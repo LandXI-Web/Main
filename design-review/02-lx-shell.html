@@ -1,0 +1,228 @@
+<title>Land-XI 쉘 목업</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@700;800&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+:root{
+  --mist:#EEF2F5; --surface:#FFFFFF; --ink:#111C2D; --ink-2:rgba(17,28,45,.68); --ink-3:rgba(17,28,45,.48);
+  --line:rgba(17,28,45,.10); --line-strong:rgba(17,28,45,.18);
+  --lx:#2457D6; --lx-deep:#193FA3; --lx-tint:#E8EEFB;
+  --s-found:#F2622A; --s-doing:#E3A008; --s-done:#1E9E6A; --s-hold:#6B7A8C; --s-error:#D93025;
+  --display:'Gothic A1',system-ui,sans-serif; --body:'IBM Plex Sans KR',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --rule: repeating-linear-gradient(90deg, var(--line-strong) 0 1px, transparent 1px 10px), repeating-linear-gradient(90deg, var(--ink) 0 1px, transparent 1px 50px);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--mist);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.55;font-variant-numeric:tabular-nums}
+a{color:inherit;text-decoration:none}
+.intro{max-width:1280px;margin:0 auto;padding:28px 24px 12px}
+.intro .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--ink-3)}
+.intro h1{font-family:var(--display);font-size:24px;font-weight:800;letter-spacing:-.02em;margin:4px 0 6px}
+.intro p{margin:0;color:var(--ink-2);max-width:70ch}
+.frame{max-width:1280px;margin:16px auto 60px;border:1px solid var(--line-strong);border-radius:12px;overflow:hidden;background:var(--mist);box-shadow:0 24px 60px rgba(17,28,45,.12);display:grid;grid-template-columns:64px 1fr;grid-template-rows:48px 1fr;height:860px}
+/* 레일 */
+.rail{grid-row:1/3;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:stretch;padding:10px 0}
+.rail .logo{height:40px;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:13px;letter-spacing:-.02em;color:var(--lx);margin-bottom:8px}
+.rail .logo small{display:block;font:500 8px var(--mono);letter-spacing:.14em;color:var(--ink-3);text-align:center}
+.rail a{display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0 8px;font-size:10.5px;color:var(--ink-2);position:relative;letter-spacing:-.01em}
+.rail a i{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;border:1px solid transparent}
+.rail a i svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.rail a.on{color:var(--lx);font-weight:600}
+.rail a.on i{background:var(--lx-tint);border-color:rgba(36,87,214,.25)}
+.rail a.on::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;background:var(--lx);border-radius:0 3px 3px 0}
+.rail .grp{font:500 9px var(--mono);letter-spacing:.12em;color:var(--ink-3);text-align:center;margin:10px 0 2px}
+.rail .sp{flex:1}
+.rail .user{margin:6px auto 0;width:30px;height:30px;border-radius:50%;background:var(--lx);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:600}
+/* 컨텍스트 바 */
+.ctx{background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 20px;position:relative}
+.ctx::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:5px;background:var(--rule);background-size:10px 3px,50px 5px;background-repeat:repeat-x;background-position:0 100%,0 100%;opacity:.55;transform-origin:left;animation:draw .6s cubic-bezier(.2,.8,.2,1) both}
+@keyframes draw{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){.ctx::after{animation:none}}
+.org{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px}
+.org .tag{font:500 10px var(--mono);letter-spacing:.08em;padding:2px 7px;border-radius:4px;background:var(--lx-tint);color:var(--lx)}
+.crumb{color:var(--ink-3);font-size:13px}.crumb b{color:var(--ink);font-weight:600}
+.ctx .sp{flex:1}
+.search{display:flex;align-items:center;gap:8px;height:32px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--mist);color:var(--ink-3);font-size:13px;width:280px}
+.search kbd{margin-left:auto;font:500 10px var(--mono);border:1px solid var(--line-strong);border-radius:4px;padding:1px 5px;color:var(--ink-3)}
+.icb{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;border:1px solid var(--line);position:relative;color:var(--ink-2)}
+.icb .n{position:absolute;top:-5px;right:-5px;min-width:16px;height:16px;border-radius:8px;background:var(--s-found);color:#fff;font:600 10px var(--mono);display:grid;place-items:center;padding:0 4px}
+.me{display:flex;align-items:center;gap:8px;font-size:13px}
+.me .av{width:28px;height:28px;border-radius:50%;background:var(--lx);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:600}
+/* 콘텐츠 */
+.page{overflow:auto;padding:22px 26px 40px}
+.ph{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px}
+.ph h2{font-family:var(--display);font-size:24px;font-weight:800;letter-spacing:-.02em;margin:0}
+.ph .sub{color:var(--ink-2);margin-top:2px}
+.ph .date{font-family:var(--mono);font-size:12px;color:var(--ink-3);text-align:right}
+.ph .date b{display:block;font:800 18px var(--display);color:var(--ink);letter-spacing:-.02em}
+.notice{display:flex;align-items:center;gap:12px;padding:8px 12px;border:1px solid var(--line);background:var(--surface);border-radius:8px;font-size:13px;margin-bottom:16px}
+.notice .t{font:500 10px var(--mono);letter-spacing:.08em;padding:2px 7px;border-radius:4px;background:var(--ink);color:#fff}
+.notice .d{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+.notice a.more{color:var(--lx);font-weight:600}
+.grid{display:grid;gap:14px}
+.g-top{grid-template-columns:2fr 1fr}
+.g-kpi{grid-template-columns:repeat(5,1fr);margin-top:14px}
+.g-ch{grid-template-columns:1fr 1fr 1fr;margin-top:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.card h3{font-family:var(--display);font-size:16px;font-weight:700;letter-spacing:-.01em;margin:0;display:flex;align-items:center;gap:10px}
+.card h3 .cnt{font:500 12px var(--mono);color:var(--ink-3)}
+.card h3 .r{margin-left:auto;font:600 13px var(--body);color:var(--lx)}
+/* 처리 대기 큐 */
+.queue{display:flex;flex-direction:column;margin-top:10px}
+.q{display:grid;grid-template-columns:8px 1fr auto auto;gap:14px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+.q:first-child{border-top:0}
+.q .bar{width:3px;height:30px;border-radius:2px;background:var(--c)}
+.q .tt{font-weight:600}.q .tt em{font-style:normal;font:500 11px var(--mono);letter-spacing:.06em;color:var(--ink-3);margin-right:8px}
+.q .ss{font-size:12.5px;color:var(--ink-2)}
+.q .age{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+.q .age.hot{color:var(--s-found);font-weight:500}
+.q .btn{font:600 13px var(--body);height:30px;padding:0 12px;border-radius:6px;border:1px solid var(--line-strong);background:var(--surface);cursor:pointer}
+.q .btn.p{background:var(--lx);border-color:var(--lx);color:#fff}
+.bb{display:flex;align-items:center;gap:14px;margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--mist)}
+.bb .ic{width:38px;height:38px;border-radius:9px;background:var(--ink);display:grid;place-items:center;color:#fff}
+.bb .ic svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:1.75}
+.bb .k{font-size:12px;color:var(--ink-3)}.bb .v{font:700 15px var(--display);letter-spacing:-.01em}
+.bb .v code{font:500 12px var(--mono);color:var(--lx);background:var(--lx-tint);padding:1px 6px;border-radius:4px;margin-left:6px}
+.bb .m{margin-left:auto;text-align:right;font-size:12px;color:var(--ink-2)}
+.bb .m b{display:block;font-family:var(--mono);color:var(--ink);font-weight:500}
+.store{margin-top:14px}
+.store .row{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-2)}
+.store .row b{font-family:var(--mono);font-weight:500;color:var(--ink)}
+.store .bar{height:8px;border-radius:4px;background:var(--mist);margin-top:8px;display:flex;overflow:hidden}
+.store .bar span{height:100%}
+.store .lg{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:12px;color:var(--ink-2)}
+.store .lg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:0}
+/* KPI */
+.kpi{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:22px 16px 14px}
+.kpi::before{content:"";position:absolute;left:14px;right:14px;top:9px;height:5px;background:var(--rule);background-size:10px 3px,50px 5px;background-repeat:repeat-x;background-position:0 100%,0 100%;opacity:.7}
+.kpi .l{font-size:12.5px;color:var(--ink-2)}
+.kpi .v{font:800 30px var(--display);letter-spacing:-.025em;line-height:1.05;margin-top:2px}
+.kpi .v i{font:500 12px var(--body);color:var(--ink-3);margin-left:3px}
+.kpi .d{font-size:12px;color:var(--ink-3);margin-top:4px}
+.kpi .v.hot{color:var(--s-found)}
+/* 차트 */
+.hb{display:flex;flex-direction:column;gap:9px;margin-top:14px}
+.hb .r{display:grid;grid-template-columns:110px 1fr 56px;gap:10px;align-items:center;font-size:12.5px}
+.hb .r .b{height:10px;border-radius:3px;background:var(--lx-tint);position:relative}
+.hb .r .b i{position:absolute;inset:0;width:var(--w);background:var(--lx);border-radius:3px}
+.hb .r .n{font-family:var(--mono);font-size:12px;color:var(--ink-2);text-align:right}
+.vb{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end;height:150px;margin-top:16px;padding-bottom:22px;position:relative;border-bottom:1px solid var(--line)}
+.vb div{background:var(--lx);border-radius:3px 3px 0 0;height:var(--h);position:relative;opacity:.85}
+.vb div:nth-child(4){opacity:1}
+.vb div::after{content:attr(data-d);position:absolute;top:100%;left:0;right:0;text-align:center;font:500 11px var(--mono);color:var(--ink-3);margin-top:6px}
+.vb div::before{content:attr(data-v);position:absolute;bottom:100%;left:0;right:0;text-align:center;font:500 11px var(--mono);color:var(--ink-2);margin-bottom:4px}
+.donut{display:flex;align-items:center;gap:18px;margin-top:12px}
+.donut .ring{width:120px;height:120px;border-radius:50%;background:conic-gradient(var(--ink) 0 9.9%,var(--lx) 9.9% 15.1%,#6E93EA 15.1% 19.1%,#A9BFF2 19.1% 21.9%,#CDD9F7 21.9% 24.2%,var(--mist) 24.2% 100%);display:grid;place-items:center;flex:none}
+.donut .ring b{width:82px;height:82px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font:800 20px var(--display);letter-spacing:-.02em}
+.donut .ring b small{display:block;font:500 10px var(--mono);color:var(--ink-3);text-align:center}
+.donut ul{list-style:none;margin:0;padding:0;font-size:12.5px;color:var(--ink-2);display:flex;flex-direction:column;gap:4px}
+.donut li b{font-family:var(--mono);font-weight:500;color:var(--ink);margin-left:6px}
+.donut li i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px}
+.legend{max-width:1280px;margin:0 auto 60px;padding:0 24px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.legend .card{padding:14px 16px}
+.legend h4{font-family:var(--display);font-size:14px;margin:0 0 6px}
+.legend p{margin:0;font-size:13px;color:var(--ink-2)}
+@media (max-width:1100px){.frame{height:auto;grid-template-columns:64px 1fr}.g-top,.g-ch{grid-template-columns:1fr}.g-kpi{grid-template-columns:repeat(2,1fr)}.search{width:auto}.legend{grid-template-columns:1fr}}
+</style>
+
+<div class="intro">
+  <div class="eyebrow">Land-XI 전면 개편 · 섹션 2 / 쉘 구조 (LX 관리자 대시보드)</div>
+  <h1>레일 + 컨텍스트 바, 그리고 "오늘 처리할 일"이 먼저</h1>
+  <p>기능은 기존 대시보드와 동일(승인 대기·가입 승인·미답변 문의·백본 모델·프로젝트 용량·방문·스토리지). 배치만 바꿨다 — 관리자가 눌러야 할 것이 맨 위, 숫자는 그 다음, 추이 차트는 마지막.</p>
+</div>
+
+<div class="frame">
+  <nav class="rail">
+    <div class="logo">LAND<br>XI<small>PLATFORM</small></div>
+    <a class="on"><i><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></i>대시보드</a>
+    <div class="grp">BUILD</div>
+    <a><i><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></i>프로젝트</a>
+    <a><i><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></i>데이터</a>
+    <a><i><svg viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg></i>카드 발행</a>
+    <div class="grp">USE</div>
+    <a><i><svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></svg></i>분석 실행</a>
+    <a><i><svg viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg></i>XI 맵</a>
+    <div class="sp"></div>
+    <a><i><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg></i>서비스 관리</a>
+    <a><i><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 015 0c0 1.5-2.5 2-2.5 3.5M12 17h.01"/></svg></i>서비스 지원</a>
+    <div class="user">관</div>
+  </nav>
+
+  <header class="ctx">
+    <div class="org"><span class="tag">LX</span>한국국토정보공사 <span style="color:var(--ink-3);font-weight:400">· 공간정보AI팀</span></div>
+    <div class="crumb">대시보드 › <b>관리자</b></div>
+    <div class="sp"></div>
+    <div class="search">⌕ 프로젝트, 카드, 사용자, 공지 검색<kbd>/</kbd></div>
+    <div class="icb">🔔<span class="n">3</span></div>
+    <div class="me"><span class="av">관</span>관리자</div>
+  </header>
+
+  <main class="page">
+    <div class="ph">
+      <div><h2>LX 관리자 대시보드</h2><div class="sub">오늘 처리할 승인·문의와 서비스 운영 현황</div></div>
+      <div class="date">기준일 현재<b>2026.08.25</b></div>
+    </div>
+    <div class="notice"><span class="t">공지</span>고위험 탐지 건 긴급 처리 안내<span class="d">2026.04.15</span><a class="more">전체 보기 ›</a></div>
+
+    <div class="grid g-top">
+      <div class="card">
+        <h3>처리 대기 <span class="cnt">9건</span><a class="r">전체 보기 ›</a></h3>
+        <div class="queue">
+          <div class="q" style="--c:var(--s-found)"><span class="bar"></span><div><div class="tt"><em>카드 발행</em>도로안전 정사영상 v2.1</div><div class="ss">김현우 · 신규 과제 · Segmentation · 클래스 4</div></div><span class="age hot">76일 대기</span><button class="btn p">검토</button></div>
+          <div class="q" style="--c:var(--s-found)"><span class="bar"></span><div><div class="tt"><em>카드 발행</em>농지 활용 분석 v2.0</div><div class="ss">김현우 · 과제 고도화 · Segmentation · 클래스 6</div></div><span class="age hot">102일 대기</span><button class="btn p">검토</button></div>
+          <div class="q" style="--c:var(--s-doing)"><span class="bar"></span><div><div class="tt"><em>카드 발행</em>사료작물(생육기) v3.0</div><div class="ss">이서연 · 검토중 · 학습 결과 IoU 0.87</div></div><span class="age">검토중 · 3일</span><button class="btn">이어서 검토</button></div>
+          <div class="q" style="--c:var(--s-doing)"><span class="bar"></span><div><div class="tt"><em>가입 승인</em>박지훈 · 남원시청 도로관리과</div><div class="ss">일반사용자 권한 요청 · 사료작물 분석 공유 요청</div></div><span class="age">2일</span><button class="btn">승인 / 거부</button></div>
+          <div class="q" style="--c:var(--s-hold)"><span class="bar"></span><div><div class="tt"><em>문의</em>정사영상 업로드가 92%에서 멈춥니다</div><div class="ss">전라남도 해운항만과 · 미답변 6건 중 가장 오래됨</div></div><span class="age">5일</span><button class="btn">답변</button></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>기반 모델 · 스토리지</h3>
+        <div class="bb">
+          <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg></div>
+          <div><div class="k">AI 기반 모델 (백본)</div><div class="v">XI-VFM<code>v2.1</code></div></div>
+          <div class="m">최종 적용<b>2026.03.12</b>연결 과제 14개</div>
+        </div>
+        <div class="store">
+          <div class="row"><span>전체 스토리지</span><b>44.5 / 184 TB · 24%</b></div>
+          <div class="bar"><span style="width:9.9%;background:var(--ink)"></span><span style="width:5.2%;background:var(--lx)"></span><span style="width:4%;background:#6E93EA"></span><span style="width:2.8%;background:#A9BFF2"></span><span style="width:2.3%;background:#CDD9F7"></span></div>
+          <div class="lg"><span><i style="background:var(--ink)"></i>정사영상 18.2</span><span><i style="background:var(--lx)"></i>공간데이터 9.6</span><span><i style="background:#6E93EA"></i>학습데이터 7.4</span><span><i style="background:#A9BFF2"></i>AI 분석 5.1</span><span><i style="background:#CDD9F7"></i>행정정보 2.8</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid g-kpi">
+      <div class="kpi"><div class="l">전체 사용자</div><div class="v">21<i>명</i></div><div class="d">정상 19 · 가입 승인 대기 1</div></div>
+      <div class="kpi"><div class="l">발행 분석 카드</div><div class="v">8<i>건</i></div><div class="d">공개 7 · 비공개 1</div></div>
+      <div class="kpi"><div class="l">카드 발행 승인 대기</div><div class="v hot">2<i>건</i></div><div class="d">최장 102일</div></div>
+      <div class="kpi"><div class="l">가입 승인 대기</div><div class="v">1<i>건</i></div><div class="d">남원시청 1</div></div>
+      <div class="kpi"><div class="l">미답변 문의</div><div class="v">6<i>건</i></div><div class="d">전체 12 · 최장 5일</div></div>
+    </div>
+
+    <div class="grid g-ch">
+      <div class="card">
+        <h3>AI 개발 프로젝트 용량<a class="r">전체 보기 ›</a></h3>
+        <div class="hb">
+          <div class="r"><span>도로안전 정사영상</span><div class="b"><i style="--w:100%"></i></div><span class="n">412 GB</span></div>
+          <div class="r"><span>농지 활용 분석</span><div class="b"><i style="--w:77%"></i></div><span class="n">318 GB</span></div>
+          <div class="r"><span>비닐하우스 탐지</span><div class="b"><i style="--w:62%"></i></div><span class="n">256 GB</span></div>
+          <div class="r"><span>사료작물(생육기)</span><div class="b"><i style="--w:48%"></i></div><span class="n">198 GB</span></div>
+          <div class="r"><span>도로안전 카메라</span><div class="b"><i style="--w:34%"></i></div><span class="n">142 GB</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>사용자 이용 현황 <span class="cnt">최근 7일 방문</span></h3>
+        <div class="vb"><div style="--h:54%" data-d="08.19" data-v="38"></div><div style="--h:74%" data-d="08.20" data-v="52"></div><div style="--h:67%" data-d="08.21" data-v="47"></div><div style="--h:87%" data-d="08.22" data-v="61"></div><div style="--h:78%" data-d="08.23" data-v="55"></div><div style="--h:34%" data-d="08.24" data-v="24"></div><div style="--h:27%" data-d="08.25" data-v="19"></div></div>
+      </div>
+      <div class="card">
+        <h3>스토리지 구성</h3>
+        <div class="donut">
+          <div class="ring"><b>24%<small>44.5 / 184 TB</small></b></div>
+          <ul><li><i style="background:var(--ink)"></i>정사영상<b>18.2 TB</b></li><li><i style="background:var(--lx)"></i>공간데이터<b>9.6 TB</b></li><li><i style="background:#6E93EA"></i>학습데이터<b>7.4 TB</b></li><li><i style="background:#A9BFF2"></i>AI 분석<b>5.1 TB</b></li><li><i style="background:#CDD9F7"></i>행정정보<b>2.8 TB</b></li><li><i style="background:var(--mist);border:1px solid var(--line)"></i>잔여<b>139.5 TB</b></li></ul>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="legend">
+  <div class="card"><h4>레일 64px · BUILD / USE 그룹</h4><p>기존 9개 메뉴 그대로. 다만 LX가 "만드는" 것(프로젝트·데이터·카드 발행)과 "쓰는" 것(분석 실행·XI 맵)을 그룹 라벨로 나눠, 지자체 계정에서는 BUILD 그룹이 사라지게 한다. 활성 항목은 왼쪽 3px 바.</p></div>
+  <div class="card"><h4>컨텍스트 바 48px (신설)</h4><p>기관·팀 / 현재 위치 / 전역 검색(<code>/</code>) / 알림 / 사용자. 기존에 둘 곳이 없던 것들. 하단 눈금자는 페이지 로드 때 한 번 그려진다. 지도 화면에서는 반투명으로 지도 위에 뜬다.</p></div>
+  <div class="card"><h4>대시보드 = 처리 대기 큐가 히어로</h4><p>승인·가입·문의를 하나의 큐로 합치고 대기 일수로 정렬. KPI는 큐 아래로, 차트는 맨 아래로. 워터마크 아이콘·남색 공지 띠 제거, 공지는 한 줄 스트립으로.</p></div>
+</div>
