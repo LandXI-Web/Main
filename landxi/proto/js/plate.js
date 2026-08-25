@@ -55,8 +55,8 @@ export function slot(name, rowRect) {
   switch (name) {
     case 'orbit':   // 텍스트 5컬럼 · 판 7컬럼
       return narrow ? [g, bar + 280, g, foot + 40] : [cols(5, v), bar + 96, g, foot + 74];
-    case 'atlas':   // 색인 3 · 판 6 · 카드 3
-      return narrow ? [g, bar + 40, g, foot + 40] : [cols(3, v), bar + 96, cols(3, v), foot + 74];
+    case 'atlas':   // B-Home 구도 — 색인+헤드라인 4 · 판 5 · 카드 3
+      return narrow ? [g, bar + 40, g, foot + 40] : [cols(4, v), bar + 96, cols(3, v), foot + 74];
     case 'full':
       return [0, bar + 36, 0, foot];
     case 'land':

@@ -555,11 +555,16 @@ if (optional.filmLegs) {
     .catch(() => { /* 아직 없다 — 라이브 카메라가 그대로 간다 */ });
 }
 
-const tickMag = magnetic([...document.querySelectorAll('#cta a')]);
+const tickMag = magnetic([...document.querySelectorAll('#cta a, #ah-cta a')]);
 const tickCursor = makeCursor($('#cursor'), $('#cursor-ll'), map, (x, y) => plate.inside(x, y));
 
+/* 내부 이동은 페이지 점프가 아니라 **같은 카메라의 스크롤 이동**이다(§5 규칙 4). */
+document.querySelectorAll('[data-goto]').forEach((a) => {
+  a.addEventListener('click', (e) => { e.preventDefault(); api.seek(+a.dataset.goto); });
+});
+
 /* 카피 리빌 — 줄 단위 clip-path 마스크(§4 모션). */
-const cols = [...document.querySelectorAll('.col, #dhead')].map((el) => ({
+const cols = [...document.querySelectorAll('.col, #dhead, #atlas-head')].map((el) => ({
   el, lines: [...el.querySelectorAll('.ln')], shown: false,
 }));
 function showCol(el, on) {
@@ -610,6 +615,8 @@ $('#atlas-foot').textContent = `수치가 있는 행만 실제 분석 결과다 
 function applyAtlasChapter(p, now) {
   const on = p > 0.335 && p < 0.545;
   $('#atlas').classList.toggle('on', on);
+  // 헤드라인 두 줄은 구름이 걷히는 그 프레임에 줄 마스크로 올라온다(§4 모션).
+  showCol($('#atlas-head'), on);
   $('#card').classList.toggle('on', on || (p >= 0.545 && p < 0.57));
   if (!on) {
     setArcs([]);
@@ -822,7 +829,8 @@ const NOW_STAMP = () => stamp(`${TODAY.getFullYear()}-${String(TODAY.getMonth() 
 const PLATE_FIG = [
   [0.000, 'FIG. 01', () => `SENTINEL-2 · 궤도 ${SAT.altKm} km`, () => '대한민국', () => NOW_STAMP()],
   [0.160, 'FIG. 01', () => '성층운 돌파 · 786 km → 8 km', () => '한반도 상공', () => NOW_STAMP()],
-  [0.330, 'FIG. 02', () => `전국 · 서비스 ${SVC.length}종 · 실결과 ${ROWS.length}건`, () => '대한민국', () => '2025 — 2026'],
+  // 판은 끝까지 FIG. 01 이다 — FIG. 02 는 우측 결과 카드가 쓴다(B-Home 원판의 번호 배분).
+  [0.330, 'FIG. 01', () => `전국 · 서비스 ${SVC.length}종 · 실결과 ${ROWS.length}건`, () => '대한민국', () => '2025 — 2026'],
   [0.560, 'FIG. 03', () => 'V-World 정사영상 → LX 드론 정사영상', () => '남원 사매면 전북', () => stamp('2025-08-22')],
   [0.800, 'FIG. 03', () => `LX 드론 정사영상 · GSD ${gsdOverride}`, () => '남원 사매면 전북', () => stamp(epochDate + '-01')],
 ];
@@ -913,8 +921,7 @@ function apply(p) {
 
   // 챕터 카피
   showCol($('#ch1'), p < 0.155);
-  // 판이 전폭이 되기 전에 카피는 종이 위에서 물러난다 — 활자를 사진 위에 얹지 않는다.
-  showCol($('#ch2'), p >= 0.158 && p < 0.242);
+  // 2장 카피는 이제 아틀라스 좌측 컬럼 안에 있다(B-Home 구도) — 구름 구간에는 활자가 없다.
   showCol($('#dhead'), p > 0.60 && p < 0.795);
   $('#dstrip').classList.toggle('on', p > 0.565 && p < 0.815);
 
