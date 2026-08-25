@@ -86,6 +86,7 @@ const state = () => page.evaluate(() => {
     filmTime: window.__scrub.filmTime(),
     cam: window.__scrub.camera(),
     handoff: window.__scrub.handoffActive(),
+    plates: [window.__scrub.plate(0), window.__scrub.plate(1)],
     op: segs.map(s => +(+s.style.opacity || 0).toFixed(3)),
     hasClip: segs.map(s => s.classList.contains('sc-has-clip')),
     ct: I.clips.map(c => +(c.el.currentTime || 0).toFixed(3)),
@@ -95,9 +96,10 @@ const state = () => page.evaluate(() => {
 });
 
 /* ── 1. 12지점 스크린샷 ───────────────────────────────────────────────────── */
-// 12지점: 히어로 2 + 씸 4 + 카피 플래토 중앙 5 + 인계 1.
+// 12지점(7레그): 히어로 2 + 씸 2 + 카피 플래토 중앙 6 + 인계 2.
 // 플래토 중앙에서 찍는 이유 — 램프 중간에 찍으면 불투명 흰 판이 유리 카드처럼 보인다.
-const SHOTS = [0, 0.13, 0.221, 0.2935, 0.378, 0.4495, 0.5795, 0.632, 0.703, 0.765, 0.836, 0.99];
+//   0.198 씸 01→02 · 0.300 씸 02→03 · 0.808 인계#1 남원 · 0.985 인계#2 여수
+const SHOTS = [0, 0.11, 0.198, 0.255, 0.300, 0.358, 0.462, 0.560, 0.650, 0.760, 0.808, 0.985];
 const shots = [];
 for (let i = 0; i < SHOTS.length; i++) {
   await goto(SHOTS[i]);
@@ -105,7 +107,9 @@ for (let i = 0; i < SHOTS.length; i++) {
   const f = path.join(OUT, `s_${String(i).padStart(2, '0')}_p${String(Math.round(SHOTS[i] * 1000)).padStart(4, '0')}.png`);
   await page.screenshot({ path: f });
   shots.push({ p: SHOTS[i], file: path.basename(f), leg: s.leg, label: s.label,
-    filmTime: +s.filmTime.toFixed(2), op: s.op, copy: s.copy, handoff: s.handoff });
+    filmTime: +s.filmTime.toFixed(2), op: s.op, copy: s.copy, handoff: s.handoff,
+    cam: { lng: +s.cam.lng.toFixed(4), lat: +s.cam.lat.toFixed(4), alt: Math.round(s.cam.alt) },
+    plates: s.plates });
   console.log(`  ${path.basename(f)}  leg ${s.leg} ${s.label}  film ${s.filmTime.toFixed(2)}s  op [${s.op.join(' ')}]`);
 }
 
@@ -179,10 +183,14 @@ if (!REDUCED) {
     const ls = [];
     for (let k = 0; k < pts.length; k++) ls.push(await stageLuma(pts[k], `${M.legs[i-1].id}_${M.legs[i].id}_${k}`));
     seamLuma.push({ seam: `${M.legs[i - 1].id}→${M.legs[i].id}`, luma: ls.map(v => +v.toFixed(2)) });
-    // 급락 판정: 밴드 안 최소 휘도가 양 끝 평균의 0.55 배 아래이면 플래시(검은 프레임)다.
-    const ends = (ls[0] + ls[ls.length - 1]) / 2;
+    // 급락 판정 — 딥은 "양 끝 둘 다보다" 낮게 꺼지는 것이다.
+    // 평균과 비교하면 단조 디졸브(흰 구름 → 어두운 지상)가 딥으로 오진된다.
+    // 씸을 가로질러 밝기가 한 방향으로만 움직이면 그건 컷이 아니라 디졸브다.
+    const lo = Math.min(ls[0], ls[ls.length - 1]);
     const min = Math.min(...ls);
-    if (min < ends * 0.55) seamFlashes.push({ seam: `${M.legs[i - 1].id}→${M.legs[i].id}`, min: +min.toFixed(2), ends: +ends.toFixed(2) });
+    const dip = min < lo * 0.7;
+    if (dip) seamFlashes.push({ seam: `${M.legs[i - 1].id}→${M.legs[i].id}`,
+      min: +min.toFixed(2), ends: [+ls[0].toFixed(2), +ls[ls.length - 1].toFixed(2)] });
   }
 }
 
@@ -224,9 +232,31 @@ if (!REDUCED) {
   });
 }
 
+/* ── 5. 인계 검증 — 판이 manifest 카메라 그대로 떠 있는가 ────────────────── */
+let handoffCheck = null;
+if (!REDUCED) {
+  const MF = JSON.parse(fs.readFileSync(path.resolve(root, 'landxi/assets/proto/film/legs/manifest.json'), 'utf8'));
+  const probe = async (p, idx, spec) => {
+    await goto(p);
+    const st = await page.evaluate(i => window.__scrub.plate(i), idx);
+    if (!st) return { at: p, ok: false, why: 'plate not built' };
+    const d = Math.max(
+      Math.abs(st.center[0] - spec.center[0]) * 1e4,
+      Math.abs(st.center[1] - spec.center[1]) * 1e4);
+    return { at: p, on: st.on, ready: st.ready, center: st.center.map(v => +v.toFixed(5)),
+      zoom: +st.zoom.toFixed(3), expect: { center: spec.center, zoom: spec.zoom },
+      centreDelta1e4: +d.toFixed(2), zoomDelta: +Math.abs(st.zoom - spec.zoom).toFixed(3),
+      ok: !!st.on && d < 5 && Math.abs(st.zoom - spec.zoom) < 0.02 };
+  };
+  handoffCheck = {
+    namwon: await probe(0.808, 0, MF.handoff),
+    yeosu: await probe(0.985, 1, MF.handoffFinal),
+  };
+}
+
 const report = {
   url: URL, reduced: REDUCED, viewport: [W, H], at: new Date().toISOString(),
-  errors, meta, shots,
+  errors, meta, shots, handoffCheck,
   invariants: {
     stageFixed: meta.stagePos === 'fixed',
     spacerHeightOk: Math.abs(meta.scrollHeight - meta.spacerVh * meta.innerHeight) < meta.innerHeight * 0.06,
@@ -259,5 +289,6 @@ console.log('  dead scroll      ', dead, deadAt.slice(0, 6));
 console.log('  레그 최대 불투명도', report.invariants.legsReachFullOpacity.join(' '));
 console.log('  포스터에 갇힌 레그', report.invariants.legsStuckOnPoster);
 console.log('  씸 플래시        ', seamFlashes.length, seamFlashes);
+if (handoffCheck) console.log('  인계 판          ', JSON.stringify(handoffCheck));
 if (smooth) console.log('  프레임타임       ', JSON.stringify(smooth));
 console.log('  →', path.relative(root, path.join(OUT, 'report.json')));

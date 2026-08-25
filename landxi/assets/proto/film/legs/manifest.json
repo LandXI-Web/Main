@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-25T22:07:42.558Z",
+  "generatedAt": "2026-08-25T22:25:32.245Z",
   "builder": "tools/scrub/assemble.mjs",
   "source": "4개 렌더러 · three-globe(궤도) + 구름 스파이크(권운) + MapLibre 결정론 필름 + maplibre3d 실측 3D",
   "fps": 25,
@@ -35,7 +35,7 @@
   "filmVh": 6.244,
   "spacerVh": 7.244,
   "cameraNote": "고도 = 1.5 × 720px × m/px (MapLibre 기본 fov 36.87°, 필름 뷰포트 720px). 줌·GSD 는 고도에서 유도.",
-  "flightProfile": "레그마다 렌더러가 다르다. 좌표·방위·피치는 각 렌더러의 실제 카메라 값이고, 고도만 이음매에서 튀지 않도록 하나의 단조 하강 프로파일로 이어 붙였다. 계기판 판독값은 필름 카메라가 아니라 이 비행 프로파일이다.",
+  "flightProfile": "레그마다 렌더러가 다르다. 좌표·고도·방위·피치는 전부 그 레그를 구운 렌더러의 실제 카메라 값이다(three-globe LEGS[].keys · 구름 스파이크 keys · MapLibre 필름 SEG · maplibre3d LEG[]). 그래서 렌더러가 바뀌는 이음매에서는 고도가 실제로 튄다 — 필름 자체가 거기서 컷이기 때문이다. 계기 바늘이 스냅하지 않도록 페이지가 씸 밴드(0.16vh) 위에서 두 레그의 판독값을 섞는다(scrub.js camAt). 인계 판은 그 덕분에 필름 마지막 프레임과 정확히 같은 카메라로 뜬다.",
   "bytes": {
     "desktop": 49760735,
     "mobile": 17579599,
@@ -207,11 +207,11 @@
           127.88,
           35.52
         ],
-        "altitudeM": 210000,
-        "zoom": 9.3559,
+        "altitudeM": 132000,
+        "zoom": 10.0258,
         "pitch": 35,
         "bearing": -10,
-        "mpp": 194.444,
+        "mpp": 122.222,
         "seg": "02b"
       }
     },
@@ -243,11 +243,11 @@
           127.7,
           35.9
         ],
-        "altitudeM": 210000,
-        "zoom": 9.3491,
+        "altitudeM": 434500,
+        "zoom": 8.3001,
         "pitch": 24,
         "bearing": -9,
-        "mpp": 194.444,
+        "mpp": 402.315,
         "seg": "03a"
       },
       "endCamera": {
@@ -387,11 +387,11 @@
           127.348,
           35.366
         ],
-        "altitudeM": 1500,
-        "zoom": 16.488,
+        "altitudeM": 16300,
+        "zoom": 13.0461,
         "pitch": 46,
         "bearing": -13,
-        "mpp": 1.389,
+        "mpp": 15.093,
         "seg": "06a"
       },
       "endCamera": {
@@ -399,11 +399,11 @@
           127.425,
           35.429
         ],
-        "altitudeM": 4900,
-        "zoom": 14.779,
+        "altitudeM": 52400,
+        "zoom": 11.3603,
         "pitch": 23,
         "bearing": -3,
-        "mpp": 4.537,
+        "mpp": 48.519,
         "seg": "06b"
       }
     },
@@ -463,10 +463,10 @@
       127.425,
       35.429
     ],
-    "zoom": 14.779,
+    "zoom": 11.3603,
     "pitch": 23,
     "bearing": -3,
-    "altitudeM": 4900,
+    "altitudeM": 52400,
     "detections": "/landxi/assets/data/geo/results/namwon-greenhouse-2025.geojson",
     "note": "남원 스케일 마지막 레그(06 비닐하우스)의 끝 카메라. 필름이 멈춘 그 자리에서 실지도가 같은 카메라로 이어받는다 — 1프레임 크로스페이드."
   },

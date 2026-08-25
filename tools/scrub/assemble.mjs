@@ -77,13 +77,13 @@ const PLAN = [
     dir: 'build/film/legs/cloud-break-v2', from: 40, to: 114,       // 3.00 s (t 1.60–4.56)
     // 구름 스파이크 cloud-break keys 중 권운 돌파 구간
     a: C(127.96, 35.80, 460, 27, -8),
-    b: C(127.88, 35.52, 210, 35, -10),
+    b: C(127.88, 35.52, 132, 35, -10),
     caption: '대기 산란 · 권운 3층 빌보드 · 고도 11 / 8 / 5 km',
   },
   {
     id: '03', wp: '한반도', label: '한반도', place: '전라북도', look: 'real',
     dir: 'build/film/frames', from: 217, to: 297,                   // 3.24 s
-    a: C(127.70, 35.90, 210, 24, -9),
+    a: C(127.70, 35.90, 434.5, 24, -9),
     b: C(127.326, 35.347, 22.2, 62, -25),
     caption: 'Mapterhorn terrarium DEM · 지형 과장 1.4× · EPSG:4326',
   },
@@ -105,8 +105,8 @@ const PLAN = [
   {
     id: '06', wp: '남원', label: '비닐하우스', place: '남원 농경지', look: 'real',
     dir: 'build/film/frames', from: 362, to: 438,                   // 3.08 s
-    a: C(127.348, 35.366, 1.5, 46, -13),
-    b: C(127.425, 35.429, 4.9, 23, -3),
+    a: C(127.348, 35.366, 16.3, 46, -13),
+    b: C(127.425, 35.429, 52.4, 23, -3),
     caption: 'namwon-greenhouse-2025 · 9,664동 · 항공 정사영상 2025-10 · GSD 25 cm',
   },
   {
@@ -249,9 +249,12 @@ const manifest = {
   spacerVh: +(total + 1).toFixed(3),
   cameraNote: '고도 = 1.5 × 720px × m/px (MapLibre 기본 fov 36.87°, 필름 뷰포트 720px). 줌·GSD 는 고도에서 유도.',
   flightProfile:
-    '레그마다 렌더러가 다르다. 좌표·방위·피치는 각 렌더러의 실제 카메라 값이고, 고도만 ' +
-    '이음매에서 튀지 않도록 하나의 단조 하강 프로파일로 이어 붙였다. 계기판 판독값은 ' +
-    '필름 카메라가 아니라 이 비행 프로파일이다.',
+    '레그마다 렌더러가 다르다. 좌표·고도·방위·피치는 전부 그 레그를 구운 렌더러의 실제 ' +
+    '카메라 값이다(three-globe LEGS[].keys · 구름 스파이크 keys · MapLibre 필름 SEG · ' +
+    'maplibre3d LEG[]). 그래서 렌더러가 바뀌는 이음매에서는 고도가 실제로 튄다 — 필름 ' +
+    '자체가 거기서 컷이기 때문이다. 계기 바늘이 스냅하지 않도록 페이지가 씸 밴드(0.16vh) ' +
+    '위에서 두 레그의 판독값을 섞는다(scrub.js camAt). 인계 판은 그 덕분에 필름 마지막 ' +
+    '프레임과 정확히 같은 카메라로 뜬다.',
   bytes: { desktop: dTot, mobile: mTot, poster: pTot,
     desktopMB: +(dTot / MB).toFixed(2), mobileMB: +(mTot / MB).toFixed(2), posterMB: +(pTot / MB).toFixed(2) },
   seams,

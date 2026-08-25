@@ -225,6 +225,15 @@ function satStyle(detUrl, color) {
       { id: 'det-l', type: 'line', source: 'det',
         paint: { 'line-color': color, 'line-width': 1,
           'line-opacity': ['interpolate', ['linear'], ['coalesce', ['get', 'conf'], 0.6], 0.05, 0.25, 0.7, 0.95] } },
+      // 광역 줌에서 폴리곤은 1px 이하로 사라진다. 그 구간에서는 점으로 읽힌다 —
+      // 개수를 세는 화면이지 형상을 보는 화면이 아니기 때문이다.
+      { id: 'det-p', type: 'circle', source: 'det',
+        paint: {
+          'circle-color': color,
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 1.6, 13, 3, 15, 0],
+          'circle-opacity': ['interpolate', ['linear'], ['zoom'], 10, 0.85, 14, 0.5, 15, 0],
+          'circle-stroke-width': 0,
+        } },
     ],
   };
 }
