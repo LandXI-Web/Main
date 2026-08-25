@@ -1,0 +1,309 @@
+/* Land-XI 방향 증명 프로토타입 — dive.css
+   토큰은 ../assets/css/tokens.css 를 상속하고, 이 페이지에만 필요한 값만 여기서 추가한다. */
+:root{
+  /* 다크 장면에서 --lx(#006DF7)는 위성영상 위에서 가라앉는다. 명도만 올린 형제 토큰. */
+  --lx-lit:#4E9BFF;
+  --sky-ink:#EAF2FF; --sky-ink-2:rgba(234,242,255,.66); --sky-ink-3:rgba(234,242,255,.42);
+  --sky-glass:rgba(9,17,32,.60); --sky-glass-b:rgba(234,242,255,.16);
+  /* 신뢰도 램프 — style.js CONF_RAMP 와 동일 (히스토그램·범례가 같은 색을 쓴다) */
+  --conf-1:#FFD166; --conf-2:#F7A93B; --conf-3:#F2622A; --conf-4:#DC3B22; --conf-5:#B3191C;
+  --det-illegal:#863AFF;
+  --e-silk:cubic-bezier(.45,.05,.55,.95);
+  --e-expo:cubic-bezier(.16,1,.3,1);
+  --e-flow:cubic-bezier(.33,0,.2,1);
+  --e-snap:cubic-bezier(.4,1,.75,.9);   /* Palantir 100ms 마이크로 */
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html,body{margin:0;padding:0}
+html{background:#01040C}
+body{
+  font-family:var(--f-body); color:var(--sky-ink);
+  background:#01040C; overflow-x:hidden;
+  --ink-now:var(--sky-ink); --ink2-now:var(--sky-ink-2); --ink3-now:var(--sky-ink-3);
+  --glass-now:var(--sky-glass); --glassb-now:var(--sky-glass-b);
+}
+body.is-light{
+  --ink-now:var(--ink); --ink2-now:var(--ink-2); --ink3-now:var(--ink-3);
+  --glass-now:rgba(255,255,255,.84); --glassb-now:rgba(255,255,255,.9);
+}
+.mono{font-family:var(--f-mono); font-weight:500; font-variant-numeric:tabular-nums; letter-spacing:.055em}
+#scroller{height:920vh}
+#stage{position:fixed; inset:0; overflow:hidden; background:#01040C}
+#stars{position:absolute; inset:0; width:100%; height:100%; pointer-events:none}
+#map{position:absolute; inset:0}
+#map canvas{outline:none}
+.maplibregl-ctrl-attrib{display:none}
+
+#orbit3d{position:absolute; inset:0; width:100%; height:100%; pointer-events:none; opacity:0}
+
+/* ── 성층운 ─────────────────────────────────────────────── */
+#sky{position:absolute; inset:0; pointer-events:none; overflow:hidden}
+.cloud-deck{
+  position:absolute; left:-30%; top:-30%; width:160%; height:160%;
+  background-repeat:repeat; background-size:30% 30%;
+  transform-origin:50% 46%; will-change:transform,opacity; opacity:0;
+}
+.cloud-haze{
+  position:absolute; inset:-10%; opacity:0;
+  background:radial-gradient(ellipse at 50% 44%, #FFFFFF 0%, rgba(238,245,255,.92) 26%, rgba(214,231,250,.62) 56%, rgba(200,222,250,.18) 82%, rgba(200,222,250,0) 100%);
+}
+/* 주야 터미네이터 — SunCalc 직하점에서 각도/오프셋을 계산해 JS가 갱신한다 */
+#night{
+  position:absolute; border-radius:50%; opacity:0; pointer-events:none;
+  transform:translate(-50%,-50%);
+}
+
+/* ── 등급/분위기 ────────────────────────────────────────── */
+#grade{position:absolute; inset:0; pointer-events:none}
+#grade::before{
+  content:''; position:absolute; inset:0; mix-blend-mode:soft-light;
+  background:var(--temp,linear-gradient(180deg,#7FA8E8,#2E4B86)); opacity:var(--temp-a,.5);
+  transition:opacity .5s linear;
+}
+#grade::after{
+  content:''; position:absolute; inset:-40%; mix-blend-mode:overlay; opacity:var(--grain,.05);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  will-change:transform;
+}
+#grade > .vig{position:absolute; inset:0}
+#scan{
+  position:absolute; left:0; right:0; height:34vh; top:-40vh; pointer-events:none; opacity:0;
+  background:linear-gradient(180deg,rgba(120,200,255,0) 0%,rgba(150,220,255,.10) 46%,rgba(220,242,255,.55) 72%,rgba(150,220,255,.10) 92%,rgba(120,200,255,0) 100%);
+  mix-blend-mode:screen;
+}
+
+/* ── 커서 ───────────────────────────────────────────────── */
+#cursor{position:absolute; left:0; top:0; width:0; height:0; pointer-events:none; opacity:0; z-index:8}
+#cursor svg{position:absolute; left:-20px; top:-20px; width:40px; height:40px; fill:none;
+  stroke:var(--lx-lit); stroke-width:1; opacity:.85; transition:transform .18s var(--e-flow)}
+#cursor circle{opacity:.45}
+#cursor span{position:absolute; left:16px; top:12px; font-size:10px; color:var(--ink2-now);
+  text-shadow:0 1px 3px rgba(0,8,20,.9); white-space:nowrap}
+#cursor.on-ui svg{transform:scale(1.5)}
+#cursor.on-ui path{opacity:0}
+@media (pointer:coarse){#cursor{display:none}}
+
+/* ── UI 공통 ────────────────────────────────────────────── */
+#ui{position:fixed; inset:0; z-index:5; pointer-events:none}
+#ui > *{pointer-events:auto}
+.glass{
+  background:var(--glass-now); border:1px solid var(--glassb-now);
+  border-radius:var(--r-float); backdrop-filter:blur(13px) saturate(1.25);
+  -webkit-backdrop-filter:blur(13px) saturate(1.25);
+  box-shadow:0 18px 44px rgba(0,6,18,.38);
+}
+.skip{position:absolute; left:-999px; top:12px; background:#000; color:#fff; padding:8px 12px; z-index:20}
+.skip:focus{left:12px}
+.sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
+  clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; border:0}
+.sr-only button:focus{position:fixed; left:16px; top:96px; width:auto; height:auto; clip:auto;
+  clip-path:none; padding:8px 12px; background:#00142E; color:#fff; border:1px solid var(--lx-lit);
+  font-family:var(--f-mono); font-size:11px; z-index:30}
+
+#brand{position:absolute; left:34px; top:28px; display:flex; align-items:center; gap:14px}
+#brand img{height:19px; display:block; opacity:.98; filter:brightness(1.22) saturate(1.06)}
+body.is-light #brand img{filter:none}
+body.is-light #brand-sub,body.is-light #attrib{text-shadow:0 1px 2px rgba(255,255,255,.75)}
+body.is-light #tier{text-shadow:0 1px 2px rgba(255,255,255,.75)}
+#brand-sub{font-size:10px; color:var(--ink3-now); padding-left:14px; border-left:1px solid var(--glassb-now)}
+
+/* HUD */
+#hud{position:absolute; right:30px; top:24px; width:262px; padding:14px 16px 12px}
+.hud-row{display:flex; justify-content:space-between; align-items:baseline; gap:10px;
+  padding:4px 0; border-bottom:1px solid color-mix(in oklab, var(--glassb-now) 55%, transparent)}
+.hud-row:last-of-type{border-bottom:0}
+.hud-row .k{font-size:11px; color:var(--ink3-now); letter-spacing:.02em; white-space:nowrap}
+.hud-row .v{font-size:12px; color:var(--ink-now); font-weight:600}
+#hud-scale{margin-top:10px; display:flex; align-items:center; gap:8px}
+#hud-scale span{font-size:10px; color:var(--ink2-now)}
+#scale-bar{display:block; height:5px; border:1px solid var(--ink3-now); border-top:0; min-width:6px}
+
+/* 카피 */
+#copy::before{content:''; position:fixed; left:0; bottom:0; width:76vw; height:62vh;
+  background:var(--scrim); pointer-events:none}
+#copy{position:absolute; left:34px; bottom:108px; width:min(46vw,680px)}
+.cp{position:absolute; left:0; bottom:0; width:100%; opacity:0; will-change:opacity}
+.cp h1{
+  margin:0 0 14px; font-family:var(--f-display); font-weight:900;
+  font-size:clamp(32px,3.9vw,54px); line-height:1.02; letter-spacing:-.024em;
+  color:var(--ink-now); text-wrap:balance;
+  text-shadow:0 2px 18px rgba(0,8,22,.42);
+}
+body.is-light .cp h1{text-shadow:0 2px 18px rgba(255,255,255,.55)}
+.cp h1 .ch{display:inline-block; will-change:transform,filter,opacity}
+.cp p{margin:0; font-size:11.5px; color:var(--ink2-now); padding-top:11px;
+  border-top:1px solid var(--glassb-now); max-width:34em}
+
+/* 부처 칩 */
+#chips{position:absolute; left:34px; top:96px; margin:0; padding:0; list-style:none;
+  display:flex; flex-direction:column; gap:6px; opacity:0}
+#chips li{
+  font-family:var(--f-mono); font-size:10.5px; letter-spacing:.05em;
+  padding:5px 11px 5px 9px; border-radius:3px; width:max-content;
+  background:rgba(9,17,32,.5); border:1px solid var(--glassb-now); color:var(--ink3-now);
+  display:flex; align-items:center; gap:8px;
+  transition:color .12s var(--e-snap), border-color .12s var(--e-snap), background .12s var(--e-snap);
+}
+#chips li i{width:5px; height:5px; border-radius:50%; background:currentColor; opacity:.5}
+#chips li.on{color:var(--ink-now); background:rgba(0,109,247,.16); border-color:rgba(120,180,255,.5)}
+#chips li.on i{opacity:1; background:var(--lx-lit); box-shadow:0 0 8px var(--lx-lit)}
+body.is-light #chips li{background:rgba(255,255,255,.72)}
+
+/* 타임라인 */
+#timeline{position:absolute; right:30px; bottom:76px; width:340px; padding:12px 14px 10px}
+#tl-head,#tl-foot{display:flex; justify-content:space-between; align-items:baseline}
+#tl-head{margin-bottom:9px}
+#tl-date{font-size:14px; font-weight:600; color:var(--ink-now)}
+#tl-note{font-size:9.5px; color:var(--ink3-now)}
+#tl-track{position:relative; height:22px; border-bottom:1px solid var(--glassb-now)}
+#tl-fill{position:absolute; left:0; bottom:0; height:2px; background:var(--lx-lit); width:0}
+#tl-ticks{position:absolute; inset:0}
+#tl-ticks i{position:absolute; bottom:0; width:1px; height:7px; background:var(--ink3-now); transition:height .2s var(--e-snap), background .2s var(--e-snap)}
+#tl-ticks i.ortho{height:12px; background:var(--ai)}
+#tl-ticks i.on{height:15px; background:var(--lx-lit); box-shadow:0 0 7px var(--lx-lit)}
+#tl-head-mark{position:absolute; bottom:-3px; width:1px; height:22px; background:var(--sky-ink); left:0;
+  box-shadow:0 0 10px rgba(234,242,255,.8)}
+#tl-foot{margin-top:6px; font-size:9.5px; color:var(--ink3-now)}
+
+/* 결과 패널 */
+#result{position:absolute; right:30px; top:238px; bottom:74px; width:352px; padding:18px 18px 16px;
+  overflow:auto; scrollbar-width:thin}
+#res-back{display:inline-flex; align-items:center; background:none; border:0; padding:0 0 12px;
+  color:var(--ink3-now); font-family:var(--f-mono); font-size:10.5px; cursor:pointer;
+  transition:color .1s var(--e-snap)}
+#res-back:hover{color:var(--ink-now)}
+#result .tag{font-size:10px; color:var(--lx-lit); margin:0 0 4px; letter-spacing:.09em}
+#result h2{margin:0 0 12px; font-family:var(--f-display); font-weight:800; font-size:21px;
+  letter-spacing:-.012em; color:var(--ink-now)}
+#res-meta{margin:0 0 14px; display:grid; grid-template-columns:auto 1fr; gap:5px 12px; font-size:11px}
+#res-meta dt{color:var(--ink3-now)}
+#res-meta dd{margin:0; font-family:var(--f-mono); color:var(--ink-now); text-align:right; font-weight:500}
+#res-foot{margin:12px 0 0; font-size:9.5px; color:var(--ink3-now); line-height:1.6}
+.ctl{margin-top:4px}
+.ctl label{display:flex; justify-content:space-between; align-items:baseline; font-size:11px;
+  color:var(--ink2-now); margin-bottom:7px}
+.ctl label output{font-family:var(--f-mono); font-size:13px; color:var(--ink-now); font-weight:600}
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:22px; background:none; cursor:ew-resize}
+input[type=range]::-webkit-slider-runnable-track{height:2px; background:var(--ink3-now)}
+input[type=range]::-moz-range-track{height:2px; background:var(--ink3-now)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:13px; height:13px; margin-top:-5.5px;
+  border-radius:50%; background:var(--sky-ink); border:2px solid var(--lx-lit); box-shadow:0 0 10px rgba(78,155,255,.7)}
+input[type=range]::-moz-range-thumb{width:13px; height:13px; border-radius:50%; background:var(--sky-ink);
+  border:2px solid var(--lx-lit)}
+input[type=range]:focus-visible{outline:2px solid var(--lx-lit); outline-offset:4px; border-radius:2px}
+#hist{display:block; width:100%; height:56px; margin:4px 0 8px}
+#res-ctl .n,.ctl .n{font-size:11px; color:var(--ink2-now); margin:0; line-height:1.65}
+#res-ctl .n b,.ctl .n b{color:var(--ink-now)}
+.ctl > .n b{font-family:var(--f-mono); font-size:14px; color:var(--ink-now); font-weight:600}
+.seg{display:flex; gap:0; margin-top:10px; border:1px solid var(--glassb-now); border-radius:4px; overflow:hidden}
+.seg button{flex:1; background:none; border:0; border-right:1px solid var(--glassb-now); padding:7px 4px;
+  font-family:var(--f-mono); font-size:10px; color:var(--ink3-now); cursor:pointer;
+  transition:background .1s var(--e-snap), color .1s var(--e-snap)}
+.seg button:last-child{border-right:0}
+.seg button:hover{color:var(--ink-now)}
+.seg button[aria-pressed=true]{background:rgba(0,109,247,.22); color:var(--ink-now)}
+.pending{margin-top:10px; padding:9px 11px; border:1px dashed var(--glassb-now); border-radius:4px;
+  font-family:var(--f-mono); font-size:10px; color:var(--ink3-now); line-height:1.7}
+
+#change-legend{position:absolute; left:50%; transform:translateX(-50%); bottom:124px; margin:0;
+  font-size:10px; color:var(--ink2-now); background:var(--glass-now); border:1px solid var(--glassb-now);
+  padding:6px 12px; border-radius:3px; display:flex; align-items:center; gap:12px; white-space:nowrap;
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px)}
+#change-legend b{color:var(--ink-now); font-weight:600}
+.lg{display:inline-flex; align-items:center; gap:5px}
+.lg i{width:8px; height:8px; border-radius:2px; display:block}
+.legend{display:flex; flex-wrap:wrap; gap:6px 12px; margin:9px 0 2px; font-family:var(--f-mono);
+  font-size:10px; color:var(--ink2-now)}
+.legend b{color:var(--ink-now); font-weight:600}
+.ttl{margin:14px 0 7px; font-size:11px; color:var(--ink2-now);
+  padding-top:11px; border-top:1px solid var(--glassb-now)}
+.ttl b{font-family:var(--f-mono); color:var(--ink-now); font-size:13px}
+#chg-note{color:var(--ink3-now); font-size:10px}
+
+/* 필름스트립 */
+#strip{position:absolute; left:50%; transform:translateX(-50%); bottom:24px; display:flex; gap:9px; opacity:0;
+  transition:opacity .4s var(--e-flow)}
+#strip button{
+  position:relative; padding:0; border:1px solid var(--glassb-now); border-radius:5px; overflow:hidden;
+  background:#0A1320; cursor:pointer; width:134px; height:88px; display:block;
+  transition:transform .28s var(--e-expo), border-color .12s var(--e-snap), box-shadow .28s var(--e-expo);
+}
+#strip button canvas{display:block; width:100%; height:100%; opacity:.78; transition:opacity .3s var(--e-flow)}
+#strip button span{position:absolute; left:0; right:0; bottom:0; padding:4px 7px; font-family:var(--f-mono);
+  font-size:9.5px; letter-spacing:.03em; color:#EAF2FF; white-space:nowrap;
+  background:linear-gradient(rgba(2,8,20,0),rgba(2,8,20,.88))}
+#strip button:hover{transform:translateY(-3px)}
+#strip button[aria-pressed=true]{border-color:var(--lx-lit); box-shadow:0 0 0 1px var(--lx-lit),0 12px 26px rgba(0,6,18,.5)}
+#strip button[aria-pressed=true] canvas{opacity:1}
+#strip button:focus-visible{outline:2px solid var(--lx-lit); outline-offset:2px}
+
+/* 스와이프 비교 */
+#swipe{position:absolute; inset:0; pointer-events:none; z-index:3}
+#swipe-imgs{position:absolute; inset:0; will-change:clip-path}
+#swipe-imgs img{position:absolute; display:block; image-rendering:auto}
+#swipe-line{position:absolute; top:0; bottom:0; width:1px; background:rgba(255,255,255,.92);
+  box-shadow:0 0 14px rgba(0,10,30,.8); pointer-events:none}
+#swipe-grip{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:42px; height:42px;
+  border-radius:50%; border:1px solid rgba(255,255,255,.9); background:rgba(6,14,28,.55);
+  backdrop-filter:blur(6px); cursor:ew-resize; pointer-events:auto;
+}
+#swipe-grip::before,#swipe-grip::after{content:''; position:absolute; top:50%; width:5px; height:5px;
+  border-top:1.5px solid #fff; border-right:1.5px solid #fff}
+#swipe-grip::before{left:11px; transform:translateY(-50%) rotate(-135deg)}
+#swipe-grip::after{right:11px; transform:translateY(-50%) rotate(45deg)}
+#swipe-grip:focus-visible{outline:2px solid var(--lx-lit); outline-offset:3px}
+.swipe-tag{position:absolute; top:14px; font-family:var(--f-mono); font-size:10px; letter-spacing:.08em;
+  color:#fff; background:rgba(2,8,20,.62); padding:4px 8px; border-radius:3px}
+
+/* 진행 레일 / 티어 */
+#foot{position:absolute; right:30px; bottom:24px; display:flex; align-items:center; gap:16px}
+#rail{display:flex; gap:5px}
+#rail button{width:34px; height:20px; padding:0; background:none; border:0; cursor:pointer; position:relative}
+#rail button i{position:absolute; left:0; right:0; top:9px; height:2px; background:var(--ink3-now);
+  transition:background .2s var(--e-flow), transform .2s var(--e-flow)}
+#rail button[aria-current=true] i{background:var(--lx-lit); transform:scaleY(2)}
+#rail button:hover i{background:var(--ink-now)}
+#rail button:focus-visible{outline:1px solid var(--lx-lit); outline-offset:2px}
+#tier{font-size:9.5px; color:var(--ink3-now)}
+
+/* CTA */
+#cta{position:absolute; left:34px; bottom:32px; display:flex; gap:12px}
+.mag{
+  position:relative; padding:13px 22px; border-radius:4px; cursor:pointer;
+  font-family:var(--f-body); font-size:13px; font-weight:600; letter-spacing:-.005em;
+  background:transparent; color:var(--ink-now); border:1px solid var(--glassb-now);
+  will-change:transform;
+}
+.mag.primary{background:var(--lx); border-color:var(--lx); color:#fff}
+.mag:focus-visible{outline:2px solid var(--lx-lit); outline-offset:3px}
+
+#attrib{position:absolute; right:30px; bottom:8px; margin:0; font-size:8px; color:var(--ink3-now); opacity:.6;
+  max-width:52vw; text-align:right}
+
+/* ── 프리로더 ───────────────────────────────────────────── */
+#pre{position:fixed; inset:0; z-index:40; background:#01040C; display:grid; place-items:center;
+  clip-path:inset(0 0 0 0)}
+#pre-inner{width:min(520px,76vw)}
+#pre-mark{position:relative; height:26px; margin-bottom:26px}
+#pre-mark span{position:absolute; left:0; top:2px; font-size:19px; letter-spacing:.14em; color:var(--sky-ink)}
+#pre-mark span .c{display:inline-block; opacity:0}
+#pre-mark img{position:absolute; left:0; top:0; height:22px; opacity:0}
+#pre-bar{height:1px; background:rgba(234,242,255,.14); overflow:hidden}
+#pre-bar i{display:block; height:100%; width:0; background:var(--lx-lit); box-shadow:0 0 10px var(--lx-lit)}
+#pre-meta{display:flex; justify-content:space-between; align-items:flex-end; margin-top:12px}
+#pre-ll{font-size:10.5px; color:var(--sky-ink-3)}
+#pre-pct{font-family:var(--f-mono); font-size:44px; font-weight:600; line-height:.9; color:var(--sky-ink)}
+#pre-note{margin:10px 0 0; font-size:9.5px; color:var(--sky-ink-3)}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important; transition-duration:.01ms !important}
+  #cursor{display:none}
+}
+@media (max-width:900px){
+  #hud,#timeline,#result{display:none}
+  #copy{width:calc(100% - 68px)}
+  #strip button{width:76px; height:56px}
+}

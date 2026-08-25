@@ -1,0 +1,129 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Land-XI — 국토가 숨쉬는 지휘소</title>
+<link rel="icon" href="../assets/images/favicon_landxi.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@700;800;900&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
+<link rel="stylesheet" href="../assets/css/tokens.css">
+<link rel="stylesheet" href="dive.css">
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/deck.gl@9.3.10/dist.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
+<script src="env.js"></script>
+<script type="importmap">{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"}}</script>
+</head><body>
+
+<div id="stage">
+  <canvas id="stars" aria-hidden="true"></canvas>
+  <div id="map"></div>
+  <canvas id="orbit3d" aria-hidden="true"></canvas>
+  <div id="sky" aria-hidden="true"><div id="night"></div></div>
+  <div id="swipe" hidden><div id="swipe-imgs"></div><div id="swipe-line"><button id="swipe-grip" aria-label="시점 비교 핸들" type="button"></button></div></div>
+  <div id="grade" aria-hidden="true"></div>
+  <div id="scan" aria-hidden="true"></div>
+  <div id="cursor" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 4v10M20 26v10M4 20h10M26 20h10"/><circle cx="20" cy="20" r="9"/></svg><span class="mono" id="cursor-ll">—</span></div>
+</div>
+
+<main id="ui">
+  <a class="skip mono" href="#scroller">본문 건너뛰기</a>
+
+  <header id="brand">
+    <img src="../assets/brand/landxi-wordmark-dark.png" alt="Land-XI Platform">
+    <span class="mono" id="brand-sub">한국국토정보공사 · 국토정보 통합조사 플랫폼</span>
+  </header>
+
+  <!-- 우상단 HUD — 모든 숫자가 실제 값이다 -->
+  <section id="hud" class="glass" aria-live="polite">
+    <div class="hud-row"><span class="k">KST</span><span class="v mono" id="hud-time">--:--:--</span></div>
+    <div class="hud-row"><span class="k" id="hud-k1">궤도체</span><span class="v mono" id="hud-v1">SENTINEL-2</span></div>
+    <div class="hud-row"><span class="k" id="hud-k2">고도</span><span class="v mono" id="hud-v2">786 km</span></div>
+    <div class="hud-row"><span class="k" id="hud-k3">한반도까지</span><span class="v mono" id="hud-v3">— km</span></div>
+    <div class="hud-row"><span class="k" id="hud-k4">태양 직하점</span><span class="v mono" id="hud-v4">—</span></div>
+    <div id="hud-scale"><span class="mono" id="scale-txt">—</span><i id="scale-bar"></i></div>
+  </section>
+
+  <!-- 좌하단 챕터 카피 -->
+  <section id="copy">
+    <div class="cp" data-in="0.00" data-out="0.182">
+      <h1 class="split">LX 전 직원이<br>Geo-AI 전문가입니다</h1>
+      <p class="mono">노코드 · 워크플로우 기반 AI 모델 개발 · 전국단위 AI 실태조사</p>
+    </div>
+    <div class="cp" data-in="0.192" data-out="0.326">
+      <h1 class="split">구름을 지나<br>국토로 내려갑니다</h1>
+      <p class="mono">고도 786 km → 8 km · 성층운 돌파</p>
+    </div>
+    <div class="cp" data-in="0.329" data-out="0.535">
+      <h1 class="split">범부처 AI 기반<br>국토정보 통합조사</h1>
+      <p class="mono" id="cp3-sub">부처 · 서비스 · 실탐지 집계 중</p>
+    </div>
+    <div class="cp" data-in="0.552" data-out="0.792">
+      <h1 class="split">1.5 cm 까지<br>내려갑니다</h1>
+      <p class="mono">남원 농경지 · GSD 1.54 cm · 촬영 2025-08</p>
+    </div>
+    <div class="cp" data-in="0.798" data-out="0.99">
+      <h1 class="split">AI가 본 것을<br>같은 화면에서</h1>
+      <p class="mono" id="cp5-sub">4시점 정사영상 2025.04 → 2025.10 · 동일 좌표</p>
+    </div>
+  </section>
+
+  <!-- 부처 칩 (챕터 3) -->
+  <ul id="chips" aria-label="참여 부처"></ul>
+
+  <!-- 타임라인 (챕터 3) -->
+  <section id="timeline" class="glass" hidden>
+    <div id="tl-head"><span class="mono" id="tl-date">2025-04</span><span class="mono" id="tl-note">조사 이력 자동 재생</span></div>
+    <div id="tl-track"><i id="tl-fill"></i><div id="tl-ticks"></div><i id="tl-head-mark"></i></div>
+    <div id="tl-foot"><span class="mono">2025-04</span><span class="mono">2026-08</span></div>
+  </section>
+
+  <!-- 결과 패널 (챕터 5 / 탐사 모드) -->
+  <aside id="result" class="glass" hidden>
+    <button id="res-back" class="mono" type="button">← 전국으로</button>
+    <p class="mono tag" id="res-min">해양수산부</p>
+    <h2 id="res-title">해양쓰레기 실태조사</h2>
+    <dl id="res-meta"></dl>
+    <div id="res-ctl"></div>
+    <p class="mono" id="res-foot"></p>
+  </aside>
+
+  <p id="change-legend" class="mono" hidden><b>변화 지수(비지도)</b> 2025.04 → 2025.10 · 계절 변화 포함<span class="lg"><i style="background:#40DE8A"></i>식생 증가</span><span class="lg"><i style="background:#F2622A"></i>식생 감소</span><span class="lg"><i style="background:#863AFF"></i>나지/정지 변화</span><span class="lg"><i style="background:#6675FF"></i>기타</span></p>
+
+  <!-- 필름스트립 (챕터 5) -->
+  <section id="strip" hidden aria-label="남원 4시점"></section>
+
+  <!-- 우하단 진행/티어 -->
+  <footer id="foot">
+    <nav id="rail" aria-label="챕터"></nav>
+    <span class="mono" id="tier">tier —</span>
+  </footer>
+
+  <!-- 마지막 CTA -->
+  <div id="cta" hidden>
+    <button class="mag primary" type="button">로그인하고 시작하기</button>
+    <button class="mag" type="button">플랫폼 둘러보기</button>
+  </div>
+
+  <p id="attrib" class="mono"></p>
+</main>
+
+<div id="pre">
+  <div id="pre-inner">
+    <div id="pre-mark"><span class="mono" id="pre-text">LAND-XI PLATFORM</span><img src="../assets/brand/landxi-wordmark-dark.png" alt=""></div>
+    <div id="pre-bar"><i></i></div>
+    <div id="pre-meta">
+      <span class="mono" id="pre-ll">127.0000 / 35.0000</span>
+      <span class="mono" id="pre-pct">00</span>
+    </div>
+    <p class="mono" id="pre-note">위성 타일 스트림 수신 중</p>
+  </div>
+</div>
+
+<div id="scroller"></div>
+<script type="module" src="js/dive.js"></script>
+</body></html>
