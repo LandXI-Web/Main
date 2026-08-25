@@ -43,7 +43,7 @@ test('sigungu-sample has 14 Jeonbuk 시군 with known survey ids in done[]', () 
   assert.equal(sg.features.length, 14);
   const ids = new Set(SURVEYS.map(s => s.id));
   for (const f of sg.features) {
-    assert.match(f.properties.code, /^45\d{3}$/);
+    assert.match(f.properties.code, /^52\d{3}$/);
     assert.ok(f.properties.name);
     assert.ok(f.properties.coverage >= 0 && f.properties.coverage <= 1);
     for (const d of f.properties.done) assert.ok(ids.has(d));
