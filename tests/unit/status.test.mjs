@@ -23,3 +23,11 @@ test('every key has label, color and cssVar', () => {
   for (const k of STATUS_KEYS) { const s = statusOf('key', k); assert.ok(s.label && /^#/.test(s.color) && s.cssVar.startsWith('--s-')); }
 });
 test('unknown raw value falls back to hold', () => { assert.equal(statusOf('job', '???').key, 'hold'); });
+
+test('domain label survives the meta merge (발견 이 아니라 대기/승인 대기/미답변)', () => {
+  assert.equal(statusOf('card', '대기').label, '대기');
+  assert.equal(statusOf('user', '승인 대기').label, '승인 대기');
+  assert.equal(statusOf('inquiry', '미답변').label, '미답변');
+  assert.equal(statusOf('job', 'SUCCEEDED').label, '처리 완료');
+  assert.equal(statusOf('card', '대기').color, '#F2622A');   // 색·cssVar 은 그대로
+});

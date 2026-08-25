@@ -1,0 +1,109 @@
+/* 대시보드 — 흐린 지도 백드롭 위의 밝은 유리 패널 3열. */
+.dash__map{position:fixed;inset:var(--ctx-h) 0 0 var(--rail-w);z-index:0;pointer-events:none}
+.dash__map .lxmap{filter:saturate(.8) blur(1.2px)}
+.dash__map .lxmap--backdrop::after{background:linear-gradient(180deg,rgba(233,238,241,.5),rgba(233,238,241,.72))}
+
+.dash{position:relative;z-index:1;display:grid;grid-template-columns:400px 1fr 300px;gap:14px;padding:22px 26px;align-items:start}
+.dash > .dash__head,.dash > .coverage{grid-column:1/-1}
+.dash__mid{display:grid;gap:14px;min-width:0}
+
+/* 헤더 */
+.dash__head{display:flex;align-items:center;gap:18px;padding-top:12px}
+.dash__headline{min-width:0}
+.dash__sub{margin:3px 0 0;font-size:var(--fs-13);color:var(--ink-2)}
+.dash__notice{margin-left:auto;display:flex;align-items:center;gap:8px;max-width:420px;height:34px;padding:0 10px 0 8px;border-radius:999px;background:var(--glass);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--glass-border);box-shadow:var(--sh-card);font-size:var(--fs-13);color:var(--ink-2);transition:box-shadow var(--t-fast) var(--ease),color var(--t-fast) var(--ease)}
+.dash__notice:hover{color:var(--lx);box-shadow:var(--sh-float)}
+.dash__notice-tag{font:500 10px var(--f-mono);letter-spacing:.08em;padding:2px 7px;border-radius:4px;background:var(--lx-tint);color:var(--lx)}
+.dash__notice-title{font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dash__date{font-size:var(--fs-12);color:var(--ink-3);white-space:nowrap}
+
+/* 좌: 처리 대기 큐 */
+.queue__list{max-height:min(58vh,470px);overflow:auto;margin:0 -6px;padding:0 6px}
+.q{position:relative;display:grid;grid-template-columns:38px minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:10px;align-items:center;padding:8px 12px 8px 14px;border-radius:9px;cursor:pointer;transition:background var(--t-fast) var(--ease)}
+.q + .q{margin-top:2px}
+.q:hover,.q.is-active,.q:focus-visible{background:rgba(var(--lx-rgb),.07)}
+.q.is-active{box-shadow:inset 0 0 0 1px rgba(var(--lx-rgb),.28)}
+.q__bar{position:absolute;left:4px;top:7px;bottom:7px;width:3px;border-radius:2px;background:var(--c,var(--s-hold))}
+.q__type{grid-column:1;grid-row:1/3;justify-self:start;align-self:center;font:500 10px var(--f-mono);letter-spacing:.04em;color:var(--ink-3);border:1px solid var(--line-strong);border-radius:4px;padding:2px 5px}
+.q__title{grid-column:2;grid-row:1;font-size:var(--fs-13);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.q__sub{grid-column:2;grid-row:2;font-size:var(--fs-12);color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.q__age{grid-column:3;grid-row:1/3;align-self:center;font-size:var(--fs-13);color:var(--ink-2);transition:opacity var(--t-fast) var(--ease)}
+.q.is-hot .q__age{color:var(--s-found);font-weight:600}
+.q__act{position:absolute;right:10px;top:50%;transform:translateY(-50%);opacity:0;pointer-events:none;transition:opacity var(--t-fast) var(--ease)}
+.q:hover .q__age,.q:focus-within .q__age{opacity:0}
+.q:hover .q__act,.q:focus-within .q__act{opacity:1;pointer-events:auto}
+
+/* 중: KPI 2×2 */
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.kpis .kpi{border-radius:var(--r-float)}
+.kpis .kpi__value{font-variant-numeric:tabular-nums}
+.kpis .kpi__sub .link{font-size:var(--fs-12)}
+
+/* 중: 차트 */
+.charts .card__body{padding-top:8px}
+.chart{height:230px;min-width:0}
+.chart__off{display:grid;place-items:center;height:100%;margin:0;font-size:var(--fs-12);color:var(--ink-3)}
+
+/* 우: 운영 현황 */
+.side{display:grid;gap:14px;align-content:start;min-width:0}
+.side .card__body{padding-top:8px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:var(--fs-12)}
+.kv dt{color:var(--ink-3)}
+.kv dd{margin:0;text-align:right;color:var(--ink)}
+
+.backbone__name{font-family:var(--f-display);font-size:var(--fs-20);font-weight:800;letter-spacing:-.02em;display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.backbone__name .mono{font-size:var(--fs-12);color:var(--lx);background:var(--lx-tint);border-radius:4px;padding:1px 6px}
+
+.storage__bar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:rgba(17,28,45,.06)}
+.storage__seg{display:block;background:var(--seg,var(--lx))}
+.storage__seg[style*="--i:0"]{--seg:var(--ink)}
+.storage__seg[style*="--i:1"]{--seg:var(--lx)}
+.storage__seg[style*="--i:2"]{--seg:#6E93EA}
+.storage__seg[style*="--i:3"]{--seg:#A9BFF2}
+.storage__seg.is-free{--seg:rgba(17,28,45,.07)}
+.storage__legend{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:4px;font-size:var(--fs-12)}
+.storage__legend li{display:flex;align-items:center;gap:8px;color:var(--ink-2)}
+.storage__legend li::before{content:"";width:8px;height:8px;border-radius:2px;flex:none;background:var(--seg,var(--lx))}
+.storage__legend li[style*="--i:0"]{--seg:var(--ink)}
+.storage__legend li[style*="--i:1"]{--seg:var(--lx)}
+.storage__legend li[style*="--i:2"]{--seg:#6E93EA}
+.storage__legend li[style*="--i:3"]{--seg:#A9BFF2}
+.storage__legend li.is-free{--seg:rgba(17,28,45,.14)}
+.storage__legend b{margin-left:auto;color:var(--ink)}
+
+.p{display:grid;grid-template-columns:minmax(0,1fr) 56px 40px;align-items:center;gap:8px;padding:3px 6px;margin:0 -6px;border-radius:6px;font-size:var(--fs-12);cursor:default;transition:background var(--t-fast) var(--ease)}
+.p:hover{background:rgba(var(--lx-rgb),.07)}
+.p__name{color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p__track{height:5px;border-radius:3px;background:rgba(17,28,45,.07);overflow:hidden}
+.p__track i{display:block;height:100%;border-radius:3px;background:var(--lx)}
+.p:hover .p__track i{background:var(--ink)}
+.p__gb{text-align:right;color:var(--ink)}
+
+.tiles__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.tile{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--line);border-radius:var(--r-ctl);background:var(--surface);font-size:var(--fs-12);font-weight:600;color:var(--ink-2);transition:border-color var(--t-fast) var(--ease),color var(--t-fast) var(--ease),transform var(--t-fast) var(--ease)}
+.tile:hover{border-color:var(--lx);color:var(--lx);transform:translateY(-1px)}
+
+/* Task 15 이 채운다. 비어 있으면 자리만 잡고 그리지 않는다. */
+.coverage:empty{display:none}
+
+/* 큐 요약 Drawer — 스크롤과 무관하게 화면에 고정한다. */
+.dash-drawer.drawer--right{position:fixed;top:calc(var(--ctx-h) + 12px);right:12px;bottom:12px;z-index:40}
+.dw__head{display:flex;align-items:center;gap:8px}
+.dw__type{font:500 10px var(--f-mono);letter-spacing:.08em;padding:2px 7px;border-radius:4px;background:var(--lx-tint);color:var(--lx)}
+.dw__head .icon-btn{margin-left:auto}
+.dw__title{margin:10px 0 4px}
+.dw__sub{margin:0;font-size:var(--fs-13);color:var(--ink-2)}
+.dw__meta{display:flex;align-items:center;gap:10px;margin:12px 0}
+.dw .kv{margin-bottom:16px;padding-top:12px;border-top:1px solid var(--line)}
+
+@media (max-width:1360px){
+  .dash{grid-template-columns:340px 1fr 272px}
+}
+@media (max-width:1120px){
+  .dash{grid-template-columns:minmax(0,1fr)}
+  .dash > .dash__head,.dash > .coverage,.dash > .queue,.dash > .dash__mid,.dash > .side{grid-column:1}
+  .side{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (prefers-reduced-motion:reduce){
+  .q,.q__act,.q__age,.p,.tile,.dash__notice,.dash-drawer{transition:none}
+}

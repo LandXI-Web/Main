@@ -18,5 +18,6 @@ const MAP = {
 export function statusOf(domain, raw) {
   const hit = (MAP[domain] || {})[raw];
   const key = hit ? hit[0] : 'hold';
-  return { key, label: hit ? hit[1] : String(raw ?? ''), ...META[key] };
+  // META 를 먼저 펴야 도메인 라벨(대기·승인 대기·미답변)이 키 기본 라벨(발견)에 덮이지 않는다.
+  return { ...META[key], key, label: hit ? hit[1] : String(raw ?? '') };
 }
