@@ -86,6 +86,7 @@ export const MOVE = [
   'The camera descends slowly and steadily toward the rows of white greenhouses,',
   'one smooth continuous dolly-down with a very slight forward drift.',
   'Soft cloud shadows drift across the paddies from left to right.',
+  'The low hills behind shift with a gentle parallax against the plain as the camera lowers.',
   'The greenhouse rows stay in frame from the first frame to the last;',
   'nothing enters and nothing leaves.',
   'One single continuous take, no cuts, no camera shake, no zoom snap.',
