@@ -117,7 +117,10 @@ window.build = {
     const cx = Math.floor(lonTile(lon, z)), cy = Math.floor(latTile(lat, z));
     const h = tiles >> 1;
     const x0 = cx - h, x1 = cx + h - 1, y0 = cy - h, y1 = cy + h - 1;
-    const m = await mosaic(SRC.ortho, z, x0, x1, y0, y1, 256, 32);
+    // 촬영 범위가 사각형이 아니라 성기다 → 빈 칸은 V-World 위성으로 메운다
+    const m = await mosaic(SRC.vsat, z, x0, x1, y0, y1, 256, 24);
+    const our = await mosaic(SRC.ortho, z, x0, x1, y0, y1, 256, 32);
+    m.getContext('2d').drawImage(our, 0, 0);
     const bounds = [tileLon(x0, z), tileLat(y1 + 1, z), tileLon(x1 + 1, z), tileLat(y0, z)];
     log('ortho z' + z + ' ' + m.width + 'x' + m.height + ' bounds ' + bounds.map(v => v.toFixed(4)));
     return { data: jpg(m, 0.9), bounds };
@@ -127,9 +130,11 @@ window.build = {
     if (!i) return null;
     const c = cv(4096, 2048), g = c.getContext('2d');
     g.drawImage(i, 0, 0, 4096, 2048);
-    const d = g.getImageData(0, 0, 4096, 2048);       // 그레이스케일 → 알파
+    const d = g.getImageData(0, 0, 4096, 2048);       // 휘도 × 원본 알파 → 알파
     for (let k = 0; k < d.data.length; k += 4) {
-      const a = d.data[k]; d.data[k] = d.data[k + 1] = d.data[k + 2] = 255; d.data[k + 3] = a;
+      const lum = (d.data[k] * 0.3 + d.data[k + 1] * 0.59 + d.data[k + 2] * 0.11);
+      const a = Math.round(lum * (d.data[k + 3] / 255));
+      d.data[k] = d.data[k + 1] = d.data[k + 2] = 255; d.data[k + 3] = a;
     }
     g.putImageData(d, 0, 0);
     return png(c);

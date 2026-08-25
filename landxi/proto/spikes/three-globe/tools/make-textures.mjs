@@ -19,7 +19,15 @@ const save = (name, dataUrl) => {
 };
 
 const b = await chromium.launch({ channel: 'chrome' });
-const p = await b.newPage({ viewport: { width: 400, height: 300 } });
+let p = await b.newPage({ viewport: { width: 400, height: 300 } });
+// 4096² 캔버스를 여러 장 쓰면 탭이 죽는다 → 큰 작업마다 페이지를 새로 연다.
+async function fresh() {
+  try { await p.close(); } catch {}
+  p = await b.newPage({ viewport: { width: 400, height: 300 } });
+  p.on('console', m => { if (m.type() === 'log') console.log('   [page]', m.text()); });
+  await p.goto(`http://localhost:${PORT}/landxi/proto/spikes/three-globe/tools/builder.html`);
+  await p.waitForFunction('window.__ready === 1');
+}
 p.on('console', m => { if (m.type() === 'log') console.log('   [page]', m.text()); });
 await p.goto(`http://localhost:${PORT}/landxi/proto/spikes/three-globe/tools/builder.html`);
 await p.waitForFunction('window.__ready === 1');
@@ -37,10 +45,11 @@ if (want('korea'))  { console.log('korea patch (V-World 위성 z8)…');
   const k = await p.evaluate(() => build.korea()); save('korea_z8.jpg', k.data);
   fs.writeFileSync(path.join(DATA, 'korea-bounds.json'), JSON.stringify(k.bounds)); }
 if (want('ortho'))  {
-  // 남원 금지면 127.39, 35.41 — 우리 정사영상 namwon_city_2510
-  for (const [z, name] of [[13, 'ortho_z13.jpg'], [15, 'ortho_z15.jpg']]) {
-    console.log(`ortho z${z} (namwon_city_2510)…`);
-    const o = await p.evaluate(([z]) => build.ortho(z, 127.39, 35.41, 16), [z]);
+  // 남원 금지면 — 비닐하우스 397 동의 실제 중심 (127.305, 35.335)
+  for (const [z, name] of [[13, 'ortho_z13.jpg'], [15, 'ortho_z15.jpg'], [17, 'ortho_z17.jpg']]) {
+    console.log(`ortho z${z} (namwon_city_2510 + V-World 보간)…`);
+    await fresh();
+    const o = await p.evaluate(([z]) => build.ortho(z, 127.305, 35.335, 16), [z]);
     save(name, o.data);
     fs.writeFileSync(path.join(DATA, name.replace('.jpg', '-bounds.json')), JSON.stringify(o.bounds));
   }

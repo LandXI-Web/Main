@@ -1,26 +1,31 @@
 // 남원 금지면 건물 발자국(OSM Overpass) + 우리 비닐하우스 검출 → 스파이크용 경량 JSON.
 // Overpass 가 막히면 비닐하우스 GeoJSON 만으로도 화면이 성립한다.
-import fs from 'node:fs'; import path from 'node:path';
+import fs from 'node:fs'; import path from 'node:path'; import { execFileSync } from 'node:child_process';
 const ROOT = process.cwd();
 const OUT = path.join(ROOT, 'landxi/proto/spikes/three-globe/data');
 fs.mkdirSync(OUT, { recursive: true });
-const [W, S, E, N] = [127.320, 35.350, 127.460, 35.470];   // 금지면 일대
+const [W, S, E, N] = [127.245, 35.275, 127.365, 35.395];   // 남원 금지면 일대
 
 const q = `[out:json][timeout:90];(way["building"](${S},${W},${N},${E});relation["building"](${S},${W},${N},${E}););out geom;`;
 let feats = [];
-for (const host of ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter']) {
+// node fetch 가 이 환경에서 Overpass 에 실패하는 경우가 있어 curl 폴백을 둔다.
+function ask(host) {
   try {
-    const r = await fetch(host, { method: 'POST', body: 'data=' + encodeURIComponent(q), headers: { 'content-type': 'application/x-www-form-urlencoded' } });
-    if (!r.ok) { console.log(host, r.status); continue; }
-    const j = await r.json();
-    for (const el of j.elements || []) {
-      const ring = el.type === 'way' ? el.geometry : (el.members || []).find(m => m.role === 'outer')?.geometry;
-      if (!ring || ring.length < 4) continue;
-      const lv = +(el.tags?.['building:levels'] || 0);
-      feats.push({ h: lv ? lv * 3.2 : 0, r: ring.map(g => [+g.lon.toFixed(6), +g.lat.toFixed(6)]) });
-    }
-    console.log(host, '→', feats.length, 'buildings'); break;
-  } catch (e) { console.log(host, 'fail', e.message); }
+    return JSON.parse(execFileSync('curl', ['-s', '-m', '120', '--data-urlencode', 'data=' + q, host],
+      { maxBuffer: 1 << 28, encoding: 'utf8' }));
+  } catch (e) { console.log(host, 'fail', e.message.slice(0, 80)); return null; }
+}
+for (const host of ['https://overpass-api.de/api/interpreter', 'https://overpass.osm.ch/api/interpreter']) {
+  const j = ask(host);
+  if (!j || !j.elements || !j.elements.length) continue;
+  for (const el of j.elements) {
+    const ring = el.type === 'way' ? el.geometry : (el.members || []).find(m => m.role === 'outer')?.geometry;
+    if (!ring || ring.length < 4) continue;
+    const lv = +(el.tags?.['building:levels'] || 0);
+    feats.push({ h: lv ? lv * 3.2 : 0, r: ring.map(g => [+g.lon.toFixed(6), +g.lat.toFixed(6)]) });
+  }
+  console.log(host, '->', feats.length, 'buildings');
+  if (feats.length) break;
 }
 fs.writeFileSync(path.join(OUT, 'buildings.json'), JSON.stringify({ bbox: [W, S, E, N], feats }));
 
