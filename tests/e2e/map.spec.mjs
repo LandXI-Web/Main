@@ -165,6 +165,58 @@ test('destroy() removes tools, rulebar and the global reference', async ({ page 
   }
 });
 
+test('addRaster: 남원 2508 실촬영 정사영상이 실제 타일 요청으로 올라간다', async ({ page }) => {
+  // 두 엔진 모두 같은 URL(assets/tiles/namwon_2508/{z}/{x}/{y}.webp)에서 타일을 받는다.
+  const tile = page.waitForResponse(r => /tiles\/namwon_2508\/.*\.webp/.test(r.url()) && r.status() === 200);
+  await page.goto('dev/map.html');
+  await page.waitForFunction(() => window.LX?.map?.ready);
+  const engine = await page.evaluate(() => window.LX.map.engine);
+  if (engine === 'maplibre') {
+    expect(await page.evaluate(() => !!window.LX.map.raw.getLayer('r-namwon'))).toBe(true);
+    expect(await page.evaluate(() => !!window.LX.map.raw.getSource('r-namwon'))).toBe(true);
+  } else {
+    await expect(page.locator('.lxmap__canvas canvas')).toHaveCount(1);
+  }
+  await tile;
+  expect(await page.evaluate(() => window.LX.map.getLayer('namwon').kind)).toBe('raster');
+  expect(await page.evaluate(() => window.LX.map.getLayer('namwon').imagery.id)).toBe('namwon_2508');
+  if (engine === 'maplibre') {
+    await page.evaluate(() => window.LX.map.setRasterOpacity('namwon', 0.4));
+    expect(await page.evaluate(() => window.LX.map.raw.getPaintProperty('r-namwon', 'raster-opacity'))).toBeCloseTo(0.4);
+    // NaN 이 들어와도 투명도가 NaN 이 되지 않는다.
+    await page.evaluate(() => window.LX.map.setRasterOpacity('namwon', 'nope'));
+    expect(await page.evaluate(() => window.LX.map.raw.getPaintProperty('r-namwon', 'raster-opacity'))).toBe(0);
+  }
+  // 없는 id 로 불러도 던지지 않는다.
+  expect(await page.evaluate(() => { window.LX.map.setRasterOpacity('nope', 0.5); return window.LX.map.getLayer('nope'); })).toBe(null);
+});
+
+test('addRaster: 폴백 캔버스도 같은 타일을 카메라 변환으로 그린다', async ({ page }) => {
+  const tile = page.waitForResponse(r => /tiles\/namwon_2508\/.*\.webp/.test(r.url()) && r.status() === 200);
+  await page.goto('dev/map.html?engine=fallback');
+  await page.waitForFunction(() => window.LX?.map?.ready);
+  expect(await page.evaluate(() => window.LX.map.engine)).toBe('fallback');
+  const res = await tile;
+  expect(res.status()).toBe(200);
+  expect(res.headers()['content-type']).toContain('image/webp');
+});
+
+test('지도 org 레이어 색이 tokens.css 의 --lx 를 따라간다', async ({ page }) => {
+  await page.goto('dev/map.html');
+  await page.waitForFunction(() => window.LX?.map?.ready);
+  const lx = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--lx').trim());
+  expect(lx).toBe('#006DF7');
+  await page.evaluate(() => window.LX.map.addGeoJSON('t-org', {
+    type: 'FeatureCollection',
+    features: [{ type: 'Feature', properties: { id: 'a' }, geometry: { type: 'Point', coordinates: [127.3524, 35.5311] } }],
+  }, { kind: 'org' }));
+  if (await page.evaluate(() => window.LX.map.engine === 'maplibre')) {
+    // 옛 파랑(#2457D6)이 하드코딩돼 있으면 여기서 걸린다.
+    expect(await page.evaluate(() => window.LX.map.raw.getPaintProperty('t-org-pt', 'circle-color'))).toBe(lx);
+  }
+  expect(await page.evaluate(() => window.LX.map.getLayer('t-org').kind)).toBe('org');
+});
+
 test('rulebar keeps focus on ⓘ and its scale bar node while the camera moves', async ({ page }) => {
   await page.goto('dev/map.html?engine=fallback');
   await page.waitForFunction(() => window.LX?.map?.ready);

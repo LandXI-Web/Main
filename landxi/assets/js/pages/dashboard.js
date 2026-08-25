@@ -241,7 +241,7 @@ function wireInteractions() {
 function initCharts() {
   const cs = getComputedStyle(document.documentElement);
   const tok = n => cs.getPropertyValue(n).trim();
-  const INK = tok('--ink') || '#111C2D', LX = tok('--lx') || '#2457D6';
+  const INK = tok('--ink') || '#111C2D', LX = tok('--lx') || '#006DF7';
   const INK2 = 'rgba(17,28,45,.68)', INK3 = 'rgba(17,28,45,.48)', LINE = 'rgba(17,28,45,.10)';
   const PALETTE = [INK, LX, '#6E93EA', '#A9BFF2', '#CDD9F7'];
   const MONO = 'IBM Plex Mono, ui-monospace, monospace';

@@ -4,3 +4,4 @@ playwright-report/
 shots/
 .claude/
 .superpowers/
+build/

@@ -3,9 +3,9 @@
   --mist:#E9EEF1; --surface:#FFFFFF; --glass:rgba(255,255,255,.82); --glass-border:rgba(255,255,255,.75);
   --ink:#111C2D; --ink-2:rgba(17,28,45,.68); --ink-3:rgba(17,28,45,.48);
   --line:rgba(17,28,45,.10); --line-strong:rgba(17,28,45,.18);
-  --lx:#2457D6; --lx-deep:#193FA3; --lx-tint:#E8EEFB; --lx-rgb:36,87,214;
+  --lx:#006DF7; --lx-deep:#0052B9; --lx-tint:#EBF3FE; --lx-rgb:0,109,247;
   --ai:#0FA9A0; --ai-soft:rgba(15,169,160,.16);
-  --s-found:#F2622A; --s-doing:#E3A008; --s-done:#1E9E6A; --s-hold:#6B7A8C; --s-error:#D93025; --s-info:#2457D6;
+  --s-found:#F2622A; --s-doing:#E3A008; --s-done:#1E9E6A; --s-hold:#6B7A8C; --s-error:#D93025; --s-info:var(--lx);
   /* 서체 */
   --f-display:'Gothic A1',system-ui,sans-serif; --f-body:'IBM Plex Sans KR',system-ui,sans-serif; --f-mono:'IBM Plex Mono',ui-monospace,monospace;
   --fs-12:12px; --fs-13:13px; --fs-14:14px; --fs-16:16px; --fs-20:20px; --fs-24:24px; --fs-32:32px; --fs-44:44px;

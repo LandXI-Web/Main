@@ -3,6 +3,12 @@ const TILES = 'https://tiles.openfreemap.org/planet';
 const GLYPHS = 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf';
 export const ORTHO_TILES = 'https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg';
 
+/**
+ * IMAGERY 항목의 상대 타일 경로(`assets/tiles/…`)를 문서 기준 URL 템플릿으로 바꾼다.
+ * 하위 폴더(dev/*.html)에서는 <html data-base="../"> 가 접두사를 준다.
+ */
+export const tileURL = im => (document.documentElement.dataset.base || '') + im.tiles;
+
 const DEFAULTS = { mist: '#E9EEF1', ink: '#111C2D', water: '#CFE0EF', road: '#FFFFFF', building: '#DDE3E8' };
 
 function clamp(n) { return Math.max(0, Math.min(255, Math.round(n))); }

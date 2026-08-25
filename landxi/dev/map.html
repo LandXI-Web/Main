@@ -11,8 +11,13 @@
 <div id="m" style="position:relative;height:100vh"></div>
 <script type="module">
 import { createMap } from '../assets/js/map/shell.js';
+import { IMAGERY } from '../assets/data/imagery.js';
 const params = new URLSearchParams(location.search);
 if (params.get('engine') === 'fallback') window.maplibregl = undefined;   // 폴백 경로 강제(테스트용)
-createMap(document.getElementById('m'), { ortho: true });
+const nw = IMAGERY.find(i => i.id === 'namwon_2508');
+const c = nw ? [(nw.bounds[0] + nw.bounds[2]) / 2, (nw.bounds[1] + nw.bounds[3]) / 2] : [127.8, 36.2];
+const map = await createMap(document.getElementById('m'), { ortho: true, center: c, zoom: nw ? 17 : 6 });
+// 남원 2025.08 실촬영 정사영상을 바탕에 얹는다(두 엔진 모두 같은 타일 URL).
+if (nw) map.addRaster('namwon', nw, { opacity: 1 });
 </script>
 </body></html>
