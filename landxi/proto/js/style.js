@@ -7,6 +7,7 @@ export const AOI = {
   kuksan: [126.973996, 35.825613, 126.992145, 35.838284],
   jeju:   [126.81996, 33.504972, 126.82504, 33.510028],
   jeju20: [126.894965, 33.514975, 126.900035, 33.520024], // 불법건축물 검출 도엽
+  namwonCity: [127.182606, 35.302858, 127.637309, 35.561786], // 남원시 전역 정사영상
 };
 const ortho = (id, bounds, minzoom = 12) => ({
   type: 'raster', tiles: [`${T}/${id}/{z}/{x}/{y}.webp`],
@@ -29,10 +30,13 @@ const LIT  = ['coalesce', ['feature-state', 'lit'], 0];
 const RING = ['coalesce', ['feature-state', 'ring'], 0];
 const DIM  = ['coalesce', ['feature-state', 'dim'], 1];
 const HOT  = ['coalesce', ['feature-state', 'hot'], 0];
+// 결과 리빌 — 스캔선이 지나간 뒤에만 남는다(0=미노출, 1=노출).
+export const SHOWN = ['coalesce', ['feature-state', 'shown'], 1];
+const RAIN = ['coalesce', ['feature-state', 'grow'], 1];
 
 export const ORTHO_LAYERS = [
   'o_namwon_2504', 'o_namwon_2506', 'o_namwon_2508', 'o_namwon_2510',
-  'o_kuksan_a68', 'o_kuksan_a71', 'o_jeju_2020', 'o_jeju_2022', 'o_jeju_land',
+  'o_kuksan_a68', 'o_kuksan_a71', 'o_namwon_city', 'o_jeju_2020', 'o_jeju_2022', 'o_jeju_land',
 ];
 
 export function buildStyle(v) {
@@ -63,6 +67,7 @@ export function buildStyle(v) {
       det:  { type: 'geojson', data: { type: 'FeatureCollection', features: [] }, maxzoom: 13 },
       jeju_det: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
       extent: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
+      rain: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
       res0: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
       res1: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
       res2: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
@@ -72,6 +77,9 @@ export function buildStyle(v) {
       o_namwon_2510: ortho('namwon_2510', AOI.namwon),
       o_kuksan_a68: ortho('kuksan_a68', AOI.kuksan, 13),
       o_kuksan_a71: ortho('kuksan_a71', AOI.kuksan, 13),
+      o_namwon_city: { type: 'raster', tiles: [`${T}/namwon_city_2510/{z}/{x}/{y}.webp`],
+                       tileSize: 256, minzoom: 11, maxzoom: 17, bounds: AOI.namwonCity,
+                       attribution: 'LX 정사영상' },
       o_jeju_2020:  ortho('jeju_2020', AOI.jeju20, 13),
       o_jeju_2022:  ortho('jeju_2022', AOI.jeju, 13),
       o_jeju_land:  ortho('jeju_landcover', AOI.jeju, 13),
@@ -187,14 +195,24 @@ export function buildStyle(v) {
           'veg_gain', CLS.veg_gain, 'veg_loss', CLS.veg_loss, 'built_new', CLS.built_new, CLS.other],
         'line-width': 1.1, 'line-opacity': 0 } },
 
+      // 데이터 레인 — 탐지 객체마다 지면에서 솟는 얇은 필라멘트. 밀도 자체가 코로플레스가 된다.
+      { id: 'rain-3d', type: 'fill-extrusion', source: 'rain', paint: {
+        'fill-extrusion-color': '#0FA9A0',
+        'fill-extrusion-height': ['*', ['coalesce', ['get', '_h'], 8], RAIN],
+        'fill-extrusion-base': 0, 'fill-extrusion-opacity': 0,
+        'fill-extrusion-vertical-gradient': false } },
+
       // 범용 결과 슬롯 — 실제 AI 산출물(results.js)이 도착하면 서비스별로 여기에 얹는다.
       ...[0, 1, 2].flatMap((i) => [
         { id: `res${i}-3d`, type: 'fill-extrusion', source: `res${i}`, paint: {
           'fill-extrusion-color': ['coalesce', ['get', '_color'], '#F2622A'],
           'fill-extrusion-height': ['coalesce', ['get', '_h'], 4],
           'fill-extrusion-opacity': 0, 'fill-extrusion-vertical-gradient': true } },
+        // 엣지 아웃라인 — 글로우 이중 스트로크로 "기계가 본 윤곽"을 만든다.
+        { id: `res${i}-glow`, type: 'line', source: `res${i}`, paint: {
+          'line-color': '#4FC3FF', 'line-width': 4, 'line-blur': 2.4, 'line-opacity': 0 } },
         { id: `res${i}-line`, type: 'line', source: `res${i}`, paint: {
-          'line-color': ['coalesce', ['get', '_color'], '#FFE9C9'], 'line-width': 1.1, 'line-opacity': 0 } },
+          'line-color': ['coalesce', ['get', '_color'], '#FFE9C9'], 'line-width': 1.2, 'line-opacity': 0 } },
         { id: `res${i}-dot`, type: 'circle', source: `res${i}`,
           filter: ['==', ['geometry-type'], 'Point'], paint: {
           'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 2, 11, 3.4, 15, 6, 18, 10],

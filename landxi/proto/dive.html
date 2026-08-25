@@ -25,6 +25,7 @@
   <canvas id="orbit3d" aria-hidden="true"></canvas>
   <div id="sky" aria-hidden="true"><div id="night"></div></div>
   <div id="swipe" hidden><div id="swipe-imgs"></div><div id="swipe-line"><button id="swipe-grip" aria-label="시점 비교 핸들" type="button"></button></div></div>
+  <canvas id="fx" aria-hidden="true"></canvas>
   <div id="grade" aria-hidden="true"></div>
   <div id="scan" aria-hidden="true"></div>
   <div id="cursor" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 4v10M20 26v10M4 20h10M26 20h10"/><circle cx="20" cy="20" r="9"/></svg><span class="mono" id="cursor-ll">—</span></div>
@@ -92,9 +93,17 @@
     <p class="mono" id="res-foot"></p>
   </aside>
 
+  <p id="rain-note" class="mono" hidden>비닐하우스 · 남원시 전역</p>
+
   <p id="recv" class="mono" hidden>영상 수신 중 <i></i><i></i><i></i><i></i></p>
 
   <p id="change-legend" class="mono" hidden><b>변화 지수(비지도)</b> 2025.04 → 2025.10 · 계절 변화 포함<span class="lg"><i style="background:#40DE8A"></i>식생 증가</span><span class="lg"><i style="background:#F2622A"></i>식생 감소</span><span class="lg"><i style="background:#863AFF"></i>나지/정지 변화</span><span class="lg"><i style="background:#6675FF"></i>기타</span></p>
+
+  <!-- 벡터 추출 카드 — 같은 범위의 벡터만 그리는 지도-속-지도 -->
+  <figure id="veccard" hidden>
+    <div id="vec-map"></div>
+    <figcaption><span id="vec-cap">이 영상에서 추출한 것</span></figcaption>
+  </figure>
 
   <!-- 필름스트립 (챕터 5) -->
   <section id="strip" hidden aria-label="남원 4시점"></section>

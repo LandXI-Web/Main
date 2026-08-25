@@ -1,4 +1,4 @@
-import { AOI, CONF_RAMP, CLS, CLS_KO } from './style.js';
+import { AOI, CONF_RAMP, CLS, CLS_KO, SHOWN } from './style.js';
 import { EPOCHS, SVC } from './layers.js';
 import { drawHist, fmt } from './hud.js';
 import { describe, bake, densest, centroids, label as rlabel } from './results.js';
@@ -11,7 +11,7 @@ export const STORY_OF = {
 };
 
 export function makeStories(ctx) {
-  const { map, els, data, op, fly, swipe, optional } = ctx;
+  const { map, els, data, op, fly, swipe, optional, detect, veccard } = ctx;
   let cur = null, epochIdx = 2, playTimer = 0;
 
   const meta = (rows) => rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
@@ -20,12 +20,19 @@ export function makeStories(ctx) {
   // 결과가 있는 서비스는 이 경로가 주 장면이 된다. 없으면 아래 레거시 장면으로 간다.
   let site = null, fc = null, desc = null;
 
+  // 결과 레이어의 불투명도는 스칼라가 아니라 **feature-state 리빌과 곱한 표현식**이다.
+  // 탐지 시퀀스가 신뢰도 순으로 shown 을 켜면 그 순서대로 화면에 남는다.
+  function resOp(id, val, prop) {
+    if (!map.getLayer(id)) return;
+    try { map.setPaintProperty(id, prop, val > 0 ? ['*', val, SHOWN] : 0); } catch (e) { /* noop */ }
+  }
   function clearResults() {
     for (let i = 0; i < 3; i++) {
-      op(`res${i}-3d`, 0, 'fill-extrusion-opacity');
-      op(`res${i}-line`, 0, 'line-opacity');
-      op(`res${i}-dot`, 0, 'circle-opacity');
-      op(`res${i}-dot`, 0, 'circle-stroke-opacity');
+      resOp(`res${i}-3d`, 0, 'fill-extrusion-opacity');
+      resOp(`res${i}-glow`, 0, 'line-opacity');
+      resOp(`res${i}-line`, 0, 'line-opacity');
+      resOp(`res${i}-dot`, 0, 'circle-opacity');
+      resOp(`res${i}-dot`, 0, 'circle-stroke-opacity');
     }
     site = null; fc = null; desc = null;
   }
@@ -59,12 +66,13 @@ export function makeStories(ctx) {
       map.setLayerZoomRange('res0-line', 13.6, 24);
       map.setLayerZoomRange('res1-dot', 0, 13.4);
     } catch (e) { /* noop */ }
-    op('res0-3d', 0.78, 'fill-extrusion-opacity');
-    op('res0-line', 0.72, 'line-opacity');
-    op('res1-dot', 0.92, 'circle-opacity');
-    op('res1-dot', 0.85, 'circle-stroke-opacity');
-    op('res0-dot', 0.95, 'circle-opacity');
-    op('res0-dot', 0.9, 'circle-stroke-opacity');
+    resOp('res0-3d', 0.78, 'fill-extrusion-opacity');
+    resOp('res0-glow', 0.45, 'line-opacity');
+    resOp('res0-line', 0.72, 'line-opacity');
+    resOp('res1-dot', 0.92, 'circle-opacity');
+    resOp('res1-dot', 0.85, 'circle-stroke-opacity');
+    resOp('res0-dot', 0.95, 'circle-opacity');
+    resOp('res0-dot', 0.9, 'circle-stroke-opacity');
     return desc;
   }
 
@@ -141,7 +149,22 @@ export function makeStories(ctx) {
     const d = await showResult(r);
     if (cur !== svc.id) return;
     resultPanel(svc, sites, s2.key, r, d);
-    fly({ center: r.camera.center, zoom: r.camera.zoom, pitch: r.camera.pitch != null ? r.camera.pitch : 35, bearing: r.camera.bearing || 0 }, 2300);
+    await fly({ center: r.camera.center, zoom: r.camera.zoom, pitch: r.camera.pitch != null ? r.camera.pitch : 35, bearing: r.camera.bearing || 0 }, 2300);
+    if (cur !== svc.id) return;
+    // 타일이 붙기 전에 탐지 시퀀스를 돌리면 "빈 화면에서 발견"이 된다 — 최대 3초 기다린다.
+    await new Promise((res) => {
+      const t0 = performance.now();
+      const tick = () => {
+        if (cur !== svc.id || map.areTilesLoaded() || performance.now() - t0 > 3000) return res();
+        requestAnimationFrame(tick);
+      };
+      tick();
+    });
+    if (cur !== svc.id) return;
+    // 도착 = 탐지의 순간. 스캔선이 훑고 지나간 뒤에 결과가 신뢰도 순으로 남는다.
+    detect && detect.play(fc, 'res0', 'res1');
+    // 같은 범위의 벡터만 그린 카드 — "이 영상에서 뽑아낸 것".
+    if (veccard) veccard.show(fc, `${r.region} · ${r.title}`);
   }
 
   function resultStory(svc, rows) {
@@ -155,6 +178,8 @@ export function makeStories(ctx) {
 
   function clearScene() {
     clearTimeout(playTimer);
+    detect && detect.stop();
+    veccard && veccard.hide();
     clearResults();
     swipe.hide();
     for (const l of ['grid-3d', 'grid-dim', 'det-3d', 'det-dim', 'jeju-det-3d', 'change-3d'])

@@ -7,6 +7,9 @@ import { subsolar, KST } from './sun.js';
 import { SVC, HQ, EPOCHS, headDate, dateToQ, initServices, loadJSON, ringsToLines } from './layers.js';
 import { makeSwipe } from './swipe.js';
 import { makeStories } from './stories.js';
+import { makeDetect } from './detect.js';
+import { makeVecCard } from './veccard.js';
+import { filaments } from './results.js';
 import { lerp, clamp01, fmt, splitChars, makeCursor, magnetic, scaleBar, thumbFromTiles } from './hud.js';
 
 const $ = (s) => document.querySelector(s);
@@ -259,6 +262,22 @@ function prewarmDescent() {
   for (let k = 0; k < LANES; k++) next();
 }
 
+/* ── 5c. 데이터 레인 (비닐하우스) ───────────────────────── */
+let rainLoaded = false;
+async function loadRain() {
+  if (rainLoaded) return;
+  rainLoaded = true;
+  try {
+    const g = await loadJSON('../assets/data/geo/results/namwon-greenhouse-2025.geojson');
+    const fil = filaments(g, 'nobj', 70, 700, 22);
+    map.getSource('rain').setData(fil);
+    let n = 0;
+    for (const f of g.features) n += Number(f.properties.nobj) || 0;
+    $('#rain-note').innerHTML =
+      `<b>비닐하우스 ${fmt(n)}동</b> · ${fmt(fil.features.length)}필지 · 남원시 전역 · 높이 = 동수`;
+  } catch (e) { rainLoaded = false; }
+}
+
 /* ── 6. 투영 전환 + deck.gl 아크 ────────────────────────── */
 let projGlobe = true;
 function setProj(wantGlobe) {
@@ -332,6 +351,10 @@ addEventListener('resize', sizeAll); sizeAll();
 /* ── 8. UI ──────────────────────────────────────────────── */
 const els = { panel: $('#result'), min: $('#res-min'), title: $('#res-title'), meta: $('#res-meta'), ctl: $('#res-ctl'), foot: $('#res-foot') };
 const swipe = makeSwipe(map, $('#swipe'));
+// 탐지 이벤트 오버레이 — HUD 카운트업까지 여기서 구동한다.
+let hudCountVal = null;
+const detect = makeDetect(map, $('#fx'), (n, total) => { hudCountVal = [n, total]; });
+const veccard = TIER === 'full' ? makeVecCard(map, $('#veccard')) : null;
 
 function fly(cam, ms) {
   return new Promise((res) => {
@@ -343,7 +366,7 @@ function fly(cam, ms) {
 }
 
 const stories = makeStories({
-  map, els, data, fly, swipe, optional,
+  map, els, data, fly, swipe, optional, detect, veccard,
   get results() { return RESULTS; },
   op: (id, val, prop) => opT(id, val, 0.45, prop),
   onHud(h) { hudCtx = h; },
@@ -608,14 +631,21 @@ function apply(p) {
   op('label-place', 0.92 * seg(p, 0.60, 0.70) * (1 - seg(p, 0.775, 0.815)), 'text-opacity');
   for (const l of ['grid-3d', 'grid-dim', 'det-3d', 'det-dim', 'jeju-det-3d']) op(l, 0, 'fill-extrusion-opacity');
   const chg = optional.change ? seg(p, 0.855, 0.905) : 0;
-  op('change-3d', 0.58 * chg, 'fill-extrusion-opacity');
-  op('change-edge', 0.75 * chg, 'line-opacity');
-  $('#change-legend').hidden = !(optional.change && p > 0.862);
+  const chgOut = 1 - seg(p, 0.930, 0.952);
+  op('change-3d', 0.58 * chg * chgOut, 'fill-extrusion-opacity');
+  op('change-edge', 0.75 * chg * chgOut, 'line-opacity');
+  $('#change-legend').hidden = !(optional.change && p > 0.862 && p < 0.94);
 
   if (!autoStarted) {
     ORTHO_LAYERS.forEach((id) => op(id, 0));
     op('o_namwon_2508', seg(p, 0.715, 0.792));
   }
+  // 피날레: 한 필지 → 남원시 전역. 시 전체 정사영상 위로 비닐하우스 데이터 레인이 솟는다.
+  const city = seg(p, 0.935, 0.968);
+  op('o_namwon_city', city);
+  if (city > 0.02 && !rainLoaded) loadRain();
+  op('rain-3d', 0.6 * seg(p, 0.945, 0.982), 'fill-extrusion-opacity');
+  $('#rain-note').hidden = p < 0.955;
 
   setGrade(p); setNight(p); applyCopy(p); applyChapter2(p); applyChapter45(p);
 
@@ -646,7 +676,9 @@ function updateHUD(p) {
   if (deep) {
     const h = (mode === 'explore' && hudCtx) ? hudCtx : { k2: 'GSD', v2: gsdOverride, k3: '촬영', v3: epochDate };
     $('#hud-k1').textContent = '좌표';    $('#hud-v1').textContent = `${c.lat.toFixed(4)}, ${c.lng.toFixed(4)}`;
-    $('#hud-k2').textContent = h.k2;      $('#hud-v2').textContent = h.v2;
+    $('#hud-k2').textContent = h.k2;
+    $('#hud-v2').textContent = (hudCountVal && mode === 'explore')
+      ? `${fmt(hudCountVal[0])} / ${fmt(hudCountVal[1])}` : h.v2;
     $('#hud-k3').textContent = h.k3;      $('#hud-v3').textContent = h.v3;
     $('#hud-k4').textContent = '줌';      $('#hud-v4').textContent = 'z' + map.getZoom().toFixed(2);
   } else {
@@ -679,13 +711,16 @@ function openStory(id) {
   op('label-place', 0.92, 'text-opacity'); op('label-sido', 0.85, 'text-opacity');
   try { map.setTerrain(null); } catch (e) { /* noop */ }
   terrainOn = false;
-  hudCtx = null;
+  hudCtx = null; hudCountVal = null;
+  detect.stop(); veccard && veccard.hide();
   dataReady.then(() => stories.enter(id));
 }
 const STORY_IS_NAMWON = (id) => id === 'pothole';
 
 function closeStory() {
   mode = 'scroll';
+  hudCountVal = null;
+  detect.stop(); veccard && veccard.hide();
   stories.exit();
   lenis.start();
   const c = cameraAt(0.44);

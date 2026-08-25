@@ -37,6 +37,8 @@ body.is-light{
 .maplibregl-ctrl-attrib{display:none}
 
 #orbit3d{position:absolute; inset:0; width:100%; height:100%; pointer-events:none; opacity:0}
+/* 탐지 이벤트 오버레이 — 지도 위, UI 아래 */
+#fx{position:absolute; left:0; top:0; pointer-events:none; z-index:4}
 
 /* ── 성층운 ─────────────────────────────────────────────── */
 #sky{position:absolute; inset:0; pointer-events:none; overflow:hidden}
@@ -212,6 +214,11 @@ input[type=range]:focus-visible{outline:2px solid var(--lx-lit); outline-offset:
 .pending{margin-top:10px; padding:9px 11px; border:1px dashed var(--glassb-now); border-radius:4px;
   font-family:var(--f-mono); font-size:10px; color:var(--ink3-now); line-height:1.7}
 
+#rain-note{position:absolute; left:50%; transform:translateX(-50%); bottom:128px; margin:0;
+  font-size:10px; color:var(--ink2-now); background:var(--glass-now); border:1px solid var(--glassb-now);
+  padding:6px 12px; border-radius:3px; white-space:nowrap;
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px)}
+#rain-note b{color:var(--ink-now); font-weight:600}
 #change-legend{position:absolute; left:50%; transform:translateX(-50%); bottom:124px; margin:0;
   font-size:10px; color:var(--ink2-now); background:var(--glass-now); border:1px solid var(--glassb-now);
   padding:6px 12px; border-radius:3px; display:flex; align-items:center; gap:12px; white-space:nowrap;
@@ -226,6 +233,18 @@ input[type=range]:focus-visible{outline:2px solid var(--lx-lit); outline-offset:
   padding-top:11px; border-top:1px solid var(--glassb-now)}
 .ttl b{font-family:var(--f-mono); color:var(--ink-now); font-size:13px}
 #chg-note{color:var(--ink3-now); font-size:10px}
+
+/* 벡터 추출 카드 */
+#veccard{position:absolute; left:34px; bottom:150px; margin:0; width:360px;
+  border:1px solid var(--glassb-now); border-radius:6px; overflow:hidden;
+  background:#0E1726; box-shadow:0 18px 44px rgba(0,6,18,.5);
+  transform:perspective(900px) rotateY(-7deg); transform-origin:left center}
+#vec-map{width:100%; height:200px}
+#veccard figcaption{display:flex; justify-content:space-between; align-items:center;
+  padding:7px 10px; font-family:var(--f-mono); font-size:10px; letter-spacing:.06em;
+  color:rgba(230,236,245,.72); border-top:1px solid rgba(230,236,245,.12); background:#0B1320}
+#veccard figcaption::after{content:'VECTOR'; color:var(--lx-lit); font-size:9px}
+#veccard .maplibregl-ctrl-attrib{display:none}
 
 /* 필름스트립 */
 #strip{position:absolute; left:50%; transform:translateX(-50%); bottom:24px; display:flex; gap:9px; opacity:0;
