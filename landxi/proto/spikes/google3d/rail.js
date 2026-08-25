@@ -10,8 +10,11 @@ export const KEY = (() => {
 // 국내 5개 지점 — 남원이 기본, 서울은 대조군(코엑스: 커버리지 논쟁의 현장)
 export const PLACES = {
   namwon: { name: '남원',  lon: 127.3900, lat: 35.4100, label: '남원 · 비닐하우스/농지 탐지',
+            // 근접 앵커 = 실제 탐지가 가장 빽빽한 금동 일대 하우스 단지
+            zlon: 127.3065, zlat: 35.3165,
             data: ['namwon-greenhouse-2025', 'namwon-farmland-2025'] },
   yeosu:  { name: '여수',  lon: 127.6800, lat: 34.6000, label: '여수 · 해안 쓰레기 탐지',
+            zlon: 127.6760, zlat: 34.5904,
             data: ['yeosu-marine-2026-drone-grid100'] },
   jeju:   { name: '제주',  lon: 126.5312, lat: 33.4996, label: '제주 · 대조군', data: [] },
   jeonju: { name: '전주',  lon: 127.1480, lat: 35.8242, label: '전주 · 도심 대조군', data: [] },
@@ -43,20 +46,33 @@ export function railAt(p) {
     pitch: lerp(a.pitch, b.pitch, u),
     heading: lerp(a.heading, b.heading, u),
     stage: u < 0.5 ? a.name : b.name,
+    // 넓은 앵커(군 중심) → 근접 앵커(탐지 밀집지)로 스르르 옮겨탄다
+    aim: Math.max(0, Math.min(1, (t - 0.50) / 0.26)),
   };
 }
 
-// 구름 스프라이트 한 장 — 부드러운 방사형 그라디언트 퍼프
+// 구름 스프라이트 한 장 — 가장자리가 완전히 사라지는 부드러운 퍼프
 export function cloudSprite() {
-  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const S = 256;
+  const c = document.createElement('canvas'); c.width = c.height = S;
   const g = c.getContext('2d');
-  for (let k = 0; k < 5; k++) {
-    const x = 34 + Math.random() * 60, y = 44 + Math.random() * 40, r = 22 + Math.random() * 26;
+  // 뭉게구름 덩어리 몇 개 — 캔버스 가운데 60% 안에만 둔다(가장자리 잘림 방지)
+  for (let k = 0; k < 7; k++) {
+    const x = S * (0.3 + Math.random() * 0.4);
+    const y = S * (0.38 + Math.random() * 0.26);
+    const r = S * (0.10 + Math.random() * 0.14);
     const rg = g.createRadialGradient(x, y, 0, x, y, r);
-    rg.addColorStop(0, 'rgba(255,255,255,0.92)');
-    rg.addColorStop(0.55, 'rgba(255,255,255,0.42)');
-    rg.addColorStop(1, 'rgba(255,255,255,0)');
+    rg.addColorStop(0.0, 'rgba(255,255,255,0.85)');
+    rg.addColorStop(0.45, 'rgba(255,255,255,0.34)');
+    rg.addColorStop(1.0, 'rgba(255,255,255,0)');
     g.fillStyle = rg; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
   }
+  // 원형 마스크 — 사각 경계가 절대 보이지 않게 알파를 0 으로 떨군다
+  g.globalCompositeOperation = 'destination-in';
+  const m = g.createRadialGradient(S / 2, S / 2, S * 0.16, S / 2, S / 2, S * 0.5);
+  m.addColorStop(0, 'rgba(0,0,0,1)');
+  m.addColorStop(0.78, 'rgba(0,0,0,0.75)');
+  m.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = m; g.fillRect(0, 0, S, S);
   return c.toDataURL('image/png');
 }

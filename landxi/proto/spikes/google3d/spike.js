@@ -17,6 +17,7 @@ const viewer = new Cesium.Viewer('cesium', {
   infoBox: false, selectionIndicator: false,
 });
 const scene = viewer.scene, camera = viewer.camera;
+window.__v = viewer;
 scene.globe.enableLighting = true;
 scene.globe.showGroundAtmosphere = true;
 scene.skyAtmosphere.show = true;
@@ -54,15 +55,17 @@ const puffs = [];
 
 function buildClouds(lon, lat) {
   clouds.removeAll(); puffs.length = 0;
-  for (let i = 0; i < 160; i++) {
-    const dx = (Math.random() - 0.5) * 0.42, dy = (Math.random() - 0.5) * 0.30;
-    const h = 6500 + Math.random() * 3200;
+  const sprites = [cloudSprite(), cloudSprite(), cloudSprite(), cloudSprite(), cloudSprite()];
+  for (let i = 0; i < 130; i++) {
+    const dx = (Math.random() - 0.5) * 0.46, dy = (Math.random() - 0.5) * 0.34;
+    const h = 6800 + Math.random() * 2600;                  // 적운 층: 약 6.8 ~ 9.4 km
+    const w = 1400 + Math.random() * 2600;                  // 실제 폭 1.4 ~ 4.0 km
     const b = clouds.add({
-      image: cloudSprite(),
+      image: sprites[i % 5],
       position: Cesium.Cartesian3.fromDegrees(lon + dx, lat + dy, h),
-      scale: 1, color: Cesium.Color.WHITE.withAlpha(0.34 + Math.random() * 0.30),
-      scaleByDistance: new Cesium.NearFarScalar(2e3, 4.0, 2.5e5, 0.2),
-      translucencyByDistance: new Cesium.NearFarScalar(2e3, 1.0, 6e5, 0.0),
+      sizeInMeters: true, width: w, height: w * 0.62,       // 미터 단위 = 고도에 따라 자연히 커지고 작아진다
+      color: Cesium.Color.WHITE.withAlpha(0.30 + Math.random() * 0.28),
+      translucencyByDistance: new Cesium.NearFarScalar(4e3, 1.0, 9e5, 0.0),
     });
     puffs.push({ b, lon: lon + dx, lat: lat + dy, h, v: 8.5e-6 + Math.random() * 8.5e-6 });
   }
@@ -70,7 +73,8 @@ function buildClouds(lon, lat) {
 scene.preRender.addEventListener(() => {              // 서→동 표류
   for (const p of puffs) {
     p.lon += p.v;
-    if (p.lon > place.lon + 0.22) p.lon = place.lon - 0.22;
+    const c = place.zlon ?? place.lon;
+    if (p.lon > c + 0.22) p.lon = c - 0.22;
     p.b.position = Cesium.Cartesian3.fromDegrees(p.lon, p.lat, p.h);
   }
 });
@@ -87,10 +91,11 @@ async function drape(p) {
     try {
       const raw = await (await fetch(GEO + name + '.geojson')).json();
       // 스파이크 부하 관리: 시점 반경 안쪽만, 최대 700개
+      const alon = p.zlon ?? p.lon, alat = p.zlat ?? p.lat;
       const near = raw.features.filter((f) => {
         const c = flatFirst(f.geometry.coordinates);
-        return Math.abs(c[0] - p.lon) < 0.09 && Math.abs(c[1] - p.lat) < 0.07;
-      }).slice(0, 700);
+        return Math.abs(c[0] - alon) < 0.05 && Math.abs(c[1] - alat) < 0.04;
+      }).slice(0, 900);
       const ds = await Cesium.GeoJsonDataSource.load(
         { type: 'FeatureCollection', features: near }, { clampToGround: true, strokeWidth: 2 });
       for (const ent of ds.entities.values) {
@@ -102,6 +107,7 @@ async function drape(p) {
         ent.polygon.classificationType = Cesium.ClassificationType.BOTH; // 지형 + 3D 타일 위로 투영
       }
       viewer.dataSources.add(ds); sources.push(ds);
+      console.log('[spike] drape', name, near.length, '건');
     } catch (e) { console.warn('[spike] geojson 실패', name, e); }
   }
 }
@@ -111,15 +117,17 @@ let place = PLACES.namwon, progress = 0;
 
 function apply(t) {
   const r = railAt(t);
+  const lon = place.lon + ((place.zlon ?? place.lon) - place.lon) * r.aim;
+  const lat = place.lat + ((place.zlat ?? place.lat) - place.lat) * r.aim;
   camera.lookAt(
-    Cesium.Cartesian3.fromDegrees(place.lon, place.lat, 0),
+    Cesium.Cartesian3.fromDegrees(lon, lat, 0),
     new Cesium.HeadingPitchRange(
       Cesium.Math.toRadians(r.heading), Cesium.Math.toRadians(r.pitch), r.h));
   camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
   $('stage').textContent = r.stage;
   $('pct').textContent = Math.round(t * 100) + '%';
   $('alt').textContent = r.h > 1000 ? Math.round(r.h / 1000) + ' km' : Math.round(r.h) + ' m';
-  clouds.show = r.h < 260000;
+  clouds.show = r.h < 260000;   // 하강 구간(약 30 km → 8 km)에서 구름층을 통과한다
 }
 
 // ── 장소 전환 ───────────────────────────────────────────────────────────────
@@ -127,7 +135,7 @@ function setPlace(key) {
   place = PLACES[key];
   $('placeLabel').textContent = place.label;
   for (const b of $('places').children) b.setAttribute('aria-current', String(b.dataset.k === key));
-  buildClouds(place.lon, place.lat);
+  buildClouds(place.zlon ?? place.lon, place.zlat ?? place.lat);
   drape(place);
   apply(progress);
 }
