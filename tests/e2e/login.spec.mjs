@@ -38,3 +38,27 @@ test('links open expected targets', async ({ page }) => {
   await page.click('text=계정 신청하기');
   await expect(page).toHaveURL(/signup\.html/);
 });
+
+async function login(page) {
+  await page.fill('[name=email]', 'admin@lx.or.kr');
+  await page.fill('[name=pw]', 'x');
+  await page.click('#loginForm button[type=submit]');
+}
+
+test('external next= param does not cause an open redirect', async ({ page }) => {
+  await page.goto('login.html?next=' + encodeURIComponent('https://evil.example'));
+  await login(page);
+  await expect(page).toHaveURL(/\/dashboard\.html$/);
+});
+
+test('protocol-relative next= param does not cause an open redirect', async ({ page }) => {
+  await page.goto('login.html?next=' + encodeURIComponent('//evil.example'));
+  await login(page);
+  await expect(page).toHaveURL(/\/dashboard\.html$/);
+});
+
+test('next= with a query string is preserved', async ({ page }) => {
+  await page.goto('login.html?next=' + encodeURIComponent('dashboard.html?tab=x'));
+  await login(page);
+  await expect(page).toHaveURL(/\/dashboard\.html\?tab=x$/);
+});
