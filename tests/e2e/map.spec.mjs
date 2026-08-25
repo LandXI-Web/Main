@@ -95,3 +95,86 @@ test('missing maplibre library falls back without console errors', async ({ page
   expect(await page.evaluate(() => window.LX.map.engine)).toBe('fallback');
   expect(errs.filter(m => !/unpkg|ERR_FAILED|net::/.test(m))).toEqual([]);
 });
+
+test('blocked vworld ortho endpoint disables the slider and drops the layer', async ({ page }) => {
+  await page.route('**xdworld.vworld.kr/**', r => r.abort());
+  await page.goto('dev/map.html');
+  await page.waitForFunction(() => window.LX?.map?.ready);
+  test.skip(await page.evaluate(() => window.LX.map.engine) !== 'maplibre', '정사영상 레이어는 MapLibre 경로에만 있다');
+  // 타일이 죽으면 vworld-sat 소스가 error 를 내고 lx:ortho-unavailable 로 UI 가 잠긴다.
+  await expect(page.locator('.lxmap__tool[data-tool=layers]')).toBeDisabled();
+  await expect(page.locator('.lxmap__ortho input')).toBeDisabled();
+  await expect.poll(() => page.evaluate(() => !!window.LX.map.raw.getLayer('ortho'))).toBe(false);
+  await page.evaluate(() => window.LX.map.setOrthoOpacity(0.8));           // 레이어가 없으니 무시돼야 한다
+  expect(await page.evaluate(() => !!window.LX.map.raw.getSource('vworld-sat'))).toBe(false);
+});
+
+test('addGeoJSON with a duplicate id replaces instead of throwing', async ({ page }) => {
+  for (const q of ['', '?engine=fallback']) {
+    await page.goto('dev/map.html' + q);
+    await page.waitForFunction(() => window.LX?.map?.ready);
+    const out = await page.evaluate(poly => {
+      const m = window.LX.map;
+      const two = { type: 'FeatureCollection', features: [poly.features[0], { type: 'Feature', properties: { id: 'b', s: 'done' }, geometry: { type: 'Polygon', coordinates: [[[127.30, 35.30], [127.32, 35.30], [127.32, 35.32], [127.30, 35.30]]] } }] };
+      m.addGeoJSON('t', poly, { kind: 'detection' });
+      const first = m.getLayer('t').count;
+      m.addGeoJSON('t', two, { kind: 'detection' });          // 같은 id 재등록 — throw 하면 안 된다
+      const second = m.getLayer('t').count;
+      m.setHighlight('t', p => p.s === 'done'); m.setHighlight('t', null);
+      return { engine: m.engine, first, second, kind: m.getLayer('t').kind };
+    }, POLY);
+    expect(out.first, out.engine).toBe(1);
+    expect(out.second, out.engine).toBe(2);
+    expect(out.kind, out.engine).toBe('detection');
+  }
+});
+
+test("on('move') replaces the previous listener instead of stacking", async ({ page }) => {
+  for (const q of ['', '?engine=fallback']) {
+    await page.goto('dev/map.html' + q);
+    await page.waitForFunction(() => window.LX?.map?.ready);
+    const out = await page.evaluate(async () => {
+      const m = window.LX.map;
+      const hits = { a: 0, b: 0 };
+      m.on('move', () => hits.a++);                            // 등록 즉시 1회 동기 발화
+      const atRegister = hits.a;
+      m.on('move', () => hits.b++);                            // 앞의 리스너는 떨어져야 한다
+      hits.a = 0; hits.b = 0;
+      for (let i = 0; i < 4; i++) m.jumpTo([127.4 + i * 0.02, 35.5], 12);
+      await new Promise(r => setTimeout(r, 400));
+      return { engine: m.engine, atRegister, ...hits };
+    });
+    expect(out.atRegister, out.engine).toBe(1);                // 두 엔진 모두 등록 시 1회 발화
+    expect(out.a, out.engine).toBe(0);                         // 교체됐으므로 더는 불리지 않는다
+    expect(out.b, out.engine).toBeGreaterThan(0);
+  }
+});
+
+test('destroy() removes tools, rulebar and the global reference', async ({ page }) => {
+  for (const q of ['', '?engine=fallback']) {
+    await page.goto('dev/map.html' + q);
+    await page.waitForFunction(() => window.LX?.map?.ready);
+    await expect(page.locator('.lxmap__tools')).toHaveCount(1);
+    const err = await page.evaluate(() => { try { window.LX.map.destroy(); return null; } catch (e) { return e.message; } });
+    expect(err).toBe(null);
+    await expect(page.locator('.lxmap__tools')).toHaveCount(0);
+    await expect(page.locator('.rulebar')).toHaveCount(0);
+    await expect(page.locator('.lxmap__canvas')).toHaveCount(0);
+    expect(await page.evaluate(() => 'map' in (window.LX || {}))).toBe(false);
+    expect(await page.evaluate(() => !!window.LX)).toBe(true);   // LX 자체는 남아 있어야 한다
+  }
+});
+
+test('rulebar keeps focus on ⓘ and its scale bar node while the camera moves', async ({ page }) => {
+  await page.goto('dev/map.html?engine=fallback');
+  await page.waitForFunction(() => window.LX?.map?.ready);
+  await page.focus('.rulebar__info');
+  await page.evaluate(async () => {
+    window.__sameNode = document.querySelector('.rulebar__scale i');
+    for (let i = 0; i < 5; i++) { window.LX.map.jumpTo([127.3 + i * 0.05, 35.3 + i * 0.05], 11 + i * 0.4); await new Promise(r => requestAnimationFrame(r)); }
+  });
+  await expect(page.locator('.rulebar')).toContainText('축척');
+  // innerHTML 을 다시 짓지 않으므로 포커스도 노드 동일성도 유지된다.
+  expect(await page.evaluate(() => document.activeElement?.classList.contains('rulebar__info'))).toBe(true);
+  expect(await page.evaluate(() => window.__sameNode === document.querySelector('.rulebar__scale i'))).toBe(true);
+});

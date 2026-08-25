@@ -237,13 +237,24 @@ export function createFallback(box, o = {}) {
     engine: 'fallback', ready: true, raw: { world, cam, canvas },
     flyTo(c, z) { if (REDUCE) return jump(c, z); const w = toWorld(c); cam.tx = w[0]; cam.ty = w[1]; cam.tz = z != null ? zFromZoom(clamp(z, 3, 20)) : cam.z; },
     jumpTo: jump,
+    // 같은 id 로 다시 부르면 교체한다(MapLibre 경로와 동일).
     addGeoJSON(id, data, opt) {
       const { kind = 'detection', paint = {} } = opt || {};
-      layers.set(id, { id, kind, paint, filter: null, at: st.t, features: toFeatures(data, toWorld) });
+      const prev = layers.get(id);
+      layers.set(id, { id, kind: prev ? prev.kind : kind, paint, data, filter: null, at: st.t, features: toFeatures(data, toWorld) });
+    },
+    getLayer(id) {
+      const L = layers.get(id);
+      return L ? { id, kind: L.kind, data: L.data, count: L.features.length } : null;
     },
     setHighlight(id, fn) { const L = layers.get(id); if (L) L.filter = typeof fn === 'function' ? fn : null; },
     setOrthoOpacity(v) { st.ortho = clamp(Number(v) || 0, 0, 1); },
-    on(ev, fn) { handlers[ev] = fn; if (ev === 'move') moved = true; },
+    // 핸들러는 교체 방식. 'move' 는 등록 즉시 1회 동기 발화한 뒤 카메라가 움직일 때만 발화한다.
+    on(ev, fn) {
+      handlers[ev] = fn;
+      if (ev !== 'move' || typeof fn !== 'function') return;
+      moved = false; fn({ center: toLngLat([cam.x, cam.y]), zoom: zoomFromZ(cam.z) });
+    },
     getCenter: () => toLngLat([cam.x, cam.y]),
     getZoom: () => zoomFromZ(cam.z),
     project(c) { const w = toWorld(c); return toS(w[0], w[1]); },

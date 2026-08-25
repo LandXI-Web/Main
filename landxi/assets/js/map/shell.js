@@ -22,8 +22,19 @@ export async function createMap(container, o = {}) {
     box.innerHTML = '';
     api = createFallback(box, o);
   }
-  if (o.tools !== false) container.append(renderTools(api, o));
+  const tools = o.tools !== false ? renderTools(api, o) : null;
+  if (tools) container.append(tools);
   if (o.rulebar !== false) api.rulebar = createRulebar(container, api);
+  // 엔진이 만든 것뿐 아니라 createMap 이 붙인 DOM 과 전역 참조까지 되돌린다.
+  const inner = api.destroy;
+  api.destroy = () => {
+    try { inner(); } finally {
+      if (tools) tools.remove();
+      if (api.rulebar && api.rulebar.el) api.rulebar.el.remove();
+      box.remove();
+      if (window.LX && window.LX.map === api) delete window.LX.map;
+    }
+  };
   window.LX = Object.assign(window.LX || {}, { map: api });
   return api;
 }
@@ -62,6 +73,7 @@ async function maplibre(box, o) {
   }
 
   const kinds = new Map(), data = new Map(), handlers = {};
+  let moveEmit = null, destroyed = false;
   const hit = (id, kind) => id + (kind === 'org' ? '-pt' : '-fill');
   const baseOpacity = kind => kind === 'detection' ? 0.18 : kind === 'org' ? 1 : 0.06;
 
@@ -70,6 +82,10 @@ async function maplibre(box, o) {
     flyTo: (c, z, x = {}) => REDUCE ? map.jumpTo({ center: c, zoom: z, ...x }) : map.flyTo({ center: c, zoom: z, duration: 1200, essential: true, ...x }),
     jumpTo: (c, z, x = {}) => map.jumpTo({ center: c, zoom: z, ...x }),
     addGeoJSON(id, geojson, { kind = 'detection', paint = {} } = {}) {
+      // 같은 id 로 다시 부르면 교체한다(폴백과 동일). 이미 만든 레이어와 어긋나지 않도록
+      // kind 는 최초 등록값을 유지하고 데이터만 갈아끼운다.
+      const existing = map.getSource(id);
+      if (existing) { existing.setData(geojson); data.set(id, geojson); return; }
       map.addSource(id, { type: 'geojson', data: geojson });
       kinds.set(id, kind); data.set(id, geojson);
       if (kind === 'org') {
@@ -98,21 +114,32 @@ async function maplibre(box, o) {
       map.setPaintProperty(L, prop, ['case', ['in', ['get', 'id'], ['literal', ids]], kind === 'detection' ? 0.45 : 1, 0.05]);
     },
     setOrthoOpacity: v => { if (map.getLayer('ortho')) map.setPaintProperty('ortho', 'raster-opacity', Math.max(0, Math.min(1, Number(v) || 0))); },
+    // 핸들러는 교체 방식(폴백과 동일). 'move' 는 등록 즉시 1회 동기 발화한 뒤
+    // 카메라가 움직일 때마다 발화하며, 이전 emitter 는 반드시 떼어 낸다.
     on(ev, fn) {
       handlers[ev] = fn;
-      if (ev === 'move') { const emit = () => fn({ center: map.getCenter().toArray(), zoom: map.getZoom() }); map.on('move', emit); emit(); }
+      if (ev !== 'move') return;
+      if (moveEmit) { map.off('move', moveEmit); moveEmit = null; }
+      if (typeof fn !== 'function') return;
+      moveEmit = () => fn({ center: map.getCenter().toArray(), zoom: map.getZoom() });
+      map.on('move', moveEmit); moveEmit();
+    },
+    getLayer(id) {
+      if (!kinds.has(id)) return null;
+      const d = data.get(id), feats = (d && d.features) || [];
+      return { id, kind: kinds.get(id), data: d, count: feats.length };
     },
     getCenter: () => map.getCenter().toArray(),
     getZoom: () => map.getZoom(),
     project: c => { const p = map.project(c); return [p.x, p.y]; },
-    destroy: () => map.remove(),
+    destroy() { destroyed = true; if (moveEmit) { map.off('move', moveEmit); moveEmit = null; } map.remove(); },
   };
 
   if (o.ambient === 'spin' && !REDUCE) {
     let stop = false;
     map.on('mousedown', () => { stop = true; });
     (function spin() {
-      if (stop || !map.getCanvas()) return;
+      if (stop || destroyed) return;
       const c = map.getCenter();
       map.easeTo({ center: [c.lng + 0.08, c.lat], duration: 100, easing: t => t });
       requestAnimationFrame(() => setTimeout(spin, 90));
@@ -156,7 +183,7 @@ function renderTools(api, o) {
   if (api.box) api.box.addEventListener('lx:ortho-unavailable', () => {
     const l = t.querySelector('.lxmap__ortho');
     if (!l) return;
-    l.hidden = true; l.classList.add('is-off'); if (slider) slider.disabled = true;
+    l.hidden = true; if (slider) slider.disabled = true;
     t.querySelector('[data-tool=layers]').disabled = true;
   });
   return t;
