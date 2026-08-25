@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<title>Land-XI 브랜드 필름 · 결정론적 렌더러</title>
+<!--
+  tools/film/render.html — 사전 렌더 브랜드 필름의 프레임 소스.
+  Vantor 히어로(1280x720 / 25fps / 33s)의 숏 문법을 우리 실데이터로 옮긴다.
+  · 타임라인은 전부 window.__film.seek(t) 의 순수 함수다. rAF 루프에 의존하는 상태가 없다.
+  · 모든 paint 트랜지션과 raster-fade 를 0 으로 못박아 프레임 간 잔상을 없앤다.
+  · 스택은 docs/superpowers/proto/verified-stack-probe3.html 검증본(MapLibre 5.6.0 + three 0.185.1).
+    deck.gl 은 의도적으로 뺐다 — globe 투영 구간(z<13)에서 오버레이 정합이 깨지므로
+    데이터 레이어는 전부 MapLibre 네이티브(line/fill/circle glow 스택)로 그린다.
+-->
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"}}</script>
+<style>
+  html,body{margin:0;padding:0;background:#000;overflow:hidden}
+  #film{position:absolute;left:0;top:0;width:1280px;height:720px;overflow:hidden;background:#02040a}
+  /* 컬러 그레이딩은 지도+3D 를 함께 감싼 stage 에만 건다. 그레인/비네트는 그 위에 얹는다. */
+  #stage{position:absolute;inset:0;filter:saturate(.80) contrast(1.06) brightness(1.015)}
+  #map{position:absolute;inset:0}
+  #sat{position:absolute;inset:0;width:1280px;height:720px;pointer-events:none}
+  .cl{position:absolute;left:50%;top:50%;width:2048px;height:2048px;margin:-1024px 0 0 -1024px;
+      background-size:100% 100%;background-repeat:no-repeat;will-change:transform,opacity;opacity:0}
+  #cfar{background-image:url(/landxi/assets/proto/clouds/cloud_far.webp)}
+  #cmid{background-image:url(/landxi/assets/proto/clouds/cloud_mid.webp)}
+  #cnear{background-image:url(/landxi/assets/proto/clouds/cloud_near.webp)}
+  #haze{background-image:url(/landxi/assets/proto/clouds/haze.webp);mix-blend-mode:screen}
+  #tone{position:absolute;inset:0;mix-blend-mode:soft-light;opacity:.30;
+        background:linear-gradient(178deg,#7fa8d8 0%,rgba(127,168,216,0) 44%,rgba(255,196,140,0) 64%,#ffc48c 100%)}
+  #vig{position:absolute;inset:0;background:radial-gradient(ellipse 78% 74% at 50% 48%,rgba(0,0,0,0) 42%,rgba(2,5,12,.52) 100%)}
+  #grain{position:absolute;inset:-64px;mix-blend-mode:overlay;opacity:.10;background-repeat:repeat}
+  .maplibregl-ctrl-attrib,.maplibregl-ctrl-bottom-right,.maplibregl-ctrl-bottom-left{display:none!important}
+</style></head>
+<body>
+<div id="film">
+  <div id="stage">
+    <div id="map"></div>
+    <canvas id="sat" width="1280" height="720"></canvas>
+    <div class="cl" id="cfar"></div><div class="cl" id="cmid"></div>
+    <div class="cl" id="cnear"></div><div class="cl" id="haze"></div>
+    <div id="tone"></div>
+  </div>
+  <div id="vig"></div>
+  <div id="grain"></div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+/* ───────────────────────── 0. 상수 · 이징 ───────────────────────── */
+const FPS = 25, DUR = 23.0;
+const ACCENT_GH  = '#4E86F7';   // LX 블루 — 비닐하우스 필라멘트
+const ACCENT_GH2 = '#9FC6FF';
+const ACCENT_GH3 = '#E6F0FF';
+const ACCENT_YE  = '#FF9A2E';   // 해양쓰레기(스티로폼) 검출
+const ACCENT_YE2 = '#FFE3B0';
+
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const inv=(t,a,b)=>clamp((t-a)/(b-a),0,1);
+const smooth=x=>x*x*(3-2*x);
+const smoothstep=(t,a,b)=>smooth(inv(t,a,b));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const easeInOut=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const easeOut=x=>1-Math.pow(1-x,3);
+const easeOut4=x=>1-Math.pow(1-x,4);
+const easeIn=x=>x*x*x;
+const easeLin=x=>x;
+
+/* ───────────────────────── 1. 카메라 트랙 ─────────────────────────
+   구간 경계에서 a/b 가 이어지면 연속 이동, 끊기면 하드 컷이다.
+   S7(여수)만 a 가 앞 구간의 b 와 다르므로 17.60s 에서 컷이 난다. */
+const SEG = [
+  // S1 궤도 — 지구본 자전, 한반도가 림 안으로 들어온다
+  { id:'orbit',  t0:0.00, t1:3.20, ease:easeLin,
+    a:{c:[109.0,29.6], z:1.84, p:0,  b:0  }, b:{c:[122.6,33.6], z:2.62, p:0,  b:-2 } },
+  // S2 급강하 — 궤도에서 대류권까지
+  { id:'dive',   t0:3.20, t1:5.10, ease:easeInOut,
+    a:{c:[122.6,33.6], z:2.62, p:0,  b:-2 }, b:{c:[127.85,36.20], z:6.55, p:10, b:-4 } },
+  // S3 구름 관통 → 한반도 (Sentinel-2 cloudless + 헤어라인 해안선)
+  { id:'korea',  t0:5.10, t1:8.70, ease:easeOut,
+    a:{c:[127.85,36.20], z:6.55, p:10, b:-4 }, b:{c:[127.70,35.90], z:8.30, p:24, b:-9 } },
+  // S4 남원 하강 — Mapterhorn terrarium 지형
+  { id:'descent',t0:8.70, t1:11.90, ease:easeInOut,
+    a:{c:[127.70,35.90], z:8.30, p:24, b:-9 }, b:{c:[127.3260,35.3470], z:12.60, p:62, b:-25} },
+  // S5 남원 전역 정사영상(namwon_city_2510)
+  { id:'ortho',  t0:11.90,t1:14.50, ease:easeInOut,
+    a:{c:[127.3260,35.3470], z:12.60, p:62, b:-25}, b:{c:[127.3480,35.3660], z:13.05, p:46, b:-13} },
+  // S6 비닐하우스 9,664동 — 풀백 리빌
+  { id:'green',  t0:14.50,t1:17.55, ease:easeInOut,
+    a:{c:[127.3480,35.3660], z:13.05, p:46, b:-13}, b:{c:[127.4250,35.4290], z:11.36, p:23, b:-3 } },
+  // S7 여수 — 하드 컷, 최대 밀집 해역으로
+  { id:'yeosu',  t0:17.55,t1:23.00, ease:easeOut4,
+    a:{c:[127.7305,34.5630], z:13.00, p:10, b:5  }, b:{c:[127.7215,34.5690], z:13.60, p:2,  b:0 } },
+];
+function camAt(t){
+  let s=SEG[0];
+  for(const g of SEG){ if(t>=g.t0) s=g; }
+  const k=s.ease(inv(t,s.t0,s.t1));
+  return { center:[lerp(s.a.c[0],s.b.c[0],k), lerp(s.a.c[1],s.b.c[1],k)],
+           zoom:lerp(s.a.z,s.b.z,k), pitch:lerp(s.a.p,s.b.p,k), bearing:lerp(s.a.b,s.b.b,k), seg:s.id, k };
+}
+
+/* ───────────────────────── 2. 데이터 준비 ───────────────────────── */
+const j = async u => (await fetch(u)).json();
+const bboxOf = g => { let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  (function w(c){ if(typeof c[0]==='number'){ if(c[0]<x0)x0=c[0]; if(c[0]>x1)x1=c[0];
+    if(c[1]<y0)y0=c[1]; if(c[1]>y1)y1=c[1]; } else c.forEach(w); })(g.coordinates);
+  return [x0,y0,x1,y1]; };
+const hash = s => { let h=2166136261; for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);} return ((h>>>0)%10000)/10000; };
+
+const [GH, YE, OUT] = await Promise.all([
+  j('/landxi/assets/data/geo/results/namwon-greenhouse-2025.geojson'),
+  j('/landxi/assets/data/geo/results/yeosu-marine-2025-aerial.geojson'),
+  j('/landxi/assets/data/geo/korea-outline.geojson'),
+]);
+
+// 비닐하우스: 남서→북동 대각 스위프 값 w 를 굽는다(+해시 지터로 유기적으로).
+{ let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  const bb = GH.features.map(f=>{ const b=bboxOf(f.geometry);
+    x0=Math.min(x0,b[0]);y0=Math.min(y0,b[1]);x1=Math.max(x1,b[2]);y1=Math.max(y1,b[3]); return b; });
+  GH.features.forEach((f,i)=>{ const b=bb[i], cx=(b[0]+b[2])/2, cy=(b[1]+b[3])/2;
+    const d = 0.52*((cx-x0)/(x1-x0)) + 0.48*(1-(cy-y0)/(y1-y0));
+    f.properties.w = clamp(d*0.86 + hash(String(f.properties.id))*0.14, 0, 1); });
+}
+const GH_OBJ = GH.features.reduce((s,f)=>s+(f.properties.nobj||0),0);
+
+// 여수: 신뢰도 내림차순 랭크 r(0=최고) + 검출 중심점.
+const yfs = YE.features.map(f=>({f, bb:bboxOf(f.geometry), conf:f.properties.conf||0}));
+yfs.sort((a,b)=>b.conf-a.conf);
+const YE_PTS = { type:'FeatureCollection', features: yfs.map((o,i)=>({
+  type:'Feature',
+  properties:{ r:i/(yfs.length-1), conf:o.conf, area:o.f.properties.area||1 },
+  geometry:{ type:'Point', coordinates:[(o.bb[0]+o.bb[2])/2,(o.bb[1]+o.bb[3])/2] } })) };
+yfs.forEach((o,i)=>{ o.f.properties.r = i/(yfs.length-1); });
+
+// 헤어라인 코너 브래킷 생성기 — Vantor 의 크롭마크 문법.
+function brackets(bb, padM, out){
+  const cx=(bb[0]+bb[2])/2, cy=(bb[1]+bb[3])/2;
+  const mLng = padM/(111320*Math.cos(cy*Math.PI/180)), mLat = padM/110540;
+  const x0=Math.min(bb[0]-mLng,cx-mLng), x1=Math.max(bb[2]+mLng,cx+mLng);
+  const y0=Math.min(bb[1]-mLat,cy-mLat), y1=Math.max(bb[3]+mLat,cy+mLat);
+  const ax=(x1-x0)*0.32, ay=(y1-y0)*0.32;
+  const arms=[ [[x0,y0+ay],[x0,y0],[x0+ax,y0]], [[x1-ax,y0],[x1,y0],[x1,y0+ay]],
+               [[x1,y1-ay],[x1,y1],[x1-ax,y1]], [[x0+ax,y1],[x0,y1],[x0,y1-ay]] ];
+  out.push({type:'Feature',properties:{},geometry:{type:'MultiLineString',coordinates:arms}});
+}
+// 여수 상위 신뢰도 8건에 브래킷
+const YE_BR = {type:'FeatureCollection',features:[]};
+const YE_VIEW = [127.688,34.545,127.758,34.586];   // S7 최종 프레임 대략 범위
+yfs.filter(o=>{ const cx=(o.bb[0]+o.bb[2])/2, cy=(o.bb[1]+o.bb[3])/2;
+    return cx>YE_VIEW[0]&&cx<YE_VIEW[2]&&cy>YE_VIEW[1]&&cy<YE_VIEW[3]; })
+   .slice(0,60).sort((a,b)=>(b.f.properties.area||0)-(a.f.properties.area||0)).slice(0,5)
+   .forEach(o=>brackets(o.bb, 130, YE_BR.features));
+// 남원 조사 범위(namwon_city_2510 bounds) 브래킷
+const NW_BOUNDS = [127.182606,35.302858,127.637309,35.561786];   // 타일 소스 범위
+// S6 최종 프레임 안의 최대 단지 3곳(동수 기준)에 크롭마크를 건다.
+const NW_VIEW = [127.292,35.354,127.558,35.504];
+const NW_BR = {type:'FeatureCollection',features:[]};
+GH.features.map(f=>({f,bb:bboxOf(f.geometry)}))
+  .filter(o=>{ const cx=(o.bb[0]+o.bb[2])/2, cy=(o.bb[1]+o.bb[3])/2;
+    return cx>NW_VIEW[0]&&cx<NW_VIEW[2]&&cy>NW_VIEW[1]&&cy<NW_VIEW[3]; })
+  .sort((a,b)=>(b.f.properties.nobj||0)-(a.f.properties.nobj||0)).slice(0,3)
+  .forEach(o=>brackets(o.bb, 260, NW_BR.features));
+
+/* ───────────────────────── 3. 지도 ───────────────────────── */
+const T0 = {duration:0, delay:0};   // 모든 paint 트랜지션 정지 — 결정론의 핵심
+const style = {
+  version:8, projection:{type:'globe'},
+  sources:{
+    eox:{type:'raster',tiles:['https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/{z}/{y}/{x}.jpg'],tileSize:256,maxzoom:14},
+    vsat:{type:'raster',tiles:['https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg'],tileSize:256,minzoom:5,maxzoom:19},
+    dem:{type:'raster-dem',tiles:['https://tiles.mapterhorn.com/{z}/{x}/{y}.webp'],tileSize:512,maxzoom:12,encoding:'terrarium'},
+    nwcity:{type:'raster',tiles:['/landxi/assets/tiles/namwon_city_2510/{z}/{x}/{y}.webp'],tileSize:256,minzoom:11,maxzoom:15,bounds:NW_BOUNDS},
+    outline:{type:'geojson',data:OUT},
+    gh:{type:'geojson',data:GH},
+    yep:{type:'geojson',data:YE},
+    yed:{type:'geojson',data:YE_PTS},
+    yebr:{type:'geojson',data:YE_BR},
+    nwbr:{type:'geojson',data:NW_BR},
+  },
+  layers:[
+    {id:'bg',type:'background',paint:{'background-color':'#01030a'}},
+    {id:'eox',type:'raster',source:'eox',paint:{'raster-fade-duration':0,'raster-opacity':1,'raster-opacity-transition':T0,'raster-saturation':-0.02,'raster-contrast':0.14,'raster-brightness-min':0,'raster-brightness-min-transition':T0}},
+    {id:'vsat',type:'raster',source:'vsat',paint:{'raster-fade-duration':0,'raster-opacity':0,'raster-opacity-transition':T0,'raster-saturation':-0.06,'raster-contrast':0.05}},
+    {id:'nwcity',type:'raster',source:'nwcity',paint:{'raster-fade-duration':0,'raster-opacity':0,'raster-opacity-transition':T0,'raster-saturation':-0.04,'raster-contrast':0.07}},
+    {id:'coast-glow',type:'line',source:'outline',layout:{'line-join':'round'},
+      paint:{'line-color':'#7FB2FF','line-width':4,'line-opacity':0,'line-blur':3,
+             'line-opacity-transition':T0,'line-width-transition':T0}},
+    {id:'coast',type:'line',source:'outline',layout:{'line-join':'round'},
+      paint:{'line-color':'#DCEBFF','line-width':1,'line-opacity':0,'line-blur':0.25,
+             'line-opacity-transition':T0,'line-width-transition':T0}},
+    // 비닐하우스 필라멘트 — halo / glow / core 3단 적층으로 가산광을 흉내낸다
+    {id:'gh-fill',type:'fill',source:'gh',paint:{'fill-color':ACCENT_GH,'fill-opacity':0,'fill-opacity-transition':T0}},
+    {id:'gh-halo',type:'line',source:'gh',layout:{'line-join':'round','line-cap':'round'},
+      paint:{'line-color':ACCENT_GH,'line-width':6,'line-blur':5,'line-opacity':0,
+             'line-opacity-transition':T0,'line-width-transition':T0,'line-blur-transition':T0}},
+    {id:'gh-glow',type:'line',source:'gh',layout:{'line-join':'round','line-cap':'round'},
+      paint:{'line-color':ACCENT_GH2,'line-width':2.2,'line-blur':1.4,'line-opacity':0,
+             'line-opacity-transition':T0,'line-width-transition':T0}},
+    {id:'gh-core',type:'line',source:'gh',layout:{'line-join':'round','line-cap':'round'},
+      paint:{'line-color':ACCENT_GH3,'line-width':0.7,'line-blur':0,'line-opacity':0,
+             'line-opacity-transition':T0,'line-width-transition':T0}},
+    {id:'nw-br',type:'line',source:'nwbr',paint:{'line-color':'#FFFFFF','line-width':1.4,'line-opacity':0,'line-opacity-transition':T0}},
+    // 여수 검출
+    {id:'ye-halo',type:'circle',source:'yed',paint:{
+       'circle-color':ACCENT_YE,'circle-blur':0.9,'circle-opacity':0,
+       'circle-radius':['interpolate',['linear'],['zoom'],12.8,10,13.6,15],
+       'circle-opacity-transition':T0,'circle-radius-transition':T0}},
+    {id:'ye-poly',type:'fill',source:'yep',minzoom:12.4,paint:{'fill-color':ACCENT_YE2,'fill-opacity':0,'fill-opacity-transition':T0}},
+    {id:'ye-core',type:'circle',source:'yed',paint:{
+       'circle-color':ACCENT_YE2,'circle-blur':0.2,'circle-opacity':0,
+       'circle-radius':['interpolate',['linear'],['zoom'],12.8,2.3,13.6,3.2],
+       'circle-opacity-transition':T0,'circle-radius-transition':T0}},
+    {id:'ye-br',type:'line',source:'yebr',paint:{'line-color':'#FFFFFF','line-width':1.1,'line-opacity':0,'line-opacity-transition':T0}},
+  ],
+  sky:{'atmosphere-blend':['interpolate',['linear'],['zoom'],0,1,5,0.9,7.5,0],
+       'sky-color':'#0a1c3e','horizon-color':'#7FA8D8','fog-color':'#cfe0f5',
+       'fog-ground-blend':0.5,'horizon-fog-blend':0.6,'sky-horizon-blend':0.85},
+  light:{anchor:'map',position:[1.5,210,72],color:'#ffffff',intensity:0.42},
+};
+
+const map = new maplibregl.Map({
+  container:'map', style, center:[109.0,29.6], zoom:1.84, bearing:0, pitch:0,
+  antialias:true, maxPitch:85, preserveDrawingBuffer:true, attributionControl:false,
+  fadeDuration:0, interactive:false, renderWorldCopies:false,
+});
+window.__map = map;
+await new Promise((res,rej)=>{ map.on('load',res); setTimeout(()=>rej(new Error('map load timeout')),60000); });
+let terrainOn = false;
+function ensureTerrain(t){
+  const want = t >= 6.60;
+  if(want === terrainOn) return;
+  map.setTerrain(want ? {source:'dem', exaggeration:1.45} : null);
+  terrainOn = want;
+}
+
+/* ───────────────────────── 4. 3D 위성 오버레이 ─────────────────────────
+   MapLibre custom layer 대신 독립 캔버스를 쓴다. globe 투영 위에서 큰 물체를
+   mercator 로컬 행렬로 얹으면 왜곡되므로, 전경 실루엣은 별도 씬이 정확하고 빠르다. */
+const satCanvas = document.getElementById('sat');
+const renderer = new THREE.WebGLRenderer({canvas:satCanvas, alpha:true, antialias:true, preserveDrawingBuffer:true});
+renderer.setPixelRatio(1); renderer.setSize(1280,720,false);
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+const scene = new THREE.Scene();
+const cam3 = new THREE.PerspectiveCamera(28, 1280/720, 0.1, 2000);
+{ const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environmentIntensity = 0.5; }
+const key = new THREE.DirectionalLight(0xfff4e2, 3.1); key.position.set(-6,5,7); scene.add(key);
+const rim = new THREE.DirectionalLight(0x9ec2ff, 2.2); rim.position.set(5,-2,-6); scene.add(rim);
+scene.add(new THREE.AmbientLight(0x2a3c58, 1.1));
+
+const satRoot = new THREE.Group(); scene.add(satRoot);
+const gltf = await new Promise((res,rej)=>new GLTFLoader().load('/landxi/assets/proto/models/satellite.glb',res,undefined,rej));
+{ const o = gltf.scene;
+  const box = new THREE.Box3().setFromObject(o); const c = box.getCenter(new THREE.Vector3());
+  o.position.sub(c);
+  o.rotation.x = Math.PI/2;              // 나디르(-Y) → 화면 안쪽(-Z), 즉 지구 쪽
+  satRoot.add(o); }
+const solarL = gltf.scene.getObjectByName('solar_l'), solarR = gltf.scene.getObjectByName('solar_r');
+
+const SAT_END = 4.20;
+function drawSat(t){
+  const a = smoothstep(t,0.15,0.85) * (1 - smoothstep(t,3.30,4.20));
+  satCanvas.style.opacity = a.toFixed(4);
+  if(a<=0.0005){ renderer.clear(); return; }
+  const k = clamp(t/SAT_END,0,1);
+  // 아주 느린 접근 + 프레임 우상단에서 좌하로 흐르는 드리프트
+  const eo = easeOut(k);
+  cam3.position.set(lerp(3.2,0.7,eo), lerp(2.8,1.0,eo), lerp(31,21,eo));
+  cam3.lookAt(0,0,0);
+  satRoot.position.set(lerp(5.2,2.3,k), lerp(2.5,0.8,k), 0);
+  satRoot.rotation.set(lerp(-0.18,-0.30,k), lerp(0.42,0.86,k), lerp(0.10,0.02,k));
+  const sun = lerp(-0.35,0.15,k);
+  if(solarL) solarL.rotation.x = sun;
+  if(solarR) solarR.rotation.x = sun;
+  renderer.render(scene, cam3);
+}
+
+/* ───────────────────────── 5. 구름 데크 ─────────────────────────
+   landxi/assets/proto/clouds/README.md 의 스태거·스케일·오파시티 커브를 그대로 옮겼다. */
+const EL = { far:document.getElementById('cfar'), mid:document.getElementById('cmid'),
+             near:document.getElementById('cnear'), haze:document.getElementById('haze') };
+const CL_IN0=4.15, CL_IN1=4.80, CL_OUT1=6.60;   // 진입 페이드인 → 관통
+function drawClouds(t){
+  const enter = smoothstep(t, CL_IN0, CL_IN1);              // 데크가 화면을 덮는 과정
+  const local = inv(t, CL_IN1, CL_OUT1);                    // 관통 진행도 0→1
+  const put=(el,a,b,scaleTo,op,par)=>{
+    const s = smoothstep(local,a,b);
+    const sc = lerp(1, scaleTo, s) * lerp(0.99,1,enter);
+    const o  = op*(1-s)*enter;
+    el.style.transform = 'translate3d('+(par[0]*local*24).toFixed(2)+'px,'+(par[1]*local*24).toFixed(2)+'px,0) scale('+sc.toFixed(4)+') rotate('+(par[2]*local).toFixed(3)+'deg)';
+    el.style.opacity = o.toFixed(4);
+  };
+  put(EL.near, 0.00, 0.60, 2.30, 0.97, [-38,-26,-2.2]);
+  put(EL.mid,  0.15, 0.85, 2.80, 0.95, [ 22,-16, 1.4]);
+  put(EL.far,  0.35, 1.00, 3.20, 0.92, [ -9,  7,-0.7]);
+  // haze: local≈0.42 정점의 종형 화이트아웃
+  const bell = Math.exp(-Math.pow((local-0.42)/0.17,2));
+  EL.haze.style.transform = 'scale('+lerp(1,1.6,local).toFixed(4)+')';
+  EL.haze.style.opacity = (0.85*bell*enter).toFixed(4);
+}
+
+/* ───────────────────────── 6. 그레인 ───────────────────────── */
+const grainEl = document.getElementById('grain');
+const toneEl = document.getElementById('tone');
+{ const n = document.createElement('canvas'); n.width=n.height=256;
+  const g = n.getContext('2d'), im = g.createImageData(256,256);
+  let s = 1337; const rnd=()=>{ s=(s*1664525+1013904223)>>>0; return s/4294967296; };
+  for(let i=0;i<256*256;i++){ const v = 128 + (rnd()-0.5)*118;
+    im.data[i*4]=im.data[i*4+1]=im.data[i*4+2]=v; im.data[i*4+3]=255; }
+  g.putImageData(im,0,0);
+  grainEl.style.backgroundImage = 'url('+n.toDataURL()+')'; }
+function drawGrain(f){
+  const x = (f*97)%256, y = (f*61)%256;      // 프레임마다 결정적으로 튀는 그레인
+  grainEl.style.backgroundPosition = (-x)+'px '+(-y)+'px';
+}
+
+/* ───────────────────────── 7. 레이어 스케줄 ───────────────────────── */
+const revealExpr = (prop, th, band) =>
+  ['interpolate',['linear'],['get',prop], th-band, 1, th, 0];
+
+function drawMapState(t){
+  const P = (l,p,v)=>map.setPaintProperty(l,p,v);
+
+  // 베이스맵 — EOX Sentinel-2 cloudless 가 광역 구간의 주역(이음매 없음),
+  // V-World 정사영상은 하강 이후에만 올린다(광역에서는 도엽 경계 색차가 드러난다).
+  P('eox','raster-opacity',  1 - smoothstep(t,9.60,11.40));
+  P('vsat','raster-opacity', smoothstep(t,8.60,10.40));
+  P('nwcity','raster-opacity', t<17.55 ? smoothstep(t,11.50,13.10) : 1);
+
+  // 해안선 헤어라인 — 구름이 걷히며 그어졌다가 하강과 함께 사라진다
+  const co = smoothstep(t,6.10,7.20) * (1-smoothstep(t,9.60,11.20));
+  P('coast','line-opacity', 0.92*co);
+  P('coast-glow','line-opacity', 0.32*co);
+  P('coast','line-width', lerp(0.8,1.5,smoothstep(t,6.10,8.90)));
+
+  // 비닐하우스 필라멘트
+  const gA = smoothstep(t,14.60,15.30) * (t<17.55?1:0);
+  if(gA>0){
+    const th = lerp(0.0, 1.16, easeOut(inv(t,14.80,17.30)));
+    const rv = revealExpr('w', th, 0.13);
+    P('gh-halo','line-opacity', ['*', 0.68*gA, rv]);
+    P('gh-glow','line-opacity', ['*', 0.72*gA, rv]);
+    P('gh-core','line-opacity', ['*', 0.48*gA, rv]);
+    P('gh-fill','fill-opacity', ['*', 0.16*gA, rv]);
+    P('gh-halo','line-width', lerp(4.0,9.5,smoothstep(t,14.60,17.20)));
+    P('gh-glow','line-width', lerp(1.8,2.9,smoothstep(t,14.60,17.20)));
+  } else { P('gh-halo','line-opacity',0); P('gh-glow','line-opacity',0);
+           P('gh-core','line-opacity',0); P('gh-fill','fill-opacity',0); }
+  P('nw-br','line-opacity', 0.80*smoothstep(t,16.00,16.70)*(t<17.55?1:0));
+
+  // 여수 검출 — 신뢰도 내림차순 리빌
+  if(t>=17.55){
+    const th = lerp(0.0, 1.06, easeOut(inv(t,17.90,22.20)));
+    const rv = revealExpr('r', th, 0.10);
+    P('ye-halo','circle-opacity', ['*', 0.30, rv]);
+    P('ye-core','circle-opacity', ['*', 0.96, rv]);
+    P('ye-poly','fill-opacity',   ['*', 0.42, rv]);
+    P('ye-br','line-opacity', 0.80*smoothstep(t,20.20,21.40));
+  } else {
+    P('ye-halo','circle-opacity',0); P('ye-core','circle-opacity',0);
+    P('ye-poly','fill-opacity',0); P('ye-br','line-opacity',0);
+  }
+}
+
+/* ───────────────────────── 8. seek ───────────────────────── */
+let idle = false;
+map.on('idle', ()=>{ idle = true; });
+
+window.__film = {
+  fps:FPS, duration:DUR, frames:Math.round(DUR*FPS),
+  meta:{ greenhouseObjects:GH_OBJ, greenhouseFeatures:GH.features.length, yeosuDetections:YE.features.length },
+  segments:SEG.map(s=>({id:s.id,t0:s.t0,t1:s.t1})),
+  seek(t){
+    t = clamp(t,0,DUR);
+    const c = camAt(t);
+    ensureTerrain(t);
+    drawMapState(t);
+    // 그레이딩 톤은 우주 구간에서 거의 끄고(암부 밴딩 방지) 지상에서 올린다
+    toneEl.style.opacity = lerp(0.05, 0.28, smoothstep(t,5.20,7.60)).toFixed(3);
+    // Sentinel-2 는 여름 한반도가 매우 어둡다 — 지상 구간에서만 흑점을 들어올린다
+    map.setPaintProperty('eox','raster-brightness-min', lerp(0, 0.19, smoothstep(t,5.60,7.00)));
+    map.jumpTo({center:c.center, zoom:c.zoom, pitch:c.pitch, bearing:c.bearing});
+    drawClouds(t);
+    drawSat(t);
+    drawGrain(Math.round(t*FPS));
+    idle = false;
+    map.triggerRepaint();
+    return c;
+  },
+  // 프레임 캡처 직전 검사: 모든 타일(DEM 포함) 로드 + 렌더 큐 비었음
+  settled(){ return idle && map.loaded() && map.areTilesLoaded(); },
+};
+window.__film.seek(0);
+window.__filmReady = true;
+</script>
+</body></html>
