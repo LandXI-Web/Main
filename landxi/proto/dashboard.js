@@ -83,16 +83,26 @@ const hideProbe = () => { probeEl.hidden = true; };
 /* ── 지도 ─────────────────────────────────────────────────────────────── */
 const PLATE = await mountPlate($('#plate'));
 const map = PLATE.map;
+// e2e/검수용 핸들 — 화면 동작에는 관여하지 않는다.
+window.__atlas = { map, get reg() { return REG; }, get tiles() { return INFER.tiles; }, get runs() { return INFER.runs; }, get scrub() { return SCRUB_DATE; } };
 // 원장이 가린 만큼 카메라 중심을 오른쪽으로 민다 — 클릭한 것이 원장 뒤로 숨지 않게.
 const padded = () => ({ left: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--led')) || 380, top: 56, bottom: 72, right: 20 });
 map.setPadding(padded());
 addEventListener('resize', () => map.setPadding(padded()));
 
-/** 타일 관문 — 목적지 타일이 다 올 때까지 기다렸다가 알린다(빈 판으로 착지하지 않게). */
+/** 타일 관문 — 카메라가 멈추고 목적지 타일이 다 올 때까지 기다렸다가 알린다.
+ *  'idle' 은 쓸 수 없다: 스윕이 매 프레임 소스를 갱신하는 동안 지도는 결코 idle 이 아니다. */
+function whenSettled(done, timeout = 4000) {
+  const t0 = performance.now();
+  const poll = () => {
+    if (map.areTilesLoaded() || performance.now() - t0 > timeout) { done(); return; }
+    setTimeout(poll, 120);
+  };
+  map.once('moveend', poll);
+}
 function flyGated(opts, done) {
   map.flyTo({ duration: REDUCED() ? 0 : 1400, essential: true, ...opts });
-  const fin = () => { map.off('idle', fin); done && done(); };
-  map.on('idle', fin);
+  if (done) whenSettled(done);
 }
 
 /* 핀 호흡 — 화면당 앰비언트 하나. 가장 오래된 큐 한 줄만 숨 쉰다. */
@@ -216,8 +226,8 @@ function selectDone(id) {
     PLATE.show(['det-dot'], true);
   });
   const b = r.bbox;
-  map.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: { left: 420, top: 90, right: 60, bottom: 110 }, duration: REDUCED() ? 0 : 1400 });
-  map.once('idle', () => {
+  map.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 44, duration: REDUCED() ? 0 : 1400 });
+  whenSettled(() => {
     showCard({
       kind: '완료 · 측정',
       title: r.title,
@@ -274,7 +284,7 @@ async function enterInfer() {
   PLATE.show(['aoi-line', 'sweep-fill', 'sweep-line'], true);
   PLATE.setSweep(INFER.runs[0].sweep.features());
   // AOI 전체가 원장 오른쪽에 다 들어오게 — 스윕이 지역을 훑는 것으로 읽혀야 한다.
-  map.fitBounds(AOI_BOUNDS, { padding: { left: 430, top: 84, right: 70, bottom: 110 }, duration: REDUCED() ? 0 : 1200 });
+  map.fitBounds(AOI_BOUNDS, { padding: 36, duration: REDUCED() ? 0 : 1200 });
   cancelAnimationFrame(INFER.raf);
   INFER.last = 0;
   INFER.raf = requestAnimationFrame(inferFrame);
@@ -353,7 +363,7 @@ function trainLedger() {
     c.addEventListener('click', () => {
       document.querySelectorAll('[data-img]').forEach((x) => x.classList.toggle('is-sel', x === c));
       map.fitBounds([[i.bounds[0], i.bounds[1]], [i.bounds[2], i.bounds[3]]],
-        { padding: { left: 420, top: 90, right: 60, bottom: 110 }, duration: REDUCED() ? 0 : 1200, maxZoom: 15.5 });
+        { padding: 44, duration: REDUCED() ? 0 : 1200, maxZoom: 15.5 });
       showCard({
         kind: '영상 인벤토리',
         title: i.label,
@@ -386,9 +396,9 @@ function selectDensity(id) {
   PLATE.setGrid(g.fc, gapCells(g.fc, 100));
   PLATE.show(['grid-fill', 'grid-line', 'gap-cells'], true);
   const b = r.bbox;
-  map.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: { left: 420, top: 90, right: 60, bottom: 110 }, duration: REDUCED() ? 0 : 1400 });
+  map.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 44, duration: REDUCED() ? 0 : 1400 });
   const crop = (CROPS[id] || [])[0];
-  map.once('idle', () => showCard({
+  whenSettled(() => showCard({
     kind: '학습데이터 · Acquired',
     title: r.title,
     img: crop ? '../' + crop.file : null,
