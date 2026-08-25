@@ -244,8 +244,11 @@ body{overflow-x:hidden; color:var(--ink); font-size:var(--t-body); line-height:v
 #pins .pin.dim{opacity:.28}
 
 /* ── 결과 카드 (FIG. 02) — 3컬럼 ────────────────────────── */
-#card{position:absolute; right:var(--g); top:calc(var(--bar) + 56px);
+/* 좌측 색인과 같은 세로 예산 안에 산다 — 출처 한 줄이 룰러 밑으로 잘려 나가지 않게. */
+#card{position:absolute; right:var(--g); top:calc(var(--bar) + 40px);
+  bottom:calc(var(--foot) + 14px);
   width:calc(3 * var(--colw) + 2 * var(--gap));
+  display:flex; flex-direction:column; overflow:hidden;
   opacity:0; transition:opacity var(--v3-d1) var(--v3-ease)}
 #card.on{opacity:1}
 #card-fig{margin:0 0 14px; display:flex; gap:14px; align-items:baseline; padding-bottom:10px;
@@ -256,7 +259,7 @@ body{overflow-x:hidden; color:var(--ink); font-size:var(--t-body); line-height:v
   letter-spacing:.01em}
 /* 한글은 어절 단위로 끊는다 — '조사(항 / 공)' 같은 파열을 막는다 */
 h1,h2,h3,.display,.h2,.h4,.lead,.rb h3{word-break:keep-all; overflow-wrap:break-word}
-#card-acq{position:relative; left:auto; bottom:auto; margin:16px 0 0; width:132px}
+#card-acq{position:relative; left:auto; bottom:auto; margin:14px 0 0; width:132px; flex:none}
 #card-acq figcaption{color:var(--mute)}
 #card-acq figcaption b{color:var(--ink)}
 #card-acq::before{border-color:var(--ink)}
@@ -264,7 +267,9 @@ h1,h2,h3,.display,.h2,.h4,.lead,.rb h3{word-break:keep-all; overflow-wrap:break-
 #card-count .stat{font-size:var(--t-h2); line-height:1.1}
 #card-count .stat .c{display:inline-block; opacity:0}
 #card-count .label{color:var(--mute)}
-#card-prov{margin:16px 0 0; padding-top:12px; border-top:var(--v3-hair) solid var(--hair); color:var(--mute)}
+#card-prov{margin:auto 0 0; padding-top:10px; border-top:var(--v3-hair) solid var(--hair);
+  color:var(--mute); font-size:10px; line-height:1.45;
+  display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden}
 
 /* 클래스 행 — 헤어라인 + 단일 액센트 바 */
 .rows{margin:14px 0 0; padding:0; list-style:none}

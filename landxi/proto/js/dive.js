@@ -908,7 +908,7 @@ function figAt(p) {
     return [r.fig, `${r.sensor} · ${r.title}`, r.place, stamp(r.shot)];
   }
   // 서비스를 고른 동안에는 판 캡션도 그 결과를 가리킨다 — 캡션과 카메라가 어긋나지 않는다.
-  if (camHold && cardRow) return ['FIG. 02', `${cardRow.sensor} · ${cardRow.title}`, cardRow.place, stamp(cardRow.shot)];
+  if (camHold && cardRow) return ['FIG. 01', `${cardRow.sensor} · ${cardRow.title}`, cardRow.place, stamp(cardRow.shot)];
   let out = PLATE_FIG[0];
   for (const row of PLATE_FIG) if (p >= row[0]) out = row;
   return [out[1], out[2](), out[3](), out[4]()];
