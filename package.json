@@ -1,0 +1,13 @@
+{
+  "name": "landxi-redesign",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "serve": "node tools/serve.mjs",
+    "test:unit": "node --test tests/unit",
+    "test:e2e": "playwright test",
+    "test": "npm run test:unit && npm run test:e2e",
+    "shot": "node tools/shot.mjs"
+  },
+  "devDependencies": { "@playwright/test": "1.62.1" }
+}
