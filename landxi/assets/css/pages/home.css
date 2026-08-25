@@ -1,0 +1,172 @@
+/* 홈 v2 — 궤도(우주·다크) → 하강(일출) → 전국 서비스 HUD.
+   장면은 스크롤이 아니라 상태 기계다: body[data-scene] 이 바뀌고 .scene.is-on 만 보인다.
+   다크/라이트 전환은 장면 토큰(--scene-*) 세트 교체 + .night-veil 페이드로만 일어난다(지도 스타일은 그대로). */
+
+/* ── 장면 토큰 ─────────────────────────────────────────────── */
+.home{
+  --scene-bg:var(--mist); --scene-ink:var(--ink); --scene-ink-2:var(--ink-2); --scene-ink-3:var(--ink-3);
+  --scene-line:var(--line-strong); --scene-glass:var(--glass); --scene-glass-b:var(--glass-border);
+  --scene-accent:var(--lx);
+  --orbit-x:32%; --hero-w:min(460px,38vw);
+  height:100%;overflow:hidden;background:var(--scene-bg);color:var(--scene-ink);
+  transition:background 1.2s var(--ease),color .8s var(--ease);
+}
+.home.is-dark{
+  --scene-bg:var(--scene-dark-bg); --scene-ink:var(--scene-dark-ink); --scene-ink-2:var(--scene-dark-ink-2); --scene-ink-3:var(--scene-dark-ink-3);
+  --scene-line:var(--scene-dark-line); --scene-glass:var(--scene-dark-glass); --scene-glass-b:var(--scene-dark-glass-b);
+  --scene-accent:var(--scene-dark-accent);
+}
+html{height:100%}
+
+/* ── 지도·야간 베일·별 ─────────────────────────────────────── */
+#homeMap{position:fixed;inset:0;z-index:0}
+.night-veil{position:absolute;inset:0;z-index:4;pointer-events:none;opacity:0;transition:opacity 1.2s var(--ease);
+  background:radial-gradient(120% 108% at var(--orbit-x) 50%,rgba(14,23,38,.52),rgba(5,10,20,.96) 62%)}
+.stars{position:absolute;inset:0;z-index:5;pointer-events:none;opacity:0;transition:opacity 1.2s var(--ease);
+  background-image:radial-gradient(1.4px 1.4px at 12% 18%,rgba(255,255,255,.9),transparent),radial-gradient(1.2px 1.2px at 74% 12%,rgba(255,255,255,.7),transparent),
+    radial-gradient(1.6px 1.6px at 88% 62%,rgba(255,255,255,.8),transparent),radial-gradient(1.1px 1.1px at 62% 86%,rgba(255,255,255,.6),transparent),
+    radial-gradient(1.3px 1.3px at 34% 74%,rgba(255,255,255,.7),transparent),radial-gradient(1px 1px at 46% 34%,rgba(255,255,255,.5),transparent),
+    radial-gradient(1.5px 1.5px at 92% 28%,rgba(255,255,255,.75),transparent),radial-gradient(1px 1px at 8% 58%,rgba(255,255,255,.55),transparent),
+    radial-gradient(1.2px 1.2px at 24% 44%,rgba(255,255,255,.5),transparent),radial-gradient(1.3px 1.3px at 68% 52%,rgba(255,255,255,.45),transparent);
+  -webkit-mask-image:radial-gradient(circle at var(--orbit-x) 50%,transparent 0 24%,#000 42%);
+  mask-image:radial-gradient(circle at var(--orbit-x) 50%,transparent 0 24%,#000 42%)}
+.home.is-dark .night-veil,.home.is-dark .stars{opacity:1}
+
+/* ── 상단 바 ───────────────────────────────────────────────── */
+.home-top{position:fixed;top:0;left:0;right:0;z-index:30;height:60px;display:flex;align-items:center;gap:var(--sp-3);
+  padding:0 24px;background:var(--scene-glass);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--scene-line);color:var(--scene-ink);transition:background .8s var(--ease),border-color .8s var(--ease)}
+.home-top__brand{display:flex;align-items:center;gap:8px;font-family:var(--f-display);font-weight:900;font-size:var(--fs-16);letter-spacing:-.02em;color:inherit}
+.home-top__brand img{height:24px;width:auto;display:block}
+.home-top__brand img+span{display:none}
+.home-top__nav{display:flex;gap:4px;margin-left:auto}
+.home-top__nav button{height:34px;padding:0 12px;border:0;border-radius:var(--r-ctl);background:transparent;color:var(--scene-ink-2);font-weight:600;font-size:var(--fs-13)}
+.home-top__nav button:hover,.home-top__nav button:focus-visible{color:var(--scene-ink);background:color-mix(in srgb,currentColor 10%,transparent)}
+.home-top .btn--primary{flex:none}
+
+/* ── 장면 도트 ─────────────────────────────────────────────── */
+.scene-nav{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;gap:2px}
+.scene-nav button{display:flex;align-items:center;gap:8px;justify-content:flex-end;border:0;background:transparent;padding:6px 4px;color:var(--scene-ink-3)}
+.scene-nav i{width:8px;height:8px;border-radius:50%;border:1px solid currentColor;flex:none;transition:background var(--t-fast) var(--ease),transform var(--t-fast) var(--ease)}
+.scene-nav span{font-size:var(--fs-12);opacity:0;transform:translateX(6px);transition:opacity var(--t-fast) var(--ease),transform var(--t-fast) var(--ease);white-space:nowrap;order:-1}
+.scene-nav button:hover,.scene-nav button:focus-visible{color:var(--scene-ink)}
+.scene-nav button:hover span,.scene-nav button:focus-visible span{opacity:1;transform:none}
+.scene-nav button[aria-current=true]{color:var(--scene-accent)}
+.scene-nav button[aria-current=true] i{background:currentColor;transform:scale(1.4)}
+
+/* ── 장면 스택 ─────────────────────────────────────────────── */
+.scenes{position:fixed;inset:0;z-index:2;pointer-events:none}
+.scene{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity .7s var(--ease),visibility 0s .7s}
+.scene.is-on{opacity:1;visibility:visible;transition:opacity .7s var(--ease) .15s,visibility 0s 0s}
+.scene>*{pointer-events:auto}
+.scene-stub{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,80vw);padding:24px 26px;text-align:center}
+.scene-stub h2{margin-bottom:6px}
+
+/* ── Scene 1 · 궤도 ────────────────────────────────────────── */
+#scene-orbit::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,transparent 34%,rgba(10,17,30,.42) 52%,rgba(10,17,30,.82) 72%)}
+.orbit{position:absolute;left:0;top:0;width:calc(var(--orbit-x) * 2);height:100%;pointer-events:none;overflow:visible}
+.orbit__svg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);overflow:visible}
+.orbit__arc{fill:none;vector-effect:non-scaling-stroke}
+.orbit__arc--back{stroke:rgba(230,236,245,.16);stroke-width:1;stroke-dasharray:4 6}
+.orbit__arc--front{stroke:rgba(230,236,245,.35);stroke-width:1.2;stroke-dasharray:4 6}
+.orbit__craft{color:#E6ECF5;transition:opacity .2s linear}
+.orbit__craft.is-back{opacity:.25}
+.orbit__craft .halo{fill:rgba(120,170,255,.12)}
+.orbit__craft use{filter:drop-shadow(0 0 6px rgba(180,214,255,.55))}
+.orbit__atmo .glow{fill:none;stroke:var(--earth-glow);stroke-width:9;filter:blur(6px)}
+.orbit__atmo .edge{fill:none;stroke:rgba(150,196,255,.42);stroke-width:1.2;vector-effect:non-scaling-stroke}
+.orbit__earth{display:none}
+body[data-engine=fallback] .orbit__earth{display:block}
+.orbit__earth .ball{fill:url(#lx-earth)}
+.orbit__earth .grat{fill:none;stroke:rgba(160,196,240,.26);stroke-width:.8}
+.orbit__earth .rim{fill:none;stroke:rgba(150,196,255,.5);stroke-width:1.2}
+
+.orbit-legend{position:absolute;left:32px;bottom:92px;display:flex;flex-direction:column;gap:7px;font-size:var(--fs-12);color:var(--scene-ink-3)}
+.orbit-legend span{display:flex;align-items:center;gap:8px}
+.orbit-legend b{color:var(--scene-ink-2);font-weight:600;letter-spacing:-.01em}
+.orbit-legend .ic{opacity:.8}
+
+.hero{position:absolute;right:5vw;top:50%;transform:translateY(-50%);width:var(--hero-w);display:flex;flex-direction:column;gap:14px}
+.hero .eyebrow{margin:0;color:var(--ai);font-family:var(--f-body);font-weight:600;letter-spacing:.04em}
+.wordmark{margin:0;line-height:1}
+.wordmark__text{display:block;font-family:var(--f-display);font-weight:900;font-size:clamp(38px,3.9vw,56px);letter-spacing:-.035em;line-height:1.02}
+.wordmark__text b{color:var(--scene-accent);font-weight:900}
+.hero__motto{margin:0;font-family:var(--f-display);font-weight:800;font-size:var(--fs-20);letter-spacing:-.02em}
+.hero__desc{margin:0;color:var(--scene-ink-2);font-size:var(--fs-14);line-height:1.65;max-width:34em}
+.hero__cta{display:flex;gap:10px;margin-top:6px}
+.hero .btn--secondary{border-color:var(--scene-line);color:var(--scene-ink);background:transparent}
+.hero .btn--secondary:hover{border-color:var(--scene-ink);color:var(--scene-ink)}
+
+.orbit-strip{position:absolute;left:32px;bottom:38px;margin:0;display:flex;align-items:center;gap:18px;
+  font-size:var(--fs-12);letter-spacing:.1em;color:var(--scene-ink-3)}
+.orbit-strip__k{color:var(--ai);font-weight:500}
+.orbit-strip span+span::before{content:"·";margin-right:18px;color:var(--scene-ink-3);opacity:.5}
+.orbit-strip b{color:var(--scene-ink);font-weight:500}
+
+/* ── Scene 2 · 전국 서비스 HUD ─────────────────────────────── */
+.scene .hud{position:absolute;inset:0;z-index:6;pointer-events:none;opacity:0;visibility:hidden;
+  transition:opacity .6s var(--ease),visibility 0s .6s}
+.scene .hud.is-on{opacity:1;visibility:visible;transition:opacity .6s var(--ease),visibility 0s 0s}
+.hud__svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.hud__leader{fill:none;stroke:var(--ink-3);stroke-width:1;transition:stroke var(--t-fast) var(--ease)}
+.hud__leader.is-hot{stroke:var(--lx);stroke-width:1.4}
+
+.hud__point{position:absolute;left:0;top:0;z-index:2;width:13px;height:13px;padding:0;margin:-7px 0 0 -7px;border-radius:50%;
+  border:2px solid var(--surface);background:var(--c,var(--ai));box-shadow:0 1px 4px rgba(17,28,45,.35);pointer-events:auto;
+  transition:transform var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease),opacity var(--t-fast) var(--ease)}
+.hud__point::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:1px solid var(--c,var(--ai));opacity:0}
+.hud__point.is-pulse::after{opacity:1;animation:hud-pulse 2.6s var(--ease) infinite}
+.hud__point:hover,.hud__point.is-hot,.hud__point:focus-visible{transform:scale(1.45);box-shadow:0 0 0 4px color-mix(in srgb,var(--c,var(--ai)) 28%,transparent)}
+.hud__point.is-off{opacity:.25}
+@keyframes hud-pulse{0%{transform:scale(1);opacity:.7}70%{transform:scale(2.6);opacity:0}100%{transform:scale(2.6);opacity:0}}
+
+.hud__label{position:absolute;left:0;top:0;z-index:1;padding:6px 9px 5px;border-radius:var(--r-ctl);background:var(--glass);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--glass-border);box-shadow:var(--sh-card);
+  border-bottom:2px solid var(--c,var(--ai));
+  pointer-events:auto;cursor:pointer;white-space:nowrap;line-height:1.3;
+  transition:box-shadow var(--t-fast) var(--ease),border-color var(--t-fast) var(--ease),opacity var(--t-fast) var(--ease)}
+.hud__label b{display:block;font-size:var(--fs-12);font-weight:600;color:var(--ink);letter-spacing:-.01em}
+.hud__label .n{font-family:var(--f-mono);font-size:var(--fs-13);color:var(--ink)}
+.hud__label .n i{font-style:normal;font-size:var(--fs-12);color:var(--ink-3);margin-left:2px}
+.hud__label .m{font-family:var(--f-mono);font-size:11px;color:var(--ink-3);margin-left:8px}
+.hud__label .real{display:inline-block;margin-left:8px;padding:0 5px;border-radius:999px;font-size:10px;font-weight:600;letter-spacing:.02em;
+  background:var(--ai-soft);color:var(--ai);vertical-align:1px}
+.hud__label.is-hot{border-color:var(--lx);box-shadow:var(--sh-float);z-index:3}
+.hud__label.is-off{opacity:0;pointer-events:none}
+
+.hud__stats{position:absolute;right:56px;top:80px;z-index:8;width:212px;display:flex;flex-direction:column;gap:8px}
+.hud__stats .kpi{padding:14px 12px 10px}
+.hud__stats .kpi__value{font-size:24px}
+.hud__stats .kpi__value .unit{font-size:var(--fs-12);color:var(--ink-3);margin-left:3px}
+
+.lineup{position:absolute;left:24px;bottom:24px;z-index:8;width:min(520px,44vw);padding:14px 16px 16px}
+.lineup__head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.lineup__head h2{margin:0;font-size:var(--fs-16)}
+.lineup__count{color:var(--ink-3);font-size:var(--fs-13)}
+.lineup__guide{margin:0;margin-left:auto;font-size:var(--fs-12);color:var(--ink-2)}
+.lineup__chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.lineup .chip{height:26px;padding:0 10px;font-size:var(--fs-12);border-color:var(--line)}
+.lineup .chip:hover,.lineup .chip.is-hot{border-color:var(--lx);color:var(--lx)}
+.lineup .chip[data-real=true]::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--c,var(--ai));display:inline-block;margin-right:5px;vertical-align:1px}
+
+/* ── Scene 3 · 스토리 패널(골격만, 본문은 후속 작업) ───────── */
+.story-panel{position:absolute;right:24px;top:80px;bottom:24px;width:min(480px,42vw);display:flex;flex-direction:column;overflow:hidden}
+.story-panel__head{position:relative;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:18px 44px 12px 18px;border-bottom:1px solid var(--line)}
+.story-panel__title{margin:0;font-size:var(--fs-16)}
+.story-panel__meta{margin:0;font-size:var(--fs-12);color:var(--ink-3)}
+.story-panel__close{position:absolute;right:12px;top:12px;font-size:var(--fs-20);line-height:1}
+.story-panel__body{padding:16px 18px;overflow:auto}
+
+/* ── 반응형 ────────────────────────────────────────────────── */
+@media (max-width:1180px){
+  .home{--orbit-x:34%;--hero-w:min(400px,44vw)}
+  .hud__stats{top:72px;right:44px;width:180px}
+  .lineup{width:min(440px,54vw)}
+}
+
+/* ── 감소 모션: 자전·펄스·크로스페이드 정지 ────────────────── */
+@media (prefers-reduced-motion:reduce){
+  .home,.night-veil,.stars,.scene,.scene .hud,.home-top,.hud__point,.hud__label,.hud__leader{transition:none}
+  .hud__point.is-pulse::after{animation:none;opacity:.4}
+}
