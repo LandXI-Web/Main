@@ -1,0 +1,17 @@
+*,*::before,*::after{box-sizing:border-box}
+html{font-size:var(--fs-14)}
+body{margin:0;background:var(--mist);color:var(--ink);font-family:var(--f-body);line-height:1.55;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none} button,input,select,textarea{font:inherit;color:inherit} button{cursor:pointer}
+h1,h2,h3,h4{font-family:var(--f-display);letter-spacing:-.02em;line-height:1.15;margin:0;text-wrap:balance}
+h1{font-size:var(--fs-32);font-weight:800} h2{font-size:var(--fs-24);font-weight:800} h3{font-size:var(--fs-16);font-weight:700} h4{font-size:var(--fs-14);font-weight:700}
+.display-44{font-family:var(--f-display);font-size:var(--fs-44);font-weight:900;letter-spacing:-.03em;line-height:1.1}
+.mono{font-family:var(--f-mono);font-weight:500}
+.eyebrow{font-family:var(--f-mono);font-size:var(--fs-12);letter-spacing:.08em;color:var(--ink-3);text-transform:uppercase}
+.muted{color:var(--ink-2)} .faint{color:var(--ink-3)} .small{font-size:var(--fs-13)} .xsmall{font-size:var(--fs-12)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:2px solid var(--lx);outline-offset:2px}
+[hidden]{display:none!important}
+.rule{position:relative}
+.rule::before{content:"";position:absolute;left:0;right:0;top:0;height:5px;background:var(--rule);background-size:var(--rule-size);background-repeat:repeat-x;background-position:0 100%,0 100%;transform-origin:left;animation:rule-draw .6s var(--ease) both}
+@keyframes rule-draw{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){.rule::before{animation:none} *{scroll-behavior:auto!important}}

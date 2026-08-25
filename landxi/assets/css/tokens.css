@@ -1,0 +1,23 @@
+:root{
+  /* 색 */
+  --mist:#E9EEF1; --surface:#FFFFFF; --glass:rgba(255,255,255,.82); --glass-border:rgba(255,255,255,.75);
+  --ink:#111C2D; --ink-2:rgba(17,28,45,.68); --ink-3:rgba(17,28,45,.48);
+  --line:rgba(17,28,45,.10); --line-strong:rgba(17,28,45,.18);
+  --lx:#2457D6; --lx-deep:#193FA3; --lx-tint:#E8EEFB; --lx-rgb:36,87,214;
+  --ai:#0FA9A0; --ai-soft:rgba(15,169,160,.16);
+  --s-found:#F2622A; --s-doing:#E3A008; --s-done:#1E9E6A; --s-hold:#6B7A8C; --s-error:#D93025; --s-info:#2457D6;
+  /* 서체 */
+  --f-display:'Gothic A1',system-ui,sans-serif; --f-body:'IBM Plex Sans KR',system-ui,sans-serif; --f-mono:'IBM Plex Mono',ui-monospace,monospace;
+  --fs-12:12px; --fs-13:13px; --fs-14:14px; --fs-16:16px; --fs-20:20px; --fs-24:24px; --fs-32:32px; --fs-44:44px;
+  /* 형태 */
+  --r-ctl:6px; --r-card:10px; --r-float:14px;
+  --sh-card:0 1px 2px rgba(17,28,45,.06); --sh-float:0 10px 30px rgba(17,28,45,.10); --sh-modal:0 24px 60px rgba(17,28,45,.18);
+  --sp-1:8px; --sp-2:16px; --sp-3:24px; --sp-4:32px;
+  /* 쉘 */
+  --rail-w:64px; --ctx-h:48px; --secondary-w:232px; --panel-w:392px; --rulebar-h:36px;
+  /* 시그니처 눈금자 */
+  --rule:repeating-linear-gradient(90deg,var(--line-strong) 0 1px,transparent 1px 10px),repeating-linear-gradient(90deg,var(--ink) 0 1px,transparent 1px 50px);
+  --rule-size:10px 3px,50px 5px;
+  /* 모션 */
+  --ease:cubic-bezier(.2,.8,.2,1); --t-fast:.15s; --t-base:.3s; --t-cam:1.2s;
+}
