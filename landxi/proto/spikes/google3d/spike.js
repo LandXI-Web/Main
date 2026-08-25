@@ -146,15 +146,21 @@ $('places').addEventListener('click', (e) => {
 });
 
 const lenis = new Lenis({ lerp: 0.075, wheelMultiplier: 0.9 });
-lenis.on('scroll', ({ scroll, limit }) => { progress = limit ? scroll / limit : 0; apply(progress); });
+let locked = false;   // 자동 촬영 중에는 관성 스크롤이 레일을 밀지 못하게 잠근다
+lenis.on('scroll', ({ scroll, limit }) => {
+  if (locked) return;
+  progress = limit ? scroll / limit : 0; apply(progress);
+});
 (function raf(t) { lenis.raf(t); requestAnimationFrame(raf); })(0);
 gsap.ticker.lagSmoothing(0);   // 타일 로딩으로 프레임이 튈 때 레일이 점프하지 않게
 
 // 스크린샷 자동화용 훅
 window.__spikeSeek = (t) => {
-  lenis.scrollTo(t * (document.body.scrollHeight - innerHeight), { immediate: true });
+  locked = true;
+  lenis.scrollTo(t * (document.body.scrollHeight - innerHeight), { immediate: true, force: true });
   progress = t; apply(t);
 };
+window.__spikeUnlock = () => { locked = false; };
 window.__spikePlace = setPlace;
 
 // ── 계측 ────────────────────────────────────────────────────────────────────

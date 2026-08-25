@@ -1,0 +1,176 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>커버리지 프로브 — Google Photorealistic 3D Tiles</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root{--ink:#12151a;--paper:#f7f5f0;--hot:#b8860b;--ok:#1a7f4b;--bad:#c0392b;--line:#dcd7cc}
+  body{margin:0;background:var(--paper);color:var(--ink);
+       font:14px/1.65 "Pretendard","Helvetica Neue",system-ui,sans-serif;padding:40px 32px;max-width:1080px}
+  h1{font-size:26px;letter-spacing:-.02em;margin:0 0 4px}
+  .sub{opacity:.6;font-size:13px;margin-bottom:24px}
+  table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;margin:18px 0}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}
+  th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.55;border-bottom:2px solid var(--ink)}
+  td.n{text-align:right}
+  .ok{color:var(--ok);font-weight:700} .bad{color:var(--bad);font-weight:700} .warn{color:var(--hot);font-weight:700}
+  code{background:#ece8de;padding:2px 6px;border-radius:4px;font-size:12px}
+  .note{background:#fff;border:1px solid var(--line);border-left:3px solid var(--hot);padding:14px 18px;border-radius:0 8px 8px 0;margin:20px 0}
+  button{all:unset;cursor:pointer;background:var(--ink);color:var(--paper);padding:9px 18px;border-radius:999px;font-size:13px;font-weight:600}
+  #log{white-space:pre-wrap;font:12px/1.6 ui-monospace,Menlo,monospace;background:#fff;border:1px solid var(--line);
+       border-radius:8px;padding:14px;max-height:320px;overflow:auto;margin-top:16px}
+</style>
+
+<h1>커버리지 프로브</h1>
+<div class="sub">Google Photorealistic 3D Tiles — 국내 지점별 <b>실제로 내려오는 최심 LOD</b> 측정</div>
+
+<div class="note">
+  <b>무엇을 재는가.</b> 루트 타일셋에서 목표 좌표를 포함하는 자식만 따라 내려가며,
+  더 이상 자식이 없을 때까지의 <b>깊이</b>와 <b>geometricError(m)</b>를 기록한다.
+  geometricError 가 <b>수 m 이하</b>까지 내려가면 건물 형상이 있는 <b>메시</b>,
+  <b>수십 m</b>에서 멈추면 지형 위에 정사영상만 덮인 <b>2.5D</b>다.
+  집(처마·벽면) 스케일은 대략 <b>geometricError ≤ 4 m</b> 이 기준선이다.
+</div>
+
+<p><button id="run">프로브 실행</button>
+   <span id="keystate" style="margin-left:14px"></span></p>
+
+<table id="t">
+  <thead><tr><th>지점</th><th>좌표</th><th class="n">깊이</th><th class="n">최심 geometricError</th>
+             <th class="n">타일셋 요청</th><th>판정</th></tr></thead>
+  <tbody></tbody>
+</table>
+
+<div id="log"></div>
+
+<script type="module">
+import { PLACES } from './rail.js';
+
+const KEY = (() => {
+  const q = new URL(location.href).searchParams.get('key');
+  if (q) { try { localStorage.setItem('GOOGLE_MAPS_KEY', q); } catch {} return q; }
+  try { const s = localStorage.getItem('GOOGLE_MAPS_KEY'); if (s) return s; } catch {}
+  return window.GOOGLE_MAPS_KEY || '';
+})();
+
+// 대조군 — 커버리지가 확실한 도시를 같이 재야 "한국이 안 나온다"가 증명된다
+const TARGETS = [
+  ...Object.values(PLACES).map((p) => ({ name: p.name, lon: p.zlon ?? p.lon, lat: p.zlat ?? p.lat, kr: true })),
+  { name: '도쿄(대조군)',      lon: 139.7454, lat: 35.6586, kr: false },
+  { name: '샌프란시스코(대조군)', lon: -122.4030, lat: 37.7930, kr: false },
+];
+
+const log = (s) => { document.getElementById('log').textContent += s + '\n'; };
+const A = 6378137.0, B = 6356752.314245;
+
+// 위경도 → ECEF (타일 경계상자가 ECEF 기준이라 좌표계를 맞춰야 한다)
+function ecef(lonDeg, latDeg, h = 0) {
+  const lon = lonDeg * Math.PI / 180, lat = latDeg * Math.PI / 180;
+  const e2 = 1 - (B * B) / (A * A);
+  const N = A / Math.sqrt(1 - e2 * Math.sin(lat) ** 2);
+  return [(N + h) * Math.cos(lat) * Math.cos(lon),
+          (N + h) * Math.cos(lat) * Math.sin(lon),
+          (N * (1 - e2) + h) * Math.sin(lat)];
+}
+
+// 타일 경계상자(box: 중심 3 + 반축 벡터 9)에 점이 들어가는가
+function inBox(box, p) {
+  const c = box.slice(0, 3);
+  const d = [p[0] - c[0], p[1] - c[1], p[2] - c[2]];
+  for (let i = 0; i < 3; i++) {
+    const ax = box.slice(3 + i * 3, 6 + i * 3);
+    const len = Math.hypot(...ax);
+    if (len === 0) continue;
+    const proj = (d[0] * ax[0] + d[1] * ax[1] + d[2] * ax[2]) / len;
+    if (Math.abs(proj) > len * 1.02) return false;   // 2% 여유 — 경계 걸침 허용
+  }
+  return true;
+}
+function inRegion(reg, lonDeg, latDeg) {
+  const lon = lonDeg * Math.PI / 180, lat = latDeg * Math.PI / 180;
+  return lon >= reg[0] && lon <= reg[2] && lat >= reg[1] && lat <= reg[3];
+}
+function contains(bv, lon, lat) {
+  if (!bv) return true;
+  if (bv.region) return inRegion(bv.region, lon, lat);
+  if (bv.box) return inBox(bv.box, ecef(lon, lat));
+  return true;   // sphere 등은 통과시키고 자식에서 걸러낸다
+}
+
+let session = '';
+async function getJson(url, state) {
+  const u = new URL(url, 'https://tile.googleapis.com');
+  u.searchParams.set('key', KEY);
+  if (session) u.searchParams.set('session', session);
+  const r = await fetch(u);
+  state.reqs++;
+  if (!r.ok) throw new Error(r.status + ' ' + (await r.text()).slice(0, 160));
+  const j = await r.json();
+  // 세션 토큰은 첫 응답의 자식 uri 안에 들어 있다 — 이후 요청에 계속 붙여야 한다
+  if (!session) {
+    const m = JSON.stringify(j).match(/[?&]session=([^"&]+)/);
+    if (m) { session = m[1]; log('  session=' + session.slice(0, 12) + '…'); }
+  }
+  return j;
+}
+
+// 목표 좌표를 포함하는 자식만 따라 내려간다
+async function descend(tile, lon, lat, state, depth = 0) {
+  if (depth > 28) return;
+  state.depth = Math.max(state.depth, depth);
+  if (typeof tile.geometricError === 'number' && tile.geometricError > 0)
+    state.minGE = Math.min(state.minGE, tile.geometricError);
+
+  // content 가 다른 타일셋(json)이면 이어서 펼친다
+  const uri = tile.content && (tile.content.uri || tile.content.url);
+  if (uri && /\.json/.test(uri)) {
+    try {
+      const sub = await getJson(uri, state);
+      if (sub.root) return descend(sub.root, lon, lat, state, depth + 1);
+    } catch (e) { state.err = e.message; return; }
+  }
+  const kids = (tile.children || []).filter((c) => contains(c.boundingVolume, lon, lat));
+  for (const c of kids) await descend(c, lon, lat, state, depth + 1);
+}
+
+async function probe(t) {
+  session = '';
+  const state = { depth: 0, minGE: Infinity, reqs: 0, err: null };
+  log('▸ ' + t.name + ' (' + t.lon.toFixed(4) + ', ' + t.lat.toFixed(4) + ')');
+  try {
+    const root = await getJson('/v1/3dtiles/root.json', state);
+    await descend(root.root, t.lon, t.lat, state);
+  } catch (e) { state.err = e.message; }
+  log('  깊이=' + state.depth + '  최심 GE=' +
+      (isFinite(state.minGE) ? state.minGE.toFixed(2) + 'm' : '—') +
+      '  요청=' + state.reqs + (state.err ? '  err=' + state.err : ''));
+  return state;
+}
+
+function verdict(ge) {
+  if (!isFinite(ge)) return ['bad', '데이터 없음'];
+  if (ge <= 4)  return ['ok',   '메시 — 집 스케일 O'];
+  if (ge <= 15) return ['warn', '거친 메시 — 건물 덩어리만'];
+  return ['bad', '2.5D — 정사영상만'];
+}
+
+document.getElementById('keystate').innerHTML = KEY
+  ? '<span class="ok">키 감지됨</span>'
+  : '<span class="bad">키 없음</span> — <code>?key=…</code> 또는 <code>localStorage.GOOGLE_MAPS_KEY</code> 로 주입하세요.';
+
+document.getElementById('run').onclick = async () => {
+  if (!KEY) { alert('GOOGLE_MAPS_KEY 가 없습니다.'); return; }
+  const tb = document.querySelector('#t tbody'); tb.innerHTML = '';
+  document.getElementById('log').textContent = '';
+  for (const t of TARGETS) {
+    const s = await probe(t);
+    const [cls, txt] = verdict(s.minGE);
+    tb.insertAdjacentHTML('beforeend',
+      '<tr><td>' + t.name + '</td><td>' + t.lon.toFixed(4) + ', ' + t.lat.toFixed(4) + '</td>' +
+      '<td class="n">' + s.depth + '</td>' +
+      '<td class="n">' + (isFinite(s.minGE) ? s.minGE.toFixed(2) + ' m' : '—') + '</td>' +
+      '<td class="n">' + s.reqs + '</td>' +
+      '<td class="' + cls + '">' + txt + '</td></tr>');
+  }
+  log('\n※ 루트 타일셋 요청 ' + TARGETS.length + '건 = 과금 이벤트 ' + TARGETS.length + '건.');
+};
+</script>
