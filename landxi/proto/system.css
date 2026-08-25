@@ -1,0 +1,442 @@
+/* ============================================================================
+   Land-XI 컴포넌트 시트 — 에디토리얼 아틀라스, 흰 종이 위
+   근거(실측):
+     docs/superpowers/research/2026-08-25-benchmark-vantor.md  §1 서체 · §2.2 스케일 · §2.3 색 · §2.4 그리드 · §4 모션
+     docs/superpowers/specs/2026-08-25-client-taste-profile.md §4 체계 v3 · §5 판정 규칙
+     docs/superpowers/research/2026-08-25-bench-alive.md       호버 180ms · 텍스트 인 600ms/60ms 스태거
+   규칙: border-radius 0 · box-shadow 0 · gradient 0 · 이징 1개 · 액센트 1개.
+        구획은 1px 헤어라인과 면 반전으로만 한다.
+   ========================================================================= */
+@import url('v3-tokens.css');
+
+/* ── 0. 토큰 ─────────────────────────────────────────────────────────────── */
+:root{
+  /* 색 — Vantor §2.3 실측 + LX 액센트 */
+  --lx-ink:#010102;            /* 순흑이 아니라 파랑 1 섞인 흑 */
+  --lx-paper:#FFFFFF;
+  --lx-grey:#CCCCCC;           /* light-grey */
+  --lx-grey-2:#686868;         /* dark-grey */
+  --lx-hair:#DDDDDD;           /* light-stroke */
+  --lx-hair-dark:#272727;      /* dark-stroke */
+  --lx-wash:rgba(1,1,2,.04);   /* 그리드 도해 전용 */
+  --lx-accent:#006DF7;         /* LX 블루 — 데이터가 살아 있음을 표시하는 색 */
+  --lx-amber:#FFB633;          /* 탐지 순간에만 */
+
+  /* 서체 — 3종, 각 1웨이트 */
+  --lx-display:"SUIT","Pretendard",system-ui,sans-serif;   /* 500 only */
+  --lx-body:"Pretendard",system-ui,sans-serif;             /* 400 only */
+  --lx-num:"Inter","Pretendard",system-ui,sans-serif;      /* 400, tabular */
+
+  /* 타이포 스케일 — 1024/1280/1440/1920 전부 동일(fluid 금지) */
+  --lx-h1:64px;    --lx-h1-lh:80px;      --lx-h1-ls:-0.16px;
+  --lx-h2:52px;    --lx-h2-lh:57.2px;    --lx-h2-ls:-0.52px;
+  --lx-h4:28px;    --lx-h4-lh:36.4px;    --lx-h4-ls:0.28px;
+  --lx-h5:24px;    --lx-h5-lh:31.2px;    --lx-h5-ls:-0.16px;
+  --lx-name:16px;  --lx-name-lh:20px;    --lx-name-ls:-0.16px;
+  --lx-nav:14px;   --lx-nav-lh:14px;     --lx-nav-ls:0.24px;
+  --lx-lead:20px;  --lx-lead-lh:29px;    --lx-lead-ls:-0.2px;
+  --lx-fs:16px;    --lx-lh:23.2px;       --lx-ls:-0.16px;
+  --lx-label:12px; --lx-label-lh:13.2px; --lx-label-ls:0.12px;
+  --lx-cap:12px;   --lx-cap-lh:16.8px;   --lx-cap-ls:-0.12px;
+  --lx-stat:124px; --lx-stat-lh:142.6px; --lx-stat-ls:-1.24px;
+
+  /* 그리드 — 12컬럼 · 여백 64 @1440 · 거터 24 (1컬럼 87.33px) */
+  --lx-cols:12;
+  --lx-margin:64px;
+  --lx-gutter:24px;
+  --lx-max:none;
+  --lx-measure:800px;          /* 헤드라인 블록 고정 폭 */
+
+  /* 여백 — 섹션 상단 160 / 하단 120 */
+  --lx-sec-t:160px;
+  --lx-sec-b:120px;
+  --lx-head-gap:64px;
+  --lx-bar:79px;               /* 유일한 크롬의 높이 */
+
+  /* 모션 — 이징 1개, 지속 4계단 */
+  --lx-ease:cubic-bezier(.15,1,.3,1);
+  --lx-d1:500ms; --lx-d2:750ms; --lx-d3:1000ms; --lx-d4:1250ms;
+  --lx-hover:180ms; --lx-hover-ease:cubic-bezier(.22,1,.36,1);
+  --lx-reveal:600ms; --lx-step:60ms;   /* 텍스트 인 */
+  --lx-char:40ms;                      /* 숫자 글자별 현상 */
+
+  /* 형태 — 없음 */
+  --lx-radius:0;
+  --lx-hair-w:1px;
+  --lx-bracket:12px;
+  /* 정사영상 그레이딩 — AI 가 본 곳만 색이 산다 */
+  --lx-grade:saturate(.22) contrast(1.10) brightness(.98);
+}
+/* 브레이크포인트: 타입 스케일은 고정, 여백만 움직인다 */
+@media (max-width:1439.98px){ :root{ --lx-margin:48px; --lx-sec-t:120px; --lx-sec-b:96px; } }
+@media (max-width:1279.98px){ :root{ --lx-margin:32px; } }
+@media (min-width:1920px){    :root{ --lx-margin:80px; --lx-max:1920px; } }
+
+/* ── 1. 바탕 ─────────────────────────────────────────────────────────────── */
+*,*::before,*::after{ box-sizing:border-box; border-radius:0; box-shadow:none; }
+html{ -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; scroll-behavior:smooth; }
+body.lx{
+  margin:0; background:var(--lx-paper); color:var(--lx-ink);
+  font-family:var(--lx-body); font-weight:400;
+  font-size:var(--lx-fs); line-height:var(--lx-lh); letter-spacing:var(--lx-ls);
+}
+.lx img{ display:block; max-width:100%; }
+.lx ::selection{ background:var(--lx-ink); color:var(--lx-paper); }
+.lx-skip{ position:absolute; left:-9999px; top:0; background:var(--lx-ink); color:#fff; padding:12px 16px; z-index:99; }
+.lx-skip:focus{ left:0; }
+.lx :focus-visible{ outline:1px solid var(--lx-accent); outline-offset:3px; }
+
+/* ── 2. 그리드 ───────────────────────────────────────────────────────────── */
+.lx-grid{
+  width:100%; max-width:var(--lx-max); margin-inline:auto;
+  padding-inline:var(--lx-margin);
+  display:grid; grid-template-columns:repeat(var(--lx-cols),minmax(0,1fr));
+  column-gap:var(--lx-gutter);
+}
+.lx-c2{ grid-column:span 2 } .lx-c3{ grid-column:span 3 } .lx-c4{ grid-column:span 4 }
+.lx-c5{ grid-column:span 5 } .lx-c6{ grid-column:span 6 } .lx-c7{ grid-column:span 7 }
+.lx-c8{ grid-column:span 8 } .lx-c12{ grid-column:1/-1 }
+@media (max-width:1279.98px){
+  .lx-c3,.lx-c4,.lx-c5{ grid-column:span 6 } .lx-c7,.lx-c8{ grid-column:1/-1 }
+}
+
+/* 그리드 도해 */
+.lx-gridspec{ grid-column:1/-1; display:grid; grid-template-columns:repeat(var(--lx-cols),minmax(0,1fr)); column-gap:var(--lx-gutter); margin-top:26px; }
+.lx-gridspec i{ display:block; height:184px; background:var(--lx-wash); position:relative; font-style:normal; }
+.lx-gridspec i::after{
+  content:attr(data-n); position:absolute; left:0; top:-22px;
+  font-family:var(--lx-num); font-size:var(--lx-label); line-height:var(--lx-label-lh);
+  letter-spacing:var(--lx-label-ls); color:var(--lx-grey-2);
+}
+
+/* ── 3. 타이포 프리미티브 ────────────────────────────────────────────────── */
+.lx-h1{ margin:0; font-family:var(--lx-display); font-weight:500; font-size:var(--lx-h1); line-height:var(--lx-h1-lh); letter-spacing:var(--lx-h1-ls); }
+.lx-h2{ margin:0; font-family:var(--lx-display); font-weight:500; font-size:var(--lx-h2); line-height:var(--lx-h2-lh); letter-spacing:var(--lx-h2-ls); max-width:var(--lx-measure); }
+.lx-h4{ margin:0; font-family:var(--lx-display); font-weight:500; font-size:var(--lx-h4); line-height:var(--lx-h4-lh); letter-spacing:var(--lx-h4-ls); }
+.lx-h5{ margin:0; font-family:var(--lx-display); font-weight:500; font-size:var(--lx-h5); line-height:var(--lx-h5-lh); letter-spacing:var(--lx-h5-ls); }
+.lx-nm{ font-family:var(--lx-display); font-weight:500; font-size:var(--lx-name); line-height:var(--lx-name-lh); letter-spacing:var(--lx-name-ls); }
+.lx-lead{ margin:0; font-size:var(--lx-lead); line-height:var(--lx-lead-lh); letter-spacing:var(--lx-lead-ls); max-width:var(--lx-measure); }
+.lx-body{ margin:0; font-size:var(--lx-fs); line-height:var(--lx-lh); letter-spacing:var(--lx-ls); }
+.lx-cap{ margin:0; font-family:var(--lx-num); font-size:var(--lx-cap); line-height:var(--lx-cap-lh); letter-spacing:var(--lx-cap-ls); color:var(--lx-grey-2); }
+.lx-num{ font-family:var(--lx-num); font-variant-numeric:tabular-nums; letter-spacing:0; }
+.lx-muted{ color:var(--lx-grey-2) }
+.lx-em{ color:var(--lx-ink) }
+
+/* 섹션 라벨 + 레티클 불릿 */
+.lx-label{
+  margin:0; display:inline-flex; align-items:center; gap:10px;
+  font-family:var(--lx-num); font-size:var(--lx-label); line-height:var(--lx-label-lh);
+  letter-spacing:var(--lx-label-ls); text-transform:uppercase; color:var(--lx-grey-2);
+}
+.lx-ret{ width:9px; height:9px; border:1px solid var(--lx-grey); border-radius:50%; position:relative; flex:none; transition:border-color var(--lx-d1) var(--lx-ease); }
+.lx-ret::after{ content:""; position:absolute; inset:2px; border-radius:50%; background:var(--lx-grey); transition:background var(--lx-d1) var(--lx-ease); }
+.is-in .lx-ret,.lx-ret.is-in{ border-color:var(--lx-ink) }
+.is-in .lx-ret::after,.lx-ret.is-in::after{ background:var(--lx-ink) }
+
+/* ── 4. 마스트헤드 ───────────────────────────────────────────────────────── */
+.lx-masthead{ position:sticky; top:0; z-index:60; background:var(--lx-paper); border-bottom:var(--lx-hair-w) solid var(--lx-hair); }
+/* 헤어라인까지 포함해 정확히 79px */
+.lx-masthead__in{ height:calc(var(--lx-bar) - var(--lx-hair-w)); align-items:center; }
+.lx-masthead__mark{ grid-column:span 2; font-family:var(--lx-display); font-weight:500; font-size:var(--lx-name); line-height:var(--lx-name-lh); letter-spacing:.16px; text-decoration:none; color:var(--lx-ink); }
+.lx-masthead__nav{ grid-column:span 6; display:flex; gap:32px; align-items:center; }
+.lx-masthead__meta{ grid-column:span 4; display:flex; justify-content:flex-end; align-items:center; gap:20px; }
+.lx-nav{ font-family:var(--lx-display); font-weight:500; font-size:var(--lx-nav); line-height:var(--lx-nav-lh); letter-spacing:var(--lx-nav-ls); color:var(--lx-ink); text-decoration:none; }
+.lx-nav[aria-current]{ color:var(--lx-ink) }
+@media (max-width:1279.98px){ .lx-masthead__nav{ display:none } .lx-masthead__meta{ grid-column:span 10 } }
+
+/* ● LIVE — 점과 링을 분리한 두 트랙(Vantor §4.2) */
+.lx-live{ display:inline-flex; align-items:center; gap:10px; font-family:var(--lx-num); font-size:var(--lx-label); line-height:var(--lx-label-lh); letter-spacing:var(--lx-label-ls); color:var(--lx-ink); }
+.lx-live i{ position:relative; width:6px; height:6px; border-radius:50%; background:var(--lx-accent); flex:none; animation:lx-pulse-dot 6s var(--lx-ease) infinite; }
+.lx-live i::after{ content:""; position:absolute; inset:-1px; border:1px solid var(--lx-accent); border-radius:50%; animation:lx-pulse-ring 6s var(--lx-ease) infinite; }
+@keyframes lx-pulse-dot{ 0%{opacity:.6;transform:scale(.7)} 50%{opacity:1;transform:scale(1)} 100%{opacity:.6;transform:scale(.7)} }
+@keyframes lx-pulse-ring{ 0%{opacity:0;transform:scale(1)} 50%{opacity:.6} 100%{opacity:0;transform:scale(2.6)} }
+
+/* ── 5. 섹션 ─────────────────────────────────────────────────────────────── */
+.lx-section{ padding-top:var(--lx-sec-t); padding-bottom:var(--lx-sec-b); border-top:var(--lx-hair-w) solid var(--lx-hair); }
+.lx-section--open{ border-top:0; padding-top:120px; }
+.lx-section--flush{ padding-bottom:0 }
+.lx-sec__head{ grid-column:1/-1; margin-bottom:var(--lx-head-gap); }
+.lx-sec__head .lx-h2{ margin-top:26px }
+.lx-sec__head .lx-lead{ margin-top:26px; color:var(--lx-grey-2) }
+.lx-sec__aside{ grid-column:span 3 }
+.lx-sec__main{ grid-column:5/-1 }
+.lx-sec__aside .lx-body{ color:var(--lx-grey-2) }
+@media (max-width:1279.98px){
+  .lx-sec__aside{ grid-column:1/-1; margin-bottom:48px }
+  .lx-sec__main{ grid-column:1/-1 }
+}
+
+/* 스펙 표 — 실측값 명세 */
+.lx-spec{ margin:32px 0 0 }
+.lx-spec div{ display:flex; justify-content:space-between; gap:16px; padding:9px 0; border-top:var(--lx-hair-w) solid var(--lx-hair); }
+.lx-spec div:last-child{ border-bottom:var(--lx-hair-w) solid var(--lx-hair) }
+.lx-spec dt{ font-family:var(--lx-num); font-size:var(--lx-cap); line-height:var(--lx-cap-lh); letter-spacing:var(--lx-cap-ls); color:var(--lx-grey-2); }
+.lx-spec dd{ margin:0; font-family:var(--lx-num); font-variant-numeric:tabular-nums; font-size:var(--lx-cap); line-height:var(--lx-cap-lh); color:var(--lx-ink); text-align:right; }
+.lx-spec--type dt{ color:var(--lx-ink) }
+.lx-spec--type div{ padding:20px 0 }
+.lx-spec--stack{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); column-gap:var(--lx-gutter) }
+.lx-spec--stack div{ display:block; padding-top:13px; padding-bottom:0 }
+.lx-spec--stack dd{ text-align:left; margin-top:7px; font-size:var(--lx-fs); line-height:var(--lx-lh); letter-spacing:var(--lx-ls) }
+@media (max-width:1279.98px){ .lx-spec--stack{ grid-template-columns:repeat(2,minmax(0,1fr)) } }
+
+/* ── 6. 헤드라인 블록 — 줄 단위 clip-path 리빌 ───────────────────────────── */
+.lx-line{ display:block; clip-path:inset(-5px 0 -5px 0); overflow:clip; }
+.lx-line > i{ display:block; font-style:normal; transform:translateY(105%); transition:transform var(--lx-d3) var(--lx-ease); }
+.lx-lines.is-in .lx-line > i{ transform:translateY(0) }
+
+/* 스크롤 리빌 — translateY(20px)→0, 600ms, 60ms 스태거 */
+[data-reveal]{ opacity:0; transform:translateY(20px); transition:opacity var(--lx-reveal) var(--lx-ease), transform var(--lx-reveal) var(--lx-ease); }
+[data-reveal].is-in{ opacity:1; transform:none }
+
+/* ── 7. FIG 플레이트 ─────────────────────────────────────────────────────── */
+.lx-fig{ border:var(--lx-hair-w) solid var(--lx-hair); background:var(--lx-paper); }
+.lx-fig__cap{ display:flex; align-items:baseline; gap:16px; padding:13px 16px; border-bottom:var(--lx-hair-w) solid var(--lx-hair); }
+.lx-fig__no{ font-family:var(--lx-num); font-size:var(--lx-label); line-height:var(--lx-label-lh); letter-spacing:var(--lx-label-ls); color:var(--lx-ink); flex:none; }
+.lx-fig__meta{ font-family:var(--lx-num); font-size:var(--lx-cap); line-height:var(--lx-cap-lh); letter-spacing:var(--lx-cap-ls); color:var(--lx-grey-2); }
+.lx-fig__meta b{ font-weight:400; color:var(--lx-ink) }
+.lx-fig__right{ margin-left:auto; font-family:var(--lx-num); font-size:var(--lx-cap); line-height:var(--lx-cap-lh); color:var(--lx-grey-2); flex:none }
+.lx-fig__slot,.lx-plate{ display:block; position:relative; overflow:hidden; background:var(--lx-ink); aspect-ratio:16/9; }
+.lx-fig__foot{ display:flex; gap:20px; align-items:baseline; padding:11px 16px; border-top:var(--lx-hair-w) solid var(--lx-hair); font-family:var(--lx-num); font-size:var(--lx-cap); line-height:var(--lx-cap-lh); letter-spacing:var(--lx-cap-ls); color:var(--lx-grey-2); }
+.lx-fig__foot b{ font-weight:400; color:var(--lx-ink) }
+
+/* 타일 모자이크 — 실제 정사영상 타일을 사진 원판처럼 한 장으로 깐다 */
+.lx-mosaic{ position:absolute; left:0; top:50%; width:100%; transform:translateY(-50%); display:grid; gap:0; line-height:0; filter:var(--lx-grade); }
+.lx-mosaic img{ width:100%; height:auto; display:block }
+.lx-mosaic--raw{ filter:none }
+
+/* 크롭 마크(광역 안의 근접 위치) */
+.lx-fig__mark{ position:absolute; border:1px solid rgba(255,255,255,.85); pointer-events:none; z-index:2 }
+.lx-fig__mark::before,.lx-fig__mark::after{ content:""; position:absolute; width:7px; height:7px; border:1px solid var(--lx-amber) }
+.lx-fig__mark::before{ left:-1px; top:-1px; border-right:0; border-bottom:0 }
+.lx-fig__mark::after{ right:-1px; bottom:-1px; border-left:0; border-top:0 }
+
+/* Acquired 인셋 — 축척이 안 보이면 근접을 병치한다 */
+.lx-fig__inset{ position:absolute; right:16px; bottom:16px; width:236px; margin:0; border:1px solid rgba(255,255,255,.9); background:var(--lx-ink); z-index:4 }
+.lx-fig__inset .lx-plate{ aspect-ratio:1/1 }
+.lx-fig__inset figcaption{
+  display:flex; justify-content:space-between; gap:8px; padding:6px 8px;
+  background:rgba(255,255,255,.94); color:var(--lx-ink);
+  font-family:var(--lx-num); font-size:11px; line-height:15px; letter-spacing:var(--lx-label-ls);
+}
+/* 헤어라인 스케일바 + 사람 척도 참조물 */
+.lx-scalebar{ position:absolute; left:16px; bottom:16px; z-index:4; color:#fff; font-family:var(--lx-num); font-size:11px; line-height:15px; letter-spacing:var(--lx-label-ls); }
+.lx-scalebar span{ display:block; height:5px; width:120px; border:1px solid rgba(255,255,255,.9); border-top:0; margin-bottom:5px }
+.lx-scalebar b{ font-weight:400 }
+.lx code{ font-family:var(--lx-num); font-size:inherit }
+
+/* ── 8. 색인 목록 ────────────────────────────────────────────────────────── */
+.lx-index{ border-bottom:var(--lx-hair-w) solid var(--lx-hair) }
+.lx-index__row{
+  display:grid; grid-template-columns:40px minmax(0,1fr) 132px 116px 116px 116px 28px;
+  align-items:baseline; gap:var(--lx-gutter);
+  padding:19px 0; border-top:var(--lx-hair-w) solid var(--lx-hair);
+  color:inherit; text-decoration:none;
+  transition:transform var(--lx-hover) var(--lx-hover-ease);
+}
+.lx-index__row:hover{ transform:translateX(4px) }
+.lx-index__no{ font-family:var(--lx-num); font-size:var(--lx-label); letter-spacing:var(--lx-label-ls); color:var(--lx-grey); transition:color var(--lx-hover) var(--lx-hover-ease); }
+.lx-index__row:hover .lx-index__no{ color:var(--lx-accent) }
+.lx-index__name{ font-family:var(--lx-display); font-weight:500; font-size:var(--lx-name); line-height:var(--lx-name-lh); letter-spacing:var(--lx-name-ls); }
+.lx-index__org{ font-family:var(--lx-num); font-size:var(--lx-cap); line-height:var(--lx-cap-lh); letter-spacing:var(--lx-cap-ls); color:var(--lx-grey-2) }
+.lx-index__n{ text-align:right; font-family:var(--lx-num); font-variant-numeric:tabular-nums; font-size:var(--lx-fs); line-height:var(--lx-name-lh); letter-spacing:0 }
+.lx-index__n em{ font-style:normal; font-size:var(--lx-cap); color:var(--lx-grey-2); margin-left:5px }
+.lx-index__arw{ font-family:var(--lx-num); font-size:var(--lx-cap); color:var(--lx-grey); text-align:right; transition:transform var(--lx-hover) var(--lx-hover-ease), color var(--lx-hover) var(--lx-hover-ease); }
+.lx-index__row:hover .lx-index__arw{ transform:translateX(4px); color:var(--lx-ink) }
+.lx-index__tag{ align-self:center }
+.lx-index__tag .lx-chip{ height:22px; padding:0 9px; font-size:11px }
+.lx-index__when{ font-family:var(--lx-num); font-size:var(--lx-cap); line-height:var(--lx-cap-lh); letter-spacing:var(--lx-cap-ls); color:var(--lx-grey-2) }
+@media (max-width:1439.98px){
+  .lx-index__row{ grid-template-columns:36px minmax(0,1fr) 132px 116px 112px 24px }
+  .lx-index__tag{ display:none }
+}
+@media (max-width:1279.98px){
+  .lx-index__row{ grid-template-columns:32px minmax(0,1fr) 108px 100px 20px }
+  .lx-index__when{ display:none }
+}
+
+/* ── 9. 통계 ─────────────────────────────────────────────────────────────── */
+/* 한 행에 숫자 하나. 행 높이의 절반 이상이 비어 있어야 한다(Vantor §2.4) */
+.lx-stat{
+  grid-column:1/-1; display:grid; grid-template-columns:repeat(var(--lx-cols),minmax(0,1fr));
+  column-gap:var(--lx-gutter); align-items:end;
+  border-top:var(--lx-hair-w) solid var(--lx-hair); padding:56px 0 104px;
+}
+.lx-stat__v{ grid-column:1/8; margin:0 }
+.lx-stat__side{ grid-column:9/-1; padding-bottom:16px }
+.lx-stat__n{
+  display:inline-block; font-family:var(--lx-num); font-weight:400;
+  font-size:var(--lx-stat); line-height:var(--lx-stat-lh); letter-spacing:var(--lx-stat-ls);
+  font-variant-numeric:tabular-nums;
+}
+.lx-stat__ch{ display:inline-block; color:var(--lx-grey); opacity:0; transform:translateY(6px);
+  transition:opacity var(--lx-d1) var(--lx-ease), transform var(--lx-d1) var(--lx-ease), color var(--lx-d2) var(--lx-ease); }
+.lx-stat__ch.is-in{ opacity:1; transform:none; color:var(--lx-ink) }
+.lx-stat__ch.is-pad{ opacity:0 }
+.lx-stat__u{ font-family:var(--lx-display); font-weight:500; font-size:var(--lx-h5); line-height:var(--lx-h5-lh); letter-spacing:var(--lx-h5-ls); margin-left:10px }
+.lx-stat__t{ margin:0; color:var(--lx-grey-2) }
+@media (max-width:1279.98px){
+  :root{ --lx-stat:88px; --lx-stat-lh:101px; --lx-stat-ls:-0.88px }
+  .lx-stat{ padding:40px 0 72px }
+  .lx-stat__v,.lx-stat__side{ grid-column:1/-1 }
+  .lx-stat__side{ padding-bottom:0; margin-top:20px }
+}
+
+/* ── 10. 클래스 행 ───────────────────────────────────────────────────────── */
+.lx-class{ border-bottom:var(--lx-hair-w) solid var(--lx-hair) }
+.lx-class__row{ display:grid; grid-template-columns:minmax(0,1fr) 280px 80px 66px; align-items:center; gap:var(--lx-gutter); padding:13px 0; border-top:var(--lx-hair-w) solid var(--lx-hair); }
+.lx-class__k{ font-family:var(--lx-num); font-size:var(--lx-fs); line-height:var(--lx-name-lh); letter-spacing:0 }
+.lx-class__bar{ position:relative; height:8px; border-bottom:var(--lx-hair-w) solid var(--lx-hair) }
+.lx-class__bar i{ position:absolute; left:0; bottom:0; top:0; width:0; background:var(--lx-accent); transition:width var(--lx-d2) var(--lx-ease) }
+.lx-class__n{ text-align:right; font-family:var(--lx-num); font-variant-numeric:tabular-nums; letter-spacing:0 }
+.lx-class__p{ text-align:right; font-family:var(--lx-num); font-variant-numeric:tabular-nums; font-size:var(--lx-cap); color:var(--lx-grey-2) }
+@media (max-width:1279.98px){ .lx-class__row{ grid-template-columns:minmax(0,1fr) 128px 72px 58px } }
+
+/* ── 11. 슬라이더 ────────────────────────────────────────────────────────── */
+.lx-slider__top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:22px }
+.lx-slider__val{ font-family:var(--lx-num); font-variant-numeric:tabular-nums; font-size:var(--lx-h5); line-height:var(--lx-h5-lh); letter-spacing:var(--lx-h5-ls) }
+.lx-slider__wrap{ position:relative; height:24px; display:flex; align-items:center }
+.lx-slider__track{ position:absolute; left:0; right:0; top:11px; height:1px; background:var(--lx-hair) }
+.lx-slider__fill{ position:absolute; left:0; top:11px; height:1px; background:var(--lx-ink); width:0 }
+.lx-slider__thumb{ position:absolute; top:6px; left:0; width:10px; height:10px; margin-left:-5px; background:var(--lx-ink); transition:background var(--lx-hover) var(--lx-hover-ease) }
+.lx-slider__wrap:hover .lx-slider__thumb,.lx-slider input:focus-visible ~ .lx-slider__thumb{ background:var(--lx-accent) }
+.lx-slider input[type=range]{ position:relative; z-index:2; width:100%; margin:0; height:24px; opacity:0; cursor:ew-resize }
+.lx-slider__ends{ display:flex; justify-content:space-between; margin-top:11px; font-family:var(--lx-num); font-size:var(--lx-cap); line-height:var(--lx-cap-lh); color:var(--lx-grey-2) }
+.lx-slider__read{ margin-top:26px; display:flex; flex-wrap:wrap; gap:8px 36px; font-family:var(--lx-num); font-variant-numeric:tabular-nums; font-size:var(--lx-cap); line-height:var(--lx-cap-lh); color:var(--lx-grey-2) }
+.lx-slider__read b{ font-weight:400; color:var(--lx-ink) }
+
+/* ── 12. 히스토그램 ──────────────────────────────────────────────────────── */
+.lx-hist{ display:block; width:100%; height:224px }
+.lx-hist .b{ fill:var(--lx-grey); transition:fill var(--lx-hover) var(--lx-hover-ease) }
+.lx-hist .b.on{ fill:var(--lx-accent) }
+.lx-hist .thr{ stroke:var(--lx-ink); stroke-width:1; vector-effect:non-scaling-stroke; transition:transform var(--lx-hover) var(--lx-hover-ease) }
+.lx-hist .base{ stroke:var(--lx-hair); stroke-width:1; vector-effect:non-scaling-stroke }
+.lx-hist__ax{ display:flex; justify-content:space-between; margin-top:9px; font-family:var(--lx-num); font-size:var(--lx-cap); line-height:var(--lx-cap-lh); color:var(--lx-grey-2) }
+
+/* ── 13. 타임라인 자 ─────────────────────────────────────────────────────── */
+.lx-ruler{ position:relative; height:78px; border-top:var(--lx-hair-w) solid var(--lx-hair); margin-top:8px }
+.lx-ruler__tick{ position:absolute; top:0; width:1px; height:9px; background:var(--lx-hair) }
+.lx-ruler__tick.maj{ height:17px; background:var(--lx-grey-2) }
+.lx-ruler__lab{ position:absolute; top:28px; transform:translateX(-50%); font-family:var(--lx-num); font-size:var(--lx-cap); line-height:var(--lx-cap-lh); letter-spacing:var(--lx-cap-ls); color:var(--lx-grey); white-space:nowrap; text-align:center; transition:color var(--lx-hover) var(--lx-hover-ease) }
+.lx-ruler__lab.on{ color:var(--lx-ink) }
+.lx-ruler__lab em{ display:block; font-style:normal; font-size:11px; color:var(--lx-grey) }
+.lx-ruler__lab.on em{ color:var(--lx-grey-2) }
+.lx-ruler__head{ position:absolute; top:0; left:0; height:24px; width:1px; background:var(--lx-ink); transition:transform var(--lx-d1) var(--lx-ease) }
+.lx-ruler__head::before{ content:""; position:absolute; left:-4px; top:0; width:9px; height:9px; background:var(--lx-ink) }
+.lx-ruler__bar{ display:flex; align-items:center; gap:18px; margin-top:10px }
+.lx-play{ width:34px; height:34px; border:1px solid var(--lx-hair); background:none; color:var(--lx-ink); cursor:pointer; font-size:11px; line-height:1; display:inline-flex; align-items:center; justify-content:center; transition:border-color var(--lx-hover) var(--lx-hover-ease), color var(--lx-hover) var(--lx-hover-ease) }
+.lx-play:hover{ border-color:var(--lx-ink) }
+.lx-play[aria-pressed=true]{ border-color:var(--lx-accent); color:var(--lx-accent) }
+
+/* ── 14. 필름스트립 ──────────────────────────────────────────────────────── */
+.lx-strip{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); column-gap:var(--lx-gutter) }
+.lx-strip__i{ position:relative; background:none; border:0; padding:0; text-align:left; cursor:pointer; color:inherit; font:inherit }
+.lx-strip__f{ display:block; position:relative; padding:6px }
+.lx-strip__f .lx-plate{ aspect-ratio:4/3 }
+.lx-strip__f .lx-mosaic{ transition:filter var(--lx-d1) var(--lx-ease) }
+.lx-strip__i.is-sel .lx-mosaic{ filter:saturate(.62) contrast(1.06) }
+.lx-strip__b{ position:absolute; width:14px; height:14px; border:1px solid var(--lx-ink); opacity:0; transition:opacity var(--lx-hover) var(--lx-hover-ease) }
+.lx-strip__b:nth-of-type(1){ left:0; top:0; border-right:0; border-bottom:0 }
+.lx-strip__b:nth-of-type(2){ right:0; top:0; border-left:0; border-bottom:0; transition-delay:40ms }
+.lx-strip__b:nth-of-type(3){ right:0; bottom:0; border-left:0; border-top:0; transition-delay:80ms }
+.lx-strip__b:nth-of-type(4){ left:0; bottom:0; border-right:0; border-top:0; transition-delay:120ms }
+.lx-strip__i.is-sel .lx-strip__b,.lx-strip__i:hover .lx-strip__b{ opacity:1 }
+.lx-strip__c{ margin-top:11px; padding:0 6px; display:flex; justify-content:space-between; gap:8px; font-family:var(--lx-num); font-size:var(--lx-cap); line-height:var(--lx-cap-lh); letter-spacing:var(--lx-cap-ls); color:var(--lx-grey-2) }
+.lx-strip__i.is-sel .lx-strip__c{ color:var(--lx-ink) }
+
+/* ── 15. 칩 ──────────────────────────────────────────────────────────────── */
+.lx-chip{ display:inline-flex; align-items:center; gap:8px; height:26px; padding:0 11px; border:1px solid var(--lx-hair); font-family:var(--lx-num); font-size:var(--lx-label); line-height:1; letter-spacing:var(--lx-label-ls); color:var(--lx-grey-2); white-space:nowrap }
+.lx-chip::before{ content:""; width:5px; height:5px; background:currentColor; flex:none }
+.lx-chip--pending{ border-style:dashed }
+.lx-chip--detected{ color:var(--lx-ink); border-color:var(--lx-amber) }
+.lx-chip--detected::before{ background:var(--lx-amber); animation:lx-pulse-dot 6s var(--lx-ease) infinite }
+.lx-chip--real{ color:var(--lx-ink); border-color:var(--lx-accent) }
+.lx-chip--real::before{ background:var(--lx-accent) }
+
+/* ── 16. CTA(코너 브래킷) · 링크(밑줄 통과) ─────────────────────────────── */
+.lx-cta{
+  position:relative; display:inline-flex; align-items:center; gap:14px;
+  padding:18px 28px; background:none; border:0; cursor:pointer; color:var(--lx-ink); text-decoration:none;
+  font-family:var(--lx-display); font-weight:500; font-size:var(--lx-name); line-height:var(--lx-name-lh); letter-spacing:var(--lx-name-ls);
+}
+.lx-cta::before,.lx-cta::after,.lx-cta__t::before,.lx-cta__t::after{
+  content:""; position:absolute; width:var(--lx-bracket); height:var(--lx-bracket);
+  border:1px solid currentColor;
+  transition:left var(--lx-hover) var(--lx-hover-ease), right var(--lx-hover) var(--lx-hover-ease), top var(--lx-hover) var(--lx-hover-ease), bottom var(--lx-hover) var(--lx-hover-ease);
+}
+.lx-cta::before{ left:0; top:0; border-right:0; border-bottom:0 }
+.lx-cta::after{ right:0; bottom:0; border-left:0; border-top:0 }
+.lx-cta__t{ position:static }
+.lx-cta__t::before{ right:0; top:0; border-left:0; border-bottom:0 }
+.lx-cta__t::after{ left:0; bottom:0; border-right:0; border-top:0 }
+.lx-cta:hover::before{ left:4px; top:4px }
+.lx-cta:hover::after{ right:4px; bottom:4px }
+.lx-cta:hover .lx-cta__t::before{ right:4px; top:4px }
+.lx-cta:hover .lx-cta__t::after{ left:4px; bottom:4px }
+.lx-cta__a{ display:inline-block; transition:transform var(--lx-hover) var(--lx-hover-ease) }
+.lx-cta:hover .lx-cta__a{ transform:translateX(4px) }
+
+.lx-link{ position:relative; display:inline-block; color:inherit; text-decoration:none; font-family:var(--lx-display); font-weight:500; font-size:var(--lx-name); line-height:var(--lx-name-lh); letter-spacing:var(--lx-name-ls) }
+.lx-link::after{ content:""; position:absolute; left:0; right:100%; bottom:-4px; height:1px; background:currentColor }
+.lx-link.is-off::after{ animation:lx-ul-out var(--lx-d1) var(--lx-ease) forwards }
+.lx-link:hover::after,.lx-link:focus-visible::after{ animation:lx-ul-in var(--lx-d1) var(--lx-ease) forwards }
+@keyframes lx-ul-in{ from{left:0;right:100%} to{left:0;right:0} }
+@keyframes lx-ul-out{ from{left:0;right:0} to{left:100%;right:0} }
+
+/* ── 17. 스티키 50/50 스플릿 ─────────────────────────────────────────────── */
+.lx-split{ display:grid; grid-template-columns:1fr 1fr }
+.lx-split__l{ position:sticky; top:var(--lx-bar); align-self:start; height:calc(100vh - var(--lx-bar)); display:flex; flex-direction:column; justify-content:center; padding:0 64px 0 var(--lx-margin); border-right:var(--lx-hair-w) solid var(--lx-hair) }
+.lx-split__menu{ margin:36px 0 0; padding:0; list-style:none; border-top:var(--lx-hair-w) solid var(--lx-hair) }
+.lx-split__menu li{ border-bottom:var(--lx-hair-w) solid var(--lx-hair) }
+.lx-split__menu a{ display:grid; grid-template-columns:34px minmax(0,1fr) auto; gap:16px; align-items:baseline; padding:17px 0; color:var(--lx-grey); text-decoration:none; transition:color var(--lx-hover) var(--lx-hover-ease), transform var(--lx-hover) var(--lx-hover-ease) }
+.lx-split__menu a:hover{ transform:translateX(4px) }
+.lx-split__menu li.on a{ color:var(--lx-ink) }
+.lx-split__menu .k{ font-family:var(--lx-num); font-size:var(--lx-label); letter-spacing:var(--lx-label-ls) }
+.lx-split__menu li.on .k{ color:var(--lx-accent) }
+.lx-split__menu .t{ font-family:var(--lx-display); font-weight:500; font-size:var(--lx-name); line-height:var(--lx-name-lh); letter-spacing:var(--lx-name-ls) }
+.lx-split__menu .n{ font-family:var(--lx-num); font-variant-numeric:tabular-nums; font-size:var(--lx-cap) }
+.lx-split__m{ position:relative; min-height:100vh; display:flex; flex-direction:column; justify-content:center; padding:56px 0; margin:0 }
+.lx-split__m .lx-plate{ aspect-ratio:4/3; margin-left:24px; margin-right:var(--lx-margin) }
+.lx-split__m figcaption{ display:flex; justify-content:space-between; gap:16px; padding:11px var(--lx-margin) 0 24px; font-family:var(--lx-num); font-size:var(--lx-cap); line-height:var(--lx-cap-lh); letter-spacing:var(--lx-cap-ls); color:var(--lx-grey-2) }
+@media (max-width:1279.98px){
+  .lx-split{ grid-template-columns:1fr }
+  .lx-split__l{ position:static; height:auto; padding:0 var(--lx-margin) 48px; border-right:0 }
+  .lx-split__m{ min-height:0; padding:24px 0 }
+  .lx-split__m .lx-plate{ margin-inline:var(--lx-margin) }
+  .lx-split__m figcaption{ padding-inline:var(--lx-margin) }
+}
+
+/* ── 18. 푸터 ────────────────────────────────────────────────────────────── */
+.lx-footer{ border-top:var(--lx-hair-w) solid var(--lx-hair); padding-top:72px; padding-bottom:56px }
+.lx-footer__brand{ grid-column:span 4 }
+.lx-footer__brand .lx-h4{ margin-bottom:18px }
+.lx-footer__col{ grid-column:span 2 }
+.lx-footer h3{ margin:0 0 18px; font-family:var(--lx-num); font-size:var(--lx-label); line-height:var(--lx-label-lh); letter-spacing:var(--lx-label-ls); text-transform:uppercase; color:var(--lx-grey-2); font-weight:400 }
+.lx-footer ul{ margin:0; padding:0; list-style:none }
+.lx-footer li{ padding:7px 0 }
+.lx-footer li a{ font-family:var(--lx-display); font-weight:500; font-size:14px; line-height:20px; letter-spacing:.14px; color:var(--lx-ink); text-decoration:none }
+.lx-footer li.sub a{ color:var(--lx-grey-2) }
+.lx-footer li.sub::before{ content:"\21B3"; font-family:var(--lx-num); font-size:11px; color:var(--lx-grey); margin-right:7px }
+.lx-footer__rule{ grid-column:1/-1; height:1px; background:var(--lx-hair); margin:56px 0 20px }
+.lx-footer__attr{ grid-column:1/-1; display:flex; flex-wrap:wrap; gap:8px 28px; font-family:var(--lx-num); font-size:var(--lx-cap); line-height:var(--lx-cap-lh); letter-spacing:var(--lx-cap-ls); color:var(--lx-grey-2) }
+@media (max-width:1279.98px){ .lx-footer__brand{ grid-column:1/-1; margin-bottom:40px } .lx-footer__col{ grid-column:span 4 } }
+
+/* ── 19. 커서 크로스헤어 — 플레이트 위에서만 ─────────────────────────────── */
+.lx-plate.has-cross{ cursor:none }
+.lx-cross{ position:absolute; inset:0; pointer-events:none; opacity:0; transition:opacity var(--lx-hover) var(--lx-hover-ease); z-index:3 }
+.lx-cross.on{ opacity:1 }
+.lx-cross i{ position:absolute; background:rgba(255,255,255,.72) }
+.lx-cross__v{ top:0; bottom:0; width:1px; left:0 }
+.lx-cross__h{ left:0; right:0; height:1px; top:0 }
+.lx-cross__d{ width:9px; height:9px; background:none; border:1px solid var(--lx-amber); left:0; top:0; margin:-5px 0 0 -5px }
+.lx-cross__r{ position:absolute; left:0; top:0; margin:12px 0 0 12px; padding:3px 6px; background:rgba(1,1,2,.72); color:#fff;
+  font-family:var(--lx-num); font-variant-numeric:tabular-nums; font-size:11px; line-height:15px; letter-spacing:.11px; white-space:nowrap }
+
+/* ── 20. 접근성 · 모션 축소 ──────────────────────────────────────────────── */
+@media (prefers-reduced-motion:reduce){
+  html{ scroll-behavior:auto }
+  .lx *,.lx *::before,.lx *::after{ animation:none !important; transition:none !important }
+  [data-reveal]{ opacity:1 !important; transform:none !important }
+  .lx-line > i{ transform:none !important }
+  .lx-cross{ display:none }
+  .lx-plate.has-cross{ cursor:crosshair }
+}
