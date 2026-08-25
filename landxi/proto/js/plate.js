@@ -74,8 +74,10 @@ export function slot(name, rowRect) {
 // p → 슬롯 키프레임. 컬러웨이 반전이 있던 자리마다 판의 크기가 바뀐다.
 const KEY = [
   [0.000, 'orbit'],
-  [0.155, 'orbit'],
-  [0.268, 'full'],    // 성층운 화이트아웃 정점 — 판이 가장 크다
+  // 2장 카피가 살아 있는 동안 판은 액자 안에 머문다. 흰 종이 위의 검은 활자는
+  // 판이 전폭으로 자라는 순간 구름 위에 얹혀 읽히지 않기 때문이다(§5 규칙 5 가독).
+  [0.245, 'orbit'],
+  [0.285, 'full'],    // 성층운 화이트아웃 정점 — 판이 가장 크다
   [0.330, 'atlas'],   // 구름이 걷히면 B안 아틀라스 격자로 앉는다
   [0.520, 'atlas'],
   [0.568, 'full'],    // 강하 — 풀블리드
@@ -121,6 +123,9 @@ export function makePlate(stage, frame, rowRect) {
       if (!smooth || !cur[2]) return paint(t);
       paint(cur.map((c, i) => (Math.abs(t[i] - c) < 0.4 ? t[i] : lerp(c, t[i], 0.24))));
     },
+    /* seek(p) — 스크럽 모듈 교체용 공개 API. 필름 스테이지가 들어와도 호출부는 이것 하나다.
+       update() 가 스크롤 프레임용(부드럽게 따라붙는)이라면 seek() 는 '지금 즉시 이 p' 다. */
+    seek(p) { paint(rectAt(p)); },
     to(name) { paint(slot(name, rowRect)); },
     setFig(n, text) {
       if (fig.firstChild.nodeValue !== n) fig.firstChild.nodeValue = n;

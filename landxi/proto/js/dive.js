@@ -495,8 +495,17 @@ function setEpoch(i, silent) {
    필름은 **재생하지 않고 스크럽한다**. 자유 재생하면 20초 뒤 필름은 지상을 날고 있는데
    캡션은 "고도 786 km" 라고 말하는 어긋남이 생긴다 — 한 대의 카메라라는 전제가 깨진다.
    필름의 0 → 6.0s 가 지구본 · 위성 · 성층운 돌파이고, 그것이 p 0 → 0.30 구간이다. */
-const FILM_END = 6.0;   // 필름에서 구름을 뚫고 지표가 드러나는 시점(초)
-const FILM_P = 0.30;    // 그 지점에 대응하는 스크롤 진행값
+const FILM_P = 0.30;    // 필름이 물러나고 라이브 지도가 카메라를 받는 스크롤 진행값
+/* p → 필름 시간. 선형이 아니라 두 토막이다:
+     ① 0 → 0.16   : 필름 0 → 3.5s   (지구본 · Sentinel-2 위성 통과)
+     ② 0.16 → 0.30: 필름 4.4 → 6.0s (성층운 돌파 → 지표)
+   3.5–4.4s 는 건너뛴다 — 그 구간의 프레임에는 globe → mercator 핸드오프 때
+   비어 있던 타일이 검은 사각형으로 구워져 있다(필름은 다시 굽지 않는다). */
+function filmTime(p) {
+  return p < 0.16
+    ? (p / 0.16) * 3.5
+    : 4.4 + clamp01((p - 0.16) / 0.14) * 1.6;
+}
 let film = null;
 if (optional.film) {
   const el = $('#hero-film');
@@ -511,18 +520,39 @@ if (optional.film) {
   el.load();
 }
 /* 스크럽은 매 프레임 다시 걸면 안 된다 — 탐색이 끝나기 전에 새 탐색이 들어오면
-   디코더는 영원히 첫 프레임에 머문다(실제로 그렇게 됐다). 한 번에 하나만 건다. */
-let filmWant = -1, filmSeeking = false;
+   디코더는 영원히 첫 프레임에 머문다(실제로 그렇게 됐다). 한 번에 하나만 건다.
+   그리고 목표 시간에 lerp 0.12 로 따라붙는다 — 스크롤 지터가 그대로 프레임 점프가 되지 않게. */
+let filmWant = -1, filmSeeking = false, filmAt = 0;
 function scrubFilm(p) {
   if (!film) return;
   const on = p < FILM_P + 0.02;
   film.classList.toggle('on', on);
   if (!on) return;
-  const want = clamp01(p / FILM_P) * FILM_END;
-  if (filmSeeking || Math.abs(want - filmWant) < 0.04) return;
-  filmWant = want;
+  const target = filmTime(p);
+  filmAt += (target - filmAt) * 0.12;
+  if (Math.abs(target - filmAt) < 0.02) filmAt = target;
+  if (filmSeeking || Math.abs(filmAt - filmWant) < 0.04) return;
+  filmWant = filmAt;
   filmSeeking = true;
-  try { film.currentTime = want; } catch (e) { filmSeeking = false; }
+  try { film.currentTime = filmAt; } catch (e) { filmSeeking = false; }
+}
+// 스크린샷·딥링크는 따라붙을 시간이 없다 — 즉시 그 프레임에 선다.
+function snapFilm(p) { filmAt = filmTime(p); }
+
+/* 필름 → 라이브 지도 핸드오프.
+   병렬 작업(landxi/proto/scrub/)이 레그별 종료 카메라를 담은 manifest 를 내놓으면,
+   필름이 끝나는 그 카메라에서 라이브 지도가 이어받는다. 아직 없으면 camera.js 키프레임 그대로다. */
+let FILM_HANDOFF = null;
+if (optional.film) {
+  fetch('../assets/proto/film/legs/manifest.json', { cache: 'no-store' })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((m) => {
+      const legs = m && (m.legs || m);
+      const last = Array.isArray(legs) ? legs[legs.length - 1] : null;
+      const cam = last && (last.endCamera || last.end || last.camera);
+      if (cam && Array.isArray(cam.center)) FILM_HANDOFF = cam;
+    })
+    .catch(() => { /* 아직 없다 — 라이브 카메라가 그대로 간다 */ });
 }
 
 const tickMag = magnetic([...document.querySelectorAll('#cta a')]);
@@ -882,7 +912,8 @@ function apply(p) {
 
   // 챕터 카피
   showCol($('#ch1'), p < 0.155);
-  showCol($('#ch2'), p >= 0.155 && p < 0.325);
+  // 판이 전폭이 되기 전에 카피는 종이 위에서 물러난다 — 활자를 사진 위에 얹지 않는다.
+  showCol($('#ch2'), p >= 0.158 && p < 0.242);
   showCol($('#dhead'), p > 0.60 && p < 0.795);
   $('#dstrip').classList.toggle('on', p > 0.565 && p < 0.815);
 
@@ -1103,6 +1134,7 @@ function loop() {
 const api = {
   seek(p) {
     P = clamp01(p);
+    snapFilm(P);
     const max = Math.max(1, document.documentElement.scrollHeight - innerHeight);
     lenis.scrollTo(P * max, { immediate: true, force: true, lock: true });
     ScrollTrigger.update();
@@ -1113,7 +1145,7 @@ const api = {
   },
   suppressAuto: false,
   get terrain() { return { on: terrainOn, exag: lastExag }; },
-  set(p) { P = PA = clamp01(p); apply(PA); },
+  set(p) { P = PA = clamp01(p); snapFilm(PA); apply(PA); },
   setRaw(p) { P = clamp01(p); },
   ramp(from, to, sec) {
     return new Promise((res) => {
@@ -1132,6 +1164,8 @@ const api = {
   open: selectService, select: selectService,
   close() { $('#card').classList.remove('on'); selected = null; idxEls.forEach((li) => li.classList.remove('sel')); },
   rows: ROWS, atlas, plate,
+  get filmAt() { return film ? film.currentTime : null; },
+  get handoff() { return FILM_HANDOFF; },
   get p() { return PA; }, get raw() { return P; }, get warm() { return [warmDone, warmTotal]; },
   get fps() { return fps; }, get tier() { return TIER; }, get live() { return liveRow; },
   get errors() { return errors.slice(); },
