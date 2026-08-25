@@ -44,10 +44,15 @@ ffmpeg -i assets/leg01.mp4 -frames:v 1 -q:v 3 assets/p01.webp
 자체 렌더 경로가 막혔을 때만. 그 경우에도 이 leg는 **모형이 아니라 사진**이어야 한다
 (재질 전환은 leg 03에서 딱 한 번 일어난다) — 그래서 프리앰블을 붙이되 씬에서 모형어를 뺀다.
 
+> **이 leg는 "보드" 리젝트(§_SHARED.md)의 예외다.** 이 leg는 지형이 아니라 **우주의 지구본**이고,
+> `client-taste-profile`이 요구하는 "본 화이트 우주"는 스튜디오 보드가 아니라 **행성이 떠 있는 빈 공간**이다.
+> 그래도 프리앰블·네거티브는 다른 leg와 토씨 하나 안 바꾸고 공유한다 — 이 leg가 자체 렌더로 빠질
+> 확률이 높아 실제로 이 텍스트가 kling에 들어갈 일은 드물다.
+
 **PREAMBLE (verbatim)**
 
 ```
-Macro tilt-shift photograph of a handmade physical scale model, shot on a medium-format camera with a tilt-shift lens. Milled brass, painted plaster, real moss, poured resin, sifted sand, laser-cut acrylic, fibre-optic practicals. High-key lighting: one large soft overhead source, a huge white bounce, near-shadowless with a single soft contact shadow. Seamless bone-white ground. Colour grade of warm white, pale neutrals and slate grey, with accents of LX blue #4E86F7, warm amber #FF9A2E and field green #1E9E6A only. Medium-format sharpness, fine grain, true whites, no crushed blacks. Photographic realism. NOT a 3D render, NOT clay, NOT an illustration, NOT CGI, no digital glow, no plastic sheen, no purple, no magenta, no neon, no text, no lettering, no numbers, no watermark.
+Photograph of a handmade physical miniature world, shot on a medium-format camera with a tilt-shift lens: continuous and borderless, no board, table, plinth or studio edge ever in frame — the world simply continues past its edges. Milled brass, painted plaster, real moss, poured resin, sifted sand, laser-cut acrylic, fibre-optic practicals. Soft high daylight, gentle key, near-shadowless with long soft falloff toward a pale hazy horizon. Real cotton-wool cloud drifts through the frame. Colour grade of warm white, pale neutrals and slate grey, with accents of LX blue #4E86F7, warm amber #FF9A2E and field green #1E9E6A only. Medium-format sharpness, fine grain, true whites, no crushed blacks. Photographic realism. NOT a 3D render, NOT clay, NOT an illustration, NOT CGI, no digital glow, no plastic sheen, no purple, no magenta, no neon, no text, no lettering, no numbers, no watermark.
 ```
 
 **SCENE**
@@ -65,8 +70,11 @@ The globe rotates almost imperceptibly on its axis while the camera pushes forwa
 **negative_prompt (verbatim)**
 
 ```
-text, letters, numbers, captions, subtitles, watermark, logo, signature, cut, jump cut, dissolve, camera shake, handheld wobble, zoom snap, speed ramp, people entering frame, vehicles entering frame, birds entering frame, anything entering or leaving frame, purple, magenta, neon, plastic sheen, glossy toy plastic, CGI, 3d render, clay, cartoon, illustration, dark shadows, crushed blacks, lens flare
+board, table, plinth, base plate, edge, studio, white background, blue sky paint, text, letters, numbers, captions, subtitles, watermark, logo, signature, cut, jump cut, dissolve, camera shake, handheld wobble, zoom snap, speed ramp, people entering frame, vehicles entering frame, birds entering frame, anything entering or leaving frame, purple, magenta, neon, plastic sheen, glossy toy plastic, CGI, 3d render, clay, cartoon, illustration, dark shadows, crushed blacks, lens flare
 ```
+
+> `white background`가 네거티브에 있어도 이 leg의 "본 화이트 우주"는 죽지 않는다 — 그건 배경색이지
+> 스튜디오 사이클로라마가 아니다. 이 항목이 겨눈 건 "보드 위에 놓인 물체처럼 보이는 평평한 흰 배경"이다.
 
 ## 4. 페이지 오버레이
 

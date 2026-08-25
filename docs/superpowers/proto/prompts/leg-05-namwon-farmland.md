@@ -35,13 +35,13 @@
 **PREAMBLE (verbatim)**
 
 ```
-Macro tilt-shift photograph of a handmade physical scale model, shot on a medium-format camera with a tilt-shift lens. Milled brass, painted plaster, real moss, poured resin, sifted sand, laser-cut acrylic, fibre-optic practicals. High-key lighting: one large soft overhead source, a huge white bounce, near-shadowless with a single soft contact shadow. Seamless bone-white ground. Colour grade of warm white, pale neutrals and slate grey, with accents of LX blue #4E86F7, warm amber #FF9A2E and field green #1E9E6A only. Medium-format sharpness, fine grain, true whites, no crushed blacks. Photographic realism. NOT a 3D render, NOT clay, NOT an illustration, NOT CGI, no digital glow, no plastic sheen, no purple, no magenta, no neon, no text, no lettering, no numbers, no watermark.
+Photograph of a handmade physical miniature world, shot on a medium-format camera with a tilt-shift lens: continuous and borderless, no board, table, plinth or studio edge ever in frame — the world simply continues past its edges. Milled brass, painted plaster, real moss, poured resin, sifted sand, laser-cut acrylic, fibre-optic practicals. Soft high daylight, gentle key, near-shadowless with long soft falloff toward a pale hazy horizon. Real cotton-wool cloud drifts through the frame. Colour grade of warm white, pale neutrals and slate grey, with accents of LX blue #4E86F7, warm amber #FF9A2E and field green #1E9E6A only. Medium-format sharpness, fine grain, true whites, no crushed blacks. Photographic realism. NOT a 3D render, NOT clay, NOT an illustration, NOT CGI, no digital glow, no plastic sheen, no purple, no magenta, no neon, no text, no lettering, no numbers, no watermark.
 ```
 
 **SCENE**
 
 ```
-Scene: a block of Korean paddy and dry fields built as a handmade scale model, matching the reference plot layout exactly, plot for plot. Each field is a separate shallow tray. Flooded paddies are poured resin with visible surface reflection and tiny trapped bubbles; dry fields are sifted sand raked in fine lines; growing rice is cut real moss planted in rows; harvested plots are short brass-toned moss stubble. Plot boundaries are milled brass strips standing a hair proud of the surface. A narrow farm track of pale grit runs across the block. Some trays glow faintly from within with field green; others stay matt slate and unlit; roughly two thirds glow. Seamless bone-white ground at the frame edges. Warm white, pale neutrals and slate, with field green as the only accent.
+Scene: a block of Korean paddy and dry fields built as a handmade scale model, matching the reference plot layout exactly, plot for plot. Each field is a separate shallow tray. Flooded paddies are poured resin with visible surface reflection and tiny trapped bubbles; dry fields are sifted sand raked in fine lines; growing rice is cut real moss planted in rows; harvested plots are short brass-toned moss stubble. Plot boundaries are milled brass strips standing a hair proud of the surface. A narrow farm track of pale grit runs across the block. Some trays glow faintly from within with field green; others stay matt slate and unlit; roughly two thirds glow. The field block continues into further paddy blocks and low ridgeline on every side, out to a soft hazy horizon under an overcast sky; no board, table or edge anywhere in frame. Warm white, pale neutrals and slate, with field green as the only accent.
 ```
 
 > **"roughly two thirds glow"가 실측을 지키는 문장이다.** 경작지 2,049,935 ㎡ / 비경작지 1,108,749 ㎡
@@ -63,7 +63,7 @@ The camera descends toward the field block and swings slowly to the left, tiltin
 **negative_prompt (verbatim)**
 
 ```
-text, letters, numbers, captions, subtitles, watermark, logo, signature, cut, jump cut, dissolve, camera shake, handheld wobble, zoom snap, speed ramp, people entering frame, vehicles entering frame, birds entering frame, anything entering or leaving frame, purple, magenta, neon, plastic sheen, glossy toy plastic, CGI, 3d render, clay, cartoon, illustration, dark shadows, crushed blacks, lens flare
+board, table, plinth, base plate, edge, studio, white background, blue sky paint, text, letters, numbers, captions, subtitles, watermark, logo, signature, cut, jump cut, dissolve, camera shake, handheld wobble, zoom snap, speed ramp, people entering frame, vehicles entering frame, birds entering frame, anything entering or leaving frame, purple, magenta, neon, plastic sheen, glossy toy plastic, CGI, 3d render, clay, cartoon, illustration, dark shadows, crushed blacks, lens flare
 ```
 
 ## 4. 결과가 룩 안에서 표현되는 방식

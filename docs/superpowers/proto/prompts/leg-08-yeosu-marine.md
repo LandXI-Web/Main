@@ -44,13 +44,13 @@
 **PREAMBLE (verbatim)**
 
 ```
-Macro tilt-shift photograph of a handmade physical scale model, shot on a medium-format camera with a tilt-shift lens. Milled brass, painted plaster, real moss, poured resin, sifted sand, laser-cut acrylic, fibre-optic practicals. High-key lighting: one large soft overhead source, a huge white bounce, near-shadowless with a single soft contact shadow. Seamless bone-white ground. Colour grade of warm white, pale neutrals and slate grey, with accents of LX blue #4E86F7, warm amber #FF9A2E and field green #1E9E6A only. Medium-format sharpness, fine grain, true whites, no crushed blacks. Photographic realism. NOT a 3D render, NOT clay, NOT an illustration, NOT CGI, no digital glow, no plastic sheen, no purple, no magenta, no neon, no text, no lettering, no numbers, no watermark.
+Photograph of a handmade physical miniature world, shot on a medium-format camera with a tilt-shift lens: continuous and borderless, no board, table, plinth or studio edge ever in frame — the world simply continues past its edges. Milled brass, painted plaster, real moss, poured resin, sifted sand, laser-cut acrylic, fibre-optic practicals. Soft high daylight, gentle key, near-shadowless with long soft falloff toward a pale hazy horizon. Real cotton-wool cloud drifts through the frame. Colour grade of warm white, pale neutrals and slate grey, with accents of LX blue #4E86F7, warm amber #FF9A2E and field green #1E9E6A only. Medium-format sharpness, fine grain, true whites, no crushed blacks. Photographic realism. NOT a 3D render, NOT clay, NOT an illustration, NOT CGI, no digital glow, no plastic sheen, no purple, no magenta, no neon, no text, no lettering, no numbers, no watermark.
 ```
 
 **SCENE**
 
 ```
-Scene: a sheltered Korean inner bay built as a handmade scale model, matching the reference coastline exactly. The sea is poured resin, cast thicker where the water is deeper so the shallows read paler. A breakwater of cast plaster tetrapods runs along the left. Long lines of aquaculture floats are tiny beads threaded on wire, laid out in the same rows as the reference. Two small fishing boats are milled brass hulls, hand painted, moored still. The tide line is real grit and gravel. Scattered thinly along the tide line and drifting in the shallows are small pieces of amber-coloured debris, mostly broken irregular lumps, with a few small cylinders, a few angular boxes, a few loose threads and a few round beads among them; the broken lumps clearly outnumber everything else. They are sparse, not a carpet, with plenty of clean empty water between them. Seamless bone-white ground at the frame edges. Warm white, pale neutrals and slate, with warm amber as the only accent.
+Scene: a sheltered Korean inner bay built as a handmade scale model, matching the reference coastline exactly. The sea is poured resin, cast thicker where the water is deeper so the shallows read paler. A breakwater of cast plaster tetrapods runs along the left. Long lines of aquaculture floats are tiny beads threaded on wire, laid out in the same rows as the reference. Two small fishing boats are milled brass hulls, hand painted, moored still. The tide line is real grit and gravel. Scattered thinly along the tide line and drifting in the shallows are small pieces of amber-coloured debris, mostly broken irregular lumps, with a few small cylinders, a few angular boxes, a few loose threads and a few round beads among them; the broken lumps clearly outnumber everything else. They are sparse, not a carpet, with plenty of clean empty water between them. The bay continues to open water and a soft hazy horizon under an overcast sky in the distance; no board, table or edge anywhere in frame. Warm white, pale neutrals and slate, with warm amber as the only accent.
 ```
 
 > **"They are sparse, not a carpet"가 실측을 지키는 문장이다.** 총 탐지면적은 **0.518 ha**로 아주 작다.
@@ -73,7 +73,7 @@ The camera slides forward off the land and out over the water in one smooth cont
 **negative_prompt (verbatim)**
 
 ```
-text, letters, numbers, captions, subtitles, watermark, logo, signature, cut, jump cut, dissolve, camera shake, handheld wobble, zoom snap, speed ramp, people entering frame, vehicles entering frame, birds entering frame, anything entering or leaving frame, purple, magenta, neon, plastic sheen, glossy toy plastic, CGI, 3d render, clay, cartoon, illustration, dark shadows, crushed blacks, lens flare
+board, table, plinth, base plate, edge, studio, white background, blue sky paint, text, letters, numbers, captions, subtitles, watermark, logo, signature, cut, jump cut, dissolve, camera shake, handheld wobble, zoom snap, speed ramp, people entering frame, vehicles entering frame, birds entering frame, anything entering or leaving frame, purple, magenta, neon, plastic sheen, glossy toy plastic, CGI, 3d render, clay, cartoon, illustration, dark shadows, crushed blacks, lens flare
 ```
 
 ## 5. 페이지 오버레이

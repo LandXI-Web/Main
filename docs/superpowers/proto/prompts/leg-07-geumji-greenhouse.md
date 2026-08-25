@@ -31,18 +31,36 @@
 **비닐하우스가 실제로 어떤 간격과 방향으로 늘어서 있는지**의 원본이며, 이것이 우리가
 "연상시키는 모형"이 아니라 "축척 모형"을 만들 수 있는 이유다.
 
-## 2. seedream 스틸
+## 2. 상태 — 1차 테스트 리젝트, 재테스트 대기
+
+`docs/superpowers/proto/2026-08-26-kie-test-leg.md`에서 이 leg와 동일한 앵커(금지면 6.jpg)로
+`tools/kie/leg-namwon-greenhouse.mjs`를 돌려 **끝까지 1개 관통 테스트**를 마쳤다:
+
+- 산출물: `landxi/assets/proto/film/legs/gen/namwon-greenhouse-test.png` (스틸) ·
+  `…/namwon-greenhouse-test.mp4` (5초 클립) · `…/namwon-greenhouse-test.head.jpg` (kling 입력용 1920px head) ·
+  `…/namwon-greenhouse-test.scrub.mp4` (스크럽 인코딩)
+- 검수 프레임: `shots/kie/namwon-greenhouse-test-00..05.jpg`
+- 재질 리얼리즘·모션 coherence·이음새 재사용성은 **합격**했다(§ kie-test-leg.md ①②③).
+
+**그러나 룩 자체가 고객에게 리젝트됐다.** "석고 보드는 왜 갑자기 나온 거지? 지구본 모양으로 돌면서
+비닐하우스·해양쓰레기·불법소각장 조사 아이템들이 유튜브 벤치마크 영상처럼 나와야지." —
+테스트가 쓴 `worlds.md` #2 High-key editorial 킷("Seamless bone-white ground")이 **"보드 위에 놓인
+모형 사진"**으로 읽혔다는 뜻이다. 아래 PREAMBLE·SCENE·MOVE·negative는 이 leg가 딱 그 문제의
+현장(금지면 비닐하우스)이므로 **`_SHARED.md`의 새 원칙(테두리 없는 연속 지형)으로 전부 다시 썼다.**
+**재생성 전 이 새 텍스트로 스틸부터 다시 뽑을 것 — 리젝트된 결과물을 그대로 쓰지 않는다.**
+
+## 3. seedream 스틸
 
 **PREAMBLE (verbatim)**
 
 ```
-Macro tilt-shift photograph of a handmade physical scale model, shot on a medium-format camera with a tilt-shift lens. Milled brass, painted plaster, real moss, poured resin, sifted sand, laser-cut acrylic, fibre-optic practicals. High-key lighting: one large soft overhead source, a huge white bounce, near-shadowless with a single soft contact shadow. Seamless bone-white ground. Colour grade of warm white, pale neutrals and slate grey, with accents of LX blue #4E86F7, warm amber #FF9A2E and field green #1E9E6A only. Medium-format sharpness, fine grain, true whites, no crushed blacks. Photographic realism. NOT a 3D render, NOT clay, NOT an illustration, NOT CGI, no digital glow, no plastic sheen, no purple, no magenta, no neon, no text, no lettering, no numbers, no watermark.
+Photograph of a handmade physical miniature world, shot on a medium-format camera with a tilt-shift lens: continuous and borderless, no board, table, plinth or studio edge ever in frame — the world simply continues past its edges. Milled brass, painted plaster, real moss, poured resin, sifted sand, laser-cut acrylic, fibre-optic practicals. Soft high daylight, gentle key, near-shadowless with long soft falloff toward a pale hazy horizon. Real cotton-wool cloud drifts through the frame. Colour grade of warm white, pale neutrals and slate grey, with accents of LX blue #4E86F7, warm amber #FF9A2E and field green #1E9E6A only. Medium-format sharpness, fine grain, true whites, no crushed blacks. Photographic realism. NOT a 3D render, NOT clay, NOT an illustration, NOT CGI, no digital glow, no plastic sheen, no purple, no magenta, no neon, no text, no lettering, no numbers, no watermark.
 ```
 
 **SCENE**
 
 ```
-Scene: a flat Korean alluvial plain packed with rows of small arched greenhouses, built as a handmade scale model and matching the reference layout exactly, the same rows, the same spacing, the same north-south orientation, the same irregular gaps. Each greenhouse is a separate hand-built piece: milled brass ribs under a blown translucent acrylic skin, set on sifted sand and real moss ground. Most are single arches standing alone; a few are wide blocks of several arches fused side by side, and these are clearly rarer. Fibre-optic practicals run inside the arches. Some arches are lit from within with LX blue, brightest at the near end of a row and stepping through pale blue to near white; the wide fused blocks glow more faintly and with softer edges. A narrow grit farm track runs across the plain. Seamless bone-white ground at the frame edges. Warm white, pale neutrals and slate, with LX blue as the only accent.
+Scene: a flat Korean alluvial plain packed with rows of small arched greenhouses, built as a handmade scale model and matching the reference layout exactly, the same rows, the same spacing, the same north-south orientation, the same irregular gaps. Each greenhouse is a separate hand-built piece: milled brass ribs under a blown translucent acrylic skin, set on sifted sand and real moss ground. Most are single arches standing alone; a few are wide blocks of several arches fused side by side, and these are clearly rarer. Fibre-optic practicals run inside the arches. Some arches are lit from within with LX blue, brightest at the near end of a row and stepping through pale blue to near white; the wide fused blocks glow more faintly and with softer edges. A narrow grit farm track runs across the plain. The greenhouse rows continue into more paddy and farmland on every side, out to a soft hazy horizon under an overcast sky; no board, table or edge anywhere in frame. Warm white, pale neutrals and slate, with LX blue as the only accent.
 ```
 
 > **"a few are wide blocks … clearly rarer"가 실측을 지키는 문장이다.** 단동 1,469 : 다동 205 ≈ **88 : 12**.
@@ -55,7 +73,7 @@ Scene: a flat Korean alluvial plain packed with rows of small arched greenhouses
 node <skill>/scripts/kie.mjs still "<PREAMBLE>\n\n<SCENE>" anchors/a08.png   --ar 16:9 --ref landxi/assets/proto/crops/namwon-greenhouse-2025/6.jpg
 ```
 
-## 3. kling 모션 (5초)
+## 4. kling 모션 (5초)
 
 ```
 The camera moves forward low over the plain in one smooth continuous dolly, easing almost to a standstill halfway through and then creeping on, tilting very slightly toward the horizontal. The rows of greenhouses slide past beneath as parallax and stay in frame the whole time. Fibre-optic lights inside the arches come on one after another in the order the camera reaches them, never all at once. Nothing else moves; nothing enters or leaves frame. One single continuous take, no cuts, no shake. Very slow, cinematic, controlled.
@@ -64,10 +82,10 @@ The camera moves forward low over the plain in one smooth continuous dolly, easi
 **negative_prompt (verbatim)**
 
 ```
-text, letters, numbers, captions, subtitles, watermark, logo, signature, cut, jump cut, dissolve, camera shake, handheld wobble, zoom snap, speed ramp, people entering frame, vehicles entering frame, birds entering frame, anything entering or leaving frame, purple, magenta, neon, plastic sheen, glossy toy plastic, CGI, 3d render, clay, cartoon, illustration, dark shadows, crushed blacks, lens flare
+board, table, plinth, base plate, edge, studio, white background, blue sky paint, text, letters, numbers, captions, subtitles, watermark, logo, signature, cut, jump cut, dissolve, camera shake, handheld wobble, zoom snap, speed ramp, people entering frame, vehicles entering frame, birds entering frame, anything entering or leaving frame, purple, magenta, neon, plastic sheen, glossy toy plastic, CGI, 3d render, clay, cartoon, illustration, dark shadows, crushed blacks, lens flare
 ```
 
-## 4. 결과가 룩 안에서 표현되는 방식
+## 5. 결과가 룩 안에서 표현되는 방식
 
 - **점등 순서**: 광섬유가 **카메라가 지나가는 순서대로 하나씩** `#4E86F7 → #9FC6FF → #E6F0FF` 3단.
   기존 `tools/film/render.html`의 `ACCENT_GH / GH2 / GH3` 필라멘트 문법을 모형 안으로 옮긴 것 —
@@ -75,7 +93,7 @@ text, letters, numbers, captions, subtitles, watermark, logo, signature, cut, ju
 - **형태로 클래스 구분**: 단동 = 아치 하나, 다동 = 아치 여러 개가 붙은 덩어리. 색은 하나뿐이다.
 - **밝기로 신뢰도**: 다동은 덜 밝고 가장자리가 흐릿하다.
 
-## 5. 페이지 오버레이
+## 6. 페이지 오버레이
 
 | 요소 | 내용 |
 |---|---|
@@ -95,7 +113,7 @@ text, letters, numbers, captions, subtitles, watermark, logo, signature, cut, ju
 - 읍면동 막대는 `stats.emd` 실측 상위 5개다. 이 leg가 금지면에 서 있으므로 금지면만 액센트.
 - 평균 신뢰도 0.79는 우리 결과 중 가장 높다 — 그래서 leg 05의 0.45를 숨길 이유가 더 없다.
 
-## 6. 씸
+## 7. 씸
 
 - **06 → 07**: 고도 변화(상승 → 하강)가 32 km 이격을 흡수.
 - **07 → 08**: 남원 내륙 → 여수 연안 **약 95 km. 이 필름 최대 이격이자 최고 위험 씸.**

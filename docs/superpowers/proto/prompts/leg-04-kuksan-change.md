@@ -33,13 +33,13 @@
 **PREAMBLE (verbatim)**
 
 ```
-Macro tilt-shift photograph of a handmade physical scale model, shot on a medium-format camera with a tilt-shift lens. Milled brass, painted plaster, real moss, poured resin, sifted sand, laser-cut acrylic, fibre-optic practicals. High-key lighting: one large soft overhead source, a huge white bounce, near-shadowless with a single soft contact shadow. Seamless bone-white ground. Colour grade of warm white, pale neutrals and slate grey, with accents of LX blue #4E86F7, warm amber #FF9A2E and field green #1E9E6A only. Medium-format sharpness, fine grain, true whites, no crushed blacks. Photographic realism. NOT a 3D render, NOT clay, NOT an illustration, NOT CGI, no digital glow, no plastic sheen, no purple, no magenta, no neon, no text, no lettering, no numbers, no watermark.
+Photograph of a handmade physical miniature world, shot on a medium-format camera with a tilt-shift lens: continuous and borderless, no board, table, plinth or studio edge ever in frame — the world simply continues past its edges. Milled brass, painted plaster, real moss, poured resin, sifted sand, laser-cut acrylic, fibre-optic practicals. Soft high daylight, gentle key, near-shadowless with long soft falloff toward a pale hazy horizon. Real cotton-wool cloud drifts through the frame. Colour grade of warm white, pale neutrals and slate grey, with accents of LX blue #4E86F7, warm amber #FF9A2E and field green #1E9E6A only. Medium-format sharpness, fine grain, true whites, no crushed blacks. Photographic realism. NOT a 3D render, NOT clay, NOT an illustration, NOT CGI, no digital glow, no plastic sheen, no purple, no magenta, no neon, no text, no lettering, no numbers, no watermark.
 ```
 
 **SCENE**
 
 ```
-Scene: a small Korean farming hamlet built as a handmade scale model, matching the reference layout exactly: the same road, the same stream, the same block of houses and sheds in the same positions. Houses are painted plaster with laser-cut acrylic roofs; the two long sheds are milled brass corrugated sheet, hand-painted; the stream is poured resin over sifted sand with real grit on the bed; the paddy levees are real moss. Three or four small heaps of odd debris sit on the waste ground beside the stream, made of resin offcuts and sand, colourless. At one corner of a field there is a single scorched circular mark on the soil with one thin wisp of cotton smoke rising from it. Seamless bone-white ground visible at the frame edges. Warm white, pale neutrals and slate only. No accent colour anywhere in this frame.
+Scene: a small Korean farming hamlet built as a handmade scale model, matching the reference layout exactly: the same road, the same stream, the same block of houses and sheds in the same positions. Houses are painted plaster with laser-cut acrylic roofs; the two long sheds are milled brass corrugated sheet, hand-painted; the stream is poured resin over sifted sand with real grit on the bed; the paddy levees are real moss. Three or four small heaps of odd debris sit on the waste ground beside the stream, made of resin offcuts and sand, colourless. At one corner of a field there is a single scorched circular mark on the soil with one thin wisp of cotton smoke rising from it. The hamlet's fields and stream continue into more paddy and hedgerow on every side, out to a soft hazy horizon under an overcast sky; no board, table or edge anywhere in frame. Warm white, pale neutrals and slate only. No accent colour anywhere in this frame.
 ```
 
 **CLI**
@@ -57,7 +57,7 @@ The camera glides forward and to the left, descending steadily over the hamlet i
 **negative_prompt (verbatim)**
 
 ```
-text, letters, numbers, captions, subtitles, watermark, logo, signature, cut, jump cut, dissolve, camera shake, handheld wobble, zoom snap, speed ramp, people entering frame, vehicles entering frame, birds entering frame, anything entering or leaving frame, purple, magenta, neon, plastic sheen, glossy toy plastic, CGI, 3d render, clay, cartoon, illustration, dark shadows, crushed blacks, lens flare
+board, table, plinth, base plate, edge, studio, white background, blue sky paint, text, letters, numbers, captions, subtitles, watermark, logo, signature, cut, jump cut, dissolve, camera shake, handheld wobble, zoom snap, speed ramp, people entering frame, vehicles entering frame, birds entering frame, anything entering or leaving frame, purple, magenta, neon, plastic sheen, glossy toy plastic, CGI, 3d render, clay, cartoon, illustration, dark shadows, crushed blacks, lens flare
 ```
 
 ## 4. 결과가 룩 안에서 표현되는 방식

@@ -38,13 +38,13 @@ mv build/film/refs/f_0000.png build/film/refs/ref06-jirisan.png
 **PREAMBLE (verbatim)**
 
 ```
-Macro tilt-shift photograph of a handmade physical scale model, shot on a medium-format camera with a tilt-shift lens. Milled brass, painted plaster, real moss, poured resin, sifted sand, laser-cut acrylic, fibre-optic practicals. High-key lighting: one large soft overhead source, a huge white bounce, near-shadowless with a single soft contact shadow. Seamless bone-white ground. Colour grade of warm white, pale neutrals and slate grey, with accents of LX blue #4E86F7, warm amber #FF9A2E and field green #1E9E6A only. Medium-format sharpness, fine grain, true whites, no crushed blacks. Photographic realism. NOT a 3D render, NOT clay, NOT an illustration, NOT CGI, no digital glow, no plastic sheen, no purple, no magenta, no neon, no text, no lettering, no numbers, no watermark.
+Photograph of a handmade physical miniature world, shot on a medium-format camera with a tilt-shift lens: continuous and borderless, no board, table, plinth or studio edge ever in frame — the world simply continues past its edges. Milled brass, painted plaster, real moss, poured resin, sifted sand, laser-cut acrylic, fibre-optic practicals. Soft high daylight, gentle key, near-shadowless with long soft falloff toward a pale hazy horizon. Real cotton-wool cloud drifts through the frame. Colour grade of warm white, pale neutrals and slate grey, with accents of LX blue #4E86F7, warm amber #FF9A2E and field green #1E9E6A only. Medium-format sharpness, fine grain, true whites, no crushed blacks. Photographic realism. NOT a 3D render, NOT clay, NOT an illustration, NOT CGI, no digital glow, no plastic sheen, no purple, no magenta, no neon, no text, no lettering, no numbers, no watermark.
 ```
 
 **SCENE**
 
 ```
-Scene: a forested mountain ridge built as a handmade scale model, following the reference ridgeline exactly, the same spurs and the same valley cutting in from the left. The ridge skeleton is painted plaster. The forest canopy is real moss and dyed lichen packed dense, so no individual tree reads, only surface texture: fine grey-green on the shaded slope, coarser and warmer on the sunlit slope. A thin band of real cotton fog lies in the valley and crosses the lower left of frame. Bare rock outcrops near the summit are unpainted plaster. Seamless bone-white ground at the frame edges. Warm white, pale neutrals and slate. No accent colour anywhere in this frame, nothing lit, nothing marked.
+Scene: a forested mountain ridge built as a handmade scale model, following the reference ridgeline exactly, the same spurs and the same valley cutting in from the left. The ridge skeleton is painted plaster. The forest canopy is real moss and dyed lichen packed dense, so no individual tree reads, only surface texture: fine grey-green on the shaded slope, coarser and warmer on the sunlit slope. A thin band of real cotton fog lies in the valley and crosses the lower left of frame. Bare rock outcrops near the summit are unpainted plaster. The ridge continues into further peaks and valleys under a soft overcast sky that meets a pale hazy horizon; no board, table or edge anywhere in frame. Warm white, pale neutrals and slate. No accent colour anywhere in this frame, nothing lit, nothing marked.
 ```
 
 **CLI**
@@ -62,7 +62,7 @@ The camera tracks sideways along the ridge and rises very gently at the same tim
 **negative_prompt (verbatim)**
 
 ```
-text, letters, numbers, captions, subtitles, watermark, logo, signature, cut, jump cut, dissolve, camera shake, handheld wobble, zoom snap, speed ramp, people entering frame, vehicles entering frame, birds entering frame, anything entering or leaving frame, purple, magenta, neon, plastic sheen, glossy toy plastic, CGI, 3d render, clay, cartoon, illustration, dark shadows, crushed blacks, lens flare
+board, table, plinth, base plate, edge, studio, white background, blue sky paint, text, letters, numbers, captions, subtitles, watermark, logo, signature, cut, jump cut, dissolve, camera shake, handheld wobble, zoom snap, speed ramp, people entering frame, vehicles entering frame, birds entering frame, anything entering or leaving frame, purple, magenta, neon, plastic sheen, glossy toy plastic, CGI, 3d render, clay, cartoon, illustration, dark shadows, crushed blacks, lens flare
 ```
 
 ## 4. 결과가 룩 안에서 표현되는 방식 — **표현하지 않는다**
