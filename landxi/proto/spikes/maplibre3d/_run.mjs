@@ -9,7 +9,11 @@ const OUT = 'shots/spikes/maplibre3d';
 fs.mkdirSync(OUT, { recursive: true });
 const SHOTS = process.env.SHOTS !== '0';
 
-const b = await chromium.launch({ channel: 'chrome' });   // headless shell 이면 SwiftShader 로 떨어진다
+// headless shell 이면 SwiftShader 로 떨어진다 → channel:'chrome' 로 실 GPU 를 붙인다.
+// vsync 를 풀지 않으면 전 구간이 30fps 로 평평해져 상대 비교가 불가능하다(실측).
+const b = await chromium.launch({ channel: 'chrome', args: [
+  '--disable-frame-rate-limit', '--disable-gpu-vsync', '--use-angle=d3d11',
+] });
 const p = await b.newPage({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 1 });
 const errs = [];
 p.on('console', (m) => { if (m.type() === 'error') errs.push('console: ' + m.text()); });
@@ -135,7 +139,8 @@ if (SHOTS) {
   ];
   console.log('\n── 스크린샷 ──');
   for (const [name, v] of FRAMES) {
-    await p.evaluate((x) => window.__spike.jump(x), v);
+    // seek() 는 스크롤 위치까지 옮긴다 → 섹션 카피가 장면과 맞는다
+    await p.evaluate((x) => window.__spike.seek(x), v);
     const w = await prewarm(26000);
     await p.waitForTimeout(1500);
     await p.screenshot({ path: `${OUT}/${name}.png` });

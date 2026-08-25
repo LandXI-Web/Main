@@ -18,6 +18,15 @@ function heightOf(t) {
   if (lv > 0 && lv < 120) return { h: Math.max(3, lv * 3.3), src: 'levels' };
   return { h: DEFAULT_H[(t.building || 'yes').toLowerCase()] ?? 6.5, src: 'default' };
 }
+// 링 면적(m²) — 기본 높이를 면적으로 보정할 때만 쓴다(경위도 근사).
+function ringArea(r) {
+  const lat = r[0][1] * Math.PI / 180;
+  const mx = 111320 * Math.cos(lat), my = 110540;
+  let a = 0;
+  for (let i = 0; i < r.length - 1; i++)
+    a += (r[i][0] * mx) * (r[i + 1][1] * my) - (r[i + 1][0] * mx) * (r[i][1] * my);
+  return Math.abs(a / 2);
+}
 const summary = [];
 for (const f of fs.readdirSync(RAW).filter(f => f.endsWith('.json'))) {
   const id = f.replace('.json', '');
@@ -30,8 +39,12 @@ for (const f of fs.readdirSync(RAW).filter(f => f.endsWith('.json'))) {
     rings = rings.map(g => g.map(p => [+p.lon.toFixed(6), +p.lat.toFixed(6)])).filter(r => r.length >= 4);
     if (!rings.length) continue;
     for (const r of rings) { const a = r[0], z = r[r.length - 1]; if (a[0] !== z[0] || a[1] !== z[1]) r.push([a[0], a[1]]); }
-    const t = el.tags || {}; const { h, src } = heightOf(t); stat[src]++;
-    const p = { h: +h.toFixed(1), src, b: t.building || 'yes' };
+    const t = el.tags || {}; let { h, src } = heightOf(t); stat[src]++;
+    const area = ringArea(rings[0]);
+    // 태그가 없을 때만: 바닥면적으로 높이를 흔든다. 전부 같은 높이면 판지 모형처럼 보인다.
+    // 40m² 창고 ×0.72 ~ 2,000m² 상가/아파트 ×1.9 범위.
+    if (src === 'default') h *= Math.min(1.9, Math.max(0.72, 0.62 + 0.28 * Math.log10(Math.max(20, area))));
+    const p = { h: +h.toFixed(1), src, b: t.building || 'yes', a: Math.round(area) };
     if (t['name:ko'] || t.name) p.name = t['name:ko'] || t.name;
     feats.push({ type: 'Feature', properties: p, geometry: rings.length === 1
       ? { type: 'Polygon', coordinates: rings } : { type: 'MultiPolygon', coordinates: rings.map(r => [r]) } });

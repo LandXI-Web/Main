@@ -15,7 +15,7 @@ const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
 // 남원 시내(주택 밀집, OSM 풋프린트가 있는 곳). 과업이 지정한 진입점.
 const NAMWON  = [127.39, 35.41];
 // 금지면 — 우리 0.6m 정사영상 코어 + AI 검출 비닐하우스 397동이 있는 곳.
-const GEUMJI  = [127.3115, 35.3350];
+const GEUMJI  = [127.3230, 35.3395];
 const KOREA   = [127.6, 35.95];
 // 밀집 대조군 — OSM 풋프린트가 촘촘한 도심. 시골(남원)과 나란히 봐야 판단이 선다.
 const JEONJU  = [127.1530, 35.8155];
@@ -39,7 +39,7 @@ const style = {
   glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
   projection: { type: ['interpolate', ['linear'], ['zoom'], 4, 'vertical-perspective', 7, 'mercator'] },
   sky: {
-    'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 0.9, 8, 0],
+    'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 4, 1, 6, 0.6, 8, 0],
     'sky-color': '#0a1c40', 'horizon-color': '#8cc0ee', 'fog-color': '#dfeaf8',
     'fog-ground-blend': 0.5, 'horizon-fog-blend': 0.62, 'sky-horizon-blend': 0.86,
   },
@@ -47,7 +47,9 @@ const style = {
   sources: {
     eox: { type: 'raster', tiles: ['https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/{z}/{y}/{x}.jpg'],
            tileSize: 256, maxzoom: 14, attribution: 'Sentinel-2 cloudless © EOX' },
-    vsat: { type: 'raster', tiles: [VSAT], tileSize: 256, minzoom: 5, maxzoom: 19, attribution: '© V-World / 국토교통부' },
+    vsat: { type: 'raster', tiles: [VSAT], tileSize: 256, minzoom: 5, maxzoom: 19,
+            bounds: [124.4, 32.9, 132.1, 38.8],   // 국외 타일 요청 차단
+            attribution: '© V-World / 국토교통부' },
     gibs: { type: 'raster', tiles: [`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${GIBS_DATE}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`],
             tileSize: 256, maxzoom: 8, attribution: 'NASA EOSDIS GIBS' },
     ofm: { type: 'vector', url: 'https://tiles.openfreemap.org/planet' },
@@ -145,7 +147,7 @@ const style = {
 };
 
 const map = new maplibregl.Map({
-  container: 'map', style, center: [127.5, 30], zoom: 1.35, pitch: 0, bearing: 0,
+  container: 'map', style, center: [127.5, 31], zoom: 2.05, pitch: 0, bearing: 0,
   antialias: true, maxPitch: 80, attributionControl: { compact: true },
   // 스크롤은 우리가 GSAP 로 몬다. 지도 자체 스크롤 줌은 끈다.
   scrollZoom: false, dragRotate: true, touchZoomRotate: false, boxZoom: false, doubleClickZoom: false,
@@ -215,8 +217,8 @@ function cloudDeck(center, { n = 46, lo = 1500, hi = 3000, spread = 0.34, drift 
 // ══════════════════════════════════════════════════════════════════════
 // [progress, lng, lat, zoom, pitch, bearing]
 const KEYS = [
-  [0.00, 127.50, 30.00,  1.35,  0,   0],
-  [0.09, 127.50, 33.60,  2.60,  0,  -8],
+  [0.00, 127.50, 31.00,  2.05,  0,   0],
+  [0.09, 127.50, 33.60,  3.10,  0,  -8],
   [0.18, 127.60, 35.30,  4.40, 12, -14],
   [0.29, KOREA[0], KOREA[1], 6.60, 44, -18],
   [0.40, 127.46, 35.62,  9.20, 52, -12],
@@ -447,9 +449,13 @@ window.__spike = {
   ready: () => map.areTilesLoaded() && map.isStyleLoaded(),
   toggle: (k, v) => { const el = document.getElementById(k); el.checked = v; el.dispatchEvent(new Event('change')); },
   ensure,
-  counts: () => ({
-    bld: map.queryRenderedFeatures({ layers: ['bld'] }).length,
-    gh: map.queryRenderedFeatures({ layers: ['gh'] }).length,
-    ofm: map.getLayer('bld-ofm') ? map.querySourceFeatures('ofm', { sourceLayer: 'building' }).length : 0,
-  }),
+  counts: () => {
+    // ⚠ MapLibre v5 의 queryRenderedFeatures 에 옵션 객체만 넘기면 0 이 나온다(실측).
+    //   뷰포트 사각형을 명시해야 fill-extrusion 이 잡힌다.
+    const box = [[0, 0], [innerWidth, innerHeight]];
+    const qr = (l) => { try { return map.queryRenderedFeatures(box, { layers: [l] }).length; } catch { return 0; } };
+    return { bld: qr('bld'), gh: qr('gh'),
+             ofm: map.querySourceFeatures('ofm', { sourceLayer: 'building' }).length,
+             loadedBld: stats.bld, loadedGh: stats.gh };
+  },
 };

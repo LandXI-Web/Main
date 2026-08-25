@@ -13,7 +13,7 @@
     "height": 35,
     "levels": 288,
     "default": 5966,
-    "kb": 1534
+    "kb": 1580
   },
   {
     "id": "namwon",
@@ -21,7 +21,7 @@
     "height": 0,
     "levels": 1,
     "default": 225,
-    "kb": 67
+    "kb": 69
   },
   {
     "id": "yeosu",
@@ -29,6 +29,6 @@
     "height": 1,
     "levels": 81,
     "default": 13475,
-    "kb": 3533
+    "kb": 3629
   }
 ]
