@@ -85,7 +85,7 @@
 추가로 확정된 것 하나: **진입 연출은 반드시 중단 가능해야 한다.** 활공 중 클릭·휠·키 입력이 들어오면 즉시 착지시킨다. 멈출 수 없는 연출은 "예쁜 영상"이고, 그것이 1차 목업 판정의 원인이었다.
 
 ## 7. 확정 추가 (2026-08-26, 영상 4편 + ORRERY 포렌식)
-- **히어로 = 스크롤 스크럽 필름** (scroll-craft/worldflight, MIT): 고정 무대 1개 + 전 leg 상시 마운트 + `currentTime` 스크럽(lerp 0.12, deadband 8/20ms, seek coalescing) + 한쪽 크로스페이드(seam 0.16) + 페이스 0.212–0.225 vh/초(편차 ≤6%) + 인코딩 `-g 8 -keyint_min 8 -sc_threshold 0 -movflags +faststart -an`. 대기권 구간은 자체 렌더 leg, **남원 상공부터 실시간 지도로 핸드오프**(같은 카메라). 아트디렉션 = High-key editorial(흰 크롬, 밝은 정사영상 위 어두운 글자), 미니어처 다이어라마 룩 금지.
+- **히어로 = 스크롤 스크럽 필름** (scroll-craft/worldflight, MIT): 고정 무대 1개 + 전 leg 상시 마운트 + `currentTime` 스크럽(lerp 0.12, deadband 8/20ms, seek coalescing) + 한쪽 크로스페이드(seam 0.16) + 페이스 0.212–0.225 vh/초(편차 ≤6%) + 인코딩 `-g 8 -keyint_min 8 -sc_threshold 0 -movflags +faststart -an`. 대기권 구간은 자체 렌더 leg, **남원 상공부터 실시간 지도로 핸드오프**(같은 카메라). 아트디렉션 = 페이지 크롬은 High-key editorial(흰 B안), **필름 leg는 사용자 선호에 따라 AI 생성 미니어처 디오라마 룩**(kie seedream+kling, 실제 정사영상 크롭을 참조로 한국 실제 장소 재현; 테스트 스틸 `legs/gen/namwon-greenhouse-test.png` 합격급). 대기권 leg는 자체 렌더.
 - **한국 3D 현실**: Google 3D Tiles 한국 평면(규제), V-World 3D API 폐쇄 → 구체적 지역은 자체 정사영상 + V-World 타일 + 건물 footprint 압출(높이 없음 → DSM−DTM 필요)로만.
 - **§4 보강(비율·분량·명명 레이아웃)**: 통계 숫자 = 본문 7.75배 / 색 분량 90(흰·검) : 8(회색·헤어라인) : 2(액센트) / **페이지당 한 번의 일탈**(판이 마진을 뚫는 것) / 명명 레이아웃 `PLATE-FULL` `SPLIT-5050` `LEDGER` `EVIDENCE-PAIR` `CHIP-RAIL` — 화면은 이 다섯의 조합으로만 짠다.
 - **장치 추가**: 원-바 시간 밀도 스캔 스트립(밀도×분류×시간, 클릭→카메라) / 프로비넌스 카드(모델·엔진·GSD·좌표계·파일·생성시각) / 이름 붙은 모션 비트(Snap 2.0s · Focus 3.2s · Out 0.8s) / 형태가 다른 스탯 타일 3종 + 방법 자백 한 줄.
