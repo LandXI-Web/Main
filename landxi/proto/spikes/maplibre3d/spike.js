@@ -17,6 +17,9 @@ const NAMWON  = [127.39, 35.41];
 // 금지면 — 우리 0.6m 정사영상 코어 + AI 검출 비닐하우스 397동이 있는 곳.
 const GEUMJI  = [127.3115, 35.3350];
 const KOREA   = [127.6, 35.95];
+// 밀집 대조군 — OSM 풋프린트가 촘촘한 도심. 시골(남원)과 나란히 봐야 판단이 선다.
+const JEONJU  = [127.1530, 35.8155];
+const YEOSU   = [127.7395, 34.7452];
 // namwon_city_2510 의 0.6m 코어 범위 (imagery.js 와 동일)
 const CORE_B  = [127.292609, 35.318037, 127.35883, 35.372294];
 const CITY_B  = [127.182606, 35.302858, 127.637309, 35.561786];
@@ -56,6 +59,10 @@ const style = {
                   tileSize: 256, minzoom: 11, maxzoom: 15, bounds: CITY_B },
     ortho_core: { type: 'raster', tiles: ['/landxi/assets/tiles/namwon_city_2510/{z}/{x}/{y}.webp'],
                   tileSize: 256, minzoom: 15, maxzoom: 17, bounds: CORE_B },
+    // 구름 b2 — image 소스. MapLibre v5 래스터에 raster-translate 가 없으므로(실측)
+    // 좌표 자체를 매 프레임 옮겨 흘린다.
+    cloudsheet: { type: 'image', url: '/landxi/assets/proto/clouds/cloud_far.webp',
+                  coordinates: [[124.0, 39.5], [132.0, 39.5], [132.0, 33.0], [124.0, 33.0]] },
     bld: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
     gh:  { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
   },
@@ -69,7 +76,11 @@ const style = {
     { id: 'gibs-clouds', type: 'raster', source: 'gibs', layout: { visibility: 'none' },
       paint: { 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 0, 0.55, 6, 0.42, 9, 0],
                'raster-contrast': 0.42, 'raster-brightness-min': 0.5, 'raster-saturation': -0.55,
-               'raster-fade-duration': 0, 'raster-translate-anchor': 'map', 'raster-translate': [0, 0] } },
+               'raster-fade-duration': 0 } },
+
+    { id: 'cloudsheet', type: 'raster', source: 'cloudsheet', layout: { visibility: 'none' },
+      paint: { 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 3, 0, 4.5, 0.55, 9, 0.4, 12, 0],
+               'raster-fade-duration': 0 } },
 
     { id: 'vsat', type: 'raster', source: 'vsat',
       paint: { 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 5.5, 0, 8, 1],
@@ -204,17 +215,18 @@ function cloudDeck(center, { n = 46, lo = 1500, hi = 3000, spread = 0.34, drift 
 // ══════════════════════════════════════════════════════════════════════
 // [progress, lng, lat, zoom, pitch, bearing]
 const KEYS = [
-  [0.00, 127.50, 30.00,  1.35,  0, 0],
-  [0.10, 127.50, 33.60,  2.60,  0, -8],
-  [0.20, 127.60, 35.30,  4.40, 12, -14],
-  [0.32, KOREA[0], KOREA[1], 6.60, 44, -18],
-  [0.44, 127.46, 35.62,  9.20, 52, -12],
-  [0.56, NAMWON[0], NAMWON[1] + 0.03, 11.80, 60, -6],
-  [0.66, NAMWON[0], NAMWON[1] + 0.012, 14.20, 64, 6],
-  [0.76, NAMWON[0], NAMWON[1], 16.40, 67, 18],
-  [0.84, NAMWON[0] + 0.0012, NAMWON[1] - 0.0008, 17.50, 68, 30],
-  [0.90, GEUMJI[0], GEUMJI[1], 15.20, 62, 18],
-  [1.00, GEUMJI[0], GEUMJI[1], 17.20, 68, -4],
+  [0.00, 127.50, 30.00,  1.35,  0,   0],
+  [0.09, 127.50, 33.60,  2.60,  0,  -8],
+  [0.18, 127.60, 35.30,  4.40, 12, -14],
+  [0.29, KOREA[0], KOREA[1], 6.60, 44, -18],
+  [0.40, 127.46, 35.62,  9.20, 52, -12],
+  [0.50, NAMWON[0], NAMWON[1] + 0.030, 11.80, 60,  -6],
+  [0.59, NAMWON[0], NAMWON[1] + 0.012, 14.20, 64,   6],
+  [0.67, NAMWON[0], NAMWON[1] + 0.003, 16.40, 67,  18],
+  [0.74, NAMWON[0] + 0.0012, NAMWON[1] - 0.0008, 17.50, 68, 30],
+  [0.81, GEUMJI[0], GEUMJI[1], 15.20, 62, 18],
+  [0.88, GEUMJI[0], GEUMJI[1], 17.20, 68, -4],
+  [1.00, JEONJU[0], JEONJU[1], 17.30, 68, 24],
 ];
 const lerp = (a, b, t) => a + (b - a) * t;
 const ease = (t) => t * t * (3 - 2 * t);
@@ -229,16 +241,16 @@ function camAt(p) {
 
 const STAGES = [
   [0.00, '궤도',   '지구 · Sentinel-2 무운 · 대기광'],
-  [0.14, '접근',   '대기권 진입 · 구름층'],
-  [0.28, '국토',   '대한민국 · V-World 위성'],
-  [0.48, '지역',   '남원 · Mapterhorn 지형 ON'],
-  [0.62, '마을',   '정사영상 2m → 위성 위로'],
-  [0.72, '거리',   'OSM 풋프린트 3D · 실측 높이'],
-  [0.88, '금지면', '정사영상 0.6m · AI 검출 온실 4m'],
+  [0.12, '접근',   '대기권 진입 · 구름층'],
+  [0.25, '국토',   '대한민국 · V-World 위성'],
+  [0.44, '지역',   '남원 · Mapterhorn 지형 ON'],
+  [0.56, '마을',   '정사영상 2m → 위성 위로'],
+  [0.65, '거리',   'OSM 풋프린트 3D · 실측 높이'],
+  [0.79, '금지면', '정사영상 0.6m · AI 검출 온실 4m'],
+  [0.93, '전주',   '밀집 대조군 · 한옥마을'],
 ];
-
 // 지형은 이 구간에서만 켠다 — 성능 절벽이 여기 하나뿐이기 때문(조사 §7.2)
-const TERRAIN_IN = [0.40, 0.74];
+const TERRAIN_IN = [0.34, 0.70];
 
 let terrainOn = false;
 function applyTerrain(p) {
@@ -254,10 +266,13 @@ function seek(p) {
   progress = Math.min(1, Math.max(0, p));
   const c = camAt(progress);
   applyTerrain(progress);
+  // 전주 구간이 다가오면 미리 붙인다 (스크롤이 도착했을 때 이미 서 있게)
+  if (progress > 0.72 && !loaded.has('jeonju')) ensure(['jeonju']);
   map.jumpTo(c);
   paintHud(c);
   driftCss(c);
 }
+let lastEle = 0;
 function paintHud(c) {
   // MapLibre 는 카메라 실고도를 직접 안 주므로 스케일에서 역산한다.
   const alt = (40075016.686 * Math.cos(c.center[1] * Math.PI / 180) / Math.pow(2, c.zoom + 8)) * innerHeight
@@ -267,8 +282,15 @@ function paintHud(c) {
     : km >= 1 ? km.toFixed(1) + ' km' : Math.round(alt) + ' m';
   document.getElementById('n-zoom').textContent = c.zoom.toFixed(2);
   document.getElementById('n-pitch').textContent = Math.round(c.pitch) + '°';
-  const e = terrainOn ? map.queryTerrainElevation(c.center) : null;
-  document.getElementById('n-ele').textContent = e == null ? '—' : Math.round(e) + ' m';
+  // ⚠ queryTerrainElevation 은 GPU 리드백을 유발한다. 매 프레임 호출하면
+  //   "READ-usage buffer ... discarded the shadow copy" 경고가 쏟아지고 프레임이 씹힌다.
+  //   HUD 표시용이므로 4Hz 로 충분하다.
+  const now = performance.now();
+  if (now - lastEle > 250) {
+    lastEle = now;
+    const e = terrainOn ? map.queryTerrainElevation(c.center) : null;
+    document.getElementById('n-ele').textContent = e == null ? '—' : Math.round(e) + ' m';
+  }
   let s = STAGES[0]; for (const k of STAGES) if (progress >= k[0]) s = k;
   const st = document.getElementById('hud-stage');
   if (st.textContent !== s[1]) { st.textContent = s[1]; document.getElementById('hud-sub').textContent = s[2]; }
@@ -303,18 +325,35 @@ const stats = { bld: 0, ofm: 0, gh: 0, sources: {} };
 
 async function loadJson(u) { const r = await fetch(u); if (!r.ok) throw new Error(u + ' ' + r.status); return r.json(); }
 
-map.on('load', async () => {
-  // 풋프린트 3지역을 하나로 합친다(마을/거리 장면 전부 커버).
-  const parts = [];
-  for (const id of ['namwon', 'geumji', 'jeonju', 'yeosu']) {
+// 지역별 지연 로딩 — 이미 붙은 지역은 다시 받지 않는다.
+const loaded = new Map();
+let pending = null;
+async function ensure(ids) {
+  const need = ids.filter((id) => !loaded.has(id));
+  if (!need.length) return;
+  for (const id of need) {
+    loaded.set(id, []);   // 중복 요청 방지
     try {
       const g = await loadJson(`data/buildings-${id}.geojson`);
+      loaded.set(id, g.features);
       stats.sources[id] = g.features.length;
-      parts.push(...g.features);
-    } catch (e) { stats.sources[id] = 0; console.warn('풋프린트 없음', id); }
+    } catch (e) { console.warn('풋프린트 없음', id); stats.sources[id] = 0; }
   }
-  stats.bld = parts.length;
-  map.getSource('bld').setData({ type: 'FeatureCollection', features: parts });
+  const all = [].concat(...loaded.values());
+  stats.bld = all.length;
+  map.getSource('bld').setData({ type: 'FeatureCollection', features: all });
+  const el = document.getElementById('n-bld');
+  if (el) el.textContent = `${stats.bld} / 온실 ${stats.gh}`;
+}
+
+const boot = (m) => { const el = document.getElementById('boot'); if (el) el.textContent = m; console.log('boot:', m); };
+
+map.on('load', async () => {
+ try {
+  boot('스타일 로드됨');
+  // 풋프린트는 지역별로 지연 로딩한다. 여수 3.5MB / 전주 1.5MB 를 첫 화면에서
+  // 다 받으면 궤도 장면이 늦어진다 — 카메라가 다가올 때 붙인다.
+  await ensure(['namwon', 'geumji']);
 
   try {
     const g = await loadJson('data/greenhouse-core.geojson');
@@ -327,18 +366,20 @@ map.on('load', async () => {
   // 구름 c
   map.addLayer(cloudDeck(NAMWON, { n: 46, lo: 1500, hi: 3000, spread: 0.42 }));
 
-  // GIBS 흘리기
+  // 구름 b 흘리기 — GIBS 는 정지(그날의 실제 구름), image 구름장은 좌표를 옮겨 흐른다.
+  const SHEET = [[124.0, 39.5], [132.0, 39.5], [132.0, 33.0], [124.0, 33.0]];
   let gt = 0;
   setInterval(() => {
     if (!gibsOn || REDUCE) return;
-    gt = (gt + 1.1) % 4096;
-    map.setPaintProperty('gibs-clouds', 'raster-translate', [-gt, gt * 0.18]);
+    gt = (gt + 0.006) % 8;           // 8도 주기로 되감는다(이음매는 seam 이 보인다 — 한계)
+    map.getSource('cloudsheet').setCoordinates(SHEET.map(([x, y]) => [x + gt, y]));
   }, 60);
 
   seek(0);
   wire();
   document.getElementById('boot').classList.add('gone');
   document.body.dataset.ready = '1';
+ } catch (e) { boot('부팅 실패: ' + e.message); console.error(e); }
 });
 
 map.on('error', (e) => console.warn('map error:', e && e.error && e.error.message));
@@ -362,7 +403,11 @@ function wire() {
   const bind = (id, fn) => document.getElementById(id).addEventListener('change', (e) => fn(e.target.checked));
   bind('t-css', (v) => { cssOn = v; driftCss(camAt(progress)); });
   bind('t-three', (v) => { threeOn = v; const l = map.getLayer('three-clouds'); if (l) l.implementation.on = v; map.triggerRepaint(); });
-  bind('t-gibs', (v) => { gibsOn = v; map.setLayoutProperty('gibs-clouds', 'visibility', v ? 'visible' : 'none'); });
+  bind('t-gibs', (v) => {
+    gibsOn = v;
+    map.setLayoutProperty('gibs-clouds', 'visibility', v ? 'visible' : 'none');
+    map.setLayoutProperty('cloudsheet', 'visibility', v ? 'visible' : 'none');
+  });
   bind('t-ofm', (v) => {
     map.setLayoutProperty('bld-ofm', 'visibility', v ? 'visible' : 'none');
     if (v) setTimeout(() => {
@@ -401,6 +446,7 @@ window.__spike = {
   // 타일이 다 붙었는지 — 흐린 스크린샷 방지
   ready: () => map.areTilesLoaded() && map.isStyleLoaded(),
   toggle: (k, v) => { const el = document.getElementById(k); el.checked = v; el.dispatchEvent(new Event('change')); },
+  ensure,
   counts: () => ({
     bld: map.queryRenderedFeatures({ layers: ['bld'] }).length,
     gh: map.queryRenderedFeatures({ layers: ['gh'] }).length,
