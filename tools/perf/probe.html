@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<title>perf probe</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
+<style>
+html,body{margin:0;height:100%;background:#03060e}
+#map{position:absolute;inset:0}
+.glass{position:absolute;width:30%;height:38%;border-radius:16px;border:1px solid rgba(255,255,255,.25);
+  background:rgba(20,30,50,.28);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  box-shadow:0 8px 40px rgba(0,0,0,.35);pointer-events:none}
+#g1{top:6%;left:4%} #g2{top:6%;right:4%} #g3{bottom:6%;left:35%}
+#hud{position:absolute;left:8px;bottom:8px;color:#9fe;font:12px/1.4 monospace;background:#000a;padding:6px 8px;border-radius:6px;z-index:9}
+</style>
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/deck.gl@9.3.10/dist.min.js"></script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"}}</script>
+</head><body>
+<div id="map"></div>
+<div id="hud"></div>
+<script type="module">
+// ── tools/perf/probe.html ─────────────────────────────────────────────────
+// 2026-08-25-perf-thispc 측정용. verified-stack-probe3.html 의 스택/스타일을
+// 그대로 재사용하되, 시나리오(a~g)를 query string 으로 켜고 rAF 기반 fps
+// 하니스(6s 창 p50/p95 프레임타임)를 추가했다. DPR 변화(h)는 러너가
+// Playwright deviceScaleFactor 로 바깥에서 준다(브라우저에서 devicePixelRatio
+// 를 직접 덮어쓸 방법이 없기 때문).
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const qs = new URLSearchParams(location.search);
+const LEVEL = qs.get('level') || 'a';           // a..g, 누적
+const ORDER = ['a','b','c','d','e','f','g'];
+const IDX = Math.max(0, ORDER.indexOf(LEVEL));
+const WARMUP_MS = Number(qs.get('warmup') || 1500);
+const WINDOW_MS = Number(qs.get('dur') || 6000);   // 스펙 §2: 6s 창. 러너는 8s 총 실행 중 이 창만 표본화.
+
+const hud = document.getElementById('hud');
+const setHud = s => { hud.textContent = s; };
+
+// ── fps 하니스: rAF 타임스탬프 → 프레임타임 배열 → p50/p95 ──────────────
+const frameTimes = [];
+let measuring = false, lastT = 0;
+function pct(sorted, p) { const i = Math.min(sorted.length - 1, Math.floor(p * sorted.length)); return sorted[i]; }
+function rafLoop(t) {
+  if (lastT && measuring) frameTimes.push(t - lastT);
+  lastT = t;
+  requestAnimationFrame(rafLoop);
+}
+requestAnimationFrame(rafLoop);
+
+async function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── 시나리오 플래그 (누적: a<b<c<d<e<f<g) ────────────────────────────────
+const F = {
+  vsat:   IDX >= 1,   // b: V-World 위성 + 하이브리드 + 지명
+  terrain:IDX >= 2,   // c: Mapterhorn 지형 ON, pitch65 z12
+  deck:   IDX >= 3,   // d: deck.gl Scatterplot 5k + Arc
+  three:  IDX >= 4,   // e: three CustomLayer glTF(satellite.glb) + RoomEnvironment PMREM
+  debris: IDX >= 5,   // f: marine-debris.geojson 5,000 폴리곤 fill + setFilter 100ms
+  glass:  IDX >= 6,   // g: backdrop-filter 유리 패널 3장
+};
+
+const scatterPts = F.deck ? Array.from({ length: 5000 }, () => ({
+  p: [127.0 + Math.random() * 2.5, 34.6 + Math.random() * 2.8],
+})) : [];
+const arcs = F.deck ? Array.from({ length: 250 }, () => ({
+  s: [126.98 + Math.random() * 2, 37.56 - Math.random() * 2],
+  t: [129 + Math.random() * 2, 35.1 + Math.random() * 2],
+})) : [];
+
+const style = {
+  version: 8,
+  projection: { type: 'globe' },
+  glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
+  sources: {
+    eox: { type: 'raster', tiles: ['https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/{z}/{y}/{x}.jpg'], tileSize: 256, maxzoom: 14, attribution: 'Sentinel-2 cloudless © EOX' },
+    ...(F.vsat ? {
+      vsat: { type: 'raster', tiles: ['https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg'], tileSize: 256, minzoom: 5, maxzoom: 19, attribution: '© VWorld' },
+      vhyb: { type: 'raster', tiles: ['https://xdworld.vworld.kr/2d/Hybrid/service/{z}/{x}/{y}.png'], tileSize: 256, minzoom: 5, maxzoom: 19 },
+      ofm:  { type: 'vector', url: 'https://tiles.openfreemap.org/planet' },
+    } : {}),
+    ...(F.terrain ? { dem: { type: 'raster-dem', tiles: ['https://tiles.mapterhorn.com/{z}/{x}/{y}.webp'], tileSize: 512, maxzoom: 12, encoding: 'terrarium', attribution: '© Mapterhorn' } } : {}),
+    ...(F.debris ? { debris: { type: 'geojson', data: '/landxi/assets/data/geo/marine-debris.geojson' } } : {}),
+  },
+  layers: [
+    { id: 'bg', type: 'background', paint: { 'background-color': '#02040a' } },
+    { id: 'eox', type: 'raster', source: 'eox', paint: { 'raster-fade-duration': 300, 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 7, 1, 9, 0] } },
+    ...(F.vsat ? [
+      { id: 'vsat', type: 'raster', source: 'vsat', paint: { 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 6, 0, 8, 1], 'raster-saturation': 0.08, 'raster-contrast': 0.05 } },
+      { id: 'boundary', type: 'line', source: 'ofm', 'source-layer': 'boundary', filter: ['<=', ['get', 'admin_level'], 4], paint: { 'line-color': '#7fd8ff', 'line-width': ['interpolate', ['linear'], ['zoom'], 3, 0.5, 10, 1.6], 'line-opacity': 0.7, 'line-blur': 0.6 } },
+      { id: 'vhyb', type: 'raster', source: 'vhyb', paint: { 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 9, 0, 11, 0.85] } },
+      { id: 'place', type: 'symbol', source: 'ofm', 'source-layer': 'place', filter: ['==', ['get', 'class'], 'city'], layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'], 'text-size': 12 }, paint: { 'text-color': '#eaf6ff', 'text-halo-color': '#001018', 'text-halo-width': 1.4 } },
+    ] : []),
+    ...(F.debris ? [
+      { id: 'debris-fill', type: 'fill', source: 'debris', paint: { 'fill-color': '#ff5f8a', 'fill-opacity': 0.55, 'fill-outline-color': '#ffffff' } },
+    ] : []),
+  ],
+  sky: { 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 7, 0], 'sky-color': '#0b1e46', 'horizon-color': '#8fc0f0', 'fog-color': '#e6f0ff', 'fog-ground-blend': 0.45, 'horizon-fog-blend': 0.6, 'sky-horizon-blend': 0.85 },
+  light: { anchor: 'map', position: [1.5, 90, 80], color: '#ffffff', intensity: 0.45 },
+};
+
+// ── 카메라 목표: a 글로브 아이들 / b 위성+지명 z8 팬 / c~e 남원 z12 pitch65
+//    / f~g 해양쓰레기 bbox 중심 z9 pitch65 (5,000 폴리곤이 실제로 화면에 들어와야
+//    fill/필터 갱신 비용이 정직하게 측정된다) ────────────────────────────────
+const CAM_IDLE   = { center: [127.5, 36], zoom: 1.6, pitch: 0, bearing: 0 };
+const CAM_PAN    = { center: [127.5, 36], zoom: 8, pitch: 0, bearing: 0 };
+const CAM_NAMWON = { center: [127.39, 35.41], zoom: 12, pitch: 65, bearing: 35 };
+const CAM_DEBRIS = { center: [126.39, 34.75], zoom: 9, pitch: 65, bearing: 0 };
+const cam = IDX === 0 ? CAM_IDLE : IDX === 1 ? CAM_PAN : IDX <= 4 ? CAM_NAMWON : CAM_DEBRIS;
+
+const map = new maplibregl.Map({
+  container: 'map', style, center: cam.center, zoom: cam.zoom, pitch: cam.pitch, bearing: cam.bearing,
+  antialias: true, maxPitch: 85, attributionControl: { compact: true },
+});
+window.__map = map;
+const mapErrors = [];
+map.on('error', e => mapErrors.push(String((e.error && e.error.message) || e.type)));
+
+await new Promise((res, rej) => { map.on('load', res); setTimeout(() => rej(new Error('load timeout')), 45000); });
+
+if (F.terrain) map.setTerrain({ source: 'dem', exaggeration: 1.4 });
+
+// b: 연속 팬 — 측정 창 동안 rAF 로 center 를 진동시킨다 (타일 요청/리드로우 스트레스)
+let panT0 = null;
+if (IDX === 1) {
+  panT0 = performance.now();
+  const basePan = cam.center.slice();
+  const tick = () => {
+    const t = (performance.now() - panT0) / 1000;
+    map.jumpTo({ center: [basePan[0] + Math.sin(t * 0.6) * 0.35, basePan[1] + Math.cos(t * 0.4) * 0.12], zoom: cam.zoom, pitch: cam.pitch, bearing: cam.bearing });
+    if (!doneAll) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+// d: deck.gl interleaved — ScatterplotLayer 5k + ArcLayer 250
+if (F.deck) {
+  const overlay = new deck.MapboxOverlay({
+    interleaved: true,
+    layers: [
+      new deck.ScatterplotLayer({ id: 'scatter5k', data: scatterPts, getPosition: d => d.p, getRadius: 400, radiusMinPixels: 2, getFillColor: [0, 220, 255, 200] }),
+      new deck.ArcLayer({ id: 'arcs', data: arcs, getSourcePosition: d => d.s, getTargetPosition: d => d.t, getSourceColor: [0, 220, 255], getTargetColor: [255, 110, 0], getWidth: 1.6, getHeight: 0.4 }),
+    ],
+  });
+  map.addControl(overlay);
+  window.__overlay = overlay;
+}
+
+// e: three.js CustomLayer — satellite.glb + RoomEnvironment PMREM (금속 머티리얼 검게 안 나오게)
+if (F.three) {
+  const layer = {
+    id: 'three-sat', type: 'custom', renderingMode: '3d',
+    onAdd(m, gl) {
+      this.map = m;
+      this.camera = new THREE.Camera();
+      this.scene = new THREE.Scene();
+      this.renderer = new THREE.WebGLRenderer({ canvas: m.getCanvas(), context: gl, antialias: true });
+      this.renderer.autoClear = false;
+      try {
+        const pmrem = new THREE.PMREMGenerator(this.renderer);
+        this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+        this.scene.environmentIntensity = 0.55;
+        pmrem.dispose();
+      } catch (e) { /* 환경맵 실패해도 조명만으로 렌더 */ }
+      this.scene.add(new THREE.AmbientLight(0x8aa8d8, 2.0));
+      const sun = new THREE.DirectionalLight(0xfff6e4, 3.4); sun.position.set(0, -70, 100).normalize(); this.scene.add(sun);
+      new GLTFLoader().load('/landxi/assets/proto/models/satellite.glb',
+        gltf => { this.gltf = true; this.scene.add(gltf.scene); },
+        undefined, e => { this.gltfErr = String((e && e.message) || e); });
+    },
+    render(gl, args) {
+      this.n = (this.n || 0) + 1;
+      const pd = args && args.defaultProjectionData;
+      if (pd && pd.mainMatrix) {
+        const merc = maplibregl.MercatorCoordinate.fromLngLat(cam.center, 900);
+        const s = merc.meterInMercatorCoordinateUnits() * 180000;
+        this.camera.projectionMatrix = new THREE.Matrix4().fromArray(pd.mainMatrix)
+          .multiply(new THREE.Matrix4().makeTranslation(merc.x, merc.y, merc.z))
+          .multiply(new THREE.Matrix4().makeScale(s, -s, s));
+      }
+      this.renderer.resetState();
+      this.renderer.render(this.scene, this.camera);
+      this.map.triggerRepaint();
+    },
+  };
+  map.addLayer(layer);
+}
+
+// f: 5,000 폴리곤 fill 위에서 confidence 로 100ms 마다 setFilter
+let filterTimer = null;
+if (F.debris) {
+  let toggle = false;
+  filterTimer = setInterval(() => {
+    toggle = !toggle;
+    try { map.setFilter('debris-fill', ['>=', ['get', 'confidence'], toggle ? 0.9 : 0.5]); } catch (e) { /* 레이어 아직 없음 */ }
+  }, 100);
+}
+
+// g: backdrop-filter 유리 패널 3장
+if (F.glass) {
+  for (const id of ['g1', 'g2', 'g3']) {
+    const d = document.createElement('div');
+    d.className = 'glass'; d.id = id;
+    document.body.appendChild(d);
+  }
+}
+
+// ── 측정 ──────────────────────────────────────────────────────────────────
+let doneAll = false;
+setHud(`level=${LEVEL} warming up…`);
+await sleep(WARMUP_MS);
+frameTimes.length = 0;
+measuring = true;
+setHud(`level=${LEVEL} measuring ${WINDOW_MS}ms…`);
+await sleep(WINDOW_MS);
+measuring = false;
+doneAll = true;
+
+const sorted = frameTimes.slice().sort((a, b) => a - b);
+const p50Ms = pct(sorted, 0.50), p95Ms = pct(sorted, 0.95);
+const avgMs = sorted.reduce((a, b) => a + b, 0) / (sorted.length || 1);
+const mem = performance.memory ? {
+  usedMB: +(performance.memory.usedJSHeapSize / 1048576).toFixed(1),
+  totalMB: +(performance.memory.totalJSHeapSize / 1048576).toFixed(1),
+} : null;
+
+window.__perf = {
+  level: LEVEL, idx: IDX, flags: F, dpr: window.devicePixelRatio,
+  frames: sorted.length, windowMs: WINDOW_MS,
+  p50Ms: +p50Ms.toFixed(2), p95Ms: +p95Ms.toFixed(2), avgMs: +avgMs.toFixed(2),
+  p50Fps: +(1000 / p50Ms).toFixed(1), p95Fps: +(1000 / p95Ms).toFixed(1), avgFps: +(1000 / avgMs).toFixed(1),
+  jsHeap: mem, mapErrors: mapErrors.slice(0, 10),
+};
+setHud(`level=${LEVEL} dpr=${window.devicePixelRatio} p50=${window.__perf.p50Fps}fps p95=${window.__perf.p95Fps}fps`);
+if (filterTimer) clearInterval(filterTimer);
+window.__perfDone = true;
+</script></body></html>

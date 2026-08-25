@@ -1,0 +1,342 @@
+[
+  {
+    "label": "a",
+    "level": "a",
+    "dpr": 1,
+    "perf": {
+      "level": "a",
+      "idx": 0,
+      "flags": {
+        "vsat": false,
+        "terrain": false,
+        "deck": false,
+        "three": false,
+        "debris": false,
+        "glass": false
+      },
+      "dpr": 1,
+      "frames": 240,
+      "windowMs": 8000,
+      "p50Ms": 33.4,
+      "p95Ms": 33.5,
+      "avgMs": 33.36,
+      "p50Fps": 29.9,
+      "p95Fps": 29.9,
+      "avgFps": 30,
+      "jsHeap": {
+        "usedMB": 17.4,
+        "totalMB": 30.3
+      },
+      "mapErrors": []
+    },
+    "consoleErrors": [],
+    "shot": "shots\\perf\\scenario-a.png",
+    "chromeMemMB": null
+  },
+  {
+    "label": "b",
+    "level": "b",
+    "dpr": 1,
+    "perf": {
+      "level": "b",
+      "idx": 1,
+      "flags": {
+        "vsat": true,
+        "terrain": false,
+        "deck": false,
+        "three": false,
+        "debris": false,
+        "glass": false
+      },
+      "dpr": 1,
+      "frames": 240,
+      "windowMs": 8000,
+      "p50Ms": 33.4,
+      "p95Ms": 33.5,
+      "avgMs": 33.36,
+      "p50Fps": 29.9,
+      "p95Fps": 29.9,
+      "avgFps": 30,
+      "jsHeap": {
+        "usedMB": 37.6,
+        "totalMB": 74.8
+      },
+      "mapErrors": []
+    },
+    "consoleErrors": [],
+    "shot": "shots\\perf\\scenario-b.png",
+    "chromeMemMB": null
+  },
+  {
+    "label": "c",
+    "level": "c",
+    "dpr": 1,
+    "perf": {
+      "level": "c",
+      "idx": 2,
+      "flags": {
+        "vsat": true,
+        "terrain": true,
+        "deck": false,
+        "three": false,
+        "debris": false,
+        "glass": false
+      },
+      "dpr": 1,
+      "frames": 237,
+      "windowMs": 8000,
+      "p50Ms": 33.4,
+      "p95Ms": 33.5,
+      "avgMs": 33.78,
+      "p50Fps": 29.9,
+      "p95Fps": 29.9,
+      "avgFps": 29.6,
+      "jsHeap": {
+        "usedMB": 50.6,
+        "totalMB": 91.6
+      },
+      "mapErrors": []
+    },
+    "consoleErrors": [],
+    "shot": "shots\\perf\\scenario-c.png",
+    "chromeMemMB": null
+  },
+  {
+    "label": "d",
+    "level": "d",
+    "dpr": 1,
+    "perf": {
+      "level": "d",
+      "idx": 3,
+      "flags": {
+        "vsat": true,
+        "terrain": true,
+        "deck": true,
+        "three": false,
+        "debris": false,
+        "glass": false
+      },
+      "dpr": 1,
+      "frames": 240,
+      "windowMs": 8000,
+      "p50Ms": 33.4,
+      "p95Ms": 33.5,
+      "avgMs": 33.36,
+      "p50Fps": 29.9,
+      "p95Fps": 29.9,
+      "avgFps": 30,
+      "jsHeap": {
+        "usedMB": 43.1,
+        "totalMB": 96.6
+      },
+      "mapErrors": []
+    },
+    "consoleErrors": [],
+    "shot": "shots\\perf\\scenario-d.png",
+    "chromeMemMB": null
+  },
+  {
+    "label": "e",
+    "level": "e",
+    "dpr": 1,
+    "perf": {
+      "level": "e",
+      "idx": 4,
+      "flags": {
+        "vsat": true,
+        "terrain": true,
+        "deck": true,
+        "three": true,
+        "debris": false,
+        "glass": false
+      },
+      "dpr": 1,
+      "frames": 240,
+      "windowMs": 8000,
+      "p50Ms": 33.4,
+      "p95Ms": 33.5,
+      "avgMs": 33.36,
+      "p50Fps": 29.9,
+      "p95Fps": 29.9,
+      "avgFps": 30,
+      "jsHeap": {
+        "usedMB": 47,
+        "totalMB": 93.1
+      },
+      "mapErrors": []
+    },
+    "consoleErrors": [],
+    "shot": "shots\\perf\\scenario-e.png",
+    "chromeMemMB": null
+  },
+  {
+    "label": "f",
+    "level": "f",
+    "dpr": 1,
+    "perf": {
+      "level": "f",
+      "idx": 5,
+      "flags": {
+        "vsat": true,
+        "terrain": true,
+        "deck": true,
+        "three": true,
+        "debris": true,
+        "glass": false
+      },
+      "dpr": 1,
+      "frames": 240,
+      "windowMs": 8000,
+      "p50Ms": 33.4,
+      "p95Ms": 33.6,
+      "avgMs": 33.36,
+      "p50Fps": 29.9,
+      "p95Fps": 29.8,
+      "avgFps": 30,
+      "jsHeap": {
+        "usedMB": 108,
+        "totalMB": 144.3
+      },
+      "mapErrors": []
+    },
+    "consoleErrors": [],
+    "shot": "shots\\perf\\scenario-f.png",
+    "chromeMemMB": null
+  },
+  {
+    "label": "g",
+    "level": "g",
+    "dpr": 1,
+    "perf": {
+      "level": "g",
+      "idx": 6,
+      "flags": {
+        "vsat": true,
+        "terrain": true,
+        "deck": true,
+        "three": true,
+        "debris": true,
+        "glass": true
+      },
+      "dpr": 1,
+      "frames": 240,
+      "windowMs": 8000,
+      "p50Ms": 33.4,
+      "p95Ms": 33.6,
+      "avgMs": 33.36,
+      "p50Fps": 29.9,
+      "p95Fps": 29.8,
+      "avgFps": 30,
+      "jsHeap": {
+        "usedMB": 117.9,
+        "totalMB": 151.9
+      },
+      "mapErrors": []
+    },
+    "consoleErrors": [],
+    "shot": "shots\\perf\\scenario-g.png",
+    "chromeMemMB": 3927
+  },
+  {
+    "label": "h-dpr1",
+    "level": "g",
+    "dpr": 1,
+    "perf": {
+      "level": "g",
+      "idx": 6,
+      "flags": {
+        "vsat": true,
+        "terrain": true,
+        "deck": true,
+        "three": true,
+        "debris": true,
+        "glass": true
+      },
+      "dpr": 1,
+      "frames": 241,
+      "windowMs": 8000,
+      "p50Ms": 33.4,
+      "p95Ms": 33.5,
+      "avgMs": 33.36,
+      "p50Fps": 29.9,
+      "p95Fps": 29.9,
+      "avgFps": 30,
+      "jsHeap": {
+        "usedMB": 113,
+        "totalMB": 148
+      },
+      "mapErrors": []
+    },
+    "consoleErrors": [],
+    "shot": "shots\\perf\\scenario-h-dpr1.png",
+    "chromeMemMB": null
+  },
+  {
+    "label": "h-dpr1.5",
+    "level": "g",
+    "dpr": 1.5,
+    "perf": {
+      "level": "g",
+      "idx": 6,
+      "flags": {
+        "vsat": true,
+        "terrain": true,
+        "deck": true,
+        "three": true,
+        "debris": true,
+        "glass": true
+      },
+      "dpr": 1.5,
+      "frames": 240,
+      "windowMs": 8000,
+      "p50Ms": 33.4,
+      "p95Ms": 33.6,
+      "avgMs": 33.36,
+      "p50Fps": 29.9,
+      "p95Fps": 29.8,
+      "avgFps": 30,
+      "jsHeap": {
+        "usedMB": 62.6,
+        "totalMB": 124
+      },
+      "mapErrors": []
+    },
+    "consoleErrors": [],
+    "shot": "shots\\perf\\scenario-h-dpr1.5.png",
+    "chromeMemMB": null
+  },
+  {
+    "label": "h-dpr2",
+    "level": "g",
+    "dpr": 2,
+    "perf": {
+      "level": "g",
+      "idx": 6,
+      "flags": {
+        "vsat": true,
+        "terrain": true,
+        "deck": true,
+        "three": true,
+        "debris": true,
+        "glass": true
+      },
+      "dpr": 2,
+      "frames": 240,
+      "windowMs": 8000,
+      "p50Ms": 33.4,
+      "p95Ms": 33.5,
+      "avgMs": 33.36,
+      "p50Fps": 29.9,
+      "p95Fps": 29.9,
+      "avgFps": 30,
+      "jsHeap": {
+        "usedMB": 96.2,
+        "totalMB": 150.2
+      },
+      "mapErrors": []
+    },
+    "consoleErrors": [],
+    "shot": "shots\\perf\\scenario-h-dpr2.png",
+    "chromeMemMB": null
+  }
+]
