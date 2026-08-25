@@ -1,0 +1,370 @@
+{
+  "generatedAt": "2026-08-25T21:22:37.972Z",
+  "source": "build/film/frames (tools/film/render.html, 결정론적 렌더 575프레임 @25fps)",
+  "fps": 25,
+  "filmSize": [
+    1280,
+    720
+  ],
+  "mobileSize": [
+    960,
+    540
+  ],
+  "encode": {
+    "desktop": "-c:v libx264 -profile:v high -preset slow -crf 20 -g 8 -keyint_min 8 -sc_threshold 0 -movflags +faststart -an",
+    "mobile": "-c:v libx264 -profile:v high -preset slow -crf 24 -g 4 -keyint_min 4 -sc_threshold 0 -movflags +faststart -an"
+  },
+  "pace": {
+    "targetRate": 0.218,
+    "unit": "vh per film-second",
+    "band": [
+      0.212,
+      0.225
+    ]
+  },
+  "seam": 0.16,
+  "lerp": 0.12,
+  "spacerVh": 6.049,
+  "filmVh": 5.049,
+  "seams": [
+    {
+      "from": "01",
+      "to": "02",
+      "frameShared": true,
+      "pass": true,
+      "pct": 0.656,
+      "basePct": 3.056,
+      "ratio": 0.21,
+      "lumaA": 168.07,
+      "lumaB": 168.08,
+      "lumaDrop": 0.01
+    },
+    {
+      "from": "02",
+      "to": "03",
+      "frameShared": true,
+      "pass": true,
+      "pct": 1.118,
+      "basePct": 1.347,
+      "ratio": 0.83,
+      "lumaA": 65.44,
+      "lumaB": 65.42,
+      "lumaDrop": 0.02
+    },
+    {
+      "from": "03",
+      "to": "04",
+      "frameShared": true,
+      "pass": true,
+      "pct": 0.977,
+      "basePct": 1.435,
+      "ratio": 0.68,
+      "lumaA": 76.47,
+      "lumaB": 76.46,
+      "lumaDrop": 0
+    },
+    {
+      "from": "04",
+      "to": "05",
+      "frameShared": true,
+      "pass": true,
+      "pct": 1.396,
+      "basePct": 1.547,
+      "ratio": 0.9,
+      "lumaA": 77.96,
+      "lumaB": 77.94,
+      "lumaDrop": 0.02
+    },
+    {
+      "from": "05",
+      "to": "06",
+      "frameShared": false,
+      "pass": true,
+      "pct": 11.142,
+      "basePct": 1.22,
+      "ratio": 9.13,
+      "lumaA": 63.6,
+      "lumaB": 46.27,
+      "lumaDrop": 17.33
+    }
+  ],
+  "legs": [
+    {
+      "id": "01",
+      "label": "궤도",
+      "place": "지구 저궤도",
+      "look": "real",
+      "frames": [
+        0,
+        127
+      ],
+      "count": 128,
+      "seconds": 5.12,
+      "weightVh": 1.116,
+      "rate": 0.218,
+      "src": "/landxi/assets/proto/film/legs/leg_01.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/leg_01-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/leg_01.webp",
+      "bytes": 5199631,
+      "bytesMobile": 1819077,
+      "bytesPoster": 38032,
+      "startCamera": {
+        "center": [
+          109,
+          29.6
+        ],
+        "zoom": 1.84,
+        "pitch": 0,
+        "bearing": 0,
+        "seg": "orbit",
+        "altitudeM": 41060985,
+        "mpp": 38019.431
+      },
+      "endCamera": {
+        "center": [
+          127.84998,
+          36.19999
+        ],
+        "zoom": 6.55,
+        "pitch": 10,
+        "bearing": -4,
+        "seg": "dive",
+        "altitudeM": 1456006,
+        "mpp": 1348.154
+      }
+    },
+    {
+      "id": "02",
+      "label": "성층운",
+      "place": "한반도 상공",
+      "look": "real",
+      "frames": [
+        127,
+        217
+      ],
+      "count": 91,
+      "seconds": 3.64,
+      "weightVh": 0.794,
+      "rate": 0.2181,
+      "src": "/landxi/assets/proto/film/legs/leg_02.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/leg_02-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/leg_02.webp",
+      "bytes": 5935765,
+      "bytesMobile": 2723750,
+      "bytesPoster": 49874,
+      "startCamera": {
+        "center": [
+          127.84998,
+          36.19999
+        ],
+        "zoom": 6.55,
+        "pitch": 10,
+        "bearing": -4,
+        "seg": "dive",
+        "altitudeM": 1456006,
+        "mpp": 1348.154
+      },
+      "endCamera": {
+        "center": [
+          127.7,
+          35.9
+        ],
+        "zoom": 8.3,
+        "pitch": 24,
+        "bearing": -9,
+        "seg": "korea",
+        "altitudeM": 434526,
+        "mpp": 402.339
+      }
+    },
+    {
+      "id": "03",
+      "label": "한반도",
+      "place": "전라북도",
+      "look": "real",
+      "frames": [
+        217,
+        297
+      ],
+      "count": 81,
+      "seconds": 3.24,
+      "weightVh": 0.706,
+      "rate": 0.2179,
+      "src": "/landxi/assets/proto/film/legs/leg_03.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/leg_03-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/leg_03.webp",
+      "bytes": 7063634,
+      "bytesMobile": 2752555,
+      "bytesPoster": 231352,
+      "startCamera": {
+        "center": [
+          127.7,
+          35.9
+        ],
+        "zoom": 8.3,
+        "pitch": 24,
+        "bearing": -9,
+        "seg": "korea",
+        "altitudeM": 434526,
+        "mpp": 402.339
+      },
+      "endCamera": {
+        "center": [
+          127.326,
+          35.347
+        ],
+        "zoom": 12.6,
+        "pitch": 62,
+        "bearing": -25,
+        "seg": "descent",
+        "altitudeM": 22212,
+        "mpp": 20.567
+      }
+    },
+    {
+      "id": "04",
+      "label": "남원",
+      "place": "남원 분지",
+      "look": "real",
+      "frames": [
+        297,
+        362
+      ],
+      "count": 66,
+      "seconds": 2.64,
+      "weightVh": 0.576,
+      "rate": 0.2182,
+      "src": "/landxi/assets/proto/film/legs/leg_04.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/leg_04-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/leg_04.webp",
+      "bytes": 4208319,
+      "bytesMobile": 2030252,
+      "bytesPoster": 170040,
+      "startCamera": {
+        "center": [
+          127.326,
+          35.347
+        ],
+        "zoom": 12.6,
+        "pitch": 62,
+        "bearing": -25,
+        "seg": "descent",
+        "altitudeM": 22212,
+        "mpp": 20.567
+      },
+      "endCamera": {
+        "center": [
+          127.348,
+          35.366
+        ],
+        "zoom": 13.05,
+        "pitch": 46,
+        "bearing": -13,
+        "seg": "ortho",
+        "altitudeM": 16256,
+        "mpp": 15.052
+      }
+    },
+    {
+      "id": "05",
+      "label": "비닐하우스",
+      "place": "남원 농경지",
+      "look": "real",
+      "frames": [
+        362,
+        438
+      ],
+      "count": 77,
+      "seconds": 3.08,
+      "weightVh": 0.671,
+      "rate": 0.2179,
+      "src": "/landxi/assets/proto/film/legs/leg_05.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/leg_05-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/leg_05.webp",
+      "bytes": 5030831,
+      "bytesMobile": 2448991,
+      "bytesPoster": 202414,
+      "startCamera": {
+        "center": [
+          127.348,
+          35.366
+        ],
+        "zoom": 13.05,
+        "pitch": 46,
+        "bearing": -13,
+        "seg": "ortho",
+        "altitudeM": 16256,
+        "mpp": 15.052
+      },
+      "endCamera": {
+        "center": [
+          127.425,
+          35.429
+        ],
+        "zoom": 11.36,
+        "pitch": 23,
+        "bearing": -3,
+        "seg": "green",
+        "altitudeM": 52411,
+        "mpp": 48.529
+      }
+    },
+    {
+      "id": "06",
+      "label": "여수",
+      "place": "여수 가막만",
+      "look": "real",
+      "frames": [
+        439,
+        574
+      ],
+      "count": 136,
+      "seconds": 5.44,
+      "weightVh": 1.186,
+      "rate": 0.218,
+      "src": "/landxi/assets/proto/film/legs/leg_06.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/leg_06-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/leg_06.webp",
+      "bytes": 2518705,
+      "bytesMobile": 1328744,
+      "bytesPoster": 41444,
+      "startCamera": {
+        "center": [
+          127.73043,
+          34.56304
+        ],
+        "zoom": 13.004,
+        "pitch": 9.94,
+        "bearing": 4.96,
+        "seg": "yeosu",
+        "altitudeM": 16948,
+        "mpp": 15.693
+      },
+      "endCamera": {
+        "center": [
+          127.7215,
+          34.569
+        ],
+        "zoom": 13.6,
+        "pitch": 2,
+        "bearing": 0,
+        "seg": "yeosu",
+        "altitudeM": 11212,
+        "mpp": 10.381
+      }
+    }
+  ],
+  "handoff": {
+    "center": [
+      127.7215,
+      34.569
+    ],
+    "zoom": 13.6,
+    "pitch": 2,
+    "bearing": 0,
+    "seg": "yeosu",
+    "altitudeM": 11212,
+    "mpp": 10.381,
+    "note": "필름 최종 프레임(f_0574, t=22.96s)의 카메라. 스크럽 종료 지점에서 실지도가 같은 카메라로 이어받는다."
+  }
+}

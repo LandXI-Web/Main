@@ -1,0 +1,19 @@
+{
+ "fps": 25,
+ "w": 1280,
+ "h": 720,
+ "legs": [
+  {
+   "name": "orbit-korea",
+   "seconds": 5.6,
+   "frames": 140,
+   "mb": 13.93
+  },
+  {
+   "name": "cloud-break",
+   "seconds": 5,
+   "frames": 125,
+   "mb": 11.08
+  }
+ ]
+}
