@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { SURVEYS, SURVEY_COUNTERS } from '../../landxi/assets/data/surveys.js';
 import { DASH } from '../../landxi/assets/data/dashboard.js';
+import { IMAGERY } from '../../landxi/assets/data/imagery.js';
+import { MODELS } from '../../landxi/assets/data/models.js';
 
 test('7 surveys with required fields', () => {
   assert.equal(SURVEYS.length, 7);
@@ -84,4 +86,74 @@ test('support-data.js and ai-project-data.js were copied from the prototype', ()
     assert.ok(fs.existsSync(p), p);
     assert.ok(fs.readFileSync(p, 'utf8').length > 100, p);
   }
+});
+
+/* ── Task 8b: 실자산(정사영상 타일·실탐지 벡터·모델 메타) ───────────────── */
+
+test('imagery entries point at existing tile dirs with bounds', () => {
+  assert.ok(IMAGERY.length >= 6);
+  for (const i of IMAGERY) {
+    assert.equal(i.bounds.length, 4);
+    assert.ok(i.bounds[0] < i.bounds[2] && i.bounds[1] < i.bounds[3]);
+    assert.ok(fs.existsSync(`landxi/assets/tiles/${i.id}/${i.minzoom}`), i.id);
+    assert.match(i.tiles, /^assets\/tiles\/[a-z0-9_]+\/\{z\}\/\{x\}\/\{y\}\.webp$/);
+    assert.ok(['ortho', 'landcover'].includes(i.kind), i.id);
+    assert.ok(i.gsd > 0 && i.maxzoom > i.minzoom);
+  }
+});
+
+test('namwon has 4 epochs sharing one AOI', () => {
+  const nw = IMAGERY.filter(i => i.id.startsWith('namwon_'));
+  assert.equal(nw.length, 4);
+  for (const i of nw) assert.deepEqual(i.bounds, nw[0].bounds);
+});
+
+test('marine debris geojson is simplified and sized', () => {
+  const g = JSON.parse(fs.readFileSync('landxi/assets/data/geo/marine-debris.geojson', 'utf8'));
+  assert.ok(g.features.length >= 3000 && g.features.length <= 6000);
+  assert.ok(fs.statSync('landxi/assets/data/geo/marine-debris.geojson').size < 6e6);
+});
+
+test('marine debris grid aggregates every detection with giin counts', () => {
+  const g = JSON.parse(fs.readFileSync('landxi/assets/data/geo/marine-debris-grid.geojson', 'utf8'));
+  assert.ok(g.features.length > 0);
+  let total = 0, withConf = 0;
+  for (const f of g.features) {
+    const p = f.properties;
+    assert.ok(p.count > 0);
+    // 원본 13건은 confidence 가 비어 있다 — 0 으로 눌러 담지 말고 결측으로 남긴다.
+    assert.ok(p.conf_n >= 0 && p.conf_n <= p.count);
+    if (p.conf_n === 0) assert.equal(p.mean_conf, null);
+    else assert.ok(p.mean_conf > 0 && p.mean_conf <= 1, JSON.stringify(p));
+    total += p.count;
+    withConf += p.conf_n;
+  }
+  assert.equal(total, 38057);          // 원본 38,057건이 한 건도 빠지지 않는다
+  assert.equal(withConf, 38044);       // 그중 confidence 를 가진 건수
+  assert.ok(g.features.some(f => f.properties.giin && Object.keys(f.properties.giin).length));
+});
+
+test('jeju illegal detections are WGS84 polygons', () => {
+  const g = JSON.parse(fs.readFileSync('landxi/assets/data/geo/jeju-illegal.geojson', 'utf8'));
+  assert.ok(g.features.length >= 1);
+  for (const f of g.features) {
+    assert.ok(/Polygon/.test(f.geometry.type));
+    const [x, y] = f.geometry.coordinates[0][0];
+    assert.ok(x > 126 && x < 127 && y > 33 && y < 34);
+  }
+});
+
+test('models list has real files metadata', () => {
+  assert.ok(MODELS.length >= 6);
+  for (const m of MODELS) assert.ok(m.sizeMB > 0 && m.classes.length);
+});
+
+test('models carry task, trainedAt and inferred flag', () => {
+  for (const m of MODELS) {
+    assert.ok(['detect', 'segment', 'obb'].includes(m.task), m.id);
+    assert.match(m.trainedAt, /^\d{4}-\d{2}$/);
+    assert.ok(m.file.endsWith('.pt'), m.id);
+    assert.equal(typeof m.inferred, 'boolean');
+  }
+  assert.ok(MODELS.some(m => m.inferred === false));
 });

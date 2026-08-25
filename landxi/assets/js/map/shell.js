@@ -1,4 +1,4 @@
-import { buildStyle, ORTHO_TILES } from './style.js';
+import { buildStyle, ORTHO_TILES, tileURL } from './style.js';
 import { createFallback } from './fallback.js';
 import { createRulebar } from './rulebar.js';
 import { icon } from '../ui/icon.js';
@@ -72,8 +72,9 @@ async function maplibre(box, o) {
     });
   }
 
-  const kinds = new Map(), data = new Map(), handlers = {};
+  const kinds = new Map(), data = new Map(), rasters = new Map(), handlers = {};
   let moveEmit = null, destroyed = false;
+  const clamp01 = v => Math.max(0, Math.min(1, Number(v) || 0));
   const hit = (id, kind) => id + (kind === 'org' ? '-pt' : '-fill');
   const baseOpacity = kind => kind === 'detection' ? 0.18 : kind === 'org' ? 1 : 0.06;
 
@@ -114,6 +115,29 @@ async function maplibre(box, o) {
       map.setPaintProperty(L, prop, ['case', ['in', ['get', 'id'], ['literal', ids]], kind === 'detection' ? 0.45 : 1, 0.05]);
     },
     setOrthoOpacity: v => { if (map.getLayer('ortho')) map.setPaintProperty('ortho', 'raster-opacity', Math.max(0, Math.min(1, Number(v) || 0))); },
+    /**
+     * 실촬영 정사영상 타일(assets/data/imagery.js 의 IMAGERY 항목)을 얹는다.
+     * id 는 호출자가 정하는 키이고 소스·레이어는 `r-<id>` 로 만든다. 같은 id 로 다시
+     * 부르면 갈아끼운다.
+     */
+    addRaster(id, imagery, { opacity = 1, before } = {}) {
+      if (!imagery || !imagery.tiles) return;
+      const key = 'r-' + id;
+      if (map.getLayer(key)) map.removeLayer(key);
+      if (map.getSource(key)) map.removeSource(key);
+      map.addSource(key, {
+        type: 'raster', tiles: [tileURL(imagery)], tileSize: 256,
+        bounds: imagery.bounds, minzoom: imagery.minzoom, maxzoom: imagery.maxzoom,
+        attribution: imagery.label || 'LX',
+      });
+      const at = before && map.getLayer(before) ? before : undefined;
+      map.addLayer({ id: key, type: 'raster', source: key, paint: { 'raster-opacity': clamp01(opacity) } }, at);
+      rasters.set(id, imagery);
+    },
+    setRasterOpacity(id, v) {
+      const key = 'r-' + id;
+      if (map.getLayer(key)) map.setPaintProperty(key, 'raster-opacity', clamp01(v));
+    },
     // 핸들러는 교체 방식(폴백과 동일). 'move' 는 등록 즉시 1회 동기 발화한 뒤
     // 카메라가 움직일 때마다 발화하며, 이전 emitter 는 반드시 떼어 낸다.
     on(ev, fn) {
@@ -125,7 +149,10 @@ async function maplibre(box, o) {
       map.on('move', moveEmit); moveEmit();
     },
     getLayer(id) {
-      if (!kinds.has(id)) return null;
+      if (!kinds.has(id)) {
+        const im = rasters.get(id);
+        return im ? { id, kind: 'raster', imagery: im, count: 0 } : null;
+      }
       const d = data.get(id), feats = (d && d.features) || [];
       return { id, kind: kinds.get(id), data: d, count: feats.length };
     },

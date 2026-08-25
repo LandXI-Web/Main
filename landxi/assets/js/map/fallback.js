@@ -1,6 +1,8 @@
 // Land-XI 폴백 지도 — MapLibre/타일 서버를 쓸 수 없을 때 쓰는 절차적 캔버스 지도.
 // design-review/03-lx-interactive.html 의 makeWorld/makeDetections/renderer 를 모듈로 옮기고
 // MapLibre 경로와 동일한 LXMap 시그니처로 감쌌다.
+import { tileURL } from './style.js';
+
 const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ── 지리 ↔ 월드 좌표 ─────────────────────────────────────────────── */
@@ -67,6 +69,13 @@ function toFeatures(data, toWorld) {
   }
   return out;
 }
+/* ── XYZ 타일 ↔ 경위도 ───────────────────────────────────────────────── */
+const P2 = z => Math.pow(2, z);
+const lon2t = (lon, z) => (lon + 180) / 360 * P2(z);
+const lat2t = (lat, z) => { const r = lat * Math.PI / 180; return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * P2(z); };
+const t2lon = (x, z) => x / P2(z) * 360 - 180;
+const t2lat = (y, z) => { const n = Math.PI - 2 * Math.PI * y / P2(z); return 180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n))); };
+
 function inRing(pt, ring) {
   let hit = false;
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
@@ -86,7 +95,7 @@ export function createFallback(box, o = {}) {
   const c0 = toWorld(o.center || [127.8, 36.2]);
   const cam = { x: c0[0], y: c0[1], z: zFromZoom(o.zoom == null ? 6 : o.zoom), tx: null, ty: null, tz: null };
   const st = { t: 0, ortho: 0, hover: null };
-  const layers = new Map(), handlers = {};
+  const layers = new Map(), rasters = new Map(), tileCache = new Map(), handlers = {};
   const interactive = o.interactive !== false && o.mode !== 'backdrop';
   let dpr = 1, Wc = 1, Hc = 1, raf = 0, dead = false, last = performance.now(), moved = true;
 
@@ -143,6 +152,69 @@ export function createFallback(box, o = {}) {
     ctx.restore();
   }
 
+  /* ── 실촬영 정사영상 타일 ────────────────────────────────────────────
+     MapLibre 경로와 같은 URL(assets/tiles/…/{z}/{x}/{y}.webp)에서 타일을 받아
+     실제 경위도 위치에 그린다. 폴백 세계는 경위도를 BOUNDS 안에 선형으로 펴 놓은
+     것이라, 타일의 경위도 모서리를 그대로 toWorld→toS 로 옮기면 남원 타일이
+     127.35/35.53 자리에 정확히 앉는다. BOUNDS 밖(제주·국산리)은 자리가 없어 건너뛴다. */
+  const TILE_CACHE_MAX = 400;      // 줌·패닝을 오래 하면 캐시가 무한히 늘어난다.
+  function tileImg(url) {
+    let img = tileCache.get(url);
+    if (img) { tileCache.delete(url); tileCache.set(url, img); return img; }   // LRU: 최근 사용을 뒤로
+    img = new Image();
+    img.decoding = 'async';
+    img.addEventListener('load', () => { if (!dead) moved = true; });
+    img.addEventListener('error', () => { img.failed = true; });
+    img.src = url;
+    tileCache.set(url, img);
+    while (tileCache.size > TILE_CACHE_MAX) tileCache.delete(tileCache.keys().next().value);
+    return img;
+  }
+
+  function bestZoom(im) {
+    const a = toWorld([im.bounds[0], im.bounds[3]]), b = toWorld([im.bounds[2], im.bounds[1]]);
+    const px = Math.abs(toS(b[0], b[1])[0] - toS(a[0], a[1])[0]);
+    let best = im.minzoom, bd = Infinity;
+    for (let z = im.minzoom; z <= im.maxzoom; z++) {
+      const across = Math.max(1e-6, lon2t(im.bounds[2], z) - lon2t(im.bounds[0], z));
+      const d = Math.abs(px / across - 256);
+      if (d < bd) { bd = d; best = z; }
+    }
+    return best;
+  }
+
+  const MAX_TILES = 256;           // 한 프레임에 그리는 타일 상한
+  // NaN 이 들어와도 투명도가 NaN 이 되지 않게 한다(MapLibre 경로와 같은 규칙).
+  const clamp01 = v => { const x = Number(v); return Number.isFinite(x) ? clamp(x, 0, 1) : 0; };
+
+  function drawRaster(R) {
+    const im = R.im, [w, s, e, n] = im.bounds;
+    if (e < BOUNDS.west || w > BOUNDS.east || n < BOUNDS.south || s > BOUNDS.north) return;
+    // 화면에 실제로 보이는 경위도 창 ∩ 영상 범위 만 그린다. 영상 서쪽 끝에서 세면
+    // 16타일보다 넓은 영상(국산리 z19 = 27타일)은 동쪽으로 패닝해도 계속 서쪽만 나온다.
+    const nw = toLngLat(toW(0, 0)), se = toLngLat(toW(Wc, Hc));
+    const vw = Math.max(w, Math.min(nw[0], se[0])), ve = Math.min(e, Math.max(nw[0], se[0]));
+    const vs = Math.max(s, Math.min(nw[1], se[1])), vn = Math.min(n, Math.max(nw[1], se[1]));
+    if (vw >= ve || vs >= vn) return;
+    const z = bestZoom(im), tpl = tileURL(im);
+    const x0 = Math.floor(lon2t(vw, z)), x1 = Math.floor(lon2t(ve, z) - 1e-9);
+    const y0 = Math.floor(lat2t(vn, z)), y1 = Math.floor(lat2t(vs, z) - 1e-9);
+    ctx.save(); ctx.globalAlpha = R.opacity;
+    let drawn = 0;
+    for (let x = x0; x <= x1 && drawn < MAX_TILES; x++) {
+      for (let y = y0; y <= y1 && drawn < MAX_TILES; y++) {
+        drawn++;
+        const img = tileImg(tpl.replace('{z}', z).replace('{x}', x).replace('{y}', y));
+        if (img.failed || !img.complete || !img.naturalWidth) continue;
+        const p = toWorld([t2lon(x, z), t2lat(y, z)]), q = toWorld([t2lon(x + 1, z), t2lat(y + 1, z)]);
+        const A = toS(p[0], p[1]), B = toS(q[0], q[1]);
+        // 이웃 타일 사이에 반올림 틈이 생기지 않도록 1px 넉넉히 그린다.
+        ctx.drawImage(img, A[0], A[1], B[0] - A[0] + 1, B[1] - A[1] + 1);
+      }
+    }
+    ctx.restore();
+  }
+
   function drawLayer(L, t) {
     const k = KIND[L.kind] || KIND.detection;
     const prog = REDUCE ? 1 : clamp((t - L.at) / 0.9, 0, 1);
@@ -188,7 +260,9 @@ export function createFallback(box, o = {}) {
     if (o.ambient === 'spin' && !REDUCE && cam.tx == null && !drag) { cam.x += 0.4 / cam.z; if (cam.x > world.W) cam.x -= world.W; moved = true; }
     if (moved) { moved = false; if (handlers.move) handlers.move({ center: toLngLat([cam.x, cam.y]), zoom: zoomFromZ(cam.z) }); }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    drawBase(); drawSeeded(st.t);
+    drawBase();
+    for (const R of rasters.values()) drawRaster(R);
+    drawSeeded(st.t);
     for (const L of layers.values()) drawLayer(L, st.t);
     drawSweep(st.t);
     raf = requestAnimationFrame(frame);
@@ -245,7 +319,20 @@ export function createFallback(box, o = {}) {
     },
     getLayer(id) {
       const L = layers.get(id);
-      return L ? { id, kind: L.kind, data: L.data, count: L.features.length } : null;
+      if (L) return { id, kind: L.kind, data: L.data, count: L.features.length };
+      const R = rasters.get(id);
+      return R ? { id, kind: 'raster', imagery: R.im, count: 0 } : null;
+    },
+    /** MapLibre 경로와 같은 시그니처. before 는 폴백에 레이어 순서 개념이 없어 무시한다. */
+    addRaster(id, imagery, opt) {
+      if (!imagery || !imagery.tiles) return;
+      const { opacity = 1 } = opt || {};
+      rasters.set(id, { id, im: imagery, opacity: clamp01(opacity) });
+      moved = true;
+    },
+    setRasterOpacity(id, v) {
+      const R = rasters.get(id);
+      if (R) { R.opacity = clamp01(v); moved = true; }
     },
     setHighlight(id, fn) { const L = layers.get(id); if (L) L.filter = typeof fn === 'function' ? fn : null; },
     setOrthoOpacity(v) { st.ortho = clamp(Number(v) || 0, 0, 1); },
@@ -258,6 +345,6 @@ export function createFallback(box, o = {}) {
     getCenter: () => toLngLat([cam.x, cam.y]),
     getZoom: () => zoomFromZ(cam.z),
     project(c) { const w = toWorld(c); return toS(w[0], w[1]); },
-    destroy() { dead = true; cancelAnimationFrame(raf); removeEventListener('resize', resize); removeEventListener('mousemove', onMove); removeEventListener('mouseup', onUp); canvas.remove(); },
+    destroy() { dead = true; cancelAnimationFrame(raf); removeEventListener('resize', resize); removeEventListener('mousemove', onMove); removeEventListener('mouseup', onUp); rasters.clear(); tileCache.clear(); canvas.remove(); },
   };
 }
