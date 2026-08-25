@@ -1,0 +1,20 @@
+{
+  "tilejson": "2.2.0",
+  "name": "landxi-terrarium-namwon",
+  "description": "AWS Open Data Terrain Tiles (Terrarium) AOI mirror — 남원 금지/송동 30x30km. z13이 원 해상도(약 30m), z14 이상은 보간이라 제외; MapLibre overzoom 사용.",
+  "format": "png",
+  "encoding": "terrarium",
+  "tileSize": 256,
+  "minzoom": 9,
+  "maxzoom": 13,
+  "bounds": [
+    127.24,
+    35.28,
+    127.54,
+    35.54
+  ],
+  "attribution": "Elevation: AWS Terrain Tiles (SRTM/Copernicus/NED 혼합) — Public Domain / CC-BY",
+  "tiles": [
+    "./{z}/{x}/{y}.png"
+  ]
+}
