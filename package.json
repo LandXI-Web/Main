@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "serve": "node tools/serve.mjs",
-    "test:unit": "node --test tests/unit",
+    "test:unit": "node --test tests/unit/*.test.mjs",
     "test:e2e": "playwright test",
     "test": "npm run test:unit && npm run test:e2e",
     "shot": "node tools/shot.mjs"
