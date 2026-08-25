@@ -1,0 +1,4 @@
+# 대용량 텍스처는 커밋하지 않는다 — tools/make-textures.mjs 로 재생성한다.
+tex/*.jpg
+tex/*.png
+tex/*.webp
