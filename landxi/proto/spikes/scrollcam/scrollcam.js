@@ -136,7 +136,12 @@ const DEF = {
   velRef: 0.006,       // 프레임당 Δp 가 이 값이면 lerpFast 에 도달
   rest: 1.2e-5,        // 이 이하면 스냅하고 apply 를 건너뛴다 (정지 시 잔떨림 0)
   tension: 1,          // 0 = 완전 선형(camera.js 호환), 1 = Catmull-Rom
-  join: 0.006,         // 구간 경계에서 이징 속도를 잇는 교차 창 반폭(p 단위). 0 = camera.js 그대로
+  /* join: 구간 경계에서 두 이징의 G 를 교차시키는 창 반폭(p 단위).
+     기본 0 — **켜지 말 것을 권한다.** 실측: expo.inOut → power4.out 경계(p=0.800)에서
+     오른쪽 이징의 진입 기울기(d0≈4)가 창 안으로 외삽되면서 zoom 이 14.197 → 14.138 로
+     0.06 레벨 되감겼다(축척 4% 역주행). 속도 계단 하나를 없애려다 되감김을 만든 셈이다.
+     경계 속도는 창으로 덮는 게 아니라 **이징 선택으로 맞춰야 한다** — easeJoinReport() 참조. */
+  join: 0,
   screenSpace: true,   // 중심 이동을 2^-zoom 으로 재매개변수화
   globeZoom: [3.5, 6.5], // 이 구간에서 대권 해 → 평면 해로 교차
   maxPitch: 85,
@@ -563,6 +568,29 @@ export function createRail(opts = {}) {
     resetMetrics() {
       Object.assign(met, { frames: 0, fps: 0, fpsEMA: 0, worst: 0, dropped: 0, lat: [], jitZ: 0, jitB: 0, jitC: 0, jitFrames: 0, gateMs: 0, gateFrames: 0, applies: 0, skipped: 0 });
       restSince = 0;
+    },
+    /* 이징 경계 린트 — 구간 경계에서 카메라 속도가 몇 배로 튀는지 알려준다.
+       비율이 3 을 넘으면 화면에서 "박자"가 아니라 "덜컥"으로 읽힌다. 고치는 방법은
+       창을 넓히는 게 아니라 **오른쪽 구간의 이징을 진입 기울기가 작은 것으로 바꾸는 것**이다
+       (…in / …inOut 은 0 에서 시작, …out 은 최대 기울기로 시작한다). */
+    easeJoinReport() {
+      const out = [];
+      const r = (a, b) => (Math.max(a, b) + 1e-9) / (Math.min(a, b) + 1e-9);
+      for (let i = 1; i <= N - 2; i++) {
+        const L = SEG[i - 1], G2 = SEG[i];
+        const zIn = Math.abs(KEYS[i].z - KEYS[i - 1].z) * L.d1 * L.inv;
+        const zOut = Math.abs(KEYS[i + 1].z - KEYS[i].z) * G2.d0 * G2.inv;
+        const cIn = Math.hypot(KEYS[i].c[0] - KEYS[i - 1].c[0], KEYS[i].c[1] - KEYS[i - 1].c[1]) * L.d1 * L.inv;
+        const cOut = Math.hypot(KEYS[i + 1].c[0] - KEYS[i].c[0], KEYS[i + 1].c[1] - KEYS[i].c[1]) * G2.d0 * G2.inv;
+        const lo = Math.min(zIn, zOut), ratio = r(zIn, zOut);
+        const v = lo < 0.5
+          ? (KEYS[i].hold > 0 ? '홀드' : (zIn < 0.5 && zOut < 0.5 ? '정지 비트' : (zIn < 0.5 ? '급출발' : '급정거')))
+          : (ratio > 3 ? '덜컥' : 'ok');
+        out.push({ p: KEYS[i].p, hold: KEYS[i].hold, easeIn: KEYS[i - 1].e, easeOut: KEYS[i].e,
+          zoomRateIn: +zIn.toFixed(2), zoomRateOut: +zOut.toFixed(2), zoomRatio: +ratio.toFixed(2),
+          centerRatio: +r(cIn, cOut).toFixed(2), verdict: v });
+      }
+      return out;
     },
     setOption(k, v) { if (k === 'magnet') Object.assign(o.magnet, v); else o[k] = v; if (k === 'tension') lastApplied = null; },
     options: o,
