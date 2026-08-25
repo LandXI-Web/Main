@@ -336,8 +336,13 @@ input[type=range]:focus-visible{outline:var(--v3-hair) solid var(--v3-accent); o
 
 #res-blocks{position:relative; flex:1; min-height:0; overflow:hidden}
 .rb{position:absolute; inset:0; opacity:0; pointer-events:none;
+  display:grid; grid-template-columns:1fr 1fr; grid-template-rows:auto 1fr;
+  column-gap:var(--gap); align-content:start;
   transition:opacity var(--v3-d1) var(--v3-ease)}
 .rb.on{opacity:1; pointer-events:auto}
+/* 통계 124px 는 반 컬럼에 들어가지 않는다 — 머리는 전폭 띠, 아래만 2단으로 나눈다. */
+.rb-head{grid-column:1 / -1; min-width:0}
+.rb-a,.rb-b{min-width:0; align-self:start}
 .rb .caption{color:var(--mute)}
 .rb h3{margin:4px 0 6px; font-family:var(--v3-display); font-weight:500;
   font-size:var(--t-h4); line-height:calc(var(--t-h4-lh) / var(--t-h4)); letter-spacing:.01em}
@@ -363,7 +368,9 @@ input[type=range]:focus-visible{outline:var(--v3-hair) solid var(--v3-accent); o
 .rp .fr i:nth-child(2){right:8px; bottom:8px; border-left:0; border-top:0}
 .rp.live canvas.pl{opacity:0}
 .rp.live{background:transparent}
-.rp:hover .fr{border-color:rgba(255,255,255,.6)}
+.rp:hover .fr,.rp.hot .fr{border-color:rgba(255,255,255,.6)}
+.rp{cursor:pointer}
+#res-menu button.hot{transform:translateX(4px); color:var(--ink)}
 .pcap{position:absolute; left:0; right:0; bottom:0; height:36px; padding:0 16px;
   display:flex; align-items:center; justify-content:space-between; gap:16px;
   background:var(--paper); border-top:var(--v3-hair) solid var(--hair); white-space:nowrap}
