@@ -68,10 +68,16 @@ const mppOf = a => a / K;
 const zoomOf = (altM, lat) =>
   Math.log2((156543.03392 * Math.cos((lat * Math.PI) / 180)) / mppOf(altM));
 
+// 좌표는 "먼 이동"에서 보간하지 않는다. 남원(35.43)과 여수(34.57) 사이를 섞으면
+// 계기가 35.10 이라는, 필름 어디에도 없는 자리를 읽는다. 필름이 거기서 컷이면
+// 계기도 컷이어야 한다 — 다만 고도·방위·피치는 계속 섞어서 바늘이 스냅하지 않게 둔다.
+const JUMP = 0.15;    // 도(°)
 function mixCam(A, B, t) {
+  const far = Math.abs(A.lng - B.lng) > JUMP || Math.abs(A.lat - B.lat) > JUMP;
+  const g = far ? (t < 0.5 ? 0 : 1) : t;
   return {
-    lng: lerp(A.lng, B.lng, t),
-    lat: lerp(A.lat, B.lat, t),
+    lng: lerp(A.lng, B.lng, g),
+    lat: lerp(A.lat, B.lat, g),
     alt: Math.exp(lerp(Math.log(A.alt), Math.log(B.alt), t)),
     pitch: lerp(A.pitch, B.pitch, t),
     bearing: lerp(A.bearing, B.bearing, t),
@@ -155,7 +161,14 @@ function paint() {
   const p = clamp01(t / total);
   el.root.style.setProperty('--sb-p', p.toFixed(5));
 
-  const c = camAt(t);
+  handoff(t);
+  // 인계 판이 올라와 있으면 계기는 판의 카메라를 읽는다. "같은 카메라로 이어받았다"는
+  // 주장을 계기가 그 순간에 반박하면 안 된다.
+  const live = PLATES.find(r => r && r.on);
+  const c = live ? {
+    lng: live.spec.center[0], lat: live.spec.center[1],
+    alt: live.spec.altitudeM, pitch: live.spec.pitch, bearing: live.spec.bearing,
+  } : camAt(t);
   const mpp = mppOf(c.alt);
   const brg = ((c.bearing % 360) + 360) % 360;   // 항공 관례대로 0–360
   el.bearing.textContent = nf(brg, 1) + '°';
@@ -180,8 +193,6 @@ function paint() {
     // 실캡션 — 장소 · 날짜 · GSD 는 manifest 가 들고 있는 실제 출처 문자열이다.
     el.caption.textContent = M.legs[k].place + ' · ' + M.legs[k].caption;
   }
-
-  handoff(t, c);
 }
 
 /* ── 인계 — 필름이 멈춘 그 카메라를 살아 있는 지도가 이어받는다 ──────────────
@@ -310,7 +321,7 @@ const boot = async () => {
   // 인계 구간 — #1 은 레그 06 의 마지막 0.10vh 부터 다음 씸의 절반까지,
   //             #2 는 마지막 레그의 마지막 0.28vh 부터 끝까지.
   const hi = M.handoff.legIndex;
-  BAND_N = [cum[hi][1] - 0.10, cum[hi][1] + SEAM / 2];
+  BAND_N = [cum[hi][1] - 0.14, cum[hi][1] + SEAM / 4];
   const fi = M.handoffFinal.legIndex;
   BAND_Y = [cum[fi][1] - 0.28, total];
 
@@ -350,7 +361,11 @@ const boot = async () => {
     leg: () => legAt(trackVh()),
     legLabel: () => M.legs[legAt(trackVh())].label,
     filmTime: () => filmTimeAt(trackVh()),
-    camera: () => camAt(trackVh()),
+    camera: () => {
+      const live = PLATES.find(r => r && r.on);
+      return live ? { lng: live.spec.center[0], lat: live.spec.center[1],
+        alt: live.spec.altitudeM, pitch: live.spec.pitch, bearing: live.spec.bearing } : camAt(trackVh());
+    },
     spacerVh: () => total + 1,
     bands: () => ({ namwon: BAND_N, yeosu: BAND_Y, total }),
     plate: i => {

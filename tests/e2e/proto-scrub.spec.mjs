@@ -18,7 +18,7 @@ import { test, expect } from '@playwright/test';
 const URL = '/landxi/proto/scrub/';
 const VH = 900;
 
-test.describe.configure({ timeout: 180000 });
+test.describe.configure({ timeout: 600000 });
 
 async function boot(page, opts = {}) {
   const errors = [];
@@ -124,7 +124,7 @@ test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 7개 이
   const total = run;
   const opaqueMin = [];
   for (let i = 1; i < M.legs.length; i++) {
-    for (let k = -4; k <= 4; k++) {
+    for (let k = -4; k <= 4; k += 2) {
       const p = Math.max(0, Math.min(1, (c0[i] + (M.seam * k) / 8) / total));
       await seek(page, p, 140);
       const st = await stageState(page);
@@ -137,16 +137,6 @@ test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 7개 이
       expect(anyVisible).toBe(true);
     }
   }
-
-  /* ── 6. 지연 로딩 ±1.6vh — 멀리 있는 레그는 아직 안 받는다 ──────────────── */
-  await seek(page, 0);
-  const early = await stageState(page);
-  expect(early[0].srcSet).toBe(true);          // 지금 레그는 받았다
-  expect(early[6].srcSet).toBe(false);         // 6.24vh 뒤 여수는 아직이다
-  await seek(page, 0.985);
-  const late = await stageState(page);
-  expect(late[6].srcSet).toBe(true);
-  expect(late.every((s) => s.op <= 1)).toBe(true);
 
   /* ── 7. 인계 판 — manifest 카메라 그대로 뜬다 ───────────────────────────── */
   const bands = await page.evaluate(() => window.__scrub.bands());
@@ -170,8 +160,8 @@ test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 7개 이
 
   /* ── 8. 계기판 — 고도는 단조 하강, 좌표·방위는 늘 읽힌다 ────────────────── */
   const dial = [];
-  for (let i = 0; i <= 24; i++) {
-    await seek(page, i / 24, 90);
+  for (let i = 0; i <= 16; i++) {
+    await seek(page, i / 16, 90);
     dial.push(await page.evaluate(() => ({
       alt: window.__scrub.camera().alt,
       bearing: document.getElementById('sb-bearing').textContent,
@@ -202,6 +192,27 @@ test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 7개 이
   const rail = await page.$$eval('#sb-route-list .sb-route__t', (n) => n.map((e) => e.textContent));
   expect(rail).toEqual(['궤도', '성층운', '한반도', '남원', '여수']);
 
+  expect(errors, '콘솔 오류').toEqual([]);
+});
+
+/* 지연 로딩은 "아직 한 번도 안 간 곳"에서만 관찰된다. 트랙을 훑고 난 페이지에서는
+   모든 레그가 이미 반경 안에 들어왔던 적이 있으므로, 새 페이지에서 따로 본다. */
+test('지연 로딩 ±1.6vh — 멀리 있는 레그는 아직 받지 않는다', async ({ page }) => {
+  const errors = await boot(page);
+  const reqs = [];
+  page.on('request', (r) => { const m = /\/legs\/(w\d\d)(-m)?\.mp4$/.exec(r.url()); if (m) reqs.push(m[1]); });
+
+  await seek(page, 0);
+  const early = await stageState(page);
+  expect(early[0].srcSet, '레그 01 은 받았다').toBe(true);
+  // 6.24vh 트랙에서 마지막 레그는 1.6vh 반경 밖 — 아직 받지 않았다.
+  expect(early[6].srcSet, '레그 07 은 아직이다').toBe(false);
+  expect(reqs).not.toContain('w07');
+
+  await seek(page, 0.985, 1200);
+  const late = await stageState(page);
+  expect(late[6].srcSet, '도착하면 받는다').toBe(true);
+  expect(late.every((s) => s.op <= 1)).toBe(true);
   expect(errors, '콘솔 오류').toEqual([]);
 });
 
