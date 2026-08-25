@@ -25,7 +25,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const p = (...a) => path.join(ROOT, ...a);
 
 // ---------------------------------------------------------------- 비용 게이트 --
-const CAP = 28;                       // 이 leg 스틸 단계에 허용된 누적 크레딧
+const CAP = 30;                       // 라운드당 허용 크레딧 (2회 x 14.5 = 29)
 const EST_STILL = 14.5;               // seedream 5-pro i2i 실측(1차 과금) 14.5
 const LEDGER = p('shots/kie/leg01-credits.json');
 
@@ -42,7 +42,10 @@ async function gate(label) {
   const l = ledger();
   const before = await credits();
   if (l.start == null) { l.start = before; saveLedger(l); }
-  const spent = l.start - before;
+  // 캡은 '라운드' 단위다. 라운드 1(팩 프롬프트)은 28 캡에서 still-1 만 돌고 끝났고,
+  // 클라이언트가 ORRERY 스타일로 방향을 바꾸며 캡 30 짜리 라운드 2를 새로 열었다.
+  if (l.roundStart == null) { l.roundStart = l.start; saveLedger(l); }
+  const spent = l.roundStart - before;
   if (spent + EST_STILL > CAP) {
     throw new Error(`비용 게이트: ${label} 실행 시 누적 ${spent}+${EST_STILL} > 캡 ${CAP}. 중단.`);
   }
@@ -68,6 +71,13 @@ const REF_MAT = p('shots/kie/namwon-greenhouse-test-03.jpg');
 // 물려받았고, 레퍼런스가 셋이면 구도 지시가 묽어진다.
 const REF_COMP2 = p('landxi/assets/proto/film/legs/gen/ch1-leg-01-globe.ref-comp2.jpg');
 const REF_STYLE = p('landxi/assets/proto/film/legs/gen/ch1-leg-01-globe.ref-style.jpg');
+
+// 라운드 2 스타일 참조 — 클라이언트 지시: 유튜브 ORRERY 지구본과 같은 테마/재질/조명,
+// 단 배경만 흰색·크림. shots/yt/QUI6-seg/f_008.png 에서 지구본만 크롭했다.
+// f_008 을 고른 이유: f_005/f_007 은 반투명 자막이 지구본 위를 지나가고,
+// f_009 이후는 지구본이 프레임에 잘린다. 크롭으로 좌상단 웹캠 PiP,
+// 좌하단 ORRERY 로고 카드, 우측 마우스 커서를 전부 잘라냈다(텍스트·로고 유입 차단).
+const REF_ORRERY = p('landxi/assets/proto/film/legs/gen/ch1-leg-01-globe.ref-orrery.jpg');
 
 const outPng = (n) => p(`landxi/assets/proto/film/legs/gen/ch1-leg-01-globe.still-${n}.png`);
 
@@ -100,42 +110,52 @@ const REALISM = 'Photographic realism — a real handmade object photographed on
 // 1차: 팩 그대로 + 참조 역할 + 리얼리즘 + Avoid.
 const STILL_1 = [PACK, REF_ROLES, REALISM, AVOID].join('\n\n');
 
-// 2차 — 1차 실측 결과 반영. 떨어진 항목만 겨냥한다.
-//   실패 1: 한반도가 원반 중앙이 아니라 좌상단, 형태도 중국 해안에 뭉개짐
-//           -> 회전을 못박고 "호주·적도는 안 보인다"로 남반구를 잘라낸다.
-//   실패 2: 지구본이 프레임 높이의 ~73% (팩 목표 55%). 영상이 55%->75%로
-//           달리인 하는데 시작이 이미 73%면 무브가 죽는다 -> 여백을 수치로 지시.
-//   경계:   바다 채도가 높아 "코발트 액센트 하나"라기보다 파란 지구본으로 읽혔다.
-// 통과한 항목(석고 릴리프·이끼·솜구름·황동 링/위성·크림 배경·텍스트 없음)은
-// 문장을 건드리지 않고 REF_STYLE 로 잠근다.
-const ROTATION = 'Rotate the model globe so the Korean peninsula sits exactly at the centre of the '
-  + 'visible disc, facing the camera head-on. The peninsula is sculpted as a clear thumb-shaped '
-  + 'landmass roughly one eighth of the disc width, with the Japanese island arc curving away to its '
-  + 'right, the Yellow Sea and the Chinese coast to its left, and Siberia above it. '
-  + 'Australia, Indonesia and the equator are NOT visible — the southern hemisphere is below the '
-  + 'horizon of the visible disc. A few small cotton-wool clouds sit over the peninsula\'s southern coast.';
-
-const FRAMING = 'Framing: the sphere occupies only the middle 55% of the frame height and sits '
-  + 'slightly below centre. Leave a wide empty band of plain cream haze above the globe, at least a '
-  + 'quarter of the frame height, and empty cream to the left and to the right. The whole sphere is '
-  + 'inside the frame with generous margin — do not crop it, do not let it fill the frame.';
-
-const OCEAN = 'The resin ocean is a deep, muted, desaturated cobalt, dark and restrained, closer to '
-  + 'slate blue than to bright sky blue. It is the only saturated colour in the picture; everything '
-  + 'else is cream, sand, moss green and matte white.';
-
-const RING = 'The thin brass orbit ring crosses the upper third of the globe, with the tiny brass '
-  + 'satellite model near the top right of the ring.';
-
-const REF_ROLES_2 = [
-  'Use the first reference image ONLY for framing: how small the sphere is inside the frame and how much empty cream surrounds it. Ignore its colours and materials entirely.',
-  'Use the second reference image for the model itself — its painted plaster relief continents, moss texture, cotton-wool clouds, brass ring and brass satellite, matte cream background and low-saturation colour grade. Keep those materials exactly, but re-pose the globe and re-frame it as described above.',
+// ---------------------------------------------------------- 라운드 2 (ORRERY) --
+// 클라이언트 승인 방향: 지구본이 유튜브 ORRERY 지구본처럼 보여야 한다
+// (같은 테마·재질·조명) — 단 배경은 어두운 곳이 아니라 흰색/크림.
+// 팩의 프레이밍 규칙은 유지: 한반도 정면 중앙·형태 식별, 지구본 작게 + 여백 크게,
+// 황동 링과 작은 위성은 위쪽, 보드/테이블/가장자리/별/텍스트 없음.
+//
+// 라운드 1 실측에서 가져온 교훈 둘을 그대로 적용한다.
+//   - 스케일을 "55%"처럼 %로 주면 무시된다(73% 나왔다) -> "여백이 크다"로 서술.
+//   - 한반도를 알아서 조형해주지 않는다 -> 반도 형태 + 황해 + 일본 열도 호를 명시.
+const SCENE_2 = [
+  'A handmade miniature model globe floating in a bright matte cream-white field — no table, no stand, no base, no board, no edges; the world simply continues beyond the frame.',
+  '',
+  'The globe is built exactly like the model in the second reference image: continents sculpted in relief from painted plaster and sifted sand, real moss packed into the mountain ranges and forests, oceans of deep muted cobalt-blue poured resin, polar caps of matte white plaster. Fine handmade texture everywhere — visible grain, dust and tiny imperfections.',
+  '',
+  'A single thin milled brass meridian ring encircles the globe and crosses the upper third of the frame, with one tiny brass satellite model mounted on the ring near the top.',
+  '',
+  'The globe is rotated so the Korean peninsula faces the camera dead-on at the centre of the visible disc: the peninsula is sculpted as a clear thumb-shaped landmass hanging south from the mainland, the Yellow Sea on its left, the curving Japanese island arc on its right, and a few small cotton-wool clouds resting over its southern coast.',
+  '',
+  'Framing: the globe is small in the frame, with a large margin of empty white space all around it — generous empty cream above, below, to the left and to the right. The whole sphere sits inside the frame, slightly below centre, and is never cropped.',
+  '',
+  'Lighting: one warm directional key from the upper left with a big soft white bounce filling the shadows — the same warm sculptural light as the reference — but lifted so the surrounding field reads as bright matte cream, not darkness.',
+  '',
+  'Macro photographic realism, medium-format sharpness, shallow depth of field falling off at the limb of the globe. A real physical object photographed in a studio.',
 ].join('\n');
 
-const STILL_2 = [PACK, ROTATION, FRAMING, OCEAN, RING, REF_ROLES_2, REALISM, AVOID].join('\n\n');
+const REF_ROLES_ORRERY = [
+  'Use the first reference image ONLY for framing: how small the sphere is inside the frame and how much empty cream surrounds it. Ignore its colours and materials entirely.',
+  'Use the second reference image ONLY for material, sculpting and light: the plaster-and-sand relief continents, the moss, the resin ocean, the milled brass ring, the macro realism. Ignore its dark background, its glowing pins and its stand completely.',
+].join('\n');
 
-const PROMPTS = { 1: STILL_1, 2: STILL_2 };
-const REFS = { 1: [REF_COMP, REF_MAT], 2: [REF_COMP2, REF_STYLE] };
+const REALISM_2 = 'NOT a 3D render, NOT CGI, NOT illustration, NOT clay, no digital glow, no plastic sheen, no toy-town cuteness.';
+
+// ORRERY 프레임이 끌고 들어올 수 있는 것들을 앞쪽에 못박는다:
+// 어두운 배경, 주황·빨강 발광 핀, 검은 지도 핀/바늘, 황동 받침대.
+const AVOID_2 = 'Avoid: dark background, black space, night, stars, board, table, plinth, base plate, '
+  + 'stand, frame edge, glowing orange or red pin lights, illuminated city dots, black map pins, '
+  + 'needles, blue sky, purple, neon, text, letters, logo, watermark, people, vehicles, cartoon, '
+  + 'CGI look, glossy plastic, lens flare.';
+
+const STILL_2 = [SCENE_2, REF_ROLES_ORRERY, REALISM_2, AVOID_2].join('\n\n');
+
+// 3차는 2차 검수 결과를 보고 확정한다. 기본값은 2차와 동일.
+const STILL_3 = STILL_2;
+
+const PROMPTS = { 1: STILL_1, 2: STILL_2, 3: STILL_3 };
+const REFS = { 1: [REF_COMP, REF_MAT], 2: [REF_COMP2, REF_ORRERY], 3: [REF_COMP2, REF_ORRERY] };
 
 // ------------------------------------------------------------------ ffmpeg --
 function ffmpeg() {
@@ -153,26 +173,29 @@ function ffmpeg() {
 }
 
 /**
- * 검수 시트: (1) 후보 스틸 전체, (2) 한반도 부근 확대(식별 여부 판정용),
- * (3) 목표 프레이밍 참조 — 를 세로로 붙인다.
+ * 검수 시트: (1) 납품본(리프레이밍 완료), (2) 한반도 부근 확대(형태·중심 판정),
+ * (3) ORRERY 스타일 참조 — 를 세로로 붙인다.
  */
 function sheet() {
-  const cand = [1, 2].map(outPng).filter(fs.existsSync).pop();
-  if (!cand) throw new Error('스틸이 아직 없다');
+  const raw = [1, 2, 3].map(outPng).filter(fs.existsSync).pop();
+  if (!raw) throw new Error('스틸이 아직 없다');
+  const framed = raw.replace(/\.png$/, '.framed.png');
+  const hero = fs.existsSync(framed) ? framed : raw;
   const out = p('shots/kie/leg01-stills.jpg');
   fs.mkdirSync(path.dirname(out), { recursive: true });
-  const fit = (i) => `[${i}:v]scale=1280:720:force_original_aspect_ratio=decrease,`
-    + `pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=0xEFE7D8`;
+  const fit = 'scale=1280:720:force_original_aspect_ratio=decrease,'
+    + 'pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=0xEAE1D0';
   execFileSync(ffmpeg(), ['-hide_banner', '-loglevel', 'error', '-y',
-    '-i', cand, '-i', cand, '-i', REF_COMP2,
+    '-i', hero, '-i', raw, '-i', REF_ORRERY,
     '-filter_complex',
-    `${fit(0)}[a];`
-    + `[1:v]crop=iw*0.42:ih*0.42:iw*0.22:ih*0.12,${''}scale=1280:720:force_original_aspect_ratio=decrease,`
-    + `pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=0xEFE7D8[b];`
-    + `${fit(2)}[c];[a][b][c]vstack=inputs=3[o]`,
+    `[0:v]${fit}[a];`
+    + `[1:v]crop=iw*0.30:ih*0.34:iw*0.36:ih*0.30,${fit}[b];`
+    + `[2:v]${fit}[c];[a][b][c]vstack=inputs=3[o]`,
     '-map', '[o]', '-frames:v', '1', '-q:v', '3', out]);
-  return { out: path.relative(ROOT, out).split(path.sep).join('/'),
-    rows: ['candidate still', 'Korea region 2.4x', 'target framing ref'] };
+  return {
+    out: path.relative(ROOT, out).split(path.sep).join('/'),
+    rows: [path.basename(hero), path.basename(raw) + ' — Korea 3.3x', path.basename(REF_ORRERY)],
+  };
 }
 
 // --------------------------------------------------------------------- cli --
@@ -182,11 +205,16 @@ const n = Number(process.argv[3] || 1);
 if (cmd === 'credits') {
   console.log(await credits());
 } else if (cmd === 'prompts') {
-  for (const k of [1, 2]) console.log(`--- STILL ${k} ---\n${PROMPTS[k]}\n`);
+  for (const k of [1, 2, 3]) console.log(`--- STILL ${k} ---\n${PROMPTS[k]}\n`);
+} else if (cmd === 'newround') {
+  const l = ledger();
+  l.roundStart = await credits();
+  saveLedger(l);
+  console.log(JSON.stringify({ roundStart: l.roundStart, cap: CAP }, null, 2));
 } else if (cmd === 'sheet') {
   console.log(JSON.stringify(sheet(), null, 2));
 } else if (cmd === 'still') {
-  if (!PROMPTS[n]) throw new Error('시도 번호는 1 또는 2');
+  if (!PROMPTS[n]) throw new Error('시도 번호는 1, 2, 3 중 하나');
   const { l, before } = await gate(`still-${n}`);
   const t0 = Date.now();
   const r = await still(PROMPTS[n], { ref: REFS[n], ar: '16:9', out: outPng(n) });
@@ -202,6 +230,6 @@ if (cmd === 'credits') {
   saveLedger(l);
   console.log(JSON.stringify(rec, null, 2));
 } else {
-  console.error('usage: node tools/kie/leg-01-globe.mjs credits|prompts|still <1|2>|sheet');
+  console.error('usage: node tools/kie/leg-01-globe.mjs credits|prompts|newround|still <1|2|3>|sheet');
   process.exit(1);
 }
