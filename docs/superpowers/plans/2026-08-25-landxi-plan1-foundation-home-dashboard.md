@@ -898,6 +898,36 @@ test('dashboard queue items have pins', () => { assert.ok(DASH.queue.length >= 5
 
 ---
 
+### Task 8b: 실자산 파이프라인 — 정사영상 타일·실탐지 벡터·CI
+
+**Files:**
+- Create: `tools/prepare-assets.py`, `tools/prepare-assets.md`(실행법), `landxi/assets/tiles/**`, `landxi/assets/data/geo/marine-debris.geojson`, `marine-debris-grid.geojson`, `jeju-illegal.geojson`, `landxi/assets/data/models.js`, `landxi/assets/data/imagery.js`, `landxi/assets/brand/*`
+- Modify: `landxi/assets/css/tokens.css`(`--lx` → CI 블루), `landxi/assets/js/map/shell.js`, `fallback.js`(`addRaster`), `tests/unit/data.test.mjs`(추가 케이스), `tests/e2e/map.spec.mjs`
+
+**Interfaces:**
+- Consumes: conda env `yolo` (`C:\Users\oem\anaconda3\envs\yolo\python.exe`, GDAL 3.12: `gdal_translate`, `gdal2tiles.py`, `ogr2ogr` in `envs\yolo\Scripts` / `envs\yolo\Library\bin`). Source rasters (never modified): `E:\namwon_final\nw_2506.tif`, `nw_2508.tif`, `nw_2510.tif`, `F:\namwon_final\nw_2504.tif` (EPSG:5186, 1.5cm, have .ovr), `F:\a68_out\ortho_kuksan2_a68_zenmuse.tif`, `F:\a71_out\ortho_kuksan2_a71_zenmuse.tif` (5cm, WGS84 bounds 126.974,35.82562,126.99214,35.83828), `D:\python\lx_2023\336081285_AE_2022_12.tif` + `segmented_image.tif` (EPSG:5179, bounds 126.81996,33.505,126.82504,33.51) + `detected_objects.shp`; vectors `D:\python\jeonnamdo\jeonam_debris_wgs84.geojson` (38,057 polygons, props confidence/class/area_m2), `result_wgs84.geojson` (26,049, props class_name/confidence/giin); models `D:\python\99. LX 부서별 협력사항\02. 지적사업혁신처\best(Car|House|Road|Vinylhouse).pt` + `data(*.yaml)`, `D:\python\lx_2023\model_yolo_illegal*.pt`, `model_segformer_land.pt`, `model_landuse_epoch000.pt`, `yolo11n.pt`, `yolo11x-obb.pt`.
+- Produces: `IMAGERY = [{id:'namwon_2508', label:'남원 도통동 · 2025.08', kind:'ortho'|'landcover', gsd:0.015, captured:'2025-08', bounds:[W,S,E,N], minzoom:12, maxzoom:18, tiles:'assets/tiles/namwon_2508/{z}/{x}/{y}.webp'}, … namwon_2504/2506/2510, kuksan_a68, kuksan_a71, jeju_2022, jeju_landcover]` (`assets/data/imagery.js`, ES module); `MODELS = [{id, name, file, sizeMB, task:'detect'|'segment'|'obb', classes:[…], trainedAt}]`; GeoJSON files above; brand assets. `LXMap.addRaster(id, imagery, {opacity=1, before?}) → void` and `setRasterOpacity(id, v)` added to both engines (maplibre: raster source `{type:'raster', tiles:[url], tileSize:256, bounds, minzoom, maxzoom}`; fallback: loads tiles from the same URLs with `Image` at the nearest zoom and draws them in the camera transform).
+- Rules: AOI/zoom so that `landxi/assets/tiles` ≤ 200MB total; webp quality 80; skip regeneration when output exists (`--force` to rebuild); script prints a size summary per dataset. Namwon AOI = WGS84 127.379–127.401 / 35.399–35.421 (도통동·시청 일대) — converted to EPSG:5186 for `-projwin`.
+
+- [ ] **Step 1: 단위 테스트 추가** (`tests/unit/data.test.mjs`)
+```js
+import fs from 'node:fs';
+import { IMAGERY } from '../../landxi/assets/data/imagery.js'; import { MODELS } from '../../landxi/assets/data/models.js';
+test('imagery entries point at existing tile dirs with bounds', () => { assert.ok(IMAGERY.length >= 6); for (const i of IMAGERY) { assert.equal(i.bounds.length, 4); assert.ok(i.bounds[0] < i.bounds[2] && i.bounds[1] < i.bounds[3]); assert.ok(fs.existsSync(`landxi/assets/tiles/${i.id}/${i.minzoom}`), i.id); } });
+test('namwon has 4 epochs sharing one AOI', () => { const nw = IMAGERY.filter(i => i.id.startsWith('namwon_')); assert.equal(nw.length, 4); for (const i of nw) assert.deepEqual(i.bounds, nw[0].bounds); });
+test('marine debris geojson is simplified and sized', () => { const g = JSON.parse(fs.readFileSync('landxi/assets/data/geo/marine-debris.geojson', 'utf8')); assert.ok(g.features.length >= 3000 && g.features.length <= 6000); assert.ok(fs.statSync('landxi/assets/data/geo/marine-debris.geojson').size < 6e6); });
+test('models list has real files metadata', () => { assert.ok(MODELS.length >= 6); for (const m of MODELS) assert.ok(m.sizeMB > 0 && m.classes.length); });
+```
+- [ ] **Step 2: 실패 확인** `npm run test:unit` → FAIL (modules missing)
+- [ ] **Step 3: `tools/prepare-assets.py`** — 단계: (a) 남원: 각 epoch를 `gdal_translate -projwin <5186 창> -tr 0.3 0.3 -r average -of GTiff -co TILED=YES -co COMPRESS=DEFLATE` 로 z18급(0.3m)까지만 다운샘플해 작업 파일을 만들고(원본 1.5cm 직접 자르기 금지 — 수 GB), `gdal2tiles.py --xyz -z 12-18 -w none -r bilinear --processes 4` → PNG를 Pillow로 webp(q80) 변환 후 PNG 삭제; 4 epoch 모두 같은 `-projwin` 창 사용; (b) 국산리 a68/a71: 전체 범위 `-tr 0.2` → z13–19; (c) 제주 항공·세그멘테이션 2종: z13–19; (d) 벡터: `ogr2ogr -f GeoJSON -lco COORDINATE_PRECISION=5 -simplify 0.00002 -sql "SELECT confidence, class, area_m2 FROM jeonam_debris_wgs84 ORDER BY confidence DESC LIMIT 5000"` → `marine-debris.geojson`; Python으로 전체 38,057건을 500m 격자(0.0045°)로 집계해 `marine-debris-grid.geojson`(`count`, `mean_conf`); `result_wgs84`는 `giin`(기인) 집계를 격자 속성에 추가; `detected_objects.shp` → `jeju-illegal.geojson`(EPSG:4326); (e) 모델 메타: 파일 stat(mtime→`trainedAt`, size→`sizeMB`) + `data(*.yaml)`의 `names` → `models.js`(yaml 없는 모델은 파일명에서 task/classes 추정하고 `inferred:true`); (f) 브랜드: `https://land-xi.lx.or.kr/lnxi/public/lnxi/lbl/common/images/front/logo_big_v3.png`, `https://land-xi.lx.or.kr/lnxi/public/lnxi/lbl/common/images/front/logo.png` 다운로드 + 기존 프로토타입 `https://mini531.github.io/namwon-smart-village/landxi7/assets/images/logo_landxi_dark.png`, `lx_symbol.png` → `landxi/assets/brand/`; 워드마크에서 주색을 샘플링(가장 채도 높은 파란 픽셀의 중앙값)해 `tokens.css`의 `--lx`, `--lx-deep`(−25% 명도), `--lx-tint`(92% 흰색 혼합), `--lx-rgb` 갱신하고 값을 리포트에 기록. 각 단계는 산출물이 있으면 건너뛴다(`--force`).
+- [ ] **Step 4: `LXMap.addRaster` / `setRasterOpacity`** 양 엔진 구현; `dev/map.html`에 `IMAGERY.find(i=>i.id==='namwon_2508')`를 올리고 카메라를 그 bounds로; e2e 1건 추가(`tests/e2e/map.spec.mjs`): `addRaster` 후 maplibre면 `raw.getLayer('r-namwon')` 존재, fallback이면 `document.querySelector('.lxmap__canvas canvas')` 위에 최소 1장의 타일 요청이 200으로 응답(`page.waitForResponse(/tiles\/namwon_2508\/.*\.webp/)`).
+- [ ] **Step 5: 실행·검증** `"C:\Users\oem\anaconda3\envs\yolo\python.exe" tools/prepare-assets.py` → 크기 요약 ≤ 200MB 확인 → `npm test` PASS → `node tools/shot.mjs dev/map.html shots/map-real.png` 로 실영상이 보이는지 확인(리포트에 첨부 경로 기록).
+- [ ] **Step 6: 커밋** `git add -A && git commit -m "feat: 실자산 파이프라인(남원 4시점·드론·제주 타일, 해양쓰레기 실탐지, 모델 메타, CI)"`
+
+**후속 작업 반영:** Task 9(홈)·13(로그인)·14(대시보드)는 폴백/목업 대신 `IMAGERY`의 `namwon_2508`을 `addRaster`로 바탕에 쓴다(글로브 진입 후 남원 AOI로 착지). Task 11 시뮬레이터의 해양쓰레기 카드는 `marine-debris.geojson`을, 농지이용/불법건축물 카드는 `jeju-illegal.geojson`+`jeju_landcover`를 켠다. Task 8의 `detections-sample.geojson`은 실자산이 없는 조사(개발제한구역·방치쓰레기·불법소각장·도로안전·비닐하우스)만 남긴다. 쉘 로고는 `assets/brand/landxi-wordmark.png`(레일에서는 LX 심볼)로 교체한다.
+
+---
+
 ### Task 9: 홈 — 페이지 골격·글로브 진입·스크롤 카메라
 
 **Files:**

@@ -143,6 +143,20 @@
 인터랙션: 특별한 것 없음(공통 진입 모션만). 사용자 관리에서 사용자 호버 → 소속 기관 위치가 바탕 지도에 표시.
 
 ## 7. 데이터 계약 (`assets/data/`)
+
+### 7.0 실자산 원칙 (2026-08-25 추가)
+사용자 PC에 있는 실제 영상·AI 결과를 최대한 사용한다. 목업 GeoJSON은 실자산이 없는 항목에만 쓴다. 준비 스크립트 `tools/prepare-assets.py`(conda env `yolo`의 GDAL 3.12 사용)가 아래를 생성하며, 결과물은 `landxi/assets/tiles/`, `landxi/assets/data/geo/`에 커밋한다(총량 200MB 이내로 AOI·줌을 제한).
+
+| 원본 | 산출 | 사용처 |
+|---|---|---|
+| `E:\namwon_final\nw_2506/2508/2510.tif`, `F:\namwon_final\nw_2504.tif` (남원 전역 1.5cm, EPSG:5186) | 도통동 AOI(중심 127.390,35.410, 약 2×2km) XYZ 타일 z12–18 (`tiles/namwon_2504…2510/{z}/{x}/{y}.webp`) + `bounds.json` | 홈 히어로·스캔 렌즈, XI 맵 타임 스크럽(4시점), 대시보드 바탕 |
+| `F:\a68_out`, `F:\a71_out` `ortho_kuksan2_*_zenmuse.tif` (드론 5cm, 2시점) | 전체 범위 z13–19 (`tiles/kuksan_a68`, `kuksan_a71`) | 변화 탐지 비교(계획 4) |
+| `D:\python\lx_2023\336081285_AE_2022_12.tif` + `segmented_image.tif` + `detected_objects.shp` (제주) | z13–19 타일 2종 + `jeju-illegal.geojson` | 분석 실행 실결과(농지이용/불법건축물) |
+| `D:\python\jeonnamdo\jeonam_debris_wgs84.geojson` (38,057) / `result_wgs84.geojson` (26,049) | 좌표 5자리 단순화 + 신뢰도 상위 5,000건 + 500m 격자 집계 → `marine-debris.geojson`, `marine-debris-grid.geojson` | 해양쓰레기 실태조사 레이어, 통합조사 시뮬레이터, 전국 커버리지 |
+| 모델 파일 메타(`best(Vinylhouse).pt` 등, `model_yolo_illegal*.pt`, `yolo11*.pt`) | `models.js`(이름·크기·클래스·학습일 — 파일 stat에서 생성) | 프로젝트·모델 카드·백본 표시 |
+| 기존 Land-XI 시안(`F:\카카오톡 다운로드\Land-XI_UIlist_240329.zip`, 디자인시안 v1.2) 및 https://land-xi.lx.or.kr 로고 | `assets/brand/landxi-wordmark.png`, `lx-symbol.png` | CI: 워드마크·LX 심볼 |
+
+CI 반영: 주색 `--lx`를 Land-XI CI 블루로 맞춘다(시안 샘플 기준 `#0D5BD7`; 로고 원본에서 최종 샘플링해 값을 기록). 상단 로고는 "LAND-XI PLATFORM" 워드마크를 사용한다. 지도가 없는 화면의 바탕도 실제 남원 정사영상 타일을 흐리게 깐다. 영화적 톤: 히어로는 실제 정사영상 위 글로브→남원 줌인으로 시작하고, 앰비언트·연출은 실영상 위에서 일어난다.
 - 기존 `ai-project-data.js`, `support-data.js`, `CARD_APPROVALS` 등은 그대로 옮긴다.
 - 추가 GeoJSON: `projects-extent.geojson`(프로젝트별 범위 폴리곤, `pid`), `detections-sample.geojson`(과제별 탐지 폴리곤, `task`, `cls`, `status`, `capturedAt`), `orgs.geojson`(기관 포인트: LX 전주·남원시청·전남도청·신안·완도), `sigungu-simplified.geojson`(시군구 경계, `code`, `name`, `coverage` 0~1, `tasks[]`).
 - 지도 스타일 JSON은 토큰 값을 하드코딩하되 `build-style.js`(수동 실행 스크립트)로 tokens.css에서 재생성한다.
