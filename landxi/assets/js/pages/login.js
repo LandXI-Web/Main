@@ -4,11 +4,15 @@ import { NotifyUI } from '../ui/dialog.js';
 
 const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+// 오픈 리다이렉트 방지: 같은 사이트의 "이름.html(?쿼리)" 형태만 허용하고
+// 그 외(외부 URL, 프로토콜 상대 경로 등)는 dashboard.html로 되돌린다.
+const safeNext = (v) => (/^[a-z0-9_-]+\.html(?:\?[^\s#]*)?$/i.test(v || '') && !/[:\/\\]/.test(v)) ? v : 'dashboard.html';
+
 const mapEl = document.getElementById('loginMap');
 if (mapEl) createMap(mapEl, { mode: 'backdrop', globe: true, zoom: 2.4, interactive: false, tools: false, rulebar: false });
 
 if (AuthState.isLoggedIn()) {
-  const next = new URLSearchParams(location.search).get('next') || 'dashboard.html';
+  const next = safeNext(new URLSearchParams(location.search).get('next'));
   location.replace(next);
 }
 
@@ -39,7 +43,7 @@ form.addEventListener('submit', (e) => {
   if (form.remember.checked) localStorage.setItem('lx_saved_email', email);
   else localStorage.removeItem('lx_saved_email');
 
-  const next = new URLSearchParams(location.search).get('next') || 'dashboard.html';
+  const next = safeNext(new URLSearchParams(location.search).get('next'));
   const go = () => { location.href = next; };
   if (REDUCE) { go(); return; }
   card.classList.add('is-leaving');
