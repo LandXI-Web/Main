@@ -39,7 +39,35 @@ One continuous forward flight, no cuts. The camera glides steadily forward and s
 ```
 board, table, plinth, base plate, edge, studio, white background, blue sky paint, text, letters, numbers, captions, subtitles, watermark, logo, signature, cut, jump cut, dissolve, camera shake, handheld wobble, zoom snap, speed ramp, people entering frame, vehicles entering frame, cars on roads, birds entering frame, purple, magenta, neon, plastic sheen, glossy toy plastic, CGI, 3d render, clay, cartoon, illustration, dark shadows, crushed blacks, lens flare, morphing terrain, extra drones, drone turning around, HUD, crosshair
 ```
-**설정**: `kling/v2-1-pro`, `{"duration":"5"}`, 16:9, `cfg_scale` **0.6**(드론이 5초 내내 프레임 안에 머물고 지정 경로를 지켜야 하므로 프롬프트 준수를 높인다), `image` = **Leg 2 인코딩 mp4의 마지막 프레임**(`anchors/a03.png`), `image_tail` = **비움**(Leg 4의 첫 프레임이 아직 없다 — 양 끝을 다 고정하면 모델이 갈등을 "카메라 후퇴"로 풀어 모든 leg가 같은 와이드샷이 된다). 2회까지 생성.
+**설정 (API — `POST /image-to-video/kling-2.5-turbo`, 근거: `docs/superpowers/proto/2026-08-26-kling-api-check.md`)**
+
+| 항목 | 값 |
+|---|---|
+| 모델 | **`kling-v2-5-turbo`** (구 `kling-v2-1`·`-v2-1-master`는 **2026-09-15 폐지**) |
+| `settings.resolution` | **`1080p`** |
+| `settings.duration` | **`5`** |
+| 화면비 | **16:9** — 신형 스키마엔 `aspect_ratio`가 없다. 첫 프레임 이미지의 종횡비가 곧 결과 종횡비 |
+| `contents[].first_frame` | **Leg 2 인코딩 mp4의 마지막 프레임** = `anchors/a03.png` |
+| `contents[].last_frame` | **비움** — Leg 4의 첫 프레임이 아직 없다(끝 프레임 단독 지정은 신형에서 불가, 쓰려면 1080p 필수) |
+| cfg | **신형 스키마에 `cfg_scale`이 없다**(kling v2.x 미지원). 드론을 프레임에 붙들어 두는 일은 "never turning back toward the camera and never leaving the frame" 문장이 대신한다 |
+| 네거티브 | **`negative_prompt` 필드 없음** → 위 네거티브를 프롬프트 끝에 `Do not include: …` 로 병합 |
+| 비용 | 0.5 U/s × 5 s = 2.5 U ≈ **$0.35**/테이크, 2테이크 $0.70 |
+
+2회까지 생성.
+
+**웹앱 수동 생성 (klingai.com)**
+
+| 웹앱 항목 | 설정 |
+|---|---|
+| 모드 | 이미지 → 영상 (Image to Video) |
+| 모델 | **Kling 2.5 Turbo** |
+| 해상도 | **1080p** |
+| 길이 | **5s** |
+| 시작 프레임 업로드 | `anchors/a03.png` (Leg 2 **인코딩본**의 마지막 프레임) |
+| 끝 프레임 | **비움** |
+| 프롬프트 | 위 모션 프롬프트 그대로 |
+| Negative prompt | 위 네거티브 그대로 (웹앱에는 전용 입력란이 있어 병합 불필요) |
+| 결과 | 다운로드 → `landxi/assets/proto/film/legs/gen/ch1-leg-03-drone.mp4` |
 
 **영상 검수 체크**
 - [ ] 드론이 5초 내내 프레임 안에 있고 뒤돌거나 카메라 쪽으로 오지 않는가

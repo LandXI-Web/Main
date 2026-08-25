@@ -39,7 +39,35 @@ One continuous descent, no cuts. The camera sinks slowly and steadily toward the
 ```
 board, table, plinth, base plate, edge, studio, white background, blue sky paint, text, letters, numbers, captions, subtitles, watermark, logo, signature, cut, jump cut, dissolve, camera shake, handheld wobble, zoom snap, speed ramp, people entering frame, vehicles entering frame, cars on roads, tractors, birds entering frame, purple, magenta, neon, plastic sheen, glossy toy plastic, CGI, 3d render, clay, cartoon, illustration, dark shadows, crushed blacks, lens flare, morphing parcels, parcels changing shape, checkerboard pattern, map overlay, coloured data overlay
 ```
-**설정**: `kling/v2-1-pro`, `{"duration":"5"}`, 16:9, `cfg_scale` **0.6**(필지 형상은 실측 근거다 — 모핑되면 정직성이 깨지므로 프롬프트 준수 우선), `image` = `anchors/a04.png`, `image_tail` = **비움**. 2회까지.
+**설정 (API — `POST /image-to-video/kling-2.5-turbo`, 근거: `docs/superpowers/proto/2026-08-26-kling-api-check.md`)**
+
+| 항목 | 값 |
+|---|---|
+| 모델 | **`kling-v2-5-turbo`** (구 `kling-v2-1`·`-v2-1-master`는 **2026-09-15 폐지**) |
+| `settings.resolution` | **`1080p`** |
+| `settings.duration` | **`5`** |
+| 화면비 | **16:9** — 첫 프레임 이미지의 종횡비가 곧 결과 종횡비 |
+| `contents[].first_frame` | **Leg 3 인코딩 mp4의 마지막 프레임** = `anchors/a04.png` |
+| `contents[].last_frame` | **비움** — Leg 5의 첫 프레임이 아직 없다 |
+| cfg | **신형 스키마에 `cfg_scale`이 없다**. 필지 형상은 실측 근거이므로 모핑 방지는 오직 `first_frame`(실 정사영상 기반)과 네거티브의 `morphing parcels, parcels changing shape`로 건다 |
+| 네거티브 | **`negative_prompt` 필드 없음** → 위 네거티브를 프롬프트 끝에 `Do not include: …` 로 병합 |
+| 비용 | 0.5 U/s × 5 s = 2.5 U ≈ **$0.35**/테이크, 2테이크 $0.70 |
+
+2회까지 생성.
+
+**웹앱 수동 생성 (klingai.com)**
+
+| 웹앱 항목 | 설정 |
+|---|---|
+| 모드 | 이미지 → 영상 (Image to Video) |
+| 모델 | **Kling 2.5 Turbo** |
+| 해상도 | **1080p** |
+| 길이 | **5s** |
+| 시작 프레임 업로드 | `anchors/a04.png` (Leg 3 **인코딩본**의 마지막 프레임) |
+| 끝 프레임 | **비움** |
+| 프롬프트 | 위 모션 프롬프트 그대로 |
+| Negative prompt | 위 네거티브 그대로 (웹앱 전용 입력란) |
+| 결과 | 다운로드 → `landxi/assets/proto/film/legs/gen/ch1-leg-04-namwon-farmland.mp4` |
 
 **영상 검수 체크**
 - [ ] 필지 경계가 5초 내내 **같은 형상**을 유지하는가(모핑 = 즉시 리테이크)

@@ -39,7 +39,35 @@ One continuous descent, no cuts. The camera falls steadily straight down toward 
 ```
 board, table, plinth, base plate, edge, studio, white background, blue sky paint, text, letters, numbers, captions, subtitles, watermark, logo, signature, cut, jump cut, dissolve, camera shake, handheld wobble, zoom snap, speed ramp, people entering frame, vehicles entering frame, cars on roads, birds entering frame, purple, magenta, neon, plastic sheen, glossy toy plastic, CGI, 3d render, clay, cartoon, illustration, dark shadows, crushed blacks, lens flare, morphing coastline, morphing continents, extra aircraft, contrails, stars, black space
 ```
-**설정**: `kling/v2-1-pro`, `{"duration":"5"}`, 16:9, `cfg_scale` **0.5**(항공기 경로는 지켜야 하고 지형은 모델이 부드럽게 이어야 하는 중간값), `image` = **Leg 1 인코딩 mp4의 마지막 프레임**(`anchors/a02.png`), `image_tail` = **비움**(Leg 3의 첫 프레임이 아직 없다 — 양 끝을 다 고정하면 모델이 갈등을 "카메라 후퇴"로 푼다). 2회까지 생성.
+**설정 (API — `POST /image-to-video/kling-2.5-turbo`, 근거: `docs/superpowers/proto/2026-08-26-kling-api-check.md`)**
+
+| 항목 | 값 |
+|---|---|
+| 모델 | **`kling-v2-5-turbo`** (구 `kling-v2-1`·`-v2-1-master`는 **2026-09-15 폐지**) |
+| `settings.resolution` | **`1080p`** |
+| `settings.duration` | **`5`** |
+| 화면비 | **16:9** — 신형 스키마엔 `aspect_ratio`가 없다. **첫 프레임 이미지의 종횡비가 곧 결과 종횡비**이므로 `anchors/a02.png`가 16:9여야 한다 |
+| `contents[].first_frame` | **Leg 1 인코딩 mp4의 마지막 프레임** = `anchors/a02.png` |
+| `contents[].last_frame` | **비움** — Leg 3의 첫 프레임이 아직 없다. 양 끝을 다 고정하면 모델이 갈등을 "카메라 후퇴"로 풀어 모든 leg가 같은 와이드샷이 된다. (`last_frame`은 1080p 필수이고 **끝 프레임 단독 지정은 불가**) |
+| cfg | **신형 스키마에 `cfg_scale`이 없다**(kling v2.x 전 계열 미지원). 준수 강도는 모션 프롬프트의 "crossing once and only once", "no direction change" 같은 명시 문장으로만 건다 |
+| 네거티브 | 신형 스키마에 **`negative_prompt` 필드가 없다** → 위 네거티브를 프롬프트 끝에 `Do not include: …` 형태의 부정 서술로 **병합**한다 |
+| 비용 | 0.5 U/s × 5 s = 2.5 U ≈ **$0.35**/테이크, 2테이크 $0.70 |
+
+2회까지 생성.
+
+**웹앱 수동 생성 (klingai.com — API 리소스팩 없이 웹 크레딧으로 뽑을 때)**
+
+| 웹앱 항목 | 설정 |
+|---|---|
+| 모드 | 이미지 → 영상 (Image to Video) |
+| 모델 | **Kling 2.5 Turbo** |
+| 해상도 | **1080p** |
+| 길이 | **5s** |
+| 시작 프레임 업로드 | `anchors/a02.png` (Leg 1 **인코딩본**의 마지막 프레임) |
+| 끝 프레임 | **비움** |
+| 프롬프트 | 위 모션 프롬프트 그대로 |
+| Negative prompt | 위 네거티브 그대로 (**웹앱에는 전용 입력란이 있다** — API와 달리 프롬프트 병합 불필요) |
+| 결과 | 다운로드 → `landxi/assets/proto/film/legs/gen/ch1-leg-02-clouds-aircraft.mp4` |
 
 **영상 검수 체크**
 - [ ] 5초 내내 한 방향 하강뿐인가(멈춤·후퇴·방향 전환 없음)
