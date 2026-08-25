@@ -13,7 +13,6 @@ const SIGUNGU_URL = '../assets/data/geo/sigungu.geojson';
 
 const ACCENT = '#006DF7';
 const DETECT = '#FFB633';
-const TEAL = '#0FA9A0';
 const INK = '#010102';
 
 const EMPTY = { type: 'FeatureCollection', features: [] };
@@ -190,7 +189,7 @@ export async function mountPlate(el) {
     filter: ['>', ['get', 'lit'], 0],
     paint: {
       'fill-color': ACCENT,
-      'fill-opacity': ['interpolate', ['linear'], ['get', 'cov'], 0, 0.06, 1, 0.34],
+      'fill-opacity': ['interpolate', ['linear'], ['get', 'cov'], 0, 0.03, 1, 0.14],
     },
     layout: { visibility: 'none' },
   });
@@ -251,7 +250,7 @@ export async function mountPlate(el) {
     geometry: { type: 'Polygon', coordinates: [[[W, N], [E, N], [E, S], [W, S], [W, N]]] },
   }]);
   // 코너 눈금 — 브래킷 대신 네 귀퉁이의 짧은 ㄱ자 두 선. 액센트는 여기에만 쓴다.
-  const tw = (E - W) * 0.055, th = (N - S) * 0.075;
+  const tw = (E - W) * 0.07, th = (N - S) * 0.095;
   const corner = (x, y, sx, sy) => ({
     type: 'Feature', properties: {},
     geometry: { type: 'LineString', coordinates: [[x + sx * tw, y], [x, y], [x, y - sy * th]] },
@@ -294,7 +293,7 @@ export async function mountPlate(el) {
     paint: {
       'line-color': ['case', ['==', ['get', 'st'], 'live'], ACCENT, 'rgba(255,255,255,0.9)'],
       'line-width': 1,
-      'line-opacity': ['match', ['get', 'st'], 'live', ['get', 'b'], 'idle', 0.14, 0.22],
+      'line-opacity': ['match', ['get', 'st'], 'live', ['get', 'b'], 'idle', 0.18, 0.3],
     },
     layout: { visibility: 'none' },
   });
@@ -302,9 +301,9 @@ export async function mountPlate(el) {
   map.addLayer({
     id: 'sdet-dot', type: 'circle', source: 'sdet',
     paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 1, 14, 2, 16, 3],
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 1.4, 13, 2, 16, 3],
       'circle-color': ACCENT,
-      'circle-opacity': 0.72,
+      'circle-opacity': 0.9,
     },
     layout: { visibility: 'none' },
   });
@@ -312,8 +311,8 @@ export async function mountPlate(el) {
     id: 'det-dot', type: 'circle', source: 'det',
     paint: {
       'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 1.2, 16, 3],
-      'circle-color': TEAL,
-      'circle-opacity': 0.8,
+      'circle-color': ACCENT,
+      'circle-opacity': 0.85,
     },
     layout: { visibility: 'none' },
   });
@@ -323,10 +322,10 @@ export async function mountPlate(el) {
   map.addLayer({
     id: 'stack-3d', type: 'fill-extrusion', source: 'stack',
     paint: {
-      'fill-extrusion-color': ['case', ['>', ['get', 'alt'], 0], TEAL, ACCENT],
+      'fill-extrusion-color': ['case', ['>', ['get', 'alt'], 0], '#5E9BF9', ACCENT],
       'fill-extrusion-base': ['get', 'base'],
       'fill-extrusion-height': ['get', 'top'],
-      'fill-extrusion-opacity': 0.82,
+      'fill-extrusion-opacity': 0.74,
     },
     layout: { visibility: 'none' },
   });

@@ -180,6 +180,11 @@ test('기능 대조 — 원본 대시보드 위젯이 원장 꼬리에 1:1 로 �
   await expect(page.locator('#ops-admin .row')).toHaveCount(4);      // 원본 support-grid 4타일
   // 원본에 없는 위젯은 만들지 않는다.
   expect(ops).not.toContain('전국 커버리지');
+
+  // 원장 꼬리를 눈으로 확인한다(대조표 §B 의 여섯 위젯이 한 화면에 있는지).
+  await page.locator('#fig-notice').scrollIntoViewIfNeeded();
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: `${SHOTS}/06-ops.png` });
 });
 
 test('좌측 레일 — 원본 include/header.html 의 메뉴가 그대로 있다', async ({ page }) => {

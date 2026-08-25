@@ -88,12 +88,13 @@ button{ font:inherit; color:inherit; background:none; border:0; padding:0; curso
 #mark{ font-family:var(--v3-display); font-weight:500; font-size:14px; letter-spacing:.18em; white-space:nowrap; }
 #mast-title{ font-family:var(--v3-display); font-weight:500; font-size:14px; line-height:1;
   letter-spacing:-0.01em; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-#mast-r{ padding:0 var(--pad); white-space:nowrap; }
+#mast-r{ padding:0 var(--pad); white-space:nowrap; justify-self:end; }
 #mast-r .sep{ margin:0 7px; color:var(--v3-grey); }
 
 /* 레지스터 탭 — 앱 탭이 아니라 마스트헤드의 한 줄. 밑줄 막대를 쓰지 않는다.
    번호는 Inter 12px 캡스, 이름은 SUIT. 선택은 잉크의 농도로만 말한다. */
-#regs{ display:flex; align-items:stretch; height:100%; padding-left:22px; }
+#regs{ display:flex; align-items:stretch; height:100%; padding-left:20px; min-width:0; }
+.reg{ flex:0 0 auto; }
 .reg{ display:flex; align-items:baseline; gap:8px; padding:0 18px; position:relative;
   align-self:center; color:var(--grey-3);
   transition:color var(--v3-hover) var(--v3-hover-ease), transform var(--v3-hover) var(--v3-hover-ease); }
@@ -102,6 +103,7 @@ button{ font:inherit; color:inherit; background:none; border:0; padding:0; curso
   font-variant-numeric:tabular-nums; color:var(--grey-3); transition:color var(--v3-hover) var(--v3-hover-ease); }
 .reg .rn{ font-family:var(--v3-display); font-weight:500; font-size:13.5px; letter-spacing:-0.01em; }
 .reg .rt{ font-family:var(--v3-num); font-size:10px; letter-spacing:.02em; color:var(--v3-grey); }
+.reg .ri,.reg .rn,.reg .rt{ white-space:nowrap; }
 .reg:hover{ color:var(--v3-black); transform:translateY(-1px); }
 .reg[aria-selected="true"]{ color:var(--v3-black); }
 .reg[aria-selected="true"] .ri{ color:var(--v3-accent); }
@@ -197,7 +199,7 @@ button{ font:inherit; color:inherit; background:none; border:0; padding:0; curso
 .bal__t{ height:7px; background:#F1F2F4; position:relative; }
 .bal__t i{ position:absolute; inset:0 auto 0 0; background:var(--v3-accent);
   transition:width var(--v3-d2) var(--v3-ease); }
-.bal__r.alt .bal__t i{ background:var(--v3-teal); }
+.bal__r.alt .bal__t i{ background:#9FC4FA; }   /* 액센트 1 — 구분은 색상이 아니라 명도로 */
 .bal__v{ font-family:var(--v3-num); font-size:11px; text-align:right; font-variant-numeric:tabular-nums; }
 .bal__g{ font-family:var(--v3-num); font-size:10px; letter-spacing:.06em; text-transform:uppercase;
   color:var(--grey-3); padding:12px var(--pad) 4px; }
@@ -307,7 +309,7 @@ button{ font:inherit; color:inherit; background:none; border:0; padding:0; curso
 #card dd{ margin:0; color:var(--v3-black); font-variant-numeric:tabular-nums; text-align:right; }
 #card img{ display:block; width:100%; height:132px; object-fit:cover; border-top:1px solid var(--line); }
 #card .cf{ padding:9px 12px 11px; border-top:1px solid var(--line); font-family:var(--v3-num);
-  font-size:9.5px; color:var(--grey-3); line-height:1.5; word-break:break-all; }
+  font-size:9.5px; color:var(--grey-3); line-height:1.5; overflow-wrap:anywhere; }
 
 /* ── 스캔 스트립 ──────────────────────────────────────────────────────── */
 #strip{ position:fixed; z-index:8; inset:auto 0 0 var(--rail); height:var(--strip); background:#fff;

@@ -46,7 +46,7 @@ function projectsSVG() {
   const rows = top.map((t, i) => {
     const y = i * rowH;
     const w = (t.gb / max) * TRACK;
-    return `<text class="lbl" x="0" y="${y + 12}">${esc(t.n)}</text>`
+    return `<text class="lbl" x="0" y="${y + 12}">${esc(t.name)}</text>`
       + `<rect x="${NAMEW}" y="${y + 4}" width="${Math.max(1, w).toFixed(1)}" height="8" fill="#006DF7" opacity="${(1 - i * 0.14).toFixed(2)}"/>`
       + `<text class="val" x="${W}" y="${y + 12}" text-anchor="end">${t.gb} GB</text>`;
   }).join('');
