@@ -5,3 +5,4 @@ shots/
 .claude/
 .superpowers/
 build/
+.env.local
