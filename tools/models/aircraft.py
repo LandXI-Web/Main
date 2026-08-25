@@ -11,6 +11,7 @@ aircraft.glb — 소형 항공측량기 (세스나 172 계열: 고익 + 스트�
 import os
 import sys
 
+sys.dont_write_bytecode = True          # tools/models/ 에 __pycache__ 를 남기지 않는다
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from lxbuild import AIRFOIL, Node, export_glb, material, reset_scene  # noqa: E402
