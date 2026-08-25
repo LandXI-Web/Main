@@ -1,238 +1,112 @@
 <!doctype html><html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Land-XI — 워크플로우 캔버스 · 전남 해양쓰레기 탐지</title>
+<title>Land-XI — 국토 조사 보드 · 남원시 비닐하우스 9,664동</title>
 <link rel="icon" href="../assets/images/favicon_landxi.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@700;800;900&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
-<link rel="stylesheet" href="../assets/css/tokens.css">
+<link rel="stylesheet" href="v3-tokens.css">
 <link rel="stylesheet" href="workflow.css">
 <script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
 <script src="env.js"></script>
-</head><body>
+</head><body class="v3" data-colorway="dark">
 
-<a class="skip mono" href="#canvas">캔버스로 건너뛰기</a>
+<a class="skip" href="#stage">보드로 건너뛰기</a>
 
-<!-- ── 상단 바 ───────────────────────────────────────────────────────────── -->
-<header id="top">
-  <img id="wordmark" src="../assets/brand/landxi-wordmark-dark.png" alt="Land-XI">
-  <nav id="crumb" aria-label="위치">
-    <span class="mono dim">프로젝트</span><span class="sep">›</span>
-    <b>전남 해양쓰레기 탐지</b>
-    <button id="ver" class="ver" type="button" aria-haspopup="listbox" aria-expanded="false">
-      <i class="dot"></i><span class="mono">v3</span><span class="live mono">Live</span>
-    </button>
-  </nav>
-  <div id="top-right">
-    <label id="assist" class="seg" title="Builder Assist">
-      <span class="mono dim">Builder Assist</span>
-      <select id="assist-mode" class="mono" aria-label="Builder Assist 모드">
-        <option value="auto">자동</option><option value="suggest">제안</option><option value="manual">수동</option>
-      </select>
-    </label>
-    <button id="autolay" class="seg tgl" type="button" aria-pressed="true">
-      <svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 4h6v5H3zM11 4h6v5h-6zM7 13h6v4H7zM6 9v2h8V9M10 11v2"/></svg>
-      <span class="mono">자동정렬</span>
-    </button>
-    <div id="runner" class="seg">
-      <i class="pulse"></i>
-      <span class="mono">LX-GPU-01</span><span class="mono dim" id="runner-ping">12 ms</span>
+<!-- ── 상단 79px 바 하나. 이것이 화면의 유일한 크롬이다. ───────────────── -->
+<header id="bar">
+  <span id="mark">LAND-XI</span>
+  <h1 id="ttl">국토 조사 보드</h1>
+  <p id="place" class="caption">—</p>
+  <div id="bar-r">
+    <div id="presets" role="tablist" aria-label="조사 과업">
+      <button role="tab" aria-selected="true" data-preset="namwon-greenhouse">남원 비닐하우스</button>
+      <button role="tab" aria-selected="false" data-preset="yeosu-marine">여수 해양쓰레기</button>
     </div>
-    <button id="ops" class="seg tgl" type="button" aria-pressed="false" title="판독(다크) 모드">
-      <svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M14.5 12.2A5.5 5.5 0 0 1 7.8 5.5a5.5 5.5 0 1 0 6.7 6.7z"/></svg>
-      <span class="mono">판독</span>
-    </button>
+    <span id="live"><i></i>LIVE</span>
   </div>
 </header>
 
-<main id="app">
+<main id="stage" tabindex="-1">
+  <div id="map"></div>
+  <canvas id="glow" aria-hidden="true"></canvas>
+  <canvas id="edges" aria-hidden="true"></canvas>
+  <div id="nodes" data-band="mid"></div>
 
-  <!-- ── 좌: 노드 캔버스 ───────────────────────────────────────────────── -->
-  <section id="canvas-zone" aria-label="워크플로우 캔버스">
-    <div id="canvas" tabindex="-1">
-      <div id="grid-bg" aria-hidden="true"></div>
-      <div id="world">
-        <svg id="edges" aria-hidden="true"><defs>
-          <filter id="fglow" x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-        </defs>
-          <g id="edge-lines"></g><g id="edge-flow"></g><path id="wire" class="wire" d=""></path>
-        </svg>
-        <div id="nodes"></div>
-      </div>
+  <!-- 거의 안 보이는 관측 격자 인덱스 — "여기는 계측 공간이다" -->
+  <div id="gridhud" aria-hidden="true"></div>
 
-      <!-- 미니맵 -->
-      <div id="minimap" aria-label="캔버스 미니맵">
-        <canvas id="mini-c" width="188" height="118"></canvas>
-        <div id="mini-view"></div>
-      </div>
+  <!-- 커서 좌표 · 사람 척도 스케일바 -->
+  <p id="xy" class="num" aria-hidden="true"></p>
+  <div id="scale" aria-hidden="true"><span id="scale-bar"></span><span id="scale-t" class="num"></span></div>
 
-      <!-- 캔버스 좌상단 상태 -->
-      <div id="canvas-hud">
-        <span class="mono" id="hud-zoom">100%</span>
-        <span class="mono dim" id="hud-count">노드 6 · 엣지 5</span>
-        <span class="mono warn" id="hud-manual" hidden>자동정렬 일시정지 — 수동 배치</span>
-      </div>
+  <!-- ── 우: 라이브 분석 (패널 배경 없음 · 헤어라인 한 줄로만 구획) ─────── -->
+  <section id="panel" aria-label="라이브 분석">
+    <p id="eyebrow" class="label">—</p>
+    <div id="stat" class="stat num" aria-live="polite"></div>
+    <p id="statsub" class="caption"></p>
 
-      <!-- 블록 라이브러리 (우클릭 / 포트 +) -->
-      <div id="lib" class="pop" hidden role="menu" aria-label="블록 라이브러리">
-        <div class="pop-h"><span class="mono" id="lib-title">블록 추가</span><span class="mono dim" id="lib-note"></span></div>
-        <input id="lib-q" class="mono" type="search" placeholder="블록 검색" aria-label="블록 검색">
-        <div id="lib-list"></div>
-      </div>
+    <hr class="hr">
+    <div class="row"><span class="label">신뢰도 임계</span><span id="thr" class="num">0.50</span></div>
+    <canvas id="conf" tabindex="0" role="slider" aria-label="신뢰도 임계값"
+            aria-valuemin="0" aria-valuemax="1" aria-valuenow="0.5"></canvas>
+    <p id="confnote" class="caption"></p>
 
-      <!-- 노드 인스펙터 -->
-      <aside id="insp" hidden aria-label="블록 상세">
-        <header>
-          <span class="mono badge" id="insp-kind">MODEL</span>
-          <b id="insp-title">—</b>
-          <button id="insp-x" class="ic-btn" type="button" aria-label="닫기">
-            <svg class="ic" viewBox="0 0 20 20"><path d="M5 5l10 10M15 5L5 15"/></svg>
-          </button>
-        </header>
-        <div id="insp-tabs" role="tablist">
-          <button role="tab" aria-selected="true" data-tab="visual" class="mono">Visual</button>
-          <button role="tab" aria-selected="false" data-tab="json" class="mono">JSON</button>
-          <button role="tab" aria-selected="false" data-tab="log" class="mono">로그</button>
-        </div>
-        <div id="insp-body">
-          <div class="tabp" data-tab="visual">
-            <div id="insp-shot"><canvas id="insp-canvas" width="768" height="512"></canvas><span class="mono" id="insp-cap">—</span></div>
-            <dl id="insp-meta"></dl>
-            <div id="insp-chain"></div>
-          </div>
-          <div class="tabp" data-tab="json" hidden><pre id="insp-json" class="mono"></pre></div>
-          <div class="tabp" data-tab="log" hidden><pre id="insp-log" class="mono"></pre></div>
-        </div>
-      </aside>
+    <hr class="hr">
+    <div class="row"><span class="label">클래스</span><span id="clsnote" class="caption"></span></div>
+    <ul id="cls"></ul>
 
-      <!-- 하단 실행 바 (화면에서 유일한 유리 패널 2개 중 하나) -->
-      <div id="runbar" class="glass">
-        <button id="run" class="primary" type="button">
-          <svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4l10 6-10 6z"/></svg>
-          <span>워크플로우 실행</span>
-        </button>
-        <button id="debug" class="ghost" type="button">
-          <svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M6 7l4-3 4 3M4 12h12"/></svg>
-          <span class="mono">단계 실행</span>
-        </button>
-        <label class="chk mono"><input type="checkbox" id="use-cache" checked> 블록 캐시</label>
-        <label class="chk mono"><input type="checkbox" id="sink"> 국토조사 DB 반영</label>
-        <div id="run-stat" class="mono" aria-live="polite">대기 — 실행하면 각 블록이 실제 타일을 읽고 썸네일을 만든다</div>
-        <div id="run-prog"><i></i></div>
-      </div>
-    </div>
+    <hr class="hr">
+    <div class="row"><span class="label">실행</span><span id="tps" class="num">—</span></div>
+    <button id="run" class="bracket" type="button">파이프라인 실행</button>
+    <p id="runnote" class="caption"></p>
   </section>
 
-  <!-- ── 우: 결과 지도 + 지표 ──────────────────────────────────────────── -->
-  <section id="right">
-
-    <div id="map-zone">
-      <div id="map"></div>
-
-      <!-- 지도 상단 탭 -->
-      <div id="map-tabs" role="tablist" aria-label="결과 보기">
-        <button role="tab" aria-selected="true" data-view="det" class="mono">탐지 결과</button>
-        <button role="tab" aria-selected="false" data-view="swipe" class="mono">시점 비교 · 남원 4시점</button>
-      </div>
-
-      <!-- 좌상단 유리 패널: 레이어 · 신뢰도 · 클래스 -->
-      <div id="ctl" class="glass" role="group" aria-label="결과 필터">
-        <div class="ctl-h"><span class="mono">전남 해양쓰레기</span><span class="mono dim" id="ctl-src">—</span></div>
-
-        <div class="ctl-sec">
-          <div class="row"><span class="mono k">표현</span>
-            <div class="segbar" id="rep" role="radiogroup" aria-label="표현 방식">
-              <button role="radio" aria-checked="true" data-rep="poly" class="mono">폴리곤</button>
-              <button role="radio" aria-checked="false" data-rep="grid" class="mono">격자</button>
-              <button role="radio" aria-checked="false" data-rep="conf" class="mono">신뢰도 농도</button>
-            </div>
-          </div>
-          <label class="row chk mono"><input type="checkbox" id="lbl-toggle" checked> 지명 · 도로 오버레이</label>
-        </div>
-
-        <div class="ctl-sec">
-          <div class="row"><span class="mono k">신뢰도 임계</span><span class="mono v" id="conf-val">0.50</span></div>
-          <canvas id="conf-spark" width="600" height="88" aria-hidden="true"></canvas>
-          <input id="conf" type="range" min="0.05" max="1" step="0.01" value="0.5" aria-label="신뢰도 임계값">
-          <div class="row sub"><span class="mono dim" id="conf-lo">0.05</span>
-            <span class="mono" id="conf-count">— / —</span><span class="mono dim">1.00</span></div>
-        </div>
-
-        <div class="ctl-sec">
-          <div class="row"><span class="mono k">클래스</span><button id="cls-all" class="link mono" type="button">전체</button></div>
-          <ul id="cls-list"></ul>
-        </div>
-
-        <div class="ctl-sec" id="chips-sec">
-          <div class="row"><span class="mono k">적용된 필터</span></div>
-          <ul id="chips"></ul>
-        </div>
-      </div>
-
-      <!-- 우하단 요약 -->
-      <div id="sum" class="mono">
-        <div><span class="k">표시</span><b id="sum-shown">—</b></div>
-        <div><span class="k">전체</span><b id="sum-total">—</b></div>
-        <div><span class="k">총 면적</span><b id="sum-area">—</b></div>
-        <div><span class="k">평균 신뢰도</span><b id="sum-conf">—</b></div>
-      </div>
-
-      <!-- 탐지 호버 툴팁 -->
-      <div id="tip" hidden aria-hidden="true">
-        <canvas id="tip-c" width="192" height="192"></canvas>
-        <div id="tip-b">
-          <b id="tip-cls">—</b>
-          <div class="mono"><span>신뢰도</span><i id="tip-conf">—</i></div>
-          <div class="bar"><i id="tip-bar"></i></div>
-          <div class="mono"><span>면적</span><i id="tip-area">—</i></div>
-          <div class="mono dim" id="tip-src">—</div>
-        </div>
-      </div>
-
-      <!-- 시점 비교(스와이프) -->
-      <div id="swipe" hidden>
-        <canvas id="sw-a" width="768" height="768"></canvas>
-        <canvas id="sw-b" width="768" height="768"></canvas>
-        <div id="sw-line"><button id="sw-grip" type="button" aria-label="시점 비교 핸들"></button></div>
-        <div id="sw-cap">
-          <span class="mono" id="sw-la">2025.04</span>
-          <div id="sw-steps" role="group" aria-label="시점 선택"></div>
-          <span class="mono" id="sw-lb">2025.10</span>
-        </div>
-      </div>
-
-      <p id="attrib" class="mono"></p>
-    </div>
-
-    <!-- 지표 -->
-    <div id="metrics">
-      <div class="mx" id="mx-hist">
-        <h3 class="mono">신뢰도 분포 <span class="dim">막대 클릭 = 임계 설정</span></h3>
-        <canvas id="c-hist" width="640" height="220"></canvas>
-      </div>
-      <div class="mx" id="mx-cls">
-        <h3 class="mono">클래스별 검출 <span class="dim">막대 클릭 = 토글</span></h3>
-        <canvas id="c-cls" width="640" height="220"></canvas>
-      </div>
-      <div class="mx" id="mx-curve">
-        <h3 class="mono">학습 곡선 <span class="warn" id="curve-warn">예시</span></h3>
-        <canvas id="c-curve" width="640" height="220"></canvas>
-      </div>
-      <div class="mx" id="mx-lat">
-        <h3 class="mono">최근 실행 지연 <span class="dim">실측</span></h3>
-        <canvas id="c-lat" width="640" height="220"></canvas>
-        <div id="lat-read" class="mono">—</div>
-      </div>
-    </div>
-
+  <!-- ── 좌하단: 선택 타일 스트립 (삼면 결속의 두 번째 면) ───────────────── -->
+  <section id="strip" aria-label="선택 타일">
+    <div class="row"><span class="label">TILES</span><span id="striph" class="caption"></span></div>
+    <div id="stripl"></div>
   </section>
+
+  <!-- ── 우하단: 미니맵은 그래프가 아니라 영토다 ─────────────────────────── -->
+  <div id="mini"><canvas id="minic"></canvas><span class="label">남원시 · 처리 현황</span></div>
+
+  <!-- ── 심층 검토 — 밝은 면과 어두운 면이 칼로 그은 경계로 만난다 ───────── -->
+  <aside id="inspect" data-colorway="light" hidden aria-label="심층 검토">
+    <div class="ins-h">
+      <span class="label">DEEP INSPECT</span>
+      <button id="ins-x" type="button" aria-label="닫기">×</button>
+    </div>
+    <div id="ins-n" class="stat num"></div>
+    <p id="ins-sub" class="caption"></p>
+    <canvas id="ins-c" width="640" height="420"></canvas>
+    <p id="ins-cap" class="caption"></p>
+    <dl id="ins-meta"></dl>
+    <div id="ins-rows"></div>
+  </aside>
+
+  <div id="lasso-hint" class="caption">SHIFT+드래그 영역 선택 · 클릭 탐지 선택 · I 심층 검토 · [ ] 임계</div>
 </main>
 
-<div id="toast" class="mono" hidden role="status"></div>
-<div id="boot"><div id="boot-in"><span class="mono">LAND-XI · WORKFLOW</span><div id="boot-bar"><i></i></div><span class="mono dim" id="boot-note">실자산 카탈로그 로드</span></div></div>
+<!-- ── 상주 타임라인 — 이 화면에서 허용된 단 하나의 유리 ────────────────── -->
+<div id="time">
+  <button id="play" type="button" aria-label="시점 자동재생">▶</button>
+  <canvas id="tl"></canvas>
+  <div id="tside">
+    <span id="tstamp" class="num">2025-10</span>
+    <span id="tnote" class="caption"></span>
+  </div>
+</div>
+
+<p id="attrib" class="caption"></p>
+
+<!-- 로더는 스피너가 아니라 3단 조립 -->
+<div id="boot"><div id="boot-in">
+  <span class="label">LAND-XI · 국토 조사 보드</span>
+  <ol id="boot-steps">
+    <li data-s="1">실자산 카탈로그</li><li data-s="2">탐지 폴리곤</li><li data-s="3">정사영상 타일</li>
+  </ol>
+  <span id="boot-note" class="caption"></span>
+</div></div>
 
 <script type="module" src="workflow.js"></script>
 </body></html>

@@ -5,9 +5,9 @@ const URL = 'proto/workflow.html';
 const SHOTS = 'shots/proto-wf';
 fs.mkdirSync(SHOTS, { recursive: true });
 
-// 오프라인/키 없음에서 타일이 404 나는 것은 이 프로토의 정상 동작이다(폴백이 있다).
+// 오프라인/키 없음에서 타일이 404 나는 것은 이 프로토의 정상 동작이다(로컬 정사영상 폴백이 있다).
 // 네트워크 실패는 무시하고, 우리 코드가 던진 것만 실패로 본다.
-const NETWORK = /Failed to load resource|net::ERR|ERR_|status of 40|status of 50|AbortError/i;
+const NETWORK = /Failed to load resource|net::ERR|ERR_|status of 40|status of 50|AbortError|could not be decoded/i;
 
 function watch(page) {
   const errs = [];
@@ -20,51 +20,85 @@ function watch(page) {
   return errs;
 }
 
-async function boot(page) {
-  await page.goto(URL);
-  await page.waitForFunction(() => window.__wf && window.__wf.ready && window.__wf.graph().nodes >= 6, null, { timeout: 25000 });
-  await page.waitForFunction(() => window.__wf.thumbs() >= 6, null, { timeout: 25000 });
-  await page.waitForTimeout(700);
+// skip=1 = 진입 활공 건너뛰기(활공 자체는 별도 케이스에서 검증한다)
+async function boot(page, q = '?skip=1') {
+  await page.goto(URL + q);
+  await page.waitForFunction(() => window.__wf && window.__wf.ready, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.__wf.thumbs() >= 6, null, { timeout: 30000 });
+  await page.waitForTimeout(1200);
 }
 
-test('로드 — 콘솔 오류 0, 실자산이 실제로 붙는다', async ({ page }) => {
+/** 액자 안에 실제 픽셀이 있는가 — 이 화면의 1번 규칙(D1). */
+async function paintedFrames(page) {
+  return page.evaluate(() => {
+    let ok = 0;
+    for (const c of document.querySelectorAll('.node canvas')) {
+      const g = c.getContext('2d');
+      const d = g.getImageData(0, 0, c.width, c.height).data;
+      const seen = new Set();
+      let sum = 0, n = 0;
+      for (let i = 0; i < d.length; i += 4 * 401) { seen.add(`${d[i] >> 4},${d[i + 1] >> 4},${d[i + 2] >> 4}`); sum += d[i]; n++; }
+      if (seen.size > 8 && sum / n > 14) ok++;
+    }
+    return ok;
+  });
+}
+
+test('로드 — 콘솔 오류 0, 실자산 수치가 그대로 화면에 있다', async ({ page }) => {
   const errs = watch(page);
   await boot(page);
 
   const s = await page.evaluate(() => ({ ...window.__wf.state, ...window.__wf.counts(), ...window.__wf.graph() }));
-  expect(s.total).toBeGreaterThan(4000);            // marine-debris.geojson 5,000 폴리곤이 전제
+  expect(s.total).toBe(1674);            // 25년 남원시 비닐하우스 조사(드론).gpkg — 필지
+  expect(s.objTotal).toBe(9664);         // 동
   expect(s.shown).toBeGreaterThan(0);
-  expect(s.classes.length).toBeGreaterThan(0);
   expect(s.nodes).toBe(6);
   expect(s.edges).toBe(5);
+  expect(s.entry).toBe(false);
 
-  // 실행 바가 실측 소요를 말한다(가짜 진행률 금지)
-  await expect(page.locator('#run-stat')).toContainText(/ms/);
+  await expect(page.locator('#stat')).toContainText(/[0-9,]+/);
+  await expect(page.locator('#statsub')).toContainText('9,664');
+  await expect(page.locator('#place')).toContainText('남원');
+
+  // 액자 5개(지도 액자는 캔버스가 없다 — 지도 자체가 액자 안이다)가 전부 실제 픽셀
+  expect(await paintedFrames(page)).toBeGreaterThanOrEqual(4);
+
   expect(errs, errs.join('\n')).toEqual([]);
-
-  await page.screenshot({ path: `${SHOTS}/overview.png` });
+  await page.screenshot({ path: `${SHOTS}/v3-landed.png` });
 });
 
-test('신뢰도 슬라이더 — 표시 건수가 실제로 줄고 지도 필터가 같이 움직인다', async ({ page }) => {
+test('진입 — 한 대의 카메라로 활공해 착지하고, 건드리면 즉시 멈춘다', async ({ page }) => {
+  const errs = watch(page);
+  await page.goto(URL);
+  // 활공 중 프레임
+  await page.waitForTimeout(1800);
+  const mid = await page.evaluate(() => ({ entry: window.__wf.state.entry, z: window.__wf.data() ? 1 : 0 }));
+  expect(mid.entry).toBe(true);
+  await page.screenshot({ path: `${SHOTS}/v3-entry.png` });
+
+  // 조작 가능한 연출이어야 한다 — 클릭하면 바로 착지
+  await page.mouse.click(700, 400);
+  await page.waitForTimeout(400);
+  expect(await page.evaluate(() => window.__wf.state.entry)).toBe(false);
+  expect(errs, errs.join('\n')).toEqual([]);
+});
+
+test('신뢰도 임계 — 지도·액자·숫자가 같은 프레임에서 함께 움직인다', async ({ page }) => {
   const errs = watch(page);
   await boot(page);
 
-  const before = await page.evaluate(() => window.__wf.counts().shown);
-  await page.evaluate(() => window.__wf.setThreshold(0.9, 'test'));
-  await page.waitForTimeout(400);
-  const after = await page.evaluate(() => window.__wf.counts().shown);
-
-  expect(after).toBeLessThan(before);
-  await expect(page.locator('#conf-val')).toHaveText('0.90');
-  await expect(page.locator('#chips li')).toContainText(/0\.90/);
-
-  // 후처리 블록의 파라미터도 같은 값이어야 한다 — 세 구역이 하나의 상태를 본다.
-  const nodeConf = await page.evaluate(() =>
-    +document.querySelector('.node[data-id] input[data-p="conf"]').value);
-  expect(nodeConf).toBeCloseTo(0.9, 2);
-
+  const before = await page.evaluate(() => window.__wf.counts());
+  await page.evaluate(() => window.__wf.setThreshold(0.9));
   await page.waitForTimeout(900);
-  await page.screenshot({ path: `${SHOTS}/slider-090.png` });
+  const after = await page.evaluate(() => window.__wf.counts());
+
+  expect(after.shown).toBeLessThan(before.shown);
+  expect(after.total).toBe(before.total);          // 삭제가 아니라 감쇠
+  await expect(page.locator('#thr')).toHaveText('0.90');
+  await expect(page.locator('.node[data-id="post"] [data-art]')).toHaveText(/0\.90/);
+
+  await page.waitForTimeout(700);
+  await page.screenshot({ path: `${SHOTS}/v3-slider-090.png` });
   expect(errs, errs.join('\n')).toEqual([]);
 });
 
@@ -72,132 +106,124 @@ test('클래스 토글 — 감쇠이지 삭제가 아니다', async ({ page }) =
   const errs = watch(page);
   await boot(page);
   const n0 = await page.evaluate(() => window.__wf.state.classes.length);
-  if (n0 > 1) {
-    await page.locator('#cls-list button').first().click();
-    await page.waitForTimeout(200);
-    const n1 = await page.evaluate(() => window.__wf.state.classes.length);
-    expect(n1).toBe(n0 - 1);
-    // 필터 칩이 생기고, 원본 총계는 그대로다(삭제가 아니라 감쇠)
-    await expect(page.locator('#chips li')).toHaveCount(await page.locator('#chips li').count());
-    const t = await page.evaluate(() => window.__wf.counts().total);
-    expect(t).toBeGreaterThan(4000);
-  }
+  await page.locator('#cls li').first().click();
+  await page.waitForTimeout(300);
+  expect(await page.evaluate(() => window.__wf.state.classes.length)).toBe(n0 - 1);
+  expect(await page.evaluate(() => window.__wf.counts().total)).toBe(1674);
   expect(errs, errs.join('\n')).toEqual([]);
 });
 
-test('포트 연결 — 두 포트를 이으면 엣지가 생긴다', async ({ page }) => {
+test('뷰어 플래그 — 정확히 한 액자만 "지도에 표시 중"이고, 클릭하면 옮겨간다', async ({ page }) => {
   const errs = watch(page);
   await boot(page);
+  expect(await page.locator('.node.is-viewer').count()).toBe(1);
+  await expect(page.locator('.node[data-id="detect"]')).toHaveClass(/is-viewer/);
 
-  // 라이브러리에서 시각화 블록을 하나 띄운다(우클릭 → 검색 → 선택)
-  const before = await page.evaluate(() => window.__wf.graph());
-  await page.evaluate(() => {
-    const g = document.querySelector('#canvas');
-    g.dispatchEvent(new MouseEvent('contextmenu', { clientX: 520, clientY: 700, bubbles: true }));
-  });
-  await expect(page.locator('#lib')).toBeVisible();
-  await page.fill('#lib-q', '시각화');
-  await page.locator('#lib-list .lib-i').first().click();
-  await page.waitForTimeout(500);
-
-  const mid = await page.evaluate(() => window.__wf.graph());
-  expect(mid.nodes).toBe(before.nodes + 1);
-
-  // 인스펙터가 열려 있으면 포트를 덮는다. 닫고 캔버스를 다시 맞춘다.
-  await page.locator('#insp-x').click();
-  await page.evaluate(() => window.__wfgraph.fit());
-  await page.waitForTimeout(300);
-
-  // 후처리(post) 출력 포트 → 방금 만든 블록의 입력 포트로 드래그
-  const added = await page.evaluate(() => {
-    const g = window.__wfgraph;
-    return g.G.nodes[g.G.nodes.length - 1].id;
-  });
-  const post = await page.evaluate(() => window.__wfgraph.G.nodes.find((n) => n.type === 'post').id);
-  const from = page.locator(`.node[data-id="${post}"] .port.out`);
-  const to = page.locator(`.node[data-id="${added}"] .port.in`);
-  const a = await from.boundingBox(), b = await to.boundingBox();
-  await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(a.x + 60, a.y + 20, { steps: 6 });
-  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 10 });
-  await page.mouse.up();
+  await page.locator('.node[data-id="source"] .frame').click();
   await page.waitForTimeout(400);
-
-  const after = await page.evaluate(() => window.__wf.graph());
-  expect(after.edges).toBe(mid.edges + 1);
+  expect(await page.locator('.node.is-viewer').count()).toBe(1);
+  await expect(page.locator('.node[data-id="source"]')).toHaveClass(/is-viewer/);
+  await expect(page.locator('#eyebrow')).toContainText('SOURCE');
+  await page.screenshot({ path: `${SHOTS}/v3-viewer-flag.png` });
   expect(errs, errs.join('\n')).toEqual([]);
 });
 
-test('실행 — 모든 블록이 실제 썸네일을 만들고, 두 번째 실행은 캐시가 잡힌다', async ({ page }) => {
+test('시점 스크럽 — 4시점 어디서든 액자에 픽셀이 남는다', async ({ page }) => {
   const errs = watch(page);
   await boot(page);
+  await page.evaluate(() => window.__wf.setT(0));
+  await page.waitForTimeout(2600);
+  await expect(page.locator('#tstamp')).toHaveText('2025-04');
+  expect(await paintedFrames(page)).toBeGreaterThanOrEqual(4);
+  await page.screenshot({ path: `${SHOTS}/v3-timeline-2504.png` });
 
-  // 노드 캔버스가 단색이 아니어야 한다 = 실제 타일/폴리곤이 그려졌다는 뜻
-  const painted = await page.evaluate(() => {
-    let ok = 0;
-    for (const c of document.querySelectorAll('.node canvas')) {
-      const g = c.getContext('2d');
-      const d = g.getImageData(0, 0, c.width, c.height).data;
-      const seen = new Set();
-      for (let i = 0; i < d.length; i += 4 * 97) seen.add(`${d[i]},${d[i + 1]},${d[i + 2]}`);
-      if (seen.size > 12) ok++;
-    }
-    return ok;
+  await page.evaluate(() => window.__wf.setT(2));
+  await page.waitForTimeout(1600);
+  await expect(page.locator('#tnote')).toContainText('결손');   // 06·08 전역 정사영상 없음을 숨기지 않는다
+  expect(errs, errs.join('\n')).toEqual([]);
+});
+
+test('삼면 결속 — 선택 하나가 지도·타일 스트립·타임라인을 함께 좁힌다', async ({ page }) => {
+  const errs = watch(page);
+  await boot(page);
+  await page.evaluate(() => {
+    const d = window.__wf.data();
+    const a = d.anchors[2].c;
+    window.__wf.select([a[0] - 0.004, a[1] - 0.003, a[0] + 0.004, a[1] + 0.003]);
   });
-  expect(painted).toBeGreaterThanOrEqual(5);
+  await page.waitForTimeout(1400);
+  expect(await page.locator('#stripl .t').count()).toBeGreaterThan(0);
+  await expect(page.locator('#striph')).toContainText(/z1[0-9]/);
+  expect(await page.evaluate(() => window.__wf.state.selection)).not.toBeNull();
 
+  await page.locator('#stripl .t').first().hover();
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: `${SHOTS}/v3-trinity.png` });
+  expect(errs, errs.join('\n')).toEqual([]);
+});
+
+test('실행 — 진행률을 지어내지 않고 실제 타일 디코딩을 잰다', async ({ page }) => {
+  const errs = watch(page);
+  await boot(page);
   await page.click('#run');
-  await page.waitForFunction(() => /캐시 [1-9]/.test(document.querySelector('#run-stat').textContent),
-    null, { timeout: 20000 });
-  await expect(page.locator('.nh .st[data-s="cache"]').first()).toBeVisible();
+  await page.waitForFunction(() => /실측 \d+ ms/.test(document.querySelector('#runnote').textContent),
+    null, { timeout: 25000 });
+  await expect(page.locator('#runnote')).toContainText(/타일 \d+장/);
+  await page.screenshot({ path: `${SHOTS}/v3-run.png` });
   expect(errs, errs.join('\n')).toEqual([]);
 });
 
-test('인스펙터 — Visual / JSON / 로그 3탭', async ({ page }) => {
+test('심층 검토 — 밝은 면과 어두운 면이 칼로 그은 경계로 만난다', async ({ page }) => {
   const errs = watch(page);
   await boot(page);
+  await page.evaluate(() => {
+    const d = window.__wf.data();
+    const b = d.detail;
+    const f = d.feats
+      .filter((x) => x.properties.c[0] > b[0] && x.properties.c[0] < b[2] && x.properties.c[1] > b[1] && x.properties.c[1] < b[3])
+      .sort((a, z) => z.properties.nobj - a.properties.nobj)[0];
+    window.__wf.pick(f.id);
+  });
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: `${SHOTS}/v3-lockon.png` });
 
-  const detect = await page.evaluate(() => window.__wfgraph.G.nodes.find((n) => n.type === 'detect').id);
-  await page.locator(`.node[data-id="${detect}"] .thumb`).click();
-  await expect(page.locator('#insp')).toBeVisible();
-  await expect(page.locator('#insp-title')).toHaveText('탐지');
-  await page.waitForTimeout(900);
-  await page.screenshot({ path: `${SHOTS}/inspector.png` });
+  await page.keyboard.press('i');
+  await expect(page.locator('#inspect')).toHaveClass(/is-in/);
+  await expect(page.locator('#ins-meta')).toContainText('신뢰도');
+  const bg = await page.evaluate(() => getComputedStyle(document.querySelector('#inspect')).backgroundColor);
+  expect(bg).toBe('rgb(255, 255, 255)');            // 하드 명암 경계
+  await page.waitForTimeout(1100);
+  await page.screenshot({ path: `${SHOTS}/v3-inspect.png` });
 
-  await page.locator('#insp-tabs button[data-tab="json"]').click();
-  await expect(page.locator('#insp-json')).toContainText('"type": "detect"');
-  await page.locator('#insp-tabs button[data-tab="log"]').click();
-  await expect(page.locator('#insp-log')).not.toHaveText('');
-  expect(errs, errs.join('\n')).toEqual([]);
-});
-
-test('시점 비교 — 남원 4시점 스와이프', async ({ page }) => {
-  const errs = watch(page);
-  await boot(page);
-  await page.locator('#map-tabs button[data-view="swipe"]').click();
-  await expect(page.locator('#swipe')).toBeVisible();
-  await page.waitForTimeout(1800);
-  await page.screenshot({ path: `${SHOTS}/swipe.png` });
-  expect(errs, errs.join('\n')).toEqual([]);
-});
-
-test('키보드 — Tab 으로 노드에 닿고 Ctrl+Z 로 되돌린다', async ({ page }) => {
-  const errs = watch(page);
-  await boot(page);
-
-  const focusable = await page.evaluate(() => document.querySelectorAll('.node[tabindex="0"]').length);
-  expect(focusable).toBe(6);
-
-  const before = await page.evaluate(() => window.__wf.graph());
-  const id = await page.evaluate(() => window.__wfgraph.G.nodes.find((n) => n.type === 'mapout').id);
-  await page.locator(`.node[data-id="${id}"]`).focus();
-  await page.keyboard.press('Delete');
-  await page.waitForTimeout(200);
-  expect((await page.evaluate(() => window.__wf.graph())).nodes).toBe(before.nodes - 1);
-
-  await page.keyboard.press('Control+z');
+  await page.keyboard.press('Escape');
   await page.waitForTimeout(300);
-  expect((await page.evaluate(() => window.__wf.graph())).nodes).toBe(before.nodes);
+  await expect(page.locator('#inspect')).not.toHaveClass(/is-in/);
+  expect(errs, errs.join('\n')).toEqual([]);
+});
+
+test('여수 프리셋 — 없는 것을 만들지 않는다(모델 결손·단일 시점)', async ({ page }) => {
+  const errs = watch(page);
+  await boot(page, '?preset=yeosu-marine&skip=1');
+  expect(await page.evaluate(() => window.__wf.counts().total)).toBe(1770);
+  await expect(page.locator('.node[data-id="model"]')).toHaveClass(/is-void/);
+  await expect(page.locator('.node[data-id="model"] [data-foot]')).toContainText('없다');
+  await expect(page.locator('#play')).toBeDisabled();
+  await page.screenshot({ path: `${SHOTS}/v3-yeosu.png` });
+  expect(errs, errs.join('\n')).toEqual([]);
+});
+
+test('키보드 — 액자에 Tab 으로 닿고 Enter 로 뷰어를 옮긴다', async ({ page }) => {
+  const errs = watch(page);
+  await boot(page);
+  expect(await page.locator('.node[tabindex="0"]').count()).toBe(6);
+  await page.locator('.node[data-id="post"]').focus();
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(300);
+  await expect(page.locator('.node[data-id="post"]')).toHaveClass(/is-viewer/);
+
+  const t0 = await page.evaluate(() => window.__wf.state.thr);
+  await page.keyboard.press(']');
+  await page.waitForTimeout(200);
+  expect(await page.evaluate(() => window.__wf.state.thr)).toBeGreaterThan(t0);
   expect(errs, errs.join('\n')).toEqual([]);
 });

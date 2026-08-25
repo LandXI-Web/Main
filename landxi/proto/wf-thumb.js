@@ -1,12 +1,14 @@
-// 노드 썸네일 렌더러 — "결과 이미지가 UI 의 1급 시민" (Roboflow 체크 ①).
-// 여기서 그리는 그림은 전부 실제 파일이다:
-//   · 정사영상 = landxi/assets/tiles/<id>/{z}/{x}/{y}.webp (prepare-assets.py 산출)
-//   · 검출 폴리곤 = 실제 GeoJSON 좌표를 타일 픽셀로 투영한 것
-// 합성 이미지는 하나도 없다.
+/* wf-thumb.js — 액자 렌더러 (D1: 노드는 카드가 아니라 액자다)
+   노드 본체의 70% 이상은 "지금 그 단계가 실제로 보고 있는 픽셀"이어야 한다.
+   여기서 그리는 그림은 전부 실제 파일이다:
+     · 정사영상 = landxi/assets/tiles/<id>/{z}/{x}/{y}.webp
+     · 탐지     = 실제 GeoJSON 좌표를 타일 픽셀 좌표로 투영한 것
+   합성 이미지는 하나도 없다. 없으면 무채색으로 "없음"을 쓴다.
+*/
 
-import { BASE, classColor, ko } from './wf-data.js';
+import { BASE, C, classColor, ko } from './wf-data.js';
 
-/* ── Web Mercator 타일 산술 ───────────────────────────────────────────── */
+/* ── Web Mercator ─────────────────────────────────────────────────────── */
 export const lon2x = (lon, z) => ((lon + 180) / 360) * 2 ** z;
 export const lat2y = (lat, z) => {
   const r = (lat * Math.PI) / 180;
@@ -17,257 +19,321 @@ export const y2lat = (y, z) => {
   const n = Math.PI - (2 * Math.PI * y) / 2 ** z;
   return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
 };
+export const metersPerPx = (lat, z) => (156543.03392 * Math.cos((lat * Math.PI) / 180)) / 2 ** z;
 
+/* ── 타일 이미지 캐시 ─────────────────────────────────────────────────── */
 const imgCache = new Map();
-// cors:true 면 CORS 헤더가 필요하다(캔버스 readback 용). V-World 처럼 헤더가 없는 서버는
-// 한 번 실패한 뒤 crossOrigin 없이 다시 시도한다 — 그리기는 되고 readback 만 막힌다.
+let tilesFetched = 0;
+export const tileCount = () => tilesFetched;
+export const isCached = (src) => imgCache.has('c:' + src) || imgCache.has('n:' + src);
+
+// 성긴 타일셋의 빈 칸은 개발 서버가 투명 1×1 PNG 로 돌려준다(200 OK).
+// 그것을 "타일이 있다"고 세면 액자가 새까맣게 비면서 목업처럼 보인다. 크기로 걸러 낸다.
+const REAL = (im) => !!im && im.naturalWidth >= 32;
+export { REAL as realTile };
+
 function tileImage(src, cors = true) {
   const key = (cors ? 'c:' : 'n:') + src;
   if (imgCache.has(key)) return imgCache.get(key);
   const p = new Promise((res) => {
     const im = new Image();
     if (cors) im.crossOrigin = 'anonymous';
-    im.onload = () => res(im);
+    im.onload = () => { tilesFetched++; res(REAL(im) ? im : null); };
     im.onerror = () => res(cors ? tileImage(src, false) : null);
     im.src = src;
   });
   imgCache.set(key, p);
   return p;
 }
+export { tileImage };
 
-/* 도엽 중심에서 span×span 타일을 모자이크한다. 반환값은 그 모자이크의 지리 범위. */
-export async function mosaic(ctx, imagery, { z, span = 3, center } = {}) {
-  const b = imagery.bounds;
-  const zoom = Math.min(z ?? imagery.maxzoom - 1, imagery.maxzoom);
-  const c = center || [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2];
-  const x0 = Math.floor(lon2x(c[0], zoom)) - (span >> 1);
-  const y0 = Math.floor(lat2y(c[1], zoom)) - (span >> 1);
-  const size = ctx.canvas.width / span;
+/* ── 정사영상 크롭 ────────────────────────────────────────────────────────
+   캔버스를 정확히 덮을 만큼의 타일만 읽어 붙인다. 반환값은 그 크롭의 지리 범위.
+   selective desaturation: 영상은 무채에 가깝게 눌러 두고, 채도는 탐지 폴리곤에만 준다. */
+export async function orthoCrop(ctx, imagery, center, z, opt = {}) {
+  const W = ctx.canvas.width / (ctx.__s || 1), H = ctx.canvas.height / (ctx.__s || 1);
+  const zoom = Math.max(imagery.minzoom, Math.min(z, imagery.maxzoom));
+  const cx = lon2x(center[0], zoom) * 256, cy = lat2y(center[1], zoom) * 256;
+  const x0 = cx - W / 2, y0 = cy - H / 2;
+  const tx0 = Math.floor(x0 / 256), ty0 = Math.floor(y0 / 256);
+  const tx1 = Math.floor((x0 + W - 1) / 256), ty1 = Math.floor((y0 + H - 1) / 256);
+
   const jobs = [];
-  for (let i = 0; i < span; i++) {
-    for (let j = 0; j < span; j++) {
-      const src = BASE + imagery.tiles
-        .replace('{z}', zoom).replace('{x}', x0 + i).replace('{y}', y0 + j);
-      jobs.push(tileImage(src).then((im) => ({ im, i, j })));
+  for (let tx = tx0; tx <= tx1; tx++) {
+    for (let ty = ty0; ty <= ty1; ty++) {
+      const src = BASE + imagery.tiles.replace('{z}', zoom).replace('{x}', tx).replace('{y}', ty);
+      jobs.push(tileImage(src).then((im) => ({ im, tx, ty })));
     }
   }
-  ctx.fillStyle = '#1C2127';
-  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  ctx.save();
+  ctx.fillStyle = '#08090B';
+  ctx.fillRect(0, 0, W, H);
+  ctx.filter = opt.filter ?? 'saturate(0.28) contrast(1.1) brightness(0.92)';
   let hit = 0;
-  for (const { im, i, j } of await Promise.all(jobs)) {
+  for (const { im, tx, ty } of await Promise.all(jobs)) {
     if (!im) continue;
     hit++;
-    ctx.drawImage(im, i * size, j * size, size, size);
+    ctx.drawImage(im, tx * 256 - x0, ty * 256 - y0, 256, 256);
   }
+  ctx.restore();
+
   return {
-    ok: hit > 0, tiles: hit, zoom,
-    west: x2lon(x0, zoom), north: y2lat(y0, zoom),
-    east: x2lon(x0 + span, zoom), south: y2lat(y0 + span, zoom),
+    ok: hit > 0, tiles: hit, zoom, x0, y0,
+    west: x2lon(x0 / 256, zoom), north: y2lat(y0 / 256, zoom),
+    east: x2lon((x0 + W) / 256, zoom), south: y2lat((y0 + H) / 256, zoom),
+    mpp: metersPerPx(center[1], zoom),
   };
 }
 
-/* V-World 위성 타일 1장 크롭 — 여수 해안처럼 우리 정사영상이 없는 곳의 미니 크롭용. */
-export async function satCrop(ctx, urlTpl, lng, lat, zoom = 17) {
-  const fx = lon2x(lng, zoom), fy = lat2y(lat, zoom);
-  const x = Math.floor(fx), y = Math.floor(fy);
-  ctx.fillStyle = '#12202E'; ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-  const im = await tileImage(urlTpl.replace('{z}', zoom).replace('{x}', x).replace('{y}', y));
-  const W = ctx.canvas.width;
-  if (im) {
-    // 검출 지점이 정중앙에 오도록 2배 확대해 그린다.
-    const s = W / 128;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(im, (fx - x) * 256 - 64, (fy - y) * 256 - 64, 128, 128, 0, 0, W, W);
-    return { ok: true, s };
-  }
-  ctx.fillStyle = '#5F6B7C'; ctx.font = '11px "IBM Plex Mono",monospace';
-  ctx.textAlign = 'center'; ctx.fillText('타일 없음', W / 2, W / 2);
-  return { ok: false };
+/* 우리 정사영상이 없는 해안(여수)용 — V-World 위성 타일 크롭. */
+export async function satCrop(ctx, tpl, center, z, opt = {}) {
+  const W = ctx.canvas.width / (ctx.__s || 1), H = ctx.canvas.height / (ctx.__s || 1);
+  const cx = lon2x(center[0], z) * 256, cy = lat2y(center[1], z) * 256;
+  const x0 = cx - W / 2, y0 = cy - H / 2;
+  const jobs = [];
+  for (let tx = Math.floor(x0 / 256); tx <= Math.floor((x0 + W - 1) / 256); tx++)
+    for (let ty = Math.floor(y0 / 256); ty <= Math.floor((y0 + H - 1) / 256); ty++)
+      jobs.push(tileImage(tpl.replace('{z}', z).replace('{x}', tx).replace('{y}', ty)).then((im) => ({ im, tx, ty })));
+  ctx.save();
+  ctx.fillStyle = '#08090B'; ctx.fillRect(0, 0, W, H);
+  ctx.filter = opt.filter ?? 'saturate(0.3) contrast(1.08) brightness(0.9)';
+  let hit = 0;
+  for (const { im, tx, ty } of await Promise.all(jobs)) { if (!im) continue; hit++; ctx.drawImage(im, tx * 256 - x0, ty * 256 - y0, 256, 256); }
+  ctx.restore();
+  if (!hit) missing(ctx, '타일 없음 — 오프라인');
+  return { ok: hit > 0, tiles: hit, zoom: z, x0, y0,
+    west: x2lon(x0 / 256, z), north: y2lat(y0 / 256, z),
+    east: x2lon((x0 + W) / 256, z), south: y2lat((y0 + H) / 256, z), mpp: metersPerPx(center[1], z) };
 }
 
-/* ── 검출 폴리곤 그리기 ──────────────────────────────────────────────────
-   supervision 의 기본 문법: 외곽 2px + 채움 22%, 클래스 고정색, 라벨은 모노. */
+/* 정사영상 도엽 밖이면 검은 액자가 아니라 위성 크롭으로 대체하고, 그 사실을 캡션에 쓴다.
+   "없는 것을 만들지 않는다"와 "액자 안에는 픽셀이 있어야 한다"를 동시에 지키는 유일한 방법. */
+export async function crop(ctx, imagery, satUrl, center, z, opt = {}) {
+  if (imagery) {
+    const b = imagery.bounds;
+    const inside = center[0] >= b[0] && center[0] <= b[2] && center[1] >= b[1] && center[1] <= b[3];
+    if (inside) {
+      const box = await orthoCrop(ctx, imagery, center, z, opt);
+      // 타일이 200 으로 돌아와도 그 시점의 촬영 풋프린트 밖이면 내용이 비어 있다
+      // (2025-04 전역 정사영상의 고해상 코어는 10월 것과 범위가 다르다).
+      // "타일이 있다"가 아니라 "픽셀이 있다"로 판정한다.
+      if (box.tiles > 0 && hasPixels(ctx)) return { ...box, src: imagery.label, ortho: true };
+    }
+  }
+  const box = await satCrop(ctx, satUrl, center, z, opt);
+  return { ...box, src: 'V-World 위성(이 시점 고해상 도엽 없음)', ortho: false };
+}
+
+function hasPixels(ctx) {
+  try {
+    const c = ctx.canvas;
+    const d = ctx.getImageData(0, 0, c.width, c.height).data;
+    const seen = new Set();
+    let sum = 0, n = 0;
+    for (let i = 0; i < d.length; i += 4 * 401) { seen.add(`${d[i] >> 4},${d[i + 1] >> 4},${d[i + 2] >> 4}`); sum += d[i]; n++; }
+    return seen.size >= 8 && sum / n >= 30;
+  } catch { return true; }   // CORS 로 읽을 수 없으면 그린 것을 믿는다
+}
+
+/* ── 결손 표기 — 무채, 점선. 가짜 그림을 그리지 않는다. ─────────────────── */
+export function missing(ctx, text) {
+  const W = ctx.canvas.width / (ctx.__s || 1), H = ctx.canvas.height / (ctx.__s || 1);
+  ctx.save();
+  ctx.fillStyle = '#0B0C0E'; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.setLineDash([3, 4]); ctx.lineWidth = 1;
+  ctx.strokeRect(8.5, 8.5, W - 17, H - 17);
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(255,255,255,.42)';
+  ctx.font = '400 11px Inter, system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(text, W / 2, H / 2 + 4);
+  ctx.restore();
+}
+
+/* ── 탐지 폴리곤 ──────────────────────────────────────────────────────────
+   supervision 문법 + 우리 규칙: 통과=채도 복원(청록), 탈락=감쇠(삭제 아님). */
 export function drawDets(ctx, box, feats, opt = {}) {
-  const W = ctx.canvas.width, H = ctx.canvas.height;
+  const W = ctx.canvas.width / (ctx.__s || 1), H = ctx.canvas.height / (ctx.__s || 1);
   const px = (lng) => ((lng - box.west) / (box.east - box.west)) * W;
   const py = (lat) => ((lat - box.north) / (box.south - box.north)) * H;
-  const scale = opt.scale ?? 1;
   let drawn = 0, dimmed = 0;
-
   const path = (geom) => {
     const rings = geom.type === 'Polygon' ? geom.coordinates : geom.coordinates.flat();
     ctx.beginPath();
     for (const ring of rings) {
-      ring.forEach((c, i) => (i ? ctx.lineTo(px(c[0]), py(c[1])) : ctx.moveTo(px(c[0]), py(c[1]))));
+      for (let i = 0; i < ring.length; i++) {
+        const x = px(ring[i][0]), y = py(ring[i][1]);
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
       ctx.closePath();
     }
   };
-
   for (const f of feats) {
-    const g = f.geometry; if (!g) continue;
-    const ring = g.type === 'Polygon' ? g.coordinates[0] : g.coordinates[0][0];
-    let inside = false;
-    for (const c of ring) {
-      if (c[0] >= box.west && c[0] <= box.east && c[1] <= box.north && c[1] >= box.south) { inside = true; break; }
-    }
-    if (!inside) continue;
-    const pass = opt.test ? opt.test(f) : true;
-    const col = classColor(f.cls || 'other');
-    path(g);
+    const p = f.properties || f;
+    const b = p.bb;
+    if (b && (b[2] < box.west || b[0] > box.east || b[3] < box.south || b[1] > box.north)) continue;
+    const pass = opt.test ? opt.test(p) : true;
+    const col = classColor(p.cls);
+    path(f.geometry);
     if (pass) {
       drawn++;
-      ctx.fillStyle = col; ctx.globalAlpha = 0.22; ctx.fill();
-      ctx.globalAlpha = 1; ctx.strokeStyle = col; ctx.lineWidth = 2 * scale; ctx.stroke();
+      ctx.globalAlpha = opt.fill ?? 0.2; ctx.fillStyle = col; ctx.fill();
+      ctx.globalAlpha = 1; ctx.strokeStyle = col; ctx.lineWidth = opt.lw ?? 1.25; ctx.stroke();
     } else {
-      dimmed++;                                     // 필터는 삭제가 아니라 감쇠다 (Palantir P1)
-      ctx.globalAlpha = 0.12; ctx.fillStyle = col; ctx.fill();
-      ctx.strokeStyle = col; ctx.lineWidth = 1 * scale; ctx.stroke();
+      dimmed++;
+      ctx.globalAlpha = 0.1; ctx.fillStyle = '#FFFFFF'; ctx.fill();
+      ctx.globalAlpha = 0.32; ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 0.75; ctx.stroke();
       ctx.globalAlpha = 1;
     }
   }
-
-  // 라벨은 통과한 것 중 신뢰도 상위 몇 개만 — 겹쳐서 못 읽으면 없느니만 못하다.
-  if (opt.labels) {
-    const top = feats
-      .filter((f) => (opt.test ? opt.test(f) : true) && f.conf != null)
-      .sort((a, b) => b.conf - a.conf).slice(0, opt.labels);
-    ctx.font = `500 ${11 * scale}px "IBM Plex Mono",monospace`;
-    for (const f of top) {
-      const ring = f.geometry.type === 'Polygon' ? f.geometry.coordinates[0] : f.geometry.coordinates[0][0];
-      const x = px(ring[0][0]), y = py(ring[0][1]);
-      if (x < 0 || x > W || y < 0 || y > H) continue;
-      const t = f.conf.toFixed(2);
-      const w = ctx.measureText(t).width + 8 * scale;
-      ctx.fillStyle = classColor(f.cls || 'other');
-      ctx.fillRect(x, y - 15 * scale, w, 14 * scale);
-      ctx.fillStyle = '#0E1726';
-      ctx.fillText(t, x + 4 * scale, y - 4.5 * scale);
+  // 최상위 1건에만 코너 브래킷 — "AI가 방금 판단했다"의 표식. 라벨 도배는 하지 않는다.
+  if (opt.bracket) {
+    const top = feats.filter((f) => (opt.test ? opt.test(f.properties || f) : true))
+      .sort((a, b) => (b.properties || b).conf - (a.properties || a).conf)[0];
+    if (top) {
+      const b = (top.properties || top).bb;
+      bracketRect(ctx, px(b[0]) - 3, py(b[3]) - 3, px(b[2]) - px(b[0]) + 6, py(b[1]) - py(b[3]) + 6,
+        opt.bracketColor || C.amber, 7);
     }
   }
   return { drawn, dimmed };
 }
 
-/* SAHI 슬라이스 격자 — 슬라이스 크기(px)와 중첩률에서 실제 지상 간격을 계산해 긋는다. */
-export function drawSlices(ctx, box, { slice, overlap, gsd }) {
-  const W = ctx.canvas.width, H = ctx.canvas.height;
-  const stepM = slice * gsd * (1 - overlap);                    // 지상 스텝(m)
-  const spanM = (box.east - box.west) * 111320 * Math.cos((box.north * Math.PI) / 180);
-  const stepPx = (stepM / spanM) * W;
-  if (!(stepPx > 3)) return { stepM, cols: 0 };
+export function bracketRect(ctx, x, y, w, h, color, len = 8, lw = 1.4) {
   ctx.save();
-  ctx.strokeStyle = 'rgba(15,169,160,.85)'; ctx.lineWidth = 1;
-  ctx.setLineDash([4, 3]);
-  for (let x = 0; x <= W; x += stepPx) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
-  for (let y = 0; y <= H; y += stepPx) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
-  ctx.setLineDash([]);
-  // 첫 셀만 중첩 마진을 실제 비율로 칠해 "무엇이 겹치는가"를 보여준다.
-  const ov = stepPx * (overlap / (1 - overlap));
-  ctx.fillStyle = 'rgba(15,169,160,.20)';
-  ctx.fillRect(stepPx, 0, ov, H); ctx.fillRect(0, stepPx, W, ov);
-  ctx.restore();
-  return { stepM, cols: Math.ceil(W / stepPx) };
+  ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.beginPath();
+  const L = Math.min(len, w / 2, h / 2);
+  ctx.moveTo(x, y + L); ctx.lineTo(x, y); ctx.lineTo(x + L, y);
+  ctx.moveTo(x + w - L, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + L);
+  ctx.moveTo(x + w, y + h - L); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w - L, y + h);
+  ctx.moveTo(x + L, y + h); ctx.lineTo(x, y + h); ctx.lineTo(x, y + h - L);
+  ctx.stroke(); ctx.restore();
 }
 
-/* 모델 블록 썸네일 — 추론 결과가 아니라 모델 자체의 초상. 가짜 성능 숫자를 그리지 않는다. */
-export function drawModelCard(ctx, model, curve) {
-  const W = ctx.canvas.width, H = ctx.canvas.height, u = W / 100;   // 100 등분 단위로 스케일 독립
-  const bg = ctx.createLinearGradient(0, 0, 0, H);
-  bg.addColorStop(0, '#252A31'); bg.addColorStop(1, '#141A21');
-  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-  ctx.textAlign = 'left';
+/* ── SAHI 슬라이스 격자 — 슬라이스 px·중첩률·GSD 에서 지상 간격을 계산해 긋는다 */
+export function drawSlices(ctx, box, { slice, overlap, srcGsd }) {
+  const W = ctx.canvas.width / (ctx.__s || 1), H = ctx.canvas.height / (ctx.__s || 1);
+  const g = srcGsd || box.mpp;
+  const stepPx = (slice * (1 - overlap) * g) / box.mpp;
+  const out = { stepM: slice * g * (1 - overlap), cols: 0, rows: 0, stepPx };
+  if (!(stepPx > 6)) return out;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,.30)'; ctx.lineWidth = 1;
+  for (let x = stepPx / 2; x <= W; x += stepPx) { ctx.beginPath(); ctx.moveTo(Math.round(x) + .5, 0); ctx.lineTo(Math.round(x) + .5, H); ctx.stroke(); }
+  for (let y = stepPx / 2; y <= H; y += stepPx) { ctx.beginPath(); ctx.moveTo(0, Math.round(y) + .5); ctx.lineTo(W, Math.round(y) + .5); ctx.stroke(); }
+  // 첫 셀만 중첩 마진을 실제 비율로 칠해 "무엇이 겹치는가"를 보여준다.
+  const ov = stepPx * (overlap / (1 - overlap));
+  ctx.fillStyle = 'rgba(15,169,160,.22)';
+  ctx.fillRect(stepPx / 2, 0, ov, H);
+  ctx.fillRect(0, stepPx / 2, W, ov);
+  ctx.restore();
+  out.cols = Math.ceil(W / stepPx); out.rows = Math.ceil(H / stepPx);
+  return out;
+}
 
-  // 상단 — 태스크와 클래스 수. 실제 메타에서만 온다.
-  ctx.font = `600 ${5.6 * u}px "IBM Plex Mono",monospace`;
-  ctx.fillStyle = '#EAF0F7';
-  ctx.fillText(`${model.task.toUpperCase()}  ${model.classes.length}클래스`, 5 * u, 10 * u);
-  ctx.font = `400 ${4.4 * u}px "IBM Plex Mono",monospace`;
+/* 처리 진행 — 슬라이스 셀이 순서대로 "읽힌" 상태를 실제 진행률로 칠한다. */
+export function drawSliceProgress(ctx, box, { slice, overlap, srcGsd }, p) {
+  const W = ctx.canvas.width / (ctx.__s || 1), H = ctx.canvas.height / (ctx.__s || 1);
+  const stepPx = (slice * (1 - overlap) * (srcGsd || box.mpp)) / box.mpp;
+  if (!(stepPx > 6)) return;
+  const cols = Math.ceil(W / stepPx), rows = Math.ceil(H / stepPx);
+  const total = cols * rows, done = Math.floor(total * Math.max(0, Math.min(1, p)));
+  ctx.save();
+  ctx.fillStyle = 'rgba(15,169,160,.16)';
+  for (let i = 0; i < done; i++) {
+    const cx = i % cols, cy = (i / cols) | 0;
+    ctx.fillRect(cx * stepPx, cy * stepPx, stepPx, stepPx);
+  }
+  if (done < total) {
+    const cx = done % cols, cy = (done / cols) | 0;
+    bracketRect(ctx, cx * stepPx, cy * stepPx, stepPx, stepPx, C.amber, 6, 1.2);
+  }
+  ctx.restore();
+}
+
+/* 원본 GSD 를 모르는 자료(위성 크롭)에서는 실제 웹 타일 경계를 긋는다 — 지어내지 않는다. */
+export function drawTileGrid(ctx, box) {
+  const W = ctx.canvas.width / (ctx.__s || 1), H = ctx.canvas.height / (ctx.__s || 1);
+  const ox = -(box.x0 % 256), oy = -(box.y0 % 256);
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,.34)'; ctx.lineWidth = 1;
+  for (let x = ox; x <= W; x += 256) { ctx.beginPath(); ctx.moveTo(Math.round(x) + .5, 0); ctx.lineTo(Math.round(x) + .5, H); ctx.stroke(); }
+  for (let y = oy; y <= H; y += 256) { ctx.beginPath(); ctx.moveTo(0, Math.round(y) + .5); ctx.lineTo(W, Math.round(y) + .5); ctx.stroke(); }
+  ctx.restore();
+  return { cols: Math.ceil(W / 256), rows: Math.ceil(H / 256), stepPx: 256 };
+}
+
+/* ── 모델 카드 — 추론 결과가 아니라 모델 자체의 초상. 가짜 성능 숫자 금지. */
+export function drawModelCard(ctx, mdl, classes) {
+  const W = ctx.canvas.width / (ctx.__s || 1), H = ctx.canvas.height / (ctx.__s || 1);
+  ctx.save();
+  ctx.fillStyle = '#0A0B0D'; ctx.fillRect(0, 0, W, H);
+  if (!mdl) {
+    ctx.restore();
+    missing(ctx, '학습 모델 파일 없음');
+    return { ok: false };
+  }
+  // 파일 크기를 세로 막대의 실제 길이로 쓴다 — 장식이 아니라 값이다(최대 249.2MB = best(Road)).
+  const frac = Math.min(1, mdl.sizeMB / 249.2);
+  ctx.fillStyle = 'rgba(255,255,255,.06)';
+  ctx.fillRect(0, H - 4, W, 4);
+  ctx.fillStyle = C.teal;
+  ctx.fillRect(0, H - 4, W * frac, 4);
+
+  ctx.font = '400 10px Inter, system-ui, sans-serif';
   ctx.fillStyle = 'rgba(255,255,255,.46)';
-  ctx.fillText(`${model.sizeMB} MB · ${model.trainedAt}`, 5 * u, 16.5 * u);
-
-  // 클래스 고정색 스와치 — 이 블록이 무엇을 찾는지 색으로 먼저 말한다.
-  let x = 5 * u;
-  for (const c of model.classes.slice(0, 14)) {
-    ctx.fillStyle = classColor(c);
-    ctx.fillRect(x, 20 * u, 3.4 * u, 3.4 * u);
-    x += 4.4 * u;
-  }
-
-  // 예시 학습 곡선 — 하단 절반. 반드시 라벨과 함께 그린다.
-  const top = 30 * u, bot = H - 8 * u, left = 5 * u, right = W - 5 * u;
-  ctx.strokeStyle = 'rgba(255,255,255,.09)'; ctx.lineWidth = 1;
-  for (let i = 0; i <= 2; i++) {
-    const y = top + ((bot - top) * i) / 2;
-    ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(right, y); ctx.stroke();
-  }
-  const plot = (arr, color, norm) => {
-    ctx.beginPath();
-    arr.forEach((v, i) => {
-      const px = left + ((right - left) * i) / (arr.length - 1);
-      const py = top + (bot - top) * (1 - norm(v));
-      i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
-    });
-    ctx.strokeStyle = color; ctx.lineWidth = Math.max(1.4, 0.8 * u); ctx.stroke();
-  };
-  plot(curve.map50, '#0FA9A0', (v) => v);
-  plot(curve.loss, '#F2622A', (v) => Math.min(1, v / 3));
-
-  ctx.font = `500 ${4 * u}px "IBM Plex Mono",monospace`;
-  ctx.fillStyle = '#0FA9A0'; ctx.fillText('mAP50', left, top - 1.6 * u);
-  ctx.fillStyle = '#F2622A'; ctx.fillText('loss', left + 17 * u, top - 1.6 * u);
-  ctx.textAlign = 'right';
-  ctx.fillStyle = 'rgba(255,255,255,.5)';
-  ctx.fillText('예시 곡선 · 실 학습 로그 없음', right, top - 1.6 * u);
   ctx.textAlign = 'left';
+  ctx.fillText(mdl.task.toUpperCase() + ' · ' + mdl.trainedAt + ' 학습', 12, 20);
+
+  ctx.font = '400 40px Inter, system-ui, sans-serif';
+  ctx.fillStyle = '#FFFFFF';
+  const numTxt = mdl.sizeMB.toFixed(1);
+  ctx.fillText(numTxt, 12, 62);
+  const nw = ctx.measureText(numTxt).width;
+  ctx.font = '400 11px Inter, system-ui, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,.46)';
+  ctx.fillText('MB · 가중치 파일 크기', 16 + nw, 62);
+
+
+  // 클래스 스와치 — 이 모델이 무엇을 찾는지 색으로 먼저 말한다.
+  let x = 12, y = H - 26;
+  ctx.font = '400 10px Inter, system-ui, sans-serif';
+  for (const c of mdl.classes.slice(0, 4)) {
+    ctx.fillStyle = classColor(c);
+    ctx.fillRect(x, y - 7, 7, 7);
+    ctx.fillStyle = 'rgba(255,255,255,.72)';
+    const t = ko(c);
+    ctx.fillText(t, x + 11, y);
+    x += 11 + ctx.measureText(t).width + 12;
+    if (x > W - 30) break;
+  }
+  if (mdl.classes.length > 4) {
+    ctx.fillStyle = 'rgba(255,255,255,.4)';
+    ctx.fillText('+' + (mdl.classes.length - 4), x, y);
+  }
+  ctx.restore();
   return { ok: true };
 }
 
-/* 지도 출력 블록 썸네일 — 실제 통과 검출을 격자로 집계한 밀도도.
-   미리 구운 격자 파일이 아니라 지금 임계값을 통과한 것만 센다. 슬라이더를 끌면 이 그림도 바뀐다. */
-export function drawGridMini(ctx, feats, bbox, test) {
-  const W = ctx.canvas.width, H = ctx.canvas.height;
-  const g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, '#0B1420'); g.addColorStop(1, '#101C2A');
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  const [w, s, e, n] = bbox;
-  const CELL = 0.012;
-  const cells = new Map();
-  let live = 0, max = 1;
-  for (const f of feats) {
-    const p = f.properties || f;
-    if (test && !test(p)) continue;
-    const c = p.c; if (!c) continue;
-    live++;
-    const k = Math.floor(c[0] / CELL) + ':' + Math.floor(c[1] / CELL);
-    const v = (cells.get(k) || 0) + 1;
-    cells.set(k, v); if (v > max) max = v;
+/* ── 지도 출력 액자 — 실제 통과 검출의 격자 밀도(청록 단일 계열) ────────── */
+export function drawTerritory(ctx, cells, box, test, maxObj) {
+  const W = ctx.canvas.width / (ctx.__s || 1), H = ctx.canvas.height / (ctx.__s || 1);
+  ctx.save();
+  ctx.fillStyle = '#08090B'; ctx.fillRect(0, 0, W, H);
+  const [w, s, e, n] = box;
+  const cw = Math.max(3, (0.005 / (e - w)) * W), ch = Math.max(3, (0.005 / (n - s)) * H);
+  let live = 0;
+  for (const c of cells) {
+    if (test && !test(c)) continue;
+    live += c.obj;
+    const x = ((c.c[0] - w) / (e - w)) * W;
+    const y = H - ((c.c[1] - s) / (n - s)) * H;
+    const t = Math.min(1, Math.log(1 + c.obj) / Math.log(1 + (maxObj || 300)));
+    ctx.globalAlpha = 0.25 + t * 0.7;
+    ctx.fillStyle = C.teal;
+    ctx.fillRect(x - cw / 2, y - ch / 2, cw, ch);
   }
-  const cw = Math.max(2, (CELL / (e - w)) * W), ch = Math.max(2, (CELL / (n - s)) * H);
-  for (const [k, v] of cells) {
-    const [ix, iy] = k.split(':').map(Number);
-    const x = ((ix * CELL - w) / (e - w)) * W;
-    const y = H - ((iy * CELL - s) / (n - s)) * H;
-    const t = Math.min(1, Math.log(1 + v) / Math.log(1 + max));
-    ctx.fillStyle = `rgba(${Math.round(15 + t * 120)},${Math.round(190 - t * 60)},${Math.round(190 - t * 30)},${0.35 + t * 0.6})`;
-    ctx.fillRect(x, y - ch, cw, ch);
-  }
-  ctx.font = `500 ${Math.min(13, Math.round(W / 26))}px "IBM Plex Mono",monospace`;
-  ctx.fillStyle = 'rgba(255,255,255,.68)';
-  ctx.textAlign = 'left';
-  ctx.fillText(`격자 ${cells.size.toLocaleString()}셀 · 검출 ${live.toLocaleString()}`, W * 0.03, H * 0.92);
-  return { live, cells: cells.size };
+  ctx.globalAlpha = 1;
+  ctx.restore();
+  return { live, cells: cells.length };
 }
-
-export function label(ctx, text) {
-  const W = ctx.canvas.width, H = ctx.canvas.height;
-  const fs = Math.min(13, Math.max(9, Math.round(W / 30)));
-  const bh = Math.round(fs * 1.7);
-  ctx.font = `500 ${fs}px "IBM Plex Mono",monospace`;
-  ctx.textAlign = 'left';
-  const w = ctx.measureText(text).width + fs;
-  ctx.fillStyle = 'rgba(10,16,26,.76)';
-  ctx.fillRect(0, H - bh, w, bh);
-  ctx.fillStyle = '#DCE4EE';
-  ctx.fillText(text, fs * 0.45, H - bh * 0.38);
-}
-
-export const KO = ko;

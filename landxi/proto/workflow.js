@@ -1,580 +1,548 @@
-// 워크플로우 캔버스 + 라이브 분석 — 세 구역(캔버스 · 지도 · 지표)이 하나의 시스템이다.
-// 연결 고리 하나만 기억하면 된다: **후처리 블록의 신뢰도 임계 = 지도 슬라이더 = 히스토그램 커서.**
-// 어디를 만져도 같은 값이 움직이고, 세 곳이 같은 프레임에 다시 그려진다.
+/* workflow.js — 국토 조사 보드
+   구성은 셋이 아니라 하나다. 같은 state.t 와 state.selection 을 세 배율이 공유한다.
+     · 진입(3~5초)  파이프라인이 남원 상공 활공 경로를 따라 내려앉는다 (3안 C)
+     · 착지         지도가 곧 캔버스. 액자가 실제 지리 앵커 위에 선다 (3안 A)
+     · 심층 검토    밝은 면과 어두운 면이 칼로 그은 경계로 만난다 (3안 B의 축약)
+*/
 
-import { IMAGERY } from '../assets/data/imagery.js';
-import { MODELS } from '../assets/data/models.js';
-import { loadDetections, loadGrid, loadSample, exampleCurve, classColor, ko, SAMPLES } from './wf-data.js';
-import { createGraph, BLOCKS } from './wf-graph.js';
+import { loadPreset, loadSigungu, PRESETS, EPOCHS, C, imagery, ko } from './wf-data.js';
 import { createMap } from './wf-map.js';
+import { createGraph, STAGES } from './wf-graph.js';
+import { createGlow, createTimeline, createConfLegend, createMinimap, developNumber } from './wf-charts.js';
 import { createRunner } from './wf-run.js';
-import { mosaic, satCrop, drawDets, drawSlices, drawModelCard, drawGridMini, label } from './wf-thumb.js';
-import * as CH from './wf-charts.js';
+import {
+  crop, drawDets, bracketRect, metersPerPx,
+  lon2x, lat2y, x2lon, y2lat, tileImage,
+} from './wf-thumb.js';
 
-const $ = (s, r = document) => r.querySelector(s);
-const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-const fmt = (n) => n.toLocaleString('ko-KR');
+const $ = (s) => document.querySelector(s);
+const fmt = (v) => Math.round(v).toLocaleString('ko-KR');
+const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SKIP = new URLSearchParams(location.search).has('skip') || REDUCE;
 
-/* ── 부팅 ────────────────────────────────────────────────────────────── */
-const boot = $('#boot'), bootBar = $('#boot-bar i'), bootNote = $('#boot-note');
-let bootP = 0;
-const step = (t, p) => { bootNote.textContent = t; bootP = p; bootBar.style.width = p + '%'; };
-
-let DATA, GRID, MAPI, GRAPH, RUN;
-const S = { thr: 0.5, classes: new Set(), rep: 'poly', view: 'det' };
-
-init().catch((e) => { console.error(e); bootNote.textContent = '로드 실패: ' + e.message; });
-
-async function init() {
-  step('실검출 카탈로그 로드', 12);
-  DATA = await loadDetections((t) => step(t, Math.min(58, bootP + 14)));
-  step('격자 집계 로드', 64);
-  GRID = await loadGrid();
-  S.thr = 0.5;
-  S.classes = new Set(DATA.classes.map((c) => c.cls));
-
-  step('지도 타일 소스 확인', 76);
-  MAPI = await createMap($('#map'), DATA, {
-    onHover: showTip, onHoverMove: moveTip, onPick: pickDet,
-  });
-  const srcList = DATA.sources.map((s) => `${s.src} (${fmt(s.n)})`).join(String.fromCharCode(10));
-  $('#attrib').textContent = `배경 V-World ${MAPI.keyed ? 'WMTS' : 'xdworld'} · 검출 ${DATA.sources.length}종`;
-  $('#attrib').title = srcList;
-  $('#ctl-src').textContent = `${fmt(DATA.feats.length)}건 · ${DATA.sources.length}개 산출물`;
-  $('#ctl-src').title = srcList;
-
-  step('캔버스 구성', 88);
-  buildGraph();
-  buildFilterUI();
-  buildTabs();
-  applyAll('init');
-
-  await new Promise((r) => MAPI.map.once('load', r));
-  MAPI.apply({ thr: S.thr, classes: S.classes, rep: S.rep });
-  // 실제 검출 bbox 로 맞추되, 좌측 유리 패널이 덮는 폭만큼 패딩을 준다.
-  const bb = DATA.bbox;
-  MAPI.map.fitBounds([[bb[0], bb[1]], [bb[2], bb[3]]],
-    { padding: { top: 78, left: 232, right: 16, bottom: 88 }, duration: 0 });
-
-  step('준비 완료', 100);
-  setTimeout(() => { boot.classList.add('gone'); GRAPH.fit(); redrawCharts(); }, 260);
-
-  // 첫 인상은 정적 스크린샷이 아니라 "이미 한 번 돈 파이프라인"이어야 한다.
-  setTimeout(() => doRun({ auto: true }), 520);
-}
-
-/* ── 그래프 ──────────────────────────────────────────────────────────── */
-function defaults(type) {
-  return ({
-    input: { imagery: 'namwon_2508' },
-    slice: { slice: 640, overlap: 0.2 },
-    model: { model: 'best-vinylhouse' },
-    post: { conf: 0.5, nms: 0.5, minArea: 10 },
-  })[type] || {};
-}
-
-function buildGraph() {
-  GRAPH = createGraph($('#canvas'), {
-    defaults, paintBody, onSelect: onSelect, onChange: onGraphChange,
-    onToast: toast,
-  });
-  const n1 = GRAPH.addNode('input', 40, 200);
-  const n2 = GRAPH.addNode('slice', 308, 200);
-  const n3 = GRAPH.addNode('model', 308, 400);
-  const n4 = GRAPH.addNode('detect', 576, 280);
-  const n5 = GRAPH.addNode('post', 844, 280);
-  const n6 = GRAPH.addNode('mapout', 1112, 280);
-  GRAPH.connect(n1.id, 'image', n2.id, 'image');
-  GRAPH.connect(n2.id, 'tiles', n4.id, 'tiles');
-  GRAPH.connect(n3.id, 'model', n4.id, 'model');
-  GRAPH.connect(n4.id, 'det', n5.id, 'det');
-  GRAPH.connect(n5.id, 'det', n6.id, 'det');
-  GRAPH.layout(false);
-  GRAPH.fit();
-
-  RUN = createRunner({
-    graph: GRAPH, IMAGERY, MODELS, grid: GRID,
-    getCanvas: (id) => $(`.node[data-id="${id}"] canvas`),
-    onNode: (n) => { GRAPH.render(); if (GRAPH.selected?.id === n.id) fillInspector(n); },
-    onStep: onRunStep, toast,
-    mapState: () => ({ thr: S.thr }),
-    counts: () => MAPI.counts(),
-    feats: () => DATA.feats,
-    bbox: () => DATA.bbox,
-    passes: (p) => p.conf >= S.thr && S.classes.has(p.cls),
-    sink: () => $('#sink').checked,
-  });
-}
-
-function onGraphChange() { redrawCharts(); }
-
-/* ── 노드 본문 (파라미터 UI) ─────────────────────────────────────────── */
-function paintBody(el, n, canvas, nodeEl) {
-  const thumb = nodeEl.querySelector('.thumb');
-  const empty = thumb.querySelector('.empty');
-  const cap = thumb.querySelector('.cap');
-  const has = n.state === 'done' || n.state === 'cache';
-  empty.hidden = has;
-  if (!has) empty.textContent = n.state === 'run' ? '계산 중…' : n.spec.desc;
-  cap.textContent = has && n.t ? `${Math.round(n.t)} ms` : '';
-
-  if (el.dataset.t !== n.type) { el.dataset.t = n.type; el.innerHTML = ctrlHTML(n); bindCtrls(el, n); }
-  syncCtrls(el, n);
-
-  const dl = el.querySelector('dl');
-  if (dl) {
-    const meta = n.out?.meta || {};
-    const keys = Object.keys(meta).slice(0, 5);
-    dl.innerHTML = keys.length
-      ? keys.map((k) => `<dt>${k.replace(/_/g, ' ')}</dt><dd>${meta[k]}</dd>`).join('')
-      : '<dt>상태</dt><dd>미실행</dd>';
-  }
-}
-
-function ctrlHTML(n) {
-  const p = n.params;
-  switch (n.type) {
-    case 'input': return `
-      <div class="ctlrow"><label>도엽</label>
-        <select data-p="imagery">${IMAGERY.map((i) => `<option value="${i.id}">${i.label}</option>`).join('')}</select></div>
-      <dl></dl>`;
-    case 'slice': return `
-      <div class="ctlrow"><label>슬라이스</label>
-        <input type="range" data-p="slice" min="320" max="1280" step="64"><span class="val" data-v="slice"></span></div>
-      <div class="ctlrow"><label>중첩</label>
-        <input type="range" data-p="overlap" min="0" max="0.4" step="0.05"><span class="val" data-v="overlap"></span></div>
-      <dl></dl>`;
-    case 'model': return `
-      <div class="ctlrow"><label>가중치</label>
-        <select data-p="model">${MODELS.map((m) => `<option value="${m.id}">${m.name}</option>`).join('')}</select></div>
-      <div class="sw"></div><p class="warnline" hidden></p><dl></dl>`;
-    case 'post': return `
-      <div class="ctlrow"><label>신뢰도</label>
-        <input type="range" data-p="conf" min="0.05" max="1" step="0.01"><span class="val" data-v="conf"></span></div>
-      <div class="ctlrow"><label>NMS IoU</label>
-        <input type="range" data-p="nms" min="0.1" max="0.9" step="0.05"><span class="val" data-v="nms"></span></div>
-      <div class="ctlrow"><label>최소면적</label>
-        <input type="range" data-p="minArea" min="0" max="200" step="5"><span class="val" data-v="minArea"></span></div>
-      <dl></dl>`;
-    default: return '<dl></dl>';
-  }
-}
-
-function bindCtrls(el, n) {
-  for (const c of $$('[data-p]', el)) {
-    c.addEventListener('input', () => {
-      const k = c.dataset.p;
-      n.params[k] = c.type === 'range' ? +c.value : c.value;
-      syncCtrls(el, n);
-      // 임계값은 지도·차트와 공유되는 하나의 값이다.
-      if (n.type === 'post' && k === 'conf') setThreshold(+c.value, 'node');
-      GRAPH.dirty(n.id);
-      scheduleRerun(n);
-    });
-    c.addEventListener('pointerdown', (e) => e.stopPropagation());
-  }
-}
-
-function syncCtrls(el, n) {
-  for (const c of $$('[data-p]', el)) {
-    const v = n.params[c.dataset.p];
-    if (c.value != v) c.value = v;
-  }
-  const V = { slice: (v) => v + 'px', overlap: (v) => Math.round(v * 100) + '%',
-              conf: (v) => (+v).toFixed(2), nms: (v) => (+v).toFixed(2), minArea: (v) => v + '㎡' };
-  for (const s of $$('[data-v]', el)) s.textContent = (V[s.dataset.v] || String)(n.params[s.dataset.v]);
-  if (n.type === 'model') {
-    const m = MODELS.find((x) => x.id === n.params.model) || MODELS[0];
-    const sw = el.querySelector('.sw');
-    if (sw) sw.innerHTML = m.classes.slice(0, 12).map((c) => `<i style="background:${classColor(c)}" title="${c}"></i>`).join('');
-    const w = el.querySelector('.warnline');
-    if (w) { w.hidden = !m.inferred; w.textContent = m.inferred ? '⚠ data yaml 없음 — 클래스 추정값' : ''; }
-  }
-  if (n.type === 'input') {
-    const has = !!SAMPLES[n.params.imagery];
-    const dl = el.querySelector('dl');
-    if (dl && !n.out) dl.innerHTML = `<dt>산출물</dt><dd>${has ? '있음' : '없음'}</dd>`;
-  }
-}
-
-// 파라미터를 만지면 그 블록부터 아래로만 다시 돈다 — 상류는 캐시됨 배지를 유지한다.
-let rerunT = 0;
-function scheduleRerun() {
-  clearTimeout(rerunT);
-  rerunT = setTimeout(() => doRun({ quiet: true }), 220);
-}
-
-/* ── 실행 ────────────────────────────────────────────────────────────── */
-async function doRun({ stepwise = false, quiet = false, auto = false } = {}) {
-  if (RUN.busy) return;
-  const btn = $('#run');
-  btn.disabled = true;
-  $('#run-stat').textContent = quiet ? '변경된 블록만 재계산 중…' : '실행 중 — 블록이 실제 타일을 읽는다';
-  const r = await RUN.run({ useCache: $('#use-cache').checked, stepwise });
-  btn.disabled = false;
-  if (!r) return;
-  const cached = r.steps.filter((s) => s.cached).length;
-  $('#run-stat').innerHTML =
-    `총 <b>${r.total.toFixed(0)} ms</b> · 블록 ${r.steps.length} · 캐시 ${cached} · ${new Date().toLocaleTimeString('ko-KR')}`;
-  $('#run-prog i').style.width = '100%';
-  setTimeout(() => ($('#run-prog i').style.width = '0'), 700);
-  drawLatency();
-  if (!quiet && !auto) toast(`실행 완료 — ${r.total.toFixed(0)} ms`);
-}
-
-function onRunStep(steps, n) {
-  const done = steps.length, all = GRAPH.G.nodes.length;
-  $('#run-prog i').style.width = `${(done / all) * 100}%`;
-  $('#run-stat').textContent = `${n.spec.name} — ${n.state === 'cache' ? '캐시됨' : Math.round(n.t || 0) + ' ms'}`;
-  GRAPH.drawMini();
-}
-
-function drawLatency() {
-  if (!RUN) return;
-  const steps = RUN.lastSteps;
-  CH.drawLatency($('#c-lat'), RUN.runs, steps);
-  const t = steps.reduce((s, x) => s + x.ms, 0);
-  const slow = steps.filter((s) => !s.cached).sort((a, b) => b.ms - a.ms)[0];
-  $('#lat-read').textContent = steps.length
-    ? `총 ${t.toFixed(0)} ms · 최장 ${slow ? slow.name + ' ' + slow.ms.toFixed(0) + 'ms' : '—'} · ${steps.filter((s) => s.cached).length}개 캐시 적중`
-    : '—';
-}
-
-/* ── 인스펙터 ────────────────────────────────────────────────────────── */
-const insp = $('#insp');
-let inspNode = null;
-function onSelect(n, open) {
-  inspNode = n;
-  if (!n) { if (open !== true) insp.hidden = true; return; }
-  if (open) insp.hidden = false;
-  if (!insp.hidden) fillInspector(n);
-}
-$('#insp-x').addEventListener('click', () => { insp.hidden = true; });
-$$('#insp-tabs button').forEach((b) => b.addEventListener('click', () => {
-  $$('#insp-tabs button').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
-  $$('.tabp', insp).forEach((p) => (p.hidden = p.dataset.tab !== b.dataset.tab));
-}));
-
-async function fillInspector(n) {
-  $('#insp-kind').textContent = n.spec.kind;
-  $('#insp-title').textContent = n.spec.name;
-  const meta = n.out?.meta || {};
-  $('#insp-meta').innerHTML = Object.entries(meta).map(([k, v]) => `<dt>${k.replace(/_/g, ' ')}</dt><dd>${v}</dd>`).join('')
-    || '<dt>상태</dt><dd>미실행 — 실행하면 채워진다</dd>';
-  $('#insp-json').textContent = JSON.stringify({
-    id: n.id, type: n.type, kind: n.spec.kind, state: n.state,
-    params: n.params, ms: n.t ? +n.t.toFixed(1) : null,
-    cacheKey: RUN ? RUN.keyOf(n).slice(0, 96) + '…' : null,
-    inputs: GRAPH.G.edges.filter((e) => e.t === n.id).map((e) => `${e.f}.${e.fp} → ${e.tp}`),
-    output: meta,
-  }, null, 2);
-  $('#insp-log').textContent = n.log.length ? n.log.map((l, i) => `${String(i + 1).padStart(2, '0')}  ${l}`).join('\n')
-                                            : '로그 없음 — 아직 실행되지 않았다';
-  // 추론 체인 — 순차 스트리밍(각 줄이 0.06s 간격으로 들어온다)
-  const chain = $('#insp-chain');
-  chain.innerHTML = n.log.map((l, i) =>
-    `<div class="chain-i" style="animation-delay:${i * 0.06}s"><i></i><b>${l}</b></div>`).join('');
-  // 큰 썸네일 재렌더 — 노드의 336px 캔버스를 확대하는 게 아니라 768px 로 다시 그린다.
-  const c = $('#insp-canvas'), g = c.getContext('2d');
-  g.clearRect(0, 0, c.width, c.height);
-  $('#insp-cap').textContent = n.out ? (n.spec.name + ' · ' + (n.t ? Math.round(n.t) + ' ms' : '')) : '미실행';
-  await renderBig(n, g);
-}
-
-async function renderBig(n, g) {
-  const o = n.out; if (!o) { g.fillStyle = '#1C2127'; g.fillRect(0, 0, g.canvas.width, g.canvas.height); return; }
-  if (n.type === 'model') { drawModelCard(g, o.model, o.curve); return; }
-  if (n.type === 'mapout' || n.type === 'gridag') {
-    drawGridMini(g, DATA.feats, DATA.bbox, (p) => p.conf >= S.thr && S.classes.has(p.cls)); return; }
-  if (!o.imagery) { g.fillStyle = '#1C2127'; g.fillRect(0, 0, g.canvas.width, g.canvas.height);
-                    label(g, n.spec.name); return; }
-  const box = await mosaic(g, o.imagery, { span: 3 });
-  if (n.type === 'slice') drawSlices(g, box, { slice: n.params.slice, overlap: n.params.overlap, gsd: o.imagery.gsd });
-  else if (o.all) drawDets(g, box, o.all, { test: o.test, labels: 10, scale: 2 });
-  else if (o.feats) drawDets(g, box, o.feats, { labels: 10, scale: 2 });
-  $('#insp-cap').textContent =
-    `${o.imagery.id} · z${box.zoom} · ${o.spec ? o.spec.label : n.spec.name}${n.t ? ' · ' + Math.round(n.t) + ' ms' : ''}`;
-}
-
-/* ── 지도 필터 UI ───────────────────────────────────────────────────── */
-function buildFilterUI() {
-  const lo = DATA.conf.lo;
-  const slider = $('#conf');
-  slider.min = lo; slider.value = S.thr;
-  $('#conf-lo').textContent = lo.toFixed(2);
-
-  slider.addEventListener('input', () => setThreshold(+slider.value, 'map'));
-
-  $('#cls-list').innerHTML = DATA.classes.map((c) => `
-    <li><button type="button" aria-pressed="true" data-cls="${c.cls}">
-      <i class="box" style="background:${c.color}"></i>
-      <span class="nm">${ko(c.cls)}</span><span class="n" data-n="${c.cls}">${fmt(c.n)}</span>
-    </button></li>`).join('');
-  $$('#cls-list button').forEach((b) => b.addEventListener('click', () => toggleClass(b.dataset.cls)));
-  $('#cls-all').addEventListener('click', () => {
-    const all = S.classes.size === DATA.classes.length;
-    S.classes = new Set(all ? [DATA.classes[0].cls] : DATA.classes.map((c) => c.cls));
-    applyAll('classes');
-  });
-
-  $$('#rep button').forEach((b) => b.addEventListener('click', () => {
-    $$('#rep button').forEach((x) => x.setAttribute('aria-checked', String(x === b)));
-    S.rep = b.dataset.rep; applyAll('rep');
-  }));
-  $('#lbl-toggle').addEventListener('change', (e) => MAPI.setLabels(e.target.checked));
-
-  // 차트가 곧 필터다.
-  $('#c-hist').addEventListener('click', (e) => {
-    const v = CH.histValueAt($('#c-hist'), e.clientX);
-    if (v != null) setThreshold(v, 'chart');
-  });
-  $('#c-cls').addEventListener('click', (e) => {
-    const cls = CH.classAt($('#c-cls'), e.clientY);
-    if (cls) toggleClass(cls);
-  });
-}
-
-function toggleClass(cls) {
-  S.classes.has(cls) ? S.classes.delete(cls) : S.classes.add(cls);
-  if (!S.classes.size) S.classes.add(cls);
-  applyAll('classes');
-}
-
-function setThreshold(v, from) {
-  S.thr = v;
-  if (from !== 'map') $('#conf').value = v;
-  // 후처리 블록의 파라미터도 같은 값이다 — 화면 세 곳이 하나의 상태를 본다.
-  const post = GRAPH.G.nodes.find((n) => n.type === 'post');
-  if (post && from !== 'node') {
-    post.params.conf = v;
-    GRAPH.render();
-    clearTimeout(rerunT); rerunT = setTimeout(() => { GRAPH.dirty(post.id); doRun({ quiet: true }); }, 320);
-  }
-  applyAll('thr');
-}
-
-// 한 번의 호출로 지도·요약·칩·차트가 같은 프레임에 갱신된다.
-function applyAll(reason) {
-  if (MAPI) MAPI.apply({ thr: S.thr, classes: S.classes, rep: S.rep });
-  $('#conf-val').textContent = S.thr.toFixed(2);
-  const c = MAPI ? MAPI.counts() : { shown: 0, total: DATA.feats.length, area: 0, mean: 0, per: new Map() };
-  $('#conf-count').textContent = `${fmt(c.shown)} / ${fmt(c.total)}`;
-  $('#sum-shown').textContent = fmt(c.shown);
-  $('#sum-total').textContent = fmt(c.total);
-  $('#sum-area').textContent = (c.area / 10000).toFixed(2) + ' ha';
-  $('#sum-conf').textContent = c.mean.toFixed(3);
-  for (const cl of DATA.classes) {
-    const el = $(`[data-n="${cl.cls}"]`);
-    if (el) el.textContent = fmt(c.per.get(cl.cls)?.on ?? 0);
-    const b = $(`#cls-list [data-cls="${cl.cls}"]`);
-    if (b) b.setAttribute('aria-pressed', String(S.classes.has(cl.cls)));
-  }
-  drawChips();
-  redrawCharts();
-}
-
-function drawChips() {
-  const off = DATA.classes.filter((c) => !S.classes.has(c.cls));
-  const chips = [];
-  if (S.thr > DATA.conf.lo + 0.001) chips.push({ k: 'thr', t: `신뢰도 ≥ ${S.thr.toFixed(2)}` });
-  for (const c of off) chips.push({ k: 'cls:' + c.cls, t: `− ${ko(c.cls)}` });
-  $('#chips').innerHTML = chips.length
-    ? chips.map((c) => `<li>${c.t}<button type="button" data-k="${c.k}" aria-label="필터 제거">×</button></li>`).join('')
-    : '<li style="background:transparent;border-color:transparent;color:var(--ink-3)">없음 — 전체 표시</li>';
-  $$('#chips button').forEach((b) => b.addEventListener('click', () => {
-    const k = b.dataset.k;
-    if (k === 'thr') setThreshold(DATA.conf.lo, 'chip');
-    else { S.classes.add(k.slice(4)); applyAll('chip'); }
-  }));
-}
-
-function redrawCharts() {
-  const lo = DATA.conf.lo, hi = 1;
-  const bins = CH.histBins(DATA.feats, S.classes, lo, hi, 24);
-  CH.drawHist($('#c-hist'), bins, S.thr, lo, hi, { note: '신뢰도' });
-  CH.drawSpark($('#conf-spark'), bins, S.thr, lo, hi);
-  const c = MAPI ? MAPI.counts() : { per: new Map() };
-  CH.drawClassBars($('#c-cls'), DATA.classes.map((x) => ({
-    cls: x.cls, n: c.per.get(x.cls)?.on ?? 0, all: x.n, on: S.classes.has(x.cls),
-  })));
-  const mn = GRAPH?.G.nodes.find((n) => n.type === 'model');
-  const m = MODELS.find((x) => x.id === mn?.params.model) || MODELS[0];
-  CH.drawCurve($('#c-curve'), exampleCurve(m.id), `${m.name} · 예시`);
-  $('#curve-warn').textContent = '예시 · 실 로그 없음';
-  $('#mx-curve h3').title = `${m.file} 의 학습 로그(results.csv)가 저장소에 없어 예시 곡선을 그린다`;
-  drawLatency();
-}
-
-/* ── 호버 툴팁 (실제 위성 타일 크롭) ────────────────────────────────── */
-const tip = $('#tip');
-let tipJob = 0;
-function showTip(p, pt) {
-  if (!p) { tip.hidden = true; return; }
-  tip.hidden = false;
-  if (p.cell) {                                   // 광역 줌 — 격자 셀 요약
-    $('#tip-cls').textContent = '격자 셀 · 약 500 m';
-    $('#tip-conf').textContent = (+p.conf).toFixed(3);
-    $('#tip-bar').style.width = `${p.conf * 100}%`;
-    $('#tip-bar').style.background = 'var(--lx)';
-    $('#tip-area').textContent = fmt(p.n) + ' 건';
-    $('#tip-src').textContent = '클릭하면 이 셀로 내려간다';
-    moveTip(pt);
-    const job = ++tipJob;
-    satCrop($('#tip-c').getContext('2d'), MAPI.satUrl, p.c[0], p.c[1], 14).then(() => {
-      if (job === tipJob) cropFrame($('#tip-c').getContext('2d'));
-    });
-    return;
-  }
-  $('#tip-cls').textContent = ko(p.cls);
-  $('#tip-conf').textContent = (+p.conf).toFixed(3);
-  $('#tip-bar').style.width = `${p.conf * 100}%`;
-  $('#tip-bar').style.background = classColor(p.cls);
-  $('#tip-area').textContent = (+p.area).toFixed(1) + ' ㎡';
-  $('#tip-src').textContent = p.src || '';
-  moveTip(pt);
-  const job = ++tipJob;
-  const f = DATA.feats.find((x) => x.id === p.id);
-  if (f) satCrop($('#tip-c').getContext('2d'), MAPI.satUrl, f.properties.c[0], f.properties.c[1], 17)
-    .then(() => { if (job === tipJob) drawTipPoly(f); });
-}
-// 크롭임을 알리는 프레임 — 배경 지도와 같은 위성영상이라 테두리가 없으면 지도와 섞인다.
-function cropFrame(g) {
-  const W = g.canvas.width;
-  g.strokeStyle = 'rgba(255,255,255,.5)'; g.lineWidth = 2;
-  g.strokeRect(1, 1, W - 2, W - 2);
-  g.font = '500 11px "IBM Plex Mono",monospace';
-  g.fillStyle = 'rgba(10,16,26,.7)'; g.fillRect(0, W - 17, 74, 17);
-  g.fillStyle = 'rgba(255,255,255,.8)'; g.fillText('256px 크롭', 5, W - 5);
-}
-
-function drawTipPoly(f) {
-  const c = $('#tip-c'), g = c.getContext('2d');
-  const [lng, lat] = f.properties.c;
-  const zoom = 17;
-  const span = 128 / 256 / 2 ** zoom * 360;                      // satCrop 이 그린 폭(경도)
-  const box = { west: lng - span / 2, east: lng + span / 2,
-                north: lat + (span / 2) * 0.82, south: lat - (span / 2) * 0.82 };
-  drawDets(g, box, [{ geometry: f.geometry, cls: f.properties.cls, conf: f.properties.conf }], { scale: 1 });
-  cropFrame(g);
-}
-function moveTip(pt) {
-  if (!pt) return;
-  const r = $('#map-zone').getBoundingClientRect();
-  const x = Math.min(pt.x + 16, r.width - 300), y = Math.min(pt.y + 14, r.height - 120);
-  tip.style.transform = `translate(${Math.max(6, x)}px,${Math.max(6, y)}px)`;
-}
-function pickDet(f) {
-  if (!f) return;
-  toast(`${ko(f.properties.cls)} · 신뢰도 ${f.properties.conf.toFixed(3)} · ${f.properties.area.toFixed(1)} ㎡ · ${f.properties.src}`);
-}
-
-/* ── 탭: 결과 지도 ↔ 시점 비교 ─────────────────────────────────────── */
-const EPOCHS = ['namwon_2504', 'namwon_2506', 'namwon_2508', 'namwon_2510'];
-let swA = 0, swB = 3, swReady = false;
-
-function buildTabs() {
-  $$('#map-tabs button').forEach((b) => b.addEventListener('click', async () => {
-    $$('#map-tabs button').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
-    S.view = b.dataset.view;
-    const on = S.view === 'swipe';
-    $('#swipe').hidden = !on;
-    $('#ctl').style.display = on ? 'none' : '';
-    $('#sum').style.display = on ? 'none' : '';
-    if (on && !swReady) { swReady = true; await renderSwipe(); }
-  }));
-
-  $('#sw-steps').innerHTML = EPOCHS.map((id, i) => {
-    const im = IMAGERY.find((x) => x.id === id);
-    return `<button type="button" data-i="${i}" aria-pressed="false">${im.captured}</button>`;
-  }).join('');
-  $$('#sw-steps button').forEach((b) => b.addEventListener('click', () => {
-    const i = +b.dataset.i;
-    if (i === swA || i === swB) return;
-    // 가까운 쪽을 교체한다 — 사용자가 "어느 쪽이 바뀌는지" 예측할 수 있어야 한다.
-    (Math.abs(i - swA) <= Math.abs(i - swB)) ? (swA = i) : (swB = i);
-    renderSwipe();
-  }));
-
-  const grip = $('#sw-grip'), line = $('#sw-line');
-  const setX = (px) => {
-    const r = $('#swipe').getBoundingClientRect();
-    const p = Math.max(2, Math.min(98, ((px - r.left) / r.width) * 100));
-    line.style.left = p + '%';
-    $('#sw-b').style.clipPath = `inset(0 0 0 ${p}%)`;
-  };
-  grip.addEventListener('pointerdown', (e) => {
-    grip.setPointerCapture(e.pointerId);
-    const mv = (ev) => setX(ev.clientX);
-    const up = () => { grip.removeEventListener('pointermove', mv); grip.removeEventListener('pointerup', up); };
-    grip.addEventListener('pointermove', mv); grip.addEventListener('pointerup', up);
-  });
-}
-
-async function renderSwipe() {
-  const a = IMAGERY.find((x) => x.id === EPOCHS[swA]), b = IMAGERY.find((x) => x.id === EPOCHS[swB]);
-  $('#sw-la').textContent = a.captured; $('#sw-lb').textContent = b.captured;
-  $$('#sw-steps button').forEach((x) => x.setAttribute('aria-pressed', String(+x.dataset.i === swA || +x.dataset.i === swB)));
-  const ga = $('#sw-a').getContext('2d'), gb = $('#sw-b').getContext('2d');
-  const opt = { span: 4, z: 18 };
-  const [, boxB] = await Promise.all([mosaic(ga, a, opt), mosaic(gb, b, opt)]);
-  // 실제 변화지수 폴리곤을 B 위에 얹는다 — 스와이프가 "그림 두 장"이 아니라 판독이 된다.
-  const { feats, spec } = await loadSample('namwon_2508');
-  if (spec) drawDets(gb, boxB, feats.filter((f) => f.conf >= S.thr), { labels: 6, scale: 2 });
-  $('#sw-la').textContent = `${a.captured} · GSD ${(a.gsd * 100).toFixed(2)}cm`;
-  $('#sw-lb').textContent = spec
-    ? `${b.captured} + ${spec.label.replace(' · score', '')} ≥${S.thr.toFixed(2)}`
-    : `${b.captured} · GSD ${(b.gsd * 100).toFixed(2)}cm`;
-}
-
-/* ── 상단 바 · 기타 ─────────────────────────────────────────────────── */
-$('#run').addEventListener('click', () => doRun({}));
-$('#debug').addEventListener('click', () => doRun({ stepwise: true }));
-$('#autolay').addEventListener('click', (e) => {
-  const b = e.currentTarget, on = b.getAttribute('aria-pressed') !== 'true';
-  b.setAttribute('aria-pressed', String(on));
-  GRAPH.setAutoLayout(on);
-  toast(on ? '자동정렬 켜짐 — 배치를 다시 계산했다' : '자동정렬 꺼짐');
-});
-$('#ops').addEventListener('click', (e) => {
-  const b = e.currentTarget, on = b.getAttribute('aria-pressed') !== 'true';
-  b.setAttribute('aria-pressed', String(on));
-  document.documentElement.dataset.ops = on ? 'dark' : '';   // cssVar 는 documentElement 를 읽는다
-  requestAnimationFrame(() => { redrawCharts(); GRAPH.render(); });
-});
-$('#ver').addEventListener('click', () => toast('버전 v3 · Live — 저장 시점마다 스냅샷이 남는다(프로토는 표시만)'));
-$('#assist-mode').addEventListener('change', (e) => toast(`Builder Assist: ${e.target.selectedOptions[0].textContent}`));
-$('#sink').addEventListener('change', (e) =>
-  toast(e.target.checked ? '주의 — 결과가 국토조사 DB에 반영된다' : '안전한 시험 실행 (기본값)'));
-
-let toastT = 0;
-function toast(msg) {
-  const t = $('#toast');
-  t.textContent = msg; t.hidden = false;
-  clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), 2600);
-}
-
-let rsz = 0;
-window.addEventListener('resize', () => {
-  clearTimeout(rsz);
-  rsz = setTimeout(() => { redrawCharts(); GRAPH?.place(); }, 160);
-});
-
-// 실행 지연(ms)을 상단 러너 칩에 붙인다 — 실측값만 쓴다.
-setInterval(() => {
-  const last = RUN?.runs?.[RUN.runs.length - 1];
-  if (last) $('#runner-ping').textContent = `${Math.round(last)} ms`;
-}, 1500);
-
-// 테스트 훅 — Playwright 가 내부 상태를 들여다볼 수 있게 최소한만 노출한다.
-Object.defineProperty(window, '__wfgraph', { get: () => GRAPH });
-Object.defineProperty(window, '__wfmap', { get: () => MAPI?.map });
-// 부팅이 끝나기 전에 폴링당해도 던지지 않는다 — 던지면 waitForFunction 이 재시도 없이 죽는다.
-window.__wf = {
-  get ready() { return !!(GRAPH && MAPI && DATA); },
-  get state() { return { ...S, classes: [...S.classes] }; },
-  counts: () => (MAPI ? MAPI.counts() : { shown: 0, total: 0, area: 0, mean: 0, per: new Map() }),
-  graph: () => (GRAPH ? { nodes: GRAPH.G.nodes.length, edges: GRAPH.G.edges.length } : { nodes: 0, edges: 0 }),
-  run: (o) => doRun(o || {}),
-  setThreshold,
-  thumbs: () => (GRAPH ? GRAPH.G.nodes.filter((n) => n.state === 'done' || n.state === 'cache').length : 0),
+const state = {
+  presetId: 'namwon-greenhouse',
+  t: 3,                       // 0..3 — 정사영상 시점 축
+  thr: 0.5,
+  classes: new Set(),
+  selection: null,            // { bbox, ids, tiles }
+  viewer: 'detect',
+  hover: null,
+  picked: null,
+  entry: true,
 };
+
+let data, mapc, graph, glow, timeline, legend, mini, runner;
+let renderTimer = 0;
+
+/* ── 부트 ─────────────────────────────────────────────────────────────── */
+const bootStep = (n, note) => {
+  for (const li of document.querySelectorAll('#boot-steps li')) li.classList.toggle('on', +li.dataset.s <= n);
+  if (note) $('#boot-note').textContent = note;
+};
+
+async function boot(presetId) {
+  document.body.classList.add('is-entry');
+  bootStep(1, '실자산 카탈로그 · imagery / models / results / change');
+  data = await loadPreset(presetId, (n) => bootStep(2, n));
+  state.classes = new Set(data.classes.map((c) => c.cls));
+  state.thr = data.preset.conf0;
+  bootStep(3, `${data.res.title} · ${fmt(data.count)} ${data.unit}`);
+
+  mapc = await createMap($('#map'), data, {
+    onLasso: (bbox) => setSelection(bbox),
+    onPick: (id, lngLat) => pickDetection(id, lngLat),
+    onMove: (lngLat) => onCursor(lngLat),
+    onFilter: () => { glow?.mark(); },
+  });
+
+  glow = createGlow({ canvas: $('#glow'), map: mapc.map, data,
+    getState: () => ({ thr: state.thr, classes: state.classes, cascade: mapc.state.cascade }) });
+
+  graph = createGraph({
+    host: $('#nodes'), edgesCanvas: $('#edges'), mapc, data, safeRight: 360,
+    hooks: {
+      onPickNode: (id) => setViewer(id),
+      onHoverNode: (id) => { state.hover = id; },
+      onBand: () => { /* 시맨틱 줌은 CSS 가 처리한다 */ },
+      onThumbs: () => {},
+    },
+  });
+
+  timeline = createTimeline({
+    canvas: $('#tl'), host: $('#time'), data,
+    onScrub: (t) => setT(t),
+    onEpochJump: (i) => flyToAoi(i),
+  });
+
+  legend = createConfLegend({
+    canvas: $('#conf'), valueEl: $('#thr'), data,
+    onChange: (v) => setThreshold(v),
+  });
+
+  mini = createMinimap({ canvas: $('#minic'), data,
+    getState: () => ({ thr: state.thr, view: viewBounds() }) });
+  const region = data.preset.region || '남원시';
+  document.querySelector('#mini .label').textContent = `${region} · 처리 현황`;
+  loadSigungu(region).then((f) => f && mini.setBoundary(f)).catch(() => {});
+
+  runner = createRunner({ data, mapc, graph, on: {
+    tps: (v) => { $('#tps').textContent = v > 0 ? v.toFixed(0) + ' tiles/s' : '캐시 적중'; },
+    log: (l) => { $('#runnote').textContent = `${l.stage.toUpperCase()} — ${l.text}${l.ms ? ` · ${l.ms} ms` : ''}`; },
+    done: (r) => {
+      $('#run').disabled = false;
+      $('#run').textContent = '파이프라인 재실행';
+      $('#runnote').textContent = r.fresh
+        ? `실측 ${r.total} ms · 타일 ${r.tiles}장(신규 ${r.fresh} · 캐시 ${r.cached}) · ${r.tps.toFixed(0)} tiles/s — 로컬 타일 저장소 디코딩 실측`
+        : `실측 ${r.total} ms · 타일 ${r.tiles}장 전부 캐시 적중 — 처리량은 측정하지 않았다`;
+    },
+  } });
+
+  // 기본 선택 = 탐지가 가장 두꺼운 실제 셀 하나.
+  const a = data.anchors[0].c;
+  state.selection = boxAround(a, 0.0055);
+
+  wire();
+  setViewer('detect');
+  paintPanel();
+  paintClasses();
+  $('#attrib').textContent = `정사영상 LX 국토정보공사 · 배경 V-World${mapc.keyed ? '(키)' : '(공개)'} · 탐지 ${data.res.src}`;
+  $('#place').textContent = `${data.preset.place} · ${data.img ? '정사영상 ' + data.img.captured : '기준영상 V-World 위성'} · 분석 ${data.analyzedAt}`;
+  if (!data.preset.epochs) { $('#play').disabled = true; $('#play').style.opacity = '.3'; }
+
+  await render();
+  $('#boot').classList.add('out');
+  setTimeout(() => { $('#boot').hidden = true; }, 800);
+
+  await entryFlight();
+  window.__wf.ready = true;
+}
+
+/* ── 진입 활공 (3안 C) — 컷 없이 한 대의 카메라 ────────────────────────── */
+function entryFlight() {
+  // 착지점은 설계자가 고른 좌표가 아니라 6개 앵커(=실제 탐지 밀도 상위 셀)의 무게중심이다.
+  const ax = data.anchors.reduce((a, x) => a + x.c[0], 0) / data.anchors.length;
+  const ay = data.anchors.reduce((a, x) => a + x.c[1], 0) / data.anchors.length;
+  const land = { center: [ax, ay], zoom: 14.45, pitch: 45, bearing: 0 };
+  const revealAll = () => {
+    for (const n of graph.nodes) n.el.classList.add('is-in');
+    document.body.classList.remove('is-entry');
+    state.entry = false;
+  };
+  if (SKIP) {
+    mapc.map.jumpTo(land);
+    revealAll();
+    mapc.setCascade(1);
+    afterLanding(true);
+    return Promise.resolve();
+  }
+  return new Promise((res) => {
+    mapc.map.flyTo({ ...land, duration: 4200, curve: 1.45, essential: true,
+      easing: (t) => 1 - (1 - t) ** 4 });
+    // 단계가 항로 위 웨이포인트처럼 순서대로 내려앉는다.
+    graph.nodes.forEach((n, i) => setTimeout(() => n.el.classList.add('is-in'), 620 + i * 330));
+    setTimeout(() => {
+      document.body.classList.remove('is-entry');
+      state.entry = false;
+      afterLanding(false);
+      res();
+    }, 4300);
+  });
+}
+
+/* 착지 직후: 탐지가 중심에서 바깥으로 물결친다 + 숫자가 현상된다 (장치 4) */
+function afterLanding(instant) {
+  if (instant) { paintPanel(); return; }
+  const t0 = performance.now();
+  const step = (now) => {
+    const p = Math.min(1, (now - t0) / 900);
+    mapc.setCascade(p);
+    glow?.mark();
+    paintPanel();
+    if (p < 1) requestAnimationFrame(step);
+  };
+  mapc.setCascade(0);
+  requestAnimationFrame(step);
+}
+
+/* ── 상태 변경 ────────────────────────────────────────────────────────── */
+function setThreshold(v, silent) {
+  state.thr = v;
+  mapc.setThreshold(v);
+  glow?.mark();
+  mini?.draw();
+  if (!silent) legend.set(v);
+  $('#conf').setAttribute('aria-valuenow', v.toFixed(2));
+  paintPanel();
+  paintClasses();
+  scheduleRender();
+}
+
+function setT(t) {
+  state.t = t;
+  const near = mapc.setEpoch(t);
+  const i = Math.max(0, Math.min(3, Math.round(t)));
+  $('#tstamp').textContent = EPOCHS[i].label;
+  $('#tnote').textContent = EPOCHS[i].city
+    ? '전역 정사영상 있음 · 클릭하면 그 시점으로'
+    : '전역 정사영상 결손 — 금지 AOI 도엽에만 존재. 눈금을 누르면 그 도엽으로 간다';
+  scheduleRender();
+  return near;
+}
+
+function setViewer(id) {
+  state.viewer = id;
+  graph.setViewer(id);
+  mapc.setViewer(id);
+  const s = STAGES.find((x) => x.id === id);
+  const n = graph.node(id);
+  $('#eyebrow').textContent = `${s.no} · ${s.kind} · ${n?.art?.textContent || ''}`;
+  glow?.mark();
+  paintPanel();
+}
+
+function boxAround(c, r) {
+  return { bbox: [c[0] - r, c[1] - r * 0.78, c[0] + r, c[1] + r * 0.78], ids: [], tiles: [] };
+}
+
+function setSelection(bbox) {
+  const sel = { bbox, ids: [], tiles: [] };
+  state.selection = sel;
+  mapc.showSelection(bbox);
+  timeline.setSelection(bbox);
+  paintStrip();
+  paintPanel();
+  scheduleRender();
+}
+
+function pickDetection(id, lngLat) {
+  if (id == null) { state.picked = null; mapc.showBrackets(null); return; }
+  const f = data.feats[id] || data.feats.find((x) => x.id === id);
+  if (!f) return;
+  state.picked = f;
+  const b = f.properties.bb;
+  mapc.showBrackets(b);
+  // 락온 3비트 — 브래킷 수렴 180ms → 확정 80ms → 라벨 120ms
+  graph.lockOn(() => {
+    const p = mapc.map.project(f.properties.c);
+    return [p.x, p.y];
+  }, `정합도 ${(f.properties.conf * 100).toFixed(0)}% · ${f.properties.nobj}동`);
+  setSelection([b[0] - 0.0016, b[1] - 0.0013, b[2] + 0.0016, b[3] + 0.0013]);
+  // 선택은 카메라 이동이다 — 화면 전환이 아니라 같은 지도의 카메라가 간다(규칙 4).
+  if (!mapc.map.getBounds().contains({ lng: f.properties.c[0], lat: f.properties.c[1] })) {
+    mapc.map.easeTo({ center: f.properties.c, zoom: Math.max(mapc.map.getZoom(), 15.6), duration: 1000, essential: true });
+  }
+  if ($('#inspect').classList.contains('is-in')) paintInspect();
+}
+
+/* ── 렌더 (액자) ──────────────────────────────────────────────────────── */
+function epochFor(t) {
+  const i = Math.max(0, Math.min(3, Math.round(t)));
+  const e = EPOCHS[i];
+  const cityId = e.city || (t < 1.5 ? 'namwon_city_2504' : 'namwon_city_2510');
+  return { i, label: e.label, exact: !!e.city, cityImg: data.img ? imagery(cityId) : null };
+}
+
+function selCenter() {
+  const b = state.selection.bbox;
+  return [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2];
+}
+
+function nearFeats(center, r = 0.006) {
+  const out = [];
+  for (const f of data.feats) {
+    const c = f.properties.c;
+    if (Math.abs(c[0] - center[0]) < r && Math.abs(c[1] - center[1]) < r) out.push(f);
+  }
+  return out;
+}
+
+function scheduleRender() {
+  clearTimeout(renderTimer);
+  renderTimer = setTimeout(render, 90);
+}
+
+async function render() {
+  const center = selCenter();
+  await graph.renderAll({
+    center,
+    feats: nearFeats(center),
+    thr: state.thr,
+    classes: state.classes,
+    epoch: epochFor(state.t),
+    counts: mapc.counts(),
+    satUrl: mapc.satUrl,
+  });
+  const n = graph.node(state.viewer);
+  const s = STAGES.find((x) => x.id === state.viewer);
+  $('#eyebrow').textContent = `${s.no} · ${s.kind} · ${n?.art?.textContent || ''}`;
+  paintStrip();
+}
+
+/* ── 우측 조판 ────────────────────────────────────────────────────────── */
+function paintPanel() {
+  const c = mapc.counts();
+  developNumber($('#stat'), c.obj, data.unit === '필지' ? '동' : '건');
+  const objUnit = data.unit === '필지' ? '동' : '건';
+  $('#statsub').innerHTML =
+    `${fmt(c.shown)} / ${fmt(c.total)} ${data.unit} 통과 · 원본 ${fmt(data.objTotal)}${objUnit}<br>` +
+    `${data.res.title} · ${data.areaHa.toLocaleString()} ha · ${data.analyzedAt} 분석`;
+  $('#confnote').textContent =
+    `원본 신뢰도 평균 ${data.confMean} · 임계 미만 ${fmt(c.total - c.shown)}${data.unit}는 지우지 않고 감쇠한다`;
+  $('#clsnote').textContent = `${data.classes.length}종 · 클릭하면 감쇠`;
+  updateScaleBar();
+  mini?.draw();
+}
+
+function paintClasses() {
+  const c = mapc.counts();
+  const host = $('#cls');
+  host.innerHTML = '';
+  const max = Math.max(...data.classes.map((x) => (c.per.get(x.cls)?.obj || 0)), 1);
+  for (const cl of data.classes) {
+    const e = c.per.get(cl.cls) || { on: 0, all: 0, obj: 0 };
+    const li = document.createElement('li');
+    li.className = state.classes.has(cl.cls) ? '' : 'off';
+    li.innerHTML = `<span class="k">${cl.ko}</span><span class="v">${fmt(e.obj)}</span>
+      <span class="bar"><i style="width:${(e.obj / max) * 100}%;background:${cl.color}"></i></span>`;
+    li.title = `${cl.ko} — ${fmt(e.on)} / ${fmt(e.all)} ${data.unit}`;
+    li.addEventListener('click', () => {
+      if (state.classes.has(cl.cls)) state.classes.delete(cl.cls); else state.classes.add(cl.cls);
+      if (!state.classes.size) state.classes.add(cl.cls);
+      mapc.setClasses([...state.classes]);
+      glow?.mark();
+      paintPanel(); paintClasses(); scheduleRender();
+    });
+    host.appendChild(li);
+  }
+}
+
+/* ── 타일 스트립 — 선택 영역의 실제 타일 (삼면 결속의 두 번째 면) ───────── */
+async function paintStrip() {
+  const host = $('#stripl');
+  const b = state.selection?.bbox;
+  if (!b) { host.innerHTML = '<p class="empty">선택 없음</p>'; return; }
+  const z = data.img ? Math.min(data.img.maxzoom, 17) : 17;
+  const x0 = Math.floor(lon2x(b[0], z)), x1 = Math.floor(lon2x(b[2], z));
+  const y0 = Math.floor(lat2y(b[3], z)), y1 = Math.floor(lat2y(b[1], z));
+  const tiles = [];
+  for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) tiles.push([z, x, y]);
+  state.selection.tiles = tiles;
+  const shown = tiles.slice(0, 6);
+  $('#striph').textContent = `${shown.length}/${tiles.length}장 · z${z} · ${data.img ? data.img.id : 'V-World'}`;
+
+  host.innerHTML = '';
+  for (const [tz, tx, ty] of shown) {
+    const el = document.createElement('div');
+    el.className = 't';
+    el.innerHTML = `<canvas width="152" height="152"></canvas><span>${tx}/${ty}</span>`;
+    const box = { west: x2lon(tx, tz), north: y2lat(ty, tz), east: x2lon(tx + 1, tz), south: y2lat(ty + 1, tz) };
+    el.addEventListener('pointerenter', () => { mapc.showBrackets([box.west, box.south, box.east, box.north]); el.classList.add('on'); });
+    el.addEventListener('pointerleave', () => { mapc.showBrackets(state.picked ? state.picked.properties.bb : null); el.classList.remove('on'); });
+    el.addEventListener('click', () => mapc.map.flyTo({
+      center: [(box.west + box.east) / 2, (box.north + box.south) / 2], zoom: 16.6, duration: 1000, essential: true }));
+    host.appendChild(el);
+    const cv = el.querySelector('canvas');
+    const cx = cv.getContext('2d');
+    cx.__s = 2; cx.scale(2, 2);
+    const src = data.img
+      ? '../' + data.img.tiles.replace('{z}', tz).replace('{x}', tx).replace('{y}', ty)
+      : mapc.satUrl.replace('{z}', tz).replace('{x}', tx).replace('{y}', ty);
+    tileImage(src).then((im) => {
+      cx.fillStyle = '#08090B'; cx.fillRect(0, 0, 76, 76);
+      if (im) { cx.save(); cx.filter = 'saturate(.28) contrast(1.1) brightness(.92)'; cx.drawImage(im, 0, 0, 76, 76); cx.restore(); }
+      drawDets(cx, box, nearFeats([(box.west + box.east) / 2, (box.north + box.south) / 2], 0.004),
+        { test: (p) => p.conf >= state.thr && state.classes.has(p.cls), fill: 0.26, lw: 1 });
+    });
+  }
+}
+
+/* ── 심층 검토 — 하드 명암 경계 ───────────────────────────────────────── */
+function toggleInspect(on) {
+  const el = $('#inspect');
+  const want = on ?? !el.classList.contains('is-in');
+  el.hidden = false;
+  el.classList.toggle('is-in', want);
+  if (want) paintInspect();
+}
+
+async function paintInspect() {
+  const f = state.picked;
+  const b = state.selection?.bbox;
+  const c = mapc.counts();
+  const near = nearFeats(selCenter(), 0.005)
+    .filter((x) => state.classes.has(x.properties.cls))
+    .sort((a, z) => z.properties.conf - a.properties.conf);
+
+  $('#ins-n').textContent = fmt(f ? f.properties.nobj : near.reduce((a, x) => a + x.properties.nobj, 0));
+  $('#ins-sub').textContent = f
+    ? `${ko(f.properties.cls)} · ${f.properties.emd || '—'} · PNU ${f.properties.pnu || '—'}`
+    : `선택 영역 ${near.length} ${data.unit} · 전체 ${fmt(c.total)} 중`;
+
+  const cv = $('#ins-c');
+  const cx = cv.getContext('2d');
+  cx.__s = 1;
+  cx.setTransform(1, 0, 0, 1, 0, 0);
+  const center = f ? f.properties.c : selCenter();
+  const e = epochFor(state.t);
+  const box = await crop(cx, e.cityImg, mapc.satUrl, center, 17, { filter: 'saturate(.34) contrast(1.12)' });
+  drawDets(cx, box, nearFeats(center, 0.005),
+    { test: (p) => p.conf >= state.thr && state.classes.has(p.cls), fill: 0.24, lw: 1.6 });
+  if (f) {
+    const px = (l) => ((l - box.west) / (box.east - box.west)) * cv.width;
+    const py = (l) => ((l - box.north) / (box.south - box.north)) * cv.height;
+    const bb = f.properties.bb;
+    bracketRect(cx, px(bb[0]) - 6, py(bb[3]) - 6, px(bb[2]) - px(bb[0]) + 12, py(bb[1]) - py(bb[3]) + 12, C.amber, 14, 1.6);
+  }
+  $('#ins-cap').textContent =
+    `${f?.properties.emd ? '전북 남원시 ' + f.properties.emd : data.preset.place} · ${box.src} · ${box.mpp.toFixed(2)} m/px · ${e.label}`;
+
+  const meta = $('#ins-meta');
+  meta.innerHTML = '';
+  const rows = f
+    ? [['신뢰도', f.properties.conf.toFixed(3)], ['면적', `${fmt(f.properties.area)} ㎡`],
+       ['동수', `${f.properties.nobj}동`], ['읍면동', f.properties.emd || '—'],
+       ['SAM', '—'], ['원본', data.res.src]]
+    : [['선택 범위', b ? `${b[0].toFixed(4)}, ${b[1].toFixed(4)} → ${b[2].toFixed(4)}, ${b[3].toFixed(4)}` : '—'],
+       ['통과', `${fmt(c.shown)} / ${fmt(c.total)}`], ['임계', state.thr.toFixed(2)],
+       ['원본', data.res.src]];
+  for (const [k, v] of rows) {
+    const dt = document.createElement('dt'); dt.textContent = k;
+    const dd = document.createElement('dd'); dd.textContent = v;
+    meta.append(dt, dd);
+  }
+
+  const list = $('#ins-rows');
+  list.innerHTML = '';
+  for (const x of near.slice(0, 14)) {
+    const r = document.createElement('div');
+    r.className = 'r';
+    r.innerHTML = `<span>${ko(x.properties.cls)} · ${x.properties.emd || '—'}</span>
+                   <span>${x.properties.conf.toFixed(3)} · ${x.properties.nobj}동</span>`;
+    r.addEventListener('pointerenter', () => mapc.showBrackets(x.properties.bb));
+    r.addEventListener('click', () => pickDetection(x.id));
+    list.appendChild(r);
+  }
+}
+
+/* ── 커서 좌표 · 사람 척도 스케일바 ───────────────────────────────────── */
+let cursorRaf = 0;
+function onCursor(lngLat) {
+  if (cursorRaf) return;
+  cursorRaf = requestAnimationFrame(() => {
+    cursorRaf = 0;
+    $('#xy').textContent =
+      `${lngLat.lng.toFixed(5)}° E   ${lngLat.lat.toFixed(5)}° N   z${mapc.map.getZoom().toFixed(2)}`;
+  });
+}
+
+/* 사람 척도 스케일바 — 막대 길이는 반드시 실제 길이여야 한다(장치 8).
+   그래서 "화면에 들어오는 가장 큰 눈금"을 고르고, 그 눈금에 붙은 참조물을 함께 쓴다. */
+const SCALE_STEPS = [
+  [4.5, '승용차 1대'], [10, null], [25, null], [54, '비닐하우스 1동'], [105, '축구장'],
+  [250, null], [500, null], [1000, null], [2000, null], [5000, null], [10000, null], [20000, null],
+];
+function updateScaleBar() {
+  if (!mapc) return;
+  const mpp = metersPerPx(mapc.map.getCenter().lat, mapc.map.getZoom());
+  let best = SCALE_STEPS[0];
+  for (const st of SCALE_STEPS) if (st[0] / mpp <= 185) best = st;
+  const w = Math.max(28, best[0] / mpp);
+  const len = best[0] >= 1000 ? `${best[0] / 1000} km` : `${best[0]} m`;
+  $('#scale-bar').style.width = w.toFixed(0) + 'px';
+  $('#scale-t').textContent = `${len}${best[1] ? ' · ' + best[1] : ''} · ${mpp.toFixed(2)} m/px`;
+}
+
+function viewBounds() {
+  const b = mapc.map.getBounds();
+  return [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+}
+
+function flyToAoi(i) {
+  const im = imagery(EPOCHS[i].aoi);
+  if (!im) return;
+  mapc.map.flyTo({ center: [(im.bounds[0] + im.bounds[2]) / 2, (im.bounds[1] + im.bounds[3]) / 2],
+    zoom: 16.4, pitch: 40, duration: 2000, essential: true });
+  setSelection([im.bounds[0], im.bounds[1], im.bounds[2], im.bounds[3]]);
+}
+
+/* ── 배선 ─────────────────────────────────────────────────────────────── */
+function wire() {
+  $('#play').addEventListener('click', () => {
+    if (!data.preset.epochs) return;
+    const on = !timeline.playing;
+    timeline.play(on);
+    $('#play').textContent = on ? '❚❚' : '▶';
+  });
+  $('#run').addEventListener('click', () => {
+    $('#run').disabled = true;
+    $('#run').textContent = '실행 중';
+    runner.run(state.selection);
+  });
+  $('#ins-x').addEventListener('click', () => toggleInspect(false));
+  for (const b of document.querySelectorAll('#presets button')) {
+    b.addEventListener('click', async () => {
+      if (b.dataset.preset === state.presetId) return;
+      for (const o of document.querySelectorAll('#presets button')) o.setAttribute('aria-selected', String(o === b));
+      state.presetId = b.dataset.preset;
+      location.search = '?preset=' + state.presetId + (SKIP ? '&skip=1' : '');
+    });
+  }
+  mapc.map.on('zoom', () => { updateScaleBar(); glow?.mark(); });
+  mapc.map.on('moveend', () => { mini?.draw(); });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.target.matches('input,textarea')) return;
+    if (e.key === 'i' || e.key === 'I') { toggleInspect(); e.preventDefault(); }
+    else if (e.key === 'Escape') { toggleInspect(false); state.picked = null; mapc.showBrackets(null); }
+    else if (e.key === ' ') { $('#play').click(); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft' && e.shiftKey) { timeline.t = state.t - 0.25; setT(timeline.t); }
+    else if (e.key === 'ArrowRight' && e.shiftKey) { timeline.t = state.t + 0.25; setT(timeline.t); }
+    else if (e.key === '[') setThreshold(Math.max(0.01, state.thr - 0.05));
+    else if (e.key === ']') setThreshold(Math.min(1, state.thr + 0.05));
+  });
+  // 진입 활공 중 아무 조작이나 하면 즉시 착지한다 — 조작 불가능한 연출은 목업이다.
+  const skip = () => {
+    if (!state.entry) return;
+    state.entry = false;
+    mapc.map.stop();
+    document.body.classList.remove('is-entry');
+    for (const n of graph.nodes) n.el.classList.add('is-in');
+    mapc.setCascade(1);
+    paintPanel();
+  };
+  $('#stage').addEventListener('pointerdown', skip);
+  window.addEventListener('wheel', skip, { passive: true });
+}
+
+/* ── 테스트·디버그 API ────────────────────────────────────────────────── */
+window.__wf = {
+  ready: false,
+  get state() {
+    return { thr: state.thr, t: state.t, viewer: state.viewer,
+             classes: [...state.classes], selection: state.selection?.bbox || null, entry: state.entry };
+  },
+  counts: () => mapc.counts(),
+  graph: () => ({ nodes: graph.nodes.length, edges: graph.nodes.length - 1, band: graph.band }),
+  thumbs: () => graph.thumbs(),
+  setThreshold: (v) => setThreshold(v),
+  setT: (v) => { timeline.t = v; setT(v); },
+  setViewer: (id) => setViewer(id),
+  select: (bbox) => setSelection(bbox),
+  pick: (id) => pickDetection(id),
+  inspect: (on) => toggleInspect(on),
+  land: () => { mapc.map.stop(); document.body.classList.remove('is-entry'); state.entry = false;
+                for (const n of graph.nodes) n.el.classList.add('is-in'); mapc.setCascade(1); paintPanel(); },
+  run: () => runner.run(state.selection),
+  data: () => data,
+};
+
+const q = new URLSearchParams(location.search);
+if (q.get('preset') && PRESETS.some((p) => p.id === q.get('preset'))) state.presetId = q.get('preset');
+for (const b of document.querySelectorAll('#presets button')) {
+  b.setAttribute('aria-selected', String(b.dataset.preset === state.presetId));
+}
+boot(state.presetId).catch((e) => {
+  console.error(e);
+  $('#boot-note').textContent = '로드 실패: ' + e.message;
+});
