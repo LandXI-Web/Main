@@ -13,11 +13,7 @@ body{cursor:default}
 #scroller{height:600vh;pointer-events:none}
 
 #stage{position:fixed;inset:0;overflow:hidden;background:var(--paper)}
-#map,#gl{position:absolute;inset:0;width:100%;height:100%}
-#map{transition:opacity .5s ease}
-#gl{display:block;transition:opacity .5s ease}
-body[data-demo="map"]   #gl {opacity:0;pointer-events:none}
-body[data-demo="globe"] #map{opacity:0;pointer-events:none}
+#map{position:absolute;inset:0;width:100%;height:100%}
 
 .maplibregl-ctrl-attrib{font-size:9px;opacity:.5}
 
@@ -49,7 +45,7 @@ body[data-demo="globe"] #map{opacity:0;pointer-events:none}
 #hud dd.ok{color:#1E7A45}
 
 /* ── 컨트롤 ── */
-#ctl{position:absolute;top:16px;left:16px;z-index:8;width:238px;padding:12px 14px 13px;
+#ctl{position:absolute;top:16px;left:16px;z-index:8;width:246px;padding:12px 14px 13px;
   background:rgba(255,255,255,.86);border:1px solid var(--line);backdrop-filter:blur(10px)}
 #ctl .row{display:flex;gap:6px;margin-bottom:9px}
 #ctl button{flex:1;padding:7px 8px;font:500 10.5px/1 var(--mono);letter-spacing:.02em;
@@ -62,6 +58,14 @@ body[data-demo="globe"] #map{opacity:0;pointer-events:none}
 #ctl label:hover{color:var(--ink)}
 #ctl input{accent-color:#0E1116;margin:0}
 #ctl .hint{margin:10px 0 0;font:400 9.5px/1.5 var(--mono);color:var(--dim);opacity:.75}
+#ctl .cap{margin:12px 0 7px;font:600 9.5px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--ink);
+  padding-top:10px;border-top:1px solid var(--line)}
+#ctl .cap:first-child{margin-top:0;padding-top:0;border-top:0}
+#plates{display:grid;gap:5px}
+#plates button{display:flex;justify-content:space-between;align-items:baseline;gap:8px;width:100%;
+  padding:7px 9px;text-align:left;font:500 10.5px/1.25 var(--mono)}
+#plates button em{font-style:normal;font-size:9px;color:var(--dim);letter-spacing:.04em}
+#plates button.on em{color:rgba(255,255,255,.62)}
 
 #boot{position:absolute;inset:0;display:grid;place-items:center;z-index:20;background:var(--paper);
   font:500 11px/1 var(--mono);letter-spacing:.18em;color:var(--dim);transition:opacity .6s ease}

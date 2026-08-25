@@ -136,6 +136,7 @@ const DEF = {
   velRef: 0.006,       // 프레임당 Δp 가 이 값이면 lerpFast 에 도달
   rest: 1.2e-5,        // 이 이하면 스냅하고 apply 를 건너뛴다 (정지 시 잔떨림 0)
   tension: 1,          // 0 = 완전 선형(camera.js 호환), 1 = Catmull-Rom
+  join: 0.006,         // 구간 경계에서 이징 속도를 잇는 교차 창 반폭(p 단위). 0 = camera.js 그대로
   screenSpace: true,   // 중심 이동을 2^-zoom 으로 재매개변수화
   globeZoom: [3.5, 6.5], // 이 구간에서 대권 해 → 평면 해로 교차
   maxPitch: 85,
@@ -143,6 +144,7 @@ const DEF = {
   gateMaxMs: 1500,     // 이보다 오래 막히면 페널티를 되돌린다 (데드락 금지)
   gateReleaseMs: 800,
   magnet: { enabled: true, radius: 0.016, idleMs: 160, duration: 900 },
+  focusBreak: 0.004,   // 스크롤이 이만큼 움직이면 오프레일 목표를 놓아준다
   reducedMotion: 'auto',
 };
 
@@ -222,15 +224,63 @@ export function createRail(opts = {}) {
     return lo;
   };
 
+  /* ── 이징 시간 G(p) ────────────────────────────────────────────────
+     카메라의 네 축을 각각 이징하지 않는다. **하나의 단조 함수 G(p) ∈ [0, N-1]**
+     (= 소수점 키프레임 인덱스)를 만들고 모든 축이 거기서 파생된다. 이렇게 하면
+     축끼리 어긋나는 일이 원천적으로 없다.
+
+     구간마다 다른 이징을 쓰면 경계에서 **속도가 계단으로 끊긴다** — 실측했다:
+     4000 스텝에서 zoom 의 2차 차분 최댓값이 스텝 평균의 6배(2.3e-2)였다. 화면에서는
+     "박자"가 아니라 "덜컥"으로 읽힌다. 그래서 경계 좌우 아주 좁은 창(기본 ±0.006 p)에서
+     두 구간의 G 를 smoothstep 으로 교차시킨다. 창 밖에서는 이징이 원래 정의 그대로다.
+     이징을 창 밖으로 선형 외삽해야 교차가 성립하므로 양 끝 기울기를 미리 잰다.
+
+     단, **hold 가 있는 키프레임에서는 창을 0 으로 둔다** — 정지는 의도된 것이고
+     그 경계를 매끄럽게 만들면 정지가 사라진다. */
+  const SEG = [];
+  for (let i = 0; i < N - 1; i++) {
+    const a = KEYS[i], b = KEYS[i + 1];
+    const p0 = a.p + a.hold, p1 = b.p;
+    const e = parseEase(a.e), h = 1e-3;
+    SEG.push({ p0, inv: 1 / Math.max(1e-6, p1 - p0), e, d0: (e(h) - e(0)) / h, d1: (e(1) - e(1 - h)) / h });
+  }
+  const JW = new Float64Array(N);   // 키프레임 i 에서의 교차 창 반폭
+  for (let i = 1; i < N - 1; i++) {
+    if (KEYS[i].hold > 0) continue;                       // 홀드 경계는 매끄럽게 하지 않는다
+    const l = KEYS[i].p - SEG[i - 1].p0, r = KEYS[i + 1].p - SEG[i].p0;
+    JW[i] = Math.max(0, Math.min(o.join, 0.35 * Math.min(l, r)));
+  }
+  // 구간 안: 이징을 그대로(u 는 [0,1] 로 잘린다 → hold 구간이 진짜로 정지한다).
+  const Gin  = (i, p) => i + SEG[i].e(clamp01((p - SEG[i].p0) * SEG[i].inv));
+  // 교차 창 안: 이웃 구간을 정의역 밖으로 선형 외삽해야 속도가 이어진다.
+  const Gext = (i, p) => {
+    const S = SEG[i], u = (p - S.p0) * S.inv;
+    return i + (u < 0 ? S.d0 * u : u > 1 ? 1 + S.d1 * (u - 1) : S.e(u));
+  };
+
+  function G(p) {
+    const i = segOf(p);
+    let g = Gin(i, p);
+    // 두 창은 겹치지 않는다(반폭이 인접 구간 길이의 35% 이하이므로).
+    if (i + 1 <= N - 2 && JW[i + 1] > 0 && p > KEYS[i + 1].p - JW[i + 1]) {
+      const b = KEYS[i + 1].p, w = JW[i + 1], t = smoothstep(b - w, b + w, p);
+      g = Gext(i, p) * (1 - t) + Gext(i + 1, p) * t;
+    } else if (i >= 1 && JW[i] > 0 && p < KEYS[i].p + JW[i]) {
+      const b = KEYS[i].p, w = JW[i], t = smoothstep(b - w, b + w, p);
+      g = Gext(i - 1, p) * (1 - t) + Gext(i, p) * t;
+    }
+    return clamp(g, 0, N - 1);
+  }
+
   const tmp2 = [0, 0], tmp3 = [0, 0, 0];
 
   /* 순수 함수 — p → 카메라. 테스트/마이그레이션의 접점이다. */
   function at(p) {
     p = clamp01(p);
-    const i = segOf(p), a = KEYS[i], b = KEYS[i + 1];
-    const span = b.p - a.p || 1;
-    const raw = clamp01((p - a.p - a.hold) / Math.max(1e-6, span - a.hold));
-    const k = parseEase(a.e)(raw);
+    const g = G(p);
+    const i = clamp(Math.floor(g), 0, N - 2);
+    const a = KEYS[i], b = KEYS[i + 1];
+    const k = clamp01(g - i);
     const zoom = a.z + (b.z - a.z) * k;
     const kc = o.screenSpace ? warpAt(i, k) : k;
     crEval(S_PLANE, i, kc, o.tension, tmp2);
@@ -262,7 +312,8 @@ export function createRail(opts = {}) {
   let pT = 0, pS = 0, pPrev = 0, vel = 0;
   let raf = 0, last = 0, running = false;
   let gated = false, gateSince = 0, gateRelease = 0;
-  let lastInput = 0, inputPending = 0, driving = null, magnetArmed = -1, magnetFired = -1;
+  let lastInput = 0, inputPending = 0, driving = null, magnetFired = -1;
+  let focus = null;   // 오프레일 목표(결과 판 클릭 등)
   const subs = new Set();
   if (typeof opts.apply === 'function') subs.add(opts.apply);
 
@@ -344,6 +395,26 @@ export function createRail(opts = {}) {
     const ci = chapterFor(pS);
     if (ci !== chIdx) { chIdx = ci; opts.onChapter && ci >= 0 && opts.onChapter(ci, CH[ci], pS); }
 
+    /* ── 오프레일 목표 ──────────────────────────────────────────
+       "결과 판을 클릭하면 카메라가 실제 지점으로 난다". 스크롤 카메라가 매 프레임
+       jumpTo 로 덮으면 날아가다 말고 되돌아오므로, 그동안은 레일이 물러난다.
+       타일 게이트는 여기에도 걸린다 — 도착했는데 화면이 흐린 것보다 조금 늦게 도착하는 편이 낫다. */
+    if (focus) {
+      if (Math.abs(pT - focus.p0) > (o.focusBreak || 0.004)) { focus.rev = focus.rev || performance.now(); }
+      const rate = dt / Math.max(1, focus.ms) * (focus.gate === false ? 1 : pen);
+      focus.q = clamp01(focus.q + (focus.rev ? -rate * 1.4 : rate));
+      const k = focus.ease(focus.q);
+      const st = mix(focus.from, focus.to, k);
+      st.p = pS; st.pTarget = pT; st.velocity = vel; st.gated = gated; st.instant = reduced;
+      st.chapter = chIdx; st.dt = dt; st.atRest = false; st.focus = true; st.focusQ = focus.q;
+      lastApplied = st;
+      fire(st);
+      if (focus.q >= 1 && !focus.rev) { const d = focus.done; focus.done = null; d && d(); }
+      if (focus.q <= 0 && focus.rev) focus = null;
+      raf = requestAnimationFrame(frame);
+      return;
+    }
+
     if (moved || lastApplied === null) {
       const st = at(pS);
       st.p = pS; st.pTarget = pT; st.velocity = vel; st.gated = gated;
@@ -423,12 +494,42 @@ export function createRail(opts = {}) {
   }
   const unbind = opts.bindInput === false ? () => {} : bindInput(opts.inputTarget);
 
+  const shortest = (a, b) => ((b - a) % 360 + 540) % 360 - 180;
+  const mix = (A, B, k) => ({
+    center: [A.center[0] + shortest(A.center[0], B.center[0]) * k, A.center[1] + (B.center[1] - A.center[1]) * k],
+    zoom: A.zoom + (B.zoom - A.zoom) * k,
+    pitch: A.pitch + (B.pitch - A.pitch) * k,
+    bearing: A.bearing + shortest(A.bearing, B.bearing) * k,
+  });
+
   const api = {
     KEYS, CHAPTERS: CH, at, reduced,
+
+    /* 결과 판 / POI — 레일 밖의 실제 지점으로 카메라를 데려간다.
+       사용자가 다시 스크롤하면(|Δp| > focusBreak) 자동으로 레일로 되돌아온다. */
+    focus(target, ms = 1600, ease = 'power3.inOut') {
+      const from = lastApplied ? { center: lastApplied.center.slice(), zoom: lastApplied.zoom, pitch: lastApplied.pitch, bearing: lastApplied.bearing } : at(pS);
+      const to = { center: (target.center || target.c).slice(), zoom: target.zoom, pitch: target.pitch || 0, bearing: target.bearing || 0 };
+      if (reduced) { focus = { from, to, q: 1, ms: 1, ease: (x) => x, p0: pT, gate: false }; return Promise.resolve(); }
+      return new Promise((done) => { focus = { from, to, q: 0, ms, ease: parseEase(ease), p0: pT, done, gate: target.gate !== false }; });
+    },
+    release() { if (focus) focus.rev = performance.now(); },
+    get focused() { return !!focus; },
+
+    /* 결정론적 렌더링용 — rAF 를 기다리지 않고 그 자리에서 계산·적용한다.
+       레그 렌더러(오프라인 프레임 캡처)가 seek(t) → jumpTo 로 쓰는 경로다. */
+    applyAt(p) {
+      const st = at(clamp01(p));
+      st.p = clamp01(p); st.pTarget = st.p; st.velocity = 0; st.gated = false;
+      st.instant = true; st.chapter = chapterFor(st.p); st.dt = 16.7; st.atRest = false;
+      pT = pS = pPrev = st.p; lastApplied = st;
+      fire(st);
+      return st;
+    },
     /* 호스트(ScrollTrigger)가 매 스크롤마다 호출한다. */
     setProgress(p) { pT = clamp01(p); },
     /* 즉시 이동 — 스무딩을 건너뛴다. */
-    seek(p) { pT = pS = pPrev = clamp01(p); vel = 0; driving = null; lastApplied = null; },
+    seek(p) { pT = pS = pPrev = clamp01(p); vel = 0; driving = null; focus = null; lastApplied = null; },
     /* 자동재생. 입력이 들어오면 pause() 로 취소된다. */
     play(from, to, ms = 6000, ease = 'power2.inOut') {
       return new Promise((done) => {

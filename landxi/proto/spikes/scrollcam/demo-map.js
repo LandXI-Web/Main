@@ -5,8 +5,20 @@ const EOX = 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/
 const XD_SAT = 'https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg';
 const XD_HYB = 'https://xdworld.vworld.kr/2d/Hybrid/service/{z}/{x}/{y}.png';
 const DEM = 'https://tiles.mapterhorn.com/{z}/{x}/{y}.webp';
-const ORTHO = '../../assets/tiles/namwon_city_2510/{z}/{x}/{y}.webp';
+const T = '../../../assets/tiles';
 const NW_BOUNDS = [127.182606, 35.302858, 127.637309, 35.561786];
+
+/* 결과 판 — 실제로 분석 결과가 있는 지점만 올린다. 좌표·줌 범위는 타일셋에서 실측했다. */
+export const PLATES = [
+  { id: 'city',   ko: '남원 시 전역',   src: 'namwon_city_2510', minzoom: 11, maxzoom: 17,
+    bounds: NW_BOUNDS,                                     center: [127.3247, 35.3454], zoom: 16.2, pitch: 34, bearing: -8 },
+  { id: 'drone',  ko: '남원 드론 AOI',  src: 'namwon_2510', minzoom: 12, maxzoom: 19,
+    bounds: [127.3481, 35.5276, 127.3567, 35.5347],        center: [127.3524, 35.5311], zoom: 18.1, pitch: 46, bearing: 18 },
+  { id: 'kuksan', ko: '군산 국산 A71',  src: 'kuksan_a71', minzoom: 13, maxzoom: 19,
+    bounds: [126.973996, 35.825613, 126.992145, 35.838284], center: [126.9831, 35.8320], zoom: 17.4, pitch: 52, bearing: -26 },
+  { id: 'jeju',   ko: '제주 애월',      src: 'jeju_2022', minzoom: 13, maxzoom: 19,
+    bounds: [126.81996, 33.504972, 126.82504, 33.510028],   center: [126.8224, 33.5076], zoom: 18.4, pitch: 40, bearing: 8 },
+];
 
 const ramp = (...s) => ['interpolate', ['linear'], ['zoom'], ...s];
 
@@ -18,7 +30,9 @@ export function style() {
       eox: { type: 'raster', tiles: [EOX], tileSize: 256, maxzoom: 14, attribution: 'Sentinel-2 cloudless © EOX' },
       vsat: { type: 'raster', tiles: [XD_SAT], tileSize: 256, minzoom: 5, maxzoom: 19, attribution: '© V-World' },
       vhyb: { type: 'raster', tiles: [XD_HYB], tileSize: 256, minzoom: 5, maxzoom: 19 },
-      ortho: { type: 'raster', tiles: [ORTHO], tileSize: 256, minzoom: 11, maxzoom: 17, bounds: NW_BOUNDS, attribution: 'LX 정사영상' },
+      ...Object.fromEntries(PLATES.map((p) => [`o_${p.id}`, {
+        type: 'raster', tiles: [`${T}/${p.src}/{z}/{x}/{y}.webp`], tileSize: 256,
+        minzoom: p.minzoom, maxzoom: p.maxzoom, bounds: p.bounds, attribution: 'LX 정사영상' }])),
       dem: { type: 'raster-dem', tiles: [DEM], tileSize: 512, maxzoom: 12, encoding: 'terrarium',
              bounds: [124.0, 32.5, 132.0, 39.5], attribution: '© Mapterhorn' },
       dem2: { type: 'raster-dem', tiles: [DEM], tileSize: 512, maxzoom: 12, encoding: 'terrarium',
@@ -31,8 +45,13 @@ export function style() {
     },
     light: { anchor: 'map', position: [1.4, 120, 62], color: '#FFF6E6', intensity: 0.42 },
     layers: [
-      { id: 'bg', type: 'background', paint: { 'background-color':
-        ramp(5.2, 'rgba(246,244,240,0)', 6.4, 'rgba(28,48,78,1)', 11, 'rgba(78,108,148,1)') } },
+      /* 함정: **완전 불투명한 background 는 위의 raster 를 가린다.**
+         MapLibre 는 불투명 레이어를 opaque 패스에서 깊이버퍼와 함께 먼저 그리므로,
+         translucent 패스로 가는 raster 가 깊이 테스트에서 탈락한다. 레이어 순서와 무관하다.
+         알파를 1 미만으로만 두면(0.999) translucent 패스로 내려와 순서대로 그려진다. */
+      { id: 'bg', type: 'background', paint: {
+        'background-opacity': 0.999,
+        'background-color': ramp(5.2, 'rgba(246,244,240,0)', 6.4, 'rgba(28,48,78,1)', 11, 'rgba(78,108,148,1)') } },
       { id: 'eox', type: 'raster', source: 'eox',
         paint: { 'raster-opacity': ramp(6.6, 1, 8.2, 0), 'raster-fade-duration': 0, 'raster-saturation': 0.05 } },
       { id: 'hillshade', type: 'hillshade', source: 'dem', minzoom: 4, maxzoom: 13,
@@ -40,8 +59,11 @@ export function style() {
                  'hillshade-shadow-color': '#20303F', 'hillshade-highlight-color': '#FFF8EC' } },
       { id: 'vsat', type: 'raster', source: 'vsat', minzoom: 5,
         paint: { 'raster-opacity': ramp(5.4, 0, 7.4, 1), 'raster-fade-duration': 0 } },
-      { id: 'ortho', type: 'raster', source: 'ortho', minzoom: 11,
-        paint: { 'raster-opacity': ramp(12.2, 0, 13.6, 1), 'raster-fade-duration': 0 } },
+      // 시 전역 정사영상은 강하 구간에서 줌으로 켜지고, 나머지 판은 클릭할 때만 켜진다.
+      { id: 'o_city', type: 'raster', source: 'o_city', minzoom: 11,
+        paint: { 'raster-opacity': ramp(11.6, 0, 12.8, 1), 'raster-fade-duration': 0 } },
+      ...PLATES.slice(1).map((p) => ({ id: `o_${p.id}`, type: 'raster', source: `o_${p.id}`, minzoom: p.minzoom,
+        paint: { 'raster-opacity': 0, 'raster-opacity-transition': { duration: 520 }, 'raster-fade-duration': 0 } })),
       { id: 'vhyb', type: 'raster', source: 'vhyb', minzoom: 9,
         paint: { 'raster-opacity': ramp(9, 0, 11, 0.5, 15, 0.75), 'raster-fade-duration': 0 } },
     ],
@@ -96,6 +118,13 @@ export function createMapDemo(container) {
     get isGlobe() { return globe; },
     get sinceSwitch() { return performance.now() - lastSwitch; },
     projection, mercatorBias, setTerrain,
+    /* 결과 판 전환 — 판 하나만 켠다. raster-opacity-transition 이 크로스페이드를 맡는다. */
+    showPlate(id) {
+      for (const p of PLATES.slice(1)) {
+        try { map.setPaintProperty(`o_${p.id}`, 'raster-opacity', p.id === id ? 1 : 0); } catch { /* 스타일 로딩 중 */ }
+      }
+    },
+    PLATES,
     ready: () => new Promise((r) => (map.loaded() ? r() : map.once('load', r))),
     tilesReady: () => { try { return map.areTilesLoaded(); } catch { return true; } },
   };

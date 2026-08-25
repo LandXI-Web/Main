@@ -2,7 +2,12 @@
    camera.js 의 키프레임 포맷을 그대로 확장했다({p,c/center,z/zoom,t/pitch,b/bearing,e/ease}에
    hold 와 turn 만 추가). dive.js 의 KEYS 를 그대로 붙여넣어도 돌아간다. */
 
-export const NAMWON = [127.3524, 35.5311];
+/* 착지점은 "예쁜 좌표"가 아니라 **z17 정사영상이 실제로 있는 곳**이어야 한다.
+   namwon_city_2510 의 고해상 코어는 z16–17 에서 [127.290–127.359, 35.317–35.373] 뿐이다
+   (z11–15 는 시 전역). 처음엔 드론 AOI 좌표(127.3524, 35.5311)로 잡았다가 착지 화면이
+   저해상 오버줌으로 뭉개졌다 — 레일을 데이터에 맞췄다. */
+export const NAMWON = [127.3247, 35.3454];
+export const CITY = [127.4084, 35.4337];      // 시 전역 정사영상(z11–15)의 중심
 
 export const KEYS = [
   // p,     center,                z,     pitch, bearing, ease,           hold
@@ -10,9 +15,9 @@ export const KEYS = [
   { p: 0.180, c: [127.62, 36.42], z: 3.40, t: 6,  b: 12,  e: 'expo.in' },
   { p: 0.300, c: [127.82, 36.10], z: 5.40, t: 22, b: -4,  e: 'power2.out' },
   { p: 0.420, c: [127.74, 35.94], z: 6.90, t: 34, b: -10, e: 'none',         hold: 0.035, label: '국토' },
-  { p: 0.560, c: [127.52, 35.62], z: 8.80, t: 48, b: -18, e: 'power3.inOut' },
-  { p: 0.690, c: [127.410, 35.520], z: 11.6, t: 62, b: -30, e: 'expo.inOut', label: '분지' },
-  { p: 0.800, c: [127.3620, 35.5390], z: 14.2, t: 54, b: -14, e: 'power4.out' },
+  { p: 0.560, c: [127.52, 35.52], z: 8.80, t: 48, b: -18, e: 'power3.inOut' },
+  { p: 0.690, c: [127.400, 35.400], z: 11.6, t: 62, b: -30, e: 'expo.inOut', label: '분지' },
+  { p: 0.800, c: [127.3330, 35.3620], z: 14.2, t: 54, b: -14, e: 'power4.out' },
   { p: 0.890, c: NAMWON,           z: 16.4, t: 32, b: -4,  e: 'power2.inOut', hold: 0.03, label: '착지' },
   { p: 1.000, c: NAMWON,           z: 17.0, t: 0,  b: 0,   e: 'none' },
 ];

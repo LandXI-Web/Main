@@ -1,15 +1,14 @@
-/* SPIKE 셸 — 하나의 레일이 두 렌더러를 동시에 구동한다.
+/* SPIKE 셸 — MapLibre 한 대의 카메라를 레일이 구동한다.
 
    스크롤 배선에 대한 결정(중요):
    Lenis 는 **페이지**를 부드럽게 하고, 레일은 **카메라**를 부드럽게 한다. 둘을 직렬로 걸면
    지연이 두 번 쌓여 "무겁다"가 아니라 "느리다"가 된다. 그래서 레일은 Lenis 의 *평활값*이 아니라
    *목표값*(lenis.targetScroll)을 읽는다 — 스무딩은 정확히 한 번만 일어난다.
-   ScrollTrigger 는 챕터 리빌과 Lenis 부재 시의 폴백 경로에 쓴다. */
+   ScrollTrigger 는 폴백 진행값과 챕터 트리거에 쓴다. */
 
 import { createRail, lenisScroller, mapApply } from './scrollcam.js';
 import { KEYS, CHAPTERS, MARKS } from './rail-config.js';
 import { createMapDemo } from './demo-map.js';
-import { createGlobeDemo } from './demo-globe.js';
 
 const $ = (s) => document.querySelector(s);
 const reducedOS = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -28,12 +27,12 @@ ScrollTrigger.create({
   onUpdate: (self) => { stProgress = self.progress; },
 });
 
-/* ── 데모 ── */
+/* ── 지도 ── */
 const mapDemo = createMapDemo('map');
-const globeDemo = await createGlobeDemo($('#gl'));
+const PLATES = mapDemo.PLATES;
 
 /* ── 레일 ── */
-let gateOn = true, zoomBias = 0;
+let gateOn = true, terrainOn = false;
 const rail = createRail({
   keyframes: KEYS,
   chapters: CHAPTERS,
@@ -43,21 +42,16 @@ const rail = createRail({
     document.querySelectorAll('#copy .ch').forEach((el, j) => el.classList.toggle('on', j === i));
   },
 });
-window.__lenis = lenis;
 
-/* 지도 구독자 — 투영 전환과 지형을 카메라와 같은 프레임에서 처리한다.
+/* 카메라 구독자 — 투영 전환과 지형을 카메라와 같은 프레임에서 처리한다.
    (전환을 별도 콜백/타이머로 미루면 한 프레임 어긋난 화면이 반드시 눈에 띈다.) */
 const jump = mapApply(mapDemo.map);
-let terrainOn = false;
 rail.subscribe((s) => {
-  if (document.body.dataset.demo !== 'map') return;
-  const globe = mapDemo.projection(s.zoom, s.center[1]);
-  const z = globe ? s.zoom : s.zoom + zoomBias;
-  jump({ ...s, zoom: z });
+  mapDemo.projection(s.zoom, s.center[1]);
+  jump(s);
   const exag = terrainOn && s.zoom > 6.2 && s.zoom < 12.6 ? 1.4 * (1 - Math.max(0, (s.zoom - 11.4) / 1.2)) : 0;
   mapDemo.setTerrain(terrainOn, exag);
 });
-rail.subscribe((s) => { if (document.body.dataset.demo === 'globe') globeDemo.apply(s); });
 
 /* ── HUD ── */
 const hud = {
@@ -75,7 +69,7 @@ rail.subscribe((s) => {
   set(hud.c, `${s.center[0].toFixed(4)}, ${s.center[1].toFixed(4)}`);
   set(hud.z, s.zoom.toFixed(3));
   set(hud.tb, `${s.pitch.toFixed(1)}° / ${((s.bearing % 360 + 540) % 360 - 180).toFixed(1)}°`);
-  set(hud.proj, document.body.dataset.demo === 'globe' ? 'three · sphere' : (mapDemo.isGlobe ? 'globe' : 'mercator'));
+  set(hud.proj, `${mapDemo.isGlobe ? 'globe' : 'mercator'} · ${s.focus ? '판' : '레일'}`);
 });
 
 setInterval(() => {
@@ -89,17 +83,33 @@ setInterval(() => {
   set(hud.app, `${m.applies} / ${m.skipped}`);
 }, 400);
 
+/* ── 결과 판 — 클릭하면 카메라가 실제 지점으로 난다 ────────────────
+   dive.js 의 flyTo + camHold 조합을 레일 안으로 들여온 것이다. 타일 게이트가
+   비행 속도에도 걸리므로 "도착했는데 흐림" 대신 "조금 늦게, 선명하게" 가 된다. */
+$('#plates').innerHTML = PLATES.map((p) =>
+  `<button data-id="${p.id}">${p.ko}<em>z${p.zoom} · ${p.pitch}°</em></button>`).join('');
+let activePlate = null;
+document.querySelectorAll('#plates button').forEach((b) => {
+  b.onclick = () => {
+    const p = PLATES.find((x) => x.id === b.dataset.id);
+    activePlate = p.id;
+    document.querySelectorAll('#plates button').forEach((x) => x.classList.toggle('on', x === b));
+    mapDemo.showPlate(p.id);
+    rail.focus(p, 1900);
+  };
+});
+rail.subscribe((s) => {
+  if (activePlate && !s.focus) {          // 스크롤이 판을 놓아줬다
+    activePlate = null;
+    document.querySelectorAll('#plates button').forEach((x) => x.classList.remove('on'));
+    mapDemo.showPlate(null);
+  }
+});
+
 /* ── 컨트롤 ── */
-const demo = (which) => {
-  document.body.dataset.demo = which;
-  $('#b-map').classList.toggle('on', which === 'map');
-  $('#b-globe').classList.toggle('on', which === 'globe');
-  rail.seek(rail.progress);           // 새 렌더러에 즉시 현재 상태를 밀어 넣는다
-};
-$('#b-map').onclick = () => demo('map');
-$('#b-globe').onclick = () => demo('globe');
 $('#o-tension').onchange = (e) => rail.setOption('tension', e.target.checked ? 1 : 0);
 $('#o-warp').onchange = (e) => rail.setOption('screenSpace', e.target.checked);
+$('#o-join').onchange = (e) => rail.setOption('join', e.target.checked ? 0.006 : 0);
 $('#o-magnet').onchange = (e) => rail.setOption('magnet', { enabled: e.target.checked });
 $('#o-gate').onchange = (e) => { gateOn = e.target.checked; };
 $('#o-terrain').onchange = (e) => { terrainOn = e.target.checked; rail.resetMetrics(); };
@@ -109,7 +119,6 @@ $('#b-reset').onclick = () => rail.resetMetrics();
 
 /* ── 부팅 ── */
 await mapDemo.ready();
-demo('map');
 rail.seek(0);
 rail.start();
 
@@ -118,28 +127,23 @@ gsap.ticker.add(() => {
   // 레일의 목표값은 Lenis 의 *목표* 스크롤에서 온다(이중 스무딩 방지).
   const y = (lenis.targetScroll != null ? lenis.targetScroll : (window.scrollY || 0));
   rail.setProgress(y / limit());
-  if (++ticks === 4) {
-    $('#boot').classList.add('gone');
-    document.body.dataset.ready = '1';
-  }
+  if (++ticks === 4) { $('#boot').classList.add('gone'); document.body.dataset.ready = '1'; }
 });
 
 /* ── 계측 도구 (Playwright 에서 호출한다) ── */
-async function settle(ms = 900) { await new Promise((r) => setTimeout(r, ms)); }
+const settle = (ms = 900) => new Promise((r) => setTimeout(r, ms));
 
 window.__rail = {
-  rail, lenis, map: mapDemo.map, MARKS, CHAPTERS,
-  demo,
-  seek(p) {
-    const s = lenisScroller(lenis);
-    s(p, 0); rail.seek(p);
-  },
+  rail, lenis, map: mapDemo.map, MARKS, CHAPTERS, PLATES,
+  seek(p) { lenisScroller(lenis)(p, 0); rail.seek(p); },
   play: (a, b, ms) => rail.play(a, b, ms, 'power1.inOut'),
+  plate: (id) => document.querySelector(`#plates button[data-id="${id}"]`).click(),
   metrics: () => rail.metrics(),
   reset: () => rail.resetMetrics(),
   errors: () => mapDemo.errors,
   setOption: (k, v) => rail.setOption(k, v),
   at: (p) => rail.at(p),
+  applyAt: (p) => rail.applyAt(p),
 
   /* 글로브 ↔ 메르카토르 축척 불연속을 실제로 잰다.
      같은 center/zoom 에서 화면 가로 절반이 덮는 지상 거리(도 단위)를 두 투영에서 비교한다. */
@@ -150,30 +154,26 @@ window.__rail = {
       const a = map.unproject([w * 0.25, h / 2]), b = map.unproject([w * 0.75, h / 2]);
       return Math.abs(b.lng - a.lng);
     };
-    const out = {};
+    const out = { zoom, lat: center[1] };
     map.setProjection({ type: 'globe' }); map.jumpTo({ center, zoom, pitch: 0, bearing: 0 });
-    await settle(600); out.globeSpanDeg = span();
+    await settle(700); out.globeSpanDeg = +span().toFixed(5);
     map.setProjection({ type: 'mercator' }); map.jumpTo({ center, zoom, pitch: 0, bearing: 0 });
-    await settle(600); out.mercatorSpanDeg = span();
-    out.ratio = out.globeSpanDeg / out.mercatorSpanDeg;
-    out.zoomLevels = Math.log2(out.ratio);
-    out.predicted1overCosLat = 1 / Math.cos(center[1] * Math.PI / 180);
-    out.lat = center[1]; out.zoom = zoom;
+    await settle(700); out.mercatorSpanDeg = +span().toFixed(5);
+    out.ratio = +(out.globeSpanDeg / out.mercatorSpanDeg).toFixed(4);
+    out.zoomLevels = +Math.log2(out.ratio).toFixed(4);
+    out.predicted_1overCosLat = +(1 / Math.cos(center[1] * Math.PI / 180)).toFixed(4);
     return out;
   },
 
-  /* jumpTo 한 번의 비용. 렌더는 다음 rAF 에서 일어나므로 호출 비용과 프레임 비용을 나눠 잰다. */
+  /* jumpTo 비용 — 호출 자체와 프레임 전체를 나눠 잰다. */
   async measureJumpCost(n = 240) {
     const map = mapDemo.map;
-    const base = rail.at(0.62);
     let t0 = performance.now();
     for (let i = 0; i < n; i++) {
-      const q = 0.62 + (i / n) * 0.0004;
-      const s = rail.at(q);
+      const s = rail.at(0.62 + (i / n) * 0.0004);
       map.jumpTo({ center: s.center, zoom: s.zoom, pitch: s.pitch, bearing: s.bearing });
     }
     const callMs = (performance.now() - t0) / n;
-    // 프레임 포함 비용
     t0 = performance.now(); let frames = 0;
     await new Promise((res) => {
       const step = () => {
@@ -185,28 +185,26 @@ window.__rail = {
       requestAnimationFrame(step);
     });
     const frameMs = (performance.now() - t0) / frames;
-    return { callMs: +callMs.toFixed(3), frameMs: +frameMs.toFixed(2), fps: +(1000 / frameMs).toFixed(1), base: base.zoom };
+    return { callMs: +callMs.toFixed(3), frameMs: +frameMs.toFixed(2), fps: +(1000 / frameMs).toFixed(1) };
   },
 
-  /* 레일 자체의 수학 검증 — 브라우저 없이도 같은 답이 나와야 한다. */
-  auditRail(steps = 2000) {
-    let maxJerkC = 0, maxJerkZ = 0, prev = null, prev2 = null, offKey = 0;
+  /* 레일 수학 감사 — 브라우저 없이도 같은 답이 나와야 한다. */
+  auditRail(steps = 4000) {
+    let jc = 0, jz = 0, jb = 0, kerr = 0, back = 0, prev = null, prev2 = null, pz = -1;
     for (let i = 0; i <= steps; i++) {
       const s = rail.at(i / steps);
+      if (s.zoom < pz) back = Math.max(back, pz - s.zoom);
+      pz = s.zoom;
       if (prev && prev2) {
         const a1 = [s.center[0] - prev.center[0], s.center[1] - prev.center[1]];
         const a0 = [prev.center[0] - prev2.center[0], prev.center[1] - prev2.center[1]];
-        maxJerkC = Math.max(maxJerkC, Math.hypot(a1[0] - a0[0], a1[1] - a0[1]));
-        maxJerkZ = Math.max(maxJerkZ, Math.abs((s.zoom - prev.zoom) - (prev.zoom - prev2.zoom)));
+        jc = Math.max(jc, Math.hypot(a1[0] - a0[0], a1[1] - a0[1]));
+        jz = Math.max(jz, Math.abs((s.zoom - prev.zoom) - (prev.zoom - prev2.zoom)));
+        jb = Math.max(jb, Math.abs((s.bearing - prev.bearing) - (prev.bearing - prev2.bearing)));
       }
       prev2 = prev; prev = s;
     }
-    for (const k of KEYS) {
-      const s = rail.at(k.p + (k.hold || 0) + (k.p >= 1 ? 0 : 1e-9));
-      const at = rail.at(Math.min(1, k.p));
-      const d = Math.hypot(at.center[0] - k.c[0], at.center[1] - k.c[1]);
-      if (d > 1e-6) offKey = Math.max(offKey, d);
-    }
-    return { maxJerkCenterDeg: maxJerkC, maxJerkZoom: maxJerkZ, maxKeyframeErrorDeg: offKey, steps };
+    for (const k of KEYS) { const s = rail.at(k.p); kerr = Math.max(kerr, Math.hypot(s.center[0] - k.c[0], s.center[1] - k.c[1])); }
+    return { steps, maxKeyframeErrorDeg: kerr, d2center: jc, d2zoom: jz, d2bearing: jb, maxZoomReversal: back };
   },
 };
