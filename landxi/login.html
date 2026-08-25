@@ -1,0 +1,43 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>로그인 — Land-XI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@700;800;900&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
+<link rel="stylesheet" href="assets/css/tokens.css">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/components.css">
+<link rel="stylesheet" href="assets/css/map.css">
+<link rel="stylesheet" href="assets/css/pages/login.css">
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+</head><body class="login-body">
+<div class="login">
+  <div id="loginMap" class="login__map" aria-hidden="true"></div>
+  <div class="login-card glass">
+    <div class="brand">
+      <img class="brand__img" src="assets/brand/landxi-wordmark.png" alt="LAND-XI PLATFORM" onerror="this.hidden=true;this.nextElementSibling.hidden=false">
+      <span class="brand__text" hidden>LAND-XI PLATFORM</span>
+    </div>
+    <h1 class="sr-only">로그인</h1>
+    <p class="eyebrow login-eyebrow">LX 전 직원이 Geo-AI 전문가입니다</p>
+    <p class="login-subtitle muted">NO-CODE 기반의 AI 학습모델을 구축하는 Land-XI</p>
+    <form id="loginForm" novalidate>
+      <div class="field">
+        <label for="loginEmail">아이디(이메일)</label>
+        <input class="input" id="loginEmail" name="email" type="email" autocomplete="username" placeholder="name@lx.or.kr">
+      </div>
+      <div class="field">
+        <label for="loginPw">비밀번호</label>
+        <input class="input" id="loginPw" name="pw" type="password" autocomplete="current-password" placeholder="비밀번호">
+      </div>
+      <label class="login-remember"><input type="checkbox" name="remember"> 아이디 저장</label>
+      <p class="login-error" role="alert" hidden></p>
+      <button type="submit" class="btn btn--primary btn--block btn--lg">로그인</button>
+    </form>
+    <div class="login-links">
+      <button type="button" class="link" data-action="find-id">아이디 찾기</button>
+      <button type="button" class="link" data-action="find-pw">비밀번호 찾기</button>
+      <a class="link" href="signup.html">계정 신청하기</a>
+    </div>
+  </div>
+</div>
+<script type="module" src="assets/js/pages/login.js"></script>
+</body></html>
