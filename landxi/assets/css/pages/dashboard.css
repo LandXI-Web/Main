@@ -83,8 +83,64 @@
 .tile{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--line);border-radius:var(--r-ctl);background:var(--surface);font-size:var(--fs-12);font-weight:600;color:var(--ink-2);transition:border-color var(--t-fast) var(--ease),color var(--t-fast) var(--ease),transform var(--t-fast) var(--ease)}
 .tile:hover{border-color:var(--lx);color:var(--lx);transform:translateY(-1px)}
 
-/* Task 15 이 채운다. 비어 있으면 자리만 잡고 그리지 않는다. */
-.coverage:empty{display:none}
+/* 하단: 전국 커버리지 — 좌 소형 SVG 코로플레스, 우 시군구 14 × 실태조사 7 매트릭스. */
+.coverage:empty{display:none}          /* 데이터가 없으면 자리만 잡고 그리지 않는다 */
+.coverage__body{position:relative;display:grid;grid-template-columns:minmax(280px,34%) minmax(0,1fr);gap:22px;align-items:start}
+.coverage__legend{display:flex;align-items:center;gap:6px;font-size:var(--fs-12);color:var(--ink-3)}
+.coverage__legend i{width:9px;height:9px;border-radius:2px;flex:none}
+.coverage__legend i.is-done{background:var(--lx)}
+.coverage__legend i.is-field{box-shadow:inset 0 0 0 1px var(--line-strong)}
+.coverage__legend i + i{margin-left:6px}
+
+/* 좌: 카드 안에서 직접 투영한 코로플레스 */
+.coverage__map{margin:0;display:grid;gap:8px;min-width:0}
+.coverage__map svg{display:block;width:100%;height:auto}
+.coverage__map figcaption{font-size:var(--fs-12);color:var(--ink-3)}
+.coverage__map.is-off{min-height:120px;place-content:center;text-align:center}
+.coverage__frame{fill:none;stroke:var(--line);stroke-dasharray:4 7}
+.coverage__cell{cursor:pointer}
+.coverage__poly{fill:var(--lx);stroke:rgba(var(--lx-rgb),.5);stroke-width:1.6;transition:fill-opacity var(--t-fast) var(--ease)}
+.coverage__cell:hover .coverage__poly,.coverage__cell.is-hover .coverage__poly{fill-opacity:.92;stroke:var(--ink);stroke-width:2.4}
+.coverage__name{font-family:var(--f-body);font-size:24px;font-weight:600;fill:var(--ink);text-anchor:middle;pointer-events:none}
+.coverage__ratio{font-family:var(--f-mono);font-size:20px;fill:var(--ink-3);text-anchor:middle;pointer-events:none}
+.coverage__cell:hover .coverage__name,.coverage__cell.is-hover .coverage__name{fill:var(--surface)}
+.coverage__cell:hover .coverage__ratio,.coverage__cell.is-hover .coverage__ratio{fill:rgba(255,255,255,.82)}
+.coverage__cell:focus-visible{outline:none}
+.coverage__cell:focus-visible .coverage__poly{stroke:var(--ink);stroke-width:2.4}
+/* 앰비언트는 이 한 점뿐 — 가장 최근 대체 완료 시군 */
+.coverage__ping{fill:none;stroke:var(--lx);stroke-width:2.5;pointer-events:none;transform-box:fill-box;transform-origin:center;animation:cov-ping 2.8s var(--ease) infinite}
+@keyframes cov-ping{0%{transform:scale(.34);opacity:.85}70%{opacity:0}100%{transform:scale(1.5);opacity:0}}
+
+/* 우: 매트릭스 */
+.coverage__matrix{--cols:84px repeat(7,minmax(0,1fr)) 26px;display:grid;gap:2px;min-width:0}
+.coverage__matrix .head,.coverage__matrix .row{display:grid;grid-template-columns:var(--cols);gap:4px;align-items:center}
+.coverage__matrix .head{align-items:end;padding:0 4px 7px;margin:0 -4px;border-bottom:1px solid var(--line)}
+.head__corner{font-size:var(--fs-12);color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.head__label{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;height:116px;font-size:10.5px;color:var(--ink-2)}
+.head__label i{width:8px;height:8px;border-radius:2px;background:var(--c);flex:none}
+.head__label b{writing-mode:vertical-rl;font-weight:600;letter-spacing:.01em;white-space:nowrap}
+.head__n{font-size:10px;color:var(--ink-3);text-align:right}
+
+.coverage__matrix .row{padding:3px 4px;margin:0 -4px;border-radius:6px;color:inherit;transition:background var(--t-fast) var(--ease)}
+.coverage__matrix .row:hover,.coverage__matrix .row.is-hover,.coverage__matrix .row:focus-visible{background:rgba(var(--lx-rgb),.08);outline:none}
+.row__name{font-size:var(--fs-12);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.coverage__matrix .row.is-hover .row__name{color:var(--ink);font-weight:600}
+.coverage__matrix .cell{width:100%;max-width:62px;justify-self:center;height:13px;border-radius:3px;box-shadow:inset 0 0 0 1px var(--line);transition:transform var(--t-fast) var(--ease)}
+.coverage__matrix .cell.is-done{background:var(--c);box-shadow:none}
+.coverage__matrix .row:hover .cell.is-done{transform:scaleY(1.3)}
+.row__n{font-size:11px;text-align:right;color:var(--ink-3)}
+.coverage__matrix .row.is-hover .row__n{color:var(--ink)}
+
+/* 툴팁 — 포인터를 따라간다. body 기준 절대 좌표를 JS 가 transform 으로 준다. */
+.coverage__tip{position:absolute;left:0;top:0;z-index:5;pointer-events:none;display:grid;gap:6px;max-width:360px;padding:9px 11px;border-radius:var(--r-ctl);background:rgba(17,28,45,.94);color:var(--surface);box-shadow:var(--sh-float);font-size:var(--fs-12)}
+.coverage__tip[hidden]{display:none}
+.coverage__tip-head{white-space:nowrap}
+.coverage__tip-head .mono{color:var(--lx-tint)}
+.coverage__tip-list{display:flex;flex-wrap:wrap;gap:4px}
+.coverage__tip-list i{display:inline-flex;align-items:center;gap:5px;font-style:normal;font-size:11px;padding:1px 7px 1px 6px;border-radius:999px;background:rgba(255,255,255,.13)}
+.coverage__tip-list i::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--c)}
+.coverage__tip-list i.is-none{color:rgba(255,255,255,.6)}
+.coverage__tip-list i.is-none::before{display:none}
 
 /* 큐 요약 Drawer — 스크롤과 무관하게 화면에 고정한다. */
 .dash-drawer.drawer--right{position:fixed;top:calc(var(--ctx-h) + 12px);right:12px;bottom:12px;z-index:40}
@@ -101,9 +157,12 @@
 }
 @media (max-width:1120px){
   .dash{grid-template-columns:minmax(0,1fr)}
+  .coverage__body{grid-template-columns:minmax(0,1fr)}
   .dash > .dash__head,.dash > .coverage,.dash > .queue,.dash > .dash__mid,.dash > .side{grid-column:1}
   .side{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (prefers-reduced-motion:reduce){
   .q,.q__act,.q__age,.p,.tile,.dash__notice,.dash-drawer{transition:none}
+  .coverage__poly,.coverage__matrix .row,.coverage__matrix .cell{transition:none}
+  .coverage__ping{animation:none;opacity:.45}
 }
