@@ -93,11 +93,15 @@ export function rowsHTML(classes, fixedMap) {
     }]);
   }
   const max = list.reduce((a, c) => Math.max(a, c.n), 0) || 1;
+  // 합계는 접힌 '기타'까지 포함한 원본 합이어야 비율이 100%로 닫힌다.
+  const tot = classes.reduce((a, c) => a + c.n, 0) || 1;
   return '<ul class="rows">' + list.map((c) => {
     const col = (fixedMap && fixedMap[c.key]) || c.color || '#006DF7';
     return `<li><span class="k"><s style="background:${esc(col)}"></s>${esc(c.name)}</span>`
       + `<span class="bar" style="--w:${(c.n / max * 100).toFixed(1)}%"></span>`
-      + `<span class="v">${fmt(c.n)}<u>${esc(c.unit || '')}</u></span></li>`;
+      + `<span class="v">${fmt(c.n)}<u>${esc(c.unit || '')}</u></span>`
+      // 비율 열 — B-Home 원판의 클래스 표(건 / 비율). 셈이 맞는지 눈으로 검산된다.
+      + `<span class="pc">${(c.n / tot * 100).toFixed(1)}<u>%</u></span></li>`;
   }).join('') + '</ul>';
 }
 

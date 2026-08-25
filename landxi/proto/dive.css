@@ -175,14 +175,14 @@ body{overflow-x:hidden; color:var(--ink); font-size:var(--t-body); line-height:v
 /* ── 아틀라스 좌측 색인 (13 서비스) — 3컬럼 ─────────────── */
 /* B-Home 좌측 컬럼 = 4컬럼. 마스트헤드 아래 56px 에서 시작해 푸터 위에서 끝난다.
    색인 13행(24px 피치) → 캡션 → 헤드라인 블록 → CTA 행이 한 화면에 함께 선다. */
-#atlas{position:absolute; left:var(--g); top:calc(var(--bar) + 56px);
+#atlas{position:absolute; left:var(--g); top:calc(var(--bar) + 40px);
   bottom:calc(var(--foot) + 14px);
   width:calc(4 * var(--colw) + 3 * var(--gap));
   display:flex; flex-direction:column;
   opacity:0; transition:opacity var(--v3-d1) var(--v3-ease)}
 #atlas.on{opacity:1}
-#atlas-fig{margin:0 0 14px; display:flex; justify-content:space-between; align-items:baseline; gap:12px;
-  padding-bottom:10px; border-bottom:var(--v3-hair) solid var(--ink); color:var(--mute)}
+#atlas-fig{margin:0 0 7px; display:flex; justify-content:space-between; align-items:baseline; gap:12px;
+  padding-bottom:6px; border-bottom:var(--v3-hair) solid var(--ink); color:var(--mute)}
 #atlas-fig b{color:var(--ink); font-weight:400}
 #index{margin:0; padding:0; list-style:none}
 #index li{display:grid; grid-template-columns:22px 1fr 60px auto; align-items:baseline; gap:10px;
@@ -214,12 +214,12 @@ body{overflow-x:hidden; color:var(--ink); font-size:var(--t-body); line-height:v
 /* ── 아틀라스 헤드라인 블록 (B-Home 좌측 하단) ──────────────
    색인이 끝나고 남은 세로 공간을 이 블록이 전부 가져간다. 한 화면 안에서
    라벨 → 헤드라인 → 리드 → CTA 가 위에서 아래로 한 번에 읽힌다. */
-#atlas-head{margin-top:auto; padding-top:12px}
-#atlas-head .ck{margin:0 0 12px; padding-bottom:9px;
+#atlas-head{margin-top:auto; padding-top:20px}
+#atlas-head .ck{margin:0 0 16px; padding-bottom:10px;
   border-bottom:var(--v3-hair) solid var(--hair); color:var(--mute)}
-#atlas-head h1{margin:0 0 15px; font-family:var(--v3-display); font-weight:500;
+#atlas-head h1{margin:0 0 20px; font-family:var(--v3-display); font-weight:500;
   font-size:var(--t-h1); line-height:1.10; letter-spacing:-0.02em; text-wrap:balance}
-#ah-lead{margin:0 0 14px; font-size:13.5px; line-height:1.5; color:#2A2E34; max-width:34em}
+#ah-lead{margin:0 0 18px; font-size:13.5px; line-height:1.5; color:#2A2E34; max-width:34em}
 #ah-lead .num{font-family:var(--v3-num); font-size:12.5px; color:var(--mute)}
 #ah-cta{display:flex; align-items:center; gap:26px; flex-wrap:nowrap; white-space:nowrap}
 #ah-1{margin-left:-20px}
@@ -268,7 +268,7 @@ h1,h2,h3,.display,.h2,.h4,.lead,.rb h3{word-break:keep-all; overflow-wrap:break-
 
 /* 클래스 행 — 헤어라인 + 단일 액센트 바 */
 .rows{margin:14px 0 0; padding:0; list-style:none}
-.rows li{display:grid; grid-template-columns:minmax(84px,30%) 1fr 74px; align-items:center; gap:16px;
+.rows li{display:grid; grid-template-columns:minmax(80px,28%) 1fr 66px 46px; align-items:center; gap:12px;
   padding:4px 0; border-bottom:var(--v3-hair) solid var(--hair);
   transition:transform var(--v3-hover) var(--v3-hover-ease)}
 .rows li:hover{transform:translateX(4px)}
@@ -279,6 +279,10 @@ h1,h2,h3,.display,.h2,.h4,.lead,.rb h3{word-break:keep-all; overflow-wrap:break-
 .rows .v{font-family:var(--v3-num); font-size:12px; font-variant-numeric:tabular-nums;
   text-align:right; color:var(--ink)}
 .rows .v u{text-decoration:none; color:var(--soft); font-size:9.5px; margin-left:6px}
+/* 비율 열 — B-Home 원판의 클래스 표 오른쪽 끝 */
+.rows .pc{font-family:var(--v3-num); font-size:11px; font-variant-numeric:tabular-nums;
+  color:var(--mute); text-align:right; white-space:nowrap}
+.rows .pc u{text-decoration:none; color:var(--soft); font-size:9px; margin-left:2px}
 
 /* 신뢰도 — 헤어라인 트랙 + 히스토그램(값은 sweep 으로 도착한다) */
 .ctl{margin-top:14px; padding-top:12px; border-top:var(--v3-hair) solid var(--hair)}

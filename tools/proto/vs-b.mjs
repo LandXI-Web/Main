@@ -3,7 +3,7 @@
  *   node tools/serve.mjs &
  *   node tools/proto/vs-b.mjs
  *
- * ① design-canvas/B-Home.dc.html 을 1440×900 으로 렌더 → design-canvas/renders/B-Home.png
+ * ① design-canvas/B-Home.dc.html 을 1440×900 으로 렌더 → shots/proto/w-B-template.png
  *    (<x-dc> 래퍼와 없는 support.js 는 무시된다. sat-namwon.jpg 는 img/ 아래로 라우팅한다.)
  * ② B 원판의 실측 지오메트리를 뽑는다 — 마스트헤드 높이 · 바깥 여백 · 타입 계단.
  * ③ 우리 페이지의 같은 상태(2장 아틀라스 · 결과 아틀라스)를 찍는다.
@@ -12,14 +12,16 @@
 import { chromium } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
 
 const PORT = process.env.PORT || 4173;
 const OUT = path.resolve('shots/proto');
-const RND = path.resolve('design-canvas/renders');
+// B 원판 렌더는 우리 산출물 폴더에 남긴다 — design-canvas/ 는 읽기 전용 템플릿이다.
+// (리포에 커밋된 design-canvas/renders/B-Home.png 는 전량 0바이트로 깨져 있다.
+//  깨져 있으면 같은 렌더의 사본인 Main.png 로 대체한다.)
+const RND = path.resolve('shots/proto');
+const TPL = path.resolve('design-canvas/renders/Main.png');
 const W = 1440, H = 900;
 fs.mkdirSync(OUT, { recursive: true });
-fs.mkdirSync(RND, { recursive: true });
 
 const browser = await chromium.launch({ channel: 'chrome' });
 
@@ -36,7 +38,13 @@ await b.goto(`http://localhost:${PORT}/design-canvas/B-Home.dc.html`, { waitUnti
 await b.addStyleTag({ content: 'x-dc,helmet{display:block}helmet{display:none}body{margin:0}' });
 await b.waitForTimeout(2500);
 const art = await b.$('x-dc > div');
-await (art || b).screenshot({ path: path.join(RND, 'B-Home.png') });
+try {
+  await (art || b).screenshot({ path: path.join(RND, 'w-B-template.png') });
+  if (fs.statSync(path.join(RND, 'w-B-template.png')).size < 5000) throw new Error('빈 렌더');
+} catch (e) {
+  console.log('B 렌더 실패 — 커밋된 사본을 쓴다:', e.message);
+  fs.copyFileSync(TPL, path.join(RND, 'w-B-template.png'));
+}
 
 // ── ② B 실측 ──
 const BM = await b.evaluate(() => {
@@ -124,27 +132,39 @@ OURS.atlas = await p.evaluate(() => {
 const A = 0.888, B2 = 0.988;
 await grab('w-vs-src-res', A + (B2 - A) * (2 / 6), 7000);
 await ctx.close();
-await browser.close();
 console.log('우리 실측:', JSON.stringify(OURS, null, 1));
 
-/* ── ④ 나란히 붙이기 ──────────────────────────────────── */
-const FF = process.env.FFMPEG || 'ffmpeg';
-const bpng = path.join(RND, 'B-Home.png');
-function pair(mine, out, label) {
-  const dst = path.join(OUT, out);
-  try {
-    execFileSync(FF, ['-y', '-loglevel', 'error', '-i', path.join(OUT, mine), '-i', bpng,
-      '-filter_complex',
-      `[0:v]scale=${W}:-1,pad=${W}:${H + 34}:0:34:white,`
-      + `drawtext=text='OURS — ${label}':x=12:y=9:fontsize=17:fontcolor=black[a];`
-      + `[1:v]scale=${W}:-1,pad=${W}:${H + 34}:0:34:white,`
-      + "drawtext=text='B-Home.dc.html (template)':x=12:y=9:fontsize=17:fontcolor=black[b];"
-      + '[a][b]hstack=inputs=2',
-      dst], { stdio: ['ignore', 'ignore', 'pipe'] });
-    console.log('side-by-side', dst);
-  } catch (e) {
-    console.log('ffmpeg 실패 — 원본만 남긴다:', String(e.stderr || e).slice(0, 200));
-  }
+/* ── ④ 나란히 붙이기 ────────────────────────────────────
+   ffmpeg drawtext 는 이 환경에서 fontconfig 가 없어 죽는다. 브라우저로 붙인다 —
+   어차피 브라우저는 이미 떠 있고, 라벨 서체도 페이지와 같은 것을 쓴다. */
+const bpng = path.join(RND, 'w-B-template.png');
+const dataURI = (f) => 'data:image/png;base64,' + fs.readFileSync(f).toString('base64');
+
+async function pair(mine, out, label) {
+  const src = path.join(OUT, mine);
+  if (!fs.existsSync(src) || !fs.existsSync(bpng)) { console.log('건너뜀:', out); return; }
+  const c = await browser.newContext({ viewport: { width: W * 2, height: H + 34 }, deviceScaleFactor: 1 });
+  const pg = await c.newPage();
+  await pg.setContent(`<style>
+      *{margin:0;box-sizing:border-box}
+      body{background:#fff;font:13px/1 ui-sans-serif,system-ui,sans-serif;color:#111}
+      .r{display:flex}
+      .h{height:34px;display:flex;align-items:center;padding:0 12px;
+         border-bottom:1px solid #ddd;letter-spacing:.02em}
+      .c{width:${W}px}
+      .c + .c{border-left:1px solid #ddd}
+      img{display:block;width:${W}px;height:${H}px}
+    </style>
+    <div class="r">
+      <div class="c"><div class="h">OURS — ${label}</div><img src="${dataURI(src)}"></div>
+      <div class="c"><div class="h">B-Home.dc.html (template)</div><img src="${dataURI(bpng)}"></div>
+    </div>`);
+  await pg.waitForTimeout(400);
+  await pg.screenshot({ path: path.join(OUT, out) });
+  await c.close();
+  console.log('side-by-side', path.join(OUT, out));
 }
-pair('w-vs-src-atlas.png', 'w-vs-B.png', 'ch2 atlas');
-pair('w-vs-src-res.png', 'w-vs-B-results.png', 'results atlas');
+
+await pair('w-vs-src-atlas.png', 'w-vs-B.png', 'ch2 atlas');
+await pair('w-vs-src-res.png', 'w-vs-B-results.png', 'results atlas');
+await browser.close();
