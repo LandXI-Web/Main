@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@maplibre/maplibre-gl-compare@0.5.0/dist/maplibre-gl-compare.css">
+<style>html,body{margin:0;height:100%;background:#03060e}#map{position:absolute;inset:0}</style>
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/deck.gl@9.3.10/dist.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pmtiles@4.5.0/dist/pmtiles.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@maplibre/maplibre-gl-compare@0.5.0/dist/maplibre-gl-compare.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"}}</script>
+</head><body>
+<div id="map"></div>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+const R={steps:[],errors:[]}; window.__probe=R;
+const ok=(k,v)=>R.steps.push({k,ok:true,v}); const bad=(k,e)=>R.steps.push({k,ok:false,e:String(e&&e.message||e)});
+const measure=(label,ms)=>new Promise(res=>{let n=0,t0=performance.now();const l=()=>{n++;if(performance.now()-t0<ms)requestAnimationFrame(l);else{ok('fps:'+label,+(n/((performance.now()-t0)/1000)).toFixed(1));res();}};requestAnimationFrame(l);});
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+try{
+ok('globals',{maplibre:!!window.maplibregl, deck:!!window.deck, pmtiles:!!window.pmtiles, gsap:!!window.gsap,
+  ScrollTrigger:!!(window.gsap&&gsap.ScrollTrigger||window.ScrollTrigger), Compare:!!(window.maplibregl&&maplibregl.Compare)||!!window.Compare||!!(window.maplibregl&&maplibregl.Compare), SunCalc:!!window.SunCalc,
+  three:THREE.REVISION, GLTFLoader:!!GLTFLoader, EffectComposer:!!EffectComposer, UnrealBloomPass:!!UnrealBloomPass});
+
+// pmtiles protocol
+try{ const p=new pmtiles.Protocol(); maplibregl.addProtocol('pmtiles', p.tile); ok('pmtiles-protocol',true);}catch(e){bad('pmtiles-protocol',e);}
+
+// suncalc terminator input
+try{ const pos=SunCalc.getPosition(new Date(),37.5,127); ok('suncalc',{alt:+pos.altitude.toFixed(3),az:+pos.azimuth.toFixed(3)});}catch(e){bad('suncalc',e);}
+
+const pts=Array.from({length:5000},(_,i)=>({type:'Feature',id:i,properties:{v:Math.random()},geometry:{type:'Point',coordinates:[126+Math.random()*4,33+Math.random()*5]}}));
+
+const style={version:8,projection:{type:'globe'},glyphs:'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
+ sources:{
+  eox:{type:'raster',tiles:['https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/{z}/{y}/{x}.jpg'],tileSize:256,maxzoom:14,attribution:'Sentinel-2 cloudless © EOX'},
+  vsat:{type:'raster',tiles:['https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg'],tileSize:256,minzoom:5,maxzoom:19,attribution:'© VWorld'},
+  vhyb:{type:'raster',tiles:['https://xdworld.vworld.kr/2d/Hybrid/service/{z}/{x}/{y}.png'],tileSize:256,minzoom:5,maxzoom:19},
+  ofm:{type:'vector',url:'https://tiles.openfreemap.org/planet'},
+  dem:{type:'raster-dem',tiles:['https://tiles.mapterhorn.com/{z}/{x}/{y}.webp'],tileSize:512,maxzoom:12,encoding:'terrarium',attribution:'© Mapterhorn'},
+  pts:{type:'geojson',data:{type:'FeatureCollection',features:pts}},
+  trail:{type:'geojson',lineMetrics:true,data:{type:'Feature',properties:{},geometry:{type:'LineString',coordinates:[[126.9,37.56],[127.4,36.6],[128.6,35.8],[129.07,35.18]]}}}},
+ layers:[
+  {id:'bg',type:'background',paint:{'background-color':'#02040a'}},
+  {id:'eox',type:'raster',source:'eox',paint:{'raster-fade-duration':300,'raster-opacity':['interpolate',['linear'],['zoom'],7,1,9,0]}},
+  {id:'vsat',type:'raster',source:'vsat',paint:{'raster-opacity':['interpolate',['linear'],['zoom'],6,0,8,1],'raster-saturation':0.08,'raster-contrast':0.05}},
+  {id:'boundary',type:'line',source:'ofm','source-layer':'boundary',filter:['<=',['get','admin_level'],4],paint:{'line-color':'#7fd8ff','line-width':['interpolate',['linear'],['zoom'],3,0.5,10,1.6],'line-opacity':0.7,'line-blur':0.6}},
+  {id:'vhyb',type:'raster',source:'vhyb',paint:{'raster-opacity':['interpolate',['linear'],['zoom'],9,0,11,0.85]}},
+  {id:'place',type:'symbol',source:'ofm','source-layer':'place',filter:['==',['get','class'],'city'],layout:{'text-field':['get','name'],'text-font':['Noto Sans Regular'],'text-size':12},paint:{'text-color':'#eaf6ff','text-halo-color':'#001018','text-halo-width':1.4}},
+  {id:'heat',type:'heatmap',source:'pts',maxzoom:11,paint:{'heatmap-weight':['get','v'],'heatmap-radius':22,'heatmap-opacity':['interpolate',['linear'],['zoom'],8,0.8,11,0]}},
+  {id:'dots',type:'circle',source:'pts',minzoom:9,paint:{'circle-radius':['case',['boolean',['feature-state','hover'],false],9,3.2],'circle-color':'#ff5f8a','circle-stroke-color':'#fff','circle-stroke-width':0.6,'circle-opacity':0.9}},
+  {id:'trail',type:'line',source:'trail',layout:{'line-cap':'round'},paint:{'line-width':3.5,'line-gradient':['interpolate',['linear'],['line-progress'],0,'rgba(0,255,255,0)',0.5,'#00e5ff',1,'rgba(0,255,255,0)']}},
+  {id:'b3d',type:'fill-extrusion',source:'ofm','source-layer':'building',minzoom:14,paint:{'fill-extrusion-color':'#93a9c4','fill-extrusion-height':['coalesce',['get','render_height'],12],'fill-extrusion-base':['coalesce',['get','render_min_height'],0],'fill-extrusion-opacity':0.85,'fill-extrusion-vertical-gradient':true}}],
+ sky:{'atmosphere-blend':['interpolate',['linear'],['zoom'],0,1,5,1,7,0],'sky-color':'#0b1e46','horizon-color':'#8fc0f0','fog-color':'#e6f0ff','fog-ground-blend':0.45,'horizon-fog-blend':0.6,'sky-horizon-blend':0.85},
+ light:{anchor:'map',position:[1.5,90,80],color:'#ffffff',intensity:0.45}};
+
+const map=new maplibregl.Map({container:'map',style,center:[127.5,36],zoom:1.6,antialias:true,maxPitch:85,attributionControl:{compact:true}});
+window.__map=map;
+map.on('error',e=>R.errors.push(String(e.error&&e.error.message||e.type)));
+await new Promise((res,rej)=>{map.on('load',res);setTimeout(()=>rej(new Error('load timeout')),45000);});
+ok('map-load',{projection:map.getProjection(),layers:map.getStyle().layers.length});
+await sleep(2500);
+ok('layers-present',map.getStyle().layers.map(l=>l.id));
+await measure('S1-globe-eox-heat5k',2000);
+
+// three.js custom layer on globe: orbiting satellite + bloom composer construction
+try{
+  const layer={id:'three-orbit',type:'custom',renderingMode:'3d',
+    onAdd(m,gl){ this.map=m;
+      this.camera=new THREE.Camera(); this.scene=new THREE.Scene();
+      this.scene.add(new THREE.AmbientLight(0xffffff,1.2));
+      const dl=new THREE.DirectionalLight(0xffffff,2); dl.position.set(0,-70,100).normalize(); this.scene.add(dl);
+      const g=new THREE.SphereGeometry(1,12,12);
+      this.mesh=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:0x00e5ff})); this.scene.add(this.mesh);
+      this.renderer=new THREE.WebGLRenderer({canvas:m.getCanvas(),context:gl,antialias:true});
+      this.renderer.autoClear=false;
+      try{ this.composer=new EffectComposer(this.renderer); this.bloomOK=true; }catch(e){ this.bloomOK=false; this.bloomErr=String(e.message); }
+      // glTF load
+      new GLTFLoader().load('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/Duck/glTF-Binary/Duck.glb',
+        gltf=>{ this.gltf=true; gltf.scene.scale.setScalar(0.5); this.scene.add(gltf.scene); }, undefined, e=>{ this.gltfErr=String(e&&e.message||e); });
+    },
+    render(gl,args){
+      this.n=(this.n||0)+1;
+      const pd=args&&args.defaultProjectionData;
+      this.hasMainMatrix=!!(pd&&pd.mainMatrix); this.transition=pd?pd.projectionTransition:null;
+      if(pd&&pd.mainMatrix){
+        const merc=maplibregl.MercatorCoordinate.fromLngLat([127.5,36],400000);
+        const s=merc.meterInMercatorCoordinateUnits()*200000;
+        const m4=new THREE.Matrix4().fromArray(pd.mainMatrix)
+          .multiply(new THREE.Matrix4().makeTranslation(merc.x,merc.y,merc.z))
+          .multiply(new THREE.Matrix4().makeScale(s,-s,s));
+        this.camera.projectionMatrix=m4;
+      }
+      this.renderer.resetState(); this.renderer.render(this.scene,this.camera); this.map.triggerRepaint();
+    }};
+  map.addLayer(layer);
+  await sleep(3000);
+  const impl=map.getLayer('three-orbit').implementation;
+  ok('three-custom-layer-globe',{renders:impl.n,hasMainMatrix:impl.hasMainMatrix,projectionTransition:impl.transition,bloomComposer:impl.bloomOK,bloomErr:impl.bloomErr,gltfLoaded:!!impl.gltf,gltfErr:impl.gltfErr});
+}catch(e){bad('three-custom-layer-globe',e);}
+await measure('S2-globe+three',1500);
+
+// deck.gl interleaved
+try{
+  const ov=new deck.MapboxOverlay({interleaved:true,layers:[
+    new deck.ArcLayer({id:'arcs',data:Array.from({length:250},()=>({s:[126.98+Math.random()*2,37.56-Math.random()*2],t:[129+Math.random()*2,35.1+Math.random()*2]})),getSourcePosition:d=>d.s,getTargetPosition:d=>d.t,getSourceColor:[0,220,255],getTargetColor:[255,110,0],getWidth:1.6,getHeight:0.4}),
+    new deck.ScenegraphLayer({id:'drone',data:[{p:[127.39,35.41,900]}],scenegraph:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/Duck/glTF-Binary/Duck.glb',getPosition:d=>d.p,sizeScale:300,_lighting:'pbr'}),
+    new deck.TripsLayer({id:'trips',data:[{path:[[126.9,37.56,300],[127.4,36.6,300],[128.6,35.8,300]],timestamps:[0,50,100]}],getPath:d=>d.path,getTimestamps:d=>d.timestamps,currentTime:60,trailLength:40,widthMinPixels:3,getColor:[0,255,200]})]});
+  map.addControl(ov); window.__ov=ov; await sleep(3500);
+  ok('deck-interleaved',{errors:R.errors.slice(-3)});
+}catch(e){bad('deck-interleaved',e);}
+await measure('S3-globe+three+deck',2000);
+
+// terrain + cinematic flyTo with custom easing
+try{ map.setTerrain({source:'dem',exaggeration:1.4}); ok('terrain-mapterhorn',map.getTerrain()); }catch(e){bad('terrain-mapterhorn',e);}
+map.flyTo({center:[127.39,35.41],zoom:12.5,pitch:68,bearing:35,duration:6000,curve:1.5,easing:t=>1-Math.pow(1-t,4)});
+await measure('S4-flyto-terrain-all',5500);
+await sleep(2000);
+ok('elevation-namwon',map.queryTerrainElevation([127.39,35.41]));
+await measure('S5-idle-z12.5-terrain-all',2000);
+
+// Seoul 3D buildings
+map.jumpTo({center:[126.978,37.566],zoom:16,pitch:70,bearing:20});
+await sleep(5000);
+ok('buildings3d',{rendered:map.queryRenderedFeatures({layers:['b3d']}).length});
+await measure('S6-seoul-z16-3d-terrain-all',2500);
+
+// reduce: terrain off, mercator
+map.setTerrain(null); map.setProjection({type:'mercator'}); await sleep(1500);
+await measure('S7-degraded-mercator-noterrain',2000);
+
+// GSAP + ScrollTrigger sanity
+try{ const st=(window.ScrollTrigger||gsap.ScrollTrigger); gsap.registerPlugin(st); ok('gsap',{version:gsap.version,scrollTrigger:!!st}); }catch(e){bad('gsap',e);}
+// Compare plugin
+ok('compare-plugin',{onMaplibregl:typeof maplibregl.Compare, globalCompare:typeof window.Compare});
+// CSS feature detection
+ok('css-support',{scrollTimeline:CSS.supports('animation-timeline: scroll()'), viewTimeline:CSS.supports('animation-timeline: view()'),
+  viewTransition:typeof document.startViewTransition==='function', mixBlendMode:CSS.supports('mix-blend-mode: screen'),
+  backdropFilter:CSS.supports('backdrop-filter: blur(10px)'), colorMix:CSS.supports('color: color-mix(in oklab, red, blue)'),
+  reducedMotionAPI: !!window.matchMedia('(prefers-reduced-motion: reduce)')});
+
+R.done=true;
+}catch(e){bad('FATAL',e);R.done=true;}
+</script></body></html>
