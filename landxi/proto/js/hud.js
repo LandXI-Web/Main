@@ -26,13 +26,39 @@ export function splitChars(h) {
   return out;
 }
 
-/* ── 커서 ──────────────────────────────────────────────── */
+/* ── 숫자 현상 (Vantor 4.4) ────────────────────────────────
+   글자 하나씩 35–50ms 스태거로 배경색에서 떠오른다. 페이드가 아니라 "현상"으로 읽히도록
+   opacity 와 색을 같이 태운다. 이미 같은 값이면 다시 돌리지 않는다. */
+export function develop(el, text, stagger = 42) {
+  if (el.dataset.dev === text) return;
+  el.dataset.dev = text;
+  el.textContent = '';
+  const spans = [...String(text)].map((ch) => {
+    const s = document.createElement('span');
+    s.className = 'c'; s.textContent = ch;
+    el.appendChild(s);
+    return s;
+  });
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    spans.forEach((s) => { s.style.opacity = '1'; });
+    return;
+  }
+  spans.forEach((s, i) => {
+    s.animate(
+      [{ opacity: 0, color: 'color-mix(in srgb, currentColor 18%, transparent)' },
+       { opacity: 1, color: 'currentColor' }],
+      { duration: 560, delay: 60 + i * stagger, easing: 'cubic-bezier(.15,1,.3,1)', fill: 'both' },
+    );
+  });
+}
+
+/* ── 커서 — 지도 위 크로스헤어 / UI 위 브래킷 ────────────── */
 export function makeCursor(el, label, map) {
   let tx = innerWidth / 2, ty = innerHeight / 2, x = tx, y = ty, on = false;
   addEventListener('pointermove', (e) => {
     tx = e.clientX; ty = e.clientY; on = true;
     const t = e.target;
-    el.classList.toggle('on-ui', !!(t && t.closest && t.closest('#ui button, #ui input, #ui a, #swipe-grip')));
+    el.classList.toggle('on-ui', !!(t && t.closest && t.closest('#ui button, #ui input, #ui a, #ui li, #swipe-grip')));
   }, { passive: true });
   addEventListener('pointerleave', () => { on = false; });
   return () => {
@@ -42,7 +68,7 @@ export function makeCursor(el, label, map) {
     if (!on) return;
     try {
       const ll = map.unproject([x, y]);
-      label.textContent = `${ll.lat.toFixed(4)}  ${ll.lng.toFixed(4)}`;
+      label.textContent = `${ll.lat.toFixed(4)} ${ll.lng.toFixed(4)}`;
     } catch { label.textContent = '—'; }
   };
 }
@@ -81,27 +107,34 @@ export function scaleBar(map, txt, bar) {
 }
 
 /* ── 히스토그램 ────────────────────────────────────────── */
-export function drawHist(cv, bins, cut, ramp, lo = 0.5, hi = 1) {
+/* 축·격자 없음. 데이터 잉크만. 단일 액센트 + 무채 감쇠(취향 프로필 §4 차트).
+   값은 sweep 으로 도착한다 — grow(0→1)를 곱해 왼쪽부터 차오른다. */
+const cssv = (n) => getComputedStyle(document.body).getPropertyValue(n).trim();
+export function drawHist(cv, bins, cut, _ramp, lo = 0.5, hi = 1, grow = 1) {
   const dpr = Math.min(2, devicePixelRatio || 1);
-  const w = cv.clientWidth || 300, h = cv.clientHeight || 56;
-  if (cv.width !== w * dpr) { cv.width = w * dpr; cv.height = h * dpr; }
+  const w = cv.clientWidth || 300, h = cv.clientHeight || 52;
+  if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
   const x = cv.getContext('2d');
   x.setTransform(dpr, 0, 0, dpr, 0, 0);
   x.clearRect(0, 0, w, h);
+  const accent = cssv('--v3-accent') || '#006DF7';
+  const line = cssv('--cw-line') || '#272727';
+  const fg = cssv('--cw-fg') || '#fff';
   const max = Math.max(1, ...bins);
   const bw = w / bins.length;
   const span = hi - lo || 1;
   bins.forEach((v, i) => {
+    if (i / bins.length > grow) return;
     const t = lo + (i + 0.5) / bins.length * span;
-    const bh = Math.max(v > 0 ? 1.5 : 0, (v / max) * (h - 10));
-    const active = t >= cut;
-    x.fillStyle = active ? ramp[Math.min(ramp.length - 1, Math.floor((t - lo) / span * ramp.length))]
-                         : 'rgba(140,152,170,.28)';
-    x.fillRect(i * bw + 0.6, h - bh, bw - 1.2, bh);
+    const bh = Math.max(v > 0 ? 1 : 0, (v / max) * (h - 8));
+    x.fillStyle = t >= cut ? accent : line;
+    x.fillRect(i * bw, h - bh, Math.max(1, bw - 1), bh);
   });
+  // 기준선 + 임계 커서 — 헤어라인 둘뿐이다.
+  x.fillStyle = line; x.fillRect(0, h - 0.5, w, 0.5);
   const cx = (cut - lo) / span * w;
-  x.strokeStyle = 'rgba(255,255,255,.85)'; x.lineWidth = 1;
-  x.beginPath(); x.moveTo(cx, 0); x.lineTo(cx, h); x.stroke();
+  x.strokeStyle = fg; x.lineWidth = 1;
+  x.beginPath(); x.moveTo(cx + 0.5, 0); x.lineTo(cx + 0.5, h); x.stroke();
 }
 
 /* ── 타일 좌표 ─────────────────────────────────────────── */
@@ -124,6 +157,57 @@ export function loadImg(src) {
     i.onload = () => res(i); i.onerror = () => res(null);
     i.src = src;
   });
+}
+
+/* ── "Acquired" 크롭 인셋 ────────────────────────────────
+   축척이 안 보이는 탐지(수 픽셀짜리 점)를 **실제 타일 z18 크롭**으로 병치한다(Vantor 6.1-⑥).
+   지도는 저채도로 눌러 두고 이 크롭만 원본 채도로 둔다 — "AI가 본 곳만 색이 산다".
+   폴리곤이 있으면 같은 좌표계로 그 위에 그린다. 가짜 이미지를 만들지 않는다. */
+export async function cropFromTiles(tpl, lng, lat, z, size, geom, color = '#FFB633') {
+  const cv = document.createElement('canvas');
+  cv.width = size; cv.height = size;
+  const cx = cv.getContext('2d');
+  cx.fillStyle = '#0A0D12'; cx.fillRect(0, 0, size, size);
+  const px = lon2x(lng, z) * 256, py = lat2y(lat, z) * 256;
+  const x0 = px - size / 2, y0 = py - size / 2;
+  const tx0 = Math.floor(x0 / 256), tx1 = Math.floor((x0 + size) / 256);
+  const ty0 = Math.floor(y0 / 256), ty1 = Math.floor((y0 + size) / 256);
+  const jobs = [];
+  let hit = 0;
+  for (let tx = tx0; tx <= tx1; tx++) for (let ty = ty0; ty <= ty1; ty++) {
+    const u = tpl.replace('{z}', z).replace('{x}', tx).replace('{y}', ty);
+    jobs.push(loadImg(u).then((img) => {
+      if (!img) return;
+      hit++;
+      cx.drawImage(img, tx * 256 - x0, ty * 256 - y0, 256, 256);
+    }));
+  }
+  await Promise.all(jobs);
+  if (!hit) return null;
+  if (geom) {
+    const draw = (ring) => {
+      cx.beginPath();
+      ring.forEach((c, i) => {
+        const X = lon2x(c[0], z) * 256 - x0, Y = lat2y(c[1], z) * 256 - y0;
+        i ? cx.lineTo(X, Y) : cx.moveTo(X, Y);
+      });
+      cx.closePath();
+      cx.strokeStyle = color; cx.lineWidth = 1.5; cx.stroke();
+    };
+    const walk = (g) => {
+      if (!g) return;
+      if (g.type === 'Polygon') g.coordinates.forEach(draw);
+      else if (g.type === 'MultiPolygon') g.coordinates.forEach((p) => p.forEach(draw));
+      else if (/Point/.test(g.type)) {
+        const c = g.type === 'Point' ? g.coordinates : g.coordinates[0];
+        const X = lon2x(c[0], z) * 256 - x0, Y = lat2y(c[1], z) * 256 - y0;
+        cx.strokeStyle = color; cx.lineWidth = 1.5;
+        cx.strokeRect(X - 9, Y - 9, 18, 18);
+      }
+    };
+    walk(geom);
+  }
+  return cv;
 }
 
 /* AOI 실제 타일에서 썸네일을 굽는다 — 가짜 플레이스홀더 없음 */

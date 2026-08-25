@@ -120,9 +120,13 @@ export function buildStyle(v) {
         'hillshade-accent-color': 'rgba(8,14,44,0.42)' } },
 
       // 우리 정사영상 — 전부 opacity 0 으로 깔아두고 장면이 켠다.
+      // 선택적 채도(취향 프로필 §4 영상 처리): 정사영상은 사진처럼 눌러 둔다 —
+      // 채도 −45%, 그림자를 들어올려 밝은 아틀라스 판으로 만든다.
+      // 색이 다시 사는 곳은 (a) AI 폴리곤 안, (b) "Acquired" z18 크롭 두 곳뿐이다.
       ...ORTHO_LAYERS.map(id => ({
         id, type: 'raster', source: id,
-        paint: { 'raster-opacity': 0, 'raster-fade-duration': 200, 'raster-resampling': 'linear' },
+        paint: { 'raster-opacity': 0, 'raster-fade-duration': 200, 'raster-resampling': 'linear',
+                 'raster-saturation': -0.45, 'raster-contrast': -0.04, 'raster-brightness-min': 0.30 },
       })),
 
       // 국토의 실루엣 — 우리 실제 해안선(korea-outline.geojson)을 링 → 라인으로 변환해 쓴다.

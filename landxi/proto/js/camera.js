@@ -49,10 +49,11 @@ export function cameraAt(p) {
 }
 
 // 챕터 경계 — ←/→ 키와 진행 인디케이터가 쓴다.
+// at 값은 컬러웨이 전환점·카피 블록과 같은 좌표를 쓴다(룰러 눈금이 곧 악장 경계다).
 export const CHAPTERS = [
   { id: 1, at: 0.02,  label: '궤도',       ko: '국토가 깨어난다' },
-  { id: 2, at: 0.215, label: '성층운 돌파', ko: '구름을 뚫는다' },
-  { id: 3, at: 0.40,  label: '전국 점등',   ko: '전국이 켜진다' },
-  { id: 4, at: 0.63,  label: '남원 강하',   ko: '1.5cm까지' },
-  { id: 5, at: 0.86,  label: '증명',        ko: 'AI가 본 것' },
+  { id: 2, at: 0.19,  label: '성층운 돌파', ko: '구름을 뚫는다' },
+  { id: 3, at: 0.33,  label: '전국 점등',   ko: '전국이 켜진다' },
+  { id: 4, at: 0.556, label: '남원 강하',   ko: '1.5cm까지' },
+  { id: 5, at: 0.792, label: '증명',        ko: 'AI가 본 것' },
 ];

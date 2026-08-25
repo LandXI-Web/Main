@@ -1,6 +1,6 @@
 import { AOI, CONF_RAMP, CLS, CLS_KO, SHOWN } from './style.js';
 import { EPOCHS, SVC } from './layers.js';
-import { drawHist, fmt } from './hud.js';
+import { drawHist, fmt, develop } from './hud.js';
 import { describe, bake, densest, centroids, label as rlabel } from './results.js';
 
 // 서비스 클릭 → 같은 지도 위에서 실제 분석 결과가 3D 로 얹힌다.
@@ -44,9 +44,27 @@ export function makeStories(ctx) {
     farmland: { key: 'legacy-jeju', label: '제주 불법건축물 · 2020', run: () => jeju() },
   };
 
-  function legendHTML(d) {
-    return d.keys.slice(0, 8).map((k) =>
-      `<span class="lg"><i style="background:${d.color.get(k)}"></i>${rlabel(k)} <b>${fmt(d.classes.get(k))}</b></span>`).join('');
+  // 클래스 목록 — 칩이 아니라 헤어라인 행. 막대는 단일 액센트,
+  // 클래스 고정색은 지도와 이어지도록 8×2px 헤어라인 하나로만 남긴다(무지개 금지).
+  function rowsHTML(d) {
+    const max = Math.max(1, ...d.keys.map((k) => d.classes.get(k)));
+    return '<ul class="rows">' + d.keys.slice(0, 8).map((k) => {
+      const n = d.classes.get(k);
+      return `<li><span class="k"><s style="background:${d.color.get(k)}"></s>${rlabel(k)}</span>`
+        + `<i class="bar" style="--w:${(n / max * 100).toFixed(1)}%"></i>`
+        + `<b class="v">${fmt(n)}</b></li>`;
+    }).join('') + '</ul>';
+  }
+  // 값은 도착한다 — 히스토그램이 왼쪽에서 오른쪽으로 640ms 스윕으로 그려진다.
+  function sweepHist(cv, bins, cut, ramp, lo, hi) {
+    if (!cv) return;
+    const t0 = performance.now();
+    const step = () => {
+      const g = Math.min(1, (performance.now() - t0) / 640);
+      drawHist(cv, bins, cut, ramp, lo, hi, g);
+      if (g < 1 && cv.isConnected) requestAnimationFrame(step);
+    };
+    step();
   }
 
   async function showResult(r) {
@@ -78,25 +96,28 @@ export function makeStories(ctx) {
 
   function resultPanel(svc, sites, active, r, d) {
     const st = r.stats || {};
-    els.min.textContent = `${svc.ministry} · ${r.region}`;
+    // 캡션은 "장소 · 날짜" 하나로 — Vantor 의 지명+촬영일 규약.
+    els.cap.textContent = `${r.region} · ${st.analyzedAt || r.year}`;
     els.title.textContent = r.title;
+    develop(els.count, fmt(st.count != null ? st.count : d.n));
+    els.unit.textContent = r.unit || '건';
     els.meta.innerHTML = meta([
+      ['부처', svc.ministry],
       ['조사', `${SENSOR[r.sensor] || r.sensor} · ${r.year}`],
-      ['객체', `${fmt(st.count != null ? st.count : d.n)} ${r.unit || '건'}`],
-      ['신뢰도', d.conf ? `${d.conf.lo.toFixed(2)} – ${d.conf.hi.toFixed(2)}` : '—'],
-      ['분석', st.analyzedAt || '—'],
+      ['신뢰도 범위', d.conf ? `${d.conf.lo.toFixed(2)} – ${d.conf.hi.toFixed(2)}` : '—'],
+      ['분석 기준', st.analyzedAt || '—'],
     ]);
     const lo = d.conf ? d.conf.lo : 0, hi = d.conf ? d.conf.hi : 1;
     els.ctl.innerHTML =
       (sites.length > 1 ? `<div class="seg" id="site-seg" role="group" aria-label="조사 지구">${
         sites.map((x) => `<button type="button" data-k="${x.key}" aria-pressed="${x.key === active}">${x.label}</button>`).join('')
       }</div>` : '') +
-      `<div class="legend">${legendHTML(d)}</div>` +
-      (d.conf ? `<div class="ctl" style="margin-top:8px">
+      rowsHTML(d) +
+      (d.conf ? `<div class="ctl">
         <label for="rconf">신뢰도 임계값<output id="rconf-out">${lo.toFixed(2)}</output></label>
         <input id="rconf" type="range" min="${lo}" max="${hi}" step="0.002" value="${lo}">
         <canvas id="rhist"></canvas>
-        <p class="n"><b id="rconf-n">${fmt(d.n)}</b> / ${fmt(d.n)} 객체 표시</p></div>` : '') +
+        <p class="n"><b id="rconf-n">${fmt(d.n)}</b> / ${fmt(d.n)} 객체 표시 · 임계 이하는 삭제하지 않고 무채로 남긴다</p></div>` : '') +
       `<div class="seg" id="rview-seg" role="group" aria-label="보기 방식">
         <button type="button" data-v="wide" aria-pressed="true">전역 · 분포</button>
         <button type="button" data-v="close" aria-pressed="false">정밀 · 입체</button>
@@ -125,7 +146,11 @@ export function makeStories(ctx) {
         if (hist) drawHist(cv, hist, v, ramp.length ? ramp : CONF_RAMP, st.confBins[0], st.confBins[st.confBins.length - 1]);
       };
       sl.addEventListener('input', apply);
-      requestAnimationFrame(apply);
+      requestAnimationFrame(() => {
+        apply();
+        const hist = st.confHist && st.confHist.length ? st.confHist : null;
+        if (hist) sweepHist(cv, hist, +sl.value, ramp.length ? ramp : CONF_RAMP, st.confBins[0], st.confBins[st.confBins.length - 1]);
+      });
     }
     els.ctl.querySelectorAll('#site-seg button').forEach((b) =>
       b.addEventListener('click', () => enterSite(svc, sites, b.dataset.k)));
@@ -145,7 +170,7 @@ export function makeStories(ctx) {
     site = s2.key;
     if (s2.run) { clearResults(); s2.run(); return; }
     const r = s2.row;
-    ctx.onHud && ctx.onHud({ k2: '데이터', v2: `${fmt(r.stats.count)} ${r.unit || '건'}`, k3: '분석', v3: r.stats.analyzedAt || String(r.year) });
+    ctx.onHud && ctx.onHud({ line: `${SENSOR[r.sensor] || r.sensor} 정사영상 ${r.year} · ${r.region}`, v2: `${fmt(r.stats.count)} ${r.unit || '건'}`, v3: r.stats.analyzedAt || String(r.year) });
     const d = await showResult(r);
     if (cur !== svc.id) return;
     resultPanel(svc, sites, s2.key, r, d);
@@ -165,6 +190,8 @@ export function makeStories(ctx) {
     detect && detect.play(fc, 'res0', 'res1');
     // 같은 범위의 벡터만 그린 카드 — "이 영상에서 뽑아낸 것".
     if (veccard) veccard.show(fc, `${r.region} · ${r.title}`);
+    // 이 축척에서 안 보이는 탐지는 실제 z18 크롭으로 병치한다.
+    ctx.acquire && ctx.acquire(fc);
   }
 
   function resultStory(svc, rows) {
@@ -179,7 +206,9 @@ export function makeStories(ctx) {
   function clearScene() {
     clearTimeout(playTimer);
     detect && detect.stop();
+    detect && detect.unpin();
     veccard && veccard.hide();
+    ctx.acquire && ctx.acquire(null);
     clearResults();
     swipe.hide();
     for (const l of ['grid-3d', 'grid-dim', 'det-3d', 'det-dim', 'jeju-det-3d', 'change-3d'])
@@ -195,10 +224,11 @@ export function makeStories(ctx) {
   /* ── 해양쓰레기 · 전남 ─────────────────────────────── */
   function marine() {
     const n = data.debris.features.filter(f => f.geometry).length;
-    els.min.textContent = '해양수산부 · 전라남도';
+    els.cap.textContent = '전남 신안·완도 · 2026-08-12';
     els.title.textContent = '해양쓰레기 실태조사';
+    develop(els.count, '38,057'); els.unit.textContent = '건';
     els.meta.innerHTML = meta([
-      ['총 탐지', '38,057 건'], ['집계 격자', '9,032 셀'],
+      ['부처', '해양수산부'], ['집계 격자', '9,032 셀'],
       ['상세 폴리곤', `${fmt(n)} 개`], ['최근 실행', '2026-08-12'],
     ]);
     els.ctl.innerHTML = `
@@ -238,7 +268,7 @@ export function makeStories(ctx) {
     slider.addEventListener('input', apply);
     requestAnimationFrame(apply);
 
-    ctx.onHud && ctx.onHud({ k2: '데이터', v2: '탐지 폴리곤 5,000', k3: '최근 실행', v3: '2026-08-12' });
+    ctx.onHud && ctx.onHud({ line: '항공 영상 기반 격자 집계 · 전남 신안·완도', v2: '탐지 폴리곤 5,000', v3: '2026-08-12' });
     fly({ center: [126.392, 34.792], zoom: 9.4, pitch: 54, bearing: -16 }, 2200);
   }
 
@@ -276,13 +306,14 @@ export function makeStories(ctx) {
   }
 
   function namwon() {
-    els.min.textContent = '국토교통부 · 전북 남원';
+    els.cap.textContent = '전북 남원시 사매면 · 2025-08-22';
     els.title.textContent = '도로안전 다시점 조사';
     const hasChange = !!(data.change.features || []).length;
+    develop(els.count, hasChange ? fmt(data.change.features.length) : '1,264');
+    els.unit.textContent = hasChange ? '폴리곤' : '건';
     els.meta.innerHTML = meta([
-      ['정사영상', '4 시점'], ['GSD', '1.08 – 1.69 cm'],
-      ['기간', '2025.04 – 2025.10'],
-      hasChange ? ['변화 지수', fmt(data.change.features.length) + ' 폴리곤'] : ['탐지', '1,264 건'],
+      ['부처', '국토교통부'], ['정사영상', '4 시점'],
+      ['GSD', '1.08 – 1.69 cm'], ['기간', '2025.04 – 2025.10'],
     ]);
     els.ctl.innerHTML = `<div class="seg" id="ep-seg" role="group" aria-label="촬영 시점">${
       EPOCHS.map((e, i) => `<button type="button" data-i="${i}" aria-pressed="${i === epochIdx}">${e.label}</button>`).join('')
@@ -302,7 +333,7 @@ export function makeStories(ctx) {
       ? '변화 지수(비지도)는 4시점 정사영상만으로 산출한 상대 지표다. 학습된 탐지 모델의 결과가 아니다. '
         + '04→10 구간은 벼 생육에 따른 계절 변화가 대부분이며, 위반 판정이 아니다. 높이 = score.'
       : '남원 4시점에는 탐지 결과가 없다. 변화탐지 색문법을 얹지 않고 순수 영상 비교로 둔다.';
-    ctx.onHud && ctx.onHud({ k2: 'GSD', v2: '1.08 – 1.69 cm', k3: '촬영', v3: '2025.04 – 2025.10' });
+    ctx.onHud && ctx.onHud({ line: 'LX 드론 정사영상 4시점 · GSD 1.08 – 1.69 cm', v3: '2025.04 – 2025.10' });
     els.ctl.querySelectorAll('#ep-seg button').forEach(b =>
       b.addEventListener('click', () => { setTilt(false); setEpoch(+b.dataset.i); }));
     els.ctl.querySelectorAll('#pair-seg button').forEach(b =>
@@ -345,15 +376,16 @@ export function makeStories(ctx) {
 
   /* ── 국산리 드론 변화탐지 ──────────────────────────── */
   function kuksan() {
-    els.min.textContent = 'LX 한국국토정보공사 · 전북 국산리';
+    els.cap.textContent = '전북 국산리 · 2025-08';
     els.title.textContent = '드론 변화탐지';
+    develop(els.count, '486'); els.unit.textContent = '건';
     els.meta.innerHTML = meta([
-      ['드론 정사영상', 'A68 / A71'], ['GSD', '5.0 cm'],
-      ['촬영', '2025-08'], ['변화 탐지', '486 건'],
+      ['부처', 'LX 한국국토정보공사'], ['드론 정사영상', 'A68 / A71'],
+      ['GSD', '5.0 cm'], ['촬영', '2025-08'],
     ]);
     els.ctl.innerHTML = `<p class="n">두 차례 비행(A68 · A71)의 정사영상을 같은 좌표에서 가른다.</p>`;
     els.foot.textContent = '두 소티 사이의 차이가 곧 변화다. 합성 오버레이 없이 원본끼리 비교한다.';
-    ctx.onHud && ctx.onHud({ k2: 'GSD', v2: '5.0 cm', k3: '촬영', v3: '2025-08' });
+    ctx.onHud && ctx.onHud({ line: 'LX 드론 정사영상 A68/A71 · GSD 5.0 cm', v3: '2025-08' });
     op('o_kuksan_a68', 1, 'raster-opacity');
     fly({ center: [126.98307, 35.83195], zoom: 15.95, pitch: 0, bearing: 0 }, 2400)
       .then(() => swipe.show({
@@ -370,7 +402,7 @@ export function makeStories(ctx) {
       ['불법건축물 검출', '2 건'], ['도엽', '126.897, 33.517'],
     ]);
     els.foot.textContent = '검출 폴리곤을 실제 좌표 위에 8.5 m 로 세웠다. 클래스색은 전 화면에서 동일하다.';
-    ctx.onHud && ctx.onHud({ k2: 'GSD', v2: '10 cm', k3: '촬영', v3: '2020-12' });
+    ctx.onHud && ctx.onHud({ line: '항공 정사영상 · GSD 10 cm · 제주', v3: '2020-12' });
     swipe.hide();
     op('o_jeju_2022', 0, 'raster-opacity'); op('o_jeju_land', 0, 'raster-opacity');
     op('o_jeju_2020', 1, 'raster-opacity');
@@ -385,7 +417,7 @@ export function makeStories(ctx) {
       ['토지형질 분할', 'SegFormer'], ['도엽', '126.822, 33.507'],
     ]);
     els.foot.textContent = '원본 마스크는 흑백 이진 영상이다. 검정은 투명, 흰 영역만 탐지색으로 다시 칠해 얹었다. 이 도엽의 분할 면적은 전체의 0.06 % 로 매우 작다 — 크게 보이도록 꾸미지 않는다.';
-    ctx.onHud && ctx.onHud({ k2: 'GSD', v2: '12 cm', k3: '촬영', v3: '2022-12' });
+    ctx.onHud && ctx.onHud({ line: '항공 정사영상 · GSD 12 cm · SegFormer 분할', v3: '2022-12' });
     op('o_jeju_2020', 0, 'raster-opacity');
     op('jeju-det-3d', 0, 'fill-extrusion-opacity'); op('jeju-det-edge', 0, 'line-opacity');
     op('o_jeju_2022', 1, 'raster-opacity');
@@ -396,8 +428,9 @@ export function makeStories(ctx) {
   }
 
   function jeju() {
-    els.min.textContent = '농림축산식품부 · 제주';
+    els.cap.textContent = '제주 · 2020.12 / 2022.12';
     els.title.textContent = '농지이용 · 불법건축물';
+    develop(els.count, '2'); els.unit.textContent = '건';
     els.ctl.innerHTML = `<div class="seg" id="jj-seg" role="group" aria-label="도엽">
         <button type="button" data-v="built" aria-pressed="true">불법건축물 · 2020</button>
         <button type="button" data-v="seg" aria-pressed="false">토지형질 · 2022</button>
@@ -413,15 +446,17 @@ export function makeStories(ctx) {
 
   /* ── 실데이터 준비 중 ──────────────────────────────── */
   function pending(s) {
-    els.min.textContent = s.ministry;
+    els.cap.textContent = `${s.ministry} · ${s.lastRun}`;
     els.title.textContent = s.name;
+    develop(els.count, fmt(s.count)); els.unit.textContent = s.unit;
     els.meta.innerHTML = meta([
-      ['집계', `${fmt(s.count)} ${s.unit}`], ['최근 실행', s.lastRun],
+      ['최근 실행', s.lastRun],
       ['좌표', `${s.lnglat[1].toFixed(3)}, ${s.lnglat[0].toFixed(3)}`],
+      ['실결과', '없음'],
     ]);
     els.ctl.innerHTML = `<div class="pending">실탐지 레이어 준비 중<br>이 서비스의 수치는 라인업 소개용이며, 지도에 얹을 실제 결과물이 아직 없다.<br>없는 것을 그리지 않는다.</div>`;
     els.foot.textContent = '실데이터 4종(해양쓰레기 · 농지 · 도로안전 · 드론 변화탐지)만 결과 레이어를 갖는다.';
-    ctx.onHud && ctx.onHud({ k2: '집계', v2: fmt(s.count) + ' ' + s.unit, k3: '최근 실행', v3: s.lastRun });
+    ctx.onHud && ctx.onHud({ line: s.ministry + ' · 실결과 준비 중', v2: fmt(s.count) + ' ' + s.unit, v3: s.lastRun });
     fly({ center: s.lnglat, zoom: 10.6, pitch: 48, bearing: -12 }, 2200);
   }
 

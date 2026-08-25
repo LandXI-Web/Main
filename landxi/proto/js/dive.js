@@ -10,7 +10,7 @@ import { makeStories } from './stories.js';
 import { makeDetect } from './detect.js';
 import { makeVecCard } from './veccard.js';
 import { filaments } from './results.js';
-import { lerp, clamp01, fmt, splitChars, makeCursor, magnetic, scaleBar, thumbFromTiles } from './hud.js';
+import { lerp, clamp01, fmt, makeCursor, magnetic, scaleBar, thumbFromTiles, develop, cropFromTiles } from './hud.js';
 
 const $ = (s) => document.querySelector(s);
 const D2R = Math.PI / 180;
@@ -101,7 +101,7 @@ const map = new maplibregl.Map({
   center: [127.5, 36.2], zoom: 1.55, bearing: 28, pitch: 0,
   antialias: TIER === 'full', maxPitch: 80, fadeDuration: 0,
   attributionControl: false,
-  localIdeographFontFamily: "'Gothic A1','IBM Plex Sans KR',sans-serif",
+  localIdeographFontFamily: "'Pretendard','SUIT',sans-serif",
 });
 for (const h of ['scrollZoom', 'dragPan', 'dragRotate', 'doubleClickZoom', 'touchZoomRotate', 'keyboard', 'boxZoom'])
   map[h] && map[h].disable();
@@ -263,7 +263,7 @@ function prewarmDescent() {
 }
 
 /* ── 5c. 데이터 레인 (비닐하우스) ───────────────────────── */
-let rainLoaded = false;
+let rainLoaded = false, glowRows = null;
 async function loadRain() {
   if (rainLoaded) return;
   rainLoaded = true;
@@ -271,6 +271,10 @@ async function loadRain() {
     const g = await loadJSON('../assets/data/geo/results/namwon-greenhouse-2025.geojson');
     const fil = filaments(g, 'nobj', 70, 700, 22);
     map.getSource('rain').setData(fil);
+    glowRows = fil.features.map((f) => {
+      const r = f.geometry.coordinates[0];
+      return { c: [(r[0][0] + r[1][0]) / 2, (r[0][1] + r[2][1]) / 2], h: f.properties._h };
+    });
     let n = 0;
     for (const f of g.features) n += Number(f.properties.nobj) || 0;
     $('#rain-note').innerHTML =
@@ -291,20 +295,45 @@ let overlay = null, arcSig = '';
 function ensureOverlay(on) {
   if (on && !overlay) {
     overlay = new deck.MapboxOverlay({ interleaved: false, layers: [] });
-    map.addControl(overlay); arcSig = '';
+    map.addControl(overlay); arcSig = ''; glowSig = '';
   } else if (!on && overlay) {
     try { map.removeControl(overlay); } catch (e) { /* noop */ }
-    overlay = null; arcSig = '';
+    overlay = null; arcSig = ''; glowSig = ''; arcLayer = null; glowLayer = null;
   }
 }
 const rgb = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+let arcLayer = null, glowLayer = null, glowSig = '';
+function syncDeck() {
+  if (!overlay) return;
+  overlay.setProps({ layers: [arcLayer, glowLayer].filter(Boolean) });
+}
+/* 가산 혼합 발광 — 겹칠수록 밝아진다. kepler 의 `Layer Blending: additive` 가 근거다.
+   9,664동을 폴리곤이 아니라 **빛의 밀도**로 먼저 보여준다. 어두운 바닥(3악장)에서만 성립. */
+function setGlow(rows, k) {
+  const sig = rows ? rows.length + '|' + k.toFixed(2) : '';
+  if (sig === glowSig) return;
+  glowSig = sig;
+  glowLayer = (rows && rows.length && k > 0.01) ? new deck.LineLayer({
+    id: 'lx-glow', data: rows,
+    getSourcePosition: (d) => [d.c[0], d.c[1], 0],
+    getTargetPosition: (d) => [d.c[0], d.c[1], d.h],
+    getColor: [0, 109, 247, Math.round(150 * k)],
+    getWidth: 1.4, widthMinPixels: 1, widthMaxPixels: 3,
+    parameters: {
+      blend: true,
+      blendColorOperation: 'add', blendColorSrcFactor: 'src-alpha', blendColorDstFactor: 'one',
+      blendAlphaOperation: 'add', blendAlphaSrcFactor: 'one', blendAlphaDstFactor: 'one',
+      depthWriteEnabled: false,
+    },
+  }) : null;
+  syncDeck();
+}
 function setArcs(rows) {
   if (!overlay) return;
   const sig = rows.map((r) => r.s.id + r.k.toFixed(2)).join('|');
   if (sig === arcSig) return;
   arcSig = sig;
-  overlay.setProps({
-    layers: rows.length ? [new deck.ArcLayer({
+  arcLayer = rows.length ? new deck.ArcLayer({
       id: 'lx-arcs', data: rows,
       getSourcePosition: () => HQ,
       getTargetPosition: (d) => d.s.lnglat,
@@ -312,8 +341,8 @@ function setArcs(rows) {
       getTargetColor: (d) => [...rgb(d.s.hex), Math.round(30 + 200 * d.k)],
       getWidth: (d) => 0.7 + 2.4 * d.k,
       getHeight: 0.42, widthMinPixels: 1, widthMaxPixels: 4,
-    })] : [],
-  });
+    }) : null;
+  syncDeck();
 }
 
 /* ── 7. 궤도 · 성층운 · 태양 ────────────────────────────── */
@@ -349,7 +378,8 @@ const sizeAll = () => {
 addEventListener('resize', sizeAll); sizeAll();
 
 /* ── 8. UI ──────────────────────────────────────────────── */
-const els = { panel: $('#result'), min: $('#res-min'), title: $('#res-title'), meta: $('#res-meta'), ctl: $('#res-ctl'), foot: $('#res-foot') };
+const els = { panel: $('#result'), cap: $('#res-cap'), title: $('#res-title'),
+  count: $('#res-n'), unit: $('#res-unit'), meta: $('#res-meta'), ctl: $('#res-ctl'), foot: $('#res-foot') };
 const swipe = makeSwipe(map, $('#swipe'));
 // 탐지 이벤트 오버레이 — HUD 카운트업까지 여기서 구동한다.
 let hudCountVal = null;
@@ -365,8 +395,40 @@ function fly(cam, ms) {
   });
 }
 
+/* "Acquired" 크롭 — 축척이 안 보이는 탐지를 실제 z18 타일 크롭으로 병치한다.
+   지도 정사영상은 저채도로 눌러 두고 이 크롭만 원본 채도다: AI 가 본 곳에서만 색이 산다. */
+let acqSeq = 0;
+function centreOf(g) {
+  let ring = g.coordinates;
+  while (Array.isArray(ring) && Array.isArray(ring[0]) && Array.isArray(ring[0][0])) ring = ring[0];
+  if (!Array.isArray(ring)) return null;
+  if (typeof ring[0] === 'number') return ring;
+  let x = 0, y = 0, n = 0;
+  for (const c of ring) if (Array.isArray(c) && c.length >= 2) { x += c[0]; y += c[1]; n++; }
+  return n ? [x / n, y / n] : null;
+}
+async function acquire(fc) {
+  const el = $('#acq');
+  const seq = ++acqSeq;
+  el.hidden = true;
+  const f = fc && (fc.features || [])[0];
+  if (!f || !f.geometry) return;
+  const c = centreOf(f.geometry);
+  if (!c) return;
+  const z = Math.min(18, v.maxzoom || 18);
+  let cv = null;
+  try { cv = await cropFromTiles(v.sat, c[0], c[1], z, 252, f.geometry); } catch (e) { cv = null; }
+  if (!cv || seq !== acqSeq || mode !== 'explore') return;
+  const dst = $('#acq-cv').getContext('2d');
+  dst.clearRect(0, 0, 252, 252);
+  dst.drawImage(cv, 0, 0);
+  $('#acq-ll').textContent =
+    `${c[1].toFixed(4)} ${c[0].toFixed(4)} · conf ${(f.properties._conf || 0).toFixed(2)}`;
+  el.hidden = false;
+}
+
 const stories = makeStories({
-  map, els, data, fly, swipe, optional, detect, veccard,
+  map, els, data, fly, swipe, optional, detect, veccard, acquire,
   get results() { return RESULTS; },
   op: (id, val, prop) => opT(id, val, 0.45, prop),
   onHud(h) { hudCtx = h; },
@@ -375,21 +437,47 @@ const stories = makeStories({
 
 const MINISTRIES = [...new Set(SVC.filter((s) => !/^LX/.test(s.ministry)).map((s) => s.ministry))];
 // 카피의 숫자는 services.js 에서 직접 센다 — 데이터가 바뀌면 문장도 같이 바뀐다.
+const REAL_N = SVC.filter((s) => s.real).reduce((a, s) => a + s.count, 0);
 $('#cp3-sub').textContent =
-  `${MINISTRIES.length}개 부처 · ${SVC.length}개 서비스 · 실탐지 ${fmt(SVC.filter((s) => s.real).reduce((a, s) => a + s.count, 0))}건`;
-$('#chips').innerHTML = MINISTRIES.map((m) => `<li data-m="${m}"><i></i>${m}</li>`).join('');
-const chipEls = [...document.querySelectorAll('#chips li')];
+  `${MINISTRIES.length}개 부처 · ${SVC.length}개 서비스 · 실탐지 ${fmt(REAL_N)}건 · 기준 2026-08`;
+$('#fig-sub').textContent = `대한민국 · ${SVC.length}개 서비스 · 조사 이력 2025-04 → 2026-08`;
 
-const tlTicks = $('#tl-ticks');
+// 부처 색인 — 유리 칩이 아니라 헤어라인 행. 호버는 4px 이동(색만 바뀌면 실패).
+$('#index').innerHTML = MINISTRIES.map((m, i) => {
+  const n = SVC.filter((s) => s.ministry === m).length;
+  return `<li data-m="${m}"><span class="n">${String(i + 1).padStart(2, '0')}</span>`
+    + `<span class="m">${m}</span><span class="c">${n}</span></li>`;
+}).join('');
+const chipEls = [...document.querySelectorAll('#index li')];
+// 색인 행은 장식이 아니다 — 호버하면 그 부처만 남기고 나머지를 감쇠시키고(Palantir 디밍),
+// 누르면 그 부처의 첫 실데이터 서비스가 지도 위에 열린다.
+let hoveredMin = null;
+chipEls.forEach((li) => {
+  const m = li.dataset.m;
+  const first = SVC.find((x) => x.ministry === m && x.real) || SVC.find((x) => x.ministry === m);
+  li.tabIndex = 0;
+  li.setAttribute('role', 'button');
+  li.setAttribute('aria-label', `${m} — ${first ? first.name : ''} 결과 열기`);
+  li.addEventListener('pointerenter', () => { hoveredMin = m; });
+  li.addEventListener('pointerleave', () => { if (hoveredMin === m) hoveredMin = null; });
+  li.addEventListener('focus', () => { hoveredMin = m; });
+  li.addEventListener('blur', () => { if (hoveredMin === m) hoveredMin = null; });
+  const go = () => { if (first) openStory(first.id); };
+  li.addEventListener('click', go);
+  li.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+});
+
+const tlTicks = $('#rl-tl');
 tlTicks.innerHTML = [
   ...EPOCHS.map((e) => `<i class="ortho" style="left:${(dateToQ(e.date) * 100).toFixed(2)}%"></i>`),
   ...SVC.map((s) => `<i data-s="${s.id}" style="left:${(dateToQ(Date.parse(s.lastRun)) * 100).toFixed(2)}%"></i>`),
 ].join('');
 const tickEls = Object.fromEntries(SVC.map((s) => [s.id, tlTicks.querySelector(`[data-s="${s.id}"]`)]));
 
-$('#rail').innerHTML = CHAPTERS.map((c) =>
-  `<button type="button" data-at="${c.at}" aria-label="${c.id}장 ${c.label} — ${c.ko}"><i></i></button>`).join('');
-const railBtns = [...document.querySelectorAll('#rail button')];
+$('#rl-ch').innerHTML = CHAPTERS.map((c) =>
+  `<button type="button" style="left:${(c.at * 100).toFixed(2)}%" data-at="${c.at}"`
+  + ` aria-label="${c.id}장 ${c.label} — ${c.ko}"><i></i></button>`).join('');
+const railBtns = [...document.querySelectorAll('#rl-ch button')];
 railBtns.forEach((b) => b.addEventListener('click', () => api.seek(+b.dataset.at)));
 
 const list = document.createElement('ul');
@@ -399,9 +487,15 @@ list.innerHTML = SVC.map((s) =>
 $('#ui').appendChild(list);
 list.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) openStory(b.dataset.id); });
 
+// 카피 리빌은 글자 블러가 아니라 **줄 단위 clip-path 마스크**다(Vantor 4.3).
 const cps = [...document.querySelectorAll('.cp')].map((el) => ({
-  el, chars: splitChars(el.querySelector('h1')), sub: el.querySelector('p'),
+  el, lines: [...el.querySelectorAll('.ln')], sub: el.querySelector('.caption'),
   in: +el.dataset.in, out: +el.dataset.out, shown: false,
+}));
+// 통계 — 124px 숫자가 글자별로 현상된다. 한 화면에 하나씩.
+const sts = [...document.querySelectorAll('.st')].map((el) => ({
+  el, num: el.querySelector('.stat'), txt: el.querySelector('.stat').textContent,
+  sub: el.querySelector('.caption'), in: +el.dataset.in, out: +el.dataset.out, shown: false,
 }));
 
 const strip = $('#strip');
@@ -416,7 +510,7 @@ strip.innerHTML = EPOCHS.map((e, i) =>
   });
 });
 
-const tickMag = magnetic([...document.querySelectorAll('.mag')]);
+const tickMag = magnetic([...document.querySelectorAll('#cta a')]);
 const tickCursor = makeCursor($('#cursor'), $('#cursor-ll'), map);
 
 /* ── 9. 스크롤 → p ──────────────────────────────────────── */
@@ -439,26 +533,32 @@ ScrollTrigger.create({
 let mode = 'scroll', terrainOn = false, lastExag = 0, scanned = false, autoStarted = false, hovered = null;
 let gsdOverride = '1.54 cm', epochDate = '2025-08', hudCtx = null;
 
-const LIGHT_STORY = new Set(['pothole', 'change', 'farmland']);
+/* 3악장 — 디센트(검정) · 아틀라스(밝음) · 옵서버토리(어두움).
+   경계는 그라디언트 없이 **한 프레임에 칼로 자른다**. 명암이 교대하는 것 자체가 연출이다
+   (취향 벤치마크 §6.1 · "단조롭다 = 명암이 교대하지 않는 것"). */
+const FLIP_IN = 0.262;    // 성층운 화이트아웃 정점 — 페이지 전체가 흑 → 백으로 뒤집힌다
+const FLIP_OUT = 0.792;   // 착지 = 증명 악장 — 다시 흑으로. 분석은 어두운 바닥 위 발광이다.
+let movement = '';
 function setGrade(p) {
-  // 색온도 이행: 챕터 1 새벽(5600K) → 챕터 4 정오. 밝기 반전은 실제 배경 밝기에 맞춘다 —
-  // 위성영상 구간(p<0.75)은 어두우므로 계속 다크 UI 로 간다.
+  const mv = mode === 'explore' ? 'obs' : (p < FLIP_IN ? 'desc' : (p < FLIP_OUT ? 'atlas' : 'obs'));
+  const light = mv === 'atlas';
+  if (mv !== movement) {
+    movement = mv;
+    document.body.dataset.movement = mv;
+    document.body.dataset.colorway = light ? 'light' : 'dark';
+    $('#brand').firstElementChild.src =
+      light ? '../assets/brand/landxi-wordmark.png' : '../assets/brand/landxi-wordmark-dark.png';
+  }
+  // 아틀라스 판 — 전국 챕터에서만. 강하 챕터는 정사영상이 밝으므로 스크림 없이 간다.
+  $('#paper').classList.toggle('on', !light ? false : p < 0.556);
+  $('#atlas').classList.toggle('on', light && p < 0.556);
   const dark = 1 - seg(p, 0.24, 0.40);
-  const light = mode === 'explore' ? LIGHT_STORY.has(stories.current) : p > 0.755;
-  document.body.classList.toggle('is-light', light);
   const g = document.documentElement.style;
-  g.setProperty('--temp', dark > 0.5
-    ? 'linear-gradient(180deg,#8FB4F0 0%,#2B4682 100%)'
-    : 'linear-gradient(180deg,#FFEBCC 0%,#F3DCB4 100%)');
-  g.setProperty('--temp-a', (0.11 + dark * 0.23).toFixed(3));
-  g.setProperty('--grain', String(TIER === 'full' ? (0.024 + dark * 0.028).toFixed(3) : 0.016));
-  g.setProperty('--scrim', light
-    ? 'radial-gradient(115% 105% at 0% 100%, rgba(247,251,255,.88) 0%, rgba(247,251,255,.46) 38%, rgba(247,251,255,0) 70%)'
-    : 'radial-gradient(115% 105% at 0% 100%, rgba(2,8,20,.82) 0%, rgba(2,8,20,.40) 38%, rgba(2,8,20,0) 70%)');
-  $('#brand').firstElementChild.src =
-    light ? '../assets/brand/landxi-wordmark.png' : '../assets/brand/landxi-wordmark-dark.png';
-  $('#grade').style.background =
-    `radial-gradient(ellipse at 50% 46%, rgba(0,0,0,0) ${(42 + dark * 9).toFixed(0)}%, rgba(2,8,20,${(0.22 + dark * 0.3).toFixed(3)}) 100%)`;
+  g.setProperty('--temp', dark > 0.5 ? '#8FB4F0' : '#FFE9C6');
+  g.setProperty('--temp-a', (0.10 + dark * 0.20).toFixed(3));
+  g.setProperty('--grain', String(TIER === 'full' ? (0.022 + dark * 0.026).toFixed(3) : 0.014));
+  $('#grade').style.background = light ? 'none'
+    : `radial-gradient(ellipse at 50% 46%, rgba(0,0,0,0) ${(42 + dark * 9).toFixed(0)}%, rgba(1,1,2,${(0.24 + dark * 0.3).toFixed(3)}) 100%)`;
 }
 
 function setNight(p) {
@@ -485,54 +585,77 @@ function setNight(p) {
     ` rgba(20,40,80,0) ${(Math.min(1, c + 0.10) * 100).toFixed(1)}%)`;
 }
 
+// 텍스트 리빌 — clip-path 라인 마스크 1000ms, 줄당 60ms 스태거(취향 프로필 §4 모션).
 function applyCopy(p, force) {
   cps.forEach((c) => {
     const inn = !force && p >= c.in && p <= c.out;
-    if (inn && !c.shown) {
-      c.shown = true;
-      gsap.set(c.el, { opacity: 1 });
-      gsap.fromTo(c.chars, { y: 20, filter: 'blur(12px)', opacity: 0 },
-        { y: 0, filter: 'blur(0px)', opacity: 1, duration: 0.8, ease: 'power2.out', stagger: { each: 0.03, from: 'random' } });
-      gsap.fromTo(c.sub, { opacity: 0, y: 10 },
-        { opacity: 1, y: 0, duration: 0.55, ease: 'power2.out', delay: 0.42 });
-    } else if (!inn && c.shown) {
-      c.shown = false;
-      gsap.to(c.el, { opacity: 0, duration: 0.4, ease: 'power2.in' });
-      gsap.to(c.chars, { y: -22, filter: 'blur(9px)', duration: 0.4, ease: 'power2.in' });
+    if (inn === c.shown) return;
+    c.shown = inn;
+    c.el.classList.toggle('on', inn);
+    c.lines.forEach((ln, i) => {
+      ln.style.transitionDelay = inn ? `${i * 60}ms` : '0ms';
+      ln.firstElementChild.style.transitionDelay = inn ? `${i * 60}ms` : '0ms';
+      ln.classList.toggle('is-in', inn);
+    });
+    if (c.sub) {
+      c.sub.style.transition = 'opacity var(--v3-d1) var(--v3-ease)';
+      c.sub.style.transitionDelay = inn ? `${c.lines.length * 60 + 260}ms` : '0ms';
+      c.sub.style.opacity = inn ? '1' : '0';
     }
   });
 }
 
-function applyChapter2(p) {
-  const on = p > 0.30 && p < 0.545;
-  $('#timeline').hidden = !on;
-  $('#chips').style.opacity = on ? '1' : '0';
+// 통계 — 124px 숫자가 글자별 42ms 스태거로 현상된다. 화면당 하나.
+function applyStats(p, force) {
+  sts.forEach((t) => {
+    const inn = !force && p >= t.in && p <= t.out && mode === 'scroll';
+    if (inn === t.shown) return;
+    t.shown = inn;
+    t.el.classList.toggle('on', inn);
+    if (inn) develop(t.num, t.txt);
+    else t.num.dataset.dev = '';
+  });
+}
+
+// 가장 최근에 실행된 서비스 — 유휴 앰비언트가 이 하나만 호흡한다(화면당 움직이는 요소 1개).
+const NEWEST = SVC.slice().sort((a, b) => Date.parse(b.lastRun) - Date.parse(a.lastRun))[0];
+
+function applyChapter2(p, now) {
+  const on = p > 0.33 && p < 0.556;
+  // kepler 식 어두운 유리 시간 스크러버 — 밝은 아틀라스 위에 얹는 유일한 유리 예외.
+  $('#ruler').classList.toggle('tl', on);
+  $('#rl-tl').classList.toggle('on', on);
   if (!on) {
     setArcs([]);
-    const l = p <= 0.30 ? 0 : (1 - seg(p, 0.545, 0.60));
+    const l = p <= 0.33 ? 0 : (1 - seg(p, 0.556, 0.61));
     SVC.forEach((s) => map.setFeatureState({ source: 'svc', id: s.idx }, { lit: l, ring: 0, dim: 1, hot: 0 }));
     return;
   }
-  const q = seg(p, 0.335, 0.515);
+  const q = seg(p, 0.345, 0.528);
   const d = new Date(headDate(q));
-  $('#tl-date').textContent = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
-  $('#tl-fill').style.width = (q * 100).toFixed(2) + '%';
-  $('#tl-head-mark').style.left = (q * 100).toFixed(2) + '%';
+  $('#rl-mark').style.left = (q * 100).toFixed(2) + '%';
+  $('#rl-r').textContent =
+    `조사 이력 자동 재생 · ${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')} 기준`;
 
+  // 유휴 앰비언트: 최근 실행 1건이 6s 주기로 호흡한다(주기 ≥6s · 위상 고정).
+  const breath = 0.30 + 0.30 * (0.5 - 0.5 * Math.cos(now / 6000 * 6.2832));
   const arcs = [], litMin = new Set();
   SVC.forEach((s) => {
     const dq = q - s.q;
     const lit = clamp01(dq / 0.028);
     let ring = tri(dq, 0.085);
     if (s.real) ring = Math.max(ring, tri(dq - 0.13, 0.085));
+    if (s.id === NEWEST.id && lit > 0.9) ring = Math.max(ring, breath);
+    const off = (hovered && hovered !== s.id) || (hoveredMin && s.ministry !== hoveredMin);
     map.setFeatureState({ source: 'svc', id: s.idx }, {
-      lit, ring, hot: hovered === s.id ? 1 : 0,
-      dim: (hovered && hovered !== s.id) ? 0.32 : 1,
+      lit, ring, hot: (hovered === s.id || hoveredMin === s.ministry) ? 1 : 0,
+      dim: off ? 0.22 : 1,
     });
     if (tickEls[s.id]) tickEls[s.id].classList.toggle('on', lit > 0.5);
     if (lit > 0.02) { litMin.add(s.ministry); arcs.push({ s, k: clamp01(dq / 0.07) * (dq > 0.22 ? 0.32 : 1) }); }
   });
   chipEls.forEach((c) => c.classList.toggle('on', litMin.has(c.dataset.m)));
+  $('#atlas').classList.toggle('focus', !!hoveredMin);
   setArcs(TIER === 'full' ? arcs : arcs.slice(0, 5));
 }
 
@@ -572,7 +695,8 @@ function baseReady() {
 let graceUntil = 0;
 // 강하 구간 최소 소요시간 — 스크롤을 아무리 빨리 굴려도 z6.8→z18.2 를 3초 안에 통과하지 못한다.
 // (a) 연출상 이 구간이 이 페이지의 하이라이트이고, (b) 뷰포트가 천천히 변해야 타일 큐가 비워진다.
-const DESCENT_STEP = 0.0019;   // ≈ 0.11 p/s @60fps → 0.47–0.84 를 최소 3.2초
+// 3단 강하 프로파일(Airbus 영상 해부 §장치 1): ① 가속 ② 최고속 ③ 감속 정착. 합계 ≈ 3,300ms.
+const descentStep = (p) => (p < 0.60 ? 0.0018 : p < 0.72 ? 0.0030 : 0.0014);
 function gate(now) {
   const inDescent = P > 0.47 && P < 0.84;
   if (!inDescent || P <= PA) {
@@ -583,7 +707,7 @@ function gate(now) {
   const ready = now < graceUntil || baseReady();
   if (ready) {
     if (throttleSince) { throttleSince = 0; graceUntil = now + 260; $('#recv').hidden = true; }
-    PA = Math.min(P, PA + DESCENT_STEP);
+    PA = Math.min(P, PA + descentStep(PA));
     return;
   }
   // **완전히 멈춘다.** 조금씩 기어가면 매 프레임 타일 세트가 바뀌어 큐가 영원히 비지 않는다(실측).
@@ -595,19 +719,35 @@ function gate(now) {
 }
 
 function apply(p) {
+  const now = performance.now();
   if (mode === 'explore') {
     setGrade(0.95); updateHUD(p); clouds.update(-1);
+    $('#rl-l').textContent = '탐사 — 분석 결과';
+    $('#rl-r').textContent = (hudCtx && hudCtx.line) || '';
     $('#night').style.opacity = '0'; $('#stars').style.opacity = '0';
     orbit && orbit.update(map, SUN, 0);
+    // 옵서버토리 — 어두운 바닥 위 발광 데이터. 영상은 눌러 두고 색은 결과에만 남긴다.
+    op('vsat', -0.42, 'raster-saturation'); op('eox', -0.35, 'raster-saturation');
+    op('vsat', 0.72, 'raster-brightness-max'); op('eox', 0.72, 'raster-brightness-max');
+    for (const id of ORTHO_LAYERS) { op(id, 0, 'raster-brightness-min'); op(id, 0.66, 'raster-brightness-max'); }
+    $('#readout').classList.add('on');
     return;
   }
 
   const c = cameraAt(p);
-  const padL = Math.round(Math.min(innerWidth * 0.26, 460) * (1 - seg(p, 0.15, 0.30)));
-  map.jumpTo({ center: c.center, zoom: c.zoom, pitch: c.pitch, bearing: c.bearing,
-    padding: { left: padL, top: 0, right: 0, bottom: 0 } });
+  // 유휴 드리프트 — 강하·착지 구간에서 카메라가 아주 느리게 흐른다(주기 26s).
+  // 좌표 판독이 실제로 갱신되므로 "실데이터에 묶인 앰비언트"가 된다.
+  const idle = (TIER === 'still') ? 0 : seg(p, 0.556, 0.60) * (1 - seg(p, 0.775, 0.795));
+  const dLng = Math.sin(now / 4200) * 0.00042 * idle;
+  const dLat = Math.cos(now / 5300) * 0.00026 * idle;
+  const padL = Math.round(
+    Math.min(innerWidth * 0.26, 460) * (1 - seg(p, 0.15, 0.30))
+    + 544 * seg(p, 0.30, 0.352) * (1 - seg(p, 0.545, 0.60)));
+  map.jumpTo({ center: [c.center[0] + dLng, c.center[1] + dLat], zoom: c.zoom, pitch: c.pitch,
+    bearing: c.bearing + Math.sin(now / 7100) * 0.5 * idle,
+    padding: { left: padL, top: 56, right: 0, bottom: 78 } });
   setProj(p < 0.255);
-  ensureOverlay(!projGlobe && p > 0.30 && p < 0.56);
+  ensureOverlay(!projGlobe && ((p > 0.30 && p < 0.56) || p > 0.928));
 
   // 지형은 DEM maxzoom(12) 근처까지만 켠다.
   // 그 위에서는 MapLibre 가 지형 메시에 드레이프한 텍스처를 확대해 쓰기 때문에
@@ -620,6 +760,20 @@ function apply(p) {
     try { map.setTerrain(wantTerrain ? { source: 'dem2', exaggeration: exag } : null); } catch (e) { errors.push('terrain'); }
   }
   vis('hillshade', p > 0.235 && p < 0.72);
+  // 선택적 채도 — 강하 이후(정사영상 구간)에는 베이스 영상도 눌러 둔다.
+  op('vsat', p > 0.556 ? -0.42 : 0.06, 'raster-saturation');
+  op('eox', p > 0.556 ? -0.35 : 0.10, 'raster-saturation');
+  op('vsat', p > FLIP_OUT ? 0.74 : 1, 'raster-brightness-max');
+  // 강하 구간은 활자가 영상 위에 직접 얹힌다 — 그림자를 들어올려 밝은 판으로 만든다.
+  const liftBase = (p > 0.50 && p < FLIP_OUT) ? 0.30 : 0;
+  op('vsat', liftBase, 'raster-brightness-min');
+  op('eox', liftBase, 'raster-brightness-min');
+  // 밝은 아틀라스 악장(강하)은 그림자를 들어올려 검은 활자가 읽히게,
+  // 어두운 옵서버토리 악장(증명)은 눌러서 흰 활자와 발광 데이터가 읽히게 한다.
+  for (const id of ORTHO_LAYERS) {
+    op(id, p > FLIP_OUT ? 0 : 0.30, 'raster-brightness-min');
+    op(id, p > FLIP_OUT ? 0.62 : 1, 'raster-brightness-max');
+  }
 
   const silhouette = seg(p, 0.275, 0.35) * (1 - seg(p, 0.525, 0.585));
   op('coast-glow', 0.5 * silhouette, 'line-opacity');
@@ -644,10 +798,20 @@ function apply(p) {
   const city = seg(p, 0.935, 0.968);
   op('o_namwon_city', city);
   if (city > 0.02 && !rainLoaded) loadRain();
-  op('rain-3d', 0.6 * seg(p, 0.945, 0.982), 'fill-extrusion-opacity');
+  op('rain-3d', 0.34 * seg(p, 0.945, 0.982), 'fill-extrusion-opacity');
+  // 밀도를 먼저, 개체를 나중에 — 가산 발광이 9,664동을 빛의 밀도로 보여준다.
+  setGlow(p > 0.93 ? glowRows : null, seg(p, 0.940, 0.980));
   $('#rain-note').hidden = p < 0.955;
 
-  setGrade(p); setNight(p); applyCopy(p); applyChapter2(p); applyChapter45(p);
+  setGrade(p); setNight(p); applyCopy(p); applyStats(p); applyChapter2(p, now); applyChapter45(p);
+  $('#readout').classList.toggle('on', p > 0.556 && p < 0.938);
+
+  // 5장 유휴 앰비언트 — 가장 최신 시점의 탐지 하나가 6초 주기로 호흡한다.
+  if (p > 0.80 && p < 0.93 && TIER !== 'still') {
+    detect.pin([(AOI.namwon[0] + AOI.namwon[2]) / 2, (AOI.namwon[1] + AOI.namwon[3]) / 2],
+      `남원 사매면 · GSD ${gsdOverride} · ${epochDate}`);
+  }
+  else if (p <= 0.80 || p >= 0.93) detect.unpin();
 
   if (!scanned && p > 0.795 && TIER !== 'still') {
     scanned = true;
@@ -665,28 +829,45 @@ function apply(p) {
   let ci = 0;
   CHAPTERS.forEach((ch, i) => { if (p >= ch.at - 0.01) ci = i; });
   railBtns.forEach((b, i) => b.setAttribute('aria-current', String(i === ci)));
+  $('#rl-fill').style.width = (p * 100).toFixed(2) + '%';
+  $('#rl-l').textContent = `0${CHAPTERS[ci].id} — ${CHAPTERS[ci].label}`;
+  if (!(p > 0.33 && p < 0.556)) {
+    $('#rl-r').textContent =
+      p < 0.19 ? 'SENTINEL-2 · 저궤도 786 km'
+      : p < 0.33 ? '성층운 돌파 · 고도 786 km → 8 km'
+      : p < 0.792 ? `전북 남원시 · GSD ${gsdOverride} · ${epochDate}`
+      : '남원 4시점 · 2025.04 → 2025.10 · 동일 좌표';
+  }
   updateHUD(p);
 }
 
 /* ── 11. HUD — 모든 숫자가 실제 값 ──────────────────────── */
+/* HUD 는 캡션 한 줄이다. 모서리 스티커를 쓰지 않는다.
+   모든 값은 해설이어야 한다 — 단위·범위·기준시점이 없는 장식 숫자는 여기 오지 않는다
+   (판정 규칙 9. '태양 직하점 10.9°' 는 그래서 삭제했다). */
 function updateHUD(p) {
-  $('#hud-time').textContent = KST();
-  const deep = p > 0.60 || mode === 'explore';
+  const t = KST();
   const c = map.getCenter();
-  if (deep) {
-    const h = (mode === 'explore' && hudCtx) ? hudCtx : { k2: 'GSD', v2: gsdOverride, k3: '촬영', v3: epochDate };
-    $('#hud-k1').textContent = '좌표';    $('#hud-v1').textContent = `${c.lat.toFixed(4)}, ${c.lng.toFixed(4)}`;
-    $('#hud-k2').textContent = h.k2;
-    $('#hud-v2').textContent = (hudCountVal && mode === 'explore')
-      ? `${fmt(hudCountVal[0])} / ${fmt(hudCountVal[1])}` : h.v2;
-    $('#hud-k3').textContent = h.k3;      $('#hud-v3').textContent = h.v3;
-    $('#hud-k4').textContent = '줌';      $('#hud-v4').textContent = 'z' + map.getZoom().toFixed(2);
+  const z = map.getZoom();
+  let txt;
+  if (mode === 'explore') {
+    const h = hudCtx || {};
+    const n = hudCountVal ? `${fmt(hudCountVal[0])} / ${fmt(hudCountVal[1])} 객체` : (h.v2 || '');
+    txt = [h.line || 'LX AI 분석 결과', n, h.v3 ? `기준 ${h.v3}` : ''].filter(Boolean).join(' · ');
+  } else if (p < 0.19) {
+    txt = `SENTINEL-2 · 고도 ${SAT.altKm} km · 한반도까지 ${orbit ? fmt(Math.round(orbit.state.distKm)) : '—'} km · KST ${t}`;
+  } else if (p < 0.33) {
+    txt = `SENTINEL-2 · 고도 ${SAT.altKm} km → 8 km · 성층운 돌파 · KST ${t}`;
+  } else if (p < 0.556) {
+    txt = `V-WORLD 정사영상 · ${MINISTRIES.length}개 부처 ${SVC.length}개 서비스 · 실탐지 ${fmt(REAL_N)}건 · KST ${t}`;
+  } else if (p < 0.792) {
+    txt = `LX 드론 정사영상 · GSD ${gsdOverride} · 촬영 ${epochDate} · z${z.toFixed(1)}`;
   } else {
-    $('#hud-k1').textContent = '궤도체';     $('#hud-v1').textContent = SAT.name;
-    $('#hud-k2').textContent = '고도';       $('#hud-v2').textContent = SAT.altKm + ' km';
-    $('#hud-k3').textContent = '한반도까지'; $('#hud-v3').textContent = orbit ? fmt(Math.round(orbit.state.distKm)) + ' km' : '—';
-    $('#hud-k4').textContent = '태양 직하점'; $('#hud-v4').textContent = `${SUN.lat.toFixed(1)}°, ${SUN.lng.toFixed(1)}°`;
+    txt = `남원 4시점 2025.04 → 2025.10 · GSD ${gsdOverride} · 동일 좌표 · KST ${t}`;
   }
+  $('#meta-txt').textContent = txt;
+  $('#ro-ll').textContent = `${c.lat.toFixed(5)} N  ${c.lng.toFixed(5)} E`;
+  $('#ro-z').textContent = `z${z.toFixed(2)} · ${epochDate}`;
   scaleBar(map, $('#scale-txt'), $('#scale-bar'));
 }
 
@@ -696,12 +877,18 @@ function openStory(id) {
   lenis.stop();
   autoStarted = false;
   applyCopy(0, true);
-  $('#chips').style.opacity = '0';
-  $('#timeline').hidden = true;
+  $('#ruler').classList.remove('tl');
+  $('#rl-tl').classList.remove('on');
+  $('#paper').classList.remove('on');
+  $('#atlas').classList.remove('on');
+  applyStats(0, true);
   strip.style.opacity = STORY_IS_NAMWON(id) ? '1' : '0';
   strip.style.pointerEvents = STORY_IS_NAMWON(id) ? 'auto' : 'none';
   $('#cta').hidden = true;
   $('#change-legend').hidden = true;
+  $('#rain-note').hidden = true;
+  $('#recv').hidden = true;
+  document.body.dataset.panel = '1';
   setArcs([]);
   ORTHO_LAYERS.forEach((l) => op(l, 0));
   SVC.forEach((s) => map.setFeatureState({ source: 'svc', id: s.idx }, { lit: 0, ring: 0, dim: 1, hot: 0 }));
@@ -713,12 +900,15 @@ function openStory(id) {
   terrainOn = false;
   hudCtx = null; hudCountVal = null;
   detect.stop(); veccard && veccard.hide();
+  // 결과 패널이 우측 400px 을 덮는다 — 카메라 중심을 남은 프레임 가운데로 옮긴다.
+  map.easeTo({ padding: { left: 0, top: 56, right: 400, bottom: 78 }, duration: 600 });
   dataReady.then(() => stories.enter(id));
 }
 const STORY_IS_NAMWON = (id) => id === 'pothole';
 
 function closeStory() {
   mode = 'scroll';
+  delete document.body.dataset.panel;
   hudCountVal = null;
   detect.stop(); veccard && veccard.hide();
   stories.exit();
