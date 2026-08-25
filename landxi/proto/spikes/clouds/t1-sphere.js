@@ -78,11 +78,8 @@ export function createCloudSphere(tex, opt = {}) {
   g.add(shadow, cloud);
 
   let off = 0;
-  return {
-    group: g, name: 'cloud-sphere',
-    // altitudeKm 200 아래로 내려가면 구의 곡률이 깨지므로 걷어낸다.
-    update(altKm, dt, sun) {
-      off = (off + dt * 0.0035) % 1;                    // ≈ 0.21 회전/분 (지구 자전 ×300 과장)
+  function core(altKm, offset, sun) {
+      off = offset;
       const vis = THREE.MathUtils.smoothstep(altKm, 60, 420);
       g.visible = vis > 0.01;
       for (const m of [cloudMat, shadowMat]) {
@@ -93,7 +90,13 @@ export function createCloudSphere(tex, opt = {}) {
       shadowMat.uniforms.uOpacity.value = vis * 0.55;
       // 그림자는 태양 반대편으로 밀린다 — 고도가 낮을수록 크게 어긋난다
       shadowUni.uShift.value.set(-sun.x * 0.010, sun.y * 0.006);
-    },
+  }
+  let acc = 0;
+  return {
+    group: g, name: 'cloud-sphere',
+    // 구름층 회전 ≈ 0.21 회전/분 (지구 자전 ×300 과장). 200km 아래로 내려가면 걷어낸다.
+    update(altKm, dt, sun) { acc = (acc + dt * 0.0035) % 1; core(altKm, acc, sun); },
+    updateAt(altKm, T, sun) { core(altKm, (T * 0.0035) % 1, sun); },
     dispose() { cloudMat.dispose(); shadowMat.dispose(); g.clear(); },
   };
 }

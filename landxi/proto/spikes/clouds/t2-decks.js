@@ -9,20 +9,21 @@ const ART = '../../../assets/proto/clouds/';
 // 2048px / 70km = 34 m/px — 40km 상공에서는 충분하고, 2km 앞에서는 8배 확대되어 뭉갠다.
 // (이 한 줄이 데크 기법의 고도 하한을 결정한다)
 const DECKS = [
-  { file: 'cloud_far.webp',  altKm: 10.6, span: 900, tileKm: 70, op: 0.66, wind: [0.0055, 0.0015] },
-  { file: 'cloud_mid.webp',  altKm: 8.0,  span: 420, tileKm: 34, op: 0.92, wind: [0.0100, 0.0030] },
-  { file: 'cloud_near.webp', altKm: 5.4,  span: 200, tileKm: 16, op: 0.86, wind: [0.0170, 0.0055] },
-  { file: 'cloud_mid.webp',  altKm: 1.7,  span:  70, tileKm: 6.5, op: 0.62, wind: [0.0290, 0.0092] },
+  { file: 'cloud_far.webp',  altKm: 10.6, span: 900, tileKm: 70,  op: 0.62, from: 70, wind: [0.0055, 0.0015] },
+  { file: 'cloud_mid.webp',  altKm: 8.0,  span: 420, tileKm: 34,  op: 0.86, from: 26, wind: [0.0100, 0.0030] },
+  { file: 'cloud_near.webp', altKm: 5.4,  span: 200, tileKm: 16,  op: 0.80, from: 15, wind: [0.0170, 0.0055] },
+  { file: 'cloud_mid.webp',  altKm: 1.7,  span:  70, tileKm: 6.5, op: 0.58, from: 6.5, wind: [0.0290, 0.0092] },
 ];
 
-const VS = `varying vec2 vUv; varying vec3 vW;
+const VS = `varying vec2 vUv; varying vec3 vW; varying vec3 vN;
   void main(){ vUv=uv; vW=(modelMatrix*vec4(position,1.0)).xyz;
+    vN=normalize(mat3(modelMatrix)*normal);
     gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`;
 
 const FS = `
   uniform sampler2D map; uniform vec3 sun; uniform vec2 uOff; uniform float uRep;
   uniform float uOpacity; uniform float uFade; uniform float uHole; uniform vec3 uCamW;
-  varying vec2 vUv; varying vec3 vW;
+  varying vec2 vUv; varying vec3 vW; varying vec3 vN;
   void main(){
     vec4 t = texture2D(map, vUv*uRep + uOff);
     // 지평선 쪽으로 갈수록 광학두께가 길어져 하얗게 뭉개진다(에어리얼 퍼스펙티브)
@@ -30,10 +31,10 @@ const FS = `
     float horizon = smoothstep(1.02, 0.34, rad);
     // 관통 직전에만 한가운데가 갈라진다. uHole 은 구멍의 양(0=없음, 1=화면 전체).
     float hole = uHole < 0.002 ? 1.0 : smoothstep(uHole*0.34, uHole*1.10 + 0.14, rad);
-    float nl = clamp(dot(normalize(sun), vec3(0.0,1.0,0.0)) , -1.0, 1.0);
+    float nl = clamp(dot(normalize(sun), normalize(vN)), -1.0, 1.0);
     float day = smoothstep(-0.15, 0.30, nl);
-    vec3 lit = mix(vec3(0.70,0.75,0.84), vec3(1.0,0.995,0.98), clamp(nl*1.6,0.0,1.0));
-    vec3 col = t.rgb * lit * (0.52 + 0.70*max(nl,0.0));
+    vec3 lit = mix(vec3(0.74,0.79,0.87), vec3(1.0,0.998,0.99), clamp(nl*1.6,0.0,1.0));
+    vec3 col = t.rgb * lit * (0.66 + 0.62*max(nl,0.0));
     col = mix(col*0.30 + vec3(0.05,0.07,0.12), col, day);
     // 태양 쪽 가장자리에 따뜻한 실버라이닝
     vec3 V = normalize(uCamW - vW);
@@ -82,36 +83,41 @@ export function createDecks(anchor) {
 
   anchor.add(g);
   let t = 0;
+
+  // 절대 시각 T(초)로 상태를 못 박는다. 누적 dt 를 쓰지 않으므로 같은 T 는 늘 같은 그림.
+  function core(altKm, T, sun, cam) {
+    let flash = 0;
+    for (const L of layers) {
+      L.mat.uniforms.sun.value.copy(sun);
+      L.mat.uniforms.uCamW.value.copy(cam.position);
+      L.mat.uniforms.uOff.value.set(T * L.d.wind[0], T * L.d.wind[1]);
+      const dz = altKm - L.d.altKm;                 // + = 카메라가 데크 위
+      const band = L.d.altKm > 4 ? 0.35 : 0.14;     // 낮은 데크일수록 얇게 지나간다
+      // 위에 있으면 보이고, 관통하면 사라진다. 밑에서는 보이지 않는다(고개를 들지 않으므로)
+      const vis = THREE.MathUtils.smoothstep(dz, -band, band);
+      // 각 데크는 자기 고도의 몇 배 안으로 들어와야 나타난다. 이걸 안 하면 네 장이
+      // 한 번에 겹쳐 그냥 회색 안개가 된다(스택 커버리지가 99% 가 되어버린다).
+      const far = 1.0 - THREE.MathUtils.smoothstep(altKm, L.d.from, L.d.from * 2.4);
+      L.mat.uniforms.uFade.value = vis * far;
+      // 관통 1.8km 안에서만 한가운데가 갈라진다
+      L.mat.uniforms.uHole.value = (1 - THREE.MathUtils.smoothstep(Math.abs(dz), 0.06, 1.8)) * 1.25;
+      flash = Math.max(flash, (1 - THREE.MathUtils.smoothstep(Math.abs(dz), 0.04, band * 2.6)) * L.d.op * far);
+    }
+    hazeMat.opacity = flash * 0.88;
+    haze.visible = hazeMat.opacity > 0.01;
+    if (haze.visible) {
+      const dist = cam.near * 40;
+      const h = 2 * Math.tan(cam.fov * Math.PI / 360) * dist;
+      haze.scale.set(h * cam.aspect * 0.5, h * 0.5, 1);
+      haze.position.set(0, 0, -dist);
+      haze.quaternion.identity();
+    }
+  }
+
   return {
     group: g, haze, name: 'billboard-decks',
-    update(altKm, dt, sun, cam) {
-      t += dt;
-      let flash = 0;
-      for (const L of layers) {
-        L.mat.uniforms.sun.value.copy(sun);
-        L.mat.uniforms.uCamW.value.copy(cam.position);
-        L.mat.uniforms.uOff.value.set(t * L.d.wind[0], t * L.d.wind[1]);
-        const dz = altKm - L.d.altKm;                 // + = 카메라가 데크 위
-        const band = L.d.altKm > 4 ? 0.35 : 0.14;     // 낮은 데크일수록 얇게 지나간다
-        // 위에 있으면 보이고, 관통하면 사라진다. 밑에서는 보이지 않는다(고개를 들지 않으므로)
-        const vis = THREE.MathUtils.smoothstep(dz, -band, band);
-        const far = 1.0 - THREE.MathUtils.smoothstep(altKm, 45, 130);   // 궤도에선 걷는다
-        L.mat.uniforms.uFade.value = vis * far;
-        // 관통 1.8km 안에서만 한가운데가 갈라진다
-        L.mat.uniforms.uHole.value = (1 - THREE.MathUtils.smoothstep(Math.abs(dz), 0.06, 1.8)) * 1.25;
-        flash = Math.max(flash, (1 - THREE.MathUtils.smoothstep(Math.abs(dz), 0.04, band * 2.6)) * L.d.op * far);
-      }
-      hazeMat.opacity = flash * 0.85;
-      haze.visible = hazeMat.opacity > 0.01;
-      if (haze.visible) {
-        // 카메라 앞 1 근처에 고정 — 화면을 꽉 채운다
-        const dist = cam.near * 40;
-        const h = 2 * Math.tan(cam.fov * Math.PI / 360) * dist;
-        haze.scale.set(h * cam.aspect * 0.5, h * 0.5, 1);
-        haze.position.set(0, 0, -dist);
-        haze.quaternion.identity();
-      }
-    },
+    update(altKm, dt, sun, cam) { t += dt; core(altKm, t, sun, cam); },
+    updateAt(altKm, T, sun, cam) { core(altKm, T, sun, cam); },
     dispose() { layers.forEach((L) => { L.mat.dispose(); L.m.geometry.dispose(); }); hazeMat.dispose(); },
   };
 }

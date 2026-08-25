@@ -56,24 +56,27 @@ scene.add(camera);
 
 /* ── 앵커 프레임 — X=동, Y=상, Z=남 ───────────────────────── */
 const anchor = new THREE.Group();
-{
-  const P = llToVec(TARGET.lon, TARGET.lat, R);
+let ANCHOR = { lon: TARGET.lon, lat: TARGET.lat };
+function placeAnchor(lon, lat) {
+  ANCHOR = { lon, lat };
+  const P = llToVec(lon, lat, R);
   const up = P.clone().normalize();
   const north = new THREE.Vector3(0, 1, 0).sub(up.clone().multiplyScalar(up.y)).normalize();
   const east = north.clone().cross(up).normalize();
   const m = new THREE.Matrix4().makeBasis(east, up, north.clone().negate());
   anchor.quaternion.setFromRotationMatrix(m);
   anchor.position.copy(P);
+  anchor.updateMatrixWorld(true);
 }
 scene.add(anchor);
-anchor.updateMatrixWorld(true);
+placeAnchor(TARGET.lon, TARGET.lat);
 
 /* ── 태양 (SunCalc) ───────────────────────────────────────── */
 const sunWorld = new THREE.Vector3(1, 0, 0);
 let sunElev = 0;
 function updateSun() {
   if (!window.SunCalc) return;
-  const s = window.SunCalc.getPosition(WHEN, TARGET.lat, TARGET.lon);
+  const s = window.SunCalc.getPosition(WHEN, ANCHOR.lat, ANCHOR.lon);
   sunElev = s.altitude;
   const ce = Math.cos(s.altitude);
   const east = -ce * Math.sin(s.azimuth);
@@ -139,7 +142,7 @@ function zoomForAltitude(altKm, pitch) {
   const vh = 2 * Math.tan(camera.fov * Math.PI / 360) * altKm * 1000;       // 지상 세로 폭(m)
   const widen = 1 / Math.max(0.30, Math.cos(pitch * Math.PI / 180));         // 기울이면 더 멀리 본다
   const mpp = (vh * widen) / (innerHeight || 900);
-  const z = Math.log2(156543.03392 * Math.cos(TARGET.lat * Math.PI / 180) / mpp);
+  const z = Math.log2(156543.03392 * Math.cos(ANCHOR.lat * Math.PI / 180) / mpp);
   return Math.max(1.2, Math.min(19, z));
 }
 
@@ -184,11 +187,10 @@ const fps = (() => {
 
 /* ── seek ─────────────────────────────────────────────────── */
 let P = 0.1, altKm = altitudeKm(P);
-function seek(p) {
-  P = clamp01(p);
-  altKm = altitudeKm(P);
-  const pitch = pitchDeg(P), bearing = bearingDeg(P);
 
+// 고도·자세·지도 중심을 한 번에 못 박는다. seek() 와 film() 이 함께 쓴다.
+function apply(alt, pitch, bearing, center, zoomOverride) {
+  altKm = alt;
   // three.js 카메라 — 앵커 로컬에서 (뒤로 물러난 만큼) 기울여 내려본다
   const h = altKm * KM;
   const back = h * Math.tan(pitch * Math.PI / 180);
@@ -205,11 +207,12 @@ function seek(p) {
   camera.updateProjectionMatrix();
 
   // MapLibre
-  const mz = zoomForAltitude(altKm, pitch);
-  map.jumpTo({ center: [TARGET.lon, TARGET.lat], zoom: mz, pitch: Math.min(80, pitch), bearing });
+  const mz = zoomOverride != null ? zoomOverride : zoomForAltitude(altKm, pitch);
+  map.jumpTo({ center: center || [ANCHOR.lon, ANCHOR.lat], zoom: mz, pitch: Math.min(80, pitch), bearing });
 
-  // 배경 크로스페이드: 글로브 → 지도 (p 0.26 → 0.365)
-  const k = smooth(P, 0.235, 0.300);
+  // 배경 크로스페이드: 글로브 → 지도. p 가 아니라 고도로 건다 —
+  // 필름 타임라인과 스크럽이 같은 규칙을 쓰게 하려면 이게 유일한 기준이어야 한다.
+  const k = 1 - smooth(altKm, 190, 900);
   mapEl.style.opacity = String(k);
   earthGroup.visible = k < 0.995;
   if (earth) earth.material.uniforms.uOpacity.value = 1 - k;
@@ -220,8 +223,13 @@ function seek(p) {
   hazeMat.uniforms.uSun.value = 1 - clamp01(sunElev / 0.5);
   hazeMat.uniforms.uPitch.value = smooth(pitch, 10, 60);
 
-  $('#h-p').textContent = P.toFixed(3);
   $('#h-alt').textContent = altKm >= 100 ? Math.round(altKm) + ' km' : altKm.toFixed(2) + ' km';
+}
+
+function seek(p) {
+  P = clamp01(p);
+  apply(altitudeKm(P), pitchDeg(P), bearingDeg(P));
+  $('#h-p').textContent = P.toFixed(3);
   $('#scrub').value = String(P);
 }
 
@@ -296,6 +304,56 @@ function benchFrames(n = 90) {
   const med = Math.max(q(0.5), 0.01);
   return { n, medms: +med.toFixed(2), p95ms: +q(0.95).toFixed(2), fps: +(1000 / med).toFixed(1) };
 }
+
+
+/* ── 필름 레그 "성층운 돌파" — 5초 결정론적 타임라인 ───────────
+   프레임을 시각(t, 0..1)만으로 못 박는다. dt 를 쓰지 않으므로 몇 번을 렌더해도
+   같은 그림이 나온다(스크럽 인코딩의 전제).
+   0.00  EOX 글로브 위의 한반도 (첫 프레임 — 다른 레그의 우주 컷과 이어붙인다)
+   0.55  데크가 화면으로 밀려 올라온다
+   0.66  화이트아웃 정점 — 고도 불연속을 이 흰 섬광이 덮는다
+   1.00  구름 없는 V-World 서남해안 z8.0 (마지막 프레임 — 다음 레그의 지역 컷)   */
+const FILM = {
+  sec: 5, fps: 25,
+  from: [127.55, 36.60],          // 한반도 중부
+  to:   [126.35, 34.75],          // 서남해안(신안·목포 앞바다)
+  endZoom: 8.0,
+};
+const ease = (t) => t * t * (3 - 2 * t);
+const expo = (a, b, t) => a * Math.pow(b / a, t);
+
+function filmState(t) {
+  t = clamp01(t);
+  // 고도: 궤도 → 성층권 → 데크 관통. 0.72 이후는 흰 섬광 뒤에서 지역 고도로 넘어간다.
+  const alt = t < 0.72
+    ? expo(6400, 7.2, ease(t / 0.72))
+    : expo(7.2, 372, ease((t - 0.72) / 0.28));      // 372km ≈ MapLibre z8
+  const pitch = lerp(2, 16, ease(smooth(t, 0.30, 0.80)));
+  const bearing = lerp(-16, 4, ease(t));
+  const g = ease(smooth(t, 0.12, 0.96));
+  const center = [lerp(FILM.from[0], FILM.to[0], g), lerp(FILM.from[1], FILM.to[1], g)];
+  // 마지막 15% 는 지도 줌을 z8.0 으로 정확히 눌러 다음 레그와 이음매를 맞춘다.
+  const lock = ease(smooth(t, 0.86, 1.0));
+  return { alt, pitch, bearing, center, lock };
+}
+
+function film(t) {
+  const st = filmState(t);
+  placeAnchor(st.center[0], st.center[1]);
+  updateSun();
+  const zPhys = zoomForAltitude(st.alt, st.pitch);
+  const z = lerp(zPhys, FILM.endZoom, st.lock);
+  apply(st.alt, st.pitch, st.bearing, st.center, z);
+  // 기법은 시각으로 결정론적으로 갱신한다(누적 dt 금지)
+  const T = t * FILM.sec;
+  if (tech[2]) tech[2].updateAt(st.alt, T, sunWorld, camera);
+  if (tech[3]) { tech[3].updateAt(st.alt, T, sunWorld, camera, KM); tech[3].fit(camera); }
+  if (tech[1]) tech[1].updateAt(st.alt, T, sunWorld);
+  P = t;
+  $('#h-p').textContent = t.toFixed(3);
+}
+
+function clean(on) { $('#ui').style.display = on ? 'none' : ''; }
 
 /* ── 부팅 ─────────────────────────────────────────────────── */
 const note = $('#note');
@@ -378,6 +436,9 @@ window.__spike = {
   setHour: (h) => setHour(h),
   setSync: (v) => { SYNC = !!v; fps.reset(); },
   benchFrames,
+  film, filmState, clean, placeAnchor,
+  FILM,
+  renderOnce: () => { if (current === 3 && tech[3]) tech[3].render(innerWidth * DPR, innerHeight * DPR); renderer.render(scene, camera); },
 };
 
 boot().catch((e) => { note.textContent = '부팅 실패: ' + e.message; console.error(e); });

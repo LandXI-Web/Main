@@ -64,7 +64,9 @@ out vec4 fragColor;
 float fbm(vec3 p){
   float lo = texture(uNoise, p * 0.5).r;
   float hi = texture(uNoise, p * 2.7).g;
-  return clamp(lo * 0.80 + hi * 0.32 - 0.10, 0.0, 1.0);
+  // 저주파에 고주파를 '깎아내는' 방식(remap) — 단순 합보다 뭉게구름 가장자리가 산다
+  float base = lo * 1.06 - 0.06;
+  return clamp((base - hi * 0.34) / 0.66, 0.0, 1.0);
 }
 
 // 고도 프로파일 — 바닥은 평평하고 정수리는 둥글게(적운)
@@ -76,7 +78,7 @@ float density(vec3 lp){
   vec3 q = vec3(lp.x, lp.y * 2.2, lp.z) / (uKM * 11.0);
   q += vec3(uTime * 0.0075, 0.0, uTime * 0.0026);
   float n = fbm(q);
-  float d = (n - (1.0 - uCoverage)) * 3.0;
+  float d = (n - (1.0 - uCoverage)) * 6.5;
   return clamp(d, 0.0, 1.0) * profile(h) * uDensity;
 }
 
@@ -125,10 +127,10 @@ void main(){
       float ls = (y1 - y0) / 6.0 / max(abs(L.y), 0.28);
       float tl = 0.0, sh = 0.0;
       for (int j = 0; j < 6; j++) { tl += ls; sh += density(p + L * tl); }
-      float Tl = exp(-sh * ls / uKM * 0.62);
+      float Tl = exp(-sh * ls / uKM * 1.5);
       float powder = 1.0 - exp(-d * 3.6);
       vec3 S = (sunCol * Tl * phase * powder * 1.8 + amb) * day + amb * 0.22;
-      float a = 1.0 - exp(-d * dt / uKM * 0.50);
+      float a = 1.0 - exp(-d * dt / uKM * 2.4);
       acc += T * a * S;
       T *= (1.0 - a);
     }
@@ -177,8 +179,9 @@ export function createVolumetric(renderer, anchor, opt = {}) {
     comp, name: 'volumetric',
     setScale(s) { scale = s; },
     get resScale() { return scale; },
-    update(altKm, dt, sun, cam, KM) {
-      t += dt;
+    update(altKm, dt, sun, cam, KM) { t += dt; this.updateAt(altKm, t, sun, cam, KM); },
+    updateAt(altKm, T, sun, cam, KM) {
+      t = T;
       on = altKm < 90;                       // 대류권 밖에서는 끈다
       comp.visible = on;
       if (!on) return;
@@ -190,8 +193,8 @@ export function createVolumetric(renderer, anchor, opt = {}) {
       u.uCamWorld.value.copy(cam.matrixWorld);
       u.uToLocal.value.copy(anchor.matrixWorld).invert();
       u.uSteps.value = altKm < 12 ? 48 : altKm < 40 ? 32 : 24;
-      u.uCoverage.value = THREE.MathUtils.lerp(0.34, 0.56, THREE.MathUtils.smoothstep(altKm, 0.6, 9.0));
-      u.uDensity.value = THREE.MathUtils.smoothstep(altKm, 92, 52);
+      u.uCoverage.value = THREE.MathUtils.lerp(0.40, 0.62, THREE.MathUtils.smoothstep(altKm, 0.6, 9.0));
+      u.uDensity.value = 1 - THREE.MathUtils.smoothstep(altKm, 52, 92);
     },
     render(w, h) {
       if (!on) return;
