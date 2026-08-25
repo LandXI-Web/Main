@@ -1,4 +1,5 @@
 import { icon } from './ui/icon.js';
+import { initPalette } from './ui/palette.js';
 const MENU = [
   { key: 'dashboard', label: '대시보드', href: 'dashboard.html', icon: 'dashboard' },
   { group: 'BUILD' },
@@ -28,6 +29,8 @@ export function mountShell(opts = {}) {
   if (opts.secondary) { body.classList.add('has-secondary'); main.before(renderSecondary(opts.secondary)); }
   if (opts.footer !== false && !opts.mapPage) body.append(renderFooter());
   bindFlyout(); window.LX = Object.assign(window.LX || {}, { shell: { setCrumb, notify } });
+  const palette = initPalette({ sources: () => (window.LX?.paletteSources?.() || []), onPlace: i => window.LX?.map?.flyTo?.(i.lnglat, 14) || window.LX?.onPlace?.(i) });
+  window.LX = Object.assign(window.LX || {}, { palette });
 }
 function renderRail(active) {
   const nav = document.createElement('nav'); nav.className = 'rail'; nav.setAttribute('aria-label', '주 메뉴');
