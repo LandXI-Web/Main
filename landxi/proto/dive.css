@@ -116,17 +116,25 @@ body{overflow-x:hidden; color:var(--ink); font-size:var(--t-body); line-height:v
 #brand{display:flex; align-items:center; gap:20px}
 #brand img{height:16px; display:block}
 #brand-sub{padding-left:20px; border-left:var(--v3-hair) solid var(--hair); color:var(--mute)}
-#meta{margin:0; display:flex; align-items:center; gap:16px; color:var(--mute); min-width:0}
+#meta{margin:0 auto 0 32px; display:flex; align-items:center; gap:16px; color:var(--mute); min-width:0}
 #meta-txt{color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   font-family:var(--v3-num); font-size:var(--t-lab)}
-#live{position:relative; padding-left:14px; font-family:var(--v3-num); font-size:11px;
-  letter-spacing:.08em; color:var(--mute); font-weight:400}
-#live::before,#live::after{content:''; position:absolute; left:0; top:50%; width:6px; height:6px;
-  margin-top:-3px; background:var(--v3-accent)}
-#live::before{animation:pulse-dot 2600ms var(--v3-ease) infinite}
-#live::after{animation:pulse-ring 2600ms var(--v3-ease) infinite}
-@keyframes pulse-dot{0%,100%{opacity:.6; transform:scale(.7)}50%{opacity:1; transform:scale(1)}}
-@keyframes pulse-ring{0%{opacity:0; transform:scale(1)}50%{opacity:.5}100%{opacity:0; transform:scale(2.2)}}
+/* 마스트헤드 메뉴 — 홈이 실제로 가진 기능만(B-Home 우측 내비 행). */
+#nav{display:flex; align-items:center; gap:26px; flex:none}
+#nav .nl{position:relative; font-family:var(--v3-body); font-size:13px; letter-spacing:-0.01em;
+  color:var(--mute); text-decoration:none; padding:4px 0;
+  transition:color var(--v3-hover) var(--v3-hover-ease), transform var(--v3-hover) var(--v3-hover-ease)}
+#nav .nl::after{content:''; position:absolute; left:0; right:0; bottom:0; height:var(--v3-hair);
+  background:var(--ink); transform:scaleX(0); transform-origin:left;
+  transition:transform var(--v3-hover) var(--v3-hover-ease)}
+#nav .nl:hover{color:var(--ink); transform:translateY(-2px)}
+#nav .nl:hover::after{transform:scaleX(1)}
+#nav .nl.on{color:var(--ink)}
+#nav .nl.on::after{transform:scaleX(1); background:var(--v3-accent)}
+#nav .nl:focus-visible{outline:var(--v3-hair) solid var(--v3-accent); outline-offset:4px}
+/* `시연` — 이 화면은 운영 현황이 아니라 신규 개발 콘티다. 가짜 LIVE 램프를 쓰지 않는다. */
+#demo{font-family:var(--v3-num); font-size:10px; font-weight:400; letter-spacing:.10em;
+  color:var(--mute); padding:3px 7px; border:var(--v3-hair) solid var(--hair)}
 
 /* ── 판 액자 — 헤어라인 + 코너 브래킷 + PLACE · DATE 캡션 ── */
 #plate{position:absolute; left:0; top:0; width:0; height:0; pointer-events:none;
@@ -165,20 +173,25 @@ body{overflow-x:hidden; color:var(--ink); font-size:var(--t-body); line-height:v
 #ch1-cta{margin-left:-24px}
 
 /* ── 아틀라스 좌측 색인 (13 서비스) — 3컬럼 ─────────────── */
+/* B-Home 좌측 컬럼 = 4컬럼. 마스트헤드 아래 56px 에서 시작해 푸터 위에서 끝난다.
+   색인 13행(24px 피치) → 캡션 → 헤드라인 블록 → CTA 행이 한 화면에 함께 선다. */
 #atlas{position:absolute; left:var(--g); top:calc(var(--bar) + 56px);
-  width:calc(3 * var(--colw) + 2 * var(--gap));
+  bottom:calc(var(--foot) + 14px);
+  width:calc(4 * var(--colw) + 3 * var(--gap));
+  display:flex; flex-direction:column;
   opacity:0; transition:opacity var(--v3-d1) var(--v3-ease)}
 #atlas.on{opacity:1}
 #atlas-fig{margin:0 0 14px; display:flex; justify-content:space-between; align-items:baseline; gap:12px;
   padding-bottom:10px; border-bottom:var(--v3-hair) solid var(--ink); color:var(--mute)}
 #atlas-fig b{color:var(--ink); font-weight:400}
 #index{margin:0; padding:0; list-style:none}
-#index li{display:grid; grid-template-columns:20px 1fr 52px auto; align-items:baseline; gap:10px;
-  padding:8px 0; border-bottom:var(--v3-hair) solid var(--hair);
+#index li{display:grid; grid-template-columns:22px 1fr 60px auto; align-items:baseline; gap:10px;
+  padding:3px 0; border-bottom:var(--v3-hair) solid var(--hair);
   color:var(--mute); cursor:pointer;
   transition:transform var(--v3-hover) var(--v3-hover-ease), color var(--v3-hover) var(--v3-hover-ease),
              opacity var(--v3-hover) var(--v3-hover-ease)}
-#index li .n{font-family:var(--v3-num); font-size:10px; letter-spacing:.01em; color:var(--soft)}
+#index li .n{font-family:var(--v3-num); font-size:10px; font-style:normal;
+  letter-spacing:.01em; color:var(--soft); font-variant-numeric:tabular-nums}
 #index li .m{font-family:var(--v3-body); font-size:13px; line-height:1.2; letter-spacing:-0.01em;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 #index li s{text-decoration:none; font-family:var(--v3-num); font-size:9.5px;
@@ -196,8 +209,39 @@ body{overflow-x:hidden; color:var(--ink); font-size:var(--t-body); line-height:v
 #index li.on .n{color:var(--v3-accent)}
 #index li.sel{border-bottom-color:var(--ink)}
 #index li.sel .m{color:var(--v3-accent)}
-#atlas-foot{margin:16px 0 0; padding-top:12px; border-top:var(--v3-hair) solid var(--hair);
-  color:var(--mute)}
+#atlas-foot{margin:8px 0 0; color:var(--soft); font-size:10px}
+
+/* ── 아틀라스 헤드라인 블록 (B-Home 좌측 하단) ──────────────
+   색인이 끝나고 남은 세로 공간을 이 블록이 전부 가져간다. 한 화면 안에서
+   라벨 → 헤드라인 → 리드 → CTA 가 위에서 아래로 한 번에 읽힌다. */
+#atlas-head{margin-top:auto; padding-top:12px}
+#atlas-head .ck{margin:0 0 12px; padding-bottom:9px;
+  border-bottom:var(--v3-hair) solid var(--hair); color:var(--mute)}
+#atlas-head h1{margin:0 0 15px; font-family:var(--v3-display); font-weight:500;
+  font-size:var(--t-h1); line-height:1.10; letter-spacing:-0.02em; text-wrap:balance}
+#ah-lead{margin:0 0 14px; font-size:13.5px; line-height:1.5; color:#2A2E34; max-width:34em}
+#ah-lead .num{font-family:var(--v3-num); font-size:12.5px; color:var(--mute)}
+#ah-cta{display:flex; align-items:center; gap:26px; flex-wrap:nowrap; white-space:nowrap}
+#ah-1{margin-left:-20px}
+.v3 #ah-1{padding:12px 20px; font-size:15px}
+
+/* ── 판 위 지점 콜아웃 (B-Home 원판) ────────────────────────
+   유리가 아니라 **불투명한 흰 종이 조각**이다 — 판 안의 사진 위에 캡션을 올리는
+   유일한 방법이고, 값은 전부 실제로 센 결과다(§5 규칙 9). */
+#pins{position:absolute; inset:0; pointer-events:none; opacity:0;
+  transition:opacity var(--v3-d1) var(--v3-ease)}
+#pins.on{opacity:1}
+#pins .pin{position:absolute; transform:translate(-50%,-100%); padding:5px 9px 6px;
+  background:var(--paper); border:var(--v3-hair) solid var(--hair); white-space:nowrap;
+  transition:transform var(--v3-hover) var(--v3-hover-ease), opacity var(--v3-hover) var(--v3-hover-ease)}
+#pins .pin::after{content:''; position:absolute; left:50%; top:100%; width:var(--v3-hair);
+  height:14px; background:var(--hair)}
+#pins .pin b{display:block; font-family:var(--v3-num); font-size:13px; font-weight:400;
+  font-variant-numeric:tabular-nums; color:var(--ink); letter-spacing:-0.01em}
+#pins .pin b u{text-decoration:none; font-size:9.5px; color:var(--mute); margin-left:3px}
+#pins .pin s{display:block; text-decoration:none; font-family:var(--v3-num); font-size:9px;
+  color:var(--soft); letter-spacing:.02em; margin-top:1px}
+#pins .pin.dim{opacity:.28}
 
 /* ── 결과 카드 (FIG. 02) — 3컬럼 ────────────────────────── */
 #card{position:absolute; right:var(--g); top:calc(var(--bar) + 56px);
@@ -438,9 +482,20 @@ input[type=range]:focus-visible{outline:var(--v3-hair) solid var(--v3-accent); o
 #rl-r,#tier{color:var(--mute)}
 #rl-scale{display:flex; align-items:center; gap:10px; color:var(--mute)}
 #scale-bar{display:block; height:4px; border:var(--v3-hair) solid var(--mute); border-top:0; min-width:6px}
-#attrib{position:absolute; left:var(--g); right:var(--g); bottom:5px; margin:0; font-size:8px;
+#attrib{position:absolute; left:calc(var(--g) + 250px); right:var(--g); bottom:5px; margin:0; font-size:8px;
   color:var(--soft); text-align:right; line-height:1.2;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+/* 정책 링크 — 홈이 실제로 지고 있는 기능. 밑줄 통과 호버(§4 CTA 규칙). */
+#policy{position:absolute; left:var(--g); bottom:4px; display:flex; gap:16px}
+#policy a{position:relative; font-family:var(--v3-num); font-size:9px; letter-spacing:.02em;
+  color:var(--soft); text-decoration:none; padding-bottom:2px;
+  transition:color var(--v3-hover) var(--v3-hover-ease)}
+#policy a::after{content:''; position:absolute; left:0; right:0; bottom:0; height:var(--v3-hair);
+  background:var(--mute); transform:scaleX(0); transform-origin:left;
+  transition:transform var(--v3-hover) var(--v3-hover-ease)}
+#policy a:hover{color:var(--ink)}
+#policy a:hover::after{transform:scaleX(1)}
+#policy a:focus-visible{outline:var(--v3-hair) solid var(--v3-accent); outline-offset:3px}
 
 /* ── 프리로더 — 흰 종이 위 3단 조립 ─────────────────────── */
 #pre{position:fixed; inset:0; z-index:40; background:var(--paper); display:grid; place-items:center;

@@ -47,7 +47,7 @@ export function cropLabel(c) {
 
 const SENSOR = { drone: '드론 정사영상', aerial: '항공 정사영상', satellite: '위성영상' };
 // 색인 3컬럼(≈310px)에 부처를 끼워 넣으려면 줄여야 한다. 줄이되 지어내지 않는다.
-const MIN_ABBR = {
+export const MIN_ABBR = {
   '해양수산부': '해수부', '농림축산식품부': '농식품부', '국토교통부': '국토부',
   '환경부': '환경부', '산업통상자원부': '산업부', 'LX 한국국토정보공사': 'LX',
 };

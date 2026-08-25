@@ -42,7 +42,16 @@
       <img src="../assets/brand/landxi-wordmark.png" alt="Land-XI Platform">
       <span class="label" id="brand-sub">한국국토정보공사 · 국토정보 통합조사</span>
     </div>
-    <p id="meta" class="caption" aria-live="polite"><span id="meta-txt">V-WORLD 정사영상 · 13 서비스 · KST --:--</span><b id="live">LIVE</b></p>
+    <p id="meta" class="caption" aria-live="polite"><span id="meta-txt">V-WORLD 정사영상 · 13 서비스 · KST --:--</span></p>
+    <!-- 홈이 실제로 가진 기능만 건다(v2 §6 인벤토리): 서비스 라인업 · 활용 사례 · 문의하기 · 로그인.
+         운영 현황을 지어내지 않는다 — 이 페이지는 신규 개발 콘티다(`시연` 스탬프). -->
+    <nav id="nav" aria-label="주요 메뉴">
+      <a class="nl" href="#atlas" data-goto="0.44">서비스</a>
+      <a class="nl" href="#results" data-goto="0.90">활용 사례</a>
+      <a class="nl" href="mailto:land-xi@lx.or.kr?subject=Land-XI%20%ED%94%8C%EB%9E%AB%ED%8F%BC%20%EB%AC%B8%EC%9D%98">문의하기</a>
+      <a class="nl on" href="login.html">로그인</a>
+      <b id="demo" title="이 화면은 운영 현황이 아니라 신규 개발 콘티다">시연</b>
+    </nav>
   </header>
 
   <!-- 판 액자 — 헤어라인 + 코너 브래킷 + 지명·촬영일 캡션. 종이 위에 그린다. -->
@@ -60,19 +69,30 @@
     <a class="bracket" id="ch1-cta" href="#scroller">1.5 cm까지 내려가기</a>
   </section>
 
-  <!-- ── 2장 구름 돌파 → 전국 ─────────────────────────────── -->
-  <section id="ch2" class="col">
-    <p class="label ck">02 — 구름 돌파</p>
-    <h1 class="display"><span class="ln reveal"><i>부처는 여섯,</i></span><span class="ln reveal"><i>영상은 하나다</i></span></h1>
-    <p class="lead">고도 786 km에서 8 km로. 구름을 뚫으면 100,363 km²가 그대로 있다.</p>
-  </section>
-
-  <!-- ── 3장 전국 — B안 아틀라스 좌측 색인 ────────────────── -->
+  <!-- ── 2장 구름 돌파 → 전국 · B-Home 아틀라스 좌측 컬럼 ─────
+       B-Home.png 의 좌측 컬럼 그대로다: 색인 헤더 → 13행 → 챕터 라벨 →
+       대형 헤드라인 → 리드 2줄 → CTA 행. 구름을 뚫는 동안에는 사진 위에 활자를
+       얹지 않고(§5 규칙 5), 구름이 걷히는 그 프레임에 이 컬럼이 조립된다. -->
   <section id="atlas">
     <p id="atlas-fig" class="label">색인 · 전국 조사 서비스<b id="atlas-n">13종</b></p>
     <ul id="index" aria-label="전국 조사 서비스 13종"></ul>
     <p id="atlas-foot" class="caption">수치가 있는 행만 실제 분석 결과다.</p>
+
+    <div id="atlas-head">
+      <p class="label ck" id="ah-ck">CHAPTER 02 · 구름 돌파 → 전국 점등</p>
+      <h1 class="display"><span class="ln reveal"><i>부처는 여섯,</i></span><span class="ln reveal"><i>영상은 하나다</i></span></h1>
+      <p class="lead" id="ah-lead">범부처 AI 기반 국토정보 통합조사 — 한 번 찍어 열세 번 쓴다.<br>
+        <span class="num">위성 10 m · 항공 25 cm · 드론 1 cm</span> — 같은 땅을 세 고도에서 본다.</p>
+      <div id="ah-cta">
+        <a class="bracket" id="ah-1" href="login.html">로그인하고 시작하기</a>
+        <a class="link" id="ah-2" href="#results" data-goto="0.90">활용 사례 보기</a>
+        <a class="link" id="ah-3" href="mailto:land-xi@lx.or.kr?subject=Land-XI%20%ED%94%8C%EB%9E%AB%ED%8F%BC%20%EB%AC%B8%EC%9D%98">문의하기</a>
+      </div>
+    </div>
   </section>
+
+  <!-- 판 위 콜아웃 — 실제로 센 수치만 지점에 붙는다(B-Home 원판의 지점 라벨). -->
+  <div id="pins" aria-hidden="true"></div>
 
   <!-- 선택 서비스 결과 카드 (FIG. 02) -->
   <aside id="card" hidden>
@@ -117,8 +137,9 @@
 
   <!-- 마지막 CTA -->
   <div id="cta" hidden>
-    <a class="bracket" id="cta-1" href="#" role="button">로그인하고 시작하기</a>
-    <a class="link" id="cta-2" href="#" role="button">플랫폼 둘러보기</a>
+    <a class="bracket" id="cta-1" href="login.html">로그인하고 시작하기</a>
+    <a class="link" id="cta-2" href="#atlas" data-goto="0.44">서비스 13종 보기</a>
+    <a class="link" id="cta-3" href="mailto:land-xi@lx.or.kr?subject=Land-XI%20%ED%94%8C%EB%9E%AB%ED%8F%BC%20%EB%AC%B8%EC%9D%98">문의하기</a>
   </div>
 
   <!-- 하단 헤어라인 푸터 -->
@@ -133,6 +154,8 @@
       <span class="caption" id="rl-scale"><span class="num" id="scale-txt">—</span><i id="scale-bar"></i></span>
       <span class="caption" id="tier">tier —</span>
     </div>
+    <!-- 정책 링크 — 홈이 실제로 지고 있는 기능(v2 §6). 지어낸 운영 지표는 여기에 없다. -->
+    <nav id="policy" aria-label="정책"><a href="#">이용약관</a><a href="#">개인정보처리방침</a><a href="#">저작권정책</a></nav>
     <p id="attrib" class="caption"></p>
   </footer>
 </main>

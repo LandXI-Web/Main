@@ -15,7 +15,7 @@ import { makeSwipe } from './swipe.js';
 import { makeDetect } from './detect.js';
 import { describe, bake, centroids, filaments } from './results.js';
 import { makePlate } from './plate.js';
-import { buildRows, indexHTML, rowsHTML, makeAtlas, stamp, CROP_KEY, cropLabel } from './atlas.js';
+import { buildRows, indexHTML, rowsHTML, makeAtlas, stamp, CROP_KEY, cropLabel, MIN_ABBR } from './atlas.js';
 import { lerp, clamp01, fmt, makeCursor, magnetic, scaleBar, thumbFromTiles, develop, cropFromTiles, drawHist } from './hud.js';
 
 const $ = (s) => document.querySelector(s);
@@ -555,11 +555,16 @@ if (optional.filmLegs) {
     .catch(() => { /* 아직 없다 — 라이브 카메라가 그대로 간다 */ });
 }
 
-const tickMag = magnetic([...document.querySelectorAll('#cta a')]);
+const tickMag = magnetic([...document.querySelectorAll('#cta a, #ah-cta a')]);
 const tickCursor = makeCursor($('#cursor'), $('#cursor-ll'), map, (x, y) => plate.inside(x, y));
 
+/* 내부 이동은 페이지 점프가 아니라 **같은 카메라의 스크롤 이동**이다(§5 규칙 4). */
+document.querySelectorAll('[data-goto]').forEach((a) => {
+  a.addEventListener('click', (e) => { e.preventDefault(); api.seek(+a.dataset.goto); });
+});
+
 /* 카피 리빌 — 줄 단위 clip-path 마스크(§4 모션). */
-const cols = [...document.querySelectorAll('.col, #dhead')].map((el) => ({
+const cols = [...document.querySelectorAll('.col, #dhead, #atlas-head')].map((el) => ({
   el, lines: [...el.querySelectorAll('.ln')], shown: false,
 }));
 function showCol(el, on) {
@@ -607,9 +612,76 @@ const NEWEST = SVC.slice().sort((a, b) => Date.parse(b.lastRun) - Date.parse(a.l
 const REAL_N = ROWS.reduce((a, r) => a + (r.count || 0), 0);
 $('#atlas-foot').textContent = `수치가 있는 행만 실제 분석 결과다 — ${ROWS.length}건.`;
 
+/* 판 위 지점 콜아웃 — B-Home 원판의 라벨. 서비스가 광고하는 수치가 아니라
+   결과 아틀라스가 실제로 센 수치만 붙는다. 붙일 게 없으면 아무것도 안 붙는다. */
+const PINS = (() => {
+  const by = new Map();
+  for (const s of SVC) {
+    const rs = ROWS.filter((r) => r.service === s.id && r.count != null);
+    if (!rs.length) continue;
+    const n = rs.reduce((a, r) => a + r.count, 0);
+    // 지명은 **그 서비스 지점에 가장 가까운 결과**의 것을 쓴다. 한 서비스가 여러 지역에
+    // 결과를 가진 경우(드론 변화탐지 = 국산리 + 남원) 첫 행을 그냥 쓰면 라벨이 붙은 점과
+    // 지명이 어긋난다 — 그건 지도 위의 거짓말이다.
+    const near = rs.slice().sort((a, b) =>
+      Math.hypot(a.camera.center[0] - s.lnglat[0], a.camera.center[1] - s.lnglat[1])
+      - Math.hypot(b.camera.center[0] - s.lnglat[0], b.camera.center[1] - s.lnglat[1]))[0];
+    // 가까이 선 서비스는 라벨 하나로 합친다 — 남원처럼 두 결과가 겹치는 곳에서
+    // 흰 조각 두 장이 포개지면 판이 지저분해지고 어느 쪽도 읽히지 않는다(B 원판과 같은 처리).
+    // 라벨이 서는 자리는 서비스 아이콘이 아니라 **결과가 실제로 있는 좌표**다.
+    const at = near.camera.center;
+    // 경계 반올림이 아니라 **근접 병합**이다 — 0.45° 안에 이미 선 라벨이 있으면 그 라벨에 합친다.
+    let key = null;
+    for (const [k, v] of by) {
+      if (Math.hypot(v.ll[0] / v.k - at[0], v.ll[1] / v.k - at[1]) < 0.45) { key = k; break; }
+    }
+    if (key === null) key = `${at[0]},${at[1]}`;
+    const g = by.get(key) || { place: near.place, ids: [], vals: [], mins: new Set(), ll: [0, 0], k: 0, top: 0 };
+    g.ids.push(s.id);
+    g.vals.push({ n, unit: near.unit || '건' });
+    g.mins.add(MIN_ABBR[s.ministry] || s.ministry);
+    g.ll = [g.ll[0] + at[0], g.ll[1] + at[1]];
+    g.k += 1;
+    if (n > g.top) { g.top = n; g.place = near.place; }
+    by.set(key, g);
+  }
+  return [...by.values()]
+    .map((g) => ({ ...g, ll: [g.ll[0] / g.k, g.ll[1] / g.k], vals: g.vals.sort((a, b) => b.n - a.n) }))
+    .sort((a, b) => b.top - a.top);
+})();
+$('#pins').innerHTML = PINS.map((g) =>
+  `<div class="pin" data-ids="${g.ids.join(' ')}">`
+  + g.vals.map((v) => `<b>${fmt(v.n)}<u>${v.unit}</u></b>`).join('')
+  + `<s>${g.place} · ${[...g.mins].join('·')}</s></div>`).join('');
+const pinEls = [...document.querySelectorAll('#pins .pin')];
+
+function layoutPins(on) {
+  $('#pins').classList.toggle('on', on);
+  if (!on) return;
+  const r = plate.rect;
+  const L = r[0], T = r[1], R = innerWidth - r[2], B = innerHeight - r[3];
+  let shown = 0;
+  pinEls.forEach((el, i) => {
+    const g = PINS[i];
+    const q = map.project(g.ll);
+    // 판 밖으로 나간 라벨은 그리지 않는다 — 종이 위에 사진의 주석이 떠다니면 거짓말이 된다.
+    const inside = shown < 3 && q.x > L + 46 && q.x < R - 46 && q.y > T + 52 && q.y < B - 14;
+    el.style.display = inside ? '' : 'none';
+    if (!inside) return;
+    shown += 1;
+    el.style.left = q.x.toFixed(1) + 'px';
+    el.style.top = (q.y - 16).toFixed(1) + 'px';
+    const foc = hoveredSvc || hovered || selected;
+    el.classList.toggle('dim', !!foc && !g.ids.includes(foc));
+  });
+}
+
 function applyAtlasChapter(p, now) {
   const on = p > 0.335 && p < 0.545;
+  layoutPins(on);
   $('#atlas').classList.toggle('on', on);
+  // 헤드라인 두 줄은 구름이 걷히는 그 프레임에 줄 마스크로 올라온다(§4 모션).
+  showCol($('#atlas-head'), on);
   $('#card').classList.toggle('on', on || (p >= 0.545 && p < 0.57));
   if (!on) {
     setArcs([]);
@@ -652,7 +724,10 @@ function applyAtlasChapter(p, now) {
   if (!selected) {
     const lit = SVC.filter((s) => q > s.q).sort((a, b) => b.q - a.q);
     // 실결과가 있는 서비스를 먼저 세운다 — 이 지면의 주인공은 결과이지 라인업이 아니다.
-    const withRes = lit.find((s) => ROWS.some((r) => r.service === s.id));
+    // 셀 수 있는 탐지 결과가 있는 서비스를 먼저 세운다 — '2 시점' 같은 메타 수치를
+    // 124px 통계 자리에 올리면 지면이 결과가 아니라 카탈로그로 읽힌다.
+    const withRes = lit.find((s) => ROWS.some((r) => r.service === s.id && r.count >= 10))
+      || lit.find((s) => ROWS.some((r) => r.service === s.id));
     const want = (withRes || lit[0] || SVC[0]).id;
     if (want !== cardShown) { cardShown = want; renderCard(want); }
   }
@@ -822,7 +897,8 @@ const NOW_STAMP = () => stamp(`${TODAY.getFullYear()}-${String(TODAY.getMonth() 
 const PLATE_FIG = [
   [0.000, 'FIG. 01', () => `SENTINEL-2 · 궤도 ${SAT.altKm} km`, () => '대한민국', () => NOW_STAMP()],
   [0.160, 'FIG. 01', () => '성층운 돌파 · 786 km → 8 km', () => '한반도 상공', () => NOW_STAMP()],
-  [0.330, 'FIG. 02', () => `전국 · 서비스 ${SVC.length}종 · 실결과 ${ROWS.length}건`, () => '대한민국', () => '2025 — 2026'],
+  // 판은 끝까지 FIG. 01 이다 — FIG. 02 는 우측 결과 카드가 쓴다(B-Home 원판의 번호 배분).
+  [0.330, 'FIG. 01', () => `전국 · 서비스 ${SVC.length}종 · 실결과 ${ROWS.length}건`, () => '대한민국', () => '2025 — 2026'],
   [0.560, 'FIG. 03', () => 'V-World 정사영상 → LX 드론 정사영상', () => '남원 사매면 전북', () => stamp('2025-08-22')],
   [0.800, 'FIG. 03', () => `LX 드론 정사영상 · GSD ${gsdOverride}`, () => '남원 사매면 전북', () => stamp(epochDate + '-01')],
 ];
@@ -913,8 +989,7 @@ function apply(p) {
 
   // 챕터 카피
   showCol($('#ch1'), p < 0.155);
-  // 판이 전폭이 되기 전에 카피는 종이 위에서 물러난다 — 활자를 사진 위에 얹지 않는다.
-  showCol($('#ch2'), p >= 0.158 && p < 0.242);
+  // 2장 카피는 이제 아틀라스 좌측 컬럼 안에 있다(B-Home 구도) — 구름 구간에는 활자가 없다.
   showCol($('#dhead'), p > 0.60 && p < 0.795);
   $('#dstrip').classList.toggle('on', p > 0.565 && p < 0.815);
 
@@ -1008,7 +1083,9 @@ function renderCard(id) {
     return null;
   }
 
-  const r = rows[0];
+  // 한 서비스에 결과가 여럿이면 **가장 크게 센 것**을 세운다 — 124px 통계 자리에
+  // '2 시점' 같은 메타 수치가 올라가면 지면이 결과가 아니라 카탈로그로 읽힌다.
+  const r = rows.slice().sort((a, b) => (b.count || 0) - (a.count || 0))[0];
   cardRow = r;
   acquire(null, r);
   $('#card-count').hidden = false;
