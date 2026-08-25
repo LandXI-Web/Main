@@ -22,15 +22,20 @@ export async function bakeEarthTexture(Z = 3, onTile) {
   const mc = document.createElement('canvas'); mc.width = mc.height = S;
   const mx = mc.getContext('2d');
   mx.fillStyle = '#08192e'; mx.fillRect(0, 0, S, S);   // 결측 타일은 심해색으로
-  let got = 0;
-  await Promise.all(Array.from({ length: n * n }, async (_, k) => {
+  // 64장을 한 번에 쏘면 EOX 가 몇 장을 떨군다 → 지구에 검은 사각형이 남는다.
+  // 동시 8장으로 제한하고 3회까지 재시도한다.
+  let got = 0, done = 0, next = 0;
+  const one = async (k) => {
     const x = k % n, y = (k / n) | 0;
     const url = EOX.replace('{z}', Z).replace('{x}', x).replace('{y}', y);
-    for (let a = 0; a < 2; a++) {                       // 한 번 재시도 — 검은 사각형 방지
-      try { mx.drawImage(await loadImg(a ? url + '?r=1' : url), x * 256, y * 256); got++; break; }
-      catch { /* 재시도 */ }
+    for (let a = 0; a < 3; a++) {
+      try { mx.drawImage(await loadImg(a ? `${url}?r=${a}` : url), x * 256, y * 256); got++; break; }
+      catch { await new Promise((r) => setTimeout(r, 180 * (a + 1))); }
     }
-    onTile && onTile(k + 1, n * n);
+    onTile && onTile(++done, n * n);
+  };
+  await Promise.all(Array.from({ length: 8 }, async () => {
+    while (next < n * n) await one(next++);
   }));
   if (got < n * n * 0.5) throw new Error('EOX 타일 수신 실패');
 
@@ -85,7 +90,7 @@ export function makeEarth(tex) {
         // 바다의 태양 글린트 — 지구가 '살아 있는 물체'로 읽히게 하는 값싼 한 줄
         vec3 V = normalize(cameraPosition - vW);
         vec3 Hv = normalize(normalize(sun) + V);
-        lit += vec3(1.0,0.97,0.90) * pow(max(dot(normalize(vN), Hv), 0.0), 220.0) * water * 1.5;
+        lit += vec3(1.0,0.97,0.90) * pow(max(dot(normalize(vN), Hv), 0.0), 900.0) * water * 0.85;
         gl_FragColor = vec4(mix(night, lit, day) + max(dusk,0.0), uOpacity);
       }`,
   });

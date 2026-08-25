@@ -125,7 +125,10 @@ const map = new maplibregl.Map({
     layers: [
       { id: 'bg', type: 'background', paint: { 'background-color': '#0b1420' } },
       { id: 'eox', type: 'raster', source: 'eox', paint: { 'raster-opacity': 1 } },
-      { id: 'vsat', type: 'raster', source: 'vsat', minzoom: 5, paint: { 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 5, 0, 7, 1] } },
+      // 지역 스케일(z<9.4)에서는 Sentinel-2 cloudless 를 쓰고 V-World 는 z9.4 부터 넘겨받는다.
+      // V-World 는 z8 근처에서 갯벌·연안이 타일 단위 청록 블록으로 깨져 보인다(실측 확인).
+      // 레그의 마지막 프레임처럼 '깨끗한 지역 위성'이 필요한 곳에서는 EOX 가 정답이다.
+      { id: 'vsat', type: 'raster', source: 'vsat', minzoom: 5, paint: { 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 9.4, 0, 11, 1] } },
       { id: 'gibs', type: 'raster', source: 'gibs', paint: { 'raster-opacity': 0 } },
     ],
   },
@@ -136,6 +139,7 @@ for (const h of ['scrollZoom', 'dragPan', 'dragRotate', 'doubleClickZoom', 'touc
   map[h] && map[h].disable();
 if (map.setPixelRatio) map.setPixelRatio(DPR);
 map.on('error', () => {});
+window.__map = map;
 
 // 고도 → MapLibre zoom (같은 지상 폭을 보도록)
 function zoomForAltitude(altKm, pitch) {
@@ -212,8 +216,15 @@ function apply(alt, pitch, bearing, center, zoomOverride) {
 
   // 배경 크로스페이드: 글로브 → 지도. p 가 아니라 고도로 건다 —
   // 필름 타임라인과 스크럽이 같은 규칙을 쓰게 하려면 이게 유일한 기준이어야 한다.
-  const k = 1 - smooth(altKm, 190, 900);
+  // 글로브는 500km 위에서만 살아 있다. 그 아래는 지도가 100% — 이 경계가 흐리면
+  // 지역 뷰가 어두운 구체에 덮여 탁해진다(마지막 프레임이 이래서 파랗게 죽었다).
+  const k = 1 - smooth(altKm, 380, 1500);
   mapEl.style.opacity = String(k);
+  // 지역·궤도 스케일의 위성 영상은 바다가 거의 검다. 고도에 비례해 살짝 들어 올린다.
+  const lift = smooth(altKm, 40, 400);
+  mapEl.style.filter = lift > 0.01
+    ? `brightness(${(1 + 0.34 * lift).toFixed(3)}) contrast(${(1 + 0.05 * lift).toFixed(3)}) saturate(${(1 + 0.12 * lift).toFixed(3)})`
+    : '';
   earthGroup.visible = k < 0.995;
   if (earth) earth.material.uniforms.uOpacity.value = 1 - k;
   if (atmo) atmo.material.uniforms.strength.value = 1 - k;
@@ -344,11 +355,16 @@ function film(t) {
   const zPhys = zoomForAltitude(st.alt, st.pitch);
   const z = lerp(zPhys, FILM.endZoom, st.lock);
   apply(st.alt, st.pitch, st.bearing, st.center, z);
-  // 기법은 시각으로 결정론적으로 갱신한다(누적 dt 금지)
+  // 레그는 하이브리드다 — 스파이크의 결론 그대로.
+  //   > 250km : ① 구름 구 (지구 한 알 위의 실제 구름 무늬)
+  //   < 170km : ② 빌보드 데크 (관통)
+  // 둘의 자체 페이드 구간(420→60km / 168km↓)이 겹치며 자연스럽게 손을 넘긴다.
+  // ③ 볼류메트릭은 레그에서 끈다(비용 대비 이득이 이 고도대에서 역전된다 — 리포트 참조).
   const T = t * FILM.sec;
-  if (tech[2]) tech[2].updateAt(st.alt, T, sunWorld, camera);
-  if (tech[3]) { tech[3].updateAt(st.alt, T, sunWorld, camera, KM); tech[3].fit(camera); }
   if (tech[1]) tech[1].updateAt(st.alt, T, sunWorld);
+  if (tech[2]) tech[2].updateAt(st.alt, T, sunWorld, camera);
+  if (tech[3]) tech[3].comp.visible = false;
+  if (tech[4]) tech[4].group.visible = false;
   P = t;
   $('#h-p').textContent = t.toFixed(3);
 }
