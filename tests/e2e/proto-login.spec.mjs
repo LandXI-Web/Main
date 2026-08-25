@@ -5,9 +5,8 @@ const URL = 'proto/login.html';
 const SHOTS = 'shots/proto-login';
 fs.mkdirSync(SHOTS, { recursive: true });
 
-// 오프라인/키 없음에서 V-World 타일이 404 나는 것은 정상 동작이다(판은 어두운 바닥으로 남는다).
-// 네트워크 실패는 무시하고, 우리 코드가 던진 것만 실패로 본다.
-const NETWORK = /Failed to load resource|net::ERR|ERR_|status of 40|status of 50|AbortError|could not be decoded/i;
+// 필름 파일이 아직 없을 수 있다(레그를 굽는 중). 그건 정상 동작이다 — 포스터가 남는다.
+const NETWORK = /Failed to load resource|net::ERR|ERR_|status of 40|status of 50|AbortError/i;
 
 function watch(page) {
   const errs = [];
@@ -30,45 +29,110 @@ async function boot(page, q = '') {
 const EMAIL_MSG = '업무 이메일 형식으로 입력해 주세요 (예: hong@lx.or.kr)';
 const PW_MSG = '비밀번호가 비어 있습니다. 계정은 소속 기관 담당자가 발급합니다.';
 
-test('로드 — 콘솔 오류 0, 구도와 카피가 그대로 있다', async ({ page }) => {
+test('카피 — 분위기 문장이 아니라 Land-XI 플랫폼 소개다', async ({ page }) => {
   const errs = watch(page);
   await boot(page);
 
-  await expect(page.locator('.lg-h1')).toContainText('국토는 매일');
-  await expect(page.locator('.lg-h1')).toContainText('조금씩 달라진다');
-  await expect(page.locator('.lg-cta__t')).toHaveText('로그인하고 시작하기');
-  await expect(page.locator('.lx-plate__cap')).toContainText('FIG. 01');
-  await expect(page.locator('.lx-plate__cap')).toContainText('전주 · LX 본사 · V-World 정사영상');
-  await expect(page.locator('#lgClock')).toHaveText(/^\d{2}:\d{2}$/);
-  await expect(page.locator('.lg-live')).toContainText('LIVE');
-
-  // 좌 5/12 · 우 7/12, 거터 64px (Vantor 실측 그리드)
-  const box = await page.evaluate(() => {
-    const l = document.querySelector('.lg-left').getBoundingClientRect();
-    const r = document.querySelector('.lg-right').getBoundingClientRect();
-    const h1 = getComputedStyle(document.querySelector('.lg-h1'));
-    return { lx: l.x, lw: l.width, rw: r.width, fs: h1.fontSize, lh: h1.lineHeight, fam: h1.fontFamily };
+  // 모토(스펙 §1 고정 문안)가 H1 이고, SUIT 500 단일 굵기다.
+  const h1 = page.locator('.lg-h1');
+  await expect(h1).toContainText('LX 전 직원이');
+  await expect(h1).toContainText('Geo-AI 전문가입니다');
+  await expect(h1).not.toContainText('국토는 매일');           // 반려된 카피는 없다
+  const type = await page.evaluate(() => {
+    const cs = getComputedStyle(document.querySelector('.lg-h1'));
+    return { fam: cs.fontFamily, w: cs.fontWeight };
   });
-  expect(box.lx).toBe(64);
-  expect(box.fs).toBe('64px');
-  expect(box.lh).toBe('80px');
-  expect(box.fam).toMatch(/SUIT/);
-  expect(box.rw / box.lw).toBeGreaterThan(1.25);      // 7/12 ÷ 5/12 ≈ 1.4
+  expect(type.fam).toMatch(/SUIT/);
+  expect(type.w).toBe('500');
 
+  // 비전(스펙 §1 고정 문안)
+  await expect(page.locator('.lg-vis')).toContainText('범부처 AI 기반 국토정보 통합조사');
+  await expect(page.locator('.lg-mast__vis')).toHaveText('범부처 AI 기반 국토정보 통합조사');
+
+  // 3축 원장 — 실수치가 mono 로 붙어 있다.
+  const rows = page.locator('.lg-ledger .lg-row');
+  await expect(rows).toHaveCount(3);
+  await expect(rows.nth(0)).toContainText('노코드 · 워크플로우 기반 AI 모델 개발');
+  await expect(rows.nth(0)).toContainText('10');
+  await expect(rows.nth(1)).toContainText('전국단위 AI 실태조사');
+  await expect(rows.nth(1)).toContainText('13개 조사');
+  await expect(rows.nth(1)).toContainText('51,569');
+  await expect(rows.nth(2)).toContainText('범부처 통합');
+  await expect(rows.nth(2)).toContainText('부처 5');
+
+  await expect(page.locator('.lg-cta__t')).toHaveText('로그인하고 시작하기');
   expect(errs).toEqual([]);
   await page.screenshot({ path: `${SHOTS}/default.png` });
 });
 
-test('앰비언트 — 5초 아무것도 안 해도 카메라가 표류한다(주기 12s)', async ({ page }) => {
+test('판 — 디오라마 필름이 FIG. 01 캡션·브래킷·● LIVE 와 함께 선다', async ({ page }) => {
   await boot(page);
-  const a = await page.evaluate(() => window.__login.center());
-  test.skip(a === null, '지도 미생성(WebGL 없음) — 정지 화면 폴백');
+
+  await expect(page.locator('.lg-cap__no')).toHaveText('FIG. 01');
+  await expect(page.locator('#lgCapMeta')).toContainText('남원 금지면');
+  await expect(page.locator('#lgCapMeta')).toContainText('9,664동');
+  await expect(page.locator('#lgClock')).toHaveText(/^\d{2}:\d{2}$/);   // KST
+  await expect(page.locator('.lg-live')).toContainText('LIVE');
+  await expect(page.locator('.lx-bracket')).toHaveCount(4);
+
+  const p = await page.evaluate(() => {
+    const v = document.querySelector('#lgVideo');
+    const r = document.querySelector('#lgPlate').getBoundingClientRect();
+    return {
+      fit: getComputedStyle(v).objectFit,
+      poster: v.poster,
+      src: window.__login.source(),
+      right: Math.round(r.right), top: Math.round(r.top), left: Math.round(r.left),
+      vw: innerWidth,
+    };
+  });
+  expect(p.fit).toBe('cover');
+  expect(p.poster).toMatch(/namwon-greenhouse-test\.png$/);
+  // 판은 남원 디오라마 레그를 먼저 쓴다. 없으면 히어로 필름 0.5×.
+  expect(p.src === null || /namwon-greenhouse-test\.mp4|hero\.mp4/.test(p.src)).toBeTruthy();
+  // 이탈 하나 — 판이 오른쪽 위 여백을 넘어 화면 밖으로 흘러나간다.
+  expect(p.right).toBe(p.vw);
+  expect(p.top).toBe(0);
+  expect(p.left).toBeGreaterThan(400);
+});
+
+test('앰비언트 — 5초 아무것도 안 해도 판이 돌고 있다(움직이는 요소 1개)', async ({ page }) => {
+  await boot(page);
+  const src = await page.evaluate(() => window.__login.source());
+  test.skip(src === null, '필름 미존재 — 포스터 정지 화면 폴백');
   expect(await page.evaluate(() => window.__login.drifting())).toBe(true);
-  // 12초 주기이므로 어느 위상에서 시작하든 몇 초 안에 눈에 띄게 움직인다.
-  await page.waitForFunction((a0) => {
-    const b = window.__login.center();
-    return Math.abs(a0[0] - b[0]) + Math.abs(a0[1] - b[1]) > 0.0004;
-  }, a, { timeout: 15000 });
+  const t0 = await page.evaluate(() => document.querySelector('#lgVideo').currentTime);
+  await page.waitForTimeout(900);
+  const t1 = await page.evaluate(() => document.querySelector('#lgVideo').currentTime);
+  expect(t1).toBeGreaterThan(t0);
+});
+
+test('B안 대조 — 마스트헤드 64 · 여백 56 · 색인행 24 · 헤어라인 리듬', async ({ page }) => {
+  await boot(page);
+  const m = await page.evaluate(() => {
+    const r = (s) => { const b = document.querySelector(s).getBoundingClientRect(); return { x: Math.round(b.x), y: Math.round(b.y), w: Math.round(b.width), h: Math.round(b.height) }; };
+    const cs = (s, p) => getComputedStyle(document.querySelector(s))[p];
+    return {
+      mast: r('.lg-mast'), row: r('.lg-row'), ledger: r('.lg-ledger'), cap: r('.lg-cap'),
+      rule: r('.lg-rule'), chapLs: cs('.lg-chap__l', 'letterSpacing'),
+      rowBorder: cs('.lg-row', 'borderBottomWidth'),
+      capBg: cs('.lg-cap', 'backgroundColor'),
+      figColor: cs('.lg-cap__no', 'color'),
+      overX: document.documentElement.scrollWidth > innerWidth + 1,
+      overY: document.documentElement.scrollHeight > innerHeight + 1,
+    };
+  });
+  expect(m.mast.h).toBe(64);              // B안 마스트헤드
+  expect(m.row.x).toBe(56);               // B안 좌 여백
+  expect(m.row.h).toBe(24);               // B안 색인행
+  expect(m.ledger.w).toBe(400);           // B안 색인 폭
+  expect(m.rule.w).toBe(210);             // B안 눈금자
+  expect(m.rowBorder).toBe('1px');        // 헤어라인
+  expect(m.chapLs).toBe('1.89px');        // .18em @ 10.5px
+  expect(m.capBg).toBe('rgba(255, 255, 255, 0.9)');   // B안 캡션 흰 띠
+  expect(m.figColor).toBe('rgb(0, 109, 247)');        // FIG 넘버 = LX 블루
+  expect(m.overX).toBe(false);
+  expect(m.overY).toBe(false);
 });
 
 test('포커스 — 액센트 헤어라인이 좌→우로 그어진다', async ({ page }) => {
@@ -115,7 +179,7 @@ test('형식 오류 — 이메일만 어긋나면 그 필드만 표시된다', a
   await expect(page.locator('#lgPwMsg')).toBeHidden();
 });
 
-test('성공 — 동사가 바뀌고 카메라가 남원으로 이동한다', async ({ page }) => {
+test('성공 — 동사가 바뀌고 판이 뷰포트를 먹으며 남원으로 밀고 들어간다', async ({ page }) => {
   // 204 로 응답하면 브라우저가 이동하지 않는다 — 문서를 살려 둔 채 카메라를 확인한다.
   await page.route('**/dashboard.html', (r) => r.fulfill({ status: 204, body: '' }));
   await boot(page);
@@ -128,15 +192,24 @@ test('성공 — 동사가 바뀌고 카메라가 남원으로 이동한다', as
   await page.waitForFunction(() => document.querySelector('.lg-cta__t').textContent === '시작됨', null, { timeout: 5000 });
   expect(await page.evaluate(() => localStorage.getItem('lx_logged_in'))).toBe('1');
   await expect(page.locator('#lg')).toHaveClass(/is-leaving/);
+  await expect(page.locator('#lgPlate')).toHaveClass(/is-full/);
 
-  // 착지(타일이 그려진 뒤)까지 기다린다 — 마지막 프레임이 검은 판이면 안 된다.
   await page.waitForFunction(() => window.__login.landed, null, { timeout: 15000 });
   await page.screenshot({ path: `${SHOTS}/success.png` });
 
+  // 판이 액자를 벗고 뷰포트 전체가 됐다 — 마지막 프레임이 흰 여백이면 안 된다.
+  const box = await page.evaluate(() => {
+    const r = document.querySelector('#lgPlate').getBoundingClientRect();
+    return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height), vw: innerWidth, vh: innerHeight };
+  });
+  expect(box.x).toBe(0); expect(box.y).toBe(0);
+  expect(box.w).toBe(box.vw); expect(box.h).toBe(box.vh);
+
+  // 카메라는 남원 금지면에 있다(디오라마가 재현한 실좌표).
   const c = await page.evaluate(() => window.__login.center());
-  expect(await page.evaluate(() => window.__login.drifting())).toBe(false);  // 표류 정지
-  expect(Math.abs(c[1] - 35.5311)).toBeLessThan(0.02);                       // 남원 착지
+  expect(Math.abs(c[1] - 35.5311)).toBeLessThan(0.02);
   expect(Math.abs(c[0] - 127.3524)).toBeLessThan(0.02);
+  await expect(page.locator('#lgReadStat')).toContainText('남원 금지면');
 });
 
 test('리다이렉트 — 허용 목록 밖 next 는 무시된다', async ({ page }) => {
@@ -170,15 +243,30 @@ test('safeNext — 허용/차단 목록 단위 점검', async ({ page }) => {
   expect(new Set(r.no)).toEqual(new Set(['dashboard.html']));
 });
 
-test('축소 모션 — 표류·리빌 없이 같은 내용이 전부 보인다', async ({ browser }) => {
+test('아이디 저장 — 체크하면 다음 방문에 이메일이 채워져 있다', async ({ page }) => {
+  await boot(page);
+  await page.locator('#lgEmail').fill('hong@lx.or.kr');
+  await page.locator('#lgPw').fill('lx-2026');
+  await page.locator('.lx-check').click();            // 실제 입력은 시각적으로 숨겨져 있다
+  await expect(page.locator('.lx-check input')).toBeChecked();
+  await page.locator('#lgSubmit').click();
+  await page.waitForFunction(() => localStorage.getItem('lx_saved_email') === 'hong@lx.or.kr', null, { timeout: 10000 });
+});
+
+test('축소 모션 — 필름 대신 포스터, 같은 내용이 전부 보인다', async ({ browser }) => {
   const ctx = await browser.newContext({ reducedMotion: 'reduce', viewport: { width: 1440, height: 900 } });
   const page = await ctx.newPage();
   const errs = watch(page);
-  await boot(page);
+  await page.addInitScript(() => { try { localStorage.clear(); } catch {} });
+  await page.goto(URL);
+  await page.waitForFunction(() => window.__login && window.__login.ready, null, { timeout: 30000 });
   expect(await page.evaluate(() => window.__login.drifting())).toBe(false);
-  const clip = await page.evaluate(() => getComputedStyle(document.querySelector('.lx-plate')).clipPath);
+  expect(await page.evaluate(() => document.querySelector('#lgVideo').getAttribute('src'))).toBeNull();
+  expect(await page.evaluate(() => document.querySelector('#lgVideo').poster)).toMatch(/\.png$/);
+  const clip = await page.evaluate(() => getComputedStyle(document.querySelector('#lgPlate')).clipPath);
   expect(clip === 'none' || /inset\(0/.test(clip)).toBeTruthy();
   await expect(page.locator('.lg-h1')).toBeVisible();
+  await expect(page.locator('.lg-ledger .lg-row')).toHaveCount(3);
   expect(errs).toEqual([]);
   await ctx.close();
 });
@@ -189,5 +277,8 @@ test('1024 — 구도가 무너지지 않는다', async ({ browser }) => {
   await boot(page);
   const over = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
   expect(over).toBe(false);
+  await expect(page.locator('.lg-h1')).toBeVisible();
+  await expect(page.locator('#lgPlate')).toBeVisible();
+  await page.screenshot({ path: `${SHOTS}/default-1024.png`, fullPage: true });
   await ctx.close();
 });
