@@ -20,10 +20,10 @@ body { font: 400 14px/1.5 "Pretendard Variable", Pretendard, -apple-system, "Seg
   background-repeat: repeat-x; background-position: 0 50%;
   will-change: transform, background-position, opacity;
 }
-#cssclouds .cl[data-l="far"]  { background-image: url("/landxi/assets/proto/clouds/cloud_far.webp");  background-size: auto 62%; opacity: .34; }
-#cssclouds .cl[data-l="mid"]  { background-image: url("/landxi/assets/proto/clouds/cloud_mid.webp");  background-size: auto 78%; opacity: .48; }
-#cssclouds .cl[data-l="near"] { background-image: url("/landxi/assets/proto/clouds/cloud_near.webp"); background-size: auto 128%; opacity: .62; }
-#cssclouds .cl[data-l="haze"] { background-image: url("/landxi/assets/proto/clouds/haze.webp");       background-size: cover;    opacity: .30; }
+#cssclouds .cl[data-l="far"]  { background-image: url("/landxi/assets/proto/clouds/cloud_far.webp");  background-size: auto 62%; opacity: .16; }
+#cssclouds .cl[data-l="mid"]  { background-image: url("/landxi/assets/proto/clouds/cloud_mid.webp");  background-size: auto 78%; opacity: .22; }
+#cssclouds .cl[data-l="near"] { background-image: url("/landxi/assets/proto/clouds/cloud_near.webp"); background-size: auto 128%; opacity: .30; }
+#cssclouds .cl[data-l="haze"] { background-image: url("/landxi/assets/proto/clouds/haze.webp");       background-size: cover;    opacity: .14; }
 
 #vignette {
   position: absolute; inset: 0; pointer-events: none;
@@ -86,3 +86,15 @@ body { font: 400 14px/1.5 "Pretendard Variable", Pretendard, -apple-system, "Seg
 @media (prefers-reduced-motion: reduce) {
   #cssclouds .cl { animation: none !important; }
 }
+
+/* ── 필름 모드 (?film=1) — 프레임 렌더링용. UI 를 전부 걷어낸다. ── */
+:root[data-film="1"] #panel,
+:root[data-film="1"] #hud,
+:root[data-film="1"] #scroll,
+:root[data-film="1"] #boot,
+:root[data-film="1"] .maplibregl-ctrl-bottom-right { display: none !important; }
+:root[data-film="1"] #vignette {
+  background: radial-gradient(ellipse at 50% 54%, transparent 52%, rgba(2,7,16,.50) 100%);
+}
+/* 시네마틱 등급 — 살짝 눌러 담아 위성영상 특유의 '지도 같음'을 지운다 */
+:root[data-film="1"] #map { filter: saturate(1.06) contrast(1.05) brightness(0.98); }

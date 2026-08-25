@@ -10,6 +10,13 @@ import * as THREE from 'three';
 
 const q = new URLSearchParams(location.search);
 const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+// ?film=1 — 스크롤 UI·HUD·패널을 숨기고 프레임 렌더링용 결정론 모드로 들어간다.
+const FILM = q.get('film') === '1';
+if (FILM) document.documentElement.dataset.film = '1';
+// 필름 모드에서 구름의 위상은 performance.now() 가 아니라 legTime 이어야 한다.
+// 그래야 같은 t 를 다시 seek 했을 때 픽셀이 같다.
+let legTime = null;
+const clock = () => (legTime != null ? legTime : performance.now() / 1000);
 
 // ── 좌표 ────────────────────────────────────────────────────────────
 // 남원 시내(주택 밀집, OSM 풋프린트가 있는 곳). 과업이 지정한 진입점.
@@ -167,21 +174,27 @@ function cloudDeck(center, { n = 46, lo = 1500, hi = 3000, spread = 0.34, drift 
       this.scene = new THREE.Scene();
       this.renderer = new THREE.WebGLRenderer({ canvas: m.getCanvas(), context: gl, antialias: true });
       this.renderer.autoClear = false;
-      this.t0 = performance.now();
+      this.t0 = 0;
       this.puffs = [];
+      // ⚠ Math.random 은 새로고침마다 배치가 달라진다 → 프레임 재렌더 시 픽셀이 바뀐다.
+      //   고정 시드 LCG 로 대체한다.
+      let seed = 20260826;
+      const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+      this.rnd = rnd;
       const tex = new THREE.TextureLoader().load('/landxi/assets/proto/clouds/cloud_near.webp');
       tex.colorSpace = THREE.SRGBColorSpace;
       // 스프라이트는 항상 카메라를 향한다 → 낮은 폴리곤 수로 볼륨감을 낸다
       for (let i = 0; i < n; i++) {
+        const rnd = this.rnd;
         const mat = new THREE.SpriteMaterial({ map: tex, transparent: true,
-          opacity: 0.16 + Math.random() * 0.24, depthWrite: false, depthTest: true });
+          opacity: 0.14 + rnd() * 0.22, depthWrite: false, depthTest: true });
         const s = new THREE.Sprite(mat);
-        const alt = lo + Math.random() * (hi - lo);
+        const alt = lo + rnd() * (hi - lo);
         s.userData = {
-          lng: center[0] + (Math.random() - 0.5) * spread,
-          lat: center[1] + (Math.random() - 0.5) * spread * 0.78,
-          alt, scale: (900 + Math.random() * 2600),
-          v: drift * (0.55 + Math.random() * 0.9),
+          lng: center[0] + (rnd() - 0.5) * spread,
+          lat: center[1] + (rnd() - 0.5) * spread * 0.78,
+          alt, scale: (700 + rnd() * 3100),
+          v: drift * (0.55 + rnd() * 0.9),
         };
         this.puffs.push(s); this.scene.add(s);
       }
@@ -190,7 +203,7 @@ function cloudDeck(center, { n = 46, lo = 1500, hi = 3000, spread = 0.34, drift 
     },
     render(gl, args) {
       if (!this.on) return;
-      const dt = (performance.now() - this.t0) / 1000;
+      const dt = clock() - this.t0;
       const pd = args.defaultProjectionData;
       // 덱 전체의 기준점을 중심 좌표에 두고, 각 스프라이트는 상대 위치로 배치한다.
       const base = maplibregl.MercatorCoordinate.fromLngLat(center, 0);
@@ -256,6 +269,7 @@ const TERRAIN_IN = [0.34, 0.70];
 
 let terrainOn = false;
 function applyTerrain(p) {
+  if (FILM) return;
   const want = p >= TERRAIN_IN[0] && p <= TERRAIN_IN[1];
   if (want === terrainOn) return;
   terrainOn = want;
@@ -304,11 +318,14 @@ const cssLayers = [...cssRoot.querySelectorAll('.cl')];
 const CSS_DEPTH = [0.22, 0.46, 1.0, 0.12];   // far / mid / near / haze
 function driftCss(c) {
   // 구름은 z3~z13 사이에서만 의미가 있다. 그 밖에서는 투명.
-  const w = c.zoom < 2.6 ? 0 : c.zoom < 4.2 ? (c.zoom - 2.6) / 1.6
-          : c.zoom < 9 ? 1 : c.zoom < 13.2 ? 1 - (c.zoom - 9) / 4.2 : 0;
+  // 필름 레그는 z15~17.5 를 훑는다. 여기서도 얇은 실안개가 흘러야 "정지 화면"이 아니게 된다.
+  const w = FILM
+    ? 0.34
+    : (c.zoom < 2.6 ? 0 : c.zoom < 4.2 ? (c.zoom - 2.6) / 1.6
+       : c.zoom < 9 ? 1 : c.zoom < 13.2 ? 1 - (c.zoom - 9) / 4.2 : 0);
   cssRoot.style.setProperty('--w', w.toFixed(3));
   cssRoot.style.opacity = cssOn ? w : 0;
-  const t = performance.now() / 1000;
+  const t = clock();
   cssLayers.forEach((el, i) => {
     const d = CSS_DEPTH[i];
     // 카메라가 내려갈수록 근경 구름이 커지며 화면 밖으로 흘러나간다 → 통과감
@@ -366,7 +383,9 @@ map.on('load', async () => {
   document.getElementById('n-bld').textContent = `${stats.bld} / 온실 ${stats.gh}`;
 
   // 구름 c
-  map.addLayer(cloudDeck(NAMWON, { n: 46, lo: 1500, hi: 3000, spread: 0.42 }));
+  map.addLayer(FILM
+    ? cloudDeck([127.3400, 35.3560], { n: 58, lo: 1100, hi: 2600, spread: 0.17, drift: 0.000042 })
+    : cloudDeck(NAMWON, { n: 46, lo: 1500, hi: 3000, spread: 0.42 }));
 
   // 구름 b 흘리기 — GIBS 는 정지(그날의 실제 구름), image 구름장은 좌표를 옮겨 흐른다.
   const SHEET = [[124.0, 39.5], [132.0, 39.5], [132.0, 33.0], [124.0, 33.0]];
@@ -377,8 +396,17 @@ map.on('load', async () => {
     map.getSource('cloudsheet').setCoordinates(SHEET.map(([x, y]) => [x + gt, y]));
   }, 60);
 
-  seek(0);
-  wire();
+  if (FILM) {
+    // 결정론이 최우선이다. 지형은 z15+ 에서 시각 기여가 거의 없으면서
+    // 프레임 간 DEM 로딩 편차를 만든다 → 레그에서는 끈다.
+    map.setTerrain(null);
+    window.__leg.seek(0);
+    // CSS 구름도 계속 흐르게 두면 프레임이 흔들린다 → rAF 드리프트 루프를 걸지 않는다.
+    window.__filmReady = true;
+  } else {
+    seek(0);
+    wire();
+  }
   document.getElementById('boot').classList.add('gone');
   document.body.dataset.ready = '1';
  } catch (e) { boot('부팅 실패: ' + e.message); console.error(e); }
@@ -438,6 +466,57 @@ function wire() {
   // CSS 구름은 rAF 로 계속 흘러야 한다(스크롤이 멈춰도 움직인다)
   (function drift() { if (cssOn) driftCss(camAt(progress)); requestAnimationFrame(drift); })();
 }
+
+// ══════════════════════════════════════════════════════════════════════
+// 5. 필름 레그 — 결정론 카메라 (프레임 렌더링용)
+//    「남원 금지면 저공 통과 → 남원 시내 주택가 착지」 5.6초.
+//    스크롤과 무관하게 t(초) 하나로 상태가 못박힌다.
+// ══════════════════════════════════════════════════════════════════════
+// 타일 로딩이 조용해진 시점을 재기 위한 워터마크
+let lastData = 0;
+map.on('dataloading', () => { lastData = performance.now(); });
+map.on('data', () => { lastData = performance.now(); });
+map.on('sourcedata', () => { lastData = performance.now(); });
+
+const LEG_FPS = 25;
+const LEG_DUR = 5.6;
+// [t, lng, lat, zoom, pitch, bearing]
+const LEG = [
+  [0.00, 127.3096, 35.3318, 15.35, 58, -34],   // 금지면 온실 지대 진입
+  [1.30, 127.3196, 35.3392, 16.05, 63, -22],   // 온실 위를 스치며
+  [2.60, 127.3330, 35.3512, 16.35, 66,  -8],   // 논밭 → 취락으로
+  [4.10, 127.3620, 35.3860, 16.20, 67,  12],   // 요천 따라 북동
+  [5.60, 127.3888, 35.4084, 17.25, 68,  26],   // 남원 시내 주택가 착지
+];
+// 등속이 아니라 아주 완만한 ease-in-out — 필름은 가감속이 있어야 한다.
+const legEase = (u) => u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+function legCam(t) {
+  t = Math.min(LEG_DUR, Math.max(0, t));
+  let i = 0; while (i < LEG.length - 2 && t > LEG[i + 1][0]) i++;
+  const A = LEG[i], B = LEG[i + 1];
+  const u = legEase((t - A[0]) / (B[0] - A[0] || 1));
+  return { center: [lerp(A[1], B[1], u), lerp(A[2], B[2], u)],
+           zoom: lerp(A[3], B[3], u), pitch: lerp(A[4], B[4], u), bearing: lerp(A[5], B[5], u) };
+}
+
+window.__leg = {
+  fps: LEG_FPS, duration: LEG_DUR, frames: Math.round(LEG_DUR * LEG_FPS) + 1,
+  meta: { place: '남원 금지면 → 남원 시내', proj: 'mercator', terrain: false },
+  seek(t) {
+    legTime = t;                      // 구름 위상 고정
+    lastData = performance.now();     // 이동 직후는 무조건 미정착으로 본다
+    const c = legCam(t);
+    map.jumpTo(c);
+    paintHud(c);
+    driftCss(c);
+    map.triggerRepaint();
+  },
+  // ⚠ areTilesLoaded() 는 큰 jumpTo 직후 "아직 요청도 안 한" 상태에서 true 를 돌려준다.
+  //   그대로 캡처하면 위성/정사영상이 통째로 빈 프레임이 나온다(실측).
+  //   → data 이벤트가 일정 시간 조용해졌는지(정적 상태)를 함께 본다.
+  settled: () => map.loaded() && map.areTilesLoaded() && !map.isMoving()
+                 && performance.now() - lastData > 480,
+};
 
 // ── 자동 검증용 훅 ──────────────────────────────────────────────────
 window.__spike = {
