@@ -26,7 +26,9 @@ function recolorTile(img, rgb) {
   return cv;
 }
 
-export function makeSwipe(map, root) {
+// frame() → [x0, x1] : 커튼이 움직일 가로 구간. 흰 아틀라스에서는 **판의 폭**이다 —
+// 판이 화면의 일부만 차지할 때 손잡이가 뷰포트 한가운데 있으면 판 밖에 서 있게 된다.
+export function makeSwipe(map, root, frame) {
   const imgs = root.querySelector('#swipe-imgs');
   const line = root.querySelector('#swipe-line');
   const grip = root.querySelector('#swipe-grip');
@@ -49,12 +51,19 @@ export function makeSwipe(map, root) {
       t.el.style.width = Math.ceil(b.x - a.x + 1) + 'px';
       t.el.style.height = Math.ceil(b.y - a.y + 1) + 'px';
     }
-    const px = frac * innerWidth;
-    imgs.style.clipPath = `inset(0 0 0 ${(frac * 100).toFixed(3)}%)`;
+    const fr = (frame && frame()) || [0, innerWidth, 0, innerHeight];
+    const px = fr[0] + frac * (fr[1] - fr[0]);
+    imgs.style.clipPath = `inset(0 0 0 ${(px / innerWidth * 100).toFixed(3)}%)`;
     line.style.left = px + 'px';
+    line.style.top = fr[2] + 'px';
+    line.style.bottom = (innerHeight - fr[3]) + 'px';
     tagA.style.right = (innerWidth - px + 14) + 'px';
     tagB.style.left = (px + 14) + 'px';
+    tagA.style.top = tagB.style.top = (fr[2] + 14) + 'px';
+    grip.style.top = ((fr[2] + fr[3]) / 2).toFixed(0) + 'px';
+    lastFrame = fr;
   }
+  let lastFrame = [0, innerWidth, 0, innerHeight];
 
   async function show({ bdir, bounds, z, la, lb, recolor }) {
     hide();
@@ -89,7 +98,11 @@ export function makeSwipe(map, root) {
 
   function hide() { token++; cfg = null; root.hidden = true; imgs.innerHTML = ''; }
 
-  const setFromX = (x) => { frac = Math.max(0.03, Math.min(0.97, x / innerWidth)); layout(); };
+  const setFromX = (x) => {
+    const w = Math.max(1, lastFrame[1] - lastFrame[0]);
+    frac = Math.max(0.03, Math.min(0.97, (x - lastFrame[0]) / w));
+    layout();
+  };
   grip.addEventListener('pointerdown', (e) => { drag = true; grip.setPointerCapture(e.pointerId); e.preventDefault(); });
   addEventListener('pointermove', (e) => { if (drag) setFromX(e.clientX); });
   addEventListener('pointerup', () => { drag = false; });

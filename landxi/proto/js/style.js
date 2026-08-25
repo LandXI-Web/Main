@@ -126,7 +126,7 @@ export function buildStyle(v) {
       ...ORTHO_LAYERS.map(id => ({
         id, type: 'raster', source: id,
         paint: { 'raster-opacity': 0, 'raster-fade-duration': 200, 'raster-resampling': 'linear',
-                 'raster-saturation': -0.45, 'raster-contrast': -0.04, 'raster-brightness-min': 0.30 },
+                 'raster-saturation': -0.35, 'raster-contrast': 0.06, 'raster-brightness-min': 0.02 },
       })),
 
       // 국토의 실루엣 — 우리 실제 해안선(korea-outline.geojson)을 링 → 라인으로 변환해 쓴다.
@@ -134,8 +134,8 @@ export function buildStyle(v) {
       // 남는다(실측 확인). 자체 라인 소스에는 그 문제가 없다.
       { id: 'coast-glow', type: 'line', source: 'outline', maxzoom: 12,
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': '#8CDFFF', 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 3.5, 9, 9],
-                 'line-blur': 6, 'line-opacity': 0 } },
+        paint: { 'line-color': '#8CDFFF', 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 2.4, 9, 6],
+                 'line-blur': 5, 'line-opacity': 0 } },
       { id: 'coast', type: 'line', source: 'outline', maxzoom: 12,
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: { 'line-color': '#E8F6FF', 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 0.6, 9, 1.5],
@@ -219,9 +219,9 @@ export function buildStyle(v) {
           'line-color': ['coalesce', ['get', '_color'], '#FFE9C9'], 'line-width': 1.2, 'line-opacity': 0 } },
         { id: `res${i}-dot`, type: 'circle', source: `res${i}`,
           filter: ['==', ['geometry-type'], 'Point'], paint: {
-          'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 2, 11, 3.4, 15, 6, 18, 10],
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 1.5, 11, 2.4, 15, 5, 18, 9],
           'circle-color': ['coalesce', ['get', '_color'], '#F2622A'],
-          'circle-stroke-color': '#FFFFFF', 'circle-stroke-width': 1,
+          'circle-stroke-color': '#FFFFFF', 'circle-stroke-width': 0.7,
           'circle-opacity': 0, 'circle-stroke-opacity': 0 } },
       ]),
 
@@ -239,11 +239,11 @@ export function buildStyle(v) {
         'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 5, 1.1, 9, 2.2],
         'circle-stroke-opacity': ['*', LIT, ['*', 0.85, ['-', 1, RING]]] } },
       { id: 'svc-dot', type: 'circle', source: 'svc', paint: {
-        'circle-radius': ['*', LIT, ['*', ['case', ['get', 'real'], 9, 6], ['+', 1, ['*', 0.5, HOT]]]],
+        'circle-radius': ['*', LIT, ['*', ['case', ['get', 'real'], 8, 5], ['+', 1, ['*', 0.5, HOT]]]],
         'circle-color': ['get', 'color'],
         'circle-stroke-color': '#FFFFFF',
-        'circle-stroke-width': ['+', 1.3, ['*', 1.2, HOT]],
-        'circle-opacity': ['*', LIT, DIM],
+        'circle-stroke-width': ['+', 1.2, ['*', 1.2, HOT]],
+        'circle-opacity': ['*', LIT, ['*', DIM, ['case', ['get', 'real'], 1, 0.12]]],
         'circle-stroke-opacity': ['*', LIT, ['*', 0.92, DIM]] } },
 
       // 라벨 — 영상 위이므로 흰 글자 + 어두운 반투명 헤일로.
@@ -268,10 +268,11 @@ export function buildStyle(v) {
       { id: 'svc-label', type: 'symbol', source: 'svc', minzoom: 5,
         filter: ['==', ['get', 'labeled'], true],
         layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Regular'],
-                  'text-size': 12, 'text-offset': [0, -1.7], 'text-anchor': 'bottom',
+                  'text-size': 12, 'text-offset': [0, -2.6], 'text-anchor': 'bottom',
                   'text-letter-spacing': 0.02 },
+        // 라벨은 **가리킬 때만** 나온다. 13개를 한꺼번에 얹으면 판이 목록이 된다.
         paint: { 'text-color': '#FFFFFF', 'text-halo-color': 'rgba(2,8,20,0.82)', 'text-halo-width': 1.4,
-                 'text-opacity': ['*', LIT, DIM] } },
+                 'text-opacity': ['*', LIT, HOT] } },
     ],
   };
 }

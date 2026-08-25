@@ -31,6 +31,9 @@ http.createServer((req, res) => {
       change: has('landxi/assets/data/geo/namwon-change.geojson'),
       results: has('landxi/assets/data/results.js'),
       changeGrid: has('landxi/assets/data/geo/namwon-change-grid.geojson'),
+      // 병렬 작업 산출물 — 브라우저가 404 로 존재를 확인하면 콘솔 오류가 남으므로 여기서 답한다.
+      film: has('landxi/assets/proto/film/hero.mp4'),
+      crops: has('landxi/assets/data/crops.js'),
     }));
   }
   if (p === '/landxi/proto/env.js') {

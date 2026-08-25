@@ -32,7 +32,9 @@ export const dateToQ = (d) => (d < PIVOT
   : 0.12 + ((d - PIVOT) / (TIMELINE.to - PIVOT)) * 0.88);
 
 export function initServices(map) {
-  SVC.forEach(s => { s.hex = resolve(s.color) || '#006DF7'; s.q = dateToQ(Date.parse(s.lastRun)); });
+  // 색은 하나다 — LX 블루. 서비스마다 색을 주면 즉시 '무지개 대시보드'로 읽힌다(§5-6).
+  // 위계는 색이 아니라 **점의 크기와 링**으로 준다: 실결과 보유 = 채운 점, 라인업 = 헤어라인 링.
+  SVC.forEach(s => { s.hex = '#006DF7'; s.q = dateToQ(Date.parse(s.lastRun)); });
   map.getSource('svc').setData({
     type: 'FeatureCollection',
     features: SVC.map(s => ({

@@ -17,8 +17,10 @@
 <script type="importmap">{"imports":{
   "three":"https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
   "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"}}</script>
-</head><body class="v3" data-colorway="dark">
+</head><body class="v3" data-colorway="light">
 
+<!-- ── 판(plate) — 어두움은 오직 이 위성/정사영상 안에서만 나온다. ──────────────
+     흰 종이(body) 위에 clip-path 로 잘린 창 하나. 지도는 한 번 만들고 끝까지 살아 있다. -->
 <div id="stage">
   <canvas id="stars" aria-hidden="true"></canvas>
   <div id="map"></div>
@@ -26,103 +28,92 @@
   <div id="sky" aria-hidden="true"><div id="night"></div></div>
   <div id="swipe" hidden><div id="swipe-imgs"></div><div id="swipe-line"><button id="swipe-grip" aria-label="시점 비교 핸들" type="button"></button></div></div>
   <canvas id="fx" aria-hidden="true"></canvas>
+  <!-- 미리 구운 실데이터 필름이 있으면 궤도 판 위에 깔린다. 없으면 라이브 지구본 그대로. -->
+  <video id="hero-film" muted playsinline loop preload="none" aria-hidden="true" hidden></video>
   <div id="grade" aria-hidden="true"></div>
-  <div id="scan" aria-hidden="true"></div>
 </div>
 
 <main id="ui">
   <a class="skip" href="#scroller">본문 건너뛰기</a>
 
-  <!-- 상단 헤어라인 바 — 워드마크 행 + 캡션 한 줄 -->
+  <!-- 상단 헤어라인 마스트헤드 -->
   <header id="topbar">
     <div id="brand">
-      <img src="../assets/brand/landxi-wordmark-dark.png" alt="Land-XI Platform">
+      <img src="../assets/brand/landxi-wordmark.png" alt="Land-XI Platform">
       <span class="label" id="brand-sub">한국국토정보공사 · 국토정보 통합조사</span>
     </div>
-    <p id="meta" class="caption" aria-live="polite"><span id="meta-txt">SENTINEL-2 · 고도 786 km · KST --:--</span><b id="live">LIVE</b></p>
+    <p id="meta" class="caption" aria-live="polite"><span id="meta-txt">V-WORLD 정사영상 · 13 서비스 · KST --:--</span><b id="live">LIVE</b></p>
   </header>
 
-  <!-- 아틀라스 좌측 판 (챕터 3 전국) -->
-  <div id="paper" aria-hidden="true"></div>
+  <!-- 판 액자 — 헤어라인 + 코너 브래킷 + 지명·촬영일 캡션. 종이 위에 그린다. -->
+  <div id="plate" aria-hidden="true">
+    <p id="plate-fig" class="label">FIG. 01<span id="plate-sub">SENTINEL-2 · 궤도 786 km</span></p>
+    <div id="plate-box"><i class="bk tl"></i><i class="bk tr"></i><i class="bk bl"></i><i class="bk br"></i></div>
+    <p id="plate-cap" class="caption"><span id="pc-a">대한민국</span><b id="pc-b">—</b></p>
+  </div>
 
+  <!-- ── 1장 궤도 ─────────────────────────────────────────── -->
+  <section id="ch1" class="col">
+    <p class="label ck">01 — 궤도</p>
+    <h1 class="display"><span class="ln reveal"><i>국토는 매일</i></span><span class="ln reveal"><i>조금씩 달라진다</i></span></h1>
+    <p class="lead">위성 10 m, 항공 25 cm, 드론 1 cm. 같은 땅을 세 고도에서 본다.</p>
+    <a class="bracket" id="ch1-cta" href="#scroller">1.5 cm까지 내려가기</a>
+  </section>
+
+  <!-- ── 2장 구름 돌파 → 전국 ─────────────────────────────── -->
+  <section id="ch2" class="col">
+    <p class="label ck">02 — 구름 돌파</p>
+    <h1 class="display"><span class="ln reveal"><i>부처는 여섯,</i></span><span class="ln reveal"><i>영상은 하나다</i></span></h1>
+    <p class="lead">고도 786 km에서 8 km로. 구름을 뚫으면 100,363 km²가 그대로 있다.</p>
+  </section>
+
+  <!-- ── 3장 전국 — B안 아틀라스 좌측 색인 ────────────────── -->
   <section id="atlas">
-    <p id="fig" class="label">FIG. 03 <span id="fig-sub">대한민국 · 조사 이력 2025-04 → 2026-08</span></p>
-    <ul id="index" aria-label="참여 부처"></ul>
+    <p id="atlas-fig" class="label">색인 · 전국 조사 서비스<b id="atlas-n">13종</b></p>
+    <ul id="index" aria-label="전국 조사 서비스 13종"></ul>
+    <p id="atlas-foot" class="caption">수치가 있는 행만 실제 분석 결과다.</p>
   </section>
 
-  <!-- 챕터 카피 -->
-  <section id="copy">
-    <div class="cp" data-in="0.00" data-out="0.182">
-      <h1 class="display"><span class="ln reveal"><i>국토는 매일</i></span><span class="ln reveal"><i>조금씩 달라진다</i></span></h1>
-      <p class="caption">위성 10 m · 항공 25 cm · 드론 1.08 cm — 같은 땅을 세 고도에서 본다</p>
-    </div>
-    <div class="cp" data-in="0.192" data-out="0.326">
-      <h1 class="display"><span class="ln reveal"><i>구름 아래</i></span><span class="ln reveal"><i>100,363 km²</i></span></h1>
-      <p class="caption">고도 786 km → 8 km · 성층운 돌파 · 대한민국 국토 면적</p>
-    </div>
-    <div class="cp col" data-in="0.329" data-out="0.404">
-      <h1 class="display"><span class="ln reveal"><i>부처는 다섯,</i></span><span class="ln reveal"><i>영상은 하나다</i></span></h1>
-      <p class="caption" id="cp3-sub">부처 · 서비스 · 실탐지 집계 중</p>
-    </div>
-    <div class="cp" data-in="0.552" data-out="0.792">
-      <h1 class="display"><span class="ln reveal"><i>1.5 cm 앞에서</i></span><span class="ln reveal"><i>국토를 본다</i></span></h1>
-      <p class="caption" id="cp4-sub">전북 남원시 · 드론 정사영상 GSD 1.54 cm · 2025-08-22</p>
-    </div>
-    <div class="cp" data-in="0.798" data-out="0.99">
-      <h1 class="display"><span class="ln reveal"><i>AI가 본 것을</i></span><span class="ln reveal"><i>같은 화면에서</i></span></h1>
-      <p class="caption" id="cp5-sub">4시점 정사영상 2025.04 → 2025.10 · 동일 좌표</p>
-    </div>
-  </section>
-
-  <!-- 통계 — 챕터 3 후반, 한 번에 하나씩 현상된다 -->
-  <section id="stats" aria-live="polite">
-    <div class="st" data-in="0.408" data-out="0.462">
-      <p class="stat num" data-n="38057">38,057</p>
-      <p class="caption">해양쓰레기 탐지 후보 · 전남 신안·완도 · 최근 분석 2026-08-12</p>
-    </div>
-    <div class="st" data-in="0.462" data-out="0.512">
-      <p class="stat num" data-n="9664">9,664</p>
-      <p class="caption">비닐하우스 동 수 · 전북 남원시 전역 · 최근 분석 2026-06-06</p>
-    </div>
-    <div class="st" data-in="0.512" data-out="0.556">
-      <p class="stat num" data-n="1860">1,860</p>
-      <p class="caption">스티로폼 부유·적치 객체 · 전남 여수시 · 항공 2025</p>
-    </div>
-  </section>
-
-  <!-- 강하 중 좌표 판독 — 카메라를 따라 갱신된다 -->
-  <p id="readout" class="caption"><span class="num" id="ro-ll">—</span><span class="num" id="ro-z">—</span></p>
-
-  <!-- 결과 패널 (서비스 클릭) -->
-  <aside id="result" hidden>
-    <button id="res-back" class="link" type="button">← 전국으로</button>
-    <p class="caption" id="res-cap">—</p>
-    <h2 class="h2" id="res-title">—</h2>
-    <p id="res-count"><span class="stat num" id="res-n">0</span><span class="label" id="res-unit">건</span></p>
-    <dl id="res-meta"></dl>
-    <div id="res-ctl"></div>
-    <p class="caption" id="res-foot"></p>
+  <!-- 선택 서비스 결과 카드 (FIG. 02) -->
+  <aside id="card" hidden>
+    <p id="card-fig" class="label">FIG. 02<span id="card-sub">선택 · —</span></p>
+    <p id="card-cap" class="caption">—</p>
+    <h2 class="h2" id="card-title">—</h2>
+    <p id="card-count"><span class="stat num" id="card-n">0</span><span class="label" id="card-unit">건</span></p>
+    <div id="card-rows"></div>
+    <figure id="card-acq" class="racq" hidden>
+      <canvas width="132" height="132"></canvas>
+      <figcaption><b>ACQUIRED</b><span></span></figcaption>
+    </figure>
+    <p id="card-prov" class="caption"></p>
   </aside>
 
-  <!-- Acquired 크롭 인셋 — 축척이 안 보이는 탐지를 실제 타일로 병치한다 -->
-  <figure id="acq" hidden>
-    <canvas id="acq-cv" width="252" height="252"></canvas>
-    <figcaption class="caption"><b class="label">ACQUIRED</b><span class="num" id="acq-ll">—</span></figcaption>
-  </figure>
+  <!-- ── 3장 강하 — 판이 풀블리드가 되고, 흰 캡션 띠만 남는다 ── -->
+  <section id="dstrip">
+    <span class="label" id="ds-ch">03 — 남원 강하</span>
+    <span class="caption num" id="ro-ll">—</span>
+    <span class="caption num" id="ro-z">—</span>
+    <span class="caption" id="ro-gsd">—</span>
+  </section>
+  <h1 id="dhead"><span class="ln reveal"><i>1.5 cm 앞에서</i></span><span class="ln reveal"><i>국토를 본다</i></span></h1>
 
-  <p id="rain-note" class="caption" hidden>비닐하우스 · 남원시 전역</p>
+  <!-- 착지 — 4시점 필름스트립 + 흰 헤어라인 타임라인 -->
+  <section id="film" hidden>
+    <p class="label" id="film-fig">동일 좌표 4시점<span>드론 정사영상 · GSD 1.08 – 1.69 cm · 2025.04 → 2025.10</span></p>
+    <div id="strip"></div>
+    <div id="tl">
+      <div id="tl-track"><i id="tl-fill"></i><nav id="tl-ticks"></nav><i id="tl-head"></i></div>
+      <div id="tl-foot"><span class="caption">2025.04</span><span class="caption">핸들로 두 시점을 가른다</span><span class="caption">2025.10</span></div>
+    </div>
+  </section>
+
+  <!-- ── 4장 결과 아틀라스 — 이 페이지의 목적 (스티키 50:50) ── -->
+  <section id="results" hidden aria-label="실제 분석 결과">
+    <div id="res-left"></div>
+    <div id="res-right"><div id="res-strip"></div></div>
+  </section>
+
   <p id="recv" class="caption" hidden>영상 수신 중 <i></i><i></i><i></i><i></i></p>
-
-  <p id="change-legend" class="caption" hidden><b>변화 지수(비지도)</b> 2025.04 → 2025.10 · 계절 변화 포함<span class="lg"><i style="background:#40DE8A"></i>식생 증가</span><span class="lg"><i style="background:#F2622A"></i>식생 감소</span><span class="lg"><i style="background:#863AFF"></i>나지/정지</span><span class="lg"><i style="background:#6675FF"></i>기타</span></p>
-
-  <!-- 벡터 추출 카드 — 같은 범위의 벡터만 그리는 지도-속-지도 -->
-  <figure id="veccard" hidden>
-    <div id="vec-map"></div>
-    <figcaption class="caption"><span id="vec-cap">이 영상에서 추출한 것</span><b class="label">VECTOR</b></figcaption>
-  </figure>
-
-  <!-- 필름스트립 (챕터 5) -->
-  <section id="strip" hidden aria-label="남원 4시점"></section>
 
   <!-- 마지막 CTA -->
   <div id="cta" hidden>
@@ -130,32 +121,25 @@
     <a class="link" id="cta-2" href="#" role="button">플랫폼 둘러보기</a>
   </div>
 
-  <!-- 하단 전폭 헤어라인 룰러 -->
+  <!-- 하단 헤어라인 푸터 -->
   <footer id="ruler">
-    <div class="rl-head">
-      <span class="label" id="rl-l">01 — 궤도</span>
-      <span class="caption" id="rl-r">저궤도 786 km</span>
-    </div>
     <div id="rl-track">
       <i id="rl-fill"></i>
       <nav id="rl-ch" aria-label="챕터"></nav>
-      <div id="rl-tl" aria-hidden="true"></div>
-      <i id="rl-mark"></i>
     </div>
     <div class="rl-foot">
-      <span class="caption" id="rl-a">2025-04</span>
+      <span class="label" id="rl-l">01 — 궤도</span>
+      <span class="caption" id="rl-r">저궤도 786 km</span>
       <span class="caption" id="rl-scale"><span class="num" id="scale-txt">—</span><i id="scale-bar"></i></span>
-      <span class="caption" id="rl-b">2026-08</span>
       <span class="caption" id="tier">tier —</span>
     </div>
+    <p id="attrib" class="caption"></p>
   </footer>
-
-  <p id="attrib" class="caption"></p>
 </main>
 
 <div id="pre">
   <div id="pre-inner">
-    <div id="pre-mark"><span class="num" id="pre-text">LAND-XI PLATFORM</span><img src="../assets/brand/landxi-wordmark-dark.png" alt=""></div>
+    <div id="pre-mark"><span class="num" id="pre-text">LAND-XI PLATFORM</span><img src="../assets/brand/landxi-wordmark.png" alt=""></div>
     <div id="pre-bar"><i></i></div>
     <div id="pre-meta">
       <span class="num" id="pre-ll">127.0000 / 35.0000</span>
@@ -167,7 +151,6 @@
 
 <div id="cursor" aria-hidden="true">
   <svg viewBox="0 0 40 40" class="cx"><path d="M20 6v9M20 25v9M6 20h9M25 20h9"/><circle cx="20" cy="20" r="7"/></svg>
-  <svg viewBox="0 0 40 40" class="bk"><path d="M6 14V6h8M34 14V6h-8M6 26v8h8M34 26v8h-8"/></svg>
   <span class="num" id="cursor-ll">—</span>
 </div>
 
