@@ -101,8 +101,8 @@ export function gapCells(filledFC, m = 100, cap = 4000) {
 }
 
 /* ── 적층 기둥: 시군구 중심에 사각 기둥, epoch 층마다 base/height ──────── */
-const COL_M = 2600;   // 기둥 한 변(m)
-const H_MAX = 26000;  // 최고 스택의 높이(m) — 축척은 캡션에 적는다
+const COL_M = 7000;   // 기둥 한 변(m) — 전국 축척에서 시군구 하나로 읽히는 크기
+const H_MAX = 34000;  // 최고 스택의 높이(m) — 축척은 캡션에 적는다
 function square(center, m) {
   const [lng, lat] = center;
   const dLat = m / 2 / M_PER_DEG_LAT;

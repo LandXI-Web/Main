@@ -471,7 +471,7 @@ function resultsLedger() {
   el.querySelectorAll('[data-stack]').forEach((b) => b.addEventListener('click', () => {
     const s = STACKS.find((x) => x.code === b.dataset.stack);
     document.querySelectorAll('[data-stack]').forEach((x) => x.classList.toggle('is-sel', x === b));
-    flyGated({ center: s.center, zoom: 9.6, pitch: 56, bearing: -18 }, () => showCard({
+    flyGated({ center: s.center, zoom: 9.4, pitch: 50, bearing: -14 }, () => showCard({
       kind: '결과 누적 · 측정',
       title: s.region,
       rows: [
@@ -501,15 +501,17 @@ function paintStacks() {
     row.querySelector('.bar i').style.width = `${((tot / STACK_MAX) * 100).toFixed(1)}%`;
   }
   const total = STACKS.reduce((a, s) => a + s.layers.filter((l) => l.date <= SCRUB_DATE).reduce((b, l) => b + l.count, 0), 0);
-  if (REG === 'results') setHead('누적 결과', total, '건',
-    `<span class="num">${ymd(SCRUB_DATE)}</span> 시점 · 시군구 <span class="num">${STACKS.length}</span>곳 실측 · 스트립을 끌면 기둥이 자란다`);
+  if (REG !== 'results') return;
+  // 자릿수가 그대로면 숫자만 갈아 끼운다 — 매 프레임 현상 애니메이션을 다시 돌리면 글자가 안 보인다.
+  $('#head-sub').innerHTML = `<span class="num">${ymd(SCRUB_DATE)}</span> 시점 · 시군구 <span class="num">${STACKS.length}</span>곳 실측 · 스트립을 끌면 기둥이 자란다`;
+  if (!setHeadValue(total)) setHead('누적 결과', total, '건', $('#head-sub').innerHTML);
 }
 
 function enterResults() {
   resultsLedger();
   PLATE.show(['stack-3d', 'sig-cov'], true);
   paintStacks();
-  flyGated({ center: [127.5, 35.1], zoom: 8.0, pitch: 54, bearing: -18 });
+  flyGated({ center: [127.45, 35.05], zoom: 7.7, pitch: 46, bearing: -14 });
 }
 function leaveResults() {
   PLATE.show(['stack-3d', 'sig-cov'], false);
