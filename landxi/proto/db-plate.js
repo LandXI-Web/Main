@@ -1,135 +1,54 @@
-// 판(plate) — 뷰포트 전체를 채우는 V-World 위성 정사영상 지도.
-// 이 파일이 "지도와 어울리는 대시보드"의 절반이다: 세 레지스터가 각각
-// 지도 레이어 한 벌을 켠다. 대시보드를 지도 위에 얹는 것이 아니라,
-// 지도가 대시보드다.
-//   추론 현황  → AOI 윤곽 + z14 실타일 스윕 + 탐지 점 + 큐 핀
-//   학습데이터 → 100m 라벨 표본 밀도 격자(+ 점선 결측 칸) + 영상 인벤토리 풋프린트
-//   결과 누적  → 시군구별 epoch 적층 기둥(fill-extrusion) + 커버리지 코로플레스
+// 판(plate) — 화면의 62%를 차지하는 V-World 위성 정사영상.
+// A안 "지도 위 원장"(docs/superpowers/specs/2026-08-26-map-dashboard-options.md §3.1):
+// 지도는 새 위젯이 아니라 원본 위젯 B1–B16 을 조판하는 **바탕**이다.
+// 그래서 이 판 위에 남는 것은 실제 분석 결과 4건과 헤어라인 액자뿐이다 —
+// 불투명 격자 사각형도, 앱 크롬 탭도 없다(반려 사유 1·2).
 import { resolveVWorld } from './js/sources.js';
-import { DONE, COVERAGE, APPROVALS, IMG, STACKS, STACK_MAX, SWEEP_TILE } from './db-data.js';
-
+import { COVERAGE, APPROVALS, IMG } from './db-data.js';
 
 const SIGUNGU_URL = '../assets/data/geo/sigungu.geojson';
 
 const ACCENT = '#006DF7';
 const DETECT = '#FFB633';
-const INK = '#010102';
 
 const EMPTY = { type: 'FeatureCollection', features: [] };
-const fc = (features) => ({ type: 'FeatureCollection', features });
+export const fc = (features) => ({ type: 'FeatureCollection', features });
 
-/* ── 타일 ↔ 좌표 ─────────────────────────────────────────────────────── */
-export const tile2lng = (x, z) => (x / 2 ** z) * 360 - 180;
-export const tile2lat = (y, z) => {
-  const n = Math.PI - (2 * Math.PI * y) / 2 ** z;
-  return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
-};
-export function tileBox(x, y, z) {
-  const w = tile2lng(x, z), e = tile2lng(x + 1, z);
-  const n = tile2lat(y, z), s = tile2lat(y + 1, z);
-  return [[w, n], [e, n], [e, s], [w, s], [w, n]];
+/* ── 폴리곤 → 대표점 ──────────────────────────────────────────────────
+   축척이 작아 폴리곤이 한 점으로 무너지는 구간에서 3px 이하의 점이 대신 선다. */
+export function centroid(g) {
+  if (!g) return null;
+  if (g.type === 'Point') return g.coordinates;
+  const rings = g.type === 'Polygon' ? g.coordinates
+    : g.type === 'MultiPolygon' ? g.coordinates.flat()
+      : g.type === 'LineString' ? [g.coordinates] : null;
+  if (!rings || !rings[0] || !rings[0].length) return null;
+  let sx = 0, sy = 0, n = 0;
+  for (const pt of rings[0]) { sx += pt[0]; sy += pt[1]; n++; }
+  return n ? [sx / n, sy / n] : null;
 }
-export function tileFeature(x, y, z, props = {}) {
-  return { type: 'Feature', properties: { x, y, z, ...props }, geometry: { type: 'Polygon', coordinates: [tileBox(x, y, z)] } };
-}
-
-/* ── 100m 격자 집계 ──────────────────────────────────────────────────── */
-const M_PER_DEG_LAT = 110540;
-function cellKey(lng, lat, m) {
-  const dLat = m / M_PER_DEG_LAT;
-  const dLng = m / (111320 * Math.cos((lat * Math.PI) / 180));
-  return [Math.floor(lat / dLat), Math.floor(lng / dLng), dLat, dLng];
-}
-/** 탐지 피처 목록 → m 미터 격자 셀 폴리곤(개수 포함). 값이 0인 칸은 만들지 않는다. */
-export function densify(points, m = 100) {
-  const map = new Map();
-  for (const [lng, lat] of points) {
-    const [gy, gx, dLat, dLng] = cellKey(lng, lat, m);
-    const k = `${gy}|${gx}`;
-    const c = map.get(k);
-    if (c) { c.n++; } else { map.set(k, { gy, gx, dLat, dLng, n: 1 }); }
-  }
-  let max = 0;
-  for (const c of map.values()) if (c.n > max) max = c.n;
-  const feats = [];
-  for (const c of map.values()) {
-    const y0 = c.gy * c.dLat, y1 = y0 + c.dLat;
-    const x0 = c.gx * c.dLng, x1 = x0 + c.dLng;
-    feats.push({
-      type: 'Feature',
-      properties: { n: c.n, w: max ? c.n / max : 0 },
-      geometry: { type: 'Polygon', coordinates: [[[x0, y1], [x1, y1], [x1, y0], [x0, y0], [x0, y1]]] },
-    });
-  }
-  return { fc: fc(feats), max, cells: feats.length };
-}
-
-/** 채워진 칸에 맞닿아 있는데 비어 있는 칸 = 결측(점선 회색).
- *  bbox 전체를 채우면 수만 칸이 되고 의미도 없다 — 표본이 끊긴 자리만 보여 준다. */
-export function gapCells(filledFC, m = 100, cap = 4000) {
-  const feats = filledFC.features;
-  if (!feats.length) return EMPTY;
-  const have = new Set();
-  let minY = 9e9, maxY = -9e9, minX = 9e9, maxX = -9e9, dLat = 0, dLng = 0;
-  for (const f of feats) {
-    const r = f.geometry.coordinates[0];
-    const lat = r[2][1], lng = r[0][0];
-    const [gy, gx, dy, dx] = cellKey(lng + 1e-9, lat + 1e-9, m);
-    dLat = dy; dLng = dx;
-    have.add(`${gy}|${gx}`);
-    if (gy < minY) minY = gy; if (gy > maxY) maxY = gy;
-    if (gx < minX) minX = gx; if (gx > maxX) maxX = gx;
-  }
-  const seen = new Set();
+export function dotsOf(geo) {
   const out = [];
-  for (const key of have) {
-    const [gy, gx] = key.split('|').map(Number);
-    for (let dy = -1; dy <= 1; dy++) {
-      for (let dx = -1; dx <= 1; dx++) {
-        if (!dy && !dx) continue;
-        const ny = gy + dy, nx = gx + dx, k = `${ny}|${nx}`;
-        if (have.has(k) || seen.has(k)) continue;
-        seen.add(k);
-        if (out.length >= cap) continue;
-        const y0 = ny * dLat, y1 = y0 + dLat, x0 = nx * dLng, x1 = x0 + dLng;
-        out.push({ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [[[x0, y1], [x1, y1], [x1, y0], [x0, y0], [x0, y1]]] } });
-      }
-    }
+  for (const f of geo.features || []) {
+    const c = centroid(f.geometry);
+    if (c) out.push({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: c } });
   }
   return fc(out);
 }
-
-/* ── 적층 기둥: 시군구 중심에 사각 기둥, epoch 층마다 base/height ──────── */
-const COL_M = 7000;   // 기둥 한 변(m) — 전국 축척에서 시군구 하나로 읽히는 크기
-const H_MAX = 34000;  // 최고 스택의 높이(m) — 축척은 캡션에 적는다
-function square(center, m) {
-  const [lng, lat] = center;
-  const dLat = m / 2 / M_PER_DEG_LAT;
-  const dLng = m / 2 / (111320 * Math.cos((lat * Math.PI) / 180));
-  return [[[lng - dLng, lat + dLat], [lng + dLng, lat + dLat], [lng + dLng, lat - dLat], [lng - dLng, lat - dLat], [lng - dLng, lat + dLat]]];
+/** 피처 모음의 경계 상자. */
+export function bboxOf(geo) {
+  let w = 9e9, s = 9e9, e = -9e9, n = -9e9;
+  const eat = ([x, y]) => { if (x < w) w = x; if (x > e) e = x; if (y < s) s = y; if (y > n) n = y; };
+  const walk = (g) => {
+    if (!g) return;
+    if (g.type === 'Point') eat(g.coordinates);
+    else if (g.type === 'Polygon' || g.type === 'MultiLineString') g.coordinates.flat().forEach(eat);
+    else if (g.type === 'MultiPolygon') g.coordinates.flat(2).forEach(eat);
+    else if (g.type === 'LineString') g.coordinates.forEach(eat);
+  };
+  for (const f of geo.features || []) walk(f.geometry);
+  return w > e ? null : [w, s, e, n];
 }
-/** 스크럽 날짜 이하의 층만 세운다 — 스트립을 끌면 기둥이 자란다. */
-export function stackFC(uptoDate) {
-  const feats = [];
-  for (const s of STACKS) {
-    for (const l of s.layers) {
-      if (uptoDate && l.date > uptoDate) continue;
-      feats.push({
-        type: 'Feature',
-        properties: {
-          code: s.code, region: s.region, id: l.id, title: l.title, date: l.date,
-          count: l.count, unit: l.unit,
-          base: (l.base / STACK_MAX) * H_MAX,
-          top: (l.top / STACK_MAX) * H_MAX,
-          alt: s.layers.indexOf(l) % 2,
-        },
-        geometry: { type: 'Polygon', coordinates: square(s.center, COL_M) },
-      });
-    }
-  }
-  return fc(feats);
-}
-export const STACK_SCALE = { colM: COL_M, hMax: H_MAX, per: Math.round(STACK_MAX / (H_MAX / 1000)) };
 
 /* ── 지도 ────────────────────────────────────────────────────────────── */
 export async function mountPlate(el) {
@@ -146,8 +65,7 @@ export async function mountPlate(el) {
         { id: 'bg', type: 'background', paint: { 'background-color': '#0b0e12' } },
         {
           id: 'vsat', type: 'raster', source: 'vsat',
-          // 사진 인화 — 채도 −35%, 대비 +6%, 검정을 살짝 들어 올린다(§4 영상 처리).
-          // 판이 물러나야 헤어라인 계기와 액센트 하나가 앞으로 나온다.
+          // 사진 인화 — 채도 −35%, 대비 +6%, 검정을 살짝 들어 올린다(취향 §4 영상 처리).
           paint: {
             'raster-saturation': -0.35,
             'raster-contrast': 0.06,
@@ -159,179 +77,70 @@ export async function mountPlate(el) {
       ],
     },
     center: [127.55, 35.15],
-    zoom: 7.4,
+    zoom: 7.2,
     pitch: 0,
     bearing: 0,
-    dragRotate: true,
     maxZoom: 18.5,
     minZoom: 5.5,
   });
-  map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'bottom-right');
   await new Promise((res) => map.on('load', res));
 
-  /* 실경계 헤어라인 — sigungu.geojson 249개. 위성 위에서 흰 실선 한 겹. */
+  /* 행정경계 — 계기가 아니라 판에 새긴 눈금. 1px 잉크 헤어라인 하나. */
   const sig = await fetch(SIGUNGU_URL).then((r) => r.json());
   const covBy = Object.fromEntries(COVERAGE.map((c) => [c.code, c]));
-  for (const f of sig.features) {
-    const c = covBy[f.properties.code];
-    f.properties.cov = c ? c.coverage : 0;
-    f.properties.lit = c ? 1 : 0;
-    f.properties.measured = c && c.measured ? 1 : 0;
-  }
-  // 실측 결과가 있는 두 시군구는 커버리지 목업과 무관하게 표시한다.
-  for (const f of sig.features) {
-    if (f.properties.code === '52190' || f.properties.code === '46130') f.properties.measured = 1;
-  }
+  for (const f of sig.features) f.properties.lit = covBy[f.properties.code] ? 1 : 0;
   map.addSource('sig', { type: 'geojson', data: sig });
-
-  map.addLayer({
-    id: 'sig-cov', type: 'fill', source: 'sig',
-    filter: ['>', ['get', 'lit'], 0],
-    paint: {
-      'fill-color': ACCENT,
-      'fill-opacity': ['interpolate', ['linear'], ['get', 'cov'], 0, 0.03, 1, 0.14],
-    },
-    layout: { visibility: 'none' },
-  });
-  // 행정경계는 계기가 아니라 판에 새긴 눈금이다 — 1px 잉크 헤어라인 하나.
   map.addLayer({
     id: 'sig-line', type: 'line', source: 'sig',
     paint: { 'line-color': 'rgba(1,1,2,0.35)', 'line-width': 1 },
   });
-  // 실측 시군구도 굵어지지 않는다. 같은 1px, 잉크가 조금 진해질 뿐.
-  map.addLayer({
-    id: 'sig-measured', type: 'line', source: 'sig',
-    filter: ['>', ['get', 'measured'], 0],
-    paint: { 'line-color': 'rgba(1,1,2,0.58)', 'line-width': 1 },
-  });
 
-  /* 학습데이터 — 밀도 격자 + 결측 점선 */
-  map.addSource('grid', { type: 'geojson', data: EMPTY });
-  map.addSource('gap', { type: 'geojson', data: EMPTY });
-  map.addLayer({
-    id: 'gap-cells', type: 'line', source: 'gap',
-    paint: { 'line-color': '#c9ccd1', 'line-width': 0.7, 'line-opacity': 0.5, 'line-dasharray': [1.4, 2.2] },
-    layout: { visibility: 'none' },
-  });
-  map.addLayer({
-    id: 'grid-fill', type: 'fill', source: 'grid',
-    paint: {
-      'fill-color': ['interpolate', ['linear'], ['get', 'w'], 0, '#cfe1fb', 0.5, '#5f9bf4', 1, ACCENT],
-      'fill-opacity': ['interpolate', ['linear'], ['get', 'w'], 0, 0.42, 1, 0.9],
-    },
-    layout: { visibility: 'none' },
-  });
-  map.addLayer({
-    id: 'grid-line', type: 'line', source: 'grid',
-    paint: { 'line-color': '#ffffff', 'line-width': 0.4, 'line-opacity': 0.35 },
-    layout: { visibility: 'none' },
-  });
-
-  /* 영상 인벤토리 풋프린트 */
+  /* 정사영상 풋프린트 11종 — 어디까지가 실제 촬영 범위인지가 정직성이다(D17·D18). */
   map.addSource('imgbox', {
     type: 'geojson',
     data: fc(IMG.map((i) => ({
       type: 'Feature',
       properties: { id: i.id, label: i.label, kind: i.kind, city: i.coverage === 'city' ? 1 : 0 },
-      geometry: { type: 'Polygon', coordinates: [[[i.bounds[0], i.bounds[3]], [i.bounds[2], i.bounds[3]], [i.bounds[2], i.bounds[1]], [i.bounds[0], i.bounds[1]], [i.bounds[0], i.bounds[3]]]] },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [[[i.bounds[0], i.bounds[3]], [i.bounds[2], i.bounds[3]], [i.bounds[2], i.bounds[1]], [i.bounds[0], i.bounds[1]], [i.bounds[0], i.bounds[3]]]],
+      },
     }))),
   });
   map.addLayer({
     id: 'imgbox-line', type: 'line', source: 'imgbox',
-    paint: { 'line-color': '#ffffff', 'line-width': ['case', ['>', ['get', 'city'], 0], 1.2, 1.8], 'line-opacity': 0.85 },
-    layout: { visibility: 'none' },
+    paint: { 'line-color': 'rgba(255,255,255,0.55)', 'line-width': 1 },
   });
 
-  /* 추론 — AOI 윤곽(헤어라인 + 코너 눈금) + z14 실타일 스윕 */
-  const W = tile2lng(SWEEP_TILE.x0, 14), E = tile2lng(SWEEP_TILE.x1 + 1, 14);
-  const N = tile2lat(SWEEP_TILE.y0, 14), S = tile2lat(SWEEP_TILE.y1 + 1, 14);
-  const aoi = fc([{
-    type: 'Feature', properties: {},
-    geometry: { type: 'Polygon', coordinates: [[[W, N], [E, N], [E, S], [W, S], [W, N]]] },
-  }]);
-  // 코너 눈금 — 브래킷 대신 네 귀퉁이의 짧은 ㄱ자 두 선. 액센트는 여기에만 쓴다.
-  const tw = (E - W) * 0.07, th = (N - S) * 0.095;
-  const corner = (x, y, sx, sy) => ({
-    type: 'Feature', properties: {},
-    geometry: { type: 'LineString', coordinates: [[x + sx * tw, y], [x, y], [x, y - sy * th]] },
-  });
-  const ticks = fc([corner(W, N, 1, 1), corner(E, N, -1, 1), corner(W, S, 1, -1), corner(E, S, -1, -1)]);
+  /* 결과 — 실제 분석 결과 4건(측정 = 실선 + 채움, D17). */
+  map.addSource('res', { type: 'geojson', data: EMPTY });
+  map.addSource('resdot', { type: 'geojson', data: EMPTY });
+  map.addSource('chg', { type: 'geojson', data: EMPTY });
 
-  map.addSource('aoi', { type: 'geojson', data: aoi });
-  map.addSource('aoitick', { type: 'geojson', data: ticks });
-  map.addSource('sweep', { type: 'geojson', data: EMPTY });
-  map.addSource('det', { type: 'geojson', data: EMPTY });
-  map.addSource('sdet', { type: 'geojson', data: EMPTY });
+  map.addLayer({
+    id: 'res-fill', type: 'fill', source: 'res',
+    paint: { 'fill-color': ACCENT, 'fill-opacity': ['case', ['<', ['get', 'conf'], ['literal', 0]], 0, 0.14] },
+  });
+  map.addLayer({
+    id: 'res-line', type: 'line', source: 'res',
+    paint: { 'line-color': ACCENT, 'line-width': 1, 'line-opacity': 0.8 },
+  });
+  map.addLayer({
+    id: 'res-dot', type: 'circle', source: 'resdot',
+    paint: {
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 1.1, 12, 2, 16, 3],
+      'circle-color': ACCENT,
+      'circle-opacity': ['interpolate', ['linear'], ['zoom'], 13.4, 0.85, 15.4, 0],
+    },
+  });
+  /* 변화 지수(비지도) — 모델 탐지가 아니므로 점선 고스트로만 그린다(D17 추정). */
+  map.addLayer({
+    id: 'chg-line', type: 'line', source: 'chg',
+    paint: { 'line-color': DETECT, 'line-width': 1, 'line-opacity': 0.8, 'line-dasharray': [2, 2] },
+  });
+
+  /* 핀 — 원본 B13 `카드 발행 승인 대기` 2건이 요청 지역 위에 선다. */
   map.addSource('pins', { type: 'geojson', data: EMPTY });
-
-  // 어두운 지반 위에서 흰 헤어라인이 읽히도록 잉크 한 겹을 아래에 깐다(그림자가 아니라 판의 음영).
-  map.addLayer({
-    id: 'aoi-under', type: 'line', source: 'aoi',
-    paint: { 'line-color': 'rgba(1,1,2,0.30)', 'line-width': 2.4 },
-    layout: { visibility: 'none' },
-  });
-  map.addLayer({
-    id: 'aoi-line', type: 'line', source: 'aoi',
-    paint: { 'line-color': 'rgba(255,255,255,0.72)', 'line-width': 1 },
-    layout: { visibility: 'none' },
-  });
-  map.addLayer({
-    id: 'aoi-tick', type: 'line', source: 'aoitick',
-    paint: { 'line-color': ACCENT, 'line-width': 1 },
-    layout: { visibility: 'none', 'line-cap': 'butt' },
-  });
-
-  // 스윕 = 헤어라인 격자. 칸은 절대 불투명해지지 않는다 — 처리된 칸만 액센트 8~12%,
-  // 방금 처리된 칸은 28%까지 번쩍했다가 500ms 에 걸쳐 가라앉는다(알파는 db-sweep 가 계산).
-  map.addLayer({
-    id: 'sweep-fill', type: 'fill', source: 'sweep',
-    paint: { 'fill-color': ACCENT, 'fill-opacity': ['get', 'a'] },
-    layout: { visibility: 'none' },
-  });
-  map.addLayer({
-    id: 'sweep-line', type: 'line', source: 'sweep',
-    paint: {
-      'line-color': ['case', ['==', ['get', 'st'], 'live'], ACCENT, 'rgba(255,255,255,0.9)'],
-      'line-width': 1,
-      'line-opacity': ['match', ['get', 'st'], 'live', ['get', 'b'], 'idle', 0.18, 0.3],
-    },
-    layout: { visibility: 'none' },
-  });
-  // 탐지는 칸 안에 쌓이는 3px 이하의 액센트 점이다. 히트맵도, 발광도 아니다.
-  map.addLayer({
-    id: 'sdet-dot', type: 'circle', source: 'sdet',
-    paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 1.4, 13, 2, 16, 3],
-      'circle-color': ACCENT,
-      'circle-opacity': 0.9,
-    },
-    layout: { visibility: 'none' },
-  });
-  map.addLayer({
-    id: 'det-dot', type: 'circle', source: 'det',
-    paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 1.2, 16, 3],
-      'circle-color': ACCENT,
-      'circle-opacity': 0.85,
-    },
-    layout: { visibility: 'none' },
-  });
-
-  /* 결과 누적 — epoch 적층 기둥 */
-  map.addSource('stack', { type: 'geojson', data: EMPTY });
-  map.addLayer({
-    id: 'stack-3d', type: 'fill-extrusion', source: 'stack',
-    paint: {
-      'fill-extrusion-color': ['case', ['>', ['get', 'alt'], 0], '#5E9BF9', ACCENT],
-      'fill-extrusion-base': ['get', 'base'],
-      'fill-extrusion-height': ['get', 'top'],
-      'fill-extrusion-opacity': 0.74,
-    },
-    layout: { visibility: 'none' },
-  });
-
-  /* 핀 — 원본 대시보드의 `카드 발행 승인 대기` 2건이 요청 지역 위에 선다.
-     화면에서 숨 쉬는 것은 스윕의 현재 칸 하나뿐이므로, 핀은 움직이지 않는다. */
   map.addLayer({
     id: 'pin-ring', type: 'circle', source: 'pins',
     paint: { 'circle-radius': 8, 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-width': 1, 'circle-stroke-color': 'rgba(255,255,255,0.5)' },
@@ -350,12 +159,8 @@ export async function mountPlate(el) {
 
   return {
     map, fc, show,
-    setSweep: (data) => map.getSource('sweep').setData(data),
-    setDet: (data) => map.getSource('det').setData(data),
-    setSDet: (data) => map.getSource('sdet').setData(data),
-    setGrid: (g, gap) => { map.getSource('grid').setData(g); map.getSource('gap').setData(gap || EMPTY); },
-    setStack: (data) => map.getSource('stack').setData(data),
-    pins: () => map.getSource('pins'),
+    setRes: (poly, dots) => { map.getSource('res').setData(poly || EMPTY); map.getSource('resdot').setData(dots || EMPTY); },
+    setChange: (data) => map.getSource('chg').setData(data || EMPTY),
     keyed: v.keyed,
   };
 }

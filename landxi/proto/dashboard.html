@@ -1,6 +1,6 @@
 <!doctype html><html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Land-XI — 운영 아틀라스</title>
+<title>LX 관리자 대시보드 — Land-XI</title>
 <link rel="icon" href="../assets/images/favicon_landxi.png">
 <script>
   // 로그인 관문. 그리기 전에 판정한다 — 관리자 화면이 한 프레임도 새어 나가지 않게.
@@ -17,79 +17,76 @@
 
 <a class="skip" href="#ledger">원장으로 건너뛰기</a>
 
-<!-- ── 좌측 내비게이션 레일 — 원본 include/header.html 의 aside.app-sidebar 를
-     흰 B안 문법(헤어라인 · SUIT 라벨 · 무채 아이콘)으로 옮긴 것. 메뉴는 추가하지 않는다.
-     대조표: docs/superpowers/proto/2026-08-26-dashboard-parity.md §A -->
+<!-- ══ A안 "지도 위 원장" ══════════════════════════════════════════════════
+     레일 A1–A11 · 원장 B1–B15(원본 순서 그대로) · 판 PLATE-FULL.
+     기능은 원본 dashboard.html 과 1:1 이고, 지도는 새 위젯이 아니라 그 위젯들을
+     조판하는 바탕이다. 대조표 docs/superpowers/proto/2026-08-26-dashboard-parity.md -->
+
+<!-- ── A1–A11 좌측 내비게이션 레일 ────────────────────────────────────── -->
 <aside id="rail" aria-label="주 메뉴">
   <a id="rail-mark" href="../home.html" aria-label="Land-XI 홈"><img src="../assets/images/lx_symbol.png" alt=""></a>
   <nav id="rail-top" class="rail-group"></nav>
   <nav id="rail-foot" class="rail-group"></nav>
 </aside>
 
-<!-- ── 판(plate) — 뷰포트 전체를 채우는 V-World 위성 정사영상. ──────────────
-     흰 크롬(마스트헤드·원장·스캔 스트립)이 이 판 위에 헤어라인으로 얹힌다.
-     카드도 유리도 그림자도 없다. 색은 흰 종이 + 액센트 하나. -->
+<!-- ── 판 ─────────────────────────────────────────────────────────────── -->
 <div id="plate" aria-hidden="true"></div>
+<!-- 판의 비네트 — 카드도 유리도 아니다. 사진 자체의 인화 처리로 계기가 앉을 자리를 만든다.
+     (§4 "오버레이는 이미지 안에". 판 위 흰 헤어라인·캡션이 밝은 지형에서도 읽히게.) -->
 <div id="plate-veil" aria-hidden="true"></div>
-<!-- 현재 스캔 칸 안의 작은 수 — 지도 위에 떠 있는 유일한 숫자. -->
-<span id="cellnum" class="num" hidden></span>
 
-<!-- ── 마스트헤드 ─────────────────────────────────────────────────────── -->
-<header id="mast">
-  <div id="mast-l">
+<!-- ── 원장 — 원본 위젯 B1 → B15 를 원본 순서 그대로 세운 흰 단 ────────── -->
+<aside id="ledger" tabindex="-1" aria-label="LX 관리자 대시보드">
+  <div id="led-head">
     <span id="mark">LAND-XI</span>
-    <h2 id="mast-title">—</h2>
-  </div>
-  <nav id="regs" aria-label="레지스터 전환"></nav>
-  <p class="caption" id="mast-r">V-WORLD 위성 정사영상<span class="sep">·</span>데이터 기준 <span class="num" id="mast-asof">—</span><span class="sep">·</span><span class="num" id="mast-src">—</span></p>
-</header>
-
-<!-- ── 좌측 원장(LEDGER) — B안 대시보드의 문법을 그대로 옮긴 흰 단. ──────── -->
-<aside id="ledger" tabindex="-1" aria-label="원장">
-
-  <!-- 머리 숫자 한 개 — B안의 73,223 자리. -->
-  <div id="head">
-    <h1 id="head-title">—</h1>
-    <p class="caption" id="head-kicker">—</p>
+    <h1 id="b1">LX 관리자 대시보드</h1>
+    <p class="caption" id="b1-sub">서비스 운영 현황과 승인·관리 업무를 한눈에 확인하세요.</p>
     <hr class="tickrule">
-    <p class="label" id="head-label">—</p>
-    <p class="stat" id="head-stat" aria-live="polite">—</p>
-    <p class="caption" id="head-sub">—</p>
+    <p class="caption" id="b2">—</p>
   </div>
-
-  <!-- 레지스터별 본문. 세 개의 판이 이 자리에서 교대한다. -->
-  <div id="reg-body"></div>
-
-  <!-- 원본 대시보드 위젯이 원장 꼬리에 1:1 로 남는다(대조표 §B). -->
-  <section class="fg" id="fg-ops">
-    <p class="fg__h" id="fig-notice"><b>FIG. 08</b> 공지 <a class="rt rt--a" href="../notice.html">전체 보기</a></p>
-    <div id="ops-notice"></div>
-    <p class="fg__h"><b>FIG. 09</b> AI 기반 모델 · 백본</p>
-    <div id="ops-bb"></div>
-    <p class="fg__h"><b>FIG. 10</b> 운영 지표 · <span class="num">5</span>종 <i class="tag tag--demo">시연</i></p>
-    <div id="ops-kpi"></div>
-    <p class="fg__h" id="fig-proj"><b>FIG. 12</b> 프로젝트 용량 · 방문 · 스토리지 <i class="tag tag--demo">시연</i></p>
-    <div id="ops-chart"></div>
-    <p class="fg__h" id="fig-approve"><b>FIG. 13</b> 카드 발행 승인 대기 · <span class="num" id="ops-n">—</span>건 <i class="tag tag--demo">시연</i></p>
-    <div class="rows" id="ops-rows" role="list"></div>
-    <p class="fg__h" id="fig-admin"><b>FIG. 14</b> 사용자 · 콘텐츠 관리 <i class="tag tag--demo">시연</i></p>
-    <div class="rows" id="ops-admin" role="list"></div>
-  </section>
-
-  <footer id="led-foot">
-    <p class="caption">수치 출처 <span class="num">assets/data/{results,models,imagery,crops}.js</span></p>
-    <p class="caption"><i class="tag tag--sim">모의 실행</i> 실타일을 실제로 훑는 시뮬레이션 · <i class="tag tag--demo">시연</i> 원형 프로토타입 목업</p>
-  </footer>
+  <div id="led-body"></div>
+  <footer id="led-foot"></footer>
 </aside>
 
-<!-- ── 지도 위 부유 요소 ──────────────────────────────────────────────── -->
+<!-- ── 판 위 계기 — 전부 이미지 안 헤어라인(D20). 떠 있는 HUD 스티커 금지. ── -->
+<div id="fresh">
+  <p class="caption" id="fresh-t">—</p>
+  <button type="button" id="allmap" class="ghost">전체 지도로</button>
+</div>
+
+<!-- D01 취득 밀도 스캔 스트립 — 남원 농경지 정사영상 4시점 + 변화 급변 -->
+<section id="scan" aria-label="정사영상 취득 · 변화 스캔">
+  <p class="caption" id="scan-h">—</p>
+  <div id="scan-bar"></div>
+  <div id="scan-ax"></div>
+</section>
+
+<!-- D17 정직 태깅 범례 -->
+<ul id="tags" aria-label="표기 규약">
+  <li><i class="sw sw--m"></i>측정</li>
+  <li><i class="sw sw--e"></i>추정</li>
+  <li><i class="sw sw--u"></i>미확정</li>
+  <li><i class="sw sw--x"></i>결측</li>
+</ul>
+
+<!-- 판 오른쪽 계기단 — 벡터 추출 카드 + 임계 범례. 한 단으로 흐른다(겹치지 않게). -->
+<div id="instr">
+  <!-- 지도-속-지도. B9(백본 모델)가 하는 일의 증거. -->
+  <figure id="vcard" hidden></figure>
+  <!-- 임계 드래그 범례 — 슬라이더가 아니라 히스토그램 위의 마커 -->
+  <section id="thr" hidden aria-label="신뢰도 임계"></section>
+</div>
+
+<!-- D18 뷰어 플래그 — 지도가 지금 무엇을 보고 있는지 한 줄 -->
+<p id="flag" class="caption">—</p>
+
 <div id="probe" hidden></div>
 <div id="card" hidden aria-live="polite"></div>
 <p id="attrib" class="caption">자료제공: 브이월드(www.vworld.kr) · 경계 sigungu.geojson</p>
 
-<!-- ── 하단 스캔 스트립 — 시간 밀도 막대 하나. 스스로 재생하고 사건에서 선다. ── -->
-<div id="strip" aria-label="시간 스캔">
-  <button type="button" id="strip-play" aria-pressed="true" aria-label="스캔 재생/정지"><svg viewBox="0 0 12 12" aria-hidden="true"><path class="ic-play" d="M3 2l7 4-7 4z"/><path class="ic-pause" d="M3.2 2h2.1v8H3.2zM6.7 2h2.1v8H6.7z"/></svg></button>
+<!-- D02 어두운 유리 시간 스크러버 — 화면에 허용된 단 하나의 유리. 사건에서 선다. -->
+<div id="strip" aria-label="시간 스크러버">
+  <button type="button" id="strip-play" aria-pressed="true" aria-label="재생/정지"><svg viewBox="0 0 12 12" aria-hidden="true"><path class="ic-play" d="M3 2l7 4-7 4z"/><path class="ic-pause" d="M3.2 2h2.1v8H3.2zM6.7 2h2.1v8H6.7z"/></svg></button>
   <span class="num strip-end" id="strip-t0">—</span>
   <div id="strip-track" role="slider" tabindex="0" aria-label="시점" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
     <canvas id="strip-bar"></canvas>

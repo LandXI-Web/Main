@@ -15,6 +15,7 @@ import { SURVEYS } from '../assets/data/surveys.js';
 import { RESULTS } from '../assets/data/results.js';
 import { MODELS } from '../assets/data/models.js';
 import { IMAGERY } from '../assets/data/imagery.js';
+import { CHANGE } from '../assets/data/change.js';
 
 export const nf = new Intl.NumberFormat('ko-KR');
 export const pct = (v, dp = 0) => `${(v * 100).toFixed(dp)}%`;
@@ -99,6 +100,9 @@ export const DONE = RESULTS.map((r) => ({
   date: r.stats.analyzedAt,
   classes: r.stats.classes,
   conf: r.stats.confMean,
+  confHist: r.stats.confHist || null,
+  confMin: r.stats.confMin,
+  confMax: r.stats.confMax,
   areaHa: r.stats.areaHa,
   bbox: r.stats.bbox,
   geojson: '../' + r.geojson,
@@ -192,16 +196,16 @@ export const STACK_MAX = Math.max(...STACKS.map((s) => s.total));
    원본 페이지들은 이 콘티 저장소에 없다. 링크를 지어내는 대신 같은 데이터를
    담고 있는 우리 자리로 보낸다(레지스터 전환 `tab` 또는 원장 스크롤 `to`). */
 export const NAV = [
-  { menu: 'dashboard', name: '대시보드', href: 'dashboard.html', act: { here: 1 }, icon: 'dash' },
-  { menu: 'media', name: '데이터 관리', href: 'dataset.html', act: { tab: 'train' }, icon: 'data' },
-  { menu: 'project', name: '프로젝트', href: 'ai-project.html', act: { to: 'fig-proj' }, icon: 'proj' },
-  { menu: 'analysis', name: '분석 서비스', href: 'analysis-ai.html', act: { tab: 'infer' }, icon: 'run' },
-  { menu: 'map', name: '지도 서비스', href: 'ximap.html', act: { tab: 'results' }, icon: 'map' },
+  { menu: 'dashboard', name: '대시보드', href: 'dashboard.html', icon: 'dash' },
+  { menu: 'media', name: '데이터 관리', href: 'dataset.html', icon: 'data', to: 'b-store' },
+  { menu: 'project', name: '프로젝트', href: 'ai-project.html', icon: 'proj', to: 'b-proj' },
+  { menu: 'analysis', name: '분석 서비스', href: 'analysis-ai.html', icon: 'run', to: 'b-result' },
+  { menu: 'map', name: '지도 서비스', href: 'ximap.html', icon: 'map', to: 'b-result' },
 ];
 export const NAV_FOOT = [
-  { menu: 'support', name: '서비스 지원', href: 'notice.html', act: { to: 'fig-notice' }, icon: 'help' },
-  { menu: 'publish-admin', name: '카드 발행 관리', href: 'admin-publish.html', act: { to: 'fig-approve' }, icon: 'stack' },
-  { menu: 'admin', name: '서비스 관리', href: 'admin-notice.html', act: { to: 'fig-admin' }, icon: 'gear' },
+  { menu: 'support', name: '서비스 지원', href: 'notice.html', icon: 'help', to: 'b-notice' },
+  { menu: 'publish-admin', name: '카드 발행 관리', href: 'admin-publish.html', icon: 'stack', to: 'b-approve' },
+  { menu: 'admin', name: '서비스 관리', href: 'admin-notice.html', icon: 'gear', to: 'b-admin' },
 ];
 /** MY 플라이아웃 — 원본과 항목·동작이 같다(로그아웃은 lx_logged_in 삭제 후 home). */
 export const NAV_MY = [
@@ -235,7 +239,7 @@ export const ADMIN_TILES = [
 export const KPI = [
   { label: '전체 사용자', value: 21, unit: '명', sub: '정상 19 · 가입 승인 대기 1', href: 'admin-users.html' },
   { label: '발행 분석 카드', value: 8, unit: '건', sub: '공개 7 · 비공개 1', href: 'ai-card.html' },
-  { label: '카드 발행 승인 대기', value: APPROVALS.length, unit: '건', sub: '검토 필요', href: 'admin-publish.html?status=대기', to: 'fig-approve' },
+  { label: '카드 발행 승인 대기', value: APPROVALS.length, unit: '건', sub: '검토 필요', href: 'admin-publish.html?status=대기', to: 'b-approve' },
   { label: '가입 승인 대기', value: 1, unit: '건', sub: '승인 필요', href: 'admin-users.html' },
   { label: '미답변 문의', value: 6, unit: '건', sub: '전체 12 · 답변 필요', href: 'admin-inquiry.html' },
 ];
@@ -254,6 +258,17 @@ export const COVERAGE = DASH.coverage.map((r) => ({
 }));
 export const CELLS = COVERAGE.length * COLS.length;
 export const DONE_CELLS = COVERAGE.reduce((a, r) => a + r.done.length, 0);
+
+/* ── D01 취득 밀도 스캔 스트립의 눈금 ────────────────────────────────
+   축 = 남원 농경지 정사영상 4시점(실제 촬영월). 무채 틱 = 취득, 앰버 틱 = 변화 급변.
+   변화는 change.js 의 비지도 변화 지수이지 모델 탐지가 아니다 — 표기를 그대로 지킨다. */
+export const AOI_EPOCHS = IMG
+  .filter((i) => /^namwon_25/.test(i.id))
+  .sort((a, b) => (a.captured < b.captured ? -1 : 1));
+export const CHANGE_PAIRS = CHANGE.map((c) => ({
+  pair: c.pair, label: c.label, method: c.method, to: c.toDate, bounds: c.bounds,
+  polygons: '../' + c.polygons,
+}));
 
 /* ── 레지스터 정의 ──────────────────────────────────────────────────── */
 export const REGISTERS = [
