@@ -34,6 +34,8 @@ http.createServer((req, res) => {
       // 병렬 작업 산출물 — 브라우저가 404 로 존재를 확인하면 콘솔 오류가 남으므로 여기서 답한다.
       film: has('landxi/assets/proto/film/hero.mp4'),
       crops: has('landxi/assets/data/crops.js'),
+      // 스크럽 모듈(landxi/proto/scrub/)의 레그 매니페스트 — 도착하면 필름→지도 핸드오프가 켜진다.
+      filmLegs: has('landxi/assets/proto/film/legs/manifest.json'),
     }));
   }
   if (p === '/landxi/proto/env.js') {

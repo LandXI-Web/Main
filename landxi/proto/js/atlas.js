@@ -168,6 +168,7 @@ export function buildRows(RESULTS, sat) {
     clsMap: { 불법건축물: '#F2622A' }, fixedMap: { 불법건축물: '#F2622A' }, fixed: '#F2622A',
     conf: null,
     what: '제주 항공 정사영상 2020.12 도엽에서 판독한 불법건축물 4개소.',
+    noConfNote: '판독 결과가 좌표 목록으로만 남아 신뢰도가 기록되지 않았다.',
     prov: '제주 항공 정사영상 2020.12(불법건축물 도엽) · 원본 shp 좌표 기준 z19 크롭 · 등록 탐지 geojson 없음',
     plate: { src: 'jeju_2020', bounds: AOI.jeju20, z: pickZ(AOI.jeju20, 700, 13, 19) },
   });
@@ -187,6 +188,7 @@ export function buildRows(RESULTS, sat) {
     clsMap: {}, fixedMap: { a68: '#006DF7', a71: '#8FB6E8' },
     conf: null,
     what: '같은 날 두 번 비행한 드론 정사영상 두 벌. AI 결과가 아니라 비교 원본이다.',
+    noConfNote: '등록된 탐지가 아니라 시계열 원본 두 벌이다.',
     prov: 'LX 드론 정사영상 kuksan_a68 / kuksan_a71 · 2025.08 · GSD 5 cm · 등록 탐지 geojson 없음',
     plate: { src: 'kuksan_a68', bounds: AOI.kuksan, z: pickZ(AOI.kuksan, 700, 13, 19) },
   });
@@ -210,7 +212,8 @@ export function buildRows(RESULTS, sat) {
       filter: (f) => f && f.properties && f.properties.pair === pair.pair,
       camera: { center: mid(AOI.namwon), zoom: 17.3, pitch: 0, bearing: 0 },
       classes, clsMap, fixedMap: clsMap,
-      conf: null, unsup: true,
+      conf: null,
+      noConfNote: '비지도 변화지수라 학습 라벨이 없다.',
       swipe: { bdir: 'namwon_2510', bounds: AOI.namwon, z: 17, la: '2025.04', lb: '2025.10' },
       what: `${pair.method} · ${pair.label} · ${fmt(pair.stats.n)}구역 ${fmt(Math.round(pair.stats.area_m2))}㎡.`,
       prov: `LX 드론 정사영상 4시점(2025.04 → 2025.10) 변화지수 · 비지도 · 학습 라벨 없음 · ${pair.polygons.split('/').pop()}`,
@@ -264,9 +267,7 @@ export function makeAtlas({ left, right, strip, rows, tier, crops, sat }) {
   blocksEl.innerHTML = rows.map((r, i) => {
     const statTxt = r.count != null ? fmt(r.count) : (r.statText || '—');
     const statUnit = r.count != null ? (r.unit || '') : (r.statUnit || '');
-    const noConf = r.unsup
-      ? '비지도 변화지수라 학습 라벨이 없다.'
-      : '등록된 탐지가 아니라 시계열 원본이다.';
+    const noConf = r.noConfNote || '등록된 탐지가 아니라 시계열 원본이다.';
     const ctl = r.conf
       ? `<div class="ctl">`
         + `<label for="rc${i}">신뢰도 임계값<output id="rc${i}-out">${r.conf.lo.toFixed(3)}</output></label>`
@@ -312,9 +313,11 @@ export function makeAtlas({ left, right, strip, rows, tier, crops, sat }) {
     const cs = getComputedStyle(document.documentElement);
     const g = parseFloat(cs.getPropertyValue('--g')) || 64;
     const gap = parseFloat(cs.getPropertyValue('--gap')) || 24;
-    PH = Math.max(180, Math.round(H * 0.74));
+    /* 판 하나만 액자에 든다. 위아래 이웃이 화면에 걸치면 필름스트립이 아니라
+       '스크롤이 어중간하게 멈춘 목록'으로 읽힌다 — 간격을 여백보다 크게 잡아 밀어낸다. */
+    PH = Math.max(180, Math.round(H * 0.70));
     PAD = Math.max(0, Math.round((H - PH) / 2));
-    G = Math.round(H * 0.075) + 24;
+    G = PAD + 6;
     strip.style.padding = `${PAD}px ${g}px 0 ${gap}px`;
     rps.forEach((el) => { el.style.height = PH + 'px'; el.style.marginBottom = G + 'px'; });
   }

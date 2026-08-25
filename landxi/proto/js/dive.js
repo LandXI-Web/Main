@@ -167,7 +167,7 @@ initServices(map);
 })();
 
 // 병렬 작업물이 도착했을 때만 켜지는 선택 레이어. 404 로 존재를 확인하면 콘솔 오류가 남는다.
-const optional = { change: false, satellite: false, clouds: false, results: false, film: false, crops: false };
+const optional = { change: false, satellite: false, clouds: false, results: false, film: false, crops: false, filmLegs: false };
 let RESULTS = [];
 const assetsReady = (async () => {
   try {
@@ -543,7 +543,7 @@ function snapFilm(p) { filmAt = filmTime(p); }
    병렬 작업(landxi/proto/scrub/)이 레그별 종료 카메라를 담은 manifest 를 내놓으면,
    필름이 끝나는 그 카메라에서 라이브 지도가 이어받는다. 아직 없으면 camera.js 키프레임 그대로다. */
 let FILM_HANDOFF = null;
-if (optional.film) {
+if (optional.filmLegs) {
   fetch('../assets/proto/film/legs/manifest.json', { cache: 'no-store' })
     .then((r) => (r.ok ? r.json() : null))
     .then((m) => {
@@ -664,6 +664,7 @@ async function goLive(i) {
   const seq = ++rowSeq;
   liveRow = i;
   const r = ROWS[i];
+  hudCountVal = null;   // 이전 행의 탐지 수가 다음 행 캡션에 남지 않게 한다
   swipe.hide();
   detect.stop(); detect.unpin();
   clearRes();
@@ -992,6 +993,9 @@ function renderCard(id) {
   const card = $('#card');
   card.hidden = false;
   $('#card-sub').textContent = s.name;
+  // 증거 크롭은 카드가 가리키는 결과의 것이어야 한다 — 앞 행의 크롭이 남으면 거짓말이 된다.
+  acqSeq++;
+  $('#card-acq').hidden = true;
 
   if (!rows.length) {
     $('#card-cap').textContent = `${s.ministry} · 최근 실행 ${s.lastRun}`;
@@ -1006,6 +1010,7 @@ function renderCard(id) {
 
   const r = rows[0];
   cardRow = r;
+  acquire(null, r);
   $('#card-count').hidden = false;
   $('#card-cap').textContent = `${r.region} · ${r.sensor} · ${r.when}`;
   $('#card-title').textContent = r.title;
@@ -1039,6 +1044,7 @@ async function selectService(id) {
   if (!s) return;
   const seq = ++selSeq;
   selected = id;
+  hudCountVal = null;
   camHold = true; holdP = PA;
   idxEls.forEach((li) => li.classList.toggle('sel', li.dataset.id === id));
   detect.stop(); detect.unpin(); swipe.hide(); clearRes();
