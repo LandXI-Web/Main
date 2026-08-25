@@ -83,8 +83,12 @@ button{ font:inherit; color:inherit; background:none; border:0; padding:0; curso
 #ledger::-webkit-scrollbar{ width:7px; }
 #ledger::-webkit-scrollbar-thumb{ background:var(--line); }
 
-/* 머리 숫자 — B안의 대형 통계 블록 */
-#head{ padding:20px var(--pad) 16px; border-bottom:1px solid var(--line); }
+/* 머리 — B안의 표시 조판 블록(제목 + 킥커 + 눈금) 위에 대형 통계 하나 */
+#head{ padding:18px var(--pad) 16px; border-bottom:1px solid var(--line); }
+#head-title{ font-family:var(--v3-display); font-weight:500; font-size:31px; line-height:1.16;
+  letter-spacing:-0.02em; margin:0; }
+#head-kicker{ margin:5px 0 11px; }
+#head .tickrule{ margin:0 0 13px; }
 #head-label{ margin:0 0 8px; }
 #head-stat{ display:flex; align-items:baseline; gap:6px; }
 #head-stat .u{ font-size:15px; letter-spacing:0; color:var(--grey); }
@@ -107,6 +111,13 @@ button{ font:inherit; color:inherit; background:none; border:0; padding:0; curso
 .fg:first-child > .fg__h:first-child{ border-top:0; }
 .fg__h b{ font-weight:400; color:var(--v3-accent); letter-spacing:.08em; }
 .fg__h .rt{ margin-left:auto; color:var(--v3-grey); font-size:10px; letter-spacing:.06em; text-transform:uppercase; }
+
+/* 열 머리 — B안의 `상태 · 대상 · 단계 / 산출 / 진행` 줄 */
+.colh{ display:grid; grid-template-columns:9px 1fr auto auto; gap:0 9px;
+  padding:0 var(--pad) 6px; font-family:var(--v3-num); font-size:9px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--grey-3); }
+.colh span:nth-child(3){ text-align:right; }
+.colh span:nth-child(4){ text-align:right; min-width:52px; }
 
 /* 원장 행 */
 .rows{ padding:0 var(--pad) 4px; }
@@ -154,8 +165,11 @@ button{ font:inherit; color:inherit; background:none; border:0; padding:0; curso
 /* 영상 인벤토리 칩 */
 .chips{ display:flex; flex-wrap:wrap; gap:5px; padding:2px var(--pad) 14px; }
 .chip{ font-family:var(--v3-num); font-size:10px; letter-spacing:.02em; color:var(--grey);
-  border:1px solid var(--line); padding:3px 7px 4px; white-space:nowrap;
-  transition:color var(--v3-hover) var(--v3-hover-ease), border-color var(--v3-hover) var(--v3-hover-ease); }
+  border:1px solid var(--line); padding:3px 7px 4px; white-space:nowrap; display:inline-block;
+  transition:color var(--v3-hover) var(--v3-hover-ease), border-color var(--v3-hover) var(--v3-hover-ease),
+    transform var(--v3-hover) var(--v3-hover-ease); }
+/* §5-3 — 호버는 색만이 아니라 물리적으로 움직인다 */
+.chip:hover{ transform:translateY(-2px); }
 .chip b{ font-weight:400; color:var(--v3-black); }
 .chip:hover,.chip.is-sel{ border-color:var(--v3-accent); color:var(--v3-accent); }
 .chip:hover b,.chip.is-sel b{ color:var(--v3-accent); }
@@ -277,6 +291,7 @@ button{ font:inherit; color:inherit; background:none; border:0; padding:0; curso
 
 @media (prefers-reduced-motion: reduce){
   #head-stat .ch{ transition:none; clip-path:inset(0); transform:none; }
+  .chip:hover,.row:hover{ transform:none; }
   .row .bar i,.bal__t i{ transition:none; }
   *{ scroll-behavior:auto; }
 }

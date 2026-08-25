@@ -49,6 +49,12 @@ function setHeadValue(n) {
   return true;
 }
 
+function setTitle(reg) {
+  const r = REGISTERS.find((x) => x.id === reg);
+  $('#head-title').textContent = r.name;
+  $('#head-kicker').textContent = `${r.idx} · ${r.sub}`;
+}
+
 function setHead(label, value, unit, sub) {
   $('#head-label').textContent = label;
   $('#head-sub').innerHTML = sub;
@@ -84,7 +90,7 @@ const hideProbe = () => { probeEl.hidden = true; };
 const PLATE = await mountPlate($('#plate'));
 const map = PLATE.map;
 // e2e/검수용 핸들 — 화면 동작에는 관여하지 않는다.
-window.__atlas = { map, get reg() { return REG; }, get tiles() { return INFER.tiles; }, get runs() { return INFER.runs; }, get scrub() { return SCRUB_DATE; } };
+window.__atlas = { map, get reg() { return REG; }, get tiles() { return INFER.tiles; }, get runs() { return INFER.runs; }, get scrub() { return SCRUB_DATE; }, seek: (p) => STRIP.seek(p) };
 // 원장이 가린 만큼 카메라 중심을 오른쪽으로 민다 — 클릭한 것이 원장 뒤로 숨지 않게.
 const padded = () => ({ left: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--led')) || 380, top: 56, bottom: 72, right: 20 });
 map.setPadding(padded());
@@ -111,7 +117,7 @@ function flyGated(opts, done) {
   const src = PLATE.pins();
   const t0 = performance.now();
   (function loop(t) {
-    const ph = ((t - t0) % 2600) / 2600;
+    const ph = ((t - t0) % 6400) / 6400;   // 앰비언트 주기 ≥6s(§5-11)
     const data = src._data;
     for (const f of data.features) f.properties.pulse = f.properties.hot ? ph : 0;
     src.setData(data);
@@ -143,6 +149,7 @@ function inferLedger() {
   el.innerHTML = `
   <section class="fg">
     <p class="fg__h"><b>FIG. 01</b> 실행 중 · <span class="num">${runs.length}</span>건 <i class="tag tag--sim">모의 실행</i><span class="rt">tiles / s</span></p>
+    <div class="colh"><span></span><span>모델 · 지역 · 진행</span><span>속도</span><span>ETA</span></div>
     <div class="rows" id="run-rows" role="list">
       ${runs.map((r) => `
         <button type="button" class="row is-run" role="listitem" data-run="${r.id}">
@@ -155,6 +162,7 @@ function inferLedger() {
         </button>`).join('')}
     </div>
     <p class="fg__h"><b>FIG. 02</b> 완료 · <span class="num">${DONE.length}</span>건 <i class="tag tag--meas">측정</i><span class="rt">객체 수</span></p>
+    <div class="colh"><span></span><span>결과 · 지역 · 분석일</span><span>객체</span><span>진행</span></div>
     <div class="rows" id="done-rows" role="list">
       ${DONE.map((r) => `
         <button type="button" class="row is-done" role="listitem" data-done="${r.id}">
@@ -314,6 +322,7 @@ function trainLedger() {
   el.innerHTML = `
   <section class="fg">
     <p class="fg__h"><b>FIG. 01</b> 라벨 표본 밀도 · 100 m 격자 <i class="tag tag--meas">측정</i><span class="rt">칸 ${nf.format(totalCells)}</span></p>
+    <div class="colh"><span></span><span>데이터셋 · 격자 · 밀도</span><span>표본</span><span>칸당</span></div>
     <div class="rows" id="dens-rows" role="list">
       ${DONE.map((r) => `
         <button type="button" class="row" role="listitem" data-dens="${r.id}">
@@ -439,6 +448,7 @@ function resultsLedger() {
   el.innerHTML = `
   <section class="fg">
     <p class="fg__h"><b>FIG. 01</b> 시군구별 결과 적층 <i class="tag tag--meas">측정</i><span class="rt">epoch 스택</span></p>
+    <div class="colh"><span></span><span>시군구 · epoch</span><span>누적</span><span>층</span></div>
     <div class="rows" id="stack-rows" role="list">
       ${STACKS.map((s) => `
         <button type="button" class="row is-done" role="listitem" data-stack="${s.code}">
@@ -590,6 +600,7 @@ async function go(id, push = true) {
   REG = id;
   document.querySelectorAll('.reg').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.reg === id)));
   document.body.dataset.reg = id;
+  setTitle(id);
   if (push) {
     const u = new URL(location.href);
     u.searchParams.set('tab', id);
@@ -604,7 +615,7 @@ regsEl.addEventListener('click', (ev) => {
 addEventListener('popstate', () => go(new URLSearchParams(location.search).get('tab') || 'infer', false));
 
 /* ── 스캔 스트립 ──────────────────────────────────────────────────────── */
-mountStrip($('#strip'), {
+const STRIP = mountStrip($('#strip'), {
   onScrub: (p, date) => {
     SCRUB_DATE = date;
     if (REG === 'results') paintStacks();
@@ -616,6 +627,7 @@ mountStrip($('#strip'), {
 
 opsTail();
 await go(REG, false);
+document.documentElement.dataset.atlas = 'ready';
 
 /* 지도 위 상호작용 — 탐지 점·기둥·핀 */
 map.on('mousemove', (ev) => {

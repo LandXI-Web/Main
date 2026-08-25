@@ -288,6 +288,8 @@ body.lx{ overflow:hidden; background:var(--lx-paper); }
   .lg-ctarow{ width:auto; flex-wrap:wrap; gap:16px; }
   .lg-foot,.lg-vis{ width:auto; max-width:none; }
   .lg-fallback{ position:relative; order:7; left:auto; bottom:auto; margin:0 var(--lg-m) 24px; }
+  /* 핸드오프 — 흐름 안에 있는 판을 뷰포트에 고정해서 화면을 다 먹인다. */
+  .lg-plate.is-full{ position:fixed; }
 }
 
 @media (prefers-reduced-motion:reduce){
