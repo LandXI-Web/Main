@@ -162,23 +162,62 @@ export const STACKS = (() => {
 
 export const STACK_MAX = Math.max(...STACKS.map((s) => s.total));
 
-/* ── 기존 대시보드 기능 → 원장 행 (시연 데이터, 원형 목업 그대로) ────── */
+/* ── 원본 대시보드 기능 → 원장 행 ────────────────────────────────────
+   대조표: docs/superpowers/proto/2026-08-26-dashboard-parity.md
+   원본 = https://mini531.github.io/namwon-smart-village/landxi7/dashboard.html
+   여기서는 **원본에 있는 것만** 옮긴다. 값도 원본 화면의 값 그대로 쓴다. */
 
-const QTYPE = { card: '카드 발행 승인', user: '가입 승인', inquiry: '문의' };
-export const QUEUE = DASH.queue.map((q, i) => ({
-  i,
-  type: q.type,
-  typeName: QTYPE[q.type],
-  title: q.title,
-  sub: q.sub,
-  status: q.status,
-  lnglat: q.pin.lnglat,
-}));
-export const QUEUE_BY_TYPE = ['card', 'user', 'inquiry'].map((t) => ({
-  type: t, name: QTYPE[t], n: QUEUE.filter((q) => q.type === t).length,
-}));
+/* A. 좌측 내비게이션 레일 — include/header.html 의 aside.app-sidebar 그대로.
+   원본 페이지들은 이 콘티 저장소에 없다. 링크를 지어내는 대신 같은 데이터를
+   담고 있는 우리 자리로 보낸다(레지스터 전환 `tab` 또는 원장 스크롤 `to`). */
+export const NAV = [
+  { menu: 'dashboard', name: '대시보드', href: 'dashboard.html', act: { here: 1 }, icon: 'dash' },
+  { menu: 'media', name: '데이터 관리', href: 'dataset.html', act: { tab: 'train' }, icon: 'data' },
+  { menu: 'project', name: '프로젝트', href: 'ai-project.html', act: { to: 'fig-proj' }, icon: 'proj' },
+  { menu: 'analysis', name: '분석 서비스', href: 'analysis-ai.html', act: { tab: 'infer' }, icon: 'run' },
+  { menu: 'map', name: '지도 서비스', href: 'ximap.html', act: { tab: 'results' }, icon: 'map' },
+];
+export const NAV_FOOT = [
+  { menu: 'support', name: '서비스 지원', href: 'notice.html', act: { to: 'fig-notice' }, icon: 'help' },
+  { menu: 'publish-admin', name: '카드 발행 관리', href: 'admin-publish.html', act: { to: 'fig-approve' }, icon: 'stack' },
+  { menu: 'admin', name: '서비스 관리', href: 'admin-notice.html', act: { to: 'fig-admin' }, icon: 'gear' },
+];
+/** MY 플라이아웃 — 원본과 항목·동작이 같다(로그아웃은 lx_logged_in 삭제 후 home). */
+export const NAV_MY = [
+  { name: '마이 페이지', href: '../mypage.html' },
+  { name: '로그아웃', action: 'logout' },
+];
 
-export const KPI = DASH.kpis.map((k) => ({ ...k, demo: true }));
+/* B3. 공지 스트립 — 원본은 SP_NOTICES 를 고정 우선·날짜 역순으로 정렬해 첫 건을 쓴다.
+   그 첫 건이 dashboard.js 의 notice 와 같다(id 8, 2026-04-15, urgent). */
+export const NOTICE = { ...DASH.notice, id: 8, more: '../notice.html' };
+
+/* B13. 카드 발행 승인 대기 — 원본 CARD_APPROVALS 2건. 요청자·요청시각까지 원본 값.
+   행 클릭은 원본의 `admin-publish.html?open=<id>` 자리다(우리는 지도 핀으로 간다). */
+const APPROVAL_META = {
+  '도로안전 정사영상 v2.1': { id: 'pa-1', requester: '김현우', at: '2026.06.10 14:30' },
+  '농지 활용 분석 v2.0': { id: 'pa-6', requester: '김현우', at: '2026.05.15 08:50' },
+};
+export const APPROVALS = DASH.queue
+  .filter((q) => APPROVAL_META[q.title])
+  .map((q, i) => ({ i, title: q.title, sub: q.sub, ...APPROVAL_META[q.title], lnglat: q.pin.lnglat }));
+
+/* B14. 사용자·콘텐츠 관리 타일 4 — 원본 support-grid 그대로. */
+export const ADMIN_TILES = [
+  { name: '사용자 관리', desc: '전체 21명 · 가입 승인 대기 1', href: 'admin-users.html' },
+  { name: '공지사항 관리', desc: '전체 12건 · 긴급 2', href: 'admin-notice.html' },
+  { name: '문의 관리', desc: '미답변 6 · 전체 12', href: 'admin-inquiry.html' },
+  { name: '자주 묻는 질문 관리', desc: '전체 15건', href: 'admin-faq.html' },
+];
+
+/* B4–B8. KPI 5 — 원본 화면의 값·부제·링크를 그대로 쓴다(우리 목업값으로 갈아치우지 않는다). */
+export const KPI = [
+  { label: '전체 사용자', value: 21, unit: '명', sub: '정상 19 · 가입 승인 대기 1', href: 'admin-users.html' },
+  { label: '발행 분석 카드', value: 8, unit: '건', sub: '공개 7 · 비공개 1', href: 'ai-card.html' },
+  { label: '카드 발행 승인 대기', value: APPROVALS.length, unit: '건', sub: '검토 필요', href: 'admin-publish.html?status=대기', to: 'fig-approve' },
+  { label: '가입 승인 대기', value: 1, unit: '건', sub: '승인 필요', href: 'admin-users.html' },
+  { label: '미답변 문의', value: 6, unit: '건', sub: '전체 12 · 답변 필요', href: 'admin-inquiry.html' },
+];
 export const VISITS = DASH.visits;
 export const VISITS_TOTAL = VISITS.reduce((a, v) => a + v.count, 0);
 export const STORAGE = DASH.storage;

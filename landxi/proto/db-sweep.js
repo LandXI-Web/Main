@@ -79,11 +79,36 @@ export async function indexDetections(url) {
   return { byTile, pts, total: pts.length };
 }
 
+/* --v3-ease 를 JS 에서 그대로 쓴다(칸의 번쩍임과 CSS 전환이 같은 이징이어야 한다). */
+const EASE = (() => {
+  const [x1, y1, x2, y2] = [0.15, 1, 0.3, 1];
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+  const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+  const fx = (t) => ((ax * t + bx) * t + cx) * t;
+  const fy = (t) => ((ay * t + by) * t + cy) * t;
+  return (x) => {
+    let t = x;
+    for (let i = 0; i < 5; i++) {
+      const d = (3 * ax * t + 2 * bx) * t + cx;
+      if (Math.abs(d) < 1e-6) break;
+      t -= (fx(t) - x) / d;
+    }
+    return fy(Math.min(1, Math.max(0, t)));
+  };
+})();
+
+/* 칸의 알파 — 처리되면 28% 로 번쩍했다가 500ms 에 걸쳐 제자리(8~12%)로 가라앉는다.
+   불투명한 사각형은 만들지 않는다: 판이 사진으로 남아야 한다. */
+export const FLASH_MS = 500;
+const A_DONE = 0.08;
+const A_HIT = 0.12;
+const A_FLASH = 0.28;
+
 /**
  * 스윕 하나. rate = 초당 타일 수(측정된 실제 진행 속도로 다시 계산된다).
- * onStep({i, total, tps, eta, hits, tile, det}) 로 매 칸을 알린다.
+ * 기본 rate 는 8.33 = 120ms 에 한 칸(스윕 틱).
  */
-export function makeSweep({ tiles, index, rate = 27, offset = 0 }) {
+export function makeSweep({ tiles, index, rate = 1000 / 120, offset = 0 }) {
   let i = Math.floor(tiles.length * offset);
   const started = performance.now();
   let steps = 0;
@@ -91,13 +116,22 @@ export function makeSweep({ tiles, index, rate = 27, offset = 0 }) {
   let hits = 0;
   let det = 0;
   const state = new Map();               // "x|y" → 'idle' | 'live' | 'done' | 'hit'
+  const lit = new Map();                 // "x|y" → 처리된 시각(번쩍임 기준)
+  const counts = new Map();              // "x|y" → 그 칸의 탐지 수
+  let dets = [];                         // 지나간 칸에서 쌓인 탐지 대표점
   for (const [x, y] of tiles) state.set(`${x}|${y}`, 'idle');
-  for (let k = 0; k < i; k++) {
-    const [x, y] = tiles[k];
-    const n = index?.byTile.get(`${x}|${y}`)?.length || 0;
-    state.set(`${x}|${y}`, n ? 'hit' : 'done');
-    if (n) { hits++; det += n; }
-  }
+
+  const mark = (k, now) => {
+    const pts = index?.byTile.get(k) || null;
+    const n = pts ? pts.length : 0;
+    state.set(k, n ? 'hit' : 'done');
+    counts.set(k, n);
+    lit.set(k, now);
+    if (n) { hits++; det += n; dets = dets.concat(pts); }
+    return n;
+  };
+
+  for (let k = 0; k < i; k++) mark(`${tiles[k][0]}|${tiles[k][1]}`, -1e9);
 
   return {
     get i() { return i; },
@@ -105,6 +139,11 @@ export function makeSweep({ tiles, index, rate = 27, offset = 0 }) {
     get hits() { return hits; },
     get det() { return det; },
     state,
+    /** 지금 칸의 탐지 수 — 현재 칸 안에 찍는 작은 숫자. */
+    get liveCount() {
+      const t = tiles[Math.min(i, tiles.length - 1)];
+      return t ? (counts.get(`${t[0]}|${t[1]}`) ?? 0) : 0;
+    },
     /** 경과 시간만큼 앞으로 간다. 화면 주사율과 무관하게 rate 를 지킨다. */
     advance(dtMs) {
       carry += (dtMs / 1000) * rate;
@@ -112,12 +151,9 @@ export function makeSweep({ tiles, index, rate = 27, offset = 0 }) {
       carry -= step;
       const want = Math.min(tiles.length, i + Math.max(0, step));
       let moved = false;
+      const now = performance.now();
       while (i < want) {
-        const [x, y] = tiles[i];
-        const k = `${x}|${y}`;
-        const n = index?.byTile.get(k)?.length || 0;
-        state.set(k, n ? 'hit' : 'done');
-        if (n) { hits++; det += n; }
+        mark(`${tiles[i][0]}|${tiles[i][1]}`, now);
         i++; steps++; moved = true;
       }
       if (i > 0 && i < tiles.length) {
@@ -137,16 +173,36 @@ export function makeSweep({ tiles, index, rate = 27, offset = 0 }) {
     get done() { return i >= tiles.length; },
     reset() {
       i = 0; hits = 0; det = 0; steps = 0; carry = 0;
+      dets = [];
+      lit.clear(); counts.clear();
       for (const k of state.keys()) state.set(k, 'idle');
     },
-    /** 지도에 넣을 GeoJSON. */
-    features() {
+    /** 누적된 탐지 점. 칸이 지나갈 때마다 늘어난다. */
+    detFC() {
+      return { type: 'FeatureCollection', features: dets.map((c) => ({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: c } })) };
+    },
+    /** 지도에 넣을 GeoJSON. a = 채움 알파, b = 현재 칸 테두리의 숨(호흡). */
+    features(now = performance.now()) {
       const out = [];
+      const breath = 0.62 + 0.38 * (0.5 - 0.5 * Math.cos((now % 2400) / 2400 * Math.PI * 2));
       for (const [x, y] of tiles) {
-        const st = state.get(`${x}|${y}`);
-        out.push(tileFeature(x, y, Z, { st }));
+        const k = `${x}|${y}`;
+        const st = state.get(k);
+        let a = 0;
+        if (st === 'done' || st === 'hit') {
+          const base = st === 'hit' ? A_HIT : A_DONE;
+          const dt = now - (lit.get(k) ?? -1e9);
+          a = dt < FLASH_MS ? base + (A_FLASH - base) * (1 - EASE(dt / FLASH_MS)) : base;
+        }
+        out.push(tileFeature(x, y, Z, { st, a: +a.toFixed(3), b: st === 'live' ? +breath.toFixed(3) : 0 }));
       }
       return { type: 'FeatureCollection', features: out };
+    },
+    /** 현재 스캔 칸의 중심(칸 안에 숫자를 놓기 위해). */
+    liveCenter() {
+      const t = tiles[Math.min(i, tiles.length - 1)];
+      if (!t) return null;
+      return [(tile2lng(t[0], Z) + tile2lng(t[0] + 1, Z)) / 2, (tile2lat(t[1], Z) + tile2lat(t[1] + 1, Z)) / 2];
     },
     /** 현재 스캔 라인의 위도(스캔 스트립·라벨용). */
     lat() {

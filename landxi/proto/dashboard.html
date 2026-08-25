@@ -17,23 +17,31 @@
 
 <a class="skip" href="#ledger">원장으로 건너뛰기</a>
 
+<!-- ── 좌측 내비게이션 레일 — 원본 include/header.html 의 aside.app-sidebar 를
+     흰 B안 문법(헤어라인 · SUIT 라벨 · 무채 아이콘)으로 옮긴 것. 메뉴는 추가하지 않는다.
+     대조표: docs/superpowers/proto/2026-08-26-dashboard-parity.md §A -->
+<aside id="rail" aria-label="주 메뉴">
+  <a id="rail-mark" href="../home.html" aria-label="Land-XI 홈"><img src="../assets/images/lx_symbol.png" alt=""></a>
+  <nav id="rail-top" class="rail-group"></nav>
+  <nav id="rail-foot" class="rail-group"></nav>
+</aside>
+
 <!-- ── 판(plate) — 뷰포트 전체를 채우는 V-World 위성 정사영상. ──────────────
      흰 크롬(마스트헤드·원장·스캔 스트립)이 이 판 위에 헤어라인으로 얹힌다.
      카드도 유리도 그림자도 없다. 색은 흰 종이 + 액센트 하나. -->
 <div id="plate" aria-hidden="true"></div>
 <div id="plate-veil" aria-hidden="true"></div>
+<!-- 현재 스캔 칸 안의 작은 수 — 지도 위에 떠 있는 유일한 숫자. -->
+<span id="cellnum" class="num" hidden></span>
 
 <!-- ── 마스트헤드 ─────────────────────────────────────────────────────── -->
 <header id="mast">
   <div id="mast-l">
     <span id="mark">LAND-XI</span>
-    <p class="caption" id="mast-sub">Land-XI 콘티 · 데이터 기준 <span class="num" id="mast-asof">—</span></p>
+    <h2 id="mast-title">—</h2>
   </div>
   <nav id="regs" aria-label="레지스터 전환"></nav>
-  <p class="caption" id="mast-r">
-    <span id="mast-plate">V-WORLD 위성 정사영상</span>
-    <span class="sep">·</span><span class="num" id="mast-src">—</span>
-  </p>
+  <p class="caption" id="mast-r">V-WORLD 위성 정사영상<span class="sep">·</span>데이터 기준 <span class="num" id="mast-asof">—</span><span class="sep">·</span><span class="num" id="mast-src">—</span></p>
 </header>
 
 <!-- ── 좌측 원장(LEDGER) — B안 대시보드의 문법을 그대로 옮긴 흰 단. ──────── -->
@@ -52,15 +60,20 @@
   <!-- 레지스터별 본문. 세 개의 판이 이 자리에서 교대한다. -->
   <div id="reg-body"></div>
 
-  <!-- 기존 대시보드 기능이 원장 꼬리로 흡수된 자리 -->
+  <!-- 원본 대시보드 위젯이 원장 꼬리에 1:1 로 남는다(대조표 §B). -->
   <section class="fg" id="fg-ops">
-    <p class="fg__h"><b>FIG. 09</b> 처리 대기 큐 · <span class="num" id="ops-n">—</span>건 <i class="tag tag--demo">시연</i></p>
-    <div class="rows" id="ops-rows" role="list"></div>
-    <p class="fg__h"><b>FIG. 10</b> 지표 · 방문 · 스토리지 <i class="tag tag--demo">시연</i></p>
+    <p class="fg__h" id="fig-notice"><b>FIG. 08</b> 공지 <a class="rt rt--a" href="../notice.html">전체 보기</a></p>
+    <div id="ops-notice"></div>
+    <p class="fg__h"><b>FIG. 09</b> AI 기반 모델 · 백본</p>
+    <div id="ops-bb"></div>
+    <p class="fg__h"><b>FIG. 10</b> 운영 지표 · <span class="num">5</span>종 <i class="tag tag--demo">시연</i></p>
     <div id="ops-kpi"></div>
+    <p class="fg__h" id="fig-proj"><b>FIG. 12</b> 프로젝트 용량 · 방문 · 스토리지 <i class="tag tag--demo">시연</i></p>
     <div id="ops-chart"></div>
-    <p class="fg__h"><b>FIG. 11</b> 전국 커버리지 · 시군구 <span class="num" id="cov-n">—</span>/249</p>
-    <div id="ops-cov"></div>
+    <p class="fg__h" id="fig-approve"><b>FIG. 13</b> 카드 발행 승인 대기 · <span class="num" id="ops-n">—</span>건 <i class="tag tag--demo">시연</i></p>
+    <div class="rows" id="ops-rows" role="list"></div>
+    <p class="fg__h" id="fig-admin"><b>FIG. 14</b> 사용자 · 콘텐츠 관리 <i class="tag tag--demo">시연</i></p>
+    <div class="rows" id="ops-admin" role="list"></div>
   </section>
 
   <footer id="led-foot">

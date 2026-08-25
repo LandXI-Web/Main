@@ -1,6 +1,6 @@
 // 원장 안의 미니 차트 — 방문(7일)·스토리지. 둘 다 원형 프로토타입의 시연 목업이라
 // 꼬리표를 달고 작게 둔다. 축·격자 최소, 데이터 잉크만, 액센트 하나.
-import { VISITS, VISITS_TOTAL, STORAGE, nf } from './db-data.js';
+import { VISITS, VISITS_TOTAL, STORAGE, PROJECTS, nf } from './db-data.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -37,8 +37,27 @@ function storageSVG() {
     + `<text class="lbl" x="${W}" y="22" text-anchor="end">전체 ${total} TB · ${((used / total) * 100).toFixed(0)}%</text></svg>`;
 }
 
+/** AI 개발 프로젝트 현황 — 원본의 가로 막대 Top 5(용량 GB). 축·격자 없이 값만. */
+function projectsSVG() {
+  const top = [...PROJECTS].sort((a, b) => b.gb - a.gb).slice(0, 5);
+  const W = 336, rowH = 19, H = top.length * rowH;
+  const max = Math.max(...top.map((t) => t.gb));
+  const NAMEW = 132, VALW = 46, TRACK = W - NAMEW - VALW;
+  const rows = top.map((t, i) => {
+    const y = i * rowH;
+    const w = (t.gb / max) * TRACK;
+    return `<text class="lbl" x="0" y="${y + 12}">${esc(t.n)}</text>`
+      + `<rect x="${NAMEW}" y="${y + 4}" width="${Math.max(1, w).toFixed(1)}" height="8" fill="#006DF7" opacity="${(1 - i * 0.14).toFixed(2)}"/>`
+      + `<text class="val" x="${W}" y="${y + 12}" text-anchor="end">${t.gb} GB</text>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="프로젝트 용량 Top 5">${rows}</svg>`;
+}
+
 export function drawMinis(host) {
   host.innerHTML = `
+    <div class="mini">${projectsSVG()}
+      <p class="caption" style="margin-top:6px">데이터 사용량 상위 <span class="num">5</span> · 전체 <span class="num">${PROJECTS.length}</span>과제</p>
+    </div>
     <div class="mini">${visitsSVG()}
       <p class="caption" style="margin-top:6px">7일 방문 합계 <span class="num">${nf.format(VISITS_TOTAL)}</span>회</p>
     </div>

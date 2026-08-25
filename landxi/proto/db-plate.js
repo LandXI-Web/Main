@@ -6,7 +6,7 @@
 //   학습데이터 → 100m 라벨 표본 밀도 격자(+ 점선 결측 칸) + 영상 인벤토리 풋프린트
 //   결과 누적  → 시군구별 epoch 적층 기둥(fill-extrusion) + 커버리지 코로플레스
 import { resolveVWorld } from './js/sources.js';
-import { DONE, COVERAGE, QUEUE, IMG, STACKS, STACK_MAX, SWEEP_TILE } from './db-data.js';
+import { DONE, COVERAGE, APPROVALS, IMG, STACKS, STACK_MAX, SWEEP_TILE } from './db-data.js';
 
 
 const SIGUNGU_URL = '../assets/data/geo/sigungu.geojson';
@@ -147,8 +147,15 @@ export async function mountPlate(el) {
         { id: 'bg', type: 'background', paint: { 'background-color': '#0b0e12' } },
         {
           id: 'vsat', type: 'raster', source: 'vsat',
-          // −35% 채도. 판이 물러나야 흰 크롬과 액센트 하나가 앞으로 나온다.
-          paint: { 'raster-saturation': -0.35, 'raster-contrast': -0.04, 'raster-brightness-max': 0.94, 'raster-fade-duration': 220 },
+          // 사진 인화 — 채도 −35%, 대비 +6%, 검정을 살짝 들어 올린다(§4 영상 처리).
+          // 판이 물러나야 헤어라인 계기와 액센트 하나가 앞으로 나온다.
+          paint: {
+            'raster-saturation': -0.35,
+            'raster-contrast': 0.06,
+            'raster-brightness-min': 0.06,
+            'raster-brightness-max': 0.96,
+            'raster-fade-duration': 220,
+          },
         },
       ],
     },
@@ -187,18 +194,16 @@ export async function mountPlate(el) {
     },
     layout: { visibility: 'none' },
   });
+  // 행정경계는 계기가 아니라 판에 새긴 눈금이다 — 1px 잉크 헤어라인 하나.
   map.addLayer({
     id: 'sig-line', type: 'line', source: 'sig',
-    paint: {
-      'line-color': '#ffffff',
-      'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.5, 12, 1],
-      'line-opacity': ['case', ['>', ['get', 'lit'], 0], 0.55, 0.26],
-    },
+    paint: { 'line-color': 'rgba(1,1,2,0.35)', 'line-width': 1 },
   });
+  // 실측 시군구도 굵어지지 않는다. 같은 1px, 잉크가 조금 진해질 뿐.
   map.addLayer({
     id: 'sig-measured', type: 'line', source: 'sig',
     filter: ['>', ['get', 'measured'], 0],
-    paint: { 'line-color': ACCENT, 'line-width': 1.4, 'line-opacity': 0.9 },
+    paint: { 'line-color': 'rgba(1,1,2,0.58)', 'line-width': 1 },
   });
 
   /* 학습데이터 — 밀도 격자 + 결측 점선 */
@@ -238,57 +243,77 @@ export async function mountPlate(el) {
     layout: { visibility: 'none' },
   });
 
-  /* 추론 — AOI 윤곽 + z14 실타일 스윕 */
-  const aoi = fc([tileFeature(0, 0, 0)]);
-  aoi.features = [{
+  /* 추론 — AOI 윤곽(헤어라인 + 코너 눈금) + z14 실타일 스윕 */
+  const W = tile2lng(SWEEP_TILE.x0, 14), E = tile2lng(SWEEP_TILE.x1 + 1, 14);
+  const N = tile2lat(SWEEP_TILE.y0, 14), S = tile2lat(SWEEP_TILE.y1 + 1, 14);
+  const aoi = fc([{
     type: 'Feature', properties: {},
-    geometry: {
-      type: 'Polygon',
-      coordinates: [[
-        [tile2lng(SWEEP_TILE.x0, 14), tile2lat(SWEEP_TILE.y0, 14)],
-        [tile2lng(SWEEP_TILE.x1 + 1, 14), tile2lat(SWEEP_TILE.y0, 14)],
-        [tile2lng(SWEEP_TILE.x1 + 1, 14), tile2lat(SWEEP_TILE.y1 + 1, 14)],
-        [tile2lng(SWEEP_TILE.x0, 14), tile2lat(SWEEP_TILE.y1 + 1, 14)],
-        [tile2lng(SWEEP_TILE.x0, 14), tile2lat(SWEEP_TILE.y0, 14)],
-      ]],
-    },
-  }];
+    geometry: { type: 'Polygon', coordinates: [[[W, N], [E, N], [E, S], [W, S], [W, N]]] },
+  }]);
+  // 코너 눈금 — 브래킷 대신 네 귀퉁이의 짧은 ㄱ자 두 선. 액센트는 여기에만 쓴다.
+  const tw = (E - W) * 0.055, th = (N - S) * 0.075;
+  const corner = (x, y, sx, sy) => ({
+    type: 'Feature', properties: {},
+    geometry: { type: 'LineString', coordinates: [[x + sx * tw, y], [x, y], [x, y - sy * th]] },
+  });
+  const ticks = fc([corner(W, N, 1, 1), corner(E, N, -1, 1), corner(W, S, 1, -1), corner(E, S, -1, -1)]);
+
   map.addSource('aoi', { type: 'geojson', data: aoi });
+  map.addSource('aoitick', { type: 'geojson', data: ticks });
   map.addSource('sweep', { type: 'geojson', data: EMPTY });
   map.addSource('det', { type: 'geojson', data: EMPTY });
+  map.addSource('sdet', { type: 'geojson', data: EMPTY });
   map.addSource('pins', { type: 'geojson', data: EMPTY });
 
+  // 어두운 지반 위에서 흰 헤어라인이 읽히도록 잉크 한 겹을 아래에 깐다(그림자가 아니라 판의 음영).
   map.addLayer({
-    id: 'aoi-line', type: 'line', source: 'aoi',
-    paint: { 'line-color': '#ffffff', 'line-width': 1.2, 'line-opacity': 0.9, 'line-dasharray': [3, 2] },
+    id: 'aoi-under', type: 'line', source: 'aoi',
+    paint: { 'line-color': 'rgba(1,1,2,0.30)', 'line-width': 2.4 },
     layout: { visibility: 'none' },
   });
   map.addLayer({
+    id: 'aoi-line', type: 'line', source: 'aoi',
+    paint: { 'line-color': 'rgba(255,255,255,0.72)', 'line-width': 1 },
+    layout: { visibility: 'none' },
+  });
+  map.addLayer({
+    id: 'aoi-tick', type: 'line', source: 'aoitick',
+    paint: { 'line-color': ACCENT, 'line-width': 1 },
+    layout: { visibility: 'none', 'line-cap': 'butt' },
+  });
+
+  // 스윕 = 헤어라인 격자. 칸은 절대 불투명해지지 않는다 — 처리된 칸만 액센트 8~12%,
+  // 방금 처리된 칸은 28%까지 번쩍했다가 500ms 에 걸쳐 가라앉는다(알파는 db-sweep 가 계산).
+  map.addLayer({
     id: 'sweep-fill', type: 'fill', source: 'sweep',
-    paint: {
-      // 90/8/2 — 앰버는 '지금 스캔 중인 칸' 한 줄에만 쓴다. 탐지가 있는 칸은 액센트.
-      'fill-color': ['match', ['get', 'st'], 'live', DETECT, 'hit', ACCENT, '#ffffff'],
-      'fill-opacity': ['match', ['get', 'st'], 'live', 0.55, 'hit', 0.3, 'done', 0.1, 0.0],
-    },
+    paint: { 'fill-color': ACCENT, 'fill-opacity': ['get', 'a'] },
     layout: { visibility: 'none' },
   });
   map.addLayer({
     id: 'sweep-line', type: 'line', source: 'sweep',
     paint: {
-      'line-color': ['match', ['get', 'st'], 'live', DETECT, 'hit', ACCENT, '#ffffff'],
-      'line-width': ['match', ['get', 'st'], 'live', 1.6, 0.5],
-      'line-opacity': ['match', ['get', 'st'], 'idle', 0.16, 'done', 0.4, 0.8],
+      'line-color': ['case', ['==', ['get', 'st'], 'live'], ACCENT, 'rgba(255,255,255,0.9)'],
+      'line-width': 1,
+      'line-opacity': ['match', ['get', 'st'], 'live', ['get', 'b'], 'idle', 0.14, 0.22],
+    },
+    layout: { visibility: 'none' },
+  });
+  // 탐지는 칸 안에 쌓이는 3px 이하의 액센트 점이다. 히트맵도, 발광도 아니다.
+  map.addLayer({
+    id: 'sdet-dot', type: 'circle', source: 'sdet',
+    paint: {
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 1, 14, 2, 16, 3],
+      'circle-color': ACCENT,
+      'circle-opacity': 0.72,
     },
     layout: { visibility: 'none' },
   });
   map.addLayer({
     id: 'det-dot', type: 'circle', source: 'det',
     paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 1.4, 16, 4.5],
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 1.2, 16, 3],
       'circle-color': TEAL,
-      'circle-opacity': 0.85,
-      'circle-stroke-width': 0.4,
-      'circle-stroke-color': '#ffffff',
+      'circle-opacity': 0.8,
     },
     layout: { visibility: 'none' },
   });
@@ -306,25 +331,19 @@ export async function mountPlate(el) {
     layout: { visibility: 'none' },
   });
 
-  /* 큐 핀 — 기존 대시보드의 처리 대기 큐가 지도 위 점이 된다(시연). */
+  /* 핀 — 원본 대시보드의 `카드 발행 승인 대기` 2건이 요청 지역 위에 선다.
+     화면에서 숨 쉬는 것은 스윕의 현재 칸 하나뿐이므로, 핀은 움직이지 않는다. */
   map.addLayer({
-    id: 'pin-halo', type: 'circle', source: 'pins',
-    paint: {
-      'circle-radius': ['interpolate', ['linear'], ['get', 'pulse'], 0, 6, 1, 15],
-      'circle-color': ACCENT,
-      'circle-opacity': ['interpolate', ['linear'], ['get', 'pulse'], 0, 0.24, 1, 0],
-    },
+    id: 'pin-ring', type: 'circle', source: 'pins',
+    paint: { 'circle-radius': 8, 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-width': 1, 'circle-stroke-color': 'rgba(255,255,255,0.5)' },
   });
   map.addLayer({
     id: 'pin-dot', type: 'circle', source: 'pins',
-    paint: {
-      'circle-radius': 3.4, 'circle-color': '#ffffff',
-      'circle-stroke-width': 1.6, 'circle-stroke-color': ACCENT,
-    },
+    paint: { 'circle-radius': 2.6, 'circle-color': ACCENT, 'circle-stroke-width': 1, 'circle-stroke-color': '#ffffff' },
   });
-  map.getSource('pins').setData(fc(QUEUE.map((q, i) => ({
+  map.getSource('pins').setData(fc(APPROVALS.map((q) => ({
     type: 'Feature',
-    properties: { i, type: q.type, title: q.title, sub: q.sub, status: q.status, hot: i === 0 ? 1 : 0, pulse: 0 },
+    properties: { i: q.i, id: q.id, title: q.title, sub: q.sub, requester: q.requester, at: q.at },
     geometry: { type: 'Point', coordinates: q.lnglat },
   }))));
 
@@ -334,6 +353,7 @@ export async function mountPlate(el) {
     map, fc, show,
     setSweep: (data) => map.getSource('sweep').setData(data),
     setDet: (data) => map.getSource('det').setData(data),
+    setSDet: (data) => map.getSource('sdet').setData(data),
     setGrid: (g, gap) => { map.getSource('grid').setData(g); map.getSource('gap').setData(gap || EMPTY); },
     setStack: (data) => map.getSource('stack').setData(data),
     pins: () => map.getSource('pins'),

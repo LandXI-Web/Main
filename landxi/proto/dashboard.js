@@ -9,8 +9,8 @@
 import {
   nf, pct, ymd, REGISTERS, REG_IDS, DATA_ASOF,
   TOTAL_OBJECTS, TOTAL_AREA_HA, RUNS, DONE, doneById, IMG, IMG_CITY, IMG_AOI,
-  CLASS_BALANCE, STACKS, STACK_MAX, QUEUE, QUEUE_BY_TYPE, KPI, COVERAGE, COLS,
-  DONE_CELLS, CELLS, BACKBONE, MODEL_LIST, EPOCHS, T1,
+  CLASS_BALANCE, STACKS, STACK_MAX, KPI, BACKBONE, MODEL_LIST, EPOCHS, T1, COVERAGE,
+  NAV, NAV_FOOT, NAV_MY, NOTICE, APPROVALS, ADMIN_TILES,
 } from './db-data.js';
 import { mountPlate, densify, gapCells, stackFC, STACK_SCALE, tile2lng, tile2lat } from './db-plate.js';
 import { realTiles, indexDetections, makeSweep, fmtEta } from './db-sweep.js';
@@ -25,7 +25,61 @@ const REDUCED = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ── 마스트헤드 ───────────────────────────────────────────────────────── */
 $('#mast-asof').textContent = DATA_ASOF;
+$('#mast-title').textContent = 'LX 관리자 대시보드';
 $('#mast-src').textContent = `결과 ${DONE.length} · 모델 ${MODEL_LIST.length} · 영상 ${IMG.length}`;
+
+const TICK = 1000 / 120;                 // 스윕 틱 — 120ms 에 한 칸
+
+/* ── 좌측 내비게이션 레일 ─────────────────────────────────────────────
+   원본 include/header.html 의 메뉴 구조 그대로. 새 메뉴를 만들지 않는다.
+   원본 페이지가 이 저장소에 없을 때는 같은 데이터가 있는 우리 자리로 보내고,
+   대응 관계는 title 에 원본 파일명으로 남긴다(대조표 §A). */
+const RAIL_ICON = {
+  dash: '<rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/>',
+  data: '<rect x="10" y="10" width="4" height="4"/><path d="M10 10L6 6M14 10l4-4M10 14l-4 4M14 14l4 4"/><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/>',
+  proj: '<path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>',
+  run: '<polygon points="5 3 19 12 5 21 5 3"/>',
+  map: '<polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/>',
+  help: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  stack: '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>',
+  my: '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+};
+const railIcon = (k) => `<svg class="ri-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${RAIL_ICON[k] || ''}</svg>`;
+const railItem = (n) => `
+  <button type="button" class="rail-i" data-menu="${n.menu}" data-act='${JSON.stringify(n.act)}'
+    title="원본 ${n.href}">${railIcon(n.icon)}<span class="rl">${esc(n.name)}</span></button>`;
+
+$('#rail-top').innerHTML = NAV.map(railItem).join('');
+$('#rail-foot').innerHTML = NAV_FOOT.map(railItem).join('')
+  + `<div class="rail-i rail-my" data-menu="my">${railIcon('my')}<span class="rl">MY</span>
+       <div class="rail-fly">${NAV_MY.map((m) => (m.action
+         ? `<button type="button" data-action="${m.action}">${esc(m.name)}</button>`
+         : `<a href="${esc(m.href)}">${esc(m.name)}</a>`)).join('')}</div>
+     </div>`;
+
+/** 레일 항목은 원본 페이지로 가지 않는다 — 그 내용이 우리 화면 어디에 있는지로 간다. */
+function railGo(act) {
+  if (act.here) { $('#ledger').scrollTo({ top: 0, behavior: REDUCED() ? 'auto' : 'smooth' }); return; }
+  if (act.tab) { go(act.tab); return; }
+  if (act.to) scrollLedgerTo(act.to);
+}
+function scrollLedgerTo(id) {
+  const t = document.getElementById(id);
+  if (!t) return;
+  $('#ledger').scrollTo({ top: t.offsetTop - 4, behavior: REDUCED() ? 'auto' : 'smooth' });
+  t.classList.remove('is-ping');
+  requestAnimationFrame(() => t.classList.add('is-ping'));
+}
+$('#rail').addEventListener('click', (ev) => {
+  const lo = ev.target.closest('[data-action="logout"]');
+  if (lo) { try { localStorage.removeItem('lx_logged_in'); } catch (e) { /* 저장소 차단 */ } location.href = '../home.html'; return; }
+  const b = ev.target.closest('.rail-i[data-act]');
+  if (!b) return;
+  document.querySelectorAll('.rail-i').forEach((x) => x.removeAttribute('aria-current'));
+  b.setAttribute('aria-current', 'page');
+  railGo(JSON.parse(b.dataset.act));
+});
 
 /* ── 레지스터 탭 ──────────────────────────────────────────────────────── */
 const regsEl = $('#regs');
@@ -111,20 +165,6 @@ function flyGated(opts, done) {
   if (done) whenSettled(done);
 }
 
-/* 핀 호흡 — 화면당 앰비언트 하나. 가장 오래된 큐 한 줄만 숨 쉰다. */
-(function breathe() {
-  if (REDUCED()) return;
-  const src = PLATE.pins();
-  const t0 = performance.now();
-  (function loop(t) {
-    const ph = ((t - t0) % 6400) / 6400;   // 앰비언트 주기 ≥6s(§5-11)
-    const data = src._data;
-    for (const f of data.features) f.properties.pulse = f.properties.hot ? ph : 0;
-    src.setData(data);
-    requestAnimationFrame(loop);
-  })(t0);
-})();
-
 /* ══ 레지스터 01 · 추론 현황 ═════════════════════════════════════════════ */
 const INFER = { tiles: null, runs: [], raf: 0, last: 0, sel: null };
 
@@ -134,8 +174,8 @@ async function buildInfer() {
   const tiles = await realTiles();
   INFER.tiles = tiles;
   // 실행 3건 — 각자 다른 모델·다른 탐지셋·다른 속도. 진행률은 전부 측정값.
-  // 초당 타일 수. 남원 전역 z14 196칸을 1~2분에 훑는 속도 — 진행이 눈으로 읽히게.
-  const rates = [3.4, 2.2, 5.1];
+  // 초당 타일 수. 스윕 틱 120ms — 칸이 하나씩 넘어가는 것이 눈에 읽히는 속도.
+  const rates = [TICK, TICK / 1.5, TICK * 1.35];   // 기준 = 120ms 에 한 칸
   const offs = [0.35, 0.12, 0.58];
   INFER.runs = await Promise.all(RUNS.map(async (r, i) => {
     const index = await indexDetections(r.detections);
@@ -254,22 +294,30 @@ function selectDone(id) {
   });
 }
 
-function inferFrame(t) {
-  const dt = Math.min(400, t - (INFER.last || t));
-  INFER.last = t;
-  let any = false;
-  for (const r of INFER.runs) {
-    if (r.sweep.done) { r.sweep.reset(); any = true; }   // 다음 회차로 넘어간다
-    if (r.sweep.advance(dt)) any = true;
-  }
-  // 지도에는 선택된(또는 첫) 실행의 스윕만 올린다 — 세 겹이 겹치면 아무것도 안 보인다.
+/* 현재 칸 안의 작은 수 — 화면에서 지도 위에 떠 있는 유일한 숫자.
+   심볼 레이어(글리프)를 쓰지 않는다: 폰트를 외부에서 받아 오지 않기 위해서다. */
+const cellNum = $('#cellnum');
+function paintCellNum(sw) {
+  const c = sw && !sw.done ? sw.liveCenter() : null;
+  if (!c || REG !== 'infer') { cellNum.hidden = true; return; }
+  const pt = map.project(c);
+  if (pt.x < 0 || pt.y < 0 || pt.x > innerWidth || pt.y > innerHeight) { cellNum.hidden = true; return; }
+  cellNum.hidden = false;
+  cellNum.textContent = String(sw.liveCount);
+  cellNum.classList.toggle('has-hit', sw.liveCount > 0);
+  cellNum.style.transform = `translate(${pt.x.toFixed(1)}px, ${pt.y.toFixed(1)}px) translate(-50%,-50%)`;
+}
+
+/** 지도에 올릴 스윕 한 벌(선택된 실행). 세 겹이 겹치면 아무것도 안 보인다. */
+function paintSweep(t) {
   const shown = INFER.runs.find((r) => r.id === INFER.sel) || INFER.runs[0];
-  if (shown && any) PLATE.setSweep(shown.sweep.features());
-  const det = INFER.runs.reduce((a, r) => a + r.sweep.det, 0);
-  if (REG === 'infer' && !setHeadValue(det)) {
-    setHead('모의 실행 · 탐지 누적', det, '건',
-      `z14 실타일 <span class="num">${INFER.tiles.length}</span>칸 · 모델 <span class="num">${INFER.runs.length}</span>종 동시 · 완료 <span class="num">${DONE.length}</span>건은 실측`);
-  }
+  if (!shown) return;
+  PLATE.setSweep(shown.sweep.features(t));
+  PLATE.setSDet(shown.sweep.detFC());
+  paintCellNum(shown.sweep);
+}
+
+function inferRows() {
   for (const r of INFER.runs) {
     const row = document.querySelector(`[data-run="${r.id}"]`);
     if (!row) continue;
@@ -279,6 +327,27 @@ function inferFrame(t) {
     row.querySelector('[data-eta]').textContent = s.done ? '완료' : `ETA ${fmtEta(s.eta)}`;
     row.querySelector('.bar i').style.width = `${((s.i / s.total) * 100).toFixed(1)}%`;
   }
+}
+
+function inferHead() {
+  const det = INFER.runs.reduce((a, r) => a + r.sweep.det, 0);
+  if (REG === 'infer' && !setHeadValue(det)) {
+    setHead('모의 실행 · 탐지 누적', det, '건',
+      `z14 실타일 <span class="num">${INFER.tiles.length}</span>칸 · 모델 <span class="num">${INFER.runs.length}</span>종 동시 · 완료 <span class="num">${DONE.length}</span>건은 실측`);
+  }
+}
+
+function inferFrame(t) {
+  const dt = Math.min(400, t - (INFER.last || t));
+  INFER.last = t;
+  for (const r of INFER.runs) {
+    if (r.sweep.done) r.sweep.reset();       // 다음 회차로 넘어간다
+    r.sweep.advance(dt);
+  }
+  // 칸의 번쩍임이 500ms 에 걸쳐 가라앉으므로 매 프레임 다시 칠한다.
+  paintSweep(t);
+  inferHead();
+  inferRows();
   INFER.raf = requestAnimationFrame(inferFrame);
 }
 
@@ -289,17 +358,22 @@ async function enterInfer() {
   setHead('모의 실행 · 탐지 누적', 0, '건',
     `z14 실타일 <span class="num">${INFER.tiles.length}</span>칸 · 모델 <span class="num">${RUNS.length}</span>종 동시 · 완료 <span class="num">${DONE.length}</span>건은 실측`);
   inferLedger();
-  PLATE.show(['aoi-line', 'sweep-fill', 'sweep-line'], true);
-  PLATE.setSweep(INFER.runs[0].sweep.features());
+  PLATE.show(['aoi-under', 'aoi-line', 'aoi-tick', 'sweep-fill', 'sweep-line', 'sdet-dot'], true);
   // AOI 전체가 원장 오른쪽에 다 들어오게 — 스윕이 지역을 훑는 것으로 읽혀야 한다.
   map.fitBounds(AOI_BOUNDS, { padding: 36, duration: REDUCED() ? 0 : 1200 });
   cancelAnimationFrame(INFER.raf);
   INFER.last = 0;
+  if (REDUCED()) {                       // 감소 모션 — 스스로 움직이지 않는 정지 프레임
+    paintSweep(performance.now() + 1e6);  // 번쩍임이 이미 가라앉은 시각으로 그린다
+    inferHead(); inferRows();
+    return;
+  }
   INFER.raf = requestAnimationFrame(inferFrame);
 }
 function leaveInfer() {
   cancelAnimationFrame(INFER.raf); INFER.raf = 0;
-  PLATE.show(['aoi-line', 'sweep-fill', 'sweep-line', 'det-dot'], false);
+  cellNum.hidden = true;
+  PLATE.show(['aoi-under', 'aoi-line', 'aoi-tick', 'sweep-fill', 'sweep-line', 'sdet-dot', 'det-dot'], false);
 }
 
 /* ══ 레지스터 02 · 학습데이터 ════════════════════════════════════════════ */
@@ -538,55 +612,71 @@ function leaveResults() {
   map.easeTo({ pitch: 0, bearing: 0, duration: REDUCED() ? 0 : 700 });
 }
 
-/* ══ 원장 꼬리 — 기존 대시보드 기능(시연) ════════════════════════════════ */
+/* ══ 원장 꼬리 — 원본 대시보드 위젯 1:1 ═════════════════════════════════
+   대조표: docs/superpowers/proto/2026-08-26-dashboard-parity.md §B
+   여기에 있는 것은 전부 원본 dashboard.html 에 있는 것이고, 없는 것은 만들지 않았다. */
 function opsTail() {
-  $('#ops-n').textContent = QUEUE.length;
-  $('#cov-n').textContent = COVERAGE.length;
-  $('#ops-rows').innerHTML = QUEUE.map((q) => `
-    <button type="button" class="row${q.i === 0 ? ' is-hot' : ''}" role="listitem" data-q="${q.i}">
+  /* B3 공지 */
+  $('#ops-notice').innerHTML = `
+    <a class="row is-link" href="../notice.html?notice=${NOTICE.id}">
+      <i class="dot dot--warn"></i>
+      <span class="t">${esc(NOTICE.title)}</span>
+      <span class="v num">${ymd(NOTICE.date)}</span>
+    </a>`;
+
+  /* B9 백본 */
+  $('#ops-bb').innerHTML = `
+    <div class="bb">
+      <p class="bb__n"><b>${esc(BACKBONE.name)}</b> <span class="num">${esc(BACKBONE.ver)}</span></p>
+      <dl class="bb__m">
+        <dt>최종 적용</dt><dd class="num">${esc(BACKBONE.applied)}</dd>
+        <dt>연결된 분석 과제</dt><dd class="num">${BACKBONE.tasks}<em>개</em></dd>
+      </dl>
+    </div>`;
+
+  /* B4–B8 KPI 5 */
+  $('#ops-kpi').innerHTML = `<div class="kpis">${KPI.map((k, i) => `
+    <button type="button" class="k" data-kpi="${i}" title="원본 ${esc(k.href)}">
+      <p class="k__l">${esc(k.label)}</p>
+      <p class="k__v num">${nf.format(k.value)}<em>${esc(k.unit)}</em></p>
+      <p class="k__s">${esc(k.sub)}</p></button>`).join('')}</div>`;
+  $('#ops-kpi').querySelectorAll('[data-kpi]').forEach((b) => {
+    const k = KPI[+b.dataset.kpi];
+    b.addEventListener('click', () => { if (k.to) scrollLedgerTo(k.to); });
+  });
+
+  /* B10–B12 차트 3 */
+  drawMinis($('#ops-chart'));
+
+  /* B13 카드 발행 승인 대기 */
+  $('#ops-n').textContent = APPROVALS.length;
+  $('#ops-rows').innerHTML = APPROVALS.length ? APPROVALS.map((a) => `
+    <button type="button" class="row" role="listitem" data-ap="${a.i}">
       <i class="dot"></i>
-      <span class="t">${esc(q.title)}</span>
-      <span class="v num">${esc(q.status)}</span>
-      <span class="s num">${esc(q.typeName)} · ${esc(q.sub)}</span>
-    </button>`).join('');
-  $('#ops-rows').querySelectorAll('[data-q]').forEach((b) => {
-    const q = QUEUE[+b.dataset.q];
+      <span class="t">${esc(a.title)}</span>
+      <span class="v num">검토</span>
+      <span class="s num">${esc(a.requester)} · ${esc(a.at)}</span>
+    </button>`).join('') : '<p class="caption" style="padding:2px 22px 12px">승인 대기 중인 카드가 없습니다.</p>';
+  $('#ops-rows').querySelectorAll('[data-ap]').forEach((b) => {
+    const a = APPROVALS[+b.dataset.ap];
     b.addEventListener('click', () => {
-      flyGated({ center: q.lnglat, zoom: 12.6 }, () => showCard({
-        kind: '처리 대기 · 시연',
-        title: q.title,
-        rows: [['유형', esc(q.typeName)], ['상태', esc(q.status)], ['내용', esc(q.sub)],
-          ['좌표', q.lnglat.map((n) => n.toFixed(3)).join(', ')]],
-        prov: 'assets/data/dashboard.js · 원형 프로토타입 목업(시연)',
+      flyGated({ center: a.lnglat, zoom: 12.6 }, () => showCard({
+        kind: '카드 발행 승인 대기 · 시연',
+        title: a.title,
+        rows: [['요청자', esc(a.requester)], ['요청 시각', esc(a.at)], ['내용', esc(a.sub)],
+          ['좌표', a.lnglat.map((n) => n.toFixed(3)).join(', ')]],
+        prov: `원본 admin-publish.html?open=${a.id} · assets/data/dashboard.js(시연)`,
       }));
     });
   });
 
-  $('#ops-kpi').innerHTML = `<div class="kpis">${KPI.map((k) => `
-    <div class="k"><p class="k__l">${esc(k.label)}</p>
-      <p class="k__v num">${nf.format(k.value)}<em>${esc(k.unit)}</em></p>
-      <p class="k__s">${esc(k.sub)}</p></div>`).join('')}</div>`;
-  drawMinis($('#ops-chart'));
-
-  $('#ops-cov').innerHTML = `<div class="mat"><table>
-    <thead><tr><th></th>${COLS.map((c) => `<th><span>${esc(c.short)}</span></th>`).join('')}</tr></thead>
-    <tbody>${COVERAGE.map((r) => `<tr class="${r.measured ? 'is-meas' : ''}" data-cov="${r.code}">
-      <th>${esc(r.name)}</th>
-      ${COLS.map((c) => `<td><i class="c${r.done.includes(c.id) ? ' on' : ''}" style="opacity:${r.done.includes(c.id) ? (0.35 + r.coverage * 0.65).toFixed(2) : 1}"></i></td>`).join('')}
-    </tr>`).join('')}</tbody></table>
-    <p class="caption" style="margin-top:8px">채워진 칸 <span class="num">${DONE_CELLS}</span>/${CELLS} · 실제 분석 결과가 붙은 시군구는 <span class="num">1</span>곳(남원) — 나머지는 시연값</p></div>`;
-  $('#ops-cov').querySelectorAll('[data-cov]').forEach((tr) => {
-    tr.addEventListener('mouseenter', () => {
-      map.setPaintProperty('sig-cov', 'fill-opacity',
-        ['case', ['==', ['get', 'code'], tr.dataset.cov], 0.55,
-          ['interpolate', ['linear'], ['get', 'cov'], 0, 0.06, 1, 0.34]]);
-      map.setLayoutProperty('sig-cov', 'visibility', 'visible');
-    });
-  });
-  $('#ops-cov').addEventListener('mouseleave', () => {
-    map.setPaintProperty('sig-cov', 'fill-opacity', ['interpolate', ['linear'], ['get', 'cov'], 0, 0.06, 1, 0.34]);
-    if (REG !== 'results') map.setLayoutProperty('sig-cov', 'visibility', 'none');
-  });
+  /* B14 사용자·콘텐츠 관리 4 */
+  $('#ops-admin').innerHTML = ADMIN_TILES.map((t) => `
+    <div class="row is-static" role="listitem" title="원본 ${esc(t.href)}">
+      <i class="dot dot--o"></i>
+      <span class="t">${esc(t.name)}</span>
+      <span class="s num">${esc(t.desc)}</span>
+    </div>`).join('');
 }
 
 /* ══ 전환 ════════════════════════════════════════════════════════════════ */
@@ -630,6 +720,10 @@ await go(REG, false);
 document.documentElement.dataset.atlas = 'ready';
 
 /* 지도 위 상호작용 — 탐지 점·기둥·핀 */
+map.on('move', () => {
+  if (REG !== 'infer' || !INFER.runs.length) return;
+  paintCellNum((INFER.runs.find((r) => r.id === INFER.sel) || INFER.runs[0]).sweep);
+});
 map.on('mousemove', (ev) => {
   const feats = map.queryRenderedFeatures(ev.point, { layers: ['pin-dot', 'stack-3d', 'grid-fill'].filter((l) => map.getLayer(l)) });
   map.getCanvas().style.cursor = feats.length ? 'pointer' : '';
@@ -637,7 +731,7 @@ map.on('mousemove', (ev) => {
   const f = feats[0];
   const p = f.properties;
   const html = f.layer.id === 'pin-dot'
-    ? `<p class="pt">${esc(p.title)}</p><p class="ps">${esc(p.status)} · 시연</p>`
+    ? `<p class="pt">${esc(p.title)}</p><p class="ps">카드 발행 승인 대기 · ${esc(p.requester)} · ${esc(p.at)}</p>`
     : f.layer.id === 'stack-3d'
       ? `<p class="pt">${esc(p.title)}</p><p class="ps">${esc(p.region)} · ${ymd(p.date)} · ${nf.format(p.count)}${esc(p.unit)}</p>`
       : `<p class="pt">100 m 칸</p><p class="ps">라벨 표본 ${nf.format(p.n)}건</p>`;
@@ -648,5 +742,7 @@ map.on('click', (ev) => {
   if (!feats.length) return;
   const p = feats[0].properties;
   if (feats[0].layer.id === 'stack-3d') selectDone(p.id);
-  else showCard({ kind: '처리 대기 · 시연', title: p.title, rows: [['상태', esc(p.status)], ['내용', esc(p.sub)]], prov: 'assets/data/dashboard.js (시연)' });
+  else showCard({ kind: '카드 발행 승인 대기 · 시연', title: p.title,
+    rows: [['요청자', esc(p.requester)], ['요청 시각', esc(p.at)], ['내용', esc(p.sub)]],
+    prov: `원본 admin-publish.html?open=${esc(p.id)} · assets/data/dashboard.js(시연)` });
 });
