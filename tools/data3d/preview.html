@@ -1,0 +1,55 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<title>Land-XI · 남원 3D 데이터 스파이크</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
+<style>
+  html,body{margin:0;height:100%;background:#0b0e12;font:13px/1.5 "Pretendard",system-ui,sans-serif}
+  #map{position:absolute;inset:0}
+  .card{position:absolute;left:16px;top:16px;z-index:5;background:rgba(12,15,20,.82);
+    backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.14);border-radius:12px;
+    padding:14px 16px;color:#e8edf4;max-width:330px}
+  .card h1{margin:0 0 8px;font-size:14px;letter-spacing:.02em}
+  .card dl{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0;font-size:12px}
+  .card dt{color:#8fa3b8}.card dd{margin:0;color:#e8edf4}
+  .warn{margin-top:10px;padding:7px 9px;border-radius:7px;background:rgba(255,176,32,.13);
+    border:1px solid rgba(255,176,32,.35);color:#ffcf7a;font-size:11px;line-height:1.45}
+</style></head><body>
+<div id="map"></div>
+<div class="card"><h1>남원 금지·송동 — 확보 가능한 최선의 3D</h1>
+<dl><dt>지형</dt><dd id="s-dem">AWS Terrarium z9–13 로컬 미러</dd>
+<dt>건물</dt><dd id="s-bld">…</dd>
+<dt>바탕</dt><dd id="s-base">V-World 항공영상 WMTS</dd></dl>
+<div class="warn">건물 높이는 <b>실측 3동</b>을 제외하면 전부 면적×용도 <b>추정치</b>입니다. 시각화 전용.</div></div>
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<script src="/landxi/proto/env.js"></script>
+<script>
+const KEY = window.VWORLD_KEY || '';
+const map = window.__m = new maplibregl.Map({
+  container:'map', pitch:62, bearing:-24, zoom:14.6, center:[127.3905,35.4085], antialias:true,
+  style:{version:8, glyphs:'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+    sources:{
+      sat:{type:'raster',tiles:[`https://api.vworld.kr/req/wmts/1.0.0/${KEY}/Satellite/{z}/{y}/{x}.jpeg`],
+           tileSize:256,maxzoom:19,attribution:'© V-World'},
+      dem:{type:'raster-dem',tiles:['/landxi/assets/data/3d/terrain-namwon/{z}/{x}/{y}.png'],
+           tileSize:256,minzoom:9,maxzoom:13,encoding:'terrarium',attribution:'AWS Terrain Tiles'},
+      bld:{type:'geojson',data:'/landxi/assets/data/3d/namwon-buildings.geojson'}
+    },
+    layers:[
+      {id:'bg',type:'background',paint:{'background-color':'#0b0e12'}},
+      {id:'sat',type:'raster',source:'sat',paint:{'raster-opacity':1}},
+      {id:'hill',type:'hillshade',source:'dem',
+       paint:{'hillshade-exaggeration':.32,'hillshade-shadow-color':'#0a1420','hillshade-highlight-color':'#fff6e0'}},
+      {id:'bld3d',type:'fill-extrusion',source:'bld',
+       paint:{'fill-extrusion-height':['get','height_m'],'fill-extrusion-base':0,
+         'fill-extrusion-opacity':.92,
+         'fill-extrusion-color':['case',['get','height_is_estimate'],
+            ['interpolate',['linear'],['get','height_m'],3,'#8ea6bd',4,'#cfd9e4',5.5,'#e6b98a',7.5,'#d98b5f'],
+            '#4fd1a5']}}
+    ]}
+});
+map.on('load',()=>{ map.setTerrain({source:'dem',exaggeration:1.35});
+  fetch('/landxi/assets/data/3d/namwon-buildings.geojson').then(r=>r.json()).then(j=>{
+    document.getElementById('s-bld').textContent =
+      `${j.features.length.toLocaleString()}동 · Overture(CN-EAB+OSM)`;
+    window.__ready = true; });
+});
+</script></body></html>
