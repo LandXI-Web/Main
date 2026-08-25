@@ -243,6 +243,17 @@ body{overflow-x:hidden; color:var(--ink); font-size:var(--t-body); line-height:v
   color:var(--soft); letter-spacing:.02em; margin-top:1px}
 #pins .pin.dim{opacity:.28}
 
+/* ── 아틀라스 헤드라인 블록 (B-Home 좌측 하단) ──────────── */
+#atlas-head{margin-top:auto; padding-top:22px}
+#atlas-head .ck{margin:0 0 16px; padding-bottom:10px;
+  border-bottom:var(--v3-hair) solid var(--hair); color:var(--mute)}
+#atlas-head h1{margin:0 0 22px; font-family:var(--v3-display); font-weight:500;
+  font-size:var(--t-h1); line-height:1.16; letter-spacing:-0.02em; text-wrap:balance}
+#ah-lead{margin:0 0 22px; font-size:14px; line-height:1.65; color:#2A2E34; max-width:34em}
+#ah-lead .num{font-family:var(--v3-num); font-size:13px; color:var(--mute)}
+#ah-cta{display:flex; align-items:center; gap:28px; flex-wrap:wrap}
+#ah-1{margin-left:-22px}
+
 /* ── 결과 카드 (FIG. 02) — 3컬럼 ────────────────────────── */
 #card{position:absolute; right:var(--g); top:calc(var(--bar) + 56px);
   width:calc(3 * var(--colw) + 2 * var(--gap));
