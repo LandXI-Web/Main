@@ -1,4 +1,5 @@
-// 정사영상 타일 카탈로그 — tools/prepare-assets.py 가 실제 원본에서 생성.
+// 정사영상 타일 카탈로그 — tools/prepare-assets.py(AOI·드론·제주)와
+// tools/citywide/namwon_city.py(coverage:"city" 항목)가 실제 원본에서 생성.
 // tiles 경로는 landxi/ 기준 상대 경로다.
 // 자동 생성 — 직접 고치지 말고 파이프라인을 다시 돌릴 것.
 export const IMAGERY = [
@@ -145,5 +146,63 @@ export const IMAGERY = [
     "minzoom": 13,
     "maxzoom": 19,
     "tiles": "assets/tiles/jeju_2020/{z}/{x}/{y}.webp"
+  },
+  {
+    "id": "namwon_city_2510",
+    "label": "남원 전역 · 2025.10",
+    "kind": "ortho",
+    "gsd": 2.0,
+    "captured": "2025-10",
+    "bounds": [
+      127.182606,
+      35.302858,
+      127.637309,
+      35.561786
+    ],
+    "minzoom": 11,
+    "maxzoom": 17,
+    "tiles": "assets/tiles/namwon_city_2510/{z}/{x}/{y}.webp",
+    "coverage": "city",
+    "sourceGsd": 0.0168,
+    "core": {
+      "bounds": [
+        127.292609,
+        35.318037,
+        127.35883,
+        35.372294
+      ],
+      "gsd": 0.6,
+      "minzoom": 16,
+      "maxzoom": 17
+    }
+  },
+  {
+    "id": "namwon_city_2504",
+    "label": "남원 전역 · 2025.04",
+    "kind": "ortho",
+    "gsd": 2.0,
+    "captured": "2025-04",
+    "bounds": [
+      127.185155,
+      35.309298,
+      127.637372,
+      35.555208
+    ],
+    "minzoom": 11,
+    "maxzoom": 17,
+    "tiles": "assets/tiles/namwon_city_2504/{z}/{x}/{y}.webp",
+    "coverage": "city",
+    "sourceGsd": 0.0108,
+    "core": {
+      "bounds": [
+        127.292609,
+        35.318037,
+        127.35883,
+        35.372294
+      ],
+      "gsd": 0.6,
+      "minzoom": 16,
+      "maxzoom": 17
+    }
   }
 ];

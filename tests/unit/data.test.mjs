@@ -104,9 +104,28 @@ test('imagery entries point at existing tile dirs with bounds', () => {
 });
 
 test('namwon has 4 epochs sharing one AOI', () => {
-  const nw = IMAGERY.filter(i => i.id.startsWith('namwon_'));
+  // 800m AOI 시점만 — namwon_city_*(coverage:'city', 전역 바탕)는 AOI 를 공유하지 않는다.
+  const nw = IMAGERY.filter(i => /^namwon_\d{4}$/.test(i.id));
   assert.equal(nw.length, 4);
   for (const i of nw) assert.deepEqual(i.bounds, nw[0].bounds);
+});
+
+test('city-wide namwon imagery covers the whole 시 with a sharper core', () => {
+  const city = IMAGERY.filter(i => i.coverage === 'city');
+  assert.ok(city.length >= 1);
+  for (const c of city) {
+    assert.match(c.id, /^namwon_city_\d{4}$/);
+    // 남원시 외곽을 감싼다(대략 127.19-127.64 / 35.31-35.55).
+    assert.ok(c.bounds[2] - c.bounds[0] > 0.4, c.id);
+    assert.ok(c.bounds[3] - c.bounds[1] > 0.2, c.id);
+    assert.ok(c.minzoom <= 11 && c.maxzoom >= 15, c.id);
+    if (c.core) {
+      assert.ok(c.core.gsd < c.gsd, c.id);
+      assert.ok(c.core.minzoom > 15 && c.core.maxzoom === c.maxzoom, c.id);
+      assert.ok(c.core.bounds[0] >= c.bounds[0] && c.core.bounds[2] <= c.bounds[2], c.id);
+      assert.ok(fs.existsSync(`landxi/assets/tiles/${c.id}/${c.core.minzoom}`), c.id);
+    }
+  }
 });
 
 test('marine debris geojson is simplified and sized', () => {
