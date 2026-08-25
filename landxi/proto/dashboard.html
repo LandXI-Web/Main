@@ -1,0 +1,142 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Land-XI — 운영 리포트 2026-08-25</title>
+<link rel="icon" href="../assets/images/favicon_landxi.png">
+<script>
+  // 로그인 관문. 그리기 전에 판정한다 — 관리자 화면이 한 프레임도 새어 나가지 않게.
+  if (localStorage.getItem('lx_logged_in') !== '1') {
+    location.replace('../login.html?next=' + encodeURIComponent('proto/dashboard.html' + location.search));
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="v3-tokens.css">
+<link rel="stylesheet" href="dashboard.css">
+</head><body class="v3" data-colorway="light">
+
+<a class="skip" href="#report">리포트 본문으로</a>
+
+<div id="page">
+
+  <!-- ── 좌측 고정 단 — 목차와 숫자 하나. 사이드바 내비게이션이 아니다. ───────── -->
+  <aside id="rail">
+    <header id="mast">
+      <span id="mark">LAND-XI</span>
+      <p class="caption" id="mast-sub">운영 리포트 · <span class="num" id="mast-date">—</span> KST</p>
+    </header>
+
+    <nav id="chapters" aria-label="장 이동"></nav>
+
+    <div id="head">
+      <p class="label" id="head-label">—</p>
+      <p class="stat" id="head-stat" aria-live="polite"></p>
+      <p class="caption" id="head-sub">—</p>
+    </div>
+
+    <footer id="fresh">
+      <span id="fresh-dot" aria-hidden="true"></span>
+      <span id="fresh-txt" class="caption">—</span>
+      <button type="button" id="fresh-more" class="linkish">신선도 상세</button>
+      <dl id="fresh-detail" hidden></dl>
+    </footer>
+  </aside>
+
+  <!-- ── 우측 스크롤 단 — 판과 헤어라인 표. ────────────────────────────────── -->
+  <main id="report" tabindex="-1">
+
+    <!-- 시간 자: 이 단의 머리에 상주한다 -->
+    <div id="ruler" aria-label="시간 축">
+      <button type="button" id="rul-play" aria-pressed="false" aria-label="시간 재생"><svg viewBox="0 0 12 12" aria-hidden="true"><path class="ic-play" d="M3 2l7 4-7 4z"/><path class="ic-pause" d="M3.2 2h2.1v8H3.2zM6.7 2h2.1v8H6.7z"/></svg></button>
+      <span class="num rul-end" id="rul-t0">—</span>
+      <div id="rul-track" role="presentation"><i id="rul-head"></i></div>
+      <span class="num rul-end" id="rul-t1">—</span>
+      <span class="num" id="rul-date">—</span>
+      <span id="rul-note"></span>
+    </div>
+
+    <!-- 표지 도판 — 마지막으로 도착한 실제 픽셀. 리포트는 사진 한 장으로 시작한다. -->
+    <figure class="plate" id="cover">
+      <figcaption class="fig" id="cover-fig">—</figcaption>
+      <div id="cover-strip"></div>
+      <p class="caption" id="cover-note">—</p>
+    </figure>
+
+    <!-- 01 처리 대기 -->
+    <section class="sec" id="sec-queue" data-sec="queue">
+      <header class="sec__h">
+        <p class="label">01 · 처리 대기</p>
+        <h2 class="h2 reveal">102일째 아무도<br>열어 보지 않은 카드가 있다</h2>
+        <p class="lead">카드 발행·가입 승인·문의가 한 줄씩, 오래 기다린 순서로. 대기 중인 요청 <span class="num" id="q-total">—</span>건 가운데
+          두 건은 60일을 넘겼다 — 액센트 헤어라인이 그것이다.</p>
+      </header>
+      <div class="rows" id="queue" role="list"></div>
+      <p class="fig" id="q-fig">—</p>
+    </section>
+
+    <!-- 02 지표 -->
+    <section class="sec" id="sec-kpi" data-sec="kpi">
+      <header class="sec__h">
+        <p class="label">02 · 지표</p>
+        <h2 class="h2 reveal">일주일에 5,575번,<br>누군가 이 화면을 열었다</h2>
+      </header>
+      <div class="kpis" id="kpis"></div>
+
+      <div class="plate" id="charts">
+        <div class="plate__h">
+          <p class="fig" id="c-fig">FIG. 02 · 운영 지표</p>
+          <div id="chart-tabs" role="tablist" aria-label="지표 보기"></div>
+        </div>
+        <div id="chart" role="tabpanel"></div>
+      </div>
+    </section>
+
+    <!-- 03 전국 커버리지 -->
+    <section class="sec" id="sec-cov" data-sec="cov">
+      <header class="sec__h">
+        <p class="label">03 · 전국 커버리지</p>
+        <h2 class="h2 reveal">시군구 249곳 가운데<br>14곳이 켜져 있다</h2>
+        <p class="lead">실경계는 <span class="num">sigungu.geojson</span>에서 그 자리에서 투영한다. 농도는 커버리지, 색은 하나뿐.
+          칠해지지 않은 곳은 지워진 것이 아니라 아직 헤어라인이다.</p>
+      </header>
+
+      <figure class="plate" id="cov-plate">
+        <figcaption class="fig" id="cov-fig">—</figcaption>
+        <div class="atlas-wrap">
+          <svg id="atlas" viewBox="0 0 1000 1000" role="img" aria-label="전국 시군구 커버리지 코로플레스">
+            <g id="a-base"></g><g id="a-lit"></g><g id="a-sido"></g><g id="a-mark"></g>
+          </svg>
+          <div id="cov-tip" class="tip" hidden></div>
+        </div>
+        <p class="legend">
+          <i class="lg lg--full"></i>커버리지 93%
+          <i class="lg lg--mid"></i>50%
+          <i class="lg lg--low"></i>29%
+          <i class="lg lg--none"></i>미실증 시군구 235
+        </p>
+      </figure>
+
+      <div class="plate" id="mat-plate">
+        <p class="fig" id="mat-fig">—</p>
+        <div class="mat-wrap"><table id="matrix"></table></div>
+      </div>
+    </section>
+
+    <!-- 04 활동 기록 -->
+    <section class="sec" id="sec-log" data-sec="log">
+      <header class="sec__h">
+        <p class="label">04 · 활동 기록</p>
+        <h2 class="h2 reveal">3월 12일부터 오늘까지,<br>기록은 14줄이다</h2>
+        <p class="lead">누가·언제·무엇을. 시스템이 한 일과 사람이 한 일을 같은 자에 올린다.</p>
+      </header>
+      <ol class="tl" id="log"></ol>
+      <p class="fig" id="log-fig">—</p>
+    </section>
+
+    <footer id="end">
+      <p class="caption">Land-XI · 국토정보 통합 분석 플랫폼 · 운영 리포트 프로토타입</p>
+      <p class="caption">수치 출처 <span class="num">assets/data/{dashboard,surveys,results,models,imagery}.js</span> · 경계 <span class="num">geo/{sigungu,sido}.geojson</span></p>
+    </footer>
+  </main>
+</div>
+
+<script type="module" src="dashboard.js"></script>
+</body></html>
