@@ -122,7 +122,13 @@ async function waitTask(taskId, { label = 'job', timeoutMs = 20 * 60 * 1000 } = 
       return { urls, credits: d.creditsConsumed ?? null, ms: d.costTime ?? Date.now() - t0 };
     }
     if (state === 'fail' || state === 'failed') {
-      throw new Error(`${label} 실패: ${d.failMsg || d.failCode || JSON.stringify(d).slice(0, 400)}`);
+      const err = new Error(`${label} 실패: ${d.failMsg || d.failCode || JSON.stringify(d).slice(0, 400)}`);
+      err.failCode = String(d.failCode || '');
+      err.creditsConsumed = d.creditsConsumed ?? null;
+      // costTime 0 + failCode 500 + creditsConsumed 0 = 큐에 들어가기도 전에 죽은
+      // 서버측 일시 장애. 과금이 없으므로 재시도가 안전하다.
+      err.retryable = err.failCode === '500' && (d.creditsConsumed === 0 || d.creditsConsumed == null);
+      throw err;
     }
     log(`  ${label}: ${state || 'queued'} ${d.progress != null ? d.progress + '% ' : ''}(${Math.round((Date.now() - t0) / 1000)}s)`);
     await sleep(delay);
@@ -180,11 +186,27 @@ export async function video(prompt, opts = {}) {
     cfg_scale: 0.5,
   };
   if (tail) input.tail_image_url = await asUrl(tail);
+  const label = out ? path.basename(out) : 'video';
   const t0 = Date.now();
-  const taskId = await createTask(MODELS.video, input);
-  const r = await waitTask(taskId, { label: out ? path.basename(out) : 'video', timeoutMs: 25 * 60 * 1000 });
-  const file = out ? await download(r.urls[0], out) : null;
-  return { file, url: r.urls[0], credits: r.credits, ms: r.ms, wallMs: Date.now() - t0, taskId, model: MODELS.video };
+  // 무과금 실패(failCode 500, creditsConsumed 0)만 재시도한다. 성공 즉시 빠져나오므로
+  // 이 루프가 예산을 두 번 쓰는 일은 없다.
+  const maxTries = opts.retries ?? 12;
+  let last;
+  for (let i = 1; i <= maxTries; i++) {
+    const taskId = await createTask(MODELS.video, input);
+    try {
+      const r = await waitTask(taskId, { label, timeoutMs: 25 * 60 * 1000 });
+      const file = out ? await download(r.urls[0], out) : null;
+      return { file, url: r.urls[0], credits: r.credits, ms: r.ms, wallMs: Date.now() - t0, taskId, model: MODELS.video, tries: i };
+    } catch (e) {
+      last = e;
+      if (!e.retryable || i === maxTries) throw e;
+      const wait = Math.min(15000 * i, 90000);
+      log(`  ${label}: 무과금 서버 오류(500), ${Math.round(wait / 1000)}s 후 재시도 ${i}/${maxTries}`);
+      await sleep(wait);
+    }
+  }
+  throw last;
 }
 
 // ------------------------------------------------------------------ cli --

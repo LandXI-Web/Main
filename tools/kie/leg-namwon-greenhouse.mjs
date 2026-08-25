@@ -12,7 +12,9 @@
  *   (@2x 는 파란 탐지 폴리곤이 구워져 있어 레퍼런스로 넣으면 그 선이 다이어라마에 새어든다).
  */
 
+import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { credits, still, video } from './kie.mjs';
 
@@ -22,6 +24,31 @@ const p = (...a) => path.join(ROOT, ...a);
 const ANCHOR = p('landxi/assets/proto/crops/namwon-greenhouse-2025/6-clean.jpg');
 const OUT_PNG = p('landxi/assets/proto/film/legs/gen/namwon-greenhouse-test.png');
 const OUT_MP4 = p('landxi/assets/proto/film/legs/gen/namwon-greenhouse-test.mp4');
+const HEAD_JPG = p('landxi/assets/proto/film/legs/gen/namwon-greenhouse-test.head.jpg');
+
+// seedream 은 2736x1520 / 6.7MB PNG 를 돌려준다. 그걸 그대로 kling 에 먹이면
+// createTask 는 통과하고 곧바로 "internal error, please try again later" 로 죽는다
+// (과금은 안 된다). 1920px / JPEG 로 줄여서 넣으면 통과한다.
+function makeHead() {
+  const ff = ffmpeg();
+  execFileSync(ff, ['-hide_banner', '-loglevel', 'error', '-y', '-i', OUT_PNG,
+    '-vf', 'scale=1920:-2:flags=lanczos', '-frames:v', '1', '-q:v', '2', HEAD_JPG]);
+  return HEAD_JPG;
+}
+
+export function ffmpeg() {
+  if (process.env.FFMPEG && fs.existsSync(process.env.FFMPEG)) return process.env.FFMPEG;
+  const base = path.join(process.env.USERPROFILE || process.env.HOME,
+    'AppData/Local/Microsoft/WinGet/Packages');
+  for (const d of fs.existsSync(base) ? fs.readdirSync(base) : []) {
+    if (!d.startsWith('Gyan.FFmpeg')) continue;
+    for (const b of fs.readdirSync(path.join(base, d))) {
+      const c = path.join(base, d, b, 'bin/ffmpeg.exe');
+      if (fs.existsSync(c)) return c;
+    }
+  }
+  return 'ffmpeg';
+}
 
 /**
  * ORRERY 프리앰블. 재질 목록은 EXAMPLES.md `orrery` 행 그대로
@@ -87,7 +114,8 @@ if (cmd === 'credits') {
   const before = await credits();
   console.error(`크레딧 before: ${before}`);
   const t0 = Date.now();
-  const r = await video(VIDEO_PROMPT, { image: OUT_PNG, seconds: 5, out: OUT_MP4 });
+  const head = makeHead();
+  const r = await video(VIDEO_PROMPT, { image: head, seconds: 5, out: OUT_MP4 });
   const after = await credits();
   console.log(JSON.stringify({
     step: 'video', model: r.model, taskId: r.taskId, file: r.file,
