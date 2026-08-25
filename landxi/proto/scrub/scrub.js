@@ -254,7 +254,8 @@ function satStyle(detUrl, color) {
   };
 }
 
-// 각 인계의 트랙 구간(vh). #1 은 레그 06 의 마지막 0.10vh + 씸 절반, #2 는 끝까지.
+// 각 인계의 트랙 구간(vh). #1 은 레그 06 의 마지막 0.14vh + 씸 1/4(다음 레그가
+// 밑에서 올라오기 전에 닫는다), #2 는 마지막 레그의 마지막 0.28vh 부터 끝까지.
 let BAND_N = [0, 0], BAND_Y = [0, 0];
 function handoff(t) {
   if (reduce) return;
