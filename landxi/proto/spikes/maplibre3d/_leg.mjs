@@ -24,7 +24,7 @@ const OUT = path.resolve(root, 'landxi/assets/proto/film/legs/src');
 const SETTLE_MS = Number(val('settle', 90));
 
 if (!flag('skip-frames')) {
-  fs.rmSync(FRAMES, { recursive: true, force: true });
+  if (!flag('anchors-only')) fs.rmSync(FRAMES, { recursive: true, force: true });
   fs.mkdirSync(FRAMES, { recursive: true });
 
   const browser = await chromium.launch({ channel: 'chrome', args: [
@@ -53,14 +53,23 @@ if (!flag('skip-frames')) {
     const AN = path.resolve(root, 'landxi/assets/proto/film/legs/src/anchors');
     fs.mkdirSync(AN, { recursive: true });
     await page.setViewportSize({ width: 1920, height: 1080 });
-    const T = [0, meta.dur * 0.5, meta.dur];
-    for (let k = 0; k < T.length; k++) {
-      await page.evaluate((tt) => window.__leg.seek(tt), T[k]);
+    // 0 시작(금지면 온실) · 1 중간 · 2 끝(남원 시내 주택).
+    // 중간 컷은 레그 경로를 벗어난 포즈다 — 남원 시내 남서쪽에 주택(실측 풋프린트)과
+    // AI 검출 온실 84동이 함께 있는 자리가 있어 거기서 잡는다.
+    const POSE = [
+      { seek: 0 },
+      { pose: { center: [127.3742, 35.4020], zoom: 16.15, pitch: 69, bearing: 22, t: 2.8 } },
+      { seek: meta.dur },
+    ];
+    for (let k = 0; k < POSE.length; k++) {
+      const s = POSE[k];
+      if (s.seek != null) await page.evaluate((tt) => window.__leg.seek(tt), s.seek);
+      else await page.evaluate((o) => window.__leg.pose(o), s.pose);
       await page.waitForFunction('window.__leg.settled()', null, { timeout: 45000, polling: 40 }).catch(() => {});
       await page.waitForTimeout(1200);
       await page.screenshot({ path: path.join(AN, `namwon-3d-${k}.png`),
         clip: { x: 0, y: 0, width: 1920, height: 1080 }, animations: 'disabled' });
-      console.log('anchor', k, 't=' + T[k].toFixed(2));
+      console.log('anchor', k, JSON.stringify(s));
     }
     await page.setViewportSize({ width: W, height: H });
     if (flag('anchors-only')) { await browser.close(); process.exit(0); }

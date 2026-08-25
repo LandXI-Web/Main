@@ -171,6 +171,11 @@ const style = {
   ],
 };
 
+if (FILM) {
+  for (const id of ['eox', 'gibs', 'cloudsheet']) delete style.sources[id];
+  style.layers = style.layers.filter((l) => !['eox', 'gibs-clouds', 'cloudsheet'].includes(l.id));
+}
+
 const map = new maplibregl.Map({
   container: 'map', style, center: [127.5, 31], zoom: 2.05, pitch: 0, bearing: 0,
   antialias: true, maxPitch: 80, attributionControl: { compact: true },
@@ -201,10 +206,21 @@ function cloudDeck(center, { n = 64, lo = 900, hi = 2100, spread = 0.030, drift 
       const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
       const tex = new THREE.TextureLoader().load('/landxi/assets/proto/clouds/cloud_near.webp');
       tex.colorSpace = THREE.SRGBColorSpace;
+      // ⚠ THREE.Sprite 는 쓸 수 없다. 스프라이트는 카메라의 matrixWorld 로 방향을 정하는데,
+      //   MapLibre CustomLayer 패턴은 빈 Camera 에 projectionMatrix 만 주입하므로
+      //   matrixWorld 가 단위행렬이다 → 스프라이트가 엉뚱한 방향을 보고 화면에서 사라진다(실측).
+      //   위에서 내려다보는 구름층은 애초에 '수평 판'이 물리적으로도 맞다.
+      const geo = new THREE.PlaneGeometry(1, 1);   // XY 평면 = 우리 좌표계에서 수평
       for (let i = 0; i < n; i++) {
-        const mat = new THREE.SpriteMaterial({ map: tex, transparent: true,
-          opacity: 0.18 + rnd() * 0.30, depthWrite: false, depthTest: false });
-        const sp = new THREE.Sprite(mat);
+        const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true,
+          opacity: 0.18 + rnd() * 0.30, depthWrite: false, depthTest: false,
+          side: THREE.DoubleSide });
+        const sp = new THREE.Mesh(geo, mat);
+        sp.rotation.z = rnd() * Math.PI * 2;       // 같은 텍스처가 반복돼 보이지 않게
+        // ⚠ three 는 projectionMatrix×matrixWorldInverse 로 프러스텀을 만들어 컬링한다.
+        //   MapLibre 가 주는 mainMatrix 는 스케일이 극단적이라 이 프러스텀이 엉망이 되고
+        //   모든 객체가 컬링된다 — render() 는 불리는데 draw call 이 0 이 된다(실측).
+        sp.frustumCulled = false;
         sp.userData = {
           // 카메라 중심 기준 상대 오프셋(도). 매 프레임 ±spread 안으로 감싸므로
           // 줌이 바뀌어도 구름이 늘 화면 근처에 남는다 — 무한 구름장.
@@ -234,11 +250,19 @@ function cloudDeck(center, { n = 64, lo = 900, hi = 2100, spread = 0.030, drift 
         dx = ((dx + S) % (2 * S) + 2 * S) % (2 * S) - S;
         const m = maplibregl.MercatorCoordinate.fromLngLat([c.lng + dx, c.lat + u.oy], u.alt);
         sp.position.set((m.x - base.x) / mpu, -(m.y - base.y) / mpu, (m.z - base.z) / mpu);
-        sp.scale.set(u.scale, u.scale, 1);
+        sp.scale.set(u.scale * 2.4, u.scale * 1.7, 1);
       }
       this.camera.projectionMatrix = new THREE.Matrix4().fromArray(pd.mainMatrix)
         .multiply(new THREE.Matrix4().makeTranslation(base.x, base.y, base.z))
         .multiply(new THREE.Matrix4().makeScale(mpu, -mpu, mpu));
+      // ⚠ MapLibre 는 타일 클리핑에 스텐실을 쓰고 켠 채로 넘겨준다.
+      //   three 의 resetState() 는 스텐실을 건드리지 않으므로, 우리 드로우가
+      //   전부 스텐실 테스트에서 버려진다 — 렌더 호출은 되는데 화면에 아무것도 안 나온다(실측).
+      gl.disable(gl.STENCIL_TEST);
+      gl.disable(gl.DEPTH_TEST);
+      gl.depthMask(false);
+      gl.enable(gl.BLEND);
+      gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
       this.renderer.resetState();
       this.renderer.render(this.scene, this.camera);
       this.map.triggerRepaint();
@@ -356,7 +380,7 @@ function driftCss(c) {
   // 구름은 z3~z13 사이에서만 의미가 있다. 그 밖에서는 투명.
   // 필름 레그는 z15~17.5 를 훑는다. 여기서도 얇은 실안개가 흘러야 "정지 화면"이 아니게 된다.
   const w = FILM
-    ? 0.34
+    ? 0
     : (c.zoom < 2.6 ? 0 : c.zoom < 4.2 ? (c.zoom - 2.6) / 1.6
        : c.zoom < 7.5 ? 1 : c.zoom < 10.2 ? 1 - (c.zoom - 7.5) / 2.7 : 0);
   cssRoot.style.setProperty('--w', w.toFixed(3));
@@ -375,7 +399,7 @@ function driftCss(c) {
 // ══════════════════════════════════════════════════════════════════════
 // 4. 부팅
 // ══════════════════════════════════════════════════════════════════════
-let cssOn = true, threeOn = true, gibsOn = false;
+let cssOn = !FILM, threeOn = true, gibsOn = false;
 const stats = { bld: 0, ofm: 0, gh: 0, sources: {} };
 
 async function loadJson(u) { const r = await fetch(u); if (!r.ok) throw new Error(u + ' ' + r.status); return r.json(); }
@@ -428,7 +452,7 @@ map.on('load', async () => {
   const SHEET = [[124.0, 39.5], [132.0, 39.5], [132.0, 33.0], [124.0, 33.0]];
   let gt = 0;
   setInterval(() => {
-    if (!gibsOn || REDUCE) return;
+    if (FILM || !gibsOn || REDUCE) return;
     gt = (gt + 0.006) % 8;           // 8도 주기로 되감는다(이음매는 seam 이 보인다 — 한계)
     map.getSource('cloudsheet').setCoordinates(SHEET.map(([x, y]) => [x + gt, y]));
   }, 60);
@@ -546,6 +570,15 @@ window.__leg = {
     map.jumpTo(c);
     paintHud(c);
     driftCss(c);
+    map.triggerRepaint();
+  },
+  // 레그 경로 밖의 임의 카메라(앵커 스틸용). 구름 위상 t 도 함께 못박는다.
+  pose(o) {
+    legTime = o.t ?? 0;
+    lastData = performance.now();
+    map.jumpTo({ center: o.center, zoom: o.zoom, pitch: o.pitch, bearing: o.bearing });
+    paintHud({ center: o.center, zoom: o.zoom, pitch: o.pitch, bearing: o.bearing });
+    driftCss({ center: o.center, zoom: o.zoom, pitch: o.pitch, bearing: o.bearing });
     map.triggerRepaint();
   },
   // ⚠ areTilesLoaded() 는 큰 jumpTo 직후 "아직 요청도 안 한" 상태에서 true 를 돌려준다.
