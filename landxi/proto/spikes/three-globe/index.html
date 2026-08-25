@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Land-XI SPIKE — 스크롤 글로브</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.3.11/dist/lenis.min.js"></script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="gl"></canvas>
+
+<div id="loader"><div class="bar"><i></i></div><span>지구를 불러오는 중</span></div>
+
+<div id="hud" aria-hidden="true">
+  <div class="tl">
+    <div class="mark">LAND<span>·</span>XI</div>
+    <div class="sub">EARTH OBSERVATION · SPIKE</div>
+  </div>
+  <div class="tr">
+    <div class="rd"><b id="alt">—</b><i>ALT</i></div>
+    <div class="rd"><b id="coord">—</b><i>POS</i></div>
+    <div class="rd"><b id="fps">—</b><i>FPS</i></div>
+  </div>
+  <div class="cap" id="cap"><h2></h2><p></p></div>
+  <div class="scrollcue"><span>SCROLL</span><i></i></div>
+  <div class="attrib">Sentinel-2 cloudless © EOX · Black Marble © NASA EOSDIS GIBS · DEM © AWS Terrain Tiles · 위성 © V-World / 국토교통부 · 정사영상 © Land-XI</div>
+</div>
+
+<main id="scroll">
+  <section class="pane"></section><section class="pane"></section><section class="pane"></section>
+  <section class="pane"></section><section class="pane"></section><section class="pane"></section>
+  <section class="pane"></section><section class="pane"></section><section class="pane"></section>
+</main>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!doctype html><meta charset="utf-8"><title>spike texture builder</title>
+<body style="background:#111;color:#ccc;font:12px monospace"><pre id="log"></pre>
+<script>
+const log = m => { document.getElementById('log').textContent += m + '\n'; console.log(m); };
+const R2D = 180 / Math.PI;
+const tileLon = (x, z) => x / 2 ** z * 360 - 180;
+const tileLat = (y, z) => { const t = Math.PI - 2 * Math.PI * y / 2 ** z; return R2D * Math.atan(0.5 * (Math.exp(t) - Math.exp(-t))); };
+const lonTile = (lon, z) => (lon + 180) / 360 * 2 ** z;
+const latTile = (lat, z) => { const s = Math.sin(lat / R2D); return (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * 2 ** z; };
+
+function cv(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+function load(url) {
+  return new Promise(res => {
+    const i = new Image(); i.crossOrigin = 'anonymous';
+    i.onload = () => res(i); i.onerror = () => res(null); i.src = url;
+  });
+}
+async function pool(items, n, fn) {
+  let i = 0, done = 0;
+  await Promise.all(Array.from({ length: n }, async () => {
+    while (i < items.length) { const k = i++; await fn(items[k]); if (++done % 128 === 0) log('  ' + done + '/' + items.length); }
+  }));
+}
+
+// 머케이터 타일 격자를 하나의 캔버스로 붙인다.
+async function mosaic(tpl, z, x0, x1, y0, y1, ts = 256, conc = 24) {
+  const c = cv((x1 - x0 + 1) * ts, (y1 - y0 + 1) * ts), g = c.getContext('2d');
+  const jobs = [];
+  for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) jobs.push([x, y]);
+  await pool(jobs, conc, async ([x, y]) => {
+    const img = await load(tpl.replace('{z}', z).replace('{x}', x).replace('{y}', y));
+    if (img) g.drawImage(img, (x - x0) * ts, (y - y0) * ts, ts, ts);
+  });
+  return c;
+}
+
+// 전지구 머케이터(±85.051°) 모자이크 → 등장방형(equirect, ±90°)
+function toEquirect(src, W, H) {
+  const out = cv(W, H), g = out.getContext('2d');
+  g.imageSmoothingEnabled = true;
+  const S = src.height;
+  for (let row = 0; row < H; row++) {
+    const lat = 90 - (row + 0.5) / H * 180;
+    if (Math.abs(lat) > 85.0511) continue;            // 극지방: 머케이터에 자료 없음
+    const yPx = latTile(lat, 0) * S;                   // z0 정규화 → 0..1 → 픽셀
+    g.drawImage(src, 0, Math.min(S - 1, Math.max(0, yPx - 0.5)), src.width, 1, 0, row, W, 1);
+  }
+  // 극지방을 가장 가까운 유효 행으로 채워 심(seam)을 없앤다
+  const topRow = Math.ceil(H * (90 - 85.0511) / 180) + 1, botRow = H - topRow - 1;
+  for (let r = 0; r < topRow; r++) g.drawImage(out, 0, topRow, W, 1, 0, r, W, 1);
+  for (let r = botRow; r < H; r++) g.drawImage(out, 0, botRow - 1, W, 1, 0, r, W, 1);
+  return out;
+}
+
+function jpg(c, q = 0.9) { return c.toDataURL('image/jpeg', q); }
+function png(c) { return c.toDataURL('image/png'); }
+
+const SRC = {
+  eox: 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/{z}/{y}/{x}.jpg',
+  night: 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_Black_Marble/default/2016-01-01/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png',
+  dem: 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png',
+  vsat: 'https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg',
+  ortho: '/landxi/assets/tiles/namwon_city_2510/{z}/{x}/{y}.webp',
+};
+
+window.build = {
+  async day(z = 5) {                                  // 전지구 주간 — EOX Sentinel-2 cloudless
+    const n = 2 ** z - 1;
+    const m = await mosaic(SRC.eox, z, 0, n, 0, n);
+    log('day mosaic ' + m.width + 'x' + m.height);
+    return jpg(toEquirect(m, m.width, m.width / 2), 0.86);
+  },
+  async night(z = 4) {                                // 야간등 — NASA Black Marble
+    const n = 2 ** z - 1;
+    const m = await mosaic(SRC.night, z, 0, n, 0, n);
+    return jpg(toEquirect(m, 4096, 2048), 0.82);
+  },
+  async terrain(z = 5) {                              // terrarium DEM → 범프(높이) + 해양 마스크
+    const n = 2 ** z - 1;
+    const m = await mosaic(SRC.dem, z, 0, n, 0, n);
+    const eq = toEquirect(m, 4096, 2048), g = eq.getContext('2d');
+    const d = g.getImageData(0, 0, 4096, 2048), p = d.data;
+    const bump = cv(4096, 2048), spec = cv(4096, 2048);
+    const bd = bump.getContext('2d').createImageData(4096, 2048);
+    const sd = spec.getContext('2d').createImageData(4096, 2048);
+    for (let i = 0; i < p.length; i += 4) {
+      const h = p[i] * 256 + p[i + 1] + p[i + 2] / 256 - 32768;   // terrarium 디코드(m)
+      const v = Math.max(0, Math.min(255, Math.round(h / 8000 * 255 * 1.0 + 8)));
+      bd.data[i] = bd.data[i + 1] = bd.data[i + 2] = h <= 0 ? 0 : v; bd.data[i + 3] = 255;
+      const s = h <= 0 ? 255 : 0;                                  // 바다=1 → 스펙큘러
+      sd.data[i] = sd.data[i + 1] = sd.data[i + 2] = s; sd.data[i + 3] = 255;
+    }
+    bump.getContext('2d').putImageData(bd, 0, 0);
+    spec.getContext('2d').putImageData(sd, 0, 0);
+    // 해안선 계단을 부드럽게
+    const blur = (src) => { const o = cv(2048, 1024), g2 = o.getContext('2d'); g2.filter = 'blur(1.2px)'; g2.drawImage(src, 0, 0, 2048, 1024); return o; };
+    return { bump: jpg(bump, 0.85), spec: jpg(blur(spec), 0.85) };
+  },
+  async korea() {                                     // 한반도 지역 고해상 패치 (V-World 위성 z8)
+    const z = 8, b = [122, 32, 133, 40];               // [w,s,e,n]
+    const x0 = Math.floor(lonTile(b[0], z)), x1 = Math.ceil(lonTile(b[2], z)) - 1;
+    const y0 = Math.floor(latTile(b[3], z)), y1 = Math.ceil(latTile(b[1], z)) - 1;
+    const m = await mosaic(SRC.vsat, z, x0, x1, y0, y1);
+    const bounds = [tileLon(x0, z), tileLat(y1 + 1, z), tileLon(x1 + 1, z), tileLat(y0, z)];
+    log('korea ' + m.width + 'x' + m.height + ' bounds ' + bounds.map(v => v.toFixed(3)));
+    // 구면 셰이더에서 등장방형 uv 로 샘플하려면 위도 방향을 선형(equirect)으로 다시 편다.
+    const H = Math.round(m.width * (bounds[3] - bounds[1]) / (bounds[2] - bounds[0]));
+    const out = cv(m.width, H), g = out.getContext('2d');
+    for (let row = 0; row < H; row++) {
+      const lat = bounds[3] - (row + 0.5) / H * (bounds[3] - bounds[1]);
+      const yPx = (latTile(lat, z) - y0) * 256;
+      g.drawImage(m, 0, Math.max(0, yPx - 0.5), m.width, 1, 0, row, m.width, 1);
+    }
+    return { data: jpg(out, 0.88), bounds };
+  },
+  async ortho(z, lon, lat, tiles = 16) {              // 우리 정사영상 — 정중앙 tiles×tiles 창
+    const cx = Math.floor(lonTile(lon, z)), cy = Math.floor(latTile(lat, z));
+    const h = tiles >> 1;
+    const x0 = cx - h, x1 = cx + h - 1, y0 = cy - h, y1 = cy + h - 1;
+    const m = await mosaic(SRC.ortho, z, x0, x1, y0, y1, 256, 32);
+    const bounds = [tileLon(x0, z), tileLat(y1 + 1, z), tileLon(x1 + 1, z), tileLat(y0, z)];
+    log('ortho z' + z + ' ' + m.width + 'x' + m.height + ' bounds ' + bounds.map(v => v.toFixed(4)));
+    return { data: jpg(m, 0.9), bounds };
+  },
+  async clouds() {                                    // NASA Visible Earth 구름 (turban/webgl-earth 미러)
+    const i = await load('https://raw.githubusercontent.com/turban/webgl-earth/master/images/fair_clouds_4k.png');
+    if (!i) return null;
+    const c = cv(4096, 2048), g = c.getContext('2d');
+    g.drawImage(i, 0, 0, 4096, 2048);
+    const d = g.getImageData(0, 0, 4096, 2048);       // 그레이스케일 → 알파
+    for (let k = 0; k < d.data.length; k += 4) {
+      const a = d.data[k]; d.data[k] = d.data[k + 1] = d.data[k + 2] = 255; d.data[k + 3] = a;
+    }
+    g.putImageData(d, 0, 0);
+    return png(c);
+  },
+};
+window.__ready = 1;
+</script>

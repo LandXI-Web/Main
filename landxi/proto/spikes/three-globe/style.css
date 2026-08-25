@@ -1,0 +1,39 @@
+:root{ --ink:#f2f5f8; --dim:rgba(242,245,248,.52); --line:rgba(242,245,248,.16); }
+*{box-sizing:border-box}
+html,body{margin:0;background:#03060c;color:var(--ink);
+  font-family:"Inter","Noto Sans KR",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+#gl{position:fixed;inset:0;width:100vw;height:100vh;display:block;z-index:0}
+#scroll{position:relative;z-index:1}
+.pane{height:100vh}
+
+#loader{position:fixed;inset:0;z-index:9;display:grid;place-content:center;gap:14px;
+  background:#03060c;transition:opacity .8s ease}
+#loader.gone{opacity:0;pointer-events:none}
+#loader span{font-size:10px;letter-spacing:.34em;text-transform:uppercase;color:var(--dim);text-align:center}
+#loader .bar{width:220px;height:1px;background:var(--line);overflow:hidden}
+#loader .bar i{display:block;height:100%;width:0;background:var(--ink);transition:width .4s ease}
+
+#hud{position:fixed;inset:0;z-index:2;pointer-events:none;mix-blend-mode:normal}
+#hud .tl{position:absolute;top:28px;left:32px}
+.mark{font-size:13px;letter-spacing:.42em;font-weight:600}
+.mark span{opacity:.45;margin:0 .1em}
+.sub{margin-top:6px;font-size:9px;letter-spacing:.3em;color:var(--dim)}
+#hud .tr{position:absolute;top:28px;right:32px;display:flex;gap:26px;text-align:right}
+.rd b{display:block;font-size:15px;font-weight:300;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.rd i{display:block;margin-top:4px;font-size:8px;letter-spacing:.3em;color:var(--dim);font-style:normal}
+
+.cap{position:absolute;left:32px;bottom:88px;max-width:min(30ch,42vw)}
+.cap h2{margin:0;font-size:clamp(26px,3.4vw,52px);font-weight:300;line-height:1.06;letter-spacing:-.02em;
+  font-family:"Noto Sans KR",Inter,sans-serif}
+.cap p{margin:14px 0 0;font-size:12.5px;line-height:1.75;color:var(--dim);font-weight:300;max-width:34ch}
+.cap h2,.cap p{opacity:0;transform:translateY(14px)}
+
+.scrollcue{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);display:grid;
+  justify-items:center;gap:10px;transition:opacity .5s}
+.scrollcue span{font-size:8.5px;letter-spacing:.36em;color:var(--dim)}
+.scrollcue i{width:1px;height:34px;background:linear-gradient(var(--ink),transparent);
+  animation:cue 2.2s ease-in-out infinite}
+@keyframes cue{0%,100%{transform:scaleY(.35);opacity:.35}50%{transform:scaleY(1);opacity:1}}
+.attrib{position:absolute;bottom:12px;right:32px;font-size:8px;letter-spacing:.06em;color:rgba(242,245,248,.3);
+  max-width:52ch;text-align:right;line-height:1.5}
+@media (max-width:720px){ #hud .tr{gap:16px} .cap{left:20px;right:20px;max-width:none} .attrib{display:none} }
