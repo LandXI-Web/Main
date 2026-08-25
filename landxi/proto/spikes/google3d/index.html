@@ -1,0 +1,36 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>SPIKE — Google Photorealistic 3D Tiles · Land-XI</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cesium/Build/Cesium/Widgets/widgets.css">
+<link rel="stylesheet" href="spike.css">
+<div id="cesium"></div>
+
+<div id="veil"></div>
+
+<header class="hud hud-tl">
+  <div class="brand">LAND·XI <span>SPIKE</span></div>
+  <div class="stage" id="stage">지구</div>
+  <div class="place" id="placeLabel">남원 · 비닐하우스/농지 탐지</div>
+  <nav id="places"></nav>
+</header>
+
+<aside class="hud hud-tr" id="meter">
+  <div class="row"><b id="fps">–</b><span>fps</span></div>
+  <div class="row"><b id="tiles">0</b><span>tiles loaded</span></div>
+  <div class="row"><b id="pending">0</b><span>pending</span></div>
+  <div class="row"><b id="alt">–</b><span>altitude</span></div>
+  <div class="row"><b id="reqs">0</b><span>root reqs</span></div>
+  <div class="src" id="src">source: —</div>
+</aside>
+
+<div class="hud hud-bl" id="verdict"></div>
+
+<div class="hud hud-br"><div class="scrollhint"><span id="pct">0%</span> · 스크롤</div></div>
+
+<div id="spacer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/cesium/Build/Cesium/Cesium.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script type="module" src="spike.js"></script>
