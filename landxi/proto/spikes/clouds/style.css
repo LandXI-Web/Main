@@ -1,0 +1,45 @@
+:root { --ink:#0d1218; --pane:rgba(255,255,255,.92); --line:rgba(13,18,24,.14); }
+* { box-sizing: border-box; }
+html, body { margin:0; height:100%; background:#05080d; overflow:hidden;
+  font:400 13px/1.45 'Pretendard','SUIT',-apple-system,'Segoe UI',system-ui,sans-serif;
+  color:var(--ink); -webkit-font-smoothing:antialiased; }
+
+#map, #gl { position:fixed; inset:0; width:100%; height:100%; }
+#map { opacity:0; transition:none; }
+#gl { pointer-events:none; }
+.maplibregl-ctrl-attrib, .maplibregl-control-container { display:none !important; }
+
+#ui { position:fixed; inset:0; pointer-events:none; padding:18px; display:flex; flex-direction:column; }
+#ui > * { pointer-events:auto; }
+
+header { display:flex; align-items:baseline; gap:14px; }
+header b { font-weight:650; letter-spacing:-.01em; font-size:14px;
+  background:var(--pane); padding:7px 12px; border-radius:2px; }
+#note { font-size:11px; letter-spacing:.02em; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,.7); }
+
+#tech { position:absolute; top:18px; right:18px; display:flex; gap:1px; }
+#tech button { pointer-events:auto; font:inherit; font-size:12px; letter-spacing:-.005em;
+  border:0; padding:8px 13px 8px 9px; background:rgba(255,255,255,.78); color:#5a6470;
+  cursor:pointer; display:flex; align-items:center; gap:7px; }
+#tech button i { font-style:normal; font-size:10px; width:15px; height:15px; display:grid;
+  place-items:center; border:1px solid currentColor; border-radius:50%; opacity:.6; }
+#tech button.on { background:#0d1218; color:#fff; }
+#tech button.on i { opacity:1; }
+
+#hud { position:absolute; left:18px; top:64px; background:var(--pane); padding:10px 13px;
+  display:grid; gap:5px; min-width:186px; border-radius:2px; }
+#hud div { display:flex; justify-content:space-between; gap:16px; font-variant-numeric:tabular-nums; }
+#hud em { font-style:normal; font-size:10px; letter-spacing:.10em; text-transform:uppercase; color:#7b8592; }
+#hud span { font-size:12px; font-weight:550; }
+
+#bar { margin-top:auto; }
+#scrub { -webkit-appearance:none; appearance:none; width:100%; height:3px; background:rgba(255,255,255,.35);
+  outline:none; cursor:pointer; }
+#scrub::-webkit-slider-thumb { -webkit-appearance:none; width:13px; height:13px; border-radius:50%;
+  background:#fff; box-shadow:0 1px 6px rgba(0,0,0,.5); cursor:grab; }
+#ticks { position:relative; height:16px; margin-top:6px; }
+#ticks span { position:absolute; transform:translateX(-50%); font-size:10px; letter-spacing:.03em;
+  color:#fff; text-shadow:0 1px 4px rgba(0,0,0,.75); white-space:nowrap; }
+
+#credits { margin:10px 0 0; font-size:9.5px; line-height:1.5; letter-spacing:.01em;
+  color:rgba(255,255,255,.62); text-shadow:0 1px 3px rgba(0,0,0,.6); max-width:76ch; }

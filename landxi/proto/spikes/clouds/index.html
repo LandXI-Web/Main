@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Land-XI SPIKE — 움직이는 구름 · 대기</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
+<link rel="stylesheet" href="./style.css">
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
+<script type="importmap">{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"}}</script>
+</head>
+<body>
+<div id="map"></div>
+<canvas id="gl"></canvas>
+
+<div id="ui">
+  <header>
+    <b>SPIKE · 움직이는 구름 &amp; 대기</b>
+    <span id="note">부팅…</span>
+  </header>
+
+  <div id="tech">
+    <button data-t="1"><i>1</i>구름 구</button>
+    <button data-t="2"><i>2</i>빌보드 데크</button>
+    <button data-t="3"><i>3</i>볼류메트릭</button>
+    <button data-t="4"><i>4</i>실사 GIBS</button>
+  </div>
+
+  <div id="hud">
+    <div><em>기법</em><span id="h-tech">—</span></div>
+    <div><em>p</em><span id="h-p">0.100</span></div>
+    <div><em>고도</em><span id="h-alt">—</span></div>
+    <div><em>성능</em><span id="h-fps">—</span></div>
+  </div>
+
+  <div id="bar">
+    <input id="scrub" type="range" min="0" max="1" step="0.001" value="0.1">
+    <div id="ticks"><span style="left:10%">0.10 궤도</span><span style="left:28%">0.28 성층권</span><span style="left:32%">0.32 돌파</span><span style="left:60%">0.60 지역</span></div>
+  </div>
+
+  <p id="credits"></p>
+</div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
