@@ -20,4 +20,10 @@
   --rule-size:10px 3px,50px 5px;
   /* 모션 */
   --ease:cubic-bezier(.2,.8,.2,1); --t-fast:.15s; --t-base:.3s; --t-cam:1.2s;
+  /* 다크 장면(우주) 팔레트 — home.css 의 .home.is-dark 가 --scene-* 로 참조한다 */
+  --scene-dark-bg:#0E1726; --scene-dark-ink:#E6ECF5; --scene-dark-ink-2:rgba(230,236,245,.68); --scene-dark-ink-3:rgba(230,236,245,.46);
+  --scene-dark-line:rgba(230,236,245,.16); --scene-dark-glass:rgba(16,26,44,.62); --scene-dark-glass-b:rgba(230,236,245,.14);
+  --scene-dark-accent:#4E86F7;
+  /* 궤도 장면 지구본 — home-orbit.js 가 getComputedStyle 로 읽어 인라인 SVG stop-color 에 쓴다 */
+  --earth-hi:#1B3C5E; --earth-mid:#102338; --earth-lo:#060D1A; --earth-glow:rgba(96,158,255,.24);
 }

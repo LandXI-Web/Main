@@ -116,6 +116,8 @@ function go(n) {
   if (SCENES[from] && SCENES[from].leave) SCENES[from].leave();
   scene = n;
   body.dataset.scene = String(n);
+  // #scene-orbit 는 마크업에 이미 is-on 이 박혀 있다(지도 비동기 초기화와 무관하게 히어로가 즉시 보이도록).
+  // toggle(true)/toggle(false) 는 이미 같은 값이면 아무 것도 하지 않으므로 이중 토글이 아니다.
   for (const el of sections) el.classList.toggle('is-on', Number(el.dataset.scene) === n);
   for (const d of dots) d.setAttribute('aria-current', Number(d.dataset.dot) === n ? 'true' : 'false');
   if (SCENES[n] && SCENES[n].enter) SCENES[n].enter(from);

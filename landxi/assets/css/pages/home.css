@@ -12,9 +12,9 @@
   transition:background 1.2s var(--ease),color .8s var(--ease);
 }
 .home.is-dark{
-  --scene-bg:#0E1726; --scene-ink:#E6ECF5; --scene-ink-2:rgba(230,236,245,.68); --scene-ink-3:rgba(230,236,245,.46);
-  --scene-line:rgba(230,236,245,.16); --scene-glass:rgba(16,26,44,.62); --scene-glass-b:rgba(230,236,245,.14);
-  --scene-accent:#4E86F7;
+  --scene-bg:var(--scene-dark-bg); --scene-ink:var(--scene-dark-ink); --scene-ink-2:var(--scene-dark-ink-2); --scene-ink-3:var(--scene-dark-ink-3);
+  --scene-line:var(--scene-dark-line); --scene-glass:var(--scene-dark-glass); --scene-glass-b:var(--scene-dark-glass-b);
+  --scene-accent:var(--scene-dark-accent);
 }
 html{height:100%}
 
@@ -74,7 +74,7 @@ html{height:100%}
 .orbit__craft.is-back{opacity:.25}
 .orbit__craft .halo{fill:rgba(120,170,255,.12)}
 .orbit__craft use{filter:drop-shadow(0 0 6px rgba(180,214,255,.55))}
-.orbit__atmo .glow{fill:none;stroke:rgba(96,158,255,.24);stroke-width:9;filter:blur(6px)}
+.orbit__atmo .glow{fill:none;stroke:var(--earth-glow);stroke-width:9;filter:blur(6px)}
 .orbit__atmo .edge{fill:none;stroke:rgba(150,196,255,.42);stroke-width:1.2;vector-effect:non-scaling-stroke}
 .orbit__earth{display:none}
 body[data-engine=fallback] .orbit__earth{display:block}
@@ -116,7 +116,7 @@ body[data-engine=fallback] .orbit__earth{display:block}
   border:2px solid var(--surface);background:var(--c,var(--ai));box-shadow:0 1px 4px rgba(17,28,45,.35);pointer-events:auto;
   transition:transform var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease),opacity var(--t-fast) var(--ease)}
 .hud__point::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:1px solid var(--c,var(--ai));opacity:0}
-.hud__point.is-real::after{opacity:1;animation:hud-pulse 2.6s var(--ease) infinite}
+.hud__point.is-pulse::after{opacity:1;animation:hud-pulse 2.6s var(--ease) infinite}
 .hud__point:hover,.hud__point.is-hot,.hud__point:focus-visible{transform:scale(1.45);box-shadow:0 0 0 4px color-mix(in srgb,var(--c,var(--ai)) 28%,transparent)}
 .hud__point.is-off{opacity:.25}
 @keyframes hud-pulse{0%{transform:scale(1);opacity:.7}70%{transform:scale(2.6);opacity:0}100%{transform:scale(2.6);opacity:0}}
@@ -168,5 +168,5 @@ body[data-engine=fallback] .orbit__earth{display:block}
 /* ── 감소 모션: 자전·펄스·크로스페이드 정지 ────────────────── */
 @media (prefers-reduced-motion:reduce){
   .home,.night-veil,.stars,.scene,.scene .hud,.home-top,.hud__point,.hud__label,.hud__leader{transition:none}
-  .hud__point.is-real::after{animation:none;opacity:.4}
+  .hud__point.is-pulse::after{animation:none;opacity:.4}
 }

@@ -49,10 +49,13 @@ export function createHud(map, services, { onSelect } = {}) {
     return { s, leader, label, point: null, w: 0, h: 0 };
   });
 
+  // 앰비언트 펄스는 실자산 4종 전부가 아니라 가장 최근에 갱신된 1곳에만 켠다(스펙: "포인트 펄스 1개만 앰비언트").
+  // 실데이터 배지는 is-real 이 그대로 맡으므로 real 4종 전부에 남는다.
+  const pulseId = services.reduce((best, s) => (s.real && (!best || s.lastRun > best.lastRun)) ? s : best, null)?.id;
   for (const it of items) {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'hud__point' + (it.s.real ? ' is-real' : '');
+    b.className = 'hud__point' + (it.s.real ? ' is-real' : '') + (it.s.id === pulseId ? ' is-pulse' : '');
     b.dataset.service = it.s.id;
     b.style.setProperty('--c', it.s.color);
     b.setAttribute('aria-label', `${it.s.name} ${nf.format(it.s.count)}${it.s.unit} — 분석 보기`);

@@ -17,6 +17,12 @@ const RINGS = [
   { kind: 'sat', icon: 'i-satellite', label: '위성', k: 1.95, tilt: -5, w: 0.10, a0: 4.4 },
 ];
 const base = () => document.documentElement.dataset.base || '';
+// tokens.css 의 --earth-* 를 읽는다(값은 fallback 과 같은 헥스). SVG stop-color 속성은 var() 를
+// 직접 받지 못하므로(프레젠테이션 속성) 여기서 계산해 문자열로 박아 넣는다.
+const cssVar = (name, fallback) => {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return v || fallback;
+};
 
 /** @returns {{start:()=>void, stop:()=>void, layout:()=>void, globeR:()=>number}} */
 export function createOrbit(container, map, { zoom = 1.6, spin = 3.2 } = {}) {
@@ -71,8 +77,9 @@ export function createOrbit(container, map, { zoom = 1.6, spin = 3.2 } = {}) {
 }
 
 function defs() {
+  const hi = cssVar('--earth-hi', '#1B3C5E'), mid = cssVar('--earth-mid', '#102338'), lo = cssVar('--earth-lo', '#060D1A');
   return `<defs><radialGradient id="lx-earth" cx="34%" cy="28%" r="78%">`
-    + `<stop offset="0" stop-color="#1B3C5E"/><stop offset=".62" stop-color="#102338"/><stop offset="1" stop-color="#060D1A"/>`
+    + `<stop offset="0" stop-color="${hi}"/><stop offset=".62" stop-color="${mid}"/><stop offset="1" stop-color="${lo}"/>`
     + `</radialGradient></defs>`;
 }
 
