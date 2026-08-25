@@ -1,0 +1,88 @@
+/* SPIKE — 지구에서 마을로. 프로토 본선 토큰과 독립적으로 둔다(실험 격리). */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: #04070d; color: #eaf2ff; }
+body { font: 400 14px/1.5 "Pretendard Variable", Pretendard, -apple-system, "Segoe UI", system-ui, sans-serif; }
+
+#stage { position: fixed; inset: 0; z-index: 0; }
+#map { position: absolute; inset: 0; }
+.maplibregl-ctrl-attrib { font-size: 10px; opacity: .55; }
+
+/* ── 구름안 (a) : CSS 시차 덱 ─────────────────────────────
+   지도 캔버스 위 screen 합성. 지도 프레임버퍼를 건드리지 않으므로 사실상 공짜. */
+#cssclouds {
+  position: absolute; inset: -12%; pointer-events: none;
+  mix-blend-mode: screen; opacity: 0; transition: opacity .5s linear;
+  will-change: opacity;
+}
+#cssclouds.on { opacity: 1; }
+#cssclouds .cl {
+  position: absolute; inset: 0;
+  background-repeat: repeat-x; background-position: 0 50%;
+  will-change: transform, background-position, opacity;
+}
+#cssclouds .cl[data-l="far"]  { background-image: url("/landxi/assets/proto/clouds/cloud_far.webp");  background-size: auto 62%; opacity: .34; }
+#cssclouds .cl[data-l="mid"]  { background-image: url("/landxi/assets/proto/clouds/cloud_mid.webp");  background-size: auto 78%; opacity: .48; }
+#cssclouds .cl[data-l="near"] { background-image: url("/landxi/assets/proto/clouds/cloud_near.webp"); background-size: auto 128%; opacity: .62; }
+#cssclouds .cl[data-l="haze"] { background-image: url("/landxi/assets/proto/clouds/haze.webp");       background-size: cover;    opacity: .30; }
+
+#vignette {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 52%, transparent 46%, rgba(2,6,14,.62) 100%);
+}
+
+/* ── HUD ───────────────────────────────────────────────── */
+#hud {
+  position: fixed; left: 28px; bottom: 28px; z-index: 6; pointer-events: none;
+  text-shadow: 0 1px 14px rgba(0,10,26,.9);
+}
+#hud-stage { font-size: 30px; font-weight: 650; letter-spacing: -.01em; }
+#hud-sub { font-size: 12px; opacity: .62; margin-top: 2px; letter-spacing: .04em; }
+#hud-num { display: flex; gap: 22px; margin: 14px 0 0; }
+#hud-num dt { font-size: 10px; letter-spacing: .14em; opacity: .5; margin: 0; }
+#hud-num dd { margin: 2px 0 0; font: 500 17px/1 ui-monospace, "Cascadia Mono", monospace; color: #9fe8ff; }
+
+/* ── 계측 패널 ─────────────────────────────────────────── */
+#panel {
+  position: fixed; right: 18px; top: 18px; z-index: 7; width: 226px;
+  padding: 12px 14px; border-radius: 12px;
+  background: rgba(6,12,24,.72); backdrop-filter: blur(14px);
+  border: 1px solid rgba(140,200,255,.16); font-size: 11.5px;
+}
+#panel .row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+#panel b { font: 600 13px/1 ui-monospace, monospace; color: #7ef0c8; }
+#panel #fps-min { font: 400 10px/1 ui-monospace, monospace; opacity: .5; }
+#panel hr { border: 0; border-top: 1px solid rgba(140,200,255,.14); margin: 9px 0; }
+#panel label { display: block; margin: 5px 0; opacity: .86; cursor: pointer; }
+#panel input { vertical-align: -1px; margin-right: 6px; accent-color: #4fd0ff; }
+
+/* ── 스크롤 트랙 ───────────────────────────────────────── */
+#scroll { position: relative; z-index: 4; }
+#scroll section {
+  min-height: 100svh; display: grid; align-content: center;
+  padding: 0 clamp(28px, 7vw, 120px); max-width: 640px;
+  pointer-events: none;
+}
+#scroll section h1 {
+  margin: 0; font-size: clamp(38px, 5.4vw, 74px); font-weight: 680;
+  letter-spacing: -.03em; line-height: 1.02;
+  text-shadow: 0 2px 40px rgba(0,8,22,.92);
+}
+#scroll section p {
+  margin: 14px 0 0; font-size: 15px; max-width: 42ch; opacity: .74;
+  text-shadow: 0 1px 20px rgba(0,8,22,.9);
+}
+#scroll section::before {
+  content: attr(data-cap); font: 500 10px/1 ui-monospace, monospace;
+  letter-spacing: .22em; color: #6fd8ff; margin-bottom: 16px;
+}
+
+#boot {
+  position: fixed; inset: 0; z-index: 20; display: grid; place-content: center;
+  background: #04070d; font-size: 12px; letter-spacing: .18em; opacity: .7;
+  transition: opacity .6s ease;
+}
+#boot.gone { opacity: 0; pointer-events: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  #cssclouds .cl { animation: none !important; }
+}

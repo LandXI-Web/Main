@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SPIKE · 지구에서 마을로 — MapLibre 3D 강하</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
+<link rel="stylesheet" href="spike.css">
+<script src="/landxi/proto/env.js"></script>
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.min.js"></script>
+<script type="importmap">
+{"imports":{
+  "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
+}}
+</script>
+</head>
+<body>
+
+<!-- 고정 무대 : 지도 + 구름 합성 레이어 -->
+<div id="stage">
+  <div id="map"></div>
+  <!-- 구름안 (a) : 우리 webp 를 CSS 로 흘린다. screen 합성이라 지도 FPS 에 거의 영향이 없다 -->
+  <div id="cssclouds" aria-hidden="true">
+    <div class="cl" data-l="far"></div>
+    <div class="cl" data-l="mid"></div>
+    <div class="cl" data-l="near"></div>
+    <div class="cl" data-l="haze"></div>
+  </div>
+  <div id="vignette" aria-hidden="true"></div>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="hud-stage">궤도</div>
+  <div id="hud-sub">지구 · 대기광</div>
+  <dl id="hud-num">
+    <div><dt>고도</dt><dd id="n-alt">—</dd></div>
+    <div><dt>줌</dt><dd id="n-zoom">—</dd></div>
+    <div><dt>피치</dt><dd id="n-pitch">—</dd></div>
+    <div><dt>표고</dt><dd id="n-ele">—</dd></div>
+  </dl>
+</div>
+
+<!-- 계측/토글 패널 -->
+<div id="panel">
+  <div class="row"><b id="fps">— fps</b><span id="fps-min"></span></div>
+  <div class="row"><span>건물</span><b id="n-bld">—</b></div>
+  <div class="row"><span>지형</span><b id="n-terrain">off</b></div>
+  <hr>
+  <label><input type="checkbox" id="t-css" checked> 구름 a · CSS 시차</label>
+  <label><input type="checkbox" id="t-gibs"> 구름 b · GIBS 래스터</label>
+  <label><input type="checkbox" id="t-three" checked> 구름 c · three 스프라이트</label>
+  <hr>
+  <label><input type="radio" name="bsrc" value="osm" checked> 풋프린트 OSM(사전빌드)</label>
+  <label><input type="checkbox" id="t-ofm"> OpenFreeMap building</label>
+</div>
+
+<!-- 스크롤 트랙 : 여기 높이가 카메라 타임라인이 된다 -->
+<main id="scroll">
+  <section data-cap="궤도"><h1>지구</h1><p>Sentinel-2 무운(無雲) 지구가 대기광을 두르고 돈다.</p></section>
+  <section data-cap="접근"><h1>구름층</h1><p>구름이 흐른다. 카메라가 대기권으로 들어간다.</p></section>
+  <section data-cap="국토"><h1>대한민국</h1><p>V-World 위성으로 갈아탄다.</p></section>
+  <section data-cap="지역"><h1>남원</h1><p>지리산 자락이 솟아오른다. 지형 ON.</p></section>
+  <section data-cap="마을"><h1>남원 시내</h1><p>우리 정사영상이 위성 위로 올라온다.</p></section>
+  <section data-cap="거리"><h1>주택이 선다</h1><p>실제 건물 풋프린트가 3D 로 일어선다.</p></section>
+  <section data-cap="금지면"><h1>비닐하우스</h1><p>AI 가 검출한 온실 폴리곤 — 청록 4m.</p></section>
+</main>
+
+<div id="boot">불러오는 중…</div>
+<script type="module" src="spike.js"></script>
+</body>
+</html>

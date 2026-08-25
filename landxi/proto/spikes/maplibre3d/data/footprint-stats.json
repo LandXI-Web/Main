@@ -1,0 +1,34 @@
+[
+  {
+    "id": "geumji",
+    "n": 11,
+    "height": 0,
+    "levels": 0,
+    "default": 11,
+    "kb": 3
+  },
+  {
+    "id": "jeonju",
+    "n": 6289,
+    "height": 35,
+    "levels": 288,
+    "default": 5966,
+    "kb": 1534
+  },
+  {
+    "id": "namwon",
+    "n": 226,
+    "height": 0,
+    "levels": 1,
+    "default": 225,
+    "kb": 67
+  },
+  {
+    "id": "yeosu",
+    "n": 13557,
+    "height": 1,
+    "levels": 81,
+    "default": 13475,
+    "kb": 3533
+  }
+]
