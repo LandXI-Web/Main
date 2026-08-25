@@ -1,0 +1,74 @@
+/* Land-XI v3 시각 체계 — 취향 프로필 §4 (docs/superpowers/specs/2026-08-25-client-taste-profile.md)
+   서체: SUIT Medium 단일 굵기(표시) · Pretendard(본문) · Inter(숫자, tabular)
+   색: #010102 / #FFFFFF 하드 반전 + 액센트 1(LX 블루) + 탐지 순간 앰버
+   모션: 이징 하나, 지속 500/750/1000/1250ms 사다리, 호버 180ms
+   패널: 유리·라운드·그림자 없음. 헤어라인 + 코너 브래킷. */
+@import url('https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/static/woff2/SUIT.css');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap');
+
+:root{
+  /* 서체 */
+  --v3-display:'SUIT',system-ui,sans-serif;          /* weight 500 only */
+  --v3-body:'Pretendard',system-ui,sans-serif;       /* weight 400 */
+  --v3-num:'Inter',system-ui,sans-serif;             /* weight 400, font-variant-numeric: tabular-nums */
+  --v3-h1:64px; --v3-h1-lh:80px; --v3-h2:52px; --v3-h2-lh:57px;
+  --v3-body-fs:16px; --v3-body-lh:23px; --v3-label:12px; --v3-label-lh:14px;
+  --v3-stat:124px; --v3-stat-lh:1.0;
+  --v3-track:0.01em;
+  /* 한글 행간 보정 */
+  --v3-h1-lh-ko:1.25; --v3-body-lh-ko:1.6; --v3-label-lh-ko:1.2;
+
+  /* 색 — 두 바탕과 반전 */
+  --v3-black:#010102; --v3-white:#FFFFFF;
+  --v3-grey:#CCCCCC; --v3-grey-2:#686868;
+  --v3-line-dark:#272727; --v3-line-light:#DDDDDD;
+  --v3-accent:#006DF7;            /* LX 블루 — 액센트 1 */
+  --v3-detect:#FFB633;            /* 탐지 순간에만 */
+  --v3-teal:#0FA9A0;              /* AI 결과 필라멘트·폴리곤 (분석 뷰 발광용) */
+
+  /* colorway 토큰 — 섹션마다 [data-colorway] 로 뒤집는다 */
+  --cw-bg:var(--v3-black); --cw-fg:var(--v3-white); --cw-muted:var(--v3-grey); --cw-line:var(--v3-line-dark);
+
+  /* 모션 — 하나의 이징, 네 개의 지속 */
+  --v3-ease:cubic-bezier(0.15,1,0.3,1);
+  --v3-d1:500ms; --v3-d2:750ms; --v3-d3:1000ms; --v3-d4:1250ms;
+  --v3-hover:180ms; --v3-hover-ease:cubic-bezier(.22,1,.36,1);
+  --v3-stagger:40ms;              /* 숫자 글자별 현상 */
+
+  /* 형태 — 없음 */
+  --v3-radius:0; --v3-shadow:none;
+  --v3-hair:1px;
+  --v3-bracket:12px;              /* 코너 브래킷 길이 */
+}
+[data-colorway="light"]{ --cw-bg:var(--v3-white); --cw-fg:var(--v3-black); --cw-muted:var(--v3-grey-2); --cw-line:var(--v3-line-light); }
+[data-colorway="dark"]{  --cw-bg:var(--v3-black); --cw-fg:var(--v3-white); --cw-muted:var(--v3-grey);   --cw-line:var(--v3-line-dark); }
+
+/* 기본 조판 */
+.v3{ font-family:var(--v3-body); font-weight:400; font-size:var(--v3-body-fs); line-height:var(--v3-body-lh-ko); color:var(--cw-fg); background:var(--cw-bg); letter-spacing:var(--v3-track); }
+.v3 .display{ font-family:var(--v3-display); font-weight:500; font-size:var(--v3-h1); line-height:var(--v3-h1-lh-ko); letter-spacing:-0.01em; }
+.v3 .h2{ font-family:var(--v3-display); font-weight:500; font-size:var(--v3-h2); line-height:1.15; letter-spacing:-0.01em; }
+.v3 .num{ font-family:var(--v3-num); font-weight:400; font-variant-numeric:tabular-nums; }
+.v3 .stat{ font-family:var(--v3-num); font-weight:400; font-size:var(--v3-stat); line-height:var(--v3-stat-lh); letter-spacing:-0.02em; font-variant-numeric:tabular-nums; }
+.v3 .label{ font-family:var(--v3-num); font-size:var(--v3-label); line-height:var(--v3-label-lh-ko); letter-spacing:0.04em; text-transform:uppercase; color:var(--cw-muted); }
+.v3 .caption{ font-family:var(--v3-num); font-size:var(--v3-label); color:var(--cw-muted); letter-spacing:0.02em; } /* "장소 · 날짜" */
+
+/* 코너 브래킷 CTA / 프레임 */
+.v3 .bracket{ position:relative; display:inline-block; padding:14px 22px; color:var(--cw-fg); text-decoration:none; font-family:var(--v3-display); font-weight:500; }
+.v3 .bracket::before,.v3 .bracket::after{ content:""; position:absolute; width:var(--v3-bracket); height:var(--v3-bracket); border:var(--v3-hair) solid var(--cw-fg); transition:all var(--v3-hover) var(--v3-hover-ease); }
+.v3 .bracket::before{ left:0; top:0; border-right:0; border-bottom:0; }
+.v3 .bracket::after{ right:0; bottom:0; border-left:0; border-top:0; }
+.v3 .bracket:hover::before,.v3 .bracket:hover::after{ width:100%; height:100%; }
+
+/* 헤어라인 규칙 */
+.v3 .hr{ border:0; border-top:var(--v3-hair) solid var(--cw-line); margin:0; }
+
+/* 텍스트 리빌 (clip-path 라인 마스크) */
+.v3 .reveal{ clip-path:inset(-5px 0 100% 0); transition:clip-path var(--v3-d3) var(--v3-ease); }
+.v3 .reveal.is-in{ clip-path:inset(-5px 0 -5px 0); }
+.v3 .img-reveal{ clip-path:inset(100% 0 0 0); transition:clip-path var(--v3-d3) var(--v3-ease); }
+.v3 .img-reveal.is-in{ clip-path:inset(0); }
+
+@media (prefers-reduced-motion: reduce){
+  .v3 .reveal,.v3 .img-reveal{ transition:none; clip-path:inset(0); }
+}
