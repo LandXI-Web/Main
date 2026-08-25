@@ -265,6 +265,22 @@ form.addEventListener('submit', (e) => {
 });
 
 /* ── 핸드오프 — 화면 전환이 아니라 카메라 이동(§5-4). ────────────────────── */
+/* 판이 액자를 벗고 뷰포트 전체가 된다 — FLIP(현재 사각형 고정 → 전체로 전이).
+   MapLibre 는 컨테이너 크기를 스스로 따라가지 않으므로 전이 동안 매 프레임 resize() 한다. */
+function expandPlate(done) {
+  const r = plate.getBoundingClientRect();
+  plate.style.position = 'fixed';
+  plate.style.left = r.left + 'px'; plate.style.top = r.top + 'px';
+  plate.style.width = r.width + 'px'; plate.style.height = r.height + 'px';
+  plate.style.margin = '0'; plate.style.flex = 'none';
+  plate.getBoundingClientRect();                 /* 리플로 — 시작 사각형을 확정시킨다 */
+  plate.classList.add('is-full');
+  let pumping = true;
+  const pump = () => { if (!pumping) return; map.resize(); requestAnimationFrame(pump); };
+  requestAnimationFrame(pump);
+  setTimeout(() => { pumping = false; map.resize(); paintScale(); done(); }, 1320);
+}
+
 function handoff() {
   const go = () => location.assign(nextTarget());
   if (REDUCE || !map) { go(); return; }
@@ -281,10 +297,10 @@ function handoff() {
   });
 
   const tick = setInterval(paintScale, 80);
-  const t0 = performance.now();
   let done = false;
-  /* 마지막으로 보는 프레임이 검은 판이면 안 된다 — 착지 타일이 그려진 뒤에 넘긴다.
-     그래도 2.8초를 넘기지는 않는다(느린 회선에서 사용자를 붙잡아 두지 않는다). */
+  /* 마지막으로 보는 프레임이 검은 판이면 안 된다 — 판이 뷰포트 전체가 되고
+     그 넓어진 프레임의 타일까지 다 그려진 뒤에 넘긴다.
+     그래도 4.5초를 넘기지는 않는다(느린 회선에서 사용자를 붙잡아 두지 않는다). */
   const land = () => {
     if (done) return;
     done = true;
@@ -293,12 +309,10 @@ function handoff() {
     window.__login.landed = true;
     setTimeout(go, 600);                               /* 카피 덱 §8: "시작됨" 0.6초 노출 */
   };
-  const onIdle = () => {
-    if (performance.now() - t0 < 1250) { map.once('idle', onIdle); return; }
-    land();
-  };
-  map.once('idle', onIdle);
-  setTimeout(land, 2800);
+  /* 액자 벗기가 끝난(=마지막 resize 가 끝난) 다음의 idle 만 "착지"로 친다.
+     확대 중의 idle 은 좁은 프레임 기준이라 넓힌 자리가 비어 있을 수 있다. */
+  expandPlate(() => { map.once('idle', land); if (map.loaded()) land(); });
+  setTimeout(land, 4500);
 }
 
 /* ── 테스트 훅 ────────────────────────────────────────────────────────── */

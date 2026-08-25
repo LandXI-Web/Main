@@ -54,6 +54,9 @@ body.lx{ overflow:hidden; }
   outline:none; transition:border-color var(--lx-hover) var(--lx-hover-ease);
 }
 .lx-field__input::placeholder{ color:var(--lx-grey); }
+/* system.css 의 `.lx :focus-visible` 사각 링은 이 화면에서 끈다 —
+   포커스 표시는 아래 .lx-field__rule 이 그어지는 사건 그 자체다(§5-3). 링이 겹치면 그 사건이 안 보인다. */
+.lx .lx-field__input:focus-visible{ outline:none; }
 .lx-field:hover .lx-field__input{ border-bottom-color:var(--lx-grey-2); }
 /* 포커스 = 액센트 헤어라인이 좌→우로 180ms 에 그어진다(색만 바뀌는 것은 실패 — §5-3) */
 .lx-field__rule{
@@ -156,6 +159,18 @@ body.lx{ overflow:hidden; }
 /* ── 성공(핸드오프) — 종이가 물러나고 카메라만 남는다 ───────────────────── */
 .lg.is-leaving .lg-left,.lg.is-leaving .lx-masthead,.lg.is-leaving .lx-plate__cap{
   opacity:0; transition:opacity var(--lx-d3) var(--lx-ease); pointer-events:none;
+}
+/* 넘어가는 중에 커서 밑으로 판이 들어와도 십자선이 깨어나지 않는다 */
+.lg.is-leaving .lg-plate{ pointer-events:none; }
+.lg.is-leaving .lx-cross{ opacity:0 !important; }
+
+/* 종이가 물러난 자리에 흰 여백이 남으면 "도킹"이 아니라 그냥 사라진 화면이다.
+   판이 액자를 벗고 뷰포트 전체가 된다 — 카메라 이동과 같은 1250ms·같은 이징. */
+.lg-plate.is-full{
+  left:0 !important; top:0 !important; width:100vw !important; height:100vh !important;
+  border:0; z-index:50;
+  transition:left var(--lx-d4) var(--lx-ease), top var(--lx-d4) var(--lx-ease),
+             width var(--lx-d4) var(--lx-ease), height var(--lx-d4) var(--lx-ease);
 }
 
 /* ── 반응형 — 1280 까지 같은 구도, 그 아래는 판이 아래로 내려간다 ───────── */
