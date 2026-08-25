@@ -108,7 +108,6 @@ body.lx{ overflow:hidden; }
 .lg-plate.is-in{ clip-path:inset(0); }
 .lx-plate__map{ position:absolute; inset:0; }
 .lx-plate__map canvas{ outline:none; }
-.lg-attr{ padding:11px var(--lx-margin) 0 0; display:none; }   /* 판이 바닥까지 간다 — 출처는 마스트헤드 뒤로 */
 
 /* 코너 브래킷 — 액자 안쪽 10px, 팔 12px */
 .lx-bracket{
@@ -184,7 +183,6 @@ body.lx{ overflow:hidden; }
   .lg-right{ margin-top:40px; margin-right:0; }
   .lg-plate{ border-right:var(--lx-hair-w) solid var(--lx-hair); border-bottom:var(--lx-hair-w) solid var(--lx-hair); min-height:360px; }
   .lx-plate__cap{ padding-right:0; }
-  .lg-attr{ display:block; padding-right:0; }
   .lg-foot{ margin-top:34px; }
   .lg-mast__meta{ grid-column:5 / -1; }
 }
