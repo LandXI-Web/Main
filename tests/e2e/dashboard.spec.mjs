@@ -37,7 +37,7 @@ test('header carries title, notice strip and mono date', async ({ page }) => {
 test('kpi hover highlights extents by status and 5th kpi survives as sub text', async ({ page }) => {
   await page.goto('dashboard.html'); await page.waitForFunction(() => window.LX?.map?.ready);
   await expect(page.locator('.kpis .kpi').nth(0).locator('.kpi__sub')).toContainText('승인 대기');
-  await expect(page.locator('.kpis .kpi').nth(2)).toHaveClass(/kpi--hot/);
+  await expect(page.locator('.kpis .kpi[data-status=found]')).toHaveClass(/kpi--hot/);   // 위치가 아니라 status=found 로 hot 타일을 찾는다
   await expect.poll(() => page.evaluate(() => !!window.LX.map.getLayer('extents'))).toBe(true);
   await page.evaluate(() => { window.__hi = []; const m = window.LX.map, f = m.setHighlight.bind(m); m.setHighlight = (id, fn) => { window.__hi.push([id, typeof fn]); return f(id, fn); }; });
   await page.locator('.kpis .kpi').nth(1).hover();

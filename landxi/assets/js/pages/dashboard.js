@@ -113,11 +113,15 @@ function renderQueue(queue) {
 
 /* ── 중: KPI ─────────────────────────────────────────────────────── */
 function renderKpis() {
-  const k = DASH.kpis, pending = k[4];
+  const k = DASH.kpis;
+  // 5번째 항목('가입 승인 대기')은 자체 타일 없이 전체 사용자 타일의 부제에만 녹아든다.
+  // 배열 순서가 아니라 라벨로 찾아야 DASH.kpis 가 재배열돼도 안 깨진다.
+  const pending = k.find(kpi => kpi.label === '가입 승인 대기');
+  const shown = k.filter(kpi => kpi !== pending);
   const subOf = (kpi, i) => i === 0
     ? `정상 ${num(kpi.value - pending.value)} · <a class="link" href="admin-users.html">승인 대기 ${num(pending.value)}</a>`
     : esc(kpi.sub);
-  $('#kpis').innerHTML = k.slice(0, 4).map((kpi, i) => `<article class="kpi card glass${i === 2 ? ' kpi--hot' : ''}" data-interactive data-status="${esc(kpi.status)}" data-kpi="${i}">
+  $('#kpis').innerHTML = shown.map((kpi, i) => `<article class="kpi card glass${kpi.status === 'found' ? ' kpi--hot' : ''}" data-interactive data-status="${esc(kpi.status)}" data-kpi="${i}">
       <div class="kpi__label">${esc(kpi.label)}</div>
       <div class="kpi__value" data-n="${kpi.value}"><span class="kpi__num">0</span><span class="unit">${esc(kpi.unit)}</span></div>
       <div class="kpi__sub">${subOf(kpi, i)}</div>
@@ -177,10 +181,13 @@ function wireInteractions() {
   drawer.el.addEventListener('click', e => { if (e.target.closest('[data-close]')) drawer.close(); });
 
   const list = $('#queueList');
+  // 큐는 pid·org 두 레이어를 오간다. 한 곳에서 매 mouseover 마다 둘 다 켜고 끄지 않으면
+  // (행 밖 · 어느 쪽에도 안 걸리는 행으로 옮길 때) 이전 강조가 남는다 — 아래 side 핸들러와 같은 패턴.
   list.addEventListener('mouseover', e => {
-    const row = e.target.closest('.q'); if (!row || !list.contains(row)) return;
-    if (row.dataset.pid) hl('extents', p => p.pid === row.dataset.pid);
-    else if (row.dataset.org) hl('orgs', p => p.name === row.dataset.org);
+    const row = e.target.closest('.q');
+    const hit = row && list.contains(row) ? row : null;
+    hl('extents', hit && hit.dataset.pid ? p => p.pid === hit.dataset.pid : null);
+    hl('orgs', hit && hit.dataset.org ? p => p.name === hit.dataset.org : null);
   });
   list.addEventListener('mouseleave', () => { hl('extents', null); hl('orgs', null); });
 
