@@ -135,6 +135,16 @@ test('B안 대조 — 마스트헤드 64 · 여백 56 · 색인행 24 · 헤어�
   expect(m.overY).toBe(false);
 });
 
+test('등장 — 스크롤이 없는 한 판이므로 모든 블록이 켜진다', async ({ page }) => {
+  await boot(page);
+  const off = await page.evaluate(() => [...document.querySelectorAll('[data-reveal]')]
+    .filter((n) => getComputedStyle(n).opacity !== '1')
+    .map((n) => n.className));
+  expect(off).toEqual([]);                    // 하단 10% 잘림으로 꺼진 블록이 없다
+  await expect(page.locator('.lg-foot')).toBeVisible();
+  await expect(page.locator('.lg-note')).toContainText('plat@lx.or.kr');
+});
+
 test('포커스 — 액센트 헤어라인이 좌→우로 그어진다', async ({ page }) => {
   await boot(page);
   await page.locator('#lgEmail').click();

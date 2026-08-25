@@ -110,12 +110,13 @@ body.lx{ overflow:hidden; background:var(--lx-paper); }
 /* ══ 좌측 종이 ═══════════════════════════════════════════════════════════ */
 .lg-left{
   position:relative; z-index:5;
-  padding:calc(var(--lg-bar) + 30px) 0 32px var(--lg-m);
+  display:flex; flex-direction:column;          /* B안 순서: 색인 → 챕터 → 헤드라인 → 폼 */
+  padding:calc(var(--lg-bar) + 44px) 0 22px var(--lg-m);
   width:calc(var(--lg-col) + var(--lg-m));
 }
 
 /* 챕터 라벨 + 눈금자 — B안 210×7 repeating gradient 그대로 */
-.lg-chap{ margin-bottom:18px; }
+.lg-chap{ margin-bottom:16px; }
 .lg-chap__l{ margin:0; font-size:10.5px; line-height:14px; letter-spacing:.18em; color:var(--lg-ink-48); }
 .lg-rule{
   display:block; width:210px; height:7px; margin-top:10px;
@@ -127,17 +128,17 @@ body.lx{ overflow:hidden; background:var(--lx-paper); }
 /* 헤드라인 블록 — B안 리듬(굵고 짧게, 행간 1.0대). 굵기는 SUIT 500 단일. */
 .lg-h1{
   margin:0; font-family:var(--lx-display); font-weight:500;
-  font-size:56px; line-height:1.08; letter-spacing:-.02em; color:var(--lx-ink);
+  font-size:62px; line-height:1.06; letter-spacing:-.02em; color:var(--lx-ink);
   max-width:var(--lg-col);
 }
 .lg-vis{
-  margin:18px 0 0; font-size:16px; line-height:1.66; color:var(--lg-ink-68);
+  margin:20px 0 0; font-size:16px; line-height:1.66; color:var(--lg-ink-68);
   max-width:var(--lg-col); letter-spacing:var(--lx-ls);
 }
 .lg-vis__n{ font-size:12.5px; line-height:1.7; color:var(--lg-ink-48); letter-spacing:.01em; }
 
 /* ── 색인(LEDGER) — B안 index row 그대로: 머리줄 + 24px 행 + 헤어라인 ── */
-.lg-ledger{ width:var(--lg-ledger); margin-top:20px; }
+.lg-ledger{ order:-1; width:var(--lg-ledger); margin:0 0 30px; }
 .lg-ledger__h{
   display:flex; align-items:baseline; justify-content:space-between;
   padding-bottom:8px; border-bottom:1px solid var(--lg-hair-2);
@@ -158,7 +159,7 @@ body.lx{ overflow:hidden; background:var(--lx-paper); }
 .lg-row__v i{ font-style:normal; color:var(--lg-ink-48); font-size:9.5px; }
 
 /* ── 헤어라인 폼 ─────────────────────────────────────────────────────────── */
-.lg-form{ margin:20px 0 0; width:var(--lg-ledger); }
+.lg-form{ margin:22px 0 0; width:var(--lg-ledger); }
 .lx-field{ position:relative; padding-bottom:16px; margin-bottom:8px; }
 .lx-field__label{
   display:block; font-family:var(--lx-num); font-size:11px; line-height:14px;
@@ -192,7 +193,7 @@ body.lx{ overflow:hidden; background:var(--lx-paper); }
 
 .lx-check{
   display:flex; width:fit-content; align-items:center; gap:9px; cursor:pointer;
-  font-size:12.5px; color:var(--lg-ink-68); margin:2px 0 16px;
+  font-size:12.5px; color:var(--lg-ink-68); margin:2px 0 14px;
 }
 .lx-check input{ position:absolute; opacity:0; width:0; height:0; }
 .lx-check__box{
@@ -215,7 +216,7 @@ body.lx{ overflow:hidden; background:var(--lx-paper); }
 .lg-see:hover{ opacity:.6; }
 .lg-ctarow__n{ font-size:10.5px; line-height:14px; color:var(--lg-ink-48); }
 
-.lg-links{ display:flex; align-items:center; gap:13px; margin:18px 0 0; }
+.lg-links{ display:flex; align-items:center; gap:13px; margin:16px 0 0; }
 .lg-link{ font-size:13px; line-height:17px; }
 .lg-dot{ color:var(--lx-grey); font-size:12px; }
 
@@ -248,7 +249,10 @@ body.lx{ overflow:hidden; background:var(--lx-paper); }
 .lg.is-leaving .lg-spec,.lg.is-leaving .lg-plate__scrim{
   opacity:0; transition:opacity var(--lx-d3) var(--lx-ease); pointer-events:none;
 }
-.lg.is-leaving .lg-read{ color:#fff; mix-blend-mode:normal; }
+.lg.is-leaving .lg-read{
+  /* 판이 화면을 다 먹으면 흰 종이가 없다 — 해설은 불투명 잉크 칩으로 살아남는다. */
+  color:#fff; background:rgba(1,1,2,.72); padding:7px 10px;
+}
 
 .lg-plate.is-full{
   left:0 !important; top:0 !important; right:0 !important; height:100vh !important; z-index:50;
@@ -268,7 +272,7 @@ body.lx{ overflow:hidden; background:var(--lx-paper); }
   :root{ --lg-m:32px; }
   body.lx{ overflow:auto; }
   .lg{ display:flex; flex-direction:column; min-height:100vh; overflow:visible; }
-  .lg-mast{ position:sticky; order:1; background:var(--lx-paper); }
+  .lg-mast{ position:relative; order:1; background:var(--lx-paper); }
   .lg-plate{ position:relative; order:2; left:auto; right:auto; top:auto; height:300px; }
   .lg-plate__scrim--l{ background:linear-gradient(100deg,rgba(255,255,255,.55) 0%,rgba(255,255,255,0) 34%); }
   .lg-plate__scrim--b{ background:linear-gradient(0deg,#FFF 0%,rgba(255,255,255,0) 26%); }
@@ -283,7 +287,7 @@ body.lx{ overflow:hidden; background:var(--lx-paper); }
   .lg-h1{ font-size:44px; }
   .lg-ctarow{ width:auto; flex-wrap:wrap; gap:16px; }
   .lg-foot,.lg-vis{ width:auto; max-width:none; }
-  .lg-fallback{ position:relative; left:auto; bottom:auto; margin:0 var(--lg-m) 24px; }
+  .lg-fallback{ position:relative; order:7; left:auto; bottom:auto; margin:0 var(--lg-m) 24px; }
 }
 
 @media (prefers-reduced-motion:reduce){

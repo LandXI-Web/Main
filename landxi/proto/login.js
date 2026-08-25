@@ -61,10 +61,16 @@ const video = $('#lgVideo');
 /* 이미 로그인 상태면 도킹 과정을 반복하지 않는다(기존 동작 유지). */
 if (isLoggedIn()) location.replace(nextTarget());
 
-/* ── 등장 — 헤드라인은 줄 단위 마스크, 나머지는 [data-reveal] 이 맡는다 ──── */
+/* ── 등장 — 헤드라인은 줄 단위 마스크, 나머지는 [data-reveal] 스태거 ────────
+   이 화면은 스크롤이 없다(한 판). system.js 의 스크롤 리빌 관찰자는 뷰포트 하단
+   10% 를 잘라 보므로 마지막 블록이 영영 안 켜진다 — 여기서는 직접 순서대로 켠다. */
 requestAnimationFrame(() => requestAnimationFrame(() => {
   $('#lgH1').classList.add('is-in');
   plate.classList.add('is-in');
+  for (const n of document.querySelectorAll('[data-reveal]')) {
+    const d = REDUCE ? 0 : Number(n.dataset.revealDelay || 0);
+    setTimeout(() => n.classList.add('is-in'), d);
+  }
 }));
 
 /* ── 시계 — KST hh:mm. 캡션의 숫자는 전부 해설이다(§5-9). ─────────────── */
