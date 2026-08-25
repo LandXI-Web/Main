@@ -47,6 +47,25 @@ if (!flag('skip-frames')) {
   await page.waitForFunction('window.__leg.settled()', null, { timeout: 90000, polling: 60 }).catch(() => {});
   await page.waitForTimeout(1500);
 
+  // ── 앵커 스틸 3장 (1920×1080, UI 없음) ────────────────────────────
+  // image-to-video(kling) 의 참조 프레임. 시작 / 중간(주택+온실이 정사영상 위에 선 순간) / 끝.
+  if (!flag('no-anchors')) {
+    const AN = path.resolve(root, 'landxi/assets/proto/film/legs/src/anchors');
+    fs.mkdirSync(AN, { recursive: true });
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    const T = [0, meta.dur * 0.5, meta.dur];
+    for (let k = 0; k < T.length; k++) {
+      await page.evaluate((tt) => window.__leg.seek(tt), T[k]);
+      await page.waitForFunction('window.__leg.settled()', null, { timeout: 45000, polling: 40 }).catch(() => {});
+      await page.waitForTimeout(1200);
+      await page.screenshot({ path: path.join(AN, `namwon-3d-${k}.png`),
+        clip: { x: 0, y: 0, width: 1920, height: 1080 }, animations: 'disabled' });
+      console.log('anchor', k, 't=' + T[k].toFixed(2));
+    }
+    await page.setViewportSize({ width: W, height: H });
+    if (flag('anchors-only')) { await browser.close(); process.exit(0); }
+  }
+
   const list = flag('keys')
     ? [{ i: 0, t: 0 }, { i: meta.frames - 1, t: meta.dur }]
     : Array.from({ length: meta.frames }, (_, i) => ({ i, t: i / meta.fps }));

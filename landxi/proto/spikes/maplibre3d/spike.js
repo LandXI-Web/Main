@@ -60,8 +60,12 @@ const style = {
     gibs: { type: 'raster', tiles: [`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${GIBS_DATE}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`],
             tileSize: 256, maxzoom: 8, attribution: 'NASA EOSDIS GIBS' },
     ofm: { type: 'vector', url: 'https://tiles.openfreemap.org/planet' },
-    dem: { type: 'raster-dem', tiles: ['https://tiles.mapterhorn.com/{z}/{x}/{y}.webp'],
-           tileSize: 512, maxzoom: 12, encoding: 'terrarium', attribution: '© Mapterhorn' },
+    // 지형 — 남원 AOI 는 로컬 미러(z9–13, 30m 원해상도)를 쓴다. 네트워크 왕복이 없어
+    // 프레임 렌더링 중 DEM 로딩 편차가 사라진다.
+    dem: { type: 'raster-dem', tiles: ['/landxi/assets/data/3d/terrain-namwon/{z}/{x}/{y}.png'],
+           tileSize: 256, minzoom: 9, maxzoom: 13, encoding: 'terrarium',
+           bounds: [127.24, 35.28, 127.54, 35.54],
+           attribution: 'Elevation: AWS Terrain Tiles' },
     // 우리 정사영상 — 2m 전역과 0.6m 코어를 소스 2개로 쪼갠다.
     // 그래야 코어 밖에서 z16 타일을 z17.5 까지 늘려 뭉개는 일이 없다.
     ortho_city: { type: 'raster', tiles: ['/landxi/assets/tiles/namwon_city_2510/{z}/{x}/{y}.webp'],
@@ -73,6 +77,9 @@ const style = {
     cloudsheet: { type: 'image', url: '/landxi/assets/proto/clouds/cloud_far.webp',
                   coordinates: [[124.0, 39.5], [132.0, 39.5], [132.0, 33.0], [124.0, 33.0]] },
     bld: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
+    // 실측 풋프린트 — Overture CN-EAB(ML) 5,109동. OSM 226동을 대체한다.
+    // height_m 은 대부분 면적 기반 추정(height_is_estimate=true)이다.
+    bld3d: { type: 'geojson', data: '/landxi/assets/data/3d/namwon-buildings.geojson' },
     gh:  { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
   },
   layers: [
@@ -122,7 +129,18 @@ const style = {
         'fill-extrusion-vertical-gradient': true,
       } },
 
-    // (B) 우리가 구운 OSM 풋프린트 — 주력.
+    // (B0) 실측 풋프린트 (Overture CN-EAB) — 남원 주력.
+    { id: 'bld3d', type: 'fill-extrusion', source: 'bld3d', minzoom: 13.6,
+      paint: {
+        'fill-extrusion-color': ['interpolate', ['linear'], ['get', 'height_m'],
+          3, '#f4efe6', 7, '#ded5c8', 12, '#bcc1cb', 24, '#8f9cb2', 45, '#6f8098'],
+        'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 13.6, 0, 15.2, ['get', 'height_m']],
+        'fill-extrusion-base': 0,
+        'fill-extrusion-opacity': ['interpolate', ['linear'], ['zoom'], 13.6, 0, 15.2, 0.95],
+        'fill-extrusion-vertical-gradient': true,
+      } },
+
+    // (B) 우리가 구운 OSM 풋프린트 — 남원 밖(전주·여수) 대조군.
     { id: 'bld', type: 'fill-extrusion', source: 'bld', minzoom: 13.6,
       paint: {
         // 낮은 시골 주택은 밝은 지붕색, 높을수록 회청색 → 마을의 스케일감이 읽힌다
@@ -165,7 +183,7 @@ window.map = map;
 // 2. 구름 c — three.js 스프라이트 덱 (CustomLayer)
 //    실 고도 1.5~3km 에 판을 띄운다. 카메라가 마을로 내려가면 구름 밑을 통과한다.
 // ══════════════════════════════════════════════════════════════════════
-function cloudDeck(center, { n = 46, lo = 1500, hi = 3000, spread = 0.34, drift = 0.000018 } = {}) {
+function cloudDeck(center, { n = 64, lo = 900, hi = 2100, spread = 0.030, drift = 0.000055 } = {}) {
   return {
     id: 'three-clouds', type: 'custom', renderingMode: '3d',
     onAdd(m, gl) {
@@ -175,28 +193,28 @@ function cloudDeck(center, { n = 46, lo = 1500, hi = 3000, spread = 0.34, drift 
       this.renderer = new THREE.WebGLRenderer({ canvas: m.getCanvas(), context: gl, antialias: true });
       this.renderer.autoClear = false;
       this.t0 = 0;
+      this.spread = spread;
       this.puffs = [];
       // ⚠ Math.random 은 새로고침마다 배치가 달라진다 → 프레임 재렌더 시 픽셀이 바뀐다.
       //   고정 시드 LCG 로 대체한다.
       let seed = 20260826;
       const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
-      this.rnd = rnd;
       const tex = new THREE.TextureLoader().load('/landxi/assets/proto/clouds/cloud_near.webp');
       tex.colorSpace = THREE.SRGBColorSpace;
-      // 스프라이트는 항상 카메라를 향한다 → 낮은 폴리곤 수로 볼륨감을 낸다
       for (let i = 0; i < n; i++) {
-        const rnd = this.rnd;
         const mat = new THREE.SpriteMaterial({ map: tex, transparent: true,
-          opacity: 0.14 + rnd() * 0.22, depthWrite: false, depthTest: true });
-        const s = new THREE.Sprite(mat);
-        const alt = lo + rnd() * (hi - lo);
-        s.userData = {
-          lng: center[0] + (rnd() - 0.5) * spread,
-          lat: center[1] + (rnd() - 0.5) * spread * 0.78,
-          alt, scale: (700 + rnd() * 3100),
-          v: drift * (0.55 + rnd() * 0.9),
+          opacity: 0.18 + rnd() * 0.30, depthWrite: false, depthTest: false });
+        const sp = new THREE.Sprite(mat);
+        sp.userData = {
+          // 카메라 중심 기준 상대 오프셋(도). 매 프레임 ±spread 안으로 감싸므로
+          // 줌이 바뀌어도 구름이 늘 화면 근처에 남는다 — 무한 구름장.
+          ox: (rnd() - 0.5) * 2 * spread,
+          oy: (rnd() - 0.5) * 1.5 * spread,
+          alt: lo + rnd() * (hi - lo),
+          scale: 420 + rnd() * 1500,
+          v: drift * (0.6 + rnd() * 0.85),
         };
-        this.puffs.push(s); this.scene.add(s);
+        this.puffs.push(sp); this.scene.add(sp);
       }
       this.scene.add(new THREE.AmbientLight(0xffffff, 2.0));
       this.on = true;
@@ -205,15 +223,18 @@ function cloudDeck(center, { n = 46, lo = 1500, hi = 3000, spread = 0.34, drift 
       if (!this.on) return;
       const dt = clock() - this.t0;
       const pd = args.defaultProjectionData;
-      // 덱 전체의 기준점을 중심 좌표에 두고, 각 스프라이트는 상대 위치로 배치한다.
-      const base = maplibregl.MercatorCoordinate.fromLngLat(center, 0);
+      const c = this.map.getCenter();
+      const S = this.spread;
+      const base = maplibregl.MercatorCoordinate.fromLngLat([c.lng, c.lat], 0);
       const mpu = base.meterInMercatorCoordinateUnits();
-      for (const s of this.puffs) {
-        const u = s.userData;
-        const lng = u.lng + (REDUCE ? 0 : u.v * dt * 1000);
-        const c = maplibregl.MercatorCoordinate.fromLngLat([lng, u.lat], u.alt);
-        s.position.set((c.x - base.x) / mpu, -(c.y - base.y) / mpu, (c.z - base.z) / mpu);
-        s.scale.set(u.scale, u.scale, 1);
+      for (const sp of this.puffs) {
+        const u = sp.userData;
+        // 서풍. ±S 로 감아 돌린다(끝이 없다).
+        let dx = u.ox + (REDUCE ? 0 : u.v * dt * 1000);
+        dx = ((dx + S) % (2 * S) + 2 * S) % (2 * S) - S;
+        const m = maplibregl.MercatorCoordinate.fromLngLat([c.lng + dx, c.lat + u.oy], u.alt);
+        sp.position.set((m.x - base.x) / mpu, -(m.y - base.y) / mpu, (m.z - base.z) / mpu);
+        sp.scale.set(u.scale, u.scale, 1);
       }
       this.camera.projectionMatrix = new THREE.Matrix4().fromArray(pd.mainMatrix)
         .multiply(new THREE.Matrix4().makeTranslation(base.x, base.y, base.z))
@@ -288,6 +309,20 @@ function seek(p) {
   paintHud(c);
   driftCss(c);
 }
+// 스크롤 섹션 카피는 두 장이 동시에 보이면 서로 덮어써 읽히지 않는다.
+// 뷰포트 중앙에서 멀어질수록 지운다.
+let SECTIONS = null;
+function fadeSections() {
+  if (FILM) return;
+  if (!SECTIONS) SECTIONS = [...document.querySelectorAll('#scroll section')];
+  const mid = innerHeight / 2;
+  for (const el of SECTIONS) {
+    const r = el.getBoundingClientRect();
+    const d = Math.abs(r.top + r.height / 2 - mid) / innerHeight;   // 0 = 정중앙
+    el.style.opacity = String(Math.max(0, Math.min(1, 1 - Math.pow(d * 2.4, 2))));
+  }
+}
+
 let lastEle = 0;
 function paintHud(c) {
   // MapLibre 는 카메라 실고도를 직접 안 주므로 스케일에서 역산한다.
@@ -307,6 +342,7 @@ function paintHud(c) {
     const e = terrainOn ? map.queryTerrainElevation(c.center) : null;
     document.getElementById('n-ele').textContent = e == null ? '—' : Math.round(e) + ' m';
   }
+  fadeSections();
   let s = STAGES[0]; for (const k of STAGES) if (progress >= k[0]) s = k;
   const st = document.getElementById('hud-stage');
   if (st.textContent !== s[1]) { st.textContent = s[1]; document.getElementById('hud-sub').textContent = s[2]; }
@@ -322,7 +358,7 @@ function driftCss(c) {
   const w = FILM
     ? 0.34
     : (c.zoom < 2.6 ? 0 : c.zoom < 4.2 ? (c.zoom - 2.6) / 1.6
-       : c.zoom < 9 ? 1 : c.zoom < 13.2 ? 1 - (c.zoom - 9) / 4.2 : 0);
+       : c.zoom < 7.5 ? 1 : c.zoom < 10.2 ? 1 - (c.zoom - 7.5) / 2.7 : 0);
   cssRoot.style.setProperty('--w', w.toFixed(3));
   cssRoot.style.opacity = cssOn ? w : 0;
   const t = clock();
@@ -372,7 +408,8 @@ map.on('load', async () => {
   boot('스타일 로드됨');
   // 풋프린트는 지역별로 지연 로딩한다. 여수 3.5MB / 전주 1.5MB 를 첫 화면에서
   // 다 받으면 궤도 장면이 늦어진다 — 카메라가 다가올 때 붙인다.
-  await ensure(['namwon', 'geumji']);
+  // 남원은 실측 Overture 소스(bld3d)가 담당한다. OSM 은 대조군(전주)만 남긴다.
+  await ensure(['geumji']);
 
   try {
     const g = await loadJson('data/greenhouse-core.geojson');
@@ -384,8 +421,8 @@ map.on('load', async () => {
 
   // 구름 c
   map.addLayer(FILM
-    ? cloudDeck([127.3400, 35.3560], { n: 58, lo: 1100, hi: 2600, spread: 0.17, drift: 0.000042 })
-    : cloudDeck(NAMWON, { n: 46, lo: 1500, hi: 3000, spread: 0.42 }));
+    ? cloudDeck(NAMWON, { n: 72, lo: 950, hi: 2200, spread: 0.026, drift: 0.000060 })
+    : cloudDeck(NAMWON, { n: 56, lo: 1200, hi: 2600, spread: 0.034 }));
 
   // 구름 b 흘리기 — GIBS 는 정지(그날의 실제 구름), image 구름장은 좌표를 옮겨 흐른다.
   const SHEET = [[124.0, 39.5], [132.0, 39.5], [132.0, 33.0], [124.0, 33.0]];
