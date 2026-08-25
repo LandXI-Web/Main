@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { SURVEYS, SURVEY_COUNTERS } from '../../landxi/assets/data/surveys.js';
 import { DASH } from '../../landxi/assets/data/dashboard.js';
+import { SERVICES, serviceById } from '../../landxi/assets/data/services.js';
 
 test('7 surveys with required fields', () => {
   assert.equal(SURVEYS.length, 7);
@@ -84,4 +85,30 @@ test('support-data.js and ai-project-data.js were copied from the prototype', ()
     assert.ok(fs.existsSync(p), p);
     assert.ok(fs.readFileSync(p, 'utf8').length > 100, p);
   }
+});
+
+test('13 home services: unique ids, 4 real assets, sane coordinates', () => {
+  assert.equal(SERVICES.length, 13);
+  assert.equal(new Set(SERVICES.map(s => s.id)).size, 13);
+  for (const s of SERVICES) {
+    for (const k of ['id', 'name', 'ministry', 'unit', 'lastRun', 'story', 'color']) assert.ok(s[k], `${s.id}.${k}`);
+    assert.equal(typeof s.real, 'boolean');
+    assert.ok(Number.isFinite(s.count) && s.count > 0, s.id);
+    const [lng, lat] = s.lnglat;
+    assert.ok(lng > 124 && lng < 132, s.id);   // 대한민국 경도 범위
+    assert.ok(lat > 33 && lat < 39, s.id);     // 대한민국 위도 범위
+    assert.match(s.lastRun, /^\d{4}-\d{2}-\d{2}$/);
+    assert.match(s.color, /^var\(--[a-z-]+\)$/);
+  }
+  const real = SERVICES.filter(s => s.real);
+  assert.deepEqual(real.map(s => s.id).sort(), ['change', 'farmland', 'marine', 'pothole']);
+  assert.deepEqual(real.map(s => s.story).sort(), ['jeju', 'kuksan', 'marine', 'namwon']);
+  assert.equal(SERVICES.find(s => s.id === 'marine').count, 38057);
+  assert.equal(serviceById('marine').id, 'marine');
+  assert.equal(serviceById('nope'), null);
+});
+
+test('every survey id from the 7-survey lineup also exists as a home service', () => {
+  const ids = new Set(SERVICES.map(s => s.id));
+  for (const s of SURVEYS) assert.ok(ids.has(s.id), s.id);
 });
