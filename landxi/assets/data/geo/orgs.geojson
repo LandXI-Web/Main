@@ -1,0 +1,75 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "LX 전주",
+        "kind": "lx"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.148,
+          35.846
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "남원시청",
+        "kind": "gov"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.39,
+          35.416
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "전남도청",
+        "kind": "gov"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.463,
+          34.816
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "신안군청",
+        "kind": "gov"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.381,
+          34.833
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "완도군청",
+        "kind": "gov"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          126.755,
+          34.311
+        ]
+      }
+    }
+  ]
+}
