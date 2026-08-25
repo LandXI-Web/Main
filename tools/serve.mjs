@@ -3,7 +3,7 @@ const root = path.resolve('.'); const port = Number(process.env.PORT) || 4173;
 // 투명 1×1 PNG — 성긴 타일셋의 빈 칸용
 const BLANK = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
-const types = { '.html':'text/html; charset=utf-8', '.css':'text/css', '.js':'text/javascript', '.mjs':'text/javascript', '.json':'application/json', '.geojson':'application/geo+json', '.svg':'image/svg+xml', '.png':'image/png', '.jpg':'image/jpeg', '.webp':'image/webp', '.ico':'image/x-icon' };
+const types = { '.html':'text/html; charset=utf-8', '.css':'text/css', '.js':'text/javascript', '.mjs':'text/javascript', '.json':'application/json', '.geojson':'application/geo+json', '.svg':'image/svg+xml', '.png':'image/png', '.jpg':'image/jpeg', '.webp':'image/webp', '.ico':'image/x-icon', '.mp4':'video/mp4', '.webm':'video/webm' };
 
 // 프로토타입 전용: .env.local 의 VWORLD_KEY 를 브라우저에 주입한다(소스에는 키를 두지 않는다).
 function envJs() {
@@ -51,6 +51,27 @@ http.createServer((req, res) => {
     }
     res.writeHead(404); return res.end('404');
   }
-  res.writeHead(200, { 'content-type': types[path.extname(f)] || 'application/octet-stream' });
+  const type = types[path.extname(f)] || 'application/octet-stream';
+  const size = fs.statSync(f).size;
+  /* Range 응답 — 이게 없으면 <video> 의 seekable 이 비어서 currentTime 을 못 준다.
+     히어로 필름은 스크롤에 스크럽으로 물려 있으므로(재생이 아니라) Range 가 필수다. */
+  const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
+  if (range && size) {
+    let start = range[1] === '' ? null : Number(range[1]);
+    let end = range[2] === '' ? null : Number(range[2]);
+    if (start === null) { start = Math.max(0, size - (end || 0)); end = size - 1; }
+    if (end === null || end >= size) end = size - 1;
+    if (!Number.isFinite(start) || start > end) {
+      res.writeHead(416, { 'content-range': `bytes */${size}` });
+      return res.end();
+    }
+    res.writeHead(206, {
+      'content-type': type, 'accept-ranges': 'bytes',
+      'content-range': `bytes ${start}-${end}/${size}`,
+      'content-length': end - start + 1,
+    });
+    return fs.createReadStream(f, { start, end }).pipe(res);
+  }
+  res.writeHead(200, { 'content-type': type, 'accept-ranges': 'bytes', 'content-length': size });
   fs.createReadStream(f).pipe(res);
 }).listen(port, () => console.log('serve http://localhost:' + port + '/landxi/'));

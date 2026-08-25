@@ -489,15 +489,40 @@ function setEpoch(i, silent) {
   if (!silent) swipe.hide();
 }
 
-/* 히어로 필름 — 미리 구운 실데이터 20초 필름이 있으면 궤도 판의 바닥으로 깔고,
-   없으면 라이브 지구본 그대로 간다. 있으면 "WebGL급 몰입"의 90%를 영상이 가져간다(벤치마크 §3). */
+/* 히어로 필름 — 미리 구운 실데이터 23초 필름(tools/film)이 있으면 궤도·구름 판의 바닥으로 깔고,
+   없으면 라이브 지구본 그대로 간다. 있으면 "WebGL급 몰입"의 90%를 영상이 가져간다(벤치마크 §3).
+
+   필름은 **재생하지 않고 스크럽한다**. 자유 재생하면 20초 뒤 필름은 지상을 날고 있는데
+   캡션은 "고도 786 km" 라고 말하는 어긋남이 생긴다 — 한 대의 카메라라는 전제가 깨진다.
+   필름의 0 → 6.0s 가 지구본 · 위성 · 성층운 돌파이고, 그것이 p 0 → 0.30 구간이다. */
+const FILM_END = 6.0;   // 필름에서 구름을 뚫고 지표가 드러나는 시점(초)
+const FILM_P = 0.30;    // 그 지점에 대응하는 스크롤 진행값
 let film = null;
 if (optional.film) {
   const el = $('#hero-film');
   el.src = '../assets/proto/film/hero.mp4';
   el.hidden = false;
-  el.addEventListener('loadeddata', () => { film = el; el.play().catch(() => {}); }, { once: true });
+  el.removeAttribute('loop');
+  el.addEventListener('loadeddata', () => {
+    film = el;
+    el.pause();
+  }, { once: true });
+  el.addEventListener('seeked', () => { filmSeeking = false; });
   el.load();
+}
+/* 스크럽은 매 프레임 다시 걸면 안 된다 — 탐색이 끝나기 전에 새 탐색이 들어오면
+   디코더는 영원히 첫 프레임에 머문다(실제로 그렇게 됐다). 한 번에 하나만 건다. */
+let filmWant = -1, filmSeeking = false;
+function scrubFilm(p) {
+  if (!film) return;
+  const on = p < FILM_P + 0.02;
+  film.classList.toggle('on', on);
+  if (!on) return;
+  const want = clamp01(p / FILM_P) * FILM_END;
+  if (filmSeeking || Math.abs(want - filmWant) < 0.04) return;
+  filmWant = want;
+  filmSeeking = true;
+  try { film.currentTime = want; } catch (e) { filmSeeking = false; }
 }
 
 const tickMag = magnetic([...document.querySelectorAll('#cta a')]);
@@ -793,7 +818,7 @@ function apply(p) {
   if ($('#pc-b').textContent !== fg[3]) $('#pc-b').textContent = fg[3];
   // 결과 아틀라스에서는 각 판이 자기 캡션 바를 갖는다 — 전역 액자는 물러난다.
   $('#plate').classList.toggle('hide', p >= RES_A - 0.005);
-  if (film) film.classList.toggle('on', p < 0.150);
+  scrubFilm(p);
   document.documentElement.style.setProperty('--grain', TIER === 'full' ? '0.024' : '0.012');
 
   // 카메라. 결과 아틀라스 구간과 서비스 선택 중에는 flyTo 가 카메라를 가져간다.

@@ -79,11 +79,21 @@ export function indexHTML(SVC, ROWS) {
   }).join('');
 }
 
-/* ── 클래스 행 — 헤어라인 + 단일 액센트 바 ───────────────── */
+/* ── 클래스 행 — 헤어라인 + 단일 액센트 바 ─────────────────
+   50% 컬럼 한 화면에 통계 124px 과 같이 서야 하므로 최대 5행이다.
+   넘치면 상위 4개 + 꼬리 합계로 접는다 — 잘라 버리지 않고 합계로 남긴다. */
 export function rowsHTML(classes, fixedMap) {
   if (!classes || !classes.length) return '';
-  const max = classes.reduce((a, c) => Math.max(a, c.n), 0) || 1;
-  return '<ul class="rows">' + classes.map((c) => {
+  let list = classes;
+  if (list.length > 5) {
+    const head = list.slice(0, 4), tail = list.slice(4);
+    list = head.concat([{
+      key: '_rest', name: `기타 ${tail.length}종`, color: '#AAAEB4',
+      n: tail.reduce((a, c) => a + c.n, 0), unit: tail[0].unit,
+    }]);
+  }
+  const max = list.reduce((a, c) => Math.max(a, c.n), 0) || 1;
+  return '<ul class="rows">' + list.map((c) => {
     const col = (fixedMap && fixedMap[c.key]) || c.color || '#006DF7';
     return `<li><span class="k"><s style="background:${esc(col)}"></s>${esc(c.name)}</span>`
       + `<span class="bar" style="--w:${(c.n / max * 100).toFixed(1)}%"></span>`
@@ -264,7 +274,7 @@ export function makeAtlas({ left, right, strip, rows, tier, crops, sat }) {
         + ` value="${r.conf.lo}" aria-label="${esc(r.title)} 신뢰도 임계값">`
         + `<canvas id="rh${i}" aria-hidden="true"></canvas>`
         + `<p class="n"><b id="rcn${i}">${fmt(r.count)}</b> / ${fmt(r.count)} 표시`
-        + ` · 임계 이하는 지우지 않고 무채로 남긴다</p></div>`
+        + ' · 이하는 무채로 남는다</p></div>'
       : `<p class="rpend">신뢰도 축이 없다. ${noConf} 없는 축을 만들지 않는다.</p>`;
     return `<article class="rb" data-i="${i}" aria-label="${esc(r.title)}">`
       + '<div class="rb-head">'
