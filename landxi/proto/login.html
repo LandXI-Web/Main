@@ -1,0 +1,120 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>로그인 — Land-XI</title>
+<link rel="icon" href="../assets/images/favicon_landxi.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
+<!-- 컴포넌트 시트가 토큰(v3-tokens.css)까지 @import 한다. login.css 는 이 화면 고유의 것만 얹는다. -->
+<link rel="stylesheet" href="system.css">
+<link rel="stylesheet" href="login.css">
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<!-- serve.mjs 가 .env.local 의 VWORLD_KEY 를 여기로 주입한다. 없으면 키 없는 xdworld 로 간다. -->
+<script src="env.js"></script>
+</head><body class="lx">
+
+<a class="lx-skip" href="#loginForm">본문 건너뛰기</a>
+
+<div class="lg" id="lg">
+
+  <!-- ── 마스트헤드 — 헤어라인 한 줄. 크롬은 이것뿐이다(.lx-masthead). ────── -->
+  <header class="lx-masthead">
+    <div class="lx-masthead__in lx-grid">
+      <a class="lx-masthead__mark lg-mast__mark" href="dive.html" aria-label="Land-XI 홈">
+        LAND-XI <span class="lg-mast__sub lx-num">PLATFORM</span>
+      </a>
+      <p class="lx-masthead__meta lg-mast__meta lx-label">LX 한국국토정보공사 · 공간정보본부</p>
+    </div>
+  </header>
+
+  <main class="lg-grid lx-grid">
+
+    <!-- ── 좌 5/12 — 종이. 활자와 헤어라인만. ─────────────────────────────── -->
+    <section class="lg-left lx-c5">
+
+      <p class="lx-label lg-eyebrow" data-reveal data-reveal-delay="0">접속</p>
+
+      <h1 class="lg-h1 lx-h1 lx-lines" id="lgH1">
+        <span class="lx-line"><i>국토는 매일</i></span>
+        <span class="lx-line"><i style="transition-delay:60ms">조금씩 달라진다</i></span>
+      </h1>
+
+      <p class="lg-sub" data-reveal data-reveal-delay="120">전국 13개 조사가 같은 영상 위에 있습니다.<br>
+        계정으로 들어가면 어제와 오늘이 겹칩니다.</p>
+
+      <form class="lg-form" id="loginForm" novalidate data-reveal data-reveal-delay="180">
+
+        <div class="lx-field" data-field="email">
+          <label class="lx-field__label" for="lgEmail">아이디 (업무 이메일)</label>
+          <input class="lx-field__input" id="lgEmail" name="email" type="email"
+                 autocomplete="username" placeholder="hong@lx.or.kr" spellcheck="false">
+          <span class="lx-field__rule" aria-hidden="true"></span>
+          <p class="lx-field__msg" id="lgEmailMsg" role="alert" hidden></p>
+        </div>
+
+        <div class="lx-field" data-field="pw">
+          <label class="lx-field__label" for="lgPw">비밀번호</label>
+          <input class="lx-field__input" id="lgPw" name="pw" type="password"
+                 autocomplete="current-password">
+          <span class="lx-field__rule" aria-hidden="true"></span>
+          <p class="lx-field__msg" id="lgPwMsg" role="alert" hidden></p>
+        </div>
+
+        <label class="lx-check"><input type="checkbox" name="remember"><span class="lx-check__box" aria-hidden="true"></span><span>아이디 저장</span></label>
+
+        <!-- 동사 사슬(카피 덱 §8·§4-1): 로그인하고 시작하기 → 로그인 중… → 시작됨.
+             채운 버튼이 아니라 코너 브래킷 프레임(.lx-cta) — 호버하면 네 코너가 4px 안으로 들어온다. -->
+        <button type="submit" class="lx-cta lg-cta" id="lgSubmit">
+          <span class="lx-cta__t lg-cta__t">로그인하고 시작하기</span>
+          <span class="lx-cta__a" aria-hidden="true">&#8594;</span>
+        </button>
+      </form>
+
+      <nav class="lg-links" data-reveal data-reveal-delay="240">
+        <a class="lx-link" href="find-id.html">아이디 찾기</a><span class="lg-dot" aria-hidden="true">·</span><a class="lx-link" href="find-pw.html">비밀번호 찾기</a><span class="lg-dot" aria-hidden="true">·</span><a class="lx-link" href="signup.html">계정 신청</a>
+      </nav>
+
+      <div class="lg-foot" data-reveal data-reveal-delay="300">
+        <p class="lg-note">계정은 소속 기관 담당자가 발급합니다. 발급 전이면 계정 신청에서 기관·부서를 남겨 주세요.</p>
+        <p class="lx-cap lg-foot__l">운영 LX 한국국토정보공사 공간정보본부 · 문의 plat@lx.or.kr · V-World 정사영상 © 국토교통부</p>
+      </div>
+    </section>
+
+    <!-- ── 우 7/12 — 판(FIG). 어두움은 오직 이 액자 안에서만 나온다. ───────── -->
+    <section class="lg-right lx-c7">
+
+      <p class="lx-plate__cap" id="lgCap">
+        <span class="lx-fig__no">FIG. 01</span>
+        <span class="lx-fig__meta">전주 · LX 본사 · V-World 정사영상 · KST <b class="lx-num" id="lgClock">--:--</b></span>
+        <span class="lx-live lg-live"><i aria-hidden="true"></i>LIVE</span>
+      </p>
+
+      <figure class="lx-plate lg-plate" id="lgPlate" data-cross>
+        <div class="lx-plate__map" id="lgMap" role="img" aria-label="LX 전주 본사 상공 V-World 정사영상"></div>
+
+        <!-- 액자 안 헤어라인 벡터만. 떠 있는 HUD 스티커 없음. -->
+        <span class="lx-bracket lx-bracket--tl" aria-hidden="true"></span>
+        <span class="lx-bracket lx-bracket--tr" aria-hidden="true"></span>
+        <span class="lx-bracket lx-bracket--bl" aria-hidden="true"></span>
+        <span class="lx-bracket lx-bracket--br" aria-hidden="true"></span>
+
+        <!-- 척도: 액자 안 헤어라인 바가 실제로 몇 m 인가(.lx-scalebar) -->
+        <div class="lx-scalebar lg-scale" aria-hidden="true">
+          <span id="lgScaleBar"></span>
+          <b class="lx-num" id="lgScaleTxt">— m</b>
+        </div>
+
+        <!-- 해설 숫자 — 좌표(기준계)와 상태(범위·기준시점). 카피 덱 §8 배경 캡션. -->
+        <div class="lg-read" id="lgRead">
+          <span class="lx-num" id="lgCoord">35.8242, 127.1480 EPSG:4326</span>
+          <span id="lgStatus">대기 중 · 전국 13개 조사 · 최근 분석 2026-08-19 남원</span>
+        </div>
+
+        <p class="lg-fallback" id="lgFallback" hidden></p>
+      </figure>
+
+    </section>
+  </main>
+</div>
+
+<script type="module" src="login.js"></script>
+</body></html>
