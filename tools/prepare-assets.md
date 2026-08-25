@@ -88,6 +88,26 @@ Land-XI 워드마크는 `LAND`(짙은 파랑) → `XI`(시안) 그라디언트�
 
 `--lx-deep` 은 HSL 명도 −25%, `--lx-tint` 는 흰색 92% 혼합으로 파생한다.
 
+### 대비(WCAG 2.1)
+
+92% 틴트 공식은 그대로 두되, **틴트 배경 위 텍스트는 `--lx` 가 아니라 `--lx-deep`** 을 쓴다.
+
+| 조합 | 대비 | AA(4.5:1) |
+| --- | --- | --- |
+| `--lx` `#006DF7` on `--lx-tint` `#EBF3FE` | 4.15:1 | ✗ |
+| `--lx-deep` `#0052B9` on `--lx-tint` `#EBF3FE` | **6.46:1** | ✓ |
+| `--lx` `#006DF7` on 흰색 | 4.64:1 | ✓ (레일 등 흰 바탕은 `--lx` 유지) |
+| `--lx-deep` `#0052B9` on 흰색 | 7.22:1 | ✓ (AAA) |
+
+적용: `shell.css` 의 `.ctx__tag`, `.secondary__item[aria-current=page]`.
+
+### 색의 단일 출처
+
+CI 색을 바꿀 때 JS 하드코딩이 따라오지 않는 사고를 막으려고, 지도·상태색은 리터럴 대신
+`landxi/assets/js/tokens.js` 의 `cssVar(name, fallback)` 로 tokens.css 에서 읽는다.
+`--s-info` 는 `var(--lx)` 로 주색에 묶여 있다. 리터럴은 DOM 이 없는 환경(node:test)의
+폴백일 뿐이며, `tests/unit/status.test.mjs` 가 리터럴과 tokens.css 값의 일치를 검사한다.
+
 ## 중단된 실행에서 이어 돌리기
 
 멱등성은 "산출물 파일이 있으면 건너뛴다" 만으로는 부족하다. 실행이 중간에 죽으면

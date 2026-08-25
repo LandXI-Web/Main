@@ -2,6 +2,7 @@
 // design-review/03-lx-interactive.html 의 makeWorld/makeDetections/renderer 를 모듈로 옮기고
 // MapLibre 경로와 동일한 LXMap 시그니처로 감쌌다.
 import { tileURL } from './style.js';
+import { cssVar } from '../tokens.js';
 
 const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -48,13 +49,24 @@ export function makeDetections(w, seed) {
   return d;
 }
 
-const AI = '#0FA9A0', LX = '#2457D6';
-const KIND = {
-  detection: { fill: 'rgba(15,169,160,.18)', stroke: AI, width: 1.5, hi: 'rgba(15,169,160,.45)' },
-  extent: { fill: 'rgba(36,87,214,.06)', stroke: 'rgba(36,87,214,.35)', width: 1, hi: 'rgba(36,87,214,.18)' },
-  coverage: { fill: 'rgba(36,87,214,.30)', stroke: 'rgba(36,87,214,.30)', width: 1, hi: 'rgba(36,87,214,.50)' },
-  org: { fill: LX, stroke: '#FFFFFF', width: 2, hi: LX },
-};
+/**
+ * 레이어 팔레트를 tokens.css 에서 만든다(리터럴은 폴백). 지도 하나당 한 번만 계산한다.
+ * `--lx-rgb` 를 쓰는 이유는 extent/coverage 가 같은 파랑의 알파 변주이기 때문이다.
+ */
+function makePalette() {
+  const ai = cssVar('--ai', '#0FA9A0'), lx = cssVar('--lx', '#006DF7');
+  const lxRGB = cssVar('--lx-rgb', '0,109,247');
+  const lxA = a => `rgba(${lxRGB},${a})`;
+  return {
+    ai, lxRGB,
+    kinds: {
+      detection: { fill: 'rgba(15,169,160,.18)', stroke: ai, width: 1.5, hi: 'rgba(15,169,160,.45)' },
+      extent: { fill: lxA('.06'), stroke: lxA('.35'), width: 1, hi: lxA('.18') },
+      coverage: { fill: lxA('.30'), stroke: lxA('.30'), width: 1, hi: lxA('.50') },
+      org: { fill: lx, stroke: '#FFFFFF', width: 2, hi: lx },
+    },
+  };
+}
 
 /** GeoJSON → 월드 좌표 피처 목록(Polygon / MultiPolygon / Point). */
 function toFeatures(data, toWorld) {
@@ -96,6 +108,7 @@ export function createFallback(box, o = {}) {
   const cam = { x: c0[0], y: c0[1], z: zFromZoom(o.zoom == null ? 6 : o.zoom), tx: null, ty: null, tz: null };
   const st = { t: 0, ortho: 0, hover: null };
   const layers = new Map(), rasters = new Map(), tileCache = new Map(), handlers = {};
+  const PAL = makePalette(), KIND = PAL.kinds;
   const interactive = o.interactive !== false && o.mode !== 'backdrop';
   let dpr = 1, Wc = 1, Hc = 1, raf = 0, dead = false, last = performance.now(), moved = true;
 
@@ -147,7 +160,7 @@ export function createFallback(box, o = {}) {
       ctx.beginPath(); pts.forEach((s, k) => k ? ctx.lineTo(s[0], s[1]) : ctx.moveTo(s[0], s[1])); ctx.closePath();
       ctx.fillStyle = 'rgba(15,169,160,.12)'; ctx.fill();
       const len = pts.length * 40; ctx.setLineDash([len]); ctx.lineDashOffset = len * (1 - prog);
-      ctx.strokeStyle = AI; ctx.lineWidth = 1.2; ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle = PAL.ai; ctx.lineWidth = 1.2; ctx.stroke(); ctx.setLineDash([]);
     });
     ctx.restore();
   }
@@ -232,7 +245,7 @@ export function createFallback(box, o = {}) {
         ctx.beginPath();
         for (const ring of f.rings) ring.forEach((p, i) => { const s = toS(p[0], p[1]); i ? ctx.lineTo(s[0], s[1]) : ctx.moveTo(s[0], s[1]); });
         ctx.closePath();
-        ctx.fillStyle = cov != null ? 'rgba(36,87,214,' + cov + ')' : (L.paint.fill || (L.filter && on ? k.hi : k.fill));
+        ctx.fillStyle = cov != null ? `rgba(${PAL.lxRGB},${cov})` : (L.paint.fill || (L.filter && on ? k.hi : k.fill));
         ctx.fill();
         ctx.setLineDash([9999]); ctx.lineDashOffset = 9999 * (1 - prog);
         ctx.strokeStyle = L.paint.stroke || k.stroke; ctx.lineWidth = L.paint.width || k.width; ctx.stroke(); ctx.setLineDash([]);

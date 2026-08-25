@@ -201,6 +201,22 @@ test('addRaster: 폴백 캔버스도 같은 타일을 카메라 변환으로 그
   expect(res.headers()['content-type']).toContain('image/webp');
 });
 
+test('지도 org 레이어 색이 tokens.css 의 --lx 를 따라간다', async ({ page }) => {
+  await page.goto('dev/map.html');
+  await page.waitForFunction(() => window.LX?.map?.ready);
+  const lx = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--lx').trim());
+  expect(lx).toBe('#006DF7');
+  await page.evaluate(() => window.LX.map.addGeoJSON('t-org', {
+    type: 'FeatureCollection',
+    features: [{ type: 'Feature', properties: { id: 'a' }, geometry: { type: 'Point', coordinates: [127.3524, 35.5311] } }],
+  }, { kind: 'org' }));
+  if (await page.evaluate(() => window.LX.map.engine === 'maplibre')) {
+    // 옛 파랑(#2457D6)이 하드코딩돼 있으면 여기서 걸린다.
+    expect(await page.evaluate(() => window.LX.map.raw.getPaintProperty('t-org-pt', 'circle-color'))).toBe(lx);
+  }
+  expect(await page.evaluate(() => window.LX.map.getLayer('t-org').kind)).toBe('org');
+});
+
 test('rulebar keeps focus on ⓘ and its scale bar node while the camera moves', async ({ page }) => {
   await page.goto('dev/map.html?engine=fallback');
   await page.waitForFunction(() => window.LX?.map?.ready);

@@ -2,9 +2,12 @@ import { buildStyle, ORTHO_TILES, tileURL } from './style.js';
 import { createFallback } from './fallback.js';
 import { createRulebar } from './rulebar.js';
 import { icon } from '../ui/icon.js';
+import { cssVar } from '../tokens.js';
 
 const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const AI = '#0FA9A0', LX = '#2457D6';
+// 레이어 색은 tokens.css 가 단일 출처(리터럴은 폴백). 지도 생성 시점에 읽으므로
+// CI 색을 바꾸면 지도도 따라온다.
+const AI = () => cssVar('--ai', '#0FA9A0'), LX = () => cssVar('--lx', '#006DF7');
 
 /**
  * 지도 셸. MapLibre 를 먼저 시도하고, 라이브러리·타일 서버가 없거나 8초 안에
@@ -90,9 +93,9 @@ async function maplibre(box, o) {
       map.addSource(id, { type: 'geojson', data: geojson });
       kinds.set(id, kind); data.set(id, geojson);
       if (kind === 'org') {
-        map.addLayer({ id: id + '-pt', type: 'circle', source: id, paint: { 'circle-radius': 6, 'circle-color': LX, 'circle-stroke-color': '#fff', 'circle-stroke-width': 2, ...paint } });
+        map.addLayer({ id: id + '-pt', type: 'circle', source: id, paint: { 'circle-radius': 6, 'circle-color': LX(), 'circle-stroke-color': '#fff', 'circle-stroke-width': 2, ...paint } });
       } else {
-        const color = kind === 'detection' ? AI : LX;
+        const color = kind === 'detection' ? AI() : LX();
         const opacity = kind === 'coverage' ? ['*', 0.5, ['coalesce', ['get', 'coverage'], 0]] : baseOpacity(kind);
         map.addLayer({ id: id + '-fill', type: 'fill', source: id, paint: { 'fill-color': color, 'fill-opacity': opacity, ...paint } });
         map.addLayer({ id: id + '-line', type: 'line', source: id, paint: { 'line-color': color, 'line-width': 1.5, 'line-opacity': kind === 'extent' ? 0.35 : 1 } });
