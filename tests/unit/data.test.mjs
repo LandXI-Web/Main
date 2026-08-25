@@ -172,8 +172,10 @@ test('13 home services: unique ids, 4 real assets, sane coordinates', () => {
     assert.match(s.color, /^var\(--[a-z-]+\)$/);
   }
   const real = SERVICES.filter(s => s.real);
-  assert.deepEqual(real.map(s => s.id).sort(), ['change', 'farmland', 'marine', 'pothole']);
-  assert.deepEqual(real.map(s => s.story).sort(), ['jeju', 'kuksan', 'marine', 'namwon']);
+  // greenhouse 는 25년 남원 비닐하우스 GPKG(1,674필지 / 9,664동) 가 붙으면서 real 로 승격됐다.
+  // story 키는 아직 'generic' 이다 — 스토리 카피가 준비되면 별도 키를 부여할 것.
+  assert.deepEqual(real.map(s => s.id).sort(), ['change', 'farmland', 'greenhouse', 'marine', 'pothole']);
+  assert.deepEqual(real.map(s => s.story).sort(), ['generic', 'jeju', 'kuksan', 'marine', 'namwon']);
   assert.equal(SERVICES.find(s => s.id === 'marine').count, 38057);
   assert.equal(serviceById('marine').id, 'marine');
   assert.equal(serviceById('nope'), null);
