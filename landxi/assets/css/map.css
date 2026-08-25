@@ -1,0 +1,48 @@
+/* 지도 셸 — 캔버스/배경 모드, 도구 스트립, 상태 눈금줄 */
+.lxmap{position:absolute;inset:0;overflow:hidden;background:var(--mist)}
+.lxmap__canvas{position:absolute;inset:0}
+.lxmap__canvas canvas{outline:0;display:block}
+.lxmap__fallback{position:absolute;inset:0}
+.lxmap .maplibregl-ctrl-attrib{font-size:11px;background:rgba(255,255,255,.6)}
+
+.lxmap--backdrop{pointer-events:none;filter:saturate(.85)}
+.lxmap--backdrop::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(233,238,241,.35),rgba(233,238,241,.6))}
+
+.lxmap__tools{position:absolute;right:16px;bottom:calc(var(--rulebar-h) + 16px);display:flex;flex-direction:column;gap:6px;z-index:10}
+.lxmap__tool,.lxmap__zoom button{width:36px;height:36px;border-radius:var(--r-card);background:var(--glass);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--glass-border);box-shadow:var(--sh-card);display:grid;place-items:center;color:var(--ink-2);cursor:pointer;transition:color var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease)}
+.lxmap__tool:hover,.lxmap__zoom button:hover{color:var(--lx);box-shadow:var(--sh-float)}
+.lxmap__tool:disabled{opacity:.4;cursor:not-allowed}
+.lxmap__tool:focus-visible,.lxmap__zoom button:focus-visible{outline:2px solid var(--lx);outline-offset:2px}
+.lxmap__zoom{display:flex;flex-direction:column;gap:2px;margin-top:6px}
+.lxmap__zoom button{font-size:16px;font-family:var(--f-mono);line-height:1}
+
+.lxmap__ortho{position:absolute;right:44px;bottom:0;width:180px;display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--glass);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--glass-border);border-radius:var(--r-card);box-shadow:var(--sh-card);font-size:var(--fs-12);color:var(--ink-2)}
+.lxmap__ortho input{flex:1;accent-color:var(--lx)}
+.lxmap__ortho[hidden]{display:none}
+
+.rulebar{position:absolute;left:0;right:0;bottom:0;height:var(--rulebar-h);z-index:10;display:flex;align-items:center;gap:22px;padding:0 16px;background:var(--glass);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--line);font-size:var(--fs-12);color:var(--ink-2)}
+.rulebar b{color:var(--ink);font-weight:500}
+.rulebar__ai{color:var(--ai)}
+.rulebar__spacer{flex:1}
+.rulebar__scale{display:flex;align-items:center;gap:6px}
+.rulebar__scale i{width:var(--tick,80px);height:6px;border:1px solid var(--ink);border-top:0;background:var(--rule);background-size:var(--rule-size);background-repeat:repeat-x;background-position:0 100%,0 100%;transition:width var(--t-base) var(--ease)}
+.rulebar__info{border:0;background:none;color:var(--ink-3);cursor:pointer;font-size:var(--fs-14);line-height:1;padding:2px 4px;border-radius:var(--r-ctl)}
+.rulebar__info:hover{color:var(--lx)}
+.rulebar__info:focus-visible{outline:2px solid var(--lx);outline-offset:2px}
+
+/* 눈금줄 ⓘ 다이얼로그의 정부 표준 사이트 정보 */
+.siteinfo{font-size:var(--fs-13);color:var(--ink-2)}
+.siteinfo__links{display:flex;flex-wrap:wrap;gap:6px 16px;list-style:none;margin:0 0 12px;padding:0}
+.siteinfo__links a{color:var(--ink-2);text-decoration:none;border-bottom:1px solid var(--line-strong)}
+.siteinfo__links a:hover{color:var(--lx)}
+.siteinfo__links b{color:var(--ink);font-weight:600}
+.siteinfo p{margin:0 0 4px}
+.siteinfo__copy{margin-top:12px;color:var(--ink-3);font-size:var(--fs-12)}
+
+/* 지도 캔버스형 페이지의 플로팅 패널 자리 */
+.map-panel{position:absolute;top:16px;left:16px;bottom:calc(var(--rulebar-h) + 16px);width:var(--panel-w);z-index:12;display:flex;flex-direction:column;overflow:hidden}
+.map-panel--detail{left:calc(var(--panel-w) + 28px)}
+
+@media (prefers-reduced-motion: reduce){
+  .rulebar__scale i,.lxmap__tool,.lxmap__zoom button{transition:none}
+}
