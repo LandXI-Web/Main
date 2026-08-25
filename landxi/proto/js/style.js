@@ -90,13 +90,16 @@ export function buildStyle(v) {
           5.2, 'rgba(2,8,22,0)', 6.4, 'rgba(24,44,74,1)', 11, 'rgba(74,104,144,1)'] } },
 
       { id: 'eox', type: 'raster', source: 'eox', paint: {
-        'raster-fade-duration': 300,
+        // 페이드를 두면 새 타일이 도착해도 흐린 부모 타일이 남아 강하 중 뭉개져 보인다.
+        'raster-fade-duration': 0,
         // EOX 는 z14.5 까지 밑에 깔아둔다. V-World 타일이 늦게 도착해도 배경색 구멍이 생기지 않는다.
-        'raster-opacity': ['interpolate', ['linear'], ['zoom'], 12.8, 1, 14.6, 0],
+        // EOX 는 우리 정사영상이 화면을 덮을 때까지 밑에 깔아둔다. V-World 는 그 위에 불투명하게
+        // 얹히므로 평소엔 보이지 않고, 타일이 늦게 오는 순간에만 배경색 구멍 대신 이 영상이 보인다.
+        'raster-opacity': ['interpolate', ['linear'], ['zoom'], 16.4, 1, 17.6, 0],
         'raster-saturation': 0.1, 'raster-contrast': 0.06 } },
 
       { id: 'vsat', type: 'raster', source: 'vsat', paint: {
-        'raster-fade-duration': 300,
+        'raster-fade-duration': 0,
         'raster-opacity': ['interpolate', ['linear'], ['zoom'], 9.6, 0, 11.2, 1],
         'raster-saturation': 0.06, 'raster-contrast': 0.04 } },
 

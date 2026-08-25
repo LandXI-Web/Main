@@ -127,7 +127,7 @@ body.is-light #tier{text-shadow:0 1px 2px rgba(255,255,255,.75)}
 .cp{position:absolute; left:0; bottom:0; width:100%; opacity:0; will-change:opacity}
 .cp h1{
   margin:0 0 14px; font-family:var(--f-display); font-weight:900;
-  font-size:clamp(32px,3.9vw,54px); line-height:1.02; letter-spacing:-.024em;
+  font-size:clamp(32px,3.9vw,54px); line-height:1.02; letter-spacing:-.044em;
   color:var(--ink-now); text-wrap:balance;
   text-shadow:0 2px 18px rgba(0,8,22,.42);
 }
@@ -168,8 +168,13 @@ body.is-light #chips li{background:rgba(255,255,255,.72)}
 #tl-foot{margin-top:6px; font-size:9.5px; color:var(--ink3-now)}
 
 /* 결과 패널 */
-#result{position:absolute; right:30px; top:238px; bottom:74px; width:352px; padding:18px 18px 16px;
-  overflow:auto; scrollbar-width:thin}
+#result{position:absolute; right:30px; top:216px; width:352px; padding:18px 18px 24px;
+  max-height:calc(100vh - 272px); overflow:auto; overscroll-behavior:contain; scrollbar-width:thin}
+#result::-webkit-scrollbar{width:6px}
+#result::-webkit-scrollbar-thumb{background:var(--glassb-now); border-radius:3px}
+/* 보기 토글은 항상 손에 닿아야 한다 — 패널이 스크롤돼도 바닥에 붙는다 */
+#rview-seg{position:sticky; bottom:-8px; z-index:2; margin-top:12px;
+  box-shadow:0 -10px 14px -6px var(--glass-now)}
 #res-back{display:inline-flex; align-items:center; background:none; border:0; padding:0 0 12px;
   color:var(--ink3-now); font-family:var(--f-mono); font-size:10.5px; cursor:pointer;
   transition:color .1s var(--e-snap)}
@@ -257,6 +262,16 @@ input[type=range]:focus-visible{outline:2px solid var(--lx-lit); outline-offset:
 #swipe-grip:focus-visible{outline:2px solid var(--lx-lit); outline-offset:3px}
 .swipe-tag{position:absolute; top:14px; font-family:var(--f-mono); font-size:10px; letter-spacing:.08em;
   color:#fff; background:rgba(2,8,20,.62); padding:4px 8px; border-radius:3px}
+
+/* 타일 수신 인디케이터 — 강하 중 타일이 못 따라올 때만 뜬다 */
+#recv{position:absolute; left:50%; transform:translateX(-50%); bottom:150px; margin:0;
+  display:flex; align-items:center; gap:6px; font-size:10px; letter-spacing:.08em;
+  color:var(--ink2-now); background:var(--glass-now); border:1px solid var(--glassb-now);
+  padding:6px 12px; border-radius:3px; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px)}
+#recv i{width:5px; height:9px; background:var(--ink3-now); display:block; animation:recv 1s infinite}
+#recv i:nth-child(2){animation-delay:.12s} #recv i:nth-child(3){animation-delay:.24s}
+#recv i:nth-child(4){animation-delay:.36s}
+@keyframes recv{0%,100%{background:var(--ink3-now)}40%{background:var(--lx-lit)}}
 
 /* 진행 레일 / 티어 */
 #foot{position:absolute; right:30px; bottom:24px; display:flex; align-items:center; gap:16px}

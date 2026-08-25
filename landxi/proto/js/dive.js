@@ -1,4 +1,4 @@
-import { resolveVWorld } from './sources.js';
+import { resolveVWorld, EOX as EOX_TPL, DEM as DEM_TPL } from './sources.js';
 import { buildStyle, AOI, ORTHO_LAYERS } from './style.js';
 import { cameraAt, CHAPTERS } from './camera.js';
 import { makeClouds } from './clouds.js';
@@ -208,6 +208,57 @@ const dataReady = (async () => {
   } catch (e) { errors.push('data: ' + e.message); }
 })();
 
+/* ── 5b. 강하 경로 타일 프리워밍 ────────────────────────
+   챕터 4 강하는 z8.5 → z18 을 3초 만에 통과한다. 그 사이 V-World/DEM 타일이 도착하지 못하면
+   MapLibre 가 저줌 타일을 확대해 덮으므로 "1.5cm 까지"를 말하는 화면이 뭉개진 텍스처가 된다.
+   그래서 챕터 3(전국 점등) 동안 네트워크가 한가할 때 강하 키프레임 경로의 타일을 미리 받아둔다.
+   Image() 와 MapLibre 는 같은 HTTP 캐시를 쓰므로 그대로 캐시 히트가 된다. */
+const lon2tx = (l, z) => Math.floor((l + 180) / 360 * Math.pow(2, z));
+const lat2ty = (a, z) => Math.floor((1 - Math.log(Math.tan(a * D2R) + 1 / Math.cos(a * D2R)) / Math.PI) / 2 * Math.pow(2, z));
+const fill = (tpl, z, x, y) => tpl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+
+// 프리워밍 대상은 손으로 찍지 않고 **카메라 트랙에서 직접 뽑는다**.
+// 중심을 눈대중으로 넣으면 이징 때문에 실제 경로와 어긋나 하나도 안 맞는다(실측).
+// MapLibre 는 256px 소스에 대해 z = round(mapZoom + 1) 타일을 요청한다.
+function prewarmURLs() {
+  const out = [];
+  const push = (tpl, z, x, y, r) => {
+    for (let i = x - r; i <= x + r; i++) for (let j = y - r; j <= y + r; j++) out.push(fill(tpl, z, i, j));
+  };
+  for (let q = 0.545; q <= 0.806; q += 0.005) {
+    const c = cameraAt(q);
+    const tz = Math.max(6, Math.min(v.maxzoom, Math.round(c.zoom + 1)));
+    const x = lon2tx(c.center[0], tz), y = lat2ty(c.center[1], tz);
+    push(v.sat, tz, x, y, tz >= 14 ? 2 : 1);
+    if (tz <= 12) {
+      const dz = Math.max(6, Math.min(12, Math.round(c.zoom)));
+      push(DEM_TPL, dz, lon2tx(c.center[0], dz), lat2ty(c.center[1], dz), 1);
+    }
+    if (tz <= 15) {
+      const ez = Math.max(6, Math.min(14, tz));
+      push(EOX_TPL, ez, lon2tx(c.center[0], ez), lat2ty(c.center[1], ez), 1);
+    }
+  }
+  return [...new Set(out)];
+}
+let warmed = false, warmDone = 0, warmTotal = 0;
+function prewarmDescent() {
+  if (warmed) return;
+  warmed = true;
+  const urls = prewarmURLs();
+  warmTotal = urls.length;
+  let i = 0;
+  const LANES = 6;   // 지도 자신의 요청을 완전히 굶기지 않는 선
+  const next = () => {
+    if (i >= urls.length) return;
+    const u = urls[i++];
+    const img = new Image();
+    img.onload = img.onerror = () => { warmDone++; next(); };
+    img.src = u;
+  };
+  for (let k = 0; k < LANES; k++) next();
+}
+
 /* ── 6. 투영 전환 + deck.gl 아크 ────────────────────────── */
 let projGlobe = true;
 function setProj(wantGlobe) {
@@ -352,7 +403,9 @@ lenis.on('scroll', ScrollTrigger.update);
 gsap.ticker.add((t) => lenis.raf(t * 1000));
 gsap.ticker.lagSmoothing(0);
 
-let P = 0;
+let P = 0;     // 스크롤 원본
+let PA = 0;    // 실제 적용값 — 타일이 못 따라오면 전진 속도를 제한한다
+let throttleSince = 0;
 ScrollTrigger.create({
   trigger: '#scroller', start: 'top top', end: 'bottom bottom',
   scrub: TIER !== 'still',
@@ -360,7 +413,7 @@ ScrollTrigger.create({
 });
 
 /* ── 10. 장면 ───────────────────────────────────────────── */
-let mode = 'scroll', terrainOn = false, scanned = false, autoStarted = false, hovered = null;
+let mode = 'scroll', terrainOn = false, lastExag = 0, scanned = false, autoStarted = false, hovered = null;
 let gsdOverride = '1.54 cm', epochDate = '2025-08', hudCtx = null;
 
 const LIGHT_STORY = new Set(['pothole', 'change', 'farmland']);
@@ -484,6 +537,40 @@ function applyChapter45(p) {
   if (!on && autoStarted && p < 0.78) { autoStarted = false; swipe.hide(); }
 }
 
+// 타일이 도착하지 못하면 강하 구간에서 p 의 전진 속도를 제한한다.
+// 완전히 멈추지는 않는다(정지는 버그로 읽힌다) — 프레임당 0.0009 로 기어가며 타일을 기다린다.
+// areTilesLoaded() 는 모든 소스를 보므로 강하 중엔 항상 false 다. 그 줌에서 화면을 책임지는
+// 소스 하나만 본다: z<13 은 EOX(빠르고 이음매 없음), z≥13 은 V-World.
+function baseReady() {
+  const z = map.getZoom();
+  const id = z < 13.2 ? 'eox' : 'vsat';
+  try { return map.isSourceLoaded(id); } catch (e) { return true; }
+}
+let graceUntil = 0;
+// 강하 구간 최소 소요시간 — 스크롤을 아무리 빨리 굴려도 z6.8→z18.2 를 3초 안에 통과하지 못한다.
+// (a) 연출상 이 구간이 이 페이지의 하이라이트이고, (b) 뷰포트가 천천히 변해야 타일 큐가 비워진다.
+const DESCENT_STEP = 0.0019;   // ≈ 0.11 p/s @60fps → 0.47–0.84 를 최소 3.2초
+function gate(now) {
+  const inDescent = P > 0.47 && P < 0.84;
+  if (!inDescent || P <= PA) {
+    if (throttleSince) { throttleSince = 0; graceUntil = now + 260; $('#recv').hidden = true; }
+    PA = P;
+    return;
+  }
+  const ready = now < graceUntil || baseReady();
+  if (ready) {
+    if (throttleSince) { throttleSince = 0; graceUntil = now + 260; $('#recv').hidden = true; }
+    PA = Math.min(P, PA + DESCENT_STEP);
+    return;
+  }
+  // **완전히 멈춘다.** 조금씩 기어가면 매 프레임 타일 세트가 바뀌어 큐가 영원히 비지 않는다(실측).
+  // 카메라를 세워야 MapLibre 가 큐를 비우고, 비는 순간 바로 풀린다.
+  if (!throttleSince) throttleSince = now;
+  const stalled = now - throttleSince;
+  $('#recv').hidden = stalled < 300;
+  if (stalled > 12000) { PA = P; throttleSince = 0; graceUntil = now + 400; $('#recv').hidden = true; }
+}
+
 function apply(p) {
   if (mode === 'explore') {
     setGrade(0.95); updateHUD(p); clouds.update(-1);
@@ -499,12 +586,17 @@ function apply(p) {
   setProj(p < 0.255);
   ensureOverlay(!projGlobe && p > 0.30 && p < 0.56);
 
-  const wantTerrain = TIER === 'full' && p > 0.578 && p < 0.778;
-  if (wantTerrain !== terrainOn) {
-    terrainOn = wantTerrain;
-    try { map.setTerrain(wantTerrain ? { source: 'dem2', exaggeration: 1.4 } : null); } catch (e) { errors.push('terrain'); }
+  // 지형은 DEM maxzoom(12) 근처까지만 켠다.
+  // 그 위에서는 MapLibre 가 지형 메시에 드레이프한 텍스처를 확대해 쓰기 때문에
+  // **영상만 뭉개지고 라벨은 선명한** 특유의 스미어가 생긴다(실측 A/B 확인).
+  // 그래서 z13 부근에서 과장을 0 으로 부드럽게 눕힌 뒤 끈다 — 시각적 튐이 없다.
+  const exag = TIER === 'full' && p > 0.578 ? 1.4 * (1 - seg(p, 0.652, 0.698)) : 0;
+  const wantTerrain = exag > 0.02;
+  if (wantTerrain !== terrainOn || (wantTerrain && Math.abs(exag - lastExag) > 0.035)) {
+    terrainOn = wantTerrain; lastExag = exag;
+    try { map.setTerrain(wantTerrain ? { source: 'dem2', exaggeration: exag } : null); } catch (e) { errors.push('terrain'); }
   }
-  vis('hillshade', p > 0.235 && p < 0.83);
+  vis('hillshade', p > 0.235 && p < 0.72);
 
   const silhouette = seg(p, 0.275, 0.35) * (1 - seg(p, 0.525, 0.585));
   op('coast-glow', 0.5 * silhouette, 'line-opacity');
@@ -522,7 +614,7 @@ function apply(p) {
 
   if (!autoStarted) {
     ORTHO_LAYERS.forEach((id) => op(id, 0));
-    op('o_namwon_2508', seg(p, 0.735, 0.80));
+    op('o_namwon_2508', seg(p, 0.715, 0.792));
   }
 
   setGrade(p); setNight(p); applyCopy(p); applyChapter2(p); applyChapter45(p);
@@ -630,7 +722,8 @@ function loop() {
     fps = frames / ((now - fpsT0) / 1000);
     frames = 0; fpsT0 = now;
     $('#tier').textContent = `tier ${TIER} · ${fps.toFixed(0)} fps`;
-    if (!graded && now - T_BOOT > 2600) {
+    const warmBusy = warmTotal && warmDone < warmTotal * 0.92 && now - T_BOOT < 26000;
+    if (!graded && !warmBusy && now - T_BOOT > 6500) {
       graded = true;
       if (fps < 24 && TIER === 'full') {
         TIER = 'lite';
@@ -640,7 +733,8 @@ function loop() {
       }
     }
   }
-  apply(P);
+  gate(now);
+  apply(PA);
   tickCursor(); tickMag();
 }
 
@@ -652,23 +746,36 @@ const api = {
     const max = Math.max(1, document.documentElement.scrollHeight - innerHeight);
     lenis.scrollTo(P * max, { immediate: true, force: true, lock: true });
     ScrollTrigger.update();
-    P = clamp01(p);
-    apply(P);
+    P = PA = clamp01(p);
+    throttleSince = 0;
+    $('#recv').hidden = true;
+    apply(PA);
   },
   suppressAuto: false,
+  get terrain() { return { on: terrainOn, exag: lastExag }; },
   // 프레임 단위 촬영용 — p 를 직접 세팅한다(rAF 루프가 다음 프레임에 반영).
-  set(p) { P = clamp01(p); if (mode === 'scroll') apply(P); },
+  set(p) { P = PA = clamp01(p); if (mode === 'scroll') apply(PA); },
+  // 실제 스크롤처럼 원본 p 만 밀어 넣는다(타일 게이트가 그대로 작동한다).
+  setRaw(p) { P = clamp01(p); },
+  ramp(from, to, sec) {
+    return new Promise((res) => {
+      P = PA = clamp01(from);
+      const o = { v: from };
+      gsap.to(o, { v: to, duration: sec, ease: 'none', onUpdate: () => { P = o.v; }, onComplete: res });
+    });
+  },
   // 데모/영상 촬영용 — 스크롤 대신 p 를 직접 시간으로 흘린다.
   demo(sec = 30) {
     return new Promise((res) => {
       if (mode === 'explore') closeStory();
       const o = { v: 0 };
-      P = 0; scanned = false; autoStarted = false; apply(0);
+      P = PA = 0; scanned = false; autoStarted = false; apply(0);
       gsap.to(o, { v: 1, duration: sec, ease: 'none', onUpdate: () => { P = o.v; }, onComplete: res });
     });
   },
   open: openStory, close: closeStory, ready: dataReady,
-  get p() { return P; }, get fps() { return fps; }, get tier() { return TIER; },
+  get p() { return PA; }, get raw() { return P; }, get warm() { return [warmDone, warmTotal]; },
+  get fps() { return fps; }, get tier() { return TIER; },
   get errors() { return errors.slice(); },
   map, stories, swipe,
 };
@@ -677,4 +784,6 @@ window.__dive = api;
 const T_BOOT = performance.now();
 await PRE.finish();
 loop();
+// 궤도 챕터는 EOX z0–4 만 쓰므로 네트워크가 한가하다. 이때 강하 경로 타일을 미리 받아둔다.
+setTimeout(prewarmDescent, 1200);
 document.body.dataset.ready = '1';

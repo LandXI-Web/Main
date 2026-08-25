@@ -93,6 +93,7 @@ export function makeStories(ctx) {
         <button type="button" data-v="wide" aria-pressed="true">전역 · 분포</button>
         <button type="button" data-v="close" aria-pressed="false">정밀 · 입체</button>
       </div>`;
+    els.panel.scrollTop = 0;
     els.foot.textContent = (r.what || '') + ' · 원본 ' + (r.src || 'GPKG') + ' (EPSG:5186 → 4326 변환본). 높이 = 신뢰도.';
 
     const sl = els.ctl.querySelector('#rconf');
