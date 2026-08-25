@@ -34,6 +34,81 @@ async function mosaic(tpl, z, x0, x1, y0, y1, ts = 256, conc = 24) {
   return c;
 }
 
+// V-World 위성은 한국 영역 밖(및 일부 해상)에 실촬영 대신 매끈한 저해상 채움 타일을 준다.
+// 그 경계가 타일 단위 계단으로 보이므로, 분산이 낮은 '무데이터' 타일은 지워서
+// 셰이더가 저해상 원본(EOX)을 쓰게 한다.
+function dropFlatTiles(src, ts = 256, sdMin = 7) {
+  const W = src.width, H = src.height, g = src.getContext('2d');
+  const img = g.getImageData(0, 0, W, H), d = img.data;
+  const nx = Math.ceil(W / ts), ny = Math.ceil(H / ts);
+  let dropped = 0;
+  for (let ty = 0; ty < ny; ty++) for (let tx = 0; tx < nx; tx++) {
+    let s = 0, s2 = 0, n = 0;
+    const x1 = Math.min(W, (tx + 1) * ts), y1 = Math.min(H, (ty + 1) * ts);
+    for (let y = ty * ts; y < y1; y += 3) for (let x = tx * ts; x < x1; x += 3) {
+      const i = (y * W + x) * 4;
+      const l = d[i] * 0.2126 + d[i + 1] * 0.7152 + d[i + 2] * 0.0722;
+      s += l; s2 += l * l; n++;
+    }
+    if (!n) continue;
+    const m = s / n, sd = Math.sqrt(Math.max(0, s2 / n - m * m));
+    if (sd >= sdMin) continue;
+    dropped++;
+    for (let y = ty * ts; y < y1; y++) for (let x = tx * ts; x < x1; x++) {
+      const i = (y * W + x) * 4; d[i] = d[i + 1] = d[i + 2] = 0;
+    }
+  }
+  g.putImageData(img, 0, 0);
+  log('  dropFlatTiles ' + dropped + '/' + (nx * ny) + ' 무데이터 타일 제거');
+  return src;
+}
+
+// V-World 위성 모자이크는 타일마다 촬영/보정 노출이 달라 바다 위에 체크무늬가 남는다.
+// 타일 평균 휘도로 저주파 보정장을 만들어(쌍선형 확대) 나눠 주면 이음매가 사라진다.
+function flattenTiles(src, ts = 256) {
+  const W = src.width, H = src.height, g = src.getContext('2d');
+  const img = g.getImageData(0, 0, W, H), d = img.data;
+  const nx = Math.ceil(W / ts), ny = Math.ceil(H / ts);
+  const small = cv(nx, ny), sg = small.getContext('2d');
+  const sd = sg.createImageData(nx, ny);
+  let gSum = 0, gN = 0;
+  for (let ty = 0; ty < ny; ty++) for (let tx = 0; tx < nx; tx++) {
+    let sum = 0, n = 0;
+    for (let y = ty * ts; y < Math.min(H, (ty + 1) * ts); y += 4)
+      for (let x = tx * ts; x < Math.min(W, (tx + 1) * ts); x += 4) {
+        const i = (y * W + x) * 4;
+        const l = d[i] * 0.2126 + d[i + 1] * 0.7152 + d[i + 2] * 0.0722;
+        if (l > 3) { sum += l; n++; }
+      }
+    const m = n > 64 ? sum / n : -1;
+    const k = (ty * nx + tx) * 4;
+    sd.data[k] = sd.data[k + 1] = sd.data[k + 2] = m < 0 ? 0 : Math.min(255, Math.round(m));
+    sd.data[k + 3] = 255;
+    if (m > 0) { gSum += m; gN++; }
+  }
+  if (!gN) return src;
+  const gMean = gSum / gN;
+  // 빈 타일(-1)은 전역 평균으로 메워 보정장이 튀지 않게 한다
+  for (let k = 0; k < sd.data.length; k += 4)
+    if (sd.data[k] === 0) sd.data[k] = sd.data[k + 1] = sd.data[k + 2] = Math.round(gMean);
+  sg.putImageData(sd, 0, 0);
+
+  const field = cv(W, H), fg = field.getContext('2d');
+  fg.imageSmoothingEnabled = true; fg.imageSmoothingQuality = 'high';
+  fg.drawImage(small, 0, 0, nx, ny, -ts / 2, -ts / 2, W + ts, H + ts);   // 타일 중심 정렬
+  const fd = fg.getImageData(0, 0, W, H).data;
+  for (let i = 0; i < d.length; i += 4) {
+    const f = fd[i] || gMean;
+    const gain = Math.max(0.72, Math.min(1.38, gMean / f));
+    d[i] = Math.min(255, d[i] * gain);
+    d[i + 1] = Math.min(255, d[i + 1] * gain);
+    d[i + 2] = Math.min(255, d[i + 2] * gain);
+  }
+  g.putImageData(img, 0, 0);
+  log('  flattenTiles ' + nx + 'x' + ny + ' mean ' + gMean.toFixed(1));
+  return src;
+}
+
 // 전지구 머케이터(±85.051°) 모자이크 → 등장방형(equirect, ±90°)
 function toEquirect(src, W, H) {
   const out = cv(W, H), g = out.getContext('2d');
@@ -96,11 +171,10 @@ window.build = {
     const blur = (src) => { const o = cv(2048, 1024), g2 = o.getContext('2d'); g2.filter = 'blur(1.2px)'; g2.drawImage(src, 0, 0, 2048, 1024); return o; };
     return { bump: jpg(bump, 0.85), spec: jpg(blur(spec), 0.85) };
   },
-  async korea() {                                     // 한반도 지역 고해상 패치 (V-World 위성 z8)
-    const z = 8, b = [122, 32, 133, 40];               // [w,s,e,n]
+  async korea(z = 8, b = [122, 32, 133, 40]) {        // 한반도 지역 고해상 패치 (V-World 위성)
     const x0 = Math.floor(lonTile(b[0], z)), x1 = Math.ceil(lonTile(b[2], z)) - 1;
     const y0 = Math.floor(latTile(b[3], z)), y1 = Math.ceil(latTile(b[1], z)) - 1;
-    const m = await mosaic(SRC.vsat, z, x0, x1, y0, y1);
+    const m = flattenTiles(dropFlatTiles(await mosaic(SRC.vsat, z, x0, x1, y0, y1)));
     const bounds = [tileLon(x0, z), tileLat(y1 + 1, z), tileLon(x1 + 1, z), tileLat(y0, z)];
     log('korea ' + m.width + 'x' + m.height + ' bounds ' + bounds.map(v => v.toFixed(3)));
     // 구면 셰이더에서 등장방형 uv 로 샘플하려면 위도 방향을 선형(equirect)으로 다시 편다.

@@ -1,0 +1,177 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Land-XI — 스크럽 비행 · 궤도에서 여수까지</title>
+<meta name="description" content="스크롤이 필름의 재생 위치를 고른다. 6개 레그, 23초, 하나의 카메라. 궤도 → 성층운 → 한반도 → 남원 → 여수, 그리고 살아 있는 지도로의 인계.">
+<link rel="icon" href="../../assets/images/favicon_landxi.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
+<link rel="stylesheet" href="../system.css">
+<link rel="stylesheet" href="../vendor/scrollcraft/scrollcraft.css">
+<link rel="stylesheet" href="scrub.css">
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<script src="../vendor/scrollcraft/scrollcraft.js"></script>
+<script type="module" src="scrub.js"></script>
+</head><body class="lx sb" data-colorway="light">
+
+<a class="lx-skip" href="#sb-legend">본문으로 건너뛰기</a>
+
+<!-- ═══ 마스트헤드 — 이 화면의 유일한 크롬. 흰 종이·헤어라인 하나(79px) ═════ -->
+<header class="lx-masthead sb-mast">
+  <div class="lx-grid lx-masthead__in">
+    <a class="lx-masthead__mark" href="#top">LAND-XI</a>
+    <nav class="lx-masthead__nav" aria-label="주요">
+      <a class="lx-nav lx-link" href="../system.html">체계</a>
+      <a class="lx-nav lx-link" href="../dashboard.html">리포트</a>
+      <a class="lx-nav lx-link" href="../workflow.html">워크플로우</a>
+    </nav>
+    <div class="lx-masthead__meta">
+      <span class="lx-cap sb-mast__cap">스크럽 비행 · 필름 <span class="lx-num">23.0</span>초 · <span class="lx-num">6</span>레그</span>
+      <span class="lx-live"><i></i>LIVE</span>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ 월드플라이트 ═════════════════════════════════════════════════════════
+     문서 흐름에 있는 것은 스페이서 하나뿐이다(worldflight.md §8 Hard rules #1).
+     무대는 position:fixed 하나, 6개 레그가 전부 동시에 마운트된 채로 남는다.
+     src 는 절대 교체하지 않는다 — src 스왑 = 검은 프레임 = 이 모드가 없애려는 컷.
+  ══════════════════════════════════════════════════════════════════════════ -->
+<div id="top" data-sc-mode="worldflight" data-sc-seam="0.16" data-sc-lerp="0.12">
+
+  <div class="sb-world" data-sc-world>
+
+    <div data-sc-segment data-sc-w="1.116" data-sc-linger="0.22" data-sc-waypoint="궤도">
+      <img class="sc-world__poster" src="/landxi/assets/proto/film/legs/leg_01.webp" alt="" decoding="async">
+      <video data-sc-src="/landxi/assets/proto/film/legs/leg_01.mp4"
+             data-sc-src-mobile="/landxi/assets/proto/film/legs/leg_01-m.mp4"></video>
+    </div>
+
+    <div data-sc-segment data-sc-w="0.794" data-sc-linger="0.28" data-sc-waypoint="성층운">
+      <img class="sc-world__poster" src="/landxi/assets/proto/film/legs/leg_02.webp" alt="" decoding="async">
+      <video data-sc-src="/landxi/assets/proto/film/legs/leg_02.mp4"
+             data-sc-src-mobile="/landxi/assets/proto/film/legs/leg_02-m.mp4"></video>
+    </div>
+
+    <div data-sc-segment data-sc-w="0.706" data-sc-linger="0.30" data-sc-waypoint="한반도">
+      <img class="sc-world__poster" src="/landxi/assets/proto/film/legs/leg_03.webp" alt="" decoding="async">
+      <video data-sc-src="/landxi/assets/proto/film/legs/leg_03.mp4"
+             data-sc-src-mobile="/landxi/assets/proto/film/legs/leg_03-m.mp4"></video>
+    </div>
+
+    <div data-sc-segment data-sc-w="0.576" data-sc-linger="0.24" data-sc-waypoint="남원">
+      <img class="sc-world__poster" src="/landxi/assets/proto/film/legs/leg_04.webp" alt="" decoding="async">
+      <video data-sc-src="/landxi/assets/proto/film/legs/leg_04.mp4"
+             data-sc-src-mobile="/landxi/assets/proto/film/legs/leg_04-m.mp4"></video>
+    </div>
+
+    <div data-sc-segment data-sc-w="0.671" data-sc-linger="0.34" data-sc-waypoint="남원">
+      <img class="sc-world__poster" src="/landxi/assets/proto/film/legs/leg_05.webp" alt="" decoding="async">
+      <video data-sc-src="/landxi/assets/proto/film/legs/leg_05.mp4"
+             data-sc-src-mobile="/landxi/assets/proto/film/legs/leg_05-m.mp4"></video>
+    </div>
+
+    <div data-sc-segment data-sc-w="1.186" data-sc-linger="0.30" data-sc-waypoint="여수">
+      <img class="sc-world__poster" src="/landxi/assets/proto/film/legs/leg_06.webp" alt="" decoding="async">
+      <video data-sc-src="/landxi/assets/proto/film/legs/leg_06.mp4"
+             data-sc-src-mobile="/landxi/assets/proto/film/legs/leg_06-m.mp4"></video>
+    </div>
+
+    <!-- 인계(handoff). 필름 마지막 프레임과 같은 카메라로 살아 있는 지도가 이어받는다.
+         레그가 아니라 무대의 마지막 층이므로 엔진은 이것을 모른다. -->
+    <div class="sb-handoff" id="sb-handoff" aria-hidden="true"><div id="sb-map"></div></div>
+  </div>
+
+  <!-- ── 카피 층 — 고정. 유일한 transform 은 translateY, 창 전체에서 4vh 상한 ── -->
+  <div class="sb-copy-layer" data-sc-world-copy>
+
+    <article class="sb-copy sb-copy--bl" data-sc-copy data-sc-window="hero">
+      <p class="lx-label">01 · 궤도 · 지구 저궤도</p>
+      <h1 class="lx-h1 sb-h1">국토는 매일<br>조금씩 달라진다</h1>
+      <p class="sb-sub">위성 2m, 항공 25cm, 드론 1cm — 같은 땅을 세 고도에서 본다</p>
+      <p class="sb-motto">LX 전 직원이 Geo-AI 전문가입니다</p>
+      <p class="lx-cap sb-cred">스크롤이 필름의 재생 위치를 고릅니다</p>
+    </article>
+
+    <article class="sb-copy sb-copy--br" data-sc-copy data-sc-window="0.215 0.372 0.16 0.16">
+      <p class="lx-label">02 · 성층운 · 한반도 상공</p>
+      <h2 class="sb-h2">부처는 다섯,<br>영상은 하나다</h2>
+      <p class="sb-sub">범부처 AI 기반 국토정보 통합조사 — 한 번 찍어 열세 번 쓴다</p>
+      <p class="lx-cap sb-cred">Sentinel-2 cloudless · 2024 · GSD <span class="lx-num">10</span> m</p>
+    </article>
+
+    <article class="sb-copy sb-copy--tl" data-sc-copy data-sc-window="0.384 0.515 0.16 0.16">
+      <p class="lx-label">03 · 한반도 · 전라북도</p>
+      <h2 class="sb-h2">이제 한 곳으로<br>내려간다</h2>
+      <p class="sb-sub">지형 과장 <span class="lx-num">1.4</span>× · 지리산 서릉을 넘어 남원 분지로</p>
+      <p class="lx-cap sb-cred">Mapterhorn terrarium DEM · <span class="lx-num">127.70</span>, <span class="lx-num">35.90</span> · EPSG:4326</p>
+    </article>
+
+    <article class="sb-copy sb-copy--bl" data-sc-copy data-sc-window="0.527 0.632 0.16 0.16">
+      <p class="lx-label">04 · 남원 · 남원 분지</p>
+      <h2 class="sb-h2"><span class="lx-num">1.54</span>cm까지<br>내려간다</h2>
+      <p class="sb-sub">2025년 8월, 남원 농경지. 드론 한 번이 만든 해상도.</p>
+      <p class="lx-cap sb-cred">GSD <span class="lx-num">1.54</span> cm · <span class="lx-num">2025-08</span> · 남원 농경지 · AOI <span class="lx-num">0.61</span> km²</p>
+    </article>
+
+    <article class="sb-copy sb-copy--ml" data-sc-copy data-sc-window="0.644 0.762 0.16 0.16">
+      <p class="lx-label">05 · 비닐하우스 · 남원 농경지</p>
+      <h2 class="sb-h2">전에는 이 한 필지를<br>확인하러 차를 몰았다</h2>
+      <p class="sb-sub">남원 전역 비닐하우스 <span class="lx-num">9,664</span>동 — 한 번의 판독으로</p>
+      <p class="lx-cap sb-cred">namwon-greenhouse-2025 · 항공 정사영상 <span class="lx-num">2025-10</span> · GSD <span class="lx-num">25</span> cm</p>
+    </article>
+
+    <article class="sb-copy sb-copy--br" data-sc-copy data-sc-window="0.774 0.898 0.16 0.16">
+      <p class="lx-label">06 · 여수 · 여수 가막만</p>
+      <h2 class="sb-h2">AI가 본 것을<br>사람이 정한다</h2>
+      <p class="sb-sub"><span class="lx-num">38,057</span>건은 후보다. 확정은 담당자의 판단이다.</p>
+      <p class="lx-cap sb-cred">yeosu-marine-2025-aerial · 전라남도 신안·완도 · 격자 <span class="lx-num">9,032</span>셀</p>
+    </article>
+
+    <!-- 마감 = 도착이 아니라 인계. 필름이 끝난 자리에서 살아 있는 지도가 같은 카메라를 이어받는다. -->
+    <article class="sb-copy sb-copy--finale" data-sc-copy data-sc-window="0.900 1 0.30 0.02">
+      <!-- 귀환의 운(韻). 마지막 화면이 첫 화면을 다시 부른다 — 다만 도착이 아니라 인계다. -->
+      <figure class="sb-rhyme">
+        <img src="/landxi/assets/proto/film/legs/leg_01.webp" alt="출발 프레임 — 지구 저궤도" decoding="async">
+        <figcaption class="lx-cap">출발 · 지구 저궤도 · ALT <span class="lx-num">1,456</span> km</figcaption>
+      </figure>
+      <p class="lx-label">인계 · HANDOFF</p>
+      <h2 class="sb-h2">필름이 끝난 자리에서<br>지도가 이어받는다</h2>
+      <p class="sb-sub">같은 좌표, 같은 줌, 같은 방위. 여기서부터는 당신이 카메라를 잡습니다.</p>
+      <p class="lx-cap sb-cred" id="sb-handoff-cap">여수 가막만 · <span class="lx-num">127.7215</span>, <span class="lx-num">34.5690</span> · z <span class="lx-num">13.60</span></p>
+      <p class="sb-cta"><a class="sb-cta__a" href="../dive.html">지도에서 직접 보기</a><a class="sb-cta__a sb-cta__a--2" href="../workflow.html">이 분석 직접 실행하기</a></p>
+    </article>
+  </div>
+
+  <!-- ── 계기판 — 엔진은 --sc-seg / --sc-segp 만 준다. 다이얼·항로는 전부 이 페이지 코드다. ── -->
+  <aside class="sb-inst" id="sb-legend" aria-label="비행 계기">
+    <div class="sb-dial" aria-hidden="true">
+      <svg viewBox="0 0 120 120" class="sb-dial__svg">
+        <circle class="sb-dial__rim" cx="60" cy="60" r="55"></circle>
+        <circle class="sb-dial__rim sb-dial__rim--in" cx="60" cy="60" r="43"></circle>
+        <g class="sb-dial__disc" id="sb-disc">
+          <g id="sb-pips"></g>
+        </g>
+        <line class="sb-dial__needle" x1="60" y1="10" x2="60" y2="26"></line>
+      </svg>
+      <span class="sb-dial__hub">LX</span>
+    </div>
+    <dl class="sb-read">
+      <div><dt>방위</dt><dd class="lx-num" id="sb-bearing">—</dd></div>
+      <div><dt>고도</dt><dd class="lx-num" id="sb-alt">—</dd></div>
+      <div><dt>지상분해능</dt><dd class="lx-num" id="sb-gsd">—</dd></div>
+      <div><dt>좌표</dt><dd class="lx-num" id="sb-coord">—</dd></div>
+    </dl>
+  </aside>
+
+  <!-- ── 항로 — 5개 지점. 현재 지점은 액센트 사각 마커로만 표시한다(색 변경 금지). ── -->
+  <nav class="sb-route" aria-label="항로">
+    <ol id="sb-route-list"></ol>
+  </nav>
+
+  <!-- 유일한 문서 흐름 요소. 높이는 엔진이 (Σw + 1) × innerHeight 로 쓴다. -->
+  <div data-sc-spacer aria-hidden="true"></div>
+</div>
+
+<p class="sb-hint" id="sb-hint" aria-hidden="true">스크롤</p>
+
+</body></html>

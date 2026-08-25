@@ -38,19 +38,19 @@ const easeOut = x => 1 - Math.pow(1 - x, 3);
 const easeOut4 = x => 1 - Math.pow(1 - x, 4);
 
 const SEG = [
-  { id: 'orbit',   t0: 0.00,  t1: 3.20,  ease: easeLin,
+  { id: 'orbit',   t0: 0.00,  t1: 3.20,  ease: easeLin, easeName: 'easeLin',
     a: { c: [109.0, 29.6],       z: 1.84,  p: 0,  b: 0 },   b: { c: [122.6, 33.6],       z: 2.62,  p: 0,  b: -2 } },
-  { id: 'dive',    t0: 3.20,  t1: 5.10,  ease: easeInOut,
+  { id: 'dive',    t0: 3.20,  t1: 5.10,  ease: easeInOut, easeName: 'easeInOut',
     a: { c: [122.6, 33.6],       z: 2.62,  p: 0,  b: -2 },  b: { c: [127.85, 36.20],     z: 6.55,  p: 10, b: -4 } },
-  { id: 'korea',   t0: 5.10,  t1: 8.70,  ease: easeOut,
+  { id: 'korea',   t0: 5.10,  t1: 8.70,  ease: easeOut, easeName: 'easeOut',
     a: { c: [127.85, 36.20],     z: 6.55,  p: 10, b: -4 },  b: { c: [127.70, 35.90],     z: 8.30,  p: 24, b: -9 } },
-  { id: 'descent', t0: 8.70,  t1: 11.90, ease: easeInOut,
+  { id: 'descent', t0: 8.70,  t1: 11.90, ease: easeInOut, easeName: 'easeInOut',
     a: { c: [127.70, 35.90],     z: 8.30,  p: 24, b: -9 },  b: { c: [127.3260, 35.3470], z: 12.60, p: 62, b: -25 } },
-  { id: 'ortho',   t0: 11.90, t1: 14.50, ease: easeInOut,
+  { id: 'ortho',   t0: 11.90, t1: 14.50, ease: easeInOut, easeName: 'easeInOut',
     a: { c: [127.3260, 35.3470], z: 12.60, p: 62, b: -25 }, b: { c: [127.3480, 35.3660], z: 13.05, p: 46, b: -13 } },
-  { id: 'green',   t0: 14.50, t1: 17.55, ease: easeInOut,
+  { id: 'green',   t0: 14.50, t1: 17.55, ease: easeInOut, easeName: 'easeInOut',
     a: { c: [127.3480, 35.3660], z: 13.05, p: 46, b: -13 }, b: { c: [127.4250, 35.4290], z: 11.36, p: 23, b: -3 } },
-  { id: 'yeosu',   t0: 17.55, t1: 23.00, ease: easeOut4,
+  { id: 'yeosu',   t0: 17.55, t1: 23.00, ease: easeOut4, easeName: 'easeOut4',
     a: { c: [127.7305, 34.5630], z: 13.00, p: 10, b: 5 },   b: { c: [127.7215, 34.5690], z: 13.60, p: 2,  b: 0 } },
 ];
 function camAt(t) {
@@ -241,6 +241,10 @@ const manifest = {
   pace: { targetRate: RATE_TARGET, unit: 'vh per film-second', band: [0.212, 0.225] },
   seam: 0.16,
   lerp: 0.12,
+  // 필름의 카메라 트랙 원본. 페이지의 계기판이 이 표를 그대로 읽어 방위·고도·좌표를 낸다
+  // (값을 지어내지 않는다 — 필름을 실제로 구운 그 카메라다).
+  cameraTrack: SEG.map(s => ({ id: s.id, t0: s.t0, t1: s.t1, ease: s.easeName, a: s.a, b: s.b })),
+  cameraNote: '고도 = 1.5 × 720px × (156543.03392 · cos φ / 2^z). MapLibre 기본 fov 36.87°, 필름 뷰포트 높이 720px 기준.',
   spacerVh: +(total + 1).toFixed(3),
   filmVh: +total.toFixed(3),
   seams,

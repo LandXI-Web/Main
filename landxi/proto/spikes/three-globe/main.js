@@ -11,6 +11,9 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const BASE = './';
+// 필름 모드: 스크롤 대신 window.__spike.setLeg()/seek() 로 결정론적 프레임을 낸다.
+// (스크롤 데모와 같은 씬을 쓰되 Lenis/ScrollTrigger 와 로컬 지면 씬은 끈다.)
+const FILM = new URLSearchParams(location.search).has('film');
 const R_EARTH = 6371;                     // km. globe 씬에서 반지름 1 = 6371 km
 const TARGET = { lon: 127.305, lat: 35.335, name: '남원 금지면' };   // 비닐하우스 397 동의 실제 중심
 const D2R = Math.PI / 180;
@@ -31,7 +34,7 @@ const m2z = (lat) => -(lat - TARGET.lat) * MPD;
 /* ───────────────────────── 렌더러 ───────────────────────── */
 const canvas = document.getElementById('gl');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));   // DPR 상한 1.5
+renderer.setPixelRatio(FILM ? 1 : Math.min(devicePixelRatio, 1.5));   // DPR 상한 1.5 (필름은 1 고정)
 renderer.setSize(innerWidth, innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -59,7 +62,7 @@ const json = (f) => fetch(BASE + f).then(r => r.ok ? r.json() : null).catch(() =
 /* ───────────────────────── GLOBE 씬 ───────────────────────── */
 const gScene = new THREE.Scene();
 const gCam = new THREE.PerspectiveCamera(38, innerWidth / innerHeight, 0.0008, 400);
-const sunDir = ll2v(10, 100).normalize();   // 태양 방향 — 시작 화면은 낮, 왼쪽 림에 터미네이터
+const sunDir = ll2v(8, 143).normalize();   // 태양 방향 — 시작 화면은 낮, 왼쪽 림에 터미네이터
 
 const earthUniforms = {
   dayMap: { value: tex('earth_day.jpg') },
@@ -68,10 +71,14 @@ const earthUniforms = {
   specMap: { value: tex('earth_spec.jpg', false) },
   cloudMap: { value: tex('earth_clouds.png') },
   koreaMap: { value: tex('korea_z8.jpg') },
+  korea2Map: { value: tex('korea_z10.jpg') },
+  uKorea2Bounds: { value: new THREE.Vector4(124.8046875, 32.84267363, 130.078125, 37.16031655) },
+  uKorea2Blend: { value: 0 },
   uKoreaBounds: { value: new THREE.Vector4(122, 32, 133, 40) },
   uKoreaBlend: { value: 0 },
   uSun: { value: sunDir.clone() },
   uCloudRot: { value: 0 },
+  uRimK: { value: 1 },
   uTime: { value: 0 },
 };
 
@@ -85,18 +92,29 @@ const EARTH_VS = `
 
 const EARTH_FS = `
   precision highp float;
-  uniform sampler2D dayMap,nightMap,bumpMap,specMap,cloudMap,koreaMap;
-  uniform vec4 uKoreaBounds; uniform float uKoreaBlend,uCloudRot,uTime;
+  uniform sampler2D dayMap,nightMap,bumpMap,specMap,cloudMap,koreaMap,korea2Map;
+  uniform vec4 uKoreaBounds,uKorea2Bounds; uniform float uKoreaBlend,uKorea2Blend,uCloudRot,uTime,uRimK;
   uniform vec3 uSun;
   varying vec3 vP; varying vec3 vW;
   const float PI = 3.14159265359;
   vec2 sph2uv(vec3 n){ return vec2(atan(n.z,-n.x)/(2.0*PI)+0.5, asin(clamp(n.y,-1.0,1.0))/PI+0.5); }
+  float lum(vec3 c){ return dot(c, vec3(0.2126,0.7152,0.0722)); }
+  // 저해상 원본의 '색'을 지키고 고해상 패치의 '휘도 디테일'만 얹는다.
+  // (V-World 타일은 타일마다 색이 튀어서 그대로 섞으면 체크무늬가 생긴다)
+  vec3 detailTransfer(vec3 base, vec3 hi, float landK){
+    float g = clamp(lum(hi) / max(lum(base), 0.035), 0.60, 1.70);
+    vec3 lumOnly = base * g;
+    vec3 d = mix(lumOnly, hi, 0.62);
+    return mix(base, d, landK);        // 바다에서는 원본 그대로 — 타일 체크무늬 제거
+  }
   void main(){
     vec3 n = normalize(vP);
     vec2 uv = sph2uv(n);
     float lon = (uv.x-0.5)*360.0, lat = (uv.y-0.5)*180.0;
 
     vec3 base = texture2D(dayMap, uv).rgb;
+    float oceanMask = texture2D(specMap, uv).r;      // 1 = 바다
+    float landK = 1.0 - smoothstep(0.22, 0.55, oceanMask);
 
     // 한반도 고해상 패치를 접근할수록 섞는다
     if(uKoreaBlend > 0.001){
@@ -106,7 +124,22 @@ const EARTH_FS = `
         float edge = smoothstep(0.0,0.07,kb.x)*smoothstep(1.0,0.93,kb.x)
                    * smoothstep(0.0,0.07,kb.y)*smoothstep(1.0,0.93,kb.y);
         vec3 k = texture2D(koreaMap, kb).rgb;
-        base = mix(base, k*1.03, edge*uKoreaBlend);
+        float kv = smoothstep(0.02, 0.09, max(max(k.r,k.g),k.b));   // 무데이터 타일
+        k = mix(base, k, kv);
+        base = mix(base, detailTransfer(base, k, landK), edge*uKoreaBlend*kv);
+      }
+    }
+
+    if(uKorea2Blend > 0.001){
+      vec2 kb = vec2((lon-uKorea2Bounds.x)/(uKorea2Bounds.z-uKorea2Bounds.x),
+                     (uKorea2Bounds.w-lat)/(uKorea2Bounds.w-uKorea2Bounds.y));
+      if(kb.x>0.0 && kb.x<1.0 && kb.y>0.0 && kb.y<1.0){
+        float edge = smoothstep(0.0,0.05,kb.x)*smoothstep(1.0,0.95,kb.x)
+                   * smoothstep(0.0,0.05,kb.y)*smoothstep(1.0,0.95,kb.y);
+        vec3 k2 = texture2D(korea2Map, kb).rgb;
+        float k2v = smoothstep(0.02, 0.09, max(max(k2.r,k2.g),k2.b));
+        k2 = mix(base, k2, k2v);
+        base = mix(base, detailTransfer(base, k2, landK), edge*uKorea2Blend*k2v);
       }
     }
 
@@ -137,13 +170,14 @@ const EARTH_FS = `
     col += vec3(0.012,0.026,0.055)*(1.0-day);
 
     vec3 V = normalize(cameraPosition - vW);
-    float ocean = texture2D(specMap, uv).r;
+    float ocean = oceanMask;
     vec3 H = normalize(uSun + V);
     col += vec3(1.0,0.97,0.9) * pow(max(dot(n,H),0.0),420.0) * ocean * day * 0.42;
 
     float fres = pow(1.0 - max(dot(n,V),0.0), 3.2);
-    col += vec3(0.24,0.47,0.95) * fres * (0.30 + 0.62*day);
+    col += vec3(0.24,0.47,0.95) * fres * (0.30 + 0.62*day) * uRimK;
 
+    col = mix(col, mix(vec3(lum(col)) * vec3(0.86,0.96,1.10), col, 0.55), ocean*0.55);
     gl_FragColor = vec4(col, 1.0);
   }`;
 
@@ -193,6 +227,27 @@ const atmo = new THREE.Mesh(
 );
 atmo.renderOrder = 3; gScene.add(atmo);
 
+// 저고도 지평선 밴드 — 대기 구체 안쪽에 들어와도 림이 남게 한다
+const limb = new THREE.Mesh(
+  new THREE.SphereGeometry(1.0135, 256, 128),
+  new THREE.ShaderMaterial({
+    transparent: true, side: THREE.BackSide, depthWrite: false, blending: THREE.AdditiveBlending,
+    uniforms: { uSun: { value: sunDir.clone() }, uFade: { value: 0 } },
+    vertexShader: EARTH_VS,
+    fragmentShader: `
+      varying vec3 vP; varying vec3 vW; uniform vec3 uSun; uniform float uFade;
+      void main(){
+        vec3 n = normalize(vP);
+        vec3 V = normalize(cameraPosition - vW);
+        float f = pow(clamp(1.0-abs(dot(n,V)),0.0,1.0), 10.0);
+        float sun = clamp(dot(n,uSun)*0.5+0.5, 0.0, 1.0);
+        vec3 c = mix(vec3(0.30,0.52,0.92), vec3(0.72,0.86,1.0), sun);
+        gl_FragColor = vec4(c, clamp(f*(0.15+1.7*sun),0.0,1.0)*uFade);
+      }`,
+  })
+);
+limb.renderOrder = 4; gScene.add(limb);
+
 // 별
 {
   const N = 5200, pos = new Float32Array(N * 3), sz = new Float32Array(N);
@@ -218,12 +273,58 @@ atmo.renderOrder = 3; gScene.add(atmo);
   })));
 }
 
+/* 글로브 공간 구름 덱 — 지구 반지름 1 기준으로 고도 h km 에 접평면 빌보드를 깐다.
+   레그 2 "cloud-break" 에서 카메라가 이 층들을 실제로 통과한다. */
+const gDecks = [];
+{
+  const DECK_VS = `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`;
+  const DECK_FS = `
+    varying vec2 vUv; uniform sampler2D map; uniform vec2 uOff; uniform float uScale,uOpacity;
+    uniform vec3 uTint;
+    void main(){
+      float a = texture2D(map, vUv*uScale + uOff).a;
+      float r = length(vUv-0.5)*2.0;
+      a *= smoothstep(1.0, 0.18, r);
+      gl_FragColor = vec4(uTint, pow(clamp(a,0.0,1.0),0.8)*uOpacity);
+    }`;
+  // [고도 km, 폭(도), 진하기]
+  const TIERS = [[300, 5.4, 0.26], [215, 4.4, 0.34], [150, 3.5, 0.42],
+                 [105, 2.7, 0.50], [76, 2.1, 0.58], [56, 1.7, 0.62]];
+  let seed = 7;
+  const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+  TIERS.forEach(([h, span, op], ti) => {
+    for (let k = 0; k < 3; k++) {
+      const lat = 35.3 + (rnd() - 0.5) * 3.0 - ti * 0.10, lon = 127.9 + (rnd() - 0.5) * 3.2 - ti * 0.04;
+      const r = 1 + h / R_EARTH;
+      const m = new THREE.ShaderMaterial({
+        transparent: true, depthWrite: false, side: THREE.DoubleSide,
+        uniforms: {
+          map: { value: earthUniforms.cloudMap.value },
+          uOff: { value: new THREE.Vector2(rnd() * 0.8, 0.28 + rnd() * 0.4) },
+          uScale: { value: 0.09 + rnd() * 0.05 },
+          uOpacity: { value: 0 },
+          uTint: { value: new THREE.Color(ti < 2 ? 0xeef4ff : 0xffffff) },
+        },
+        vertexShader: DECK_VS, fragmentShader: DECK_FS,
+      });
+      const w = span * Math.PI / 180;                       // 도 → 구면 단위
+      const q = new THREE.Mesh(new THREE.PlaneGeometry(w, w * 0.72), m);
+      ll2v(lat, lon, r, q.position);
+      q.lookAt(0, 0, 0);                                    // 접평면
+      q.rotateZ(rnd() * Math.PI);
+      q.renderOrder = 10 + (TIERS.length - ti);
+      q.userData = { h, op };
+      gDecks.push(q); gScene.add(q);
+    }
+  });
+}
+
 // 궤도 위성
 let sat = null;
 new GLTFLoader(loadMgr).load('../../../assets/proto/models/satellite.glb', (g) => {
   sat = g.scene;
   const box = new THREE.Box3().setFromObject(sat);
-  const s = 0.022 / Math.max(...box.getSize(new THREE.Vector3()).toArray());
+  const s = (FILM ? 0.115 : 0.022) / Math.max(...box.getSize(new THREE.Vector3()).toArray());
   sat.scale.setScalar(s);
   sat.traverse(o => {
     if (o.isMesh && o.material) { o.material.envMap = envRT.texture; o.material.envMapIntensity = 1.2; o.castShadow = true; }
@@ -425,9 +526,9 @@ composer.addPass(gPass); composer.addPass(lPass);
 const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.5, 0.72, 0.86);
 composer.addPass(bloom);
 const grade = new ShaderPass({
-  uniforms: { tDiffuse: { value: null }, uT: { value: 0 }, uGrain: { value: 0.032 }, uVig: { value: 1.0 }, uCA: { value: 0.9 }, uSat: { value: 1.0 } },
+  uniforms: { tDiffuse: { value: null }, uT: { value: 0 }, uGrain: { value: 0.032 }, uVig: { value: 1.0 }, uCA: { value: 0.9 }, uSat: { value: 1.0 }, uWarm: { value: 0 } },
   vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
-  fragmentShader: `varying vec2 vUv; uniform sampler2D tDiffuse; uniform float uT,uGrain,uVig,uCA,uSat;
+  fragmentShader: `varying vec2 vUv; uniform sampler2D tDiffuse; uniform float uT,uGrain,uVig,uCA,uSat,uWarm;
     float h(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453); }
     void main(){
       vec2 d = vUv-0.5; float r2 = dot(d,d);
@@ -438,6 +539,7 @@ const grade = new ShaderPass({
       c.b = texture2D(tDiffuse, vUv - d*ca).b;
       float l = dot(c, vec3(0.2126,0.7152,0.0722));
       c = mix(vec3(l), c, uSat);                              // 채도
+      c *= mix(vec3(1.0), vec3(1.075,1.015,0.945), uWarm);    // 저고도 웜 그레이드
       c = (c-0.5)*1.045 + 0.5;                                // 미세 대비
       c *= mix(1.0, 1.0-1.05*r2, uVig);
       c += (h(vUv*vec2(1920.0,1080.0)+uT)-0.5)*uGrain;
@@ -468,6 +570,33 @@ const LKEYS = [
   [0.90, 900, -120, 1690, 28, -260],
   [1.00, 120, 60, 481, 14, -900],
 ];
+/* ── 필름 레그 ────────────────────────────────────────────────────────────
+   씸 규칙: orbit-korea 의 마지막 상태 SEAM 이 cloud-break 의 첫 상태와 동일해야 한다. */
+const SEAM = [460, 36.05, 127.95, 18];          // [altKm, lat, lon, tiltDeg] — 한반도가 프레임을 채운다
+const LEGS = {
+  'orbit-korea': {
+    seconds: 5.6,
+    keys: [
+      [0.00, 15000, 13.0, 60.0, 0],
+      [0.30, 9200, 21.0, 88.0, 4],
+      [0.62, 3400, 29.0, 112.0, 11],
+      [0.84, 1500, 34.2, 124.0, 13],
+      [1.00, ...SEAM],
+    ],
+  },
+  'cloud-break': {
+    seconds: 5.0,
+    keys: [
+      [0.00, ...SEAM],
+      [0.32, 350, 35.76, 127.96, 28],
+      [0.65, 260, 35.30, 127.90, 38],
+      [0.87, 190, 35.06, 127.84, 44],
+      [1.00, 132, 34.96, 127.80, 48],          // 여수 남해안 · 수평선 + 대기 밴드
+    ],
+  },
+};
+let LEG = null, vTime = 0;
+
 function sampleKeys(keys, p) {
   const last = keys.length - 1;
   if (p <= keys[0][0]) return keys[0].slice(1);
@@ -482,8 +611,9 @@ function sampleKeys(keys, p) {
 }
 
 const tmpA = new THREE.Vector3(), tmpB = new THREE.Vector3();
+const camDir = new THREE.Vector3(), camRight = new THREE.Vector3(), camUp = new THREE.Vector3();
 function placeGlobeCam(p) {
-  const [alt, lat, lon, tilt] = sampleKeys(GKEYS, p);
+  const [alt, lat, lon, tilt] = sampleKeys(LEG ? LEG.keys : GKEYS, p);
   const r = 1 + alt / R_EARTH;
   ll2v(lat, lon, r, tmpA);
   const up = tmpA.clone().normalize();
@@ -491,7 +621,7 @@ function placeGlobeCam(p) {
   gCam.position.copy(tmpA).addScaledVector(north, -Math.tan(tilt * D2R) * (alt / R_EARTH));
   gCam.up.copy(up);
   ll2v(lat, lon, 1, tmpB);
-  if (alt > 3000) gCam.lookAt(0, 0, 0); else gCam.lookAt(tmpB);
+  if (alt > 2600) gCam.lookAt(0, 0, 0); else gCam.lookAt(tmpB);
   gCam.near = Math.max(0.00012, (alt / R_EARTH) * 0.05);
   gCam.updateProjectionMatrix();
   return alt;
@@ -524,6 +654,7 @@ const $alt = document.getElementById('alt'), $coord = document.getElementById('c
 function apply(p) {
   P = p;
   const gAlt = placeGlobeCam(p);
+  if (FILM) return applyFilm(p, gAlt);
   const lAlt = placeLocalCam(p);
 
   earthUniforms.uKoreaBlend.value = smooth(0.28, 0.50, p);
@@ -564,6 +695,57 @@ function apply(p) {
     : `${TARGET.lat.toFixed(3)}°N ${TARGET.lon.toFixed(3)}°E`;
 }
 
+/* 필름 모드 상태 — 시간까지 p 에서 결정된다(같은 p → 같은 프레임). */
+function applyFilm(p, gAlt) {
+  vTime = (LEG ? LEG.t0 : 0) + p * (LEG ? LEG.seconds : 1);
+  localGroup.visible = false; sky.visible = false;
+  gScene.visible = true;
+
+  earthUniforms.uKoreaBlend.value = 1 - smooth(900, 4200, gAlt);
+  earthUniforms.uKorea2Blend.value = 0.55 * (1 - smooth(90, 900, gAlt));
+
+  const rot = vTime * 0.0022;
+  cloudA.rotation.y = rot; cloudB.rotation.y = rot * 1.6 + 0.4;
+  earthUniforms.uCloudRot.value = -rot / (Math.PI * 2);
+  // 저고도에서는 구름 셸을 걷어 한반도가 보이게 한다(빌보드 덱이 그 역할을 이어받는다)
+  const shell = 0.30 + 0.70 * smooth(420, 2600, gAlt);
+  cloudA.material.opacity = 0.95 * shell;
+  cloudB.material.opacity = 0.42 * shell;
+
+  // 구름 덱 — 카메라가 다가오면 켜지고, 통과하면 꺼진다
+  for (const q of gDecks) {
+    const h = q.userData.h;
+    const fin = 1 - smooth(h * 2.4, h * 7.5, gAlt);
+    const fout = smooth(h * 0.5, h * 1.06, gAlt);
+    q.material.uniforms.uOpacity.value = q.userData.op * fin * fout;
+  }
+
+  atmo.material.uniforms.uFade.value = smooth(140, 800, gAlt);
+  limb.material.uniforms.uFade.value = 1 - smooth(220, 1100, gAlt);
+  earthUniforms.uRimK.value = 0.12 + 0.88 * smooth(200, 1800, gAlt);
+
+  bloom.strength = lerp(0.62, 0.30, 1 - smooth(60, 3000, gAlt));
+  grade.uniforms.uGrain.value = 0.028;
+  grade.uniforms.uSat.value = lerp(1.0, 1.02, 1 - smooth(120, 2500, gAlt));
+  grade.uniforms.uWarm.value = 1 - smooth(150, 2200, gAlt);
+  renderer.toneMappingExposure = lerp(1.02, 1.30, 1 - smooth(120, 2500, gAlt));
+
+  // 위성 — 레그 1 초반에 프레임을 가로지른다
+  if (sat) {
+    // 카메라 로컬 프레임에 놓아 프레이밍을 보장한다(레그 1 도입부의 주인공).
+    gCam.getWorldDirection(camDir);
+    camRight.crossVectors(camDir, gCam.up).normalize();
+    camUp.crossVectors(camRight, camDir).normalize();
+    const u = vTime * 0.30 - 0.62;
+    sat.position.copy(gCam.position)
+      .addScaledVector(camDir, 0.92)
+      .addScaledVector(camRight, u * 0.50)
+      .addScaledVector(camUp, 0.155 - u * 0.06);
+    sat.lookAt(0, 0, 0); sat.rotateX(Math.PI / 2); sat.rotateZ(vTime * 0.18);
+    sat.visible = gAlt > 5200 && u < 0.95;
+  }
+}
+
 /* ───────────────────────── 스크롤 ───────────────────────── */
 const CAPS = [
   [0.00, '지구를 하나의 데이터셋으로', 'Land-XI 는 위성·항공·드론 관측을 하나의 좌표계 위에 겹쳐 놓는다.'],
@@ -587,8 +769,10 @@ function setCap(p) {
   });
 }
 
+let lenis = null;
+if (!FILM) {
 gsap.registerPlugin(ScrollTrigger);
-const lenis = new Lenis({ duration: 1.15, smoothWheel: true });
+lenis = new Lenis({ duration: 1.15, smoothWheel: true });
 lenis.on('scroll', ScrollTrigger.update);
 gsap.ticker.add((t) => lenis.raf(t * 1000));
 gsap.ticker.lagSmoothing(0);
@@ -599,10 +783,12 @@ ScrollTrigger.create({
 });
 const cue = document.querySelector('.scrollcue');
 ScrollTrigger.create({ trigger: '#scroll', start: 'top top-=40', onEnter: () => cue.style.opacity = 0, onLeaveBack: () => cue.style.opacity = 1 });
+}
 
 /* ───────────────────────── 루프 ───────────────────────── */
 const times = [];
 function frame(ms) {
+  if (FILM) return;                       // 필름은 seek() 가 동기 렌더한다
   requestAnimationFrame(frame);
   tNow = ms / 1000;
   earthUniforms.uTime.value = tNow;
@@ -626,11 +812,29 @@ addEventListener('resize', () => {
   gCam.updateProjectionMatrix(); lCam.updateProjectionMatrix();
 });
 
-loadMgr.onLoad = () => { document.getElementById('loader').classList.add('gone'); setCap(0); };
+loadMgr.onLoad = () => {
+  document.getElementById('loader').classList.add('gone');
+  if (!FILM) setCap(0);
+  window.__spikeLoaded = true;
+};
 setTimeout(() => document.getElementById('loader').classList.add('gone'), 12000);
 
 /* 디버그 훅 — 스크린샷 러너용 */
 window.__spike = {
+  // 필름: 레그 선택 → seek(p) 가 그 레그 안의 진행도(0..1)를 뜻한다
+  setLeg(name) {
+    const l = LEGS[name];
+    if (!l) throw new Error('unknown leg ' + name);
+    // 씸 규칙: 레그의 가상 시각이 이어져야 구름 회전이 프레임 단위로 맞는다.
+    const ORDER = ['orbit-korea', 'cloud-break'];
+    let t0 = 0;
+    for (const k of ORDER) { if (k === name) break; t0 += LEGS[k].seconds; }
+    LEG = l; LEG.t0 = t0;
+    return { name, seconds: l.seconds, frames: Math.round(l.seconds * 25) };
+  },
+  legs: () => Object.fromEntries(Object.entries(LEGS).map(([k, v]) => [k, v.seconds])),
+  render(p) { apply(clamp(p, 0, 1)); composer.render(); return p; },
+  loaded: () => !!window.__spikeLoaded,
   seek(p) {
     p = clamp(p, 0, 1);
     const el = document.getElementById('scroll');
@@ -645,4 +849,5 @@ window.__spike = {
   detects: () => window.__spikeDetects || 0,
 };
 window.lenisInstance = lenis;
+if (FILM) { document.getElementById('hud').style.display = 'none'; document.getElementById('scroll').style.display = 'none'; }
 apply(0);

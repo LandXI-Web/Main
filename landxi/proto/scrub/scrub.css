@@ -1,0 +1,159 @@
+/* ============================================================================
+   Land-XI 스크럽 비행 — worldflight 위에 얹은 흰 에디토리얼 아틀라스 크롬
+   근거: build/scroll-craft (MIT) references/worldflight.md §3 씸 · §4 카피 계약 ·
+         §5 레일 · worlds.md #2 High-key editorial
+         landxi/proto/system.css (라운드 0 · 그림자 0 · 그라디언트 0 · 액센트 1)
+   원칙: 필름은 어떤 룩이어도 좋다. **크롬은 언제나 흰 종이와 1px 헤어라인이다.**
+         스크림으로 필름을 어둡게 만들지 않는다 — 대비는 불투명 흰 판(하드 반전)으로 얻는다.
+   ========================================================================= */
+
+/* 엔진 CSS 의 토큰을 우리 팔레트로 갈아끼운다(선택·포커스·스테이지 바탕이 이걸 읽는다). */
+:root{
+  --sc-canvas:#000000; --sc-surface:#FFFFFF; --sc-ink:#010102;
+  --sc-ink-soft:#686868; --sc-accent:#006DF7; --sc-accent-ink:#FFFFFF;
+}
+/* 스크럽 페이지에서 smooth scroll 은 재앙이다 — 재생헤드가 손이 아니라 브라우저 애니메이션을
+   따라가고, 측정이 재현되지 않는다. 프로그램적 부드러운 이동은 필요한 곳에서만 명시한다. */
+html{ scroll-behavior:auto; }
+
+.sb{ overflow-x:hidden; }
+.sb .lx-masthead{ position:fixed; inset:0 0 auto 0; }
+.sb-mast__cap{ font-variant-numeric:tabular-nums; }
+
+/* ── 무대 ────────────────────────────────────────────────────────────────
+   position:fixed 하나. 엔진이 opacity/visibility/z-index 를 쓴다 — 여기서 건드리지 않는다. */
+.sb-world{ background:#000; }
+.sb-world .sc-world__seg > video{ object-fit:cover; }
+
+/* 인계 층 — 레그가 아니라 무대의 마지막 층. 스크럽이 끝난 자리에서만 올라온다. */
+.sb-handoff{
+  position:absolute; inset:0; z-index:130; opacity:0; visibility:hidden;
+  transition:opacity 260ms var(--lx-ease);
+}
+.sb-handoff.is-on{ opacity:1; visibility:visible; }
+#sb-map{ position:absolute; inset:0; }
+.sb-handoff .maplibregl-ctrl-attrib{ font-family:var(--lx-num); font-size:10px; }
+
+/* ── 카피 층 ─────────────────────────────────────────────────────────────
+   유일한 transform 은 엔진이 쓰는 translateY(창 전체 4vh 상한). 여기서 추가 변형 금지. */
+.sb-copy-layer{ }
+.sb-copy{
+  position:absolute;
+  width:min(560px, calc(100vw - var(--lx-margin) * 2));
+  background:var(--lx-paper);
+  border:var(--lx-hair-w) solid var(--lx-hair);
+  padding:32px 36px 30px;
+}
+.sb-copy > * + *{ margin-top:14px; }
+.sb-copy .lx-label{ color:var(--lx-grey-2); }
+.sb-h1{ font-size:56px; line-height:1.22; letter-spacing:-0.5px; }
+.sb-h2{
+  margin:0; font-family:var(--lx-display); font-weight:500;
+  font-size:38px; line-height:1.26; letter-spacing:-0.38px; color:var(--lx-ink);
+}
+.sb-sub{ margin:0; font-size:var(--lx-fs); line-height:1.62; color:var(--lx-grey-2); }
+.sb-motto{
+  margin:0; padding-top:14px; border-top:var(--lx-hair-w) solid var(--lx-hair);
+  font-family:var(--lx-display); font-weight:500; font-size:14px; letter-spacing:.2px;
+}
+.sb-cred{ color:var(--lx-grey-2); }
+
+/* 앵커 — 인접한 창끼리 같은 모서리를 반복하지 않는다(BL → BR → TL → BL → ML → BR → C). */
+.sb-copy--bl{ left:var(--lx-margin); bottom:236px; }
+.sb-copy--br{ right:var(--lx-margin); bottom:64px; }
+.sb-copy--tl{ left:var(--lx-margin); top:calc(var(--lx-bar) + 40px); }
+/* 엔진이 카피의 transform 을 소유한다(translateY, 4vh 상한). 그래서 중앙 정렬은
+   translate 가 아니라 margin:auto 로만 한다 — 그러지 않으면 매 프레임 덮어써진다. */
+.sb-copy--ml{ left:var(--lx-margin); top:0; bottom:0; height:fit-content; margin-block:auto; }
+.sb-copy--finale{
+  left:0; right:0; top:0; bottom:0;
+  width:min(620px, calc(100vw - var(--lx-margin) * 2));
+  height:fit-content; margin:auto;
+}
+
+/* 귀환의 운 — 첫 프레임을 마지막 판 안에 다시 놓는다. 판 밖 캡션, 헤어라인 하나. */
+.sb-rhyme{ margin:0 0 4px; }
+.sb-rhyme img{ width:132px; height:74px; object-fit:cover; border:var(--lx-hair-w) solid var(--lx-hair); }
+.sb-rhyme figcaption{ margin-top:8px; }
+
+.sb-cta{ display:flex; gap:24px; margin-top:22px; padding-top:20px; border-top:var(--lx-hair-w) solid var(--lx-hair); }
+.sb-cta__a{
+  font-family:var(--lx-display); font-weight:500; font-size:14px; letter-spacing:.24px;
+  color:var(--lx-ink); text-decoration:none; padding-bottom:4px;
+  border-bottom:1px solid var(--lx-ink); transition:color var(--lx-hover) var(--lx-hover-ease), border-color var(--lx-hover) var(--lx-hover-ease);
+}
+.sb-cta__a:hover{ color:var(--lx-accent); border-color:var(--lx-accent); }
+.sb-cta__a--2{ color:var(--lx-grey-2); border-color:var(--lx-hair); }
+
+/* ── 계기판 — 엔진은 아무것도 그리지 않는다(§5). 전부 이 페이지 코드다. ───── */
+.sb-inst{
+  position:fixed; left:var(--lx-margin); bottom:40px; z-index:70;
+  display:flex; align-items:flex-end; gap:18px;
+  background:var(--lx-paper); border:var(--lx-hair-w) solid var(--lx-hair);
+  padding:16px 20px 14px;
+}
+.sb-dial{ position:relative; width:96px; height:96px; flex:none; }
+.sb-dial__svg{ width:96px; height:96px; display:block; overflow:visible; }
+.sb-dial__rim{ fill:none; stroke:var(--lx-hair); stroke-width:1; }
+.sb-dial__rim--in{ stroke-dasharray:1 5; stroke:var(--lx-grey); }
+/* 디스크는 페이지 전체에서 정확히 1회전한다. 각 지점의 핍이 그 지점에 도착할 때 바늘 밑에 온다. */
+.sb-dial__disc{ transform-origin:60px 60px; transform:rotate(calc(var(--sb-p, 0) * 360deg)); }
+.sb-dial__needle{ stroke:var(--lx-ink); stroke-width:1.5; }
+.sb-pip{ fill:none; stroke:var(--lx-grey-2); stroke-width:1; }
+.sb-pip[data-on="1"]{ stroke:var(--lx-accent); fill:var(--lx-accent); }
+.sb-dial__hub{
+  position:absolute; inset:0; display:grid; place-items:center;
+  font-family:var(--lx-display); font-weight:500; font-size:13px; letter-spacing:.4px; color:var(--lx-ink);
+}
+.sb-read{ margin:0; display:grid; grid-template-columns:auto auto; gap:4px 14px; align-content:end; }
+.sb-read > div{ display:contents; }
+.sb-read dt{ font-family:var(--lx-body); font-size:11px; line-height:16px; color:var(--lx-grey-2); }
+.sb-read dd{ margin:0; font-size:12px; line-height:16px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+
+/* ── 항로 — 5개 지점. 현재 지점은 액센트 사각 마커로만 표시한다(색 변경 금지). ── */
+.sb-route{
+  position:fixed; right:var(--lx-margin); top:50%; transform:translateY(-50%); z-index:70;
+  background:var(--lx-paper); border:var(--lx-hair-w) solid var(--lx-hair); padding:16px 18px;
+}
+.sb-route ol{ margin:0; padding:0; list-style:none; display:grid; gap:12px; }
+.sb-route li{ display:flex; align-items:center; gap:10px; }
+.sb-route .sb-route__m{ width:7px; height:7px; flex:none; border:1px solid var(--lx-grey); }
+.sb-route li[aria-current="true"] .sb-route__m{ background:var(--lx-accent); border-color:var(--lx-accent); }
+.sb-route .sb-route__t{
+  font-family:var(--lx-display); font-weight:500; font-size:12px; letter-spacing:.2px;
+  color:var(--lx-grey-2); transition:color var(--lx-hover) var(--lx-hover-ease);
+}
+.sb-route li[aria-current="true"] .sb-route__t{ color:var(--lx-ink); }
+.sb-route button{ all:unset; cursor:pointer; display:flex; align-items:center; gap:10px; }
+.sb-route button:focus-visible{ outline:1px solid var(--lx-accent); outline-offset:3px; }
+
+/* ── 스크롤 힌트 — 첫 스크롤에 사라진다 ─────────────────────────────────── */
+.sb-hint{
+  position:fixed; left:50%; bottom:28px; z-index:70; margin:0; transform:translateX(-50%);
+  font-family:var(--lx-display); font-weight:500; font-size:12px; letter-spacing:.3em;
+  color:#FFFFFF;
+  transition:opacity var(--lx-d1) var(--lx-ease);
+}
+.sb-hint.is-off{ opacity:0; }
+
+/* ── 좁은 화면 ───────────────────────────────────────────────────────────── */
+@media (max-width:1023.98px){
+  .sb-route{ display:none; }
+  .sb-copy{ width:calc(100vw - var(--lx-margin) * 2); padding:24px 24px 22px; }
+  .sb-h1{ font-size:38px; }
+  .sb-h2{ font-size:27px; }
+  .sb-copy--bl,.sb-copy--br,.sb-copy--tl,.sb-copy--ml,.sb-copy--finale{
+    left:var(--lx-margin); right:var(--lx-margin); top:auto; bottom:172px;
+    margin:0; width:auto; transform:none;
+  }
+  .sb-inst{ left:var(--lx-margin); right:var(--lx-margin); bottom:24px; padding:12px 14px 10px; }
+  .sb-dial{ width:64px; height:64px; }
+  .sb-dial__svg{ width:64px; height:64px; }
+}
+
+/* ── reduced motion — 클립을 아예 받지 않는다(엔진 계약). 포스터가 필름이 된다. ── */
+@media (prefers-reduced-motion: reduce){
+  .sb-hint{ display:none; }
+  .sb-handoff{ display:none; }
+  .sb-dial__disc{ transform:none; }
+}

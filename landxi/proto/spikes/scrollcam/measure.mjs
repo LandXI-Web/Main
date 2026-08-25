@@ -15,8 +15,11 @@ const R = {};
 
 const browser = await chromium.launch({
   channel: 'chrome', headless: false,
+  /* 이 장비의 주 디스플레이는 5120×1440 @ 29 Hz 다. vsync 를 끄지 않으면 fps 가
+     29 에서 천장을 치고 "느리다"는 오진이 나온다. 판단은 workMs(프레임당 apply 비용)로 한다. */
   args: ['--disable-background-timer-throttling', '--disable-renderer-backgrounding',
-         '--disable-backgrounding-occluded-windows', '--ignore-gpu-blocklist'],
+         '--disable-backgrounding-occluded-windows', '--ignore-gpu-blocklist',
+         '--disable-gpu-vsync', '--disable-frame-rate-limit'],
 });
 
 async function open(ctx) {
@@ -130,9 +133,11 @@ const sweep = async () => {
   return p.evaluate(() => window.__rail.metrics());
 };
 R.fpsNoTerrain = await sweep();
-await p.check('#o-terrain'); await wait(5000);
-R.fpsTerrain = await sweep();
-await p.uncheck('#o-terrain'); await wait(1500);
+try {   // 지형은 알려진 성능 절벽이다 — GPU 프로세스가 죽으면 여기서만 잃는다
+  await p.check('#o-terrain'); await wait(5000);
+  R.fpsTerrain = await sweep();
+  await p.uncheck('#o-terrain'); await wait(1500);
+} catch (e) { R.fpsTerrain = { error: String(e).slice(0, 160) }; }
 
 /* 게이트 on/off — 빠른 스크럽에서 게이트가 실제로 개입하는지 */
 const scrub = async () => {
@@ -159,6 +164,7 @@ R.reduced = await p.evaluate(() => ({ p: window.__rail.rail.progress, m: window.
 await p.uncheck('#o-reduced');
 
 R.errors = errs.slice(0, 10).concat(await p.evaluate(() => window.__rail.errors().slice(0, 6)));
+R.display = await p.evaluate(() => ({ w: screen.width, h: screen.height, dpr: devicePixelRatio }));
 R.gpu = await p.evaluate(() => {
   const c = document.createElement('canvas'); const gl = c.getContext('webgl2');
   const d = gl && gl.getExtension('WEBGL_debug_renderer_info');

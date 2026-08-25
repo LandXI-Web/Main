@@ -44,6 +44,11 @@ if (want('clouds')) { console.log('clouds (NASA Visible Earth via turban/webgl-e
 if (want('korea'))  { console.log('korea patch (V-World 위성 z8)…');
   const k = await p.evaluate(() => build.korea()); save('korea_z8.jpg', k.data);
   fs.writeFileSync(path.join(DATA, 'korea-bounds.json'), JSON.stringify(k.bounds)); }
+if (want('korea2')) { console.log('남해안 근접 패치 (V-World 위성 z10)…');
+  await fresh();
+  const k = await p.evaluate(() => build.korea(10, [125.0, 33.0, 130.0, 37.0]));
+  save('korea_z10.jpg', k.data);
+  fs.writeFileSync(path.join(DATA, 'korea2-bounds.json'), JSON.stringify(k.bounds)); }
 if (want('ortho'))  {
   // 남원 금지면 — 비닐하우스 397 동의 실제 중심 (127.305, 35.335)
   for (const [z, name] of [[13, 'ortho_z13.jpg'], [15, 'ortho_z15.jpg'], [17, 'ortho_z17.jpg']]) {

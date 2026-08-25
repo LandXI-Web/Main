@@ -54,16 +54,20 @@ async function shoot(t, file) {
   await page.screenshot({ path: file });
 }
 
+if (!flag('anchors-only')) {
 console.log(`레그 굽는 중 — ${N} 프레임 ${W}x${H} @${FPS}fps`);
 for (let i = 0; i < N; i++) {
   await shoot(i / (N - 1), path.join(FRAMES, `f_${String(i).padStart(4, '0')}.png`));
   if (i % 10 === 0) process.stdout.write(`  ${i}/${N}\n`);
 }
+}
 
-// 1920×1080 앵커 스틸 — 시작/중간/끝
+// 1920×1080 앵커 스틸 — 시작 / 중간 / 끝.
+// 중간은 화이트아웃 정점(t=0.62)이 아니라 t=0.50(32.7km)이다. 흰 화면은
+// AI 디오라마 시드로 쓸 수 없어서, 구름 사이로 지상이 보이는 프레임을 고른다. — 시작/중간/끝
 await page.setViewportSize({ width: 1920, height: 1080 });
 await page.waitForTimeout(400);
-const ANCHORS = [[0, 'cloudv2-0.png'], [0.62, 'cloudv2-1.png'], [1, 'cloudv2-2.png']];
+const ANCHORS = [[0, 'cloudv2-0.png'], [0.50, 'cloudv2-1.png'], [1, 'cloudv2-2.png']];
 for (const [t, name] of ANCHORS) {
   await shoot(t, path.join(ANCH, name));
   console.log('앵커', name, 't=' + t);
@@ -71,7 +75,7 @@ for (const [t, name] of ANCHORS) {
 console.log('pageerror:', [...new Set(errs)].slice(0, 5).join(' | ') || '(none)');
 await browser.close();
 
-if (flag('frames-only')) process.exit(0);
+if (flag('frames-only') || flag('anchors-only')) process.exit(0);
 
 // ── 인코딩 ────────────────────────────────────────────────────────────────
 // 스크럽 재생용: -g 8 로 키프레임을 촘촘히 박아 임의 시각 시크가 즉시 그려지게 한다.

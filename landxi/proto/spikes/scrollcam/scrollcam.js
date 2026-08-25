@@ -325,14 +325,20 @@ export function createRail(opts = {}) {
   /* ── 계측 ── */
   const met = {
     frames: 0, fps: 0, fpsEMA: 0, worst: 0, dropped: 0,
-    lat: [], jitZ: 0, jitB: 0, jitC: 0, jitFrames: 0,
+    lat: [], jitZ: 0, jitB: 0, jitC: 0, jitFrames: 0, work: 0, workMax: 0, workN: 0,
     gateMs: 0, gateFrames: 0, applies: 0, skipped: 0,
   };
   let restSince = 0, lastApplied = null;
 
+  /* apply 에 실제로 드는 시간 — fps 는 디스플레이 주사율에 걸려 진실을 말하지 않는다
+     (이 장비의 5120×1440 패널은 29 Hz 다). 프레임 예산을 판단하는 건 이 값이다. */
   function fire(state) {
     met.applies++;
+    const t0 = performance.now();
     for (const f of subs) { try { f(state); } catch (e) { console.error('scrollcam apply', e); } }
+    const d = performance.now() - t0;
+    met.work += d; met.workN++;
+    if (d > met.workMax) met.workMax = d;
   }
 
   function frame(now) {
@@ -559,6 +565,7 @@ export function createRail(opts = {}) {
       const q = (f) => (l.length ? l[Math.min(l.length - 1, Math.floor(l.length * f))] : 0);
       return {
         fps: +met.fps.toFixed(1), frames: met.frames, dropped: met.dropped, worstFrameMs: +met.worst.toFixed(1),
+        workMs: met.workN ? +(met.work / met.workN).toFixed(3) : 0, workMaxMs: +met.workMax.toFixed(2),
         latency: { n: l.length, p50: +q(0.5).toFixed(1), p95: +q(0.95).toFixed(1), max: +(l[l.length - 1] || 0).toFixed(1) },
         jitter: { zoom: met.jitZ, bearing: met.jitB, center: met.jitC, frames: met.jitFrames },
         gate: { ms: Math.round(met.gateMs), frames: met.gateFrames },
@@ -566,7 +573,7 @@ export function createRail(opts = {}) {
       };
     },
     resetMetrics() {
-      Object.assign(met, { frames: 0, fps: 0, fpsEMA: 0, worst: 0, dropped: 0, lat: [], jitZ: 0, jitB: 0, jitC: 0, jitFrames: 0, gateMs: 0, gateFrames: 0, applies: 0, skipped: 0 });
+      Object.assign(met, { frames: 0, fps: 0, fpsEMA: 0, worst: 0, dropped: 0, lat: [], jitZ: 0, jitB: 0, jitC: 0, jitFrames: 0, gateMs: 0, gateFrames: 0, applies: 0, skipped: 0, work: 0, workMax: 0, workN: 0 });
       restSince = 0;
     },
     /* 이징 경계 린트 — 구간 경계에서 카메라 속도가 몇 배로 튀는지 알려준다.
