@@ -92,7 +92,10 @@ html{ scroll-behavior:auto; }
 .sb-rhyme img{ width:132px; height:74px; object-fit:cover; border:var(--lx-hair-w) solid var(--lx-hair); }
 .sb-rhyme figcaption{ margin-top:8px; }
 
-.sb-cta{ display:flex; gap:24px; margin-top:22px; padding-top:20px; border-top:var(--lx-hair-w) solid var(--lx-hair); }
+.sb-cta{ display:flex; align-items:center; gap:24px; margin-top:22px; padding-top:20px; border-top:var(--lx-hair-w) solid var(--lx-hair); }
+/* 코너 브래킷은 시스템 관용구다(system.css §16, --lx-bracket 12px). 판 안에서는
+   좌우 여백만 줄여 쓴다 — 모서리 4개는 그대로 둔다. */
+.sb-cta__b{ padding:14px 20px; margin-left:-4px; }
 .sb-cta__a{
   font-family:var(--lx-display); font-weight:500; font-size:14px; letter-spacing:.24px;
   color:var(--lx-ink); text-decoration:none; padding-bottom:4px;

@@ -181,7 +181,12 @@ function paint() {
                      : nf(mpp * 100, 1) + ' cm/px';
   el.coord.textContent = c.lng.toFixed(4) + ', ' + c.lat.toFixed(4);
 
-  const k = legAt(t);
+  // 현재 레그는 엔진이 발행한 --sc-seg 를 읽는다(§5 "엔진은 레일을 그리지 않는다" —
+  // 대신 두 숫자를 발행하고, 레일·다이얼·핍은 전부 이 파일이 그 숫자로 그린다).
+  // 인라인 스타일에서 직접 읽는다 — 엔진이 setProperty 로 쓰므로 getComputedStyle
+  // 을 부를 이유가 없다. 스크롤 프레임마다 강제 리플로우를 만들지 않기 위해서다.
+  const seg = parseInt(el.root.style.getPropertyValue('--sc-seg'), 10);
+  const k = Number.isFinite(seg) ? seg : legAt(t);
   if (k !== lastLeg) {
     lastLeg = k;
     const wp = M.legs[k].wp || M.legs[k].label;

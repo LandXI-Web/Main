@@ -1,3 +1,6 @@
+/* VENDORED — scroll-craft (https://github.com/nateherkai/scroll-craft)
+   MIT License · Copyright (c) 2026 Nate Herk · 전문은 이 폴더의 LICENSE.
+   Land-XI 는 이 파일을 수정하지 않는다. 페이지 쪽 보정은 landxi/proto/scrub/ 안에 둔다. */
 /* ============================================================================
    scrollcraft: a scroll-driven interaction runtime
    ----------------------------------------------------------------------------
