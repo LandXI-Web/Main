@@ -10,7 +10,7 @@
 <span data-test="place"></span>
 <script type="module">
 import {mountShell} from '../assets/js/shell.js';
-window.LX = { paletteSources: () => [{type:'project', label:'도로안전 정사영상', sub:'Segmentation · 김현우', href:'ai-project-view.html?pid=P-001'}, {type:'place', label:'남원시 도통동', sub:'전북특별자치도', lnglat:[127.39, 35.41]}], onPlace: i => document.querySelector('[data-test=place]').textContent = i.lnglat.join(',') };
+window.LX = { paletteSources: () => [{type:'project', label:'도로안전 정사영상', sub:'Segmentation · 김현우', href:'ai-project-view.html?pid=P-001'}, {type:'place', label:'남원시 도통동', sub:'전북특별자치도', lnglat:[127.39, 35.41]}, {type:'card', label:'<b>x</b>', sub:'XSS 테스트', href:'admin-publish.html'}], onPlace: i => document.querySelector('[data-test=place]').textContent = i.lnglat.join(',') };
 mountShell({active:'dashboard', crumb:['대시보드','관리자']});
 </script>
 </body></html>

@@ -29,7 +29,7 @@ export function mountShell(opts = {}) {
   if (opts.secondary) { body.classList.add('has-secondary'); main.before(renderSecondary(opts.secondary)); }
   if (opts.footer !== false && !opts.mapPage) body.append(renderFooter());
   bindFlyout(); window.LX = Object.assign(window.LX || {}, { shell: { setCrumb, notify } });
-  const palette = initPalette({ sources: () => (window.LX?.paletteSources?.() || []), onPlace: i => window.LX?.map?.flyTo?.(i.lnglat, 14) || window.LX?.onPlace?.(i) });
+  const palette = initPalette({ sources: () => (window.LX?.paletteSources?.() || []), onPlace: i => { const m = window.LX?.map; if (m?.flyTo) m.flyTo(i.lnglat, 14); else window.LX?.onPlace?.(i); } });
   window.LX = Object.assign(window.LX || {}, { palette });
 }
 function renderRail(active) {
