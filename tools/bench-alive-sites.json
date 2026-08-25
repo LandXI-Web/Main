@@ -1,0 +1,417 @@
+[
+ {
+  "g": "a",
+  "slug": "apple-vision-pro",
+  "url": "https://www.apple.com/apple-vision-pro/"
+ },
+ {
+  "g": "a",
+  "slug": "apple-iphone-17-pro",
+  "url": "https://www.apple.com/iphone-17-pro/"
+ },
+ {
+  "g": "a",
+  "slug": "apple-mac-pro",
+  "url": "https://www.apple.com/mac-pro/"
+ },
+ {
+  "g": "a",
+  "slug": "apple-macbook-pro",
+  "url": "https://www.apple.com/macbook-pro/"
+ },
+ {
+  "g": "a",
+  "slug": "tesla-cybertruck",
+  "url": "https://www.tesla.com/cybertruck"
+ },
+ {
+  "g": "a",
+  "slug": "tesla-optimus",
+  "url": "https://www.tesla.com/we-robot"
+ },
+ {
+  "g": "a",
+  "slug": "spacex-starship",
+  "url": "https://www.spacex.com/vehicles/starship/"
+ },
+ {
+  "g": "a",
+  "slug": "spacex-home",
+  "url": "https://www.spacex.com/"
+ },
+ {
+  "g": "a",
+  "slug": "rivian-r1s",
+  "url": "https://rivian.com/r1s"
+ },
+ {
+  "g": "a",
+  "slug": "lucid-gravity",
+  "url": "https://lucidmotors.com/gravity"
+ },
+ {
+  "g": "a",
+  "slug": "nothing-phone",
+  "url": "https://nothing.tech/"
+ },
+ {
+  "g": "a",
+  "slug": "teenage-engineering",
+  "url": "https://teenage.engineering/"
+ },
+ {
+  "g": "b",
+  "slug": "linear",
+  "url": "https://linear.app/"
+ },
+ {
+  "g": "b",
+  "slug": "linear-product",
+  "url": "https://linear.app/features"
+ },
+ {
+  "g": "b",
+  "slug": "vercel",
+  "url": "https://vercel.com/"
+ },
+ {
+  "g": "b",
+  "slug": "vercel-ship",
+  "url": "https://vercel.com/ship"
+ },
+ {
+  "g": "b",
+  "slug": "stripe",
+  "url": "https://stripe.com/"
+ },
+ {
+  "g": "b",
+  "slug": "stripe-sessions",
+  "url": "https://stripe.com/sessions"
+ },
+ {
+  "g": "b",
+  "slug": "cloudflare-radar",
+  "url": "https://radar.cloudflare.com/"
+ },
+ {
+  "g": "b",
+  "slug": "github-home",
+  "url": "https://github.com/"
+ },
+ {
+  "g": "b",
+  "slug": "resend",
+  "url": "https://resend.com/"
+ },
+ {
+  "g": "b",
+  "slug": "clerk",
+  "url": "https://clerk.com/"
+ },
+ {
+  "g": "c",
+  "slug": "runway",
+  "url": "https://runwayml.com/"
+ },
+ {
+  "g": "c",
+  "slug": "luma",
+  "url": "https://lumalabs.ai/"
+ },
+ {
+  "g": "c",
+  "slug": "krea",
+  "url": "https://www.krea.ai/"
+ },
+ {
+  "g": "c",
+  "slug": "cursor",
+  "url": "https://cursor.com/"
+ },
+ {
+  "g": "c",
+  "slug": "perplexity",
+  "url": "https://www.perplexity.ai/"
+ },
+ {
+  "g": "c",
+  "slug": "anthropic-claude",
+  "url": "https://www.anthropic.com/claude"
+ },
+ {
+  "g": "c",
+  "slug": "anthropic-home",
+  "url": "https://www.anthropic.com/"
+ },
+ {
+  "g": "c",
+  "slug": "openai-sora",
+  "url": "https://openai.com/sora/"
+ },
+ {
+  "g": "c",
+  "slug": "openai-index",
+  "url": "https://openai.com/"
+ },
+ {
+  "g": "c",
+  "slug": "scale-ai",
+  "url": "https://scale.com/"
+ },
+ {
+  "g": "d",
+  "slug": "rerun",
+  "url": "https://rerun.io/"
+ },
+ {
+  "g": "d",
+  "slug": "rerun-viewer",
+  "url": "https://rerun.io/viewer"
+ },
+ {
+  "g": "d",
+  "slug": "foxglove",
+  "url": "https://foxglove.dev/"
+ },
+ {
+  "g": "d",
+  "slug": "blackshark",
+  "url": "https://blackshark.ai/"
+ },
+ {
+  "g": "d",
+  "slug": "vantor",
+  "url": "https://www.vantor.com/"
+ },
+ {
+  "g": "d",
+  "slug": "planet",
+  "url": "https://www.planet.com/"
+ },
+ {
+  "g": "d",
+  "slug": "umbra",
+  "url": "https://umbra.space/"
+ },
+ {
+  "g": "d",
+  "slug": "iceye",
+  "url": "https://www.iceye.com/"
+ },
+ {
+  "g": "d",
+  "slug": "safran-ai",
+  "url": "https://www.safran-group.com/companies/safran-electronics-defense"
+ },
+ {
+  "g": "d",
+  "slug": "overturemaps",
+  "url": "https://overturemaps.org/"
+ },
+ {
+  "g": "d",
+  "slug": "felt",
+  "url": "https://felt.com/"
+ },
+ {
+  "g": "d",
+  "slug": "mapbox",
+  "url": "https://www.mapbox.com/"
+ },
+ {
+  "g": "d",
+  "slug": "earthengine",
+  "url": "https://earthengine.google.com/"
+ },
+ {
+  "g": "d",
+  "slug": "nvidia-earth2",
+  "url": "https://www.nvidia.com/en-us/high-performance-computing/earth-2/"
+ },
+ {
+  "g": "d",
+  "slug": "nvidia-omniverse",
+  "url": "https://www.nvidia.com/en-us/omniverse/"
+ },
+ {
+  "g": "d",
+  "slug": "bentley-itwin",
+  "url": "https://www.bentley.com/software/itwin-platform/"
+ },
+ {
+  "g": "d",
+  "slug": "esri-uc",
+  "url": "https://www.esri.com/en-us/about/events/uc/overview"
+ },
+ {
+  "g": "d",
+  "slug": "foursquare-studio",
+  "url": "https://location.foursquare.com/products/studio/"
+ },
+ {
+  "g": "d",
+  "slug": "deckgl",
+  "url": "https://deck.gl/"
+ },
+ {
+  "g": "d",
+  "slug": "deckgl-showcase",
+  "url": "https://deck.gl/showcase"
+ },
+ {
+  "g": "e",
+  "slug": "windy",
+  "url": "https://www.windy.com/"
+ },
+ {
+  "g": "e",
+  "slug": "zoomearth",
+  "url": "https://zoom.earth/"
+ },
+ {
+  "g": "e",
+  "slug": "nullschool",
+  "url": "https://earth.nullschool.net/"
+ },
+ {
+  "g": "e",
+  "slug": "ventusky",
+  "url": "https://www.ventusky.com/"
+ },
+ {
+  "g": "e",
+  "slug": "flightradar24",
+  "url": "https://www.flightradar24.com/"
+ },
+ {
+  "g": "e",
+  "slug": "marinetraffic",
+  "url": "https://www.marinetraffic.com/en/ais/home/centerx:-12.0/centery:25.0/zoom:4"
+ },
+ {
+  "g": "f",
+  "slug": "toss",
+  "url": "https://toss.im/",
+  "locale": "ko-KR"
+ },
+ {
+  "g": "f",
+  "slug": "tossbank",
+  "url": "https://www.tossbank.com/",
+  "locale": "ko-KR"
+ },
+ {
+  "g": "f",
+  "slug": "kakaomobility",
+  "url": "https://www.kakaomobility.com/",
+  "locale": "ko-KR"
+ },
+ {
+  "g": "f",
+  "slug": "baemin-brand",
+  "url": "https://www.woowahan.com/",
+  "locale": "ko-KR"
+ },
+ {
+  "g": "f",
+  "slug": "hyundai-ioniq",
+  "url": "https://www.hyundai.com/worldwide/en/eco/ioniq5",
+  "locale": "ko-KR"
+ },
+ {
+  "g": "f",
+  "slug": "samsung-unpacked",
+  "url": "https://www.samsung.com/sec/unpacked/",
+  "locale": "ko-KR"
+ },
+ {
+  "g": "f",
+  "slug": "naver-d2",
+  "url": "https://d2.naver.com/home",
+  "locale": "ko-KR"
+ },
+ {
+  "g": "f",
+  "slug": "lg-signature",
+  "url": "https://www.lgsignature.com/",
+  "locale": "ko-KR"
+ },
+ {
+  "g": "f",
+  "slug": "socar",
+  "url": "https://www.socar.kr/",
+  "locale": "ko-KR"
+ },
+ {
+  "g": "f",
+  "slug": "lx-korea",
+  "url": "https://www.lx.or.kr/",
+  "locale": "ko-KR"
+ },
+ {
+  "g": "g",
+  "slug": "aw-mesh3d-gallery",
+  "url": "https://mesh3d.gallery/the-state-of-the-gallery"
+ },
+ {
+  "g": "g",
+  "slug": "aw-alethia-earth",
+  "url": "https://alethia.earth/"
+ },
+ {
+  "g": "g",
+  "slug": "aw-wc26-data-portraits",
+  "url": "https://wc26.bogachev.fr/"
+ },
+ {
+  "g": "g",
+  "slug": "aw-eclipses",
+  "url": "https://eclipses.bogachev.fr/"
+ },
+ {
+  "g": "g",
+  "slug": "aw-subdivisions",
+  "url": "https://subdivisions.com/"
+ },
+ {
+  "g": "g",
+  "slug": "aw-sstr-tech",
+  "url": "https://sstr.tech/en"
+ },
+ {
+  "g": "g",
+  "slug": "aw-cipher-tv",
+  "url": "https://cipher.tv/"
+ },
+ {
+  "g": "g",
+  "slug": "aw-likova",
+  "url": "https://likova.space/"
+ },
+ {
+  "g": "g",
+  "slug": "aw-noomo-showcase",
+  "url": "https://showcase.noomoagency.com/"
+ },
+ {
+  "g": "g",
+  "slug": "aw-miumiu-immersive",
+  "url": "https://immersivebags.miumiu.com/"
+ },
+ {
+  "g": "g",
+  "slug": "aw-the-watch",
+  "url": "https://thewatch.60fps.fr/"
+ },
+ {
+  "g": "g",
+  "slug": "aw-rechroma",
+  "url": "https://rechroma.com/"
+ },
+ {
+  "g": "g",
+  "slug": "aw-signal-iq",
+  "url": "https://marketing.pinelabs.com/signaliq"
+ }
+]
