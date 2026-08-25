@@ -21,13 +21,15 @@ export async function bakeEarthTexture(Z = 3, onTile) {
   const n = 1 << Z, S = n * 256;
   const mc = document.createElement('canvas'); mc.width = mc.height = S;
   const mx = mc.getContext('2d');
+  mx.fillStyle = '#08192e'; mx.fillRect(0, 0, S, S);   // 결측 타일은 심해색으로
   let got = 0;
   await Promise.all(Array.from({ length: n * n }, async (_, k) => {
     const x = k % n, y = (k / n) | 0;
-    try {
-      const im = await loadImg(EOX.replace('{z}', Z).replace('{x}', x).replace('{y}', y));
-      mx.drawImage(im, x * 256, y * 256); got++;
-    } catch { /* 빈 타일 */ }
+    const url = EOX.replace('{z}', Z).replace('{x}', x).replace('{y}', y);
+    for (let a = 0; a < 2; a++) {                       // 한 번 재시도 — 검은 사각형 방지
+      try { mx.drawImage(await loadImg(a ? url + '?r=1' : url), x * 256, y * 256); got++; break; }
+      catch { /* 재시도 */ }
+    }
     onTile && onTile(k + 1, n * n);
   }));
   if (got < n * n * 0.5) throw new Error('EOX 타일 수신 실패');
@@ -59,20 +61,32 @@ export async function earthTexture(onTile) {
 // 태양광을 받는 지표. 낮/밤 터미네이터와 약한 스펙큘러만 — 구름이 주인공이므로 절제한다.
 export function makeEarth(tex) {
   const m = new THREE.ShaderMaterial({
-    uniforms: { map: { value: tex }, sun: { value: new THREE.Vector3(1, 0, 0) } },
-    vertexShader: `varying vec2 vUv; varying vec3 vN;
+    uniforms: { map: { value: tex }, sun: { value: new THREE.Vector3(1, 0, 0) }, uOpacity: { value: 1 } },
+    vertexShader: `varying vec2 vUv; varying vec3 vN; varying vec3 vW;
       void main(){ vUv=uv; vN=normalize(mat3(modelMatrix)*normal);
+        vW=(modelMatrix*vec4(position,1.0)).xyz;
         gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
-    fragmentShader: `uniform sampler2D map; uniform vec3 sun; varying vec2 vUv; varying vec3 vN;
+    transparent: true, depthWrite: true,
+    fragmentShader: `uniform sampler2D map; uniform vec3 sun; uniform float uOpacity;
+      varying vec2 vUv; varying vec3 vN; varying vec3 vW;
       void main(){
         vec3 c = texture2D(map, vUv).rgb;
+        // Sentinel-2 cloudless 의 바다는 거의 검다. 그대로 두면 낮인데도 밤처럼 읽힌다.
+        // 어두운 화소를 심해 블루로 끌어올리고 전체를 살짝 감마 리프트한다.
+        float lum = dot(c, vec3(0.299,0.587,0.114));
+        float water = 1.0 - smoothstep(0.035, 0.16, lum);
+        c = mix(pow(c, vec3(0.80)) * 1.18, vec3(0.055,0.135,0.265) + c*1.6, water);
         float nl = dot(normalize(vN), normalize(sun));
         float day = smoothstep(-0.22, 0.30, nl);
         vec3 night = c*0.055 + vec3(0.012,0.018,0.035);
         vec3 lit = c * (0.35 + 0.85*max(nl,0.0));
         // 터미네이터 부근 붉은 산란
         vec3 dusk = vec3(1.0,0.55,0.32) * (1.0-abs(nl*3.0)) * smoothstep(0.0,0.35,day) * 0.22;
-        gl_FragColor = vec4(mix(night, lit, day) + max(dusk,0.0), 1.0);
+        // 바다의 태양 글린트 — 지구가 '살아 있는 물체'로 읽히게 하는 값싼 한 줄
+        vec3 V = normalize(cameraPosition - vW);
+        vec3 Hv = normalize(normalize(sun) + V);
+        lit += vec3(1.0,0.97,0.90) * pow(max(dot(normalize(vN), Hv), 0.0), 220.0) * water * 1.5;
+        gl_FragColor = vec4(mix(night, lit, day) + max(dusk,0.0), uOpacity);
       }`,
   });
   const mesh = new THREE.Mesh(new THREE.SphereGeometry(R, 128, 96), m);

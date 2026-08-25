@@ -15,17 +15,29 @@ const smooth = THREE.MathUtils.smoothstep;
 
 /* ── 목표 지점 · 시각 ─────────────────────────────────────── */
 const TARGET = { lon: 127.3524, lat: 35.5311, name: '남원' };   // dive.js 와 같은 AOI
-const WHEN = new Date();
+// 태양 위치용 시각. 기본값은 한국 표준시 오전 10:30 (구름 입체감이 가장 잘 읽히는 각도).
+let WHEN = kstDate(10.5);
+function kstDate(hourKst) {
+  const d = new Date();
+  // KST = UTC+9
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(),
+    Math.floor(hourKst) - 9, Math.round((hourKst % 1) * 60)));
+}
 
-/* ── 고도 곡선 — p 를 km 로. 0.3 에서 대류권계면(10km)을 지난다 ── */
-const A_TOP = 12000, A_MID = 10, A_GND = 0.35;
+/* ── 고도 곡선 — p 를 km 로. 세 구간의 지수 보간.
+   0.00 궤도 40,800km · 0.10 ≈ 6,000km(지구 한 알) · 0.22 600km · 0.28 ≈ 28km(성층권)
+   0.30 대류권계면 10km · 0.32 ≈ 9km(데크 관통) · 0.60 ≈ 2.4km · 1.00 350m ── */
+const BANDS = [[0, 40800], [0.22, 600], [0.30, 10], [1, 0.35]];
 export function altitudeKm(p) {
   p = clamp01(p);
-  return p < 0.3
-    ? A_TOP * Math.pow(A_MID / A_TOP, p / 0.3)
-    : A_MID * Math.pow(A_GND / A_MID, (p - 0.3) / 0.7);
+  for (let i = 1; i < BANDS.length; i++) {
+    const [p0, a0] = BANDS[i - 1], [p1, a1] = BANDS[i];
+    if (p <= p1 || i === BANDS.length - 1)
+      return a0 * Math.pow(a1 / a0, (p - p0) / (p1 - p0));
+  }
+  return 0.35;
 }
-const pitchDeg = (p) => lerp(8, 66, smooth(p, 0.18, 0.92));
+const pitchDeg = (p) => lerp(4, 66, smooth(p, 0.24, 0.92));
 const bearingDeg = (p) => lerp(-24, 18, smooth(p, 0.0, 1.0));
 
 /* ── 렌더러 ───────────────────────────────────────────────── */
@@ -60,6 +72,7 @@ anchor.updateMatrixWorld(true);
 const sunWorld = new THREE.Vector3(1, 0, 0);
 let sunElev = 0;
 function updateSun() {
+  if (!window.SunCalc) return;
   const s = window.SunCalc.getPosition(WHEN, TARGET.lat, TARGET.lon);
   sunElev = s.altitude;
   const ce = Math.cos(s.altitude);
@@ -196,11 +209,11 @@ function seek(p) {
   map.jumpTo({ center: [TARGET.lon, TARGET.lat], zoom: mz, pitch: Math.min(80, pitch), bearing });
 
   // 배경 크로스페이드: 글로브 → 지도 (p 0.26 → 0.365)
-  const k = smooth(P, 0.255, 0.365);
+  const k = smooth(P, 0.235, 0.300);
   mapEl.style.opacity = String(k);
   earthGroup.visible = k < 0.995;
-  if (earth) earth.material.opacity = 1 - k;
-  if (atmo) atmo.material.uniforms.strength.value = (1 - k) * 1.0 + 0.0;
+  if (earth) earth.material.uniforms.uOpacity.value = 1 - k;
+  if (atmo) atmo.material.uniforms.strength.value = 1 - k;
 
   // 헤이즈
   hazeMat.uniforms.uK.value = smooth(altKm, 60, 3.0) * 0.55;
@@ -223,11 +236,10 @@ function resize() {
 }
 addEventListener('resize', resize);
 
-let frames = 0;
-function loop() {
-  const dt = fps.tick();
-  frames++;
+let frames = 0, SYNC = false;
 
+// 한 프레임 — rAF 루프와 오프라인 벤치가 같은 코드를 쓴다.
+function frame(dt) {
   if (earth) earth.material.uniforms.sun.value.copy(sunWorld);
   if (atmo) atmo.material.uniforms.sun.value.copy(sunWorld);
 
@@ -239,21 +251,50 @@ function loop() {
     else if (current === 4) { t.setSun(sunWorld); t.update(altKm, dt); }
   }
   // 헤이즈 판을 카메라 앞에 맞춘다
-  {
-    const d = camera.near * 30;
-    const hh = 2 * Math.tan(camera.fov * Math.PI / 360) * d;
-    haze.scale.set(hh * camera.aspect * 0.5, hh * 0.5, 1);
-    haze.position.set(0, 0, -d);
-  }
+  const d = camera.near * 30;
+  const hh = 2 * Math.tan(camera.fov * Math.PI / 360) * d;
+  haze.scale.set(hh * camera.aspect * 0.5, hh * 0.5, 1);
+  haze.position.set(0, 0, -d);
+
   if (current === 3 && tech[3]) tech[3].render(innerWidth * DPR, innerHeight * DPR);
-
   renderer.render(scene, camera);
+}
 
+function loop() {
+  const dt = fps.tick();
+  frames++;
+  frame(dt);
+  // 벤치 모드: GPU 가 실제로 프레임을 끝낼 때까지 기다린다. 이걸 켜지 않으면 JS 는
+  // 커맨드 제출 시간만 재게 되어 0.1ms 같은 무의미한 값이 나온다.
+  if (SYNC) { const g = renderer.getContext(); g.readPixels(0, 0, 1, 1, g.RGBA, g.UNSIGNED_BYTE, new Uint8Array(4)); }
   if ((frames & 15) === 0) {
     const s = fps.stats();
     if (s) $('#h-fps').textContent = s.fps.toFixed(0) + ' fps · ' + s.medms.toFixed(1) + 'ms';
   }
   requestAnimationFrame(loop);
+}
+
+// 오프라인 벤치 — rAF(창이 가려지면 30Hz 로 묶인다)를 우회해 실제 프레임 비용을 잰다.
+// n 프레임을 연속으로 그리고 gl.finish() 로 GPU 완료까지 기다린 뒤 평균/분위수를 낸다.
+function benchFrames(n = 90) {
+  const gl = renderer.getContext();
+  const px = new Uint8Array(4);
+  // ANGLE/D3D11 에서 gl.finish() 는 실제로 동기화하지 않는다(0.0ms 가 나온다).
+  // 1픽셀 readPixels 는 강제로 GPU 왕복을 발생시켜 프레임이 끝났음을 보장한다.
+  const sync = () => { renderer.setRenderTarget(null); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); };
+  for (let i = 0; i < 12; i++) frame(1 / 60);       // 워밍업(셰이더 컴파일·타일 업로드)
+  sync();
+  const t = [];
+  for (let i = 0; i < n; i++) {
+    const a = performance.now();
+    frame(1 / 60);
+    sync();
+    t.push(performance.now() - a);
+  }
+  t.sort((a, b) => a - b);
+  const q = (f) => t[Math.min(t.length - 1, Math.floor(t.length * f))];
+  const med = Math.max(q(0.5), 0.01);
+  return { n, medms: +med.toFixed(2), p95ms: +q(0.95).toFixed(2), fps: +(1000 / med).toFixed(1) };
 }
 
 /* ── 부팅 ─────────────────────────────────────────────────── */
@@ -263,7 +304,6 @@ async function boot() {
   const { tex, credit } = await earthTexture((i, n) => { if (i % 8 === 0) note.textContent = `EOX 타일 ${i}/${n}`; });
   earthCredit = credit;
   earth = makeEarth(tex);
-  earth.material.transparent = true;
   earthGroup.add(earth);
   atmo = makeAtmosphere(1.052);
   earthGroup.add(atmo);
@@ -286,9 +326,9 @@ async function boot() {
 
   note.textContent = 'NASA GIBS 수신…';
   let gibsInfo = null;
-  for (const back of [1, 2, 3]) {
+  for (const back of [1, 2, 3, 4]) {
     try {
-      const g = await bakeGibs(LAYERS.modis, gibsDate(back), 2,
+      const g = await bakeGibs(LAYERS.modis, gibsDate(back), 3,
         (i, n) => { if (i % 8 === 0) note.textContent = `GIBS 타일 ${i}/${n}`; });
       tech[4] = createGibsSphere(g.canvas);
       earthGroup.add(tech[4].group);
@@ -302,6 +342,7 @@ async function boot() {
     ' · V-World 국토교통부 · 구름 데크 텍스처 © LX Land-XI';
 
   setTech(2);
+  setHour(10.5);
   resize();
   seek(0.1);
   note.textContent = '';
@@ -311,6 +352,13 @@ async function boot() {
 
 /* ── UI ───────────────────────────────────────────────────── */
 $('#scrub').addEventListener('input', (e) => seek(+e.target.value));
+function setHour(h) {
+  WHEN = kstDate(h); updateSun();
+  $('#h-sun').textContent = (sunElev * 180 / Math.PI).toFixed(1) + '° · ' + h.toFixed(1) + '시';
+  $('#hour').value = String(h);
+  seek(P);
+}
+$('#hour').addEventListener('input', (e) => setHour(+e.target.value));
 document.querySelectorAll('#tech button').forEach((b) =>
   b.addEventListener('click', () => setTech(+b.dataset.t)));
 addEventListener('keydown', (e) => {
@@ -327,6 +375,9 @@ window.__spike = {
   fps: () => fps.stats(),
   resetFps: () => fps.reset(),
   sunElevDeg: () => sunElev * 180 / Math.PI,
+  setHour: (h) => setHour(h),
+  setSync: (v) => { SYNC = !!v; fps.reset(); },
+  benchFrames,
 };
 
 boot().catch((e) => { note.textContent = '부팅 실패: ' + e.message; console.error(e); });

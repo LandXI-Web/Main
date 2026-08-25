@@ -27,19 +27,27 @@ const img = (u) => new Promise((res, rej) => {
   i.onload = () => res(i); i.onerror = rej; i.src = u;
 });
 
-// z=2 → 8×4 타일(512px) = 4096×2048 등장방형. 32 요청이면 충분히 빠르다.
-export async function bakeGibs(layer = LAYERS.modis, date = gibsDate(1), z = 2, onTile) {
-  const nx = 2 << z, ny = 1 << z, S = 512;
-  const c = document.createElement('canvas'); c.width = nx * S; c.height = ny * S;
+// GIBS EPSG:4326 `250m` 타일매트릭스는 정사각 격자가 아니다. 화소 크기는 레벨 8 에서
+// 0.002197°, 위로 갈수록 두 배 — 레벨 z 의 타일 한 변은 288/2^z 도다.
+//   z=2 → 72°/타일 → 5×3 (아래 한 줄이 잘린다)
+//   z=3 → 36°/타일 → 10×5 = 5120×2560, 정확히 2:1 등장방형 ← 이걸 쓴다
+// 격자 밖 좌표는 404 가 아니라 400 을 돌려주므로 범위를 정확히 맞춰야 한다.
+export const tileDeg = (z) => 288 / Math.pow(2, z);
+export async function bakeGibs(layer = LAYERS.modis, date = gibsDate(1), z = 3, onTile) {
+  const deg = tileDeg(z), S = 512;
+  const nx = Math.ceil(360 / deg), ny = Math.ceil(180 / deg);
+  const c = document.createElement('canvas');
+  c.width = Math.round(360 / deg * S); c.height = Math.round(180 / deg * S);
   const x2 = c.getContext('2d', { willReadFrequently: true });
   x2.fillStyle = '#000'; x2.fillRect(0, 0, c.width, c.height);
   let got = 0;
   await Promise.all(Array.from({ length: nx * ny }, async (_, k) => {
     const x = k % nx, y = (k / nx) | 0;
     try { x2.drawImage(await img(G4326(layer, date, z, y, x)), x * S, y * S); got++; } catch { /* 결측 */ }
+
     onTile && onTile(k + 1, nx * ny);
   }));
-  if (!got) throw new Error('GIBS 타일 수신 실패');
+  if (got < nx * ny * 0.8) throw new Error(`GIBS 타일 부족 ${got}/${nx * ny} (${date})`);
 
   // 트루컬러 → 구름 알파 키잉: 밝고(V 높음) 채도 낮은(S 낮음) 화소가 구름.
   const im = x2.getImageData(0, 0, c.width, c.height);
@@ -56,7 +64,10 @@ export async function bakeGibs(layer = LAYERS.modis, date = gibsDate(1), z = 2, 
     p[i] = Math.round(255 * w); p[i + 1] = Math.round(253 * w); p[i + 2] = Math.round(250 * w);
   }
   x2.putImageData(im, 0, 0);
-  return { canvas: c, date, layer, tiles: got };
+  // 5120x2560 은 GPU 에 52MB. 4096x2048 로 줄여도 글로브 스케일에선 차이가 없다.
+  const o = document.createElement('canvas'); o.width = 4096; o.height = 2048;
+  o.getContext('2d').drawImage(c, 0, 0, o.width, o.height);
+  return { canvas: o, date, layer, tiles: got, grid: `${nx}x${ny}` };
 }
 
 export function createGibsSphere(canvas) {

@@ -5,10 +5,14 @@ import * as THREE from 'three';
 import { KM } from './globe.js';
 
 const ART = '../../../assets/proto/clouds/';
+// tileKm = 텍스처 한 장이 덮는 지상 거리. 이게 구름 알갱이의 실제 크기를 정한다.
+// 2048px / 70km = 34 m/px — 40km 상공에서는 충분하고, 2km 앞에서는 8배 확대되어 뭉갠다.
+// (이 한 줄이 데크 기법의 고도 하한을 결정한다)
 const DECKS = [
-  { file: 'cloud_far.webp',  altKm: 11.0, span: 1300, rep: 3.0, op: 0.72, wind: [0.0060, 0.0016] },
-  { file: 'cloud_mid.webp',  altKm: 7.0,  span:  820, rep: 3.4, op: 0.95, wind: [0.0104, 0.0031] },
-  { file: 'cloud_near.webp', altKm: 3.4,  span:  420, rep: 3.8, op: 0.88, wind: [0.0182, 0.0058] },
+  { file: 'cloud_far.webp',  altKm: 10.6, span: 900, tileKm: 70, op: 0.66, wind: [0.0055, 0.0015] },
+  { file: 'cloud_mid.webp',  altKm: 8.0,  span: 420, tileKm: 34, op: 0.92, wind: [0.0100, 0.0030] },
+  { file: 'cloud_near.webp', altKm: 5.4,  span: 200, tileKm: 16, op: 0.86, wind: [0.0170, 0.0055] },
+  { file: 'cloud_mid.webp',  altKm: 1.7,  span:  70, tileKm: 6.5, op: 0.62, wind: [0.0290, 0.0092] },
 ];
 
 const VS = `varying vec2 vUv; varying vec3 vW;
@@ -24,8 +28,8 @@ const FS = `
     // 지평선 쪽으로 갈수록 광학두께가 길어져 하얗게 뭉개진다(에어리얼 퍼스펙티브)
     float rad = length(vUv - 0.5) * 2.0;
     float horizon = smoothstep(1.02, 0.34, rad);
-    // 데크 한가운데가 먼저 갈라진다 — 카메라가 뚫고 나갈 구멍
-    float hole = smoothstep(uHole*0.45, uHole + 0.30, rad);
+    // 관통 직전에만 한가운데가 갈라진다. uHole 은 구멍의 양(0=없음, 1=화면 전체).
+    float hole = uHole < 0.002 ? 1.0 : smoothstep(uHole*0.34, uHole*1.10 + 0.14, rad);
     float nl = clamp(dot(normalize(sun), vec3(0.0,1.0,0.0)) , -1.0, 1.0);
     float day = smoothstep(-0.15, 0.30, nl);
     vec3 lit = mix(vec3(0.70,0.75,0.84), vec3(1.0,0.995,0.98), clamp(nl*1.6,0.0,1.0));
@@ -52,7 +56,7 @@ export function createDecks(anchor) {
     const mat = new THREE.ShaderMaterial({
       uniforms: {
         map: { value: tex(ART + d.file) }, sun: { value: new THREE.Vector3(1, 0, 0) },
-        uOff: { value: new THREE.Vector2() }, uRep: { value: d.rep },
+        uOff: { value: new THREE.Vector2() }, uRep: { value: d.span / d.tileKm },
         uOpacity: { value: d.op }, uFade: { value: 0 }, uHole: { value: 1.4 },
         uCamW: { value: new THREE.Vector3() },
       },
@@ -62,7 +66,7 @@ export function createDecks(anchor) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(d.span * KM, d.span * KM, 1, 1), mat);
     m.rotation.x = -Math.PI / 2;
     m.position.y = d.altKm * KM;
-    m.renderOrder = 30 + (12 - d.altKm);   // 낮은 데크가 나중에(앞에) 그려진다
+    m.renderOrder = 30 + Math.round((12 - d.altKm) * 4);   // 낮은 데크가 나중에(앞에) 그려진다
     g.add(m);
     return { d, m, mat };
   });
@@ -87,17 +91,15 @@ export function createDecks(anchor) {
         L.mat.uniforms.sun.value.copy(sun);
         L.mat.uniforms.uCamW.value.copy(cam.position);
         L.mat.uniforms.uOff.value.set(t * L.d.wind[0], t * L.d.wind[1]);
-        const dz = altKm - L.d.altKm;
-        // 접근하면 차오르고(위에서), 통과 직전 0.35km 안에서 급히 빠진다
-        const above = THREE.MathUtils.smoothstep(dz, 0.0, 6.0);
-        const near = THREE.MathUtils.smoothstep(Math.abs(dz), 0.10, 0.95);
-        const below = 1.0 - THREE.MathUtils.smoothstep(-dz, 0.4, 3.0);
-        const far = 1.0 - THREE.MathUtils.smoothstep(altKm, 60, 160);   // 궤도에선 걷는다
-        L.mat.uniforms.uFade.value = above * near * Math.max(below, 0.0) * far;
-        // 통과가 가까울수록 구멍이 커진다
-        L.mat.uniforms.uHole.value = THREE.MathUtils.lerp(0.10, 1.45,
-          THREE.MathUtils.smoothstep(Math.abs(dz), 0.0, 4.0));
-        flash = Math.max(flash, (1 - THREE.MathUtils.smoothstep(Math.abs(dz), 0.05, 0.62)) * L.d.op * far);
+        const dz = altKm - L.d.altKm;                 // + = 카메라가 데크 위
+        const band = L.d.altKm > 4 ? 0.35 : 0.14;     // 낮은 데크일수록 얇게 지나간다
+        // 위에 있으면 보이고, 관통하면 사라진다. 밑에서는 보이지 않는다(고개를 들지 않으므로)
+        const vis = THREE.MathUtils.smoothstep(dz, -band, band);
+        const far = 1.0 - THREE.MathUtils.smoothstep(altKm, 45, 130);   // 궤도에선 걷는다
+        L.mat.uniforms.uFade.value = vis * far;
+        // 관통 1.8km 안에서만 한가운데가 갈라진다
+        L.mat.uniforms.uHole.value = (1 - THREE.MathUtils.smoothstep(Math.abs(dz), 0.06, 1.8)) * 1.25;
+        flash = Math.max(flash, (1 - THREE.MathUtils.smoothstep(Math.abs(dz), 0.04, band * 2.6)) * L.d.op * far);
       }
       hazeMat.opacity = flash * 0.85;
       haze.visible = hazeMat.opacity > 0.01;

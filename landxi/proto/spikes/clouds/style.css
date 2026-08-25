@@ -43,3 +43,7 @@ header b { font-weight:650; letter-spacing:-.01em; font-size:14px;
 
 #credits { margin:10px 0 0; font-size:9.5px; line-height:1.5; letter-spacing:.01em;
   color:rgba(255,255,255,.62); text-shadow:0 1px 3px rgba(0,0,0,.6); max-width:76ch; }
+
+#hour-row { display:flex; align-items:center; gap:10px; }
+#hour { -webkit-appearance:none; appearance:none; flex:1; height:2px; background:#c9d0d8; outline:none; }
+#hour::-webkit-slider-thumb { -webkit-appearance:none; width:10px; height:10px; border-radius:50%; background:#0d1218; }
