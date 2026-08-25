@@ -12,6 +12,11 @@ test('kpi counts up to data-n', async ({ page }) => {
   await page.waitForTimeout(1500);
   await expect(page.locator('.kpi').first().locator('.kpi__num')).toHaveText('21');
 });
+test('kpi with missing/invalid data-n renders 0, not NaN', async ({ page }) => {
+  await page.goto('dev/components.html');
+  await page.waitForTimeout(1500);
+  await expect(page.locator('[data-test="kpi-invalid"] .kpi__num')).toHaveText('0');
+});
 test('pill colors follow status tokens', async ({ page }) => {
   await page.goto('dev/components.html');
   // Note: modern Chrome resolves nested var() chains at computed-value read time
