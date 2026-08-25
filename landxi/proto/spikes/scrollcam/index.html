@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SPIKE · scrollcam — 스크롤 구동 카메라 레일</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
+<link rel="stylesheet" href="scrollcam.css">
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.min.js"></script>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+            "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"}}
+</script>
+</head>
+<body>
+
+<div id="stage">
+  <div id="map"></div>
+  <canvas id="gl"></canvas>
+
+  <!-- 카피: 스크롤이 곧 타임라인이라는 것을 화면이 스스로 말한다 -->
+  <div id="copy">
+    <p class="ch" data-ch="0"><b>궤도</b><span>국토가 깨어난다</span></p>
+    <p class="ch" data-ch="1"><b>대기권</b><span>구름을 지난다</span></p>
+    <p class="ch" data-ch="2"><b>강하</b><span>남원 분지로</span></p>
+    <p class="ch" data-ch="3"><b>착지</b><span>1.5 cm 까지</span></p>
+  </div>
+
+  <div id="rail"><i></i><em id="rail-p">0.000</em></div>
+
+  <aside id="hud">
+    <h1>scrollcam <small>SPIKE</small></h1>
+    <dl>
+      <dt>fps</dt><dd id="m-fps">—</dd>
+      <dt>지연 p50 / p95</dt><dd id="m-lat">—</dd>
+      <dt>정지 잔떨림</dt><dd id="m-jit">—</dd>
+      <dt>게이트</dt><dd id="m-gate">—</dd>
+      <dt>프레임 최악</dt><dd id="m-worst">—</dd>
+      <dt>apply / skip</dt><dd id="m-app">—</dd>
+    </dl>
+    <hr>
+    <dl class="cam">
+      <dt>p</dt><dd id="c-p">—</dd>
+      <dt>center</dt><dd id="c-c">—</dd>
+      <dt>zoom</dt><dd id="c-z">—</dd>
+      <dt>pitch / bearing</dt><dd id="c-tb">—</dd>
+      <dt>투영</dt><dd id="c-proj">—</dd>
+    </dl>
+  </aside>
+
+  <nav id="ctl">
+    <div class="row">
+      <button id="b-map" class="on">지도 (MapLibre)</button>
+      <button id="b-globe">구 (three.js)</button>
+    </div>
+    <label><input type="checkbox" id="o-tension" checked> Catmull-Rom (끄면 선형)</label>
+    <label><input type="checkbox" id="o-warp" checked> 화면속도 재매개변수화</label>
+    <label><input type="checkbox" id="o-magnet" checked> 챕터 자석</label>
+    <label><input type="checkbox" id="o-gate" checked> 타일 준비 게이트</label>
+    <label><input type="checkbox" id="o-terrain"> 지형 (fps 비용 측정용)</label>
+    <label><input type="checkbox" id="o-reduced"> 모션 감소 모의</label>
+    <div class="row">
+      <button id="b-play">20s 자동재생</button>
+      <button id="b-reset">계측 초기화</button>
+    </div>
+    <p class="hint">휠 · 터치 · ↑↓ PgUp/PgDn Space · ←→ 챕터 · Home/End</p>
+  </nav>
+
+  <div id="boot">타일 수신 중…</div>
+</div>
+
+<div id="scroller"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
