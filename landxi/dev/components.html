@@ -1,0 +1,150 @@
+<!doctype html><html lang="ko" data-base="../"><head><meta charset="utf-8"><title>컴포넌트 갤러리 — Land-XI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@700;800;900&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="../assets/css/tokens.css">
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/components.css">
+<style>
+body{padding:32px;display:flex;flex-direction:column;gap:32px}
+section{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+</style>
+</head><body>
+
+<section aria-labelledby="h-btn">
+  <h2 id="h-btn">Button</h2>
+  <div class="row">
+    <button class="btn btn--primary btn--sm">저장</button>
+    <button class="btn btn--primary">저장</button>
+    <button class="btn btn--primary btn--lg">저장</button>
+  </div>
+  <div class="row">
+    <button class="btn btn--secondary btn--sm">취소</button>
+    <button class="btn btn--secondary">취소</button>
+    <button class="btn btn--secondary btn--lg">취소</button>
+  </div>
+  <div class="row">
+    <button class="btn btn--ghost btn--sm">더보기</button>
+    <button class="btn btn--ghost">더보기</button>
+    <button class="btn btn--ghost btn--lg">더보기</button>
+  </div>
+  <div class="row">
+    <button class="btn btn--danger btn--sm">삭제</button>
+    <button class="btn btn--danger">삭제</button>
+    <button class="btn btn--danger btn--lg">삭제</button>
+  </div>
+</section>
+
+<section aria-labelledby="h-pill">
+  <h2 id="h-pill">Pill</h2>
+  <div class="row">
+    <span class="pill" data-status="found">발견</span>
+    <span class="pill" data-status="doing">진행중</span>
+    <span class="pill" data-status="done">완료</span>
+    <span class="pill" data-status="hold">보류</span>
+    <span class="pill" data-status="error">오류</span>
+    <span class="pill" data-status="info">정보</span>
+  </div>
+</section>
+
+<section aria-labelledby="h-tabs">
+  <h2 id="h-tabs">Tabs</h2>
+  <div class="tabs" role="tablist" aria-label="예시 탭">
+    <button class="tab" role="tab" id="tab-1" aria-controls="panel-1" aria-selected="true">개요</button>
+    <button class="tab" role="tab" id="tab-2" aria-controls="panel-2" aria-selected="false">상세</button>
+    <button class="tab" role="tab" id="tab-3" aria-controls="panel-3" aria-selected="false">이력</button>
+  </div>
+  <div id="panel-1" role="tabpanel" aria-labelledby="tab-1">개요 패널 내용입니다.</div>
+  <div id="panel-2" role="tabpanel" aria-labelledby="tab-2" hidden>상세 패널 내용입니다.</div>
+  <div id="panel-3" role="tabpanel" aria-labelledby="tab-3" hidden>이력 패널 내용입니다.</div>
+</section>
+
+<section aria-labelledby="h-card">
+  <h2 id="h-card">Card / Glass</h2>
+  <div class="row">
+    <div class="card" style="width:320px">
+      <div class="card__head">
+        <div class="card__title">필지 조사 카드 <span class="count">12</span></div>
+        <div class="card__actions"><button class="btn btn--ghost btn--sm">편집</button></div>
+      </div>
+      <div class="card__body">카드 본문 텍스트입니다. 국공유지 조사 결과 요약이 표시됩니다.</div>
+    </div>
+    <div class="glass" style="width:320px;padding:16px">
+      <div class="card__title">글래스 패널</div>
+      <div class="muted small">배경 위에 겹치는 반투명 패널 예시입니다.</div>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="h-kpi">
+  <h2 id="h-kpi">KPI</h2>
+  <div class="grid4">
+    <div class="card kpi" data-n="21" data-interactive>
+      <div class="kpi__label">신규 발견</div>
+      <div class="kpi__value"><span class="kpi__num">0</span><span class="unit">건</span></div>
+      <div class="kpi__sub">전주 대비 +3</div>
+    </div>
+    <div class="card kpi kpi--hot" data-n="128" data-interactive>
+      <div class="kpi__label">진행중 조사</div>
+      <div class="kpi__value"><span class="kpi__num">0</span><span class="unit">건</span></div>
+      <div class="kpi__sub">전주 대비 +12</div>
+    </div>
+    <div class="card kpi" data-n="964" data-interactive>
+      <div class="kpi__label">완료 카드</div>
+      <div class="kpi__value"><span class="kpi__num">0</span><span class="unit">건</span></div>
+      <div class="kpi__sub">누적</div>
+    </div>
+    <div class="card kpi" data-n="3200" data-interactive>
+      <div class="kpi__label">대상 필지</div>
+      <div class="kpi__value"><span class="kpi__num">0</span><span class="unit">필지</span></div>
+      <div class="kpi__sub">전국</div>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="h-list">
+  <h2 id="h-list">ListHeader / Chip / Search panel</h2>
+  <div class="list-header">
+    <button class="chip" aria-pressed="true">전체</button>
+    <button class="chip" aria-pressed="false">발견</button>
+    <button class="chip" aria-pressed="false">진행중</button>
+    <button class="chip" aria-pressed="false">완료</button>
+    <span class="list-header__spacer"></span>
+    <button class="icon-btn" aria-label="검색" id="search-toggle"></button>
+    <button class="icon-btn" aria-label="새로고침"></button>
+  </div>
+  <div class="search-panel">
+    <label class="field">키워드<input class="input" type="text" placeholder="지번 검색"></label>
+    <label class="field">지역<select class="select"><option>전체</option><option>서울</option><option>경기</option></select></label>
+    <label class="field">상태<select class="select"><option>전체</option><option>발견</option><option>완료</option></select></label>
+  </div>
+</section>
+
+<section aria-labelledby="h-table">
+  <h2 id="h-table">Table / Paginator</h2>
+  <table class="table">
+    <thead><tr><th>지번</th><th>지역</th><th>상태</th><th class="num">면적(㎡)</th></tr></thead>
+    <tbody>
+      <tr><td>서울 강남구 123-4</td><td>서울</td><td><span class="pill" data-status="found">발견</span></td><td class="num">1,204</td></tr>
+      <tr><td>부산 해운대구 56-7</td><td>부산</td><td><span class="pill" data-status="doing">진행중</span></td><td class="num">832</td></tr>
+      <tr><td>대전 유성구 9-1</td><td>대전</td><td><span class="pill" data-status="info">정보</span></td><td class="num">2,410</td></tr>
+    </tbody>
+  </table>
+  <div class="paginator">
+    <button class="pg" aria-current="page">1</button>
+    <button class="pg">2</button>
+    <button class="pg">3</button>
+    <span class="total">총 3건</span>
+  </div>
+</section>
+
+<script type="module">
+import { icon } from '../assets/js/ui/icon.js';
+import { initTabs } from '../assets/js/ui/tabs.js';
+import { countUpAll } from '../assets/js/ui/kpi.js';
+document.getElementById('search-toggle').innerHTML = icon('search');
+document.querySelectorAll('.tabs').forEach(initTabs);
+countUpAll();
+</script>
+</body></html>
