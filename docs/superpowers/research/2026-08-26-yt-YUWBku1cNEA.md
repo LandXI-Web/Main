@@ -1,5 +1,6 @@
 # 영상 분석 — "Claude Code + Seedance 2.5 = Insane Websites" (Kyle Skelly)
 
+> 상태: **조사 완료** (2026-08-26) · 키프레임 87장 전량 육안 판독 · 트랜스크립트 대조 완료
 > 조사 대상: https://www.youtube.com/watch?v=YUWBku1cNEA
 > 목적: Land-XI 전면 개편(흰 에디토리얼 아틀라스 / Vantor 급)에 이식 가능한 **프런트엔드 기법**과 **데이터·AI 제작 노하우**를 추출한다.
 > 근거 자료: `build/yt/YUWBku1cNEA.info.json` · `build/yt/YUWBku1cNEA.transcript.txt` · `shots/yt/YUWBku1cNEA/`(키프레임 87장: 15초 등간격 42 + 장면전환 45, 전량 육안 판독)
