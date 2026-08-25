@@ -10,7 +10,7 @@ import {
   nf, pct, ymd, REGISTERS, REG_IDS, DATA_ASOF,
   TOTAL_OBJECTS, TOTAL_AREA_HA, RUNS, DONE, doneById, IMG, IMG_CITY, IMG_AOI,
   CLASS_BALANCE, STACKS, STACK_MAX, KPI, BACKBONE, MODEL_LIST, EPOCHS, T1, COVERAGE,
-  NAV, NAV_FOOT, NAV_MY, NOTICE, APPROVALS, ADMIN_TILES,
+  NAV, NAV_FOOT, NAV_MY, NOTICE, APPROVALS, ADMIN_TILES, imgById, imgForBBox, gsdText, ENGINE, CRS,
 } from './db-data.js';
 import { mountPlate, densify, gapCells, stackFC, STACK_SCALE, tile2lng, tile2lat } from './db-plate.js';
 import { realTiles, indexDetections, makeSweep, fmtEta } from './db-sweep.js';
@@ -22,6 +22,8 @@ const $ = (s, r = document) => r.querySelector(s);
 const AOI_BOUNDS = [[tile2lng(13980, 14), tile2lat(6473, 14)], [tile2lng(14001, 14), tile2lat(6458, 14)]];
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const REDUCED = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+/** 프로비넌스 카드의 '생성시각' — 이 카드가 지금 만들어졌다는 사실만 적는다. */
+const stamp = () => new Date().toISOString().slice(0, 19).replace('T', ' ') + 'Z';
 
 /* ── 마스트헤드 ───────────────────────────────────────────────────────── */
 $('#mast-asof').textContent = DATA_ASOF;
@@ -146,7 +148,8 @@ const map = PLATE.map;
 // e2e/검수용 핸들 — 화면 동작에는 관여하지 않는다.
 window.__atlas = { map, get reg() { return REG; }, get tiles() { return INFER.tiles; }, get runs() { return INFER.runs; }, get scrub() { return SCRUB_DATE; }, seek: (p) => STRIP.seek(p) };
 // 원장이 가린 만큼 카메라 중심을 오른쪽으로 민다 — 클릭한 것이 원장 뒤로 숨지 않게.
-const padded = () => ({ left: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--led')) || 380, top: 56, bottom: 72, right: 20 });
+const cssPx = (n, d) => parseFloat(getComputedStyle(document.documentElement).getPropertyValue(n)) || d;
+const padded = () => ({ left: cssPx('--rail', 54) + cssPx('--led', 380), top: 56, bottom: 72, right: 20 });
 map.setPadding(padded());
 addEventListener('resize', () => map.setPadding(padded()));
 
@@ -246,14 +249,18 @@ function selectRun(id) {
   document.querySelectorAll('#run-rows .row').forEach((b) => b.classList.toggle('is-sel', b.dataset.run === id));
   flyGated({ center: r.center, zoom: r.zoom, pitch: 0 }, () => {
     const s = r.sweep;
+    const im = imgById(r.imagery);
     showCard({
       kind: '실행 · 모의 실행',
       title: `${r.task} · ${r.region}`,
       rows: [
-        ['모델', esc(r.model.file)],
-        ['가중치', `${r.model.sizeMB} MB`],
+        ['모델', `${esc(r.model.file)} · ${r.model.sizeMB} MB`],
+        ['엔진', esc(ENGINE(r.model))],
+        ['GSD', esc(gsdText(im))],
+        ['좌표계', CRS],
+        ['촬영일', esc(im ? im.captured.replace('-', '.') : '—')],
+        ['생성시각', stamp()],
         ['클래스', r.model.classes.map(esc).join(', ')],
-        ['영상', esc(r.imagery)],
         ['타일', `<span class="num">${nf.format(s.i)}</span> / ${nf.format(s.total)} · z14`],
         ['처리 속도', `<span class="num">${s.tps.toFixed(0)}</span> tiles/s`],
         ['탐지 누적', `<span class="num">${nf.format(s.det)}</span>건`],
@@ -281,6 +288,12 @@ function selectDone(id) {
       title: r.title,
       img: crop ? '../' + crop.file : null,
       rows: [
+        ['모델', esc(r.service)],
+        ['엔진', `GPKG → GeoJSON · ${esc(r.sensor)} 정사영상`],
+        ['GSD', esc(gsdText(imgForBBox(r.bbox)))],
+        ['좌표계', CRS],
+        ['촬영일', ymd(r.date)],
+        ['생성시각', stamp()],
         ['지역', esc(r.region)],
         ['센서', esc(r.sensor)],
         ['객체', `<span class="num">${nf.format(r.count)}</span>${esc(r.unit)}`],

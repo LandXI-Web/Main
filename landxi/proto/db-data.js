@@ -118,6 +118,27 @@ export const IMG = IMAGERY.map((i) => ({
   gsdM: i.gsd >= 1 ? i.gsd : null,
   zSpan: `z${i.minzoom}–z${i.maxzoom}`,
 }));
+export const imgById = (id) => IMG.find((i) => i.id === id) || null;
+/** GSD 표기 — cm 는 소수 둘째, m 는 그대로. */
+export const gsdText = (i) => (!i ? '—' : i.gsdCm != null ? `${i.gsdCm} cm/px` : `${i.gsdM} m/px`);
+/** 엔진 — .pt 확장자와 best(*)/model_* 명명에서 읽히는 것만 적는다(추정은 추정이라 쓴다). */
+export const ENGINE = (m) => (m && /\.pt$/.test(m.file)
+  ? `PyTorch .pt · ${m.task === 'segment' ? 'Segmentation' : 'Detection'}`
+  : '—');
+/** 좌표계 — 원본 GPKG 는 EPSG:5186, 웹 배포본은 4326 으로 변환되어 있다. */
+export const CRS = 'EPSG:5186 → EPSG:4326';
+
+/** 결과 bbox 의 중심을 품는 정사영상 세트를 찾는다 — GSD 를 지어내지 않기 위한 실측 대조.
+ *  후보가 여럿이면 가장 좁은(=가장 고해상) 세트를 고른다. */
+export function imgForBBox(bbox) {
+  if (!bbox) return null;
+  const cx = (bbox[0] + bbox[2]) / 2, cy = (bbox[1] + bbox[3]) / 2;
+  const hit = IMG.filter((i) => i.bounds[0] <= cx && cx <= i.bounds[2] && i.bounds[1] <= cy && cy <= i.bounds[3]);
+  if (!hit.length) return null;
+  const area = (i) => (i.bounds[2] - i.bounds[0]) * (i.bounds[3] - i.bounds[1]);
+  return hit.sort((a, b) => area(a) - area(b))[0];
+}
+
 export const IMG_CITY = IMG.filter((i) => i.coverage === 'city');
 export const IMG_AOI = IMG.filter((i) => i.coverage !== 'city');
 

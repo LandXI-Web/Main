@@ -65,7 +65,7 @@ export function mountStrip(el, { onScrub = () => {}, onEvent = () => {} } = {}) 
   let last = performance.now();
   const seen = new Set();
   const DUR = 26000;             // 기간 전체를 26초에 지난다
-  const HOLD = 1500;
+  const HOLD = 2200;              // 사건에서 재생 헤드가 서 있는 시간(2.2s)
 
   function paint() {
     head.style.left = `${p * 100}%`;
