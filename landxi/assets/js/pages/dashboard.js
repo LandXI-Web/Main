@@ -9,6 +9,7 @@ import { countUpAll } from '../ui/kpi.js';
 import { initTabs } from '../ui/tabs.js';
 import { createDrawer } from '../ui/drawer.js';
 import { icon } from '../ui/icon.js';
+import { mountCoverage } from './dashboard-coverage.js';
 
 const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const BASE_DATE = DASH.notice.date;
@@ -33,11 +34,15 @@ function start() {
   initCharts();
   countUpAll($('#kpis'));
   wireInteractions();
+  // 커버리지 카드는 자기 GeoJSON 을 읽어 카드 안 SVG 를 그리고, 같은 GeoJSON 을 돌려준다.
+  // 배경 지도에는 boot() 가 그 결과를 coverage 레이어로 얹는다.
+  coverage = mountCoverage($('#coverage'), { highlight: fn => hl('coverage', fn) })
+    .catch(e => { console.error('[dash] coverage 실패:', e); return null; });   // boot() 의 await 가 무너지지 않게
   boot();                                   // 지도는 비동기. 그때까지 강조 호출은 무시된다.
 }
 
 /* ── 지도 ────────────────────────────────────────────────────────── */
-let map = null;
+let map = null, coverage = null;
 const hl = (id, fn) => { if (map && map.getLayer(id)) map.setHighlight(id, fn); };
 
 async function boot() {
@@ -55,6 +60,8 @@ async function boot() {
   ]);
   if (extents) map.addGeoJSON('extents', extents, { kind: 'extent' });
   if (orgs) map.addGeoJSON('orgs', orgs, { kind: 'org' });
+  const sigungu = await coverage;
+  if (sigungu) map.addGeoJSON('coverage', sigungu, { kind: 'coverage' });
   indexPins(extents, orgs);
 }
 
