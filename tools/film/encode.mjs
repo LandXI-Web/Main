@@ -1,4 +1,4 @@
-// tools/film/encode.mjs — build/film/frames/*.png → landxi/assets/proto/film/{hero.mp4,hero.webm,hero-poster.jpg}
+// tools/film/encode.mjs — build/film/frames/*.png → landxi/assets/proto/film/{hero.mp4,hero.webm,poster.jpg}
 //
 //   node tools/film/encode.mjs
 //   FFMPEG=C:\path\to\ffmpeg.exe node tools/film/encode.mjs
@@ -47,7 +47,7 @@ for (const crf of [34, 37, 40, 43, 46]) {
 }
 
 // ── poster (첫 프레임 = 재생 시작과 이음매가 없다) ──────────────────────────
-const poster = path.join(OUT, 'hero-poster.jpg');
+const poster = path.join(OUT, 'poster.jpg');
 for (const q of [4, 5, 6, 7, 8]) {
   run(['-y', '-i', path.join(FRAMES, frames[0]), '-vf', 'scale=1440:810:flags=lanczos',
     '-q:v', String(q), poster]);

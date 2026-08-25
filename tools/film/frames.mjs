@@ -43,8 +43,9 @@ console.log('film', JSON.stringify(meta));
 // 프레임 목록 결정
 let list;
 if (flag('keys')) {
-  // 숏마다 대표 프레임 — 12장
-  const KEYS = [0.7, 2.4, 4.4, 5.2, 6.2, 7.6, 9.6, 11.4, 12.8, 14.0, 14.6, 16.0, 17.4, 17.7, 19.2, 20.8, 22.6];
+  // 숏마다 대표 프레임 — 12장 (S1 궤도 2 · S2/S3 구름·한반도 3 · S4 하강 2 ·
+  //                              S5 정사영상 2 · S6 비닐하우스 1 · S7 여수 2)
+  const KEYS = [0.90, 2.60, 4.40, 6.10, 7.40, 9.20, 11.20, 13.00, 14.20, 17.20, 19.60, 22.60];
   list = KEYS.map(t => ({ t, name: 'k_' + String(Math.round(t * 100)).padStart(4, '0') + '.png' }));
 } else {
   const total = meta.frames;
