@@ -1,280 +1,628 @@
-// Land-XI 운영 리포트 — 관리자 대시보드.
-// 콘솔이 아니라 리포트다. 좌측은 고정된 목차와 숫자 하나, 우측은 흐르는 판과 헤어라인 표.
-// 카드·유리·그림자·라운드 없음. 색은 흰 종이 + 액센트 하나, 앰버는 사건 도착 380ms 만.
+// Land-XI Ops Atlas — 지휘층.
+// 세 레지스터가 각각 "지도 레이어 한 벌 + 원장 한 벌"을 켠다. 대시보드 아래에 지도를
+// 깔지 않는다 — 지도가 대시보드이고, 원장은 그 지도를 읽는 방식이다.
+//   01 추론 현황  = 기존 [분석 실행] 기능. 어느 지역에서 어떤 모델이 돌고 있는가.
+//   02 학습데이터 = 기존 [데이터 관리] 기능. 학습데이터가 어디에 어떻게 쌓였는가.
+//   03 결과 누적  = 기존 [분석 결과 / XI맵] 기능. 결과가 지역별로 얼마나 쌓였는가.
+// 기존 대시보드의 나머지 기능(처리 대기 큐·KPI·방문/스토리지·전국 커버리지)은
+// 원장 꼬리에 시연 데이터 그대로 남는다. 기능을 새로 만들지 않았다.
 import {
-  QUEUE, BREATH, HOT_DAYS, KPI, COVERAGE, COLS, CELLS, DONE_CELLS,
-  LOG, CHAPTERS, META, EVENTS, T0, NOW, nf,
+  nf, pct, ymd, REGISTERS, REG_IDS, DATA_ASOF,
+  TOTAL_OBJECTS, TOTAL_AREA_HA, RUNS, DONE, doneById, IMG, IMG_CITY, IMG_AOI,
+  CLASS_BALANCE, STACKS, STACK_MAX, QUEUE, QUEUE_BY_TYPE, KPI, COVERAGE, COLS,
+  DONE_CELLS, CELLS, BACKBONE, MODEL_LIST, EPOCHS, T1,
 } from './db-data.js';
-import { RESULTS } from '../assets/data/results.js';
-import { IMAGERY } from '../assets/data/imagery.js';
-import { mountAtlas } from './db-atlas.js';
-import { drawChart, TABS, TAB_NAME } from './db-charts.js';
-import { mountRuler } from './db-ruler.js';
-import { develop, countUp, onceInView, REDUCED } from './db-motion.js';
-
-if (localStorage.getItem('lx_logged_in') !== '1') throw new Error('guard');
+import { mountPlate, densify, gapCells, stackFC, STACK_SCALE, tile2lng, tile2lat } from './db-plate.js';
+import { realTiles, indexDetections, makeSweep, fmtEta } from './db-sweep.js';
+import { mountStrip } from './db-strip.js';
+import { drawMinis } from './db-charts.js';
+import { CROPS } from '../assets/data/crops.js';
 
 const $ = (s, r = document) => r.querySelector(s);
-const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const AOI_BOUNDS = [[tile2lng(13980, 14), tile2lat(6473, 14)], [tile2lng(14001, 14), tile2lat(6458, 14)]];
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const Q = new URLSearchParams(location.search);
+const REDUCED = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/* 아이콘은 기본 뮤티드 그레이. 호버에서 본문색, 활성에서 액센트(Palantir P12). */
-const ICON = {
-  card: '<path d="M1.5 3.5h13v9h-13zM1.5 6.5h13M4.5 9.5h4"/>',
-  user: '<path d="M8 8.6a2.8 2.8 0 1 0 0-5.6 2.8 2.8 0 0 0 0 5.6zM2.6 13.4c.6-2.5 2.8-3.6 5.4-3.6s4.8 1.1 5.4 3.6"/>',
-  inquiry: '<path d="M2 3h12v8H8.6L5.4 13.6V11H2z"/>',
-};
-const ico = (t) => `<svg class="ic" viewBox="0 0 16 16" aria-hidden="true">${ICON[t] || ''}</svg>`;
+/* ── 마스트헤드 ───────────────────────────────────────────────────────── */
+$('#mast-asof').textContent = DATA_ASOF;
+$('#mast-src').textContent = `결과 ${DONE.length} · 모델 ${MODEL_LIST.length} · 영상 ${IMG.length}`;
 
-/* ── 좌측: 머리글·목차·신선도 ──────────────────────────────────────── */
-$('#mast-date').textContent = META.now;
+/* ── 레지스터 탭 ──────────────────────────────────────────────────────── */
+const regsEl = $('#regs');
+regsEl.setAttribute('role', 'tablist');
+regsEl.innerHTML = REGISTERS.map((r) => `
+  <button type="button" class="reg" role="tab" id="tab-${r.id}" data-reg="${r.id}" aria-selected="false">
+    <span class="ri num">${r.idx}</span><span class="rn">${esc(r.name)}</span><span class="rt num">${esc(r.tally())}</span>
+  </button>`).join('');
 
-$('#chapters').innerHTML = CHAPTERS.map((c) => `
-  <a class="ch-link" href="#${c.sec}" data-sec="${c.id}">
-    <i class="num idx">${c.idx}</i><span class="nm">${esc(c.name)}</span><i class="num tally">${c.tally}</i>
-  </a>`).join('');
+let REG = (new URLSearchParams(location.search).get('tab') || '').toLowerCase();
+if (!REG_IDS.includes(REG)) REG = 'infer';
 
-$('#fresh-txt').innerHTML =
-  `데이터 ${META.updated} 갱신 · 정사영상 <b class="num">${META.tiles}</b>세트 · 모델 <b class="num">${META.models}</b>종 · 관리자 ${esc(META.admin)}`;
-$('#fresh-detail').innerHTML = [
-  ['마지막 분석', `${LOG.find((l) => l.who === '시스템' && l.event)?.date || '—'} · 누적 탐지 ${nf.format(META.detections)}건`],
-  ['경계 자료', 'sigungu.geojson 249 · sido.geojson 17'],
-  ['기록 범위', `${T0} → ${NOW}`],
-].map(([k, v]) => `<dt class="label">${esc(k)}</dt><dd class="num">${esc(v)}</dd>`).join('');
-$('#fresh-more').addEventListener('click', (e) => {
-  const d = $('#fresh-detail');
-  d.hidden = !d.hidden;
-  e.currentTarget.setAttribute('aria-expanded', String(!d.hidden));
-});
-
-/* ── 표지 도판 — 남원 4시점 정사영상. 리포 안의 실제 타일이다. ─────
-   §4 영상 처리: 약한 무채화·대비. 호버하면 그 시점만 채도가 돌아온다(선택적 채도).
-   축척은 캡션의 GSD 로 말한다 — 장식 숫자가 아니라 해설이다(§5-9). */
-const COVER_Z = 17, COVER_X = [111902, 111903], COVER_Y = [51679, 51680];
-const EPOCHS = IMAGERY.filter((i) => /^namwon_25/.test(i.id));
-$('#cover-strip').innerHTML = EPOCHS.map((e, i) => `
-  <figure class="ep" data-id="${e.id}" style="--i:${i}">
-    <div class="ep__frame">${COVER_Y.flatMap((y) => COVER_X.map((x) =>
-    `<img src="../${e.tiles.replace('{z}', COVER_Z).replace('{x}', x).replace('{y}', y)}" alt="" loading="lazy" decoding="async">`)).join('')}
-      <span class="ep__brk" aria-hidden="true"></span></div>
-    <figcaption class="num">${esc(e.captured)}<i>GSD ${(e.gsd * 100).toFixed(2)}cm</i></figcaption>
-  </figure>`).join('');
-$('#cover-fig').textContent =
-  `FIG. 00 · 남원시 · 정사영상 ${EPOCHS.length}시점 ${EPOCHS[0].captured} → ${EPOCHS[EPOCHS.length - 1].captured} · z${COVER_Z} 실타일`;
-$('#cover-note').textContent =
-  `같은 프레임을 네 번 찍었다 — 4월의 마른 논이 10월에는 다른 색이다. 정사영상 ${META.tiles}세트 · 모델 ${META.models}종 · 누적 탐지 ${nf.format(META.detections)}건.`;
-
-/* ── 01 처리 대기 큐 — 헤어라인 줄. 표가 아니라 줄이다. ───────────── */
-/** 이 지점을 품는 실제 분석 결과. 클릭 전에 규모를 알려 준다(Palantir P3). */
-function linked([lng, lat]) {
-  return RESULTS
-    .filter((r) => { const b = r.stats.bbox; return b && lng >= b[0] - 0.15 && lng <= b[2] + 0.15 && lat >= b[1] - 0.15 && lat <= b[3] + 0.15; })
-    .map((r) => ({ title: r.title, n: r.stats.count, unit: r.unit }));
+/* ── 큰 숫자 ──────────────────────────────────────────────────────────── */
+const headStat = $('#head-stat');
+/** 숫자만 갈아 끼운다 — 매 프레임 현상 애니메이션을 다시 돌리지 않게. */
+function setHeadValue(n) {
+  const s = nf.format(n);
+  const chs = headStat.querySelectorAll('.ch');
+  if (chs.length !== s.length) return false;
+  [...s].forEach((c, i) => { if (chs[i].textContent !== c) chs[i].textContent = c; });
+  return true;
 }
 
-$('#queue').innerHTML = QUEUE.map((q) => {
-  const link = linked(q.lnglat);
-  return `
-  <div class="q${q.hot ? ' is-hot' : ''}${q === BREATH ? ' is-breath' : ''}" role="listitem" data-i="${q.i}" data-date="${q.date}">
-    <button type="button" class="q__row" aria-expanded="false" aria-controls="qd-${q.i}">
-      ${ico(q.type)}
-      <span class="q__type label">${esc(q.typeName)}</span>
-      <span class="q__ttl">${esc(q.title)}</span>
-      <span class="q__st label">${esc(q.status)}</span>
-      <span class="q__age num">${q.age}<i>일</i></span>
-    </button>
-    <div class="q__d" id="qd-${q.i}" hidden>
-      <div class="q__grid">
-        <dl>
-          <dt class="label">접수</dt><dd class="num">${q.date}</dd>
-          <dt class="label">대기</dt><dd class="num">${q.age}일${q.hot ? ` · ${HOT_DAYS}일 초과` : ''}</dd>
-          <dt class="label">좌표</dt><dd class="num">${q.lnglat[1].toFixed(4)}, ${q.lnglat[0].toFixed(4)}</dd>
-        </dl>
-        <p class="q__sub">${esc(q.sub)}</p>
-      </div>
-      <div class="q__linked">
-        <p class="label">연결된 객체 ${link.length}종</p>
-        ${link.length
-      ? `<ul>${link.map((l) => `<li><span>${esc(l.title)}</span><b class="num">${nf.format(l.n)}</b><em>${esc(l.unit)}</em></li>`).join('')}</ul>`
-      : '<p class="q__none">이 좌표를 품는 분석 결과가 아직 없다 — 현장 조사 구간</p>'}
-      </div>
-      <p class="q__act"><a class="bracket" href="#sec-cov">${esc(q.act)}</a><a class="bracket" href="?region=${encodeURIComponent(q.lnglat.join(','))}">지도에서 열기</a></p>
+function setHead(label, value, unit, sub) {
+  $('#head-label').textContent = label;
+  $('#head-sub').innerHTML = sub;
+  const s = typeof value === 'number' ? nf.format(value) : value;
+  headStat.innerHTML = [...s].map((c, i) => `<span class="ch" style="--i:${i}">${esc(c)}</span>`).join('')
+    + (unit ? `<span class="u">${esc(unit)}</span>` : '');
+  headStat.classList.remove('is-in');
+  requestAnimationFrame(() => headStat.classList.add('is-in'));
+}
+
+/* ── 부유 카드 / 프로브 ───────────────────────────────────────────────── */
+const cardEl = $('#card');
+const probeEl = $('#probe');
+function showCard({ kind, title, rows, img, prov }) {
+  cardEl.hidden = false;
+  cardEl.innerHTML = `
+    <div class="ch"><span class="label">${esc(kind)}</span><button type="button" aria-label="닫기">×</button></div>
+    ${img ? `<img src="${esc(img)}" alt="">` : ''}
+    <div class="cb"><h3>${esc(title)}</h3><dl>${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join('')}</dl></div>
+    ${prov ? `<p class="cf">출처 ${esc(prov)}</p>` : ''}`;
+  cardEl.querySelector('button').addEventListener('click', () => { cardEl.hidden = true; });
+}
+function showProbe(x, y, html) {
+  probeEl.hidden = false;
+  probeEl.innerHTML = html;
+  const r = probeEl.getBoundingClientRect();
+  probeEl.style.left = `${Math.min(innerWidth - r.width - 10, x + 14)}px`;
+  probeEl.style.top = `${Math.min(innerHeight - r.height - 84, y + 14)}px`;
+}
+const hideProbe = () => { probeEl.hidden = true; };
+
+/* ── 지도 ─────────────────────────────────────────────────────────────── */
+const PLATE = await mountPlate($('#plate'));
+const map = PLATE.map;
+// 원장이 가린 만큼 카메라 중심을 오른쪽으로 민다 — 클릭한 것이 원장 뒤로 숨지 않게.
+const padded = () => ({ left: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--led')) || 380, top: 56, bottom: 72, right: 20 });
+map.setPadding(padded());
+addEventListener('resize', () => map.setPadding(padded()));
+
+/** 타일 관문 — 목적지 타일이 다 올 때까지 기다렸다가 알린다(빈 판으로 착지하지 않게). */
+function flyGated(opts, done) {
+  map.flyTo({ duration: REDUCED() ? 0 : 1400, essential: true, ...opts });
+  const fin = () => { map.off('idle', fin); done && done(); };
+  map.on('idle', fin);
+}
+
+/* 핀 호흡 — 화면당 앰비언트 하나. 가장 오래된 큐 한 줄만 숨 쉰다. */
+(function breathe() {
+  if (REDUCED()) return;
+  const src = PLATE.pins();
+  const t0 = performance.now();
+  (function loop(t) {
+    const ph = ((t - t0) % 2600) / 2600;
+    const data = src._data;
+    for (const f of data.features) f.properties.pulse = f.properties.hot ? ph : 0;
+    src.setData(data);
+    requestAnimationFrame(loop);
+  })(t0);
+})();
+
+/* ══ 레지스터 01 · 추론 현황 ═════════════════════════════════════════════ */
+const INFER = { tiles: null, runs: [], raf: 0, last: 0, sel: null };
+
+async function buildInfer() {
+  if (INFER.tiles) return;
+  $('#reg-body').innerHTML = `<p class="fg__h"><b>FIG. 01</b> 실타일 목록 확인 중…</p>`;
+  const tiles = await realTiles();
+  INFER.tiles = tiles;
+  // 실행 3건 — 각자 다른 모델·다른 탐지셋·다른 속도. 진행률은 전부 측정값.
+  // 초당 타일 수. 남원 전역 z14 196칸을 1~2분에 훑는 속도 — 진행이 눈으로 읽히게.
+  const rates = [3.4, 2.2, 5.1];
+  const offs = [0.35, 0.12, 0.58];
+  INFER.runs = await Promise.all(RUNS.map(async (r, i) => {
+    const index = await indexDetections(r.detections);
+    return { ...r, index, sweep: makeSweep({ tiles, index, rate: rates[i], offset: offs[i] }) };
+  }));
+}
+
+function inferLedger() {
+  const runs = INFER.runs;
+  const el = $('#reg-body');
+  el.innerHTML = `
+  <section class="fg">
+    <p class="fg__h"><b>FIG. 01</b> 실행 중 · <span class="num">${runs.length}</span>건 <i class="tag tag--sim">모의 실행</i><span class="rt">tiles / s</span></p>
+    <div class="rows" id="run-rows" role="list">
+      ${runs.map((r) => `
+        <button type="button" class="row is-run" role="listitem" data-run="${r.id}">
+          <i class="dot"></i>
+          <span class="t">${esc(r.task)} · ${esc(r.region)}</span>
+          <span class="v num" data-tps>—</span>
+          <span class="s num" data-sub>—</span>
+          <span class="p num" data-eta>—</span>
+          <span class="bar"><i style="width:0%"></i></span>
+        </button>`).join('')}
     </div>
-  </div>`;
-}).join('');
+    <p class="fg__h"><b>FIG. 02</b> 완료 · <span class="num">${DONE.length}</span>건 <i class="tag tag--meas">측정</i><span class="rt">객체 수</span></p>
+    <div class="rows" id="done-rows" role="list">
+      ${DONE.map((r) => `
+        <button type="button" class="row is-done" role="listitem" data-done="${r.id}">
+          <i class="dot"></i>
+          <span class="t">${esc(r.title)}</span>
+          <span class="v num">${nf.format(r.count)}<em>${esc(r.unit)}</em></span>
+          <span class="s num">${esc(r.region)} · ${esc(r.sensor)} · ${ymd(r.date)}</span>
+          <span class="p num">100%</span>
+        </button>`).join('')}
+    </div>
+    <p class="fg__h"><b>FIG. 03</b> 모델 카드 · <span class="num">${MODEL_LIST.length}</span>종<span class="rt">백본 ${esc(BACKBONE.name)} ${esc(BACKBONE.ver)}</span></p>
+    <div class="chips" id="model-chips">
+      ${MODEL_LIST.map((m) => `<span class="chip" data-model="${m.id}"><b>${esc(m.file)}</b> ${m.sizeMB}MB · ${esc(m.task)}</span>`).join('')}
+    </div>
+  </section>`;
 
-$('#q-total').textContent = QUEUE.length;
-$('#q-fig').textContent =
-  `FIG. 01 · 처리 대기 ${QUEUE.length}건 · ${HOT_DAYS}일 초과 ${QUEUE.filter((q) => q.hot).length}건 · 최장 ${QUEUE[0].age}일 · 기준 ${NOW}`;
+  el.querySelectorAll('[data-run]').forEach((b) => {
+    b.addEventListener('click', () => selectRun(b.dataset.run));
+    b.addEventListener('mouseenter', (ev) => {
+      const r = runs.find((x) => x.id === b.dataset.run);
+      showProbe(ev.clientX, ev.clientY, `<p class="pt">${esc(r.model.name)}</p><p class="ps">${esc(r.model.file)} · ${r.model.sizeMB}MB · 클래스 ${r.model.classes.length}<br>영상 ${esc(r.imagery)} · z14 실타일 ${INFER.tiles.length}</p>`);
+    });
+    b.addEventListener('mouseleave', hideProbe);
+  });
+  el.querySelectorAll('[data-done]').forEach((b) => {
+    b.addEventListener('click', () => selectDone(b.dataset.done));
+  });
+  el.querySelectorAll('[data-model]').forEach((c) => {
+    c.addEventListener('mouseenter', (ev) => {
+      const m = MODEL_LIST.find((x) => x.id === c.dataset.model);
+      showProbe(ev.clientX, ev.clientY, `<p class="pt">${esc(m.name)}</p><p class="ps">클래스 ${m.classes.map(esc).join(' · ')}<br>학습 ${esc(m.trainedAt)} · ${esc(m.task)}${m.inferred ? ' · 클래스 추정' : ''}</p>`);
+    });
+    c.addEventListener('mouseleave', hideProbe);
+  });
+}
 
-$('#queue').addEventListener('click', (e) => {
-  const btn = e.target.closest('.q__row');
-  if (!btn) return;
-  const row = btn.parentElement;
-  const d = row.querySelector('.q__d');
-  const open = d.hidden;
-  // 한 번에 하나만 — 인라인 상세는 쌓이지 않는다.
-  $$('#queue .q__d').forEach((x) => { x.hidden = true; x.previousElementSibling.setAttribute('aria-expanded', 'false'); x.parentElement.classList.remove('is-open'); });
-  d.hidden = !open;
-  btn.setAttribute('aria-expanded', String(open));
-  row.classList.toggle('is-open', open);
-});
+function selectRun(id) {
+  const r = INFER.runs.find((x) => x.id === id);
+  if (!r) return;
+  INFER.sel = id;
+  document.querySelectorAll('#run-rows .row').forEach((b) => b.classList.toggle('is-sel', b.dataset.run === id));
+  flyGated({ center: r.center, zoom: r.zoom, pitch: 0 }, () => {
+    const s = r.sweep;
+    showCard({
+      kind: '실행 · 모의 실행',
+      title: `${r.task} · ${r.region}`,
+      rows: [
+        ['모델', esc(r.model.file)],
+        ['가중치', `${r.model.sizeMB} MB`],
+        ['클래스', r.model.classes.map(esc).join(', ')],
+        ['영상', esc(r.imagery)],
+        ['타일', `<span class="num">${nf.format(s.i)}</span> / ${nf.format(s.total)} · z14`],
+        ['처리 속도', `<span class="num">${s.tps.toFixed(0)}</span> tiles/s`],
+        ['탐지 누적', `<span class="num">${nf.format(s.det)}</span>건`],
+        ['ETA', fmtEta(s.eta)],
+      ],
+      prov: `assets/tiles/${r.imagery}/14/** (실타일 ${INFER.tiles.length}) · ${r.detections.replace('../', '')}`,
+    });
+  });
+}
 
-/* ── 02 지표 — 124px / 52px 숫자 넷. 카드 없음. ────────────────────── */
-$('#kpis').innerHTML = KPI.map((k) => `
-  <div class="k k--${k.size}" data-i="${k.i}"${k.tab ? ` data-tab="${k.tab}"` : ''}>
-    <p class="k__v stat num" data-target="${k.value}">0</p>
-    <p class="k__l">${esc(k.label)}<i class="unit">${esc(k.unit)}</i></p>
-    <p class="k__s caption">${esc(k.sub)}</p>
-  </div>`).join('');
+function selectDone(id) {
+  const r = doneById(id);
+  if (!r) return;
+  document.querySelectorAll('#done-rows .row').forEach((b) => b.classList.toggle('is-sel', b.dataset.done === id));
+  const crop = (CROPS[id] || [])[0];
+  fetch(r.geojson).then((x) => x.json()).then((j) => {
+    PLATE.setDet(j);
+    PLATE.show(['det-dot'], true);
+  });
+  const b = r.bbox;
+  map.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: { left: 420, top: 90, right: 60, bottom: 110 }, duration: REDUCED() ? 0 : 1400 });
+  map.once('idle', () => {
+    showCard({
+      kind: '완료 · 측정',
+      title: r.title,
+      img: crop ? '../' + crop.file : null,
+      rows: [
+        ['지역', esc(r.region)],
+        ['센서', esc(r.sensor)],
+        ['객체', `<span class="num">${nf.format(r.count)}</span>${esc(r.unit)}`],
+        ...Object.entries(r.classes).slice(0, 4).map(([k, v]) => [k, `<span class="num">${nf.format(v)}</span>`]),
+        ['평균 신뢰도', `<span class="num">${r.conf.toFixed(3)}</span>`],
+        ...(r.areaHa ? [['면적', `<span class="num">${nf.format(Math.round(r.areaHa))}</span> ha`]] : []),
+        ['분석일', ymd(r.date)],
+      ],
+      prov: `${r.geojson.replace('../', '')} · EPSG:5186 → 4326${crop ? ` · 크롭 ${crop.source}` : ''}`,
+    });
+  });
+}
 
-onceInView($('#kpis'), () => {
-  $$('#kpis .k__v').forEach((el, i) => setTimeout(() => countUp(el, Number(el.dataset.target), { dur: 900 }), i * 120));
-});
+function inferFrame(t) {
+  const dt = Math.min(400, t - (INFER.last || t));
+  INFER.last = t;
+  let any = false;
+  for (const r of INFER.runs) {
+    if (r.sweep.done) { r.sweep.reset(); any = true; }   // 다음 회차로 넘어간다
+    if (r.sweep.advance(dt)) any = true;
+  }
+  // 지도에는 선택된(또는 첫) 실행의 스윕만 올린다 — 세 겹이 겹치면 아무것도 안 보인다.
+  const shown = INFER.runs.find((r) => r.id === INFER.sel) || INFER.runs[0];
+  if (shown && any) PLATE.setSweep(shown.sweep.features());
+  const det = INFER.runs.reduce((a, r) => a + r.sweep.det, 0);
+  if (REG === 'infer' && !setHeadValue(det)) {
+    setHead('모의 실행 · 탐지 누적', det, '건',
+      `z14 실타일 <span class="num">${INFER.tiles.length}</span>칸 · 모델 <span class="num">${INFER.runs.length}</span>종 동시 · 완료 <span class="num">${DONE.length}</span>건은 실측`);
+  }
+  for (const r of INFER.runs) {
+    const row = document.querySelector(`[data-run="${r.id}"]`);
+    if (!row) continue;
+    const s = r.sweep;
+    row.querySelector('[data-tps]').innerHTML = `${s.tps.toFixed(0)}<em>t/s</em>`;
+    row.querySelector('[data-sub]').textContent = `${esc(r.model.file)} · ${nf.format(s.i)}/${nf.format(s.total)} 타일 · 탐지 ${nf.format(s.det)}`;
+    row.querySelector('[data-eta]').textContent = s.done ? '완료' : `ETA ${fmtEta(s.eta)}`;
+    row.querySelector('.bar i').style.width = `${((s.i / s.total) * 100).toFixed(1)}%`;
+  }
+  INFER.raf = requestAnimationFrame(inferFrame);
+}
 
-/* 차트 — 탭은 딥링크다(?tab=). */
-$('#chart-tabs').innerHTML = TABS.map((t) => `
-  <button type="button" role="tab" data-tab="${t}" aria-selected="false" aria-controls="chart">${esc(TAB_NAME[t])}</button>`).join('');
+async function enterInfer() {
+  setHead('모의 실행 · 탐지 누적', 0, '건', '실타일 목록을 확인하는 중…');
+  await buildInfer();
+  if (REG !== 'infer') return;
+  setHead('모의 실행 · 탐지 누적', 0, '건',
+    `z14 실타일 <span class="num">${INFER.tiles.length}</span>칸 · 모델 <span class="num">${RUNS.length}</span>종 동시 · 완료 <span class="num">${DONE.length}</span>건은 실측`);
+  inferLedger();
+  PLATE.show(['aoi-line', 'sweep-fill', 'sweep-line'], true);
+  PLATE.setSweep(INFER.runs[0].sweep.features());
+  // AOI 전체가 원장 오른쪽에 다 들어오게 — 스윕이 지역을 훑는 것으로 읽혀야 한다.
+  map.fitBounds(AOI_BOUNDS, { padding: { left: 430, top: 84, right: 70, bottom: 110 }, duration: REDUCED() ? 0 : 1200 });
+  cancelAnimationFrame(INFER.raf);
+  INFER.last = 0;
+  INFER.raf = requestAnimationFrame(inferFrame);
+}
+function leaveInfer() {
+  cancelAnimationFrame(INFER.raf); INFER.raf = 0;
+  PLATE.show(['aoi-line', 'sweep-fill', 'sweep-line', 'det-dot'], false);
+}
 
-let tab = TABS.includes(Q.get('tab')) ? Q.get('tab') : TABS[0];
-function setTab(t, push = false) {
-  tab = t;
-  $$('#chart-tabs button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
-  $('#chart').classList.remove('is-in');
-  drawChart($('#chart'), t);
-  $('#c-fig').textContent = `FIG. 02 · ${TAB_NAME[t]} · 출처 assets/data/dashboard.js · 기준 ${NOW}`;
+/* ══ 레지스터 02 · 학습데이터 ════════════════════════════════════════════ */
+const TRAIN = { built: false, sel: null };
+
+async function buildTrain() {
+  if (TRAIN.built) return;
+  const packs = {};
+  for (const r of DONE) {
+    const idx = await indexDetections(r.geojson);
+    packs[r.id] = idx;
+  }
+  TRAIN.packs = packs;
+  TRAIN.built = true;
+}
+
+function trainLedger() {
+  const el = $('#reg-body');
+  const totalCells = TRAIN.cells || 0;
+  el.innerHTML = `
+  <section class="fg">
+    <p class="fg__h"><b>FIG. 01</b> 라벨 표본 밀도 · 100 m 격자 <i class="tag tag--meas">측정</i><span class="rt">칸 ${nf.format(totalCells)}</span></p>
+    <div class="rows" id="dens-rows" role="list">
+      ${DONE.map((r) => `
+        <button type="button" class="row" role="listitem" data-dens="${r.id}">
+          <i class="dot"></i>
+          <span class="t">${esc(r.title)}</span>
+          <span class="v num">${nf.format(r.count)}<em>${esc(r.unit)}</em></span>
+          <span class="s num" data-cells>—</span>
+          <span class="p num" data-per>—</span>
+        </button>`).join('')}
+    </div>
+
+    <p class="fg__h"><b>FIG. 02</b> 클래스 균형 · 지역별 <i class="tag tag--meas">측정</i></p>
+    <div class="bal">
+      ${CLASS_BALANCE.map((b) => `
+        <p class="bal__g">${esc(b.region)} · ${esc(b.title)} · ${nf.format(b.total)}</p>
+        ${b.rows.map((c, i) => `
+          <div class="bal__r${i % 2 ? ' alt' : ''}">
+            <span class="bal__n">${esc(c.name)}</span>
+            <span class="bal__t"><i style="width:${(c.share * 100).toFixed(1)}%"></i></span>
+            <span class="bal__v">${nf.format(c.n)}</span>
+          </div>`).join('')}`).join('')}
+    </div>
+
+    <p class="fg__h"><b>FIG. 03</b> 정사영상 인벤토리 · <span class="num">${IMG.length}</span>세트</p>
+    <div class="chips" id="img-chips">
+      ${IMG.map((i) => `<span class="chip" data-img="${i.id}"><b>${esc(i.label)}</b> ${i.gsdCm ? i.gsdCm + 'cm' : i.gsdM + 'm'} · ${esc(i.zSpan)}</span>`).join('')}
+      <span class="chip chip--gap">결측 구간 = 점선 칸</span>
+    </div>
+  </section>`;
+
+  el.querySelectorAll('[data-dens]').forEach((b) => {
+    b.addEventListener('click', () => selectDensity(b.dataset.dens));
+    b.addEventListener('mouseenter', (ev) => {
+      const r = doneById(b.dataset.dens);
+      const crop = (CROPS[r.id] || [])[0];
+      showProbe(ev.clientX, ev.clientY,
+        `<p class="pt">${esc(r.title)}</p><p class="ps">라벨 표본 ${nf.format(r.count)}${esc(r.unit)} · 평균 신뢰도 ${r.conf.toFixed(3)}</p>`
+        + (crop ? `<img src="../${esc(crop.file)}" alt="">` : ''));
+    });
+    b.addEventListener('mouseleave', hideProbe);
+  });
+  el.querySelectorAll('[data-img]').forEach((c) => {
+    const i = IMG.find((x) => x.id === c.dataset.img);
+    c.addEventListener('mouseenter', (ev) => showProbe(ev.clientX, ev.clientY,
+      `<p class="pt">${esc(i.label)}</p><p class="ps">${esc(i.kind)} · GSD ${i.gsdCm ? i.gsdCm + ' cm' : i.gsdM + ' m'} · 촬영 ${esc(i.captured)}<br>${esc(i.zSpan)} · ${esc(i.tiles)}</p>`));
+    c.addEventListener('mouseleave', hideProbe);
+    c.addEventListener('click', () => {
+      document.querySelectorAll('[data-img]').forEach((x) => x.classList.toggle('is-sel', x === c));
+      map.fitBounds([[i.bounds[0], i.bounds[1]], [i.bounds[2], i.bounds[3]]],
+        { padding: { left: 420, top: 90, right: 60, bottom: 110 }, duration: REDUCED() ? 0 : 1200, maxZoom: 15.5 });
+      showCard({
+        kind: '영상 인벤토리',
+        title: i.label,
+        rows: [['유형', esc(i.kind)], ['GSD', i.gsdCm ? `${i.gsdCm} cm` : `${i.gsdM} m`],
+          ['촬영', esc(i.captured)], ['줌', esc(i.zSpan)],
+          ['범위', `${i.bounds.map((n) => n.toFixed(3)).join(', ')}`]],
+        prov: i.tiles,
+      });
+    });
+  });
+  refreshDensityRows();
+}
+
+function refreshDensityRows() {
+  for (const r of DONE) {
+    const row = document.querySelector(`[data-dens="${r.id}"]`);
+    if (!row || !TRAIN.packs) continue;
+    const g = densify(TRAIN.packs[r.id].pts, 100);
+    row.querySelector('[data-cells]').textContent = `100m 칸 ${nf.format(g.cells)} · 최대 ${nf.format(g.max)}건/칸`;
+    row.querySelector('[data-per]').textContent = `${(r.count / Math.max(1, g.cells)).toFixed(1)}/칸`;
+  }
+}
+
+function selectDensity(id) {
+  const r = doneById(id);
+  if (!r || !TRAIN.packs) return;
+  TRAIN.sel = id;
+  document.querySelectorAll('[data-dens]').forEach((b) => b.classList.toggle('is-sel', b.dataset.dens === id));
+  const g = densify(TRAIN.packs[id].pts, 100);
+  PLATE.setGrid(g.fc, gapCells(g.fc, 100));
+  PLATE.show(['grid-fill', 'grid-line', 'gap-cells'], true);
+  const b = r.bbox;
+  map.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: { left: 420, top: 90, right: 60, bottom: 110 }, duration: REDUCED() ? 0 : 1400 });
+  const crop = (CROPS[id] || [])[0];
+  map.once('idle', () => showCard({
+    kind: '학습데이터 · Acquired',
+    title: r.title,
+    img: crop ? '../' + crop.file : null,
+    rows: [
+      ['라벨 표본', `<span class="num">${nf.format(r.count)}</span>${esc(r.unit)}`],
+      ['100 m 칸', `<span class="num">${nf.format(g.cells)}</span>`],
+      ['최대 밀도', `<span class="num">${nf.format(g.max)}</span> 건/칸`],
+      ['평균 밀도', `<span class="num">${(r.count / Math.max(1, g.cells)).toFixed(1)}</span> 건/칸`],
+      ...(crop ? [['크롭 GSD', `<span class="num">${crop.gsd.toFixed(3)}</span> m`], ['크롭 신뢰도', `<span class="num">${crop.conf.toFixed(3)}</span>`]] : []),
+    ],
+    prov: `${r.geojson.replace('../', '')}${crop ? ` · ${crop.file}` : ''}`,
+  }));
+}
+
+async function enterTrain() {
+  setHead('라벨 표본', TOTAL_OBJECTS, '건', '집계 중…');
+  await buildTrain();
+  if (REG !== 'train') return;
+  let cells = 0;
+  for (const r of DONE) cells += densify(TRAIN.packs[r.id].pts, 100).cells;
+  TRAIN.cells = cells;
+  setHead('라벨 표본', TOTAL_OBJECTS, '건',
+    `100 m 격자 <span class="num">${nf.format(cells)}</span>칸 · 정사영상 <span class="num">${IMG.length}</span>세트 · 전역 ${IMG_CITY.length} / AOI ${IMG_AOI.length}`);
+  trainLedger();
+  PLATE.show(['imgbox-line'], true);
+  selectDensity(TRAIN.sel || DONE[0].id);
+}
+function leaveTrain() {
+  PLATE.show(['grid-fill', 'grid-line', 'gap-cells', 'imgbox-line'], false);
+}
+
+/* ══ 레지스터 03 · 결과 누적 ═════════════════════════════════════════════ */
+let SCRUB_DATE = T1;
+
+function resultsLedger() {
+  const el = $('#reg-body');
+  const est = COVERAGE.filter((c) => !c.measured);
+  el.innerHTML = `
+  <section class="fg">
+    <p class="fg__h"><b>FIG. 01</b> 시군구별 결과 적층 <i class="tag tag--meas">측정</i><span class="rt">epoch 스택</span></p>
+    <div class="rows" id="stack-rows" role="list">
+      ${STACKS.map((s) => `
+        <button type="button" class="row is-done" role="listitem" data-stack="${s.code}">
+          <i class="dot"></i>
+          <span class="t">${esc(s.region)}</span>
+          <span class="v num" data-tot>${nf.format(s.total)}</span>
+          <span class="s num" data-lay>${s.layers.map((l) => ymd(l.date).slice(5)).join(' → ')}</span>
+          <span class="p num">${s.layers.length}층</span>
+          <span class="bar"><i style="width:${((s.total / STACK_MAX) * 100).toFixed(0)}%"></i>${s.layers.map((l) => `<b style="left:${((l.top / STACK_MAX) * 100).toFixed(1)}%"></b>`).join('')}</span>
+        </button>`).join('')}
+    </div>
+
+    <p class="fg__h"><b>FIG. 02</b> 층 · epoch <span class="num">${EPOCHS.length}</span>개 <i class="tag tag--meas">측정</i></p>
+    <div class="rows" role="list">
+      ${STACKS.flatMap((s) => s.layers.map((l) => `
+        <button type="button" class="row" role="listitem" data-layer="${l.id}">
+          <i class="dot"></i>
+          <span class="t">${esc(l.title)}</span>
+          <span class="v num">${nf.format(l.count)}<em>${esc(l.unit)}</em></span>
+          <span class="s num">${ymd(l.date)} · 누적 ${nf.format(l.top)}</span>
+          <span class="p num">${pct(l.count / STACK_MAX)}</span>
+        </button>`)).join('')}
+    </div>
+
+    <p class="fg__h"><b>FIG. 03</b> 미실측 시군구 · <span class="num">${est.length}</span>곳 <i class="tag tag--demo">추정</i><span class="rt">커버리지 시연값</span></p>
+    <div class="rows" role="list">
+      ${est.slice(0, 6).map((c) => `
+        <div class="row" role="listitem">
+          <i class="dot"></i>
+          <span class="t">${esc(c.name)}</span>
+          <span class="v num">—</span>
+          <span class="s num">조사 항목 ${c.done.length} · 커버리지 ${pct(c.coverage)}</span>
+          <span class="p num">추정</span>
+        </div>`).join('')}
+    </div>
+    <p class="caption" style="padding:0 22px 14px">기둥 높이는 실측 객체 수에만 세운다. 추정 시군구는 높이를 갖지 않고 경계 농도로만 남는다 —
+      <span class="num">${nf.format(STACK_SCALE.per)}</span>건 = 1 km.</p>
+  </section>`;
+
+  el.querySelectorAll('[data-stack]').forEach((b) => b.addEventListener('click', () => {
+    const s = STACKS.find((x) => x.code === b.dataset.stack);
+    document.querySelectorAll('[data-stack]').forEach((x) => x.classList.toggle('is-sel', x === b));
+    flyGated({ center: s.center, zoom: 9.6, pitch: 56, bearing: -18 }, () => showCard({
+      kind: '결과 누적 · 측정',
+      title: s.region,
+      rows: [
+        ['누적 객체', `<span class="num">${nf.format(s.total)}</span>건`],
+        ...s.layers.map((l) => [ymd(l.date), `<span class="num">${nf.format(l.count)}</span> ${esc(l.unit)}`]),
+        ['기둥 축척', `<span class="num">${nf.format(STACK_SCALE.per)}</span>건 = 1 km`],
+      ],
+      prov: s.layers.map((l) => `assets/data/geo/results/${l.id}.geojson`).join(' · '),
+    }));
+  }));
+  el.querySelectorAll('[data-layer]').forEach((b) => b.addEventListener('click', () => selectDone(b.dataset.layer)));
+}
+
+function paintStacks() {
+  PLATE.setStack(stackFC(SCRUB_DATE));
+  const rows = document.querySelectorAll('[data-stack]');
+  if (!rows.length) return;
+  for (const s of STACKS) {
+    const row = document.querySelector(`[data-stack="${s.code}"]`);
+    if (!row) continue;
+    const grown = s.layers.filter((l) => l.date <= SCRUB_DATE);
+    const tot = grown.reduce((a, l) => a + l.count, 0);
+    row.querySelector('[data-tot]').textContent = nf.format(tot);
+    row.querySelector('[data-lay]').textContent = grown.length
+      ? `${grown.map((l) => ymd(l.date).slice(5)).join(' → ')} · ${grown.length}/${s.layers.length}층`
+      : `${ymd(SCRUB_DATE)} 시점 · 아직 없음`;
+    row.querySelector('.bar i').style.width = `${((tot / STACK_MAX) * 100).toFixed(1)}%`;
+  }
+  const total = STACKS.reduce((a, s) => a + s.layers.filter((l) => l.date <= SCRUB_DATE).reduce((b, l) => b + l.count, 0), 0);
+  if (REG === 'results') setHead('누적 결과', total, '건',
+    `<span class="num">${ymd(SCRUB_DATE)}</span> 시점 · 시군구 <span class="num">${STACKS.length}</span>곳 실측 · 스트립을 끌면 기둥이 자란다`);
+}
+
+function enterResults() {
+  resultsLedger();
+  PLATE.show(['stack-3d', 'sig-cov'], true);
+  paintStacks();
+  flyGated({ center: [127.5, 35.1], zoom: 8.0, pitch: 54, bearing: -18 });
+}
+function leaveResults() {
+  PLATE.show(['stack-3d', 'sig-cov'], false);
+  map.easeTo({ pitch: 0, bearing: 0, duration: REDUCED() ? 0 : 700 });
+}
+
+/* ══ 원장 꼬리 — 기존 대시보드 기능(시연) ════════════════════════════════ */
+function opsTail() {
+  $('#ops-n').textContent = QUEUE.length;
+  $('#cov-n').textContent = COVERAGE.length;
+  $('#ops-rows').innerHTML = QUEUE.map((q) => `
+    <button type="button" class="row${q.i === 0 ? ' is-hot' : ''}" role="listitem" data-q="${q.i}">
+      <i class="dot"></i>
+      <span class="t">${esc(q.title)}</span>
+      <span class="v num">${esc(q.status)}</span>
+      <span class="s num">${esc(q.typeName)} · ${esc(q.sub)}</span>
+    </button>`).join('');
+  $('#ops-rows').querySelectorAll('[data-q]').forEach((b) => {
+    const q = QUEUE[+b.dataset.q];
+    b.addEventListener('click', () => {
+      flyGated({ center: q.lnglat, zoom: 12.6 }, () => showCard({
+        kind: '처리 대기 · 시연',
+        title: q.title,
+        rows: [['유형', esc(q.typeName)], ['상태', esc(q.status)], ['내용', esc(q.sub)],
+          ['좌표', q.lnglat.map((n) => n.toFixed(3)).join(', ')]],
+        prov: 'assets/data/dashboard.js · 원형 프로토타입 목업(시연)',
+      }));
+    });
+  });
+
+  $('#ops-kpi').innerHTML = `<div class="kpis">${KPI.map((k) => `
+    <div class="k"><p class="k__l">${esc(k.label)}</p>
+      <p class="k__v num">${nf.format(k.value)}<em>${esc(k.unit)}</em></p>
+      <p class="k__s">${esc(k.sub)}</p></div>`).join('')}</div>`;
+  drawMinis($('#ops-chart'));
+
+  $('#ops-cov').innerHTML = `<div class="mat"><table>
+    <thead><tr><th></th>${COLS.map((c) => `<th><span>${esc(c.short)}</span></th>`).join('')}</tr></thead>
+    <tbody>${COVERAGE.map((r) => `<tr class="${r.measured ? 'is-meas' : ''}" data-cov="${r.code}">
+      <th>${esc(r.name)}</th>
+      ${COLS.map((c) => `<td><i class="c${r.done.includes(c.id) ? ' on' : ''}" style="opacity:${r.done.includes(c.id) ? (0.35 + r.coverage * 0.65).toFixed(2) : 1}"></i></td>`).join('')}
+    </tr>`).join('')}</tbody></table>
+    <p class="caption" style="margin-top:8px">채워진 칸 <span class="num">${DONE_CELLS}</span>/${CELLS} · 실제 분석 결과가 붙은 시군구는 <span class="num">1</span>곳(남원) — 나머지는 시연값</p></div>`;
+  $('#ops-cov').querySelectorAll('[data-cov]').forEach((tr) => {
+    tr.addEventListener('mouseenter', () => {
+      map.setPaintProperty('sig-cov', 'fill-opacity',
+        ['case', ['==', ['get', 'code'], tr.dataset.cov], 0.55,
+          ['interpolate', ['linear'], ['get', 'cov'], 0, 0.06, 1, 0.34]]);
+      map.setLayoutProperty('sig-cov', 'visibility', 'visible');
+    });
+  });
+  $('#ops-cov').addEventListener('mouseleave', () => {
+    map.setPaintProperty('sig-cov', 'fill-opacity', ['interpolate', ['linear'], ['get', 'cov'], 0, 0.06, 1, 0.34]);
+    if (REG !== 'results') map.setLayoutProperty('sig-cov', 'visibility', 'none');
+  });
+}
+
+/* ══ 전환 ════════════════════════════════════════════════════════════════ */
+const ENTER = { infer: enterInfer, train: enterTrain, results: enterResults };
+const LEAVE = { infer: leaveInfer, train: leaveTrain, results: leaveResults };
+
+async function go(id, push = true) {
+  if (!REG_IDS.includes(id)) id = 'infer';
+  if (LEAVE[REG]) LEAVE[REG]();
+  cardEl.hidden = true;
+  REG = id;
+  document.querySelectorAll('.reg').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.reg === id)));
+  document.body.dataset.reg = id;
   if (push) {
     const u = new URL(location.href);
-    u.searchParams.set('tab', t);
+    u.searchParams.set('tab', id);
     history.replaceState(null, '', u);
   }
+  await ENTER[id]();
 }
-$('#chart-tabs').addEventListener('click', (e) => {
-  const b = e.target.closest('button[data-tab]');
-  if (b) setTab(b.dataset.tab, true);
+regsEl.addEventListener('click', (ev) => {
+  const b = ev.target.closest('.reg');
+  if (b) go(b.dataset.reg);
 });
-$('#kpis').addEventListener('click', (e) => {
-  const k = e.target.closest('.k[data-tab]');
-  if (k) { setTab(k.dataset.tab, true); $('#charts').scrollIntoView({ behavior: REDUCED() ? 'auto' : 'smooth', block: 'center' }); }
-});
-setTab(tab);
+addEventListener('popstate', () => go(new URLSearchParams(location.search).get('tab') || 'infer', false));
 
-/* ── 03 전국 커버리지 ─────────────────────────────────────────────── */
-$('#cov-fig').textContent =
-  `FIG. 03 · 전국 시군구 실경계 249 · 실증 ${COVERAGE.length} 시군 · 농도 = 커버리지 · 투영 등장방형(cos φ 보정)`;
-$('#mat-fig').textContent =
-  `FIG. 04 · 시군 ${COVERAGE.length} × 실태조사 ${COLS.length} = ${CELLS}칸 · AI 대체 ${DONE_CELLS}칸 (${Math.round((DONE_CELLS / CELLS) * 100)}%)`;
-
-let atlas = null;
-mountAtlas($('#sec-cov')).then((a) => {
-  atlas = a;
-  const region = Q.get('region');
-  if (region && a.codes().includes(region)) a.highlight(region, 'matrix');
-  requestAnimationFrame(() => { gotoSec(); document.documentElement.dataset.atlas = 'ready'; });
-}).catch((e) => console.warn('[dash] 커버리지 판 실패:', e.message));
-
-$('#matrix').addEventListener('click', (e) => {
-  const a = e.target.closest('a[data-region]');
-  if (!a) return;
-  e.preventDefault();
-  const u = new URL(location.href);
-  u.searchParams.set('region', a.dataset.region);
-  history.replaceState(null, '', u);
-  atlas?.highlight(a.dataset.region, 'matrix');
-});
-
-/* ── 04 활동 기록 — 날짜가 붙은 헤어라인 연표. ────────────────────── */
-$('#log').innerHTML = LOG.map((l, i) => `
-  <li class="tl__i${l.event ? ' is-event' : ''}" data-date="${l.date}" data-i="${i}">
-    <time class="num" datetime="${l.date}">${l.date}</time>
-    <span class="tl__w">${esc(l.who)}</span>
-    <p class="tl__t">${esc(l.text)}</p>
-    <p class="tl__m caption">${esc(l.meta || '')}</p>
-  </li>`).join('');
-$('#log-fig').textContent = `FIG. 05 · 기록 ${LOG.length}줄 · 사건 ${EVENTS.length} · ${T0} → ${NOW}`;
-
-/* ── 시간 자 + 감쇠 ───────────────────────────────────────────────── */
-const dated = $$('[data-date]').map((el) => ({ el, d: el.dataset.date }));
-const ruler = mountRuler($('#ruler'), {
-  onTick: (date) => {
-    for (const x of dated) x.el.classList.toggle('is-dim', x.d > date);
+/* ── 스캔 스트립 ──────────────────────────────────────────────────────── */
+mountStrip($('#strip'), {
+  onScrub: (p, date) => {
+    SCRUB_DATE = date;
+    if (REG === 'results') paintStacks();
   },
-  onEvent: (ev) => {
-    $$('#log .tl__i').forEach((li) => li.classList.toggle('is-now', !!ev && li.dataset.date === ev.date && li.querySelector('.tl__t').textContent === ev.label));
+  onEvent: (e) => {
+    if (REG === 'results') paintStacks();
   },
 });
 
-/* ── 좌측 124px 숫자를 장에 묶는다 ────────────────────────────────── */
-const chapByEl = new Map(CHAPTERS.map((c) => [$('#' + c.sec), c]));
-let cur = null;
-function showChapter(c) {
-  if (!c || c === cur) return;
-  cur = c;
-  $('#head-label').textContent = c.label;
-  $('#head-sub').textContent = c.sub;
-  const n = Number(String(c.stat).replace(/,/g, ''));
-  const el = $('#head-stat');
-  if (Number.isFinite(n)) { el.dataset.shown = ''; countUp(el, n, { dur: 750 }); }
-  else develop(el, c.stat);
-  $$('#chapters .ch-link').forEach((a) => a.classList.toggle('is-on', a.dataset.sec === c.id));
-  document.documentElement.dataset.sec = c.id;
-}
+opsTail();
+await go(REG, false);
 
-// 읽는 눈이 있는 높이(뷰포트 42%)를 지나는 장이 그 순간의 장이다.
-// 교차 비율로 고르면 긴 장(커버리지 판)이 짧은 장을 삼킨다.
-const secList = CHAPTERS.map((c) => ({ c, el: $('#' + c.sec) }));
-let queued = false;
-function pickChapter() {
-  queued = false;
-  const line = window.innerHeight * 0.42;
-  let best = secList[0].c;
-  for (const { c, el } of secList) {
-    const r = el.getBoundingClientRect();
-    if (r.top > line) break;
-    best = c;
-    if (r.bottom > line) break;
-  }
-  showChapter(best);
-}
-addEventListener('scroll', () => { if (!queued) { queued = true; requestAnimationFrame(pickChapter); } }, { passive: true });
-addEventListener('resize', pickChapter, { passive: true });
-pickChapter();
-
-/* 헤드라인 리빌 — 관찰 대상은 부모다. clip-path 로 눌린 자기 자신은 교차 면적이 0이라 절대 켜지지 않는다. */
-$$('.reveal').forEach((el) => onceInView(el.parentElement || el, () => el.classList.add('is-in'), '0px 0px -12% 0px'));
-
-/* 딥링크 ?sec= */
-const sec = Q.get('sec');
-const secTarget = sec ? CHAPTERS.find((x) => x.id === sec) : null;
-/** 판이 다 그려지면 문서가 길어진다 — 딥링크는 그 뒤에 한 번 더 자리를 잡아야 한다. */
-function gotoSec() {
-  if (!secTarget) return;
-  // CSS scroll-behavior:smooth 가 'auto' 를 삼킨다 — 딥링크는 즉시 착지해야 한다.
-  $('#' + secTarget.sec).scrollIntoView({ behavior: 'instant', block: 'start' });
-  pickChapter();
-}
-requestAnimationFrame(gotoSec);
-/* 딥링크 ?q= (큐 항목 인라인 펼침) */
-const qRaw = Q.get('q');
-if (qRaw !== null && /^\d+$/.test(qRaw)) $(`#queue .q[data-i="${qRaw}"] .q__row`)?.click();
-
-/* ── 테스트·디버그 훅 ─────────────────────────────────────────────── */
-window.__db = {
-  ready: true,
-  tab: () => tab,
-  kpi: () => $$('#kpis .k__v').map((el) => Number(el.textContent.replace(/[^\d]/g, ''))),
-  kpiTargets: () => KPI.map((k) => k.value),
-  cells: () => $$('#matrix .cell').length,
-  hot: () => $('#sec-cov')?.dataset.hot || '',
-  litCodes: () => $$('#atlas path.a-lit').map((p) => p.dataset.code),
-  sigungu: () => atlas?.count() ?? 0,
-  chapter: () => cur?.id,
-  headStat: () => $('#head-stat').textContent,
-  queue: () => QUEUE.length,
-  dimmed: () => $$('.is-dim').length,
-  ruler,
-  highlight: (code) => atlas?.highlight(code, 'matrix'),
-  setTab,
-};
-document.documentElement.dataset.db = 'ready';
+/* 지도 위 상호작용 — 탐지 점·기둥·핀 */
+map.on('mousemove', (ev) => {
+  const feats = map.queryRenderedFeatures(ev.point, { layers: ['pin-dot', 'stack-3d', 'grid-fill'].filter((l) => map.getLayer(l)) });
+  map.getCanvas().style.cursor = feats.length ? 'pointer' : '';
+  if (!feats.length) { hideProbe(); return; }
+  const f = feats[0];
+  const p = f.properties;
+  const html = f.layer.id === 'pin-dot'
+    ? `<p class="pt">${esc(p.title)}</p><p class="ps">${esc(p.status)} · 시연</p>`
+    : f.layer.id === 'stack-3d'
+      ? `<p class="pt">${esc(p.title)}</p><p class="ps">${esc(p.region)} · ${ymd(p.date)} · ${nf.format(p.count)}${esc(p.unit)}</p>`
+      : `<p class="pt">100 m 칸</p><p class="ps">라벨 표본 ${nf.format(p.n)}건</p>`;
+  showProbe(ev.originalEvent.clientX, ev.originalEvent.clientY, html);
+});
+map.on('click', (ev) => {
+  const feats = map.queryRenderedFeatures(ev.point, { layers: ['pin-dot', 'stack-3d'].filter((l) => map.getLayer(l)) });
+  if (!feats.length) return;
+  const p = feats[0].properties;
+  if (feats[0].layer.id === 'stack-3d') selectDone(p.id);
+  else showCard({ kind: '처리 대기 · 시연', title: p.title, rows: [['상태', esc(p.status)], ['내용', esc(p.sub)]], prov: 'assets/data/dashboard.js (시연)' });
+});

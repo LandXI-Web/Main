@@ -85,7 +85,10 @@ export const SCENE = [
 export const MOVE = [
   'The camera descends slowly and steadily toward the rows of white greenhouses,',
   'one smooth continuous dolly-down with a very slight forward drift.',
-  'Soft cloud shadows drift across the paddies from left to right.',
+  // 'cloud' 라는 단어가 배경 호리존에 실제 파란 하늘을 부른다(테스트 leg 실측:
+  // t=1.67-2.62s 우상단 채도 0.9 -> 3.64). 그림자만 요구하고 배경은 못박는다.
+  'Soft grey shadows slide across the paddy surfaces from left to right, cast from off-frame;',
+  'the background stays seamless matte white.',
   'The low hills behind shift with a gentle parallax against the plain as the camera lowers.',
   'The greenhouse rows stay in frame from the first frame to the last;',
   'nothing enters and nothing leaves.',

@@ -1,6 +1,7 @@
 {
-  "generatedAt": "2026-08-25T21:27:04.089Z",
-  "source": "build/film/frames (tools/film/render.html, 결정론적 렌더 575프레임 @25fps)",
+  "generatedAt": "2026-08-25T22:07:42.558Z",
+  "builder": "tools/scrub/assemble.mjs",
+  "source": "4개 렌더러 · three-globe(궤도) + 구름 스파이크(권운) + MapLibre 결정론 필름 + maplibre3d 실측 3D",
   "fps": 25,
   "filmSize": [
     1280,
@@ -12,7 +13,7 @@
   ],
   "encode": {
     "desktop": "-c:v libx264 -profile:v high -preset slow -crf 20 -g 8 -keyint_min 8 -sc_threshold 0 -movflags +faststart -an",
-    "mobile": "-c:v libx264 -profile:v high -preset slow -crf 24 -g 4 -keyint_min 4 -sc_threshold 0 -movflags +faststart -an"
+    "mobile": "-vf scale=960:540 -c:v libx264 -profile:v high -preset slow -crf 25 -g 4 -keyint_min 4 -sc_threshold 0 -movflags +faststart -an"
   },
   "pace": {
     "targetRate": 0.218,
@@ -20,522 +21,466 @@
     "band": [
       0.212,
       0.225
-    ]
+    ],
+    "deviationPct": 0.14
   },
   "seam": 0.16,
   "lerp": 0.12,
-  "cameraTrack": [
-    {
-      "id": "orbit",
-      "t0": 0,
-      "t1": 3.2,
-      "ease": "easeLin",
-      "a": {
-        "c": [
-          109,
-          29.6
-        ],
-        "z": 1.84,
-        "p": 0,
-        "b": 0
-      },
-      "b": {
-        "c": [
-          122.6,
-          33.6
-        ],
-        "z": 2.62,
-        "p": 0,
-        "b": -2
-      }
-    },
-    {
-      "id": "dive",
-      "t0": 3.2,
-      "t1": 5.1,
-      "ease": "easeInOut",
-      "a": {
-        "c": [
-          122.6,
-          33.6
-        ],
-        "z": 2.62,
-        "p": 0,
-        "b": -2
-      },
-      "b": {
-        "c": [
-          127.85,
-          36.2
-        ],
-        "z": 6.55,
-        "p": 10,
-        "b": -4
-      }
-    },
-    {
-      "id": "korea",
-      "t0": 5.1,
-      "t1": 8.7,
-      "ease": "easeOut",
-      "a": {
-        "c": [
-          127.85,
-          36.2
-        ],
-        "z": 6.55,
-        "p": 10,
-        "b": -4
-      },
-      "b": {
-        "c": [
-          127.7,
-          35.9
-        ],
-        "z": 8.3,
-        "p": 24,
-        "b": -9
-      }
-    },
-    {
-      "id": "descent",
-      "t0": 8.7,
-      "t1": 11.9,
-      "ease": "easeInOut",
-      "a": {
-        "c": [
-          127.7,
-          35.9
-        ],
-        "z": 8.3,
-        "p": 24,
-        "b": -9
-      },
-      "b": {
-        "c": [
-          127.326,
-          35.347
-        ],
-        "z": 12.6,
-        "p": 62,
-        "b": -25
-      }
-    },
-    {
-      "id": "ortho",
-      "t0": 11.9,
-      "t1": 14.5,
-      "ease": "easeInOut",
-      "a": {
-        "c": [
-          127.326,
-          35.347
-        ],
-        "z": 12.6,
-        "p": 62,
-        "b": -25
-      },
-      "b": {
-        "c": [
-          127.348,
-          35.366
-        ],
-        "z": 13.05,
-        "p": 46,
-        "b": -13
-      }
-    },
-    {
-      "id": "green",
-      "t0": 14.5,
-      "t1": 17.55,
-      "ease": "easeInOut",
-      "a": {
-        "c": [
-          127.348,
-          35.366
-        ],
-        "z": 13.05,
-        "p": 46,
-        "b": -13
-      },
-      "b": {
-        "c": [
-          127.425,
-          35.429
-        ],
-        "z": 11.36,
-        "p": 23,
-        "b": -3
-      }
-    },
-    {
-      "id": "yeosu",
-      "t0": 17.55,
-      "t1": 23,
-      "ease": "easeOut4",
-      "a": {
-        "c": [
-          127.7305,
-          34.563
-        ],
-        "z": 13,
-        "p": 10,
-        "b": 5
-      },
-      "b": {
-        "c": [
-          127.7215,
-          34.569
-        ],
-        "z": 13.6,
-        "p": 2,
-        "b": 0
-      }
-    }
-  ],
-  "cameraNote": "고도 = 1.5 × 720px × (156543.03392 · cos φ / 2^z). MapLibre 기본 fov 36.87°, 필름 뷰포트 높이 720px 기준.",
-  "spacerVh": 6.049,
-  "filmVh": 5.049,
+  "deadband": {
+    "ms": 8,
+    "seekMs": 20
+  },
+  "lazyVh": 1.6,
+  "filmSeconds": 28.64,
+  "filmVh": 6.244,
+  "spacerVh": 7.244,
+  "cameraNote": "고도 = 1.5 × 720px × m/px (MapLibre 기본 fov 36.87°, 필름 뷰포트 720px). 줌·GSD 는 고도에서 유도.",
+  "flightProfile": "레그마다 렌더러가 다르다. 좌표·방위·피치는 각 렌더러의 실제 카메라 값이고, 고도만 이음매에서 튀지 않도록 하나의 단조 하강 프로파일로 이어 붙였다. 계기판 판독값은 필름 카메라가 아니라 이 비행 프로파일이다.",
+  "bytes": {
+    "desktop": 49760735,
+    "mobile": 17579599,
+    "poster": 653986,
+    "desktopMB": 47.46,
+    "mobileMB": 16.77,
+    "posterMB": 0.62
+  },
   "seams": [
     {
       "from": "01",
       "to": "02",
-      "frameShared": true,
+      "frameShared": false,
+      "rule": "B",
+      "pct": 23.433,
+      "lumaA": 117.52,
+      "lumaB": 64.5,
+      "lumaDelta": -53.02,
       "pass": true,
-      "pct": 0.656,
-      "basePct": 3.056,
-      "ratio": 0.21,
-      "lumaA": 168.07,
-      "lumaB": 168.08,
-      "lumaDrop": 0.01
+      "monotonic": true
     },
     {
       "from": "02",
       "to": "03",
-      "frameShared": true,
+      "frameShared": false,
+      "rule": "B",
+      "pct": 8.31,
+      "lumaA": 62.24,
+      "lumaB": 66.73,
+      "lumaDelta": 4.49,
       "pass": true,
-      "pct": 1.118,
-      "basePct": 1.347,
-      "ratio": 0.83,
-      "lumaA": 65.44,
-      "lumaB": 65.42,
-      "lumaDrop": 0.02
+      "monotonic": true
     },
     {
       "from": "03",
       "to": "04",
       "frameShared": true,
+      "rule": "A",
+      "pct": 0.079,
+      "lumaA": 77.74,
+      "lumaB": 77.74,
+      "lumaDelta": 0,
       "pass": true,
-      "pct": 0.977,
-      "basePct": 1.435,
-      "ratio": 0.68,
-      "lumaA": 76.47,
-      "lumaB": 76.46,
-      "lumaDrop": 0
+      "monotonic": true
     },
     {
       "from": "04",
       "to": "05",
-      "frameShared": true,
+      "frameShared": false,
+      "rule": "B",
+      "pct": 7.073,
+      "lumaA": 79.17,
+      "lumaB": 89.59,
+      "lumaDelta": 10.42,
       "pass": true,
-      "pct": 1.396,
-      "basePct": 1.547,
-      "ratio": 0.9,
-      "lumaA": 77.96,
-      "lumaB": 77.94,
-      "lumaDrop": 0.02
+      "monotonic": true
     },
     {
       "from": "05",
       "to": "06",
       "frameShared": false,
+      "rule": "B",
+      "pct": 12.23,
+      "lumaA": 81,
+      "lumaB": 79.17,
+      "lumaDelta": -1.83,
       "pass": true,
-      "pct": 11.142,
-      "basePct": 1.22,
-      "ratio": 9.13,
-      "lumaA": 63.6,
-      "lumaB": 46.27,
-      "lumaDrop": 17.33
+      "monotonic": true
+    },
+    {
+      "from": "06",
+      "to": "07",
+      "frameShared": false,
+      "rule": "B",
+      "pct": 9.766,
+      "lumaA": 64.94,
+      "lumaB": 47.55,
+      "lumaDelta": -17.39,
+      "pass": true,
+      "monotonic": true
     }
   ],
   "legs": [
     {
       "id": "01",
+      "wp": "궤도",
       "label": "궤도",
       "place": "지구 저궤도",
-      "look": "real",
+      "look": "globe",
+      "caption": "궤도 합성 · three-globe · NASA BMNG 8k + 구름 8k",
+      "source": "build/film/legs/orbit-korea#0..139",
       "frames": [
         0,
-        127
+        139
       ],
-      "count": 128,
-      "seconds": 5.12,
-      "weightVh": 1.116,
+      "count": 140,
+      "encodedFrames": 141,
+      "seconds": 5.6,
+      "weightVh": 1.221,
       "rate": 0.218,
-      "src": "/landxi/assets/proto/film/legs/leg_01.mp4",
-      "srcMobile": "/landxi/assets/proto/film/legs/leg_01-m.mp4",
-      "poster": "/landxi/assets/proto/film/legs/leg_01.webp",
-      "bytes": 5199631,
-      "bytesMobile": 1819077,
-      "bytesPoster": 38032,
+      "src": "/landxi/assets/proto/film/legs/w01.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/w01-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/w01.webp",
+      "bytes": 14544518,
+      "bytesMobile": 3516255,
+      "bytesPoster": 57620,
       "startCamera": {
         "center": [
-          109,
-          29.6
+          60,
+          13
         ],
-        "zoom": 1.84,
+        "altitudeM": 15000000,
+        "zoom": 3.4571,
         "pitch": 0,
         "bearing": 0,
-        "seg": "orbit",
-        "altitudeM": 41060985,
-        "mpp": 38019.431
+        "mpp": 13888.889,
+        "seg": "01a"
       },
       "endCamera": {
         "center": [
-          127.84998,
-          36.19999
+          127.95,
+          36.05
         ],
-        "zoom": 6.55,
-        "pitch": 10,
-        "bearing": -4,
-        "seg": "dive",
-        "altitudeM": 1456006,
-        "mpp": 1348.154
+        "altitudeM": 460000,
+        "zoom": 8.2151,
+        "pitch": 18,
+        "bearing": -6,
+        "mpp": 425.926,
+        "seg": "01b"
       }
     },
     {
       "id": "02",
+      "wp": "성층운",
       "label": "성층운",
-      "place": "한반도 상공",
-      "look": "real",
+      "place": "한반도 상공 · 권운층",
+      "look": "globe",
+      "caption": "대기 산란 · 권운 3층 빌보드 · 고도 11 / 8 / 5 km",
+      "source": "build/film/legs/cloud-break-v2#40..114",
       "frames": [
-        127,
-        217
+        40,
+        114
       ],
-      "count": 91,
-      "seconds": 3.64,
-      "weightVh": 0.794,
-      "rate": 0.2181,
-      "src": "/landxi/assets/proto/film/legs/leg_02.mp4",
-      "srcMobile": "/landxi/assets/proto/film/legs/leg_02-m.mp4",
-      "poster": "/landxi/assets/proto/film/legs/leg_02.webp",
-      "bytes": 5935765,
-      "bytesMobile": 2723750,
-      "bytesPoster": 49874,
+      "count": 75,
+      "encodedFrames": 76,
+      "seconds": 3,
+      "weightVh": 0.654,
+      "rate": 0.218,
+      "src": "/landxi/assets/proto/film/legs/w02.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/w02-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/w02.webp",
+      "bytes": 6375987,
+      "bytesMobile": 2198767,
+      "bytesPoster": 153742,
       "startCamera": {
         "center": [
-          127.84998,
-          36.19999
+          127.96,
+          35.8
         ],
-        "zoom": 6.55,
-        "pitch": 10,
-        "bearing": -4,
-        "seg": "dive",
-        "altitudeM": 1456006,
-        "mpp": 1348.154
+        "altitudeM": 460000,
+        "zoom": 8.2196,
+        "pitch": 27,
+        "bearing": -8,
+        "mpp": 425.926,
+        "seg": "02a"
       },
       "endCamera": {
         "center": [
-          127.7,
-          35.9
+          127.88,
+          35.52
         ],
-        "zoom": 8.3,
-        "pitch": 24,
-        "bearing": -9,
-        "seg": "korea",
-        "altitudeM": 434526,
-        "mpp": 402.339
+        "altitudeM": 210000,
+        "zoom": 9.3559,
+        "pitch": 35,
+        "bearing": -10,
+        "mpp": 194.444,
+        "seg": "02b"
       }
     },
     {
       "id": "03",
+      "wp": "한반도",
       "label": "한반도",
       "place": "전라북도",
       "look": "real",
+      "caption": "Mapterhorn terrarium DEM · 지형 과장 1.4× · EPSG:4326",
+      "source": "build/film/frames#217..297",
       "frames": [
         217,
         297
       ],
       "count": 81,
+      "encodedFrames": 82,
       "seconds": 3.24,
       "weightVh": 0.706,
       "rate": 0.2179,
-      "src": "/landxi/assets/proto/film/legs/leg_03.mp4",
-      "srcMobile": "/landxi/assets/proto/film/legs/leg_03-m.mp4",
-      "poster": "/landxi/assets/proto/film/legs/leg_03.webp",
-      "bytes": 7063634,
-      "bytesMobile": 2752555,
-      "bytesPoster": 231352,
+      "src": "/landxi/assets/proto/film/legs/w03.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/w03-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/w03.webp",
+      "bytes": 7093894,
+      "bytesMobile": 2461423,
+      "bytesPoster": 125746,
       "startCamera": {
         "center": [
           127.7,
           35.9
         ],
-        "zoom": 8.3,
+        "altitudeM": 210000,
+        "zoom": 9.3491,
         "pitch": 24,
         "bearing": -9,
-        "seg": "korea",
-        "altitudeM": 434526,
-        "mpp": 402.339
+        "mpp": 194.444,
+        "seg": "03a"
       },
       "endCamera": {
         "center": [
           127.326,
           35.347
         ],
-        "zoom": 12.6,
+        "altitudeM": 22200,
+        "zoom": 12.6008,
         "pitch": 62,
         "bearing": -25,
-        "seg": "descent",
-        "altitudeM": 22212,
-        "mpp": 20.567
+        "mpp": 20.556,
+        "seg": "03b"
       }
     },
     {
       "id": "04",
+      "wp": "남원",
       "label": "남원",
       "place": "남원 분지",
       "look": "real",
+      "caption": "항공 정사영상 2025-10 · GSD 25 cm · 남원시 전역",
+      "source": "build/film/frames#297..362",
       "frames": [
         297,
         362
       ],
       "count": 66,
+      "encodedFrames": 67,
       "seconds": 2.64,
       "weightVh": 0.576,
       "rate": 0.2182,
-      "src": "/landxi/assets/proto/film/legs/leg_04.mp4",
-      "srcMobile": "/landxi/assets/proto/film/legs/leg_04-m.mp4",
-      "poster": "/landxi/assets/proto/film/legs/leg_04.webp",
-      "bytes": 4208319,
-      "bytesMobile": 2030252,
-      "bytesPoster": 170040,
+      "src": "/landxi/assets/proto/film/legs/w04.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/w04-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/w04.webp",
+      "bytes": 4082376,
+      "bytesMobile": 1782193,
+      "bytesPoster": 92236,
       "startCamera": {
         "center": [
           127.326,
           35.347
         ],
-        "zoom": 12.6,
+        "altitudeM": 22200,
+        "zoom": 12.6008,
         "pitch": 62,
         "bearing": -25,
-        "seg": "descent",
-        "altitudeM": 22212,
-        "mpp": 20.567
+        "mpp": 20.556,
+        "seg": "04a"
       },
       "endCamera": {
         "center": [
           127.348,
           35.366
         ],
-        "zoom": 13.05,
+        "altitudeM": 16300,
+        "zoom": 13.0461,
         "pitch": 46,
         "bearing": -13,
-        "seg": "ortho",
-        "altitudeM": 16256,
-        "mpp": 15.052
+        "mpp": 15.093,
+        "seg": "04b"
       }
     },
     {
       "id": "05",
+      "wp": "남원",
+      "label": "남원 3D",
+      "place": "금지면 → 남원 시내",
+      "look": "diorama",
+      "caption": "건물 풋프린트 실측 + AI 온실 검출 · 남원 금지면 · GSD 1.54 cm",
+      "source": "build/film/legs/namwon-3d#0..140",
+      "frames": [
+        0,
+        140
+      ],
+      "count": 141,
+      "encodedFrames": 142,
+      "seconds": 5.64,
+      "weightVh": 1.23,
+      "rate": 0.2181,
+      "src": "/landxi/assets/proto/film/legs/w05.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/w05-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/w05.webp",
+      "bytes": 10276667,
+      "bytesMobile": 4202253,
+      "bytesPoster": 80772,
+      "startCamera": {
+        "center": [
+          127.3096,
+          35.3318
+        ],
+        "altitudeM": 3300,
+        "zoom": 15.3511,
+        "pitch": 58,
+        "bearing": -34,
+        "mpp": 3.056,
+        "seg": "05a"
+      },
+      "endCamera": {
+        "center": [
+          127.3888,
+          35.4084
+        ],
+        "altitudeM": 880,
+        "zoom": 17.2566,
+        "pitch": 68,
+        "bearing": 26,
+        "mpp": 0.815,
+        "seg": "05b"
+      }
+    },
+    {
+      "id": "06",
+      "wp": "남원",
       "label": "비닐하우스",
       "place": "남원 농경지",
       "look": "real",
+      "caption": "namwon-greenhouse-2025 · 9,664동 · 항공 정사영상 2025-10 · GSD 25 cm",
+      "source": "build/film/frames#362..438",
       "frames": [
         362,
         438
       ],
       "count": 77,
+      "encodedFrames": 78,
       "seconds": 3.08,
       "weightVh": 0.671,
       "rate": 0.2179,
-      "src": "/landxi/assets/proto/film/legs/leg_05.mp4",
-      "srcMobile": "/landxi/assets/proto/film/legs/leg_05-m.mp4",
-      "poster": "/landxi/assets/proto/film/legs/leg_05.webp",
-      "bytes": 5030831,
-      "bytesMobile": 2448991,
-      "bytesPoster": 202414,
+      "src": "/landxi/assets/proto/film/legs/w06.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/w06-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/w06.webp",
+      "bytes": 4864044,
+      "bytesMobile": 2224525,
+      "bytesPoster": 118884,
       "startCamera": {
         "center": [
           127.348,
           35.366
         ],
-        "zoom": 13.05,
+        "altitudeM": 1500,
+        "zoom": 16.488,
         "pitch": 46,
         "bearing": -13,
-        "seg": "ortho",
-        "altitudeM": 16256,
-        "mpp": 15.052
+        "mpp": 1.389,
+        "seg": "06a"
       },
       "endCamera": {
         "center": [
           127.425,
           35.429
         ],
-        "zoom": 11.36,
+        "altitudeM": 4900,
+        "zoom": 14.779,
         "pitch": 23,
         "bearing": -3,
-        "seg": "green",
-        "altitudeM": 52411,
-        "mpp": 48.529
+        "mpp": 4.537,
+        "seg": "06b"
       }
     },
     {
-      "id": "06",
+      "id": "07",
+      "wp": "여수",
       "label": "여수",
       "place": "여수 가막만",
       "look": "real",
+      "caption": "yeosu-marine-2025-aerial · 격자 9,032셀 · 후보 38,057건",
+      "source": "build/film/frames#439..574",
       "frames": [
         439,
         574
       ],
       "count": 136,
+      "encodedFrames": 137,
       "seconds": 5.44,
       "weightVh": 1.186,
       "rate": 0.218,
-      "src": "/landxi/assets/proto/film/legs/leg_06.mp4",
-      "srcMobile": "/landxi/assets/proto/film/legs/leg_06-m.mp4",
-      "poster": "/landxi/assets/proto/film/legs/leg_06.webp",
-      "bytes": 2518705,
-      "bytesMobile": 1328744,
-      "bytesPoster": 41444,
+      "src": "/landxi/assets/proto/film/legs/w07.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/w07-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/w07.webp",
+      "bytes": 2523249,
+      "bytesMobile": 1194183,
+      "bytesPoster": 24986,
       "startCamera": {
         "center": [
-          127.73043,
-          34.56304
+          127.7305,
+          34.563
         ],
-        "zoom": 13.004,
-        "pitch": 9.94,
-        "bearing": 4.96,
-        "seg": "yeosu",
-        "altitudeM": 16948,
-        "mpp": 15.693
+        "altitudeM": 17000,
+        "zoom": 12.9996,
+        "pitch": 10,
+        "bearing": 5,
+        "mpp": 15.741,
+        "seg": "07a"
       },
       "endCamera": {
         "center": [
           127.7215,
           34.569
         ],
-        "zoom": 13.6,
+        "altitudeM": 11200,
+        "zoom": 13.6015,
         "pitch": 2,
         "bearing": 0,
-        "seg": "yeosu",
-        "altitudeM": 11212,
-        "mpp": 10.381
+        "mpp": 10.37,
+        "seg": "07b"
       }
     }
   ],
   "handoff": {
+    "afterLeg": "06",
+    "legIndex": 5,
+    "center": [
+      127.425,
+      35.429
+    ],
+    "zoom": 14.779,
+    "pitch": 23,
+    "bearing": -3,
+    "altitudeM": 4900,
+    "detections": "/landxi/assets/data/geo/results/namwon-greenhouse-2025.geojson",
+    "note": "남원 스케일 마지막 레그(06 비닐하우스)의 끝 카메라. 필름이 멈춘 그 자리에서 실지도가 같은 카메라로 이어받는다 — 1프레임 크로스페이드."
+  },
+  "handoffFinal": {
+    "legIndex": 6,
     "center": [
       127.7215,
       34.569
     ],
-    "zoom": 13.6,
+    "zoom": 13.6015,
     "pitch": 2,
     "bearing": 0,
-    "seg": "yeosu",
-    "altitudeM": 11212,
-    "mpp": 10.381,
-    "note": "필름 최종 프레임(f_0574, t=22.96s)의 카메라. 스크럽 종료 지점에서 실지도가 같은 카메라로 이어받는다."
+    "altitudeM": 11200,
+    "detections": "/landxi/assets/data/geo/results/yeosu-marine-2025-aerial.geojson",
+    "note": "필름 최종 프레임의 카메라. 마감(귀환) 구간에서 여수 실지도가 이어받는다."
   }
 }

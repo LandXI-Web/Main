@@ -9,26 +9,19 @@
      2) src 를 절대 교체하지 않는다             → 엔진 loadClip(): data-sc-src 를 1회 Blob 으로만 물린다
      3) 크로스페이드는 한쪽만                   → 엔진 readWorld(): 나가는 leg 가 밑에서 풀 강도 유지
      4) lerp 는 끄지 않는다(reduced-motion 제외) → data-sc-lerp="0.12", 엔진 tick()
-     5) 전체 비행 페이스 1개                    → tools/scrub/legs.mjs 가 weight=0.218×초 로 굽는다
-     6) 씸 프레임은 인코딩된 mp4 에서            → tools/scrub/legs.mjs seamDiff()
+     5) 전체 비행 페이스 1개                    → tools/scrub/assemble.mjs 가 weight=0.218×초 로 굽는다
+     6) 씸 프레임은 인코딩된 mp4 에서            → assemble.mjs 의 grayFrame(mp4,'last'|'first')
      7) 카피의 유일한 transform 은 translateY   → 엔진이 쓴다. 이 파일은 카피에 transform 을 쓰지 않는다
    ========================================================================= */
 
 const MANIFEST = '/landxi/assets/proto/film/legs/manifest.json';
-const YEOSU = '/landxi/assets/data/geo/results/yeosu-marine-2025-aerial.geojson';
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const clamp01 = v => clamp(v, 0, 1);
 const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = x => x * x * (3 - 2 * x);
 const nf = (v, d = 0) => v.toLocaleString('ko-KR', { minimumFractionDigits: d, maximumFractionDigits: d });
-
-const EASES = {
-  easeLin: x => x,
-  easeInOut: x => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2),
-  easeOut: x => 1 - Math.pow(1 - x, 3),
-  easeOut4: x => 1 - Math.pow(1 - x, 4),
-};
 
 // 엔진의 lingerEase 와 동일한 곡선. 계기판이 읽는 필름 시각이 실제 재생헤드와
 // 어긋나지 않게 하려면 같은 리맵을 써야 한다(f(0)=0, f(1)=1 고정).
@@ -43,40 +36,70 @@ const $ = s => document.querySelector(s);
 const el = {
   root: $('[data-sc-mode="worldflight"]'),
   spacer: $('[data-sc-spacer]'),
-  disc: $('#sb-disc'),
   pips: $('#sb-pips'),
   bearing: $('#sb-bearing'),
   alt: $('#sb-alt'),
   gsd: $('#sb-gsd'),
   coord: $('#sb-coord'),
+  caption: $('#sb-caption'),
   route: $('#sb-route-list'),
   hint: $('#sb-hint'),
-  handoff: $('#sb-handoff'),
-  map: $('#sb-map'),
+  plateN: $('#sb-plate-namwon'),
+  plateY: $('#sb-plate-yeosu'),
+  mapN: $('#sb-map-namwon'),
+  mapY: $('#sb-map-yeosu'),
+  plateCap: $('#sb-plate-cap'),
 };
 
 let M = null;            // manifest
 let cum = [];            // leg 별 [c0, c1] (vh)
 let total = 0;           // Σ weight (vh)
-let map = null, mapReady = false;
+let SEAM = 0.16;
+let linger = [];
 
-/* ── 카메라 트랙 — 필름을 실제로 구운 그 표를 그대로 읽는다 ───────────────── */
-function camAt(t) {
-  const T = M.cameraTrack;
-  let s = T[0];
-  for (const g of T) if (t >= g.t0) s = g;
-  const k = (EASES[s.ease] || EASES.easeLin)(clamp01((t - s.t0) / (s.t1 - s.t0)));
+/* ── 카메라 ────────────────────────────────────────────────────────────────
+   레그마다 렌더러가 달라 카메라 트랙이 하나로 이어지지 않는다. 그래서 계기판은
+   manifest.legs[i].startCamera → endCamera 를 레그 안에서 보간하고, 이음매에서는
+   씸 밴드(0.16vh) 위에서 두 레그의 판독값을 섞는다 — 계기 바늘이 튀지 않게.
+   고도만 로그 보간이다. 15,000 km → 460 km 를 선형으로 읽으면 첫 절반이 통째로
+   "아직 15,000 km" 로 보인다. */
+const K = 1.5 * 720;                       // MapLibre 기본 fov 36.87°, 필름 뷰포트 720px
+const mppOf = a => a / K;
+const zoomOf = (altM, lat) =>
+  Math.log2((156543.03392 * Math.cos((lat * Math.PI) / 180)) / mppOf(altM));
+
+function mixCam(A, B, t) {
   return {
-    lng: lerp(s.a.c[0], s.b.c[0], k),
-    lat: lerp(s.a.c[1], s.b.c[1], k),
-    zoom: lerp(s.a.z, s.b.z, k),
-    pitch: lerp(s.a.p, s.b.p, k),
-    bearing: lerp(s.a.b, s.b.b, k),
-    seg: s.id,
+    lng: lerp(A.lng, B.lng, t),
+    lat: lerp(A.lat, B.lat, t),
+    alt: Math.exp(lerp(Math.log(A.alt), Math.log(B.alt), t)),
+    pitch: lerp(A.pitch, B.pitch, t),
+    bearing: lerp(A.bearing, B.bearing, t),
   };
 }
-const mppOf = (zoom, lat) => (156543.03392 * Math.cos((lat * Math.PI) / 180)) / Math.pow(2, zoom);
-const altOf = (zoom, lat) => 1.5 * 720 * mppOf(zoom, lat);   // manifest.cameraNote 참조
+const camPoint = c => ({
+  lng: c.center[0], lat: c.center[1], alt: c.altitudeM, pitch: c.pitch, bearing: c.bearing,
+});
+// 레그 i 안에서의 카메라. local 은 0..1 로 잘라 쓴다(이음매 밖에서도 정의되도록).
+function camOfLeg(i, t) {
+  const L = M.legs[i];
+  const local = clamp01((t - cum[i][0]) / Math.max(L.weightVh, 1e-6));
+  const u = lingerEase(local, linger[i]);
+  return mixCam(camPoint(L.startCamera), camPoint(L.endCamera), u);
+}
+function camAt(t) {
+  const k = legAt(t);
+  const A = camOfLeg(k, t);
+  if (k + 1 < M.legs.length && t > cum[k][1] - SEAM / 2) {
+    const w = smooth(clamp01((t - (cum[k][1] - SEAM / 2)) / SEAM));
+    return mixCam(A, camOfLeg(k + 1, t), w);
+  }
+  if (k > 0 && t < cum[k][0] + SEAM / 2) {
+    const w = smooth(clamp01((t - (cum[k][0] - SEAM / 2)) / SEAM));
+    return mixCam(camOfLeg(k - 1, t), A, w);
+  }
+  return A;
+}
 
 /* ── 트랙 위치 ────────────────────────────────────────────────────────────── */
 function trackVh() {
@@ -88,23 +111,23 @@ function legAt(t) {
   for (let i = 0; i < cum.length; i++) if (t >= cum[i][0]) k = i;
   return k;
 }
-// 트랙 위치 → 필름 절대 시각(초). 레그 안에서는 엔진과 같은 lingerEase 를 통과시킨다.
+// 트랙 위치 → 그 레그 안에서의 필름 시각(초).
 function filmTimeAt(t) {
   const k = legAt(t);
   const L = M.legs[k];
   const local = clamp01((t - cum[k][0]) / Math.max(L.weightVh, 1e-6));
-  const linger = parseFloat(el.root.querySelectorAll('[data-sc-segment]')[k].getAttribute('data-sc-linger')) || 0;
-  return L.frames[0] / M.fps + lingerEase(local, linger) * L.seconds;
+  return lingerEase(local, linger[k]) * L.seconds;
 }
 
 /* ── 계기판 ───────────────────────────────────────────────────────────────── */
-const WAYPOINTS = [];    // {label, frac} — 이름 붙은 5개 지점
+const WAYPOINTS = [];    // 이름 붙은 5개 지점 — 궤도 · 성층운 · 한반도 · 남원 · 여수
 function buildRail() {
-  const seen = new Map();
+  const seen = new Set();
   M.legs.forEach((L, i) => {
-    if (seen.has(L.label)) return;
-    seen.set(L.label, i);
-    WAYPOINTS.push({ label: L.label, place: L.place, leg: i, frac: cum[i][0] / total });
+    const w = L.wp || L.label;
+    if (seen.has(w)) return;
+    seen.add(w);
+    WAYPOINTS.push({ label: w, leg: i, frac: cum[i][0] / total });
   });
 
   // 항로 — 현재 지점은 액센트 사각 마커로만 표시한다. 글자색을 바꾸지 않는다.
@@ -120,8 +143,6 @@ function buildRail() {
   // 다이얼 핍 — 디스크가 페이지 전체에 정확히 1회전하므로,
   // 각 지점의 핍은 그 지점에 도착하는 순간 정확히 바늘(12시) 밑에 온다.
   el.pips.innerHTML = WAYPOINTS.map(w => {
-    // 디스크는 +p×360 으로 돈다. 그러니 핍의 출발 각은 -frac×360 이어야
-    // p == frac 인 순간 정확히 12시(바늘 밑)에 온다.
     const a = (-w.frac * 360 - 90) * Math.PI / 180;
     const x = 60 + 49 * Math.cos(a), y = 60 + 49 * Math.sin(a);
     return `<rect class="sb-pip" data-leg="${w.leg}" x="${(x - 3).toFixed(2)}" y="${(y - 3).toFixed(2)}" width="6" height="6"></rect>`;
@@ -134,17 +155,14 @@ function paint() {
   const p = clamp01(t / total);
   el.root.style.setProperty('--sb-p', p.toFixed(5));
 
-  const ft = filmTimeAt(t);
-  const c = camAt(ft);
-  const alt = altOf(c.zoom, c.lat);
-  const mpp = mppOf(c.zoom, c.lat);
-
-  // 방위는 항공 관례대로 0–360 으로 읽는다(필름의 bearing 은 −25..+5).
-  const brg = ((c.bearing % 360) + 360) % 360;
+  const c = camAt(t);
+  const mpp = mppOf(c.alt);
+  const brg = ((c.bearing % 360) + 360) % 360;   // 항공 관례대로 0–360
   el.bearing.textContent = nf(brg, 1) + '°';
-  el.alt.textContent = alt >= 10000 ? nf(alt / 1000, 0) + ' km'
-                     : alt >= 1000 ? nf(alt / 1000, 1) + ' km'
-                     : nf(alt, 0) + ' m';
+  el.alt.textContent = c.alt >= 1e6 ? nf(c.alt / 1000, 0) + ' km'
+                     : c.alt >= 1e4 ? nf(c.alt / 1000, 0) + ' km'
+                     : c.alt >= 1000 ? nf(c.alt / 1000, 2) + ' km'
+                     : nf(c.alt, 0) + ' m';
   el.gsd.textContent = mpp >= 1000 ? nf(mpp / 1000, 1) + ' km/px'
                      : mpp >= 1 ? nf(mpp, 1) + ' m/px'
                      : nf(mpp * 100, 1) + ' cm/px';
@@ -153,56 +171,107 @@ function paint() {
   const k = legAt(t);
   if (k !== lastLeg) {
     lastLeg = k;
-    const wpLeg = (WAYPOINTS.find(w => w.label === M.legs[k].label) || {}).leg;
+    const wp = M.legs[k].wp || M.legs[k].label;
+    const wpLeg = (WAYPOINTS.find(w => w.label === wp) || {}).leg;
     el.route.querySelectorAll('li').forEach(li =>
       li.setAttribute('aria-current', String(+li.dataset.leg === wpLeg)));
     el.pips.querySelectorAll('.sb-pip').forEach(r =>
       r.setAttribute('data-on', +r.dataset.leg === wpLeg ? '1' : '0'));
+    // 실캡션 — 장소 · 날짜 · GSD 는 manifest 가 들고 있는 실제 출처 문자열이다.
+    el.caption.textContent = M.legs[k].place + ' · ' + M.legs[k].caption;
   }
 
-  handoff(p, c);
+  handoff(t, c);
 }
 
-/* ── 인계 — 필름이 끝난 그 카메라를 살아 있는 지도가 이어받는다 ──────────────
-   레그가 아니라 무대의 마지막 층이다. 지도는 인계 구간 근처에서만 만든다. */
-function makeMap(c) {
-  if (map || reduce || !window.maplibregl) return;
-  map = new maplibregl.Map({
-    container: el.map,
-    center: [c.lng, c.lat], zoom: c.zoom, pitch: c.pitch, bearing: c.bearing,
+/* ── 인계 — 필름이 멈춘 그 카메라를 살아 있는 지도가 이어받는다 ──────────────
+   레그가 아니라 무대의 마지막 두 층이다.
+     #1 남원  레그 06(비닐하우스) 끝 — manifest.handoff, 온실 검출 9,664동
+     #2 여수  필름 최종 프레임      — manifest.handoffFinal, 해양쓰레기 후보
+   지도는 각자 자기 구간 1.2vh 앞에서만 만든다. 크로스페이드는 1프레임(≈40ms). */
+const PLATES = [];
+function makePlate(spec, container, host, style) {
+  if (reduce || !window.maplibregl) return null;
+  const map = new maplibregl.Map({
+    container,
+    center: spec.center, zoom: spec.zoom, pitch: spec.pitch, bearing: spec.bearing,
     attributionControl: { compact: true },
-    style: {
-      version: 8,
-      sources: {
-        vsat: { type: 'raster', tiles: ['https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg'],
-                tileSize: 256, minzoom: 5, maxzoom: 19, attribution: 'V-World 위성영상' },
-        det: { type: 'geojson', data: YEOSU },
-      },
-      layers: [
-        { id: 'bg', type: 'background', paint: { 'background-color': '#06080b' } },
-        { id: 'sat', type: 'raster', source: 'vsat' },
-        // 탐지는 후보다 — 신뢰도로 감쇠시키되 삭제하지 않는다(카피덱 §4 "감쇠").
-        { id: 'det-f', type: 'fill', source: 'det',
-          paint: { 'fill-color': '#FF9A2E', 'fill-opacity': ['interpolate', ['linear'], ['get', 'conf'], 0.05, 0.12, 0.7, 0.5] } },
-        { id: 'det-l', type: 'line', source: 'det',
-          paint: { 'line-color': '#FF9A2E', 'line-width': 1,
-                   'line-opacity': ['interpolate', ['linear'], ['get', 'conf'], 0.05, 0.25, 0.7, 0.95] } },
-      ],
-    },
+    style,
   });
-  map.on('load', () => { mapReady = true; });
-  map.scrollZoom.disable();     // 페이지 스크롤을 지도가 삼키지 않게 — 인계 후 드래그/줌만 허용
+  map.scrollZoom.disable();   // 페이지 스크롤을 지도가 삼키지 않게 — 인계 후에만 허용
   map.keyboard.disable();
+  const rec = { map, host, ready: false, on: false, spec };
+  map.on('load', () => { rec.ready = true; });
+  return rec;
 }
-const HANDOFF_FROM = 0.955;     // 마지막 레그의 마지막 프레임 부근에서만
-function handoff(p, c) {
+function satStyle(detUrl, color) {
+  return {
+    version: 8,
+    sources: {
+      vsat: {
+        type: 'raster',
+        tiles: ['https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg'],
+        tileSize: 256, minzoom: 5, maxzoom: 19, attribution: 'V-World 위성영상',
+      },
+      det: { type: 'geojson', data: detUrl },
+    },
+    layers: [
+      { id: 'bg', type: 'background', paint: { 'background-color': '#06080b' } },
+      { id: 'sat', type: 'raster', source: 'vsat' },
+      // 탐지는 후보다 — 신뢰도로 감쇠시키되 삭제하지 않는다(카피덱 §4 "감쇠").
+      { id: 'det-f', type: 'fill', source: 'det',
+        paint: { 'fill-color': color,
+          'fill-opacity': ['interpolate', ['linear'], ['coalesce', ['get', 'conf'], 0.6], 0.05, 0.12, 0.7, 0.5] } },
+      { id: 'det-l', type: 'line', source: 'det',
+        paint: { 'line-color': color, 'line-width': 1,
+          'line-opacity': ['interpolate', ['linear'], ['coalesce', ['get', 'conf'], 0.6], 0.05, 0.25, 0.7, 0.95] } },
+    ],
+  };
+}
+
+// 각 인계의 트랙 구간(vh). #1 은 레그 06 의 마지막 0.10vh + 씸 절반, #2 는 끝까지.
+let BAND_N = [0, 0], BAND_Y = [0, 0];
+function handoff(t) {
   if (reduce) return;
-  if (p > 0.86) makeMap(c);
-  const on = p >= HANDOFF_FROM && mapReady;
-  el.handoff.classList.toggle('is-on', on);
-  el.handoff.setAttribute('aria-hidden', on ? 'false' : 'true');
-  if (map && on) map.scrollZoom.enable();
-  else if (map) map.scrollZoom.disable();
+  // #1 남원 — 레그 06 끝
+  if (!PLATES[0] && t > BAND_N[0] - 1.2) {
+    PLATES[0] = makePlate(M.handoff, el.mapN, el.plateN,
+      satStyle(M.handoff.detections, '#00D3A7'));
+  }
+  // #2 여수 — 필름 최종 프레임
+  if (!PLATES[1] && t > BAND_Y[0] - 1.2) {
+    PLATES[1] = makePlate(M.handoffFinal, el.mapY, el.plateY,
+      satStyle(M.handoffFinal.detections, '#FF9A2E'));
+  }
+  gate(PLATES[0], t >= BAND_N[0] && t <= BAND_N[1]);
+  gate(PLATES[1], t >= BAND_Y[0]);
+}
+function gate(rec, want) {
+  if (!rec) return;
+  const on = want && rec.ready;
+  if (on === rec.on) return;
+  rec.on = on;
+  rec.host.classList.toggle('is-on', on);
+  rec.host.setAttribute('aria-hidden', on ? 'false' : 'true');
+  if (on) rec.map.scrollZoom.enable(); else rec.map.scrollZoom.disable();
+  if (on) rec.map.resize();
+}
+
+/* ── 재생 보증 — 프레임이 실제로 그려진 클립만 포스터를 덮게 한다 ─────────────
+   엔진은 'seeked' 가 오지 않는 기기(iOS 무재생 클립)를 위해 2.5초 타이머로도
+   클립을 드러낸다. 그 타이머가 디코드보다 먼저 오면 검은 프레임이 한 번 스친다.
+   requestVideoFrameCallback 이 있는 브라우저에서는 "진짜 그려진 프레임"을 직접
+   확인할 수 있으므로, 그때까지 포스터를 붙잡아 둔다. */
+function guardPaint() {
+  if (!('requestVideoFrameCallback' in HTMLVideoElement.prototype)) return;
+  document.documentElement.classList.add('sb-rvfc');
+  el.root.querySelectorAll('[data-sc-segment] video').forEach(v => {
+    const tick = () => {
+      v.classList.add('sb-painted');
+      v.requestVideoFrameCallback(tick);
+    };
+    v.requestVideoFrameCallback(tick);
+  });
 }
 
 /* ── 이동 ─────────────────────────────────────────────────────────────────── */
@@ -221,15 +290,26 @@ function seek(p) {
 /* ── 부팅 ─────────────────────────────────────────────────────────────────── */
 const boot = async () => {
   M = await (await fetch(MANIFEST)).json();
+  SEAM = M.seam || 0.16;
 
   let run = 0;
   cum = M.legs.map(L => { const a = run; run += L.weightVh; return [a, run]; });
   total = run;
+  linger = Array.from(el.root.querySelectorAll('[data-sc-segment]'),
+    s => parseFloat(s.getAttribute('data-sc-linger')) || 0);
+
+  // 인계 구간 — #1 은 레그 06 의 마지막 0.10vh 부터 다음 씸의 절반까지,
+  //             #2 는 마지막 레그의 마지막 0.28vh 부터 끝까지.
+  const hi = M.handoff.legIndex;
+  BAND_N = [cum[hi][1] - 0.10, cum[hi][1] + SEAM / 2];
+  const fi = M.handoffFinal.legIndex;
+  BAND_Y = [cum[fi][1] - 0.28, total];
 
   buildRail();
 
   // 엔진 마운트. 이 한 줄 아래로는 재생헤드·크로스페이드·로딩이 전부 엔진 소관이다.
   window.ScrollCraft.mount(document);
+  guardPaint();
 
   // §7b — innerHeight 가 0 으로 읽히는 순간에 마운트되면 스페이서가 0px 이 되고
   // 페이지는 조용히 스크롤 불가 정지 이미지가 된다. 창과 서체가 정착한 뒤 한 번 재측정시킨다.
@@ -261,9 +341,17 @@ const boot = async () => {
     leg: () => legAt(trackVh()),
     legLabel: () => M.legs[legAt(trackVh())].label,
     filmTime: () => filmTimeAt(trackVh()),
-    camera: () => camAt(filmTimeAt(trackVh())),
+    camera: () => camAt(trackVh()),
     spacerVh: () => total + 1,
-    handoffActive: () => el.handoff.classList.contains('is-on'),
+    bands: () => ({ namwon: BAND_N, yeosu: BAND_Y, total }),
+    plate: i => {
+      const r = PLATES[i];
+      if (!r) return null;
+      const c = r.map.getCenter();
+      return { on: r.on, ready: r.ready, center: [c.lng, c.lat],
+        zoom: r.map.getZoom(), pitch: r.map.getPitch(), bearing: r.map.getBearing() };
+    },
+    handoffActive: () => PLATES.some(r => r && r.on),
     ready: true,
   };
   document.documentElement.classList.add('sb-ready');

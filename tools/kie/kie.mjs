@@ -182,7 +182,8 @@ export async function video(prompt, opts = {}) {
     image_url: await asUrl(image),
     duration: String(seconds),
     // 스크럽에서 깨지는 것만 정확히 겨냥한 네거티브.
-    negative_prompt: negative ?? 'blur, distortion, low quality, warping, morphing, jitter, flicker, text, watermark, subtitles, cut, scene change, people, vehicles',
+    negative_prompt: negative ?? 'blur, distortion, low quality, warping, morphing, jitter, flicker, text, watermark, '
+      + 'subtitles, cut, scene change, people, vehicles, sky, clouds, horizon, blue background',
     cfg_scale: 0.5,
   };
   if (tail) input.tail_image_url = await asUrl(tail);
@@ -190,7 +191,8 @@ export async function video(prompt, opts = {}) {
   const t0 = Date.now();
   // 무과금 실패(failCode 500, creditsConsumed 0)만 재시도한다. 성공 즉시 빠져나오므로
   // 이 루프가 예산을 두 번 쓰는 일은 없다.
-  const maxTries = opts.retries ?? 12;
+  // 테스트 leg 는 9번째 시도에 통과했다. 상한 12는 여유가 3회뿐이라 배치에서 위험하다.
+  const maxTries = opts.retries ?? 24;
   let last;
   for (let i = 1; i <= maxTries; i++) {
     const taskId = await createTask(MODELS.video, input);
