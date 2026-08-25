@@ -53,3 +53,17 @@
 .paginator .pg{height:30px;min-width:30px;padding:0 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
 .paginator .pg[aria-current=page]{background:var(--lx);border-color:var(--lx);color:#fff}
 .paginator .total{margin-left:auto;color:var(--ink-2)}
+/* Dialog / NotifyUI / Drawer */
+.dialog{border:0;padding:0;border-radius:var(--r-float);box-shadow:var(--sh-modal);background:var(--surface);width:min(92vw,var(--dw,560px));color:var(--ink)}
+.dialog--sm{--dw:420px}.dialog--lg{--dw:820px}.dialog--full{--dw:96vw;height:92vh}
+.dialog::backdrop{background:rgba(17,28,45,.35);backdrop-filter:blur(2px)}
+.dialog__head{display:flex;align-items:center;gap:10px;padding:16px 18px 0}.dialog__head .icon-btn{margin-left:auto}
+.dialog__body{padding:12px 18px}.dialog__foot{display:flex;justify-content:flex-end;gap:8px;padding:0 18px 16px}
+.toast-host{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:8px;z-index:1000}
+.toast{background:var(--ink);color:#fff;padding:10px 14px;border-radius:10px;font-size:var(--fs-13);box-shadow:var(--sh-float);animation:toast-in .25s var(--ease)}
+.toast--success{border-left:3px solid var(--s-done)}.toast--warn{border-left:3px solid var(--s-doing)}.toast--error{border-left:3px solid var(--s-error)}.toast--out{opacity:0;transition:opacity .25s}
+@keyframes toast-in{from{opacity:0;transform:translateY(6px)}}
+.drawer{position:absolute;z-index:20;background:var(--glass);backdrop-filter:blur(14px);border:1px solid var(--glass-border);box-shadow:var(--sh-float);transition:transform var(--t-base) var(--ease)}
+.drawer--right{top:12px;bottom:12px;right:12px;width:var(--w);border-radius:var(--r-float);transform:translateX(calc(100% + 24px))}
+.drawer--bottom{left:12px;right:12px;bottom:12px;height:var(--h);border-radius:var(--r-float);transform:translateY(calc(100% + 24px))}
+.drawer[data-open=true]{transform:none}.drawer__body{padding:16px;height:100%;overflow:auto}

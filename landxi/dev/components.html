@@ -143,12 +143,40 @@ section{display:flex;flex-direction:column;gap:12px}
   </div>
 </section>
 
+<section aria-labelledby="h-dialog">
+  <h2 id="h-dialog">Dialog / NotifyUI</h2>
+  <div class="row">
+    <button class="btn btn--secondary" id="btn-alert">Alert</button>
+    <button class="btn btn--secondary" id="btn-confirm">Confirm</button>
+    <button class="btn btn--secondary" id="btn-toast-success">Toast 성공</button>
+    <button class="btn btn--secondary" id="btn-toast-error">Toast 오류</button>
+  </div>
+</section>
+
+<section aria-labelledby="h-drawer">
+  <h2 id="h-drawer">Drawer</h2>
+  <div class="row">
+    <button class="btn btn--secondary" id="btn-drawer">Drawer 열기</button>
+  </div>
+  <div id="drawer-host" style="position:relative;height:320px;border:1px dashed var(--line);border-radius:var(--r-card)"></div>
+</section>
+
 <script type="module">
 import { icon } from '../assets/js/ui/icon.js';
 import { initTabs } from '../assets/js/ui/tabs.js';
 import { countUpAll } from '../assets/js/ui/kpi.js';
+import { openDialog, NotifyUI } from '../assets/js/ui/dialog.js';
+import { createDrawer } from '../assets/js/ui/drawer.js';
 document.getElementById('search-toggle').innerHTML = icon('search');
 document.querySelectorAll('.tabs').forEach(initTabs);
 countUpAll();
+
+document.getElementById('btn-alert').addEventListener('click', () => NotifyUI.alert('저장되었습니다.', '알림'));
+document.getElementById('btn-confirm').addEventListener('click', () => NotifyUI.confirm('삭제할까요?', '확인'));
+document.getElementById('btn-toast-success').addEventListener('click', () => NotifyUI.success('저장됨'));
+document.getElementById('btn-toast-error').addEventListener('click', () => NotifyUI.error('오류 발생'));
+
+window.__drawer = createDrawer({ side: 'right', width: 392, host: document.getElementById('drawer-host') });
+document.getElementById('btn-drawer').addEventListener('click', () => window.__drawer.open('<p data-test=d>상세</p>'));
 </script>
 </body></html>
