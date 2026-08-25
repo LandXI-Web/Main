@@ -928,147 +928,101 @@ test('models list has real files metadata', () => { assert.ok(MODELS.length >= 6
 
 ---
 
-### Task 9: 홈 — 페이지 골격·글로브 진입·스크롤 카메라
+### Task 9: 홈 v2 — 장면 골격·궤도(Orbit)·하강(Descent)·전국 서비스 HUD
 
 **Files:**
-- Create: `landxi/home.html`(교체), `landxi/assets/css/pages/home.css`, `landxi/assets/js/pages/home.js`
+- Create: `landxi/home.html`(교체), `landxi/assets/css/pages/home.css`, `landxi/assets/js/pages/home.js`(장면 컨트롤러), `landxi/assets/js/pages/home-orbit.js`, `landxi/assets/js/pages/home-hud.js`, `landxi/assets/data/services.js`
 - Test: `tests/e2e/home.spec.mjs`
 
 **Interfaces:**
-- Consumes: `createMap`, `mountShell({public:true})`은 사용하지 않음(홈은 자체 상단바). `countUpAll`, `openDialog`, `NotifyUI`.
-- Produces: 섹션 ID `#hero #survey #service(파이프라인) #compare #features #lineup #cases #contact`; `window.LX.home = { stage(n) }`; 스크롤 카메라 단계 표 `STAGES = [{sel:'#hero', center:[127.8,36.2], zoom:5.6, pitch:0}, {sel:'#survey', center:[127.39,35.41], zoom:12.5, pitch:45}, {sel:'#service', center:[127.1,35.8], zoom:8.5, pitch:20}, {sel:'#compare', center:[127.39,35.41], zoom:15.5, pitch:55, ortho:1}, {sel:'#features', center:[127.5,35.6], zoom:9, pitch:30}, {sel:'#lineup', center:[127.8,36.2], zoom:6.2, pitch:0}]`.
+- Consumes: `createMap` (`{mode:'canvas', globe:true, zoom:2.2, center:[127.8,36.2], interactive:false, tools:false, rulebar:false, ortho:false}`), `api.addGeoJSON/setHighlight/flyTo/project/on`, `api.raw`(maplibre) for style crossfade, `IMAGERY`+`api.addRaster`(있으면 `namwon_2508`을 미리 올려 Scene 3에서 사용; 없으면 생략), `countUpAll`, `openDialog`, `NotifyUI`, `icon`, brand `assets/brand/landxi-wordmark.png`(없으면 텍스트 폴백).
+- Produces: `SERVICES = [{id, name, ministry, lnglat, count, unit, lastRun, real:true|false, story:'marine'|'jeju'|'namwon'|'kuksan'|'generic', color}]` 13종(`assets/data/services.js`; 실자산 4종 `marine`(126.2,35.1, 38057건), `farmland`/`illegal`(126.822,33.507), `pothole`(127.39,35.41), `change`(126.983,35.832) + 예시 9종: greenbelt, trash, incinerator, greenhouse, feedcrop, silage, river, solar, building — 라인업 13과 1:1). `window.LX.home = { scene, go(n), openStory(serviceId), closeStory() }`; 장면 컨테이너 `#scene-orbit #scene-descent #scene-story #scene-survey #scene-build #scene-contact`(`.scene[data-scene=n]`), 상단 진행 도트 `.scene-nav`(6개, 키보드 ↑↓/PageUp/PageDown, 도트 클릭). Scene 3·4·5·6의 본문은 후속 작업이 채우므로 **빈 섹션 + 제목 + `data-todo`**만 둔다(라인업 칩·지표·CTA·상단 내비는 이 작업에서 구현).
+- 장면 전환 모델: 스크롤 스냅이 아닌 **상태 기계** — `go(n)`이 `body[data-scene]`을 바꾸고 각 장면이 `enter/leave` 훅으로 카메라·레이어·오버레이를 조정한다(휠/터치는 한 번에 한 장면씩, 700ms 디바운스). Scene 1은 4초 후 자동으로 Scene 2(감소 모션·사용자 조작 시 취소).
 
-- [ ] **Step 1: 테스트**
+- [ ] **Step 1: e2e 테스트**
 ```js
 import { test, expect } from '@playwright/test';
-test('home sections exist and globe map mounts', async ({ page }) => {
-  await page.goto('home.html'); await page.waitForFunction(() => window.LX?.map?.ready);
-  for (const id of ['hero', 'survey', 'service', 'compare', 'features', 'lineup', 'cases', 'contact']) await expect(page.locator('#' + id)).toHaveCount(1);
-  await expect(page.locator('.home-top .btn--primary')).toHaveText('로그인');
+test('orbit scene shows wordmark, globe map and 3 orbit rings, then auto-advances', async ({ page }) => {
+  await page.goto('home.html'); await page.waitForFunction(() => window.LX?.map?.ready && window.LX?.home);
+  await expect(page.locator('#scene-orbit .wordmark')).toBeVisible();
+  await expect(page.locator('#scene-orbit .orbit__ring')).toHaveCount(3);
+  await expect(page.locator('#scene-orbit .orbit__craft')).toHaveCount(3);
+  await page.waitForTimeout(4600); expect(await page.evaluate(() => window.LX.home.scene)).toBe(2);
 });
-test('scrolling to #survey moves the camera in', async ({ page }) => {
-  await page.goto('home.html'); await page.waitForFunction(() => window.LX?.map?.ready);
-  const z0 = await page.evaluate(() => window.LX.map.getZoom());
-  await page.locator('#survey').scrollIntoViewIfNeeded(); await page.waitForTimeout(1600);
-  const z1 = await page.evaluate(() => window.LX.map.getZoom()); expect(z1).toBeGreaterThan(z0 + 3);
+test('descent shows 13 service points with HUD labels; chip hover highlights; click opens story', async ({ page }) => {
+  await page.goto('home.html'); await page.waitForFunction(() => window.LX?.home); await page.evaluate(() => window.LX.home.go(2)); await page.waitForTimeout(1500);
+  await expect(page.locator('.hud__point')).toHaveCount(13); await expect(page.locator('.hud__label')).toHaveCount(13);
+  await page.locator('.lineup .chip[data-service=marine]').hover(); await expect(page.locator('.hud__point[data-service=marine]')).toHaveClass(/is-hot/);
+  await page.locator('.hud__point[data-service=marine]').click(); await page.waitForTimeout(800);
+  expect(await page.evaluate(() => window.LX.home.scene)).toBe(3); await expect(page.locator('#scene-story')).toHaveAttribute('data-service', 'marine');
 });
-test('hero stats count up', async ({ page }) => { await page.goto('home.html'); await page.waitForTimeout(1600); await expect(page.locator('#hero [data-n="13"] .kpi__num')).toHaveText('13'); });
+test('scene nav dots and keyboard move between scenes; stats count up', async ({ page }) => {
+  await page.goto('home.html'); await page.waitForFunction(() => window.LX?.home);
+  await page.locator('.scene-nav button').nth(3).click(); expect(await page.evaluate(() => window.LX.home.scene)).toBe(4);
+  await page.keyboard.press('PageUp'); await page.waitForTimeout(800); expect(await page.evaluate(() => window.LX.home.scene)).toBe(3);
+  await page.evaluate(() => window.LX.home.go(2)); await page.waitForTimeout(1600); await expect(page.locator('.hud__stats [data-n="13"] .kpi__num')).toHaveText('13');
+});
+test('sunrise: descent scene is light, orbit is dark', async ({ page }) => {
+  await page.goto('home.html'); await page.waitForFunction(() => window.LX?.home);
+  const dark = await page.evaluate(() => getComputedStyle(document.body).getPropertyValue('--scene-bg').trim());
+  await page.evaluate(() => window.LX.home.go(2)); await page.waitForTimeout(1200);
+  const light = await page.evaluate(() => getComputedStyle(document.body).getPropertyValue('--scene-bg').trim()); expect(dark).not.toBe(light);
+});
 ```
-- [ ] **Step 2: home.html 골격** — `<body class="home">` 안: `<div id="homeMap" class="home-map"></div>`(fixed 전면), `<header class="home-top">`(로고 LAND-XI, 내비 플랫폼 소개(#service) 활용 사례(#cases) 분석 서비스(#lineup) 문의하기(#contact), 로그인 버튼 `.btn.btn--primary` → login.html), 그리고 섹션 8개. 히어로 문안: eyebrow `LX 전 직원이 Geo-AI 전문가입니다`, h1 `영상 위에 커서를 올리면, 국토가 <em>정보</em>가 됩니다`, 리드 `드론·항공·위성영상을 코드 한 줄 없이 학습하고, 탐지 결과를 지도 위에서 바로 확인하는 공공 Geo-AI 플랫폼.`, CTA `로그인하고 시작하기`(login.html)·`13개 분석 서비스 보기`(#lineup), 지표 4(공공 분석 서비스 13종 / 학습된 AI 모델 카드 8건 / 누적 분석 면적 1,284 km² / 참여 지자체 3곳). 기타 섹션은 Task 11에서 채우되 지금은 제목과 앵커만.
-- [ ] **Step 3: home.js**
-```js
-import { createMap } from '../map/shell.js'; import { countUpAll } from '../ui/kpi.js';
-const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
-export const STAGES = [ /* 인터페이스 표 그대로 */ ];
-const map = await createMap(document.getElementById('homeMap'), { mode: 'canvas', globe: true, zoom: 2.2, center: [127.8, 36.2], interactive: false, tools: false, rulebar: false, ortho: true, ambient: 'spin' });
-setTimeout(() => map.flyTo(STAGES[0].center, STAGES[0].zoom, { pitch: 0 }), REDUCE ? 0 : 1500);
-let current = 0;
-const io = new IntersectionObserver(es => { es.forEach(e => { if (!e.isIntersecting) return; const i = STAGES.findIndex(s => document.querySelector(s.sel) === e.target); if (i < 0 || i === current) return; current = i; const s = STAGES[i]; map.flyTo(s.center, s.zoom, { pitch: s.pitch }); map.setOrthoOpacity(s.ortho || 0); window.LX.home?.onStage?.(i); }); }, { threshold: .45 });
-STAGES.forEach(s => io.observe(document.querySelector(s.sel)));
-window.LX.home = { stage: n => { current = n; const s = STAGES[n]; map.flyTo(s.center, s.zoom, { pitch: s.pitch }); } };
-countUpAll();
-document.querySelectorAll('.home-top a[href^="#"]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); document.querySelector(a.getAttribute('href')).scrollIntoView({ behavior: REDUCE ? 'auto' : 'smooth' }); }));
-```
-- [ ] **Step 4: home.css** — `.home-map{position:fixed;inset:0;z-index:0}`, `.home-top{position:sticky;top:0;z-index:5;height:64px;display:flex;align-items:center;gap:26px;padding:0 28px;background:var(--glass);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}`, 섹션 공통 `.home-section{position:relative;z-index:2;max-width:1200px;margin:0 auto;padding:96px 24px}`, `.hero{min-height:calc(100vh - 64px);display:grid;align-content:center}`, `.hero__copy{max-width:600px}`, 유리 카드 `.home-card{composes 없음 → .glass 병용}`, 지표 4열 `.hero__stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:40px}`.
-- [ ] **Step 5: 실행** PASS → **Step 6: 커밋** `git add -A && git commit -m "feat: 홈 골격·글로브 진입·스크롤 연동 카메라"`
+- [ ] **Step 2: home.html 골격** — `<body class="home" data-scene="1">`: 고정 `#homeMap`(전면), `.home-top`(워드마크 소형·내비 플랫폼 소개(#scene-build) 활용 사례(스토리 패널 링크) 문의하기(#scene-contact)·로그인 `.btn.btn--primary`), `.scene-nav`, 6개 `<section class="scene" id="scene-…">`, Scene 1 안: `.orbit`(SVG 링 3개 `.orbit__ring` + 마커 `.orbit__craft[data-kind=sat|air|uav]` + 라벨 위성/항공/드론) 좌측, 우측 `.wordmark`(img + 텍스트 폴백) · 모토 · 설명 · CTA 2(로그인하고 시작하기 → login.html / 플랫폼 둘러보기 → `go(2)`) · HUD 스트립 `ORBIT · SAT 3 · AIR 2 · UAV 5 · 13 SERVICES`; Scene 2 안: `.hud`(SVG 오버레이: 포인트 13 `.hud__point[data-service]`, 리더선 `.hud__leader`, 라벨 카드 `.hud__label`), 우상단 `.hud__stats`(KPI 4, `data-n`), 좌하단 `.lineup`(칩 13 `data-service`), 안내 문구 "포인트를 눌러 실제 분석을 보세요".
+- [ ] **Step 3: home.js(장면 컨트롤러)** — `SCENES = [{n:1, enter(){ setDark(true); map.jumpTo([127.8,36.2],2.2); orbit.start(); }, leave(){ orbit.stop(); }}, {n:2, enter(){ sunrise(); map.flyTo([127.8,36.2],6.3,{pitch:0}); hud.show(); }, leave(){ hud.hide(); }}, {n:3 …story: hud.hide(); (Task 10 채움)}, {n:4 …survey}, {n:5 …build: map.flyTo([127.39,35.41],12,{pitch:45})}, {n:6 …contact}]`; `go(n)` = leave→enter, `body.dataset.scene=n`, 도트 갱신, 해당 섹션으로 `scrollIntoView({behavior: REDUCE?'auto':'smooth'})`; 휠·키·터치 바인딩; `setDark(on)`은 `body.classList.toggle('is-dark')`로 `--scene-bg` 등 토큰 세트 전환(`.home.is-dark{--scene-bg:#0E1726; --scene-ink:#E6ECF5 …}`), `sunrise()`는 `is-dark` 제거 + `#homeMap` 위 `.night-veil`(어두운 반투명 오버레이)을 1.2s 페이드아웃 — 지도 스타일 자체를 바꾸지 않아 MapLibre/폴백 모두 동작. Scene 1 자동 진행 4s 타이머(사용자 입력 시 취소).
+- [ ] **Step 4: home-orbit.js** — `createOrbit(container) → {start, stop}`: SVG 타원 링 3개(반지름 비율 1.0/1.25/1.5, `transform: rotateX(62deg) rotateZ(각도)`로 원근), 각 링에 마커 1개(위성=원+패널 아이콘, 항공=비행기 아이콘, 드론=쿼드콥터 아이콘 — 스프라이트에 `i-satellite i-plane i-drone` 3개 심볼 추가), 각속도 sat 0.10rad/s · air 0.18 · uav 0.30, 지구 뒤편 통과 시 `opacity .25`; rAF 루프, 감소 모션이면 정지 상태 배치. 글로브는 `ambient:'spin'` 대신 orbit가 `map.raw?.easeTo`/폴백 pan으로 자전(Scene 1에서만).
+- [ ] **Step 5: home-hud.js** — `createHud(map, services, {onSelect}) → {show, hide, highlight(id|null)}`: `map.on('move')`마다 `project(lnglat)`로 포인트·리더선·라벨 좌표 갱신(라벨은 포인트에서 우상향 28px 오프셋, 화면 밖이면 반대편), 라벨 카드 = 서비스명 + `count`(mono) + `lastRun`, 실자산 서비스는 `real` 배지 `실데이터`; 펄스는 `real` 포인트에만; `highlight(id)`로 `is-hot`; 클릭 → `onSelect(id)` → `LX.home.openStory(id)`(Task 10 전까지는 `go(3)` + `#scene-story[data-service]` 설정만).
+- [ ] **Step 6: home.css** — 장면 100vh 스택, `.scene{min-height:100vh;position:relative;z-index:2}`; 다크 토큰 세트; 궤도 링(`stroke:rgba(230,236,245,.35)`, 점선 `4 6`), 마커 글로우; HUD(포인트 8px + 펄스, 리더선 1px 잉크 40%, 라벨 유리 카드 12/13px mono); `.scene-nav` 우측 고정 도트; `.home-top` 유리; 워드마크 대형(높이 64px 이미지 또는 Gothic A1 900 56px).
+- [ ] **Step 7: 실행** `npm test` PASS → 스크린샷 Scene 1·2 확인 → **Step 8: 커밋** `git add -A && git commit -m "feat: 홈 v2 장면 골격·궤도·하강·전국 서비스 HUD"`
 
 ---
 
-### Task 10: 홈 — 스캔 렌즈
+### Task 10: 홈 v2 — 스토리 슬라이드(해양쓰레기·제주·남원·국산리·일반)
 
 **Files:**
-- Create: `landxi/assets/js/pages/home-lens.js`; Modify: `home.html`(#hero에 `<div class="lens" id="lens"><span class="lens__tag"></span></div>`), `home.css`
-- Test: `tests/e2e/home-lens.spec.mjs`
+- Create: `landxi/assets/js/pages/home-story.js`, `landxi/assets/js/pages/home-lens.js`(스캔 렌즈, 제주 스토리에서 사용), `landxi/assets/js/pages/home-scrub.js`(타임 스크럽/스와이프 비교); Modify: `home.html`(#scene-story 본문), `home.css`, `home.js`(`openStory/closeStory` 연결)
+- Test: `tests/e2e/home-story.spec.mjs`
 
 **Interfaces:**
-- Consumes: `window.LX.map`(`addGeoJSON('lens-det', detections, {kind:'detection'})`, `project`), `detections-sample.geojson`, `SURVEYS`.
-- Produces: `initLens({ map, host:'#hero', radius:130 })`. 렌즈 밖 탐지 레이어는 `fill-opacity .04`, 렌즈 안은 SVG 오버레이(`<svg class="lens-svg">`)에 `map.project`로 폴리곤을 다시 그려 `clipPath` 원으로 자름(MapLibre 레이어 자체를 원형으로 자를 수 없으므로 오버레이 방식). 가장 가까운 탐지의 `SURVEYS[surveyId].service`를 `.lens__tag`에 표시. 클릭 시 `#lineup [data-service=id]`로 스크롤·`is-hit` 클래스 1.2s.
+- Consumes: `SERVICES`, GeoJSON `marine-debris.geojson`, `marine-debris-grid.geojson`(`count, mean_conf, giin_*`), `jeju-illegal.geojson`, `IMAGERY`(`namwon_2504…2510`, `kuksan_a68/a71`, `jeju_2022`, `jeju_landcover`) + `api.addRaster/setRasterOpacity`(없으면 해당 슬라이드는 "영상 준비 중" 상태로 표시하되 UI는 동작), ECharts(도넛·막대), `openDialog`(활용 사례 2건 모달), `createDrawer` 대신 자체 `.story` 패널.
+- Produces: `openStory(id)` → 카메라 `flyTo(service.lnglat, zoomByStory, {pitch:45})` + `.story[data-service]` 슬라이드 인 + 덱 1페이지; `closeStory()` → Scene 2 복귀. 덱 API `{next(), prev(), goSlide(i)}`, 키보드 ←→, 진행 표시 `.story__dots`. 슬라이드 정의는 `STORIES = { marine:[…], jeju:[…], namwon:[…], kuksan:[…], generic:[…] }` 각 슬라이드 `{title, body(html), enter(map), leave(map)}`. 스토리 종류별 내용은 스펙 6.1 Scene 3 그대로(해양쓰레기 5슬라이드: 개요/격자 히트맵/기인 도넛+막대/변화 슬라이더/실행하기; 제주 4: 항공/토지피복 토글/불법건축물+스캔 렌즈/실행; 남원 4: 2025.08/타임 스크럽 4시점/탐지 예시/실행; 국산리 3: a68/a71 스와이프/실행; 일반 3). "실행하기"는 `login.html?next=analysis-ai.html`. 패널 상단 "활용 사례" → 기존 사례 2건 다이얼로그, "닫기" → `closeStory()`.
+- 변화분석(해양쓰레기 ④): 격자 `count`를 시점 A(전체)·시점 B(`mean_conf`≥0.6만)로 나눠 슬라이더 0–100으로 보간해 색을 바꾼다(실측 시점이 하나이므로 "신뢰도 기준 시나리오"임을 캡션에 명시).
+- 스캔 렌즈: 커서 반경 130px 안에서만 `jeju-illegal` 폴리곤 표시(SVG 오버레이 + clipPath), 가장 가까운 탐지의 클래스 태그.
+- 타임 스크럽: `.scrub` 트랙(4 눈금 2025.04/06/08/10), 드래그 시 인접 두 래스터의 `setRasterOpacity`를 보간; 스와이프 비교: 두 래스터 중 위 레이어를 `clip`(maplibre는 `raster-opacity` 대신 `map.raw.setLayerZoomRange` 불가 → 오버레이 `<div class="swipe">`로 캔버스 위에 마스크 이미지를 두는 대신, 간단히 **좌우 분할 오버레이**: 화면을 두 개의 맵 컨테이너로 나누지 않고, 위 레이어 opacity 1, 아래 0으로 두고 `clip-path: inset(0 X% 0 0)`을 `#homeMap`의 복제 캔버스가 아닌 **두 번째 MapLibre 인스턴스**(`createMap(#swipeMap, {...same camera, tools:false, rulebar:false})`)에 적용, 카메라 동기화 `on('move')`). 폴백 엔진에서는 두 번째 인스턴스도 폴백.
 
-- [ ] **Step 1: 테스트**
-```js
-import { test, expect } from '@playwright/test';
-test('lens follows cursor and shows nearest service; click scrolls to lineup', async ({ page }) => {
-  await page.goto('home.html'); await page.waitForFunction(() => window.LX?.lens?.ready);
-  const hero = page.locator('#hero'); const box = await hero.boundingBox();
-  await page.mouse.move(box.x + box.width * .7, box.y + box.height * .5);
-  await expect(page.locator('#lens')).toBeVisible();
-  await expect(page.locator('.lens__tag')).not.toHaveText('');
-  await page.mouse.click(box.x + box.width * .7, box.y + box.height * .5);
-  await page.waitForTimeout(800);
-  const y = await page.evaluate(() => document.querySelector('#lineup').getBoundingClientRect().top); expect(Math.abs(y)).toBeLessThan(400);
-});
-```
-- [ ] **Step 2: home-lens.js** — `pointermove`에서 `[x,y]` 갱신 → `requestAnimationFrame`으로 오버레이 재투영: 각 feature `coordinates[0].map(map.project)` → `<path d>`; `<clipPath id="lensClip"><circle r=130/>`; 링 2개(잉크 1.5px, ai 점선) + 십자 눈금 4개; `pointerleave` 시 숨김. `nearest = argmin dist(project(centroid), mouse)`; `window.LX.lens = {ready:true}`. 감소 모션과 무관(사용자 조작).
-- [ ] **Step 3: CSS** `.lens{position:fixed;z-index:4;pointer-events:none;display:none}.lens__tag{position:absolute;left:18px;top:-150px;white-space:nowrap;font:500 11px var(--f-mono);letter-spacing:.06em;color:#fff;background:var(--ink);padding:4px 8px;border-radius:6px}.lens-svg{position:fixed;inset:0;z-index:3;pointer-events:none}` `#hero{cursor:none}`(터치·감소 모션 시 `cursor:auto` 및 렌즈 비활성).
-- [ ] **Step 4: 실행** PASS → **Step 5: 커밋** `git add -A && git commit -m "feat: 홈 스캔 렌즈"`
+- [ ] **Step 1: e2e** — marine 스토리 열기 → `.story[data-service=marine]` 보임, 덱 5장, `→` 키로 2장째 이동 시 `.story__dots [aria-current]` 인덱스 1, 격자 레이어 `getLayer('grid')` 존재; `닫기` → scene 2; jeju 스토리 3장째에서 마우스 이동 시 `.lens` 표시; namwon 스토리 2장째 `.scrub` 드래그 후 `data-t` 값 변화; kuksan 스와이프 `.swipe` 드래그 후 `--pos` 변화(래스터 없을 때도 UI는 동작해야 함).
+- [ ] **Step 2–5: 구현**(home-story.js 덱/슬라이드/카메라, home-lens.js, home-scrub.js, CSS: `.story{position:fixed;right:0;top:64px;bottom:0;width:480px}` 유리, 슬라이드 전환 `translateX` 320ms, 감소 모션 즉시).
+- [ ] **Step 6: 실행** `npm test` PASS → **Step 7: 커밋** `git add -A && git commit -m "feat: 홈 v2 스토리 슬라이드(해양쓰레기·제주·남원·국산리)"`
 
 ---
 
-### Task 11: 홈 — 통합조사 시뮬레이터
+### Task 11: 홈 v2 — 통합조사 시뮬레이터 (Scene 4)
 
 **Files:**
-- Create: `landxi/assets/js/pages/home-survey.js`; Modify: `home.html`(#survey 내용), `home.css`
+- Create: `landxi/assets/js/pages/home-survey.js`; Modify: `home.html`(#scene-survey 본문), `home.css`
 - Test: `tests/e2e/home-survey.spec.mjs`
 
 **Interfaces:**
-- Consumes: `SURVEYS`, `SURVEY_COUNTERS`, `detections-sample.geojson`, `window.LX.map`(`addGeoJSON('survey-'+id, …)`, `setHighlight`, `project`).
-- Produces: 마크업 — `<section id="survey" class="home-section">` 안 좌 `.survey__stack`(카드 7장 `.survey-card[data-id]`: 부처 eyebrow, 이름, `현장 인력 · 주기`, 대응 서비스 칩), 상단 `.survey__slider`(`<input type=range id="surveyMix" min=0 max=100 value=0>` 라벨 `현장조사` / `Geo-AI 통합조사`), 우 `.survey__map`(지도는 전면 바탕이므로 여기엔 `<svg class="survey-svg">` 조사원·드론 오버레이만), 하단 `.survey__counters`(4개: 조사 인력 / 소요 기간 / 커버리지 / 데이터 양식). `window.LX.survey = { setMix(0..100) }`.
-- 동작(`mix` 0→100): ① 조사원 아이콘 7개(각 조사 색)가 `mix<50`일 때 각자 경로(사전 정의 폴리라인, `requestAnimationFrame`으로 순환 이동)를 걷고, `mix≥50`부터 정지 후 검증 지점(각 조사 첫 탐지 위치)으로 이동해 작은 체크 아이콘이 됨. ② 드론 아이콘이 `mix` 비율만큼 좌→우 스윕 경로를 진행, 지나간 영역의 탐지 폴리곤 레이어 `fill-opacity`가 `.04→.35`로. ③ 카드 스택은 `transform: translateY(-idx*Δ) scale(1-idx*δ)`로 `mix`에 비례해 겹쳐지고, `mix≥90`이면 맨 앞 카드 대신 `.survey-card--merged`("통합조사 1회 · 7개 조사 부분 대체") 표시. ④ 카운터는 `mix<50`이면 field 값, 아니면 ai 값으로 교체(교차 페이드). ⑤ 카드 클릭 → 해당 조사 레이어만 `setHighlight`, 서비스 칩 `is-hit`.
+- Consumes: `SURVEYS`, `SURVEY_COUNTERS`, `detections-sample.geojson`(greenbelt·trash·incinerator·pothole·greenhouse), `marine-debris.geojson`(marine 카드 → 전남으로 카메라 이동 대신 **남원 AOI 안에 예시 폴리곤을 쓰지 않고**, 카드 클릭 시 해당 서비스의 실데이터 위치로 `flyTo`), `jeju-illegal.geojson`(farmland 카드), `window.LX.map`, Scene 4 `enter()`(카메라 남원 AOI zoom 13.5).
+- Produces: 마크업·동작은 v1 정의 그대로 — `.survey__stack` 카드 7(`.survey-card[data-id]`), `#surveyMix` 슬라이더(현장조사 ↔ Geo-AI 통합조사), `.survey-svg` 조사원 7팀 경로 이동→검증 지점, 드론 스윕 `data-progress`, 카드 병합 `.survey-card--merged`("통합조사 1회 · 7개 조사 부분 대체"), 카운터 4(`data-k=teams|months|coverage|formats`), 카드 클릭 → 해당 레이어만 `setHighlight` + `.lineup .chip[data-service]`(Scene 2의 칩) 대신 카드 옆 서비스 칩 `is-hit`. `window.LX.survey = { setMix(0..100) }`.
 
-- [ ] **Step 1: 테스트**
-```js
-import { test, expect } from '@playwright/test';
-test('slider merges cards, sweeps drone, swaps counters', async ({ page }) => {
-  await page.goto('home.html'); await page.waitForFunction(() => window.LX?.survey);
-  await expect(page.locator('.survey-card')).toHaveCount(7);
-  await expect(page.locator('.survey__counters [data-k=teams]')).toHaveText('7팀');
-  await page.evaluate(() => window.LX.survey.setMix(100)); await page.waitForTimeout(900);
-  await expect(page.locator('.survey-card--merged')).toBeVisible();
-  await expect(page.locator('.survey__counters [data-k=teams]')).toHaveText('1팀 + 검증');
-  await expect(page.locator('.survey-svg .drone')).toHaveAttribute('data-progress', '1');
-});
-test('clicking a survey card highlights its service chip', async ({ page }) => {
-  await page.goto('home.html'); await page.waitForFunction(() => window.LX?.survey);
-  await page.locator('.survey-card[data-id=greenbelt]').click();
-  await expect(page.locator('#lineup [data-service=greenbelt]')).toHaveClass(/is-hit/);
-});
-```
-- [ ] **Step 2: home-survey.js 구현**(위 동작 ①~⑤; 조사원 경로는 남원 중심 ±0.03° 안에서 조사별로 다른 5점 폴리라인을 `SURVEYS` 순서로 생성; SVG 좌표는 매 프레임 `map.project`). `setMix`는 `#surveyMix`의 값과 동기화.
-- [ ] **Step 3: CSS** `.survey{display:grid;grid-template-columns:420px 1fr;gap:24px}.survey__stack{position:relative;height:420px}.survey-card{position:absolute;left:0;right:0;transition:transform .5s var(--ease),opacity .5s}.survey__slider{display:flex;align-items:center;gap:12px;font-size:var(--fs-13)}.survey__slider input{flex:1;accent-color:var(--ai)}.survey__counters{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px}.survey-svg{position:fixed;inset:0;z-index:2;pointer-events:none}`.
-- [ ] **Step 4: 실행** PASS → **Step 5: 커밋** `git add -A && git commit -m "feat: 홈 통합조사 시뮬레이터(현장→Geo-AI 슬라이더)"`
+- [ ] **Step 1: e2e**(v1 테스트 그대로: 카드 7, 카운터 `7팀`→`1팀 + 검증`, `data-progress="1"`, merged 카드, greenbelt 카드 클릭 → 서비스 칩 `is-hit`)
+- [ ] **Step 2–3: 구현** → **Step 4: 실행** PASS → **Step 5: 커밋** `git add -A && git commit -m "feat: 홈 v2 통합조사 시뮬레이터"`
 
 ---
 
-### Task 12: 홈 — 파이프라인·전후 비교·기능 소개·서비스 라인업·활용 사례·문의 폼
+### Task 12: 홈 v2 — 만드는 법(Scene 5)·문의(Scene 6)·기능 소개·사례·정책
 
 **Files:**
-- Modify: `home.html`, `home.js`, `home.css`
+- Modify: `home.html`(#scene-build, #scene-contact 본문), `home.css`, `home.js`(Scene 5/6 enter)
 - Test: `tests/e2e/home-sections.spec.mjs`
 
 **Interfaces:**
-- 유지 기능(스펙 6.1): 4단계 파이프라인(데이터 입력 → 모델 선택(YOLO v11) → 학습 → 평가), 전/후 비교(4쌍, 5초 자동, 드래그 시 정지), 기능 소개 3(학습·분석 / 멀티소스 / 지도 시각화 — 기존 `lp-*.png`), 서비스 라인업 13칩(방치쓰레기·도로안전·조사료·비닐하우스·농지이용·개발제한구역·불법소각장·해양쓰레기·사료작물·곤포사일리지·하천 점용·태양광·건축물 — `data-service` id는 `SURVEYS.id`와 일치하는 것 7개 포함), 활용 사례 2(도로안전 / 농지 관리, 카드 클릭 → `openDialog` 상세+첨부 다운로드 토스트), 문의 3카드(대표 전화 063-713-1213 / 기술 문의 063-713-1216 / 온라인 문의 → 다이얼로그 폼 이름·소속·전화·문의 내용, 빈 값 `.has-error` + 안내문, 제출 시 `NotifyUI.success('문의가 접수되었습니다')`), 정책 링크 3(다이얼로그).
+- 유지 기능: 4단계 파이프라인(데이터 입력→모델 선택(YOLO v11)→학습→평가; IntersectionObserver 진입 시 선이 흐름), 기능 소개 3(학습·분석 / 멀티소스 / 지도 시각화 — `assets/images/landing/lp-*.png`), **워크플로우 캔버스 미리보기**(노드 6개 데이터→클래스→라벨링→학습→평가→발행, 정적 SVG + 흐르는 점선), 문의 3카드(대표 전화 063-713-1213 / 기술 문의 063-713-1216 / 온라인 문의 → `openDialog` 폼 이름·소속·전화·문의 내용, 빈 값 `.has-error`, 제출 `NotifyUI.success('문의가 접수되었습니다')`; 실패 시 다이얼로그 재오픈 루프), 정책 링크 3(다이얼로그), 정부 표준 푸터(주소·고객센터·©·패밀리사이트 select). 활용 사례 2건 다이얼로그는 Task 10의 스토리 패널과 상단 내비 '활용 사례'에서 호출(공용 함수 `openCaseDialog(i)`를 `home-story.js`가 export — 없으면 이 작업에서 `home-cases.js`로 분리해 양쪽이 import).
 
-- [ ] **Step 1: 테스트**
-```js
-import { test, expect } from '@playwright/test';
-test('lineup has 13 chips, cases open dialog, contact validates', async ({ page }) => {
-  await page.goto('home.html');
-  await expect(page.locator('#lineup .chip')).toHaveCount(13);
-  await page.locator('#cases .case-card').first().click(); await expect(page.locator('dialog[open]')).toContainText('도로안전');
-  await page.locator('dialog[open] .dialog__close').click();
-  await page.locator('#contact [data-open-inquiry]').click(); await page.locator('dialog[open] [data-value=submit]').click();
-  await expect(page.locator('dialog[open] .has-error')).toHaveCount(4);
-  await page.fill('dialog[open] [name=name]', '홍길동'); await page.fill('dialog[open] [name=org]', '남원시'); await page.fill('dialog[open] [name=phone]', '010-0000-0000'); await page.fill('dialog[open] [name=msg]', '문의');
-  await page.locator('dialog[open] [data-value=submit]').click(); await expect(page.locator('.toast')).toContainText('접수');
-});
-test('before/after slider is draggable', async ({ page }) => {
-  await page.goto('home.html'); const s = page.locator('#compare .ba'); const b = await s.boundingBox();
-  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2); await page.mouse.down(); await page.mouse.move(b.x + b.width * .8, b.y + b.height / 2); await page.mouse.up();
-  const v = await s.evaluate(e => parseFloat(getComputedStyle(e).getPropertyValue('--pos'))); expect(v).toBeGreaterThan(70);
-});
-```
-- [ ] **Step 2: 구현** — 파이프라인 `.pipe` 4노드 + 연결선 `stroke-dasharray` 애니메이션(IntersectionObserver 진입 시). 전후 비교 `.ba{--pos:50%}` 두 이미지 `clip-path:inset(0 calc(100% - var(--pos)) 0 0)`, 핸들 드래그, 5s 자동 회전(감소 모션 시 정지). 폼 다이얼로그는 `openDialog({actions:[{label:'취소',value:null},{label:'문의 보내기',value:'submit',primary:true}]})`에서 `submit`이면 검증 후 통과 시 닫고 토스트, 실패 시 다이얼로그를 다시 연다(`openDialog`는 값을 반환하므로 루프).
-- [ ] **Step 3: 실행** PASS → **Step 4: 커밋** `git add -A && git commit -m "feat: 홈 파이프라인·전후 비교·라인업·활용 사례·문의"`
+- [ ] **Step 1: e2e** — Scene 5: `.pipe__node` 4, `.wf-preview .wf-node` 6; Scene 6: 문의 폼 검증 4 `.has-error` → 채운 뒤 토스트 `접수`; 정책 링크 클릭 → `dialog[open]`; 푸터 select 존재.
+- [ ] **Step 2–3: 구현** → **Step 4: 실행** PASS → **Step 5: 커밋** `git add -A && git commit -m "feat: 홈 v2 만드는 법·문의·푸터"`
 
 ---
 
