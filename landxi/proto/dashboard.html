@@ -1,6 +1,6 @@
 <!doctype html><html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Land-XI — 운영 리포트 2026-08-25</title>
+<title>Land-XI — 운영 아틀라스</title>
 <link rel="icon" href="../assets/images/favicon_landxi.png">
 <script>
   // 로그인 관문. 그리기 전에 판정한다 — 관리자 화면이 한 프레임도 새어 나가지 않게.
@@ -9,133 +9,80 @@
   }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 <link rel="stylesheet" href="v3-tokens.css">
 <link rel="stylesheet" href="dashboard.css">
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
 </head><body class="v3" data-colorway="light">
 
-<a class="skip" href="#report">리포트 본문으로</a>
+<a class="skip" href="#ledger">원장으로 건너뛰기</a>
 
-<div id="page">
+<!-- ── 판(plate) — 뷰포트 전체를 채우는 V-World 위성 정사영상. ──────────────
+     흰 크롬(마스트헤드·원장·스캔 스트립)이 이 판 위에 헤어라인으로 얹힌다.
+     카드도 유리도 그림자도 없다. 색은 흰 종이 + 액센트 하나. -->
+<div id="plate" aria-hidden="true"></div>
+<div id="plate-veil" aria-hidden="true"></div>
 
-  <!-- ── 좌측 고정 단 — 목차와 숫자 하나. 사이드바 내비게이션이 아니다. ───────── -->
-  <aside id="rail">
-    <header id="mast">
-      <span id="mark">LAND-XI</span>
-      <p class="caption" id="mast-sub">운영 리포트 · <span class="num" id="mast-date">—</span> KST</p>
-    </header>
+<!-- ── 마스트헤드 ─────────────────────────────────────────────────────── -->
+<header id="mast">
+  <div id="mast-l">
+    <span id="mark">LAND-XI</span>
+    <p class="caption" id="mast-sub">Land-XI 콘티 · 데이터 기준 <span class="num" id="mast-asof">—</span></p>
+  </div>
+  <nav id="regs" aria-label="레지스터 전환"></nav>
+  <p class="caption" id="mast-r">
+    <span id="mast-plate">V-WORLD 위성 정사영상</span>
+    <span class="sep">·</span><span class="num" id="mast-src">—</span>
+  </p>
+</header>
 
-    <nav id="chapters" aria-label="장 이동"></nav>
+<!-- ── 좌측 원장(LEDGER) — B안 대시보드의 문법을 그대로 옮긴 흰 단. ──────── -->
+<aside id="ledger" tabindex="-1" aria-label="원장">
 
-    <div id="head">
-      <p class="label" id="head-label">—</p>
-      <p class="stat" id="head-stat" aria-live="polite"></p>
-      <p class="caption" id="head-sub">—</p>
-    </div>
+  <!-- 머리 숫자 한 개 — B안의 73,223 자리. -->
+  <div id="head">
+    <p class="label" id="head-label">—</p>
+    <p class="stat" id="head-stat" aria-live="polite">—</p>
+    <p class="caption" id="head-sub">—</p>
+  </div>
 
-    <footer id="fresh">
-      <span id="fresh-dot" aria-hidden="true"></span>
-      <span id="fresh-txt" class="caption">—</span>
-      <button type="button" id="fresh-more" class="linkish">신선도 상세</button>
-      <dl id="fresh-detail" hidden></dl>
-    </footer>
-  </aside>
+  <!-- 레지스터별 본문. 세 개의 판이 이 자리에서 교대한다. -->
+  <div id="reg-body"></div>
 
-  <!-- ── 우측 스크롤 단 — 판과 헤어라인 표. ────────────────────────────────── -->
-  <main id="report" tabindex="-1">
+  <!-- 기존 대시보드 기능이 원장 꼬리로 흡수된 자리 -->
+  <section class="fg" id="fg-ops">
+    <p class="fg__h"><b>FIG. 09</b> 처리 대기 큐 · <span class="num" id="ops-n">—</span>건 <i class="tag tag--demo">시연</i></p>
+    <div class="rows" id="ops-rows" role="list"></div>
+    <p class="fg__h"><b>FIG. 10</b> 지표 · 방문 · 스토리지 <i class="tag tag--demo">시연</i></p>
+    <div id="ops-kpi"></div>
+    <div id="ops-chart"></div>
+    <p class="fg__h"><b>FIG. 11</b> 전국 커버리지 · 시군구 <span class="num" id="cov-n">—</span>/249</p>
+    <div id="ops-cov"></div>
+  </section>
 
-    <!-- 시간 자: 이 단의 머리에 상주한다 -->
-    <div id="ruler" aria-label="시간 축">
-      <button type="button" id="rul-play" aria-pressed="false" aria-label="시간 재생"><svg viewBox="0 0 12 12" aria-hidden="true"><path class="ic-play" d="M3 2l7 4-7 4z"/><path class="ic-pause" d="M3.2 2h2.1v8H3.2zM6.7 2h2.1v8H6.7z"/></svg></button>
-      <span class="num rul-end" id="rul-t0">—</span>
-      <div id="rul-track" role="presentation"><i id="rul-head"></i></div>
-      <span class="num rul-end" id="rul-t1">—</span>
-      <span class="num" id="rul-date">—</span>
-      <span id="rul-note"></span>
-    </div>
+  <footer id="led-foot">
+    <p class="caption">수치 출처 <span class="num">assets/data/{results,models,imagery,crops}.js</span></p>
+    <p class="caption"><i class="tag tag--sim">모의 실행</i> 실타일을 실제로 훑는 시뮬레이션 · <i class="tag tag--demo">시연</i> 원형 프로토타입 목업</p>
+  </footer>
+</aside>
 
-    <!-- 표지 도판 — 마지막으로 도착한 실제 픽셀. 리포트는 사진 한 장으로 시작한다. -->
-    <figure class="plate" id="cover">
-      <figcaption class="fig" id="cover-fig">—</figcaption>
-      <div id="cover-strip"></div>
-      <p class="caption" id="cover-note">—</p>
-    </figure>
+<!-- ── 지도 위 부유 요소 ──────────────────────────────────────────────── -->
+<div id="probe" hidden></div>
+<div id="card" hidden aria-live="polite"></div>
+<p id="attrib" class="caption">자료제공: 브이월드(www.vworld.kr) · 경계 sigungu.geojson</p>
 
-    <!-- 01 처리 대기 -->
-    <section class="sec" id="sec-queue" data-sec="queue">
-      <header class="sec__h">
-        <p class="label">01 · 처리 대기</p>
-        <h2 class="h2 reveal">102일째 아무도<br>열어 보지 않은 카드가 있다</h2>
-        <p class="lead">카드 발행·가입 승인·문의가 한 줄씩, 오래 기다린 순서로. 대기 중인 요청 <span class="num" id="q-total">—</span>건 가운데
-          두 건은 60일을 넘겼다 — 액센트 헤어라인이 그것이다.</p>
-      </header>
-      <div class="rows" id="queue" role="list"></div>
-      <p class="fig" id="q-fig">—</p>
-    </section>
-
-    <!-- 02 지표 -->
-    <section class="sec" id="sec-kpi" data-sec="kpi">
-      <header class="sec__h">
-        <p class="label">02 · 지표</p>
-        <h2 class="h2 reveal">일주일에 5,575번,<br>누군가 이 화면을 열었다</h2>
-      </header>
-      <div class="kpis" id="kpis"></div>
-
-      <div class="plate" id="charts">
-        <div class="plate__h">
-          <p class="fig" id="c-fig">FIG. 02 · 운영 지표</p>
-          <div id="chart-tabs" role="tablist" aria-label="지표 보기"></div>
-        </div>
-        <div id="chart" role="tabpanel"></div>
-      </div>
-    </section>
-
-    <!-- 03 전국 커버리지 -->
-    <section class="sec" id="sec-cov" data-sec="cov">
-      <header class="sec__h">
-        <p class="label">03 · 전국 커버리지</p>
-        <h2 class="h2 reveal">시군구 249곳 가운데<br>14곳이 켜져 있다</h2>
-        <p class="lead">실경계는 <span class="num">sigungu.geojson</span>에서 그 자리에서 투영한다. 농도는 커버리지, 색은 하나뿐.
-          칠해지지 않은 곳은 지워진 것이 아니라 아직 헤어라인이다.</p>
-      </header>
-
-      <figure class="plate" id="cov-plate">
-        <figcaption class="fig" id="cov-fig">—</figcaption>
-        <div class="atlas-wrap">
-          <svg id="atlas" viewBox="0 0 1000 1000" role="img" aria-label="전국 시군구 커버리지 코로플레스">
-            <g id="a-base"></g><g id="a-lit"></g><g id="a-sido"></g><g id="a-mark"></g>
-          </svg>
-          <div id="cov-tip" class="tip" hidden></div>
-        </div>
-        <p class="legend">
-          <i class="lg lg--full"></i>커버리지 93%
-          <i class="lg lg--mid"></i>50%
-          <i class="lg lg--low"></i>29%
-          <i class="lg lg--none"></i>미실증 시군구 235
-        </p>
-      </figure>
-
-      <div class="plate" id="mat-plate">
-        <p class="fig" id="mat-fig">—</p>
-        <div class="mat-wrap"><table id="matrix"></table></div>
-      </div>
-    </section>
-
-    <!-- 04 활동 기록 -->
-    <section class="sec" id="sec-log" data-sec="log">
-      <header class="sec__h">
-        <p class="label">04 · 활동 기록</p>
-        <h2 class="h2 reveal">3월 12일부터 오늘까지,<br>기록은 14줄이다</h2>
-        <p class="lead">누가·언제·무엇을. 시스템이 한 일과 사람이 한 일을 같은 자에 올린다.</p>
-      </header>
-      <ol class="tl" id="log"></ol>
-      <p class="fig" id="log-fig">—</p>
-    </section>
-
-    <footer id="end">
-      <p class="caption">Land-XI · 국토정보 통합 분석 플랫폼 · 운영 리포트 프로토타입</p>
-      <p class="caption">수치 출처 <span class="num">assets/data/{dashboard,surveys,results,models,imagery}.js</span> · 경계 <span class="num">geo/{sigungu,sido}.geojson</span></p>
-    </footer>
-  </main>
+<!-- ── 하단 스캔 스트립 — 시간 밀도 막대 하나. 스스로 재생하고 사건에서 선다. ── -->
+<div id="strip" aria-label="시간 스캔">
+  <button type="button" id="strip-play" aria-pressed="true" aria-label="스캔 재생/정지"><svg viewBox="0 0 12 12" aria-hidden="true"><path class="ic-play" d="M3 2l7 4-7 4z"/><path class="ic-pause" d="M3.2 2h2.1v8H3.2zM6.7 2h2.1v8H6.7z"/></svg></button>
+  <span class="num strip-end" id="strip-t0">—</span>
+  <div id="strip-track" role="slider" tabindex="0" aria-label="시점" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+    <canvas id="strip-bar"></canvas>
+    <i id="strip-head"></i>
+    <div id="strip-marks"></div>
+  </div>
+  <span class="num strip-end" id="strip-t1">—</span>
+  <span class="num" id="strip-now">—</span>
+  <span id="strip-note" class="caption"></span>
 </div>
 
 <script type="module" src="dashboard.js"></script>
