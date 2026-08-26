@@ -10,7 +10,8 @@
     { "file": "B2-DataMgmt-List.dc.html",   "title": "B2 · 데이터 관리 — 아카이브 / 완료 / 발행중", "x": 3120, "y": 1020, "w": 1440, "h": 900 },
     { "file": "B2-XiMap.dc.html",           "title": "B2 · 지도 서비스 (XI맵) — 분석 지도",     "x": 4680, "y": 1020, "w": 1440, "h": 900 },
 
-    { "file": "B3-Dashboard.dc.html", "title": "B3 · 대시보드 — 축소 현황 원장 (지도 없음 · 벤치마킹 안 C ESRI-LEDGER)", "x": 0, "y": 2040, "w": 1440, "h": 900 }
+    { "file": "B3-Dashboard.dc.html", "title": "B3 · 대시보드 — 축소 현황 원장 (지도 없음 · 벤치마킹 안 C ESRI-LEDGER)", "x": 0, "y": 2040, "w": 1440, "h": 900 },
+    { "file": "B3-DataMgmt.dc.html",  "title": "B3 · 데이터 관리 — 4탭 = 파이프라인 4단계 · 영상 프레임 우선 원장 (전면 재설계)", "x": 1560, "y": 2040, "w": 1440, "h": 900 }
   ],
   "annotations": [
     {
