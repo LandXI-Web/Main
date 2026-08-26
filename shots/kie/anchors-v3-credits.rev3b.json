@@ -1,0 +1,79 @@
+{
+  "session": "rev3b-2026-08-26",
+  "cap": 50,
+  "per_still_expected": 14.5,
+  "started": "2026-08-26T05:27:58.251Z",
+  "runs": [
+    {
+      "id": "A02",
+      "reroll": true,
+      "model": "seedream/5-pro-image-to-image",
+      "taskId": "e088086e424668aa2d2ea02ac5fc1455",
+      "refs": [
+        "landxi/assets/proto/film/legs/anchors-v3/A01.png",
+        "shots/kie/leg01-stills.jpg"
+      ],
+      "credits_reported": 14.5,
+      "credits_balance_before": 412.5,
+      "credits_balance_after": 398,
+      "credits_charged": 14.5,
+      "gen_ms": 143,
+      "wall_ms": 162997,
+      "png": "landxi/assets/proto/film/legs/anchors-v3/A02.png",
+      "png_bytes": 7339653,
+      "at": "2026-08-26T05:30:48.834Z",
+      "jpg": "landxi/assets/proto/film/legs/anchors-v3/A02.jpg",
+      "jpg_bytes": 372978
+    },
+    {
+      "id": "A03",
+      "reroll": true,
+      "model": "seedream/5-pro-image-to-image",
+      "taskId": "1ba8d9c056c7a6f2af8ae3d40a63c134",
+      "refs": [
+        "landxi/assets/proto/film/legs/anchors-v3/A02.png",
+        "shots/yt/QUI6-seg/f_008.png"
+      ],
+      "credits_reported": 14.5,
+      "credits_balance_before": 398,
+      "credits_balance_after": 383.5,
+      "credits_charged": 14.5,
+      "gen_ms": 166,
+      "wall_ms": 176281,
+      "png": "landxi/assets/proto/film/legs/anchors-v3/A03.png",
+      "png_bytes": 7316925,
+      "at": "2026-08-26T05:33:53.054Z",
+      "jpg": "landxi/assets/proto/film/legs/anchors-v3/A03.jpg",
+      "jpg_bytes": 359054
+    },
+    {
+      "id": "A04",
+      "reroll": true,
+      "model": "seedream/5-pro-image-to-image",
+      "taskId": "bd820b2a055f3610ddc359831582fc06",
+      "refs": [
+        "landxi/assets/proto/film/legs/anchors-v3/A03.png",
+        "landxi/assets/proto/crops/namwon-farmland-2025/5.jpg"
+      ],
+      "credits_reported": 14.5,
+      "credits_balance_before": 383.5,
+      "credits_balance_after": 369,
+      "credits_charged": 14.5,
+      "gen_ms": 163,
+      "wall_ms": 178416,
+      "png": "landxi/assets/proto/film/legs/anchors-v3/A04.png",
+      "png_bytes": 7059647,
+      "at": "2026-08-26T05:37:00.515Z",
+      "jpg": "landxi/assets/proto/film/legs/anchors-v3/A04.jpg",
+      "jpg_bytes": 362620
+    }
+  ],
+  "spent": 43.5,
+  "rerolls": [
+    "A02",
+    "A03",
+    "A04"
+  ],
+  "prev_ledger": "shots/kie/anchors-v3-credits.rev2.json",
+  "remaining_of_cap": 6.5
+}
