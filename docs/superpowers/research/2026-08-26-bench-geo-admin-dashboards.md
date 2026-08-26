@@ -323,7 +323,7 @@ radius 8px, 헤어라인 `#EAEAEA`, 그림자 없음.
 **⑫ 가져올 것**: KPI를 **주제 제목으로 묶는 것**, 숫자 자동 축소, 위젯 간격 8px 균일, 오류 위젯의 한 줄 선언.
 **버릴 것**: 면 채움 색으로 상태를 말하기.
 
-## 1.8 Linear 〔M〕
+## 1.8 Linear — 1차 관찰 〔M〕 (DOM 실측은 §1.14에서 이어진다)
 
 **캡처** `linear-1..8.jpg` `linear-hd-1..3.jpg` `linear-9..14.jpg`
 
@@ -483,7 +483,7 @@ GEE는 큐를 **한 곳**에만 두고 숫자를 두 번 말하지 않는다.
 **⑨ 탭.** 좌 컬럼 하단에 `Outage Summary | Location Summary` 2탭 — **탭은 목록 컬럼에만 걸리고
 지도·범례에는 걸리지 않는다.** 전역 탭이 아니라 **국소 탭**이다.
 
-## 1.12 NASA Earthdata Search — 입도(granule) 뷰와 시간 스트립 〔L, 추가 실측〕
+## 1.12 NASA Earthdata Search — 입도(granule) 뷰와 시간 스트립 〔L, §1.1의 추가 실측〕
 
 **캡처** `earthdata-2.jpg` `earthdata-3.jpg` · 실측 `_measure-earthdata.json`
 
