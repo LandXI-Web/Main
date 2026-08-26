@@ -14,6 +14,8 @@
      7) 카피의 유일한 transform 은 translateY   → 엔진이 쓴다. 이 파일은 카피에 transform 을 쓰지 않는다
    ========================================================================= */
 
+import { createEnding, LEAD as END_LEAD, SPAN as END_SPAN, PAD as END_PAD } from './ending.js';
+
 const MANIFEST = '/landxi/assets/proto/film/legs/manifest.json';
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -51,6 +53,7 @@ const el = {
   plateCap: $('#sb-plate-cap'),
 };
 
+let END = null;          // 브랜드 마감 판 (ending.js)
 let M = null;            // manifest
 let cum = [];            // leg 별 [c0, c1] (vh)
 let total = 0;           // Σ weight (vh)
@@ -181,6 +184,10 @@ function paint() {
                      : nf(mpp * 100, 1) + ' cm/px';
   el.coord.textContent = c.lng.toFixed(4) + ', ' + c.lat.toFixed(4);
 
+  // 브랜드 마감 판 — 필름이 끝난 뒤의 2.00vh 를 읽는다. 계기판보다 뒤에 두는 이유는
+  // 마감이 계기 값을 바꾸지 않기 때문이다: 카메라는 이미 멈춰 있고, 크롬만 물러난다.
+  if (END) END.paint();
+
   // 현재 레그는 엔진이 발행한 --sc-seg 를 읽는다(§5 "엔진은 레일을 그리지 않는다" —
   // 대신 두 숫자를 발행하고, 레일·다이얼·핍은 전부 이 파일이 그 숫자로 그린다).
   // 인라인 스타일에서 직접 읽는다 — 엔진이 setProperty 로 쓰므로 getComputedStyle
@@ -279,7 +286,8 @@ function gate(rec, want) {
   rec.on = on;
   rec.host.classList.toggle('is-on', on);
   rec.host.setAttribute('aria-hidden', on ? 'false' : 'true');
-  if (on) rec.map.scrollZoom.enable(); else rec.map.scrollZoom.disable();
+  // 휠 줌은 켜지 않는다. 인계 판 뒤로 아직 페이지가 남아 있고(브랜드 마감 2.00vh),
+  // 지도가 휠을 삼키면 독자는 마감에 영영 닿지 못한다. 카메라는 드래그로 잡는다.
   if (on) rec.map.resize();
 }
 
@@ -309,8 +317,15 @@ function gotoLeg(i) {
   const y = trackTop() + (cum[i][0] + M.legs[i].weightVh * 0.12) * innerHeight;
   scrollTo({ top: Math.round(y), behavior: reduce ? 'auto' : 'smooth' });
 }
+// seek 는 **비행 트랙**(0 → Σw vh)의 진행도다. 문서 전체 높이가 아니다 —
+// 마감 판 2.00vh 가 뒤에 붙은 뒤로도 seek(0.5) 가 같은 프레임을 가리켜야 하기 때문이다.
 function seek(p) {
-  scrollTo({ top: Math.round(clamp01(p) * maxScroll()), behavior: 'auto' });
+  scrollTo({ top: Math.round(trackTop() + clamp01(p) * total * innerHeight), behavior: 'auto' });
+}
+// seekEnd 는 마감 판 안의 진행도(0 → 1 = B 시작 → I 끝).
+function seekEnd(e) {
+  const y = trackTop() + (total + END_LEAD + clamp01(e) * END_SPAN) * innerHeight;
+  scrollTo({ top: Math.round(y), behavior: 'auto' });
 }
 
 /* ── 부팅 ─────────────────────────────────────────────────────────────────── */
@@ -333,13 +348,24 @@ const boot = async () => {
 
   buildRail();
 
+  // 브랜드 마감 판. 스크롤 예산 2.00vh 는 **흐름에 요소를 더하지 않고** 컨테이너의
+  // padding-bottom 으로 낸다 — 스페이서 높이는 엔진이 매 layout 마다 (Σw+1)×vh 로
+  // 다시 쓰므로 거기에 얹을 수 없고, 형제 요소를 두면 "흐름에는 스페이서 하나"라는
+  // worldflight §8 #1 이 깨진다.
+  END = createEnding({
+    root: el.root, reduce, trackTop, totalVh: () => total, plate: () => PLATES[1],
+  });
+  const padEnd = () => { el.root.style.paddingBottom = Math.round(END_PAD * innerHeight) + 'px'; };
+  padEnd();
+
   // 엔진 마운트. 이 한 줄 아래로는 재생헤드·크로스페이드·로딩이 전부 엔진 소관이다.
   window.ScrollCraft.mount(document);
   guardPaint();
+  END.layout();
 
   // §7b — innerHeight 가 0 으로 읽히는 순간에 마운트되면 스페이서가 0px 이 되고
   // 페이지는 조용히 스크롤 불가 정지 이미지가 된다. 창과 서체가 정착한 뒤 한 번 재측정시킨다.
-  const relayout = () => { dispatchEvent(new Event('resize')); paint(); };
+  const relayout = () => { padEnd(); END.layout(); dispatchEvent(new Event('resize')); paint(); };
   addEventListener('load', relayout);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(relayout);
 
@@ -347,12 +373,15 @@ const boot = async () => {
     paint();
     if (scrollY > 40) el.hint.classList.add('is-off');
   }, { passive: true });
-  addEventListener('resize', paint);
+  addEventListener('resize', () => { padEnd(); END.layout(); paint(); });
 
   addEventListener('keydown', e => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key === 'ArrowRight') { e.preventDefault(); gotoLeg(legAt(trackVh()) + 1); }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); gotoLeg(legAt(trackVh()) - 1); }
+    // End = 마감으로. 브라우저 기본 End 는 문서 맨 끝(= 이미 끝난 LX 락업)으로 뛰므로
+    // 마감을 처음부터 볼 수 없다. 필름이 끝나는 자리에 세운다.
+    else if (e.key === 'End') { e.preventDefault(); END.jump(); }
   });
 
   paint();
@@ -360,7 +389,10 @@ const boot = async () => {
   window.__scrub = {
     manifest: M,
     legs: M.legs,
-    seek,                                   // 0..1 페이지 진행도
+    seek,                                   // 0..1 비행 트랙 진행도
+    seekEnd,                                // 0..1 브랜드 마감 판 진행도(B 시작 → I 끝)
+    end: () => END.state(),
+    endVh: () => END_PAD,
     gotoLeg,
     progress: () => clamp01(scrollY / maxScroll()),
     trackVh,

@@ -208,7 +208,49 @@
     <ol id="sb-route-list"></ol>
   </nav>
 
-  <!-- 유일한 문서 흐름 요소. 높이는 엔진이 (Σw + 1) × innerHeight 로 쓴다. -->
+  <!-- ── 브랜드 마감 판 ──────────────────────────────────────────────────────
+       필름이 끝난 자리에서 마지막 프레임이 붙잡힌 채로, 페이지가 브랜드를 그린다.
+       영상에는 글자를 굽지 않는다(프리앰블 `no text, no lettering`) — 리테이크 0,
+       카피 수정 자유, 레티나 선명도. 규격은 홍보영상 실측 그대로
+       (docs/superpowers/research/2026-08-26-promo-video.md §2·§4).
+
+       3단은 절대 겹치지 않는다: 제품 워드마크 → 태그라인 → 운영기관 락업.
+       홍보영상에서도 `LAND-XI PLATFORM` 과 LX 코퍼릿 락업은 같은 화면에 나오지 않는다.
+    ── -->
+  <div class="sb-end" id="sb-end" aria-hidden="true">
+
+    <!-- ① 월드 그룹 — 워드마크는 스크린이 아니라 **월드에 붙어 있다**.
+         밑에서 지도가 0.621 줌레벨 물러나는 동안 이 그룹이 같은 비율(−35 %)로 줄어든다.
+         그래서 "로고가 붙었다"가 아니라 "이 세계가 이 이름을 갖고 있다"로 읽힌다. -->
+    <div class="sb-end__world" aria-hidden="true">
+      <p class="sb-end__wm" id="sb-end-wm">LAND-XI PLATFORM</p>
+    </div>
+
+    <!-- ② 크림 헤이즈 — 사방에서 조여들며 필름을 덮는다(프리앰블의 pale cream haze).
+         홍보영상의 화이트아웃을 필름 팔레트로 옮긴 값이다. -->
+    <div class="sb-end__haze" aria-hidden="true"></div>
+
+    <!-- ③ 태그라인 — 좌→우 와이프. `공간`·`미래`만 굵게(홍보영상 문법). -->
+    <p class="sb-end__tag" id="sb-end-tag"><span><b>공간</b>을 읽고 <b>미래</b>를 설계합니다.</span></p>
+
+    <!-- ④ 운영기관 락업 — 블러 인 + 동심원 리플 3겹, 그리고 마지막 화면으로 홀드.
+         자산은 홍보영상 락업에서 알파 매트를 뽑은 것(임시 참조 · LX 원본 수령 전용). -->
+    <div class="sb-end__lx" id="sb-end-lx">
+      <span class="sb-end__rip" aria-hidden="true"></span>
+      <span class="sb-end__rip" aria-hidden="true"></span>
+      <span class="sb-end__rip" aria-hidden="true"></span>
+      <img src="/landxi/assets/brand/promo/brand-lx-lockup-alpha.png" alt="LX 한국국토정보공사" decoding="async">
+    </div>
+
+    <!-- ⑤ CTA — 마지막 화면에 로그인 유도가 남는다. -->
+    <p class="sb-end__cta" id="sb-end-cta">
+      <a class="lx-cta" href="../login.html"><span class="lx-cta__t">로그인하고 시작하기</span></a>
+    </p>
+  </div>
+
+  <!-- 유일한 문서 흐름 요소. 높이는 엔진이 (Σw + 1) × innerHeight 로 쓴다.
+       마감 판의 2.00vh 는 흐름에 요소를 더하지 않고 이 컨테이너의 padding-bottom 으로 낸다
+       (worldflight §8 Hard rule #1 — 문서 흐름에는 스페이서 하나뿐이다). -->
   <div data-sc-spacer aria-hidden="true"></div>
 </div>
 

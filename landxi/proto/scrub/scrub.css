@@ -160,7 +160,121 @@ html{ scroll-behavior:auto; }
 }
 .sb-hint.is-off{ opacity:0; }
 
+/* ════ 브랜드 마감 판 ══════════════════════════════════════════════════════
+   규격 출처: docs/superpowers/research/2026-08-26-promo-video.md §2(실측) · §4(9비트)
+   필름이 끝난 자리에서 마지막 프레임을 붙잡고, 페이지가 브랜드를 그린다.
+   모든 값은 ending.js 가 스크롤에서 계산해 커스텀 프로퍼티로 흘려보낸다 —
+   이 시트에는 트랜지션이 없다. 스크럽 판에서 트랜지션은 재생헤드와 싸운다.
+
+   체계 준수 메모(design/system.md 대비 의도적 이탈 3건, 전부 **필름 판 한정**):
+     · 워드마크 화이트 + 소프트 섀도 — 위성영상 위에서 순백 글자는 섀도 없이 안 읽힌다
+       (§4-2 가 홍보영상의 3D 압출 대신 지정한 값). 종이 크롬에는 그림자가 없다.
+     · 크림 헤이즈의 radial-gradient — 프리앰블 `pale cream haze` 를 옮긴 것.
+     · 태그라인 필드 그린 #1E9E6A — 홍보영상 민트 #52C4A3 의 필름 팔레트 대응값(§4-1 E).
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/* 크롬은 필름이 끝나는 순간부터 물러난다. 마감 판은 빈 프레임 위에서 시작해야 한다 —
+   흰 카피 판이 남아 있으면 워드마크가 그 위에 겹쳐 뜬다. */
+.sb .lx-masthead,.sb-copy-layer,.sb-inst,.sb-route,.sb-hint{ opacity:var(--sb-chrome, 1); }
+.sb-endgame .lx-masthead,.sb-endgame .sb-copy-layer,
+.sb-endgame .sb-inst,.sb-endgame .sb-route{ pointer-events:none; }
+
+/* 기본값은 :root 에 둔다 — ending.js 도 <html> 에 쓰므로, .sb-end 에 선언하면
+   자기 선언이 상속값을 이겨서 스크럽 값이 영영 반영되지 않는다. */
+:root{
+  --sb-chrome:1; --sb-wm-op:0; --sb-wm-s:1.538; --sb-haze:100; --sb-haze-op:0;
+  --sb-tag-op:0; --sb-tag-clip:100%; --sb-tag-blur:0px;
+  --sb-lx-op:0; --sb-lx-blur:10px; --sb-cta-op:0;
+}
+.sb-end{
+  position:fixed; inset:0; z-index:200; visibility:hidden; pointer-events:none;
+}
+.sb-end.is-on{ visibility:visible; }
+
+/* ① 월드 그룹 — 워드마크는 스크린이 아니라 월드에 붙어 있다.
+   밑에서 지도가 0.621 줌레벨 물러나는 동안 이 그룹이 같은 −35 % 로 줄어든다.
+   원점은 뷰포트 중앙 = 지도의 줌 기준점. 두 축척이 한 카메라를 공유한다. */
+.sb-end__world{
+  position:absolute; inset:0;
+  transform:scale(var(--sb-wm-s)); transform-origin:50% 50%;
+  will-change:transform;
+}
+.sb-end__wm{
+  position:absolute; left:50%; top:0; margin:0; transform:translateX(-50%);
+  white-space:nowrap; font-family:var(--lx-display); font-weight:800;
+  line-height:1; letter-spacing:0; word-spacing:0.115em;   /* 트래킹 0 — 곡면 원근은 재현하지 않는다 */
+  color:#FFFFFF; text-shadow:0 2px 10px rgba(20,24,34,.28);
+  opacity:var(--sb-wm-op);
+}
+
+/* ② 크림 헤이즈 — 사방에서 조여든다. --sb-haze 가 100 → 0 으로 닫힌다. */
+.sb-end__haze{
+  position:absolute; inset:0; opacity:var(--sb-haze-op);
+  background:radial-gradient(circle at 50% 50%,
+    rgba(235,238,245,0) calc(var(--sb-haze) * 1%),
+    #EBEEF5 calc(var(--sb-haze) * 1.35%));
+}
+
+/* ③ 태그라인 — 좌→우 와이프(clip-path), 홀드, 디포커스 아웃. 베이스라인 88 % 아님:
+   빈 크림 화면에서는 광학 중앙이 옳다(홍보영상도 요람 위 중앙에 놓는다). */
+.sb-end__tag{
+  position:absolute; left:0; right:0; top:50%; margin:0; transform:translateY(-50%);
+  text-align:center; font-family:var(--lx-display); font-weight:500;
+  font-size:clamp(24px, 3.05vw, 46px); line-height:1.3; letter-spacing:-0.4px;
+  color:#1E9E6A; opacity:var(--sb-tag-op); filter:blur(var(--sb-tag-blur));
+}
+.sb-end__tag span{ display:inline-block; clip-path:inset(0 var(--sb-tag-clip) 0 0); }
+.sb-end__tag b{ font-weight:800; }
+
+/* ④ LX 락업 — 블러 인만(슬라이드·스케일 없음) + 동심원 리플 3겹.
+   §4-3: 폭 32.7 % · 수직 위치는 화면 중앙에서 위로 1.3 %. */
+.sb-end__lx{
+  position:absolute; left:50%; top:calc(50% - 1.3vh); transform:translate(-50%,-50%);
+  width:32.7vw; opacity:var(--sb-lx-op);
+}
+.sb-end__lx img{
+  display:block; width:100%; height:auto;
+  filter:blur(var(--sb-lx-blur));
+}
+.sb-end__rip{
+  position:absolute; left:50%; top:50%; width:32.7vw; height:32.7vw;
+  margin:-16.35vw 0 0 -16.35vw; border:1px solid #FFFFFF; border-radius:50%;
+  transform:scale(var(--r, 1)); opacity:var(--o, 0); pointer-events:none;
+}
+.sb-end__rip:nth-child(1){ --r:var(--sb-rip0, .6); --o:var(--sb-rip0-o, 0); }
+.sb-end__rip:nth-child(2){ --r:var(--sb-rip1, .6); --o:var(--sb-rip1-o, 0); }
+.sb-end__rip:nth-child(3){ --r:var(--sb-rip2, .6); --o:var(--sb-rip2-o, 0); }
+
+/* ⑤ CTA — 마지막 화면에 로그인 유도가 남는다. 코너 브래킷은 체계 관용구 그대로. */
+.sb-end__cta{
+  position:absolute; left:0; right:0; top:calc(50% + 11.5vh); margin:0;
+  text-align:center; opacity:var(--sb-cta-op);
+}
+.sb-end.is-on .sb-end__cta{ pointer-events:auto; }
+.sb-end__cta .lx-cta{ color:#0D2740; }
+
+/* ── 저감 모드 — 스크럽 없이 정지 3줄. 크림 판 위에 잉크로 한 번에 선다. ── */
+.sb-end.is-static{
+  display:grid; align-content:center; justify-items:center; gap:40px;
+  background:#EBEEF5;
+}
+.sb-end.is-static .sb-end__world,.sb-end.is-static .sb-end__haze{ display:none; }
+.sb-end.is-static::before{
+  content:"LAND-XI PLATFORM"; font-family:var(--lx-display); font-weight:800;
+  font-size:clamp(28px, 3.2vw, 48px); letter-spacing:0; word-spacing:0.115em; color:var(--lx-ink);
+}
+.sb-end.is-static .sb-end__tag,.sb-end.is-static .sb-end__lx,.sb-end.is-static .sb-end__cta{
+  position:static; transform:none; opacity:1; filter:none; margin:0;
+}
+.sb-end.is-static .sb-end__tag span{ clip-path:none; }
+.sb-end.is-static .sb-end__lx img{ filter:none; }   /* 블러 인은 저감 모드에 없다 */
+.sb-end.is-static .sb-end__rip{ display:none; }
+
 /* ── 좁은 화면 ───────────────────────────────────────────────────────────── */
+@media (max-width:1023.98px){
+  .sb-end__lx,.sb-end__rip{ width:62vw; }
+  .sb-end__rip{ height:62vw; margin:-31vw 0 0 -31vw; }
+}
 @media (max-width:1023.98px){
   .sb-route{ display:none; }
   .sb-copy{ width:calc(100vw - var(--lx-margin) * 2); padding:24px 24px 22px; }
