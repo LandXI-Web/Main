@@ -1,0 +1,360 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>
+@import url("https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/static/woff2/SUIT.css");
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap");
+*{box-sizing:border-box}
+body{margin:0;background:#FFFFFF;color:#010102;font-family:'Pretendard','SUIT',system-ui,sans-serif;font-weight:400;font-size:16px;line-height:1.44;-webkit-font-smoothing:antialiased}
+.d{font-family:'SUIT','Pretendard',system-ui,sans-serif;font-weight:500;letter-spacing:-.012em}
+.n{font-family:'Inter',system-ui,sans-serif;font-weight:400;font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
+.n5{font-family:'Inter',system-ui,sans-serif;font-weight:500;font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
+.lb{font-size:11px;line-height:1.2;letter-spacing:.11em;color:#686868;text-transform:uppercase;font-family:'Inter','Pretendard',system-ui,sans-serif}
+.gray{color:#686868}
+.dim{color:#9A9A9A}
+.chip{height:22px;line-height:22px;padding:0 9px;background:#F1F3F5;color:#686868;font-size:12px;letter-spacing:-.005em;white-space:nowrap}
+.chip-lx{height:22px;line-height:22px;padding:0 9px;background:#006DF7;color:#FFFFFF;font-size:12px;letter-spacing:-.005em;white-space:nowrap}
+.tag{border:1px dotted #CCC;padding:0 4px;font-size:9px;line-height:14px;letter-spacing:.02em;color:#9A9A9A;margin-left:5px;display:inline-block;vertical-align:1px}
+.act{font-size:12px;line-height:1.2;color:#010102;border-bottom:1px solid #010102}
+.btn{font-size:12px;line-height:1.2;border:1px solid #010102;padding:5px 11px;color:#010102}
+.sh{font-family:'SUIT','Pretendard',system-ui,sans-serif;font-weight:500;font-size:15px;letter-spacing:-.012em;color:#010102}
+</style></helmet>
+<div style="width:1440px;height:900px;position:relative;overflow:hidden;background:#FFFFFF;font-family:'Pretendard','SUIT',system-ui,sans-serif;color:#010102">
+
+<!-- ══════ A1–A11 · 좌측 레일 72 (원본 라벨·순서 그대로) ══════ -->
+<div style="position:absolute;left:0;top:0;width:72px;height:900px;background:#FFFFFF;display:flex;flex-direction:column;z-index:9">
+<div style="height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border-bottom:1px solid #DDD">
+<div class="d" style="font-size:12px;letter-spacing:.16em;margin-right:-.16em">LAND</div>
+<div class="d" style="font-size:14.5px;letter-spacing:.16em;margin-right:-.16em">XI</div>
+</div>
+<div style="padding-top:9px;display:flex;flex-direction:column">
+<div style="position:relative;width:72px;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#010102">
+<div style="position:absolute;left:0;top:8px;width:2px;height:44px;background:#010102"></div>
+<svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round"><rect x="2.6" y="2.6" width="6.4" height="6.4"/><rect x="11" y="2.6" width="6.4" height="6.4"/><rect x="2.6" y="11" width="6.4" height="6.4"/><rect x="11" y="11" width="6.4" height="6.4"/></svg>
+<div style="font-size:10px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line">대시보드</div></div>
+<div style="position:relative;width:72px;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#686868">
+<svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round"><ellipse cx="10" cy="4.9" rx="7" ry="2.5"/><path d="M3 4.9v10.2c0 1.4 3.14 2.5 7 2.5s7-1.1 7-2.5V4.9"/><path d="M3 10c0 1.4 3.14 2.5 7 2.5s7-1.1 7-2.5"/></svg>
+<div style="font-size:10px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line">데이터
+관리</div></div>
+<div style="position:relative;width:72px;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#686868">
+<svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round"><path d="M2.4 16.4V4.2h5.1l1.7 2.2h8.4v10z"/></svg>
+<div style="font-size:10px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line">프로젝트</div></div>
+<div style="position:relative;width:72px;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#686868">
+<svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round"><path d="M6.2 3.4 16 10l-9.8 6.6z"/></svg>
+<div style="font-size:10px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line">분석 서비스</div></div>
+<div style="position:relative;width:72px;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#686868">
+<svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round"><path d="M2.4 5.2 7.6 3l4.8 2.2L17.6 3v11.8l-5.2 2.2-4.8-2.2-5.2 2.2z"/><path d="M7.6 3v14M12.4 5.2v11.8"/></svg>
+<div style="font-size:10px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line">지도 서비스</div></div>
+</div>
+<div style="margin-top:auto;padding-bottom:8px;display:flex;flex-direction:column">
+<div style="position:relative;width:72px;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#686868">
+<svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round"><circle cx="10" cy="10" r="7.3"/><path d="M7.9 7.8a2.15 2.15 0 1 1 3.1 1.9c-.7.4-1 .9-1 1.7"/><circle cx="10" cy="14.3" r=".75" fill="currentColor" stroke="none"/></svg>
+<div style="font-size:10px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line">서비스 지원</div></div>
+<div style="position:relative;width:72px;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#686868">
+<svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round"><path d="M10 2.5 17.5 6.8 10 11.1 2.5 6.8z"/><path d="M2.5 11.1 10 15.4l7.5-4.3"/></svg>
+<div style="font-size:10px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line">카드 발행
+관리</div></div>
+<div style="position:relative;width:72px;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#686868">
+<svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round"><circle cx="10" cy="10" r="2.9"/><path d="M10 1.6v2.5M10 15.9v2.5M18.4 10h-2.5M4.1 10H1.6M15.94 4.06l-1.77 1.77M5.83 14.17l-1.77 1.77M15.94 15.94l-1.77-1.77M5.83 5.83 4.06 4.06"/></svg>
+<div style="font-size:10px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line">서비스 관리</div></div>
+<div style="position:relative;width:72px;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#686868">
+<svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round"><circle cx="10" cy="6.9" r="3.1"/><path d="M3.7 17.3c0-3.4 2.9-5.3 6.3-5.3s6.3 1.9 6.3 5.3"/></svg>
+<div style="font-size:10px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line">MY</div></div>
+<div style="position:relative;width:72px;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#686868">
+<svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round"><path d="M11.6 2.6H3.4v14.8h8.2"/><path d="M8.6 10h9M14.2 6.6 17.6 10l-3.4 3.4"/></svg>
+<div style="font-size:10px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line">로그아웃</div></div>
+</div>
+</div>
+<div style="position:absolute;left:72px;top:0;width:1px;height:900px;background:#DDD"></div>
+
+<!-- ══════ B1 · B2 · 마스트헤드 h72 ══════ -->
+<div style="position:absolute;left:96px;top:15px;width:1000px">
+<div class="d" style="font-size:24px;line-height:30px;letter-spacing:-.022em">LX 관리자 대시보드</div>
+<div style="font-size:13px;line-height:18px;color:#686868;letter-spacing:-.01em;margin-top:3px">서비스 운영 현황과 승인·관리 업무를 한눈에</div>
+</div>
+<div style="position:absolute;left:1250px;top:16px;width:1px;height:40px;background:#DDD"></div>
+<div style="position:absolute;left:1272px;top:18px;width:144px">
+<div class="n" style="font-size:15px;line-height:1.2;letter-spacing:-.01em">2026.08.26</div>
+<div style="font-size:12px;line-height:1.4;color:#686868;margin-top:4px">기준일 현재</div>
+</div>
+
+<!-- ══════ B4–B8 · 헤드라인 밴드 h104 (일탈 1 : 좌우 마진을 뚫고 판면 끝까지 간다) ══════ -->
+<div style="position:absolute;left:72px;top:72px;width:1368px;height:1px;background:#DDD"></div>
+<div style="position:absolute;left:414px;top:72px;width:1px;height:104px;background:#DDD"></div>
+<div style="position:absolute;left:756px;top:72px;width:1px;height:104px;background:#DDD"></div>
+<div style="position:absolute;left:1098px;top:72px;width:1px;height:104px;background:#DDD"></div>
+<div style="position:absolute;left:72px;top:176px;width:1368px;height:1px;background:#010102"></div>
+
+<div style="position:absolute;left:96px;top:84px;width:300px">
+<div style="font-size:13px;line-height:1.2;color:#686868;letter-spacing:-.01em">전체 사용자</div>
+<div style="display:flex;align-items:baseline;margin-top:6px"><div class="n" style="font-size:52px;line-height:1;letter-spacing:-.022em">21</div><div style="font-size:15px;color:#686868;margin-left:4px">명</div></div>
+<div style="font-size:11px;line-height:1.2;color:#9A9A9A;margin-top:7px">정상 19 · 가입 승인 대기 1</div>
+</div>
+<div style="position:absolute;left:438px;top:84px;width:300px">
+<div style="font-size:13px;line-height:1.2;color:#686868;letter-spacing:-.01em">발행 분석 카드</div>
+<div style="display:flex;align-items:baseline;margin-top:6px"><div class="n" style="font-size:52px;line-height:1;letter-spacing:-.022em">8</div><div style="font-size:15px;color:#686868;margin-left:4px">건</div></div>
+<div style="font-size:11px;line-height:1.2;color:#9A9A9A;margin-top:7px">공개 7 · 비공개 1</div>
+</div>
+<div style="position:absolute;left:780px;top:84px;width:300px">
+<div style="font-size:13px;line-height:1.2;color:#686868;letter-spacing:-.01em">승인 대기</div>
+<div style="display:flex;align-items:baseline;margin-top:6px"><div class="n" style="font-size:52px;line-height:1;letter-spacing:-.022em">3</div><div style="font-size:15px;color:#686868;margin-left:4px">건</div></div>
+<div style="font-size:11px;line-height:1.2;color:#9A9A9A;margin-top:7px">카드 발행 2 · 가입 1 · 검토 필요</div>
+</div>
+<div style="position:absolute;left:1122px;top:84px;width:300px">
+<div style="font-size:13px;line-height:1.2;color:#686868;letter-spacing:-.01em">미답변 문의</div>
+<div style="display:flex;align-items:baseline;margin-top:6px"><div class="n" style="font-size:52px;line-height:1;letter-spacing:-.022em">6</div><div style="font-size:15px;color:#686868;margin-left:4px">건</div></div>
+<div style="font-size:11px;line-height:1.2;color:#9A9A9A;margin-top:7px">전체 12 · 답변 필요</div>
+</div>
+
+<!-- ══════ B3 · 공지 스트립 h48 ══════ -->
+<div style="position:absolute;left:96px;top:189px;width:1320px;height:22px;display:flex;align-items:center;gap:12px">
+<div class="chip">공지</div>
+<div class="d" style="font-size:16px;letter-spacing:-.012em">고위험 탐지 건 긴급 처리 안내</div>
+<div class="n" style="font-size:13px;color:#686868">2026.04.15</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:18px">
+<div style="font-size:11px;color:#9A9A9A">전체 12건 · 긴급 2</div>
+<div class="act">전체 보기 ›</div>
+</div>
+</div>
+<div style="position:absolute;left:96px;top:224px;width:1320px;height:1px;background:#DDD"></div>
+
+<!-- ══════ 본문 2단 : 좌 856 / 우 440 ══════ -->
+<div style="position:absolute;left:964px;top:224px;width:1px;height:632px;background:#DDD"></div>
+
+<!-- ── B9 · AI 기반 모델(백본) ── -->
+<div style="position:absolute;left:96px;top:240px;width:856px;height:112px">
+<div style="position:absolute;right:0;top:0;width:128px;height:72px;overflow:hidden;background:#0E120D">
+<img src="plate-ortho.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:52% 46%;display:block;filter:saturate(.42) contrast(1.06) brightness(.86)">
+<div style="position:absolute;left:5px;top:5px;width:14px;height:14px;border-left:1px solid rgba(255,255,255,.8);border-top:1px solid rgba(255,255,255,.8)"></div>
+<div style="position:absolute;right:5px;bottom:5px;width:14px;height:14px;border-right:1px solid rgba(255,255,255,.8);border-bottom:1px solid rgba(255,255,255,.8)"></div>
+</div>
+<div style="position:absolute;right:0;top:75px;width:128px;text-align:right;font-size:9px;line-height:1.3;color:#9A9A9A">남원 전역 도엽 · GSD 2 m</div>
+<div style="width:856px">
+<div class="d" style="font-size:18px;letter-spacing:-.015em">AI 기반 모델(백본) · XI-VFM v2.1</div>
+<div style="font-size:13px;line-height:1.5;color:#686868;margin-top:5px;letter-spacing:-.01em">국토 관측 영상 파운데이션 모델. 학습 모델 10종 · 클래스 합 57 · GSD 0.0108–2 m · EPSG:5186→4326</div>
+<div style="display:flex;align-items:center;gap:6px;margin-top:9px">
+<div class="chip">백본</div><div class="chip-lx">적용 중</div><div class="chip">연결된 분석 과제 14개</div><div class="chip">AOI 미지정 4</div>
+</div>
+</div>
+<div style="position:absolute;left:0;top:88px;width:856px;height:1px;background:#DDD"></div>
+<div style="position:absolute;left:0;top:96px;width:856px;display:flex;align-items:center">
+<div style="font-size:12px;color:#686868">최종 적용 <span class="n" style="color:#010102">2026.03.12</span></div>
+<div style="margin-left:auto"><span class="act">서비스 관리에서 열기 ›</span></div>
+</div>
+</div>
+<div style="position:absolute;left:96px;top:364px;width:856px;height:1px;background:#DDD"></div>
+
+<!-- ── B10 · AI 개발 프로젝트 현황 ── -->
+<div style="position:absolute;left:96px;top:376px;width:856px">
+<div style="display:flex;align-items:baseline">
+<div class="sh">AI 개발 프로젝트 현황</div>
+<div style="font-size:11px;color:#9A9A9A;margin-left:12px">용량 Top5 · GB<span class="tag">시연</span></div>
+<div style="margin-left:auto"><span class="act">전체 보기 ›</span></div>
+</div>
+<div style="margin-top:11px">
+<div style="display:flex;align-items:center;height:26px">
+<div style="width:176px;font-size:13px;letter-spacing:-.012em;white-space:nowrap;overflow:hidden">도로안전 정사영상</div>
+<div style="flex:1;height:9px;position:relative"><div style="width:100%;height:9px;background:#DFE3E7"></div></div>
+<div class="n5" style="width:58px;text-align:right;font-size:14px;letter-spacing:-.01em">412</div>
+</div>
+<div style="display:flex;align-items:center;height:26px">
+<div style="width:176px;font-size:13px;letter-spacing:-.012em;white-space:nowrap;overflow:hidden">농지 활용 분석</div>
+<div style="flex:1;height:9px;position:relative"><div style="width:77.2%;height:9px;background:#DFE3E7"></div></div>
+<div class="n5" style="width:58px;text-align:right;font-size:14px;letter-spacing:-.01em">318</div>
+</div>
+<div style="display:flex;align-items:center;height:26px">
+<div style="width:176px;font-size:13px;letter-spacing:-.012em;white-space:nowrap;overflow:hidden">비닐하우스 탐지</div>
+<div style="flex:1;height:9px;position:relative"><div style="width:62.1%;height:9px;background:#DFE3E7"></div></div>
+<div class="n5" style="width:58px;text-align:right;font-size:14px;letter-spacing:-.01em">256</div>
+</div>
+<div style="display:flex;align-items:center;height:26px">
+<div style="width:176px;font-size:13px;letter-spacing:-.012em;white-space:nowrap;overflow:hidden">사료작물(생육기) 탐지</div>
+<div style="flex:1;height:9px;position:relative"><div style="width:48.1%;height:9px;background:#DFE3E7"></div></div>
+<div class="n5" style="width:58px;text-align:right;font-size:14px;letter-spacing:-.01em">198</div>
+</div>
+<div style="display:flex;align-items:center;height:26px">
+<div style="width:176px;font-size:13px;letter-spacing:-.012em;white-space:nowrap;overflow:hidden">도로안전 카메라</div>
+<div style="flex:1;height:9px;position:relative"><div style="width:34.5%;height:9px;background:#DFE3E7"></div></div>
+<div class="n5" style="width:58px;text-align:right;font-size:14px;letter-spacing:-.01em">142</div>
+</div>
+</div>
+</div>
+<div style="position:absolute;left:96px;top:550px;width:856px;height:1px;background:#DDD"></div>
+
+<!-- ── B11 · 사용자 이용 현황 ── -->
+<div style="position:absolute;left:96px;top:562px;width:856px">
+<div style="display:flex;align-items:baseline">
+<div class="sh">사용자 이용 현황</div>
+<div style="font-size:11px;color:#9A9A9A;margin-left:12px">최근 7일 방문<span class="tag">시연</span></div>
+<div style="margin-left:auto"><span class="n5" style="font-size:14px">954</span><span style="font-size:11px;color:#686868;margin-left:4px">회 · 7일 합계</span></div>
+</div>
+<svg width="856" height="84" viewBox="0 0 856 84" style="display:block;margin-top:10px">
+<line x1="0" y1="72" x2="856" y2="72" stroke="#DDD" stroke-width="1"/>
+<line x1="0" y1="24" x2="856" y2="24" stroke="#F0F0F0" stroke-width="1"/>
+<polyline points="8,45 149,29 290,33 431,20 572,24 713,63 848,67" fill="none" stroke="#010102" stroke-width="1.2"/>
+<rect x="6.5" y="43.5" width="3" height="3" fill="#FFFFFF" stroke="#010102" stroke-width="1"/>
+<rect x="147.5" y="27.5" width="3" height="3" fill="#FFFFFF" stroke="#010102" stroke-width="1"/>
+<rect x="288.5" y="31.5" width="3" height="3" fill="#FFFFFF" stroke="#010102" stroke-width="1"/>
+<rect x="429.5" y="18.5" width="3" height="3" fill="#FFFFFF" stroke="#010102" stroke-width="1"/>
+<rect x="570.5" y="22.5" width="3" height="3" fill="#FFFFFF" stroke="#010102" stroke-width="1"/>
+<rect x="711.5" y="61.5" width="3" height="3" fill="#FFFFFF" stroke="#010102" stroke-width="1"/>
+<rect x="846.5" y="65.5" width="3" height="3" fill="#FFFFFF" stroke="#010102" stroke-width="1"/>
+<text x="8" y="36" font-family="Inter" font-size="11" fill="#686868">128</text>
+<text x="149" y="20" font-family="Inter" font-size="11" fill="#686868">156</text>
+<text x="290" y="24" font-family="Inter" font-size="11" fill="#686868">149</text>
+<text x="431" y="11" font-family="Inter" font-size="11" fill="#686868">172</text>
+<text x="572" y="15" font-family="Inter" font-size="11" fill="#686868">165</text>
+<text x="713" y="54" font-family="Inter" font-size="11" fill="#686868">96</text>
+<text x="848" y="58" font-family="Inter" font-size="11" text-anchor="end" fill="#686868">88</text>
+</svg>
+<div style="display:flex;justify-content:space-between;margin-top:3px">
+<div class="n" style="font-size:11px;color:#9A9A9A">08.20</div><div class="n" style="font-size:11px;color:#9A9A9A">08.21</div><div class="n" style="font-size:11px;color:#9A9A9A">08.22</div><div class="n" style="font-size:11px;color:#9A9A9A">08.23</div><div class="n" style="font-size:11px;color:#9A9A9A">08.24</div><div class="n" style="font-size:11px;color:#9A9A9A">08.25</div><div class="n" style="font-size:11px;color:#9A9A9A">08.26</div>
+</div>
+</div>
+<div style="position:absolute;left:96px;top:706px;width:856px;height:1px;background:#DDD"></div>
+
+<!-- ── B12 · 전체 스토리지 사용량 ── -->
+<div style="position:absolute;left:96px;top:718px;width:856px">
+<div style="display:flex;align-items:baseline">
+<div class="sh">전체 스토리지 사용량</div>
+<div style="font-size:11px;color:#9A9A9A;margin-left:12px">총량 = 측정 · 7분류 배분<span class="tag">시연</span></div>
+<div style="margin-left:auto"><span class="n" style="font-size:16px;letter-spacing:-.01em">44.5</span><span style="font-size:12px;color:#686868"> / 184 TB</span></div>
+</div>
+<div style="display:flex;gap:24px;align-items:flex-start;margin-top:12px">
+<div style="position:relative;flex:none">
+<svg width="52" height="52" viewBox="0 0 46 46" style="display:block"><circle cx="23" cy="23" r="19" fill="none" stroke="#EDEFF1" stroke-width="6"/><circle cx="23" cy="23" r="19" fill="none" stroke="#010102" stroke-width="6" stroke-dasharray="28.7 119.4" transform="rotate(-90 23 23)"/></svg>
+<div class="n5" style="position:absolute;left:0;top:19px;width:52px;text-align:center;font-size:12px;letter-spacing:-.02em">24%</div></div>
+<div style="flex:1;display:flex;flex-wrap:wrap">
+<div style="width:190px;display:flex;align-items:center;gap:8px;height:23px;border-bottom:1px solid #EEE;padding-right:18px"><span style="width:5px;height:5px;border:1px dotted #686868;flex:none"></span><span style="font-size:12px;color:#686868;flex:1">정사영상</span><span class="n5" style="font-size:12.5px">18.2</span></div>
+<div style="width:190px;display:flex;align-items:center;gap:8px;height:23px;border-bottom:1px solid #EEE;padding-right:18px"><span style="width:5px;height:5px;border:1px dotted #686868;flex:none"></span><span style="font-size:12px;color:#686868;flex:1">공간데이터</span><span class="n5" style="font-size:12.5px">9.6</span></div>
+<div style="width:190px;display:flex;align-items:center;gap:8px;height:23px;border-bottom:1px solid #EEE;padding-right:18px"><span style="width:5px;height:5px;border:1px dotted #686868;flex:none"></span><span style="font-size:12px;color:#686868;flex:1">학습데이터</span><span class="n5" style="font-size:12.5px">7.4</span></div>
+<div style="width:190px;display:flex;align-items:center;gap:8px;height:23px;border-bottom:1px solid #EEE;padding-right:18px"><span style="width:5px;height:5px;border:1px dotted #686868;flex:none"></span><span style="font-size:12px;color:#686868;flex:1">AI 분석</span><span class="n5" style="font-size:12.5px">5.1</span></div>
+<div style="width:190px;display:flex;align-items:center;gap:8px;height:23px;padding-right:18px"><span style="width:5px;height:5px;border:1px dotted #686868;flex:none"></span><span style="font-size:12px;color:#686868;flex:1">행정정보</span><span class="n5" style="font-size:12.5px">2.8</span></div>
+<div style="width:190px;display:flex;align-items:center;gap:8px;height:23px;padding-right:18px"><span style="width:5px;height:5px;border:1px dotted #686868;flex:none"></span><span style="font-size:12px;color:#686868;flex:1">기타</span><span class="n5" style="font-size:12.5px">1.4</span></div>
+<div style="width:190px;display:flex;align-items:center;gap:8px;height:23px;padding-right:18px"><span style="width:5px;height:5px;background:#DFE3E7;flex:none"></span><span style="font-size:12px;color:#9A9A9A;flex:1">잔여 공간</span><span class="n5" style="font-size:12.5px;color:#9A9A9A">139.5</span></div>
+</div>
+</div>
+</div>
+
+<!-- ── B13 · 카드 발행 승인 대기 목록 (우단) ── -->
+<div style="position:absolute;left:988px;top:240px;width:428px;display:flex;align-items:baseline">
+<div class="sh">카드 발행 승인 대기</div>
+<div style="display:flex;align-items:baseline;margin-left:9px"><span class="n5" style="font-size:15px;letter-spacing:-.01em">2</span><span style="font-size:11px;color:#686868;margin-left:1px">건</span></div>
+<div style="margin-left:auto"><span class="act">카드 발행 관리 ›</span></div>
+</div>
+<div style="position:absolute;left:988px;top:268px;width:428px;height:1px;background:#010102"></div>
+
+<div style="position:absolute;left:988px;top:280px;width:428px;height:100px">
+<div style="position:absolute;left:0;top:0;width:128px;height:72px;overflow:hidden;background:#0E120D">
+<img src="ev-ortho-namwon.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:50% 50%;display:block">
+<div style="position:absolute;left:5px;top:5px;width:12px;height:12px;border-left:1px solid rgba(255,255,255,.85);border-top:1px solid rgba(255,255,255,.85)"></div>
+<div style="position:absolute;right:5px;bottom:5px;width:12px;height:12px;border-right:1px solid rgba(255,255,255,.85);border-bottom:1px solid rgba(255,255,255,.85)"></div>
+</div>
+<div style="position:absolute;left:0;top:76px;width:128px;font-size:9px;line-height:1.3;color:#9A9A9A">남원 도통동<span class="tag" style="margin-left:4px">추정</span></div>
+<div style="position:absolute;left:144px;top:0;width:284px">
+<div class="d" style="font-size:14px;letter-spacing:-.012em;white-space:nowrap;overflow:hidden">도로안전 정사영상 v2.1</div>
+<div style="font-size:12px;line-height:1.5;color:#686868;margin-top:4px;letter-spacing:-.01em">남원시 도로안전 정사영상 4시점<br>(2504 · 2506 · 2508 · 2510)</div>
+<div style="display:flex;align-items:center;gap:5px;margin-top:8px">
+<div class="chip" style="height:20px;line-height:20px;font-size:11px;padding:0 8px">대기</div>
+<div class="chip" style="height:20px;line-height:20px;font-size:11px;padding:0 8px">카드 발행</div>
+</div>
+</div>
+<div style="position:absolute;left:144px;top:80px;width:284px;display:flex;align-items:center">
+<div style="font-size:11px;color:#9A9A9A">제출 <span class="n">2026.06.10 14:30</span><span class="tag">시연</span></div>
+<div style="margin-left:auto"><span class="act" style="font-size:11px">검토 ›</span></div>
+</div>
+</div>
+<div style="position:absolute;left:988px;top:392px;width:428px;height:1px;background:#DDD"></div>
+
+<div style="position:absolute;left:988px;top:404px;width:428px;height:100px">
+<div style="position:absolute;left:0;top:0;width:128px;height:72px;overflow:hidden;background:#0E120D">
+<img src="ev-change.jpg" alt="" style="width:100%;height:100%;object-fit:cover;object-position:44% 52%;display:block">
+<div style="position:absolute;left:5px;top:5px;width:12px;height:12px;border-left:1px solid rgba(255,255,255,.85);border-top:1px solid rgba(255,255,255,.85)"></div>
+<div style="position:absolute;right:5px;bottom:5px;width:12px;height:12px;border-right:1px solid rgba(255,255,255,.85);border-bottom:1px solid rgba(255,255,255,.85)"></div>
+</div>
+<div style="position:absolute;left:0;top:76px;width:128px;font-size:9px;line-height:1.3;color:#9A9A9A">남원 시중앙권<span class="tag" style="margin-left:4px">추정</span></div>
+<div style="position:absolute;left:144px;top:0;width:284px">
+<div class="d" style="font-size:14px;letter-spacing:-.012em;white-space:nowrap;overflow:hidden">농지 활용 분석 v2.0</div>
+<div style="font-size:12px;line-height:1.5;color:#686868;margin-top:4px;letter-spacing:-.01em">남원시 농지이용 현황 2,098필지<br>315.9 ha · 경작 1,291 / 비경작 807</div>
+<div style="display:flex;align-items:center;gap:5px;margin-top:8px">
+<div class="chip" style="height:20px;line-height:20px;font-size:11px;padding:0 8px">대기</div>
+<div class="chip" style="height:20px;line-height:20px;font-size:11px;padding:0 8px">카드 발행</div>
+</div>
+</div>
+<div style="position:absolute;left:144px;top:80px;width:284px;display:flex;align-items:center">
+<div style="font-size:11px;color:#9A9A9A">제출 <span class="n">2026.05.15 08:50</span><span class="tag">시연</span></div>
+<div style="margin-left:auto"><span class="act" style="font-size:11px">검토 ›</span></div>
+</div>
+</div>
+<div style="position:absolute;left:988px;top:516px;width:428px;height:1px;background:#DDD"></div>
+
+<!-- ── B14 · 관리 바로가기 ── -->
+<div style="position:absolute;left:988px;top:530px;width:428px">
+<div class="sh">관리 바로가기</div>
+</div>
+<div style="position:absolute;left:988px;top:556px;width:428px;height:1px;background:#DDD"></div>
+<div style="position:absolute;left:988px;top:557px;width:428px">
+<div style="display:flex;align-items:center;height:43px;border-bottom:1px solid #DDD">
+<div style="font-size:13px;letter-spacing:-.012em">사용자 관리</div>
+<div style="margin-left:auto;display:flex;align-items:baseline;gap:10px">
+<div style="font-size:11px;color:#9A9A9A">가입 승인 대기 1</div>
+<div style="display:flex;align-items:baseline"><span class="n5" style="font-size:14px">21</span><span style="font-size:10px;color:#686868;margin-left:1px">명</span></div>
+<div style="font-size:12px;color:#686868">›</div></div>
+</div>
+<div style="display:flex;align-items:center;height:43px;border-bottom:1px solid #DDD">
+<div style="font-size:13px;letter-spacing:-.012em">공지사항 관리</div>
+<div style="margin-left:auto;display:flex;align-items:baseline;gap:10px">
+<div style="font-size:11px;color:#9A9A9A">긴급 2</div>
+<div style="display:flex;align-items:baseline"><span class="n5" style="font-size:14px">12</span><span style="font-size:10px;color:#686868;margin-left:1px">건</span></div>
+<div style="font-size:12px;color:#686868">›</div></div>
+</div>
+<div style="display:flex;align-items:center;height:43px;border-bottom:1px solid #DDD">
+<div style="font-size:13px;letter-spacing:-.012em">문의 관리</div>
+<div style="margin-left:auto;display:flex;align-items:baseline;gap:10px">
+<div style="font-size:11px;color:#9A9A9A">미답변 6 · 전체 12</div>
+<div style="display:flex;align-items:baseline"><span class="n5" style="font-size:14px">6</span><span style="font-size:10px;color:#686868;margin-left:1px">건</span></div>
+<div style="font-size:12px;color:#686868">›</div></div>
+</div>
+<div style="display:flex;align-items:center;height:43px;border-bottom:1px solid #DDD">
+<div style="font-size:13px;letter-spacing:-.012em">자주 묻는 질문 관리</div>
+<div style="margin-left:auto;display:flex;align-items:baseline;gap:10px">
+<div style="display:flex;align-items:baseline"><span class="n5" style="font-size:14px">15</span><span style="font-size:10px;color:#686868;margin-left:1px">건</span></div>
+<div style="font-size:12px;color:#686868">›</div></div>
+</div>
+</div>
+
+<!-- ── 표기 규약 · 결손 선언 ── -->
+<div style="position:absolute;left:988px;top:752px;width:428px">
+<div style="display:flex;align-items:flex-start;gap:7px">
+<svg width="13" height="13" viewBox="0 0 14 14" style="flex:none;margin-top:2px"><circle cx="7" cy="7" r="6" fill="none" stroke="#9A9A9A" stroke-width="1"/><path d="M7 6v4.4" stroke="#9A9A9A" stroke-width="1.2"/><circle cx="7" cy="3.9" r=".8" fill="#9A9A9A"/></svg>
+<div style="font-size:11px;line-height:1.5;color:#9A9A9A;letter-spacing:-.01em">자료 없음 — 공지 12건 · 문의 12건 · 사용자 21명에는 위치 필드가 없다. <span style="color:#686868">위치를 가진 행에만 128×72 액자가 붙는다.</span></div>
+</div>
+<div style="height:1px;background:#DDD;margin-top:11px"></div>
+<div style="display:flex;align-items:center;gap:18px;margin-top:9px">
+<div style="font-size:11px;color:#686868">태그 없음 = <span style="color:#010102">측정</span></div>
+<div style="display:flex;align-items:center;gap:6px"><span class="tag" style="margin-left:0">시연</span><span style="font-size:11px;color:#686868">원본 데모 시드</span></div>
+<div style="display:flex;align-items:center;gap:6px"><span class="tag" style="margin-left:0">추정</span><span style="font-size:11px;color:#686868">우리가 연결한 값</span></div>
+</div>
+</div>
+
+<!-- ══════ B15 · 푸터 h44 ══════ -->
+<div style="position:absolute;left:96px;top:856px;width:1320px;height:1px;background:#010102"></div>
+<div style="position:absolute;left:96px;top:870px;width:1320px;display:flex;align-items:center;gap:16px">
+<div style="font-size:11px;color:#686868;letter-spacing:-.005em">LX 한국국토정보공사 · 고객센터 063-713-1213 · 개인정보처리방침 · 이용약관 · 이메일주소무단수집거부</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:16px">
+<div style="font-size:11px;color:#9A9A9A">데이터 기준 2025-10 정사영상 (드론 GSD 1.08–1.69 cm) · <span class="n">v3.0</span> · 조회 <span class="n">0.6s</span></div>
+<div style="font-size:11px;color:#686868;border:1px solid #DDD;padding:3px 9px;line-height:1.2">Family Site ▾</div>
+</div>
+</div>
+
+</div>
+</x-dc>
+</body>
+</html>
