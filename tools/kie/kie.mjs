@@ -94,6 +94,12 @@ export async function uploadLocal(file) {
 const asUrl = (v) => (/^https?:\/\//i.test(v) ? Promise.resolve(v) : uploadLocal(v));
 
 // ----------------------------------------------------------------- task --
+// 2026-08-26: 러너가 폴링 중 죽으면 taskId 가 사라져 kie.ai/logs 로 복구해야 했다.
+// createTask 직후 pending 장부(shots/kie/pending-tasks.jsonl)에 한 줄 적고, 결과가 나오면 상태를 덧붙인다.
+const PENDING = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../shots/kie/pending-tasks.jsonl');
+function notePending(rec) {
+  try { fs.mkdirSync(path.dirname(PENDING), { recursive: true }); fs.appendFileSync(PENDING, JSON.stringify({ at: new Date().toISOString(), ...rec }) + '\n'); } catch { /* 장부 실패는 생성 흐름을 막지 않는다 */ }
+}
 async function createTask(model, input) {
   const res = await fetch(`${API}/api/v1/jobs/createTask`, {
     method: 'POST',
@@ -102,6 +108,7 @@ async function createTask(model, input) {
   });
   const j = await res.json().catch(() => ({}));
   if (j.code !== 200 || !j?.data?.taskId) throw new Error(`createTask ${model}: ${JSON.stringify(j).slice(0, 500)}`);
+  notePending({ event: 'created', taskId: j.data.taskId, model, image_url: input.image_url, tail_image_url: input.tail_image_url, prompt: String(input.prompt || '').slice(0, 120) });
   return j.data.taskId;
 }
 
@@ -119,6 +126,7 @@ async function waitTask(taskId, { label = 'job', timeoutMs = 20 * 60 * 1000 } = 
       if (typeof out === 'string') { try { out = JSON.parse(out); } catch { /* noop */ } }
       const urls = out?.resultUrls || out?.result_urls || out?.urls || [];
       if (!urls.length) throw new Error(`${label}: success 인데 결과 URL 없음: ${JSON.stringify(d).slice(0, 400)}`);
+      notePending({ event: 'success', taskId, credits: d.creditsConsumed ?? null, url: urls[0] });
       return { urls, credits: d.creditsConsumed ?? null, ms: d.costTime ?? Date.now() - t0 };
     }
     if (state === 'fail' || state === 'failed') {
@@ -128,6 +136,7 @@ async function waitTask(taskId, { label = 'job', timeoutMs = 20 * 60 * 1000 } = 
       // costTime 0 + failCode 500 + creditsConsumed 0 = 큐에 들어가기도 전에 죽은
       // 서버측 일시 장애. 과금이 없으므로 재시도가 안전하다.
       err.retryable = err.failCode === '500' && (d.creditsConsumed === 0 || d.creditsConsumed == null);
+      notePending({ event: 'fail', taskId, failCode: err.failCode, credits: d.creditsConsumed ?? null, msg: String(d.failMsg || '').slice(0, 160) });
       throw err;
     }
     log(`  ${label}: ${state || 'queued'} ${d.progress != null ? d.progress + '% ' : ''}(${Math.round((Date.now() - t0) / 1000)}s)`);

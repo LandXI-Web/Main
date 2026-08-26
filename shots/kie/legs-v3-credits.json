@@ -1,6 +1,6 @@
 {
   "session": "legs-v3-2026-08-26",
-  "cap": 160,
+  "cap": 200,
   "per_video_expected": 50,
   "model": "kling/v2-1-pro",
   "started": "2026-08-26T03:35:43.980Z",
@@ -181,12 +181,55 @@
       "wall_ms": 174802,
       "mp4": "landxi/assets/proto/film/legs/gen/v3-leg-03.mp4",
       "mp4_bytes": 16964780
+    },
+    {
+      "leg": 4,
+      "rev": 3,
+      "head": "landxi/assets/proto/film/legs/anchors-v3/A04.png",
+      "tail": "landxi/assets/proto/film/legs/anchors-v3/A05.png",
+      "attempt": 1,
+      "model": "kling/v2-1-pro",
+      "duration": "5",
+      "cfg_scale": 0.5,
+      "note": "rev.3d prompt(드론 문장 삭제). 러너가 세션 타임아웃으로 죽어 taskId를 kie.ai/logs에서 복구",
+      "credits_balance_before": 204.5,
+      "at": "2026-08-26T09:32:08.000Z",
+      "ok": false,
+      "taskId": "e33bcfa3f80f940a63987ceee63c839d",
+      "error": "fail 500: The upstream API service timed out and no results were returned (costTime 0, creditsConsumed 0)",
+      "failCode": "500",
+      "credits_balance_after": 204.5,
+      "credits_charged": 0
+    },
+    {
+      "leg": 4,
+      "rev": 3,
+      "head": "landxi/assets/proto/film/legs/anchors-v3/A04.png",
+      "tail": "landxi/assets/proto/film/legs/anchors-v3/A05.png",
+      "attempt": 1,
+      "model": "kling/v2-1-pro",
+      "duration": "5",
+      "cfg_scale": 0.5,
+      "prompt": "The quilt of green and ochre felt parcels stays filling the lower two thirds of the frame throughout, the river of cobalt resin stays running through the middle distance, the top of the frame stays open and empty; the warm key holds from upper camera left. The camera glides slowly and steadily forward and down over the parcels in one smooth continuous move, the distant cluster of arched translucent structures on the right growing gradually larger. Nothing enters or leaves the frame, nothing moves on the ground. One single continuous take, no cuts, no camera shake, no zoom snap. Slow, cinematic, controlled.",
+      "negative_full_chars": 829,
+      "negative": "checkerboard pattern, regular grid, tractors, farmers, cars on roads, power lines, blue sky paint, satellite, brass satellite, satellite model, aircraft, airplane, plane model, brass ring, brass arc, armature, meridian ring, hoop across the sky, drone, quadcopter, quadrotor, rotors, board, table, plinth, base plate, studio edge, seamless backdrop, white background, text, letters, numbers, captions, subtitles, watermark, logo, signature, people, human figures, vehicles entering frame, birds",
+      "credits_balance_before": 204.5,
+      "at": "2026-08-26T13:17:33.442Z",
+      "ok": true,
+      "taskId": "6a376cfbf445f16677158ce119a8be16",
+      "credits_reported": 50,
+      "credits_balance_after": 154.5,
+      "credits_charged": 50,
+      "gen_ms": 469,
+      "wall_ms": 476201,
+      "mp4": "landxi/assets/proto/film/legs/gen/v3-leg-04.mp4",
+      "mp4_bytes": 18628522
     }
   ],
-  "spent": 300,
-  "remaining_of_cap": 10,
+  "spent": 350,
+  "remaining_of_cap": 0,
   "spent_by_rev": {
     "rev2": 150,
-    "rev3": 150
+    "rev3": 200
   }
 }
