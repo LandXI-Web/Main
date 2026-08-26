@@ -14,7 +14,8 @@
 > **안 C `ESRI-LEDGER`**(ArcGIS Online 콘텐츠 브라우저, 지도 0%)이다. 근거는 §2–§3.
 
 **목차** — §0 수집 방법과 접근 한계 · §1 대상별 해부(19절) · §2 후보 3안 + ASCII 1440×900 대입도 ·
-§3 이식 권고(그리드·타입·간격·상태 문법 + 베낄 것 17 / 바꿀 것 15) · §4 안티패턴 17종 · §5 요약
+§3 이식 권고(그리드·타입·간격·상태 문법 + 베낄 것 17 / 바꿀 것 15) · §4 안티패턴 17종 · §5 요약 ·
+§6 V-World 지도조회 보강 · §7 캡처 색인(219장)
 
 ## 0. 수집 방법과 접근 한계 (정직 기록)
 
@@ -1258,3 +1259,96 @@ Linear는 같은 공식을 쓰되 **제품 스크린샷을 y=527에 올려** 첫
   박스 없는 52px 숫자, `ⓘ 자료 없음`과 큰 0, 범례 패널.
   베낄 숫자는 `76 · 8 · 344 · 8 · 830 · 8 · 166` / `76 / 48 / 56 / 640 / 32 / 48` 이고,
   바꿀 것은 **한국어 라벨 · 우리 실데이터 · 채움색 제거 · 흰 종이 바탕 · 정사영상 베이스맵 · 우리 서체** 여섯이다.
+
+---
+
+# §6. 보강 — V-World 지도조회(`map.vworld.kr`)가 권고안을 국내 사례로 뒷받침한다
+
+**캡처** `vworld-map-1.jpg` `-2` `-3`
+
+§1.13에서 다룬 것은 V-World **포털 첫 화면**이었다. 실제 **앱**(지도조회)은 다른 화면이고,
+**권고안 `ESRI-STATUS`와 사실상 같은 조판**이다. 국내 국토교통부 서비스가 이미 이 구조를 쓴다는 점은
+"임의 구현이 아니라 잘 만든 걸 따왔다"는 근거로 그대로 쓸 수 있다.
+
+**② 그리드(1440×900 실측).**
+
+| 영역 | x | 폭 | 비율 |
+|---|---|---|---|
+| 상단 GNB (남색 `#1B3A6B`) | 0–1440 | 1440 | h **46** |
+| 서브 바 (`📌 주제도 0 건 ‹`) | 0–1440 | 1440 | h **34** |
+| **좌 패널** | 0–360 | **360** | **25%** |
+| **지도** | 360–1390 | **1030** | **71.5%** |
+| **우 도구 레일** | 1390–1435 | **45** | 3% |
+| 하단 상태 밴드 | 0–1440 | 1440 | h **32** |
+
+→ Esri `Outage Center`(좌 344 / 지도 830 / 우 235)와 **같은 3단**이고,
+Esri `Oregon`(지도 70%)과 **지도 비율이 거의 같다**(71.5%). 우리 권고 그리드(57.6%)보다 지도가 더 크다.
+
+**⑤/⑧ 좌 패널의 구조 — 우리 좌 큐 컬럼과 1:1 대응.**
+`주제도 ⓘ` 제목(20px) + `✕` → **2탭 50:50**(`검색어로 찾기` / `분류별 찾기`, Copernicus의 `VISUALISE`/`SEARCH`와
+같은 규격) → **총계 줄** `총 402 건` + 우측 `모두열기 ✛`(Esri의 `1-60 of 8,147` + `Relevance ▾`와 같은 자리) →
+**아코디언 행 h=41**(`3D지도` `지도` `새만금개발사업` `국토관리/지역개발` `농림/해양/수산` `도로/교통/물류`
+`문화/체육/관광` `사회복지` `산업/중소기업` `일반공공행정` `공공안전` `환경/자연/기후` `기타` = 13행) +
+행 우측 `✛` 확장. 900px에 **13행이 정확히 들어간다.**
+
+**⑦ 우 도구 레일 45px — 아이콘 + 한글 2글자 라벨.**
+`3D지도 / 화질 / 거리 / 면적 / 높이 / KML / 둘러보기 / 초기화 / 측정`. Copernicus의 40px 도구 레일과 같은 문법인데
+**한글 라벨을 아이콘 아래 10px로 붙였다** — 한국어에서 아이콘만으로는 의미가 안 서기 때문이다.
+**우리 좌 레일(76px, 아이콘 24 + 라벨 11px 2줄)이 같은 판단을 이미 하고 있다.**
+
+**⑨ 하단 상태 밴드 h=32 — 세 가지를 한 줄에.**
+좌: 기관 로고 2개(`국토교통부` `브이월드`), 중: **빨간 고지 문구**
+`※ 연속지적도 등 모든 주제도와 3D 가시화 및 분석결과는 참고용으로만 사용하시기 바랍니다.`,
+우: **카메라 상태 판독** `내려다보는 높이 1700.7 km · 각도 90°`.
+→ 우리 C11(지도 하단 크레딧 스트립)과 C16(프로비넌스)이 국내에서 어떻게 쓰이는지의 실물.
+**빨간 고지 문구는 국내 공공 지오 서비스의 사실상 의무**이므로, 우리도 이 자리를 비워 두면 안 된다.
+
+**⑩ 색.** GNB 남색, 액센트 파랑, 고지 문구만 빨강. 지도는 위성영상(컬러). **UI는 사실상 무채**다.
+
+**⑪ 첫 900px.** 위성영상 **71.5%**, 최대 폰트 20px. 큰 수는 없다(`총 402 건`이 14px).
+→ 즉 **국내 실물은 "지도 큼 + 목록 촘촘 + 큰 수 없음"** 이다. 우리 권고안은 여기에
+Esri 오리건의 **박스 없는 52px 큰 수**를 더한 것이고, 발주자의 *"첫 화면이니 잘 보이게"* 가
+그 추가분을 정당화한다.
+
+---
+
+# §7. 캡처 색인
+
+전부 `shots/bench/dash/` 아래에 있다(`.gitignore` 대상이라 커밋되지 않는다).
+`_measure-<slug>.json` 은 같은 폴더의 DOM 실측 원본이다. **총 219장.**
+
+| 대상 | slug | 장수 | 접근 | 실제로 연 URL |
+|---|---|---|---|---|
+| **원본 대시보드(대조군)** | `ZZ-original-landxi7` | 3 | L | `mini531.github.io/namwon-smart-village/landxi7/dashboard.html` |
+| UP42 콘솔 | `up42`(문서 스크린샷) `up42-mktg` | 6 | D/M | `docs.up42.com/getting-started/quickstart`, `up42.com` |
+| Planet Insights Platform | `planet` `planet-docs` `planet-explorer` `planet-mktg` | 15 | M/D | `planet.com/products/planet-insights-platform/`, `docs.planet.com`, `planet.com/products/explorer/` |
+| Cesium ion | `cesium-ion` `cesium-mktg` | 7 | D/M | `ion.cesium.com`, `cesium.com/learn/ion/`, `cesium.com/platform/cesium-ion/` |
+| Mapbox Studio · Account | `mapbox` `mapbox-studio` `mapbox-studio-ui` `mapbox-account` `mapbox-docs` | 16 | D | `docs.mapbox.com/studio-manual/guides/`, `/console-tools/studio/`, `/console-tools/accounts/` |
+| Roboflow | `roboflow` `roboflow-docs` `roboflow-app` `roboflow-mktg` | 15 | M/D | `roboflow.com`, `docs.roboflow.com/*` |
+| Felt | `felt` `felt-hd` `felt-mktg` | 5 | M | `felt.com` |
+| **Esri ArcGIS Online 홈·갤러리·검색** | `arcgis-online` `arcgis-gallery` `arcgis-gallery-hd` | 10 | **L** | `arcgis.com/home/index.html`, `/home/gallery.html`, `/home/search.html?q=korea` |
+| **Esri ArcGIS Dashboards (실운영 4종)** | `arcgis-dash-oregon(-hd)` `arcgis-dash-outage(-hd)` `arcgis-dash-hanover(-hd)` `arcgis-dash-wildfire(-hd)` | 16 | **L** | `arcgis.com/apps/dashboards/{ce675f…, ed790f…, 3786a0…, 36c1c9…}` |
+| Esri ArcGIS Dashboards (폐기 확인) | `arcgis-dashboard-jhu(-hd)` `arcgis-dashboard-county` | 4 | L | `arcgis.com/apps/dashboards/{bda759…, 409af5…}` |
+| Google Earth Engine 코드에디터 | `gee` | 5 | D | `developers.google.com/earth-engine/guides/playground` |
+| Sentinel Hub EO Browser (폐기 확인) | `eobrowser` `eobrowser-hd` | 4 | L | `apps.sentinel-hub.com/eo-browser/` |
+| **Copernicus Browser (EO Browser 후속)** | `copernicus-browser(-hd)` | 4 | **L** | `browser.dataspace.copernicus.eu` |
+| **NASA Earthdata Search** | `earthdata` `earthdata-hd` `earthdata-m` | 5 | **L** | `search.earthdata.nasa.gov/search` |
+| Vercel | `vercel` `vercel-obs` `vercel-dash` `vercel-docs` | 16 | D | `vercel.com/docs/dashboard-features`, `/docs/observability` |
+| Linear | `linear` `linear-hd` `linear-mktg` | 18 | M | `linear.app/homepage`, `linear.app/product` |
+| Stripe | `stripe` `stripe-docs` `stripe-mktg` | 13 | D/M | `docs.stripe.com/dashboard`, `stripe.com/en-kr/payments` |
+| Cloudflare | `cloudflare` `cloudflare-docs` | 7 | M/D | `cloudflare.com/…/analytics/`, `developers.cloudflare.com/…` |
+| Foursquare Studio | `foursquare-studio` `foursquare-docs` | 9 | D | `docs.foursquare.com/analytics-products/docs/{studio-overview,dashboard}` |
+| **kepler.gl** | `keplergl(-hd)` `keplergl-data(-hd)` | 8 | **L** | `kepler.gl/demo`, `kepler.gl/demo/earthquakes` |
+| **V-World 포털 · 오픈API · 지도조회** | `vworld-portal` `vworld-openapi` `vworld-map` | 10 | **L** | `vworld.kr/v4po_main.do`, `/dev/v4api.do`, `map.vworld.kr/map/maps.do` |
+| 네이버 클라우드 | `ncloud` `ncloud-guide` `ncloud-console` `ncloud-mktg` | 12 | M | `ncloud.com`, `guide.ncloud-docs.com` |
+| 토스 비즈니스 · 페이먼츠 | `toss-business` `toss-biz` `tosspayments` | 11 | M | `business.toss.im`, `tosspayments.com` |
+
+**접근 등급**: **L** = 실제 제품 UI를 브라우저에서 열고 DOM까지 실측 · **D** = 공식 문서의 제품 스크린샷 ·
+**M** = 마케팅 페이지(일부는 실제 DOM 목업이라 실측 가능).
+**L 등급이 10개 대상**이고, §2·§3의 조판 수치는 **전부 L 등급에서만** 뽑았다.
+D·M 등급에서 가져온 것은 **부품**(칩 규격 · 자간 · radius 정책 · 12열 그리드)뿐이다.
+
+**재현 방법.** 캡처 하네스는 `shots/bench/dash/_tools/`(gitignore)에 있다.
+`cap.mjs`(단일 페이지 캡처 + DOM 실측), `scroll.mjs`(스크롤/휠 프레임 캡처),
+`imgs.mjs`(문서 페이지에 박힌 제품 스크린샷을 원본 해상도로 재렌더), `dump.mjs`(실측 JSON 요약),
+그리고 배치 `batchA…batchJ.mjs`. 전부 저장소의 `@playwright/test@1.62.1`을 쓴다.
