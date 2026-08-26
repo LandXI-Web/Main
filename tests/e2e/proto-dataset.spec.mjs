@@ -207,7 +207,7 @@ test('디스크 증량 모달 — 프리셋 6 + 직접 입력 + 사유 검증 ·
   const errs = watch(page);
   await boot(page);
   await hold(page);
-  await expect(page.locator('#disk-use')).toHaveText('1965.0 / 2048.0 GB');
+  await expect(page.locator("#disk-use")).toHaveText("1,965.0 / 2,048.0 GB");
   await expect(page.locator('#disk-free')).toHaveText('잔여 83.0 GB');
   await expect(page.locator('#disk-pct')).toHaveText('96%');
 
@@ -252,7 +252,8 @@ test('아카이브 — 데이터셋 상세 드로어(데이터명/출처/설명 
   await expect(page.locator('#detail')).toBeVisible();
   expect(await page.locator('#detail-rows .dt-r span').allInnerTexts()).toEqual(['데이터명', '출처', '설명']);
   expect(await page.locator('#detail-bands .dt-b').count()).toBeGreaterThan(0);
-  await page.waitForTimeout(1400);
+  await page.waitForFunction(() => ['idle', 'off'].includes(document.documentElement.dataset.plate || ''), null, { timeout: 25000 }).catch(() => {});
+  await page.waitForTimeout(800);
   await page.screenshot({ path: path.join(SHOTS, '06-archive-detail.png') });
   await page.locator('#detail-x').click();
   await expect(page.locator('#detail')).toBeHidden();
@@ -301,7 +302,8 @@ test('발행 폼 — 공유 권한 표 + 필수 검증 + 발행하면 발행중 
   await expect(page.locator('#pubform')).toBeVisible();
   expect(await page.locator('#pf-perm thead th').allInnerTexts()).toEqual(['기관명', '권한명']);
   expect(await page.locator('#pf-perm tbody tr').count()).toBe(2);
-  await page.waitForTimeout(1200);
+  await page.waitForFunction(() => ['idle', 'off'].includes(document.documentElement.dataset.plate || ''), null, { timeout: 25000 }).catch(() => {});
+  await page.waitForTimeout(800);
   await page.screenshot({ path: path.join(SHOTS, '08-publish-form.png') });
 
   await page.locator('#pf-name').fill('');

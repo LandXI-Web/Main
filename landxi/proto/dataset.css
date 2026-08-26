@@ -209,13 +209,14 @@ body[data-tab="archive"] #ds-search,body[data-tab="manage"] #ds-search,body[data
 .ac-th--none{ border:1px dotted var(--grey-3); background:#fff; display:flex; align-items:center; justify-content:center; }
 .ac-th--none span{ font-size:9px; letter-spacing:.06em; color:var(--grey-3); }
 .ac[data-hidden="1"] .ac-th{ opacity:.42; }
-.ac-b{ flex:1; min-width:0; }
+.ac-b{ flex:1; min-width:0; display:block; }
 .ac-t{ display:flex; align-items:baseline; gap:8px; }
 .kind{ font-size:9px; letter-spacing:.06em; color:var(--grey); border:1px solid var(--line); padding:1px 5px; flex:none; }
 .ac-n{ font-size:13.5px; letter-spacing:-.014em; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .ac[data-hidden="1"] .ac-n{ color:var(--grey); }
-.ac-m{ font-size:10px; color:var(--grey); margin-top:7px; }
-.ac-by{ font-size:9.5px; color:var(--grey-3); margin-top:5px; }
+.ac-m{ display:block; font-size:10px; color:var(--grey); margin-top:7px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ac-by{ display:block; font-size:9.5px; color:var(--grey-3); margin-top:5px; }
 .ac-a{ display:flex; gap:11px; margin-top:9px; flex-wrap:wrap; }
 
 /* ── 업로드 완료 행 ────────────────────────────────────────────────── */
@@ -223,9 +224,10 @@ body[data-tab="archive"] #ds-search,body[data-tab="manage"] #ds-search,body[data
   transition:transform var(--hov) var(--hove); }
 .dn:hover{ transform:translateX(4px); }
 .dn[aria-current]{ background:rgba(0,109,247,.05); }
-.dn-b{ flex:1; min-width:0; }
-.dn-f{ font-size:10.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.dn-m{ font-size:9px; margin-top:4px; }
+.dn-b{ flex:1; min-width:0; display:block; }
+.dn-f{ display:block; font-size:10.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dn-m{ display:block; font-size:9px; margin-top:4px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .dn-go{ font-size:9.5px; letter-spacing:.04em; border:1px solid var(--ink); padding:3px 8px;
   color:var(--ink); white-space:nowrap; flex:none; transition:background var(--hov) var(--hove), color var(--hov) var(--hove); }
 .dn-go:hover{ background:var(--ink); color:#fff; }
@@ -277,7 +279,7 @@ body[data-tab="archive"] #ds-search,body[data-tab="manage"] #ds-search,body[data
 
 /* 데이터셋 상세 · 발행중 요약 — 헤어라인 액자(카드 아님) */
 #detail,#pbcard{ position:fixed; z-index:5; top:352px; border:1px solid rgba(255,255,255,.45);
-  padding:15px 15px 13px; background:rgba(1,1,2,.30); backdrop-filter:none; }
+  padding:15px 15px 13px; background:rgba(1,1,2,.42); }
 #detail{ left:calc(var(--pl) + 32px); width:340px; }
 #pbcard{ right:32px; width:308px; }
 #detail[hidden],#pbcard[hidden],#pubform[hidden]{ display:none; }

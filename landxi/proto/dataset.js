@@ -188,8 +188,9 @@ function renderUpload() {
   }
   $('#disk-pct').textContent = `${DISK.pct}%`;
   $('#disk-bar i').style.width = `${DISK.pct}%`;
-  $('#disk-use').textContent = `${DISK.used.toFixed(1)} / ${DISK.total.toFixed(1)} GB`;
-  $('#disk-free').textContent = `잔여 ${DISK.free.toFixed(1)} GB`;
+  const gb = (v) => nf.format(v) + (Number.isInteger(v) ? '.0' : '');
+  $('#disk-use').textContent = `${gb(DISK.used)} / ${gb(DISK.total)} GB`;
+  $('#disk-free').textContent = `잔여 ${gb(DISK.free)} GB`;
 }
 
 $('#up-more').addEventListener('click', (ev) => {
@@ -577,7 +578,7 @@ function syncPlate() {
   }
   showOrtho(map, null);
   bk.set(uploadItems().filter((x) => x.kind === 'measured'));
-  frame(map, KOREA_SW, wide, { maxZoom: 9 });
+  frame(map, KOREA_SW, S.tab === 'upload' ? wide : pad, { maxZoom: 9 });
 }
 
 $('#allmap').addEventListener('click', () => {
