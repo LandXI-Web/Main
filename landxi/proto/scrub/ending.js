@@ -41,9 +41,33 @@ const [B, C, D, E, F, G, H, I] = CUT;
 
 const WM_WIDTH = 0.31;      // 프레임 폭 대비 — §2-1 실측 31.1 %
 const WM_BASE = 0.568;      // 프레임 높이 대비 베이스라인 — §2-1 실측 56.8 %
-const WM_RATIO = 9.7;       // 폭 : 캡하이트 — §2-1 실측 (캡 41px @720p)
+/* 워드마크 벡터(assets/brand/vector/landxi-wordmark.svg, viewBox 5758×606)의 기하.
+   글자 몸통은 y 15(캡 상단) → 589(베이스라인). O·C 의 둥근 바닥은 601 까지 오버슈트하고
+   viewBox 는 606 에서 끝난다. 폭 : 캡하이트 = 5758/574 = 10.03 (홍보영상 실측 9.7). */
+const WM_VB = [5758, 606];
+const WM_BASELINE = 589 / WM_VB[1];   // 렌더 높이 대비 베이스라인 위치
+const WM_CAP = 574 / WM_VB[1];        // 렌더 높이 대비 캡하이트
 const SHRINK = 0.65;        // −35 % — §2-1 587 → 383 px
 const DZ = Math.log2(1 / SHRINK);   // 0.621 줌레벨 = 지상 스케일 ×0.65
+
+/* 실제로 쓸 줌아웃 폭(레벨).
+   래스터 타일 레벨이 바뀌면 소스가 **한 번도 요청한 적 없는 z** 를 통째로 새로 받는다 —
+   V-World 는 느려서 수축 중에 타일이 몇 장 비어 있다(실측: 0.226 에서 2.5 초 뒤에도
+   `loading` 이 열 장 이상). MapLibre 는 256px 래스터의 레벨을 round(zoom + 1) 로 고르므로
+   경계는 정수가 아니라 **.5** 다(coveringZoomLevel, roundZoom). 여수 13.60 은 z15 를
+   그리고 13.03 은 z14 를 그린다 — 정수 경계 안(여수 −33 %)에 머물러도 레벨은 바뀐다.
+   그래서 scrub.js 가 판을 만들 때 이 값으로 한 번 물러났다 돌아와 z14 를 미리 받아 둔다.
+   줌 정수 경계는 그대로 지킨다(e2e 계약: floor(zoom) 불변). 정수 경계 안에 −22 % 이상의
+   여유가 없을 때만 규격값(−35 %)을 그대로 쓴다 — 브랜드 문법이 타일 아티팩트보다 중요하다.
+
+   ※ end-2 좌하단의 회청색 사각형은 로딩 구멍이 **아니다** — V-World 위성영상 자체의
+   모자이크 공백이다(13/7001/3257, 14/14002/6515 … 타일 안에 평평한 회청색 면이 구워져
+   있고 모든 레벨에 같다). 카메라가 물러나며 화각이 넓어질 때 프레임 안으로 들어온다.
+   dz ≤ 0.23 이면 프레임 밖에 머물지만 그러면 −15 % 뿐이라 브랜드 문법이 깨진다. 소스 문제. */
+export function dzFor(zoom) {
+  const room = (zoom - Math.floor(zoom)) - 0.02;   // 줌 정수 경계까지(스펙 계약: floor(z) 불변)
+  return room >= 0.35 ? Math.min(DZ, room) : DZ;
+}
 
 export function createEnding(ctx) {
   // 값은 <html> 에 흘린다. 마스트헤드는 [data-sc-mode] 밖에 있고, 커스텀 프로퍼티는
@@ -56,59 +80,32 @@ export function createEnding(ctx) {
   const reduce = ctx.reduce;
   if (reduce) host.classList.add('is-static');
 
-  let fs = 0, asc = 0, top = 0, wpx = 0;   // 워드마크 실측 결과(스케일 1 기준)
-  let cv = null;
-
+  let top = 0, wpx = 0, hpx = 0;   // 워드마크 실측 결과(스케일 1 기준)
 
   /* ── 워드마크 기하 — 홍보영상 비율을 화면 크기와 무관하게 재현한다 ────────
-     자족은 SUIT 800. 홍보영상은 지오메트릭 그로테스크 ExtraBold 이고, SUIT 는
-     체계가 이미 싣고 있는 유일한 지오메트릭 표시 서체다(제4의 서체를 들이지 않는다).
-     폭을 먼저 31 %에 맞추고, 그 다음 캔버스 폰트 메트릭으로 베이스라인을 56.8 %에 건다.
-     em 값으로 어림잡지 않는 이유: 폴백 서체가 걸리면 비율이 통째로 어긋난다. */
+     워드마크는 브랜드 벡터(SVG) 그대로다 — 조판하지 않는다. 폭을 31 % 에 맞추고,
+     렌더 높이에서 베이스라인(589/606)을 되짚어 56.8 % 에 건다. */
   function layout() {
     const vw = innerWidth, vh = innerHeight;
-    const target = vw * WM_WIDTH;
     // 31 % 는 **수축이 끝난 뒤**(스케일 1.000)의 폭이다 — 홍보영상 64.17 s 실측.
     // 재는 동안 월드 그룹을 1.000 으로 고정한다. 스케일이 걸린 채로 재면
     // 진입 크기(1.538×)를 31 % 에 맞추게 되고, 마감이 20 % 로 쪼그라든다.
     const prev = root.style.getPropertyValue('--sb-wm-s');
     root.style.setProperty('--sb-wm-s', '1');
-    fs = target / WM_RATIO / 0.72;                 // 캡비 0.72 로 출발
-    for (let i = 0; i < 3; i++) {                  // 실측으로 수렴시킨다
-      wm.style.fontSize = fs + 'px';
-      const w = wm.getBoundingClientRect().width;
-      if (!w) break;
-      fs *= target / w;
-    }
-    wm.style.fontSize = fs + 'px';
-    wpx = wm.getBoundingClientRect().width;
-
-    // line-height:1 상자 안에서 베이스라인이 앉는 높이 = (fs − (asc+desc))/2 + asc
-    if (!cv) cv = document.createElement('canvas').getContext('2d');
-    cv.font = '800 ' + fs + 'px SUIT, Pretendard, system-ui, sans-serif';
-    const m = cv.measureText('LAND-XI PLATFORM');
-    const a = m.fontBoundingBoxAscent || m.actualBoundingBoxAscent || fs * 0.88;
-    const d = m.fontBoundingBoxDescent || m.actualBoundingBoxDescent || fs * 0.22;
-    asc = (fs - (a + d)) / 2 + a;
-    top = vh * WM_BASE - asc;
+    wm.style.width = (vw * WM_WIDTH).toFixed(2) + 'px';
+    const r = wm.getBoundingClientRect();
+    wpx = r.width || vw * WM_WIDTH;
+    hpx = r.height || wpx * WM_VB[1] / WM_VB[0];
+    top = vh * WM_BASE - hpx * WM_BASELINE;
     wm.style.top = top + 'px';
-    root.style.setProperty('--sb-wm-cap', (wpx / WM_RATIO).toFixed(2) + 'px');
+    root.style.setProperty('--sb-wm-cap', (hpx * WM_CAP).toFixed(2) + 'px');
     if (prev) root.style.setProperty('--sb-wm-s', prev); else root.style.removeProperty('--sb-wm-s');
   }
 
-  /* 실제로 쓸 줌아웃 폭(레벨).
-     타일 레벨 경계를 넘으면 래스터 소스가 **한 번도 요청한 적 없는 z** 를 통째로 새로
-     받는다 — V-World 위성영상은 그 순간 몇 장이 결번이라 프레임 구석에 라벤더색 빈
-     타일이 뜬다. 그래서 마지막 카메라의 줌 소수부 안에서 최대한 물러난다.
-     소수부가 너무 작아 −22 % 도 못 낼 때만 규격값(−35 %)을 그대로 쓴다 —
-     브랜드 문법이 타일 아티팩트보다 중요하기 때문이다.
-     워드마크 스케일은 이 값에서 2^dz 로 되짚어 쓴다 = 두 축척이 언제나 정확히 같다. */
   let dz = null;
   function dzOf(P) {
     if (dz !== null) return dz;
-    if (!P || !P.spec) return DZ;                       // 지도가 없으면 규격값 그대로
-    const room = (P.spec.zoom - Math.floor(P.spec.zoom)) - 0.02;
-    dz = room >= 0.35 ? Math.min(DZ, room) : DZ;
+    dz = (!P || !P.spec) ? DZ : dzFor(P.spec.zoom);   // 지도가 없으면 규격값 그대로
     return dz;
   }
 
@@ -196,7 +193,7 @@ export function createEnding(ctx) {
         cuts: { B, C, D, E, F, G, H, I },
         dz, shrink: dz === null ? null : Math.pow(2, -dz),
         wordmark: {
-          widthPct: wpx / innerWidth, baselinePct: (top + asc) / innerHeight, fontSize: fs,
+          widthPct: wpx / innerWidth, baselinePct: (top + hpx * WM_BASELINE) / innerHeight, height: hpx,
           liveWidthPct: r.width / innerWidth, opacity: op('sb-end-wm'),
         },
         tagline: op('sb-end-tag'),

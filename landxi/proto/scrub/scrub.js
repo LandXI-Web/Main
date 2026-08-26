@@ -14,7 +14,7 @@
      7) 카피의 유일한 transform 은 translateY   → 엔진이 쓴다. 이 파일은 카피에 transform 을 쓰지 않는다
    ========================================================================= */
 
-import { createEnding, LEAD as END_LEAD, SPAN as END_SPAN, PAD as END_PAD } from './ending.js';
+import { createEnding, dzFor as endDzFor, LEAD as END_LEAD, SPAN as END_SPAN, PAD as END_PAD } from './ending.js';
 
 const MANIFEST = '/landxi/assets/proto/film/legs/manifest.json';
 
@@ -213,7 +213,7 @@ function paint() {
      #2 여수  필름 최종 프레임      — manifest.handoffFinal, 해양쓰레기 후보
    지도는 각자 자기 구간 1.2vh 앞에서만 만든다. 크로스페이드는 1프레임(≈40ms). */
 const PLATES = [];
-function makePlate(spec, container, host, style) {
+function makePlate(spec, container, host, style, warmZoom) {
   if (reduce || !window.maplibregl) return null;
   const map = new maplibregl.Map({
     container,
@@ -223,8 +223,23 @@ function makePlate(spec, container, host, style) {
   });
   map.scrollZoom.disable();   // 페이지 스크롤을 지도가 삼키지 않게 — 인계 후에만 허용
   map.keyboard.disable();
-  const rec = { map, host, ready: false, on: false, spec };
-  map.on('load', () => { rec.ready = true; });
+  const rec = { map, host, ready: false, on: false, warm: false, spec };
+  map.on('load', () => {
+    rec.ready = true;
+    handoff(trackVh());   // 독자가 이미 구간 안에 서 있으면 다음 스크롤을 기다리지 않고 켠다
+    // 예열 — 마감 판이 이 지도를 warmZoom 까지 줌아웃시킨다(ending.js). 그 줌은 V-World
+    // 래스터의 **다른 타일 레벨**(round(z+1): 13.60→z15, 13.03→z14)이라 그때 처음 받으면
+    // 느린 타일이 프레임 구석에 빈 사각형으로 남는다. 판이 아직 숨어 있는 동안 한 번
+    // 물러났다 돌아와 그 레벨을 캐시에 넣어 둔다. 판이 켜지면 즉시 되돌린다(gate).
+    if (warmZoom !== undefined && !rec.on) {
+      rec.warm = true;
+      map.once('idle', () => {
+        if (!rec.warm) return;
+        map.setZoom(warmZoom);
+        map.once('idle', () => { if (rec.warm) { rec.warm = false; map.setZoom(spec.zoom); } });
+      });
+    }
+  });
   return rec;
 }
 function satStyle(detUrl, color) {
@@ -274,7 +289,8 @@ function handoff(t) {
   // #2 여수 — 필름 최종 프레임
   if (!PLATES[1] && t > BAND_Y[0] - 1.2) {
     PLATES[1] = makePlate(M.handoffFinal, el.mapY, el.plateY,
-      satStyle(M.handoffFinal.detections, '#FF9A2E'));
+      satStyle(M.handoffFinal.detections, '#FF9A2E'),
+      M.handoffFinal.zoom - endDzFor(M.handoffFinal.zoom));   // 마감 수축의 끝 줌을 예열
   }
   gate(PLATES[0], t >= BAND_N[0] && t <= BAND_N[1]);
   gate(PLATES[1], t >= BAND_Y[0]);
@@ -284,6 +300,7 @@ function gate(rec, want) {
   const on = want && rec.ready;
   if (on === rec.on) return;
   rec.on = on;
+  if (on && rec.warm) { rec.warm = false; rec.map.setZoom(rec.spec.zoom); }   // 예열 중이면 카메라 복귀
   rec.host.classList.toggle('is-on', on);
   rec.host.setAttribute('aria-hidden', on ? 'false' : 'true');
   // 휠 줌은 켜지 않는다. 인계 판 뒤로 아직 페이지가 남아 있고(브랜드 마감 2.00vh),
@@ -414,6 +431,7 @@ const boot = async () => {
         zoom: r.map.getZoom(), pitch: r.map.getPitch(), bearing: r.map.getBearing() };
     },
     handoffActive: () => PLATES.some(r => r && r.on),
+    plateMap: i => (PLATES[i] ? PLATES[i].map : null),   // 진단·촬영용(타일 상태 조회)
     ready: true,
   };
   document.documentElement.classList.add('sb-ready');
