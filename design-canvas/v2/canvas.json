@@ -14,7 +14,8 @@
     { "file": "B4-Dashboard.dc.html", "title": "B4 · 대시보드 — 전면 개편 (124px 진술 · 스캔 스트립 · 검정 반전 판 · 신규 계측 글리프)", "x": 3120, "y": 2040, "w": 1440, "h": 900 },
     { "file": "B3-DataMgmt.dc.html",  "title": "B3 · 데이터 관리 — 4탭 = 파이프라인 4단계 · 영상 프레임 우선 원장 (전면 재설계)", "x": 1560, "y": 2040, "w": 1440, "h": 900 },
 
-    { "file": "B5-Dashboard.dc.html", "title": "B5 · 대시보드 — Observable · EIA 전력망 스타일 (시간 스크러버 124 · KPI 띠 · 좌1:우3 · 헤어라인 표 · 출처 줄)", "x": 0, "y": 3060, "w": 1440, "h": 900 }
+    { "file": "B5-Dashboard.dc.html", "title": "B5 · 대시보드 — Observable · EIA 전력망 스타일 (시간 스크러버 124 · KPI 띠 · 좌1:우3 · 헤어라인 표 · 출처 줄)", "x": 0, "y": 3060, "w": 1440, "h": 900 },
+    { "file": "B5-DataMgmt.dc.html",  "title": "B5 · 데이터 관리 — Roboflow Images 그리드 골격 × B2 아카이브/완료/발행중 처리 (발주 확정안)", "x": 1560, "y": 3060, "w": 1440, "h": 900 }
   ],
   "annotations": [
     {
