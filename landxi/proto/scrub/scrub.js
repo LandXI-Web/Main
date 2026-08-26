@@ -16,7 +16,7 @@
 
 import { createEnding, dzFor as endDzFor, LEAD as END_LEAD, SPAN as END_SPAN, PAD as END_PAD } from './ending.js';
 
-const MANIFEST = '/landxi/assets/proto/film/legs/manifest.json';
+const MANIFEST = new URL('../../assets/proto/film/legs/manifest.json', import.meta.url).href;
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -347,7 +347,10 @@ function seekEnd(e) {
 
 /* ── 부팅 ─────────────────────────────────────────────────────────────────── */
 const boot = async () => {
-  M = await (await fetch(MANIFEST)).json();
+  // Manifest paths are root-absolute ('/landxi/...'); rebase them so the page also works
+  // under a sub-path host such as GitHub Pages (/Main/landxi/...).
+  const SITE_BASE = new URL('../../', import.meta.url).href; // .../landxi/
+  M = JSON.parse((await (await fetch(MANIFEST)).text()).split('"/landxi/').join('"' + SITE_BASE));
   SEAM = M.seam || 0.16;
 
   let run = 0;
