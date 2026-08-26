@@ -1,4 +1,4 @@
-// B5-DataMgmt 타일 크롭 — landxi/assets/proto/crops/** 실자산 → design-canvas/v2/img/tile-*.jpg (480×294, ≤40 KB)
+// B5-DataMgmt · B5-Dashboard 타일 크롭 — landxi/assets/proto/crops/** 실자산 → design-canvas/v2/img/tile-*.jpg (480×294, ≤40 KB)
 import { chromium } from '@playwright/test';
 import fs from 'node:fs'; import path from 'node:path';
 const root = process.cwd();
@@ -21,6 +21,16 @@ const TILES = {
   'tile-arc-jeju':  ['jeju-illegal/2-clean.jpg', '50% 50%'],
   'tile-arc-yeosu': ['yeosu-marine-2026-drone/1.jpg', '50% 50%'],
   'tile-done-2':    ['namwon-greenhouse-2025/4-clean.jpg', '50% 50%'],
+  // B5-Dashboard 스택용(2026-08-26): 결과 판은 -clean(폴리곤은 판 위에 청록으로 다시 그린다), 학습데이터 판은 시점별 원본
+  'tile-farm-clean':        ['namwon-farmland-2025/2-clean.jpg', '50% 50%'],
+  'tile-gh-clean':          ['namwon-greenhouse-2025/1-clean.jpg', '50% 50%'],
+  'tile-arc-yeosu-air':     ['yeosu-marine-2025-aerial/1-clean.jpg', '50% 50%'],
+  'tile-yeosu-drone-clean': ['yeosu-marine-2026-drone/1-clean.jpg', '50% 50%'],
+  'tile-ep-1':              ['namwon-epoch/1.jpg', '50% 50%'],
+  'tile-ep-2':              ['namwon-epoch/2.jpg', '50% 50%'],
+  'tile-ep-4':              ['namwon-epoch/4.jpg', '50% 50%'],
+  'tile-kuksan-1':          ['kuksan-change/1.jpg', '50% 50%'],
+  'tile-arc-jeju':          ['jeju-illegal/2-clean.jpg', '50% 50%'],
 };
 const browser = await chromium.launch({ channel: 'chrome' });
 const page = await browser.newPage();
