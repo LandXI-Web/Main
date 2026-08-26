@@ -1,0 +1,134 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>
+@import url("https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/static/woff2/SUIT.css");
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap");
+*{box-sizing:border-box}
+body{margin:0;background:#FFFFFF;color:#010102;font-family:'Pretendard','SUIT',system-ui,sans-serif;font-weight:400;font-size:16px;line-height:1.44;-webkit-font-smoothing:antialiased}
+.d{font-family:'SUIT','Pretendard',system-ui,sans-serif;font-weight:500;letter-spacing:-.012em}
+.n{font-family:'Inter',system-ui,sans-serif;font-weight:400;font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
+.n5{font-family:'Inter',system-ui,sans-serif;font-weight:500;font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
+.lb{font-size:12px;line-height:1.2;letter-spacing:.10em;color:#686868;text-transform:uppercase;font-family:'Inter','Pretendard',system-ui,sans-serif}
+.kb{font-size:12px;line-height:1.2;letter-spacing:.04em;color:#686868}
+.fld-l{font-size:12px;line-height:1.2;letter-spacing:.01em;color:#686868}
+.fld{margin-top:10px;height:36px;border-bottom:1px solid #010102;display:flex;align-items:center;font-size:15px;letter-spacing:.01em}
+.link{font-size:13px;line-height:1.2;color:#010102;letter-spacing:-.01em}
+.sep{font-size:13px;color:#CCCCCC}
+.plate{position:absolute;background:#FFFFFF;border:1px solid #DDDDDD;overflow:hidden}
+.plate img{display:block;width:100%;height:100%;object-fit:cover;object-position:0 0}
+</style></helmet>
+<div style="width:1440px;height:900px;position:relative;overflow:hidden;background:#FFFFFF;font-family:'Pretendard','SUIT',system-ui,sans-serif;color:#010102">
+
+<!-- LEFT 720 : login form is the primary object -->
+<div style="position:absolute;left:72px;top:58px;width:576px;display:flex;align-items:center;gap:12px">
+<svg width="20" height="20" viewBox="0 0 20 20" style="display:block"><path d="M10 1.4 18.6 10 10 18.6 1.4 10z" fill="none" stroke="#010102" stroke-width="1.3"/><path d="M10 6.1 13.9 10 10 13.9 6.1 10z" fill="#010102"/></svg>
+<div class="d" style="font-size:17px;letter-spacing:-.01em">Land-XI 플랫폼</div>
+<div style="width:1px;height:16px;background:#DDD;margin:0 4px"></div>
+<div class="kb">LX 한국국토정보공사</div>
+</div>
+
+<div style="position:absolute;left:72px;top:178px;width:492px">
+<div class="lb">SIGN IN</div>
+<div class="d" style="font-size:32px;line-height:40px;margin-top:12px;letter-spacing:-.02em">로그인</div>
+<div style="font-size:14px;line-height:20px;margin-top:8px;color:#686868;letter-spacing:-.01em">계정 정보를 입력해 주세요.</div>
+</div>
+
+<!-- id field, focused: underline = the screen's single accent -->
+<div style="position:absolute;left:72px;top:318px;width:492px">
+<div class="fld-l" style="color:#010102">아이디 (이메일)</div>
+<div class="fld" style="border-bottom:1px solid #006DF7">
+<div style="color:#CCCCCC">example@lx.or.kr</div>
+<div style="width:1px;height:18px;background:#010102;margin-left:1px"></div>
+</div>
+</div>
+
+<!-- password field, empty-submit error (original copy) -->
+<div style="position:absolute;left:72px;top:404px;width:492px">
+<div class="fld-l">비밀번호</div>
+<div class="fld"><div style="color:#CCCCCC">비밀번호</div></div>
+<div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+<div style="width:6px;height:6px;background:#010102"></div>
+<div style="font-size:12px;line-height:1.2;letter-spacing:-.005em">비밀번호를 입력해 주세요.</div>
+</div>
+</div>
+
+<div style="position:absolute;left:72px;top:500px;width:492px;display:flex;align-items:center">
+<div style="width:13px;height:13px;border:1px solid #010102;margin-right:9px"></div>
+<div class="link">로그인 상태 유지</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+<div class="link" style="border-bottom:1px solid #DDD">아이디 찾기</div><div class="sep">|</div><div class="link" style="border-bottom:1px solid #DDD">비밀번호 찾기</div>
+</div>
+</div>
+
+<!-- submit: the one filled CTA, ink -->
+<div style="position:absolute;left:72px;top:540px;width:492px;height:52px;background:#010102;display:flex;align-items:center;justify-content:center;gap:10px">
+<div class="d" style="font-size:16px;color:#FFFFFF;letter-spacing:.02em">로그인</div>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="square"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+</div>
+
+<div style="position:absolute;left:72px;top:614px;width:492px;display:flex;align-items:baseline;gap:6px">
+<div class="link" style="color:#686868">처음 이용하시나요?</div>
+<div class="link" style="border-bottom:1px solid #010102">계정 신청하기</div>
+</div>
+
+<!-- footer: original form-footer 1:1 -->
+<div style="position:absolute;left:72px;top:744px;width:492px;height:1px;background:#DDD"></div>
+<div style="position:absolute;left:72px;top:760px;width:492px;white-space:nowrap">
+<div style="display:flex;align-items:baseline;gap:6px">
+<div class="kb" style="color:#010102">문의 <span class="n5">063-713-1218</span></div>
+<div class="kb">· 평일 09:00~18:00</div>
+</div>
+<div style="display:flex;gap:8px;align-items:baseline;margin-top:12px">
+<div class="kb" style="color:#010102">개인정보처리방침</div><div class="sep" style="font-size:12px">|</div><div class="kb">이용약관</div><div class="sep" style="font-size:12px">|</div><div class="kb">이메일무단수집거부</div>
+</div>
+<div style="display:flex;align-items:baseline;margin-top:22px">
+<div class="d" style="font-size:12px;letter-spacing:.06em">LX 한국국토정보공사</div>
+<div class="kb n" style="margin-left:auto;letter-spacing:.02em">Copyright© LX. ALL RIGHTS RESERVED.</div>
+</div>
+</div>
+
+<!-- 50/50 seam -->
+<div style="position:absolute;left:720px;top:0;width:1px;height:900px;background:#DDD"></div>
+
+<!-- RIGHT 720 : service screens, three real B5/B2 renders, 6 s crossfade -->
+<div style="position:absolute;left:776px;top:58px;width:608px;display:flex;align-items:baseline">
+<div class="lb">서비스 화면</div>
+<div class="kb" style="margin-left:12px">로그인하면 열리는 화면 그대로</div>
+<div class="n" style="margin-left:auto;font-size:12px;letter-spacing:.04em;color:#686868">01 <span style="color:#CCC">/ 03</span></div>
+</div>
+
+<div class="plate" style="left:776px;top:166px;width:664px;height:415px;border-right:0"><img src="svc-ximap.jpg" alt=""></div>
+<div class="plate" style="left:776px;top:190px;width:664px;height:415px;border-right:0"><img src="svc-datamgmt.jpg" alt=""></div>
+<!-- front plate = dashboard (frame 1 active). deviation (1): it breaks the right margin to 1440 -->
+<div class="plate" style="left:776px;top:214px;width:664px;height:415px;border-right:0"><img src="svc-dashboard.jpg" alt=""></div>
+<svg width="664" height="415" viewBox="0 0 664 415" style="position:absolute;left:776px;top:214px;display:block"><path d="M0 12V0h12M652 0h12v12M664 403v12h-12M12 415H0v-12" fill="none" stroke="#010102" stroke-width="1"/></svg>
+
+<div style="position:absolute;left:776px;top:646px;width:608px;display:flex;align-items:baseline">
+<div class="n" style="font-size:12px;letter-spacing:.16em;color:#686868">FRAME 01</div>
+<div class="d" style="font-size:16px;margin-left:14px;letter-spacing:-.014em">대시보드 · 승인 대기 2 · 기준 2026.08.26</div>
+<div class="kb" style="margin-left:auto">LX 관리자 대시보드 · B5</div>
+</div>
+
+<div style="position:absolute;left:776px;top:692px;width:608px;height:1px;background:#DDD"></div>
+<div style="position:absolute;left:776px;top:706px;width:608px;display:flex;gap:24px">
+<div style="width:186px"><div style="height:1px;background:#010102"></div><div class="kb" style="margin-top:8px;color:#010102">01 대시보드</div><div class="kb" style="margin-top:4px">승인 대기 2 · 기준 2026.08.26</div></div>
+<div style="width:186px"><div style="height:1px;background:#DDD"></div><div class="kb" style="margin-top:8px">02 데이터 관리</div><div class="kb" style="margin-top:4px">25건 · 디스크 96 % · 잔여 83 GB</div></div>
+<div style="width:186px"><div style="height:1px;background:#DDD"></div><div class="kb" style="margin-top:8px">03 XI맵</div><div class="kb" style="margin-top:4px">1,674 필지 탐지 · 2026-06-06</div></div>
+</div>
+<div style="position:absolute;left:776px;top:832px;width:608px;display:flex;align-items:baseline">
+<div class="kb">프레임 6 s 교차 · 유휴 움직임은 이것 하나 · prefers-reduced-motion = 정지</div>
+<div class="kb n" style="margin-left:auto;letter-spacing:.04em">1440 × 900 · 1:1 렌더</div>
+</div>
+
+</div>
+</x-dc>
+</body>
+</html>

@@ -15,7 +15,8 @@
     { "file": "B3-DataMgmt.dc.html",  "title": "B3 · 데이터 관리 — 4탭 = 파이프라인 4단계 · 영상 프레임 우선 원장 (전면 재설계)", "x": 1560, "y": 2040, "w": 1440, "h": 900 },
 
     { "file": "B5-Dashboard.dc.html", "title": "B5 · 대시보드 — Observable · EIA 전력망 스타일 (시간 스크러버 124 · KPI 띠 · 좌1:우3 · 헤어라인 표 · 출처 줄)", "x": 0, "y": 3060, "w": 1440, "h": 900 },
-    { "file": "B5-DataMgmt.dc.html",  "title": "B5 · 데이터 관리 — Roboflow Images 그리드 골격 × B2 아카이브/완료/발행중 처리 (발주 확정안)", "x": 1560, "y": 3060, "w": 1440, "h": 900 }
+    { "file": "B5-DataMgmt.dc.html",  "title": "B5 · 데이터 관리 — Roboflow Images 그리드 골격 × B2 아카이브/완료/발행중 처리 (발주 확정안)", "x": 1560, "y": 3060, "w": 1440, "h": 900 },
+    { "file": "B5-Login.dc.html",     "title": "B5 · 로그인 — 좌 실제 로그인 폼 / 우 서비스 화면(B5 대시보드 · 데이터 관리 · XI맵 실렌더 6 s 교차)", "x": 3120, "y": 3060, "w": 1440, "h": 900 }
   ],
   "annotations": [
     {
