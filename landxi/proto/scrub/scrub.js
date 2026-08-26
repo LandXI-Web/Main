@@ -158,11 +158,36 @@ function buildRail() {
   }).join('');
 }
 
+/* ── 카운트업 — 샷 리스트 v2 레그 5 `비닐하우스 9,664동 · 1,674필지` ───────────
+   엔진의 data-sc-count 는 data-sc-act 안에서만 센다. 월드플라이트 카피는 act 가 아니므로
+   같은 창(data-sc-window from..to)의 진행도로 페이지가 직접 센다. 목표는 마크업에 적힌
+   그대로(쉼표 포함) 렌더되고, 값은 실데이터(namwon-greenhouse-2025.geojson)다. */
+const COUNTS = [];
+function collectCounts() {
+  el.root.querySelectorAll('[data-sc-copy] [data-sb-count]').forEach(n => {
+    const copy = n.closest('[data-sc-copy]');
+    const win = (copy.getAttribute('data-sc-window') || '').trim().split(/\s+/).map(parseFloat);
+    const at = (n.getAttribute('data-sb-count-at') || '0.1 0.6').trim().split(/\s+/).map(parseFloat);
+    const tpl = n.getAttribute('data-sb-count') || '0';
+    COUNTS.push({ el: n, b: parseFloat(tpl.replace(/,/g, '')) || 0, from: win[0], to: win[1], a0: at[0], a1: at[1], last: null });
+  });
+}
+function paintCounts(p) {
+  for (const K of COUNTS) {
+    if (!(K.to > K.from)) continue;
+    const wp = clamp01((p - K.from) / (K.to - K.from));
+    const kt = smooth(clamp01((wp - K.a0) / Math.max(K.a1 - K.a0, 0.001)));
+    const out = nf(Math.round(K.b * kt));
+    if (out !== K.last) { K.el.textContent = out; K.last = out; }
+  }
+}
+
 let lastLeg = -1;
 function paint() {
   const t = trackVh();
   const p = clamp01(t / total);
   el.root.style.setProperty('--sb-p', p.toFixed(5));
+  paintCounts(p);
 
   handoff(t);
   // 인계 판이 올라와 있으면 계기는 판의 카메라를 읽는다. "같은 카메라로 이어받았다"는
@@ -209,7 +234,7 @@ function paint() {
 
 /* ── 인계 — 필름이 멈춘 그 카메라를 살아 있는 지도가 이어받는다 ──────────────
    레그가 아니라 무대의 마지막 두 층이다.
-     #1 남원  레그 06(비닐하우스) 끝 — manifest.handoff, 온실 검출 9,664동
+     #1 남원  레그 05(비닐하우스 실태) 끝 — manifest.handoff, 온실 검출 9,664동
      #2 여수  필름 최종 프레임      — manifest.handoffFinal, 해양쓰레기 후보
    지도는 각자 자기 구간 1.2vh 앞에서만 만든다. 크로스페이드는 1프레임(≈40ms). */
 const PLATES = [];
@@ -281,7 +306,7 @@ function satStyle(detUrl, color) {
 let BAND_N = [0, 0], BAND_Y = [0, 0];
 function handoff(t) {
   if (reduce) return;
-  // #1 남원 — 레그 06 끝
+  // #1 남원 — 레그 05 끝(manifest.handoff.legIndex)
   if (!PLATES[0] && t > BAND_N[0] - 1.2) {
     PLATES[0] = makePlate(M.handoff, el.mapN, el.plateN,
       satStyle(M.handoff.detections, '#00D3A7'));
@@ -359,7 +384,7 @@ const boot = async () => {
   linger = Array.from(el.root.querySelectorAll('[data-sc-segment]'),
     s => parseFloat(s.getAttribute('data-sc-linger')) || 0);
 
-  // 인계 구간 — #1 은 레그 06 의 마지막 0.10vh 부터 다음 씸의 절반까지,
+  // 인계 구간 — #1 은 레그 05 의 마지막 0.14vh 부터 다음 씸의 1/4 까지,
   //             #2 는 마지막 레그의 마지막 0.28vh 부터 끝까지.
   const hi = M.handoff.legIndex;
   BAND_N = [cum[hi][1] - 0.14, cum[hi][1] + SEAM / 4];
@@ -367,6 +392,7 @@ const boot = async () => {
   BAND_Y = [cum[fi][1] - 0.28, total];
 
   buildRail();
+  collectCounts();
 
   // 브랜드 마감 판. 스크롤 예산 2.00vh 는 **흐름에 요소를 더하지 않고** 컨테이너의
   // padding-bottom 으로 낸다 — 스페이서 높이는 엔진이 매 layout 마다 (Σw+1)×vh 로

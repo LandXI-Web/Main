@@ -70,6 +70,17 @@ html{ scroll-behavior:auto; }
   font-family:var(--lx-display); font-weight:500; font-size:14px; letter-spacing:.2px;
 }
 .sb-cred{ color:var(--lx-grey-2); }
+/* 브래킷 콜아웃(샷 리스트 v2 레그 4) — 코너 브래킷은 시스템 관용구(system.css §16, --lx-bracket 12px).
+   CTA 가 아니라 판독 결과이므로 호버 이동은 없다. */
+.sb-bracket{ position:relative; display:inline-block; margin-top:16px; padding:10px 14px; color:var(--lx-ink); }
+.sb-bracket::before,.sb-bracket::after,.sb-bracket__t::before,.sb-bracket__t::after{
+  content:""; position:absolute; width:var(--lx-bracket); height:var(--lx-bracket); border:1px solid currentColor;
+}
+.sb-bracket::before{ left:0; top:0; border-right:0; border-bottom:0 }
+.sb-bracket::after{ right:0; bottom:0; border-left:0; border-top:0 }
+.sb-bracket__t{ position:static }
+.sb-bracket__t::before{ right:0; top:0; border-left:0; border-bottom:0 }
+.sb-bracket__t::after{ left:0; bottom:0; border-right:0; border-top:0 }
 
 /* 앵커 — 인접한 창끼리 같은 모서리를 반복하지 않는다(BL → BR → TL → BL → ML → BR → C). */
 .sb-copy--bl{ left:var(--lx-margin); bottom:236px; }

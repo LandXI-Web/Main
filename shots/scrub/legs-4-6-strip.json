@@ -1,0 +1,267 @@
+{
+  "url": "http://localhost:4173/landxi/proto/scrub/",
+  "errors": [],
+  "rows": [
+    {
+      "i": 1,
+      "tag": "seam-03-04-mid",
+      "p": 0.4243,
+      "leg": 3,
+      "t": 3.324,
+      "film": 0,
+      "op": [
+        0,
+        0,
+        1,
+        0.5,
+        0,
+        0,
+        0
+      ],
+      "painted": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "alt": "22 km",
+      "caption": "남원 평야 · 농지이용 · AI 생성 필름 · kling v2-1-pro · 앵커 A04 → A05 · namwon-farmland-2025 2,098필지",
+      "file": "legs-4-6-1-seam-03-04-mid.png"
+    },
+    {
+      "i": 2,
+      "tag": "L4-mid",
+      "p": 0.4945,
+      "leg": 3,
+      "t": 3.874,
+      "film": 2.53,
+      "op": [
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "painted": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "alt": "14 km",
+      "caption": "남원 평야 · 농지이용 · AI 생성 필름 · kling v2-1-pro · 앵커 A04 → A05 · namwon-farmland-2025 2,098필지",
+      "file": "legs-4-6-2-L4-mid.png"
+    },
+    {
+      "i": 3,
+      "tag": "seam-04-05-mid",
+      "p": 0.5657,
+      "leg": 4,
+      "t": 4.432,
+      "film": 0,
+      "op": [
+        0,
+        0,
+        0,
+        1,
+        0.5,
+        0,
+        0
+      ],
+      "painted": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "alt": "8.60 km",
+      "caption": "남원 · 비닐하우스 실태 · AI 생성 필름 · kling v2-1-pro · 앵커 A05 → A06 · namwon-greenhouse-2025 9,664동",
+      "file": "legs-4-6-3-seam-04-05-mid.png"
+    },
+    {
+      "i": 4,
+      "tag": "L5-mid",
+      "p": 0.6359,
+      "leg": 4,
+      "t": 4.981,
+      "film": 2.53,
+      "op": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      "painted": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "alt": "21 km",
+      "caption": "남원 · 비닐하우스 실태 · AI 생성 필름 · kling v2-1-pro · 앵커 A05 → A06 · namwon-greenhouse-2025 9,664동",
+      "file": "legs-4-6-4-L5-mid.png"
+    },
+    {
+      "i": 5,
+      "tag": "seam-05-06-mid",
+      "p": 0.7072,
+      "leg": 4,
+      "t": 5.54,
+      "film": 5.08,
+      "op": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0.5,
+        0
+      ],
+      "painted": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "alt": "52 km",
+      "caption": "지구본 이동 · 남원 → 여수 · AI 생성 필름 · kling v2-1-pro · 앵커 A06 → A07 · 여수 국동항 방파제",
+      "file": "legs-4-6-5-seam-05-06-mid.png"
+    },
+    {
+      "i": 6,
+      "tag": "L6-mid",
+      "p": 0.7774,
+      "leg": 5,
+      "t": 6.09,
+      "film": 2.53,
+      "op": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "painted": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "alt": "30 km",
+      "caption": "지구본 이동 · 남원 → 여수 · AI 생성 필름 · kling v2-1-pro · 앵커 A06 → A07 · 여수 국동항 방파제",
+      "file": "legs-4-6-6-L6-mid.png"
+    },
+    {
+      "i": 7,
+      "tag": "seam-06-07-in",
+      "p": 0.8384,
+      "leg": 5,
+      "t": 6.568,
+      "film": 4.59,
+      "op": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "painted": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "alt": "19 km",
+      "caption": "지구본 이동 · 남원 → 여수 · AI 생성 필름 · kling v2-1-pro · 앵커 A06 → A07 · 여수 국동항 방파제",
+      "file": "legs-4-6-7-seam-06-07-in.png"
+    },
+    {
+      "i": 8,
+      "tag": "seam-06-07-mid",
+      "p": 0.8486,
+      "leg": 5,
+      "t": 6.648,
+      "film": 5.08,
+      "op": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0.5
+      ],
+      "painted": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "alt": "17 km",
+      "caption": "여수 가막만 · yeosu-marine-2025-aerial · 격자 9,032셀 · 후보 38,057건",
+      "file": "legs-4-6-8-seam-06-07-mid.png"
+    },
+    {
+      "i": 9,
+      "tag": "seam-06-07-out",
+      "p": 0.8588,
+      "leg": 6,
+      "t": 6.728,
+      "film": 0.54,
+      "op": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1
+      ],
+      "painted": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "alt": "16 km",
+      "caption": "여수 가막만 · yeosu-marine-2025-aerial · 격자 9,032셀 · 후보 38,057건",
+      "file": "legs-4-6-9-seam-06-07-out.png"
+    }
+  ]
+}

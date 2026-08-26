@@ -2,6 +2,7 @@
 //
 //   node tools/scrub/shoot-strip.mjs                 # shots/scrub/legs-1-3-*.png
 //   node tools/scrub/shoot-strip.mjs --out shots/x   # 출력 폴더
+//   node tools/scrub/shoot-strip.mjs --legs 4-6 --prefix legs-4-6   # 레그 4–6 + 씸 03→04 … 06→07
 //
 // 지점은 트랙 진행도(window.__scrub.seek 의 p)다. 씸 밴드(0.16vh)의 한가운데와 양끝을
 // 반드시 포함시킨다 — 이음매의 크로스페이드가 실제 스크린샷에서 어떻게 보이는지 보기 위해.
@@ -37,19 +38,35 @@ const cum = M.legs.map(l => { const a = run; run += l.weightVh; return [a, run];
 const total = run;
 const seam = M.seam;
 const P = v => +(v / total).toFixed(4);
-// 9지점: 레그 1 안 2곳 · 씸 01→02 한가운데 · 레그 2 안 · 씸 02→03 한가운데 · 레그 3 안 ·
+// 9지점(기본, 레그 1–3): 레그 1 안 2곳 · 씸 01→02 한가운데 · 레그 2 안 · 씸 02→03 한가운데 · 레그 3 안 ·
 //        씸 03→04 (시작 · 한가운데 · 끝) — 렌더러가 바뀌는 이음매라 세 장.
-const POINTS = [
-  { p: P(0.10), tag: 'L1-open' },
-  { p: P(cum[0][1] - 0.45), tag: 'L1-mid' },
-  { p: P(cum[0][1]), tag: 'seam-01-02-mid' },
-  { p: P(cum[1][0] + 0.55), tag: 'L2-mid' },
-  { p: P(cum[1][1]), tag: 'seam-02-03-mid' },
-  { p: P(cum[2][0] + 0.55), tag: 'L3-mid' },
-  { p: P(cum[2][1] - seam / 2), tag: 'seam-03-04-in' },
-  { p: P(cum[2][1]), tag: 'seam-03-04-mid' },
-  { p: P(cum[2][1] + seam / 2), tag: 'seam-03-04-out' },
-];
+// --legs 4-6 (2026-08-27): 같은 패턴을 레그 a..b 에 적용한다 — 앞 씸 한가운데 · 각 레그 안 · 사이 씸 · 마지막 씸 3장.
+const LEGS = val('legs', null);
+let POINTS;
+if (!LEGS) {
+  POINTS = [
+    { p: P(0.10), tag: 'L1-open' },
+    { p: P(cum[0][1] - 0.45), tag: 'L1-mid' },
+    { p: P(cum[0][1]), tag: 'seam-01-02-mid' },
+    { p: P(cum[1][0] + 0.55), tag: 'L2-mid' },
+    { p: P(cum[1][1]), tag: 'seam-02-03-mid' },
+    { p: P(cum[2][0] + 0.55), tag: 'L3-mid' },
+    { p: P(cum[2][1] - seam / 2), tag: 'seam-03-04-in' },
+    { p: P(cum[2][1]), tag: 'seam-03-04-mid' },
+    { p: P(cum[2][1] + seam / 2), tag: 'seam-03-04-out' },
+  ];
+} else {
+  const [a, b] = LEGS.split('-').map(n => parseInt(n, 10) - 1);
+  const id = i => String(i + 1).padStart(2, '0');
+  POINTS = [{ p: P(cum[a][0]), tag: `seam-${id(a - 1)}-${id(a)}-mid` }];
+  for (let i = a; i <= b; i++) {
+    POINTS.push({ p: P(cum[i][0] + 0.55), tag: `L${i + 1}-mid` });
+    if (i < b) POINTS.push({ p: P(cum[i][1]), tag: `seam-${id(i)}-${id(i + 1)}-mid` });
+  }
+  POINTS.push({ p: P(cum[b][1] - seam / 2), tag: `seam-${id(b)}-${id(b + 1)}-in` });
+  POINTS.push({ p: P(cum[b][1]), tag: `seam-${id(b)}-${id(b + 1)}-mid` });
+  POINTS.push({ p: P(cum[b][1] + seam / 2), tag: `seam-${id(b)}-${id(b + 1)}-out` });
+}
 
 async function settle() {
   await page.waitForFunction(() => {
@@ -61,7 +78,7 @@ async function settle() {
 }
 
 // 첫 번째 훑기 — 레그 1–4 클립을 미리 받아 두게 한다(지연 로딩 ±1.6vh).
-for (const q of [0, 0.25, 0.5]) { await page.evaluate(p => window.__scrub.seek(p), q); await page.waitForTimeout(900); }
+for (const q of (LEGS ? [0, 0.25, 0.5, 0.75, 0.9] : [0, 0.25, 0.5])) { await page.evaluate(p => window.__scrub.seek(p), q); await page.waitForTimeout(900); }
 
 const rows = [];
 for (let i = 0; i < POINTS.length; i++) {
