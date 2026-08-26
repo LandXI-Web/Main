@@ -21,9 +21,12 @@ import sys
 import numpy as np
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-IN = os.path.join(ROOT, 'landxi', 'assets', 'proto', 'film', 'legs', 'gen',
-                  'ch1-leg-01-globe.mp4')
-OUT = os.path.join(ROOT, 'shots', 'kie', 'leg01-video-check.json')
+IN = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
+    ROOT, 'landxi', 'assets', 'proto', 'film', 'legs', 'gen',
+    'ch1-leg-01-globe.mp4')
+OUT = os.path.join(ROOT, 'shots', 'kie',
+                   ('leg01-video-check-' + os.path.splitext(os.path.basename(IN))[0] + '.json')
+                   if len(sys.argv) > 1 else 'leg01-video-check.json')
 
 
 def ff(name):
