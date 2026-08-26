@@ -113,8 +113,8 @@ export const ARCHIVE = [
   {
     id: 'a2', kind: '정사영상', name: '운봉읍 드론 정사영상 2026-04',
     file: '남원_운봉_드론_4월.ecw', size: '62.7 GB', basis: '2026.04.08',
-    by: '이서연', at: '2026.04.09 10:00', hidden: false,
-    thumb: crop('namwon-epoch', 0) || crop('namwon-greenhouse-2025', 0),
+    by: '이서연', at: '2026.04.09 10:00', hidden: true,
+    thumb: crop('namwon-epoch', 2),
     imagery: 'namwon_2506',
     detail: {
       데이터명: '운봉읍 드론 정사영상 2026-04',
@@ -130,8 +130,8 @@ export const ARCHIVE = [
   {
     id: 'a3', kind: '공간정보', name: '남원 도로파손 라벨 쉐입 2026-04',
     file: 'NW_road_defect_labels_202604.shp', size: '48.2 MB', basis: '2026.06.20',
-    by: '김현우', at: '2026.06.20 12:30', hidden: true,
-    thumb: crop('namwon-farmland-2025', 1),
+    by: '김현우', at: '2026.06.20 12:30', hidden: false,
+    thumb: null,
     imagery: null,
     detail: {
       데이터명: '남원 도로파손 라벨 쉐입 2026-04',
@@ -148,7 +148,7 @@ export const ARCHIVE = [
     id: 'a4', kind: '이미지셋', name: '순찰차량 도로영상 2026-04',
     file: 'camera_org_202604.zip', size: '4,820장', basis: '2026.04.12',
     by: '김현우', at: '2026.04.13 08:30', hidden: false,
-    thumb: crop('namwon-greenhouse-2025', 0),
+    thumb: null,
     imagery: null,
     detail: {
       데이터명: '순찰차량 도로영상 2026-04',
@@ -161,7 +161,56 @@ export const ARCHIVE = [
       ['크기', '18.7 GB · 2026.04.12'],
     ],
   },
+  {
+    // 마스터 B5 r4c5 — 실제 GeoJSON 이 있는 벡터 자산. 판에는 탐지 결과 격자(86셀)가 그대로 선다.
+    id: 'a5', kind: '공간정보', name: '여수 해양쓰레기 조사 2026',
+    file: 'yeosu-marine-2026-drone-grid100.geojson', size: '24.4 KB', basis: '2026.03.15',
+    by: '이서연', at: '2026.03.20 11:00', hidden: false,
+    thumb: '../assets/proto/crops/yeosu-marine-2026-drone/1-clean.jpg',
+    imagery: null,
+    geo: { file: '../assets/data/geo/results/yeosu-marine-2026-drone-grid100.geojson', bounds: [127.6423, 34.5681, 127.7127, 34.6369], count: 86, unit: '100 m 격자' },
+    detail: {
+      데이터명: '여수 해양쓰레기 조사 2026',
+      출처: 'LX · 드론 · results/yeosu-marine-2026-drone · EPSG:4326',
+      설명: '해양쓰레기 탐지 결과 100 m 격자 86셀 · 기준일 2026.03.15',
+    },
+    bands: [
+      ['geom', 'Polygon · EPSG:4326 · 86 셀'],
+      ['top', 'styrofoam · mean_conf'],
+      ['크기', '24.4 KB · 2026.03.15'],
+    ],
+  },
 ];
+
+/* ── 타일 그림 — 마스터 B5 의 tile-*.jpg 는 이 실자산 크롭에서 떴다(tools/design/tiles-b5.mjs).
+   프로토는 캔버스 사본이 아니라 crops/** 원본을 그대로 쓴다. 그림이 없는 자산은 흰 액자다. ── */
+const C = (d, n, clean = true) => `../assets/proto/crops/${d}/${n}${clean ? '-clean' : ''}.jpg`;
+export const THUMB = {
+  u1: C('namwon-farmland-2025', 3), u2: C('namwon-farmland-2025', 5), u3: C('namwon-farmland-2025', 7),
+  d1: C('namwon-farmland-2025', 4), d2: C('namwon-greenhouse-2025', 1), d4: C('namwon-greenhouse-2025', 4), d5: C('namwon-greenhouse-2025', 3),
+  p3: C('namwon-greenhouse-2025', 6), p4: C('namwon-greenhouse-2025', 5), p7: C('namwon-greenhouse-2025', 7),
+};
+/** 벡터 실루엣 — 실좌표 GeoJSON 을 타일 캔버스에 그린다(마스터 유보 3: 판이 아니라 실좌표 렌더). */
+export const SILHOUETTE = {
+  // 비닐하우스 라벨 SHP = 남원 비닐하우스 결과 폴리곤의 밀집 셀 하나(EPSG 없음 → 실패 사유와 짝).
+  d7: { file: '../assets/data/geo/results/namwon-greenhouse-2025.geojson', bbox: [127.296, 35.316, 127.308, 35.328], crs: 'EPSG 없음' },
+  p2: { file: '../assets/data/geo/results/namwon-greenhouse-2025.geojson', bbox: [127.296, 35.316, 127.308, 35.328], crs: 'EPSG 없음' },
+  a5: { file: '../assets/data/geo/results/yeosu-marine-2026-drone-grid100.geojson', bbox: null, crs: 'EPSG:4326' },
+};
+/** XLSX 첫 행 미리보기 — results.js 의 필드(pnu/emd/cls/area). */
+export const XLSX_ROWS = {
+  head: ['pnu', 'emd', 'cls', 'area'],
+  rows: [['4519025022…0001', '사매면', '경작', '1,284'], ['4519025022…0007', '사매면', '비경작', '612'], ['4519025023…0012', '사매면', '경작', '2,031']],
+  tail: '… 2,098행',
+};
+/** ZIP 파일 트리 — camera_org_202604.zip. */
+export const ZIP_TREE = `camera_org_202604/
+├ 20260412/
+│  ├ DJI_0001.JPG
+│  ├ DJI_0002.JPG
+│  └ … 4,820장
+└ index.csv`;
+export const FAIL_ACTIONS = ['crs', 'cancel', 'detail'];
 
 /** 공유 설정 모달 — 원본 공유 권한 표(기관명 · 권한명). */
 export const ORGS = ['LX 한국국토정보공사', '남원시청'];
