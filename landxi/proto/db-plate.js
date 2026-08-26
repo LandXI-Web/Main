@@ -1,223 +1,223 @@
-// 판(plate) — 남원 정사영상 위에 **위치를 가진 현황만** 스스로 자기 모양으로 선다.
-// 등급표: docs/superpowers/specs/2026-08-26-dashboard-map-relationship.md §2
-//   Ⅰ 상시 표시(조작 없이)  B9 작업 AOI · B10 사업 지역 · B12 정사영상 footprint · B13 발행 대기 핀
-//   Ⅱ 원장을 만졌을 때만    B2 · B5 · B6 · B16
-//   Ⅲ 판이 반응하지 않는다   B1 · B3 · B4 · B7 · B8 · B11 · B14 · B15
-// 정직성은 색이 아니라 **선 종류**로 말한다: 측정 = 실선 · 추정 = 점선 · 미확정 = 파선.
-import { resolveVWorld } from './js/sources.js';
-import { APPROVALS, IMG, ASSET_SGG } from './db-data.js';
+// 판(plate) 12.8 — 대한민국 전도 한 판 + 토글 2 + 0.25° 그리드 + 등급 범례 + 셀 콜아웃.
+// 조판 마스터: design-canvas/v2/B5-Dashboard.dc.html / B5-Dashboard-Data.dc.html (572×254, y 378–632)
+// 근거: design-canvas/v2/NOTES.md §12.8
+//
+// 판은 위젯이 아니라 B9 백본이 만드는 것의 **증거 자리**다(§12.1 #4).
+// 그래서 탐색하지 않는다 — interactive:false, 휠·드래그 없음. 셀 호버와 클릭(→ XI맵)만 산다.
+// 셀 등급은 손 값이 아니라 db-data.js 의 bbox ∩ 셀 집계다.
+import { EOX } from './js/sources.js';
+import {
+  CELL, GRID, PLATE_BOUNDS, cellsFor, gradeOf, legendFor, calloutFor, cellBBox, loadFootprints,
+} from './db-data.js';
 
-const SIGUNGU_URL = '../assets/data/geo/sigungu.geojson';
-
-const ACCENT = '#006DF7';
-const MUTE = '#E8EBEE';
-
+const TEAL = '#0FA9A0';
+const WHITE = '#FFFFFF';
 const EMPTY = { type: 'FeatureCollection', features: [] };
 export const fc = (features) => ({ type: 'FeatureCollection', features });
-
-/* ── 기하 도우미 ──────────────────────────────────────────────────────── */
-export function centroid(g) {
-  if (!g) return null;
-  if (g.type === 'Point') return g.coordinates;
-  const rings = g.type === 'Polygon' ? g.coordinates
-    : g.type === 'MultiPolygon' ? g.coordinates.flat()
-      : g.type === 'LineString' ? [g.coordinates] : null;
-  if (!rings || !rings[0] || !rings[0].length) return null;
-  let sx = 0, sy = 0, n = 0;
-  for (const pt of rings[0]) { sx += pt[0]; sy += pt[1]; n++; }
-  return n ? [sx / n, sy / n] : null;
-}
-export function dotsOf(geo) {
-  const out = [];
-  for (const f of geo.features || []) {
-    const c = centroid(f.geometry);
-    if (c) out.push({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: c } });
-  }
-  return fc(out);
-}
-export function bboxOf(geo) {
-  let w = 9e9, s = 9e9, e = -9e9, n = -9e9;
-  const eat = ([x, y]) => { if (x < w) w = x; if (x > e) e = x; if (y < s) s = y; if (y > n) n = y; };
-  const walk = (g) => {
-    if (!g) return;
-    if (g.type === 'Point') eat(g.coordinates);
-    else if (g.type === 'Polygon' || g.type === 'MultiLineString') g.coordinates.flat().forEach(eat);
-    else if (g.type === 'MultiPolygon') g.coordinates.flat(2).forEach(eat);
-    else if (g.type === 'LineString') g.coordinates.forEach(eat);
-  };
-  for (const f of geo.features || []) walk(f.geometry);
-  return w > e ? null : [w, s, e, n];
-}
 export const boxPoly = (b) => ({
   type: 'Polygon',
   coordinates: [[[b[0], b[3]], [b[2], b[3]], [b[2], b[1]], [b[0], b[1]], [b[0], b[3]]]],
 });
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const r2 = (v) => Math.round(v * 100) / 100;
 
-/** 읍면동별 실제 조사 범위 — 결과 폴리곤의 `emd` 를 되짚어 만든 실측 외곽이다. */
-export function emdIndex(geos) {
-  const by = new Map();
-  for (const geo of geos) {
-    for (const f of geo.features || []) {
-      const k = f.properties && f.properties.emd;
-      if (!k) continue;
-      const c = centroid(f.geometry);
-      if (!c) continue;
-      const cur = by.get(k) || { n: 0, w: 9e9, s: 9e9, e: -9e9, no: -9e9 };
-      cur.n++;
-      if (c[0] < cur.w) cur.w = c[0];
-      if (c[0] > cur.e) cur.e = c[0];
-      if (c[1] < cur.s) cur.s = c[1];
-      if (c[1] > cur.no) cur.no = c[1];
-      by.set(k, cur);
-    }
+/* ── 그래티큘 — 1° `.3` · 0.25° `.13` (§12.8) ────────────────────────── */
+export function graticule(g = GRID) {
+  const feats = [];
+  const isDeg = (v) => Math.abs(v - Math.round(v)) < 1e-9;
+  for (let x = g.w; x <= g.e + 1e-9; x = r2(x + CELL)) {
+    feats.push({
+      type: 'Feature',
+      properties: { d: isDeg(x) ? 1 : 0 },
+      geometry: { type: 'LineString', coordinates: [[x, g.s], [x, g.n]] },
+    });
   }
-  const out = new Map();
-  for (const [k, v] of by) {
-    if (v.e - v.w < 1e-5 || v.no - v.s < 1e-5) continue;
-    out.set(k, { bbox: [v.w, v.s, v.e, v.no], n: v.n });
+  for (let y = g.s; y <= g.n + 1e-9; y = r2(y + CELL)) {
+    feats.push({
+      type: 'Feature',
+      properties: { d: isDeg(y) ? 1 : 0 },
+      geometry: { type: 'LineString', coordinates: [[g.w, y], [g.e, y]] },
+    });
   }
-  return out;
+  return fc(feats);
 }
 
-/* ── 지도 ────────────────────────────────────────────────────────────── */
-export async function mountPlate(el) {
-  const v = await resolveVWorld();
+/** 셀 → GeoJSON. 등급 계산에 쓰는 값(ai·data·plan)을 그대로 속성으로 싣는다. */
+export function cellFC(cells) {
+  return fc(cells.map((c, i) => ({
+    type: 'Feature',
+    id: i,
+    properties: { i, ai: c.ai, data: c.data, plan: c.planned.length ? 1 : 0 },
+    geometry: boxPoly(cellBBox(c)),
+  })));
+}
+
+/* ── 등급 표현식 — 토글은 이 표현식만 갈아 끼운다(레이어 재생성 금지) ── */
+export const FILL = {
+  ai: {
+    color: TEAL,
+    opacity: ['case',
+      ['>=', ['get', 'ai'], 3], 0.82,
+      ['==', ['get', 'ai'], 2], 0.55,
+      ['==', ['get', 'ai'], 1], 0.3,
+      0],
+  },
+  data: {
+    color: WHITE,
+    opacity: ['case',
+      ['>=', ['get', 'data'], 4], 0.78,
+      ['>=', ['get', 'data'], 2], 0.5,
+      ['==', ['get', 'data'], 1], 0.26,
+      0],
+  },
+};
+export const LINE = {
+  ai: ['case', ['>=', ['get', 'ai'], 1], TEAL, 'rgba(255,255,255,0.45)'],
+  data: ['case', ['>=', ['get', 'data'], 1], WHITE, 'rgba(255,255,255,0.45)'],
+};
+
+/* ── 판 ──────────────────────────────────────────────────────────────── */
+export async function mountPlate(el, opts = {}) {
+  const mode0 = opts.mode === 'data' ? 'data' : 'ai';
+  const footprints = opts.footprints || await loadFootprints();
+  const cells = opts.cells || cellsFor(footprints);
+
   const map = new maplibregl.Map({
     container: el,
     attributionControl: false,
+    interactive: false,          // 판은 계기판이다. 탐색은 XI맵이 한다.
+    fadeDuration: 0,
     style: {
       version: 8,
-      sources: {
-        vsat: { type: 'raster', tiles: [v.sat], tileSize: 256, minzoom: v.minzoom, maxzoom: v.maxzoom, attribution: '' },
-      },
+      // 위성만. 라벨·벡터 스타일 없음(§12.8).
+      sources: { eox: { type: 'raster', tiles: [EOX], tileSize: 256, minzoom: 0, maxzoom: 14, attribution: '' } },
       layers: [
-        { id: 'bg', type: 'background', paint: { 'background-color': '#11150F' } },
+        { id: 'bg', type: 'background', paint: { 'background-color': '#010102' } },
         {
-          id: 'vsat', type: 'raster', source: 'vsat',
-          // 사진 인화 — 채도 −35%, 대비 +6%, 검정을 살짝 들어 올린다(취향 §4).
-          paint: {
-            'raster-saturation': -0.35,
-            'raster-contrast': 0.06,
-            'raster-brightness-min': 0.06,
-            'raster-brightness-max': 0.96,
-            'raster-fade-duration': 220,
-          },
+          id: 'eox',
+          type: 'raster',
+          source: 'eox',
+          // 원판의 사진 처리 그대로 — saturate(.72) contrast(1.04).
+          paint: { 'raster-saturation': -0.28, 'raster-contrast': 0.04, 'raster-fade-duration': 0 },
         },
       ],
     },
-    center: [127.42, 35.42],
-    zoom: 11.4,
-    maxZoom: 18.5,
-    minZoom: 5.5,
+    bounds: [[PLATE_BOUNDS[0], PLATE_BOUNDS[1]], [PLATE_BOUNDS[2], PLATE_BOUNDS[3]]],
+    fitBoundsOptions: { padding: 0, animate: false },
+    bearing: 0,
+    pitch: 0,
   });
-  await new Promise((res) => map.on('load', res));
+  await new Promise((res) => (map.loaded() ? res() : map.on('load', res)));
 
-  /* ── B10 사업 지역 — 실자산이 있는 시군구만 채운다. 나머지는 무채. ── */
-  const sig = await fetch(SIGUNGU_URL).then((r) => r.json());
-  for (const f of sig.features) f.properties.has = ASSET_SGG.includes(f.properties.code) ? 1 : 0;
-  map.addSource('sig', { type: 'geojson', data: sig });
+  map.addSource('grat', { type: 'geojson', data: graticule() });
   map.addLayer({
-    id: 'sig-mute', type: 'line', source: 'sig',
-    filter: ['==', ['get', 'has'], 0],
-    // 자산이 없는 곳은 어둡게 하지 않는다 — 밝은 판에서 어두움은 강조로 읽힌다.
-    paint: { 'line-color': MUTE, 'line-width': 1, 'line-opacity': 0.5, 'line-dasharray': [1, 3] },
+    id: 'grat-025',
+    type: 'line',
+    source: 'grat',
+    filter: ['==', ['get', 'd'], 0],
+    paint: { 'line-color': 'rgba(255,255,255,0.13)', 'line-width': 1 },
   });
   map.addLayer({
-    id: 'sig-asset-fill', type: 'fill', source: 'sig',
-    filter: ['==', ['get', 'has'], 1],
-    paint: { 'fill-color': ACCENT, 'fill-opacity': ['case', ['boolean', ['feature-state', 'lit'], false], 0.16, 0.08] },
-  });
-  map.addLayer({
-    id: 'sig-asset-line', type: 'line', source: 'sig',
-    filter: ['==', ['get', 'has'], 1],
-    paint: { 'line-color': 'rgba(1,1,2,0.5)', 'line-width': 1 },
+    id: 'grat-1',
+    type: 'line',
+    source: 'grat',
+    filter: ['==', ['get', 'd'], 1],
+    paint: { 'line-color': 'rgba(255,255,255,0.3)', 'line-width': 1 },
   });
 
-  /* ── B12 정사영상 footprint — 가장 얇은 헤어라인 액자. ── */
-  map.addSource('imgbox', {
-    type: 'geojson',
-    data: fc(IMG.map((i) => ({
-      type: 'Feature',
-      properties: { id: i.id, label: i.label, captured: i.captured, city: i.coverage === 'city' ? 1 : 0 },
-      geometry: boxPoly(i.bounds),
-    }))),
+  map.addSource('cells', { type: 'geojson', data: cellFC(cells) });
+  map.addLayer({
+    id: 'cells-fill',
+    type: 'fill',
+    source: 'cells',
+    filter: ['==', ['get', 'plan'], 0],
+    paint: { 'fill-color': FILL[mode0].color, 'fill-opacity': FILL[mode0].opacity },
   });
   map.addLayer({
-    id: 'imgbox-line', type: 'line', source: 'imgbox',
-    paint: {
-      'line-color': 'rgba(255,255,255,0.5)',
-      'line-width': ['case', ['boolean', ['feature-state', 'lit'], false], 1, 0.5],
-    },
+    id: 'cells-line',
+    type: 'line',
+    source: 'cells',
+    filter: ['==', ['get', 'plan'], 0],
+    paint: { 'line-color': LINE[mode0], 'line-width': 1 },
+  });
+  // 예정은 점선 고스트(§5) — 채우지 않는다.
+  map.addLayer({
+    id: 'cells-plan',
+    type: 'line',
+    source: 'cells',
+    filter: ['==', ['get', 'plan'], 1],
+    paint: { 'line-color': WHITE, 'line-width': 1, 'line-dasharray': [2, 2] },
   });
 
-  /* ── B9 작업 AOI — 상태를 색이 아니라 선 종류로 말한다. 채움은 0. ── */
-  map.addSource('job', { type: 'geojson', data: EMPTY });
-  map.addLayer({
-    id: 'job-done', type: 'line', source: 'job',
-    filter: ['==', ['get', 'st'], 'done'],
-    paint: { 'line-color': 'rgba(255,255,255,0.92)', 'line-width': 1, 'line-opacity': ['case', ['boolean', ['feature-state', 'dim'], false], 0.25, 1] },
-  });
-  map.addLayer({
-    id: 'job-run', type: 'line', source: 'job',
-    filter: ['==', ['get', 'st'], 'run'],
-    paint: { 'line-color': '#4E95F9', 'line-width': 1 },
-  });
-  map.addLayer({
-    id: 'job-wait', type: 'line', source: 'job',
-    filter: ['==', ['get', 'st'], 'wait'],
-    paint: { 'line-color': 'rgba(255,255,255,0.75)', 'line-width': 1, 'line-dasharray': [4, 3] },
-  });
-  map.addLayer({
-    id: 'job-fail', type: 'line', source: 'job',
-    // 실패는 삭제하지 않는다 — 감쇠만 한다.
-    filter: ['==', ['get', 'st'], 'fail'],
-    paint: { 'line-color': 'rgba(255,255,255,0.42)', 'line-width': 1, 'line-dasharray': [4, 3] },
-  });
-  /* 실행 중 한 건의 스윕선 — 화면에서 유일한 운동. */
-  map.addSource('sweep', { type: 'geojson', data: EMPTY });
-  map.addLayer({
-    id: 'sweep-line', type: 'line', source: 'sweep',
-    paint: { 'line-color': '#4E95F9', 'line-width': 1, 'line-opacity': 0.9 },
-  });
-
-  /* ── 결과 폴리곤 — 원장에서 결과를 고를 때만 켠다(Ⅱ등급). ── */
-  map.addSource('res', { type: 'geojson', data: EMPTY });
-  map.addSource('resdot', { type: 'geojson', data: EMPTY });
-  map.addSource('chg', { type: 'geojson', data: EMPTY });
-  map.addLayer({
-    id: 'res-fill', type: 'fill', source: 'res',
-    paint: { 'fill-color': ACCENT, 'fill-opacity': 0.14 },
-    layout: { visibility: 'none' },
-  });
-  map.addLayer({
-    id: 'res-line', type: 'line', source: 'res',
-    paint: { 'line-color': ACCENT, 'line-width': 1, 'line-opacity': 0.8 },
-    layout: { visibility: 'none' },
-  });
-  map.addLayer({
-    id: 'res-dot', type: 'circle', source: 'resdot',
-    paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 1.1, 12, 2, 16, 3],
-      'circle-color': ACCENT,
-      'circle-opacity': ['interpolate', ['linear'], ['zoom'], 13.4, 0.85, 15.4, 0],
-    },
-    layout: { visibility: 'none' },
-  });
-  /* 변화 지수(비지도)는 탐지가 아니다 — 점선 고스트로만 그린다. */
-  map.addLayer({
-    id: 'chg-line', type: 'line', source: 'chg',
-    paint: { 'line-color': '#FFB633', 'line-width': 1, 'line-opacity': 0.8, 'line-dasharray': [2, 2] },
-  });
-
-  const show = (ids, on) => ids.forEach((id) => map.getLayer(id) && map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none'));
-
-  return {
-    map, fc, show,
-    setJobs: (data) => map.getSource('job').setData(data || EMPTY),
-    setSweep: (data) => map.getSource('sweep').setData(data || EMPTY),
-    setRes: (poly, dots) => { map.getSource('res').setData(poly || EMPTY); map.getSource('resdot').setData(dots || EMPTY); },
-    setChange: (data) => map.getSource('chg').setData(data || EMPTY),
-    approvals: APPROVALS,
-    keyed: v.keyed,
+  const setMode = (m) => {
+    const k = m === 'data' ? 'data' : 'ai';
+    map.setPaintProperty('cells-fill', 'fill-color', FILL[k].color);
+    map.setPaintProperty('cells-fill', 'fill-opacity', FILL[k].opacity);
+    map.setPaintProperty('cells-line', 'line-color', LINE[k]);
+    return k;
   };
+
+  return { map, cells, footprints, setMode, project: (ll) => map.project(ll) };
 }
+
+/* ══ 판 위 계기 — 토글 · 범례 · 콜아웃 · 셀 히트영역 ══════════════════ */
+
+/** 세그먼트 2 — 라운드 0, 흰 헤어라인. 선택 = 흰 채움·잉크 글자(§12.8). */
+export function toggleHTML(mode) {
+  const seg = (k, name) => `<button type="button" role="radio" class="pt-seg" data-mode="${k}"`
+    + ` aria-checked="${mode === k ? 'true' : 'false'}" tabindex="${mode === k ? '0' : '-1'}">${esc(name)}</button>`;
+  return seg('ai', 'AI 분석 결과') + '<i class="pt-gap"></i>' + seg('data', 'AI 학습데이터 구축 현황');
+}
+
+/** 범례 — 셀 수는 집계값이다. */
+export function legendHTML(cells, mode) {
+  const lg = legendFor(cells, mode);
+  return `<div class="pl-h">${esc(lg.head)}</div>`
+    + lg.rows.map((r) => `<div class="pl-r" data-g="${r.g}"><i class="sw sw--${r.g}"></i>${esc(r.name)} <span class="n">${r.n}셀</span></div>`).join('');
+}
+
+/** 콜아웃 244px — 흰 바탕 · 잉크 1px · 라운드 0. */
+export function calloutHTML(cell, mode) {
+  const c = calloutFor(cell, mode);
+  const tag = (t) => (t ? `<i class="tag">${esc(t)}</i>` : '');
+  return `<div class="pc-t">${esc(c.place)} <span class="n">${esc(c.coords)}</span></div>`
+    + `<div class="pc-k pc-k--${c.headTone}">${c.head}</div>`
+    + c.lines.map((l) => `<div class="pc-l n${l.tone === 'mute' ? ' is-mute' : ''}">${l.t}${tag(l.tag)}</div>`).join('');
+}
+
+/** 셀 히트영역 — 링크 그 자체다. 클릭하면 XI맵의 같은 범위로 간다. */
+export function cellsHTML(cells, project) {
+  return cells.map((c, i) => {
+    const b = cellBBox(c);
+    const a = project([b[0], b[3]]);
+    const z = project([b[2], b[1]]);
+    return `<a class="pcell" data-cell="${i}" href="ximap.html?bbox=${b.join(',')}"`
+      + ` style="left:${a.x.toFixed(2)}px;top:${a.y.toFixed(2)}px;width:${(z.x - a.x).toFixed(2)}px;height:${(z.y - a.y).toFixed(2)}px"`
+      + ` aria-label="${esc(calloutFor(c, 'ai').place || '셀')} ${esc(b.join(', '))} — XI맵에서 보기"></a>`;
+  }).join('');
+}
+
+/**
+ * 호버 표식 — 흰 브래킷 4(팔 5) + 셀 중앙 5px 점 + 직각 리더 → 콜아웃 우변.
+ * 좌표는 전부 map.project() 로 구한다(판은 움직이지 않으므로 한 번 계산하면 그대로다).
+ */
+export function markHTML(cell, project, callout) {
+  const b = cellBBox(cell);
+  const a = project([b[0], b[3]]);
+  const z = project([b[2], b[1]]);
+  const A = 5;                       // 브래킷 팔
+  const O = 3;                       // 셀 모서리에서 바깥으로
+  const cx = (a.x + z.x) / 2;
+  const cy = (a.y + z.y) / 2;
+  const elbow = callout.top + callout.h - 14;
+  const bk = [
+    [a.x - O, a.y - O, 'tl'], [z.x + O - A, a.y - O, 'tr'],
+    [a.x - O, z.y + O - A, 'bl'], [z.x + O - A, z.y + O - A, 'br'],
+  ].map(([x, y, k]) => `<i class="pbk pbk--${k}" style="left:${x.toFixed(2)}px;top:${y.toFixed(2)}px"></i>`).join('');
+  const svg = `<svg class="plead" width="572" height="254" viewBox="0 0 572 254" aria-hidden="true">`
+    + `<polyline points="${cx.toFixed(2)},${cy.toFixed(2)} ${cx.toFixed(2)},${elbow} ${callout.right},${elbow}" fill="none" stroke="#FFFFFF" stroke-width="1"/>`
+    + `<rect x="${(cx - 2.5).toFixed(2)}" y="${(cy - 2.5).toFixed(2)}" width="5" height="5" fill="#FFFFFF"/></svg>`;
+  return bk + svg;
+}
+
+export { EMPTY, GRID, CELL, gradeOf };

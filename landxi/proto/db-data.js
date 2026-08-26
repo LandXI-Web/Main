@@ -111,20 +111,24 @@ export const NOTICE = { ...DASH.notice, id: 8, more: '../notice.html' };
 /* B13. 카드 발행 승인 대기 — 원본 CARD_APPROVALS 2건. 요청자·요청시각까지 원본 값.
    행 클릭은 원본의 `admin-publish.html?open=<id>` 자리다(우리는 지도 핀으로 간다). */
 // 카드 ↔ 지역 연결은 원본에 없다 — A5 과제명에서 되짚은 **연결 추정**이며 화면이 그렇게 말한다.
+// sgg 는 그 emd 가 속한 시군구다 — 결과 폴리곤에 그 emd 가 없어 범위를 그릴 수 없고(D.1),
+// 카드 ↔ 지역 연결 자체가 우리가 되짚은 주장이므로 화면에 `추정` 으로 표기한다.
 const APPROVAL_META = {
-  '도로안전 정사영상 v2.1': { id: 'pa-1', at: '2026.06.10 14:30', emd: '도통동' },
-  '농지 활용 분석 v2.0': { id: 'pa-6', at: '2026.05.15 08:50', emd: '시 중앙권' },
+  '도로안전 정사영상 v2.1': { id: 'pa-1', at: '2026.06.10 14:30', sgg: '남원시', emd: '도통동' },
+  '농지 활용 분석 v2.0': { id: 'pa-6', at: '2026.05.15 08:50', sgg: '남원시', emd: '시 중앙권' },
 };
 export const APPROVALS = DASH.queue
   .filter((q) => APPROVAL_META[q.title])
   .map((q, i) => ({ i, title: q.title, sub: q.sub, ...APPROVAL_META[q.title], lnglat: q.pin.lnglat }));
 
 /* B14. 사용자·콘텐츠 관리 타일 4 — 원본 support-grid 그대로. */
+// `ref` = Outage Center 규칙(§12.1 #10): 같은 수치를 두 번 말하지 않는다.
+// 사용자·문의 수치는 KPI 띠에 이미 있으므로 여기서는 어디에 있는지만 가리킨다.
 export const ADMIN_TILES = [
-  { name: '사용자 관리', short: '사용자 관리', desc: '전체 21명 · 가입 대기 1', href: 'admin-users.html' },
-  { name: '공지사항 관리', short: '공지사항 관리', desc: '전체 12건 · 긴급 2', href: 'admin-notice.html' },
-  { name: '문의 관리', short: '문의 관리', desc: '미답변 6 · 전체 12', href: 'admin-inquiry.html' },
-  { name: '자주 묻는 질문 관리', short: '자주 묻는 질문', desc: '전체 15건', href: 'admin-faq.html' },
+  { name: '사용자 관리', short: '사용자 관리', desc: '전체 21명 · 가입 대기 1', ref: '수치는 KPI ① · ④에', href: 'admin-users.html' },
+  { name: '공지사항 관리', short: '공지사항 관리', desc: '전체 12건 · 긴급 2', ref: '전체 12건 · 긴급 2', href: 'admin-notice.html' },
+  { name: '문의 관리', short: '문의 관리', desc: '미답변 6 · 전체 12', ref: '수치는 KPI ⑤에', href: 'admin-inquiry.html' },
+  { name: '자주 묻는 질문 관리', short: '자주 묻는 질문', desc: '전체 15건', ref: '전체 15건', href: 'admin-faq.html' },
 ];
 
 /* B4–B8. KPI 5 — 원본 화면의 값·부제·링크를 그대로 쓴다(우리 목업값으로 갈아치우지 않는다). */
