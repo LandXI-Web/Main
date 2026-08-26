@@ -26,6 +26,12 @@ const SHOTS = path.join(ROOT, 'shots/kie');
 const LEDGER = path.join(SHOTS, 'legs-v3-credits.json');
 const CAP = Number(process.env.LEGS_V3_CAP || 160);
 const PER = 50;
+// rev.3 (2026-08-26, 클라이언트 "go"): 앵커 A02 v3b / A03 v3c / A04 v3b 확정 후 leg 1–3 재생성.
+// LEGS_V3_REV=3 으로 실행하면 이전 rev 산출물을 *.rev2.mp4 로 백업하고, 1회/캡 규칙은 rev 별로 센다.
+const REV = Number(process.env.LEGS_V3_REV || 2);
+const PREV = `rev${REV - 1}`;
+const runsOfRev = (l) => l.runs.filter((r) => (r.rev || 2) === REV);
+const spentOfRev = (l) => Number(runsOfRev(l).reduce((s, x) => s + (x.credits_charged || 0), 0).toFixed(2));
 const TS = [0, 1, 2, 3, 4, 4.85];
 // kling/v2-1-pro 는 negative_prompt 500자 상한 (createTask "Input exceeds maximum length", 무과금).
 // anchors-v3.json 의 negative 는 677~830자라 마지막 쉼표 경계에서 500자로 자른다. motion_prompt 는 손대지 않는다.
@@ -72,7 +78,9 @@ function readLedger() {
 function writeLedger(l) {
   fs.mkdirSync(SHOTS, { recursive: true });
   l.spent = Number(l.runs.reduce((s, x) => s + (x.credits_charged || 0), 0).toFixed(2));
-  l.remaining_of_cap = Number((l.cap - l.spent).toFixed(2));
+  l.spent_by_rev = {};
+  for (const r of l.runs) { const k = 'rev' + (r.rev || 2); l.spent_by_rev[k] = Number(((l.spent_by_rev[k] || 0) + (r.credits_charged || 0)).toFixed(2)); }
+  l.remaining_of_cap = Number((l.cap - spentOfRev(l)).toFixed(2));
   fs.writeFileSync(LEDGER, JSON.stringify(l, null, 2) + '\n');
 }
 
@@ -82,16 +90,24 @@ async function runOne(n, ledger) {
   const tailId = a.tail;
   const head = path.join(ANCH, `${a.id}.png`);
   const tail = path.join(ANCH, `${tailId}.png`);
-  if (fs.existsSync(raw(n))) throw new Error(`${rel(raw(n))} 가 이미 있다 — leg 당 1회 규칙. 삭제 후 재실행.`);
-  if (ledger.runs.some((r) => r.leg === n && r.ok)) throw new Error(`leg ${n} 은 이미 성공 기록이 있다.`);
-  if (ledger.spent + PER > ledger.cap + 1e-9) throw new Error(`예산 정지: ${ledger.spent}+${PER} > ${ledger.cap}`);
+  if (runsOfRev(ledger).some((r) => r.leg === n && r.ok)) throw new Error(`leg ${n} 은 rev${REV} 성공 기록이 이미 있다.`);
+  if (spentOfRev(ledger) + PER > ledger.cap + 1e-9) throw new Error(`예산 정지(rev${REV}): ${spentOfRev(ledger)}+${PER} > ${ledger.cap}`);
+  // 이전 rev 산출물 백업(gen + src). 백업본이 이미 있으면 덮어쓰지 않는다.
+  for (const f of [raw(n), scrub(n)]) {
+    if (!fs.existsSync(f)) continue;
+    const bak = f.replace(/\.mp4$/, `.${PREV}.mp4`);
+    if (fs.existsSync(bak)) throw new Error(`${rel(bak)} 가 이미 있다 — rev${REV} 는 이미 한 번 실행됐다.`);
+    fs.renameSync(f, bak); process.stderr.write(`[leg ${n}] backup ${rel(f)} -> ${rel(bak)}
+`);
+  }
+  if (fs.existsSync(raw(n))) throw new Error(`${rel(raw(n))} 가 이미 있다 — leg 당 1회 규칙.`);
 
   fs.mkdirSync(GEN, { recursive: true });
   for (let attempt = 1; attempt <= 2; attempt++) {
     const before = await credits();
     process.stderr.write(`\n[leg ${n}] ${a.id} -> ${tailId}  attempt ${attempt}  balance=${before}\n`);
     const rec = {
-      leg: n, head: rel(head), tail: rel(tail), attempt, model: 'kling/v2-1-pro', duration: '5', cfg_scale: 0.5,
+      leg: n, rev: REV, head: rel(head), tail: rel(tail), attempt, model: 'kling/v2-1-pro', duration: '5', cfg_scale: 0.5,
       prompt: a.motion_prompt, negative_full_chars: a.negative.length, negative: trimNeg(a.negative), credits_balance_before: before, at: new Date().toISOString(),
     };
     try {
@@ -137,7 +153,7 @@ function post(n) {
 }
 
 function sheet(ns) {
-  const out = path.join(SHOTS, 'v3-legs-1-3-sheet.jpg');
+  const out = path.join(SHOTS, REV > 2 ? `v3-legs-1-3-rev${REV}-sheet.jpg` : 'v3-legs-1-3-sheet.jpg');
   const rows = ns.map((n) => ({
     label: `leg ${n}  ${id(n)} -> ${id(n + 1)}`,
     next: id(n + 1),
@@ -179,7 +195,7 @@ try {
     const ledger = readLedger(); ledger.cap = CAP; writeLedger(ledger);
     const done = [];
     for (const n of ns) done.push(await runOne(n, ledger));
-    console.log(JSON.stringify({ spent: ledger.spent, cap: ledger.cap, done: done.map((d) => ({ leg: d.leg, taskId: d.taskId, charged: d.credits_charged })) }, null, 2));
+    console.log(JSON.stringify({ rev: REV, spent_rev: spentOfRev(ledger), spent_total: ledger.spent, cap: ledger.cap, done: done.map((d) => ({ leg: d.leg, taskId: d.taskId, charged: d.credits_charged })) }, null, 2));
   } else if (cmd === 'post') { for (const n of ns) console.log(JSON.stringify(post(n))); }
   else if (cmd === 'sheet') console.log(sheet(ns));
   else { console.error('usage: legs-v3.mjs credits|run n..|post n..|sheet n..'); process.exit(1); }

@@ -3,16 +3,17 @@
 - 원본: <https://mini531.github.io/namwon-smart-village/landxi7/dataset.html>
   (+ 프래그먼트 `dataset-upload.html` · `dataset-manage.html` · `dataset-manage-publishing.html` · `dataset-archive.html`)
 - 인벤토리: `docs/superpowers/specs/2026-08-26-landxi7-function-inventory.md` §3
-- 조판 마스터: `design-canvas/v2/B2-DataMgmt-Upload.dc.html` · `B2-DataMgmt-List.dc.html` (각 1440×900)
-  · 파리티 체크리스트 `design-canvas/v2/NOTES.md` §6 · §7
-- 시각 체계: `docs/superpowers/specs/2026-08-25-client-taste-profile.md` §4 · §5 · §7
-- 구현: `landxi/proto/dataset.{html,css,js}` · `ds-data.js` · `ds-plate.js`
-- 검증: `tests/e2e/proto-dataset.spec.mjs` (25건 전부 통과, 콘솔 0) · 그림 `shots/proto-ds/`
+- 조판 마스터: **`design-canvas/v2/B5-DataMgmt.dc.html`** (1440×900, 발주 확정) · `NOTES.md` §13 (장치 지도 · 유보 3 · §13.6 구현)
+  · 이전 마스터 B2-DataMgmt-{Upload,List} 는 §6 · §7 기록으로만 남는다
+- 법: `design/system.md`
+- 구현: `landxi/proto/dataset.{html,css,js}` · `ds-data.js` · `ds-plate.js` · `ds-thumbs.js`
+- 검증: `tests/e2e/proto-dataset.spec.mjs` (16건 전부 통과, 콘솔 0) · 그림 `shots/proto-ds/b5-*.png`
+- 발주 추가(2026-08-26): "아카이브 완료 → 그 결과를 지도의 레이어처럼 본다" → 아카이브 `표시` = 우측 판의 레이어(§5 · `NOTES.md` §13.6)
 
 원칙 두 가지.
 1. **기능은 원본과 1:1.** 표에 없는 기능은 만들지 않았고, 원본에 있는 기능은 빼지 않았다.
-2. **지도는 새 위젯이 아니라 원본 `#ds-map` 의 자리다.** 판 위에 남는 것은 실측 범위 액자와
-   선택 락온뿐이고, 좌표계가 없는 파일은 점선 무채 액자로 **자백**한다(취향 §5-10).
+2. **썸네일이 목록이다(B5).** 텍스트 행 0. 4탭은 `?tab=` 로 가른 진짜 탭이고, 우측 480 슬롯을
+   발행 폼 · 상세 · 지도 판이 나눠 쓴다. 좌표계가 없는 파일은 점선 무채 액자로 **자백**한다.
 
 ---
 
@@ -23,7 +24,7 @@
 | 로그인 관문 | 비로그인 진입 시 `login.html?next=` 로 되돌림 | `dataset.html` head 인라인 스크립트 — 그리기 전에 판정 | **있음** |
 | 좌측 레일 A1–A11 | `include/header.html` 메뉴 10 | 대시보드와 **같은 컴포넌트를 옮겨 씀**(`dashboard.*` 는 손대지 않음), 활성 `data-menu="media"` = 데이터 관리 | **있음** |
 | 푸터 include | 개인정보처리방침 · 이용약관 · 이메일주소무단수집거부 · 주소 · 고객센터 · Family Site | 원장 하단 `#foot-links` / `#foot-addr` | **있음** |
-| 배경 지도(전국 뷰) | `NamwonMap.initMap`, 탭 전환해도 재초기화 없음 | MapLibre + V-World 위성. 지도는 한 번만 mount, 탭 전환은 **같은 지도의 카메라 이동**(§5-4) | **있음** |
+| 배경 지도(전국 뷰) | `NamwonMap.initMap`, 탭 전환해도 재초기화 없음 | B5 는 전면 지도가 없다. 지도는 우측 판(`#mapdrawer`)에 한 번만 mount 되고 탭을 옮겨도 살아 있다 | **있음(판으로)** |
 
 ## 1. 탭 4종 · `?tab=` 딥링크
 
@@ -82,14 +83,14 @@
 | 유형 필터 4 | 전체 · 정사영상 · 이미지셋 · 공간정보 | `KIND_FILTERS` | **있음** |
 | 검색 | | 같음 | **있음** |
 | 데이터 카드 | 유형 · 데이터명 · 원본 파일명 · 크기 · 기준일 · 등록자 · 등록일시 | `ARCHIVE` 4건 | **있음** |
-| 표시/숨김 토글 | 숨김은 감쇠, 삭제가 아니다 | `data-hidden` → 썸네일 `opacity:.42` + 라벨 `표시`↔`숨김` | **있음** |
-| 공유 설정 **모달** | 기관명 / 권한명 표 | `#m-share` — 저장 시 상태 반영 | **있음** |
-| 공간 편집 | 판에서 범위 편집 진입 | 카드·상세 드로어 양쪽에 있음(판이 그 범위로 이동) | **있음** |
-| 삭제 | 목록에서 제거 | `.act[data-act="del"]` | **있음** |
-| 데이터셋 상세 | 데이터명 / 출처 / 설명 | `#detail` 드로어 | **있음** |
+| 표시/숨김 | 원본 아카이브 카드에는 없음(카드 클릭 = `flyToData` 뷰 이동뿐). 발주 추가 요구 | `data-hidden` → 타일 `opacity:.34` + 선반 `숨김 — 삭제 아님`. **표시 = 판의 레이어**: 정사영상은 실제 타일, 공간정보는 실제 GeoJSON, `fitBounds` 줌 투 익스텐트. 숨김은 레이어 목록에 감쇠로 남고 판에서 꺼진다. 기하가 없으면 `실측 범위 없음` | **있음(+판)** |
+| 공유 설정 **모달** | 기관명 / 권한명 표 | `#m-share` — 3단 세그먼트, 저장 시 상태 반영 | **있음** |
+| 공간 편집 | 편집용 벡터를 판에 올리고 `view.fit` | 타일·상세 양쪽 — 판을 열고 그 범위로 간다. 기하 없으면 자백 | **있음** |
+| 삭제 | 목록에서 제거 | `.act[data-act="del"]` — 판의 레이어도 내린다 | **있음** |
+| 데이터셋 상세 | 데이터명 / 출처 / 설명 | `#detail` 드로어(우측 480 슬롯) + 실측 범위 행 | **있음** |
 | 밴드 · 속성 표 | 속성명 / 속성정보 | `#detail-bands` | **있음** |
 
-## 6. 판(지도) — 마스터가 판에 두는 것만
+## 6. 판(지도) — (B2 기록. B5 의 판은 `NOTES.md` §13.6 을 따른다)
 
 | 마스터 | 우리 구현 |
 |---|---|
@@ -110,7 +111,7 @@
 
 ---
 
-## 8. 마스터와 남은 차이 (`shots/proto-ds/ds-vs-B2-{upload,list}.png`)
+## 8. 마스터와 남은 차이 — B5 는 `NOTES.md` §13.6 참조. 아래는 B2 시절 기록
 
 | # | 차이 | 왜 |
 |---|---|---|
@@ -137,8 +138,7 @@
 
 ```bash
 node tools/serve.mjs                                    # 4173
-npx playwright test tests/e2e/proto-dataset.spec.mjs    # 25건
+npx playwright test tests/e2e/proto-dataset.spec.mjs    # 16건
 ```
 
-그림은 `shots/proto-ds/` 에 떨어진다 — 탭 4종 · 증량 모달 · 상세 드로어 · 공유 모달 ·
-발행 폼 · 호버, 그리고 마스터 대조 `ds-vs-B2-upload.png` · `ds-vs-B2-list.png`.
+그림은 `shots/proto-ds/b5-*.png` — 탭 4종 · 발행 드로어 · 판 위 레이어(벡터 · 정사영상+숨김+범위 없음).

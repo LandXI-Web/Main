@@ -121,7 +121,7 @@ body[data-side]:not([data-side="none"]) #grid{ right:calc(var(--side) + 24px); }
 .word{ position:absolute; left:8px; top:8px; font-size:9px; letter-spacing:.08em; color:var(--grey); white-space:nowrap; z-index:2; }
 .th--dark .word{ color:#fff; }
 .tag{ position:absolute; right:8px; top:8px; z-index:2; }
-.tile[data-st] .tag{ top:auto; bottom:24px; }
+.tile[data-st] .tag{ top:auto; right:auto; left:8px; bottom:22px; }
 .tag2{ position:absolute; right:8px; top:23px; font-size:9px; letter-spacing:.06em; color:var(--grey); z-index:2; }
 .tag2--dark{ color:rgba(255,255,255,.72); }
 .tagb{ position:absolute; right:8px; bottom:7px; font-size:9px; letter-spacing:.06em; color:var(--grey); z-index:2; }

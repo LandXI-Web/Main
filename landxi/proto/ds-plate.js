@@ -59,8 +59,8 @@ export class Brackets {
       const y = Math.min(a.y, b.y) - (h - Math.abs(b.y - a.y)) / 2;
       box.style.transform = `translate(${Math.round(x)}px,${Math.round(y)}px)`;
       box.style.width = `${Math.round(w)}px`; box.style.height = `${Math.round(h)}px`;
-      // 캡션은 액자 위에 — 판 하단의 장소·날짜·GSD 캡션과 겹치지 않게.
-      if (cap) cap.style.transform = `translate(${Math.round(x)}px,${Math.round(y - cap.offsetHeight - 5)}px)`;
+      // 캡션은 액자 안 좌상단 — 타일의 단어와 같은 자리. 판 하단의 장소·날짜·GSD 캡션과 겹치지 않는다.
+      if (cap) cap.style.transform = `translate(${Math.round(x) + 8}px,${Math.round(y) + 7}px)`;
     }
   }
 }

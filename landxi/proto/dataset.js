@@ -160,7 +160,8 @@ function body(fmt, id, opts = {}) {
 function drawSilhouettes(root) {
   $$('canvas[data-sil]', root).forEach(async (c) => {
     const spec = SILHOUETTE[c.dataset.sil];
-    const n = await silhouette(c, spec, { width: 1.2 });
+    const big = c.width > 500;   // 드로어 액자는 여유가 크다
+    const n = await silhouette(c, spec, { width: 1.2, pad: 24, padTop: big ? 30 : 60, padBottom: big ? 30 : 44 });
     const tag = c.parentElement.querySelector('.tagb');
     if (tag) tag.textContent = `${spec.crs} · ${nf.format(n)} polygon`;
   });
@@ -364,7 +365,7 @@ function renderPublishing() {
   reveal($('#pb-list'));
   $$('canvas[data-sil]', $('#pb-list')).forEach(async (c) => {
     const spec = SILHOUETTE[c.dataset.sil];
-    const n = await silhouette(c, spec, { width: 1.2 });
+    const n = await silhouette(c, spec, { width: 1.2, pad: 24, padTop: 70, padBottom: 44 });
     const tag = c.parentElement.querySelector('.tag2'); if (tag) tag.textContent = `${spec.crs} · ${n} polygon`;
   });
 }
@@ -473,6 +474,7 @@ async function ensureMap() {
       m.on('idle', () => { document.documentElement.dataset.plate = 'idle'; });
       m.on('movestart', () => { document.documentElement.dataset.plate = 'moving'; });
       document.documentElement.dataset.plate = 'ready';
+      window.__dsMap = m;   // 검증용 — e2e 가 레이어 유무를 본다
       return m;
     }).catch(() => { document.documentElement.dataset.plate = 'off'; return null; });
   }

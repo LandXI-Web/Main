@@ -30,6 +30,6 @@ await shot('b5-06-map');
 await page.locator('.act[data-ar="a1"][data-act="vis"]').click().catch(() => {});
 await page.locator('.act[data-ar="a1"][data-act="vis"]').click().catch(() => {});
 await idle(); await page.waitForTimeout(1800);
-await shot('b5-07-map-raster');
+await shot('b5-07-map-layers');
 console.log('errors', errs);
 await browser.close();

@@ -35,13 +35,13 @@ export async function silhouette(canvas, spec, opts = {}) {
   const fts = g.features.filter((f) => inBox(f, spec.bbox));
   if (!fts.length) return 0;
   const bb = spec.bbox || bboxOf(fts);
-  const pad = opts.pad ?? 10;
+  const pad = opts.pad ?? 10, pt = opts.padTop ?? pad, pb = opts.padBottom ?? pad;
   const kx = (W - pad * 2) / (bb[2] - bb[0]);
-  const ky = (H - pad * 2) / (bb[3] - bb[1]);
+  const ky = (H - pt - pb) / (bb[3] - bb[1]);
   // 위도 보정 — 화면 위에서도 실제 비율을 지킨다.
   const kLat = ky, kLon = kx / Math.cos(((bb[1] + bb[3]) / 2) * Math.PI / 180) * Math.cos(((bb[1] + bb[3]) / 2) * Math.PI / 180);
   const k = Math.min(kLon, kLat);
-  const ox = (W - (bb[2] - bb[0]) * k) / 2, oy = (H - (bb[3] - bb[1]) * k) / 2;
+  const ox = (W - (bb[2] - bb[0]) * k) / 2, oy = pb + (H - pt - pb - (bb[3] - bb[1]) * k) / 2;
   const px = (p) => [ox + (p[0] - bb[0]) * k, H - (oy + (p[1] - bb[1]) * k)];
   ctx.strokeStyle = opts.stroke || '#010102';
   ctx.lineWidth = opts.width || 0.7;
