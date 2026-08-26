@@ -55,10 +55,10 @@ test('카피 — 분위기 문장이 아니라 Land-XI 플랫폼 소개다', asy
   await expect(rows.nth(0)).toContainText('노코드 · 워크플로우 기반 AI 모델 개발');
   await expect(rows.nth(0)).toContainText('10');
   await expect(rows.nth(1)).toContainText('전국단위 AI 실태조사');
-  await expect(rows.nth(1)).toContainText('13개 조사');
+  await expect(rows.nth(1)).toContainText('15개 조사');
   await expect(rows.nth(1)).toContainText('51,569');
   await expect(rows.nth(2)).toContainText('범부처 통합');
-  await expect(rows.nth(2)).toContainText('부처 5');
+  await expect(rows.nth(2)).toContainText('부처 6');
 
   await expect(page.locator('.lg-cta__t')).toHaveText('로그인하고 시작하기');
   expect(errs).toEqual([]);

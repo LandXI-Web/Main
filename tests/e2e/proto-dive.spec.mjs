@@ -71,7 +71,7 @@ test('흰 아틀라스 — 종이는 끝까지 희고, 13행·7행이 전부 실
     count: (el.querySelector('.c') || {}).textContent || null,
     pending: !!el.querySelector('s'),
   })));
-  expect(idx.length).toBe(13);
+  expect(idx.length).toBe(15);
   const real = idx.filter((r) => r.real);
   expect(real.length).toBeGreaterThanOrEqual(3);
   for (const r of real) expect(num(r.count), `${r.id} 수치`).toBeGreaterThan(0);
@@ -249,7 +249,7 @@ test.describe('reduced-motion', () => {
     await page.waitForTimeout(2000);
     expect(await page.evaluate(() => window.__dive.tier)).toBe('still');
     // 스크린리더/키보드용 평면 목록이 13종 전부를 담는다 — 연출에 갇히지 않는다
-    expect(await page.$$eval('#svc-list button', (b) => b.length)).toBe(13);
+    expect(await page.$$eval('#svc-list button', (b) => b.length)).toBe(15);
     const labels = await page.$$eval('#svc-list button', (b) => b.map((x) => x.textContent));
     expect(labels.some((t) => /실결과/.test(t)), '실결과 표기').toBe(true);
     expect(labels.some((t) => /준비 중/.test(t)), '준비중 표기').toBe(true);

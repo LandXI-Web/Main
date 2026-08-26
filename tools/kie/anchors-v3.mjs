@@ -191,7 +191,10 @@ try {
     }
   } else if (cmd === 'run') {
     const ei0 = rest.indexOf('--extra-ref');
-    const ids = rest.filter((x, k) => !x.startsWith('--') && k !== ei0 + 1);
+    // ei0 === -1 이면 ei0+1 === 0 이라 첫 positional 이 통째로 날아간다 (2026-08-26 실측 버그).
+    const ids = rest.filter((x, k) => !x.startsWith('--') && !(ei0 > -1 && k === ei0 + 1));
+    const hasPositional = rest.some((x) => !x.startsWith('--'));
+    if (hasPositional && !ids.length) throw new Error('앵커 인자 파싱 실패 — 전체 실행으로 떨어지는 것을 막았다.');
     const list = ids.length ? ids : ANCHORS.map((a) => a.id);
     const reroll = rest.includes('--reroll');
     const ei = rest.indexOf('--extra-ref');
