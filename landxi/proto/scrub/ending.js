@@ -196,7 +196,9 @@ export function createEnding(ctx) {
 
   /* End 키 = 마감으로 건너뛴다. 필름이 끝나는 지점(크롬이 물러나기 시작하는 자리)에 선다. */
   function jump() {
-    scrollTo({ top: Math.round(ctx.trackTop() + ctx.totalVh() * innerHeight), behavior: 'auto' });
+    // y0 는 소수 px 이다(Σw × innerHeight). round 로 그 앞에 떨어지면 lead = 0 이라 판이 켜지지
+    // 않는다(트랙 6.987vh × 900 = 6288.3 → 6288). 한 px 뒤에 선다 — lead ≈ 0.004, e = 0.
+    scrollTo({ top: Math.ceil(ctx.trackTop() + ctx.totalVh() * innerHeight) + 1, behavior: 'auto' });
     paint();
   }
 

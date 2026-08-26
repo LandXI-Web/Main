@@ -386,8 +386,12 @@ const boot = async () => {
   addEventListener('load', relayout);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(relayout);
 
+  // 엔진은 --sc-seg 를 자기 rAF 틱에서 쓴다. scroll 이벤트 시점에는 아직 이전 값일 수
+  // 있으므로(큰 점프·되감기에서 캡션/항로가 이전 레그에 남는다) 다음 프레임에 한 번 더 그린다.
+  let rafPaint = 0;
   addEventListener('scroll', () => {
     paint();
+    if (!rafPaint) rafPaint = requestAnimationFrame(() => { rafPaint = 0; paint(); });
     if (scrollY > 40) el.hint.classList.add('is-off');
   }, { passive: true });
   addEventListener('resize', () => { padEnd(); END.layout(); paint(); });

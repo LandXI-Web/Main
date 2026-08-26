@@ -120,7 +120,7 @@ test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 7개 이
     label: window.__scrub.legLabel(),
     t: window.__scrub.trackVh(),
   }));
-  // 0.5 × 6.244vh = 3.12vh → 레그 04(남원 분지, 2.581–3.157vh)
+  // 0.5 × 6.987vh = 3.49vh → 레그 04(남원 분지, 3.324–3.900vh). AI 레그 1–3 이 각 1.108vh.
   expect(mid.id).toBe('04');
   expect(mid.label).toBe('남원');
 
@@ -147,9 +147,15 @@ test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 7개 이
   }
 
   /* ── 7. 인계 판 — manifest 카메라 그대로 뜬다 ───────────────────────────── */
+  // 판은 자기 구간 1.2vh 앞에서 만들어지고 MapLibre load(타일 + 검출 GeoJSON, 여수는 38k
+  // 피처)가 끝나야 켜진다. AI 레그 1–3(각 1.108vh)로 트랙이 6.99vh 가 되면서 판 생성
+  // 시점이 씸 순회의 끝으로 밀려, 고정 1.4초 대기로는 load 가 끝나기 전에 검사한다.
+  // 판이 켜지는 것 자체를 기다린다(카메라 검사는 그 뒤에 그대로).
+  const plateOn = (i) => page.waitForFunction((k) => { const r = window.__scrub.plate(k); return !!(r && r.on); }, i, { timeout: 20000 }).catch(() => {});
   const bands = await page.evaluate(() => window.__scrub.bands());
   const pN = ((bands.namwon[0] + bands.namwon[1]) / 2) / bands.total;
-  await seek(page, pN, 1400);
+  await seek(page, pN, 600);
+  await plateOn(0);
   const plateN = await page.evaluate(() => window.__scrub.plate(0));
   expect(plateN).not.toBeNull();
   expect(plateN.on).toBe(true);
@@ -158,7 +164,8 @@ test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 7개 이
   expect(plateN.zoom).toBeCloseTo(M.handoff.zoom, 2);
   expect(plateN.bearing).toBeCloseTo(M.handoff.bearing, 1);
 
-  await seek(page, 0.99, 1400);
+  await seek(page, 0.99, 600);
+  await plateOn(1);
   const plateY = await page.evaluate(() => window.__scrub.plate(1));
   expect(plateY).not.toBeNull();
   expect(plateY.on).toBe(true);
@@ -310,7 +317,7 @@ test('지연 로딩 ±1.6vh — 멀리 있는 레그는 아직 받지 않는다'
   await seek(page, 0);
   const early = await stageState(page);
   expect(early[0].srcSet, '레그 01 은 받았다').toBe(true);
-  // 6.24vh 트랙에서 마지막 레그는 1.6vh 반경 밖 — 아직 받지 않았다.
+  // 6.99vh 트랙에서 마지막 레그(5.80vh~)는 1.6vh 반경 밖 — 아직 받지 않았다.
   expect(early[6].srcSet, '레그 07 은 아직이다').toBe(false);
   expect(reqs).not.toContain('w07');
 

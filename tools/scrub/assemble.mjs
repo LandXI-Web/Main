@@ -2,15 +2,17 @@
 //
 //   node tools/scrub/assemble.mjs            # 인코딩 + 포스터 + 씸검증 + 매니페스트
 //   node tools/scrub/assemble.mjs --verify   # 인코딩 생략, 씸 diff / 페이스만 재측정
+//   node tools/scrub/assemble.mjs --only 01,02,03   # 이 레그만 (재)인코딩, 나머지는 기존 산출물
 //   CRF=21 MCRF=26 node tools/scrub/assemble.mjs
 //
 // 왜 legs.mjs 와 따로 있나
 //   legs.mjs 는 "하나의 결정론 필름(build/film/frames 575장)"을 6조각으로 자른다.
 //   이 파일은 서로 다른 렌더러가 구운 소스를 한 편으로 잇는다 —
-//     · build/film/legs/orbit-korea    (three-globe 스파이크, 궤도→한반도)
-//     · build/film/legs/cloud-break-v2 (구름 스파이크, 대기권 진입·권운 돌파)
-//     · build/film/frames              (MapLibre 결정론 필름, 한반도→남원→여수)
+//     · src/v3-leg-01..03.mp4          (kling v2-1-pro AI 레그 1–3, 앵커 A01→A04. 이미 GOP 8/faststart
+//                                       규격으로 인코딩된 mp4 — 재인코딩 없이 그대로 싣는다)
+//     · build/film/frames              (MapLibre 결정론 필름, 남원→여수)
 //     · build/film/legs/namwon-3d      (maplibre3d 스파이크, 실측 3D 남원)
+//   이전 플레이스홀더(three-globe 궤도 · 구름 스파이크 · MapLibre 한반도)는 AI 레그로 교체됐다.
 //
 // 스크럽 인코딩(worldflight §6): 일반 웹 인코딩은 키프레임을 2–5초에 한 번 넣는다.
 // 스크럽은 랜덤 액세스이므로 긴 GOP 는 seek 마다 디코더가 앞 키프레임부터 걸어오게
@@ -35,6 +37,8 @@ const FPS = 25;
 const MB = 1048576;
 const RATE = 0.218;                      // vh per film-second (밴드 0.212–0.225)
 const VERIFY_ONLY = process.argv.includes('--verify');
+const onlyArg = process.argv.indexOf('--only');
+const ONLY = onlyArg >= 0 ? new Set(process.argv[onlyArg + 1].split(',')) : null;
 
 fs.mkdirSync(OUT, { recursive: true });
 fs.mkdirSync(TMP, { recursive: true });
@@ -64,28 +68,37 @@ const C = (lng, lat, altKm, pitch, bearing) => ({
    출발/도착 좌표·방위·피치는 각 렌더러의 실제 카메라에서 가져왔고(주석에 출처),
    고도만 연속이 되도록 이어 붙였다. 이 사실은 manifest.flightProfile 에 남긴다. */
 const PLAN = [
+  // 01–03: kling v2-1-pro AI 레그(docs/superpowers/proto/2026-08-26-kie-legs-1-3.md).
+  // `mp4` 는 이미 스크럽 규격(GOP 8, faststart, 무음)으로 인코딩된 파일이라 그대로 싣고,
+  // 모바일본만 kling 원본(`gen`)에서 새로 굽는다. 카메라는 미니어처 세계라 실측이 없다 —
+  // 앵커 문서의 고도대(A02 고궤도 · A03 ~30 km/피치 60°)를 따르고, 레그 03 끝은 이어받는
+  // 레그 04(MapLibre 실카메라)의 시작 카메라에 맞춘다. manifest 에 cameraSource:'authored' 로 남긴다.
   {
-    id: '01', wp: '궤도', label: '궤도', place: '지구 저궤도', look: 'globe',
-    dir: 'build/film/legs/orbit-korea', from: 0, to: 139,           // 5.60 s
-    // three-globe LEGS['orbit-korea'].keys — [altKm, lat, lon, tilt]
-    a: C(60.0, 13.0, 15000, 0, 0),
-    b: C(127.95, 36.05, 460, 18, -6),
-    caption: '궤도 합성 · three-globe · NASA BMNG 8k + 구름 8k',
+    id: '01', wp: '궤도', label: '궤도', place: '모형 지구본 · 위성', look: 'diorama',
+    mp4: 'landxi/assets/proto/film/legs/src/v3-leg-01.mp4',
+    gen: 'landxi/assets/proto/film/legs/gen/v3-leg-01.mp4',
+    a: C(127.95, 36.05, 15000, 0, 0),
+    b: C(127.95, 36.05, 460, 12, 0),
+    caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A01 → A02 · 위성 모형',
+    authored: true,
   },
   {
-    id: '02', wp: '성층운', label: '성층운', place: '한반도 상공 · 권운층', look: 'globe',
-    dir: 'build/film/legs/cloud-break-v2', from: 40, to: 114,       // 3.00 s (t 1.60–4.56)
-    // 구름 스파이크 cloud-break keys 중 권운 돌파 구간
-    a: C(127.96, 35.80, 460, 27, -8),
-    b: C(127.88, 35.52, 132, 35, -10),
-    caption: '대기 산란 · 권운 3층 빌보드 · 고도 11 / 8 / 5 km',
+    id: '02', wp: '성층운', label: '성층운', place: '한반도 상공 · 구름 천장', look: 'diorama',
+    mp4: 'landxi/assets/proto/film/legs/src/v3-leg-02.mp4',
+    gen: 'landxi/assets/proto/film/legs/gen/v3-leg-02.mp4',
+    a: C(127.95, 36.05, 460, 12, 0),
+    b: C(127.60, 35.70, 30, 60, -10),
+    caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A02 → A03 · 항공기 모형',
+    authored: true,
   },
   {
-    id: '03', wp: '한반도', label: '한반도', place: '전라북도', look: 'real',
-    dir: 'build/film/frames', from: 217, to: 297,                   // 3.24 s
-    a: C(127.70, 35.90, 434.5, 24, -9),
+    id: '03', wp: '한반도', label: '드론', place: '지리산 서릉 → 남원 분지', look: 'diorama',
+    mp4: 'landxi/assets/proto/film/legs/src/v3-leg-03.mp4',
+    gen: 'landxi/assets/proto/film/legs/gen/v3-leg-03.mp4',
+    a: C(127.60, 35.70, 30, 60, -10),
     b: C(127.326, 35.347, 22.2, 62, -25),
-    caption: 'Mapterhorn terrarium DEM · 지형 과장 1.4× · EPSG:4326',
+    caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A03 → A04 · 드론 모형',
+    authored: true,
   },
   {
     id: '04', wp: '남원', label: '남원', place: '남원 분지', look: 'real',
@@ -146,16 +159,37 @@ function concatList(L) {
   return lst;
 }
 
+// 포스터(첫 프레임)와 씸 프레임(마지막 프레임)은 **인코딩된 mp4** 에서 뽑는다(씸 법칙 6).
+function stills(L, d) {
+  const p = path.join(OUT, `w${L.id}.webp`);
+  const q = path.join(OUT, `w${L.id}-last.webp`);
+  const W = ['-vf', 'scale=960:-2:flags=lanczos', '-frames:v', '1', '-c:v', 'libwebp', '-quality', '80', '-an'];
+  run(['-y', '-i', d, ...W, p]);
+  run(['-y', '-sseof', '-0.06', '-i', d, ...W, q]);
+  return { p, q };
+}
+
 function encode(L) {
-  const lst = concatList(L);
   const d = path.join(OUT, `w${L.id}.mp4`);
   const m = path.join(OUT, `w${L.id}-m.mp4`);
-  run(['-y', '-f', 'concat', '-safe', '0', '-i', lst, '-r', String(FPS), ...D_ARGS, d]);
-  run(['-y', '-f', 'concat', '-safe', '0', '-i', lst, '-r', String(FPS), ...M_ARGS, m]);
-  const p = path.join(OUT, `w${L.id}.webp`);
-  run(['-y', '-i', path.join(path.resolve(root, L.dir), pad(L.from)),
-    '-vf', 'scale=960:-1:flags=lanczos', '-c:v', 'libwebp', '-quality', '80', '-an', p]);
-  return { d, m, p };
+  if (L.mp4) {
+    // 이미 스크럽 규격으로 인코딩된 레그 — 데스크톱본은 재인코딩 없이 그대로.
+    fs.copyFileSync(path.resolve(root, L.mp4), d);
+    const MA = M_ARGS.map(a => (a.startsWith('scale=') ? 'scale=960:-2:flags=lanczos' : a));
+    run(['-y', '-i', path.resolve(root, L.gen || L.mp4), ...MA, m]);
+  } else {
+    const lst = concatList(L);
+    run(['-y', '-f', 'concat', '-safe', '0', '-i', lst, '-r', String(FPS), ...D_ARGS, d]);
+    run(['-y', '-f', 'concat', '-safe', '0', '-i', lst, '-r', String(FPS), ...M_ARGS, m]);
+  }
+  const { p, q } = stills(L, d);
+  // src/ 관례(orbit-korea.first.webp 등)대로 첫/끝 프레임을 소스 옆에도 남긴다.
+  if (L.mp4) {
+    const base = path.resolve(root, L.mp4).replace(/\.mp4$/, '');
+    fs.copyFileSync(p, base + '.first.webp');
+    fs.copyFileSync(q, base + '.last.webp');
+  }
+  return { d, m, p, q };
 }
 
 /* ── 씸 측정 — 인코딩된 mp4 에서 뽑는다 ────────────────────────────────────── */
@@ -175,28 +209,39 @@ const meanAbs = (A, B) => { let s = 0; for (let i = 0; i < GN; i++) s += Math.ab
 /* ── 메인 ───────────────────────────────────────────────────────────────────── */
 const legs = [];
 for (const L of PLAN) {
-  const count = L.to - L.from + 1;
-  const seconds = +(count / FPS).toFixed(3);
-  const w = +(seconds * RATE).toFixed(3);
   const d = path.join(OUT, `w${L.id}.mp4`);
   const m = path.join(OUT, `w${L.id}-m.mp4`);
   const p = path.join(OUT, `w${L.id}.webp`);
-  if (!VERIFY_ONLY) {
-    process.stdout.write(`enc ${L.id} ${L.label} ${count}f ${seconds}s ... `);
+  const q = path.join(OUT, `w${L.id}-last.webp`);
+  const doEnc = !VERIFY_ONLY && (!ONLY || ONLY.has(L.id));
+  if (doEnc) {
+    process.stdout.write(`enc ${L.id} ${L.label} ... `);
     encode(L);
     console.log(`${(size(d) / MB).toFixed(2)} MB / ${(size(m) / MB).toFixed(2)} MB`);
+  } else if (!fs.existsSync(q)) {
+    stills(L, d);   // 기존 산출물에 씸 프레임 webp 만 없으면 그것만 보충
   }
-  const real = +probe(['-v', 'error', '-select_streams', 'v:0', '-show_entries',
-    'stream=nb_frames', '-of', 'csv=p=0', d]);
+  // csv 순서(ffprobe 고정): width,height,r_frame_rate,duration,nb_frames
+  const [wStr, hStr, fpsStr, durStr, real] = probe(['-v', 'error', '-select_streams', 'v:0',
+    '-show_entries', 'stream=width,height,r_frame_rate,nb_frames,duration', '-of', 'csv=p=0', d]).split(',');
+  const fps = (() => { const [n, dd] = fpsStr.split('/'); return +n / (+dd || 1); })();
+  const count = L.mp4 ? +real : L.to - L.from + 1;
+  const seconds = L.mp4 ? +(+durStr).toFixed(3) : +(count / FPS).toFixed(3);
+  const w = +(seconds * RATE).toFixed(3);
   legs.push({
     id: L.id, wp: L.wp, label: L.label, place: L.place, look: L.look, caption: L.caption,
-    source: L.dir + `#${L.from}..${L.to}`,
-    frames: [L.from, L.to], count, encodedFrames: real, seconds, weightVh: w,
+    source: L.mp4 ? L.mp4 : L.dir + `#${L.from}..${L.to}`,
+    renderer: L.mp4 ? 'kling v2-1-pro (AI)' : L.dir,
+    frames: L.mp4 ? [0, count - 1] : [L.from, L.to], count, encodedFrames: +real,
+    fps: +fps.toFixed(3), size: [+wStr, +hStr],
+    seconds, weightVh: w,
     rate: +(w / seconds).toFixed(4),
     src: `/landxi/assets/proto/film/legs/w${L.id}.mp4`,
     srcMobile: `/landxi/assets/proto/film/legs/w${L.id}-m.mp4`,
     poster: `/landxi/assets/proto/film/legs/w${L.id}.webp`,
-    bytes: size(d), bytesMobile: size(m), bytesPoster: size(p),
+    seamPoster: `/landxi/assets/proto/film/legs/w${L.id}-last.webp`,
+    bytes: size(d), bytesMobile: size(m), bytesPoster: size(p) + size(q),
+    cameraSource: L.authored ? 'authored' : 'renderer',
     startCamera: { ...L.a, seg: L.id + 'a' },
     endCamera: { ...L.b, seg: L.id + 'b' },
   });
@@ -209,7 +254,8 @@ for (let i = 0; i + 1 < legs.length; i++) {
   const B = grayFrame(path.join(OUT, `w${legs[i + 1].id}.mp4`), 'first');
   const pct = +((meanAbs(A, B) / 255) * 100).toFixed(3);
   const lumaA = meanLuma(A), lumaB = meanLuma(B);
-  const sameSource = PLAN[i].dir === PLAN[i + 1].dir && PLAN[i].to === PLAN[i + 1].from;
+  const sameSource = !PLAN[i].mp4 && !PLAN[i + 1].mp4 &&
+    PLAN[i].dir === PLAN[i + 1].dir && PLAN[i].to === PLAN[i + 1].from;
   seams.push({
     from: legs[i].id, to: legs[i + 1].id,
     frameShared: sameSource,
@@ -231,9 +277,17 @@ const pTot = legs.reduce((s, L) => s + L.bytesPoster, 0);
 const manifest = {
   generatedAt: new Date().toISOString(),
   builder: 'tools/scrub/assemble.mjs',
-  source: '4개 렌더러 · three-globe(궤도) + 구름 스파이크(권운) + MapLibre 결정론 필름 + maplibre3d 실측 3D',
+  source: '3개 소스 · kling v2-1-pro AI 레그 1–3(앵커 A01→A04) + MapLibre 결정론 필름 + maplibre3d 실측 3D',
   fps: FPS,
+  fpsNote: '레그 01–03 은 24 fps(kling 출력 1946×1080), 나머지는 25 fps 1280×720. 레그별 legs[].fps / legs[].size.',
   filmSize: [1280, 720],
+  aiLegs: {
+    ids: ['01', '02', '03'],
+    doc: 'docs/superpowers/proto/2026-08-26-kie-legs-1-3.md',
+    note: '미니어처 세계라 실카메라가 없다. startCamera/endCamera 는 앵커 문서의 고도대를 따라 authored 이고 ' +
+      '(A02 고궤도 460 km · A03 ~30 km/피치 60°), 레그 03 끝은 이어받는 레그 04 의 실카메라에 맞춘다. ' +
+      'cameraSource:"authored" 로 표시. 페이지 오버레이의 숫자는 전부 실데이터다.',
+  },
   mobileSize: [960, 540],
   encode: {
     desktop: `-c:v libx264 -profile:v high -preset slow -crf ${CRF} -g 8 -keyint_min 8 -sc_threshold 0 -movflags +faststart -an`,
@@ -249,9 +303,8 @@ const manifest = {
   spacerVh: +(total + 1).toFixed(3),
   cameraNote: '고도 = 1.5 × 720px × m/px (MapLibre 기본 fov 36.87°, 필름 뷰포트 720px). 줌·GSD 는 고도에서 유도.',
   flightProfile:
-    '레그마다 렌더러가 다르다. 좌표·고도·방위·피치는 전부 그 레그를 구운 렌더러의 실제 ' +
-    '카메라 값이다(three-globe LEGS[].keys · 구름 스파이크 keys · MapLibre 필름 SEG · ' +
-    'maplibre3d LEG[]). 그래서 렌더러가 바뀌는 이음매에서는 고도가 실제로 튄다 — 필름 ' +
+    '레그마다 렌더러가 다르다. 레그 04–07 의 좌표·고도·방위·피치는 그 레그를 구운 렌더러의 실제 ' +
+    '카메라 값이다(MapLibre 필름 SEG · maplibre3d LEG[]); AI 레그 01–03 은 authored(aiLegs.note). 그래서 렌더러가 바뀌는 이음매에서는 고도가 실제로 튄다 — 필름 ' +
     '자체가 거기서 컷이기 때문이다. 계기 바늘이 스냅하지 않도록 페이지가 씸 밴드(0.16vh) ' +
     '위에서 두 레그의 판독값을 섞는다(scrub.js camAt). 인계 판은 그 덕분에 필름 마지막 ' +
     '프레임과 정확히 같은 카메라로 뜬다.',

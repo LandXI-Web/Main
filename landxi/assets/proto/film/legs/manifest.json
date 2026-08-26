@@ -1,12 +1,22 @@
 {
-  "generatedAt": "2026-08-25T22:25:32.245Z",
+  "generatedAt": "2026-08-26T04:04:59.200Z",
   "builder": "tools/scrub/assemble.mjs",
-  "source": "4개 렌더러 · three-globe(궤도) + 구름 스파이크(권운) + MapLibre 결정론 필름 + maplibre3d 실측 3D",
+  "source": "3개 소스 · kling v2-1-pro AI 레그 1–3(앵커 A01→A04) + MapLibre 결정론 필름 + maplibre3d 실측 3D",
   "fps": 25,
+  "fpsNote": "레그 01–03 은 24 fps(kling 출력 1946×1080), 나머지는 25 fps 1280×720. 레그별 legs[].fps / legs[].size.",
   "filmSize": [
     1280,
     720
   ],
+  "aiLegs": {
+    "ids": [
+      "01",
+      "02",
+      "03"
+    ],
+    "doc": "docs/superpowers/proto/2026-08-26-kie-legs-1-3.md",
+    "note": "미니어처 세계라 실카메라가 없다. startCamera/endCamera 는 앵커 문서의 고도대를 따라 authored 이고 (A02 고궤도 460 km · A03 ~30 km/피치 60°), 레그 03 끝은 이어받는 레그 04 의 실카메라에 맞춘다. cameraSource:\"authored\" 로 표시. 페이지 오버레이의 숫자는 전부 실데이터다."
+  },
   "mobileSize": [
     960,
     540
@@ -31,18 +41,18 @@
     "seekMs": 20
   },
   "lazyVh": 1.6,
-  "filmSeconds": 28.64,
-  "filmVh": 6.244,
-  "spacerVh": 7.244,
+  "filmSeconds": 32.049,
+  "filmVh": 6.987,
+  "spacerVh": 7.987,
   "cameraNote": "고도 = 1.5 × 720px × m/px (MapLibre 기본 fov 36.87°, 필름 뷰포트 720px). 줌·GSD 는 고도에서 유도.",
-  "flightProfile": "레그마다 렌더러가 다르다. 좌표·고도·방위·피치는 전부 그 레그를 구운 렌더러의 실제 카메라 값이다(three-globe LEGS[].keys · 구름 스파이크 keys · MapLibre 필름 SEG · maplibre3d LEG[]). 그래서 렌더러가 바뀌는 이음매에서는 고도가 실제로 튄다 — 필름 자체가 거기서 컷이기 때문이다. 계기 바늘이 스냅하지 않도록 페이지가 씸 밴드(0.16vh) 위에서 두 레그의 판독값을 섞는다(scrub.js camAt). 인계 판은 그 덕분에 필름 마지막 프레임과 정확히 같은 카메라로 뜬다.",
+  "flightProfile": "레그마다 렌더러가 다르다. 레그 04–07 의 좌표·고도·방위·피치는 그 레그를 구운 렌더러의 실제 카메라 값이다(MapLibre 필름 SEG · maplibre3d LEG[]); AI 레그 01–03 은 authored(aiLegs.note). 그래서 렌더러가 바뀌는 이음매에서는 고도가 실제로 튄다 — 필름 자체가 거기서 컷이기 때문이다. 계기 바늘이 스냅하지 않도록 페이지가 씸 밴드(0.16vh) 위에서 두 레그의 판독값을 섞는다(scrub.js camAt). 인계 판은 그 덕분에 필름 마지막 프레임과 정확히 같은 카메라로 뜬다.",
   "bytes": {
-    "desktop": 49760735,
-    "mobile": 17579599,
-    "poster": 653986,
-    "desktopMB": 47.46,
-    "mobileMB": 16.77,
-    "posterMB": 0.62
+    "desktop": 40706575,
+    "mobile": 14465506,
+    "poster": 982832,
+    "desktopMB": 38.82,
+    "mobileMB": 13.8,
+    "posterMB": 0.94
   },
   "seams": [
     {
@@ -50,10 +60,10 @@
       "to": "02",
       "frameShared": false,
       "rule": "B",
-      "pct": 23.433,
-      "lumaA": 117.52,
-      "lumaB": 64.5,
-      "lumaDelta": -53.02,
+      "pct": 0.153,
+      "lumaA": 59.03,
+      "lumaB": 59.03,
+      "lumaDelta": 0,
       "pass": true,
       "monotonic": true
     },
@@ -62,22 +72,22 @@
       "to": "03",
       "frameShared": false,
       "rule": "B",
-      "pct": 8.31,
-      "lumaA": 62.24,
-      "lumaB": 66.73,
-      "lumaDelta": 4.49,
+      "pct": 0.149,
+      "lumaA": 62.49,
+      "lumaB": 62.37,
+      "lumaDelta": -0.12,
       "pass": true,
       "monotonic": true
     },
     {
       "from": "03",
       "to": "04",
-      "frameShared": true,
-      "rule": "A",
-      "pct": 0.079,
-      "lumaA": 77.74,
+      "frameShared": false,
+      "rule": "B",
+      "pct": 19.9,
+      "lumaA": 49.25,
       "lumaB": 77.74,
-      "lumaDelta": 0,
+      "lumaDelta": 28.49,
       "pass": true,
       "monotonic": true
     },
@@ -123,32 +133,40 @@
       "id": "01",
       "wp": "궤도",
       "label": "궤도",
-      "place": "지구 저궤도",
-      "look": "globe",
-      "caption": "궤도 합성 · three-globe · NASA BMNG 8k + 구름 8k",
-      "source": "build/film/legs/orbit-korea#0..139",
+      "place": "모형 지구본 · 위성",
+      "look": "diorama",
+      "caption": "AI 생성 필름 · kling v2-1-pro · 앵커 A01 → A02 · 위성 모형",
+      "source": "landxi/assets/proto/film/legs/src/v3-leg-01.mp4",
+      "renderer": "kling v2-1-pro (AI)",
       "frames": [
         0,
-        139
+        121
       ],
-      "count": 140,
-      "encodedFrames": 141,
-      "seconds": 5.6,
-      "weightVh": 1.221,
+      "count": 122,
+      "encodedFrames": 122,
+      "fps": 24,
+      "size": [
+        1946,
+        1080
+      ],
+      "seconds": 5.083,
+      "weightVh": 1.108,
       "rate": 0.218,
       "src": "/landxi/assets/proto/film/legs/w01.mp4",
       "srcMobile": "/landxi/assets/proto/film/legs/w01-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w01.webp",
-      "bytes": 14544518,
-      "bytesMobile": 3516255,
-      "bytesPoster": 57620,
+      "seamPoster": "/landxi/assets/proto/film/legs/w01-last.webp",
+      "bytes": 5445438,
+      "bytesMobile": 1460897,
+      "bytesPoster": 88560,
+      "cameraSource": "authored",
       "startCamera": {
         "center": [
-          60,
-          13
+          127.95,
+          36.05
         ],
         "altitudeM": 15000000,
-        "zoom": 3.4571,
+        "zoom": 3.1879,
         "pitch": 0,
         "bearing": 0,
         "mpp": 13888.889,
@@ -161,8 +179,8 @@
         ],
         "altitudeM": 460000,
         "zoom": 8.2151,
-        "pitch": 18,
-        "bearing": -6,
+        "pitch": 12,
+        "bearing": 0,
         "mpp": 425.926,
         "seg": "01b"
       }
@@ -171,83 +189,99 @@
       "id": "02",
       "wp": "성층운",
       "label": "성층운",
-      "place": "한반도 상공 · 권운층",
-      "look": "globe",
-      "caption": "대기 산란 · 권운 3층 빌보드 · 고도 11 / 8 / 5 km",
-      "source": "build/film/legs/cloud-break-v2#40..114",
+      "place": "한반도 상공 · 구름 천장",
+      "look": "diorama",
+      "caption": "AI 생성 필름 · kling v2-1-pro · 앵커 A02 → A03 · 항공기 모형",
+      "source": "landxi/assets/proto/film/legs/src/v3-leg-02.mp4",
+      "renderer": "kling v2-1-pro (AI)",
       "frames": [
-        40,
-        114
+        0,
+        121
       ],
-      "count": 75,
-      "encodedFrames": 76,
-      "seconds": 3,
-      "weightVh": 0.654,
+      "count": 122,
+      "encodedFrames": 122,
+      "fps": 24,
+      "size": [
+        1946,
+        1080
+      ],
+      "seconds": 5.083,
+      "weightVh": 1.108,
       "rate": 0.218,
       "src": "/landxi/assets/proto/film/legs/w02.mp4",
       "srcMobile": "/landxi/assets/proto/film/legs/w02-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w02.webp",
-      "bytes": 6375987,
-      "bytesMobile": 2198767,
-      "bytesPoster": 153742,
+      "seamPoster": "/landxi/assets/proto/film/legs/w02-last.webp",
+      "bytes": 6390547,
+      "bytesMobile": 1712776,
+      "bytesPoster": 114654,
+      "cameraSource": "authored",
       "startCamera": {
         "center": [
-          127.96,
-          35.8
+          127.95,
+          36.05
         ],
         "altitudeM": 460000,
-        "zoom": 8.2196,
-        "pitch": 27,
-        "bearing": -8,
+        "zoom": 8.2151,
+        "pitch": 12,
+        "bearing": 0,
         "mpp": 425.926,
         "seg": "02a"
       },
       "endCamera": {
         "center": [
-          127.88,
-          35.52
+          127.6,
+          35.7
         ],
-        "altitudeM": 132000,
-        "zoom": 10.0258,
-        "pitch": 35,
+        "altitudeM": 30000,
+        "zoom": 12.16,
+        "pitch": 60,
         "bearing": -10,
-        "mpp": 122.222,
+        "mpp": 27.778,
         "seg": "02b"
       }
     },
     {
       "id": "03",
       "wp": "한반도",
-      "label": "한반도",
-      "place": "전라북도",
-      "look": "real",
-      "caption": "Mapterhorn terrarium DEM · 지형 과장 1.4× · EPSG:4326",
-      "source": "build/film/frames#217..297",
+      "label": "드론",
+      "place": "지리산 서릉 → 남원 분지",
+      "look": "diorama",
+      "caption": "AI 생성 필름 · kling v2-1-pro · 앵커 A03 → A04 · 드론 모형",
+      "source": "landxi/assets/proto/film/legs/src/v3-leg-03.mp4",
+      "renderer": "kling v2-1-pro (AI)",
       "frames": [
-        217,
-        297
+        0,
+        121
       ],
-      "count": 81,
-      "encodedFrames": 82,
-      "seconds": 3.24,
-      "weightVh": 0.706,
-      "rate": 0.2179,
+      "count": 122,
+      "encodedFrames": 122,
+      "fps": 24,
+      "size": [
+        1946,
+        1080
+      ],
+      "seconds": 5.083,
+      "weightVh": 1.108,
+      "rate": 0.218,
       "src": "/landxi/assets/proto/film/legs/w03.mp4",
       "srcMobile": "/landxi/assets/proto/film/legs/w03-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w03.webp",
-      "bytes": 7093894,
-      "bytesMobile": 2461423,
-      "bytesPoster": 125746,
+      "seamPoster": "/landxi/assets/proto/film/legs/w03-last.webp",
+      "bytes": 7124254,
+      "bytesMobile": 1888679,
+      "bytesPoster": 118618,
+      "cameraSource": "authored",
       "startCamera": {
         "center": [
-          127.7,
-          35.9
+          127.6,
+          35.7
         ],
-        "altitudeM": 434500,
-        "zoom": 8.3001,
-        "pitch": 24,
-        "bearing": -9,
-        "mpp": 402.315,
+        "altitudeM": 30000,
+        "zoom": 12.16,
+        "pitch": 60,
+        "bearing": -10,
+        "mpp": 27.778,
         "seg": "03a"
       },
       "endCamera": {
@@ -271,21 +305,29 @@
       "look": "real",
       "caption": "항공 정사영상 2025-10 · GSD 25 cm · 남원시 전역",
       "source": "build/film/frames#297..362",
+      "renderer": "build/film/frames",
       "frames": [
         297,
         362
       ],
       "count": 66,
       "encodedFrames": 67,
+      "fps": 25,
+      "size": [
+        1280,
+        720
+      ],
       "seconds": 2.64,
       "weightVh": 0.576,
       "rate": 0.2182,
       "src": "/landxi/assets/proto/film/legs/w04.mp4",
       "srcMobile": "/landxi/assets/proto/film/legs/w04-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w04.webp",
+      "seamPoster": "/landxi/assets/proto/film/legs/w04-last.webp",
       "bytes": 4082376,
       "bytesMobile": 1782193,
-      "bytesPoster": 92236,
+      "bytesPoster": 209882,
+      "cameraSource": "renderer",
       "startCamera": {
         "center": [
           127.326,
@@ -319,21 +361,29 @@
       "look": "diorama",
       "caption": "건물 풋프린트 실측 + AI 온실 검출 · 남원 금지면 · GSD 1.54 cm",
       "source": "build/film/legs/namwon-3d#0..140",
+      "renderer": "build/film/legs/namwon-3d",
       "frames": [
         0,
         140
       ],
       "count": 141,
       "encodedFrames": 142,
+      "fps": 25,
+      "size": [
+        1280,
+        720
+      ],
       "seconds": 5.64,
       "weightVh": 1.23,
       "rate": 0.2181,
       "src": "/landxi/assets/proto/film/legs/w05.mp4",
       "srcMobile": "/landxi/assets/proto/film/legs/w05-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w05.webp",
+      "seamPoster": "/landxi/assets/proto/film/legs/w05-last.webp",
       "bytes": 10276667,
       "bytesMobile": 4202253,
-      "bytesPoster": 80772,
+      "bytesPoster": 173922,
+      "cameraSource": "renderer",
       "startCamera": {
         "center": [
           127.3096,
@@ -367,21 +417,29 @@
       "look": "real",
       "caption": "namwon-greenhouse-2025 · 9,664동 · 항공 정사영상 2025-10 · GSD 25 cm",
       "source": "build/film/frames#362..438",
+      "renderer": "build/film/frames",
       "frames": [
         362,
         438
       ],
       "count": 77,
       "encodedFrames": 78,
+      "fps": 25,
+      "size": [
+        1280,
+        720
+      ],
       "seconds": 3.08,
       "weightVh": 0.671,
       "rate": 0.2179,
       "src": "/landxi/assets/proto/film/legs/w06.mp4",
       "srcMobile": "/landxi/assets/proto/film/legs/w06-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w06.webp",
+      "seamPoster": "/landxi/assets/proto/film/legs/w06-last.webp",
       "bytes": 4864044,
       "bytesMobile": 2224525,
-      "bytesPoster": 118884,
+      "bytesPoster": 220846,
+      "cameraSource": "renderer",
       "startCamera": {
         "center": [
           127.348,
@@ -415,21 +473,29 @@
       "look": "real",
       "caption": "yeosu-marine-2025-aerial · 격자 9,032셀 · 후보 38,057건",
       "source": "build/film/frames#439..574",
+      "renderer": "build/film/frames",
       "frames": [
         439,
         574
       ],
       "count": 136,
       "encodedFrames": 137,
+      "fps": 25,
+      "size": [
+        1280,
+        720
+      ],
       "seconds": 5.44,
       "weightVh": 1.186,
       "rate": 0.218,
       "src": "/landxi/assets/proto/film/legs/w07.mp4",
       "srcMobile": "/landxi/assets/proto/film/legs/w07-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w07.webp",
+      "seamPoster": "/landxi/assets/proto/film/legs/w07-last.webp",
       "bytes": 2523249,
       "bytesMobile": 1194183,
-      "bytesPoster": 24986,
+      "bytesPoster": 56350,
+      "cameraSource": "renderer",
       "startCamera": {
         "center": [
           127.7305,
