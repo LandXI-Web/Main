@@ -169,7 +169,8 @@ html{ scroll-behavior:auto; }
    체계 준수 메모(design/system.md 대비 의도적 이탈 3건, 전부 **필름 판 한정**):
      · 워드마크 화이트 + 소프트 섀도 — 위성영상 위에서 순백 글자는 섀도 없이 안 읽힌다
        (§4-2 가 홍보영상의 3D 압출 대신 지정한 값). 종이 크롬에는 그림자가 없다.
-       워드마크·태그라인·락업은 assets/brand/vector 의 SVG 그대로다 — 조판하지 않는다.
+       태그라인·락업은 assets/brand/vector 의 SVG 그대로다. 워드마크만 SUIT 800 조판 —
+       landxi-wordmark.svg 는 Archivo Black 을 좁힌 폴백 재조판이라 홍보영상보다 눌려 보인다.
      · 크림 헤이즈의 radial-gradient — 프리앰블 `pale cream haze` 를 옮긴 것.
      · 태그라인 필드 그린 #1E9E6A — 홍보영상 민트 #52C4A3 의 필름 팔레트 대응값(§4-1 E).
    ═════════════════════════════════════════════════════════════════════════ */
@@ -202,8 +203,9 @@ html{ scroll-behavior:auto; }
 }
 .sb-end__wm{
   position:absolute; left:50%; top:0; margin:0; transform:translateX(-50%);
-  display:block; width:31vw; height:auto;   /* 폭·top 은 ending.js layout() 이 실측으로 덮어쓴다 */
-  filter:drop-shadow(0 2px 10px rgba(20,24,34,.28));
+  white-space:nowrap; font-family:var(--lx-display); font-weight:800;
+  line-height:1; letter-spacing:0; word-spacing:0.115em;   /* 트래킹 0 — 곡면 원근은 재현하지 않는다 */
+  color:#FFFFFF; text-shadow:0 2px 10px rgba(20,24,34,.28);
   opacity:var(--sb-wm-op);
 }
 
@@ -263,8 +265,8 @@ html{ scroll-behavior:auto; }
 }
 .sb-end.is-static .sb-end__world,.sb-end.is-static .sb-end__haze{ display:none; }
 .sb-end.is-static::before{
-  content:""; width:clamp(240px, 31vw, 460px); aspect-ratio:5758 / 606;
-  background:url(../../assets/brand/vector/landxi-wordmark-dark.svg) center / contain no-repeat;
+  content:"LAND-XI PLATFORM"; font-family:var(--lx-display); font-weight:800;
+  font-size:clamp(28px, 3.2vw, 48px); letter-spacing:0; word-spacing:0.115em; color:var(--lx-ink);
 }
 .sb-end.is-static .sb-end__tag,.sb-end.is-static .sb-end__lx,.sb-end.is-static .sb-end__cta{
   position:static; transform:none; opacity:1; filter:none; margin:0;

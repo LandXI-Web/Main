@@ -272,7 +272,11 @@ const manifest = {
   },
   handoffFinal: {
     legIndex: 6,
-    center: legs[6].endCamera.center,
+    // 필름 끝 카메라(127.7215, 34.569)에서 동쪽으로 1.3 km. 마감 수축(−35 %)이 끝나는 z13.02
+    // 1440×900 프레임이 V-World 위성영상의 회청색 모자이크 공백(서 lon<127.672 · 동 lon≥127.801)
+    // 을 밟지 않는 중심이다 — ending.js dzFor 주석의 실측 참조. 인계 크로스페이드는 이 오프셋만큼
+    // 미세하게 어긋난다(허용: 화면폭의 ~9 %, 카메라가 이미 멈춰 있는 정지 프레임 위에서).
+    center: [127.736, 34.566],
     zoom: legs[6].endCamera.zoom,
     pitch: legs[6].endCamera.pitch,
     bearing: legs[6].endCamera.bearing,

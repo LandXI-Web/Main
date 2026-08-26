@@ -41,12 +41,12 @@ const [B, C, D, E, F, G, H, I] = CUT;
 
 const WM_WIDTH = 0.31;      // 프레임 폭 대비 — §2-1 실측 31.1 %
 const WM_BASE = 0.568;      // 프레임 높이 대비 베이스라인 — §2-1 실측 56.8 %
-/* 워드마크 벡터(assets/brand/vector/landxi-wordmark.svg, viewBox 5758×606)의 기하.
-   글자 몸통은 y 15(캡 상단) → 589(베이스라인). O·C 의 둥근 바닥은 601 까지 오버슈트하고
-   viewBox 는 606 에서 끝난다. 폭 : 캡하이트 = 5758/574 = 10.03 (홍보영상 실측 9.7). */
-const WM_VB = [5758, 606];
-const WM_BASELINE = 589 / WM_VB[1];   // 렌더 높이 대비 베이스라인 위치
-const WM_CAP = 574 / WM_VB[1];        // 렌더 높이 대비 캡하이트
+const WM_RATIO = 9.7;       // 폭 : 캡하이트 — §2-1 실측 (캡 41px @720p)
+/* 워드마크는 브랜드 벡터를 쓰지 않는다. assets/brand/vector/landxi-wordmark.svg 는 홍보영상의
+   트레이스가 아니라 Archivo Black 을 좁혀 다시 짠 폴백이라(shots/brand/vector-vs-promo.jpg 라벨)
+   폭:캡 10.0 은 맞아도 글자 하나하나가 눌려 있고 낱말 사이가 벌어진다 — 31 % 로 놓으면 홍보영상의
+   넓고 무거운 지오메트릭 그로테스크가 아니라 컨덴스드로 읽힌다. 원본 벡터가 오기 전까지는
+   SUIT 800 조판이 더 가깝다. 태그라인·LX 락업은 벡터 그대로다(트레이스라 정확하다). */
 const SHRINK = 0.65;        // −35 % — §2-1 587 → 383 px
 const DZ = Math.log2(1 / SHRINK);   // 0.621 줌레벨 = 지상 스케일 ×0.65
 
@@ -60,10 +60,14 @@ const DZ = Math.log2(1 / SHRINK);   // 0.621 줌레벨 = 지상 스케일 ×0.65
    줌 정수 경계는 그대로 지킨다(e2e 계약: floor(zoom) 불변). 정수 경계 안에 −22 % 이상의
    여유가 없을 때만 규격값(−35 %)을 그대로 쓴다 — 브랜드 문법이 타일 아티팩트보다 중요하다.
 
-   ※ end-2 좌하단의 회청색 사각형은 로딩 구멍이 **아니다** — V-World 위성영상 자체의
-   모자이크 공백이다(13/7001/3257, 14/14002/6515 … 타일 안에 평평한 회청색 면이 구워져
-   있고 모든 레벨에 같다). 카메라가 물러나며 화각이 넓어질 때 프레임 안으로 들어온다.
-   dz ≤ 0.23 이면 프레임 밖에 머물지만 그러면 −15 % 뿐이라 브랜드 문법이 깨진다. 소스 문제. */
+   ※ V-World 위성영상에는 평평한 회청색 모자이크 공백이 구워져 있다(13/7001/3257 등, 모든
+   레벨에 같다). 가막만 주변 실측(z15 64px 셀 표준편차 <3 · R>40, tools 없이 1회 샘플링):
+     서쪽  lon < 127.672 (lat 34.522–34.545) · lon < 127.697 (lat ≤ 34.522, lat ≥ 34.602)
+     동쪽  lon ≥ 127.801 (lat 34.552–34.574)
+   dz 는 그대로 두고 인계 카메라 중심을 옮겨 해결한다 — manifest.handoffFinal.center 를
+   [127.736, 34.566] 으로 잡으면 수축 끝(z13.02, 1440×900) 프레임이 lon 127.675–127.797 ·
+   lat 34.535–34.597 이라 네 공백이 전부 프레임 밖이다. 수축은 중심 고정 줌아웃이므로
+   끝 프레임이 비어 있지 않으면 중간 프레임도 비어 있지 않다. */
 export function dzFor(zoom) {
   const room = (zoom - Math.floor(zoom)) - 0.02;   // 줌 정수 경계까지(스펙 계약: floor(z) 불변)
   return room >= 0.35 ? Math.min(DZ, room) : DZ;
@@ -80,25 +84,42 @@ export function createEnding(ctx) {
   const reduce = ctx.reduce;
   if (reduce) host.classList.add('is-static');
 
-  let top = 0, wpx = 0, hpx = 0;   // 워드마크 실측 결과(스케일 1 기준)
+  let fs = 0, asc = 0, top = 0, wpx = 0;   // 워드마크 실측 결과(스케일 1 기준)
+  let cv = null;
 
   /* ── 워드마크 기하 — 홍보영상 비율을 화면 크기와 무관하게 재현한다 ────────
-     워드마크는 브랜드 벡터(SVG) 그대로다 — 조판하지 않는다. 폭을 31 % 에 맞추고,
-     렌더 높이에서 베이스라인(589/606)을 되짚어 56.8 % 에 건다. */
+     자족은 SUIT 800. 홍보영상은 지오메트릭 그로테스크 ExtraBold 이고, SUIT 는
+     체계가 이미 싣고 있는 유일한 지오메트릭 표시 서체다(제4의 서체를 들이지 않는다).
+     폭을 먼저 31 %에 맞추고, 그 다음 캔버스 폰트 메트릭으로 베이스라인을 56.8 %에 건다.
+     em 값으로 어림잡지 않는 이유: 폴백 서체가 걸리면 비율이 통째로 어긋난다. */
   function layout() {
     const vw = innerWidth, vh = innerHeight;
+    const target = vw * WM_WIDTH;
     // 31 % 는 **수축이 끝난 뒤**(스케일 1.000)의 폭이다 — 홍보영상 64.17 s 실측.
     // 재는 동안 월드 그룹을 1.000 으로 고정한다. 스케일이 걸린 채로 재면
     // 진입 크기(1.538×)를 31 % 에 맞추게 되고, 마감이 20 % 로 쪼그라든다.
     const prev = root.style.getPropertyValue('--sb-wm-s');
     root.style.setProperty('--sb-wm-s', '1');
-    wm.style.width = (vw * WM_WIDTH).toFixed(2) + 'px';
-    const r = wm.getBoundingClientRect();
-    wpx = r.width || vw * WM_WIDTH;
-    hpx = r.height || wpx * WM_VB[1] / WM_VB[0];
-    top = vh * WM_BASE - hpx * WM_BASELINE;
+    fs = target / WM_RATIO / 0.72;                 // 캡비 0.72 로 출발
+    for (let i = 0; i < 3; i++) {                  // 실측으로 수렴시킨다
+      wm.style.fontSize = fs + 'px';
+      const w = wm.getBoundingClientRect().width;
+      if (!w) break;
+      fs *= target / w;
+    }
+    wm.style.fontSize = fs + 'px';
+    wpx = wm.getBoundingClientRect().width;
+
+    // line-height:1 상자 안에서 베이스라인이 앉는 높이 = (fs − (asc+desc))/2 + asc
+    if (!cv) cv = document.createElement('canvas').getContext('2d');
+    cv.font = '800 ' + fs + 'px SUIT, Pretendard, system-ui, sans-serif';
+    const m = cv.measureText('LAND-XI PLATFORM');
+    const a = m.fontBoundingBoxAscent || m.actualBoundingBoxAscent || fs * 0.88;
+    const d = m.fontBoundingBoxDescent || m.actualBoundingBoxDescent || fs * 0.22;
+    asc = (fs - (a + d)) / 2 + a;
+    top = vh * WM_BASE - asc;
     wm.style.top = top + 'px';
-    root.style.setProperty('--sb-wm-cap', (hpx * WM_CAP).toFixed(2) + 'px');
+    root.style.setProperty('--sb-wm-cap', (wpx / WM_RATIO).toFixed(2) + 'px');
     if (prev) root.style.setProperty('--sb-wm-s', prev); else root.style.removeProperty('--sb-wm-s');
   }
 
@@ -193,7 +214,7 @@ export function createEnding(ctx) {
         cuts: { B, C, D, E, F, G, H, I },
         dz, shrink: dz === null ? null : Math.pow(2, -dz),
         wordmark: {
-          widthPct: wpx / innerWidth, baselinePct: (top + hpx * WM_BASELINE) / innerHeight, height: hpx,
+          widthPct: wpx / innerWidth, baselinePct: (top + asc) / innerHeight, fontSize: fs,
           liveWidthPct: r.width / innerWidth, opacity: op('sb-end-wm'),
         },
         tagline: op('sb-end-tag'),
