@@ -104,6 +104,8 @@ button{ font:inherit; color:inherit; background:none; border:0; padding:0; curso
 #bb-applied i{ font-style:normal; color:#CCCCCC; }
 #plate-box{ position:absolute; left:128px; top:378px; width:572px; height:254px; overflow:hidden; background:#010102; }
 #plate{ position:absolute; inset:0; }
+/* maplibre 벤더 CSS 가 Helvetica Neue 를 심는다 — 서체는 정확히 3개여야 한다(§1). */
+#plate, #plate *{ font-family:'Pretendard','SUIT',system-ui,sans-serif; }
 #plate canvas{ outline:none; }
 #plate-cap{ position:absolute; left:128px; top:644px; width:572px; display:flex;
   justify-content:space-between; align-items:baseline; }
