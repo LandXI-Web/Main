@@ -17,85 +17,163 @@
 
 <a class="skip" href="#ledger">원장으로 건너뛰기</a>
 
-<!-- ══ A안 "지도 위 원장" ══════════════════════════════════════════════════
-     레일 A1–A11 · 원장 B1–B15(원본 순서 그대로) · 판 PLATE-FULL.
-     기능은 원본 dashboard.html 과 1:1 이고, 지도는 새 위젯이 아니라 그 위젯들을
-     조판하는 바탕이다. 대조표 docs/superpowers/proto/2026-08-26-dashboard-parity.md -->
+<!-- ══ A안 "지도 위 원장" — 디자인 마스터 design-canvas/v2/B2-Dashboard.dc.html 대조 ══
+     레일 76 · 원장 372 · 판 992. 기능은 원본 dashboard.html 과 1:1(A1–A11 / B1–B16),
+     대조표 docs/superpowers/proto/2026-08-26-dashboard-parity.md -->
 
-<!-- ── A1–A11 좌측 내비게이션 레일 ────────────────────────────────────── -->
+<!-- ── A1–A11 좌측 레일 ────────────────────────────────────────────────── -->
 <aside id="rail" aria-label="주 메뉴">
-  <a id="rail-mark" href="../home.html" aria-label="Land-XI 홈"><img src="../assets/images/lx_symbol.png" alt=""></a>
+  <a id="rail-mark" href="../home.html" aria-label="Land-XI 홈"><span>LAND</span><span>XI</span></a>
   <nav id="rail-top" class="rail-group"></nav>
   <nav id="rail-foot" class="rail-group"></nav>
 </aside>
 
 <!-- ── 판 ─────────────────────────────────────────────────────────────── -->
 <div id="plate" aria-hidden="true"></div>
-<!-- 판의 비네트 — 카드도 유리도 아니다. 사진 자체의 인화 처리로 계기가 앉을 자리를 만든다.
-     (§4 "오버레이는 이미지 안에". 판 위 흰 헤어라인·캡션이 밝은 지형에서도 읽히게.) -->
+<!-- 인화 비네트 — 카드도 유리도 아니다. 사진 자체의 처리로 계기가 앉을 자리를 만든다. -->
 <div id="plate-veil" aria-hidden="true"></div>
 
-<!-- ── 원장 — 원본 위젯 B1 → B15 를 원본 순서 그대로 세운 흰 단 ────────── -->
+<!-- ── 원장 B1 → B15 (원본 순서 그대로) ────────────────────────────────── -->
 <aside id="ledger" tabindex="-1" aria-label="LX 관리자 대시보드">
-  <div id="led-head">
-    <span id="mark">LAND-XI</span>
-    <h1 id="b1">LX 관리자 대시보드</h1>
-    <p class="caption" id="b1-sub">서비스 운영 현황과 승인·관리 업무를 한눈에 확인하세요.</p>
-    <hr class="tickrule">
-    <p class="caption" id="b2">—</p>
+  <p class="lb">LAND-XI · 관리자</p>
+  <h1 id="b1">LX 관리자 대시보드</h1>
+  <p class="kb" id="b1-sub">서비스 운영 현황과 승인·관리 업무를 한눈에 확인하세요</p>
+  <p class="asof" id="b2"><i></i><span class="n"></span><em class="kb"></em></p>
+  <hr class="hr">
+
+  <!-- B3 공지 -->
+  <a class="notice" id="b-notice" href="../notice.html"></a>
+  <hr class="hr hr--ink">
+
+  <!-- B4–B8 KPI 5 -->
+  <div id="b-kpi"></div>
+
+  <!-- B9 백본 — Ⅰ등급: 연결된 분석 과제가 판 위에 작업 AOI 로 선다 -->
+  <div class="g1">
+  <div class="wh" id="b-bb"><span class="lb">AI 기반 모델 (백본)</span><span class="kb" id="bb-tasks">—</span></div>
+  <div class="bb">
+    <span class="d" id="bb-name">—</span><span class="n5" id="bb-ver">—</span>
+    <span class="kb" id="bb-applied">—</span>
   </div>
-  <div id="led-body"></div>
-  <footer id="led-foot"></footer>
+  <button type="button" class="jobs" id="b-jobs"></button>
+  <div class="src"><span class="kb">출처</span><span class="n" id="bb-src">—</span></div>
+  </div>
+
+  <!-- B10 AI 개발 프로젝트 현황 — Ⅰ등급: 사업 지역 채색 -->
+  <div class="g1">
+  <div class="wh" id="b-proj"><span class="lb">AI 개발 프로젝트 현황</span>
+    <span class="kb"><i class="est">추정</i><a href="../ai-project.html">전체 보기 ›</a></span></div>
+  <div id="t-proj"></div>
+  </div>
+
+  <!-- B11 사용자 이용 현황 — Ⅲ등급: 판은 반응하지 않는다 -->
+  <div class="wh" id="b-visit"><span class="lb">사용자 이용 현황</span>
+    <span class="kb"><i class="est">추정</i>최근 7일 방문</span></div>
+  <div id="t-visit"></div>
+
+  <!-- B12 전체 스토리지 사용량 — Ⅰ등급: 정사영상 footprint -->
+  <div class="g1">
+  <div class="wh" id="b-store"><span class="lb">전체 스토리지 사용량</span>
+    <span class="kb"><i class="est">추정</i><span id="store-tot">—</span></span></div>
+  <div id="t-store"></div>
+  </div>
+
+  <!-- B13 카드 발행 승인 대기 — Ⅰ등급: 대상 지역 핀 2 -->
+  <div class="g1">
+  <div class="wh" id="b-approve"><span class="lb" id="ap-h">카드 발행 승인 대기</span>
+    <span class="kb"><a href="../admin-publish.html">카드 발행 관리 ›</a></span></div>
+  <div id="ap-rows" role="list"></div>
+  </div>
+
+  <!-- B14 사용자·콘텐츠 관리 -->
+  <hr class="hr hr--ink">
+  <div id="ad-rows" role="list"></div>
+
+  <!-- B15 푸터 -->
+  <hr class="hr">
+  <div class="foot"><span class="kb">LX 한국국토정보공사 · 고객센터 <span class="n">063-713-1213</span></span>
+    <a class="kb fam" href="../home.html">Family Site</a></div>
 </aside>
 
-<!-- ── 판 위 계기 — 전부 이미지 안 헤어라인(D20). 떠 있는 HUD 스티커 금지. ── -->
+<!-- ── 판 위 계기 — 전부 이미지 안 헤어라인. 떠 있는 HUD 스티커 금지. ────── -->
 <div id="fresh">
-  <p class="caption" id="fresh-t">—</p>
-  <button type="button" id="allmap" class="ghost">전체 지도로</button>
+  <i class="live"></i>
+  <span class="n" id="fresh-t">—</span>
+  <span class="kb" id="fresh-s">—</span>
+  <button type="button" id="allmap" class="ghost"><svg viewBox="0 0 132 32" aria-hidden="true"><path d="M0 12V0h16M116 0h16v12M132 20v12h-16M16 32H0v-12"/></svg><b class="d">전체 지도로</b></button>
 </div>
 
-<!-- D01 취득 밀도 스캔 스트립 — 남원 농경지 정사영상 4시점 + 변화 급변 -->
-<section id="scan" aria-label="정사영상 취득 · 변화 스캔">
-  <p class="caption" id="scan-h">—</p>
+<!-- 취득 밀도 스캔 스트립 — 무채 틱 = 취득 밀도, 앰버 틱 = 자동 정지점 -->
+<section id="scan" aria-label="취득 밀도 스캔">
+  <div class="wh"><span class="n scan-k">SCAN · 취득 밀도 × 시점</span>
+    <span class="kb">클릭하면 카메라와 필터가 그 시점으로 간다</span></div>
   <div id="scan-bar"></div>
-  <div id="scan-ax"></div>
+  <div id="scan-rule"></div>
+  <div class="wh scan-lg">
+    <span class="kb"><i class="sw sw--g"></i>무채 틱 = 취득 밀도</span>
+    <span class="kb"><i class="sw sw--a"></i>앰버 틱 = 자동 정지점</span>
+    <span class="kb" id="scan-n">—</span>
+  </div>
 </section>
 
-<!-- D17 정직 태깅 범례 -->
-<ul id="tags" aria-label="표기 규약">
-  <li><i class="sw sw--m"></i>측정</li>
-  <li><i class="sw sw--e"></i>추정</li>
-  <li><i class="sw sw--u"></i>미확정</li>
-  <li><i class="sw sw--x"></i>결측</li>
-</ul>
 
-<!-- 판 오른쪽 계기단 — 벡터 추출 카드 + 임계 범례. 한 단으로 흐른다(겹치지 않게). -->
-<div id="instr">
-  <!-- 지도-속-지도. B9(백본 모델)가 하는 일의 증거. -->
-  <figure id="vcard" hidden></figure>
-  <!-- 임계 드래그 범례 — 슬라이더가 아니라 히스토그램 위의 마커 -->
-  <section id="thr" hidden aria-label="신뢰도 임계"></section>
-</div>
 
-<!-- D18 뷰어 플래그 — 지도가 지금 무엇을 보고 있는지 한 줄 -->
-<p id="flag" class="caption">—</p>
+<!-- 스케일 바 + 사람 척도 참조물 -->
+<div id="scale"><i class="bar"></i><span class="n" id="scale-m">—</span><span class="kb">비닐하우스 1동 ≒ 54 m</span></div>
 
+<!-- 벡터 추출 카드 — 지도-속-지도. 백본 모델이 하는 일의 증거. -->
+<figure id="vcard" hidden></figure>
+
+<!-- 신뢰도 임계 — 슬라이더가 아니라 히스토그램 위의 마커 -->
+<section id="thr" hidden aria-label="신뢰도 임계"></section>
+
+<!-- 락온 브래킷 -->
+<div id="lock" hidden><span class="lkl"><span class="n lkl-a"></span><span class="n lkl-b">락온 180 → 80 → 120 ms</span></span>
+  <i class="bk bk--tl"></i><i class="bk bk--tr"></i><i class="bk bk--bl"></i><i class="bk bk--br"></i></div>
+
+<svg id="pins" aria-hidden="true"></svg>
 <div id="probe" hidden></div>
 <div id="card" hidden aria-live="polite"></div>
-<p id="attrib" class="caption">자료제공: 브이월드(www.vworld.kr) · 경계 sigungu.geojson</p>
 
-<!-- D02 어두운 유리 시간 스크러버 — 화면에 허용된 단 하나의 유리. 사건에서 선다. -->
-<div id="strip" aria-label="시간 스크러버">
-  <button type="button" id="strip-play" aria-pressed="true" aria-label="재생/정지"><svg viewBox="0 0 12 12" aria-hidden="true"><path class="ic-play" d="M3 2l7 4-7 4z"/><path class="ic-pause" d="M3.2 2h2.1v8H3.2zM6.7 2h2.1v8H6.7z"/></svg></button>
-  <span class="num strip-end" id="strip-t0">—</span>
-  <div id="strip-track" role="slider" tabindex="0" aria-label="시점" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-    <canvas id="strip-bar"></canvas>
-    <i id="strip-head"></i>
+<!-- 어두운 유리 시간 스크러버 — 화면에 허용된 단 하나의 유리 -->
+<div id="strip">
+  <div class="wh strip-h">
+    <span class="n strip-k">시간 스크러버</span>
+    <span class="kb">남원 정사영상 취득 · 변화 지수(비지도)</span>
+    <span class="strip-tr">
+      <button type="button" id="strip-prev" aria-label="이전 시점">◀</button>
+      <button type="button" id="strip-play">재생</button>
+      <button type="button" id="strip-next" aria-label="다음 시점">▶</button>
+      <button type="button" id="strip-pause">일시정지</button>
+      <span class="kb auto" id="strip-auto">자동 정지 ON</span>
+    </span>
+  </div>
+  <div id="strip-track" role="slider" tabindex="0" aria-label="시점 창" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+    <i class="base"></i>
+    <i id="strip-win"><b class="h h--a" data-h="a"></b><b class="h h--b" data-h="b"></b></i>
     <div id="strip-marks"></div>
   </div>
-  <span class="num strip-end" id="strip-t1">—</span>
-  <span class="num" id="strip-now">—</span>
-  <span id="strip-note" class="caption"></span>
+  <div class="wh strip-ax">
+    <span class="n" id="strip-t0">—</span>
+    <span class="n" id="strip-now">—</span>
+    <span class="n" id="strip-t1">—</span>
+  </div>
+</div>
+
+<!-- 뷰어 플래그 + 자백 + 정직 태깅 범례 한 줄(칩 프레임 없음) -->
+<div id="foot">
+  <p id="flag">
+    <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.4 11V1h7.2L7.4 4l2.2 3H2.4"/></svg>
+    <span class="kb" id="flag-t">—</span>
+    <span class="n" id="attrib">자료제공: 브이월드 · LX 한국국토정보공사</span>
+  </p>
+  <p id="own" class="kb">—</p>
+  <p id="legend" class="kb">
+    <i class="ln ln--m"></i>측정 = 실선<span class="sep">·</span>
+    <i class="ln ln--e"></i>추정 = 점선<span class="sep">·</span>
+    <i class="ln ln--u"></i>미확정 = 파선<span class="sep">·</span>
+    눈금이 붙은 블록만 지도에 선다
+  </p>
 </div>
 
 <script type="module" src="dashboard.js"></script>
