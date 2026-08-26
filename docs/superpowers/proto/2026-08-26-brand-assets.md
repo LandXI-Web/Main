@@ -78,3 +78,49 @@
 
 전체 48개 후보는 `landxi/assets/brand/src/{uilist,uilist/_crops,pptx-intro2,pptx-feedback-8ch,pdf-visual-concepts}/`
 아래 원본 파일명(또는 `pageNN-xrefNN`/크롭명)으로 보관. 콘택트 시트: `shots/brand/candidates.jpg`.
+
+## 벡터화 작업 (2026-08-26 후속)
+
+원본 벡터가 없다는 위 결론에 따라 프로모 영상 프레임 3장(`promo/brand-wordmark-4x.png`,
+`brand-lx-lockup-4x.png`, `brand-tagline-2x.png`)에서 SVG를 뽑았다. 도구는
+`tools/brand/`(`yolo` conda 환경: opencv, numpy, Pillow, Node/Playwright 병용),
+산출물은 `landxi/assets/brand/vector/`, 비교 시트는 `shots/brand/vector-vs-promo.jpg`.
+
+**트레이싱 방식**: 처음엔 `potracer`(순수 파이썬 potrace 포트, `pip install potracer`)를
+썼으나 사각형 하나짜리 최소 재현 테스트에서도 좌표를 잘못 뽑아(코너가 아니라 변의 중점을
+잇는 다이아몬드 모양 출력 — bool 반전/전치 조합을 다 시도해도 동일) 폐기. 대신
+`cv2.findContours`(RETR_CCOMP, 홀/카운터 보존) → `cv2.approxPolyDP`(서브픽셀 tolerance)로
+단순화 → 정점별 turn-angle을 재서 급격한 코너(>48~60°)는 직선(L)으로, 완만한 연속 구간은
+Catmull-Rom→cubic Bezier(C)로 매끄럽게 잇는 자체 구현(`tools/brand/vectorize.py`의
+`mask_to_path_d_cv`)으로 교체했다. 직선 stem은 각지게, 라운드 카운터/모서리는 부드럽게
+나온다 (`shots/brand/vector-vs-promo.jpg`에서 LX 락업 오버레이가 프로모와 픽셀 단위로
+거의 겹치는 것으로 확인).
+
+- **`lx-lockup.svg`** — `promo/brand-lx-lockup-4x.png`(밝은 배경)를 2배 업스케일 후
+  배경색과의 거리 임계값 + Hue 분리로 민트 LX 심볼(`#1FBF8F`)과 네이비 국문 텍스트
+  (`#0F2A4A`)를 별도 path로 분리, 각각 트레이싱. 그림자 스펙클은 연결요소 면적 필터로
+  제거. `tools/brand/build_lockup.py`.
+- **`tagline.svg`** — `promo/brand-tagline-2x.png`를 동일 파이프라인으로 단색(민트
+  `#2FC49B`) 트레이싱. 프레임 우상단에 섞여든 UI 아이콘 조각(면적 <400px)은 최소 면적
+  필터로 제거. `tools/brand/build_tagline.py`.
+- **`landxi-wordmark.svg` / `landxi-wordmark-dark.svg` — 폴백 재조판 (트레이싱 아님, 명시)**:
+  `brand-wordmark-4x.png`를 직접 트레이싱하는 건 포기했다. 이유 둘: (1) 좌측 "LAND-XI"의
+  L이 프레임 밖으로 잘려 있고, (2) 배경의 흰색 비행기 그래픽이 "PLATFORM"의 A/T와 겹쳐
+  마스크에 섞여 들어옴(`brightness>190 & saturation<60` 임계값으로는 비행기와 글자를
+  구분 불가 — 둘 다 흰색). 대신 지시대로 **Google Fonts "Archivo Black"(weight 900)을
+  Playwright로 렌더링**해 재조판했다. 프로모 자체 픽셀에서 실측한 목표 비율(가려진
+  L을 보간해 추정: width\:cap ≈ 9.7:1, XI-PLATFORM 사이 word-space ≈ 0.54×cap)에
+  맞추기 위해 — Archivo Black 기본 트래킹은 13.0:1로 목표보다 훨씬 넓고, Montserrat
+  ExtraBold는 14.5:1로 더 넓어서 음수 letter-spacing만으로는 획이 서로 겹칠 정도로
+  압축해야 함 — 균일 `scaleX(0.745)` 압축 + 실측 word-gap 스페이서로 렌더링 후 재측정을
+  3회 반복 수렴시켰다(결과: width\:cap 9.70:1, word-space\:cap 0.545). 이 렌더를
+  `mask_to_path_d_cv`로 트레이싱해 최종 SVG를 만들었다(`tools/brand/build_wordmark.py` +
+  `tools/brand/render-wordmark.mjs`). fill은 `#FFFFFF`(라이트-온-다크용)와
+  `-dark.svg`의 `#010102`(다크-온-라이트용) 두 벌.
+- 세 SVG 모두 `landxi/assets/brand/vector/*.png`로 3000px 폭 PNG(투명 배경) 동반 export.
+- `shots/brand/vector-vs-promo.jpg`: 자산별 [프로모 크롭 | 벡터 래스터 | 50% 오버레이]
+  3열 × 3행. LX 락업/태그라인은 오버레이가 거의 픽셀 정합; 워드마크는 재조판이라 형태
+  비교용(정합 아님).
+
+**한계**: 워드마크는 실제 로고 폰트가 아니라 근사 재조판이다. "GOTHAM" 단서(위 4번)를
+확인할 방법이 없어 Archivo Black으로 대체했고, 공식 폰트 파일을 구하면 재작업 필요.
