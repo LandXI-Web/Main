@@ -1,0 +1,213 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>데이터 관리 — Land-XI</title>
+<link rel="icon" href="../assets/images/favicon_landxi.png">
+<script>
+  // 로그인 관문. 그리기 전에 판정한다 — 관리자 화면이 한 프레임도 새어 나가지 않게.
+  if (localStorage.getItem('lx_logged_in') !== '1') {
+    location.replace('../login.html?next=' + encodeURIComponent('proto/dataset.html' + location.search));
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
+<link rel="stylesheet" href="v3-tokens.css">
+<link rel="stylesheet" href="dataset.css">
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+</head><body class="v3" data-colorway="light" data-tab="upload">
+
+<a class="skip" href="#ledger">원장으로 건너뛰기</a>
+
+<!-- ══ 데이터 관리 — 조판 마스터 design-canvas/v2/B2-DataMgmt-Upload.dc.html (?tab=upload)
+     · B2-DataMgmt-List.dc.html (?tab=archive|manage|publishing), 각 1440×900.
+     기능은 원본 dataset.html + 프래그먼트 4종과 1:1.
+     대조표 docs/superpowers/proto/2026-08-26-dataset-parity.md ══ -->
+
+<!-- ── A1–A11 좌측 레일 (대시보드와 같은 컴포넌트) ─────────────────────── -->
+<aside id="rail" aria-label="주 메뉴">
+  <a id="rail-mark" href="../home.html" aria-label="Land-XI 홈"><span>LAND</span><span>XI</span></a>
+  <nav id="rail-top" class="rail-group"></nav>
+  <nav id="rail-foot" class="rail-group"></nav>
+</aside>
+
+<!-- ── 판 ─────────────────────────────────────────────────────────────── -->
+<div id="plate" aria-hidden="true"></div>
+<div id="plate-veil" aria-hidden="true"></div>
+<div id="ex-layer" aria-hidden="true"></div>
+
+<!-- ── 원장 ───────────────────────────────────────────────────────────── -->
+<aside id="ledger" tabindex="-1" aria-label="데이터 관리">
+  <p class="lb">데이터 관리 · DATASET</p>
+  <h1 id="ds-h1">데이터 관리</h1>
+  <p class="kb" id="ds-sub">업로드 · 발행 · 아카이브를 원본과 같은 4개 탭으로 다룹니다</p>
+
+  <!-- 탭 4종 — 원본 #ds-tabs. `?tab=` 으로 URL 과 동기화한다. -->
+  <div id="ds-tabs" role="tablist" aria-label="데이터 관리 탭"></div>
+  <div class="tabs-rule"></div>
+
+  <!-- 필터 칩 + 검색 — 탭 전환 시 초기화된다(원본 동작). -->
+  <div id="ds-filters" role="group" aria-label="필터"></div>
+  <label id="ds-search" for="q">
+    <svg viewBox="0 0 14 14" aria-hidden="true"><circle cx="6.2" cy="6.2" r="4.6"/><path d="M9.6 9.6 13 13"/></svg>
+    <input id="q" type="search" placeholder="검색" autocomplete="off" aria-label="검색">
+  </label>
+
+  <!-- 탭 패널 4종 -->
+  <section id="panel-upload" class="panel" role="tabpanel" aria-labelledby="tab-upload">
+    <form id="up-form" novalidate>
+      <div id="drop" tabindex="0" role="button" aria-describedby="drop-sub">
+        <p class="dz-t">파일을 드래그하여 놓거나 클릭</p>
+        <p class="kb dz-s" id="drop-sub">여러 파일을 한 번에 · 최대 1 TB</p>
+        <div class="dz-acc" id="dz-acc"></div>
+        <input id="file" type="file" multiple hidden>
+      </div>
+      <p id="up-picked" class="kb" hidden></p>
+      <p id="up-err" class="err" role="alert" hidden></p>
+      <button type="submit" id="up-go" class="ghost ghost--w">
+        <svg viewBox="0 0 324 38" aria-hidden="true"><path d="M0 12V0h16M308 0h16v12M324 26v12h-16M16 38H0v-12"/></svg><b class="d">업로드</b>
+      </button>
+    </form>
+
+    <div class="wh sec"><span class="lb">진행 목록</span><span class="kb" id="up-tally">—</span></div>
+    <div id="up-list" role="list"></div>
+    <p id="up-more" class="kb" hidden></p>
+
+    <div class="wh sec2"><span class="lb">내 디스크 사용량</span><span class="n5" id="disk-pct">—</span></div>
+    <div id="disk-bar"><i></i></div>
+    <div class="wh disk-n"><span class="n" id="disk-use">—</span><span class="n" id="disk-free">—</span></div>
+    <button type="button" id="quota-open" class="ghost ghost--w">
+      <svg viewBox="0 0 324 36" aria-hidden="true"><path d="M0 12V0h16M308 0h16v12M324 24v12h-16M16 36H0v-12"/></svg><b class="d">디스크 증량 신청</b>
+    </button>
+  </section>
+
+  <section id="panel-archive" class="panel" role="tabpanel" aria-labelledby="tab-archive" hidden>
+    <div id="ar-list" role="list"></div>
+    <p id="ar-empty" class="kb empty" hidden>조건에 맞는 데이터가 없습니다.</p>
+  </section>
+
+  <section id="panel-manage" class="panel" role="tabpanel" aria-labelledby="tab-manage" hidden>
+    <div class="wh sec"><span class="lb" id="dn-h">업로드 완료</span><button type="button" class="kb more" id="dn-more">전체 보기 ›</button></div>
+    <div id="dn-list" role="list"></div>
+    <p id="dn-empty" class="kb empty" hidden>조건에 맞는 데이터가 없습니다.</p>
+  </section>
+
+  <section id="panel-publishing" class="panel" role="tabpanel" aria-labelledby="tab-publishing" hidden>
+    <div class="wh sec"><span class="lb" id="pb-h">레이어 발행중</span><span class="kb" id="pb-tally">—</span></div>
+    <div id="pb-list" role="list"></div>
+    <p id="pb-empty" class="kb empty" hidden>조건에 맞는 데이터가 없습니다.</p>
+  </section>
+
+  <!-- 푸터 include — 원본 include/footer.html -->
+  <hr class="hr">
+  <div id="foot-links"></div>
+  <p class="kb n" id="foot-addr">—</p>
+</aside>
+
+<!-- ── 판 위 계기 — 전부 이미지 안 헤어라인 ────────────────────────────── -->
+<div id="fresh">
+  <i class="live"></i>
+  <span class="n" id="fresh-t">—</span>
+  <span class="kb" id="fresh-s">—</span>
+  <button type="button" id="allmap" class="ghost"><svg viewBox="0 0 132 32" aria-hidden="true"><path d="M0 12V0h16M116 0h16v12M132 20v12h-16M16 32H0v-12"/></svg><b class="d">전체 지도로</b></button>
+</div>
+
+<!-- 데이터셋 상세 드로어 — 아카이브 카드에서 연다. -->
+<section id="detail" hidden aria-label="데이터셋 상세">
+  <div class="wh dt-h"><span class="n dt-k">데이터셋 상세</span><button type="button" id="detail-x" class="n x" aria-label="닫기">×</button></div>
+  <div id="detail-rows"></div>
+  <p class="n dt-sub">밴드 · 속성</p>
+  <div class="dt-th"><span>속성명</span><span>속성정보</span></div>
+  <div id="detail-bands"></div>
+  <div class="dt-act">
+    <button type="button" class="ghost ghost--d" data-act="share"><svg viewBox="0 0 148 34" aria-hidden="true"><path d="M0 12V0h16M132 0h16v12M148 22v12h-16M16 34H0v-12"/></svg><b class="d">공유 설정</b></button>
+    <button type="button" class="ghost ghost--d" data-act="geo"><svg viewBox="0 0 148 34" aria-hidden="true"><path d="M0 12V0h16M132 0h16v12M148 22v12h-16M16 34H0v-12"/></svg><b class="d">공간 편집</b></button>
+  </div>
+</section>
+
+<!-- 레이어 발행중 요약 패널 — 발행중 탭에서 판 위에 선다. -->
+<section id="pbcard" hidden aria-label="레이어 발행중 요약">
+  <div class="wh dt-h"><span class="n dt-k" id="pbcard-k">레이어 발행중</span><span class="kb" id="pbcard-s">—</span></div>
+  <div id="pbcard-body"></div>
+  <button type="button" id="pbcard-cancel" class="ghost ghost--d"><svg viewBox="0 0 276 34" aria-hidden="true"><path d="M0 12V0h16M260 0h16v12M276 22v12h-16M16 34H0v-12"/></svg><b class="d">발행 취소</b></button>
+</section>
+
+<!-- 지도 레이어 발행 폼 — 화면에 허용된 단 하나의 유리(취향 §6). -->
+<form id="pubform" hidden aria-label="지도 레이어 발행">
+  <div class="wh pf-h"><span class="n pf-k">지도 레이어 발행</span><span class="kb" id="pf-sel">—</span></div>
+  <div class="pf-grid">
+    <label class="pf-f"><span class="kb">발행 유형 *</span><select id="pf-type" required></select></label>
+    <label class="pf-f"><span class="kb">기준 일자 *</span><input id="pf-basis" type="date" required></label>
+    <label class="pf-f"><span class="kb">데이터명 *</span><input id="pf-name" type="text" required maxlength="80" placeholder="데이터명"></label>
+    <label class="pf-f"><span class="kb">출처</span><input id="pf-src" type="text" maxlength="60" placeholder="출처"></label>
+  </div>
+  <div class="pf-grid2">
+    <label class="pf-f"><span class="kb">설명</span><input id="pf-desc" type="text" maxlength="120" placeholder="설명"></label>
+    <div class="pf-f pf-share">
+      <span class="kb">공유 권한 · 기관명 / 권한명</span>
+      <table id="pf-perm"><thead><tr><th>기관명</th><th>권한명</th></tr></thead><tbody></tbody></table>
+    </div>
+    <button type="submit" class="ghost ghost--d pf-go"><svg viewBox="0 0 168 34" aria-hidden="true"><path d="M0 12V0h16M152 0h16v12M168 22v12h-16M16 34H0v-12"/></svg><b class="d">지도 레이어 발행</b></button>
+  </div>
+  <p id="pf-err" class="err err--d" role="alert" hidden></p>
+</form>
+
+<!-- 판 하단 — 범례 · 자백 · 출처 -->
+<div id="legend" aria-hidden="true">
+  <span class="kb"><svg viewBox="0 0 14 8" aria-hidden="true"><path d="M0 4h14" stroke-width="1.6"/></svg>측정 = 실선</span>
+  <span class="kb"><svg viewBox="0 0 14 8" aria-hidden="true"><path d="M0 4h14" stroke-width="1" stroke-dasharray="4 3"/></svg>미확정 = 파선</span>
+</div>
+<div id="plate-foot">
+  <p class="kb" id="own">—</p>
+  <p class="n" id="attrib">—</p>
+</div>
+
+<!-- ── 모달 3종 (원본 공용 컴포넌트) ──────────────────────────────────── -->
+<div id="scrim" hidden></div>
+
+<!-- 디스크 증량 신청 — 원본 dataset-upload / mypage 공용 -->
+<div id="m-quota" class="modal" role="dialog" aria-modal="true" aria-labelledby="mq-t" hidden>
+  <p class="n mq-tag" id="mq-tag">MODAL · 잔여 —</p>
+  <form class="mbox" id="mq-form" novalidate>
+    <div class="wh m-h"><span class="d" id="mq-t">디스크 증량 신청</span><button type="button" class="kb x" data-close aria-label="닫기">×</button></div>
+    <p class="kb m-l">신청 용량 (GB) <b>*</b></p>
+    <div id="mq-presets" role="group" aria-label="신청 용량"></div>
+    <label id="mq-custom" hidden><input id="mq-gb" type="number" min="1" max="4096" step="1" placeholder="직접 입력 (GB)" aria-label="직접 입력 (GB)"></label>
+    <p class="kb m-l">신청 사유 <b>*</b></p>
+    <textarea id="mq-why" placeholder="신청 사유를 입력해 주세요" maxlength="300"></textarea>
+    <p id="mq-err" class="err" role="alert" hidden></p>
+    <div class="m-act">
+      <button type="button" class="ghost ghost--w" data-close><svg viewBox="0 0 176 38" aria-hidden="true"><path d="M0 12V0h16M160 0h16v12M176 26v12h-16M16 38H0v-12"/></svg><b class="d">취소</b></button>
+      <button type="submit" class="fill d">저장</button>
+    </div>
+  </form>
+</div>
+
+<!-- 공유 설정 — 원본 아카이브 공유 권한 표 -->
+<div id="m-share" class="modal" role="dialog" aria-modal="true" aria-labelledby="ms-t" hidden>
+  <p class="n mq-tag">MODAL · 공유 권한</p>
+  <form class="mbox" id="ms-form" novalidate>
+    <div class="wh m-h"><span class="d" id="ms-t">공유 설정</span><button type="button" class="kb x" data-close aria-label="닫기">×</button></div>
+    <p class="kb m-l" id="ms-sub">—</p>
+    <table id="ms-perm"><thead><tr><th>기관명</th><th>권한명</th></tr></thead><tbody></tbody></table>
+    <div class="m-act">
+      <button type="button" class="ghost ghost--w" data-close><svg viewBox="0 0 176 38" aria-hidden="true"><path d="M0 12V0h16M160 0h16v12M176 26v12h-16M16 38H0v-12"/></svg><b class="d">취소</b></button>
+      <button type="submit" class="fill d">저장</button>
+    </div>
+  </form>
+</div>
+
+<!-- 세부 정보 — 업로드 카드의 `세부 정보` -->
+<div id="m-detail" class="modal" role="dialog" aria-modal="true" aria-labelledby="md-t" hidden>
+  <p class="n mq-tag">MODAL · 업로드 세부 정보</p>
+  <div class="mbox">
+    <div class="wh m-h"><span class="d" id="md-t">세부 정보</span><button type="button" class="kb x" data-close aria-label="닫기">×</button></div>
+    <div id="md-rows"></div>
+    <div class="m-act m-act--1">
+      <button type="button" class="ghost ghost--w" data-close><svg viewBox="0 0 176 38" aria-hidden="true"><path d="M0 12V0h16M160 0h16v12M176 26v12h-16M16 38H0v-12"/></svg><b class="d">닫기</b></button>
+    </div>
+  </div>
+</div>
+
+<p id="say" class="kb" role="status" aria-live="polite"></p>
+
+<script type="module" src="dataset.js"></script>
+</body></html>
