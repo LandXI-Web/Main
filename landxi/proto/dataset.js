@@ -143,7 +143,8 @@ const shelf = (st, acts, ds) => `<div class="shelf"><span class="st n">${st}</sp
   acts.map(([k, name]) => `<button type="button" class="act" data-act="${k}" ${ds}>${esc(name)}</button>`).join('')}</span></div>`;
 const cap = (name, meta, sub) => `<p class="cap n"><span class="nm" title="${esc(name)}">${esc(name)}</span><span class="mt">· ${esc(meta)}</span></p>${
   sub ? `<p class="why n" title="${esc(sub)}">${esc(sub)}</p>` : ''}`;
-const img = (src, id, cls = '') => `<img src="${esc(src)}" alt="" data-rv="${id}" class="${cls}" loading="lazy">`;
+const img = (src, id, cls = '', eager = false) => `<img src="${esc(src)}" alt="" data-rv="${id}" class="${cls}"${eager ? '' : ' loading="lazy"'}>`;
+const figImg = (src, id) => img(src, 'fig-' + id, '', true);
 const demo = () => `<span class="tag"><em class="demo">${SEED_TAG}</em></span>`;
 const date = (at) => String(at).slice(0, 10);
 /** 파일 종류별 그림 — 그림이 없으면 흰 액자, 좌표도 없으면 점선 액자 + 이유. */
@@ -301,9 +302,9 @@ function figFor(row, im) {
   const t = THUMB[row.id] || row.thumb;
   if (im && t) {
     const cm = (im.gsd * 100).toFixed(2);
-    return `<div class="fig fig--ink">${img(t, 'fig-' + row.id)}${bracket(416, 200, '#fff')}<span class="fc n">${im.bounds.map((v) => v.toFixed(4)).join(',').replace(/,([^,]*),/, ',$1 ~ ')} · EPSG:5186 → 4326 · GSD ${cm} cm</span><span class="fm n">측정</span></div>`;
+    return `<div class="fig fig--ink">${figImg(t, row.id)}${bracket(416, 200, '#fff')}<span class="fc n">${im.bounds.map((v) => v.toFixed(4)).join(',').replace(/,([^,]*),/, ',$1 ~ ')} · EPSG:5186 → 4326 · GSD ${cm} cm</span><span class="fm n">측정</span></div>`;
   }
-  if (t) return `<div class="fig">${img(t, 'fig-' + row.id)}</div>`;
+  if (t) return `<div class="fig">${figImg(t, row.id)}</div>`;
   if (SILHOUETTE[row.id]) return `<div class="fig"><canvas width="832" height="400" data-sil="${row.id}"></canvas><span class="fm n dk">${esc(SILHOUETTE[row.id].crs)}</span></div>`;
   if (row.fmt === 'XLSX') return `<div class="fig">${xlsxTable(XLSX_ROWS)}</div>`;
   if (row.fmt === 'ZIP' || row.kind === '이미지셋') return `<div class="fig">${zipTree(ZIP_TREE)}</div>`;
@@ -355,7 +356,7 @@ function pbTile(p) {
   const acts = fail ? FAIL_ACTIONS.map((k) => [k, { crs: '좌표계 지정', cancel: '발행 취소', detail: '세부 정보' }[k]]) : [['cancel', '발행 취소'], ['detail', '세부 정보']];
   return `<div class="tile" role="listitem" data-id="${p.id}" data-st="${p.st}">
     <div class="th ${b.cls}">${b.html}${ticks(p, !t)}${fail ? bracket(TW, TH, AMBER) : ''}${word(fail ? '발행중 · 실패' : '발행중')}${
-      b.sil ? `<span class="tag2 n"></span>` : ''}${shelf(fail ? `실패 ${stepTxt}` : stepTxt, acts, `data-pb="${p.id}"`)}</div>
+      b.sil ? `<span class="tag2 n"></span>` : ''}${shelf(fail ? `<span title="${esc(stepTxt)}">실패 ${p.step}/4</span>` : stepTxt, acts, `data-pb="${p.id}"`)}</div>
     ${cap(p.file, `${date(p.at)} · ${p.size}`, fail ? p.why : '')}</div>`;
 }
 function renderPublishing() {
@@ -499,6 +500,7 @@ async function showOnPlate(a, on, fit = true) {
   if (!m) { renderLayers(); return; }
   await syncLayers();
   if (on && g && fit) frame(m, g.bounds, { maxZoom: g.kind === 'raster' ? 16.6 : 14.2 });
+  if (on && g) say(`${a.name} — 판의 레이어로 섰습니다 · 범위로 이동`);
   if (on && !g) say(`${a.name} — 실측 범위 없음, 판에 세우지 않습니다`);
   if (!on) say(`${a.name} — 숨김(감쇠). 레이어 목록에 남습니다`);
   renderLayers();

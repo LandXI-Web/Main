@@ -129,7 +129,8 @@ body[data-side]:not([data-side="none"]) #grid{ right:calc(var(--side) + 24px); }
 .br-svg{ position:absolute; left:0; top:0; pointer-events:none; z-index:3; }
 /* 검정 선반 — 하드 엣지, 그라디언트 아님. 상태어 + 액션 */
 .shelf{ position:absolute; left:0; right:0; bottom:0; height:18px; background:var(--ink); display:flex; align-items:center; padding:0 8px; gap:8px; z-index:4; }
-.shelf .st{ font-size:9px; letter-spacing:.06em; color:#fff; white-space:nowrap; }
+.shelf .st{ font-size:9px; letter-spacing:.06em; color:#fff; white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis; }
+.shelf .ax{ flex:none; }
 .shelf .st b{ font-weight:400; color:var(--accent); }
 .shelf .ax{ margin-left:auto; display:flex; gap:0; white-space:nowrap; }
 .shelf .act{ font-size:9px; letter-spacing:.02em; color:rgba(255,255,255,.72); font-family:'Inter','Pretendard',sans-serif;

@@ -7,7 +7,7 @@
   · 이전 마스터 B2-DataMgmt-{Upload,List} 는 §6 · §7 기록으로만 남는다
 - 법: `design/system.md`
 - 구현: `landxi/proto/dataset.{html,css,js}` · `ds-data.js` · `ds-plate.js` · `ds-thumbs.js`
-- 검증: `tests/e2e/proto-dataset.spec.mjs` (16건 전부 통과, 콘솔 0) · 그림 `shots/proto-ds/b5-*.png`
+- 검증: `tests/e2e/proto-dataset.spec.mjs` (16건 전부 통과, 콘솔 0) · 단위 77건 · 그림 `shots/proto-ds/b5-*.png` (`node tools/proto/shoot-ds.mjs`, 11장) · §11 구현 지도
 - 발주 추가(2026-08-26): "아카이브 완료 → 그 결과를 지도의 레이어처럼 본다" → 아카이브 `표시` = 우측 판의 레이어(§5 · `NOTES.md` §13.6)
 
 원칙 두 가지.
@@ -82,7 +82,7 @@
 |---|---|---|---|
 | 유형 필터 4 | 전체 · 정사영상 · 이미지셋 · 공간정보 | `KIND_FILTERS` | **있음** |
 | 검색 | | 같음 | **있음** |
-| 데이터 카드 | 유형 · 데이터명 · 원본 파일명 · 크기 · 기준일 · 등록자 · 등록일시 | `ARCHIVE` 4건 | **있음** |
+| 데이터 카드 | 유형 · 데이터명 · 원본 파일명 · 크기 · 기준일 · 등록자 · 등록일시 | `ARCHIVE` 5건 (원본 시드 4 + 판 레이어 시연용 실측 GeoJSON `여수 해양쓰레기 조사 2026` 1) | **있음** |
 | 표시/숨김 | 원본 아카이브 카드에는 없음(카드 클릭 = `flyToData` 뷰 이동뿐). 발주 추가 요구 | `data-hidden` → 타일 `opacity:.34` + 선반 `숨김 — 삭제 아님`. **표시 = 판의 레이어**: 정사영상은 실제 타일, 공간정보는 실제 GeoJSON, `fitBounds` 줌 투 익스텐트. 숨김은 레이어 목록에 감쇠로 남고 판에서 꺼진다. 기하가 없으면 `실측 범위 없음` | **있음(+판)** |
 | 공유 설정 **모달** | 기관명 / 권한명 표 | `#m-share` — 3단 세그먼트, 저장 시 상태 반영 | **있음** |
 | 공간 편집 | 편집용 벡터를 판에 올리고 `view.fit` | 타일·상세 양쪽 — 판을 열고 그 범위로 간다. 기하 없으면 자백 | **있음** |
@@ -141,4 +141,59 @@ node tools/serve.mjs                                    # 4173
 npx playwright test tests/e2e/proto-dataset.spec.mjs    # 16건
 ```
 
-그림은 `shots/proto-ds/b5-*.png` — 탭 4종 · 발행 드로어 · 판 위 레이어(벡터 · 정사영상+숨김+범위 없음).
+그림은 `shots/proto-ds/b5-*.png` — `node tools/proto/shoot-ds.mjs` (서버 4173 필요).
+탭 4종(01–04) · 발행 드로어(05) · 판 위 레이어(06 벡터 · 07 정사영상+숨김+범위 없음) · 발행 실패 앰버(08, +hover) · 호버(09 타일 · 09-tab 칩).
+
+---
+
+## 11. B5 구현 — 무엇이 어디에 앉았나 (2026-08-27 검수)
+
+마스터 `design-canvas/v2/B5-DataMgmt.dc.html` (렌더 `design-canvas/v2/renders/B5-DataMgmt.png`) ↔ `landxi/proto/dataset.*`.
+
+| 마스터 장치 | 구현 위치 | 비고 |
+|---|---|---|
+| 레일 72 · 마스트헤드 64 · 마진 56 · 5열 240 / gap 12 · 라운드 0 · 그림자 0 | `dataset.css` `:root` 토큰 + `.tiles{grid auto-fill 240}` | 1440 에서 128 → 1384, 5열이 정확히 맞는다. 폭이 줄면 열만 준다(3열까지) |
+| 탭 칩 4 — 활성만 잉크, 나머지 회색(유보 1) | `.tb[aria-selected=true]` | e2e 가 border 색을 잰다 |
+| 드로어 닫힌 채 시작(유보 2) · 우측 480 슬롯을 발행 폼 · 상세 · 지도 판이 나눠 씀 | `body[data-side]` = none/pub/detail/map · `#pubdrawer` `#detail` `#mapdrawer` | 열리면 `#grid` 가 3열로 물러난다. 이 화면의 일탈 1회 |
+| 타일 = 실크롭 13 | `ds-data.js` `THUMB` → `assets/proto/crops/*` | 플레이스홀더 0. 그림 없는 자산은 XLSX 표 / ZIP 트리 / SHP 실루엣 / 점선 자백 |
+| 실패 SHP 는 실좌표 렌더(유보 3) | `ds-thumbs.js` `silhouette()` — `results/namwon-greenhouse-2025.geojson` bbox 셀을 캔버스에 등축 투영 | 폴리곤 수를 우상단에 적는다(`EPSG 없음 · 84 polygon`) |
+| 액센트 #006DF7 한 곳 = 살아있는 업로드 | `.th[data-live] .rv-line` + `.shelf .st b` | e2e 가 `#grid` 안 액센트 = `['pv','rv-line']` 뿐임을 잰다 |
+| 앰버 #FFB633 = 발행 실패만 | `.ticks i.fail` · `bracket(…, AMBER)` · `.why::before` | 그 외 0 |
+| 호버 = 물리 반응 180ms | 타일 `translateY(-4px)` · 칩 `-2px` · 선반 액션 `-1px` · 레일 아이콘 `-2px` | 색만 바뀌는 호버 없음 |
+
+### 11.1 아카이브 `표시` → 판의 레이어 (발주 추가)
+
+```
+타일 선반 [표시/숨김] ─▶ archAct(id,'vis') ─▶ showOnPlate(a, on)          (dataset.js)
+    ├ S.layers 에 id 추가 — 표시된 순서 = 레이어 순서
+    ├ setSide('map') → #mapdrawer 열림. 판은 한 번만 mount(ensureMap) — 탭을 옮겨도 살아 있다
+    ├ syncLayers() → geomOf(a)                                             (ds-plate.js)
+    │     raster(imagery.js 도엽)      → addRaster: 실제 타일 피라미드, bounds 안에서만 요청
+    │     vector(results/*.geojson)    → addVector: 청록 fill .18 + line 1px
+    │     기하 없음                     → 판에 올리지 않고 레이어 행 · 상태줄에 `실측 범위 없음`
+    ├ frame(bounds, 1250ms) = 줌 투 익스텐트
+    └ Brackets.set() → 헤어라인 코너 브래킷 + 액자 안 캡션(이름 · GSD/셀)
+                       판 하단 캡션 = 장소 · 날짜 · GSD · 측정 (imagery.js label/gsd)
+숨김 = setHidden(visibility none) + 브래킷 감쇠 — 레이어 목록에 남는다(삭제 아님)
+삭제 = removeLayer + S.layers 에서 제거
+툴바 지도 아이콘 = 표시된 아카이브 전부를 레이어로 세우고 합집합 범위로 간다
+```
+
+- 바탕은 V-World 정사영상(`js/sources.js` `resolveVWorld` — 키 없으면 공개 폴백). 판 기하·GSD 는 `imagery.js` 실측값.
+- 검증 훅: `window.__dsMap` · `html[data-plate]` = closed/ready/moving/idle/off.
+
+### 11.2 검수에서 고친 것 (2026-08-27)
+
+| # | 증상 | 조치 |
+|---|---|---|
+| F1 | 발행 실패 타일 선반이 240 을 넘쳐 `세부 정보` 가 잘림 | 실패 상태어를 `실패 n/4` 로 줄이고(단계명은 title), `.shelf .st` 말줄임 · 액션 `flex:none` |
+| F2 | 드로어 액자 상단 18px 흰 띠 | `#pf-fig` `#detail-fig` 래퍼가 `.fig` 를 겹쳐 쓰고 있었다(액자 안 액자) — 래퍼의 class 제거 |
+| F3 | 숨김 → 표시 뒤 상태줄에 `숨김(감쇠)` 문장이 남음 | 표시가 판에 섰을 때도 말한다(`판의 레이어로 섰습니다 · 범위로 이동`) |
+| F4 | 드로어 그림 지연 로드 | `figImg()` — 드로어 액자는 eager |
+
+### 11.3 마스터와 남은 차이 (의도)
+
+- 마스터 발행 드로어의 액자는 `zone_X.ecw` 에 남원 2025-06 도엽의 좌표 · GSD 1.69 cm 를 적었다. 구현은 **파일이 실제 도엽(`imagery.js`)과 같은 자산일 때만**(d4 · d5) 좌표·브래킷·`측정` 을 적는다 — §5 "숫자는 imagery.js 에서만". zone_X 는 그림만.
+- 마스터는 4탭을 한 그리드에 합쳐 20 타일을 보여 준다(D5). 구현은 원본과 같은 진짜 탭 4개라 한 탭당 4–8 타일이고 아래가 빈다.
+- 기준 일자는 네이티브 `<input type=date>` 라 달력 아이콘이 보인다(기능 우선).
+- 아카이브 5건(마스터 4) — 판 레이어 시연을 위해 실측 GeoJSON 자산 1건을 더했다. 원본 시드는 그대로.
