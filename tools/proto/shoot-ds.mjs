@@ -1,4 +1,4 @@
-// 데이터 관리 B5 — 6장. 각 탭 · 드로어 · 판 위 레이어. 콘솔 오류를 같이 찍는다.
+// 데이터 관리 B5 — 9장. 각 탭 · 드로어 · 판 위 레이어 · 발행 실패(앰버) · 호버. 콘솔 오류를 같이 찍는다.
 import { chromium } from '@playwright/test';
 import fs from 'node:fs';
 const base = 'http://localhost:4173/landxi/proto/dataset.html';
@@ -31,5 +31,17 @@ await page.locator('.act[data-ar="a1"][data-act="vis"]').click().catch(() => {})
 await page.locator('.act[data-ar="a1"][data-act="vis"]').click().catch(() => {});
 await idle(); await page.waitForTimeout(1800);
 await shot('b5-07-map-layers');
+// 발행 실패 — 앰버 브래킷 + 실좌표 SHP 실루엣 + 사유 원문. 타일만 크게, 그리고 호버.
+await page.goto(`${base}?tab=publishing`); await ready(); await page.waitForTimeout(1400);
+await page.locator('.tile[data-id="p2"]').screenshot({ path: `${out}/b5-08-fail.png` });
+await page.locator('.tile[data-id="p2"] .th').hover(); await page.waitForTimeout(400);
+await page.screenshot({ path: `${out}/b5-08-fail-hover.png`, clip: { x: 128, y: 124, width: 1256, height: 240 } });
+// 호버 — 타일 4px 상승 + 선반 액션 · 탭 칩 상승. 업로드 탭.
+await page.goto(`${base}?tab=upload`); await ready(); await page.waitForTimeout(1400);
+await page.evaluate(() => { for (let i = 1; i < 9999; i++) clearInterval(i); });
+await page.locator('.tile[data-id="u2"] .th').hover(); await page.waitForTimeout(400);
+await page.screenshot({ path: `${out}/b5-09-hover.png` });
+await page.locator('#tab-archive').hover(); await page.waitForTimeout(400);
+await page.screenshot({ path: `${out}/b5-09-hover-tab.png`, clip: { x: 72, y: 64, width: 1368, height: 80 } });
 console.log('errors', errs);
 await browser.close();
