@@ -115,11 +115,12 @@ $('#b-bb').innerHTML = `${svg('backbone', 16)}<span class="d t">AI 기반 모델
 $('#bb-applied').innerHTML = `최종 적용 ${esc(BACKBONE.applied)} · 연결된 분석 과제 ${BACKBONE.tasks}개`
   + ` <i>(측정 ${JOBS.length} · AOI 미지정 ${JOB_UNMAPPED})</i>`;
 
-/* ══ 판 12.8 ═════════════════════════════════════════════════════════ */
+/* ══ 판 12.8 ═════════════════════════════════════════════════════════
+   판은 이 파일 맨 끝에서 올린다 — 원장이 지도를 기다리지 않는다(§12.1 #4:
+   판은 위젯이 아니라 증거 자리다. 증거가 늦게 도착해도 원장은 이미 서 있어야 한다). */
 let MODE = 'ai';
-const footprints = await loadFootprints();
-const CELLS = cellsFor(footprints);
-const PLATE = await mountPlate($('#plate'), { mode: MODE, footprints, cells: CELLS });
+let CELLS = [];
+let PLATE = null;
 
 const pt = $('#pt');
 const pl = $('#pl');
@@ -127,16 +128,12 @@ const pc = $('#pc');
 const pmark = $('#pmark');
 let hovered = -1;
 
-pt.innerHTML = toggleHTML(MODE);
-$('#pcells').innerHTML = cellsHTML(CELLS, PLATE.project);
-paintLegend();
-
 function paintLegend() { pl.innerHTML = legendHTML(CELLS, MODE); }
 /** 콜아웃 높이는 마스터 고정값이다 — AI 96 / 데이터 82(줄 수 상한에 맞춘 값). */
 const PC_H = () => (MODE === 'data' ? 82 : 96);
 function showCell(i) {
   const cell = CELLS[i];
-  if (!cell) return;
+  if (!cell || !PLATE) return;
   hovered = i;
   pc.hidden = false;
   pc.style.height = `${PC_H()}px`;
@@ -161,7 +158,7 @@ $('#pcells').addEventListener('focusin', (ev) => {
 $('#pcells').addEventListener('focusout', hideCell);
 
 function setMode(m) {
-  if (m === MODE) return;
+  if (m === MODE || !PLATE) return;
   MODE = PLATE.setMode(m);
   document.body.dataset.mode = MODE;
   $$('.pt-seg', pt).forEach((b) => {
@@ -183,11 +180,6 @@ pt.addEventListener('keydown', (ev) => {
   setMode(next);
   $(`.pt-seg[data-mode="${next}"]`, pt).focus();
 });
-
-/* 판 캡션·출처 — 지역 이름은 결과가 실제로 선 셀에서 뽑는다. */
-const REGIONS = [...new Set(CELLS.filter((c) => c.ai > 0).map((c) => calloutFor(c, 'ai').place).filter(Boolean))];
-$('#plate-src').innerHTML = `Data source: EOX Sentinel-2 cloudless 2024 · ${esc(REGIONS.join('·'))} 분석 결과`
-  + ` · 정사영상 타일 카탈로그 ${IMG.length}종<i> | </i>기준시점 ${ymd(T1)}`;
 
 /* ══ ① B10 AI 개발 프로젝트 현황 ════════════════════════════════════ */
 $('#b-proj').innerHTML = `${svg('bars', 16)}<span class="d t">AI 개발 프로젝트 현황</span>`
@@ -263,8 +255,8 @@ document.documentElement.dataset.dash = 'ready';
 // 테스트·비교 촬영용 손잡이 — 판의 상태를 밖에서 읽을 수 있게 한다.
 window.__dash = {
   get mode() { return MODE; },
-  cells: CELLS,
-  map: PLATE.map,
+  get cells() { return CELLS; },
+  get map() { return PLATE && PLATE.map; },
   setMode,
   showCell,
   hideCell,
@@ -272,3 +264,16 @@ window.__dash = {
   callout: (i, m) => calloutFor(CELLS[i], m || MODE),
   indexOf: (lon, lat) => CELLS.findIndex((c) => Math.abs(c.lon - lon) < 1e-6 && Math.abs(c.lat - lat) < 1e-6),
 };
+
+/* ── 판을 올린다 — 위성 타일·CDN 이 늦어도 위 원장은 이미 다 서 있다. ── */
+const footprints = await loadFootprints();
+CELLS = cellsFor(footprints);
+PLATE = await mountPlate($('#plate'), { mode: MODE, footprints, cells: CELLS });
+pt.innerHTML = toggleHTML(MODE);
+$('#pcells').innerHTML = cellsHTML(CELLS, PLATE.project);
+paintLegend();
+// 판 출처 — 지역 이름은 결과가 실제로 선 셀에서 뽑는다.
+const REGIONS = [...new Set(CELLS.filter((c) => c.ai > 0).map((c) => calloutFor(c, 'ai').place).filter(Boolean))];
+$('#plate-src').innerHTML = `Data source: EOX Sentinel-2 cloudless 2024 · ${esc(REGIONS.join('·'))} 분석 결과`
+  + ` · 정사영상 타일 카탈로그 ${IMG.length}종<i> | </i>기준시점 ${ymd(T1)}`;
+document.documentElement.dataset.plate = 'ready';

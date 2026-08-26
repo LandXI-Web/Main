@@ -7,6 +7,8 @@ import fs from 'node:fs';
 // 기능 대조표 : docs/superpowers/proto/2026-08-26-dashboard-parity.md (A1–A11 / B1–B16)
 // 법전       : design/system.md
 const URL = 'proto/dashboard.html';
+// 판은 EOX 타일과 unpkg maplibre 를 실제로 받아온다 — 전체 스위트에서 30s 는 빠듯하다.
+test.describe.configure({ timeout: 60000 });
 const SHOTS = 'shots/proto';
 fs.mkdirSync(SHOTS, { recursive: true });
 
@@ -24,10 +26,12 @@ function watch(page) {
   return errs;
 }
 
-async function boot(page) {
+// 원장은 지도를 기다리지 않는다 — 두 준비 신호가 따로 있다(dash = 원장, plate = 판).
+async function boot(page, { plate = true } = {}) {
   await page.addInitScript(() => localStorage.setItem('lx_logged_in', '1'));
   await page.goto(URL);
   await page.waitForFunction(() => document.documentElement.dataset.dash === 'ready', null, { timeout: 40000 });
+  if (plate) await page.waitForFunction(() => document.documentElement.dataset.plate === 'ready', null, { timeout: 40000 });
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(400);
 }
@@ -121,7 +125,7 @@ test('B1 제목 SUIT 32 · 부제 15 · KPI 값 Inter 56', async ({ page }) => {
 /* ── B3 · B2 · B4–B8 ──────────────────────────────────────────────────── */
 
 test('B3 공지 스트립 + B2 기준일 — 원본 값 그대로', async ({ page }) => {
-  await boot(page);
+  await boot(page, { plate: false });
   await expect(page.locator('#b-notice')).toContainText('고위험 탐지 건 긴급 처리 안내');
   await expect(page.locator('#b-notice')).toContainText('2026.04.15');
   await expect(page.locator('#b-notice')).toContainText('전체 보기 ›');
@@ -130,7 +134,7 @@ test('B3 공지 스트립 + B2 기준일 — 원본 값 그대로', async ({ pag
 });
 
 test('B4–B8 KPI 5 — 값·부제·딥링크가 원본과 같다', async ({ page }) => {
-  await boot(page);
+  await boot(page, { plate: false });
   await expect(page.locator('.k')).toHaveCount(5);
   const rows = await page.locator('.k').evaluateAll((n) => n.map((e) => [
     e.querySelector('.lab').textContent, e.querySelector('.kv b').textContent,
@@ -155,6 +159,19 @@ test('B9 백본 — XI-VFM v2.1 · 최종 적용 · 과제 14개(자백 포함)'
   await expect(page.locator('#bb-ver')).toHaveText('XI-VFM v2.1');
   await expect(page.locator('#bb-applied')).toContainText('최종 적용 2026.03.12 · 연결된 분석 과제 14개');
   await expect(page.locator('#bb-applied')).toContainText('측정 10 · AOI 미지정 4');
+});
+
+test('원장은 판을 기다리지 않는다 — 판이 서기 전에 B1–B14 가 이미 서 있다', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('lx_logged_in', '1'));
+  // 판이 쓰는 위성 타일과 maplibre 를 끊어도 원장은 그려진다.
+  await page.route(/tiles\.maps\.eox\.at|unpkg\.com/, (r) => r.abort());
+  await page.goto(URL);
+  await page.waitForFunction(() => document.documentElement.dataset.dash === 'ready', null, { timeout: 40000 });
+  await expect(page.locator('.k')).toHaveCount(5);
+  await expect(page.locator('.pr')).toHaveCount(5);
+  await expect(page.locator('.ap-row')).toHaveCount(2);
+  await expect(page.locator('.ad')).toHaveCount(4);
+  expect(await page.evaluate(() => document.documentElement.dataset.plate)).toBeUndefined();
 });
 
 test('판 — 위성 한 판 · 상호작용 없음 · 그리드/셀 레이어가 선다', async ({ page }) => {
@@ -310,7 +327,7 @@ test('판 캡션·출처 — 셀 호버/클릭 안내와 기준시점', async ({
 /* ── B10 · B11 · B12 ──────────────────────────────────────────────────── */
 
 test('B10 랭크드 바 — 원본 Top5 값 · 1위만 액센트 · 2–5위 #CCC', async ({ page }) => {
-  await boot(page);
+  await boot(page, { plate: false });
   const rows = await page.locator('.pr').evaluateAll((n) => n.map((e) => [
     e.querySelector('.pn').textContent, e.querySelector('.pv').textContent,
     getComputedStyle(e.querySelector('.trk i')).backgroundColor,
@@ -324,7 +341,7 @@ test('B10 랭크드 바 — 원본 Top5 값 · 1위만 액센트 · 2–5위 #CC
 });
 
 test('B11 7일 폴리라인 — 7값 전부 · 양끝·최대만 잉크', async ({ page }) => {
-  await boot(page);
+  await boot(page, { plate: false });
   const v = await page.locator('#t-visit .vl2').allInnerTexts();
   expect(v).toEqual(['812', '945', '1,024', '876', '1,150', '412', '356']);
   const tone = await page.locator('#t-visit .vl2').evaluateAll((n) => n.map((e) => getComputedStyle(e).color));
@@ -337,7 +354,7 @@ test('B11 7일 폴리라인 — 7값 전부 · 양끝·최대만 잉크', async 
 });
 
 test('B12 스택 바 — 6분류 실척 + 잔여, 사용/전체 44.5 / 184 TB', async ({ page }) => {
-  await boot(page);
+  await boot(page, { plate: false });
   await expect(page.locator('#b-store')).toContainText('44.5');
   await expect(page.locator('#b-store')).toContainText('/ 184 TB');
   await expect(page.locator('#t-store i')).toHaveCount(6);
@@ -350,7 +367,7 @@ test('B12 스택 바 — 6분류 실척 + 잔여, 사용/전체 44.5 / 184 TB', 
 /* ── B13 · B14 · B15 · B16 ────────────────────────────────────────────── */
 
 test('B13 승인 대기 원장 — 2행, 값·태그·딥링크가 원본과 같다', async ({ page }) => {
-  await boot(page);
+  await boot(page, { plate: false });
   await expect(page.locator('.ap-row')).toHaveCount(2);
   const head = await page.locator('#ap-head .th').allInnerTexts();
   expect(head).toEqual(['#', '카드명', '버전', '요청 일시', '요청 지역', '상태', '진입']);
@@ -368,7 +385,7 @@ test('B13 승인 대기 원장 — 2행, 값·태그·딥링크가 원본과 같
 });
 
 test('B14 CHIP-RAIL — 관리 4, 같은 수치를 두 번 말하지 않는다', async ({ page }) => {
-  await boot(page);
+  await boot(page, { plate: false });
   await expect(page.locator('.ad')).toHaveCount(4);
   const rows = await page.locator('.ad').evaluateAll((n) => n.map((e) => [e.querySelector('.t').textContent, e.querySelector('.s').textContent]));
   expect(rows).toEqual([
@@ -380,7 +397,7 @@ test('B14 CHIP-RAIL — 관리 4, 같은 수치를 두 번 말하지 않는다',
 });
 
 test('B15 푸터 + 콜로폰 — 출처 표기 규칙을 화면이 말한다', async ({ page }) => {
-  await boot(page);
+  await boot(page, { plate: false });
   await expect(page.locator('#foot')).toContainText('LX 한국국토정보공사 · 고객센터');
   await expect(page.locator('#foot')).toContainText('063-713-1213');
   await expect(page.locator('#colophon')).toContainText('태그 없음 = 측정');

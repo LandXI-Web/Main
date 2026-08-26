@@ -85,9 +85,9 @@ async function shoot(mode, out) {
   const p = await c.newPage();
   await p.addInitScript(() => localStorage.setItem('lx_logged_in', '1'));
   await p.goto(`http://localhost:${PORT}/landxi/proto/dashboard.html`, { waitUntil: 'domcontentloaded' });
-  await p.waitForFunction(() => document.documentElement.dataset.dash === 'ready', null, { timeout: 40000 });
+  await p.waitForFunction(() => document.documentElement.dataset.plate === 'ready', null, { timeout: 60000 });
   await p.evaluate(() => document.fonts.ready);
-  await p.waitForFunction(() => window.__dash && window.__dash.map.areTilesLoaded(), null, { timeout: 40000 }).catch(() => {});
+  await p.waitForFunction(() => window.__dash.map && window.__dash.map.areTilesLoaded(), null, { timeout: 40000 }).catch(() => {});
   await p.waitForTimeout(1600);
   // 원판은 남원 셀 호버 상태다. 같은 셀을 세운다.
   await p.evaluate((m) => {
