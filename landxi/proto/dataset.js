@@ -15,7 +15,7 @@ import {
   DONE_UP, DONE_FOLD, PUB_TYPES, PUB_PREFILL, PUB_STEPS, PUBLISHING, PUB_ST,
   IMG, EXTENTS, PLATE_HEAD, ATTRIB, FOOT_LINKS, FOOT_ADDR,
 } from './ds-data.js';
-import { mountPlate, Brackets, uploadItems, lockItem, frame, padFor, KOREA } from './ds-plate.js';
+import { mountPlate, Brackets, uploadItems, lockItem, frame, padFor, padWide, showOrtho, KOREA_SW } from './ds-plate.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -547,23 +547,37 @@ function syncPlate() {
   }
   if (!map || !bk) return;
 
-  const pad = padFor(cssPx('--rail', 72) + cssPx('--led', 372));
+  const pad = padFor({
+    drawer: !$('#detail').hidden,
+    side: !$('#pbcard').hidden,
+    form: !$('#pubform').hidden,
+  });
+  const wide = padWide();
   if (S.tab === 'upload') {
+    showOrtho(map, null);
     bk.set(uploadItems());
-    frame(map, KOREA, pad, { maxZoom: 8 });
+    frame(map, KOREA_SW, wide, { maxZoom: 9 });
     return;
   }
   const a = S.arch.find((x) => x.id === S.archSel);
   if (a) {
     const im = IMG.find((i) => i.id === a.imagery);
     // 좌표계가 없는 자산은 판에 세우지 않는다 — 없는 것을 그리지 않는 것이 정직성이다.
-    if (im) { bk.set([lockItem(a, im.bounds)]); frame(map, im.bounds, pad, { maxZoom: 15.4 }); return; }
-    bk.clear(); frame(map, KOREA, pad, { maxZoom: 8 });
+    if (im) {
+      // 마스터처럼 판 전체가 그 정사영상이다 — 계기는 사진 위에 얹힌다, 사진을 밀어내지 않는다.
+      showOrtho(map, im);
+      bk.set([lockItem(a, im.bounds)]);
+      frame(map, im.bounds, { left: 56, top: 84, right: 56, bottom: 100 }, { maxZoom: 17.2 });
+      return;
+    }
+    showOrtho(map, null);
+    bk.clear(); frame(map, KOREA_SW, wide, { maxZoom: 9 });
     say(`${a.name} — 좌표계가 없어 판에 세우지 않습니다`);
     return;
   }
+  showOrtho(map, null);
   bk.set(uploadItems().filter((x) => x.kind === 'measured'));
-  frame(map, KOREA, pad, { maxZoom: 8 });
+  frame(map, KOREA_SW, wide, { maxZoom: 9 });
 }
 
 $('#allmap').addEventListener('click', () => {
@@ -581,6 +595,9 @@ document.documentElement.dataset.ds = 'ready';
 mountPlate($('#plate')).then((m) => {
   map = m;
   bk = new Brackets(m, $('#ex-layer'));
+  // 타일이 다 앉은 순간을 밖에서도 알 수 있게 한다(스크린샷·검증용).
+  m.on('idle', () => { document.documentElement.dataset.plate = 'idle'; });
+  m.on('movestart', () => { document.documentElement.dataset.plate = 'moving'; });
   syncPlate();
   document.documentElement.dataset.plate = 'ready';
 }).catch(() => {

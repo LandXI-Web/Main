@@ -221,7 +221,7 @@ export const EXTENTS = [
     sub: `${fx(nw.bounds[0])},${fx(nw.bounds[1])} ~ ${fx(nw.bounds[2])},${fx(nw.bounds[3])} · GSD ${gsdCm(byId('namwon_2504'))} – ${gsdCm(byId('namwon_2506'))} cm`,
   },
   {
-    id: 'ex-kuksan', measured: true, title: '국산리 · kuksan_a68 / a71',
+    id: 'ex-kuksan', measured: true, capAbove: true, title: '국산리 · kuksan_a68 / a71',
     bounds: [
       Math.min(ku.bounds[0], ku2.bounds[0]), Math.min(ku.bounds[1], ku2.bounds[1]),
       Math.max(ku.bounds[2], ku2.bounds[2]), Math.max(ku.bounds[3], ku2.bounds[3]),
@@ -230,13 +230,13 @@ export const EXTENTS = [
   },
   {
     // 여수 해양쓰레기 조사 범위 — 정사영상 도엽이 아니라 조사 범위다(results.js 유래).
-    id: 'ex-yeosu', measured: true, title: '여수 · 해양쓰레기 조사 범위',
+    id: 'ex-yeosu', measured: true, capAbove: true, title: '여수 · 해양쓰레기 조사 범위',
     bounds: [127.5093, 34.5547, 127.7495, 34.7503],
     sub: '127.5093,34.5547 ~ 127.7495,34.7503',
   },
   {
     // 결손 자백 — 좌표계가 없는 업로드 대기 파일. 삭제하지 않고 파선으로 남긴다.
-    id: 'ex-pending', measured: false, title: '업로드 대기 · 좌표 미확정',
+    id: 'ex-pending', measured: false, capAbove: true, title: '업로드 대기 · 좌표 미확정',
     bounds: [126.62, 36.58, 126.98, 36.86],
     sub: 'NW_ortho_202602_field_01.tif · 범위 미확정',
   },
