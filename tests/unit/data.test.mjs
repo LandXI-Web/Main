@@ -177,13 +177,13 @@ test('models carry task, trainedAt and inferred flag', () => {
   }
   assert.ok(MODELS.some(m => m.inferred === false));
 });
-test('13 home services: unique ids, 4 real assets, sane coordinates', () => {
-  assert.equal(SERVICES.length, 13);
-  assert.equal(new Set(SERVICES.map(s => s.id)).size, 13);
+test('15 home services: unique ids, real assets, sane coordinates', () => {
+  assert.equal(SERVICES.length, 15);
+  assert.equal(new Set(SERVICES.map(s => s.id)).size, 15);
   for (const s of SERVICES) {
     for (const k of ['id', 'name', 'ministry', 'unit', 'lastRun', 'story', 'color']) assert.ok(s[k], `${s.id}.${k}`);
     assert.equal(typeof s.real, 'boolean');
-    assert.ok(Number.isFinite(s.count) && s.count > 0, s.id);
+    assert.ok(Number.isFinite(s.count) && (s.count > 0 || s.real === false), s.id);
     const [lng, lat] = s.lnglat;
     assert.ok(lng > 124 && lng < 132, s.id);   // 대한민국 경도 범위
     assert.ok(lat > 33 && lat < 39, s.id);     // 대한민국 위도 범위

@@ -1,4 +1,4 @@
-// 전국 공공 분석 서비스 라인업 13종.
+// 전국 공공 분석 서비스 라인업 15종(2026-08-26 홍보영상 항목 산림 훼손·탄소 흡수량 추가, count 0 = 준비 중).
 // real:true 5종은 실제 보유 자산(영상·AI 결과)에 기반한다 — 해양쓰레기(전남 신안·완도 + 여수),
 // 농지이용(남원 2,098필지), 비닐하우스(남원 9,664동), 도로안전(남원), 드론 변화탐지(국산리).
 // 나머지 8종은 라인업 소개용 예시 수치다.
@@ -20,6 +20,8 @@ export const SERVICES = [
   { id: 'trash', name: '방치폐기물 탐지', ministry: '환경부', lnglat: [128.6, 35.87], count: 631, unit: '개소', lastRun: '2026-07-03', real: false, story: 'generic', color: 'var(--ai)' },
   { id: 'river', name: '하천 불법점용', ministry: '환경부', lnglat: [128.95, 35.2], count: 358, unit: '건', lastRun: '2026-05-29', real: false, story: 'generic', color: 'var(--ai)' },
   { id: 'greenhouse', name: '비닐하우스 현황', ministry: '농림축산식품부', lnglat: [127.426, 35.43], count: 9664, unit: '동', lastRun: '2026-06-06', real: true, story: 'generic', color: 'var(--s-done)', results: ['namwon-greenhouse-2025'] },
+  { id: 'forest', name: '산림 훼손 탐지', ministry: '산림청', lnglat: [129.05, 35.62], count: 0, unit: '건', lastRun: '2026-08-26', real: false, story: 'generic', color: 'var(--s-done)' },
+  { id: 'carbon', name: '탄소 흡수량 산정', ministry: '산림청', lnglat: [129.12, 35.58], count: 0, unit: 'tCO₂', lastRun: '2026-08-26', real: false, story: 'generic', color: 'var(--ai)' },
 ];
 
 export const serviceById = id => SERVICES.find(s => s.id === id) || null;
