@@ -35,7 +35,7 @@ const shot = (page, n) => page.screenshot({ path: path.join(SHOTS, `${n}.png`) }
 test('로그인 관문 — 플래그가 없으면 관리자 화면이 한 프레임도 새지 않는다', async ({ page }) => {
   await page.goto(URL + '?tab=archive');
   await page.waitForURL(/login\.html/, { timeout: 10000 });
-  expect(decodeURIComponent(page.url())).toContain('proto/dataset.html?tab=archive');
+  expect(decodeURIComponent(page.url())).toContain('proto/login.html?next=dataset.html?tab=archive');
 });
 test('레일 — 원본 메뉴 순서 그대로, 활성은 데이터 관리', async ({ page }) => {
   const errs = watch(page);

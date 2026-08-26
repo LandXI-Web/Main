@@ -5,7 +5,7 @@
 <script>
   // 로그인 관문. 그리기 전에 판정한다 — 관리자 화면이 한 프레임도 새어 나가지 않게.
   if (localStorage.getItem('lx_logged_in') !== '1') {
-    location.replace('../login.html?next=' + encodeURIComponent('proto/dataset.html' + location.search));
+    location.replace('login.html?next=' + encodeURIComponent('dataset.html' + location.search));
   }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

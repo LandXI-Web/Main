@@ -44,7 +44,7 @@ async function pickResult(page) {
 test('로그인 관문 — 플래그가 없으면 관리자 화면이 한 프레임도 새지 않는다', async ({ page }) => {
   await page.goto(URL);
   await page.waitForURL(/login\.html/, { timeout: 10000 });
-  expect(decodeURIComponent(page.url())).toContain('proto/dashboard.html');
+  expect(decodeURIComponent(page.url())).toContain('proto/login.html?next=dashboard.html');
 });
 
 /* ── A. 좌측 레일 ─────────────────────────────────────────────────────── */
