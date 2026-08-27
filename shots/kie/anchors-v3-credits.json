@@ -1,39 +1,38 @@
 {
-  "session": "rev3h-2026-08-27",
+  "session": "rev3i-2026-08-27",
   "cap": 20,
   "per_still_expected": 14.5,
-  "started": "2026-08-27T08:11:17.024Z",
+  "started": "2026-08-27T09:55:01.893Z",
   "runs": [
     {
-      "id": "A09",
+      "id": "A01",
       "reroll": true,
       "refs": [
-        "landxi/assets/proto/film/legs/anchors-v3/A08b.png",
-        "landxi/assets/proto/film/legs/anchors-v3/A09.v3a.png"
+        "shots/kie/A01-v3a-noring-crop.jpg"
       ],
-      "prompt_sha256": "6bb24cfd3a9ea998",
-      "credits_balance_before": 9453,
-      "at": "2026-08-27T08:11:17.458Z",
-      "taskId": "73e3dff67e81f6fc861bb7f7565aba5f",
+      "prompt_sha256": "e6f670b1777f41a2",
+      "credits_balance_before": 9188.5,
+      "at": "2026-08-27T09:55:02.214Z",
+      "taskId": "cecc1468b4c90c55f25bf1352087d37b",
       "model": "seedream/5-pro-image-to-image",
-      "task_created_at": "2026-08-27T08:11:21.453Z",
+      "task_created_at": "2026-08-27T09:55:03.305Z",
       "ok": true,
-      "credits_reported": 14.5,
-      "credits_balance_after": 9438.5,
-      "credits_charged": 14.5,
-      "gen_ms": 143,
-      "wall_ms": 156713,
-      "png": "landxi/assets/proto/film/legs/anchors-v3/A09.png",
-      "png_bytes": 7181392,
-      "finished_at": "2026-08-27T08:13:58.116Z",
-      "jpg": "landxi/assets/proto/film/legs/anchors-v3/A09.jpg",
-      "jpg_bytes": 352632
+      "credits_reported": 14,
+      "credits_balance_after": 9174.5,
+      "credits_charged": 14,
+      "gen_ms": 135,
+      "wall_ms": 140646,
+      "png": "landxi/assets/proto/film/legs/anchors-v3/A01.png",
+      "png_bytes": 6909034,
+      "finished_at": "2026-08-27T09:57:23.934Z",
+      "jpg": "landxi/assets/proto/film/legs/anchors-v3/A01.jpg",
+      "jpg_bytes": 276217
     }
   ],
-  "spent": 14.5,
+  "spent": 14,
   "rerolls": [
-    "A09"
+    "A01"
   ],
-  "prev_ledger": "shots/kie/anchors-v3-credits.rev3g.json",
-  "remaining_of_cap": 5.5
+  "prev_ledger": "shots/kie/anchors-v3-credits.rev3h.json",
+  "remaining_of_cap": 6
 }
