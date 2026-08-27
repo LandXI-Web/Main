@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-27T07:50:45.504Z",
+  "generatedAt": "2026-08-27T09:22:41.109Z",
   "builder": "tools/scrub/assemble.mjs",
-  "source": "단일 소스 · kling v2-1-pro AI 레그 1–8b(앵커 A01→A06→A06b→A07→A08→A08b→A09). MapLibre 플레이스홀더 0",
+  "source": "단일 소스 · kling v2-1-pro AI 레그 1–11(앵커 A01→A06→A06b→A07→A08→A08b→A09→A10→A11→A12). MapLibre 플레이스홀더 0. 레그 12(귀환·브랜드 마감)는 페이지가 A12 홀드 위에 그린다",
   "fps": 25,
   "fpsNote": "전 레그 24 fps(kling 출력 1932×1072→1080p 스케일). 레그별 legs[].fps / legs[].size.",
   "filmSize": [
@@ -19,24 +19,28 @@
       "06b",
       "07",
       "08",
-      "08b"
+      "08b",
+      "09",
+      "10",
+      "11"
     ],
     "doc": [
       "docs/superpowers/proto/2026-08-26-kie-legs-1-3.md",
       "docs/superpowers/proto/2026-08-27-kie-legs-4-6.md",
       "docs/superpowers/proto/2026-08-27-kie-legs-4-6b.md",
       "docs/superpowers/proto/2026-08-27-kie-leg-7.md",
-      "docs/superpowers/proto/2026-08-27-kie-legs-8-8b.md"
+      "docs/superpowers/proto/2026-08-27-kie-legs-8-8b.md",
+      "docs/superpowers/proto/2026-08-27-kie-legs-final.md"
     ],
-    "note": "미니어처 세계라 실카메라가 없다. startCamera/endCamera 는 앵커 문서의 고도대를 따라 authored 이고 (A02 고궤도 460 km · A03 ~30 km/피치 60° · A05 남원 분지 8.6 km · A06b 남원 상공 140 km · A07 여수 17 km · A08 국동항 방파제 발치 0.3 km/피치 50°), 레그 05 끝은 남원 인계 판의 카메라, 레그 06 은 남원 위 수직 상승, 06b 는 여수 17 km 로 활강, 07 끝(국동항 방파제 발치 클로즈업)은 여수 인계 판의 카메라가 된다. 08 은 여수 위 수직 상승(0.3 → 6 km), 08b 는 울주 산지(129.15, 35.55 · 4.5 km/피치 65°)로 활강 — 필름은 여수 인계 판 뒤로 이어진다. cameraSource:\"authored\" 로 표시. 페이지 오버레이의 숫자는 전부 실데이터다."
+    "note": "미니어처 세계라 실카메라가 없다. startCamera/endCamera 는 앵커 문서의 고도대를 따라 authored 이고 (A02 고궤도 460 km · A03 ~30 km/피치 60° · A05 남원 분지 8.6 km · A06b 남원 상공 140 km · A07 여수 17 km · A08 국동항 방파제 발치 0.3 km/피치 50°), 레그 05 끝은 남원 인계 판의 카메라, 레그 06 은 남원 위 수직 상승, 06b 는 여수 17 km 로 활강, 07 끝(국동항 방파제 발치 클로즈업)은 여수 인계 판의 카메라가 된다. 08 은 여수 위 수직 상승(0.3 → 6 km), 08b 는 울주 산지(129.15, 35.55 · 4.5 km/피치 65°)로 활강 — 필름은 여수 인계 판 뒤로 이어진다. 09 는 울주 능선 활강(4.5 → 1.2 km/피치 35°), 10 은 소각 공터 접근(0.5 km/피치 30°), 11 은 급상승해 한반도 전체(A12 · 1,400 km/피치 0) — 그 위에 브랜드 마감. cameraSource:\"authored\" 로 표시. 페이지 오버레이의 숫자는 전부 실데이터다."
   },
   "mobileSize": [
     960,
     540
   ],
   "encode": {
-    "desktop": "-c:v libx264 -profile:v high -preset slow -crf 22 -g 8 -keyint_min 8 -sc_threshold 0 -movflags +faststart -an",
-    "mobile": "-vf scale=960:540 -c:v libx264 -profile:v high -preset slow -crf 25 -g 4 -keyint_min 4 -sc_threshold 0 -movflags +faststart -an"
+    "desktop": "-c:v libx264 -profile:v high -preset slow -crf 24 -g 8 -keyint_min 8 -sc_threshold 0 -movflags +faststart -an",
+    "mobile": "-vf scale=960:540 -c:v libx264 -profile:v high -preset slow -crf 27 -g 4 -keyint_min 4 -sc_threshold 0 -movflags +faststart -an"
   },
   "pace": {
     "targetRate": 0.218,
@@ -54,18 +58,18 @@
     "seekMs": 20
   },
   "lazyVh": 1.6,
-  "filmSeconds": 50.83,
-  "filmVh": 11.08,
-  "spacerVh": 12.08,
+  "filmSeconds": 66.079,
+  "filmVh": 14.404,
+  "spacerVh": 15.404,
   "cameraNote": "고도 = 1.5 × 720px × m/px (MapLibre 기본 fov 36.87°, 필름 뷰포트 720px). 줌·GSD 는 고도에서 유도.",
   "flightProfile": "전 레그가 kling AI 미니어처라 실카메라가 없다 — 카메라는 전부 authored(aiLegs.note) 이고 하나의 단조 하강 프로파일로 이어 붙였다(레그 06 상승·06b 이동, 08 상승·08b 이동 제외). AI 레그끼리의 tail→head 이음매는 앵커를 공유해 diff 0.2 % 대다. 계기 바늘이 스냅하지 않도록 페이지가 씸 밴드(0.16vh) 위에서 두 레그의 판독값을 섞는다(scrub.js camAt). 인계 판은 그 덕분에 필름 마지막 프레임과 정확히 같은 카메라로 뜬다.",
   "bytes": {
-    "desktop": 51018356,
-    "mobile": 17190940,
-    "poster": 972022,
-    "desktopMB": 48.65,
-    "mobileMB": 16.39,
-    "posterMB": 0.93
+    "desktop": 52647903,
+    "mobile": 18379533,
+    "poster": 1280350,
+    "desktopMB": 50.21,
+    "mobileMB": 17.53,
+    "posterMB": 1.22
   },
   "seams": [
     {
@@ -73,10 +77,10 @@
       "to": "02",
       "frameShared": false,
       "rule": "B",
-      "pct": 0.204,
-      "lumaA": 66.05,
-      "lumaB": 65.64,
-      "lumaDelta": -0.41,
+      "pct": 0.236,
+      "lumaA": 66.11,
+      "lumaB": 65.63,
+      "lumaDelta": -0.48,
       "pass": true,
       "monotonic": true
     },
@@ -85,10 +89,10 @@
       "to": "03",
       "frameShared": false,
       "rule": "B",
-      "pct": 0.185,
-      "lumaA": 66.31,
-      "lumaB": 66.08,
-      "lumaDelta": -0.23,
+      "pct": 0.215,
+      "lumaA": 66.35,
+      "lumaB": 66.09,
+      "lumaDelta": -0.26,
       "pass": true,
       "monotonic": true
     },
@@ -97,10 +101,10 @@
       "to": "04",
       "frameShared": false,
       "rule": "B",
-      "pct": 0.186,
-      "lumaA": 47.12,
-      "lumaB": 46.89,
-      "lumaDelta": -0.23,
+      "pct": 0.216,
+      "lumaA": 47.15,
+      "lumaB": 46.88,
+      "lumaDelta": -0.27,
       "pass": true,
       "monotonic": true
     },
@@ -109,10 +113,10 @@
       "to": "05",
       "frameShared": false,
       "rule": "B",
-      "pct": 0.236,
-      "lumaA": 57.71,
-      "lumaB": 57.28,
-      "lumaDelta": -0.43,
+      "pct": 0.267,
+      "lumaA": 57.76,
+      "lumaB": 57.3,
+      "lumaDelta": -0.46,
       "pass": true,
       "monotonic": true
     },
@@ -121,10 +125,10 @@
       "to": "06",
       "frameShared": false,
       "rule": "B",
-      "pct": 0.199,
-      "lumaA": 61.79,
-      "lumaB": 61.72,
-      "lumaDelta": -0.07,
+      "pct": 0.219,
+      "lumaA": 61.77,
+      "lumaB": 61.71,
+      "lumaDelta": -0.06,
       "pass": true,
       "monotonic": true
     },
@@ -133,10 +137,10 @@
       "to": "06b",
       "frameShared": false,
       "rule": "B",
-      "pct": 12.876,
-      "lumaA": 54.36,
-      "lumaB": 49.62,
-      "lumaDelta": -4.74,
+      "pct": 0.203,
+      "lumaA": 54.41,
+      "lumaB": 54.15,
+      "lumaDelta": -0.26,
       "pass": true,
       "monotonic": true
     },
@@ -145,10 +149,10 @@
       "to": "07",
       "frameShared": false,
       "rule": "B",
-      "pct": 0.142,
-      "lumaA": 49.75,
-      "lumaB": 49.76,
-      "lumaDelta": 0.01,
+      "pct": 0.183,
+      "lumaA": 50.01,
+      "lumaB": 49.77,
+      "lumaDelta": -0.24,
       "pass": true,
       "monotonic": true
     },
@@ -157,10 +161,10 @@
       "to": "08",
       "frameShared": false,
       "rule": "B",
-      "pct": 0.128,
-      "lumaA": 40.19,
-      "lumaB": 40.28,
-      "lumaDelta": 0.09,
+      "pct": 0.166,
+      "lumaA": 40.09,
+      "lumaB": 40.32,
+      "lumaDelta": 0.23,
       "pass": true,
       "monotonic": true
     },
@@ -169,10 +173,46 @@
       "to": "08b",
       "frameShared": false,
       "rule": "B",
-      "pct": 0.14,
-      "lumaA": 38.33,
-      "lumaB": 38.15,
-      "lumaDelta": -0.18,
+      "pct": 0.153,
+      "lumaA": 38.3,
+      "lumaB": 38.17,
+      "lumaDelta": -0.13,
+      "pass": true,
+      "monotonic": true
+    },
+    {
+      "from": "08b",
+      "to": "09",
+      "frameShared": false,
+      "rule": "B",
+      "pct": 0.217,
+      "lumaA": 40.92,
+      "lumaB": 40.63,
+      "lumaDelta": -0.29,
+      "pass": true,
+      "monotonic": true
+    },
+    {
+      "from": "09",
+      "to": "10",
+      "frameShared": false,
+      "rule": "B",
+      "pct": 0.173,
+      "lumaA": 41.74,
+      "lumaB": 41.84,
+      "lumaDelta": 0.1,
+      "pass": true,
+      "monotonic": true
+    },
+    {
+      "from": "10",
+      "to": "11",
+      "frameShared": false,
+      "rule": "B",
+      "pct": 0.195,
+      "lumaA": 37.44,
+      "lumaB": 37.25,
+      "lumaDelta": -0.19,
       "pass": true,
       "monotonic": true
     }
@@ -205,9 +245,9 @@
       "srcMobile": "/landxi/assets/proto/film/legs/w01-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w01.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w01-last.webp",
-      "bytes": 4129008,
-      "bytesMobile": 1521274,
-      "bytesPoster": 88166,
+      "bytes": 3173889,
+      "bytesMobile": 1236843,
+      "bytesPoster": 86932,
       "cameraSource": "authored",
       "startCamera": {
         "center": [
@@ -261,9 +301,9 @@
       "srcMobile": "/landxi/assets/proto/film/legs/w02-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w02.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w02-last.webp",
-      "bytes": 4995401,
-      "bytesMobile": 1721858,
-      "bytesPoster": 114602,
+      "bytes": 3916350,
+      "bytesMobile": 1398907,
+      "bytesPoster": 113306,
       "cameraSource": "authored",
       "startCamera": {
         "center": [
@@ -317,9 +357,9 @@
       "srcMobile": "/landxi/assets/proto/film/legs/w03-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w03.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w03-last.webp",
-      "bytes": 5815098,
-      "bytesMobile": 1838285,
-      "bytesPoster": 111022,
+      "bytes": 4539953,
+      "bytesMobile": 1474745,
+      "bytesPoster": 110014,
       "cameraSource": "authored",
       "startCamera": {
         "center": [
@@ -373,9 +413,9 @@
       "srcMobile": "/landxi/assets/proto/film/legs/w04-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w04.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w04-last.webp",
-      "bytes": 4601269,
-      "bytesMobile": 1959032,
-      "bytesPoster": 114446,
+      "bytes": 3629464,
+      "bytesMobile": 1586370,
+      "bytesPoster": 113274,
       "cameraSource": "authored",
       "startCamera": {
         "center": [
@@ -429,9 +469,9 @@
       "srcMobile": "/landxi/assets/proto/film/legs/w05-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w05.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w05-last.webp",
-      "bytes": 6904636,
-      "bytesMobile": 2122166,
-      "bytesPoster": 115686,
+      "bytes": 5384871,
+      "bytesMobile": 1684069,
+      "bytesPoster": 114582,
       "cameraSource": "authored",
       "startCamera": {
         "center": [
@@ -485,9 +525,9 @@
       "srcMobile": "/landxi/assets/proto/film/legs/w06-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w06.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w06-last.webp",
-      "bytes": 4886765,
-      "bytesMobile": 1973659,
-      "bytesPoster": 120588,
+      "bytes": 3792219,
+      "bytesMobile": 1612157,
+      "bytesPoster": 120560,
       "cameraSource": "authored",
       "startCamera": {
         "center": [
@@ -541,9 +581,9 @@
       "srcMobile": "/landxi/assets/proto/film/legs/w06b-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w06b.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w06b-last.webp",
-      "bytes": 5171041,
-      "bytesMobile": 1554275,
-      "bytesPoster": 83196,
+      "bytes": 5326433,
+      "bytesMobile": 1535472,
+      "bytesPoster": 102746,
       "cameraSource": "authored",
       "startCamera": {
         "center": [
@@ -597,9 +637,9 @@
       "srcMobile": "/landxi/assets/proto/film/legs/w07-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w07.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w07-last.webp",
-      "bytes": 4991554,
-      "bytesMobile": 1551564,
-      "bytesPoster": 77184,
+      "bytes": 3835740,
+      "bytesMobile": 1237765,
+      "bytesPoster": 76344,
       "cameraSource": "authored",
       "startCamera": {
         "center": [
@@ -653,9 +693,9 @@
       "srcMobile": "/landxi/assets/proto/film/legs/w08-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w08.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w08-last.webp",
-      "bytes": 4084582,
-      "bytesMobile": 1269362,
-      "bytesPoster": 67318,
+      "bytes": 3106057,
+      "bytesMobile": 1009702,
+      "bytesPoster": 66556,
       "cameraSource": "authored",
       "startCamera": {
         "center": [
@@ -709,9 +749,9 @@
       "srcMobile": "/landxi/assets/proto/film/legs/w08b-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w08b.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w08b-last.webp",
-      "bytes": 5439002,
-      "bytesMobile": 1679465,
-      "bytesPoster": 79814,
+      "bytes": 3809416,
+      "bytesMobile": 1292232,
+      "bytesPoster": 80968,
       "cameraSource": "authored",
       "startCamera": {
         "center": [
@@ -736,6 +776,174 @@
         "bearing": -40,
         "mpp": 4.167,
         "seg": "08bb"
+      }
+    },
+    {
+      "id": "09",
+      "wp": "울주",
+      "label": "산림",
+      "place": "울주 산림식생 · 급경사지",
+      "look": "diorama",
+      "caption": "AI 생성 필름 · kling v2-1-pro · 앵커 A09 → A10 · 산림식생 · 급경사지(조사 항목 시연)",
+      "source": "landxi/assets/proto/film/legs/src/v3-leg-09.mp4",
+      "renderer": "kling v2-1-pro (AI)",
+      "frames": [
+        0,
+        121
+      ],
+      "count": 122,
+      "encodedFrames": 122,
+      "fps": 24,
+      "size": [
+        1946,
+        1080
+      ],
+      "seconds": 5.083,
+      "weightVh": 1.108,
+      "rate": 0.218,
+      "src": "/landxi/assets/proto/film/legs/w09.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/w09-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/w09.webp",
+      "seamPoster": "/landxi/assets/proto/film/legs/w09-last.webp",
+      "bytes": 4089746,
+      "bytesMobile": 1428960,
+      "bytesPoster": 97098,
+      "cameraSource": "authored",
+      "startCamera": {
+        "center": [
+          129.15,
+          35.55
+        ],
+        "altitudeM": 4500,
+        "zoom": 14.8997,
+        "pitch": 65,
+        "bearing": -40,
+        "mpp": 4.167,
+        "seg": "09a"
+      },
+      "endCamera": {
+        "center": [
+          129.16,
+          35.56
+        ],
+        "altitudeM": 1200,
+        "zoom": 16.8064,
+        "pitch": 35,
+        "bearing": -40,
+        "mpp": 1.111,
+        "seg": "09b"
+      }
+    },
+    {
+      "id": "10",
+      "wp": "울주",
+      "label": "불법소각",
+      "place": "울주 산자락 공터 · 불법소각",
+      "look": "diorama",
+      "caption": "AI 생성 필름 · kling v2-1-pro · 앵커 A10 → A11 · 불법소각(조사 항목 시연)",
+      "source": "landxi/assets/proto/film/legs/src/v3-leg-10.mp4",
+      "renderer": "kling v2-1-pro (AI)",
+      "frames": [
+        0,
+        121
+      ],
+      "count": 122,
+      "encodedFrames": 122,
+      "fps": 24,
+      "size": [
+        1946,
+        1080
+      ],
+      "seconds": 5.083,
+      "weightVh": 1.108,
+      "rate": 0.218,
+      "src": "/landxi/assets/proto/film/legs/w10.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/w10-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/w10.webp",
+      "seamPoster": "/landxi/assets/proto/film/legs/w10-last.webp",
+      "bytes": 3976899,
+      "bytesMobile": 1372296,
+      "bytesPoster": 93922,
+      "cameraSource": "authored",
+      "startCamera": {
+        "center": [
+          129.16,
+          35.56
+        ],
+        "altitudeM": 1200,
+        "zoom": 16.8064,
+        "pitch": 35,
+        "bearing": -40,
+        "mpp": 1.111,
+        "seg": "10a"
+      },
+      "endCamera": {
+        "center": [
+          129.165,
+          35.565
+        ],
+        "altitudeM": 500,
+        "zoom": 18.0694,
+        "pitch": 30,
+        "bearing": -40,
+        "mpp": 0.463,
+        "seg": "10b"
+      }
+    },
+    {
+      "id": "11",
+      "wp": "국토",
+      "label": "국토 변화",
+      "place": "줌아웃 · 한반도 전체 · 국토 변화 분석",
+      "look": "diorama",
+      "caption": "AI 생성 필름 · kling v2-1-pro · 앵커 A11 → A12 · 남원 4시점 2025-04→10 · 변화지수 456(비지도)",
+      "source": "landxi/assets/proto/film/legs/src/v3-leg-11.mp4",
+      "renderer": "kling v2-1-pro (AI)",
+      "frames": [
+        0,
+        121
+      ],
+      "count": 122,
+      "encodedFrames": 122,
+      "fps": 24,
+      "size": [
+        1946,
+        1080
+      ],
+      "seconds": 5.083,
+      "weightVh": 1.108,
+      "rate": 0.218,
+      "src": "/landxi/assets/proto/film/legs/w11.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/w11-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/w11.webp",
+      "seamPoster": "/landxi/assets/proto/film/legs/w11-last.webp",
+      "bytes": 4066866,
+      "bytesMobile": 1510015,
+      "bytesPoster": 104048,
+      "cameraSource": "authored",
+      "startCamera": {
+        "center": [
+          129.165,
+          35.565
+        ],
+        "altitudeM": 500,
+        "zoom": 18.0694,
+        "pitch": 30,
+        "bearing": -40,
+        "mpp": 0.463,
+        "seg": "11a"
+      },
+      "endCamera": {
+        "center": [
+          127.8,
+          36.3
+        ],
+        "altitudeM": 1400000,
+        "zoom": 6.6047,
+        "pitch": 0,
+        "bearing": 0,
+        "mpp": 1296.296,
+        "seg": "11b"
       }
     }
   ],
@@ -766,6 +974,19 @@
     "detections": "/landxi/assets/data/geo/results/yeosu-marine-2025-aerial.geojson",
     "note": "레그 07(여수 해안) 끝 카메라. 07 끝에서 여수 실지도가 이어받고, 08 이 밑에서 올라오면 닫힌다 — 필름은 판 뒤로 이어진다(08 상승 → 08b 울주)."
   },
+  "finale": {
+    "legIndex": 12,
+    "center": [
+      127.8,
+      36.3
+    ],
+    "zoom": 6.6047,
+    "pitch": 0,
+    "bearing": 0,
+    "altitudeM": 1400000,
+    "detections": null,
+    "note": "레그 11(줌아웃 · 국토 변화) 끝 카메라 = A12 홀드. 필름 마지막 0.28vh 부터 끝까지 국토 실지도가 같은 카메라로 이어받고, 그 위에서 브랜드 마감(LEAD 0.30 + SPAN 1.54 + TAIL 0.16vh)이 선다. 울주 조사 항목은 실결과가 없어 검출 레이어 없음."
+  },
   "full": {
     "src": "/landxi/assets/proto/film/legs/full.mp4",
     "poster": "/landxi/assets/proto/film/legs/full.webp",
@@ -779,20 +1000,23 @@
       "06b",
       "07",
       "08",
-      "08b"
+      "08b",
+      "09",
+      "10",
+      "11"
     ],
-    "legCount": 10,
+    "legCount": 13,
     "size": [
       1920,
       1080
     ],
     "fps": 24,
-    "frames": 1061,
-    "seconds": 44.208,
-    "legSecondsSum": 50.83,
+    "frames": 1375,
+    "seconds": 57.292,
+    "legSecondsSum": 66.079,
     "xfadeSeconds": 0.734,
-    "bytes": 55494241,
-    "encode": "xfade=fade:0.734s × 9 · scale/crop 1920×1080 · libx264 high crf 20 -g 8 -keyint_min 8 -sc_threshold 0 +faststart -an",
-    "note": "레그 사이를 0.734s 씩 xfade(fade) 로 겹쳤다(스크럽 씸 밴드 0.16vh ÷ 0.218 vh/s). 하드컷보다 6.61s 짧다."
+    "bytes": 73189020,
+    "encode": "xfade=fade:0.734s × 12 · scale/crop 1920×1080 · libx264 high crf 20 -g 8 -keyint_min 8 -sc_threshold 0 +faststart -an",
+    "note": "레그 사이를 0.734s 씩 xfade(fade) 로 겹쳤다(스크럽 씸 밴드 0.16vh ÷ 0.218 vh/s). 하드컷보다 8.81s 짧다."
   }
 }

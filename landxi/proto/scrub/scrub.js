@@ -50,6 +50,8 @@ const el = {
   plateY: $('#sb-plate-yeosu'),
   mapN: $('#sb-map-namwon'),
   mapY: $('#sb-map-yeosu'),
+  plateK: $('#sb-plate-korea'),
+  mapK: $('#sb-map-korea'),
   plateCap: $('#sb-plate-cap'),
 };
 
@@ -235,7 +237,8 @@ function paint() {
 /* ── 인계 — 필름이 멈춘 그 카메라를 살아 있는 지도가 이어받는다 ──────────────
    레그가 아니라 무대의 마지막 두 층이다.
      #1 남원  레그 05(비닐하우스 실태) 끝 — manifest.handoff, 온실 검출 9,664동
-     #2 여수  필름 최종 프레임      — manifest.handoffFinal, 해양쓰레기 후보
+     #2 여수  레그 07 끝            — manifest.handoffFinal, 해양쓰레기 후보(08 이 올라오면 닫힌다)
+     #3 국토  필름 최종 프레임      — manifest.finale, A12 홀드(레그 11 끝) 위 국토 실지도. 브랜드 마감이 이 판의 줌으로 수축을 잰다
    지도는 각자 자기 구간 1.2vh 앞에서만 만든다. 크로스페이드는 1프레임(≈40ms). */
 const PLATES = [];
 function makePlate(spec, container, host, style, warmZoom) {
@@ -276,11 +279,13 @@ function satStyle(detUrl, color) {
         tiles: ['https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg'],
         tileSize: 256, minzoom: 5, maxzoom: 19, attribution: 'V-World 위성영상',
       },
-      det: { type: 'geojson', data: detUrl },
+      ...(detUrl ? { det: { type: 'geojson', data: detUrl } } : {}),
     },
     layers: [
       { id: 'bg', type: 'background', paint: { 'background-color': '#06080b' } },
       { id: 'sat', type: 'raster', source: 'vsat' },
+      // 검출이 없는 판(국토 마감 판 — 울주 조사 항목은 실결과가 없다)은 위성영상만.
+      ...(!detUrl ? [] : [
       // 탐지는 후보다 — 신뢰도로 감쇠시키되 삭제하지 않는다(카피덱 §4 "감쇠").
       { id: 'det-f', type: 'fill', source: 'det',
         paint: { 'fill-color': color,
@@ -297,13 +302,14 @@ function satStyle(detUrl, color) {
           'circle-opacity': ['interpolate', ['linear'], ['zoom'], 10, 0.85, 14, 0.5, 15, 0],
           'circle-stroke-width': 0,
         } },
+      ]),
     ],
   };
 }
 
 // 각 인계의 트랙 구간(vh). #1 은 레그 06 의 마지막 0.14vh + 씸 1/4(다음 레그가
 // 밑에서 올라오기 전에 닫는다), #2 는 마지막 레그의 마지막 0.28vh 부터 끝까지.
-let BAND_N = [0, 0], BAND_Y = [0, 0];
+let BAND_N = [0, 0], BAND_Y = [0, 0], BAND_K = [0, 0];
 function handoff(t) {
   if (reduce) return;
   // #1 남원 — 레그 05 끝(manifest.handoff.legIndex)
@@ -317,8 +323,15 @@ function handoff(t) {
       satStyle(M.handoffFinal.detections, '#FF9A2E'),
       M.handoffFinal.zoom - endDzFor(M.handoffFinal.zoom));   // 마감 수축의 끝 줌을 예열
   }
+  // #3 국토 — 필름 최종 프레임(레그 11 끝 = A12 홀드). 마감 수축(ending.js)이 이 판을 dz 만큼 줌아웃시키므로 그 줌을 예열한다.
+  if (!PLATES[2] && M.finale && t > BAND_K[0] - 1.2) {
+    PLATES[2] = makePlate(M.finale, el.mapK, el.plateK,
+      satStyle(M.finale.detections, '#FFD166'),
+      M.finale.zoom - endDzFor(M.finale.zoom));
+  }
   gate(PLATES[0], t >= BAND_N[0] && t <= BAND_N[1]);
   gate(PLATES[1], t >= BAND_Y[0] && t <= BAND_Y[1]);
+  gate(PLATES[2], t >= BAND_K[0] && t <= BAND_K[1]);
 }
 function gate(rec, want) {
   if (!rec) return;
@@ -392,6 +405,8 @@ const boot = async () => {
   //   legIndex 가 마지막 레그가 아니면 남원 판과 같은 문법으로 닫는다 — 07 의 마지막 0.28vh 부터 08 씸의 1/4 까지.
   const fi = M.handoffFinal.legIndex;
   BAND_Y = fi + 1 < M.legs.length ? [cum[fi][1] - 0.28, cum[fi][1] + SEAM / 4] : [cum[fi][1] - 0.28, total];
+  // 2026-08-27 레그 9–11: #3 국토 판은 필름 최종 프레임(레그 11 끝 = A12 홀드)의 마지막 0.28vh 부터 끝까지 — 브랜드 마감이 그 위에 선다.
+  if (M.finale) { const ki = M.finale.legIndex; BAND_K = [cum[ki][1] - 0.28, total]; }
 
   buildRail();
   collectCounts();
@@ -401,7 +416,7 @@ const boot = async () => {
   // 다시 쓰므로 거기에 얹을 수 없고, 형제 요소를 두면 "흐름에는 스페이서 하나"라는
   // worldflight §8 #1 이 깨진다.
   END = createEnding({
-    root: el.root, reduce, trackTop, totalVh: () => total, plate: () => PLATES[1],
+    root: el.root, reduce, trackTop, totalVh: () => total, plate: () => PLATES[2] || PLATES[1],
   });
   const padEnd = () => { el.root.style.paddingBottom = Math.round(END_PAD * innerHeight) + 'px'; };
   padEnd();
@@ -457,7 +472,7 @@ const boot = async () => {
         alt: live.spec.altitudeM, pitch: live.spec.pitch, bearing: live.spec.bearing } : camAt(trackVh());
     },
     spacerVh: () => total + 1,
-    bands: () => ({ namwon: BAND_N, yeosu: BAND_Y, total }),
+    bands: () => ({ namwon: BAND_N, yeosu: BAND_Y, korea: BAND_K, total }),
     plate: i => {
       const r = PLATES[i];
       if (!r) return null;

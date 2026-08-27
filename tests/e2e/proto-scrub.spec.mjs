@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
  *
  * 이 스펙이 지키는 계약 (references/worldflight.md §8 Hard rules + 스펙 §B/§F):
  *   1) 문서 흐름에는 스페이서 하나뿐이고, 무대는 position:fixed 하나다.
- *   2) src 를 절대 교체하지 않는다 — 10개 레그(01–06, 06b, 07, 08, 08b · 전부 kling AI)가 전부 동시에 마운트된 채로 남는다.
+ *   2) src 를 절대 교체하지 않는다 — 13개 레그(01–06, 06b, 07, 08, 08b, 09, 10, 11 · 전부 kling AI)가 전부 동시에 마운트된 채로 남는다.
  *   3) 크로스페이드는 한쪽만. 어느 순간에도 완전 불투명한 레그가 최소 하나 있다
  *      → 씸에서 페이지 바탕(검정)이 드러나지 않는다.
  *   4) 재생헤드는 lerp 0.12 + 데드밴드 8/20ms + 시크 병합으로 움직인다.
@@ -56,11 +56,11 @@ const stageState = (page) => page.evaluate(() => {
   }));
 });
 
-test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 10개 레그 이음매', async ({ page }) => {
+test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 13개 레그 이음매', async ({ page }) => {
   const errors = await boot(page);
 
   const M = await page.evaluate(() => window.__scrub.manifest);
-  expect(M.legs.length).toBe(10);
+  expect(M.legs.length).toBe(13);
 
   /* ── 1. 문서 흐름에는 스페이서 하나뿐, 무대는 fixed ─────────────────────── */
   const flow = await page.evaluate(() => {
@@ -120,11 +120,10 @@ test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 10개 �
     label: window.__scrub.legLabel(),
     t: window.__scrub.trackVh(),
   }));
-  // 0.55 × 11.08vh = 6.094vh → 레그 06(상승, 5.540–6.648vh 의 한가운데). AI 레그 1–8b 가 각 1.108vh.
-  // (레그 06b 가 들어오며 7.834 → 8.942vh; AI 레그 07 이 플레이스홀더 1.186vh 를 대체하며 8.864vh; 2026-08-27 kie-leg-7;
-  //  레그 08·08b 가 들어오며 11.08vh — 0.5 는 05→06 씸 위에 정확히 떨어지므로 0.55 로 옮겼다; 2026-08-27 kie-legs-8-8b)
-  expect(mid.id).toBe('06');
-  expect(mid.label).toBe('상승');
+  // 0.55 × 14.404vh = 7.922vh → 레그 07(여수, 7.756–8.864vh · 시작 씸 밴드 밖). AI 레그 1–11 이 각 1.108vh.
+  // (레그 08·08b 가 들어오며 11.08vh 에서는 레그 06 이었다; 2026-08-27 레그 09·10·11 이 들어오며 14.404vh; kie-legs-final)
+  expect(mid.id).toBe('07');
+  expect(mid.label).toBe('여수');
 
   /* ── 5. 이음매에 검은 프레임이 없다 ──────────────────────────────────────
      구조적 보증: 한쪽만 페이드하므로 나가는 레그가 밑에서 풀 강도로 남는다.
@@ -194,8 +193,10 @@ test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 10개 �
     expect(d.gsd).toMatch(/(cm|m|km)\/px$/);
     expect(d.alt).toBeGreaterThan(0);
   }
-  // 궤도(15,000km) → 울주(4.5km): 시작이 끝보다 세 자릿수 위다.
-  expect(dial[0].alt / dial[dial.length - 1].alt).toBeGreaterThan(500);
+  // 궤도(15,000km) → 울주 공터(0.5km) → 귀환(A12, 1,400km): 최저점이 시작보다 네 자릿수 아래이고, 끝은 다시 수백 km 위다(2026-08-27 레그 11).
+  const minAlt = Math.min(...dial.map((d) => d.alt));
+  expect(dial[0].alt / minAlt).toBeGreaterThan(500);
+  expect(dial[dial.length - 1].alt).toBeGreaterThan(100000);
 
   /* ── 9. 키보드 ←/→ 로 레그를 건너뛴다 ───────────────────────────────────── */
   await seek(page, 0);
@@ -207,9 +208,9 @@ test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 10개 �
   await page.waitForTimeout(900);
   expect(await page.evaluate(() => window.__scrub.leg())).toBe(0);
 
-  /* ── 10. 항로 — 이름 붙은 6개 지점 ──────────────────────────────────────── */
+  /* ── 10. 항로 — 이름 붙은 7개 지점 ──────────────────────────────────────── */
   const rail = await page.$$eval('#sb-route-list .sb-route__t', (n) => n.map((e) => e.textContent));
-  expect(rail).toEqual(['궤도', '성층운', '한반도', '남원', '여수', '울주']);
+  expect(rail).toEqual(['궤도', '성층운', '한반도', '남원', '여수', '울주', '국토']);
 
   expect(errors, '콘솔 오류').toEqual([]);
 });
@@ -224,8 +225,9 @@ test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 10개 �
 test('브랜드 마감 — 워드마크 → 태그라인 → LX 락업, 겹침 0, 월드에 붙은 수축', async ({ page }) => {
   const errors = await boot(page);
 
-  // 마감 앞까지 한 번 훑어 마지막 레그와 인계 판을 실제로 올려 둔다(여수 판은 0.78 대에서 만들어진다).
-  for (const q of [0.5, 0.78, 0.9, 1]) await seek(page, q, 500);
+  // 마감 앞까지 한 번 훑어 마지막 레그와 인계 판을 실제로 올려 둔다(여수 판은 0.60 대, 국토 마감 판은 0.90 대에서 만들어진다; 2026-08-27 레그 9–11).
+  for (const q of [0.5, 0.6, 0.78, 0.9, 1]) await seek(page, q, 500);
+  await page.waitForFunction(() => { const r = window.__scrub.plate(2); return !!(r && r.ready); }, null, { timeout: 30000 }).catch(() => {});
   await page.waitForTimeout(2500);
 
   const at = async (e) => {
@@ -254,13 +256,14 @@ test('브랜드 마감 — 워드마크 → 태그라인 → LX 락업, 겹침 0
 
   /* 4. 월드 부착 수축 — 워드마크가 화면에서 줄어드는 비율 = 지도가 줌아웃한 비율.
         두 값이 어긋나면 "로고가 붙었다"로 읽힌다. 같아야 "이 세계가 이 이름을 갖는다"다. */
-  const zSpec = await page.evaluate(() => window.__scrub.manifest.handoffFinal.zoom);
+  // 수축은 필름이 실제로 멈춘 자리(레그 11 끝 = A12 홀드)의 국토 판(plate 2, manifest.finale)에서 잰다 — 2026-08-27 레그 9–11 전에는 여수 판이었다.
+  const zSpec = await page.evaluate(() => window.__scrub.manifest.finale.zoom);
   // 시작 표본은 수축(비트 C, e ≥ 0.0286)이 시작되기 **전**에 잰다 — 0.030 은 이미 C 안이라 지도가 0.005 만큼 물러나 있다
   // (트랙 11.08vh 의 px 반올림으로 e 가 0.0004 흔들리면 precision 2 를 넘긴다; 2026-08-27 kie-legs-8-8b).
   const a = await at(0.020);
-  const zA = await page.evaluate(() => window.__scrub.plate(1).zoom);
+  const zA = await page.evaluate(() => window.__scrub.plate(2).zoom);
   const b = await at(0.226);
-  const zB = await page.evaluate(() => window.__scrub.plate(1).zoom);
+  const zB = await page.evaluate(() => window.__scrub.plate(2).zoom);
   expect(zA).toBeCloseTo(zSpec, 2);                                  // 시작 = 인계 카메라
   expect(zB).toBeLessThan(zA - 0.3);                                 // 실제로 물러났다
   const wordShrink = b.wordmark.liveWidthPct / a.wordmark.liveWidthPct;
@@ -323,13 +326,13 @@ test('지연 로딩 ±1.6vh — 멀리 있는 레그는 아직 받지 않는다'
   await seek(page, 0);
   const early = await stageState(page);
   expect(early[0].srcSet, '레그 01 은 받았다').toBe(true);
-  // 11.08vh 트랙에서 마지막 레그 08b(9.97vh~, index 9)는 1.6vh 반경 밖 — 아직 받지 않았다.
-  expect(early[9].srcSet, '레그 08b 는 아직이다').toBe(false);
-  expect(reqs).not.toContain('w08b');
+  // 14.404vh 트랙에서 마지막 레그 11(13.30vh~, index 12)은 1.6vh 반경 밖 — 아직 받지 않았다.
+  expect(early[12].srcSet, '레그 11 은 아직이다').toBe(false);
+  expect(reqs).not.toContain('w11');
 
   await seek(page, 0.985, 1200);
   const late = await stageState(page);
-  expect(late[9].srcSet, '도착하면 받는다').toBe(true);
+  expect(late[12].srcSet, '도착하면 받는다').toBe(true);
   expect(late.every((s) => s.op <= 1)).toBe(true);
   expect(errors, '콘솔 오류').toEqual([]);
 });
@@ -353,10 +356,10 @@ test('reduced-motion — 클립을 아예 받지 않는다. 포스터와 글이 
   await page.waitForTimeout(800);
 
   expect(videoReqs, 'reduced-motion 에서 mp4 를 받지 않는다').toEqual([]);
-  // 포스터 10장이 그대로 서 있고, 카피는 읽힌다.
+  // 포스터 13장이 그대로 서 있고, 카피는 읽힌다.
   const posters = await page.$$eval('.sc-world__poster', (n) => n.map((e) => e.naturalWidth > 0));
-  expect(posters.length).toBeGreaterThanOrEqual(10);
-  expect(posters.filter(Boolean).length).toBeGreaterThanOrEqual(10);
+  expect(posters.length).toBeGreaterThanOrEqual(13);
+  expect(posters.filter(Boolean).length).toBeGreaterThanOrEqual(13);
   expect(await page.textContent('.sb-h1')).toContain('국토는 매일');
   // 인계 판은 만들지 않는다(엔진 계약: reduced 에서는 지도도 띄우지 않는다).
   expect(await page.evaluate(() => window.__scrub.handoffActive())).toBe(false);

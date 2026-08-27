@@ -31,13 +31,14 @@ html{ scroll-behavior:auto; }
 .sb-rvfc .sb-world .sc-world__seg > video:not(.sb-painted){ opacity:0 !important; }
 
 /* 인계 판(plate) — 레그가 아니라 무대의 마지막 두 층.
-   #1 남원(레그 06 끝) · #2 여수(필름 최종 프레임). 크로스페이드는 1프레임(40ms). */
+   #1 남원(레그 05 끝) · #2 여수(레그 07 끝) · #3 국토(필름 최종 프레임 = A12 홀드, 브랜드 마감이 그 위). 크로스페이드는 1프레임(40ms). */
 .sb-plate{
   position:absolute; inset:0; z-index:130; opacity:0; visibility:hidden;
   transition:opacity 40ms linear;
 }
 .sb-plate.is-on{ opacity:1; visibility:visible; }
 #sb-plate-yeosu{ z-index:132; }
+#sb-plate-korea{ z-index:134; }
 .sb-plate__map{ position:absolute; inset:0; }
 .sb-plate .maplibregl-ctrl-attrib{ font-family:var(--lx-num); font-size:14px; }
 /* 인계 판이 올라와 있는 동안 계기판·항로는 그대로 남는다 — 같은 카메라를

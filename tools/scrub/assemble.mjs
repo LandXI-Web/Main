@@ -1,4 +1,4 @@
-// tools/scrub/assemble.mjs — 월드플라이트 레그 조립기 (10 레그: 01–07 + 08·08b)
+// tools/scrub/assemble.mjs — 월드플라이트 레그 조립기 (13 레그: 01–07 + 08·08b + 09·10·11)
 //
 //   node tools/scrub/assemble.mjs            # 인코딩 + 포스터 + 씸검증 + 매니페스트
 //   node tools/scrub/assemble.mjs --verify   # 인코딩 생략, 씸 diff / 페이스만 재측정
@@ -30,8 +30,8 @@ import path from 'node:path';
 
 const FFMPEG = process.env.FFMPEG || 'ffmpeg';
 const FFPROBE = process.env.FFPROBE || 'ffprobe';
-const CRF = process.env.CRF || '22';   // 2026-08-27: 10 레그 데스크톱 예산(≤60 MB) 때문에 20 → 22
-const MCRF = process.env.MCRF || '25';
+const CRF = process.env.CRF || '24';   // 2026-08-27: 10 레그 데스크톱 예산(≤60 MB) 때문에 20 → 22, 13 레그(09–11)로 64.75 MB 라 22 → 24
+const MCRF = process.env.MCRF || '27';  // 13 레그 모바일 21.82 MB > 20 MB 라 25 → 27
 const root = process.cwd();
 const OUT = path.resolve(root, 'landxi/assets/proto/film/legs');
 const TMP = path.resolve(root, 'build/film/scrubtmp');
@@ -186,6 +186,37 @@ const PLAN = [
     caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A08b → A09 · 울주 산지 능선',
     authored: true,
   },
+  // 09·10·11 (2026-08-27 "전부 go", docs/superpowers/proto/2026-08-27-kie-legs-final.md): 울주 산릉 활강(A09→A10, 피치 65→35)
+  // → 불법소각 공터 접근(A10→A11, 피치 35→30) → 급상승·한반도 전체(A11→A12, 모형 지구본 귀환). 카메라는 authored —
+  // 09 시작은 08b 끝(울주 4.5 km), 11 끝은 A12(한반도 전체가 프레임, 피치 0 · ~1,400 km)로 "먼 이동"이라 계기는 중간에서 컷(JUMP).
+  // 울주 조사 항목(산림식생·급경사지·불법소각)은 실결과가 없다 — 카피는 '조사 항목(시연)' 으로만, 숫자 없음.
+  {
+    id: '09', wp: '울주', label: '산림', place: '울주 산림식생 · 급경사지', look: 'diorama',
+    mp4: 'landxi/assets/proto/film/legs/src/v3-leg-09.mp4',
+    gen: 'landxi/assets/proto/film/legs/gen/v3-leg-09.mp4',
+    a: C(129.1500, 35.5500, 4.5, 65, -40),
+    b: C(129.1600, 35.5600, 1.2, 35, -40),
+    caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A09 → A10 · 산림식생 · 급경사지(조사 항목 시연)',
+    authored: true,
+  },
+  {
+    id: '10', wp: '울주', label: '불법소각', place: '울주 산자락 공터 · 불법소각', look: 'diorama',
+    mp4: 'landxi/assets/proto/film/legs/src/v3-leg-10.mp4',
+    gen: 'landxi/assets/proto/film/legs/gen/v3-leg-10.mp4',
+    a: C(129.1600, 35.5600, 1.2, 35, -40),
+    b: C(129.1650, 35.5650, 0.5, 30, -40),
+    caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A10 → A11 · 불법소각(조사 항목 시연)',
+    authored: true,
+  },
+  {
+    id: '11', wp: '국토', label: '국토 변화', place: '줌아웃 · 한반도 전체 · 국토 변화 분석', look: 'diorama',
+    mp4: 'landxi/assets/proto/film/legs/src/v3-leg-11.mp4',
+    gen: 'landxi/assets/proto/film/legs/gen/v3-leg-11.mp4',
+    a: C(129.1650, 35.5650, 0.5, 30, -40),
+    b: C(127.8000, 36.3000, 1400.0, 0, 0),
+    caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A11 → A12 · 남원 4시점 2025-04→10 · 변화지수 456(비지도)',
+    authored: true,
+  },
 ];
 
 /* ── 인코딩 ─────────────────────────────────────────────────────────────────── */
@@ -335,17 +366,18 @@ const pTot = legs.reduce((s, L) => s + L.bytesPoster, 0);
 const manifest = {
   generatedAt: new Date().toISOString(),
   builder: 'tools/scrub/assemble.mjs',
-  source: '단일 소스 · kling v2-1-pro AI 레그 1–8b(앵커 A01→A06→A06b→A07→A08→A08b→A09). MapLibre 플레이스홀더 0',
+  source: '단일 소스 · kling v2-1-pro AI 레그 1–11(앵커 A01→A06→A06b→A07→A08→A08b→A09→A10→A11→A12). MapLibre 플레이스홀더 0. 레그 12(귀환·브랜드 마감)는 페이지가 A12 홀드 위에 그린다',
   fps: FPS,
   fpsNote: '전 레그 24 fps(kling 출력 1932×1072→1080p 스케일). 레그별 legs[].fps / legs[].size.',
   filmSize: [1280, 720],
   aiLegs: {
-    ids: ['01', '02', '03', '04', '05', '06', '06b', '07', '08', '08b'],
-    doc: ['docs/superpowers/proto/2026-08-26-kie-legs-1-3.md', 'docs/superpowers/proto/2026-08-27-kie-legs-4-6.md', 'docs/superpowers/proto/2026-08-27-kie-legs-4-6b.md', 'docs/superpowers/proto/2026-08-27-kie-leg-7.md', 'docs/superpowers/proto/2026-08-27-kie-legs-8-8b.md'],
+    ids: ['01', '02', '03', '04', '05', '06', '06b', '07', '08', '08b', '09', '10', '11'],
+    doc: ['docs/superpowers/proto/2026-08-26-kie-legs-1-3.md', 'docs/superpowers/proto/2026-08-27-kie-legs-4-6.md', 'docs/superpowers/proto/2026-08-27-kie-legs-4-6b.md', 'docs/superpowers/proto/2026-08-27-kie-leg-7.md', 'docs/superpowers/proto/2026-08-27-kie-legs-8-8b.md', 'docs/superpowers/proto/2026-08-27-kie-legs-final.md'],
     note: '미니어처 세계라 실카메라가 없다. startCamera/endCamera 는 앵커 문서의 고도대를 따라 authored 이고 ' +
       '(A02 고궤도 460 km · A03 ~30 km/피치 60° · A05 남원 분지 8.6 km · A06b 남원 상공 140 km · A07 여수 17 km · A08 국동항 방파제 발치 0.3 km/피치 50°), 레그 05 끝은 남원 ' +
       '인계 판의 카메라, 레그 06 은 남원 위 수직 상승, 06b 는 여수 17 km 로 활강, 07 끝(국동항 방파제 발치 클로즈업)은 여수 인계 판의 카메라가 된다. ' +
       '08 은 여수 위 수직 상승(0.3 → 6 km), 08b 는 울주 산지(129.15, 35.55 · 4.5 km/피치 65°)로 활강 — 필름은 여수 인계 판 뒤로 이어진다. ' +
+      '09 는 울주 능선 활강(4.5 → 1.2 km/피치 35°), 10 은 소각 공터 접근(0.5 km/피치 30°), 11 은 급상승해 한반도 전체(A12 · 1,400 km/피치 0) — 그 위에 브랜드 마감. ' +
       'cameraSource:"authored" 로 표시. 페이지 오버레이의 숫자는 전부 실데이터다.',
   },
   mobileSize: [960, 540],
@@ -400,6 +432,19 @@ const manifest = {
     altitudeM: legs[7].endCamera.altitudeM,
     detections: '/landxi/assets/data/geo/results/yeosu-marine-2025-aerial.geojson',
     note: '레그 07(여수 해안) 끝 카메라. 07 끝에서 여수 실지도가 이어받고, 08 이 밑에서 올라오면 닫힌다 — 필름은 판 뒤로 이어진다(08 상승 → 08b 울주).',
+  },
+  finale: {
+    // 2026-08-27 레그 9–11: 필름 최종 프레임 = 레그 11 끝 = A12(한반도 전체, 모형 지구본). 레그 12(귀환·브랜드 마감)는
+    // 페이지가 이 프레임을 홀드한 위에 그린다(샷 리스트 v2 · ending.js SPAN 1.54vh). 브랜드 마감의 "월드 부착 수축"은 이 카메라의
+    // 국토 실지도 판(scrub.js PLATES[2])을 dz 만큼 줌아웃시켜 잰다 — 여수 판이 아니라 필름이 실제로 멈춘 자리다.
+    legIndex: legs.length - 1,
+    center: legs[legs.length - 1].endCamera.center,
+    zoom: legs[legs.length - 1].endCamera.zoom,
+    pitch: legs[legs.length - 1].endCamera.pitch,
+    bearing: legs[legs.length - 1].endCamera.bearing,
+    altitudeM: legs[legs.length - 1].endCamera.altitudeM,
+    detections: null,
+    note: '레그 11(줌아웃 · 국토 변화) 끝 카메라 = A12 홀드. 필름 마지막 0.28vh 부터 끝까지 국토 실지도가 같은 카메라로 이어받고, 그 위에서 브랜드 마감(LEAD 0.30 + SPAN 1.54 + TAIL 0.16vh)이 선다. 울주 조사 항목은 실결과가 없어 검출 레이어 없음.',
   },
 };
 
