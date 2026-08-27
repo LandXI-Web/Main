@@ -1,6 +1,6 @@
 /* Land-XI 로그인 — 마스터 design-canvas/v2/B5-Login.dc.html (NOTES §14 · 5차 개정).
-   구 랜드XI(login.do)의 구도만 가져온다: 페이지 중앙의 작은 카드 하나(1200×480, 1440×900 에서 x 120–1320 · y 210–690),
-   좌 60% = 디오라마 오프닝 필름(Leg 01, 글자 0) · 우 40% = 태그라인 + 압축 폼. 카드 위 = Land-XI CI + 원본 소개 한 줄,
+   구 랜드XI(login.do)의 구도만 가져온다: 페이지 중앙의 작은 카드 하나(1200×560, 1440×900 에서 x 120–1320 · y 170–730),
+   좌 60% = 디오라마 오프닝 필름(Leg 01, 글자 0) · 우 40% = 로그인 제목 + 소개 한 문장 + 폼(6차: 라벨·입력·옵션·링크 글자 2배). 카드 위 = Land-XI CI + 원본 소개 한 줄,
    카드 아래 = LX 락업 + 정책 링크 + Copyright. 원본의 어두운 배경/글로우는 가져오지 않는다.
    서체(발주 결정 2026-08-27): 표시 Paperlogy 700 / 본문·라벨·버튼 Pretendard / 숫자 Inter tabular · 헤어라인 #DDD · radius 0 · shadow 0 · 12px 바닥.
    톤 T3 흑+청(5차, 발주 "검정과 파란색의 배합"): 액센트 #006DF7 = 워드마크 Land-XI · 로그인 CTA 채움(로그인 예외) · 포커스 밑줄 · 찾기 링크 · 체크. 나머지 잉크/회색. 그라디언트·그림자·radius 0.
@@ -10,7 +10,7 @@
 
 :root{
   --lg-card-w:1200px;
-  --lg-card-h:480px;            /* 5차: 태그라인이 우 패널로 오면서 440 → 480 */
+  --lg-card-h:560px;            /* 5차 440 → 480, 6차: 폼 글자 2배로 480 → 560 */
   --lg-gap:24px;                /* 카드 ↔ 위 소개 / 아래 푸터 */
   --lg-pad:40px;                /* 폼 패널 패딩 */
 }
@@ -38,9 +38,9 @@ body.lx{ overflow:hidden; background:var(--lx-paper); color:var(--lx-ink); }
 .lg-head{ position:absolute; left:0; right:0; bottom:calc(100% + var(--lg-gap)); }
 .lg-brand{ display:block; width:max-content; }
 .lg-brand__ci{ display:block; height:22px; width:auto; }   /* 실제 CI — 브랜드 예외, 공식 그라디언트 그대로 */
-.lg-intro{ margin:12px 0 0; font-size:15px; line-height:22px; letter-spacing:-.005em; color:var(--lx-grey-2); }
+.lg-intro{ margin:12px 0 0; font-size:17px; line-height:24px; letter-spacing:-.005em; color:var(--lx-grey-2); }
 
-/* ── 카드 1200×440 — 헤어라인 1, radius 0, shadow 0 ── */
+/* ── 카드 1200×560 — 헤어라인 1, radius 0, shadow 0 ── */
 .lg-card{
   display:flex; width:100%; height:var(--lg-card-h);
   border:1px solid var(--lx-hair); background:var(--lx-paper);
@@ -50,92 +50,90 @@ body.lx{ overflow:hidden; background:var(--lx-paper); color:var(--lx-ink); }
 .lg-film{ position:relative; flex:0 0 60%; margin:0; min-width:0; overflow:hidden; background:var(--lx-ink); }
 .lg-film__v{ display:block; width:100%; height:100%; object-fit:cover; object-position:50% 50%; }
 
-/* 우 40% — 태그라인(필름에서 옮겨 옴) + 압축 폼. 세로 예산 478: 32 + 태그 30+6+36(2줄) + 22 + 제목 36 + 18 + 필드 60×2+10 + 옵션 18 + 20 + 버튼 44 + 18 + 문의 14 = 424 */
-.lg-panel{ position:relative; flex:0 0 40%; min-width:0; padding:32px var(--lg-pad) 0; }
-.lg-tag{ margin:0; color:var(--lx-ink); }
-.lg-tag__t{ display:block; font-family:var(--font-display); font-weight:700; font-size:24px; line-height:30px; letter-spacing:-.02em; }
-.lg-tag__xi{ color:var(--lx-accent); }   /* 흑+청 — 워드마크의 Land-XI 만 액센트 */
-.lg-tag__s{ display:block; margin-top:6px; font-size:13px; line-height:18px; letter-spacing:-.005em; color:var(--lx-grey-2); word-break:keep-all; }
-.lg-h1{ margin:22px 0 0; font-family:var(--font-display); font-weight:700; font-size:28px; line-height:36px; letter-spacing:-.02em; }
-.lg-banner{ margin:8px 0 0; font-size:12px; line-height:16px; color:var(--lx-ink); }
-.lg-banner[hidden]{ display:none; }
-.lg-banner::before{ content:""; display:inline-block; width:6px; height:6px; background:var(--lx-ink); margin-right:8px; vertical-align:1px; }
+/* 우 40% — 제목 + 소개 한 문장 + 폼(6차: 글자 2배). 세로 예산 558: 패딩 24 + 제목 42 + 8 + 소개 48(2줄) + 18 + 필드 88×2+10 + 옵션 2+72(2줄) + 16 + 버튼 56 + 14 + 문의 16 = 502(바닥 여백 56 · 에러 2줄 +44−16 = 530, 여백 28) */
+.lg-panel{ position:relative; flex:0 0 40%; min-width:0; padding:24px var(--lg-pad) 0; }
+.lg-h1{ margin:0; font-family:var(--font-display); font-weight:700; font-size:34px; line-height:42px; letter-spacing:-.02em; }
+/* 로그인 바로 아래 — 상시 소개 한 문장(구 ?logout 배너 자리). Pretendard 16 회색, keep-all, 399 폭에서 2줄. */
+.lg-lead{ margin:8px 0 0; font-size:16px; line-height:24px; letter-spacing:-.005em; color:var(--lx-grey-2); word-break:keep-all; }
 
 /* ── 폼 — 밑줄 필드(박스 0). 포커스 = 밑줄이 액센트로 그어진다. ───────────── */
 .lg-form{ margin-top:18px; }
 .lx-field{ position:relative; padding-bottom:6px; margin-bottom:10px; }
-.lx-field__label{ display:block; font-size:12px; line-height:14px; letter-spacing:.01em; color:var(--lx-grey-2); }
+.lx-field__label{ display:block; font-size:26px; line-height:30px; letter-spacing:.01em; color:var(--lx-grey-2); }   /* 6차: 13→26(2배) */
 .lx-field.is-focus .lx-field__label{ color:var(--lx-ink); }
 .lx-field__input{
-  display:block; width:100%; margin-top:8px; height:32px; padding:0; border:0; border-radius:0;
+  display:block; width:100%; margin-top:8px; height:44px; padding:0; border:0; border-radius:0;
   border-bottom:1px solid var(--lx-ink); background:transparent; color:var(--lx-ink);
-  font-family:var(--lx-body); font-size:14px; letter-spacing:.01em; outline:none;
+  font-family:var(--lx-body); font-size:28px; letter-spacing:.01em; outline:none;   /* 6차: 입력·플레이스홀더 28(2배) */
 }
 .lx-field__input::placeholder{ color:var(--lx-grey); }
 .lx .lx-field__input:focus-visible{ outline:none; }
 .lx-field__rule{
-  position:absolute; left:0; right:100%; top:53px; height:1px;
+  position:absolute; left:0; right:100%; top:81px; height:1px;   /* 라벨 30 + 8 + 입력 44 − 1 */
   background:var(--lx-accent); transition:right var(--lx-hover) var(--lx-hover-ease);
 }
 .lx-field.is-focus .lx-field__rule{ right:0; }
 .lx-field__msg{
-  margin:6px 0 0; font-size:12px; line-height:14px; letter-spacing:-.005em; color:var(--lx-ink);
+  margin:6px 0 0; font-size:14px; line-height:16px; letter-spacing:-.005em; color:var(--lx-ink);
   display:flex; align-items:center; gap:8px;
 }
 .lx-field__msg[hidden]{ display:none; }
+.lx-field.is-error{ margin-bottom:2px; }   /* 에러 줄(22)이 들어오면 필드 간격을 줄여 카드 안에서 끝나게 */
 .lx-field__msg::before{ content:""; width:6px; height:6px; background:var(--lx-ink); flex:none; }
 
-.lg-opts{ display:flex; align-items:center; margin-top:2px; }
-.lx-check{ display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-size:12px; line-height:16px; letter-spacing:-.01em; position:relative; }
+.lg-opts{ display:flex; flex-wrap:wrap; align-items:center; row-gap:8px; margin-top:2px; }   /* 6차: 26px 글자는 399 폭에 한 줄로 안 들어가 두 줄로 감싼다(찾기 링크는 우측) */
+.lx-check{ display:inline-flex; align-items:center; gap:10px; cursor:pointer; font-size:26px; line-height:32px; letter-spacing:-.01em; position:relative; }
 .lx-check input{ position:absolute; opacity:0; width:0; height:0; }
-.lx-check__box{ width:12px; height:12px; border:1px solid var(--lx-ink); flex:none; }
+.lx-check__box{ width:20px; height:20px; border:1px solid var(--lx-ink); flex:none; }
 .lx-check input:checked + .lx-check__box{ background:var(--lx-accent); border-color:var(--lx-accent); }   /* 체크 = 액센트 */
 .lx-check input:focus-visible + .lx-check__box{ outline:1px solid var(--lx-accent); outline-offset:2px; }
 .lg-find{ margin-left:auto; display:flex; align-items:center; gap:8px; }
-.lg-find__a{ font-size:12px; line-height:16px; letter-spacing:-.01em; color:var(--lx-accent); text-decoration:none; border-bottom:1px solid transparent; transition:border-color var(--lx-hover) var(--lx-hover-ease); }   /* 찾기 링크 = 액센트 */
+.lg-find__a{ font-size:26px; line-height:32px; letter-spacing:-.01em; color:var(--lx-accent); text-decoration:none; border-bottom:1px solid transparent; transition:border-color var(--lx-hover) var(--lx-hover-ease); }   /* 찾기 링크 = 액센트 */
 .lg-find__a:hover{ border-bottom-color:var(--lx-accent); }
-.lg-sep{ font-size:12px; color:var(--lx-grey); }
+.lg-sep{ font-size:14px; color:var(--lx-grey); }
+.lg-find .lg-sep{ font-size:26px; line-height:32px; }
 
 /* 버튼 2 나란히 — 로그인(액센트 채움 — 로그인 페이지의 유일한 색 채움 CTA, NOTES §14 로그인 예외) · 계정 신청하기(헤어라인 잉크) */
-.lg-actions{ display:flex; gap:10px; margin-top:20px; }
+.lg-actions{ display:flex; gap:10px; margin-top:16px; }
 .lg-submit{
-  display:flex; align-items:center; justify-content:center; gap:8px; flex:none; width:calc(50% - 5px); height:44px; margin:0; padding:0;
+  display:flex; align-items:center; justify-content:center; gap:8px; flex:none; width:calc(50% - 5px); height:56px; margin:0; padding:0;
   border:0; border-radius:0; background:var(--lx-accent); color:#FFFFFF; cursor:pointer;
-  font-family:var(--lx-body); font-weight:500; font-size:15px; letter-spacing:.02em;
+  font-family:var(--lx-body); font-weight:500; font-size:20px; letter-spacing:.02em;
 }
 .lg-submit[disabled]{ cursor:default; opacity:.6; }
 .lg-submit:focus-visible{ outline:1px solid var(--lx-accent); outline-offset:3px; }
 .lg-submit svg{ transition:transform var(--lx-hover) var(--lx-hover-ease); }
 .lg-submit:hover svg{ transform:translateX(4px); }
 .lg-signup__a{
-  display:flex; align-items:center; justify-content:center; flex:none; width:calc(50% - 5px); height:44px;
+  display:flex; align-items:center; justify-content:center; flex:none; width:calc(50% - 5px); height:56px;
   border:1px solid var(--lx-ink); color:var(--lx-ink); text-decoration:none;
-  font-family:var(--lx-body); font-weight:500; font-size:15px; letter-spacing:.02em;
+  font-family:var(--lx-body); font-weight:500; font-size:20px; letter-spacing:.02em;
   transition:color var(--lx-hover) var(--lx-hover-ease), border-color var(--lx-hover) var(--lx-hover-ease);
 }
 .lg-signup__a:hover{ color:var(--lx-accent); border-color:var(--lx-accent); }
 
-.lg-contact{ margin:18px 0 0; display:flex; justify-content:center; align-items:baseline; gap:6px; font-size:12px; line-height:14px; letter-spacing:.04em; color:var(--lx-grey-2); }
+.lg-contact{ margin:14px 0 0; display:flex; justify-content:center; align-items:baseline; gap:6px; font-size:14px; line-height:16px; letter-spacing:.04em; color:var(--lx-grey-2); }
 .lg-contact__ink{ color:var(--lx-ink); }
 .lg-contact__ink b{ font-weight:500; }
 
 /* ── 카드 아래 — LX 락업 18 + 정책 링크 3 + Copyright, 한 줄 ── */
 .lg-foot{ position:absolute; left:0; right:0; top:calc(100% + var(--lg-gap)); display:flex; align-items:center; white-space:nowrap; }
 .lg-foot__ci{ display:block; height:18px; width:auto; }   /* 실제 LX 락업(민트 심볼 + 네이비 국문) — 브랜드 예외 */
-.lg-foot__policy{ margin:0 0 0 32px; display:flex; align-items:baseline; gap:8px; font-size:12px; line-height:14px; letter-spacing:.04em; color:var(--lx-grey-2); }
+.lg-foot__policy{ margin:0 0 0 32px; display:flex; align-items:baseline; gap:8px; font-size:14px; line-height:16px; letter-spacing:.04em; color:var(--lx-grey-2); }
 .lg-foot__policy a{ color:inherit; text-decoration:none; }
 .lg-foot__policy a:hover{ color:var(--lx-accent); }
 .lg-foot__ink{ color:var(--lx-ink); }
-.lg-foot__legal{ margin:0 0 0 auto; font-size:12px; line-height:14px; letter-spacing:.02em; color:var(--lx-grey-2); }
+.lg-foot__legal{ margin:0 0 0 auto; font-size:14px; line-height:16px; letter-spacing:.02em; color:var(--lx-grey-2); }
 
 /* 축소 모션 — 포스터만(JS 가 source 를 뗀다). */
 @media (prefers-reduced-motion: reduce){
   .lx-field__rule,.lg-submit svg,.lg-find__a,.lg-signup__a{ transition:none; }
 }
 
-/* ── <1280 — 카드가 100%−64 로 줄어든다(비율 60/40 유지) ── */
+/* ── <1280 — 카드가 100%−64 로 줄어든다(비율 60/40 유지). 우 패널 ≈300 폭 — 옵션 줄 글자만 20 으로 ── */
 @media (max-width: 1279px){
   .lg-wrap{ width:calc(100% - 64px); }
+  .lx-check,.lg-find__a,.lg-find .lg-sep{ font-size:20px; line-height:26px; }
 }
 
 /* ── <900 — 세로 스택: 소개 → 필름 → 폼 → 푸터 ── */

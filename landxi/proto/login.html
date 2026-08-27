@@ -9,8 +9,8 @@
 
 <a class="lx-skip" href="#loginForm">본문 건너뛰기</a>
 
-<!-- 마스터: design-canvas/v2/B5-Login.dc.html (NOTES §14 · 5차 개정) — 구 랜드XI(login.do) 구도.
-     페이지 중앙의 작은 카드 하나(1200×480): 좌 60% 필름 판(글자 0) · 우 40% 압축 폼(태그라인 → 로그인 → 필드 → 버튼).
+<!-- 마스터: design-canvas/v2/B5-Login.dc.html (NOTES §14 · 6차 개정) — 구 랜드XI(login.do) 구도.
+     페이지 중앙의 작은 카드 하나(1200×560): 좌 60% 필름 판(글자 0) · 우 40% 폼(로그인 → 소개 한 문장 → 필드 → 버튼). 6차: 폼 글자 2배.
      흑 + 청 배합(5차): 워드마크 Land-XI · 로그인 CTA 채움 · 포커스 밑줄 · 찾기 링크 · 체크 = 액센트 #006DF7, 나머지 잉크/회색.
      카드 위 = 실제 Land-XI CI + 원본 소개 한 줄 · 카드 아래 = LX 락업 + 정책 링크 + Copyright. -->
 <div class="lg" id="lg">
@@ -38,14 +38,9 @@
 
       <!-- 우 40% — 압축 폼 -->
       <main class="lg-panel">
-        <!-- 태그라인(필름에서 옮겨 옴, 원본 카피) — Land-XI 는 액센트, 플랫폼은 잉크 -->
-        <p class="lg-tag">
-          <strong class="lg-tag__t"><span class="lg-tag__xi">Land-XI</span> 플랫폼</strong>
-          <span class="lg-tag__s">고해상도 드론·항공·위성영상과 AI기술을 활용하여 공공서비스 혁신을 지원합니다.</span>
-        </p>
+        <!-- 6차: 우 패널 맨 위의 `Land-XI 플랫폼` 제목·한 줄 삭제. 제목 로그인 → 바로 아래 소개 한 문장(상시, ?logout 배너 자리 대체 — 배너 문구는 없다). -->
         <h1 class="lg-h1">로그인</h1>
-        <!-- ?logout — 원본 배너 문구. 잉크 한 줄. -->
-        <p class="lg-banner" id="lgBanner" role="status" hidden>안전하게 로그아웃되었습니다.</p>
+        <p class="lg-lead" id="lgLead">Land-XI 플랫폼은 고해상도 드론·항공·위성영상과 AI기술을 활용하여 공공서비스 혁신을 지원합니다.</p>
 
         <form class="lg-form" id="loginForm" novalidate>
 

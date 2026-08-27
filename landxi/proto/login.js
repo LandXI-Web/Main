@@ -2,7 +2,7 @@
    카드 좌: 디오라마 오프닝 필름 Leg 01 루프 · 카드 우: 원본 login.html 의 폼 1:1(문구·에러 2종 원본 그대로).
 
    유지 기능: ?next= 안전 리다이렉트(같은 사이트 *.html 만) · localStorage.lx_logged_in ·
-             ?logout 배너 · 아이디 저장(lx_saved_email, 라벨은 원본 '로그인 상태 유지') · 목 인증. */
+             ?logout(세션 삭제 — 6차: 배너 문구 없음, 제목 아래 소개 문장이 상시) · 아이디 저장(lx_saved_email, 라벨은 원본 '로그인 상태 유지') · 목 인증. */
 
 const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -24,10 +24,9 @@ const form = $('#loginForm');
 const btn = $('#lgSubmit');
 const video = $('#lgVideo');
 
-/* ?logout — 세션을 지우고 배너를 켠다. 이미 로그인 상태면 바로 next 로. */
+/* ?logout — 세션만 지운다(6차: 배너 문구 삭제, 로그인 아래에는 소개 문장이 상시). 이미 로그인 상태면 바로 next 로. */
 if (params().has('logout')) {
   localStorage.removeItem('lx_logged_in');
-  $('#lgBanner').hidden = false;
 } else if (isLoggedIn()) {
   location.replace(nextTarget());
 }
