@@ -58,7 +58,7 @@ $('#rail-foot').innerHTML = NAV_FOOT.map(railItem).join('')
   + `<button type="button" class="rail-i" data-action="logout" title="원본 로그아웃">${railSvg('out')}<span class="rl">로그아웃</span></button>`;
 $('#rail').addEventListener('click', (ev) => {
   const lo = ev.target.closest('[data-action="logout"]');
-  if (lo) { try { localStorage.removeItem('lx_logged_in'); } catch { /* 저장소 차단 */ } location.href = '../home.html'; return; }
+  if (lo) { try { localStorage.removeItem('lx_logged_in'); } catch { /* 저장소 차단 */ } location.href = 'scrub/index.html'; return; }
   const b = ev.target.closest('.rail-i[data-menu]'); if (!b) return;
   const go = b.dataset.go;
   if (go && go !== 'dataset.html') { location.href = go; return; }
