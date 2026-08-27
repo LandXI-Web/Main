@@ -43,7 +43,7 @@ const mp4 = path.join(OUT, 'full.mp4');
 const webp = path.join(OUT, 'full.webp');
 process.stdout.write(`full ${n} legs, xfade ${XF}s ... `);
 run(['-y', ...inputs, '-filter_complex', chain.join(';'), '-map', '[vout]',
-  '-c:v', 'libx264', '-profile:v', 'high', '-preset', 'slow', '-crf', process.env.CRF || '20',
+  '-c:v', 'libx264', '-profile:v', 'high', '-preset', 'slow', '-crf', process.env.CRF || '25',
   '-g', '8', '-keyint_min', '8', '-sc_threshold', '0', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', mp4]);
 run(['-y', '-i', mp4, '-vf', 'scale=960:-2:flags=lanczos', '-frames:v', '1', '-c:v', 'libwebp', '-quality', '80', '-an', webp]);
 const [wStr, hStr, durStr, nb] = probe(['-v', 'error', '-select_streams', 'v:0',
@@ -53,7 +53,7 @@ const full = {
   legs: M.legs.map(L => L.id), legCount: n, size: [+wStr, +hStr], fps: 24, frames: +nb,
   seconds: +(+durStr).toFixed(3), legSecondsSum: +durs.reduce((s, d) => s + d, 0).toFixed(3),
   xfadeSeconds: XF, bytes: fs.statSync(mp4).size,
-  encode: `xfade=fade:${XF}s × ${n - 1} · scale/crop 1920×1080 · libx264 high crf ${process.env.CRF || '20'} -g 8 -keyint_min 8 -sc_threshold 0 +faststart -an`,
+  encode: `xfade=fade:${XF}s × ${n - 1} · scale/crop 1920×1080 · libx264 high crf ${process.env.CRF || '25'} -g 8 -keyint_min 8 -sc_threshold 0 +faststart -an`,
   note: XF > 0 ? `레그 사이를 ${XF}s 씩 xfade(fade) 로 겹쳤다(스크럽 씸 밴드 0.16vh ÷ 0.218 vh/s). 하드컷보다 ${(XF * (n - 1)).toFixed(2)}s 짧다.` : '하드컷.',
 };
 M.full = full;
