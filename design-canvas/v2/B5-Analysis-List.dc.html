@@ -1,0 +1,199 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>B5 · 분석 서비스 — 서비스</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap");
+/* Paperlogy 700/800 표시 · Pretendard 본문 · Inter 표 숫자 — T3 (발주 결정 2026-08-27) */
+@font-face{font-family:'Paperlogy';font-weight:800;font-display:swap;src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2') format('woff2')}
+@font-face{font-family:'Paperlogy';font-weight:700;font-display:swap;src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2') format('woff2')}
+:root{--ink:#010102;--grey:#686868;--grey-2:#CCCCCC;--line:#DDDDDD;--accent:#006DF7;--tint-1:#E8F1FF;--tint-2:#D6E6FF;--teal:#0FA9A0;--warn:#D1352B;--amber:#FFB633}
+*{box-sizing:border-box}
+body{margin:0;background:#FFFFFF;color:var(--ink);font-family:'Pretendard',system-ui,sans-serif;font-weight:400;font-size:18px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.d{font-family:'Paperlogy','Pretendard',system-ui,sans-serif;font-weight:700;letter-spacing:-.015em}
+.d8{font-family:'Paperlogy','Pretendard',system-ui,sans-serif;font-weight:800;letter-spacing:-.02em}
+.n{font-family:'Inter','Pretendard',system-ui,sans-serif;font-weight:400;font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
+.lab{font-size:14px;line-height:1.2;color:var(--grey);letter-spacing:.04em}
+.mic{font-size:14px;line-height:1.35;color:var(--grey)}
+.st{font-size:14px;line-height:1.2;color:var(--accent);font-weight:500;letter-spacing:.01em}
+.tag{border:1px dotted var(--grey-2);padding:0 5px;font-size:14px;line-height:18px;color:var(--grey);margin-left:6px;display:inline-block;vertical-align:1px;letter-spacing:0;font-weight:400;font-family:'Pretendard',system-ui,sans-serif}
+.tb{position:absolute;height:28px;line-height:30px;font-size:15px;letter-spacing:-.01em;color:var(--ink);white-space:nowrap}
+.tb.on{background:var(--tint-2);padding:0 10px}
+.cta{position:absolute;height:36px;background:var(--ink);color:#FFFFFF;display:flex;align-items:center;justify-content:center;padding:0 20px;font-size:15px;font-weight:500;letter-spacing:-.01em;white-space:nowrap}
+.fld{position:absolute;height:28px;border:1px solid var(--line);display:flex;align-items:center;padding:0 10px;gap:8px;font-size:14.5px;letter-spacing:-.01em;white-space:nowrap;color:var(--ink)}
+.chip{height:24px;line-height:22px;padding:0 9px;border:1px solid var(--line);color:var(--ink);font-size:14px;white-space:nowrap;display:inline-block}
+.chip.on{border-color:var(--accent);color:var(--accent);background:var(--tint-1)}
+.tab{position:absolute;font-size:16px;letter-spacing:-.01em;color:var(--grey);white-space:nowrap;line-height:22px}
+.tab .c{font-family:'Inter',system-ui,sans-serif;font-size:14px;color:var(--grey-2);margin-left:5px}
+.tab.on{color:var(--ink)}
+.tab.on .c{color:var(--accent)}
+.det{position:absolute;height:20px;line-height:20px;padding:0 6px;font-family:'Inter',system-ui,sans-serif;font-size:14px;letter-spacing:.06em;color:#FFFFFF;background:var(--teal);white-space:nowrap}
+</style></helmet>
+<div style="width:1440px;height:900px;position:relative;overflow:hidden;background:#FFFFFF;font-family:'Pretendard',system-ui,sans-serif;color:#010102">
+<div style="position:absolute;left:0;top:0;width:72px;height:900px;background:#FFFFFF;z-index:9">
+<div style="position:absolute;left:0;top:0;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/><path d="M8.5 8.5h3v3h-3z" fill="currentColor" stroke="none"/></svg>
+<div class="d" style="font-size:14px;letter-spacing:.18em;margin-right:-.18em">LAND XI</div></div>
+<div style="position:absolute;left:12px;top:58px;width:48px;height:1px;background:#DDDDDD"></div>
+
+<div style="position:absolute;left:0;top:72px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M3 3h14v14H3z"/><path d="M3 8.5h14M10.5 8.5V17"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">대시보드</div></div>
+<div style="position:absolute;left:0;top:130px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M3 3h10v10H3z"/><path d="M7 7h10v10H7z"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">데이터
+관리</div></div>
+<div style="position:absolute;left:0;top:188px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+<div style="position:absolute;left:0;top:9px;width:2px;height:40px;background:#010102"></div>
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M2.5 2.5h5v5h-5z"/><path d="M12.5 2.5h5v5h-5z"/><path d="M7.5 12.5h5v5h-5z"/><path d="M7.5 5h5M15 7.5v4H10v1"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">프로젝트</div></div>
+<div style="position:absolute;left:0;top:246px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+<div style="position:absolute;left:0;top:9px;width:2px;height:40px;background:#010102"></div>
+
+<svg style="color:#010102;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M3 3h14v14H3z"/><path d="M3 10h14" stroke-dasharray="2 2"/><path d="M6 5.5h3v3H6z"/><path d="M11.5 11.5h3.5v3.5h-3.5z"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#010102">분석 서비스</div></div>
+<div style="position:absolute;left:0;top:304px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M4.5 4.5h11v11h-11z"/><path d="M10 1v18M1 10h18"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">지도 서비스</div></div>
+
+<div style="position:absolute;left:0;top:596px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M3 3h14v9.5H8.5L4.5 17v-4.5H3z"/><path d="M6.5 7.5h7"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">서비스 지원</div></div>
+<div style="position:absolute;left:0;top:654px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M3 6h10v11H3z"/><path d="M9 11 17 3M12 3h5v5"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">카드 발행
+관리</div></div>
+<div style="position:absolute;left:0;top:712px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M6 3v14M14 3v14"/><path d="M4 6.5h4v2.5H4z"/><path d="M12 11h4v2.5h-4z"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">서비스 관리</div></div>
+<div style="position:absolute;left:0;top:770px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M3 3h14v14H3z"/><path d="M8 6h4v4H8z"/><path d="M5.5 17v-3h9v3"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">MY</div></div>
+<div style="position:absolute;left:0;top:828px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M11 3H3.5v14H11"/><path d="M8.5 10H17M13.5 6.5 17 10l-3.5 3.5"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">로그아웃</div></div>
+</div>
+<div style="position:absolute;left:72px;top:0px;width:1px;height:900px;background:#DDDDDD"></div>
+<div style="position:absolute;left:128px;top:0;width:1256px;height:64px;display:flex;align-items:center;gap:12px">
+<span class="chip" style="color:#686868">공지</span>
+<span style="font-size:16px;letter-spacing:-.01em">고위험 탐지 건 긴급 처리 안내</span>
+<span class="n" style="font-size:14.5px;color:#686868;letter-spacing:.02em">2026.04.15</span>
+<span style="font-size:14.5px;color:#686868;margin-left:6px">전체 보기 ›</span>
+<div style="flex:1"></div>
+<span class="mic">기준일 현재</span>
+<span class="n" style="font-size:16px;letter-spacing:.02em;color:#686868">2026.08.27</span>
+</div>
+<div style="position:absolute;left:72px;top:64px;width:1368px;height:1px;background:#DDDDDD"></div>
+<div style="position:absolute;left:128px;top:92px;display:flex;align-items:baseline;gap:16px"><span class="d" style="font-size:34px;line-height:40px">분석 서비스</span><span style="font-size:17px;color:#686868;letter-spacing:-.01em;margin-left:14px">부처 6 · 서비스 15 · 실측 결과 5</span></div>
+<div style="position:absolute;left:128px;top:140px;width:118px;height:4px;background:#006DF7"></div>
+<div style="position:absolute;left:128px;top:156px;width:1256px;height:1px;background:#DDDDDD"></div>
+<div class="tab on" style="left:908px;top:104px">서비스<span class="c">15</span></div>
+<div style="position:absolute;left:908px;top:132px;width:70px;height:2px;background:#010102"></div>
+<div class="tab" style="left:1010px;top:104px">분석 실행</div>
+<div class="tab" style="left:1122px;top:104px">실행중<span class="c">3</span></div>
+<div class="tab" style="left:1224px;top:104px">완료<span class="c">7</span></div>
+<div class="cta" style="left:1276px;top:96px;width:108px">분석 실행</div>
+<div style="position:absolute;left:128px;top:174px;width:222.4px"><div class="lab">분석 서비스</div><div style="margin-top:8px;display:flex;align-items:baseline;gap:8px"><span class="d" style="font-size:58px;line-height:1;letter-spacing:-.02em;color:#006DF7">15</span><span style="font-size:17px;color:#686868">종</span></div><div class="mic n" style="margin-top:10px;letter-spacing:.02em;white-space:nowrap">실측 5 · 라인업 10</div></div>
+<div style="position:absolute;left:386.4px;top:174px;width:222.4px"><div class="lab">참여 부처</div><div style="margin-top:8px;display:flex;align-items:baseline;gap:8px"><span class="d" style="font-size:58px;line-height:1;letter-spacing:-.02em;color:#006DF7">6</span><span style="font-size:17px;color:#686868">개</span></div><div class="mic n" style="margin-top:10px;letter-spacing:.02em;white-space:nowrap">+ LX 자체 1</div></div>
+<div style="position:absolute;left:368.4px;top:174px;width:1px;height:104px;background:#DDDDDD"></div>
+<div style="position:absolute;left:644.8px;top:174px;width:222.4px"><div class="lab">실행중</div><div style="margin-top:8px;display:flex;align-items:baseline;gap:8px"><span class="d" style="font-size:58px;line-height:1;letter-spacing:-.02em;color:#006DF7">3</span><span style="font-size:17px;color:#686868">건</span></div><div class="mic n" style="margin-top:10px;letter-spacing:.02em;white-space:nowrap">처리 중 1 · 대기 1 · 실패 1 <span class="tag">시연</span></div></div>
+<div style="position:absolute;left:626.8px;top:174px;width:1px;height:104px;background:#DDDDDD"></div>
+<div style="position:absolute;left:903.1999999999999px;top:174px;width:222.4px"><div class="lab">완료</div><div style="margin-top:8px;display:flex;align-items:baseline;gap:8px"><span class="d" style="font-size:58px;line-height:1;letter-spacing:-.02em;color:#006DF7">7</span><span style="font-size:17px;color:#686868">건</span></div><div class="mic n" style="margin-top:10px;letter-spacing:.02em;white-space:nowrap">결과 산출물 4 <span class="tag">시연</span></div></div>
+<div style="position:absolute;left:885.1999999999999px;top:174px;width:1px;height:104px;background:#DDDDDD"></div>
+<div style="position:absolute;left:1161.6px;top:174px;width:222.4px"><div class="lab">준비 중</div><div style="margin-top:8px;display:flex;align-items:baseline;gap:8px"><span class="d" style="font-size:58px;line-height:1;letter-spacing:-.02em;color:#010102">10</span><span style="font-size:17px;color:#686868">종</span></div><div class="mic n" style="margin-top:10px;letter-spacing:.02em;white-space:nowrap">결과 없음 8 · 미착수 2</div></div>
+<div style="position:absolute;left:1143.6px;top:174px;width:1px;height:104px;background:#DDDDDD"></div>
+<div style="position:absolute;left:128px;top:302px;width:1256px;height:1px;background:#DDDDDD"></div>
+<span class="chip on" style="position:absolute;left:128px;top:320px">전체 <span class="n" style="color:#006DF7;margin-left:2px">15</span></span>
+<span class="chip" style="position:absolute;left:209px;top:320px">농림축산식품부 <span class="n" style="color:#CCCCCC;margin-left:2px">4</span></span>
+<span class="chip" style="position:absolute;left:354.5px;top:320px">국토교통부 <span class="n" style="color:#CCCCCC;margin-left:2px">3</span></span>
+<span class="chip" style="position:absolute;left:471px;top:320px">환경부 <span class="n" style="color:#CCCCCC;margin-left:2px">3</span></span>
+<span class="chip" style="position:absolute;left:558.5px;top:320px">산림청 <span class="n" style="color:#CCCCCC;margin-left:2px">2</span></span>
+<span class="chip" style="position:absolute;left:646px;top:320px">해양수산부 <span class="n" style="color:#CCCCCC;margin-left:2px">1</span></span>
+<span class="chip" style="position:absolute;left:762.5px;top:320px">산업통상자원부 <span class="n" style="color:#CCCCCC;margin-left:2px">1</span></span>
+<span class="chip" style="position:absolute;left:908px;top:320px">LX <span class="n" style="color:#CCCCCC;margin-left:2px">1</span></span>
+<div class="fld" style="left:1152px;top:318px;width:232px;"><svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="#686868" stroke-width="1.5" style="flex:none"><circle cx="8.5" cy="8.5" r="5.75"/><path d="m12.75 12.75 4 4"/></svg><span style="color:#CCCCCC">서비스명 · 부처</span></div>
+<div class="lab" style="position:absolute;left:128px;top:368px;white-space:nowrap;">실측 결과 5</div>
+<div class="n" style="position:absolute;left:218px;top:368px;font-size:14px;letter-spacing:.01em;color:#CCCCCC;white-space:nowrap;line-height:1.3;">결과 산출물 있음 · 최근 실행 순</div>
+<div style="position:absolute;left:128px;top:390px;width:232px;height:130px;overflow:hidden;background:#FFFFFF;outline:1px solid #DDDDDD"><img src="pj-road.jpg" alt="" style="position:absolute;left:0;top:0;width:232px;height:130px;object-fit:cover;display:block"><svg width="30" height="20" viewBox="0 0 30 20" style="position:absolute;left:94px;top:56px;display:block;pointer-events:none"><path d="M0 6V0h6M24 0h6v6M30 14v6h-6M6 20H0v-6" fill="none" stroke="#0FA9A0" stroke-width="1"/></svg><svg width="24" height="16" viewBox="0 0 24 16" style="position:absolute;left:140px;top:34px;display:block;pointer-events:none"><path d="M0 5V0h5M19 0h5v5M24 11v5h-5M5 16H0v-5" fill="none" stroke="#0FA9A0" stroke-width="1"/></svg><svg width="26" height="18" viewBox="0 0 26 18" style="position:absolute;left:60px;top:86px;display:block;pointer-events:none"><path d="M0 6V0h6M20 0h6v6M26 12v6h-6M6 18H0v-6" fill="none" stroke="#0FA9A0" stroke-width="1"/></svg><div class="det" style="left:8px;top:102px;background:#0FA9A0">남원 3지점</div></div>
+<div class="d" style="position:absolute;left:128px;top:532px;font-size:17px;line-height:1.1;color:#010102;white-space:nowrap;">도로안전 다시점 조사</div>
+<div style="position:absolute;left:128px;top:556px;font-size:14.5px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;width:232px;overflow:hidden;text-overflow:ellipsis">국토교통부 · 2026.08.19</div>
+<div style="position:absolute;left:128px;top:580px;display:flex;align-items:baseline;gap:6px"><span class="d" style="font-size:28px;line-height:1;color:#006DF7">1,264</span><span style="font-size:15px;color:#686868">건</span></div>
+<div style="position:absolute;left:384px;top:390px;width:232px;height:130px;overflow:hidden;background:#FFFFFF;outline:1px solid #DDDDDD"><img src="tile-arc-yeosu-air.jpg" alt="" style="position:absolute;left:0;top:0;width:232px;height:130px;object-fit:cover;display:block"><svg width="232" height="130" viewBox="0 0 232 130" style="position:absolute;left:0;top:0;display:block;pointer-events:none"><circle cx="150" cy="28" r="3" fill="rgba(15,169,160,.25)" stroke="#0FA9A0" stroke-width="1"/><circle cx="162" cy="22" r="3" fill="rgba(15,169,160,.25)" stroke="#0FA9A0" stroke-width="1"/><circle cx="176" cy="34" r="3" fill="rgba(15,169,160,.25)" stroke="#0FA9A0" stroke-width="1"/><circle cx="188" cy="26" r="3" fill="rgba(15,169,160,.25)" stroke="#0FA9A0" stroke-width="1"/><circle cx="170" cy="46" r="3" fill="rgba(15,169,160,.25)" stroke="#0FA9A0" stroke-width="1"/><circle cx="158" cy="40" r="3" fill="rgba(15,169,160,.25)" stroke="#0FA9A0" stroke-width="1"/><circle cx="196" cy="42" r="3" fill="rgba(15,169,160,.25)" stroke="#0FA9A0" stroke-width="1"/><circle cx="204" cy="30" r="3" fill="rgba(15,169,160,.25)" stroke="#0FA9A0" stroke-width="1"/><circle cx="182" cy="56" r="3" fill="rgba(15,169,160,.25)" stroke="#0FA9A0" stroke-width="1"/><circle cx="144" cy="44" r="3" fill="rgba(15,169,160,.25)" stroke="#0FA9A0" stroke-width="1"/><circle cx="210" cy="52" r="3" fill="rgba(15,169,160,.25)" stroke="#0FA9A0" stroke-width="1"/><circle cx="166" cy="62" r="3" fill="rgba(15,169,160,.25)" stroke="#0FA9A0" stroke-width="1"/><circle cx="190" cy="66" r="3" fill="rgba(15,169,160,.25)" stroke="#0FA9A0" stroke-width="1"/></svg><svg width="80" height="56" viewBox="0 0 80 56" style="position:absolute;left:134px;top:12px;display:block;pointer-events:none"><path d="M0 8V0h8M72 0h8v8M80 48v8h-8M8 56H0v-8" fill="none" stroke="#0FA9A0" stroke-width="1"/></svg><div class="det" style="left:8px;top:102px;background:#0FA9A0">여수 항공 1,860</div></div>
+<div class="d" style="position:absolute;left:384px;top:532px;font-size:17px;line-height:1.1;color:#010102;white-space:nowrap;">해양쓰레기 실태조사</div>
+<div style="position:absolute;left:384px;top:556px;font-size:14.5px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;width:232px;overflow:hidden;text-overflow:ellipsis">해양수산부 · 2026.08.12</div>
+<div style="position:absolute;left:384px;top:580px;display:flex;align-items:baseline;gap:6px"><span class="d" style="font-size:28px;line-height:1;color:#006DF7">38,057</span><span style="font-size:15px;color:#686868">건</span></div>
+<div style="position:absolute;left:640px;top:390px;width:232px;height:130px;overflow:hidden;background:#FFFFFF;outline:1px solid #DDDDDD"><img src="ev-change.jpg" alt="" style="position:absolute;left:0;top:0;width:232px;height:130px;object-fit:cover;display:block"><div class="det" style="left:8px;top:102px;background:#0FA9A0">국산리 A68→A71</div></div>
+<div class="d" style="position:absolute;left:640px;top:532px;font-size:17px;line-height:1.1;color:#010102;white-space:nowrap;">드론 변화탐지</div>
+<div style="position:absolute;left:640px;top:556px;font-size:14.5px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;width:232px;overflow:hidden;text-overflow:ellipsis">LX 한국국토정보공사 · 2026.08.05</div>
+<div style="position:absolute;left:640px;top:580px;display:flex;align-items:baseline;gap:6px"><span class="d" style="font-size:28px;line-height:1;color:#006DF7">486</span><span style="font-size:15px;color:#686868">건</span></div>
+<div style="position:absolute;left:896px;top:390px;width:232px;height:130px;overflow:hidden;background:#FFFFFF;outline:1px solid #DDDDDD"><img src="tile-farm-clean.jpg" alt="" style="position:absolute;left:0;top:0;width:232px;height:130px;object-fit:cover;display:block"><svg width="232" height="130" viewBox="0 0 232 130" style="position:absolute;left:0;top:0;display:block;pointer-events:none"><polygon points="22,62 108,20 150,48 62,96" fill="rgba(15,169,160,0.12)" stroke="#0FA9A0" stroke-width="1.2" stroke-linejoin="miter"/><polygon points="70,102 160,56 204,86 112,130" fill="rgba(15,169,160,0.12)" stroke="#0FA9A0" stroke-width="1.2" stroke-linejoin="miter"/><polygon points="150,10 220,0 232,32 176,56" fill="rgba(15,169,160,0.12)" stroke="#0FA9A0" stroke-width="1.2" stroke-linejoin="miter"/></svg><div class="det" style="left:8px;top:102px;background:#0FA9A0">남원 2,098 필지</div></div>
+<div class="d" style="position:absolute;left:896px;top:532px;font-size:17px;line-height:1.1;color:#010102;white-space:nowrap;">농지이용·불법건축물</div>
+<div style="position:absolute;left:896px;top:556px;font-size:14.5px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;width:232px;overflow:hidden;text-overflow:ellipsis">농림축산식품부 · 2026.06.08</div>
+<div style="position:absolute;left:896px;top:580px;display:flex;align-items:baseline;gap:6px"><span class="d" style="font-size:28px;line-height:1;color:#006DF7">2,098</span><span style="font-size:15px;color:#686868">필지</span></div>
+<div style="position:absolute;left:1152px;top:390px;width:232px;height:130px;overflow:hidden;background:#FFFFFF;outline:1px solid #DDDDDD"><img src="tile-gh-clean.jpg" alt="" style="position:absolute;left:0;top:0;width:232px;height:130px;object-fit:cover;display:block"><svg width="232" height="130" viewBox="0 0 232 130" style="position:absolute;left:0;top:0;display:block;pointer-events:none"><polygon points="72,-10 90,-10 98,140 80,140" fill="rgba(15,169,160,0.12)" stroke="#0FA9A0" stroke-width="1.2" stroke-linejoin="miter"/><polygon points="91,-10 109,-10 117,140 100,140" fill="rgba(15,169,160,0.12)" stroke="#0FA9A0" stroke-width="1.2" stroke-linejoin="miter"/><polygon points="120,-10 138,-10 145,140 128,140" fill="rgba(15,169,160,0.12)" stroke="#0FA9A0" stroke-width="1.2" stroke-linejoin="miter"/></svg><div class="det" style="left:8px;top:102px;background:#0FA9A0">남원 1,674 필지</div></div>
+<div class="d" style="position:absolute;left:1152px;top:532px;font-size:17px;line-height:1.1;color:#010102;white-space:nowrap;">비닐하우스 현황</div>
+<div style="position:absolute;left:1152px;top:556px;font-size:14.5px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;width:232px;overflow:hidden;text-overflow:ellipsis">농림축산식품부 · 2026.06.06</div>
+<div style="position:absolute;left:1152px;top:580px;display:flex;align-items:baseline;gap:6px"><span class="d" style="font-size:28px;line-height:1;color:#006DF7">9,664</span><span style="font-size:15px;color:#686868">동</span></div>
+<div style="position:absolute;left:128px;top:628px;width:1256px;height:1px;background:#DDDDDD"></div>
+<div class="lab" style="position:absolute;left:128px;top:646px;white-space:nowrap;">라인업 10</div>
+<div class="n" style="position:absolute;left:198px;top:646px;font-size:14px;letter-spacing:.01em;color:#CCCCCC;white-space:nowrap;line-height:1.3;">결과 산출 전 · 예시 수치 = [추정] · 0 = 준비 중</div>
+<div style="position:absolute;left:128px;top:668px;width:232px;height:88px;border:1px dashed #CCCCCC"></div>
+<div class="d" style="position:absolute;left:142px;top:682px;font-size:16px;line-height:1.1;color:#010102;white-space:nowrap;">개발제한구역 훼손</div>
+<div style="position:absolute;left:142px;top:704px;font-size:14.5px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">국토교통부</div>
+<div style="position:absolute;left:142px;top:726px;display:flex;align-items:baseline;gap:5px"><span class="n" style="font-size:16px;color:#686868">912</span><span style="font-size:14px;color:#CCCCCC">건</span><span class="tag" style="margin-left:4px">추정</span></div>
+<div style="position:absolute;left:384px;top:668px;width:232px;height:88px;border:1px dashed #CCCCCC"></div>
+<div class="d" style="position:absolute;left:398px;top:682px;font-size:16px;line-height:1.1;color:#010102;white-space:nowrap;">태양광 설비 현황</div>
+<div style="position:absolute;left:398px;top:704px;font-size:14.5px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">산업통상자원부</div>
+<div style="position:absolute;left:398px;top:726px;display:flex;align-items:baseline;gap:5px"><span class="n" style="font-size:16px;color:#686868">3,140</span><span style="font-size:14px;color:#CCCCCC">개소</span><span class="tag" style="margin-left:4px">추정</span></div>
+<div style="position:absolute;left:640px;top:668px;width:232px;height:88px;border:1px dashed #CCCCCC"></div>
+<div class="d" style="position:absolute;left:654px;top:682px;font-size:16px;line-height:1.1;color:#010102;white-space:nowrap;">사료작물 재배지</div>
+<div style="position:absolute;left:654px;top:704px;font-size:14.5px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">농림축산식품부</div>
+<div style="position:absolute;left:654px;top:726px;display:flex;align-items:baseline;gap:5px"><span class="n" style="font-size:16px;color:#686868">1,785</span><span style="font-size:14px;color:#CCCCCC">필지</span><span class="tag" style="margin-left:4px">추정</span></div>
+<div style="position:absolute;left:896px;top:668px;width:232px;height:88px;border:1px dashed #CCCCCC"></div>
+<div class="d" style="position:absolute;left:910px;top:682px;font-size:16px;line-height:1.1;color:#010102;white-space:nowrap;">불법 소각시설</div>
+<div style="position:absolute;left:910px;top:704px;font-size:14.5px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">환경부</div>
+<div style="position:absolute;left:910px;top:726px;display:flex;align-items:baseline;gap:5px"><span class="n" style="font-size:16px;color:#686868">274</span><span style="font-size:14px;color:#CCCCCC">개소</span><span class="tag" style="margin-left:4px">추정</span></div>
+<div style="position:absolute;left:1152px;top:668px;width:232px;height:88px;border:1px dashed #CCCCCC"></div>
+<div class="d" style="position:absolute;left:1166px;top:682px;font-size:16px;line-height:1.1;color:#010102;white-space:nowrap;">건축물 변화 탐지</div>
+<div style="position:absolute;left:1166px;top:704px;font-size:14.5px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">국토교통부</div>
+<div style="position:absolute;left:1166px;top:726px;display:flex;align-items:baseline;gap:5px"><span class="n" style="font-size:16px;color:#686868">5,620</span><span style="font-size:14px;color:#CCCCCC">동</span><span class="tag" style="margin-left:4px">추정</span></div>
+<div style="position:absolute;left:128px;top:768px;width:232px;height:88px;border:1px dashed #CCCCCC"></div>
+<div class="d" style="position:absolute;left:142px;top:782px;font-size:16px;line-height:1.1;color:#010102;white-space:nowrap;">곤포 사일리지 집계</div>
+<div style="position:absolute;left:142px;top:804px;font-size:14.5px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">농림축산식품부</div>
+<div style="position:absolute;left:142px;top:826px;display:flex;align-items:baseline;gap:5px"><span class="n" style="font-size:16px;color:#686868">8,934</span><span style="font-size:14px;color:#CCCCCC">개</span><span class="tag" style="margin-left:4px">추정</span></div>
+<div style="position:absolute;left:384px;top:768px;width:232px;height:88px;border:1px dashed #CCCCCC"></div>
+<div class="d" style="position:absolute;left:398px;top:782px;font-size:16px;line-height:1.1;color:#010102;white-space:nowrap;">방치폐기물 탐지</div>
+<div style="position:absolute;left:398px;top:804px;font-size:14.5px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">환경부</div>
+<div style="position:absolute;left:398px;top:826px;display:flex;align-items:baseline;gap:5px"><span class="n" style="font-size:16px;color:#686868">631</span><span style="font-size:14px;color:#CCCCCC">개소</span><span class="tag" style="margin-left:4px">추정</span></div>
+<div style="position:absolute;left:640px;top:768px;width:232px;height:88px;border:1px dashed #CCCCCC"></div>
+<div class="d" style="position:absolute;left:654px;top:782px;font-size:16px;line-height:1.1;color:#010102;white-space:nowrap;">하천 불법점용</div>
+<div style="position:absolute;left:654px;top:804px;font-size:14.5px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">환경부</div>
+<div style="position:absolute;left:654px;top:826px;display:flex;align-items:baseline;gap:5px"><span class="n" style="font-size:16px;color:#686868">358</span><span style="font-size:14px;color:#CCCCCC">건</span><span class="tag" style="margin-left:4px">추정</span></div>
+<div style="position:absolute;left:896px;top:768px;width:232px;height:88px;border:1px dashed #CCCCCC"></div>
+<div class="d" style="position:absolute;left:910px;top:782px;font-size:16px;line-height:1.1;color:#686868;white-space:nowrap;">산림 훼손 탐지</div>
+<div style="position:absolute;left:910px;top:804px;font-size:14.5px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">산림청</div>
+<div style="position:absolute;left:910px;top:826px;font-size:14.5px;letter-spacing:-.01em;color:#CCCCCC;white-space:nowrap;line-height:1.3;">준비 중 · 모델 학습 전</div>
+<div style="position:absolute;left:1152px;top:768px;width:232px;height:88px;border:1px dashed #CCCCCC"></div>
+<div class="d" style="position:absolute;left:1166px;top:782px;font-size:16px;line-height:1.1;color:#686868;white-space:nowrap;">탄소 흡수량 산정</div>
+<div style="position:absolute;left:1166px;top:804px;font-size:14.5px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">산림청</div>
+<div style="position:absolute;left:1166px;top:826px;font-size:14.5px;letter-spacing:-.01em;color:#CCCCCC;white-space:nowrap;line-height:1.3;">준비 중 · 모델 학습 전</div>
+<div style="position:absolute;left:72px;top:866px;width:1368px;height:1px;background:#DDDDDD"></div>
+<div style="position:absolute;left:128px;top:876px;font-size:14px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">LX 한국국토정보공사 · 고객센터 063-713-1213 · 개인정보처리방침 · 이용약관 · 이메일주소무단수집거부</div>
+</div>
+</x-dc>
+</body>
+</html>
