@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 
-// 마스터 design-canvas/v2/B5-Login.dc.html (NOTES §14 · 2차 개정) — SPLIT-5050.
-// 좌 = 원본 login.html 폼 1:1 · 우 = 디오라마 오프닝 필름 Leg 01(w01.mp4) 풀블리드.
+// 마스터 design-canvas/v2/B5-Login.dc.html (NOTES §14 · 3차 개정) — SPLIT-5050.
+// 좌 = 실제 CI 2(좌상 Land-XI 워드마크 · 좌하 LX 락업) + 폼 1:1(우·하, 판과 간격 64) · 우 = 필름 Leg 01 인셋 판(마진 56 · 헤어라인 · 캡션 0).
 const URL = 'proto/login.html';
 const SHOTS = 'shots/proto-login';
 fs.mkdirSync(SHOTS, { recursive: true });
@@ -60,32 +60,51 @@ test('좌 — 원본 로그인 폼의 컨트롤·문구가 1:1 로 있다', asyn
   await expect(page.locator('.lg-foot')).toContainText('063-713-1218');
   await expect(page.locator('.lg-foot')).toContainText('평일 09:00~18:00');
   await expect(page.locator('[data-policy]')).toHaveText(['개인정보처리방침', '이용약관', '이메일무단수집거부']);
-  await expect(page.locator('.lg-foot__org')).toHaveText('LX 한국국토정보공사');
+  // 실제 CI 2 — 조판/트레이싱 폴백이 아니라 공식 파일. 로드돼서 자연 크기가 있어야 한다.
+  const ci = await page.evaluate(() => {
+    const g = (id) => { const i = document.querySelector(id); const r = i.getBoundingClientRect();
+      return { src: i.getAttribute('src'), ok: i.complete && i.naturalWidth > 0, x: Math.round(r.x), y: Math.round(r.y), h: Math.round(r.height), w: Math.round(r.width) }; };
+    return { lx: g('#lgCiLandxi'), lock: g('#lgCiLx'), old: document.querySelectorAll('.lg-brand__wm, .lg-brand__org, .lg-foot__org').length };
+  });
+  expect(ci.lx.src).toBe('../assets/brand/landxi-wordmark.png');
+  expect(ci.lx.ok).toBe(true);
+  expect(ci.lx.x).toBe(72); expect(ci.lx.y).toBe(58); expect(ci.lx.h).toBe(22);
+  expect(ci.lock.src).toBe('../assets/brand/vector/lx-lockup.svg');
+  expect(ci.lock.ok).toBe(true);
+  expect(ci.lock.x).toBe(72); expect(ci.lock.h).toBe(18);
+  expect(ci.old).toBe(0);
+  await expect(page.locator('#lgCiLx')).toHaveAttribute('alt', 'LX 한국국토정보공사');
   await expect(page.locator('.lg-foot__legal')).toContainText('Copyright© LX. ALL RIGHTS RESERVED.');
   // 플랫폼 소개 카피(§3 B2-Login)는 없다.
   await expect(page.locator('body')).not.toContainText('Geo-AI 전문가');
   await expect(page.locator('body')).not.toContainText('범부처 AI 기반');
 
-  // 서체 — SUIT 500 단일 굵기.
-  const type = await page.evaluate(() => {
-    const cs = getComputedStyle(document.querySelector('.lg-h1'));
-    return { fam: cs.fontFamily, w: cs.fontWeight };
+  // 서체(발주 결정) — 제목 Paperlogy 700 · 라벨/버튼 Pretendard. 폰트는 실제 로드돼야 한다.
+  const type = await page.evaluate(async () => {
+    await document.fonts.ready;
+    const h = getComputedStyle(document.querySelector('.lg-h1'));
+    const b = getComputedStyle(document.querySelector('.lg-submit'));
+    const l = getComputedStyle(document.querySelector('.lx-field__label'));
+    return { fam: h.fontFamily, w: h.fontWeight, btn: b.fontFamily, lbl: l.fontFamily, loaded: document.fonts.check('700 32px Paperlogy') };
   });
-  expect(type.fam).toMatch(/SUIT/);
-  expect(type.w).toBe('500');
+  expect(type.fam).toMatch(/^"?Paperlogy"?/);
+  expect(type.w).toBe('700');
+  expect(type.btn).toMatch(/^"?Pretendard"?/);
+  expect(type.lbl).toMatch(/^"?Pretendard"?/);
+  expect(type.loaded).toBe(true);
 
   expect(errs).toEqual([]);
   await page.screenshot({ path: `${SHOTS}/b5-login.png` });
 });
 
-test('우 — 디오라마 오프닝 필름(w01.mp4)이 풀블리드로, 브래킷 4 · 캡션 2 와 함께 선다', async ({ page }) => {
+test('우 — 디오라마 오프닝 필름(w01.mp4)이 마진 56 인셋 판(608×788 · 헤어라인)으로, 캡션·브래킷 0', async ({ page }) => {
   await boot(page);
 
-  await expect(page.locator('.lx-bracket')).toHaveCount(4);
-  await expect(page.locator('#lgFilmNo')).toContainText('01');
-  await expect(page.locator('#lgFilmNo')).toContainText('/ 12');
-  await expect(page.locator('#lgFilmNo')).toContainText('5.08 s');
-  await expect(page.locator('#lgCapMeta')).toContainText('모형 지구본 · 위성 · AI 생성 필름');
+  await expect(page.locator('.lx-bracket')).toHaveCount(0);
+  await expect(page.locator('#lgFilmNo, #lgCapMeta, .lg-film__cap, .lg-film__no')).toHaveCount(0);
+  await expect(page.locator('body')).not.toContainText('kling');
+  await expect(page.locator('body')).not.toContainText('모형 지구본');
+  await expect(page.locator('body')).not.toContainText('5.08 s');
 
   const p = await page.evaluate(() => {
     const v = document.querySelector('#lgVideo');
@@ -95,8 +114,10 @@ test('우 — 디오라마 오프닝 필름(w01.mp4)이 풀블리드로, 브래�
       fit: getComputedStyle(v).objectFit,
       poster: v.poster, srcs, current: window.__login.source(),
       autoplay: v.autoplay, muted: v.muted, loop: v.loop, playsinline: v.hasAttribute('playsinline'),
-      x: Math.round(r.x), right: Math.round(r.right), top: Math.round(r.top), h: Math.round(r.height),
+      x: Math.round(r.x), right: Math.round(r.right), top: Math.round(r.top), h: Math.round(r.height), w: Math.round(r.width),
       vw: innerWidth, vh: innerHeight,
+      border: getComputedStyle(document.querySelector('#lgPlate')).borderTopWidth,
+      formRight: Math.round(document.querySelector('.lg-form').getBoundingClientRect().right),
     };
   });
   expect(p.fit).toBe('cover');
@@ -105,11 +126,15 @@ test('우 — 디오라마 오프닝 필름(w01.mp4)이 풀블리드로, 브래�
   expect(p.srcs.some((s) => s.endsWith('/w01-m.mp4'))).toBe(true);
   expect(p.current === null || /w01\.mp4$/.test(p.current)).toBeTruthy();   // 1440 폭 = 데스크톱 소스
   expect(p.autoplay && p.muted && p.loop && p.playsinline).toBe(true);
-  // SPLIT-5050 — 판이 x 720 에서 1440 까지, y 0–900, 마진 없이.
-  expect(p.x).toBe(Math.round(p.vw / 2));
-  expect(p.right).toBe(p.vw);
-  expect(p.top).toBe(0);
-  expect(p.h).toBe(p.vh);
+  // SPLIT-5050 + 인셋 56 — 판이 x 776–1384 · y 56–844 = 608×788, 헤어라인 1.
+  expect(p.x).toBe(Math.round(p.vw / 2) + 56);
+  expect(p.right).toBe(p.vw - 56);
+  expect(p.top).toBe(56);
+  expect(p.h).toBe(p.vh - 112);
+  expect(p.w).toBe(608);
+  expect(p.border).toBe('1px');
+  // 폼 오른끝 ↔ 판 왼끝 = 64.
+  expect(p.x - p.formRight).toBe(64);
 });
 
 test('앰비언트 — 유휴 움직임은 필름 루프 하나, 5초 아무것도 안 해도 돈다', async ({ page }) => {
@@ -143,6 +168,8 @@ test('시스템 법 — 헤어라인 · radius 0 · shadow 0 · 12px 바닥 · �
       footBorder: cs(document.querySelector('.lg-foot')).borderTopWidth,
       formX: Math.round(document.querySelector('.lg-form').getBoundingClientRect().x),
       formW: Math.round(document.querySelector('.lg-form').getBoundingClientRect().width),
+      headY: Math.round(document.querySelector('.lg-head__l').getBoundingClientRect().y),
+      signupBottom: Math.round(document.querySelector('.lg-signup').getBoundingClientRect().bottom),
       overX: document.documentElement.scrollWidth > innerWidth + 1,
       overY: document.documentElement.scrollHeight > innerHeight + 1,
       footBottom: Math.round(r.bottom), vh: innerHeight,
@@ -153,11 +180,14 @@ test('시스템 법 — 헤어라인 · radius 0 · shadow 0 · 12px 바닥 · �
   expect(m.shadow).toBe(0);
   expect(m.accent).toBe(0);              // 정지 상태에서 액센트 0 — 포커스 때 밑줄 1
   expect(m.footBorder).toBe('1px');
-  expect(m.formX).toBe(72);
+  expect(m.formX).toBe(220);              // 폼은 우·하 — 오른끝 712, 판(776)과 64
   expect(m.formW).toBe(492);
   expect(m.overX).toBe(false);
   expect(m.overY).toBe(false);
   expect(m.footBottom).toBeLessThanOrEqual(m.vh);
+  // 세로 — SIGN IN 238(이전 178 + 60), 폼 블록이 푸터 헤어라인(744) 위에서 끝난다.
+  expect(m.headY).toBe(238);
+  expect(m.signupBottom).toBeLessThan(744);
 });
 
 test('포커스 — 액센트 헤어라인이 좌→우로 그어진다', async ({ page }) => {
@@ -290,7 +320,8 @@ test('축소 모션 — 필름 대신 포스터, 같은 내용이 전부 보인�
   expect(await page.evaluate(() => document.querySelector('#lgVideo').poster)).toMatch(/w01\.webp$/);
   await expect(page.locator('.lg-h1')).toBeVisible();
   await expect(page.locator('#lgSubmit')).toBeVisible();
-  await expect(page.locator('.lx-bracket')).toHaveCount(4);
+  await expect(page.locator('#lgCiLandxi')).toBeVisible();
+  await expect(page.locator('#lgCiLx')).toBeVisible();
   expect(errs).toEqual([]);
   await ctx.close();
 });
@@ -304,6 +335,17 @@ test('1024 — 구도가 무너지지 않는다', async ({ browser }) => {
   await expect(page.locator('.lg-h1')).toBeVisible();
   await expect(page.locator('#lgPlate')).toBeVisible();
   await expect(page.locator('.lg-foot')).toBeVisible();
+  // 1024 — 폼이 줄어도(≈432) 판과의 간격 64 · 판 마진 56 은 유지.
+  const g = await page.evaluate(() => {
+    const f = document.querySelector('.lg-form').getBoundingClientRect();
+    const p = document.querySelector('#lgPlate').getBoundingClientRect();
+    return { gap: Math.round(p.x - f.right), fx: Math.round(f.x), fw: Math.round(f.width), px: Math.round(p.x), pr: Math.round(p.right) };
+  });
+  expect(g.gap).toBe(64);
+  expect(g.fx).toBe(72);
+  expect(g.fw).toBeGreaterThanOrEqual(400);
+  expect(g.px).toBe(512 + 56);
+  expect(g.pr).toBe(1024 - 56);
   await page.screenshot({ path: `${SHOTS}/default-1024.png`, fullPage: true });
   await ctx.close();
 });

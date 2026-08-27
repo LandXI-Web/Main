@@ -1,8 +1,8 @@
 /* Land-XI 로그인 — 마스터 design-canvas/v2/B5-Login.dc.html (NOTES §14 · 2차 개정).
    SPLIT-5050(3차 개정): 좌 = 실제 CI 두 개가 앵커(좌상 Land-XI 워드마크 · 좌하 LX 락업), 폼(492)은 우·하로 붙어
    판과의 간격 64 · 우 = 디오라마 오프닝 필름(Leg 01) 인셋 판(마진 56 → 608×788, 헤어라인, 캡션 0).
-   서체 SUIT 500 / Pretendard 400 / Inter tabular · 헤어라인 · radius 0 · shadow 0 · 12px 바닥.
-   액센트 #006DF7 은 아이디·비밀번호 포커스 밑줄 한 곳.
+   서체(발주 결정 2026-08-27): 표시 Paperlogy 700 / 본문·라벨·버튼 Pretendard / 숫자 Inter tabular · 헤어라인 · radius 0 · shadow 0 · 12px 바닥.
+   톤 T3: 잉크 시스템 + 액센트 #006DF7(포커스 밑줄 · 링크 호버) · CTA 는 잉크. 띠 색 --tint-1/2 는 정의만(현재 미사용).
 
    프리미티브는 system.css 에서 온다: .lx-skip · .lx-num · [--lx-*] 토큰.
    여기 있는 것은 이 화면에만 있는 것뿐이다: .lx-field(밑줄 폼) · .lx-check · 필름 판 · 브래킷. */
@@ -12,11 +12,19 @@
   --lg-col:492px;               /* 폼 폭 */
   --lg-gap:64px;                /* 폼 오른끝 ↔ 필름 판 왼끝 */
   --lg-inset:56px;              /* 필름 판 마진 */
-  --lg-tint:#E8F1FF;            /* 필요 시 띠 색 — 현재 미사용 */
 }
 
 html,body{ height:100%; }
 body.lx{ overflow:hidden; background:var(--lx-paper); color:var(--lx-ink); }
+
+/* Paperlogy — fonts.html 과 같은 noonnu(jsDelivr) 배포. 토큰 --font-display/--tint-* 는 v3-tokens.css 에 아직 없어 여기 로컬 정의. */
+@font-face{font-family:'Paperlogy';font-weight:800;font-display:swap;src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2') format('woff2')}
+@font-face{font-family:'Paperlogy';font-weight:700;font-display:swap;src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2') format('woff2')}
+:root{
+  --font-display:"Paperlogy","Pretendard",system-ui,sans-serif;
+  --tint-1:#E8F1FF;
+  --tint-2:#D6E6FF;
+}
 
 /* ── 액자 — 50/50 ─────────────────────────────────────────────────────────── */
 .lg{ position:relative; display:grid; grid-template-columns:1fr 1fr; height:100vh; min-height:640px; overflow:hidden; }
@@ -27,14 +35,14 @@ body.lx{ overflow:hidden; background:var(--lx-paper); color:var(--lx-ink); }
   /* 오른쪽 패딩 = 판 마진에서 폼 간격을 뺀 것 → 폼 오른끝이 판 왼끝에서 정확히 --lg-gap 떨어진다. */
   padding:58px calc(var(--lg-gap) - var(--lg-inset)) 40px var(--lg-m);
 }
-/* 실제 CI — 브랜드 예외: 공식 그라디언트 그대로(팔레트 법 밖). 높이 28 고정, 폭은 비율. */
+/* 실제 CI — 브랜드 예외: 공식 그라디언트 그대로(팔레트 법 밖). 높이 22 고정, 폭은 비율. */
 .lg-brand{ display:block; width:max-content; }
-.lg-brand__ci{ display:block; height:28px; width:auto; }
+.lg-brand__ci{ display:block; height:22px; width:auto; }
 
 /* 폼 블록은 우·하로 — 왼쪽 CI 와 판 사이 빈 공간을 없앤다. */
-.lg-head{ margin-top:160px; width:var(--lg-col); max-width:100%; margin-left:auto; }
+.lg-head{ margin-top:158px; width:var(--lg-col); max-width:100%; margin-left:auto; }
 .lg-head__l{ margin:0; font-size:12px; line-height:14px; letter-spacing:.10em; text-transform:uppercase; color:var(--lx-grey-2); }
-.lg-h1{ margin:12px 0 0; font-family:var(--lx-display); font-weight:500; font-size:32px; line-height:40px; letter-spacing:-.02em; }
+.lg-h1{ margin:12px 0 0; font-family:var(--font-display); font-weight:700; font-size:32px; line-height:40px; letter-spacing:-.02em; }
 .lg-sub{ margin:8px 0 0; font-size:14px; line-height:20px; letter-spacing:-.01em; color:var(--lx-grey-2); }
 .lg-banner{ margin:12px 0 0; font-size:12px; line-height:16px; color:var(--lx-ink); }
 .lg-banner[hidden]{ display:none; }
@@ -72,13 +80,13 @@ body.lx{ overflow:hidden; background:var(--lx-paper); color:var(--lx-ink); }
 .lx-check input:focus-visible + .lx-check__box{ outline:1px solid var(--lx-ink); outline-offset:2px; }
 .lg-find{ margin-left:auto; display:flex; align-items:center; gap:10px; }
 .lg-find__a{ font-size:13px; line-height:16px; letter-spacing:-.01em; color:var(--lx-ink); text-decoration:none; border-bottom:1px solid var(--lx-hair); transition:border-color var(--lx-hover) var(--lx-hover-ease); }
-.lg-find__a:hover{ border-bottom-color:var(--lx-ink); }
+.lg-find__a:hover{ color:var(--lx-accent); border-bottom-color:var(--lx-accent); }
 .lg-sep{ font-size:12px; color:var(--lx-grey); }
 
 .lg-submit{
   display:flex; align-items:center; justify-content:center; gap:10px; width:100%; height:52px; margin-top:24px;
   border:0; border-radius:0; background:var(--lx-ink); color:#FFFFFF; cursor:pointer;
-  font-family:var(--lx-display); font-weight:500; font-size:16px; letter-spacing:.02em;
+  font-family:var(--lx-body); font-weight:500; font-size:16px; letter-spacing:.02em;
 }
 .lg-submit[disabled]{ cursor:default; opacity:.6; }
 .lg-submit:focus-visible{ outline:1px solid var(--lx-ink); outline-offset:3px; }
@@ -86,14 +94,15 @@ body.lx{ overflow:hidden; background:var(--lx-paper); color:var(--lx-ink); }
 .lg-submit:hover svg{ transform:translateX(4px); }
 
 .lg-signup{ margin:22px 0 0; font-size:13px; line-height:16px; letter-spacing:-.01em; color:var(--lx-grey-2); }
-.lg-signup__a{ color:var(--lx-ink); text-decoration:none; border-bottom:1px solid var(--lx-ink); }
+.lg-signup__a{ color:var(--lx-ink); text-decoration:none; border-bottom:1px solid var(--lx-ink); transition:color var(--lx-hover) var(--lx-hover-ease), border-color var(--lx-hover) var(--lx-hover-ease); }
+.lg-signup__a:hover{ color:var(--lx-accent); border-bottom-color:var(--lx-accent); }
 
 /* ── 푸터 — 원본 3행 1:1 ──────────────────────────────────────────────────── */
 .lg-foot{ margin-top:auto; width:var(--lg-col); max-width:100%; padding-top:16px; border-top:1px solid var(--lx-hair); white-space:nowrap; }
 .lg-foot__row{ margin:0; display:flex; align-items:baseline; gap:6px; font-size:12px; line-height:14px; letter-spacing:.04em; color:var(--lx-grey-2); }
 .lg-foot__row + .lg-foot__row{ margin-top:12px; }
 .lg-foot__row a{ color:inherit; text-decoration:none; }
-.lg-foot__row a:hover{ color:var(--lx-ink); }
+.lg-foot__row a:hover{ color:var(--lx-accent); }
 .lg-foot__ink{ color:var(--lx-ink); }
 .lg-foot__ink b{ font-weight:500; }
 .lg-foot__policy{ gap:8px; }
