@@ -1,0 +1,25 @@
+// charts.html 검증 샷: 1440 · S1–S3 / S4–S6 · T3 톤 · 콘솔 오류
+import { chromium } from '@playwright/test';
+import fs from 'node:fs';
+const PORT = process.env.PORT || 4173, OUT = 'shots/proto';
+fs.mkdirSync(OUT, { recursive: true });
+const b = await chromium.launch({ channel: 'chrome' });
+const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
+const errs = [];
+p.on('console', m => { if (m.type() === 'error') errs.push('console: ' + m.text()); });
+p.on('pageerror', e => errs.push('pageerror: ' + e.message));
+await p.goto(`http://localhost:${PORT}/landxi/proto/charts.html`, { waitUntil: 'networkidle' });
+await p.waitForTimeout(1500);
+const secs = await p.$$eval('section.tr', els => els.map(e => ({ id: e.id, top: e.offsetTop, h: e.offsetHeight, rule: e.querySelector('.rule').textContent })));
+console.log(secs.map(s => `${s.id} ${s.h}px | ${s.rule}`).join('\n'));
+const clip = (a, b) => ({ x: 0, y: a.top - 8, width: 1440, height: (b.top + b.h) - a.top + 16 });
+await p.screenshot({ path: `${OUT}/charts-1.png`, clip: clip(secs[0], secs[2]), fullPage: true });
+await p.screenshot({ path: `${OUT}/charts-2.png`, clip: clip(secs[3], secs[5]), fullPage: true });
+await p.click('.tonebar [data-tone="T3"]'); await p.waitForTimeout(400);
+console.log('tone T3 primary =', await p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()));
+await p.screenshot({ path: `${OUT}/charts-3-t3.png`, clip: { x: 0, y: 0, width: 1440, height: secs[0].top + secs[0].h }, fullPage: true });
+await p.click('.pickbtn[data-id="S4"]'); await p.waitForTimeout(200);
+console.log('pick =', await p.evaluate(() => localStorage.getItem('lx_chartpick') + ' / ' + document.getElementById('pickText').textContent));
+console.log('svg text count', await p.$$eval('svg text', t => t.length), '| canvas', await p.$$eval('canvas', c => c.length), '| images', await p.$$eval('svg image', i => i.length));
+console.log(errs.length ? errs.join('\n') : 'no console errors');
+await b.close();

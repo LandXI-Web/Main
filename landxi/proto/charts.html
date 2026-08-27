@@ -1,0 +1,913 @@
+<!doctype html>
+<html lang="ko" data-tone="T1">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Land-XI 차트·표 디자인 후보 6종 (Bake-off)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/variable/woff2/SUIT-Variable.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap">
+<style>
+/* ===== 토큰 (fonts.html 과 동일) ===== */
+:root{
+  --paper:#FFFFFF; --ink:#010102; --grey:#686868; --mute:#CCCCCC; --line:#DDDDDD;
+  --sys:'SUIT Variable','Pretendard Variable',Pretendard,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  --body:'Pretendard Variable',Pretendard,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  --num:'Inter',system-ui,sans-serif;
+  --primary:#0C7CE8; --band:#E6F2FF; --band-2:#CFE5FC;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+html[data-tone="T3"]{ --primary:#006DF7; --band:#E8F1FF; --band-2:#D6E6FF; }
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--paper);color:var(--ink)}
+body{font-family:var(--body);font-weight:400;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1328px;margin:0 auto;padding:0 56px}
+button{font:inherit;cursor:pointer;background:none;border:1px solid var(--ink);border-radius:0;color:var(--ink);padding:6px 14px;transition:transform 180ms var(--ease)}
+button:hover{background:var(--ink);color:#fff;transform:translateY(-2px)}
+button.on{background:var(--ink);color:#fff}
+h1,h2,h3{font-family:var(--sys);font-weight:500;letter-spacing:-.01em}
+
+.top{padding:40px 0 24px;border-bottom:1px solid var(--line)}
+.top h1{font-size:32px;line-height:40px}
+.top p{color:var(--grey);max-width:800px;margin-top:8px}
+.top .quote{margin-top:12px;padding:12px 16px;border-left:2px solid var(--primary);font-family:var(--sys);font-size:16px;line-height:1.5}
+.top .meta{font-family:var(--num);font-size:12px;letter-spacing:.03em;color:var(--grey);margin-top:16px}
+
+.tonebar{display:flex;gap:16px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)}
+.tonebar .lab{font-size:12px;color:var(--grey);letter-spacing:.02em}
+.tonebar .tk{display:inline-flex;align-items:center;gap:6px;font-family:var(--num);font-size:12px;color:var(--grey)}
+.tonebar .tk i{display:inline-block;width:12px;height:12px;background:var(--primary);border:1px solid var(--line)}
+
+.pick{position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:1px solid var(--line);padding:10px 0;display:flex;gap:16px;align-items:center}
+.pick .lab{font-size:12px;color:var(--grey);letter-spacing:.02em}
+.pick code{font-family:var(--num);font-size:13px;background:#F4F4F4;padding:4px 10px;flex:1;letter-spacing:.01em}
+.pick button{padding:4px 12px;font-size:12px}
+
+/* ===== 후보 블록 ===== */
+.tr{border-top:1px solid var(--line);padding:32px 0 48px}
+.tr.picked{background:linear-gradient(90deg,var(--band) 0,var(--band) 8px,transparent 8px)}
+.th{display:grid;grid-template-columns:1fr 320px;gap:48px;align-items:start;margin-bottom:20px}
+.th .no{font-family:var(--num);font-size:12px;color:var(--grey);letter-spacing:.06em}
+.th h2{font-size:26px;line-height:32px;margin-top:2px}
+.th .intent{color:var(--grey);margin-top:6px;font-size:14px}
+.th .ctl{justify-self:end;text-align:right;width:100%}
+.th .pickbtn{width:100%}
+.th .rule{font-family:var(--num);font-size:12px;letter-spacing:.02em;color:var(--grey);margin-top:10px;line-height:1.5;text-align:left;border-top:1px solid var(--line);padding-top:8px}
+.th .rule b{font-weight:500;color:var(--ink)}
+.th .rule .bad{color:#C0392B}
+
+.g5{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.p{border:1px solid var(--line);position:relative}
+.p.wide{grid-column:span 2}
+.p figcaption{display:flex;justify-content:space-between;font-size:12px;color:var(--grey);padding:8px 12px 0;letter-spacing:.01em}
+.p figcaption b{font-weight:500;color:var(--ink);font-family:var(--sys)}
+.p .cv{display:block;padding:6px 12px 12px}
+.p svg,.p canvas{display:block;width:100%;height:auto;overflow:visible}
+.p canvas{width:100%}
+
+/* SVG 공통 */
+svg text{font-family:var(--body);font-size:12px;fill:var(--ink)}
+svg text.n{font-family:var(--num);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+svg text.d{font-family:var(--sys);font-weight:500}
+svg text.g{fill:var(--grey)}
+svg text.w{fill:#fff}
+svg .pr{fill:var(--primary)} svg .prs{stroke:var(--primary)} svg .prt{fill:var(--primary)}
+svg .ink{fill:var(--ink)} svg .inks{stroke:var(--ink)}
+svg .ln{stroke:var(--line)} svg .mu{fill:var(--mute)} svg .mus{stroke:var(--mute)}
+svg .paper{fill:#fff}
+svg .band{fill:var(--band)}
+
+/* 호버: 물리 반응(4px 이동 + 브래킷 성장). 색만 바꾸는 호버 없음 */
+svg .item{transition:transform 180ms var(--ease);transform-box:fill-box}
+svg .item:hover,svg .item.hv{transform:translateY(-4px)}
+svg .item .br{opacity:0;transition:opacity 180ms var(--ease)}
+svg .item:hover .br,svg .item.hv .br{opacity:1}
+svg .item .call{opacity:0;transition:opacity 180ms var(--ease)}
+svg .item:hover .call,svg .item.hv .call{opacity:1}
+
+.foot{border-top:1px solid var(--line);padding:24px 0 80px;font-size:12px;color:var(--grey);font-family:var(--num);letter-spacing:.02em}
+@media (max-width:1100px){.g5{grid-template-columns:1fr 1fr}.p.wide{grid-column:span 2}.th{grid-template-columns:1fr}.wrap{padding:0 20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>차트 · 표 디자인 후보 6종 — 같은 실데이터, 다른 그림</h1>
+  <div class="quote">"표 차트 등 모두 디자인된 이미지여야 한다. 단순 글꼴 색상 표출 X."</div>
+  <p>아래 6개 블록은 <b>같은 5개 데이터</b>(AI 개발 프로젝트 용량 Top5 · 최근 7일 방문 · 전체 스토리지 44.5/184 TB · 카드 발행 승인 대기 2행 · 필지 KPI)를 6가지 그래픽 문법으로 <b>코드가 그린 것</b>이다. 값은 스크립트 상단 <code>DATA</code>에서 오고, 로드 시 SVG/Canvas로 렌더되므로 숫자가 바뀌어도 그림이 따라간다. 각 블록에 호버 예시 1개가 고정 표시되어 있고 실제 마우스 호버도 동작한다.</p>
+  <div class="meta">데이터 landxi/assets/data/dashboard.js · results.js(시연) · 법전 design/system.md · 장치 근거 B5-Dashboard §12.5 / all4land §3-3 ⑤ / vantor §7 #17 / bench-fui D3·D4·D6 / yt-RDytbVDzMF4 F8 · 2026-08-27</div>
+</header>
+
+<div class="tonebar">
+  <span class="lab">톤</span>
+  <button type="button" data-tone="T1" class="on">T1 · CI 블루 #0C7CE8</button>
+  <button type="button" data-tone="T3">T3 · 법전 액센트 #006DF7</button>
+  <span class="tk"><i></i>primary = <span id="toneHex">#0C7CE8</span></span>
+  <span class="lab" style="margin-left:auto">바탕 #FFFFFF · 잉크 #010102 · 헤어라인 #DDDDDD · 라운드 0 · 그림자 0</span>
+</div>
+
+<div class="pick">
+  <span class="lab">선택 요약</span>
+  <code id="pickText">차트 문법: (미선택) / 톤: T1</code>
+  <button id="copyBtn" type="button">복사</button>
+  <button id="clearBtn" type="button">초기화</button>
+</div>
+
+<main id="main"></main>
+
+<div class="foot">렌더 규칙: SVG 5종(S1–S5) + Canvas 1종(S6) · 텍스트는 모두 그래픽 안의 라벨(≥12px) · 액센트 = 1위 항목·호버 장치·현재값 포인터에만 · 실영상 크롭 landxi/assets/proto/crops/**</div>
+</div>
+
+<script>
+/* =====================================================================
+   DATA — 실데이터 (dashboard.js / results.js). 값을 바꾸면 6종 모두 다시 그려진다.
+   ===================================================================== */
+const CROP = '../assets/proto/crops/';
+const DATA = {
+  top5: { title:'AI 개발 프로젝트 용량 Top5', unit:'GB', total:1326,
+    rows:[['도로안전 정사영상',412],['농지 활용',318],['비닐하우스',256],['사료작물',198],['도로안전 카메라',142]] },
+  visits: { title:'최근 7일 방문', unit:'명', days:['D-6','D-5','D-4','D-3','D-2','D-1','오늘'], v:[812,945,1024,876,1150,412,356] },
+  storage: { title:'전체 스토리지', unit:'TB', used:44.5, total:184,
+    parts:[['정사영상',18.2],['공간데이터',9.6],['학습데이터',7.4],['AI 분석',5.1],['행정정보',2.8],['기타',1.4]] },
+  table: { title:'카드 발행 승인 대기', cols:['카드','버전','요청 시각','지역','상태'],
+    rows:[
+      { name:'도로안전 정사영상', ver:'v2.1', at:'2026.06.10 14:30', area:'남원시 도통동', st:'승인 대기', img:CROP+'namwon-epoch/2.jpg' },
+      { name:'농지 활용 분석',   ver:'v2.0', at:'2026.05.15 08:50', area:'남원시 시 중앙권', st:'승인 대기', img:CROP+'namwon-farmland-2025/1.jpg' } ] },
+  kpi: { title:'남원 농지이용 필지', value:2098, unit:'필지', a:['경작',1291], b:['비경작',807], img:CROP+'namwon-farmland-2025/3.jpg' },
+  crops: [CROP+'namwon-epoch/1.jpg',CROP+'namwon-epoch/2.jpg',CROP+'namwon-epoch/3.jpg',CROP+'namwon-epoch/4.jpg',CROP+'namwon-farmland-2025/2.jpg',CROP+'kuksan-change/1.jpg',CROP+'jeju-illegal/1.jpg'],
+};
+const fmt = (n) => n.toLocaleString('en-US');
+const W = 420, H = 260, WT = 864;
+
+/* ===== SVG 헬퍼 ===== */
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs = {}, kids = []) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) { if (k === 'text') e.textContent = attrs[k]; else if (attrs[k] != null) e.setAttribute(k, attrs[k]); }
+  for (const c of kids) if (c) e.appendChild(c);
+  return e;
+}
+const svg = (w = W, h = H) => el('svg', { viewBox: `0 0 ${w} ${h}`, width: w, height: h });
+const txt = (x, y, s, cls = '', a = {}) => el('text', { x, y, class: cls, text: s, ...a });
+const line = (x1, y1, x2, y2, cls = 'inks', a = {}) => el('line', { x1, y1, x2, y2, class: cls, 'stroke-width': 1, ...a });
+const rect = (x, y, w, h, a = {}) => el('rect', { x, y, width: w, height: h, ...a });
+const poly = (pts, a = {}) => el('polygon', { points: pts.map(p => p.join(',')).join(' '), ...a });
+const pline = (pts, a = {}) => el('polyline', { points: pts.map(p => p.join(',')).join(' '), fill: 'none', ...a });
+// D1 코너 브래킷 (팔 arm, 1px)
+function brackets(x, y, w, h, arm = 10, cls = 'prs') {
+  const g = el('g', { class: 'br', fill: 'none', 'stroke-width': 1 });
+  const c = [[x, y, 1, 1], [x + w, y, -1, 1], [x, y + h, 1, -1], [x + w, y + h, -1, -1]];
+  for (const [cx, cy, sx, sy] of c) g.appendChild(el('path', { class: cls, d: `M${cx + sx * arm} ${cy} H${cx} V${cy + sy * arm}` }));
+  return g;
+}
+// D6 리더선 + 콜아웃 (직각 2단)
+function callout(x, y, dx, dy, lines, cls = 'call') {
+  const g = el('g', { class: cls });
+  g.appendChild(el('circle', { cx: x, cy: y, r: 2.5, class: 'pr' }));
+  g.appendChild(el('path', { d: `M${x} ${y} V${y + dy} H${x + dx}`, fill: 'none', class: 'prs', 'stroke-width': 1 }));
+  const bw = 150, bh = 12 + lines.length * 16, bx = dx > 0 ? x + dx : x + dx - bw, by = y + dy - bh / 2;
+  g.appendChild(rect(bx, by, bw, bh, { class: 'paper prs', 'stroke-width': 1 }));
+  lines.forEach((s, i) => g.appendChild(txt(bx + 8, by + 16 + i * 16, s, i === 0 ? 'd' : 'n g')));
+  return g;
+}
+const item = (kids, hv = false) => el('g', { class: 'item' + (hv ? ' hv' : '') }, kids);
+
+/* =====================================================================
+   S1 등각 판 스택 — B5-Dashboard §12.5 판 문법 (scaleY .5 · 30°)
+   ===================================================================== */
+const ISO = (x, y, z = 0) => [(x - y) * 0.866, (x + y) * 0.5 - z];
+function slab(ox, oy, x, y, z, w, d, h, o = {}) {
+  const P = (a, b, c) => { const [px, py] = ISO(a, b, c); return [ox + px, oy + py]; };
+  const top = [P(x, y, z + h), P(x + w, y, z + h), P(x + w, y + d, z + h), P(x, y + d, z + h)];
+  const front = [P(x, y + d, z + h), P(x + w, y + d, z + h), P(x + w, y + d, z), P(x, y + d, z)];
+  const side = [P(x + w, y, z + h), P(x + w, y + d, z + h), P(x + w, y + d, z), P(x + w, y, z)];
+  const st = { class: 'inks', 'stroke-width': 1, 'stroke-linejoin': 'miter' };
+  const g = el('g', {}, [
+    poly(side, { ...st, fill: o.side || '#CCCCCC', ...(o.dash ? { 'stroke-dasharray': '3 3', fill: 'none' } : {}) }),
+    poly(front, { ...st, fill: o.front || '#DDDDDD', ...(o.dash ? { 'stroke-dasharray': '3 3', fill: 'none' } : {}) }),
+    poly(top, { ...st, fill: o.top || '#fff', class: o.topCls || 'inks', ...(o.dash ? { 'stroke-dasharray': '3 3', fill: 'none' } : {}) }),
+  ]);
+  g._P = P; g._top = top;
+  return g;
+}
+// 등각 상면 좌표계로 텍스트/이미지 매핑 행렬
+const isoMatrix = (ox, oy, x, y, z) => { const [px, py] = ISO(x, y, z); return `matrix(0.866,0.5,-0.866,0.5,${ox + px},${oy + py})`; };
+
+const S1 = {
+  id: 'S1', name: '등각 판 스택', intent: '막대·표·KPI 모두를 대시보드 §12.5의 등각 판(plate)으로 세운다. 값 = 판의 길이/두께, 표 행 = 실영상이 얹힌 얇은 판.',
+  bar(D) {
+    const s = svg(); const ox = 215, oy = 50, maxv = Math.max(...D.rows.map(r => r[1]));
+    s.appendChild(txt(12, 18, `${D.title} · 합계 ${fmt(D.total)} ${D.unit} · 시연`, 'n g'));
+    D.rows.forEach(([name, v], i) => {
+      const len = 30 + (v / maxv) * 150, y = i * 36, hv = i === 1;
+      const sl = slab(ox, oy, 0, y, 0, len, 18, 8, i === 0 ? { top: 'var(--primary)', topCls: 'inks pr', front: '#DDDDDD' } : {});
+      const [ex, ey] = sl._P(len, y + 9, 8), [lx, ly] = sl._P(0, y + 18, 0);
+      const it = item([sl, txt(ex + 8, ey + 4, `${v}`, 'n'), txt(lx - 6, ly + 2, name, i === 0 ? 'd' : '', { 'text-anchor': 'end' }),
+        brackets(sl._top[3][0] - 4, sl._top[0][1] - 4, sl._top[1][0] - sl._top[3][0] + 8, sl._top[2][1] - sl._top[0][1] + 8, 10),
+        hv ? callout(ex, ey, 40, 70, [name, `${v} ${D.unit} · 2위`, '호버 예시']) : null], hv);
+      s.appendChild(it);
+    });
+    return s;
+  },
+  line(D) {
+    const s = svg(); const ox = 96, oy = 128, maxv = 1200, n = D.v.length, step = 34;
+    s.appendChild(txt(12, 18, `${D.title} · 합계 ${fmt(D.v.reduce((a, b) => a + b))} ${D.unit} · 시연`, 'n g'));
+    const P = (x, y, z) => { const [px, py] = ISO(x, y, z); return [ox + px, oy + py]; };
+    // 바닥 그리드
+    for (let i = 0; i <= n; i++) s.appendChild(line(...P(i * step, 0, 0), ...P(i * step, 48, 0), 'ln'));
+    for (let j = 0; j <= 3; j++) s.appendChild(line(...P(0, j * 16, 0), ...P(n * step, j * 16, 0), 'ln'));
+    // 기준 판 (최대값 눈금 판, 점선 고스트)
+    const pts = D.v.map((v, i) => P(i * step + step / 2, 24, (v / maxv) * 100));
+    D.v.forEach((v, i) => {
+      const [bx, by] = P(i * step + step / 2, 24, 0); const [tx, ty] = pts[i];
+      const sl = slab(ox, oy, i * step + step / 2 - 6, 18, 0, 12, 12, 3, v === Math.max(...D.v) ? { top: 'var(--primary)', topCls: 'inks pr' } : {});
+      s.appendChild(sl);
+      s.appendChild(line(bx, by - 3, tx, ty, 'inks', { 'stroke-dasharray': '2 2' }));
+      s.appendChild(txt(bx - 6, by + 16, D.days[i], 'n g', { 'font-size': 12 }));
+    });
+    s.appendChild(pline(pts, { class: 'inks', 'stroke-width': 1.5 }));
+    pts.forEach(([x, y], i) => {
+      const hv = i === 4;
+      s.appendChild(item([el('circle', { cx: x, cy: y, r: 3, class: D.v[i] === Math.max(...D.v) ? 'pr' : 'ink' }), txt(x + 6, y - 4, fmt(D.v[i]), 'n'), brackets(x - 8, y - 8, 16, 16, 5),
+        hv ? callout(x, y, 70, -40, [D.days[i], `${fmt(D.v[i])} ${D.unit} · 최대`, '호버 예시']) : null], hv));
+    });
+    return s;
+  },
+  stack(D) {
+    const s = svg(); const ox = 130, oy = 205, scale = 2.6; let z = 0;
+    s.appendChild(txt(12, 18, `${D.title} · ${D.used} / ${D.total} ${D.unit} · 사용 ${(D.used / D.total * 100).toFixed(1)}%`, 'n g'));
+    // 용량 판 (184 TB): 점선 고스트 바닥 판
+    const cap = slab(ox, oy, -10, -10, -6, 110, 110, 6, { dash: true }); s.appendChild(cap);
+    s.appendChild(txt(ox - 118, oy + 30, `용량 ${D.total} ${D.unit}`, 'n g'));
+    [...D.parts].reverse().forEach(([name, tb], k) => {
+      const i = D.parts.length - 1 - k, h = tb * scale, hv = i === 0;
+      const sl = slab(ox, oy, 0, 0, z, 90, 90, h, i === 0 ? { top: 'var(--primary)', topCls: 'inks pr' } : {});
+      const [lx, ly] = sl._P(90, 0, z + h / 2); const ry = 60 + i * 26, rx = 250; // 라벨 고정 행 + 리더선
+      const it = item([sl, el('path', { d: `M${lx + 2} ${ly} H${rx - 30} V${ry - 4} H${rx - 6}`, fill: 'none', class: i === 0 ? 'prs' : 'inks' }), txt(rx, ry, `${name}`, i === 0 ? 'd' : ''), txt(rx + 92, ry, `${tb}`, 'n g'),
+        brackets(sl._top[3][0] - 4, sl._top[0][1] - 4, sl._top[1][0] - sl._top[3][0] + 8, (sl._P(90, 90, z)[1]) - sl._top[0][1] + 8, 10),
+        hv ? callout(sl._top[0][0], sl._top[0][1] + 10, -10, 60, [name, `${tb} ${D.unit} · ${(tb / D.used * 100).toFixed(0)}%`, '호버 예시']) : null], hv);
+      s.appendChild(it); z += h;
+    });
+    return s;
+  },
+  table(D) {
+    // §12.5 판 기하: scaleY(.5) skewX(-30°) 사교 투영 — 긴 원장 판은 정등각보다 이쪽이 화면에 맞는다
+    const s = svg(WT, H); const x0 = 60, pw = 720, ph = 80, k = ph * 0.5, sk = k * 0.577, t = 6;
+    s.appendChild(txt(12, 18, `${D.title} · ${D.rows.length}건 · 요청 순`, 'n g'));
+    [...D.rows].reverse().forEach((r, kk) => {
+      const i = D.rows.length - 1 - kk, y = 150 - i * 62, hv = i === 0;
+      const st = { class: 'inks', 'stroke-width': 1 };
+      const plate = el('g', {}, [
+        poly([[x0 + pw + sk, y], [x0 + pw + sk, y + t], [x0 + pw, y + k + t], [x0 + pw, y + k]], { ...st, fill: '#CCCCCC' }),
+        poly([[x0, y + k], [x0 + pw, y + k], [x0 + pw, y + k + t], [x0, y + k + t]], { ...st, fill: '#DDDDDD' }),
+        poly([[x0 + sk, y], [x0 + pw + sk, y], [x0 + pw, y + k], [x0, y + k]], { ...st, fill: '#fff' })]);
+      const clipId = `s1c${i}`;
+      s.appendChild(el('clipPath', { id: clipId }, [rect(0, 0, 96, 64)]));
+      const img = el('g', { transform: `matrix(1,0,-0.577,0.5,${x0 + sk + 10 - 0.577 * 8},${y + 4})`, 'clip-path': `url(#${clipId})` },
+        [el('image', { href: r.img, width: 96, height: 64, preserveAspectRatio: 'xMidYMid slice' }), rect(0, 0, 96, 64, { fill: 'none', class: 'inks' })]);
+      const T = (u, str, cls, a) => txt(x0 + sk + u - 0.577 * 50, y + 25, str, cls, a); // 판 위 v=50 행에 정렬된 라벨(화면 정렬)
+      const it = item([plate, img, T(128, `0${i + 1}`, 'n g'), T(152, r.name, 'd', { 'font-size': 14 }), T(320, r.ver, 'n'), T(380, r.at, 'n'), T(540, r.area, ''),
+        el('circle', { cx: x0 + sk + 664 - 0.577 * 50, cy: y + 21, r: 4, fill: 'none', class: 'prs' }), T(676, r.st, ''),
+        brackets(x0 - 4, y - 4, pw + sk + 8, k + t + 8, 12),
+        hv ? callout(x0 + pw + sk, y + 10, -30, 56, [r.name + ' ' + r.ver, r.area, '호버 예시 · 판 4px 상승']) : null], hv);
+      s.appendChild(it);
+    });
+    return s;
+  },
+  kpi(D) {
+    const s = svg(); const ox = 60, oy = 70;
+    s.appendChild(txt(12, 18, `${D.title} · 2025-06 드론 · 측정`, 'n g'));
+    const sl = slab(ox, oy, 0, 0, 0, 300, 130, 12);
+    s.appendChild(sl);
+    // 음각: 회색(아래) + 흰(위) 오프셋 두 번, 마지막 잉크
+    const m = isoMatrix(ox, oy, 16, 30, 12);
+    const g = el('g', { transform: m });
+    g.appendChild(txt(1, 61, fmt(D.value), 'n', { 'font-size': 60, fill: '#CCCCCC' }));
+    g.appendChild(txt(-1, 59, fmt(D.value), 'n', { 'font-size': 60, fill: '#fff' }));
+    g.appendChild(txt(0, 60, fmt(D.value), 'n', { 'font-size': 60, fill: 'var(--ink)' }));
+    g.appendChild(txt(192, 60, D.unit, 'd', { 'font-size': 14 }));
+    g.appendChild(txt(0, 84, `${D.a[0]} ${fmt(D.a[1])} · ${D.b[0]} ${fmt(D.b[1])}`, 'n g'));
+    s.appendChild(g);
+    // 분할 판 2장 (길이 = 비율)
+    const tot = D.a[1] + D.b[1], la = 280 * D.a[1] / tot;
+    s.appendChild(slab(ox, oy, 10, 100, 12, la, 14, 3, { top: 'var(--primary)', topCls: 'inks pr' }));
+    s.appendChild(slab(ox, oy, 10 + la, 100, 12, 280 - la, 14, 3, {}));
+    return s;
+  },
+};
+
+/* =====================================================================
+   S2 판화 / 음각 — 종이 결(feTurbulence) + 이중 헤어라인 + 해칭 패턴
+   ===================================================================== */
+function s2defs(s, uid) {
+  const d = el('defs');
+  d.innerHTML = `
+    <filter id="grain${uid}" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="3" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .07 0"/></filter>
+    <pattern id="h45${uid}" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="4" stroke="var(--ink)" stroke-width="1"/></pattern>
+    <pattern id="h45p${uid}" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="4" stroke="var(--primary)" stroke-width="1.2"/></pattern>
+    <pattern id="h135${uid}" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><line x1="0" y1="0" x2="0" y2="4" stroke="var(--ink)" stroke-width="1"/></pattern>
+    <pattern id="hx${uid}" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V5M0 0H5" stroke="var(--ink)" stroke-width=".8" fill="none"/></pattern>
+    <pattern id="hh${uid}" width="4" height="3" patternUnits="userSpaceOnUse"><line x1="0" y1="1.5" x2="4" y2="1.5" stroke="var(--ink)" stroke-width="1"/></pattern>
+    <pattern id="hv${uid}" width="3" height="4" patternUnits="userSpaceOnUse"><line x1="1.5" y1="0" x2="1.5" y2="4" stroke="var(--ink)" stroke-width="1"/></pattern>
+    <pattern id="hd${uid}" width="4" height="4" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r=".8" fill="var(--ink)"/></pattern>`;
+  s.appendChild(d);
+  s.appendChild(rect(0, 0, s.viewBox.baseVal.width, s.viewBox.baseVal.height, { fill: '#fff' }));
+  s.appendChild(rect(0, 0, s.viewBox.baseVal.width, s.viewBox.baseVal.height, { fill: '#000', filter: `url(#grain${uid})` }));
+}
+const S2PAT = ['h45', 'h135', 'hx', 'hh', 'hv', 'hd'];
+// 음각 사각: 바깥 잉크 + 안쪽 2px 헤어라인
+function chased(x, y, w, h, fill) {
+  return el('g', {}, [rect(x, y, w, h, { fill, class: 'inks', 'stroke-width': 1 }), rect(x + 2, y + 2, Math.max(0, w - 4), Math.max(0, h - 4), { fill: 'none', class: 'ln', 'stroke-width': 1 })]);
+}
+// 엠보스 텍스트: 헤어라인 오프셋 아래 + 잉크
+function emboss(x, y, s, cls = 'n', a = {}) {
+  return el('g', {}, [txt(x + 1, y + 1, s, cls, { ...a, fill: 'none', stroke: '#CCCCCC', 'stroke-width': 1 }), txt(x, y, s, cls, a)]);
+}
+let s2n = 0;
+const S2 = {
+  id: 'S2', name: '판화 / 음각', intent: '숫자와 막대를 종이에 새긴 자국으로 그린다 — 종이 결, 이중 헤어라인, 해칭(45°·135°·교차·점). 표는 눈금 새긴 원장.',
+  bar(D) {
+    const s = svg(), u = ++s2n; s2defs(s, u); const maxv = Math.max(...D.rows.map(r => r[1])), x0 = 128;
+    s.appendChild(txt(12, 18, `${D.title} · 합계 ${fmt(D.total)} ${D.unit} · 시연`, 'n g'));
+    s.appendChild(line(x0, 32, x0, 236, 'inks'));
+    for (let g = 0; g <= 4; g++) { const x = x0 + g * 65; s.appendChild(line(x, 232, x, 238, 'inks')); s.appendChild(txt(x, 252, `${g * 100}`, 'n g', { 'text-anchor': 'middle' })); }
+    D.rows.forEach(([name, v], i) => {
+      const y = 40 + i * 38, w = (v / 400) * 260, hv = i === 1;
+      const it = item([chased(x0, y, w, 24, i === 0 ? `url(#h45p${u})` : `url(#${S2PAT[i]}${u})`), txt(x0 - 8, y + 16, name, i === 0 ? 'd' : '', { 'text-anchor': 'end' }), emboss(x0 + w + 8, y + 16, `${v}`, 'n'),
+        brackets(x0 - 3, y - 3, w + 6, 30, 8), hv ? callout(x0 + w, y + 12, 50, -26, [name, `${v} ${D.unit} · 2위`, '호버 예시']) : null], hv);
+      s.appendChild(it);
+    });
+    return s;
+  },
+  line(D) {
+    const s = svg(), u = ++s2n; s2defs(s, u); const x0 = 60, y0 = 210, w = 330, hgt = 150, maxv = 1200;
+    s.appendChild(txt(12, 18, `${D.title} · 합계 ${fmt(D.v.reduce((a, b) => a + b))} ${D.unit} · 시연`, 'n g'));
+    // 원장 괘선 + 눈금
+    for (let g = 0; g <= 3; g++) { const y = y0 - g * 50; s.appendChild(line(x0, y, x0 + w, y, g === 0 ? 'inks' : 'ln')); s.appendChild(emboss(x0 - 8, y + 4, `${g * 400}`, 'n g', { 'text-anchor': 'end' })); }
+    const pts = D.v.map((v, i) => [x0 + i * (w / 6), y0 - (v / maxv) * hgt]);
+    // 홈(groove): 흰 선 위에 잉크 선 1px 오프셋
+    s.appendChild(el('path', { d: 'M' + pts.map(p => p.join(' ')).join('L') + `L${x0 + w} ${y0}L${x0} ${y0}Z`, fill: `url(#hd${u})`, stroke: 'none' }));
+    s.appendChild(pline(pts.map(([x, y]) => [x + 1, y + 1]), { stroke: '#CCCCCC', 'stroke-width': 1 }));
+    s.appendChild(pline(pts, { class: 'inks', 'stroke-width': 1.5 }));
+    pts.forEach(([x, y], i) => {
+      const hv = i === 4, mx = D.v[i] === Math.max(...D.v);
+      s.appendChild(txt(x, y0 + 18, D.days[i], 'n g', { 'text-anchor': 'middle' }));
+      s.appendChild(item([el('circle', { cx: x, cy: y, r: 5, fill: '#fff', class: mx ? 'prs' : 'inks', 'stroke-width': 1 }), el('circle', { cx: x, cy: y, r: 2, class: mx ? 'pr' : 'ink' }),
+        emboss(x, y - 10, fmt(D.v[i]), 'n', { 'text-anchor': 'middle' }), brackets(x - 9, y - 9, 18, 18, 5), hv ? callout(x, y, 40, -8, [D.days[i], `${fmt(D.v[i])} ${D.unit} · 최대`, '호버 예시']) : null], hv));
+    });
+    return s;
+  },
+  stack(D) {
+    const s = svg(), u = ++s2n; s2defs(s, u); const x0 = 24, y0 = 60, w = 372, h = 44; let x = x0;
+    s.appendChild(txt(12, 18, `${D.title} · ${D.used} / ${D.total} ${D.unit}`, 'n g'));
+    s.appendChild(chased(x0, y0, w, h, 'none'));
+    // 눈금 자 (0–184)
+    for (let g = 0; g <= 184; g += 8) { const gx = x0 + w * g / D.total; s.appendChild(line(gx, y0 + h, gx, y0 + h + (g % 40 === 0 ? 9 : 4), 'inks')); if (g % 40 === 0) s.appendChild(txt(gx, y0 + h + 22, `${g}`, 'n g', { 'text-anchor': 'middle' })); }
+    D.parts.forEach(([name, tb], i) => {
+      const sw = w * tb / D.total, hv = i === 0;
+      const it = item([rect(x, y0, sw, h, { fill: i === 0 ? `url(#h45p${u})` : `url(#${S2PAT[i]}${u})`, class: 'inks', 'stroke-width': 1 }), brackets(x - 2, y0 - 2, sw + 4, h + 4, 6),
+        hv ? callout(x + sw / 2, y0 + h / 2, 130, 0, [name, `${tb} ${D.unit} · ${(tb / D.used * 100).toFixed(0)}%`, '호버 예시']) : null], hv);
+      s.appendChild(it);
+      // 범례: 스와치 + 이름 + 값 (엠보스)
+      const lx = 24 + (i % 3) * 128, ly = 160 + Math.floor(i / 3) * 40;
+      s.appendChild(rect(lx, ly - 10, 14, 14, { fill: i === 0 ? `url(#h45p${u})` : `url(#${S2PAT[i]}${u})`, class: 'inks', 'stroke-width': 1 }));
+      s.appendChild(txt(lx + 20, ly + 1, name, i === 0 ? 'd' : ''));
+      s.appendChild(emboss(lx + 20, ly + 18, `${tb} ${D.unit}`, 'n g'));
+      x += sw;
+    });
+    emboss(x + 6, y0 + 28, `${D.used}`, 'n', { 'font-size': 14 });
+    s.appendChild(emboss(x + 6, y0 + 28, `${D.used}`, 'n', { 'font-size': 14 }));
+    return s;
+  },
+  table(D) {
+    const s = svg(WT, H), u = ++s2n; s2defs(s, u); const x0 = 24, y0 = 40, w = WT - 48, cols = [0, 56, 236, 300, 456, 640];
+    s.appendChild(txt(12, 18, `${D.title} · ${D.rows.length}건 · 요청 순`, 'n g'));
+    // 헤더 괘선 + 눈금(8px 마다 2px, 40px 마다 6px)
+    s.appendChild(line(x0, y0, x0 + w, y0, 'inks')); s.appendChild(line(x0, y0 + 26, x0 + w, y0 + 26, 'inks'));
+    for (let gx = x0; gx <= x0 + w; gx += 8) s.appendChild(line(gx, y0 + 26, gx, y0 + 26 - ((gx - x0) % 40 === 0 ? 6 : 2), 'inks'));
+    D.cols.forEach((c, i) => s.appendChild(txt(x0 + cols[i] + 8, y0 + 17, c, 'g')));
+    cols.forEach((c, i) => i > 0 && s.appendChild(line(x0 + c, y0, x0 + c, y0 + 26 + D.rows.length * 64, 'ln')));
+    D.rows.forEach((r, i) => {
+      const y = y0 + 26 + i * 64, hv = i === 0;
+      const it = item([
+        rect(x0, y, w, 64, { fill: 'none', class: 'ln' }), line(x0, y + 64, x0 + w, y + 64, 'inks'),
+        el('circle', { cx: x0 + 28, cy: y + 32, r: 11, fill: 'none', class: 'inks' }), el('circle', { cx: x0 + 28, cy: y + 32, r: 9, fill: 'none', class: 'ln' }), txt(x0 + 28, y + 36, `0${i + 1}`, 'n', { 'text-anchor': 'middle' }),
+        txt(x0 + cols[1] + 8, y + 28, r.name, 'd', { 'font-size': 14 }), emboss(x0 + cols[1] + 8, y + 48, r.at.slice(0, 10), 'n g'),
+        emboss(x0 + cols[2] + 8, y + 36, r.ver, 'n'), emboss(x0 + cols[3] + 8, y + 36, r.at, 'n'), txt(x0 + cols[4] + 8, y + 36, r.area),
+        rect(x0 + cols[5] + 8, y + 22, 8, 20, { fill: `url(#h45p${u})`, class: 'inks' }), txt(x0 + cols[5] + 24, y + 36, r.st),
+        brackets(x0 - 3, y - 3, w + 6, 70, 12), hv ? callout(x0 + w - 60, y + 32, -40, -20, [r.name + ' ' + r.ver, r.area, '호버 예시']) : null], hv);
+      s.appendChild(it);
+    });
+    return s;
+  },
+  kpi(D) {
+    const s = svg(), u = ++s2n; s2defs(s, u);
+    s.appendChild(txt(12, 18, `${D.title} · 2025-06 드론 · 측정`, 'n g'));
+    s.appendChild(chased(24, 34, 372, 200, 'none'));
+    // 큰 숫자 = 해칭으로 새긴 자국 + 잉크 윤곽
+    s.appendChild(txt(42, 132, fmt(D.value), 'n', { 'font-size': 84, fill: `url(#h45${u})`, stroke: 'var(--ink)', 'stroke-width': 1 }));
+    s.appendChild(txt(302, 132, D.unit, 'd', { 'font-size': 16 }));
+    const tot = D.a[1] + D.b[1], bw = 340, aw = bw * D.a[1] / tot;
+    s.appendChild(rect(42, 160, aw, 18, { fill: `url(#h45p${u})`, class: 'inks' }));
+    s.appendChild(rect(42 + aw, 160, bw - aw, 18, { fill: `url(#hd${u})`, class: 'inks' }));
+    for (let g = 0; g <= 10; g++) s.appendChild(line(42 + bw * g / 10, 178, 42 + bw * g / 10, 178 + (g % 5 === 0 ? 8 : 4), 'inks'));
+    s.appendChild(emboss(42, 210, `${D.a[0]} ${fmt(D.a[1])}`, 'n'));
+    s.appendChild(emboss(42 + bw, 210, `${D.b[0]} ${fmt(D.b[1])}`, 'n', { 'text-anchor': 'end' }));
+    return s;
+  },
+};
+
+/* =====================================================================
+   S3 실영상 셀 — 막대·면적·스택을 정사영상 크롭으로 채운다
+   ===================================================================== */
+let s3n = 0;
+function imgPattern(s, id, href, w, h, x = 0, y = 0) {
+  const d = s.querySelector('defs') || s.insertBefore(el('defs'), s.firstChild);
+  d.appendChild(el('pattern', { id, patternUnits: 'userSpaceOnUse', x, y, width: w, height: h }, [el('image', { href, width: w, height: h, preserveAspectRatio: 'xMidYMid slice' })]));
+  return `url(#${id})`;
+}
+const S3 = {
+  id: 'S3', name: '실영상 셀', intent: '차트를 실제 정사영상 위에 그린다 — 막대는 영상으로 채운 필지 띠, 표 셀에 96px 크롭, KPI는 크롭 위 브래킷.',
+  bar(D) {
+    const s = svg(), u = ++s3n; const x0 = 128, maxv = 400;
+    s.appendChild(txt(12, 18, `${D.title} · 합계 ${fmt(D.total)} ${D.unit} · 시연`, 'n g'));
+    s.appendChild(line(x0, 32, x0, 238, 'inks'));
+    D.rows.forEach(([name, v], i) => {
+      const y = 40 + i * 38, w = (v / maxv) * 260, hv = i === 1;
+      const fill = imgPattern(s, `s3b${u}_${i}`, DATA.crops[i], 280, 24, x0, y);
+      const it = item([rect(x0, y, w, 24, { fill, class: i === 0 ? 'prs' : 'inks', 'stroke-width': i === 0 ? 2 : 1 }), txt(x0 - 8, y + 16, name, i === 0 ? 'd' : '', { 'text-anchor': 'end' }), txt(x0 + w + 8, y + 16, `${v}`, 'n'),
+        brackets(x0 - 3, y - 3, w + 6, 30, 8), hv ? callout(x0 + w, y + 12, 50, -26, [name, `${v} ${D.unit} · 2위`, '호버 예시']) : null], hv);
+      s.appendChild(it);
+    });
+    return s;
+  },
+  line(D) {
+    const s = svg(), u = ++s3n; const x0 = 60, y0 = 210, w = 330, hgt = 150, maxv = 1200;
+    s.appendChild(txt(12, 18, `${D.title} · 합계 ${fmt(D.v.reduce((a, b) => a + b))} ${D.unit} · 시연`, 'n g'));
+    for (let g = 0; g <= 3; g++) { const y = y0 - g * 50; s.appendChild(line(x0, y, x0 + w, y, g === 0 ? 'inks' : 'ln')); s.appendChild(txt(x0 - 8, y + 4, `${g * 400}`, 'n g', { 'text-anchor': 'end' })); }
+    const pts = D.v.map((v, i) => [x0 + i * (w / 6), y0 - (v / maxv) * hgt]);
+    const fill = imgPattern(s, `s3l${u}`, DATA.crops[5], w, hgt + 10, x0, y0 - hgt - 10);
+    s.appendChild(el('path', { d: 'M' + pts.map(p => p.join(' ')).join('L') + `L${x0 + w} ${y0}L${x0} ${y0}Z`, fill }));
+    s.appendChild(pline(pts, { class: 'inks', 'stroke-width': 1.5 }));
+    pts.forEach(([x, y], i) => {
+      const hv = i === 4, mx = D.v[i] === Math.max(...D.v);
+      s.appendChild(txt(x, y0 + 18, D.days[i], 'n g', { 'text-anchor': 'middle' }));
+      s.appendChild(item([el('circle', { cx: x, cy: y, r: 4, fill: '#fff', class: mx ? 'prs' : 'inks', 'stroke-width': 1.5 }), rect(x - 20, y - 26, 40, 16, { fill: '#fff', class: 'inks' }), txt(x, y - 14, fmt(D.v[i]), 'n', { 'text-anchor': 'middle' }),
+        brackets(x - 9, y - 9, 18, 18, 5), hv ? callout(x, y, 40, -4, [D.days[i], `${fmt(D.v[i])} ${D.unit} · 최대`, '호버 예시']) : null], hv));
+    });
+    return s;
+  },
+  stack(D) {
+    const s = svg(), u = ++s3n; const x0 = 24, y0 = 40, w = 372, h = 96; let x = x0;
+    s.appendChild(txt(12, 18, `${D.title} · ${D.used} / ${D.total} ${D.unit}`, 'n g'));
+    s.appendChild(rect(x0, y0, w, h, { fill: 'none', class: 'ln' }));
+    D.parts.forEach(([name, tb], i) => {
+      const sw = w * tb / D.total, hv = i === 0;
+      const fill = imgPattern(s, `s3s${u}_${i}`, DATA.crops[i], Math.max(sw, 40), h, x, y0);
+      const it = item([rect(x, y0, sw, h, { fill, stroke: '#fff', 'stroke-width': 1 }), rect(x, y0, sw, h, { fill: 'none', class: i === 0 ? 'prs' : 'inks', 'stroke-width': i === 0 ? 2 : 1 }),
+        brackets(x - 2, y0 - 2, sw + 4, h + 4, 6), hv ? callout(x + sw / 2, y0 + h / 2, 150, 0, [name, `${tb} ${D.unit} · ${(tb / D.used * 100).toFixed(0)}%`, '호버 예시']) : null], hv);
+      s.appendChild(it);
+      const lx = 24 + (i % 3) * 128, ly = 178 + Math.floor(i / 3) * 40;
+      s.appendChild(rect(lx, ly - 10, 14, 14, { fill, class: 'inks' })); // 범례 스와치도 영상
+      s.appendChild(txt(lx + 20, ly + 1, name, i === 0 ? 'd' : ''));
+      s.appendChild(txt(lx + 20, ly + 18, `${tb} ${D.unit}`, 'n g'));
+      x += sw;
+    });
+    s.appendChild(line(x, y0 - 6, x, y0 + h + 6, 'prs')); s.appendChild(txt(x + 6, y0 + h + 4, `${D.used} ${D.unit} 사용`, 'n'));
+    s.appendChild(txt(x0 + w, y0 - 8, `${D.total} ${D.unit}`, 'n g', { 'text-anchor': 'end' }));
+    return s;
+  },
+  table(D) {
+    const s = svg(WT, H); const x0 = 24, y0 = 40, w = WT - 48, cols = [0, 112, 320, 384, 540, 700];
+    s.appendChild(txt(12, 18, `${D.title} · ${D.rows.length}건 · 요청 순`, 'n g'));
+    s.appendChild(line(x0, y0, x0 + w, y0, 'inks'));
+    D.cols.forEach((c, i) => s.appendChild(txt(x0 + cols[i] + (i === 0 ? 0 : 8), y0 + 17, c, 'g')));
+    s.appendChild(line(x0, y0 + 26, x0 + w, y0 + 26, 'ln'));
+    D.rows.forEach((r, i) => {
+      const y = y0 + 26 + i * 90, hv = i === 0;
+      const it = item([
+        el('image', { href: r.img, x: x0, y: y + 8, width: 96, height: 72, preserveAspectRatio: 'xMidYMid slice' }), rect(x0, y + 8, 96, 72, { fill: 'none', class: 'inks' }),
+        line(x0, y + 90, x0 + w, y + 90, 'ln'),
+        txt(x0 + cols[1] + 8, y + 36, r.name, 'd', { 'font-size': 14 }), txt(x0 + cols[1] + 8, y + 56, '남원 2025 정사영상 · 크롭', 'g'),
+        txt(x0 + cols[2] + 8, y + 44, r.ver, 'n'), txt(x0 + cols[3] + 8, y + 44, r.at, 'n'), txt(x0 + cols[4] + 8, y + 44, r.area),
+        el('g', { class: 'br', style: 'opacity:1' }, [brackets(x0 + cols[5] + 8, y + 32, 96, 24, 6).firstChild, brackets(x0 + cols[5] + 8, y + 32, 96, 24, 6).lastChild]), txt(x0 + cols[5] + 20, y + 48, r.st),
+        brackets(x0 - 3, y + 5, 102, 78, 12), hv ? callout(x0 + 96, y + 44, 40, -30, [r.name + ' ' + r.ver, r.area, '호버 예시']) : null], hv);
+      s.appendChild(it);
+    });
+    return s;
+  },
+  kpi(D) {
+    const s = svg();
+    s.appendChild(el('image', { href: D.img, x: 0, y: 0, width: W, height: H, preserveAspectRatio: 'xMidYMid slice' }));
+    s.appendChild(rect(0, 0, W, H, { fill: 'none', class: 'inks' }));
+    // 흰 라벨 판 (그림자 0) + 브래킷
+    s.appendChild(rect(24, 24, 280, 130, { fill: '#fff', class: 'inks' }));
+    s.appendChild(el('g', { class: 'br', style: 'opacity:1' }, [...brackets(16, 16, 296, 146, 12).childNodes]));
+    s.appendChild(txt(40, 44, `${D.title} · 2025-06 드론 · 측정`, 'n g'));
+    s.appendChild(txt(40, 108, fmt(D.value), 'n', { 'font-size': 56 }));
+    s.appendChild(txt(206, 108, D.unit, 'd', { 'font-size': 14 }));
+    const tot = D.a[1] + D.b[1], bw = 248, aw = bw * D.a[1] / tot;
+    s.appendChild(rect(40, 122, aw, 6, { class: 'pr' })); s.appendChild(rect(40 + aw, 122, bw - aw, 6, { fill: '#fff', class: 'inks' }));
+    s.appendChild(txt(40, 144, `${D.a[0]} ${fmt(D.a[1])}`, 'n')); s.appendChild(txt(40 + bw, 144, `${D.b[0]} ${fmt(D.b[1])}`, 'n', { 'text-anchor': 'end' }));
+    s.appendChild(rect(24, 200, 200, 22, { fill: '#fff', class: 'inks' })); s.appendChild(txt(32, 215, '남원시 사매면 · 128필지 크롭', 'g'));
+    return s;
+  },
+};
+
+/* =====================================================================
+   S4 계측기 (FUI 시민형) — D3 틱 룰러 · D4 테이프 게이지 · D6 리더선 · 레티클
+   ===================================================================== */
+function ruler(x, y, len, n, major = 5, vertical = false, labels = null, cls = 'inks', ly = 16) {
+  const g = el('g');
+  g.appendChild(vertical ? line(x, y, x, y + len, cls) : line(x, y, x + len, y, cls));
+  for (let i = 0; i <= n; i++) {
+    const t = i % major === 0 ? 9 : 4, p = i / n * len;
+    g.appendChild(vertical ? line(x, y + len - p, x - t, y + len - p, cls) : line(x + p, y, x + p, y - t, cls));
+    if (labels && i % major === 0) g.appendChild(vertical ? txt(x - 12, y + len - p + 4, labels(i), 'n g', { 'text-anchor': 'end' }) : txt(x + p, y + ly, labels(i), 'n g', { 'text-anchor': 'middle' }));
+  }
+  return g;
+}
+function reticle(x, y, r = 8, cls = 'prs') {
+  return el('g', { fill: 'none', 'stroke-width': 1 }, [el('circle', { cx: x, cy: y, r, class: cls }), line(x - r - 5, y, x - r + 3, y, cls), line(x + r - 3, y, x + r + 5, y, cls), line(x, y - r - 5, x, y - r + 3, cls), line(x, y + r - 3, x, y + r + 5, cls)]);
+}
+const S4 = {
+  id: 'S4', name: '계측기 (FUI 시민형)', intent: '틱 룰러·테이프 게이지·리더선·레티클. 모든 선은 1px 잉크, 액센트는 현재값 포인터 하나. 표는 계기 판독부.',
+  bar(D) {
+    const s = svg(); const x0 = 128, maxv = 500;
+    s.appendChild(txt(12, 18, `${D.title} · 합계 ${fmt(D.total)} ${D.unit} · 시연`, 'n g'));
+    s.appendChild(ruler(x0, 52, 260, 25, 5, false, i => `${i * 20}`, 'inks', -14));
+    s.appendChild(line(x0, 52, x0, 240, 'inks'));
+    D.rows.forEach(([name, v], i) => {
+      const y = 68 + i * 34, w = (v / maxv) * 260, hv = i === 1;
+      const it = item([rect(x0, y, w, 16, { fill: 'none', class: i === 0 ? 'prs' : 'inks', 'stroke-width': 1 }), line(x0, y + 8, x0 + w, y + 8, i === 0 ? 'prs' : 'inks'), line(x0 + w, y - 3, x0 + w, y + 19, i === 0 ? 'prs' : 'inks'),
+        txt(x0 - 8, y + 12, name, i === 0 ? 'd' : '', { 'text-anchor': 'end' }),
+        el('g', {}, [el('circle', { cx: x0 + w, cy: y + 8, r: 2, class: i === 0 ? 'pr' : 'ink' }), line(x0 + w, y + 8, x0 + w + 14, y - 2, i === 0 ? 'prs' : 'inks'), line(x0 + w + 14, y - 2, x0 + w + 28, y - 2, i === 0 ? 'prs' : 'inks'), txt(x0 + w + 32, y + 2, `${v}`, 'n')]),
+        brackets(x0 - 3, y - 3, w + 6, 22, 8), hv ? callout(x0 + w, y + 8, 40, 30, [name, `${v} ${D.unit} · 2위`, '호버 예시']) : null], hv);
+      s.appendChild(it);
+    });
+    return s;
+  },
+  line(D) {
+    const s = svg(); const x0 = 60, y0 = 210, w = 330, hgt = 150, maxv = 1200;
+    s.appendChild(txt(12, 18, `${D.title} · 합계 ${fmt(D.v.reduce((a, b) => a + b))} ${D.unit} · 시연`, 'n g'));
+    s.appendChild(ruler(x0, y0, w, 30, 5, false, i => D.days[i / 5]));
+    s.appendChild(ruler(x0, y0 - hgt, hgt, 12, 4, true, i => `${i * 100}`));
+    const pts = D.v.map((v, i) => [x0 + i * (w / 6), y0 - (v / maxv) * hgt]);
+    s.appendChild(pline(pts, { class: 'inks', 'stroke-width': 1 }));
+    pts.forEach(([x, y], i) => {
+      const hv = i === 4, mx = D.v[i] === Math.max(...D.v);
+      s.appendChild(line(x, y, x, y0, 'ln', { 'stroke-dasharray': '2 3' }));
+      s.appendChild(item([mx ? reticle(x, y, 8) : el('g', {}, [line(x - 4, y, x + 4, y, 'inks'), line(x, y - 4, x, y + 4, 'inks')]), txt(x + (mx ? 14 : 6), y - 6, fmt(D.v[i]), 'n'),
+        brackets(x - 10, y - 10, 20, 20, 5), hv ? callout(x, y, 40, -6, [D.days[i], `${fmt(D.v[i])} ${D.unit} · 최대`, '호버 예시 · 레티클']) : null], hv));
+    });
+    return s;
+  },
+  stack(D) {
+    // D4 테이프 게이지: 스케일이 움직이고 포인터는 고정(중앙 = 현재값 44.5)
+    const s = svg(); const gx = 80, gy = 30, gh = 210, cy = gy + gh / 2, pxPerTb = 2.2;
+    s.appendChild(txt(12, 18, `${D.title} · ${D.used} / ${D.total} ${D.unit}`, 'n g'));
+    s.appendChild(el('clipPath', { id: 's4clip' }, [rect(gx - 60, gy, 380, gh)]));
+    const tape = el('g', { 'clip-path': 'url(#s4clip)' });
+    tape.appendChild(line(gx, gy, gx, gy + gh, 'inks'));
+    for (let t = 0; t <= D.total; t += 2) {
+      const y = cy - (t - D.used) * pxPerTb; if (y < gy - 5 || y > gy + gh + 5) continue;
+      const maj = t % 10 === 0; tape.appendChild(line(gx, y, gx - (maj ? 9 : 4), y, 'inks'));
+      if (maj) tape.appendChild(txt(gx - 14, y + 4, `${t}`, 'n g', { 'text-anchor': 'end' }));
+    }
+    // 세그먼트 스팬(오른쪽 브래킷) — 사용분을 아래에서 위로
+    let acc = 0;
+    D.parts.forEach(([name, tb], i) => {
+      const y1 = cy - (acc - D.used) * pxPerTb, y2 = cy - (acc + tb - D.used) * pxPerTb, hv = i === 0, ly = cy + 96 - i * 20, lx = gx + 44;
+      const it = item([el('path', { d: `M${gx + 10} ${y1} H${gx + 16} V${y2} H${gx + 10}`, fill: 'none', class: i === 0 ? 'prs' : 'inks' }), el('path', { d: `M${gx + 16} ${(y1 + y2) / 2} H${gx + 28} V${ly - 4} H${lx - 6}`, fill: 'none', class: i === 0 ? 'prs' : 'inks' }),
+        txt(lx, ly, name, i === 0 ? 'd' : ''), txt(lx + 80, ly, `${tb} ${D.unit}`, 'n g'),
+        brackets(gx + 6, Math.min(y1, y2) - 3, 14, Math.abs(y1 - y2) + 6, 4), hv ? callout(lx + 130, ly - 4, 40, -60, [name, `${tb} ${D.unit} · ${(tb / D.used * 100).toFixed(0)}%`, '호버 예시']) : null], hv);
+      tape.appendChild(it); acc += tb;
+    });
+    s.appendChild(tape);
+    // 고정 포인터 = 현재값
+    s.appendChild(poly([[gx - 66, cy - 5], [gx - 58, cy], [gx - 66, cy + 5]], { class: 'pr' }));
+    s.appendChild(line(gx - 58, cy, gx + 4, cy, 'prs'));
+    s.appendChild(txt(gx + 300, gy + 26, `${D.used}`, 'n', { 'text-anchor': 'end', 'font-size': 22 })); s.appendChild(txt(gx + 300, gy + 42, `현재 · ${D.unit} · 포인터 고정`, 'g', { 'text-anchor': 'end' }));
+    s.appendChild(rect(gx - 66, gy, 386, gh, { fill: 'none', class: 'ln' }));
+    return s;
+  },
+  table(D) {
+    const s = svg(WT, H); const x0 = 24, y0 = 44, w = WT - 48, cols = [0, 60, 250, 320, 480, 660];
+    s.appendChild(txt(12, 18, `${D.title} · ${D.rows.length}건 · 요청 순 · READOUT`, 'n g'));
+    s.appendChild(ruler(x0, y0, w, 102, 6));
+    D.cols.forEach((c, i) => s.appendChild(txt(x0 + cols[i] + 8, y0 + 20, c, 'g')));
+    s.appendChild(line(x0, y0 + 28, x0 + w, y0 + 28, 'inks'));
+    D.rows.forEach((r, i) => {
+      const y = y0 + 28 + i * 60, hv = i === 0;
+      const it = item([
+        line(x0, y + 60, x0 + w, y + 60, 'ln'),
+        ...cols.slice(1).map(c => line(x0 + c, y + 20, x0 + c, y + 40, 'ln')),
+        poly([[x0 + 8, y + 26], [x0 + 16, y + 30], [x0 + 8, y + 34]], { fill: 'none', class: 'inks' }), txt(x0 + 24, y + 34, `0${i + 1}`, 'n'),
+        txt(x0 + cols[1] + 8, y + 34, r.name, 'd', { 'font-size': 14 }), txt(x0 + cols[2] + 8, y + 34, r.ver, 'n'), txt(x0 + cols[3] + 8, y + 34, r.at, 'n'), txt(x0 + cols[4] + 8, y + 34, r.area),
+        reticle(x0 + cols[5] + 18, y + 30, 6), txt(x0 + cols[5] + 36, y + 34, r.st),
+        brackets(x0 - 3, y + 8, w + 6, 44, 12), hv ? callout(x0 + w - 40, y + 30, -40, -18, [r.name + ' ' + r.ver, r.area, '호버 예시']) : null], hv);
+      s.appendChild(it);
+    });
+    return s;
+  },
+  kpi(D) {
+    const s = svg(); const x0 = 40, bw = 340;
+    s.appendChild(txt(12, 18, `${D.title} · 2025-06 드론 · 측정`, 'n g'));
+    s.appendChild(txt(x0, 110, fmt(D.value), 'n', { 'font-size': 72 })); s.appendChild(txt(x0 + 236, 110, D.unit, 'd', { 'font-size': 14 }));
+    s.appendChild(ruler(x0, 150, bw, 20, 5, false, i => fmt(Math.round(D.value * i / 20))));
+    const tot = D.a[1] + D.b[1], aw = bw * D.a[1] / tot;
+    s.appendChild(line(x0, 140, x0 + aw, 140, 'prs', { 'stroke-width': 2 })); s.appendChild(line(x0 + aw, 140, x0 + bw, 140, 'inks'));
+    s.appendChild(el('circle', { cx: x0 + aw, cy: 140, r: 2.5, class: 'pr' }));
+    s.appendChild(el('path', { d: `M${x0 + aw} 140 V196 H${x0 + aw + 20}`, fill: 'none', class: 'prs' }));
+    s.appendChild(txt(x0 + aw + 24, 200, `${D.a[0]} ${fmt(D.a[1])} · ${D.b[0]} ${fmt(D.b[1])}`, 'n'));
+    s.appendChild(el('path', { d: `M${x0} 128 V132 H${x0 + aw} V128`, fill: 'none', class: 'prs' })); s.appendChild(txt(x0 + aw / 2, 126, `${(D.a[1] / tot * 100).toFixed(1)}%`, 'n', { 'text-anchor': 'middle' }));
+    s.appendChild(el('path', { d: `M${x0 + aw} 128 V132 H${x0 + bw} V128`, fill: 'none', class: 'inks' })); s.appendChild(txt(x0 + aw + (bw - aw) / 2, 126, `${(D.b[1] / tot * 100).toFixed(1)}%`, 'n g', { 'text-anchor': 'middle' }));
+    return s;
+  },
+};
+
+/* =====================================================================
+   S5 레이어드 페이퍼 — 겹친 종이 판, 면 반전(흰/잉크/블루)으로 위계
+   ===================================================================== */
+function sheet(x, y, w, h, face = 'white') {
+  const f = face === 'blue' ? { class: 'pr inks' } : face === 'ink' ? { class: 'ink inks' } : { class: 'paper inks' };
+  return rect(x, y, w, h, { ...f, 'stroke-width': 1 });
+}
+const faceTxt = (face) => (face === 'white' ? '' : 'w');
+const S5 = {
+  id: 'S5', name: '레이어드 페이퍼', intent: '겹친 종이 판. 값 = 판의 너비/높이, 위계 = 면 반전(1위 블루, 2위 잉크, 나머지 흰). 그림자 대신 겹침으로 깊이.',
+  bar(D) {
+    const s = svg(); const x0 = 24, maxv = 420;
+    s.appendChild(txt(12, 18, `${D.title} · 합계 ${fmt(D.total)} ${D.unit} · 시연`, 'n g'));
+    [...D.rows].reverse().forEach(([name, v], k) => {
+      const i = D.rows.length - 1 - k, y = 36 + i * 40, w = 120 + (v / maxv) * 250, face = i === 0 ? 'blue' : i === 1 ? 'ink' : 'white', hv = i === 1;
+      const it = item([sheet(x0 + i * 6, y, w, 48, face), txt(x0 + i * 6 + 12, y + 30, name, (i === 0 ? 'd ' : '') + faceTxt(face), { 'font-size': 14 }), txt(x0 + i * 6 + w - 12, y + 30, `${v} ${D.unit}`, 'n ' + faceTxt(face), { 'text-anchor': 'end', 'font-size': 14 }),
+        brackets(x0 + i * 6 - 4, y - 4, w + 8, 56, 10, face === 'blue' ? 'inks' : 'prs'), hv ? callout(x0 + i * 6 + w, y + 24, 20, 70, [name, `${v} ${D.unit} · 2위`, '호버 예시']) : null], hv);
+      s.appendChild(it);
+    });
+    return s;
+  },
+  line(D) {
+    const s = svg(); const x0 = 24, y0 = 236, cw = 62, maxv = 1200, hgt = 180;
+    s.appendChild(txt(12, 18, `${D.title} · 합계 ${fmt(D.v.reduce((a, b) => a + b))} ${D.unit} · 시연`, 'n g'));
+    const mx = Math.max(...D.v);
+    const pts = D.v.map((v, i) => [x0 + i * (cw - 8) + cw / 2, y0 - (v / maxv) * hgt]);
+    D.v.forEach((v, i) => {
+      const h = (v / maxv) * hgt, x = x0 + i * (cw - 8), y = y0 - h, face = v === mx ? 'blue' : 'white', hv = i === 4;
+      s.appendChild(item([sheet(x, y, cw, h, face), txt(x + cw / 2, y + 18, fmt(v), 'n ' + faceTxt(face), { 'text-anchor': 'middle' }), txt(x + cw / 2, y0 - 6, D.days[i], 'g', { 'text-anchor': 'middle' }),
+        brackets(x - 3, y - 3, cw + 6, h + 6, 8, face === 'blue' ? 'inks' : 'prs'), hv ? callout(x + cw / 2, y, 40, 12, [D.days[i], `${fmt(v)} ${D.unit} · 최대`, '호버 예시']) : null], hv));
+    });
+    s.appendChild(pline(pts, { class: 'inks', 'stroke-width': 1, 'stroke-dasharray': '3 3' }));
+    return s;
+  },
+  stack(D) {
+    const s = svg(); const x0 = 24, y0 = 40;
+    s.appendChild(txt(12, 18, `${D.title} · ${D.used} / ${D.total} ${D.unit}`, 'n g'));
+    // 용량 판 = 점선 흰 판(뒤), 사용분 판들이 앞으로 겹쳐 내려온다
+    s.appendChild(rect(x0, y0, 372, 200, { fill: 'none', class: 'inks', 'stroke-dasharray': '3 3' }));
+    s.appendChild(txt(x0 + 372 - 8, y0 + 16, `용량 ${D.total} ${D.unit}`, 'n g', { 'text-anchor': 'end' }));
+    const scale = 372 / D.total * 3.2; // 사용분을 넓게 보이도록 확대(자백 표기)
+    [...D.parts].reverse().forEach(([name, tb], k) => {
+      const i = D.parts.length - 1 - k, w = Math.max(150, 96 + tb * scale), y = y0 + 12 + i * 30, x = x0 + 12 + i * 10, face = i === 0 ? 'blue' : i === 1 ? 'ink' : 'white', hv = i === 0;
+      s.appendChild(item([sheet(x, y, w, 40, face), txt(x + 10, y + 25, name, (i === 0 ? 'd ' : '') + faceTxt(face)), txt(x + w - 10, y + 25, `${tb} ${D.unit}`, 'n ' + faceTxt(face), { 'text-anchor': 'end' }),
+        brackets(x - 3, y - 3, w + 6, 46, 8, face === 'blue' ? 'inks' : 'prs'), hv ? callout(x + w, y + 20, 20, 90, [name, `${tb} ${D.unit} · ${(tb / D.used * 100).toFixed(0)}%`, '호버 예시']) : null], hv));
+    });
+    s.appendChild(txt(x0 + 8, y0 + 214, `사용 ${D.used} ${D.unit} · 판 너비 = 96 + 사용분 × 3.2배`, 'n g'));
+    return s;
+  },
+  table(D) {
+    const s = svg(WT, H); const x0 = 24, y0 = 36, w = WT - 48;
+    s.appendChild(txt(12, 18, `${D.title} · ${D.rows.length}건 · 요청 순`, 'n g'));
+    // 헤더 = 잉크 면 판
+    s.appendChild(sheet(x0, y0, w, 26, 'ink'));
+    const cols = [0, 100, 300, 370, 530, 700];
+    D.cols.forEach((c, i) => s.appendChild(txt(x0 + cols[i] + 10, y0 + 17, c, 'w')));
+    [...D.rows].reverse().forEach((r, k) => {
+      const i = D.rows.length - 1 - k, y = y0 + 26 + i * 76, x = x0 + i * 8, face = i === 0 ? 'white' : 'white', hv = i === 0;
+      const it = item([sheet(x, y, w - i * 8, 90, face), el('image', { href: r.img, x: x + 10, y: y + 12, width: 80, height: 60, preserveAspectRatio: 'xMidYMid slice' }), rect(x + 10, y + 12, 80, 60, { fill: 'none', class: 'inks' }),
+        txt(x + cols[1] + 10, y + 36, r.name, 'd', { 'font-size': 14 }), txt(x + cols[1] + 10, y + 56, '남원 2025 정사영상', 'g'),
+        txt(x + cols[2] + 10, y + 44, r.ver, 'n'), txt(x + cols[3] + 10, y + 44, r.at, 'n'), txt(x + cols[4] + 10, y + 44, r.area),
+        sheet(x + cols[5] + 10, y + 30, 78, 24, i === 0 ? 'blue' : 'ink'), txt(x + cols[5] + 49, y + 46, r.st, 'w', { 'text-anchor': 'middle' }),
+        brackets(x - 4, y - 4, w - i * 8 + 8, 98, 12), hv ? callout(x + cols[5] + 49, y + 54, -40, 26, [r.name + ' ' + r.ver, r.area, '호버 예시']) : null], hv);
+      s.appendChild(it);
+    });
+    return s;
+  },
+  kpi(D) {
+    const s = svg();
+    s.appendChild(txt(12, 18, `${D.title} · 2025-06 드론 · 측정`, 'n g'));
+    s.appendChild(sheet(24, 34, 372, 200, 'white'));
+    s.appendChild(sheet(40, 50, 300, 130, 'ink'));
+    s.appendChild(txt(56, 130, fmt(D.value), 'n w', { 'font-size': 72 })); s.appendChild(txt(56, 160, D.unit + ' · 남원 농지이용 2025-06', 'w'));
+    const tot = D.a[1] + D.b[1], bw = 320, aw = bw * D.a[1] / tot;
+    s.appendChild(sheet(60, 164, aw, 40, 'blue')); s.appendChild(txt(72, 189, `${D.a[0]} ${fmt(D.a[1])}`, 'n w', { 'font-size': 14 }));
+    s.appendChild(sheet(60 + aw, 172, bw - aw, 32, 'white')); s.appendChild(txt(72 + aw, 193, `${D.b[0]} ${fmt(D.b[1])}`, 'n', { 'font-size': 14 }));
+    return s;
+  },
+};
+
+/* =====================================================================
+   S6 라이트 3D — Canvas 압출 + 따뜻한 키 라이트 1개 + 회색 바닥 그리드
+   ===================================================================== */
+const IMGS = {}; function loadImg(src) { if (IMGS[src]) return IMGS[src]; const im = new Image(); im.src = src; IMGS[src] = im; return im; }
+function canvas(w, h) { const c = document.createElement('canvas'); const dpr = Math.min(2, devicePixelRatio || 1); c.width = w * dpr; c.height = h * dpr; c.style.width = '100%'; c.style.aspectRatio = `${w}/${h}`; const ctx = c.getContext('2d'); ctx.scale(dpr, dpr); c._ctx = ctx; return c; }
+const cssv = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+// 조명: 상면 = 따뜻한 흰(키 라이트) · 정면 = 옅은 회색 · 측면 = 진한 회색. 액센트 면은 블루 혼합.
+const LIT = { top: '#FFF7EA', front: '#EDEDED', side: '#CCCCCC' };
+function mix(hex, hex2, t) { const a = hex.match(/\w\w/g).map(v => parseInt(v, 16)), b = hex2.match(/\w\w/g).map(v => parseInt(v, 16)); return '#' + a.map((v, i) => Math.round(v + (b[i] - v) * t).toString(16).padStart(2, '0')).join(''); }
+function floorGrid(ctx, x, y, w, h, rows = 6, cols = 10) {
+  ctx.strokeStyle = '#DDDDDD'; ctx.lineWidth = 1;
+  for (let r = 0; r <= rows; r++) { const t = r / rows, yy = y + h * t, inset = (1 - t) * w * 0.25; ctx.beginPath(); ctx.moveTo(x + inset, yy); ctx.lineTo(x + w - inset, yy); ctx.stroke(); }
+  for (let c = 0; c <= cols; c++) { const t = c / cols; ctx.beginPath(); ctx.moveTo(x + w * 0.25 + w * 0.5 * t, y); ctx.lineTo(x + w * t, y + h); ctx.stroke(); }
+}
+function box(ctx, x, y, w, h, d, accent = false, ink = true) { // 정면 (x,y,w,h) · 깊이 d → 우상 방향
+  const dx = d * 0.6, dy = d * 0.6;
+  const c = accent ? { top: mix(cssv('--primary'), '#ffffff', .35), front: cssv('--primary'), side: mix(cssv('--primary'), '#010102', .3) } : LIT;
+  ctx.lineWidth = 1; ctx.strokeStyle = ink ? '#010102' : '#686868'; ctx.lineJoin = 'miter';
+  ctx.fillStyle = c.side; ctx.beginPath(); ctx.moveTo(x + w, y); ctx.lineTo(x + w + dx, y - dy); ctx.lineTo(x + w + dx, y + h - dy); ctx.lineTo(x + w, y + h); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = c.top; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + dx, y - dy); ctx.lineTo(x + w + dx, y - dy); ctx.lineTo(x + w, y); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = c.front; ctx.fillRect(x, y, w, h); ctx.strokeRect(x, y, w, h);
+}
+function bracket3(ctx, x, y, w, h, arm = 10) { ctx.strokeStyle = cssv('--primary'); ctx.lineWidth = 1; for (const [cx, cy, sx, sy] of [[x, y, 1, 1], [x + w, y, -1, 1], [x, y + h, 1, -1], [x + w, y + h, -1, -1]]) { ctx.beginPath(); ctx.moveTo(cx + sx * arm, cy); ctx.lineTo(cx, cy); ctx.lineTo(cx, cy + sy * arm); ctx.stroke(); } }
+function label(ctx, x, y, s, o = {}) { ctx.font = `${o.w || 400} ${o.size || 12}px ${o.num ? 'Inter' : o.d ? '"SUIT Variable"' : '"Pretendard Variable"'}, sans-serif`; ctx.fillStyle = o.color || '#010102'; ctx.textAlign = o.align || 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillText(s, x, y); }
+function callout3(ctx, x, y, dx, dy, lines) {
+  ctx.strokeStyle = cssv('--primary'); ctx.fillStyle = cssv('--primary'); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + dy); ctx.lineTo(x + dx, y + dy); ctx.stroke();
+  const bw = 150, bh = 12 + lines.length * 16, bx = dx > 0 ? x + dx : x + dx - bw, by = y + dy - bh / 2;
+  ctx.fillStyle = '#fff'; ctx.fillRect(bx, by, bw, bh); ctx.strokeRect(bx, by, bw, bh);
+  lines.forEach((s, i) => label(ctx, bx + 8, by + 16 + i * 16, s, i === 0 ? { d: true, w: 500 } : { num: true, color: '#686868' }));
+}
+function s6hover(c, hitTest, draw) { // 마우스 → 항목 인덱스 → 재렌더(4px 상승 + 브래킷)
+  c._hv = c._hvDefault; draw(c._hv);
+  c.addEventListener('mousemove', e => { const r = c.getBoundingClientRect(); const x = (e.clientX - r.left) * (c._w / r.width), y = (e.clientY - r.top) * (c._h / r.height); const i = hitTest(x, y); if (i !== c._hv) { c._hv = i; draw(i); } });
+  c.addEventListener('mouseleave', () => { c._hv = c._hvDefault; draw(c._hv); });
+  c._redraw = () => draw(c._hv);
+}
+const S6 = {
+  id: 'S6', name: '라이트 3D', intent: 'Canvas 압출 막대 · 따뜻한 키 라이트 하나 · 회색 바닥 그리드(Vantor "벡터를 아트로"). 표는 뒤로 물러나는 3D 원장, KPI는 서 있는 숫자.',
+  bar(D) {
+    const c = canvas(W, H), ctx = c._ctx; c._w = W; c._h = H; c._hvDefault = 1; const maxv = 420, x0 = 40, y0 = 230, bw = 44, gap = 26;
+    const hit = (x, y) => { for (let i = 0; i < D.rows.length; i++) { const bx = x0 + i * (bw + gap); if (x >= bx && x <= bx + bw + 14) return i; } return -1; };
+    s6hover(c, hit, (hv) => {
+      ctx.clearRect(0, 0, W, H); label(ctx, 12, 18, `${D.title} · 합계 ${fmt(D.total)} ${D.unit} · 시연`, { num: true, color: '#686868' });
+      floorGrid(ctx, 20, 120, 380, 120);
+      D.rows.forEach(([name, v], i) => {
+        const h = (v / maxv) * 170, x = x0 + i * (bw + gap), lift = i === hv ? 4 : 0, y = y0 - h - lift;
+        box(ctx, x, y, bw, h, 22, i === 0);
+        label(ctx, x + bw / 2 + 6, y - 20, `${v}`, { num: true, align: 'center' });
+        label(ctx, x + bw / 2, y0 + 16, name.length > 6 ? name.slice(0, 6) + '…' : name, { align: 'center', d: i === 0, w: i === 0 ? 500 : 400 });
+        if (i === hv) { bracket3(ctx, x - 4, y - 18, bw + 22, h + 22); callout3(ctx, x + bw + 13, y - 13, 24, -24, [name, `${v} ${D.unit} · ${i + 1}위`, '호버 예시']); }
+      });
+    });
+    return c;
+  },
+  line(D) {
+    const c = canvas(W, H), ctx = c._ctx; c._w = W; c._h = H; c._hvDefault = 4; const x0 = 50, y0 = 220, w = 320, hgt = 150, maxv = 1200, d = 18;
+    const pts = D.v.map((v, i) => [x0 + i * (w / 6), y0 - (v / maxv) * hgt]);
+    const hit = (x) => { let b = -1, bd = 24; pts.forEach(([px], i) => { if (Math.abs(px - x) < bd) { bd = Math.abs(px - x); b = i; } }); return b; };
+    s6hover(c, hit, (hv) => {
+      ctx.clearRect(0, 0, W, H); label(ctx, 12, 18, `${D.title} · 합계 ${fmt(D.v.reduce((a, b) => a + b))} ${D.unit} · 시연`, { num: true, color: '#686868' });
+      floorGrid(ctx, 20, 150, 380, 90);
+      // 압출 리본: 구간마다 상면(키 라이트) + 정면(벽)
+      for (let i = 0; i < pts.length - 1; i++) {
+        const [ax, ay] = pts[i], [bx, by] = pts[i + 1];
+        ctx.fillStyle = LIT.front; ctx.strokeStyle = '#010102'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.lineTo(bx, y0); ctx.lineTo(ax, y0); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = LIT.top; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + d * .6, ay - d * .6); ctx.lineTo(bx + d * .6, by - d * .6); ctx.lineTo(bx, by); ctx.closePath(); ctx.fill(); ctx.stroke();
+      }
+      const [lx, ly] = pts[pts.length - 1]; ctx.fillStyle = LIT.side; ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx + d * .6, ly - d * .6); ctx.lineTo(lx + d * .6, y0 - d * .6); ctx.lineTo(lx, y0); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = cssv('--primary'); ctx.lineWidth = 1.5; ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke();
+      pts.forEach(([x, y], i) => { const lift = i === hv ? 4 : 0; label(ctx, x, y - 28 - lift, fmt(D.v[i]), { num: true, align: 'center' }); label(ctx, x, y0 + 16, D.days[i], { align: 'center', color: '#686868' }); if (i === hv) { bracket3(ctx, x - 10, y - 10 - lift, 20, 20, 5); callout3(ctx, x, y - lift, 50, -48, [D.days[i], `${fmt(D.v[i])} ${D.unit} · 최대`, '호버 예시']); } });
+    });
+    return c;
+  },
+  stack(D) {
+    const c = canvas(W, H), ctx = c._ctx; c._w = W; c._h = H; c._hvDefault = 0; const x0 = 120, y0 = 230, bw = 110, scale = 3.6;
+    const ys = []; let acc = 0; D.parts.forEach(([, tb]) => { const h = tb * scale; ys.push([y0 - acc - h, h]); acc += h; });
+    const hit = (x, y) => { if (x < x0 || x > x0 + bw + 40) return -1; for (let i = 0; i < ys.length; i++) if (y >= ys[i][0] && y <= ys[i][0] + ys[i][1]) return i; return -1; };
+    s6hover(c, hit, (hv) => {
+      ctx.clearRect(0, 0, W, H); label(ctx, 12, 18, `${D.title} · ${D.used} / ${D.total} ${D.unit}`, { num: true, color: '#686868' });
+      floorGrid(ctx, 20, 150, 380, 90);
+      // 용량(184) 고스트 상자: 점선
+      ctx.setLineDash([3, 3]); ctx.strokeStyle = '#686868'; ctx.lineWidth = 1; const capH = 184 * scale * 0.28; ctx.strokeRect(x0, y0 - capH, bw, capH); ctx.setLineDash([]); label(ctx, x0 + bw + 6, y0 - capH + 4, `용량 ${D.total} ${D.unit} (0.28×)`, { num: true, color: '#686868' });
+      for (let i = D.parts.length - 1; i >= 0; i--) { const [y, h] = ys[i]; const lift = i === hv ? 4 : 0; box(ctx, x0, y - lift, bw, h, 40, i === 0); }
+      D.parts.forEach(([name, tb], i) => { const [y, h] = ys[i]; const ly = y + h / 2 - 12, ry = 200 - i * 24, lx = x0 + bw + 70; ctx.strokeStyle = i === 0 ? cssv('--primary') : '#010102'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0 + bw + 26, ly); ctx.lineTo(x0 + bw + 40, ly); ctx.lineTo(x0 + bw + 40, ry - 4); ctx.lineTo(lx - 6, ry - 4); ctx.stroke(); label(ctx, lx, ry, `${name} ${tb}`, { d: i === 0, w: i === 0 ? 500 : 400 }); if (i === hv) { bracket3(ctx, x0 - 4, y - 8, bw + 32, h + 8, 8); callout3(ctx, lx + 92, ry - 4, 20, -70, [name, `${tb} ${D.unit} · ${(tb / D.used * 100).toFixed(0)}%`, '호버 예시']); } });
+    });
+    return c;
+  },
+  table(D) {
+    const c = canvas(WT, H), ctx = c._ctx; c._w = WT; c._h = H; c._hvDefault = 0;
+    const imgs = D.rows.map(r => loadImg(r.img));
+    const rowY = (i) => 200 - i * 84; // 앞(0)이 아래, 뒤(1)가 위로 물러남
+    const hit = (x, y) => { for (let i = 0; i < D.rows.length; i++) if (y >= rowY(i) - 56 && y <= rowY(i) + 8) return i; return -1; };
+    s6hover(c, hit, (hv) => {
+      ctx.clearRect(0, 0, WT, H); label(ctx, 12, 18, `${D.title} · ${D.rows.length}건 · 요청 순`, { num: true, color: '#686868' });
+      floorGrid(ctx, 40, 40, WT - 80, 200, 8, 12);
+      for (let i = D.rows.length - 1; i >= 0; i--) {
+        const r = D.rows[i], y = rowY(i), sc = 1 - i * 0.08, lift = i === hv ? 4 : 0, sk = 0.35;
+        ctx.save(); ctx.translate(WT / 2, y - lift); ctx.scale(sc, sc); ctx.transform(1, 0, sk, 1, 0, 0); ctx.translate(-WT / 2, 0);
+        // 원장 판(두께 6) — 정면 띠 + 상면
+        ctx.fillStyle = LIT.side; ctx.fillRect(60, 0, WT - 120, 6); ctx.strokeStyle = '#010102'; ctx.lineWidth = 1; ctx.strokeRect(60, 0, WT - 120, 6);
+        ctx.fillStyle = LIT.top; ctx.fillRect(60, -56, WT - 120, 56); ctx.strokeRect(60, -56, WT - 120, 56);
+        if (imgs[i].complete && imgs[i].naturalWidth) ctx.drawImage(imgs[i], 72, -48, 64, 42); ctx.strokeRect(72, -48, 64, 42);
+        label(ctx, 150, -30, r.name, { d: true, w: 500, size: 14 }); label(ctx, 150, -12, r.at.slice(0, 10) + ' 요청', { color: '#686868' });
+        label(ctx, 340, -22, r.ver, { num: true }); label(ctx, 400, -22, r.at, { num: true }); label(ctx, 550, -22, r.area);
+        ctx.fillStyle = i === 0 ? cssv('--primary') : '#010102'; ctx.fillRect(690, -36, 6, 20); label(ctx, 704, -22, r.st);
+        if (i === hv) bracket3(ctx, 56, -60, WT - 112, 70, 12);
+        ctx.restore();
+        if (i === hv) callout3(ctx, WT / 2 + (WT / 2 - 60) * sc - 40, y - 28 - lift, -30, -66, [r.name + ' ' + r.ver, r.area, '호버 예시 · 판 4px 상승']);
+      }
+    });
+    imgs.forEach(im => im.addEventListener('load', () => c._redraw()));
+    return c;
+  },
+  kpi(D) {
+    const c = canvas(W, H), ctx = c._ctx; c._w = W; c._h = H; c._hvDefault = -1;
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H); label(ctx, 12, 18, `${D.title} · 2025-06 드론 · 측정`, { num: true, color: '#686868' });
+      floorGrid(ctx, 20, 150, 380, 90);
+      // 서 있는 숫자: 깊이 14px 압출(측면 회색) + 정면 잉크 + 상면 키 라이트(흰 윤곽)
+      ctx.font = '500 84px Inter, sans-serif'; ctx.textAlign = 'left'; const s = fmt(D.value), x = 36, y = 160;
+      for (let k = 14; k > 0; k--) { ctx.fillStyle = k > 2 ? LIT.side : LIT.top; ctx.fillText(s, x + k * .6, y - k * .6); }
+      ctx.fillStyle = '#010102'; ctx.fillText(s, x, y); ctx.lineWidth = 1; ctx.strokeStyle = '#010102'; ctx.strokeText(s, x + 14 * .6, y - 14 * .6);
+      label(ctx, 300, 160, D.unit, { d: true, w: 500, size: 16 });
+      const tot = D.a[1] + D.b[1], bw = 330, aw = bw * D.a[1] / tot;
+      box(ctx, 40, 190, aw, 14, 14, true); box(ctx, 40 + aw, 190, bw - aw, 14, 14, false);
+      label(ctx, 40, 232, `${D.a[0]} ${fmt(D.a[1])}`, { num: true }); label(ctx, 40 + bw, 232, `${D.b[0]} ${fmt(D.b[1])}`, { num: true, align: 'right' });
+    };
+    draw(); c._redraw = draw;
+    return c;
+  },
+};
+
+/* =====================================================================
+   페이지 조립 · 선택 · 규율 검사
+   ===================================================================== */
+const TREATS = [S1, S2, S3, S4, S5, S6];
+const PANELS = [['bar', '① AI 개발 프로젝트 용량 Top5', 'GB · 시연'], ['line', '② 최근 7일 방문', '명 · 시연'], ['stack', '③ 전체 스토리지', '44.5 / 184 TB'], ['table', '④ 카드 발행 승인 대기', '2건 · 요청 순'], ['kpi', '⑤ 필지 KPI', '2,098 · 측정']];
+const DK = { bar: DATA.top5, line: DATA.visits, stack: DATA.storage, table: DATA.table, kpi: DATA.kpi };
+function build() {
+  const main = document.getElementById('main'); main.innerHTML = '';
+  for (const T of TREATS) {
+    const sec = document.createElement('section'); sec.className = 'tr'; sec.id = T.id;
+    sec.innerHTML = `<header class="th"><div><div class="no">${T.id} / 06</div><h2>${T.name}</h2><p class="intent">${T.intent}</p></div><div class="ctl"><button type="button" class="pickbtn" data-id="${T.id}">선택 — ${T.id} ${T.name}</button><div class="rule">규율 검사 중…</div></div></header><div class="g5"></div>`;
+    const g = sec.querySelector('.g5');
+    for (const [k, cap, sub] of PANELS) {
+      const f = document.createElement('figure'); f.className = 'p' + (k === 'table' ? ' wide' : ''); f.dataset.k = k;
+      f.innerHTML = `<figcaption><b>${cap}</b><span>${sub}${k === 'bar' || k === 'line' || k === 'stack' || k === 'table' ? ' · 호버 예시 1' : ''}</span></figcaption><div class="cv"></div>`;
+      f.querySelector('.cv').appendChild(T[k](DK[k]));
+      g.appendChild(f);
+    }
+    main.appendChild(sec);
+  }
+  requestAnimationFrame(() => TREATS.forEach(T => audit(document.getElementById(T.id))));
+  syncPick();
+}
+function audit(sec) {
+  let radius = 0, shadow = 0, minFont = 99; const prim = cssv('--primary').toLowerCase();
+  sec.querySelectorAll('*').forEach(e => {
+    const cs = getComputedStyle(e);
+    if (parseFloat(cs.borderTopLeftRadius) > 0) radius++;
+    if (cs.boxShadow && cs.boxShadow !== 'none') shadow++;
+    if ([...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim())) minFont = Math.min(minFont, parseFloat(cs.fontSize));
+  });
+  // 보이는 액센트만 센다(숨은 호버 브래킷·콜아웃 제외, 고정 호버 예시는 포함)
+  let accent = [...sec.querySelectorAll('svg .pr, svg .prs, svg .prt')].filter(e => !e.closest('.br,.call') || e.closest('.item.hv')).length;
+  if (sec.id === 'S6') accent = 5 + 4; // 캔버스: 1위 막대 · 7일 선 · 1위 스택 · 상태 바 · 경작 판 = 5 + 호버 장치 4
+  const grad = sec.querySelectorAll('[style*="gradient"]').length;
+  sec.querySelector('.rule').innerHTML = `규율 검사 — radius <b>${radius}</b> · shadow <b>${shadow}</b> · gradient <b>${grad}</b> · 액센트 요소 <b>${accent}</b>(1위·현재값·호버) · 최소 글자 <b class="${minFont < 12 ? 'bad' : ''}">${minFont}px</b>${sec.id === 'S6' ? ' · 조명 틴트 #FFF7EA 1(팔레트 외, 렌더 음영)' : ''}`;
+}
+/* 선택 · 톤 */
+const LS = 'lx_chartpick', LT = 'lx_charttone';
+function syncPick() {
+  const id = localStorage.getItem(LS) || '', tone = document.documentElement.dataset.tone;
+  const T = TREATS.find(t => t.id === id);
+  document.getElementById('pickText').textContent = `차트 문법: ${T ? `${T.id} ${T.name}` : '(미선택)'} / 톤: ${tone}`;
+  document.querySelectorAll('.tr').forEach(s => s.classList.toggle('picked', s.id === id));
+  document.querySelectorAll('.pickbtn').forEach(b => b.classList.toggle('on', b.dataset.id === id));
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('.pickbtn'); if (b) { localStorage.setItem(LS, b.dataset.id); syncPick(); }
+  const t = e.target.closest('[data-tone]'); if (t && t.tagName === 'BUTTON') { setTone(t.dataset.tone); }
+});
+function setTone(t) {
+  document.documentElement.dataset.tone = t; localStorage.setItem(LT, t);
+  document.querySelectorAll('.tonebar [data-tone]').forEach(b => b.classList.toggle('on', b.dataset.tone === t));
+  document.getElementById('toneHex').textContent = cssv('--primary');
+  document.querySelectorAll('canvas').forEach(c => c._redraw && c._redraw()); // 캔버스는 토큰을 읽어 다시 그린다
+  syncPick();
+}
+document.getElementById('copyBtn').onclick = () => navigator.clipboard?.writeText(document.getElementById('pickText').textContent);
+document.getElementById('clearBtn').onclick = () => { localStorage.removeItem(LS); syncPick(); };
+build();
+setTone(localStorage.getItem(LT) || 'T1');
+document.fonts?.ready.then(() => document.querySelectorAll('canvas').forEach(c => c._redraw && c._redraw()));
+window.__charts = { DATA, rebuild: build };
+</script>
+</body>
+</html>
