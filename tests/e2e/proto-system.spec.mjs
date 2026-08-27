@@ -32,7 +32,7 @@ test('시트가 뜬다 — 콘솔 오류 0, 컴포넌트가 전부 조립된다'
   await expect(page.locator('h1.lx-h1')).toContainText('표기법은 하나다');
 
   // 13개 섹션 + 각 컴포넌트 실체
-  await expect(page.locator('.lx-index__row')).toHaveCount(13);      // services.js 13종
+  await expect(page.locator('.lx-index__row')).toHaveCount(15);      // services.js 15종
   await expect(page.locator('.lx-class__row')).toHaveCount(8);       // 여수 드론 8클래스
   await expect(page.locator('.lx-strip__i')).toHaveCount(4);         // 남원 4시점
   await expect(page.locator('.lx-stat')).toHaveCount(3);
@@ -74,11 +74,11 @@ test('측정값 — 그리드 1컬럼 87.33px, 타이포 스케일이 실측값 
     };
   });
   expect(m.col).toBeCloseTo(87.33, 1);          // 12컬럼 · 여백 64 · 거터 24 @1440
-  expect(m.h1).toEqual([64, 80]);
-  expect(m.h2).toEqual([52, 57.2]);
-  expect(m.body).toEqual([16, 23.2]);
-  expect(m.label).toBe(12);
-  expect(m.stat).toEqual([124, 142.6]);
+  expect(m.h1).toEqual([66, 82]);
+  expect(m.h2).toEqual([54, 59.4]);
+  expect(m.body).toEqual([18, 26]);
+  expect(m.label).toBe(14);
+  expect(m.stat).toEqual([126, 145]);
   expect(m.barH).toBeCloseTo(79, 0);
   expect(m.radius).toBe('0px');                  // 라운드 0
   expect(m.shadow).toBe('none');                 // 그림자 0
@@ -181,9 +181,9 @@ test('1024 — 타입 스케일은 그대로, 여백만 32px 로 줄어든다', 
     return { h1: px('h1.lx-h1', 'fontSize'), h2: px('#s02 .lx-h2', 'fontSize'),
              body: px('#s02 .lx-sec__aside .lx-body', 'fontSize'), pad, w: g.width };
   });
-  expect(m.h1).toBe(64);      // fluid type 금지 — 1024에서도 같다
-  expect(m.h2).toBe(52);
-  expect(m.body).toBe(16);
+  expect(m.h1).toBe(66);      // fluid type 금지 — 1024에서도 같다
+  expect(m.h2).toBe(54);
+  expect(m.body).toBe(18);
   expect(m.pad).toBe('32px');
   expect(errs, errs.join('\n')).toEqual([]);
 });

@@ -125,7 +125,7 @@ test('좌 — 원본 로그인 폼의 컨트롤·문구가 1:1 로 있다', asyn
   expect(type.fam).toMatch(/^"?Paperlogy"?/);
   expect(type.w).toBe('700');
   expect(type.size).toBe('34px');   // 6차: 로그인 Paperlogy 34
-  expect(type.btn).toMatch(/^"?Pretendard"?/);
+  expect(type.btn).toMatch(/^"?Paperlogy"?/);
   expect(type.btnSize).toBe('20px');
   expect(type.signupSize).toBe('20px');
   expect(type.lbl).toMatch(/^"?Paperlogy"?/);      // 7차: 로그인과 같은 서체
@@ -143,7 +143,7 @@ test('좌 — 원본 로그인 폼의 컨트롤·문구가 1:1 로 있다', asyn
   expect(type.findFam).toMatch(/^"?Paperlogy"?/);
   expect(type.findW).toBe('700');
   expect(type.findSize).toBe('16px');               // 아이디 찾기 | 비밀번호 찾기 26 → 18
-  expect(type.signup).toMatch(/^"?Pretendard"?/);
+  expect(type.signup).toMatch(/^"?Paperlogy"?/);
   expect(type.lead).toMatch(/^"?Pretendard"?/);
   expect(parseFloat(type.leadSize)).toBeGreaterThanOrEqual(16);
   expect(type.leadColor).toBe('rgb(104, 104, 104)');
