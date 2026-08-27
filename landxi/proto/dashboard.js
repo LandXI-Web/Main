@@ -13,7 +13,7 @@ import {
 } from './db-data.js';
 import { CROPS } from '../assets/data/crops.js';
 import { CHANGE } from '../assets/data/change.js';
-import { drapeSvg } from './db-geo.js';
+import { drapeSvg, WINDOW_RULE } from './db-geo.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -100,10 +100,10 @@ const LEFT = [
       CHANGE.slice(0, 3).map((c) => `${c.toDate.slice(2)} ${c.stats.n}`).join(' · '),
       `${ym(CHANGE[0].fromDate)} → ${ym(CHANGE[CHANGE.length - 1].toDate)} 드론`,
       '__ON__', `추정 · 기준 ${ym(CHANGE[CHANGE.length - 1].toDate)}`] } },
-  res('04', 'yeosu-marine-2026-drone', '여수 해양쓰레기 드론', 0, (r) => `${nf.format(r.count)}건 · ${nClasses(r)}종 · ${r.date.slice(0, 4)}`),
-  res('03', 'yeosu-marine-2025-aerial', '여수 해양쓰레기 항공', 0, (r) => `${nf.format(r.count)}건 · 스티로폼 ${nClasses(r)}종 · ${r.date.slice(0, 4)}`),
-  res('02', 'namwon-greenhouse-2025', '남원 비닐하우스', 0, (r) => `${nf.format(RES_OBJ(r.id))}동 · ${nf.format(r.count)}필지 · ${r.date.slice(0, 4)} ${r.sensor}`),
-  res('01', 'namwon-farmland-2025', '남원 농지이용', 1, (r) => `${nf.format(r.count)}${r.unit} · ${r.date.slice(0, 4)} ${r.sensor}`),
+  res('04', 'yeosu-marine-2026-drone', '여수 해양쓰레기 드론', 0, (r) => `${nf.format(r.count)}건 · ${nClasses(r)}종 · ${r.year}`),
+  res('03', 'yeosu-marine-2025-aerial', '여수 해양쓰레기 항공', 0, (r) => `${nf.format(r.count)}건 · 스티로폼 ${nClasses(r)}종 · ${r.year}`),
+  res('02', 'namwon-greenhouse-2025', '남원 비닐하우스', 0, (r) => `${nf.format(RES_OBJ(r.id))}동 · ${nf.format(r.count)}필지 · ${r.year} ${r.sensor}`),
+  res('01', 'namwon-farmland-2025', '남원 농지이용', 1, (r) => `${nf.format(r.count)}${r.unit} · ${r.year} ${r.sensor}`),
 ];
 function CHANGE_POLYS() { return CHANGE.reduce((a, c) => a + c.stats.n, 0); }
 function RES_OBJ(id) { const r = RES[id]; return r && r.objTotal ? r.objTotal : 0; }
@@ -114,7 +114,7 @@ function res(no, id, name, ci, vf) {
   return { no, name, id, v: vf(r), crop: c, img: c.clean || c.file, geo: r.geojson, unit: r.unit,
     call: { c2: `${nf.format(big)}<small>${unit}</small>`, c3: [
       topClasses(r.classes),
-      `${r.date.slice(0, 4)} ${r.sensor} · GSD ${cm(c.gsd)} <em>추정</em>`,
+      /^namwon/.test(id) ? `${ep2506.captured} ${r.sensor} · GSD ${cm(ep2506.gsd)} <em>추정</em>` : `${r.year} ${r.sensor} · 타일 미등록`,
       `${BACKBONE.name} ${BACKBONE.ver} · 신뢰도 μ ${r.conf.toFixed(2)}`,
       '__ON__',
       `측정 · 기준 ${ymd(r.date)}`] } };
@@ -122,7 +122,7 @@ function res(no, id, name, ci, vf) {
 
 /** 우 스택 — AI 개발 프로젝트 현황의 실체: 정사영상 시점 7. 앞(01) = 라벨이 연결된 2025-06. */
 const img = (id) => IMG.find((i) => i.id === id);
-const bound = (i) => [`E ${i.bounds[0].toFixed(3)}–${i.bounds[2].toFixed(3).slice(-4)} · 줌 ${i.minzoom}–${i.maxzoom}`, `N ${i.bounds[1].toFixed(3)}–${i.bounds[3].toFixed(3).slice(-4)} · ${i.kind === 'ortho' ? '드론' : '항공'}`];
+const bound = (i, sensor = '드론') => [`E ${i.bounds[0].toFixed(3)}–${i.bounds[2].toFixed(3).slice(-4)} · 줌 ${i.minzoom}–${i.maxzoom}`, `N ${i.bounds[1].toFixed(3)}–${i.bounds[3].toFixed(3).slice(-4)} · ${sensor}`];
 const ep = (no, id, ci, extra, lab) => {
   const i = img(id); const c = crop('namwon-epoch', ci);
   return { no, name: `남원 농경지 ${i.captured}`, v: `드론 · GSD ${cm(i.gsd)} · ${lab}`, crop: c, img: c.file,
@@ -130,11 +130,11 @@ const ep = (no, id, ci, extra, lab) => {
 };
 const city = img('namwon_city_2510');
 const RIGHT = [
-  { no: '07', name: `여수 항공 ${RES['yeosu-marine-2025-aerial'].date.slice(0, 4)} · 드론 ${RES['yeosu-marine-2026-drone'].date.slice(0, 4)}`, v: '타일 카탈로그 미등록 · 결과만 보유', ghost: true, empty: true,
+  { no: '07', name: `여수 항공 ${RES['yeosu-marine-2025-aerial'].year} · 드론 ${RES['yeosu-marine-2026-drone'].year}`, v: '타일 카탈로그 미등록 · 결과만 보유', ghost: true, empty: true,
     call: { c2: '미등록', c3: ['타일 카탈로그 미등록', `결과 ${nf.format(RES['yeosu-marine-2025-aerial'].count + RES['yeosu-marine-2026-drone'].count)}건 보유`] } },
   (() => { const a = img('jeju_2020'), b = img('jeju_2022'), c = crop('jeju-illegal', 1);
     return { no: '06', name: `제주 항공 ${a.captured} · ${b.captured}`, v: `GSD ${cm(a.gsd)} · ${cm(b.gsd)} · 토지형질`, crop: c, img: c.clean || c.file,
-      call: { c2: `GSD ${cm(b.gsd).replace(' cm', '<small>cm</small>')}`, c3: [...bound(b), `${cm(a.gsd)} · ${a.captured} 불법건축물 도엽`, `토지형질 세그멘테이션 ${b.captured}`, `측정 · 촬영 ${b.captured}`] } }; })(),
+      call: { c2: `GSD ${cm(b.gsd).replace(' cm', '<small>cm</small>')}`, c3: [...bound(b, '항공'), `${cm(a.gsd)} · ${a.captured} 불법건축물 도엽`, `토지형질 세그멘테이션 ${b.captured}`, `측정 · 촬영 ${b.captured}`] } }; })(),
   (() => { const a = img('kuksan_a68'), c = crop('kuksan-change', 0);
     return { no: '05', name: '국산리 드론 A68 · A71', v: `${a.captured} · GSD ${cm(a.gsd)} · 2비행`, crop: c, img: c.file,
       call: { c2: `GSD ${cm(a.gsd).replace(' cm', '<small>cm</small>')}`, c3: [...bound(a), 'A68 · A71 2비행', '변화탐지 · 라벨 연결 없음', `측정 · 촬영 ${a.captured}`] } }; })(),
@@ -170,9 +170,9 @@ buildStack($('#plates-l'), LEFT, 48);
 buildStack($('#plates-r'), RIGHT, 40);
 const chips = (arr) => arr.map(([k, v]) => `<span class="chip">${esc(k)} <b class="n">${esc(v)}</b></span>`).join('');
 $('#sl-sub').innerHTML = chips([['실측', 4], ['비지도', 1], ['준비 중', 1]]) + `<span class="chip dim">카드 ↔ 결과 매핑 미확정</span>`;
-$('#sr-sub').innerHTML = PROJECTS.map((p, i) => `<span class="chip${i ? '' : ' on'}">${esc(p.name)} <b class="n">${p.gb}</b></span>`).join('');
+$('#sr-sub').innerHTML = `<span class="mic n tx">${PROJECTS.map((p, i) => `<span class="${i ? '' : 'on'}">${esc(p.name)} ${p.gb}</span>`).join(' · ')}</span>`;
 $('#proj-sum').dataset.n = String(PROJECTS.reduce((a, p) => a + p.gb, 0));
-$('#sl-src').innerHTML = `출처 · 남원 ${RES['namwon-farmland-2025'].date.slice(0, 4)} 드론 · 여수 ${RES['yeosu-marine-2025-aerial'].date.slice(0, 4)} 항공 · ${RES['yeosu-marine-2026-drone'].date.slice(0, 4)} 드론 · 변화지수 4시점<i> | </i>기준 ${ymd(T1)}`;
+$('#sl-src').innerHTML = `출처 · 남원 ${RES['namwon-farmland-2025'].year} 드론 · 여수 ${RES['yeosu-marine-2025-aerial'].year} 항공 · ${RES['yeosu-marine-2026-drone'].year} 드론 · 변화지수 4시점<i> | </i>기준 ${ymd(T1)}`;
 $('#sr-src').innerHTML = `출처 · 정사영상 타일 카탈로그 ${IMG.length}종 · 프로젝트 용량 집계<span class="tag">시연</span><i> | </i>기준 ${ym(T1).replace('-', '.')}`;
 
 /* 호버·포커스 — 한 번에 하나만 뜨겁다 */
@@ -210,7 +210,8 @@ async function drape() {
     const pl = $(`#plates-l .pl[data-no="${p.no}"]`); const on = $('.callout .c3.on', pl);
     try {
       const fc = await (await fetch(p.geo)).json();
-      const d = drapeSvg(fc, p.crop);
+      const d = drapeSvg(fc, p.crop, { rule: WINDOW_RULE[p.id || 'namwon-epoch'] });
+      pl.dataset.win = d.winM.toFixed(1);
       $('.geo', pl).innerHTML = d.svg;
       pl.dataset.geo = String(d.n);
       on.textContent = `판 위 ${nf.format(d.n)}${p.unit}${d.emd ? ` · ${d.emd}${RES[p.id] && RES[p.id].emd && RES[p.id].emd[d.emd] ? ` ${nf.format(RES[p.id].emd[d.emd])}` : ''}` : ''}`;

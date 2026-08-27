@@ -61,6 +61,8 @@ export const DONE = RESULTS.map((r) => ({
   geojson: '../' + r.geojson,
   service: r.service,
   emd: r.stats.emd || null,
+  objTotal: r.stats.objTotal || null,
+  year: r.year,
 }));
 
 export const doneById = (id) => DONE.find((x) => x.id === id);
