@@ -1,50 +1,30 @@
 import { test, expect } from '@playwright/test';
-import fs from 'node:fs';
 
-// A안 "지도 위 원장" — docs/superpowers/specs/2026-08-26-map-dashboard-options.md §3.1
-// 관계 등급표   — docs/superpowers/specs/2026-08-26-dashboard-map-relationship.md §2 (Ⅰ/Ⅱ/Ⅲ)
-// 조판 마스터   — design-canvas/v2/B2-Dashboard.dc.html (1440×900)
+// LX 관리자 대시보드 — SPLIT-5050 판 스택(지도 위젯 없음).
+// 조판 마스터   — design-canvas/v2/B5-Dashboard.dc.html rev2 (NOTES.md §12.5, 1440×900)
 // 기능 대조표   — docs/superpowers/proto/2026-08-26-dashboard-parity.md (A1–A11 / B1–B16)
 const URL = 'proto/dashboard.html';
-const SHOTS = 'shots/proto-dash';
-fs.mkdirSync(SHOTS, { recursive: true });
 
 // 오프라인/외부 CDN 실패는 이 프로토의 정상 동작이다. 우리 코드가 던진 것만 실패로 본다.
-const NETWORK = /Failed to load resource|net::ERR|ERR_|status of 40|status of 50|AbortError|preloaded using link preload|WebGL|vworld|xdworld/i;
-
+const NETWORK = /Failed to load resource|net::ERR|ERR_|status of 40|status of 50|AbortError|preloaded using link preload|fonts\.g|jsdelivr/i;
 function watch(page) {
   const errs = [];
   page.on('pageerror', (e) => errs.push('pageerror: ' + e.message));
-  page.on('console', (m) => {
-    if (m.type() !== 'error') return;
-    const t = m.text();
-    if (!NETWORK.test(t)) errs.push('console: ' + t);
-  });
+  page.on('console', (m) => { if (m.type() === 'error' && !NETWORK.test(m.text())) errs.push('console: ' + m.text()); });
   return errs;
 }
-
-async function boot(page) {
+async function boot(page, q = '') {
   await page.addInitScript(() => localStorage.setItem('lx_logged_in', '1'));
-  await page.goto(URL);
-  await page.waitForFunction(() => document.documentElement.dataset.atlas === 'ready', null, { timeout: 30000 });
-  await page.waitForTimeout(900);
+  await page.goto(URL + q);
+  await page.waitForFunction(() => document.documentElement.dataset.dash === 'ready', null, { timeout: 30000 });
+  await page.waitForTimeout(1000);
 }
-/** 스크러버가 스스로 시점을 옮기므로, 손으로 볼 때는 먼저 세운다. */
-async function hold(page) {
-  await page.locator('#strip-pause').click();
-  await page.waitForTimeout(500);
-}
-/** Ⅱ등급 — 원장을 만져야 결과가 판에 선다. */
-async function pickResult(page) {
-  await hold(page);
-  await page.locator('#t-proj [data-proj]').nth(1).click();   // 농지 활용
-  await page.waitForTimeout(2600);
-}
+const geoReady = (page) => page.waitForFunction(() => /ready|partial/.test(document.documentElement.dataset.geo || ''), null, { timeout: 30000 });
 
 test('로그인 관문 — 플래그가 없으면 관리자 화면이 한 프레임도 새지 않는다', async ({ page }) => {
   await page.goto(URL);
   await page.waitForURL(/login\.html/, { timeout: 10000 });
-  expect(decodeURIComponent(page.url())).toContain('proto/dashboard.html');
+  expect(decodeURIComponent(page.url())).toContain('next=dashboard.html');
 });
 
 /* ── A. 좌측 레일 ─────────────────────────────────────────────────────── */
@@ -53,294 +33,223 @@ test('A1–A11 레일 — 원본 include/header.html 의 메뉴가 순서까지 
   const errs = watch(page);
   await boot(page);
   const names = await page.locator('#rail .rail-i .rl').allInnerTexts();
-  expect(names).toEqual([
-    '대시보드', '데이터 관리', '프로젝트', '분석 서비스', '지도 서비스',
-    '서비스 지원', '카드 발행 관리', '서비스 관리', 'MY', '로그아웃',
-  ]);
-  // 원본 파일명이 대응 관계로 남아 있다.
+  expect(names).toEqual(['대시보드', '데이터 관리', '프로젝트', '분석 서비스', '지도 서비스', '서비스 지원', '카드 발행 관리', '서비스 관리', 'MY', '로그아웃']);
   await expect(page.locator('#rail [data-menu="media"]')).toHaveAttribute('title', '원본 dataset.html');
-  await expect(page.locator('#rail [data-menu="map"]')).toHaveAttribute('title', '원본 ximap.html');
-  // A2 대시보드는 현재 페이지다.
+  await expect(page.locator('#rail [data-menu="media"]')).toHaveAttribute('data-go', 'dataset.html');
   await expect(page.locator('#rail [data-menu="dashboard"]')).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('#rail-mark')).toHaveAttribute('href', 'scrub/index.html');
+  // A10 MY 플라이아웃 — 마이 페이지 · 로그아웃
+  await page.locator('#rail [data-menu="my"]').click();
+  await expect(page.locator('#rail-my')).toBeVisible();
+  expect(await page.locator('#rail-my').innerText()).toContain('마이 페이지');
   expect(errs, errs.join(' | ')).toEqual([]);
 });
 
-test('A3–A9 레일 — 원본 페이지 대신 그 내용이 있는 원장 블록으로 데려간다', async ({ page }) => {
+test('A4–A9 레일 — 원본 페이지 대신 같은 데이터가 있는 자리로 데려간다', async ({ page }) => {
   await boot(page);
   await page.locator('#rail [data-menu="publish-admin"]').click();
   await page.waitForTimeout(700);
-  const inView = await page.evaluate(() => {
-    const l = document.querySelector('#ledger');
-    const t = document.querySelector('#b-approve');
-    const d = t.offsetTop - l.scrollTop;
-    return d >= -100 && d < l.clientHeight;
-  });
-  expect(inView).toBe(true);
+  await expect(page.locator('#b-approve')).toBeInViewport();
+  await page.locator('#rail [data-menu="project"]').click();
+  await page.waitForTimeout(500);
+  await expect(page.locator('#plates-r .pl.is-front')).toBeFocused();
+  await expect(page.locator('#plates-r .pl.is-front')).toHaveClass(/is-hot/);   // 포커스 = 호버와 같은 장치
 });
 
-test('A11 로그아웃 — 원본과 같이 로그인 플래그를 지우고 home 으로 간다', async ({ page }) => {
+test('A11 로그아웃 — 로그인 플래그를 지우고 메인(scrub)으로 간다', async ({ page }) => {
   await boot(page);
   const cleared = page.evaluate(() => new Promise((res) => {
     const rm = localStorage.removeItem.bind(localStorage);
     localStorage.removeItem = (k) => { rm(k); if (k === 'lx_logged_in') res(true); };
   }));
-  await page.locator('#rail [data-action="logout"]').click();
+  await page.locator('#rail-foot [data-action="logout"]').click();
   expect(await cleared).toBe(true);
-  await page.waitForURL(/home\.html/, { timeout: 10000 });
+  await page.waitForURL(/scrub\/index\.html/, { timeout: 10000 });
 });
 
-/* ── B. 원장 위젯 ─────────────────────────────────────────────────────── */
+/* ── B. 위젯 — 각 1회 ─────────────────────────────────────────────────── */
 
-test('B1–B15 — 원본 위젯이 원본 순서 그대로, 스크롤 없이 한 화면에 든다', async ({ page }) => {
+test('B1–B15 — 원본 위젯이 전부, 각 한 번, 지도 없이 한 화면에 든다', async ({ page }) => {
   const errs = watch(page);
   await boot(page);
-
-  await expect(page.locator('#b1')).toHaveText('LX 관리자 대시보드');            // B1
-  expect(await page.locator('#b2').innerText()).toContain('기준일');             // B2
-
-  const led = await page.locator('#ledger').innerText();
-  expect(led).toContain('고위험 탐지 건 긴급 처리 안내');                         // B3
-  expect(led).toContain('2026.04.15');
-  expect(led).toContain('XI-VFM');                                               // B9
-  expect(led).toContain('AI 개발 프로젝트 현황');                                 // B10
-  expect(led).toContain('최근 7일 방문');                                         // B11
-  expect(led).toContain('전체 스토리지 사용량');                                  // B12
-  expect(led).toContain('44.5 / 184 TB');
-  expect(led).toContain('063-713-1213');                                         // B15
-
-  // B4–B8 — KPI 5개, 값·부제가 원본과 같다.
-  await expect(page.locator('#b-kpi .k')).toHaveCount(5);
+  await expect(page.locator('#b1')).toHaveText('LX 관리자 대시보드');                     // B1
+  await expect(page.locator('#b2')).toContainText('기준일');                              // B2
+  await expect(page.locator('#b-notice')).toContainText('고위험 탐지 건 긴급 처리 안내'); // B3
+  await expect(page.locator('#b-notice')).toContainText('2026.04.15');
+  await expect(page.locator('#b-kpi .k')).toHaveCount(4);                                 // B4 B6 B7 B8
   const kpi = await page.locator('#b-kpi').innerText();
-  for (const t of ['전체 사용자', '발행 분석 카드', '카드 발행 승인 대기', '가입 승인 대기', '미답변 문의',
-    '정상 19 · 가입 승인 대기 1', '공개 7 · 비공개 1', '검토 필요', '승인 필요', '전체 12 · 답변 필요']) {
-    expect(kpi, t).toContain(t);
-  }
-  expect(await page.locator('#b-kpi .k').first().locator('.kv').innerText()).toContain('21');
-
-  await expect(page.locator('#ap-rows .ap')).toHaveCount(2);                     // B13
-  const ap = await page.locator('#ap-rows').innerText();
-  expect(ap).toContain('도로안전 정사영상 v2.1');
-  expect(ap).toContain('2026.06.10 14:30');
-  await expect(page.locator('#ad-rows .ad')).toHaveCount(4);                     // B14
-
-  // 마스터와 같은 순서.
-  const heads = await page.locator('#ledger .lb').allInnerTexts();
-  expect(heads).toEqual([
-    'LAND-XI · 관리자', 'AI 기반 모델 (백본)', 'AI 개발 프로젝트 현황',
-    '사용자 이용 현황', '전체 스토리지 사용량', '카드 발행 승인 대기 · 2건',
-  ]);
-  // Ⅰ등급(B9 · B10 · B12 · B13) 네 블록에만 눈금이 붙는다 — 눈금의 유무가 곧 등급표다.
-  await expect(page.locator('#ledger .g1')).toHaveCount(4);
-
-  // 원장은 1440×900 에서 스크롤 없이 든다(마스터와 같은 밀도).
-  const fits = await page.evaluate(() => {
-    const l = document.querySelector('#ledger');
-    return l.scrollHeight <= l.clientHeight + 1;
-  });
-  expect(fits).toBe(true);
-
+  for (const t of ['전체 사용자', '카드 발행 승인 대기', '가입 승인 대기', '미답변 문의', '정상 19', '검토 필요', '승인 필요', '전체 12']) expect(kpi, t).toContain(t);
+  await expect(page.locator('#b5')).toContainText('발행 분석 카드');                       // B5 — 좌 스택 헤더 1회
+  await expect(page.locator('#b5')).toContainText('공개 7 · 비공개 1');
+  await expect(page.locator('#b-bb')).toContainText('XI-VFM v2.1');                       // B9
+  await expect(page.locator('#b-bb')).toContainText('2026.03.12');
+  await expect(page.locator('#b10')).toContainText('1,326');                              // B10 — 우 스택 헤더 1회
+  await expect(page.locator('#sr-sub')).toContainText('도로안전 정사영상 412');
+  await expect(page.locator('#t-visit polyline')).toHaveCount(1);                          // B11
+  await expect(page.locator('#t-visit rect')).toHaveCount(7);
+  await expect(page.locator('#t-visit')).toContainText('1,150');
+  await expect(page.locator('#t-store rect')).toHaveCount(7);                             // B12 — 테두리 1 + 6분류
+  await expect(page.locator('#b-store')).toContainText('/ 184 TB');
+  await expect(page.locator('#ap-rows tr.ap')).toHaveCount(2);                            // B13
+  await expect(page.locator('#ad-rows .ad')).toHaveCount(4);                               // B14
+  await expect(page.locator('#foot')).toContainText('063-713-1213');                       // B15
+  // 각 1회 — 제목·백본·표는 문서에 하나뿐
+  for (const s of ['#b1', '#b-bb', '#ap-table', '#t-visit', '#t-store', '#b-notice']) await expect(page.locator(s)).toHaveCount(1);
+  // 지도 위젯 0 · 탭 0 · 앰버 0
+  expect(await page.locator('.maplibregl-map, canvas, [role=tab]').count()).toBe(0);
+  expect(await page.evaluate(async () => /FFB633/i.test(await (await fetch('dashboard.css')).text()))).toBe(false);
+  // 한 화면 — 1440×900 에서 본문이 세로 스크롤 없이 든다
+  expect(await page.evaluate(() => document.querySelector('#foot').getBoundingClientRect().bottom)).toBeLessThanOrEqual(900);
   expect(errs, errs.join(' | ')).toEqual([]);
 });
 
-test('콘티 원칙 — 지어낸 담당자 이름을 싣지 않는다', async ({ page }) => {
+test('불필요한 글자 없음 — 설명 문장·콜로폰이 없다', async ({ page }) => {
   await boot(page);
-  const body = await page.locator('body').innerText();
-  expect(body).not.toContain('김현우');
-  // 대신 원본의 요청 시각은 그대로 남는다.
-  expect(body).toContain('2026.05.15 08:50');
+  const t = await page.locator('body').innerText();
+  for (const s of ['한눈에', '입력(우)', '출처 표기 —', '검토 대상 · 요청 순']) expect(t).not.toContain(s);
 });
 
-test('원본에 없는 것은 만들지 않았다 — 탭 0 · 커버리지 0 · 처리 대기 큐 0', async ({ page }) => {
+/* ── 판 스택 ─────────────────────────────────────────────────────────── */
+
+test('판 스택 — 좌 6장(실측 4 · 비지도 고스트 1 · 준비 중 1) · 우 7장(정사영상 6 · 미등록 고스트 1), 앞 판은 01', async ({ page }) => {
   await boot(page);
-  await expect(page.locator('[role="tab"], .tab, .reg')).toHaveCount(0);
-  const body = await page.locator('body').innerText();
-  expect(body).not.toContain('전국 커버리지');
-  expect(body).not.toContain('처리 대기 큐');
-  expect(body).not.toContain('추론 현황');
+  await expect(page.locator('#plates-l .pl')).toHaveCount(6);
+  await expect(page.locator('#plates-r .pl')).toHaveCount(7);
+  await expect(page.locator('#plates-l .pl.is-ghost')).toHaveCount(2);
+  await expect(page.locator('#plates-r .pl.is-ghost')).toHaveCount(1);
+  await expect(page.locator('#plates-l .pl.is-front')).toHaveAttribute('data-no', '01');
+  await expect(page.locator('#plates-l .pl.is-front')).toHaveAttribute('data-id', 'namwon-farmland-2025');
+  const zs = await page.locator('#plates-l .pl').evaluateAll((els) => els.map((e) => +e.style.zIndex));
+  expect(zs).toEqual([1, 2, 3, 4, 5, 6]);
+  // 실크롭이 걸려 있다(크롭 카탈로그 경로)
+  const imgs = await page.locator('#plates-l .pl img').evaluateAll((els) => els.map((e) => e.getAttribute('src')));
+  expect(imgs.length).toBe(5);
+  for (const s of imgs) expect(s).toMatch(/^\.\.\/assets\/proto\/crops\//);
+  // 우 스택 라벨 = imagery.js 그대로
+  const labs = await page.locator('#plates-r .pl .lab').allInnerTexts();
+  expect(labs.join('\n')).toContain('GSD 1.69 cm');
+  expect(labs.join('\n')).toContain('GSD 1.08 cm');
+  expect(labs.join('\n')).toContain('국산리 드론 A68 · A71');
 });
 
-test('B10–B12 — 스탯 타일 3종의 형태가 서로 다르고 값은 원본 시드다', async ({ page }) => {
+test('결과 지오메트리 — GeoJSON 이 크롭 창으로 투영되어 청록으로 선다(실측 4 + 변화지수 고스트)', async ({ page }) => {
   await boot(page);
-  await expect(page.locator('#t-proj .pr')).toHaveCount(5);              // 랭크드 바
-  await expect(page.locator('#t-visit svg .ln')).toHaveCount(1);         // 스파크라인
-  await expect(page.locator('#t-store .gauge .arc')).toHaveCount(1);     // 도넛 게이지
-  const proj = await page.locator('#t-proj').innerText();
-  for (const v of ['412', '318', '256', '198', '142']) expect(proj, v).toContain(v);
-  const store = await page.locator('#t-store').innerText();
-  for (const v of ['18.2', '9.6', '7.4', '5.1', '2.8', '1.4', '139.5']) expect(store, v).toContain(v);
-  // 데모 시드에는 [추정] 꼬리표가 붙는다.
-  expect(await page.locator('#b-proj').innerText()).toContain('추정');
+  await geoReady(page);
+  const geo = await page.locator('#plates-l .pl').evaluateAll((els) => els.map((e) => [e.dataset.no, e.dataset.geo, e.dataset.win, e.querySelectorAll('.geo path, .geo rect').length]));
+  const byNo = Object.fromEntries(geo.map(([no, n, win, k]) => [no, { n: +n, win: +win, k }]));
+  for (const no of ['01', '02', '03', '04', '05']) { expect(byNo[no].n, no).toBeGreaterThan(0); expect(byNo[no].k, no).toBe(byNo[no].n); }
+  expect(byNo['01'].win).toBeGreaterThanOrEqual(70); expect(byNo['01'].win).toBeLessThanOrEqual(120);   // make_crops 규칙
+  expect(byNo['05'].win).toBe(90);
+  // 우 스택은 청록 0
+  expect(await page.locator('#plates-r .geo path, #plates-r .geo rect').count()).toBe(0);
+  // 청록만 — 판 위 지오메트리 색
+  const stroke = await page.locator('#plates-l .pl.is-front .geo path').first().evaluate((e) => getComputedStyle(e).stroke);
+  expect(stroke.replace(/\s/g, '')).toBe('rgb(15,169,160)');
 });
 
-/* ── 판 위 계기 ───────────────────────────────────────────────────────── */
-
-test('Ⅰ등급 — 조작 없이 판에 서 있는 것은 넷뿐이다', async ({ page }) => {
-  const errs = watch(page);
+test('호버 — 판이 8px 뜨고 브래킷·리더선·콜아웃이 서며 나머지는 .54 로 감쇠한다(삭제 아님)', async ({ page }) => {
   await boot(page);
-  await hold(page);
-
-  // B9 작업 AOI — 실측 범위가 있는 것만 그린다(상태별 선 종류).
-  expect(await page.evaluate(() => window.__atlas.jobs)).toBeGreaterThan(5);
-  const sts = await page.evaluate(() => [...new Set(window.__atlas.map.getSource('job')._data.features.map((f) => f.properties.st))].sort());
-  expect(sts).toEqual(['done', 'fail', 'run', 'wait']);
-
-  // B12 정사영상 footprint · B10 사업 지역 채색이 켜져 있다.
-  for (const id of ['imgbox-line', 'sig-asset-fill', 'sig-mute', 'job-done', 'job-run', 'job-wait', 'job-fail']) {
-    expect(await page.evaluate((l) => window.__atlas.map.getLayoutProperty(l, 'visibility') !== 'none', id), id).toBe(true);
-  }
-  // B13 십자 핀 — 화면 안에 든 발행 대기 건에 십자가 선다.
-  // (원본 시드의 두 핀 중 하나는 남원 밖 좌표라 이 시야에서는 그려지지 않는다 — 지어내 옮기지 않는다.)
-  expect(await page.locator('#pins .pin').count()).toBeGreaterThan(0);
-
-  // E1/E2 — 벡터 카드 · 임계 범례 · 락온은 상주하지 않는다.
-  await expect(page.locator('#vcard')).toBeHidden();
-  await expect(page.locator('#thr')).toBeHidden();
-  await expect(page.locator('#lock')).toBeHidden();
-
-  // E5 — 작업 AOI 전부가 한 화면에 든다.
-  const fits = await page.evaluate(() => {
-    const m = window.__atlas.map;
-    const b = m.getBounds();
-    return m.getSource('job')._data.features.every((f) => {
-      const c = f.geometry.coordinates[0];
-      return c.every(([x, y]) => x >= b.getWest() && x <= b.getEast() && y >= b.getSouth() && y <= b.getNorth());
-    });
-  });
-  expect(fits).toBe(true);
-
-  expect(errs, errs.join(' | ')).toEqual([]);
-  await page.screenshot({ path: `${SHOTS}/02-grade1.png` });
-});
-
-test('Ⅲ등급 — 원장을 만져도 판이 반응하지 않는다(무반응이 곧 선언)', async ({ page }) => {
-  await boot(page);
-  await hold(page);
-  const before = await page.evaluate(() => ({
-    c: window.__atlas.map.getCenter().toArray(), z: window.__atlas.map.getZoom(), r: window.__atlas.res,
-  }));
-  // B4 전체 사용자 · B11 스파크라인 · B14 관리 타일 — 전부 위치가 없는 값이다.
-  await page.locator('#b-kpi .k').first().hover();
-  await page.locator('#t-visit').hover();
-  await page.locator('#ad-rows .ad').first().hover();
-  await page.waitForTimeout(900);
-  const after = await page.evaluate(() => ({
-    c: window.__atlas.map.getCenter().toArray(), z: window.__atlas.map.getZoom(), r: window.__atlas.res,
-  }));
-  expect(after).toEqual(before);
-  await expect(page.locator('#vcard')).toBeHidden();
-});
-
-test('Ⅱ등급 — B10 행을 누르면 그때 결과가 판에 서고 임계 범례가 함께 뜬다', async ({ page }) => {
-  const errs = watch(page);
-  await boot(page);
-  await pickResult(page);
-  expect(await page.evaluate(() => window.__atlas.res)).toBeTruthy();
-  await expect(page.locator('#thr')).toBeVisible();
-  await expect(page.locator('#vcard')).toBeVisible();
-  await expect(page.locator('#lock')).toBeVisible();
-  expect(await page.locator('#flag-t').innerText()).toContain('지금 지도가 보는 것');
-  expect(errs, errs.join(' | ')).toEqual([]);
-  await page.screenshot({ path: `${SHOTS}/03-grade2.png` });
-});
-
-test('임계 드래그 — 마커를 올리면 통과가 줄고 미달이 늘어난다', async ({ page }) => {
-  await boot(page);
-  await pickResult(page);
-  const before = await page.evaluate(() => window.__atlas.pass);
-  await page.locator('#thr-r').fill('0.45');
-  await page.dispatchEvent('#thr-r', 'input');
+  await geoReady(page);
+  const front = page.locator('#plates-l .pl.is-front');
+  await front.hover();
   await page.waitForTimeout(400);
-  const after = await page.evaluate(() => window.__atlas.pass);
-  expect(after).toBeLessThan(before);
-  const pass = +(await page.locator('#thr-pass').innerText()).replace(/,/g, '');
-  const miss = +(await page.locator('#thr-miss').innerText()).replace(/,/g, '');
-  expect(pass + miss).toBe(before);
+  await expect(front).toHaveClass(/is-hot/);
+  expect(await front.evaluate((e) => getComputedStyle(e).transform)).toMatch(/matrix\(1, 0, 0, 1, 0, -8\)/);
+  expect(await page.locator('#plates-l .pl[data-no="02"]').evaluate((e) => +getComputedStyle(e).opacity)).toBeCloseTo(0.54, 2);
+  expect(await page.locator('#plates-l .pl[data-no="02"]').isVisible()).toBe(true);
+  await expect(front.locator('.callout')).toBeVisible();
+  expect(await front.locator('.bk').evaluateAll((els) => els.map((e) => getComputedStyle(e).opacity))).toEqual(['1', '1', '1', '1']);
+  // 콜아웃 내용 = 실값
+  const c = await front.locator('.callout').innerText();
+  for (const t of ['남원 농지이용', '2,098', '경작지 1,291', '비경작지 807', 'XI-VFM v2.1', '0.45', '판 위', '측정', '2026.06.08']) expect(c, t).toContain(t);
+  expect(await front.locator('.callout').evaluate((e) => getComputedStyle(e).borderTopColor)).toBe('rgb(0, 109, 247)');
+  // 우 스택 앞 판
+  const r = page.locator('#plates-r .pl.is-front');
+  await r.hover(); await page.waitForTimeout(400);
+  await expect(front).not.toHaveClass(/is-hot/);
+  const rc = await r.locator('.callout').innerText();
+  for (const t of ['남원 농경지 2025-06', 'GSD 1.69', 'E 127.348', 'N 35.528', '줌 12–19', '2,098 + 1,674', '318 GB', '촬영 2025-06']) expect(rc, t).toContain(t);
+  // 고스트 콜아웃 — 준비 중은 이유를 말한다
+  await page.locator('#plates-l .pl[data-no="06"] .lab').hover(); await page.waitForTimeout(300);
+  expect(await page.locator('#plates-l .pl[data-no="06"] .callout').innerText()).toContain('결과 파일 없음');
+  await page.mouse.move(700, 850); await page.waitForTimeout(300);
+  expect(await page.locator('.pl.is-hot').count()).toBe(0);
 });
 
-test('B13 호버 — 십자 핀에 리더선과 `연결 추정` 라벨이 붙는다', async ({ page }) => {
+test('키보드 — Tab 으로 판에 들어가면 호버와 같은 장치가 서고 Esc 로 내린다', async ({ page }) => {
   await boot(page);
-  await hold(page);
-  await page.locator('#ap-rows .ap').first().hover();
+  await page.locator('#plates-l .pl[data-no="02"]').focus();
+  await page.waitForTimeout(300);
+  await expect(page.locator('#plates-l .pl[data-no="02"]')).toHaveClass(/is-hot/);
+  await expect(page.locator('#plates-l .pl[data-no="02"] .callout')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+  expect(await page.locator('.pl.is-hot').count()).toBe(0);
+});
+
+/* ── B16 딥링크 ─────────────────────────────────────────────────────── */
+
+test('B16 ?status=대기 — KPI ③ 가 승인 대기 블록으로 데려간다', async ({ page }) => {
+  await boot(page);
+  await expect(page.locator('#b-kpi a.k')).toHaveAttribute('href', 'dashboard.html?status=대기');
+  await page.locator('#b-kpi a.k').click();
+  await page.waitForURL(/status=/);
+  await page.waitForFunction(() => document.documentElement.dataset.deep === 'status');
+  await expect(page.locator('#b-approve')).toHaveAttribute('aria-current', 'true');
+  await expect(page.locator('#b-approve')).toBeInViewport();
+});
+
+test('B16 ?open=<id> — 승인 행이 그 카드로 열린다', async ({ page }) => {
+  await boot(page);
+  const hrefs = await page.locator('#ap-rows tr.ap .go').evaluateAll((els) => els.map((e) => e.getAttribute('href')));
+  expect(hrefs).toEqual(['dashboard.html?open=pa-1', 'dashboard.html?open=pa-6']);
+  await page.locator('#ap-rows tr.ap').nth(1).locator('td').nth(1).click();
+  await page.waitForURL(/open=pa-6/);
+  await page.waitForFunction(() => document.documentElement.dataset.deep === 'open:pa-6');
+  await expect(page.locator('#ap-rows tr.ap[data-id="pa-6"]')).toHaveAttribute('aria-current', 'true');
+  expect(await page.locator('#ap-rows tr.ap[data-id="pa-6"]').innerText()).toContain('농지 활용 분석');
+  await expect(page.locator('#ap-rows tr.ap[data-id="pa-6"]')).toHaveCSS('background-color', 'rgb(214, 230, 255)');
+});
+
+/* ── 도착 · 유휴 · 반응형 ─────────────────────────────────────────────── */
+
+test('도착 — 숫자가 900ms 카운트업으로 도착하고, 유휴 움직임은 앞 판 스윕 하나뿐(≥6 s)', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('lx_logged_in', '1'));
+  await page.goto(URL);
+  await page.waitForFunction(() => document.documentElement.dataset.dash === 'ready');
+  const early = await page.locator('#b-kpi .k .big').first().innerText();
+  await page.waitForTimeout(1200);
+  await expect(page.locator('#b-kpi .k .big').first()).toHaveText('21');
+  expect(+early.replace(/,/g, '')).toBeLessThanOrEqual(21);
+  await geoReady(page);
+  const sweeps = await page.evaluate(() => new Promise((res) => {
+    const seen = []; const t0 = performance.now();
+    const ob = new MutationObserver(() => { const f = document.querySelector('.pl.is-sweep'); if (f && !seen.length) seen.push(performance.now() - t0); });
+    ob.observe(document.querySelector('#plates-l'), { attributes: true, subtree: true, attributeFilter: ['class'] });
+    setTimeout(() => { ob.disconnect(); res(seen); }, 7500);
+  }));
+  expect(sweeps.length).toBe(1);
+  expect(await page.locator('.pl.is-sweep, .is-sweep').count()).toBeLessThanOrEqual(1);
+});
+
+test('반응형 — 1280 에서 마진 안에 들고, 1100 미만이면 스택이 세로로 선다', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await boot(page);
+  const over = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+  expect(over).toBe(false);
+  const ps = await page.locator('#plates-l').evaluate((e) => +getComputedStyle(e).getPropertyValue('--ps'));
+  expect(ps).toBeLessThan(1);
+  await page.setViewportSize({ width: 1000, height: 800 });
   await page.waitForTimeout(400);
-  await expect(page.locator('#pins .pin.is-on')).toHaveCount(1);
-  const txt = await page.evaluate(() => document.querySelector('#pins .pin.is-on').textContent);
-  expect(txt).toContain('연결 추정');
-  // 리더선은 원장 경계에서 핀까지 점선으로 그어진다.
-  expect(await page.evaluate(() => !!document.querySelector('#pins .pin.is-on .ld'))).toBe(true);
-  await page.screenshot({ path: `${SHOTS}/04-pin.png` });
-});
-
-test('자백 — 지도가 못 그리는 것을 화면이 말한다', async ({ page }) => {
-  await boot(page);
-  const own = await page.locator('#own').innerText();
-  expect(own).toContain('모의 실행 · 원본 시드');
-  expect(own).toContain('AOI 미지정');
-  expect(own).toContain('지역 매핑 미확정');
-  expect(await page.evaluate(() => window.__atlas.unmapped)).toBe(4);   // 원본 14 − 시드 10
-  // B9 카드에도 같은 자백이 선다.
-  expect(await page.locator('#b-jobs').innerText()).toContain('AOI 미지정');
-  // 정직 태깅은 칩이 아니라 판 하단 범례 한 줄이다.
-  await expect(page.locator('#tags')).toHaveCount(0);
-  const lg = await page.locator('#legend').innerText();
-  for (const t of ['측정 = 실선', '추정 = 점선', '미확정 = 파선']) expect(lg, t).toContain(t);
-});
-
-test('취득 스캔 스트립 — 정사영상 4시점, 틱이 곧 컨트롤이다', async ({ page }) => {
-  const errs = watch(page);
-  await boot(page);
-  await expect(page.locator('#scan-bar .ep')).toHaveCount(4);
-  expect(await page.locator('#scan-bar .ep').allInnerTexts())
-    .toEqual(['2025-04', '2025-06', '2025-08', '2025-10']);
-  await hold(page);
-  await page.locator('#scan-bar .ep').nth(1).click();
-  await page.waitForTimeout(2200);
-  expect(await page.evaluate(() => window.__atlas.epoch)).toBe(1);
-  expect(await page.locator('#fresh-s').innerText()).toContain('GSD');
-  expect(errs, errs.join(' | ')).toEqual([]);
-});
-
-test('시간 스크러버 — 유리는 하나뿐이고, 재생 중에는 스윕이 멈춘다', async ({ page }) => {
-  await boot(page);
-  const glass = await page.evaluate(() => [...document.querySelectorAll('*')]
-    .filter((e) => {
-      const s = getComputedStyle(e);
-      return (s.backdropFilter && s.backdropFilter !== 'none') || (s.webkitBackdropFilter && s.webkitBackdropFilter !== 'none');
-    }).map((e) => e.id));
-  expect(glass).toEqual(['strip']);
-
-  // 재생 중 = 스윕 정지(움직이는 요소는 화면당 하나).
-  await page.waitForTimeout(600);
-  expect(await page.evaluate(() => window.__atlas.map.getSource('sweep')._data.features.length)).toBe(0);
-  const a = await page.evaluate(() => window.__atlas.win);
-  await page.waitForTimeout(1500);
-  expect(await page.evaluate(() => window.__atlas.win)).not.toBe(a);
-
-  // 세우면 실행 중 작업의 스윕선 하나가 유일한 운동으로 승계된다.
-  await page.locator('#strip-pause').click();
-  await page.waitForTimeout(700);
-  expect(await page.evaluate(() => window.__atlas.map.getSource('sweep')._data.features.length)).toBe(1);
-});
-
-test('호버는 색만이 아니라 물리적으로 반응한다 — 4px 이동 + 숫자 액센트', async ({ page }) => {
-  await boot(page);
-  const row = page.locator('#b-kpi .k').first();
-  await row.hover();
-  await page.waitForTimeout(320);
-  const shift = await row.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m41);
-  expect(shift).toBeCloseTo(4, 0);
-  const color = await row.locator('.kv .n5').evaluate((el) => getComputedStyle(el).color);
-  expect(color).toBe('rgb(0, 109, 247)');
-  await page.screenshot({ path: `${SHOTS}/05-hover.png` });
+  const [l, r] = await Promise.all(['#stack-l', '#stack-r'].map((s) => page.locator(s).evaluate((e) => e.getBoundingClientRect().top)));
+  expect(r).toBeGreaterThan(l + 300);
 });
 
 test('접근성·모션 — 감소 모션에서 화면이 스스로 움직이지 않는다', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await boot(page);
-  const a = await page.evaluate(() => window.__atlas.win);
-  await page.waitForTimeout(1400);
-  expect(await page.evaluate(() => window.__atlas.win)).toBe(a);
-  await expect(page.locator('#strip-play')).toHaveAttribute('aria-pressed', 'false');
-  // 스윕도 서 있다.
-  expect(await page.evaluate(() => window.__atlas.map.getSource('sweep')._data.features.length)).toBe(0);
-  expect(await page.locator('#b-kpi .k').first().locator('.kv').innerText()).toContain('21');
+  await expect(page.locator('#b-kpi .k .big').first()).toHaveText('21');
+  await geoReady(page);
+  await page.waitForTimeout(6500);
+  expect(await page.locator('.is-sweep').count()).toBe(0);
 });

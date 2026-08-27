@@ -1,5 +1,5 @@
-/* Land-XI 로그인 — 마스터 design-canvas/v2/B5-Login.dc.html (NOTES §14 · 2차 개정).
-   좌: 원본 login.html 의 폼 1:1(문구·에러 2종 원본 그대로) · 우: 디오라마 오프닝 필름 Leg 01 루프.
+/* Land-XI 로그인 — 마스터 design-canvas/v2/B5-Login.dc.html (NOTES §14 · 4차 개정 · 구 랜드XI 구도의 중앙 카드).
+   카드 좌: 디오라마 오프닝 필름 Leg 01 루프 · 카드 우: 원본 login.html 의 폼 1:1(문구·에러 2종 원본 그대로).
 
    유지 기능: ?next= 안전 리다이렉트(같은 사이트 *.html 만) · localStorage.lx_logged_in ·
              ?logout 배너 · 아이디 저장(lx_saved_email, 라벨은 원본 '로그인 상태 유지') · 목 인증. */
