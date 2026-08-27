@@ -5,9 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 const dir = path.join(process.cwd(), 'design-canvas/v2');
 const INK = '#010102', G = '#686868', C = '#CCCCCC', H = '#DDDDDD', ACC = '#006DF7', TEAL = '#0FA9A0';
-const rd = (f) => fs.readFileSync(path.join(dir, f), 'utf8').replace(/
-/g, '
-');
+const rd = (f) => fs.readFileSync(path.join(dir, f), 'utf8').replace(/\r\n/g, '\n');
 const wr = (f, s) => { fs.writeFileSync(path.join(dir, f), s, 'utf8'); console.log('wrote', f, s.length); };
 function rep(s, a, b, tag) { if (!s.includes(a)) throw new Error('anchor missing: ' + (tag || a.slice(0, 60))); return s.replace(a, b); }
 const mic = (x, y, w, t, extra = '') => `<div class="mic" style="position:absolute;left:${x}px;top:${y}px;width:${w}px;${extra}">${t}</div>\n`;
@@ -97,8 +95,6 @@ const BADGE4 = BADGE5.replace('>5<', '>4<');
       num(924, 818, '2025-07', 12, INK) + txt(1004, 818, `최근 학습 — <span class="n">best(Vinylhouse).pt</span>`, 12) +
       num(924, 836, '—', 12, C) + txt(1004, 836, `등록일시 · 대장에 없음`, 12, G) +
       `<div style="position:absolute;left:72px;top:866px;width:1368px;height:1px;background:#DDDDDD"></div>`, 'ov-activity');
-    s = s.replace(BADGE5, BADGE4);
-    s = s.replace('라벨링 3 · 학습 5 · 배포 1 = 원본 시드(시연)', '라벨링 3 · 배포 1 = 원본 시드(시연) · 학습 4 = 시연 시드 정정(§15)');
     wr('B5-Project-Overview.dc.html', s);
   } else console.log('skip B5-Project-Overview (done)');
 }
@@ -109,7 +105,7 @@ const BADGE4 = BADGE5.replace('>5<', '>4<');
   if (!s.includes('아카이브 목록에서 선택')) {
     // 마스트헤드 우측 텍스트 · 메모 — 드로어 밖으로
     s = rep(s, '<div class="n" style="position:absolute;left:128px;top:84px;width:1256px;text-align:right;', '<div class="n" style="position:absolute;left:128px;top:84px;width:812px;text-align:right;');
-    s = rep(s, '<div class="mic" style="position:absolute;text-align:right;left:764px;top:131px;width:620px;color:#686868">헤더 접힘 96', '<div class="mic" style="position:absolute;text-align:right;left:660px;top:131px;width:280px;color:#686868">헤더 접힘 96');
+    s = rep(s, '<div class="mic" style="position:absolute;text-align:right;left:764px;top:131px;width:620px;color:#686868">헤더 접힘 96', '<div class="mic" style="position:absolute;text-align:right;left:660px;top:131px;width:280px;white-space:nowrap;color:#686868">헤더 접힘 96');
     // 툴바: 전체(352,80) · 데이터명(440,96) · 검색어(544,100) · 초기화 652 · 검색 712 · 선택 제외 780 · 파일 추가 864(채움 = 열린 드로어의 트리거)
     const tStart = s.indexOf('<div style="position:absolute;left:352px;top:176px;width:96px');
     const tEnd = s.indexOf('<div style="position:absolute;left:128px;top:216px;width:1256px;height:1px');
@@ -180,9 +176,41 @@ const BADGE4 = BADGE5.replace('>5<', '>4<');
       `<div style="position:absolute;left:984px;top:845px;"><span style="font-size:13.5px;line-height:18px;letter-spacing:-.014em;color:${G}">취소</span></div>\n` +
       `<div style="position:absolute;left:1308px;top:836px;width:108px;height:36px;border:1px solid ${INK};display:flex;align-items:center;justify-content:center;font-size:12.5px;letter-spacing:-.014em;color:${INK};white-space:nowrap">추가 <span class="n" style="margin-left:6px">2</span></div>\n`;
     s = rep(s, '\n</div>\n</x-dc>', '\n' + d + '</div>\n</x-dc>', 'data-close');
-    s = s.replace(BADGE5, BADGE4);
     wr('B5-Project-Data.dc.html', s);
   } else console.log('skip B5-Project-Data (done)');
+}
+
+/* ───────── 5. 보정 2차 — 시스템 법(≥12px · 액센트 1) · 겹침 · 대표 이미지 변경 · 배지 5 ───────── */
+{
+  let s = rd('B5-Projects.dc.html');
+  if (!s.includes('일탈 1회 — 드로어')) {
+    s = rep(s, `<span class="n" style="font-size:13px;color:#006DF7;margin-left:10px">열기 ›</span>`, `<span class="n" style="font-size:13px;color:${INK};margin-left:10px">열기 ›</span>`, 'pj-open');
+    s = rep(s, `stroke="#006DF7" stroke-width="1.5"`, `stroke="#006DF7" stroke-width="1"`, 'pj-brk');
+    s = rep(s, /<div class="mic" style="position:absolute;left:128px;top:848px;white-space:nowrap;color:#CCCCCC">일탈 1회[^<]*<\/div>/.exec(s)[0],
+      `<div class="mic" style="position:absolute;left:600px;top:876px;width:340px;text-align:right;white-space:nowrap;color:${C}">일탈 1회 — 드로어가 우·하 마진을 뚫는다 · 3행은 스크롤</div>`, 'pj-dev');
+    wr('B5-Projects.dc.html', s);
+  } else console.log('skip polish B5-Projects');
+}
+{
+  let s = rd('B5-Project-Overview.dc.html');
+  if (!s.includes('대표 이미지 <span')) {
+    s = rep(s, `>초대 <span style="color:${C}">·</span> 인라인</div>`, `>초대</div>`, 'ov-inv');
+    s = s.replace(/left:(924|1052)px;top:738px;font-size:11px/g, 'left:$1px;top:738px;font-size:12px');
+    s = rep(s, `white-space:nowrap">남원 드론 정사영상 · 비닐하우스 4동 · 결과 도형 = 남원시 비닐하우스 조사 2025</div>`,
+      `white-space:nowrap">남원 드론 · 비닐하우스 4동 · 청록 = 조사 2025 결과</div>` +
+      `<div class="mic" style="position:absolute;left:964px;top:318px;width:420px;text-align:right;white-space:nowrap;color:${G}">대표 이미지 <span style="color:${INK}">변경 ›</span></div>`, 'ov-hero');
+    s = s.replace(BADGE4, BADGE5);
+    s = s.replace('라벨링 3 · 배포 1 = 원본 시드(시연) · 학습 4 = 시연 시드 정정(§15)', '라벨링 3 · 학습 5 · 배포 1 = 원본 시드(시연)');
+    wr('B5-Project-Overview.dc.html', s);
+  } else console.log('skip polish B5-Project-Overview');
+}
+{
+  let s = rd('B5-Project-Data.dc.html');
+  if (s.includes('font-size:11px')) {
+    s = s.replace(/font-size:11px/g, 'font-size:12px');
+    s = s.replace(BADGE4, BADGE5);
+    wr('B5-Project-Data.dc.html', s);
+  } else console.log('skip polish B5-Project-Data');
 }
 
 /* ───────── 4. B5-Project-Train — 새 판 ───────── */
@@ -194,20 +222,20 @@ const BADGE4 = BADGE5.replace('>5<', '>4<');
   let head = data.slice(0, segStart);
   head = head.replace('<span class="d" style="font-size:14.5px;color:#010102">데이터</span><span class="n" style="font-size:12px;letter-spacing:.02em;color:#010102">10</span></div><div style="position:absolute;left:192px;top:158px;width:103px;height:2px;background:#010102"></div>',
     '<span class="d" style="font-size:14.5px;color:#686868">데이터</span><span class="n" style="font-size:12px;letter-spacing:.02em;color:#CCCCCC">10</span></div>');
-  head = head.replace('<span class="d" style="font-size:14.5px;color:#686868">학습</span><span class="n" style="font-size:12px;letter-spacing:.02em;color:#CCCCCC">4</span></div>',
-    `<span class="d" style="font-size:14.5px;color:#010102">학습</span><span class="n" style="font-size:12px;letter-spacing:.02em;color:#010102">4</span></div><div style="position:absolute;left:390px;top:158px;width:80px;height:2px;background:${INK}"></div>`);
-  head = head.replace('헤더 접힘 96 — 프로젝트명 24 + 탭만(원본 3겹 레일 667px → 레일 72 한 겹)', '학습 탭 — 지도 없음 · 상태 열 4 · 카드 클릭 = 결과 드로어');
-  head = head.replace('Object Detection · 정사영상 · 도엽 10 · 결과 1,674 필지', 'Object Detection · 정사영상 · 도엽 10 · 학습 4 · 기반 모델 XI-VFM v2.1 고정');
+  head = head.replace('<span class="d" style="font-size:14.5px;color:#686868">학습</span><span class="n" style="font-size:12px;letter-spacing:.02em;color:#CCCCCC">5</span></div>',
+    `<span class="d" style="font-size:14.5px;color:#010102">학습</span><span class="n" style="font-size:12px;letter-spacing:.02em;color:#010102">5</span></div><div style="position:absolute;left:390px;top:158px;width:80px;height:2px;background:${INK}"></div>`);
+  head = head.replace('헤더 접힘 96 — 원본 3겹 레일 667 → 레일 72 한 겹', '학습 탭 — 지도 없음 · 상태 열 4 · 카드 = 결과 드로어');
+  head = head.replace('Object Detection · 정사영상 · 도엽 10 · 결과 1,674 필지', 'Object Detection · 정사영상 · 도엽 10 · 학습 5 · 기반 모델 XI-VFM v2.1 고정');
   if (!head.includes('top:158px;width:80px')) throw new Error('train tab swap failed');
 
   let b = '';
   // 툴바
   b += btn(128, 176, 120, '새로 학습하기', 'fill');
   b += box(260, 176, 160, 28, H, `<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="${G}" stroke-width="1.5" style="flex:none"><circle cx="8.5" cy="8.5" r="5.75"/><path d="m12.75 12.75 4 4"/></svg><span style="color:${C}">학습명</span>`);
-  b += mic(436, 184, 300, `학습 이력 <span class="n" style="color:${INK}">4</span> — 대기 1 · 진행 1 · 완료 2 · 실패 0${tag('시연')}`, 'white-space:nowrap');
+  b += mic(436, 184, 300, `학습 이력 <span class="n" style="color:${INK}">5</span> — 대기 2 · 진행 2 · 완료 1 · 실패 0 · 원본 시드 그대로${tag('시연')}`, 'white-space:nowrap');
   b += hl(128, 216, 812);
   // 상태 열 4
-  const cols = [[128, '대기', 1], [331, '진행', 1], [534, '완료', 2], [737, '실패', 0]];
+  const cols = [[128, '대기', 2], [331, '진행', 2], [534, '완료', 1], [737, '실패', 0]];
   for (const [x, name, n] of cols) {
     b += `<div style="position:absolute;left:${x}px;top:232px;"><span class="d" style="font-size:14.5px;line-height:20px">${name}</span><span class="n" style="font-size:12px;letter-spacing:.02em;color:${n ? INK : C};margin-left:8px">${n}</span></div>\n`;
     b += hl(x, 256, 191, INK);
@@ -216,18 +244,20 @@ const BADGE4 = BADGE5.replace('>5<', '>4<');
     let s = '';
     if (opts.sel) s += brk(x, y, 191, 108, INK, 12);
     s += `<div style="position:absolute;left:${x + 10}px;top:${y + 12}px;width:171px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span class="d" style="font-size:13.5px;line-height:18px">${name}</span></div>\n`;
-    s += num(x + 10, y + 36, l1, 11, G) + num(x + 10, y + 54, l2, 11, opts.sel ? INK : G) + num(x + 10, y + 72, l3, 11, G);
+    const clip = 'width:171px;overflow:hidden;text-overflow:ellipsis';
+    s += num(x + 10, y + 36, l1, 12, G, clip) + num(x + 10, y + 54, l2, 12, opts.sel ? INK : G, clip) + num(x + 10, y + 72, l3, 12, G, clip);
     if (opts.word) s += `<div class="mic" style="position:absolute;left:${x + 10}px;top:${y + 90}px;white-space:nowrap;color:${INK}">${opts.word}</div>\n`;
     s += hl(x, y + 108, 191);
     return s;
   };
-  b += card(128, 266, '학습 #5', '시작 2026.06.11 22:30 · 소요 —', '라벨 4,200 · IoU — · F1 —', 'XI-VFM v2.1 · 에폭 — · 배치 —', { word: '대기 — 앞에 진행 1' });
-  b += card(331, 266, '학습 #4', '시작 2026.06.11 21:45 · 소요 —', '라벨 4,200 · IoU — · F1 —', 'XI-VFM v2.1 · 에폭 — · 배치 —', { word: '진행 중 · 경과 —' });
-  b += card(534, 266, '비닐하우스 v2.0', '시작 2026.04.15 08:50 · 소요 —', 'IoU <b style="font-weight:400">0.84</b> · F1 0.89 · 라벨 3,450', 'XI-VFM v2.1 · 에폭 100 · 배치 16', { sel: true, word: '완료 · 결과 드로어 열림 ›' });
-  b += card(534, 386, '비닐하우스 v1.0', '시작 2026.03.20 · 소요 —', 'IoU 0.76 · F1 0.81 · 라벨 1,800', 'XI-VFM v2.1 · 에폭 — · 배치 —', { word: '완료' });
+  b += card(128, 266, '학습 #5', '2026.06.11 22:30 · 소요 —', 'IoU — · F1 —', '라벨 4,200 · 에폭 — · 배치 —', { word: '대기 — 앞에 진행 2' });
+  b += card(128, 386, '비닐하우스 v1.0', '2026.04.15 11:10 · 1 h 15 m', 'IoU 0.71 · F1 0.76', '라벨 1,560 · 에폭 — · 배치 —', { word: '대기 — 재학습 줄' });
+  b += card(331, 266, '학습 #4', '2026.06.11 21:45 · 소요 —', 'IoU — · F1 —', '라벨 4,200 · 에폭 — · 배치 —', { word: '진행 중 · 경과 —' });
+  b += card(331, 386, '비닐하우스 v2.0', '2026.05.10 14:30 · 35 m', 'IoU 0.78 · F1 0.83', '라벨 2,800 · 에폭 — · 배치 —', { word: '진행 중 · 중간 지표' });
+  b += card(534, 266, '비닐하우스 v2.1', '2026.05.18 07:40 · 1 h 35 m', 'IoU 0.82 · F1 0.87', '라벨 3,842 · 에폭 100 · 배치 16', { sel: true, word: '완료 · 결과 드로어 열림 ›' });
   b += `<div style="position:absolute;left:737px;top:266px;width:191px;height:108px;border:1px dashed ${C}"></div>\n`;
   b += mic(749, 292, 170, `실패 없음 — 실패 시 이 열에 <span style="color:${INK}">앰버 브래킷</span> + 사유 원문 1줄(원본 상태칩 → 말)`, 'line-height:17px');
-  b += mic(128, 512, 812, `카드 = 원본 이력 카드 7필드(이름 · 상태 · 시작 · 소요 · 라벨 · IoU · F1) + 기반 모델 · 에폭/배치 — 값 없는 칸은 —, 지어내지 않는다`, 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis');
+  b += mic(128, 512, 812, `카드 = 원본 이력 카드 7필드(이름 · 상태 · 시작 · 소요 · IoU · F1 · 라벨) + 에폭/배치 — 기반 모델은 헤더에 한 번 · 원본 시드 5건의 값·상태 그대로(시연) · 값 없는 칸은 —`, 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis');
   b += hl(128, 540, 812);
   // 인셋 — 라벨링/분석 풀블리드 모드 320×200
   const ix = 128, iy = 560, iw = 320, ih = 200;
@@ -256,60 +286,62 @@ const BADGE4 = BADGE5.replace('>5<', '>4<');
   const rowsF = [
     ['학습명 *', '예: 학습 #6', C], ['기반 모델(백본)', 'XI-VFM v2.1 · 고정 — 이 과제는 위 기반 모델 위에서 학습', INK],
     ['이전 학습 이어가기', '없음 (새로 시작) ▾ — 이 과제의 이전 결과를 이어받아 추가 학습(선택)', G],
-    ['데이터셋 *', '선택 ▾ — 데이터 탭에서 만든 데이터셋 1개만', G], ['탐지 형태', 'Object Detection — 프로젝트 설정을 따름(변경 불가)', INK],
-    ['고급 옵션 ›', '입력 크기 640×640 · 학습:검증 80:20 · 배치 16 · 에폭 100 · IoU 0.5 · Confidence 0.25', G],
+    ['데이터셋 *', '선택 ▾ — 데이터 탭에서 만든 데이터셋 2 중 1개', G],
+    ['이미지 크기', '640 × 640 ▾', INK], ['학습 : 검증 비율', '80 : 20 ▾', INK], ['에폭 (Epochs)', '100', INK], ['배치 크기', '16', INK],
+    ['IoU · Confidence 임계값', '0.5 · 0.25', INK],
     ['', `취소 · <span style="color:${INK}">학습 시작</span> — 필수 2필드 미입력 시 비활성`, G],
   ];
   let fyy = fy + 16;
   for (const [k, v, col] of rowsF) {
-    b += lab(fx, fyy + 4, k) + `<div class="n" style="position:absolute;left:${fx + 130}px;top:${fyy + 3}px;width:330px;font-size:12px;letter-spacing:.01em;color:${col};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v}</div>\n` + hl(fx, fyy + 24, 460);
-    fyy += 26;
+    b += lab(fx, fyy + 4, k) + `<div class="n" style="position:absolute;left:${fx + 150}px;top:${fyy + 3}px;width:310px;font-size:12px;letter-spacing:.01em;color:${col};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v}</div>\n` + hl(fx, fyy + 22, 460);
+    fyy += 24;
   }
-  b += mic(fx, fyy + 6, 460, `추가 기능 없음 확인 — 상태 열 4 = 원본 상태칩 3(대기중 · 진행중 · 완료)의 재배치 + 실패(Prefect 어휘) · 검색 = 학습명 · 카드 클릭 = 결과 드로어(원본과 같음) · 취소/재시작 · 로그 보기 · 비교는 원본에 없어 <span style="color:${INK}">넣지 않았다</span>`, 'line-height:16px');
+  b += mic(fx, fyy + 4, 460, `추가 기능 없음 확인 — 상태 열 4 = 원본 상태칩 3(대기중 · 진행중 · 완료)의 재배치 + 실패(Prefect 어휘) · 검색 = 학습명 · 카드 클릭 = 결과 드로어 · 취소/재시작 · 로그 · 비교는 원본에 없어 <span style="color:${INK}">넣지 않았다</span>`, 'line-height:16px');
   // 학습 결과 드로어 480
   let d = `<div style="position:absolute;left:960px;top:64px;width:480px;height:836px;background:#FFFFFF"></div>\n` + vl(960, 64, 836, INK) +
     `<div style="position:absolute;left:984px;top:82px;"><span class="d" style="font-size:20px;line-height:26px">학습 결과</span></div>\n` +
     `<div style="position:absolute;left:1404px;top:86px;"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="${G}" stroke-width="1.3"><path d="M.75.75l10.5 10.5M11.25.75.75 11.25"/></svg></div>\n` +
-    mic(984, 114, 432, `비닐하우스 v2.0 · 완료 · 원본 드로어 5섹션 그대로${tag('시연')}`, 'white-space:nowrap') + hl(984, 138, 432);
+    mic(984, 114, 432, `비닐하우스 v2.1 · 완료 · 원본 드로어 5섹션 그대로 · 값 = 원본 시드${tag('시연')}`, 'white-space:nowrap') + hl(984, 138, 432);
   const kv2 = (y, a, b1, c, d1) => `<div style="position:absolute;left:984px;top:${y}px;font-size:12px;letter-spacing:-.01em;color:${G};white-space:nowrap">${a}</div><div class="n" style="position:absolute;left:1090px;top:${y}px;font-size:12.5px;letter-spacing:.01em;white-space:nowrap">${b1}</div>` +
-    (c ? `<div style="position:absolute;left:1220px;top:${y}px;font-size:12px;letter-spacing:-.01em;color:${G};white-space:nowrap">${c}</div><div class="n" style="position:absolute;left:1316px;top:${y}px;font-size:12.5px;letter-spacing:.01em;white-space:nowrap">${d1}</div>` : '') + '\n';
+    (c ? `<div style="position:absolute;left:1236px;top:${y}px;font-size:12px;letter-spacing:-.01em;color:${G};white-space:nowrap">${c}</div><div class="n" style="position:absolute;left:1326px;top:${y}px;font-size:12.5px;letter-spacing:.01em;white-space:nowrap">${d1}</div>` : '') + '\n';
   d += lab(984, 150, '학습 정보');
-  d += kv2(170, '학습명', '비닐하우스 v2.0', '상태', '완료');
-  d += kv2(192, '학습 시작', '2026.04.15 08:50', '소요 시간', `<span style="color:${C}">—</span>`);
-  d += kv2(214, '라벨 수', '3,450', '클래스 수', '2');
+  d += kv2(170, '학습명', '비닐하우스 v2.1', '상태', '완료');
+  d += kv2(192, '학습 시작', '2026.05.18 07:40', '소요 시간', '1시간 35분');
+  d += kv2(214, '라벨 수', '3,842', '클래스 수', '2');
   d += hl(984, 238, 432);
   d += lab(984, 250, '학습 설정');
-  d += txt(984, 270, '구성 라벨링 데이터', 12, G) + txt(1090, 270, `주생면 1구역 정사영상 <span style="color:${C}">·</span> 주생면 2구역 정사영상`, 12.5);
+  d += txt(984, 270, '구성 라벨링 데이터', 12, G) + txt(1090, 270, `남원 농경지 2025.04 <span style="color:${C}">·</span> 2025.06 <span style="color:${C}">·</span> 2025.08`, 12.5);
   d += kv2(292, '기반 모델(백본)', 'XI-VFM v2.1', '입력 크기', '640 × 640');
   d += kv2(314, '이전 학습', '없음 (새로 시작)', '탐지 형태', 'Object Detection');
   d += kv2(336, '학습 : 검증', '80 : 20', '배치 크기', '16');
   d += kv2(358, '에폭', '100', 'IoU · Conf', '0.5 · 0.25');
   d += hl(984, 382, 432);
   d += lab(984, 394, '학습 결과');
-  d += `<div class="n" style="position:absolute;left:984px;top:412px;font-size:32px;line-height:36px;letter-spacing:-.01em;color:${ACC}">0.84</div>` + txt(984, 452, '영역 일치도 (IoU)', 12, G);
-  d += `<div class="n" style="position:absolute;left:1120px;top:412px;font-size:32px;line-height:36px;letter-spacing:-.01em;color:${INK}">0.89</div>` + txt(1120, 452, '종합 정확도 (F1)', 12, G);
-  d += num(1256, 424, '검증 셋 20 % 기준 · 시드 값', 11, G) + num(1256, 440, 'v1.0 대비 IoU +0.08 · F1 +0.08', 11, G);
+  d += `<div class="n" style="position:absolute;left:984px;top:412px;font-size:32px;line-height:36px;letter-spacing:-.01em;color:${ACC}">0.82</div>` + txt(984, 452, '영역 일치도 (IoU)', 12, G);
+  d += `<div class="n" style="position:absolute;left:1120px;top:412px;font-size:32px;line-height:36px;letter-spacing:-.01em;color:${INK}">0.87</div>` + txt(1120, 452, '종합 정확도 (F1)', 12, G);
+  d += num(1256, 422, '검증 셋 20 % 기준 · 원본 시드', 12, G) + num(1256, 440, 'v2.0 대비 IoU +0.04 · F1 +0.04', 12, G);
   d += hl(984, 474, 432);
   d += lab(984, 486, '클래스별 성능 — Precision · Recall · F1');
-  for (const [i, cname] of ['비닐하우스_단동', '비닐하우스_다동'].entries()) {
-    const y = 508 + i * 22;
-    d += txt(984, y, cname, 12) + `<div style="position:absolute;left:1120px;top:${y + 4}px;width:220px;height:10px;border:1px dotted ${C}"></div>` + num(1350, y + 1, '— · — · —', 11, C);
-  }
-  d += mic(984, 554, 432, `점선 = 값 없음 — 모델 대장에 클래스별 지표가 없다(원본 표의 숫자는 도로안전 데모) · 있으면 헤어라인 막대 + 소수 3자리`, 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis');
-  d += hl(984, 576, 432);
-  d += lab(984, 588, '오분류 행렬 — 행 = 실제 · 열 = 예측 · 값 = 라벨 수');
+  const bar = (y, cname, f1) => txt(984, y, cname, 12, f1 == null ? G : INK) +
+    (f1 == null
+      ? `<div style="position:absolute;left:1120px;top:${y + 7}px;width:220px;height:0;border-top:1px dotted ${C}"></div>` + num(1350, y, '— · — · —', 12, C)
+      : hl(1120, y + 7, 220, H) + `<div style="position:absolute;left:1120px;top:${y + 6}px;width:${Math.round(220 * f1)}px;height:2px;background:${INK}"></div>` + num(1350, y, `— · — · ${f1.toFixed(2)}`, 12, INK));
+  d += bar(508, '전체(F1)', 0.87) + bar(530, '비닐하우스_단동', null) + bar(552, '비닐하우스_다동', null);
+  d += mic(984, 574, 432, `헤어라인 막대 = F1 × 220 px · 클래스별 값은 대장에 없어 점선(원본 표의 숫자는 도로안전 시드) · 있으면 소수 3자리`, 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis');
+  d += hl(984, 596, 432);
+  d += lab(984, 608, '오분류 행렬 — 행 = 실제 · 열 = 예측 · 값 = 라벨 수');
   const cls = ['단동', '다동', '배경'];
-  const gx = 984, gy = 608, cw = 96, ch = 22, hw = 80;
-  d += `<div style="position:absolute;left:${gx + hw}px;top:${gy}px;width:${cw * 3}px;height:${ch}px;display:flex">` + cls.map(c => `<div class="n" style="width:${cw}px;text-align:center;font-size:11px;line-height:${ch}px;color:${G}">예측 ${c}</div>`).join('') + '</div>\n';
+  const gx = 984, gy = 628, cw = 96, ch = 22, hw = 80;
+  d += `<div style="position:absolute;left:${gx + hw}px;top:${gy}px;width:${cw * 3}px;height:${ch}px;display:flex">` + cls.map(c => `<div class="n" style="width:${cw}px;text-align:center;font-size:12px;line-height:${ch}px;color:${G}">예측 ${c}</div>`).join('') + '</div>\n';
   for (const [r, c] of cls.entries()) {
     const y = gy + ch * (r + 1);
-    d += hl(gx, y, hw + cw * 3) + `<div class="n" style="position:absolute;left:${gx}px;top:${y}px;width:${hw}px;font-size:11px;line-height:${ch}px;color:${G}">실제 ${c}</div>`;
+    d += hl(gx, y, hw + cw * 3) + `<div class="n" style="position:absolute;left:${gx}px;top:${y}px;width:${hw}px;font-size:12px;line-height:${ch}px;color:${G}">실제 ${c}</div>`;
     for (let k = 0; k < 3; k++) d += `<div class="n" style="position:absolute;left:${gx + hw + cw * k}px;top:${y}px;width:${cw}px;text-align:center;font-size:12px;line-height:${ch}px;color:${r === k ? INK : C}">${r === k ? '—' : '—'}</div>`;
     d += '\n';
   }
   d += hl(gx, gy + ch * 4, hw + cw * 3);
   for (let k = 0; k <= 3; k++) d += vl(gx + hw + cw * k, gy + ch, ch * 3);
-  d += mic(984, gy + ch * 4 + 8, 432, `대각선 = 맞춘 수(잉크) · 나머지 = 오분류(회색) — 시드 없음이라 전부 — · 5×5 원본 표를 클래스 2 + 배경 = 3×3 로`, 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis');
+  d += mic(984, gy + ch * 4 + 8, 432, `대각선 = 맞춘 수(잉크) · 나머지 = 오분류(회색) — 셀 값은 대장에 없어 — · 크기 = 클래스 n + 배경: 원본 시드 5클래스 = 5×5, 이 프로젝트 2 + 배경 = 3×3`, 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis');
   d += `<div style="position:absolute;left:984px;top:845px;"><span style="font-size:13.5px;line-height:18px;letter-spacing:-.014em;color:${G}">닫기</span></div>\n`;
   d += `<div class="mic" style="position:absolute;left:1100px;top:846px;width:316px;text-align:right;white-space:nowrap;color:${C}">배포 탭의 발행 폼에서 이 결과를 고른다(원본 픽커)</div>\n`;
 
