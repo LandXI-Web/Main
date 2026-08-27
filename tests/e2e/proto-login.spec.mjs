@@ -132,7 +132,7 @@ test('좌 — 원본 로그인 폼의 컨트롤·문구가 1:1 로 있다', asyn
   expect(type.lblW).toBe('700');
   expect(type.lblSize).toBe('16px');                // 라벨 26 → 20
   expect(type.lbl2Size).toBe('16px');
-  expect(type.inputFam).toMatch(/^"?Paperlogy"?/);
+  expect(type.inputFam).toMatch(/^"?Pretendard"?/); expect(type.inputW).toBe("400");
   expect(type.inputW).toBe('700');
   expect(type.inputSize).toBe('16px');              // 입력·플레이스홀더 28 → 22
   expect(type.phSize).toBe('16px');
