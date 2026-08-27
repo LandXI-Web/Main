@@ -130,19 +130,19 @@ test('좌 — 원본 로그인 폼의 컨트롤·문구가 1:1 로 있다', asyn
   expect(type.signupSize).toBe('20px');
   expect(type.lbl).toMatch(/^"?Paperlogy"?/);      // 7차: 로그인과 같은 서체
   expect(type.lblW).toBe('700');
-  expect(type.lblSize).toBe('20px');                // 라벨 26 → 20
-  expect(type.lbl2Size).toBe('20px');
+  expect(type.lblSize).toBe('16px');                // 라벨 26 → 20
+  expect(type.lbl2Size).toBe('16px');
   expect(type.inputFam).toMatch(/^"?Paperlogy"?/);
   expect(type.inputW).toBe('700');
-  expect(type.inputSize).toBe('22px');              // 입력·플레이스홀더 28 → 22
-  expect(type.phSize).toBe('22px');
-  expect(type.pwSize).toBe('22px');
+  expect(type.inputSize).toBe('16px');              // 입력·플레이스홀더 28 → 22
+  expect(type.phSize).toBe('16px');
+  expect(type.pwSize).toBe('16px');
   expect(type.chkFam).toMatch(/^"?Paperlogy"?/);
   expect(type.chkW).toBe('700');
-  expect(type.chkSize).toBe('18px');                // 로그인 상태 유지 26 → 18
+  expect(type.chkSize).toBe('16px');                // 로그인 상태 유지 26 → 18
   expect(type.findFam).toMatch(/^"?Paperlogy"?/);
   expect(type.findW).toBe('700');
-  expect(type.findSize).toBe('18px');               // 아이디 찾기 | 비밀번호 찾기 26 → 18
+  expect(type.findSize).toBe('16px');               // 아이디 찾기 | 비밀번호 찾기 26 → 18
   expect(type.signup).toMatch(/^"?Pretendard"?/);
   expect(type.lead).toMatch(/^"?Pretendard"?/);
   expect(parseFloat(type.leadSize)).toBeGreaterThanOrEqual(16);

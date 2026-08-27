@@ -222,7 +222,7 @@ const TAB_TITLE = {
   $('#pane-proj').innerHTML = PROJECTS.map((p, i) => `<div class="rk${i ? '' : ' on'}" data-proj="${esc(p.name)}">
     <span class="no n">${String(i + 1).padStart(2, '0')}</span><span class="nm">${esc(p.name)}</span>
     <span class="bar"><i style="width:${((p.gb / max) * 100).toFixed(1)}%"></i></span><span class="val"><b class="big cu" data-n="${p.gb}">0</b><span class="u">GB</span></span></div>`).join('')
-    + `<div class="rk-sum n"><span class="no"></span><span class="nm">합계 ${PROJECTS.length}건</span><span class="bar"></span><span class="val"><b class="cu" data-n="${PROJ_SUM}">0</b><span class="u">GB</span></span></div>`;
+    + `<div class="rk-sum n"><span class="no"></span><span class="nm">합계 ${PROJECTS.length}건</span><span class="bar"></span><span class="val"><b class="big cu" data-n="${PROJ_SUM}">0</b><span class="u">GB</span></span></div>`;
 }
 // 탭 2 — 7일 폴리라인, 직접 라벨 7값
 {

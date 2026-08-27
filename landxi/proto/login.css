@@ -59,12 +59,12 @@ body.lx{ overflow:hidden; background:var(--lx-paper); color:var(--lx-ink); }
 /* ── 폼 — 밑줄 필드(박스 0). 포커스 = 밑줄이 액센트로 그어진다. ───────────── */
 .lg-form{ margin-top:18px; }
 .lx-field{ position:relative; padding-bottom:6px; margin-bottom:10px; }
-.lx-field__label{ display:block; font-family:var(--font-display); font-weight:700; font-size:20px; line-height:24px; letter-spacing:-.01em; color:var(--lx-grey-2); }   /* 7차: Paperlogy 700 20(6차 Pretendard 26) */
+.lx-field__label{ display:block; font-family:var(--font-display); font-weight:700; font-size:16px; line-height:22px; letter-spacing:-.01em; color:var(--lx-grey-2); }   /* 7차: Paperlogy 700 20(6차 Pretendard 26) */
 .lx-field.is-focus .lx-field__label{ color:var(--lx-ink); }
 .lx-field__input{
   display:block; width:100%; margin-top:8px; height:40px; padding:0; border:0; border-radius:0;
   border-bottom:1px solid var(--lx-ink); background:transparent; color:var(--lx-ink);
-  font-family:var(--font-display); font-weight:700; font-size:22px; letter-spacing:-.01em; outline:none;   /* 7차: 입력·플레이스홀더 Paperlogy 700 22(6차 Pretendard 28) */
+  font-family:var(--font-display); font-weight:700; font-size:16px; letter-spacing:-.01em; outline:none;   /* 7차: 입력·플레이스홀더 Paperlogy 700 22(6차 Pretendard 28) */
 }
 .lx-field__input::placeholder{ color:var(--lx-grey); }
 .lx .lx-field__input:focus-visible{ outline:none; }
@@ -82,16 +82,16 @@ body.lx{ overflow:hidden; background:var(--lx-paper); color:var(--lx-ink); }
 .lx-field__msg::before{ content:""; width:6px; height:6px; background:var(--lx-ink); flex:none; }
 
 .lg-opts{ display:flex; flex-wrap:wrap; align-items:center; row-gap:8px; margin-top:6px; }   /* 7차: 18px 는 399 폭에 한 줄(상태 유지 좌 · 찾기 링크 우). 좁은 폭에서만 감싼다 */
-.lx-check{ display:inline-flex; align-items:center; gap:10px; cursor:pointer; font-family:var(--font-display); font-weight:700; font-size:18px; line-height:24px; letter-spacing:-.01em; position:relative; }   /* 7차: Paperlogy 700 18 */
+.lx-check{ display:inline-flex; align-items:center; gap:10px; cursor:pointer; font-family:var(--font-display); font-weight:700; font-size:16px; line-height:22px; letter-spacing:-.01em; position:relative; }   /* 7차: Paperlogy 700 18 */
 .lx-check input{ position:absolute; opacity:0; width:0; height:0; }
 .lx-check__box{ width:18px; height:18px; border:1px solid var(--lx-ink); flex:none; }
 .lx-check input:checked + .lx-check__box{ background:var(--lx-accent); border-color:var(--lx-accent); }   /* 체크 = 액센트 */
 .lx-check input:focus-visible + .lx-check__box{ outline:1px solid var(--lx-accent); outline-offset:2px; }
 .lg-find{ margin-left:auto; display:flex; align-items:center; gap:8px; }
-.lg-find__a{ font-family:var(--font-display); font-weight:700; font-size:18px; line-height:24px; letter-spacing:-.01em; color:var(--lx-accent); text-decoration:none; border-bottom:1px solid transparent; transition:border-color var(--lx-hover) var(--lx-hover-ease); }   /* 찾기 링크 = 액센트 */
+.lg-find__a{ font-family:var(--font-display); font-weight:700; font-size:16px; line-height:22px; letter-spacing:-.01em; color:var(--lx-accent); text-decoration:none; border-bottom:1px solid transparent; transition:border-color var(--lx-hover) var(--lx-hover-ease); }   /* 찾기 링크 = 액센트 */
 .lg-find__a:hover{ border-bottom-color:var(--lx-accent); }
 .lg-sep{ font-size:14px; color:var(--lx-grey); }
-.lg-find .lg-sep{ font-size:18px; line-height:24px; }
+.lg-find .lg-sep{ font-size:16px; line-height:22px; }
 
 /* 버튼 2 나란히 — 로그인(액센트 채움 — 로그인 페이지의 유일한 색 채움 CTA, NOTES §14 로그인 예외) · 계정 신청하기(헤어라인 잉크) */
 .lg-actions{ display:flex; gap:10px; margin-top:16px; }

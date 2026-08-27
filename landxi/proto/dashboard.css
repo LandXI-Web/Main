@@ -186,7 +186,7 @@ a.k:hover .ks .dim{ color:var(--accent); }
 .rk .nm{ font-size:17.5px; color:var(--grey); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .rk .u,.rk-sum .u{ font-size:14px; color:var(--grey); margin-left:5px; }
 .rk-sum{ height:28px; border-top:1px solid var(--line); font-size:16px; color:var(--grey); }
-.rk-sum .nm{ white-space:nowrap; } .rk-sum .val{ text-align:right; white-space:nowrap; } .rk-sum .val b{ font-weight:400; font-size:18px; color:var(--ink); }
+.rk-sum .nm{ white-space:nowrap; } .rk-sum .val{ text-align:right; white-space:nowrap; } .rk-sum .val b{ font-weight:400; font-size:20px; color:var(--ink); }
 .rk .bar{ height:14px; position:relative; border-bottom:1px solid var(--line); }
 .rk .bar i{ position:absolute; left:0; top:0; height:14px; background:var(--grey-3); transform-origin:0 50%; transform:scaleX(0); transition:transform var(--d3) var(--ease); }
 .rk .val{ text-align:right; white-space:nowrap; } .rk .val b{ font-size:20px; color:var(--grey); }
