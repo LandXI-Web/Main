@@ -1,4 +1,4 @@
-// 대시보드(B5-Dashboard-Data) — 기본 · 셀 호버 · 학습데이터 토글 · 탭 2·3 · 1280 · 딥링크. 콘솔 오류를 같이 찍는다.
+// 대시보드(B5-Dashboard-Data) — 기본 · 셀 호버 · 학습데이터 토글 · 탭 2·3 · 1280 · 딥링크 · 1920×1200 · 1440 전체. 콘솔 오류를 같이 찍는다.
 // 실행: node tools/serve.mjs & node tools/proto/shoot-dash.mjs
 import { chromium } from '@playwright/test';
 import fs from 'node:fs';
@@ -30,6 +30,12 @@ await p.locator('#tab-visit').click(); await p.waitForTimeout(1200);
 await p.screenshot({ path: `${out}/b5-04-tab-visit.png` });
 await p.locator('#tab-store').click(); await p.waitForTimeout(1200);
 await p.screenshot({ path: `${out}/b5-05-tab-store.png` });
+await p.context().close();
+p = await open(1920, 1200);
+await p.screenshot({ path: `${out}/b5-08-1920.png` });
+await p.context().close();
+p = await open(1440, 900);
+await p.screenshot({ path: `${out}/b5-09-1440-full.png`, fullPage: true });
 await p.context().close();
 p = await open(1280, 800, '?tab=proj');
 await p.screenshot({ path: `${out}/b5-06-1280.png`, fullPage: true });

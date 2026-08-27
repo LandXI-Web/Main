@@ -15,6 +15,7 @@ import { RESULTS } from '../assets/data/results.js';
 import { MODELS } from '../assets/data/models.js';
 import { IMAGERY } from '../assets/data/imagery.js';
 import { CHANGE } from '../assets/data/change.js';
+import { CROPS } from '../assets/data/crops.js';
 
 export const nf = new Intl.NumberFormat('ko-KR');
 const DAY = 86400000;
@@ -112,29 +113,41 @@ export const NOTICE = { ...DASH.notice, id: 8, more: '../notice.html' };
 /* B13. 카드 발행 승인 대기 — 원본 CARD_APPROVALS 2건. 요청자·요청시각까지 원본 값.
    행 클릭은 원본의 `admin-publish.html?open=<id>` 자리다(우리는 지도 핀으로 간다). */
 // 카드 ↔ 지역 연결은 원본에 없다 — A5 과제명에서 되짚은 **연결 추정**이며 화면이 그렇게 말한다.
+// 증거 크롭 = crops.js 의 실크롭 중 요청 지역 기준점에 **가장 가까운 것**(코드가 고른다, 손으로 놓지 않는다).
+//   도통동 = 원본 시드 핀(127.39, 35.41) · 시 중앙권 = 농지이용 결과의 camera.center. 거리(km)를 같이 적는다 → `추정`.
+//   도로안전 카드는 결과 폴리곤이 없으므로 헤어라인 없는 `-clean` 정사영상 크롭을 쓴다.
+const FARM = RESULTS.find((r) => r.id === 'namwon-farmland-2025');
 const APPROVAL_META = {
-  '도로안전 정사영상 v2.1': { id: 'pa-1', at: '2026.06.10 14:30', emd: '도통동' },
-  '농지 활용 분석 v2.0': { id: 'pa-6', at: '2026.05.15 08:50', emd: '시 중앙권' },
+  '도로안전 정사영상 v2.1': { id: 'pa-1', at: '2026.06.10 14:30', emd: '도통동', ref: [127.39, 35.41], set: 'namwon-farmland-2025', clean: true },
+  '농지 활용 분석 v2.0': { id: 'pa-6', at: '2026.05.15 08:50', emd: '시 중앙권', ref: FARM.camera.center, set: 'namwon-farmland-2025', clean: false },
 };
+const kmBetween = (a, b) => Math.hypot((a[0] - b[0]) * 111.32 * Math.cos((b[1] * Math.PI) / 180), (a[1] - b[1]) * 110.57);
+function nearestCrop(set, ref, clean) {
+  const best = CROPS[set].map((c) => ({ c, km: kmBetween(c.lnglat, ref) })).sort((x, y) => x.km - y.km)[0];
+  const { c, km } = best;
+  return { src: '../' + (clean && c.clean ? c.clean : c.file), km: +km.toFixed(1), cls: clean ? null : c.cls, conf: clean ? null : c.conf, source: c.source === 'vworld' ? 'V-World' : '정사영상', gsdCm: +(c.gsd * 100).toFixed(0) };
+}
 export const APPROVALS = DASH.queue
   .filter((q) => APPROVAL_META[q.title])
-  .map((q, i) => ({ i, title: q.title, sub: q.sub, ...APPROVAL_META[q.title], lnglat: q.pin.lnglat }));
+  .map((q, i) => { const m = APPROVAL_META[q.title]; return { i, title: q.title, sub: q.sub, id: m.id, at: m.at, emd: m.emd, lnglat: q.pin.lnglat, crop: nearestCrop(m.set, m.ref, m.clean) }; });
 
-/* B14. 사용자·콘텐츠 관리 타일 4 — 원본 support-grid 그대로. */
+/* B14. 사용자·콘텐츠 관리 타일 4 — 원본 support-grid 그대로. desc 는 원본 부제 원문,
+   big/sub 는 같은 수치를 타일 큰 숫자로 그리기 위한 분해(값은 desc 와 동일). act = 조치 필요(warn). */
 export const ADMIN_TILES = [
-  { name: '사용자 관리', short: '사용자 관리', desc: '전체 21명 · 가입 대기 1', href: 'admin-users.html' },
-  { name: '공지사항 관리', short: '공지사항 관리', desc: '전체 12건 · 긴급 2', href: 'admin-notice.html' },
-  { name: '문의 관리', short: '문의 관리', desc: '미답변 6 · 전체 12', href: 'admin-inquiry.html' },
-  { name: '자주 묻는 질문 관리', short: '자주 묻는 질문', desc: '전체 15건', href: 'admin-faq.html' },
+  { name: '사용자 관리', short: '사용자 관리', desc: '전체 21명 · 가입 대기 1', href: 'admin-users.html', big: 21, unit: '명', bigLabel: '전체', sub: { label: '가입 대기', n: 1, act: true } },
+  { name: '공지사항 관리', short: '공지사항 관리', desc: '전체 12건 · 긴급 2', href: 'admin-notice.html', big: 12, unit: '건', bigLabel: '전체', sub: { label: '긴급', n: 2, act: true } },
+  { name: '문의 관리', short: '문의 관리', desc: '미답변 6 · 전체 12', href: 'admin-inquiry.html', big: 6, unit: '건', bigLabel: '미답변', act: true, sub: { label: '전체', n: 12 } },
+  { name: '자주 묻는 질문 관리', short: '자주 묻는 질문', desc: '전체 15건', href: 'admin-faq.html', big: 15, unit: '건', bigLabel: '전체' },
 ];
 
-/* B4–B8. KPI 5 — 원본 화면의 값·부제·링크를 그대로 쓴다(우리 목업값으로 갈아치우지 않는다). */
+/* B4–B8. KPI 5 — 원본 화면의 값·부제·링크를 그대로 쓴다(우리 목업값으로 갈아치우지 않는다).
+   act = 조치 필요 → 숫자·상태어가 warn(#D1352B). 정보 KPI(①②)는 액센트 파랑. design/system.md §2 색 역할. */
 export const KPI = [
   { label: '전체 사용자', value: 21, unit: '명', sub: '정상 19 · 가입 승인 대기 1', href: 'admin-users.html' },
   { label: '발행 분석 카드', value: 8, unit: '건', sub: '공개 7 · 비공개 1', href: 'ai-card.html' },
-  { label: '카드 발행 승인 대기', value: APPROVALS.length, unit: '건', sub: '검토 필요', href: 'admin-publish.html?status=대기', to: 'b-approve' },
-  { label: '가입 승인 대기', value: 1, unit: '건', sub: '승인 필요', href: 'admin-users.html' },
-  { label: '미답변 문의', value: 6, unit: '건', sub: '전체 12 · 답변 필요', href: 'admin-inquiry.html' },
+  { label: '카드 발행 승인 대기', value: APPROVALS.length, unit: '건', sub: '검토 필요', href: 'admin-publish.html?status=대기', to: 'b-approve', act: true },
+  { label: '가입 승인 대기', value: 1, unit: '건', sub: '승인 필요', href: 'admin-users.html', act: true },
+  { label: '미답변 문의', value: 6, unit: '건', sub: '전체 12 · 답변 필요', href: 'admin-inquiry.html', act: true },
 ];
 /* B10 · B12 — 원본 대시보드 ECharts 시드를 그대로 쓴다(우리 목업값으로 갈아치우지 않는다).
    원본 주석이 "사용량=데모"라고 밝힌 값이므로 화면에는 [추정] 꼬리표를 단다. */

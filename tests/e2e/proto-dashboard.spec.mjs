@@ -89,13 +89,14 @@ test('B1–B15 — 원본 위젯이 전부, 각 한 번, 한 화면에 든다', 
   await expect(page.locator('#pane-visit polyline')).toHaveCount(1);                       // B11
   await expect(page.locator('#pane-visit rect')).toHaveCount(7);
   await expect(page.locator('#pane-store rect')).toHaveCount(7);                          // B12 — 테두리 1 + 6분류
-  await expect(page.locator('#ap-rows tr.ap')).toHaveCount(2);                            // B13
+  await expect(page.locator('#ap-rows .ap')).toHaveCount(2);                               // B13 — 증거 카드 2
+  await expect(page.locator('#ap-rows .ap .ev img')).toHaveCount(2);
   await expect(page.locator('#ad-rows .ad')).toHaveCount(4);                               // B14
   await expect(page.locator('#foot')).toContainText('063-713-1213');                       // B15
-  for (const s of ['#b1', '#b-bb', '#ap-table', '#pane-proj', '#pane-visit', '#pane-store', '#b-notice', '#plate']) await expect(page.locator(s)).toHaveCount(1);
+  for (const s of ['#b1', '#b-bb', '#ap-rows', '#ad-rows', '#pane-proj', '#pane-visit', '#pane-store', '#b-notice', '#plate']) await expect(page.locator(s)).toHaveCount(1);
   expect(await page.locator('#main [role=tab]').count()).toBe(5);                          // 탭 = 판 토글 2 + 우 패널 3 뿐
   expect(await page.evaluate(async () => /FFB633/i.test(await (await fetch('dashboard.css')).text()))).toBe(false);
-  expect(await page.evaluate(() => document.querySelector('#foot').getBoundingClientRect().bottom)).toBeLessThanOrEqual(900);
+  expect(await page.evaluate(() => Math.round(document.querySelector('#foot').getBoundingClientRect().bottom) === document.documentElement.scrollHeight)).toBe(true); // 푸터가 바닥
   expect(errs, errs.join(' | ')).toEqual([]);
 });
 
@@ -212,14 +213,14 @@ test('B16 ?status=대기 — KPI ③ 가 승인 대기 블록으로 데려간다
 
 test('B16 ?open=<id> — 승인 행이 그 카드로 열린다', async ({ page }) => {
   await boot(page);
-  const hrefs = await page.locator('#ap-rows tr.ap .go').evaluateAll((els) => els.map((e) => e.getAttribute('href')));
+  const hrefs = await page.locator('#ap-rows .ap .go').evaluateAll((els) => els.map((e) => e.getAttribute('href')));
   expect(hrefs).toEqual(['dashboard.html?open=pa-1', 'dashboard.html?open=pa-6']);
-  await page.locator('#ap-rows tr.ap').nth(1).locator('td').nth(1).click();
+  await page.locator('#ap-rows .ap').nth(1).locator('.go').click();
   await page.waitForURL(/open=pa-6/);
   await page.waitForFunction(() => document.documentElement.dataset.deep === 'open:pa-6');
-  await expect(page.locator('#ap-rows tr.ap[data-id="pa-6"]')).toHaveAttribute('aria-current', 'true');
-  expect(await page.locator('#ap-rows tr.ap[data-id="pa-6"]').innerText()).toContain('농지 활용 분석');
-  await expect(page.locator('#ap-rows tr.ap[data-id="pa-6"]')).toHaveCSS('background-color', 'rgb(214, 230, 255)');
+  await expect(page.locator('#ap-rows .ap[data-id="pa-6"]')).toHaveAttribute('aria-current', 'true');
+  expect(await page.locator('#ap-rows .ap[data-id="pa-6"]').innerText()).toContain('농지 활용 분석');
+  await expect(page.locator('#ap-rows .ap[data-id="pa-6"]')).toHaveCSS('background-color', 'rgb(214, 230, 255)');
 });
 
 /* ── 도착 · 반응형 · 모션 ─────────────────────────────────────────────── */
@@ -257,3 +258,99 @@ test('접근성·모션 — 감소 모션에서 숫자가 바로 도착하고 �
   await expect(page.locator('#b-kpi .k .big').first()).toHaveText('21');
   expect(await page.locator('#pane-proj .rk.on .bar i').evaluate((e) => getComputedStyle(e).transform)).toMatch(/none|matrix\(1, 0, 0, 1, 0, 0\)/);
 });
+
+/* ── 12.10 — 여백은 콘텐츠로 · 색 역할(파랑 정보 / 빨강 조치 / 검정 본문 / 청록 AI / 앰버 탐지) ── */
+
+const WARN = 'rgb(209, 53, 43)', BLUE = 'rgb(0, 109, 247)';
+// warn 이 허용되는 자리 전부. 이 밖의 요소가 warn 색이면 실패한다(상태색 남용 금지).
+const WARN_OK = ['#b-kpi .k.act .kv b', '#b-kpi .k.act .ks em', '#ap-rows .ap .st', '#ap-rows .ap .go', '#ad-rows .ad .tb b.warn', '#ad-rows .ad .ts b.warn'];
+
+test('B13 — 승인 대기 2건이 요청 지역 실크롭(EVIDENCE-PAIR)으로 선다, 크롭은 코드가 고른 가장 가까운 것', async ({ page }) => {
+  await boot(page);
+  const cards = page.locator('#ap-rows .ap');
+  await expect(cards).toHaveCount(2);
+  const srcs = await cards.locator('.ev img').evaluateAll((els) => els.map((e) => e.getAttribute('src')));
+  expect(srcs[0]).toMatch(/crops\/namwon-farmland-2025\/\d+-clean\.jpg$/);      // 도로안전 = 결과 폴리곤 없음 → clean
+  expect(srcs[1]).toMatch(/crops\/namwon-farmland-2025\/\d+\.jpg$/);            // 농지 = 결과 헤어라인 크롭
+  const loaded = await cards.locator('.ev img').evaluateAll((els) => els.map((e) => e.complete && e.naturalWidth > 0));
+  expect(loaded).toEqual([true, true]);
+  const t = await page.locator('#b-approve').innerText();
+  for (const s of ['도로안전 정사영상', 'v2.1', '남원시 도통동', '농지 활용 분석', 'v2.0', '남원시 시 중앙권', '2026.06.10 14:30', '2026.05.15 08:50', '승인 대기', '검토 ›', 'km']) expect(t, s).toContain(s);
+  expect((t.match(/추정/g) || []).length).toBe(4);                                 // 지역 2 + 크롭 거리 2
+  expect(await page.locator('#ap-rows .ap').first().locator('.ev-l').innerText()).toContain('V-World');
+});
+
+test('B14 — 관리 타일 4가 큰 수로 선다(전체 21 · 가입 대기 1 / 12 · 긴급 2 / 미답변 6 / 15)', async ({ page }) => {
+  await boot(page);
+  const tiles = page.locator('#ad-rows .ad');
+  await expect(tiles).toHaveCount(4);
+  await page.waitForTimeout(1100);
+  expect(await tiles.locator('.tb b').allInnerTexts()).toEqual(['21', '12', '6', '15']);
+  const names = await tiles.locator('.th .d').allInnerTexts();
+  expect(names).toEqual(['사용자 관리', '공지사항 관리', '문의 관리', '자주 묻는 질문 관리']);
+  const t = await page.locator('#ad-rows').innerText();
+  for (const s of ['가입 대기 1', '긴급 2', '미답변', '전체 12']) expect(t, s).toContain(s);
+  const hrefs = await tiles.evaluateAll((els) => els.map((e) => e.getAttribute('href')));
+  expect(hrefs).toEqual(['../admin-users.html', '../admin-notice.html', '../admin-inquiry.html', '../admin-faq.html']);
+  await expect(tiles.nth(0).locator('.th')).toHaveCSS('background-color', 'rgb(232, 241, 255)');   // 머리띠 --tint-1
+});
+
+test('색 역할 — warn 은 조치 필요 자리에만, 파랑은 정보에만, 앰버 0', async ({ page }) => {
+  await boot(page);
+  await page.waitForTimeout(1100);
+  // warn 자리(양성)
+  const kpiBig = await page.locator('#b-kpi .k .kv b').evaluateAll((els) => els.map((e) => getComputedStyle(e).color));
+  expect(kpiBig).toEqual([BLUE, BLUE, WARN, WARN, WARN]);
+  for (const s of ['#b-kpi .k.act .ks em', '#ap-rows .ap .st', '#ap-rows .ap .go']) {
+    const cs = await page.locator(s).evaluateAll((els) => els.map((e) => getComputedStyle(e).color));
+    expect(cs.length, s).toBeGreaterThan(0); for (const c of cs) expect(c, s).toBe(WARN);
+  }
+  const tileBig = await page.locator('#ad-rows .ad .tb b').evaluateAll((els) => els.map((e) => getComputedStyle(e).color));
+  expect(tileBig).toEqual([BLUE, BLUE, WARN, BLUE]);
+  const tileSub = await page.locator('#ad-rows .ad .ts b').evaluateAll((els) => els.map((e) => [e.textContent, getComputedStyle(e).color]));
+  expect(tileSub).toEqual([['1', WARN], ['2', WARN], ['12', 'rgb(1, 1, 2)']]);
+  // warn 남용 0 — 화면의 모든 요소 중 warn 색인 것은 허용 자리 안에 있어야 한다
+  const stray = await page.evaluate(([warn, ok]) => [...document.querySelectorAll('body *')]
+    .filter((e) => getComputedStyle(e).color === warn && e.textContent.trim())
+    .filter((e) => !ok.some((s) => e.closest(s)))
+    .map((e) => e.tagName + '.' + e.className + ':' + e.textContent.trim().slice(0, 20)), [WARN, WARN_OK]);
+  expect(stray).toEqual([]);
+  // 파랑 = 정보/선택: 활성 탭 · 1위 막대 · 섹션 글리프 · 제목 룰
+  await expect(page.locator('#tabs [aria-selected=true]')).toHaveCSS('color', BLUE);
+  await expect(page.locator('#tabs [aria-selected=true]')).toHaveCSS('background-color', 'rgb(232, 241, 255)');
+  await expect(page.locator('#pane-proj .rk.on .bar i')).toHaveCSS('background-color', BLUE);
+  await expect(page.locator('#b-bb svg')).toHaveCSS('color', BLUE);
+  expect(await page.locator('#b1').evaluate((e) => getComputedStyle(e, '::after').backgroundColor)).toBe(BLUE);
+  expect(await page.locator('#b1').evaluate((e) => getComputedStyle(e, '::after').height)).toBe('4px');
+  // 스토리지 범례 = 파랑(정사영상) + 청록(AI 분석)
+  await page.locator('#tab-store').click(); await page.waitForTimeout(300);
+  const fills = await page.locator('#s-bar rect').evaluateAll((els) => els.map((e) => e.getAttribute('fill')));
+  expect(fills.slice(1)).toEqual(['#006DF7', '#010102', '#686868', '#0FA9A0', '#CCCCCC', '#CCCCCC']);
+  // 채운 파란 버튼 0 · 앰버 0 · 라운드 0 · 그림자 0
+  const css = await page.evaluate(async () => (await (await fetch('dashboard.css')).text()));
+  expect(/FFB633/i.test(css)).toBe(false);
+  expect(/linear-gradient|box-shadow|border-radius\s*:\s*[1-9]/.test(css)).toBe(false);
+  expect(await page.evaluate(([blue]) => [...document.querySelectorAll('button, a')].filter((e) => getComputedStyle(e).backgroundColor === blue).length, [BLUE])).toBe(0);
+});
+
+for (const [w, h] of [[1440, 900], [1920, 1200]]) {
+  test(`여백은 콘텐츠로 — ${w}×${h}: 판·패널이 254→420 사이에서 자라고, 푸터는 바닥, 80px 넘는 빈 띠가 없다`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    await boot(page);
+    const m = await page.evaluate(() => {
+      const r = (s) => document.querySelector(s).getBoundingClientRect();
+      const plate = r('#plate-wrap'), panel = r('#panel'), foot = r('#foot');
+      // 본문 블록들의 세로 구간을 모아 그 사이 빈 띠의 최댓값을 잰다
+      const blocks = ['#b1-row', '#b-kpi', '#plate-wrap', '#panel', '#b-approve', '#b-admin', '#foot'].map((s) => r(s)).sort((a, b) => a.top - b.top);
+      let gap = 0; for (let i = 1; i < blocks.length; i++) gap = Math.max(gap, blocks[i].top - blocks[i - 1].bottom);
+      const sh = document.documentElement.scrollHeight;
+      return { plate: plate.height, panel: panel.height, footBottom: Math.round(foot.bottom + scrollY), sh, gap, tail: sh - Math.round(foot.bottom + scrollY) };
+    });
+    expect(m.plate).toBeGreaterThanOrEqual(254); expect(m.plate).toBeLessThanOrEqual(420);
+    expect(Math.abs(m.plate - m.panel)).toBeLessThanOrEqual(1);                    // 판 = 패널 높이
+    expect(m.footBottom).toBe(m.sh);                                                // 푸터가 문서 바닥
+    expect(m.tail).toBe(0);
+    expect(m.gap).toBeLessThanOrEqual(80);                                          // 빈 띠 ≤ 80
+    if (h >= 1200) { expect(m.sh).toBe(h); expect(m.plate).toBeGreaterThan(254); }  // 1920×1200 = 한 화면, 판이 자랐다
+  });
+}

@@ -6,6 +6,7 @@
 //  3) 숫자는 results.js · imagery.js · change.js · services.js · dashboard.js 에서만. 원본 시드 = 시연, 우리가 이은 값 = 추정.
 //     판 위 셀은 실좌표(db-cells.js)를 판에 투영한 것 — 손으로 놓은 셀이 아니다.
 //  4) 불필요한 글자 없음: 설명 문장 0. 자세한 값은 호버 콜아웃에.
+//  5) 색 역할(design/system.md §2): 파랑 = 정보/선택 · 빨강(warn) = 조치 필요 · 검정 = 본문 · 청록 = AI 결과 · 앰버 = 탐지 순간.
 import {
   nf, ymd, T1, BACKBONE, KPI, NAV, NAV_FOOT, NAV_MY, NOTICE, APPROVALS, ADMIN_TILES,
   PROJECTS, VISITS, VISITS_TOTAL, STORAGE, JOBS, JOB_UNMAPPED, IMG,
@@ -81,11 +82,14 @@ $('#b-notice').href = `${NOTICE.more}?notice=${NOTICE.id}`;
 $('#b2-d').textContent = ymd(T1);
 
 /* ══ B4–B8 KPI 5 ═══════════════════════════════════════════════════════ */
+// 색 역할: 정보 KPI(①②) = 파랑, 조치 필요 KPI(③④⑤ act) = warn — 숫자와 상태어(검토/승인/답변 필요)만.
+const actWord = (t) => esc(t).replace(/(검토 필요|승인 필요|답변 필요)/, '<em>$1</em>');
 $('#b-kpi').innerHTML = KPI.map((k) => {
   const inner = `<span class="kl">${esc(k.label)}</span><span class="kv"><b class="big cu" data-n="${k.value}">0</b><span>${esc(k.unit)}</span></span>
-    <span class="ks n">${esc(k.sub)}${k.to ? ' · <span class="dim">?status=대기</span>' : ''}</span>`;
-  return k.to ? `<a class="k" role="listitem" href="dashboard.html?status=대기" title="원본 ${esc(k.href)}">${inner}</a>`
-    : `<div class="k" role="listitem" title="원본 ${esc(k.href)}">${inner}</div>`;
+    <span class="ks n">${k.act ? actWord(k.sub) : esc(k.sub)}${k.to ? ' · <span class="dim">?status=대기</span>' : ''}</span>`;
+  const cls = `k${k.act ? ' act' : ''}`;
+  return k.to ? `<a class="${cls}" role="listitem" href="dashboard.html?status=대기" title="원본 ${esc(k.href)}">${inner}</a>`
+    : `<div class="${cls}" role="listitem" title="원본 ${esc(k.href)}">${inner}</div>`;
 }).join('');
 
 /* ══ B9 백본 헤더 ══════════════════════════════════════════════════════ */
@@ -238,7 +242,8 @@ const TAB_SRC = { proj: `출처 · AI 개발 프로젝트 용량 집계<span cla
 // 탭 3 — 스토리지 스택 40px + 범례 6 + 잔여
 {
   const W = 600, tot = STORAGE.total; let x = 0;
-  const tone = ['#010102', '#686868', '#686868', '#CCCCCC', '#CCCCCC', '#CCCCCC'];
+  // 범례 색 역할 — 정사영상 = 파랑(정보) · AI 분석 = 청록(AI 결과) · 나머지 무채.
+  const tone = ['#006DF7', '#010102', '#686868', '#0FA9A0', '#CCCCCC', '#CCCCCC'];
   $('#pane-store').innerHTML = `<div class="pane-big"><b class="big cu" data-n="${STORAGE.used}" data-dec="1">0</b><span class="u">/ ${tot} TB</span></div>
     <svg id="s-bar" viewBox="0 0 ${W} 40" preserveAspectRatio="none" aria-hidden="true"><rect x=".5" y=".5" width="${W - 1}" height="39" fill="none" stroke="#DDDDDD"/>
     ${STORAGE.parts.map((p, i) => { const w = (p.tb / tot) * W; const r = `<rect x="${x.toFixed(2)}" y="0" width="${w.toFixed(2)}" height="40" fill="${tone[i]}"><title>${esc(p.label)} ${p.tb} TB</title></rect>`; x += w; return r; }).join('')}</svg>
@@ -265,19 +270,28 @@ $('#tabs').addEventListener('keydown', (ev) => {
 });
 
 /* ══ B13 · B14 · B15 ═════════════════════════════════════════════════════ */
+// B13 — EVIDENCE-PAIR. 크롭은 db-data 가 요청 지역 기준점에 가장 가까운 실크롭을 고른 것(거리 km 를 적는다 → 추정).
+$('#ap-cnt').textContent = String(APPROVALS.length);
 $('#ap-rows').innerHTML = APPROVALS.map((a, i) => {
   const m = a.title.match(/^(.*?)\s+(v[\d.]+)$/); const name = m ? m[1] : a.title, ver = m ? m[2] : '';
-  const href = `dashboard.html?open=${a.id}`;
-  const cell = (t, cls = '') => `<td class="${cls}"><a href="${href}" tabindex="-1">${t}</a></td>`;
-  return `<tr class="ap" data-id="${a.id}" title="원본 admin-publish.html?open=${a.id}">
-    ${cell(`<span class="i">${String(i + 1).padStart(2, '0')}</span>`)}${cell(esc(name))}${cell(esc(ver))}
-    ${cell(`${esc(a.at)}<span class="tag">시연</span>`)}${cell(`남원시 ${esc(a.emd)}<span class="tag">추정</span>`)}${cell('승인 대기')}
-    <td class="r"><a class="go" href="${href}">검토 › <span class="dim">?open=${a.id}</span></a></td></tr>`;
+  const href = `dashboard.html?open=${a.id}`; const c = a.crop;
+  const evl = c.cls ? `<i>${esc(c.cls)}</i> ${(c.conf * 100).toFixed(0)}% · ${c.source} ${c.gsdCm} cm` : `${c.source} ${c.gsdCm} cm · 폴리곤 없음`;
+  return `<article class="ap" role="listitem" data-id="${a.id}" title="원본 admin-publish.html?open=${a.id}">
+    <a class="ev" href="${href}" tabindex="-1" aria-hidden="true"><img src="${c.src}" alt="" loading="lazy" width="640" height="420"><span class="ev-l n">${evl}</span></a>
+    <div class="meta">
+      <div class="mh"><span class="no n">${String(i + 1).padStart(2, '0')}</span><span class="nm">${esc(name)}</span><span class="ver n">${esc(ver)}</span><span class="st warn">승인 대기</span></div>
+      <dl class="n"><dt>요청 일시</dt><dd>${esc(a.at)}<span class="tag">시연</span></dd>
+        <dt>요청 지역</dt><dd>남원시 ${esc(a.emd)}<span class="tag">추정</span></dd>
+        <dt>증거 크롭</dt><dd>기준점에서 ${c.km} km<span class="tag">추정</span></dd></dl>
+      <a class="go warn" href="${href}">검토 › <span class="dim">?open=${a.id}</span></a>
+    </div></article>`;
 }).join('');
+// B14 — 타일 4: 큰 수 = 정보(파랑) / 조치 필요(warn). 값은 원본 부제(desc)와 같다.
 const AD_ICON = ['<path d="M8 4.5h4v4H8z"/><path d="M4.5 16v-3.5h11V16"/>', '<path d="M3 3.5h14v9H3z"/><path d="M6 12.5V17"/><path d="M6 7h8M6 9.5h5"/>', '<path d="M3 5h14v10H3z"/><path d="m3 5 7 5.5L17 5"/>', '<path d="M3 3h14v14H3z"/><path d="M6 7.5h8M8.5 12.5h5.5"/><path d="M5.5 11h2v3h-2z"/>'];
-$('#ad-rows').insertAdjacentHTML('beforeend', ADMIN_TILES.map((t, i) => `<a class="ad" href="../${esc(t.href)}" title="원본 ${esc(t.href)}">
-  <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter" aria-hidden="true">${AD_ICON[i]}</svg>
-  <span class="d">${esc(t.name)}</span><span class="mic n">${esc(t.desc)}</span><span class="mic">›</span></a>`).join(''));
+$('#ad-rows').innerHTML = ADMIN_TILES.map((t, i) => `<a class="ad" href="../${esc(t.href)}" title="원본 ${esc(t.href)} — ${esc(t.desc)}">
+  <span class="th"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter" aria-hidden="true">${AD_ICON[i]}</svg><span class="d">${esc(t.name)}</span><span class="mic">›</span></span>
+  <span class="tb"><b class="big cu${t.act ? ' warn' : ''}" data-n="${t.big}">0</b><span>${esc(t.unit)}</span><span class="tl">${esc(t.bigLabel)}</span></span>
+  <span class="ts n">${t.sub ? `${esc(t.sub.label)} <b class="${t.sub.act ? 'warn' : ''}">${t.sub.n}</b>` : '&nbsp;'}</span></a>`).join('');
 $('#foot-l').textContent = 'LX 한국국토정보공사 · 고객센터 063-713-1213 · 개인정보처리방침 · 이용약관 · 이메일주소무단수집거부';
 
 /* ══ B16 딥링크 ═════════════════════════════════════════════════════════ */
@@ -286,7 +300,7 @@ function deepLink() {
   if (q.get('status') === '대기') { $('#b-approve').setAttribute('aria-current', 'true'); document.documentElement.dataset.deep = 'status'; setTimeout(() => goTo('b-approve'), 300); }
   const open = q.get('open');
   if (open) {
-    const tr = $(`#ap-rows tr[data-id="${CSS.escape(open)}"]`);
+    const tr = $(`#ap-rows .ap[data-id="${CSS.escape(open)}"]`);
     if (tr) { tr.setAttribute('aria-current', 'true'); document.documentElement.dataset.deep = 'open:' + open; setTimeout(() => { tr.scrollIntoView({ block: 'center' }); $('.go', tr).focus({ preventScroll: true }); }, 300); }
     else { document.documentElement.dataset.deep = 'open:missing'; say(`?open=${open} — 승인 대기 목록에 없는 카드`); }
   }
@@ -312,6 +326,6 @@ let saved = null; try { saved = localStorage.getItem('lx_dash_tab'); } catch { /
 setTab(saved || 'proj', { remember: false });
 requestAnimationFrame(() => {
   document.documentElement.dataset.dash = 'ready';
-  $$('#b-kpi .cu').forEach(countUp);
+  $$('#b-kpi .cu, #ad-rows .cu').forEach(countUp);
   deepLink();
 });
