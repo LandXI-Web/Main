@@ -66,7 +66,7 @@ body.lx{ overflow:hidden; background:var(--lx-paper); color:var(--lx-ink); }
   border-bottom:1px solid var(--lx-ink); background:transparent; color:var(--lx-ink);
   font-family:var(--font-display); font-weight:700; font-size:16px; letter-spacing:-.01em; outline:none;   /* 7차: 입력·플레이스홀더 Paperlogy 700 22(6차 Pretendard 28) */
 }
-.lx-field__input::placeholder{ color:var(--lx-grey); }
+.lx-field__input::placeholder{ color:var(--lx-grey); font-family:var(--lx-body); font-weight:400; }   /* 8차: 예시 글자 = 소개 문장과 같은 Pretendard 400 */
 .lx .lx-field__input:focus-visible{ outline:none; }
 .lx-field__rule{
   position:absolute; left:0; right:100%; top:71px; height:1px;   /* 라벨 24 + 8 + 입력 40 − 1 */
