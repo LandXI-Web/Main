@@ -111,7 +111,7 @@ html[data-dash] [data-line]>*{ transform:none; }
 .src i{ font-style:normal; color:var(--grey-3); }
 
 /* 판 스택 — 종이 스택. 앞 판(01)이 아래·z 최상, 뒤 판은 pitch 만큼 위로 물러나 윗 띠만 보인다 */
-.plates{ position:relative; height:calc(var(--ph) * var(--ps) + var(--top) + 16px); --top:232px; }
+.plates{ position:relative; height:calc((var(--ph) + var(--top)) * var(--ps) + 16px); --top:232px; }
 .pl{ position:absolute; left:0; width:100%; height:calc(var(--ph) * var(--ps)); display:block;
   transition:transform var(--hov) var(--hove), opacity var(--hov) var(--hove); }
 .pl .box{ position:absolute; left:calc(115px * var(--ps)); top:0; width:296px; height:200px; transform-origin:0 0;
@@ -236,6 +236,7 @@ a.k:hover .ks .dim{ color:var(--accent); }
 /* ══ 반응형 — 1100 미만이면 스택이 세로로 선다 ═══════════════════════════ */
 @media (max-width:1439px){
   #band{ grid-template-columns:repeat(4,minmax(0,1fr)) 278px 262px; }
+  .ch > .mic{ display:none; }                       /* 좁으면 부제(시연 태그)만 접고 수치는 남긴다 */
 }
 @media (max-width:1280px){
   :root{ --m:40px; }
