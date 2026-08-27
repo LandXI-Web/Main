@@ -99,7 +99,7 @@ function renderTabs() {
     <button type="button" class="tb" id="tab-${t.id}" role="tab" data-tab="${t.id}"
       aria-selected="${t.id === S.tab}" aria-controls="panel-${t.id}" title="원본 ${t.frag}">${esc(t.name)}<span class="c n">${COUNT[t.id]()}</span></button>`).join('');
   const total = TAB_IDS.reduce((n, id) => n + COUNT[id](), 0);
-  $('#ds-sub').textContent = `${total}건 · 업로드 ${COUNT.upload()} · 완료 ${COUNT.manage()} · 발행중 ${COUNT.publishing()} · 아카이브 ${COUNT.archive()} — 원본 4탭 · ${SEED_TAG}`;
+  $('#ds-sub').textContent = `${total}건 · 업로드 ${COUNT.upload()} · 완료 ${COUNT.manage()} · 발행중 ${COUNT.publishing()} · 아카이브 ${COUNT.archive()}`;
 }
 const tabFromUrl = () => { const t = new URLSearchParams(location.search).get('tab'); return TAB_IDS.includes(t) ? t : DEFAULT_TAB; };
 function setTab(id, push = true) {
@@ -523,7 +523,7 @@ function renderLayers() {
       <span class="mt n">${g ? (g.kind === 'raster' ? `도엽 · GSD ${(g.im.gsd * 100).toFixed(2)} cm` : `GeoJSON · ${a.geo.count}셀`) : '실측 범위 없음'}</span>
       ${g ? `<button type="button" class="act n" data-ly="${a.id}" data-act="fit">범위로</button>` : ''}
       <button type="button" class="act n" data-ly="${a.id}" data-act="vis">${a.hidden ? '표시' : '숨김'}</button></div>`;
-  }).join('') : `<p class="ly-empty">아카이브 타일의 <b>표시</b>를 누르면 그 자산이 여기 레이어로 섭니다.</p>`;
+  }).join('') : `<p class="ly-empty">표시된 레이어 없음</p>`;
   const f = S.arch.find((x) => x.id === S.focus), g = f && geomOf(f);
   $('#plate-cap').textContent = g ? g.cap : (f ? `${f.name} · 실측 범위 없음` : '');
   const none = $('#plate-none');

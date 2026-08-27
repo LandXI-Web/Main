@@ -228,7 +228,7 @@ function paint() {
     el.pips.querySelectorAll('.sb-pip').forEach(r =>
       r.setAttribute('data-on', +r.dataset.leg === wpLeg ? '1' : '0'));
     // 실캡션 — 장소 · 날짜 · GSD 는 manifest 가 들고 있는 실제 출처 문자열이다.
-    el.caption.textContent = M.legs[k].place + ' · ' + M.legs[k].caption;
+    if (el.caption) el.caption.textContent = M.legs[k].place + ' · ' + M.legs[k].caption;
   }
 }
 

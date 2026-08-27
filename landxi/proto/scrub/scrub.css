@@ -112,7 +112,7 @@ html{ scroll-behavior:auto; }
   color:var(--lx-ink); text-decoration:none; padding-bottom:4px;
   border-bottom:1px solid var(--lx-ink); transition:color var(--lx-hover) var(--lx-hover-ease), border-color var(--lx-hover) var(--lx-hover-ease);
 }
-.sb-cta__a:hover{ color:var(--lx-accent); border-color:var(--lx-accent); }
+.sb-cta__a:hover{ color:var(--lx-accent); border-color:var(--lx-accent); background:var(--lx-tint-1); }
 .sb-cta__a--2{ color:var(--lx-grey-2); border-color:var(--lx-hair); }
 
 /* ── 계기판 — 엔진은 아무것도 그리지 않는다(§5). 전부 이 페이지 코드다. ───── */
@@ -158,7 +158,7 @@ html{ scroll-behavior:auto; }
   font-family:var(--lx-display); font-weight:500; font-size:12px; letter-spacing:.2px;
   color:var(--lx-grey-2); transition:color var(--lx-hover) var(--lx-hover-ease);
 }
-.sb-route li[aria-current="true"] .sb-route__t{ color:var(--lx-ink); }
+.sb-route li[aria-current="true"] .sb-route__t{ color:var(--lx-accent); }   /* T3 — 활성 상태어는 액센트 */
 .sb-route button{ all:unset; cursor:pointer; display:flex; align-items:center; gap:10px; }
 .sb-route button:focus-visible{ outline:1px solid var(--lx-accent); outline-offset:3px; }
 
@@ -180,7 +180,7 @@ html{ scroll-behavior:auto; }
    체계 준수 메모(design/system.md 대비 의도적 이탈 3건, 전부 **필름 판 한정**):
      · 워드마크 화이트 + 소프트 섀도 — 위성영상 위에서 순백 글자는 섀도 없이 안 읽힌다
        (§4-2 가 홍보영상의 3D 압출 대신 지정한 값). 종이 크롬에는 그림자가 없다.
-       태그라인·락업은 assets/brand/vector 의 SVG 그대로다. 워드마크만 SUIT 800 조판 —
+       태그라인·락업은 assets/brand/vector 의 SVG 그대로다. 워드마크만 Paperlogy 800 조판(2026-08-27, fonts.html T3) —
        landxi-wordmark.svg 는 Archivo Black 을 좁힌 폴백 재조판이라 홍보영상보다 눌려 보인다.
      · 크림 헤이즈의 radial-gradient — 프리앰블 `pale cream haze` 를 옮긴 것.
      · 태그라인 필드 그린 #1E9E6A — 홍보영상 민트 #52C4A3 의 필름 팔레트 대응값(§4-1 E).
@@ -229,7 +229,7 @@ html{ scroll-behavior:auto; }
 }
 
 /* ③ 태그라인 — 브랜드 벡터(tagline.svg, 3123×253). 좌→우 와이프(clip-path), 홀드,
-   디포커스 아웃. 폭 36.8vw 는 이전 조판(3.05vw SUIT 500)의 실측 폭 530px@1440 그대로.
+   디포커스 아웃. 폭 36.8vw 는 이전 조판(3.05vw SUIT 500, 현재 Paperlogy)의 실측 폭 530px@1440 그대로.
    베이스라인 88 % 아님: 빈 크림 화면에서는 광학 중앙이 옳다(홍보영상도 요람 위 중앙). */
 .sb-end__tag{
   position:absolute; left:0; right:0; top:50%; margin:0; transform:translateY(-50%);

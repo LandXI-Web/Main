@@ -7,14 +7,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/variable/woff2/SUIT-Variable.css">
+<link rel="stylesheet" href="fonts-system.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap">
 <style>
 /* ===== 토큰 (fonts.html 과 동일) ===== */
 :root{
   --paper:#FFFFFF; --ink:#010102; --grey:#686868; --mute:#CCCCCC; --line:#DDDDDD;
-  --sys:'SUIT Variable','Pretendard Variable',Pretendard,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  --sys:'Paperlogy','Pretendard Variable',Pretendard,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
   --body:'Pretendard Variable',Pretendard,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
   --num:'Inter',system-ui,sans-serif;
   --primary:#0C7CE8; --band:#E6F2FF; --band-2:#CFE5FC;
@@ -29,7 +29,7 @@ body{font-family:var(--body);font-weight:400;font-size:14px;line-height:1.6;-web
 button{font:inherit;cursor:pointer;background:none;border:1px solid var(--ink);border-radius:0;color:var(--ink);padding:6px 14px;transition:transform 180ms var(--ease)}
 button:hover{background:var(--ink);color:#fff;transform:translateY(-2px)}
 button.on{background:var(--ink);color:#fff}
-h1,h2,h3{font-family:var(--sys);font-weight:500;letter-spacing:-.01em}
+h1,h2,h3{font-family:var(--sys);font-weight:700;letter-spacing:-.01em}
 
 .top{padding:40px 0 24px;border-bottom:1px solid var(--line)}
 .top h1{font-size:32px;line-height:40px}
@@ -734,7 +734,7 @@ function box(ctx, x, y, w, h, d, accent = false, ink = true) { // 정면 (x,y,w,
   ctx.fillStyle = c.front; ctx.fillRect(x, y, w, h); ctx.strokeRect(x, y, w, h);
 }
 function bracket3(ctx, x, y, w, h, arm = 10) { ctx.strokeStyle = cssv('--primary'); ctx.lineWidth = 1; for (const [cx, cy, sx, sy] of [[x, y, 1, 1], [x + w, y, -1, 1], [x, y + h, 1, -1], [x + w, y + h, -1, -1]]) { ctx.beginPath(); ctx.moveTo(cx + sx * arm, cy); ctx.lineTo(cx, cy); ctx.lineTo(cx, cy + sy * arm); ctx.stroke(); } }
-function label(ctx, x, y, s, o = {}) { ctx.font = `${o.w || 400} ${o.size || 12}px ${o.num ? 'Inter' : o.d ? '"SUIT Variable"' : '"Pretendard Variable"'}, sans-serif`; ctx.fillStyle = o.color || '#010102'; ctx.textAlign = o.align || 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillText(s, x, y); }
+function label(ctx, x, y, s, o = {}) { ctx.font = `${o.w || 400} ${o.size || 12}px ${o.num ? 'Inter' : o.d ? 'Paperlogy' : '"Pretendard Variable"'}, sans-serif`; ctx.fillStyle = o.color || '#010102'; ctx.textAlign = o.align || 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillText(s, x, y); }
 function callout3(ctx, x, y, dx, dy, lines) {
   ctx.strokeStyle = cssv('--primary'); ctx.fillStyle = cssv('--primary'); ctx.lineWidth = 1;
   ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + dy); ctx.lineTo(x + dx, y + dy); ctx.stroke();
