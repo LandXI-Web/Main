@@ -30,8 +30,8 @@ const STATUS = {
   'B5-Project-Delete': ['프로젝트', 'review', '삭제 확인'],
   'B2-Projects': ['프로젝트', 'drop', '2차 안'],
   'B5-Analysis-List': ['분석 서비스', 'review', '서비스 홈'],
-  'B5-Analysis-Run-Review': ['분석 서비스', 'review', '분석 실행 1 · 실행 검토'],
-  'B5-Analysis-Run-Progress': ['분석 서비스', 'review', '분석 실행 2 · 실행중'],
+  'B5-Analysis-Run-Review': ['분석 서비스', 'review', '분석 실행 1 · 실행 검토 — 영상 중심(불러오기 · 업로드)'],
+  'B5-Analysis-Run-Progress': ['분석 서비스', 'review', '분석 실행 2 · 실행중 — 제목 정정 · 영상별 진행 · 누적'],
   'B5-Analysis-Result': ['분석 서비스', 'review', '분석 실행 3 · 실행 결과'],
   // B5-Analysis-Run · Run-1…5: drop — 5단계 안 → 3화면으로 통합(2026-08-27 · NOTES §19.6) · 파일은 git 이력에만
   'B2-HomeFilm': ['메인(필름)', 'review', '필름 스테이지 카피 판 — 구현본이 앞섬'],
