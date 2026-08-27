@@ -1,0 +1,29 @@
+
+[leg 9] A09 -> A10  attempt 1  balance=9338.5
+[leg 9] pending taskId=ba715f193f1e5ce53cef0813736855b6 (원장 기록)
+  v3-leg-09.mp4: generating (0s)
+  v3-leg-09.mp4: generating (4s)
+  v3-leg-09.mp4: generating (10s)
+  v3-leg-09.mp4: generating (16s)
+  v3-leg-09.mp4: generating (25s)
+  v3-leg-09.mp4: generating (35s)
+  v3-leg-09.mp4: generating (47s)
+  v3-leg-09.mp4: generating (62s)
+  v3-leg-09.mp4: generating (78s)
+  v3-leg-09.mp4: generating (93s)
+  v3-leg-09.mp4: generating (109s)
+[leg 9] ok taskId=ba715f193f1e5ce53cef0813736855b6 charged=50 spent=1050/280
+{
+  "rev": 3,
+  "batch": "6b-8b-9-11",
+  "spent_rev": 150,
+  "spent_total": 1050,
+  "cap": 280,
+  "done": [
+    {
+      "leg": 9,
+      "taskId": "ba715f193f1e5ce53cef0813736855b6",
+      "charged": 50
+    }
+  ]
+}

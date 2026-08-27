@@ -631,10 +631,38 @@
       "mp4": "landxi/assets/proto/film/legs/gen/v3-leg-08b.mp4",
       "mp4_bytes": 15650206,
       "finished_at": "2026-08-27T09:00:27.512Z"
+    },
+    {
+      "leg": 9,
+      "rev": 3,
+      "batch": "6b-8b-9-11",
+      "head": "landxi/assets/proto/film/legs/anchors-v3/A09.png",
+      "tail": "landxi/assets/proto/film/legs/anchors-v3/A10.png",
+      "attempt": 1,
+      "model": "kling/v2-1-pro",
+      "duration": "5",
+      "cfg_scale": 0.5,
+      "prompt": "The ridgeline stays in frame throughout and only grows nearer, the raw pale cut face on the near shoulder stays visible the whole time; the warm key holds from upper camera left. The camera descends in one smooth continuous glide along the ridge, dropping steadily while it tilts down from about sixty-five degrees toward thirty-five, so the moss and lichen canopy patches, the spill of grit below the cut face and the thin sand-coloured track resolve, and the flat bare clearing at the foot of the ridge appears in the distance beyond centre right. The altitude only decreases, never rises. Nothing enters or leaves the frame. One single continuous take, no cuts, no camera shake, no zoom snap. Slow, cinematic, controlled.",
+      "prompt_sha256": "8d91ce98c6f2fcdf",
+      "negative_full_chars": 1026,
+      "negative": "sharp alpine spires, snow caps, glaciers, blue sky paint, ski lifts, roads with cars, wind turbines, brass satellite, satellite model, aircraft, airplane, plane model, drone, quadrotor, rotors, brass ring, brass arc, armature, meridian ring, hoop across the sky, sawtooth ridge, jagged peaks, spiked crest, pale blue sea, sky blue water, bright haze, milky haze, washed out horizon, village, harbour, breakwater, boats, buildings, houses, rooftops, plateau, wall, panel, backdrop, board, table",
+      "credits_balance_before": 9338.5,
+      "at": "2026-08-27T09:00:55.651Z",
+      "taskId": "ba715f193f1e5ce53cef0813736855b6",
+      "task_created_at": "2026-08-27T09:01:00.459Z",
+      "ok": true,
+      "credits_reported": 50,
+      "credits_balance_after": 9288.5,
+      "credits_charged": 50,
+      "gen_ms": 116,
+      "wall_ms": 125975,
+      "mp4": "landxi/assets/proto/film/legs/gen/v3-leg-09.mp4",
+      "mp4_bytes": 15668264,
+      "finished_at": "2026-08-27T09:03:06.311Z"
     }
   ],
-  "spent": 1000,
-  "remaining_of_cap": 180,
+  "spent": 1050,
+  "remaining_of_cap": 130,
   "spent_by_rev": {
     "rev2": 150,
     "rev3": 150,
@@ -643,6 +671,6 @@
     "rev3-legs7": 50,
     "rev3-legs6-7-rev3f": 100,
     "rev3-legs8-8b": 100,
-    "rev3-legs6b-8b-9-11": 100
+    "rev3-legs6b-8b-9-11": 150
   }
 }
