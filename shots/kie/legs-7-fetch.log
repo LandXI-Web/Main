@@ -1,0 +1,11 @@
+[leg 7] fetched taskId=993b669995fce2a04579d5b86677a6d1 charged_now=0 charged_total=0
+{
+  "rev": 3,
+  "batch": "7",
+  "leg": 7,
+  "taskId": "993b669995fce2a04579d5b86677a6d1",
+  "charged": 0,
+  "mp4": "landxi/assets/proto/film/legs/gen/v3-leg-07.mp4",
+  "spent_rev": 0,
+  "cap": 60
+}

@@ -8,13 +8,13 @@
 // 왜 legs.mjs 와 따로 있나
 //   legs.mjs 는 "하나의 결정론 필름(build/film/frames 575장)"을 6조각으로 자른다.
 //   이 파일은 서로 다른 렌더러가 구운 소스를 한 편으로 잇는다 —
-//     · src/v3-leg-01..06b.mp4         (kling v2-1-pro AI 레그 1–6b, 앵커 A01→A06→A06b→A07. 이미 GOP 8/faststart
+//     · src/v3-leg-01..07.mp4          (kling v2-1-pro AI 레그 1–7, 앵커 A01→A06→A06b→A07→A08. 이미 GOP 8/faststart
 //                                       규격으로 인코딩된 mp4 — 재인코딩 없이 그대로 싣는다. 06b 는 2026-08-27
 //                                       "D2 go" 로 들어온 중간 앵커 레그 — 고고도 곡률 구간)
-//     · build/film/frames              (MapLibre 결정론 필름 — 레그 07 여수 플레이스홀더만 남았다)
+//     · build/film/frames              (MapLibre 결정론 필름 — 2026-08-27 레그 07 까지 AI 로 교체돼 지금은 쓰지 않는다.
+//                                       concatList/D_ARGS 경로는 다음 플레이스홀더를 위해 남긴다)
 //   이전 플레이스홀더(three-globe 궤도 · 구름 스파이크 · MapLibre 한반도 · MapLibre 남원 · maplibre3d
-//   남원 3D · MapLibre 비닐하우스)는 AI 레그로 교체됐다. 레그 07 은 여수 인계·브랜드 마감이 그 카메라에
-//   묶여 있어 AI 레그 7 이 나올 때까지 유지한다.
+//   남원 3D · MapLibre 비닐하우스 · MapLibre 여수)는 전부 AI 레그로 교체됐다.
 //
 // 스크럽 인코딩(worldflight §6): 일반 웹 인코딩은 키프레임을 2–5초에 한 번 넣는다.
 // 스크럽은 랜덤 액세스이므로 긴 GOP 는 seek 마다 디코더가 앞 키프레임부터 걸어오게
@@ -148,12 +148,18 @@ const PLAN = [
     caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A06b → A07 · 여수 국동항 방파제',
     authored: true,
   },
+  // 07 (2026-08-27 "D7 GO", docs/superpowers/proto/2026-08-27-kie-leg-7.md): AI 레그 7(A07→A08)이 MapLibre 플레이스홀더를
+  // 교체했다. 카메라는 authored — 시작은 레그 06b 끝(여수 17 km), 끝은 국동항 방파제 위 저공 사각(A08: 수천 m, 피치 ~40°).
+  // 영상은 방파제를 향해 완만히 내려오다 끝나므로 끝 고도는 2.4 km 로 잡는다(실제 프레임: 방파제가 화면폭의 ~1/4).
+  // 여수 인계 판(handoffFinal)과 브랜드 마감은 이 끝 카메라를 그대로 이어받는다.
   {
-    id: '07', wp: '여수', label: '여수', place: '여수 가막만', look: 'real',
-    dir: 'build/film/frames', from: 439, to: 574,                   // 5.44 s
+    id: '07', wp: '여수', label: '여수', place: '여수 해안 · 해양쓰레기', look: 'diorama',
+    mp4: 'landxi/assets/proto/film/legs/src/v3-leg-07.mp4',
+    gen: 'landxi/assets/proto/film/legs/gen/v3-leg-07.mp4',
     a: C(127.7305, 34.5630, 17.0, 10, 5),
-    b: C(127.7215, 34.5690, 11.2, 2, 0),
-    caption: 'yeosu-marine-2025-aerial · 격자 9,032셀 · 후보 38,057건',
+    b: C(127.7305, 34.5630, 2.4, 40, 5),
+    caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A07 → A08 · yeosu-marine 항공 1,857건 · 드론 2,078건',
+    authored: true,
   },
 ];
 
@@ -303,16 +309,16 @@ const pTot = legs.reduce((s, L) => s + L.bytesPoster, 0);
 const manifest = {
   generatedAt: new Date().toISOString(),
   builder: 'tools/scrub/assemble.mjs',
-  source: '2개 소스 · kling v2-1-pro AI 레그 1–6b(앵커 A01→A06→A06b→A07) + MapLibre 결정론 필름(레그 07 여수 플레이스홀더)',
+  source: '단일 소스 · kling v2-1-pro AI 레그 1–7(앵커 A01→A06→A06b→A07→A08). MapLibre 플레이스홀더 0',
   fps: FPS,
-  fpsNote: '레그 01–06b 는 24 fps(kling 출력 1932×1072→1080p 스케일), 레그 07 은 25 fps 1280×720. 레그별 legs[].fps / legs[].size.',
+  fpsNote: '전 레그 24 fps(kling 출력 1932×1072→1080p 스케일). 레그별 legs[].fps / legs[].size.',
   filmSize: [1280, 720],
   aiLegs: {
-    ids: ['01', '02', '03', '04', '05', '06', '06b'],
-    doc: ['docs/superpowers/proto/2026-08-26-kie-legs-1-3.md', 'docs/superpowers/proto/2026-08-27-kie-legs-4-6.md', 'docs/superpowers/proto/2026-08-27-kie-legs-4-6b.md'],
+    ids: ['01', '02', '03', '04', '05', '06', '06b', '07'],
+    doc: ['docs/superpowers/proto/2026-08-26-kie-legs-1-3.md', 'docs/superpowers/proto/2026-08-27-kie-legs-4-6.md', 'docs/superpowers/proto/2026-08-27-kie-legs-4-6b.md', 'docs/superpowers/proto/2026-08-27-kie-leg-7.md'],
     note: '미니어처 세계라 실카메라가 없다. startCamera/endCamera 는 앵커 문서의 고도대를 따라 authored 이고 ' +
-      '(A02 고궤도 460 km · A03 ~30 km/피치 60° · A05 남원 분지 8.6 km · A06b 남원 상공 140 km · A07 여수 17 km), 레그 05 끝은 남원 ' +
-      '인계 판의 카메라, 레그 06 은 남원 위 수직 상승, 레그 06b 끝은 이어받는 레그 07(MapLibre 실카메라)의 시작에 맞춘다. ' +
+      '(A02 고궤도 460 km · A03 ~30 km/피치 60° · A05 남원 분지 8.6 km · A06b 남원 상공 140 km · A07 여수 17 km · A08 국동항 2.4 km/피치 40°), 레그 05 끝은 남원 ' +
+      '인계 판의 카메라, 레그 06 은 남원 위 수직 상승, 06b 는 여수 17 km 로 활강, 07 끝(국동항 방파제 저공)은 여수 인계 판·브랜드 마감의 카메라가 된다. ' +
       'cameraSource:"authored" 로 표시. 페이지 오버레이의 숫자는 전부 실데이터다.',
   },
   mobileSize: [960, 540],
@@ -330,9 +336,8 @@ const manifest = {
   spacerVh: +(total + 1).toFixed(3),
   cameraNote: '고도 = 1.5 × 720px × m/px (MapLibre 기본 fov 36.87°, 필름 뷰포트 720px). 줌·GSD 는 고도에서 유도.',
   flightProfile:
-    '레그마다 렌더러가 다르다. 레그 07 의 좌표·고도·방위·피치는 그 레그를 구운 렌더러의 실제 ' +
-    '카메라 값이다(MapLibre 필름 SEG); AI 레그 01–06b 는 authored(aiLegs.note). 그래서 렌더러가 바뀌는 이음매에서는 고도가 실제로 튄다 — 필름 ' +
-    '자체가 거기서 컷이기 때문이다. 계기 바늘이 스냅하지 않도록 페이지가 씸 밴드(0.16vh) ' +
+    '전 레그가 kling AI 미니어처라 실카메라가 없다 — 카메라는 전부 authored(aiLegs.note) 이고 하나의 단조 하강 프로파일로 ' +
+    '이어 붙였다(레그 06 상승·06b 이동 제외). AI 레그끼리의 tail→head 이음매는 앵커를 공유해 diff 0.2 % 대다. 계기 바늘이 스냅하지 않도록 페이지가 씸 밴드(0.16vh) ' +
     '위에서 두 레그의 판독값을 섞는다(scrub.js camAt). 인계 판은 그 덕분에 필름 마지막 ' +
     '프레임과 정확히 같은 카메라로 뜬다.',
   bytes: { desktop: dTot, mobile: mTot, poster: pTot,
@@ -353,11 +358,11 @@ const manifest = {
   },
   handoffFinal: {
     legIndex: legs.length - 1,
-    // 필름 끝 카메라(127.7215, 34.569)에서 동쪽으로 1.3 km. 마감 수축(−35 %)이 끝나는 z13.02
-    // 1440×900 프레임이 V-World 위성영상의 회청색 모자이크 공백(서 lon<127.672 · 동 lon≥127.801)
-    // 을 밟지 않는 중심이다 — ending.js dzFor 주석의 실측 참조. 인계 크로스페이드는 이 오프셋만큼
-    // 미세하게 어긋난다(허용: 화면폭의 ~9 %, 카메라가 이미 멈춰 있는 정지 프레임 위에서).
-    center: [127.736, 34.566],
+    // 2026-08-27 AI 레그 7: 필름 끝 카메라 = 국동항 방파제(127.7305, 34.5630) 2.4 km. 판 중심을 그대로 방파제에 둔다.
+    // 이전 오프셋([127.736, 34.566], MapLibre 플레이스홀더 11.2 km 끝 카메라 기준)은 z13.02 수축 끝 프레임이 V-World
+    // 모자이크 공백(서 lon<127.672 · 동 lon≥127.801)을 밟지 않기 위한 것이었다. 지금은 z15.8 → 수축 끝 z15.2 의
+    // 1440×900 프레임이 lon ±0.02° 라 공백 네 곳 모두 프레임 밖이다(ending.js dzFor 주석의 실측 참조).
+    center: legs.at(-1).endCamera.center,
     zoom: legs.at(-1).endCamera.zoom,
     pitch: legs.at(-1).endCamera.pitch,
     bearing: legs.at(-1).endCamera.bearing,

@@ -3,10 +3,12 @@ import { test, expect } from '@playwright/test';
 // 데이터 관리 — 대시보드 골격(공지 · 기준일 · 제목 · KPI 카드 5) + 단계 뷰(좌 타일 그리드 / 우 패널), 원본 1:1
 //  원본      https://mini531.github.io/namwon-smart-village/landxi7/dataset.html
 //            (+ dataset-upload / dataset-manage / dataset-manage-publishing / dataset-archive)
-//  마스터    design-canvas/v2/B5-DataMgmt.dc.html (1440×900) · NOTES.md §13.7
-//  대조표    docs/superpowers/proto/2026-08-26-dataset-parity.md §11
+//  마스터    design-canvas/v2/B5-DataMgmt.dc.html (1440×900) · NOTES.md §13.7 · §13.8
+//  대조표    docs/superpowers/proto/2026-08-26-dataset-parity.md §11 · §11.6
 //  발주      KPI 카드 = 단계 선택 · 타일에 선반 없음(상태는 그림 위) · 완료 선택 = 우측에 지도 + 기본 정보 자동 ·
-//            발행중 진행 경과는 카드 위 · 액션은 우 패널 · 타일 4단(S·M·L·XL) · `대기중 n건 더 · 전체 보기` 없음 — 전 건 표출
+//            발행중 진행 경과는 카드 위 · 액션은 우 패널 · `대기중 n건 더 · 전체 보기` 없음 — 전 건 표출
+//  발주 2차  업로드 선택 없음 = 카드별 진행 현황판 · 쪽당 4 · 6 · 8 · 16 + 페이저 · 완료 = 실제 위치 + 성과 / 위치 없으면 데이터 테이블 속성 ·
+//            아카이브 = 사용 현황 · 발행 이력 · 메모(이 브라우저에만 저장), 레이어 목록 블록 없음
 const URL = 'proto/dataset.html';
 const ACCENT = 'rgb(0, 109, 247)', WARN = 'rgb(209, 53, 43)', TINT = 'rgb(232, 241, 255)';
 
@@ -19,8 +21,11 @@ function watch(page) {
   return errs;
 }
 async function boot(page, tab) {
-  // 타일 크기는 첫 진입에서만 지운다 — 같은 테스트 안의 새로고침은 저장값을 봐야 한다.
-  await page.addInitScript(() => { localStorage.setItem('lx_logged_in', '1'); if (!sessionStorage.getItem('lx_e2e')) { localStorage.removeItem('lx_ds_size'); sessionStorage.setItem('lx_e2e', '1'); } });
+  // 쪽당 수·메모는 첫 진입에서만 지운다 — 같은 테스트 안의 새로고침은 저장값을 봐야 한다.
+  await page.addInitScript(() => {
+    localStorage.setItem('lx_logged_in', '1');
+    if (!sessionStorage.getItem('lx_e2e')) { for (const k of Object.keys(localStorage)) if (/^lx_ds_/.test(k)) localStorage.removeItem(k); sessionStorage.setItem('lx_e2e', '1'); }
+  });
   await page.goto(URL + (tab ? `?tab=${tab}` : ''));
   await page.waitForFunction(() => document.documentElement.dataset.ds === 'ready', null, { timeout: 20000 });
   await page.waitForTimeout(700);
@@ -31,6 +36,7 @@ const plateIdle = (page) => page.waitForFunction(() => ['idle', 'off'].includes(
 const select = async (page, id) => { await page.locator(`.th[data-open="${id}"]`).click(); await page.waitForTimeout(250); };
 const kpi = (page, id) => page.locator(`#kpi-${id} .kv b`).innerText();
 const cols = (page, list) => page.locator(list).evaluate((e) => getComputedStyle(e).gridTemplateColumns.split(' ').length);
+const heads = (page) => page.locator('#side-info .ph .lb:first-child, #side-info .pbh .lb:first-child').allInnerTexts();
 
 const STAGES = [
   { id: 'upload', name: '데이터 업로드', panel: '#panel-upload', n: 6 },
@@ -100,9 +106,9 @@ test('KPI 카드 5 — 디스크 96 %(warn + 증량 신청) · 단계 4 건수 �
   expect(errs).toEqual([]);
 });
 
-/* ── 단계 4 — 전 건 표출 · 선반 없음 · 시작은 선택 없음(빈 상태 판 + 건수) ── */
+/* ── 단계 4 — 전 건 표출(쪽당 8 이면 1쪽) · 선반 없음 · 시작은 선택 없음 ── */
 for (const s of STAGES) {
-  test(`?tab=${s.id} — 타일 ${s.n} = KPI 건수 · 접힘/전체 보기 없음 · 타일에 버튼 0 · 우 패널은 빈 상태(${s.n})`, async ({ page }) => {
+  test(`?tab=${s.id} — 타일 ${s.n} = KPI 건수 · 접힘/전체 보기 없음 · 타일에 버튼 0 · 페이저 1 / 1 · 우 패널은 ${s.id === 'upload' ? '진행 현황판' : `빈 상태(${s.n})`}`, async ({ page }) => {
     const errs = watch(page);
     await boot(page, s.id);
     await expect(page.locator(`#kpi-${s.id}`)).toHaveAttribute('aria-selected', 'true');
@@ -114,40 +120,88 @@ for (const s of STAGES) {
     expect(text).not.toMatch(/전체 보기|건 더|접기/);
     expect(text).not.toMatch(/습니다|세요|합니다|입니다/);                                         // 문장 0
     expect(await page.locator('#grid .tile[data-id] button, #grid .shelf').count()).toBe(0);      // 선반 없음
+    await expect(page.locator('#pg-n')).toHaveText('1 / 1');
+    await expect(page.locator('#pager')).toHaveAttribute('data-pages', '1');
+    await expect(page.locator('#pg-next')).toBeHidden();                                          // 한 쪽이면 화살표 없음
     await expect(page.locator('#side')).toHaveAttribute('data-mode', 'none');
-    await expect(page.locator('#side-h')).toHaveText(s.name);
     await expect(page.locator('#side-m')).toHaveText(`선택 0 / ${s.n}`);
-    await expect(page.locator('#side .fig--none .big')).toHaveText(String(s.n));
     await expect(page.locator('#plate-wrap')).toBeHidden();
+    if (s.id === 'upload') {
+      // 선택 없음 = 카드별 진행 현황판 — 한 줄 = 한 건(이름 · 상태어 · 막대 % · 크기 · 잔여)
+      await expect(page.locator('#side-h')).toHaveText('진행 현황');
+      expect(await page.locator('#side .pb').count()).toBe(6);
+      expect(await page.locator('#side .pbh .lb').allInnerTexts()).toEqual(['파일 6 · 진행 중 1', '상태', '진행률', '크기', '잔여']);
+      expect(await page.locator('#side .pb .stw').allInnerTexts()).toEqual(['업로드중', '일시정지', '중단됨', '대기중', '대기중', '대기중']);
+      await expect(page.locator('#side .pb[data-id="u1"] [data-ppct]')).toHaveText(/^\d+%$/);
+      await expect(page.locator('#side .pb[data-id="u2"] [data-prem]')).toHaveText('30.1 GB');       // 51.0 GB × 59 %
+      await expect(page.locator('#side .pb[data-id="u4"] [data-prem]')).toHaveText('18.7 GB');       // 0 %
+      expect(await page.locator('#side .pb[data-id="u2"] .bar').evaluate((e) => e.style.getPropertyValue('--pct'))).toBe('41%');
+      expect(await page.locator('#side .pb[data-id="u1"] .stw').evaluate((e) => getComputedStyle(e).color)).toBe(ACCENT);
+      expect(await page.locator('#fig-wrap .fig').count()).toBe(0);
+    } else {
+      await expect(page.locator('#side-h')).toHaveText(s.name);
+      await expect(page.locator('#side .fig--none .big')).toHaveText(String(s.n));
+    }
     expect(await page.locator('#grid .tile[aria-current="true"]').count()).toBe(0);
     expect(errs).toEqual([]);
   });
 }
 
-/* ── 타일 크기 4단 — 열 수 6/4/3/2, localStorage ─────────────────────── */
-test('타일 크기 S·M·L·XL — 열 6/4/3/2 · 그림도 같이 커진다 · 새로고침 뒤에도 남는다', async ({ page }) => {
+/* ── 쪽당 4 · 6 · 8 · 16 + 페이저 — 열 2/3/4/4, 16 = 4×4, localStorage ─────── */
+test('쪽당 4 · 6 · 8 · 16 — 열 2/3/4/4 · 16 은 4×4 로 타일이 낮아진다 · 페이저 1 / 2 ‹ › · 새로고침 뒤에도 남는다', async ({ page }) => {
   const errs = watch(page);
   await boot(page, 'manage');
-  await expect(page.locator('#size button[data-size="M"]')).toHaveAttribute('aria-pressed', 'true');
+  expect(await page.locator('#pp button').allInnerTexts()).toEqual(['4', '6', '8', '16']);
+  await expect(page.locator('#pp button[data-pp="8"]')).toHaveAttribute('aria-pressed', 'true');
   expect(await cols(page, '#dn-list')).toBe(4);
-  const wM = await page.locator('.tile[data-id="d1"] .th').evaluate((e) => e.getBoundingClientRect().width);
-  for (const [k, n] of [['S', 6], ['L', 3], ['XL', 2]]) {
-    await page.locator(`#size button[data-size="${k}"]`).click();
-    await expect(page.locator('body')).toHaveAttribute('data-size', k);
-    expect(await cols(page, '#dn-list')).toBe(n);
-  }
-  const wXL = await page.locator('.tile[data-id="d1"] .th').evaluate((e) => e.getBoundingClientRect().width);
-  expect(wXL).toBeGreaterThan(wM * 1.8);
-  expect(await page.evaluate(() => localStorage.getItem('lx_ds_size'))).toBe('XL');
+  const h8 = await page.locator('.tile[data-id="d1"] .th').evaluate((e) => e.getBoundingClientRect().height);
+  await page.locator('#pp button[data-pp="16"]').click();
+  await expect(page.locator('body')).toHaveAttribute('data-pp', '16');
+  expect(await cols(page, '#dn-list')).toBe(4);
+  const h16 = await page.locator('.tile[data-id="d1"] .th').evaluate((e) => e.getBoundingClientRect().height);
+  expect(h16).toBeLessThan(h8 * 0.8);                                                             // 4행이 한 화면에
+  await expect(page.locator('#pg-n')).toHaveText('1 / 1');
+  await page.locator('#pp button[data-pp="6"]').click();
+  expect(await cols(page, '#dn-list')).toBe(3);
+  await expect(page.locator('#pg-n')).toHaveText('1 / 2');
+  expect(await page.locator('#dn-list .tile[data-id]').count()).toBe(6);
+  await page.locator('#pp button[data-pp="4"]').click();
+  expect(await cols(page, '#dn-list')).toBe(2);
+  await expect(page.locator('#pg-n')).toHaveText('1 / 2');
+  await expect(page.locator('#pager')).toHaveAttribute('data-pages', '2');
+  expect(await page.locator('#dn-list .tile[data-id]').evaluateAll((es) => es.map((e) => e.dataset.id))).toEqual(['d1', 'd2', 'd3', 'd4']);
+  await expect(page.locator('#pg-prev')).toBeDisabled();
+  await page.locator('#pg-next').click();
+  await expect(page.locator('#pg-n')).toHaveText('2 / 2');
+  expect(await page.locator('#dn-list .tile[data-id]').evaluateAll((es) => es.map((e) => e.dataset.id))).toEqual(['d5', 'd6', 'd7', 'd8']);
+  await expect(page.locator('#pg-next')).toBeDisabled();
+  const w4 = await page.locator('.tile[data-id="d5"] .th').evaluate((e) => e.getBoundingClientRect().width);
+  expect(w4).toBeGreaterThan(300);                                                                // 2열 = 그림이 커진다
+  await page.locator('#pg-prev').click();
+  await expect(page.locator('#pg-n')).toHaveText('1 / 2');
+  // 검색은 1쪽으로 · 쪽 수가 준다
+  await page.locator('#q').fill('shp');
+  await expect(page.locator('#pg-n')).toHaveText('1 / 1');
+  expect(await page.locator('#dn-list .tile[data-id]').count()).toBe(2);
+  expect(await page.evaluate(() => localStorage.getItem('lx_ds_pp'))).toBe('4');
   await page.reload();
   await page.waitForFunction(() => document.documentElement.dataset.ds === 'ready');
-  await expect(page.locator('body')).toHaveAttribute('data-size', 'XL');
+  await expect(page.locator('body')).toHaveAttribute('data-pp', '4');
   expect(await cols(page, '#dn-list')).toBe(2);
+  await expect(page.locator('#pg-n')).toHaveText('1 / 2');
+  // 업로드 — 드롭존이 매 쪽 첫 타일. 쪽당 4 = 드롭존 + 3
+  await page.locator('#kpi-upload').click(); await page.waitForTimeout(300);
+  await expect(page.locator('#up-form.tile #drop')).toBeVisible();
+  expect(await page.locator('#up-tiles .tile[data-id]').count()).toBe(3);
+  await expect(page.locator('#pg-n')).toHaveText('1 / 2');
+  await page.locator('#pg-next').click();
+  await expect(page.locator('#up-form.tile #drop')).toBeVisible();
+  expect(await page.locator('#up-tiles .tile[data-id]').evaluateAll((es) => es.map((e) => e.dataset.id))).toEqual(['u4', 'u5', 'u6']);
   expect(errs).toEqual([]);
 });
 
 /* ── 업로드 — 드롭존 검증 3 · 진행 4상태(그림 위 리빌 + %) · 액션 5 는 우 패널 ── */
-test('드롭존 — 검증 3(파일 없음 · 허용 형식 · 1 TB) · 대기 건은 접지 않고 바로 선다', async ({ page }) => {
+test('드롭존 — 검증 3(파일 없음 · 허용 형식 · 1 TB) · 대기 건은 접지 않고 바로 선다 · 현황판에도 한 줄', async ({ page }) => {
   const errs = watch(page);
   await boot(page, 'upload');
   await page.evaluate(() => document.getElementById('up-form').requestSubmit());
@@ -166,9 +220,11 @@ test('드롭존 — 검증 3(파일 없음 · 허용 형식 · 1 TB) · 대기 �
   expect(await kpi(page, 'upload')).toBe('7');
   expect(await page.locator('#panel-upload .tile[data-id]').count()).toBe(7);
   await expect(page.locator('.tile[data-st="wait"]').last()).toContainText('ok.shp');
+  expect(await page.locator('#side .pb').count()).toBe(7);
+  await expect(page.locator('#side .pb').last()).toContainText('ok.shp');
   expect(errs).toEqual([]);
 });
-test('업로드 상태 기계(우 패널) — 일시정지(멈춤) → 재개(그 자리부터) · 이어 올리기 · 세부 정보 · 취소 · Esc = 선택 해제', async ({ page }) => {
+test('업로드 상태 기계(우 패널) — 선택 = 그 건의 상세 · 일시정지(멈춤) → 재개 · 이어 올리기 · 세부 정보 · 취소 → 현황판 · Esc = 선택 해제', async ({ page }) => {
   const errs = watch(page);
   await boot(page, 'upload');
   expect(await page.locator('.tile[data-id="u1"]').getAttribute('data-st')).toBe('run');
@@ -178,10 +234,16 @@ test('업로드 상태 기계(우 패널) — 일시정지(멈춤) → 재개(�
   await expect(page.locator('.tile[data-id="u3"] .st')).toHaveText(/중단됨 \d+%/);
   await expect(page.locator('.tile[data-id="u4"] .st')).toHaveText('대기중 0%');
   await expect(page.locator('.tile[data-id="u2"]')).toHaveAttribute('data-dim', '');
+  // 현황판의 막대가 유휴 운동을 따라 움직인다
+  const b0 = parseInt(await page.locator('#side .pb[data-id="u1"] [data-ppct]').innerText(), 10);
+  await page.waitForTimeout(1900);
+  expect(parseInt(await page.locator('#side .pb[data-id="u1"] [data-ppct]').innerText(), 10)).toBeGreaterThan(b0);
   await select(page, 'u1');
   await expect(page.locator('.tile[data-id="u1"]')).toHaveAttribute('aria-current', 'true');
   await expect(page.locator('#side')).toHaveAttribute('data-mode', 'tile');
   await expect(page.locator('#side-m')).toHaveText('선택 1 / 6');
+  expect(await page.locator('#side .pb').count()).toBe(0);                                        // 선택하면 현황판 대신 상세
+  await expect(page.locator('#fig-wrap .fig')).toHaveAttribute('data-live', '');
   expect(await page.locator('#side-acts .act').allInnerTexts()).toEqual(['일시정지', '취소', '세부 정보']);
   await page.locator('#side-acts .act[data-up="u1"][data-act="pause"]').click();
   expect(await page.locator('.tile[data-id="u1"]').getAttribute('data-st')).toBe('pause');
@@ -205,11 +267,13 @@ test('업로드 상태 기계(우 패널) — 일시정지(멈춤) → 재개(�
   await expect(page.locator('.tile[data-id="u2"]')).toHaveCount(0);
   expect(await kpi(page, 'upload')).toBe('5');
   await expect(page.locator('#side')).toHaveAttribute('data-mode', 'none');
+  expect(await page.locator('#side .pb').count()).toBe(5);                                        // 취소 → 현황판으로
   await select(page, 'u4');
   expect(await page.locator('#side-acts .act').allInnerTexts()).toEqual(['취소', '세부 정보']);
   await page.keyboard.press('Escape');
   await expect(page.locator('#side')).toHaveAttribute('data-mode', 'none');
   expect(await page.locator('#grid .tile[aria-current="true"]').count()).toBe(0);
+  await expect(page.locator('#side-h')).toHaveText('진행 현황');
   expect(errs).toEqual([]);
 });
 test('디스크 96 % · 증량 신청 모달 — 프리셋 · 직접 입력 · 사유 필수', async ({ page }) => {
@@ -230,8 +294,8 @@ test('디스크 96 % · 증량 신청 모달 — 프리셋 · 직접 입력 · �
   expect(errs).toEqual([]);
 });
 
-/* ── 업로드 완료 — 선택 = 우측에 지도 + 기본 정보 자동 · 발행 폼은 패널 안 ── */
-test('완료 타일 선택 — 브래킷 + 틴트 캡션, 우 패널에 V-World 판(도엽 + 실측 브래킷) + 기본 정보 + `지도 레이어 발행 ›` · 다시 누르면 해제', async ({ page }) => {
+/* ── 업로드 완료 — 선택 = 실제 위치 + 성과 / 위치 없으면 데이터 테이블 속성 · 발행 폼은 패널 안 ── */
+test('완료 도엽 선택 — 브래킷 + 틴트 캡션, 우 패널에 V-World 판(도엽 + 실측 브래킷 + 청록 결과) + 성과 2 + 기본 정보 + `지도 레이어 발행 ›` · 다시 누르면 해제', async ({ page }) => {
   const errs = watch(page);
   await boot(page, 'manage');
   await expect(page.locator('.tile[data-id="d4"] .word')).toHaveText('완료 · 아카이빙 2회');
@@ -243,6 +307,14 @@ test('완료 타일 선택 — 브래킷 + 틴트 캡션, 우 패널에 V-World 
   await expect(page.locator('#side-h')).toHaveText('NW_ortho_202604_section_A.tif');
   await expect(page.locator('#side-m')).toHaveText('선택 1 / 8');
   await expect(page.locator('#plate-wrap')).toBeVisible();
+  // 성과 — results.js 실측치. 농지이용 2,098 필지 · 비닐하우스 9,664 동(1,674 필지). 범위 안 건수는 GeoJSON 을 세어 적는다.
+  expect(await heads(page)).toEqual(['성과 2 · AI 결과']);
+  expect(await page.locator('#side-info .rs .nm').evaluateAll((es) => es.map((e) => e.firstChild.textContent))).toEqual(['농지이용 현황', '비닐하우스 조사']);
+  expect(await page.locator('#side-info .rs .nv').allInnerTexts()).toEqual(['2,098필지', '9,664동']);
+  expect(await page.locator('#side-info .rs .at').allInnerTexts()).toEqual(['2026.06.08', '2026.06.06']);
+  await expect(page.locator('#side-info .rs').nth(1).locator('.nm small').first()).toHaveText('· 1,674 필지');
+  await expect(page.locator('#side-info [data-rin="namwon-farmland-2025"]')).toHaveText('· 범위 내 2', { timeout: 15000 });
+  await expect(page.locator('#side-info [data-rin="namwon-greenhouse-2025"]')).toHaveText('· 범위 내 0', { timeout: 15000 });
   expect(await page.locator('#side-info dt').allInnerTexts()).toEqual(['이름', '형식', '크기', '업로드 일시', '촬영일', 'GSD', '좌표계', '아카이빙', '등록자', '범위']);
   await expect(page.locator('#side-info dd').nth(5)).toHaveText('1.08 cm');
   await expect(page.locator('#side-info dd').last()).toHaveText('127.3481, 35.5276, 127.3567, 35.5347');
@@ -251,15 +323,30 @@ test('완료 타일 선택 — 브래킷 + 틴트 캡션, 우 패널에 V-World 
   await plateIdle(page);
   if ((await page.evaluate(() => document.documentElement.dataset.plate)) !== 'off') {
     await expect.poll(() => page.evaluate(() => !!(window.__dsMap && window.__dsMap.getLayer('ly-sel'))), { timeout: 15000 }).toBe(true);
-    await expect(page.locator('#plate-cap')).toContainText('GSD 1.08 cm · 측정');
+    await expect.poll(() => page.evaluate(() => !!window.__dsMap.getLayer('ly-res-namwon-farmland-2025')), { timeout: 20000 }).toBe(true);   // 청록 결과
+    await expect(page.locator('#plate-cap')).toContainText('GSD 1.08 cm · 측정 · 성과 2');
     await expect(page.locator('#ex-layer .ex')).toHaveCount(1);
   }
-  // 그림이 없는 자산은 액자 + 자백. 판은 도엽이 있을 때만.
+  // 위치가 없는 자산 — 액자 + 자백 + 데이터 테이블 속성(속성명 / 유형 / 예시). 판은 도엽이 있을 때만.
   await select(page, 'd6');
   await expect(page.locator('#plate-wrap')).toBeHidden();
   await expect(page.locator('#fig-wrap .fig--none')).toContainText('좌표계 없음');
+  expect(await heads(page)).toEqual(['데이터 테이블 · 4열 · — 행 · 좌표계 없음']);
+  expect(await page.locator('#side-info .sc i').allInnerTexts()).toEqual(['geom', 'cls', 'sev', 'len_m']);
+  expect(await page.locator('#side-info .rs').count()).toBe(0);
   await expect(page.locator('#side-info dd').last()).toHaveText('실측 범위 없음');
-  await select(page, 'd6');                                                              // 토글 해제
+  await select(page, 'd3');                                                              // XLSX — 첫 행 미리보기 + 열 5
+  await expect(page.locator('#fig-wrap .xt')).toBeVisible();
+  expect(await heads(page)).toEqual(['데이터 테이블 · 5열 · 2,098행']);
+  expect(await page.locator('#side-info .sc i').allInnerTexts()).toEqual(['pnu', 'emd', 'cls', 'area', 'conf']);
+  expect(await page.locator('#side-info .sc em').allInnerTexts()).toEqual(['문자 19', '문자', '문자', '수 · ㎡', '수 · 0–1']);
+  await select(page, 'd7');                                                              // SHP(결과 GeoJSON) — 예시 = 첫 행 실값
+  await expect(page.locator('#fig-wrap canvas[data-sil="d7"]')).toBeVisible();
+  await expect(page.locator('#side-info .sc[data-col="cls"] .exv')).toHaveText('비닐하우스_단동', { timeout: 15000 });
+  await expect(page.locator('#side-info .sc[data-col="area"] .exv')).toHaveText('1,543');
+  await select(page, 'd8');                                                              // ZIP — 파일 트리
+  expect(await page.locator('#side-info .sc i').allInnerTexts()).toEqual(['20260412/', 'DJI_*.JPG', 'index.csv']);
+  await select(page, 'd8');                                                              // 토글 해제
   await expect(page.locator('#side')).toHaveAttribute('data-mode', 'none');
   await expect(page.locator('#side-m')).toHaveText('선택 0 / 8');
   expect(errs).toEqual([]);
@@ -334,19 +421,30 @@ test('발행중 — 눈금 4 · 채움 = 완료 단계 · 리빌 % · 실패 2 =
   expect(errs).toEqual([]);
 });
 
-/* ── 아카이브 — 선택 = 판의 레이어 · 5액션은 패널 · 숨김 = 감쇠 · 범위 없는 자산은 자백 ── */
-test('아카이브 선택 → 판의 레이어(줌 투 익스텐트) · 5액션 · 숨김은 감쇠(목록에 남는다) · 범위 없음 자백 · 삭제는 내린다', async ({ page }) => {
+/* ── 아카이브 — 선택 = 판의 레이어 + 사용 현황 · 성과 · 발행 이력 · 메모 · 5액션은 패널 · 숨김 = 감쇠 · 레이어 목록 블록 없음 ── */
+test('아카이브 선택 → 판의 레이어(줌 투 익스텐트) · 사용 현황/성과/발행 이력/메모 · 레이어 목록·범위·표시 블록 없음 · 5액션 · 숨김은 감쇠 · 범위 없음 자백 · 삭제는 내린다', async ({ page }) => {
   const errs = watch(page);
   await boot(page, 'archive');
   await expect(page.locator('.tile[data-id="a2"]')).toHaveAttribute('data-hidden', '1');
   await expect(page.locator('.tile[data-id="a2"] .st')).toHaveText('숨김 · 삭제 아님');
   await expect(page.locator('.tile[data-id="a1"] .word')).toHaveText('아카이브 · 정사영상');
+  // 선택 없음 — 유형 분해만. 레이어 목록 없음.
+  expect(await page.locator('#side-info dt').allInnerTexts()).toEqual(['정사영상', '공간정보', '이미지셋', '최근 등록']);
   await select(page, 'a5');
   await expect(page.locator('#side')).toHaveAttribute('data-mode', 'tile');
   await expect(page.locator('#plate-wrap')).toBeVisible();
   expect(await page.locator('#side-acts .act').allInnerTexts()).toEqual(['숨김', '공유', '공간 편집', '삭제', '상세']);
-  await expect(page.locator('.ly[data-id="a5"]')).toHaveAttribute('data-hidden', '0');
-  await expect(page.locator('.ly[data-id="a5"]')).toContainText('86셀');
+  expect(await heads(page)).toEqual(['사용 현황 · 1', '성과 1 · AI 결과', '발행 이력 · 1', '메모 · 이 브라우저에만 저장']);
+  expect(await page.locator('#side .ly, #side .ly-empty').count()).toBe(0);
+  const text = await page.locator('#side').innerText();
+  expect(text).not.toMatch(/레이어 \d+ · 표시|범위 \/ 표시·숨김|표시된 레이어/);
+  expect(await page.locator('#side-info dt').allInnerTexts()).toEqual(['이름', '원본 파일', '유형', '형식', '크기', '기준일']);   // 표시 · 범위 행 없음
+  expect(await page.locator('#side-info .us .nm').allInnerTexts()).toEqual(['해양쓰레기 실태조사']);
+  expect(await page.locator('#side-info .rs .nv').allInnerTexts()).toEqual(['2,078건']);
+  await expect(page.locator('#side-info [data-rin="yeosu-marine-2026-drone"]')).toHaveText('· 범위 내 2,078', { timeout: 15000 });
+  expect(await page.locator('#side-info .pl .v').allInnerTexts()).toEqual(['v1']);
+  await expect(page.locator('#side-info .pl .at')).toHaveText('2026.03.20 11:00');
+  await expect(page.locator('#memo')).toHaveAttribute('aria-label', '메모 · 이 브라우저에만 저장');
   await plateIdle(page);
   const plate = await page.evaluate(() => document.documentElement.dataset.plate);
   if (plate !== 'off') {
@@ -355,43 +453,44 @@ test('아카이브 선택 → 판의 레이어(줌 투 익스텐트) · 5액션 
     await expect(page.locator('#plate-cap')).toContainText('86셀');
     await expect(page.locator('#ex-layer .ex')).toHaveCount(1);
   }
-  // 숨김 = 감쇠. 목록에 남고 판에서는 꺼진다. 표시 = 다시 선다.
+  // 숨김 = 감쇠. 타일에 남고 판에서는 꺼진다. 표시 = 다시 선다.
   await page.locator('#side-acts .act[data-ar="a5"][data-act="vis"]').click();
   await expect(page.locator('.tile[data-id="a5"]')).toHaveAttribute('data-hidden', '1');
-  await expect(page.locator('.ly[data-id="a5"]')).toHaveAttribute('data-hidden', '1');
   expect(await page.locator('#side-acts .act').first().innerText()).toBe('표시');
   if (plate !== 'off') await expect.poll(() => page.evaluate(() => window.__dsMap.getLayoutProperty('ly-a5', 'visibility'))).toBe('none');
   await page.locator('#side-acts .act[data-ar="a5"][data-act="vis"]').click();
   await expect(page.locator('.tile[data-id="a5"]')).toHaveAttribute('data-hidden', '0');
-  // 정사영상 도엽 — 타일 피라미드가 레이어로 선다.
+  // 정사영상 도엽 — 타일 피라미드가 레이어로 선다. 사용 현황 2(프로젝트 · 데이터셋) + 성과 2.
   await select(page, 'a1');
-  await expect(page.locator('.ly[data-id="a1"]')).toContainText('GSD 1.08 cm');
+  expect(await page.locator('#side-info .us .nm').allInnerTexts()).toEqual(['도로안전 정사영상', '도로안전 데이터셋 v2']);
+  expect(await page.locator('#side-info .us .kd').allInnerTexts()).toEqual(['프로젝트', '데이터셋']);
+  expect(await page.locator('#side-info .rs .nv').allInnerTexts()).toEqual(['2,098필지', '9,664동']);
+  expect(await page.locator('#side-info .pl .v').allInnerTexts()).toEqual(['v3', 'v2', 'v1']);
   if (plate !== 'off') {
     await expect.poll(() => page.evaluate(() => !!window.__dsMap.getLayer('ly-a1')), { timeout: 15000 }).toBe(true);
     await expect(page.locator('#plate-cap')).toContainText('GSD 1.08 cm');
   }
-  // 범위 없는 자산 — 판은 자백한다.
+  // 범위 없는 자산 — 판은 자백한다. 성과 0 · 사용 현황은 있다.
   await select(page, 'a4');
-  await expect(page.locator('.ly[data-id="a4"]')).toContainText('실측 범위 없음');
   await expect(page.locator('#plate-cap')).toContainText('실측 범위 없음');
-  await expect(page.locator('#side-info dd').last()).toHaveText('실측 범위 없음');
+  expect(await page.locator('#side-info .rs').count()).toBe(0);
+  expect(await page.locator('#side-info .us').count()).toBe(2);
   // 삭제 — 레이어가 내려온다.
   await select(page, 'a5');
   await page.locator('#side-acts .act[data-ar="a5"][data-act="del"]').click();
   await expect(page.locator('.tile[data-id="a5"]')).toHaveCount(0);
   await expect(page.locator('#side')).toHaveAttribute('data-mode', 'none');
-  await expect(page.locator('.ly[data-id="a5"]')).toHaveCount(0);
   if (plate !== 'off') expect(await page.evaluate(() => !!window.__dsMap.getLayer('ly-a5'))).toBe(false);
   expect(await kpi(page, 'archive')).toBe('4');
   expect(errs).toEqual([]);
 });
-test('아카이브 상세(밴드·속성) · 공유 설정 모달 · 공간 편집', async ({ page }) => {
+test('아카이브 상세(등록·GSD·좌표계 · 데이터명·출처·설명 · 밴드·속성) · 공유 설정 모달 · 공간 편집', async ({ page }) => {
   const errs = watch(page);
   await boot(page, 'archive');
   await select(page, 'a1');
   await page.locator('#side-acts .act[data-ar="a1"][data-act="detail"]').click();
   await expect(page.locator('#side-acts .act[data-act="detail"]')).toHaveClass(/on/);
-  expect(await page.locator('#side-info dt').allInnerTexts()).toEqual(expect.arrayContaining(['데이터명', '출처', '설명']));
+  expect(await page.locator('#side-info dt').allInnerTexts()).toEqual(expect.arrayContaining(['등록 일시', '등록자', 'GSD', '좌표계', '데이터명', '출처', '설명']));
   expect(await page.locator('#side-info .dt-b').count()).toBe(3);
   await page.locator('#side-acts .act[data-ar="a1"][data-act="share"]').click();
   await expect(page.locator('#m-share')).toBeVisible();
@@ -405,15 +504,36 @@ test('아카이브 상세(밴드·속성) · 공유 설정 모달 · 공간 편�
   await select(page, 'a1');
   await page.locator('#side-acts .act[data-ar="a1"][data-act="geo"]').click();
   await expect(page.locator('#say')).toContainText('범위로 이동');
-  await expect(page.locator('.ly[data-id="a1"]')).toHaveCount(1);
+  expect(errs).toEqual([]);
+});
+test('아카이브 메모 — 이 브라우저에만 저장(localStorage · 자산별) · 글자 수 · 새로고침 뒤에도 남는다 · 다른 자산은 비어 있다', async ({ page }) => {
+  const errs = watch(page);
+  await boot(page, 'archive');
+  await select(page, 'a1');
+  await expect(page.locator('#memo')).toHaveValue('');
+  await expect(page.locator('#side-info [data-memo-n]')).toHaveText('0');
+  await expect(page.locator('#side-info [data-memo-at]')).toHaveText('저장 없음');
+  await page.locator('#memo').fill('4월 A구역 — 6월 재발행 전 검수');
+  await expect(page.locator('#side-info [data-memo-n]')).toHaveText('20');
+  await expect(page.locator('#side-info [data-memo-at]')).toHaveText(/^저장 \d{4}\.\d{2}\.\d{2} \d{2}:\d{2}$/);
+  expect(JSON.parse(await page.evaluate(() => localStorage.getItem('lx_ds_memo_a1'))).t).toBe('4월 A구역 — 6월 재발행 전 검수');
+  await select(page, 'a2');
+  await expect(page.locator('#memo')).toHaveValue('');
+  await page.reload();
+  await page.waitForFunction(() => document.documentElement.dataset.ds === 'ready');
+  await select(page, 'a1');
+  await expect(page.locator('#memo')).toHaveValue('4월 A구역 — 6월 재발행 전 검수');
+  await expect(page.locator('#side-info [data-memo-at]')).toContainText('저장 20');
+  expect(await page.locator('#side-info .memo .mf').innerText()).toContain('서버 저장 아님');
   expect(errs).toEqual([]);
 });
 
 /* ── 시스템 — 라운드·그림자·그라디언트 0 · 글자 14 이상 · warn 은 디스크/실패뿐 · 액센트 채움 0 ── */
 test('시스템 — 라운드·그림자·그라디언트 0 · 최소 14px · warn = 디스크 96 % + 발행 실패만 · 파란 채움 0 · 푸터', async ({ page }) => {
   const errs = watch(page);
-  for (const tab of ['upload', 'publishing']) {
+  for (const tab of ['upload', 'publishing', 'archive']) {
     await boot(page, tab);
+    if (tab === 'archive') await select(page, 'a1');
     const bad = await page.evaluate(() => {
       const out = [];
       for (const e of document.querySelectorAll('#mast *, #main *:not(#plate *), #foot *')) {

@@ -7,18 +7,23 @@
 //     "대시보드와 동일하게 공지는 그대로 두고 아래로 내려서 · 디스크·업로드·완료·발행중은 카드로 상단에 · 그 아래 진행 상황 ·
 //      업로드 완료를 선택하면 자동으로 오른쪽에 지도와 기본 정보 · 발행중은 진행 경과를 카드 위에 시각적으로 ·
 //      미니 카드 아래 표시/숨김/공유/공간 편집/발행 같은 것은 없고 오른쪽 카드를 펼쳐서 정리 · 카드는 4배수로 키우게"
-//  3) KPI 카드 = 단계 선택. 타일에는 선반이 없다 — 상태는 그림 위에, 액션은 우 패널에.
+//     발주 2차(2026-08-27): "업로드는 카드를 선택하면 오른쪽 정보 창, 선택하지 않으면 일반 카드별 진행현황 전체 · 타일은 4 6 8 16, 아래 페이지 수 ·
+//      업로드 완료는 카드 클릭하면 실제 위치 정보와 성과, 위치 정보가 없는 건 데이터 테이블 속성 ·
+//      아카이브 우 패널의 레이어 표시 이력은 의미 없다 — 메모 등 유용한 컨텐츠"
+//  3) KPI 카드 = 단계 선택. 타일에는 선반이 없다 — 상태는 그림 위에, 액션은 우 패널에. 쪽당 4·6·8·16 + 페이저.
 //  4) 아카이브 `표시` = 그 자산이 우측 판의 레이어로 선다(ds-plate.js). 좌표가 없으면 `실측 범위 없음`.
 //  5) 콘티 원칙(§5): 목록은 원본 목업 시드 = `시연`. 좌표·GSD 는 imagery.js 실측. 문장 0 — 라벨·수·상태어만.
 import {
   nf, SEED_TAG, TABS, TAB_IDS, DEFAULT_TAB, FMT_FILTERS, KIND_FILTERS, matchFmt, extOf,
   DROP, ACCEPT_EXT, UP_ST, UP_ACTIONS, ACT_NAME, UPLOADS,
   DISK, QUOTA_PRESETS, ARCHIVE, ORGS, PERMS, SHARE_DEFAULT,
-  DONE_UP, PUB_TYPES, PUB_PREFILL, PUB_STEPS, PUBLISHING, PUB_ST, PUB_PCT, SIZES, SIZE_KEY,
+  DONE_UP, PUB_TYPES, PUB_PREFILL, PUB_STEPS, PUBLISHING, PUB_ST, PUB_PCT,
+  PER_PAGE, PP_DEFAULT, PP_KEY, MEMO_KEY, MEMO_MAX, bytesOf, fmtBytes,
+  RESULT_OF, RESULT_BY_ID, resultRow, SCHEMA, SCHEMA_OF, USAGE, PUBLISH_LOG,
   IMG, ATTRIB, FOOT_LINKS, FOOT_ADDR, THUMB, SILHOUETTE, XLSX_ROWS, ZIP_TREE, FAIL_ACTIONS,
 } from './ds-data.js';
 import { NOTICE, T1, ymd } from './db-data.js';
-import { silhouette, xlsxTable, zipTree, noneBox, loadGeo, esc } from './ds-thumbs.js';
+import { silhouette, xlsxTable, zipTree, noneBox, loadGeo, bboxOf, esc } from './ds-thumbs.js';
 import { mountPlate, Brackets, addRaster, addVector, setHidden, removeLayer, hasLayer, frame, KOREA_SW } from './ds-plate.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -88,7 +93,8 @@ const S = {
   layers: [],              // 판에 선 순서(아카이브 id) — 표시된 순서
   focus: null,             // 판이 마지막으로 간 자산
   quotaGb: 256,
-  size: 'M',
+  pp: PP_DEFAULT,          // 쪽당 타일 수 4 · 6 · 8 · 16
+  page: 1,
 };
 const sayEl = $('#say');
 let sayT = 0;
@@ -139,7 +145,7 @@ function setTab(id, push = true) {
   S.tab = id;
   // 원본 동작 — 탭 전환 시 필터·검색·선택이 초기화된다.
   S.filter = '전체'; S.q = ''; $('#q').value = '';
-  S.sel = null; S.mode = 'none'; S.more = false;
+  S.sel = null; S.mode = 'none'; S.more = false; S.page = 1;
   document.body.dataset.tab = id;
   TABS.forEach((t) => { $(`#panel-${t.id}`).hidden = t.id !== id; });
   if (push) { const u = new URL(location.href); u.searchParams.set('tab', id); history.pushState({ tab: id }, '', u); }
@@ -148,26 +154,43 @@ function setTab(id, push = true) {
 }
 window.addEventListener('popstate', () => setTab(tabFromUrl(), false));
 
-/* ══ 툴바 — 필터 · 검색 · 타일 크기 4단(localStorage) ═══════════════════ */
+/* ══ 툴바 — 필터 · 검색 · 쪽당 타일 수 4단(localStorage) + 페이저 ═══════════ */
 function renderFilters() {
   const chips = S.tab === 'archive' ? KIND_FILTERS : FMT_FILTERS;
   $('#fsel-k').textContent = S.tab === 'archive' ? '유형' : '형식';
   $('#ds-filters').innerHTML = chips.map((c) => `<option value="${esc(c)}"${c === S.filter ? ' selected' : ''}>${esc(c)}</option>`).join('');
 }
-$('#ds-filters').addEventListener('change', (ev) => { S.filter = ev.target.value; renderPanel(); });
-$('#q').addEventListener('input', (ev) => { S.q = ev.target.value.trim(); renderPanel(); });
+$('#ds-filters').addEventListener('change', (ev) => { S.filter = ev.target.value; S.page = 1; renderPanel(); });
+$('#q').addEventListener('input', (ev) => { S.q = ev.target.value.trim(); S.page = 1; renderPanel(); });
 const hit = (row) => { const q = S.q.toLowerCase(); return !q || [row.file, row.name, row.by, row.kind].filter(Boolean).some((v) => String(v).toLowerCase().includes(q)); };
 const passFmt = (row) => matchFmt(row.file, S.filter);
 const passKind = (row) => S.filter === '전체' || row.kind === S.filter;
-function setSize(k, save = true) {
-  if (!SIZES[k]) k = 'M';
-  S.size = k; document.body.dataset.size = k;
-  $$('#size button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.size === k)));
-  if (save) { try { localStorage.setItem(SIZE_KEY, k); } catch { /* 저장소 차단 */ } }
+/** 쪽당 4 · 6 · 8 · 16 = 열 2 · 3 · 4 · 4(16 = 4×4). 바꾸면 1쪽으로. localStorage 에 남는다. */
+function setPp(n, save = true) {
+  n = Number(n); if (!PER_PAGE[n]) n = PP_DEFAULT;
+  S.pp = n; S.page = 1; document.body.dataset.pp = String(n);
+  $$('#pp button').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.pp) === n)));
+  if (save) { try { localStorage.setItem(PP_KEY, String(n)); } catch { /* 저장소 차단 */ } }
   if (map) requestAnimationFrame(() => map.resize());
 }
-$('#size').addEventListener('click', (ev) => { const b = ev.target.closest('[data-size]'); if (b) setSize(b.dataset.size); });
-try { setSize(localStorage.getItem(SIZE_KEY) || 'M', false); } catch { setSize('M', false); }
+$('#pp').addEventListener('click', (ev) => { const b = ev.target.closest('[data-pp]'); if (b) { setPp(b.dataset.pp); renderPanel(); } });
+try { setPp(localStorage.getItem(PP_KEY) || PP_DEFAULT, false); } catch { setPp(PP_DEFAULT, false); }
+/** 페이저 — 필터·검색을 거친 목록을 쪽당 수로 자른다. slot = 그 쪽에 항상 서는 고정 타일(업로드 드롭존 1). */
+function pageOf(rows, slot = 0) {
+  const per = Math.max(1, S.pp - slot);
+  const pages = Math.max(1, Math.ceil(rows.length / per));
+  if (S.page > pages) S.page = pages;
+  if (S.page < 1) S.page = 1;
+  const pg = $('#pager'); pg.dataset.pages = String(pages);
+  $('#pg-n').textContent = `${S.page} / ${pages}`;
+  $('#pg-prev').disabled = S.page <= 1; $('#pg-next').disabled = S.page >= pages;
+  const start = (S.page - 1) * per;
+  return rows.slice(start, start + per);
+}
+$('#pager').addEventListener('click', (ev) => {
+  if (ev.target.closest('#pg-prev')) S.page -= 1; else if (ev.target.closest('#pg-next')) S.page += 1; else return;
+  renderPanel(); $('#grid').scrollTop = 0;
+});
 
 function renderPanel() {
   if (S.tab === 'upload') renderUpload();
@@ -232,7 +255,7 @@ function upTile(u) {
 }
 function renderUpload() {
   // 발주(2026-08-27): "대기중 n건 더 · 전체 보기 는 필요 없다. 대기중 다 표출" — 접지 않는다. 그리드가 스크롤한다.
-  const rows = S.ups.filter((u) => passFmt(u) && hit(u));
+  const rows = pageOf(S.ups.filter((u) => passFmt(u) && hit(u)), 1);   // 드롭존이 매 쪽 첫 타일
   $('#up-tiles').innerHTML = rows.map(upTile).join('');
   reveal($('#up-tiles'));
 }
@@ -281,7 +304,7 @@ $('#up-form').addEventListener('submit', (ev) => {
   }
   say(`업로드 대기 +${picked.length}건 · ${SEED_TAG}`);
   take([]); $('#file').value = '';
-  renderKpi(); renderUpload();
+  renderKpi(); renderUpload(); renderSide();   // 현황판에도 한 줄 선다
 });
 
 /* 유휴 운동 1개 — 업로드중 타일의 리빌. 실제로 도는 타이머이고 값은 `시연` 이다. 일시정지 = 멈춤, 재개 = 그 자리부터. */
@@ -295,6 +318,9 @@ function tick() {
     if (ln) ln.style.setProperty('--pct', `${u.pct}%`);
     if (pv) pv.textContent = `${u.pct}%`;
     if (S.sel === u.id) { const sp = $('#side [data-pv]'); if (sp) sp.textContent = `${u.pct}%`; const st = $('#side .rv-top'); if (st) st.style.setProperty('--rest', `${100 - u.pct}%`); const sl = $('#side .rv-line'); if (sl) sl.style.setProperty('--pct', `${u.pct}%`); }
+    // 진행 현황판(선택 없음) — 막대 · % · 잔여가 같이 움직인다
+    const pb = $(`#side .pb[data-id="${u.id}"]`);
+    if (pb) { pb.querySelector('.bar').style.setProperty('--pct', `${u.pct}%`); pb.querySelector('[data-ppct]').textContent = `${u.pct}%`; pb.querySelector('[data-prem]').textContent = remain(u); }
   }
 }
 if (!REDUCED()) setInterval(tick, 1600);
@@ -307,8 +333,9 @@ function dnTile(d) {
     ${cap(d.file, `${date(d.at)} · ${d.size}`)}</div>`;
 }
 function renderDone() {
-  const rows = S.done.filter((d) => passFmt(d) && hit(d));
-  $('#dn-empty').hidden = rows.length > 0;
+  const all = S.done.filter((d) => passFmt(d) && hit(d));
+  const rows = pageOf(all);
+  $('#dn-empty').hidden = all.length > 0;
   $('#dn-list').innerHTML = rows.map(dnTile).join('');
   reveal($('#dn-list')); drawSilhouettes($('#dn-list'));
 }
@@ -379,8 +406,9 @@ function pbTile(p) {
     ${cap(p.file, `${date(p.at)} · ${p.size}`)}</div>`;
 }
 function renderPublishing() {
-  const rows = S.pubs.filter((p) => passFmt(p) && hit(p));
-  $('#pb-empty').hidden = rows.length > 0;
+  const all = S.pubs.filter((p) => passFmt(p) && hit(p));
+  const rows = pageOf(all);
+  $('#pb-empty').hidden = all.length > 0;
   $('#pb-list').innerHTML = rows.map(pbTile).join('');
   reveal($('#pb-list')); drawSilhouettes($('#pb-list'));
 }
@@ -419,8 +447,9 @@ function arTile(a) {
     ${cap(a.name, meta)}</div>`;
 }
 function renderArchive() {
-  const rows = S.arch.filter((a) => passKind(a) && hit(a));
-  $('#ar-empty').hidden = rows.length > 0;
+  const all = S.arch.filter((a) => passKind(a) && hit(a));
+  const rows = pageOf(all);
+  $('#ar-empty').hidden = all.length > 0;
   $('#ar-list').innerHTML = rows.map(arTile).join('');
   reveal($('#ar-list')); drawSilhouettes($('#ar-list'));
 }
@@ -471,6 +500,82 @@ function figFor(row, opts = {}) {
 }
 function showFig(html) { $('#plate-wrap').hidden = true; const f = $('#fig-wrap'); f.hidden = false; f.innerHTML = html; drawSilhouettes(f); reveal(f); }
 function showPlate() { $('#fig-wrap').hidden = true; $('#plate-wrap').hidden = false; }
+function hideFrames() { $('#plate-wrap').hidden = true; const f = $('#fig-wrap'); f.hidden = true; f.innerHTML = ''; }
+
+/* ── 진행 현황판(업로드 · 선택 없음) — 한 줄 = 한 건. 이름 · 상태어 · 막대 % · 크기 · 잔여. 발주 2차. ── */
+const remain = (u) => fmtBytes(bytesOf(u.size) * (1 - u.pct / 100));
+function boardHtml() {
+  const c = by(S.ups, (u) => u.st);
+  const head = `<div class="pbh"><span class="lb">파일 ${S.ups.length} · 진행 중 ${c.run || 0}</span><span class="lb">상태</span><span class="lb">진행률</span><span class="lb sz">크기</span><span class="lb rm">잔여</span></div>`;
+  return head + S.ups.map((u) => `<div class="pb" data-id="${u.id}" data-st="${u.st}">
+    <span class="nm" title="${esc(u.file)}">${esc(u.file)}</span><span class="stw">${esc(UP_ST[u.st])}</span>
+    <span class="bar" style="--pct:${u.pct}%"><i></i><b class="n" data-ppct>${u.pct}%</b></span>
+    <span class="sz n">${esc(u.size)}</span><span class="rm n" data-prem>${remain(u)}</span></div>`).join('');
+}
+
+/* ── 성과 — 이 자산에 닿은 실제 AI 결과(results.js). 판 위에 청록으로 서고, 범위 안 건수는 세어서 적는다. ── */
+const resultsOf = (id) => (RESULT_OF[id] || []).map((rid) => resultRow(RESULT_BY_ID[rid])).filter(Boolean);
+function resultsHtml(res, bounds) {
+  if (!res.length) return '';
+  const head = `<div class="ph"><span class="lb">성과 ${res.length} · AI 결과</span><span class="lb">결과 / 건수 / 분석일</span></div>`;
+  return head + res.map((r) => `<div class="rs" data-res="${r.id}"><span class="sw"></span>
+    <span class="nm">${esc(r.name)}${r.sub ? `<small class="n">· ${esc(r.sub)}</small>` : ''}${bounds ? `<small class="n" data-rin="${r.id}">· 범위 내 …</small>` : ''}</span>
+    <span class="nv n"><b>${nf.format(r.n)}</b><span>${esc(r.unit)}</span></span><span class="at n">${esc(r.at)}</span></div>`).join('');
+}
+const hits = (b, bb) => b[2] >= bb[0] && b[0] <= bb[2] && b[3] >= bb[1] && b[1] <= bb[3];
+/** 범위 안 건수 — 실제 GeoJSON 을 받아 자산 범위와 겹치는 피처를 센다. */
+async function fillInBounds(res, bounds) {
+  for (const r of res) {
+    const g = await loadGeo(r.geojson);
+    const el = $(`#side [data-rin="${r.id}"]`); if (!g || !el) continue;
+    const n = g.features.filter((f) => hits(bboxOf([f]), bounds)).length;
+    el.textContent = `· 범위 내 ${nf.format(n)}`;
+  }
+}
+
+/* ── 데이터 테이블 속성 — 위치가 없는 완료본. 속성명 / 유형 / 예시. SHP(결과 GeoJSON 이 있는 것)는 첫 행 실값으로 바꿔 적는다. ── */
+function schemaHtml(row) {
+  const k = SCHEMA_OF[row.id], sc = k && SCHEMA[k]; if (!sc) return '';
+  const head = `<div class="ph"><span class="lb">데이터 테이블 · ${sc.cols.length}열 · ${esc(sc.rows)}</span><span class="lb">속성명 / 유형 / 예시</span></div>`;
+  return head + sc.cols.map(([n, t, e]) => `<div class="sc" data-col="${esc(n)}"><i>${esc(n)}</i><em>${esc(t)}</em><span class="exv">${esc(e)}</span></div>`).join('')
+    + `<p class="attrib n">${sc.geo ? '예시 = 결과 첫 행 실값' : `예시 · ${SEED_TAG}`}</p>`;
+}
+async function fillSchemaFromGeo(row) {
+  const k = SCHEMA_OF[row.id], sc = k && SCHEMA[k]; if (!sc || !sc.geo) return;
+  const g = await loadGeo(sc.geo); if (!g || !g.features.length) return;
+  const pr = g.features[0].properties || {};
+  for (const [n] of sc.cols) {
+    const el = $(`#side .sc[data-col="${n}"] .exv`); if (!el || pr[n] == null) continue;
+    el.textContent = typeof pr[n] === 'number' ? nf.format(pr[n]) : String(pr[n]);
+  }
+}
+
+/* ── 아카이브 — 사용 현황 · 발행 이력 · 메모(이 브라우저에만 저장). 레이어 목록 블록은 뺐다(발주 2차). ── */
+function usageHtml(a) {
+  const us = USAGE[a.id] || [];
+  const head = `<div class="ph"><span class="lb">사용 현황 · ${us.length}</span><span class="lb">프로젝트 · 데이터셋 · 서비스 / 근거 · ${SEED_TAG}</span></div>`;
+  return head + (us.length ? us.map((u) => `<div class="us" title="${esc(u.src)}"><span class="kd">${esc(u.kind)}</span><span class="nm">${esc(u.name)}</span><span class="rf n">${esc(u.ref)}</span></div>`).join('') : `<p class="us-empty n">사용 0</p>`);
+}
+function publishHtml(a) {
+  const log = PUBLISH_LOG[a.id] || [];
+  return `<div class="ph"><span class="lb">발행 이력 · ${log.length}</span><span class="lb">버전 / 일시 / 등록자 · ${SEED_TAG}</span></div>`
+    + log.map(([v, at, who, wh]) => `<div class="pl"><span class="v n">${esc(v)}</span><span class="wh">${esc(wh)}</span><span class="by">${esc(who)}</span><span class="at n">${esc(at)}</span></div>`).join('');
+}
+const memoGet = (id) => { try { return JSON.parse(localStorage.getItem(MEMO_KEY(id)) || 'null') || { t: '', at: '' }; } catch { return { t: '', at: '' }; } };
+const memoPut = (id, t) => { const at = new Date().toLocaleString('sv-SE').slice(0, 16).replace(/-/g, '.'); try { localStorage.setItem(MEMO_KEY(id), JSON.stringify({ t, at })); } catch { /* 저장소 차단 */ } return at; };
+function memoHtml(a) {
+  const m = memoGet(a.id);
+  return `<div class="ph"><span class="lb">메모 · 이 브라우저에만 저장</span><span class="lb n"><span data-memo-n>${m.t.length}</span> / ${MEMO_MAX}</span></div>
+    <div class="memo"><textarea id="memo" data-memo="${a.id}" maxlength="${MEMO_MAX}" rows="3" placeholder="메모" aria-label="메모 · 이 브라우저에만 저장">${esc(m.t)}</textarea>
+    <p class="mf n"><span data-memo-at>${m.at ? `저장 ${esc(m.at)}` : '저장 없음'}</span><span class="dim">localStorage · 서버 저장 아님</span></p></div>`;
+}
+let memoT = 0;
+$('#side').addEventListener('input', (ev) => {
+  const ta = ev.target.closest('textarea[data-memo]'); if (!ta) return;
+  const n = $('#side [data-memo-n]'); if (n) n.textContent = String(ta.value.length);
+  clearTimeout(memoT);
+  memoT = setTimeout(() => { const at = memoPut(ta.dataset.memo, ta.value); const el = $('#side [data-memo-at]'); if (el) { el.textContent = `저장 ${at}`; el.classList.add('saved'); } }, 300);
+});
 function renderSide() {
   const side = $('#side'), info = $('#side-info'), acts = $('#side-acts');
   const name = TABS.find((t) => t.id === S.tab).name;
@@ -478,14 +583,24 @@ function renderSide() {
   const row = S.sel && rowOf(S.sel);
   if (!row) { S.sel = null; S.mode = 'none'; }
   side.dataset.mode = S.mode;
+  if (side.dataset.sel !== String(S.sel)) { side.dataset.sel = String(S.sel); $('#side-body').scrollTop = 0; }   // 선택이 바뀌면 맨 위부터
   $('#side-h').textContent = row ? (row.name || row.file) : name;
   $('#side-m').textContent = row ? `선택 1 / ${total}` : `선택 0 / ${total}`;
   info.innerHTML = ''; acts.innerHTML = '';
   if (!row) {
-    // 빈 상태 — 단계의 건수. 아카이브는 판에 선 레이어 목록도 같이.
-    showFig(`<div class="fig fig--none"><b class="big n">${total}</b><span class="t1">${esc(name)} · 선택 없음</span><span class="t2">타일 선택 → 지도 · 기본 정보 · 액션</span></div>`);
-    if (S.tab === 'archive') info.innerHTML = layersHtml();
-    if (S.tab === 'upload') info.innerHTML = dl([['디스크', `${gb(DISK.used)} / ${gb(DISK.total)} GB`], ['잔여', `${gb(DISK.free)} GB`], ['허용 형식', ACCEPT_EXT.map((x) => x.slice(1).toUpperCase()).join(' · '), 'wide'], ['한도', '1 TB']]);
+    // 빈 상태. 업로드 = 카드별 진행 현황판(발주 2차) · 그 외 = 단계의 건수.
+    if (S.tab === 'upload') {
+      hideFrames();
+      $('#side-h').textContent = '진행 현황';
+      info.innerHTML = boardHtml() + dl([['디스크', `${gb(DISK.used)} / ${gb(DISK.total)} GB`], ['잔여', `${gb(DISK.free)} GB`], ['허용 형식', ACCEPT_EXT.map((x) => x.slice(1).toUpperCase()).join(' · '), 'wide'], ['한도', '1 TB']]);
+      applyMapMode('none');
+      return;
+    }
+    showFig(`<div class="fig fig--none"><b class="big n">${total}</b><span class="t1">${esc(name)} · 선택 없음</span><span class="t2">타일 선택 → ${S.tab === 'archive' ? '판 · 사용 현황 · 발행 이력 · 메모' : '지도 · 기본 정보 · 액션'}</span></div>`);
+    if (S.tab === 'archive') {
+      const c = by(S.arch, (a) => a.kind), last = S.arch.map((a) => a.at).sort().pop() || '—';
+      info.innerHTML = dl([['정사영상', `${c['정사영상'] || 0}건`], ['공간정보', `${c['공간정보'] || 0}건`], ['이미지셋', `${c['이미지셋'] || 0}건`], ['최근 등록', last]]);
+    }
     applyMapMode('none');
     return;
   }
@@ -500,8 +615,9 @@ function renderSide() {
     return;
   }
   if (S.tab === 'manage') {
-    const d = row, im = imFor(d);
-    if (im) { showPlate(); applyMapMode('sel', { id: d.id, im, title: d.file, sub: `GSD ${cm(im)}` }); }
+    // 도엽이 있으면 실제 위치(판 + 도엽 + 성과 청록) · 없으면 액자 + 데이터 테이블 속성(발주 2차)
+    const d = row, im = imFor(d), res = resultsOf(d.id);
+    if (im) { showPlate(); applyMapMode('sel', { id: d.id, im, title: d.file, sub: `GSD ${cm(im)}`, res }); }
     else { showFig(figFor(d)); applyMapMode('none'); }
     const base = [['이름', esc(d.file), 'wide'], ['형식', d.fmt], ['크기', d.size], ['업로드 일시', d.at], ['촬영일', im ? ymd(im.captured) : '—'],
       ['GSD', im ? cm(im) : '—'], ['좌표계', im ? 'EPSG:5186 → 4326' : SILHOUETTE[d.id] ? SILHOUETTE[d.id].crs : '—'],
@@ -510,7 +626,9 @@ function renderSide() {
       info.innerHTML = `<div class="ph"><span class="lb">지도 레이어 발행</span><span class="lb">${esc(d.file)} · ${esc(d.size)}</span></div>` + pubFormHtml(d, PUB_PREFILL[d.id] || {});
       return;
     }
-    info.innerHTML = dl(base);
+    // 위치·성과가 먼저, 기본 정보는 그 아래(스크롤). 위치가 없으면 데이터 테이블 속성이 먼저.
+    info.innerHTML = (im ? resultsHtml(res, im.bounds) : schemaHtml(d)) + dl(base);
+    if (im) fillInBounds(res, im.bounds); else fillSchemaFromGeo(d);
     acts.innerHTML = actBtn('pub', '지도 레이어 발행 ›', `data-dn="${d.id}"`, 'pri');
     return;
   }
@@ -527,20 +645,23 @@ function renderSide() {
     applyMapMode('none');
     return;
   }
-  // 아카이브 — 판(레이어) + 기본 정보 + 밴드·속성(상세) + 5액션. 표시 상태의 자산은 선택되면 레이어로 선다(숨김은 `표시` 를 눌러야).
-  const a = row, g = geomOf(a);
+  // 아카이브 — 판(레이어) + 기본 정보 + (상세: 밴드·속성) + 사용 현황 · 성과 · 발행 이력 · 메모 + 5액션.
+  // 표시 상태의 자산은 선택되면 레이어로 선다(숨김은 `표시` 를 눌러야). 레이어 목록·범위·표시 행은 뺐다(발주 2차: 의미 없음).
+  const a = row, g = geomOf(a), res = resultsOf(a.id);
   if (!a.hidden && !S.layers.includes(a.id)) S.layers.push(a.id);
   showPlate(); applyMapMode('arch', a);
-  const rows = [['이름', esc(a.name), 'wide'], ['원본 파일', esc(a.file), 'wide'], ['유형', a.kind], ['형식', extOf(a.file).toUpperCase()], ['크기', a.size], ['기준일', a.basis],
-    ['등록 일시', a.at], ['GSD', g && g.kind === 'raster' ? cm(g.im) : '—'], ['좌표계', g ? (g.kind === 'raster' ? 'EPSG:5186 → 4326' : 'EPSG:4326') : SILHOUETTE[a.id] ? SILHOUETTE[a.id].crs : '—'],
-    ['표시', a.hidden ? '숨김 · 삭제 아님' : '표시'], ['범위', g ? `<span class="n">${bounds4(g.bounds)}</span>` : '실측 범위 없음', 'wide']];
+  // 사용 현황 → 성과 → 기본 정보 3행(이름 · 원본 파일 · 유형/형식 · 크기/기준일) → 발행 이력 → 메모. 나머지 행은 `상세` 에.
+  const rows = [['이름', esc(a.name), 'wide'], ['원본 파일', esc(a.file), 'wide'], ['유형', a.kind], ['형식', extOf(a.file).toUpperCase()], ['크기', a.size], ['기준일', a.basis]];
   let html = dl(rows);
   if (S.more) {
-    html += dl(Object.entries(a.detail).map(([k, v]) => [k, esc(v)]));
+    html += dl([['등록 일시', a.at], ['등록자', esc(a.by)], ['GSD', g && g.kind === 'raster' ? cm(g.im) : '—'], ['좌표계', g ? (g.kind === 'raster' ? 'EPSG:5186 → 4326' : 'EPSG:4326') : SILHOUETTE[a.id] ? SILHOUETTE[a.id].crs : '—'],
+      ...Object.entries(a.detail).map(([k, v]) => [k, esc(v), 'wide'])]);
     html += `<div class="ph"><span class="lb">밴드 · 속성</span><span class="lb">속성명 / 속성정보</span></div>` + a.bands.map(([k, v]) => `<div class="dt-b"><i>${esc(k)}</i><em>${esc(v)}</em></div>`).join('');
   }
-  html += layersHtml();
+  // 쓰임(사용 현황 · 성과)이 먼저, 그 다음 기본 정보, 발행 이력, 메모.
+  html = usageHtml(a) + resultsHtml(res, g ? g.bounds : null) + html + publishHtml(a) + memoHtml(a) + `<p class="attrib n">${esc(ATTRIB)}</p>`;
   info.innerHTML = html;
+  if (g) fillInBounds(res, g.bounds);
   acts.innerHTML = [['vis', a.hidden ? '표시' : '숨김'], ['share', '공유'], ['geo', '공간 편집'], ['del', '삭제'], ['detail', '상세']]
     .map(([k, n]) => actBtn(k, n, `data-ar="${a.id}"`, k === 'detail' && S.more ? 'on' : '')).join('');
 }
@@ -550,11 +671,6 @@ $('#side').addEventListener('click', (ev) => {
   if (b.dataset.dn) { openPubForm(b.dataset.dn); return; }
   if (b.dataset.pb) { const p = S.pubs.find((x) => x.id === b.dataset.pb); if (p) pbAct(p, b.dataset.act); return; }
   if (b.dataset.ar) { const a = S.arch.find((x) => x.id === b.dataset.ar); if (a) archAct(a, b.dataset.act); return; }
-  if (b.dataset.ly) {
-    const a = S.arch.find((x) => x.id === b.dataset.ly); if (!a) return;
-    if (b.dataset.act === 'vis') { archAct(a, 'vis'); return; }
-    const g = geomOf(a); if (g && map) { S.focus = a.id; frame(map, g.bounds, { maxZoom: g.kind === 'raster' ? 16.6 : 14.2 }); renderSide(); }
-  }
 });
 
 /* ══ 판 — 한 번만 mount. 완료 = 선택 도엽 1장, 아카이브 = 표시된 레이어들 ══════ */
@@ -588,21 +704,39 @@ async function applyMapMode(mode, arg) {
     for (const id of S.layers) setHidden(m, id, true);
     if (!hasLayer(m, 'sel') || m.__selId !== arg.id) { removeLayer(m, 'sel'); addRaster(m, 'sel', arg.im, false); m.__selId = arg.id; }
     bk.set([{ id: 'sel', bounds: arg.im.bounds, title: arg.title, sub: arg.sub }]);
-    frame(m, arg.im.bounds, { maxZoom: 16.6 });
-    $('#plate-cap').textContent = `${arg.im.label} · GSD ${cm(arg.im)} · 측정`;
+    // 성과가 있으면 도엽을 가운데 두고 3배 범위 — 주변의 청록 결과 폴리곤이 같이 보인다
+    const b = arg.im.bounds, hasRes = arg.res && arg.res.length;
+    frame(m, hasRes ? grow(b, 1) : b, { maxZoom: 16.6 });
+    $('#plate-cap').textContent = `${arg.im.label} · GSD ${cm(arg.im)} · 측정${arg.res && arg.res.length ? ` · 성과 ${arg.res.length}` : ''}`;
     none.hidden = true;
+    syncResults(m, arg.res || [], req);
     return;
   }
   // arch
   removeLayer(m, 'sel'); m.__selId = null;
   await syncLayers();
   const a = arg, g = geomOf(a);
+  syncResults(m, resultsOf(a.id), req);
   if (S.focus !== a.id && g) { S.focus = a.id; frame(m, g.bounds, { maxZoom: g.kind === 'raster' ? 16.6 : 14.2 }); }
   const live = S.layers.map((id) => S.arch.find((x) => x.id === id)).filter((x) => x && !x.hidden && geomOf(x));
   $('#plate-cap').textContent = g ? g.cap : `${a.name} · 실측 범위 없음`;
   none.hidden = !!g || live.length > 0;
   if (!none.hidden) none.textContent = `${a.name} · 실측 범위 없음`;
   if (!g && live.length && !S.focus) frame(m, KOREA_SW, { maxZoom: 8 });
+}
+/** 범위를 사방으로 k 배 키운다(1 = 3× 범위). */
+const grow = (b, k) => { const w = (b[2] - b[0]) * k, h = (b[3] - b[1]) * k; return [b[0] - w, b[1] - h, b[2] + w, b[3] + h]; };
+/** 성과 레이어 — 선택 자산에 닿은 결과 GeoJSON 을 청록으로 올린다(`res-<id>`). 다른 결과는 끈다. */
+const resUp = new Set();
+async function syncResults(m, res, req) {
+  for (const id of resUp) if (!res.some((r) => r.id === id)) setHidden(m, 'res-' + id, true);
+  for (const r of res) {
+    if (!hasLayer(m, 'res-' + r.id)) {
+      const data = await loadGeo(r.geojson);
+      if (req !== mapReq) return;
+      if (data) { addVector(m, 'res-' + r.id, data, false); resUp.add(r.id); }
+    } else setHidden(m, 'res-' + r.id, false);
+  }
 }
 async function putLayer(a) {
   const g = geomOf(a); if (!g || !map) return null;
@@ -630,20 +764,6 @@ async function showOnPlate(a, on, fit = true) {
   if (on && !g) say(`${a.name} — 실측 범위 없음`);
   if (!on) say(`${a.name} — 숨김 · 삭제 아님`);
 }
-function layersHtml() {
-  const rows = S.layers.map((id) => S.arch.find((x) => x.id === id)).filter(Boolean);
-  const head = `<div class="ph"><span class="lb">레이어 ${rows.length} · 표시 ${rows.filter((a) => !a.hidden).length} · 숨김 ${rows.filter((a) => a.hidden).length}</span><span class="lb">범위 / 표시·숨김</span></div>`;
-  const list = rows.length ? rows.map((a) => {
-    const g = geomOf(a);
-    return `<div class="ly" data-id="${a.id}" data-kind="${g ? g.kind : 'none'}" data-hidden="${a.hidden ? 1 : 0}"${S.focus === a.id ? ' aria-current="true"' : ''}>
-      <span class="sw"></span><span class="nm">${esc(a.name)}</span>
-      <span class="mt n">${g ? (g.kind === 'raster' ? `도엽 · GSD ${cm(g.im)}` : `GeoJSON · ${a.geo.count}셀`) : '실측 범위 없음'}</span>
-      ${g ? `<button type="button" class="act n" data-act="fit" data-ly="${a.id}">범위로</button>` : ''}
-      <button type="button" class="act n" data-act="vis" data-ly="${a.id}">${a.hidden ? '표시' : '숨김'}</button></div>`;
-  }).join('') : `<p class="ly-empty n">표시된 레이어 0</p>`;
-  return head + list + `<p class="attrib n">${esc(ATTRIB)}</p>`;
-}
-
 /* ══ 모달 ══════════════════════════════════════════════════════════════ */
 let lastFocus = null;
 function openModal(sel) {

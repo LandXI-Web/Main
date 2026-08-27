@@ -14,13 +14,15 @@
 <link rel="stylesheet" href="v3-tokens.css">
 <link rel="stylesheet" href="dataset.css">
 <script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
-</head><body class="v3" data-colorway="light" data-tab="upload" data-size="M">
+</head><body class="v3" data-colorway="light" data-tab="upload" data-pp="8">
 
 <a class="skip" href="#grid">목록으로 건너뛰기</a>
 
 <!-- ══ 데이터 관리 — 조판 마스터 design-canvas/v2/B5-DataMgmt.dc.html (1440×900, NOTES.md §13.7).
      대시보드(B5-Dashboard-Data)와 같은 골격: 마스트헤드(공지 + 기준일) → 제목 → KPI 카드 5 → 단계 뷰.
-     단계 뷰 = 좌 타일 그리드(≈60%, 열 수는 S·M·L·XL 토글 6/4/3/2) + 우 패널(≈40%, 그리드와 같은 높이).
+     단계 뷰 = 좌 타일 그리드(≈60%, 쪽당 4·6·8·16 = 2·3·4·4열, 아래 페이저) + 우 패널(≈40%, 그리드와 같은 높이).
+     발주 2차(2026-08-27): 업로드 선택 없음 = 진행 현황판 · 완료 선택 = 실제 위치 + 성과 / 위치 없으면 데이터 테이블 속성 ·
+     아카이브 = 사용 현황 · 발행 이력 · 메모(이 브라우저에만 저장). 레이어 목록 블록은 뺐다.
      KPI 카드 = 단계 선택(`?tab=`). 타일에는 선반이 없다 — 상태는 그림 위에, 액션은 우 패널에.
      기능은 원본 dataset.html + 프래그먼트 4종과 1:1(docs/superpowers/proto/2026-08-26-dataset-parity.md).
      색 역할(system.md §2): 파랑 = 정보/선택 · 빨강(warn) = 조치 필요(디스크 96% · 발행 실패) · 청록 = AI 결과. ══ -->
@@ -50,7 +52,7 @@
   <div id="b-kpi" role="tablist" aria-label="단계"></div>
   <hr class="hr">
 
-  <!-- 툴바 — 단계명 + 필터 + 검색 + 타일 크기 4단 -->
+  <!-- 툴바 — 단계명 + 필터 + 검색 + 쪽당 타일 수 4단(4 · 6 · 8 · 16) -->
   <div id="tool">
     <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter" aria-hidden="true"><path d="M3 3h14v14H3z"/><path d="M3 7.67h14M3 12.33h14M7.67 3v14M12.33 3v14"/></svg>
     <h2 id="tool-h" class="d"></h2>
@@ -63,12 +65,12 @@
       <input id="q" type="search" placeholder="파일명 · 데이터명" autocomplete="off" aria-label="검색">
     </label>
     <span class="sp"></span>
-    <div id="size" role="group" aria-label="타일 크기">
-      <span class="lb">타일</span>
-      <button type="button" data-size="S" aria-pressed="false" title="6열">S</button>
-      <button type="button" data-size="M" aria-pressed="true" title="4열">M</button>
-      <button type="button" data-size="L" aria-pressed="false" title="3열">L</button>
-      <button type="button" data-size="XL" aria-pressed="false" title="2열">XL</button>
+    <div id="pp" role="group" aria-label="쪽당 타일 수">
+      <span class="lb">쪽당</span>
+      <button type="button" class="n" data-pp="4" aria-pressed="false" title="2열 × 2">4</button>
+      <button type="button" class="n" data-pp="6" aria-pressed="false" title="3열 × 2">6</button>
+      <button type="button" class="n" data-pp="8" aria-pressed="true" title="4열 × 2">8</button>
+      <button type="button" class="n" data-pp="16" aria-pressed="false" title="4열 × 4">16</button>
     </div>
   </div>
 
@@ -106,6 +108,12 @@
         <p id="ar-empty" class="empty n" hidden>일치 0건</p>
       </section>
     </div>
+    <!-- 페이저 — 그리드 아래. `1 / 2 · ‹ ›` -->
+    <nav id="pager" aria-label="쪽">
+      <span id="pg-n" class="n"></span>
+      <button type="button" id="pg-prev" class="n" aria-label="이전 쪽">‹</button>
+      <button type="button" id="pg-next" class="n" aria-label="다음 쪽">›</button>
+    </nav>
 
     <!-- 우 패널 — 선택 타일의 판(지도/그림) + 기본 정보 + 액션. 판은 한 번만 mount 되어 단계를 옮겨도 산다. -->
     <aside id="side" aria-label="선택 항목" data-mode="none">

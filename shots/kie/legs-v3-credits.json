@@ -1,6 +1,6 @@
 {
   "session": "legs-v3-2026-08-26",
-  "cap": 220,
+  "cap": 60,
   "per_video_expected": 50,
   "model": "kling/v2-1-pro",
   "started": "2026-08-26T03:35:43.980Z",
@@ -356,14 +356,49 @@
       "wall_ms": 110983,
       "mp4": "landxi/assets/proto/film/legs/gen/v3-leg-06b.mp4",
       "mp4_bytes": 15508593
+    },
+    {
+      "leg": 7,
+      "rev": 3,
+      "batch": "7",
+      "head": "landxi/assets/proto/film/legs/anchors-v3/A07.png",
+      "tail": "landxi/assets/proto/film/legs/anchors-v3/A08.png",
+      "attempt": 1,
+      "model": "kling/v2-1-pro",
+      "duration": "5",
+      "cfg_scale": 0.5,
+      "prompt": "The breakwater arm and the moored fishing-boat models stay in frame throughout and only grow larger, the cobalt resin water stays still and wakeless; the warm key holds from upper camera left. The camera descends in one smooth continuous glide along the coastline, dropping steadily while it tilts down from about sixty-five degrees toward forty, until the grey sand strand and the white polystyrene drifts at the foot of the breakwater fill the near half of the frame. The altitude only decreases, never rises. Nothing enters or leaves the frame. One single continuous take, no cuts, no camera shake, no zoom snap. Slow, cinematic, controlled.",
+      "prompt_sha256": "9ab3a8a20054f05c",
+      "negative_full_chars": 870,
+      "negative": "wakes, boat trails, whitecaps, waves breaking, blue sky paint, ships entering frame, harbour cranes, brass satellite, satellite model, aircraft, airplane, plane model, drone, quadrotor, rotors, brass ring, brass arc, armature, meridian ring, hoop across the sky, cliff, plateau, terrace, escarpment, raised land, mesa, step, board, table, plinth, base plate, studio edge, seamless backdrop, white background, text, letters, numbers, captions, subtitles, watermark, logo, signature, people",
+      "credits_balance_before": 9746.5,
+      "at": "2026-08-27T04:30:33.628Z",
+      "recovered": true,
+      "recovery_note": "createTask 는 run 에서 이미 과금됐고 폴링 중 회선 끊김. taskId 로 결과만 회수 (새 createTask 없음). run 시 잔액 9746.5 → 회수 시 9696.5 = 50 과금(run 시점). 원장에 pending 줄이 없던 이유: run 은 1087aa7 이전 코드로 실행됨.",
+      "fetch_balance_before": 9696.5,
+      "fetched_at": "2026-08-27T04:30:33.628Z",
+      "ok": true,
+      "taskId": "993b669995fce2a04579d5b86677a6d1",
+      "credits_reported": 50,
+      "credits_balance_after": 9696.5,
+      "credits_charged_at_fetch": 0,
+      "gen_ms": 485,
+      "fetch_wall_ms": 2072,
+      "mp4": "landxi/assets/proto/film/legs/gen/v3-leg-07.mp4",
+      "mp4_bytes": 12774022,
+      "credits_charged": 50,
+      "credits_charged_at_run": 50,
+      "wall_ms": 2072,
+      "run_at": "2026-08-27 (legs-7-run.log: balance=9746.5 → fetch failed at ~10s)"
     }
   ],
-  "spent": 650,
-  "remaining_of_cap": 20,
+  "spent": 700,
+  "remaining_of_cap": 10,
   "spent_by_rev": {
     "rev2": 150,
     "rev3": 150,
     "rev3-legs4-6": 150,
-    "rev3-legs4-6b": 200
+    "rev3-legs4-6b": 200,
+    "rev3-legs7": 50
   }
 }

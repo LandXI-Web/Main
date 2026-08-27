@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-08-27T01:57:26.594Z",
+  "generatedAt": "2026-08-27T04:34:14.400Z",
   "builder": "tools/scrub/assemble.mjs",
-  "source": "2개 소스 · kling v2-1-pro AI 레그 1–6b(앵커 A01→A06→A06b→A07) + MapLibre 결정론 필름(레그 07 여수 플레이스홀더)",
+  "source": "단일 소스 · kling v2-1-pro AI 레그 1–7(앵커 A01→A06→A06b→A07→A08). MapLibre 플레이스홀더 0",
   "fps": 25,
-  "fpsNote": "레그 01–06b 는 24 fps(kling 출력 1932×1072→1080p 스케일), 레그 07 은 25 fps 1280×720. 레그별 legs[].fps / legs[].size.",
+  "fpsNote": "전 레그 24 fps(kling 출력 1932×1072→1080p 스케일). 레그별 legs[].fps / legs[].size.",
   "filmSize": [
     1280,
     720
@@ -16,14 +16,16 @@
       "04",
       "05",
       "06",
-      "06b"
+      "06b",
+      "07"
     ],
     "doc": [
       "docs/superpowers/proto/2026-08-26-kie-legs-1-3.md",
       "docs/superpowers/proto/2026-08-27-kie-legs-4-6.md",
-      "docs/superpowers/proto/2026-08-27-kie-legs-4-6b.md"
+      "docs/superpowers/proto/2026-08-27-kie-legs-4-6b.md",
+      "docs/superpowers/proto/2026-08-27-kie-leg-7.md"
     ],
-    "note": "미니어처 세계라 실카메라가 없다. startCamera/endCamera 는 앵커 문서의 고도대를 따라 authored 이고 (A02 고궤도 460 km · A03 ~30 km/피치 60° · A05 남원 분지 8.6 km · A06b 남원 상공 140 km · A07 여수 17 km), 레그 05 끝은 남원 인계 판의 카메라, 레그 06 은 남원 위 수직 상승, 레그 06b 끝은 이어받는 레그 07(MapLibre 실카메라)의 시작에 맞춘다. cameraSource:\"authored\" 로 표시. 페이지 오버레이의 숫자는 전부 실데이터다."
+    "note": "미니어처 세계라 실카메라가 없다. startCamera/endCamera 는 앵커 문서의 고도대를 따라 authored 이고 (A02 고궤도 460 km · A03 ~30 km/피치 60° · A05 남원 분지 8.6 km · A06b 남원 상공 140 km · A07 여수 17 km · A08 국동항 2.4 km/피치 40°), 레그 05 끝은 남원 인계 판의 카메라, 레그 06 은 남원 위 수직 상승, 06b 는 여수 17 km 로 활강, 07 끝(국동항 방파제 저공)은 여수 인계 판·브랜드 마감의 카메라가 된다. cameraSource:\"authored\" 로 표시. 페이지 오버레이의 숫자는 전부 실데이터다."
   },
   "mobileSize": [
     960,
@@ -49,18 +51,18 @@
     "seekMs": 20
   },
   "lazyVh": 1.6,
-  "filmSeconds": 41.021,
-  "filmVh": 8.942,
-  "spacerVh": 9.942,
+  "filmSeconds": 40.664,
+  "filmVh": 8.864,
+  "spacerVh": 9.864,
   "cameraNote": "고도 = 1.5 × 720px × m/px (MapLibre 기본 fov 36.87°, 필름 뷰포트 720px). 줌·GSD 는 고도에서 유도.",
-  "flightProfile": "레그마다 렌더러가 다르다. 레그 07 의 좌표·고도·방위·피치는 그 레그를 구운 렌더러의 실제 카메라 값이다(MapLibre 필름 SEG); AI 레그 01–06b 는 authored(aiLegs.note). 그래서 렌더러가 바뀌는 이음매에서는 고도가 실제로 튄다 — 필름 자체가 거기서 컷이기 때문이다. 계기 바늘이 스냅하지 않도록 페이지가 씸 밴드(0.16vh) 위에서 두 레그의 판독값을 섞는다(scrub.js camAt). 인계 판은 그 덕분에 필름 마지막 프레임과 정확히 같은 카메라로 뜬다.",
+  "flightProfile": "전 레그가 kling AI 미니어처라 실카메라가 없다 — 카메라는 전부 authored(aiLegs.note) 이고 하나의 단조 하강 프로파일로 이어 붙였다(레그 06 상승·06b 이동 제외). AI 레그끼리의 tail→head 이음매는 앵커를 공유해 diff 0.2 % 대다. 계기 바늘이 스냅하지 않도록 페이지가 씸 밴드(0.16vh) 위에서 두 레그의 판독값을 섞는다(scrub.js camAt). 인계 판은 그 덕분에 필름 마지막 프레임과 정확히 같은 카메라로 뜬다.",
   "bytes": {
-    "desktop": 50147025,
-    "mobile": 13671050,
-    "poster": 790536,
-    "desktopMB": 47.82,
-    "mobileMB": 13.04,
-    "posterMB": 0.75
+    "desktop": 52951925,
+    "mobile": 13866884,
+    "poster": 808314,
+    "desktopMB": 50.5,
+    "mobileMB": 13.22,
+    "posterMB": 0.77
   },
   "seams": [
     {
@@ -140,10 +142,10 @@
       "to": "07",
       "frameShared": false,
       "rule": "B",
-      "pct": 13.26,
+      "pct": 0.133,
       "lumaA": 49.8,
-      "lumaB": 47.55,
-      "lumaDelta": -2.25,
+      "lumaB": 49.76,
+      "lumaDelta": -0.04,
       "pass": true,
       "monotonic": true
     }
@@ -545,33 +547,33 @@
       "id": "07",
       "wp": "여수",
       "label": "여수",
-      "place": "여수 가막만",
-      "look": "real",
-      "caption": "yeosu-marine-2025-aerial · 격자 9,032셀 · 후보 38,057건",
-      "source": "build/film/frames#439..574",
-      "renderer": "build/film/frames",
+      "place": "여수 해안 · 해양쓰레기",
+      "look": "diorama",
+      "caption": "AI 생성 필름 · kling v2-1-pro · 앵커 A07 → A08 · yeosu-marine 항공 1,857건 · 드론 2,078건",
+      "source": "landxi/assets/proto/film/legs/src/v3-leg-07.mp4",
+      "renderer": "kling v2-1-pro (AI)",
       "frames": [
-        439,
-        574
+        0,
+        121
       ],
-      "count": 136,
-      "encodedFrames": 137,
-      "fps": 25,
+      "count": 122,
+      "encodedFrames": 122,
+      "fps": 24,
       "size": [
-        1280,
-        720
+        1946,
+        1080
       ],
-      "seconds": 5.44,
-      "weightVh": 1.186,
+      "seconds": 5.083,
+      "weightVh": 1.108,
       "rate": 0.218,
       "src": "/landxi/assets/proto/film/legs/w07.mp4",
       "srcMobile": "/landxi/assets/proto/film/legs/w07-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w07.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w07-last.webp",
-      "bytes": 2523249,
-      "bytesMobile": 1194183,
-      "bytesPoster": 56350,
-      "cameraSource": "renderer",
+      "bytes": 5328149,
+      "bytesMobile": 1390017,
+      "bytesPoster": 74128,
+      "cameraSource": "authored",
       "startCamera": {
         "center": [
           127.7305,
@@ -586,14 +588,14 @@
       },
       "endCamera": {
         "center": [
-          127.7215,
-          34.569
+          127.7305,
+          34.563
         ],
-        "altitudeM": 11200,
-        "zoom": 13.6015,
-        "pitch": 2,
-        "bearing": 0,
-        "mpp": 10.37,
+        "altitudeM": 2400,
+        "zoom": 15.824,
+        "pitch": 40,
+        "bearing": 5,
+        "mpp": 2.222,
         "seg": "07b"
       }
     }
@@ -615,13 +617,13 @@
   "handoffFinal": {
     "legIndex": 7,
     "center": [
-      127.736,
-      34.566
+      127.7305,
+      34.563
     ],
-    "zoom": 13.6015,
-    "pitch": 2,
-    "bearing": 0,
-    "altitudeM": 11200,
+    "zoom": 15.824,
+    "pitch": 40,
+    "bearing": 5,
+    "altitudeM": 2400,
     "detections": "/landxi/assets/data/geo/results/yeosu-marine-2025-aerial.geojson",
     "note": "필름 최종 프레임의 카메라. 마감(귀환) 구간에서 여수 실지도가 이어받는다."
   }
