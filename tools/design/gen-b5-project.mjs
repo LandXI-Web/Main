@@ -691,79 +691,116 @@ function vmap(x, y, w, h, cLon, cLat, latSpan, inner, label = '남원시') {
 // ======================================================================
 // 9. B5-Project-Create — 발주(2026-08-27): "오른쪽에서 프로젝트 명을 치고 탐지 유형을 정리하고 학습데이터 유형과
 //    영상 불러오기 · 불러오기에 따른 권장 해상도 · 학습데이터 불러오기 · 구성원 초대" → 우 패널 480 = 폼(위→아래 그 순서)
-//    좌 776 = 현재 단계(03 영상 불러오기)의 픽커 크게 · 단계 레일 5 = 진행(폼 절 01–05)
+//    9차(2026-08-27) "굳이 5스텝으로 나뉠 필요가 있는가" → 단계 레일 삭제 · 한 화면. 좌 776 = 편집 중인 필드의 문맥
+//    (프로젝트명/탐지 유형/학습데이터 유형 → 미리보기 판 · 영상 불러오기 → 아카이브 픽커 · 학습데이터 → 목록 · 구성원 → 아이디 확인)
+//    + 검토 상태(B5-Project-Create-Review) = 모두 채운 뒤 좌 검토 판 · 우 요약.
 // ======================================================================
-function create() {
+const ARC = [
+  ['남원 정사영상 2026-04 A구역', '2026.04 · 1.08 cm', 'tile-arc-a.jpg', true, '시연'], ['운봉읍 드론 정사영상 2026-04', '2026.04 · 1.69 cm', 'tile-arc-hid.jpg', true, '시연'], ['남원 전역 2025.10', '2025.10 · 2.00 m/px', 'tile-ep-4.jpg'],
+  ['국산리 드론 A68 2025.08', '2025.08 · 0.05 m/px', 'tile-kuksan-1.jpg'], ['순찰차량 도로영상 2026-04', '2026.04 · 4,820장', 'pj-car.jpg', false, '시연'], ['제주 항공 정사영상 2020.12', '2020.12 · 0.10 m/px', 'pj-jeju2020.jpg'],
+];
+// 좌 문맥 — 영상 불러오기 = 아카이브 픽커(원본 파일 추가 모달: 유형 · 검색 · 초기화/검색 · 목록 · 페이지네이션) + 회백 벡터 풋프린트
+function ctxArchive() {
   let s = '';
-  s += txt(X0, 22, '‹ 프로젝트 목록', 13, G) + hl(72, 64, 1368);
-  s += disp(X0, 80, '프로젝트 만들기', 32);
-  // 단계 레일 — 판 5(136×64) + 헤어라인 연결 + 포트 · 상태어(완료 / 진행 / 대기) = 우 폼의 절 01–05
-  const steps = [['01', '프로젝트명', '완료'], ['02', '탐지 유형', '완료'], ['03', '영상 불러오기', '진행'], ['04', '학습데이터', '대기'], ['05', '구성원 초대', '대기']];
-  const SW = 136, SG = 24, SY = 140, SH = 64;
-  steps.forEach(([n, t, stt], i) => {
-    const x = X0 + i * (SW + SG), done = stt === '완료', on = stt === '진행';
-    s += div(x, SY, SW, SH, `border:${on ? 1.5 : 1}px solid ${on || done ? INK : H};background:${on ? T1 : '#FFFFFF'}`);
-    s += num(x + 12, SY + 10, n, 12, on || done ? ACC : C) + st(x + SW - 12, SY + 10, done ? '완료 ✓' : stt, `right:auto;transform:translateX(-100%);color:${done || on ? ACC : C}`);
-    s += disp(x + 12, SY + 34, t, 15, on || done ? INK : G);
-    if (i) s += div(x - 3, SY + SH / 2 - 3, 6, 6, `background:${on || done ? INK : '#FFFFFF'};border:1px solid ${on || done ? INK : C}`);
-    if (i < 4) s += div(x + SW - 3, SY + SH / 2 - 3, 6, 6, `background:${done ? INK : '#FFFFFF'};border:1px solid ${done ? INK : C}`) + hl(x + SW + 3, SY + SH / 2, SG - 6, done ? INK : H);
-  });
-  // 좌 — 현재 단계 03 영상 불러오기 = 아카이브 픽커(원본 파일 추가 모달: 유형 · 검색 · 초기화/검색 · 목록 8 · 페이지네이션)
-  const TY = 232;
-  s += disp(X0, TY, '03 · 영상 불러오기', 22) + st(XR - 200, TY + 10, '아카이브 8건 · 선택 2', 'width:200px;text-align:right');
-  const ty = 272;
+  s += lab(X0, 136, '영상 불러오기') + disp(X0, 154, '아카이브에서 선택', 22) + st(XR - 200, 164, '8건 · 선택 2', 'width:200px;text-align:right');
+  const ty = 200;
   s += sel(X0, ty, 96, '전체', G) + search(X0 + 104, ty, 200, '검색어') + tb(X0 + 312, ty, '초기화', false, `color:${G}`) + tb(X0 + 360, ty, '검색') + pager(XR - 160, ty + 7);
   s += hl(X0, ty + 34, W);
-  const arc = [
-    ['남원 정사영상 2026-04 A구역', '2026.04 · 1.08 cm', 'tile-arc-a.jpg', true, '시연'], ['운봉읍 드론 정사영상 2026-04', '2026.04 · 1.69 cm', 'tile-arc-hid.jpg', true, '시연'], ['남원 전역 2025.10', '2025.10 · 2.00 m/px', 'tile-ep-4.jpg'],
-    ['국산리 드론 A68 2025.08', '2025.08 · 0.05 m/px', 'tile-kuksan-1.jpg'], ['순찰차량 도로영상 2026-04', '2026.04 · 4,820장', 'pj-car.jpg', false, '시연'], ['제주 항공 정사영상 2020.12', '2020.12 · 0.10 m/px', 'pj-jeju2020.jpg'],
-  ];
-  const TW = 240, TH = 136, TG = (W - TW * 3) / 2, RH = 180, GY = 322;
-  arc.forEach(([n, m, src, on, tg], i) => {
+  const TW = 240, TH = 150, TG = (W - TW * 3) / 2, RH = 198, GY = 250;
+  ARC.forEach(([n, m, src, on, tg], i) => {
     const x = X0 + (i % 3) * (TW + TG), y = GY + Math.floor(i / 3) * RH;
     if (on) s += div(x - 8, y - 8, TW + 16, RH - 4, `background:${T1}`);
     s += img(x, y, TW, TH, src, on ? brkIn(TW, TH, ACC) : '');
     if (on) s += chk(x + TW - 22, y + 8, true);
     s += txt(x, y + TH + 8, n + (tg ? `<span class="tag">${tg}</span>` : ''), 13, INK, `width:${TW}px;overflow:hidden;text-overflow:ellipsis`) + num(x, y + TH + 28, m, 12, G);
   });
-  // 풋프린트 — 회백 벡터 지도(sigungu.geojson · 남원 중심) 위 선택 2건의 범위 = 헤어라인 사각 + 번호표(1 A구역 = ortho_z15 범위 안 · 2 운봉읍)
-  const MY2 = 690, MH2 = 146;
-  s += vmap(X0, MY2, W, MH2, 127.43, 35.41, 0.30, (rect, tag) => ({
+  // 풋프린트 — 회백 벡터 지도(sigungu.geojson · 남원 중심) 위 선택 2건 = 액센트 헤어라인 사각 + 번호표
+  const MY2 = 656, MH2 = 176;
+  s += vmap(X0, MY2, W, MH2, 127.43, 35.41, 0.34, (rect, tag) => ({
     svg: rect(127.29, 35.33, 127.37, 35.39) + rect(127.50, 35.42, 127.56, 35.47),
     html: tag(127.29, 35.39, '1 · A구역') + tag(127.50, 35.47, '2 · 운봉읍'),
   }));
-  s += num(X0, MY2 + MH2 + 6, '남원 · 선택 영상 범위 · 시군구 경계 = 행정안전부', 12, G) + txt(XR - 240, MY2 + MH2 + 6, '‹ 이전 02 · 다음 04 ›', 13, INK, 'width:240px;text-align:right');
-  // ── 우 패널 480 = 폼(위→아래: 프로젝트명 → 탐지 유형 → 학습데이터 유형 → 영상 불러오기 → 권장 해상도 → 학습데이터 불러오기 → 구성원 초대 → CTA)
+  s += num(X0, MY2 + MH2 + 6, '남원 · 선택 영상 범위 · 시군구 경계 = 행정안전부', 12, G);
+  return s;
+}
+// 우 폼(480) — 필드 7 + CTA. active = 편집 중 필드(틴트 띠). review = 채운 값 요약(컴팩트)
+function createForm({ active = '', review = false } = {}) {
+  let s = '';
   s += div(DX, 64, DW, 836, 'background:#FFFFFF') + vl(DX, 64, 836, INK);
-  s += disp(DI, 86, '새 프로젝트', 20) + num(1416 - 80, 92, '03 / 05', 12.5, G, 'width:80px;text-align:right') + hl(DI, 122, DIW);
-  const sec = (y, n, t, on = false, wait = false) => num(DI, y, n, 12, wait ? C : ACC) + lab(DI + 24, y, t, on ? `color:${INK}` : (wait ? `color:${C}` : ''));
-  // 01 프로젝트명
-  s += sec(136, '01', '프로젝트명') + fld(DI, 156, DIW, `<span style="font-size:15.5px">남원 비닐하우스 2026</span><span style="flex:1"></span><span class="n" style="font-size:14px;color:${G}">13/100</span>`, `height:36px;border-color:${INK}`);
-  // 02 탐지 유형 — 타일 2(208×84) + 학습데이터 유형 select
-  s += sec(208, '02', '탐지 유형');
+  s += disp(DI, 86, '새 프로젝트', 20) + (review ? st(1416 - 120, 92, '모든 항목 입력', 'width:120px;text-align:right') : '') + hl(DI, 122, DIW);
+  if (review) {
+    // 컴팩트 요약 — 라벨 + 값 한 줄씩(수정은 좌 검토 판의 `수정 ›`)
+    const rows = [['프로젝트명', '남원 비닐하우스 2026'], ['탐지 유형', 'Object Detection'], ['학습데이터 유형', '정사영상 (ortho)'], ['영상', '2 · 1.08 – 1.69 cm'], ['권장 해상도', '≤ 0.02 m/px'], ['학습데이터', '1 · 비닐하우스 라벨 v3'], ['구성원', '2 · 소유자 + 편집자 1']];
+    rows.forEach(([k, v], i) => { const y = 136 + i * 46; s += lab(DI, y, k) + txt(DI, y + 18, v, 14) + hl(DI, y + 44, DIW, i === rows.length - 1 ? H : '#EEEEEE'); });
+    s += hl(DI, 818, DIW) + tb(DI, 830, '목록', false, `color:${G}`) + tb(DI + 48, 830, '취소', false, `color:${G}`) + cta(1416 - 120, 826, 120, '프로젝트 만들기');
+    return s;
+  }
+  const on = (k) => active === k;
+  const L = (y, k, t) => lab(DI, y, t, on(k) ? `color:${INK}` : '');
+  // 프로젝트명
+  s += L(136, 'name', '프로젝트명') + fld(DI, 156, DIW, `<span style="font-size:15.5px">남원 비닐하우스 2026</span><span style="flex:1"></span><span class="n" style="font-size:14px;color:${G}">13/100</span>`, `height:36px;border-color:${INK}`);
+  // 탐지 유형 — 타일 2(208×84) + 학습데이터 유형 select
+  s += L(208, 'det', '탐지 유형');
   s += img(DI, 228, 208, 84, 'pj-radio-det.jpg', poly(208, 84, DET, .9) + brkIn(208, 84, INK, 12, 1.5)) + img(DI + 224, 228, 208, 84, 'pj-radio-seg.jpg', poly(208, 84, SEG, .9));
   s += txt(DI, 318, 'Object Detection', 13) + txt(DI + 224, 318, 'Segmentation', 13, G);
-  s += lab(DI + 24, 352, '학습데이터 유형') + sel(DI, 372, DIW, '정사영상 (ortho)');
-  // 03 영상 불러오기(진행 = 틴트 띠) — 버튼 `아카이브에서 선택` + 선택 2 썸네일 + 권장 해상도(GSD 에서 자동)
-  s += div(DX + 1, 412, DW - 1, 176, `background:${T1}`) + div(DX + 1, 412, 2, 176, `background:${INK}`);
-  s += sec(424, '03', '영상 불러오기', true);
+  s += L(352, 'dtype', '학습데이터 유형') + sel(DI, 372, DIW, '정사영상 (ortho)');
+  // 영상 불러오기 — 버튼 `아카이브에서 선택` + 선택 2 썸네일 + 권장 해상도(GSD 에서 자동)
+  if (on('imagery')) s += div(DX + 1, 412, DW - 1, 176, `background:${T1}`) + div(DX + 1, 412, 2, 176, `background:${INK}`);
+  s += L(424, 'imagery', '영상 불러오기');
   s += `<div class="fld" style="left:${DI}px;top:444px;width:160px;height:32px;border-color:${INK};background:#FFFFFF;justify-content:center">${ico('import', INK, 14)}아카이브에서 선택</div>\n`;
   s += img(DI + 172, 444, 56, 32, 'tile-arc-a.jpg', brkIn(56, 32, ACC, 6)) + img(DI + 236, 444, 56, 32, 'tile-arc-hid.jpg', brkIn(56, 32, ACC, 6)) + txt(DI + 304, 448, '선택 2', 13) + num(DI + 304, 468, '1.08 – 1.69 cm', 12, G);
-  s += lab(DI + 24, 496, '권장 해상도') + `<span class="tag" style="position:absolute;left:${DI + 24 + 74}px;top:494px;border-color:${ACC};color:${ACC}">자동</span>\n`;
+  s += lab(DI, 496, '권장 해상도') + `<span class="tag" style="position:absolute;left:${DI + 74}px;top:494px;border-color:${ACC};color:${ACC}">자동</span>\n`;
   s += sel(DI, 516, DIW, '≤ 0.02 m/px') + num(DI, 552, '선택 영상 GSD 1.08 – 1.69 cm → 2 cm 급', 12, G);
-  // 04 학습데이터 불러오기
-  s += sec(608, '04', '학습데이터 불러오기', false, true);
+  // 학습데이터 불러오기
+  s += L(608, 'dataset', '학습데이터 불러오기');
   s += `<div class="fld" style="left:${DI}px;top:628px;width:200px;height:32px;justify-content:center;color:${G}">${ico('layers', G, 14)}데이터셋 · 라벨링 데이터</div>\n` + txt(DI + 212, 634, '선택 0', 13, C);
-  // 05 구성원 초대 — 아이디 확인 → 역할(원본 모달 3필드) + 소유자 행
-  s += sec(684, '05', '구성원 초대', false, true);
+  // 구성원 초대 — 아이디 확인 → 역할(원본 모달 3필드) + 소유자 행
+  s += L(684, 'members', '구성원 초대');
   s += fld(DI, 704, 196, `<span style="color:${C}">아이디</span>`) + tb(DI + 204, 704, '확인', false, `color:${G}`) + sel(DI + 252, 704, 180, '편집자', G);
   s += hl(DI, 748, DIW) + txt(DI, 756, '소유자 · 내 계정', 13) + num(1416 - 80, 756, '1 명', 12.5, G, 'width:80px;text-align:right') + hl(DI, 782, DIW);
   s += hl(DI, 818, DIW) + tb(DI, 830, '목록', false, `color:${G}`) + tb(DI + 48, 830, '취소', false, `color:${G}`) + cta(1416 - 120, 826, 120, '프로젝트 만들기');
+  return s;
+}
+function create() {
+  let s = '';
+  s += txt(X0, 22, '‹ 프로젝트 목록', 13, G) + hl(72, 64, 1368);
+  s += disp(X0, 80, '프로젝트 만들기', 32);
+  s += ctxArchive();
+  s += createForm({ active: 'imagery' });
   s += FOOT;
   return page('B5 · 프로젝트 — 만들기', s);
 }
+// 검토 — 좌 = 대표 이미지(선택 영상 1 자동) + 이름 크게 + kv 6(행마다 `수정 ›`) · 우 = 요약 + CTA
+function createReview() {
+  let s = '';
+  s += txt(X0, 22, '‹ 프로젝트 목록', 13, G) + hl(72, 64, 1368);
+  s += disp(X0, 80, '프로젝트 만들기', 32) + st(X0 + 224, 92, '검토');
+  s += lab(X0, 136, '대표 이미지 · 자동 (영상 1)') + txt(XR - 60, 134, '변경 ›', 13, INK, 'width:60px;text-align:right');
+  s += img(X0, 156, W, 292, 'tile-arc-a.jpg', brkIn(W, 292, ACC));
+  s += disp(X0, 468, '남원 비닐하우스 2026', 32);
+  const th = (src) => `<img src="${src}" alt="" style="width:44px;height:26px;object-fit:cover;display:inline-block;vertical-align:middle;margin-right:6px">`;
+  const rows = [
+    ['탐지 유형', 'Object Detection'],
+    ['학습데이터 유형', '정사영상 (ortho)'],
+    ['권장 해상도', `≤ 0.02 m/px <span style="color:${G}">· 자동 · GSD 1.08 – 1.69 cm</span>`],
+    ['영상 2', th('tile-arc-a.jpg') + th('tile-arc-hid.jpg') + `<span style="color:${G}">남원 A구역 · 운봉읍</span>`],
+    ['학습데이터 1', `비닐하우스 라벨 v3 <span style="color:${G}">· 라벨링 데이터 · 1,240장</span>`],
+    ['구성원 2', `소유자 · 내 계정 <span style="color:${G}">· kimtj 편집자</span>`],
+  ];
+  const RY = 532, RH = 46;
+  s += hl(X0, RY, W, INK);
+  rows.forEach(([k, v], i) => {
+    const y = RY + i * RH;
+    s += lab(X0, y + 16, k) + `<div style="position:absolute;left:${X0 + 176}px;top:${y + 12}px;font-size:14px;letter-spacing:-.01em;color:${INK};white-space:nowrap;line-height:22px">${v}</div>\n`;
+    s += txt(XR - 60, y + 14, '수정 ›', 13, INK, 'width:60px;text-align:right') + hl(X0, y + RH, W);
+  });
+  s += createForm({ review: true });
+  s += FOOT;
+  return page('B5 · 프로젝트 — 만들기 검토', s);
+}
 
 wr('B5-Project-Create.dc.html', create());
+wr('B5-Project-Create-Review.dc.html', createReview());
 wr('B5-Projects.dc.html', projects());
 wr('B5-Project-Overview.dc.html', overview());
 wr('B5-Project-Data.dc.html', data());
