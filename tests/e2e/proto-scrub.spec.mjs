@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
  *
  * 이 스펙이 지키는 계약 (references/worldflight.md §8 Hard rules + 스펙 §B/§F):
  *   1) 문서 흐름에는 스페이서 하나뿐이고, 무대는 position:fixed 하나다.
- *   2) src 를 절대 교체하지 않는다 — 7개 레그가 전부 동시에 마운트된 채로 남는다.
+ *   2) src 를 절대 교체하지 않는다 — 8개 레그(01–06, 06b, 07)가 전부 동시에 마운트된 채로 남는다.
  *   3) 크로스페이드는 한쪽만. 어느 순간에도 완전 불투명한 레그가 최소 하나 있다
  *      → 씸에서 페이지 바탕(검정)이 드러나지 않는다.
  *   4) 재생헤드는 lerp 0.12 + 데드밴드 8/20ms + 시크 병합으로 움직인다.
@@ -56,11 +56,11 @@ const stageState = (page) => page.evaluate(() => {
   }));
 });
 
-test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 7개 이음매', async ({ page }) => {
+test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 8개 레그 이음매', async ({ page }) => {
   const errors = await boot(page);
 
   const M = await page.evaluate(() => window.__scrub.manifest);
-  expect(M.legs.length).toBe(7);
+  expect(M.legs.length).toBe(8);
 
   /* ── 1. 문서 흐름에는 스페이서 하나뿐, 무대는 fixed ─────────────────────── */
   const flow = await page.evaluate(() => {
@@ -120,9 +120,10 @@ test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 7개 이
     label: window.__scrub.legLabel(),
     t: window.__scrub.trackVh(),
   }));
-  // 0.5 × 6.987vh = 3.49vh → 레그 04(남원 분지, 3.324–3.900vh). AI 레그 1–3 이 각 1.108vh.
-  expect(mid.id).toBe('04');
-  expect(mid.label).toBe('남원');
+  // 0.5 × 8.942vh = 4.47vh → 레그 05(비닐하우스, 4.432–5.540vh). AI 레그 1–6b 가 각 1.108vh.
+  // (레그 06b 가 들어오며 7.834 → 8.942vh; 2026-08-27 kie-legs-4-6b)
+  expect(mid.id).toBe('05');
+  expect(mid.label).toBe('비닐하우스');
 
   /* ── 5. 이음매에 검은 프레임이 없다 ──────────────────────────────────────
      구조적 보증: 한쪽만 페이드하므로 나가는 레그가 밑에서 풀 강도로 남는다.
@@ -317,13 +318,13 @@ test('지연 로딩 ±1.6vh — 멀리 있는 레그는 아직 받지 않는다'
   await seek(page, 0);
   const early = await stageState(page);
   expect(early[0].srcSet, '레그 01 은 받았다').toBe(true);
-  // 6.99vh 트랙에서 마지막 레그(5.80vh~)는 1.6vh 반경 밖 — 아직 받지 않았다.
-  expect(early[6].srcSet, '레그 07 은 아직이다').toBe(false);
+  // 8.94vh 트랙에서 마지막 레그 07(7.76vh~, index 7)은 1.6vh 반경 밖 — 아직 받지 않았다.
+  expect(early[7].srcSet, '레그 07 은 아직이다').toBe(false);
   expect(reqs).not.toContain('w07');
 
   await seek(page, 0.985, 1200);
   const late = await stageState(page);
-  expect(late[6].srcSet, '도착하면 받는다').toBe(true);
+  expect(late[7].srcSet, '도착하면 받는다').toBe(true);
   expect(late.every((s) => s.op <= 1)).toBe(true);
   expect(errors, '콘솔 오류').toEqual([]);
 });
@@ -347,10 +348,10 @@ test('reduced-motion — 클립을 아예 받지 않는다. 포스터와 글이 
   await page.waitForTimeout(800);
 
   expect(videoReqs, 'reduced-motion 에서 mp4 를 받지 않는다').toEqual([]);
-  // 포스터 7장이 그대로 서 있고, 카피는 읽힌다.
+  // 포스터 8장이 그대로 서 있고, 카피는 읽힌다.
   const posters = await page.$$eval('.sc-world__poster', (n) => n.map((e) => e.naturalWidth > 0));
-  expect(posters.length).toBeGreaterThanOrEqual(7);
-  expect(posters.filter(Boolean).length).toBeGreaterThanOrEqual(7);
+  expect(posters.length).toBeGreaterThanOrEqual(8);
+  expect(posters.filter(Boolean).length).toBeGreaterThanOrEqual(8);
   expect(await page.textContent('.sb-h1')).toContain('국토는 매일');
   // 인계 판은 만들지 않는다(엔진 계약: reduced 에서는 지도도 띄우지 않는다).
   expect(await page.evaluate(() => window.__scrub.handoffActive())).toBe(false);

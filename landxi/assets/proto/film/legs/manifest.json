@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-08-26T23:18:55.402Z",
+  "generatedAt": "2026-08-27T01:57:26.594Z",
   "builder": "tools/scrub/assemble.mjs",
-  "source": "2개 소스 · kling v2-1-pro AI 레그 1–6(앵커 A01→A07) + MapLibre 결정론 필름(레그 07 여수 플레이스홀더)",
+  "source": "2개 소스 · kling v2-1-pro AI 레그 1–6b(앵커 A01→A06→A06b→A07) + MapLibre 결정론 필름(레그 07 여수 플레이스홀더)",
   "fps": 25,
-  "fpsNote": "레그 01–06 은 24 fps(kling 출력 1932×1072→1080p 스케일), 레그 07 은 25 fps 1280×720. 레그별 legs[].fps / legs[].size.",
+  "fpsNote": "레그 01–06b 는 24 fps(kling 출력 1932×1072→1080p 스케일), 레그 07 은 25 fps 1280×720. 레그별 legs[].fps / legs[].size.",
   "filmSize": [
     1280,
     720
@@ -15,13 +15,15 @@
       "03",
       "04",
       "05",
-      "06"
+      "06",
+      "06b"
     ],
     "doc": [
       "docs/superpowers/proto/2026-08-26-kie-legs-1-3.md",
-      "docs/superpowers/proto/2026-08-27-kie-legs-4-6.md"
+      "docs/superpowers/proto/2026-08-27-kie-legs-4-6.md",
+      "docs/superpowers/proto/2026-08-27-kie-legs-4-6b.md"
     ],
-    "note": "미니어처 세계라 실카메라가 없다. startCamera/endCamera 는 앵커 문서의 고도대를 따라 authored 이고 (A02 고궤도 460 km · A03 ~30 km/피치 60° · A05 남원 분지 8.6 km · A07 여수 17 km), 레그 05 끝은 남원 인계 판의 카메라, 레그 06 끝은 이어받는 레그 07(MapLibre 실카메라)의 시작에 맞춘다. cameraSource:\"authored\" 로 표시. 페이지 오버레이의 숫자는 전부 실데이터다."
+    "note": "미니어처 세계라 실카메라가 없다. startCamera/endCamera 는 앵커 문서의 고도대를 따라 authored 이고 (A02 고궤도 460 km · A03 ~30 km/피치 60° · A05 남원 분지 8.6 km · A06b 남원 상공 140 km · A07 여수 17 km), 레그 05 끝은 남원 인계 판의 카메라, 레그 06 은 남원 위 수직 상승, 레그 06b 끝은 이어받는 레그 07(MapLibre 실카메라)의 시작에 맞춘다. cameraSource:\"authored\" 로 표시. 페이지 오버레이의 숫자는 전부 실데이터다."
   },
   "mobileSize": [
     960,
@@ -47,18 +49,18 @@
     "seekMs": 20
   },
   "lazyVh": 1.6,
-  "filmSeconds": 35.938,
-  "filmVh": 7.834,
-  "spacerVh": 8.834,
+  "filmSeconds": 41.021,
+  "filmVh": 8.942,
+  "spacerVh": 9.942,
   "cameraNote": "고도 = 1.5 × 720px × m/px (MapLibre 기본 fov 36.87°, 필름 뷰포트 720px). 줌·GSD 는 고도에서 유도.",
-  "flightProfile": "레그마다 렌더러가 다르다. 레그 07 의 좌표·고도·방위·피치는 그 레그를 구운 렌더러의 실제 카메라 값이다(MapLibre 필름 SEG); AI 레그 01–06 은 authored(aiLegs.note). 그래서 렌더러가 바뀌는 이음매에서는 고도가 실제로 튄다 — 필름 자체가 거기서 컷이기 때문이다. 계기 바늘이 스냅하지 않도록 페이지가 씸 밴드(0.16vh) 위에서 두 레그의 판독값을 섞는다(scrub.js camAt). 인계 판은 그 덕분에 필름 마지막 프레임과 정확히 같은 카메라로 뜬다.",
+  "flightProfile": "레그마다 렌더러가 다르다. 레그 07 의 좌표·고도·방위·피치는 그 레그를 구운 렌더러의 실제 카메라 값이다(MapLibre 필름 SEG); AI 레그 01–06b 는 authored(aiLegs.note). 그래서 렌더러가 바뀌는 이음매에서는 고도가 실제로 튄다 — 필름 자체가 거기서 컷이기 때문이다. 계기 바늘이 스냅하지 않도록 페이지가 씸 밴드(0.16vh) 위에서 두 레그의 판독값을 섞는다(scrub.js camAt). 인계 판은 그 덕분에 필름 마지막 프레임과 정확히 같은 카메라로 뜬다.",
   "bytes": {
-    "desktop": 43168484,
-    "mobile": 11977161,
-    "poster": 702778,
-    "desktopMB": 41.17,
-    "mobileMB": 11.42,
-    "posterMB": 0.67
+    "desktop": 50147025,
+    "mobile": 13671050,
+    "poster": 790536,
+    "desktopMB": 47.82,
+    "mobileMB": 13.04,
+    "posterMB": 0.75
   },
   "seams": [
     {
@@ -90,10 +92,10 @@
       "to": "04",
       "frameShared": false,
       "rule": "B",
-      "pct": 0.167,
+      "pct": 0.165,
       "lumaA": 47.11,
-      "lumaB": 46.87,
-      "lumaDelta": -0.24,
+      "lumaB": 46.88,
+      "lumaDelta": -0.23,
       "pass": true,
       "monotonic": true
     },
@@ -102,10 +104,10 @@
       "to": "05",
       "frameShared": false,
       "rule": "B",
-      "pct": 0.17,
-      "lumaA": 62.83,
-      "lumaB": 62.66,
-      "lumaDelta": -0.17,
+      "pct": 0.199,
+      "lumaA": 57.64,
+      "lumaB": 57.29,
+      "lumaDelta": -0.35,
       "pass": true,
       "monotonic": true
     },
@@ -114,22 +116,34 @@
       "to": "06",
       "frameShared": false,
       "rule": "B",
-      "pct": 0.169,
-      "lumaA": 64,
-      "lumaB": 63.84,
-      "lumaDelta": -0.16,
+      "pct": 0.168,
+      "lumaA": 61.82,
+      "lumaB": 61.71,
+      "lumaDelta": -0.11,
       "pass": true,
       "monotonic": true
     },
     {
       "from": "06",
+      "to": "06b",
+      "frameShared": false,
+      "rule": "B",
+      "pct": 0.144,
+      "lumaA": 49.7,
+      "lumaB": 49.61,
+      "lumaDelta": -0.09,
+      "pass": true,
+      "monotonic": true
+    },
+    {
+      "from": "06b",
       "to": "07",
       "frameShared": false,
       "rule": "B",
-      "pct": 12.949,
-      "lumaA": 42.74,
+      "pct": 13.26,
+      "lumaA": 49.8,
       "lumaB": 47.55,
-      "lumaDelta": 4.81,
+      "lumaDelta": -2.25,
       "pass": true,
       "monotonic": true
     }
@@ -330,9 +344,9 @@
       "srcMobile": "/landxi/assets/proto/film/legs/w04-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w04.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w04-last.webp",
-      "bytes": 8086748,
-      "bytesMobile": 2108722,
-      "bytesPoster": 115186,
+      "bytes": 5901783,
+      "bytesMobile": 1959032,
+      "bytesPoster": 115396,
       "cameraSource": "authored",
       "startCamera": {
         "center": [
@@ -386,9 +400,9 @@
       "srcMobile": "/landxi/assets/proto/film/legs/w05-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w05.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w05-last.webp",
-      "bytes": 7335812,
-      "bytesMobile": 1925224,
-      "bytesPoster": 115262,
+      "bytes": 8907323,
+      "bytesMobile": 2122166,
+      "bytesPoster": 116784,
       "cameraSource": "authored",
       "startCamera": {
         "center": [
@@ -417,11 +431,11 @@
     },
     {
       "id": "06",
-      "wp": "여수",
-      "label": "여수 이동",
-      "place": "지구본 이동 · 남원 → 여수",
+      "wp": "남원",
+      "label": "상승",
+      "place": "남원 상공 · 지구본 곡률",
       "look": "diorama",
-      "caption": "AI 생성 필름 · kling v2-1-pro · 앵커 A06 → A07 · 여수 국동항 방파제",
+      "caption": "AI 생성 필름 · kling v2-1-pro · 앵커 A06 → A06b · 수직 상승",
       "source": "landxi/assets/proto/film/legs/src/v3-leg-06.mp4",
       "renderer": "kling v2-1-pro (AI)",
       "frames": [
@@ -442,9 +456,9 @@
       "srcMobile": "/landxi/assets/proto/film/legs/w06-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w06.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w06-last.webp",
-      "bytes": 5833632,
-      "bytesMobile": 1667615,
-      "bytesPoster": 100228,
+      "bytes": 6740120,
+      "bytesMobile": 1759977,
+      "bytesPoster": 102172,
       "cameraSource": "authored",
       "startCamera": {
         "center": [
@@ -460,6 +474,62 @@
       },
       "endCamera": {
         "center": [
+          127.47,
+          35.33
+        ],
+        "altitudeM": 140000,
+        "zoom": 9.9443,
+        "pitch": 30,
+        "bearing": 15,
+        "mpp": 129.63,
+        "seg": "06b"
+      }
+    },
+    {
+      "id": "06b",
+      "wp": "여수",
+      "label": "여수 이동",
+      "place": "지구본 이동 · 남원 → 여수",
+      "look": "diorama",
+      "caption": "AI 생성 필름 · kling v2-1-pro · 앵커 A06b → A07 · 여수 국동항 방파제",
+      "source": "landxi/assets/proto/film/legs/src/v3-leg-06b.mp4",
+      "renderer": "kling v2-1-pro (AI)",
+      "frames": [
+        0,
+        121
+      ],
+      "count": 122,
+      "encodedFrames": 122,
+      "fps": 24,
+      "size": [
+        1946,
+        1080
+      ],
+      "seconds": 5.083,
+      "weightVh": 1.108,
+      "rate": 0.218,
+      "src": "/landxi/assets/proto/film/legs/w06b.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/w06b-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/w06b.webp",
+      "seamPoster": "/landxi/assets/proto/film/legs/w06b-last.webp",
+      "bytes": 6685507,
+      "bytesMobile": 1554275,
+      "bytesPoster": 84082,
+      "cameraSource": "authored",
+      "startCamera": {
+        "center": [
+          127.47,
+          35.33
+        ],
+        "altitudeM": 140000,
+        "zoom": 9.9443,
+        "pitch": 30,
+        "bearing": 15,
+        "mpp": 129.63,
+        "seg": "06ba"
+      },
+      "endCamera": {
+        "center": [
           127.7305,
           34.563
         ],
@@ -468,7 +538,7 @@
         "pitch": 10,
         "bearing": 5,
         "mpp": 15.741,
-        "seg": "06b"
+        "seg": "06bb"
       }
     },
     {
@@ -540,10 +610,10 @@
     "bearing": -3,
     "altitudeM": 52400,
     "detections": "/landxi/assets/data/geo/results/namwon-greenhouse-2025.geojson",
-    "note": "남원 스케일 마지막 레그(05 비닐하우스 실태)의 끝 카메라. 레그 06 은 지구본 곡면을 따라 여수로 옮겨 가므로 남원 인계는 그 앞에서 닫는다. 필름이 멈춘 그 자리에서 실지도가 같은 카메라로 이어받는다 — 1프레임 크로스페이드."
+    "note": "남원 스케일 마지막 레그(05 비닐하우스 실태)의 끝 카메라. 레그 06 은 수직 상승, 06b 는 지구본 곡면을 따라 여수로 옮겨 가므로 남원 인계는 그 앞에서 닫는다. 필름이 멈춘 그 자리에서 실지도가 같은 카메라로 이어받는다 — 1프레임 크로스페이드."
   },
   "handoffFinal": {
-    "legIndex": 6,
+    "legIndex": 7,
     "center": [
       127.736,
       34.566

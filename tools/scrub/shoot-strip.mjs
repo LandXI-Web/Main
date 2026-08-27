@@ -3,6 +3,7 @@
 //   node tools/scrub/shoot-strip.mjs                 # shots/scrub/legs-1-3-*.png
 //   node tools/scrub/shoot-strip.mjs --out shots/x   # 출력 폴더
 //   node tools/scrub/shoot-strip.mjs --legs 4-6 --prefix legs-4-6   # 레그 4–6 + 씸 03→04 … 06→07
+//   node tools/scrub/shoot-strip.mjs --legs 4-6b --prefix legs-4-6b # 레그 4–6b + 씸 03→04 … 06b→07 (id 는 manifest)
 //
 // 지점은 트랙 진행도(window.__scrub.seek 의 p)다. 씸 밴드(0.16vh)의 한가운데와 양끝을
 // 반드시 포함시킨다 — 이음매의 크로스페이드가 실제 스크린샷에서 어떻게 보이는지 보기 위해.
@@ -56,11 +57,14 @@ if (!LEGS) {
     { p: P(cum[2][1] + seam / 2), tag: 'seam-03-04-out' },
   ];
 } else {
-  const [a, b] = LEGS.split('-').map(n => parseInt(n, 10) - 1);
-  const id = i => String(i + 1).padStart(2, '0');
+  // --legs 4-6b : 레그 id 로 (매니페스트 순서). 06b 처럼 숫자가 아닌 id 가 있으므로 index 는 manifest 에서 찾는다.
+  const norm = k => { const m = /^(\d+)([a-z]?)$/.exec(k); return m[1].padStart(2, '0') + m[2]; };
+  const idx = k => { const i = M.legs.findIndex(l => l.id === norm(k)); if (i < 0) throw new Error('레그 없음 ' + k); return i; };
+  const [a, b] = LEGS.split('-').map(idx);
+  const id = i => M.legs[i].id;
   POINTS = [{ p: P(cum[a][0]), tag: `seam-${id(a - 1)}-${id(a)}-mid` }];
   for (let i = a; i <= b; i++) {
-    POINTS.push({ p: P(cum[i][0] + 0.55), tag: `L${i + 1}-mid` });
+    POINTS.push({ p: P(cum[i][0] + 0.55), tag: `L${id(i)}-mid` });
     if (i < b) POINTS.push({ p: P(cum[i][1]), tag: `seam-${id(i)}-${id(i + 1)}-mid` });
   }
   POINTS.push({ p: P(cum[b][1] - seam / 2), tag: `seam-${id(b)}-${id(b + 1)}-in` });
@@ -92,8 +96,8 @@ for (let i = 0; i < POINTS.length; i++) {
       film: +window.__scrub.filmTime().toFixed(2),
       op: segs.map(s => +(+s.style.opacity || 0).toFixed(2)),
       painted: segs.map(s => !!s.querySelector('video.sb-painted')),
-      alt: document.getElementById('sb-alt').textContent,
-      caption: document.getElementById('sb-caption').textContent,
+      alt: (document.getElementById('sb-alt') || {}).textContent || '',
+      caption: (document.getElementById('sb-caption') || {}).textContent || '',
     };
   });
   const f = path.join(OUT, `${PREFIX}-${i + 1}-${tag}.png`);

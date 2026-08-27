@@ -7,6 +7,8 @@
  *   node tools/kie/legs-v3.mjs post 1 2 3       # 스크럽 인코딩 + 검수 프레임 + 씸 프레임
  *   node tools/kie/legs-v3.mjs sheet 1 2 3      # 3행 × (6 프레임 + 다음 앵커) 콘택트 시트
  *   LEGS_V3_REV=3 LEGS_V3_BATCH=4-6 node tools/kie/legs-v3.mjs run 4 5 6   # leg 4–6 (2026-08-27)
+ *   LEGS_V3_REV=3 LEGS_V3_BATCH=4-6b LEGS_V3_PREV=rev1 LEGS_V3_CAP=220 node tools/kie/legs-v3.mjs run 4 5 6 6b
+ *       # leg 4·5·6·6b (2026-08-27 "D1 그대로, D2 go") — 13앵커 체인(A06→A06b→A07), 이전 4-6 산출물은 *.rev1.mp4
  *
  * 규칙(2026-08-26 클라이언트): leg 당 생성 정확히 1회, 자동 재시도 없음, 캡 160.
  * 매 호출 전후 잔액을 shots/kie/legs-v3-credits.json 에 기록.
@@ -30,7 +32,8 @@ const PER = 50;
 // rev.3 (2026-08-26, 클라이언트 "go"): 앵커 A02 v3b / A03 v3c / A04 v3b 확정 후 leg 1–3 재생성.
 // LEGS_V3_REV=3 으로 실행하면 이전 rev 산출물을 *.rev2.mp4 로 백업하고, 1회/캡 규칙은 rev 별로 센다.
 const REV = Number(process.env.LEGS_V3_REV || 2);
-const PREV = `rev${REV - 1}`;
+// LEGS_V3_PREV 로 백업 접미사를 지정할 수 있다(batch 4-6b 는 4-6 산출물을 .rev1 로 보관).
+const PREV = process.env.LEGS_V3_PREV || `rev${REV - 1}`;
 // 배치(2026-08-27, 클라이언트 "go"): leg 4–6 은 같은 rev.3 앵커지만 별도 캡(160)으로 센다.
 // LEGS_V3_BATCH=4-6 으로 실행. 1회/캡 규칙과 시트 이름은 (rev, batch) 별.
 const BATCH = process.env.LEGS_V3_BATCH || '1-3';
@@ -52,8 +55,10 @@ function trimNeg(s) {
   return (head + cut.slice(0, cut.lastIndexOf(','))).trim();
 }
 
-const id = (n) => `A${String(n).padStart(2, '0')}`;
-const nn = (n) => String(n).padStart(2, '0');
+// leg 키는 4·5·6 같은 숫자 또는 '6b' 같은 문자열. A06b 는 A06→A07 사이의 중간 앵커(rev.3d).
+const nn = (n) => { const m = /^(\d+)([a-z]?)$/.exec(String(n)); if (!m) throw new Error('leg 키 형식: ' + n); return m[1].padStart(2, '0') + m[2]; };
+const id = (n) => `A${nn(n)}`;
+const anchorOf = (n) => { const a = SPEC.anchors.find((x) => x.id === id(n)); if (!a) throw new Error('앵커 없음 ' + id(n)); return a; };
 const raw = (n) => path.join(GEN, `v3-leg-${nn(n)}.mp4`);
 const scrub = (n) => path.join(SRC, `v3-leg-${nn(n)}.mp4`);
 const frame = (n, t) => path.join(SHOTS, `v3-leg-${nn(n)}-t${t.toFixed(2)}.jpg`);
@@ -89,9 +94,8 @@ function writeLedger(l) {
 }
 
 async function runOne(n, ledger) {
-  const a = SPEC.anchors.find((x) => x.id === id(n));
-  if (!a) throw new Error('앵커 없음 ' + id(n));
-  const tailId = a.tail;
+  const a = anchorOf(n);
+  const tailId = a.tail;   // 다음 앵커는 n+1 이 아니라 anchors-v3.json 의 tail 로 (A06 → A06b → A07)
   const head = path.join(ANCH, `${a.id}.png`);
   const tail = path.join(ANCH, `${tailId}.png`);
   if (runsOfRev(ledger).some((r) => r.leg === n && r.ok)) throw new Error(`leg ${n} 은 rev${REV}/batch ${BATCH} 성공 기록이 이미 있다.`);
@@ -159,10 +163,10 @@ function post(n) {
 function sheet(ns) {
   const out = path.join(SHOTS, BATCH !== '1-3' ? `v3-legs-${BATCH}-sheet.jpg` : REV > 2 ? `v3-legs-1-3-rev${REV}-sheet.jpg` : 'v3-legs-1-3-sheet.jpg');
   const rows = ns.map((n) => ({
-    label: `leg ${n}  ${id(n)} -> ${id(n + 1)}`,
-    next: id(n + 1),
+    label: `leg ${n}  ${id(n)} -> ${anchorOf(n).tail}`,
+    next: anchorOf(n).tail,
     frames: TS.map((t) => ({ t, f: slash(frame(n, t)) })),
-    nextFile: slash(path.join(ANCH, `${id(n + 1)}.jpg`)),
+    nextFile: slash(path.join(ANCH, `${anchorOf(n).tail}.jpg`)),
   }));
   const py = `
 import json, sys
@@ -192,7 +196,7 @@ print(out, sh.size)
 }
 
 const [cmd, ...rest] = process.argv.slice(2);
-const ns = rest.map(Number).filter(Boolean);
+const ns = rest.map((x) => (/^\d+$/.test(x) ? Number(x) : x)).filter((x) => x !== '' && x != null);
 try {
   if (cmd === 'credits') console.log(await credits());
   else if (cmd === 'run') {
