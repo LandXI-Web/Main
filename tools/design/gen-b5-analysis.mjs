@@ -1,4 +1,4 @@
-// B5 분석 서비스 3판 재생성기 — List(증거 그리드) · Run(워크플로우) · Result(풀블리드 지도 + 스캔 스트립)
+// B5 분석 서비스 3판 재생성기 — List(카드 그리드 + 우 정보 패널) · Run(워크플로우) · Result(풀블리드 지도 + 스캔 스트립)
 // 발주 원문(2026-08-27): "프로젝트는 진행하고 분석 서비스로 설계하자. 현재 로그인 대시보드 데이터관리 프로젝트
 //   탭별로 구현한 특과 톤앤매너를 유지하고 창의적인 프론트 디자인을 구현하자. 기존 기능은 유지하되"
 // 규칙 — ① design/system.md §1–§5 ② 실데이터 = services.js(15 · 부처 6) · results.js(4 산출물) · imagery.js(11)
@@ -236,53 +236,79 @@ function head(active, sub) {
 }
 
 // ======================================================================
-// 1. B5-Analysis-List — KPI 5 + 실측 증거 카드 5 + 라인업 판 10(점선) · 부처 칩 · CTA 분석 실행
+// 1. B5-Analysis-List — 카드 그리드(좌 3열 · 이미지 + 이름 + 부처만) + 우 정보 패널(선택 카드) · 숫자는 우 패널 안에만
+// 발주(2026-08-27): "분석서비스 메인은 아래는 이미지와 카드 형태로 한다. 숫자 건 추정 이런 것도 필요 없고.
+//   메인은 그냥 카드 서비스만 펼쳐 놓는거다. 그리고 카드를 클릭하면 오른쪽에 카드 정보를 표출한다."
 // ======================================================================
-// 증거 오버레이(232×130 좌표) — 실제 결과 형상을 손으로 옮긴 근사(폴리곤 수·위치는 NOTES §19 유보 ③)
+// 카드 이미지 — 실측 5 = 결과 크롭(청록 도형은 손으로 옮긴 근사, NOTES §19 유보 ③) · 준비 중 10 = 대상 지역 정사영상 크롭(점선 판 0)
 const EV = {
-  marine: { src: 'tile-arc-yeosu-air.jpg', over: svgDots(232, 130, [[150, 28], [162, 22], [176, 34], [188, 26], [170, 46], [158, 40], [196, 42], [204, 30], [182, 56], [144, 44], [210, 52], [166, 62], [190, 66]], 3) + brkIn(80, 56, TEAL, 8, 1, 134, 12), chip: '여수 항공 1,860' },
-  farmland: { src: 'tile-farm-clean.jpg', over: svgPolys(232, 130, ['22,62 108,20 150,48 62,96', '70,102 160,56 204,86 112,130', '150,10 220,0 232,32 176,56']), chip: '남원 2,098 필지' },
-  pothole: { src: 'pj-road.jpg', over: brkIn(30, 20, TEAL, 6, 1, 94, 56) + brkIn(24, 16, TEAL, 5, 1, 140, 34) + brkIn(26, 18, TEAL, 6, 1, 60, 86), chip: '남원 3지점' },
-  change: { src: 'ev-change.jpg', over: '', chip: '국산리 A68→A71' },
-  greenhouse: { src: 'tile-gh-clean.jpg', over: svgPolys(232, 130, ['72,-10 90,-10 98,140 80,140', '91,-10 109,-10 117,140 100,140', '120,-10 138,-10 145,140 128,140']), chip: '남원 1,674 필지' },
+  marine: { src: 'tile-arc-yeosu-air.jpg', over: svgDots(244, 84, [[158, 20], [170, 16], [184, 26], [196, 20], [178, 36], [166, 30], [204, 32], [212, 22], [190, 44], [152, 34], [218, 40], [174, 50], [198, 52]], 3) },
+  farmland: { src: 'tile-farm-clean.jpg', over: svgPolys(244, 84, ['22,46 108,14 150,36 62,72', '70,76 160,42 204,64 112,96', '150,6 220,0 244,24 176,42']) },
+  pothole: { src: 'pj-road.jpg', over: brkIn(30, 20, TEAL, 6, 1, 98, 40) + brkIn(24, 16, TEAL, 5, 1, 146, 22) + brkIn(26, 18, TEAL, 6, 1, 62, 64) },
+  change: { src: 'ev-change.jpg', over: '' },
+  greenhouse: { src: 'tile-gh-clean.jpg', over: svgPolys(244, 84, ['76,-10 94,-10 102,106 84,106', '96,-10 114,-10 122,106 104,106', '126,-10 144,-10 151,106 134,106']) },
+  greenbelt: { src: 'tile-ep-4.jpg', over: '' },
+  solar: { src: 'pj-jeju2020.jpg', over: '' },
+  feedcrop: { src: 'crop-farm-1.jpg', over: '' },
+  incinerator: { src: 'tile-kuksan-1.jpg', over: '' },
+  building: { src: 'tile-ep-2.jpg', over: '' },
+  silage: { src: 'crop-farm-6.jpg', over: '' },
+  trash: { src: 'tile-arc-a.jpg', over: '' },
+  river: { src: 'tile-arc-hid.jpg', over: '' },
+  forest: { src: 'tile-ep-1.jpg', over: '' },
+  carbon: { src: 'pj-land.jpg', over: '' },
+};
+// 선택 카드(남원 농지이용) 정보 — results.js namwon-farmland-2025 · dashboard.js backbone XI-VFM v2.1
+const SEL = {
+  id: 'farmland', name: '농지이용·불법건축물', min: '농림축산식품부',
+  what: '농경지 / 비경작지 필지 단위 이용 분류 · 드론 정사영상 + AI 세그멘테이션 · PNU 필지 경계 결합',
+  kv: [
+    ['모델', 'XI-VFM v2.1 · 서비스 모델 v3'],
+    ['입력 영상', '드론 정사영상 · GSD 1.08 cm'],
+    ['산출물', 'GeoJSON · GPKG · XLSX(필지 행정정보)'],
+    ['최근 실행', '2026.06.08 · 남원 농경지 2025.04'],
+    ['결과', '2,098 필지 · 315.9 ha · 경작지 1,291 · 비경작지 807'],
+    ['평균 신뢰도', '0.45 · 중앙값 0.41'],
+  ],
 };
 function list() {
-  let s = head('서비스', '부처 6 · 서비스 15 · 실측 결과 5');
-  s += cta(XE - 108, 96, 108, '분석 실행');
-  // KPI 5 — 대시보드 문법(라벨 · 큰 수 58 액센트 · 단위 · 보조 한 줄)
-  const K = [['분석 서비스', '15', '종', '실측 5 · 라인업 10'], ['참여 부처', '6', '개', '+ LX 자체 1'], ['실행중', '3', '건', '처리 중 1 · 대기 1 · 실패 1 <span class="tag">시연</span>'], ['완료', '7', '건', '결과 산출물 4 <span class="tag">시연</span>'], ['준비 중', '10', '종', '결과 없음 8 · 미착수 2']];
-  const kw = (CW - 4 * 36) / 5;
-  K.forEach(([l, n, u, sub], i) => {
-    const x = X0 + i * (kw + 36);
-    s += `<div style="position:absolute;left:${x}px;top:174px;width:${kw}px"><div class="lab">${l}</div><div style="margin-top:8px;display:flex;align-items:baseline;gap:8px"><span class="d" style="font-size:58px;line-height:1;letter-spacing:-.02em;color:${i === 4 ? INK : ACC}">${n}</span><span style="font-size:17px;color:${G}">${u}</span></div><div class="mic n" style="margin-top:10px;letter-spacing:.02em;white-space:nowrap">${sub}</div></div>\n`;
-    if (i) s += vl(x - 18, 174, 104);
+  let s = head('서비스', '부처 6 · 서비스 15');
+  // 좌 열 128–900(772 · 61 %) · 세로 헤어라인 x 916 · 우 패널 940–1384(444 · 35 %)
+  const LW = 772, LX = X0, LE = X0 + LW, PX = 940, PW = 444, TOP = 172;
+  // 부처 필터 칩(원본 보기 필터) + 검색 — 칩에 수 0
+  const M = ['전체', '농식품부', '국토부', '환경부', '산림청', '해수부', '산업부', 'LX'];   // 부처 약칭(칩) · 카드는 정식 명칭
+  let cx = LX;
+  M.forEach((m, i) => { s += chip(cx, TOP, m, i === 0); cx += m.length * 14.5 + 28; });
+  s += search(LE - 168, TOP - 2, 168, '서비스명 · 부처');
+  // 카드 15 — 3열 × 5행 · 244×96 이미지 + 이름 + 부처 (그 외 0)
+  const CWd = 244, GX = 20, IH = 84, PITCH = 130, GY = TOP + 36;
+  SERVICES.forEach(([id, name, min], i) => {
+    const x = LX + (i % 3) * (CWd + GX), y = GY + Math.floor(i / 3) * PITCH, ev = EV[id], on = id === SEL.id;
+    if (on) s += div(x - 6, y - 6, CWd + 12, PITCH - 2, `background:${T1}`);
+    s += img(x, y, CWd, IH, ev.src, ev.over + (on ? brkIn(CWd, IH, ACC) : ''), `outline:1px solid ${on ? ACC : H}`);
+    s += disp(x, y + IH + 7, name, 14, INK, `width:${CWd}px;overflow:hidden;text-overflow:ellipsis`);
+    s += txt(x, y + IH + 27, min, 12, G, `width:${CWd}px;overflow:hidden;text-overflow:ellipsis`);
   });
-  s += hl(X0, 302, CW);
-  // 부처 필터 칩(원본에는 없는 분류 — services.js ministry 를 그대로; 기능 추가 아님 = 목록 보기 필터)
-  const M = [['전체', 15, true], ['농림축산식품부', 4], ['국토교통부', 3], ['환경부', 3], ['산림청', 2], ['해양수산부', 1], ['산업통상자원부', 1], ['LX', 1]];
-  let cx = X0;
-  M.forEach(([m, n, on]) => { s += chip(cx, 320, `${m} <span class="n" style="color:${on ? ACC : C};margin-left:2px">${n}</span>`, on); cx += m.length * 14.5 + 44 + (n > 9 ? 8 : 0); });
-  s += search(XE - 232, 318, 232, '서비스명 · 부처');
-  // 실측 결과 5 — 증거 그리드(실크롭 + 청록 결과 + 큰 수)
-  s += lab(X0, 368, '실측 결과 5') + num(X0 + 90, 368, '결과 산출물 있음 · 최근 실행 순', 12, C);
-  const real = SERVICES.filter(v => v[6]).sort((a, b) => b[5].localeCompare(a[5]));
-  real.forEach(([id, name, min, cnt, unit, last], i) => {
-    const x = X0 + i * 256, y = 390, ev = EV[id];
-    s += img(x, y, 232, 130, ev.src, ev.over + det(8, 102, ev.chip), `outline:1px solid ${H}`);
-    s += disp(x, y + 142, name, 15) + txt(x, y + 166, `${min} · ${dot(last)}`, 12.5, G, 'width:232px;overflow:hidden;text-overflow:ellipsis');
-    s += `<div style="position:absolute;left:${x}px;top:${y + 190}px;display:flex;align-items:baseline;gap:6px"><span class="d" style="font-size:28px;line-height:1;color:${ACC}">${fmt(cnt)}</span><span style="font-size:15px;color:${G}">${unit}</span></div>\n`;
+  s += vl(916, TOP - 8, 866 - TOP + 8 - 16);
+  // 우 패널 — 선택 카드 정보(선택 0 = `서비스 15` + 점선 틀, 판 미작성 · NOTES §19.2)
+  let y = TOP;
+  s += lab(PX, y, '선택') + disp(PX + 44, y - 4, SEL.name, 18) ;
+  s += txt(PX, y + 28, SEL.min, 13, G);
+  y += 58;
+  s += img(PX, y, PW, 250, EV[SEL.id].src, `<svg width="${PW}" height="250" viewBox="0 0 244 84" preserveAspectRatio="none" style="position:absolute;left:0;top:0;display:block;pointer-events:none">${EV[SEL.id].over.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '')}</svg>` + brkIn(PW, 250, TEAL, 14, 1, 0, 0), `outline:1px solid ${H}`);
+  y += 250 + 14;
+  s += txt(PX, y, SEL.what, 12.5, INK, `width:${PW}px;white-space:normal;line-height:1.45`);
+  y += 52;
+  s += hl(PX, y, PW);
+  SEL.kv.forEach(([k, v], i) => {
+    const ry = y + 1 + i * 34;
+    s += lab(PX, ry + 10, k) + txt(PX + 96, ry + 8, v, 12.5, INK, `width:${PW - 96}px;overflow:hidden;text-overflow:ellipsis`) + hl(PX, ry + 33, PW);
   });
-  s += hl(X0, 628, CW);
-  // 라인업 10 — 결과 산출 전(점선 무채 + 이유 한 줄) · 예시 수치는 [추정]
-  s += lab(X0, 646, '라인업 10') + num(X0 + 70, 646, '결과 산출 전 · 예시 수치 = [추정] · 0 = 준비 중', 12, C);
-  const rest = SERVICES.filter(v => !v[6]);
-  rest.forEach(([id, name, min, cnt, unit], i) => {
-    const x = X0 + (i % 5) * 256, y = 668 + Math.floor(i / 5) * 100;
-    s += div(x, y, 232, 88, `border:1px dashed ${C}`);
-    s += disp(x + 14, y + 14, name, 14, cnt ? INK : G) + txt(x + 14, y + 36, min, 12.5, G);
-    if (cnt) s += `<div style="position:absolute;left:${x + 14}px;top:${y + 58}px;display:flex;align-items:baseline;gap:5px"><span class="n" style="font-size:16px;color:${G}">${fmt(cnt)}</span><span style="font-size:14px;color:${C}">${unit}</span><span class="tag" style="margin-left:4px">추정</span></div>\n`;
-    else s += txt(x + 14, y + 58, '준비 중 · 모델 학습 전', 12.5, C);
-  });
+  y += 1 + SEL.kv.length * 34 + 22;
+  // 액션 — 헤어라인 2 + 검정 CTA 1(화면당 1 · 툴바 CTA 없음)
+  s += div(PX, y, 108, 36, `border:1px solid ${H};display:flex;align-items:center;justify-content:center;font-size:15px;letter-spacing:-.01em`, '결과 보기');
+  s += div(PX + 120, y, 108, 36, `border:1px solid ${H};display:flex;align-items:center;justify-content:center;font-size:15px;letter-spacing:-.01em`, '실행 이력');
+  s += cta(PX + PW - 120, y, 120, '분석 실행');
   s += FOOT;
   return page('B5 · 분석 서비스 — 서비스', s);
 }
