@@ -34,7 +34,7 @@ const STATUS = {
   'B5-Analysis-Run-Progress': ['분석 서비스', 'review', '분석 실행 2 · 실행중 — 제목 정정 · 영상별 진행 · 누적'],
   'B5-Analysis-Result': ['분석 서비스', 'review', '분석 실행 3 · 실행 결과'],
   // B5-Analysis-Run · Run-1…5: drop — 5단계 안 → 3화면으로 통합(2026-08-27 · NOTES §19.6) · 파일은 git 이력에만
-  'B2-HomeFilm': ['메인(필름)', 'review', '필름 스테이지 카피 판 — 구현본이 앞섬'],
+  'B2-HomeFilm': ['메인(필름)', 'drop', '초기 카피 판 — 메인은 스크럽 필름 구현본(scrub/index.html)이 원판'],
   'B2-HomeAtlas': ['메인(필름)', 'drop', '홈 아틀라스(필름 뒤 페이지) — 미사용'],
   'B2-XiMap': ['XI맵', 'review', '초안 — 미착수'],
 };
