@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 
-// 마스터 design-canvas/v2/B5-Login.dc.html (NOTES §14 · 6차 개정) — 구 랜드XI(login.do) 구도.
-// 페이지 중앙의 작은 카드 하나(1200×560, 1440×900 에서 x 120–1320 · y 170–730): 좌 60% 필름 Leg 01(글자 0) · 우 40% 로그인 → 소개 한 문장 → 폼(글자 2배).
-// 6차: 우 패널의 `Land-XI 플랫폼` 제목·한 줄 삭제 · ?logout 배너 문구 삭제 · 라벨 26 / 입력 28 / 옵션·링크 26 / 버튼 20·56.
+// 마스터 design-canvas/v2/B5-Login.dc.html (NOTES §14 · 7차 개정) — 구 랜드XI(login.do) 구도.
+// 페이지 중앙의 작은 카드 하나(1200×520, 1440×900 에서 x 120–1320 · y 190–710): 좌 60% 필름 Leg 01(글자 0) · 우 40% 로그인 → 소개 한 문장 → 폼.
+// 7차: 라벨·입력·옵션·링크 = 로그인과 같은 Paperlogy 700, 포인트 줄임 — 라벨 20 / 입력 22 / 옵션·링크 18 / 버튼 20·56(Pretendard). 카드 560 → 520.
 // 흑+청: 액센트 #006DF7 = 워드마크 Land-XI · 로그인 CTA 채움 · 포커스 밑줄 · 찾기 링크 · 체크.
 const ACCENT = 'rgb(0, 109, 247)';
 // 카드 위 = 실제 Land-XI CI + 원본 소개 한 줄 · 카드 아래 = LX 락업 + 정책 링크 + Copyright.
@@ -109,15 +109,15 @@ test('좌 — 원본 로그인 폼의 컨트롤·문구가 1:1 로 있다', asyn
   await expect(page.locator('body')).not.toContainText('Geo-AI 전문가');
   await expect(page.locator('body')).not.toContainText('범부처 AI 기반');
 
-  // 서체(발주 결정) — 제목 Paperlogy 700 34 · 라벨/버튼 Pretendard. 6차: 라벨 26 · 입력/플레이스홀더 28 · 상태 유지 26 · 찾기 26 · 버튼 20. 폰트는 실제 로드돼야 한다.
+  // 서체(발주 결정) — 제목 Paperlogy 700 34 · 버튼 Pretendard. 7차: 라벨 20 · 입력/플레이스홀더 22 · 상태 유지 18 · 찾기 18 — 전부 Paperlogy 700(로그인과 같은 서체) · 버튼 20. 폰트는 실제 로드돼야 한다.
   const type = await page.evaluate(async () => {
     await document.fonts.ready;
     const g = (sel) => getComputedStyle(document.querySelector(sel));
     const h = g('.lg-h1'), b = g('.lg-submit'), l = g('.lx-field__label'), i = g('.lg-intro'), s = g('#lgSignup'), ld = g('#lgLead');
     const inp = g('#lgEmail'), ph = getComputedStyle(document.querySelector('#lgEmail'), '::placeholder'), pw = g('#lgPw');
     const chk = g('.lx-check'), find = g('.lg-find__a'), lbl2 = g('label[for=lgPw]');
-    return { fam: h.fontFamily, w: h.fontWeight, size: h.fontSize, btn: b.fontFamily, btnSize: b.fontSize, signupSize: s.fontSize, lbl: l.fontFamily, lblSize: l.fontSize, lbl2Size: lbl2.fontSize,
-             inputSize: inp.fontSize, phSize: ph.fontSize, pwSize: pw.fontSize, inputFam: inp.fontFamily, chkSize: chk.fontSize, findSize: find.fontSize,
+    return { fam: h.fontFamily, w: h.fontWeight, size: h.fontSize, btn: b.fontFamily, btnSize: b.fontSize, signupSize: s.fontSize, lbl: l.fontFamily, lblW: l.fontWeight, lblSize: l.fontSize, lbl2Size: lbl2.fontSize,
+             inputSize: inp.fontSize, phSize: ph.fontSize, pwSize: pw.fontSize, inputFam: inp.fontFamily, inputW: inp.fontWeight, chkSize: chk.fontSize, chkFam: chk.fontFamily, chkW: chk.fontWeight, findSize: find.fontSize, findFam: find.fontFamily, findW: find.fontWeight,
              lead: ld.fontFamily, leadSize: ld.fontSize, leadColor: ld.color, leadBreak: ld.wordBreak,
              intro: i.fontFamily, introSize: i.fontSize, introColor: i.color, signup: s.fontFamily,
              loaded: document.fonts.check('700 34px Paperlogy') };
@@ -128,15 +128,21 @@ test('좌 — 원본 로그인 폼의 컨트롤·문구가 1:1 로 있다', asyn
   expect(type.btn).toMatch(/^"?Pretendard"?/);
   expect(type.btnSize).toBe('20px');
   expect(type.signupSize).toBe('20px');
-  expect(type.lbl).toMatch(/^"?Pretendard"?/);
-  expect(type.lblSize).toBe('26px');                // 라벨 2배(13 → 26)
-  expect(type.lbl2Size).toBe('26px');
-  expect(type.inputFam).toMatch(/^"?Pretendard"?/);
-  expect(type.inputSize).toBe('28px');              // 입력·플레이스홀더 2배(14 → 28)
-  expect(type.phSize).toBe('28px');
-  expect(type.pwSize).toBe('28px');
-  expect(type.chkSize).toBe('26px');                // 로그인 상태 유지
-  expect(type.findSize).toBe('26px');               // 아이디 찾기 | 비밀번호 찾기
+  expect(type.lbl).toMatch(/^"?Paperlogy"?/);      // 7차: 로그인과 같은 서체
+  expect(type.lblW).toBe('700');
+  expect(type.lblSize).toBe('20px');                // 라벨 26 → 20
+  expect(type.lbl2Size).toBe('20px');
+  expect(type.inputFam).toMatch(/^"?Paperlogy"?/);
+  expect(type.inputW).toBe('700');
+  expect(type.inputSize).toBe('22px');              // 입력·플레이스홀더 28 → 22
+  expect(type.phSize).toBe('22px');
+  expect(type.pwSize).toBe('22px');
+  expect(type.chkFam).toMatch(/^"?Paperlogy"?/);
+  expect(type.chkW).toBe('700');
+  expect(type.chkSize).toBe('18px');                // 로그인 상태 유지 26 → 18
+  expect(type.findFam).toMatch(/^"?Paperlogy"?/);
+  expect(type.findW).toBe('700');
+  expect(type.findSize).toBe('18px');               // 아이디 찾기 | 비밀번호 찾기 26 → 18
   expect(type.signup).toMatch(/^"?Pretendard"?/);
   expect(type.lead).toMatch(/^"?Pretendard"?/);
   expect(parseFloat(type.leadSize)).toBeGreaterThanOrEqual(16);
@@ -151,7 +157,7 @@ test('좌 — 원본 로그인 폼의 컨트롤·문구가 1:1 로 있다', asyn
   await page.screenshot({ path: `${SHOTS}/b5-login.png` });
 });
 
-test('카드 — 1200×560 이 화면 중앙, 좌 60% 필름(w01.mp4) + 우 40% 폼, 헤어라인 1, 캡션·브래킷 0', async ({ page }) => {
+test('카드 — 1200×520 이 화면 중앙, 좌 60% 필름(w01.mp4) + 우 40% 폼, 헤어라인 1, 캡션·브래킷 0', async ({ page }) => {
   await boot(page);
 
   await expect(page.locator('.lx-bracket')).toHaveCount(0);
@@ -185,11 +191,11 @@ test('카드 — 1200×560 이 화면 중앙, 좌 60% 필름(w01.mp4) + 우 40% 
   expect(p.srcs.some((s) => s.endsWith('/w01-m.mp4'))).toBe(true);
   expect(p.current === null || /w01\.mp4$/.test(p.current)).toBeTruthy();   // 1440 폭 = 데스크톱 소스
   expect(p.autoplay && p.muted && p.loop && p.playsinline).toBe(true);
-  // 카드 1200×560, 화면 정중앙(x 120–1320 · y 170–730).
+  // 카드 1200×520, 화면 정중앙(x 120–1320 · y 190–710).
   expect(p.card.w).toBe(1200);
-  expect(p.card.h).toBe(560);
+  expect(p.card.h).toBe(520);
   expect(p.card.x).toBe(120);
-  expect(p.card.y).toBe(170);
+  expect(p.card.y).toBe(190);
   expect(p.card.cx).toBe(p.vw / 2);
   expect(p.card.cy).toBe(p.vh / 2);
   expect(p.border).toBe('1px');
@@ -258,7 +264,7 @@ test('시스템 법 — 헤어라인 · radius 0 · shadow 0 · 14px 바닥 · �
   expect(m.shadow).toBe(0);
   expect(m.accent).toEqual(['lg-find__a', 'lg-find__a', 'lg-submit']);   // 6차: 워드마크 Land-XI 삭제 → 정지 액센트 3 곳
   expect(m.gradient).toBe(0);
-  expect(m.cardH).toBe(560);
+  expect(m.cardH).toBe(520);
   expect(m.overX).toBe(false);
   expect(m.overY).toBe(false);
   expect(m.headGap).toBe(24);
@@ -309,7 +315,7 @@ test('빈 제출 — 원본 에러 문구 2종이 인라인으로 나온다', as
 
   expect(page.url()).toContain('login.html');
   expect(await page.evaluate(() => localStorage.getItem('lx_logged_in'))).toBeNull();
-  // 에러 2줄이 들어와도(6차 글자 2배) 문의 줄이 카드 안에서 끝난다.
+  // 에러 2줄이 들어와도 문의 줄이 카드 안에서 끝난다.
   const fit = await page.evaluate(() => {
     const c = document.querySelector('#lgCard').getBoundingClientRect(), k = document.querySelector('.lg-contact').getBoundingClientRect();
     return Math.round(c.bottom - k.bottom);
@@ -357,7 +363,7 @@ test('?logout — 세션을 지운다. 배너 문구는 없고(6차) 제목 아�
   expect(page.url()).toContain('login.html');
 });
 
-test('1920×1200 — 카드 1200×560 중앙(x 360 · y 320), 글자 2배가 카드 안에서 끝난다, 스크롤 0', async ({ browser }) => {
+test('1920×1200 — 카드 1200×520 중앙(x 360 · y 340), 폼이 카드 안에서 끝난다, 옵션 한 줄, 스크롤 0', async ({ browser }) => {
   const ctx = await browser.newContext({ viewport: { width: 1920, height: 1200 } });
   const page = await ctx.newPage();
   await boot(page);
@@ -370,15 +376,15 @@ test('1920×1200 — 카드 1200×560 중앙(x 360 · y 320), 글자 2배가 카
       overX: document.documentElement.scrollWidth > innerWidth + 1, overY: document.documentElement.scrollHeight > innerHeight + 1,
       inside: inner.every((r) => r.left >= p.left - 1 && r.right <= p.right + 1 && r.bottom <= c.bottom + 1),
       contactBottom: Math.round(contact.bottom), cardBottom: Math.round(c.bottom),
-      findInside: find.right <= p.right - 39 && find.left >= chk.left, findBelowCheck: find.top >= chk.bottom,
+      findInside: find.right <= p.right - 39 && find.left >= chk.right, findSameRow: Math.abs(find.top - chk.top) <= 2,
     };
   });
-  expect([g.x, g.y, g.w, g.h]).toEqual([360, 320, 1200, 560]);
+  expect([g.x, g.y, g.w, g.h]).toEqual([360, 340, 1200, 520]);
   expect(g.overX).toBe(false); expect(g.overY).toBe(false);
   expect(g.inside).toBe(true);
   expect(g.contactBottom).toBeLessThan(g.cardBottom - 24);
   expect(g.findInside).toBe(true);
-  expect(g.findBelowCheck).toBe(true);   // 26px 옵션 줄은 2줄: 상태 유지 / 찾기 링크(우)
+  expect(g.findSameRow).toBe(true);   // 7차: 18px 옵션 줄은 한 줄 — 상태 유지(좌) · 찾기 링크(우)
   await page.screenshot({ path: `${SHOTS}/b5-login-1920.png` });
   await ctx.close();
 });
@@ -449,7 +455,7 @@ test('축소 모션 — 필름 대신 포스터, 같은 내용이 전부 보인�
   await ctx.close();
 });
 
-test('1024 — 카드가 100%−64(960×560) 로 줄고 60/40 · 중앙 유지', async ({ browser }) => {
+test('1024 — 카드가 100%−64(960×520) 로 줄고 60/40 · 중앙 유지', async ({ browser }) => {
   const ctx = await browser.newContext({ viewport: { width: 1024, height: 900 } });
   const page = await ctx.newPage();
   await boot(page);
@@ -466,7 +472,7 @@ test('1024 — 카드가 100%−64(960×560) 로 줄고 60/40 · 중앙 유지',
   });
   expect(g.x).toBe(32);
   expect(g.w).toBe(1024 - 64);
-  expect(g.h).toBe(560);
+  expect(g.h).toBe(520);
   expect(g.cy).toBe(450);
   expect(Math.abs(g.fw - (g.w - 2) * 0.6)).toBeLessThanOrEqual(1);
   expect(Math.abs(g.mw - (g.w - 2) * 0.4)).toBeLessThanOrEqual(1);
