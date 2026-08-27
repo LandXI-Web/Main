@@ -1,0 +1,77 @@
+
+[leg 11] A11 -> A12  attempt 1  balance=9238.5
+[leg 11] pending taskId=4e7bff89dd4a8cd5dc6ad541b9c400bd (원장 기록)
+  v3-leg-11.mp4: generating (0s)
+  v3-leg-11.mp4: generating (5s)
+  v3-leg-11.mp4: generating (10s)
+  v3-leg-11.mp4: generating (16s)
+  v3-leg-11.mp4: generating (24s)
+  v3-leg-11.mp4: generating (35s)
+  v3-leg-11.mp4: generating (47s)
+  v3-leg-11.mp4: generating (63s)
+  v3-leg-11.mp4: generating (78s)
+  v3-leg-11.mp4: generating (93s)
+  v3-leg-11.mp4: generating (109s)
+  v3-leg-11.mp4: generating (124s)
+  v3-leg-11.mp4: generating (139s)
+  v3-leg-11.mp4: generating (155s)
+  v3-leg-11.mp4: generating (170s)
+  v3-leg-11.mp4: generating (186s)
+  v3-leg-11.mp4: generating (202s)
+  v3-leg-11.mp4: generating (217s)
+  v3-leg-11.mp4: generating (233s)
+  v3-leg-11.mp4: generating (248s)
+  v3-leg-11.mp4: generating (264s)
+  v3-leg-11.mp4: generating (279s)
+  v3-leg-11.mp4: generating (294s)
+  v3-leg-11.mp4: generating (310s)
+  v3-leg-11.mp4: generating (325s)
+  v3-leg-11.mp4: generating (340s)
+  v3-leg-11.mp4: generating (356s)
+  v3-leg-11.mp4: generating (371s)
+  v3-leg-11.mp4: generating (386s)
+  v3-leg-11.mp4: generating (402s)
+  v3-leg-11.mp4: generating (417s)
+  v3-leg-11.mp4: generating (432s)
+  v3-leg-11.mp4: generating (448s)
+  v3-leg-11.mp4: generating (463s)
+  v3-leg-11.mp4: generating (479s)
+  v3-leg-11.mp4: generating (494s)
+  v3-leg-11.mp4: generating (509s)
+  v3-leg-11.mp4: generating (525s)
+  v3-leg-11.mp4: generating (540s)
+  v3-leg-11.mp4: generating (556s)
+  v3-leg-11.mp4: generating (571s)
+  v3-leg-11.mp4: generating (587s)
+  v3-leg-11.mp4: generating (602s)
+  v3-leg-11.mp4: generating (617s)
+  v3-leg-11.mp4: generating (633s)
+  v3-leg-11.mp4: generating (648s)
+  v3-leg-11.mp4: generating (664s)
+  v3-leg-11.mp4: generating (679s)
+  v3-leg-11.mp4: generating (694s)
+  v3-leg-11.mp4: generating (710s)
+  v3-leg-11.mp4: generating (725s)
+  v3-leg-11.mp4: generating (740s)
+  v3-leg-11.mp4: generating (756s)
+  v3-leg-11.mp4: generating (771s)
+  v3-leg-11.mp4: generating (786s)
+  v3-leg-11.mp4: generating (801s)
+  v3-leg-11.mp4: generating (817s)
+  v3-leg-11.mp4: generating (832s)
+  v3-leg-11.mp4: generating (847s)
+[leg 11] ok taskId=4e7bff89dd4a8cd5dc6ad541b9c400bd charged=50 spent=1150/280
+{
+  "rev": 3,
+  "batch": "6b-8b-9-11",
+  "spent_rev": 250,
+  "spent_total": 1150,
+  "cap": 280,
+  "done": [
+    {
+      "leg": 11,
+      "taskId": "4e7bff89dd4a8cd5dc6ad541b9c400bd",
+      "charged": 50
+    }
+  ]
+}

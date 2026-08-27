@@ -687,10 +687,38 @@
       "mp4": "landxi/assets/proto/film/legs/gen/v3-leg-10.mp4",
       "mp4_bytes": 15346230,
       "finished_at": "2026-08-27T09:05:22.798Z"
+    },
+    {
+      "leg": 11,
+      "rev": 3,
+      "batch": "6b-8b-9-11",
+      "head": "landxi/assets/proto/film/legs/anchors-v3/A11.png",
+      "tail": "landxi/assets/proto/film/legs/anchors-v3/A12.png",
+      "attempt": 1,
+      "model": "kling/v2-1-pro",
+      "duration": "5",
+      "cfg_scale": 0.5,
+      "prompt": "The clearing and the ridge behind it stay in frame throughout as they shrink; the warm key holds from upper camera left. The camera climbs away in one smooth continuous vertical rise, tilting gently up as it goes, so the ridge country, then the plains, then the whole peninsula gather into the frame and the horizon curves into the gentle arc of a model world; the fine etched brass grid on the land and the small warm points lit in a few of its cells come into view already in place, resolving rather than appearing, and the brass ring closes back overhead with the satellite riding it. The altitude only increases, never dips. Nothing enters or leaves the frame. One single continuous take, no cuts, no camera shake, no zoom snap. Slow, cinematic, controlled.",
+      "prompt_sha256": "ba3d8b7692f72d99",
+      "negative_full_chars": 901,
+      "negative": "workers, incinerator building, brass satellite, satellite model, aircraft, airplane, plane model, drone, quadrotor, rotors, brass ring, brass arc, armature, meridian ring, hoop across the sky, wildfire, forest fire, large fire, flames filling frame, orange sky, fire glow across the hillside, smoke filling frame, clearing filling frame, close-up of fire, board, table, plinth, base plate, studio edge, seamless backdrop, white background, text, letters, numbers, captions, subtitles, watermark",
+      "credits_balance_before": 9238.5,
+      "at": "2026-08-27T09:05:47.090Z",
+      "taskId": "4e7bff89dd4a8cd5dc6ad541b9c400bd",
+      "task_created_at": "2026-08-27T09:05:53.038Z",
+      "ok": true,
+      "credits_reported": 50,
+      "credits_balance_after": 9188.5,
+      "credits_charged": 50,
+      "gen_ms": 851,
+      "wall_ms": 865179,
+      "mp4": "landxi/assets/proto/film/legs/gen/v3-leg-11.mp4",
+      "mp4_bytes": 15389760,
+      "finished_at": "2026-08-27T09:20:18.534Z"
     }
   ],
-  "spent": 1100,
-  "remaining_of_cap": 80,
+  "spent": 1150,
+  "remaining_of_cap": 30,
   "spent_by_rev": {
     "rev2": 150,
     "rev3": 150,
@@ -699,6 +727,6 @@
     "rev3-legs7": 50,
     "rev3-legs6-7-rev3f": 100,
     "rev3-legs8-8b": 100,
-    "rev3-legs6b-8b-9-11": 200
+    "rev3-legs6b-8b-9-11": 250
   }
 }
