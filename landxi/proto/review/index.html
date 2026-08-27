@@ -29,7 +29,7 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 </style>
 </head>
 <body><div class="w">
-<div class="sub">Land-XI · 검토 허브 · 2026-08-27 · 최근 갱신 18:55</div>
+<div class="sub">Land-XI · 검토 허브 · 2026-08-27 · 최근 갱신 19:20</div>
 <h1>결정할 것과 진행 상황</h1>
 <p class="sub">"결정 필요"의 번호로 답해 주세요(예: "D5 OK, D13 수정: …"). 원판은 <a href="masters.html">원판 갤러리</a>, 화면은 아래 링크(전부 이 사이트).</p>
 <div class="links"><a href="masters.html">원판 갤러리</a><a href="../scrub/index.html">메인(스크럽 필름)</a><a href="../film/timeline.html">필름 타임라인 · 풀 영상</a><a href="../film/anchors.html">앵커</a><a href="https://github.com/LandXI-Web/Main/tree/plan1-foundation">GitHub</a></div>
@@ -40,13 +40,14 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 <div class="dec"><h3>D10 · 분석 서비스 원판 4장</h3><p>홈(이미지 카드 15 + 우측 정보) · 실행 검토(영상 중심) · 실행중 · 실행 결과. OK → 구현. 확인 1건: 비닐하우스 9,664동(서비스) vs 1,674필지(결과) — 어느 쪽을 대표 수치로?</p></div>
 <div class="dec"><h3>D13 · 지도 서비스 원판 3장</h3><p>기본(V-World 실사 판 + 레이어 카드 + 4시점) · 피처 클릭(탐지 정보·조치 상태) · 시점 비교(스와이프). 원본 38 상태 1:1. OK → 구현.</p></div>
 <div class="dec"><h3>D3 · 표·차트 스타일</h3><p><a href="../charts.html">6종 페이지</a>에서 하나 선택(S1–S6). 대시보드·데이터 관리 차트에 일괄 적용.</p></div>
+<div class="dec"><h3>D14 · 필름 마무리 2건</h3><p>① Leg 11 t≈1.5–2.5의 능선→반도 모핑(1 s): 그대로 / 1회 재생성(50). ② 브랜드 마감 바닥: 현재 실제 V-World 국토 위성 판(모형→실제 귀환) / A12 모형 홀드 유지. 답 예: "D14 그대로 · 위성 판".</p></div>
 </section>
 
 <section>
 <h2>화면 현황 <span class="sub">메인 → 로그인 → 대시보드 → 데이터 관리 → 프로젝트 → 분석 → 지도</span></h2>
 <table>
 <tr><th>화면</th><th>상태</th><th>주소 · 메모</th></tr>
-<tr><td>메인(스크럽 필름)</td><td><span class="st ok">적용</span></td><td><a href="../scrub/index.html">/landxi/proto/scrub/</a> · Leg 1–8b AI, 6b·9·10·11 생성 중 · 여수 핸드오프 · 브랜드 마감</td></tr>
+<tr><td>메인(스크럽 필름)</td><td><span class="st ok">적용</span></td><td><a href="../scrub/index.html">/landxi/proto/scrub/</a> · 13 leg 전부 AI · 여수 핸드오프 · 국토 판 브랜드 마감</td></tr>
 <tr><td>로그인</td><td><span class="st ok">적용</span></td><td><a href="../login.html?logout">/landxi/proto/login.html</a> · 구 Land-XI 구도 · 실제 CI · Paperlogy</td></tr>
 <tr><td>대시보드</td><td><span class="st ok">적용</span></td><td><a href="../dashboard.html">/landxi/proto/dashboard.html</a> · 지도 그리드 + 탭 패널 · 색 규칙(파랑=정보/빨강=조치) · 단위·히트맵</td></tr>
 <tr><td>데이터 관리</td><td><span class="st ok">적용</span></td><td><a href="../dataset.html">/landxi/proto/dataset.html</a> · KPI 카드 · 타일/우 패널(현황판↔상세) · 쪽당 4/6/8/16</td></tr>
@@ -62,13 +63,13 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 <table>
 <tr><th>레그</th><th>상태</th><th>메모</th></tr>
 <tr><td>01–05</td><td><span class="st ok">탑재</span></td><td>지구본 · 구름 · 드론 · 남원 평야 · 비닐하우스</td></tr>
-<tr><td>06 · 06b</td><td><span class="st ok">06 탑재</span> <span class="st run">06b 생성 중</span></td><td>비닐하우스 유지 상승 · 여수로</td></tr>
+<tr><td>06 · 06b</td><td><span class="st ok">탑재</span></td><td>비닐하우스 유지 상승 · 여수로(씸 0.2 %)</td></tr>
 <tr><td>07</td><td><span class="st ok">탑재</span></td><td>해안 다이브 · 해양쓰레기 · 여수 실지도 핸드오프</td></tr>
-<tr><td>08 · 08b</td><td><span class="st ok">08 탑재</span> <span class="st run">08b 재생성 중</span></td><td>상승 · 울주로(새 A09 기준, 지형 유지)</td></tr>
-<tr><td>09 · 10 · 11</td><td><span class="st run">생성 중</span></td><td>산림·급경사 · 불법소각 · 줌아웃 국토 변화</td></tr>
-<tr><td>12</td><td><span class="st ok">페이지</span></td><td>귀환 · 브랜드 마감(A12 홀드 + 워드마크 · 태그라인 · LX 락업)</td></tr>
+<tr><td>08 · 08b</td><td><span class="st ok">탑재</span></td><td>상승 · 울주로(지형 유지)</td></tr>
+<tr><td>09 · 10 · 11</td><td><span class="st ok">탑재</span></td><td>산림·급경사 · 불법소각 · 줌아웃 국토 변화(11: t≈1.5–2.5 모핑 1 s — D14)</td></tr>
+<tr><td>12</td><td><span class="st ok">페이지</span></td><td>귀환 · 브랜드 마감 — 국토 V-World 판 위(A12 홀드) + 워드마크 · 태그라인 · LX 락업</td></tr>
 </table>
-<p class="sub">규칙: 1회 생성 · 프롬프트 사전 공개 · 앵커 → 확인 → 영상 · taskId 즉시 기록. 크레딧 잔액 ≈ 9,440 → 5개 생성 후 ≈ 9,190.</p>
+<p class="sub">13 leg · 66.1 s · 풀 영상 57.3 s · 씸 ≤ 0.27 %. 크레딧 잔액 9,188.5. 규칙: 1회 생성 · 프롬프트 사전 공개 · 앵커 → 확인 → 영상.</p>
 </section>
 
 <section>
