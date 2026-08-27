@@ -57,7 +57,7 @@ $('#rail-my').innerHTML = NAV_MY.map((m) => (m.action
 function logout() { try { localStorage.removeItem('lx_logged_in'); } catch { /* 저장소 차단 */ } location.href = 'scrub/index.html'; }
 function goTo(id) {
   if (id.startsWith('tab:')) { setTab(id.slice(4)); $(`#tab-${id.slice(4)}`).focus(); return; }
-  if (id === 'plate') { $('#plate-wrap').scrollIntoView({ behavior: REDUCED() ? 'auto' : 'smooth', block: 'center' }); const c = $('#cells .cell[data-g="3"], #cells .cell'); if (c) c.focus({ preventScroll: true }); return; }
+  if (id === 'plate') { $('#plate-wrap').scrollIntoView({ behavior: REDUCED() ? 'auto' : 'smooth', block: 'center' }); const c = $('#cells .cell[data-g="4"], #cells .cell[data-g="2"], #cells .cell'); if (c) c.focus({ preventScroll: true }); return; }
   const el = document.getElementById(id); if (!el) return;
   el.scrollIntoView({ behavior: REDUCED() ? 'auto' : 'smooth', block: 'center' });
   const t = el.matches('a,button,[tabindex]') ? el : $('a,button,[tabindex]', el);
@@ -134,11 +134,11 @@ function paintCells() {
     if (g == null) el.removeAttribute('data-g'); else { el.dataset.g = String(g); tally[g] = (tally[g] || 0) + 1; }
     el.setAttribute('aria-label', cellLabel(c));
   }
+  // 범례 = 히트 단계(건수)와 셀 수만. 학습데이터만·조사 예정·영상 미등록 셀은 헤어라인으로 그리되 설명은 호버 콜아웃에서만.
   const rows = MODE === 'res'
-    ? [['3', '결과 3건 이상'], ['2', '결과 2건'], ['1', '결과 1건'], ['train', '학습데이터만 · 결과 없음'], ['plan', '조사 예정']]
-    : [['3', '시점 4 이상'], ['2', '시점 2–3'], ['1', '시점 1'], ['res', '결과만 · 영상 미등록']];
-  legendEl.innerHTML = `<div class="lg-h">그리드 ${STEP}° · ${MODE === 'res' ? '청록 진하기 = 결과 건수' : '파랑 진하기 = 정사영상 시점 수'}</div>`
-    + rows.filter(([g]) => tally[g]).map(([g, t]) => `<div class="lg"><span class="sw" data-g="${g}"></span>${t} <span class="n">${tally[g]}셀</span></div>`).join('');
+    ? [['4', '결과 4건 이상'], ['3', '결과 3건'], ['2', '결과 2건'], ['1', '결과 1건']]
+    : [['4', '시점 4 이상'], ['3', '시점 3'], ['2', '시점 2'], ['1', '시점 1']];
+  legendEl.innerHTML = rows.filter(([g]) => tally[g]).map(([g, t]) => `<div class="lg"><span class="sw" data-g="${g}"></span>${t} <span class="n">${tally[g]}셀</span></div>`).join('');
 }
 const fmtRes = (r) => `${r.name} ${nf.format(r.objTotal && r.name === '비닐하우스' ? r.objTotal : r.count)}${r.objTotal && r.name === '비닐하우스' ? '동' : r.unit}`;
 function calloutHtml(c) {
@@ -203,29 +203,26 @@ function mountMap() {
     map.on('error', () => { document.documentElement.dataset.plate = document.documentElement.dataset.plate || 'error'; });
   } catch { wrap.classList.add('no-map'); document.documentElement.dataset.plate = 'off'; }
 }
-$('#l-src').innerHTML = `출처 · EOX Sentinel-2 cloudless 2024 · 결과 ${RESULTS.length} · 변화지수 ${CHANGE.length}쌍 · 정사영상 ${IMAGERY.length}종<i> | </i>기준 ${ymd(T1)}`;
+// 출처·기준은 화면 글줄이 아니라 title 로 — 판 아래 글줄 0.
+wrap.title = `대한민국 전도 · EOX Sentinel-2 cloudless 2024 · 그리드 ${STEP}° · 결과 ${RESULTS.length} · 변화지수 ${CHANGE.length}쌍 · 정사영상 ${IMAGERY.length}종 · 기준 ${ymd(T1)} · 셀 호버 = 내용 · 클릭 → XI맵`;
 
 /* ══ 우 탭 패널 — B10 | B11 | B12 (각 1회) ═════════════════════════════ */
 const PROJ_SUM = PROJECTS.reduce((a, p) => a + p.gb, 0);
-const TAB_META = {
-  proj: `용량 Top5 · GB<i class="tag">시연</i>`,
-  visit: `최근 7일 방문 · 회<i class="tag">시연</i>`,
-  store: `6분류<i class="tag">시연</i>`,
+// 숫자는 각 1회 — 합계·최대·잔여는 차트 안에만. 출처·기준은 글줄 대신 패널 title 로(시연 데이터).
+const YM = T1.slice(0, 7).replace('-', '.');
+const TAB_TITLE = {
+  proj: `AI 개발 프로젝트 ${PROJECTS.length}건 · 용량 순(GB) · 출처 AI 개발 프로젝트 용량 집계(시연) · 기준 ${YM}`,
+  visit: `최근 7일 방문(회) · 출처 서비스 접속 로그 7일(시연) · 기준 ${YM}`,
+  store: `스토리지 ${STORAGE.parts.length}분류(TB) · 사용 ${STORAGE.used} TB = 측정 · 분류 배분 시연 · 기준 ${YM}`,
 };
-const TAB_SUB = {
-  proj: `상위 5개 합계 <b class="cu" data-n="${PROJ_SUM}">0</b> GB`,
-  visit: `7일 합계 <b class="cu" data-n="${VISITS_TOTAL}">0</b>회 · 최대 ${VISITS.reduce((a, v) => (v.count > a.count ? v : a)).day} ${nf.format(Math.max(...VISITS.map((v) => v.count)))}`,
-  store: `사용 <b class="cu" data-n="${STORAGE.used}" data-dec="1">0</b> / ${STORAGE.total} TB · 잔여 ${(STORAGE.total - STORAGE.used).toFixed(1)} TB`,
-};
-const TAB_CAP = { proj: `AI 개발 프로젝트 ${PROJECTS.length}건 · 용량 순`, visit: `최근 7일 · 요일 7값`, store: `스토리지 ${STORAGE.parts.length}분류 · 1 px ≒ ${(STORAGE.total / 600).toFixed(2)} TB` };
-const TAB_SRC = { proj: `출처 · AI 개발 프로젝트 용량 집계<span class="tag">시연</span><i> | </i>기준 ${T1.slice(0, 7).replace('-', '.')}`, visit: `출처 · 서비스 접속 로그 7일<span class="tag">시연</span><i> | </i>기준 ${T1.slice(0, 7).replace('-', '.')}`, store: `출처 · 스토리지 사용량 집계 · 사용 44.5 TB = 측정 · 분류 배분<span class="tag">시연</span><i> | </i>기준 ${T1.slice(0, 7).replace('-', '.')}` };
 
 // 탭 1 — 랭크드 바(1위 액센트)
 {
   const max = Math.max(...PROJECTS.map((p) => p.gb));
   $('#pane-proj').innerHTML = PROJECTS.map((p, i) => `<div class="rk${i ? '' : ' on'}" data-proj="${esc(p.name)}">
     <span class="no n">${String(i + 1).padStart(2, '0')}</span><span class="nm">${esc(p.name)}</span>
-    <span class="bar"><i style="width:${((p.gb / max) * 100).toFixed(1)}%"></i></span><b class="val big cu" data-n="${p.gb}">0</b></div>`).join('');
+    <span class="bar"><i style="width:${((p.gb / max) * 100).toFixed(1)}%"></i></span><span class="val"><b class="big cu" data-n="${p.gb}">0</b><span class="u">GB</span></span></div>`).join('')
+    + `<div class="rk-sum n"><span class="no"></span><span class="nm">합계 ${PROJECTS.length}건</span><span class="bar"></span><span class="val"><b class="cu" data-n="${PROJ_SUM}">0</b><span class="u">GB</span></span></div>`;
 }
 // 탭 2 — 7일 폴리라인, 직접 라벨 7값
 {
@@ -237,17 +234,18 @@ const TAB_SRC = { proj: `출처 · AI 개발 프로젝트 용량 집계<span cla
       ${VISITS.map((v, i) => `<line x1="${x(i).toFixed(1)}" y1="${y(v.count).toFixed(1)}" x2="${x(i).toFixed(1)}" y2="${H}" stroke="#DDDDDD" stroke-dasharray="2 3"/>`).join('')}
       <polyline points="${VISITS.map((v, i) => `${x(i).toFixed(1)},${y(v.count).toFixed(1)}`).join(' ')}"/>
       ${VISITS.map((v, i) => `<rect x="${(x(i) - 3).toFixed(1)}" y="${(y(v.count) - 3).toFixed(1)}" width="6" height="6" fill="${i === imax ? '#006DF7' : '#FFF'}" stroke="${i === imax ? '#006DF7' : '#010102'}" vector-effect="non-scaling-stroke"/>`).join('')}
-    </svg><div id="v-ax" class="n">${VISITS.map((v, i) => `<span class="${i === imax ? 'pk' : (i === 0 || i === n - 1) ? 'on' : ''}" style="left:${((x(i) / W) * 100).toFixed(2)}%"><b class="cu" data-n="${v.count}">0</b>${v.day}</span>`).join('')}</div>`;
+    </svg><div id="v-ax" class="n">${VISITS.map((v, i) => `<span class="${i === imax ? 'pk' : (i === 0 || i === n - 1) ? 'on' : ''}" style="left:${((x(i) / W) * 100).toFixed(2)}%"><b class="cu" data-n="${v.count}">0<i>회</i></b>${v.day}</span>`).join('')}</div>
+    <div id="v-sum" class="n"><span>7일 합계</span><b class="cu" data-n="${VISITS_TOTAL}">0</b>회</div>`;
 }
 // 탭 3 — 스토리지 스택 40px + 범례 6 + 잔여
 {
   const W = 600, tot = STORAGE.total; let x = 0;
   // 범례 색 역할 — 정사영상 = 파랑(정보) · AI 분석 = 청록(AI 결과) · 나머지 무채.
   const tone = ['#006DF7', '#010102', '#686868', '#0FA9A0', '#CCCCCC', '#CCCCCC'];
-  $('#pane-store').innerHTML = `<div class="pane-big"><b class="big cu" data-n="${STORAGE.used}" data-dec="1">0</b><span class="u">/ ${tot} TB</span></div>
+  $('#pane-store').innerHTML = `<div class="pane-big"><b class="big cu" data-n="${STORAGE.used}" data-dec="1">0</b><span class="u">TB</span><span class="u">/ ${tot} TB</span></div>
     <svg id="s-bar" viewBox="0 0 ${W} 40" preserveAspectRatio="none" aria-hidden="true"><rect x=".5" y=".5" width="${W - 1}" height="39" fill="none" stroke="#DDDDDD"/>
     ${STORAGE.parts.map((p, i) => { const w = (p.tb / tot) * W; const r = `<rect x="${x.toFixed(2)}" y="0" width="${w.toFixed(2)}" height="40" fill="${tone[i]}"><title>${esc(p.label)} ${p.tb} TB</title></rect>`; x += w; return r; }).join('')}</svg>
-    <div id="s-lg" class="n">${STORAGE.parts.map((p, i) => `<span class="li"><i style="background:${tone[i]}"></i>${esc(p.label)} <b class="cu" data-n="${p.tb}" data-dec="1">0</b></span>`).join('')}<span class="li rest"><i style="border:1px solid #DDDDDD"></i>잔여 <b>${(tot - STORAGE.used).toFixed(1)}</b></span></div>`;
+    <div id="s-lg" class="n">${STORAGE.parts.map((p, i) => `<span class="li"><i style="background:${tone[i]}"></i>${esc(p.label)} <b class="cu" data-n="${p.tb}" data-dec="1">0</b>TB</span>`).join('')}<span class="li rest"><i style="border:1px solid #DDDDDD"></i>잔여 <b>${(tot - STORAGE.used).toFixed(1)}</b>TB</span></div>`;
 }
 const TABS = ['proj', 'visit', 'store'];
 let TAB = 'proj';
@@ -256,10 +254,10 @@ function setTab(t, { remember = true } = {}) {
   TAB = t;
   for (const b of $$('#tabs [role=tab]')) { const on = b.dataset.tab === t; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; }
   for (const k of TABS) { const p = $(`#pane-${k}`); p.hidden = k !== t; p.classList.toggle('is-in', k === t); }
-  $('#tab-meta').innerHTML = TAB_META[t]; $('#r-sub').innerHTML = TAB_SUB[t]; $('#r-cap').textContent = TAB_CAP[t]; $('#r-src').innerHTML = TAB_SRC[t];
+  $('#panel').title = TAB_TITLE[t];
   $('#b10-more').hidden = t !== 'proj';
   document.documentElement.dataset.tab = t;
-  requestAnimationFrame(() => { $$(`#pane-${t} .cu, #r-sub .cu`).forEach(countUp); });
+  requestAnimationFrame(() => { $$(`#pane-${t} .cu`).forEach(countUp); });
   if (remember) { try { localStorage.setItem('lx_dash_tab', t); } catch { /* 저장소 차단 */ } }
 }
 $('#tabs').addEventListener('click', (ev) => { const b = ev.target.closest('[role=tab]'); if (b) setTab(b.dataset.tab); });
@@ -311,9 +309,10 @@ function deepLink() {
 function countUp(el) {
   const to = parseFloat(el.dataset.n || el.textContent) || 0, dec = +(el.dataset.dec || 0);
   const fmt = (v) => (dec ? v.toFixed(dec) : nf.format(Math.round(v)));
-  if (REDUCED()) { el.textContent = fmt(to); return; }
+  const unit = el.querySelector('i'); const put = (s) => { el.textContent = s; if (unit) el.append(unit); };
+  if (REDUCED()) { put(fmt(to)); return; }
   const t0 = performance.now();
-  const step = (t) => { const k = Math.min(1, (t - t0) / 900); el.textContent = fmt(to * EASE4(k)); if (k < 1) requestAnimationFrame(step); };
+  const step = (t) => { const k = Math.min(1, (t - t0) / 900); put(fmt(to * EASE4(k))); if (k < 1) requestAnimationFrame(step); };
   requestAnimationFrame(step);
 }
 

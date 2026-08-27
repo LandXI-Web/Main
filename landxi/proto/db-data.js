@@ -143,11 +143,11 @@ export const ADMIN_TILES = [
 /* B4–B8. KPI 5 — 원본 화면의 값·부제·링크를 그대로 쓴다(우리 목업값으로 갈아치우지 않는다).
    act = 조치 필요 → 숫자·상태어가 warn(#D1352B). 정보 KPI(①②)는 액센트 파랑. design/system.md §2 색 역할. */
 export const KPI = [
-  { label: '전체 사용자', value: 21, unit: '명', sub: '정상 19 · 가입 승인 대기 1', href: 'admin-users.html' },
+  { label: '전체 사용자', value: 21, unit: '명', sub: '정상 19', href: 'admin-users.html' },
   { label: '발행 분석 카드', value: 8, unit: '건', sub: '공개 7 · 비공개 1', href: 'ai-card.html' },
   { label: '카드 발행 승인 대기', value: APPROVALS.length, unit: '건', sub: '검토 필요', href: 'admin-publish.html?status=대기', to: 'b-approve', act: true },
   { label: '가입 승인 대기', value: 1, unit: '건', sub: '승인 필요', href: 'admin-users.html', act: true },
-  { label: '미답변 문의', value: 6, unit: '건', sub: '전체 12 · 답변 필요', href: 'admin-inquiry.html', act: true },
+  { label: '미답변 문의', value: 6, unit: '건', sub: '답변 필요', href: 'admin-inquiry.html', act: true },
 ];
 /* B10 · B12 — 원본 대시보드 ECharts 시드를 그대로 쓴다(우리 목업값으로 갈아치우지 않는다).
    원본 주석이 "사용량=데모"라고 밝힌 값이므로 화면에는 [추정] 꼬리표를 단다. */

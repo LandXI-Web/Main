@@ -80,7 +80,8 @@ test('B1–B15 — 원본 위젯이 전부, 각 한 번, 한 화면에 든다', 
   await expect(page.locator('#b-notice')).toContainText('2026.04.15');
   await expect(page.locator('#b-kpi .k')).toHaveCount(5);                                 // B4–B8
   const kpi = await page.locator('#b-kpi').innerText();
-  for (const t of ['전체 사용자', '발행 분석 카드', '카드 발행 승인 대기', '가입 승인 대기', '미답변 문의', '정상 19 · 가입 승인 대기 1', '공개 7 · 비공개 1', '검토 필요', '승인 필요', '전체 12 · 답변 필요']) expect(kpi, t).toContain(t);
+  for (const t of ['전체 사용자', '발행 분석 카드', '카드 발행 승인 대기', '가입 승인 대기', '미답변 문의', '정상 19', '공개 7 · 비공개 1', '검토 필요', '승인 필요', '답변 필요']) expect(kpi, t).toContain(t);
+  for (const t of ['가입 승인 대기 1', '전체 12']) expect(kpi, t + ' 는 KPI ④ / 타일에만').not.toContain(t);     // 중복 0
   await expect(page.locator('#b-bb')).toContainText('XI-VFM v2.1');                       // B9
   await expect(page.locator('#bb-sub')).toContainText('2026.03.12');
   await expect(page.locator('#bb-sub')).toContainText('14개');
@@ -103,7 +104,53 @@ test('B1–B15 — 원본 위젯이 전부, 각 한 번, 한 화면에 든다', 
 test('불필요한 글자 없음 — 설명 문장이 없다', async ({ page }) => {
   await boot(page);
   const t = await page.locator('body').innerText();
-  for (const s of ['Data source', '출처 표기 —', '검토 대상 · 요청 순', '입력(우)']) expect(t).not.toContain(s);
+  for (const s of ['Data source', '출처 표기 —', '검토 대상 · 요청 순', '입력(우)', '출처 ·', '용량 순', '1 px', '호버 = 내용', 'Sentinel-2', '상위 5개', '요일 7값']) expect(t, s).not.toContain(s);
+  expect(t).not.toMatch(/^출처/m);                                                          // 출처·기준은 title 로만
+  expect(await page.locator('#main .cap, #main .src, #tab-meta, #r-sub').count()).toBe(0);  // 판·패널 아래 글줄 0
+  expect(await page.locator('#plate-wrap').getAttribute('title')).toMatch(/Sentinel-2.*기준 2026\.06\.08/);
+  expect(await page.locator('#panel').getAttribute('title')).toMatch(/출처/);
+});
+
+test('중복 0 — 합계·최대·잔여는 차트 안에 한 번, 모든 값에 단위, H1 룰 = "LX 관리자" 폭', async ({ page }) => {
+  await boot(page);
+  const once = (txt, s) => expect(txt.split(s).length - 1, s + ' 1회').toBe(1);
+  await page.waitForTimeout(1100);
+  let t = await page.locator('#right').innerText();
+  once(t, '1,326'); expect(t).not.toContain('Top5');
+  expect(await page.locator('#pane-proj .rk-sum')).toHaveCount(1);
+  for (const v of await page.locator('#pane-proj .rk .val').allInnerTexts()) expect(v).toMatch(/^\d+\s*GB$/);      // 412 GB …
+  expect(await page.locator('#pane-proj .rk-sum .val').innerText()).toMatch(/1,326\s*GB/);
+  await page.locator('#tab-visit').click(); await page.waitForTimeout(1100);
+  t = await page.locator('#right').innerText();
+  once(t, '5,575'); once(t, '1,150'); expect(t).not.toContain('최대');
+  for (const v of await page.locator('#v-ax span b').allInnerTexts()) expect(v).toMatch(/^[\d,]+회$/);
+  await page.locator('#tab-store').click(); await page.waitForTimeout(1100);
+  t = await page.locator('#right').innerText();
+  once(t, '44.5'); once(t, '139.5'); once(t, '184');
+  expect(await page.locator('#s-lg .li').count()).toBe(7);
+  for (const v of await page.locator('#s-lg .li').allInnerTexts()) expect(v).toMatch(/[\d.]+\s*TB$/);           // 정사영상 18.2 TB …
+  expect(await page.locator('#pane-store .pane-big').innerText().then((x) => x.replace(/\s+/g, ' '))).toBe('44.5 TB / 184 TB');
+  const rule = await page.evaluate(() => { const r = document.querySelector('#b1 .rule'); return { text: r.textContent, w: r.getBoundingClientRect().width, rule: parseFloat(getComputedStyle(r, '::after').width) }; });
+  expect(rule.text).toBe('LX 관리자'); expect(Math.abs(rule.rule - rule.w)).toBeLessThanOrEqual(4);
+});
+
+test('판 히트 램프 — 건수가 다르면 채움이 다르고(4단 램프), 범례는 건수 행만', async ({ page }) => {
+  await boot(page);
+  const fills = async () => page.evaluate(() => { const m = new Map(); for (const c of document.querySelectorAll('#cells .cell[data-g]')) if (/^\d$/.test(c.dataset.g)) m.set(c.dataset.g, getComputedStyle(c).backgroundColor); return [...m.entries()]; });
+  let f = await fills();
+  expect(new Set(f.map(([, v]) => v)).size).toBe(f.length);                                   // 등급 수 = 채움 색 수
+  expect(f.length).toBeGreaterThanOrEqual(2);
+  const css = await page.evaluate(async () => (await (await fetch('dashboard.css')).text()));
+  for (const g of ['1', '2', '3', '4']) expect(css).toMatch(new RegExp(`\\.cell\\[data-g="${g}"\\][^{]*\\{[^}]*background:rgba\\(`));
+  expect(new Set([...css.matchAll(/data-g="(\d)"\][^{]*\{[^}]*background:(rgba\([^)]*\))/g)].map((m) => m[2])).size).toBe(8);   // 청록 4 + 파랑 4
+  let lg = await page.locator('#legend').innerText();
+  expect(lg).not.toMatch(/그리드|학습데이터만|조사 예정|영상 미등록/);
+  expect(lg.split('\n').filter((l) => l.trim()).every((l) => /^(결과 \d건( 이상)?|\d셀)$/.test(l.trim()))).toBe(true);
+  await page.locator('#seg-train').click(); await page.waitForTimeout(300);
+  f = await fills(); expect(new Set(f.map(([, v]) => v)).size).toBe(f.length); expect(f.length).toBeGreaterThanOrEqual(3);
+  lg = await page.locator('#legend').innerText();
+  expect(lg).not.toMatch(/그리드|영상 미등록|결과만/);
+  expect(lg.split('\n').filter((l) => l.trim()).every((l) => /^(시점 \d( 이상)?|\d셀)$/.test(l.trim()))).toBe(true);
 });
 
 /* ── 판 — 0.25° 그리드 · 실자산 셀 ──────────────────────────────────────── */
@@ -123,7 +170,7 @@ test('판 — 셀은 실좌표에서 투영된다: 남원 127.25–127.50 E · 3
   });
   expect(ok).toBe(true);
   const legend = await page.locator('#legend').innerText();
-  expect(legend).toContain('결과 2건'); expect(legend).toContain('학습데이터만');
+  expect(legend).toContain('결과 2건'); expect(legend).not.toContain('학습데이터만');
   // 셀 등급 = 실데이터 집계
   expect(await page.locator('#cells .cell[data-g="2"]').count()).toBe(2);                 // 남원 · 여수
   expect(await page.locator('#cells .cell[data-g="1"]').count()).toBe(1);                 // 남원 변화지수(비지도)
@@ -155,7 +202,7 @@ test('판 토글 — 학습데이터 모드는 정사영상 시점 수로 칠하
   await page.locator('#seg-train').click(); await page.waitForTimeout(300);
   await expect(page.locator('#plate-wrap')).toHaveAttribute('data-mode', 'train');
   await expect(page.locator('#seg-train')).toHaveAttribute('aria-selected', 'true');
-  await expect(page.locator('#cells .cell[data-key="127.25,35.50"]')).toHaveAttribute('data-g', '3');   // 남원 AOI 4시점
+  await expect(page.locator('#cells .cell[data-key="127.25,35.50"]')).toHaveAttribute('data-g', '4');   // 남원 AOI 4시점 = 램프 최상단
   await page.locator('#cells .cell[data-key="127.25,35.50"]').hover(); await page.waitForTimeout(300);
   const c = await page.locator('#callout').innerText();
   expect(c).toContain('학습데이터'); expect(c).toContain('2025-06 · GSD 1.69 cm');
@@ -178,21 +225,21 @@ test('셀 클릭 → XI맵(원본 ximap.html 의 자리) 로 셀 좌표를 넘�
 test('탭 패널 — 탭 3이 B10·B11·B12 를 전환하고, 키보드·localStorage·카운트업이 산다', async ({ page }) => {
   await boot(page);
   await expect(page.locator('#tab-proj')).toHaveAttribute('aria-selected', 'true');
-  await expect(page.locator('#pane-proj .rk.on .val')).toHaveText('412');
+  await expect(page.locator('#pane-proj .rk.on .val b')).toHaveText('412');
   await expect(page.locator('#pane-proj .rk.on .bar i')).toHaveCSS('background-color', 'rgb(0, 109, 247)');
   await page.locator('#tab-visit').click();
   await expect(page.locator('#pane-visit')).toBeVisible(); await expect(page.locator('#pane-proj')).toBeHidden();
   const early = await page.locator('#v-ax span.pk b').innerText();
   await page.waitForTimeout(1100);
-  await expect(page.locator('#v-ax span.pk b')).toHaveText('1,150');
-  expect(+early.replace(/,/g, '')).toBeLessThanOrEqual(1150);
-  expect(await page.locator('#r-sub').innerText()).toContain('5,575');
+  await expect(page.locator('#v-ax span.pk b')).toHaveText('1,150회');
+  expect(+early.replace(/[,회]/g, '')).toBeLessThanOrEqual(1150);
+  expect(await page.locator('#v-sum').innerText()).toContain('5,575');
   await page.keyboard.press('ArrowRight');
   await expect(page.locator('#tab-store')).toHaveAttribute('aria-selected', 'true');
   await expect(page.locator('#pane-store')).toBeVisible();
   await page.waitForTimeout(1100);
   await expect(page.locator('#pane-store .pane-big .big')).toHaveText('44.5');
-  expect(await page.locator('#pane-store').innerText()).toContain('정사영상');
+  expect(await page.locator('#pane-store').innerText()).toMatch(/정사영상\s*18\.2\s*TB/);
   expect(await page.evaluate(() => localStorage.getItem('lx_dash_tab'))).toBe('store');
   await page.reload(); await page.waitForFunction(() => document.documentElement.dataset.dash === 'ready');
   await expect(page.locator('#tab-store')).toHaveAttribute('aria-selected', 'true');
@@ -320,8 +367,8 @@ test('색 역할 — warn 은 조치 필요 자리에만, 파랑은 정보에만
   await expect(page.locator('#tabs [aria-selected=true]')).toHaveCSS('background-color', 'rgb(232, 241, 255)');
   await expect(page.locator('#pane-proj .rk.on .bar i')).toHaveCSS('background-color', BLUE);
   await expect(page.locator('#b-bb svg')).toHaveCSS('color', BLUE);
-  expect(await page.locator('#b1').evaluate((e) => getComputedStyle(e, '::after').backgroundColor)).toBe(BLUE);
-  expect(await page.locator('#b1').evaluate((e) => getComputedStyle(e, '::after').height)).toBe('4px');
+  expect(await page.locator('#b1 .rule').evaluate((e) => getComputedStyle(e, '::after').backgroundColor)).toBe(BLUE);
+  expect(await page.locator('#b1 .rule').evaluate((e) => getComputedStyle(e, '::after').height)).toBe('4px');
   // 스토리지 범례 = 파랑(정사영상) + 청록(AI 분석)
   await page.locator('#tab-store').click(); await page.waitForTimeout(300);
   const fills = await page.locator('#s-bar rect').evaluateAll((els) => els.map((e) => e.getAttribute('fill')));

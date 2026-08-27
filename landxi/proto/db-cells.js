@@ -60,15 +60,15 @@ export function buildCells({ RESULTS = [], CHANGE = [], IMAGERY = [], SERVICES =
 /** 셀 등급(결과 모드): 3 = 결과 3건 이상 · 2 · 1 · 'train' = 학습데이터만 · 'plan' = 조사 예정 · null */
 export function gradeResult(cell) {
   const n = cell.results.length + cell.change.length;
-  if (n >= 3) return 3; if (n === 2) return 2; if (n === 1) return 1;
+  if (n >= 4) return 4; if (n === 3) return 3; if (n === 2) return 2; if (n === 1) return 1;
   if (cell.imagery.length) return 'train';
   if (cell.planned.length) return 'plan';
   return null;
 }
-/** 셀 등급(학습데이터 모드): 시점 수 4+ / 2–3 / 1 · 'res' = 결과만(영상 미등록) · null */
+/** 셀 등급(학습데이터 모드): 시점 수 4+ / 3 / 2 / 1 (히트 램프) · 'res' = 결과만(영상 미등록) · null */
 export function gradeTrain(cell) {
   const n = new Set(cell.imagery.map((i) => i.captured + i.id.replace(/_\d{4}$/, ''))).size;
-  if (n >= 4) return 3; if (n >= 2) return 2; if (n === 1) return 1;
+  if (n >= 4) return 4; if (n === 3) return 3; if (n === 2) return 2; if (n === 1) return 1;
   if (cell.results.length || cell.change.length) return 'res';
   return null;
 }

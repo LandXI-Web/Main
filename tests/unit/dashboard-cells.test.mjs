@@ -38,7 +38,7 @@ test('imagery footprints mark every intersecting cell; training grade counts epo
   assert.ok(jeju && gradeResult(jeju) === 'train');
   const nwAoi = cells.get('127.25,35.50');
   assert.ok(nwAoi.imagery.some((i) => i.id === 'namwon_2506'));
-  assert.equal(gradeTrain(nwAoi), 3);
+  assert.equal(gradeTrain(nwAoi), 4);
 });
 
 test('planned cells only where no real asset exists', () => {
