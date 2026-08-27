@@ -14,6 +14,11 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.3/packages/wanted-sans/fonts/webfonts/variable/complete/WantedSansVariable.min.css">
 <link rel="stylesheet" href="https://hangeul.pstatic.net/hangeul_static/css/nanum-square-neo.css">
+<link rel="stylesheet" href="https://hangeul.pstatic.net/hangeul_static/css/nanum-barun-gothic.css">
+<link rel="stylesheet" href="https://hangeul.pstatic.net/hangeul_static/css/nanum-square.css">
+<link rel="stylesheet" href="https://hangeul.pstatic.net/hangeul_static/css/maru-buri.css">
+<link rel="stylesheet" href="https://spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&family=Noto+Serif+KR:wght@400;700&family=Nanum+Gothic:wght@400;700&family=Nanum+Myeongjo:wght@400;700&family=Black+Han+Sans&family=Jua&family=Gugi&family=Orbit&family=Moirai+One&family=Bagel+Fat+One&family=Nanum+Pen+Script&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;700&family=IBM+Plex+Mono:wght@400;500&family=Hahmlet:wght@400;700;800&family=Gowun+Batang:wght@400;700&family=Song+Myung&family=Gothic+A1:wght@400;900&family=Inter:wght@400;600&family=Geist:wght@400;600&family=Space+Grotesk:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* noonnu 배포(jsDelivr) — 개별 @font-face */
@@ -24,6 +29,19 @@
 @font-face{font-family:'GmarketSans';font-weight:700;font-display:swap;src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansBold.woff') format('woff')}
 @font-face{font-family:'Cafe24SsurroundAir';font-weight:400;font-display:swap;src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2105_2@1.0/Cafe24SsurroundAir.woff') format('woff')}
 @font-face{font-family:'S-CoreDream';font-weight:800;font-display:swap;src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/S-CoreDream-8Heavy.woff') format('woff')}
+/* 2차 추가분 — 경로는 2026-08-27 jsDelivr 파일 목록 API로 실검증 */
+@font-face{font-family:'LINESeedKR';font-weight:700;font-display:swap;src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_11-01@1.0/LINESeedKR-Bd.woff2') format('woff2')}
+@font-face{font-family:'LINESeedKR';font-weight:400;font-display:swap;src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_11-01@1.0/LINESeedKR-Rg.woff2') format('woff2')}
+@font-face{font-family:'KoPubDotum';font-weight:500;font-display:swap;src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/KoPubDotumMedium.woff') format('woff')}
+@font-face{font-family:'RIDIBatang';font-weight:400;font-display:swap;src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.0/RIDIBatang.woff') format('woff')}
+@font-face{font-family:'SunBatang';font-weight:700;font-display:swap;src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_eight@1.0/SunBatang-Bold.woff') format('woff')}
+@font-face{font-family:'SunBatang';font-weight:400;font-display:swap;src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_eight@1.0/SunBatang-Medium.woff') format('woff')}
+@font-face{font-family:'JeonjuSun';font-weight:700;font-display:swap;src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2202@1.0/JeonjuSunB.woff') format('woff')}
+@font-face{font-family:'JeonjuSun';font-weight:400;font-display:swap;src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2202@1.0/JeonjuSunR.woff') format('woff')}
+@font-face{font-family:'Cafe24Ssurround';font-weight:700;font-display:swap;src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2105_2@1.0/Cafe24Ssurround.woff') format('woff')}
+@font-face{font-family:'BMDOHYEON';font-weight:400;font-display:swap;src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_one@1.0/BMDOHYEON.woff') format('woff')}
+@font-face{font-family:'BMHANNAAir';font-weight:400;font-display:swap;src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_four@1.0/BMHANNAAir.woff') format('woff')}
+@font-face{font-family:'BMEULJIRO';font-weight:400;font-display:swap;src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.0/BMEULJIRO.woff') format('woff')}
 
 /* ===== 페이지 자체: THE SYSTEM 레이아웃(흰 바탕·헤어라인·라운드 0·그림자 0) ===== */
 :root{
@@ -75,6 +93,21 @@ button:hover{background:var(--ink);color:#fff}
 .pick .lab{font-size:12px;color:var(--grey);letter-spacing:.02em}
 .pick code{font-family:var(--num);font-size:13px;background:#F4F4F4;padding:4px 10px;flex:1;letter-spacing:.01em}
 .pick button{padding:4px 12px;font-size:12px}
+
+/* 카테고리 필터 · 한눈에 */
+.filters{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line);border-top:0;margin:0}
+.filters button{border:0;border-right:1px solid var(--line);padding:8px 14px;font-size:12px;letter-spacing:.01em}
+.filters button:last-child{border-right:0}
+.filters button.on{background:var(--ink);color:#fff}
+.filters button i{font-style:normal;font-family:var(--num);font-size:11px;color:var(--mute);margin-left:6px}
+.filters button.on i{color:#BBB}
+.glance{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line);border-top:0;padding:0}
+.glance a{display:block;font-size:28px;line-height:36px;padding:10px 16px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);text-decoration:none;white-space:nowrap;color:var(--ink)}
+.glance a:hover{background:var(--band)}
+.glance a.hide,.cand.hide{display:none}
+.glance a small{display:block;font-family:var(--num);font-size:10px;line-height:12px;letter-spacing:.04em;color:var(--mute);margin-top:-2px}
+.glance .lab{width:100%;font-size:12px;color:var(--grey);padding:8px 16px 4px;border-bottom:0}
+.side .cat{display:inline-block;font-size:11px;letter-spacing:.02em;color:var(--grey);border-bottom:1px solid var(--line);padding-bottom:2px;margin-top:2px}
 
 /* 후보 카드 */
 .cands{padding:24px 0 0}
@@ -149,7 +182,7 @@ button:hover{background:var(--ink);color:#fff}
 
 <header class="top">
   <h1>글꼴 · 블루 톤 후보 — 대시보드 스펙시먼</h1>
-  <p>클라이언트 지시: "랜드XI CI처럼 <b>흰색에 밝은 파란색</b> 톤앤매너가 스타일 전체에 반영되고, 큰 틀에서 <b>디자인 폰트</b>로 개편." 아래에서 톤 1개(T1–T3)와 글꼴 1개를 고르면 상단 요약에 기록된다(브라우저에 저장). 모든 후보는 같은 대시보드 구성(마스트헤드 · H1 · KPI · 표 · 버튼 · 캡션 · 모토)으로 조판했다.</p>
+  <p>클라이언트 지시: "랜드XI CI처럼 <b>흰색에 밝은 파란색</b> 톤앤매너가 스타일 전체에 반영되고, 큰 틀에서 <b>디자인 폰트</b>로 개편." 2차: "후보군이 다양하게 많았으면 한다"는 지시에 따라 카테고리별로 36종까지 넓혔다. 아래에서 톤 1개(T1–T3)와 글꼴 1개를 고르면 상단 요약에 기록된다(브라우저에 저장). 모든 후보는 같은 대시보드 구성(마스트헤드 · H1 · KPI · 표 · 버튼 · 캡션 · 모토)으로 조판했다.</p>
   <div class="meta">기준 화면 design-canvas/v2/renders/B5-Dashboard.png · 현행 법전 design/system.md(SUIT 500 / Pretendard 400 / Inter tabular · #006DF7 한 번) · 2026-08-27</div>
 
   <div class="swatches" id="swatches">
@@ -187,6 +220,8 @@ button:hover{background:var(--ink);color:#fff}
   <button id="clearBtn" type="button">초기화</button>
 </div>
 
+<div class="filters" id="filters"></div>
+<nav class="glance" id="glance"></nav>
 <main class="cands" id="cands"></main>
 
 <section class="nums" id="nums">
@@ -200,57 +235,165 @@ button:hover{background:var(--ink);color:#fff}
 <script>
 /* ===== 후보 정의 ===== */
 const CANDS = [
-  { id:'suit', name:'SUIT + Pretendard', sub:'현행 기준 (system.md)',
+  { id:'suit', cat:'기하학 고딕', name:'SUIT + Pretendard', sub:'현행 기준 (system.md)',
     disp:'"SUIT Variable"', dw:500, body:'"Pretendard Variable"', numf:'Inter', nw:400,
     lic:'SUIT OFL · Pretendard OFL', src:'jsDelivr gh sun-typeface/SUIT · orioncactus/pretendard',
     weights:'표시 SUIT 500 · 본문 400 · 숫자 Inter 400', fams:[['SUIT Variable',500],['Pretendard Variable',400]] },
-  { id:'paperlogy', name:'Paperlogy + Pretendard', sub:'각진 기하 표시체 · 스타트업/테크 톤',
+  { id:'paperlogy', cat:'기하학 고딕', name:'Paperlogy + Pretendard', sub:'각진 기하 표시체 · 스타트업/테크 톤',
     disp:'Paperlogy', dw:800, body:'"Pretendard Variable"', numf:'Inter', nw:400,
     lic:'Paperlogy 무료 상업용(눈누) · Pretendard OFL', src:'jsDelivr gh projectnoonnu/2408-3',
     weights:'표시 Paperlogy 800(700 보조) · 본문 Pretendard 400', fams:[['Paperlogy',800],['Pretendard Variable',400]] },
-  { id:'freesentation', name:'Freesentation + Pretendard', sub:'넓은 자폭 프레젠테이션 표시체',
+  { id:'freesentation', cat:'컨덴스드·확장', name:'Freesentation + Pretendard', sub:'넓은 자폭 프레젠테이션 표시체',
     disp:'Freesentation', dw:700, body:'"Pretendard Variable"', numf:'Inter', nw:400,
     lic:'Freesentation 무료 상업용(눈누) · Pretendard OFL', src:'jsDelivr gh projectnoonnu/2404',
     weights:'표시 Freesentation 700(800 보조) · 본문 Pretendard 400', fams:[['Freesentation',700],['Pretendard Variable',400]] },
-  { id:'wanted', name:'Wanted Sans (variable)', sub:'단일 패밀리 · 표시/본문 통일',
+  { id:'wanted', cat:'휴머니스트 고딕', name:'Wanted Sans (variable)', sub:'단일 패밀리 · 표시/본문 통일',
     disp:'"Wanted Sans Variable"', dw:700, body:'"Wanted Sans Variable"', numf:'"Wanted Sans Variable"', nw:500,
     lic:'OFL', src:'jsDelivr gh wanteddev/wanted-sans',
     weights:'표시 700 · 본문 400 · 숫자 500(같은 패밀리, tabular)', fams:[['Wanted Sans Variable',700]] },
-  { id:'gmarket', name:'Gmarket Sans + Pretendard', sub:'둥근 각 기하 표시체 · 친숙한 공공 톤',
+  { id:'gmarket', cat:'기하학 고딕', name:'Gmarket Sans + Pretendard', sub:'둥근 각 기하 표시체 · 친숙한 공공 톤',
     disp:'GmarketSans', dw:700, body:'"Pretendard Variable"', numf:'Inter', nw:400,
     lic:'Gmarket Sans 무료 상업용 · Pretendard OFL', src:'jsDelivr gh projectnoonnu/noonfonts_2001',
     weights:'표시 Gmarket Sans Bold · 본문 Pretendard 400', fams:[['GmarketSans',700],['Pretendard Variable',400]] },
-  { id:'nsneo', name:'NanumSquare Neo', sub:'단일 패밀리 · Heavy 표시 + Regular 본문',
+  { id:'nsneo', cat:'휴머니스트 고딕', name:'NanumSquare Neo', sub:'단일 패밀리 · Heavy 표시 + Regular 본문',
     disp:'NanumSquareNeoHeavy', dw:400, body:'NanumSquareNeo', numf:'NanumSquareNeoBold', nw:400,
     lic:'OFL (네이버)', src:'hangeul.pstatic.net 공식 CSS',
     weights:'표시 Heavy · 본문 Regular · 숫자 Bold', fams:[['NanumSquareNeoHeavy',400],['NanumSquareNeo',400]] },
-  { id:'plex', name:'IBM Plex Sans KR', sub:'단일 패밀리 · 숫자 IBM Plex Mono',
+  { id:'plex', cat:'휴머니스트 고딕', name:'IBM Plex Sans KR', sub:'단일 패밀리 · 숫자 IBM Plex Mono',
     disp:'"IBM Plex Sans KR"', dw:700, body:'"IBM Plex Sans KR"', numf:'"IBM Plex Mono"', nw:500,
     lic:'OFL', src:'Google Fonts',
     weights:'표시 700 · 본문 400 · 숫자 Plex Mono 500', fams:[['IBM Plex Sans KR',700],['IBM Plex Mono',500]] },
-  { id:'hahmlet', name:'Hahmlet + Pretendard', sub:'에디토리얼 세리프 표시체 (1안)',
+  { id:'hahmlet', cat:'명조·세리프', name:'Hahmlet + Pretendard', sub:'에디토리얼 세리프 표시체 (1안)',
     disp:'Hahmlet', dw:700, body:'"Pretendard Variable"', numf:'Inter', nw:400,
     lic:'OFL', src:'Google Fonts',
     weights:'표시 Hahmlet 700 · 본문 Pretendard 400', fams:[['Hahmlet',700],['Pretendard Variable',400]] },
-  { id:'batang', name:'Gowun Batang + Pretendard', sub:'에디토리얼 세리프 (2안) · 워드마크는 Song Myung',
+  { id:'batang', cat:'명조·세리프', name:'Gowun Batang + Pretendard', sub:'에디토리얼 세리프 (2안) · 워드마크는 Song Myung',
     disp:'"Gowun Batang"', dw:700, body:'"Pretendard Variable"', numf:'Inter', nw:400, wm:'"Song Myung"',
     lic:'OFL', src:'Google Fonts',
     weights:'표시 Gowun Batang 700 · 워드마크 Song Myung 400 · 본문 Pretendard 400', fams:[['Gowun Batang',700],['Song Myung',400],['Pretendard Variable',400]] },
-  { id:'surround', name:'Cafe24 Surround Air + Pretendard', sub:'둥근 기하 표시체 · 부드러운 톤',
+  { id:'surround', cat:'라운드', name:'Cafe24 Surround Air + Pretendard', sub:'둥근 기하 표시체 · 부드러운 톤',
     disp:'Cafe24SsurroundAir', dw:400, body:'"Pretendard Variable"', numf:'Inter', nw:400,
     lic:'Cafe24 무료 상업용 · Pretendard OFL', src:'jsDelivr gh projectnoonnu/noonfonts_2105_2',
     weights:'표시 Surround Air 400(단일 굵기) · 본문 Pretendard 400', fams:[['Cafe24SsurroundAir',400],['Pretendard Variable',400]] },
-  { id:'scoredream', name:'S-Core Dream 8 Heavy + Pretendard', sub:'묵직한 기하 표시체 (에스코어 드림)',
+  { id:'scoredream', cat:'디스플레이 헤비', name:'S-Core Dream 8 Heavy + Pretendard', sub:'묵직한 기하 표시체 (에스코어 드림)',
     disp:'"S-CoreDream"', dw:800, body:'"Pretendard Variable"', numf:'Inter', nw:400,
     lic:'S-Core Dream 무료 상업용 · Pretendard OFL', src:'jsDelivr gh projectnoonnu/noonfonts_six',
     weights:'표시 S-Core Dream 8 Heavy · 본문 Pretendard 400',
     note:'TheJamsil(더잠실)은 눈누 CDN 경로가 404라 제외 — 필요 시 롯데 공식 배포본을 저장소에 동봉해야 함.',
     fams:[['S-CoreDream',800],['Pretendard Variable',400]] },
-  { id:'gothica1', name:'Gothic A1 900 + Gothic A1 400', sub:'취향 프로필 초기 페어링 (현행 법전은 금지 목록)',
+  { id:'gothica1', cat:'디스플레이 헤비', name:'Gothic A1 900 + Gothic A1 400', sub:'취향 프로필 초기 페어링 (현행 법전은 금지 목록)',
     disp:'"Gothic A1"', dw:900, body:'"Gothic A1"', numf:'Inter', nw:400,
     lic:'OFL', src:'Google Fonts',
     weights:'표시 900 · 본문 400 · 숫자 Inter 400', fams:[['Gothic A1',900],['Gothic A1',400]] },
+  /* ===== 2차 추가 후보 (카테고리별) — 표시체가 단일 굵기면 본문은 Pretendard 400 ===== */
+  // 기하학 고딕
+  { id:'lineseed', cat:'기하학 고딕', name:'LINE Seed Sans KR', sub:'단일 패밀리 · Bold 표시 + Regular 본문',
+    disp:'LINESeedKR', dw:700, body:'LINESeedKR', numf:'Inter', nw:400,
+    lic:'OFL (LINE)', src:'jsDelivr gh projectnoonnu/noonfonts_11-01',
+    weights:'표시 700 · 본문 400 · 숫자 Inter 400', fams:[['LINESeedKR',700],['LINESeedKR',400]] },
+  { id:'spoqa', cat:'기하학 고딕', name:'Spoqa Han Sans Neo', sub:'단일 패밀리 · Bold 표시 + Regular 본문',
+    disp:'"Spoqa Han Sans Neo"', dw:700, body:'"Spoqa Han Sans Neo"', numf:'Inter', nw:400,
+    lic:'OFL (스포카)', src:'spoqa.github.io 공식 CSS (눈누 jsDelivr 사본은 0바이트라 제외)',
+    weights:'표시 700 · 본문 400 · 숫자 Inter 400', fams:[['Spoqa Han Sans Neo',700],['Spoqa Han Sans Neo',400]] },
+  { id:'ssurround', cat:'기하학 고딕', name:'Cafe24 Ssurround + Pretendard', sub:'둥근 각 기하 표시체(Bold) · Surround Air의 굵은 짝',
+    disp:'Cafe24Ssurround', dw:700, body:'"Pretendard Variable"', numf:'Inter', nw:400,
+    lic:'Cafe24 무료 상업용 · Pretendard OFL', src:'jsDelivr gh projectnoonnu/noonfonts_2105_2',
+    weights:'표시 Ssurround Bold(단일) · 본문 Pretendard 400', fams:[['Cafe24Ssurround',700],['Pretendard Variable',400]] },
+  // 휴머니스트 고딕
+  { id:'notosans', cat:'휴머니스트 고딕', name:'Noto Sans KR', sub:'단일 패밀리 · 700 표시 + 400 본문 (본고딕)',
+    disp:'"Noto Sans KR"', dw:700, body:'"Noto Sans KR"', numf:'Inter', nw:400,
+    lic:'OFL (Google/Adobe)', src:'Google Fonts',
+    weights:'표시 700 · 본문 400 · 숫자 Inter 400', fams:[['Noto Sans KR',700],['Noto Sans KR',400]] },
+  { id:'nanumgothic', cat:'휴머니스트 고딕', name:'Nanum Gothic', sub:'단일 패밀리 · 700 표시 + 400 본문',
+    disp:'"Nanum Gothic"', dw:700, body:'"Nanum Gothic"', numf:'Inter', nw:400,
+    lic:'OFL (네이버)', src:'Google Fonts',
+    weights:'표시 700 · 본문 400 · 숫자 Inter 400', fams:[['Nanum Gothic',700],['Nanum Gothic',400]] },
+  { id:'nanumbarun', cat:'휴머니스트 고딕', name:'Nanum Barun Gothic', sub:'단일 패밀리 · Bold 표시 + Regular 본문',
+    disp:'NanumBarunGothicBold', dw:400, body:'NanumBarunGothic', numf:'Inter', nw:400,
+    lic:'OFL (네이버)', src:'hangeul.pstatic.net 공식 CSS',
+    weights:'표시 Bold · 본문 Regular · 숫자 Inter 400', fams:[['NanumBarunGothicBold',400],['NanumBarunGothic',400]] },
+  { id:'nanumsquare', cat:'휴머니스트 고딕', name:'NanumSquare (원본)', sub:'단일 패밀리 · ExtraBold 표시 + Regular 본문 (Neo 이전판)',
+    disp:'NanumSquareExtraBold', dw:400, body:'NanumSquare', numf:'NanumSquareBold', nw:400,
+    lic:'OFL (네이버)', src:'hangeul.pstatic.net 공식 CSS',
+    weights:'표시 ExtraBold · 본문 Regular · 숫자 Bold', fams:[['NanumSquareExtraBold',400],['NanumSquare',400]] },
+  { id:'kopub', cat:'휴머니스트 고딕', name:'KoPub 돋움 + Pretendard', sub:'출판용 돋움 표시(Medium) · 본문 Pretendard',
+    disp:'KoPubDotum', dw:500, body:'"Pretendard Variable"', numf:'Inter', nw:400,
+    lic:'KoPub 서체 라이선스(무료 배포·재배포 허용)', src:'jsDelivr gh projectnoonnu/noonfonts_two',
+    weights:'표시 KoPub 돋움 Medium(단일) · 본문 Pretendard 400',
+    note:'요청된 KoPub World 돋움/바탕은 눈누 CDN에 없어 구판 KoPub 돋움 Medium으로 대체.',
+    fams:[['KoPubDotum',500],['Pretendard Variable',400]] },
+  // 명조·세리프
+  { id:'notoserif', cat:'명조·세리프', name:'Noto Serif KR + Pretendard', sub:'본명조 표시체 · 본문 Pretendard',
+    disp:'"Noto Serif KR"', dw:700, body:'"Pretendard Variable"', numf:'Inter', nw:400,
+    lic:'OFL', src:'Google Fonts',
+    weights:'표시 Noto Serif KR 700 · 본문 Pretendard 400', fams:[['Noto Serif KR',700],['Pretendard Variable',400]] },
+  { id:'nanummyeongjo', cat:'명조·세리프', name:'Nanum Myeongjo + Pretendard', sub:'나눔명조 표시체 · 본문 Pretendard',
+    disp:'"Nanum Myeongjo"', dw:700, body:'"Pretendard Variable"', numf:'Inter', nw:400,
+    lic:'OFL (네이버)', src:'Google Fonts',
+    weights:'표시 Nanum Myeongjo 700 · 본문 Pretendard 400', fams:[['Nanum Myeongjo',700],['Pretendard Variable',400]] },
+  { id:'maruburi', cat:'명조·세리프', name:'MaruBuri (마루 부리)', sub:'단일 패밀리 · Bold 표시 + Regular 본문 (네이버 글꼴)',
+    disp:'MaruBuriBold', dw:400, body:'MaruBuri', numf:'Inter', nw:400,
+    lic:'OFL (네이버)', src:'hangeul.pstatic.net 공식 CSS',
+    weights:'표시 Bold · 본문 Regular · 숫자 Inter 400', fams:[['MaruBuriBold',400],['MaruBuri',400]] },
+  { id:'ridi', cat:'명조·세리프', name:'Ridi Batang + Pretendard', sub:'리디바탕 표시체(Regular 단일) · 본문 Pretendard',
+    disp:'RIDIBatang', dw:400, body:'"Pretendard Variable"', numf:'Inter', nw:400,
+    lic:'OFL (리디)', src:'jsDelivr gh projectnoonnu/noonfonts_twelve',
+    weights:'표시 RIDI Batang 400(단일) · 본문 Pretendard 400', fams:[['RIDIBatang',400],['Pretendard Variable',400]] },
+  { id:'sunbatang', cat:'명조·세리프', name:'순바탕 + Pretendard', sub:'순바탕 Bold 표시 · 본문 Pretendard',
+    disp:'SunBatang', dw:700, body:'"Pretendard Variable"', numf:'Inter', nw:400,
+    lic:'OFL (한국출판인회의)', src:'jsDelivr gh projectnoonnu/noonfonts_eight',
+    weights:'표시 순바탕 Bold(Medium 보조) · 본문 Pretendard 400', fams:[['SunBatang',700],['Pretendard Variable',400]] },
+  { id:'jeonju', cat:'명조·세리프', name:'전주완판본 순체 + Pretendard', sub:'완판본 목판 명조 표시체 · 본문 Pretendard',
+    disp:'JeonjuSun', dw:700, body:'"Pretendard Variable"', numf:'Inter', nw:400,
+    lic:'전주시 무료 배포(상업용 허용)', src:'jsDelivr gh projectnoonnu/noonfonts_2202',
+    weights:'표시 전주완판본 순 B(R 보조) · 본문 Pretendard 400', fams:[['JeonjuSun',700],['Pretendard Variable',400]] },
+  // 컨덴스드·확장
+  { id:'blackhan', cat:'컨덴스드·확장', name:'Black Han Sans + Pretendard', sub:'좁고 무거운 헤드라인 표시체 · 본문 Pretendard',
+    disp:'"Black Han Sans"', dw:400, body:'"Pretendard Variable"', numf:'Inter', nw:400,
+    lic:'OFL (Zess Type)', src:'Google Fonts',
+    weights:'표시 Black Han Sans 400(단일) · 본문 Pretendard 400', fams:[['Black Han Sans',400],['Pretendard Variable',400]] },
+  // 디스플레이 헤비
+  { id:'dohyeon', cat:'디스플레이 헤비', name:'배민 도현 + Pretendard', sub:'각진 헤비 표시체 · 본문 Pretendard',
+    disp:'BMDOHYEON', dw:400, body:'"Pretendard Variable"', numf:'Inter', nw:400,
+    lic:'우아한형제들 무료 배포(상업용 허용)', src:'jsDelivr gh projectnoonnu/noonfonts_one',
+    weights:'표시 도현 400(단일) · 본문 Pretendard 400', fams:[['BMDOHYEON',400],['Pretendard Variable',400]] },
+  { id:'euljiro', cat:'디스플레이 헤비', name:'배민 을지로체 + Pretendard', sub:'간판 붓글씨 헤비 표시체 · 본문 Pretendard',
+    disp:'BMEULJIRO', dw:400, body:'"Pretendard Variable"', numf:'Inter', nw:400,
+    lic:'우아한형제들 무료 배포(상업용 허용)', src:'jsDelivr gh projectnoonnu/noonfonts_twelve',
+    weights:'표시 을지로 400(단일) · 본문 Pretendard 400', fams:[['BMEULJIRO',400],['Pretendard Variable',400]] },
+  { id:'bagel', cat:'디스플레이 헤비', name:'Bagel Fat One + Pretendard', sub:'둥글고 뚱뚱한 표시체 · 본문 Pretendard',
+    disp:'"Bagel Fat One"', dw:400, body:'"Pretendard Variable"', numf:'Inter', nw:400,
+    lic:'OFL (JAMO)', src:'Google Fonts',
+    weights:'표시 Bagel Fat One 400(단일) · 본문 Pretendard 400', fams:[['Bagel Fat One',400],['Pretendard Variable',400]] },
+  { id:'moirai', cat:'디스플레이 헤비', name:'Moirai One + Pretendard', sub:'매듭 형태 헤비 표시체 · 본문 Pretendard',
+    disp:'"Moirai One"', dw:400, body:'"Pretendard Variable"', numf:'Inter', nw:400,
+    lic:'OFL (JAMO)', src:'Google Fonts',
+    weights:'표시 Moirai One 400(단일) · 본문 Pretendard 400', fams:[['Moirai One',400],['Pretendard Variable',400]] },
+  // 라운드
+  { id:'jua', cat:'라운드', name:'Jua (주아) + Pretendard', sub:'배민 주아 · 둥근 붓 표시체 · 본문 Pretendard',
+    disp:'Jua', dw:400, body:'"Pretendard Variable"', numf:'Inter', nw:400,
+    lic:'OFL (우아한형제들)', src:'Google Fonts',
+    weights:'표시 Jua 400(단일) · 본문 Pretendard 400', fams:[['Jua',400],['Pretendard Variable',400]] },
+  { id:'hannaair', cat:'라운드', name:'배민 한나체 Air + Pretendard', sub:'가벼운 둥근 표시체 · 본문 Pretendard',
+    disp:'BMHANNAAir', dw:400, body:'"Pretendard Variable"', numf:'Inter', nw:400,
+    lic:'우아한형제들 무료 배포(상업용 허용)', src:'jsDelivr gh projectnoonnu/noonfonts_four',
+    weights:'표시 한나 Air 400(단일) · 본문 Pretendard 400', fams:[['BMHANNAAir',400],['Pretendard Variable',400]] },
+  // 손글씨·개성
+  { id:'gugi', cat:'손글씨·개성', name:'Gugi + Pretendard', sub:'전통 붓 표시체 · 본문 Pretendard',
+    disp:'Gugi', dw:400, body:'"Pretendard Variable"', numf:'Inter', nw:400,
+    lic:'OFL (Taebaek)', src:'Google Fonts',
+    weights:'표시 Gugi 400(단일) · 본문 Pretendard 400', fams:[['Gugi',400],['Pretendard Variable',400]] },
+  { id:'orbit', cat:'손글씨·개성', name:'Orbit + Pretendard', sub:'우주·궤도 모티프 표시체(국토·위성 맥락) · 본문 Pretendard',
+    disp:'Orbit', dw:400, body:'"Pretendard Variable"', numf:'Inter', nw:400,
+    lic:'OFL (Taebaek)', src:'Google Fonts',
+    weights:'표시 Orbit 400(단일) · 본문 Pretendard 400', fams:[['Orbit',400],['Pretendard Variable',400]] },
+  { id:'nanumpen', cat:'손글씨·개성', name:'Nanum Pen Script + Pretendard', sub:'손글씨 1종 · 본문 Pretendard',
+    disp:'"Nanum Pen Script"', dw:400, body:'"Pretendard Variable"', numf:'Inter', nw:400,
+    lic:'OFL (네이버)', src:'Google Fonts',
+    weights:'표시 Nanum Pen Script 400(단일) · 본문 Pretendard 400', fams:[['Nanum Pen Script',400],['Pretendard Variable',400]] },
 ];
+const CATS=['전체','기하학 고딕','휴머니스트 고딕','컨덴스드·확장','라운드','명조·세리프','디스플레이 헤비','손글씨·개성'];
+const DROPPED='제외(CDN 404): Cafe24 Danjunghae · Cafe24 ClassicType · 강원교육모두체 · 부산체 · 카카오 큰글씨 · TheJamsil(롯데 공식 CDN 없음) / 36종 상한으로 보류: Grandiflora One · Diphylleia · Sunflower · Gowun Dodum · Do Hyeon(Google판, 배민 도현과 중복) · Nanum Brush';
 const NUMS = [
   { name:'Inter', sub:'현행 기준 · Google Fonts', fam:'Inter', w:400 },
   { name:'Geist', sub:'Vercel · OFL · Google Fonts', fam:'Geist', w:400 },
@@ -292,10 +435,11 @@ function specimen(c){
 
 function card(c,i){
   return `
-  <article class="cand" id="c-${c.id}" data-id="${c.id}">
+  <article class="cand" id="c-${c.id}" data-id="${c.id}" data-cat="${c.cat}">
     <aside class="side">
       <div class="no">${String(i+1).padStart(2,'0')} / ${String(CANDS.length).padStart(2,'0')}</div>
       <h2>${c.name}</h2>
+      <span class="cat">${c.cat}</span>
       <dl><dt>페어링</dt><dd>${c.sub}</dd><dt>굵기</dt><dd>${c.weights}</dd><dt>라이선스</dt><dd>${c.lic}</dd><dt>소스</dt><dd>${c.src}</dd></dl>
       <span class="badge" data-badge>loading…</span>
       <button class="pickbtn" type="button" data-pick="${c.id}">선택</button>
@@ -306,6 +450,11 @@ function card(c,i){
 }
 
 document.getElementById('cands').innerHTML = CANDS.map(card).join('');
+document.getElementById('filters').innerHTML = CATS.map(k=>`<button type="button" data-cat="${k}" class="${k==='전체'?'on':''}">${k}<i>${k==='전체'?CANDS.length:CANDS.filter(c=>c.cat===k).length}</i></button>`).join('');
+document.getElementById('glance').innerHTML = `<div class="lab">한눈에 — 후보 이름을 각자의 표시 서체로(28px). 클릭하면 카드로 이동. ${DROPPED}</div>`+CANDS.map((c,i)=>`<a href="#c-${c.id}" data-cat="${c.cat}" style="font-family:${c.disp},var(--sys);font-weight:${c.dw}">${c.name.split(' + ')[0]} <span style="color:var(--grey)">국토</span><small>${String(i+1).padStart(2,'0')} · ${c.cat}</small></a>`).join('');
+document.getElementById('filters').addEventListener('click',e=>{ const b=e.target.closest('[data-cat]'); if(!b) return; const k=b.dataset.cat;
+  document.querySelectorAll('#filters button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.cand,.glance a').forEach(el=>el.classList.toggle('hide',k!=='전체'&&el.dataset.cat!==k)); });
 document.getElementById('numrows').innerHTML = NUMS.map(n=>`
   <div class="numrow" data-fam="${n.fam.replace(/"/g,'')}" data-w="${n.w}">
     <div class="nm">${n.name}<small>${n.sub}</small></div>
