@@ -4,7 +4,7 @@
 // 규칙 — ① design/system.md §1–§5 ② 실데이터 = services.js(15 · 부처 6) · results.js(4 산출물) · imagery.js(11)
 //        ③ 원본 데모 시드(실행중 3 · 완료 7 · 모델 v1–v5 · 공유 역할 9)는 `시연` ④ 화면당 검정 CTA 1
 //        ⑤ 파리티 = NOTES.md §19.1 표 (원본 analysis-ai.html 컨트롤 31 상태 1회씩)
-// usage: node tools/design/gen-b5-analysis.mjs   (repo root) — 3판을 통째로 다시 쓴다(멱등).
+// usage: node tools/design/gen-b5-analysis.mjs   (repo root) — 3판 + 단계별 5판(Run-1…5)을 통째로 다시 쓴다(멱등).
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -490,3 +490,353 @@ function result() {
 wr('B5-Analysis-List.dc.html', list());
 wr('B5-Analysis-Run.dc.html', run());
 wr('B5-Analysis-Result.dc.html', result());
+
+// ======================================================================
+// 4. B5-Analysis-Run-1…5 — 단계별 상세 5판 (발주 2026-08-27: "분석 실행 워크플로우 단계별로 세부 실행이 조금 더 디테일하게
+//    프론트 화면이 필요할 것 같다. 각 단계별 아래 정보와 오른쪽 정보가 잘 고민이 되어야 한다.")
+//    기능은 원본 픽커와 1:1(과제 8 · 모델 v1–v5 종속 · 영상 탭 4 + 페이지 · 실행 · 진행 오버레이 5단계) — 서버 기능 추가 0, 선택값의 표현만.
+// ======================================================================
+const dash = (x, y, w, h, inner = '') => div(x, y, w, h, `border:1px dashed ${C}`, inner);
+const hbtn = (x, y, w, t, col = INK, bd = H) => `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:36px;border:1px solid ${bd};display:flex;align-items:center;justify-content:center;font-size:15px;letter-spacing:-.01em;color:${col};white-space:nowrap">${t}</div>\n`;
+const TAG = (t = '시연') => `<span class="tag">${t}</span>`;
+// 원본 과제 8(인벤토리 §2 #2) → services.js 명칭·부처로 (#2 도로안전 카메라 · #4 사료작물 생산기는 서비스 항목이 없어 원본 이름 + `시연`)
+const TASKS = [
+  ['pothole', '도로안전 다시점 조사', '국토교통부', '포트홀 점 · GeoJSON', 'pj-road.jpg', '정사영상'],
+  ['pothole-cam', '도로안전 카메라', '국토교통부', '포트홀 점 · GeoJSON', 'pj-car.jpg', '차량 영상', true],
+  ['feedcrop', '사료작물 재배지 · 생육기', '농림축산식품부', '필지 폴리곤 · GPKG', 'crop-farm-1.jpg', '드론'],
+  ['feedcrop2', '사료작물 재배지 · 생산기', '농림축산식품부', '필지 폴리곤 · GPKG', 'crop-farm-6.jpg', '드론', true],
+  ['silage', '곤포 사일리지 집계', '농림축산식품부', '개체 점 · XLSX', 'pj-land.jpg', '드론'],
+  ['greenhouse', '비닐하우스 현황', '농림축산식품부', '동 폴리곤 · 필지 결합 · GPKG', 'tile-gh-clean.jpg', '드론'],
+  ['farmland', '농지이용·불법건축물', '농림축산식품부', '필지 폴리곤 · GeoJSON · XLSX', 'tile-farm-clean.jpg', '드론'],
+  ['trash', '방치폐기물 탐지', '환경부', '개소 점 · GeoJSON', 'tile-arc-hid.jpg', '드론'],
+];
+const TASK = TASKS[5];
+// 원본 모델 목록 5(과제 종속 · 시드 그대로) + 표시용 지표(학습 데이터 · IoU · F1 · 권장 GSD = `시연`, 기반 = dashboard.js XI-VFM v2.1)
+const MODELS = [
+  ['v5', '단동/연동 분리', '2026.05.20', 3842, 1674, .82, .87, '1–2 cm', '최신'],
+  ['v4', '반사광 보정', '2026.04.30', 3410, 1512, .79, .84, '1–2 cm', '이전'],
+  ['v3', '군집 분리', '2026.04.09', 2960, 1320, .76, .81, '1–3 cm', '이전'],
+  ['v2', '경계 정밀', '2026.03.21', 2210, 980, .72, .78, '1–3 cm', '이전'],
+  ['v1', '기본', '2026.02.15', 1480, 640, .66, .72, '2–5 cm', '이전'],
+];
+const MODEL = MODELS[0];
+const IMG_SEL = { id: 'namwon_2506', label: '남원 농경지 · 2025.06', gsd: 0.0169 };   // imagery.js · bounds 127.3481–127.3567 · 35.5276–35.5347
+const AREA = '0.62 km²', EST = '58분';          // 면적 = imagery.js bounds · 예상 = 원본 완료 시드(비닐하우스 운봉읍·인월면 58분) → `시연`
+const PARAMS = ['클래스 2 · 단동 · 다동', '입력 640 px', '임계 0.5'];
+const PARAMW = [150, 100, 78];   // 칩 실폭(렌더 측정) + 사이 8   // Run 판과 같은 3(원본에 파라미터 없음 → `시연`)
+const STEPS5 = ['전처리', '추론', '후처리', '벡터화', '저장'];
+const SUBS = ['비닐하우스 현황', '비닐하우스 현황 · v5', '비닐하우스 현황 · 남원 농경지 2025.06', '비닐하우스 현황 · 남원 농경지 2025.06 · 실행 검토', '비닐하우스 현황 · 남원 농경지 2025.06 · 실행중'];
+
+// 노드 레일 4 — 단계 k(1–4) 활성, 앞은 완료, 뒤는 점선 대기. 5(실행중)는 04 진행
+function nodeRail(k) {
+  let s = '';
+  const NY = 196, NH = 150, NW = 176, GAP = 24;
+  const names = ['01 분석 과제', '02 모델', '03 영상 선택', '04 실행'];
+  const filled = [
+    [TASK[1], TASK[2] + ' · 실측', ['과제 8 중 1']],
+    [`${MODEL[0]} ${MODEL[1]}`, `${MODEL[2]} · 종속 모델 5`, [MODEL[0], 'v4', 'v3', '+2']],
+    [IMG_SEL.label.replace(' · ', ' '), `아카이브 · 드론 ${(IMG_SEL.gsd * 100).toFixed(2)} cm`, ['선택 1', '11건 중']],
+    [k >= 5 ? '실행중' : '실행 검토', k >= 5 ? '추론 2 / 5 · 42 %' : '전처리 → 저장 · 5단계', k >= 5 ? ['2 / 5'] : ['5단계']],
+  ];
+  const empty = [['과제 선택', '8 중 —', ['—']], ['모델 선택', '과제 종속 · —', ['—']], ['영상 선택', '아카이브 11 · —', ['—']], ['실행', '5단계', ['대기']]];
+  const stt = i => (i + 1 < k ? 'done' : i + 1 === k ? 'on' : 'wait');
+  s += lab(X0, 174, '워크플로우') + num(X0 + 78, 174, k >= 5 ? '4 / 4 단계 · 실행중' : `${k} / 4 단계 · ${names[k - 1].slice(3)}`, 12, ACC);
+  for (let i = 0; i < 4; i++) {
+    const x = X0 + i * (NW + GAP), st_ = k >= 5 ? (i < 3 ? 'done' : 'on') : stt(i);
+    const [v, m, chips] = st_ === 'wait' ? empty[i] : filled[i];
+    const bd = st_ === 'on' ? `border:1.5px solid ${ACC};background:${T1}` : st_ === 'wait' ? `border:1px dashed ${C}` : `border:1px solid ${INK}`;
+    s += div(x, NY, NW, NH, bd);
+    s += lab(x + 12, NY + 12, names[i], st_ === 'wait' ? `color:${C}` : '') + (st_ === 'done' ? st(x + NW - 40, NY + 12, '완료', `color:${TEAL}`) : st_ === 'on' ? st(x + NW - 40, NY + 12, k >= 5 ? '진행' : '선택') : '');
+    s += disp(x + 12, NY + 34, v, 15, st_ === 'wait' ? C : INK, `width:${NW - 24}px;overflow:hidden;text-overflow:ellipsis`) + txt(x + 12, NY + 60, m, 12, st_ === 'wait' ? C : G, `width:${NW - 24}px;overflow:hidden;text-overflow:ellipsis`);
+    let cx = x + 12;
+    chips.forEach((c, j) => { const on = st_ !== 'wait' && j === 0 && i !== 3; s += `<span class="chip${on ? ' on' : ''}" style="position:absolute;left:${cx}px;top:${NY + 96}px;height:22px;line-height:20px;${st_ === 'wait' ? `color:${C}` : ''}">${c}</span>\n`; cx += c.length * 9.5 + 26; });
+    if (i < 3) s += hl(x + NW, NY + NH / 2, GAP, st_ === 'done' ? INK : C) + (st_ === 'done' ? `<svg width="6" height="8" viewBox="0 0 6 8" style="position:absolute;left:${x + NW + GAP - 6}px;top:${NY + NH / 2 - 4}px"><path d="M0 0l6 4-6 4z" fill="${INK}"/></svg>\n` : '');
+    if (i === 3) s += (k >= 5 ? steps(x + 12, NY + 128, NW - 24, 2, 'run') : steps(x + 12, NY + 128, NW - 24, 1, 'run').replace(new RegExp(ACC, 'g'), C));
+  }
+  return s + hl(X0, 372, 776);
+}
+
+// 헤어라인 지표 막대(0–1) — Result 클래스 막대 문법
+const bar = (x, y, w, v, col = TEAL, h = 3) => div(x, y, w, h, `background:${H}`) + div(x, y, Math.round(w * v), h, `background:${col}`);
+
+// 우 실행 요약 판 — 채운 단계는 값, 나머지는 점선 `대기` 행
+function summary(k) {
+  const RX = 960, RW = 424, RI = 984, RIW = 376;
+  let s = div(RX, 156, RW, 744, 'background:#FFFFFF') + vl(RX, 156, 744, INK);
+  s += disp(RI, 178, '실행 요약', 20) + num(RI + 100, 184, `${Math.min(k, 4)} / 4`, 13, ACC) + hl(RI, 214, RIW);
+  let y = 226;
+  const row = (n, title, inner, h) => { s += lab(RI, y, n) + disp(RI + 28, y - 4, title, 14) + inner(y + 26); y += h; s += hl(RI, y - 12, RIW); };
+  const wait = (n, title, hint) => { s += lab(RI, y, n, `color:${C}`) + disp(RI + 28, y - 4, title, 14, C) + txt(RI + RIW - 60, y - 2, '대기', 12, C, 'width:60px;text-align:right') + dash(RI, y + 24, RIW, 28, `<span class="mic" style="position:absolute;left:10px;top:4px;color:${C}">${hint}</span>`); y += 66; s += hl(RI, y - 12, RIW); };
+  const kvs = (y0, arr, lw = 84) => arr.map(([kk, v], i) => lab(RI, y0 + i * 26 + 2, kk) + txt(RI + lw, y0 + i * 26, v, 12.5, INK, `width:${RIW - lw}px;overflow:hidden;text-overflow:ellipsis`)).join('');
+  // 01 과제
+  if (k >= 1) {
+    const big = k === 1, ih = big ? 160 : 72, iw = big ? RIW : 128;
+    row('01', '분석 과제', (yy) => {
+      let t = img(RI, yy, iw, ih, TASK[4], brkIn(iw, ih, TEAL, 10), `outline:1px solid ${H}`);
+      if (big) {
+        t += disp(RI, yy + ih + 12, TASK[1], 17) + txt(RI + 150, yy + ih + 15, TASK[2], 12.5, G);
+        t += kvs(yy + ih + 44, [['산출물', TASK[3]], ['입력 요건', `${TASK[5]} 정사영상 · GSD 1–5 cm ${TAG()}`], ['참조', '실측 · 남원 1,674 필지 · 2025.06']]);
+      } else t += disp(RI + 140, yy - 2, TASK[1], 15) + txt(RI + 140, yy + 22, TASK[2], 12.5, G) + txt(RI + 140, yy + 44, TASK[3], 12, C, `width:${RIW - 140}px;overflow:hidden;text-overflow:ellipsis`);
+      return t;
+    }, big ? ih + 44 + 26 * 3 + 40 : ih + 44);
+  }
+  // 02 모델
+  if (k >= 2) {
+    const big = k === 2;
+    row('02', '모델', (yy) => {
+      let t = disp(RI, yy - 2, `${MODEL[0]} · ${MODEL[1]}`, 15) + txt(RI + 150, yy + 1, `${MODEL[2]} · XI-VFM v2.1 ${TAG()}`, 12.5, G);
+      const b0 = yy + 28;
+      t += lab(RI, b0, 'IoU') + bar(RI + 40, b0 + 6, 110, MODEL[5]) + num(RI + 156, b0 - 1, MODEL[5].toFixed(2), 12.5);
+      t += lab(RI + 200, b0, 'F1') + bar(RI + 232, b0 + 6, 96, MODEL[6], INK) + num(RI + 334, b0 - 1, MODEL[6].toFixed(2), 12.5);
+      if (big) t += kvs(b0 + 30, [['학습 데이터', `${fmt(MODEL[3])} 장 · ${fmt(MODEL[4])} 필지 ${TAG()}`], ['권장 GSD', MODEL[7]], ['상태', MODEL[8] + ' · 종속 모델 5 중']]);
+      return t;
+    }, big ? 28 + 30 + 26 * 3 + 30 : 28 + 26 + 30);
+  }
+  // 03 영상
+  if (k >= 3) {
+    const big = k === 3;
+    row('03', '영상', (yy) => {
+      let t = img(RI, yy, big ? RIW : 128, big ? 150 : 72, 'tile-gh-clean.jpg', brkIn(big ? RIW : 128, big ? 150 : 72, ACC, 10) + (big ? det(8, 122, `${IMG_SEL.label} · ${(IMG_SEL.gsd * 100).toFixed(2)} cm`) : ''), `outline:1px solid ${H}`);
+      const y2 = big ? yy + 162 : yy;
+      const x2 = big ? RI : RI + 140;
+      t += lab(x2, y2 + 2, '선택 1') + txt(x2 + 52, y2, `${IMG_SEL.label} · 드론`, 12.5, INK, `width:${RIW - (big ? 52 : 192)}px;overflow:hidden;text-overflow:ellipsis`);
+      t += lab(x2, y2 + 28, '면적') + num(x2 + 52, y2 + 26, `${AREA} · 0.78 × 0.79 km`, 12.5);
+      t += lab(x2, y2 + 54, '예상') + num(x2 + 52, y2 + 52, `${EST} ${TAG()}`, 12.5);
+      return t;
+    }, big ? 162 + 80 + 40 : 124);
+  }
+  // 04 실행(파라미터 + 예상 결과)
+  if (k >= 4) {
+    row('04', '실행', (yy) => {
+      let t = `<span class="tag" style="position:absolute;left:${RI + 64}px;top:${yy - 28}px">시연</span>\n`, cx = RI;
+      PARAMS.forEach((c, i) => { t += chip(cx, yy - 2, c); cx += PARAMW[i] + 8; });
+      t += kvs(yy + 34, [['산출물', 'GPKG · GeoJSON · XLSX'], ['좌표계', 'EPSG:5186'], ['저장 위치', '완료 목록 · 내 것']]);
+      return t;
+    }, 26 + 34 + 26 * 3 + 16);
+  }
+  // 대기 행
+  if (k < 2) wait('02', '모델', '과제 종속 · v1–v5');
+  if (k < 3) wait('03', '영상', '아카이브 11 · 탭 4');
+  if (k < 4) wait('04', '실행', '전처리 · 추론 · 후처리 · 벡터화 · 저장');
+  return { s, y, RI, RIW };
+}
+
+// 회백 베이스맵 소지도 — sigungu.geojson(실좌표) 회백 면 + 흰 경계 + 시군구 라벨 · 풋프린트 = imagery.js bounds
+const SIGUNGU = JSON.parse(fs.readFileSync(path.join(root, 'landxi/assets/data/geo/sigungu.geojson'), 'utf8')).features;
+function greyMap(w, h, box, foots, labels) {
+  const [LON0, LAT0, LON1, LAT1] = box, k = Math.cos(35.6 * Math.PI / 180);
+  const sc = Math.min(w / ((LON1 - LON0) * k), h / (LAT1 - LAT0));
+  const ox = (w - (LON1 - LON0) * k * sc) / 2, oy = (h - (LAT1 - LAT0) * sc) / 2;
+  const P = ([lo, la]) => [ox + (lo - LON0) * k * sc, oy + (LAT1 - la) * sc];
+  let d = '';
+  for (const f of SIGUNGU) {
+    const polys = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
+    for (const poly of polys) for (const ring of poly) {
+      if (!ring.some(([lo, la]) => lo > LON0 - .3 && lo < LON1 + .3 && la > LAT0 - .3 && la < LAT1 + .3)) continue;
+      d += ring.map((c, i) => (i ? 'L' : 'M') + P(c).map(v => v.toFixed(1)).join(' ')).join('') + 'Z';
+    }
+  }
+  let m = `<path d="${d}" fill="#E6E6E6" stroke="#FFFFFF" stroke-width="1.2" stroke-linejoin="miter"/>`;
+  for (const [lo, la, t] of labels) { const [x, y] = P([lo, la]); m += `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="13" font-family="Pretendard,system-ui" fill="#8A8A8A" text-anchor="middle">${t}</text>`; }
+  for (const [b, t, kind, dx = 12, dy = 4] of foots) {
+    const [x0, y0] = P([b[0], b[3]]), [x1, y1] = P([b[2], b[1]]);
+    const bw = Math.max(x1 - x0, 10), bh = Math.max(y1 - y0, 10);
+    const col = kind === 'on' ? ACC : kind === 'city' ? G : TEAL;
+    m += `<rect x="${x0.toFixed(1)}" y="${y0.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" fill="${kind === 'on' ? 'rgba(0,109,247,.9)' : kind === 'city' ? 'none' : 'rgba(15,169,160,.25)'}" stroke="${col}" stroke-width="1.5"${kind === 'city' ? ' stroke-dasharray="4 3"' : ''}/>`;
+    const tx = kind === 'city' ? x0 + 6 : kind === 'on' ? x0 : x0 + bw + dx, ty = kind === 'city' ? y0 + bh - 8 : kind === 'on' ? y0 + bh + 18 : y0 + bh / 2 + dy;
+    m += `<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" font-size="14" font-family="Pretendard,system-ui" fill="${col}">${t}</text>`;
+  }
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="position:absolute;left:0;top:0;display:block"><rect width="${w}" height="${h}" fill="#F4F4F4"/>${m}<text x="10" y="22" font-size="14" font-family="Inter,system-ui" fill="${G}" letter-spacing=".04em">${LON0}–${LON1} E · ${LAT0}–${LAT1} N</text></svg>`;
+}
+
+// 실행 카드(04 · 실행중 공용) — 과제 → 모델 → 영상 n 판 3 + 파라미터 + 예상 결과 표
+function runCard(live) {
+  const Y = 392, W = 776, IH = live ? 80 : 120;
+  let s = disp(X0, Y, live ? '실행중' : '실행 검토', 15) + num(X0 + (live ? 60 : 84), Y + 2, '2026년 8월 남원 농경지 비닐하우스 현황 ' + TAG('자동'), 13, G);
+  s += div(X0, Y + 34, W, 1, `background:${INK}`);
+  const PW = 240, PG = (W - PW * 3) / 2, PY = Y + 52;
+  const plates = [
+    ['01 분석 과제', TASK[4], TASK[1], `${TASK[2]} · ${TASK[3]}`, TEAL],
+    ['02 모델', null, `${MODEL[0]} · ${MODEL[1]}`, `${MODEL[2]} · IoU ${MODEL[5].toFixed(2)} · F1 ${MODEL[6].toFixed(2)}`, INK],
+    ['03 영상 1', 'tile-gh-clean.jpg', IMG_SEL.label, `드론 ${(IMG_SEL.gsd * 100).toFixed(2)} cm · ${AREA}`, ACC],
+  ];
+  plates.forEach(([l, src, t, m, col], i) => {
+    const x = X0 + i * (PW + PG);
+    s += lab(x, PY, l);
+    if (src) s += img(x, PY + 22, PW, IH, src, brkIn(PW, IH, col, 10), `outline:1px solid ${H}`);
+    else {
+      // 모델 판 = 큰 수 2(IoU 액센트 · F1 잉크) + 학습 데이터 — 그림 대신 수치 판
+      const bs = live ? 26 : 34;
+      s += div(x, PY + 22, PW, IH, `border:1px solid ${H}`);
+      s += `<div class="d" style="position:absolute;left:${x + 14}px;top:${PY + 34}px;font-size:${bs}px;line-height:1;color:${ACC}">${MODEL[5].toFixed(2)}</div>\n` + lab(x + 14, PY + 34 + bs + 6, 'IoU');
+      s += `<div class="d" style="position:absolute;left:${x + 124}px;top:${PY + 34}px;font-size:${bs}px;line-height:1">${MODEL[6].toFixed(2)}</div>\n` + lab(x + 124, PY + 34 + bs + 6, 'F1');
+      if (!live) s += num(x + 14, PY + 100, `학습 ${fmt(MODEL[3])} 장 · ${fmt(MODEL[4])} 필지 ${TAG()}`, 11.5, G);
+    }
+    s += disp(x, PY + 22 + IH + 10, t, 14, INK, `width:${PW}px;overflow:hidden;text-overflow:ellipsis`) + txt(x, PY + 22 + IH + 32, m, 12, G, `width:${PW}px;overflow:hidden;text-overflow:ellipsis`);
+    if (i < 2) s += hl(x + PW + 4, PY + 22 + IH / 2, PG - 8, INK) + `<svg width="6" height="8" viewBox="0 0 6 8" style="position:absolute;left:${x + PW + PG - 10}px;top:${PY + 22 + IH / 2 - 4}px"><path d="M0 0l6 4-6 4z" fill="${INK}"/></svg>\n`;
+  });
+  if (live) return { s, RY: PY + 22 + IH + 66 };
+  // 파라미터 칩 행 + 예상 결과 3열 행
+  const TY = PY + 22 + IH + 66;
+  s += hl(X0, TY - 8, W);
+  s += lab(X0, TY + 6, '파라미터') + `<span class="tag" style="position:absolute;left:${X0 + 64}px;top:${TY + 4}px">시연</span>\n`;
+  let cx = X0 + 120; PARAMS.forEach((c, i) => { s += chip(cx, TY + 2, c); cx += PARAMW[i] + 8; });
+  const EY = TY + 40;
+  s += lab(X0, EY + 6, '예상 결과');
+  [['산출물', 'GPKG · GeoJSON · XLSX'], ['좌표계', 'EPSG:5186 · PNU 결합'], ['저장 위치', '완료 목록 · 내 것']].forEach(([kk, v], i) => { const ex = X0 + 120 + i * 226; s += lab(ex, EY + 6, kk) + txt(ex + 64, EY + 4, v, 12.5, INK, 'width:158px;overflow:hidden;text-overflow:ellipsis'); });
+  return { s, RY: EY + 44 };
+}
+// 5단계 레일 — 대기(k=0) 또는 진행(k · pct)
+function rail5(y, k, pct = 0) {
+  const W = 776, seg = W / 5;
+  let s = hl(X0, y - 8, W) + lab(X0, y + 4, '단계') + num(X0 + 40, y + 4, k ? `${k} / 5 · ${STEPS5[k - 1]} 진행` : '5 · 대기', 12.5, k ? ACC : G);
+  const ry = y + 50;
+  s += div(X0, ry + 3, W, 1, `background:${H}`);
+  if (k) s += div(X0, ry + 2, seg * (k - 1) + seg * pct / 100, 3, `background:${ACC}`);
+  STEPS5.forEach((t, i) => {
+    const x = X0 + i * seg, done = i + 1 < k, on = i + 1 === k;
+    s += div(x, ry, 7, 7, `background:${done ? TEAL : on ? ACC : '#FFFFFF'};border:1px solid ${done ? TEAL : on ? ACC : C}`);
+    s += txt(x + 14, ry - 24, t, 13, k ? (done ? TEAL : on ? ACC : C) : G) + lab(x + 14, ry + 14, done ? '완료' : on ? `${pct} %` : '대기', done ? `color:${TEAL}` : on ? `color:${ACC}` : `color:${C}`);
+  });
+  return s;
+}
+
+function runStep(k) {
+  let s = head('분석 실행', SUBS[k - 1]) + nodeRail(k);
+  const BY = 392, W = 776;
+  if (k === 1) {
+    s += disp(X0, BY, '분석 과제', 15) + num(X0 + 76, BY + 2, '8 · 부처 3', 13, ACC) + search(X0 + W - 168, BY - 4, 168, '과제명 · 부처');
+    s += hl(X0, BY + 34, W);
+    const CWd = 179, GX = 20, IH = 100, PITCH = 196;
+    TASKS.forEach(([id, name, min, out, src, kind, demo], i) => {
+      const x = X0 + (i % 4) * (CWd + GX), y = BY + 52 + Math.floor(i / 4) * PITCH, on = id === TASK[0];
+      if (on) s += div(x - 6, y - 6, CWd + 12, PITCH - 8, `background:${T1}`);
+      s += img(x, y, CWd, IH, src, on ? brkIn(CWd, IH, ACC, 10) : '', `outline:1px solid ${on ? ACC : H}`);
+      s += disp(x, y + IH + 8, name, 13.5, INK, `width:${CWd}px;overflow:hidden;text-overflow:ellipsis`);
+      s += txt(x, y + IH + 30, min + (demo ? TAG() : ''), 12, G, `width:${CWd}px;overflow:hidden;text-overflow:ellipsis`);
+      s += txt(x, y + IH + 50, out, 11.5, C, `width:${CWd}px;overflow:hidden;text-overflow:ellipsis`);
+    });
+    s += hl(X0, BY + 52 + 2 * PITCH - 4, W) + num(X0, BY + 52 + 2 * PITCH + 6, '선택 1 · 과제 8 중', 12, G) + txt(X0 + W - 260, BY + 52 + 2 * PITCH + 6, '원본 옵션 카드 8 · 선택 → 종속 모델', 12, C, 'width:260px;text-align:right');
+  }
+  if (k === 2) {
+    s += disp(X0, BY, '모델', 15) + num(X0 + 40, BY + 2, '5 · 과제 종속', 13, ACC) + num(X0 + 150, BY + 2, `기반 XI-VFM v2.1 · 지표 ${TAG()}`, 12.5, G);
+    s += txt(X0 + W - 120, BY + 2, '최신순 ▾', 12.5, G, 'width:120px;text-align:right');
+    const cols = [[0, '버전'], [56, '이름'], [190, '학습일'], [290, '학습 데이터'], [430, 'IoU'], [550, 'F1'], [676, '권장 GSD']];
+    const HY = BY + 36;
+    s += hl(X0, HY - 4, W);
+    cols.forEach(([dx, t]) => s += lab(X0 + dx, HY + 6, t));
+    s += div(X0, HY + 28, W, 1, `background:${INK}`);
+    const RH = 62;
+    MODELS.forEach(([v, n, dt, imgs, parc, iou, f1, gsd, stt], i) => {
+      const y = HY + 30 + i * RH, on = i === 0;
+      if (on) s += div(X0, y, W, RH - 1, `background:${T1}`) + brkIn(W, RH - 1, ACC, 10, 1, X0, y);
+      s += disp(X0 + 12, y + 20, v, 15, on ? ACC : INK);
+      s += txt(X0 + 56, y + 12, n, 13.5, INK) + txt(X0 + 56, y + 34, 'XI-VFM v2.1', 11.5, C);
+      s += num(X0 + 190, y + 20, dt, 12.5, G);
+      s += num(X0 + 290, y + 12, `${fmt(imgs)} 장`, 12.5) + num(X0 + 290, y + 34, `${fmt(parc)} 필지`, 11.5, C);
+      s += bar(X0 + 430, y + 24, 66, iou, TEAL) + num(X0 + 502, y + 15, iou.toFixed(2), 12.5);
+      s += bar(X0 + 550, y + 24, 66, f1, INK) + num(X0 + 622, y + 15, f1.toFixed(2), 12.5);
+      s += num(X0 + 676, y + 20, gsd, 12.5, G);
+      s += `<div class="st" style="position:absolute;left:${X0 + W - 40}px;top:${y + 21}px;width:40px;text-align:right;color:${stt === '최신' ? ACC : C}">${stt}</div>\n`;
+      s += hl(X0, y + RH - 1, W);
+    });
+    const EY = HY + 30 + 5 * RH + 14;
+    s += num(X0, EY, '선택 v5 · 최신 · 이전 4 = 재현용', 12, G) + txt(X0 + W - 320, EY, 'IoU 청록 · F1 잉크 · 막대 0–1 · 학습 데이터 = 라벨 장 · 필지', 12, C, 'width:320px;text-align:right');
+  }
+  if (k === 3) {
+    const PY = BY;
+    s += disp(X0, PY, '영상 선택', 15) + num(X0 + 76, PY + 2, '아카이브 11', 13, ACC);
+    s += search(X0 + 456 - 168, PY - 4, 168, '영상명');
+    ['전체', '최근', '공유', '내 영상'].forEach((t, i) => s += tb(X0 + i * 70, PY + 30, t, i === 0));
+    s += hl(X0, PY + 62, 456);
+    IMAGERY.slice(0, 6).forEach(([id, label, kind, gsd, src], i) => {
+      const x = X0 + (i % 3) * 156, y = PY + 78 + Math.floor(i / 3) * 122, on = id === 'namwon_2506';
+      if (on) s += div(x - 6, y - 6, 156, 112, `background:${T1}`);
+      s += img(x, y, 144, 81, src, on ? brkIn(144, 81, ACC) : '') + chk(x + 124, y + 6, on);
+      s += txt(x, y + 86, label, 12, on ? INK : G, 'width:144px;overflow:hidden;text-overflow:ellipsis') + num(x, y + 102, `${kind} · ${gsd}`, 11, C);
+    });
+    s += hl(X0, PY + 322, 456) + pager(X0, PY + 334, 1, 2) + num(X0 + 456 - 80, PY + 334, '11건 중 1~6', 12, G, 'width:80px;text-align:right');
+    const SY = PY + 366;
+    s += lab(X0, SY, '선택 목록') + num(X0 + 66, SY, '1', 12.5, ACC);
+    s += hl(X0, SY + 22, 456) + img(X0, SY + 30, 56, 32, 'tile-gh-clean.jpg') + txt(X0 + 66, SY + 28, IMG_SEL.label, 12.5) + num(X0 + 66, SY + 46, `드론 · 1.69 cm · ${AREA}`, 11.5, G) + `<div style="position:absolute;left:${X0 + 456 - 16}px;top:${SY + 38}px">${ico('close', G, 11)}</div>\n`;
+    s += hl(X0, SY + 70, 456) + lab(X0, SY + 80, '합계') + num(X0 + 66, SY + 78, `${AREA} · 1건`, 12.5, INK) + num(X0 + 456 - 150, SY + 78, `예상 ${EST} ${TAG()}`, 12.5, G, 'width:150px;text-align:right');
+    const MX = X0 + 480, MW = 296, MH = 296;
+    s += div(MX, PY, MW, MH, 'overflow:hidden', greyMap(MW, MH, [126.9, 35.2, 127.75, 35.95],
+      [[[127.182606, 35.302858, 127.637309, 35.561786], '남원 전역 ×2 · 항공 2 m', 'city'],
+       [[126.973996, 35.825613, 126.992145, 35.838284], '국산리 ×2', 'teal'],
+       [[127.3481, 35.5276, 127.3567, 35.5347], '남원 농경지 ×4 · 선택 1', 'on']],
+      [[127.5, 35.40, '남원시'], [127.28, 35.66, '임실군'], [127.63, 35.75, '장수군'], [127.0, 35.5, '순창군'], [127.55, 35.28, '구례군'], [127.15, 35.85, '완주군']]));
+    s += brkIn(MW, MH, INK, 12, 1, MX, PY);
+    s += lab(MX, PY + MH + 12, '선택 범위') + num(MX + 66, PY + MH + 12, '127.348–127.357 E · 35.528–35.535 N', 12, G);
+    s += num(MX + 66, PY + MH + 32, '0.78 × 0.79 km · 남원 농경지 4시점 동일 범위', 12, C);
+    s += num(MX, PY + MH + 58, '제주 ×3 · 범위 밖(33.5 N) ↓', 12, C) + num(MX, PY + MH + 78, '회백 = 시군구 경계 · 점선 = 항공 · 채움 = 선택', 11.5, C);
+  }
+  if (k === 4) {
+    const rc = runCard(false); s += rc.s + rail5(rc.RY, 0);
+  }
+  const sm = summary(k); s += sm.s;
+  const ctaT = ['다음 · 모델', '다음 · 영상', '다음 · 실행', '분석 실행'][k - 1];
+  const cy = 804;
+  s += hbtn(sm.RI, cy, 100, k === 1 ? '취소' : '이전', G) + cta(sm.RI + 112, cy, sm.RIW - 112, ctaT);
+  s += txt(sm.RI, 850, k === 4 ? '실행 → 실행중 목록 · 진행 5단계' : `단계 ${k} / 4 · 선택 후 다음`, 12, C);
+  s += FOOT;
+  return page(`B5 · 분석 서비스 — 분석 실행 ${k} / 4`, s);
+}
+
+// 5. 실행중 — 같은 실행 카드 + 레일 진행(추론 2 / 5 · 42 %) + 처리 중 타일 스캔 스트립 · 우 요약 + 로그
+function runLive() {
+  let s = head('분석 실행', SUBS[4]) + nodeRail(5);
+  const rc = runCard(true); s += rc.s;
+  const RY = rc.RY;
+  s += rail5(RY, 2, 42);
+  const GY = RY + 92;
+  s += hl(X0, GY - 8, 776);
+  s += `<div style="position:absolute;left:${X0}px;top:${GY}px;display:flex;align-items:baseline;gap:6px"><span class="d" style="font-size:40px;line-height:1;color:${ACC}">42</span><span style="font-size:15px;color:${G}">%</span></div>\n` + lab(X0, GY + 46, '추론 · 2 / 5');
+  const TX = X0 + 110, TW = 356;
+  s += div(TX, GY + 12, TW, 10, `background:${H}`) + div(TX, GY + 12, Math.round(TW * .42), 10, `background:${ACC}`);
+  s += div(TX, GY + 26, TW, 1, `background:${INK}`);
+  for (let i = 0; i <= 20; i++) s += div(TX + i * TW / 20, GY + 26, 1, i % 5 ? 4 : 8, `background:${INK}`);
+  s += num(TX, GY + 38, '0', 11, G) + num(TX + TW / 2 - 8, GY + 38, '50', 11, G) + num(TX + TW - 20, GY + 38, '100 %', 11, G);
+  [['경과', '24분 ' + TAG()], ['잔여', '34분 ' + TAG()]].forEach(([kk, v], i) => { s += lab(X0 + 480, GY + 2 + i * 24, kk) + num(X0 + 520, GY + i * 24, v, 12.5); });
+  [['필지', '702 / 1,674 ' + TAG()], ['시작', '13:42']].forEach(([kk, v], i) => { s += lab(X0 + 604, GY + 2 + i * 24, kk) + num(X0 + 644, GY + i * 24, v, 12.5, i ? G : INK); });
+  const TY = GY + 76, TH = 60;
+  ['tile-gh-clean.jpg', 'tile-done-2.jpg', 'tile-done-ecw.jpg', 'tile-done-x.jpg'].forEach((src, i) => {
+    const x = X0 + i * 196, done = i < 1, on = i === 1;
+    let over = '';
+    if (done) over = svgPolys(180, TH, ['40,-6 56,-6 62,70 46,70', '70,-6 86,-6 92,70 76,70', '104,-6 120,-6 126,70 110,70'], .18, 1.2) + det(6, TH - 22, '완료');
+    if (on) over = `<svg width="180" height="${TH}" viewBox="0 0 180 ${TH}" style="position:absolute;left:0;top:0;display:block"><rect x="0" y="0" width="76" height="${TH}" fill="rgba(15,169,160,.10)"/><rect x="60" y="0" width="16" height="${TH}" fill="rgba(15,169,160,.18)"/><line x1="76" y1="0" x2="76" y2="${TH}" stroke="${TEAL}" stroke-width="1.5"/></svg>` + brkIn(180, TH, ACC, 10) + det(6, TH - 22, 'SCAN 42 %', AMB);
+    s += img(x, TY, 180, TH, src, over, `outline:1px solid ${H}${on || done ? '' : ';filter:grayscale(1);opacity:.55'}`);
+    s += num(x, TY + TH + 4, `타일 ${i + 1} / 4 · ${done ? '완료' : on ? '추론 중' : '대기'}`, 11.5, done ? TEAL : on ? ACC : C);
+  });
+  const RX = 960, RW = 424, RI = 984, RIW = 376;
+  s += div(RX, 156, RW, 744, 'background:#FFFFFF') + vl(RX, 156, 744, INK);
+  s += disp(RI, 178, '실행 요약', 20) + num(RI + 100, 184, '실행중', 13, ACC) + hl(RI, 214, RIW);
+  let y = 226;
+  [['과제', TASK[1] + ' · ' + TASK[2]], ['모델', `${MODEL[0]} · ${MODEL[1]} · ${MODEL[2]}`], ['영상', `${IMG_SEL.label} · 1.69 cm · ${AREA}`], ['파라미터', PARAMS.join(' · ') + ' ' + TAG()], ['산출물', 'GPKG · GeoJSON · XLSX · EPSG:5186']].forEach(([kk, v]) => { s += lab(RI, y + 2, kk) + txt(RI + 76, y, v, 12.5, INK, `width:${RIW - 76}px;overflow:hidden;text-overflow:ellipsis`); y += 28; });
+  s += hl(RI, y + 4, RIW);
+  y += 20;
+  s += disp(RI, y, '실행 로그', 15) + num(RI + 70, y + 3, '시각 · 단계 · 상태', 12, G);
+  s += `<div style="position:absolute;left:${RI + RIW - 16}px;top:${y + 4}px">${ico('refresh', G, 13)}</div>\n`;
+  y += 30;
+  s += hl(RI, y, RIW);
+  const LOG = [
+    ['13:42:00', '대기열 등록', '완료', TEAL], ['13:42:31', '전처리', '시작', TEAL], ['13:51:08', '전처리', '완료 · 타일 4', TEAL],
+    ['13:51:10', '추론', '시작 · v5', ACC], ['14:06:12', '추론', '타일 1 / 4 완료', ACC], ['14:06:40', '추론', '타일 2 / 4 · 42 %', ACC],
+    ['—', '후처리', '대기', C], ['—', '벡터화', '대기', C], ['—', '저장', '대기', C],
+  ];
+  LOG.forEach(([t, st_, w, col], i) => {
+    const ry = y + 1 + i * 30;
+    s += num(RI, ry + 8, t, 12, col === C ? C : G) + txt(RI + 84, ry + 7, st_, 12.5, col === C ? C : INK) + `<div class="st" style="position:absolute;left:${RI + 160}px;top:${ry + 9}px;width:${RIW - 160}px;text-align:right;color:${col}">${w}</div>\n` + hl(RI, ry + 29, RIW);
+  });
+  y += 1 + LOG.length * 30 + 8;
+  s += num(RI, y, '시연 · 원본 상태어 = 대기 · 전처리중 · 분석중 · 후처리중 · 완료', 11.5, C);
+  const cy = 804;
+  s += hbtn(RI, cy, 88, '취소', WARN, WARN) + hbtn(RI + 100, cy, 128, '새로 분석하기', G);
+  s += `<div style="position:absolute;left:${RI + 240}px;top:${cy}px;width:${RIW - 240}px;height:36px;border:1px dashed ${C};display:flex;align-items:center;justify-content:center;font-size:15px;color:${C}">결과 보기</div>\n`;
+  s += txt(RI, 850, '완료 → 결과 보기 활성 · 실행중 목록 = 세그먼트 실행중 3', 12, C);
+  s += FOOT;
+  return page('B5 · 분석 서비스 — 분석 실행 · 실행중', s);
+}
+
+for (let k = 1; k <= 4; k++) wr(`B5-Analysis-Run-${k}.dc.html`, runStep(k));
+wr('B5-Analysis-Run-5.dc.html', runLive());
