@@ -38,14 +38,16 @@ const STATUS = {
   'B2-HomeAtlas': ['메인(필름)', 'drop', '홈 아틀라스(필름 뒤 페이지) — 미사용'],
   'B2-XiMap': ['XI맵', 'review', '초안 — 미착수'],
 };
-const CATS = ['로그인', '대시보드', '데이터 관리', '프로젝트', '분석 서비스', '메인(필름)', 'XI맵', '기타'];
+const CATS = ['메인(필름)', '로그인', '대시보드', '데이터 관리', '프로젝트', '분석 서비스', 'XI맵', '지도 서비스', '기타'];
+// 원판 없이 구현본이 곧 원판인 화면 — 갤러리에 카드로 노출
+const EXTRA = [{ id: 'LIVE-Main', cat: '메인(필름)', st: 'apply', note: 'scrub/index.html — 스크럽 필름 구현본이 원판 (타임라인: film/timeline.html)', title: '메인 · 스크럽 필름 (구현본)', img: '../../assets/proto/film/legs/full.webp', href: '../scrub/index.html' }];
 const LABEL = { apply: ['적용', '#0FA9A0'], review: ['검토', '#006DF7'], drop: ['폐기', '#8A8A8A'] };
 
 const c = JSON.parse(fs.readFileSync('design-canvas/v2/canvas.json', 'utf8'));
 const boards = c.artboards.map(a => a.file.replace('.dc.html', '')).filter(id => fs.existsSync(`design-canvas/v2/renders/${id}.png`))
-  .map(id => { const [cat, st, note] = STATUS[id] || ['기타', 'drop', '미분류']; const t = c.artboards.find(a => a.file === id + '.dc.html'); return { id, cat, st, note, title: t?.title || id }; });
+  .map(id => { const [cat, st, note] = STATUS[id] || ['기타', 'drop', '미분류']; const t = c.artboards.find(a => a.file === id + '.dc.html'); return { id, cat, st, note, title: t?.title || id }; }).concat(EXTRA);
 
-const card = b => `<figure class="card" data-id="${b.id}" data-cat="${b.cat}" data-st="${b.st}"><a href="../../../design-canvas/v2/renders/${b.id}.png" class="lb" data-title="${b.title}"><img loading="lazy" src="../../../design-canvas/v2/renders/${b.id}.png" alt="${b.id}"></a><figcaption><div class="row"><span class="badge"></span><b>${b.title}</b></div><span class="meta">${b.id} · ${b.note}</span><div class="ctl"><button type="button" data-set="apply">적용</button><button type="button" data-set="review">검토</button><button type="button" data-set="drop">폐기</button></div></figcaption></figure>`;
+const card = b => { const img = b.img || `../../../design-canvas/v2/renders/${b.id}.png`; const open = b.href ? `<a href="${b.href}" class="live-link" title="구현 화면 열기">` : `<a href="${img}" class="lb" data-title="${b.title}">`; return `<figure class="card" data-id="${b.id}" data-cat="${b.cat}" data-st="${b.st}">${open}<img loading="lazy" src="${img}" alt="${b.id}"></a><figcaption><div class="row"><span class="badge"></span><b>${b.title}</b></div><span class="meta">${b.id} · ${b.note}</span><div class="ctl"><button type="button" data-set="apply">적용</button><button type="button" data-set="review">검토</button><button type="button" data-set="drop">폐기</button></div></figcaption></figure>`; };
 
 let body = '';
 for (const cat of CATS) {
