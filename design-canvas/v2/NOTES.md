@@ -675,6 +675,19 @@ Data 만 42 % — 남은 단어는 원본 툴바 7종 + 세그먼트 2 + 데이�
 
 ---
 
+## 16. 글꼴·톤 결정 적용 — Paperlogy + Pretendard · T3 (2026-08-27)
+
+클라이언트 결정(원문): **"일단 모든 글꼴과 스타일은 Paperlogy + Pretendard, T3로 간다."** 근거 화면 `landxi/proto/fonts.html`(후보 36종 · 톤 T1–T3). 법전 `design/system.md` §1·§2 개정.
+
+적용 범위(이 판):
+- 마스터 헬멧(모든 `B5-*.dc.html` + 생성기 `tools/design/gen-b5.mjs`): SUIT `@import` → Paperlogy 700/800 `@font-face`(눈누 jsDelivr `projectnoonnu/2408-3`). `.d` = Paperlogy 700(이전 SUIT 500). 본문 스택 `'Pretendard','Paperlogy'`. `.n`(Inter tabular)은 그대로 — 소형 표 숫자.
+- KPI 큰 숫자 = Paperlogy 700 + 액센트 `#006DF7`: `B5-Dashboard`·`B5-Dashboard-Data` 상단 밴드 56px 다섯 개, `B5-DataMgmt` 디스크 `96%` 64px.
+- 틴트 `#E8F1FF`: `B5-DataMgmt` 활성 탭 칩(테두리·글자 액센트 + 틴트 면, 생성기 `chip(t, n, on)`), `B5-Projects` 페이저 현재 쪽.
+- 채운 파란 버튼 없음 — 1차 버튼은 잉크 채움 그대로.
+- 렌더: `node design-canvas/v2/render.mjs` 전체 재렌더. Paperlogy 는 한글 2,780자·라틴·숫자 글리프를 갖지만 **tnum(고정폭 숫자)이 없다** — 자릿수가 흐르는 표는 `.n`(Inter)에 남긴다.
+
+프로토 반영(같은 커밋): `landxi/proto/fonts-system.css`(토큰 `--font-display/--font-body/--font-num` · `--accent` · `--tint-1/--tint-2`) → `v3-tokens.css`·`system.css`가 상속. `dataset.html`(KPI 96% 액센트 · 활성 칩 틴트 · 링크 액센트), `scrub/index.html`(H1/H2 Paperlogy 700 · 워드마크 800), `film/*.html`, `charts.html`.
+
 ## 재현
 
 ```bash

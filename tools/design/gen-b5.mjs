@@ -113,13 +113,14 @@ T.push(tile(4, 3, `${img('tile-arc-yeosu.jpg')}${word('아카이브 · 정사영
   cap('여수 해양쓰레기 조사 2026', '2026 · 드론')));
 
 // ---------- 셸 ----------
-const chip = (t, n) => `<div style="display:flex;align-items:baseline;gap:6px;border:1px solid ${INK};padding:6px 10px 6px;font-size:12px;letter-spacing:-.014em;color:${INK};white-space:nowrap">${t}<span class="n" style="font-size:11px;color:${G}">${n}</span></div>`;
+const TINT = '#E8F1FF';   // T3 틴트(2026-08-27 결정) — 활성 칩
+const chip = (t, n, on) => `<div style="display:flex;align-items:baseline;gap:6px;border:1px solid ${on ? ACC : INK};${on ? `background:${TINT};` : ''}padding:6px 10px 6px;font-size:12px;letter-spacing:-.014em;color:${on ? ACC : INK};white-space:nowrap">${t}<span class="n" style="font-size:11px;color:${G}">${n}</span></div>`;
 const dd = (t) => `<div style="display:flex;align-items:center;gap:8px;border:1px solid ${H};padding:6px 10px;font-size:12px;letter-spacing:-.014em;color:${G};white-space:nowrap">${t}<svg width="9" height="6" viewBox="0 0 9 6" fill="none" stroke="${G}" stroke-width="1.25"><path d="M.5.5 4.5 5 8.5.5"/></svg></div>`;
 
 const head = `
 <div style="position:absolute;left:128px;top:19px;display:flex;align-items:baseline;gap:14px">
 <div class="d" style="font-size:21px;line-height:26px;letter-spacing:-.02em">데이터 관리</div>
-<div class="n" style="font-size:11px;letter-spacing:.02em;color:${G}">25건 · 업로드 6 · 완료 8 · 발행중 7 · 아카이브 4 — 원본 4탭을 한 그리드에 · 20 표시, 나머지는 스크롤</div></div>
+<div class="n" style="font-size:11px;letter-spacing:.02em;color:${G}">25건 · 업로드 6 · 완료 8 · 발행중 7 · 아카이브 4</div></div>
 <div style="position:absolute;right:56px;top:0;height:64px;display:flex;align-items:center;gap:14px">
 <div style="display:flex;align-items:baseline;gap:3px"><div class="n" style="font-size:64px;line-height:64px;letter-spacing:-.03em;color:${INK}">96</div><div class="n" style="font-size:18px;color:${G}">%</div></div>
 <div style="display:flex;flex-direction:column;gap:4px">
@@ -129,7 +130,7 @@ const head = `
 <div style="position:absolute;left:72px;top:64px;width:1368px;height:1px;background:${H}"></div>
 
 <div style="position:absolute;left:128px;top:80px;width:820px;height:28px;display:flex;align-items:center;gap:8px">
-${chip('데이터 업로드', 6)}${chip('업로드 완료', 8)}${chip('레이어 발행중', 7)}${chip('아카이브', 4)}
+${chip('데이터 업로드', 6)}${chip('업로드 완료', 8, true)}${chip('레이어 발행중', 7)}${chip('아카이브', 4)}
 ${dd('형식 · 전체')}${dd('유형 · 전체')}
 <div style="display:flex;align-items:center;gap:8px;width:150px;border-bottom:1px solid ${INK};padding-bottom:5px;margin-left:8px">
 <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="${G}" stroke-width="1.25"><circle cx="6.2" cy="6.2" r="4.6"/><path d="M9.6 9.6 13 13"/></svg>
@@ -179,8 +180,7 @@ ${permRow('남원시청', '뷰어')}
 <div style="display:flex;align-items:center;gap:10px;margin-top:26px">
 <div style="position:relative;width:120px;height:38px;display:flex;align-items:center;justify-content:center">${br(120, 38, INK, 12, 1)}<span class="d" style="font-size:14px;letter-spacing:.01em">취소</span></div>
 <div style="width:120px;height:38px;background:${INK};display:flex;align-items:center;justify-content:center"><span class="d" style="font-size:14px;color:#FFFFFF">발행</span></div>
-<div class="n" style="font-size:9.5px;letter-spacing:.03em;color:${G};margin-left:6px;line-height:1.5">기준 일자 · 데이터명 필수<br>발행하면 <span style="color:${INK}">?tab=publishing</span> 으로 옮겨진다</div></div>
-<div class="n" style="position:absolute;left:32px;bottom:18px;font-size:9.5px;letter-spacing:.04em;color:${C}">드로어는 우·하 마진을 뚫는다 — 이 화면의 일탈 1회</div>
+<div class="n" style="font-size:9.5px;letter-spacing:.03em;color:${G};margin-left:6px;line-height:1.5">기준 일자 · 데이터명 필수</div></div>
 </div>`;
 
 const html = `<!doctype html>

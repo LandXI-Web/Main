@@ -53,7 +53,7 @@ const TABS = [
   { id: 'publishing', name: '레이어 발행중', panel: '#panel-publishing', shot: 'b5-03-publishing', n: 7 },
   { id: 'archive', name: '아카이브', panel: '#panel-archive', shot: 'b5-04-archive', n: 5 },
 ];
-test('탭 4종 — 라벨·순서·건수, 기본값 upload, 활성 칩만 잉크(마스터 유보 1), 드로어는 닫혀 시작(유보 2)', async ({ page }) => {
+test('탭 4종 — 라벨·순서·건수, 기본값 upload, 활성 칩만 액센트+틴트(T3), 드로어는 닫혀 시작(유보 2)', async ({ page }) => {
   const errs = watch(page);
   await boot(page);
   const labels = await page.locator('#ds-tabs .tb').allInnerTexts();
@@ -61,7 +61,9 @@ test('탭 4종 — 라벨·순서·건수, 기본값 upload, 활성 칩만 잉�
   await expect(page.locator('#tab-upload')).toHaveAttribute('aria-selected', 'true');
   const ink = await page.locator('#tab-upload').evaluate((e) => getComputedStyle(e).borderColor);
   const grey = await page.locator('#tab-archive').evaluate((e) => getComputedStyle(e).borderColor);
-  expect(ink).toBe('rgb(1, 1, 2)'); expect(grey).toBe('rgb(221, 221, 221)');
+  // T3(2026-08-27, fonts.html): 활성 칩 = 액센트 테두리 + 틴트 면, 나머지는 헤어라인
+  expect(ink).toBe('rgb(0, 109, 247)'); expect(grey).toBe('rgb(221, 221, 221)');
+  expect(await page.locator('#tab-upload').evaluate((e) => getComputedStyle(e).backgroundColor)).toBe('rgb(232, 241, 255)');
   await expect(page.locator('body')).toHaveAttribute('data-side', 'none');
   for (const d of ['#pubdrawer', '#detail', '#mapdrawer']) await expect(page.locator(d)).toBeHidden();
   expect(errs).toEqual([]);
@@ -310,7 +312,7 @@ test('아카이브 상세 · 공유 설정 · 공간 편집', async ({ page }) =
 });
 
 /* ── 시스템 — 라운드 0 · 그림자 0 · 액센트 1곳 · 푸터 ──────────────────── */
-test('시스템 — 라운드·그림자·그라디언트 0, 액센트는 살아있는 업로드뿐, 푸터 include', async ({ page }) => {
+test('시스템 — 라운드·그림자·그라디언트 0, 액센트는 살아있는 업로드 + 링크(T3), 파란 채움 0, 푸터 include', async ({ page }) => {
   const errs = watch(page);
   await boot(page, 'upload');
   const bad = await page.evaluate(() => {
@@ -327,7 +329,10 @@ test('시스템 — 라운드·그림자·그라디언트 0, 액센트는 살아
   const accent = await page.evaluate(() => [...document.querySelectorAll('#grid *')].filter((e) => {
     const cs = getComputedStyle(e); return [cs.color, cs.backgroundColor, cs.borderLeftColor].includes('rgb(0, 109, 247)');
   }).map((e) => e.className).sort());
-  expect(accent).toEqual(['pv', 'rv-line']);
+  // T3: 살아있는 업로드(pv · rv-line)는 반드시 액센트. 그 외 허용 자리는 링크·상태어뿐 — 파란 채움 면은 없다.
+  expect(accent).toEqual(expect.arrayContaining(['pv', 'rv-line']));
+  const filled = await page.evaluate(() => [...document.querySelectorAll('#grid button, #tool button, #grid .tb, #tool .tb')].filter((e) => getComputedStyle(e).backgroundColor === 'rgb(0, 109, 247)').map((e) => e.className));
+  expect(filled).toEqual([]);
   expect(await page.locator('#foot-links span').allInnerTexts()).toEqual(['개인정보처리방침', '이용약관', '이메일주소무단수집거부']);
   await expect(page.locator('#foot-addr')).toContainText('063-713-1213');
   await expect(page.locator('#foot .fam')).toContainText('Family Site');

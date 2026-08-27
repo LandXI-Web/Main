@@ -132,7 +132,7 @@ body[data-side]:not([data-side="none"]) #grid{ right:calc(var(--side) + 24px); }
 .shelf{ position:absolute; left:0; right:0; bottom:0; height:18px; background:var(--ink); display:flex; align-items:center; padding:0 8px; gap:8px; z-index:4; }
 .shelf .st{ font-size:9px; letter-spacing:.06em; color:#fff; white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis; }
 .shelf .ax{ flex:none; }
-.shelf .st b{ font-weight:400; color:#8FBEFF; }   /* 잉크 선반 위 상태어 — 액센트의 밝은 대응값(대비) */
+.shelf .st b{ font-weight:400; color:var(--accent); }
 .shelf .ax{ margin-left:auto; display:flex; gap:0; white-space:nowrap; }
 .shelf .act{ font-size:9px; letter-spacing:.02em; color:rgba(255,255,255,.72); font-family:var(--font-num);
   transition:color var(--hov) var(--hove), transform var(--hov) var(--hove); }

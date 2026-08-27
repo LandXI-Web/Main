@@ -1,0 +1,27 @@
+/* Land-XI 글꼴 체계 — 클라이언트 결정(2026-08-27, landxi/proto/fonts.html T3):
+   "일단 모든 글꼴과 스타일은 Paperlogy + Pretendard, T3로 간다."
+   표시 Paperlogy 700/800 · 본문 Pretendard 400/500 · 소형 표 숫자 Inter tabular.
+   모든 프로토 페이지는 이 파일 하나만 불러온다(v3-tokens.css 가 @import 하므로 토큰을 쓰는 페이지는 자동). */
+
+/* @import 는 다른 규칙보다 앞에 와야 한다. */
+/* Pretendard — 정적 400/500(family 'Pretendard'). */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+/* Inter — 소형 표·좌표·캡션의 tabular 숫자. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap');
+
+/* Paperlogy — 눈누 배포(jsDelivr projectnoonnu/2408-3). fonts.html 에서 동작 확인한 소스 그대로. */
+@font-face{font-family:'Paperlogy';font-weight:800;font-style:normal;font-display:swap;
+  src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2') format('woff2')}
+@font-face{font-family:'Paperlogy';font-weight:700;font-style:normal;font-display:swap;
+  src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2') format('woff2')}
+
+
+:root{
+  --font-display:'Paperlogy','Pretendard',system-ui,sans-serif;   /* 700 / 800 — H1·H2·KPI·워드마크 텍스트 */
+  --font-body:'Pretendard',system-ui,sans-serif;                   /* 400 / 500 */
+  --font-num:'Inter','Pretendard',system-ui,sans-serif;            /* 400, tabular-nums — 12px 안팎 표 숫자 */
+  /* T3 — 블루 액센트 + 틴트 */
+  --accent:#006DF7;
+  --tint-1:#E8F1FF;   /* 밴드·호버·선택 행 */
+  --tint-2:#D6E6FF;   /* 더 진한 선택·활성 칩 */
+}
