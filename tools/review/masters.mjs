@@ -36,9 +36,12 @@ const STATUS = {
   // B5-Analysis-Run · Run-1…5: drop — 5단계 안 → 3화면으로 통합(2026-08-27 · NOTES §19.6) · 파일은 git 이력에만
   'B2-HomeFilm': ['메인(필름)', 'drop', '초기 카피 판 — 메인은 스크럽 필름 구현본(scrub/index.html)이 원판'],
   'B2-HomeAtlas': ['메인(필름)', 'drop', '홈 아틀라스(필름 뒤 페이지) — 미사용'],
-  'B2-XiMap': ['XI맵', 'review', '초안 — 미착수'],
+  'B5-Map': ['지도 서비스', 'review', '기본 — V-World 실타일 + 레이어 카드 + 시점 스트립'],
+  'B5-Map-Info': ['지도 서비스', 'review', '객체 정보 — 브래킷 콜아웃 + 탐지 정보 + 조치 상태'],
+  'B5-Map-Compare': ['지도 서비스', 'review', '겹쳐보기 — 2025.04 | 2025.10 스와이프 + 변화 지수'],
+  'B2-XiMap': ['지도 서비스', 'drop', 'XI맵 초안 — 원본 지도 서비스 기능의 1/4 · 임계/스캔은 원본에 없음(NOTES §20)'],
 };
-const CATS = ['메인(필름)', '로그인', '대시보드', '데이터 관리', '프로젝트', '분석 서비스', 'XI맵', '지도 서비스', '기타'];
+const CATS = ['메인(필름)', '로그인', '대시보드', '데이터 관리', '프로젝트', '분석 서비스', '지도 서비스', '기타'];
 // 원판 없이 구현본이 곧 원판인 화면 — 갤러리에 카드로 노출
 const EXTRA = [{ id: 'LIVE-Main', cat: '메인(필름)', st: 'apply', note: 'scrub/index.html — 스크럽 필름 구현본이 원판 (타임라인: film/timeline.html)', title: '메인 · 스크럽 필름 (구현본)', img: '../../assets/proto/film/legs/full.webp', href: '../scrub/index.html' }];
 const LABEL = { apply: ['적용', '#0FA9A0'], review: ['검토', '#006DF7'], drop: ['폐기', '#8A8A8A'] };
