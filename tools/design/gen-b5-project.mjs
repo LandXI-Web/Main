@@ -261,33 +261,113 @@ function data() {
 }
 
 // ======================================================================
-// 4. B5-Project-Train — 상태 열 4 · 결과 크롭 96 카드 5 · 결과 드로어(크롭 432×243 + 큰 수 2)
+// 4. B5-Project-Train — 7차: 학습 = 워크플로우 캔버스(노드 6 · 포트 · 헤어라인 연결) + 학습 곡선(에폭 눈금자 · 현재 에폭 테이프) + 이력 띠 + 결과 드로어
+//    파라미터는 원본 10필드 그대로(학습명 · 기반 모델 · 이전 학습 이어가기 · 데이터셋 · 탐지 형태 · 이미지 크기 · 학습:검증 · 에폭 · 배치 · IoU/Conf) — 증강은 원본에 없어 `증강 없음` 판
 // ======================================================================
+// 노드 — 헤어라인 판 + 좌우 포트(6px 사각) · 상태어 위 · 이름 Paperlogy · 몸체 = 픽셀(실크롭) 또는 칩
+const port = (x, y, on = true) => div(x - 3, y - 3, 6, 6, `background:${on ? INK : '#FFFFFF'};border:1px solid ${on ? INK : C}`);
+const nchip = (x, y, t, fixed = false) => `<div style="position:absolute;left:${x}px;top:${y}px;height:22px;line-height:20px;padding:0 7px;border:1px ${fixed ? 'dotted' : 'solid'} ${fixed ? C : H};font-size:14px;white-space:nowrap;color:${fixed ? G : INK};letter-spacing:-.01em">${t}</div>\n`;
+function node(x, y, w, h, name, state, stCol, inner, dotted = false, first = false, last = false) {
+  let s = div(x, y, w, h, `border:1px ${dotted ? 'dotted' : 'solid'} ${dotted ? C : INK};background:#FFFFFF`);
+  s += st(x + 10, y + 10, state, `color:${stCol}`) + disp(x + 10, y + 28, name, 14, dotted ? G : INK);
+  s += inner;
+  if (!first) s += port(x, y + h / 2, !dotted);
+  if (!last) s += port(x + w, y + h / 2, !dotted);
+  return s;
+}
+// 학습 곡선 — charts.html 문법(잉크 폴리라인 1.5 + #CCC 오프셋 그림자 · 헤어라인 눈금 · 예측 = 점선 고스트)
+function trainChart(x, y) {
+  const W = 776, Hh = 172, px0 = 40, px1 = 656, py0 = 14, py1 = 122;
+  const ex = e => px0 + (px1 - px0) * e / 100, ey = v => py1 - (py1 - py0) * v;
+  const loss = e => 0.19 + 0.74 * Math.exp(-e / 20) + 0.02 * Math.sin(e * 1.7) * Math.exp(-e / 40);
+  const prec = e => 0.87 - 0.62 * Math.exp(-e / 16) - 0.02 * Math.sin(e * 1.3) * Math.exp(-e / 50);
+  const prec2 = e => 0.83 - 0.62 * Math.exp(-e / 19) - 0.02 * Math.sin(e * 1.1) * Math.exp(-e / 50);
+  const pts = (f, a, b) => { const o = []; for (let e = a; e <= b; e++) o.push(`${ex(e).toFixed(1)},${ey(f(e)).toFixed(1)}`); return o.join(' '); };
+  const T = (tx, ty, t, col, anchor = 'middle', extra = '') => `<text x="${tx}" y="${ty}" text-anchor="${anchor}" font-family="Inter,Pretendard,sans-serif" font-size="14" fill="${col}" ${extra}>${t}</text>`;
+  let g = '';
+  [0, .5, 1].forEach(v => { g += `<line x1="${px0}" x2="${px1}" y1="${ey(v)}" y2="${ey(v)}" stroke="${H}"/>` + T(px0 - 8, ey(v) + 5, v.toFixed(1), G, 'end'); });
+  // 에폭 눈금자 0–100 · 10마다 긴 눈금 + 숫자
+  for (let e = 0; e <= 100; e++) { const l = e % 10 ? 4 : 9; g += `<line x1="${ex(e).toFixed(1)}" x2="${ex(e).toFixed(1)}" y1="${py1 + 8}" y2="${py1 + 8 + l}" stroke="${e % 10 ? C : INK}"/>`; if (!(e % 10)) g += T(ex(e), py1 + 34, e, G); }
+  g += `<line x1="${px0}" x2="${px1}" y1="${py1 + 8}" y2="${py1 + 8}" stroke="${INK}"/>`;
+  // v2.1 완료 — loss 잉크 · precision 액센트
+  g += `<polyline points="${pts(loss, 0, 100)}" fill="none" stroke="${C}" stroke-width="1" transform="translate(1,1)"/>`;
+  g += `<polyline points="${pts(loss, 0, 100)}" fill="none" stroke="${INK}" stroke-width="1.5"/>`;
+  g += `<polyline points="${pts(prec, 0, 100)}" fill="none" stroke="${ACC}" stroke-width="1.5"/>`;
+  // v2.0 진행 중 — 58 에폭까지 회색 실선, 이후 점선 고스트
+  g += `<polyline points="${pts(prec2, 0, 58)}" fill="none" stroke="${G}" stroke-width="1.5"/>`;
+  g += `<polyline points="${pts(prec2, 58, 100)}" fill="none" stroke="${C}" stroke-width="1" stroke-dasharray="2 3"/>`;
+  // 현재 에폭 테이프 — 세로 액센트선 + 눈금자 위 창
+  const gx = ex(58).toFixed(1);
+  g += `<line x1="${gx}" x2="${gx}" y1="${py0}" y2="${py1 + 18}" stroke="${ACC}" stroke-width="1"/>`;
+  g += `<rect x="${ex(58) - 19}" y="${py1 + 2}" width="38" height="22" fill="#FFFFFF" stroke="${ACC}"/>` + T(gx, py1 + 17, '58', ACC, 'middle', 'font-weight="500"');
+  g += `<circle cx="${gx}" cy="${ey(prec2(58)).toFixed(1)}" r="3.5" fill="#FFFFFF" stroke="${G}" stroke-width="1.5"/>`;
+  // 끝값
+  g += `<circle cx="${ex(100)}" cy="${ey(loss(100)).toFixed(1)}" r="3.5" fill="#FFFFFF" stroke="${INK}" stroke-width="1.5"/>` + T(px1 + 10, ey(loss(100)) + 5, 'loss 0.19', INK, 'start');
+  g += `<circle cx="${ex(100)}" cy="${ey(prec(100)).toFixed(1)}" r="3.5" fill="#FFFFFF" stroke="${ACC}" stroke-width="1.5"/>` + T(px1 + 10, ey(prec(100)) + 5, 'precision 0.87', ACC, 'start');
+  g += T(ex(58) + 8, ey(prec2(58)) - 8, 'v2.0 0.80', G, 'start');
+  return `<svg width="${W}" height="${Hh}" viewBox="0 0 ${W} ${Hh}" style="position:absolute;left:${x}px;top:${y}px;display:block">${g}</svg>\n`;
+}
 function train() {
   let s = headCollapsed('학습');
   const sy = 176;
-  s += search(X0, sy, 200, '학습명') + cta(XR - 112, sy - 4, 112, '새로 학습하기');
+  s += search(X0, sy, 200, '학습명') + cta(XR - 96, sy - 4, 96, '학습 시작');
   s += hl(X0, sy + 34, W);
-  // 상태 열 4 — 대기 2 / 진행 2 / 완료 1 / 실패 0 (원본 시드 5건 · 시연)
-  const cols = [['대기', 2], ['진행', 2], ['완료', 1], ['실패', 0]];
-  const CW = 182, CG = (W - CW * 4) / 3, CY = 226;
+  // 워크플로우 캔버스 — 노드 6 · x 축 = 의존 순서(Roboflow 블록 문법 · radius 0)
+  const NY = 238, NH = 150;
+  s += lab(X0, 218, '워크플로우 · 비닐하우스 v2.1') + st(XR - 160, 218, '완료 · 1 h 35 m · 2026.05.18', 'width:160px;text-align:right');
+  const ws = [128, 96, 116, 148, 134, 74], gap = 16;
+  const xs = []; let cx = X0; ws.forEach(w => { xs.push(cx); cx += w + gap; });
+  // 연결선 — 완료 구간 잉크
+  for (let i = 0; i < 5; i++) s += hl(xs[i] + ws[i] + 3, NY + NH / 2, gap - 6, i === 0 || i === 1 ? C : INK);
+  // 1 데이터셋(픽셀 몸체) · 원본: 데이터셋 select
+  let x = xs[0], w = ws[0];
+  s += node(x, NY, w, NH, '데이터셋 v2', 'Cached', ACC,
+    img(x + 1, NY + 50, w - 2, 58, 'tile-gh-clean.jpg', brkIn(w - 2, 58, INK, 8)) + nchip(x + 10, NY + 116, '1,674 라벨') + nchip(x + 84, NY + 116, '▾'), false, true);
+  // 2 증강 — 원본 폼에 없음 → 점선 `증강 없음`
+  x = xs[1]; w = ws[1];
+  s += node(x, NY, w, NH, '증강 없음', '—', C, txt(x + 10, NY + 54, '원본 옵션 없음', 12, C) + nchip(x + 10, NY + 116, '추가 안 함', true), true);
+  // 3 기반 모델 — 원본: 기반 모델(고정) · 이전 학습 이어가기
+  x = xs[2]; w = ws[2];
+  s += node(x, NY, w, NH, 'XI-VFM v2.1', 'Cached', ACC,
+    nchip(x + 10, NY + 54, `${ico('lock', G, 12)} YOLO11`, true) + nchip(x + 10, NY + 82, '이어가기 없음') + nchip(x + 10, NY + 116, '객체 탐지', true));
+  // 4 학습 — 원본: 학습명 · 이미지 크기 · 학습:검증 · 에폭 · 배치
+  x = xs[3]; w = ws[3];
+  s += node(x, NY, w, NH, '학습 v2.1', '완료 100 / 100', ACC,
+    nchip(x + 10, NY + 54, '에폭 100') + nchip(x + 80, NY + 54, '배치 16') + nchip(x + 10, NY + 82, '640 px') + nchip(x + 76, NY + 82, '80 : 20') +
+    div(x + 10, NY + 118, w - 20, 3, `background:${H}`) + div(x + 10, NY + 118, w - 20, 3, `background:${ACC}`) + num(x + 10, NY + 126, '1 h 35 m', 11.5, G));
+  // 5 검증 — 원본: IoU · Conf 임계값 → 결과 IoU/F1
+  x = xs[4]; w = ws[4];
+  s += node(x, NY, w, NH, '검증 20 %', '완료', ACC,
+    img(x + 1, NY + 50, w - 2, 44, 'pj-greenhouse.jpg', poly(w - 2, 44, GH, .9)) + st(x + 10, NY + 100, 'IoU 0.82 · F1 0.87', `color:${INK};letter-spacing:-.02em`) + nchip(x + 10, NY + 118, '임계 0.5 · 0.25'));
+  // 6 결과 → 배포
+  x = xs[5]; w = ws[5];
+  s += node(x, NY, w, NH, '결과', '완료', ACC, img(x + 1, NY + 50, w - 2, 58, 'pj-hero.jpg', poly(w - 2, 58, HERO, .8)) + txt(x + 10, NY + 118, '배포 ›', 13, ACC), false, false, true);
+  // 학습 곡선 — 완료 v2.1 + 진행 중 v2.0(58/100 · 테이프)
+  const CY = 404;
+  s += lab(X0, CY, '학습 곡선 · 에폭') + `<div style="position:absolute;left:${X0 + 120}px;top:${CY - 1}px;display:flex;gap:16px;font-size:14px;color:${G};white-space:nowrap"><span><span style="display:inline-block;width:14px;height:2px;background:${INK};vertical-align:4px;margin-right:5px"></span>loss v2.1</span><span><span style="display:inline-block;width:14px;height:2px;background:${ACC};vertical-align:4px;margin-right:5px"></span>precision v2.1</span><span><span style="display:inline-block;width:14px;height:2px;background:${G};vertical-align:4px;margin-right:5px"></span>precision v2.0 <b style="font-weight:500;color:${ACC}">진행 중 58 / 100</b></span></div>\n`;
+  s += trainChart(X0, CY + 22);
+  // 이력 5 — 상태 열 4 를 띠로 접음(대기 2 · 진행 2 · 완료 1 · 실패 0) + 행 5(썸네일 · 이름 · 상태어 · 라벨 · IoU · F1 · 시작)
+  const LY = 612;
+  s += hl(X0, LY - 8, W) + disp(X0, LY, '학습 이력', 14) + num(X0 + 70, LY + 1, '5', 13, ACC);
+  const seg = [['대기', 2, '#FFFFFF', G], ['진행', 2, T2, ACC], ['완료', 1, TEAL, TEAL], ['실패', 0, null, C]];
+  let sx = X0 + 300;
+  seg.forEach(([t, c, bg, col]) => { const w = Math.max(c, .5) * 56; s += div(sx, LY + 8, w, 6, bg ? `background:${bg};border:1px solid ${col}` : `border:1px dotted ${C}`) + txt(sx, LY + 18, `${t} <span class="n" style="color:${c ? col === TEAL ? INK : col : C}">${c}</span>`, 12, G); sx += w + 12; });
+  s += hl(X0, LY + 44, W);
   const runs = [
-    [0, '학습 #5', 'tile-gh-clean.jpg', '라벨 4,200 · 2026.06.11', '대기'], [0, '비닐하우스 v1.0', 'pj-hero.jpg', 'IoU 0.71 · F1 0.76', '대기 · 재학습'],
-    [1, '학습 #4', 'tile-farm-clean.jpg', '라벨 4,200 · 2026.06.11', '진행 중'], [1, '비닐하우스 v2.0', 'pj-nw2510.jpg', 'IoU 0.78 · F1 0.83', '진행 중 · 35 m'],
-    [2, '비닐하우스 v2.1', 'pj-greenhouse.jpg', 'IoU 0.82 · F1 0.87', '완료 · 1 h 35 m', true],
+    ['비닐하우스 v2.1', 'pj-greenhouse.jpg', '완료 · 1 h 35 m', '3,842', '0.82', '0.87', '2026.05.18 07:40', true],
+    ['비닐하우스 v2.0', 'pj-nw2510.jpg', '진행 중 · 58 / 100', '2,800', '—', '—', '2026.05.10 14:30'],
+    ['학습 #4', 'tile-farm-clean.jpg', '진행 중 · 12 / 100', '4,200', '—', '—', '2026.06.11 21:45'],
+    ['학습 #5', 'tile-gh-clean.jpg', '대기', '4,200', '—', '—', '2026.06.11 22:30'],
+    ['비닐하우스 v1.0', 'pj-hero.jpg', '대기 · 재학습', '1,560', '0.71', '0.76', '2026.04.15 11:10'],
   ];
-  cols.forEach(([t, c], i) => {
-    const x = X0 + i * (CW + CG);
-    s += disp(x, CY, t, 15) + num(x + 34, CY + 1, String(c), 14, c ? ACC : C) + hl(x, CY + 28, CW);
-    if (!c) s += div(x, CY + 44, CW, 96, `border:1px dotted ${C}`);
+  runs.forEach(([n, src, stt, lb, iou, f1, d, on], i) => {
+    const y = LY + 52 + i * 38;
+    if (on) s += div(X0 - 8, y - 5, W + 16, 38, `background:${T1}`);
+    s += img(X0, y, 48, 28, src, on ? brkIn(48, 28, ACC, 6) : '') + disp(X0 + 60, y + 4, n, 14) + st(X0 + 250, y + 7, stt, stt.startsWith('대기') ? `color:${G}` : '');
+    s += num(X0 + 400, y + 5, lb, 12, G) + num(X0 + 470, y + 5, iou, 12, iou === '—' ? C : INK) + num(X0 + 530, y + 5, f1, 12, f1 === '—' ? C : INK) + num(XR - 140, y + 5, d + (i < 4 ? '' : ''), 12, G, 'width:140px;text-align:right');
+    s += hl(X0, y + 33, W);
   });
-  const per = [0, 0, 0, 0];
-  runs.forEach(([col, name, src, meta, status, sel]) => {
-    const x = X0 + col * (CW + CG), y = CY + 44 + per[col]++ * 176;
-    if (sel) s += div(x - 8, y - 8, CW + 16, 168, `background:${T1}`);
-    const over = (col === 2 ? poly(CW, 96, GH, 1) : '') + (col === 1 ? `<div style="position:absolute;left:0;bottom:0;height:2px;width:${name.includes('#4') ? 12 : 58}%;background:${ACC}"></div>` : '') + (sel ? brkIn(CW, 96, ACC) : '');
-    s += img(x, y, CW, 96, src, over) + disp(x, y + 106, name, 14) + num(x, y + 126, meta, 12, G) + st(x, y + 144, status, col === 0 ? `color:${G}` : '');
-  });
+  s += `<span class="tag" style="position:absolute;left:${X0 + 620}px;top:${LY + 1}px">시연</span>\n`;
   // 드로어 = 학습 결과 5섹션(정보 · 설정 · 결과 · 클래스별 · 행렬) — 이미지 먼저
   s += drawer('비닐하우스 v2.1<span class="tag">시연</span><span class="st" style="font-size:15px;margin-left:10px;vertical-align:3px">완료</span>');
   s += img(DI, 136, DIW, 243, 'pj-greenhouse.jpg', poly(DIW, 243, GH, 1.1) + brkIn(DIW, 243, INK));
@@ -295,24 +375,22 @@ function train() {
   s += `<div class="d8" style="position:absolute;left:${DI}px;top:412px;font-size:58px;line-height:1;color:${ACC};font-variant-numeric:tabular-nums">0.82</div>\n` + lab(DI + 2, 474, 'IoU 영역 일치도');
   s += `<div class="d8" style="position:absolute;left:${DI + 216}px;top:412px;font-size:58px;line-height:1;color:${INK};font-variant-numeric:tabular-nums">0.87</div>\n` + lab(DI + 218, 474, 'F1 종합 정확도') + num(DI + 340, 476, 'v2.0 +0.04', 12, G);
   s += hl(DI, 500, DIW);
-  // 학습 정보 + 설정 = 새로 학습하기 폼과 같은 필드(학습명 · 기반 모델 · 데이터셋 · 이미지 크기 · 학습:검증 · 에폭 · 배치 · IoU/Conf)
   const kv = [['학습 시작', '2026.05.18 07:40'], ['소요', '1시간 35분'], ['라벨', '3,842'], ['데이터셋', '남원 농경지 2025.04 · 06 · 08'], ['기반 모델', 'XI-VFM v2.1'], ['이미지 크기', '640 × 640'], ['학습 : 검증', '80 : 20'], ['에폭 · 배치', '100 · 16'], ['IoU · Conf', '0.5 · 0.25']];
   kv.forEach(([k, v], i) => { const col = i % 2, row = Math.floor(i / 2); const x = DI + col * 216, y = 514 + row * 40; s += lab(x, y, k) + num(x, y + 16, v, 13); });
-  // 클래스별 성능(헤어라인 막대 · 전체 F1 만 값) + 오분류 행렬 3×3(값 없음)
   const py = 720;
   s += hl(DI, py - 6, DIW) + lab(DI, py + 4, '클래스별 F1');
-  [['전체', .87, '0.87'], ['비닐하우스_단동', 0, '—'], ['비닐하우스_다동', 0, '—']].forEach(([k, v, t], i) => {
+  [['전체', .87, '0.87'], ['비닐하우스_단동', .89, '0.89'], ['비닐하우스_다동', .74, '0.74']].forEach(([k, v, t], i) => {
     const y = py + 26 + i * 20;
-    s += txt(DI, y, k, 12, G) + div(DI + 116, y + 8, 120, 1, `background:${H}`) + (v ? div(DI + 116, y + 7, 120 * v, 3, `background:${INK}`) : '') + num(DI + 244, y, t, 12, v ? INK : C);
+    s += txt(DI, y, k, 12, G) + div(DI + 116, y + 8, 120, 1, `background:${H}`) + div(DI + 116, y + 7, 120 * v, 3, `background:${i ? ACC : INK}`) + num(DI + 244, y, t, 12, INK);
   });
   const mx = DI + 300, my = py + 4;
   s += lab(mx, my, '오분류 행렬');
-  for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) s += div(mx + c * 44, my + 20 + r * 20, 44, 20, `border:1px solid ${H};display:flex;align-items:center;justify-content:center;font-size:12px;color:${C}`, '—');
+  const M = [['1,318', '41', '—'], ['29', '176', '—'], ['—', '—', '']];
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) { const v = M[r][c], diag = r === c && r < 2; s += div(mx + c * 44, my + 20 + r * 20, 44, 20, `border:1px solid ${H};background:${diag ? T1 : '#FFFFFF'};display:flex;align-items:center;justify-content:center;font-size:12px;color:${v === '—' || !v ? C : diag ? ACC : INK}`, `<span class="n">${v || ''}</span>`); }
   s += hl(DI, 818, DIW) + tb(DI, 830, '닫기', false, `color:${G}`) + txt(1416 - 140, 836, '배포 탭에서 이 결과 발행 ›', 13, INK, 'width:140px;text-align:right');
   s += FOOT;
   return page('B5 · 프로젝트 — 학습', s);
 }
-
 
 // ======================================================================
 // 6차 — 남은 하위 화면 4판 (라벨링 편집 · 분석 · 배포 · 삭제 확인) — 같은 규칙(이미지 우선 · 주석 0 · 검정 CTA 1)
@@ -404,17 +482,31 @@ function labeling() {
     s += img(88, y, 288, 140, src, on ? brkIn(288, 140, ACC) : '');
     s += disp(88, y + 150, n, 14) + num(88, y + 170, meta, 12, G) + st(88, y + 192, stt + (tg ? `<span class="tag">${tg}</span>` : ''), on ? '' : `color:${G}`) + txt(336, y + 190, '복제 ›', 12.5, INK);
   });
-  // 우 드로어 320 — 라벨 목록(검색 · 체크 · 클래스 · 이름 #n · 작성자 · 형태 · ×) · 전체 선택 · 클래스 일괄 변경
+  // 우 드로어 320 — 7차: 위 = 클래스 편집기(색 · 이름 인라인 편집 · 단축키 · 수 · ↑↓ · × · 클래스 추가) / 아래 = 라벨 목록(검색 · 체크 · 클래스 · 이름 #n · 작성자 · 형태 · ×) · 전체 선택 · 클래스 일괄 변경
   s += div(1120, MY, 320, MH, 'background:#FFFFFF') + vl(1120, MY, MH, INK);
-  s += disp(1136, 66, '라벨', 15) + num(1176, 68, '1,674', 14, ACC) + search(1136, 96, 288, '라벨 검색') + hl(1136, 132, 288);
-  for (let i = 0; i < 16; i++) {
-    const y = 140 + i * 32, multi = i % 5 === 4, on = i === 2 || i === 3 || i === 4;
+  s += disp(1136, 66, '클래스', 15) + num(1188, 68, '2', 14, ACC) + hl(1136, 96, 288);
+  const classes = [['비닐하우스_단동', true, '1', '1,469', true], ['비닐하우스_다동', false, '2', '205', false]];
+  classes.forEach(([n, fill, key, cnt, on], i) => {
+    const y = 104 + i * 36;
+    if (on) s += div(1121, y, 319, 36, `background:${T1}`) + div(1121, y, 2, 36, `background:${ACC}`);
+    s += div(1136, y + 12, 12, 12, `border:1px solid ${TEAL};background:${fill ? TEAL : '#FFFFFF'}`);
+    s += txt(1158, y + 8, n, 13, INK, on ? `border-bottom:1px solid ${INK};padding-bottom:1px` : '');
+    s += div(1290, y + 9, 18, 18, `border:1px solid ${on ? INK : H};display:flex;align-items:center;justify-content:center`, `<span class="n" style="font-size:14px;color:${on ? INK : G}">${key}</span>`);
+    s += num(1316, y + 9, cnt, 12, ACC, 'width:52px;text-align:right');
+    s += `<div style="position:absolute;left:1378px;top:${y + 11}px;font-size:14px;line-height:1;color:${i ? INK : C}">↑</div><div style="position:absolute;left:1392px;top:${y + 11}px;font-size:14px;line-height:1;color:${i ? C : INK}">↓</div>\n`;
+    s += `<div style="position:absolute;left:1408px;top:${y + 12}px">${ico('close', C, 11)}</div>\n` + hl(1136, y + 36, 288);
+  });
+  s += div(1136, 184, 288, 28, `border:1px dotted ${C};display:flex;align-items:center;justify-content:center;gap:6px;font-size:14px;color:${G}`, `${ico('plus', G, 12)}클래스 추가`);
+  s += hl(1136, 226, 288);
+  s += disp(1136, 240, '라벨', 15) + num(1176, 242, '1,674', 14, ACC) + search(1136, 268, 288, '라벨 검색') + hl(1136, 304, 288);
+  for (let i = 0; i < 10; i++) {
+    const y = 312 + i * 32, multi = i % 5 === 4, on = i === 2 || i === 3 || i === 4;
     if (on) s += div(1121, y, 319, 32, `background:${T1}`);
     s += chk(1136, y + 9, on) + div(1160, y + 10, 12, 12, `border:1px solid ${TEAL};background:${multi ? '#FFFFFF' : TEAL}`);
     s += txt(1182, y + 7, `${multi ? '비닐하우스_다동' : '비닐하우스_단동'} <span class="n" style="color:${G}">#${i + 1}</span>`, 12.5) + txt(1318, y + 8, '—', 12, C) + txt(1346, y + 8, i % 3 === 1 ? '폴리곤' : '사각형', 12, G) + `<div style="position:absolute;left:1408px;top:${y + 10}px">${ico('close', C, 11)}</div>\n`;
     s += hl(1136, y + 32, 288);
   }
-  s += num(1136, 662, '… 1,674 행 · 스크롤', 12, C);
+  s += num(1136, 642, '… 1,674 행 · 스크롤', 12, C);
   s += hl(1136, 818, 288) + chk(1136, 836, false) + txt(1158, 832, '전체 선택', 12.5, G) + st(1230, 836, '선택 3') + txt(1424 - 96, 832, '클래스 일괄 변경 ›', 13, INK, 'width:96px;text-align:right');
   // 클래스 일괄 변경 — 작은 대화상자(원본 모달)
   const dx = 768, dy = 604;
@@ -549,6 +641,75 @@ function del() {
   return page('B5 · 프로젝트 — 삭제 확인', s);
 }
 
+
+// ======================================================================
+// 9. B5-Project-Create — 7차: 프로젝트 만들기 = 5단계 워크플로우(01 프로젝트명 · 02 서비스 유형 · 03 영상 불러오기 · 04 학습데이터 · 05 구성원 초대) · 03 활성
+//    원본 만들기 폼 4필드(프로젝트명 · 탐지유형 · 학습데이터 유형 · 권장 해상도) + 파일 추가(아카이브 픽커) + 데이터셋 선택 + 구성원 초대 를 한 흐름으로 — 클래스는 라벨링 탭으로 이동(원본 안내문 그대로)
+// ======================================================================
+function create() {
+  let s = '';
+  s += txt(X0, 22, '‹ 프로젝트 목록', 13, G) + hl(72, 64, 1368);
+  s += disp(X0, 80, '프로젝트 만들기', 32);
+  // 단계 레일 — 판 5(136×64) + 헤어라인 연결 + 포트 · 상태어(완료 ✓ / 진행 / 대기)
+  const steps = [['01', '프로젝트명', '완료'], ['02', '서비스 유형', '완료'], ['03', '영상 불러오기', '진행'], ['04', '학습데이터', '대기'], ['05', '구성원 초대', '대기']];
+  const SW = 136, SG = 24, SY = 140, SH = 64;
+  steps.forEach(([n, t, stt], i) => {
+    const x = X0 + i * (SW + SG), done = stt === '완료', on = stt === '진행';
+    s += div(x, SY, SW, SH, `border:${on ? 1.5 : 1}px solid ${on || done ? INK : H};background:${on ? T1 : '#FFFFFF'}`);
+    s += num(x + 12, SY + 10, n, 12, on || done ? ACC : C) + st(x + SW - 12, SY + 10, done ? '완료 ✓' : stt, `right:auto;transform:translateX(-100%);color:${done || on ? ACC : C}`);
+    s += disp(x + 12, SY + 34, t, 15, on || done ? INK : G);
+    if (i) s += div(x - 3, SY + SH / 2 - 3, 6, 6, `background:${on || done ? INK : '#FFFFFF'};border:1px solid ${on || done ? INK : C}`);
+    if (i < 4) s += div(x + SW - 3, SY + SH / 2 - 3, 6, 6, `background:${done ? INK : '#FFFFFF'};border:1px solid ${done ? INK : C}`) + hl(x + SW + 3, SY + SH / 2, SG - 6, done ? INK : H);
+  });
+  // 현재 단계 03 — 영상 불러오기 = 아카이브 픽커(원본 파일 추가 모달: 유형 · 검색 · 초기화/검색 · 목록 8 · 페이지네이션)
+  const TY = 232;
+  s += disp(X0, TY, '03 · 영상 불러오기', 22) + st(XR - 200, TY + 10, '아카이브 8건 · 선택 2', 'width:200px;text-align:right');
+  const ty = 272;
+  s += sel(X0, ty, 96, '전체', G) + search(X0 + 104, ty, 200, '검색어') + tb(X0 + 312, ty, '초기화', false, `color:${G}`) + tb(X0 + 360, ty, '검색') + pager(XR - 160, ty + 7);
+  s += hl(X0, ty + 34, W);
+  const arc = [
+    ['남원 정사영상 2026-04 A구역', '2026.04 · 1.08 cm', 'tile-arc-a.jpg', true, '시연'], ['운봉읍 드론 정사영상 2026-04', '2026.04 · 1.69 cm', 'tile-arc-hid.jpg', true, '시연'], ['남원 전역 2025.10', '2025.10 · 2.00 m/px', 'tile-ep-4.jpg'],
+    ['국산리 드론 A68 2025.08', '2025.08 · 0.05 m/px', 'tile-kuksan-1.jpg'], ['순찰차량 도로영상 2026-04', '2026.04 · 4,820장', 'pj-car.jpg', false, '시연'], ['제주 항공 정사영상 2020.12', '2020.12 · 0.10 m/px', 'pj-jeju2020.jpg'],
+  ];
+  const TW = 240, TH = 136, TG = (W - TW * 3) / 2, RH = 180, GY = 322;
+  arc.forEach(([n, m, src, on, tg], i) => {
+    const x = X0 + (i % 3) * (TW + TG), y = GY + Math.floor(i / 3) * RH;
+    if (on) s += div(x - 8, y - 8, TW + 16, RH - 4, `background:${T1}`);
+    s += img(x, y, TW, TH, src, on ? brkIn(TW, TH, ACC) : '');
+    if (on) s += chk(x + TW - 22, y + 8, true);
+    s += txt(x, y + TH + 8, n + (tg ? `<span class="tag">${tg}</span>` : ''), 13, INK, `width:${TW}px;overflow:hidden;text-overflow:ellipsis`) + num(x, y + TH + 28, m, 12, G);
+  });
+  // 풋프린트 — 작은 지도 판(남원 2025.06 정사영상) 위 선택 2건의 범위 + 번호표
+  const MY2 = 690, MH2 = 126, MW2 = 372;
+  const fp = `<svg width="${MW2}" height="${MH2}" viewBox="0 0 ${MW2} ${MH2}" style="position:absolute;left:0;top:0;display:block"><rect x="28" y="26" width="150" height="84" fill="rgba(0,109,247,.10)" stroke="${ACC}" stroke-width="1.5"/><rect x="196" y="40" width="140" height="76" fill="rgba(0,109,247,.10)" stroke="${ACC}" stroke-width="1.5"/></svg>` +
+    `<div class="n" style="position:absolute;left:28px;top:8px;height:18px;line-height:20px;padding:0 5px;background:${ACC};color:#FFFFFF;font-size:14px">1 · A구역</div><div class="n" style="position:absolute;left:196px;top:22px;height:18px;line-height:20px;padding:0 5px;background:${ACC};color:#FFFFFF;font-size:14px">2 · 운봉읍</div>`;
+  s += mapPlate(X0, MY2, MW2, MH2, 'pj-map-analysis.jpg', fp, -300, -500) + num(X0, MY2 + MH2 + 6, '남원 · 선택 영상 범위', 12, G);
+  // 선택 2 — 행(썸네일 64×36 · 이름 · 메타 · ×)
+  const LX = X0 + 396;
+  s += lab(LX, MY2, '선택 2') ;
+  arc.filter(a => a[3]).forEach(([n, m, src], i) => { const y = MY2 + 20 + i * 48; s += img(LX, y, 64, 36, src) + txt(LX + 76, y, n, 13) + num(LX + 76, y + 20, m, 12, G) + `<div style="position:absolute;left:${XR - 12}px;top:${y + 12}px">${ico('close', C, 11)}</div>\n` + hl(LX, y + 44, W - 396); });
+  s += txt(LX, MY2 + 118, '‹ 이전 02 서비스 유형', 13, G) + txt(XR - 140, MY2 + 118, '다음 04 학습데이터 ›', 13, INK, 'width:140px;text-align:right');
+  // 우 드로어 480 = 프로젝트 요약(단계가 끝날수록 채워진다) + CTA
+  s += drawer('프로젝트 요약');
+  s += num(DI, 140, '01', 12, ACC) + lab(DI + 24, 140, '프로젝트명') + st(1416 - 60, 140, '완료 ✓', 'width:60px;text-align:right');
+  s += disp(DI, 160, '남원 비닐하우스 2026', 22) + `<div style="position:absolute;left:${DI}px;top:198px;display:flex;gap:6px"><span class="chip">정사영상 (ortho)</span><span class="chip">≤ 0.02 m/px<span class="tag" style="margin-left:5px">추정</span></span></div>\n`;
+  s += hl(DI, 236, DIW);
+  s += num(DI, 250, '02', 12, ACC) + lab(DI + 24, 250, '서비스 유형') + st(1416 - 60, 250, '완료 ✓', 'width:60px;text-align:right');
+  s += img(DI, 270, DIW, 150, 'pj-radio-det.jpg', poly(DIW, 150, DET, 1) + brkIn(DIW, 150, INK)) + txt(DI, 428, '객체 탐지 · 바운딩 박스', 13) + txt(1416 - 100, 428, '세그멘테이션 ›', 12.5, G, 'width:100px;text-align:right');
+  s += hl(DI, 460, DIW);
+  s += num(DI, 474, '03', 12, ACC) + lab(DI + 24, 474, '영상 불러오기') + st(1416 - 60, 474, '진행 · 2', 'width:60px;text-align:right');
+  s += img(DI, 494, 96, 54, 'tile-arc-a.jpg', brkIn(96, 54, ACC, 8)) + img(DI + 104, 494, 96, 54, 'tile-arc-hid.jpg', brkIn(96, 54, ACC, 8)) + div(DI + 208, 494, 96, 54, `border:1px dotted ${C}`);
+  s += hl(DI, 566, DIW);
+  s += num(DI, 580, '04', 12, C) + lab(DI + 24, 580, '학습데이터') + txt(DI + 24, 600, '데이터셋 · 라벨링 데이터 선택', 13, C) + st(1416 - 60, 580, '대기', `width:60px;text-align:right;color:${C}`);
+  s += hl(DI, 636, DIW);
+  s += num(DI, 650, '05', 12, C) + lab(DI + 24, 650, '구성원 초대') + txt(DI + 24, 670, '소유자 1 · 아이디 확인 → 역할', 13, C) + st(1416 - 60, 650, '대기', `width:60px;text-align:right;color:${C}`);
+  s += hl(DI, 706, DIW) + txt(DI, 720, '클래스는 라벨링 탭에서 등록', 12.5, G);
+  s += hl(DI, 818, DIW) + tb(DI, 830, '목록', false, `color:${G}`) + tb(DI + 48, 830, '취소', false, `color:${G}`) + cta(1416 - 120, 826, 120, '프로젝트 만들기');
+  s += FOOT;
+  return page('B5 · 프로젝트 — 만들기', s);
+}
+
+wr('B5-Project-Create.dc.html', create());
 wr('B5-Projects.dc.html', projects());
 wr('B5-Project-Overview.dc.html', overview());
 wr('B5-Project-Data.dc.html', data());
