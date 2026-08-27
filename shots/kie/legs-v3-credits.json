@@ -659,10 +659,38 @@
       "mp4": "landxi/assets/proto/film/legs/gen/v3-leg-09.mp4",
       "mp4_bytes": 15668264,
       "finished_at": "2026-08-27T09:03:06.311Z"
+    },
+    {
+      "leg": 10,
+      "rev": 3,
+      "batch": "6b-8b-9-11",
+      "head": "landxi/assets/proto/film/legs/anchors-v3/A10.png",
+      "tail": "landxi/assets/proto/film/legs/anchors-v3/A11.png",
+      "attempt": 1,
+      "model": "kling/v2-1-pro",
+      "duration": "5",
+      "cfg_scale": 0.5,
+      "prompt": "The clearing stays in frame throughout and only grows larger, the two small orange flames, their thin grey smoke columns, the two low heaps of residue and the short rusted chimney stay exactly where they are; the warm key holds from upper camera left. The camera drifts slowly and steadily forward and down toward the clearing in one smooth continuous move, tilting from about thirty-five degrees to thirty. The two fires stay small and local throughout and never spread; the smoke stays as two thin columns and never fills the frame. Nothing enters or leaves the frame. One single continuous take, no cuts, no camera shake, no zoom snap. Slow, cinematic, controlled.",
+      "prompt_sha256": "210a4839a8441217",
+      "negative_full_chars": 872,
+      "negative": "autumn foliage riot, red leaves, snow, logging machinery, chainsaws, workers, blue sky paint, brass satellite, satellite model, aircraft, airplane, plane model, drone, quadrotor, rotors, brass ring, brass arc, armature, meridian ring, hoop across the sky, smoke filling frame, smoke plume in foreground, wildfire, forest fire, board, table, plinth, base plate, studio edge, seamless backdrop, white background, text, letters, numbers, captions, subtitles, watermark, logo, signature, people",
+      "credits_balance_before": 9288.5,
+      "at": "2026-08-27T09:03:26.477Z",
+      "taskId": "3653827efd04049416c81101ad5371b4",
+      "task_created_at": "2026-08-27T09:03:31.757Z",
+      "ok": true,
+      "credits_reported": 50,
+      "credits_balance_after": 9238.5,
+      "credits_charged": 50,
+      "gen_ms": 106,
+      "wall_ms": 111131,
+      "mp4": "landxi/assets/proto/film/legs/gen/v3-leg-10.mp4",
+      "mp4_bytes": 15346230,
+      "finished_at": "2026-08-27T09:05:22.798Z"
     }
   ],
-  "spent": 1050,
-  "remaining_of_cap": 130,
+  "spent": 1100,
+  "remaining_of_cap": 80,
   "spent_by_rev": {
     "rev2": 150,
     "rev3": 150,
@@ -671,6 +699,6 @@
     "rev3-legs7": 50,
     "rev3-legs6-7-rev3f": 100,
     "rev3-legs8-8b": 100,
-    "rev3-legs6b-8b-9-11": 150
+    "rev3-legs6b-8b-9-11": 200
   }
 }

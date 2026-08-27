@@ -1,0 +1,28 @@
+
+[leg 10] A10 -> A11  attempt 1  balance=9288.5
+[leg 10] pending taskId=3653827efd04049416c81101ad5371b4 (원장 기록)
+  v3-leg-10.mp4: generating (0s)
+  v3-leg-10.mp4: generating (5s)
+  v3-leg-10.mp4: generating (10s)
+  v3-leg-10.mp4: generating (17s)
+  v3-leg-10.mp4: generating (25s)
+  v3-leg-10.mp4: generating (35s)
+  v3-leg-10.mp4: generating (48s)
+  v3-leg-10.mp4: generating (63s)
+  v3-leg-10.mp4: generating (78s)
+  v3-leg-10.mp4: generating (94s)
+[leg 10] ok taskId=3653827efd04049416c81101ad5371b4 charged=50 spent=1100/280
+{
+  "rev": 3,
+  "batch": "6b-8b-9-11",
+  "spent_rev": 200,
+  "spent_total": 1100,
+  "cap": 280,
+  "done": [
+    {
+      "leg": 10,
+      "taskId": "3653827efd04049416c81101ad5371b4",
+      "charged": 50
+    }
+  ]
+}
