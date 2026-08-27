@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Land-XI 검토 허브</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{--ink:#010102;--ink2:#4A4A4A;--mute:#8A8A8A;--line:#DDDDDD;--tint:#E8F1FF;--accent:#006DF7;--warn:#B42318}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);font:15px/1.6 Pretendard,"Noto Sans KR",system-ui,sans-serif}
+.w{max-width:1200px;margin:0 auto;padding:28px 32px 64px}
+h1{font-size:34px;margin:0 0 4px;letter-spacing:-.02em}
+h2{font-size:20px;margin:0 0 10px;letter-spacing:-.01em}
+.sub{color:var(--mute);font-size:13px}
+section{padding:26px 0;border-top:1px solid var(--line)}
+.eyebrow{font:600 11px/1 Inter,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin-bottom:8px}
+.dec{border-left:3px solid var(--accent);background:var(--tint);padding:14px 18px;margin:12px 0}
+.dec h3{margin:0 0 6px;font-size:16px}
+.dec .q{font-weight:600}
+.dec .ans{color:var(--ink2);font-size:13.5px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--mute);font-weight:600}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.st{display:inline-block;font:600 10.5px/1 Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:4px 6px;border:1px solid var(--line);white-space:nowrap}
+.st.new{border-color:var(--accent);color:var(--accent)}.st.old{color:var(--mute)}.st.run{border-color:#0FA9A0;color:#0FA9A0}
+.imgs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:10px}
+.imgs figure{margin:0}.imgs img,.wide img{width:100%;display:block;border:1px solid var(--line)}
+figcaption{font-size:12px;color:var(--mute);margin-top:5px}
+.note{font-size:13px;color:var(--ink2)}
+code{font:12px Inter,monospace;background:#F5F5F4;padding:1px 4px}
+</style>
+</head>
+<body><div class="w">
+<div class="eyebrow">Land-XI · 검토 허브 · 2026-08-27</div>
+<h1>봐야 할 것과 결정할 것 — 한 곳에</h1>
+<p class="sub">이 페이지 하나만 보시면 됩니다. "결정 필요"의 번호로 답해 주세요(예: "D1 재생성, D2 OK"). 화면 링크는 전부 이 사이트(GitHub Pages) 안입니다. 캔버스·선택 페이지도 여기서만 링크합니다.</p>
+
+<section>
+<div class="eyebrow">결정 필요</div>
+
+<div class="dec"><h3>D1 · 앵커 A05 재생성 여부</h3>
+<div class="q">A05(비닐하우스 앵커) 새 버전에 없던 도로가 생겼습니다. 1회 더 재생성할까요, 그대로 갈까요?</div>
+<div class="ans">봐야 할 것: 아래 A05 이전/새 버전 두 장. 답: "D1 재생성" 또는 "D1 그대로". 재생성이면 14.5크레딧, 네거티브에 road/asphalt/markings 추가.</div>
+<div class="imgs">
+<figure><img src="../../assets/proto/review/A05-old.jpg" alt="A05 이전"><figcaption>A05 이전(v3b) — 우상단 회색 패널·기둥(이것 때문에 Leg 5에 나무 상자가 생김)</figcaption></figure>
+<figure><img src="../../assets/proto/review/A05-new.jpg" alt="A05 새"><figcaption>A05 새(v3d) — 패널 사라짐, 대신 왼쪽에 도로(노란 빗금)가 생김</figcaption></figure>
+<figure><img src="../../assets/proto/review/A06b.jpg" alt="A06b"><figcaption>A06b 신설 중간 앵커(통과) — 지구본 이동을 "상승 → 여수로 미끄러짐" 두 leg로 나누기 위한 것</figcaption></figure>
+</div></div>
+
+<div class="dec"><h3>D2 · Leg 4·5·6·6b 영상 생성 GO</h3>
+<div class="q">D1이 정해지면 Leg 4(남원 평야)·5(비닐하우스)·6(상승)·6b(여수로) 4개를 생성합니다 — 200크레딧, leg당 1회.</div>
+<div class="ans">봐야 할 것: 아래 "Leg 4–6 1차 결과" 시트(왜 다시 하는지). 답: "D2 GO". 프롬프트 원문은 <a href="../film/anchors.html">앵커 갤러리</a> 각 장 아래에 있습니다.</div>
+<div class="wide"><img src="../../assets/proto/review/v3-legs-4-6-sheet.jpg" alt="Leg 4–6 1차 시트"></div>
+<div class="note">1차 판정: Leg 4 △(반투명 돔 유령 통과) · Leg 5 △(A05 패널이 나무 상자로) · Leg 6 ✕(상승 없이 제자리 모핑) → A05 수정 + 중간 앵커 A06b로 해결.</div></div>
+
+<div class="dec"><h3>D3 · 표·차트 스타일 선택</h3>
+<div class="q">"표·차트도 디자인된 그래픽이어야 한다"에 맞춰 같은 실데이터를 6가지로 그렸습니다. 하나 골라 주세요.</div>
+<div class="ans">봐야 할 것: <a href="../charts.html">표·차트 스타일 선택 페이지</a> (S1 등각 판 스택 · S2 판화/음각 · S3 실영상 셀 · S4 계측기 · S5 레이어드 페이퍼 · S6 라이트 3D). 각 블록의 <code>선택</code>을 누르거나 "D3 S3"처럼 답해 주세요.</div></div>
+
+<div class="dec"><h3>D4 · 프로젝트 원판 4장 검토</h3>
+<div class="q">목록 · 개요 · 데이터 · 학습 원판(집에서 만드신 3장 다듬음 + 학습 신규). OK면 남은 하위 화면(라벨링 편집·분석·배포/발행·삭제 확인) 원판 → 구현으로 갑니다.</div>
+<div class="ans">봐야 할 것: <a href="https://claude.ai/code/artifact/0f405cdd-037e-4d9b-ba02-edebc5978f76">디자인 캔버스</a> 5행 (B5-Projects · B5-Project-Overview · B5-Project-Data · B5-Project-Train). 답: "D4 OK" 또는 수정 사항.</div></div>
+</section>
+
+<section>
+<div class="eyebrow">확정된 것 (참고)</div>
+<table>
+<tr><th>항목</th><th>결정</th></tr>
+<tr><td>글꼴 · 톤</td><td><b>Paperlogy + Pretendard · T3(잉크 + 블루 액센트·틴트)</b> — 시스템 전체에 적용 중(<a href="../fonts.html">폰트 페이지</a>에서 고르신 조합)</td></tr>
+<tr><td>대시보드 골격</td><td>이등분 지도 그리드 스택(좌 AI 분석 결과 / 우 학습데이터 구축, 호버 콜아웃) — 구현 중</td></tr>
+<tr><td>데이터 관리 골격</td><td>Roboflow 격자 + B2 탭·드로어, 아카이브 표시 → 지도 레이어 — 구현 완료</td></tr>
+<tr><td>로그인</td><td>좌 실제 폼 / 우 디오라마 영상(인셋, 캡션 없음) + 실제 Land-XI·LX CI — 수정 중</td></tr>
+<tr><td>필름 구조</td><td>12 leg → 지구본 이동 구간에 중간 앵커(6b, 이후 8b)로 13–14 leg</td></tr>
+<tr><td>생성 규칙</td><td>1회 생성 원칙, 프롬프트 사전 공개, 앵커 → 확인 → 영상</td></tr>
+</table>
+</section>
+
+<section>
+<div class="eyebrow">화면 — 현행 사이트 (메인 → 로그인 → 대시보드 → 데이터 관리)</div>
+<table>
+<tr><th>화면</th><th>주소</th><th>상태</th><th>메모</th></tr>
+<tr><td>메인(스크럽 필름)</td><td><a href="../scrub/index.html">/landxi/proto/scrub/index.html</a></td><td><span class="st new">신형</span></td><td>Leg 1–6 AI(4–6은 재생성 예정) + 임시 7 + 여수 핸드오프 + 브랜드 마감. 루트 <code>/Main/</code>도 여기로</td></tr>
+<tr><td>로그인</td><td><a href="../login.html?logout">/landxi/proto/login.html</a></td><td><span class="st run">수정 중</span></td><td>이미 로그인 상태면 <code>?logout</code>을 붙여 보세요</td></tr>
+<tr><td>관리자 대시보드</td><td><a href="../dashboard.html">/landxi/proto/dashboard.html</a></td><td><span class="st run">신형 구현 중</span></td><td>지금은 구형이 뜹니다. 완료되면 로그인 뒤 신형</td></tr>
+<tr><td>데이터 관리</td><td><a href="../dataset.html?tab=archive">/landxi/proto/dataset.html</a></td><td><span class="st new">신형</span></td><td>아카이브 탭 → 타일 <code>표시</code> → 우측 지도 판에 레이어</td></tr>
+<tr><td>프로젝트</td><td>—</td><td><span class="st old">원판 단계</span></td><td>D4 검토 후 구현</td></tr>
+<tr><td>XI맵 · 분석 실행 · 카드 발행 · 서비스 지원/관리 · MY</td><td>—</td><td><span class="st old">미착수</span></td><td>프로젝트 다음 순서</td></tr>
+</table>
+</section>
+
+<section>
+<div class="eyebrow">필름 자료</div>
+<table>
+<tr><th>자료</th><th>주소</th></tr>
+<tr><td>타임라인(레그별 영상 재생·시간)</td><td><a href="../film/timeline.html">/landxi/proto/film/timeline.html</a></td></tr>
+<tr><td>앵커 갤러리 13장(프롬프트 포함)</td><td><a href="../film/anchors.html">/landxi/proto/film/anchors.html</a></td></tr>
+<tr><td>Leg 1–3 rev3 검수 시트</td><td><a href="../../assets/proto/review/v3-legs-1-3-rev3-sheet.jpg">이미지</a></td></tr>
+<tr><td>Leg 4–6 1차 검수 시트</td><td><a href="../../assets/proto/review/v3-legs-4-6-sheet.jpg">이미지</a></td></tr>
+<tr><td>앵커 A05/A06b 시트</td><td><a href="../../assets/proto/review/anchors-v3d-sheet.jpg">이미지</a></td></tr>
+</table>
+</section>
+
+<section>
+<div class="eyebrow">선택 · 원판</div>
+<table>
+<tr><th>페이지</th><th>주소</th><th>용도</th></tr>
+<tr><td>폰트 · 톤 후보 36종</td><td><a href="../fonts.html">/landxi/proto/fonts.html</a></td><td>결정됨(Paperlogy + Pretendard · T3) — 참고용</td></tr>
+<tr><td>표·차트 스타일 6종</td><td><a href="../charts.html">/landxi/proto/charts.html</a></td><td><b>D3</b></td></tr>
+<tr><td>디자인 캔버스(원판 전부)</td><td><a href="https://claude.ai/code/artifact/0f405cdd-037e-4d9b-ba02-edebc5978f76">claude.ai 아티팩트</a></td><td>B5 대시보드·데이터 관리·로그인·프로젝트 4장 (<b>D4</b>)</td></tr>
+<tr><td>GitHub 저장소</td><td><a href="https://github.com/LandXI-Web/Main/tree/plan1-foundation">plan1-foundation</a></td><td>10분마다 자동 배포</td></tr>
+</table>
+</section>
+
+<p class="sub">이 허브는 진행에 맞춰 갱신됩니다. 새 검토 요청은 항상 여기 "결정 필요"에 번호로 추가합니다.</p>
+</div></body></html>
