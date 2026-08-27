@@ -9,18 +9,16 @@
 
 <a class="lx-skip" href="#loginForm">본문 건너뛰기</a>
 
-<!-- 마스터: design-canvas/v2/B5-Login.dc.html (NOTES §14 · 2차 개정) — SPLIT-5050.
-     좌 = 원본 login.html 의 폼 1:1 · 우 = 디오라마 오프닝 필름(Leg 01) 풀블리드. -->
+<!-- 마스터: design-canvas/v2/B5-Login.dc.html (NOTES §14 · 3차 개정) — SPLIT-5050.
+     좌 = 실제 CI 두 개(좌상 Land-XI · 좌하 LX 락업)가 앵커, 폼은 우·하로 붙는다 · 우 = 필름 인셋 판(마진 56, 헤어라인). -->
 <div class="lg" id="lg">
 
   <!-- ══ 좌 — 흰 종이, 폼이 1급 객체 ═══════════════════════════════════════ -->
   <main class="lg-left">
 
+    <!-- 실제 Land-XI CI(공식 그라디언트 워드마크, 브랜드 예외 — 자기 색 허용). -->
     <a class="lg-brand" href="dive.html" aria-label="Land-XI 플랫폼 홈">
-      <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.4 18.6 10 10 18.6 1.4 10z" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M10 6.1 13.9 10 10 13.9 6.1 10z" fill="currentColor"/></svg>
-      <span class="lg-brand__wm">Land-XI 플랫폼</span>
-      <span class="lg-brand__div" aria-hidden="true"></span>
-      <span class="lg-brand__org">LX 한국국토정보공사</span>
+      <img class="lg-brand__ci" id="lgCiLandxi" src="../assets/brand/landxi-wordmark.png" alt="LAND-XI PLATFORM" width="306" height="17">
     </a>
 
     <div class="lg-head">
@@ -70,27 +68,18 @@
       <p class="lg-foot__row lg-foot__policy">
         <a class="lg-foot__ink" href="#privacy" data-policy="privacy">개인정보처리방침</a><span class="lg-sep" aria-hidden="true">|</span><a href="#terms" data-policy="terms">이용약관</a><span class="lg-sep" aria-hidden="true">|</span><a href="#email" data-policy="email">이메일무단수집거부</a>
       </p>
-      <p class="lg-foot__row lg-foot__legal"><span class="lg-foot__org">LX 한국국토정보공사</span><span class="lx-num">Copyright© LX. ALL RIGHTS RESERVED.</span></p>
+      <p class="lg-foot__row lg-foot__legal"><img class="lg-foot__ci" id="lgCiLx" src="../assets/brand/vector/lx-lockup.svg" alt="LX 한국국토정보공사" width="160" height="18"><span class="lx-num">Copyright© LX. ALL RIGHTS RESERVED.</span></p>
     </footer>
   </main>
 
-  <!-- ══ 우 — 디오라마 오프닝 필름(Leg 01 · 궤도), 마진 없이 풀블리드 ═════════
+  <!-- ══ 우 — 디오라마 오프닝 필름(Leg 01 · 궤도), 인셋 판(마진 56 · 헤어라인 · 캡션 0) ═══
        유휴 움직임은 이 루프 하나. prefers-reduced-motion 이면 포스터만. -->
-  <figure class="lg-film" id="lgPlate" aria-label="디오라마 오프닝 필름 — 모형 지구본과 위성">
+  <figure class="lg-film" id="lgPlate" aria-label="디오라마 오프닝 필름">
     <video class="lg-film__v" id="lgVideo" autoplay muted loop playsinline preload="auto"
            poster="../assets/proto/film/legs/w01.webp">
       <source src="../assets/proto/film/legs/w01-m.mp4" type="video/mp4" media="(max-width: 900px)">
       <source src="../assets/proto/film/legs/w01.mp4" type="video/mp4">
     </video>
-
-    <!-- 액자 안 흰 코너 브래킷 12 · 캡션 2줄. HUD 스티커 없음. -->
-    <span class="lx-bracket lx-bracket--tl" aria-hidden="true"></span>
-    <span class="lx-bracket lx-bracket--tr" aria-hidden="true"></span>
-    <span class="lx-bracket lx-bracket--bl" aria-hidden="true"></span>
-    <span class="lx-bracket lx-bracket--br" aria-hidden="true"></span>
-
-    <span class="lg-film__no lx-num" id="lgFilmNo">01 <i>/ 12</i> · 5.08 s</span>
-    <figcaption class="lg-film__cap" id="lgCapMeta">모형 지구본 · 위성 · AI 생성 필름 · kling v2-1-pro</figcaption>
   </figure>
 
 </div>

@@ -1,5 +1,6 @@
 /* Land-XI 로그인 — 마스터 design-canvas/v2/B5-Login.dc.html (NOTES §14 · 2차 개정).
-   SPLIT-5050: 좌 = 원본 login.html 의 폼 1:1(흰 종이, 마진 72) · 우 = 디오라마 오프닝 필름(Leg 01) 풀블리드.
+   SPLIT-5050(3차 개정): 좌 = 실제 CI 두 개가 앵커(좌상 Land-XI 워드마크 · 좌하 LX 락업), 폼(492)은 우·하로 붙어
+   판과의 간격 64 · 우 = 디오라마 오프닝 필름(Leg 01) 인셋 판(마진 56 → 608×788, 헤어라인, 캡션 0).
    서체 SUIT 500 / Pretendard 400 / Inter tabular · 헤어라인 · radius 0 · shadow 0 · 12px 바닥.
    액센트 #006DF7 은 아이디·비밀번호 포커스 밑줄 한 곳.
 
@@ -9,6 +10,8 @@
 :root{
   --lg-m:72px;                  /* 마스터 좌 마진 */
   --lg-col:492px;               /* 폼 폭 */
+  --lg-gap:64px;                /* 폼 오른끝 ↔ 필름 판 왼끝 */
+  --lg-inset:56px;              /* 필름 판 마진 */
   --lg-tint:#E8F1FF;            /* 필요 시 띠 색 — 현재 미사용 */
 }
 
@@ -21,16 +24,15 @@ body.lx{ overflow:hidden; background:var(--lx-paper); color:var(--lx-ink); }
 /* ── 좌 ───────────────────────────────────────────────────────────────────── */
 .lg-left{
   position:relative; display:flex; flex-direction:column; min-width:0;
-  padding:58px var(--lg-m) 40px;
+  /* 오른쪽 패딩 = 판 마진에서 폼 간격을 뺀 것 → 폼 오른끝이 판 왼끝에서 정확히 --lg-gap 떨어진다. */
+  padding:58px calc(var(--lg-gap) - var(--lg-inset)) 40px var(--lg-m);
 }
-.lg-brand{
-  display:flex; align-items:center; gap:12px; color:var(--lx-ink); text-decoration:none; width:max-content;
-}
-.lg-brand__wm{ font-family:var(--lx-display); font-weight:500; font-size:17px; line-height:20px; letter-spacing:-.01em; }
-.lg-brand__div{ width:1px; height:16px; background:var(--lx-hair); margin:0 4px; }
-.lg-brand__org{ font-size:12px; line-height:14px; letter-spacing:.04em; color:var(--lx-grey-2); }
+/* 실제 CI — 브랜드 예외: 공식 그라디언트 그대로(팔레트 법 밖). 높이 28 고정, 폭은 비율. */
+.lg-brand{ display:block; width:max-content; }
+.lg-brand__ci{ display:block; height:28px; width:auto; }
 
-.lg-head{ margin-top:100px; max-width:var(--lg-col); }
+/* 폼 블록은 우·하로 — 왼쪽 CI 와 판 사이 빈 공간을 없앤다. */
+.lg-head{ margin-top:160px; width:var(--lg-col); max-width:100%; margin-left:auto; }
 .lg-head__l{ margin:0; font-size:12px; line-height:14px; letter-spacing:.10em; text-transform:uppercase; color:var(--lx-grey-2); }
 .lg-h1{ margin:12px 0 0; font-family:var(--lx-display); font-weight:500; font-size:32px; line-height:40px; letter-spacing:-.02em; }
 .lg-sub{ margin:8px 0 0; font-size:14px; line-height:20px; letter-spacing:-.01em; color:var(--lx-grey-2); }
@@ -39,7 +41,7 @@ body.lx{ overflow:hidden; background:var(--lx-paper); color:var(--lx-ink); }
 .lg-banner::before{ content:""; display:inline-block; width:6px; height:6px; background:var(--lx-ink); margin-right:8px; vertical-align:1px; }
 
 /* ── 폼 — 밑줄 필드(박스 0). 포커스 = 밑줄이 액센트로 그어진다. ───────────── */
-.lg-form{ margin-top:44px; width:var(--lg-col); max-width:100%; }
+.lg-form{ margin-top:44px; width:var(--lg-col); max-width:100%; margin-left:auto; }
 .lx-field{ position:relative; padding-bottom:8px; margin-bottom:24px; }
 .lx-field__label{ display:block; font-size:12px; line-height:14px; letter-spacing:.01em; color:var(--lx-grey-2); }
 .lx-field.is-focus .lx-field__label{ color:var(--lx-ink); }
@@ -96,19 +98,12 @@ body.lx{ overflow:hidden; background:var(--lx-paper); color:var(--lx-ink); }
 .lg-foot__ink b{ font-weight:500; }
 .lg-foot__policy{ gap:8px; }
 .lg-foot__legal{ margin-top:22px !important; justify-content:space-between; }
-.lg-foot__org{ font-family:var(--lx-display); font-weight:500; letter-spacing:.06em; color:var(--lx-ink); }
+.lg-foot__legal{ align-items:center; }
+.lg-foot__ci{ display:block; height:18px; width:auto; }   /* 실제 LX 락업(민트 심볼 + 네이비 국문) — 브랜드 예외 */
 
-/* ── 우 — 필름 판, 풀블리드 ────────────────────────────────────────────────── */
-.lg-film{ position:relative; margin:0; overflow:hidden; background:var(--lx-ink); min-width:0; }
+/* ── 우 — 필름 판, 인셋(마진 56 → 1440 에서 608×788). 헤어라인 한 줄, radius 0, shadow 0, 캡션 0. ── */
+.lg-film{ position:relative; margin:var(--lg-inset); overflow:hidden; background:var(--lx-ink); min-width:0; border:1px solid var(--lx-hair); }
 .lg-film__v{ display:block; width:100%; height:100%; object-fit:cover; object-position:50% 50%; }
-.lx-bracket{ position:absolute; width:var(--lx-bracket); height:var(--lx-bracket); border:1px solid #FFFFFF; pointer-events:none; z-index:2; }
-.lx-bracket--tl{ left:24px; top:24px; border-right:0; border-bottom:0; }
-.lx-bracket--tr{ right:24px; top:24px; border-left:0; border-bottom:0; }
-.lx-bracket--bl{ left:24px; bottom:24px; border-right:0; border-top:0; }
-.lx-bracket--br{ right:24px; bottom:24px; border-left:0; border-top:0; }
-.lg-film__no{ position:absolute; right:48px; top:58px; font-size:12px; line-height:14px; letter-spacing:.06em; color:#FFFFFF; z-index:2; }
-.lg-film__no i{ font-style:normal; opacity:.6; }
-.lg-film__cap{ position:absolute; left:48px; bottom:58px; margin:0; font-size:12px; line-height:14px; letter-spacing:.02em; color:#FFFFFF; z-index:2; }
 
 /* 축소 모션 — 포스터만(JS 가 source 를 뗀다). */
 @media (prefers-reduced-motion: reduce){
@@ -119,11 +114,9 @@ body.lx{ overflow:hidden; background:var(--lx-paper); color:var(--lx-ink); }
 @media (max-width: 900px){
   body.lx{ overflow:auto; }
   .lg{ grid-template-columns:1fr; grid-template-rows:40vh auto; height:auto; min-height:100vh; }
-  .lg-film{ order:-1; min-height:40vh; }
+  .lg-film{ order:-1; margin:24px 24px 0; min-height:calc(40vh - 24px); }
   .lg-left{ padding:40px 24px 32px; }
   .lg-head{ margin-top:48px; }
-  .lg-form,.lg-foot{ width:100%; }
+  .lg-head,.lg-form,.lg-foot{ width:100%; }
   .lg-foot{ margin-top:48px; white-space:normal; }
-  .lg-film__no{ right:24px; top:44px; }
-  .lg-film__cap{ left:24px; bottom:44px; }
 }
