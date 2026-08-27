@@ -168,7 +168,7 @@ function projects() {
 // ======================================================================
 // 2. B5-Project-Overview — 히어로 776×436 + 큰 수 4 · 정보/구성원 = 드로어
 // ======================================================================
-function overview() {
+function overviewBody() {
   let s = back();
   s += disp(X0, 80, '비닐하우스 탐지', 40) + st(X0 + 4, 130, '학습 완료 · 다음 할 일 = 라벨링 3/10');
   // 원본 ③ 컨트롤 — 수정 · 구성원 초대 · 삭제(텍스트) · 목록(= ‹ 프로젝트 목록) · CTA 1 = 다음 할 일
@@ -198,8 +198,9 @@ function overview() {
   s += hl(DI, 630, DIW) + disp(DI, 646, '최근 활동', 15);
   [['2026-06-06', '라벨 1,674 필지 저장'], ['2025-07', '학습 완료 · best(Vinylhouse).pt']].forEach(([d, t], i) => { const y = 680 + i * 28; s += num(DI, y, d, 12, G) + txt(DI + 92, y, t, 13); });
   s += FOOT;
-  return page('B5 · 프로젝트 — 개요', s);
+  return s;
 }
+const overview = () => page('B5 · 프로젝트 — 개요', overviewBody());
 
 // ======================================================================
 // 3. B5-Project-Data — 파일 그리드 3열 248×150 · 데이터셋 띠 · 파일 추가 드로어
@@ -311,7 +312,247 @@ function train() {
   return page('B5 · 프로젝트 — 학습', s);
 }
 
+
+// ======================================================================
+// 6차 — 남은 하위 화면 4판 (라벨링 편집 · 분석 · 배포 · 삭제 확인) — 같은 규칙(이미지 우선 · 주석 0 · 검정 CTA 1)
+// 풀블리드 지도 = design-canvas/v2/img/pj-map-*.jpg (tools/design/map-crops-b5.py · namwon_2506 z19 로컬 타일 1384×852)
+// ======================================================================
+const ICONS = {
+  rect: '<rect x="3" y="4" width="14" height="12"/>',
+  circle: '<circle cx="10" cy="10" r="6.5"/>',
+  polygon: '<path d="M10 3l7 5-2.5 8h-9L3 8z"/>',
+  copy: '<path d="M7 7h10v10H7z"/><path d="M3 13V3h10"/>',
+  import: '<path d="M10 3v10M6 9l4 4 4-4M3 17h14"/>',
+  undo: '<path d="M7 5 3 9l4 4"/><path d="M3 9h9a5 5 0 0 1 0 10"/>',
+  close: '<path d="M4 4l12 12M16 4 4 16"/>',
+  search: '<circle cx="8.5" cy="8.5" r="5.75"/><path d="m12.75 12.75 4 4"/>',
+  globe: '<circle cx="10" cy="10" r="7"/><path d="M3 10h14M10 3c3 3 3 11 0 14M10 3c-3 3-3 11 0 14"/>',
+  ruler: '<path d="M3 13 13 3l4 4L7 17z"/><path d="M8 8l2 2M11 5l2 2M5 11l2 2"/>',
+  pen: '<path d="M4 16l2-6 7-7 4 4-7 7z"/><path d="M11 5l4 4"/>',
+  download: '<path d="M10 3v10M6 9l4 4 4-4M3 17h14"/>',
+  layers: '<path d="M10 3 3 7l7 4 7-4z"/><path d="M3 11l7 4 7-4"/>',
+  plus: '<path d="M10 4v12M4 10h12"/>',
+  minus: '<path d="M4 10h12"/>',
+  save: '<path d="M3 3h11l3 3v11H3z"/><path d="M6 3v5h7V3M6 17v-6h8v6"/>',
+  lock: '<rect x="5" y="9" width="10" height="8"/><path d="M7 9V6a3 3 0 0 1 6 0v3"/>',
+  chevL: '<path d="M12 4 6 10l6 6"/>',
+};
+const ico = (k, col = INK, sz = 16) => `<svg width="${sz}" height="${sz}" viewBox="0 0 20 20" fill="none" stroke="${col}" stroke-width="1.5" stroke-linejoin="miter" stroke-linecap="butt" style="flex:none">${ICONS[k]}</svg>`;
+// 아이콘 버튼(헤어라인) — 라벨 있으면 가로형
+const ibtn = (x, y, w, k, label = '', on = false) => `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:32px;border:1px solid ${on ? INK : H};background:${on ? T2 : '#FFFFFF'};display:flex;align-items:center;justify-content:${label ? 'flex-start' : 'center'};gap:7px;padding:0 ${label ? 9 : 0}px;font-size:12.5px;letter-spacing:-.01em;color:${INK};white-space:nowrap">${ico(k, INK, 15)}${label}</div>\n`;
+// 지도 우측 플로팅 툴바(원본 8: 검색 · 지구 · 측정 · 그리기 · 다운로드 · LX 레이어 · + · −)
+function mapTools(x, y) {
+  let s = '';
+  const g1 = ['search', 'globe', 'ruler', 'pen', 'download', 'layers'];
+  g1.forEach((k, i) => { s += div(x, y + i * 36, 36, 36, `background:#FFFFFF;border:1px solid ${H};border-top-width:${i ? 0 : 1}px;display:flex;align-items:center;justify-content:center`, ico(k, INK, 16) + (k === 'layers' ? `<span class="lab" style="position:absolute;left:0;right:0;bottom:2px;text-align:center;font-size:8px;color:${INK}">LX</span>` : '')); });
+  const y2 = y + 6 * 36 + 12;
+  ['plus', 'minus'].forEach((k, i) => { s += div(x, y2 + i * 36, 36, 36, `background:#FFFFFF;border:1px solid ${H};border-top-width:${i ? 0 : 1}px;display:flex;align-items:center;justify-content:center`, ico(k, INK, 16)); });
+  return s;
+}
+// 풀블리드 지도(1384×852 원판을 박스에 맞춰 잘라 넣음) + SVG 오버레이
+const mapPlate = (x, y, w, h, src, over = '', oy = 0, ox = 0) => `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;overflow:hidden;background:#EEE"><img src="${src}" alt="" style="position:absolute;left:${ox}px;top:${oy}px;width:1384px;height:852px;display:block">${over}</div>\n`;
+const tealPolys = (pts, oy = 0, fill = .12, ox = 0) => `<svg width="1384" height="852" viewBox="0 0 1384 852" style="position:absolute;left:${ox}px;top:${oy}px;display:block;pointer-events:none">` +
+  pts.map(p => `<polygon points="${p}" fill="rgba(15,169,160,${fill})" stroke="${TEAL}" stroke-width="1.5" stroke-linejoin="miter"/>`).join('') + `</svg>`;
+const mapTag = (x, y, t, oy = 0, ox = 0) => `<div class="n" style="position:absolute;left:${x + ox}px;top:${y + oy}px;height:18px;line-height:18px;padding:0 5px;background:${TEAL};color:#FFFFFF;font-size:11px;letter-spacing:.02em;white-space:nowrap">${t}</div>`;
+// 작은 대화상자(헤어라인 잉크 테두리)
+const dialog = (x, y, w, h, title, inner, tag = '') => div(x, y, w, h, `background:#FFFFFF;border:1px solid ${INK}`) +
+  disp(x + 20, y + 18, title + tag, 16) + `<div style="position:absolute;left:${x + w - 30}px;top:${y + 22}px">${ico('close', G, 12)}</div>\n` + hl(x + 20, y + 50, w - 40) + inner;
+// 라벨 폴리곤(pj-map-label 1384×852 좌표) — 파란 지붕 장동 1 · 소형 2 · 이랑 하우스 2
+const LABEL_PTS = ['158,486 388,336 468,410 244,566', '800,320 838,318 842,362 806,364', '736,182 792,186 796,300 742,302', '744,306 800,308 802,430 748,432', '716,132 748,130 750,178 718,180'];
+// 분석 결과 폴리곤(pj-map-analysis) — 하우스 이랑 4 (오프셋 -70 은 호출부에서)
+function stripPolys() {
+  const A = [175, 435], B = [335, 510], C = [85, 610], D = [240, 700];
+  const lerp = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+  const out = [];
+  for (let i = 0; i < 4; i++) {
+    const t0 = i / 4 + .02, t1 = (i + 1) / 4 - .02;
+    const a = lerp(A, B, t0), b = lerp(A, B, t1), c = lerp(C, D, t1), d = lerp(C, D, t0);
+    out.push([a, b, c, d].map(p => p.map(v => v.toFixed(0)).join(',')).join(' '));
+  }
+  return out;
+}
+
+// ======================================================================
+// 5. B5-Project-Labeling — `&did=` 편집 모드(풀블리드): 헤더 48 · 지도 1368 · 좌 영상 320 · 우 라벨 320
+// ======================================================================
+function labeling() {
+  let s = '';
+  // 헤더 48 — 프로젝트명 · 라벨링 · 영상명 · 닫기
+  s += txt(88, 15, '‹ 비닐하우스 탐지', 13, G) + disp(212, 13, '라벨링', 16) + txt(276, 16, '남원 농경지 2025.06 · 도엽 1 · 0.017 m/px', 12.5, G) + txt(1400, 15, '닫기', 13, G) + hl(72, 48, 1368);
+  // 지도 = 남원 2025.06 정사영상 실판 + 라벨 폴리곤(청록) + 번호표
+  const MY = 49, MH = 851;
+  const OX = 160, tags = [[244, 448, '#1 단동'], [748, 300, '#2 단동'], [796, 166, '#3 단동'], [802, 412, '#4 단동'], [750, 112, '#5 다동']];
+  s += mapPlate(72, MY, 1368, MH, 'pj-map-label.jpg', tealPolys(LABEL_PTS, 0, .12, OX) + tags.map(([x, y, t]) => mapTag(x, y, t, 0, OX)).join(''), 0, OX);
+  // 상단 툴바(원본 8) — 좌 드로어 오른쪽 408 부터 · 저장 = 판의 검정 CTA 1
+  const ty = 64;
+  s += ibtn(408, ty, 74, 'rect', '사각형', true) + ibtn(490, ty, 62, 'circle', '원형') + ibtn(560, ty, 74, 'polygon', '폴리곤') + ibtn(642, ty, 86, 'copy', '도형 복사') + ibtn(736, ty, 128, 'import', '공간 정보 불러오기') +
+    vl(876, ty + 4, 24) + ibtn(888, ty, 86, 'undo', '실행 취소') + cta(982, ty, 56, '저장') + ibtn(1046, ty, 56, 'close', '닫기');
+  // 지도 툴바 — 우 드로어 앞 1072
+  s += mapTools(1072, 116);
+  // 좌 드로어 320 — 영상 3(이름 · GSD · 라벨 수 · 날짜 · 상태어 · 복제) · 접기
+  s += div(72, MY, 320, MH, 'background:#FFFFFF') + vl(392, MY, MH, INK);
+  s += disp(88, 66, '영상', 15) + num(128, 68, '3', 14, ACC) + `<div style="position:absolute;left:366px;top:66px">${ico('chevL', G, 14)}</div>\n` + hl(88, 96, 288);
+  const imgs = [
+    ['남원 농경지 2025.04', 'tile-farm-clean.jpg', '0.011 m/px · 라벨 — · 2026.05.18', '마감', false, '시연'],
+    ['남원 농경지 2025.06', 'tile-gh-clean.jpg', '0.017 m/px · 라벨 1,674 · 2026.06.06', '라벨링됨', true],
+    ['남원 농경지 2025.10', 'pj-nw2510.jpg', '0.017 m/px · 라벨 0 · —', '미작업', false],
+  ];
+  imgs.forEach(([n, src, meta, stt, on, tg], i) => {
+    const y = 108 + i * 236;
+    if (on) s += div(80, y - 8, 304, 228, `background:${T1}`);
+    s += img(88, y, 288, 140, src, on ? brkIn(288, 140, ACC) : '');
+    s += disp(88, y + 150, n, 14) + num(88, y + 170, meta, 12, G) + st(88, y + 192, stt + (tg ? `<span class="tag">${tg}</span>` : ''), on ? '' : `color:${G}`) + txt(336, y + 190, '복제 ›', 12.5, INK);
+  });
+  // 우 드로어 320 — 라벨 목록(검색 · 체크 · 클래스 · 이름 #n · 작성자 · 형태 · ×) · 전체 선택 · 클래스 일괄 변경
+  s += div(1120, MY, 320, MH, 'background:#FFFFFF') + vl(1120, MY, MH, INK);
+  s += disp(1136, 66, '라벨', 15) + num(1176, 68, '1,674', 14, ACC) + search(1136, 96, 288, '라벨 검색') + hl(1136, 132, 288);
+  for (let i = 0; i < 16; i++) {
+    const y = 140 + i * 32, multi = i % 5 === 4, on = i === 2 || i === 3 || i === 4;
+    if (on) s += div(1121, y, 319, 32, `background:${T1}`);
+    s += chk(1136, y + 9, on) + div(1160, y + 10, 12, 12, `border:1px solid ${TEAL};background:${multi ? '#FFFFFF' : TEAL}`);
+    s += txt(1182, y + 7, `${multi ? '비닐하우스_다동' : '비닐하우스_단동'} <span class="n" style="color:${G}">#${i + 1}</span>`, 12.5) + txt(1318, y + 8, '—', 12, C) + txt(1346, y + 8, i % 3 === 1 ? '폴리곤' : '사각형', 12, G) + `<div style="position:absolute;left:1408px;top:${y + 10}px">${ico('close', C, 11)}</div>\n`;
+    s += hl(1136, y + 32, 288);
+  }
+  s += num(1136, 662, '… 1,674 행 · 스크롤', 12, C);
+  s += hl(1136, 818, 288) + chk(1136, 836, false) + txt(1158, 832, '전체 선택', 12.5, G) + st(1230, 836, '선택 3') + txt(1424 - 96, 832, '클래스 일괄 변경 ›', 13, INK, 'width:96px;text-align:right');
+  // 클래스 일괄 변경 — 작은 대화상자(원본 모달)
+  const dx = 768, dy = 604;
+  s += dialog(dx, dy, 320, 176, '클래스 일괄 변경',
+    lab(dx + 20, dy + 66, '선택 3건 → 클래스') + sel(dx + 20, dy + 86, 280, '비닐하우스_다동') +
+    hl(dx + 20, dy + 130, 280) + tb(dx + 190, dy + 140, '취소', false, `color:${G}`) + tb(dx + 244, dy + 140, '변경'));
+  return page('B5 · 프로젝트 — 라벨링 편집', s);
+}
+
+// ======================================================================
+// 6. B5-Project-Analysis — 분석 탭: 지도 풀블리드 + 좌 드로어(세그먼트 3 · 픽커 3단 · CTA) + 우 실행 목록 + 공유 설정
+// ======================================================================
+function analysis() {
+  let s = headCollapsed('분석');
+  const MY = 161, MH = 705, OY = -70, OX = 320;
+  // 지도 = 남원 2025.06 정사영상 + 선택한 완료 항목(#1)의 결과 폴리곤
+  const strips = stripPolys();
+  s += mapPlate(72, MY, 1368, MH, 'pj-map-analysis.jpg', tealPolys(strips, OY, .12, OX) + mapTag(346, 496, '#1 · 단동 4', OY, OX), OY, OX);
+  s += mapTools(1072, MY + 16);
+  // 좌 드로어 320 — 세그먼트 3 → `분석 실행`: 과제(고정) → 모델(종속) → 영상 픽커(실썸네일) → CTA
+  s += div(72, MY, 320, MH, 'background:#FFFFFF') + vl(392, MY, MH, INK);
+  const sy = 176;
+  s += `<div class="tab on" style="left:88px;top:${sy}px">분석 실행</div>\n` + div(88, sy + 28, 56, 2, `background:${INK}`) +
+    `<div class="tab" style="left:${168}px;top:${sy}px">실행중<span class="c">2</span></div>\n` + `<div class="tab" style="left:${244}px;top:${sy}px">완료<span class="c">1</span></div>\n` + hl(88, sy + 30, 288);
+  s += lab(88, 224, '1 · 분석 과제') + fld(88, 244, 288, `${ico('lock', G, 13)}<span>비닐하우스 탐지</span>`, `background:${T1};border-color:${T1}`);
+  s += lab(88, 290, '2 · 모델') + sel(88, 310, 288, '비닐하우스 v2.1 · F1 0.87');
+  s += lab(88, 356, '3 · 영상 · 아카이브');
+  const th = [['남원 농경지 2025.06', 'tile-gh-clean.jpg', true], ['남원 농경지 2025.04', 'tile-farm-clean.jpg'], ['남원 농경지 2025.08', 'pj-hero.jpg'], ['남원 농경지 2025.10', 'pj-nw2510.jpg'], ['남원 전역 2025.10', 'tile-ep-4.jpg'], ['국산리 드론 A68', 'tile-kuksan-1.jpg']];
+  th.forEach(([n, src, on], i) => {
+    const x = 88 + (i % 2) * 152, y = 376 + Math.floor(i / 2) * 108;
+    if (on) s += div(x - 6, y - 6, 148, 106, `background:${T1}`);
+    s += img(x, y, 136, 78, src, on ? brkIn(136, 78, ACC) : '') + txt(x, y + 84, n, 12, on ? INK : G, 'width:136px;overflow:hidden;text-overflow:ellipsis');
+    if (on) s += chk(x + 116, y + 6, true);
+  });
+  s += hl(88, 806, 288) + st(88, 782, '선택 1 · 남원 농경지 2025.06') + cta(88, 818, 288, '분석 실행');
+  // 우 드로어 320 — 실행 목록(실행중 2 · 완료 1) · 행 = 실썸네일 96×54 + 이름 + 상태어 · 5단계 진행선 · 완료 선택 = 지도 결과
+  s += div(1120, MY, 320, MH, 'background:#FFFFFF') + vl(1120, MY, MH, INK);
+  s += disp(1136, 178, '실행 목록', 15) + num(1210, 180, '3', 14, ACC) + hl(1136, 208, 288);
+  const runs = [
+    ['비닐하우스 탐지 #3', 'tile-farm-clean.jpg', '남원 농경지 2025.04', '분석중 · 3/5', 3, false, '시연'],
+    ['비닐하우스 탐지 #4', 'pj-nw2510.jpg', '남원 농경지 2025.10', '대기 · 1/5', 1, false, '시연'],
+    ['비닐하우스 탐지 #1', 'tile-gh-clean.jpg', '남원 농경지 2025.06 · 82분', '완료 · 단동 4', 5, true, '시연'],
+  ];
+  runs.forEach(([n, src, meta, stt, step, on, tg], i) => {
+    const y = 220 + i * 98;
+    if (on) s += div(1121, y - 8, 319, 96, `background:${T1}`);
+    s += img(1136, y, 96, 54, src, on ? poly(96, 54, GH, .8) + brkIn(96, 54, ACC) : '');
+    s += disp(1244, y, n, 13) + num(1244, y + 20, meta + (tg ? `<span class="tag">${tg}</span>` : ''), 12, G) + st(1244, y + 40, stt, step === 1 ? `color:${G}` : '');
+    s += div(1136, y + 64, 288, 1, `background:${H}`) + div(1136, y + 63, 288 * step / 5, 3, `background:${step === 5 ? TEAL : ACC}`);
+    s += hl(1136, y + 82, 288);
+  });
+  s += lab(1136, 522, '단계') + num(1176, 522, '대기 · 전처리 · 분석 · 후처리 · 완료', 12, G);
+  s += txt(1136, 556, '결과 다운로드 ›', 13, INK) + txt(1250, 556, '공유 설정 ›', 13, INK);
+  // 공유 설정 — 작은 대화상자(원본 모달: 기관·역할 체크 9 · 취소/저장)
+  const dx = 700, dy = 420;
+  const roles = [['LX 한국국토정보공사', 'LX 관리자', true], ['LX 한국국토정보공사', 'LX 일반 사용자', false], ['남원시청', '남원시청 관리자', true], ['남원시청', '사료작물 분석', false], ['남원시청', '농지 활용 분석', false], ['전라남도', '전라남도 관리자', false]];
+  let inner = txt(dx + 20, dy + 62, '분석 결과를 공유할 기관·역할을 선택하세요.', 12.5, G);
+  roles.forEach(([org, role, on], i) => { const y = dy + 92 + i * 28; inner += chk(dx + 20, y + 3, on) + txt(dx + 44, y, role, 13, on ? INK : G) + txt(dx + 204, y + 1, org, 12, C) + hl(dx + 20, y + 24, 320); });
+  inner += num(dx + 20, dy + 262, '+3 · 스크롤', 12, C) + hl(dx + 20, dy + 286, 320) + tb(dx + 250, dy + 296, '취소', false, `color:${G}`) + tb(dx + 304, dy + 296, '저장');
+  s += dialog(dx, dy, 360, 336, '공유 설정', inner, '<span class="st" style="font-size:12px;margin-left:10px;vertical-align:2px">비닐하우스 탐지 #1</span>');
+  s += FOOT;
+  return page('B5 · 프로젝트 — 분석', s);
+}
+
+// ======================================================================
+// 7. B5-Project-Deploy — 배포 탭: 세그먼트 2(발행 요청 1 · 모델 등록 0) + 우 드로어 720 = 발행 폼 13필드 + 학습 결과 픽커
+// ======================================================================
+function deploy() {
+  let s = headCollapsed('배포');
+  const W2 = 536, XR2 = X0 + W2;   // 본문 열 536(드로어 720 앞)
+  const sy = 176;
+  s += `<div class="tab on" style="left:${X0}px;top:${sy + 4}px">발행 요청<span class="c">1</span></div>\n` + div(X0, sy + 32, 58, 2, `background:${INK}`) +
+    `<div class="tab" style="left:${X0 + 92}px;top:${sy + 4}px">모델 등록<span class="c">0</span></div>\n` +
+    tb(XR2 - 96, sy, '카드 발행 요청', true, 'width:96px;text-align:center');
+  s += hl(X0, sy + 34, W2);
+  // 표 1행(원본 7열: 상태 · 과제명 · 학습 결과 · 모델명 · 과제 유형 · 요청자 · 요청일) — 좁은 열이라 2줄 행
+  const ry = 226;
+  s += st(X0, ry + 4, '대기') + disp(X0 + 48, ry, '비닐하우스 탐지 v2.1', 15) + num(XR2 - 100, ry + 3, '2026.06.08', 12, G, 'width:100px;text-align:right');
+  [['학습 결과', '비닐하우스 v2.1'], ['모델명', 'v2.1'], ['과제 유형', '신규 과제'], ['요청자', '—']].forEach(([k, v], i) => { const x = X0 + 48 + i * 122; s += lab(x, ry + 30, k) + txt(x, ry + 46, v, 12.5, i === 3 ? C : INK); });
+  s += hl(X0, ry + 74, W2) + `<span class="tag" style="position:absolute;left:${XR2 - 34}px;top:${ry + 46}px">시연</span>\n`;
+  // 모델 등록 0 — 빈 판(원본 "등록된 모델이 없습니다")
+  const ey = 340;
+  s += disp(X0, ey, '모델 등록', 14) + num(X0 + 70, ey + 1, '0', 13, C);
+  s += div(X0, ey + 30, W2, 300, `border:1px dotted ${C};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px`, ico('layers', C, 40) + `<span style="font-size:13px;color:${G}">등록된 모델이 없습니다</span>`);
+  // 우 드로어 720 — 발행 폼(원본 ai-publish-create.html 13필드 1:1)
+  const DX2 = 720, DI2 = 744, DIW2 = 672, CW = 320, C2 = DI2 + 352;
+  s += div(DX2, 64, 720, 836, 'background:#FFFFFF') + vl(DX2, 64, 836, INK) + disp(DI2, 86, '카드 발행 요청', 20) + `<div style="position:absolute;left:1404px;top:90px">${ico('close', G, 12)}</div>\n` + hl(DI2, 122, DIW2);
+  const auto = '<span class="tag">자동</span>';
+  const radio = (x, y, t, on) => `<div style="position:absolute;left:${x}px;top:${y}px;display:flex;align-items:center;gap:7px;font-size:13px;color:${on ? INK : G}"><span style="width:14px;height:14px;border:1px solid ${on ? INK : C};display:inline-block;position:relative">${on ? `<span style="position:absolute;left:3px;top:3px;width:6px;height:6px;background:${INK}"></span>` : ''}</span>${t}</div>\n`;
+  // 1행 — 과제 유형(라디오) · 모델명
+  s += lab(DI2, 138, '과제 유형') + radio(DI2, 160, '신규 과제', true) + radio(DI2 + 100, 160, '과제 고도화', false);
+  s += lab(C2, 138, '모델명') + fld(C2, 156, CW, '<span>v2.1</span>', `border-color:${INK}`);
+  // 2행 — 과제명(자동) · 학습 결과 선택(픽커)
+  s += lab(DI2, 200, '과제명' + auto) + fld(DI2, 218, CW, '<span>비닐하우스 탐지</span>', `background:${T1};border-color:${T1}`);
+  s += lab(C2, 200, '학습 결과') + fld(C2, 218, CW, `<span>비닐하우스 v2.1 · F1 0.87</span><span style="flex:1"></span><span style="color:${ACC}">선택 ›</span>`, `border-color:${ACC}`);
+  // 3행 — 탐지 형태(자동) · 데이터 유형(자동)
+  s += lab(DI2, 262, '탐지 형태' + auto) + fld(DI2, 280, CW, '<span>객체 탐지</span>', `background:${T1};border-color:${T1}`);
+  s += lab(C2, 262, '데이터 유형' + auto) + fld(C2, 280, CW, '<span>정사영상 (ortho)</span>', `background:${T1};border-color:${T1}`);
+  // 4행 — 클래스(자동 칩) · 권장 해상도
+  s += lab(DI2, 324, '클래스' + auto) + `<div style="position:absolute;left:${DI2}px;top:344px;display:flex;gap:6px"><span class="chip" style="background:${T1};border-color:${T1}">비닐하우스_단동</span><span class="chip" style="background:${T1};border-color:${T1}">비닐하우스_다동</span></div>\n`;
+  s += lab(C2, 324, '권장 해상도<span class="tag">추정</span>') + sel(C2, 342, CW, '≤ 0.02 m/px');
+  // 5·6행 — 소개 · 개발 목적(textarea)
+  s += lab(DI2, 388, '소개') + div(DI2, 406, DIW2, 52, `border:1px solid ${H};padding:8px 10px;font-size:13px;line-height:1.5`, '남원 농경지 정사영상에서 비닐하우스(단동·다동)를 자동 탐지');
+  s += lab(DI2, 474, '개발 목적') + div(DI2, 492, DIW2, 52, `border:1px solid ${H};padding:8px 10px;font-size:13px;color:${C}`, '개발 목적 입력');
+  // 7행 — 대시보드 썸네일 · 카드 썸네일(이미지 선택 ×2 · 실크롭)
+  s += lab(DI2, 562, '대시보드 썸네일 이미지') + img(DI2, 582, CW, 180, 'pj-hero.jpg', poly(CW, 180, HERO, 1) + brkIn(CW, 180, INK)) + txt(DI2, 770, '이미지 선택 ›', 12.5, INK) + num(DI2 + 100, 771, 'JPG · PNG · 300×260', 12, G);
+  s += lab(C2, 562, '카드 썸네일 이미지') + img(C2, 582, CW, 180, 'pj-greenhouse.jpg', poly(CW, 180, GH, 1)) + txt(C2, 770, '이미지 선택 ›', 12.5, INK) + num(C2 + 100, 771, 'JPG · PNG · 300×260', 12, G);
+  s += hl(DI2, 818, DIW2) + tb(DI2, 830, '목록', false, `color:${G}`) + tb(DI2 + 48, 830, '취소', false, `color:${G}`) + cta(1416 - 96, 826, 96, '발행 요청');
+  // 학습 결과 선택 — 작은 대화상자(원본 모달 픽커 3행)
+  const dx = 1000, dy = 236;
+  let inner = '';
+  [['비닐하우스 v2.1', '2026.05.18 · IoU 0.82 · F1 0.87', true], ['비닐하우스 v2.0', '2026.05.10 · IoU 0.78 · F1 0.83'], ['비닐하우스 v1.0', '2026.04.15 · IoU 0.71 · F1 0.76']].forEach(([n, m, on], i) => {
+    const y = dy + 64 + i * 52;
+    if (on) inner += div(dx + 1, y - 8, 358, 50, `background:${T1}`);
+    inner += chk(dx + 20, y + 6, !!on) + disp(dx + 44, y, n, 13) + num(dx + 44, y + 20, m, 12, G) + hl(dx + 20, y + 42, 320);
+  });
+  s += dialog(dx, dy, 360, 236, '학습 결과 선택', inner, '<span class="tag">시연</span>');
+  s += FOOT;
+  return page('B5 · 프로젝트 — 배포', s);
+}
+
+// ======================================================================
+// 8. B5-Project-Delete — 개요 위 삭제 확인(원본 NotifyUI.confirm 문구 그대로)
+// ======================================================================
+function del() {
+  let s = overviewBody();
+  s += div(72, 0, 1368, 900, 'background:rgba(1,1,2,.54)');
+  const w = 440, h = 196, x = 72 + (1368 - w) / 2, y = (900 - h) / 2;
+  s += div(x, y, w, h, 'background:#FFFFFF');
+  s += disp(x + 24, y + 22, '프로젝트 삭제', 18) + txt(x + 24, y + 66, '“비닐하우스 탐지” 프로젝트를 삭제할까요?', 14) + txt(x + 24, y + 92, '삭제 후에는 복구할 수 없습니다.', 13, G);
+  s += hl(x + 24, y + 136, w - 48) + tb(x + w - 24 - 72 - 40, y + 150, '취소', false, `color:${G}`) + cta(x + w - 24 - 72, y + 146, 72, '삭제');
+  return page('B5 · 프로젝트 — 삭제 확인', s);
+}
+
 wr('B5-Projects.dc.html', projects());
 wr('B5-Project-Overview.dc.html', overview());
 wr('B5-Project-Data.dc.html', data());
 wr('B5-Project-Train.dc.html', train());
+wr('B5-Project-Labeling.dc.html', labeling());
+wr('B5-Project-Analysis.dc.html', analysis());
+wr('B5-Project-Deploy.dc.html', deploy());
+wr('B5-Project-Delete.dc.html', del());
