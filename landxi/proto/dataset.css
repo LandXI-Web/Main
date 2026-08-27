@@ -194,6 +194,9 @@ body[data-size="S"] .cap .dt,body[data-size="M"] .cap .dt{ display:none; }
 /* XLSX 표 · ZIP 트리 */
 .xt{ position:absolute; left:10px; top:30px; right:10px; bottom:26px; border-collapse:collapse; font-size:14px; line-height:22px; color:var(--ink); overflow:hidden; display:block; }
 .xt td{ padding:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:80px; }
+/* S·M 열에서는 emd 열을 접는다 — 172px 에 4열은 넘친다(마스터 12.1 과 같이 3열) */
+body[data-size="S"] .th .xt td:nth-child(2),body[data-size="M"] .th .xt td:nth-child(2){ display:none; }
+body[data-size="S"] .th .xt td:first-child,body[data-size="M"] .th .xt td:first-child{ max-width:66px; }
 .xt tr:first-child{ color:var(--grey); border-bottom:1px solid var(--ink); }
 .xt tr + tr{ border-bottom:1px solid var(--line); }
 .xt tr:last-child{ border-bottom:0; color:var(--grey); }
@@ -208,8 +211,7 @@ body[data-size="S"] .cap .dt,body[data-size="M"] .cap .dt{ display:none; }
 .dz-s{ font-size:14px; letter-spacing:.03em; color:var(--grey); }
 body[data-size="S"] .th--drop svg,body[data-size="S"] .dz-s{ display:none; }
 .picked{ margin:4px 0 0; font-size:14px; color:var(--grey); line-height:1.4; word-break:break-all; }
-.more,.empty{ margin:14px 0 0; font-size:14px; color:var(--grey); letter-spacing:.02em; }
-.more button{ color:var(--accent); border-bottom:1px solid var(--accent); }
+.empty{ margin:14px 0 0; font-size:14px; color:var(--grey); letter-spacing:.02em; }
 #up-go{ margin-top:8px; }
 
 /* ══ 우 패널 ═══════════════════════════════════════════════════════════ */
@@ -219,7 +221,7 @@ body[data-size="S"] .th--drop svg,body[data-size="S"] .dz-s{ display:none; }
 #fig-wrap,#plate-wrap,#side-info{ flex:none; }
 #side-body{ flex:1; min-height:0; overflow:auto; scrollbar-width:thin; scrollbar-color:var(--grey-3) transparent; margin-top:12px; display:flex; flex-direction:column; }
 /* 판 — 지도(V-World + 레이어). 한 번만 mount. */
-#plate-wrap{ position:relative; width:100%; aspect-ratio:16/9; max-height:260px; flex:none; background:var(--ink); border:1px solid var(--line); overflow:hidden; }
+#plate-wrap{ position:relative; width:100%; aspect-ratio:16/9; max-height:220px; flex:none; background:var(--ink); border:1px solid var(--line); overflow:hidden; }
 #plate{ position:absolute; inset:0; background:#0A1018; }
 #plate canvas{ outline:none; }
 .maplibregl-ctrl-attrib,.maplibregl-ctrl-bottom-right,.maplibregl-ctrl-bottom-left{ display:none!important; }
@@ -232,7 +234,7 @@ body[data-size="S"] .th--drop svg,body[data-size="S"] .dz-s{ display:none; }
 #plate-none{ position:absolute; inset:0; margin:0; display:flex; align-items:center; justify-content:center; text-align:center; background:#fff; z-index:4;
   font-size:14px; color:var(--grey); border:1px dashed var(--grey-3); padding:20px; line-height:1.6; }
 /* 그림 액자 — 지도가 아닐 때(썸네일 · 실루엣 · 표 · 트리 · 빈 상태) */
-.fig{ position:relative; width:100%; aspect-ratio:16/9; max-height:260px; overflow:hidden; background:#fff; border:1px solid var(--line); flex:none; }
+.fig{ position:relative; width:100%; aspect-ratio:16/9; max-height:220px; overflow:hidden; background:#fff; border:1px solid var(--line); flex:none; }
 .fig img{ width:100%; height:100%; object-fit:cover; display:block; }
 .fig canvas{ width:100%; height:100%; display:block; }
 .fig .fc{ position:absolute; left:10px; right:10px; bottom:8px; font-size:14px; letter-spacing:.05em; color:#fff; z-index:2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -255,6 +257,8 @@ body[data-size="S"] .th .tagb,body[data-size="M"] .th .tagb{ display:none; }
 .fig .xt{ left:14px; right:14px; top:16px; font-size:15px; line-height:26px; }
 .fig .xt td{ max-width:none; }
 .fig .tree{ left:16px; top:14px; font-size:15px; line-height:22px; }
+/* 발행 폼이 열리면 판은 낮아진다 — 폼과 발행 버튼이 한 화면에 */
+#side[data-mode="pub"] #plate-wrap,#side[data-mode="pub"] .fig{ max-height:140px; }
 /* 기본 정보 — 두 열 dl */
 .info{ margin:12px 0 0; display:grid; grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr); column-gap:14px; row-gap:0; }
 .info dt.wide{ grid-column:1 / 2; }
@@ -269,6 +273,7 @@ body[data-size="S"] .th .tagb,body[data-size="M"] .th .tagb{ display:none; }
 .dt-b em{ font-style:normal; font-family:var(--font-num); font-size:14px; letter-spacing:.02em; color:var(--grey); }
 /* 액션 행 — 헤어라인 버튼 */
 .acts{ display:flex; align-items:center; gap:1px; margin-top:14px; flex-wrap:wrap; flex:none; }
+#side-acts{ margin-top:12px; padding-bottom:2px; }   /* 스크롤 몸통 밖 — 항상 보인다 */
 .acts:empty{ display:none; }
 .acts .act{ height:30px; line-height:28px; padding:0 12px; font-size:14px; letter-spacing:-.01em; color:var(--ink); border:1px solid var(--line); white-space:nowrap;
   transition:background var(--hov) var(--hove), border-color var(--hov) var(--hove), color var(--hov) var(--hove), transform var(--hov) var(--hove); }
