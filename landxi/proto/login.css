@@ -57,7 +57,7 @@ body.lx{ overflow:hidden; background:var(--lx-paper); color:var(--lx-ink); }
 .lg-lead{ margin:8px 0 0; font-size:16px; line-height:24px; letter-spacing:-.005em; color:var(--lx-grey-2); word-break:keep-all; }
 
 /* ── 폼 — 밑줄 필드(박스 0). 포커스 = 밑줄이 액센트로 그어진다. ───────────── */
-.lg-form{ margin-top:18px; }
+.lg-form{ margin-top:36px; }
 .lx-field{ position:relative; padding-bottom:6px; margin-bottom:10px; }
 .lx-field__label{ display:block; font-family:var(--font-display); font-weight:700; font-size:16px; line-height:22px; letter-spacing:-.01em; color:var(--lx-grey-2); }   /* 7차: Paperlogy 700 20(6차 Pretendard 26) */
 .lx-field.is-focus .lx-field__label{ color:var(--lx-ink); }
@@ -94,11 +94,11 @@ body.lx{ overflow:hidden; background:var(--lx-paper); color:var(--lx-ink); }
 .lg-find .lg-sep{ font-size:16px; line-height:22px; }
 
 /* 버튼 2 나란히 — 로그인(액센트 채움 — 로그인 페이지의 유일한 색 채움 CTA, NOTES §14 로그인 예외) · 계정 신청하기(헤어라인 잉크) */
-.lg-actions{ display:flex; gap:10px; margin-top:16px; }
+.lg-actions{ display:flex; gap:10px; margin-top:32px; }
 .lg-submit{
   display:flex; align-items:center; justify-content:center; gap:8px; flex:none; width:calc(50% - 5px); height:56px; margin:0; padding:0;
   border:0; border-radius:0; background:var(--lx-accent); color:#FFFFFF; cursor:pointer;
-  font-family:var(--lx-body); font-weight:500; font-size:20px; letter-spacing:.02em;
+  font-family:var(--font-display); font-weight:700; font-size:20px; letter-spacing:.02em;
 }
 .lg-submit[disabled]{ cursor:default; opacity:.6; }
 .lg-submit:focus-visible{ outline:1px solid var(--lx-accent); outline-offset:3px; }
@@ -107,7 +107,7 @@ body.lx{ overflow:hidden; background:var(--lx-paper); color:var(--lx-ink); }
 .lg-signup__a{
   display:flex; align-items:center; justify-content:center; flex:none; width:calc(50% - 5px); height:56px;
   border:1px solid var(--lx-ink); color:var(--lx-ink); text-decoration:none;
-  font-family:var(--lx-body); font-weight:500; font-size:20px; letter-spacing:.02em;
+  font-family:var(--font-display); font-weight:700; font-size:20px; letter-spacing:.02em;
   transition:color var(--lx-hover) var(--lx-hover-ease), border-color var(--lx-hover) var(--lx-hover-ease);
 }
 .lg-signup__a:hover{ color:var(--lx-accent); border-color:var(--lx-accent); }
