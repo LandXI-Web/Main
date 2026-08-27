@@ -9,8 +9,9 @@
 
 <a class="lx-skip" href="#loginForm">본문 건너뛰기</a>
 
-<!-- 마스터: design-canvas/v2/B5-Login.dc.html (NOTES §14 · 4차 개정) — 구 랜드XI(login.do) 구도.
-     페이지 중앙의 작은 카드 하나(1200×440): 좌 60% 필름 판 + 태그라인 · 우 40% 압축 폼.
+<!-- 마스터: design-canvas/v2/B5-Login.dc.html (NOTES §14 · 5차 개정) — 구 랜드XI(login.do) 구도.
+     페이지 중앙의 작은 카드 하나(1200×480): 좌 60% 필름 판(글자 0) · 우 40% 압축 폼(태그라인 → 로그인 → 필드 → 버튼).
+     흑 + 청 배합(5차): 워드마크 Land-XI · 로그인 CTA 채움 · 포커스 밑줄 · 찾기 링크 · 체크 = 액센트 #006DF7, 나머지 잉크/회색.
      카드 위 = 실제 Land-XI CI + 원본 소개 한 줄 · 카드 아래 = LX 락업 + 정책 링크 + Copyright. -->
 <div class="lg" id="lg">
   <div class="lg-wrap">
@@ -26,21 +27,22 @@
     <!-- ══ 카드 ══ -->
     <div class="lg-card" id="lgCard">
 
-      <!-- 좌 60% — 디오라마 오프닝 필름(Leg 01) + 태그라인(캡션 0). 유휴 움직임은 이 루프 하나. reduced-motion = 포스터. -->
+      <!-- 좌 60% — 디오라마 오프닝 필름(Leg 01). 필름 안 글자 0(발주 지시 5차). 유휴 움직임은 이 루프 하나. reduced-motion = 포스터. -->
       <figure class="lg-film" id="lgPlate" aria-label="디오라마 오프닝 필름">
         <video class="lg-film__v" id="lgVideo" autoplay muted loop playsinline preload="auto"
                poster="../assets/proto/film/legs/w01.webp">
           <source src="../assets/proto/film/legs/w01-m.mp4" type="video/mp4" media="(max-width: 900px)">
           <source src="../assets/proto/film/legs/w01.mp4" type="video/mp4">
         </video>
-        <figcaption class="lg-tag">
-          <strong class="lg-tag__t">Land-XI 플랫폼</strong>
-          <span class="lg-tag__s">고해상도 드론·항공·위성영상과 AI기술을 활용하여 공공서비스 혁신을 지원합니다.</span>
-        </figcaption>
       </figure>
 
       <!-- 우 40% — 압축 폼 -->
       <main class="lg-panel">
+        <!-- 태그라인(필름에서 옮겨 옴, 원본 카피) — Land-XI 는 액센트, 플랫폼은 잉크 -->
+        <p class="lg-tag">
+          <strong class="lg-tag__t"><span class="lg-tag__xi">Land-XI</span> 플랫폼</strong>
+          <span class="lg-tag__s">고해상도 드론·항공·위성영상과 AI기술을 활용하여 공공서비스 혁신을 지원합니다.</span>
+        </p>
         <h1 class="lg-h1">로그인</h1>
         <!-- ?logout — 원본 배너 문구. 잉크 한 줄. -->
         <p class="lg-banner" id="lgBanner" role="status" hidden>안전하게 로그아웃되었습니다.</p>
@@ -70,7 +72,7 @@
             </nav>
           </div>
 
-          <!-- 버튼 2 나란히 — 로그인(채운 CTA, 잉크) · 계정 신청하기(헤어라인). 원본의 로그인 · 회원가입 자리. -->
+          <!-- 버튼 2 나란히 — 로그인(채운 CTA, 액센트 — 로그인 예외) · 계정 신청하기(헤어라인 잉크). 원본의 로그인 · 회원가입 자리. -->
           <div class="lg-actions">
             <button type="submit" class="lg-submit" id="lgSubmit">
               <span class="lg-submit__t">로그인</span>

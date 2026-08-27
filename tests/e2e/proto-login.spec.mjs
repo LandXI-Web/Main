@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 
-// 마스터 design-canvas/v2/B5-Login.dc.html (NOTES §14 · 4차 개정) — 구 랜드XI(login.do) 구도.
-// 페이지 중앙의 작은 카드 하나(1200×440, 1440×900 에서 x 120–1320 · y 230–670): 좌 60% 필름 Leg 01 + 태그라인 · 우 40% 압축 폼.
+// 마스터 design-canvas/v2/B5-Login.dc.html (NOTES §14 · 5차 개정) — 구 랜드XI(login.do) 구도.
+// 페이지 중앙의 작은 카드 하나(1200×480, 1440×900 에서 x 120–1320 · y 210–690): 좌 60% 필름 Leg 01(글자 0) · 우 40% 태그라인 + 압축 폼.
+// 흑+청: 액센트 #006DF7 = 워드마크 Land-XI · 로그인 CTA 채움 · 포커스 밑줄 · 찾기 링크 · 체크.
+const ACCENT = 'rgb(0, 109, 247)';
 // 카드 위 = 실제 Land-XI CI + 원본 소개 한 줄 · 카드 아래 = LX 락업 + 정책 링크 + Copyright.
 const URL = 'proto/login.html';
 const SHOTS = 'shots/proto-login';
@@ -65,10 +67,17 @@ test('좌 — 원본 로그인 폼의 컨트롤·문구가 1:1 로 있다', asyn
   await expect(page.locator('.lg-contact')).toContainText('063-713-1218');
   await expect(page.locator('.lg-contact')).toContainText('평일 09:00~18:00');
   await expect(page.locator('[data-policy]')).toHaveText(['개인정보처리방침', '이용약관', '이메일무단수집거부']);
-  // 카드 위 — 원본 소개 한 줄(원본 카피, 장식이 아니다) · 판 위 태그라인(원본 카피).
+  // 카드 위 — 원본 소개 한 줄(원본 카피, 장식이 아니다) · 태그라인(원본 카피)은 필름이 아니라 우 패널 맨 위, 로그인 제목 위.
   await expect(page.locator('.lg-intro')).toHaveText('LAND-XI의 직관적인 인터페이스를 사용하여 NO-CODE 기반의 AI 학습모델을 구축하고 활용할 수 있습니다.');
-  await expect(page.locator('.lg-tag__t')).toHaveText('Land-XI 플랫폼');
-  await expect(page.locator('.lg-tag__s')).toHaveText('고해상도 드론·항공·위성영상과 AI기술을 활용하여 공공서비스 혁신을 지원합니다.');
+  await expect(page.locator('.lg-panel .lg-tag__t')).toHaveText('Land-XI 플랫폼');
+  await expect(page.locator('.lg-panel .lg-tag__s')).toHaveText('고해상도 드론·항공·위성영상과 AI기술을 활용하여 공공서비스 혁신을 지원합니다.');
+  await expect(page.locator('#lgPlate')).toHaveText('');                 // 필름 안 글자 0
+  await expect(page.locator('#lgPlate figcaption, #lgPlate .lg-tag')).toHaveCount(0);
+  const order = await page.evaluate(() => {
+    const t = document.querySelector('.lg-tag').getBoundingClientRect(), h = document.querySelector('.lg-h1').getBoundingClientRect(), p = document.querySelector('.lg-panel').getBoundingClientRect();
+    return { above: t.bottom <= h.top, inPanel: t.left >= p.left && t.right <= p.right };
+  });
+  expect(order).toEqual({ above: true, inPanel: true });
   // 실제 CI 2 — 조판/트레이싱 폴백이 아니라 공식 파일. 로드돼서 자연 크기가 있어야 한다. CI 는 카드 위 좌, 락업은 카드 아래 좌(x = 카드 x 120).
   const ci = await page.evaluate(() => {
     const g = (id) => { const i = document.querySelector(id); const r = i.getBoundingClientRect();
@@ -100,8 +109,11 @@ test('좌 — 원본 로그인 폼의 컨트롤·문구가 1:1 로 있다', asyn
     const t = getComputedStyle(document.querySelector('.lg-tag__t'));
     const i = getComputedStyle(document.querySelector('.lg-intro'));
     const s = getComputedStyle(document.querySelector('#lgSignup'));
+    const xi = getComputedStyle(document.querySelector('.lg-tag__xi'));
+    const ts = getComputedStyle(document.querySelector('.lg-tag__s'));
     return { fam: h.fontFamily, w: h.fontWeight, size: h.fontSize, btn: b.fontFamily, lbl: l.fontFamily,
-             tag: t.fontFamily, tagColor: t.color, intro: i.fontFamily, introSize: i.fontSize, introColor: i.color, signup: s.fontFamily,
+             tag: t.fontFamily, tagW: t.fontWeight, tagColor: t.color, xiColor: xi.color, tagS: ts.fontFamily, tagSSize: ts.fontSize, tagSColor: ts.color,
+             intro: i.fontFamily, introSize: i.fontSize, introColor: i.color, signup: s.fontFamily,
              loaded: document.fonts.check('700 28px Paperlogy') };
   });
   expect(type.fam).toMatch(/^"?Paperlogy"?/);
@@ -111,7 +123,12 @@ test('좌 — 원본 로그인 폼의 컨트롤·문구가 1:1 로 있다', asyn
   expect(type.lbl).toMatch(/^"?Pretendard"?/);
   expect(type.signup).toMatch(/^"?Pretendard"?/);
   expect(type.tag).toMatch(/^"?Paperlogy"?/);
-  expect(type.tagColor).toBe('rgb(255, 255, 255)');
+  expect(type.tagW).toBe('700');
+  expect(type.tagColor).toBe('rgb(1, 1, 2)');       // 플랫폼 = 잉크
+  expect(type.xiColor).toBe(ACCENT);                // Land-XI = 액센트
+  expect(type.tagS).toMatch(/^"?Pretendard"?/);
+  expect(type.tagSSize).toBe('13px');
+  expect(type.tagSColor).toBe('rgb(104, 104, 104)');
   expect(type.intro).toMatch(/^"?Pretendard"?/);
   expect(type.introSize).toBe('15px');
   expect(type.introColor).toBe('rgb(104, 104, 104)');
@@ -121,7 +138,7 @@ test('좌 — 원본 로그인 폼의 컨트롤·문구가 1:1 로 있다', asyn
   await page.screenshot({ path: `${SHOTS}/b5-login.png` });
 });
 
-test('카드 — 1200×440 이 화면 중앙, 좌 60% 필름(w01.mp4) + 우 40% 폼, 헤어라인 1, 캡션·브래킷 0', async ({ page }) => {
+test('카드 — 1200×480 이 화면 중앙, 좌 60% 필름(w01.mp4) + 우 40% 폼, 헤어라인 1, 캡션·브래킷 0', async ({ page }) => {
   await boot(page);
 
   await expect(page.locator('.lx-bracket')).toHaveCount(0);
@@ -155,11 +172,11 @@ test('카드 — 1200×440 이 화면 중앙, 좌 60% 필름(w01.mp4) + 우 40% 
   expect(p.srcs.some((s) => s.endsWith('/w01-m.mp4'))).toBe(true);
   expect(p.current === null || /w01\.mp4$/.test(p.current)).toBeTruthy();   // 1440 폭 = 데스크톱 소스
   expect(p.autoplay && p.muted && p.loop && p.playsinline).toBe(true);
-  // 카드 1200×440, 화면 정중앙(x 120–1320 · y 230–670).
+  // 카드 1200×480, 화면 정중앙(x 120–1320 · y 210–690).
   expect(p.card.w).toBe(1200);
-  expect(p.card.h).toBe(440);
+  expect(p.card.h).toBe(480);
   expect(p.card.x).toBe(120);
-  expect(p.card.y).toBe(230);
+  expect(p.card.y).toBe(210);
   expect(p.card.cx).toBe(p.vw / 2);
   expect(p.card.cy).toBe(p.vh / 2);
   expect(p.border).toBe('1px');
@@ -186,7 +203,7 @@ test('앰비언트 — 유휴 움직임은 필름 루프 하나, 5초 아무것�
   expect(t1).not.toBe(t0);
 });
 
-test('시스템 법 — 헤어라인 · radius 0 · shadow 0 · 12px 바닥 · 액센트는 포커스 밑줄 한 곳 · 스크롤 0', async ({ page }) => {
+test('시스템 법 — 헤어라인 · radius 0 · shadow 0 · 12px 바닥 · 액센트 = 워드마크·CTA·찾기 링크만 · 스크롤 0', async ({ page }) => {
   await boot(page);
   const m = await page.evaluate(() => {
     const all = [...document.querySelectorAll('.lg *')];
@@ -196,14 +213,16 @@ test('시스템 법 — 헤어라인 · radius 0 · shadow 0 · 12px 바닥 · �
       .map((n) => parseFloat(cs(n).fontSize)).filter((s) => s < 12);
     const radius = vis.filter((n) => cs(n).borderRadius !== '0px').length;
     const shadow = vis.filter((n) => cs(n).boxShadow !== 'none').length;
+    // 정지 상태의 액센트 = 워드마크 Land-XI(1) · 로그인 CTA(1) · 찾기 링크(2) — 그 밖에는 없다(밑줄 룰은 포커스 때만).
     const accent = vis.filter((n) => {
       const c = cs(n);
       return [c.color, c.backgroundColor, c.borderBottomColor].includes('rgb(0, 109, 247)') && !n.classList.contains('lx-field__rule');
-    }).length;
+    }).map((n) => n.className.split(' ')[0]).sort();
+    const gradient = vis.filter((n) => cs(n).backgroundImage !== 'none' && n.tagName !== 'IMG' && n.tagName !== 'VIDEO').length;
     const q = (s) => document.querySelector(s).getBoundingClientRect();
     const card = q('#lgCard'), head = q('.lg-head'), foot = q('.lg-foot'), sub = q('#lgSubmit'), sign = q('#lgSignup'), contact = q('.lg-contact');
     return {
-      small, radius, shadow, accent,
+      small, radius, shadow, accent, gradient,
       overX: document.documentElement.scrollWidth > innerWidth + 1,
       overY: document.documentElement.scrollHeight > innerHeight + 1,
       headGap: Math.round(card.top - head.bottom), footGap: Math.round(foot.top - card.bottom),
@@ -215,12 +234,18 @@ test('시스템 법 — 헤어라인 · radius 0 · shadow 0 · 12px 바닥 · �
       submitBg: getComputedStyle(document.querySelector('#lgSubmit')).backgroundColor,
       signBorder: getComputedStyle(document.querySelector('#lgSignup')).borderTopWidth,
       signBg: getComputedStyle(document.querySelector('#lgSignup')).backgroundColor,
+      signBorderColor: getComputedStyle(document.querySelector('#lgSignup')).borderTopColor,
+      findColor: getComputedStyle(document.querySelector('.lg-find__a')).color,
+      submitColor: getComputedStyle(document.querySelector('#lgSubmit')).color,
+      cardH: Math.round(card.height),
     };
   });
   expect(m.small).toEqual([]);
   expect(m.radius).toBe(0);
   expect(m.shadow).toBe(0);
-  expect(m.accent).toBe(0);              // 정지 상태에서 액센트 0 — 포커스 때 밑줄 1
+  expect(m.accent).toEqual(['lg-find__a', 'lg-find__a', 'lg-submit', 'lg-tag__xi']);
+  expect(m.gradient).toBe(0);
+  expect(m.cardH).toBe(480);
   expect(m.overX).toBe(false);
   expect(m.overY).toBe(false);
   expect(m.headGap).toBe(24);
@@ -232,9 +257,12 @@ test('시스템 법 — 헤어라인 · radius 0 · shadow 0 · 12px 바닥 · �
   expect(m.btnW).toBe(true);
   expect(m.btnGap).toBe(10);
   expect(m.contactBottom).toBeLessThan(m.cardBottom - 24);
-  expect(m.submitBg).toBe('rgb(1, 1, 2)');
+  expect(m.submitBg).toBe(ACCENT);                 // 로그인 CTA = 액센트 채움(로그인 예외)
+  expect(m.submitColor).toBe('rgb(255, 255, 255)');
   expect(m.signBorder).toBe('1px');
+  expect(m.signBorderColor).toBe('rgb(1, 1, 2)');  // 계정 신청하기 = 헤어라인 잉크
   expect(m.signBg).toBe('rgba(0, 0, 0, 0)');
+  expect(m.findColor).toBe(ACCENT);
 });
 
 test('포커스 — 액센트 헤어라인이 좌→우로 그어진다', async ({ page }) => {
@@ -345,6 +373,7 @@ test('아이디 저장 — 체크하면 다음 방문에 이메일이 채워져 
   await page.locator('#lgPw').fill('lx-2026');
   await page.locator('.lx-check').click();            // 실제 입력은 시각적으로 숨겨져 있다
   await expect(page.locator('.lx-check input')).toBeChecked();
+  expect(await page.evaluate(() => getComputedStyle(document.querySelector('.lx-check__box')).backgroundColor)).toBe(ACCENT);   // 체크 = 액센트
   await page.locator('#lgSubmit').click();
   await page.waitForFunction(() => localStorage.getItem('lx_saved_email') === 'hong@lx.or.kr', null, { timeout: 10000 });
 
@@ -373,7 +402,7 @@ test('축소 모션 — 필름 대신 포스터, 같은 내용이 전부 보인�
   await ctx.close();
 });
 
-test('1024 — 카드가 100%−64(960) 로 줄고 60/40 · 중앙 유지', async ({ browser }) => {
+test('1024 — 카드가 100%−64(960×480) 로 줄고 60/40 · 중앙 유지', async ({ browser }) => {
   const ctx = await browser.newContext({ viewport: { width: 1024, height: 900 } });
   const page = await ctx.newPage();
   await boot(page);
@@ -390,7 +419,7 @@ test('1024 — 카드가 100%−64(960) 로 줄고 60/40 · 중앙 유지', asyn
   });
   expect(g.x).toBe(32);
   expect(g.w).toBe(1024 - 64);
-  expect(g.h).toBe(440);
+  expect(g.h).toBe(480);
   expect(g.cy).toBe(450);
   expect(Math.abs(g.fw - (g.w - 2) * 0.6)).toBeLessThanOrEqual(1);
   expect(Math.abs(g.mw - (g.w - 2) * 0.4)).toBeLessThanOrEqual(1);
