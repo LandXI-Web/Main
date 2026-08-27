@@ -621,12 +621,20 @@
       "credits_balance_before": 9388.5,
       "at": "2026-08-27T08:48:17.579Z",
       "taskId": "a6eaabcfdc3b79ca73693203537d1d8c",
-      "state": "pending",
-      "task_created_at": "2026-08-27T08:48:22.403Z"
+      "task_created_at": "2026-08-27T08:48:22.403Z",
+      "ok": true,
+      "credits_reported": 50,
+      "credits_balance_after": 9338.5,
+      "credits_charged": 50,
+      "gen_ms": 720,
+      "wall_ms": 725502,
+      "mp4": "landxi/assets/proto/film/legs/gen/v3-leg-08b.mp4",
+      "mp4_bytes": 15650206,
+      "finished_at": "2026-08-27T09:00:27.512Z"
     }
   ],
-  "spent": 950,
-  "remaining_of_cap": 230,
+  "spent": 1000,
+  "remaining_of_cap": 180,
   "spent_by_rev": {
     "rev2": 150,
     "rev3": 150,
@@ -635,6 +643,6 @@
     "rev3-legs7": 50,
     "rev3-legs6-7-rev3f": 100,
     "rev3-legs8-8b": 100,
-    "rev3-legs6b-8b-9-11": 50
+    "rev3-legs6b-8b-9-11": 100
   }
 }
