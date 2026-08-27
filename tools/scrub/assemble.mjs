@@ -1,4 +1,4 @@
-// tools/scrub/assemble.mjs — 월드플라이트 7레그 조립기
+// tools/scrub/assemble.mjs — 월드플라이트 레그 조립기 (10 레그: 01–07 + 08·08b)
 //
 //   node tools/scrub/assemble.mjs            # 인코딩 + 포스터 + 씸검증 + 매니페스트
 //   node tools/scrub/assemble.mjs --verify   # 인코딩 생략, 씸 diff / 페이스만 재측정
@@ -8,7 +8,7 @@
 // 왜 legs.mjs 와 따로 있나
 //   legs.mjs 는 "하나의 결정론 필름(build/film/frames 575장)"을 6조각으로 자른다.
 //   이 파일은 서로 다른 렌더러가 구운 소스를 한 편으로 잇는다 —
-//     · src/v3-leg-01..07.mp4          (kling v2-1-pro AI 레그 1–7, 앵커 A01→A06→A06b→A07→A08. 이미 GOP 8/faststart
+//     · src/v3-leg-01..08b.mp4         (kling v2-1-pro AI 레그 1–8b, 앵커 A01→A06→A06b→A07→A08→A08b→A09. 이미 GOP 8/faststart
 //                                       규격으로 인코딩된 mp4 — 재인코딩 없이 그대로 싣는다. 06b 는 2026-08-27
 //                                       "D2 go" 로 들어온 중간 앵커 레그 — 고고도 곡률 구간)
 //     · build/film/frames              (MapLibre 결정론 필름 — 2026-08-27 레그 07 까지 AI 로 교체돼 지금은 쓰지 않는다.
@@ -30,7 +30,7 @@ import path from 'node:path';
 
 const FFMPEG = process.env.FFMPEG || 'ffmpeg';
 const FFPROBE = process.env.FFPROBE || 'ffprobe';
-const CRF = process.env.CRF || '20';
+const CRF = process.env.CRF || '22';   // 2026-08-27: 10 레그 데스크톱 예산(≤60 MB) 때문에 20 → 22
 const MCRF = process.env.MCRF || '25';
 const root = process.cwd();
 const OUT = path.resolve(root, 'landxi/assets/proto/film/legs');
@@ -164,6 +164,28 @@ const PLAN = [
     caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A07 → A08 · yeosu-marine 항공 1,857건 · 드론 2,078건',
     authored: true,
   },
+  // 08·08b (2026-08-27 "디오라마 D11을 진행한다", docs/superpowers/proto/2026-08-27-kie-legs-8-8b.md): 여수 → 울주 이동을
+  // 06/06b 와 같은 문법으로 쪼갰다. 08 은 방파제 발치(0.3 km)에서 수직 상승만(고도 단조 증가, 좌표는 국동항에 머문다),
+  // 08b 는 곡면을 따라 북동으로 활강+완만 하강해 울주 산지(A09: 수천 m, 피치 ~65°)에 닿는다. 카메라는 authored.
+  // 여수 인계 판(handoffFinal)은 07 끝에 그대로 남고(BAND_Y 가 08 씸 1/4 에서 닫힌다), 필름은 판 뒤로 이어진다.
+  {
+    id: '08', wp: '여수', label: '상승', place: '여수 상공 · 지구본 곡률', look: 'diorama',
+    mp4: 'landxi/assets/proto/film/legs/src/v3-leg-08.mp4',
+    gen: 'landxi/assets/proto/film/legs/gen/v3-leg-08.mp4',
+    a: C(127.7305, 34.5630, 0.3, 50, 5),
+    b: C(127.7400, 34.5700, 6.0, 60, 20),
+    caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A08 → A08b · 수직 상승',
+    authored: true,
+  },
+  {
+    id: '08b', wp: '울주', label: '울주 이동', place: '지구본 이동 · 여수 → 울주', look: 'diorama',
+    mp4: 'landxi/assets/proto/film/legs/src/v3-leg-08b.mp4',
+    gen: 'landxi/assets/proto/film/legs/gen/v3-leg-08b.mp4',
+    a: C(127.7400, 34.5700, 6.0, 60, 20),
+    b: C(129.1500, 35.5500, 4.5, 65, -40),
+    caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A08b → A09 · 울주 산지 능선',
+    authored: true,
+  },
 ];
 
 /* ── 인코딩 ─────────────────────────────────────────────────────────────────── */
@@ -208,8 +230,9 @@ function encode(L) {
   const d = path.join(OUT, `w${L.id}.mp4`);
   const m = path.join(OUT, `w${L.id}-m.mp4`);
   if (L.mp4) {
-    // 이미 스크럽 규격으로 인코딩된 레그 — 데스크톱본은 재인코딩 없이 그대로.
-    fs.copyFileSync(path.resolve(root, L.mp4), d);
+    // 2026-08-27 레그 8·8b: 10 레그 × src(crf 20) ≈ 63 MB 로 데스크톱 예산(≤60 MB)을 넘겼다. 데스크톱본은 kling 원본(gen)에서
+    // 같은 GOP 규격·crf ${CRF}(기본 22) 로 다시 굽는다 — src/ 는 kie post 산출물 그대로 두고, 씸 프레임은 이 인코딩본에서 뽑는다(씸 법칙 6).
+    run(['-y', '-i', path.resolve(root, L.gen || L.mp4), '-vf', 'scale=-2:1080:flags=lanczos', ...D_ARGS, d]);
     const MA = M_ARGS.map(a => (a.startsWith('scale=') ? 'scale=960:-2:flags=lanczos' : a));
     run(['-y', '-i', path.resolve(root, L.gen || L.mp4), ...MA, m]);
   } else {
@@ -312,16 +335,17 @@ const pTot = legs.reduce((s, L) => s + L.bytesPoster, 0);
 const manifest = {
   generatedAt: new Date().toISOString(),
   builder: 'tools/scrub/assemble.mjs',
-  source: '단일 소스 · kling v2-1-pro AI 레그 1–7(앵커 A01→A06→A06b→A07→A08). MapLibre 플레이스홀더 0',
+  source: '단일 소스 · kling v2-1-pro AI 레그 1–8b(앵커 A01→A06→A06b→A07→A08→A08b→A09). MapLibre 플레이스홀더 0',
   fps: FPS,
   fpsNote: '전 레그 24 fps(kling 출력 1932×1072→1080p 스케일). 레그별 legs[].fps / legs[].size.',
   filmSize: [1280, 720],
   aiLegs: {
-    ids: ['01', '02', '03', '04', '05', '06', '06b', '07'],
-    doc: ['docs/superpowers/proto/2026-08-26-kie-legs-1-3.md', 'docs/superpowers/proto/2026-08-27-kie-legs-4-6.md', 'docs/superpowers/proto/2026-08-27-kie-legs-4-6b.md', 'docs/superpowers/proto/2026-08-27-kie-leg-7.md'],
+    ids: ['01', '02', '03', '04', '05', '06', '06b', '07', '08', '08b'],
+    doc: ['docs/superpowers/proto/2026-08-26-kie-legs-1-3.md', 'docs/superpowers/proto/2026-08-27-kie-legs-4-6.md', 'docs/superpowers/proto/2026-08-27-kie-legs-4-6b.md', 'docs/superpowers/proto/2026-08-27-kie-leg-7.md', 'docs/superpowers/proto/2026-08-27-kie-legs-8-8b.md'],
     note: '미니어처 세계라 실카메라가 없다. startCamera/endCamera 는 앵커 문서의 고도대를 따라 authored 이고 ' +
       '(A02 고궤도 460 km · A03 ~30 km/피치 60° · A05 남원 분지 8.6 km · A06b 남원 상공 140 km · A07 여수 17 km · A08 국동항 방파제 발치 0.3 km/피치 50°), 레그 05 끝은 남원 ' +
-      '인계 판의 카메라, 레그 06 은 남원 위 수직 상승, 06b 는 여수 17 km 로 활강, 07 끝(국동항 방파제 발치 클로즈업)은 여수 인계 판·브랜드 마감의 카메라가 된다. ' +
+      '인계 판의 카메라, 레그 06 은 남원 위 수직 상승, 06b 는 여수 17 km 로 활강, 07 끝(국동항 방파제 발치 클로즈업)은 여수 인계 판의 카메라가 된다. ' +
+      '08 은 여수 위 수직 상승(0.3 → 6 km), 08b 는 울주 산지(129.15, 35.55 · 4.5 km/피치 65°)로 활강 — 필름은 여수 인계 판 뒤로 이어진다. ' +
       'cameraSource:"authored" 로 표시. 페이지 오버레이의 숫자는 전부 실데이터다.',
   },
   mobileSize: [960, 540],
@@ -340,7 +364,7 @@ const manifest = {
   cameraNote: '고도 = 1.5 × 720px × m/px (MapLibre 기본 fov 36.87°, 필름 뷰포트 720px). 줌·GSD 는 고도에서 유도.',
   flightProfile:
     '전 레그가 kling AI 미니어처라 실카메라가 없다 — 카메라는 전부 authored(aiLegs.note) 이고 하나의 단조 하강 프로파일로 ' +
-    '이어 붙였다(레그 06 상승·06b 이동 제외). AI 레그끼리의 tail→head 이음매는 앵커를 공유해 diff 0.2 % 대다. 계기 바늘이 스냅하지 않도록 페이지가 씸 밴드(0.16vh) ' +
+    '이어 붙였다(레그 06 상승·06b 이동, 08 상승·08b 이동 제외). AI 레그끼리의 tail→head 이음매는 앵커를 공유해 diff 0.2 % 대다. 계기 바늘이 스냅하지 않도록 페이지가 씸 밴드(0.16vh) ' +
     '위에서 두 레그의 판독값을 섞는다(scrub.js camAt). 인계 판은 그 덕분에 필름 마지막 ' +
     '프레임과 정확히 같은 카메라로 뜬다.',
   bytes: { desktop: dTot, mobile: mTot, poster: pTot,
@@ -360,19 +384,22 @@ const manifest = {
       '남원 인계는 그 앞에서 닫는다. 필름이 멈춘 그 자리에서 실지도가 같은 카메라로 이어받는다 — 1프레임 크로스페이드.',
   },
   handoffFinal: {
-    legIndex: legs.length - 1,
+    // 2026-08-27 레그 8·8b: 필름이 07 뒤로 이어지므로 여수 판은 "필름 최종 프레임"이 아니라 레그 07 끝(index 7)에 선다.
+    // scrub.js 는 legIndex 가 마지막 레그가 아니면 밴드를 [07 끝 −0.28vh, 07 끝 +씸/4] 로 닫는다(남원 판과 같은 문법).
+    // 브랜드 마감(ending.js)은 여전히 이 판의 줌으로 수축을 잰다 — 필름 끝(08b, 울주)에는 판이 없어 수축은 숨은 지도 위에서 잰다(임시, 09–12 까지).
+    legIndex: legs.findIndex(L => L.id === '07'),
     // 2026-08-27 AI 레그 7: 필름 끝 카메라 = 국동항 방파제(127.7305, 34.5630) 2.4 km. 판 중심을 그대로 방파제에 둔다.
     // rev.3f: 끝 카메라 0.3 km / 피치 50 (z18.82). 수축 끝 z18.2 프레임은 lon ±0.002° — 모자이크 공백과 더 멀다.
     // 이전 오프셋([127.736, 34.566], MapLibre 플레이스홀더 11.2 km 끝 카메라 기준)은 z13.02 수축 끝 프레임이 V-World
     // 모자이크 공백(서 lon<127.672 · 동 lon≥127.801)을 밟지 않기 위한 것이었다. 지금은 z15.8 → 수축 끝 z15.2 의
     // 1440×900 프레임이 lon ±0.02° 라 공백 네 곳 모두 프레임 밖이다(ending.js dzFor 주석의 실측 참조).
-    center: legs.at(-1).endCamera.center,
-    zoom: legs.at(-1).endCamera.zoom,
-    pitch: legs.at(-1).endCamera.pitch,
-    bearing: legs.at(-1).endCamera.bearing,
-    altitudeM: legs.at(-1).endCamera.altitudeM,
+    center: legs[7].endCamera.center,
+    zoom: legs[7].endCamera.zoom,
+    pitch: legs[7].endCamera.pitch,
+    bearing: legs[7].endCamera.bearing,
+    altitudeM: legs[7].endCamera.altitudeM,
     detections: '/landxi/assets/data/geo/results/yeosu-marine-2025-aerial.geojson',
-    note: '필름 최종 프레임의 카메라. 마감(귀환) 구간에서 여수 실지도가 이어받는다.',
+    note: '레그 07(여수 해안) 끝 카메라. 07 끝에서 여수 실지도가 이어받고, 08 이 밑에서 올라오면 닫힌다 — 필름은 판 뒤로 이어진다(08 상승 → 08b 울주).',
   },
 };
 
@@ -386,3 +413,9 @@ seams.forEach(s => console.log(`  ${s.from}→${s.to} 규칙${s.rule} diff=${s.p
 console.log('── 크기 ──');
 console.log(`  데스크톱 ${(dTot / MB).toFixed(2)} MB (≤60)  ·  모바일 ${(mTot / MB).toFixed(2)} MB (≤20)  ·  포스터 ${(pTot / MB).toFixed(2)} MB`);
 console.log(`  필름 ${manifest.filmSeconds}s  ·  트랙 ${manifest.filmVh}vh  ·  스페이서 ${manifest.spacerVh}vh`);
+
+// 풀 영상본(2026-08-27 "필름타임라인 한 공간에 풀 영상본도") — 매니페스트를 읽어 legs/full.mp4 를 굽고 manifest.full 을 적는다.
+if (!VERIFY_ONLY) {
+  console.log('── 풀 영상 ──');
+  execFileSync(process.execPath, [path.resolve(root, 'tools/film/full.mjs')], { stdio: 'inherit' });
+}

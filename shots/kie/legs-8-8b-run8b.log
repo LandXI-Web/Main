@@ -1,0 +1,37 @@
+
+[leg 8b] A08b -> A09  attempt 1  balance=9503
+[leg 8b] FAIL charged=0: createTask kling/v2-1-pro: {"code":500,"msg":"Input exceeds maximum length","data":null}
+[leg 8b] 무과금 오류 — 1회만 재시도
+
+[leg 8b] A08b -> A09  attempt 2  balance=9503
+[leg 8b] FAIL charged=0: createTask kling/v2-1-pro: {"code":500,"msg":"Input exceeds maximum length","data":null}
+ERROR: createTask kling/v2-1-pro: {"code":500,"msg":"Input exceeds maximum length","data":null}
+
+[leg 8b] A08b -> A09  attempt 1  balance=9503
+[leg 8b] pending taskId=b85c624f02d267943badb2a99ad65427 (원장 기록)
+  v3-leg-08b.mp4: generating (0s)
+  v3-leg-08b.mp4: generating (5s)
+  v3-leg-08b.mp4: generating (10s)
+  v3-leg-08b.mp4: generating (16s)
+  v3-leg-08b.mp4: generating (25s)
+  v3-leg-08b.mp4: generating (35s)
+  v3-leg-08b.mp4: generating (48s)
+  v3-leg-08b.mp4: generating (63s)
+  v3-leg-08b.mp4: generating (78s)
+  v3-leg-08b.mp4: generating (93s)
+  v3-leg-08b.mp4: generating (109s)
+[leg 8b] ok taskId=b85c624f02d267943badb2a99ad65427 charged=50 spent=900/110
+{
+  "rev": 3,
+  "batch": "8-8b",
+  "spent_rev": 100,
+  "spent_total": 900,
+  "cap": 110,
+  "done": [
+    {
+      "leg": "8b",
+      "taskId": "b85c624f02d267943badb2a99ad65427",
+      "charged": 50
+    }
+  ]
+}

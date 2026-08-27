@@ -129,7 +129,7 @@ function filmTimeAt(t) {
 }
 
 /* ── 계기판 ───────────────────────────────────────────────────────────────── */
-const WAYPOINTS = [];    // 이름 붙은 5개 지점 — 궤도 · 성층운 · 한반도 · 남원 · 여수
+const WAYPOINTS = [];    // 이름 붙은 6개 지점 — 궤도 · 성층운 · 한반도 · 남원 · 여수 · 울주
 function buildRail() {
   const seen = new Set();
   M.legs.forEach((L, i) => {
@@ -318,7 +318,7 @@ function handoff(t) {
       M.handoffFinal.zoom - endDzFor(M.handoffFinal.zoom));   // 마감 수축의 끝 줌을 예열
   }
   gate(PLATES[0], t >= BAND_N[0] && t <= BAND_N[1]);
-  gate(PLATES[1], t >= BAND_Y[0]);
+  gate(PLATES[1], t >= BAND_Y[0] && t <= BAND_Y[1]);
 }
 function gate(rec, want) {
   if (!rec) return;
@@ -385,11 +385,13 @@ const boot = async () => {
     s => parseFloat(s.getAttribute('data-sc-linger')) || 0);
 
   // 인계 구간 — #1 은 레그 05 의 마지막 0.14vh 부터 다음 씸의 1/4 까지,
-  //             #2 는 마지막 레그의 마지막 0.28vh 부터 끝까지.
+  //             #2 는 레그 07 의 마지막 0.28vh 부터 08 씸의 1/4 까지(07 이 마지막 레그였을 땐 끝까지).
   const hi = M.handoff.legIndex;
   BAND_N = [cum[hi][1] - 0.14, cum[hi][1] + SEAM / 4];
+  // 2026-08-27 레그 8·8b: 여수 판은 레그 07 끝에 서고 필름은 그 뒤로 이어진다(08 상승 → 08b 울주).
+  //   legIndex 가 마지막 레그가 아니면 남원 판과 같은 문법으로 닫는다 — 07 의 마지막 0.28vh 부터 08 씸의 1/4 까지.
   const fi = M.handoffFinal.legIndex;
-  BAND_Y = [cum[fi][1] - 0.28, total];
+  BAND_Y = fi + 1 < M.legs.length ? [cum[fi][1] - 0.28, cum[fi][1] + SEAM / 4] : [cum[fi][1] - 0.28, total];
 
   buildRail();
   collectCounts();

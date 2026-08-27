@@ -54,10 +54,14 @@ const NEG_MAX = 500;
 function trimNeg(s) {
   if (s.length <= NEG_MAX) return s;
   const base = SPEC.negative_base;
-  const specific = s.startsWith(base) ? s.slice(base.length).replace(/^\s*,\s*/, '') : '';
+  let specific = s.startsWith(base) ? s.slice(base.length).replace(/^\s*,\s*/, '') : '';
+  // A08b(2026-08-27): 앵커 고유 항목만으로 500자를 넘는다(specific 573자) → createTask "Input exceeds maximum length"(무과금 2회).
+  // 그때는 고유 항목도 뒤에서부터 쉼표 경계로 잘라 500자 안에 넣고, 공통 base 는 남는 자리에만 채운다. 역시 생략만 한다.
+  if (specific.length > NEG_MAX) { const c = specific.slice(0, NEG_MAX); specific = c.slice(0, c.lastIndexOf(',')).trim(); }
   const head = specific ? specific + ', ' : '';
   const room = NEG_MAX - head.length;
   const cut = base.slice(0, room);
+  if (cut.indexOf(',') < 0) return head.replace(/,\s*$/, '').trim();   // base 가 한 항목도 못 들어가면 고유 항목만
   return (head + cut.slice(0, cut.lastIndexOf(','))).trim();
 }
 

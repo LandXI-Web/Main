@@ -5,6 +5,7 @@
 //   node tools/scrub/shoot-strip.mjs --legs 4-6 --prefix legs-4-6   # 레그 4–6 + 씸 03→04 … 06→07
 //   node tools/scrub/shoot-strip.mjs --legs 4-6b --prefix legs-4-6b # 레그 4–6b + 씸 03→04 … 06b→07 (id 는 manifest)
 //   node tools/scrub/shoot-strip.mjs --legs 6b-7 --prefix legs-6b-7   # 레그 6b–7 + 씸 06→06b · 06b→07 + 여수 인계 밴드 3장
+//   node tools/scrub/shoot-strip.mjs --legs 7-8b --prefix legs-7-8b   # 레그 7–8b: 씸 06b→07 · 07 · 여수 인계 3장 · 08 · 씸 08→08b · 08b · 필름 끝
 //
 // 지점은 트랙 진행도(window.__scrub.seek 의 p)다. 씸 밴드(0.16vh)의 한가운데와 양끝을
 // 반드시 포함시킨다 — 이음매의 크로스페이드가 실제 스크린샷에서 어떻게 보이는지 보기 위해.
@@ -63,20 +64,26 @@ if (!LEGS) {
   const idx = k => { const i = M.legs.findIndex(l => l.id === norm(k)); if (i < 0) throw new Error('레그 없음 ' + k); return i; };
   const [a, b] = LEGS.split('-').map(idx);
   const id = i => M.legs[i].id;
+  // 여수 인계 #2 는 manifest.handoffFinal.legIndex 레그의 끝에 선다(2026-08-27 레그 8·8b 뒤로는 07 끝, 필름은 판 뒤로 이어진다).
+  // 그 레그가 범위에 들면 밴드(마지막 0.28vh ~ 다음 씸 1/4)의 앞·가운데·끝을 찍는다 — `--legs 7-8b` 는 07 → 인계 → 08 → 08b 순.
+  const fi = M.handoffFinal.legIndex;
   POINTS = [{ p: P(cum[a][0]), tag: `seam-${id(a - 1)}-${id(a)}-mid` }];
   for (let i = a; i <= b; i++) {
     POINTS.push({ p: P(cum[i][0] + 0.55), tag: `L${id(i)}-mid` });
-    if (i < b) POINTS.push({ p: P(cum[i][1]), tag: `seam-${id(i)}-${id(i + 1)}-mid` });
+    if (i === fi) {
+      POINTS.push({ p: P(cum[i][1] - 0.28 - seam / 2), tag: `handoff-${id(i)}-in` });
+      POINTS.push({ p: P(cum[i][1] - 0.14), tag: `handoff-${id(i)}-mid` });
+      POINTS.push({ p: P(cum[i][1]), tag: `handoff-${id(i)}-end` });
+    }
+    if (i < b && i !== fi) POINTS.push({ p: P(cum[i][1]), tag: `seam-${id(i)}-${id(i + 1)}-mid` });
   }
   if (b + 1 < M.legs.length) {
     POINTS.push({ p: P(cum[b][1] - seam / 2), tag: `seam-${id(b)}-${id(b + 1)}-in` });
     POINTS.push({ p: P(cum[b][1]), tag: `seam-${id(b)}-${id(b + 1)}-mid` });
     POINTS.push({ p: P(cum[b][1] + seam / 2), tag: `seam-${id(b)}-${id(b + 1)}-out` });
-  } else {
-    // 마지막 레그(--legs 6b-7, 2026-08-27): 다음 씸이 없다. 대신 여수 인계 #2 밴드(마지막 0.28vh)의 앞·가운데·끝을 찍는다.
-    POINTS.push({ p: P(cum[b][1] - 0.28 - seam / 2), tag: `handoff-${id(b)}-in` });
-    POINTS.push({ p: P(cum[b][1] - 0.14), tag: `handoff-${id(b)}-mid` });
-    POINTS.push({ p: P(cum[b][1]), tag: `handoff-${id(b)}-end` });
+  } else if (b !== fi) {
+    // 마지막 레그에 인계 판이 없으면(08b 울주) 필름 끝 프레임을 한 장 찍는다.
+    POINTS.push({ p: P(cum[b][1]), tag: `film-end-${id(b)}` });
   }
 }
 
