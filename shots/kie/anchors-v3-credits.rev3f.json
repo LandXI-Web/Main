@@ -1,0 +1,65 @@
+{
+  "session": "rev3f-2026-08-27",
+  "cap": 30,
+  "per_still_expected": 14.5,
+  "started": "2026-08-27T04:59:21.058Z",
+  "runs": [
+    {
+      "id": "A06b",
+      "reroll": true,
+      "refs": [
+        "landxi/assets/proto/film/legs/anchors-v3/A06.png",
+        "landxi/assets/proto/film/legs/anchors-v3/A07.png"
+      ],
+      "prompt_sha256": "8640c8fc0dcf3dfc",
+      "credits_balance_before": 9696.5,
+      "at": "2026-08-27T04:59:21.398Z",
+      "taskId": "aa89b0778d520ff7202a4e80511f7c72",
+      "model": "seedream/5-pro-image-to-image",
+      "task_created_at": "2026-08-27T04:59:25.982Z",
+      "ok": true,
+      "credits_reported": 14.5,
+      "credits_balance_after": 9682,
+      "credits_charged": 14.5,
+      "gen_ms": 146,
+      "wall_ms": 159237,
+      "png": "landxi/assets/proto/film/legs/anchors-v3/A06b.png",
+      "png_bytes": 7451493,
+      "finished_at": "2026-08-27T05:02:05.209Z",
+      "jpg": "landxi/assets/proto/film/legs/anchors-v3/A06b.jpg",
+      "jpg_bytes": 428007
+    },
+    {
+      "id": "A08",
+      "reroll": true,
+      "refs": [
+        "landxi/assets/proto/film/legs/anchors-v3/A07.png",
+        "landxi/assets/proto/crops/yeosu-marine-2026-drone/1.jpg"
+      ],
+      "prompt_sha256": "2e6ddc1d225be04e",
+      "credits_balance_before": 9682,
+      "at": "2026-08-27T05:02:13.347Z",
+      "taskId": "8cb119703bb7dc89909e3557fa2d0db8",
+      "model": "seedream/5-pro-image-to-image",
+      "task_created_at": "2026-08-27T05:02:15.813Z",
+      "ok": true,
+      "credits_reported": 14.5,
+      "credits_balance_after": 9667.5,
+      "credits_charged": 14.5,
+      "gen_ms": 75,
+      "wall_ms": 80098,
+      "png": "landxi/assets/proto/film/legs/anchors-v3/A08.png",
+      "png_bytes": 6852186,
+      "finished_at": "2026-08-27T05:03:35.900Z",
+      "jpg": "landxi/assets/proto/film/legs/anchors-v3/A08.jpg",
+      "jpg_bytes": 241504
+    }
+  ],
+  "spent": 29,
+  "rerolls": [
+    "A06b",
+    "A08"
+  ],
+  "prev_ledger": "shots/kie/anchors-v3-credits.rev3e.json",
+  "remaining_of_cap": 1
+}

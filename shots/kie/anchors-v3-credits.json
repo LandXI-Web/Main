@@ -1,65 +1,39 @@
 {
-  "session": "rev3f-2026-08-27",
-  "cap": 30,
+  "session": "rev3g-2026-08-27",
+  "cap": 20,
   "per_still_expected": 14.5,
-  "started": "2026-08-27T04:59:21.058Z",
+  "started": "2026-08-27T05:18:32.257Z",
   "runs": [
     {
-      "id": "A06b",
-      "reroll": true,
+      "id": "A08b",
+      "reroll": false,
       "refs": [
-        "landxi/assets/proto/film/legs/anchors-v3/A06.png",
-        "landxi/assets/proto/film/legs/anchors-v3/A07.png"
+        "landxi/assets/proto/film/legs/anchors-v3/A08.png",
+        "landxi/assets/proto/film/legs/anchors-v3/A09.png"
       ],
-      "prompt_sha256": "8640c8fc0dcf3dfc",
-      "credits_balance_before": 9696.5,
-      "at": "2026-08-27T04:59:21.398Z",
-      "taskId": "aa89b0778d520ff7202a4e80511f7c72",
+      "prompt_sha256": "fe5137dbebf8721c",
+      "credits_balance_before": 9617.5,
+      "at": "2026-08-27T05:18:32.622Z",
+      "taskId": "5b44de5f56b09929254cd1e010b89361",
       "model": "seedream/5-pro-image-to-image",
-      "task_created_at": "2026-08-27T04:59:25.982Z",
+      "task_created_at": "2026-08-27T05:18:36.233Z",
       "ok": true,
       "credits_reported": 14.5,
-      "credits_balance_after": 9682,
+      "credits_balance_after": 9553,
       "credits_charged": 14.5,
-      "gen_ms": 146,
-      "wall_ms": 159237,
-      "png": "landxi/assets/proto/film/legs/anchors-v3/A06b.png",
-      "png_bytes": 7451493,
-      "finished_at": "2026-08-27T05:02:05.209Z",
-      "jpg": "landxi/assets/proto/film/legs/anchors-v3/A06b.jpg",
-      "jpg_bytes": 428007
-    },
-    {
-      "id": "A08",
-      "reroll": true,
-      "refs": [
-        "landxi/assets/proto/film/legs/anchors-v3/A07.png",
-        "landxi/assets/proto/crops/yeosu-marine-2026-drone/1.jpg"
-      ],
-      "prompt_sha256": "2e6ddc1d225be04e",
-      "credits_balance_before": 9682,
-      "at": "2026-08-27T05:02:13.347Z",
-      "taskId": "8cb119703bb7dc89909e3557fa2d0db8",
-      "model": "seedream/5-pro-image-to-image",
-      "task_created_at": "2026-08-27T05:02:15.813Z",
-      "ok": true,
-      "credits_reported": 14.5,
-      "credits_balance_after": 9667.5,
-      "credits_charged": 14.5,
-      "gen_ms": 75,
-      "wall_ms": 80098,
-      "png": "landxi/assets/proto/film/legs/anchors-v3/A08.png",
-      "png_bytes": 6852186,
-      "finished_at": "2026-08-27T05:03:35.900Z",
-      "jpg": "landxi/assets/proto/film/legs/anchors-v3/A08.jpg",
-      "jpg_bytes": 241504
+      "gen_ms": 152,
+      "wall_ms": 156312,
+      "png": "landxi/assets/proto/film/legs/anchors-v3/A08b.png",
+      "png_bytes": 6926509,
+      "finished_at": "2026-08-27T05:21:12.523Z",
+      "jpg": "landxi/assets/proto/film/legs/anchors-v3/A08b.jpg",
+      "jpg_bytes": 265231,
+      "credits_charged_balance_diff": 64.5,
+      "charge_note": "잔액 차액 64.5 = 이 스틸 14.5 + 동시 진행 중인 leg 영상 세션(legs-v3.mjs) 과금 50. credits_reported=14.5 를 채택."
     }
   ],
-  "spent": 29,
-  "rerolls": [
-    "A06b",
-    "A08"
-  ],
-  "prev_ledger": "shots/kie/anchors-v3-credits.rev3e.json",
-  "remaining_of_cap": 1
+  "spent": 14.5,
+  "rerolls": [],
+  "prev_ledger": "shots/kie/anchors-v3-credits.rev3f.json",
+  "remaining_of_cap": 5.5
 }
