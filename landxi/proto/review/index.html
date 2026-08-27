@@ -33,7 +33,7 @@ code{font:12px Inter,monospace;background:#F5F5F4;padding:1px 4px}
 </style>
 </head>
 <body><div class="w">
-<div class="eyebrow">Land-XI · 검토 허브 · 2026-08-27 · 최근 갱신 15:25</div>
+<div class="eyebrow">Land-XI · 검토 허브 · 2026-08-27 · 최근 갱신 16:05</div>
 <h1>봐야 할 것과 결정할 것 — 한 곳에</h1>
 <p class="sub">이 페이지 하나만 보시면 됩니다. 원판은 <a href="masters.html">원판 갤러리</a>(GitHub 버전)에서 봅니다. "결정 필요"의 번호로 답해 주세요(예: "D1 재생성, D2 OK"). 화면 링크는 전부 이 사이트(GitHub Pages) 안입니다. 캔버스·선택 페이지도 여기서만 링크합니다.</p>
 
@@ -81,9 +81,10 @@ code{font:12px Inter,monospace;background:#F5F5F4;padding:1px 4px}
 <figure><img src="../../assets/proto/review/A07-new.jpg" alt="A07 새"><figcaption>A07 새 — Leg 7 시작 프레임</figcaption></figure>
 <figure><img src="../../assets/proto/review/A08.jpg" alt="A08"><figcaption>A08 — Leg 7 끝 프레임(긴 직선 방파제·해안 스티로폼)</figcaption></figure>
 </div></div>
-<div class="dec"><h3>D8 · 울주 이동(Leg 8 → 8b) 중간 앵커 A08b 생성 여부</h3>
+<div class="dec" style="border-left-color:#0FA9A0;background:#F1FAF9"><h3>D8 · 중간 앵커 A08b — 생성 완료(○)</h3>
 <div class="q">6/6b와 같은 방식: A08(여수 해안)에서 곧장 A09(울주 산악)로 가면 모핑이 나므로, "상승해 곡면이 보이고 영남 산악이 멀리 보이는" 중간 앵커 A08b를 1장 뽑아(14.5) Leg 8(상승)·8b(울주로 미끄러짐)로 나눕니다. 필름은 14 leg ≈ 71 s.</div>
-<div class="ans">답: "D8 GO"(A08b 스틸 1회 → 확인 → Leg 8·8b 영상 100) 또는 "D8 A07 재생성 먼저"(방파제 통일 후 Leg 7 재생성 50 + 위).</div></div>
+<div class="ans">여수 해안 위로 상승한 시점 · 곡면 · 멀리 영남 산악 · 소품 없음. 아래 D11에서 영상 GO.</div>
+<div class="wide"><img src="../../assets/proto/review/anchors-v3g-sheet.jpg" alt="A08 | A08b | A09"></div></div>
 <div class="dec"><h3>D9 · Leg 6 · 6b · 7 재생성 GO (앵커 A06b · A08 새 버전 반영)</h3>
 <div class="q">06 지적(비닐하우스 유지) → A06b를 "같은 군락 그대로, 카메라만 상승"으로, 07 지적(해안 쓰레기 줌인) → A08을 "방파제 아래 해안 클로즈업, 스티로폼·부표 가득"으로 재생성했습니다. 이 앵커로 Leg 6(A06→A06b) · 6b(A06b→A07) · 7(A07→A08) 3개를 다시 뽑습니다 — 150크레딧, leg당 1회.</div>
 <div class="ans">답: "D9 GO". 프롬프트(변경분): Leg 6 = <em>… the greenhouse cluster stays the same and stays centre-left in frame (it neither shrinks away nor changes), the quilt and river stretch out around it, the ground curls into the arc of a model world …</em> / Leg 7 = <em>… the camera dives in one smooth continuous descent toward the shore at the foot of the breakwater, dropping fast and steadily and tilting down, until the grey sand strand with its many white polystyrene drifts and buoys fills the frame …</em></div>
@@ -91,6 +92,9 @@ code{font:12px Inter,monospace;background:#F5F5F4;padding:1px 4px}
 <div class="dec"><h3>D10 · 분석 서비스 원판 3장 검토</h3>
 <div class="q">원본 31 상태 전수 캡처 기준(기능 1:1). 서비스 홈(KPI 5 + 실결과 증거 격자 + 준비 중 10) · 분석 실행(과제 → 모델 → 영상 선택 → 실행 워크플로우, 한반도 풋프린트 지도) · 결과(풀블리드 정사영상 + 스캔→브래킷→DETECTED 카운트업, 실행중/완료 목록, 결과 요약·신뢰도 게이지).</div>
 <div class="ans">봐야 할 것: <a href="masters.html">원판 갤러리</a> "검토 중" (B5-Analysis-List · Run · Result). 답: "D10 OK" 또는 수정 사항. 데이터 확인 필요 1건: 비닐하우스 <b>9,664동</b>(services) vs <b>1,674필지</b>(results) — 대시보드/필름은 둘 다 표기 중.</div></div>
+<div class="dec"><h3>D11 · Leg 8(A08→A08b 상승) · 8b(A08b→A09 울주로) 영상 생성 GO</h3>
+<div class="q">100크레딧, leg당 1회. 6/6b와 같은 구조. Leg 8b는 A09의 마을·방파제 위치가 A08b와 달라 "자라 들어올" 위험이 있어, 결과에 따라 A09 1회 재생성이 필요할 수 있습니다.</div>
+<div class="ans">답: "D11 GO". 프롬프트(원문): Leg 8 = <em>The shore, the breakwater arm and the moored fishing-boat models stay in frame throughout … The camera rises in one smooth continuous climb, altitude only increases, the shore and breakwater fall away below-left and stay in frame shrinking, the cobalt sea widens, the ground curls into the arc of a model world, warm haze at the horizon; nothing enters or leaves the frame …</em> / Leg 8b = <em>The curved surface of the model world stays in frame throughout … The camera slides north-east along the curved surface and descends gently toward the moss ridges, the sea receding behind and to the left, terraced fields and ridgelines coming up beneath; nothing enters or leaves the frame …</em></div></div>
 </section>
 
 <section>
