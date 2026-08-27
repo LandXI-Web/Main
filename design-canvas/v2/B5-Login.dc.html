@@ -8,8 +8,6 @@
 <body>
 <x-dc>
 <helmet><style>
-@font-face{font-family:"Paperlogy";font-weight:800;font-display:swap;src:url("https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2") format("woff2")}
-@font-face{font-family:"Paperlogy";font-weight:700;font-display:swap;src:url("https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2") format("woff2")}
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap");
 /* Paperlogy + Pretendard, T3 (발주 결정 2026-08-27) — 표시 Paperlogy 700, 본문/라벨/버튼 Pretendard */
@@ -21,80 +19,79 @@ body{margin:0;background:#FFFFFF;color:#010102;font-family:'Pretendard','Paperlo
 .b5{font-family:'Pretendard',system-ui,sans-serif;font-weight:500}
 .n{font-family:'Inter',system-ui,sans-serif;font-weight:400;font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
 .n5{font-family:'Inter',system-ui,sans-serif;font-weight:500;font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
-.lb{font-size:12px;line-height:1.2;letter-spacing:.10em;color:#686868;text-transform:uppercase;font-family:'Inter','Pretendard',system-ui,sans-serif}
 .kb{font-size:12px;line-height:1.2;letter-spacing:.04em;color:#686868}
-.fld-l{font-size:12px;line-height:1.2;letter-spacing:.01em;color:#686868}
-.fld{margin-top:10px;height:36px;border-bottom:1px solid #010102;display:flex;align-items:center;font-size:15px;letter-spacing:.01em}
-.link{font-size:13px;line-height:1.2;color:#010102;letter-spacing:-.01em}
-.sep{font-size:13px;color:#CCCCCC}
+.fld-l{font-size:12px;line-height:14px;letter-spacing:.01em;color:#686868}
+.fld{margin-top:8px;height:32px;border-bottom:1px solid #010102;display:flex;align-items:center;font-size:14px;letter-spacing:.01em}
+.link{font-size:12px;line-height:1.2;color:#010102;letter-spacing:-.01em}
+.sep{font-size:12px;color:#CCCCCC}
 </style></helmet>
 <div style="width:1440px;height:900px;position:relative;overflow:hidden;background:#FFFFFF;font-family:'Pretendard','Paperlogy',system-ui,sans-serif;color:#010102">
 
-<!-- LEFT 720 : anchors = real CI top-left + real LX lockup bottom-left; the form block sits right/low, 64px from the film plate.
-     Brand exception: both CI keep their own colours (Land-XI blue gradient · LX mint + navy). -->
-<img src="ci-landxi.png" alt="LAND-XI PLATFORM" style="position:absolute;left:72px;top:58px;height:22px;width:auto;display:block">
+<!-- 4차 개정 — 구 랜드XI(login.do) 구도: 페이지 중앙의 작은 카드 하나(1200×440, x 120–1320 · y 230–670 = 세로 중앙),
+     좌 60% 필름 판 + 짧은 태그라인, 우 40% 압축 폼. 카드 위 = 실제 Land-XI CI + 원본 소개 한 줄, 카드 아래 = LX 락업 + 정책 링크 + Copyright.
+     헤어라인 #DDD 1 · radius 0 · shadow 0 · 액센트는 포커스 밑줄뿐. 원본의 어두운 배경/글로우는 가져오지 않는다. -->
 
-<!-- title only — no eyebrow, no subtitle (client: 불필요한 글자 전체 삭제) -->
-<div class="d" style="position:absolute;left:220px;top:294px;width:492px;font-size:32px;line-height:40px;letter-spacing:-.02em">로그인</div>
+<!-- 카드 위 — CI 22 + 소개 한 줄(원본 카피) -->
+<img src="ci-landxi.png" alt="LAND-XI PLATFORM" style="position:absolute;left:120px;top:150px;height:22px;width:auto;display:block">
+<div style="position:absolute;left:120px;top:184px;width:1200px;font-size:15px;line-height:22px;letter-spacing:-.005em;color:#686868">LAND-XI의 직관적인 인터페이스를 사용하여 NO-CODE 기반의 AI 학습모델을 구축하고 활용할 수 있습니다.</div>
 
-<!-- id field, focused: underline = the screen's single accent -->
-<div style="position:absolute;left:220px;top:378px;width:492px">
-<div class="fld-l" style="color:#010102">아이디 (이메일)</div>
-<div class="fld" style="border-bottom:1px solid #006DF7">
-<div style="color:#CCCCCC">example@lx.or.kr</div>
-<div style="width:1px;height:18px;background:#010102;margin-left:1px"></div>
-</div>
-</div>
+<!-- 카드 1200×440 -->
+<div style="position:absolute;left:120px;top:230px;width:1200px;height:440px;border:1px solid #DDDDDD;display:flex;background:#FFFFFF">
 
-<!-- password field, empty-submit error (original copy) -->
-<div style="position:absolute;left:220px;top:464px;width:492px">
-<div class="fld-l">비밀번호</div>
-<div class="fld"><div style="color:#CCCCCC">비밀번호</div></div>
-<div style="display:flex;align-items:center;gap:8px;margin-top:8px">
-<div style="width:6px;height:6px;background:#010102"></div>
-<div style="font-size:12px;line-height:1.2;letter-spacing:-.005em">비밀번호를 입력해 주세요.</div>
-</div>
-</div>
+  <!-- 좌 60% — Leg 01 필름 판 + 태그라인 좌하(흰 Paperlogy · 지구본의 밝은 대륙을 피해 어두운 하단에, 캡션·브래킷 0) -->
+  <div style="position:relative;flex:0 0 60%;height:100%;overflow:hidden;background:#010102">
+    <img src="login-film.jpg" alt="" style="display:block;width:100%;height:100%;object-fit:cover;object-position:50% 50%">
+    <div style="position:absolute;left:40px;right:40px;bottom:36px;color:#FFFFFF">
+      <div class="d" style="font-size:28px;line-height:36px;letter-spacing:-.02em">Land-XI 플랫폼</div>
+      <div style="margin-top:8px;font-size:14px;line-height:22px;letter-spacing:-.005em;color:#FFFFFF">고해상도 드론·항공·위성영상과 AI기술을 활용하여 공공서비스 혁신을 지원합니다.</div>
+    </div>
+  </div>
 
-<div style="position:absolute;left:220px;top:560px;width:492px;display:flex;align-items:center">
-<div style="width:13px;height:13px;border:1px solid #010102;margin-right:9px"></div>
-<div class="link">로그인 상태 유지</div>
-<div style="margin-left:auto;display:flex;align-items:center;gap:10px">
-<div class="link" style="border-bottom:1px solid #DDD">아이디 찾기</div><div class="sep">|</div><div class="link" style="border-bottom:1px solid #DDD">비밀번호 찾기</div>
-</div>
-</div>
+  <!-- 우 40% — 압축 폼(패딩 40) -->
+  <div style="position:relative;flex:0 0 40%;height:100%;padding:36px 40px 0">
+    <div class="d" style="font-size:28px;line-height:36px;letter-spacing:-.02em">로그인</div>
 
-<!-- submit: the one filled CTA, ink -->
-<div style="position:absolute;left:220px;top:600px;width:492px;height:52px;background:#010102;display:flex;align-items:center;justify-content:center;gap:10px">
-<div class="b5" style="font-size:16px;color:#FFFFFF;letter-spacing:.02em">로그인</div>
-<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="square"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-</div>
+    <!-- 아이디, 포커스: 밑줄 = 화면의 유일한 액센트 -->
+    <div style="margin-top:22px">
+      <div class="fld-l" style="color:#010102">아이디 (이메일)</div>
+      <div class="fld" style="border-bottom:1px solid #006DF7"><div style="color:#CCCCCC">example@lx.or.kr</div><div style="width:1px;height:16px;background:#010102;margin-left:1px"></div></div>
+    </div>
+    <div style="margin-top:18px">
+      <div class="fld-l">비밀번호</div>
+      <div class="fld"><div style="color:#CCCCCC">비밀번호</div></div>
+    </div>
 
-<div style="position:absolute;left:220px;top:674px;width:492px;display:flex;align-items:baseline;gap:6px">
-<div class="link" style="color:#686868">처음 이용하시나요?</div>
-<div class="link" style="border-bottom:1px solid #010102">계정 신청하기</div>
-</div>
+    <div style="margin-top:14px;display:flex;align-items:center">
+      <div style="width:12px;height:12px;border:1px solid #010102;margin-right:8px"></div>
+      <div class="link">로그인 상태 유지</div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+        <div class="link" style="border-bottom:1px solid #DDD">아이디 찾기</div><div class="sep">|</div><div class="link" style="border-bottom:1px solid #DDD">비밀번호 찾기</div>
+      </div>
+    </div>
 
-<!-- footer: original form-footer 1:1 -->
-<div style="position:absolute;left:72px;top:744px;width:492px;height:1px;background:#DDD"></div>
-<div style="position:absolute;left:72px;top:760px;width:492px;white-space:nowrap">
-<div style="display:flex;align-items:baseline;gap:6px">
-<div class="kb" style="color:#010102">문의 <span class="n5">063-713-1218</span></div>
-<div class="kb">· 평일 09:00~18:00</div>
-</div>
-<div style="display:flex;gap:8px;align-items:baseline;margin-top:12px">
-<div class="kb" style="color:#010102">개인정보처리방침</div><div class="sep" style="font-size:12px">|</div><div class="kb">이용약관</div><div class="sep" style="font-size:12px">|</div><div class="kb">이메일무단수집거부</div>
-</div>
-<div style="display:flex;align-items:center;margin-top:22px">
-<img src="ci-lx-lockup.svg" alt="LX 한국국토정보공사" style="display:block;height:18px;width:auto">
-<div class="kb n" style="margin-left:auto;letter-spacing:.02em">Copyright© LX. ALL RIGHTS RESERVED.</div>
-</div>
+    <!-- 버튼 2 나란히: 로그인(잉크 채움) · 계정 신청하기(헤어라인) — 원본의 로그인 · 회원가입 자리 -->
+    <div style="margin-top:22px;display:flex;gap:10px">
+      <div style="flex:1;height:44px;background:#010102;display:flex;align-items:center;justify-content:center;gap:8px">
+        <div class="b5" style="font-size:15px;color:#FFFFFF;letter-spacing:.02em">로그인</div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="square"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </div>
+      <div class="b5" style="flex:1;height:44px;border:1px solid #010102;display:flex;align-items:center;justify-content:center;font-size:15px;letter-spacing:.02em">계정 신청하기</div>
+    </div>
+
+    <div style="margin-top:20px;display:flex;justify-content:center;align-items:baseline;gap:6px">
+      <div class="kb" style="color:#010102">문의 <span class="n5">063-713-1218</span></div>
+      <div class="kb">· 평일 09:00~18:00</div>
+    </div>
+  </div>
 </div>
 
-<!-- RIGHT 720 : the diorama opening film as an inset plate — 56px white margin all round (x 776–1384 · y 56–844 = 608×788),
-     hairline edge, radius 0, shadow 0. Leg 1 frame @ t≈2.5 s. No captions, no brackets — the hairline is the frame. -->
-<div style="position:absolute;left:776px;top:56px;width:608px;height:788px;overflow:hidden;background:#010102;border:1px solid #DDDDDD">
-<img src="login-film.jpg" alt="" style="display:block;width:100%;height:100%;object-fit:cover;object-position:50% 50%">
+<!-- 카드 아래 — LX 락업 18 + 정책 링크 3 + Copyright -->
+<div style="position:absolute;left:120px;top:694px;width:1200px;display:flex;align-items:center;white-space:nowrap">
+  <img src="ci-lx-lockup.svg" alt="LX 한국국토정보공사" style="display:block;height:18px;width:auto">
+  <div style="display:flex;gap:8px;align-items:baseline;margin-left:32px">
+    <div class="kb" style="color:#010102">개인정보처리방침</div><div class="sep">|</div><div class="kb">이용약관</div><div class="sep">|</div><div class="kb">이메일무단수집거부</div>
+  </div>
+  <div class="kb n" style="margin-left:auto;letter-spacing:.02em">Copyright© LX. ALL RIGHTS RESERVED.</div>
 </div>
 
 </div>

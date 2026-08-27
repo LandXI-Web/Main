@@ -9,78 +9,91 @@
 
 <a class="lx-skip" href="#loginForm">본문 건너뛰기</a>
 
-<!-- 마스터: design-canvas/v2/B5-Login.dc.html (NOTES §14 · 3차 개정) — SPLIT-5050.
-     좌 = 실제 CI 두 개(좌상 Land-XI · 좌하 LX 락업)가 앵커, 폼은 우·하로 붙는다 · 우 = 필름 인셋 판(마진 56, 헤어라인). -->
+<!-- 마스터: design-canvas/v2/B5-Login.dc.html (NOTES §14 · 4차 개정) — 구 랜드XI(login.do) 구도.
+     페이지 중앙의 작은 카드 하나(1200×440): 좌 60% 필름 판 + 태그라인 · 우 40% 압축 폼.
+     카드 위 = 실제 Land-XI CI + 원본 소개 한 줄 · 카드 아래 = LX 락업 + 정책 링크 + Copyright. -->
 <div class="lg" id="lg">
+  <div class="lg-wrap">
 
-  <!-- ══ 좌 — 흰 종이, 폼이 1급 객체 ═══════════════════════════════════════ -->
-  <main class="lg-left">
+    <!-- ══ 카드 위 — CI + 소개(원본 카피) ══ -->
+    <header class="lg-head">
+      <a class="lg-brand" href="dive.html" aria-label="Land-XI 플랫폼 홈">
+        <img class="lg-brand__ci" id="lgCiLandxi" src="../assets/brand/landxi-wordmark.png" alt="LAND-XI PLATFORM" width="306" height="17">
+      </a>
+      <p class="lg-intro">LAND-XI의 직관적인 인터페이스를 사용하여 NO-CODE 기반의 AI 학습모델을 구축하고 활용할 수 있습니다.</p>
+    </header>
 
-    <!-- 실제 Land-XI CI(공식 그라디언트 워드마크, 브랜드 예외 — 자기 색 허용). -->
-    <a class="lg-brand" href="dive.html" aria-label="Land-XI 플랫폼 홈">
-      <img class="lg-brand__ci" id="lgCiLandxi" src="../assets/brand/landxi-wordmark.png" alt="LAND-XI PLATFORM" width="306" height="17">
-    </a>
+    <!-- ══ 카드 ══ -->
+    <div class="lg-card" id="lgCard">
 
-    <!-- 불필요한 글자 0 — 제목 하나. (SIGN IN 눈썹 · 부제 삭제, 발주 지시) -->
-    <div class="lg-head">
-      <h1 class="lg-h1">로그인</h1>
-      <!-- ?logout — 원본 배너 문구. 잉크 한 줄. -->
-      <p class="lg-banner" id="lgBanner" role="status" hidden>안전하게 로그아웃되었습니다.</p>
+      <!-- 좌 60% — 디오라마 오프닝 필름(Leg 01) + 태그라인(캡션 0). 유휴 움직임은 이 루프 하나. reduced-motion = 포스터. -->
+      <figure class="lg-film" id="lgPlate" aria-label="디오라마 오프닝 필름">
+        <video class="lg-film__v" id="lgVideo" autoplay muted loop playsinline preload="auto"
+               poster="../assets/proto/film/legs/w01.webp">
+          <source src="../assets/proto/film/legs/w01-m.mp4" type="video/mp4" media="(max-width: 900px)">
+          <source src="../assets/proto/film/legs/w01.mp4" type="video/mp4">
+        </video>
+        <figcaption class="lg-tag">
+          <strong class="lg-tag__t">Land-XI 플랫폼</strong>
+          <span class="lg-tag__s">고해상도 드론·항공·위성영상과 AI기술을 활용하여 공공서비스 혁신을 지원합니다.</span>
+        </figcaption>
+      </figure>
+
+      <!-- 우 40% — 압축 폼 -->
+      <main class="lg-panel">
+        <h1 class="lg-h1">로그인</h1>
+        <!-- ?logout — 원본 배너 문구. 잉크 한 줄. -->
+        <p class="lg-banner" id="lgBanner" role="status" hidden>안전하게 로그아웃되었습니다.</p>
+
+        <form class="lg-form" id="loginForm" novalidate>
+
+          <div class="lx-field" data-field="email">
+            <label class="lx-field__label" for="lgEmail">아이디 (이메일)</label>
+            <input class="lx-field__input" id="lgEmail" name="email" type="email"
+                   autocomplete="username" placeholder="example@lx.or.kr" spellcheck="false">
+            <span class="lx-field__rule" aria-hidden="true"></span>
+            <p class="lx-field__msg" id="lgEmailMsg" role="alert" hidden></p>
+          </div>
+
+          <div class="lx-field" data-field="pw">
+            <label class="lx-field__label" for="lgPw">비밀번호</label>
+            <input class="lx-field__input" id="lgPw" name="pw" type="password"
+                   autocomplete="current-password" placeholder="비밀번호">
+            <span class="lx-field__rule" aria-hidden="true"></span>
+            <p class="lx-field__msg" id="lgPwMsg" role="alert" hidden></p>
+          </div>
+
+          <div class="lg-opts">
+            <label class="lx-check"><input type="checkbox" name="remember"><span class="lx-check__box" aria-hidden="true"></span><span>로그인 상태 유지</span></label>
+            <nav class="lg-find" aria-label="계정 찾기">
+              <a class="lg-find__a" href="find-id.html">아이디 찾기</a><span class="lg-sep" aria-hidden="true">|</span><a class="lg-find__a" href="find-password.html">비밀번호 찾기</a>
+            </nav>
+          </div>
+
+          <!-- 버튼 2 나란히 — 로그인(채운 CTA, 잉크) · 계정 신청하기(헤어라인). 원본의 로그인 · 회원가입 자리. -->
+          <div class="lg-actions">
+            <button type="submit" class="lg-submit" id="lgSubmit">
+              <span class="lg-submit__t">로그인</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+            <a class="lg-signup__a" id="lgSignup" href="signup.html">계정 신청하기</a>
+          </div>
+
+          <p class="lg-contact"><span class="lg-contact__ink">문의 <b class="lx-num">063-713-1218</b></span><span>· 평일 09:00~18:00</span></p>
+        </form>
+      </main>
     </div>
 
-    <form class="lg-form" id="loginForm" novalidate>
-
-      <div class="lx-field" data-field="email">
-        <label class="lx-field__label" for="lgEmail">아이디 (이메일)</label>
-        <input class="lx-field__input" id="lgEmail" name="email" type="email"
-               autocomplete="username" placeholder="example@lx.or.kr" spellcheck="false">
-        <span class="lx-field__rule" aria-hidden="true"></span>
-        <p class="lx-field__msg" id="lgEmailMsg" role="alert" hidden></p>
-      </div>
-
-      <div class="lx-field" data-field="pw">
-        <label class="lx-field__label" for="lgPw">비밀번호</label>
-        <input class="lx-field__input" id="lgPw" name="pw" type="password"
-               autocomplete="current-password" placeholder="비밀번호">
-        <span class="lx-field__rule" aria-hidden="true"></span>
-        <p class="lx-field__msg" id="lgPwMsg" role="alert" hidden></p>
-      </div>
-
-      <div class="lg-opts">
-        <label class="lx-check"><input type="checkbox" name="remember"><span class="lx-check__box" aria-hidden="true"></span><span>로그인 상태 유지</span></label>
-        <nav class="lg-find" aria-label="계정 찾기">
-          <a class="lg-find__a" href="find-id.html">아이디 찾기</a><span class="lg-sep" aria-hidden="true">|</span><a class="lg-find__a" href="find-password.html">비밀번호 찾기</a>
-        </nav>
-      </div>
-
-      <!-- 채운 CTA는 이것 하나(잉크). -->
-      <button type="submit" class="lg-submit" id="lgSubmit">
-        <span class="lg-submit__t">로그인</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-      </button>
-
-      <p class="lg-signup"><span>처음 이용하시나요?</span> <a class="lg-signup__a" href="signup.html">계정 신청하기</a></p>
-    </form>
-
+    <!-- ══ 카드 아래 — LX 락업 + 정책 링크 + Copyright ══ -->
     <footer class="lg-foot">
-      <p class="lg-foot__row"><span class="lg-foot__ink">문의 <b class="lx-num">063-713-1218</b></span><span>· 평일 09:00~18:00</span></p>
-      <p class="lg-foot__row lg-foot__policy">
+      <img class="lg-foot__ci" id="lgCiLx" src="../assets/brand/vector/lx-lockup.svg" alt="LX 한국국토정보공사" width="160" height="18">
+      <p class="lg-foot__policy">
         <a class="lg-foot__ink" href="#privacy" data-policy="privacy">개인정보처리방침</a><span class="lg-sep" aria-hidden="true">|</span><a href="#terms" data-policy="terms">이용약관</a><span class="lg-sep" aria-hidden="true">|</span><a href="#email" data-policy="email">이메일무단수집거부</a>
       </p>
-      <p class="lg-foot__row lg-foot__legal"><img class="lg-foot__ci" id="lgCiLx" src="../assets/brand/vector/lx-lockup.svg" alt="LX 한국국토정보공사" width="160" height="18"><span class="lx-num">Copyright© LX. ALL RIGHTS RESERVED.</span></p>
+      <p class="lg-foot__legal lx-num">Copyright© LX. ALL RIGHTS RESERVED.</p>
     </footer>
-  </main>
 
-  <!-- ══ 우 — 디오라마 오프닝 필름(Leg 01 · 궤도), 인셋 판(마진 56 · 헤어라인 · 캡션 0) ═══
-       유휴 움직임은 이 루프 하나. prefers-reduced-motion 이면 포스터만. -->
-  <figure class="lg-film" id="lgPlate" aria-label="디오라마 오프닝 필름">
-    <video class="lg-film__v" id="lgVideo" autoplay muted loop playsinline preload="auto"
-           poster="../assets/proto/film/legs/w01.webp">
-      <source src="../assets/proto/film/legs/w01-m.mp4" type="video/mp4" media="(max-width: 900px)">
-      <source src="../assets/proto/film/legs/w01.mp4" type="video/mp4">
-    </video>
-  </figure>
-
+  </div>
 </div>
 
 <script type="module" src="login.js"></script>
