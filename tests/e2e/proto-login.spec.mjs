@@ -47,7 +47,10 @@ test('좌 — 원본 로그인 폼의 컨트롤·문구가 1:1 로 있다', asyn
   await boot(page);
 
   await expect(page.locator('.lg-h1')).toHaveText('로그인');
-  await expect(page.locator('.lg-sub')).toHaveText('계정 정보를 입력해 주세요.');
+  // 불필요한 글자 0 — 눈썹 SIGN IN · 부제 없음(발주 지시).
+  await expect(page.locator('.lg-head__l, .lg-sub')).toHaveCount(0);
+  await expect(page.locator('body')).not.toContainText('SIGN IN');
+  await expect(page.locator('body')).not.toContainText('계정 정보를 입력해 주세요.');
   await expect(page.locator('label[for=lgEmail]')).toHaveText('아이디 (이메일)');
   await expect(page.locator('label[for=lgPw]')).toHaveText('비밀번호');
   await expect(page.locator('#lgEmail')).toHaveAttribute('placeholder', 'example@lx.or.kr');
@@ -168,7 +171,8 @@ test('시스템 법 — 헤어라인 · radius 0 · shadow 0 · 12px 바닥 · �
       footBorder: cs(document.querySelector('.lg-foot')).borderTopWidth,
       formX: Math.round(document.querySelector('.lg-form').getBoundingClientRect().x),
       formW: Math.round(document.querySelector('.lg-form').getBoundingClientRect().width),
-      headY: Math.round(document.querySelector('.lg-head__l').getBoundingClientRect().y),
+      headY: Math.round(document.querySelector('.lg-h1').getBoundingClientRect().y),
+      emailY: Math.round(document.querySelector('label[for=lgEmail]').getBoundingClientRect().y),
       signupBottom: Math.round(document.querySelector('.lg-signup').getBoundingClientRect().bottom),
       overX: document.documentElement.scrollWidth > innerWidth + 1,
       overY: document.documentElement.scrollHeight > innerHeight + 1,
@@ -185,8 +189,9 @@ test('시스템 법 — 헤어라인 · radius 0 · shadow 0 · 12px 바닥 · �
   expect(m.overX).toBe(false);
   expect(m.overY).toBe(false);
   expect(m.footBottom).toBeLessThanOrEqual(m.vh);
-  // 세로 — SIGN IN 238(이전 178 + 60), 폼 블록이 푸터 헤어라인(744) 위에서 끝난다.
-  expect(m.headY).toBe(238);
+  // 세로 — 제목 294 · 아이디 라벨 378, 폼 블록이 푸터 헤어라인(744) 위에서 끝난다.
+  expect(m.headY).toBe(294);
+  expect(m.emailY).toBe(378);
   expect(m.signupBottom).toBeLessThan(744);
 });
 
