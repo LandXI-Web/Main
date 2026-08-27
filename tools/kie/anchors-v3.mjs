@@ -20,7 +20,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { still, credits } from './kie.mjs';
+import { still, credits, promptHash } from './kie.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const SPEC = path.join(ROOT, 'tools/kie/anchors-v3.json');
@@ -98,23 +98,39 @@ async function runOne(id, ledger, { reroll = false, extra = [] } = {}) {
   const ref = refsFor(id, extra);
   process.stderr.write(`\n[${id}] refs = ${ref.map((r) => path.relative(ROOT, r).replace(/\\/g, '/')).join(' , ') || '(none, text-to-image)'}\n`);
   fs.mkdirSync(OUT, { recursive: true });
-  const r = await still(a.still_prompt, { ref: ref.length ? ref : undefined, ar: a.ar || '16:9', quality: 'high', out: png(id) });
+  const rec = {
+    id, reroll, refs: ref.map((x) => path.relative(ROOT, x).replace(/\\/g, '/')),
+    prompt_sha256: promptHash(a.still_prompt), credits_balance_before: before, at: new Date().toISOString(),
+  };
+  // createTask 직후(폴링 전) pending 줄을 원장에 남긴다. 폴링 중 회선이 끊겨도 taskId 로 recordInfo 회수 가능.
+  const onTask = (taskId, meta) => {
+    Object.assign(rec, { state: 'pending', taskId, model: meta.model, task_created_at: meta.at });
+    ledger.runs.push(rec); writeLedger(ledger);
+    process.stderr.write(`[${id}] pending taskId=${taskId} (원장 기록)\n`);
+  };
+  let r;
+  try {
+    r = await still(a.still_prompt, { ref: ref.length ? ref : undefined, ar: a.ar || '16:9', quality: 'high', out: png(id), onTask });
+  } catch (e) {
+    if (rec.state === 'pending') { rec.last_error = String(e.message).slice(0, 600); writeLedger(ledger); }
+    throw e;
+  }
   const after = await credits();
   const charged = before - after;
-  const rec = {
-    id, reroll, model: r.model, taskId: r.taskId,
-    refs: ref.map((x) => path.relative(ROOT, x).replace(/\\/g, '/')),
-    credits_reported: r.credits, credits_balance_before: before, credits_balance_after: after,
+  delete rec.state;
+  Object.assign(rec, {
+    ok: true, model: r.model, taskId: r.taskId,
+    credits_reported: r.credits, credits_balance_after: after,
     credits_charged: Number(charged.toFixed(2)),
     gen_ms: r.ms, wall_ms: r.wallMs,
     png: path.relative(ROOT, png(id)).replace(/\\/g, '/'),
     png_bytes: fs.statSync(png(id)).size,
-    at: new Date().toISOString(),
-  };
+    finished_at: new Date().toISOString(),
+  });
   makeJpeg(id);
   rec.jpg = path.relative(ROOT, jpg(id)).replace(/\\/g, '/');
   rec.jpg_bytes = fs.statSync(jpg(id)).size;
-  ledger.runs.push(rec);
+  if (!ledger.runs.includes(rec)) ledger.runs.push(rec);
   if (reroll) ledger.rerolls.push(id);
   ledger.spent = Number(ledger.runs.reduce((s, x) => s + (x.credits_charged || 0), 0).toFixed(2));
   ledger.remaining_of_cap = Number((ledger.cap - ledger.spent).toFixed(2));
