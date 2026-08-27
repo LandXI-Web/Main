@@ -1,11 +1,13 @@
 # THE SYSTEM — Land-XI 디자인 법전 (구현 에이전트는 이 파일만 읽고 짠다)
 근거: docs/superpowers/specs/2026-08-25-client-taste-profile.md §4·§5·§7 (영상 iyRYc9sVRsw "THE SYSTEM 패널", cM5n9priMjo "명명 레이아웃·3-비평가")
 
-## 1. 서체 (정확히 3개, 더 없음) — 2026-08-27 개정
+## 1. 서체 (정확히 3개, 더 없음) — 2026-08-27 개정 (+2 스케일)
+> 클라이언트 결정(2026-08-27): **"글자는 전체적으로 2포인트 키우는걸 기본으로 생각하자. 글자가 너무 작다."** → 모든 단계 +2px 가 새 기본. **바닥 14px** — 14 미만 글자는 어디에도 없다(타일 표식·칩·캡션 포함).
+> 스케일표(구→신): H1 64/80→**66/82** · H2 52/57→**54/59** · H3 32/40→**34/42** · H4 28→**30** · H5 24→**26** · 리드 20/29→**22/32** · 본문 16/23→**18/26** · 소형 14→**16** · 표 14→**16** · 캡션·라벨 12/14→**14/16** · 칩·태그 11–12→**13–14(=14)** · KPI 124→**126**, 통계 56/48→**58/50**. 토큰: `landxi/proto/system.css` `--lx-*`, `landxi/proto/v3-tokens.css` `--v3-*`.
 > 클라이언트 결정(2026-08-27, `landxi/proto/fonts.html` 후보 36종 비교 → T3 선택): **"일단 모든 글꼴과 스타일은 Paperlogy + Pretendard, T3로 간다."** 이전 SUIT 500 규정은 폐기.
-- 표시: **Paperlogy 700**(H1·H2·H3·KPI 숫자·마스트헤드), **800**은 워드마크 텍스트(`LAND-XI PLATFORM`)·초대형 통계에만 — H1 64/80 · H2 52/57 · H3 32/40. letter-spacing −0.01em. 웹폰트는 눈누 jsDelivr(`projectnoonnu/2408-3`) 700/800 두 파일뿐 — 그 외 굵기를 지정하지 않는다.
-- 본문: **Pretendard 400**(본문 16/23, 한글 행간 1.6) · **500**(강조·버튼·탭 라벨). 라벨 12/14(1.2).
-- 숫자: 큰 숫자(KPI·통계 ≥ 32px)는 **Paperlogy 700**, 소형 표·좌표·캡션(≤ 14px)은 **Inter 400 tabular** — letter-spacing 0.02–0.04em. Paperlogy는 tnum 이 없으므로 자릿수가 바뀌며 흐르는 표 숫자는 Inter.
+- 표시: **Paperlogy 700**(H1·H2·H3·KPI 숫자·마스트헤드), **800**은 워드마크 텍스트(`LAND-XI PLATFORM`)·초대형 통계에만 — H1 66/82 · H2 54/59 · H3 34/42. letter-spacing −0.01em. 웹폰트는 눈누 jsDelivr(`projectnoonnu/2408-3`) 700/800 두 파일뿐 — 그 외 굵기를 지정하지 않는다.
+- 본문: **Pretendard 400**(본문 18/26, 한글 행간 1.6) · **500**(강조·버튼·탭 라벨). 라벨 14/16(1.2). 소형·표 16.
+- 숫자: 큰 숫자(KPI·통계 ≥ 32px)는 **Paperlogy 700**, 소형 표·좌표·캡션(14–16px)은 **Inter 400 tabular** — letter-spacing 0.02–0.04em. Paperlogy는 tnum 이 없으므로 자릿수가 바뀌며 흐르는 표 숫자는 Inter.
 - 토큰: `--font-display` `--font-body` `--font-num` (`landxi/proto/fonts-system.css`, 모든 프로토 페이지가 이 파일을 불러온다. `--lx-display`·`--v3-display` 는 이 토큰의 별칭).
 - 금지: SUIT, Gothic A1, IBM Plex, Inter를 본문에 쓰는 것, 제3의 서체.
 

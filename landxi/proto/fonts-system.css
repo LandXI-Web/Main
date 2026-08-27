@@ -19,7 +19,7 @@
 :root{
   --font-display:'Paperlogy','Pretendard',system-ui,sans-serif;   /* 700 / 800 — H1·H2·KPI·워드마크 텍스트 */
   --font-body:'Pretendard',system-ui,sans-serif;                   /* 400 / 500 */
-  --font-num:'Inter','Pretendard',system-ui,sans-serif;            /* 400, tabular-nums — 12px 안팎 표 숫자 */
+  --font-num:'Inter','Pretendard',system-ui,sans-serif;            /* 400, tabular-nums — 14px 안팎 표 숫자 */
   /* T3 — 블루 액센트 + 틴트 */
   --accent:#006DF7;
   --tint-1:#E8F1FF;   /* 밴드·호버·선택 행 */

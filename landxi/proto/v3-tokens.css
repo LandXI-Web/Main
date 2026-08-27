@@ -10,9 +10,9 @@
   --v3-display:var(--font-display);   /* Paperlogy 700 (800 = 워드마크·초대형) */
   --v3-body:var(--font-body);         /* Pretendard 400 / 500 */
   --v3-num:var(--font-num);           /* Inter 400 tabular — 소형 표 숫자만. 큰 숫자는 --font-display */
-  --v3-h1:64px; --v3-h1-lh:80px; --v3-h2:52px; --v3-h2-lh:57px;
-  --v3-body-fs:16px; --v3-body-lh:23px; --v3-label:12px; --v3-label-lh:14px;
-  --v3-stat:124px; --v3-stat-lh:1.0;
+  --v3-h1:66px; --v3-h1-lh:82px; --v3-h2:54px; --v3-h2-lh:59px;
+  --v3-body-fs:18px; --v3-body-lh:26px; --v3-label:14px; --v3-label-lh:16px;   /* 2026-08-27 클라이언트: "글자는 전체적으로 2포인트 키우는걸 기본으로" — 전 스케일 +2, 바닥 14px */
+  --v3-stat:126px; --v3-stat-lh:1.0;
   --v3-track:0.01em;
   /* 한글 행간 보정 */
   --v3-h1-lh-ko:1.25; --v3-body-lh-ko:1.6; --v3-label-lh-ko:1.2;

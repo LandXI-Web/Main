@@ -28,21 +28,21 @@ const HELMET = `<helmet><style>
 /* 토큰 = landxi/proto/fonts-system.css (--accent · --tint-1 · --tint-2) 와 같은 값 */
 :root{--ink:#010102;--grey:#686868;--grey-2:#CCCCCC;--line:#DDDDDD;--accent:#006DF7;--tint-1:#E8F1FF;--tint-2:#D6E6FF;--teal:#0FA9A0}
 *{box-sizing:border-box}
-body{margin:0;background:#FFFFFF;color:var(--ink);font-family:'Pretendard',system-ui,sans-serif;font-weight:400;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body{margin:0;background:#FFFFFF;color:var(--ink);font-family:'Pretendard',system-ui,sans-serif;font-weight:400;font-size:18px;line-height:1.5;-webkit-font-smoothing:antialiased}
 .d{font-family:'Paperlogy','Pretendard',system-ui,sans-serif;font-weight:700;letter-spacing:-.015em}
 .d8{font-family:'Paperlogy','Pretendard',system-ui,sans-serif;font-weight:800;letter-spacing:-.02em}
 .n{font-family:'Inter','Pretendard',system-ui,sans-serif;font-weight:400;font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
-.lab{font-size:12px;line-height:1.2;color:var(--grey);letter-spacing:.04em}
-.st{font-size:12px;line-height:1.2;color:var(--accent);font-weight:500;letter-spacing:.01em}
-.tag{border:1px dotted var(--grey-2);padding:0 5px;font-size:12px;line-height:16px;color:var(--grey);margin-left:6px;display:inline-block;vertical-align:1px;letter-spacing:0;font-weight:400}
-.tb{position:absolute;height:28px;line-height:28px;font-size:13px;letter-spacing:-.01em;color:var(--ink);white-space:nowrap}
+.lab{font-size:14px;line-height:1.2;color:var(--grey);letter-spacing:.04em}
+.st{font-size:14px;line-height:1.2;color:var(--accent);font-weight:500;letter-spacing:.01em}
+.tag{border:1px dotted var(--grey-2);padding:0 5px;font-size:14px;line-height:18px;color:var(--grey);margin-left:6px;display:inline-block;vertical-align:1px;letter-spacing:0;font-weight:400}
+.tb{position:absolute;height:28px;line-height:30px;font-size:15px;letter-spacing:-.01em;color:var(--ink);white-space:nowrap}
 .tb.on{background:var(--tint-2);padding:0 10px}
-.cta{position:absolute;height:36px;background:var(--ink);color:#FFFFFF;display:flex;align-items:center;justify-content:center;padding:0 20px;font-size:13px;font-weight:500;letter-spacing:-.01em;white-space:nowrap}
-.fld{position:absolute;height:28px;border:1px solid var(--line);display:flex;align-items:center;padding:0 10px;gap:8px;font-size:12.5px;letter-spacing:-.01em;white-space:nowrap;color:var(--ink)}
-.chip{height:22px;line-height:20px;padding:0 9px;border:1px solid var(--line);color:var(--ink);font-size:12px;white-space:nowrap;display:inline-block}
-.tab{position:absolute;font-size:14px;letter-spacing:-.01em;color:var(--grey);white-space:nowrap;line-height:20px}
+.cta{position:absolute;height:36px;background:var(--ink);color:#FFFFFF;display:flex;align-items:center;justify-content:center;padding:0 20px;font-size:15px;font-weight:500;letter-spacing:-.01em;white-space:nowrap}
+.fld{position:absolute;height:28px;border:1px solid var(--line);display:flex;align-items:center;padding:0 10px;gap:8px;font-size:14.5px;letter-spacing:-.01em;white-space:nowrap;color:var(--ink)}
+.chip{height:22px;line-height:22px;padding:0 9px;border:1px solid var(--line);color:var(--ink);font-size:14px;white-space:nowrap;display:inline-block}
+.tab{position:absolute;font-size:16px;letter-spacing:-.01em;color:var(--grey);white-space:nowrap;line-height:22px}
 .tab b{font-weight:400;color:var(--ink)}
-.tab .c{font-family:'Inter',system-ui,sans-serif;font-size:12px;color:var(--grey-2);margin-left:5px}
+.tab .c{font-family:'Inter',system-ui,sans-serif;font-size:14px;color:var(--grey-2);margin-left:5px}
 .tab.on{color:var(--ink)}
 .tab.on .c{color:var(--accent)}
 </style></helmet>`;
@@ -51,9 +51,10 @@ body{margin:0;background:#FFFFFF;color:var(--ink);font-family:'Pretendard',syste
 const div = (x, y, w, h, extra = '', inner = '') => `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;${extra}">${inner}</div>\n`;
 const hl = (x, y, w, col = H) => div(x, y, w, 1, `background:${col}`);
 const vl = (x, y, h, col = H) => div(x, y, 1, h, `background:${col}`);
-const txt = (x, y, t, size = 13, col = INK, extra = '') => `<div style="position:absolute;left:${x}px;top:${y}px;font-size:${size}px;letter-spacing:-.01em;color:${col};white-space:nowrap;line-height:1.3;${extra}">${t}</div>\n`;
-const num = (x, y, t, size = 13, col = INK, extra = '') => `<div class="n" style="position:absolute;left:${x}px;top:${y}px;font-size:${size}px;letter-spacing:.01em;color:${col};white-space:nowrap;line-height:1.3;${extra}">${t}</div>\n`;
-const disp = (x, y, t, size, col = INK, extra = '') => `<div class="d" style="position:absolute;left:${x}px;top:${y}px;font-size:${size}px;line-height:1.1;color:${col};white-space:nowrap;${extra}">${t}</div>\n`;
+const UP = (s) => Math.max(14, s + 2);   // 2026-08-27 클라이언트 "글자 2포인트 키우기" — 호출부 수치는 그대로, 출력만 +2(바닥 14)
+const txt = (x, y, t, size = 13, col = INK, extra = '') => `<div style="position:absolute;left:${x}px;top:${y}px;font-size:${UP(size)}px;letter-spacing:-.01em;color:${col};white-space:nowrap;line-height:1.3;${extra}">${t}</div>\n`;
+const num = (x, y, t, size = 13, col = INK, extra = '') => `<div class="n" style="position:absolute;left:${x}px;top:${y}px;font-size:${UP(size)}px;letter-spacing:.01em;color:${col};white-space:nowrap;line-height:1.3;${extra}">${t}</div>\n`;
+const disp = (x, y, t, size, col = INK, extra = '') => `<div class="d" style="position:absolute;left:${x}px;top:${y}px;font-size:${UP(size)}px;line-height:1.1;color:${col};white-space:nowrap;${extra}">${t}</div>\n`;
 const lab = (x, y, t, extra = '') => `<div class="lab" style="position:absolute;left:${x}px;top:${y}px;white-space:nowrap;${extra}">${t}</div>\n`;
 const st = (x, y, t, extra = '') => `<div class="st" style="position:absolute;left:${x}px;top:${y}px;white-space:nowrap;${extra}">${t}</div>\n`;
 const tb = (x, y, t, on = false, extra = '') => `<div class="tb${on ? ' on' : ''}" style="left:${x}px;top:${y}px;${extra}">${t}</div>\n`;
@@ -66,7 +67,7 @@ const chk = (x, y, on) => `<div style="position:absolute;left:${x}px;top:${y}px;
 const brk = (x, y, w, h, col = INK, k = 12, sw = 1) => `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="position:absolute;left:${x}px;top:${y}px;display:block;pointer-events:none"><path d="M0 ${k}V0h${k}M${w - k} 0h${k}v${k}M${w} ${h - k}v${k}h-${k}M${k} ${h}H0v-${k}" fill="none" stroke="${col}" stroke-width="${sw}"/></svg>\n`;
 const img = (x, y, w, h, src, over = '', extra = '') => `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;overflow:hidden;background:#FFFFFF;${extra}"><img src="${src}" alt="" style="position:absolute;left:0;top:0;width:${w}px;height:${h}px;object-fit:cover;display:block">${over}</div>\n`;
 const pager = (x, y, cur = 1) => txt(x, y, '처음', 12.5, G) + txt(x + 33, y, '이전', 12.5, G) +
-  div(x + 66, y - 3, 20, 20, `border:1px solid ${INK};display:flex;align-items:center;justify-content:center`, `<span class="n" style="font-size:12px">${cur}</span>`) +
+  div(x + 66, y - 3, 20, 20, `border:1px solid ${INK};display:flex;align-items:center;justify-content:center`, `<span class="n" style="font-size:14px">${cur}</span>`) +
   txt(x + 94, y, '다음', 12.5, G) + txt(x + 127, y, '마지막', 12.5, G);
 
 // 청록 결과 폴리곤 — 기준 크기의 좌표를 목표 크기로 스케일(pj-greenhouse 402×226 · pj-hero 420×240)
@@ -145,7 +146,7 @@ function projects() {
     const col = i % 2, row = Math.floor(i / 2);
     const x = X0 + col * (CW + GAP), y = 136 + row * 306;
     let over = '';
-    if (hover) over = poly(CW, CH, GH) + brkIn(CW, CH, ACC) + `<div style="position:absolute;right:10px;bottom:8px;font-size:12px;color:#FFFFFF;letter-spacing:-.01em">변경 ›</div>`;
+    if (hover) over = poly(CW, CH, GH) + brkIn(CW, CH, ACC) + `<div style="position:absolute;right:10px;bottom:8px;font-size:14px;color:#FFFFFF;letter-spacing:-.01em">변경 ›</div>`;
     s += img(x, y, CW, name ? CH : Math.min(CH, 856 - y), src, over, hover ? `outline:12px solid ${T1};outline-offset:0` : '');
     if (!name) return;                       // 3행 = 스크롤(이미지만 보인다)
     s += disp(x, y + CH + 12, name, 17) + num(x, y + CH + 38, meta, 12, G) + st(x, y + CH + 58, status);
@@ -153,7 +154,7 @@ function projects() {
   });
   // 우 드로어 — 원본 ② 만들기 폼(프로젝트명 · 탐지유형 카드 2 · 학습 데이터 유형 · 권장 해상도 · 클래스 · 목록/취소/만들기)
   s += drawer('프로젝트 만들기');
-  s += lab(DI, 140, '프로젝트명') + fld(DI, 160, DIW, `<span style="font-size:13.5px">남원 비닐하우스 2026</span><span style="flex:1"></span><span class="n" style="font-size:12px;color:${G}">13/100</span>`, `height:36px;border-color:${INK}`);
+  s += lab(DI, 140, '프로젝트명') + fld(DI, 160, DIW, `<span style="font-size:15.5px">남원 비닐하우스 2026</span><span style="flex:1"></span><span class="n" style="font-size:14px;color:${G}">13/100</span>`, `height:36px;border-color:${INK}`);
   s += lab(DI, 214, '탐지유형');
   s += img(DI, 234, 208, 117, 'pj-radio-det.jpg', poly(208, 117, DET, .9) + brkIn(208, 117, INK, 12, 1.5)) + img(DI + 224, 234, 208, 117, 'pj-radio-seg.jpg', poly(208, 117, SEG, .9));
   s += txt(DI, 358, '객체 탐지', 13) + txt(DI + 224, 358, '세그멘테이션', 13, G);
@@ -183,7 +184,7 @@ function overviewBody() {
   [['1,674', '탐지 필지', ACC], ['0.82', 'IoU · 최근 학습', INK], ['10', '정사영상 도엽', INK], ['2', '데이터셋', INK]].forEach(([n, l, col], i) => {
     const x = X0 + i * kw;
     if (i) s += vl(x - 16, ky + 4, 64);
-    s += `<div class="d8" style="position:absolute;left:${x}px;top:${ky}px;font-size:48px;line-height:1;color:${col};font-variant-numeric:tabular-nums">${n}</div>\n` + lab(x + 2, ky + 58, l);
+    s += `<div class="d8" style="position:absolute;left:${x}px;top:${ky}px;font-size:50px;line-height:1;color:${col};font-variant-numeric:tabular-nums">${n}</div>\n` + lab(x + 2, ky + 58, l);
   });
   // 드로어 = 프로젝트 정보(kv 6) + 구성원 3 + 초대 인라인 + 최근 활동 2
   s += drawer('프로젝트 정보');
@@ -224,7 +225,7 @@ function data() {
   files.forEach(([name, gsd, src, lb, on], i) => {
     const x = X0 + (i % 3) * (TW + TG), y = GY + Math.floor(i / 3) * RH;
     if (on) s += div(x - 8, y - 8, TW + 16, RH, `background:${T1}`);
-    const more = lb === '+1' ? `<div style="position:absolute;inset:0;background:rgba(1,1,2,.45)"></div><div class="d8" style="position:absolute;right:14px;bottom:8px;font-size:32px;color:#FFFFFF">+1</div>` : '';
+    const more = lb === '+1' ? `<div style="position:absolute;inset:0;background:rgba(1,1,2,.45)"></div><div class="d8" style="position:absolute;right:14px;bottom:8px;font-size:34px;color:#FFFFFF">+1</div>` : '';
     s += img(x, y, TW, TH, src, more + (on ? brkIn(TW, TH, ACC) : ''));
     s += txt(x, y + TH + 8, name, 13, INK, `width:${TW - 80}px;overflow:hidden;text-overflow:ellipsis`);
     if (lb !== '+1' && lb !== '라벨 —') s += st(x + TW - 80, y + TH + 10, lb, 'width:80px;text-align:right');
@@ -288,11 +289,11 @@ function train() {
     s += img(x, y, CW, 96, src, over) + disp(x, y + 106, name, 14) + num(x, y + 126, meta, 12, G) + st(x, y + 144, status, col === 0 ? `color:${G}` : '');
   });
   // 드로어 = 학습 결과 5섹션(정보 · 설정 · 결과 · 클래스별 · 행렬) — 이미지 먼저
-  s += drawer('비닐하우스 v2.1<span class="tag">시연</span><span class="st" style="font-size:13px;margin-left:10px;vertical-align:3px">완료</span>');
+  s += drawer('비닐하우스 v2.1<span class="tag">시연</span><span class="st" style="font-size:15px;margin-left:10px;vertical-align:3px">완료</span>');
   s += img(DI, 136, DIW, 243, 'pj-greenhouse.jpg', poly(DIW, 243, GH, 1.1) + brkIn(DIW, 243, INK));
   s += num(DI, 386, '남원 농경지 2025.06 · 검증 셋 20 %', 12, G);
-  s += `<div class="d8" style="position:absolute;left:${DI}px;top:412px;font-size:56px;line-height:1;color:${ACC};font-variant-numeric:tabular-nums">0.82</div>\n` + lab(DI + 2, 474, 'IoU 영역 일치도');
-  s += `<div class="d8" style="position:absolute;left:${DI + 216}px;top:412px;font-size:56px;line-height:1;color:${INK};font-variant-numeric:tabular-nums">0.87</div>\n` + lab(DI + 218, 474, 'F1 종합 정확도') + num(DI + 340, 476, 'v2.0 +0.04', 12, G);
+  s += `<div class="d8" style="position:absolute;left:${DI}px;top:412px;font-size:58px;line-height:1;color:${ACC};font-variant-numeric:tabular-nums">0.82</div>\n` + lab(DI + 2, 474, 'IoU 영역 일치도');
+  s += `<div class="d8" style="position:absolute;left:${DI + 216}px;top:412px;font-size:58px;line-height:1;color:${INK};font-variant-numeric:tabular-nums">0.87</div>\n` + lab(DI + 218, 474, 'F1 종합 정확도') + num(DI + 340, 476, 'v2.0 +0.04', 12, G);
   s += hl(DI, 500, DIW);
   // 학습 정보 + 설정 = 새로 학습하기 폼과 같은 필드(학습명 · 기반 모델 · 데이터셋 · 이미지 크기 · 학습:검증 · 에폭 · 배치 · IoU/Conf)
   const kv = [['학습 시작', '2026.05.18 07:40'], ['소요', '1시간 35분'], ['라벨', '3,842'], ['데이터셋', '남원 농경지 2025.04 · 06 · 08'], ['기반 모델', 'XI-VFM v2.1'], ['이미지 크기', '640 × 640'], ['학습 : 검증', '80 : 20'], ['에폭 · 배치', '100 · 16'], ['IoU · Conf', '0.5 · 0.25']];
@@ -339,12 +340,12 @@ const ICONS = {
 };
 const ico = (k, col = INK, sz = 16) => `<svg width="${sz}" height="${sz}" viewBox="0 0 20 20" fill="none" stroke="${col}" stroke-width="1.5" stroke-linejoin="miter" stroke-linecap="butt" style="flex:none">${ICONS[k]}</svg>`;
 // 아이콘 버튼(헤어라인) — 라벨 있으면 가로형
-const ibtn = (x, y, w, k, label = '', on = false) => `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:32px;border:1px solid ${on ? INK : H};background:${on ? T2 : '#FFFFFF'};display:flex;align-items:center;justify-content:${label ? 'flex-start' : 'center'};gap:7px;padding:0 ${label ? 9 : 0}px;font-size:12.5px;letter-spacing:-.01em;color:${INK};white-space:nowrap">${ico(k, INK, 15)}${label}</div>\n`;
+const ibtn = (x, y, w, k, label = '', on = false) => `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:32px;border:1px solid ${on ? INK : H};background:${on ? T2 : '#FFFFFF'};display:flex;align-items:center;justify-content:${label ? 'flex-start' : 'center'};gap:7px;padding:0 ${label ? 9 : 0}px;font-size:14.5px;letter-spacing:-.01em;color:${INK};white-space:nowrap">${ico(k, INK, 15)}${label}</div>\n`;
 // 지도 우측 플로팅 툴바(원본 8: 검색 · 지구 · 측정 · 그리기 · 다운로드 · LX 레이어 · + · −)
 function mapTools(x, y) {
   let s = '';
   const g1 = ['search', 'globe', 'ruler', 'pen', 'download', 'layers'];
-  g1.forEach((k, i) => { s += div(x, y + i * 36, 36, 36, `background:#FFFFFF;border:1px solid ${H};border-top-width:${i ? 0 : 1}px;display:flex;align-items:center;justify-content:center`, ico(k, INK, 16) + (k === 'layers' ? `<span class="lab" style="position:absolute;left:0;right:0;bottom:2px;text-align:center;font-size:8px;color:${INK}">LX</span>` : '')); });
+  g1.forEach((k, i) => { s += div(x, y + i * 36, 36, 36, `background:#FFFFFF;border:1px solid ${H};border-top-width:${i ? 0 : 1}px;display:flex;align-items:center;justify-content:center`, ico(k, INK, 16) + (k === 'layers' ? `<span class="lab" style="position:absolute;left:0;right:0;bottom:2px;text-align:center;font-size:14px;color:${INK}">LX</span>` : '')); });
   const y2 = y + 6 * 36 + 12;
   ['plus', 'minus'].forEach((k, i) => { s += div(x, y2 + i * 36, 36, 36, `background:#FFFFFF;border:1px solid ${H};border-top-width:${i ? 0 : 1}px;display:flex;align-items:center;justify-content:center`, ico(k, INK, 16)); });
   return s;
@@ -353,7 +354,7 @@ function mapTools(x, y) {
 const mapPlate = (x, y, w, h, src, over = '', oy = 0, ox = 0) => `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;overflow:hidden;background:#EEE"><img src="${src}" alt="" style="position:absolute;left:${ox}px;top:${oy}px;width:1384px;height:852px;display:block">${over}</div>\n`;
 const tealPolys = (pts, oy = 0, fill = .12, ox = 0) => `<svg width="1384" height="852" viewBox="0 0 1384 852" style="position:absolute;left:${ox}px;top:${oy}px;display:block;pointer-events:none">` +
   pts.map(p => `<polygon points="${p}" fill="rgba(15,169,160,${fill})" stroke="${TEAL}" stroke-width="1.5" stroke-linejoin="miter"/>`).join('') + `</svg>`;
-const mapTag = (x, y, t, oy = 0, ox = 0) => `<div class="n" style="position:absolute;left:${x + ox}px;top:${y + oy}px;height:18px;line-height:18px;padding:0 5px;background:${TEAL};color:#FFFFFF;font-size:11px;letter-spacing:.02em;white-space:nowrap">${t}</div>`;
+const mapTag = (x, y, t, oy = 0, ox = 0) => `<div class="n" style="position:absolute;left:${x + ox}px;top:${y + oy}px;height:18px;line-height:21px;padding:0 5px;background:${TEAL};color:#FFFFFF;font-size:14px;letter-spacing:.02em;white-space:nowrap">${t}</div>`;
 // 작은 대화상자(헤어라인 잉크 테두리)
 const dialog = (x, y, w, h, title, inner, tag = '') => div(x, y, w, h, `background:#FFFFFF;border:1px solid ${INK}`) +
   disp(x + 20, y + 18, title + tag, 16) + `<div style="position:absolute;left:${x + w - 30}px;top:${y + 22}px">${ico('close', G, 12)}</div>\n` + hl(x + 20, y + 50, w - 40) + inner;
@@ -473,7 +474,7 @@ function analysis() {
   let inner = txt(dx + 20, dy + 62, '분석 결과를 공유할 기관·역할을 선택하세요.', 12.5, G);
   roles.forEach(([org, role, on], i) => { const y = dy + 92 + i * 28; inner += chk(dx + 20, y + 3, on) + txt(dx + 44, y, role, 13, on ? INK : G) + txt(dx + 204, y + 1, org, 12, C) + hl(dx + 20, y + 24, 320); });
   inner += num(dx + 20, dy + 262, '+3 · 스크롤', 12, C) + hl(dx + 20, dy + 286, 320) + tb(dx + 250, dy + 296, '취소', false, `color:${G}`) + tb(dx + 304, dy + 296, '저장');
-  s += dialog(dx, dy, 360, 336, '공유 설정', inner, '<span class="st" style="font-size:12px;margin-left:10px;vertical-align:2px">비닐하우스 탐지 #1</span>');
+  s += dialog(dx, dy, 360, 336, '공유 설정', inner, '<span class="st" style="font-size:14px;margin-left:10px;vertical-align:2px">비닐하우스 탐지 #1</span>');
   s += FOOT;
   return page('B5 · 프로젝트 — 분석', s);
 }
@@ -497,12 +498,12 @@ function deploy() {
   // 모델 등록 0 — 빈 판(원본 "등록된 모델이 없습니다")
   const ey = 340;
   s += disp(X0, ey, '모델 등록', 14) + num(X0 + 70, ey + 1, '0', 13, C);
-  s += div(X0, ey + 30, W2, 300, `border:1px dotted ${C};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px`, ico('layers', C, 40) + `<span style="font-size:13px;color:${G}">등록된 모델이 없습니다</span>`);
+  s += div(X0, ey + 30, W2, 300, `border:1px dotted ${C};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px`, ico('layers', C, 40) + `<span style="font-size:15px;color:${G}">등록된 모델이 없습니다</span>`);
   // 우 드로어 720 — 발행 폼(원본 ai-publish-create.html 13필드 1:1)
   const DX2 = 720, DI2 = 744, DIW2 = 672, CW = 320, C2 = DI2 + 352;
   s += div(DX2, 64, 720, 836, 'background:#FFFFFF') + vl(DX2, 64, 836, INK) + disp(DI2, 86, '카드 발행 요청', 20) + `<div style="position:absolute;left:1404px;top:90px">${ico('close', G, 12)}</div>\n` + hl(DI2, 122, DIW2);
   const auto = '<span class="tag">자동</span>';
-  const radio = (x, y, t, on) => `<div style="position:absolute;left:${x}px;top:${y}px;display:flex;align-items:center;gap:7px;font-size:13px;color:${on ? INK : G}"><span style="width:14px;height:14px;border:1px solid ${on ? INK : C};display:inline-block;position:relative">${on ? `<span style="position:absolute;left:3px;top:3px;width:6px;height:6px;background:${INK}"></span>` : ''}</span>${t}</div>\n`;
+  const radio = (x, y, t, on) => `<div style="position:absolute;left:${x}px;top:${y}px;display:flex;align-items:center;gap:7px;font-size:15px;color:${on ? INK : G}"><span style="width:14px;height:14px;border:1px solid ${on ? INK : C};display:inline-block;position:relative">${on ? `<span style="position:absolute;left:3px;top:3px;width:6px;height:6px;background:${INK}"></span>` : ''}</span>${t}</div>\n`;
   // 1행 — 과제 유형(라디오) · 모델명
   s += lab(DI2, 138, '과제 유형') + radio(DI2, 160, '신규 과제', true) + radio(DI2 + 100, 160, '과제 고도화', false);
   s += lab(C2, 138, '모델명') + fld(C2, 156, CW, '<span>v2.1</span>', `border-color:${INK}`);

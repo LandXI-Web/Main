@@ -28,18 +28,18 @@
   --lx-num:var(--font-num);           /* Inter 400 tabular — 소형 표 숫자 */
   --lx-tint-1:var(--tint-1); --lx-tint-2:var(--tint-2);   /* T3 틴트 */
 
-  /* 타이포 스케일 — 1024/1280/1440/1920 전부 동일(fluid 금지) */
-  --lx-h1:64px;    --lx-h1-lh:80px;      --lx-h1-ls:-0.16px;
-  --lx-h2:52px;    --lx-h2-lh:57.2px;    --lx-h2-ls:-0.52px;
-  --lx-h4:28px;    --lx-h4-lh:36.4px;    --lx-h4-ls:0.28px;
-  --lx-h5:24px;    --lx-h5-lh:31.2px;    --lx-h5-ls:-0.16px;
-  --lx-name:16px;  --lx-name-lh:20px;    --lx-name-ls:-0.16px;
-  --lx-nav:14px;   --lx-nav-lh:14px;     --lx-nav-ls:0.24px;
-  --lx-lead:20px;  --lx-lead-lh:29px;    --lx-lead-ls:-0.2px;
-  --lx-fs:16px;    --lx-lh:23.2px;       --lx-ls:-0.16px;
-  --lx-label:12px; --lx-label-lh:13.2px; --lx-label-ls:0.12px;
-  --lx-cap:12px;   --lx-cap-lh:16.8px;   --lx-cap-ls:-0.12px;
-  --lx-stat:124px; --lx-stat-lh:142.6px; --lx-stat-ls:-1.24px;
+  /* 타이포 스케일 — 1024/1280/1440/1920 전부 동일(fluid 금지). 2026-08-27 클라이언트 "글자는 전체적으로 2포인트 키우는걸 기본으로" — 전 단계 +2, 바닥 14px */
+  --lx-h1:66px;    --lx-h1-lh:82px;      --lx-h1-ls:-0.16px;
+  --lx-h2:54px;    --lx-h2-lh:59.4px;    --lx-h2-ls:-0.52px;
+  --lx-h4:30px;    --lx-h4-lh:39px;      --lx-h4-ls:0.28px;
+  --lx-h5:26px;    --lx-h5-lh:33.8px;    --lx-h5-ls:-0.16px;
+  --lx-name:18px;  --lx-name-lh:22px;    --lx-name-ls:-0.16px;
+  --lx-nav:16px;   --lx-nav-lh:16px;     --lx-nav-ls:0.24px;
+  --lx-lead:22px;  --lx-lead-lh:32px;    --lx-lead-ls:-0.2px;
+  --lx-fs:18px;    --lx-lh:26px;         --lx-ls:-0.16px;
+  --lx-label:14px; --lx-label-lh:15.4px; --lx-label-ls:0.12px;
+  --lx-cap:14px;   --lx-cap-lh:19.6px;   --lx-cap-ls:-0.12px;
+  --lx-stat:126px; --lx-stat-lh:145px;   --lx-stat-ls:-1.24px;
 
   /* 그리드 — 12컬럼 · 여백 64 @1440 · 거터 24 (1컬럼 87.33px) */
   --lx-cols:12;
@@ -217,10 +217,10 @@ body.lx{
 .lx-fig__inset figcaption{
   display:flex; justify-content:space-between; gap:8px; padding:6px 8px;
   background:rgba(255,255,255,.94); color:var(--lx-ink);
-  font-family:var(--lx-num); font-size:11px; line-height:15px; letter-spacing:var(--lx-label-ls);
+  font-family:var(--lx-num); font-size:14px; line-height:18px; letter-spacing:var(--lx-label-ls);
 }
 /* 헤어라인 스케일바 + 사람 척도 참조물 */
-.lx-scalebar{ position:absolute; left:16px; bottom:16px; z-index:4; color:#fff; font-family:var(--lx-num); font-size:11px; line-height:15px; letter-spacing:var(--lx-label-ls); }
+.lx-scalebar{ position:absolute; left:16px; bottom:16px; z-index:4; color:#fff; font-family:var(--lx-num); font-size:14px; line-height:18px; letter-spacing:var(--lx-label-ls); }
 .lx-scalebar span{ display:block; height:5px; width:120px; border:1px solid rgba(255,255,255,.9); border-top:0; margin-bottom:5px }
 .lx-scalebar b{ font-weight:400 }
 .lx code{ font-family:var(--lx-num); font-size:inherit }
@@ -244,7 +244,7 @@ body.lx{
 .lx-index__arw{ font-family:var(--lx-num); font-size:var(--lx-cap); color:var(--lx-grey); text-align:right; transition:transform var(--lx-hover) var(--lx-hover-ease), color var(--lx-hover) var(--lx-hover-ease); }
 .lx-index__row:hover .lx-index__arw{ transform:translateX(4px); color:var(--lx-ink) }
 .lx-index__tag{ align-self:center }
-.lx-index__tag .lx-chip{ height:22px; padding:0 9px; font-size:11px }
+.lx-index__tag .lx-chip{ height:22px; padding:0 9px; font-size:14px }
 .lx-index__when{ font-family:var(--lx-num); font-size:var(--lx-cap); line-height:var(--lx-cap-lh); letter-spacing:var(--lx-cap-ls); color:var(--lx-grey-2) }
 @media (max-width:1439.98px){
   .lx-index__row{ grid-template-columns:36px minmax(0,1fr) 132px 116px 112px 24px }
@@ -319,12 +319,12 @@ body.lx{
 .lx-ruler__tick.maj{ height:17px; background:var(--lx-grey-2) }
 .lx-ruler__lab{ position:absolute; top:28px; transform:translateX(-50%); font-family:var(--lx-num); font-size:var(--lx-cap); line-height:var(--lx-cap-lh); letter-spacing:var(--lx-cap-ls); color:var(--lx-grey); white-space:nowrap; text-align:center; transition:color var(--lx-hover) var(--lx-hover-ease) }
 .lx-ruler__lab.on{ color:var(--lx-ink) }
-.lx-ruler__lab em{ display:block; font-style:normal; font-size:11px; color:var(--lx-grey) }
+.lx-ruler__lab em{ display:block; font-style:normal; font-size:14px; color:var(--lx-grey) }
 .lx-ruler__lab.on em{ color:var(--lx-grey-2) }
 .lx-ruler__head{ position:absolute; top:0; left:0; height:24px; width:1px; background:var(--lx-ink); transition:transform var(--lx-d1) var(--lx-ease) }
 .lx-ruler__head::before{ content:""; position:absolute; left:-4px; top:0; width:9px; height:9px; background:var(--lx-ink) }
 .lx-ruler__bar{ display:flex; align-items:center; gap:18px; margin-top:10px }
-.lx-play{ width:34px; height:34px; border:1px solid var(--lx-hair); background:none; color:var(--lx-ink); cursor:pointer; font-size:11px; line-height:1; display:inline-flex; align-items:center; justify-content:center; transition:border-color var(--lx-hover) var(--lx-hover-ease), color var(--lx-hover) var(--lx-hover-ease) }
+.lx-play{ width:34px; height:34px; border:1px solid var(--lx-hair); background:none; color:var(--lx-ink); cursor:pointer; font-size:14px; line-height:1; display:inline-flex; align-items:center; justify-content:center; transition:border-color var(--lx-hover) var(--lx-hover-ease), color var(--lx-hover) var(--lx-hover-ease) }
 .lx-play:hover{ border-color:var(--lx-ink) }
 .lx-play[aria-pressed=true]{ border-color:var(--lx-accent); color:var(--lx-accent) }
 
@@ -414,9 +414,9 @@ body.lx{
 .lx-footer h3{ margin:0 0 18px; font-family:var(--lx-num); font-size:var(--lx-label); line-height:var(--lx-label-lh); letter-spacing:var(--lx-label-ls); text-transform:uppercase; color:var(--lx-grey-2); font-weight:400 }
 .lx-footer ul{ margin:0; padding:0; list-style:none }
 .lx-footer li{ padding:7px 0 }
-.lx-footer li a{ font-family:var(--lx-display); font-weight:700; font-size:14px; line-height:20px; letter-spacing:.14px; color:var(--lx-ink); text-decoration:none }
+.lx-footer li a{ font-family:var(--lx-display); font-weight:700; font-size:16px; line-height:22px; letter-spacing:.14px; color:var(--lx-ink); text-decoration:none }
 .lx-footer li.sub a{ color:var(--lx-grey-2) }
-.lx-footer li.sub::before{ content:"\21B3"; font-family:var(--lx-num); font-size:11px; color:var(--lx-grey); margin-right:7px }
+.lx-footer li.sub::before{ content:"\21B3"; font-family:var(--lx-num); font-size:14px; color:var(--lx-grey); margin-right:7px }
 .lx-footer__rule{ grid-column:1/-1; height:1px; background:var(--lx-hair); margin:56px 0 20px }
 .lx-footer__attr{ grid-column:1/-1; display:flex; flex-wrap:wrap; gap:8px 28px; font-family:var(--lx-num); font-size:var(--lx-cap); line-height:var(--lx-cap-lh); letter-spacing:var(--lx-cap-ls); color:var(--lx-grey-2) }
 @media (max-width:1279.98px){ .lx-footer__brand{ grid-column:1/-1; margin-bottom:40px } .lx-footer__col{ grid-column:span 4 } }
@@ -430,7 +430,7 @@ body.lx{
 .lx-cross__h{ left:0; right:0; height:1px; top:0 }
 .lx-cross__d{ width:9px; height:9px; background:none; border:1px solid var(--lx-amber); left:0; top:0; margin:-5px 0 0 -5px }
 .lx-cross__r{ position:absolute; left:0; top:0; margin:12px 0 0 12px; padding:3px 6px; background:rgba(1,1,2,.72); color:#fff;
-  font-family:var(--lx-num); font-variant-numeric:tabular-nums; font-size:11px; line-height:15px; letter-spacing:.11px; white-space:nowrap }
+  font-family:var(--lx-num); font-variant-numeric:tabular-nums; font-size:14px; line-height:18px; letter-spacing:.11px; white-space:nowrap }
 
 /* ── 20. 접근성 · 모션 축소 ──────────────────────────────────────────────── */
 @media (prefers-reduced-motion:reduce){
