@@ -479,9 +479,7 @@ function editGeo(a) {
 $('#grid').addEventListener('click', (ev) => {
   const th = ev.target.closest('[data-open]'); if (!th) return;
   const id = th.dataset.open;
-  S.sel = S.sel === id ? null : id;
-  S.mode = S.sel ? 'tile' : 'none'; S.more = false;
-  renderPanel(); renderSide();
+  if (S.sel === id) backToBoard(); else selectTile(id);   // 선택 타일을 다시 누르면 현황판으로
 });
 
 /* ══ 우 패널 — 선택 타일을 펼친다: 판(지도/그림) + 기본 정보 + 액션 ═══════ */
@@ -502,16 +500,65 @@ function showFig(html) { $('#plate-wrap').hidden = true; const f = $('#fig-wrap'
 function showPlate() { $('#fig-wrap').hidden = true; $('#plate-wrap').hidden = false; }
 function hideFrames() { $('#plate-wrap').hidden = true; const f = $('#fig-wrap'); f.hidden = true; f.innerHTML = ''; }
 
-/* ── 진행 현황판(업로드 · 선택 없음) — 한 줄 = 한 건. 이름 · 상태어 · 막대 % · 크기 · 잔여. 발주 2차. ── */
+/* ── 현황판(선택 없음) — 4단계 공용 문법(발주 3차 "통일성"): 한 줄 = 한 건, 헤어라인, 줄 = 그 타일 선택. 아래 단계 요약 kv.
+   업로드: 이름 · 상태어 · 막대 % · 크기 · 잔여 / 완료: 이름 · 형식 · 크기 · 업로드 일시 · 아카이빙 · 위치 /
+   발행중: 이름 · 4눈금 · 상태어(실패 warn + 짧은 사유) · 진행률 · 크기 / 아카이브: 이름 · 유형 · 표시/숨김 · 발행 v · 크기. ── */
+const BOARD_TITLE = { upload: '진행 현황', manage: '완료 현황', publishing: '발행 현황', archive: '보관 현황' };
 const remain = (u) => fmtBytes(bytesOf(u.size) * (1 - u.pct / 100));
+const sumBytes = (rows) => fmtBytes(rows.reduce((s, r) => s + bytesOf(r.size), 0));
+const bh = (cells) => `<div class="pbh">${cells.map((c) => `<span class="lb${/^(크기|잔여|진행률|발행)$/.test(c) ? ' rt' : ''}">${esc(c)}</span>`).join('')}</div>`;
+const bRow = (r, st, cells) => `<div class="pb" data-id="${r.id}"${st ? ` data-st="${st}"` : ''} role="button" tabindex="0"${selAttr(r.id)}>${cells}</div>`;
+const bName = (name) => `<span class="nm" title="${esc(name)}">${esc(name)}</span>`;
 function boardHtml() {
-  const c = by(S.ups, (u) => u.st);
-  const head = `<div class="pbh"><span class="lb">파일 ${S.ups.length} · 진행 중 ${c.run || 0}</span><span class="lb">상태</span><span class="lb">진행률</span><span class="lb sz">크기</span><span class="lb rm">잔여</span></div>`;
-  return head + S.ups.map((u) => `<div class="pb" data-id="${u.id}" data-st="${u.st}">
-    <span class="nm" title="${esc(u.file)}">${esc(u.file)}</span><span class="stw">${esc(UP_ST[u.st])}</span>
-    <span class="bar" style="--pct:${u.pct}%"><i></i><b class="n" data-ppct>${u.pct}%</b></span>
-    <span class="sz n">${esc(u.size)}</span><span class="rm n" data-prem>${remain(u)}</span></div>`).join('');
+  if (S.tab === 'upload') {
+    const c = by(S.ups, (u) => u.st);
+    return bh([`파일 ${S.ups.length} · 진행 중 ${c.run || 0}`, '상태', '진행률', '크기', '잔여'])
+      + S.ups.map((u) => bRow(u, u.st, `${bName(u.file)}<span class="stw">${esc(UP_ST[u.st])}</span>
+        <span class="bar" style="--pct:${u.pct}%"><i></i><b class="n" data-ppct>${u.pct}%</b></span>
+        <span class="rt n">${esc(u.size)}</span><span class="rt n" data-prem>${remain(u)}</span>`)).join('');
+  }
+  if (S.tab === 'manage') {
+    return bh([`파일 ${S.done.length} · 위치 ${S.done.filter(imFor).length}`, '형식', '크기', '업로드', '아카이빙', '위치'])
+      + S.done.map((d) => bRow(d, '', `${bName(d.file)}<span class="stw">${esc(d.fmt)}</span><span class="rt n">${esc(d.size)}</span>
+        <span class="n dim2" title="${esc(d.at)}">${date(d.at)}</span><span class="n">${d.arch}회</span><span class="n loc${imFor(d) ? ' on' : ''}">${imFor(d) ? '○' : '—'}</span>`)).join('');
+  }
+  if (S.tab === 'publishing') {
+    const c = by(S.pubs, (p) => p.st);
+    return bh([`파일 ${S.pubs.length} · 진행 ${c.run || 0} · 실패 ${c.fail || 0}`, '단계', '상태', '진행률', '크기'])
+      + S.pubs.map((p) => { const fail = p.st === 'fail'; return bRow(p, p.st, `${bName(p.file)}${ticks(p, true)}
+        <span class="stw${fail ? ' warn' : ''}">${fail ? `실패 · ${esc(p.short || '')}` : `${p.step}/4 ${esc(PUB_STEPS[p.step - 1])}`}</span>
+        <span class="rt n">${pubPct(p)}%</span><span class="rt n">${esc(p.size)}</span>`); }).join('');
+  }
+  const c = by(S.arch, (a) => (a.hidden ? 'h' : 'v'));
+  return bh([`자산 ${S.arch.length} · 표시 ${c.v || 0} · 숨김 ${c.h || 0}`, '유형', '표시', '발행', '크기'])
+    + S.arch.map((a) => { const log = PUBLISH_LOG[a.id] || []; return bRow(a, a.hidden ? 'hide' : 'show', `${bName(a.name)}<span class="stw">${esc(a.kind)}</span>
+      <span class="stw vis">${a.hidden ? '숨김' : '표시'}</span><span class="rt n ver">${log.length ? esc(log[0][0]) : '—'}</span><span class="rt n">${esc(a.size)}</span>`); }).join('');
 }
+/** 현황판 아래 단계 요약 kv — 업로드: 디스크 · 허용 형식 · 한도 / 완료: 총 용량 · 형식별 / 발행중: 진행 · 실패 / 아카이브: 표시 · 숨김 · 총 용량. */
+function boardFoot() {
+  if (S.tab === 'upload') return dl([['디스크', `${gb(DISK.used)} / ${gb(DISK.total)} GB`], ['잔여', `${gb(DISK.free)} GB`], ['허용 형식', ACCEPT_EXT.map((x) => x.slice(1).toUpperCase()).join(' · '), 'wide'], ['한도', '1 TB']]);
+  if (S.tab === 'manage') { const c = by(S.done, fmtOf); return dl([['총 용량', sumBytes(S.done)], ['위치 있음', `${S.done.filter(imFor).length}건`], ['형식별', Object.entries(c).map(([k, n]) => `${k} ${n}`).join(' · ') || '—', 'wide']]); }
+  if (S.tab === 'publishing') { const c = by(S.pubs, (p) => p.st); return dl([['진행', `${c.run || 0}건`], ['실패', c.fail ? `<span class="warn">${c.fail}건</span>` : '0건'], ['총 용량', sumBytes(S.pubs)], ['단계', '4']]); }
+  const c = by(S.arch, (a) => (a.hidden ? 'h' : 'v')), k = by(S.arch, (a) => a.kind);
+  return dl([['표시', `${c.v || 0}건`], ['숨김', `${c.h || 0}건`], ['총 용량', sumBytes(S.arch)], ['유형별', Object.entries(k).map(([n, v]) => `${n} ${v}`).join(' · ') || '—', 'wide']]);
+}
+/** 현재 단계의 목록(필터 · 검색 적용). 현황판 줄 → 타일 선택 시 그 타일이 있는 쪽으로 간다. */
+function filtered() {
+  if (S.tab === 'upload') return S.ups.filter((u) => passFmt(u) && hit(u));
+  if (S.tab === 'manage') return S.done.filter((d) => passFmt(d) && hit(d));
+  if (S.tab === 'publishing') return S.pubs.filter((p) => passFmt(p) && hit(p));
+  return S.arch.filter((a) => passKind(a) && hit(a));
+}
+function selectTile(id) {
+  S.sel = id; S.mode = 'tile'; S.more = false;
+  const i = filtered().findIndex((r) => r.id === id);
+  if (i >= 0) S.page = Math.floor(i / Math.max(1, S.pp - (S.tab === 'upload' ? 1 : 0))) + 1;
+  renderPanel(); renderSide();
+}
+function backToBoard() { S.sel = null; S.mode = 'none'; S.more = false; renderPanel(); renderSide(); }
+$('#side-back').addEventListener('click', backToBoard);
+$('#side').addEventListener('click', (ev) => { const r = ev.target.closest('.pb[data-id]'); if (r) selectTile(r.dataset.id); });
+$('#side').addEventListener('keydown', (ev) => { const r = ev.target.closest('.pb[data-id]'); if (r && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); selectTile(r.dataset.id); } });
 
 /* ── 성과 — 이 자산에 닿은 실제 AI 결과(results.js). 판 위에 청록으로 서고, 범위 안 건수는 세어서 적는다. ── */
 const resultsOf = (id) => (RESULT_OF[id] || []).map((rid) => resultRow(RESULT_BY_ID[rid])).filter(Boolean);
@@ -584,23 +631,15 @@ function renderSide() {
   if (!row) { S.sel = null; S.mode = 'none'; }
   side.dataset.mode = S.mode;
   if (side.dataset.sel !== String(S.sel)) { side.dataset.sel = String(S.sel); $('#side-body').scrollTop = 0; }   // 선택이 바뀌면 맨 위부터
-  $('#side-h').textContent = row ? (row.name || row.file) : name;
+  $('#side-h').textContent = row ? (row.name || row.file) : BOARD_TITLE[S.tab];
+  $('#side-h').title = row ? (row.name || row.file) : `${name} · ${BOARD_TITLE[S.tab]}`;
   $('#side-m').textContent = row ? `선택 1 / ${total}` : `선택 0 / ${total}`;
+  $('#side-back').hidden = !row;   // `‹ 현황` — 상세에서 현황판으로. 4단계 같다.
   info.innerHTML = ''; acts.innerHTML = '';
   if (!row) {
-    // 빈 상태. 업로드 = 카드별 진행 현황판(발주 2차) · 그 외 = 단계의 건수.
-    if (S.tab === 'upload') {
-      hideFrames();
-      $('#side-h').textContent = '진행 현황';
-      info.innerHTML = boardHtml() + dl([['디스크', `${gb(DISK.used)} / ${gb(DISK.total)} GB`], ['잔여', `${gb(DISK.free)} GB`], ['허용 형식', ACCEPT_EXT.map((x) => x.slice(1).toUpperCase()).join(' · '), 'wide'], ['한도', '1 TB']]);
-      applyMapMode('none');
-      return;
-    }
-    showFig(`<div class="fig fig--none"><b class="big n">${total}</b><span class="t1">${esc(name)} · 선택 없음</span><span class="t2">타일 선택 → ${S.tab === 'archive' ? '판 · 사용 현황 · 발행 이력 · 메모' : '지도 · 기본 정보 · 액션'}</span></div>`);
-    if (S.tab === 'archive') {
-      const c = by(S.arch, (a) => a.kind), last = S.arch.map((a) => a.at).sort().pop() || '—';
-      info.innerHTML = dl([['정사영상', `${c['정사영상'] || 0}건`], ['공간정보', `${c['공간정보'] || 0}건`], ['이미지셋', `${c['이미지셋'] || 0}건`], ['최근 등록', last]]);
-    }
+    // 선택 없음 = 단계 현황판(4단계 같은 문법) + 단계 요약 kv. 판·액자는 닫는다. 0건이면 빈 줄 하나.
+    hideFrames();
+    info.innerHTML = `<div class="board" data-k="${S.tab}">${boardHtml()}${total ? '' : `<p class="pb-empty n">0건</p>`}</div>` + boardFoot();
     applyMapMode('none');
     return;
   }

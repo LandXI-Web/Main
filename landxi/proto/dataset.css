@@ -146,6 +146,11 @@ body[data-pp="4"]{ --cols:2; --rows:2; } body[data-pp="6"]{ --cols:3; --rows:2; 
 .tile:hover{ transform:translateY(-4px); }
 /* 타일 높이 상한 = (그리드 높이 − 행 간격 − 캡션 24 × 행 − 여백) / 행 */
 .th{ position:relative; width:100%; aspect-ratio:240/147; max-height:calc((100cqh - 8px - (var(--rows) - 1) * var(--gap) - var(--rows) * 24px) / var(--rows)); min-height:64px; overflow:hidden; background:#fff; display:block; cursor:pointer; }
+/* 쪽당 16 = 4×4 가 항상 한 화면 — 타일 높이는 그리드 높이 ÷ 4 로 **고정**하고 폭도 그 비율(1.63:1)로 따라 준다.
+   (이전: 높이 상한만 두어 8건인 단계·큰 화면에서는 8 과 같아 보였다 — 클라이언트 "16 은 반응이 안 되네".) */
+body[data-pp="16"]{ --th16:calc((100cqh - 8px - 3 * var(--gap) - 4 * 24px) / 4); }
+body[data-pp="16"] .tiles{ grid-template-columns:repeat(4, minmax(0, calc(var(--th16) * 240 / 147))); justify-content:start; }
+body[data-pp="16"] .th{ aspect-ratio:auto; height:var(--th16); max-height:none; min-height:56px; }
 .th img{ position:absolute; left:0; top:0; width:100%; height:100%; object-fit:cover; display:block; }
 .th canvas{ position:absolute; left:0; top:0; width:100%; height:100%; display:block; }
 .th--box{ border:1px solid var(--line); }
@@ -315,23 +320,43 @@ body[data-pp="8"] .th .tagb,body[data-pp="16"] .th .tagb{ display:none; }
 .br:hover::before,.br:hover::after{ width:100%; height:100%; }
 .fill{ width:120px; height:38px; background:var(--ink); color:#fff; font-size:16px; display:inline-flex; align-items:center; justify-content:center; transition:transform var(--hov) var(--hove); }
 .fill:hover{ transform:translateY(-2px); }
-/* 진행 현황판(업로드 · 선택 없음) — 한 줄 = 한 건: 이름 · 상태어 · 막대 % · 크기 · 잔여. 문장 0. */
-.pbh,.pb{ display:grid; grid-template-columns:minmax(0,1fr) 58px 112px 62px 62px; column-gap:10px; align-items:center; }
+/* 현황판(선택 없음 · 4단계 공용 문법) — 한 줄 = 한 건 = 38px 헤어라인, 줄 클릭 = 그 타일 선택. 문장 0.
+   열은 단계마다 다르고(아래 data-k) 줄 높이 · 글자 · 헤더 · 호버 틴트는 같다. */
+.pbh,.pb{ display:grid; column-gap:10px; align-items:center; }
+.board[data-k="upload"] .pbh,.board[data-k="upload"] .pb{ grid-template-columns:minmax(0,1fr) 58px 112px 62px 62px; }
+.board[data-k="manage"] .pbh,.board[data-k="manage"] .pb{ grid-template-columns:minmax(0,1fr) 40px 62px 86px 58px 28px; }
+.pbh > *{ min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.board[data-k="publishing"] .pbh,.board[data-k="publishing"] .pb{ grid-template-columns:minmax(0,1fr) 52px 122px 44px 62px; }
+.board[data-k="archive"] .pbh,.board[data-k="archive"] .pb{ grid-template-columns:minmax(0,1fr) 56px 36px 32px 62px; }
 .pbh{ margin-top:16px; padding-bottom:6px; border-bottom:1px solid var(--ink); }
-.pbh .sz,.pbh .rm,.pb .sz,.pb .rm{ text-align:right; }
-.pb{ padding:8px 0 7px; border-bottom:1px solid var(--line); font-size:14px; letter-spacing:-.01em; color:var(--ink); transition:background var(--hov) var(--hove), transform var(--hov) var(--hove); }
+.pbh .rt,.pb .rt{ text-align:right; }
+.pb{ height:38px; padding:0; border-bottom:1px solid var(--line); font-size:14px; letter-spacing:-.01em; color:var(--ink); cursor:pointer; outline-offset:-1px;
+  transition:background var(--hov) var(--hove), transform var(--hov) var(--hove); }
 .pb:hover{ background:var(--t1); transform:translateX(4px); }
-.pb .nm{ min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.pb .stw{ color:var(--grey); white-space:nowrap; }
+.pb[aria-current="true"]{ background:var(--t1); }   /* T3 선택 — 타일 캡션과 같은 틴트 */
+.pb > *{ min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pb .nm{ color:var(--ink); }
+.pb .stw{ color:var(--grey); }
+.pb .stw.warn{ color:var(--warn); }
+.pb .dim2{ color:var(--grey); letter-spacing:.01em; }
+.pb .loc{ color:var(--grey-3); } .pb .loc.on{ color:var(--accent); }
+.pb .ver{ color:var(--accent); }
 .pb[data-st="run"] .stw{ color:var(--accent); }
-.pb .bar{ position:relative; height:12px; margin-right:34px; border:1px solid var(--line); background:#fff; }
+.pb[data-st="hide"] .nm,.pb[data-st="hide"] .vis{ color:var(--grey-3); }
+.pb .bar{ position:relative; height:12px; margin-right:34px; border:1px solid var(--line); background:#fff; overflow:visible; }
 .pb .bar i{ position:absolute; left:0; top:0; bottom:0; width:var(--pct); background:var(--grey-3); transition:width 1400ms linear; }
 .pb[data-st="run"] .bar i{ background:var(--accent); }
 .pb .bar b{ position:absolute; left:calc(100% + 6px); top:-1px; font-weight:400; font-size:14px; line-height:12px; color:var(--grey); white-space:nowrap; }
 .pb[data-st="run"] .bar b{ color:var(--accent); }
-.pb .sz,.pb .rm{ white-space:nowrap; color:var(--grey); }
-.pb[data-st="run"] .rm{ color:var(--ink); }
+.pb .rt{ color:var(--grey); }
+.pb[data-st="run"] [data-prem]{ color:var(--ink); }
 .pb[data-st="wait"] .nm,.pb[data-st="stop"] .nm{ color:var(--grey); }
+.pb .ticks{ position:static; gap:3px; overflow:visible; }
+.pb .ticks i{ width:10px; height:10px; }
+.pb-empty{ margin:0; height:38px; line-height:38px; font-size:14px; color:var(--grey); border-bottom:1px solid var(--line); }
+/* `‹ 현황` — 상세 헤더의 되돌아가기. 4단계 같다. */
+#side-back{ font-size:14px; letter-spacing:.02em; color:var(--accent); white-space:nowrap; flex:none; line-height:26px; transition:transform var(--hov) var(--hove); }
+#side-back:hover{ transform:translateX(-4px); }
 /* 성과(완료 · 아카이브) — 청록 견본 + 결과명 + 큰 수 + 단위 + 분석일 */
 .rs{ display:grid; grid-template-columns:10px minmax(0,1fr) auto auto; column-gap:10px; align-items:baseline; padding:7px 0 6px; border-bottom:1px solid var(--line); font-size:14px; letter-spacing:-.01em; transition:background var(--hov) var(--hove), transform var(--hov) var(--hove); }
 .rs:hover{ background:var(--t1); transform:translateX(4px); }

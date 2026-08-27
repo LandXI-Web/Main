@@ -16,7 +16,7 @@
 body{margin:0;background:#FFFFFF;color:#010102;font-family:'Pretendard','Paperlogy',system-ui,sans-serif;font-weight:400;font-size:18px;line-height:1.6;-webkit-font-smoothing:antialiased}
 .d{font-family:'Paperlogy','Pretendard',system-ui,sans-serif;font-weight:700;letter-spacing:-.01em}
 .n{font-family:'Inter','Pretendard',system-ui,sans-serif;font-weight:400;font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
-/* B5-DataMgmt 12.2 — 발주 2차(2026-08-27): 쪽당 4 · 6 · 8 · 16 + 페이저 · 완료 선택 = 실제 위치(판 180, 청록 결과) + 성과 2 + 기본 정보 4행 · 액션 826. 12.1: 판 220 · 정보 640 · 액션 812 · XLSX 3열. 대시보드 골격 + 단계 뷰(좌 타일 그리드 8 = 4열 / 우 패널). */
+/* B5-DataMgmt 12.3 — 발주 3차(2026-08-27) "통일성": 우 패널은 4단계 같은 문법 — 선택 없음 = 단계 현황판(한 줄 = 한 건 38px 헤어라인 + 요약 kv), 선택 = 그 건의 상세 + `‹ 현황`. 이 판 = 완료 단계 · 선택 없음 = `완료 현황`(이름 · 형식 · 크기 · 업로드 · 아카이빙 · 위치) + 총 용량 · 위치 있음 · 형식별. 선택 상세(판 180 + 성과 2 + dl)는 12.2 와 같다(그림 shots/proto-ds/b5-07). 12.2: 쪽당 4 · 6 · 8 · 16 + 페이저 · 완료 선택 = 실제 위치(판 180, 청록 결과) + 성과 2. 대시보드 골격 + 단계 뷰(좌 타일 그리드 8 = 4열 / 우 패널). */
 .ab{position:absolute}
 .k{position:absolute;top:170px;height:132px;padding:0 18px;border-left:1px solid #DDDDDD}
 .k .kl{display:block;font-size:14px;letter-spacing:.04em;color:#686868;white-space:nowrap;line-height:17px}
@@ -53,6 +53,13 @@ body{margin:0;background:#FFFFFF;color:#010102;font-family:'Pretendard','Paperlo
 .rs .nv{white-space:nowrap}.rs .nv b{font-family:'Paperlogy';font-weight:700;font-size:18px;color:#0FA9A0;letter-spacing:-.01em}.rs .nv span{color:#686868;margin-left:2px}
 .rs .at{color:#686868;letter-spacing:.02em}
 .ph{position:absolute;left:897px;width:487px;height:28px;display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #010102;font-size:14px;letter-spacing:.04em;color:#686868}
+/* 현황판 — 4단계 공용 문법. 한 줄 = 한 건 38px 헤어라인. 완료 열: 이름 · 형식 · 크기 · 업로드 · 아카이빙 · 위치(○ = 도엽 실측 위치) */
+.pbh,.pb{position:absolute;left:897px;width:487px;display:grid;grid-template-columns:minmax(0,1fr) 40px 62px 86px 58px 28px;column-gap:10px;align-items:center;font-size:14px;letter-spacing:-.01em;color:#010102}
+.pbh{height:28px;align-items:baseline;border-bottom:1px solid #010102;letter-spacing:.04em;color:#686868;white-space:nowrap}
+.pb{height:38px;border-bottom:1px solid #DDDDDD}
+.pb>*{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pb .stw,.pb .dt{color:#686868}.pb .rt,.pbh .rt{text-align:right}.pb .rt{color:#686868}
+.pb .loc{color:#CCCCCC}.pb .loc.on{color:#006DF7}
 .rl{position:relative;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#686868}
 .rl div{font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line}
 </style></helmet>
@@ -119,7 +126,7 @@ body{margin:0;background:#FFFFFF;color:#010102;font-family:'Pretendard','Paperlo
 <div class="tile" style="left:312px;top:372px"><div class="th"><img src="tile-done-ecw.jpg"><span class="word n">완료 · 아카이빙 1회</span></div><p class="cap n"><span class="nm">NW_ortho_202604_zone_X.ecw</span><span class="mt">· 47.6 GB</span></p></div>
 <div class="tile" style="left:496px;top:372px"><div class="th box"><span class="word n">완료 · 아카이빙 0회</span>
   <table class="n" style="position:absolute;left:10px;top:30px;right:10px;border-collapse:collapse;font-size:14px;line-height:22px;white-space:nowrap;table-layout:fixed;width:152px"><tr style="color:#686868;border-bottom:1px solid #010102"><td style="width:66px">pnu</td><td style="width:46px">cls</td><td style="text-align:right">area</td></tr><tr style="border-bottom:1px solid #DDDDDD"><td>451902…</td><td>경작</td><td style="text-align:right">1,284</td></tr><tr><td>451902…</td><td>비경작</td><td style="text-align:right">612</td></tr></table></div><p class="cap n"><span class="nm">농지이용_행정정보_202604.xlsx</span><span class="mt">· 287.3 KB</span></p></div>
-<div class="tile" style="left:680px;top:372px"><div class="th" style="outline:1px solid #006DF7;outline-offset:-1px"><img src="tile-gh-clean.jpg"><span class="word n">완료 · 아카이빙 2회</span><i class="bk tl"></i><i class="bk tr"></i><i class="bk bl"></i><i class="bk br"></i></div><p class="cap n" style="background:#E8F1FF"><span class="nm">NW_ortho_202604_section_A.tif</span><span class="mt">· 58.3 GB</span></p></div>
+<div class="tile" style="left:680px;top:372px"><div class="th"><img src="tile-gh-clean.jpg"><span class="word n">완료 · 아카이빙 2회</span></div><p class="cap n"><span class="nm">NW_ortho_202604_section_A.tif</span><span class="mt">· 58.3 GB</span></p></div>
 <div class="tile" style="left:128px;top:513px"><div class="th"><img src="tile-done-2.jpg"><span class="word n">완료 · 아카이빙 1회</span></div><p class="cap n"><span class="nm">남원_운봉_드론_4월.ecw</span><span class="mt">· 62.7 GB</span></p></div>
 <div class="tile" style="left:312px;top:513px"><div class="th dash" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:22px 10px 20px"><span class="word n">완료 · 아카이빙 0회</span><span style="font-size:14px;color:#686868">미리보기 없음</span><span class="n" style="font-size:14px;color:#CCCCCC;letter-spacing:.04em">좌표계 없음</span></div><p class="cap n"><span class="nm">NW_road_defect_labels_202604.shp</span><span class="mt">· 48.2 MB</span></p></div>
 <div class="tile" style="left:496px;top:513px"><div class="th box"><span class="word n">완료 · 아카이빙 0회</span>
@@ -135,29 +142,24 @@ body{margin:0;background:#FFFFFF;color:#010102;font-family:'Pretendard','Paperlo
 <!-- 세로 헤어라인 -->
 <div class="ab" style="left:877px;top:370px;width:1px;height:486px;background:#DDDDDD"></div>
 
-<!-- ── 우 패널 — 선택 타일: 실제 위치(판 180 = V-World + 도엽 타일 + 실측 브래킷 + 청록 결과) + 성과 2(results.js 실측치) + 기본 정보 4행 + 액션. 실화면은 아카이빙·등록자·범위 행이 더 있고 스크롤 ── -->
-<div class="ab d" style="left:897px;top:370px;width:400px;font-size:18px;line-height:26px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">NW_ortho_202604_section_A.tif</div>
-<div class="ab n" style="left:1320px;top:376px;width:64px;text-align:right;font-size:14px;color:#686868">선택 1 / 8</div>
-<div class="ab" style="left:897px;top:408px;width:487px;height:180px;background:#010102;border:1px solid #DDDDDD;overflow:hidden">
-  <img src="ds-ortho2.jpg" style="position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;filter:saturate(.5) contrast(1.1) brightness(.85)">
-  <img src="tile-gh-clean.jpg" style="position:absolute;left:194px;top:36px;width:100px;height:100px;object-fit:cover;filter:saturate(.7)">
-  <!-- 청록 = AI 결과(농지이용 · 비닐하우스 폴리곤) — 도엽을 가운데 두고 3배 범위 -->
-  <svg width="487" height="180" viewBox="0 0 487 180" style="position:absolute;left:0;top:0" fill="#0FA9A0" fill-opacity=".18" stroke="#0FA9A0" stroke-width="1"><path d="M40 62l26-8 9 18-24 10z"/><path d="M88 118l20-14 16 12-8 20-22-2z"/><path d="M136 30l30-4 6 16-28 8z"/><path d="M330 52l22-6 12 14-18 12-14-6z"/><path d="M372 120l26-10 10 18-30 8z"/><path d="M420 40l24 2 4 18-26 4z"/><path d="M304 140l18-12 14 14-10 14-20-4z"/><path d="M230 148l22-4 6 14-24 6z"/></svg>
-  <div class="ab" style="left:194px;top:36px;width:100px;height:100px"><i class="bk tl bkw"></i><i class="bk tr bkw"></i><i class="bk bl bkw"></i><i class="bk br bkw"></i></div>
-  <div class="n" style="position:absolute;left:10px;top:9px;font-size:14px;letter-spacing:.05em;color:#fff;line-height:1.4">NW_ortho_202604_section_A.tif<br>GSD 1.08 cm</div>
-  <div class="n" style="position:absolute;left:10px;bottom:8px;font-size:14px;letter-spacing:.05em;color:#fff">남원 농경지 · 2025.04 · GSD 1.08 cm · 측정 · 성과 2</div>
-</div>
-<!-- 성과 2 — results.js: 농지이용 2,098 필지(2026.06.08) · 비닐하우스 9,664 동 / 1,674 필지(2026.06.06). 범위 안 건수는 GeoJSON 을 세어 적는다 -->
-<div class="ph" style="top:598px"><span>성과 2 · AI 결과</span><span>결과 / 건수 / 분석일</span></div>
-<div class="rs" style="top:626px"><span class="sw"></span><span class="nm">농지이용 현황<small class="n">· 범위 내 2</small></span><span class="nv n"><b>2,098</b><span>필지</span></span><span class="at n">2026.06.08</span></div>
-<div class="rs" style="top:657px"><span class="sw"></span><span class="nm">비닐하우스 조사<small class="n">· 1,674 필지</small><small class="n">· 범위 내 0</small></span><span class="nv n"><b>9,664</b><span>동</span></span><span class="at n">2026.06.06</span></div>
-<dl class="info" style="top:696px;margin:0">
-  <dt class="w">이름</dt><dd class="w">NW_ortho_202604_section_A.tif</dd>
-  <dt>형식</dt><dd>TIF</dd><dt>크기</dt><dd class="n">58.3 GB</dd>
-  <dt>업로드 일시</dt><dd class="n">2026.04.11 09:00</dd><dt>촬영일</dt><dd class="n">2025.04</dd>
-  <dt>GSD</dt><dd class="n">1.08 cm</dd><dt>좌표계</dt><dd>EPSG:5186 → 4326</dd>
+<!-- ── 우 패널 — 선택 없음 = 완료 현황판(4단계 공용 문법 · B5-DataMgmt-Upload 의 진행 현황판과 같은 줄 높이 38 · 헤더 · 요약 kv).
+     한 줄 = 한 건: 이름 · 형식 · 크기 · 업로드 · 아카이빙 · 위치(○ = imagery.js 도엽 실측 위치 d4 · d5). 줄 클릭 = 그 타일 선택 → 상세(판 180 + 성과 2 + dl + `지도 레이어 발행 ›`, 헤더에 `‹ 현황`) — 12.2 판과 같다 ── -->
+<div class="ab d" style="left:897px;top:370px;width:400px;font-size:18px;line-height:26px">완료 현황</div>
+<div class="ab n" style="left:1320px;top:376px;width:64px;text-align:right;font-size:14px;color:#686868">선택 0 / 8</div>
+<div class="pbh" style="top:414px"><span>파일 8 · 위치 2</span><span>형식</span><span class="rt">크기</span><span>업로드</span><span>아카이빙</span><span>위치</span></div>
+<div class="pb" style="top:442px"><span class="nm">NW_ortho_정사영상_202604_section_C_v3.tif</span><span class="stw">TIF</span><span class="rt n">55.4 GB</span><span class="dt n">2026.04.10</span><span class="n">0회</span><span class="loc n">—</span></div>
+<div class="pb" style="top:480px"><span class="nm">NW_ortho_202604_zone_X.ecw</span><span class="stw">ECW</span><span class="rt n">47.6 GB</span><span class="dt n">2026.04.12</span><span class="n">1회</span><span class="loc n">—</span></div>
+<div class="pb" style="top:518px"><span class="nm">농지이용_행정정보_202604.xlsx</span><span class="stw">XLSX</span><span class="rt n">287.3 KB</span><span class="dt n">2026.04.09</span><span class="n">0회</span><span class="loc n">—</span></div>
+<div class="pb" style="top:556px"><span class="nm">NW_ortho_202604_section_A.tif</span><span class="stw">TIF</span><span class="rt n">58.3 GB</span><span class="dt n">2026.04.11</span><span class="n">2회</span><span class="loc on n">○</span></div>
+<div class="pb" style="top:594px"><span class="nm">남원_운봉_드론_4월.ecw</span><span class="stw">ECW</span><span class="rt n">62.7 GB</span><span class="dt n">2026.04.09</span><span class="n">1회</span><span class="loc on n">○</span></div>
+<div class="pb" style="top:632px"><span class="nm">NW_road_defect_labels_202604.shp</span><span class="stw">SHP</span><span class="rt n">48.2 MB</span><span class="dt n">2026.06.20</span><span class="n">0회</span><span class="loc n">—</span></div>
+<div class="pb" style="top:670px"><span class="nm">NW_greenhouse_labels_202603.shp</span><span class="stw">SHP</span><span class="rt n">39.4 MB</span><span class="dt n">2026.06.18</span><span class="n">0회</span><span class="loc n">—</span></div>
+<div class="pb" style="top:708px"><span class="nm">camera_org_202604.zip</span><span class="stw">ZIP</span><span class="rt n">18.7 GB</span><span class="dt n">2026.04.13</span><span class="n">0회</span><span class="loc n">—</span></div>
+<!-- 요약 kv — 총 용량(8건 합) · 위치 있음(도엽 2) · 형식별(KPI 카드의 분해와 같은 수) -->
+<dl class="info" style="top:762px;margin:0">
+  <dt>총 용량</dt><dd class="n">242.8 GB</dd><dt>위치 있음</dt><dd class="n">2건</dd>
+  <dt class="w">형식별</dt><dd class="w">TIF 2 · ECW 2 · XLSX 1 · SHP 2 · ZIP 1</dd>
 </dl>
-<div class="ab" style="left:897px;top:826px;display:flex;gap:1px"><span class="act pri">지도 레이어 발행 ›</span></div>
 
 <!-- ── 푸터 36 ── -->
 <div class="ab" style="left:72px;top:864px;width:1368px;height:36px;border-top:1px solid #DDDDDD;display:flex;align-items:center;gap:18px;padding:0 56px;font-size:14px;color:#686868;white-space:nowrap">

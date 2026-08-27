@@ -38,11 +38,12 @@ const kpi = (page, id) => page.locator(`#kpi-${id} .kv b`).innerText();
 const cols = (page, list) => page.locator(list).evaluate((e) => getComputedStyle(e).gridTemplateColumns.split(' ').length);
 const heads = (page) => page.locator('#side-info .ph .lb:first-child, #side-info .pbh .lb:first-child').allInnerTexts();
 
+//  발주 3차  "통일성" — 우 패널은 4단계 같다: 선택 없음 = 단계 현황판(한 줄 = 한 건 + 요약 kv) · 선택 = 그 건의 상세 + `‹ 현황`
 const STAGES = [
-  { id: 'upload', name: '데이터 업로드', panel: '#panel-upload', n: 6 },
-  { id: 'manage', name: '업로드 완료', panel: '#panel-manage', n: 8 },
-  { id: 'publishing', name: '레이어 발행중', panel: '#panel-publishing', n: 7 },
-  { id: 'archive', name: '아카이브', panel: '#panel-archive', n: 5 },
+  { id: 'upload', name: '데이터 업로드', panel: '#panel-upload', n: 6, board: '진행 현황', head: '파일 6 · 진행 중 1', cols: ['상태', '진행률', '크기', '잔여'], foot: ['디스크', '잔여', '허용 형식', '한도'], second: 'u2', title: 'NW_ortho_202604_section_D.tif' },
+  { id: 'manage', name: '업로드 완료', panel: '#panel-manage', n: 8, board: '완료 현황', head: '파일 8 · 위치 2', cols: ['형식', '크기', '업로드', '아카이빙', '위치'], foot: ['총 용량', '위치 있음', '형식별'], second: 'd2', title: 'NW_ortho_202604_zone_X.ecw' },
+  { id: 'publishing', name: '레이어 발행중', panel: '#panel-publishing', n: 7, board: '발행 현황', head: '파일 7 · 진행 5 · 실패 2', cols: ['단계', '상태', '진행률', '크기'], foot: ['진행', '실패', '총 용량', '단계'], second: 'p2', title: 'NW_greenhouse_labels_202603.shp' },
+  { id: 'archive', name: '아카이브', panel: '#panel-archive', n: 5, board: '보관 현황', head: '자산 5 · 표시 4 · 숨김 1', cols: ['유형', '표시', '발행', '크기'], foot: ['표시', '숨김', '총 용량', '유형별'], second: 'a2', title: '운봉읍 드론 정사영상 2026-04' },
 ];
 
 /* ── 관문 · 레일 · 마스트헤드 ─────────────────────────────────────────── */
@@ -108,7 +109,7 @@ test('KPI 카드 5 — 디스크 96 %(warn + 증량 신청) · 단계 4 건수 �
 
 /* ── 단계 4 — 전 건 표출(쪽당 8 이면 1쪽) · 선반 없음 · 시작은 선택 없음 ── */
 for (const s of STAGES) {
-  test(`?tab=${s.id} — 타일 ${s.n} = KPI 건수 · 접힘/전체 보기 없음 · 타일에 버튼 0 · 페이저 1 / 1 · 우 패널은 ${s.id === 'upload' ? '진행 현황판' : `빈 상태(${s.n})`}`, async ({ page }) => {
+  test(`?tab=${s.id} — 타일 ${s.n} = KPI 건수 · 접힘/전체 보기 없음 · 타일에 버튼 0 · 페이저 1 / 1 · 우 패널 = ${s.board}(줄 ${s.n} + 요약 kv) · 줄 클릭 = 상세 + ‹ 현황 · 쪽당 16 = 4×4`, async ({ page }) => {
     const errs = watch(page);
     await boot(page, s.id);
     await expect(page.locator(`#kpi-${s.id}`)).toHaveAttribute('aria-selected', 'true');
@@ -126,23 +127,72 @@ for (const s of STAGES) {
     await expect(page.locator('#side')).toHaveAttribute('data-mode', 'none');
     await expect(page.locator('#side-m')).toHaveText(`선택 0 / ${s.n}`);
     await expect(page.locator('#plate-wrap')).toBeHidden();
+    // 선택 없음 = 단계 현황판(4단계 같은 문법) — 제목 · 헤더 · 줄 = 건수 · 줄 높이 38 · 아래 요약 kv · 판/액자 없음 · ‹ 현황 없음
+    await expect(page.locator('#side-h')).toHaveText(s.board);
+    await expect(page.locator('#side-back')).toBeHidden();
+    await expect(page.locator('#side .board')).toHaveAttribute('data-k', s.id);
+    expect(await page.locator('#side .pb').count()).toBe(s.n);
+    expect(await page.locator('#side .pbh .lb').allInnerTexts()).toEqual([s.head, ...s.cols]);
+    expect(await page.locator('#side .pb').evaluateAll((es) => es.map((e) => Math.round(e.getBoundingClientRect().height)))).toEqual(Array(s.n).fill(38));
+    expect(await page.locator('#side .pb').evaluateAll((es) => es.filter((e) => e.scrollWidth > e.clientWidth + 1).length)).toBe(0);   // 넘침 0
+    expect(await page.locator('#side-info dt').allInnerTexts()).toEqual(s.foot);
+    expect(await page.locator('#fig-wrap .fig').count()).toBe(0);
     if (s.id === 'upload') {
-      // 선택 없음 = 카드별 진행 현황판 — 한 줄 = 한 건(이름 · 상태어 · 막대 % · 크기 · 잔여)
-      await expect(page.locator('#side-h')).toHaveText('진행 현황');
-      expect(await page.locator('#side .pb').count()).toBe(6);
-      expect(await page.locator('#side .pbh .lb').allInnerTexts()).toEqual(['파일 6 · 진행 중 1', '상태', '진행률', '크기', '잔여']);
       expect(await page.locator('#side .pb .stw').allInnerTexts()).toEqual(['업로드중', '일시정지', '중단됨', '대기중', '대기중', '대기중']);
       await expect(page.locator('#side .pb[data-id="u1"] [data-ppct]')).toHaveText(/^\d+%$/);
       await expect(page.locator('#side .pb[data-id="u2"] [data-prem]')).toHaveText('30.1 GB');       // 51.0 GB × 59 %
       await expect(page.locator('#side .pb[data-id="u4"] [data-prem]')).toHaveText('18.7 GB');       // 0 %
       expect(await page.locator('#side .pb[data-id="u2"] .bar').evaluate((e) => e.style.getPropertyValue('--pct'))).toBe('41%');
       expect(await page.locator('#side .pb[data-id="u1"] .stw').evaluate((e) => getComputedStyle(e).color)).toBe(ACCENT);
-      expect(await page.locator('#fig-wrap .fig').count()).toBe(0);
-    } else {
-      await expect(page.locator('#side-h')).toHaveText(s.name);
-      await expect(page.locator('#side .fig--none .big')).toHaveText(String(s.n));
+    }
+    if (s.id === 'manage') {
+      expect(await page.locator('#side .pb .loc').allInnerTexts()).toEqual(['—', '—', '—', '○', '○', '—', '—', '—']);   // 위치 = 도엽(d4 · d5)
+      await expect(page.locator('#side-info dd').first()).toHaveText('242.8 GB');
+    }
+    if (s.id === 'publishing') {
+      expect(await page.locator('#side .pb .ticks').count()).toBe(7);
+      expect(await page.locator('#side .pb[data-id="p2"] .ticks i.fail').count()).toBe(1);
+      await expect(page.locator('#side .pb[data-id="p2"] .stw')).toHaveText('실패 · 좌표계 없음');
+      expect(await page.locator('#side .pb[data-id="p2"] .stw').evaluate((e) => getComputedStyle(e).color)).toBe(WARN);
+      await expect(page.locator('#side .pb[data-id="p3"] .stw')).toHaveText('3/4 지도 데이터 변환');
+    }
+    if (s.id === 'archive') {
+      expect(await page.locator('#side .pb .vis').allInnerTexts()).toEqual(['표시', '숨김', '표시', '표시', '표시']);
+      expect(await page.locator('#side .pb .ver').allInnerTexts()).toEqual(['v3', 'v2', 'v1', 'v1', 'v1']);
     }
     expect(await page.locator('#grid .tile[aria-current="true"]').count()).toBe(0);
+    // 현황판 줄 클릭 = 그 타일 선택 → 상세(제목 = 이름 · 선택 1 / n · ‹ 현황) → ‹ 현황 = 현황판. 타일을 다시 눌러도 현황판.
+    await page.locator(`#side .pb[data-id="${s.second}"]`).click(); await page.waitForTimeout(300);
+    await expect(page.locator(`#grid .tile[data-id="${s.second}"]`)).toHaveAttribute('aria-current', 'true');
+    await expect(page.locator('#side')).toHaveAttribute('data-mode', 'tile');
+    await expect(page.locator('#side-h')).toHaveText(s.title);
+    await expect(page.locator('#side-m')).toHaveText(`선택 1 / ${s.n}`);
+    await expect(page.locator('#side-back')).toHaveText('‹ 현황');
+    expect(await page.locator('#side .pb').count()).toBe(0);
+    expect(await page.locator('#side-acts .act').count()).toBeGreaterThan(0);
+    await page.locator('#side-back').click(); await page.waitForTimeout(300);
+    await expect(page.locator('#side')).toHaveAttribute('data-mode', 'none');
+    await expect(page.locator('#side-h')).toHaveText(s.board);
+    expect(await page.locator('#side .pb').count()).toBe(s.n);
+    expect(await page.locator('#grid .tile[aria-current="true"]').count()).toBe(0);
+    await select(page, s.second);
+    await expect(page.locator('#side-h')).toHaveText(s.title);
+    await select(page, s.second);
+    await expect(page.locator('#side-h')).toHaveText(s.board);
+    // 쪽당 16 — 어느 단계든(건수 < 16 이어도) 4×4: 눌림 · 4열 · 타일 높이 = 그리드 ÷ 4 · 폭도 같이 준다
+    const th = `${s.panel} .tile[data-id] .th`;
+    const b8 = await page.locator(th).first().evaluate((e) => { const r = e.getBoundingClientRect(); return [r.width, r.height]; });
+    await page.locator('#pp button[data-pp="16"]').click();
+    await expect(page.locator('body')).toHaveAttribute('data-pp', '16');
+    await expect(page.locator('#pp button[data-pp="16"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#pp button[data-pp="8"]')).toHaveAttribute('aria-pressed', 'false');
+    expect(await cols(page, `${s.panel} .tiles`)).toBe(4);
+    const b16 = await page.locator(th).first().evaluate((e) => { const r = e.getBoundingClientRect(); return [r.width, r.height]; });
+    const gridH = await page.locator('#grid').evaluate((e) => e.clientHeight);
+    expect(b16[1]).toBeLessThan(b8[1] * 0.8);
+    expect(b16[0]).toBeLessThan(b8[0] * 0.8);
+    expect(Math.abs(b16[1] - (gridH - 8 - 36 - 96) / 4)).toBeLessThan(2);
+    await expect(page.locator('#pg-n')).toHaveText('1 / 1');
     expect(errs).toEqual([]);
   });
 }
@@ -243,6 +293,7 @@ test('업로드 상태 기계(우 패널) — 선택 = 그 건의 상세 · 일�
   await expect(page.locator('#side')).toHaveAttribute('data-mode', 'tile');
   await expect(page.locator('#side-m')).toHaveText('선택 1 / 6');
   expect(await page.locator('#side .pb').count()).toBe(0);                                        // 선택하면 현황판 대신 상세
+  await expect(page.locator('#side-back')).toBeVisible();
   await expect(page.locator('#fig-wrap .fig')).toHaveAttribute('data-live', '');
   expect(await page.locator('#side-acts .act').allInnerTexts()).toEqual(['일시정지', '취소', '세부 정보']);
   await page.locator('#side-acts .act[data-up="u1"][data-act="pause"]').click();
@@ -428,8 +479,9 @@ test('아카이브 선택 → 판의 레이어(줌 투 익스텐트) · 사용 �
   await expect(page.locator('.tile[data-id="a2"]')).toHaveAttribute('data-hidden', '1');
   await expect(page.locator('.tile[data-id="a2"] .st')).toHaveText('숨김 · 삭제 아님');
   await expect(page.locator('.tile[data-id="a1"] .word')).toHaveText('아카이브 · 정사영상');
-  // 선택 없음 — 유형 분해만. 레이어 목록 없음.
-  expect(await page.locator('#side-info dt').allInnerTexts()).toEqual(['정사영상', '공간정보', '이미지셋', '최근 등록']);
+  // 선택 없음 — 보관 현황판 + 요약 kv(표시 · 숨김 · 총 용량 · 유형별). 레이어 목록 없음.
+  expect(await page.locator('#side-info dt').allInnerTexts()).toEqual(['표시', '숨김', '총 용량', '유형별']);
+  await expect(page.locator('#side-info dd').last()).toHaveText('정사영상 2 · 공간정보 2 · 이미지셋 1');
   await select(page, 'a5');
   await expect(page.locator('#side')).toHaveAttribute('data-mode', 'tile');
   await expect(page.locator('#plate-wrap')).toBeVisible();
@@ -549,7 +601,7 @@ test('시스템 — 라운드·그림자·그라디언트 0 · 최소 14px · wa
     expect(bad).toEqual([]);
     const warn = await page.evaluate((W) => [...document.querySelectorAll('#main *')].filter((e) => {
       const cs = getComputedStyle(e); return [cs.color, cs.backgroundColor, cs.borderTopColor, cs.borderLeftColor, cs.borderBottomColor].includes(W) && cs.display !== 'none';
-    }).filter((e) => !e.closest('#kpi-disk, #kpi-publishing, .tile[data-st="fail"]')).map((e) => e.className), WARN);
+    }).filter((e) => !e.closest('#kpi-disk, #kpi-publishing, .tile[data-st="fail"], .pb[data-st="fail"], .info dd')).map((e) => e.className), WARN);   // 실패 = 줄 · 요약 kv 도 warn
     expect(warn).toEqual([]);
     const filled = await page.evaluate((A) => [...document.querySelectorAll('#main button, #main .k')].filter((e) => getComputedStyle(e).backgroundColor === A).map((e) => e.className), ACCENT);
     expect(filled).toEqual([]);
