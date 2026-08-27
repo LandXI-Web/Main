@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-27T04:34:14.400Z",
+  "generatedAt": "2026-08-27T05:25:22.148Z",
   "builder": "tools/scrub/assemble.mjs",
   "source": "단일 소스 · kling v2-1-pro AI 레그 1–7(앵커 A01→A06→A06b→A07→A08). MapLibre 플레이스홀더 0",
   "fps": 25,
@@ -25,7 +25,7 @@
       "docs/superpowers/proto/2026-08-27-kie-legs-4-6b.md",
       "docs/superpowers/proto/2026-08-27-kie-leg-7.md"
     ],
-    "note": "미니어처 세계라 실카메라가 없다. startCamera/endCamera 는 앵커 문서의 고도대를 따라 authored 이고 (A02 고궤도 460 km · A03 ~30 km/피치 60° · A05 남원 분지 8.6 km · A06b 남원 상공 140 km · A07 여수 17 km · A08 국동항 2.4 km/피치 40°), 레그 05 끝은 남원 인계 판의 카메라, 레그 06 은 남원 위 수직 상승, 06b 는 여수 17 km 로 활강, 07 끝(국동항 방파제 저공)은 여수 인계 판·브랜드 마감의 카메라가 된다. cameraSource:\"authored\" 로 표시. 페이지 오버레이의 숫자는 전부 실데이터다."
+    "note": "미니어처 세계라 실카메라가 없다. startCamera/endCamera 는 앵커 문서의 고도대를 따라 authored 이고 (A02 고궤도 460 km · A03 ~30 km/피치 60° · A05 남원 분지 8.6 km · A06b 남원 상공 140 km · A07 여수 17 km · A08 국동항 방파제 발치 0.3 km/피치 50°), 레그 05 끝은 남원 인계 판의 카메라, 레그 06 은 남원 위 수직 상승, 06b 는 여수 17 km 로 활강, 07 끝(국동항 방파제 발치 클로즈업)은 여수 인계 판·브랜드 마감의 카메라가 된다. cameraSource:\"authored\" 로 표시. 페이지 오버레이의 숫자는 전부 실데이터다."
   },
   "mobileSize": [
     960,
@@ -57,12 +57,12 @@
   "cameraNote": "고도 = 1.5 × 720px × m/px (MapLibre 기본 fov 36.87°, 필름 뷰포트 720px). 줌·GSD 는 고도에서 유도.",
   "flightProfile": "전 레그가 kling AI 미니어처라 실카메라가 없다 — 카메라는 전부 authored(aiLegs.note) 이고 하나의 단조 하강 프로파일로 이어 붙였다(레그 06 상승·06b 이동 제외). AI 레그끼리의 tail→head 이음매는 앵커를 공유해 diff 0.2 % 대다. 계기 바늘이 스냅하지 않도록 페이지가 씸 밴드(0.16vh) 위에서 두 레그의 판독값을 섞는다(scrub.js camAt). 인계 판은 그 덕분에 필름 마지막 프레임과 정확히 같은 카메라로 뜬다.",
   "bytes": {
-    "desktop": 52951925,
-    "mobile": 13866884,
-    "poster": 808314,
-    "desktopMB": 50.5,
-    "mobileMB": 13.22,
-    "posterMB": 0.77
+    "desktop": 53829981,
+    "mobile": 14242113,
+    "poster": 831508,
+    "desktopMB": 51.34,
+    "mobileMB": 13.58,
+    "posterMB": 0.79
   },
   "seams": [
     {
@@ -118,10 +118,10 @@
       "to": "06",
       "frameShared": false,
       "rule": "B",
-      "pct": 0.168,
+      "pct": 0.176,
       "lumaA": 61.82,
-      "lumaB": 61.71,
-      "lumaDelta": -0.11,
+      "lumaB": 61.7,
+      "lumaDelta": -0.12,
       "pass": true,
       "monotonic": true
     },
@@ -130,10 +130,10 @@
       "to": "06b",
       "frameShared": false,
       "rule": "B",
-      "pct": 0.144,
-      "lumaA": 49.7,
+      "pct": 12.895,
+      "lumaA": 54.28,
       "lumaB": 49.61,
-      "lumaDelta": -0.09,
+      "lumaDelta": -4.67,
       "pass": true,
       "monotonic": true
     },
@@ -142,7 +142,7 @@
       "to": "07",
       "frameShared": false,
       "rule": "B",
-      "pct": 0.133,
+      "pct": 0.135,
       "lumaA": 49.8,
       "lumaB": 49.76,
       "lumaDelta": -0.04,
@@ -458,9 +458,9 @@
       "srcMobile": "/landxi/assets/proto/film/legs/w06-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w06.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w06-last.webp",
-      "bytes": 6740120,
-      "bytesMobile": 1759977,
-      "bytesPoster": 102172,
+      "bytes": 6370398,
+      "bytesMobile": 1973659,
+      "bytesPoster": 121754,
       "cameraSource": "authored",
       "startCamera": {
         "center": [
@@ -570,9 +570,9 @@
       "srcMobile": "/landxi/assets/proto/film/legs/w07-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w07.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w07-last.webp",
-      "bytes": 5328149,
-      "bytesMobile": 1390017,
-      "bytesPoster": 74128,
+      "bytes": 6575927,
+      "bytesMobile": 1551564,
+      "bytesPoster": 77740,
       "cameraSource": "authored",
       "startCamera": {
         "center": [
@@ -591,11 +591,11 @@
           127.7305,
           34.563
         ],
-        "altitudeM": 2400,
-        "zoom": 15.824,
-        "pitch": 40,
+        "altitudeM": 300,
+        "zoom": 18.824,
+        "pitch": 50,
         "bearing": 5,
-        "mpp": 2.222,
+        "mpp": 0.278,
         "seg": "07b"
       }
     }
@@ -620,10 +620,10 @@
       127.7305,
       34.563
     ],
-    "zoom": 15.824,
-    "pitch": 40,
+    "zoom": 18.824,
+    "pitch": 50,
     "bearing": 5,
-    "altitudeM": 2400,
+    "altitudeM": 300,
     "detections": "/landxi/assets/data/geo/results/yeosu-marine-2025-aerial.geojson",
     "note": "필름 최종 프레임의 카메라. 마감(귀환) 구간에서 여수 실지도가 이어받는다."
   }

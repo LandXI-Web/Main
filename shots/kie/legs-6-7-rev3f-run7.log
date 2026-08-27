@@ -1,0 +1,37 @@
+[leg 7] backup landxi/assets/proto/film/legs/gen/v3-leg-07.mp4 -> landxi/assets/proto/film/legs/gen/v3-leg-07.rev2.mp4
+[leg 7] backup landxi/assets/proto/film/legs/src/v3-leg-07.mp4 -> landxi/assets/proto/film/legs/src/v3-leg-07.rev2.mp4
+
+[leg 7] A07 -> A08  attempt 1  balance=9617.5
+[leg 7] pending taskId=8edd57b6e070c9a9bfe88fe1b70a79e4 (원장 기록)
+  v3-leg-07.mp4: generating (0s)
+  v3-leg-07.mp4: generating (5s)
+  v3-leg-07.mp4: generating (10s)
+  v3-leg-07.mp4: generating (17s)
+  v3-leg-07.mp4: generating (25s)
+  v3-leg-07.mp4: generating (35s)
+  v3-leg-07.mp4: generating (48s)
+  v3-leg-07.mp4: generating (63s)
+  v3-leg-07.mp4: generating (78s)
+  v3-leg-07.mp4: generating (94s)
+  v3-leg-07.mp4: generating (109s)
+  v3-leg-07.mp4: generating (125s)
+  v3-leg-07.mp4: generating (140s)
+  v3-leg-07.mp4: generating (156s)
+  v3-leg-07.mp4: generating (171s)
+  v3-leg-07.mp4: generating (186s)
+[leg 7] ok taskId=8edd57b6e070c9a9bfe88fe1b70a79e4 charged=64.5 spent=814.5/110
+{
+  "rev": 3,
+  "batch": "6-7-rev3f",
+  "spent_rev": 114.5,
+  "spent_total": 814.5,
+  "cap": 110,
+  "done": [
+    {
+      "leg": 7,
+      "taskId": "8edd57b6e070c9a9bfe88fe1b70a79e4",
+      "charged": 64.5
+    }
+  ]
+}
+EXIT=0
