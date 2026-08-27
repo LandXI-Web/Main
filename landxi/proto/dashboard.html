@@ -9,18 +9,19 @@
   }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 <link rel="stylesheet" href="v3-tokens.css">
 <link rel="stylesheet" href="dashboard.css">
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
 </head><body class="v3" data-colorway="light">
 
 <a class="skip" href="#main">본문으로 건너뛰기</a>
 
-<!-- ══ LX 관리자 대시보드 — 조판 마스터 design-canvas/v2/B5-Dashboard.dc.html rev2 (NOTES.md §12.5, 1440×900).
-     SPLIT-5050: 좌 "AI 분석 결과" 판 스택(B5의 실체) / 우 "AI 학습데이터 구축 현황" 판 스택(B10의 실체).
-     지도 위젯 없음. 기능은 원본 dashboard.html 과 1:1(A1–A11 / B1–B16) —
-     대조표 docs/superpowers/proto/2026-08-26-dashboard-parity.md. 위젯은 각 1회. ══ -->
+<!-- ══ LX 관리자 대시보드 — 조판 마스터 design-canvas/v2/B5-Dashboard-Data.dc.html (발주자 보드, 1440×900).
+     마스트헤드(B3·B2) → B1 → KPI 5(B4–B8) → SPLIT: 좌 B9 백본 + 대한민국 전도 판(0.25° 그리드, 토글 2) /
+     우 탭 패널 1(B10 | B11 | B12) → B13 표 → B14 칩 레일 → B15 푸터.
+     기능은 원본 dashboard.html 과 1:1(A1–A11 / B1–B16) — docs/superpowers/proto/2026-08-26-dashboard-parity.md ══ -->
 
-<!-- ── A1–A11 좌측 레일 (데이터 관리와 같은 컴포넌트) ─────────────────── -->
 <aside id="rail" aria-label="주 메뉴">
   <a id="rail-mark" href="scrub/index.html" aria-label="Land-XI 메인"><span>LAND</span><span>XI</span></a>
   <nav id="rail-top" class="rail-group"></nav>
@@ -28,7 +29,6 @@
   <div id="rail-my" class="rail-fly" hidden></div>
 </aside>
 
-<!-- ── 마스트헤드 64 — B3 공지 스트립 + B2 기준일 ─────────────────────── -->
 <header id="mast">
   <a id="b-notice" class="notice" href="../notice.html" title="원본 notice.html">
     <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter" aria-hidden="true"><path d="M3 3.5h14v9H3z"/><path d="M6 12.5V17"/><path d="M6 7h8M6 9.5h5"/></svg>
@@ -41,67 +41,62 @@
 </header>
 
 <main id="main" tabindex="-1" aria-label="LX 관리자 대시보드">
-
-  <!-- B1 -->
-  <div id="b1-row" data-line><h1 id="b1" class="d">LX 관리자 대시보드</h1></div>
+  <div id="b1-row" data-line><h1 id="b1" class="d">LX 관리자 대시보드</h1><p id="b1-sub">서비스 운영 현황과 승인·관리 업무를 한눈에</p></div>
   <hr class="hr">
 
-  <!-- ── SPLIT-5050 · 판 스택 2 ─────────────────────────────────────── -->
+  <!-- B4–B8 KPI 5 -->
+  <div id="b-kpi" role="list"></div>
+  <hr class="hr">
+
   <section id="split">
-    <!-- 좌: AI 분석 결과 = 발행 분석 카드 8건의 실체 (B5 여기 1회) -->
-    <section class="stack" id="stack-l" aria-labelledby="sl-h">
-      <header class="sh">
-        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter" aria-hidden="true"><path d="M10 3 17 6.5 10 10 3 6.5z"/><path d="m3 10 7 3.5 7-3.5"/><path d="m3 13.5 7 3.5 7-3.5"/></svg>
-        <h2 id="sl-h" class="d">AI 분석 결과</h2>
-        <span class="mic" id="b5">발행 분석 카드 <b class="n cu" data-n="8">8</b> · 공개 7 · 비공개 1</span>
+    <!-- 좌: B9 백본 + 판 -->
+    <section id="left" aria-labelledby="bb-h">
+      <header class="sh" id="b-bb">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter" aria-hidden="true"><path d="M3 3h14v14H3z"/><path d="M3 7.67h14M3 12.33h14M7.67 3v14M12.33 3v14"/><path d="M7.67 7.67h4.66v4.66H7.67z" fill="currentColor" stroke="none"/></svg>
+        <h2 id="bb-h" class="d">AI 기반 모델 (백본)</h2>
         <span class="sp"></span>
-        <a class="mic more" href="#stack-l" title="원본 analysis-ai.html">분석 서비스 ›</a>
+        <span class="big bbv" id="bb-name"></span>
       </header>
-      <p class="sub" id="sl-sub"></p>
-      <div class="plates" id="plates-l" role="list"></div>
-      <p class="mic src" id="sl-src"></p>
+      <p class="sub n" id="bb-sub"></p>
+      <div id="plate-wrap">
+        <div id="plate" aria-hidden="true"></div>
+        <svg id="grid" aria-hidden="true"></svg>
+        <div id="cells" role="list" aria-label="0.25° 그리드 셀"></div>
+        <div id="seg" role="tablist" aria-label="판 모드">
+          <button type="button" role="tab" id="seg-res" aria-selected="true" data-mode="res">AI 분석 결과</button>
+          <button type="button" role="tab" id="seg-train" aria-selected="false" data-mode="train">AI 학습데이터 구축 현황</button>
+        </div>
+        <div id="callout" class="n" role="tooltip" hidden></div>
+        <div id="legend" class="n"></div>
+      </div>
+      <p class="cap"><span class="n cap-l">대한민국 전도 · Sentinel-2 cloudless 2024 · 그리드 0.25°</span><span class="sp"></span><span class="mic n">셀 호버 = 내용 · 클릭 → XI맵</span></p>
+      <p class="mic src" id="l-src"></p>
     </section>
-    <!-- 우: AI 학습데이터 구축 현황 = AI 개발 프로젝트 현황의 실체 (B10 여기 1회) -->
-    <section class="stack" id="stack-r" aria-labelledby="sr-h">
+
+    <!-- 우: 탭 패널 1 = B10 | B11 | B12 -->
+    <section id="right" aria-label="운영 현황">
       <header class="sh">
-        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter" aria-hidden="true"><path d="M3 3h14v14H3z"/><path d="M3 7.67h14M3 12.33h14M7.67 3v14M12.33 3v14"/></svg>
-        <h2 id="sr-h" class="d">AI 학습데이터 구축 현황</h2>
-        <span class="mic" id="b10">프로젝트 용량 Top5 <b class="n cu" id="proj-sum">0</b> GB<i class="tag">시연</i></span>
+        <div id="tabs" role="tablist" aria-label="운영 현황 탭">
+          <button type="button" role="tab" id="tab-proj" aria-selected="true" aria-controls="pane-proj" data-tab="proj">AI 개발 프로젝트 현황</button>
+          <button type="button" role="tab" id="tab-visit" aria-selected="false" aria-controls="pane-visit" data-tab="visit" tabindex="-1">사용자 이용 현황</button>
+          <button type="button" role="tab" id="tab-store" aria-selected="false" aria-controls="pane-store" data-tab="store" tabindex="-1">전체 스토리지 사용량</button>
+        </div>
         <span class="sp"></span>
-        <a class="mic more" id="b10-more" href="../ai-project.html" title="원본 ai-project.html">전체 보기 ›</a>
+        <span class="mic" id="tab-meta"></span>
       </header>
-      <p class="sub" id="sr-sub"></p>
-      <div class="plates" id="plates-r" role="list"></div>
-      <p class="mic src" id="sr-src"></p>
+      <p class="sub n" id="r-sub"></p>
+      <div id="panel">
+        <section id="pane-proj" role="tabpanel" aria-labelledby="tab-proj"></section>
+        <section id="pane-visit" role="tabpanel" aria-labelledby="tab-visit" hidden></section>
+        <section id="pane-store" role="tabpanel" aria-labelledby="tab-store" hidden></section>
+      </div>
+      <p class="cap"><span class="n cap-l" id="r-cap"></span><span class="sp"></span><a class="mic more" id="b10-more" href="../ai-project.html" title="원본 ai-project.html">전체 보기 ›</a></p>
+      <p class="mic src" id="r-src"></p>
     </section>
   </section>
   <hr class="hr">
 
-  <!-- ── 띠: B4 · B6 · B7 · B8 KPI 텍스트 | B11 7일 폴리라인 | B12 스택 바 ── -->
-  <section id="band">
-    <div id="b-kpi" role="list"></div>
-    <div class="cell" id="b-visit" aria-labelledby="bv-h">
-      <header class="ch"><h3 id="bv-h" class="d">사용자 이용 현황</h3><span class="mic">최근 7일 방문<i class="tag">시연</i></span><span class="sp"></span><span class="mic n">합계 <b class="cu" id="visit-sum">0</b></span></header>
-      <div id="t-visit"></div>
-    </div>
-    <div class="cell" id="b-store" aria-labelledby="bs-h">
-      <header class="ch"><h3 id="bs-h" class="d">전체 스토리지 사용량</h3><span class="mic">6분류<i class="tag">시연</i></span><span class="sp"></span><span class="n st"><b class="cu" id="store-used" data-dec="1">0</b> <span class="mic">/ <span id="store-tot"></span> TB</span></span></header>
-      <div id="t-store"></div>
-    </div>
-  </section>
-  <hr class="hr">
-
-  <!-- ── B9 백본 한 줄 ─────────────────────────────────────────────── -->
-  <div id="b-bb" class="row">
-    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter" aria-hidden="true"><path d="M3 3h14v14H3z"/><path d="M7.67 7.67h4.66v4.66H7.67z" fill="currentColor" stroke="none"/></svg>
-    <span class="d">AI 기반 모델 (백본)</span>
-    <span class="n bbv" id="bb-name"></span>
-    <span class="mic n" id="bb-applied"></span>
-    <span class="mic n" id="bb-tasks"></span>
-  </div>
-  <hr class="hr">
-
-  <!-- ── B13 카드 발행 승인 대기 — 2행, 행 → ?open=<id> ───────────────── -->
+  <!-- B13 -->
   <section id="b-approve" aria-labelledby="ba-h">
     <header class="row">
       <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter" aria-hidden="true"><path d="M3 6V3h3M14 3h3v3M17 14v3h-3M6 17H3v-3"/><path d="M6.5 10 9 12.5 13.5 7"/></svg>
@@ -115,11 +110,10 @@
     </table>
   </section>
 
-  <!-- ── B14 사용자·콘텐츠 관리 — CHIP-RAIL ──────────────────────────── -->
+  <!-- B14 -->
   <nav id="ad-rows" class="chiprail" aria-label="관리 바로가기"><span class="lb">관리 바로가기</span></nav>
 </main>
 
-<!-- ── B15 푸터 include ────────────────────────────────────────────── -->
 <footer id="foot">
   <span class="mic" id="foot-l"></span>
   <span class="sp"></span>
