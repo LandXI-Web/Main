@@ -245,15 +245,20 @@ export const PUB_STEPS = ['파일 확인', '공간정보 분석', '지도 데이
 export const PUBLISHING = [
   { id: 'p1', fmt: 'SHP', st: 'run', step: 2, file: 'NW_road_defect_labels_202604.shp', size: '48.2 MB', at: '2026.06.20 10:00', by: '김현우' },
   { id: 'p2', fmt: 'SHP', st: 'fail', step: 2, file: 'NW_greenhouse_labels_202603.shp', size: '39.4 MB', at: '2026.06.18 16:05', by: '이서연',
-    why: '좌표체계 정보를 확인할 수 없습니다. 좌표계를 지정해 다시 발행해 주세요.' },
+    why: '좌표체계 정보를 확인할 수 없습니다. 좌표계를 지정해 다시 발행해 주세요.', short: '좌표계 없음' },
   { id: 'p3', fmt: 'TIF', st: 'run', step: 3, file: 'NW_ortho_202604_section_A.tif', size: '58.3 GB', at: '2026.04.11 09:20', by: '김현우' },
   { id: 'p4', fmt: 'ECW', st: 'run', step: 1, file: 'NW_ortho_202604_zone_X.ecw', size: '47.6 GB', at: '2026.04.12 09:40', by: '정민재' },
   { id: 'p5', fmt: 'XLSX', st: 'run', step: 4, file: '농지이용_행정정보_202604.xlsx', size: '287.3 KB', at: '2026.04.09 15:52', by: '이주원' },
   { id: 'p6', fmt: 'ZIP', st: 'fail', step: 1, file: 'camera_org_202604.zip', size: '18.7 GB', at: '2026.04.13 08:41', by: '김현우',
-    why: '압축 파일 안에서 지원하는 이미지 형식을 찾지 못했습니다. 원본을 확인해 주세요.' },
+    why: '압축 파일 안에서 지원하는 이미지 형식을 찾지 못했습니다. 원본을 확인해 주세요.', short: '이미지 형식 없음' },
   { id: 'p7', fmt: 'ECW', st: 'run', step: 2, file: '남원_운봉_드론_4월.ecw', size: '62.7 GB', at: '2026.04.09 10:12', by: '이서연' },
 ];
 export const PUB_ST = { run: '진행중', fail: '실패' };
+/** 단계 → 그림 위 리빌 비율(단계 완료분 + 진행분). 4/4 = 레이어 발행 중. */
+export const PUB_PCT = [12, 37, 62, 87];
+/** 타일 크기 4단 — 열 수. 발주: "4배수 개념으로 카드 이미지도 커스텀". 기본 M. */
+export const SIZES = { S: 6, M: 4, L: 3, XL: 2 };
+export const SIZE_KEY = 'lx_ds_size';
 
 /* ── 판 — 실측 범위만 실선, 좌표계 없는 파일은 파선 ─────────────────── */
 export const IMG = IMAGERY;
