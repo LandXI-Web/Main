@@ -314,3 +314,16 @@ html{ scroll-behavior:auto; }
   .sb-plate{ display:none; }
   .sb-dial__disc{ transform:none; }
 }
+
+/* ── 소품 층(props) — 필름 위·인계 판/카피 아래. 2026-08-27 드론 오버레이 스파이크.
+   엔진의 레그 z 는 100–120, 인계 판은 130. 스프라이트는 transform 으로만 움직인다
+   (translate·scale) — 카피 층의 "translateY 만" 규칙은 카피에 대한 것이고 이 층은 무대 소속이다. */
+.sb-props{ position:absolute; inset:0; z-index:125; pointer-events:none; overflow:clip; }
+.sb-prop{ position:absolute; left:0; top:0; opacity:0; visibility:hidden; will-change:transform,opacity; }
+.sb-prop.is-on{ visibility:visible; }
+.sb-props .sb-prop__shadow{
+  position:absolute; left:0; top:0; width:100px; height:32px; border-radius:50%;
+  background:radial-gradient(ellipse at center, rgba(0,0,0,.55) 0%, rgba(0,0,0,.30) 45%, rgba(0,0,0,0) 72%);
+  filter:blur(2px); transform-origin:50% 50%;
+}
+.sb-props .sb-prop__img{ position:absolute; left:0; top:0; width:100px; max-width:none; height:auto; transform-origin:50% 50%; }

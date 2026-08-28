@@ -384,3 +384,56 @@ test('reduced-motion — 클립을 아예 받지 않는다. 포스터와 글이 
   expect(errors, '콘솔 오류').toEqual([]);
   await ctx.close();
 });
+
+test('소품 — 드론 오버레이는 레그 04 창 안에서만 서고, 스크롤을 따라 움직인다 (2026-08-27 스파이크)', async ({ page }) => {
+  const errors = await boot(page);
+  const M = await page.evaluate(() => window.__scrub.manifest);
+  let run = 0;
+  const cum = M.legs.map((l) => { const a = run; run += l.weightVh; return [a, run]; });
+  const total = run;
+  const P = (v) => v / total;
+  const i4 = M.legs.findIndex((l) => l.id === '04');
+  expect(i4).toBeGreaterThan(0);
+
+  expect(await page.evaluate(() => window.__scrub.props())).toContain('drone-04');
+  const state = () => page.evaluate(() => {
+    const h = document.querySelector('.sb-prop[data-prop="drone-04"]');
+    const r = h.getBoundingClientRect();
+    return { ...window.__scrub.prop('drone-04'), vis: getComputedStyle(h).visibility, op: +getComputedStyle(h).opacity,
+      z: +getComputedStyle(h.parentElement).zIndex, imgLoaded: h.querySelector('img').naturalWidth > 0 };
+  });
+
+  // 레그 03 한가운데 — 드론 없음(레그 03 필름 자체의 드론과 겹치지 않는다).
+  await seek(page, P(cum[i4 - 1][0] + 0.55));
+  const before = await state();
+  expect(before.on).toBe(false);
+  expect(before.vis).toBe('hidden');
+
+  // 레그 04 앞쪽·뒤쪽 — 켜져 있고, 오른쪽·위로 이동하며 작아진다(원근). 층은 레그(≤120) 위·인계 판(130) 아래.
+  await seek(page, P(cum[i4][0] + 0.30));
+  const a = await state();
+  await seek(page, P(cum[i4][0] + 0.85));
+  const b = await state();
+  for (const s of [a, b]) {
+    expect(s.on).toBe(true);
+    expect(s.vis).toBe('visible');
+    expect(s.op).toBeGreaterThan(0.9);
+    expect(s.imgLoaded).toBe(true);
+    expect(s.z).toBe(125);
+  }
+  expect(b.px).toBeGreaterThan(a.px + 100);
+  expect(b.py).toBeLessThan(a.py - 40);
+  expect(b.w).toBeLessThan(a.w);
+  // 창의 첫·끝 0.4 필름초는 페이드 — 레그 시작 직후 opacity 가 1 미만.
+  await seek(page, P(cum[i4][0] + 0.02));
+  const edge = await state();
+  expect(edge.on).toBe(true);
+  expect(edge.opacity).toBeLessThan(0.6);
+
+  // 레그 05 — 꺼진다.
+  await seek(page, P(cum[i4 + 1][0] + 0.55));
+  const after = await state();
+  expect(after.on).toBe(false);
+  expect(after.vis).toBe('hidden');
+  expect(errors, '콘솔 오류').toEqual([]);
+});

@@ -17,6 +17,7 @@
 import { createEnding, dzFor as endDzFor, LEAD as END_LEAD, SPAN as END_SPAN, PAD as END_PAD } from './ending.js';
 
 const MANIFEST = new URL('../../assets/proto/film/legs/manifest.json', import.meta.url).href;
+const PROPS = new URL('../../assets/proto/film/legs/props/props.json', import.meta.url).href;
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -192,6 +193,7 @@ function paint() {
   paintCounts(p);
 
   handoff(t);
+  paintProps(t);
   // 인계 판이 올라와 있으면 계기는 판의 카메라를 읽는다. "같은 카메라로 이어받았다"는
   // 주장을 계기가 그 순간에 반박하면 안 된다.
   const live = PLATES.find(r => r && r.on);
@@ -363,6 +365,83 @@ function guardPaint() {
   });
 }
 
+/* ── 소품(props) — 영상을 다시 만들지 않고 레그 위에 페이지가 그리는 스프라이트 ─────
+   2026-08-27 드론 오버레이 스파이크(docs/superpowers/proto/2026-08-27-drone-overlay-spike.md).
+   클라이언트: "드론이 나오는 씬이 003 하나밖에 없나?" → 레그 04(남원 평야) 위에 흰 본체·
+   LX 초록 마크·검정 프로펠러 드론을 무대 폭 2.6–5.2 % 로 좌중→우원 으로 날린다.
+   props/props.json 이 전부다(레그 id · 키포인트 · 크기 · 페이드). 같은 재생헤드(filmTimeAt)를
+   읽으므로 스크롤에 묶이고, 첫·끝 0.4 필름초는 투명도로 들어오고 나간다(하드 팝 금지).
+   reduced-motion 이면 층 자체를 만들지 않는다 — 포스터가 필름을 대신하는 화면에 움직이는
+   소품은 없다. 층 z=125: 레그(≤120) 위, 인계 판(130)·카피 아래. */
+const PROP_RECS = [];
+function buildProps(list) {
+  if (reduce || !list || !list.length) return;
+  const world = el.root.querySelector('[data-sc-world]');
+  const layer = document.createElement('div');
+  layer.className = 'sb-props';
+  layer.setAttribute('aria-hidden', 'true');
+  for (const P of list) {
+    const legIdx = M.legs.findIndex(L => L.id === P.leg);
+    if (legIdx < 0) continue;
+    const host = document.createElement('div');
+    host.className = 'sb-prop';
+    host.dataset.prop = P.id;
+    const sh = document.createElement('div'); sh.className = 'sb-prop__shadow';
+    const img = document.createElement('img'); img.className = 'sb-prop__img';
+    img.src = P.src; img.alt = ''; img.decoding = 'async';
+    if (P.filter) img.style.filter = P.filter;   // 필름 그레이드 맞춤(블러·웜·채도) — props.json
+    host.append(sh, img);
+    layer.append(host);
+    PROP_RECS.push({ spec: P, legIdx, host, sh, img, on: false, state: null });
+  }
+  world.append(layer);
+}
+function propKey(keys, u) {
+  if (u <= keys[0].t) return keys[0];
+  for (let i = 1; i < keys.length; i++) {
+    if (u <= keys[i].t) {
+      const A = keys[i - 1], B = keys[i];
+      const w = smooth(clamp01((u - A.t) / Math.max(B.t - A.t, 1e-6)));
+      return { x: lerp(A.x, B.x, w), y: lerp(A.y, B.y, w), s: lerp(A.s, B.s, w) };
+    }
+  }
+  return keys[keys.length - 1];
+}
+function paintProps(t) {
+  if (!PROP_RECS.length) return;
+  const k = legAt(t);
+  const W = innerWidth, H = innerHeight;
+  for (const R of PROP_RECS) {
+    const P = R.spec;
+    const on = k === R.legIdx;
+    if (!on) {
+      if (R.on) { R.on = false; R.host.classList.remove('is-on'); R.host.style.opacity = '0'; R.state = null; }
+      continue;
+    }
+    const L = M.legs[k];
+    const film = filmTimeAt(t);                       // 레그 안의 필름 초 — 재생헤드와 같은 리맵
+    const u = clamp01(film / L.seconds);
+    const ramp = P.ramp || 0.4;
+    const fade = Math.min(smooth(clamp01(film / ramp)), smooth(clamp01((L.seconds - film) / ramp)));
+    const K = propKey(P.keys, u);
+    // 호버링 — 필름 시각에 묶인 작은 상하 흔들림. 스크롤이 서면 드론도 선다(재생헤드 계약).
+    const bob = P.bob ? Math.sin(film * P.bob.hz * Math.PI * 2) * P.bob.amp : 0;
+    const w = K.s * W;                                // 스프라이트 폭(px)
+    const h = w / (P.aspect || 1.4545);
+    const cx = K.x * W, cy = (K.y + bob) * H;
+    R.img.style.transform = `translate(${(cx - w / 2).toFixed(1)}px, ${(cy - h / 2).toFixed(1)}px) scale(${(w / 100).toFixed(4)})`;
+    // 그림자 — 드론 아래 지면. 키라이트가 좌상단이므로 오른쪽·아래로 치우친다. 멀수록(작을수록) 옅다.
+    const S = P.shadow || { dx: 0.16, dy: 0.95, w: 0.95, h: 0.3, alpha: 0.42 };
+    const sw = w * S.w, shh = h * S.h;
+    const sx = cx + w * S.dx - sw / 2, sy = cy + h * S.dy - shh / 2 - bob * H;
+    R.sh.style.transform = `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px) scale(${(sw / 100).toFixed(4)}, ${(shh / 32).toFixed(4)})`;
+    R.sh.style.opacity = (S.alpha * (0.55 + 0.45 * (K.s / P.keys[0].s))).toFixed(3);
+    R.host.style.opacity = fade.toFixed(3);
+    if (!R.on) { R.on = true; R.host.classList.add('is-on'); }
+    R.state = { film: +film.toFixed(3), u: +u.toFixed(4), x: +K.x.toFixed(4), y: +K.y.toFixed(4), s: +K.s.toFixed(4), px: +cx.toFixed(1), py: +cy.toFixed(1), w: +w.toFixed(1), opacity: +fade.toFixed(3) };
+  }
+}
+
 /* ── 이동 ─────────────────────────────────────────────────────────────────── */
 function maxScroll() { return Math.max(document.documentElement.scrollHeight - innerHeight, 1); }
 function trackTop() { return el.root.getBoundingClientRect().top + scrollY; }
@@ -390,6 +469,9 @@ const boot = async () => {
   const SITE_BASE = new URL('../../', import.meta.url).href; // .../landxi/
   M = JSON.parse((await (await fetch(MANIFEST)).text()).split('"/landxi/').join('"' + SITE_BASE));
   SEAM = M.seam || 0.16;
+  // 소품 — 없거나 못 받으면 조용히 없다(필름은 소품 없이도 완전하다).
+  const propsList = await fetch(PROPS).then(r => (r.ok ? r.text() : '{"props":[]}'))
+    .then(txt => JSON.parse(txt.split('"/landxi/').join('"' + SITE_BASE)).props).catch(() => []);
 
   let run = 0;
   cum = M.legs.map(L => { const a = run; run += L.weightVh; return [a, run]; });
@@ -410,6 +492,7 @@ const boot = async () => {
 
   buildRail();
   collectCounts();
+  buildProps(propsList);
 
   // 브랜드 마감 판. 스크롤 예산 2.00vh 는 **흐름에 요소를 더하지 않고** 컨테이너의
   // padding-bottom 으로 낸다 — 스페이서 높이는 엔진이 매 layout 마다 (Σw+1)×vh 로
@@ -481,6 +564,11 @@ const boot = async () => {
         zoom: r.map.getZoom(), pitch: r.map.getPitch(), bearing: r.map.getBearing() };
     },
     handoffActive: () => PLATES.some(r => r && r.on),
+    prop: id => {                            // 소품 상태(테스트·촬영용). 레그 밖이면 on:false
+      const R = PROP_RECS.find(r => r.spec.id === id);
+      return R ? { on: R.on, leg: R.spec.leg, ...(R.state || {}) } : null;
+    },
+    props: () => PROP_RECS.map(r => r.spec.id),
     plateMap: i => (PLATES[i] ? PLATES[i].map : null),   // 진단·촬영용(타일 상태 조회)
     ready: true,
   };
