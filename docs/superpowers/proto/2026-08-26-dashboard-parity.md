@@ -122,3 +122,35 @@
 | U15 | 푸터 | — | 한 줄 + 색 역할 범례 + `Family Site ▾`(관리자와 동일) |
 
 자백: KPI·표 값은 원본 하드코딩 시드(`시연`). 기준일은 관리자 보드와 같은 `2026.08.26`. 원본 부제의 "확인해 보세요" 는 "불필요한 글자 삭제" 지시로 뺐다.
+
+## 뷰어 대시보드 (LX 직원 · 결과 열람형) — 원본 `dashboard3.html` ↔ 마스터 `design-canvas/v2/B5-Dashboard-Viewer.dc.html`
+
+원본: <https://mini531.github.io/namwon-smart-village/landxi7/dashboard3.html> · 생성기 `tools/design/gen-b5-dashboard-viewer.mjs` (`--plates` 로 V-World 판 재굽기) · 렌더 `design-canvas/v2/renders/B5-Dashboard-Viewer.png` (1440×1048, 관리자 보드와 같은 셸). 디자인 마스터만 — 구현 없음.
+원본 폴리곤 실좌표는 `tools/design/data/dashboard3-fields.json`(dashboard3 RESULTS.*.fields 추출본). 원본 데모 고정값(JOB-2026-040/043/044) = `시연`.
+
+| # | 원본 위젯 (dashboard3.html) | 원본 값·동작 | 마스터에서 어디에 있나 |
+|---|---|---|---|
+| V-A | 레일 `STAFF_MENU` = dashboard · analysis · map · support · my (+로그아웃) | 원본 JS 가 나머지 항목을 `display:none` | 레일 72 — 대시보드(활성) · 분석 서비스 · 지도 서비스 / 서비스 지원 · MY · 로그아웃. 데이터 관리·프로젝트·카드 발행·서비스 관리 **없음** |
+| V-B1 | 제목 `대시보드` + 부제 | 정적 | H1 `LX 대시보드` + 파랑 룰 4px(관리자 보드와 같은 자리). 부제는 한 구 `권한 부여된 분석 결과와 통계` |
+| V-B2 | 기준일 `#dash-now-date` | `new Date()` | 마스트 우 `기준일 현재 2026.08.26`(관리자 보드와 동일) |
+| V-B3 | 공지 스트립 (`SP_NOTICES` 상단 고정 1건 · 전체 보기 ›) | `고위험 탐지 건 긴급 처리 안내 · 2026.04.15` | 마스트 좌 — 관리자 보드와 동일 |
+| V-B4 | KPI 없음 (원본에 KPI 띠 없음) | — | KPI 4 는 **원본 데이터의 유도값만**: 열람 가능 분석 결과 `3건`(RESULTS 3) · 이용 가능한 분석 카드 `6종`(CARDS 8 − 비공개 1 − 미부여 1) · 최근 분석 결과 `2026.04`(JOB-2026-044) · 선택 결과 탐지 면적 `111,735 ㎡`(silage classTotals 합) `시연`. 지어낸 지표 0 |
+| V-B5 | 결과 탭 3 `#rtabBar .rtab` (권한 부여 최신 3건 · 탭 = 분석명) | silage(활성) · greenhouse · farmland | 탭 칩 3 + JOB 번호(`JOB-2026-040/043/044`). 활성 = 파랑 테두리+틴트(원본 초기 `renderResult('silage')`) |
+| V-B6 | 결과 지도 `#dashMap` (OpenLayers · V-World Satellite · zoom 14 · 폴리곤 fill .55) | mapCenter `[127.531, 35.4305]` · fields 80 | 좌 판 572×300 — **같은 V-World WMTS 키·Satellite z15 실타일**(`img/db-vw-silage.jpg`)에 원본 `fields` 80개 중 창 안 72개를 웹메르카토르로 투영한 SVG. 색은 시스템 청록 램프(AI 결과)로 치환(원본 4색 #f44336… 은 시스템 밖) |
+| V-B7 | 범례 `#rLegendTitle` + `#rLegendList` | jobLabel + classes | 판 우하 — `사료작물(생육기) 정사영상` + 4 클래스 스와치 |
+| V-B8 | 확대/축소 `#rZoomIn/#rZoomOut` | ±1 zoom | 판 좌하 `+ −` + 축척 `200 m · z15` |
+| V-B9 | `자세한 지도 보기` `#rMapDetail` → `map-home.html` | 링크 | 판 우상 `자세한 지도 보기 ›`(흰 테두리 버튼) |
+| V-B10 | 통계 도넛 `#dashDonut` (ECharts pie 52–78 %) | classTotals | 우 패널 — 합계 큰 수 `111,735 ㎡`(Paperlogy 34 파랑) + **스택 바 20px**(dashboard.html 스토리지 S 스타일) + 비율 범례(IRG 53.0 % …). 도넛→스택 바는 D3 미결 표기(디자인 결정) |
+| V-B11 | 통계 표 `구분 / 면적(㎡)` + 합계 `#rStatsTotal` | 4행 + 합계 | 우 패널 표 — 행 = 구분 4, 열 = **읍면 5(운봉읍 32,045 …) + 면적(㎡)**, 마지막 행 합계. 값 전부 원본 `regions` 그대로, 0 은 `–` |
+| V-B12 | `지도 기반 AI 분석 서비스` 카드 그리드 `#cardGrid` + `#cardPrev/#cardNext` | CARDS 8 · PERMITTED 6 · isPublic 필터 → 6, 카드 → `ximap.html` | 이미지 카드 6(01–06) 한 줄 + 우상 ‹ › 이동 버튼(6장이 모두 보여 비활성 회색) + `이용 가능 6 / 8종 · 카드 → XI맵`. desc 는 한 줄 요약(불필요 글자 삭제 지시). 썸네일은 저장소 실영상 대체(원본 `model_*.png` 없음) |
+| V-B13 | `도움이 필요하신가요?` 지원 타일 4 | 공지사항 · FAQ · 문의하기 · 사용자 매뉴얼 (+부제) | 한 줄 타일 4(아이콘 파랑 · 이름 · 부제 · ›) |
+| V-B14 | 푸터 include | 회사 정보 | 관리자 보드와 동일 한 줄 + Family Site |
+
+### 뷰어 자백
+| 자백 | 값 |
+|---|---|
+| 조치 항목 0 | 뷰어에는 승인·미답변이 없어 `--warn` 빨강 0회 (푸터 색 역할 줄에 명시) |
+| 창 안 필지 72 / 원본 80 | z15 572×300 창 밖 8개는 잘림(원본 zoom 14 는 더 넓다) |
+| 폴리곤 색 | 원본 클래스 4색 → 청록 램프(#0FA9A0 · #0B6E69 · #7FD3CD · #C6EAE7). 색 역할 `청록 = AI 결과` |
+| 카드 썸네일 | 저장소 실영상(tile-arc-a · pj-road · tile-ep-2 · crop-farm-6 · pj-hero · tile-farm-clean) — 곤포사일리지는 대응 영상이 없어 농지 크롭 |
+| render.mjs | 아트보드 루트 `height:` 를 읽어 1048 을 통째로 찍도록 고침(이전 900 고정 클립) |

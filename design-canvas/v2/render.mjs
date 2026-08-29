@@ -32,7 +32,9 @@ function extractArtboard(src) {
     (_m, pre, file, post) => `${pre}../img/${file}${post}`);
 
   const fontsLink = /<link rel="stylesheet" href="(https:\/\/fonts\.googleapis\.com\/[^"]+)">/.exec(src);
-  return { bodyMarkup: inner.trim(), styleTag, fontsHref: fontsLink ? fontsLink[1] : '' };
+  // 아트보드 높이 = 루트 div 의 height (1440×900 기본 · 대시보드류 1048)
+  const hm = /width:1440px;height:(\d+)px/.exec(inner);
+  return { bodyMarkup: inner.trim(), styleTag, fontsHref: fontsLink ? fontsLink[1] : '', height: hm ? +hm[1] : 900 };
 }
 
 const buildPage = ({ bodyMarkup, styleTag, fontsHref }) => `<!doctype html>
@@ -53,11 +55,13 @@ async function main() {
     for (const name of names) {
       const src = fs.readFileSync(path.join(dir, `${name}.dc.html`), 'utf8');
       const tmpPath = path.join(tmpDir, `${name}.html`);
-      fs.writeFileSync(tmpPath, buildPage(extractArtboard(src)), 'utf8');
+      const art = extractArtboard(src);
+      fs.writeFileSync(tmpPath, buildPage(art), 'utf8');
+      await page.setViewportSize({ width: 1440, height: art.height });
       await page.goto(url.pathToFileURL(tmpPath).href, { waitUntil: 'load' });
       await page.evaluate(() => document.fonts.ready);
       await page.waitForTimeout(400);
-      await page.screenshot({ path: path.join(outDir, `${name}.png`), clip: { x: 0, y: 0, width: 1440, height: 900 } });
+      await page.screenshot({ path: path.join(outDir, `${name}.png`), clip: { x: 0, y: 0, width: 1440, height: art.height } });
       console.log('saved renders/' + name + '.png');
     }
   } finally {
