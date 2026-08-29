@@ -185,10 +185,10 @@ test('카드 — 1200×520 이 화면 중앙, 좌 60% 필름(wfull.mp4) + 우 40
     };
   });
   expect(p.fit).toBe('cover');
-  expect(p.poster).toMatch(/\/assets\/proto\/film\/legs\/w01\.webp$/);
+  expect(p.poster).toMatch(/\/assets\/proto\/film\/legs\/wfull\.webp$/);
   expect(p.srcs.some((s) => s.endsWith('/wfull.mp4'))).toBe(true);
   expect(p.srcs.some((s) => s.endsWith('/wfull-m.mp4'))).toBe(true);
-  expect(p.current === null || /w01\.mp4$/.test(p.current)).toBeTruthy();   // 1440 폭 = 데스크톱 소스
+  expect(p.current === null || /wfull\.mp4$/.test(p.current)).toBeTruthy();   // 1440 폭 = 데스크톱 소스
   expect(p.autoplay && p.muted && p.loop && p.playsinline).toBe(true);
   // 카드 1200×520, 화면 정중앙(x 120–1320 · y 190–710).
   expect(p.card.w).toBe(1200);
@@ -445,7 +445,7 @@ test('축소 모션 — 필름 대신 포스터, 같은 내용이 전부 보인�
   await page.waitForTimeout(400);
   expect(await page.evaluate(() => window.__login.drifting())).toBe(false);
   expect(await page.evaluate(() => document.querySelectorAll('#lgVideo source').length)).toBe(0);
-  expect(await page.evaluate(() => document.querySelector('#lgVideo').poster)).toMatch(/w01\.webp$/);
+  expect(await page.evaluate(() => document.querySelector('#lgVideo').poster)).toMatch(/wfull\.webp$/);
   await expect(page.locator('.lg-h1')).toBeVisible();
   await expect(page.locator('#lgSubmit')).toBeVisible();
   await expect(page.locator('#lgCiLandxi')).toBeVisible();
@@ -497,7 +497,7 @@ test('800 — 세로 스택: 소개 → 필름 → 폼 → 푸터, 가로 스크
   expect(g.order).toBe(true);
   expect(g.filmFull).toBe(true);
   expect(g.cardW).toBe(800 - 48);
-  expect(g.src === null || /w01-m\.mp4$/.test(g.src)).toBeTruthy();   // 좁은 폭 = 모바일 소스
+  expect(g.src === null || /wfull-m\.mp4$/.test(g.src)).toBeTruthy();   // 좁은 폭 = 모바일 소스
   await expect(page.locator('#lgSubmit')).toBeVisible();
   await page.screenshot({ path: `${SHOTS}/default-800.png`, fullPage: true });
   await ctx.close();
