@@ -133,7 +133,6 @@ test('좌 — 원본 로그인 폼의 컨트롤·문구가 1:1 로 있다', asyn
   expect(type.lblSize).toBe('16px');                // 라벨 26 → 20
   expect(type.lbl2Size).toBe('16px');
   expect(type.inputFam).toMatch(/^"?Pretendard"?/); expect(type.inputW).toBe("400");
-  expect(type.inputW).toBe('700');
   expect(type.inputSize).toBe('16px');              // 입력·플레이스홀더 28 → 22
   expect(type.phSize).toBe('16px');
   expect(type.pwSize).toBe('16px');
@@ -157,7 +156,7 @@ test('좌 — 원본 로그인 폼의 컨트롤·문구가 1:1 로 있다', asyn
   await page.screenshot({ path: `${SHOTS}/b5-login.png` });
 });
 
-test('카드 — 1200×520 이 화면 중앙, 좌 60% 필름(w01.mp4) + 우 40% 폼, 헤어라인 1, 캡션·브래킷 0', async ({ page }) => {
+test('카드 — 1200×520 이 화면 중앙, 좌 60% 필름(wfull.mp4) + 우 40% 폼, 헤어라인 1, 캡션·브래킷 0', async ({ page }) => {
   await boot(page);
 
   await expect(page.locator('.lx-bracket')).toHaveCount(0);
@@ -187,8 +186,8 @@ test('카드 — 1200×520 이 화면 중앙, 좌 60% 필름(w01.mp4) + 우 40% 
   });
   expect(p.fit).toBe('cover');
   expect(p.poster).toMatch(/\/assets\/proto\/film\/legs\/w01\.webp$/);
-  expect(p.srcs.some((s) => s.endsWith('/w01.mp4'))).toBe(true);
-  expect(p.srcs.some((s) => s.endsWith('/w01-m.mp4'))).toBe(true);
+  expect(p.srcs.some((s) => s.endsWith('/wfull.mp4'))).toBe(true);
+  expect(p.srcs.some((s) => s.endsWith('/wfull-m.mp4'))).toBe(true);
   expect(p.current === null || /w01\.mp4$/.test(p.current)).toBeTruthy();   // 1440 폭 = 데스크톱 소스
   expect(p.autoplay && p.muted && p.loop && p.playsinline).toBe(true);
   // 카드 1200×520, 화면 정중앙(x 120–1320 · y 190–710).
