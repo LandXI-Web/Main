@@ -260,7 +260,7 @@ export const PUB_ST = { run: '진행중', fail: '실패' };
 export const PUB_PCT = [12, 37, 62, 87];
 /** 쪽당 타일 수 4단 — 열 수. 발주(2026-08-27 2차): "타일은 SMLXL이 아니라 4 6 8 16 이렇게 하고 아래 페이지 수 표기".
     16 = 4×4. 그리드 높이에 맞춰 타일 높이가 준다(dataset.css `--rows`). 기본 8. */
-export const PER_PAGE = { 4: { cols: 2, rows: 2 }, 6: { cols: 3, rows: 2 }, 8: { cols: 4, rows: 2 }, 16: { cols: 4, rows: 4 } };
+export const PER_PAGE = { 4: { cols: 2, rows: 2 }, 6: { cols: 3, rows: 2 }, 8: { cols: 4, rows: 2 }, 16: { cols: 8, rows: 2 } };
 export const PP_LIST = [4, 6, 8, 16];
 export const PP_DEFAULT = 8;
 export const PP_KEY = 'lx_ds_pp';

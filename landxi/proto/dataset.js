@@ -207,7 +207,7 @@ const stw = (html, warn) => `<span class="st n${warn ? ' warn' : ''}">${html}</s
 const corners = (color) => `<i class="bk bk--tl" style="--bk:${color}"></i><i class="bk bk--tr" style="--bk:${color}"></i><i class="bk bk--bl" style="--bk:${color}"></i><i class="bk bk--br" style="--bk:${color}"></i>`;
 /** 캡션 — 이름은 줄고 메타는 남는다. 메타 앞부분(날짜·대기 순번)은 S·M 열에서 접혀 이름이 산다. */
 const cap = (name, meta) => { const i = meta.indexOf(' · '); const a = i > 0 ? meta.slice(0, i) : '', b = i > 0 ? meta.slice(i + 3) : meta;
-  return `<p class="cap n"><span class="nm" title="${esc(name)}">${esc(name)}</span><span class="mt">${a ? `<span class="dt">· ${esc(a)} </span>` : ''}· ${esc(b)}</span></p>`; };
+  return `<p class="cap n"><span class="nm" title="${esc(name)}">${esc(name)}</span><span class="mt">${a ? `<span class="dt">· ${esc(a)} </span>` : ''}<span class="sep">· </span>${esc(b)}</span></p>`; };
 const img = (src, id, cls = '', eager = false) => `<img src="${esc(src)}" alt="" data-rv="${id}" class="${cls}"${eager ? '' : ' loading="lazy"'}>`;
 const figImg = (src, id) => img(src, 'fig-' + id, '', true);
 const date = (at) => String(at).slice(0, 10);

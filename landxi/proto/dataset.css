@@ -139,18 +139,18 @@ button.k[aria-selected="true"]:first-child::after,button.k[aria-selected="true"]
 #pager button:disabled{ color:var(--grey-3); cursor:default; }
 #pager[data-pages="1"] button{ visibility:hidden; }
 
-/* 타일 그리드 — 쪽당 4 · 6 · 8 · 16 = 열 2 · 3 · 4 · 4, 행 2 · 2 · 2 · 4. 타일은 1.63:1 을 기준으로 하되 그리드 높이에 맞춰 높이가 준다(모든 쪽이 스크롤 없이 한 화면). */
-body[data-pp="4"]{ --cols:2; --rows:2; } body[data-pp="6"]{ --cols:3; --rows:2; } body[data-pp="8"]{ --cols:4; --rows:2; } body[data-pp="16"]{ --cols:4; --rows:4; }
+/* 타일 그리드 — 쪽당 4 · 6 · 8 · 16 = 열 2 · 3 · 4 · 8, 행 2 · 2 · 2 · 2. 타일은 1.63:1 을 기준으로 하되 그리드 높이에 맞춰 높이가 준다(모든 쪽이 스크롤 없이 한 화면). */
+body[data-pp="4"]{ --cols:2; --rows:2; } body[data-pp="6"]{ --cols:3; --rows:2; } body[data-pp="8"]{ --cols:4; --rows:2; } body[data-pp="16"]{ --cols:8; --rows:2; }
 .tiles{ display:grid; grid-template-columns:repeat(var(--cols),minmax(0,1fr)); gap:var(--gap); align-content:start; }
 .tile{ position:relative; margin:0; min-width:0; transition:transform var(--hov) var(--hove); }
 .tile:hover{ transform:translateY(-4px); }
 /* 타일 높이 상한 = (그리드 높이 − 행 간격 − 캡션 24 × 행 − 여백) / 행 */
 .th{ position:relative; width:100%; aspect-ratio:240/147; max-height:calc((100cqh - 8px - (var(--rows) - 1) * var(--gap) - var(--rows) * 24px) / var(--rows)); min-height:64px; overflow:hidden; background:#fff; display:block; cursor:pointer; }
-/* 쪽당 16 = 4×4 가 항상 한 화면 — 타일 높이는 그리드 높이 ÷ 4 로 **고정**하고 폭도 그 비율(1.63:1)로 따라 준다.
-   (이전: 높이 상한만 두어 8건인 단계·큰 화면에서는 8 과 같아 보였다 — 클라이언트 "16 은 반응이 안 되네".) */
-body[data-pp="16"]{ --th16:calc((100cqh - 8px - 3 * var(--gap) - 4 * 24px) / 4); }
-body[data-pp="16"] .tiles{ grid-template-columns:repeat(4, minmax(0, calc(var(--th16) * 240 / 147))); justify-content:start; }
-body[data-pp="16"] .th{ aspect-ratio:auto; height:var(--th16); max-height:none; min-height:56px; }
+/* 쪽당 16 = 8×2 — 열이 2·3·4·8 로 늘며 타일이 단계적으로 작아진다(4×4 는 높이만 줄고 폭이 8 과 같아 "16 이 8 보다 작지 않다" — 클라이언트 08-29).
+   폭이 좁으니 타일 위 글자(이름·상태)는 상태만 남기고 캡션은 접는다. */
+body[data-pp="16"] .th{ min-height:48px; }
+body[data-pp="16"] .word, body[data-pp="16"] .st, body[data-pp="16"] .th--none .t1{ display:none; }   /* 85px 폭 — 이미지·상태색만 */
+body[data-pp="16"] .cap .nm, body[data-pp="16"] .cap .sep{ display:none; } body[data-pp="16"] .cap .mt::before{ content:""; }
 .th img{ position:absolute; left:0; top:0; width:100%; height:100%; object-fit:cover; display:block; }
 .th canvas{ position:absolute; left:0; top:0; width:100%; height:100%; display:block; }
 .th--box{ border:1px solid var(--line); }

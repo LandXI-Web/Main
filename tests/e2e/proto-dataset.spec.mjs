@@ -109,7 +109,7 @@ test('KPI 카드 5 — 디스크 96 %(warn + 증량 신청) · 단계 4 건수 �
 
 /* ── 단계 4 — 전 건 표출(쪽당 8 이면 1쪽) · 선반 없음 · 시작은 선택 없음 ── */
 for (const s of STAGES) {
-  test(`?tab=${s.id} — 타일 ${s.n} = KPI 건수 · 접힘/전체 보기 없음 · 타일에 버튼 0 · 페이저 1 / 1 · 우 패널 = ${s.board}(줄 ${s.n} + 요약 kv) · 줄 클릭 = 상세 + ‹ 현황 · 쪽당 16 = 4×4`, async ({ page }) => {
+  test(`?tab=${s.id} — 타일 ${s.n} = KPI 건수 · 접힘/전체 보기 없음 · 타일에 버튼 0 · 페이저 1 / 1 · 우 패널 = ${s.board}(줄 ${s.n} + 요약 kv) · 줄 클릭 = 상세 + ‹ 현황 · 쪽당 16 = 8×2`, async ({ page }) => {
     const errs = watch(page);
     await boot(page, s.id);
     await expect(page.locator(`#kpi-${s.id}`)).toHaveAttribute('aria-selected', 'true');
@@ -179,26 +179,25 @@ for (const s of STAGES) {
     await expect(page.locator('#side-h')).toHaveText(s.title);
     await select(page, s.second);
     await expect(page.locator('#side-h')).toHaveText(s.board);
-    // 쪽당 16 — 어느 단계든(건수 < 16 이어도) 4×4: 눌림 · 4열 · 타일 높이 = 그리드 ÷ 4 · 폭도 같이 준다
+    // 쪽당 16 — 어느 단계든(건수 < 16 이어도) 8×2: 눌림 · 8열 · 타일 폭·높이 모두 8 보다 작다
     const th = `${s.panel} .tile[data-id] .th`;
     const b8 = await page.locator(th).first().evaluate((e) => { const r = e.getBoundingClientRect(); return [r.width, r.height]; });
     await page.locator('#pp button[data-pp="16"]').click();
     await expect(page.locator('body')).toHaveAttribute('data-pp', '16');
     await expect(page.locator('#pp button[data-pp="16"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('#pp button[data-pp="8"]')).toHaveAttribute('aria-pressed', 'false');
-    expect(await cols(page, `${s.panel} .tiles`)).toBe(4);
+    expect(await cols(page, `${s.panel} .tiles`)).toBe(8);
     const b16 = await page.locator(th).first().evaluate((e) => { const r = e.getBoundingClientRect(); return [r.width, r.height]; });
     const gridH = await page.locator('#grid').evaluate((e) => e.clientHeight);
     expect(b16[1]).toBeLessThan(b8[1] * 0.8);
     expect(b16[0]).toBeLessThan(b8[0] * 0.8);
-    expect(Math.abs(b16[1] - (gridH - 8 - 36 - 96) / 4)).toBeLessThan(2);
     await expect(page.locator('#pg-n')).toHaveText('1 / 1');
     expect(errs).toEqual([]);
   });
 }
 
-/* ── 쪽당 4 · 6 · 8 · 16 + 페이저 — 열 2/3/4/4, 16 = 4×4, localStorage ─────── */
-test('쪽당 4 · 6 · 8 · 16 — 열 2/3/4/4 · 16 은 4×4 로 타일이 낮아진다 · 페이저 1 / 2 ‹ › · 새로고침 뒤에도 남는다', async ({ page }) => {
+/* ── 쪽당 4 · 6 · 8 · 16 + 페이저 — 열 2/3/4/8, 16 = 8×2, localStorage ─────── */
+test('쪽당 4 · 6 · 8 · 16 — 열 2/3/4/8 · 16 은 8×2 로 타일이 작아진다 · 페이저 1 / 2 ‹ › · 새로고침 뒤에도 남는다', async ({ page }) => {
   const errs = watch(page);
   await boot(page, 'manage');
   expect(await page.locator('#pp button').allInnerTexts()).toEqual(['4', '6', '8', '16']);
@@ -207,9 +206,9 @@ test('쪽당 4 · 6 · 8 · 16 — 열 2/3/4/4 · 16 은 4×4 로 타일이 낮�
   const h8 = await page.locator('.tile[data-id="d1"] .th').evaluate((e) => e.getBoundingClientRect().height);
   await page.locator('#pp button[data-pp="16"]').click();
   await expect(page.locator('body')).toHaveAttribute('data-pp', '16');
-  expect(await cols(page, '#dn-list')).toBe(4);
+  expect(await cols(page, '#dn-list')).toBe(8);
   const h16 = await page.locator('.tile[data-id="d1"] .th').evaluate((e) => e.getBoundingClientRect().height);
-  expect(h16).toBeLessThan(h8 * 0.8);                                                             // 4행이 한 화면에
+  expect(h16).toBeLessThan(h8 * 0.8);                                                             // 8열이라 폭·높이 모두 준다
   await expect(page.locator('#pg-n')).toHaveText('1 / 1');
   await page.locator('#pp button[data-pp="6"]').click();
   expect(await cols(page, '#dn-list')).toBe(3);
