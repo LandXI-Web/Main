@@ -1,19 +1,21 @@
-// B5-Dashboard-User 아트보드 생성기 — LX 사용자(직원) 대시보드, 원본 landxi7/dashboard2.html 1:1(기능 추가 0).
-// 셸은 B5-Dashboard-Data(관리자 보드)와 같다: 레일 72 · 마스트헤드 64 · H1 34 + 파랑 룰 · KPI 5 · SPLIT(좌 판 572 / 우 탭 패널 648) · 푸터.
+// B5-Dashboard-User 아트보드 생성기 — LX 사용자(직원) 대시보드, 원본 landxi7/dashboard2.html 1:1(기능 추가 0). rev.2 (2026-08-29)
+// 셸은 B5-Dashboard-Data(관리자 보드)와 같다: 레일 72 · 마스트헤드 64 · H1 34 + 파랑 룰 · KPI 5 · SPLIT · 푸터.
+// rev.2 — 고객 판정 "조잡하고 실용성이 없어 보인다" 에 답한 판: 좌(넓음) = 내 AI 개발 프로젝트 3 을 **이미지 카드**(정사영상 크롭 + 단계 레일 1개) + AI 분석 3 을 슬림 행(분할 막대 1 + 숫자 1),
+//          우(좁음) = 할 일 큐(초대 2 · 카드 검토 1 — 이 화면의 빨강 전부) → 월별 분석 실행 그래픽 1 → 내 디스크 그래픽 1. 탭 0 · 부제 0 · 푸터 색 범례 0 · 행마다 범례 0.
 // 값은 전부 원본 dashboard2.html 의 시드(PROJECTS · ANALYSIS_PROJECTS · usageData · 월별 라인 [42,55,61,48,73,84]).
-// usage: node tools/design/gen-b5-dashboard-user.mjs [--tab=disk]   (repo root) — 멱등. --tab=disk 는 우 패널 탭 2 상태(검토용).
+// usage: node tools/design/gen-b5-dashboard-user.mjs   (repo root) — 멱등.
 // 렌더: node design-canvas/v2/render.mjs B5-Dashboard-User → design-canvas/v2/renders/B5-Dashboard-User.png (1440×900)
 import fs from 'node:fs';
 import path from 'node:path';
 
 const root = process.cwd();
 const OUT = path.join(root, 'design-canvas/v2/B5-Dashboard-User.dc.html');
-const TAB = (process.argv.find(a => a.startsWith('--tab=')) || '--tab=month').slice(6);
 
 const INK = '#010102', G = '#686868', C = '#CCCCCC', H = '#DDDDDD', ACC = '#006DF7', T1 = '#E8F1FF', T2 = '#D6E6FF', TEAL = '#0FA9A0', WARN = '#D1352B';
 const W = 1440, HT = 900, X0 = 128, CW = 1256;               // 본문 열 128–1384
-const PL = { x: 128, w: 572 }, PN = { x: 736, w: 648 };      // 좌 판 / 우 패널 (관리자 보드와 동일)
-const TOP = 378, PH = 420;                                   // 판·패널 y · 높이(254→420 자란 상태)
+const PL = { x: 128, w: 792 }, PN = { x: 952, w: 432 };      // 좌 판(넓음 · 이미지 카드) / 우 패널(좁음 · 할 일·그래픽 2)
+const SPLIT_Y = 326, SPLIT_H = 508;                           // 326–834 (푸터 룰 850 위)
+const CROP = '../../../landxi/assets/proto/crops';           // 관리자 보드와 같은 실 크롭(정사영상)
 
 const svg = (d, size = 16, color = ACC, extra = '') => `<svg style="color:${color};flex:none;display:block${extra}" xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter">${d}</svg>`;
 const IC = {
@@ -73,13 +75,14 @@ ${svg(IC.notice, 16, G)}
 <span class="n" style="font-size:16px;letter-spacing:.02em;color:${G}">2026.08.26</span>
 </div><div style="position:absolute;left:72px;top:64px;width:1368px;height:1px;background:${H}"></div>
 <div style="position:absolute;left:${X0}px;top:92px;display:flex;align-items:baseline;gap:16px" data-line><div>
-<span class="d" style="font-size:34px;line-height:40px"><span style="display:inline-block;border-bottom:4px solid ${ACC};padding-bottom:8px;margin-bottom:-12px">LX 사용자</span> 대시보드</span>
-<span style="font-size:17px;color:${G};letter-spacing:-.01em;margin-left:14px">내 프로젝트 진행과 디스크 사용량을 한눈에</span></div></div>
+<span class="d" style="font-size:34px;line-height:40px"><span style="display:inline-block;border-bottom:4px solid ${ACC};padding-bottom:8px;margin-bottom:-12px">LX 사용자</span> 대시보드</span></div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:baseline;gap:10px;white-space:nowrap">${svg(IC.grid, 14, G, ';align-self:center')}<span class="mic">AI 기반 모델 (백본)</span><span class="n" style="font-size:18px;letter-spacing:-.01em;color:${INK}">XI-VFM v2.1</span><span class="mic n" style="letter-spacing:.02em">최종 적용 2026.03.12 · 연결 과제 14개</span></div></div>
 <div style="position:absolute;left:${X0}px;top:156px;width:${CW}px;height:1px;background:${H}"></div>`;
 
 // ---------- KPI 5 (원본 .ws-kpi 순서·값 그대로) ----------
 const KPI = [
-  ['내 AI 개발 프로젝트', 8, '개', '초대받은 프로젝트 <b>2</b>건', ACC, 'ai-project.html'],
+  ['내 AI 개발 프로젝트', 8, '개', `초대받은 프로젝트 <span style="color:${WARN}">2건</span>`, ACC, 'ai-project.html'],
   ['내 AI 분석 프로젝트', 3, '개', '진행 중 <b>2</b> · 완료 <b>1</b>', ACC, 'ai-project.html'],
   ['내 데이터', 24, '건', '정사영상 · 학습 데이터', ACC, 'dataset.html'],
   ['카드 발행 대기', 1, '건', `<span style="color:${WARN}">검토 대기</span>`, WARN, 'ai-publish.html'],
@@ -100,19 +103,11 @@ let kpi = '';
 }
 kpi += `<div style="position:absolute;left:${X0}px;top:302px;width:${CW}px;height:1px;background:${H}"></div>`;
 
-// ---------- 좌: 백본 헤더 + 판(내 AI 개발 프로젝트 3 · 내 AI 분석 프로젝트 3) ----------
-const bb = `
-<div style="position:absolute;left:${PL.x}px;top:326px;width:${PL.w}px;display:flex;align-items:baseline;gap:10px">
-${svg(IC.grid, 16, ACC)}<span class="d" style="font-size:18px">AI 기반 모델 (백본)</span>
-<span class="mic">국토 관측 영상 파운데이션 모델</span>
-<div style="flex:1"></div>
-<span class="n" style="font-size:26px;line-height:1;letter-spacing:-.01em">XI-VFM v2.1</span></div>
-<div class="mic n" style="position:absolute;left:${PL.x}px;top:354px;letter-spacing:.02em">최종 적용 2026.03.12 · 연결된 분석 과제 14개</div>`;
-
+// ---------- 좌(792): 내 AI 개발 프로젝트 3 = 이미지 카드 · 내 AI 분석 프로젝트 3 = 슬림 행 ----------
 const PROJECTS = [
-  { pid: 1, name: '도로안전 정사영상', updated: '2026.06.09', counts: [1240, 1180, 9] },
-  { pid: 8, name: '방치 쓰레기 탐지', updated: '2026.06.09', counts: [860, 540, 4] },
-  { pid: 6, name: '비닐하우스 탐지', updated: '2026.06.08', counts: [1520, 1500, 0] },
+  { pid: 1, name: '도로안전 정사영상', updated: '2026.06.09', counts: [1240, 1180, 9], img: `${CROP}/namwon-farmland-2025/3@2x.jpg`, pos: '30% 50%' },
+  { pid: 8, name: '방치 쓰레기 탐지', updated: '2026.06.09', counts: [860, 540, 4], img: `${CROP}/yeosu-marine-2025-aerial/1@2x.jpg`, pos: '50% 40%' },
+  { pid: 6, name: '비닐하우스 탐지', updated: '2026.06.08', counts: [1520, 1500, 0], img: `${CROP}/namwon-greenhouse-2025/1@2x.jpg`, pos: '40% 50%' },
 ];
 const STEPS = [['데이터', '건'], ['라벨링', '건'], ['학습', '회']];
 const ANALYSIS = [
@@ -122,85 +117,104 @@ const ANALYSIS = [
 ];
 const fmt = (v) => v.toLocaleString('en-US');
 
-const groupHead = (y, icon, title, n, right) => `
-<div style="position:absolute;left:${PL.x}px;top:${y}px;width:${PL.w}px;height:28px;background:${T1};display:flex;align-items:center;gap:10px;padding:0 12px;white-space:nowrap">
-${svg(icon, 15, ACC)}<span class="d" style="font-size:15.5px;color:${INK}">${title}</span><span class="n" style="font-size:15px;color:${INK}">${n}</span>
-<div style="flex:1"></div>${right}</div>`;
+// 섹션 머리(판 밖 · 28px): 아이콘 + 제목 + 개수 · 우측 보조
+const secHead = (x, y, w, icon, title, n, right) => `
+<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:28px;display:flex;align-items:center;gap:10px;white-space:nowrap">
+${svg(icon, 16, ACC)}<span class="d" style="font-size:18px;color:${INK}">${title}</span><span class="n" style="font-size:17px;color:${G}">${n}</span>
+<div style="flex:1"></div>${right || ''}</div>`;
 
-// 개발 프로젝트 행 — 단계 3 = 이어진 블록(누적 있음 = 액센트 채움·흰 글자 / 0 = 점선·미실행). 시스템이 아는 사실(누적 건수·갱신일)만.
-function devRow(p, i, y) {
-  const SX = PL.x + 12, SW = PL.w - 24, segW = 168, con = (SW - segW * 3) / 2;
-  let s = `<div class="n" style="position:absolute;left:${PL.x + 12}px;top:${y}px;font-size:14px;color:${G}">0${i + 1}</div>
-<div style="position:absolute;left:${PL.x + 40}px;top:${y - 3}px;font-size:17.5px;line-height:1.2;letter-spacing:-.01em;color:${INK};white-space:nowrap" title="ai-project.html?pid=${p.pid}">${p.name}</div>
-<div class="n" style="position:absolute;right:${W - PL.x - PL.w + 12}px;top:${y}px;font-size:14px;letter-spacing:.02em;color:${G}">갱신 ${p.updated}</div>`;
+// 개발 프로젝트 카드 — 이미지 164 + 단계 레일(이미지 하단 오버레이 · 데이터/라벨링/학습 3분절, 현재 단계 = 마지막 누적 단계 액센트 밑줄 · 0 = 점선 '미실행') + 캡션(제목 · 갱신일)
+const CARD_W = 250, CARD_GAP = 21, IMG_H = 164, CAP_H = 54;
+function devCard(p, i, x, y) {
+  const cur = p.counts.reduce((m, v, k) => v > 0 ? k : m, 0);
+  let s = `<div style="position:absolute;left:${x}px;top:${y}px;width:${CARD_W}px;height:${IMG_H}px;overflow:hidden;background:#010102" title="ai-project.html?pid=${p.pid}">
+<img src="${p.img}" alt="" style="width:100%;height:100%;object-fit:cover;object-position:${p.pos};display:block;filter:saturate(.85) contrast(1.04)">
+<span class="n" style="position:absolute;left:10px;top:8px;font-size:14px;color:#FFFFFF;letter-spacing:.06em;text-shadow:0 0 3px rgba(1,1,2,.9)">0${i + 1}</span>
+<div style="position:absolute;left:0;right:0;bottom:0;height:64px;background:linear-gradient(to bottom,rgba(1,1,2,0),rgba(1,1,2,.72))"></div>`;
+  const segW = (CARD_W - 20 - 8) / 3;
   p.counts.forEach((v, k) => {
-    const on = v > 0, x = SX + k * (segW + con), ty = y + 26;
-    if (k > 0) {
-      const prevOn = p.counts[k - 1] > 0 && on;
-      s += `<div style="position:absolute;left:${x - con}px;top:${ty + 12}px;width:${con}px;height:1px;background:${prevOn ? ACC : C};${prevOn ? '' : 'opacity:.9'}"></div>`;
-    }
-    s += `<div style="position:absolute;left:${x}px;top:${ty}px;width:${segW}px;height:26px;display:flex;align-items:center;gap:6px;padding:0 9px;white-space:nowrap;${on ? `background:${ACC};color:#FFFFFF` : `border:1px dashed ${C};color:${C}`}">
-<span style="font-size:14px;letter-spacing:-.01em">${STEPS[k][0]}</span>
-<span class="n" style="margin-left:auto;font-size:15px;letter-spacing:.01em">${on ? fmt(v) : '—'} <span style="font-size:14px;${on ? 'color:rgba(255,255,255,.75)' : ''}">${on ? STEPS[k][1] : '미실행'}</span></span></div>`;
+    const on = v > 0, isCur = k === cur, sx = 10 + k * (segW + 4);
+    s += `<div style="position:absolute;left:${sx.toFixed(1)}px;bottom:10px;width:${segW.toFixed(1)}px;height:40px;white-space:nowrap">
+<div style="font-size:12.5px;line-height:14px;color:rgba(255,255,255,${on ? '.78' : '.5'})">${STEPS[k][0]}</div>
+<div class="n" style="font-size:15px;line-height:18px;letter-spacing:.01em;color:${on ? '#FFFFFF' : 'rgba(255,255,255,.5)'}">${on ? fmt(v) : '—'}<span style="font-size:12.5px;opacity:.75"> ${on ? STEPS[k][1] : '미실행'}</span></div>
+<div style="position:absolute;left:0;bottom:0;width:100%;height:3px;${on ? `background:${isCur ? ACC : 'rgba(255,255,255,.55)'}` : `border-top:1px dashed rgba(255,255,255,.55)`}"></div></div>`;
   });
+  s += `</div>
+<div style="position:absolute;left:${x}px;top:${y + IMG_H}px;width:${CARD_W}px;height:${CAP_H}px;border:1px solid ${H};border-top:0;padding:8px 12px 0">
+<div style="font-size:16.5px;line-height:20px;letter-spacing:-.01em;color:${INK};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
+<div class="mic n" style="margin-top:2px;letter-spacing:.02em">갱신 ${p.updated}</div></div>`;
   return s;
 }
-// 분석 프로젝트 행 — 상태 3 = 분할 막대(대기중 회색 / 분석중 파랑 / 완료 청록 = AI 결과) + 건수 라벨. 막대 폭 = 합계 비례(최대 9건 = 288px).
+
+// 분석 프로젝트 행(44px) — 이름 · 분할 막대 1(대기 회색 / 분석중 파랑 / 완료 청록 = AI 결과, 폭 = 합계 비례 · 최대 9건) · 숫자 1(완료 n / 합계 건) · 갱신일. 범례는 섹션 머리에 한 번.
 function anRow(p, i, y) {
-  const total = p.pending + p.running + p.done, BW = 234, unit = BW / 9, bx = PL.x + 40;
-  const segs = [[p.pending, C, '대기중'], [p.running, ACC, '분석중'], [p.done, TEAL, '완료']];
-  let s = `<div class="n" style="position:absolute;left:${PL.x + 12}px;top:${y}px;font-size:14px;color:${G}">0${i + 1}</div>
-<div style="position:absolute;left:${bx}px;top:${y - 3}px;font-size:17.5px;line-height:1.2;letter-spacing:-.01em;color:${INK};white-space:nowrap" title="ai-project-work.html?pid=&tab=analysis (aid ${p.aid})">${p.name}</div>
-<div class="n" style="position:absolute;right:${W - PL.x - PL.w + 12}px;top:${y}px;font-size:14px;letter-spacing:.02em;color:${G}">갱신 ${p.updated}</div>
-<div style="position:absolute;left:${bx}px;top:${y + 28}px;width:${BW}px;height:14px;border-bottom:1px solid ${H}"></div>`;
+  const total = p.pending + p.running + p.done, BW = 170, unit = BW / 9, bx = PL.x + 372;
+  let s = `<div style="position:absolute;left:${PL.x}px;top:${y + 43}px;width:${PL.w}px;height:1px;background:${H}"></div>
+<div class="n" style="position:absolute;left:${PL.x + 12}px;top:${y + 11}px;font-size:14px;color:${G}">0${i + 1}</div>
+<div style="position:absolute;left:${PL.x + 40}px;top:${y + 10}px;font-size:16.5px;line-height:1.3;letter-spacing:-.01em;color:${INK};white-space:nowrap" title="ai-project-work.html?tab=analysis (aid ${p.aid})">${p.name}</div>
+<div style="position:absolute;left:${bx}px;top:${y + 16}px;width:${BW}px;height:12px;border-bottom:1px solid ${H}"></div>`;
   let x = bx;
-  segs.forEach(([v, col]) => { if (v > 0) { s += `<div style="position:absolute;left:${x}px;top:${y + 28}px;width:${(v * unit).toFixed(1)}px;height:14px;background:${col};box-shadow:none"></div>`; x += v * unit; } });
-  s += `<div class="n" style="position:absolute;left:${bx + BW + 16}px;top:${y + 26}px;font-size:14.5px;letter-spacing:.02em;white-space:nowrap;display:flex;gap:12px;color:${G}">`;
-  segs.forEach(([v, col, lab]) => { s += `<span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;background:${col};display:inline-block;flex:none"></span>${lab} <span style="color:${v > 0 ? INK : C}">${v}</span></span>`; });
-  return s + '</div>';
+  [[p.pending, C], [p.running, ACC], [p.done, TEAL]].forEach(([v, col]) => { if (v > 0) { s += `<div style="position:absolute;left:${x.toFixed(1)}px;top:${y + 16}px;width:${(v * unit).toFixed(1)}px;height:12px;background:${col}"></div>`; x += v * unit; } });
+  s += `<div class="n" style="position:absolute;left:${bx + BW + 14}px;top:${y + 11}px;font-size:15px;letter-spacing:.01em;color:${INK};white-space:nowrap">${p.done}<span style="font-size:14px;color:${G}"> / ${total} 건</span></div>
+<div class="n" style="position:absolute;right:${W - PL.x - PL.w}px;top:${y + 12}px;font-size:14px;letter-spacing:.02em;color:${G}">갱신 ${p.updated}</div>`;
+  return s;
 }
 
-const rowH = 58, rowA = 52;
-let plate = `<div style="position:absolute;left:${PL.x}px;top:${TOP}px;width:${PL.w}px;height:${PH}px;border:1px solid ${H}"></div>`;
-plate += groupHead(TOP, IC.steps, '내 AI 개발 프로젝트', 3,
-  `<span style="display:flex;align-items:center;gap:6px;font-size:14px;color:${G};white-space:nowrap"><span style="width:9px;height:9px;background:${ACC};display:inline-block"></span>데이터 있음<span style="width:9px;height:9px;border:1px dashed ${C};display:inline-block;margin-left:6px"></span>미실행</span><span class="mic" style="margin-left:14px">전체 보기 ›</span>`);
-PROJECTS.forEach((p, i) => { plate += devRow(p, i, TOP + 28 + 16 + i * rowH); });
-const Y2 = TOP + 28 + 16 + 3 * rowH - 6; // 분석 그룹 머리띠
-plate += `<div style="position:absolute;left:${PL.x}px;top:${Y2 - 1}px;width:${PL.w}px;height:1px;background:${H}"></div>`;
-plate += groupHead(Y2, IC.flask, '내 AI 분석 프로젝트', 3, `<span class="mic">전체 보기 ›</span>`);
-ANALYSIS.forEach((p, i) => { plate += anRow(p, i, Y2 + 28 + 14 + i * rowA); });
+let plate = secHead(PL.x, SPLIT_Y, PL.w, IC.steps, '내 AI 개발 프로젝트', 3, `<span class="mic">전체 보기 ›</span>`);
+const CY = SPLIT_Y + 40;
+PROJECTS.forEach((p, i) => { plate += devCard(p, i, PL.x + i * (CARD_W + CARD_GAP), CY); });
+const Y2 = CY + IMG_H + CAP_H + 30;                           // 분석 섹션 머리
+const legend = [[C, '대기'], [ACC, '분석중'], [TEAL, '완료']].map(([col, l]) => `<span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;background:${col};display:inline-block"></span>${l}</span>`).join('');
+plate += secHead(PL.x, Y2, PL.w, IC.flask, '내 AI 분석 프로젝트', 3, `<span style="display:flex;gap:12px;font-size:14px;color:${G}">${legend}</span><span class="mic" style="margin-left:16px">전체 보기 ›</span>`);
+plate += `<div style="position:absolute;left:${PL.x}px;top:${Y2 + 36}px;width:${PL.w}px;height:1px;background:${INK}"></div>`;
+ANALYSIS.forEach((p, i) => { plate += anRow(p, i, Y2 + 37 + i * 44); });
 
-// ---------- 우: 탭 패널(월별 분석 실행 | 내 디스크 사용량) ----------
-const tab = (t, on) => `<div style="height:24px;line-height:22px;padding:0 10px;font-size:14px;letter-spacing:-.01em;white-space:nowrap;border:1px solid ${on ? ACC : H};background:${on ? T1 : '#FFFFFF'};color:${on ? ACC : G}">${t}</div>`;
-let panel = `<div style="position:absolute;left:712px;top:326px;width:1px;height:${TOP + PH - 326}px;background:${H}"></div>
-<div style="position:absolute;left:${PN.x}px;top:326px;width:${PN.w}px;height:24px;display:flex;align-items:center;gap:1px">${tab('월별 분석 실행', TAB === 'month')}${tab('내 디스크 사용량', TAB === 'disk')}<div style="flex:1"></div>${TAB === 'disk' ? `<span style="font-size:14px;letter-spacing:-.01em;color:${INK};border-bottom:1px solid ${INK}">디스크 증량 신청 ›</span>` : `<span class="mic">최근 6개월</span>`}</div>
-<div style="position:absolute;left:${PN.x}px;top:${TOP}px;width:${PN.w}px;height:${PH}px;border:1px solid ${H}"></div>`;
+// ---------- 우(432): 할 일 큐 → 월별 분석 실행 → 내 디스크 ----------
+let panel = `<div style="position:absolute;left:${PN.x - 16}px;top:${SPLIT_Y}px;width:1px;height:${SPLIT_H}px;background:${H}"></div>`;
+// 할 일 — 이 화면의 빨강은 여기(와 KPI 두 곳)뿐. 행 = 할 일 · 건수 · CTA 1
+const TODO = [
+  ['초대받은 프로젝트', 2, '건', '수락 ›', 'ai-project.html?filter=invited'],
+  ['카드 발행 검토 대기', 1, '건', '검토 ›', 'ai-publish.html?status=대기'],
+];
+panel += secHead(PN.x, SPLIT_Y, PN.w, IC.sup, '할 일', TODO.reduce((a, t) => a + t[1], 0), `<span class="mic">오늘</span>`);
+TODO.forEach((t, i) => {
+  const y = SPLIT_Y + 40 + i * 48;
+  panel += `<div style="position:absolute;left:${PN.x}px;top:${y}px;width:${PN.w}px;height:48px;border-top:1px solid ${i ? H : INK};display:flex;align-items:center;gap:8px;white-space:nowrap" title="${t[4]}">
+<span style="width:6px;height:6px;background:${WARN};flex:none"></span>
+<span style="font-size:16.5px;letter-spacing:-.01em;color:${INK}">${t[0]}</span>
+<span class="n" style="font-size:17px;color:${WARN};letter-spacing:.01em">${t[1]}<span style="font-size:14px;color:${G}"> ${t[2]}</span></span>
+<div style="flex:1"></div>
+<span style="font-size:14.5px;color:${WARN};border:1px solid ${WARN};height:26px;line-height:24px;padding:0 10px">${t[3]}</span></div>`;
+});
+panel += `<div style="position:absolute;left:${PN.x}px;top:${SPLIT_Y + 40 + 96}px;width:${PN.w}px;height:1px;background:${H}"></div>`;
 
-if (TAB === 'month') {
-  const M = [42, 55, 61, 48, 73, 84], max = 84, sum = M.reduce((a, b) => a + b, 0);
-  const cx0 = PN.x + 36, colW = 96, barW = 56, base = TOP + PH - 64, hMax = 230;
-  panel += `<div style="position:absolute;left:${PN.x + 20}px;top:${TOP + 22}px;display:flex;align-items:baseline;gap:8px"><span class="d" style="font-size:34px;line-height:1;letter-spacing:-.02em;color:${ACC}">84</span><span style="font-size:14px;color:${G}">회</span><span style="font-size:14px;color:${G};margin-left:2px">6월</span><span class="n" style="font-size:14px;color:${ACC};letter-spacing:.02em;margin-left:14px">전월 대비 +15 %</span></div>`;
+// 월별 분석 실행 — 막대 6(6월 액센트 · 그 외 틴트-2) · 큰 수 1
+{
+  const M = [42, 55, 61, 48, 73, 84], max = 84, y0 = SPLIT_Y + 40 + 96 + 24;
+  panel += secHead(PN.x, y0, PN.w, IC.anal, '월별 분석 실행', '', `<span class="mic">최근 6개월</span>`);
+  panel += `<div style="position:absolute;left:${PN.x}px;top:${y0 + 34}px;display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span class="d" style="font-size:30px;line-height:1;letter-spacing:-.02em;color:${ACC}">84</span><span style="font-size:14px;color:${G}">회</span><span style="font-size:14px;color:${G};margin-left:2px">6월</span><span class="n" style="font-size:14px;color:${ACC};letter-spacing:.02em;margin-left:10px">전월 대비 +15 %</span></div>`;
+  const colW = PN.w / 6, barW = 40, base = y0 + 34 + 30 + 80, hMax = 80;
   M.forEach((v, i) => {
-    const h = Math.round(v * hMax / max), x = cx0 + i * colW + (colW - barW) / 2, on = i === 5;
-    panel += `<div style="position:absolute;left:${x}px;top:${base - h}px;width:${barW}px;height:${h}px;background:${on ? ACC : T2}"></div>
-<div class="n" style="position:absolute;left:${x - 20}px;top:${base - h - 24}px;width:${barW + 40}px;text-align:center;font-size:16px;letter-spacing:.01em;color:${on ? ACC : INK}">${v}<span style="font-size:14px;color:${G}"> 회</span></div>
-<div class="n" style="position:absolute;left:${x - 20}px;top:${base + 10}px;width:${barW + 40}px;text-align:center;font-size:14px;color:${G}">${i + 1}월</div>`;
+    const h = Math.round(v * hMax / max), x = PN.x + i * colW + (colW - barW) / 2, on = i === 5;
+    panel += `<div style="position:absolute;left:${x.toFixed(1)}px;top:${base - h}px;width:${barW}px;height:${h}px;background:${on ? ACC : T2}"></div>
+<div class="n" style="position:absolute;left:${(x - 16).toFixed(1)}px;top:${base - h - 20}px;width:${barW + 32}px;text-align:center;font-size:13.5px;letter-spacing:.01em;color:${on ? ACC : G}">${v}</div>
+<div class="n" style="position:absolute;left:${(x - 16).toFixed(1)}px;top:${base + 6}px;width:${barW + 32}px;text-align:center;font-size:13.5px;color:${G}">${i + 1}월</div>`;
   });
-  panel += `<div style="position:absolute;left:${PN.x + 20}px;top:${base}px;width:${PN.w - 40}px;height:1px;background:${INK}"></div>
-<div style="position:absolute;left:${PN.x + 20}px;top:${TOP + PH - 30}px;width:${PN.w - 40}px;height:1px;background:${H}"></div>
-<div style="position:absolute;left:${PN.x + 20}px;top:${TOP + PH - 23}px;font-size:14px;color:${G}">6개월 합계</div>
-<div class="n" style="position:absolute;right:${W - PN.x - PN.w + 20}px;top:${TOP + PH - 24}px;font-size:16px;color:${INK};letter-spacing:.01em">${sum} <span style="font-size:14px;color:${G}">회</span></div>`;
-} else {
-  const U = [['정사영상', 560, ACC], ['공간정보', 360, '#3C8BF9'], ['학습 데이터', 260, TEAL], ['라벨링 데이터', 160, '#6FC9C3'], ['기타', 80, G]];
-  const used = 1420, quota = 2048, rem = quota - used, bw = PN.w - 40, bx = PN.x + 20;
-  panel += `<div style="position:absolute;left:${bx}px;top:${TOP + 22}px;display:flex;align-items:baseline;gap:8px"><span class="d" style="font-size:34px;line-height:1;letter-spacing:-.02em;color:${ACC}">${fmt(used)}</span><span style="font-size:14px;color:${G}">GB</span><span class="n" style="font-size:16px;color:${G};margin-left:4px">/ ${fmt(quota)} GB</span><span class="n" style="font-size:14px;color:${G};margin-left:14px">${Math.round(used / quota * 100)} % 사용</span></div>
-<div style="position:absolute;left:${bx}px;top:${TOP + 78}px;width:${bw}px;height:40px;border:1px solid ${H}"></div>`;
-  let x = bx;
-  U.forEach(([n, v, col]) => { const w = v / quota * bw; panel += `<div style="position:absolute;left:${x.toFixed(1)}px;top:${TOP + 78}px;width:${w.toFixed(1)}px;height:40px;background:${col}"></div>`; x += w; });
-  U.concat([['잔여', rem, '#FFFFFF']]).forEach(([n, v, col], i) => {
-    const y = TOP + 146 + i * 38;
-    panel += `<div style="position:absolute;left:${bx}px;top:${y}px;width:${bw}px;display:flex;align-items:center;gap:10px;font-size:15px;color:${INK}"><span style="width:10px;height:10px;background:${col};border:1px solid ${col === '#FFFFFF' ? H : col};display:inline-block;flex:none"></span>${n}<span class="n" style="margin-left:auto;font-size:16px;letter-spacing:.01em">${fmt(v)} <span style="font-size:14px;color:${G}">GB</span></span></div><div style="position:absolute;left:${bx}px;top:${y + 28}px;width:${bw}px;height:1px;background:${H}"></div>`;
-  });
+  panel += `<div style="position:absolute;left:${PN.x}px;top:${base}px;width:${PN.w}px;height:1px;background:${INK}"></div>`;
+  panel += `<div style="position:absolute;left:${PN.x}px;top:${base + 30}px;width:${PN.w}px;height:1px;background:${H}"></div>`;
+
+  // 내 디스크 — 큰 수 1 · 스택 바(유형별) · 유형 5 한 줄 · 증량 신청 ›
+  const U = [['정사영상', 560, ACC], ['공간정보', 360, '#3C8BF9'], ['학습', 260, TEAL], ['라벨링', 160, '#6FC9C3'], ['기타', 80, G]];
+  const used = 1420, quota = 2048, y1 = base + 30 + 16;
+  panel += secHead(PN.x, y1, PN.w, IC.data, '내 디스크', '', `<span style="font-size:14px;letter-spacing:-.01em;color:${INK};border-bottom:1px solid ${INK}">증량 신청 ›</span>`);
+  panel += `<div style="position:absolute;left:${PN.x}px;top:${y1 + 34}px;display:flex;align-items:baseline;gap:6px;white-space:nowrap"><span class="d" style="font-size:30px;line-height:1;letter-spacing:-.02em;color:${ACC}">${fmt(used)}</span><span style="font-size:14px;color:${G}">GB</span><span class="n" style="font-size:15px;color:${G};margin-left:2px">/ ${fmt(quota)} GB</span><span class="n" style="font-size:14px;color:${G};margin-left:10px">${Math.round(used / quota * 100)} % 사용 · 잔여 ${fmt(quota - used)} GB</span></div>`;
+  const by = y1 + 34 + 40, bh = 22;
+  panel += `<div style="position:absolute;left:${PN.x}px;top:${by}px;width:${PN.w}px;height:${bh}px;border:1px solid ${H}"></div>`;
+  let x = PN.x;
+  U.forEach(([n, v, col]) => { const w = v / quota * PN.w; panel += `<div style="position:absolute;left:${x.toFixed(1)}px;top:${by}px;width:${w.toFixed(1)}px;height:${bh}px;background:${col}"></div>`; x += w; });
+  panel += `<div style="position:absolute;left:${PN.x}px;top:${by + bh + 10}px;width:${PN.w}px;display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13.5px;color:${G};white-space:nowrap">`;
+  U.forEach(([n, v, col]) => { panel += `<span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;background:${col};display:inline-block"></span>${n} <span class="n" style="color:${INK}">${v}</span><span style="font-size:12.5px"> GB</span></span>`; });
+  panel += `</div>`;
 }
 
 // ---------- 푸터 ----------
@@ -208,7 +222,6 @@ const foot = `
 <div style="position:absolute;left:72px;top:850px;width:1368px;height:1px;background:${H}"></div>
 <div class="mic" style="position:absolute;left:${X0}px;top:864px;white-space:nowrap">LX 한국국토정보공사 · 고객센터 063-713-1213 · 개인정보처리방침 · 이용약관 · 이메일주소무단수집거부</div>
 <div style="position:absolute;left:640px;top:862px;width:744px;display:flex;align-items:center;justify-content:flex-end;gap:12px">
-<div class="mic" style="color:${C};white-space:nowrap">색 역할 — <span style="color:${ACC}">파랑</span> 정보/선택 · <span style="color:${WARN}">빨강</span> 조치 필요 · 검정 본문 · <span style="color:${TEAL}">청록</span> AI 결과</div>
 <div class="chip">Family Site ▾</div></div>`;
 
 const html = `<!doctype html>
@@ -241,7 +254,6 @@ body{margin:0;background:#FFFFFF;color:#010102;font-family:'Pretendard','Paperlo
 ${rail}
 ${mast}
 ${kpi}
-${bb}
 ${plate}
 ${panel}
 ${foot}
@@ -251,4 +263,4 @@ ${foot}
 </html>
 `;
 fs.writeFileSync(OUT, html, 'utf8');
-console.log('wrote', path.relative(root, OUT), html.length, 'tab', TAB);
+console.log('wrote', path.relative(root, OUT), html.length);
