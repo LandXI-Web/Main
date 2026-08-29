@@ -1,6 +1,7 @@
 {
-  "note": "페이지가 필름 위에 그리는 소품(prop). 영상 재생성 없이 레그 안에 넣는 스프라이트 — 2026-08-27 드론 오버레이 스파이크(docs/superpowers/proto/2026-08-27-drone-overlay-spike.md). leg 는 manifest.legs[].id, keys[].t 는 그 레그 안의 필름 진행도(0..1), x·y 는 무대(뷰포트) 비율, s 는 무대 폭 대비 스프라이트 폭. ramp 는 들어오고 나가는 페이드(필름 초). 다른 레그로 옮기거나 지우려면 이 파일만 고친다.",
-  "props": [
+  "note": "페이지가 필름 위에 그리는 소품(prop). 영상 재생성 없이 레그 안에 넣는 스프라이트 — 2026-08-27 드론 오버레이 스파이크(docs/superpowers/proto/2026-08-27-drone-overlay-spike.md). leg 는 manifest.legs[].id, keys[].t 는 그 레그 안의 필름 진행도(0..1), x·y 는 무대(뷰포트) 비율, s 는 무대 폭 대비 스프라이트 폭. ramp 는 들어오고 나가는 페이드(필름 초). 다른 레그로 옮기거나 지우려면 이 파일만 고친다. 2026-08-29 D16 ①: 클라이언트 판정 \"스티커\" — 드론은 Leg 3(A03 재생성)에서만 등장. retired 에 키프레임 보존, props 는 비움.",
+  "props": [],
+  "retired": [
     {
       "id": "drone-04",
       "leg": "04",

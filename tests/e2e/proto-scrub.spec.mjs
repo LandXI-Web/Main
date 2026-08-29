@@ -385,7 +385,7 @@ test('reduced-motion — 클립을 아예 받지 않는다. 포스터와 글이 
   await ctx.close();
 });
 
-test('소품 — 드론 오버레이는 레그 04 창 안에서만 서고, 스크롤을 따라 움직인다 (2026-08-27 스파이크)', async ({ page }) => {
+test.skip('소품 — 드론 오버레이 (D16 ① 폐기 — props 비움)는 레그 04 창 안에서만 서고, 스크롤을 따라 움직인다 (2026-08-27 스파이크)', async ({ page }) => {
   const errors = await boot(page);
   const M = await page.evaluate(() => window.__scrub.manifest);
   let run = 0;
