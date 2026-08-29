@@ -1,59 +1,10 @@
 {
-  "session": "rev3l-2026-08-29",
-  "cap": 50,
+  "cap": 20,
   "per_still_expected": 14.5,
-  "started": "2026-08-29T01:49:21.239Z",
+  "session": "rev3n-2026-08-29",
+  "previous_ledger": "shots/kie/anchors-v3-credits.rev3l.json",
+  "started": "2026-08-29T02:16:38.161Z",
   "runs": [
-    {
-      "id": "A02",
-      "reroll": true,
-      "refs": [
-        "landxi/assets/proto/film/legs/anchors-v3/A01.png",
-        "shots/kie/A01-v3a-noring-crop.jpg"
-      ],
-      "prompt_sha256": "9cc6dfe4c6ee3fd2",
-      "credits_balance_before": 9160.5,
-      "at": "2026-08-29T01:49:21.688Z",
-      "taskId": "c00bf3cf7602a34f7624aed59e5d0973",
-      "model": "seedream/5-pro-image-to-image",
-      "task_created_at": "2026-08-29T01:49:28.732Z",
-      "ok": true,
-      "credits_reported": 14.5,
-      "credits_balance_after": 9146,
-      "credits_charged": 14.5,
-      "gen_ms": 140,
-      "wall_ms": 173331,
-      "png": "landxi/assets/proto/film/legs/anchors-v3/A02.png",
-      "png_bytes": 7340615,
-      "finished_at": "2026-08-29T01:52:27.687Z",
-      "jpg": "landxi/assets/proto/film/legs/anchors-v3/A02.jpg",
-      "jpg_bytes": 369804
-    },
-    {
-      "id": "A12",
-      "reroll": true,
-      "refs": [
-        "landxi/assets/proto/film/legs/anchors-v3/A11.png",
-        "landxi/assets/proto/film/legs/anchors-v3/A01.1280.jpg"
-      ],
-      "prompt_sha256": "6e5f229fc4cf15b8",
-      "credits_balance_before": 9146,
-      "at": "2026-08-29T01:53:40.095Z",
-      "taskId": "1df7f2e9b22bc920a09744ede9c2217c",
-      "model": "seedream/5-pro-image-to-image",
-      "task_created_at": "2026-08-29T01:54:12.792Z",
-      "ok": true,
-      "credits_reported": 14.5,
-      "credits_balance_after": 9131.5,
-      "credits_charged": 14.5,
-      "gen_ms": 140,
-      "wall_ms": 220418,
-      "png": "landxi/assets/proto/film/legs/anchors-v3/A12.png",
-      "png_bytes": 7273013,
-      "finished_at": "2026-08-29T01:57:53.683Z",
-      "jpg": "landxi/assets/proto/film/legs/anchors-v3/A12.jpg",
-      "jpg_bytes": 383353
-    },
     {
       "id": "A03",
       "reroll": true,
@@ -61,31 +12,29 @@
         "landxi/assets/proto/film/legs/anchors-v3/A02.png",
         "shots/yt/QUI6-seg/f_008.png"
       ],
-      "prompt_sha256": "d09e46e726ea2ead",
-      "credits_balance_before": 9131.5,
-      "at": "2026-08-29T01:58:19.317Z",
-      "taskId": "c80d9eaf3b8d43ee529775ed73433ab0",
+      "prompt_sha256": "36f06a6fe139747e",
+      "credits_balance_before": 9117,
+      "at": "2026-08-29T02:16:38.999Z",
+      "taskId": "53be421cb959a1d0f7702f537ffc8de8",
       "model": "seedream/5-pro-image-to-image",
-      "task_created_at": "2026-08-29T01:59:00.210Z",
+      "task_created_at": "2026-08-29T02:16:55.926Z",
+      "last_error": "fetch failed",
       "ok": true,
+      "recovered": true,
       "credits_reported": 14.5,
-      "credits_balance_after": 9117,
+      "credits_balance_after": 9102.5,
       "credits_charged": 14.5,
-      "gen_ms": 122,
-      "wall_ms": 137956,
+      "gen_ms": 151,
       "png": "landxi/assets/proto/film/legs/anchors-v3/A03.png",
-      "png_bytes": 7142023,
-      "finished_at": "2026-08-29T02:01:13.566Z",
+      "png_bytes": 7262251,
+      "finished_at": "2026-08-29T02:24:05.750Z",
       "jpg": "landxi/assets/proto/film/legs/anchors-v3/A03.jpg",
-      "jpg_bytes": 345038
+      "jpg_bytes": 362200
     }
   ],
-  "spent": 43.5,
+  "spent": 14.5,
   "rerolls": [
-    "A02",
-    "A12",
     "A03"
   ],
-  "prev_ledger": "shots/kie/anchors-v3-credits.rev3j.json",
-  "remaining_of_cap": 6.5
+  "remaining_of_cap": 5.5
 }
