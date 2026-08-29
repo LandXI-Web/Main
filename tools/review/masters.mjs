@@ -9,6 +9,8 @@ const STATUS = {
   'B5-Login': ['로그인', 'apply', 'login.html 적용'],
   'B2-Login': ['로그인', 'drop', '1차 안(소개 카피 + 디오라마 판)'],
   'B5-Dashboard-Data': ['대시보드', 'apply', 'dashboard.html 적용'],
+  'B5-Dashboard-User': ['대시보드','review','사용자(직원) 대시보드 — 원본 dashboard2 1:1'],
+  'B5-Dashboard-Viewer': ['대시보드','review','뷰어 대시보드 — 원본 dashboard3 1:1'],
   'B5-Dashboard': ['대시보드', 'drop', '이등분 스택 안'],
   'B4-Dashboard': ['대시보드', 'drop', '전면 개편 4차'],
   'B3-Dashboard': ['대시보드', 'drop', '축소 원장'],
