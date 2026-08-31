@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-27T09:22:41.109Z",
+  "generatedAt": "2026-08-31T00:26:07.644Z",
   "builder": "tools/scrub/assemble.mjs",
   "source": "단일 소스 · kling v2-1-pro AI 레그 1–11(앵커 A01→A06→A06b→A07→A08→A08b→A09→A10→A11→A12). MapLibre 플레이스홀더 0. 레그 12(귀환·브랜드 마감)는 페이지가 A12 홀드 위에 그린다",
   "fps": 25,
@@ -64,11 +64,11 @@
   "cameraNote": "고도 = 1.5 × 720px × m/px (MapLibre 기본 fov 36.87°, 필름 뷰포트 720px). 줌·GSD 는 고도에서 유도.",
   "flightProfile": "전 레그가 kling AI 미니어처라 실카메라가 없다 — 카메라는 전부 authored(aiLegs.note) 이고 하나의 단조 하강 프로파일로 이어 붙였다(레그 06 상승·06b 이동, 08 상승·08b 이동 제외). AI 레그끼리의 tail→head 이음매는 앵커를 공유해 diff 0.2 % 대다. 계기 바늘이 스냅하지 않도록 페이지가 씸 밴드(0.16vh) 위에서 두 레그의 판독값을 섞는다(scrub.js camAt). 인계 판은 그 덕분에 필름 마지막 프레임과 정확히 같은 카메라로 뜬다.",
   "bytes": {
-    "desktop": 52647903,
-    "mobile": 18379533,
-    "poster": 1280350,
-    "desktopMB": 50.21,
-    "mobileMB": 17.53,
+    "desktop": 53022316,
+    "mobile": 18423209,
+    "poster": 1276334,
+    "desktopMB": 50.57,
+    "mobileMB": 17.57,
     "posterMB": 1.22
   },
   "seams": [
@@ -77,10 +77,10 @@
       "to": "02",
       "frameShared": false,
       "rule": "B",
-      "pct": 0.236,
-      "lumaA": 66.11,
+      "pct": 16.175,
+      "lumaA": 59.31,
       "lumaB": 65.63,
-      "lumaDelta": -0.48,
+      "lumaDelta": 6.32,
       "pass": true,
       "monotonic": true
     },
@@ -245,9 +245,9 @@
       "srcMobile": "/landxi/assets/proto/film/legs/w01-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w01.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w01-last.webp",
-      "bytes": 3173889,
-      "bytesMobile": 1236843,
-      "bytesPoster": 86932,
+      "bytes": 3548302,
+      "bytesMobile": 1280519,
+      "bytesPoster": 82916,
       "cameraSource": "authored",
       "startCamera": {
         "center": [
@@ -1015,8 +1015,8 @@
     "seconds": 57.292,
     "legSecondsSum": 66.079,
     "xfadeSeconds": 0.734,
-    "bytes": 73189020,
-    "encode": "xfade=fade:0.734s × 12 · scale/crop 1920×1080 · libx264 high crf 20 -g 8 -keyint_min 8 -sc_threshold 0 +faststart -an",
+    "bytes": 40653977,
+    "encode": "xfade=fade:0.734s × 12 · scale/crop 1920×1080 · libx264 high crf 25 -g 8 -keyint_min 8 -sc_threshold 0 +faststart -an",
     "note": "레그 사이를 0.734s 씩 xfade(fade) 로 겹쳤다(스크럽 씸 밴드 0.16vh ÷ 0.218 vh/s). 하드컷보다 8.81s 짧다."
   }
 }

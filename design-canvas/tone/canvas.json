@@ -1,0 +1,55 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1700,
+      "title": "톤앤매너 — 헌장"
+    },
+    {
+      "file": "Color.dc.html",
+      "x": 0,
+      "y": 1820,
+      "w": 1440,
+      "h": 1300,
+      "title": "색"
+    },
+    {
+      "file": "Type.dc.html",
+      "x": 1520,
+      "y": 1820,
+      "w": 1440,
+      "h": 1650,
+      "title": "글자"
+    },
+    {
+      "file": "Components.dc.html",
+      "x": 0,
+      "y": 3590,
+      "w": 1440,
+      "h": 1850,
+      "title": "부품"
+    },
+    {
+      "file": "Layout.dc.html",
+      "x": 1520,
+      "y": 3590,
+      "w": 1440,
+      "h": 1550,
+      "title": "배치"
+    },
+    {
+      "file": "Audit.dc.html",
+      "x": 0,
+      "y": 5560,
+      "w": 1440,
+      "h": 1900,
+      "title": "진단 — 법전과 코드의 거리"
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}
