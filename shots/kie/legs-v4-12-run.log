@@ -1,0 +1,30 @@
+
+[leg 12] A12 -> A01  attempt 1  balance=8902.5
+[leg 12] pending taskId=6fb0f28c5ea893a51ee3d730f86c768c (원장 기록)
+  v3-leg-12.mp4: waiting (0s)
+  v3-leg-12.mp4: generating (4s)
+  v3-leg-12.mp4: generating (10s)
+  v3-leg-12.mp4: generating (16s)
+  v3-leg-12.mp4: generating (25s)
+  v3-leg-12.mp4: generating (35s)
+  v3-leg-12.mp4: generating (47s)
+  v3-leg-12.mp4: generating (62s)
+  v3-leg-12.mp4: generating (78s)
+  v3-leg-12.mp4: generating (93s)
+  v3-leg-12.mp4: generating (109s)
+  v3-leg-12.mp4: generating (124s)
+[leg 12] ok taskId=6fb0f28c5ea893a51ee3d730f86c768c charged=50 spent=1400/200
+{
+  "rev": 4,
+  "batch": "2-3-11-12",
+  "spent_rev": 200,
+  "spent_total": 1400,
+  "cap": 200,
+  "done": [
+    {
+      "leg": 12,
+      "taskId": "6fb0f28c5ea893a51ee3d730f86c768c",
+      "charged": 50
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+[leg 11] backup landxi/assets/proto/film/legs/gen/v3-leg-11.mp4 -> landxi/assets/proto/film/legs/gen/v3-leg-11.v3a.mp4
+[leg 11] backup landxi/assets/proto/film/legs/src/v3-leg-11.mp4 -> landxi/assets/proto/film/legs/src/v3-leg-11.v3a.mp4
+
+[leg 11] A11 -> A12  attempt 1  balance=8952.5
+[leg 11] pending taskId=8508c5962f511b4eed746c9ffcbd05c1 (원장 기록)
+  v3-leg-11.mp4: generating (0s)
+  v3-leg-11.mp4: generating (5s)
+  v3-leg-11.mp4: generating (10s)
+  v3-leg-11.mp4: generating (17s)
+  v3-leg-11.mp4: generating (25s)
+  v3-leg-11.mp4: generating (35s)
+  v3-leg-11.mp4: generating (47s)
+  v3-leg-11.mp4: generating (63s)
+  v3-leg-11.mp4: generating (78s)
+  v3-leg-11.mp4: generating (93s)
+[leg 11] ok taskId=8508c5962f511b4eed746c9ffcbd05c1 charged=50 spent=1350/200
+{
+  "rev": 4,
+  "batch": "2-3-11-12",
+  "spent_rev": 150,
+  "spent_total": 1350,
+  "cap": 200,
+  "done": [
+    {
+      "leg": 11,
+      "taskId": "8508c5962f511b4eed746c9ffcbd05c1",
+      "charged": 50
+    }
+  ]
+}

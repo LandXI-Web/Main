@@ -54,7 +54,19 @@ const NEG_MAX = 500;
 function trimNeg(s) {
   if (s.length <= NEG_MAX) return s;
   const base = SPEC.negative_base;
-  let specific = s.startsWith(base) ? s.slice(base.length).replace(/^\s*,\s*/, '') : '';
+  let specific;
+  if (s.startsWith(base)) specific = s.slice(base.length).replace(/^\s*,\s*/, '');
+  else {
+    // A12(2026-08-31 발견): negative 가 negative_base 와 마지막 한 항목("grid lines")만 다르다 —
+    // A12 는 땅에 각인된 황동 격자가 주인공이라 그 항목을 뺐다. startsWith 가 false 가 되면서
+    // 예전 코드는 앵커 고유 항목을 **통째로 버리고**(ring, hoop, armature, arc, meridian,
+    // large satellite … 전부 소실) 공통 base 앞 500자만 보냈다. 링 재발 위험이 가장 큰 레그에서
+    // 링 부정어가 사라지는 셈이라 고친다: 공통 접두를 쉼표 경계까지만 인정하고 그 뒤를 고유 항목으로 본다.
+    // negative 가 base 로 시작하는 앵커(A01–A11)는 이 가지를 타지 않으므로 결과가 바뀌지 않는다.
+    let n = 0; while (n < Math.min(base.length, s.length) && base[n] === s[n]) n++;
+    const b = s.lastIndexOf(', ', n);
+    specific = b < 0 ? '' : s.slice(b + 2);
+  }
   // A08b(2026-08-27): 앵커 고유 항목만으로 500자를 넘는다(specific 573자) → createTask "Input exceeds maximum length"(무과금 2회).
   // 그때는 고유 항목도 뒤에서부터 쉼표 경계로 잘라 500자 안에 넣고, 공통 base 는 남는 자리에만 채운다. 역시 생략만 한다.
   if (specific.length > NEG_MAX) { const c = specific.slice(0, NEG_MAX); specific = c.slice(0, c.lastIndexOf(',')).trim(); }
