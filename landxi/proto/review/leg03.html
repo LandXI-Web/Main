@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Leg 3 · 드론 · 남원 진입 — 3안 비교</title>
+<link rel="stylesheet" href="../fonts-system.css">
+<style>
+:root{--ink:#010102;--grey:#686868;--line:#DDDDDD;--tint:#E8F1FF;--accent:#006DF7;--warn:#D1352B;--teal:#0FA9A0}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);font:16px/1.6 Pretendard,system-ui,sans-serif}
+.w{max-width:1400px;margin:0 auto;padding:28px 32px 64px}
+h1{font-family:Paperlogy,Pretendard,sans-serif;font-weight:700;font-size:34px;margin:0 0 6px;letter-spacing:-.02em}
+.rule{width:120px;height:4px;background:var(--accent);margin:0 0 14px}
+.sub{color:var(--grey);font-size:14px}
+p{max-width:900px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-top:26px}
+figure{margin:0}
+video{width:100%;display:block;background:#010102;border:1px solid var(--line)}
+.on video{border:2px solid var(--teal)}
+.bad video{border:2px solid var(--warn)}
+figcaption{margin-top:8px}
+.t{font-family:Paperlogy,Pretendard,sans-serif;font-weight:700;font-size:20px;letter-spacing:-.01em}
+.st{font:600 11px/1 Inter,sans-serif;letter-spacing:.06em;padding:4px 6px;border:1px solid;margin-left:8px;white-space:nowrap;vertical-align:2px}
+.st.ok{border-color:var(--teal);color:var(--teal)}
+.st.no{border-color:var(--warn);color:var(--warn)}
+.m{font-size:14px;color:var(--grey);margin-top:4px}
+table{border-collapse:collapse;width:100%;margin-top:26px;font-size:15px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{background:var(--tint);font-size:13px;color:var(--grey);font-weight:600;border-bottom:1px solid var(--ink)}
+td.n{font-family:Inter,sans-serif;font-variant-numeric:tabular-nums;text-align:right}
+.bad-v{color:var(--warn)}
+.ok-v{color:var(--teal)}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.links{display:flex;gap:18px;flex-wrap:wrap;font-size:15px;margin-top:8px}
+section{border-top:1px solid var(--line);margin-top:34px;padding-top:22px}
+h2{font-family:Paperlogy,Pretendard,sans-serif;font-weight:700;font-size:22px;margin:0 0 10px;letter-spacing:-.01em}
+</style>
+</head>
+<body><div class="w">
+
+<div class="sub">Land-XI · 필름 검토 · 레그 03 “드론 · 남원 진입”</div>
+<h1>같은 장면 세 판</h1>
+<div class="rule"></div>
+<p>세 클립 모두 앵커는 같습니다(A03 rev.3n → A04). 다른 것은 <b>두 비행체의 궤적</b>뿐입니다. 각 5.083초, 소리 없음, 검토용 1280 폭.</p>
+<div class="links"><a href="index.html">검토 허브</a><a href="../scrub/index.html">메인 필름(현재 v4 탑재본)</a><a href="../film/timeline.html">필름 타임라인</a></div>
+
+<div class="grid">
+  <figure class="on">
+    <video src="../../assets/proto/review/leg03-v4b.mp4" controls loop muted playsinline preload="metadata" poster="../../assets/proto/review/leg03-poster.webp"></video>
+    <figcaption>
+      <div class="t">v4<span class="st ok">현재 탑재본</span></div>
+      <div class="m">둘이 <b>같은 방향</b>으로 위쪽 안개로 물러난다 — “부딪힐 것 같다”고 지적하신 판.</div>
+    </figcaption>
+  </figure>
+  <figure class="bad">
+    <video src="../../assets/proto/review/leg03-v5.mp4" controls loop muted playsinline preload="metadata"></video>
+    <figcaption>
+      <div class="t">v5<span class="st no">미탑재</span></div>
+      <div class="m">드론 왼쪽 · 항공기 오른쪽으로 <b>갈라져</b> 퇴장(교차 0). 항공기가 폭 31 %까지 커지며 렌즈 앞을 지난다.</div>
+    </figcaption>
+  </figure>
+  <figure class="bad">
+    <video src="../../assets/proto/review/leg03-v6.mp4" controls loop muted playsinline preload="metadata"></video>
+    <figcaption>
+      <div class="t">v6<span class="st no">미탑재</span></div>
+      <div class="m">v5와 같은 방향, 퇴장이 더 빠름(2.5–2.75초). 항공기가 폭 <b>33.6 %</b>로 더 커진다.</div>
+    </figcaption>
+  </figure>
+</div>
+
+<section>
+<h2>측정값</h2>
+<table>
+<thead><tr><th>항목</th><th>v4 · 현재 탑재본</th><th>v5</th><th>v6</th></tr></thead>
+<tbody>
+<tr><td>두 비행체 퇴장</td><td>둘 다 위쪽 안개로 물러남</td><td>드론 왼쪽 2.6 s · 항공기 오른쪽 2.4 s</td><td>드론 왼쪽 2.54 s · 항공기 오른쪽 2.75 s</td></tr>
+<tr><td>경로 교차</td><td class="ok-v">없음(같은 방향)</td><td class="ok-v">없음 · 간격 40 → 57 %p</td><td class="ok-v">없음 · 간격 37 → 65 %p</td></tr>
+<tr><td>항공기 최대 폭</td><td>중간</td><td class="bad-v">31 %</td><td class="bad-v">33.6 %</td></tr>
+<tr><td>드론 외형(흰 본체 · 검정 프로펠러 · 초록 LX)</td><td class="ok-v">유지</td><td class="ok-v">유지</td><td class="ok-v">유지</td></tr>
+<tr><td>고리 · 위성 재발</td><td class="ok-v">없음</td><td class="ok-v">없음</td><td class="ok-v">없음</td></tr>
+<tr><td>앞뒤 이음매(02→03 / 03→04)</td><td class="n">0.191 % / 0.255 %</td><td class="n">동일</td><td class="n">동일</td></tr>
+<tr><td>크레딧</td><td class="n">—</td><td class="n">50</td><td class="n">50</td></tr>
+</tbody>
+</table>
+<p class="sub" style="margin-top:12px">프레임 시트: <a href="../../assets/proto/review/leg03-v4.jpg">v4</a> · <a href="../../assets/proto/review/leg03-v5.jpg">v5</a> · <a href="../../assets/proto/review/leg03-v6.jpg">v6</a></p>
+</section>
+
+<section>
+<h2>왜 항공기가 커지는가</h2>
+<p>항공기의 화면상 가로 위치는 세 판 모두 우측 78 % 대에 거의 고정입니다(이동 3 %p 미만). 그런데 카메라가 5초 내내 전진·하강합니다 — <b>항공기가 제자리에 있어도 화면 안에서 커집니다.</b> 크기 금지 문구와 근접·확대 네거티브를 최우선으로 넣은 v6에서 오히려 더 커진 이유입니다. 크기라는 레버로는 세 번 다 실패했습니다.</p>
+<p>다음 시도는 <b>체류 시간</b>으로 푸는 쪽입니다 — 항공기를 첫 1초 안에 오른쪽으로 내보내 커질 시간을 주지 않는 방법(50 크레딧). 그 밖의 선택지는 위쪽으로 퇴장시키기(50), 앵커 A03부터 항공기를 훨씬 작고 멀게 재배치하기(114, 레그 02도 재촬영), 그리고 v4 유지(0)입니다.</p>
+</section>
+
+</div></body></html>
