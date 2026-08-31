@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-31T01:00:21.938Z",
+  "generatedAt": "2026-08-31T04:10:18.045Z",
   "builder": "tools/scrub/assemble.mjs",
   "source": "단일 소스 · kling v2-1-pro AI 레그 1–11(앵커 A01→A06→A06b→A07→A08→A08b→A09→A10→A11→A12). MapLibre 플레이스홀더 0. 레그 12(귀환·브랜드 마감)는 페이지가 A12 홀드 위에 그린다",
   "fps": 25,
@@ -64,11 +64,11 @@
   "cameraNote": "고도 = 1.5 × 720px × m/px (MapLibre 기본 fov 36.87°, 필름 뷰포트 720px). 줌·GSD 는 고도에서 유도.",
   "flightProfile": "전 레그가 kling AI 미니어처라 실카메라가 없다 — 카메라는 전부 authored(aiLegs.note) 이고 하나의 단조 하강 프로파일로 이어 붙였다(레그 06 상승·06b 이동, 08 상승·08b 이동 제외). AI 레그끼리의 tail→head 이음매는 앵커를 공유해 diff 0.2 % 대다. 계기 바늘이 스냅하지 않도록 페이지가 씸 밴드(0.16vh) 위에서 두 레그의 판독값을 섞는다(scrub.js camAt). 인계 판은 그 덕분에 필름 마지막 프레임과 정확히 같은 카메라로 뜬다.",
   "bytes": {
-    "desktop": 53974267,
-    "mobile": 18505698,
-    "poster": 1265692,
-    "desktopMB": 51.47,
-    "mobileMB": 17.65,
+    "desktop": 53426156,
+    "mobile": 18462738,
+    "poster": 1265840,
+    "desktopMB": 50.95,
+    "mobileMB": 17.61,
     "posterMB": 1.21
   },
   "seams": [
@@ -89,10 +89,10 @@
       "to": "03",
       "frameShared": false,
       "rule": "B",
-      "pct": 0.191,
+      "pct": 0.188,
       "lumaA": 69.59,
-      "lumaB": 69.48,
-      "lumaDelta": -0.11,
+      "lumaB": 69.47,
+      "lumaDelta": -0.12,
       "pass": true,
       "monotonic": true
     },
@@ -101,10 +101,10 @@
       "to": "04",
       "frameShared": false,
       "rule": "B",
-      "pct": 0.255,
-      "lumaA": 47.27,
+      "pct": 0.236,
+      "lumaA": 47.11,
       "lumaB": 46.88,
-      "lumaDelta": -0.39,
+      "lumaDelta": -0.23,
       "pass": true,
       "monotonic": true
     },
@@ -357,9 +357,9 @@
       "srcMobile": "/landxi/assets/proto/film/legs/w03-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w03.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w03-last.webp",
-      "bytes": 4794345,
-      "bytesMobile": 1582955,
-      "bytesPoster": 111750,
+      "bytes": 4246234,
+      "bytesMobile": 1539995,
+      "bytesPoster": 111898,
       "cameraSource": "authored",
       "startCamera": {
         "center": [
@@ -1015,7 +1015,7 @@
     "seconds": 57.292,
     "legSecondsSum": 66.079,
     "xfadeSeconds": 0.734,
-    "bytes": 41231589,
+    "bytes": 40812754,
     "encode": "xfade=fade:0.734s × 12 · scale/crop 1920×1080 · libx264 high crf 25 -g 8 -keyint_min 8 -sc_threshold 0 +faststart -an",
     "note": "레그 사이를 0.734s 씩 xfade(fade) 로 겹쳤다(스크럽 씸 밴드 0.16vh ÷ 0.218 vh/s). 하드컷보다 8.81s 짧다."
   }
