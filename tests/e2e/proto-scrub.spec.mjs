@@ -4,16 +4,18 @@ import { test, expect } from '@playwright/test';
  *
  * 이 스펙이 지키는 계약 (references/worldflight.md §8 Hard rules + 스펙 §B/§F):
  *   1) 문서 흐름에는 스페이서 하나뿐이고, 무대는 position:fixed 하나다.
- *   2) src 를 절대 교체하지 않는다 — 13개 레그(01–06, 06b, 07, 08, 08b, 09, 10, 11 · 전부 kling AI)가 전부 동시에 마운트된 채로 남는다.
+ *   2) src 를 절대 교체하지 않는다 — 14개 레그(01–06, 06b, 07, 08, 08b, 09, 10, 11, 12 · 전부 kling AI)가 전부 동시에 마운트된 채로 남는다.
  *   3) 크로스페이드는 한쪽만. 어느 순간에도 완전 불투명한 레그가 최소 하나 있다
  *      → 씸에서 페이지 바탕(검정)이 드러나지 않는다.
  *   4) 재생헤드는 lerp 0.12 + 데드밴드 8/20ms + 시크 병합으로 움직인다.
  *   5) 비행 페이스는 하나 — 레그별 vh/필름초 편차 ≤ 6%.
  *   6) 지연 로딩은 ±1.6vh. 멀리 있는 레그는 아직 받지 않는다.
  *   7) 인계 판은 manifest 가 적어 둔 카메라 그대로 뜬다.
- *   8) 브랜드 마감 판(2.00vh)은 3단이 **겹치지 않고** 순서대로 선다:
- *      워드마크 → 태그라인 → LX 락업. 워드마크 기하는 홍보영상 실측(폭 31 % ·
- *      베이스라인 56.8 %)이고, 수축은 지도의 줌아웃과 **같은 비율**이다.
+ *   8) 브랜드 마감(2.00vh, v2 — 2026-09-01)은 두 박자다: 필름 마지막 프레임(A01 · 모형 지구본)이
+ *      어둠 속으로 물러나고(무대 스케일·밝기·불투명 감쇠 + 바닥 닫힘), 그 위에 **실제 브랜드 벡터**
+ *      3종이 워드마크 → 태그라인 → LX 락업 순으로 뜬다. 마지막 화면에는 셋이 **함께** 남는다.
+ *      (이전 v1 은 국토 V-World 판 위에서 3단이 겹치지 않고 교대하는 판이었다 — ending.js
+ *       FINALE_MODE='plate' 로 남아 있고, 이 스펙의 기대값은 v2 사실에 맞춰 갱신했다.)
  *   · reduced-motion 이면 클립을 아예 받지 않는다. 포스터와 글이 필름을 대신한다.
  *   · 콘솔 오류 0.
  */
@@ -56,11 +58,11 @@ const stageState = (page) => page.evaluate(() => {
   }));
 });
 
-test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 13개 레그 이음매', async ({ page }) => {
+test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 14개 레그 이음매', async ({ page }) => {
   const errors = await boot(page);
 
   const M = await page.evaluate(() => window.__scrub.manifest);
-  expect(M.legs.length).toBe(13);
+  expect(M.legs.length).toBe(14);
 
   /* ── 1. 문서 흐름에는 스페이서 하나뿐, 무대는 fixed ─────────────────────── */
   const flow = await page.evaluate(() => {
@@ -120,8 +122,8 @@ test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 13개 �
     label: window.__scrub.legLabel(),
     t: window.__scrub.trackVh(),
   }));
-  // 0.55 × 14.404vh = 7.922vh → 레그 07(여수, 7.756–8.864vh · 시작 씸 밴드 밖). AI 레그 1–11 이 각 1.108vh.
-  // (레그 08·08b 가 들어오며 11.08vh 에서는 레그 06 이었다; 2026-08-27 레그 09·10·11 이 들어오며 14.404vh; kie-legs-final)
+  // 0.55 × 15.512vh = 8.532vh → 레그 07(여수, 7.756–8.864vh · 씸 밴드 밖). AI 레그 1–12 가 각 1.108vh.
+  // (2026-09-01 레그 12 가 붙어 트랙이 14.404 → 15.512vh 가 됐지만 0.55 지점은 여전히 레그 07 안이다 — 기대값 불변.)
   expect(mid.id).toBe('07');
   expect(mid.label).toBe('여수');
 
@@ -215,103 +217,164 @@ test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 13개 �
   expect(errors, '콘솔 오류').toEqual([]);
 });
 
-/* ── 브랜드 마감 판 ─────────────────────────────────────────────────────────
-   홍보영상(71.5 s)의 마감 문법을 필름 끝에 이식한 판이다. 이 스펙이 지키는 것:
-     · 3단이 **절대 겹치지 않는다** — 홍보영상에서도 제품 워드마크와 LX 코퍼릿
-       락업은 같은 화면에 나오지 않는다(promo-video.md §2-2 「주의」).
-     · 워드마크 기하는 실측 그대로 — 폭 31 % · 베이스라인 56.8 %.
-     · 수축(−35 %)은 **월드에 붙어** 일어난다: 워드마크 스케일 = 지도 줌아웃 비율.
-     · 마지막 화면에 CTA 가 남는다. */
-test('브랜드 마감 — 워드마크 → 태그라인 → LX 락업, 겹침 0, 월드에 붙은 수축', async ({ page }) => {
+/* ── 브랜드 마감 v2 (2026-09-01) ────────────────────────────────────────────
+   클라이언트: "한반도가 사라지면서 Land-XI 플랫폼 CI 가 떠야 될 것 같다."
+   레그 12(귀환)가 필름을 A01(작업대 위 모형 지구본)로 닫고, 그 프레임 위에서:
+     ① 지구본이 어둠 속으로 물러난다 — 무대 스케일·밝기·불투명이 감쇠하고 바닥이 닫힌다.
+     ② 그 위에 **실제 브랜드 벡터** 3종이 워드마크 → 태그라인 → LX 락업 순으로 뜬다.
+   v1 의 "3단은 절대 겹치지 않는다" 계약은 v2 에서 뒤집혔다 — v2 의 마지막 화면은
+   셋이 **함께 남는 한 장의 엔드카드**다. 그래서 겹침 0 검사를 순서 + 동시 잔존 검사로 갈았다. */
+test('브랜드 마감 v2 — 지구본이 물러나고 CI 3종이 순서대로 뜬다', async ({ page }) => {
   const errors = await boot(page);
 
-  // 마감 앞까지 한 번 훑어 마지막 레그와 인계 판을 실제로 올려 둔다(여수 판은 0.60 대, 국토 마감 판은 0.90 대에서 만들어진다; 2026-08-27 레그 9–11).
-  for (const q of [0.5, 0.6, 0.78, 0.9, 1]) await seek(page, q, 500);
-  await page.waitForFunction(() => { const r = window.__scrub.plate(2); return !!(r && r.ready); }, null, { timeout: 30000 }).catch(() => {});
-  await page.waitForTimeout(2500);
+  // 마감 앞까지 한 번 훑어 마지막 레그를 실제로 올려 둔다.
+  for (const q of [0.5, 0.8, 0.95, 1]) await seek(page, q, 500);
+  await page.waitForTimeout(1200);
 
-  const at = async (e) => {
+  const at = async (e, wait = 1500) => {
     await page.evaluate((x) => window.__scrub.seekEnd(x), e);
-    await page.waitForTimeout(340);
+    await page.waitForTimeout(wait);   // CSS 전이 사다리의 최장값(1250ms)보다 길게 기다린다
     return page.evaluate(() => window.__scrub.end());
   };
 
-  /* 1. 필름이 끝나는 자리에서는 아직 아무것도 그려지지 않는다(리드 구간). */
+  /* 1. 마감은 v2(globe) 다. 필름이 끝나는 자리에서는 아직 아무것도 뜨지 않았고 무대도 그대로다. */
   await page.evaluate(() => window.__scrub.seek(1));
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(400);
   const lead = await page.evaluate(() => window.__scrub.end());
+  expect(lead.mode).toBe('globe');
   expect(lead.e).toBe(0);
   expect(lead.wordmark.opacity).toBe(0);
   expect(lead.tagline).toBe(0);
   expect(lead.lockup).toBe(0);
+  expect(lead.globe.scale).toBe(1);
 
-  /* 2. 워드마크 기하 — 홍보영상 실측 그대로(수축이 끝난 스케일 1.000 기준). */
-  const geo = (await at(0.22)).wordmark;
-  expect(geo.widthPct).toBeCloseTo(0.31, 2);        // §2-1 폭 31.1 % 화면폭
-  expect(geo.baselinePct).toBeCloseTo(0.568, 3);    // §2-1 베이스라인 56.8 % 화면높이
+  /* 2. ① 물러남 — 스케일·밝기·불투명은 단조 감소하고 바닥은 단조 상승한다(하나의 카메라). */
+  const g0 = (await at(0.02, 400)).globe;
+  const g1 = (await at(0.16, 400)).globe;
+  const g2 = (await at(0.40, 400)).globe;
+  expect(g0.scale).toBeGreaterThan(g1.scale);
+  expect(g1.scale).toBeGreaterThan(g2.scale);
+  expect(g0.opacity).toBeGreaterThan(g2.opacity);
+  expect(g0.brightness).toBeGreaterThan(g2.brightness);
+  expect(g0.floor).toBeLessThan(g2.floor);
+  expect(g2.scale).toBeCloseTo(0.78, 2);      // 무대가 실제로 22 % 물러났다
+  expect(g2.opacity).toBeCloseTo(0.22, 2);
+  expect(g2.floor).toBeCloseTo(1, 2);
 
-  /* 3. 인 방식은 **알파만** — 0.20 s 안에 0 → 1. 스케일 인·슬라이드 금지. */
-  expect((await at(0.0)).wordmark.opacity).toBeLessThan(0.15);
-  expect((await at(0.030)).wordmark.opacity).toBeGreaterThan(0.95);
-
-  /* 4. 월드 부착 수축 — 워드마크가 화면에서 줄어드는 비율 = 지도가 줌아웃한 비율.
-        두 값이 어긋나면 "로고가 붙었다"로 읽힌다. 같아야 "이 세계가 이 이름을 갖는다"다. */
-  // 수축은 필름이 실제로 멈춘 자리(레그 11 끝 = A12 홀드)의 국토 판(plate 2, manifest.finale)에서 잰다 — 2026-08-27 레그 9–11 전에는 여수 판이었다.
-  const zSpec = await page.evaluate(() => window.__scrub.manifest.finale.zoom);
-  // 시작 표본은 수축(비트 C, e ≥ 0.0286)이 시작되기 **전**에 잰다 — 0.030 은 이미 C 안이라 지도가 0.005 만큼 물러나 있다
-  // (트랙 11.08vh 의 px 반올림으로 e 가 0.0004 흔들리면 precision 2 를 넘긴다; 2026-08-27 kie-legs-8-8b).
-  const a = await at(0.020);
-  const zA = await page.evaluate(() => window.__scrub.plate(2).zoom);
-  const b = await at(0.226);
-  const zB = await page.evaluate(() => window.__scrub.plate(2).zoom);
-  expect(zA).toBeCloseTo(zSpec, 2);                                  // 시작 = 인계 카메라
-  expect(zB).toBeLessThan(zA - 0.3);                                 // 실제로 물러났다
-  const wordShrink = b.wordmark.liveWidthPct / a.wordmark.liveWidthPct;
-  const groundShrink = Math.pow(2, zB - zA);
-  expect(wordShrink).toBeCloseTo(groundShrink, 2);                   // ← 같은 카메라
-  expect(wordShrink).toBeLessThan(0.72);                             // −28 % 이상 물러난다
-  expect(Math.floor(zB)).toBe(Math.floor(zSpec));                    // 타일 레벨은 넘지 않는다
-
-  /* 5. 3단이 겹치지 않는다 — 어느 순간에도 켜져 있는 판은 최대 하나. */
+  /* 3. ② 스태거 — 워드마크가 먼저, 태그라인이 다음, 락업이 그다음, CTA 가 마지막. */
   const marks = [];
-  for (let i = 0; i <= 24; i++) {
-    const st = await at(i / 24);
-    marks.push([+(i / 24).toFixed(3), st.stage, +st.wordmark.opacity.toFixed(3), +st.tagline.toFixed(3), +st.lockup.toFixed(3)]);
-    const lit = [st.wordmark.opacity, st.tagline, st.lockup].filter((v) => v > 0.02);
-    expect(lit.length, `e=${(i / 24).toFixed(3)} 에서 겹침`).toBeLessThanOrEqual(1);
+  for (let i = 0; i <= 12; i++) {
+    const st = await at(i / 12, 1500);
+    marks.push([+(i / 12).toFixed(3), +st.wordmark.opacity.toFixed(3), +st.tagline.toFixed(3),
+      +st.lockup.toFixed(3), +st.cta.toFixed(3)]);
   }
-  // 순서 — 워드마크가 먼저, 태그라인이 다음, 락업이 마지막.
   const firstOf = (k) => marks.findIndex((m) => m[k] > 0.5);
-  expect(firstOf(2)).toBeGreaterThanOrEqual(0);
+  expect(firstOf(1)).toBeGreaterThanOrEqual(0);
+  expect(firstOf(2)).toBeGreaterThan(firstOf(1));
   expect(firstOf(3)).toBeGreaterThan(firstOf(2));
   expect(firstOf(4)).toBeGreaterThan(firstOf(3));
+  // 한 번 뜬 것은 다시 사라지지 않는다 — 마지막 화면은 한 장의 엔드카드다.
+  for (let k = 1; k <= 4; k++) {
+    const f = firstOf(k);
+    for (let i = f; i < marks.length; i++) expect(marks[i][k]).toBeGreaterThan(0.5);
+  }
 
-  /* 6. 마지막 화면 = LX 락업 + CTA(로그인). 워드마크·태그라인은 이미 없다. */
+  /* 4. 마지막 화면 = 실제 브랜드 벡터 3종 + CTA. AI 로 그린 글자는 없다. */
   const end = await at(1);
-  expect(end.stage).toBe('lockup');
+  expect(end.wordmark.opacity).toBeGreaterThan(0.95);
+  expect(end.tagline).toBeGreaterThan(0.95);
   expect(end.lockup).toBeGreaterThan(0.95);
-  expect(end.wordmark.opacity).toBe(0);
-  expect(end.tagline).toBe(0);
   expect(end.cta).toBeGreaterThan(0.95);
+  const srcs = await page.$$eval('#sb-end-ci img', (n) => n.map((e) => ({
+    src: e.getAttribute('src'), loaded: e.naturalWidth > 0 })));
+  expect(srcs.map((x) => x.src)).toEqual([
+    '../../assets/brand/vector/landxi-wordmark.svg',
+    '../../assets/brand/vector/tagline.svg',
+    '../../assets/brand/vector/lx-lockup-reverse.svg',
+  ]);
+  for (const x of srcs) expect(x.loaded, x.src).toBe(true);
+  await expect(page.locator('#sb-end-wm')).toHaveAttribute('alt', 'LAND-XI PLATFORM');
+  await expect(page.locator('#sb-end-lx img')).toHaveAttribute('alt', 'LX 한국국토정보공사');
   const cta = page.locator('#sb-end-cta a');
   await expect(cta).toHaveText('로그인하고 시작하기');
   expect(await cta.getAttribute('href')).toBe('../login.html');
-  await expect(page.locator('#sb-end-lx img')).toHaveAttribute('alt', 'LX 한국국토정보공사');
 
-  /* 7. 마감 동안 크롬(마스트헤드·카피·계기판·항로)은 물러나 있다. */
+  /* 5. 이징은 하나, 지속은 500/750/1000/1250 ms 사다리 — 규격이 CSS 에 박혀 있다. */
+  const tr = await page.$$eval('.sb-ci__wm,.sb-ci__tag,.sb-ci__lock,.sb-ci__cta', (n) => n.map((e) => {
+    const c = getComputedStyle(e);
+    return { d: c.transitionDuration.split(',')[0].trim(), f: c.transitionTimingFunction };
+  }));
+  expect(tr.map((x) => x.d)).toEqual(['0.5s', '0.75s', '1s', '1.25s']);
+  // 이징은 하나다 — 네 요소 모두 같은 곡선만 쓴다(다른 곡선이 섞여 있으면 여기서 걸린다).
+  for (const x of tr) {
+    expect(x.f).toContain('cubic-bezier(0.15, 1, 0.3, 1)');
+    expect(x.f.replace(/cubic-bezier\(0\.15, 1, 0\.3, 1\)/g, '').replace(/[\s,]/g, '')).toBe('');
+  }
+
+  /* 6. 마감 동안 크롬(마스트헤드·카피·계기판·항로)은 물러나 있다. */
   const chrome = await page.evaluate(() => ['.lx-masthead', '.sb-copy-layer', '.sb-inst', '.sb-route']
     .map((s) => +getComputedStyle(document.querySelector(s)).opacity));
   for (const o of chrome) expect(o).toBeLessThan(0.02);
 
+  /* 7. 국토 V-World 판은 더 이상 뜨지 않는다(manifest.finale.plate=false). */
+  expect(await page.evaluate(() => window.__scrub.manifest.finale.plate)).toBe(false);
+  expect(await page.evaluate(() => window.__scrub.plate(2))).toBeNull();
+
   /* 8. End 키 — 마감의 시작으로 건너뛴다. */
   await page.evaluate(() => scrollTo(0, 0));
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(400);
   expect((await page.evaluate(() => window.__scrub.end())).on).toBe(false);
   await page.keyboard.press('End');
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(600);
   const jumped = await page.evaluate(() => window.__scrub.end());
   expect(jumped.on).toBe(true);
-  expect(jumped.e).toBeLessThan(0.02);              // 마감의 **시작**이지 끝이 아니다
+  expect(jumped.e).toBeLessThan(0.02);
+
+  expect(errors, '콘솔 오류').toEqual([]);
+});
+
+/* 마감 박자 — 문서 맨 끝(실제 스크롤)에서 CI 3종이 겹침·잘림 없이 읽히고 콘솔 오류가 0 이다.
+   seekEnd 가 아니라 진짜 스크롤 끝으로 간다 — 독자가 실제로 도달하는 자리다. */
+test('마감 박자 — 스크롤 끝에서 Land-XI CI 3종이 보인다', async ({ page }) => {
+  const errors = await boot(page);
+  for (const q of [0.6, 0.9, 1]) await seek(page, q, 400);
+
+  await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: 'auto' }));
+  await page.waitForTimeout(2200);   // 전이 사다리(최장 1250ms) + 여유
+
+  const ci = await page.evaluate(() => {
+    const pick = (sel) => {
+      const e = document.querySelector(sel);
+      const r = e.getBoundingClientRect();
+      const img = e.tagName === 'IMG' ? e : e.querySelector('img');
+      return { sel, op: +getComputedStyle(e).opacity, loaded: img.naturalWidth > 0,
+        x: r.left, y: r.top, w: r.width, h: r.height, r: r.right, b: r.bottom };
+    };
+    return { items: ['.sb-ci__wm', '.sb-ci__tag', '.sb-ci__lock'].map(pick),
+      vw: innerWidth, vh: innerHeight,
+      progress: window.__scrub.progress(), end: window.__scrub.end() };
+  });
+
+  // 셋 다 켜져 있고, 실제 SVG 가 그려졌다.
+  for (const it of ci.items) {
+    expect(it.op, it.sel).toBeGreaterThan(0.95);
+    expect(it.loaded, it.sel).toBe(true);
+    expect(it.w, it.sel).toBeGreaterThan(80);
+    expect(it.h, it.sel).toBeGreaterThan(8);
+    // 잘림 0 — 뷰포트 안에 완전히 들어온다.
+    expect(it.x, it.sel).toBeGreaterThanOrEqual(0);
+    expect(it.y, it.sel).toBeGreaterThanOrEqual(0);
+    expect(it.r, it.sel).toBeLessThanOrEqual(ci.vw);
+    expect(it.b, it.sel).toBeLessThanOrEqual(ci.vh);
+  }
+  // 겹침 0 — 세로로 쌓인 세 덩어리가 서로 침범하지 않는다.
+  for (let i = 1; i < ci.items.length; i++) {
+    expect(ci.items[i].y, ci.items[i].sel + ' 이 위 요소와 겹친다').toBeGreaterThan(ci.items[i - 1].b);
+  }
+  // 지구본은 물러나 있다.
+  expect(ci.end.globe.scale).toBeLessThan(0.85);
+  expect(ci.end.globe.opacity).toBeLessThan(0.35);
+  expect(ci.end.globe.floor).toBeGreaterThan(0.95);
 
   expect(errors, '콘솔 오류').toEqual([]);
 });
@@ -326,13 +389,14 @@ test('지연 로딩 ±1.6vh — 멀리 있는 레그는 아직 받지 않는다'
   await seek(page, 0);
   const early = await stageState(page);
   expect(early[0].srcSet, '레그 01 은 받았다').toBe(true);
-  // 14.404vh 트랙에서 마지막 레그 11(13.30vh~, index 12)은 1.6vh 반경 밖 — 아직 받지 않았다.
-  expect(early[12].srcSet, '레그 11 은 아직이다').toBe(false);
-  expect(reqs).not.toContain('w11');
+  // 15.512vh 트랙에서 마지막 레그 12(14.40vh~, index 13)은 1.6vh 반경 밖 — 아직 받지 않았다.
+  // (2026-09-01: 레그 12 마운트로 마지막 인덱스가 12 → 13, 감시 대상이 w11 → w12 로 바뀌었다.)
+  expect(early[13].srcSet, '레그 12 는 아직이다').toBe(false);
+  expect(reqs).not.toContain('w12');
 
   await seek(page, 0.985, 1200);
   const late = await stageState(page);
-  expect(late[12].srcSet, '도착하면 받는다').toBe(true);
+  expect(late[13].srcSet, '도착하면 받는다').toBe(true);
   expect(late.every((s) => s.op <= 1)).toBe(true);
   expect(errors, '콘솔 오류').toEqual([]);
 });
@@ -356,30 +420,34 @@ test('reduced-motion — 클립을 아예 받지 않는다. 포스터와 글이 
   await page.waitForTimeout(800);
 
   expect(videoReqs, 'reduced-motion 에서 mp4 를 받지 않는다').toEqual([]);
-  // 포스터 13장이 그대로 서 있고, 카피는 읽힌다.
+  // 포스터 14장이 그대로 서 있고, 카피는 읽힌다(2026-09-01 레그 12 마운트로 13 → 14).
   const posters = await page.$$eval('.sc-world__poster', (n) => n.map((e) => e.naturalWidth > 0));
-  expect(posters.length).toBeGreaterThanOrEqual(13);
-  expect(posters.filter(Boolean).length).toBeGreaterThanOrEqual(13);
+  expect(posters.length).toBeGreaterThanOrEqual(14);
+  expect(posters.filter(Boolean).length).toBeGreaterThanOrEqual(14);
   expect(await page.textContent('.sb-h1')).toContain('국토는 매일');
   // 인계 판은 만들지 않는다(엔진 계약: reduced 에서는 지도도 띄우지 않는다).
   expect(await page.evaluate(() => window.__scrub.handoffActive())).toBe(false);
 
-  // 브랜드 마감은 스크럽 없이 **정지 3줄**로 선다 — 워드마크 · 태그라인 · 락업이 한 번에.
+  // 브랜드 마감은 전이 없이 **정지 상태**로 선다 — 워드마크 · 태그라인 · 락업 · CTA 가 한 번에.
+  // (2026-09-01 v2: 선택자가 .sb-end__lx img → #sb-end-lx img 로, 검사 항목이 blur 대신 transition 으로 바뀌었다.
+  //  v2 마감에는 블러 인이 없다 — 저감 모드가 꺼야 하는 것은 전이 자체다.)
   await page.evaluate(() => window.__scrub.seekEnd(0.6));
   await page.waitForTimeout(500);
   const st = await page.evaluate(() => {
     const s = window.__scrub.end();
     const h = document.getElementById('sb-end');
-    return { on: s.on, tag: s.tagline, lx: s.lockup, cta: s.cta,
+    return { on: s.on, wm: s.wordmark.opacity, tag: s.tagline, lx: s.lockup, cta: s.cta,
       static: h.classList.contains('is-static'),
-      blur: getComputedStyle(h.querySelector('.sb-end__lx img')).filter };
+      trans: getComputedStyle(h.querySelector('#sb-end-lx img')).transitionDuration,
+      lockTrans: getComputedStyle(document.querySelector('.sb-ci__lock')).transitionDuration };
   });
   expect(st.static).toBe(true);
   expect(st.on).toBe(true);
+  expect(st.wm).toBe(1);
   expect(st.tag).toBe(1);
   expect(st.lx).toBe(1);
   expect(st.cta).toBe(1);
-  expect(st.blur).toBe('none');
+  expect(st.lockTrans).toMatch(/^0s/);
   expect(await page.textContent('#sb-end-tag')).toContain('공간을 읽고 미래를 설계합니다.');
   expect(errors, '콘솔 오류').toEqual([]);
   await ctx.close();

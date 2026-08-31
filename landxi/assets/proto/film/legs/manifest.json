@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-31T04:10:18.045Z",
+  "generatedAt": "2026-08-31T23:00:18.057Z",
   "builder": "tools/scrub/assemble.mjs",
-  "source": "단일 소스 · kling v2-1-pro AI 레그 1–11(앵커 A01→A06→A06b→A07→A08→A08b→A09→A10→A11→A12). MapLibre 플레이스홀더 0. 레그 12(귀환·브랜드 마감)는 페이지가 A12 홀드 위에 그린다",
+  "source": "단일 소스 · kling v2-1-pro AI 레그 1–12(앵커 A01→A06→A06b→A07→A08→A08b→A09→A10→A11→A12→A01). MapLibre 플레이스홀더 0. 레그 12(귀환)가 루프를 A01 로 닫고, 브랜드 마감은 그 위에서 페이지가 그린다(ending.js v2 — 지구본이 물러나고 CI 가 뜬다)",
   "fps": 25,
   "fpsNote": "전 레그 24 fps(kling 출력 1932×1072→1080p 스케일). 레그별 legs[].fps / legs[].size.",
   "filmSize": [
@@ -22,7 +22,8 @@
       "08b",
       "09",
       "10",
-      "11"
+      "11",
+      "12"
     ],
     "doc": [
       "docs/superpowers/proto/2026-08-26-kie-legs-1-3.md",
@@ -32,7 +33,7 @@
       "docs/superpowers/proto/2026-08-27-kie-legs-8-8b.md",
       "docs/superpowers/proto/2026-08-27-kie-legs-final.md"
     ],
-    "note": "미니어처 세계라 실카메라가 없다. startCamera/endCamera 는 앵커 문서의 고도대를 따라 authored 이고 (A02 고궤도 460 km · A03 ~30 km/피치 60° · A05 남원 분지 8.6 km · A06b 남원 상공 140 km · A07 여수 17 km · A08 국동항 방파제 발치 0.3 km/피치 50°), 레그 05 끝은 남원 인계 판의 카메라, 레그 06 은 남원 위 수직 상승, 06b 는 여수 17 km 로 활강, 07 끝(국동항 방파제 발치 클로즈업)은 여수 인계 판의 카메라가 된다. 08 은 여수 위 수직 상승(0.3 → 6 km), 08b 는 울주 산지(129.15, 35.55 · 4.5 km/피치 65°)로 활강 — 필름은 여수 인계 판 뒤로 이어진다. 09 는 울주 능선 활강(4.5 → 1.2 km/피치 35°), 10 은 소각 공터 접근(0.5 km/피치 30°), 11 은 급상승해 한반도 전체(A12 · 1,400 km/피치 0) — 그 위에 브랜드 마감. cameraSource:\"authored\" 로 표시. 페이지 오버레이의 숫자는 전부 실데이터다."
+    "note": "미니어처 세계라 실카메라가 없다. startCamera/endCamera 는 앵커 문서의 고도대를 따라 authored 이고 (A02 고궤도 460 km · A03 ~30 km/피치 60° · A05 남원 분지 8.6 km · A06b 남원 상공 140 km · A07 여수 17 km · A08 국동항 방파제 발치 0.3 km/피치 50°), 레그 05 끝은 남원 인계 판의 카메라, 레그 06 은 남원 위 수직 상승, 06b 는 여수 17 km 로 활강, 07 끝(국동항 방파제 발치 클로즈업)은 여수 인계 판의 카메라가 된다. 08 은 여수 위 수직 상승(0.3 → 6 km), 08b 는 울주 산지(129.15, 35.55 · 4.5 km/피치 65°)로 활강 — 필름은 여수 인계 판 뒤로 이어진다. 09 는 울주 능선 활강(4.5 → 1.2 km/피치 35°), 10 은 소각 공터 접근(0.5 km/피치 30°), 11 은 급상승해 한반도 전체(A12 · 1,400 km/피치 0), 12 는 계속 물러나 모형 지구본으로 귀환(A01 · 15,000 km/피치 0 = 레그 01 시작 카메라, 루프 폐합) — 그 위에 브랜드 마감. cameraSource:\"authored\" 로 표시. 페이지 오버레이의 숫자는 전부 실데이터다."
   },
   "mobileSize": [
     960,
@@ -58,18 +59,18 @@
     "seekMs": 20
   },
   "lazyVh": 1.6,
-  "filmSeconds": 66.079,
-  "filmVh": 14.404,
-  "spacerVh": 15.404,
+  "filmSeconds": 71.162,
+  "filmVh": 15.512,
+  "spacerVh": 16.512,
   "cameraNote": "고도 = 1.5 × 720px × m/px (MapLibre 기본 fov 36.87°, 필름 뷰포트 720px). 줌·GSD 는 고도에서 유도.",
   "flightProfile": "전 레그가 kling AI 미니어처라 실카메라가 없다 — 카메라는 전부 authored(aiLegs.note) 이고 하나의 단조 하강 프로파일로 이어 붙였다(레그 06 상승·06b 이동, 08 상승·08b 이동 제외). AI 레그끼리의 tail→head 이음매는 앵커를 공유해 diff 0.2 % 대다. 계기 바늘이 스냅하지 않도록 페이지가 씸 밴드(0.16vh) 위에서 두 레그의 판독값을 섞는다(scrub.js camAt). 인계 판은 그 덕분에 필름 마지막 프레임과 정확히 같은 카메라로 뜬다.",
   "bytes": {
-    "desktop": 53426156,
-    "mobile": 18462738,
-    "poster": 1265840,
-    "desktopMB": 50.95,
-    "mobileMB": 17.61,
-    "posterMB": 1.21
+    "desktop": 57238777,
+    "mobile": 19725646,
+    "poster": 1354124,
+    "desktopMB": 54.59,
+    "mobileMB": 18.81,
+    "posterMB": 1.29
   },
   "seams": [
     {
@@ -213,6 +214,18 @@
       "lumaA": 37.44,
       "lumaB": 37.27,
       "lumaDelta": -0.17,
+      "pass": true,
+      "monotonic": true
+    },
+    {
+      "from": "11",
+      "to": "12",
+      "frameShared": false,
+      "rule": "B",
+      "pct": 0.205,
+      "lumaA": 49.13,
+      "lumaB": 49.06,
+      "lumaDelta": -0.07,
       "pass": true,
       "monotonic": true
     }
@@ -945,6 +958,62 @@
         "mpp": 1296.296,
         "seg": "11b"
       }
+    },
+    {
+      "id": "12",
+      "wp": "국토",
+      "label": "귀환",
+      "place": "귀환 · 모형 지구본 · 작업대",
+      "look": "diorama",
+      "caption": "AI 생성 필름 · kling v2-1-pro · 앵커 A12 → A01 · 모형 지구본 귀환",
+      "source": "landxi/assets/proto/film/legs/src/v3-leg-12.mp4",
+      "renderer": "kling v2-1-pro (AI)",
+      "frames": [
+        0,
+        121
+      ],
+      "count": 122,
+      "encodedFrames": 122,
+      "fps": 24,
+      "size": [
+        1946,
+        1080
+      ],
+      "seconds": 5.083,
+      "weightVh": 1.108,
+      "rate": 0.218,
+      "src": "/landxi/assets/proto/film/legs/w12.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/w12-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/w12.webp",
+      "seamPoster": "/landxi/assets/proto/film/legs/w12-last.webp",
+      "bytes": 3812621,
+      "bytesMobile": 1262908,
+      "bytesPoster": 88284,
+      "cameraSource": "authored",
+      "startCamera": {
+        "center": [
+          127.8,
+          36.3
+        ],
+        "altitudeM": 1400000,
+        "zoom": 6.6047,
+        "pitch": 0,
+        "bearing": 0,
+        "mpp": 1296.296,
+        "seg": "12a"
+      },
+      "endCamera": {
+        "center": [
+          127.95,
+          36.05
+        ],
+        "altitudeM": 15000000,
+        "zoom": 3.1879,
+        "pitch": 0,
+        "bearing": 0,
+        "mpp": 13888.889,
+        "seg": "12b"
+      }
     }
   ],
   "handoff": {
@@ -975,17 +1044,19 @@
     "note": "레그 07(여수 해안) 끝 카메라. 07 끝에서 여수 실지도가 이어받고, 08 이 밑에서 올라오면 닫힌다 — 필름은 판 뒤로 이어진다(08 상승 → 08b 울주)."
   },
   "finale": {
-    "legIndex": 12,
+    "mode": "globe",
+    "plate": false,
+    "legIndex": 13,
     "center": [
-      127.8,
-      36.3
+      127.95,
+      36.05
     ],
-    "zoom": 6.6047,
+    "zoom": 3.1879,
     "pitch": 0,
     "bearing": 0,
-    "altitudeM": 1400000,
+    "altitudeM": 15000000,
     "detections": null,
-    "note": "레그 11(줌아웃 · 국토 변화) 끝 카메라 = A12 홀드. 필름 마지막 0.28vh 부터 끝까지 국토 실지도가 같은 카메라로 이어받고, 그 위에서 브랜드 마감(LEAD 0.30 + SPAN 1.54 + TAIL 0.16vh)이 선다. 울주 조사 항목은 실결과가 없어 검출 레이어 없음."
+    "note": "레그 12(귀환) 끝 카메라 = A01(작업대 위 모형 지구본) = 레그 01 시작 카메라. 2026-09-01 부터 국토 V-World 실지도 판은 띄우지 않는다(plate:false) — 마감은 이 A01 프레임 위에서 지구본이 물러나고 CI 가 뜨는 방식이다(LEAD 0.30 + SPAN 1.54 + TAIL 0.16vh). center/zoom/pitch 는 되돌리기용으로 남긴다."
   },
   "full": {
     "src": "/landxi/assets/proto/film/legs/full.mp4",
@@ -1003,20 +1074,21 @@
       "08b",
       "09",
       "10",
-      "11"
+      "11",
+      "12"
     ],
-    "legCount": 13,
+    "legCount": 14,
     "size": [
       1920,
       1080
     ],
     "fps": 24,
-    "frames": 1375,
-    "seconds": 57.292,
-    "legSecondsSum": 66.079,
+    "frames": 1479,
+    "seconds": 61.625,
+    "legSecondsSum": 71.162,
     "xfadeSeconds": 0.734,
-    "bytes": 40812754,
-    "encode": "xfade=fade:0.734s × 12 · scale/crop 1920×1080 · libx264 high crf 25 -g 8 -keyint_min 8 -sc_threshold 0 +faststart -an",
-    "note": "레그 사이를 0.734s 씩 xfade(fade) 로 겹쳤다(스크럽 씸 밴드 0.16vh ÷ 0.218 vh/s). 하드컷보다 8.81s 짧다."
+    "bytes": 43754810,
+    "encode": "xfade=fade:0.734s × 13 · scale/crop 1920×1080 · libx264 high crf 25 -g 8 -keyint_min 8 -sc_threshold 0 +faststart -an",
+    "note": "레그 사이를 0.734s 씩 xfade(fade) 로 겹쳤다(스크럽 씸 밴드 0.16vh ÷ 0.218 vh/s). 하드컷보다 9.54s 짧다."
   }
 }

@@ -217,6 +217,19 @@ const PLAN = [
     caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A11 → A12 · 남원 4시점 2025-04→10 · 변화지수 456(비지도)',
     authored: true,
   },
+  // 12 (2026-09-01 클라이언트 "필름은 마무리 영상이 더 있어야 될 것 같네 … 한반도가 사라지면서 Land-XI 플랫폼 CI 가 떠야 될 것 같다"):
+  // §2-4 에서 이미 구워 PASS 판정만 받고 미탑재로 보관돼 있던 A12(rev.3l) → A01(rev.3k) 클립을 14번째 레그로 올린다.
+  // 카메라가 계속 물러나며 반도가 모형 지구본으로 말리고, 어두운 작업대 판이 아래에서 올라와 필름이 시작한 자리(A01)로 닫힌다 —
+  // 그래서 끝 카메라는 레그 01 의 시작 카메라와 **같은 값**이다(루프 폐합). 브랜드 마감은 이 A01 프레임 위에서 선다(ending.js v2).
+  {
+    id: '12', wp: '국토', label: '귀환', place: '귀환 · 모형 지구본 · 작업대', look: 'diorama',
+    mp4: 'landxi/assets/proto/film/legs/src/v3-leg-12.mp4',
+    gen: 'landxi/assets/proto/film/legs/gen/v3-leg-12.mp4',
+    a: C(127.8000, 36.3000, 1400.0, 0, 0),
+    b: C(127.95, 36.05, 15000, 0, 0),
+    caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A12 → A01 · 모형 지구본 귀환',
+    authored: true,
+  },
 ];
 
 /* ── 인코딩 ─────────────────────────────────────────────────────────────────── */
@@ -366,18 +379,19 @@ const pTot = legs.reduce((s, L) => s + L.bytesPoster, 0);
 const manifest = {
   generatedAt: new Date().toISOString(),
   builder: 'tools/scrub/assemble.mjs',
-  source: '단일 소스 · kling v2-1-pro AI 레그 1–11(앵커 A01→A06→A06b→A07→A08→A08b→A09→A10→A11→A12). MapLibre 플레이스홀더 0. 레그 12(귀환·브랜드 마감)는 페이지가 A12 홀드 위에 그린다',
+  source: '단일 소스 · kling v2-1-pro AI 레그 1–12(앵커 A01→A06→A06b→A07→A08→A08b→A09→A10→A11→A12→A01). MapLibre 플레이스홀더 0. 레그 12(귀환)가 루프를 A01 로 닫고, 브랜드 마감은 그 위에서 페이지가 그린다(ending.js v2 — 지구본이 물러나고 CI 가 뜬다)',
   fps: FPS,
   fpsNote: '전 레그 24 fps(kling 출력 1932×1072→1080p 스케일). 레그별 legs[].fps / legs[].size.',
   filmSize: [1280, 720],
   aiLegs: {
-    ids: ['01', '02', '03', '04', '05', '06', '06b', '07', '08', '08b', '09', '10', '11'],
+    ids: ['01', '02', '03', '04', '05', '06', '06b', '07', '08', '08b', '09', '10', '11', '12'],
     doc: ['docs/superpowers/proto/2026-08-26-kie-legs-1-3.md', 'docs/superpowers/proto/2026-08-27-kie-legs-4-6.md', 'docs/superpowers/proto/2026-08-27-kie-legs-4-6b.md', 'docs/superpowers/proto/2026-08-27-kie-leg-7.md', 'docs/superpowers/proto/2026-08-27-kie-legs-8-8b.md', 'docs/superpowers/proto/2026-08-27-kie-legs-final.md'],
     note: '미니어처 세계라 실카메라가 없다. startCamera/endCamera 는 앵커 문서의 고도대를 따라 authored 이고 ' +
       '(A02 고궤도 460 km · A03 ~30 km/피치 60° · A05 남원 분지 8.6 km · A06b 남원 상공 140 km · A07 여수 17 km · A08 국동항 방파제 발치 0.3 km/피치 50°), 레그 05 끝은 남원 ' +
       '인계 판의 카메라, 레그 06 은 남원 위 수직 상승, 06b 는 여수 17 km 로 활강, 07 끝(국동항 방파제 발치 클로즈업)은 여수 인계 판의 카메라가 된다. ' +
       '08 은 여수 위 수직 상승(0.3 → 6 km), 08b 는 울주 산지(129.15, 35.55 · 4.5 km/피치 65°)로 활강 — 필름은 여수 인계 판 뒤로 이어진다. ' +
-      '09 는 울주 능선 활강(4.5 → 1.2 km/피치 35°), 10 은 소각 공터 접근(0.5 km/피치 30°), 11 은 급상승해 한반도 전체(A12 · 1,400 km/피치 0) — 그 위에 브랜드 마감. ' +
+      '09 는 울주 능선 활강(4.5 → 1.2 km/피치 35°), 10 은 소각 공터 접근(0.5 km/피치 30°), 11 은 급상승해 한반도 전체(A12 · 1,400 km/피치 0), ' +
+      '12 는 계속 물러나 모형 지구본으로 귀환(A01 · 15,000 km/피치 0 = 레그 01 시작 카메라, 루프 폐합) — 그 위에 브랜드 마감. ' +
       'cameraSource:"authored" 로 표시. 페이지 오버레이의 숫자는 전부 실데이터다.',
   },
   mobileSize: [960, 540],
@@ -434,9 +448,12 @@ const manifest = {
     note: '레그 07(여수 해안) 끝 카메라. 07 끝에서 여수 실지도가 이어받고, 08 이 밑에서 올라오면 닫힌다 — 필름은 판 뒤로 이어진다(08 상승 → 08b 울주).',
   },
   finale: {
-    // 2026-08-27 레그 9–11: 필름 최종 프레임 = 레그 11 끝 = A12(한반도 전체, 모형 지구본). 레그 12(귀환·브랜드 마감)는
-    // 페이지가 이 프레임을 홀드한 위에 그린다(샷 리스트 v2 · ending.js SPAN 1.54vh). 브랜드 마감의 "월드 부착 수축"은 이 카메라의
-    // 국토 실지도 판(scrub.js PLATES[2])을 dz 만큼 줌아웃시켜 잰다 — 여수 판이 아니라 필름이 실제로 멈춘 자리다.
+    // 2026-09-01: 레그 12(귀환)가 탑재되면서 필름 최종 프레임은 A12(한반도)가 아니라 **A01(작업대 위 모형 지구본)** 이다.
+    // 그래서 브랜드 마감은 국토 V-World 실지도 판 위가 아니라 그 A01 프레임 위에서 선다 — 지구본이 어둠 속으로
+    // 물러나고(밝기·크기 감쇠) 빈 어둠에 Land-XI CI 벡터 3종이 뜬다(ending.js FINALE_MODE='globe').
+    // plate:false 가 국토 판(scrub.js PLATES[2]) 생성을 끈다. 되돌리려면 plate:true + ending.js FINALE_MODE='plate'.
+    mode: 'globe',
+    plate: false,
     legIndex: legs.length - 1,
     center: legs[legs.length - 1].endCamera.center,
     zoom: legs[legs.length - 1].endCamera.zoom,
@@ -444,7 +461,7 @@ const manifest = {
     bearing: legs[legs.length - 1].endCamera.bearing,
     altitudeM: legs[legs.length - 1].endCamera.altitudeM,
     detections: null,
-    note: '레그 11(줌아웃 · 국토 변화) 끝 카메라 = A12 홀드. 필름 마지막 0.28vh 부터 끝까지 국토 실지도가 같은 카메라로 이어받고, 그 위에서 브랜드 마감(LEAD 0.30 + SPAN 1.54 + TAIL 0.16vh)이 선다. 울주 조사 항목은 실결과가 없어 검출 레이어 없음.',
+    note: '레그 12(귀환) 끝 카메라 = A01(작업대 위 모형 지구본) = 레그 01 시작 카메라. 2026-09-01 부터 국토 V-World 실지도 판은 띄우지 않는다(plate:false) — 마감은 이 A01 프레임 위에서 지구본이 물러나고 CI 가 뜨는 방식이다(LEAD 0.30 + SPAN 1.54 + TAIL 0.16vh). center/zoom/pitch 는 되돌리기용으로 남긴다.',
   },
 };
 

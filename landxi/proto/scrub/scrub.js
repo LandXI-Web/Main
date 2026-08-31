@@ -325,8 +325,11 @@ function handoff(t) {
       satStyle(M.handoffFinal.detections, '#FF9A2E'),
       M.handoffFinal.zoom - endDzFor(M.handoffFinal.zoom));   // 마감 수축의 끝 줌을 예열
   }
-  // #3 국토 — 필름 최종 프레임(레그 11 끝 = A12 홀드). 마감 수축(ending.js)이 이 판을 dz 만큼 줌아웃시키므로 그 줌을 예열한다.
-  if (!PLATES[2] && M.finale && t > BAND_K[0] - 1.2) {
+  // #3 국토 — 2026-09-01 부터 **띄우지 않는다**. 레그 12(귀환)가 붙어 필름이 A01(작업대 위 모형 지구본)로
+  // 닫히면서 마감의 인계 카메라(A12 한반도)가 사라졌다 — 마감은 실지도 판이 아니라 그 A01 프레임 위에서
+  // 지구본이 물러나는 방식으로 선다(ending.js FINALE_MODE='globe').
+  // 되돌리려면 manifest.finale.plate 를 true 로(assemble.mjs) + ending.js FINALE_MODE='plate'.
+  if (!PLATES[2] && M.finale && M.finale.plate !== false && t > BAND_K[0] - 1.2) {
     PLATES[2] = makePlate(M.finale, el.mapK, el.plateK,
       satStyle(M.finale.detections, '#FFD166'),
       M.finale.zoom - endDzFor(M.finale.zoom));

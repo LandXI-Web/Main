@@ -193,6 +193,85 @@ html{ scroll-behavior:auto; }
 .sb-endgame .lx-masthead,.sb-endgame .sb-copy-layer,
 .sb-endgame .sb-inst,.sb-endgame .sb-route{ pointer-events:none; }
 
+/* ═════════════════════════════════════════════════════════════════════════
+   브랜드 마감 v2 (2026-09-01) — 지구본이 어둠 속으로 물러나고 CI 가 뜬다
+   클라이언트: "한반도가 사라지면서 Land-XI 플랫폼 CI 가 떠야 될 것 같다."
+
+   ① 물러남은 **무대 자체**에 건다. 레그 12 가 붙어 필름 마지막 프레임이 A01(작업대 위
+      모형 지구본)이 됐으므로, 그 프레임을 담은 무대를 실제로 축소·감광·감쇠시키면
+      "카메라가 한 걸음 더 물러났다"로 읽힌다. 무대가 줄어들며 드러나는 자리는 무대 뒤
+      바닥(body::before)이 필름의 캔버스색 #08090B 로 닫아 준다 — 두 색이 같아서 이음매가 없다.
+   ② CI 는 실제 브랜드 벡터다(landxi-wordmark.svg · tagline.svg · lx-lockup-reverse.svg).
+      한 기둥으로 쌓여 워드마크 → 태그라인 → 락업 → CTA 순으로 뜬다.
+      이징 하나 · 지속 500/750/1000/1250 ms 사다리 · 그라디언트·그림자·라운드 없음.
+   ═════════════════════════════════════════════════════════════════════════ */
+:root{
+  --sb-ease-end:cubic-bezier(0.15,1,0.3,1);
+  --sb-globe-s:1; --sb-globe-b:1; --sb-globe-o:1; --sb-floor:0;
+}
+
+/* ① 물러남 — .sb-receding 은 필름이 끝나는 순간 ending.js 가 <html> 에 건다.
+   그 밖에서는 무대에 transform/filter/opacity 를 아예 걸지 않는다(합성 비용 0). */
+.sb-receding .sb-world{
+  transform:scale(var(--sb-globe-s)); transform-origin:50% 50%;
+  filter:brightness(var(--sb-globe-b)); opacity:var(--sb-globe-o);
+  will-change:transform, opacity;
+}
+/* 무대 뒤 바닥. 무대(z 1)보다 아래(z 0)이므로 무대가 줄어든 자리에만 보인다. */
+.sb-receding .sb::before{
+  content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
+  background:#08090B; opacity:var(--sb-floor);
+}
+
+/* ② CI 기둥 */
+.sb-ci{
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+.sb-ci__wm,.sb-ci__tag,.sb-ci__lock,.sb-ci__cta{
+  opacity:0; transform:translateY(1.8vh);
+  transition:opacity var(--d) var(--sb-ease-end), transform var(--d) var(--sb-ease-end);
+}
+.sb-ci__wm{ --d:500ms;  display:block; width:clamp(260px, 30vw, 560px); height:auto; }
+.sb-ci__tag{ --d:750ms;  margin:3.4vh 0 0; line-height:0; }
+.sb-ci__tag img{ display:inline-block; width:clamp(196px, 22vw, 410px); height:auto; }
+.sb-ci__lock{ --d:1000ms; margin:7.6vh 0 0; }
+.sb-ci__lock img{ display:block; width:clamp(148px, 15vw, 280px); height:auto; }
+.sb-ci__cta{ --d:1250ms; margin:6.2vh 0 0; text-align:center; }
+.sb-ci__cta .lx-cta{ color:#FFFFFF; }
+.sb-ci__cta .lx-cta:hover{ color:#2FC49B; }
+
+.sb-ci.is-wm  .sb-ci__wm,
+.sb-ci.is-tag .sb-ci__tag,
+.sb-ci.is-lx  .sb-ci__lock,
+.sb-ci.is-cta .sb-ci__cta{ opacity:1; transform:none; }
+.sb-ci.is-cta .sb-ci__cta{ pointer-events:auto; }
+
+/* 판 전환 — v2 가 켜지면 v1(국토 판 9비트) 마크업은 통째로 빠진다. 되돌리기는 data-finale 하나. */
+.sb-end[data-finale="globe"] .sb-end__v1{ display:none; }
+.sb-end[data-finale="plate"] .sb-ci{ display:none; }
+
+/* 저감 모드 — 전이 없이 어둠 위에 CI 3종이 한 번에 선다. */
+.sb-end[data-finale="globe"].is-static{ background:#08090B; }
+.sb-end[data-finale="globe"].is-static .sb-ci__wm,
+.sb-end[data-finale="globe"].is-static .sb-ci__tag,
+.sb-end[data-finale="globe"].is-static .sb-ci__lock,
+.sb-end[data-finale="globe"].is-static .sb-ci__cta{
+  opacity:1; transform:none; transition:none;
+}
+.sb-end[data-finale="globe"].is-static .sb-ci__cta{ pointer-events:auto; }
+@media (prefers-reduced-motion: reduce){
+  .sb-ci__wm,.sb-ci__tag,.sb-ci__lock,.sb-ci__cta{ transition:none; transform:none; }
+  .sb-receding .sb-world{ will-change:auto; }
+}
+@media (max-width:1023.98px){
+  .sb-ci__wm{ width:min(78vw, 560px); }
+  .sb-ci__tag img{ width:min(60vw, 410px); }
+  .sb-ci__lock img{ width:min(40vw, 280px); }
+}
+
+/* ── 아래는 v1(국토 판 9비트) — 2026-09-01 꺼 뒀다. 지우지 않았다. ────────── */
+
 /* 기본값은 :root 에 둔다 — ending.js 도 <html> 에 쓰므로, .sb-end 에 선언하면
    자기 선언이 상속값을 이겨서 스크럽 값이 영영 반영되지 않는다. */
 :root{
