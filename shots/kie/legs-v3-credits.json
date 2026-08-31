@@ -883,9 +883,37 @@
       "mp4": "landxi/assets/proto/film/legs/gen/v3-leg-03.mp4",
       "mp4_bytes": 17164779,
       "finished_at": "2026-08-31T01:45:58.209Z"
+    },
+    {
+      "leg": 3,
+      "rev": 4,
+      "batch": "3-v6",
+      "head": "landxi/assets/proto/film/legs/anchors-v3/A03.png",
+      "tail": "landxi/assets/proto/film/legs/anchors-v3/A04.png",
+      "attempt": 1,
+      "model": "kling/v2-1-pro",
+      "duration": "5",
+      "cfg_scale": 0.5,
+      "prompt": "The basin ahead stays in frame throughout; the warm key holds from upper camera left. The camera drifts slowly and steadily forward and down in one smooth continuous move, the ridgeline in the far haze swelling toward the lower third of the frame as the basin opens out beyond it. The two craft part from one another in the very first frame and travel in opposite directions for the whole clip; they never converge, never cross and never come near each other, the gap between them only widening, and they hold clearly different heights, the drone low over the land and the airplane high up at cloud level. The small white drone with black propellers and the small green \"LX\" letters on its body flies low and steadily to the left, keeping its white body, black rotors, green \"LX\" letters and its low height over the land unchanged, and it passes fully out of the left edge of the frame at about three seconds. The small white airplane, white and never gold, stays far away in the distance and tiny for the whole clip, no larger than it is in the very first frame, never turning toward the camera, never coming near the lens and never growing; holding its cloud height, it slides horizontally to the right along the distant band of cloud and passes fully out of the right edge of the frame at about three and a half seconds. From then on no drone and no aircraft is anywhere in the frame and only the miniature landscape remains. One single continuous take, no cuts, no camera shake, no zoom snap. Slow, cinematic, controlled.",
+      "prompt_sha256": "8b90d55f420ff34e",
+      "negative_full_chars": 1322,
+      "negative": "plane close to camera, airplane flying toward viewer, large airplane, airplane filling frame, aircraft near lens, growing aircraft, gold aircraft, brass aircraft, metallic plane, gold plane, brass plane, extra drones, two drones, second drone, close-up drone, grey drone, dark body, dark grey drone, black body, orange, DJI logo, converging aircraft, collision course, two craft meeting, crossing paths, drone and plane close together, craft flying toward each other, giant, oversized, landed, board",
+      "credits_balance_before": 8802.5,
+      "at": "2026-08-31T02:01:49.818Z",
+      "taskId": "ad9206ea6acdcb13f766e527a6856105",
+      "task_created_at": "2026-08-31T02:01:54.650Z",
+      "ok": true,
+      "credits_reported": 50,
+      "credits_balance_after": 8752.5,
+      "credits_charged": 50,
+      "gen_ms": 126,
+      "wall_ms": 141620,
+      "mp4": "landxi/assets/proto/film/legs/gen/v3-leg-03.mp4",
+      "mp4_bytes": 16580614,
+      "finished_at": "2026-08-31T02:04:16.311Z"
     }
   ],
-  "spent": 1450,
+  "spent": 1500,
   "remaining_of_cap": 10,
   "spent_by_rev": {
     "rev2": 150,
@@ -898,6 +926,7 @@
     "rev3-legs6b-8b-9-11": 250,
     "rev4-legs1": 50,
     "rev4-legs2-3-11-12": 200,
-    "rev4-legs3-v5": 50
+    "rev4-legs3-v5": 50,
+    "rev4-legs3-v6": 50
   }
 }
