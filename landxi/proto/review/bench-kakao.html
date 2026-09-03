@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="ko" data-f="F0" data-c="C0" data-s="S0">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>카카오 AI 돛 서밋 · 벤치마킹</title>
+<link rel="stylesheet" href="../fonts-system.css">
+<!-- 벤치 전용 서체 — 이 페이지에서만 불러온다(법전 §1 "제3의 서체 금지"는 그대로, 비교용) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/KakaoBigSans/KakaoBigSans.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap">
+<style>
+:root{--ink:#010102;--ink2:#4A4A4A;--grey:#686868;--mute:#CCCCCC;--line:#DDDDDD;--tint:#E8F1FF;--tint2:#D6E6FF;--accent:#006DF7;--warn:#D1352B;--teal:#0FA9A0;--kk:#19199B;--kk2:#325CFF;--kk-tint:#F0F3FA;--kk-ink:#191919}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);font:16px/1.6 Pretendard,system-ui,sans-serif}
+.w{max-width:1200px;margin:0 auto;padding:28px 32px 72px}
+h1{font-family:Paperlogy,Pretendard,sans-serif;font-weight:700;font-size:34px;margin:0 0 6px;letter-spacing:-.02em}
+h2{font-family:Paperlogy,Pretendard,sans-serif;font-weight:700;font-size:22px;margin:0 0 12px;letter-spacing:-.01em}
+.rule{width:120px;height:4px;background:var(--accent);margin:0 0 14px}
+.sub{color:var(--grey);font-size:14px}
+p{max-width:860px;margin:0 0 10px}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.links{display:flex;gap:18px;flex-wrap:wrap;font-size:15px;margin-top:8px}
+section{padding:30px 0 6px;border-top:1px solid var(--line);margin-top:26px}
+.dec{border-left:3px solid var(--accent);background:var(--tint);padding:12px 16px;margin:14px 0}
+.dec h3{margin:0 0 4px;font-size:17px}.dec p{margin:0;font-size:15px;color:var(--ink2);max-width:none}
+/* 판독 갤러리 */
+.gal{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 24px;margin-top:6px}
+.gal figure{margin:0}
+.gal img{width:100%;display:block;border:1px solid var(--line)}
+.gal figcaption{margin-top:8px;font-size:15px}
+.gal figcaption b{font-family:Paperlogy,Pretendard,sans-serif;font-weight:700;font-size:17px;display:block;margin-bottom:2px}
+.gal figcaption span{color:var(--grey)}
+/* 대조표 */
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{background:var(--tint);font-size:13px;color:var(--grey);font-weight:600;border-bottom:1px solid var(--ink)}
+td.k{width:150px;font-weight:500}
+td .sw{display:inline-block;width:12px;height:12px;vertical-align:-1px;margin-right:4px;border:1px solid rgba(0,0,0,.12)}
+code{font:14px Inter,Consolas,monospace;background:#F5F5F5;padding:1px 5px}
+.tag{display:inline-block;font:600 11px/1 Inter,sans-serif;letter-spacing:.06em;padding:4px 6px;border:1px solid var(--line);vertical-align:2px;margin-left:6px;white-space:nowrap}
+.tag.ok{border-color:var(--teal);color:var(--teal)}.tag.no{border-color:var(--warn);color:var(--warn)}.tag.hm{border-color:#B7791F;color:#B7791F}
+/* 선택기 */
+.pick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:16px 0 18px}
+.pick fieldset{border:1px solid var(--line);padding:12px 14px;margin:0}
+.pick legend{font:600 13px/1 Inter,sans-serif;letter-spacing:.06em;color:var(--grey);padding:0 6px}
+.pick label{display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:15px;cursor:pointer}
+.pick label small{display:block;color:var(--grey);font-size:13px;line-height:1.4}
+.pick input{margin-top:5px}
+.now{font-size:15px;margin:0 0 12px;padding:10px 14px;background:var(--tint)}
+.now b{font-family:Inter,sans-serif;font-weight:600}
+/* ===== 스펙시먼(대시보드 상단 축소판) — 토큰은 html[data-*] 로 뒤집는다 ===== */
+.spec{--p-display:Paperlogy,Pretendard,sans-serif;--p-body:Pretendard,system-ui,sans-serif;--p-w:700;--p-track:-0.01em;
+      --p-accent:var(--accent);--p-tint:var(--tint);--p-tint2:var(--tint2);--p-ink:var(--ink);--p-rule:var(--line);--p-r:0;--p-pill:0;--p-btn-r:0;--p-h1:54px;--p-kpi:126px;--p-kpi-lh:1;
+      border:1px solid var(--line);background:#fff;color:var(--p-ink);font-family:var(--p-body);overflow:hidden}
+html[data-f="F1"] .spec{--p-body:'Kakao Big Sans',Pretendard,sans-serif}
+html[data-f="F2"] .spec{--p-body:'Kakao Big Sans',Pretendard,sans-serif;--p-display:'Kakao Big Sans',Pretendard,sans-serif;--p-w:800;--p-track:-0.03em}
+html[data-f="F3"] .spec{--p-body:'Kakao Big Sans',Pretendard,sans-serif;--p-display:'Black Han Sans',Paperlogy,sans-serif;--p-w:400;--p-track:0;--p-h1:58px;--p-kpi:132px}
+html[data-c="C1"] .spec{--p-accent:var(--kk);--p-tint:var(--kk-tint);--p-tint2:#E1E6F5;--p-ink:var(--kk-ink)}
+html[data-s="S1"] .spec{--p-r:12px;--p-pill:100px;--p-btn-r:100px}
+.spec .mh{display:flex;align-items:center;gap:28px;height:64px;padding:0 40px;border-bottom:1px solid var(--p-rule)}
+.spec .mh .wm{font-family:var(--p-display);font-weight:var(--p-w);letter-spacing:.06em;font-size:16px;line-height:1.1}
+.spec .mh nav{display:flex;gap:22px;font-size:16px;font-weight:500}
+.spec .mh nav span{position:relative;padding:20px 0}
+.spec .mh nav span.on{color:var(--p-accent)}
+.spec .mh nav span.on::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--p-accent)}
+.spec .mh .ref{margin-left:auto;font-size:15px;color:var(--grey)}.spec .mh .ref b{font-family:Inter,sans-serif;font-weight:500;color:var(--p-ink);font-variant-numeric:tabular-nums;margin-left:10px}
+.spec .body{padding:34px 40px 36px}
+.spec h3.t{margin:0;font-family:var(--p-display);font-weight:var(--p-w);font-size:var(--p-h1);line-height:1.15;letter-spacing:var(--p-track);color:var(--p-ink);display:flex;align-items:baseline;gap:18px;flex-wrap:wrap}
+.spec h3.t small{font-family:var(--p-body);font-weight:400;font-size:18px;color:var(--grey);letter-spacing:0}
+.spec .trule{width:140px;height:4px;background:var(--p-accent);margin:14px 0 26px}
+.spec .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--p-rule);border-bottom:1px solid var(--p-rule)}
+.spec .kpi{padding:18px 20px 16px;border-right:1px solid var(--p-rule)}
+.spec .kpi:last-child{border-right:0}
+.spec .kpi .l{font-size:16px;color:var(--grey)}
+.spec .kpi .v{font-family:var(--p-display);font-weight:var(--p-w);font-size:var(--p-kpi);line-height:var(--p-kpi-lh);letter-spacing:-0.02em;color:var(--p-accent);font-variant-numeric:tabular-nums;margin:6px 0 4px}
+.spec .kpi .v small{font-family:var(--p-body);font-weight:400;font-size:20px;color:var(--p-ink);letter-spacing:0;margin-left:8px}
+.spec .kpi.warn .v{color:var(--warn)}
+.spec .kpi .s{font-size:16px;color:var(--grey)}.spec .kpi.warn .s{color:var(--warn)}
+.spec .row{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:28px;margin-top:30px}
+.spec .hd{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.spec .hd h4{margin:0;font-family:var(--p-display);font-weight:var(--p-w);font-size:26px;letter-spacing:var(--p-track)}
+.spec .pill{display:inline-block;font-size:14px;font-weight:500;line-height:1;padding:7px 12px;border:1.5px solid var(--p-accent);color:var(--p-accent);border-radius:var(--p-pill)}
+.spec .pill.fill{background:var(--p-tint2);border-color:var(--p-tint2);color:var(--p-accent)}
+.spec .hd .more{margin-left:auto;font-size:15px;color:var(--grey)}
+.spec table{font-size:16px}
+.spec th,.spec td{border-bottom:1px solid var(--p-rule);padding:11px 10px}
+.spec thead th{background:var(--p-tint);border-bottom:1px solid var(--p-ink);color:var(--grey);font-size:14px;font-weight:500}
+.spec td.n{font-family:Inter,sans-serif;font-variant-numeric:tabular-nums;text-align:right}
+.spec td .st{color:var(--warn);font-weight:500}
+.spec td .st.b{color:var(--p-accent)}
+.spec tr.sel td{background:var(--p-tint)}
+.spec .card{background:var(--p-tint);border-radius:var(--p-r);padding:22px 24px;display:flex;flex-direction:column;gap:10px;min-height:100%}
+.spec .card .k{font-size:14px;color:var(--grey)}
+.spec .card .big{font-family:var(--p-display);font-weight:var(--p-w);font-size:34px;letter-spacing:var(--p-track);line-height:1.2}
+.spec .card .meta{font-size:16px;line-height:1.55}
+.spec .card .meta b{font-weight:500;margin-right:8px}
+.spec .ctas{display:flex;gap:14px;align-items:center;margin-top:auto;padding-top:8px}
+.spec .btn{display:inline-block;font-family:var(--p-display);font-weight:var(--p-w);font-size:17px;letter-spacing:var(--p-track);line-height:1;padding:16px 26px;background:var(--p-ink);color:#fff;border-radius:var(--p-btn-r);text-decoration:none}
+html[data-s="S1"] .spec .btn{background:var(--p-accent)}
+.spec .brk{position:relative;display:inline-block;padding:15px 22px;font-family:var(--p-display);font-weight:var(--p-w);font-size:17px;letter-spacing:var(--p-track);line-height:1;color:var(--p-ink)}
+.spec .brk::before,.spec .brk::after{content:"";position:absolute;width:12px;height:12px;border:1px solid var(--p-ink)}
+.spec .brk::before{left:0;top:0;border-right:0;border-bottom:0}.spec .brk::after{right:0;bottom:0;border-left:0;border-top:0}
+html[data-s="S1"] .spec .brk{border:1.5px solid var(--p-ink);border-radius:var(--p-btn-r);padding:14px 22px}
+html[data-s="S1"] .spec .brk::before,html[data-s="S1"] .spec .brk::after{display:none}
+.spec .chips{display:flex;gap:8px;flex-wrap:wrap}
+.spec .chip{font-size:14px;line-height:1;padding:7px 11px;border:1px solid var(--p-rule);border-radius:var(--p-pill);color:var(--p-ink)}
+.spec .chip.on{border-color:var(--p-accent);color:var(--p-accent);background:var(--p-tint)}
+.spec .foot{margin-top:26px;font-size:14px;color:var(--grey)}
+/* 서체 견본 줄 */
+.fonts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:8px}
+.fonts .f{border:1px solid var(--line);padding:18px 20px}
+.fonts .f .n{font:600 12px/1 Inter,sans-serif;letter-spacing:.06em;color:var(--grey);margin-bottom:12px}
+.fonts .f .a{font-size:44px;line-height:1.15;letter-spacing:-.02em;margin-bottom:8px}
+.fonts .f .b{font-size:17px;line-height:1.55}
+.fonts .f .c{font-size:13px;color:var(--grey);margin-top:10px;line-height:1.5}
+.fonts .paper .a{font-family:Paperlogy,sans-serif;font-weight:700}.fonts .paper .b{font-family:Pretendard,sans-serif}
+.fonts .kbs .a{font-family:'Kakao Big Sans',sans-serif;font-weight:800;letter-spacing:-.03em}.fonts .kbs .b{font-family:'Kakao Big Sans',sans-serif}
+.fonts .bhs .a{font-family:'Black Han Sans',sans-serif;font-weight:400;letter-spacing:0}.fonts .bhs .b{font-family:'Kakao Big Sans',sans-serif}
+.rec{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin-top:8px}
+.rec div{border-top:3px solid var(--teal);padding-top:12px}
+.rec div.no{border-top-color:var(--warn)}
+.rec h3{margin:0 0 8px;font-family:Paperlogy,Pretendard,sans-serif;font-size:19px;font-weight:700}
+.rec ul{margin:0;padding-left:18px;font-size:15px}
+.rec li{margin:4px 0}
+@media (max-width:900px){.gal,.pick,.fonts,.rec,.spec .row,.spec .kpis{grid-template-columns:1fr}.w{padding:20px}.spec .kpi{border-right:0;border-bottom:1px solid var(--p-rule)}}
+</style>
+</head>
+<body><div class="w">
+
+<div class="sub">Land-XI · 검토 허브 · 벤치마킹 · 2026-09-03</div>
+<h1>카카오 AI 돛 서밋 26</h1>
+<div class="rule"></div>
+<p>https://kakaoaisail.org/aisailsummit/ 를 1440 폭으로 열어 서체·색·형태·모션을 실측했다. 아래 스펙시먼에서 서체·색·형태를 바꿔 가며 우리 대시보드 상단이 어떻게 달라지는지 보고 <b>D19</b> 에 답해 주면 된다.</p>
+<div class="links"><a href="index.html">검토 허브</a><a href="../fonts.html">글꼴 · 톤 후보(T3 결정 페이지)</a><a href="https://kakaoaisail.org/aisailsummit/" target="_blank" rel="noopener">원본 사이트 ↗</a></div>
+
+<section>
+<h2>1. 판독 — 그 사이트가 하는 일</h2>
+<div class="gal">
+  <figure><img src="../../assets/proto/review/bench-kakao/kk-hero.jpg?v=1" alt=""><figcaption><b>딥블루 한 판 + 영상 워드마크</b><span>흰 스티키 헤더 80px 아래 #19199B 단색 판이 화면 폭을 다 차지한다. 영상(3840×2160, 무음 자동재생)이 글자를 그린다 — 페이지에 제목 텍스트가 없다.</span></figcaption></figure>
+  <figure><img src="../../assets/proto/review/bench-kakao/kk-apply.jpg?v=1" alt=""><figcaption><b>D-day 80 → 제목 120 → 메타 40/24 → 필 CTA 1개</b><span>가운데 정렬 한 열. 제목은 내로우 서체 120px · 자간 −0.055em · 행간 1.225. 버튼은 한 화면에 하나, 라운드 100px 딥블루 채움.</span></figcaption></figure>
+  <figure><img src="../../assets/proto/review/bench-kakao/kk-session.jpg?v=1" alt=""><figcaption><b>영문 대문자 섹션 제목 64 + 아웃라인 필 배지</b><span>SESSION · LOCATION · FAQ. 트랙 라벨은 2px 딥블루 아웃라인 필. 카드는 라운드 12–20에 하프톤 점 그라디언트 이미지(webp) 를 배경으로 깐다.</span></figcaption></figure>
+  <figure><img src="../../assets/proto/review/bench-kakao/kk-faq.jpg?v=1" alt=""><figcaption><b>틴트 밴드 #F0F3FA + 흰 카드 + 필 탭</b><span>섹션 하나가 통째로 틴트, 그 위에 흰 라운드 12 카드. 탭은 흰 필 안에서 활성만 틴트 채움. 그림자는 사이트 전체에 사실상 없음(호버 1종).</span></figcaption></figure>
+</div>
+<p class="sub" style="margin-top:14px">더: <a href="../../assets/proto/review/bench-kakao/kk-track.jpg?v=1">트랙 카드</a> · <a href="../../assets/proto/review/bench-kakao/kk-ralphthon.jpg?v=1">랄프톤 밴드</a> · <a href="../../assets/proto/review/bench-kakao/kk-location.jpg?v=1">장소</a> · <a href="../../assets/proto/review/bench-kakao/kk-sponsors.jpg?v=1">후원사(다크 #42474C)</a> · <a href="../../assets/proto/review/bench-kakao/kk-footer.jpg?v=1">푸터 #272727</a></p>
+</section>
+
+<section>
+<h2>2. 실측 대조 — 카카오 vs Land-XI 현행(법전 §1–§4)</h2>
+<table>
+<thead><tr><th style="width:150px">항목</th><th>카카오 AI 돛 서밋</th><th>Land-XI 현행</th><th style="width:120px">판정</th></tr></thead>
+<tbody>
+<tr><td class="k">표시 서체</td><td><b>Neutronic Hangeul Narrow</b> 700 — Adobe Fonts(Typekit) 구독 서체, 내로우 고딕. 제목 120/64/44 에만.</td><td><b>Paperlogy</b> 700/800 — 눈누 무료(jsDelivr).</td><td><span class="tag no">유료 · 대체 필요</span></td></tr>
+<tr><td class="k">본문 서체</td><td><b>Kakao Big Sans</b> 400/700/800 — 카카오 배포, <b>SIL OFL 1.1 무료</b>(상업 사용 가능). 40px 메타부터 16px 네비까지 전부.</td><td><b>Pretendard</b> 400/500.</td><td><span class="tag ok">무료 · 도입 가능</span></td></tr>
+<tr><td class="k">숫자</td><td>본문 서체 그대로(D-26, 13:00 등). tabular 없음.</td><td>큰 수 Paperlogy 700 · 표 Inter tabular.</td><td><span class="tag ok">우리가 정교</span></td></tr>
+<tr><td class="k">스케일</td><td>120 · 80 · 64 · 44 · 40 · 32 · 28 · 24 · 20 · <b>16</b>(바닥). 본문 20/32.</td><td>66 · 54 · 34 · 30 · 26 · 22 · 18 · 16 · <b>14</b>(바닥). 본문 18/26.</td><td><span class="tag hm">저쪽이 한 단 크다</span></td></tr>
+<tr><td class="k">자간 · 행간</td><td>제목 −0.055em / 1.225 · 본문 −0.01~−0.02em / 1.5–1.6</td><td>제목 −0.01em / 1.25 · 본문 0.01em / 1.6</td><td><span class="tag hm">제목 자간 더 조일 수 있음</span></td></tr>
+<tr><td class="k">색</td><td><span class="sw" style="background:#19199B"></span>#19199B 딥블루(주) · <span class="sw" style="background:#325CFF"></span>#325CFF 밝은 파랑(시간·태그) · <span class="sw" style="background:#F0F3FA"></span>#F0F3FA 틴트 · <span class="sw" style="background:#191919"></span>#191919 잉크 · <span class="sw" style="background:#DC2715"></span>#DC2715 new 배지 · <span class="sw" style="background:#FFCD00"></span>#FFCD00 카카오 노랑 1회</td><td><span class="sw" style="background:#006DF7"></span>#006DF7 액센트 · <span class="sw" style="background:#E8F1FF"></span>#E8F1FF / <span class="sw" style="background:#D6E6FF"></span>#D6E6FF 틴트 · <span class="sw" style="background:#010102"></span>#010102 잉크 · <span class="sw" style="background:#D1352B"></span>#D1352B 조치</td><td><span class="tag ok">구조 동일(잉크+파랑 1+틴트+빨강 1)</span></td></tr>
+<tr><td class="k">채운 파란 버튼</td><td>있음 — 1차 CTA 전부 #19199B 채움, 호버 #14147B.</td><td>없음 — 1차 잉크 채움, 2차 코너 브래킷(법전 §2).</td><td><span class="tag hm">법전과 충돌</span></td></tr>
+<tr><td class="k">형태</td><td>라운드 12(카드) · 16(장소) · 20(키노트) · 100(필 버튼·배지·탭). 그림자 사실상 0.</td><td>라운드 0 · 그림자 0 · 헤어라인 + 코너 브래킷.</td><td><span class="tag hm">법전과 충돌</span></td></tr>
+<tr><td class="k">그라디언트</td><td>CSS 그라디언트 0 — 대신 <b>하프톤 점 이미지</b>(webp) 를 카드·밴드 배경으로.</td><td>금지.</td><td><span class="tag hm">이미지로 우회한 것</span></td></tr>
+<tr><td class="k">그리드</td><td>inner 1400 / 콘텐츠 1280 · 3열 카드 413px · 섹션 패딩 120–160.</td><td>1440 / 마진 56 · 12열 거터 24 · 섹션 패딩 120/160.</td><td><span class="tag ok">같음</span></td></tr>
+<tr><td class="k">모션</td><td>거의 없음 — 색 전환 0.2s, 히어로 영상 IntersectionObserver 재생/정지, D-day 카운터, Swiper. 스크롤 리빌 0, 키프레임 0.</td><td>이징 하나 · 500/750/1000/1250 · 클립 리빌 · 스크럽 필름.</td><td><span class="tag ok">우리가 앞섬</span></td></tr>
+<tr><td class="k">글자 양</td><td>섹션당 제목 1 + 메타 3줄 + 버튼 1. FAQ 만 문단.</td><td>"불필요한 글자 전체 삭제" 규칙과 같은 방향.</td><td><span class="tag ok">같은 원칙</span></td></tr>
+</tbody>
+</table>
+</section>
+
+<section>
+<h2>3. 서체 견본 — 같은 문장, 세 조합</h2>
+<div class="fonts">
+  <div class="f paper"><div class="n">F0 · 현행 — Paperlogy 700 + Pretendard 400</div><div class="a">남원시 비닐하우스 탐지</div><div class="b">2026년 6월 8일 기준 · 정사영상 24 cm · AI 결과 폴리곤 1,674 필지</div><div class="c">눈누 무료. 표시체 굵기 2종(700·800)만 배포.</div></div>
+  <div class="f kbs"><div class="n">F2 · Kakao Big Sans 800 + 400</div><div class="a">남원시 비닐하우스 탐지</div><div class="b">2026년 6월 8일 기준 · 정사영상 24 cm · AI 결과 폴리곤 1,674 필지</div><div class="c">SIL OFL 1.1 무료. 400/700/800 한 가족으로 제목·본문·숫자를 다 덮는다. 라틴·키릴·가나 포함.</div></div>
+  <div class="f bhs"><div class="n">F3 · Black Han Sans + Kakao Big Sans 400</div><div class="a">남원시 비닐하우스 탐지</div><div class="b">2026년 6월 8일 기준 · 정사영상 24 cm · AI 결과 폴리곤 1,674 필지</div><div class="c">Neutronic Narrow 의 무료 대역(Google Fonts). 굵기 1종, 포스터용 — 대시보드 제목엔 과하다.</div></div>
+</div>
+</section>
+
+<section>
+<h2>4. 스펙시먼 — 우리 대시보드 상단에 입혀 보기</h2>
+<div class="pick">
+  <fieldset><legend>서체</legend>
+    <label><input type="radio" name="f" value="F0" checked><span>F0 현행 <small>Paperlogy + Pretendard</small></span></label>
+    <label><input type="radio" name="f" value="F1"><span>F1 본문만 교체 <small>Paperlogy + Kakao Big Sans</small></span></label>
+    <label><input type="radio" name="f" value="F2"><span>F2 전부 교체 <small>Kakao Big Sans 800 + 400</small></span></label>
+    <label><input type="radio" name="f" value="F3"><span>F3 내로우 제목 <small>Black Han Sans + Kakao Big Sans</small></span></label>
+  </fieldset>
+  <fieldset><legend>색</legend>
+    <label><input type="radio" name="c" value="C0" checked><span>C0 현행 T3 <small>#006DF7 · 틴트 #E8F1FF</small></span></label>
+    <label><input type="radio" name="c" value="C1"><span>C1 카카오식 딥블루 <small>#19199B · 틴트 #F0F3FA · 잉크 #191919</small></span></label>
+  </fieldset>
+  <fieldset><legend>형태</legend>
+    <label><input type="radio" name="s" value="S0" checked><span>S0 현행 <small>라운드 0 · 잉크 버튼 · 코너 브래킷</small></span></label>
+    <label><input type="radio" name="s" value="S1"><span>S1 카카오식 <small>라운드 12 · 필 100 배지·탭 · 채운 파란 버튼</small></span></label>
+  </fieldset>
+</div>
+<div class="now" id="now"></div>
+
+<div class="spec" id="spec">
+  <div class="mh"><div class="wm">LAND<br>XI</div><nav><span class="on">대시보드</span><span>데이터 관리</span><span>프로젝트</span><span>분석 서비스</span><span>지도 서비스</span></nav><div class="ref">기준일 현재 <b>2026.06.08</b></div></div>
+  <div class="body">
+    <h3 class="t">LX 관리자 대시보드 <small>서비스 운영 현황과 승인·관리 업무를 한눈에</small></h3>
+    <div class="trule"></div>
+    <div class="kpis">
+      <div class="kpi"><div class="l">전체 사용자</div><div class="v">21<small>명</small></div><div class="s">정상 19</div></div>
+      <div class="kpi"><div class="l">발행 분석 카드</div><div class="v">8<small>건</small></div><div class="s">공개 7 · 비공개 1</div></div>
+      <div class="kpi warn"><div class="l">카드 발행 승인 대기</div><div class="v">2<small>건</small></div><div class="s">검토 필요</div></div>
+      <div class="kpi warn"><div class="l">미답변 문의</div><div class="v">6<small>건</small></div><div class="s">답변 필요</div></div>
+    </div>
+    <div class="row">
+      <div>
+        <div class="hd"><span class="pill">스토리지</span><h4>AI 개발 프로젝트 현황</h4><span class="more">전체 보기 ›</span></div>
+        <table>
+          <thead><tr><th>#</th><th>프로젝트</th><th style="text-align:right">용량</th><th>상태</th></tr></thead>
+          <tbody>
+            <tr class="sel"><td>01</td><td>도로안전 정사영상</td><td class="n">412 GB</td><td><span class="st b">선택</span></td></tr>
+            <tr><td>02</td><td>농지 활용 분석</td><td class="n">318 GB</td><td>공개</td></tr>
+            <tr><td>03</td><td>비닐하우스 탐지</td><td class="n">256 GB</td><td><span class="st">승인 대기</span></td></tr>
+            <tr><td>04</td><td>사료작물(생육기) 탐지</td><td class="n">198 GB</td><td>공개</td></tr>
+          </tbody>
+        </table>
+        <div class="chips" style="margin-top:14px"><span class="chip on">AI 개발 프로젝트</span><span class="chip">사용자 이용</span><span class="chip">전체 스토리지</span></div>
+      </div>
+      <div class="card">
+        <div class="k">카드 발행 승인 대기 · 01</div>
+        <div class="big">도로안전 정사영상 v2.1</div>
+        <div class="meta"><b>요청 일시</b> 2026.06.10 14:30<br><b>요청 지역</b> 남원시 도통동<br><b>증거 크롭</b> 기준점에서 5.2 km</div>
+        <div class="ctas"><a class="btn" href="#">검토하기</a><a class="brk" href="#">카드 발행 관리</a></div>
+      </div>
+    </div>
+    <div class="foot">숫자·라벨은 현행 대시보드(db-data.js)의 것. 조판 규칙만 바꾼다.</div>
+  </div>
+</div>
+</section>
+
+<section>
+<h2>5. 권고</h2>
+<div class="rec">
+  <div><h3>가져올 것</h3><ul>
+    <li><b>Kakao Big Sans 를 본문으로 검토(F1)</b> — 무료(OFL), 넓고 안정된 모듈 구조라 16–20px 표·라벨에서 Pretendard 보다 또렷하다. 표시체는 Paperlogy 유지 → 법전의 "서체 3개" 수는 그대로.</li>
+    <li><b>제목 자간</b> −0.01em → −0.03em (54px 이상만). 저쪽의 −0.055em 은 내로우 서체용이라 Paperlogy 엔 과함.</li>
+    <li><b>영문 대문자 섹션 제목 + 아웃라인 필 배지</b>의 <i>역할</i> — 섹션 이름은 크게, 분류는 얇은 테두리 라벨로. 우리 규칙에선 필 대신 각진 라벨(라운드 0)로 같은 위계를 낸다.</li>
+    <li><b>글자 양</b> — 섹션당 제목 1 · 메타 3줄 · 버튼 1. 이미 우리 원칙과 같아서 확인용.</li>
+  </ul></div>
+  <div class="no"><h3>가져오지 말 것</h3><ul>
+    <li><b>Neutronic Hangeul Narrow</b> — Adobe Fonts 구독이 있어야 웹에 쓸 수 있다. 무료 대역(Black Han Sans, F3)은 굵기 1종·포스터체라 제품 화면엔 맞지 않는다.</li>
+    <li><b>라운드 12–20 · 필 100 · 채운 파란 버튼(S1)</b> — 법전 §2 "라운드 0 · 그림자 0 · 채운 파란 버튼 없음"과 정면 충돌. 행사 랜딩(한 번 읽고 신청)과 운영 도구(매일 보는 표)는 다른 문제다.</li>
+    <li><b>하프톤 그라디언트 배경 이미지</b> — 그라디언트 금지를 이미지로 우회한 것. 우리 카드 배경은 실영상 크롭이 그 자리를 맡는다.</li>
+    <li><b>딥블루 #19199B(C1)</b> — CI 워드마크 블루(#0C7CE8 계열)와 어긋나 LX 브랜드에서 멀어진다. T3 결정(2026-08-27)을 뒤집을 이유가 없다.</li>
+  </ul></div>
+</div>
+<div class="dec"><h3>D19 · 카카오 벤치 반영 범위</h3><p>① F1 — 본문만 Kakao Big Sans 로 교체(표시체·색·형태 유지, 권장) · ② F2 — 표시체까지 Kakao Big Sans 로 통일 · ③ 서체 유지, 제목 자간 −0.03em 만 반영 · ④ 반영 없음. 색(C1)·형태(S1)는 위 스펙시먼으로 보고 원하시면 따로 지정.</p></div>
+</section>
+
+</div>
+<script>
+(function(){
+  var KEY='landxi.bench-kakao';
+  var names={F0:'F0 현행(Paperlogy+Pretendard)',F1:'F1 본문 Kakao Big Sans',F2:'F2 전부 Kakao Big Sans',F3:'F3 Black Han Sans+Kakao Big Sans',C0:'C0 T3 #006DF7',C1:'C1 딥블루 #19199B',S0:'S0 라운드 0·브래킷',S1:'S1 라운드 12·필·파란 버튼'};
+  var h=document.documentElement, now=document.getElementById('now');
+  function apply(o){ for(var k in o){ h.setAttribute('data-'+k,o[k]); var el=document.querySelector('input[name='+k+'][value='+o[k]+']'); if(el) el.checked=true; }
+    now.innerHTML='지금 보는 조합: <b>'+names[h.getAttribute('data-f')]+'</b> · <b>'+names[h.getAttribute('data-c')]+'</b> · <b>'+names[h.getAttribute('data-s')]+'</b> — 브라우저에 저장됨'; }
+  var saved={}; try{ saved=JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){}
+  apply(Object.assign({f:'F0',c:'C0',s:'S0'},saved));
+  document.querySelectorAll('.pick input').forEach(function(i){ i.addEventListener('change',function(){ var o={f:h.getAttribute('data-f'),c:h.getAttribute('data-c'),s:h.getAttribute('data-s')}; o[i.name]=i.value; apply(o); try{ localStorage.setItem(KEY,JSON.stringify(o)); }catch(e){} }); });
+})();
+</script>
+</body></html>
