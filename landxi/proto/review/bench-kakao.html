@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>카카오 AI 돛 서밋 · 벤치마킹</title>
+<title>카카오 AI 돛 · 벤치마킹</title>
 <link rel="stylesheet" href="../fonts-system.css">
 <!-- 벤치 전용 서체 — 이 페이지에서만 불러온다(법전 §1 "제3의 서체 금지"는 그대로, 비교용) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/KakaoBigSans/KakaoBigSans.css">
@@ -15,30 +15,45 @@ body{margin:0;background:#fff;color:var(--ink);font:16px/1.6 Pretendard,system-u
 .w{max-width:1200px;margin:0 auto;padding:28px 32px 72px}
 h1{font-family:Paperlogy,Pretendard,sans-serif;font-weight:700;font-size:34px;margin:0 0 6px;letter-spacing:-.02em}
 h2{font-family:Paperlogy,Pretendard,sans-serif;font-weight:700;font-size:22px;margin:0 0 12px;letter-spacing:-.01em}
+h2 small{font-family:Pretendard,sans-serif;font-weight:400;font-size:15px;color:var(--grey);margin-left:10px}
 .rule{width:120px;height:4px;background:var(--accent);margin:0 0 14px}
 .sub{color:var(--grey);font-size:14px}
-p{max-width:860px;margin:0 0 10px}
+p{max-width:880px;margin:0 0 10px}
 a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 .links{display:flex;gap:18px;flex-wrap:wrap;font-size:15px;margin-top:8px}
+nav.toc{display:flex;gap:14px;flex-wrap:wrap;font-size:14px;margin-top:14px;padding:10px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+nav.toc a{color:var(--ink2)}nav.toc a b{color:var(--accent);font-family:Inter,sans-serif;font-weight:600;margin-right:4px}
 section{padding:30px 0 6px;border-top:1px solid var(--line);margin-top:26px}
 .dec{border-left:3px solid var(--accent);background:var(--tint);padding:12px 16px;margin:14px 0}
 .dec h3{margin:0 0 4px;font-size:17px}.dec p{margin:0;font-size:15px;color:var(--ink2);max-width:none}
-/* 판독 갤러리 */
+/* 갤러리 */
 .gal{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 24px;margin-top:6px}
+.gal.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .gal figure{margin:0}
 .gal img{width:100%;display:block;border:1px solid var(--line)}
 .gal figcaption{margin-top:8px;font-size:15px}
 .gal figcaption b{font-family:Paperlogy,Pretendard,sans-serif;font-weight:700;font-size:17px;display:block;margin-bottom:2px}
 .gal figcaption span{color:var(--grey)}
-/* 대조표 */
+.gal figcaption .us{display:block;margin-top:6px;padding-left:10px;border-left:3px solid var(--teal);color:var(--ink);font-size:14px}
+.gal figcaption .us::before{content:"우리 자리 · ";color:var(--teal);font-weight:600}
+/* 표 */
 table{border-collapse:collapse;width:100%;font-size:15px}
 th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
 thead th{background:var(--tint);font-size:13px;color:var(--grey);font-weight:600;border-bottom:1px solid var(--ink)}
 td.k{width:150px;font-weight:500}
 td .sw{display:inline-block;width:12px;height:12px;vertical-align:-1px;margin-right:4px;border:1px solid rgba(0,0,0,.12)}
-code{font:14px Inter,Consolas,monospace;background:#F5F5F5;padding:1px 5px}
 .tag{display:inline-block;font:600 11px/1 Inter,sans-serif;letter-spacing:.06em;padding:4px 6px;border:1px solid var(--line);vertical-align:2px;margin-left:6px;white-space:nowrap}
 .tag.ok{border-color:var(--teal);color:var(--teal)}.tag.no{border-color:var(--warn);color:var(--warn)}.tag.hm{border-color:#B7791F;color:#B7791F}
+/* 세계관 2열 */
+.world{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:10px}
+.world > div{border-top:3px solid var(--kk);padding-top:12px}
+.world > div.lx{border-top-color:var(--accent)}
+.world h3{margin:0 0 8px;font-family:Paperlogy,Pretendard,sans-serif;font-size:19px;font-weight:700}
+.world dl{margin:0;font-size:15px;display:grid;grid-template-columns:96px 1fr;gap:6px 12px}
+.world dt{color:var(--grey)}.world dd{margin:0}
+.chars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:14px}
+.chars figure{margin:0}.chars img{width:100%;display:block;border:1px solid var(--line)}
+.chars figcaption{font-size:14px;color:var(--grey);margin-top:6px}
 /* 선택기 */
 .pick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:16px 0 18px}
 .pick fieldset{border:1px solid var(--line);padding:12px 14px;margin:0}
@@ -48,10 +63,10 @@ code{font:14px Inter,Consolas,monospace;background:#F5F5F5;padding:1px 5px}
 .pick input{margin-top:5px}
 .now{font-size:15px;margin:0 0 12px;padding:10px 14px;background:var(--tint)}
 .now b{font-family:Inter,sans-serif;font-weight:600}
-/* ===== 스펙시먼(대시보드 상단 축소판) — 토큰은 html[data-*] 로 뒤집는다 ===== */
+/* ===== 스펙시먼 — 토큰은 html[data-*] 로 뒤집는다 ===== */
 .spec{--p-display:Paperlogy,Pretendard,sans-serif;--p-body:Pretendard,system-ui,sans-serif;--p-w:700;--p-track:-0.01em;
       --p-accent:var(--accent);--p-tint:var(--tint);--p-tint2:var(--tint2);--p-ink:var(--ink);--p-rule:var(--line);--p-r:0;--p-pill:0;--p-btn-r:0;--p-h1:54px;--p-kpi:126px;--p-kpi-lh:1;
-      border:1px solid var(--line);background:#fff;color:var(--p-ink);font-family:var(--p-body);overflow:hidden}
+      border:1px solid var(--line);background:#fff;color:var(--p-ink);font-family:var(--p-body);overflow:hidden;margin-bottom:22px}
 html[data-f="F1"] .spec{--p-body:'Kakao Big Sans',Pretendard,sans-serif}
 html[data-f="F2"] .spec{--p-body:'Kakao Big Sans',Pretendard,sans-serif;--p-display:'Kakao Big Sans',Pretendard,sans-serif;--p-w:800;--p-track:-0.03em}
 html[data-f="F3"] .spec{--p-body:'Kakao Big Sans',Pretendard,sans-serif;--p-display:'Black Han Sans',Paperlogy,sans-serif;--p-w:400;--p-track:0;--p-h1:58px;--p-kpi:132px}
@@ -80,7 +95,6 @@ html[data-s="S1"] .spec{--p-r:12px;--p-pill:100px;--p-btn-r:100px}
 .spec .hd{display:flex;align-items:center;gap:12px;margin-bottom:14px}
 .spec .hd h4{margin:0;font-family:var(--p-display);font-weight:var(--p-w);font-size:26px;letter-spacing:var(--p-track)}
 .spec .pill{display:inline-block;font-size:14px;font-weight:500;line-height:1;padding:7px 12px;border:1.5px solid var(--p-accent);color:var(--p-accent);border-radius:var(--p-pill)}
-.spec .pill.fill{background:var(--p-tint2);border-color:var(--p-tint2);color:var(--p-accent)}
 .spec .hd .more{margin-left:auto;font-size:15px;color:var(--grey)}
 .spec table{font-size:16px}
 .spec th,.spec td{border-bottom:1px solid var(--p-rule);padding:11px 10px}
@@ -106,7 +120,31 @@ html[data-s="S1"] .spec .brk::before,html[data-s="S1"] .spec .brk::after{display
 .spec .chip{font-size:14px;line-height:1;padding:7px 11px;border:1px solid var(--p-rule);border-radius:var(--p-pill);color:var(--p-ink)}
 .spec .chip.on{border-color:var(--p-accent);color:var(--p-accent);background:var(--p-tint)}
 .spec .foot{margin-top:26px;font-size:14px;color:var(--grey)}
-/* 서체 견본 줄 */
+/* 스펙시먼 B — 서비스 카드(키노트·트랙 문법) */
+.spec .sec{padding:34px 40px 40px}
+.spec .sec .sect{font-family:var(--p-display);font-weight:var(--p-w);font-size:40px;letter-spacing:var(--p-track);text-align:center;margin:0 0 6px}
+.spec .sec .secs{text-align:center;color:var(--grey);font-size:16px;margin:0 0 26px}
+.spec .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+.spec .sc{border:1px solid var(--p-rule);border-radius:var(--p-r);overflow:hidden;background:#fff;display:flex;flex-direction:column}
+html[data-s="S1"] .spec .sc{border-color:transparent;background:var(--p-tint)}
+.spec .sc img{width:100%;aspect-ratio:640/420;object-fit:cover;display:block}
+.spec .sc .in{padding:18px 20px 20px;display:flex;flex-direction:column;gap:8px;flex:1}
+.spec .sc .top{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--p-accent);font-weight:500;font-family:Inter,sans-serif;font-variant-numeric:tabular-nums}
+.spec .sc .top .pill{font-family:var(--p-body);font-size:13px;padding:6px 10px}
+.spec .sc h5{margin:0;font-family:var(--p-display);font-weight:var(--p-w);font-size:24px;line-height:1.25;letter-spacing:var(--p-track)}
+.spec .sc .m{font-size:15px;color:var(--grey);line-height:1.5}
+.spec .sc .num{margin-top:auto;padding-top:10px;display:flex;align-items:baseline;gap:8px;border-top:1px solid var(--p-rule)}
+html[data-s="S1"] .spec .sc .num{border-top-color:rgba(0,0,0,.08)}
+.spec .sc .num b{font-family:var(--p-display);font-weight:var(--p-w);font-size:34px;color:var(--p-accent);letter-spacing:-0.02em;line-height:1;font-variant-numeric:tabular-nums}
+.spec .sc .num span{font-size:15px;color:var(--grey)}
+.spec .sc.dark,html[data-s="S1"] .spec .sc.dark{background:var(--p-ink);color:#fff;border-color:var(--p-ink)}
+.spec .sc.dark .m,.spec .sc.dark .num span{color:#CCCCCC}
+.spec .sc.dark .num{border-top-color:#3A3A3A}
+.spec .sc.dark .top{color:#8FBFFF}.spec .sc.dark .pill{border-color:#8FBFFF;color:#8FBFFF}
+html[data-c="C1"] .spec .sc.dark{background:var(--kk);border-color:var(--kk)}
+html[data-c="C1"] .spec .sc.dark .top,html[data-c="C1"] .spec .sc.dark .pill{color:#fff;border-color:#fff}
+html[data-c="C1"] .spec .sc.dark .num b{color:#fff}
+/* 서체 견본 */
 .fonts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:8px}
 .fonts .f{border:1px solid var(--line);padding:18px 20px}
 .fonts .f .n{font:600 12px/1 Inter,sans-serif;letter-spacing:.06em;color:var(--grey);margin-bottom:12px}
@@ -121,61 +159,137 @@ html[data-s="S1"] .spec .brk::before,html[data-s="S1"] .spec .brk::after{display
 .rec div.no{border-top-color:var(--warn)}
 .rec h3{margin:0 0 8px;font-family:Paperlogy,Pretendard,sans-serif;font-size:19px;font-weight:700}
 .rec ul{margin:0;padding-left:18px;font-size:15px}
-.rec li{margin:4px 0}
-@media (max-width:900px){.gal,.pick,.fonts,.rec,.spec .row,.spec .kpis{grid-template-columns:1fr}.w{padding:20px}.spec .kpi{border-right:0;border-bottom:1px solid var(--p-rule)}}
+.rec li{margin:5px 0}
+@media (max-width:900px){.gal,.gal.g3,.pick,.fonts,.rec,.world,.chars,.spec .row,.spec .kpis,.spec .cards{grid-template-columns:1fr}.w{padding:20px}.spec .kpi{border-right:0;border-bottom:1px solid var(--p-rule)}}
 </style>
 </head>
 <body><div class="w">
 
-<div class="sub">Land-XI · 검토 허브 · 벤치마킹 · 2026-09-03</div>
-<h1>카카오 AI 돛 서밋 26</h1>
+<div class="sub">Land-XI · 검토 허브 · 벤치마킹 · 2026-09-03 (2차 — 세계관·콘텐츠 문법·카드·CI/마스코트까지 확장)</div>
+<h1>카카오 AI 돛</h1>
 <div class="rule"></div>
-<p>https://kakaoaisail.org/aisailsummit/ 를 1440 폭으로 열어 서체·색·형태·모션을 실측했다. 아래 스펙시먼에서 서체·색·형태를 바꿔 가며 우리 대시보드 상단이 어떻게 달라지는지 보고 <b>D19</b> 에 답해 주면 된다.</p>
-<div class="links"><a href="index.html">검토 허브</a><a href="../fonts.html">글꼴 · 톤 후보(T3 결정 페이지)</a><a href="https://kakaoaisail.org/aisailsummit/" target="_blank" rel="noopener">원본 사이트 ↗</a></div>
+<p>kakaoaisail.org 의 네 페이지(메인 · PROGRAM · Summit 26 · 출항)를 1440 폭으로 열어 <b>세계관 → 콘텐츠 표현 → 카드 → CI·마스코트 → 서체·색·형태</b> 순서로 뜯었다. 각 장치마다 "우리 자리"를 적었고, 마지막 스펙시먼에서 우리 화면에 입혀 볼 수 있다. 결정은 <b>D19 · D20 · D21</b>.</p>
+<div class="links"><a href="index.html">검토 허브</a><a href="../fonts.html">글꼴 · 톤 후보(T3 결정 페이지)</a><a href="https://kakaoaisail.org/" target="_blank" rel="noopener">원본 사이트 ↗</a></div>
+<nav class="toc"><a href="#s1"><b>1</b>세계관</a><a href="#s2"><b>2</b>콘텐츠 표현 문법</a><a href="#s3"><b>3</b>카드 문법</a><a href="#s4"><b>4</b>CI · 마스코트</a><a href="#s5"><b>5</b>서체·색·형태 실측</a><a href="#s6"><b>6</b>스펙시먼(입혀 보기)</a><a href="#s7"><b>7</b>권고 · 결정</a></nav>
 
-<section>
-<h2>1. 판독 — 그 사이트가 하는 일</h2>
+<!-- ============ 1 ============ -->
+<section id="s1">
+<h2>1. 세계관 — 은유 하나가 전부를 관통한다</h2>
+<p>이 사이트가 잘 만든 이유는 서체나 색이 아니다. <b>"돛(sail) · 항해"</b> 한 은유가 이름 → 마스코트 → 카피 → 섹션명 → 질감 → 프로그램명까지 끊기지 않는다. 우리에게도 같은 축이 이미 있다 — <b>"위에서 내려다보는 눈"</b>(위성 → 항공 → 드론 → 정사영상 → 필지). 필름이 그 축으로 이미 서 있고, 화면들이 아직 그 어휘를 안 쓰고 있을 뿐이다.</p>
 <div class="gal">
-  <figure><img src="../../assets/proto/review/bench-kakao/kk-hero.jpg?v=1" alt=""><figcaption><b>딥블루 한 판 + 영상 워드마크</b><span>흰 스티키 헤더 80px 아래 #19199B 단색 판이 화면 폭을 다 차지한다. 영상(3840×2160, 무음 자동재생)이 글자를 그린다 — 페이지에 제목 텍스트가 없다.</span></figcaption></figure>
-  <figure><img src="../../assets/proto/review/bench-kakao/kk-apply.jpg?v=1" alt=""><figcaption><b>D-day 80 → 제목 120 → 메타 40/24 → 필 CTA 1개</b><span>가운데 정렬 한 열. 제목은 내로우 서체 120px · 자간 −0.055em · 행간 1.225. 버튼은 한 화면에 하나, 라운드 100px 딥블루 채움.</span></figcaption></figure>
-  <figure><img src="../../assets/proto/review/bench-kakao/kk-session.jpg?v=1" alt=""><figcaption><b>영문 대문자 섹션 제목 64 + 아웃라인 필 배지</b><span>SESSION · LOCATION · FAQ. 트랙 라벨은 2px 딥블루 아웃라인 필. 카드는 라운드 12–20에 하프톤 점 그라디언트 이미지(webp) 를 배경으로 깐다.</span></figcaption></figure>
-  <figure><img src="../../assets/proto/review/bench-kakao/kk-faq.jpg?v=1" alt=""><figcaption><b>틴트 밴드 #F0F3FA + 흰 카드 + 필 탭</b><span>섹션 하나가 통째로 틴트, 그 위에 흰 라운드 12 카드. 탭은 흰 필 안에서 활성만 틴트 채움. 그림자는 사이트 전체에 사실상 없음(호버 1종).</span></figcaption></figure>
+  <figure><img src="../../assets/proto/review/bench-kakao/kk-root-hero.jpg?v=2" alt=""><figcaption><b>메인 히어로 — 선장 라이언 + 스티커 3장</b><span>기존 IP(라이언)에 선장 모자·세일러 칼라를 입혀 세계관 캐릭터로. 바다 질감 판 위에 "미래로 / 나아가는 돛", 3D 스티커 AI · YOUR GUIDE · GROWTH. 뒤에 우주·오로라 판 두 장이 겹친다.</span><span class="us">필름이 이 자리를 맡는다. 스티커 역할은 HUD 라벨(ALT · 좌표 · 기준일)이 이미 하고 있다.</span></figcaption></figure>
+  <figure><img src="../../assets/proto/review/bench-kakao/kk-root-slogan.jpg?v=2" alt=""><figcaption><b>미션 한 문단 — 그라디언트 판에 딥블루 44px</b><span>"담대한 항해 · 파도를 넘어 · 조력자" — 은유 어휘로만 쓴 다섯 줄. 페이지에서 유일하게 색이 흐르는 자리.</span><span class="us">로그인 소개문(모토·비전). 우리는 그라디언트 대신 필름 스틸 위에 놓는다.</span></figcaption></figure>
+  <figure><img src="../../assets/proto/review/bench-kakao/kk-root-direction.jpg?v=2" alt=""><figcaption><b>3가지 지향점 — 영문 76px + 한글 한 줄 + 사진 슬라이드</b><span>Bold & Boundless / Leading & Proactive / Alive & Practical. 큰 영문이 도장, 한글은 설명, 사진은 현장.</span><span class="us">로그인 3축(관측 · 분석 · 공유). 영문 대제목 + 한글 한 줄 + 실영상 크롭 — 구조 그대로 쓸 수 있다.</span></figcaption></figure>
+  <figure><img src="../../assets/proto/review/bench-kakao/kk-invest-hero.jpg?v=2" alt=""><figcaption><b>출항 페이지 — 딥블루 한 판, 제목 · 한 문장 · 접수 기간 · D-day · 버튼 1</b><span>프로그램명도 은유("출항"), 부제도 은유("넓은 바다로"). 파트너 로고 띠가 판 안 상단에.</span><span class="us">분석 서비스 첫 화면(서비스 소개 판). 우리 판은 잉크 대신 실영상.</span></figcaption></figure>
 </div>
-<p class="sub" style="margin-top:14px">더: <a href="../../assets/proto/review/bench-kakao/kk-track.jpg?v=1">트랙 카드</a> · <a href="../../assets/proto/review/bench-kakao/kk-ralphthon.jpg?v=1">랄프톤 밴드</a> · <a href="../../assets/proto/review/bench-kakao/kk-location.jpg?v=1">장소</a> · <a href="../../assets/proto/review/bench-kakao/kk-sponsors.jpg?v=1">후원사(다크 #42474C)</a> · <a href="../../assets/proto/review/bench-kakao/kk-footer.jpg?v=1">푸터 #272727</a></p>
+<div class="world">
+  <div><h3>카카오 AI 돛 — "항해"</h3><dl>
+    <dt>이름</dt><dd>돛(sail) — 조직명 자체가 은유</dd>
+    <dt>캐릭터</dt><dd>선장 라이언(3D). 기존 IP 재의상, 신규 제작 아님</dd>
+    <dt>어휘</dt><dd>항해 · 출항 · 파도 · 조력자 · 항로 · 넓은 바다 · PROJECT SAILING</dd>
+    <dt>질감</dt><dd>바다 사진 · 픽셀 해도 · 하프톤 파도 · 별하늘</dd>
+    <dt>색</dt><dd>딥블루 #19199B(바다) + 카카오 노랑 1회(라이언)</dd>
+    <dt>섹션명</dt><dd>영문 대문자 도장: SESSION · LOCATION · ARCHIVE · APPLY</dd>
+  </dl></div>
+  <div class="lx"><h3>Land-XI — "위에서 보는 눈"(제안)</h3><dl>
+    <dt>이름</dt><dd>Land(국토) + XI(眼·AI) — 이미 은유다</dd>
+    <dt>캐릭터</dt><dd>필름의 <b>국토위성 · LX 드론 · 항공기</b> — 이미 있고, 크레딧 0(§4)</dd>
+    <dt>어휘</dt><dd>관측 · 시점 · 기준일 · 정사 · 필지 · 고도 · 탐지 · 판독</dd>
+    <dt>질감</dt><dd>실영상 크롭 · 등고선 · 타일 격자 · 필름 스틸</dd>
+    <dt>색</dt><dd>LX 블루 #006DF7(하늘·정보) + 앰버 1회(탐지 순간)</dd>
+    <dt>섹션명</dt><dd>영문 도장 후보: OBSERVE · DETECT · PUBLISH · ARCHIVE</dd>
+  </dl></div>
+</div>
 </section>
 
-<section>
-<h2>2. 실측 대조 — 카카오 vs Land-XI 현행(법전 §1–§4)</h2>
-<table>
-<thead><tr><th style="width:150px">항목</th><th>카카오 AI 돛 서밋</th><th>Land-XI 현행</th><th style="width:120px">판정</th></tr></thead>
+<!-- ============ 2 ============ -->
+<section id="s2">
+<h2>2. 콘텐츠 표현 문법 <small>페이지마다 반복되는 장치 8개</small></h2>
+<div class="gal">
+  <figure><img src="../../assets/proto/review/bench-kakao/kk-apply.jpg?v=2" alt=""><figcaption><b>① 카운트 → 제목 → 메타 dl → 버튼 1</b><span>D-26 80px 딥블루 → 120px 제목 → 일정/장소/기간을 dt·dd 세 줄 → 필 버튼 하나. 가운데 한 열, 글자 7덩이.</span><span class="us">대시보드 상단 밴드 · 카드 발행 승인 판. "기준일 현재" 를 D-day 자리처럼 큰 숫자로.</span></figcaption></figure>
+  <figure><img src="../../assets/proto/review/bench-kakao/kk-root-talent.jpg?v=2" alt=""><figcaption><b>② 아코디언 3줄 — 제목 36px 800 + 펼치면 문단</b><span>지역 AI 창업 활성화 / 인재 양성 / 산업 AX 혁신. 회색 판 셋, 펼침 전엔 제목만.</span><span class="us">서비스 지원(FAQ) · 분석 서비스 설명. 우리 규칙엔 "펼침 전 제목만" 이 딱 맞는다.</span></figcaption></figure>
+  <figure><img src="../../assets/proto/review/bench-kakao/kk-invest-benefit.jpg?v=2" alt=""><figcaption><b>③ 라벨 필 + 제목 + 두 줄 + 타일 4 + 안내 띠</b><span>ABOUT(필) → "출항이란?" → 두 줄 → 딥블루 타일 4장(제목 28 + 3줄) → 틴트 띠(지원 자격).</span><span class="us">관리 바로가기 타일 4 · 서비스 소개. 우리 타일은 흰 바탕 + 파랑 큰 수(채운 파랑 금지).</span></figcaption></figure>
+  <figure><img src="../../assets/proto/review/bench-kakao/kk-invest-archive.jpg?v=2" alt=""><figcaption><b>④ 성과 숫자 5 + 결과 카드 5</b><span>1차 지원 66팀 … PoC 3팀 — 라벨 위 · 숫자 아래 딥블루. 아래는 수상 배지(필) + 팀명 + 소속 + 헤어라인 + 결과 3줄.</span><span class="us">분석 서비스 결과 띠(탐지 1,674필지 · 9,664동 …) + 결과 카드. <b>D10 대표 수치 결정</b>과 바로 연결.</span></figcaption></figure>
+  <figure><img src="../../assets/proto/review/bench-kakao/kk-invest-schedule.jpg?v=2" alt=""><figcaption><b>⑤ 6단계 스텝퍼 + 상금 표 + 접수 배너</b><span>STEP 1–6 원형 번호를 선으로 잇고, 아래 상금은 라벨 좌 · 큰 수 우. 마지막 띠는 딥블루 판에 "먼저 접수할수록 유리".</span><span class="us">데이터 관리 파이프라인 4탭(이미 단계형) · 분석 실행 진행 상태.</span></figcaption></figure>
+  <figure><img src="../../assets/proto/review/bench-kakao/kk-program-item.jpg?v=2" alt=""><figcaption><b>⑥ 프로그램 아이템 — 영문 도장 + 사진 좌 · 배지·제목·한 줄·문단·링크 우</b><span>PROJECT SAILING / KAKAO AI ROOKIE CAMP … 네 번 반복. 사진 5:3, 배지는 검정 필, 링크는 "자세히 보기 ↗".</span><span class="us">우리 EVIDENCE-PAIR 그 자체. 프로젝트 목록 · 분석 서비스 4종 소개에.</span></figcaption></figure>
+  <figure><img src="../../assets/proto/review/bench-kakao/kk-root-wish.jpg?v=2" alt=""><figcaption><b>⑦ 인용 카드 4 + 파트너 로고 띠</b><span>"— 로컬 청년 크리에이터" 식 출처 한 줄, 회색 판. 그 아래 하늘색 띠에 파트너 로고 10개 한 줄.</span><span class="us">데이터 출처 띠(국토위성 · V-World · 드론 · LX) — 로고 한 줄이면 신뢰가 생긴다. 인용 카드는 우리 콘티 규칙(지어낸 서사 금지)상 쓰지 않는다.</span></figcaption></figure>
+  <figure><img src="../../assets/proto/review/bench-kakao/kk-root-footer.jpg?v=2" alt=""><figcaption><b>⑧ 푸터 — 링크 3열 + SNS + 초대형 워터마크</b><span>#272727 판, 맨 아래 "kakao!mpact" 를 판 폭만큼 회색으로 깔아 페이지를 닫는다.</span><span class="us">우리 푸터 · 필름 마감 뒤. LX 락업(역상)을 워터마크로 — 이미 마감 화면에서 쓰는 방식.</span></figcaption></figure>
+</div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section id="s3">
+<h2>3. 카드 문법 <small>키노트 · 트랙 · 모달 · 지도</small></h2>
+<div class="gal">
+  <figure><img src="../../assets/proto/review/bench-kakao/kk-session.jpg?v=2" alt=""><figcaption><b>키노트 카드(어둠) — 시간 · 라벨 / 하프톤 파도 / 제목 28 / 이름+소속</b><span>연사 사진은 <b>흑백 컷아웃</b>으로 톤을 맞춰 배경에 녹인다. 3장이 한 줄, 라운드 20. 카드 전체가 버튼(모달).</span><span class="us">분석 서비스 대표 카드 3(비닐하우스 · 사료작물 · 도로안전). 사진 자리엔 실영상 크롭, 이름 자리엔 기준일·결과 수.</span></figcaption></figure>
+  <figure><img src="../../assets/proto/review/bench-kakao/kk-track.jpg?v=2" alt=""><figcaption><b>트랙 카드(틴트) — 시간 · 태그 필 / 제목 20 / 이름 소속 / 사진 우하단</b><span>같은 구조를 밝게. "현장 전용" 태그는 흰 필 + 밝은 파랑 #325CFF. 3열 그리드, 트랙별 라벨 필로 묶음.</span><span class="us">프로젝트 카드 · 데이터셋 타일. 태그 = 상태(승인 대기 · 공개), 사진 = 크롭.</span></figcaption></figure>
+  <figure><img src="../../assets/proto/review/bench-kakao/kk-location.jpg?v=2" alt=""><figcaption><b>장소 카드 — 일러스트 지도 + Venue / Location 라벨 + 버튼</b><span>지도는 파랑 단색 일러스트(도로 흰 선), 우측 글 두 덩이, "카카오맵에서 보기".</span><span class="us">우리는 실지도(V-World)가 본체라 반대다 — 지도가 카드 안에 갇히지 않게.</span></figcaption></figure>
+  <figure><img src="../../assets/proto/review/bench-kakao/kk-faq.jpg?v=2" alt=""><figcaption><b>FAQ — 필 탭 3 + 흰 카드 Q/A</b><span>섹션 통째로 틴트, Q 는 700, A 는 400 20/32. 탭은 흰 필 안에서 활성만 틴트.</span><span class="us">서비스 지원. 우리는 필 대신 헤어라인 탭.</span></figcaption></figure>
+</div>
+<table style="margin-top:22px">
+<thead><tr><th style="width:170px">카드 부위</th><th>카카오</th><th>Land-XI 대응</th></tr></thead>
 <tbody>
-<tr><td class="k">표시 서체</td><td><b>Neutronic Hangeul Narrow</b> 700 — Adobe Fonts(Typekit) 구독 서체, 내로우 고딕. 제목 120/64/44 에만.</td><td><b>Paperlogy</b> 700/800 — 눈누 무료(jsDelivr).</td><td><span class="tag no">유료 · 대체 필요</span></td></tr>
-<tr><td class="k">본문 서체</td><td><b>Kakao Big Sans</b> 400/700/800 — 카카오 배포, <b>SIL OFL 1.1 무료</b>(상업 사용 가능). 40px 메타부터 16px 네비까지 전부.</td><td><b>Pretendard</b> 400/500.</td><td><span class="tag ok">무료 · 도입 가능</span></td></tr>
-<tr><td class="k">숫자</td><td>본문 서체 그대로(D-26, 13:00 등). tabular 없음.</td><td>큰 수 Paperlogy 700 · 표 Inter tabular.</td><td><span class="tag ok">우리가 정교</span></td></tr>
-<tr><td class="k">스케일</td><td>120 · 80 · 64 · 44 · 40 · 32 · 28 · 24 · 20 · <b>16</b>(바닥). 본문 20/32.</td><td>66 · 54 · 34 · 30 · 26 · 22 · 18 · 16 · <b>14</b>(바닥). 본문 18/26.</td><td><span class="tag hm">저쪽이 한 단 크다</span></td></tr>
-<tr><td class="k">자간 · 행간</td><td>제목 −0.055em / 1.225 · 본문 −0.01~−0.02em / 1.5–1.6</td><td>제목 −0.01em / 1.25 · 본문 0.01em / 1.6</td><td><span class="tag hm">제목 자간 더 조일 수 있음</span></td></tr>
-<tr><td class="k">색</td><td><span class="sw" style="background:#19199B"></span>#19199B 딥블루(주) · <span class="sw" style="background:#325CFF"></span>#325CFF 밝은 파랑(시간·태그) · <span class="sw" style="background:#F0F3FA"></span>#F0F3FA 틴트 · <span class="sw" style="background:#191919"></span>#191919 잉크 · <span class="sw" style="background:#DC2715"></span>#DC2715 new 배지 · <span class="sw" style="background:#FFCD00"></span>#FFCD00 카카오 노랑 1회</td><td><span class="sw" style="background:#006DF7"></span>#006DF7 액센트 · <span class="sw" style="background:#E8F1FF"></span>#E8F1FF / <span class="sw" style="background:#D6E6FF"></span>#D6E6FF 틴트 · <span class="sw" style="background:#010102"></span>#010102 잉크 · <span class="sw" style="background:#D1352B"></span>#D1352B 조치</td><td><span class="tag ok">구조 동일(잉크+파랑 1+틴트+빨강 1)</span></td></tr>
-<tr><td class="k">채운 파란 버튼</td><td>있음 — 1차 CTA 전부 #19199B 채움, 호버 #14147B.</td><td>없음 — 1차 잉크 채움, 2차 코너 브래킷(법전 §2).</td><td><span class="tag hm">법전과 충돌</span></td></tr>
-<tr><td class="k">형태</td><td>라운드 12(카드) · 16(장소) · 20(키노트) · 100(필 버튼·배지·탭). 그림자 사실상 0.</td><td>라운드 0 · 그림자 0 · 헤어라인 + 코너 브래킷.</td><td><span class="tag hm">법전과 충돌</span></td></tr>
-<tr><td class="k">그라디언트</td><td>CSS 그라디언트 0 — 대신 <b>하프톤 점 이미지</b>(webp) 를 카드·밴드 배경으로.</td><td>금지.</td><td><span class="tag hm">이미지로 우회한 것</span></td></tr>
-<tr><td class="k">그리드</td><td>inner 1400 / 콘텐츠 1280 · 3열 카드 413px · 섹션 패딩 120–160.</td><td>1440 / 마진 56 · 12열 거터 24 · 섹션 패딩 120/160.</td><td><span class="tag ok">같음</span></td></tr>
-<tr><td class="k">모션</td><td>거의 없음 — 색 전환 0.2s, 히어로 영상 IntersectionObserver 재생/정지, D-day 카운터, Swiper. 스크롤 리빌 0, 키프레임 0.</td><td>이징 하나 · 500/750/1000/1250 · 클립 리빌 · 스크럽 필름.</td><td><span class="tag ok">우리가 앞섬</span></td></tr>
-<tr><td class="k">글자 양</td><td>섹션당 제목 1 + 메타 3줄 + 버튼 1. FAQ 만 문단.</td><td>"불필요한 글자 전체 삭제" 규칙과 같은 방향.</td><td><span class="tag ok">같은 원칙</span></td></tr>
+<tr><td class="k">상단 좌</td><td>시간 <code>13:00 - 13:10</code> 밝은 파랑</td><td>기준일 · 시점 (Inter tabular, 파랑)</td></tr>
+<tr><td class="k">상단 우</td><td>라벨 <code>Keynote 2</code> / 태그 필 <code>현장 전용</code></td><td>상태어(승인 대기 = 빨강, 공개 = 파랑) 각진 라벨</td></tr>
+<tr><td class="k">배경</td><td>하프톤 파도 이미지(webp), 카드마다 다른 절단</td><td>실영상 크롭 640×420(이미 있음: 남원 농지 · 제주 · 국산 · 시점 4)</td></tr>
+<tr><td class="k">제목</td><td>28px 700, 2줄 고정</td><td>Paperlogy 24–26, 2줄 고정</td></tr>
+<tr><td class="k">사람</td><td>이름 700 + 소속 400, 흑백 컷아웃 사진</td><td>사람 없음 — 결과 수(1,674 필지) + 단위. 담당자명은 콘티 규칙상 금지</td></tr>
+<tr><td class="k">동작</td><td>카드 전체 클릭 → 모달(딥블루 격자 헤더 · 해시태그 · 소개 · 이전/다음)</td><td>카드 전체 클릭 → 상세 판(우 패널) — 데이터 관리에서 이미 쓰는 방식</td></tr>
 </tbody>
 </table>
 </section>
 
-<section>
-<h2>3. 서체 견본 — 같은 문장, 세 조합</h2>
-<div class="fonts">
-  <div class="f paper"><div class="n">F0 · 현행 — Paperlogy 700 + Pretendard 400</div><div class="a">남원시 비닐하우스 탐지</div><div class="b">2026년 6월 8일 기준 · 정사영상 24 cm · AI 결과 폴리곤 1,674 필지</div><div class="c">눈누 무료. 표시체 굵기 2종(700·800)만 배포.</div></div>
-  <div class="f kbs"><div class="n">F2 · Kakao Big Sans 800 + 400</div><div class="a">남원시 비닐하우스 탐지</div><div class="b">2026년 6월 8일 기준 · 정사영상 24 cm · AI 결과 폴리곤 1,674 필지</div><div class="c">SIL OFL 1.1 무료. 400/700/800 한 가족으로 제목·본문·숫자를 다 덮는다. 라틴·키릴·가나 포함.</div></div>
-  <div class="f bhs"><div class="n">F3 · Black Han Sans + Kakao Big Sans 400</div><div class="a">남원시 비닐하우스 탐지</div><div class="b">2026년 6월 8일 기준 · 정사영상 24 cm · AI 결과 폴리곤 1,674 필지</div><div class="c">Neutronic Narrow 의 무료 대역(Google Fonts). 굵기 1종, 포스터용 — 대시보드 제목엔 과하다.</div></div>
+<!-- ============ 4 ============ -->
+<section id="s4">
+<h2>4. CI · 마스코트 운용</h2>
+<table>
+<thead><tr><th style="width:170px">항목</th><th>카카오 AI 돛</th><th>Land-XI 현행</th><th style="width:150px">판정</th></tr></thead>
+<tbody>
+<tr><td class="k">로고</td><td>돛 아이콘 + "카카오 AI 돛" 워드마크(SVG, 흑/백 2색). 헤더 좌, 히어로 우하단, 모달 푸터 — 3곳에서만.</td><td>Land-XI 워드마크 · 태그라인 · LX 락업(SVG, 역상 파생본 있음)</td><td><span class="tag ok">같은 수준</span></td></tr>
+<tr><td class="k">마스코트</td><td><b>선장 라이언</b> 3D 렌더 1컷 — 메인 히어로 한 곳에만. 서브페이지엔 등장하지 않는다.</td><td>없음</td><td><span class="tag hm">D20</span></td></tr>
+<tr><td class="k">서브 브랜드</td><td>RALPHTHON 픽셀 로고타입 · summit 26 락업 · 각 프로그램 영문명</td><td>서비스명 4종은 글자뿐</td><td><span class="tag hm">영문 도장 검토</span></td></tr>
+<tr><td class="k">스티커 · 장식</td><td>3D 스티커 3(AI · YOUR GUIDE · GROWTH), new 배지 빨강, 하프톤 파도, 픽셀 해도</td><td>HUD 라벨 · 코너 브래킷 · 헤어라인</td><td><span class="tag ok">우리 장식은 데이터</span></td></tr>
+<tr><td class="k">파트너 표기</td><td>주최 · 협력 · 후원 3단 로고 월(다크), 히어로 판 안 로고 띠, 하늘색 파트너 띠</td><td>없음</td><td><span class="tag hm">데이터 출처 띠 추가</span></td></tr>
+<tr><td class="k">워터마크</td><td>푸터 "kakao!mpact" 초대형 회색</td><td>필름 마감 LX 락업(역상)</td><td><span class="tag ok">이미 씀</span></td></tr>
+</tbody>
+</table>
+<p style="margin-top:18px"><b>마스코트를 새로 만들 필요가 없다.</b> 카카오도 새 캐릭터를 만들지 않았다 — 있던 라이언에 모자를 씌웠다. 우리에겐 필름을 위해 이미 만들어 둔 세 캐릭터가 있고, 셋 다 "위에서 보는 눈"의 화신이다. 스틸을 오려 빈 상태 · 로딩 · 준비 중 · 404 · 안내 배지에 쓰면 크레딧 0 으로 세계관이 화면까지 이어진다.</p>
+<div class="chars">
+  <figure><img src="../../assets/proto/review/bench-kakao/lx-char-satellite.jpg?v=2" alt=""><figcaption><b>국토위성</b> — A01 rev.3k. 관측 · 기준일 · "준비 중" 자리</figcaption></figure>
+  <figure><img src="../../assets/proto/review/bench-kakao/lx-char-drone.jpg?v=2" alt=""><figcaption><b>LX 드론</b>(흰 본체 · 초록 LX) — A03 rev.3n. 탐지 · 진행 중 · 로딩 자리</figcaption></figure>
+  <figure><img src="../../assets/proto/review/bench-kakao/lx-char-plane.jpg?v=2" alt=""><figcaption><b>항공기</b> — A03. 항공영상 · 대면적 자리</figcaption></figure>
 </div>
 </section>
 
-<section>
-<h2>4. 스펙시먼 — 우리 대시보드 상단에 입혀 보기</h2>
+<!-- ============ 5 ============ -->
+<section id="s5">
+<h2>5. 서체 · 색 · 형태 실측 <small>카카오 vs 법전 §1–§4</small></h2>
+<table>
+<thead><tr><th style="width:150px">항목</th><th>카카오 AI 돛</th><th>Land-XI 현행</th><th style="width:120px">판정</th></tr></thead>
+<tbody>
+<tr><td class="k">표시 서체</td><td><b>Neutronic Hangeul Narrow</b> 700 — Adobe Fonts(Typekit) 구독 서체, 내로우 고딕. Summit 페이지 제목 120/64/44 에만. 메인·PROGRAM·출항 페이지는 전부 Kakao Big Sans.</td><td><b>Paperlogy</b> 700/800 — 눈누 무료(jsDelivr).</td><td><span class="tag no">유료 · 대체 필요</span></td></tr>
+<tr><td class="k">본문 서체</td><td><b>Kakao Big Sans</b> 400/700/800 — 카카오 배포, <b>SIL OFL 1.1 무료</b>. 76px 영문 대제목부터 16px 네비까지.</td><td><b>Pretendard</b> 400/500.</td><td><span class="tag ok">무료 · 도입 가능</span></td></tr>
+<tr><td class="k">숫자</td><td>본문 서체 그대로. tabular 없음.</td><td>큰 수 Paperlogy 700 · 표 Inter tabular.</td><td><span class="tag ok">우리가 정교</span></td></tr>
+<tr><td class="k">스케일</td><td>120 · 80 · 76 · 64 · 44 · 40 · 36 · 32 · 28 · 24 · 20 · <b>16</b>(바닥). 본문 20/32.</td><td>66 · 54 · 34 · 30 · 26 · 22 · 18 · 16 · <b>14</b>(바닥). 본문 18/26.</td><td><span class="tag hm">저쪽이 한 단 크다</span></td></tr>
+<tr><td class="k">자간 · 행간</td><td>제목 −0.055em / 1.225 · 본문 −0.01~−0.02em / 1.5–1.6</td><td>제목 −0.01em / 1.25 · 본문 0.01em / 1.6</td><td><span class="tag hm">제목 자간 더 조일 수 있음</span></td></tr>
+<tr><td class="k">색</td><td><span class="sw" style="background:#19199B"></span>#19199B 딥블루(주) · <span class="sw" style="background:#325CFF"></span>#325CFF 밝은 파랑 · <span class="sw" style="background:#F0F3FA"></span>#F0F3FA 틴트 · <span class="sw" style="background:#B8EDFF"></span>#B8EDFF 파트너 띠 · <span class="sw" style="background:#191919"></span>#191919 잉크 · <span class="sw" style="background:#DC2715"></span>#DC2715 new · <span class="sw" style="background:#FFCD00"></span>#FFCD00 노랑 1회</td><td><span class="sw" style="background:#006DF7"></span>#006DF7 · <span class="sw" style="background:#E8F1FF"></span>#E8F1FF / <span class="sw" style="background:#D6E6FF"></span>#D6E6FF · <span class="sw" style="background:#010102"></span>#010102 · <span class="sw" style="background:#D1352B"></span>#D1352B 조치 · <span class="sw" style="background:#0FA9A0"></span>#0FA9A0 AI · <span class="sw" style="background:#FFB633"></span>#FFB633 탐지</td><td><span class="tag ok">구조 동일</span></td></tr>
+<tr><td class="k">채운 파란 버튼</td><td>있음 — 1차 CTA 전부 #19199B 채움.</td><td>없음 — 1차 잉크 채움, 2차 코너 브래킷.</td><td><span class="tag hm">법전과 충돌</span></td></tr>
+<tr><td class="k">형태</td><td>라운드 12(카드) · 16 · 20(키노트) · 100(필). 그림자 사실상 0.</td><td>라운드 0 · 그림자 0 · 헤어라인 + 코너 브래킷.</td><td><span class="tag hm">법전과 충돌</span></td></tr>
+<tr><td class="k">그라디언트</td><td>CSS 그라디언트 0. 대신 이미지(하프톤 파도 · 오로라 판).</td><td>금지.</td><td><span class="tag hm">이미지로 우회</span></td></tr>
+<tr><td class="k">그리드 · 모션</td><td>1400/1280 · 섹션 120–160 · 모션 거의 없음(색 0.2s · 영상 IO 재생 · D-day · Swiper).</td><td>1440/56 · 120/160 · 이징 하나 · 사다리 넷 · 스크럽 필름.</td><td><span class="tag ok">같음 / 우리가 앞섬</span></td></tr>
+</tbody>
+</table>
+<h2 style="margin-top:28px">서체 견본 — 같은 문장, 세 조합</h2>
+<div class="fonts">
+  <div class="f paper"><div class="n">F0 · 현행 — Paperlogy 700 + Pretendard 400</div><div class="a">남원시 비닐하우스 탐지</div><div class="b">2026년 6월 8일 기준 · 정사영상 24 cm · AI 결과 폴리곤 1,674 필지</div><div class="c">눈누 무료. 표시체 굵기 2종(700·800)만 배포.</div></div>
+  <div class="f kbs"><div class="n">F2 · Kakao Big Sans 800 + 400</div><div class="a">남원시 비닐하우스 탐지</div><div class="b">2026년 6월 8일 기준 · 정사영상 24 cm · AI 결과 폴리곤 1,674 필지</div><div class="c">SIL OFL 1.1 무료. 400/700/800 한 가족으로 제목·본문·숫자를 다 덮는다.</div></div>
+  <div class="f bhs"><div class="n">F3 · Black Han Sans + Kakao Big Sans 400</div><div class="a">남원시 비닐하우스 탐지</div><div class="b">2026년 6월 8일 기준 · 정사영상 24 cm · AI 결과 폴리곤 1,674 필지</div><div class="c">Neutronic Narrow 의 무료 대역(Google Fonts). 굵기 1종, 포스터용.</div></div>
+</div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section id="s6">
+<h2>6. 스펙시먼 — 우리 화면에 입혀 보기</h2>
 <div class="pick">
   <fieldset><legend>서체</legend>
     <label><input type="radio" name="f" value="F0" checked><span>F0 현행 <small>Paperlogy + Pretendard</small></span></label>
@@ -189,7 +303,7 @@ html[data-s="S1"] .spec .brk::before,html[data-s="S1"] .spec .brk::after{display
   </fieldset>
   <fieldset><legend>형태</legend>
     <label><input type="radio" name="s" value="S0" checked><span>S0 현행 <small>라운드 0 · 잉크 버튼 · 코너 브래킷</small></span></label>
-    <label><input type="radio" name="s" value="S1"><span>S1 카카오식 <small>라운드 12 · 필 100 배지·탭 · 채운 파란 버튼</small></span></label>
+    <label><input type="radio" name="s" value="S1"><span>S1 카카오식 <small>라운드 12 · 필 100 · 채운 파란 버튼 · 틴트 카드</small></span></label>
   </fieldset>
 </div>
 <div class="now" id="now"></div>
@@ -222,32 +336,75 @@ html[data-s="S1"] .spec .brk::before,html[data-s="S1"] .spec .brk::after{display
       <div class="card">
         <div class="k">카드 발행 승인 대기 · 01</div>
         <div class="big">도로안전 정사영상 v2.1</div>
-        <div class="meta"><b>요청 일시</b> 2026.06.10 14:30<br><b>요청 지역</b> 남원시 도통동<br><b>증거 크롭</b> 기준점에서 5.2 km</div>
+        <div class="meta"><b>요청 일시</b>2026.06.10 14:30<br><b>요청 지역</b>남원시 도통동<br><b>증거 크롭</b>기준점에서 5.2 km</div>
         <div class="ctas"><a class="btn" href="#">검토하기</a><a class="brk" href="#">카드 발행 관리</a></div>
       </div>
     </div>
-    <div class="foot">숫자·라벨은 현행 대시보드(db-data.js)의 것. 조판 규칙만 바꾼다.</div>
+    <div class="foot">A · 대시보드 상단. 숫자·라벨은 현행 db-data.js 의 것, 조판 규칙만 바꾼다.</div>
+  </div>
+</div>
+
+<div class="spec" id="spec2">
+  <div class="sec">
+    <div class="sect">DETECT</div>
+    <div class="secs">분석 서비스 · 남원 · 2026.06.08 기준</div>
+    <div class="cards">
+      <div class="sc dark">
+        <img src="../../assets/proto/crops/namwon-farmland-2025/1.jpg" alt="">
+        <div class="in">
+          <div class="top"><span>2025.10 · 정사 24 cm</span><span class="pill">공개</span></div>
+          <h5>남원 농지 활용<br>사료작물 탐지</h5>
+          <div class="m">생육기 4시점 · 필지 경계 대조</div>
+          <div class="num"><b>1,674</b><span>필지 [추정]</span></div>
+        </div>
+      </div>
+      <div class="sc">
+        <img src="../../assets/proto/crops/jeju-illegal/1.jpg" alt="">
+        <div class="in">
+          <div class="top"><span>2025.08 · 드론 5 cm</span><span class="pill">공개</span></div>
+          <h5>제주 불법 시설물<br>탐지</h5>
+          <div class="m">농지 내 구조물 · 임야 잠식</div>
+          <div class="num"><b>318</b><span>건 [시연]</span></div>
+        </div>
+      </div>
+      <div class="sc">
+        <img src="../../assets/proto/crops/kuksan-change/1.jpg" alt="">
+        <div class="in">
+          <div class="top"><span>2024 → 2025 · 위성</span><span class="pill" style="color:var(--warn);border-color:var(--warn)">승인 대기</span></div>
+          <h5>국토위성 변화 탐지<br>토지 피복</h5>
+          <div class="m">2시점 차분 · 형질 변경 후보</div>
+          <div class="num"><b>92</b><span>필지 [시연]</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="foot">B · 서비스 카드 — 카카오 키노트(어둠 1) + 트랙(밝음 2) 문법에 우리 실영상 크롭을 넣은 것. 사람 자리에 결과 수, 하프톤 자리에 크롭. 숫자는 시연·추정 표기.</div>
   </div>
 </div>
 </section>
 
-<section>
-<h2>5. 권고</h2>
+<!-- ============ 7 ============ -->
+<section id="s7">
+<h2>7. 권고 · 결정</h2>
 <div class="rec">
   <div><h3>가져올 것</h3><ul>
-    <li><b>Kakao Big Sans 를 본문으로 검토(F1)</b> — 무료(OFL), 넓고 안정된 모듈 구조라 16–20px 표·라벨에서 Pretendard 보다 또렷하다. 표시체는 Paperlogy 유지 → 법전의 "서체 3개" 수는 그대로.</li>
-    <li><b>제목 자간</b> −0.01em → −0.03em (54px 이상만). 저쪽의 −0.055em 은 내로우 서체용이라 Paperlogy 엔 과함.</li>
-    <li><b>영문 대문자 섹션 제목 + 아웃라인 필 배지</b>의 <i>역할</i> — 섹션 이름은 크게, 분류는 얇은 테두리 라벨로. 우리 규칙에선 필 대신 각진 라벨(라운드 0)로 같은 위계를 낸다.</li>
-    <li><b>글자 양</b> — 섹션당 제목 1 · 메타 3줄 · 버튼 1. 이미 우리 원칙과 같아서 확인용.</li>
+    <li><b>세계관 어휘를 화면까지</b> — 관측 · 시점 · 기준일 · 판독 · 탐지. 섹션 영문 도장(OBSERVE · DETECT · PUBLISH · ARCHIVE)은 필름의 HUD 와 같은 목소리다.</li>
+    <li><b>필름 캐릭터 3종을 브랜드 캐릭터로</b> — 빈 상태 · 로딩 · 준비 중 · 404. 크레딧 0, 신규 제작 0.</li>
+    <li><b>카드 = 크롭 + 기준일 + 상태 + 제목 2줄 + 결과 수</b>(스펙시먼 B). 분석 서비스 · 프로젝트 · 데이터셋이 한 문법을 쓴다.</li>
+    <li><b>성과 숫자 띠 + 결과 카드</b>(④) — D10 대표 수치를 이 띠에 올린다.</li>
+    <li><b>데이터 출처 로고 띠</b>(⑦) — 국토위성 · V-World · 드론 · LX. 파트너 표기가 신뢰를 만든다.</li>
+    <li><b>Kakao Big Sans 본문(F1)</b> · 제목 자간 −0.03em — 1차 권고 그대로.</li>
   </ul></div>
   <div class="no"><h3>가져오지 말 것</h3><ul>
-    <li><b>Neutronic Hangeul Narrow</b> — Adobe Fonts 구독이 있어야 웹에 쓸 수 있다. 무료 대역(Black Han Sans, F3)은 굵기 1종·포스터체라 제품 화면엔 맞지 않는다.</li>
-    <li><b>라운드 12–20 · 필 100 · 채운 파란 버튼(S1)</b> — 법전 §2 "라운드 0 · 그림자 0 · 채운 파란 버튼 없음"과 정면 충돌. 행사 랜딩(한 번 읽고 신청)과 운영 도구(매일 보는 표)는 다른 문제다.</li>
-    <li><b>하프톤 그라디언트 배경 이미지</b> — 그라디언트 금지를 이미지로 우회한 것. 우리 카드 배경은 실영상 크롭이 그 자리를 맡는다.</li>
-    <li><b>딥블루 #19199B(C1)</b> — CI 워드마크 블루(#0C7CE8 계열)와 어긋나 LX 브랜드에서 멀어진다. T3 결정(2026-08-27)을 뒤집을 이유가 없다.</li>
+    <li><b>3D 마스코트 신규 제작</b> — 카카오도 안 했다. 라이언은 이미 있던 IP.</li>
+    <li><b>인용 카드 · 담당자 얼굴</b> — 콘티 규칙(지어낸 서사 금지). 사람 자리에 결과 수.</li>
+    <li><b>라운드 12–20 · 필 · 채운 파란 버튼 · 하프톤 그라디언트</b> — 법전 §2 충돌. 행사 랜딩과 운영 도구는 다른 문제.</li>
+    <li><b>Neutronic Narrow · 딥블루 #19199B</b> — 유료 / CI 블루와 어긋남.</li>
+    <li><b>지도를 카드 안에 가두는 것</b> — 우리는 지도가 본체.</li>
   </ul></div>
 </div>
-<div class="dec"><h3>D19 · 카카오 벤치 반영 범위</h3><p>① F1 — 본문만 Kakao Big Sans 로 교체(표시체·색·형태 유지, 권장) · ② F2 — 표시체까지 Kakao Big Sans 로 통일 · ③ 서체 유지, 제목 자간 −0.03em 만 반영 · ④ 반영 없음. 색(C1)·형태(S1)는 위 스펙시먼으로 보고 원하시면 따로 지정.</p></div>
+<div class="dec"><h3>D19 · 서체</h3><p>① <b>F1 본문만 Kakao Big Sans</b>(권장) · ② F2 표시체까지 · ③ 서체 유지, 제목 자간 −0.03em 만 · ④ 반영 없음. 색(C1)·형태(S1)는 스펙시먼으로 보고 원하시면 따로.</p></div>
+<div class="dec"><h3>D20 · 마스코트 · 캐릭터</h3><p>① 없음(현행) · ② <b>필름 캐릭터 3종(국토위성 · LX 드론 · 항공기)을 브랜드 캐릭터로 승격</b>(권장, 크레딧 0 — 빈 상태·로딩·준비 중·404·안내에 스틸 컷) · ③ 신규 3D 마스코트 제작(별도 예산 · LX 승인 필요).</p></div>
+<div class="dec"><h3>D21 · 콘텐츠 문법 도입(복수 선택)</h3><p>ⓐ 섹션 영문 도장 4종 · ⓑ 로그인 3축 = 영문 대제목 + 한글 한 줄 + 크롭 · ⓒ 서비스/프로젝트/데이터셋 카드 통일(스펙시먼 B) · ⓓ 성과 숫자 띠 + 결과 카드(D10 연동) · ⓔ 데이터 출처 로고 띠 · ⓕ 푸터 LX 워터마크. 예: "D21 ⓐⓒⓓ".</p></div>
 </section>
 
 </div>
