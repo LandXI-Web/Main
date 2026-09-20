@@ -86,7 +86,7 @@ export class Plate {
     else { const f = M.near(geo, real.view.center, real.view.km); this.home = M.bboxOf(f.length ? f : geo.features); }
     M.frame(map, this.home, { instant: REDUCED_(), pad: mode === 'extent' ? 28 : 18 });
     const counts = real.classes.map((c) => `<div class="row"><i class="sw${c.dash ? ' sw--d' : ''}"></i>${esc(c.label)}<span class="n">${(st.classes[c.key] || 0).toLocaleString('ko-KR')}</span><small>${esc(real.unit)}</small></div>`).join('');
-    this.over.innerHTML = `${this.tools()}${legend ? `<div class="plate-legend"><span class="lb">탐지결과 오버레이</span>${counts}<p class="note">results.js 실측 · 분석 ${esc(st.analyzedAt)}<br>평균 신뢰도 ${st.confMean.toFixed(2)} · 도형 = 실 결과 GeoJSON<br>시 전체 = 필지 중심점 · 확대하면 폴리곤</p></div>` : ''}${cap(esc(capL || `요청 지역 · ${real.place} 일대 · V-World 위성`), `결과 폴리곤 · ${keyL}`)}`;
+    this.over.innerHTML = `${this.tools()}${legend ? `<div class="plate-legend"><span class="lb">탐지결과 오버레이</span>${counts}<p class="note">results.js 실측 · 분석 ${esc(st.analyzedAt)}<br>평균 신뢰도 ${st.confMean.toFixed(2)} · 도형 = 실 결과 GeoJSON<br>시 전체 = 필지 중심점 · 확대하면 폴리곤</p></div>` : ''}${cap(esc(capL || `요청 지역 · ${real.place} 일대 · V-World 위성`), compact ? keyL : `결과 폴리곤 · ${keyL}`)}`;
     this.el.dataset.state = 'result';
   }
 }
