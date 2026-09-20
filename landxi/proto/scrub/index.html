@@ -18,12 +18,18 @@
 
 <!-- ═══ 마스트헤드 — 이 화면의 유일한 크롬. 흰 종이·헤어라인 하나(79px) ═════ -->
 <!-- 마스트헤드 — 이 화면의 유일한 크롬. 흰 종이·헤어라인 하나(79px)
-     메뉴를 두지 않는 이유(2026-09-20): 로그인 없이 볼 수 있는 화면은 이 필름뿐이다.
-     `체계/리포트/워크플로우` 도 `서비스 지원/활용 사례` 도 전부 관문에 걸려 로그인으로
-     튕겼다. 갈 수 없는 곳을 걸어 두면 메뉴가 아니라 함정이다. 들어가는 문 하나만 둔다. -->
+     여기 거는 곳은 **로그인 없이 열리는 화면만** 둔다(2026-09-20).
+     공지사항·활용 사례는 관문을 풀어 손님도 보게 했다(support.js GUEST_TABS).
+     한 번 실수했던 자리다 — `체계/리포트/워크플로우` 도, 뒤에 놓았던 `서비스 지원` 도
+     전부 관문에 걸려 로그인으로 튕겼다. 갈 수 없는 곳은 메뉴가 아니라 함정이다.
+     이름도 화면 이름 그대로 쓴다(그룹 이름 `서비스 지원` 을 쓰면 눌렀을 때 공지사항이 떠 어긋난다). -->
 <header class="lx-masthead sb-mast">
   <div class="lx-grid lx-masthead__in">
     <a class="lx-masthead__mark" href="#top">LAND-XI</a>
+    <nav class="lx-masthead__nav" aria-label="주요">
+      <a class="lx-nav lx-link" href="../notice.html">공지사항</a>
+      <a class="lx-nav lx-link" href="../usecase.html">활용 사례</a>
+    </nav>
     <div class="lx-masthead__meta">
       <a class="lx-nav lx-link sb-signin" href="../login.html">로그인</a>
     </div>
@@ -348,6 +354,6 @@
   <div data-sc-spacer aria-hidden="true"></div>
 </div>
 
-<p class="sb-hint" id="sb-hint" aria-hidden="true">스크롤</p>
+<p class="sb-hint" id="sb-hint" aria-hidden="true"><span class="sb-hint-w">마우스 휠로 내려보세요</span></p>
 
 </body></html>

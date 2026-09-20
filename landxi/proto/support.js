@@ -1,6 +1,6 @@
 /* 서비스 지원 공통 — 셸 올리기 · URL 상태 · 첨부 행 · 진입 스태거. (B6 구현, 채택안 = 선택 2 "분할 열람")
    페이지 모듈: support-notice.js · support-faq.js · support-contact.js · support-usecase.js · support-manual.js */
-import { mountShell, TABS, say, icon, esc, $, $$ } from './shell.js';
+import { mountShell, TABS, say, icon, esc, isLoggedIn, $, $$ } from './shell.js';
 import { AS_OF } from './support-data.js';
 
 export const SUBS = {
@@ -12,14 +12,34 @@ export const SUBS = {
 };
 const LABEL = Object.fromEntries(TABS.support.map((t) => [t.key, t.label]));
 
+/* 손님(로그인 전)도 볼 수 있는 탭 — 공지 · FAQ · 활용 사례 · 매뉴얼.
+   문의는 내 문의 내역이라 로그인이 필요하다.
+   발주자(2026-09-20): "서비스 지원·활용 사례는 메인 쪽에서 놀아야 한다. 게스트도 볼 수 있게끔" */
+export const GUEST_TABS = ['notice', 'faq', 'usecase', 'manual'];
+
 export function boot(tab) {
   document.body.classList.add('sp');
+  const guest = !isLoggedIn();
+  if (guest) document.body.classList.add('sp--guest');
+
+  // 손님에게는 레일을 걸지 않는다 — 들어가 본 적 없는 메뉴를 띄워 봐야 전부 관문이다.
+  // 대신 메인으로 돌아가는 길과 로그인 단추를 마스트헤드에 둔다.
   const shell = mountShell({
     active: 'support', title: '서비스 지원', titleRule: 1, subtitle: esc(SUBS[tab]),
-    tabs: TABS.support, tab, crumbIcon: 'notice',
+    tabs: guest ? TABS.support.filter((t) => GUEST_TABS.includes(t.key)) : TABS.support,
+    tab, crumbIcon: 'notice',
     crumbs: [{ label: '서비스 지원', href: 'notice.html' }, { label: LABEL[tab] }],
     asOf: AS_OF, demo: true,
+    rail: !guest, gate: !guest,
+    mastHtml: guest
+      ? `<a class="sp-home" href="scrub/index.html">${icon('chevR', 16)}Land-XI</a>`
+      : undefined,
   });
+  if (guest) {
+    const mast = $('#mast');
+    if (mast) mast.insertAdjacentHTML('beforeend',
+      '<a class="sp-signin" href="login.html">로그인</a>');
+  }
   return shell;
 }
 /* 마스트헤드 경로의 마지막 칸 — 열람 중이면 `공지사항 열람` · `문의 열람`(원판) */

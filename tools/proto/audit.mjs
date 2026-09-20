@@ -59,7 +59,11 @@ const PORT = 4610 + Math.floor(Math.random() * 200);
 await new Promise((r) => srv.listen(PORT, r));
 
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
+/* 화면 크기 — 기본은 **세로 745px** 이다.
+   1600×900 으로만 맞췄다가 발주자 화면(약 1996×745)에서 그대로 넘쳤다.
+   노트북·작업 표시줄·주소창을 빼면 실제 세로는 이 정도다. 여기서 맞으면 900 에서도 맞는다. */
+const VP = process.env.VP ? process.env.VP.split('x').map(Number) : [1996, 745];
+const page = await browser.newPage({ viewport: { width: VP[0], height: VP[1] } });
 await page.addInitScript(() => { try { localStorage.setItem('lx_logged_in', '1'); } catch { /* 무시 */ } });
 
 const report = [];

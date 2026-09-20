@@ -271,3 +271,18 @@ body.lx.sp #main{ padding-bottom:8px; }
 .mn-gap-ph{ display:flex; gap:10px; margin-top:12px; }
 .mn-gap-ph i{ height:10px; border:1px dashed var(--grey-3); }
 @media (max-width:1100px){ .fq,.mn{ grid-template-columns:minmax(0,1fr); row-gap:24px; } .mn::before{ display:none; } .mn-l,.mn-r{ grid-column:1; grid-row:auto; } .sp-top{ height:auto; flex-wrap:wrap; } }
+
+/* ── 손님(로그인 전) 모양 ─────────────────────────────────────────────────
+   발주자(2026-09-20): "서비스 지원·활용 사례는 메인 쪽에서 놀아야 한다.
+   로그인 해서 안에서 보이는 게 아니라. 게스트도 볼 수 있게끔."
+   레일 없이 메인으로 돌아가는 길과 로그인 단추만 둔다. */
+.lx.sp--guest #mast{ padding-left:var(--m); }
+.lx .sp-home{ display:inline-flex; align-items:center; gap:9px; color:var(--ink);
+  font-family:var(--disp); font-weight:700; font-size:18px; letter-spacing:-.02em; }
+.lx .sp-home .ic{ transform:rotate(180deg); color:var(--grey); }
+.lx .sp-home:hover{ color:var(--accent); }
+.lx .sp-home:hover .ic{ color:var(--accent); }
+.lx .sp-signin{ margin-left:20px; flex:none; color:var(--ink);
+  font-family:var(--disp); font-weight:700; font-size:18px; letter-spacing:-.02em;
+  border-bottom:1.5px solid currentColor; padding-bottom:2px; }
+.lx .sp-signin:hover{ color:var(--accent); }

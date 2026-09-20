@@ -290,60 +290,49 @@ a.k:hover .ks .dim{ color:var(--accent); }
   .rk .bar i{ transform:scaleX(1)!important; }
 }
 
-/* ── 한 화면에 들어오게 (2026-09-20) ──────────────────────────────────────
-   발주자: "대시보드는 한 화면으로. 굳이 불필요하게 마우스 휠로 내려야 하나?"
-   1600×900 에서 170px 이 화면 밖에 있었다. 1920×1080 에서만 겨우 맞았는데,
-   실제 브라우저는 주소창·탭이 있어 그 해상도에서도 넘쳤다.
-   숫자 크기는 parts.css 의 `band--s`(42px)와 같은 급으로 내렸다 — 없는 규격을 만들지 않는다. */
-#b-kpi{ padding:10px 0 12px; }
-.k .kv{ margin-top:6px; height:44px; }
-.k .kv b{ font-size:42px; }
-.k .ks{ margin-top:6px; }
+/* ══ 한 화면 — 모니터마다 (2026-09-20) ═══════════════════════════════════
+   발주자: "대시보드는 한 화면으로" · "모니터마다 최적화를 해야지"
 
+   처음엔 1600×900 에 맞춰 고정 px 로 깎았다. 세로 745px 화면에서 그대로 넘쳤고,
+   더 깎았더니 증거 크롭과 저장용량 합계가 뭉개졌다. 깎는 것으로는 안 된다.
 
-.ap dl{ padding:6px 12px 0; row-gap:3px; }
-.ap .go{ padding:0 12px 6px; }
+   그래서 **짧은 화면에서는 덜어낸다.** 덜어낼 것은 `관리 바로가기` 다 —
+   사용자·공지·문의·FAQ 네 칸은 전부 레일의 `서비스 관리` 안에 있는 화면이라
+   여기서 한 번 더 보여 주는 것뿐이다. 없어도 갈 길이 막히지 않는다.
+   대신 남는 것들(숫자 · 지도 · 증거 크롭 · 저장용량 합계)은 제 크기를 지킨다. */
 
-#b-admin{ padding:6px 0 6px; }
-.tiles .ad .th{ height:26px; }
-.tiles .ad .tb{ padding:8px 12px 0; }
-.tiles .ad .tb b{ font-size:26px; }
-.tiles .ad .ts{ padding:4px 12px 8px; }
+body{ height:100vh; min-height:560px; overflow:hidden; }
+#main{ min-height:0; overflow:clip; padding-bottom:0; }
+#split{ flex:1 1 0; min-height:0; }
+#left, #right{ min-height:0; }
+#plate-wrap{ flex:1 1 0; min-height:0; max-height:none; }
+#panel{ flex:1 1 0; min-height:0; max-height:none; }
 
-#b1-row{ padding-bottom:2px; }
+/* 세로 860px 아래 — 바로가기를 덜어낸다(레일 `서비스 관리` 에 그대로 있다). */
+@media (max-height: 940px){
+  #b-admin, #b-admin + hr, hr + #b-admin{ display:none; }
+  #b-admin{ display:none; }
+  #main > hr:last-of-type{ display:none; }
+  #main{ padding-top:calc(var(--mast) + 14px); }
+  #b1-row{ height:52px; }
+  #b1{ font-size:28px; line-height:1.24; }
+  #b-kpi{ padding:8px 0 10px; }
+  .k .kv{ margin-top:5px; height:44px; }
+  .k .kv b{ font-size:42px; }
+  .ap .ev{ height:104px; }
+  /* 저장용량 목록 — 여섯 줄(다섯 + 합계)이 다 들어가는 줄 높이.
+     합계가 안 보이면 목록의 뜻이 없다. */
+  #panel{ margin-top:11px; }
+  .rk, .rk-sum{ height:28px; }
+}
 
-/* 계속 — 지도 판과 아래 두 구역을 조금 더 줄인다. 남은 103px 을 여기서 뺀다. */
-:root{ --ph:210px; }
-#split{ padding:14px 0 6px; }
-#panel{ margin-top:22px; }
-
-.tiles .ad .tb b{ font-size:24px; }
-.tiles .ad .ts{ padding:3px 12px 7px; }
-#b-approve{ padding-bottom:4px; }
-
-/* 마지막 39px */
-#main{ padding-bottom:0; }
-#b-kpi{ padding:8px 0 8px; }
-#split{ padding:10px 0 4px; }
-#panel{ margin-top:16px; }
-
-.tiles .ad .th{ height:24px; }
-
-/* 남은 17px — 지도 판 높이에서 뺀다 */
-:root{ --ph:192px; }
-
-/* ── 되돌림 (2026-09-20) ────────────────────────────────────────────────
-   한 화면에 넣겠다고 승인 대기 증거 크롭을 74px 까지 눌렀다. 그 칸은 **어느 지역
-   요청인지 영상으로 보여 주는 것**이 존재 이유인데, 높이 숫자를 맞추려고 그 기능을
-   뭉갰다. 크롭은 읽히는 높이로 되돌리고, 공간은 덜 중요한 곳에서 뺀다. */
-.ap .ev{ height:118px; }
-
-/* 관리 바로가기 — 숫자를 큰 글자로 세울 이유가 없는 '바로가기'다.
-   제목 줄 안에 숫자를 넣어 한 줄로 만든다(96px → 약 56px). */
-.tiles .ad .th{ height:34px; }
-.tiles .ad .tb{ padding:0; position:absolute; }        /* 자리만 차지하지 않게 */
-.tiles .ad{ position:relative; }
-.tiles .ad .tb b{ font-size:15.5px; line-height:34px; }
-.tiles .ad .tb span{ display:none; }
-.tiles .ad .tb{ right:12px; top:0; padding:0; }
-.tiles .ad .ts{ padding:7px 12px 9px; }
+/* 세로 720px 아래 — 더 짧으면 숫자와 크롭을 한 단계 더 낮춘다(바닥은 지킨다). */
+@media (max-height: 740px){
+  #b1-row{ height:46px; }
+  #b1{ font-size:26px; }
+  .k .kv{ height:38px; }
+  .k .kv b{ font-size:34px; }
+  .ap .ev{ height:88px; }   /* 어느 지역 요청인지 알아볼 수 있는 하한 */
+  #panel{ margin-top:8px; }
+  .rk, .rk-sum{ height:23px; }
+}
