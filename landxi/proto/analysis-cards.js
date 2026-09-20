@@ -103,21 +103,29 @@ export function renderShelf(host, S) {
   if (S.pick === 'transplant' && cardById(S.card)) openTransplant(S);
 }
 
-/* ══ 2. 진열대 ════════════════════════════════════════════════════════════ */
+/* ══ 2. 진열대 ════════════════════════════════════════════════════════════
+   2026-09-20 개편 — 카드가 **세로로 선 판**(그림 위 · 글 아래)이라 한 장이 330px 이었고
+   7장이면 1,023px 이 되어 301px 짜리 자리에서 722px 이 잘려 나갔다.
+   내용을 줄이지 않고 **그림을 왼쪽으로 돌려** 한 장을 70~120px 로 눕혔다(대시보드 선례와 같은 수).
+   그림 폭은 vh 로 자란다 — 세로가 넉넉한 모니터에서는 그림이 커지고 칸 수가 줄어든다. */
 function drawGrid(S) {
   const list = find(S), grid = $('#cgrid');
   if (S.card && !list.some((c) => c.id === S.card)) S.card = '';
   if (!S.card && list.length) S.card = list[0].id;
   grid.innerHTML = list.map((c) => {
     const crop = cardCrop(c), ready = c.status === '준비 중', ms = modelsOfCard(c);
+    /* `배포 지역 영상`(= 결과가 아니라는 표시)은 원래 그림 위 자막이었다. 그림이 88px 로 작아지자
+       자막이 잘려 나가서 — 잘린 글자를 두지 않는다는 원칙대로 — 아래 숫자 줄로 내렸다. */
     const fig = crop
-      ? `<figure class="imgcard" style="--ar:16/10"><img src="${esc(crop.src)}" alt="${esc(crop.of)}" loading="lazy">${crop.kind === 'region' ? '<figcaption><span>배포 지역 영상</span></figcaption>' : ''}</figure>`
+      ? `<figure class="imgcard" style="--ar:16/10"><img src="${esc(crop.src)}" alt="${esc(crop.of)}" loading="lazy"></figure>`
       : `<div class="imgcard imgcard--none" style="--ar:16/10">${ready ? '준비 중 · 산출물 없음' : '결과 산출물 없음'}</div>`;
     return `<button type="button" class="ccard" data-card="${c.id}" role="option" aria-selected="${c.id === S.card}"${ready ? ' data-ready' : ''}>
   ${fig}
-  <span class="ccard-t"><span class="ccard-n">${esc(c.name)}</span>${ready ? '<em class="chip">준비 중</em>' : `<span class="n ccard-v">${esc(c.version || '')}</span>`}</span>
-  <span class="ccard-s">${esc(cardMinistries(c).join(' · ') || '소관 미정')}</span>
-  <span class="ccard-m"><span>모델 <b class="n">${ms.length}</b></span><span>전용 모듈 <b class="n">${extModules(c.ext).length}</b></span><span>배포 <b class="n">${deploysAll(c.id).length}</b></span></span>
+  <span class="ccard-b">
+    <span class="ccard-t"><span class="ccard-n">${esc(c.name)}</span>${ready ? '<em class="chip">준비 중</em>' : `<span class="n ccard-v">${esc(c.version || '')}</span>`}</span>
+    <span class="ccard-s">${esc(cardMinistries(c).join(' · ') || '소관 미정')}</span>
+    <span class="ccard-m"><span>모델 <b class="n">${ms.length}</b></span><span>전용 모듈 <b class="n">${extModules(c.ext).length}</b></span><span>배포 <b class="n">${deploysAll(c.id).length}</b></span>${crop && crop.kind === 'region' ? '<span class="ccard-w">배포 지역 영상</span>' : ''}</span>
+  </span>
 </button>`;
   }).join('');
   $('#ccount').innerHTML = `총 <b class="n">${list.length}</b>건${list.length ? ` · 선택 <b>${esc(cardById(S.card)?.name || '')}</b>` : ''}`;
@@ -131,7 +139,27 @@ function whyEmpty(S) {
   return `${p.join(' · ')} — 초기화로 전체 카드 복귀`;
 }
 
-/* ══ 3. 카드 상세 ═════════════════════════════════════════════════════════ */
+/* ══ 3. 카드 상세 ═════════════════════════════════════════════════════════
+   2026-09-20 개편 — 한 판에 세로로 2,742px 을 쌓아 296px 자리에서 여섯 배가 넘쳤다.
+   **지우지 않고 나눈다**: 머리(그림 + 이름 + 요약)만 늘 보이고, 나머지 여섯 구역은
+   판 안쪽 탭으로 갈라 한 번에 하나만 편다. 구역 안에서는 다시 좌우로 눕힌다.
+
+   되돌린 판단 둘 —
+     · 처음엔 `<details>` 일곱 개로 접었다. 다 접어도 요약 줄만 210px 이라 자리가 안 났다.
+       탭 줄 하나(34px)가 접이 머리 일곱 개보다 싸다.
+     · 모듈을 LX·기관 좌우로 나란히 놓아 봤다. 판이 좁아지면(1280 에서 392px) 설명이
+       세 줄로 접혀 오히려 늘었다. 그래서 LX/기관을 **탭 두 개로** 나누고 가로로 길게 편다.
+
+   DOM 규약(e2e) — id 와 요소는 그대로 둔다: #cd-devs [data-device] · #cd-mods-lx ·
+   #cd-mods-local · #to-project · .cd-sum · .cd-img · [data-deploy] · .cd-models.
+   **#tp-open 은 접힌 안에 두지 않는다** — 탭 줄 오른쪽에 붙여 어느 구역에서나 누를 수 있다. */
+
+/* 판 안쪽 탭. 카드를 바꿔도 보던 구역을 유지한다(목록을 훑을 때 매번 개요로 튀지 않게). */
+let cdTab = 'info';
+/* 모듈 설명 펼침. 기본은 이름만 — 공통 7 + 전용 n 의 설명까지 한 줄씩 깔면
+   좁은 판에서 판 하나를 통째로 먹는다. 버튼 한 번이면 전부 나온다(지운 것이 아니다). */
+let modsFull = false;
+
 function drawDetail(S) {
   const panel = $('#cdetail'), c = cardById(S.card);
   if (!c) {
@@ -147,18 +175,11 @@ function drawDetail(S) {
   const lxDone = lxExt.filter((m) => m.build === 'done').length;
   const devs = devicesOf(c);
 
-  panel.innerHTML = `
-<header class="panel-h"><h2>카드 상세</h2><span class="sp"></span>${c.projectId ? `<a class="link link--ink" href="ai-project.html?pid=${esc(c.projectId)}" id="to-project">이 카드를 만든 프로젝트 ›</a>` : '<span class="mic">연결된 프로젝트 없음 · 모델 개발 전</span>'}</header>
-<div class="panel-b" id="cdetail-b">
-  <p class="lb">선택 · ${esc(sc.name)}</p>
-  <div class="cd-head"><h3 class="panel-t">${esc(c.name)}</h3>${stWord(c.status)}${c.version ? `<span class="n cd-v">${esc(c.version)}</span>` : ''}</div>
-  ${crop ? `<figure class="imgcard cd-img" style="--ar:16/9"><img src="${esc(crop.src)}" alt="${esc(crop.of)}"><figcaption><span>${esc(crop.of)}</span><span class="sp"></span><span>${crop.kind === 'result' ? '결과 크롭 · 실측' : '배포 지역 영상 · 결과 아님'}</span></figcaption></figure>`
-    : `<div class="imgcard imgcard--none cd-img" style="--ar:16/9">결과 산출물 없음${c.gap ? ` · ${esc(c.gap)}` : ''}</div>`}
-  ${ready ? `<p class="cd-why"><span class="st st--dim">준비 중</span> ${esc(c.gap || '아직 결과 산출물이 없는 서비스 · 분석 실행 불가')}</p>` : ''}
-  <p class="prose cd-sum">${esc(c.summary)}</p>
-
-  <h4 class="sec-h">행정 업무</h4>
-  <dl class="kv" style="--kw:88px">
+  /* 구역 여섯 — 탭 하나에 하나씩. 라벨 옆 숫자는 안에 몇 개가 들었는지 미리 말해 준다
+     (접힌 것이 '없는 것'으로 보이지 않게 — 발주자가 잘라낸 화면을 이미 한 번 잡아냈다). */
+  const panes = {
+    info: `<h4 class="sec-h">행정 업무</h4>
+  <dl class="kv cd-kv" style="--kw:78px">
     <div><dt>행정 업무</dt><dd>${esc(c.duty)}</dd></div>
     <div><dt>소관</dt><dd>${esc(cardMinistries(c).join(' · ') || '—')}</dd></div>
     <div><dt>주기</dt><dd>${years.length ? `<span class="n">${years.join(' · ')}</span> <em class="tag">배포 연혁</em>` : '<span class="dim">—</span>'}</dd></div>
@@ -166,57 +187,106 @@ function drawDetail(S) {
     <div><dt>대상 사업</dt><dd>${esc(sc.name)} · ${esc(sc.crs)}</dd></div>
     <div><dt>버전</dt><dd>${c.version ? `<span class="n">${esc(c.version)}</span>` : '<span class="dim">발행 전</span>'}</dd></div>
   </dl>
-  <p class="help">법정 조사 주기는 레지스트리에 없다 — 배포본 연혁으로 읽는다.</p>
+  <p class="help">법정 조사 주기는 레지스트리에 없다 — 배포본 연혁으로 읽는다.</p>`,
 
-  <h4 class="sec-h">묶은 AI 모델 <span class="n">${ms.length}</span></h4>
+    model: `<h4 class="sec-h">묶은 AI 모델 <span class="n">${ms.length}</span></h4>
   ${ms.length ? `<ul class="cd-models">${ms.map((m) => `<li><span class="cd-mn">${esc(m.name)}</span><span class="cd-mm">${esc(m.ministry)}</span>${m.count > 0 ? `<span class="n cd-mc">${nf.format(m.count)} ${esc(m.unit)}</span>` : '<span class="st st--dim cd-mc">준비 중</span>'}</li>`).join('')}</ul>
   ${tot ? `<p class="mic">실측 합계 <b class="n">${nf.format(tot.items)}</b>건 · 모델 ${tot.models}종 · 최근 실행 <span class="n">${esc(tot.lastRun)}</span></p>` : '<p class="mic">실측 산출물 없음 — 수치를 지어내지 않는다</p>'}`
-    : '<p class="empty empty--s">묶인 모델이 없습니다 — 모델 개발 전</p>'}
+    : '<p class="empty empty--s">묶인 모델이 없습니다 — 모델 개발 전</p>'}`,
 
-  <h4 class="sec-h">종류 선언 <span class="n">장치 ${devs.length}</span></h4>
+    kind: `<h4 class="sec-h">종류 선언 <span class="n">장치 ${devs.length}</span><span class="sp"></span>
+    <button type="button" class="btn-br btn-br--s cd-desc-t" aria-expanded="${modsFull}" style="width:96px">${modsFull ? '설명 접기' : '설명 보기'}</button></h4>
   <p class="cd-kind" id="cd-kindline">${esc(kindLine(c))}</p>
-  <ul class="cd-devs" id="cd-devs">
+  <ul class="cd-devs" id="cd-devs"${modsFull ? ' data-full' : ''}>
     ${devs.map((d) => `<li data-device="${d.key}"><span class="cd-dv">${esc(d.name)}</span><span class="cd-dw">${esc(d.where)}</span><span class="cd-md">${esc(d.why)}</span></li>`).join('')
     || '<li class="cd-noext" data-device="none">기본형 — 결과 레이어만 켠다</li>'}
   </ul>
-  <p class="mic">화면은 카드 이름을 모른다 — 이 선언(<span class="n">kind</span>)만 보고 장치를 켠다. 새 종류가 생기면 선언 한 줄이면 된다.</p>
+  <p class="mic">화면은 카드 이름을 모른다 — 이 선언(<span class="n">kind</span>)만 보고 장치를 켠다. 새 종류가 생기면 선언 한 줄이면 된다.</p>`,
 
-  <h4 class="sec-h">공통 모듈 <span class="n">${CORE_MODULES.length}</span> + 전용 모듈 <span class="n">${lxExt.length + localExt.length}</span></h4>
+    modlx: `<h4 class="sec-h">공통 <span class="n">${CORE_MODULES.length}</span> + LX 전용 <span class="n">${lxExt.length}</span><span class="sp"></span>
+    <button type="button" class="btn-br btn-br--s cd-desc-t" aria-expanded="${modsFull}" style="width:96px">${modsFull ? '설명 접기' : '설명 보기'}</button></h4>
   <p class="cd-owner"><b>${esc(OWNER_LINE.lx.name)}</b> · ${esc(OWNER_LINE.lx.desc)}</p>
-  <ul class="cd-mods" id="cd-mods-lx">
+  <ul class="cd-mods" id="cd-mods-lx"${modsFull ? ' data-full' : ''}>
     ${CORE_MODULES.map((m) => `<li data-core data-owner="lx"><span class="cd-mk">공통</span><span class="cd-mn">${esc(m.name)}</span><span class="cd-md">${esc(m.desc)}</span><span class="st st--acc">완성</span></li>`).join('')}
     ${lxExt.map((m) => `<li data-owner="lx"><span class="cd-mk cd-mk--ext">전용</span><span class="cd-mn">${esc(m.name)}</span><span class="cd-md">${esc(m.desc)}</span><span class="st ${BUILD[m.build][1]}">${BUILD[m.build][0]}</span></li>`).join('')}
     ${lxExt.length ? '' : '<li class="cd-noext">LX 전용 모듈 없음 — 공통 모듈만으로 서는 카드</li>'}
   </ul>
-  <p class="mic">LX 전용 모듈 <b class="n">${lxDone}</b> / ${lxExt.length} 완성 · 공통 모듈 ${CORE_MODULES.length}은 모든 카드가 상속한다</p>
+  <p class="mic">LX 전용 모듈 <b class="n">${lxDone}</b> / ${lxExt.length} 완성 · 공통 모듈 ${CORE_MODULES.length}은 모든 카드가 상속한다</p>`,
 
+    modlocal: `<h4 class="sec-h">기관 가공 모듈 <span class="n">${localExt.length}</span><span class="sp"></span>
+    <button type="button" class="btn-br btn-br--s cd-desc-t" aria-expanded="${modsFull}" style="width:96px">${modsFull ? '설명 접기' : '설명 보기'}</button></h4>
   <p class="cd-owner cd-owner--local"><b>${esc(OWNER_LINE.local.name)}</b> · ${esc(OWNER_LINE.local.desc)}</p>
-  <ul class="cd-mods cd-mods--local" id="cd-mods-local">
+  <ul class="cd-mods cd-mods--local" id="cd-mods-local"${modsFull ? ' data-full' : ''}>
     ${localExt.map((m) => `<li data-owner="local"><span class="cd-mk cd-mk--loc">기관</span><span class="cd-mn">${esc(m.name)}</span><span class="cd-md">${esc(m.desc)}</span><span class="st st--dim">기관이 수행</span></li>`).join('')
     || '<li class="cd-noext">기관 가공 모듈 없음</li>'}
   </ul>
-  <p class="mic">이 <b class="n">${localExt.length}</b>개는 LX 화면에서 돌지 않는다 — 기관 작업공간(<span class="n">${esc(OWNER_LINE.local.screen)}</span>)이 맡는다. LX 는 판독까지다.</p>
+  <p class="mic">이 <b class="n">${localExt.length}</b>개는 LX 화면에서 돌지 않는다 — 기관 작업공간(<span class="n">${esc(OWNER_LINE.local.screen)}</span>)이 맡는다. LX 는 판독까지다.</p>`,
 
-  <h4 class="sec-h">배포 지역 <span class="n">${dep.length}</span></h4>
-  ${dep.length ? `<div class="tbl-wrap"><table class="tbl tbl--s" aria-label="${esc(c.name)} 배포본"><colgroup><col style="width:56px"><col><col style="width:64px"></colgroup>
+    /* 배포 표와 결과 목록은 처음에 한 구역에 좌우로 붙여 봤다. 판이 좁아지면(1366 에서 417px)
+       좌우가 풀려 세로로 쌓이고 표 하나만 200px 이라 구역이 넘쳤다 — 그래서 구역을 둘로 갈랐다. */
+    dep: `<h4 class="sec-h">배포 지역 <span class="n">${dep.length}</span></h4>
+  ${dep.length ? `<div class="tbl-wrap"><table class="tbl tbl--s" aria-label="${esc(c.name)} 배포본"><colgroup><col style="width:52px"><col><col style="width:62px"></colgroup>
     <thead><tr><th scope="col">연도</th><th scope="col">지역 · 규모</th><th scope="col">상태</th></tr></thead>
     <tbody>${dep.map((d) => { const up = updateState(d); return `<tr${d.added ? ' class="is-new"' : ''} data-deploy="${esc(d.id)}"><td class="num"><span class="n">${d.year}</span></td><td>${esc(d.region)}<span class="cd-scale">${esc(d.scale)}${up && up.level !== 'same' ? ` · 갱신 필요(${esc(up.level)})` : ''}</span></td><td>${stWord(d.status)}</td></tr>`; }).join('')}</tbody></table></div>`
-    : '<p class="empty empty--s">배포본 없음 — 아직 어느 지역에도 심지 않았다</p>'}
-  <p class="acts cd-tp">${c.portable
+    : '<p class="empty empty--s">배포본 없음 — 아직 어느 지역에도 심지 않았다</p>'}`,
+
+    res: `<h4 class="sec-h">실행 · 결과 <span class="n">${runs.length}</span></h4>
+  ${res.length ? `<ul class="cd-res">${res.map((r) => `<li><a class="link link--ink" href="ximap.html?result=${esc(r.id)}" data-result="${esc(r.id)}">${esc(r.title)} ›</a><span class="n">${nf.format(r.stats.count)} ${esc(r.unit)}</span><span class="mic">${esc(r.stats.analyzedAt)}</span></li>`).join('')}</ul>`
+    : '<p class="empty empty--s">결과 대장에 산출물이 없습니다 — 실행 전</p>'}`,
+  };
+  /* 라벨의 `<span class="cd-tw">` 는 **판이 좁아지면 접히는 꼬리말**이다(CSS 가 감춘다).
+     좁은 판에서 일곱 개가 두 줄로 밀리면 탭 줄만 50px 을 먹는다 — 꼬리말을 접으면 한 줄이 된다.
+     라벨은 코드에 박힌 글자라 esc() 를 통과시키지 않는다. */
+  const TABS_CD = [
+    ['info', '개요', ''],
+    ['model', '모델', ms.length],
+    ['kind', '종류', devs.length],
+    ['modlx', 'LX<span class="cd-tw"> 모듈</span>', CORE_MODULES.length + lxExt.length],
+    ['modlocal', '기관<span class="cd-tw"> 모듈</span>', localExt.length],
+    ['dep', '배포', dep.length],
+    ['res', '결과', res.length],
+  ];
+  if (!panes[cdTab]) cdTab = 'info';
+
+  panel.innerHTML = `
+<header class="panel-h"><h2>카드 상세</h2><span class="sp"></span>${c.projectId ? `<a class="link link--ink" href="ai-project.html?pid=${esc(c.projectId)}" id="to-project">이 카드를 만든 프로젝트 ›</a>` : '<span class="mic">연결된 프로젝트 없음 · 모델 개발 전</span>'}</header>
+<div class="panel-b" id="cdetail-b">
+  <div class="cd-top">
+    ${crop ? `<figure class="imgcard cd-img" style="--ar:16/9"><img src="${esc(crop.src)}" alt="${esc(crop.of)}"></figure>`
+    : `<div class="imgcard imgcard--none cd-img" style="--ar:16/9">결과 산출물 없음${c.gap ? ` · ${esc(c.gap)}` : ''}</div>`}
+    <div class="cd-top-b">
+      <p class="lb">선택 · ${esc(sc.name)}</p>
+      <div class="cd-head"><h3 class="panel-t">${esc(c.name)}</h3>${stWord(c.status)}${c.version ? `<span class="n cd-v">${esc(c.version)}</span>` : ''}</div>
+      <p class="prose cd-sum">${esc(c.summary)}</p>
+      ${ready ? `<p class="cd-why"><span class="st st--dim">준비 중</span> ${esc(c.gap || '아직 결과 산출물이 없는 서비스 · 분석 실행 불가')}</p>` : ''}
+      ${crop ? `<p class="mic cd-cap">${esc(crop.of)} · ${crop.kind === 'result' ? '결과 크롭 · 실측' : '배포 지역 영상 · 결과 아님'}</p>` : ''}
+    </div>
+  </div>
+  <div class="cd-bar">
+    <nav class="cd-tabs" role="tablist" aria-label="카드 상세 구역">
+      ${TABS_CD.map(([k, label, n]) => `<button type="button" role="tab" data-cdt="${k}" aria-selected="${k === cdTab}">${label}${n === '' ? '' : `<span class="n">${n}</span>`}</button>`).join('')}
+    </nav>
+    <p class="acts cd-tp">${c.portable
     ? `<button type="button" class="btn-br btn-br--s" id="tp-open">다른 지역에 이식 ›</button>`
     : `<span class="mic">이식 불가 — ${esc(c.gap || '지역 의존 자료가 커 배포본을 복제할 수 없다')}</span>`}</p>
-
-  <h4 class="sec-h">실행 · 결과 <span class="n">${runs.length}</span></h4>
-  ${res.length ? `<ul class="cd-res">${res.map((r) => `<li><a class="link link--ink" href="ximap.html?result=${esc(r.id)}" data-result="${esc(r.id)}">${esc(r.title)} ›</a><span class="n">${nf.format(r.stats.count)} ${esc(r.unit)}</span><span class="mic">${esc(r.stats.analyzedAt)}</span></li>`).join('')}</ul>`
-    : '<p class="empty empty--s">결과 대장에 산출물이 없습니다 — 실행 전</p>'}
+  </div>
+  ${TABS_CD.map(([k]) => `<div class="cd-pane" role="tabpanel" data-cdp="${k}"${k === cdTab ? '' : ' hidden'}>${panes[k]}</div>`).join('')}
 </div>
 <footer class="panel-f">
   <span class="mic">${esc(dom?.name || '미분류')} · LX 모듈 ${CORE_MODULES.length + lxExt.length} · 기관 ${localExt.length}</span>
-  <button type="button" class="btn-br" id="cd-results"${res.length ? '' : ' disabled'} style="width:104px">결과 보기</button>
-  <button type="button" class="btn-br" id="cd-history" style="width:104px">실행 이력</button>
-  ${ready ? '<button type="button" class="btn-br" id="cd-run" disabled style="width:124px">준비 중</button>' : '<button type="button" class="btn" id="cd-run" style="width:124px">분석 실행</button>'}
+  <button type="button" class="btn-br" id="cd-results"${res.length ? '' : ' disabled'}>결과 보기</button>
+  <button type="button" class="btn-br" id="cd-history">실행 이력</button>
+  ${ready ? '<button type="button" class="btn-br" id="cd-run" disabled>준비 중</button>' : '<button type="button" class="btn" id="cd-run">분석 실행</button>'}
 </footer>`;
 
+  /* 탭 전환은 다시 그리지 않는다 — 판 전체를 갈아 끼우면 들어오는 애니메이션이 매번 돈다. */
+  $('.cd-tabs', panel).addEventListener('click', (e) => {
+    const b = e.target.closest('[data-cdt]'); if (!b) return;
+    cdTab = b.dataset.cdt;
+    $$('[data-cdt]', panel).forEach((x) => x.setAttribute('aria-selected', String(x.dataset.cdt === cdTab)));
+    $$('[data-cdp]', panel).forEach((x) => { x.hidden = x.dataset.cdp !== cdTab; });
+  });
+  $$('.cd-desc-t', panel).forEach((b) => b.addEventListener('click', () => { modsFull = !modsFull; drawDetail(S); }));
   $('#cd-results')?.addEventListener('click', () => commit({ tab: 'done', run: res[0]?.id || '' }));
   $('#cd-history')?.addEventListener('click', () => commit({ tab: 'running' }));
   if (!ready) $('#cd-run')?.addEventListener('click', () => commit({ tab: 'run', card: c.id }));

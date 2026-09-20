@@ -30,7 +30,10 @@
 .an .scope-t[aria-selected="true"]{ color:var(--ink); font-weight:500; background:var(--t1); border-color:var(--accent); }
 .an .scope-t[aria-selected="true"] .n{ color:var(--accent); }
 .an .scope-t[aria-selected="true"]::after{ content:""; position:absolute; left:0; right:0; top:0; height:3px; background:var(--accent); }
-.scope-d{ margin:0 0 0 18px; font-size:14px; color:var(--grey); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* 분기 탭은 줄바꿈하지 않는다 — 판을 옆으로 세우면서 이 줄이 좁아져 `지자체 사 / 업` 으로 깨졌다 */
+.an .scope-t{ white-space:nowrap; flex:none; }
+/* 분기 설명은 자르지 않고 두 줄로 흘린다(법전: `…` 금지) */
+.scope-d{ margin:0 0 0 18px; font-size:14px; line-height:1.3; color:var(--grey); flex:1 1 auto; min-width:0; }
 .an-shelf .band{ flex:none; padding-top:14px; overflow:hidden; grid-auto-columns:minmax(0,max-content); }
 .an-shelf .band-note{ min-width:0; overflow:hidden; text-overflow:ellipsis; }
 .an-shelf .band .tile-v b{ font-size:34px; }
@@ -45,62 +48,122 @@
 .an .filters,.an .an-count,.an .run-bar,.an .dl-h,.an .step-h,.an .split-l > .inp-ic,.an .dl > .inp-ic{ flex:none; }
 .an .filters .sel--s{ min-width:0; flex:0 1 auto; }
 .an .filters .sel--s > select{ min-width:104px; }
-.an .filters-acts{ flex:none; }
-.an .panel-f{ background:var(--paper); }
+.an .filters-acts{ flex:none; margin-left:auto; }   /* 줄이 넘어가도 오른쪽 끝에 선다 */
+/* 판 바닥 — 판이 좁아지면 설명 줄이 여섯 줄로 접혀 바닥이 216px 까지 부풀었다(1280 에서 확인).
+   줄바꿈을 허용하고 단추는 한 줄로 유지한다. 단추 폭은 고정하지 않는다(글자가 먼저다). */
+.an .panel-f{ background:var(--paper); flex-wrap:wrap; row-gap:6px; }
+.an .panel-f .mic{ flex:1 1 150px; min-width:0; white-space:normal; line-height:1.3; }
+.an .panel-f .btn,.an .panel-f .btn-br{ min-width:104px; }
 
 .an-count{ margin:0 0 8px; font-size:14px; color:var(--grey); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:none; }
 .an-count b{ color:var(--ink); font-weight:500; }
-.cgrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px 14px; overflow:auto; min-height:0; align-content:start; padding-bottom:8px; scrollbar-width:thin; scrollbar-color:var(--grey-3) transparent; }
-.an .ccard{ display:flex; flex-direction:column; gap:0; min-width:0; padding-bottom:10px; border-bottom:1px solid transparent; transition:transform var(--hov) var(--hove), background var(--hov) var(--hove); }
-.an .ccard:hover{ transform:translateY(-4px); background:var(--t1); }
+
+/* 카드 한 장 — **눕힌다**. 세로로 세운 카드(그림 위 · 글 아래)는 한 장이 330px 이라
+   7장이면 1,023px 이 되어 301px 자리에서 722px 이 잘렸다. 그림을 왼쪽으로 돌리면
+   한 장이 70~110px 이 되고, 덤으로 이름 줄이 넓어져 `…` 로 자를 일이 없어졌다.
+   --cth = 그림 폭. 세로가 넉넉한 모니터일수록 커진다(한 해상도에 맞추지 않는다). */
+.cgrid{ --cth:clamp(96px, 15vh, 200px); display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 22px; overflow:auto; min-height:0; align-content:start; padding-bottom:4px; scrollbar-width:thin; scrollbar-color:var(--grey-3) transparent; }
+.an .ccard{ display:grid; grid-template-columns:var(--cth) minmax(0,1fr); column-gap:12px; align-items:start; min-width:0; text-align:left; padding:5px 4px 7px 0; border-bottom:1px solid transparent; transition:transform var(--hov) var(--hove), background var(--hov) var(--hove); }
+.an .ccard:hover{ transform:translateY(-3px); background:var(--t1); }
 .an .ccard[aria-selected="true"]{ background:var(--t1); border-bottom-color:var(--accent); }
-.an .ccard .imgcard{ margin-bottom:9px; }
+.an .ccard .imgcard{ margin:0; }
+/* 그림 없는 자리의 안내 문구 — 낱말 가운데서 끊기지 않게(`산 / 출물 없음` 이 나왔다) */
+.an .imgcard--none{ word-break:keep-all; padding:0 6px; }
 .an .ccard[aria-selected="true"] .imgcard{ outline:2px solid var(--accent); outline-offset:-2px; }
-.an .ccard-t{ display:flex; align-items:baseline; gap:8px; padding:0 2px; font-size:16.5px; font-weight:500; min-width:0; }
-.ccard-n{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0; }
+/* 이름 줄 아래는 **한 흐름**이다 — 소관과 숫자를 각각 제 줄에 두면 좁은 칸에서 네 줄이 된다.
+   같은 흐름에 담으면 자리가 있을 때 한 줄로 붙고 없을 때만 넘어간다. */
+.ccard-b{ display:flex; flex-wrap:wrap; align-items:baseline; column-gap:12px; row-gap:0; min-width:0; }
+.an .ccard-t{ display:flex; align-items:baseline; gap:8px; flex:1 1 100%; font-size:15.5px; line-height:21px; font-weight:500; min-width:0; }
+/* 이름은 자르지 않는다 — 모자라면 두 줄로 흘린다(법전: `…` 금지) */
+.ccard-n{ flex:1; min-width:0; overflow-wrap:anywhere; }
 .ccard-v{ font-size:14px; color:var(--grey); flex:none; }
-.an .ccard-s{ display:block; padding:3px 2px 0; font-size:14px; color:var(--grey); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.an .ccard-m{ display:flex; gap:12px; padding:5px 2px 0; font-size:14px; color:var(--grey); }
+.an .ccard-s{ flex:0 1 auto; padding:1px 0 0; font-size:14px; line-height:19px; color:var(--grey); overflow-wrap:anywhere; }
+.an .ccard-m{ display:flex; flex-wrap:wrap; flex:0 1 auto; gap:0 12px; padding:1px 0 0; font-size:14px; line-height:19px; color:var(--grey); }
 .ccard-m b{ color:var(--ink); font-weight:500; }
+.ccard-w{ color:var(--grey-3); }      /* 결과가 아니라 배포 지역 영상이라는 표시 */
 .an .ccard[data-ready] img{ filter:grayscale(1); opacity:.62; }
 .an .ccard[data-ready] .imgcard{ outline:1px dashed var(--grey-3); outline-offset:-1px; }
 .an .ccard[data-ready] .ccard-n{ color:var(--grey); }
 
-/* 카드 상세 */
-.cd-head{ display:flex; align-items:baseline; gap:10px; margin:2px 0 12px; }
-.cd-head .panel-t{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; }
+/* ── 카드 상세 — 머리(늘 보임) + 구역 탭 ────────────────────────────────
+   머리: 그림을 왼쪽으로 돌리고 이름 · 상태 · 요약을 오른쪽에 붙였다.
+   세로로 쌓으면 그림 하나가 363px 이라 판(296px)을 혼자 다 먹었다. */
+.cd-top{ display:grid; grid-template-columns:clamp(108px, 19vh, 260px) minmax(0,1fr); column-gap:14px; align-items:start; margin-bottom:9px; }
+.cd-img{ margin:0; }
+/* 그림 설명(무엇을 찍은 것인가 · 결과인가 아닌가)은 자막으로 그림 위에 얹었더니
+   그림이 좁아지자 글자가 잘렸다 — 글 칸으로 내렸다. 잘린 글자를 두지 않는다. */
+.cd-cap{ margin:4px 0 0; white-space:normal; line-height:1.35; color:var(--grey-3); }
+.cd-top-b{ min-width:0; }
+.cd-head{ display:flex; align-items:baseline; gap:10px; margin:2px 0 4px; }
+.cd-head .panel-t{ flex:1; min-width:0; font-size:22px; line-height:28px; overflow-wrap:anywhere; }
 .cd-v{ font-size:15px; color:var(--grey); }
-.cd-img{ margin-bottom:12px; }
-.cd-why{ margin:0 0 10px; font-size:15px; color:var(--grey); }
-.cd-sum{ font-size:15.5px; line-height:25px; margin:0 0 4px; }
-.cd-kind{ margin:10px 0 8px; font-size:15.5px; font-weight:500; letter-spacing:-.01em; }
-.cd-devs{ list-style:none; margin:0 0 6px; padding:0; }
-.cd-devs li{ display:grid; grid-template-columns:minmax(0,1fr) auto; column-gap:10px; padding:7px 0; border-bottom:1px solid var(--line); font-size:15px; }
+.cd-why{ margin:4px 0 0; font-size:14.5px; line-height:1.4; color:var(--grey); }
+.an .cd-sum{ font-size:15px; line-height:21px; margin:0; }
+
+/* 구역 탭 줄 — 오른쪽 끝은 **이식**. 어느 구역을 보고 있든 눌러야 하므로 접지 않는다. */
+.cd-bar{ display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; border-bottom:1px solid var(--ink); margin-bottom:9px; }
+.cd-tabs{ display:flex; flex-wrap:wrap; gap:0 2px; flex:1 1 auto; min-width:0; }
+.an .cd-tabs button{ display:inline-flex; align-items:baseline; gap:5px; height:29px; padding:0 9px; font-size:15px; color:var(--grey); border-bottom:2px solid transparent; margin-bottom:-1px; white-space:nowrap; transition:color var(--hov) var(--hove), background var(--hov) var(--hove); }
+.an .cd-tabs button:hover{ color:var(--ink); background:var(--t1); }
+.an .cd-tabs button[aria-selected="true"]{ color:var(--ink); font-weight:500; border-bottom-color:var(--accent); }
+.an .cd-tabs button .n{ font-size:14px; color:var(--grey-3); }
+.an .cd-tabs button[aria-selected="true"] .n{ color:var(--accent); }
+.an .cd-tp{ flex:0 1 auto; justify-content:flex-end; margin:0 0 4px auto; max-width:360px; min-width:0; }
+.an .cd-tp .mic{ white-space:normal; line-height:1.35; text-align:right; }
+.cd-pane{ min-width:0; }
+.an .cd-pane .sec-h{ margin-top:0; font-size:16px; line-height:21px; padding-bottom:6px; }
+.an .cd-pane .sec-h .sp{ flex:1; }
+/* 행정 업무 여섯 줄도 두 칸으로 — 여섯 줄 180px 이 세 줄 84px 이 된다 */
+.cd-kv{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:24px; }
+/* 부품 기본값 .kv dd 는 한 줄 + `…` 다. 여기서는 값이 길면 두 줄로 흘린다 —
+   `농지 이용 실태조사 · 농업경영체 등록…` 처럼 잘린 글자를 두지 않는다(법전). */
+.an .cd-kv > div{ align-items:start; min-height:27px; padding:4px 0; }
+.an .cd-kv dt{ line-height:19px; }
+.an .cd-kv dd{ white-space:normal; overflow:visible; overflow-wrap:anywhere; line-height:19px; }
+
+.cd-kind{ margin:0 0 6px; font-size:15px; line-height:21px; font-weight:500; letter-spacing:-.01em; }
+.cd-devs{ list-style:none; margin:0 0 5px; padding:0; display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); column-gap:22px; }
+.cd-devs li{ display:grid; grid-template-columns:minmax(0,1fr) auto; column-gap:10px; padding:5px 0; border-bottom:1px solid var(--line); font-size:15px; }
 .cd-dv{ font-weight:500; }
 .cd-dw{ font-size:14px; color:var(--accent); text-align:right; }
-.cd-devs .cd-md{ grid-column:1 / -1; }
-.cd-owner{ margin:14px 0 6px; padding-left:9px; border-left:2px solid var(--ink); font-size:14.5px; color:var(--grey); }
+.cd-devs .cd-md{ grid-column:1 / -1; font-size:14px; line-height:1.4; color:var(--grey); }
+/* 장치 목록도 모듈과 같은 규칙 — `왜 켜지는가` 한 줄은 접어 두고 같은 버튼으로 편다.
+   (이 줄들을 늘 펴 두면 장치 셋만으로 148px 이라 종류 구역이 혼자 넘쳤다) */
+.cd-devs:not([data-full]) .cd-md{ display:none; }
+.cd-owner{ margin:0 0 6px; padding-left:9px; border-left:2px solid var(--ink); font-size:14.5px; line-height:1.4; color:var(--grey); }
 .cd-owner b{ color:var(--ink); font-weight:500; }
 .cd-owner--local{ border-left-color:var(--grey-3); }
-.cd-mods{ list-style:none; margin:0 0 4px; padding:0; }
-.cd-mods li{ display:grid; grid-template-columns:44px minmax(0,1fr) auto; column-gap:10px; align-items:baseline; padding:7px 0; border-bottom:1px solid var(--line); font-size:15px; }
-.cd-mods .cd-md{ grid-column:2 / 4; font-size:14px; color:var(--grey); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+/* 모듈 — 기본은 **이름표가 가로로 흐르는** 모양이다. 설명까지 한 줄씩 깔면
+   공통 7 + 전용 n 이 500px 을 넘어 판을 혼자 먹는다.
+   지운 것이 아니다: 종류(공통·전용·기관) · 이름 · 상태는 접힌 채로도 다 보이고,
+   `설명 보기` 한 번이면 설명이 붙은 줄 목록으로 펼쳐진다. */
+.cd-mods{ list-style:none; margin:0 0 5px; padding:0; display:flex; flex-wrap:wrap; column-gap:18px; row-gap:0; }
+.cd-mods li{ display:inline-flex; align-items:baseline; gap:7px; min-width:0; padding:2px 0; font-size:15px; line-height:21px; }
+.cd-mods .cd-md{ display:none; }
+/* 접힌 상태에서 공통 모듈의 `공통`·`완성`은 줄마다 같은 말이라 머리글(공통 7)이 대신한다.
+   전용 모듈은 상태가 제각각(완성·진행·설계)이라 접혀도 남긴다 — 그 줄이 정보다. */
+.cd-mods:not([data-full]) li[data-core] .cd-mk,
+.cd-mods:not([data-full]) li[data-core] .st{ display:none; }
+.cd-mods[data-full]{ display:block; }
+.cd-mods[data-full] li{ display:grid; grid-template-columns:38px minmax(0,auto) minmax(0,1fr) auto; column-gap:12px; padding:5px 0; border-bottom:1px solid var(--line); }
+.cd-mods[data-full] .cd-md{ display:block; font-size:14px; line-height:1.4; color:var(--grey); }
 .cd-mods--local li{ opacity:.82; }
-.cd-mk{ font-size:14px; color:var(--grey); letter-spacing:.02em; }
+.cd-mk{ font-size:14px; color:var(--grey); letter-spacing:.02em; flex:none; }
 .cd-mk--ext{ color:var(--teal); }
 .cd-mk--loc{ color:var(--grey-3); }
-.cd-mn{ font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.cd-noext{ display:block!important; padding:9px 0; font-size:14px; color:var(--grey); border-bottom:1px solid var(--line); }
-.cd-models{ list-style:none; margin:0 0 6px; padding:0; }
-.cd-models li{ display:grid; grid-template-columns:minmax(0,1fr) auto; column-gap:10px; align-items:baseline; padding:7px 0; border-bottom:1px solid var(--line); font-size:15px; }
-.cd-models .cd-mm{ grid-column:1; font-size:14px; color:var(--grey); }
+.cd-mn{ font-weight:500; min-width:0; overflow-wrap:anywhere; }
+.cd-noext{ display:block!important; padding:5px 0; font-size:14px; color:var(--grey); }
+.cd-models{ list-style:none; margin:0 0 5px; padding:0; display:grid; grid-template-columns:repeat(auto-fill,minmax(236px,1fr)); column-gap:22px; }
+.cd-models li{ display:grid; grid-template-columns:minmax(0,1fr) auto; column-gap:10px; align-items:baseline; padding:5px 0; border-bottom:1px solid var(--line); font-size:15px; }
+.cd-models .cd-mn{ line-height:20px; }
+.cd-models .cd-mm{ grid-column:1; font-size:14px; line-height:19px; color:var(--grey); }
 .cd-mc{ grid-row:1 / 3; grid-column:2; align-self:center; font-size:15px; color:var(--teal); }
 .cd-scale{ display:block; font-size:14px; color:var(--grey); overflow:hidden; text-overflow:ellipsis; }
 .an .tbl tr.is-new td{ background:var(--t1); }
-.cd-tp{ justify-content:flex-start; margin:10px 0 0; }
 .cd-res{ list-style:none; margin:0; padding:0; }
-.cd-res li{ display:flex; align-items:baseline; gap:10px; padding:7px 0; border-bottom:1px solid var(--line); font-size:15px; }
-.cd-res .link{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; }
+.cd-res li{ display:flex; align-items:baseline; flex-wrap:wrap; gap:0 10px; padding:5px 0; border-bottom:1px solid var(--line); font-size:15px; }
+.cd-res .link{ flex:1 1 60%; min-width:0; overflow-wrap:anywhere; }
 .cd-res .n{ color:var(--teal); }
 
 /* 이식 마법사 */
@@ -268,7 +331,6 @@
 /* ══ 좁은 화면 ═══════════════════════════════════════════════════════════ */
 @media (max-width:1330px){
   .an-done{ grid-template-columns:250px 1px minmax(0,1fr) 1px 344px; }
-  .cgrid{ grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 @media (max-width:1180px){
   .an-done{ grid-template-columns:minmax(0,1fr); row-gap:16px; }
@@ -276,4 +338,134 @@
   .an-done .dl,.an-done .dm,.an-done .dp{ grid-column:1; }
   .run-pick,.step-two,.tp-cols{ grid-template-columns:minmax(0,1fr); }
   .thumbs{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+/* 판이 좁아지면 좌우로 편 것부터 되돌린다 — 글자가 먼저다 */
+@media (max-width:1480px){
+  /* 가로가 좁으면 그림을 줄여 글 자리를 먼저 준다 — 이름이 두 줄로 접히면 격자가 길어진다 */
+  .cgrid{ --cth:clamp(84px, 11.5vh, 132px); column-gap:16px; }
+  /* 두 칸으로 쪼개면 `장치 이름 / 어디에` 가 줄바꿈되어 오히려 네 줄이 된다 — 한 칸으로 길게 */
+  .cd-devs{ grid-template-columns:minmax(0,1fr); }
+  .cd-devs li{ padding:3px 0; }
+  .cd-models{ grid-template-columns:repeat(auto-fill,minmax(176px,1fr)); column-gap:16px; }
+  .cd-kv{ column-gap:18px; }
+  .an .cd-tabs button{ padding:0 7px; }
+  .cd-tw{ display:none; }            /* `LX 모듈` → `LX` — 일곱 탭을 한 줄에 눕힌다 */
+  .an .cd-tp{ max-width:100%; }
+}
+/* 이 블록은 위의 1480 블록보다 **뒤에** 와야 한다 — 같은 값을 덮어쓰기 때문이다
+   (처음에 위쪽 `max-width:1330` 블록에 적었다가 1480 블록에 먹혀 아무 일도 없었다) */
+@media (max-width:1330px){
+  /* 카드 이름 한 줄이 231px 에서 겨우 두 줄로 넘어간다 — 그림을 조금 더 줄여 한 줄로 되돌린다 */
+  .cgrid{ --cth:clamp(72px, 10vh, 108px); column-gap:14px; }
+  .an .ccard-t{ font-size:15px; }
+  .an .ccard-s,.an .ccard-m{ line-height:18px; }
+}
+@media (max-width:1240px){
+  .cd-kv{ grid-template-columns:minmax(0,1fr); }
+}
+@media (max-width:1100px){
+  .cgrid{ grid-template-columns:repeat(3,minmax(0,1fr)); }   /* 판이 아래로 내려가 가로가 다시 넓어진다 */
+  .cd-kv{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+
+/* ══ 세로가 짧은 모니터 ═══════════════════════════════════════════════════
+   발주자 화면이 약 1996×745 다. "모니터마다 최적화를 해야지" — 한 해상도에 맞추는 것은
+   최적화가 아니므로, 세로가 줄면 **머리 장식부터** 줄이고 판에 그만큼을 넘긴다.
+   지우는 것이 아니라 여백·글자 크기만 줄인다. 값은 대시보드 dashboard.css 하단과 같은 수. */
+@media (max-height:900px){
+  .lx.an #main{ padding-top:calc(var(--mast) + 14px); padding-bottom:4px; }
+  .lx.an #page-head{ height:56px; margin-bottom:11px; }
+  .an .scope-t{ height:37px; }
+  .an-shelf .band{ padding-top:9px; margin-bottom:9px; }
+  .an-shelf .band .tile{ padding-bottom:9px; }
+  .an-shelf .band .tile-v{ margin-top:4px; }
+  .an-shelf .band .tile-v b{ font-size:29px; }
+  .an-shelf .band-note{ padding-bottom:10px; }
+  .an .filters{ min-height:34px; }
+  .an-count{ margin-bottom:6px; }
+  .an .panel-b{ padding:9px 0 4px; }
+  .an .panel-f{ min-height:44px; padding-top:9px; }
+}
+/* 세로가 940px 이하면 **판을 진열대 옆으로 끝까지 세운다**.
+   분기 탭 · 집계 띠 · 거르개는 카드 목록의 머리지 카드 상세의 머리가 아니다.
+   그것들을 왼쪽 칸 안으로 들여보내면 오른쪽 상세 판이 175px 을 더 받는다 —
+   1280×720 에서 판 본문이 323px → 498px 이 되어 여섯 구역이 전부 들어간다.
+   (이 수를 쓰기 전에 글자·여백만 줄여 봤지만 40px 남짓밖에 못 벌었다.
+    구역을 더 쪼개는 것도 해 봤는데 탭 줄이 세 줄이 되어 되레 손해였다.) */
+@media (max-height:820px){
+  .an .an-shelf{ display:grid; grid-template-columns:minmax(0,772fr) 1px minmax(0,444fr); grid-template-rows:auto auto minmax(0,1fr); column-gap:20px; }
+  .an .an-shelf > .scopes{ grid-column:1; grid-row:1; }
+  .an .an-shelf > .band{ grid-column:1; grid-row:2; }
+  .an .an-shelf > .an-split{ display:contents; }
+  .an .an-shelf .split-l{ grid-column:1; grid-row:3; }
+  .an .an-shelf .split-r{ grid-column:3; grid-row:1 / -1; }
+  .an .an-shelf > .an-split::before{ grid-column:2; grid-row:1 / -1; }
+}
+@media (max-height:800px){
+  .lx.an #main{ padding-top:calc(var(--mast) + 9px); }
+  .lx.an #page-head{ height:50px; margin-bottom:8px; }
+  .an .scope-t{ height:34px; font-size:16px; }
+  /* 집계 여섯 칸 — 큰 숫자 타일을 **한 줄 띠**로 눕힌다. 90px 이 26px 이 된다.
+     숫자도 라벨도 그대로다(지우지 않는다) — 크기만 본문 수준으로 내린다. */
+  .an-shelf .band{ display:flex; flex-wrap:wrap; align-items:baseline; gap:0 18px; padding:2px 0 4px; margin-bottom:7px; }
+  .an-shelf .band .tile{ display:inline-flex; align-items:baseline; gap:6px; min-width:0; margin:0; padding:0; border-left:0; }
+  .an-shelf .band .tile-l{ display:inline; }
+  .an-shelf .band .tile-v{ display:inline-flex; margin:0; gap:3px; }
+  .an-shelf .band .tile-v b{ font-size:17px; }
+  .an-shelf .band .tile-v span{ font-size:14px; }
+  .an-shelf .band-note{ flex:1 1 100%; padding:0; font-size:14px; line-height:18px; white-space:normal; }
+  .an .filters{ row-gap:5px; }
+  .an .filters .sel--s > select{ min-width:92px; }
+  .an-count{ margin-bottom:3px; line-height:16px; }
+  .an .filters{ margin-bottom:0; }
+  .an .panel-h{ height:28px; }
+  .an .panel-b{ padding:7px 0 3px; }
+  .an .panel-f{ min-height:38px; padding-top:6px; }
+  /* 설명 줄은 제 줄을 하나 갖는다 — 단추와 나눠 쓰면 두 줄로 접혀 바닥이 더 두꺼워진다 */
+  .an .panel-f .mic{ flex:1 1 100%; line-height:17px; }
+  .an .panel-f .btn,.an .panel-f .btn-br{ height:32px; font-size:15px; min-width:92px; padding:0 14px; }
+  .cd-top{ grid-template-columns:clamp(96px, 13vh, 250px) minmax(0,1fr); margin-bottom:5px; }
+  /* `선택 · 지자체 사업` 을 이름 줄 오른쪽에 붙여 한 줄을 없앤다(들어갈 자리가 있으면 그 줄에 앉는다) */
+  .cd-top-b{ display:flex; flex-wrap:wrap; align-items:baseline; column-gap:10px; }
+  .cd-top-b .lb{ order:2; flex:none; margin:0; }
+  .cd-top-b .cd-head{ order:1; flex:1 1 auto; min-width:0; margin:0 0 3px; }
+  .cd-top-b .cd-sum,.cd-top-b .cd-why,.cd-top-b .cd-cap{ order:3; flex:1 1 100%; }
+  .an .cd-sum{ font-size:14.5px; line-height:19.5px; }
+  .cd-why{ font-size:14px; line-height:1.32; }
+  .cd-bar{ margin-bottom:6px; }
+  .an .cd-tabs button{ height:26px; padding:0 7px; }
+  .an .cd-pane .sec-h{ font-size:15.5px; padding-bottom:5px; }
+  .an .cd-kv > div{ min-height:24px; padding:3px 0; }
+  .an .cd-kv dt,.an .cd-kv dd{ line-height:18px; }
+  .an .help{ line-height:1.35; }
+  .an .cd-pane .tbl--s td{ height:34px; }
+  .an .cd-pane .tbl th{ height:28px; }
+  .cd-devs li{ padding:3px 0; }
+  .cd-devs .cd-md{ line-height:1.32; }
+  .cd-models li{ padding:4px 0; }
+  .an .filters .btn,.an .filters .btn-br{ height:31px; }
+  .cgrid{ gap:5px 16px; }
+  .an .ccard{ padding:3px 4px 4px 0; }
+  .an .ccard-t{ line-height:20px; }
+  .an .ccard-s,.an .ccard-m{ line-height:18px; }
+  .an .ccard .chip{ height:20px; line-height:18px; }
+}
+/* 세로가 넉넉하면 **그림을 키운다** — 빈 바닥을 남기지 않는다.
+   (칸 수를 한 칸으로 줄여 일곱 줄로 채워 봤지만 1080 에서 851px 이 되어 넘쳤다.
+    두 칸 넉 줄을 유지하고 그림만 키우는 쪽이 어느 세로에서도 들어맞는다.) */
+@media (min-height:1000px){ .cgrid{ --cth:clamp(120px, 19vh, 280px); } }
+
+/* ══ 세로가 아주 넉넉한 모니터 ═══════════════════════════════════════════
+   1200px 이상이면 모듈 · 장치 설명이 접지 않아도 다 들어간다 — 처음부터 펴 둔다.
+   (접는 것은 자리가 없을 때의 수단이지 기본값이 아니다.) 이 높이에서는 `설명 보기`
+   버튼이 할 일이 없으므로 감춘다. */
+@media (min-height:1200px){
+  .cd-mods{ display:block; }
+  .cd-mods li{ display:grid; grid-template-columns:38px minmax(0,auto) minmax(0,1fr) auto; column-gap:12px; padding:5px 0; border-bottom:1px solid var(--line); }
+  .cd-mods .cd-md{ display:block; font-size:14px; line-height:1.4; color:var(--grey); }
+  .cd-mods:not([data-full]) li[data-core] .cd-mk,
+  .cd-mods:not([data-full]) li[data-core] .st{ display:inline; }
+  .cd-devs:not([data-full]) .cd-md{ display:block; }
+  /* `.lx .btn-br{display:inline-flex}` 가 (0,2,0) 이라 클래스 하나로는 못 이긴다 — .lx 를 붙인다 */
+  .lx .cd-desc-t{ display:none; }
 }
