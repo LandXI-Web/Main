@@ -26,8 +26,8 @@ test.describe('관문', () => {
     expect(new globalThis.URL(page.url()).searchParams.get('next')).toBe('shell-demo.html?tab=faq');
   });
   test('자리 화면도 같은 관문 · 가입/찾기 화면은 관문도 레일도 없다', async ({ page }) => {
-    await page.goto('proto/admin-users.html');
-    await page.waitForURL(/login\.html\?next=admin-users\.html/);
+    await page.goto('proto/ximap.html');
+    await page.waitForURL(/login\.html\?next=ximap\.html/);
     await page.goto('proto/signup.html');
     await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
     expect(page.url()).toContain('signup.html');
@@ -76,7 +76,7 @@ test.describe('레일', () => {
     await expect(page.locator('.wm')).toHaveText('원판 · 구현 전');
   });
   test('자리 화면 — 썸네일 · 좌우 화살표 키가 산다', async ({ page }) => {
-    await boot(page, 'proto/admin-users.html');
+    await boot(page, 'proto/ximap.html');   // 아직 자리 화면인 메뉴
     const first = await page.locator('#ix').innerText();
     await page.keyboard.press('ArrowRight');
     expect(await page.locator('#ix').innerText()).not.toBe(first);
