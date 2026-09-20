@@ -5,14 +5,15 @@ const V = 'design-canvas/v2/';
 const GROUPS = [ // [접두어, 갤러리 카테고리]
   ['B6-MapWork', '지도 작업공간(컨셉)'], ['B6-Support', '서비스 지원'], ['B6-Publish', '카드 발행 관리'],
   ['B6-Admin', '서비스 관리'], ['B6-My', 'MY · 인증'], ['B6-Auth', 'MY · 인증'],
+  ['B7-Project', '프로젝트'], ['B7-State', '프로젝트'], ['B7-Analysis', '분석 서비스'], ['B7-Map', '지도 서비스'], ['B7-Stats', '지도 서비스'], ['B7-Report', '지도 서비스'],
 ];
-const ids = fs.readdirSync(V).filter((f) => /^B6-.*\.dc\.html$/.test(f)).map((f) => f.replace('.dc.html', '')).filter((id) => fs.existsSync(`${V}renders/${id}.png`)).sort();
+const ids = fs.readdirSync(V).filter((f) => /^B[67]-.*\.dc\.html$/.test(f)).map((f) => f.replace('.dc.html', '')).filter((id) => fs.existsSync(`${V}renders/${id}.png`)).sort();
 const groupOf = (id) => GROUPS.find(([p]) => id.startsWith(p));
 const pngSize = (p) => { const b = fs.readFileSync(p); return [b.readUInt32BE(16), b.readUInt32BE(20)]; };
 
 // 1) canvas.json — 그룹마다 한 행
 const cp = V + 'canvas.json'; const c = JSON.parse(fs.readFileSync(cp, 'utf8'));
-c.artboards = c.artboards.filter((a) => !/^B6-/.test(a.file));
+c.artboards = c.artboards.filter((a) => !/^B[67]-/.test(a.file));
 let y = Math.max(...c.artboards.map((a) => a.y + a.h)) + 160;
 const titleOf = (id) => { const s = fs.readFileSync(`${V}${id}.dc.html`, 'utf8'); const m = /<!--\s*title:\s*(.+?)\s*-->/.exec(s); return m ? m[1] : id.replace(/^B6-/, 'B6 · ').replace(/-/g, ' '); };
 for (const [prefix] of GROUPS) {

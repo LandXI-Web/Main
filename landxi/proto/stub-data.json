@@ -7,6 +7,126 @@
    "decision": "D5 · 원판 검토 중 (+ 지도 작업공간 컨셉 선택 1·2·3)",
    "boards": [
     {
+     "id": "B7-Project-Dataset-Create",
+     "title": "B7 Project Dataset Create",
+     "short": "B7 Project Dataset Create",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Project-Dataset-Detail",
+     "title": "B7 Project Dataset Detail",
+     "short": "B7 Project Dataset Detail",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Project-Deploy-Picker",
+     "title": "B7 Project Deploy Picker",
+     "short": "B7 Project Deploy Picker",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Project-File-Add",
+     "title": "B7 Project File Add",
+     "short": "B7 Project File Add",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Project-File-Fail",
+     "title": "B7 Project File Fail",
+     "short": "B7 Project File Fail",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Project-File-Progress",
+     "title": "B7 Project File Progress",
+     "short": "B7 Project File Progress",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Project-Invite",
+     "title": "B7 Project Invite",
+     "short": "B7 Project Invite",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Project-Invite-Error",
+     "title": "B7 Project Invite Error",
+     "short": "B7 Project Invite Error",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Project-Labeling-Fix",
+     "title": "B7 Project Labeling Fix",
+     "short": "B7 Project Labeling Fix",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Project-Model-Register",
+     "title": "B7 Project Model Register",
+     "short": "B7 Project Model Register",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Project-Model-Registered",
+     "title": "B7 Project Model Registered",
+     "short": "B7 Project Model Registered",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Project-Overview-Edit",
+     "title": "B7 Project Overview Edit",
+     "short": "B7 Project Overview Edit",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Project-Overview-Members",
+     "title": "B7 Project Overview Members",
+     "short": "B7 Project Overview Members",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Project-Train-Fix",
+     "title": "B7 Project Train Fix",
+     "short": "B7 Project Train Fix",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Project-Train-New",
+     "title": "B7 Project Train New",
+     "short": "B7 Project Train New",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Project-Train-Running",
+     "title": "B7 Project Train Running",
+     "short": "B7 Project Train Running",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Projects-Empty",
+     "title": "B7 Projects Empty",
+     "short": "B7 Projects Empty",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Projects-NoResult",
+     "title": "B7 Projects NoResult",
+     "short": "B7 Projects NoResult",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-State-Error",
+     "title": "B7 State Error",
+     "short": "B7 State Error",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-State-Loading",
+     "title": "B7 State Loading",
+     "short": "B7 State Loading",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
      "id": "B5-Projects",
      "title": "프로젝트 0 · 프로젝트 목록 — 우 패널 = 프로젝트 조회(선택 카드: 대표 이미지 · 주요 정보 · 구성원 · 데이터 요약 · 열기/수정/삭제)",
      "short": "우 패널 = 프로젝트 조회(선택 카드: 대표 이미지 · 주요 정보",
@@ -92,6 +212,30 @@
    "decision": "D10 · 원판 검토 중",
    "boards": [
     {
+     "id": "B7-Analysis-List",
+     "title": "B7 Analysis List",
+     "short": "B7 Analysis List",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Analysis-Progress-Overlay",
+     "title": "B7 Analysis Progress Overlay",
+     "short": "B7 Analysis Progress Overlay",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Analysis-Result-Edit",
+     "title": "B7 Analysis Result Edit",
+     "short": "B7 Analysis Result Edit",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Analysis-Share",
+     "title": "B7 Analysis Share",
+     "short": "B7 Analysis Share",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
      "id": "B5-Analysis-List",
      "title": "B5 · 분석 서비스 — 서비스: 카드 15(실크롭 244×84 + 이름 + 부처만 · 3열) + 우 정보 패널 444(선택 = 남원 농지이용 · 큰 이미지 · kv 6 · 숫자는 여기만) · 부처 칩 8 · CTA 분석 실행 1",
      "short": "서비스: 카드 15(실크롭 244×84 + 이름 + 부처만 · 3열) +",
@@ -122,6 +266,162 @@
    "rail": "map",
    "decision": "D13 · 원판 검토 중",
    "boards": [
+    {
+     "id": "B7-Stats-Opt1",
+     "title": "B7 Stats Opt1",
+     "short": "B7 Stats Opt1",
+     "note": "선택 1"
+    },
+    {
+     "id": "B7-Stats-Opt2",
+     "title": "B7 Stats Opt2",
+     "short": "B7 Stats Opt2",
+     "note": "선택 2"
+    },
+    {
+     "id": "B7-Stats-Opt3",
+     "title": "B7 Stats Opt3",
+     "short": "B7 Stats Opt3",
+     "note": "선택 3"
+    },
+    {
+     "id": "B7-Map-AOI",
+     "title": "B7 Map AOI",
+     "short": "B7 Map AOI",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Map-Basemap",
+     "title": "B7 Map Basemap",
+     "short": "B7 Map Basemap",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Map-Download",
+     "title": "B7 Map Download",
+     "short": "B7 Map Download",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Map-Draw",
+     "title": "B7 Map Draw",
+     "short": "B7 Map Draw",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Map-Empty",
+     "title": "B7 Map Empty",
+     "short": "B7 Map Empty",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Map-LayerTab",
+     "title": "B7 Map LayerTab",
+     "short": "B7 Map LayerTab",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Map-Loading",
+     "title": "B7 Map Loading",
+     "short": "B7 Map Loading",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Map-Measure",
+     "title": "B7 Map Measure",
+     "short": "B7 Map Measure",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Map-Parallel",
+     "title": "B7 Map Parallel",
+     "short": "B7 Map Parallel",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Map-Pledge",
+     "title": "B7 Map Pledge",
+     "short": "B7 Map Pledge",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Map-Pledge-Busy",
+     "title": "B7 Map Pledge Busy",
+     "short": "B7 Map Pledge Busy",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Map-Region",
+     "title": "B7 Map Region",
+     "short": "B7 Map Region",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Map-Search",
+     "title": "B7 Map Search",
+     "short": "B7 Map Search",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Map-Search-Empty",
+     "title": "B7 Map Search Empty",
+     "short": "B7 Map Search Empty",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Map-Table",
+     "title": "B7 Map Table",
+     "short": "B7 Map Table",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Report-Issue",
+     "title": "B7 Report Issue",
+     "short": "B7 Report Issue",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Report-Issue-Error",
+     "title": "B7 Report Issue Error",
+     "short": "B7 Report Issue Error",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Report-List",
+     "title": "B7 Report List",
+     "short": "B7 Report List",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Report-List-Empty",
+     "title": "B7 Report List Empty",
+     "short": "B7 Report List Empty",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Report-Pledge",
+     "title": "B7 Report Pledge",
+     "short": "B7 Report Pledge",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Stats-Class",
+     "title": "B7 Stats Class",
+     "short": "B7 Stats Class",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Stats-Empty",
+     "title": "B7 Stats Empty",
+     "short": "B7 Stats Empty",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B7-Stats-Find",
+     "title": "B7 Stats Find",
+     "short": "B7 Stats Find",
+     "note": "2026-09-20 자동 설계"
+    },
     {
      "id": "B5-Map",
      "title": "지도 서비스 1 · 기본 — V-World 실타일 + 레이어 카드 + 시점 스트립",

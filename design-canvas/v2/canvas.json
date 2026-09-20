@@ -1071,6 +1071,406 @@
       "y": 15540,
       "w": 1440,
       "h": 900
+    },
+    {
+      "file": "B7-Project-Dataset-Create.dc.html",
+      "title": "B7 Project Dataset Create",
+      "x": 0,
+      "y": 16600,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Project-Dataset-Detail.dc.html",
+      "title": "B7 Project Dataset Detail",
+      "x": 1560,
+      "y": 16600,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Project-Deploy-Picker.dc.html",
+      "title": "B7 Project Deploy Picker",
+      "x": 3120,
+      "y": 16600,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Project-File-Add.dc.html",
+      "title": "B7 Project File Add",
+      "x": 4680,
+      "y": 16600,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Project-File-Fail.dc.html",
+      "title": "B7 Project File Fail",
+      "x": 6240,
+      "y": 16600,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Project-File-Progress.dc.html",
+      "title": "B7 Project File Progress",
+      "x": 7800,
+      "y": 16600,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Project-Invite.dc.html",
+      "title": "B7 Project Invite",
+      "x": 9360,
+      "y": 16600,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Project-Invite-Error.dc.html",
+      "title": "B7 Project Invite Error",
+      "x": 10920,
+      "y": 16600,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Project-Labeling-Fix.dc.html",
+      "title": "B7 Project Labeling Fix",
+      "x": 12480,
+      "y": 16600,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Project-Model-Register.dc.html",
+      "title": "B7 Project Model Register",
+      "x": 14040,
+      "y": 16600,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Project-Model-Registered.dc.html",
+      "title": "B7 Project Model Registered",
+      "x": 15600,
+      "y": 16600,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Project-Overview-Edit.dc.html",
+      "title": "B7 Project Overview Edit",
+      "x": 17160,
+      "y": 16600,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Project-Overview-Members.dc.html",
+      "title": "B7 Project Overview Members",
+      "x": 18720,
+      "y": 16600,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Project-Train-Fix.dc.html",
+      "title": "B7 Project Train Fix",
+      "x": 20280,
+      "y": 16600,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Project-Train-New.dc.html",
+      "title": "B7 Project Train New",
+      "x": 21840,
+      "y": 16600,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Project-Train-Running.dc.html",
+      "title": "B7 Project Train Running",
+      "x": 23400,
+      "y": 16600,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Projects-Empty.dc.html",
+      "title": "B7 Projects Empty",
+      "x": 24960,
+      "y": 16600,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Projects-NoResult.dc.html",
+      "title": "B7 Projects NoResult",
+      "x": 26520,
+      "y": 16600,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-State-Error.dc.html",
+      "title": "B7 State Error",
+      "x": 0,
+      "y": 17660,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-State-Loading.dc.html",
+      "title": "B7 State Loading",
+      "x": 1560,
+      "y": 17660,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Analysis-List.dc.html",
+      "title": "B7 Analysis List",
+      "x": 0,
+      "y": 18720,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Analysis-Progress-Overlay.dc.html",
+      "title": "B7 Analysis Progress Overlay",
+      "x": 1560,
+      "y": 18720,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Analysis-Result-Edit.dc.html",
+      "title": "B7 Analysis Result Edit",
+      "x": 3120,
+      "y": 18720,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Analysis-Share.dc.html",
+      "title": "B7 Analysis Share",
+      "x": 4680,
+      "y": 18720,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Map-AOI.dc.html",
+      "title": "B7 Map AOI",
+      "x": 0,
+      "y": 19780,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Map-Basemap.dc.html",
+      "title": "B7 Map Basemap",
+      "x": 1560,
+      "y": 19780,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Map-Download.dc.html",
+      "title": "B7 Map Download",
+      "x": 3120,
+      "y": 19780,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Map-Draw.dc.html",
+      "title": "B7 Map Draw",
+      "x": 4680,
+      "y": 19780,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Map-Empty.dc.html",
+      "title": "B7 Map Empty",
+      "x": 6240,
+      "y": 19780,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Map-LayerTab.dc.html",
+      "title": "B7 Map LayerTab",
+      "x": 7800,
+      "y": 19780,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Map-Loading.dc.html",
+      "title": "B7 Map Loading",
+      "x": 9360,
+      "y": 19780,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Map-Measure.dc.html",
+      "title": "B7 Map Measure",
+      "x": 10920,
+      "y": 19780,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Map-Parallel.dc.html",
+      "title": "B7 Map Parallel",
+      "x": 12480,
+      "y": 19780,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Map-Pledge.dc.html",
+      "title": "B7 Map Pledge",
+      "x": 14040,
+      "y": 19780,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Map-Pledge-Busy.dc.html",
+      "title": "B7 Map Pledge Busy",
+      "x": 15600,
+      "y": 19780,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Map-Region.dc.html",
+      "title": "B7 Map Region",
+      "x": 17160,
+      "y": 19780,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Map-Search.dc.html",
+      "title": "B7 Map Search",
+      "x": 18720,
+      "y": 19780,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Map-Search-Empty.dc.html",
+      "title": "B7 Map Search Empty",
+      "x": 20280,
+      "y": 19780,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Map-Table.dc.html",
+      "title": "B7 Map Table",
+      "x": 21840,
+      "y": 19780,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Stats-Class.dc.html",
+      "title": "B7 Stats Class",
+      "x": 0,
+      "y": 20840,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Stats-Empty.dc.html",
+      "title": "B7 Stats Empty",
+      "x": 1560,
+      "y": 20840,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Stats-Find.dc.html",
+      "title": "B7 Stats Find",
+      "x": 3120,
+      "y": 20840,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Stats-Opt1.dc.html",
+      "title": "B7 Stats Opt1",
+      "x": 4680,
+      "y": 20840,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Stats-Opt2.dc.html",
+      "title": "B7 Stats Opt2",
+      "x": 6240,
+      "y": 20840,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Stats-Opt3.dc.html",
+      "title": "B7 Stats Opt3",
+      "x": 7800,
+      "y": 20840,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Report-Issue.dc.html",
+      "title": "B7 Report Issue",
+      "x": 0,
+      "y": 21900,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Report-Issue-Error.dc.html",
+      "title": "B7 Report Issue Error",
+      "x": 1560,
+      "y": 21900,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Report-List.dc.html",
+      "title": "B7 Report List",
+      "x": 3120,
+      "y": 21900,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Report-List-Empty.dc.html",
+      "title": "B7 Report List Empty",
+      "x": 4680,
+      "y": 21900,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "B7-Report-Pledge.dc.html",
+      "title": "B7 Report Pledge",
+      "x": 6240,
+      "y": 21900,
+      "w": 1440,
+      "h": 900
     }
   ],
   "annotations": [

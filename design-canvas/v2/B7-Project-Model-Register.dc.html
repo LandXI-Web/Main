@@ -1,0 +1,190 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>B7 · 프로젝트 — 모델 등록 폼</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap");
+/* Paperlogy 700/800 표시 · Pretendard 본문 · Inter 표 숫자 — T3 (발주 결정 2026-08-27) */
+@font-face{font-family:'Paperlogy';font-weight:800;font-display:swap;src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2') format('woff2')}
+@font-face{font-family:'Paperlogy';font-weight:700;font-display:swap;src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2') format('woff2')}
+/* 토큰 = landxi/proto/fonts-system.css (--accent · --tint-1 · --tint-2) 와 같은 값 */
+:root{--ink:#010102;--grey:#686868;--grey-2:#CCCCCC;--line:#DDDDDD;--accent:#006DF7;--tint-1:#E8F1FF;--tint-2:#D6E6FF;--teal:#0FA9A0}
+*{box-sizing:border-box}
+body{margin:0;background:#FFFFFF;color:var(--ink);font-family:'Pretendard',system-ui,sans-serif;font-weight:400;font-size:18px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.d{font-family:'Paperlogy','Pretendard',system-ui,sans-serif;font-weight:700;letter-spacing:-.015em}
+.d8{font-family:'Paperlogy','Pretendard',system-ui,sans-serif;font-weight:800;letter-spacing:-.02em}
+.n{font-family:'Inter','Pretendard',system-ui,sans-serif;font-weight:400;font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
+.lab{font-size:14px;line-height:1.2;color:var(--grey);letter-spacing:.04em}
+.st{font-size:14px;line-height:1.2;color:var(--accent);font-weight:500;letter-spacing:.01em}
+.tag{border:1px dotted var(--grey-2);padding:0 5px;font-size:14px;line-height:18px;color:var(--grey);margin-left:6px;display:inline-block;vertical-align:1px;letter-spacing:0;font-weight:400}
+.tb{position:absolute;height:28px;line-height:30px;font-size:15px;letter-spacing:-.01em;color:var(--ink);white-space:nowrap}
+.tb.on{background:var(--tint-2);padding:0 10px}
+.cta{position:absolute;height:36px;background:var(--ink);color:#FFFFFF;display:flex;align-items:center;justify-content:center;padding:0 20px;font-size:15px;font-weight:500;letter-spacing:-.01em;white-space:nowrap}
+.fld{position:absolute;height:28px;border:1px solid var(--line);display:flex;align-items:center;padding:0 10px;gap:8px;font-size:14.5px;letter-spacing:-.01em;white-space:nowrap;color:var(--ink)}
+.chip{height:22px;line-height:22px;padding:0 9px;border:1px solid var(--line);color:var(--ink);font-size:14px;white-space:nowrap;display:inline-block}
+.tab{position:absolute;font-size:16px;letter-spacing:-.01em;color:var(--grey);white-space:nowrap;line-height:22px}
+.tab b{font-weight:400;color:var(--ink)}
+.tab .c{font-family:'Inter',system-ui,sans-serif;font-size:14px;color:var(--grey-2);margin-left:5px}
+.tab.on{color:var(--ink)}
+.tab.on .c{color:var(--accent)}
+</style></helmet>
+<div style="width:1440px;height:900px;position:relative;overflow:hidden;background:#FFFFFF;font-family:'Pretendard',system-ui,sans-serif;color:#010102">
+<div style="position:absolute;left:0;top:0;width:72px;height:900px;background:#FFFFFF;z-index:9">
+<div style="position:absolute;left:0;top:0;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/><path d="M8.5 8.5h3v3h-3z" fill="currentColor" stroke="none"/></svg>
+<div class="d" style="font-size:14px;letter-spacing:.06em;line-height:16px;white-space:nowrap">LAND XI</div></div>
+<div style="position:absolute;left:12px;top:58px;width:48px;height:1px;background:#DDDDDD"></div>
+
+<div style="position:absolute;left:0;top:72px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M3 3h14v14H3z"/><path d="M3 8.5h14M10.5 8.5V17"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">대시보드</div></div>
+<div style="position:absolute;left:0;top:130px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M3 3h10v10H3z"/><path d="M7 7h10v10H7z"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">데이터
+관리</div></div>
+<div style="position:absolute;left:0;top:188px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+<div style="position:absolute;left:0;top:9px;width:2px;height:40px;background:#010102"></div>
+<svg style="color:#010102;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M2.5 2.5h5v5h-5z"/><path d="M12.5 2.5h5v5h-5z"/><path d="M7.5 12.5h5v5h-5z"/><path d="M7.5 5h5M15 7.5v4H10v1"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#010102">프로젝트</div></div>
+<div style="position:absolute;left:0;top:246px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M3 3h14v14H3z"/><path d="M3 10h14" stroke-dasharray="2 2"/><path d="M6 5.5h3v3H6z"/><path d="M11.5 11.5h3.5v3.5h-3.5z"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">분석 서비스</div></div>
+<div style="position:absolute;left:0;top:304px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M4.5 4.5h11v11h-11z"/><path d="M10 1v18M1 10h18"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">지도 서비스</div></div>
+
+<div style="position:absolute;left:0;top:596px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M3 3h14v9.5H8.5L4.5 17v-4.5H3z"/><path d="M6.5 7.5h7"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">서비스 지원</div></div>
+<div style="position:absolute;left:0;top:654px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M3 6h10v11H3z"/><path d="M9 11 17 3M12 3h5v5"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">카드 발행
+관리</div></div>
+<div style="position:absolute;left:0;top:712px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M6 3v14M14 3v14"/><path d="M4 6.5h4v2.5H4z"/><path d="M12 11h4v2.5h-4z"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">서비스 관리</div></div>
+<div style="position:absolute;left:0;top:770px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M3 3h14v14H3z"/><path d="M8 6h4v4H8z"/><path d="M5.5 17v-3h9v3"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">MY</div></div>
+<div style="position:absolute;left:0;top:828px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M11 3H3.5v14H11"/><path d="M8.5 10H17M13.5 6.5 17 10l-3.5 3.5"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">로그아웃</div></div>
+</div>
+<div style="position:absolute;left:72px;top:0px;width:1px;height:900px;background:#DDDDDD"></div>
+<div style="position:absolute;left:128px;top:22px;font-size:15px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">‹ 프로젝트 목록</div>
+<div style="position:absolute;left:72px;top:64px;width:1368px;height:1px;background:#DDDDDD"></div>
+<div class="d" style="position:absolute;left:128px;top:82px;font-size:26px;line-height:1.1;color:#010102;white-space:nowrap;">비닐하우스 탐지</div>
+<div class="st" style="position:absolute;left:304px;top:92px;white-space:nowrap;">학습 완료 · IoU 0.82</div>
+<div class="tab" style="left:128px;top:130px">개요</div>
+<div class="tab" style="left:184px;top:130px">데이터<span class="c">10</span></div>
+<div class="tab" style="left:274px;top:130px">라벨링<span class="c">3</span></div>
+<div class="tab" style="left:358px;top:130px">학습<span class="c">5</span></div>
+<div class="tab" style="left:430px;top:130px">분석</div>
+<div class="tab on" style="left:486px;top:130px">배포<span class="c">1</span></div>
+<div style="position:absolute;left:486px;top:158px;width:44px;height:2px;background:#010102"></div>
+<div style="position:absolute;left:72px;top:160px;width:888px;height:1px;background:#DDDDDD"></div>
+<div class="tab" style="left:128px;top:180px">발행 요청<span class="c">1</span></div>
+<div class="tab on" style="left:252px;top:180px">모델 등록<span class="c">0</span></div>
+<div style="position:absolute;left:252px;top:208px;width:96px;height:2px;background:#010102"></div>
+<div class="tb on" style="left:568px;top:176px;width:96px;text-align:center">모델 등록</div>
+<div style="position:absolute;left:128px;top:210px;width:536px;height:1px;background:#DDDDDD"></div>
+<div class="st" style="position:absolute;left:128px;top:230px;white-space:nowrap;">대기</div>
+<div class="d" style="position:absolute;left:176px;top:226px;font-size:17px;line-height:1.1;color:#010102;white-space:nowrap;">비닐하우스 탐지 v2.1</div>
+<div class="n" style="position:absolute;left:564px;top:229px;font-size:14px;letter-spacing:.01em;color:#686868;white-space:nowrap;line-height:1.3;width:100px;text-align:right">2026.06.08</div>
+<div class="lab" style="position:absolute;left:176px;top:256px;white-space:nowrap;">학습 결과</div>
+<div style="position:absolute;left:176px;top:272px;font-size:14.5px;letter-spacing:-.01em;color:#010102;white-space:nowrap;line-height:1.3;">비닐하우스 v2.1</div>
+<div class="lab" style="position:absolute;left:298px;top:256px;white-space:nowrap;">모델명</div>
+<div style="position:absolute;left:298px;top:272px;font-size:14.5px;letter-spacing:-.01em;color:#010102;white-space:nowrap;line-height:1.3;">v2.1</div>
+<div class="lab" style="position:absolute;left:420px;top:256px;white-space:nowrap;">과제 유형</div>
+<div style="position:absolute;left:420px;top:272px;font-size:14.5px;letter-spacing:-.01em;color:#010102;white-space:nowrap;line-height:1.3;">신규 과제</div>
+<div class="lab" style="position:absolute;left:542px;top:256px;white-space:nowrap;">요청자</div>
+<div style="position:absolute;left:542px;top:272px;font-size:14.5px;letter-spacing:-.01em;color:#010102;white-space:nowrap;line-height:1.3;">내 계정</div>
+<div style="position:absolute;left:128px;top:300px;width:536px;height:1px;background:#DDDDDD"></div>
+<span class="tag" style="position:absolute;left:630px;top:272px">시연</span>
+<div class="d" style="position:absolute;left:128px;top:340px;font-size:16px;line-height:1.1;color:#010102;white-space:nowrap;">모델 등록</div>
+<div class="n" style="position:absolute;left:198px;top:341px;font-size:15px;letter-spacing:.01em;color:#686868;white-space:nowrap;line-height:1.3;">0</div>
+<div style="position:absolute;left:128px;top:370px;width:536px;height:340px;border:1px dotted #CCCCCC;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px"><svg width="40" height="40" viewBox="0 0 20 20" fill="none" stroke="#CCCCCC" stroke-width="1.5" stroke-linejoin="miter" stroke-linecap="butt" style="flex:none"><path d="M10 3 3 7l7 4 7-4z"/><path d="M3 11l7 4 7-4"/></svg><span style="font-size:15px;color:#686868">등록된 모델이 없습니다</span></div>
+<div style="position:absolute;left:128px;top:734px;width:536px;height:76px;border:1px dotted #CCCCCC"><div style="position:absolute;left:20px;top:14px;font-size:15px;color:#686868">외부 모델 (pt 파일) 등록<span class="tag">준비 중</span></div><div style="position:absolute;left:20px;top:42px;font-size:14px;color:#686868">pt 파일 등록 기능은 추후 개발 협의</div></div>
+<div style="position:absolute;left:72px;top:866px;width:888px;height:1px;background:#DDDDDD"></div>
+<div style="position:absolute;left:128px;top:876px;font-size:14px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">LX 한국국토정보공사 · 고객센터 063-713-1213 · 개인정보처리방침 · 이용약관 · 이메일주소무단수집거부</div>
+<div style="position:absolute;left:720px;top:64px;width:720px;height:836px;background:#FFFFFF"></div>
+<div style="position:absolute;left:720px;top:64px;width:1px;height:836px;background:#010102"></div>
+<div class="d" style="position:absolute;left:744px;top:86px;font-size:22px;line-height:1.1;color:#010102;white-space:nowrap;">모델 등록<span class="tag">추정</span></div>
+<div style="position:absolute;left:1404px;top:90px"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="#686868" stroke-width="1.5" stroke-linejoin="miter" stroke-linecap="butt" style="flex:none"><path d="M4 4l12 12M16 4 4 16"/></svg></div>
+<div style="position:absolute;left:744px;top:122px;width:672px;height:1px;background:#DDDDDD"></div>
+<div class="lab" style="position:absolute;left:744px;top:138px;white-space:nowrap;">등록 방식</div>
+<div style="position:absolute;left:744px;top:162px;display:flex;align-items:center;gap:7px;font-size:15px;color:#010102;white-space:nowrap"><span style="width:14px;height:14px;border:1px solid #010102;display:inline-block;position:relative;flex:none"><span style="position:absolute;left:3px;top:3px;width:6px;height:6px;background:#010102"></span></span>학습 결과에서 등록</div>
+<div style="position:absolute;left:908px;top:162px;display:flex;align-items:center;gap:7px;font-size:15px;color:#CCCCCC;white-space:nowrap"><span style="width:14px;height:14px;border:1px dotted #CCCCCC;display:inline-block;position:relative;flex:none"></span>외부 모델(pt)</div>
+<span class="tag" style="position:absolute;left:1016px;top:163px;margin-left:0">준비 중</span>
+<div class="lab" style="position:absolute;left:1096px;top:138px;white-space:nowrap;">모델명 <span style="color:#006DF7">*</span></div>
+<div class="fld" style="left:1096px;top:156px;width:320px;border-color:#010102;height:32px"><span>비닐하우스 탐지 v2.1</span></div>
+<div class="lab" style="position:absolute;left:744px;top:206px;white-space:nowrap;">학습 결과 <span style="color:#006DF7">*</span></div>
+<div class="n" style="position:absolute;left:1296px;top:205px;font-size:14.5px;letter-spacing:.01em;color:#006DF7;white-space:nowrap;line-height:1.3;width:120px;text-align:right">3건 중 1 선택</div>
+<div style="position:absolute;left:744px;top:228px;width:672px;height:30px;background:#E8F1FF"></div>
+<div class="lab" style="position:absolute;left:784px;top:236px;white-space:nowrap;color:#010102">학습 결과</div>
+<div class="lab" style="position:absolute;left:1074px;top:236px;white-space:nowrap;color:#010102">학습일</div>
+<div class="lab" style="position:absolute;left:1174px;top:236px;white-space:nowrap;color:#010102">라벨</div>
+<div class="lab" style="position:absolute;left:1244px;top:236px;white-space:nowrap;color:#010102">IoU</div>
+<div class="lab" style="position:absolute;left:1300px;top:236px;white-space:nowrap;color:#010102">F1</div>
+<div style="position:absolute;left:744px;top:258px;width:672px;height:84px;background:#E8F1FF"></div>
+<div style="position:absolute;left:744px;top:258px;width:2px;height:84px;background:#006DF7"></div>
+<div style="position:absolute;left:756px;top:293px;width:14px;height:14px;border:1px solid #010102;background:#FFFFFF"><span style="position:absolute;left:3px;top:3px;width:6px;height:6px;background:#010102"></span></div>
+<div style="position:absolute;left:784px;top:268px;width:112px;height:64px;overflow:hidden;background:#FFFFFF;"><img src="b7-states-gh1.jpg" alt="" style="position:absolute;left:0;top:0;width:112px;height:64px;object-fit:cover;display:block"><svg width="112" height="64" viewBox="0 0 112 64" style="position:absolute;left:0;top:0;display:block;pointer-events:none"><polygon points="35.0,-5.4 43.4,-5.4 47.3,69.4 38.8,69.4" fill="rgba(15,169,160,.10)" stroke="#0FA9A0" stroke-width="0.8" stroke-linejoin="miter"/><polygon points="44.1,-5.4 52.5,-5.4 56.4,69.4 48.1,69.4" fill="rgba(15,169,160,.10)" stroke="#0FA9A0" stroke-width="0.8" stroke-linejoin="miter"/><polygon points="58.1,-5.4 66.5,-5.4 70.0,69.4 61.8,69.4" fill="rgba(15,169,160,.10)" stroke="#0FA9A0" stroke-width="0.8" stroke-linejoin="miter"/></svg><svg width="112" height="64" viewBox="0 0 112 64" style="position:absolute;left:0;top:0;display:block;pointer-events:none"><path d="M0 8V0h8M104 0h8v8M112 56v8h-8M8 64H0v-8" fill="none" stroke="#006DF7" stroke-width="1"/></svg></div>
+<div class="d" style="position:absolute;left:910px;top:278px;font-size:17px;line-height:1.1;color:#010102;white-space:nowrap;">비닐하우스 v2.1</div>
+<div style="position:absolute;left:910px;top:302px;font-size:14px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">최근 학습 · XI-VFM v2.1</div>
+<div class="n" style="position:absolute;left:1074px;top:289px;font-size:14.5px;letter-spacing:.01em;color:#686868;white-space:nowrap;line-height:1.3;">2026.05.18</div>
+<div class="n" style="position:absolute;left:1174px;top:289px;font-size:14.5px;letter-spacing:.01em;color:#686868;white-space:nowrap;line-height:1.3;">3,842</div>
+<div class="n" style="position:absolute;left:1244px;top:289px;font-size:15px;letter-spacing:.01em;color:#006DF7;white-space:nowrap;line-height:1.3;">0.82</div>
+<div class="n" style="position:absolute;left:1300px;top:289px;font-size:15px;letter-spacing:.01em;color:#010102;white-space:nowrap;line-height:1.3;">0.87</div>
+<div style="position:absolute;left:744px;top:342px;width:672px;height:1px;background:#DDDDDD"></div>
+<div style="position:absolute;left:756px;top:377px;width:14px;height:14px;border:1px solid #CCCCCC;background:#FFFFFF"></div>
+<div style="position:absolute;left:784px;top:352px;width:112px;height:64px;overflow:hidden;background:#FFFFFF;"><img src="b7-states-gh7.jpg" alt="" style="position:absolute;left:0;top:0;width:112px;height:64px;object-fit:cover;display:block"></div>
+<div class="d" style="position:absolute;left:910px;top:362px;font-size:17px;line-height:1.1;color:#010102;white-space:nowrap;">비닐하우스 v2.0</div>
+<div style="position:absolute;left:910px;top:386px;font-size:14px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">XI-VFM v2.1</div>
+<div class="n" style="position:absolute;left:1074px;top:373px;font-size:14.5px;letter-spacing:.01em;color:#686868;white-space:nowrap;line-height:1.3;">2026.05.10</div>
+<div class="n" style="position:absolute;left:1174px;top:373px;font-size:14.5px;letter-spacing:.01em;color:#686868;white-space:nowrap;line-height:1.3;">2,800</div>
+<div class="n" style="position:absolute;left:1244px;top:373px;font-size:15px;letter-spacing:.01em;color:#010102;white-space:nowrap;line-height:1.3;">0.78</div>
+<div class="n" style="position:absolute;left:1300px;top:373px;font-size:15px;letter-spacing:.01em;color:#010102;white-space:nowrap;line-height:1.3;">0.83</div>
+<div style="position:absolute;left:744px;top:426px;width:672px;height:1px;background:#DDDDDD"></div>
+<div style="position:absolute;left:756px;top:461px;width:14px;height:14px;border:1px solid #CCCCCC;background:#FFFFFF"></div>
+<div style="position:absolute;left:784px;top:436px;width:112px;height:64px;overflow:hidden;background:#FFFFFF;"><img src="b7-states-gh3.jpg" alt="" style="position:absolute;left:0;top:0;width:112px;height:64px;object-fit:cover;display:block"></div>
+<div class="d" style="position:absolute;left:910px;top:446px;font-size:17px;line-height:1.1;color:#010102;white-space:nowrap;">비닐하우스 v1.0</div>
+<div style="position:absolute;left:910px;top:470px;font-size:14px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">XI-VFM v2.1</div>
+<div class="n" style="position:absolute;left:1074px;top:457px;font-size:14.5px;letter-spacing:.01em;color:#686868;white-space:nowrap;line-height:1.3;">2026.04.15</div>
+<div class="n" style="position:absolute;left:1174px;top:457px;font-size:14.5px;letter-spacing:.01em;color:#686868;white-space:nowrap;line-height:1.3;">1,560</div>
+<div class="n" style="position:absolute;left:1244px;top:457px;font-size:15px;letter-spacing:.01em;color:#010102;white-space:nowrap;line-height:1.3;">0.71</div>
+<div class="n" style="position:absolute;left:1300px;top:457px;font-size:15px;letter-spacing:.01em;color:#010102;white-space:nowrap;line-height:1.3;">0.76</div>
+<div style="position:absolute;left:744px;top:510px;width:672px;height:1px;background:#DDDDDD"></div>
+<div class="lab" style="position:absolute;left:744px;top:532px;white-space:nowrap;">기반 모델<span class="tag">자동</span></div>
+<div class="fld" style="left:744px;top:550px;width:320px;background:#E8F1FF;border-color:#E8F1FF"><svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="#686868" stroke-width="1.5" stroke-linejoin="miter" stroke-linecap="butt" style="flex:none"><rect x="5" y="9" width="10" height="8"/><path d="M7 9V6a3 3 0 0 1 6 0v3"/></svg><span>XI-VFM v2.1</span></div>
+<div class="lab" style="position:absolute;left:1096px;top:532px;white-space:nowrap;">탐지 형태<span class="tag">자동</span></div>
+<div class="fld" style="left:1096px;top:550px;width:320px;background:#E8F1FF;border-color:#E8F1FF"><span>객체 탐지</span></div>
+<div class="lab" style="position:absolute;left:744px;top:594px;white-space:nowrap;">클래스<span class="tag">자동</span></div>
+<div style="position:absolute;left:744px;top:614px;display:flex;gap:6px"><span class="chip" style="background:#E8F1FF;border-color:#E8F1FF">비닐하우스_단동</span><span class="chip" style="background:#E8F1FF;border-color:#E8F1FF">비닐하우스_다동</span></div>
+<div class="lab" style="position:absolute;left:1096px;top:594px;white-space:nowrap;">데이터 유형<span class="tag">자동</span></div>
+<div class="fld" style="left:1096px;top:612px;width:320px;background:#E8F1FF;border-color:#E8F1FF"><span>정사영상 (ortho)</span></div>
+<div class="lab" style="position:absolute;left:744px;top:656px;white-space:nowrap;">설명</div>
+<div style="position:absolute;left:744px;top:674px;width:672px;height:84px;border:1px solid #DDDDDD;padding:8px 10px;font-size:15px;color:#CCCCCC">모델 설명 입력</div>
+<div style="position:absolute;left:744px;top:818px;width:672px;height:1px;background:#DDDDDD"></div>
+<div class="tb" style="left:744px;top:830px;color:#686868">취소</div>
+<div style="position:absolute;left:804px;top:835px;font-size:14.5px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">등록한 모델은 카드 발행 요청에서 선택</div>
+<div class="cta" style="left:1320px;top:826px;width:96px">모델 등록</div>
+</div>
+</x-dc>
+</body>
+</html>

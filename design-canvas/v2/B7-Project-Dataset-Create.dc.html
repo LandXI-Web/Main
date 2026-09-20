@@ -1,0 +1,206 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>B7 · 프로젝트 — 데이터셋 만들기</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap");
+/* Paperlogy 700/800 표시 · Pretendard 본문 · Inter 표 숫자 — T3 (발주 결정 2026-08-27) */
+@font-face{font-family:'Paperlogy';font-weight:800;font-display:swap;src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2') format('woff2')}
+@font-face{font-family:'Paperlogy';font-weight:700;font-display:swap;src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2') format('woff2')}
+/* 토큰 = landxi/proto/fonts-system.css (--accent · --tint-1 · --tint-2) 와 같은 값 */
+:root{--ink:#010102;--grey:#686868;--grey-2:#CCCCCC;--line:#DDDDDD;--accent:#006DF7;--tint-1:#E8F1FF;--tint-2:#D6E6FF;--teal:#0FA9A0}
+*{box-sizing:border-box}
+body{margin:0;background:#FFFFFF;color:var(--ink);font-family:'Pretendard',system-ui,sans-serif;font-weight:400;font-size:18px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.d{font-family:'Paperlogy','Pretendard',system-ui,sans-serif;font-weight:700;letter-spacing:-.015em}
+.d8{font-family:'Paperlogy','Pretendard',system-ui,sans-serif;font-weight:800;letter-spacing:-.02em}
+.n{font-family:'Inter','Pretendard',system-ui,sans-serif;font-weight:400;font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
+.lab{font-size:14px;line-height:1.2;color:var(--grey);letter-spacing:.04em}
+.st{font-size:14px;line-height:1.2;color:var(--accent);font-weight:500;letter-spacing:.01em}
+.tag{border:1px dotted var(--grey-2);padding:0 5px;font-size:14px;line-height:18px;color:var(--grey);margin-left:6px;display:inline-block;vertical-align:1px;letter-spacing:0;font-weight:400}
+.tb{position:absolute;height:28px;line-height:30px;font-size:15px;letter-spacing:-.01em;color:var(--ink);white-space:nowrap}
+.tb.on{background:var(--tint-2);padding:0 10px}
+.cta{position:absolute;height:36px;background:var(--ink);color:#FFFFFF;display:flex;align-items:center;justify-content:center;padding:0 20px;font-size:15px;font-weight:500;letter-spacing:-.01em;white-space:nowrap}
+.fld{position:absolute;height:28px;border:1px solid var(--line);display:flex;align-items:center;padding:0 10px;gap:8px;font-size:14.5px;letter-spacing:-.01em;white-space:nowrap;color:var(--ink)}
+.chip{height:22px;line-height:22px;padding:0 9px;border:1px solid var(--line);color:var(--ink);font-size:14px;white-space:nowrap;display:inline-block}
+.tab{position:absolute;font-size:16px;letter-spacing:-.01em;color:var(--grey);white-space:nowrap;line-height:22px}
+.tab b{font-weight:400;color:var(--ink)}
+.tab .c{font-family:'Inter',system-ui,sans-serif;font-size:14px;color:var(--grey-2);margin-left:5px}
+.tab.on{color:var(--ink)}
+.tab.on .c{color:var(--accent)}
+</style></helmet>
+<div style="width:1440px;height:900px;position:relative;overflow:hidden;background:#FFFFFF;font-family:'Pretendard',system-ui,sans-serif;color:#010102">
+<div style="position:absolute;left:0;top:0;width:72px;height:900px;background:#FFFFFF;z-index:9">
+<div style="position:absolute;left:0;top:0;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/><path d="M8.5 8.5h3v3h-3z" fill="currentColor" stroke="none"/></svg>
+<div class="d" style="font-size:14px;letter-spacing:.06em;line-height:16px;white-space:nowrap">LAND XI</div></div>
+<div style="position:absolute;left:12px;top:58px;width:48px;height:1px;background:#DDDDDD"></div>
+
+<div style="position:absolute;left:0;top:72px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M3 3h14v14H3z"/><path d="M3 8.5h14M10.5 8.5V17"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">대시보드</div></div>
+<div style="position:absolute;left:0;top:130px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M3 3h10v10H3z"/><path d="M7 7h10v10H7z"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">데이터
+관리</div></div>
+<div style="position:absolute;left:0;top:188px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+<div style="position:absolute;left:0;top:9px;width:2px;height:40px;background:#010102"></div>
+<svg style="color:#010102;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M2.5 2.5h5v5h-5z"/><path d="M12.5 2.5h5v5h-5z"/><path d="M7.5 12.5h5v5h-5z"/><path d="M7.5 5h5M15 7.5v4H10v1"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#010102">프로젝트</div></div>
+<div style="position:absolute;left:0;top:246px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M3 3h14v14H3z"/><path d="M3 10h14" stroke-dasharray="2 2"/><path d="M6 5.5h3v3H6z"/><path d="M11.5 11.5h3.5v3.5h-3.5z"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">분석 서비스</div></div>
+<div style="position:absolute;left:0;top:304px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M4.5 4.5h11v11h-11z"/><path d="M10 1v18M1 10h18"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">지도 서비스</div></div>
+
+<div style="position:absolute;left:0;top:596px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M3 3h14v9.5H8.5L4.5 17v-4.5H3z"/><path d="M6.5 7.5h7"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">서비스 지원</div></div>
+<div style="position:absolute;left:0;top:654px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M3 6h10v11H3z"/><path d="M9 11 17 3M12 3h5v5"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">카드 발행
+관리</div></div>
+<div style="position:absolute;left:0;top:712px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M6 3v14M14 3v14"/><path d="M4 6.5h4v2.5H4z"/><path d="M12 11h4v2.5h-4z"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">서비스 관리</div></div>
+<div style="position:absolute;left:0;top:770px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M3 3h14v14H3z"/><path d="M8 6h4v4H8z"/><path d="M5.5 17v-3h9v3"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">MY</div></div>
+<div style="position:absolute;left:0;top:828px;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+
+<svg style="color:#686868;flex:none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter"><path d="M11 3H3.5v14H11"/><path d="M8.5 10H17M13.5 6.5 17 10l-3.5 3.5"/></svg>
+<div style="font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line;color:#686868">로그아웃</div></div>
+</div>
+<div style="position:absolute;left:72px;top:0px;width:1px;height:900px;background:#DDDDDD"></div>
+<div style="position:absolute;left:128px;top:22px;font-size:15px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">‹ 프로젝트 목록</div>
+<div style="position:absolute;left:72px;top:64px;width:1368px;height:1px;background:#DDDDDD"></div>
+<div class="d" style="position:absolute;left:128px;top:82px;font-size:26px;line-height:1.1;color:#010102;white-space:nowrap;">비닐하우스 탐지</div>
+<div class="st" style="position:absolute;left:304px;top:92px;white-space:nowrap;">학습 완료 · IoU 0.82</div>
+<div class="tab" style="left:128px;top:130px">개요</div>
+<div class="tab on" style="left:184px;top:130px">데이터<span class="c">10</span></div>
+<div style="position:absolute;left:184px;top:158px;width:62px;height:2px;background:#010102"></div>
+<div class="tab" style="left:274px;top:130px">라벨링<span class="c">3</span></div>
+<div class="tab" style="left:358px;top:130px">학습<span class="c">5</span></div>
+<div class="tab" style="left:430px;top:130px">분석</div>
+<div class="tab" style="left:486px;top:130px">배포<span class="c">1</span></div>
+<div style="position:absolute;left:72px;top:160px;width:888px;height:1px;background:#DDDDDD"></div>
+<div class="tab" style="left:128px;top:180px">파일<span class="c">10</span></div>
+<div class="tab on" style="left:205px;top:180px">데이터셋<span class="c">2</span></div>
+<div style="position:absolute;left:205px;top:208px;width:80px;height:2px;background:#010102"></div>
+<div style="position:absolute;left:704px;top:183px;font-size:15px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;width:200px;text-align:right">‹ 데이터셋 목록</div>
+<div style="position:absolute;left:128px;top:210px;width:776px;height:1px;background:#DDDDDD"></div>
+<div class="d" style="position:absolute;left:128px;top:226px;font-size:24px;line-height:1.1;color:#010102;white-space:nowrap;">데이터셋 만들기</div>
+<div class="st" style="position:absolute;left:304px;top:236px;white-space:nowrap;">라벨링 데이터 3건 선택</div>
+<div class="lab" style="position:absolute;left:128px;top:270px;white-space:nowrap;">데이터셋명 <span style="color:#006DF7">*</span></div>
+<div class="fld" style="left:128px;top:290px;width:480px;height:36px;border-color:#010102"><span style="font-size:15.5px;color:#010102">비닐하우스 통합 라벨셋</span><span style="flex:1"></span><span class="n" style="font-size:14px;color:#686868">11/100</span></div>
+<div class="lab" style="position:absolute;left:632px;top:270px;white-space:nowrap;">버전 <span style="color:#006DF7">*</span></div>
+<div class="fld" style="left:632px;top:290px;width:272px;height:36px;"><span style="font-size:15.5px;color:#010102">v1.0</span><span style="flex:1"></span></div>
+<div class="lab" style="position:absolute;left:128px;top:346px;white-space:nowrap;">라벨링 데이터 선택 <span style="color:#006DF7">*</span></div>
+<div class="n" style="position:absolute;left:704px;top:345px;font-size:14.5px;letter-spacing:.01em;color:#006DF7;white-space:nowrap;line-height:1.3;width:200px;text-align:right">3건 중 3 선택</div>
+<div style="position:absolute;left:128px;top:370px;width:776px;height:30px;background:#E8F1FF"></div>
+<div style="position:absolute;left:138px;top:378px;width:14px;height:14px;border:1px solid #010102;background:#010102"></div><svg width="14" height="14" viewBox="0 0 14 14" style="position:absolute;left:138px;top:378px" fill="none" stroke="#FFFFFF" stroke-width="1.5"><path d="M3 7.2 6 10l5-6"/></svg>
+<div class="lab" style="position:absolute;left:162px;top:378px;white-space:nowrap;color:#010102">라벨링 데이터</div>
+<div class="lab" style="position:absolute;left:598px;top:378px;white-space:nowrap;color:#010102">GSD</div>
+<div class="lab" style="position:absolute;left:688px;top:378px;white-space:nowrap;color:#010102">라벨</div>
+<div class="lab" style="position:absolute;left:788px;top:378px;white-space:nowrap;color:#010102">최근 작업</div>
+<div style="position:absolute;left:138px;top:445px;width:14px;height:14px;border:1px solid #010102;background:#010102"></div><svg width="14" height="14" viewBox="0 0 14 14" style="position:absolute;left:138px;top:445px" fill="none" stroke="#FFFFFF" stroke-width="1.5"><path d="M3 7.2 6 10l5-6"/></svg>
+<div style="position:absolute;left:162px;top:408px;width:160px;height:90px;overflow:hidden;background:#FFFFFF;"><img src="b7-states-farm2.jpg" alt="" style="position:absolute;left:0;top:0;width:160px;height:90px;object-fit:cover;display:block"><svg width="160" height="90" viewBox="0 0 160 90" style="position:absolute;left:0;top:0;display:block;pointer-events:none"></svg><svg width="160" height="90" viewBox="0 0 160 90" style="position:absolute;left:0;top:0;display:block;pointer-events:none"><path d="M0 10V0h10M150 0h10v10M160 80v10h-10M10 90H0v-10" fill="none" stroke="#006DF7" stroke-width="1"/></svg></div>
+<div class="d" style="position:absolute;left:338px;top:426px;font-size:18px;line-height:1.1;color:#010102;white-space:nowrap;">남원 농경지 2025.04</div>
+<div class="n" style="position:absolute;left:338px;top:452px;font-size:14px;letter-spacing:.01em;color:#686868;white-space:nowrap;line-height:1.3;">namwon_2504 · 드론</div>
+<div class="n" style="position:absolute;left:598px;top:440px;font-size:15px;letter-spacing:.01em;color:#010102;white-space:nowrap;line-height:1.3;">1.08 cm</div>
+<div class="n" style="position:absolute;left:688px;top:440px;font-size:15px;letter-spacing:.01em;color:#006DF7;white-space:nowrap;line-height:1.3;">240<span class="tag">시연</span></div>
+<div class="n" style="position:absolute;left:788px;top:440px;font-size:15px;letter-spacing:.01em;color:#686868;white-space:nowrap;line-height:1.3;">2026.05.18</div>
+<div style="position:absolute;left:128px;top:505px;width:776px;height:1px;background:#DDDDDD"></div>
+<div style="position:absolute;left:138px;top:551px;width:14px;height:14px;border:1px solid #010102;background:#010102"></div><svg width="14" height="14" viewBox="0 0 14 14" style="position:absolute;left:138px;top:551px" fill="none" stroke="#FFFFFF" stroke-width="1.5"><path d="M3 7.2 6 10l5-6"/></svg>
+<div style="position:absolute;left:162px;top:514px;width:160px;height:90px;overflow:hidden;background:#FFFFFF;"><img src="b7-states-gh1.jpg" alt="" style="position:absolute;left:0;top:0;width:160px;height:90px;object-fit:cover;display:block"><svg width="160" height="90" viewBox="0 0 160 90" style="position:absolute;left:0;top:0;display:block;pointer-events:none"><polygon points="50.0,-7.5 62.0,-7.5 67.5,97.5 55.5,97.5" fill="rgba(15,169,160,.10)" stroke="#0FA9A0" stroke-width="1.1" stroke-linejoin="miter"/><polygon points="63.0,-7.5 75.0,-7.5 80.5,97.5 68.7,97.5" fill="rgba(15,169,160,.10)" stroke="#0FA9A0" stroke-width="1.1" stroke-linejoin="miter"/><polygon points="83.0,-7.5 95.0,-7.5 100.0,97.5 88.2,97.5" fill="rgba(15,169,160,.10)" stroke="#0FA9A0" stroke-width="1.1" stroke-linejoin="miter"/></svg><svg width="160" height="90" viewBox="0 0 160 90" style="position:absolute;left:0;top:0;display:block;pointer-events:none"><path d="M0 10V0h10M150 0h10v10M160 80v10h-10M10 90H0v-10" fill="none" stroke="#006DF7" stroke-width="1"/></svg></div>
+<div class="d" style="position:absolute;left:338px;top:532px;font-size:18px;line-height:1.1;color:#010102;white-space:nowrap;">남원 농경지 2025.06</div>
+<div class="n" style="position:absolute;left:338px;top:558px;font-size:14px;letter-spacing:.01em;color:#686868;white-space:nowrap;line-height:1.3;">namwon_2506 · 드론</div>
+<div class="n" style="position:absolute;left:598px;top:546px;font-size:15px;letter-spacing:.01em;color:#010102;white-space:nowrap;line-height:1.3;">1.69 cm</div>
+<div class="n" style="position:absolute;left:688px;top:546px;font-size:15px;letter-spacing:.01em;color:#006DF7;white-space:nowrap;line-height:1.3;">1,674</div>
+<div class="n" style="position:absolute;left:788px;top:546px;font-size:15px;letter-spacing:.01em;color:#686868;white-space:nowrap;line-height:1.3;">2026.06.06</div>
+<div style="position:absolute;left:128px;top:611px;width:776px;height:1px;background:#DDDDDD"></div>
+<div style="position:absolute;left:138px;top:657px;width:14px;height:14px;border:1px solid #010102;background:#010102"></div><svg width="14" height="14" viewBox="0 0 14 14" style="position:absolute;left:138px;top:657px" fill="none" stroke="#FFFFFF" stroke-width="1.5"><path d="M3 7.2 6 10l5-6"/></svg>
+<div style="position:absolute;left:162px;top:620px;width:160px;height:90px;overflow:hidden;background:#FFFFFF;"><img src="b7-states-gh3.jpg" alt="" style="position:absolute;left:0;top:0;width:160px;height:90px;object-fit:cover;display:block"><svg width="160" height="90" viewBox="0 0 160 90" style="position:absolute;left:0;top:0;display:block;pointer-events:none"></svg><svg width="160" height="90" viewBox="0 0 160 90" style="position:absolute;left:0;top:0;display:block;pointer-events:none"><path d="M0 10V0h10M150 0h10v10M160 80v10h-10M10 90H0v-10" fill="none" stroke="#006DF7" stroke-width="1"/></svg></div>
+<div class="d" style="position:absolute;left:338px;top:638px;font-size:18px;line-height:1.1;color:#010102;white-space:nowrap;">남원 농경지 2025.08</div>
+<div class="n" style="position:absolute;left:338px;top:664px;font-size:14px;letter-spacing:.01em;color:#686868;white-space:nowrap;line-height:1.3;">namwon_2508 · 드론</div>
+<div class="n" style="position:absolute;left:598px;top:652px;font-size:15px;letter-spacing:.01em;color:#010102;white-space:nowrap;line-height:1.3;">1.54 cm</div>
+<div class="n" style="position:absolute;left:688px;top:652px;font-size:15px;letter-spacing:.01em;color:#006DF7;white-space:nowrap;line-height:1.3;">88<span class="tag">시연</span></div>
+<div class="n" style="position:absolute;left:788px;top:652px;font-size:15px;letter-spacing:.01em;color:#686868;white-space:nowrap;line-height:1.3;">2026.06.02</div>
+<div style="position:absolute;left:128px;top:717px;width:776px;height:1px;background:#DDDDDD"></div>
+<div style="position:absolute;left:128px;top:730px;font-size:14.5px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">공간정보(shp)는 데이터셋 생성 대상에서 제외</div>
+<div style="position:absolute;left:734px;top:732px;font-size:14.5px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">처음</div>
+<div style="position:absolute;left:767px;top:732px;font-size:14.5px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">이전</div>
+<div style="position:absolute;left:800px;top:729px;width:20px;height:20px;border:1px solid #010102;display:flex;align-items:center;justify-content:center"><span class="n" style="font-size:14px">1</span></div>
+<div style="position:absolute;left:828px;top:732px;font-size:14.5px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">다음</div>
+<div style="position:absolute;left:861px;top:732px;font-size:14.5px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">마지막</div>
+<div style="position:absolute;left:128px;top:756px;width:776px;height:1px;background:#DDDDDD"></div>
+<div style="position:absolute;left:128px;top:772px;display:flex;align-items:baseline;gap:5px;white-space:nowrap"><span class="d8" style="font-size:36px;line-height:1;color:#010102">3</span><span style="font-size:15px;color:#686868">건</span></div>
+<div class="lab" style="position:absolute;left:130px;top:818px;white-space:nowrap;">라벨링 데이터</div>
+<div style="position:absolute;left:306px;top:774px;width:1px;height:58px;background:#DDDDDD"></div>
+<div style="position:absolute;left:322px;top:772px;display:flex;align-items:baseline;gap:5px;white-space:nowrap"><span class="d8" style="font-size:36px;line-height:1;color:#006DF7">2,002</span><span style="font-size:15px;color:#686868">개</span></div>
+<div class="lab" style="position:absolute;left:324px;top:818px;white-space:nowrap;">라벨 합계</div>
+<div style="position:absolute;left:500px;top:774px;width:1px;height:58px;background:#DDDDDD"></div>
+<div style="position:absolute;left:516px;top:772px;display:flex;align-items:baseline;gap:5px;white-space:nowrap"><span class="d8" style="font-size:36px;line-height:1;color:#010102">3</span><span style="font-size:15px;color:#686868">시점</span></div>
+<div class="lab" style="position:absolute;left:518px;top:818px;white-space:nowrap;">2025.04 – 2025.08</div>
+<div style="position:absolute;left:694px;top:774px;width:1px;height:58px;background:#DDDDDD"></div>
+<div style="position:absolute;left:710px;top:778px;display:flex;align-items:baseline;gap:5px;white-space:nowrap"><span class="d8" style="font-size:28px;line-height:1;color:#010102">1.08–1.69</span><span style="font-size:15px;color:#686868">cm</span></div>
+<div class="lab" style="position:absolute;left:712px;top:818px;white-space:nowrap;">GSD 범위</div>
+<div style="position:absolute;left:960px;top:64px;width:480px;height:836px;background:#FFFFFF"></div>
+<div style="position:absolute;left:960px;top:64px;width:1px;height:836px;background:#010102"></div>
+<div class="d" style="position:absolute;left:984px;top:86px;font-size:22px;line-height:1.1;color:#010102;white-space:nowrap;">데이터셋 설정<span class="tag">자동 제안</span></div>
+<div style="position:absolute;left:1404px;top:90px"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#686868" stroke-width="1.3"><path d="M.75.75l10.5 10.5M11.25.75.75 11.25"/></svg></div>
+<div style="position:absolute;left:984px;top:122px;width:432px;height:1px;background:#DDDDDD"></div>
+<div style="position:absolute;left:984px;top:138px;width:432px;height:243px;overflow:hidden;background:#FFFFFF;"><img src="b7-states-gh1.jpg" alt="" style="position:absolute;left:0;top:0;width:432px;height:243px;object-fit:cover;display:block"><svg width="432" height="243" viewBox="0 0 432 243" style="position:absolute;left:0;top:0;display:block"><rect x="6" y="4" width="122" height="122" fill="none" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.85"/><rect x="6" y="116" width="122" height="122" fill="none" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.85"/><rect x="106" y="4" width="122" height="122" fill="rgba(0,109,247,.16)" stroke="#006DF7" stroke-width="1.5" stroke-opacity="1"/><rect x="106" y="116" width="122" height="122" fill="none" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.85"/><rect x="206" y="4" width="122" height="122" fill="none" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.85"/><rect x="206" y="116" width="122" height="122" fill="none" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.85"/><rect x="306" y="4" width="122" height="122" fill="none" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.85"/><rect x="306" y="116" width="122" height="122" fill="none" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.85"/></svg><svg width="432" height="243" viewBox="0 0 432 243" style="position:absolute;left:0;top:0;display:block;pointer-events:none"><path d="M0 12V0h12M420 0h12v12M432 231v12h-12M12 243H0v-12" fill="none" stroke="#010102" stroke-width="1"/></svg></div>
+<div class="n" style="position:absolute;left:984px;top:388px;font-size:14px;letter-spacing:.01em;color:#686868;white-space:nowrap;line-height:1.3;">타일 1024 px · 이웃 타일과 20 % 겹침</div>
+<div style="position:absolute;left:984px;top:420px;display:flex;align-items:baseline;gap:5px;white-space:nowrap"><span class="d8" style="font-size:36px;line-height:1;color:#006DF7">1.54</span><span style="font-size:15px;color:#686868">cm</span></div>
+<div class="lab" style="position:absolute;left:986px;top:466px;white-space:nowrap;">기준 해상도</div>
+<div style="position:absolute;left:1118px;top:422px;width:1px;height:58px;background:#DDDDDD"></div>
+<div style="position:absolute;left:1132px;top:420px;display:flex;align-items:baseline;gap:5px;white-space:nowrap"><span class="d8" style="font-size:36px;line-height:1;color:#010102">1024</span><span style="font-size:15px;color:#686868">px</span></div>
+<div class="lab" style="position:absolute;left:1134px;top:466px;white-space:nowrap;">타일 크기</div>
+<div style="position:absolute;left:1266px;top:422px;width:1px;height:58px;background:#DDDDDD"></div>
+<div style="position:absolute;left:1280px;top:420px;display:flex;align-items:baseline;gap:5px;white-space:nowrap"><span class="d8" style="font-size:36px;line-height:1;color:#010102">20</span><span style="font-size:15px;color:#686868">%</span></div>
+<div class="lab" style="position:absolute;left:1282px;top:466px;white-space:nowrap;">겹침 비율</div>
+<div style="position:absolute;left:984px;top:498px;width:432px;height:1px;background:#DDDDDD"></div>
+<div class="lab" style="position:absolute;left:984px;top:512px;white-space:nowrap;">근거 · 선택 영상 해상도</div>
+<div class="n" style="position:absolute;left:1296px;top:511px;font-size:14.5px;letter-spacing:.01em;color:#006DF7;white-space:nowrap;line-height:1.3;width:120px;text-align:right">중앙값 1.54 cm</div>
+<div class="n" style="position:absolute;left:984px;top:540px;font-size:14.5px;letter-spacing:.01em;color:#686868;white-space:nowrap;line-height:1.3;">2025.04</div>
+<div style="position:absolute;left:1068px;top:549px;width:230px;height:1px;background:#DDDDDD"></div>
+<div style="position:absolute;left:1068px;top:548px;width:124px;height:3px;background:#010102"></div>
+<div class="n" style="position:absolute;left:1310px;top:540px;font-size:14.5px;letter-spacing:.01em;color:#010102;white-space:nowrap;line-height:1.3;">1.08 cm</div>
+<div class="n" style="position:absolute;left:984px;top:568px;font-size:14.5px;letter-spacing:.01em;color:#686868;white-space:nowrap;line-height:1.3;">2025.06</div>
+<div style="position:absolute;left:1068px;top:577px;width:230px;height:1px;background:#DDDDDD"></div>
+<div style="position:absolute;left:1068px;top:576px;width:194px;height:3px;background:#010102"></div>
+<div class="n" style="position:absolute;left:1310px;top:568px;font-size:14.5px;letter-spacing:.01em;color:#010102;white-space:nowrap;line-height:1.3;">1.69 cm</div>
+<div class="n" style="position:absolute;left:984px;top:596px;font-size:14.5px;letter-spacing:.01em;color:#686868;white-space:nowrap;line-height:1.3;">2025.08</div>
+<div style="position:absolute;left:1068px;top:605px;width:230px;height:1px;background:#DDDDDD"></div>
+<div style="position:absolute;left:1068px;top:604px;width:177px;height:3px;background:#006DF7"></div>
+<div class="n" style="position:absolute;left:1310px;top:596px;font-size:14.5px;letter-spacing:.01em;color:#010102;white-space:nowrap;line-height:1.3;">1.54 cm</div>
+<div class="st" style="position:absolute;left:1382px;top:599px;white-space:nowrap;">기준</div>
+<div style="position:absolute;left:984px;top:632px;width:432px;height:1px;background:#DDDDDD"></div>
+<div style="position:absolute;left:984px;top:646px;font-size:14.5px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;white-space:normal;width:432px;line-height:1.5">모든 선택 영상을 기준 해상도로 통일한 뒤 타일 크기로 잘라 학습 이미지를 만듭니다</div>
+<div style="position:absolute;left:984px;top:708px;font-size:15px;letter-spacing:-.01em;color:#010102;white-space:nowrap;line-height:1.3;">데이터셋 설정 수정 ›</div>
+<div style="position:absolute;left:1134px;top:708px;font-size:15px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">제안값 복원</div>
+<div style="position:absolute;left:984px;top:818px;width:432px;height:1px;background:#DDDDDD"></div>
+<div class="tb" style="left:984px;top:830px;color:#686868">목록</div>
+<div class="tb" style="left:1032px;top:830px;color:#686868">취소</div>
+<div class="cta" style="left:1332px;top:826px;width:84px">만들기</div>
+<div style="position:absolute;left:72px;top:866px;width:888px;height:1px;background:#DDDDDD"></div>
+<div style="position:absolute;left:128px;top:876px;font-size:14px;letter-spacing:-.01em;color:#686868;white-space:nowrap;line-height:1.3;">LX 한국국토정보공사 · 고객센터 063-713-1213 · 개인정보처리방침 · 이용약관 · 이메일주소무단수집거부</div>
+</div>
+</x-dc>
+</body>
+</html>
