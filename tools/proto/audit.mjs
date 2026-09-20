@@ -81,7 +81,9 @@ for (const [id, name] of list) {
       // 3 자리는 있는데 비어 있는 판
       const empty = [...document.querySelectorAll('#main div, #main section, #main figure, #main canvas')]
         .filter((e) => { const b = box(e); return b.height > 90 && b.width > 140 && !e.children.length
-          && !e.textContent.trim() && e.tagName !== 'CANVAS' && getComputedStyle(e).backgroundImage === 'none'; })
+          && !e.textContent.trim() && e.tagName !== 'CANVAS' && getComputedStyle(e).backgroundImage === 'none'
+          // 입력 대기 중인 빈 편집기·입력칸은 '빈 자리'가 아니다(안내 문구를 달고 기다리는 중이다)
+          && !e.isContentEditable && !e.hasAttribute('data-placeholder'); })
         .map((e) => ({ sel: sel(e), w: Math.round(box(e).width), h: Math.round(box(e).height) }));
       // 5 깨진 이미지
       const img = [...document.images].filter((i) => i.complete && i.naturalWidth === 0 && box(i).width > 4)
@@ -95,19 +97,37 @@ for (const [id, name] of list) {
       return { over, inner, empty, img, unnamed };
     }));
 
-    // 4 죽은 버튼 — 눌러도 DOM 도 URL 도 토스트도 안 바뀌는 것
+    /* 4 죽은 버튼 — 눌러도 아무 일도 없는 것.
+       오탐을 줄이는 두 가지:
+         · **이미 선택된 상태**의 탭·필터는 누르지 않는다. 같은 값을 다시 고르면
+           화면이 안 바뀌는 게 맞다(1차 점검에서 `전체`·`1개월`·`내 것`이 전부 이렇게 잡혔다).
+         · 비교는 innerHTML 길이가 아니라 **DOM 지문**으로 한다. hidden 토글이나
+           aria 상태만 바뀌는 탭은 길이가 그대로여서 죽은 것처럼 보였다(포털 탭). */
+    const sign = () => document.getElementById('main').outerHTML
+      .replace(/\s(style|data-sc[^=]*)="[^"]*"/g, '').length + '|'
+      + [...document.querySelectorAll('#main [hidden],#main [aria-selected],#main [aria-pressed],#main [aria-current],#main [open]')]
+        .map((e) => (e.hasAttribute('hidden') ? 'h' : '') + (e.getAttribute('aria-selected') || '')
+          + (e.getAttribute('aria-pressed') || '') + (e.getAttribute('aria-current') || '') + (e.hasAttribute('open') ? 'o' : '')).join('');
     const btns = await page.locator('#main button:visible:not([disabled]):not([data-audit-skip])').all();
     for (const b of btns.slice(0, 26)) {
       const label = (await b.innerText().catch(() => '')).replace(/\s+/g, ' ').trim().slice(0, 22);
       if (!label) continue;
       if (/삭제|제거|로그아웃|발급|저장|초기화/.test(label)) continue;   // 파괴적·상태 변경은 누르지 않는다
-      const before = await page.evaluate(() => [location.href, document.getElementById('main').innerHTML.length]);
+      // 서식 도구(execCommand)는 **선택 영역이 있어야** 듣는다. 빈 편집기에서 눌러 놓고
+      // 죽었다고 하면 안 된다. 파일 고르기는 브라우저 창을 열어 DOM 이 안 바뀐다.
+      const skip = await b.evaluate((e) => !!e.closest('.rte-bar') || /파일 추가|첨부/.test(e.textContent || '')).catch(() => false);
+      if (skip) continue;
+      const on = await b.evaluate((e) => e.getAttribute('aria-selected') === 'true'
+        || e.getAttribute('aria-pressed') === 'true' || e.hasAttribute('aria-current')).catch(() => false);
+      if (on) continue;                                                // 이미 켜진 것을 다시 누르는 셈
+      const before = await page.evaluate(sign);
+      const url0 = page.url();
       await b.click({ timeout: 2500 }).catch(() => {});
-      await page.waitForTimeout(260);
-      const after = await page.evaluate(() => [location.href, document.getElementById('main').innerHTML.length,
-        !!document.querySelector('.toast, [role="status"]:not(:empty), .modal')]);
-      if (before[0] === after[0] && before[1] === after[1] && !after[2]) found.dead.push(label);
-      if (before[0] !== after[0]) { await page.goBack({ waitUntil: 'networkidle' }).catch(() => {}); await page.waitForTimeout(500); }
+      await page.waitForTimeout(300);
+      const after = await page.evaluate((s) => [eval('(' + s + ')')(),
+        !!document.querySelector('.toast, .scrim, .modal, [role="status"]:not(:empty)')], sign.toString());
+      if (page.url() === url0 && before === after[0] && !after[1]) found.dead.push(label);
+      if (page.url() !== url0) { await page.goBack({ waitUntil: 'networkidle' }).catch(() => {}); await page.waitForTimeout(600); }
       await page.keyboard.press('Escape').catch(() => {});
     }
   } catch (e) { errs.push('AUDIT: ' + String(e.message).slice(0, 120)); }
