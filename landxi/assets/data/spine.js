@@ -43,14 +43,12 @@ export const LAYERS = [
   { id: 'L2', name: '표준 · 산출 계약', who: 'LX', kind: '고정',
     what: '판독이 무엇을 내놓는지 한 벌로 못 박는다',
     rule: '**LX 가 소유한다.** 공급자가 바뀌어도 이 계약은 남는다 — 고리의 가운데',
-    data: ['matching.js · GIVES', 'sim.js · DRIFT_SCHEMA'], screen: [],
-    screenGap: '표준을 보는 화면이 아직 없다 — 생산 관리에 자리를 내야 한다' },
+    data: ['matching.js · GIVES', 'sim.js · DRIFT_SCHEMA'], screen: ['생산 관리 · 매칭'] },
 
   { id: 'L3', name: '매칭 · 접점', who: 'LX가 계산', kind: '가변',
     what: '이 산출이 어느 업무·어느 모델에 붙는지 대조해 알려준다',
     rule: '손으로 적지 않는다 — gives 와 wants 를 맞춰 후보를 세운다',
-    data: ['matching.js · TASKS', 'sim.js · SIMS'], screen: [],
-    screenGap: '접점 목록을 보는 화면이 아직 없다 — 계산은 matchPoints() 로 이미 돈다' },
+    data: ['matching.js · TASKS', 'sim.js · SIMS'], screen: ['생산 관리 · 매칭'] },
 
   { id: 'L4', name: '생성 · 화면', who: 'LX', kind: '가변',
     what: '접점 하나 = 화면 선언 한 줄 → 생성기가 찍는다',

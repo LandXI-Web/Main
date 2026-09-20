@@ -10,9 +10,12 @@ import { TENANTS } from '../assets/data/portal.js';
 import { CARDS, DEPLOYS, cardById } from '../assets/data/cards.js';
 import { PROFILES } from '../assets/data/registry.js';
 import { LAYERS, CONTRACTS, CROSS, WHERE, STATE, spineSummary } from '../assets/data/spine.js';
+import { GIVES, TASKS, matchPoints, coverage, orgMatrix, finishPlan, matchSummary } from '../assets/data/matching.js';
+import { SIMS, LX_ROLE, LX_LINE, STANDARD_LINE } from '../assets/data/sim.js';
 
 const TAB = new URLSearchParams(location.search).get('tab') || 'spine';
 const b = businessView(), inf = infraSummary(), cap = capacityPlan(), loop = loopStats();
+const mt = matchSummary();
 
 mountShell({
   active: 'produce', title: '생산 관리',
@@ -21,6 +24,9 @@ mountShell({
   tabStyle: 'line', tab: TAB,
   tabs: [
     { key: 'spine', label: '뼈대' },
+    /* 매칭 — 뼈대의 L2(표준) · L3(접점)이 가리킬 자리. 계산은 matching.js 가 이미 하고 있었고
+       이 탭은 그 결과를 보여 줄 뿐이다(숫자를 새로 만들지 않는다). */
+    { key: 'match', label: '매칭', href: 'produce.html?tab=match', count: mt.접점 },
     { key: 'ops', label: '능동 운영', href: 'produce.html?tab=ops', count: b.이번주기_재학습 + b.검수필요 },
     { key: 'infra', label: '인프라', href: 'produce.html?tab=infra', count: `${cap.rows[0].pct}%` },
     { key: 'brand', label: '포털 생산', href: 'produce.html?tab=brand', count: produceState().tenants },
@@ -33,11 +39,17 @@ const tile = (l, v, u, tone = '') => `<div class="tile${tone ? ` tile--${tone}` 
   <span class="tile-l">${esc(l)}</span><span class="tile-v"><b>${typeof v === 'number' ? nf.format(v) : esc(v)}</b><span>${esc(u)}</span></span></div>`;
 const nameOfDeploy = (id) => cardById((DEPLOYS.find((d) => d.id === id) || {}).cardId)?.name || id;
 const h = (t, sub, right = '') => `<h2 class="pd-h">${esc(t)}<span>${esc(sub)}</span><span class="sp"></span>${right}</h2>`;
-/* 화면 참조 칩 — spine.js 의 `screen` 은 `produce.html?tab=match` 처럼 적혀 있다.
-   그대로 찍으면 개발용 URL 이 화면에 새어 나온 것처럼 보인다(점검기도 그렇게 잡는다).
-   여기서는 링크가 아니라 **어느 화면의 어느 탭인가** 를 가리키는 표기이므로 `·` 로 읽는다.
-   원본 데이터는 건드리지 않는다 — 보여 주는 방식만 바꾼다. */
-const screenChip = (d) => String(d).replace(/\?[a-z]+=/i, ' · ');
+/* 화면은 **이름으로 부른다**. 데이터 파일에는 `produce.html?tab=match` 처럼 파일명으로 적힌
+   자리가 있는데(sim.js LX_ROLE), 그대로 찍으면 개발용 URL 이 화면에 새어 나온다 —
+   점검기도 그렇게 잡는다. 원본 데이터는 건드리지 않고 **부르는 이름만** 여기서 갈아 끼운다.
+   표에 없는 값은 쿼리만 `·` 로 읽어 최소한 URL 처럼 보이지는 않게 한다. */
+const SCREEN_NAME = {
+  'dataset.html': '데이터 관리', 'ai-project.html': '프로젝트', 'admin-publish.html': '카드 발행 관리',
+  'analysis-ai.html': '분석 서비스', 'ximap.html': '지도 서비스', 'portal.html': '지자체 포털',
+  'map-drift.html': '표류 예측 지도', 'produce.html?tab=match': '생산 관리 · 매칭',
+  'produce.html?tab=ops': '생산 관리 · 능동 운영', 'produce.html?tab=studio': '생산 관리 · 화면 요구',
+};
+const screenName = (d) => SCREEN_NAME[d] || String(d).replace(/\?[a-z]+=/i, ' · ');
 
 
 /* ── 한 화면에 끝낸다 (2026-09-20) ────────────────────────────────────────
@@ -75,9 +87,6 @@ function panes(list) {
   ${list.map(([k, , html], i) => `<div class="pd-p" role="tabpanel" data-pdv="${k}"${i ? ' data-off' : ''}>${html}</div>`).join('')}`;
 }
 
-const VIEWS = { spine, ops, infra, brand, studio };
-main.insertAdjacentHTML('beforeend', `<div class="pd-sec">${(VIEWS[TAB] || spine)()}</div>`);
-
 /* 고르개는 겹쳐 쓸 수 있다(구역 안에 또 좌우 두 쪽). 그래서 **제 고르개가 맡는 구역만** 건드린다 —
    처음에 main 전체를 훑게 했더니 안쪽 고르개가 바깥 구역까지 같이 감췄다. */
 main.addEventListener('click', (e) => {
@@ -89,6 +98,25 @@ main.addEventListener('click', (e) => {
        `[hidden]{display:none!important}` 이라, 넓은 화면에서 둘 다 펴려는 CSS 를 이긴다.
        (이 함정에 한 번 빠져 1996 에서 층 다섯 중 셋만 보였다.) */
     .forEach((x) => { x.toggleAttribute('data-off', x.dataset.pdv !== b.dataset.pdp); });
+});
+
+/* 매칭 — 배포본 · 지역 고르개. 고른 것은 화면 안 상태라 판만 다시 그린다(URL 은 탭까지만 담는다).
+   접점 구역과 마무리 구역이 같은 배포본을 보므로 둘을 함께 갈아 끼운다. */
+main.addEventListener('click', (e) => {
+  const dp = e.target.closest('[data-mdp],[data-mdf]');
+  if (dp) {
+    matchDp = dp.dataset.mdp || dp.dataset.mdf;
+    main.querySelectorAll('[data-mdp],[data-mdf]').forEach((x) => x.setAttribute('aria-pressed', String((x.dataset.mdp || x.dataset.mdf) === matchDp)));
+    const a = document.getElementById('mt-pts'); if (a) a.innerHTML = ptsBody();
+    const c = document.getElementById('mt-plan'); if (c) c.innerHTML = planBody();
+    return;
+  }
+  const pf = e.target.closest('[data-mpf]');
+  if (pf) {
+    matchPf = pf.dataset.mpf;
+    main.querySelectorAll('[data-mpf]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.mpf === matchPf)));
+    const o = document.getElementById('mt-org'); if (o) o.innerHTML = orgBody();
+  }
 });
 
 
@@ -106,7 +134,9 @@ function spine() {
       <div class="sp-n"><h3>${esc(l.name)}</h3><span class="sp-k">${esc(l.kind)}</span><span class="sp-w">${esc(l.who)}</span></div>
       <div class="sp-t"><p class="sp-what">${esc(l.what)}</p>
         <p class="sp-rule">${l.rule.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')}</p></div>
-      <p class="sp-f">${l.data.map((d) => `<code>${esc(d)}</code>`).join('')}${l.screen.map((d) => `<code class="sc">${esc(screenChip(d))}</code>`).join('')}</p>
+      <p class="sp-f">${l.data.map((d) => `<code>${esc(d)}</code>`).join('')}${l.screen.map((d) => `<code class="sc">${esc(screenName(d))}</code>`).join('')}${
+  /* 화면이 아직 없는 층은 **없다고 적는다**(spine.js screenGap). 빈 칸으로 두면 있는 척이 된다. */
+  l.screenGap ? `<span class="sp-gap">${esc(l.screenGap)}</span>` : ''}</p>
       <p class="sp-st"><span class="ok">세움</span> ${esc(s.built || '')}${s.gap ? `<br><span class="gp">남음</span> ${esc(s.gap)}` : ''}</p>
     </div>`;
   };
@@ -146,6 +176,137 @@ function spine() {
       ${WHERE.map((w) => `<tr><td>${esc(w.ask)}</td><td><b class="n">${esc(w.at)}</b></td><td>${esc(w.how)}</td></tr>`).join('')}
       </tbody></table>`)],
   ])}`;
+}
+
+/* ── 매칭 ─────────────────────────────────────────────────────────────
+   발주자: "기본 Geo-AI 서비스는 고정. 그리고 이걸 **행정 서비스 연계하는 부분에서
+            매칭 포인트를 알려주는** 거고. … 매칭하여 마무리 짓는 데 핵심."
+
+   이 화면은 아무것도 계산하지 않는다 — matching.js 의 `matchPoints()` · `coverage()` ·
+   `orgMatrix()` · `finishPlan()` 이 내놓는 것을 그대로 옮긴다. 값을 지어내지 않는다.
+   말하려는 것 한 줄: **화면은 발주하지 않는다. 발주는 자료와 모델에만 낸다.** */
+const LV = { full: ['바로 닿음', 'st--teal'], plus: ['기관 자료 필요', 'st--acc'], gap: ['아직 못 닿음', 'st--warn'] };
+const VIZ_WHERE = { map: '지도', stats: '통계', result: '결과' };
+const VIZ_NAME = { table: '표', bar: '막대', line: '선', map: '지도', timeline: '시간축' };
+/* 화면 선언의 내부 표기(emd · class · count …)는 사람 말로 바꿔 적는다 — 이건 기획자가 보는 화면이다 */
+const BY_NAME = { emd: '읍·면·동', class: '종류', time: '시각', zone: '행정구역' };
+const MEASURE_NAME = { count: '건수', area: '면적', sum: '합계' };
+/* 어느 배포본 · 어느 지역을 보고 있나 — 화면 안에서만 바뀌는 상태다(URL 은 탭까지만 담는다).
+   기본값은 **운영 중인 첫 배포본**. 예정 배포본을 기본으로 두면 빈 표부터 보게 된다. */
+let matchDp = (DEPLOYS.find((d) => d.status === '운영') || DEPLOYS[0]).id;
+let matchPf = PROFILES[0].id;
+
+/* 고르개는 구역 제목 줄의 **오른쪽 칸**에 얹는다. 제목 아래에 따로 한 줄을 내주면
+   좁은 모니터에서 칩이 세 줄로 밀려 고르개만 88px 을 먹었다(1280 에서 확인).
+   제목 줄에 얹으면 남는 가로를 쓰므로 1996 에서는 한 줄에 다 선다.
+   <h2> 안에 들어가므로 <div> 가 아니라 <span> 이어야 한다(문단 요소는 못 넣는다). */
+const dpChips = (attr, cur) => `<span class="pd-pick" role="group" aria-label="배포본 고르기">
+  ${DEPLOYS.map((d) => `<button type="button" class="chip-b" ${attr}="${esc(d.id)}" aria-pressed="${d.id === cur}">
+    ${esc(cardById(d.cardId)?.name || d.cardId)}<span class="n">${d.year}</span><span class="rg">${esc(d.region)}</span></button>`).join('')}</span>`;
+
+function ptsBody() {
+  const d = DEPLOYS.find((x) => x.id === matchDp) || DEPLOYS[0];
+  const pts = matchPoints(d.id), cov = coverage(d.id);
+  if (!pts.length) return `<p class="empty empty--s">이 배포본에서 계산된 접점이 없습니다 — 카드 선언(kind)이 아직 비어 있습니다.</p>`;
+  return `<p class="pd-line"><b>${esc(cov.line)}</b> · 부서 ${cov.orgs.length}곳 —
+    바로 닿음 <span class="st st--teal">${cov.full}</span> ·
+    기관 자료 필요 <span class="st st--acc">${cov.plus}</span> ·
+    아직 못 닿음 <span class="st st--warn">${cov.gap}</span></p>
+  <table class="tb"><thead><tr><th>행정 업무</th><th>부서</th><th>쓰는 표준 산출</th><th>기관이 더할 자료</th><th>만드는 것</th><th>판정</th><th>근거</th></tr></thead><tbody>
+  ${pts.map((m) => `<tr>
+    <td>${esc(m.task)}${m.module
+    /* 전용 모듈 이름이 업무 이름과 같은 경우가 흔하다(민원 연계 · 현장 점검 동선 …).
+       그대로 찍으면 같은 말이 두 번 나오므로 그때는 `있음` 으로만 적는다. */
+    ? ` <span class="st st--dim">${m.module === m.task ? '전용 모듈 있음' : `전용 모듈 ${esc(m.module)}`}</span>` : ''}</td>
+    <td class="nw">${esc(m.org)}</td>
+    <td>${esc(m.uses.join(' · ') || '—')}</td>
+    <td>${m.needs.length ? esc(m.needs.join(' · ')) : '<span class="st st--dim">없음</span>'}</td>
+    <td>${esc(m.makes)}</td>
+    <td><span class="st ${LV[m.level][1]}">${LV[m.level][0]}</span></td>
+    <td class="pd-why">${esc(m.why)}</td></tr>`).join('')}
+  </tbody></table>`;
+}
+
+function planBody() {
+  const d = DEPLOYS.find((x) => x.id === matchDp) || DEPLOYS[0];
+  const p = finishPlan(d.id);
+  return `<p class="pd-line"><b>${esc(p.line)}</b></p>
+  ${p.views.length ? `<table class="tb"><thead><tr><th>찍을 화면</th><th>어디에</th><th>무엇을</th><th>어떻게</th><th>나온 자리</th></tr></thead><tbody>
+  ${p.views.map((v) => `<tr><td>${esc(v.title)}</td><td>${esc(VIZ_WHERE[v.tab] || v.tab)}</td>
+    <td>${esc(BY_NAME[v.by] || v.by)} 단위 · ${esc(MEASURE_NAME[v.measure] || v.measure)}</td><td>${esc(VIZ_NAME[v.viz] || v.viz)}</td>
+    <td>${esc(v.from)}</td></tr>`).join('')}
+  </tbody></table>` : '<p class="empty empty--s">아직 찍을 화면이 없습니다 — 닿는 접점이 없습니다.</p>'}
+  <p class="pd-note"><b>밖에서 받을 것 ${p.procure.length}종</b> —
+    ${p.procure.length ? esc(p.procure.join(' · ')) : '<span class="st st--dim">없음</span>'}.
+    전부 <em>기관이 가진 자료</em>다. 화면은 발주하지 않는다.</p>
+  ${p.blocked.length ? `<p class="pd-note pd-note--warn">막힌 업무 ${p.blocked.length}건 —
+    ${p.blocked.map((x) => `${esc(x.task)}(${esc(x.why)})`).join(' · ')}</p>` : ''}`;
+}
+
+function match() {
+  return `
+  <div class="band band--s">
+    ${tile('고정 산출', mt.고정_산출, '종')}
+    ${tile('행정 업무', mt.행정_업무, '종', 'ink')}
+    ${tile('접점', mt.접점, '건', 'ink')}
+    ${tile('바로 닿음', mt.바로닿는것, '건', 'ink')}
+    ${tile('기관 자료 필요', mt.기관자료_필요, '건', 'ink')}
+    ${tile('아직 못 닿음', mt.아직_못닿음, '건', mt.아직_못닿음 ? 'warn' : '')}
+    <p class="band-note">${esc(mt.line)}</p>
+  </div>
+  ${panes([
+    ['g', `고정 산출 ${mt.고정_산출} · 행정 업무 ${mt.행정_업무}`, two(
+      `고정 · 표준 산출 ${mt.고정_산출}`, `${h('고정 · Geo-AI 표준 산출', '기관 요구로 이 목록을 늘리지 않는다 — 늘어나는 것은 매칭과 화면이다')}
+      <table class="tb"><thead><tr><th>산출</th><th>무엇을 주나</th></tr></thead><tbody>
+      ${Object.entries(GIVES).map(([k, v]) => `<tr><td><b>${esc(v.name)}</b></td><td>${esc(v.what)}</td></tr>`).join('')}
+      </tbody></table>
+      <p class="pd-note">${esc(STANDARD_LINE)} — 표준을 LX 가 쥐고 있어야 공급자가 바뀌어도 고리가 끊기지 않는다.</p>`,
+      `가변 · 행정 업무 ${mt.행정_업무}`, `${h('가변 · 기관 행정 업무', '기관마다 다른 것은 판독이 아니라 업무다')}
+      <table class="tb"><thead><tr><th>업무</th><th>부서</th><th>필요한 산출</th><th>기관 자료</th><th>만드는 것</th></tr></thead><tbody>
+      ${TASKS.map((t) => `<tr><td>${esc(t.name)}</td><td>${esc(t.org)}</td>
+        <td>${esc(t.wants.map((w) => GIVES[w].name).join(' · '))}</td>
+        <td>${t.plus.length ? esc(t.plus.join(' · ')) : '<span class="st st--dim">없음</span>'}</td>
+        <td>${esc(t.makes)}</td></tr>`).join('')}
+      </tbody></table>`)],
+
+    ['p', `접점 ${mt.접점}`, `${h('매칭 포인트', '산출이 주는 것과 업무가 필요로 하는 것을 대조한 결과다 — 손으로 적은 목록이 아니다', dpChips('data-mdp', matchDp))}
+      <div id="mt-pts">${ptsBody()}</div>`],
+
+    ['f', '마무리 계획', `${h('매칭하여 마무리', '접점 하나 = 화면 선언 한 줄 → 생성기가 찍는다', dpChips('data-mdf', matchDp))}
+      <div id="mt-plan">${planBody()}</div>`],
+
+    ['o', `부서 표 ${mt.부서}`, `${h('기관 눈으로 — 우리 과에 쓸모가 있나', '배포본 × 부서. 칸의 수는 그 부서 업무 중 닿는 건수다',
+    `<span class="pd-pick" role="group" aria-label="지역 고르기">${PROFILES.map((p) =>
+      `<button type="button" class="chip-b" data-mpf="${esc(p.id)}" aria-pressed="${p.id === matchPf}">${esc(p.region)}</button>`).join('')}</span>`)}
+      <div id="mt-org">${orgBody()}</div>`],
+
+    ['s', `밖 모델 ${SIMS.length} · LX 역할 ${LX_ROLE.length}`, two(
+      `Geo-AI 밖 모델 ${SIMS.length}`, `${h('Geo-AI 밖 모델', '판독으로는 안 되는 것 — 계약만 LX 가 쥔다')}
+      <table class="tb"><thead><tr><th>모델</th><th>무엇을</th><th>받는 것</th><th>내놓는 것</th><th>아직 없는 것</th></tr></thead><tbody>
+      ${SIMS.map((s) => `<tr><td class="nw"><b>${esc(s.name)}</b></td><td>${esc(s.what)}</td>
+        <td>${esc(s.takes.join(' · '))}</td><td>${esc(s.gives.join(' · '))}</td>
+        <td class="pd-why">${esc(s.needs.join(' · '))}</td></tr>`).join('')}
+      </tbody></table>
+      <p class="pd-note">받을 것은 <b>모델 산출</b>이지 화면이 아니다 — 표준(patch schema)을 LX 가 쥐고 있어 공급자가 바뀌어도 고리가 남는다.</p>`,
+      `고리에서 LX 가 쥐는 자리 ${LX_ROLE.length}`, `${h('LX 가 쥐는 자리', LX_LINE)}
+      <table class="tb"><thead><tr><th>단계</th><th>누가</th><th>무엇을</th><th>LX 가 소유하는 것</th><th>도는 화면</th></tr></thead><tbody>
+      ${LX_ROLE.map((r) => `<tr><td class="nw"><span class="n">${r.step}</span> ${esc(r.name)}</td>
+        <td><span class="st ${r.who === 'LX' ? 'st--acc' : 'st--dim'}">${esc(r.who)}</span></td>
+        <td>${esc(r.what)}</td><td>${r.own.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')}</td>
+        <td>${r.screen ? `<a class="link" href="${esc(r.screen)}">${esc(screenName(r.screen))} ›</a>` : '<span class="st st--dim">화면 없음 · 밖에서 받는 산출</span>'}</td></tr>`).join('')}
+      </tbody></table>`)],
+  ])}`;
+}
+
+function orgBody() {
+  const m = orgMatrix(matchPf);
+  if (!m || !m.rows.length) return '<p class="empty empty--s">이 지역에 심은 배포본이 없습니다 — 아직 닿는 업무가 없습니다.</p>';
+  return `<table class="tb"><thead><tr><th>배포본</th>${m.orgs.map((o) => `<th class="c">${esc(o)}</th>`).join('')}<th class="r">합</th></tr></thead><tbody>
+  ${m.rows.map((r) => `<tr><td>${esc(r.card?.name || r.deploy.id)} <span class="st st--dim n">${r.deploy.year}</span></td>
+    ${r.cells.map((c) => `<td class="c">${c ? `<b class="n">${c}</b>` : '<span class="st st--dim">·</span>'}</td>`).join('')}
+    <td class="n">${r.cells.reduce((a, x) => a + x, 0)}</td></tr>`).join('')}
+  </tbody></table>
+  <p class="pd-note">${esc(m.region)} — 닿는 업무 <b>${m.total}</b>건. 부서 하나가 여러 배포본에 걸리면 그 과는 여러 서비스를 한 화면에서 본다.</p>`;
 }
 
 /* ── 능동 운영 ────────────────────────────────────────────────────── */
@@ -333,3 +494,11 @@ document.addEventListener('click', (e) => {
     });
   }
 });
+
+/* ── 그린다 ───────────────────────────────────────────────────────────
+   **이 줄은 파일 맨 끝에 있어야 한다.** 각 화면이 쓰는 `const`(LV · dpChips · matchDp …)는
+   호이스팅되지 않으므로, 위에서 그리면 `Cannot access … before initialization` 으로
+   판이 통째로 비어 버린다. 매칭 탭을 붙이다가 실제로 빈 화면을 한 번 만들었다.
+   (함수 선언은 호이스팅되어 VIEWS 에 담는 것은 문제가 없다.) */
+const VIEWS = { spine, match, ops, infra, brand, studio };
+main.insertAdjacentHTML('beforeend', `<div class="pd-sec">${(VIEWS[TAB] || spine)()}</div>`);
