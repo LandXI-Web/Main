@@ -59,8 +59,8 @@ const ICON = {
 };
 const railSvg = (k) => `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${ICON[k] || ''}</svg>`;
 const railItem = (n) => `
-  <button type="button" class="rail-i" data-menu="${n.menu}" data-go="${n.go || ''}"
-    title="원본 ${n.href}"${n.menu === 'media' ? ' aria-current="page"' : ''}>${railSvg(n.icon)}<span class="rl">${esc(n.name)}</span></button>`;
+  <a class="rail-i" href="${n.href}" data-menu="${n.menu}"
+    title="${esc(n.name)}"${n.menu === 'media' ? ' aria-current="page"' : ''}>${railSvg(n.icon)}<span class="rl">${esc(n.name)}</span></a>`;
 $('#rail-top').innerHTML = NAV.map(railItem).join('');
 $('#rail-foot').innerHTML = NAV_FOOT.map(railItem).join('')
   + railItem({ menu: 'my', name: 'MY', href: 'mypage.html', icon: 'my' })
@@ -69,9 +69,8 @@ $('#rail').addEventListener('click', (ev) => {
   const lo = ev.target.closest('[data-action="logout"]');
   if (lo) { try { localStorage.removeItem('lx_logged_in'); } catch { /* 저장소 차단 */ } location.href = 'scrub/index.html'; return; }
   const b = ev.target.closest('.rail-i[data-menu]'); if (!b) return;
-  const go = b.dataset.go;
-  if (go && go !== 'dataset.html') { location.href = go; return; }
-  if (!go) say(`원본 ${b.title.replace('원본 ', '')} — 콘티 밖`);
+  if (b.dataset.menu === 'media') ev.preventDefault();   // 현재 화면
+  // 그 밖의 항목은 진짜 링크다 — 원본 파일명으로 이동한다.
 });
 
 /* ══ 마스트헤드 — 공지 + 기준일(대시보드와 같은 값) ═══════════════════════ */

@@ -45,8 +45,8 @@ const RAIL_TO = { project: 'tab:proj', analysis: 'plate', map: 'plate', support:
 const RAIL_GO = { media: 'dataset.html' };
 const railSvg = (k) => `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${ICON[k] || ''}</svg>`;
 const railItem = (n) => `
-  <button type="button" class="rail-i" data-menu="${n.menu}" data-to="${RAIL_TO[n.menu] || ''}" data-go="${RAIL_GO[n.menu] || ''}"
-    title="원본 ${n.href}"${n.menu === 'dashboard' ? ' aria-current="page"' : ''}${n.menu === 'my' ? ' aria-haspopup="menu" aria-expanded="false"' : ''}>${railSvg(n.icon)}<span class="rl">${esc(n.name)}</span></button>`;
+  <a class="rail-i" href="${n.href}" data-menu="${n.menu}" data-to="${RAIL_TO[n.menu] || ''}"
+    title="${esc(n.name)}"${n.menu === 'dashboard' ? ' aria-current="page"' : ''}${n.menu === 'my' ? ' aria-haspopup="menu" aria-expanded="false"' : ''}>${railSvg(n.icon)}<span class="rl">${esc(n.name)}</span></a>`;
 $('#rail-top').innerHTML = NAV.map(railItem).join('');
 $('#rail-foot').innerHTML = NAV_FOOT.map(railItem).join('')
   + railItem({ menu: 'my', name: 'MY', href: 'mypage.html', icon: 'my' })
@@ -66,10 +66,9 @@ function goTo(id) {
 $('#rail').addEventListener('click', (ev) => {
   if (ev.target.closest('[data-action="logout"]')) { logout(); return; }
   const b = ev.target.closest('.rail-i[data-menu]'); if (!b) return;
-  if (b.dataset.menu === 'my') { const fly = $('#rail-my'); fly.hidden = !fly.hidden; b.setAttribute('aria-expanded', String(!fly.hidden)); return; }
-  if (b.dataset.menu === 'dashboard') { window.scrollTo({ top: 0, behavior: REDUCED() ? 'auto' : 'smooth' }); return; }
-  if (b.dataset.go) { location.href = b.dataset.go; return; }
-  if (b.dataset.to) goTo(b.dataset.to);
+  if (b.dataset.menu === 'my') { ev.preventDefault(); const fly = $('#rail-my'); fly.hidden = !fly.hidden; b.setAttribute('aria-expanded', String(!fly.hidden)); return; }
+  if (b.dataset.menu === 'dashboard') { ev.preventDefault(); window.scrollTo({ top: 0, behavior: REDUCED() ? 'auto' : 'smooth' }); }
+  // 그 밖의 항목은 진짜 링크다 — 원본 파일명으로 이동한다(자리 화면이든 구현 화면이든).
 });
 document.addEventListener('click', (ev) => {
   if (!ev.target.closest('#rail')) { $('#rail-my').hidden = true; $('#rail [data-menu="my"]').setAttribute('aria-expanded', 'false'); }

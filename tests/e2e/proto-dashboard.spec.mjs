@@ -33,8 +33,8 @@ test('A1–A11 레일 — 원본 include/header.html 의 메뉴가 순서까지 
   await boot(page);
   const names = await page.locator('#rail .rail-i .rl').allInnerTexts();
   expect(names).toEqual(['대시보드', '데이터 관리', '프로젝트', '분석 서비스', '지도 서비스', '서비스 지원', '카드 발행 관리', '서비스 관리', 'MY', '로그아웃']);
-  await expect(page.locator('#rail [data-menu="media"]')).toHaveAttribute('title', '원본 dataset.html');
-  await expect(page.locator('#rail [data-menu="media"]')).toHaveAttribute('data-go', 'dataset.html');
+  await expect(page.locator('#rail [data-menu="media"]')).toHaveAttribute('href', 'dataset.html');
+  await expect(page.locator('#rail [data-menu="project"]')).toHaveAttribute('href', 'ai-project.html');
   await expect(page.locator('#rail [data-menu="dashboard"]')).toHaveAttribute('aria-current', 'page');
   await expect(page.locator('#rail-mark')).toHaveAttribute('href', 'scrub/index.html');
   await page.locator('#rail [data-menu="my"]').click();
@@ -43,21 +43,14 @@ test('A1–A11 레일 — 원본 include/header.html 의 메뉴가 순서까지 
   expect(errs, errs.join(' | ')).toEqual([]);
 });
 
-test('A4–A9 레일 — 원본 페이지 대신 같은 데이터가 있는 자리로 데려간다', async ({ page }) => {
-  await boot(page);
-  await page.locator('#rail [data-menu="publish-admin"]').click();
-  await page.waitForTimeout(700);
-  await expect(page.locator('#b-approve')).toBeInViewport();
-  await page.locator('#tab-store').click();
-  await page.locator('#rail [data-menu="project"]').click();            // 프로젝트 → 탭 1
-  await page.waitForTimeout(400);
-  await expect(page.locator('#tab-proj')).toHaveAttribute('aria-selected', 'true');
-  await expect(page.locator('#tab-proj')).toBeFocused();
-  await page.locator('#rail [data-menu="map"]').click();                // 지도 서비스 → 판의 셀
-  await page.waitForTimeout(400);
-  await expect(page.locator('#cells .cell.is-hot')).toHaveCount(1);
+test('A4–A9 레일 — 원본 파일명으로 실제 이동한다 (2026-09-20: 페이지 안 스크롤 폐기)', async ({ page }) => {
+  for (const [menu, file] of [['project', 'ai-project.html'], ['analysis', 'analysis-ai.html'], ['map', 'ximap.html'],
+    ['publish-admin', 'admin-publish.html'], ['admin', 'admin-notice.html'], ['support', 'notice.html']]) {
+    await boot(page);
+    await page.locator(`#rail [data-menu="${menu}"]`).click();
+    await page.waitForURL(new RegExp(file.replace('.', '\.')));
+  }
 });
-
 test('A11 로그아웃 — 로그인 플래그를 지우고 메인(scrub)으로 간다', async ({ page }) => {
   await boot(page);
   const cleared = page.evaluate(() => new Promise((res) => {
