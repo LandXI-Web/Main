@@ -28,11 +28,14 @@ test('로그인 관문 — 플래그가 없으면 관리자 화면이 한 프레
 
 /* ── A. 좌측 레일 ─────────────────────────────────────────────────────── */
 
-test('A1–A11 레일 — 원본 include/header.html 의 메뉴가 순서까지 그대로다', async ({ page }) => {
+test('A1–A11 레일 — 원본 include/header.html 의 메뉴 + 새로 더한 생산 관리', async ({ page }) => {
   const errs = watch(page);
   await boot(page);
   const names = await page.locator('#rail .rail-i .rl').allInnerTexts();
-  expect(names).toEqual(['대시보드', '데이터 관리', '프로젝트', '분석 서비스', '지도 서비스', '서비스 지원', '카드 발행 관리', '서비스 관리', 'MY', '로그아웃']);
+  // 원본 9메뉴 순서는 그대로 두고, 카드 발행 관리 뒤에 `생산 관리`만 더했다(2026-09-20).
+  // 원본에 없던 메뉴이므로 여기서 한 번 더 못박아 둔다 — 순서가 밀리면 이 시험이 잡는다.
+  expect(names).toEqual(['대시보드', '데이터 관리', '프로젝트', '분석 서비스', '지도 서비스', '서비스 지원', '카드 발행 관리', '생산 관리', '서비스 관리', 'MY', '로그아웃']);
+  await expect(page.locator('#rail [data-menu="produce"]')).toHaveAttribute('href', 'produce.html');
   await expect(page.locator('#rail [data-menu="media"]')).toHaveAttribute('href', 'dataset.html');
   await expect(page.locator('#rail [data-menu="project"]')).toHaveAttribute('href', 'ai-project.html');
   await expect(page.locator('#rail [data-menu="dashboard"]')).toHaveAttribute('aria-current', 'page');

@@ -427,7 +427,11 @@ test('아이디 저장 — 체크하면 다음 방문에 이메일이 채워져 
   await expect(page.locator('.lx-check input')).toBeChecked();
   expect(await page.evaluate(() => getComputedStyle(document.querySelector('.lx-check__box')).backgroundColor)).toBe(ACCENT);   // 체크 = 액센트
   await page.locator('#lgSubmit').click();
-  await page.waitForFunction(() => localStorage.getItem('lx_saved_email') === 'hong@lx.or.kr', null, { timeout: 10000 });
+  // 제출 핸들러는 240ms 뒤에 localStorage 기록과 화면 이동을 잇달아 한다.
+  // 떠나는 중인 페이지에서 localStorage 를 폴링하면 부하가 걸렸을 때 실행 컨텍스트가
+  // 먼저 날아가 간헐적으로 깨진다 — 이동이 끝난 뒤 같은 출처에서 확인한다.
+  await page.waitForURL((u) => !u.pathname.endsWith('login.html'), { timeout: 20000 });
+  expect(await page.evaluate(() => localStorage.getItem('lx_saved_email'))).toBe('hong@lx.or.kr');
 
   await page.goto(URL + '?logout');
   await page.waitForFunction(() => window.__login && window.__login.ready, null, { timeout: 30000 });
