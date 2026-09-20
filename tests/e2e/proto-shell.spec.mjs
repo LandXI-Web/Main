@@ -65,23 +65,19 @@ test.describe('레일', () => {
     expect(await page.locator('#rail').evaluate((e) => e.getBoundingClientRect().width)).toBe(72);
     expect(await page.locator('#mast').evaluate((e) => e.getBoundingClientRect().height)).toBe(64);
   });
-  test('레일 링크는 실제로 이동한다 — 자리 화면도 같은 레일', async ({ page }) => {
+  test('레일 링크는 실제로 이동한다 — 구현된 화면도 같은 레일', async ({ page }) => {
     await boot(page);
-    await page.locator('#rail a[data-menu="map"]').click();                // 아직 자리 화면인 메뉴(2026-09-20: 서비스 관리는 구현됨)
+    await page.locator('#rail a[data-menu="map"]').click();                // 2026-09-20: 지도 서비스가 자리 화면에서 구현 화면이 되었다
     await page.waitForURL(/ximap\.html/);
     await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
     await expect(page.locator('#rail a.rail-i')).toHaveCount(10);
     await expect(page.locator('#rail .rail-i[aria-current="page"]')).toHaveAttribute('data-menu', 'map');
-    await expect(page.locator('#im')).toBeVisible();                     // 원판 뷰어는 그대로
-    await expect(page.locator('.wm')).toHaveText('원판 · 구현 전');
+    await expect(page.locator('#page-title')).toContainText('지도 서비스');
   });
-  test('자리 화면 — 썸네일 · 좌우 화살표 키가 산다', async ({ page }) => {
-    await boot(page, 'proto/ximap.html');   // 아직 자리 화면인 메뉴
-    const first = await page.locator('#ix').innerText();
-    await page.keyboard.press('ArrowRight');
-    expect(await page.locator('#ix').innerText()).not.toBe(first);
-    await page.locator('#th button').first().click();
-    await expect(page.locator('#ix')).toHaveText('1');
+  test('구현 화면도 셸 부품 한 벌 — 건너뛰기 · 마스트헤드 · 제목 행 · 푸터 · 토스트 자리', async ({ page }) => {
+    await boot(page, 'proto/ximap.html');
+    for (const sel of ['.skip', '#rail', '#mast', '#page-head', '#foot', '#say']) await expect(page.locator(sel)).toHaveCount(1);
+    await expect(page.locator('#foot-addr')).toContainText('063-713-1213');
   });
 });
 
