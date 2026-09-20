@@ -67,11 +67,11 @@ test.describe('레일', () => {
   });
   test('레일 링크는 실제로 이동한다 — 자리 화면도 같은 레일', async ({ page }) => {
     await boot(page);
-    await page.locator('#rail a[data-menu="admin"]').click();
-    await page.waitForURL(/admin-notice\.html/);
+    await page.locator('#rail a[data-menu="map"]').click();                // 아직 자리 화면인 메뉴(2026-09-20: 서비스 관리는 구현됨)
+    await page.waitForURL(/ximap\.html/);
     await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
     await expect(page.locator('#rail a.rail-i')).toHaveCount(9);
-    await expect(page.locator('#rail .rail-i[aria-current="page"]')).toHaveAttribute('data-menu', 'admin');
+    await expect(page.locator('#rail .rail-i[aria-current="page"]')).toHaveAttribute('data-menu', 'map');
     await expect(page.locator('#im')).toBeVisible();                     // 원판 뷰어는 그대로
     await expect(page.locator('.wm')).toHaveText('원판 · 구현 전');
   });
