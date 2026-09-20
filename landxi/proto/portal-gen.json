@@ -1,15 +1,13 @@
 {
   "at": "2026-09-20",
-  "mode": "all",
+  "mode": "only:dp-nw-",
   "files": [
     "landxi/proto/portal.html",
     "landxi/proto/portal-dp-nw-living-23.html",
     "landxi/proto/portal-dp-nw-farm-25.html",
     "landxi/proto/portal-dp-nw-road-26.html",
     "landxi/proto/portal-dp-nw-crowd-27.html",
-    "landxi/proto/portal-dp-nw-change.html",
-    "landxi/proto/portal-dp-gj-marine-25.html",
-    "landxi/proto/portal-dp-gj-marine-27.html"
+    "landxi/proto/portal-dp-nw-change.html"
   ],
   "specs": [
     {
@@ -22,13 +20,28 @@
           "name": "현황",
           "blocks": [
             "kpi",
-            "chart"
+            "chart",
+            "ext",
+            "basis"
+          ],
+          "band": [
+            "kpi"
+          ],
+          "grow": [
+            "chart",
+            "ext",
+            "basis"
           ]
         },
         {
           "id": "result",
           "name": "분석 결과",
           "blocks": [
+            "player",
+            "table"
+          ],
+          "band": [],
+          "grow": [
             "player",
             "table"
           ]
@@ -39,6 +52,11 @@
           "blocks": [
             "map",
             "parcel"
+          ],
+          "band": [],
+          "grow": [
+            "map",
+            "parcel"
           ]
         },
         {
@@ -46,12 +64,20 @@
           "name": "통계",
           "blocks": [
             "stats"
+          ],
+          "band": [],
+          "grow": [
+            "stats"
           ]
         },
         {
           "id": "report",
           "name": "보고서",
           "blocks": [
+            "report"
+          ],
+          "band": [],
+          "grow": [
             "report"
           ]
         }
@@ -70,13 +96,26 @@
           "id": "dash",
           "name": "현황",
           "blocks": [
+            "kpi",
+            "ext",
+            "basis"
+          ],
+          "band": [
             "kpi"
+          ],
+          "grow": [
+            "ext",
+            "basis"
           ]
         },
         {
           "id": "result",
           "name": "분석 결과",
           "blocks": [
+            "table"
+          ],
+          "band": [],
+          "grow": [
             "table"
           ]
         },
@@ -86,6 +125,11 @@
           "blocks": [
             "map",
             "parcel"
+          ],
+          "band": [],
+          "grow": [
+            "map",
+            "parcel"
           ]
         },
         {
@@ -93,12 +137,20 @@
           "name": "통계",
           "blocks": [
             "stats"
+          ],
+          "band": [],
+          "grow": [
+            "stats"
           ]
         },
         {
           "id": "report",
           "name": "보고서",
           "blocks": [
+            "report"
+          ],
+          "band": [],
+          "grow": [
             "report"
           ]
         }
@@ -117,13 +169,26 @@
           "id": "dash",
           "name": "현황",
           "blocks": [
+            "kpi",
+            "ext",
+            "basis"
+          ],
+          "band": [
             "kpi"
+          ],
+          "grow": [
+            "ext",
+            "basis"
           ]
         },
         {
           "id": "result",
           "name": "점검 대상",
           "blocks": [
+            "table"
+          ],
+          "band": [],
+          "grow": [
             "table"
           ]
         },
@@ -133,6 +198,12 @@
           "blocks": [
             "map",
             "grade"
+          ],
+          "band": [
+            "grade"
+          ],
+          "grow": [
+            "map"
           ]
         },
         {
@@ -140,12 +211,20 @@
           "name": "통계",
           "blocks": [
             "stats"
+          ],
+          "band": [],
+          "grow": [
+            "stats"
           ]
         },
         {
           "id": "report",
           "name": "보고서",
           "blocks": [
+            "report"
+          ],
+          "band": [],
+          "grow": [
             "report"
           ]
         }
@@ -165,7 +244,17 @@
           "name": "현황",
           "blocks": [
             "kpi",
-            "chart"
+            "chart",
+            "ext",
+            "basis"
+          ],
+          "band": [
+            "kpi"
+          ],
+          "grow": [
+            "chart",
+            "ext",
+            "basis"
           ]
         },
         {
@@ -175,12 +264,24 @@
             "player",
             "table",
             "timeline"
+          ],
+          "band": [
+            "timeline"
+          ],
+          "grow": [
+            "player",
+            "table"
           ]
         },
         {
           "id": "map",
           "name": "지도",
           "blocks": [
+            "map",
+            "heatmap"
+          ],
+          "band": [],
+          "grow": [
             "map",
             "heatmap"
           ]
@@ -190,12 +291,20 @@
           "name": "통계",
           "blocks": [
             "stats"
+          ],
+          "band": [],
+          "grow": [
+            "stats"
           ]
         },
         {
           "id": "report",
           "name": "보고서",
           "blocks": [
+            "report"
+          ],
+          "band": [],
+          "grow": [
             "report"
           ]
         }
@@ -213,7 +322,17 @@
           "name": "현황",
           "blocks": [
             "kpi",
-            "chart"
+            "chart",
+            "ext",
+            "basis"
+          ],
+          "band": [
+            "kpi"
+          ],
+          "grow": [
+            "chart",
+            "ext",
+            "basis"
           ]
         },
         {
@@ -222,12 +341,23 @@
           "blocks": [
             "table",
             "timeline"
+          ],
+          "band": [
+            "timeline"
+          ],
+          "grow": [
+            "table"
           ]
         },
         {
           "id": "map",
           "name": "지도",
           "blocks": [
+            "map",
+            "parcel"
+          ],
+          "band": [],
+          "grow": [
             "map",
             "parcel"
           ]
@@ -237,12 +367,20 @@
           "name": "통계",
           "blocks": [
             "stats"
+          ],
+          "band": [],
+          "grow": [
+            "stats"
           ]
         },
         {
           "id": "report",
           "name": "보고서",
           "blocks": [
+            "report"
+          ],
+          "band": [],
+          "grow": [
             "report"
           ]
         }
@@ -259,13 +397,27 @@
           "id": "dash",
           "name": "현황",
           "blocks": [
+            "kpi",
+            "ext",
+            "basis"
+          ],
+          "band": [
             "kpi"
+          ],
+          "grow": [
+            "ext",
+            "basis"
           ]
         },
         {
           "id": "result",
           "name": "분석 결과",
           "blocks": [
+            "player",
+            "table"
+          ],
+          "band": [],
+          "grow": [
             "player",
             "table"
           ]
@@ -276,6 +428,12 @@
           "blocks": [
             "grade",
             "map"
+          ],
+          "band": [
+            "grade"
+          ],
+          "grow": [
+            "map"
           ]
         },
         {
@@ -283,12 +441,20 @@
           "name": "통계",
           "blocks": [
             "stats"
+          ],
+          "band": [],
+          "grow": [
+            "stats"
           ]
         },
         {
           "id": "report",
           "name": "보고서",
           "blocks": [
+            "report"
+          ],
+          "band": [],
+          "grow": [
             "report"
           ]
         }
@@ -309,13 +475,27 @@
           "id": "dash",
           "name": "현황",
           "blocks": [
+            "kpi",
+            "ext",
+            "basis"
+          ],
+          "band": [
             "kpi"
+          ],
+          "grow": [
+            "ext",
+            "basis"
           ]
         },
         {
           "id": "result",
           "name": "분석 결과",
           "blocks": [
+            "player",
+            "table"
+          ],
+          "band": [],
+          "grow": [
             "player",
             "table"
           ]
@@ -326,6 +506,12 @@
           "blocks": [
             "map",
             "grade"
+          ],
+          "band": [
+            "grade"
+          ],
+          "grow": [
+            "map"
           ]
         },
         {
@@ -333,12 +519,20 @@
           "name": "통계",
           "blocks": [
             "stats"
+          ],
+          "band": [],
+          "grow": [
+            "stats"
           ]
         },
         {
           "id": "report",
           "name": "보고서",
           "blocks": [
+            "report"
+          ],
+          "band": [],
+          "grow": [
             "report"
           ]
         }

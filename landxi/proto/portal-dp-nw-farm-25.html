@@ -4,49 +4,71 @@
 <link rel="icon" href="../assets/images/favicon_landxi.png">
 <script src="shell-gate.js"></script>
 <link rel="stylesheet" href="fonts-system.css">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 <link rel="stylesheet" href="shell.css">
 <link rel="stylesheet" href="parts.css">
 <link rel="stylesheet" href="portal.css">
 <style>:root{--accent:#1F6F4A;--tint-1:#E9F3ED;--tint-2:#D1E3D9}</style>
-</head><body class="lx pt" data-page="portal" data-tenant="namwon" data-svc="dp-nw-farm-25">
+</head><body class="lx pt" data-gen="rows" data-page="portal" data-tenant="namwon" data-svc="dp-nw-farm-25">
 <main id="main">
 <div class="pt-work" data-svc="dp-nw-farm-25">
-  <nav class="pt-tabs" role="tablist" aria-label="영농관리 행정서비스 작업공간"><button type="button" role="tab" data-tab="dash" aria-selected="true">현황</button><button type="button" role="tab" data-tab="result">분석 결과</button><button type="button" role="tab" data-tab="map">지도</button><button type="button" role="tab" data-tab="stats">통계</button><button type="button" role="tab" data-tab="report">보고서</button></nav>
-  <div class="pt-pane" data-tab="dash">
-    <section class="pt-b" data-block="kpi" data-tab="dash" aria-label="머리 숫자">
-      <h3 class="pt-b-h">머리 숫자<span class="pt-b-w">탐지 건수 · 최근 분석일 · 처리 대기</span></h3>
-      <div class="pt-b-body" data-slot="kpi"></div>
-    </section>
+  <nav class="pt-tabs" role="tablist" aria-label="영농관리 행정서비스 작업공간"><button type="button" role="tab" id="pt-tab-dash" aria-controls="pt-pane-dash" data-tab="dash" aria-selected="true">현황</button><button type="button" role="tab" id="pt-tab-result" aria-controls="pt-pane-result" data-tab="result" aria-selected="false">분석 결과</button><button type="button" role="tab" id="pt-tab-map" aria-controls="pt-pane-map" data-tab="map" aria-selected="false">지도</button><button type="button" role="tab" id="pt-tab-stats" aria-controls="pt-pane-stats" data-tab="stats" aria-selected="false">통계</button><button type="button" role="tab" id="pt-tab-report" aria-controls="pt-pane-report" data-tab="report" aria-selected="false">보고서</button></nav>
+  <div class="pt-pane" role="tabpanel" id="pt-pane-dash" aria-labelledby="pt-tab-dash" data-tab="dash">
+    <div class="pt-row pt-row--band">
+      <section class="pt-b" data-block="kpi" data-seat="band" data-tab="dash" aria-label="한눈 현황">
+        <h3 class="pt-b-h">한눈 현황<span class="pt-b-w">이 서비스가 지금까지 찾아 준 것</span></h3>
+        <div class="pt-b-body" data-slot="kpi"></div>
+      </section>
+    </div>
+    <div class="pt-row pt-row--grow" data-n="2">
+      <section class="pt-b" data-block="ext" data-seat="grow" data-tab="dash" aria-label="기관 행정 가공">
+        <h3 class="pt-b-h">기관 행정 가공<span class="pt-b-w">판독 결과를 우리 업무 규칙으로 바꾸는 자리</span></h3>
+        <div class="pt-b-body" data-slot="ext"></div>
+      </section>
+      <section class="pt-b" data-block="basis" data-seat="grow" data-tab="dash" aria-label="이 서비스의 근거">
+        <h3 class="pt-b-h">이 서비스의 근거<span class="pt-b-w">묶인 AI 모델 · 사용 영상 · 갱신 상태</span></h3>
+        <div class="pt-b-body" data-slot="basis"></div>
+      </section>
+    </div>
   </div>
-  <div class="pt-pane" data-tab="result" hidden>
-    <section class="pt-b" data-block="table" data-tab="result" aria-label="결과 목록">
-      <h3 class="pt-b-h">결과 목록<span class="pt-b-w">건별 목록 · 검수 · 신고</span></h3>
-      <div class="pt-b-body" data-slot="table"></div>
-    </section>
+  <div class="pt-pane" role="tabpanel" id="pt-pane-result" aria-labelledby="pt-tab-result" data-tab="result" hidden>
+    <div class="pt-row pt-row--grow" data-n="1">
+      <section class="pt-b" data-block="table" data-seat="grow" data-tab="result" aria-label="탐지 결과 목록">
+        <h3 class="pt-b-h">탐지 결과 목록<span class="pt-b-w">건별로 보고 현장 확인을 잡는다</span></h3>
+        <div class="pt-b-body" data-slot="table"></div>
+      </section>
+    </div>
   </div>
-  <div class="pt-pane" data-tab="map" hidden>
-    <section class="pt-b" data-block="map" data-tab="map" aria-label="지도">
-      <h3 class="pt-b-h">지도<span class="pt-b-w">결과 레이어 · 속성 조회</span></h3>
-      <div class="pt-b-body" data-slot="map"></div>
-    </section>
-    <section class="pt-b" data-block="parcel" data-tab="map" data-opt='{&quot;filter&quot;:&quot;mismatch&quot;}' aria-label="필지 표">
-      <h3 class="pt-b-h">필지 표<span class="pt-b-w">필지별 결과 · 대장 대조</span></h3>
-      <div class="pt-b-body" data-slot="parcel"></div>
-    </section>
+  <div class="pt-pane" role="tabpanel" id="pt-pane-map" aria-labelledby="pt-tab-map" data-tab="map" hidden>
+    <div class="pt-row pt-row--grow" data-n="2">
+      <section class="pt-b" data-block="map" data-seat="grow" data-tab="map" aria-label="지도">
+        <h3 class="pt-b-h">지도<span class="pt-b-w">결과 레이어 · 속성 조회</span></h3>
+        <div class="pt-b-body" data-slot="map"></div>
+      </section>
+      <section class="pt-b" data-block="parcel" data-seat="grow" data-tab="map" data-opt='{&quot;filter&quot;:&quot;mismatch&quot;}' aria-label="필지별 판정">
+        <h3 class="pt-b-h">필지별 판정<span class="pt-b-w">필지 단위 결과 · 지적 대장 대조</span></h3>
+        <div class="pt-b-body" data-slot="parcel"></div>
+      </section>
+    </div>
   </div>
-  <div class="pt-pane" data-tab="stats" hidden>
-    <section class="pt-b" data-block="stats" data-tab="stats" aria-label="행정구역 통계">
-      <h3 class="pt-b-h">행정구역 통계<span class="pt-b-w">단위별 집계 · 엑셀</span></h3>
-      <div class="pt-b-body" data-slot="stats"></div>
-    </section>
+  <div class="pt-pane" role="tabpanel" id="pt-pane-stats" aria-labelledby="pt-tab-stats" data-tab="stats" hidden>
+    <div class="pt-row pt-row--grow" data-n="1">
+      <section class="pt-b" data-block="stats" data-seat="grow" data-tab="stats" aria-label="행정구역 집계">
+        <h3 class="pt-b-h">행정구역 집계<span class="pt-b-w">행정 단위로 묶어 표로</span></h3>
+        <div class="pt-b-body" data-slot="stats"></div>
+      </section>
+    </div>
   </div>
-  <div class="pt-pane" data-tab="report" hidden>
-    <section class="pt-b" data-block="report" data-tab="report" aria-label="보고서 발급">
-      <h3 class="pt-b-h">보고서 발급<span class="pt-b-w">공문 서식 · 발급 내역</span></h3>
-      <div class="pt-b-body" data-slot="report"></div>
-    </section>
+  <div class="pt-pane" role="tabpanel" id="pt-pane-report" aria-labelledby="pt-tab-report" data-tab="report" hidden>
+    <div class="pt-row pt-row--grow" data-n="1">
+      <section class="pt-b" data-block="report" data-seat="grow" data-tab="report" aria-label="보고서 발급">
+        <h3 class="pt-b-h">보고서 발급<span class="pt-b-w">공문에 붙일 서식으로</span></h3>
+        <div class="pt-b-body" data-slot="report"></div>
+      </section>
+    </div>
   </div>
 </div></main>
 <noscript>영농관리 행정서비스 · 전북특별자치도 남원시 — 이 화면은 자바스크립트가 필요합니다.</noscript>
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
 <script type="module" src="portal-ui.js"></script>
 </body></html>

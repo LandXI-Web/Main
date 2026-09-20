@@ -66,3 +66,296 @@
   .lx .pt-grid{ grid-template-columns:1fr; }
   .lx .pt-bar{ grid-template-columns:84px 1fr 54px; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   여기부터 — **새 골격**. 생성기가 data-gen="rows" 로 찍은 화면에서만 돈다.
+
+   위의 옛 규칙은 그대로 둔다. 광주전남 두 배포본이 **옛 골격으로 이미 커밋돼 있고**
+   (.pt-pane 을 그리드로 덮어 쓰는 인라인 CSS + 슬롯을 직접 채우는 인라인 모듈),
+   같은 이 파일을 쓴다. .pt-pane 을 flex 로 바꾸면 그 화면이 그대로 무너진다.
+   그래서 새 것은 전부 [data-gen="rows"] 안에 넣어 **옛 화면에 닿지 않게** 했다.
+   광주전남이 새 골격으로 다시 찍히면 위의 옛 규칙 묶음을 지우면 된다.
+   ══════════════════════════════════════════════════════════════════════════ */
+/* 지자체 포털 골격 — LX 가 한 벌 만들어 모든 기관에 내리는 생산품.
+   기관이 바꾸는 것은 CI 변수(--accent · --tint-1 · --tint-2)뿐이다. 이 파일은 기관마다 복사되지 않는다.
+   법전 design/system.md: 라운드 0 · 그림자 0 · 그라디언트 0 · 유리 0 · 바닥 14px · 채운 파란 버튼 없음.
+
+   ══ 한 화면 — 모니터마다 (2026-09-20) ═══════════════════════════════════════
+   발주자: "업무 화면은 한 화면에서 끝난다" · "모니터마다 최적화" · "내용을 지워서 맞추지 마라"
+
+   1차 구현은 블록을 세로로 쌓았다. 1996×745 지도탭에서 301px 넘쳤고, 홈은 반대로
+   아래 절반이 비었다. 두 증상이 같은 원인이다 — **세로로 쌓는 것 말고는 배치 규칙이 없었다.**
+
+   그래서 자리 규칙을 둘로 나눴다(portal.js BLOCK_SEAT).
+     band  얇게 한 줄. 높이는 내용만큼   (한눈 현황 · 시점 · 구간 등급)
+     grow  남은 높이를 채운다. 여럿이면 **좌우로 나란히**  (지도 · 표 · 차트 …)
+   대시보드가 아래 두 구역을 좌우로 놓아 한 줄을 없앤 것과 같은 수다. 지우는 것은 없다.
+
+   높이는 px 로 못 박지 않는다. 판은 flex 로 남은 만큼 가져가고, 표는 잰 높이만큼
+   줄을 채운다(portal-ui.js fitRows) — 2560×1440 에서는 더 많은 줄이, 1280×720 에서는
+   더 적은 줄이 보인다. **판 안쪽 스크롤을 만들지 않는 것**이 이 방식의 목적이다. */
+
+/* ══ 0. 화면 하나 ═══════════════════════════════════════════════════════ */
+body.lx.pt[data-gen="rows"]{ overflow:hidden; }
+.lx.pt[data-gen="rows"] #main{ min-height:0; overflow:clip; }
+
+/* ══ 1. 홈 · 서비스 카드 격자 ═══════════════════════════════════════════ */
+.lx[data-gen="rows"] .pt-home{ flex:1 1 0; min-height:0; display:flex; flex-direction:column; }
+.lx[data-gen="rows"] .pt-sum{ flex:none; }
+.lx[data-gen="rows"] .pt-grid{ flex:1 1 0; min-height:0; list-style:none; margin:0; padding:0;
+  display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); grid-auto-rows:minmax(0,1fr);
+  border-top:1px solid var(--line); }
+.lx[data-gen="rows"] .pt-grid > li{ display:flex; min-width:0; min-height:0; }
+
+.lx[data-gen="rows"] .pt-c{ position:relative; flex:1; display:flex; flex-direction:column; min-width:0; min-height:0;
+  padding:clamp(14px,2.2vh,22px) 20px clamp(12px,1.8vh,18px); color:inherit; overflow:hidden;
+  border-bottom:1px solid var(--line); border-right:1px solid var(--line);
+  transition:background var(--hov) var(--hove); }
+.lx[data-gen="rows"] .pt-grid > li:last-child .pt-c{ border-right:0; }
+.lx[data-gen="rows"] .pt-c:hover{ background:var(--t1); }
+.lx[data-gen="rows"] .pt-c::after{ content:""; position:absolute; left:0; right:0; top:-1px; height:3px; background:var(--accent);
+  transform:scaleX(0); transform-origin:left; transition:transform var(--hov) var(--hove); }
+.lx[data-gen="rows"] .pt-c:hover::after{ transform:scaleX(1); }
+.lx[data-gen="rows"] .pt-c[data-state="예정"]{ color:var(--grey); }
+.lx[data-gen="rows"] .pt-c-y{ display:block; font-family:var(--num); font-size:14px; letter-spacing:.04em; color:var(--grey);
+  white-space:nowrap; overflow:hidden; }
+.lx[data-gen="rows"] .pt-c-n{ display:block; margin-top:6px; font-family:var(--disp); font-weight:700;
+  font-size:clamp(17px,1.06vw,21px); line-height:1.24; letter-spacing:-.02em; word-break:keep-all; }
+.lx[data-gen="rows"] .pt-c-s{ display:block; margin-top:8px; font-size:14.5px; line-height:1.5; color:var(--grey); word-break:keep-all; }
+
+/* 가운데 칸 — 카드가 길어진 만큼을 **빈칸이 아니라 실측 분포로** 채운다.
+   분포가 없는 서비스는 여기에 '왜 없는지' 가 선다(막대를 지어내지 않는다). */
+.lx[data-gen="rows"] .pt-c-d{ flex:1 1 0; min-height:0; display:flex; flex-direction:column; justify-content:center;
+  gap:9px; padding:10px 0 2px; overflow:hidden; }
+.lx[data-gen="rows"] .pt-c-dh{ display:block; font-size:14px; line-height:1.35; color:var(--grey); letter-spacing:.01em;
+  word-break:keep-all; }
+.lx[data-gen="rows"] .pt-c-d .pt-bars{ flex:none; gap:4px; }
+.lx[data-gen="rows"] .pt-c-d .pt-bar{ grid-template-columns:minmax(40px,34%) minmax(0,1fr) auto; gap:8px; }
+.lx[data-gen="rows"] .pt-c-d .pt-bar u{ height:7px; }
+/* 분포가 없어도 기관이 무엇을 하는지는 선다 */
+.lx[data-gen="rows"] .pt-c-lm{ display:grid; gap:3px; }
+.lx[data-gen="rows"] .pt-c-lmi{ display:flex; align-items:baseline; gap:8px; font-size:14px; line-height:1.4;
+  color:var(--ink); min-width:0; word-break:keep-all; }
+.lx[data-gen="rows"] .pt-c-lmi i{ margin-left:auto; font-style:normal; color:var(--grey); white-space:nowrap; }
+
+/* 증거 칸 — 실측이 제 단위 그대로 한 줄씩 선다. */
+.lx[data-gen="rows"] .pt-c-ev{ margin-top:auto; padding-top:8px; display:grid; gap:4px; align-content:end; }
+.lx[data-gen="rows"] .pt-c-m{ display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:baseline; gap:4px 8px;
+  font-size:14px; min-width:0; }
+.lx[data-gen="rows"] .pt-c-m .mn{ color:var(--grey); min-width:0; line-height:1.35; word-break:keep-all; }
+.lx[data-gen="rows"] .pt-c-m .mw{ display:flex; align-items:baseline; gap:5px; white-space:nowrap; }
+.lx[data-gen="rows"] .pt-c-m .mv{ font-family:var(--num); font-weight:700; font-size:clamp(17px,1.05vw,22px);
+  letter-spacing:-.02em; color:var(--accent); font-variant-numeric:tabular-nums; }
+.lx[data-gen="rows"] .pt-c-m .mu{ color:var(--grey); }
+.lx[data-gen="rows"] .pt-c[data-state="예정"] .pt-c-m .mv{ color:var(--grey-3); }
+.lx[data-gen="rows"] .pt-c-gap{ font-size:14px; line-height:1.45; color:var(--grey); border-left:2px solid var(--line);
+  padding-left:9px; word-break:keep-all; }
+.lx[data-gen="rows"] .pt-c-f{ display:flex; align-items:baseline; gap:10px; margin-top:10px; padding-top:9px;
+  border-top:1px solid var(--line); font-size:14px; }
+.lx[data-gen="rows"] .pt-c-f .sp{ flex:1; }
+
+/* ══ 2. 작업공간 ════════════════════════════════════════════════════════ */
+.lx[data-gen="rows"] .pt-work{ flex:1 1 0; min-height:0; display:flex; flex-direction:column; }
+.lx[data-gen="rows"] .pt-tabs{ flex:none; display:flex; gap:0; border-bottom:1px solid var(--line); }
+.lx[data-gen="rows"] .pt-tabs button{ position:relative; height:clamp(36px,4.8vh,46px); padding:0 clamp(12px,1.1vw,20px);
+  font-size:15.5px; font-weight:500; color:var(--grey); letter-spacing:-.01em;
+  transition:color var(--hov) var(--hove); }
+.lx[data-gen="rows"] .pt-tabs button:hover{ color:var(--ink); }
+.lx[data-gen="rows"] .pt-tabs button[aria-selected="true"]{ color:var(--ink); }
+.lx[data-gen="rows"] .pt-tabs button[aria-selected="true"]::after{ content:""; position:absolute; left:0; right:0; bottom:-1px;
+  height:3px; background:var(--accent); }
+
+.lx[data-gen="rows"] .pt-pane{ flex:1 1 0; min-height:0; display:flex; flex-direction:column; }
+.lx[data-gen="rows"] .pt-row{ display:grid; min-height:0; }
+.lx[data-gen="rows"] .pt-row--band{ flex:none; grid-template-columns:minmax(0,1fr); border-bottom:1px solid var(--line); }
+.lx[data-gen="rows"] .pt-row--grow{ flex:1 1 0; min-height:0; }
+.lx[data-gen="rows"] .pt-row--grow[data-n="1"]{ grid-template-columns:minmax(0,1fr); }
+.lx[data-gen="rows"] .pt-row--grow[data-n="2"]{ grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+.lx[data-gen="rows"] .pt-row--grow[data-n="3"]{ grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr); }
+/* 지도가 있는 줄은 지도에 더 준다 — 표는 글자만 읽히면 되고, 지도는 땅이 보여야 뜻이 있다. */
+.lx[data-gen="rows"] .pt-row--grow[data-n="2"]:has(> [data-block="map"]:first-child){ grid-template-columns:minmax(0,1.35fr) minmax(0,1fr); }
+.lx[data-gen="rows"] .pt-row--grow[data-n="2"]:has(> [data-block="map"]:last-child){ grid-template-columns:minmax(0,1fr) minmax(0,1.35fr); }
+
+.lx[data-gen="rows"] .pt-b{ display:flex; flex-direction:column; min-width:0; min-height:0;
+  padding:clamp(10px,1.7vh,18px) 0 clamp(8px,1.2vh,14px); }
+.lx[data-gen="rows"] .pt-row--grow .pt-b + .pt-b{ margin-left:24px; padding-left:24px; border-left:1px solid var(--line); }
+.lx[data-gen="rows"] .pt-b-h{ flex:none; display:flex; align-items:baseline; gap:10px; margin:0 0 10px; min-width:0;
+  font-family:var(--disp); font-weight:700; font-size:16.5px; letter-spacing:-.02em; }
+/* 한 줄 설명은 자리가 있을 때만 — `…` 로 자르지 않는다(법전). 좁아지면 통째로 내린다. */
+.lx[data-gen="rows"] .pt-b-w{ font-family:var(--body); font-weight:400; font-size:14px; color:var(--grey); letter-spacing:-.01em;
+  min-width:0; white-space:nowrap; }
+.lx[data-gen="rows"] .pt-row--grow[data-n="3"] .pt-b-w{ display:none; }
+.lx[data-gen="rows"] .pt-b-body{ flex:1 1 0; min-height:0; display:flex; flex-direction:column; }
+/* band 줄의 블록은 높이가 auto 다. 거기서 몸통이 `flex:1 1 0` 이면 기준 크기가 0 이 되어
+   블록 높이에 아무것도 보태지 않는다 — 머리 숫자 위로 아래 블록이 겹쳐 찍혔다. */
+.lx[data-gen="rows"] .pt-row--band .pt-b-body{ flex:0 0 auto; }
+
+/* ══ 3. 블록 몸통 — 종류별로 자리만 다르고 법은 같다 ══════════════════════ */
+/* 지도 — 진짜 MapLibre 판이 들어간다. 높이는 남은 만큼. */
+.lx[data-gen="rows"] .pt-map{ flex:1 1 0; min-height:110px; position:relative; border:1px solid var(--line); background:var(--t1); }
+.lx[data-gen="rows"] .pt-map canvas{ outline:0; }
+.lx[data-gen="rows"] .pt-map-note{ position:absolute; left:0; right:0; bottom:0; margin:0; padding:6px 10px; font-size:14px;
+  line-height:1.4; color:var(--ink); background:rgba(255,255,255,.92); border-top:1px solid var(--line); }
+.lx[data-gen="rows"] .pt-map-wait{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  padding:0 16px; text-align:center; font-size:14.5px; line-height:1.5; color:var(--grey); word-break:keep-all; }
+/* 지도 위 배경 고르기 — 정사영상 시점은 실제로 구워진 타일이다 */
+.lx[data-gen="rows"] .pt-map-bar{ flex:none; display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; padding-bottom:8px;
+  font-size:14px; }
+.lx[data-gen="rows"] .pt-map-bar .lb{ margin-right:2px; }
+
+/* 시간 축 · 재생 */
+.lx[data-gen="rows"] .pt-scrub{ flex:none; display:flex; align-items:center; gap:12px; padding:2px 0 4px; }
+.lx[data-gen="rows"] .pt-scrub input[type="range"]{ flex:1; min-width:80px; accent-color:var(--accent); height:20px; }
+.lx[data-gen="rows"] .pt-scrub .n{ font-family:var(--num); font-size:14.5px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.lx[data-gen="rows"] .pt-steps{ flex:none; display:flex; flex-wrap:wrap; gap:0 18px; padding-top:4px; font-size:14px; color:var(--grey); }
+.lx[data-gen="rows"] .pt-steps b{ color:var(--ink); font-weight:500; }
+
+/* 영상 판독 판 */
+.lx[data-gen="rows"] .pt-vid{ flex:1 1 0; min-height:90px; position:relative; border:1px solid var(--line); background:var(--t1);
+  display:flex; align-items:center; justify-content:center; padding:0 16px; text-align:center;
+  font-size:14.5px; line-height:1.5; color:var(--grey); word-break:keep-all; }
+.lx[data-gen="rows"] .pt-vid[data-on="1"]{ background:#010102; color:#fff; }
+
+/* 범례 */
+.lx[data-gen="rows"] .pt-legend{ flex:none; display:flex; flex-wrap:wrap; gap:2px 16px; padding-top:8px; margin:0;
+  font-size:14px; color:var(--grey); }
+.lx[data-gen="rows"] .pt-legend span{ display:inline-flex; align-items:center; white-space:nowrap; }
+.lx[data-gen="rows"] .pt-legend i{ display:inline-block; width:14px; height:10px; margin-right:6px; font-style:normal; flex:none;
+  border:1px solid rgba(1,1,2,.16); }
+
+/* 막대 — 값이 있는 것만 그린다 */
+.lx[data-gen="rows"] .pt-bars{ flex:1 1 0; min-height:0; display:grid; align-content:start; gap:clamp(3px,.7vh,8px); overflow:hidden; }
+.lx[data-gen="rows"] .pt-bar{ display:grid; grid-template-columns:minmax(52px,26%) minmax(0,1fr) auto; align-items:center;
+  gap:10px; font-size:14px; line-height:1.3; }
+.lx[data-gen="rows"] .pt-bar > span{ color:var(--grey); white-space:nowrap; overflow:hidden; }
+.lx[data-gen="rows"] .pt-bar u{ display:block; height:9px; min-width:1px; background:var(--accent); text-decoration:none; }
+.lx[data-gen="rows"] .pt-bar b{ font-family:var(--num); font-weight:500; font-variant-numeric:tabular-nums; white-space:nowrap; }
+
+/* 한 블록이 탭을 혼자 쓸 때 — 표가 1,900px 로 늘어나면 칸 사이가 멀어 읽히지 않는다.
+   표는 읽히는 폭까지만 쓰고, 남은 폭은 **같은 결과의 다른 얼굴**(구성 · 분포)이 받는다. */
+.lx[data-gen="rows"] .pt-split{ flex:1 1 0; min-height:0; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,340px); }
+.lx[data-gen="rows"] .pt-split > :first-child{ min-width:0; min-height:0; display:flex; flex-direction:column; }
+.lx[data-gen="rows"] .pt-side{ min-width:0; min-height:0; display:flex; flex-direction:column; gap:clamp(6px,1.4vh,14px);
+  margin-left:24px; padding-left:24px; border-left:1px solid var(--line); overflow:hidden; }
+.lx[data-gen="rows"] .pt-side h4{ margin:0; font-size:14px; font-weight:400; letter-spacing:.02em; color:var(--grey); }
+.lx[data-gen="rows"] .pt-side dl{ margin:0; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:3px 12px; font-size:14px; }
+.lx[data-gen="rows"] .pt-side dt{ color:var(--grey); min-width:0; word-break:keep-all; }
+.lx[data-gen="rows"] .pt-side dd{ margin:0; font-family:var(--num); font-variant-numeric:tabular-nums; white-space:nowrap;
+  text-align:right; }
+@media (max-width:1400px){ .lx .pt-split{ grid-template-columns:minmax(0,1fr) minmax(0,260px); }
+  .lx[data-gen="rows"] .pt-side{ margin-left:16px; padding-left:16px; } }
+@media (max-width:1100px){ .lx .pt-split{ grid-template-columns:minmax(0,1fr); }
+  .lx[data-gen="rows"] .pt-side{ margin-left:0; padding-left:0; border-left:0; border-top:1px solid var(--line); padding-top:12px; } }
+
+/* 근거 크롭 — 실제 정사영상에서 잘라 낸 판독 지점. 공문에 붙는 그림이다. */
+.lx[data-gen="rows"] .pt-crops{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; min-height:0; }
+.lx[data-gen="rows"] .pt-doc .pt-crops{ flex:1 1 0; }
+.lx[data-gen="rows"] .pt-crop{ display:flex; flex-direction:column; gap:4px; min-width:0; min-height:0; }
+.lx[data-gen="rows"] .pt-crop img{ display:block; width:100%; height:100%; min-height:0; object-fit:cover;
+  border:1px solid var(--line); background:var(--t1); }
+.lx[data-gen="rows"] .pt-crop figcaption{ font-size:14px; color:var(--grey); white-space:nowrap; overflow:hidden; }
+
+/* 표 — **안쪽 스크롤을 만들지 않는다**. 잰 높이만큼만 줄을 채우고 나머지는 쪽으로 넘긴다. */
+.lx[data-gen="rows"] .pt-tb{ flex:1 1 0; min-height:0; overflow:hidden; }
+.lx[data-gen="rows"] .pt-tb table{ width:100%; border-collapse:collapse; table-layout:fixed; }
+.lx[data-gen="rows"] .pt-tb th,.lx[data-gen="rows"] .pt-tb td{ padding:0 8px; height:var(--rowh,28px); font-size:14px; line-height:1.3;
+  text-align:left; border-bottom:1px solid var(--line); white-space:nowrap; overflow:hidden; }
+.lx[data-gen="rows"] .pt-tb th{ font-weight:500; color:var(--grey); border-bottom-color:var(--ink); }
+.lx[data-gen="rows"] .pt-tb th:first-child,.lx[data-gen="rows"] .pt-tb td:first-child{ padding-left:0; }
+/* `.n` 은 **숫자 글꼴**만, `.r` 이 오른쪽 정렬이다. 둘을 한데 묶었더니
+   필지번호(PNU)까지 오른쪽으로 붙어 읍·면·동 칸과 멀어졌다. */
+.lx[data-gen="rows"] .pt-tb .n{ font-family:var(--num); font-variant-numeric:tabular-nums; }
+.lx[data-gen="rows"] .pt-tb th.r,.lx[data-gen="rows"] .pt-tb td.r{ text-align:right; }
+.lx[data-gen="rows"] .pt-tb tbody tr:hover{ background:var(--t1); }
+.lx[data-gen="rows"] .pt-tb tbody tr[aria-selected="true"]{ background:var(--t2); }
+.lx[data-gen="rows"] .pt-pager{ flex:none; display:flex; align-items:center; gap:10px; padding-top:8px; font-size:14px;
+  color:var(--grey); }
+.lx[data-gen="rows"] .pt-pager .n{ font-family:var(--num); font-variant-numeric:tabular-nums; }
+.lx[data-gen="rows"] .pt-pager .sp{ flex:1; }
+
+/* 기관 행정 가공 · 근거 — 두 칸짜리 목록 */
+.lx[data-gen="rows"] .pt-list{ flex:1 1 0; min-height:0; display:grid; align-content:start; gap:0; overflow:hidden; }
+.lx[data-gen="rows"] .pt-it{ display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:baseline; gap:4px 12px;
+  padding:clamp(5px,1vh,10px) 0; border-bottom:1px solid var(--line); }
+.lx[data-gen="rows"] .pt-it:last-child{ border-bottom:0; }
+.lx[data-gen="rows"] .pt-it-n{ font-size:15px; font-weight:500; letter-spacing:-.01em; min-width:0; word-break:keep-all; }
+.lx[data-gen="rows"] .pt-it-d{ grid-column:1; font-size:14px; line-height:1.45; color:var(--grey); word-break:keep-all; }
+.lx[data-gen="rows"] .pt-it-s{ grid-row:1; grid-column:2; font-size:14px; white-space:nowrap; }
+.lx[data-gen="rows"] .pt-it-a{ grid-row:2; grid-column:2; align-self:end; }
+
+/* 값이 없는 자리 — 왜 없는지까지 적는다 */
+.lx[data-gen="rows"] .pt-empty{ flex:1 1 0; display:flex; flex-direction:column; justify-content:center; gap:6px;
+  padding:12px 0; margin:0; color:var(--grey); font-size:14.5px; line-height:1.5; word-break:keep-all; }
+.lx[data-gen="rows"] .pt-empty b{ display:block; color:var(--ink); font-weight:500; font-size:15px; }
+.lx[data-gen="rows"] .pt-note{ flex:none; margin:8px 0 0; font-size:14px; line-height:1.45; color:var(--grey); word-break:keep-all; }
+.lx[data-gen="rows"] .pt-note em{ font-style:normal; color:var(--teal); }
+.lx[data-gen="rows"] .pt-foot{ flex:none; margin:0; padding-top:6px; font-size:14px; color:var(--grey);
+  white-space:nowrap; overflow:hidden; }
+
+/* 보고서 서식 미리보기 */
+.lx[data-gen="rows"] .pt-doc{ flex:1 1 0; min-height:0; overflow:hidden; border:1px solid var(--line); padding:clamp(10px,2vh,20px);
+  display:flex; flex-direction:column; gap:clamp(4px,.9vh,10px); }
+.lx[data-gen="rows"] .pt-doc-t{ margin:0; font-family:var(--disp); font-weight:700; font-size:clamp(16px,1.2vw,20px);
+  letter-spacing:-.02em; text-align:center; }
+.lx[data-gen="rows"] .pt-doc dl{ margin:0; display:grid; grid-template-columns:auto minmax(0,1fr); gap:3px 14px; font-size:14px; }
+.lx[data-gen="rows"] .pt-doc dt{ color:var(--grey); white-space:nowrap; }
+.lx[data-gen="rows"] .pt-doc dd{ margin:0; min-width:0; word-break:keep-all; }
+.lx[data-gen="rows"] .pt-doc-seal{ margin-top:auto; padding-top:8px; border-top:1px solid var(--line); font-size:14px;
+  color:var(--grey); text-align:right; white-space:nowrap; }
+
+/* 요구 반영 표시 — 이 블록이 기관 요구로 들어왔다는 흔적 */
+.lx[data-gen="rows"] .pt-b[data-req] .pt-b-h::after{ content:"기관 요구 반영"; margin-left:auto; padding-left:12px;
+  font-size:14px; letter-spacing:.02em; color:var(--teal); white-space:nowrap; }
+
+/* ══ 4. 모니터마다 ══════════════════════════════════════════════════════
+   값이 줄어들 뿐, 지워지는 것은 없다. 지도·표는 flex 라 스스로 줄고,
+   고정으로 서 있는 것(제목 행 · 타일 숫자 · 여백)만 여기서 깎는다. */
+@media (max-height:900px){
+  .lx.pt[data-gen="rows"] #main{ padding-top:calc(var(--mast) + 16px); }
+  .lx.pt[data-gen="rows"] #page-head{ height:54px; margin-bottom:12px; }
+  .lx.pt[data-gen="rows"] #page-title{ font-size:29px; line-height:34px; }
+  .lx[data-gen="rows"] .band{ padding-top:12px; margin-bottom:8px; }
+  .lx[data-gen="rows"] .band--s .tile-v b{ font-size:34px; }
+  .lx[data-gen="rows"] .band--s .tile{ padding-bottom:10px; }
+}
+@media (max-height:780px){
+  .lx.pt[data-gen="rows"] #main{ padding-top:calc(var(--mast) + 10px); }
+  .lx.pt[data-gen="rows"] #page-head{ height:46px; margin-bottom:8px; }
+  .lx.pt[data-gen="rows"] #page-title{ font-size:26px; line-height:30px; }
+  .lx[data-gen="rows"] .band{ padding-top:8px; margin-bottom:6px; }
+  .lx[data-gen="rows"] .band--s .tile-v b{ font-size:28px; }
+  .lx[data-gen="rows"] .band--s .tile-v{ margin-top:4px; }
+  .lx[data-gen="rows"] .band--s .tile{ padding-bottom:8px; }
+  .lx[data-gen="rows"] .pt-c-s{ line-height:1.42; }
+}
+/* 폭이 좁아져도 **카드 격자는 한 줄로 둔다.**
+   4열로 접었더니 5장이 두 줄이 되면서 줄당 높이가 반으로 줄어 글자가 잘렸다 —
+   그건 맞춘 게 아니라 지운 것이다. 한 줄을 지키면 세로가 남고, 그 안에서
+   막대 수만 줄면 된다(portal-ui.js trimCards). 한 줄이 도저히 안 되는 폭(<1100)
+   에서만 격자를 접고, 그때는 페이지 스크롤을 허용한다. */
+@media (max-width:1460px){
+  .lx[data-gen="rows"] .pt-row--grow .pt-b + .pt-b{ margin-left:18px; padding-left:18px; }
+  .lx[data-gen="rows"] .pt-row--grow[data-n="2"] .pt-b-w{ display:none; }
+}
+@media (max-width:1180px){
+  .lx[data-gen="rows"] .pt-row--grow[data-n="3"]{ grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+  .lx[data-gen="rows"] .pt-row--grow[data-n="3"] .pt-b:nth-child(3){ grid-column:1 / -1; margin-left:0; padding-left:0;
+    border-left:0; border-top:1px solid var(--line); }
+  .lx[data-gen="rows"] .pt-c{ padding-left:14px; padding-right:14px; }
+  .lx[data-gen="rows"] .pt-c-n{ font-size:16px; }
+}
+@media (max-width:1100px){
+  body.lx.pt[data-gen="rows"]{ overflow:auto; }
+  body.lx.pt[data-gen="rows"][data-fit]{ height:auto; }
+  .lx.pt[data-gen="rows"] #main{ overflow:visible; }
+  .lx[data-gen="rows"] .pt-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-rows:auto; }
+  .lx[data-gen="rows"] .pt-c{ overflow:visible; }
+  .lx[data-gen="rows"] .pt-row--grow[data-n="2"],.lx[data-gen="rows"] .pt-row--grow[data-n="3"]{ grid-template-columns:minmax(0,1fr); }
+  .lx[data-gen="rows"] .pt-row--grow .pt-b + .pt-b{ margin-left:0; padding-left:0; border-left:0;
+    border-top:1px solid var(--line); }
+  .lx[data-gen="rows"] .pt-map,.lx[data-gen="rows"] .pt-vid{ min-height:260px; }
+}
+@media (max-width:760px){ .lx .pt-grid{ grid-template-columns:minmax(0,1fr); } }
+@media (prefers-reduced-motion:reduce){
+  .lx[data-gen="rows"] .pt-c,.lx[data-gen="rows"] .pt-c::after,.lx[data-gen="rows"] .pt-tabs button{ transition:none!important; }
+}

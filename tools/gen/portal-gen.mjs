@@ -23,47 +23,63 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const D = (p) => pathToFileURL(resolve(ROOT, 'landxi/assets/data', p)).href;
 
 const { DEPLOYS, cardById, modelsOfCard } = await import(D('cards.js'));
-const { TENANTS, serviceCards, portalSummary } = await import(D('portal.js'));
+const { TENANTS, serviceCards, portalSummary, portalSpec, blockInfo, seatOf } = await import(D('portal.js'));
 const { specOf, BLOCKS, genQueue, loopStats, studioScale } = await import(D('studio.js'));
 const { themeOf, cssVars, brandGuard } = await import(D('brand.js'));
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const out = (rel, body) => { const p = resolve(ROOT, rel); mkdirSync(dirname(p), { recursive: true }); writeFileSync(p, body, 'utf8'); return rel; };
 
-/* ── 페이지 껍데기 — 모든 기관이 같은 것을 받는다(LX 생산품) ───────── */
-const page = ({ title, tenant, svc = '', mod, skeleton }) => {
+/* ── 페이지 껍데기 — 모든 기관이 같은 것을 받는다(LX 생산품) ─────────
+ * gl:true 인 화면은 MapLibre 를 함께 싣는다. 작업공간에는 **진짜 지도**가 선다 —
+ * 연한 상자에 '지도' 라고 적어 둔 자리 화면은 기관이 업무에 못 쓴다. */
+const page = ({ title, tenant, svc = '', mod, skeleton, gl = false }) => {
   const th = themeOf(tenant);
   return `<!doctype html><html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)} — ${esc(th.short)}</title>
 <link rel="icon" href="../assets/images/favicon_landxi.png">
 <script src="shell-gate.js"></script>
-<link rel="stylesheet" href="fonts-system.css">
+<link rel="stylesheet" href="fonts-system.css">${gl ? `
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">` : ''}
 <link rel="stylesheet" href="shell.css">
 <link rel="stylesheet" href="parts.css">
 <link rel="stylesheet" href="portal.css">
 <style>${cssVars(tenant)}</style>
-</head><body class="lx pt" data-page="portal" data-tenant="${esc(tenant)}"${svc ? ` data-svc="${esc(svc)}"` : ''}>
+</head><body class="lx pt" data-gen="rows" data-page="portal" data-tenant="${esc(tenant)}"${svc ? ` data-svc="${esc(svc)}"` : ''}>
 <main id="main">${skeleton}</main>
-<noscript>${esc(title)} — 이 화면은 자바스크립트가 필요합니다.</noscript>
+<noscript>${esc(title)} — 이 화면은 자바스크립트가 필요합니다.</noscript>${gl ? `
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>` : ''}
 <script type="module" src="${mod}"></script>
 </body></html>
 `;
 };
 
-/* ── 블록 골격 — 생성기가 아는 부품만 놓는다 ───────────────────────── */
+/* ── 블록 골격 — 생성기가 아는 부품만 놓는다 ─────────────────────────
+ * 이름과 한 줄 설명은 blockInfo() 가 준다. 생산 라인 사전(studio.js BLOCKS)의 말은
+ * '머리 숫자' 처럼 만드는 쪽 말이라, 기관 화면에서는 쓰는 쪽 말로 덮인다. */
 const block = (id, tab, opts = {}) => {
-  const b = BLOCKS[id]; if (!b) return '';
+  const b = blockInfo(id); if (!b.name) return '';
   const o = opts[id] ? ` data-opt='${esc(JSON.stringify(opts[id]))}'` : '';
-  return `\n    <section class="pt-b" data-block="${id}" data-tab="${tab}"${o} aria-label="${esc(b.name)}">
-      <h3 class="pt-b-h">${esc(b.name)}<span class="pt-b-w">${esc(b.what)}</span></h3>
-      <div class="pt-b-body" data-slot="${id}"></div>
-    </section>`;
+  return `\n      <section class="pt-b" data-block="${id}" data-seat="${seatOf(id)}" data-tab="${tab}"${o} aria-label="${esc(b.name)}">
+        <h3 class="pt-b-h">${esc(b.name)}<span class="pt-b-w">${esc(b.what)}</span></h3>
+        <div class="pt-b-body" data-slot="${id}"></div>
+      </section>`;
+};
+
+/* 한 화면에 넣는 수 — 블록을 세로로 쌓지 않는다.
+   band 는 얇게 한 줄씩 위에, grow 는 남은 높이를 **좌우로 나눠** 채운다.
+   순서(기관 요구 order 연산)는 각 줄 안에서 그대로 지킨다. */
+const paneSkeleton = (t) => {
+  const band = t.band.map((b) => block(b, t.id, t.opts)).join('');
+  const grow = t.grow.map((b) => block(b, t.id, t.opts)).join('');
+  return (band ? `\n    <div class="pt-row pt-row--band">${band}\n    </div>` : '')
+    + (grow ? `\n    <div class="pt-row pt-row--grow" data-n="${t.grow.length}">${grow}\n    </div>` : '');
 };
 
 const workspaceSkeleton = (spec) => {
-  const tabs = spec.tabs.map((t, i) => `<button type="button" role="tab" data-tab="${t.id}"${i === 0 ? ' aria-selected="true"' : ''}>${esc(t.name)}</button>`).join('');
-  const panes = spec.tabs.map((t, i) => `\n  <div class="pt-pane" data-tab="${t.id}"${i ? ' hidden' : ''}>${t.blocks.map((b) => block(b, t.id, t.opts)).join('')}\n  </div>`).join('');
+  const tabs = spec.tabs.map((t, i) => `<button type="button" role="tab" id="pt-tab-${t.id}" aria-controls="pt-pane-${t.id}" data-tab="${t.id}" aria-selected="${i === 0}">${esc(t.name)}</button>`).join('');
+  const panes = spec.tabs.map((t, i) => `\n  <div class="pt-pane" role="tabpanel" id="pt-pane-${t.id}" aria-labelledby="pt-tab-${t.id}" data-tab="${t.id}"${i ? ' hidden' : ''}>${paneSkeleton(t)}\n  </div>`).join('');
   return `
 <div class="pt-work" data-svc="${esc(spec.deployId)}">
   <nav class="pt-tabs" role="tablist" aria-label="${esc(spec.name)} 작업공간">${tabs}</nav>${panes}
@@ -72,6 +88,11 @@ const workspaceSkeleton = (spec) => {
 
 /* ── 찍는다 ────────────────────────────────────────────────────────── */
 const onlyQueue = process.argv.includes('--queue');
+/* --only=<조각> : 그 조각이 든 배포본만 다시 찍는다.
+   광주전남 두 배포본은 생성기가 찍은 뒤 **손으로 넓혀 커밋**돼 있다(인라인 CSS·모듈).
+   전부 다시 찍으면 그 작업이 지워지므로, 남원만 찍을 때 `--only=dp-nw-` 를 쓴다.
+   장기적으로는 그 자리가 studio.js 의 블록 종류로 올라가야 하고, 그때 이 옵션은 필요 없다. */
+const onlyArg = (process.argv.find((a) => a.startsWith('--only=')) || '').slice(7);
 const queue = genQueue();
 const written = [];
 
@@ -89,25 +110,27 @@ TENANTS.filter((t) => t.kind === 'user').forEach((t) => serviceCards(t.id).forEa
 for (const d of DEPLOYS) {
   const q = queue.find((x) => x.deployId === d.id);
   if (onlyQueue && !q?.rebuild) continue;
-  const spec = specOf(d.id); if (!spec) continue;
+  if (onlyArg && !d.id.includes(onlyArg)) continue;
+  const spec = portalSpec(d.id); if (!spec) continue;
   written.push(out(`landxi/proto/portal-${d.id}.html`, page({
     title: `${spec.name} · ${spec.region}`, tenant: ownerOf.get(d.id) || 'lx', svc: d.id,
     mod: 'portal-ui.js', skeleton: workspaceSkeleton(spec),
+    gl: spec.tabs.some((t) => t.blocks.includes('map')),          // 지도탭이 있으면 MapLibre 를 싣는다
   })));
 }
 
 // 3) 무엇을 찍었나 — 감사 기록
 const manifest = {
   at: new Date().toISOString().slice(0, 10),
-  mode: onlyQueue ? 'queue' : 'all',
+  mode: onlyQueue ? 'queue' : onlyArg ? `only:${onlyArg}` : 'all',
   files: written,
-  specs: DEPLOYS.map((d) => { const s = specOf(d.id); return s && { id: d.id, name: s.name, region: s.region, tabs: s.tabs.map((t) => ({ id: t.id, name: t.name, blocks: t.blocks })), applied: s.applied, pending: s.pending }; }).filter(Boolean),
+  specs: DEPLOYS.map((d) => { const s = portalSpec(d.id); return s && { id: d.id, name: s.name, region: s.region, tabs: s.tabs.map((t) => ({ id: t.id, name: t.name, blocks: t.blocks, band: t.band, grow: t.grow })), applied: s.applied, pending: s.pending }; }).filter(Boolean),
   loop: loopStats(), scale: studioScale(),
   brand: TENANTS.filter((t) => t.kind === 'user').map((t) => brandGuard(t.id)),
 };
 out('landxi/proto/portal-gen.json', JSON.stringify(manifest, null, 2) + '\n');
 
-console.log(`찍은 화면 ${written.length}장${onlyQueue ? ' (요구 반영분만)' : ''}`);
+console.log(`찍은 화면 ${written.length}장${onlyQueue ? ' (요구 반영분만)' : onlyArg ? ` (${onlyArg} 만)` : ''}`);
 written.forEach((f) => console.log('  ·', f));
 console.log('\n요구 고리:', JSON.stringify(loopStats(), null, 0));
 console.log('생산 규모:', JSON.stringify(studioScale(), null, 0));
