@@ -29,8 +29,11 @@ export const RATES = {
   keepEpochs: 4,                                                             // 보관 시점 수(원본)
 };
 
-/** 카드 주기 → 연간 실행 횟수. */
-const runsPerYear = (cycle = '') => (/수시/.test(cycle) ? 12 : /분기/.test(cycle) ? 4 : /반기/.test(cycle) ? 2 : /2회/.test(cycle) ? 2 : 1);
+/** 카드 주기 → 연간 실행 횟수.
+ *  ⚠ cards.js 의 `cycle` 은 아직 전부 null 이다(발주처 확인 전).
+ *  null 이면 **연 1회로 가정**하고 resourcesOf().assumedCycle 로 그 사실을 알린다 —
+ *  주기가 늘면 GPU 소요가 그 배수로 는다. 가정을 숨기면 용량 판단이 조용히 틀어진다. */
+const runsPerYear = (cycle) => (!cycle ? 1 : /수시/.test(cycle) ? 12 : /분기/.test(cycle) ? 4 : /반기/.test(cycle) ? 2 : /2회/.test(cycle) ? 2 : 1);
 
 /* 대상 범위 — **서비스마다 지역의 일부만 본다.** 지역 면적을 그대로 쓰면 자원이 부풀려진다.
  * 영농은 농경지, 도로는 노선 버퍼, 해양쓰레기는 해안 버퍼, 인파는 행사 구역,
@@ -61,6 +64,7 @@ export function resourcesOf(deployId) {
 
   return {
     deploy: d, card, profile: pf, area, regionArea: pf.area || null, runs,
+    assumedCycle: !card.cycle,                       // 주기 미정 → 연 1회 가정으로 계산했다
     storage: {
       raw: Math.round(rawGb * RATES.keepEpochs),                       // LX 보관(시점 누적)
       tile: Math.round(rawGb * RATES.tileRatio * RATES.keepEpochs),    // 기관에 공유하는 영상 이미지
@@ -90,6 +94,7 @@ export function infraSummary(filter = () => true) {
     gpuYear: sum(live, (r) => r.compute.perYear),
     gpuRetrain: sum(live, (r) => r.compute.retrain),
     trafficGbMonth: +live.reduce((a, r) => a + r.traffic.tileGbMonth, 0).toFixed(1),
+    assumedCycles: rows.filter((r) => r.assumedCycle).length,   // 몇 건이 '주기 미정 · 연 1회' 가정인가
     planned: { deploys: plan.length, storageTb: +(sum(plan, (r) => r.storage.total) / 1024).toFixed(1), gpuYear: sum(plan, (r) => r.compute.perYear) },
     rows,
   };

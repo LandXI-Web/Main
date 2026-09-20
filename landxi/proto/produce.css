@@ -54,6 +54,8 @@
 .lx .pd-note{ margin:14px 0 0; font-size:14px; color:var(--grey); }
 .lx .pd-note em{ font-style:normal; color:var(--teal); }
 .lx .pd-note b{ color:var(--ink); font-weight:500; }
+.lx .pd-note--warn{ color:var(--warn); padding-top:12px; border-top:1px solid var(--line); }
+.lx .pd-note--warn b{ color:var(--warn); }
 
 @media (max-width:900px){
   .lx .pd-cap-r{ grid-template-columns:104px 1fr; }

@@ -139,6 +139,8 @@ function infra() {
     <td class="n">${nf.format(r.compute.perYear)} h</td>
     <td><span class="st st--${r.deploy.status === '운영' ? 'teal' : r.deploy.status === '구축' ? 'acc' : 'dim'}">${esc(r.deploy.status)}</span></td></tr>`).join('')}
   </tbody></table>
+  ${inf.assumedCycles ? `<p class="pd-note pd-note--warn">배포본 ${inf.assumedCycles}건이 <b>주기 미정 · 연 1회 가정</b>으로 계산되어 있다 —
+  카드에 조사 주기가 정해지면 GPU 소요가 그 배수로 는다. 가정을 숨기지 않는다.</p>` : ''}
   <p class="pd-note">단가는 실측에서 뽑았다 — 정사영상 <b>${RATES.rawPerKm2.ortho} GB/km²</b>(남원 전역 1시점 2.1 TB ÷ 752 km²) ·
   타일은 원본의 <b>${(RATES.tileRatio * 100).toFixed(1)}%</b> · 추론 <b>${RATES.gpuHourPerKm2.ortho} GPU·h/km²</b>.
   원본은 <em>LX 보관</em>이고 기관에는 타일만 나간다.</p>`;
