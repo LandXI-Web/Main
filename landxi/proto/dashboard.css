@@ -289,3 +289,45 @@ a.k:hover .ks .dim{ color:var(--accent); }
   [data-line]>*{ transform:none; }
   .rk .bar i{ transform:scaleX(1)!important; }
 }
+
+/* ── 한 화면에 들어오게 (2026-09-20) ──────────────────────────────────────
+   발주자: "대시보드는 한 화면으로. 굳이 불필요하게 마우스 휠로 내려야 하나?"
+   1600×900 에서 170px 이 화면 밖에 있었다. 1920×1080 에서만 겨우 맞았는데,
+   실제 브라우저는 주소창·탭이 있어 그 해상도에서도 넘쳤다.
+   숫자 크기는 parts.css 의 `band--s`(42px)와 같은 급으로 내렸다 — 없는 규격을 만들지 않는다. */
+#b-kpi{ padding:10px 0 12px; }
+.k .kv{ margin-top:6px; height:44px; }
+.k .kv b{ font-size:42px; }
+.k .ks{ margin-top:6px; }
+
+.ap .ev{ height:104px; }
+.ap dl{ padding:6px 12px 0; row-gap:3px; }
+.ap .go{ padding:0 12px 6px; }
+
+#b-admin{ padding:6px 0 6px; }
+.tiles .ad .th{ height:26px; }
+.tiles .ad .tb{ padding:8px 12px 0; }
+.tiles .ad .tb b{ font-size:26px; }
+.tiles .ad .ts{ padding:4px 12px 8px; }
+
+#b1-row{ padding-bottom:2px; }
+
+/* 계속 — 지도 판과 아래 두 구역을 조금 더 줄인다. 남은 103px 을 여기서 뺀다. */
+:root{ --ph:210px; }
+#split{ padding:14px 0 6px; }
+#panel{ margin-top:22px; }
+.ap .ev{ height:86px; }
+.tiles .ad .tb b{ font-size:24px; }
+.tiles .ad .ts{ padding:3px 12px 7px; }
+#b-approve{ padding-bottom:4px; }
+
+/* 마지막 39px */
+#main{ padding-bottom:0; }
+#b-kpi{ padding:8px 0 8px; }
+#split{ padding:10px 0 4px; }
+#panel{ margin-top:16px; }
+.ap .ev{ height:74px; }
+.tiles .ad .th{ height:24px; }
+
+/* 남은 17px — 지도 판 높이에서 뺀다 */
+:root{ --ph:192px; }

@@ -21,12 +21,12 @@
   <div class="lx-grid lx-masthead__in">
     <a class="lx-masthead__mark" href="#top">LAND-XI</a>
     <nav class="lx-masthead__nav" aria-label="주요">
-      <a class="lx-nav lx-link" href="../system.html">체계</a>
-      <a class="lx-nav lx-link" href="../dashboard.html">리포트</a>
-      <a class="lx-nav lx-link" href="../workflow.html">워크플로우</a>
+      <a class="lx-nav lx-link" href="../notice.html">서비스 지원</a>
+      <a class="lx-nav lx-link" href="../usecase.html">활용 사례</a>
     </nav>
     <div class="lx-masthead__meta">
-      <span class="lx-live"><i></i>LIVE</span>
+      <em class="sb-demo">시연</em>
+      <a class="sb-signin" href="../login.html">로그인</a>
     </div>
   </div>
 </header>
@@ -281,29 +281,14 @@
     -->
   </div>
 
-  <!-- ── 계기판 — 엔진은 --sc-seg / --sc-segp 만 준다. 다이얼·항로는 전부 이 페이지 코드다. ── -->
-  <aside class="sb-inst" id="sb-legend" aria-label="비행 계기">
-    <div class="sb-dial" aria-hidden="true">
-      <svg viewBox="0 0 120 120" class="sb-dial__svg">
-        <circle class="sb-dial__rim" cx="60" cy="60" r="55"></circle>
-        <circle class="sb-dial__rim sb-dial__rim--in" cx="60" cy="60" r="43"></circle>
-        <g class="sb-dial__disc" id="sb-disc">
-          <g id="sb-pips"></g>
-        </g>
-        <line class="sb-dial__needle" x1="60" y1="10" x2="60" y2="26"></line>
-      </svg>
-      <span class="sb-dial__hub">LX</span>
-    </div>
-    <dl class="sb-read">
-      <div><dt>방위</dt><dd class="lx-num" id="sb-bearing">—</dd></div>
-      <div><dt>고도</dt><dd class="lx-num" id="sb-alt">—</dd></div>
-      <div><dt>지상분해능</dt><dd class="lx-num" id="sb-gsd">—</dd></div>
-      <div><dt>좌표</dt><dd class="lx-num" id="sb-coord">—</dd></div>
-    </dl>
-  </aside>
+  <!-- 계기판(방위·고도·지상분해능·좌표)은 2026-09-20 에 걷어냈다.
+       그 값들은 manifest.legs[].startCamera/endCamera — **AI 영상 생성용으로 잡은 가상 카메라**이지
+       측정값이 아니었다. 계기 모양으로 보여 주면 실측처럼 읽힌다(콘티 원칙).
+       같은 판단을 dive 프로토타입에서는 이미 내렸다(2026-08-25-dive-proto-report.md: `LIVE` 램프 삭제).
+       남기는 것은 항로 하나 — 지금 필름이 어디를 지나는가는 진짜 정보다. -->
 
   <!-- ── 항로 — 7개 지점(궤도 · 성층운 · 한반도 · 남원 · 여수 · 울주 · 국토). 현재 지점은 액센트 사각 마커로만 표시한다(색 변경 금지). ── -->
-  <nav class="sb-route" aria-label="항로">
+  <nav class="sb-route" id="sb-legend" aria-label="항로">
     <ol id="sb-route-list"></ol>
   </nav>
 

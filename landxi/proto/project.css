@@ -278,3 +278,58 @@ body.lx[data-lab] #foot{ display:none; }
 .lx .pj-kpi{ grid-template-columns:repeat(2,1fr); row-gap:16px; }
 .lx .pj-steps5, .lx .pj-thumbs{ grid-template-columns:repeat(4,1fr); row-gap:14px; }
 }
+
+/* ── 프로젝트 만들기 — 세 단계 한 화면 (2026-09-20 개편) ─────────────────
+   이름 → 무엇을 찾을 것인가 → 영상(선택). 유형은 고르면 실제 판독 결과가 덮인다. */
+.lx .cr-step{ padding:0 0 15px; }
+.lx .cr-step--last{ padding-bottom:4px; }
+.lx .cr-h{ display:flex; align-items:baseline; gap:12px; margin:0 0 10px; padding-bottom:8px;
+  border-bottom:1px solid var(--line); font-family:var(--disp); font-weight:700; font-size:19px; letter-spacing:-.02em; }
+.lx .cr-h span{ font-family:var(--body); font-weight:400; font-size:14px; color:var(--grey); letter-spacing:-.01em; }
+.lx .cr-h .cr-opt{ color:var(--accent); }
+.lx .cr-n{ font-family:var(--num); font-weight:700; font-size:14px; letter-spacing:.06em; color:var(--grey-3); }
+.lx .cr-name{ height:46px; font-size:19px; font-weight:500; }
+/* 글자 수는 제목 줄 오른쪽으로 — 입력칸 위에 빈 줄을 만들지 않는다 */
+.lx .cr-step .field-h{ position:absolute; right:0; top:2px; margin:0; }
+.lx .cr-step .field{ position:relative; margin:0; }
+
+/* 탐지 유형 — 화면 한가운데, 크게 */
+.lx .cr-kinds{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.lx .cr-kind{ display:block; cursor:pointer; position:relative; border:1px solid var(--line);
+  transition:border-color var(--hov) var(--hove), transform var(--hov) var(--hove); }
+.lx .cr-kind:hover{ transform:translateY(-2px); border-color:var(--grey); }
+.lx .cr-kind input{ position:absolute; opacity:0; width:0; height:0; }
+.lx .cr-kind:has(input:checked){ border-color:var(--accent); border-width:2px; }
+.lx .cr-kind:has(input:focus-visible){ outline:2px solid var(--accent); outline-offset:2px; }
+
+.lx .cr-shot{ position:relative; display:block; aspect-ratio:16/7.4; overflow:hidden; background:var(--t1); }
+.lx .cr-shot img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+/* 원본 위로 판독 결과가 덮인다 — 고르면 왼쪽부터 닦이듯 나타난다 */
+.lx .cr-shot-b{ clip-path:inset(0 100% 0 0); transition:clip-path 520ms var(--ease); }
+.lx .cr-kind:hover .cr-shot-b{ clip-path:inset(0 55% 0 0); }
+.lx .cr-kind:has(input:checked) .cr-shot-b{ clip-path:inset(0 0 0 0); }
+.lx .cr-shot-tag{ position:absolute; left:10px; top:10px; z-index:2; height:22px; line-height:20px; padding:0 8px;
+  background:rgba(255,255,255,.94); border:1px solid var(--line); font-size:14px; color:var(--grey); }
+.lx .cr-kind:has(input:checked) .cr-shot-tag{ border-color:var(--accent); color:var(--accent); }
+
+.lx .cr-kind-b{ display:block; padding:12px 15px 13px; }
+.lx .cr-kind-b > b{ display:flex; align-items:baseline; gap:9px; font-family:var(--disp); font-weight:700; font-size:20px; letter-spacing:-.02em; }
+.lx .cr-kind-b > b em{ font-family:var(--num); font-style:normal; font-weight:400; font-size:14px; letter-spacing:.02em; color:var(--grey); }
+.lx .cr-what{ display:block; margin-top:7px; font-size:15.5px; }
+.lx .cr-what b{ font-weight:500; color:var(--accent); }
+.lx .cr-when{ display:block; margin-top:4px; font-size:14px; color:var(--grey); }
+.lx .cr-proof{ display:block; margin-top:9px; padding-top:8px; border-top:1px solid var(--line); font-size:14px; color:var(--grey); }
+.lx .cr-proof b{ color:var(--ink); font-weight:700; }
+
+/* 영상 — 선택이라는 것이 보이게 */
+.lx .cr-src{ display:flex; align-items:center; gap:14px; padding:12px 16px; background:var(--t1); }
+.lx .cr-thumbs{ display:inline-flex; gap:5px; flex:none; }
+.lx .cr-thumbs img{ width:52px; height:30px; object-fit:cover; display:block; }
+.lx .cr-src-t b{ display:block; font-weight:500; font-size:15.5px; }
+.lx .cr-src-t .mic{ display:block; }
+
+.lx .cr-more summary{ cursor:pointer; font-weight:500; display:flex; align-items:baseline; gap:10px; }
+.lx .cr-more summary .mic{ font-weight:400; }
+.lx .cr-more summary::marker{ color:var(--grey); }
+
+@media (max-width:1180px){ .lx .cr-kinds{ grid-template-columns:1fr; } }
