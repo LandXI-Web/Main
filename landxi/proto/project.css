@@ -387,3 +387,26 @@ body.lx[data-lab] #foot{ display:none; }
   .lx .split-r[aria-label="프로젝트 조회"] .panel-t{ font-size:18px; }
   .lx .split-r[aria-label="프로젝트 조회"] .panel-b{ padding-top:10px; }
 }
+
+/* 만들기 화면도 짧은 모니터에서 한 화면에 (2026-09-20)
+   900px 에만 맞춰 놓아 745px 에서 203px 넘쳤다. 세 단계를 다 보여야 처음 쓰는 사람이
+   무엇을 정하는 화면인지 안다 — 단계를 접지 않고 그림과 여백에서 뺀다. */
+@media (max-height:860px){
+  .lx .cr-step{ padding-bottom:10px; }
+  .lx .cr-h{ margin-bottom:8px; padding-bottom:6px; font-size:18px; }
+  .lx .cr-name{ height:42px; font-size:18px; }
+  /* 비율로 주면 화면이 **넓을수록** 그림이 커져 짧은 화면에서 더 넘친다
+     (1996×745 가 1280×720 보다 더 넘쳤다). 높이를 직접 준다. */
+  .lx .cr-shot{ aspect-ratio:auto; height:clamp(96px, 15vh, 190px); }
+  .lx .cr-kinds{ gap:14px; }
+  .lx .cr-kind-b{ padding:10px 14px 11px; }
+  .lx .cr-kind-b > b{ font-size:18px; }
+  .lx .cr-what{ margin-top:5px; }
+  .lx .cr-proof{ margin-top:7px; padding-top:6px; }
+  .lx .cr-src{ padding:10px 14px; }
+}
+@media (max-height:760px){
+  .lx .cr-shot{ height:clamp(84px, 13vh, 150px); }
+  .lx .cr-step{ padding-bottom:7px; }
+  .lx .cr-kind-b{ padding:8px 13px 9px; }
+}

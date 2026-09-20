@@ -123,7 +123,16 @@ for (const [id, name] of list) {
       if (/삭제|제거|로그아웃|발급|저장|초기화/.test(label)) continue;   // 파괴적·상태 변경은 누르지 않는다
       // 서식 도구(execCommand)는 **선택 영역이 있어야** 듣는다. 빈 편집기에서 눌러 놓고
       // 죽었다고 하면 안 된다. 파일 고르기는 브라우저 창을 열어 DOM 이 안 바뀐다.
-      const skip = await b.evaluate((e) => !!e.closest('.rte-bar') || /파일 추가|첨부/.test(e.textContent || '')).catch(() => false);
+      /* 검색·적용처럼 **입력값을 읽는** 버튼은 빈 칸으로 누르면 아무 일도 안 나는 게 맞다.
+         같은 줄의 입력칸이 비어 있으면 건너뛴다(프로젝트 목록 `검색` 이 이렇게 오탐이었다 —
+         실제로는 "비닐" 을 넣고 누르면 8건 → 1건으로 줄고 URL 에 q= 가 붙는다). */
+      const skip = await b.evaluate((e) => {
+        if (e.closest('.rte-bar') || /파일 추가|첨부/.test(e.textContent || '')) return true;
+        if (!/검색|적용|찾기|조회/.test(e.textContent || '')) return false;
+        const box = e.closest('form, .pj-bar, .bar, header, div') || document;
+        return [...box.querySelectorAll('input[type="text"], input:not([type]), input[type="search"]')]
+          .every((i) => !i.value.trim());
+      }).catch(() => false);
       if (skip) continue;
       const on = await b.evaluate((e) => e.getAttribute('aria-selected') === 'true'
         || e.getAttribute('aria-pressed') === 'true' || e.hasAttribute('aria-current')).catch(() => false);
