@@ -10,12 +10,12 @@
 //     방문/저장소 차트·전국 커버리지)은 원형 목업(dashboard.js)을 **시연 데이터**로
 //     그대로 두고 원장(ledger) 행으로 흡수한다.
 // 시뮬레이션에는 `모의 실행`, 원형 목업 유래 수치에는 `시연`/`추정` 꼬리표를 단다.
-import { DASH } from '../assets/data/dashboard.js';
-import { RESULTS } from '../assets/data/results.js';
-import { MODELS } from '../assets/data/models.js';
-import { IMAGERY } from '../assets/data/imagery.js';
-import { CHANGE } from '../assets/data/change.js';
-import { SERVICES } from '../assets/data/services.js';
+import { DASH } from '../../assets/data/dashboard.js';
+import { RESULTS } from '../../assets/data/results.js';
+import { MODELS } from '../../assets/data/models.js';
+import { IMAGERY } from '../../assets/data/imagery.js';
+import { CHANGE } from '../../assets/data/change.js';
+import { SERVICES } from '../../assets/data/services.js';
 
 export const nf = new Intl.NumberFormat('ko-KR');
 const DAY = 86400000;
@@ -106,7 +106,7 @@ export const NAV_MY = [
 
 /* B3. 공지 스트립 — 원본은 SP_NOTICES 를 고정 우선·날짜 역순으로 정렬해 첫 건을 쓴다.
    그 첫 건이 dashboard.js 의 notice 와 같다(id 8, 2026-04-15, urgent). */
-export const NOTICE = { ...DASH.notice, id: 8, more: '../notice.html' };
+export const NOTICE = { ...DASH.notice, id: 8, more: '../../notice.html' };
 
 /* B13. 카드 발행 승인 대기 — 원본 CARD_APPROVALS 2건. 요청자·요청시각까지 원본 값.
    행 클릭은 원본의 `admin-publish.html?open=<id>` 자리다(우리는 지도 핀으로 간다). */
@@ -302,7 +302,7 @@ export function baseFootprints() {
 
 /** 제주 불법건축물 — 결과 대장에 없고 GeoJSON 으로만 있다. bbox 는 파일에서 센다.
     발행 카드 8건과의 매핑이 데이터에 없으므로 `추정` 태그를 단다(브리프 (c)). */
-export const JEJU_URL = '../assets/data/geo/jeju-illegal.geojson';
+export const JEJU_URL = '../../assets/data/geo/jeju-illegal.geojson';
 export function jejuFootprint(geo) {
   const bbox = geoBBox(geo);
   if (!bbox) return null;

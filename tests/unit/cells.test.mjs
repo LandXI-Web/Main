@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
-const M = await import(pathToFileURL('landxi/proto/db-data.js').href);
+const M = await import(pathToFileURL('landxi/proto/dashboard-128/db-data.js').href);
 const JEJU = JSON.parse(fs.readFileSync('landxi/assets/data/geo/jeju-illegal.geojson', 'utf8'));
 
 const FPS = (() => {

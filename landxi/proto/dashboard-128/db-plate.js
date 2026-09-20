@@ -5,7 +5,7 @@
 // 판은 위젯이 아니라 B9 백본이 만드는 것의 **증거 자리**다(§12.1 #4).
 // 그래서 탐색하지 않는다 — interactive:false, 휠·드래그 없음. 셀 호버와 클릭(→ XI맵)만 산다.
 // 셀 등급은 손 값이 아니라 db-data.js 의 bbox ∩ 셀 집계다.
-import { EOX } from './js/sources.js';
+import { EOX } from '../js/sources.js';
 import {
   CELL, GRID, PLATE_BOUNDS, cellsFor, gradeOf, legendFor, calloutFor, cellBBox, loadFootprints,
 } from './db-data.js';
