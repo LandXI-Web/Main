@@ -38,27 +38,29 @@ export const LAYERS = [
   { id: 'L1', name: '고정 · Geo-AI 생산', who: 'LX', kind: '고정',
     what: '영상 수집 → 라벨링 → 학습 → 판독 → 결과 품질',
     rule: '기관 요구로 늘리지 않는다 — 판독이 흔들리면 정체성이 흔들린다',
-    data: ['cards.js'], screen: ['dataset.html', 'ai-project.html', 'admin-publish.html'] },
+    data: ['cards.js'], screen: ['데이터 관리', '프로젝트', '카드 발행 관리'] },
 
   { id: 'L2', name: '표준 · 산출 계약', who: 'LX', kind: '고정',
     what: '판독이 무엇을 내놓는지 한 벌로 못 박는다',
     rule: '**LX 가 소유한다.** 공급자가 바뀌어도 이 계약은 남는다 — 고리의 가운데',
-    data: ['matching.js · GIVES', 'sim.js · DRIFT_SCHEMA'], screen: ['produce.html?tab=match'] },
+    data: ['matching.js · GIVES', 'sim.js · DRIFT_SCHEMA'], screen: [],
+    screenGap: '표준을 보는 화면이 아직 없다 — 생산 관리에 자리를 내야 한다' },
 
   { id: 'L3', name: '매칭 · 접점', who: 'LX가 계산', kind: '가변',
     what: '이 산출이 어느 업무·어느 모델에 붙는지 대조해 알려준다',
     rule: '손으로 적지 않는다 — gives 와 wants 를 맞춰 후보를 세운다',
-    data: ['matching.js · TASKS', 'sim.js · SIMS'], screen: ['produce.html?tab=match'] },
+    data: ['matching.js · TASKS', 'sim.js · SIMS'], screen: [],
+    screenGap: '접점 목록을 보는 화면이 아직 없다 — 계산은 matchPoints() 로 이미 돈다' },
 
   { id: 'L4', name: '생성 · 화면', who: 'LX', kind: '가변',
     what: '접점 하나 = 화면 선언 한 줄 → 생성기가 찍는다',
     rule: '**화면은 발주하지 않는다.** 요구가 늘면 선언이 늘 뿐 화면 코드는 그대로다',
-    data: ['studio.js', 'views.js'], screen: ['produce.html?tab=studio', 'tools/gen/portal-gen.mjs'] },
+    data: ['studio.js', 'views.js'], screen: ['생산 관리 · 화면 요구'] },
 
   { id: 'L5', name: '전달 · 기관 포털', who: '기관이 쓴다', kind: '고정 틀 + 가변 CI',
     what: '로그인 → 서비스 카드 → 작업공간(현황·결과·지도·통계·보고서)',
     rule: '골격 8부위는 LX 한 벌 · 기관은 CI 한 벌만 — 개선은 한 번에 전부로',
-    data: ['portal.js', 'brand.js'], screen: ['portal.html'] },
+    data: ['portal.js', 'brand.js'], screen: ['지자체 포털'] },
 ];
 
 /** 층 사이의 계약 — 뼈대가 실제로 버티는 자리. 여기가 깨지면 전부 흔들린다. */
