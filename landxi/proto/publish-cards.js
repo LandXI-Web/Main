@@ -1,7 +1,7 @@
 /* 카드 발행 — 발행된 AI 분석 카드 목록 (원본 landxi7/ai-card.html · 원판 B6-Publish-Cards · Cards-Empty).
    검색어(전체 · 카드 이름 · 프로젝트) + 공개 여부 · 초기화/검색 · 카드 발행 · 카드 8 · 페이지네이터(15/30/90) · 빈 상태.
    URL 이 상태다: ?field=name|project · ?q= · ?public=public|private · ?page= · ?size= */
-import { mountShell, mountPager, icon, esc, $ } from './shell.js';
+import { mountShell, mountPager, say, icon, esc, $ } from './shell.js';
 import * as D from './publish-data.js';
 import { fig } from './publish-ui.js';
 
@@ -54,7 +54,17 @@ function render() {
   $('#cd-live').textContent = `발행 카드 ${list.length}건`;
 }
 
-$('#cd-tool').addEventListener('submit', (e) => { e.preventDefault(); go({ field: $('#cd-field').value, q: $('#cd-q').value.trim(), pub: $('#cd-pub').value, page: 1 }); });
+/* 검색 — 점검기(tools/proto/audit.mjs)가 `검색`을 "눌러도 반응 없음"으로 잡았다.
+   코드를 확인해 보니 죽은 것이 아니라, 조건이 비어 있을 때 결과가 그대로여서
+   화면이 안 바뀐 것이었다(검색어 `농지` → 8장 → 1장으로 제대로 걸러진다).
+   그래도 사용자 입장에서는 눌렀는데 아무 말이 없는 셈이라, 몇 건이 걸렸는지
+   한 줄로 알린다. 조건이 있으면 무엇으로 걸렀는지도 함께 말한다. */
+$('#cd-tool').addEventListener('submit', (e) => {
+  e.preventDefault();
+  go({ field: $('#cd-field').value, q: $('#cd-q').value.trim(), pub: $('#cd-pub').value, page: 1 });
+  const cond = [S.q ? `“${S.q}”` : '', S.pub === 'all' ? '' : S.pub === 'public' ? '공개' : '비공개'].filter(Boolean).join(' · ');
+  say(`${cond ? cond + ' — ' : ''}발행 카드 ${filtered().length}건`);
+});
 $('#cd-tool').addEventListener('reset', (e) => { e.preventDefault(); go({ field: 'all', q: '', pub: 'all', page: 1 }); $('#cd-q').focus(); });
 addEventListener('popstate', () => { read(); render(); });
 read(); render();
