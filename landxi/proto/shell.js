@@ -19,6 +19,7 @@ export const NAV = [
   { key: 'map', name: '지도 서비스', href: 'ximap.html', icon: 'map', group: 'top' },
   { key: 'support', name: '서비스 지원', href: 'notice.html', icon: 'help', group: 'foot' },
   { key: 'publish', name: '카드 발행 관리', href: 'admin-publish.html', icon: 'stack', group: 'foot' },
+  { key: 'produce', name: '생산 관리', href: 'produce.html', icon: 'run', group: 'foot' },
   { key: 'admin', name: '서비스 관리', href: 'admin-notice.html', icon: 'gear', group: 'foot' },
   { key: 'my', name: 'MY', href: 'mypage.html', icon: 'my', group: 'foot' },
 ];

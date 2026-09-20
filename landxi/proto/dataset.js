@@ -43,6 +43,7 @@ const NAV = [
 const NAV_FOOT = [
   { menu: 'support', name: '서비스 지원', href: 'notice.html', icon: 'help' },
   { menu: 'publish-admin', name: '카드 발행 관리', href: 'admin-publish.html', icon: 'stack' },
+  { menu: 'produce', name: '생산 관리', href: 'produce.html', icon: 'run' },
   { menu: 'admin', name: '서비스 관리', href: 'admin-notice.html', icon: 'gear' },
 ];
 const ICON = {

@@ -1,0 +1,61 @@
+/* 생산 관리 — LX 운영자 화면. 능동 운영 · 인프라 · 포털 생산 · 화면 요구.
+   법전 design/system.md: 라운드 0 · 그림자 0 · 그라디언트 0 · 유리 0 · 바닥 14px. */
+
+.lx .pd-sec{ padding:4px 0 34px; }
+.lx .pd-h{ display:flex; align-items:baseline; gap:12px; margin:26px 0 14px; padding-bottom:10px; border-bottom:1px solid var(--ink);
+  font-family:var(--disp); font-weight:700; font-size:19px; letter-spacing:-.02em; }
+.lx .pd-h span{ font-family:var(--body); font-weight:400; font-size:14px; color:var(--grey); letter-spacing:-.01em; }
+.lx .pd-h .sp{ flex:1; }
+
+/* 용량 막대 — 지금 얼마를 쓰고, 예정 사업까지 넣으면 어디까지 가나 */
+.lx .pd-cap{ display:grid; gap:0; border-top:1px solid var(--line); }
+.lx .pd-cap-r{ display:grid; grid-template-columns:132px 1fr 190px; align-items:center; gap:18px;
+  padding:16px 0; border-bottom:1px solid var(--line); }
+.lx .pd-cap-n{ font-weight:500; }
+.lx .pd-cap-n em{ display:block; font-style:normal; font-size:14px; font-weight:400; color:var(--grey); }
+.lx .pd-track{ position:relative; height:16px; background:var(--t1); }
+.lx .pd-fill{ position:absolute; inset:0 auto 0 0; background:var(--accent); }
+.lx .pd-after{ position:absolute; top:0; bottom:0; border-right:2px solid var(--ink); }
+.lx .pd-after::after{ content:attr(data-l); position:absolute; left:6px; top:-2px; font-size:14px; color:var(--ink); white-space:nowrap; }
+.lx .pd-cap--warn .pd-fill{ background:var(--warn); }
+.lx .pd-cap-v{ font-family:var(--num); font-size:15px; font-variant-numeric:tabular-nums; text-align:right; color:var(--grey); }
+.lx .pd-cap-v b{ color:var(--ink); font-weight:700; font-size:17px; }
+
+/* 표 — parts.css .tb 위에 얹는 폭 규칙만 */
+.lx.pd table.tb{ width:100%; table-layout:auto; }
+.lx.pd table.tb th,.lx.pd table.tb td{ text-align:left; }
+.lx.pd table.tb td.n,.lx.pd table.tb th.r{ text-align:right; font-variant-numeric:tabular-nums; }
+.lx .pd-lv{ font-weight:500; white-space:nowrap; }
+.lx .pd-lv[data-l="high"]{ color:var(--warn); }
+.lx .pd-lv[data-l="mid"]{ color:var(--accent); }
+.lx .pd-lv[data-l="ok"]{ color:var(--grey); font-weight:400; }
+
+/* CI 한 벌 — 기관이 내는 것만 보여준다 */
+.lx .pd-ci{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:0; border-top:1px solid var(--line); }
+.lx .pd-ci-c{ padding:20px 22px 18px; border-bottom:1px solid var(--line); border-right:1px solid var(--line); }
+.lx .pd-ci-m{ display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+  width:56px; height:56px; border:1px solid var(--line); font-family:var(--disp); font-weight:700; line-height:1.2; }
+.lx .pd-ci-m span:first-child{ font-size:13px; letter-spacing:.1em; margin-right:-.1em; }
+.lx .pd-ci-m span:last-child{ font-size:15px; letter-spacing:.1em; margin-right:-.1em; }
+.lx .pd-ci-n{ display:block; margin-top:14px; font-weight:500; }
+.lx .pd-ci-l{ margin:12px 0 0; display:grid; grid-template-columns:auto 1fr; gap:5px 14px; font-size:14px; }
+.lx .pd-ci-l dt{ color:var(--grey); }
+.lx .pd-ci-l dd{ margin:0; }
+.lx .pd-sw{ display:inline-block; width:12px; height:12px; margin-right:7px; vertical-align:-1px; }
+
+/* 절차 6단계 — 자동 몇, 수동 몇 */
+.lx .pd-steps{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:0; border-top:1px solid var(--line); }
+.lx .pd-step{ padding:16px 18px 18px; border-bottom:1px solid var(--line); border-right:1px solid var(--line); }
+.lx .pd-step b{ display:block; font-family:var(--num); font-size:14px; color:var(--grey); letter-spacing:.06em; }
+.lx .pd-step strong{ display:block; margin-top:7px; font-weight:500; }
+.lx .pd-step p{ margin:8px 0 0; font-size:14px; line-height:1.55; color:var(--grey); }
+.lx .pd-step[data-by="수동"]{ background:var(--t1); }
+
+.lx .pd-note{ margin:14px 0 0; font-size:14px; color:var(--grey); }
+.lx .pd-note em{ font-style:normal; color:var(--teal); }
+.lx .pd-note b{ color:var(--ink); font-weight:500; }
+
+@media (max-width:900px){
+  .lx .pd-cap-r{ grid-template-columns:104px 1fr; }
+  .lx .pd-cap-v{ grid-column:2; text-align:left; }
+}

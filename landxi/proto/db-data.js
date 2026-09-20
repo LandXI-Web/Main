@@ -98,6 +98,7 @@ export const NAV = [
 export const NAV_FOOT = [
   { menu: 'support', name: '서비스 지원', href: 'notice.html', icon: 'help', to: 'b-notice' },
   { menu: 'publish-admin', name: '카드 발행 관리', href: 'admin-publish.html', icon: 'stack', to: 'b-approve' },
+  { menu: 'produce', name: '생산 관리', href: 'produce.html', icon: 'run' },
   { menu: 'admin', name: '서비스 관리', href: 'admin-notice.html', icon: 'gear', to: 'ad-rows' },
 ];
 /** MY 플라이아웃 — 원본과 항목·동작이 같다(로그아웃은 lx_logged_in 삭제 후 home). */

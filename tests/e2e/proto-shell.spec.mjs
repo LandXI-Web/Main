@@ -45,13 +45,13 @@ test.describe('관문', () => {
 });
 
 test.describe('레일', () => {
-  test('원본 9메뉴 · 원본 순서 · 전부 진짜 링크 + 로그아웃', async ({ page }) => {
+  test('원본 10메뉴 · 원본 순서 · 전부 진짜 링크 + 로그아웃', async ({ page }) => {
     const errs = watch(page);
     await boot(page);
     const items = await page.locator('#rail a.rail-i').evaluateAll((a) => a.map((e) => [e.innerText.replace(/\s+/g, ' ').trim(), e.getAttribute('href')]));
     expect(items).toEqual([
       ['대시보드', 'dashboard.html'], ['데이터 관리', 'dataset.html'], ['프로젝트', 'ai-project.html'], ['분석 서비스', 'analysis-ai.html'], ['지도 서비스', 'ximap.html'],
-      ['서비스 지원', 'notice.html'], ['카드 발행 관리', 'admin-publish.html'], ['서비스 관리', 'admin-notice.html'], ['MY', 'mypage.html'],
+      ['서비스 지원', 'notice.html'], ['카드 발행 관리', 'admin-publish.html'], ['생산 관리', 'produce.html'], ['서비스 관리', 'admin-notice.html'], ['MY', 'mypage.html'],
     ]);
     await expect(page.locator('#rail button.rail-i')).toHaveText('로그아웃');
     expect(errs).toEqual([]);
@@ -70,7 +70,7 @@ test.describe('레일', () => {
     await page.locator('#rail a[data-menu="map"]').click();                // 아직 자리 화면인 메뉴(2026-09-20: 서비스 관리는 구현됨)
     await page.waitForURL(/ximap\.html/);
     await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
-    await expect(page.locator('#rail a.rail-i')).toHaveCount(9);
+    await expect(page.locator('#rail a.rail-i')).toHaveCount(10);
     await expect(page.locator('#rail .rail-i[aria-current="page"]')).toHaveAttribute('data-menu', 'map');
     await expect(page.locator('#im')).toBeVisible();                     // 원판 뷰어는 그대로
     await expect(page.locator('.wm')).toHaveText('원판 · 구현 전');

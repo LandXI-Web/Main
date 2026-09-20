@@ -56,7 +56,7 @@ test('레일 · 마스트헤드 — 대시보드와 같은 공지 + 기준일, �
   const errs = watch(page);
   await boot(page);
   expect(await page.locator('#rail .rail-i .rl').allInnerTexts()).toEqual([
-    '대시보드', '데이터 관리', '프로젝트', '분석 서비스', '지도 서비스', '서비스 지원', '카드 발행 관리', '서비스 관리', 'MY', '로그아웃']);
+    '대시보드', '데이터 관리', '프로젝트', '분석 서비스', '지도 서비스', '서비스 지원', '카드 발행 관리', '생산 관리', '서비스 관리', 'MY', '로그아웃']);
   await expect(page.locator('.rail-i[data-menu="media"]')).toHaveAttribute('aria-current', 'page');
   await expect(page.locator('#mast .chip')).toHaveText('공지');
   await expect(page.locator('#notice-t')).toHaveText('고위험 탐지 건 긴급 처리 안내');
