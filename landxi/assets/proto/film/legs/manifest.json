@@ -1078,17 +1078,21 @@
       "12"
     ],
     "legCount": 14,
+    "finale": {
+      "src": "/landxi/assets/proto/film/legs/finale.mp4",
+      "seconds": 9.083333
+    },
     "size": [
       1920,
       1080
     ],
     "fps": 24,
-    "frames": 1479,
-    "seconds": 61.625,
-    "legSecondsSum": 71.162,
+    "frames": 1679,
+    "seconds": 69.958,
+    "legSecondsSum": 80.245,
     "xfadeSeconds": 0.734,
-    "bytes": 43754810,
-    "encode": "xfade=fade:0.734s × 13 · scale/crop 1920×1080 · libx264 high crf 25 -g 8 -keyint_min 8 -sc_threshold 0 +faststart -an",
-    "note": "레그 사이를 0.734s 씩 xfade(fade) 로 겹쳤다(스크럽 씸 밴드 0.16vh ÷ 0.218 vh/s). 하드컷보다 9.54s 짧다."
+    "bytes": 44888196,
+    "encode": "xfade=fade:0.734s × 14 · scale/crop 1920×1080 · libx264 high crf 25 -g 8 -keyint_min 8 -sc_threshold 0 +faststart -an",
+    "note": "레그 사이를 0.734s 씩 xfade(fade) 로 겹쳤다(스크럽 씸 밴드 0.16vh ÷ 0.218 vh/s). 하드컷보다 10.28s 짧다."
   }
 }

@@ -24,6 +24,11 @@ const probe = a => execFileSync(FFPROBE, a, { encoding: 'utf8' }).trim();
 
 const files = M.legs.map(L => path.join(OUT, `w${L.id}.mp4`));
 const durs = M.legs.map(L => L.seconds);
+// 브랜드 마감(2026-09-20 발주자: "줌아웃 영상 끝에 이어서 붙여야지") — 페이지 연출(scrub/ending.js)을 사이트 UI 없이 녹화한
+// legs/finale.mp4 가 있으면 마지막 레그 뒤에 같은 xfade 로 잇는다. 스크럽 페이지는 이 클립을 쓰지 않는다(연출은 코드).
+const FINALE = path.join(OUT, 'finale.mp4');
+const hasFinale = fs.existsSync(FINALE);
+if (hasFinale) { files.push(FINALE); durs.push(+probe(['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', FINALE])); }
 const inputs = files.flatMap(f => ['-i', f]);
 const n = files.length;
 const chain = [];
@@ -37,7 +42,7 @@ if (XF > 0 && n > 1) {
     prev = out;
   }
 } else {
-  chain.push(M.legs.map((_, i) => `[v${i}]`).join('') + `concat=n=${n}:v=1:a=0[vout]`);
+  chain.push(files.map((_, i) => `[v${i}]`).join('') + `concat=n=${n}:v=1:a=0[vout]`);
 }
 const mp4 = path.join(OUT, 'full.mp4');
 const webp = path.join(OUT, 'full.webp');
@@ -50,7 +55,7 @@ const [wStr, hStr, durStr, nb] = probe(['-v', 'error', '-select_streams', 'v:0',
   '-show_entries', 'stream=width,height,duration,nb_frames', '-of', 'csv=p=0', mp4]).split(',');
 const full = {
   src: '/landxi/assets/proto/film/legs/full.mp4', poster: '/landxi/assets/proto/film/legs/full.webp',
-  legs: M.legs.map(L => L.id), legCount: n, size: [+wStr, +hStr], fps: 24, frames: +nb,
+  legs: M.legs.map(L => L.id), legCount: M.legs.length, finale: hasFinale ? { src: '/landxi/assets/proto/film/legs/finale.mp4', seconds: durs[durs.length - 1] } : null, size: [+wStr, +hStr], fps: 24, frames: +nb,
   seconds: +(+durStr).toFixed(3), legSecondsSum: +durs.reduce((s, d) => s + d, 0).toFixed(3),
   xfadeSeconds: XF, bytes: fs.statSync(mp4).size,
   encode: `xfade=fade:${XF}s × ${n - 1} · scale/crop 1920×1080 · libx264 high crf ${process.env.CRF || '25'} -g 8 -keyint_min 8 -sc_threshold 0 +faststart -an`,
