@@ -35,8 +35,8 @@
 .lx .pd-ci-c{ padding:20px 22px 18px; border-bottom:1px solid var(--line); border-right:1px solid var(--line); }
 .lx .pd-ci-m{ display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
   width:56px; height:56px; border:1px solid var(--line); font-family:var(--disp); font-weight:700; line-height:1.2; }
-.lx .pd-ci-m span:first-child{ font-size:13px; letter-spacing:.1em; margin-right:-.1em; }
-.lx .pd-ci-m span:last-child{ font-size:15px; letter-spacing:.1em; margin-right:-.1em; }
+.lx .pd-ci-m span:first-child{ font-size:14px; letter-spacing:.1em; margin-right:-.1em; }   /* 바닥 14px — 법전 */
+.lx .pd-ci-m span:last-child{ font-size:16px; letter-spacing:.1em; margin-right:-.1em; }
 .lx .pd-ci-n{ display:block; margin-top:14px; font-weight:500; }
 .lx .pd-ci-l{ margin:12px 0 0; display:grid; grid-template-columns:auto 1fr; gap:5px 14px; font-size:14px; }
 .lx .pd-ci-l dt{ color:var(--grey); }
