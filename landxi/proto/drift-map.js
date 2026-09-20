@@ -5,12 +5,28 @@ import { mountShell, esc, nf } from './shell.js';
 import { PATCHES, DENSITY, COAST, FIELD, RUN, SIMS, LX_ROLE, LX_LINE, VERIFY, DRIFT_SCHEMA, sample } from '../assets/data/sim.js';
 import { run, probGrid, eta } from './drift-core.js';
 
+/* 어느 배포본에서 들어왔나 — 27년 광주전남 작업공간의 지도 탭이 여기로 넘긴다.
+   들어온 길을 빵부스러기에 남겨야 되돌아갈 수 있다(개발용 URL 은 화면에 적지 않는다). */
+const SVC = new URLSearchParams(location.search).get('svc') || '';
+const BACK = /^dp-[a-z0-9-]+$/.test(SVC) ? `portal-${SVC}.html` : '';
+
 mountShell({
   active: 'map', title: '괭생이모자반 도착 예측',
   subtitle: '위성 판독 → 표류체 패치 표준 → 해류 이류 계산 → 상륙 구간·도착 시각 · <b>2027년 전남 해양쓰레기 고도화</b>',
-  crumbs: [{ label: '지도 서비스', href: 'ximap.html' }, { label: '표류 예측' }],
+  crumbs: BACK
+    ? [{ label: '내 서비스', href: 'portal.html' }, { label: '해양쓰레기 실태조사 서비스', href: BACK }, { label: '표류 예측' }]
+    : [{ label: '지도 서비스', href: 'ximap.html' }, { label: '표류 예측' }],
   notice: false, asOf: false, fit: true, demo: true,
 });
+
+/* ── 계산 — 화면을 짜기 전에 돌린다(머리 숫자가 결과에서 나와야 하므로) ─── */
+const R = run(PATCHES);
+const PROB = probGrid(R);
+const ETA = eta(R);
+const fmt = (ms) => { const d = new Date(ms); return `${d.getUTCMonth() + 1}.${String(d.getUTCDate()).padStart(2, '0')} ${String(d.getUTCHours()).padStart(2, '0')}시`; };
+/* 예보 기간 안에 닿지 않은 구간 — 지우지 않고 적는다. 제주가 빠져 있다는 사실 자체가
+   속도장 계수를 손으로 맞춘 흔적이고, 그것을 화면이 숨기면 안 된다. */
+const MISSED = COAST.filter((c) => !ETA.some((e) => e.coast.id === c.id));
 
 const main = document.getElementById('main');
 main.innerHTML = `
@@ -42,30 +58,51 @@ main.innerHTML = `
     </div>
   </div>
   <aside class="df-side" aria-label="예측 결과">
-    <section class="df-s"><h2>상륙 구간 <span class="df-tag">모의</span></h2>
+    <div class="df-hd">
+      <h2>도착 예측 <span class="df-tag">모의</span></h2>
+      <p>입자 <b>${nf.format(R.total)}</b> · 상륙 <b>${nf.format(R.arrived)}</b>
+        · ${RUN.horizonDays}일 예보 · ${RUN.stepHours}시간 간격</p>
+    </div>
+    <nav class="df-tabs" role="tablist" aria-label="예측 결과 갈래">
+      <button type="button" role="tab" data-p="eta" aria-selected="true">상륙 구간</button>
+      <button type="button" role="tab" data-p="patch" aria-selected="false">탐지 패치</button>
+      <button type="button" role="tab" data-p="role" aria-selected="false">LX 의 자리</button>
+      <button type="button" role="tab" data-p="need" aria-selected="false">밖에서 받을 것</button>
+      <button type="button" role="tab" data-p="verify" aria-selected="false">예측 검증</button>
+    </nav>
+
+    <div class="df-p" data-p="eta" role="tabpanel" aria-label="상륙 구간">
       <p class="k">실 해류 산출이 붙으면 <em>수거 선박과 인력을 붙일 자리</em>가 된다.
-        지금 값은 모의 속도장에서 나온 것이라 <b>수거 계획의 근거로 쓰지 않는다.</b></p>
-      <div class="df-eta" id="df-eta"></div></section>
-    <section class="df-s"><h2>표준 산출 — 탐지 패치</h2>
+        지금 값은 모의 속도장에서 나온 것이라 <b>수거 계획의 근거로 쓰지 않는다.</b>
+        구간을 누르면 지도가 그리로 간다.</p>
+      <div class="df-eta" id="df-eta"></div>
+    </div>
+
+    <div class="df-p" data-p="patch" role="tabpanel" aria-label="탐지 패치" hidden>
       <p class="k">위성 판독 결과를 <b>표류체 패치 표준</b> 한 벌로 적은 것. 종류가 바뀌어도 이 틀은 같아서 시뮬레이션을 다시 만들지 않는다.</p>
-      <table class="df-tb" id="df-patch"><thead><tr><th>패치</th><th>관측</th><th class="r">면적</th><th>밀도</th><th class="r">신뢰도</th></tr></thead><tbody></tbody></table></section>
-    <section class="df-s"><h2>LX 의 자리</h2>
+      <table class="df-tb" id="df-patch"><thead><tr><th>패치</th><th>관측</th><th class="r">면적</th><th>밀도</th><th class="r">신뢰도</th></tr></thead><tbody></tbody></table>
+      <p class="df-foot">표준 필드 <b>${Object.keys(DRIFT_SCHEMA).join(' · ')}</b> — 출처 ${esc(PATCHES[0].source)}</p>
+    </div>
+
+    <div class="df-p" data-p="role" role="tabpanel" aria-label="LX 의 자리" hidden>
       <p class="k">${esc(LX_LINE)}</p>
-      <div class="df-step" id="df-role"></div></section>
-    <section class="df-s"><h2>밖에서 받을 것</h2>
-      <p class="k">발주 목록에 <b>화면은 없다.</b> 물리 모델과 자료만 받는다.</p>
-      <ul class="df-need" id="df-need"></ul></section>
-    <section class="df-s"><h2>예측 검증</h2>
+      <div class="df-step" id="df-role"></div>
+    </div>
+
+    <div class="df-p" data-p="need" role="tabpanel" aria-label="밖에서 받을 것" hidden>
+      <p class="k">발주 목록에 <b>화면은 없다.</b> 물리 모델과 자료만 받는다 —
+        무엇이 없어 어느 시뮬레이션이 못 도는지 그대로 적는다.</p>
+      <ul class="df-need" id="df-need"></ul>
+      <p class="df-foot"><b>화면 · 표준 · 이류 계산 · 검증은 LX 가 한다</b> — 발주하지 않는다.</p>
+    </div>
+
+    <div class="df-p" data-p="verify" role="tabpanel" aria-label="예측 검증" hidden>
       <p class="k">${esc(VERIFY.gap)}<br>${esc(VERIFY.fix)}</p>
-      <table class="df-tb"><tbody>${VERIFY.metric.map((m) => `<tr><td><b>${esc(m.name)}</b><br><span style="color:var(--grey)">${esc(m.what)}</span></td></tr>`).join('')}</tbody></table></section>
+      <table class="df-tb"><tbody>${VERIFY.metric.map((m) => `<tr><td><b>${esc(m.name)}</b><br><span style="color:var(--grey)">${esc(m.what)}</span></td></tr>`).join('')}</tbody></table>
+      <p class="df-foot">검증 기록 <b>${VERIFY.rows.length}건</b> — 값이 들어오기 전에는 비워 둔다.</p>
+    </div>
   </aside>
 </div>`;
-
-/* ── 계산 ─────────────────────────────────────────────────────────── */
-const R = run(PATCHES);
-const PROB = probGrid(R);
-const ETA = eta(R);
-const fmt = (ms) => { const d = new Date(ms); return `${d.getUTCMonth() + 1}.${String(d.getUTCDate()).padStart(2, '0')} ${String(d.getUTCHours()).padStart(2, '0')}시`; };
 
 /* ── 지도 ─────────────────────────────────────────────────────────── */
 const map = new maplibregl.Map({
@@ -137,6 +174,10 @@ function sizeCanvas() {
   seedFlow();
 }
 new ResizeObserver(() => sizeCanvas()).observe(document.querySelector('.df-map'));
+// 아래 조작 띠의 높이를 재어 지도 컨트롤을 그만큼 올린다(띠에 가려 안 눌리던 것)
+const bar = document.querySelector('.df-bar');
+new ResizeObserver(() => document.querySelector('.df-map')
+  .style.setProperty('--df-bar-h', `${Math.round(bar.getBoundingClientRect().height)}px`)).observe(bar);
 
 // 북쪽 고정 지도 → 직접 메르카토르 투영이 map.project() 보다 훨씬 싸다
 const mercY = (lat) => Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
@@ -237,15 +278,33 @@ document.querySelectorAll('.df-lay button').forEach((b) => b.addEventListener('c
 }));
 
 /* ── 오른쪽 판 ────────────────────────────────────────────────────── */
+/* 다섯 갈래를 탭으로 바꿔 한 번에 한 판만 편다 — 스크롤로 숨기지 않기 위해서다. */
+const tabs = [...document.querySelectorAll('.df-tabs button')];
+const panes = [...document.querySelectorAll('.df-p')];
+tabs.forEach((b) => b.addEventListener('click', () => {
+  tabs.forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+  panes.forEach((p) => { p.hidden = p.dataset.p !== b.dataset.p; });
+}));
+
 $('#df-eta').innerHTML = (ETA.length ? ETA.map((e) => `
-  <div class="df-eta-r">
+  <button type="button" class="df-eta-r" data-coast="${esc(e.coast.id)}" aria-pressed="false">
     <span class="df-eta-n">${esc(e.coast.name)}</span>
     <span class="df-eta-v">${e.ratio}<i>%</i></span>
     <span class="df-eta-t">첫 도달 ${fmt(e.first)} · 절반 ${fmt(e.half)} · ${nf.format(e.n)}입자</span>
     <span class="df-eta-b"><u style="width:${Math.min(100, e.ratio * 2)}%"></u></span>
-  </div>`).join('')
+  </button>`).join('')
   : '<p class="k">예보 기간 안에 닿는 구간이 없다.</p>')
-  + '<p class="df-warn">위 비율은 <b>모의 속도장</b>에서 계산된 값이다. 계수를 바꾸면 구간과 비율이 통째로 바뀐다 — 예측이 아니다.</p>';
+  + (MISSED.length ? `<p class="df-none">예보 ${RUN.horizonDays}일 안에 도달 입자가 없는 구간 —
+      ${MISSED.map((c) => esc(c.name)).join(' · ')}</p>` : '')
+  + '<p class="df-warn">위 비율은 <b>모의 속도장</b>에서 계산된 값이다. 계수를 바꾸면 구간과 비율이 통째로 바뀐다 — 예측이 아니다.'
+  + ' 난류 확산이 난수라 다시 열 때마다 소수점도 달라진다.</p>';
+
+// 구간을 누르면 지도가 그 구간으로 간다 — 표와 지도가 같은 것을 가리키게
+document.querySelectorAll('.df-eta-r').forEach((b) => b.addEventListener('click', () => {
+  const c = COAST.find((x) => x.id === b.dataset.coast); if (!c) return;
+  document.querySelectorAll('.df-eta-r').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  map.easeTo({ center: [c.lon, c.lat], zoom: Math.max(map.getZoom(), 7.4), duration: 700 });
+}));
 
 $('#df-patch tbody').innerHTML = PATCHES.map((p) => `<tr>
   <td>${esc(p.id)}</td><td class="n">${esc(p.at.slice(5, 10).replace('-', '.'))}</td>
@@ -254,8 +313,14 @@ $('#df-patch tbody').innerHTML = PATCHES.map((p) => `<tr>
 $('#df-role').innerHTML = LX_ROLE.map((r) => `<b>${r.step}</b><span>${esc(r.name)}
   <span class="who" data-w="${esc(r.who)}">${esc(r.who)}</span><br><em>${esc(r.what)}</em></span>`).join('');
 
-const sim = SIMS[0];
-$('#df-need').innerHTML = [...new Set(SIMS.flatMap((s) => s.needs))].map((n) => `<li>${esc(n)}</li>`).join('')
-  + `<li style="border-top:1px solid var(--ink);color:var(--grey)">화면·표준·이류 계산·검증은 LX 가 한다 — 발주하지 않는다</li>`;
+/* 밖에서 받을 것 — 낱개 목록이 아니라 **어느 시뮬레이션이 그것 때문에 못 도는지**로 묶는다.
+   27년 고도화가 요구하는 넷 중 실제로 도는 것은 도착 예측뿐이고, 그것도 속도장이 모의다. */
+$('#df-need').innerHTML = SIMS.map((s) => {
+  const runs = s.id === 'arrive';
+  return `<li>
+    <span class="nm"><b>${esc(s.name)}</b>
+      <span class="st2" data-s="${runs ? 'run' : 'wait'}">${runs ? '이류 계산은 돈다 · 속도장 모의' : '자료 대기'}</span></span>
+    ${s.needs.map((n) => `<em>${esc(n)}</em>`).join('')}</li>`;
+}).join('');
 
 setFrame(0);

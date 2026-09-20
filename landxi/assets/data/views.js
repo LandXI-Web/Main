@@ -123,6 +123,17 @@ export const VIEWS = {
    * 판독 결과가 아니라 **시뮬레이션 산출물**이다. 그래서 src 가 다르고 viz 가 다르다.
    * 밖에서 사는 것은 `needs` 에 적힌 자료·모델뿐이고, 화면은 LX 가 찍는다. */
   'dp-gj-marine-27': [
+    /* 넷 가운데 **유일하게 고리가 도는 것**. 입자 이류 계산은 실제로 돌지만
+     * 속도장이 모의라 결과를 예측으로 쓰지 않는다(sim.js FIELD.tuned · FIELD.warn).
+     *   opens  이 선언이 여는 화면 — 화면은 LX 가 찍고, 밖에서 받을 것만 needs 에 적는다.
+     *   runs   지금 무엇이 실제로 도는가. 없으면 '자료 대기'다.
+     * 화면은 이 두 칸만 보고 '열기'를 붙일지 '무엇이 없다'를 적을지 고른다. */
+    { id: 'v-arrive', tab: 'map', title: '괭생이모자반 도착 예측',
+      src: 'field', by: 'time', measure: 'count', viz: 'drift',
+      from: '27년 고도화 — 위성 판독 → 표류체 패치 표준 → 해류 이류 계산 → 상륙 구간·도착 시각',
+      needs: ['해류 수치모델 산출(격자 u·v · 시간축)', '해상풍 예보장'],
+      opens: 'map-drift.html', runs: '입자 이류 계산은 실제로 돈다 — 속도장만 모의다',
+      note: '수거 선박·인력을 언제 어디에 붙일지가 여기서 나온다. 지금 값은 모의 속도장에서 나온 것이라 수거 계획의 근거로 쓰지 않는다' },
     { id: 'v-current-flow', tab: 'map', title: '해류 모델 시각화',
       src: 'field', by: 'time', measure: 'count', viz: 'flow',
       from: '27년 고도화 — 표층 해류의 방향과 세기를 시각에 따라',

@@ -3,11 +3,73 @@
 <title>해양쓰레기 실태조사 서비스 · 광주전남특별시 — 광주전남</title>
 <link rel="icon" href="../assets/images/favicon_landxi.png">
 <script src="shell-gate.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 <link rel="stylesheet" href="fonts-system.css">
 <link rel="stylesheet" href="shell.css">
 <link rel="stylesheet" href="parts.css">
 <link rel="stylesheet" href="portal.css">
-<style>:root{--accent:#0B5FA5;--tint-1:#E6EFF7;--tint-2:#CCDEED}</style>
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<style>:root{--accent:#0B5FA5;--tint-1:#E6EFF7;--tint-2:#CCDEED}
+/* ── 이 배포본의 작업공간 CSS ─────────────────────────────────────────
+   골격(shell·parts·portal)은 LX 생산품이라 건드리지 않는다. 여기 있는 것은
+   **한 탭이 745px 한 화면에 들어가게 판을 나누는 일**뿐이다.
+   한 줄로 쌓으면 블록 두 개만 놓여도 넘치므로 판을 두 칸으로 가른다. */
+.lx .pt-pane{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 44px; align-content:start; }
+.lx .pt-pane[data-cols="1"]{ grid-template-columns:minmax(0,1fr); }
+.lx .pt-pane[data-cols="3"]{ grid-template-columns:repeat(3,minmax(0,1fr)); gap:0 30px; }
+/* 머리 숫자는 좁아도 되고 접점 표는 넓어야 덜 접힌다 — 같은 두 칸이라도 폭을 다르게 준다 */
+.lx .pt-pane[data-cols="kpi"]{ grid-template-columns:minmax(0,340px) minmax(0,1fr); }
+/* 좁은 칸에서는 큰 숫자를 가로로 늘어놓을 수 없다(서로 겹친다) — 이름 왼쪽 · 값 오른쪽 줄로 세운다 */
+.lx .pt-pane[data-cols="kpi"] .band{ grid-auto-flow:row; grid-auto-columns:auto; padding-top:0; }
+.lx .pt-pane[data-cols="kpi"] .tile{ display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+  border-left:0; border-top:1px solid var(--line); padding:9px 0 8px; margin:0; min-width:0; }
+.lx .pt-pane[data-cols="kpi"] .tile:first-child{ border-top:0; }
+.lx .pt-pane[data-cols="kpi"] .tile-v{ margin-top:0; }
+.lx .pt-pane[data-cols="kpi"] .tile-v b{ font-size:26px; }
+.lx .pt-b{ padding:14px 0 15px; border-bottom:1px solid var(--line); }
+.lx .pt-b-h{ margin-bottom:9px; }
+.lx .pt-b-body{ min-height:0; }
+.lx .pt-map,.lx .pt-map--s{ height:212px; }
+.lx .band{ padding-top:6px; margin-bottom:10px; }
+.lx .band--s .tile-v b{ font-size:36px; }
+.lx .band-note{ white-space:normal; padding-bottom:12px; line-height:1.5; }
+
+/* 실결과 지도 — 100 m 격자 집계를 색으로 칠한다(원본 정사영상은 LX 보관) */
+.lx .gj-map{ position:relative; height:236px; border:1px solid var(--line); background:var(--t1); }
+.lx .gj-map .maplibregl-ctrl-attrib{ display:none; }
+.lx .gj-lg{ display:flex; flex-wrap:wrap; gap:0 18px; margin:9px 0 0; font-size:14px; color:var(--grey); }
+.lx .gj-lg i{ display:inline-block; width:14px; height:10px; margin-right:6px; font-style:normal; }
+
+/* 표 — 결과 목록 · 접점 · 종류별 집계 */
+.lx .gj-tb{ width:100%; border-collapse:collapse; font-size:14.5px; }
+.lx .gj-tb th{ text-align:left; font-weight:500; color:var(--grey); font-size:14px; padding:0 10px 6px 0; border-bottom:1px solid var(--ink); white-space:nowrap; }
+.lx .gj-tb td{ padding:6px 10px 6px 0; border-bottom:1px solid var(--line); vertical-align:top; line-height:1.45; }
+.lx .gj-tb td.n,.lx .gj-tb th.r{ text-align:right; font-family:var(--num); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.lx .gj-tb tr:last-child td{ border-bottom:0; }
+.lx .gj-tb em{ display:block; font-style:normal; font-size:14px; color:var(--grey); }
+
+/* 자료가 없어 못 하는 것 — 무엇이 없는지 그대로 적는다(지어내지 않는다) */
+.lx .gj-gap{ border-left:2px solid var(--warn); padding:2px 0 2px 13px; }
+.lx .gj-gap b{ font-weight:500; color:var(--warn); }
+.lx .gj-gap p{ margin:0 0 6px; font-size:14.5px; line-height:1.5; }
+.lx .gj-gap ul{ margin:0; padding:0; list-style:none; font-size:14px; color:var(--grey); }
+.lx .gj-gap li{ padding:3px 0 3px 14px; position:relative; line-height:1.45; }
+.lx .gj-gap li::before{ content:""; position:absolute; left:0; top:11px; width:7px; height:1px; background:var(--grey-3); }
+.lx .gj-own{ margin:8px 0 0; font-size:14px; line-height:1.5; color:var(--grey); }
+.lx .gj-own b{ color:var(--ink); font-weight:500; }
+.lx .gj-acts{ display:flex; gap:10px; margin-top:12px; }
+.lx .pt-bars{ gap:7px; }
+.lx .pt-bar{ font-size:14.5px; }
+/* 꺾은선 — 시점별 추이(views.js 선언 viz:'line'). 점이 둘이어도 선언대로 선으로 그린다.
+   viewBox 로 늘이면 글자까지 같이 늘어나 14px 바닥이 깨진다 — 판 너비를 재서 1:1 로 그린다. */
+.lx .gj-line{ display:block; width:100%; height:128px; }
+.lx .gj-line svg{ display:block; }
+.lx .gj-line .ax{ stroke:var(--line); stroke-width:1; }
+.lx .gj-line .ln{ fill:none; stroke:var(--accent); stroke-width:2; }
+.lx .gj-line .dt{ fill:var(--accent); }
+.lx .gj-line text{ font-family:var(--num); font-size:14px; fill:var(--grey); }
+.lx .gj-line text.v{ fill:var(--ink); font-size:15px; }
+</style>
 </head><body class="lx pt" data-page="portal" data-tenant="gwangju-jeonnam" data-svc="dp-gj-marine-25">
 <main id="main">
 <div class="pt-work" data-svc="dp-gj-marine-25">
@@ -53,4 +115,205 @@
 </div></main>
 <noscript>해양쓰레기 실태조사 서비스 · 광주전남특별시 — 이 화면은 자바스크립트가 필요합니다.</noscript>
 <script type="module" src="portal-ui.js"></script>
+<script type="module">
+/* ── 2025 운영 배포본의 작업공간 채우기 ───────────────────────────────
+   portal-ui.js 는 **블록 한 종류를 어떻게 그리는가**만 알고 카드를 모른다(R5).
+   그래서 실결과가 있는 배포본에서도 판이 비어 보인다. 이 조각이 그 자리에
+   **이 배포본의 실제 산출**을 꽂는다. 값은 전부 results.js · views.js 에서 나오며
+   지어낸 숫자는 없다 — 없는 것은 '무엇이 없어 못 한다'로 적는다.
+   ※ 생성기(tools/gen/portal-gen.mjs)가 아직 이 자리를 찍지 못한다. 다시 찍으면
+     이 조각이 사라지므로, 장기적으로는 studio.js 의 블록 종류로 올라가야 한다. */
+import { esc, nf, say } from './shell.js';
+import { DEPLOYS, cardById, extModules, OWNER_LINE } from '../assets/data/cards.js';
+import { resultsFor, compileView, viewsOfTab } from '../assets/data/views.js';
+import { matchPoints } from '../assets/data/matching.js';
+import { clsLabel } from './map-data.js';   // 원본 분류 키를 사람이 읽는 말로 — 행정 화면에 영문 키를 내지 않는다
+
+const SVC = document.body.dataset.svc;
+const deploy = DEPLOYS.find((d) => d.id === SVC);
+const card = cardById(deploy.cardId);
+const RS = resultsFor(SVC);                       // 이 배포본이 여는 실결과(결과 대장에서)
+const slot = (id) => document.querySelector(`[data-slot="${id}"]`);
+const pane = (t) => document.querySelector(`.pt-pane[data-tab="${t}"]`);
+const sum = (f) => RS.reduce((a, r) => a + (f(r) || 0), 0);
+const lastRun = RS.map((r) => r.stats?.analyzedAt).filter(Boolean).sort().pop() || null;
+
+// 값이 문자열이면 그대로 쓴다 — nf.format 은 소수점을 버려 4.98 을 5 로 보이게 한다.
+const tile = (l, v, u, tone = '') => `<div class="tile${tone ? ` tile--${tone}` : ''}${v ? '' : ' tile--zero'}">
+  <span class="tile-l">${esc(l)}</span><span class="tile-v">
+  <b>${typeof v === 'string' ? esc(v) : nf.format(v || 0)}</b><span>${esc(u)}</span></span></div>`;
+
+/** 막대 — 값의 크기를 견준다. portal.css 의 .pt-bars 부품을 쓴다. */
+const bars = (rows, unit = '건') => rows.length
+  ? `<div class="pt-bars">${rows.map(([k, v]) => `<div class="pt-bar"><span>${esc(k)}</span>
+      <u style="width:${Math.round((v / Math.max(1, ...rows.map((r) => r[1]))) * 100)}%"></u>
+      <b>${nf.format(v)}</b></div>`).join('')}</div><p class="pt-note">단위 ${esc(unit)}</p>`
+  : '<p class="pt-empty">집계할 값이 없습니다.</p>';
+
+/** 자료가 없어 못 하는 것 — 무엇이 없는지와 무엇을 받아야 하는지를 그대로 적는다. */
+const gapBox = (title, why, needs = []) => `<div class="gj-gap">
+  <p><b>${esc(title)}</b> — ${esc(why)}</p>
+  ${needs.length ? `<ul>${needs.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}</div>`;
+
+/** 판에 블록을 하나 더 붙인다(생성기가 찍는 .pt-b 와 같은 모양). */
+function addBlock(tab, name, what, html) {
+  pane(tab)?.insertAdjacentHTML('beforeend', `<section class="pt-b" data-from="deploy" aria-label="${esc(name)}">
+    <h3 class="pt-b-h">${esc(name)}<span class="pt-b-w">${esc(what)}</span></h3>
+    <div class="pt-b-body">${html}</div></section>`);
+}
+
+/* ── 현황 ─────────────────────────────────────────────────────────── */
+slot('kpi').innerHTML = `<div class="band band--s">
+    ${tile('분석 결과', RS.length, '건')}
+    ${tile('탐지', sum((r) => r.stats?.count), '건', 'ink')}
+    ${tile('탐지 면적', (sum((r) => r.stats?.areaHa) || 0).toFixed(2), 'ha', 'ink')}
+  </div>
+  <p class="pt-note">${RS.map((r) => `${esc(r.title)} ${nf.format(r.stats.count)}건`).join(' · ')}
+    — 최근 분석 ${esc(lastRun || '기록 없음')} · ${esc(deploy.scale)}</p>`;
+
+// 이 판독이 어느 행정 업무에 닿는가 — 이원화 경계가 화면에서 보이는 자리
+pane('dash').dataset.cols = 'kpi';
+const MP = matchPoints(SVC);
+const lvl = { full: ['바로 닿음', 'teal'], plus: ['기관 자료 필요', 'acc'], gap: ['아직 못 닿음', 'dim'] };
+addBlock('dash', '행정 업무 접점', '판독 결과가 어느 업무의 어느 단계에 쓰이나',
+  `<table class="gj-tb"><thead><tr><th>업무</th><th>소관</th><th>상태</th><th>기관이 더 낼 것</th></tr></thead><tbody>
+    ${MP.map((m) => `<tr><td>${esc(m.task)}<em>${esc(m.makes)}</em></td><td>${esc(m.org)}</td>
+      <td><span class="st st--${lvl[m.level][1]}">${lvl[m.level][0]}</span></td>
+      <td>${m.needs.length ? esc(m.needs.join(' · ')) : '<span class="st st--dim">없음</span>'}</td></tr>`).join('')}
+  </tbody></table>
+  <p class="gj-own"><b>${esc(OWNER_LINE.local.name)}</b> — ${esc(OWNER_LINE.local.desc)}</p>`);
+
+/* ── 분석 결과 ────────────────────────────────────────────────────── */
+const drone = RS.find((r) => r.sensor === 'drone');
+slot('player').innerHTML = drone
+  ? `<div class="pt-map pt-map--s">${esc(drone.title)} · 탐지 ${nf.format(drone.stats.count)}건<br>
+      프레임 위 탐지 상자 — 원본 영상은 LX 가 보관합니다</div>
+    <div class="pt-scrub"><span class="n">00:00</span><input type="range" min="0" max="100" value="0" aria-label="재생 위치"><span class="n">—</span></div>
+    <p class="pt-note">영상 원본(TB)은 LX 보관 · 기관에는 타일과 결과만 공유됩니다.</p>`
+  : gapBox('드론 영상', '이 배포본에 드론 결과가 없다', ['드론 비행 · 정사화 산출']);
+
+slot('table').innerHTML = `<table class="gj-tb">
+  <thead><tr><th>결과</th><th>촬영</th><th class="r">탐지</th><th class="r">면적</th><th class="r">평균 신뢰도</th></tr></thead>
+  <tbody>${RS.map((r) => `<tr>
+    <td>${esc(r.title)}<em>${esc(r.what)}</em></td>
+    <td class="n">${esc(String(r.year))}</td>
+    <td class="n">${nf.format(r.stats.count)}</td>
+    <td class="n">${r.stats.areaHa} ha</td>
+    <td class="n">${r.stats.confMean != null ? r.stats.confMean.toFixed(2) : '—'}</td></tr>`).join('')}</tbody></table>
+  <p class="pt-note">결과의 수정·삭제 권한은 LX 에 있습니다 — 기관은 오류 신고로 올립니다.</p>`;
+
+/* ── 지도 ─────────────────────────────────────────────────────────── */
+
+// 구간 등급 — 해안선 구간화는 **기관 몫**(owner:'local')이고 아직 만드는 중이다.
+const shore = extModules(card.ext).find((m) => m.id === 'shore-seg');
+slot('grade').innerHTML = gapBox('해안선 구간 등급',
+  `해안선 구간화는 기관 몫(행정 가공)이라 ${shore.build === 'wip' ? 'LX 가 아니라 기관 쪽에서 만드는 중이다' : '설계만 되어 있다'}`,
+  ['해안선 관리 구역 경계(기관 보유)', '구간 길이 · 접근성 대장'])
+  + `<p class="gj-own">LX 는 <b>무엇을 어떻게 세고 나누는가</b>까지 한다 — 쓰레기 종류 분류는 이미 돌고 있고,
+    그것을 구간으로 끊어 등급을 매기는 일은 기관의 업무 규칙이라 표준화하지 않는다.</p>`;
+
+const gr = RS.find((r) => r.grid) || RS[0];
+slot('map').innerHTML = `<div class="gj-map" id="gj-map"></div>
+  <p class="gj-lg"><span><i style="background:#E6EFF7"></i>1–2건</span><span><i style="background:#9DC4FB"></i>3–5건</span>
+    <span><i style="background:#4E92F9"></i>6–9건</span><span><i style="background:#0B5FA5"></i>10건 이상</span>
+    <span>100 m 격자 집계 · ${esc(gr.title)}</span></p>
+  <div class="gj-acts"><a class="btn-br btn-br--s" href="ximap.html?on=${esc(gr.id)}">지도 서비스에서 열기</a>
+    <a class="btn-br btn-br--s" href="stats-standard.html?result=${esc(gr.id)}">통계 서랍</a></div>`;
+
+let gl = null;
+function mountMap() {
+  if (gl || !window.maplibregl) return;
+  gl = new maplibregl.Map({ container: 'gj-map', attributionControl: false, dragRotate: false,
+    center: gr.camera?.center || [127.63, 34.65], zoom: (gr.camera?.zoom || 10) - 0.4, minZoom: 8, maxZoom: 16,
+    style: 'https://tiles.openfreemap.org/styles/positron' });
+  gl.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+  gl.on('load', () => {
+    gl.addSource('grid', { type: 'geojson', data: `../assets/data/geo/results/${gr.id}-grid100.geojson` });
+    gl.addLayer({ id: 'grid-f', type: 'fill', source: 'grid',
+      paint: { 'fill-color': ['step', ['get', 'count'], '#E6EFF7', 3, '#9DC4FB', 6, '#4E92F9', 10, '#0B5FA5'],
+        'fill-opacity': 0.82 } });
+    gl.addLayer({ id: 'grid-l', type: 'line', source: 'grid', paint: { 'line-color': '#0B5FA5', 'line-width': 0.4, 'line-opacity': 0.5 } });
+    gl.on('click', 'grid-f', (e) => {
+      const p = e.features[0].properties;
+      new maplibregl.Popup({ closeButton: false }).setLngLat(e.lngLat)
+        .setHTML(`탐지 <b>${p.count}</b>건 · 면적 ${p.area} ㎡<br>주 분류 ${esc(String(p.top))} · 평균 신뢰도 ${Number(p.mean_conf).toFixed(2)}`).addTo(gl);
+    });
+    gl.on('mouseenter', 'grid-f', () => { gl.getCanvas().style.cursor = 'pointer'; });
+    gl.on('mouseleave', 'grid-f', () => { gl.getCanvas().style.cursor = ''; });
+  });
+}
+// 숨은 판에서 지도를 만들면 크기가 0 으로 잡힌다 — 지도 탭이 처음 열릴 때 세운다.
+document.querySelectorAll('.pt-tabs button').forEach((b) => b.addEventListener('click', () => {
+  if (b.dataset.tab === 'map') requestAnimationFrame(() => { mountMap(); gl?.resize(); });
+}));
+
+/* ── 통계 ─────────────────────────────────────────────────────────── */
+// 행정구역 집계: 이 결과에는 읍·면·동 값이 없다. 만들어 내지 않고 없다고 적는다.
+slot('stats').innerHTML = gapBox('행정구역별 집계', '이 결과에 읍·면·동 값이 들어 있지 않다',
+  ['해안선 관리 구역 경계(기관 보유)', '행정경계와의 공간 결합 1회'])
+  + `<p class="gj-own">대신 <b>종류별 · 연도별</b> 집계는 아래에서 바로 선다 — 기관 요구를 명세 한 줄로 적어 둔 것이다.</p>`;
+
+// views.js 에 적힌 이 기관의 요구 화면 — 선언 한 줄이 그대로 블록이 된다
+pane('stats').dataset.cols = '3';
+viewsOfTab(SVC, 'stats').forEach((v) => {
+  const c = compileView(SVC, v);
+  addBlock('stats', v.title, `${v.from || ''}`, c.ready
+    ? (v.viz === 'line' ? lineBox(c.rows, c.unit) : bars(mergeByLabel(c.rows), c.unit))
+      + `<p class="pt-note">출처 ${esc(c.from || '')}</p>`
+    : gapBox(v.title, c.gap, c.needs));
+});
+
+/** 꺾은선 — 시점별 추이. 값은 compileView 가 낸 것 그대로다.
+    자리만 만들어 두고 판이 펼쳐질 때 실제 너비로 그린다(글자를 늘이지 않기 위해). */
+function lineBox(rows, unit) {
+  if (rows.length < 2) return bars(rows.map((r) => [r.k, r.v]), unit);
+  return `<div class="gj-line" data-line='${esc(JSON.stringify({ rows, unit }))}'
+      role="img" aria-label="${esc(rows.map((r) => `${r.k} ${r.v}${unit}`).join(', '))}"></div>
+     <p class="pt-note">단위 ${esc(unit)}</p>`;
+}
+
+function drawLines() {
+  document.querySelectorAll('.gj-line[data-line]').forEach((el) => {
+    const W = Math.round(el.clientWidth), H = 128;
+    if (W < 120) return;                                   // 아직 접혀 있는 판
+    const { rows } = JSON.parse(el.dataset.line);
+    const P = { l: 4, r: 4, t: 22, b: 24 };
+    const max = Math.max(...rows.map((r) => r.v)) * 1.1;
+    const x = (i) => P.l + (i / (rows.length - 1)) * (W - P.l - P.r);
+    const y = (v) => P.t + (1 - v / (max || 1)) * (H - P.t - P.b);
+    const anc = (i) => (i === 0 ? 'start' : i === rows.length - 1 ? 'end' : 'middle');
+    el.innerHTML = `<svg width="${W}" height="${H}" aria-hidden="true">
+      <line class="ax" x1="0" y1="${H - P.b}" x2="${W}" y2="${H - P.b}"></line>
+      <polyline class="ln" points="${rows.map((r, i) => `${x(i)},${y(r.v)}`).join(' ')}"></polyline>
+      ${rows.map((r, i) => `<circle class="dt" cx="${x(i)}" cy="${y(r.v)}" r="3.5"></circle>
+        <text class="v" x="${x(i)}" y="${y(r.v) - 9}" text-anchor="${anc(i)}">${nf.format(r.v)}</text>
+        <text x="${x(i)}" y="${H - 7}" text-anchor="${anc(i)}">${esc(r.k)}</text>`).join('')}
+    </svg>`;
+  });
+}
+
+/** 같은 분류가 결과마다 다른 키로 온다(항공 Styrofoam · 드론 styrofoam).
+    읽는 사람에게는 같은 '스티로폼'이므로 사람이 읽는 이름으로 합친다. */
+function mergeByLabel(rows) {
+  const agg = new Map();
+  rows.forEach((r) => { const k = clsLabel(r.k); agg.set(k, (agg.get(k) || 0) + r.v); });
+  return [...agg.entries()].sort((a, b) => b[1] - a[1]);
+}
+
+new ResizeObserver(() => drawLines()).observe(document.querySelector('.pt-work'));
+document.querySelectorAll('.pt-tabs button').forEach((b) => b.addEventListener('click', () => requestAnimationFrame(drawLines)));
+drawLines();
+
+/* ── 보고서 ───────────────────────────────────────────────────────── */
+pane('report').dataset.cols = '1';
+slot('report').innerHTML = `<p class="pt-note">공문 서식은 LX 가 한 벌로 관리합니다 · 발급 기관 <em>광주전남특별시장</em></p>
+  <table class="gj-tb"><thead><tr><th>서식</th><th>담는 것</th><th>상태</th></tr></thead><tbody>
+    <tr><td>해양쓰레기 실태조사 결과 보고</td><td>탐지 건수 · 종류별 구성 · 결과 지도</td><td><span class="st st--teal">발급 가능</span></td></tr>
+    <tr><td>수거 계획 수립 근거 자료</td><td>구간별 물량 · 접근성 · 우선순위</td><td><span class="st st--dim">해안선 구간화 뒤</span></td></tr>
+  </tbody></table>
+  <p class="gj-acts"><button type="button" class="btn-br btn-br--s" data-act="gj-report">결과 보고 발급</button></p>`;
+document.addEventListener('click', (e) => {
+  if (e.target.closest('[data-act="gj-report"]')) say('보고서 발급은 시연 화면입니다 — 서식은 LX 가 한 벌로 관리합니다.');
+});
+</script>
 </body></html>

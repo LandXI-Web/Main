@@ -7,7 +7,61 @@
 <link rel="stylesheet" href="shell.css">
 <link rel="stylesheet" href="parts.css">
 <link rel="stylesheet" href="portal.css">
-<style>:root{--accent:#0B5FA5;--tint-1:#E6EFF7;--tint-2:#CCDEED}</style>
+<style>:root{--accent:#0B5FA5;--tint-1:#E6EFF7;--tint-2:#CCDEED}
+/* ── 이 배포본의 작업공간 CSS ─────────────────────────────────────────
+   골격(shell·parts·portal)은 LX 생산품이라 건드리지 않는다. 여기 있는 것은
+   **한 탭이 745px 한 화면에 들어가게 판을 나누는 일**뿐이다.
+   27년은 '무엇이 없어 못 한다'가 내용의 대부분이라 칸을 더 잘게 쓴다. */
+.lx .pt-pane{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 44px; align-content:start; }
+.lx .pt-pane[data-cols="3"]{ grid-template-columns:repeat(3,minmax(0,1fr)); gap:0 30px; }
+/* 지도 탭 — 가운데(구간 등급)는 짧고 오른쪽(자료 대기 표)은 길다. 칸 너비를 글 길이에 맞춘다 */
+.lx .pt-pane[data-cols="map"]{ grid-template-columns:minmax(0,1fr) minmax(0,.78fr) minmax(0,1.34fr); gap:0 28px; }
+.lx .pt-pane[data-cols="kpi"]{ grid-template-columns:minmax(0,360px) minmax(0,1fr); }
+/* 통계 탭 — 왼쪽은 '없다' 한 마디, 오른쪽은 조달 목록 10줄. 칸을 글 길이에 맞춘다 */
+.lx .pt-pane[data-cols="buy"]{ grid-template-columns:minmax(0,.72fr) minmax(0,1.28fr); gap:0 36px; }
+.lx .pt-b{ padding:14px 0 15px; border-bottom:1px solid var(--line); }
+.lx .pt-b-h{ margin-bottom:9px; }
+.lx .pt-b-body{ min-height:0; }
+
+/* 표 */
+.lx .gj-tb{ width:100%; border-collapse:collapse; font-size:14.5px; }
+.lx .gj-tb th{ text-align:left; font-weight:500; color:var(--grey); font-size:14px; padding:0 10px 6px 0; border-bottom:1px solid var(--ink); white-space:nowrap; }
+.lx .gj-tb td{ padding:6px 10px 6px 0; border-bottom:1px solid var(--line); vertical-align:top; line-height:1.4; }
+.lx .gj-tb td.n,.lx .gj-tb th.r{ text-align:right; font-family:var(--num); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.lx .gj-tb tr:last-child td{ border-bottom:0; }
+.lx .gj-tb em{ display:block; font-style:normal; font-size:14px; color:var(--grey); }
+.lx .gj-dl{ display:grid; grid-template-columns:auto 1fr; gap:0; font-size:14.5px; }
+.lx .gj-dl dt{ padding:8px 16px 8px 0; color:var(--grey); border-bottom:1px solid var(--line); white-space:nowrap; }
+.lx .gj-dl dd{ margin:0; padding:8px 0; border-bottom:1px solid var(--line); line-height:1.45; }
+.lx .gj-dl dt:last-of-type,.lx .gj-dl dd:last-of-type{ border-bottom:0; }
+
+/* 자료가 없어 못 하는 것 — 무엇이 없는지 그대로 적는다(지어내지 않는다) */
+.lx .gj-gap{ border-left:2px solid var(--warn); padding:2px 0 2px 13px; }
+.lx .gj-gap b{ font-weight:500; color:var(--warn); }
+.lx .gj-gap p{ margin:0 0 6px; font-size:14.5px; line-height:1.5; }
+.lx .gj-gap ul{ margin:0; padding:0; list-style:none; font-size:14px; color:var(--grey); }
+.lx .gj-gap li{ padding:3px 0 3px 14px; position:relative; line-height:1.45; }
+.lx .gj-gap li::before{ content:""; position:absolute; left:0; top:11px; width:7px; height:1px; background:var(--grey-3); }
+.lx .gj-own{ margin:8px 0 0; font-size:14px; line-height:1.5; color:var(--grey); }
+.lx .gj-own b{ color:var(--ink); font-weight:500; }
+.lx .gj-acts{ display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
+/* 줄만 긴 목록(표준 필드 · 조달 항목)은 두 단으로 흘린다 — 지우지 않고 높이를 반으로 */
+.lx .gj-cols{ margin:0; padding:0; list-style:none; columns:2; column-gap:26px; font-size:14.5px; }
+.lx .gj-cols li{ break-inside:avoid; padding:4px 0; border-bottom:1px solid var(--line); line-height:1.45; }
+.lx .gj-cols b{ font-weight:500; }
+.lx .gj-cols em{ display:block; font-style:normal; font-size:14px; color:var(--grey); }
+
+/* 도는 것 하나 — 도착 예측. 모의라는 사실을 진입 블록에 붙여 둔다 */
+.lx .gj-run{ border:1px solid var(--line); padding:14px 16px 15px; }
+.lx .gj-run h4{ margin:0 0 3px; font-family:var(--disp); font-weight:700; font-size:16px; letter-spacing:-.01em; }
+.lx .gj-run p{ margin:0 0 8px; font-size:14.5px; line-height:1.5; color:var(--grey); }
+.lx .gj-run .mock{ display:block; margin:9px 0 0; padding-top:9px; border-top:1px solid var(--line); color:var(--warn); font-size:14px; line-height:1.5; }
+.lx .gj-run .mock b{ font-weight:500; }
+.lx .gj-tag{ display:inline-block; margin-left:7px; padding:0 7px; height:22px; line-height:20px; vertical-align:2px;
+  border:1px dotted var(--warn); color:var(--warn); font-size:14px; letter-spacing:.04em; }
+.lx .gj-pre{ margin:0 0 10px; font-size:14.5px; line-height:1.55; }
+.lx .gj-pre b{ font-weight:500; }
+</style>
 </head><body class="lx pt" data-page="portal" data-tenant="gwangju-jeonnam" data-svc="dp-gj-marine-27">
 <main id="main">
 <div class="pt-work" data-svc="dp-gj-marine-27">
@@ -53,4 +107,144 @@
 </div></main>
 <noscript>해양쓰레기 실태조사 서비스 · 광주전남특별시 — 이 화면은 자바스크립트가 필요합니다.</noscript>
 <script type="module" src="portal-ui.js"></script>
+<script type="module">
+/* ── 2027 신규(고도화) 배포본의 작업공간 채우기 ───────────────────────
+   이 배포본은 **아직 사업이 시작되지 않았다**(DEPLOYS status '예정').
+   그래서 여기서 가장 중요한 일은 숫자를 보여 주는 것이 아니라
+   **무엇이 없어 무엇을 못 하는지**를 정확히 적는 것이다(views.js 의 needs).
+   27년 고도화가 요구하는 넷(해류 시각화 · 등심선 · 침적 예측 · 표류 추적) 가운데
+   실제로 도는 것은 **도착 예측의 이류 계산 하나뿐**이고 그것도 속도장이 모의다.
+   ※ 생성기(tools/gen/portal-gen.mjs)가 아직 이 자리를 찍지 못한다. 다시 찍으면
+     이 조각이 사라지므로, 장기적으로는 studio.js 의 블록 종류로 올라가야 한다. */
+import { esc, nf, say } from './shell.js';
+import { DEPLOYS, cardById, extModules, OWNER_LINE } from '../assets/data/cards.js';
+import { viewsOfTab, compileView, procurement, VIZ } from '../assets/data/views.js';
+import { SIMS, DRIFT_SCHEMA, STANDARD_LINE, FIELD, RUN } from '../assets/data/sim.js';
+
+const SVC = document.body.dataset.svc;
+const deploy = DEPLOYS.find((d) => d.id === SVC);
+const card = cardById(deploy.cardId);
+const PREV = DEPLOYS.find((d) => d.cardId === deploy.cardId && d.id !== SVC && d.status === '운영');
+const slot = (id) => document.querySelector(`[data-slot="${id}"]`);
+const pane = (t) => document.querySelector(`.pt-pane[data-tab="${t}"]`);
+
+/** 자료가 없어 못 하는 것 — 무엇이 없는지와 무엇을 받아야 하는지를 그대로 적는다. */
+const gapBox = (title, why, needs = []) => `<div class="gj-gap">
+  <p><b>${esc(title)}</b> — ${esc(why)}</p>
+  ${needs.length ? `<ul>${needs.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}</div>`;
+
+/** 판에 블록을 하나 더 붙인다(생성기가 찍는 .pt-b 와 같은 모양). */
+function addBlock(tab, name, what, html) {
+  pane(tab)?.insertAdjacentHTML('beforeend', `<section class="pt-b" data-from="views" aria-label="${esc(name)}">
+    <h3 class="pt-b-h">${esc(name)}<span class="pt-b-w">${esc(what)}</span></h3>
+    <div class="pt-b-body">${html}</div></section>`);
+}
+
+/** views.js 선언 한 줄 → 블록 하나. 값이 서면 그리고, 안 서면 무엇이 없는지 적는다. */
+function viewBlock(tab, v) {
+  const c = compileView(SVC, v);
+  addBlock(tab, v.title, `${VIZ[v.viz]?.name || ''} · ${v.from || ''}`,
+    (c.ready ? '' : gapBox(VIZ[v.viz]?.name || v.title, c.gap, c.needs))
+    + (v.note ? `<p class="gj-own">${esc(v.note)}</p>` : ''));
+}
+
+/* ── 현황 ─────────────────────────────────────────────────────────── */
+pane('dash').dataset.cols = 'kpi';
+// 사업 시작 전이다. 앞 배포본의 실적을 이 배포본 실적처럼 내걸지 않는다.
+document.querySelector('[data-block="kpi"] .pt-b-w').textContent = '배포본 상태 · 대상 · 이어받는 곳';
+slot('kpi').innerHTML = `<p class="gj-pre">2027년 신규사업 — <b>사업 시작 전</b>입니다.
+    이 배포본의 탐지 실적이 없으므로 숫자를 내지 않습니다.</p>
+  <dl class="gj-dl">
+    <dt>상태</dt><dd><span class="st st--dim">${esc(deploy.status)}</span> · ${esc(String(deploy.year))}년</dd>
+    <dt>대상</dt><dd>${esc(deploy.scale)}</dd>
+    <dt>이어받는 곳</dt><dd>${PREV
+      ? `<a class="link" href="portal-${esc(PREV.id)}.html">${esc(PREV.year)}년 ${esc(PREV.region)} 배포본</a>`
+      : '없음'}</dd>
+    <dt>모델</dt><dd>${esc(card.name)} ${esc(card.version || '')} — 판독은 LX 가 만들고 갱신합니다</dd>
+  </dl>`;
+
+// 고도화가 요구하는 것 넷 — 무엇이 서고 무엇이 자료를 기다리나
+const REQ = ['map', 'result', 'stats', 'dash'].flatMap((t) => viewsOfTab(SVC, t));
+const PR = procurement(SVC);
+addBlock('dash', '27년 고도화가 요구하는 것', 'Geo-AI 와 다른 요소들 — 화면은 LX 가 찍고 자료만 밖에서 받는다',
+  `<table class="gj-tb"><thead><tr><th>요구 화면</th><th>표현</th><th>상태</th><th>밖에서 받을 것</th></tr></thead><tbody>
+    ${REQ.map((v) => {
+    const c = compileView(SVC, v);
+    return `<tr><td>${esc(v.title)}</td><td>${esc(VIZ[v.viz]?.name || v.viz)}</td>
+      <td><span class="st st--${v.runs ? 'acc' : c.ready ? 'teal' : 'dim'}">${
+      v.runs ? '계산은 돈다 · 모의' : c.ready ? '바로 선다' : '자료 대기'}</span></td>
+      <td>${esc((v.needs || []).join(' · ') || '없음')}</td></tr>`;
+  }).join('')}
+  </tbody></table>
+  <p class="gj-own">${esc(PR.line)}</p>`);
+
+/* ── 분석 결과 ────────────────────────────────────────────────────── */
+slot('player').innerHTML = gapBox('영상 플레이어', '이 배포본의 촬영·판독이 아직 없다',
+  ['대상 해안 확정', '항공·드론 촬영', '위성 영상 조달(괭생이모자반 포착)'])
+  + `<p class="gj-own">앞 배포본의 영상·결과는 <b>그쪽 작업공간</b>에서 봅니다 — 연도가 다른 실적을 여기에 합치지 않습니다.</p>`;
+
+// 표준화 — 발주자가 말한 "분석 결과를 표준화하여 매칭"의 실체
+slot('table').innerHTML = `<p class="gj-own" style="margin:0 0 9px"><b>${esc(STANDARD_LINE)}</b></p>
+  <ul class="gj-cols">${Object.entries(DRIFT_SCHEMA)
+    .map(([k, f]) => `<li><b>${esc(k)}</b><em>${esc(f.what)}</em></li>`).join('')}</ul>`;
+viewsOfTab(SVC, 'result').forEach((v) => viewBlock('result', v));
+pane('result').dataset.cols = '3';
+
+/* ── 지도 ─────────────────────────────────────────────────────────── */
+pane('map').dataset.cols = 'map';
+
+// 실제로 도는 고리 하나 — 도착 예측. 선언(views.js 의 opens · runs)에서 읽어 진입을 만든다.
+const MV = viewsOfTab(SVC, 'map');
+const ARR = MV.find((v) => v.opens);
+const arrive = SIMS.find((s) => s.id === 'arrive');
+slot('map').innerHTML = ARR ? `<div class="gj-run">
+    <h4>${esc(ARR.title)}<span class="gj-tag">모의</span></h4>
+    <p>${esc(ARR.from)}</p>
+    <p>내놓는 것 · ${esc(arrive.gives.join(' · '))}</p>
+    <span class="mock"><b>${esc(ARR.runs)}.</b> ${esc(FIELD.warn)} —
+      ${esc(ARR.note)}</span>
+    <p class="gj-acts"><a class="btn-br btn-br--s" href="${esc(ARR.opens)}?svc=${esc(SVC)}">표류 예측 지도 열기</a></p>
+  </div>` : gapBox('도착 예측', '여는 화면 선언이 없다', []);
+
+// 구간 등급 — 해안선 구간화는 기관 몫(owner:'local')이고 아직 만드는 중이다
+const shore = extModules(card.ext).find((m) => m.id === 'shore-seg');
+slot('grade').innerHTML = gapBox('해안선 구간 등급',
+  `해안선 구간화는 기관 몫(행정 가공)이라 ${shore.build === 'wip' ? 'LX 가 아니라 기관 쪽에서 만드는 중이다' : '설계만 되어 있다'}`,
+  ['해안선 관리 구역 경계(기관 보유)', '구간 길이 · 접근성 대장'])
+  + `<p class="gj-own">LX 는 <b>판독까지</b> 한다 — 구간으로 끊어 등급을 매기고 수거 계획을 세우는 일은
+    기관마다 규칙이 달라 표준화하지 않습니다.</p>`;
+
+// 나머지 셋은 모두 '자료 대기'다. 같은 상자를 셋 늘어놓는 대신 한 표로 묶는다.
+const WAIT = MV.filter((v) => !v.opens);
+addBlock('map', '27년 고도화 지도 — 자료 대기', `${WAIT.length}종 · 무엇이 없어 못 서는지`,
+  `<table class="gj-tb"><thead><tr><th>요구 화면</th><th>없는 것</th></tr></thead><tbody>
+    ${WAIT.map((v) => `<tr><td>${esc(v.title)}<em>${esc(VIZ[v.viz]?.name || v.viz)} · ${esc(v.note || '')}</em></td>
+      <td>${(v.needs || []).map((n) => esc(n)).join('<br>')}</td></tr>`).join('')}
+  </tbody></table>`);
+
+/* ── 통계 ─────────────────────────────────────────────────────────── */
+slot('stats').innerHTML = gapBox('행정구역별 집계', '이 배포본에 집계할 분석 결과가 아직 없다',
+  ['대상 해안 확정 · 첫 분석 실행', '해안선 관리 구역 경계(기관 보유)'])
+  + (PREV ? `<p class="gj-own"><a class="link" href="portal-${esc(PREV.id)}.html">${esc(PREV.year)}년 배포본</a>
+    에는 종류별 · 연도별 집계가 이미 서 있습니다 — 27년은 그 위에 범위를 넓히는 사업입니다.</p>` : '');
+pane('stats').dataset.cols = 'buy';
+addBlock('stats', '밖에서 받을 것', '발주는 화면이 아니라 자료·모델에만 낸다',
+  `<ul class="gj-cols">${PR.rows.map((r) => `<li><b>${esc(r.what)}</b>
+    <em>없으면 못 서는 화면 · ${esc(r.forViews.join(' · '))}</em></li>`).join('')}</ul>
+  <p class="gj-own">해류 수치모델은 해양 물리의 영역이라 <b>밖에서 받습니다.</b>
+    표준 · 이류 계산 · 예측 검증 · 행정 전달은 LX 가 가집니다.</p>`);
+
+/* ── 보고서 ───────────────────────────────────────────────────────── */
+slot('report').innerHTML = `<p class="gj-own" style="margin:0 0 9px">공문 서식은 LX 가 한 벌로 관리합니다 ·
+    발급 기관 <b>광주전남특별시장</b></p>
+  <table class="gj-tb"><thead><tr><th>서식</th><th>담는 것</th><th>상태</th></tr></thead><tbody>
+    <tr><td>해양쓰레기 실태조사 결과 보고</td><td>탐지 건수 · 종류별 구성 · 결과 지도</td><td><span class="st st--dim">첫 분석 뒤</span></td></tr>
+    <tr><td>괭생이모자반 유입 대응 보고</td><td>도착 예상 구간 · 도착 시각 · 대응 배치</td><td><span class="st st--dim">해류 수치모델 산출 뒤</span></td></tr>
+    <tr><td>수거 계획 수립 근거 자료</td><td>구간별 물량 · 접근성 · 우선순위</td><td><span class="st st--dim">해안선 구간화 뒤</span></td></tr>
+  </tbody></table>
+  <p class="gj-acts"><button type="button" class="btn-br btn-br--s" data-act="gj-report" aria-disabled="true">결과 보고 발급</button></p>`;
+document.addEventListener('click', (e) => {
+  if (e.target.closest('[data-act="gj-report"]')) say('사업 시작 전이라 발급할 결과가 없습니다 — 첫 분석 뒤에 열립니다.');
+});
+</script>
 </body></html>

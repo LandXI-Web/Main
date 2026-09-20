@@ -2,12 +2,17 @@
    법전 design/system.md: 라운드 0 · 그림자 0 · 그라디언트 0 · 유리 0 · 바닥 14px.
    캔버스 안(해류 유선·입자)은 데이터 표현이므로 잔상을 쓴다 — UI 크롬에는 쓰지 않는다. */
 
-.lx.df #main{ padding:0; display:flex; flex-direction:column; min-height:0; overflow:clip; }
+/* 마스트헤드(64px)는 position:fixed 다. padding-top 으로 자리를 비우지 않으면
+   지도 위쪽과 좌상단 레이어 토글이 마스트헤드 밑으로 들어가 보이지 않는다. */
+.lx.df #main{ padding:var(--mast) 0 0; display:flex; flex-direction:column; min-height:0; overflow:clip; }
 .lx.df #page-head{ flex:none; }
 .lx.df #main > .df{ flex:1 1 0; min-height:0; }
-.lx .df{ display:grid; grid-template-columns:1fr 380px; height:100%; min-height:520px; }
+/* 오른쪽 판은 넓을수록 줄바꿈이 줄어 같은 내용이 더 낮게 들어간다 — 화면이 커지면 같이 넓힌다. */
+.lx .df{ display:grid; grid-template-columns:1fr clamp(380px, 24vw, 460px); height:100%; min-height:0; }
 .lx .df-map{ position:relative; border-right:1px solid var(--line); background:#EDEFF2; overflow:hidden; }
 .lx .df-map .maplibregl-canvas-container{ position:absolute; inset:0; }
+/* 확대·축소 단추가 아래 조작 띠에 가리지 않게 띠 높이만큼 띄운다(높이는 JS 가 잰다) */
+.lx .df-map .maplibregl-ctrl-bottom-right{ bottom:calc(var(--df-bar-h, 104px) + 10px); }
 .lx #df-gl{ position:absolute; inset:0; }
 .lx #df-fx{ position:absolute; inset:0; pointer-events:none; }
 
@@ -44,21 +49,38 @@
 .lx .df-mock span{ display:block; margin-top:7px; padding-top:7px; border-top:1px solid var(--line); }
 .lx .df-tag{ display:inline-block; margin-left:7px; padding:0 7px; height:22px; line-height:20px; vertical-align:2px;
   border:1px dotted var(--warn); color:var(--warn); font-family:var(--body); font-weight:400; font-size:14px; letter-spacing:.04em; }
-.lx .df-warn{ margin:12px 0 0; padding-top:11px; border-top:1px solid var(--line); font-size:14px; line-height:1.55; color:var(--warn); }
+.lx .df-warn{ margin:10px 0 0; padding-top:10px; border-top:1px solid var(--line); font-size:14px; line-height:1.55; color:var(--warn); }
 .lx .df-warn b{ font-weight:500; }
 .lx .df-eta-v i{ font-style:normal; font-size:14px; font-weight:400; color:var(--grey); margin-left:2px; }
 
-/* 오른쪽 판 */
-.lx .df-side{ overflow-y:auto; background:var(--paper); }
-.lx .df-s{ padding:18px 22px 22px; border-bottom:1px solid var(--line); }
-.lx .df-s h2{ margin:0 0 4px; font-family:var(--disp); font-weight:700; font-size:17px; letter-spacing:-.02em; }
-.lx .df-s p.k{ margin:0 0 12px; font-size:14px; line-height:1.55; color:var(--grey); }
-.lx .df-s p.k em{ font-style:normal; color:var(--teal); }
+/* 오른쪽 판 — 다섯 절이 한 줄로 쌓이면 2,060px 가 되어 745px 화면에서 1,359px 가 숨었다.
+   내용을 덜어내는 대신 구조를 바꿨다: 머리(항상 보임) + 탭 + 한 번에 한 판.
+   판마다 스크롤을 달지 않는다 — 달면 또 숨는다. 대신 각 판이 그 높이에 들어가게 짠다. */
+.lx .df-side{ display:grid; grid-template-rows:auto auto minmax(0,1fr); background:var(--paper); min-height:0; }
 
-.lx .df-step{ display:grid; grid-template-columns:22px 1fr; gap:10px 11px; font-size:14.5px; line-height:1.5; }
+.lx .df-hd{ padding:9px 18px 10px; border-bottom:1px solid var(--ink); }
+.lx .df-hd h2{ margin:0; font-family:var(--disp); font-weight:700; font-size:17px; letter-spacing:-.02em; }
+.lx .df-hd p{ margin:3px 0 0; font-family:var(--num); font-size:14px; color:var(--grey); font-variant-numeric:tabular-nums; }
+.lx .df-hd p b{ color:var(--ink); font-weight:500; }
+
+/* 탭 — 다섯 개가 380px 에 한 줄로 안 들어가므로 두 줄로 접는다(글자를 줄이지 않는다) */
+.lx .df-tabs{ display:flex; flex-wrap:wrap; border-bottom:1px solid var(--line); }
+.lx .df-tabs button{ height:34px; padding:0 13px; font-size:14px; color:var(--grey);
+  border-right:1px solid var(--line); border-bottom:2px solid transparent; }
+.lx .df-tabs button:hover{ background:var(--t1); }
+.lx .df-tabs button[aria-selected="true"]{ color:var(--ink); border-bottom-color:var(--accent); }
+
+.lx .df-p{ padding:13px 18px 14px; min-height:0; align-content:start; }
+.lx .df-p[hidden]{ display:none; }
+.lx .df-p h3{ margin:0 0 4px; font-family:var(--disp); font-weight:700; font-size:15px; letter-spacing:-.01em; }
+.lx .df-p p.k{ margin:0 0 9px; font-size:14px; line-height:1.5; color:var(--grey); }
+.lx .df-p p.k em{ font-style:normal; color:var(--teal); }
+.lx .df-p p.k b{ color:var(--ink); font-weight:500; }
+
+.lx .df-step{ display:grid; grid-template-columns:20px 1fr; gap:9px 10px; font-size:14.5px; line-height:1.5; }
 .lx .df-step b{ font-family:var(--num); font-size:14px; color:var(--grey); }
 .lx .df-step span em{ font-style:normal; color:var(--grey); }
-.lx .df-step .who{ display:inline-block; margin-left:7px; font-size:13.5px; }
+.lx .df-step .who{ display:inline-block; margin-left:7px; font-size:14px; }   /* 바닥 14px — 13.5px 였다 */
 .lx .df-step .who[data-w="LX"]{ color:var(--accent); }
 .lx .df-step .who[data-w="외부"]{ color:var(--warn); }
 
@@ -70,21 +92,40 @@
 .lx .df-tb tr.on td{ background:var(--t1); }
 .lx .df-tb button{ width:100%; text-align:left; }
 
-.lx .df-eta{ display:grid; gap:10px; }
-.lx .df-eta-r{ display:grid; grid-template-columns:1fr auto; gap:3px 12px; padding-bottom:10px; border-bottom:1px solid var(--line); }
+/* 상륙 구간 — 한 줄이 곧 버튼이다(누르면 지도가 그 구간으로 간다).
+   `.lx button{padding:0}` 이 페이지 클래스를 이기므로 여기서 다시 준다. */
+.lx .df-eta{ display:grid; gap:8px; }
+.lx .df-eta-r{ display:grid; grid-template-columns:1fr auto; gap:2px 12px; width:100%; text-align:left;
+  padding:0 0 8px; border-bottom:1px solid var(--line); }
 .lx .df-eta-r:last-child{ border-bottom:0; }
+.lx .df-eta-r:hover{ background:var(--t1); }
+.lx .df-eta-r[aria-pressed="true"]{ background:var(--t1); }
+.lx .df-eta-r[aria-pressed="true"] .df-eta-b u{ background:var(--accent); }
 .lx .df-eta-n{ font-weight:500; }
 .lx .df-eta-v{ font-family:var(--num); font-weight:500; font-size:16px; color:var(--grey); font-variant-numeric:tabular-nums; }
 .lx .df-eta-t{ grid-column:1/-1; font-size:14px; color:var(--grey); font-family:var(--num); font-variant-numeric:tabular-nums; }
 .lx .df-eta-b{ grid-column:1/-1; height:6px; background:var(--t1); }
 .lx .df-eta-b u{ display:block; height:100%; background:var(--grey-3); }
+/* 닿지 않은 구간도 적는다 — 빠진 구간이 있다는 사실 자체가 계수를 손댄 흔적이다 */
+.lx .df-none{ margin:9px 0 0; padding-top:9px; border-top:1px solid var(--line); font-size:14px; line-height:1.5; color:var(--grey); }
 
+/* 밖에서 받을 것 — 시뮬레이션마다 '무엇이 없어 못 도는가'를 붙여 둔다 */
 .lx .df-need{ margin:0; padding:0; list-style:none; font-size:14.5px; }
-.lx .df-need li{ padding:7px 0 7px 16px; position:relative; border-bottom:1px solid var(--line); line-height:1.5; }
-.lx .df-need li::before{ content:""; position:absolute; left:0; top:14px; width:7px; height:1px; background:var(--warn); }
+.lx .df-need li{ padding:9px 0; border-bottom:1px solid var(--line); line-height:1.5; }
 .lx .df-need li:last-child{ border-bottom:0; }
+.lx .df-need .nm{ display:flex; align-items:baseline; gap:8px; }
+.lx .df-need .nm b{ font-weight:500; }
+.lx .df-need .st2{ font-size:14px; }
+.lx .df-need .st2[data-s="run"]{ color:var(--teal); }
+.lx .df-need .st2[data-s="wait"]{ color:var(--warn); }
+.lx .df-need em{ display:block; margin-top:3px; padding-left:15px; position:relative; font-style:normal; font-size:14px; color:var(--grey); }
+.lx .df-need em::before{ content:""; position:absolute; left:0; top:11px; width:7px; height:1px; background:var(--warn); }
+.lx .df-foot{ margin:11px 0 0; padding-top:10px; border-top:1px solid var(--line); font-size:14px; line-height:1.5; color:var(--grey); }
+.lx .df-foot b{ color:var(--ink); font-weight:500; }
 
 @media (max-width:1100px){
+  .lx.df #main{ overflow:visible; }
   .lx .df{ grid-template-columns:1fr; height:auto; }
   .lx .df-map{ height:62vh; min-height:420px; border-right:0; border-bottom:1px solid var(--line); }
+  .lx .df-side{ grid-template-rows:auto auto auto; }
 }
