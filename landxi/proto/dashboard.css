@@ -292,14 +292,17 @@ a.k:hover .ks .dim{ color:var(--accent); }
 
 /* ══ 한 화면 — 모니터마다 (2026-09-20) ═══════════════════════════════════
    발주자: "대시보드는 한 화면으로" · "모니터마다 최적화를 해야지"
+           "한화면에 된거 맞음?? 밑에 있는건 아에 잘라 없애 버렸네?"
 
-   처음엔 1600×900 에 맞춰 고정 px 로 깎았다. 세로 745px 화면에서 그대로 넘쳤고,
-   더 깎았더니 증거 크롭과 저장용량 합계가 뭉개졌다. 깎는 것으로는 안 된다.
+   두 번 틀렸다.
+     1차 — 1600×900 에 맞춰 고정 px 로 깎았다. 745px 화면에서 그대로 넘쳤다.
+     2차 — 더 깎으니 증거 크롭이 뭉개져서, 짧은 화면에서는 `관리 바로가기` 를
+           숨겼다. 그건 맞춘 게 아니라 **지운 것**이다.
 
-   그래서 **짧은 화면에서는 덜어낸다.** 덜어낼 것은 `관리 바로가기` 다 —
-   사용자·공지·문의·FAQ 네 칸은 전부 레일의 `서비스 관리` 안에 있는 화면이라
-   여기서 한 번 더 보여 주는 것뿐이다. 없어도 갈 길이 막히지 않는다.
-   대신 남는 것들(숫자 · 지도 · 증거 크롭 · 저장용량 합계)은 제 크기를 지킨다. */
+   세로로 쌓인 다섯 줄이 원인이었다. 그래서 **구조를 바꾼다** —
+   아래 두 구역(승인 대기 · 관리 바로가기)을 좌우로 나란히 놓아 한 줄을 없앤다.
+   위의 지도·저장용량과 같은 좌우 비율이라 시선이 한 축으로 떨어진다.
+   지우는 것은 없다. 짧은 화면에서는 값이 조금씩 줄 뿐이다. */
 
 body{ height:100vh; min-height:560px; overflow:hidden; }
 #main{ min-height:0; overflow:clip; padding-bottom:0; }
@@ -308,31 +311,62 @@ body{ height:100vh; min-height:560px; overflow:hidden; }
 #plate-wrap{ flex:1 1 0; min-height:0; max-height:none; }
 #panel{ flex:1 1 0; min-height:0; max-height:none; }
 
-/* 세로 860px 아래 — 바로가기를 덜어낸다(레일 `서비스 관리` 에 그대로 있다). */
+/* 아래 두 구역 — 좌우로. **넓은 칸은 증거 카드 쪽**이다.
+   증거 카드는 그림 + 요청일시·지역·크롭 거리를 나란히 읽어야 해서 폭이 필요하고,
+   바로가기는 이름과 숫자뿐이라 좁아도 된다. (한 번 반대로 놓았다가 글자가 다 잘렸다) */
+#b-bottom{ display:grid; grid-template-columns:minmax(0,1fr) 1px 400px; column-gap:23px; flex:none; }
+#b-bottom::before{ content:""; grid-column:2; background:var(--line); }
+#b-approve{ grid-column:1; padding-bottom:0; min-width:0; }
+#b-admin{ grid-column:3; padding:0; min-width:0; }
+/* 좁은 칸이므로 바로가기는 2×2 */
+#b-bottom .tiles{ grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:12px; row-gap:10px; }
+#b-bottom .evpair{ column-gap:18px; }
+
+/* 바로가기 — 링크에 숫자를 34px 로 세울 이유가 없다. 제목 줄 오른쪽으로. */
+.tiles .ad{ position:relative; }
+.tiles .ad .th{ height:clamp(26px, 3.4vh, 30px); }
+.tiles .ad .tb{ position:absolute; right:12px; top:0; padding:0; }
+.tiles .ad .tb b{ font-size:15.5px; line-height:clamp(26px, 3.4vh, 30px); }
+.tiles .ad .tb span{ display:none; }
+.tiles .ad .ts{ padding:clamp(2px, .5vh, 6px) 12px clamp(3px, .6vh, 8px); }
+
+/* 값 — 줄어들되 바닥이 있다. 증거 크롭 84px 이 그 예다:
+   어느 지역 요청인지 영상으로 보여 주는 것이 그 칸의 존재 이유다. */
 @media (max-height: 940px){
-  #b-admin, #b-admin + hr, hr + #b-admin{ display:none; }
-  #b-admin{ display:none; }
-  #main > hr:last-of-type{ display:none; }
   #main{ padding-top:calc(var(--mast) + 14px); }
   #b1-row{ height:52px; }
   #b1{ font-size:28px; line-height:1.24; }
   #b-kpi{ padding:8px 0 10px; }
   .k .kv{ margin-top:5px; height:44px; }
   .k .kv b{ font-size:42px; }
+  #panel{ margin-top:12px; }
+  .rk, .rk-sum{ height:27px; }
   .ap .ev{ height:104px; }
-  /* 저장용량 목록 — 여섯 줄(다섯 + 합계)이 다 들어가는 줄 높이.
-     합계가 안 보이면 목록의 뜻이 없다. */
-  #panel{ margin-top:11px; }
-  .rk, .rk-sum{ height:28px; }
+  .ap .mh{ height:28px; }
+  .ap dl{ padding:6px 12px 0; row-gap:3px; }
 }
-
-/* 세로 720px 아래 — 더 짧으면 숫자와 크롭을 한 단계 더 낮춘다(바닥은 지킨다). */
-@media (max-height: 740px){
+@media (max-height: 800px){
   #b1-row{ height:46px; }
   #b1{ font-size:26px; }
   .k .kv{ height:38px; }
   .k .kv b{ font-size:34px; }
-  .ap .ev{ height:88px; }   /* 어느 지역 요청인지 알아볼 수 있는 하한 */
-  #panel{ margin-top:8px; }
-  .rk, .rk-sum{ height:23px; }
+  #panel{ margin-top:9px; }
+  .rk, .rk-sum{ height:24px; }
+  .ap .ev{ height:88px; }     /* 알아볼 수 있는 하한 */
+}
+@media (max-width: 1500px){
+  /* 좁아지면 바로가기 칸을 줄이고, 증거 카드 안에서도 그림 몫을 줄여
+     글자(요청 일시·지역·크롭 거리)가 먼저 자리를 갖게 한다.
+     그림은 '어디쯤인지' 알아보면 되고, 값은 읽혀야 뜻이 있다. */
+  #b-bottom{ grid-template-columns:minmax(0,1fr) 1px 280px; column-gap:18px; }
+  #b-bottom .tiles{ column-gap:10px; row-gap:8px; }
+  .ap{ grid-template-columns:minmax(104px,28%) minmax(0,1fr); }
+  .ap dl{ column-gap:8px; font-size:14px; }
+  .ap .mh{ gap:7px; }
+}
+@media (max-width: 1100px){
+  #b-bottom{ grid-template-columns:1fr; }
+  #b-bottom::before{ display:none; }
+  #b-approve, #b-admin{ grid-column:1; }
+  #b-bottom .tiles{ grid-template-columns:repeat(4,minmax(0,1fr)); }
 }
