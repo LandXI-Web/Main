@@ -1,0 +1,733 @@
+{
+ "generated": "2026-09-20",
+ "groups": {
+  "project": {
+   "name": "프로젝트",
+   "rail": "project",
+   "decision": "D5 · 원판 검토 중 (+ 지도 작업공간 컨셉 선택 1·2·3)",
+   "boards": [
+    {
+     "id": "B5-Projects",
+     "title": "프로젝트 0 · 프로젝트 목록 — 우 패널 = 프로젝트 조회(선택 카드: 대표 이미지 · 주요 정보 · 구성원 · 데이터 요약 · 열기/수정/삭제)",
+     "short": "우 패널 = 프로젝트 조회(선택 카드: 대표 이미지 · 주요 정보",
+     "note": "목록 + 우 프로젝트 조회"
+    },
+    {
+     "id": "B5-Project-Create",
+     "title": "프로젝트 1 · 프로젝트 만들기 — 한 화면(단계 레일 0) · 우 = 폼 7필드(편집 중 필드 틴트 띠) · 좌 = 편집 중 필드의 문맥(영상 불러오기 = 아카이브 픽커 + 회백 벡터 풋프린트)",
+     "short": "한 화면(단계 레일 0) · 우 = 폼 7필드(편집 중 필드 틴트 띠)",
+     "note": "만들기 — 한 화면 · 우 폼 · 좌 = 편집 중 필드 문맥"
+    },
+    {
+     "id": "B5-Project-Create-Review",
+     "title": "프로젝트 1-검토 · 만들기 검토 — 좌 = 대표 이미지(자동) + 이름 + kv 6(수정 ›) · 우 = 채운 값 요약 + CTA",
+     "short": "좌 = 대표 이미지(자동) + 이름 + kv 6(수정 ›) · 우 = 채",
+     "note": "만들기 검토 — 좌 검토 판 · 우 요약 + CTA"
+    },
+    {
+     "id": "B5-Project-Overview",
+     "title": "프로젝트 2-1 · 개요(허브 탭 1)",
+     "short": "프로젝트 2-1 · 개요(허브 탭 1)",
+     "note": "개요 · 구현 대기"
+    },
+    {
+     "id": "B5-Project-Data",
+     "title": "프로젝트 2-2 · 데이터(파일 | 데이터셋)",
+     "short": "프로젝트 2-2 · 데이터(파일 | 데이터셋)",
+     "note": "데이터 탭 · 구현 대기"
+    },
+    {
+     "id": "B5-Project-Labeling",
+     "title": "프로젝트 2-3 · 라벨링 + 클래스 편집기",
+     "short": "프로젝트 2-3 · 라벨링 + 클래스 편집기",
+     "note": "라벨링 + 클래스 편집기"
+    },
+    {
+     "id": "B5-Project-Train",
+     "title": "프로젝트 2-4 · 학습 워크플로우",
+     "short": "프로젝트 2-4 · 학습 워크플로우",
+     "note": "학습 워크플로우 캔버스"
+    },
+    {
+     "id": "B5-Project-Analysis",
+     "title": "프로젝트 2-5 · 분석",
+     "short": "프로젝트 2-5 · 분석",
+     "note": "분석 탭"
+    },
+    {
+     "id": "B5-Project-Deploy",
+     "title": "프로젝트 2-6 · 배포 · 발행 폼",
+     "short": "프로젝트 2-6 · 배포",
+     "note": "배포 · 발행 폼"
+    },
+    {
+     "id": "B5-Project-Delete",
+     "title": "프로젝트 2-1a · 삭제 확인(개요 모달)",
+     "short": "프로젝트 2-1a · 삭제 확인(개요 모달)",
+     "note": "삭제 확인"
+    },
+    {
+     "id": "B6-MapWork-Opt3",
+     "title": "B6 · MapWork Opt3",
+     "short": "B6 · MapWork Opt3",
+     "note": "선택 3 · 권장 — 레이어가 곧 작업: 레이어 스택 + 판 위 콜아웃(다음 일 4) + 시점 스트립"
+    },
+    {
+     "id": "B6-MapWork-Opt1",
+     "title": "B6 · MapWork Opt1",
+     "short": "B6 · MapWork Opt1",
+     "note": "선택 1 · 파이프라인 도크 — 판 풀블리드 + 아래 단계 5칸(큰 숫자) + 좌 목록 + 우 인스펙터"
+    },
+    {
+     "id": "B6-MapWork-Opt2",
+     "title": "B6 · MapWork Opt2",
+     "short": "B6 · MapWork Opt2",
+     "note": "선택 2 · 단계 분할 — 좌 600 = 지금 단계의 일 / 우 = 판"
+    }
+   ]
+  },
+  "analysis": {
+   "name": "분석 서비스",
+   "rail": "analysis",
+   "decision": "D10 · 원판 검토 중",
+   "boards": [
+    {
+     "id": "B5-Analysis-List",
+     "title": "B5 · 분석 서비스 — 서비스: 카드 15(실크롭 244×84 + 이름 + 부처만 · 3열) + 우 정보 패널 444(선택 = 남원 농지이용 · 큰 이미지 · kv 6 · 숫자는 여기만) · 부처 칩 8 · CTA 분석 실행 1",
+     "short": "서비스: 카드 15(실크롭 244×84 + 이름 + 부처만 · 3열) +",
+     "note": "서비스 홈"
+    },
+    {
+     "id": "B5-Analysis-Run-Review",
+     "title": "분석 실행 1 · 실행 검토 — 01 영상이 중심(아카이브에서 불러오기: 탭 4 · 실썸네일 9/11 · 선택 2 · 페이지 1·2 · 회백 풋프린트 지도 / 영상 업로드 드롭존 = 데이터 관리 업로드 기능) · 02 과제 · 03 모델 압축 블록 + 변경 › · 우 실행 요약 kv 7 · 검정 CTA 분석 실행 1",
+     "short": "01 영상이 중심(아카이브에서 불러오기: 탭 4 · 실썸네일 9/11",
+     "note": "분석 실행 1 · 실행 검토 — 영상 중심(불러오기 · 업로드)"
+    },
+    {
+     "id": "B5-Analysis-Run-Progress",
+     "title": "분석 실행 2 · 실행중 — 세그먼트 실행중 3 · 우 패널 제목 실행중(정정) · 처리 중 영상(스캔 스트립 72 %) · 레일 5단계 1 · 영상별 진행 행 2(원본 상태어 분석중/대기 · % · 검출) · 누적 큰 수 4(검출 1,205 필지 · 처리 면적 0.45/1.24 km² · 경과 24분 · 잔여 42분) · 취소 헤어라인 · 검정 CTA 0",
+     "short": "세그먼트 실행중 3 · 우 패널 제목 실행중(정정)",
+     "note": "분석 실행 2 · 실행중 — 제목 정정 · 영상별 진행 · 누적"
+    },
+    {
+     "id": "B5-Analysis-Result",
+     "title": "분석 실행 3 · 실행 결과 — 풀블리드 정사영상 + 청록 결과 · 스캔 스트립 → DETECTED → 카운트업 1,216/2,098 · 좌 실행중 3/완료 7(원본 탭) · 우 결과 요약 · 공유/다운로드",
+     "short": "풀블리드 정사영상 + 청록 결과 · 스캔 스트립 → DETECTED → ",
+     "note": "분석 실행 3 · 실행 결과"
+    }
+   ]
+  },
+  "map": {
+   "name": "지도 서비스",
+   "rail": "map",
+   "decision": "D13 · 원판 검토 중",
+   "boards": [
+    {
+     "id": "B5-Map",
+     "title": "지도 서비스 1 · 기본 — V-World 실타일 + 레이어 카드 + 시점 스트립",
+     "short": "V-World 실타일 + 레이어 카드 + 시점 스트립",
+     "note": "기본 — V-World 실타일 + 레이어 카드 + 시점 스트립"
+    },
+    {
+     "id": "B5-Map-Info",
+     "title": "지도 서비스 2 · 객체 정보 — 브래킷 콜아웃 + 탐지 정보",
+     "short": "브래킷 콜아웃 + 탐지 정보",
+     "note": "객체 정보 — 브래킷 콜아웃 + 탐지 정보 + 조치 상태"
+    },
+    {
+     "id": "B5-Map-Compare",
+     "title": "지도 서비스 3 · 겹쳐보기 — 2025.04 | 2025.10 + 변화 지수",
+     "short": "2025.04 | 2025.10 + 변화 지수",
+     "note": "겹쳐보기 — 2025.04 | 2025.10 스와이프 + 변화 지수"
+    }
+   ]
+  },
+  "support": {
+   "name": "서비스 지원",
+   "rail": "support",
+   "decision": "D23 · 2026-09-20 자동 설계 · 선택 1·2·3",
+   "boards": [
+    {
+     "id": "B6-Support-Notice-Opt2",
+     "title": "B6 · Support Notice Opt2",
+     "short": "B6 · Support Notice Opt2",
+     "note": "선택 2 · 권장 — 구분 건수 타일 4 + 좌 목록 / 우 열람 판"
+    },
+    {
+     "id": "B6-Support-Notice-Opt1",
+     "title": "B6 · Support Notice Opt1",
+     "short": "B6 · Support Notice Opt1",
+     "note": "선택 1 · 표 + 행 제자리 펼침"
+    },
+    {
+     "id": "B6-Support-Notice-Opt3",
+     "title": "B6 · Support Notice Opt3",
+     "short": "B6 · Support Notice Opt3",
+     "note": "선택 3 · 구분 3열 보드 + 우측 서랍"
+    },
+    {
+     "id": "B6-Support-Contact",
+     "title": "B6 · Support Contact",
+     "short": "B6 · Support Contact",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Support-Contact-Cancel",
+     "title": "B6 · Support Contact Cancel",
+     "short": "B6 · Support Contact Cancel",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Support-Contact-Empty",
+     "title": "B6 · Support Contact Empty",
+     "short": "B6 · Support Contact Empty",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Support-Contact-Error",
+     "title": "B6 · Support Contact Error",
+     "short": "B6 · Support Contact Error",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Support-Contact-View",
+     "title": "B6 · Support Contact View",
+     "short": "B6 · Support Contact View",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Support-Contact-View-Pending",
+     "title": "B6 · Support Contact View Pending",
+     "short": "B6 · Support Contact View Pending",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Support-FAQ",
+     "title": "B6 · Support FAQ",
+     "short": "B6 · Support FAQ",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Support-FAQ-Empty",
+     "title": "B6 · Support FAQ Empty",
+     "short": "B6 · Support FAQ Empty",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Support-Manual",
+     "title": "B6 · Support Manual",
+     "short": "B6 · Support Manual",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Support-Notice-Detail",
+     "title": "B6 · Support Notice Detail",
+     "short": "B6 · Support Notice Detail",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Support-Notice-Empty",
+     "title": "B6 · Support Notice Empty",
+     "short": "B6 · Support Notice Empty",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Support-Usecase",
+     "title": "B6 · Support Usecase",
+     "short": "B6 · Support Usecase",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Support-Usecase-Empty",
+     "title": "B6 · Support Usecase Empty",
+     "short": "B6 · Support Usecase Empty",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Support-Usecase-Modal",
+     "title": "B6 · Support Usecase Modal",
+     "short": "B6 · Support Usecase Modal",
+     "note": "2026-09-20 자동 설계"
+    }
+   ]
+  },
+  "publish": {
+   "name": "카드 발행 관리",
+   "rail": "publish",
+   "decision": "D24 · 2026-09-20 자동 설계 · 선택 1·2·3",
+   "boards": [
+    {
+     "id": "B6-Publish-Opt3",
+     "title": "B6 · Publish Opt3",
+     "short": "B6 · Publish Opt3",
+     "note": "선택 3 · 권장 — 분할 검토 데스크: 큐 344 · 증거(실크롭+청록) 520 · 결정 328"
+    },
+    {
+     "id": "B6-Publish-Opt1",
+     "title": "B6 · Publish Opt1",
+     "short": "B6 · Publish Opt1",
+     "note": "선택 1 · 원장(표) + 우 드로어 480"
+    },
+    {
+     "id": "B6-Publish-Opt2",
+     "title": "B6 · Publish Opt2",
+     "short": "B6 · Publish Opt2",
+     "note": "선택 2 · 상태 열 보드 4 + 선택 요약 띠"
+    },
+    {
+     "id": "B6-Publish-Card-Edit",
+     "title": "B6 · Publish Card Edit",
+     "short": "B6 · Publish Card Edit",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Publish-Card-Edit-Locked",
+     "title": "B6 · Publish Card Edit Locked",
+     "short": "B6 · Publish Card Edit Locked",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Publish-Cards",
+     "title": "B6 · Publish Cards",
+     "short": "B6 · Publish Cards",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Publish-Cards-Empty",
+     "title": "B6 · Publish Cards Empty",
+     "short": "B6 · Publish Cards Empty",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Publish-List",
+     "title": "B6 · Publish List",
+     "short": "B6 · Publish List",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Publish-List-Empty",
+     "title": "B6 · Publish List Empty",
+     "short": "B6 · Publish List Empty",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Publish-List-Pending",
+     "title": "B6 · Publish List Pending",
+     "short": "B6 · Publish List Pending",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Publish-Request",
+     "title": "B6 · Publish Request",
+     "short": "B6 · Publish Request",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Publish-Review-Analysis",
+     "title": "B6 · Publish Review Analysis",
+     "short": "B6 · Publish Review Analysis",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Publish-Review-ClassModal",
+     "title": "B6 · Publish Review ClassModal",
+     "short": "B6 · Publish Review ClassModal",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Publish-Review-Edit",
+     "title": "B6 · Publish Review Edit",
+     "short": "B6 · Publish Review Edit",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Publish-Review-Labeling",
+     "title": "B6 · Publish Review Labeling",
+     "short": "B6 · Publish Review Labeling",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Publish-Review-Members",
+     "title": "B6 · Publish Review Members",
+     "short": "B6 · Publish Review Members",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Publish-Review-Process",
+     "title": "B6 · Publish Review Process",
+     "short": "B6 · Publish Review Process",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Publish-Review-Reject",
+     "title": "B6 · Publish Review Reject",
+     "short": "B6 · Publish Review Reject",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Publish-Review-Rejected",
+     "title": "B6 · Publish Review Rejected",
+     "short": "B6 · Publish Review Rejected",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Publish-Review-Train",
+     "title": "B6 · Publish Review Train",
+     "short": "B6 · Publish Review Train",
+     "note": "2026-09-20 자동 설계"
+    }
+   ]
+  },
+  "admin": {
+   "name": "서비스 관리",
+   "rail": "admin",
+   "decision": "D25 · 2026-09-20 자동 설계 · 선택 1·2·3",
+   "boards": [
+    {
+     "id": "B6-Admin-Users-Opt2",
+     "title": "B6 · Admin Users Opt2",
+     "short": "B6 · Admin Users Opt2",
+     "note": "선택 2 · 권장 — 좌 목록 6열 + 우 사용자 정보 열람(승인/거부·권한 저장)"
+    },
+    {
+     "id": "B6-Admin-Users-Opt1",
+     "title": "B6 · Admin Users Opt1",
+     "short": "B6 · Admin Users Opt1",
+     "note": "선택 1 · 승인 대기 띠 + 원본 10열 원장"
+    },
+    {
+     "id": "B6-Admin-Users-Opt3",
+     "title": "B6 · Admin Users Opt3",
+     "short": "B6 · Admin Users Opt3",
+     "note": "선택 3 · 승인 데스크 + 부서별 카드 보드"
+    },
+    {
+     "id": "B6-Admin-Faq",
+     "title": "B6 · Admin Faq",
+     "short": "B6 · Admin Faq",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Admin-Faq-Form",
+     "title": "B6 · Admin Faq Form",
+     "short": "B6 · Admin Faq Form",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Admin-Inquiry",
+     "title": "B6 · Admin Inquiry",
+     "short": "B6 · Admin Inquiry",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Admin-Inquiry-Reply",
+     "title": "B6 · Admin Inquiry Reply",
+     "short": "B6 · Admin Inquiry Reply",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Admin-Map",
+     "title": "B6 · Admin Map",
+     "short": "B6 · Admin Map",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Admin-Map-Edit",
+     "title": "B6 · Admin Map Edit",
+     "short": "B6 · Admin Map Edit",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Admin-Notice",
+     "title": "B6 · Admin Notice",
+     "short": "B6 · Admin Notice",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Admin-Notice-Delete",
+     "title": "B6 · Admin Notice Delete",
+     "short": "B6 · Admin Notice Delete",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Admin-Notice-Form",
+     "title": "B6 · Admin Notice Form",
+     "short": "B6 · Admin Notice Form",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Admin-Notice-Form-Error",
+     "title": "B6 · Admin Notice Form Error",
+     "short": "B6 · Admin Notice Form Error",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Admin-Users-Approve",
+     "title": "B6 · Admin Users Approve",
+     "short": "B6 · Admin Users Approve",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Admin-Users-Detail",
+     "title": "B6 · Admin Users Detail",
+     "short": "B6 · Admin Users Detail",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Admin-Users-Empty",
+     "title": "B6 · Admin Users Empty",
+     "short": "B6 · Admin Users Empty",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Admin-Users-Login",
+     "title": "B6 · Admin Users Login",
+     "short": "B6 · Admin Users Login",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Admin-Users-Login-Empty",
+     "title": "B6 · Admin Users Login Empty",
+     "short": "B6 · Admin Users Login Empty",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Admin-Users-Pwd",
+     "title": "B6 · Admin Users Pwd",
+     "short": "B6 · Admin Users Pwd",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Admin-Users-Pwd-Empty",
+     "title": "B6 · Admin Users Pwd Empty",
+     "short": "B6 · Admin Users Pwd Empty",
+     "note": "2026-09-20 자동 설계"
+    }
+   ]
+  },
+  "my": {
+   "name": "마이 페이지",
+   "rail": "my",
+   "decision": "D26 · 2026-09-20 자동 설계 · 선택 1·2·3",
+   "boards": [
+    {
+     "id": "B6-My-Opt1",
+     "title": "B6 · My Opt1",
+     "short": "B6 · My Opt1",
+     "note": "선택 1 · 권장 — 좌 신원 원장 372 / 우 디스크 판(30 % + 칸 판 + 신청 이력)"
+    },
+    {
+     "id": "B6-My-Opt2",
+     "title": "B6 · My Opt2",
+     "short": "B6 · My Opt2",
+     "note": "선택 2 · 현황 밴드 4칸 + 원본 순서 세로 스택"
+    },
+    {
+     "id": "B6-My-Opt3",
+     "title": "B6 · My Opt3",
+     "short": "B6 · My Opt3",
+     "note": "선택 3 · 설정 작업공간(좌 절 목록 + 우 상세)"
+    },
+    {
+     "id": "B6-My-Brand",
+     "title": "B6 · My Brand",
+     "short": "B6 · My Brand",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-My-Brand-Applied",
+     "title": "B6 · My Brand Applied",
+     "short": "B6 · My Brand Applied",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-My-Brand-Empty",
+     "title": "B6 · My Brand Empty",
+     "short": "B6 · My Brand Empty",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-My-Brand-Error",
+     "title": "B6 · My Brand Error",
+     "short": "B6 · My Brand Error",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-My-Brand-Reset",
+     "title": "B6 · My Brand Reset",
+     "short": "B6 · My Brand Reset",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-My-Edit",
+     "title": "B6 · My Edit",
+     "short": "B6 · My Edit",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-My-Edit-Error",
+     "title": "B6 · My Edit Error",
+     "short": "B6 · My Edit Error",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-My-Edit-Saved",
+     "title": "B6 · My Edit Saved",
+     "short": "B6 · My Edit Saved",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-My-Flyout",
+     "title": "B6 · My Flyout",
+     "short": "B6 · My Flyout",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-My-History-Empty",
+     "title": "B6 · My History Empty",
+     "short": "B6 · My History Empty",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-My-Password",
+     "title": "B6 · My Password",
+     "short": "B6 · My Password",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-My-Password-Error",
+     "title": "B6 · My Password Error",
+     "short": "B6 · My Password Error",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-My-Password-Saved",
+     "title": "B6 · My Password Saved",
+     "short": "B6 · My Password Saved",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-My-PwdConfirm",
+     "title": "B6 · My PwdConfirm",
+     "short": "B6 · My PwdConfirm",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-My-PwdConfirm-Error",
+     "title": "B6 · My PwdConfirm Error",
+     "short": "B6 · My PwdConfirm Error",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-My-Storage",
+     "title": "B6 · My Storage",
+     "short": "B6 · My Storage",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-My-Storage-Done",
+     "title": "B6 · My Storage Done",
+     "short": "B6 · My Storage Done",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-My-Storage-Error",
+     "title": "B6 · My Storage Error",
+     "short": "B6 · My Storage Error",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-My-Withdraw",
+     "title": "B6 · My Withdraw",
+     "short": "B6 · My Withdraw",
+     "note": "2026-09-20 자동 설계"
+    }
+   ]
+  },
+  "auth": {
+   "name": "계정 신청 · 아이디 · 비밀번호 찾기",
+   "rail": "",
+   "decision": "D26 · 로그인 카드 가족",
+   "boards": [
+    {
+     "id": "B6-Auth-FindId",
+     "title": "B6 · Auth FindId",
+     "short": "B6 · Auth FindId",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Auth-FindId-Error",
+     "title": "B6 · Auth FindId Error",
+     "short": "B6 · Auth FindId Error",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Auth-FindId-Fail",
+     "title": "B6 · Auth FindId Fail",
+     "short": "B6 · Auth FindId Fail",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Auth-FindId-Result",
+     "title": "B6 · Auth FindId Result",
+     "short": "B6 · Auth FindId Result",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Auth-FindPw",
+     "title": "B6 · Auth FindPw",
+     "short": "B6 · Auth FindPw",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Auth-FindPw-Error",
+     "title": "B6 · Auth FindPw Error",
+     "short": "B6 · Auth FindPw Error",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Auth-FindPw-Fail",
+     "title": "B6 · Auth FindPw Fail",
+     "short": "B6 · Auth FindPw Fail",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Auth-FindPw-Result",
+     "title": "B6 · Auth FindPw Result",
+     "short": "B6 · Auth FindPw Result",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Auth-Signup-1",
+     "title": "B6 · Auth Signup 1",
+     "short": "B6 · Auth Signup 1",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Auth-Signup-1-Init",
+     "title": "B6 · Auth Signup 1 Init",
+     "short": "B6 · Auth Signup 1 Init",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Auth-Signup-2",
+     "title": "B6 · Auth Signup 2",
+     "short": "B6 · Auth Signup 2",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Auth-Signup-2-Error",
+     "title": "B6 · Auth Signup 2 Error",
+     "short": "B6 · Auth Signup 2 Error",
+     "note": "2026-09-20 자동 설계"
+    },
+    {
+     "id": "B6-Auth-Signup-3",
+     "title": "B6 · Auth Signup 3",
+     "short": "B6 · Auth Signup 3",
+     "note": "2026-09-20 자동 설계"
+    }
+   ]
+  }
+ }
+}
