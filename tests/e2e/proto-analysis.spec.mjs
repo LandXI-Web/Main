@@ -7,6 +7,10 @@ import { test, expect } from '@playwright/test';
 //  데이터 assets/data/{cards,registry}.js (정본) · results·services·imagery·models·crops (실측)
 //  실행  PORT=4201 npx playwright test tests/e2e/proto-analysis.spec.mjs --workers=1
 const P = 'proto/analysis-ai.html';
+
+/* 줄바꿈을 LF 로 맞춘다. core.autocrlf 가 켜진 윈도우에서 새로 클론하면 작업 트리가
+   CRLF 로 떨어지고, LF 기준으로 쓴 문자열 치환이 조용히 빗나가 테스트가 엉뚱하게 깨진다. */
+const nl = (s) => s.split('\r\n').join('\n');
 const ACCENT = 'rgb(0, 109, 247)', WARN = 'rgb(209, 53, 43)';
 const NETWORK = /Failed to load resource|net::ERR|ERR_|status of 40|status of 50|tile|WebGL|GPU stall|maplibre/i;
 
@@ -160,7 +164,9 @@ test.describe('진열대 — 레지스트리 · AXES', () => {
   test('R5 — cards.js 에 카드를 한 줄 더하면 화면 코드를 고치지 않아도 진열대에 선다', async ({ page }) => {
     await page.route('**/assets/data/cards.js', async (route) => {
       const res = await route.fetch();
-      const src = await res.text();
+      // 줄바꿈을 LF 로 맞춘 뒤 치환한다 — autocrlf 가 켜진 윈도우에서 새로 클론하면
+      // 작업 트리가 CRLF 로 떨어져 LF 기준 치환이 조용히 빗나간다.
+      const src = nl(await res.text());
       const extra = `{ id: 'card-test-new', name: '시험용 신규 카드', scope: 'local', duty: '테스트 업무',
         kind: { input: ['video'], output: ['density', 'series'], viz: ['heatmap', 'playback'] },
         services: ['marine'], ext: 'crowd', status: '검토', version: 'v0.1', projectId: 'pj-test', portable: true,
@@ -253,7 +259,7 @@ test.describe('카드 상세', () => {
   test('선언을 바꾸면 화면 장치가 따라 바뀐다(하드코딩 아님)', async ({ page }) => {
     await page.route('**/assets/data/cards.js', async (route) => {
       const res = await route.fetch();
-      const src = await res.text();
+      const src = nl(await res.text());
       // card-farm 의 선언만 인파관리형으로 바꾼다 — 화면 코드는 그대로다
       await route.fulfill({ body: src.replace(
         "kind: { input: ['ortho'], output: ['polygon'], viz: ['layer', 'chart'] },\n    services: ['farmland', 'greenhouse', 'feedcrop', 'silage'],",
@@ -275,9 +281,15 @@ test.describe('카드 상세', () => {
 
   test('역추적 — 이 카드를 만든 프로젝트 · 결과 → 지도 서비스', async ({ page }) => {
     await boot(page, P + '?card=card-marine');
-    await expect(page.locator('#to-project')).toHaveAttribute('href', 'ai-project.html?pid=pj-marine');
+    // 해양쓰레기는 판독은 돌지만 models.js 에 대응하는 학습 프로젝트가 없다(cards.js projectGap).
+    // 없는 프로젝트로 링크를 걸지 않는다 — 결과 → 지도 연결은 그대로 산다.
+    await expect(page.locator('#to-project')).toHaveCount(0);
     const rid = await page.evaluate(async () => (await import('../assets/data/results.js')).resultsByService('marine')[0].id);
     await expect(page.locator(`#cdetail a[href="ximap.html?result=${rid}"]`)).toHaveCount(1);
+    // 프로젝트가 있는 카드는 링크가 걸린다
+    await page.goto(P + '?card=card-farm');
+    await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
+    await expect(page.locator('#to-project')).toHaveAttribute('href', 'ai-project.html?pid=pj-greenhouse');
     // 프로젝트가 없는 카드는 링크 대신 이유 한 줄
     await page.goto(P + '?card=card-crowd');
     await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
