@@ -327,12 +327,15 @@ body{ height:100vh; min-height:560px; overflow:hidden; }
 .tiles .ad .th{ height:clamp(26px, 3.4vh, 30px); }
 .tiles .ad .tb{ position:absolute; right:12px; top:0; padding:0; }
 .tiles .ad .tb b{ font-size:15.5px; line-height:clamp(26px, 3.4vh, 30px); }
-.tiles .ad .tb span{ display:none; }
+/* 단위 말(`미답변`·`전체`)까지 숨기면 숫자가 무엇인지 모른다 — 숨기지 않고 옆에 작게 둔다.
+   (한 번 display:none 으로 지웠다가 되돌렸다) */
+.tiles .ad .tb span{ display:inline; font-size:14px; color:var(--grey); margin-left:4px; }
+.tiles .ad .tb .tl{ margin-left:4px; }
 .tiles .ad .ts{ padding:clamp(2px, .5vh, 6px) 12px clamp(3px, .6vh, 8px); }
 
 /* 값 — 줄어들되 바닥이 있다. 증거 크롭 84px 이 그 예다:
    어느 지역 요청인지 영상으로 보여 주는 것이 그 칸의 존재 이유다. */
-@media (max-height: 940px){
+@media (max-height: 860px){
   #main{ padding-top:calc(var(--mast) + 14px); }
   #b1-row{ height:52px; }
   #b1{ font-size:28px; line-height:1.24; }
@@ -370,3 +373,48 @@ body{ height:100vh; min-height:560px; overflow:hidden; }
   #b-approve, #b-admin{ grid-column:1; }
   #b-bottom .tiles{ grid-template-columns:repeat(4,minmax(0,1fr)); }
 }
+
+/* ── 배치 조정 (2026-09-20, 발주자 화면 확인 후) ───────────────────────────
+   "백본과 AI 개발 프로젝트 현황이 쓸데없이 너무 칸을 많이 차지하고 있다."
+   "카드 발행 승인 대기 보면 좀 짤린 느낌이다. 검토? 여기까지 이미지는 세로로 늘려야."
+
+   백본 구역은 **제목 두 줄과 지도·막대 다섯 줄**이 전부인데 화면의 절반을 먹고 있었다.
+   막대 다섯 줄은 22px 이면 읽힌다. 거기서 걷은 높이를 증거 크롭에 준다 —
+   그 칸은 어느 지역 요청인지 영상으로 보여 주는 것이 존재 이유라 세로가 살아야 한다. */
+
+/* 백본 — 목록 줄을 22px 로 조여 구역 자체를 낮추고, 그 높이를 아래(증거 크롭)로 넘긴다.
+   ⚠ `#panel` 안의 판들은 **절대 위치**라 자동 높이가 2px 로 잡힌다. 높이를 명시해야 한다.
+   한 번 `flex:0 0 auto` 로 바꿨다가 목록이 통째로 사라졌다 — 그때의 기록을 남겨 둔다.
+   최소값은 여섯 줄(다섯 + 합계)이 들어가는 높이다. 합계가 잘리면 목록의 뜻이 없다. */
+/* 남는 높이는 **가운데 구역**이 받는다(원판 원칙 "여백은 콘텐츠로").
+   아래 두 구역은 내용 높이로 두고, 지도 판과 목록 판이 같이 자란다 —
+   둘은 같은 격자 행이라 높이가 저절로 같아진다.
+   한 번 반대로(아래가 남는 높이를 받게) 두었다가 판이 254px 아래로 눌렸다. */
+/* 가운데 구역은 **내용 높이**로 두고(판이 스스로 자란다), 남는 높이는 아래가 받는다.
+   반대로 두면 큰 화면에서 판이 420 에 걸린 뒤 빈 띠가 생긴다(1920×1200 에서 105px). */
+/* 남는 높이는 **증거 크롭이 받는다.** 사이 여백으로 흘리면 빈 띠가 되고(1920×1200 에서
+   135px), 판에 몰아주면 판이 420 상한에 걸린다. 크롭은 커질수록 요청 지역이 잘 보이니
+   여기가 받을 자리다. 상한은 둔다 — 카드가 사진첩처럼 커지면 안 된다. */
+#split{ flex:0 0 auto; }
+#b-bottom{ flex:1 1 auto; align-items:stretch; }
+#b-approve{ display:flex; flex-direction:column; min-height:0; }
+#b-approve .evpair{ flex:1 1 auto; min-height:0; }
+/* `.ap` 는 격자(그림 | 값)라 flex 로는 안 늘어난다 — 칸을 늘리고 그림이 그 칸을 채운다. */
+.ap{ min-height:0; align-items:stretch; }
+.ap .ev{ height:100%; min-height:clamp(96px, 14vh, 140px); max-height:300px; }
+#b-approve .evpair > *{ min-height:0; }
+#left, #right{ min-height:0; overflow:visible; }
+.rk, .rk-sum{ height:clamp(22px, 3vh, 30px); }
+/* 판 높이 — 화면을 따라 자라되 254(원판 최소)와 420(원판 최대) 사이를 지킨다.
+   짧은 모니터에서는 164 까지 내려간다(여섯 줄이 들어가는 하한). */
+/* margin-top 은 원판 값(30px)을 지킨다 — 오른쪽은 탭 줄이 있어 이 값이라야 왼쪽 판과
+   아래 끝이 맞는다. 한 번 줄였다가 두 판이 19px 어긋났다. */
+#panel{ flex:1 1 0; min-height:clamp(164px, 29vh, 420px); max-height:420px; }
+#plate-wrap{ flex:1 1 0; min-height:clamp(164px, 29vh, 420px); max-height:420px; }
+.sh{ margin-bottom:2px; }
+
+/* 증거 크롭 — 카드가 세로로 서야 요청 지역이 보인다. */
+/* align-items:start 였는데 그러면 카드가 안 늘어난다 — stretch 로 두고 위 규칙을 따른다 */
+#b-bottom{ min-height:0; }
+
+

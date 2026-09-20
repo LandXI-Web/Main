@@ -377,23 +377,30 @@ test('색 역할 — warn 은 조치 필요 자리에만, 파랑은 정보에만
 });
 
 for (const [w, h] of [[1440, 900], [1920, 1200]]) {
-  test(`여백은 콘텐츠로 — ${w}×${h}: 판·패널이 254→420 사이에서 자라고, 푸터는 바닥, 80px 넘는 빈 띠가 없다`, async ({ page }) => {
+  test(`한 화면 — ${w}×${h}: 페이지가 안 넘치고, 판·패널이 같이 자라고, 잘리는 내용이 없다`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await boot(page);
     const m = await page.evaluate(() => {
       const r = (s) => document.querySelector(s).getBoundingClientRect();
-      const plate = r('#plate-wrap'), panel = r('#panel'), foot = r('#foot');
-      // 본문 블록들의 세로 구간을 모아 그 사이 빈 띠의 최댓값을 잰다
-      const blocks = ['#b1-row', '#b-kpi', '#plate-wrap', '#panel', '#b-approve', '#b-admin', '#foot'].map((s) => r(s)).sort((a, b) => a.top - b.top);
-      let gap = 0; for (let i = 1; i < blocks.length; i++) gap = Math.max(gap, blocks[i].top - blocks[i - 1].bottom);
-      const sh = document.documentElement.scrollHeight;
-      return { plate: plate.height, panel: panel.height, footBottom: Math.round(foot.bottom + scrollY), sh, gap, tail: sh - Math.round(foot.bottom + scrollY) };
+      const plate = r('#plate-wrap'), panel = r('#panel'), foot = r('#foot'), ev = r('.ap .ev');
+      const pane = document.querySelector('#pane-proj');
+      return { plate: plate.height, panel: panel.height, ev: ev.height,
+        over: document.documentElement.scrollHeight - innerHeight,
+        listClip: pane.scrollHeight - pane.clientHeight,
+        footBottom: Math.round(foot.bottom + scrollY), sh: document.documentElement.scrollHeight,
+        adminBottom: Math.round(r('#b-admin').bottom) };
     });
-    expect(m.plate).toBeGreaterThanOrEqual(254); expect(m.plate).toBeLessThanOrEqual(420);
-    expect(Math.abs(m.plate - m.panel)).toBeLessThanOrEqual(1);                    // 판 = 패널 높이
-    expect(m.footBottom).toBe(m.sh);                                                // 푸터가 문서 바닥
-    expect(m.tail).toBe(0);
-    expect(m.gap).toBeLessThanOrEqual(80);                                          // 빈 띠 ≤ 80
-    if (h >= 1200) { expect(m.sh).toBe(h); expect(m.plate).toBeGreaterThan(254); }  // 1920×1200 = 한 화면, 판이 자랐다
+    /* 2026-09-20 개편 — 계약이 바뀌었다.
+       예전엔 다섯 구역이 세로로 쌓여 있어 "판·패널 254~420 + 빈 띠 ≤80" 으로 재었다.
+       발주자가 "대시보드는 한 화면으로" · "밑에 있는건 아에 잘라 없애 버렸네?" 라고 해서
+       아래 두 구역(승인 대기 · 관리 바로가기)을 좌우로 놓아 한 줄을 없앴다.
+       그래서 지금 재야 할 것은 **넘치지 않는가 · 잘리지 않는가 · 같이 자라는가** 다. */
+    expect(m.over).toBeLessThanOrEqual(4);                        // 어느 모니터에서도 한 화면
+    expect(m.listClip).toBeLessThanOrEqual(1);                    // 저장용량 목록이 합계까지 다 보인다
+    expect(Math.abs(m.plate - m.panel)).toBeLessThanOrEqual(1);   // 판 = 패널 높이
+    expect(m.plate).toBeGreaterThanOrEqual(164);                  // 지도가 읽히는 하한
+    expect(m.plate).toBeLessThanOrEqual(420);                     // 사진첩처럼 커지지 않는다
+    expect(m.ev).toBeGreaterThanOrEqual(96);                      // 증거 크롭 — 요청 지역이 보이는 하한
+    expect(m.footBottom).toBe(m.sh);                              // 푸터가 문서 바닥
   });
 }

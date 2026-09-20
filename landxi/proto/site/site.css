@@ -47,8 +47,8 @@
 .st-row > a:hover{ background:var(--lx-tint-1); padding-inline:16px; }
 .st-row[aria-current] > a{ background:var(--lx-tint-1); padding-inline:16px; }
 .st-no{ font-family:var(--lx-num); font-size:var(--lx-cap); color:var(--lx-grey-2); font-variant-numeric:tabular-nums; }
-.st-t{ font-family:var(--lx-display); font-weight:700; font-size:var(--lx-h5); line-height:1.35;
-  letter-spacing:var(--lx-h5-ls); min-width:0; }
+.st-t{ font-family:var(--lx-display); font-weight:700; font-size:24px; line-height:1.35;
+  letter-spacing:var(--lx-h5-ls); min-width:0; }   /* h5(26) −2px — 목록에서는 조금 작게 */
 .st-d{ font-family:var(--lx-num); font-size:var(--lx-cap); color:var(--lx-grey-2);
   text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
 .st-tag{ display:inline-block; margin-right:10px; padding:0 8px; height:24px; line-height:22px;
@@ -64,7 +64,7 @@
 .st-card img{ width:100%; height:100%; object-fit:cover; display:block;
   transition:transform var(--lx-d2) var(--lx-ease); }
 .st-card > a:hover img{ transform:scale(1.03); }
-.st-card .st-t{ font-size:var(--lx-h4); line-height:var(--lx-h4-lh); }
+.st-card .st-t{ font-size:32px; line-height:1.3; }   /* h4(30) +2px — 사례는 제목이 주인공이다 */
 .st-card .lx-cap{ margin-top:12px; }
 @media (max-width:1023.98px){ .st-cards{ grid-template-columns:1fr; } }
 

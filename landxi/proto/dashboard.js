@@ -85,9 +85,9 @@ $('#b2-d').textContent = ymd(T1);
 const actWord = (t) => esc(t).replace(/(검토 필요|승인 필요|답변 필요)/, '<em>$1</em>');
 $('#b-kpi').innerHTML = KPI.map((k) => {
   const inner = `<span class="kl">${esc(k.label)}</span><span class="kv"><b class="big cu" data-n="${k.value}">0</b><span>${esc(k.unit)}</span></span>
-    <span class="ks n">${k.act ? actWord(k.sub) : esc(k.sub)}${k.to ? ' · <span class="dim">?status=대기</span>' : ''}</span>`;
+    <span class="ks n">${k.act ? actWord(k.sub) : esc(k.sub)}</span>`;
   const cls = `k${k.act ? ' act' : ''}`;
-  return k.to ? `<a class="${cls}" role="listitem" href="dashboard.html?status=대기" title="원본 ${esc(k.href)}">${inner}</a>`
+  return k.to ? `<a class="${cls}" role="listitem" href="dashboard.html?status=대기">${inner}</a>`
     : `<div class="${cls}" role="listitem" title="원본 ${esc(k.href)}">${inner}</div>`;
 }).join('');
 
@@ -280,7 +280,7 @@ $('#ap-rows').innerHTML = APPROVALS.map((a, i) => {
       <dl class="n"><dt>요청 일시</dt><dd>${esc(a.at)}<span class="tag">시연</span></dd>
         <dt>요청 지역</dt><dd>남원시 ${esc(a.emd)}<span class="tag">추정</span></dd>
         <dt>증거 크롭</dt><dd>기준점에서 ${c.km} km<span class="tag">추정</span></dd></dl>
-      <a class="go warn" href="${href}">검토 › <span class="dim">?open=${a.id}</span></a>
+      <a class="go warn" href="${href}">검토 ›</a>
     </div></article>`;
 }).join('');
 // B14 — 타일 4: 큰 수 = 정보(파랑) / 조치 필요(warn). 값은 원본 부제(desc)와 같다.

@@ -42,6 +42,16 @@ export const TABS = {
 };
 /* 푸터 · 공지 · 기준일 — 정본 한 벌(C3). 데이터 관리 화면의 값. */
 export const FOOT_LINKS = ['개인정보처리방침', '이용약관', '이메일주소무단수집거부'];
+
+/* 패밀리 사이트 — 이 플랫폼에서 실제로 갈 수 있는 곳만 등록한다(2026-09-20 발주자 지시:
+   "남원과 전라남도는 패밀리사이트에 등록해주고").
+   기관 목록은 portal.js 의 TENANTS 와 같은 것이다. 여기서 import 하지 않는 이유는
+   셸이 모든 화면에 실리는데 cards·registry 까지 딸려 오기 때문이다 — 늘어나면 옮긴다. */
+export const FAMILY = [
+  { name: 'Land-XI 소개', href: 'scrub/index.html' },
+  { name: '전북특별자치도 남원시', href: 'portal.html', kind: '지자체' },
+  { name: '광주전남특별시', href: 'portal-dp-gj-marine-25.html', kind: '지자체' },
+];
 export const FOOT_ADDR = '(우)54870 전북 전주시 덕진구 기지로 120 · 고객센터 063-713-1213, 1216';
 export const NOTICE = { id: 8, title: '고위험 탐지 건 긴급 처리 안내', date: '2026-04-15', href: 'notice.html?notice=8' };
 export const AS_OF = '2026-06-08';
@@ -177,7 +187,9 @@ export function mountShell(o = {}) {
   }
 
   const foot = `
-<footer id="foot"><span id="foot-links">${FOOT_LINKS.map((t) => `<span>${esc(t)}</span>`).join('')}</span><span id="foot-addr" class="n">${esc(FOOT_ADDR)}</span><span class="fam">Family Site<svg width="8" height="5" viewBox="0 0 9 6" fill="none" stroke="currentColor" stroke-width="1.25" aria-hidden="true"><path d="M.5.5 4.5 5 8.5.5"/></svg></span></footer>`;
+<footer id="foot"><span id="foot-links">${FOOT_LINKS.map((t) => `<span>${esc(t)}</span>`).join('')}</span><span id="foot-addr" class="n">${esc(FOOT_ADDR)}</span><details class="fam" id="fam"><summary>Family Site<svg width="8" height="5" viewBox="0 0 9 6" fill="none" stroke="currentColor" stroke-width="1.25" aria-hidden="true"><path d="M.5.5 4.5 5 8.5.5"/></svg></summary>
+  <ul class="fam-l">${FAMILY.map((f) => `<li><a href="${base}${esc(f.href)}">${esc(f.name)}${f.kind ? `<em>${esc(f.kind)}</em>` : ''}</a></li>`).join('')}</ul>
+</details></footer>`;
 
   $$('[data-shell-part]').forEach((e) => e.remove());      // 다시 불러도 한 벌
   $('#page-head')?.remove();
