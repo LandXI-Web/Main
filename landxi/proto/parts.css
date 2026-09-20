@@ -1,0 +1,280 @@
+/* Land-XI 부품 — B6 원판(design-canvas/v2/renders/B6-*.png)과 그 생성기(tools/design/gen-b6-*.mjs)에서 잰 값.
+   shell.css 의 토큰(--ink · --accent · --warn · --t1 · --line …) 위에 선다. 견본: shell-demo.html · 문서: docs/superpowers/proto/2026-09-20-shell-parts-api.md
+   규칙: 라운드 0 · 그림자 0 · 그라디언트 0 · backdrop 0 · 바닥 14px · 호버는 물리(4px 이동 · 브래킷 성장 · 밑줄 스윕) · 포커스 링 파랑 2px.
+   색 역할: 파랑 = 정보/선택 · 빨강(--warn) = 조치 필요(글자만) · 검정 = 본문 · 청록 = AI 결과. */
+
+/* ══ 1. 버튼 · 링크 ═══════════════════════════════════════════════════════
+   .btn = 1차(잉크 채움) · .btn-br = 2차(코너 브래킷 4) · .link = 파랑 밑줄 · --s = 28px 소형 */
+.lx .btn,.lx .btn-br{ position:relative; display:inline-flex; align-items:center; justify-content:center; gap:8px; height:38px; padding:0 22px; font-size:16px; font-weight:500; letter-spacing:-.01em; white-space:nowrap; flex:none; text-align:center; cursor:pointer; }
+.lx .btn{ background:var(--ink); color:#fff; transition:transform var(--hov) var(--hove); }
+.lx .btn:hover{ transform:translateY(-2px); }
+.lx .btn:active{ transform:none; }
+.lx .btn--danger{ color:#fff; }                                     /* 파괴적 확인도 채움은 잉크 — warn 은 글자색 자리에만 */
+.lx .btn--l{ height:44px; padding:0 28px; }
+.lx .btn--block{ display:flex; width:100%; }
+.lx .btn-br{ color:var(--ink); padding:0 18px; }
+.lx .btn-br::before,.lx .brackets::before{ content:""; position:absolute; inset:0; border:1.5px solid currentColor; pointer-events:none;
+  --b:9px; transition:clip-path var(--hov) var(--hove);
+  clip-path:polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0,
+    var(--b) 0, calc(100% - var(--b)) 0, calc(100% - var(--b)) var(--b), 100% var(--b), 100% calc(100% - var(--b)), calc(100% - var(--b)) calc(100% - var(--b)),
+    calc(100% - var(--b)) 100%, var(--b) 100%, var(--b) calc(100% - var(--b)), 0 calc(100% - var(--b)), 0 var(--b), var(--b) var(--b), var(--b) 0); }
+.lx .btn-br:hover::before,.lx .btn-br:focus-visible::before,.lx a.brackets:hover::before,.lx button.brackets:hover::before{
+  clip-path:polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0,
+    50% 0, 50% 0, 50% 50%, 100% 50%, 100% 50%, 50% 50%,
+    50% 100%, 50% 100%, 50% 50%, 0 50%, 0 50%, 50% 50%, 50% 0); }
+.lx .btn-br--warn{ color:var(--warn); }
+.lx .btn--s,.lx .btn-br--s{ height:28px; padding:0 12px; font-size:14.5px; }
+.lx .btn-br--s::before{ --b:7px; border-width:1px; }
+.lx .btn:disabled,.lx .btn-br:disabled,.lx .btn[aria-disabled="true"],.lx .btn-br[aria-disabled="true"]{ cursor:default; transform:none; }
+.lx .btn:disabled,.lx .btn[aria-disabled="true"]{ background:var(--grey-3); }
+.lx .btn-br:disabled,.lx .btn-br[aria-disabled="true"]{ color:var(--grey-3); }
+.lx .brackets{ position:relative; }                                  /* 아무 상자에나 코너 브래킷 4 — 색은 color, 크기는 --b */
+.lx .brackets--acc::before{ color:var(--accent); }
+.lx .link{ display:inline-block; color:var(--accent); border-bottom:1px solid currentColor; line-height:1.3; white-space:nowrap; cursor:pointer; transition:transform var(--hov) var(--hove); }
+.lx .link:hover{ transform:translateX(4px); }
+.lx .link--ink{ color:var(--ink); }
+.lx .acts{ display:flex; align-items:center; justify-content:flex-end; gap:10px; }
+
+/* ══ 2. 칩 · 꼬리표 · 상태어 ══════════════════════════════════════════════ */
+.lx .chip{ display:inline-block; height:24px; line-height:22px; padding:0 9px; border:1px solid var(--line); color:var(--grey); font-size:14px; white-space:nowrap; font-style:normal; }
+.lx .chip--on{ border-color:var(--accent); color:var(--accent); background:var(--t1); }
+.lx .chip--teal{ border-color:var(--teal); color:var(--ink); }
+.lx .chip--teal::before{ content:""; display:inline-block; width:9px; height:9px; background:var(--teal); margin-right:7px; }
+.lx .tag{ display:inline-block; height:22px; line-height:20px; padding:0 7px; border:1px dotted var(--grey); color:var(--grey); font-size:14px; letter-spacing:.04em; font-style:normal; font-weight:400; font-family:var(--body); white-space:nowrap; vertical-align:middle; }   /* 시연 · 추정 */
+.lx .st{ font-weight:500; white-space:nowrap; color:var(--ink); }     /* 상태어 — 색은 글자에만 */
+.lx .st--acc{ color:var(--accent); }
+.lx .st--warn{ color:var(--warn); }
+.lx .st--dim{ color:var(--grey); font-weight:400; }
+.lx .st--teal{ color:var(--teal); }
+
+/* ══ 3. 건수 타일 띠(KPI) ═════════════════════════════════════════════════
+   .band > .tile(×n). 큰 숫자 = Paperlogy 58(기본) / 42(.band--s). 색: 기본 파랑 · --ink · --warn · --zero.
+   고르는 타일은 <button class="tile" aria-pressed>. 선택 = 틴트 + 파랑 3px 룰(기본 아래 · .band--top 은 위). */
+.lx .band{ display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); padding:18px 0 0; border-bottom:1px solid var(--line); margin-bottom:12px; }
+.lx .band--auto{ grid-auto-columns:max-content; justify-content:start; }
+.lx .tile{ position:relative; display:block; min-width:140px; padding:0 16px 14px; margin-right:16px; text-align:left; color:inherit; white-space:nowrap; border-left:1px solid var(--line); transition:transform var(--hov) var(--hove), background var(--hov) var(--hove); }
+.lx .tile:first-child{ border-left-color:transparent; }
+.lx .tile-l{ display:block; font-size:14px; line-height:1.2; letter-spacing:.04em; color:var(--grey); }
+.lx .tile-v{ display:flex; align-items:baseline; gap:7px; margin-top:8px; }
+.lx .tile-v b{ font-family:var(--disp); font-weight:700; font-size:58px; line-height:1; letter-spacing:-.02em; color:var(--accent); font-variant-numeric:tabular-nums; }
+.lx .tile-v span{ font-size:17px; color:var(--grey); }
+.lx .tile-s{ display:block; margin-top:10px; min-height:18px; font-size:14px; line-height:18px; letter-spacing:.01em; color:var(--grey); }
+.lx .tile--ink .tile-v b{ color:var(--ink); }
+.lx .tile--warn .tile-v b,.lx .tile--warn .tile-s em{ color:var(--warn); font-style:normal; }
+.lx .tile--zero .tile-v b{ color:var(--grey-3); }
+.lx button.tile{ padding-top:18px; margin-top:-18px; cursor:pointer; }
+.lx button.tile:hover{ transform:translateY(-4px); background:var(--t1); }
+.lx button.tile::after{ content:""; position:absolute; left:0; right:0; bottom:-1px; height:3px; background:var(--accent); transform:scaleX(0); transform-origin:left; transition:transform var(--hov) var(--hove); }
+.lx .tile[aria-pressed="true"],.lx .tile[aria-selected="true"],.lx .tile.is-on{ background:var(--t1); border-left-color:transparent; }
+.lx .tile[aria-pressed="true"] + .tile,.lx .tile[aria-selected="true"] + .tile,.lx .tile.is-on + .tile{ border-left-color:transparent; }
+.lx .tile[aria-pressed="true"] .tile-l,.lx .tile[aria-selected="true"] .tile-l,.lx .tile.is-on .tile-l{ color:var(--ink); }
+.lx .tile[aria-pressed="true"]::after,.lx .tile[aria-selected="true"]::after,.lx .tile.is-on::after{ content:""; position:absolute; left:0; right:0; bottom:-1px; height:3px; background:var(--accent); transform:none; }
+.lx .band--top .tile::after{ bottom:auto!important; top:0; }
+.lx .band--s .tile-v b{ font-size:42px; }
+.lx .band--s .tile-v span{ font-size:15.5px; }
+.lx .band--s .tile{ min-width:96px; }
+.lx .band-note{ align-self:end; justify-self:end; padding-bottom:16px; font-size:14px; color:var(--grey); white-space:nowrap; }
+
+/* ══ 4. 입력 ══════════════════════════════════════════════════════════════
+   .inp 44px(폼) · .inp--s 36px(검색 행). 헤어라인 → 포커스에서 잉크. .sel = <span class="sel"><select></select></span> */
+.lx .inp,.lx .sel > select{ display:block; width:100%; height:44px; border:1px solid var(--line); background:#fff; padding:0 12px; font-size:16px; color:var(--ink); outline:0; transition:border-color var(--hov) var(--hove); appearance:none; -webkit-appearance:none; }
+.lx textarea.inp{ height:auto; min-height:112px; padding:10px 12px; line-height:1.6; resize:vertical; }
+.lx .inp::placeholder{ color:var(--grey); opacity:1; }
+.lx .inp:hover,.lx .sel > select:hover{ border-color:var(--grey); }
+.lx .inp:focus,.lx .sel > select:focus{ border-color:var(--ink); }
+.lx .inp:focus-visible,.lx .sel > select:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+.lx .inp[aria-invalid="true"]{ border-color:var(--warn); }
+.lx .inp:disabled,.lx .sel > select:disabled{ background:#FAFAFA; color:var(--grey-3); cursor:default; }
+.lx .inp[readonly]{ background:#FAFAFA; }
+.lx .inp--num,.lx .inp[type="date"],.lx .inp[type="time"],.lx .inp[type="number"]{ font-family:var(--num); font-variant-numeric:tabular-nums; font-size:15px; letter-spacing:.01em; }
+.lx .inp[type="search"]::-webkit-search-cancel-button{ -webkit-appearance:none; }
+.lx .sel{ position:relative; display:inline-block; min-width:96px; }
+.lx .sel > select{ padding-right:30px; cursor:pointer; }
+.lx .sel::after{ content:""; position:absolute; right:12px; top:50%; width:7px; height:7px; margin-top:-6px; border-right:1.5px solid var(--grey); border-bottom:1.5px solid var(--grey); transform:rotate(45deg); pointer-events:none; }
+.lx .inp--s,.lx .sel--s > select,.lx .filters .inp,.lx .filters .sel > select{ height:36px; padding:0 10px; font-size:15.5px; }
+.lx .filters .sel > select,.lx .sel--s > select{ padding-right:28px; }
+.lx .sel--s{ min-width:64px; }
+.lx .inp-ic{ position:relative; display:block; flex:1; min-width:0; }  /* 돋보기 든 입력: <label class="inp-ic">icon + <input class="inp"> */
+.lx .inp-ic > .ic{ position:absolute; left:12px; top:50%; margin-top:-7px; color:var(--grey); pointer-events:none; }
+.lx .inp-ic > .inp{ padding-left:36px; }
+
+/* 폼 필드 */
+.lx .form{ display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:16px 16px; }
+.lx .field{ grid-column:span 12; display:flex; flex-direction:column; min-width:0; }
+.lx .field--3{ grid-column:span 3; } .lx .field--4{ grid-column:span 4; } .lx .field--6{ grid-column:span 6; } .lx .field--8{ grid-column:span 8; } .lx .field--9{ grid-column:span 9; }
+.lx .field-h{ display:flex; align-items:baseline; gap:8px; margin-bottom:8px; min-height:18px; }
+.lx .field-l{ font-size:14px; line-height:1.3; color:var(--ink); font-weight:500; }
+.lx .req{ color:var(--accent); font-style:normal; margin-left:3px; }
+.lx .cnt{ margin-left:auto; font-size:14px; color:var(--grey); white-space:nowrap; }
+.lx .cnt b{ font-weight:500; color:var(--ink); }
+.lx .cnt[data-over] b{ color:var(--warn); }
+.lx .help{ margin:7px 0 0; font-size:14px; line-height:1.45; color:var(--grey); }
+.lx .err{ margin:7px 0 0; font-size:14px; line-height:1.4; color:var(--warn); border-left:2px solid var(--warn); padding-left:7px; }
+.lx .field-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.lx .field-row > .inp,.lx .field-row > .sel{ width:auto; flex:none; }
+.lx .tilde{ color:var(--grey); font-size:14px; flex:none; }
+
+/* 체크 · 라디오 — 16px 정사각. 체크 = 잉크 채움 + 흰 체크, 라디오 = 잉크 8px 정사각 */
+.lx .ck,.lx .rd{ display:inline-flex; align-items:center; gap:8px; font-size:15.5px; line-height:1.3; cursor:pointer; white-space:nowrap; }
+.lx .ck input,.lx .rd input{ appearance:none; -webkit-appearance:none; position:relative; width:16px; height:16px; margin:0; flex:none; border:1px solid #9A9A9A; background:#fff; cursor:pointer; transition:transform var(--hov) var(--hove), border-color var(--hov) var(--hove); }
+.lx .ck:hover input,.lx .rd:hover input{ border-color:var(--ink); transform:scale(1.12); }
+.lx .ck input:checked{ background:var(--ink); border-color:var(--ink); }
+.lx .ck input:checked::after{ content:""; position:absolute; left:4.5px; top:1px; width:5px; height:9px; border-right:1.5px solid #fff; border-bottom:1.5px solid #fff; transform:rotate(45deg); }
+.lx .rd input:checked{ border-color:var(--ink); }
+.lx .rd input:checked::after{ content:""; position:absolute; left:3px; top:3px; width:8px; height:8px; background:var(--ink); }
+.lx .ck input:disabled,.lx .rd input:disabled{ border-color:var(--grey-3); background:#FAFAFA; cursor:default; transform:none; }
+.lx .ck:has(input:disabled),.lx .rd:has(input:disabled){ color:var(--grey-3); cursor:default; }
+.lx .checks{ display:flex; flex-wrap:wrap; gap:12px 22px; }
+
+/* ══ 5. 검색 행 ═══════════════════════════════════════════════════════════
+   .filters = 한 줄 flex. 입력들 + 기간(날짜 ~ 날짜 + .chips 빠른 선택) + .sp + 초기화(.btn-br) + 검색(.btn) */
+.lx .filters{ display:flex; align-items:center; gap:10px; min-height:36px; margin-bottom:16px; white-space:nowrap; }
+.lx .filters .inp{ width:auto; flex:1 1 110px; min-width:0; }
+.lx .filters .inp[type="date"]{ flex:0 0 138px; }
+.lx .filters .sel{ flex:none; }
+.lx .filters .f-lab,.lx .f-lab{ font-size:14px; color:var(--grey); flex:none; }
+.lx .filters .btn,.lx .filters .btn-br{ height:36px; }
+.lx .filters .btn{ padding:0 18px; }
+.lx .filters-acts{ display:inline-flex; gap:8px; margin-left:4px; flex:none; }
+.lx .chips{ display:inline-flex; gap:4px; flex:none; }
+.lx .chip-b{ display:inline-flex; align-items:center; height:30px; padding:0 9px; border:1px solid var(--line); background:#fff; color:var(--grey); font-size:14.5px; white-space:nowrap; cursor:pointer; transition:transform var(--hov) var(--hove), background var(--hov) var(--hove), border-color var(--hov) var(--hove); }
+.lx .chip-b:hover{ transform:translateY(-2px); background:var(--t1); color:var(--ink); }
+.lx .chip-b[aria-pressed="true"],.lx .chip-b[aria-checked="true"]{ border-color:var(--accent); background:var(--t1); color:var(--accent); }
+.lx .chip-b:disabled{ color:var(--grey-3); cursor:default; transform:none; background:#fff; }
+.lx .chips--l .chip-b{ height:44px; min-width:74px; justify-content:center; padding:0 14px; font-size:16px; color:var(--ink); font-family:var(--num); }
+
+/* ══ 6. 표 ════════════════════════════════════════════════════════════════
+   <table class="tbl"> — 머리띠 틴트 32px · 행 45px(.tbl--l 52 · .tbl--s 42) · 선택 행 = 틴트 + 파랑 3px 표식 · 호버 = 행이 4px 민다.
+   고르는 행: <tr data-row tabindex="0" aria-selected="false"> + bindRows(). 숫자 칸 .num · 오른쪽 .r · 말줄임은 기본. */
+.lx .tbl{ width:100%; border-collapse:collapse; table-layout:fixed; border-top:1px solid var(--ink); font-size:15.5px; letter-spacing:-.01em; }
+.lx .tbl th{ height:32px; padding:0 12px; background:var(--t1); font-size:14px; font-weight:400; color:var(--grey); text-align:left; white-space:nowrap; }
+.lx .tbl td{ height:45px; padding:0 12px; border-bottom:1px solid var(--line); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; position:relative; }
+.lx .tbl--l td{ height:52px; } .lx .tbl--s td{ height:42px; }
+.lx .tbl .r{ text-align:right; } .lx .tbl .c{ text-align:center; }
+.lx .tbl .num{ font-family:var(--num); font-variant-numeric:tabular-nums; font-size:15px; letter-spacing:.02em; color:var(--grey); }
+.lx .tbl tbody tr{ transition:transform var(--hov) var(--hove), background var(--hov) var(--hove); }
+.lx .tbl tbody tr[data-row]{ cursor:pointer; }
+.lx .tbl tbody tr[data-row]:hover{ transform:translateX(4px); background:var(--t1); }
+.lx .tbl tbody tr[aria-selected="true"]{ background:var(--t1); }
+.lx .tbl tbody tr[aria-selected="true"] td:first-child::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent); }
+.lx .tbl tbody tr:focus-visible{ outline-offset:-2px; }
+.lx .tbl tr.is-dim td{ color:var(--grey); }
+.lx .tbl-wrap{ min-height:0; overflow:auto; scrollbar-width:thin; scrollbar-color:var(--grey-3) transparent; }
+
+/* ══ 7. 페이저 — mountPager(el, …) 가 그린다 ══════════════════════════════ */
+.lx .pager{ display:flex; align-items:center; gap:4px; min-height:36px; margin-top:12px; font-size:14.5px; color:var(--grey); white-space:nowrap; }
+.lx .pager button{ display:inline-flex; align-items:center; justify-content:center; height:28px; min-width:28px; padding:0 8px; border:1px solid transparent; color:var(--ink); text-align:center; transition:transform var(--hov) var(--hove), background var(--hov) var(--hove); }
+.lx .pager button.n{ padding:0; }
+.lx .pager button:hover:not(:disabled){ transform:translateY(-2px); background:var(--t1); }
+.lx .pager button:disabled{ color:var(--grey-3); cursor:default; }
+.lx .pager button[aria-current]{ border-color:var(--accent); color:var(--accent); background:var(--t1); }
+.lx .pager-n{ display:inline-flex; gap:2px; }
+.lx .pager-sep{ width:1px; height:16px; background:var(--line); margin:0 8px; }
+.lx .pager-size{ display:inline-flex; align-items:center; gap:8px; font-size:14px; }
+.lx .pager-size .sel > select{ height:28px; font-size:14.5px; padding:0 24px 0 8px; }
+.lx .pager-size .sel::after{ right:9px; width:6px; height:6px; margin-top:-5px; }
+.lx .pager-sum{ font-size:14px; } .lx .pager-sum b{ color:var(--ink); font-weight:500; }
+
+/* ══ 8. 분할 작업공간 — 좌 목록 / 헤어라인 / 우 열람 판 ═══════════════════
+   <div class="split" style="--l:740fr;--r:476fr"> <section class="split-l"> <aside class="split-r panel"> */
+.lx .split{ display:grid; grid-template-columns:minmax(0,var(--l,740fr)) 1px minmax(0,var(--r,476fr)); column-gap:20px; flex:1; min-height:0; }
+.lx .split::before{ content:""; grid-column:2; grid-row:1; background:var(--line); }
+.lx .split-l{ grid-column:1; grid-row:1; min-width:0; min-height:0; display:flex; flex-direction:column; }
+.lx .split-r{ grid-column:3; grid-row:1; min-width:0; min-height:0; display:flex; flex-direction:column; }
+.lx .split--5050{ --l:1fr; --r:1fr; }
+.lx .split--form{ --l:560fr; --r:656fr; }
+@media (max-width:1100px){ .lx .split{ grid-template-columns:minmax(0,1fr); row-gap:24px; } .lx .split::before{ display:none; } .lx .split-l,.lx .split-r{ grid-column:1; grid-row:auto; } }
+
+/* ══ 9. 열람 판 ═══════════════════════════════════════════════════════════ */
+.lx .panel{ border-top:1px solid var(--ink); display:flex; flex-direction:column; min-height:0; }
+.lx .panel-h{ height:32px; flex:none; background:var(--t1); display:flex; align-items:center; gap:14px; padding:0 12px; white-space:nowrap; font-size:15.5px; }
+.lx .panel-h h2,.lx .panel-h h3{ margin:0; font:inherit; font-weight:500; }
+.lx .panel-h .link{ font-size:14.5px; }
+.lx .panel-b{ flex:1; min-height:0; overflow:auto; padding:16px 0 12px; scrollbar-width:thin; scrollbar-color:var(--grey-3) transparent; }
+.lx .panel-f{ flex:none; min-height:54px; border-top:1px solid var(--line); display:flex; align-items:flex-end; justify-content:flex-end; gap:10px; padding-top:15px; }
+.lx .panel-f .mic{ margin-right:auto; align-self:center; }
+.lx .panel-t{ margin:0; font-family:var(--disp); font-weight:700; font-size:26px; line-height:34px; letter-spacing:-.01em; }   /* 판 안의 제목(공지 제목 · 사람 이름) */
+.lx .panel-meta{ display:flex; align-items:center; gap:10px; font-size:14px; color:var(--grey); white-space:nowrap; margin-bottom:10px; }
+.lx .panel-meta > * + *::before{ content:""; display:inline-block; width:1px; height:12px; background:var(--line); margin-right:10px; vertical-align:-1px; }
+.lx .prose{ font-size:16px; line-height:27px; white-space:pre-line; }
+
+/* 섹션 제목 + 잉크 룰 */
+.lx .sec-h{ display:flex; align-items:baseline; gap:8px; margin:22px 0 0; padding-bottom:9px; border-bottom:1px solid var(--ink); font-family:var(--disp); font-weight:700; font-size:18px; line-height:24px; }
+.lx .sec-h:first-child{ margin-top:0; }
+.lx .sec-h .n{ font-size:15px; color:var(--grey); }
+.lx .sec-h .ic{ color:var(--accent); align-self:center; }
+/* 키–값 격자: <dl class="kv"><div><dt>상태</dt><dd>대기</dd></div>…</dl> — 행 30px 헤어라인(.kv--l 40px) */
+.lx .kv{ margin:0; font-size:15.5px; }
+.lx .kv > div{ display:grid; grid-template-columns:var(--kw,100px) minmax(0,1fr); align-items:center; min-height:30px; border-bottom:1px solid var(--line); }
+.lx .kv--l > div{ min-height:40px; }
+.lx .kv dt{ font-size:14px; color:var(--grey); white-space:nowrap; }
+.lx .kv dd{ margin:0; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* 묶음 행: 왼쪽 58px 묶음 이름 + 오른쪽 .flds(라벨 위 · 값 아래) */
+.lx .sec{ display:flex; padding:11px 0 10px; border-bottom:1px solid var(--line); }
+.lx .sec:last-child{ border-bottom:0; }
+.lx .sec-k{ width:58px; flex:none; font-size:14.5px; font-weight:500; padding-top:1px; white-space:nowrap; }
+.lx .sec-v{ flex:1; min-width:0; }
+.lx .flds{ display:flex; gap:12px 16px; flex-wrap:wrap; }
+.lx .fld{ flex:1 1 120px; min-width:0; }
+.lx .fld-l{ display:block; font-size:14px; line-height:1.2; color:var(--grey); white-space:nowrap; }
+.lx .fld-v{ display:flex; align-items:center; gap:8px; margin-top:4px; min-height:28px; font-size:16px; line-height:24px; white-space:nowrap; }
+/* 첨부 행 */
+.lx .file{ display:flex; align-items:center; gap:10px; height:40px; border-bottom:1px solid var(--line); font-size:15px; white-space:nowrap; }
+.lx .file .ic{ color:var(--grey); flex:none; }
+.lx .file .sp + *{ flex:none; }
+
+/* ══ 10. 탭(밑줄 2px 잉크) — 판 안의 탭 ═══════════════════════════════════
+   <div class="tabs" role="tablist"><button role="tab" aria-selected="true">개요</button>…</div> */
+.lx .tabs{ display:flex; gap:30px; border-bottom:1px solid var(--line); white-space:nowrap; }
+.lx .tabs [role="tab"]{ position:relative; display:inline-flex; align-items:baseline; gap:6px; height:38px; padding:6px 0 0; font-size:16px; color:var(--grey); margin-bottom:-1px; transition:color var(--hov) var(--hove); }
+.lx .tabs [role="tab"]::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:2px; background:var(--ink); transform:scaleX(0); transform-origin:left; transition:transform var(--hov) var(--hove); }
+.lx .tabs [role="tab"]:hover{ color:var(--ink); }
+.lx .tabs [role="tab"]:hover::after,.lx .tabs [role="tab"][aria-selected="true"]::after{ transform:scaleX(1); }
+.lx .tabs [role="tab"][aria-selected="true"]{ color:var(--ink); font-weight:500; }
+.lx .tabs [role="tab"] .n{ font-size:14px; color:var(--grey-3); }
+
+/* ══ 11. 빈 상태 — 점선 무채 + 이유 한 줄 ═════════════════════════════════ */
+.lx .empty{ border:1px dashed var(--grey-3); min-height:132px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; text-align:center; padding:20px; margin:0; flex:1; }
+.lx .empty .ic{ color:var(--grey-3); margin-bottom:6px; }
+.lx .empty-t{ margin:0; font-size:16.5px; color:var(--grey); }
+.lx .empty-w{ margin:0; font-size:14px; color:var(--grey); }
+.lx .empty--s{ min-height:38px; flex:none; flex-direction:row; padding:0 12px; font-size:14px; color:var(--grey); }
+
+/* ══ 12. 그림 카드 — 실제 정사영상 크롭 + 캡션 띠 ═════════════════════════
+   <figure class="imgcard"><img src alt><figcaption><span>카드 썸네일</span><span class="sp"></span><span>결과 폴리곤 …</span></figcaption></figure> */
+.lx .imgcard{ position:relative; margin:0; overflow:hidden; background:#F3F4F6; line-height:0; aspect-ratio:var(--ar,3/2); }
+.lx .imgcard img{ display:block; width:100%; height:100%; object-fit:cover; transition:transform var(--d2) var(--ease); }
+.lx a.imgcard:hover img,.lx button.imgcard:hover img{ transform:scale(1.04); }
+.lx .imgcard figcaption{ position:absolute; left:0; right:0; bottom:0; min-height:28px; display:flex; align-items:center; gap:10px; padding:0 10px; background:rgba(1,1,2,.72); color:#fff; font-size:14px; line-height:1.3; white-space:nowrap; }
+.lx .imgcard--below{ overflow:visible; background:none; aspect-ratio:auto; }
+.lx .imgcard--below img{ aspect-ratio:var(--ar,3/2); height:auto; }
+.lx .imgcard--below figcaption{ position:static; background:none; color:var(--grey); padding:6px 0 0; }
+.lx .imgcard--none{ border:1px dashed var(--grey-3); background:none; display:flex; align-items:center; justify-content:center; font-size:14px; line-height:1.3; color:var(--grey); }
+/* 목록 카드(썸네일 + 3줄) — 카드 발행 관리 좌 목록 */
+.lx .lcard{ position:relative; display:grid; grid-template-columns:100px minmax(0,1fr); column-gap:14px; align-items:center; width:100%; padding:14px 8px; border-bottom:1px solid var(--line); text-align:left; transition:transform var(--hov) var(--hove), background var(--hov) var(--hove); }
+.lx .lcard:hover{ transform:translateX(4px); background:var(--t1); }
+.lx .lcard[aria-selected="true"],.lx .lcard[aria-current="true"]{ background:var(--t1); }
+.lx .lcard .imgcard{ --ar:100/68; }
+.lx .lcard-t{ display:flex; align-items:baseline; gap:8px; font-size:16.5px; font-weight:500; white-space:nowrap; }
+.lx .lcard-t > :first-child{ overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0; }
+.lx .lcard-t .st{ font-size:14.5px; }
+.lx .lcard-s{ display:block; font-size:14px; color:var(--grey); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* ══ 13. 진행 막대 · 단계 ═════════════════════════════════════════════════ */
+.lx .meter{ position:relative; height:10px; border:1px solid var(--line); background:#fff; }
+.lx .meter > i{ position:absolute; left:0; top:0; bottom:0; width:var(--v,0%); background:var(--accent); transition:width var(--d2) var(--ease); }
+.lx .meter--warn > i{ background:var(--warn); }
+.lx .meter > .ghost{ position:absolute; top:-1px; bottom:-1px; left:var(--v,0%); width:var(--g,0%); border:1px dashed var(--ink); }   /* 예측 = 점선 고스트 */
+.lx .steps{ display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:6px; font-size:14px; color:var(--grey); }
+.lx .steps > *{ border-top:3px solid var(--line); padding-top:8px; }
+.lx .steps > [aria-current]{ border-top-color:var(--ink); color:var(--ink); font-weight:500; }
+.lx .steps > .is-warn[aria-current]{ color:var(--warn); }
+
+/* ══ 좁은 화면(≤1100) — 가로 스크롤 없이 접는다 ═══════════════════════════ */
+@media (max-width:1100px){
+  .lx .filters{ flex-wrap:wrap; }
+  .lx .band{ grid-auto-flow:row; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); row-gap:18px; }
+  .lx .band-note{ grid-column:1 / -1; justify-self:start; }
+  .lx .tbl-wrap{ overflow-x:auto; }
+  .lx .field--3,.lx .field--4,.lx .field--6,.lx .field--8,.lx .field--9{ grid-column:span 12; }
+}

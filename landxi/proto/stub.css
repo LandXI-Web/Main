@@ -1,34 +1,21 @@
-/* 자리 화면(설계 원판 뷰어) — system.md: 라운드 0 · 그림자 0 · 그라디언트 0 · 바닥 14px */
-*{box-sizing:border-box}html,body{margin:0;height:100%}
-body{background:#FFF;color:#010102;font:400 16px/1.5 var(--font-body,'Pretendard',system-ui,sans-serif);-webkit-font-smoothing:antialiased}
-a{color:#006DF7;text-decoration:none}a:hover{text-decoration:underline}
-:focus-visible{outline:2px solid #006DF7;outline-offset:2px}
-.skip{position:absolute;left:-9999px}.skip:focus{left:8px;top:8px;background:#FFF;padding:6px 10px;z-index:99}
-.rail{position:fixed;left:0;top:0;bottom:0;width:72px;border-right:1px solid #DDD;background:#FFF;display:flex;flex-direction:column;z-index:10}
-.mk{height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#010102;border-bottom:1px solid #DDD;margin:0 12px}
-.mk b{font:700 11px/1 var(--font-display,'Paperlogy',sans-serif);letter-spacing:.18em;margin-right:-.18em;white-space:nowrap}.mk:hover{text-decoration:none}
-.rt{padding-top:14px}.rb{margin-top:auto;padding-bottom:10px}
-.ri{position:relative;width:72px;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#686868;background:none;border:0;font:inherit;cursor:pointer;padding:4px 0}
-.ri span{font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line}
-.ri:hover{color:#010102;text-decoration:none}.ri svg{transition:transform 180ms cubic-bezier(.22,1,.36,1)}.ri:hover svg{transform:translateY(-2px)}
-.ri[aria-current]{color:#010102}.ri[aria-current]:before{content:'';position:absolute;left:0;top:9px;width:2px;height:40px;background:#010102}
-main{margin-left:72px;padding:0 56px 40px;min-height:100%}main.wide{margin-left:0;max-width:1320px;margin-inline:auto}
-.mh{height:64px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #DDD;font-size:15px;color:#686868}.mh b{color:#010102;font-weight:500}.mh .sp{flex:1}.mh a{white-space:nowrap}
-.chip{height:26px;line-height:24px;padding:0 10px;border:1px solid #006DF7;color:#006DF7;background:#E8F1FF;font-size:14px;white-space:nowrap}
-.hd{display:flex;align-items:baseline;gap:16px;margin-top:26px}
-h1{margin:0;font:700 34px/42px var(--font-display,'Paperlogy',sans-serif);letter-spacing:-.01em}
-.dn{font-size:15px;color:#686868}.cnt{margin-left:auto;font:400 15px/1 Inter,sans-serif;color:#686868;font-variant-numeric:tabular-nums}.cnt b{color:#006DF7;font-weight:500}
-.rule{width:64px;height:4px;background:#006DF7;margin:6px 0 18px}
+/* 자리 화면(설계 원판 뷰어) — 레일 · 마스트헤드 · 제목 행 · 푸터는 공용 셸(shell.css, stub.js 가 mountShell 로 세운다).
+   여기에는 뷰어만 남는다. system.md: 라운드 0 · 그림자 0 · 그라디언트 0 · 바닥 14px */
+*{box-sizing:border-box}html,body{margin:0}
+body{background:#FFF;color:#010102;font:400 16px/1.5 var(--font-body,'Pretendard',system-ui,sans-serif)}
+body.stub[data-norail] #main,body.stub[data-norail] #mast,body.stub[data-norail] #foot{max-width:1432px;margin-inline:auto}
+body.stub[data-norail] #mast{right:0;left:0}
+.stub #page-head-right{align-items:center}
+.stub .cnt{font-size:15px;color:#686868}.stub .cnt b{color:#006DF7;font-weight:500}
 .fg{margin:0}.im{position:relative;border:1px solid #DDD;background:#F3F4F6;line-height:0;padding:20px 72px}
 .im img{display:block;width:100%;height:auto;outline:1px solid #DDD}
 .wm{position:absolute;right:12px;top:12px;height:28px;line-height:26px;padding:0 10px;background:#010102;color:#FFF;font-size:14px;letter-spacing:.04em}
-.nv{position:absolute;top:50%;width:44px;height:64px;margin-top:-32px;background:#FFF;border:1px solid #010102;color:#010102;font-size:26px;line-height:1;cursor:pointer;transition:transform 180ms cubic-bezier(.22,1,.36,1)}
-.pv{left:12px}.nx{right:12px}.pv:hover{transform:translateX(-4px)}.nx:hover{transform:translateX(4px)}
+.lx .nv{position:absolute;top:50%;width:44px;height:64px;margin-top:-32px;background:#FFF;border:1px solid #010102;color:#010102;font-size:26px;line-height:1;text-align:center;cursor:pointer;transition:transform 180ms cubic-bezier(.22,1,.36,1)}
+.pv{left:12px}.nx{right:12px}.lx .pv:hover{transform:translateX(-4px)}.lx .nx:hover{transform:translateX(4px)}
 figcaption{display:flex;gap:14px;align-items:baseline;padding:12px 0 4px;font-size:15px;line-height:1.5}figcaption b{font-weight:500;white-space:nowrap}figcaption span{color:#686868}
 .th{display:flex;gap:12px;overflow-x:auto;padding:10px 0 12px;border-top:1px solid #DDD;margin-top:8px}
-.th button{flex:none;width:176px;padding:0;border:1px solid #DDD;background:#FFF;cursor:pointer;text-align:left;font:inherit;color:#686868}
+.lx .th button{flex:none;width:176px;padding:0;border:1px solid #DDD;background:#FFF;cursor:pointer;text-align:left;font:inherit;color:#686868;transition:transform 180ms cubic-bezier(.22,1,.36,1)}
 .th button img{display:block;width:174px;height:109px;object-fit:cover;object-position:top left}
 .th button span{display:block;padding:6px 8px;font-size:14px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.th button[aria-selected="true"]{border-color:#006DF7;color:#006DF7;background:#E8F1FF}
-.th button:hover{border-color:#010102;color:#010102}
+.lx .th button[aria-selected="true"]{border-color:#006DF7;color:#006DF7;background:#E8F1FF}
+.lx .th button:hover{border-color:#010102;color:#010102;transform:translateY(-2px)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}

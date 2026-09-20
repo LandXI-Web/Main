@@ -1,0 +1,200 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>셸 · 부품 견본 — Land-XI</title>
+<link rel="icon" href="../assets/images/favicon_landxi.png">
+<script src="shell-gate.js"></script>
+<link rel="stylesheet" href="fonts-system.css">
+<link rel="stylesheet" href="shell.css">
+<link rel="stylesheet" href="parts.css">
+<style>
+  /* 견본 전용 — 부품이 아니다 */
+  .demo-h{ margin:34px 0 14px; display:flex; align-items:baseline; gap:12px; font-size:14px; color:var(--grey); letter-spacing:.04em; }
+  .demo-h b{ font-family:var(--num); font-weight:500; color:var(--accent); }
+  .demo-h code{ font-family:var(--num); font-size:14px; color:var(--ink); letter-spacing:0; }
+  .demo-row{ display:flex; flex-wrap:wrap; align-items:center; gap:16px 20px; }
+  .demo-grid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; }
+  .demo-work{ height:560px; display:flex; flex-direction:column; }
+</style>
+</head><body class="lx">
+
+<main id="main">
+
+  <!-- 1 · 건수 타일 띠 + 검색 행 + 분할 작업공간(표 · 페이저 · 열람 판) — 사용자 관리 원판 그대로 -->
+  <div class="band band--top" role="group" aria-label="처리 상태로 거르기" id="d-band">
+    <button type="button" class="tile" aria-pressed="true" data-f="all"><span class="tile-l">전체</span><span class="tile-v"><b>21</b><span>건</span></span><span class="tile-s n">정상 19 · 탈퇴 2</span></button>
+    <button type="button" class="tile tile--warn" aria-pressed="false" data-f="wait"><span class="tile-l">가입 승인 대기</span><span class="tile-v"><b>1</b><span>건</span></span><span class="tile-s"><em>승인 필요</em></span></button>
+    <button type="button" class="tile" aria-pressed="false" data-f="ok"><span class="tile-l">승인</span><span class="tile-v"><b>19</b><span>건</span></span><span class="tile-s n">&nbsp;</span></button>
+    <button type="button" class="tile tile--ink" aria-pressed="false" data-f="no"><span class="tile-l">거부</span><span class="tile-v"><b>1</b><span>건</span></span><span class="tile-s n">&nbsp;</span></button>
+    <div class="tile tile--zero"><span class="tile-l">잠금</span><span class="tile-v"><b>0</b><span>건</span></span><span class="tile-s">비밀번호 5회 실패</span></div>
+    <p class="band-note">숫자를 누르면 그 상태로 거른다 · <em class="tag">시연</em></p>
+  </div>
+
+  <form class="filters" id="d-filters" role="search" aria-label="사용자 검색">
+    <input class="inp" type="text" placeholder="아이디(이메일)" aria-label="아이디(이메일)">
+    <input class="inp" type="text" placeholder="이름" aria-label="이름">
+    <span class="sel"><select aria-label="부서"><option>부서 전체</option><option>홍보전산과</option><option>농업기술센터</option><option>환경관리과</option></select></span>
+    <span class="f-lab">가입일</span>
+    <input class="inp" type="date" aria-label="가입일 시작"><span class="tilde">~</span><input class="inp" type="date" aria-label="가입일 끝">
+    <span class="chips" role="group" aria-label="기간 빠른 선택">
+      <button type="button" class="chip-b" aria-pressed="true">전체</button><button type="button" class="chip-b" aria-pressed="false">1개월</button><button type="button" class="chip-b" aria-pressed="false">3개월</button><button type="button" class="chip-b" aria-pressed="false">6개월</button><button type="button" class="chip-b" aria-pressed="false">12개월</button>
+    </span>
+    <span class="filters-acts"><button type="reset" class="btn-br">초기화</button><button type="submit" class="btn" id="d-search"></button></span>
+  </form>
+
+  <div class="demo-work">
+  <div class="split">
+    <section class="split-l" aria-label="사용자 목록">
+      <div class="tbl-wrap">
+      <table class="tbl" id="d-tbl">
+        <colgroup><col style="width:74px"><col><col style="width:180px"><col style="width:76px"><col style="width:168px"><col style="width:76px"></colgroup>
+        <thead><tr><th>이름</th><th>아이디(이메일)</th><th>부서 · 직위</th><th>계정상태</th><th>가입일시</th><th>처리상태</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      </div>
+      <nav id="d-pager"></nav>
+    </section>
+
+    <aside class="split-r panel" aria-label="사용자 정보 열람">
+      <header class="panel-h"><h2>사용자 정보 열람</h2><span class="sp"></span><a class="link link--ink" href="#d-tbl">로그인 이력 0 ›</a><a class="link link--ink" href="#d-tbl">비밀번호 변경 이력 0 ›</a></header>
+      <div class="panel-b" id="d-read"></div>
+      <footer class="panel-f"><span class="mic">권한은 1인 1개 · 저장 시 반영</span><button type="button" class="btn-br" id="d-del">삭제</button><button type="button" class="btn" id="d-save">저장</button></footer>
+    </aside>
+  </div>
+  </div>
+
+  <!-- 2 · 버튼 · 칩 · 상태어 -->
+  <p class="demo-h"><b>02</b> 버튼 · 링크 · 칩 · 꼬리표 · 상태어 <code>.btn .btn-br .link .chip .tag .st</code></p>
+  <div class="demo-row">
+    <button type="button" class="btn" id="d-toast">저장</button>
+    <button type="button" class="btn btn--l" id="d-modal">+ 내 디스크 증량 신청</button>
+    <button type="button" class="btn-br">취소</button>
+    <button type="button" class="btn-br btn-br--s">비밀번호 초기화</button>
+    <button type="button" class="btn-br btn-br--warn" id="d-confirm">반려</button>
+    <button type="button" class="btn" disabled>발행 처리</button>
+    <button type="button" class="btn-br" disabled>수정</button>
+    <a class="link" href="notice.html">전체 보기</a>
+    <span class="chip">공지</span><span class="chip chip--on">선택</span><span class="chip chip--teal">경작지</span>
+    <em class="tag">시연</em><em class="tag">추정</em>
+    <span class="st st--acc">승인</span><span class="st st--warn">대기</span><span class="st">정상</span><span class="st st--dim">탈퇴</span>
+  </div>
+
+  <!-- 3 · 폼 -->
+  <p class="demo-h"><b>03</b> 폼 필드 <code>.form .field .inp .sel .cnt .help .err .ck .rd</code></p>
+  <form class="form" id="d-form" novalidate style="max-width:900px">
+    <div class="field field--3"><div class="field-h"><label class="field-l" for="f-kind">구분<em class="req">*</em></label></div><span class="sel"><select id="f-kind"><option>긴급</option><option>일반</option><option>업무</option></select></span></div>
+    <div class="field field--9"><div class="field-h"><label class="field-l" for="f-title">제목<em class="req">*</em></label><span class="cnt" data-for="f-title"></span></div><input id="f-title" class="inp" maxlength="200" value="[긴급] 정기 서버 점검 안내 (4/25 01:00~04:00)"></div>
+    <div class="field"><div class="field-h"><span class="field-l" id="f-per">게시 기간<em class="req">*</em></span></div>
+      <div class="field-row" role="group" aria-labelledby="f-per"><input class="inp" type="date" value="2026-04-23" aria-label="게시 시작일"><input class="inp" type="time" value="09:00" aria-label="게시 시작 시각"><span class="tilde">~</span><input class="inp" type="date" value="2026-04-25" aria-label="게시 종료일"><input class="inp" type="time" value="04:00" aria-label="게시 종료 시각"><label class="ck"><input type="checkbox">무한 게시</label><label class="ck"><input type="checkbox" checked>메인화면 팝업 표시</label></div></div>
+    <div class="field field--6"><div class="field-h"><label class="field-l" for="f-mail">아이디(이메일)<em class="req">*</em></label></div><input id="f-mail" class="inp" type="email" value="namwon.go" aria-invalid="true" aria-describedby="f-mail-e"><p class="err" id="f-mail-e">이메일 형식이 올바르지 않습니다.</p></div>
+    <div class="field field--6"><div class="field-h"><label class="field-l" for="f-tel">전화번호</label></div><input id="f-tel" class="inp inp--num" placeholder="063-620-0000"><p class="help">숫자와 하이픈만 · 기관 대표번호도 가능</p></div>
+    <div class="field"><div class="field-h"><label class="field-l" for="f-body">내용<em class="req">*</em></label><span class="cnt" data-for="f-body"></span></div><textarea id="f-body" class="inp" maxlength="2000" rows="3">안녕하세요, Land-XI 운영팀입니다.
+서비스 안정화를 위해 아래와 같이 정기 점검을 시행합니다.</textarea></div>
+    <div class="field"><div class="field-h"><span class="field-l" id="f-role">권한</span></div><div class="checks" role="radiogroup" aria-labelledby="f-role"><label class="rd"><input type="radio" name="role" checked>남원시청 관리자</label><label class="rd"><input type="radio" name="role">사료작물 분석</label><label class="rd"><input type="radio" name="role">농지 활용 분석</label><label class="rd"><input type="radio" name="role" disabled>영농 정보 분석</label></div></div>
+  </form>
+
+  <!-- 4 · 탭 · 그림 카드 · 키값 · 빈 상태 -->
+  <p class="demo-h"><b>04</b> 판 안의 탭 · 그림 카드 · 키–값 · 단계 · 빈 상태 <code>.tabs .imgcard .lcard .kv .steps .meter .empty</code></p>
+  <div class="tabs" role="tablist" aria-label="발행 요청 상세" id="d-tabs">
+    <button type="button" role="tab" aria-selected="true">개요</button><button type="button" role="tab" aria-selected="false" tabindex="-1">구성원 <span class="n">2</span></button><button type="button" role="tab" aria-selected="false" tabindex="-1">라벨링 <span class="n">1</span></button><button type="button" role="tab" aria-selected="false" tabindex="-1">학습 결과</button><button type="button" role="tab" aria-selected="false" tabindex="-1">분석 결과 <span class="n">2</span></button>
+  </div>
+  <div class="demo-grid" style="margin-top:16px">
+    <div>
+      <figure class="imgcard"><img src="../assets/proto/crops/namwon-farmland-2025/1.jpg" alt="남원 농지 정사영상 크롭"><figcaption><span>카드 썸네일</span><span class="sp"></span><span>남원 농지 · 2025 정사영상</span></figcaption></figure>
+      <div role="list" style="margin-top:12px">
+        <button type="button" class="lcard" role="listitem" aria-current="true"><span class="imgcard brackets brackets--acc"><img src="../assets/proto/crops/namwon-farmland-2025/2.jpg" alt=""></span><span><span class="lcard-t"><span>농지 활용 분석 v2.0</span><span class="st st--warn">대기</span></span><span class="lcard-s">농지 활용 분석 · 농지 분류 v2.0</span><span class="lcard-s n">2026.05.15 08:50</span></span></button>
+        <button type="button" class="lcard" role="listitem"><span class="imgcard imgcard--none">이미지셋</span><span><span class="lcard-t"><span>도로안전 카메라 v1.3</span><span class="st">승인</span></span><span class="lcard-s">도로안전 카메라 · 도로안전 카메라 v1.3</span><span class="lcard-s n">2026.05.28 09:00</span></span></button>
+      </div>
+    </div>
+    <div>
+      <h3 class="sec-h">발행 정보</h3>
+      <dl class="kv">
+        <div><dt>상태</dt><dd><span class="st st--warn">대기</span></dd></div>
+        <div><dt>과제 유형</dt><dd>과제 고도화</dd></div>
+        <div><dt>과제명</dt><dd>농지 활용 분석 v2.0</dd></div>
+        <div><dt>탐지 형태</dt><dd>폴리곤 (Polygon)</dd></div>
+        <div><dt>권한</dt><dd>남원시청 관리자, 농지 활용 분석</dd></div>
+        <div><dt>요청자</dt><dd>— <em class="tag">시연</em></dd></div>
+        <div><dt>요청일</dt><dd class="n">2026.05.15 08:50</dd></div>
+      </dl>
+      <p class="lb" style="margin:18px 0 8px">처리 단계</p>
+      <div class="steps"><span aria-current="step" class="is-warn">대기</span><span>검토중</span><span>승인</span><span>반려</span></div>
+      <p class="lb" style="margin:18px 0 8px">내 디스크 · 승인되면 전체 2,176 GB <em class="tag">추정</em></p>
+      <div class="meter" style="--v:28%;--g:6%" role="img" aria-label="현재 612.4 / 2,048 GB · 신청 128 GB"><i></i><span class="ghost"></span></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="empty" id="d-empty"><p class="empty-t">검색 조건에 맞는 공지사항이 없습니다.</p><p class="empty-w">검색어 “드론 배터리” · 구분 전체 — 초기화를 누르면 전체 8건으로 돌아간다</p></div>
+      <p class="empty empty--s">첨부된 파일이 없습니다.</p>
+      <div class="file"><span id="d-clip"></span><a class="link" href="#main">고위험_처리_지침_v1.pdf</a><span class="n mic">(1.2MB)</span><span class="sp"></span><button type="button" class="link link--ink">삭제</button></div>
+      <nav class="ptabs" data-style="line" aria-label="서비스 관리 탭 견본" style="align-self:flex-start;border-bottom:1px solid var(--line)"><a href="admin-notice.html">공지사항 관리</a><a href="admin-inquiry.html">문의 관리<b class="n">6</b></a><a href="admin-users.html" aria-current="page">사용자 관리<b class="n">1</b></a></nav>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+import { mountShell, TABS, say, openModal, confirmDialog, mountPager, bindRows, bindCounters, icon, esc, $, $$ } from './shell.js';
+
+mountShell({ active: 'support', title: '서비스 지원', subtitle: '셸 · 부품 견본 — 이 화면의 모든 조각이 <b style="font-weight:500;color:var(--ink)">shell.js · shell.css · parts.css</b> 에서 온다', tabs: TABS.support, tab: 'notice', crumbs: [{ label: '서비스 지원', href: 'notice.html' }, { label: '부품 견본' }], asOf: '2026-04-23', demo: true });
+
+$('#d-search').innerHTML = icon('search', 14) + '검색';
+$('#d-clip').innerHTML = icon('clip', 15);
+$('#d-empty').insertAdjacentHTML('afterbegin', icon('notice', 30));
+
+/* 원본 admin-users 시드(마스킹) — 시연 */
+const U = [
+  ['신○○', 'ne***@namwon.go.kr', '농업기술센터 · 주무관', '정상', '2026.04.22 09:15', '대기'],
+  ['김○○', 're***@gmail.com', '외부', '탈퇴', '2026.04.18 10:20', '거부'],
+  ['이○○', 'ng***@kakao.com', '홍보전산과 · 대리', '정상', '2026.03.17 08:39', '승인'],
+  ['정○○', 'jy***@korea.kr', '홍보전산과 · 주무관', '정상', '2026.03.16 09:23', '승인'],
+  ['고○○', 'db***@gmail.com', '홍보전산과 · 대리', '정상', '2026.01.13 15:07', '승인'],
+  ['테○○', 'te***@korea.kr', '홍보전산과 · 주무관', '정상', '2025.12.30 10:51', '승인'],
+  ['박○○', 'pa***@namwon.go.kr', '환경관리과 · 주무관', '정상', '2025.12.24 10:07', '승인'],
+  ['강○○', 'ka***@kovis.co.kr', '홍보전산과 · 외부협력', '정상', '2025.12.01 10:00', '승인'],
+  ['현○○', 'hy***@namwon.go.kr', '홍보전산과 · 주무관', '정상', '2025.11.03 11:25', '승인'],
+  ['조○○', 'js***@namwon.go.kr', '농업기술센터 · 주무관', '정상', '2025.09.18 20:23', '승인'],
+  ['오○○', 'oh***@namwon.go.kr', '도로관리과 · 주임', '정상', '2025.08.22 10:03', '승인'],
+  ['유○○', 'yo***@namwon.go.kr', '기획감사실 · 주임', '정상', '2025.08.12 15:00', '승인'],
+];
+const stc = { 대기: 'st--warn', 승인: 'st--acc', 거부: 'st--dim' };
+let sel = 0, page = 1, size = 8;
+function rows() {
+  $('#d-tbl tbody').innerHTML = U.slice((page - 1) * size, page * size).map((u, k) => { const i = (page - 1) * size + k; return `<tr data-row data-i="${i}" tabindex="0" aria-selected="${i === sel}"${u[3] === '탈퇴' ? ' class="is-dim"' : ''}><td>${esc(u[0])}</td><td>${esc(u[1])}</td><td>${esc(u[2])}</td><td><span class="st${u[3] === '탈퇴' ? ' st--dim' : ''}">${u[3]}</span></td><td class="num">${u[4]}</td><td><span class="st ${stc[u[5]]}">${u[5]}</span></td></tr>`; }).join('');
+}
+function read() {
+  const u = U[sel];
+  $('#d-read').innerHTML = `
+    <div style="display:flex;align-items:baseline;gap:10px;white-space:nowrap"><h3 class="panel-t">${esc(u[0])}</h3><span class="mic">${esc(u[2])}</span><span class="sp"></span><span class="st ${stc[u[5]]}">${u[5] === '대기' ? '승인 대기' : u[5]}</span></div>
+    <div style="display:flex;align-items:center;gap:10px;margin:6px 0 14px;padding-bottom:14px;border-bottom:1px solid var(--line)"><span style="color:var(--grey)">${esc(u[1])}</span><span class="sp"></span><button type="button" class="btn-br" style="width:92px">거부</button><button type="button" class="btn" style="width:124px">승인</button></div>
+    <div class="sec"><div class="sec-k">소속</div><div class="sec-v flds"><div class="fld"><span class="fld-l">전화번호</span><span class="fld-v n">063-620-****</span></div><div class="fld"><span class="fld-l">부서</span><span class="fld-v">${esc(u[2].split(' · ')[0])}</span></div><div class="fld"><span class="fld-l">직위</span><span class="fld-v">${esc(u[2].split(' · ')[1] || '-')}</span></div></div></div>
+    <div class="sec"><div class="sec-k">계정</div><div class="sec-v flds"><div class="fld"><span class="fld-l">계정 상태</span><span class="fld-v">${u[3]} <button type="button" class="btn-br btn-br--s">탈퇴</button></span></div><div class="fld"><span class="fld-l">가입일시</span><span class="fld-v n">${u[4]}</span></div><div class="fld"><span class="fld-l">탈퇴일시</span><span class="fld-v">-</span></div></div></div>
+    <div class="sec"><div class="sec-k">권한</div><div class="sec-v"><div class="checks"><label class="ck"><input type="checkbox">남원시청 관리자</label><label class="ck"><input type="checkbox">사료작물 분석</label><label class="ck"><input type="checkbox" checked>농지 활용 분석</label><label class="ck"><input type="checkbox">영농 정보 분석</label><label class="ck"><input type="checkbox">일반사용자</label></div></div></div>`;
+}
+rows(); read();
+bindRows($('#d-tbl tbody'), (r) => { sel = +r.dataset.i; read(); });
+mountPager($('#d-pager'), { total: U.length, page, size, sizes: [8, 10, 20], onChange: (s) => { page = s.page; size = s.size; rows(); } });
+bindCounters();
+
+/* 타일 · 칩 = 하나만 눌림 */
+const single = (root, q) => root.addEventListener('click', (e) => { const b = e.target.closest(q); if (!b) return; $$(q, root).forEach((x) => x.setAttribute('aria-pressed', String(x === b))); });
+single($('#d-band'), 'button.tile'); single($('#d-filters'), '.chip-b');
+$('#d-filters').addEventListener('submit', (e) => { e.preventDefault(); say('검색 — 조건 0개 · 전체 21건 · 시연'); });
+/* 탭 */
+$('#d-tabs').addEventListener('click', (e) => { const t = e.target.closest('[role="tab"]'); if (!t) return; $$('[role="tab"]', e.currentTarget).forEach((x) => { x.setAttribute('aria-selected', String(x === t)); x.tabIndex = x === t ? 0 : -1; }); });
+
+$('#d-toast').addEventListener('click', () => say('저장했습니다 — 이 브라우저에만 남는다 · 시연'));
+$('#d-save').addEventListener('click', () => say(`${U[sel][0]} — 권한 저장 · 시연`));
+$('#d-confirm').addEventListener('click', async () => { const ok = await confirmDialog({ title: '발행 반려', body: '이 요청을 반려합니다.\n요청자에게 반려 사유가 전달됩니다.', okLabel: '반려', danger: true }); say(ok ? '반려 처리 · 시연' : '취소했습니다'); });
+$('#d-del').addEventListener('click', async () => { if (await confirmDialog({ body: `${U[sel][0]} 사용자를 삭제합니다. 계속하시겠습니까?`, okLabel: '삭제', danger: true })) say('삭제 · 시연'); });
+$('#d-modal').addEventListener('click', () => {
+  openModal({
+    title: '내 디스크 증량 신청', tag: '시연', width: 660,
+    content: `<div class="form">
+      <div class="field"><div class="field-h"><span class="field-l" id="mq-l">신청 용량 (GB)<em class="req">*</em></span></div><div class="chips chips--l" role="radiogroup" aria-labelledby="mq-l">${[32, 64, 128, 256, 512, 1024].map((g) => `<button type="button" class="chip-b" role="radio" aria-checked="${g === 128}">${g}</button>`).join('')}</div></div>
+      <div class="field"><div class="meter" style="--v:30%;--g:6%"><i></i><span class="ghost"></span></div><p class="help n">현재 612.4 / 2,048 GB · 승인되면 전체 2,176 GB</p></div>
+      <div class="field"><div class="field-h"><label class="field-l" for="mq-why">신청 사유<em class="req">*</em></label><span class="cnt" data-for="mq-why"></span></div><textarea id="mq-why" class="inp" maxlength="200" rows="3">2026년 하반기 정사영상 원본 추가 적재</textarea></div></div>`,
+    actions: [{ label: '취소', kind: 'bracket' }, { label: '저장', kind: 'primary', onClick: () => { say('디스크 증량 신청 접수 — 128 GB · 시연'); } }],
+  });
+  bindCounters($('.modal'));
+  $('.modal .chips').addEventListener('click', (e) => { const b = e.target.closest('.chip-b'); if (b) $$('.chip-b', e.currentTarget).forEach((x) => x.setAttribute('aria-checked', String(x === b))); });
+});
+</script>
+</body></html>
