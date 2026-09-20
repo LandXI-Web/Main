@@ -149,49 +149,86 @@ test.describe('공지사항', () => {
 });
 
 test.describe('자주 묻는 질문', () => {
-  test('구분 레일(건수) = 거르기 · 아코디언은 여러 개 열린다 · URL', async ({ page }) => {
+  /* 2026-09-21 — 아코디언(여러 개 동시 펼침)에서 **분할 열람**으로 바꿨다.
+     발주자: "분할 열람으로 가자." 답을 펼칠수록 화면이 길어져 1280·1366 은 하나만
+     펼쳐도 넘쳤고, 질문을 2열로 세우면 이번에는 질문이 `…` 로 잘렸다.
+     그래서 아래 세 건은 **검사 범위를 줄이지 않고** 분할 열람 기준으로 다시 썼다.
+       · `aria-expanded` 토글 → 왼쪽 행 `aria-selected` + 오른쪽 판 교체
+       · `?faq=1,3`(여럿)    → `?faq=<id>`(하나). 옛 주소는 첫 번호를 연다.
+       · 구분 레일(세로)     → 구분 칩(위 띠). 건수는 그대로 칩 안에 있다. */
+  test('구분 칩(건수) = 거르기 · 첫 질문이 답변 판에 열려 있다 · URL · 뒤로 가기', async ({ page }) => {
     await boot(page, 'proto/faq.html');
-    await expect(page.locator('.fq-q')).toHaveCount(13);
+    await expect(page.locator('#fq-rows tr')).toHaveCount(13);
     expect(await page.locator('.fq-cat .n').allTextContents()).toEqual(['13', '5', '1', '2', '2', '2', '1']);
-    await expect(page.locator('.fq-q[aria-expanded="true"]')).toHaveCount(0);
-    await page.locator('#fq-q-1').click(); await page.locator('#fq-q-3').click();
-    await expect(page.locator('.fq-q[aria-expanded="true"]')).toHaveCount(2);
-    await expect(page.locator('#fq-a-3')).toBeVisible();
-    expect(q(page).faq).toBe('1,3');
-    await page.locator('#fq-q-1').click();
-    await expect(page.locator('#fq-a-1')).toBeHidden();
+    // 공지사항과 같다 — 들어오면 첫 행이 열려 있다
+    await expect(page.locator('#fq-rows tr').first()).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('#fq-title')).toHaveText('Land-XI 플랫폼은 어떤 서비스인가요?');
+    await expect(page.locator('.fq-ans')).toContainText('AI 기반 도로 안전관리 플랫폼');
+    // 다른 질문을 고르면 판이 바뀌고 URL 에 남는다
+    await page.locator('#fq-rows tr[data-id="3"]').click();
+    await expect(page.locator('#fq-title')).toHaveText('정사영상과 카메라 분석은 어떻게 다른가요?');
+    await expect(page.locator('#fq-rows tr[data-id="1"]')).toHaveAttribute('aria-selected', 'false');
+    expect(q(page).faq).toBe('3');
+    // 구분 칩으로 거르기
     await page.locator('.fq-cat[data-cat="03"]').click();
-    await expect(page.locator('.fq-q')).toHaveCount(2);
+    await expect(page.locator('#fq-rows tr')).toHaveCount(2);
     expect(q(page).cat).toBe('03');
     await page.goBack();
-    await expect(page.locator('.fq-q')).toHaveCount(13);
+    await expect(page.locator('#fq-rows tr')).toHaveCount(13);
+    await expect(page.locator('#fq-title')).toHaveText('정사영상과 카메라 분석은 어떻게 다른가요?');
+    await page.goBack();
+    await expect(page.locator('#fq-title')).toHaveText('Land-XI 플랫폼은 어떤 서비스인가요?');
   });
-  test('?faq=5 → 그 항목이 펼쳐져 있다', async ({ page }) => {
+  test('?faq=5 → 그 질문이 답변 판에 열려 있다 · 옛 주소 ?faq=1,3 은 첫 번호를 연다', async ({ page }) => {
     await boot(page, 'proto/faq.html?faq=5');
-    await expect(page.locator('#fq-q-5')).toHaveAttribute('aria-expanded', 'true');
-    await expect(page.locator('#fq-a-5')).toContainText('ECW 또는 GeoTIFF');
-    await expect(page.locator('#fq-q-5')).toBeFocused();
+    await expect(page.locator('#fq-rows tr[data-id="5"]')).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('#fq-title')).toHaveText('드론 정사영상은 어떤 형식으로 업로드하나요?');
+    await expect(page.locator('.fq-ans')).toContainText('ECW 또는 GeoTIFF');
+    await expect(page.locator('#mast .crumbs li[aria-current]')).toHaveText('자주 묻는 질문 열람');
+    await expect(page.locator('#fq-rows tr[data-id="5"]')).toBeFocused();
+    // 개발용 URL 표기가 화면 글자로 새면 안 된다
+    await expect(page.locator('#main')).not.toContainText('?faq=');
+    await boot(page, 'proto/faq.html?faq=1,3');
+    await expect(page.locator('#fq-rows tr[data-id="1"]')).toHaveAttribute('aria-selected', 'true');
+  });
+  test('목록/Esc 로 판을 닫으면 포커스가 행으로 · 다시 고르면 열린다', async ({ page }) => {
+    await boot(page, 'proto/faq.html');
+    await page.locator('#fq-rows tr[data-id="6"]').click();
+    expect(q(page).faq).toBe('6');
+    await page.locator('#fq-back').click();
+    await expect(page.locator('#fq-pane .empty')).toContainText('왼쪽에서 질문을 고르면');
+    expect(q(page).faq).toBe('0');
+    await expect(page.locator('#fq-rows tr[data-id="6"]')).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#fq-title')).toHaveText('지도에서 처리 상태를 변경하고 싶습니다.');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#fq-title')).toHaveCount(0);
+    await expect(page.locator('#fq-rows tr[aria-selected="true"]')).toHaveCount(0);
   });
   test('검색 필드(질문/답변) · 빈 상태 원문 · 초기화 · 문의하기 링크', async ({ page }) => {
     await boot(page, 'proto/faq.html');
     await page.locator('#fq-field').selectOption('content');
     await page.locator('#fq-q').fill('GeoTIFF'); await page.keyboard.press('Enter');
-    await expect(page.locator('.fq-q')).toHaveCount(1);
+    await expect(page.locator('#fq-rows tr')).toHaveCount(1);
     await page.locator('#fq-field').selectOption('title');
     await page.locator('#fq-form button[type="submit"]').click();
-    await expect(page.locator('#fq-list .empty-t')).toHaveText('검색 조건에 맞는 질문이 없습니다.');
+    await expect(page.locator('#fq-empty .empty-t')).toHaveText('검색 조건에 맞는 질문이 없습니다.');
+    await expect(page.locator('#fq-pane .empty')).toContainText('목록에 질문이 없어 비어 있다');
     await page.locator('#fq-form button[type="reset"]').click();
-    await expect(page.locator('.fq-q')).toHaveCount(13);
+    await expect(page.locator('#fq-rows tr')).toHaveCount(13);
     await expect(page.locator('#fq-field')).toHaveValue('all');
+    // 빈 상태에서도 열람 중에도 `찾는 답이 없으면 문의하기` 는 사라지지 않는다
     await expect(page.locator('.fq-more a')).toHaveAttribute('href', 'contact.html');
   });
-  test('키보드: 질문 단추 ↓ · Enter 로 펼침', async ({ page }) => {
+  test('키보드만으로: 목록 ↓ ↓ Enter → 셋째 질문 열람', async ({ page }) => {
     await boot(page, 'proto/faq.html');
-    await page.locator('#fq-q-1').focus();
-    await page.keyboard.press('ArrowDown'); await page.keyboard.press('Enter');
-    await expect(page.locator('#fq-q-2')).toHaveAttribute('aria-expanded', 'true');
+    await page.locator('#fq-rows tr').first().focus();
+    await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowDown'); await page.keyboard.press('Enter');
+    await expect(page.locator('#fq-title')).toHaveText('정사영상과 카메라 분석은 어떻게 다른가요?');
+    await expect(page.locator('#fq-rows tr[data-id="3"]')).toHaveAttribute('aria-selected', 'true');
   });
 });
+
 
 test.describe('문의하기', () => {
   test('목록 12(6/6) · 1/2쪽 · 상태 타일 · 제목 검색 · 등록일 · 기간 칩 · 초기화', async ({ page }) => {

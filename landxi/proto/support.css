@@ -26,7 +26,7 @@ body.lx.sp #main{ padding-bottom:8px; }
 .sp .sp-band .tile{ width:140px; min-width:0; height:146px; padding-bottom:0; display:flex; flex-direction:column; justify-content:flex-start; align-items:flex-start; }   /* 버튼은 고정 높이에서 내용을 가운데 놓는다 → 위로 붙인다 */
 .sp-search,.ct-filter{ position:relative; flex:1; min-width:0; margin:0 0 0 8px; padding:18px 0 0 40px; }
 .sp-search::before,.ct-filter::before{ content:""; position:absolute; left:0; top:18px; width:1px; height:104px; background:var(--line); }
-.sp-search .lb,.ct-filter .lb,.fq .lb,.uc-bar .lb{ margin-bottom:7px; }
+.sp-search .lb,.ct-filter .lb,.fq-cats-w .lb,.uc-bar .lb{ margin-bottom:7px; }
 .sp-search-row{ display:flex; align-items:center; gap:10px; }
 .sp .sp-q{ flex:1 1 200px; max-width:372px; }
 .sp-top .inp,.sp-top .sel > select,.sp-bar .inp,.sp-bar .sel > select{ height:42px; }
@@ -82,38 +82,38 @@ body.lx.sp #main{ padding-bottom:8px; }
 .sp-bar-row .btn-br{ margin-left:8px; }
 .sp-bar-row .btn{ margin-left:8px; }
 
-/* ══ 자주 묻는 질문 ═══════════════════════════════════════════════════════ */
-.fq{ display:grid; grid-template-columns:248px minmax(0,1fr); column-gap:32px; align-items:start; }
-.fq-side .lb{ margin-bottom:6px; }
-.fq-cats{ border-top:1px solid var(--ink); display:flex; flex-direction:column; }
-.sp .fq-cat{ position:relative; display:flex; align-items:center; gap:8px; height:54px; padding:0 12px; border-bottom:1px solid var(--line); font-size:16px; white-space:nowrap; transition:transform var(--hov) var(--hove), background var(--hov) var(--hove); }
-.sp .fq-cat:hover{ transform:translateX(4px); background:var(--t1); }
-.fq-cat .n{ font-size:15px; color:var(--grey); }
-.fq-cat[aria-pressed="true"]{ background:var(--t1); color:var(--accent); font-weight:500; }
-.fq-cat[aria-pressed="true"] .n{ color:var(--accent); }
-.fq-cat[aria-pressed="true"]::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent); }
-.sp .fq-cat:focus-visible{ outline-offset:-2px; }
-.fq-more{ margin-top:22px; }
-.fq-more .btn-br{ height:36px; margin-top:10px; padding:0 16px; font-size:15.5px; }
-.fq-bar .sp-bar-row .inp-ic{ max-width:560px; }
-.fq-bar .sp-bar-row .sp + .btn-br{ margin-left:0; }
-.fq-list{ margin-top:10px; border-top:1px solid var(--ink); }
-.fq-item h3{ margin:0; font:inherit; }
-.sp .fq-q{ display:flex; align-items:center; gap:12px; width:100%; min-height:45px; padding:0 12px; border-bottom:1px solid var(--line); white-space:nowrap; transition:transform var(--hov) var(--hove), background var(--hov) var(--hove); }
-.sp .fq-q:hover{ transform:translateX(4px); background:var(--t1); }
-.sp .fq-q:focus-visible{ outline-offset:-2px; }
-.fq-q .fq-m{ width:18px; flex:none; font-size:18px; line-height:1; color:var(--accent); }
-.fq-q .fq-c{ width:96px; flex:none; font-size:14.5px; color:var(--grey); }
-.fq-q .fq-t{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; font-size:16.5px; }
-.fq-q .ic{ color:var(--grey); transition:transform var(--hov) var(--hove); }
-.fq-q[aria-expanded="true"]{ background:var(--t1); border-bottom-color:var(--t2); }
-.fq-q[aria-expanded="true"] .fq-t{ font-weight:500; white-space:normal; padding:9px 0; line-height:26px; }
-.fq-q[aria-expanded="true"] .ic{ color:var(--accent); transform:rotate(180deg); }
-.fq-a{ display:flex; gap:12px; padding:16px 12px 18px 9px; border-left:3px solid var(--accent); border-bottom:1px solid var(--ink); }
-.fq-a .fq-m{ width:18px; flex:none; font-size:18px; line-height:26px; }
-.fq-a .fq-c{ width:96px; flex:none; }
-.fq-a .prose{ flex:1; min-width:0; font-size:16px; line-height:26px; }
-.sp .fq-empty{ height:420px; margin-top:20px; }
+/* ══ 자주 묻는 질문 — 분할 열람 ═══════════════════════════════════════════
+   공지사항과 같은 부품 · 같은 배치(위 띠 → 좌 목록 / 우 열람 판).
+   구분만 다르다 — 7개라 공지의 큰 숫자 타일(140px × 4)을 쓰면 1280 에서 가로로
+   넘친다. 같은 자리에 문의하기의 기간 칩과 같은 부품(.chip-b)을 두고 건수를 안에 적었다. */
+.fq-top{ align-items:stretch; }
+.fq-cats-w{ flex:1 1 auto; min-width:0; padding:18px 0 0; }
+.fq-cats{ display:flex; flex-wrap:wrap; gap:6px; }
+.sp .fq-cat{ height:32px; padding:0 11px; gap:7px; font-size:15px; }
+.sp .fq-cat .n{ font-size:14px; color:var(--grey); font-family:var(--num); }
+.sp .fq-cat[aria-pressed="true"] .n{ color:var(--accent); }
+/* 검색 칸은 줄이지 않는다 — 좁아지면 칩 줄이 접히고, 검색어 안내 글이 먼저 잘린다.
+   470px 이 `질문 또는 답변 검색` 이 다 보이는 최소치다. */
+.sp .fq-search{ flex:0 1 540px; min-width:470px; margin-left:0; }
+.fq-search .fq-field{ width:104px; flex:none; }
+.sp .fq-search .sp-q{ flex:1 1 180px; max-width:none; }
+.fq-search .sp-search-row{ gap:8px; }
+.fq-search .btn,.fq-search .btn-br{ padding:0 16px; }
+
+/* 목록 — 공지의 표 그대로. 질문 한 줄, 구분은 왼쪽 칸. */
+.sp .fq-tbl td{ height:36px; }
+.sp .fq-tbl .sp-cat{ color:var(--grey); }
+.sp .fq-tbl tr[aria-selected="true"] .sp-cat{ color:var(--accent); }
+
+/* 답변 판 — 공지 열람 판(.sp-read)의 값을 쓰고 Q · A 표식만 더한다(원판의 글자다). */
+.fq-pane{ min-height:0; }
+.sp .fq-read .sp-read-t{ display:flex; align-items:baseline; gap:12px; }
+.fq-m{ flex:none; width:18px; font-size:18px; color:var(--accent); }
+.fq-ans{ display:flex; gap:12px; margin-top:17px; }
+.fq-ans .fq-m{ line-height:27px; }
+.sp .fq-ans .sp-prose{ flex:1; min-width:0; margin-top:0; }
+.fq-more{ display:flex; align-items:baseline; gap:8px; margin:0; white-space:nowrap; }
+.sp .fq-pane-empty .fq-more{ margin-top:6px; }
 
 /* ══ 문의하기 ═════════════════════════════════════════════════════════════ */
 .sp .ct-top{ margin-bottom:20px; }
@@ -270,7 +270,7 @@ body.lx.sp #main{ padding-bottom:8px; }
 .mn-gap .mic{ margin:6px 0 0; line-height:1.55; }
 .mn-gap-ph{ display:flex; gap:10px; margin-top:12px; }
 .mn-gap-ph i{ height:10px; border:1px dashed var(--grey-3); }
-@media (max-width:1100px){ .fq,.mn{ grid-template-columns:minmax(0,1fr); row-gap:24px; } .mn::before{ display:none; } .mn-l,.mn-r{ grid-column:1; grid-row:auto; } .sp-top{ height:auto; flex-wrap:wrap; } }
+@media (max-width:1100px){ .mn{ grid-template-columns:minmax(0,1fr); row-gap:24px; } .mn::before{ display:none; } .mn-l,.mn-r{ grid-column:1; grid-row:auto; } .sp-top{ height:auto; flex-wrap:wrap; } }
 
 /* ── 손님(로그인 전) 모양 ─────────────────────────────────────────────────
    발주자(2026-09-20): "서비스 지원·활용 사례는 메인 쪽에서 놀아야 한다.
@@ -330,18 +330,6 @@ body.lx.sp #main{ padding-bottom:8px; }
 .sp .ct-vscroll{ overflow:visible; }
 .sp .ct-ans{ padding:9px 15px 11px; }
 .sp .ct-vatt .sp-file{ gap:7px; }
-
-/* ── 자주 묻는 질문 — 넓은 화면에서는 질문을 2열로 ────────────────────────
-   아코디언은 답을 펼치면 그만큼 길어진다. 질문 13개를 2열로 세우면 닫힌 목록이
-   절반으로 줄어(13행 → 7행) 펼친 답 하나가 그 자리에 들어간다.
-   펼친 항목은 두 열을 가로질러 답을 원래 폭으로 읽는다.
-   폭이 1560 미만이면 질문이 `…` 로 잘려서 적용하지 않는다(글자를 자르느니 스크롤). */
-@media (max-height:1000px) and (min-width:1560px){
-  .fq-list{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:26px; align-content:start; }
-  .fq-item:has(.fq-q[aria-expanded="true"]){ grid-column:1 / -1; }
-  .fq-list .empty{ grid-column:1 / -1; }
-  .sp .fq-q{ min-height:44px; }     /* 2열이면 행이 절반이라 높이를 되돌려도 답 하나가 들어온다 */
-}
 
 /* 문의 열람의 `목록` 단추 — 판 바닥에서 제목 줄 오른쪽으로(세로 46px 회수).
    1600×900 에서도 열람 판이 넘쳐서, 세로 1000 이하 전부에 적용한다. */
@@ -409,19 +397,16 @@ body.lx.sp #main{ padding-bottom:8px; }
   .sp .ct-empty + .ct-pager{ margin-top:10px; }
 
   /* ── 자주 묻는 질문 ────────────────────────────────────────────────────
-     질문 13개가 그대로 다 보여야 한다(검수 기준). 행을 45 → 36 으로 낮추고
-     검색 막대를 줄여 닫힌 상태가 한 화면에 들어오게 했다. */
-  .fq-bar .lb{ margin-bottom:4px; }
-  .sp .fq-bar .inp,.sp .fq-bar .sel > select,.sp .fq-bar .btn,.sp .fq-bar .btn-br{ height:38px; }
-  .fq-list{ margin-top:6px; }
-  .sp .fq-q{ min-height:36px; }
-  .sp .fq-cat{ height:44px; }
-  .fq-more{ margin-top:16px; }
-  .sp .fq-empty{ height:auto; }
-  /* 펼친 답변도 최대한 조인다(아코디언이 열리면 그만큼 길어지는 것은 남는 문제 — 보고 참고) */
-  .fq-q[aria-expanded="true"] .fq-t{ padding:5px 0; line-height:23px; }
-  .fq-a{ padding:10px 12px 12px 9px; }
-  .fq-a .prose{ line-height:23px; }
+     거른 결과 13건이 한 쪽에 다 보여야 한다(쪽당 건수를 줄이지 않는다).
+     행은 36 → 33 으로만 낮추고 글자는 16.5px 그대로. 위 띠는 칩 줄이 한 줄로
+     서는 화면에서 63px 까지 줄어든다(공지의 큰 숫자 타일은 100px 이 필요했다).
+     답변 판은 공지 열람 판(.sp-read)의 값을 그대로 쓴다. */
+  .fq-top{ height:auto; min-height:63px; }
+  .fq-cats-w{ padding-top:12px; }
+  .sp .fq-search{ padding-top:12px; flex-basis:520px; }
+  .sp .fq-tbl td{ height:33px; }
+  .sp .fq-read .sp-read-t{ gap:10px; }
+  .fq-ans{ margin-top:12px; }
 
   /* 빈 상태 판 — 못 박힌 높이를 풀어 화면에 맞춘다(문구는 그대로) */
   .sp .uc-empty{ height:auto; min-height:180px; }
@@ -467,4 +452,13 @@ body.lx.sp #main{ padding-bottom:8px; }
   .sp-hint{ margin-top:4px; }
   .sp .ct-ans{ padding:5px 12px 7px; }
   .sp .ct-tabs{ height:25px; }
+  /* FAQ — 1280 에서는 구분 칩이 두 줄로 접힌다. 접힌 만큼 칩과 행에서 되돌려 받는다. */
+  .fq-top{ min-height:0; }
+  .fq-search .fq-field{ width:88px; }
+  .fq-search .btn,.fq-search .btn-br{ padding:0 12px; }
+  .fq-cats-w{ padding-top:10px; }
+  .fq-cats{ gap:5px; }
+  .sp .fq-cat{ height:30px; }
+  .sp .fq-search{ padding-top:10px; }
+  .sp .fq-tbl td{ height:32px; }
 }
