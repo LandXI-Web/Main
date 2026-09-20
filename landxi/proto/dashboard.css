@@ -300,7 +300,7 @@ a.k:hover .ks .dim{ color:var(--accent); }
 .k .kv b{ font-size:42px; }
 .k .ks{ margin-top:6px; }
 
-.ap .ev{ height:104px; }
+
 .ap dl{ padding:6px 12px 0; row-gap:3px; }
 .ap .go{ padding:0 12px 6px; }
 
@@ -316,7 +316,7 @@ a.k:hover .ks .dim{ color:var(--accent); }
 :root{ --ph:210px; }
 #split{ padding:14px 0 6px; }
 #panel{ margin-top:22px; }
-.ap .ev{ height:86px; }
+
 .tiles .ad .tb b{ font-size:24px; }
 .tiles .ad .ts{ padding:3px 12px 7px; }
 #b-approve{ padding-bottom:4px; }
@@ -326,8 +326,24 @@ a.k:hover .ks .dim{ color:var(--accent); }
 #b-kpi{ padding:8px 0 8px; }
 #split{ padding:10px 0 4px; }
 #panel{ margin-top:16px; }
-.ap .ev{ height:74px; }
+
 .tiles .ad .th{ height:24px; }
 
 /* 남은 17px — 지도 판 높이에서 뺀다 */
 :root{ --ph:192px; }
+
+/* ── 되돌림 (2026-09-20) ────────────────────────────────────────────────
+   한 화면에 넣겠다고 승인 대기 증거 크롭을 74px 까지 눌렀다. 그 칸은 **어느 지역
+   요청인지 영상으로 보여 주는 것**이 존재 이유인데, 높이 숫자를 맞추려고 그 기능을
+   뭉갰다. 크롭은 읽히는 높이로 되돌리고, 공간은 덜 중요한 곳에서 뺀다. */
+.ap .ev{ height:118px; }
+
+/* 관리 바로가기 — 숫자를 큰 글자로 세울 이유가 없는 '바로가기'다.
+   제목 줄 안에 숫자를 넣어 한 줄로 만든다(96px → 약 56px). */
+.tiles .ad .th{ height:34px; }
+.tiles .ad .tb{ padding:0; position:absolute; }        /* 자리만 차지하지 않게 */
+.tiles .ad{ position:relative; }
+.tiles .ad .tb b{ font-size:15.5px; line-height:34px; }
+.tiles .ad .tb span{ display:none; }
+.tiles .ad .tb{ right:12px; top:0; padding:0; }
+.tiles .ad .ts{ padding:7px 12px 9px; }
