@@ -33,6 +33,12 @@ const tile = (l, v, u, tone = '') => `<div class="tile${tone ? ` tile--${tone}` 
   <span class="tile-l">${esc(l)}</span><span class="tile-v"><b>${typeof v === 'number' ? nf.format(v) : esc(v)}</b><span>${esc(u)}</span></span></div>`;
 const nameOfDeploy = (id) => cardById((DEPLOYS.find((d) => d.id === id) || {}).cardId)?.name || id;
 const h = (t, sub, right = '') => `<h2 class="pd-h">${esc(t)}<span>${esc(sub)}</span><span class="sp"></span>${right}</h2>`;
+/* 화면 참조 칩 — spine.js 의 `screen` 은 `produce.html?tab=match` 처럼 적혀 있다.
+   그대로 찍으면 개발용 URL 이 화면에 새어 나온 것처럼 보인다(점검기도 그렇게 잡는다).
+   여기서는 링크가 아니라 **어느 화면의 어느 탭인가** 를 가리키는 표기이므로 `·` 로 읽는다.
+   원본 데이터는 건드리지 않는다 — 보여 주는 방식만 바꾼다. */
+const screenChip = (d) => String(d).replace(/\?[a-z]+=/i, ' · ');
+
 
 /* ── 한 화면에 끝낸다 (2026-09-20) ────────────────────────────────────────
    이 화면은 문서형이라 탭마다 구역을 세로로 쌓아 올렸고, 뼈대 탭은 1,804px 이 넘쳤다.
@@ -100,7 +106,7 @@ function spine() {
       <div class="sp-n"><h3>${esc(l.name)}</h3><span class="sp-k">${esc(l.kind)}</span><span class="sp-w">${esc(l.who)}</span></div>
       <div class="sp-t"><p class="sp-what">${esc(l.what)}</p>
         <p class="sp-rule">${l.rule.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')}</p></div>
-      <p class="sp-f">${l.data.map((d) => `<code>${esc(d)}</code>`).join('')}${l.screen.map((d) => `<code class="sc">${esc(d)}</code>`).join('')}</p>
+      <p class="sp-f">${l.data.map((d) => `<code>${esc(d)}</code>`).join('')}${l.screen.map((d) => `<code class="sc">${esc(screenChip(d))}</code>`).join('')}</p>
       <p class="sp-st"><span class="ok">세움</span> ${esc(s.built || '')}${s.gap ? `<br><span class="gp">남음</span> ${esc(s.gap)}` : ''}</p>
     </div>`;
   };
