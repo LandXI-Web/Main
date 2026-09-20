@@ -35,7 +35,11 @@ const SCREENS = [
   ['admin-faq', 'FAQ 관리'], ['admin-map', '지도 설정'],
   ['notice', '공지사항'], ['faq', '자주 묻는 질문'], ['contact', '문의하기'],
   ['usecase', '활용 사례'], ['manual', '매뉴얼'], ['mypage', '마이페이지'],
-  ['produce', '생산 관리'], ['portal', '지자체 포털'], ['portal-dp-nw-farm-25', '포털 · 영농관리'],
+  ['produce', '생산 관리'], ['portal', '지자체 포털'],
+  // 배포본 7장 전부 상시 점검한다 — 목록에 없으면 기계가 안 본다(2026-09-20)
+  ['portal-dp-nw-farm-25', '포털 · 영농관리'], ['portal-dp-nw-living-23', '포털 · 생활환경'],
+  ['portal-dp-nw-road-26', '포털 · 도로안전'], ['portal-dp-nw-crowd-27', '포털 · 인파관리'],
+  ['portal-dp-nw-change', '포털 · 국토변화'],
   // 광주전남 해양쓰레기 두 배포본 — 25년(운영·실결과)과 27년(예정·고도화)은 화면이 다르다.
   ['portal-dp-gj-marine-25', '포털 · 해양쓰레기 25'], ['portal-dp-gj-marine-27', '포털 · 해양쓰레기 27'],
   ['login', '로그인'],
@@ -75,6 +79,9 @@ await page.addInitScript(() => { try { localStorage.setItem('lx_logged_in', '1')
    (2026-09-20: 메인에서 `서비스 지원` 을 걸어 놓고 눌러 보니 로그인으로 튕겼다) */
 const PUBLIC = ['scrub/index', 'site/notice', 'site/usecase', 'login'];
 
+/** 내려가는 것이 **그 화면의 기능**인 곳 — 업무 화면의 '한 화면' 법을 여기에 대지 않는다. */
+const SCROLL_BY_DESIGN = ['scrub/index'];
+
 const report = [];
 for (const [id, name] of list) {
   const errs = [];
@@ -89,7 +96,8 @@ for (const [id, name] of list) {
       const g = await ctx.newPage();
       await g.goto(`http://127.0.0.1:${PORT}/landxi/proto/${id}.html`, { waitUntil: 'domcontentloaded', timeout: 25000 }).catch(() => {});
       await g.waitForTimeout(900);
-      if (/login\.html/.test(g.url())) found.errs.push('공개 화면인데 로그인으로 튕긴다');
+      // 로그인 화면 자신은 당연히 로그인 화면이다 — 저를 보고 튕겼다고 하지 않는다.
+      if (id !== 'login' && /login\.html/.test(g.url())) found.errs.push('공개 화면인데 로그인으로 튕긴다');
       await ctx.close();
     }
     await page.goto(`http://127.0.0.1:${PORT}/landxi/proto/${id}.html`, { waitUntil: 'networkidle', timeout: 30000 });
@@ -121,7 +129,9 @@ for (const [id, name] of list) {
         + (typeof e.className === 'string' && e.className ? '.' + e.className.trim().split(/\s+/)[0] : ''); }
       // 7 개발용 URL 표기가 화면에 노출되나 — `?status=대기` 같은 것
       const dev = [...document.querySelectorAll('#main *')]
-        .filter((e) => !e.children.length && /\?(status|open|tab|card|svc|result|pid)=/.test(e.textContent || ''))
+        // 목록을 늘릴 것이 아니라 **모양**을 잡는다 — `?이름=` 꼴이 화면 글자로 보이면 전부 잘못이다.
+        // 이름을 하나씩 세다 보니 `?notice=7` 이 빠져나갔다(2026-09-21). 한 글자짜리 이름은 빼고 본다.
+        .filter((e) => !e.children.length && /\?[a-z][a-z0-9_]{1,14}=/.test(e.textContent || ''))
         .map((e) => e.textContent.trim().slice(0, 30));
       return { over, inner, empty, img, unnamed, dev };
     }));
@@ -191,7 +201,9 @@ let bad = 0;
 for (const r of report) {
   const issues = [];
   if (r.errs.length) issues.push(['콘솔 오류', [...new Set(r.errs)].join(' / ')]);
-  if (r.over > 4) issues.push(['페이지 스크롤', `${r.over}px 더 내려야 본다`]);
+  /* '업무 화면은 한 화면에서 끝난다'는 업무 화면의 법이다. **메인 필름은 업무 화면이 아니라
+     스크롤로 읽는 소개 영상**이고, 내려가는 것 자체가 그 화면의 기능이다 — 여기서는 재지 않는다. */
+  if (r.over > 4 && !SCROLL_BY_DESIGN.includes(r.id)) issues.push(['페이지 스크롤', `${r.over}px 더 내려야 본다`]);
   r.inner.forEach((i) => issues.push(['판 안쪽 스크롤', `${i.hid}px 숨음 (판 ${i.h}px)  ${i.sel}`]));
   r.empty.forEach((e) => issues.push(['빈 자리', `${e.w}×${e.h}  ${e.sel}`]));
   if (r.img.length) issues.push(['깨진 이미지', [...new Set(r.img)].join(' / ')]);

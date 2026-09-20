@@ -234,6 +234,13 @@ export function healthCheck() {
  *
  * 단위가 다르면 어긋난 것이 아니다 — 비닐하우스는 9,664 **동**이 1,674 **필지**에
  * 걸쳐 있다. 세는 대상이 다르므로 그대로 둔다. 같은 단위인데 다를 때만 잡는다.
+ *
+ * 2026-09-21 에 세 건을 정리했다. 그 과정에서 `real` 한 칸이 "실자산이 있는가" 와
+ * "이 숫자가 실측인가" 를 겸하고 있던 것이 드러나 칸을 갈랐다(services.js 머리말).
+ * 이 검사는 **숫자 쪽(real)만** 본다. 자산만 있고 산출이 없는 것(asset)은 잘못이 아니다.
+ *   · marine   38,057 → 3,938   대장이 받치는 여수 두 건의 합으로 내렸다
+ *   · pothole  1,264           real:false · asset:true  — 화면이 '준비 중' 으로 말한다
+ *   · change   486             real:false · asset:true
  */
 export function countCheck() {
   const issues = [];

@@ -48,7 +48,9 @@ export function buildCells({ RESULTS = [], CHANGE = [], IMAGERY = [], SERVICES =
     }
   }
   for (const s of SERVICES) {
-    if (!s.real || (s.results && s.results.length) || !s.lnglat) continue;
+    // '예정' 셀 = **실자산은 있는데 판독 산출이 대장에 없는 곳**. 숫자가 실측인지(real)가 아니라
+    // 자산이 있는지(asset)를 본다 — 2026-09-21 에 두 뜻을 칸으로 갈랐다(services.js 머리말).
+    if (!s.asset || (s.results && s.results.length) || !s.lnglat) continue;
     const cell = get(s.lnglat[0], s.lnglat[1]);
     if (cell.results.length || cell.change.length || cell.imagery.length) continue;         // 이미 실자산이 있는 셀은 그대로
     cell.planned.push({ id: s.id, name: s.name });

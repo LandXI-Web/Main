@@ -150,13 +150,13 @@ panel.addEventListener('click', async (e) => {
   if (act === 'save') { u.role = $('#u-roles input:checked')?.value || ''; saveStore('users', list); say('권한이 저장되었습니다'); return; }
   if (act === 'approve') {
     if (!await confirmDialog({ title: '확인', body: '이 사용자의 가입을 승인하시겠습니까?' })) return;
-    Object.assign(u, { action: 'approved', actionBy: '관리자', actionAt: nowIso() }); saveStore('users', list); render(); say('가입을 승인했습니다 · 시연'); refocus('#u-roles input');
+    Object.assign(u, { action: 'approved', actionBy: '관리자', actionAt: nowIso(list) }); saveStore('users', list); render(); say('가입을 승인했습니다 · 시연'); refocus('#u-roles input');
   } else if (act === 'reject') {
     if (!await confirmDialog({ title: '확인', body: '이 사용자의 가입을 거부하시겠습니까?', danger: true })) return;
-    Object.assign(u, { action: 'rejected', actionBy: '관리자', actionAt: nowIso() }); saveStore('users', list); render(); say('가입을 거부했습니다 · 시연'); refocus('[data-act="withdraw"]');
+    Object.assign(u, { action: 'rejected', actionBy: '관리자', actionAt: nowIso(list) }); saveStore('users', list); render(); say('가입을 거부했습니다 · 시연'); refocus('[data-act="withdraw"]');
   } else if (act === 'withdraw') {
     if (!await confirmDialog({ title: '확인', body: '사용자를 탈퇴 처리하시겠습니까?', danger: true })) return;
-    Object.assign(u, { status: 'withdrawn', withdrawnAt: nowIso() }); saveStore('users', list); render(); say('탈퇴 처리했습니다 · 시연'); refocus('[data-act="reset"]');
+    Object.assign(u, { status: 'withdrawn', withdrawnAt: nowIso(list) }); saveStore('users', list); render(); say('탈퇴 처리했습니다 · 시연'); refocus('[data-act="reset"]');
   } else if (act === 'reset') {
     if (!await confirmDialog({ title: '확인', body: '비밀번호 실패 횟수를 초기화 하시겠습니까?' })) return;
     u.pwdFails = 0; saveStore('users', list); render(); say('비밀번호 실패 횟수를 초기화했습니다 · 시연'); refocus('[data-act="reset"]');

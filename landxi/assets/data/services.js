@@ -1,16 +1,30 @@
 // 전국 공공 분석 서비스 라인업 15종(2026-08-26 홍보영상 항목 산림 훼손·탄소 흡수량 추가, count 0 = 준비 중).
-// real:true 5종은 실제 보유 자산(영상·AI 결과)에 기반한다 — 해양쓰레기(전남 신안·완도 + 여수),
-// 농지이용(남원 2,098필지), 비닐하우스(남원 9,664동), 도로안전(남원), 드론 변화탐지(국산리).
-// 나머지 8종은 라인업 소개용 예시 수치다.
+//
+// ── 칸 두 개로 나눈 이유 (2026-09-21) ────────────────────────────────────
+// 원래 `real` 한 칸이 두 가지를 겸했다 — "실자산이 있는가" 와 "이 숫자가 실측인가".
+// 겸하다 보니 **자산은 있는데 산출은 대장에 없는** 도로안전·드론변화탐지가 실측 숫자로
+// 둔갑했다(registry.js countCheck 가 잡아냈다). 그래서 갈랐다.
+//
+//   real   이 count 가 **결과 대장(results.js)으로 뒷받침되는가.**
+//          화면은 이미 이 뜻으로 읽고 있었다 — portal-ui.js 가 `real ? 숫자 : '준비 중'`.
+//   asset  **실자산(영상·드론)이 있는가.** 산출은 아직 없어도 된다.
+//          지도 격자(db-cells.js)가 이 칸으로 '예정' 셀을 세운다.
+//
+// real:true 3종 — 해양쓰레기(여수 1,860+2,078건) · 농지이용(남원 2,098필지) · 비닐하우스(남원 9,664동).
+// asset:true 이면서 real:false 2종 — 도로안전(남원 영상 보유, 산출 미등재) · 드론변화탐지(국산리 동일).
+// 나머지 10종은 라인업 소개용 예시 수치다(real·asset 모두 false).
 // farmland 의 story:'jeju' 는 제주 불법건축물 사례용 키로 남겨 둔 것이며, count/lnglat 는
 // 실제 분석 산출물이 있는 남원 농지이용 결과를 따른다 — 스토리 카피 작성 시 정리 필요.
 // results 배열은 landxi/assets/data/results.js 의 RESULTS id 를 가리킨다(실제 GPKG 분석 산출물).
 // color 는 토큰 변수명 문자열이며 하드코딩된 색을 쓰지 않는다.
 export const SERVICES = [
-  { id: 'marine', name: '해양쓰레기 실태조사', ministry: '해양수산부', lnglat: [126.2, 35.1], count: 38057, unit: '건', lastRun: '2026-08-12', real: true, story: 'marine', color: 'var(--ai)', results: ['yeosu-marine-2025-aerial', 'yeosu-marine-2026-drone'] },
-  { id: 'farmland', name: '농지이용·불법건축물', ministry: '농림축산식품부', lnglat: [127.421, 35.432], count: 2098, unit: '필지', lastRun: '2026-06-08', real: true, story: 'jeju', color: 'var(--s-done)', results: ['namwon-farmland-2025'] },
-  { id: 'pothole', name: '도로안전 다시점 조사', ministry: '국토교통부', lnglat: [127.39, 35.41], count: 1264, unit: '건', lastRun: '2026-08-19', real: true, story: 'namwon', color: 'var(--lx)' },
-  { id: 'change', name: '드론 변화탐지', ministry: 'LX 한국국토정보공사', lnglat: [126.983, 35.832], count: 486, unit: '건', lastRun: '2026-08-05', real: true, story: 'kuksan', color: 'var(--lx)' },
+  // 38,057 → 3,938. 대장이 받쳐 주는 것은 여수 두 건(1,860 + 2,078)뿐이다. 앞 숫자는 신안·완도를
+  // 함께 센 값이라고 적혀 있었지만 그 산출이 대장에 없다 — 들어오면 그때 올린다. 되돌리지 말 것.
+  { id: 'marine', name: '해양쓰레기 실태조사', ministry: '해양수산부', lnglat: [126.2, 35.1], count: 3938, unit: '건', lastRun: '2026-08-12', real: true, asset: true, story: 'marine', color: 'var(--ai)', results: ['yeosu-marine-2025-aerial', 'yeosu-marine-2026-drone'] },
+  { id: 'farmland', name: '농지이용·불법건축물', ministry: '농림축산식품부', lnglat: [127.421, 35.432], count: 2098, unit: '필지', lastRun: '2026-06-08', real: true, asset: true, story: 'jeju', color: 'var(--s-done)', results: ['namwon-farmland-2025'] },
+  // 남원 영상·국산리 드론은 갖고 있다(asset). 다만 판독 산출이 대장에 없어 숫자는 실측이 아니다(real:false).
+  { id: 'pothole', name: '도로안전 다시점 조사', ministry: '국토교통부', lnglat: [127.39, 35.41], count: 1264, unit: '건', lastRun: '2026-08-19', real: false, asset: true, story: 'namwon', color: 'var(--lx)' },
+  { id: 'change', name: '드론 변화탐지', ministry: 'LX 한국국토정보공사', lnglat: [126.983, 35.832], count: 486, unit: '건', lastRun: '2026-08-05', real: false, asset: true, story: 'kuksan', color: 'var(--lx)' },
   { id: 'greenbelt', name: '개발제한구역 훼손', ministry: '국토교통부', lnglat: [127.05, 37.45], count: 912, unit: '건', lastRun: '2026-06-24', real: false, story: 'generic', color: 'var(--lx)' },
   { id: 'solar', name: '태양광 설비 현황', ministry: '산업통상자원부', lnglat: [126.55, 36.75], count: 3140, unit: '개소', lastRun: '2026-05-18', real: false, story: 'generic', color: 'var(--s-doing)' },
   { id: 'feedcrop', name: '사료작물 재배지', ministry: '농림축산식품부', lnglat: [128.45, 36.55], count: 1785, unit: '필지', lastRun: '2026-06-02', real: false, story: 'generic', color: 'var(--s-done)' },
@@ -19,7 +33,7 @@ export const SERVICES = [
   { id: 'silage', name: '곤포 사일리지 집계', ministry: '농림축산식품부', lnglat: [127.75, 35.85], count: 8934, unit: '개', lastRun: '2026-06-15', real: false, story: 'generic', color: 'var(--s-done)' },
   { id: 'trash', name: '방치폐기물 탐지', ministry: '환경부', lnglat: [128.6, 35.87], count: 631, unit: '개소', lastRun: '2026-07-03', real: false, story: 'generic', color: 'var(--ai)' },
   { id: 'river', name: '하천 불법점용', ministry: '환경부', lnglat: [128.95, 35.2], count: 358, unit: '건', lastRun: '2026-05-29', real: false, story: 'generic', color: 'var(--ai)' },
-  { id: 'greenhouse', name: '비닐하우스 현황', ministry: '농림축산식품부', lnglat: [127.426, 35.43], count: 9664, unit: '동', lastRun: '2026-06-06', real: true, story: 'generic', color: 'var(--s-done)', results: ['namwon-greenhouse-2025'] },
+  { id: 'greenhouse', name: '비닐하우스 현황', ministry: '농림축산식품부', lnglat: [127.426, 35.43], count: 9664, unit: '동', lastRun: '2026-06-06', real: true, asset: true, story: 'generic', color: 'var(--s-done)', results: ['namwon-greenhouse-2025'] },
   { id: 'forest', name: '산림 훼손 탐지', ministry: '산림청', lnglat: [129.05, 35.62], count: 0, unit: '건', lastRun: '2026-08-26', real: false, story: 'generic', color: 'var(--s-done)' },
   { id: 'carbon', name: '탄소 흡수량 산정', ministry: '산림청', lnglat: [129.12, 35.58], count: 0, unit: 'tCO₂', lastRun: '2026-08-26', real: false, story: 'generic', color: 'var(--ai)' },
 ];

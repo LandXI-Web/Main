@@ -21,6 +21,19 @@ function load() {
 }
 const save = (list) => { try { sessionStorage.setItem(KEY, JSON.stringify(list)); } catch { /* 저장소 차단 */ } };
 
+/* 새 문의의 등록 일시 — **목록에 있는 가장 최근 문의의 1분 뒤**.
+   원래는 날짜만 기준일(2026-04-22)에서 가져오고 시각은 진짜 벽시계를 썼다. 그래서
+   시드 최신 문의(15:08)보다 이른 시각에 등록하면 새 문의가 목록 맨 위에 서지 않았다 —
+   오후에 돌리면 맞고 새벽에 돌리면 틀리는 화면이었다(2026-09-21 새벽에 드러남).
+   콘티는 기준일을 "오늘"로 못 박았으니 시각도 콘티 안에서 흘러야 한다. 바깥 시계를 보지 않는다. */
+function nextStamp(list) {
+  const p = (n) => String(n).padStart(2, '0');
+  const last = list.map((q) => q.createdAt).filter((s) => s?.startsWith(AS_OF)).sort().pop();
+  const [h, m, s] = last ? last.slice(11).split(':').map(Number) : [8, 59, 0];
+  const t = Math.min(h * 3600 + m * 60 + s + 60, 23 * 3600 + 59 * 60 + 59);   // 자정을 넘기지 않는다
+  return `${AS_OF}T${p(Math.floor(t / 3600))}:${p(Math.floor(t / 60) % 60)}:${p(t % 60)}`;
+}
+
 if (boot('contact')) init();
 
 function init() {
@@ -226,8 +239,7 @@ ${q.attachments?.length ? `<section class="ct-vatt" aria-label="첨부 파일"><
     const title = fTitle.value.trim(), content = fContent.value.trim();
     setErr(fTitle, !title); setErr(fContent, !content);
     if (!title || !content) { (!title ? fTitle : fContent).focus(); return; }   // 원본: 첫 미입력 칸으로 포커스
-    const now = new Date(), p = (n) => String(n).padStart(2, '0');
-    const item = { id: Date.now(), title, content, status: 'pending', createdAt: `${AS_OF}T${p(now.getHours())}:${p(now.getMinutes())}:${p(now.getSeconds())}`, attachments: files.slice(), answer: '', answeredAt: '' };
+    const item = { id: Date.now(), title, content, status: 'pending', createdAt: nextStamp(inquiries), attachments: files.slice(), answer: '', answeredAt: '' };
     inquiries.unshift(item); save(inquiries);
     resetForm(); st.page = 1; toUrl(false); draw();
     say('등록 완료 · 문의가 등록되었습니다. 답변은 영업일 기준 1-2일 내 제공됩니다.');

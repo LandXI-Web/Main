@@ -203,9 +203,14 @@ ${hint ? `<p class="uf-h" id="${id}-h">${esc(hint)}</p>` : ''}<p class="uf-e" id
       setErr(capEl, capOk ? '' : MSG.capRange); setErr(rsEl, reason ? '' : MSG.reasonEmpty);
       if (!capOk) { capEl.focus(); return false; }
       if (!reason) { rsEl.focus(); return false; }
-      const hm = new Date(), pad = (n) => String(n).padStart(2, '0');
-      let at = `${AS_OF}T${pad(hm.getHours())}:${pad(hm.getMinutes())}:${pad(hm.getSeconds())}`;   // 콘티의 기준일 + 지금 시각
-      while (state.history.some((h) => h.requestedAt === at)) at = at.replace(/(\d\d)$/, (s) => pad((+s + 1) % 60));
+      /* 콘티 기준일 안에서 **내역의 가장 최근 신청보다 1분 뒤**. 바깥 시계를 보지 않는다 —
+         날짜만 기준일에서 가져오고 시각은 벽시계를 쓰면 새벽에 신청한 것이 과거로 내려간다
+         (2026-09-21 공지 관리·문의하기에서 같은 버그가 드러났다. admin.js nowIso 와 같은 규칙). */
+      const pad = (n) => String(n).padStart(2, '0');
+      const top = state.history.map((h) => h.requestedAt).filter((s) => s?.startsWith(AS_OF)).sort().pop();
+      const [hh, mm, ss] = top ? top.slice(11).split(':').map(Number) : [8, 59, 0];
+      const sec = Math.min(hh * 3600 + mm * 60 + ss + 60, 23 * 3600 + 59 * 60);
+      const at = `${AS_OF}T${pad(Math.floor(sec / 3600))}:${pad(Math.floor(sec / 60) % 60)}:${pad(sec % 60)}`;
       state.history.unshift({ capacity: cap, reason, requestedAt: at, status: 'pending', note: '검토 중' });
       saveState(state); lastFresh = cap;
       m.close('ok'); renderHistory(at); renderPlate(true); $('.my-hist').scrollTop = 0; toast(TOAST.storageDone(cap));

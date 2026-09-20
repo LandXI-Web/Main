@@ -115,7 +115,7 @@ panel.addEventListener('click', (e) => {
   const q = byId(S.id); if (!q) return;
   const answer = cleanHtml($('#v-answer').innerHTML);
   if (isBlankHtml(answer)) { say('답변 내용을 입력해 주세요.'); $('#v-answer').focus(); return; }
-  Object.assign(q, { answer, answerAttachments: files.slice(), answeredAt: nowIso(), answeredBy: '관리자', status: 'replied' });
+  Object.assign(q, { answer, answerAttachments: files.slice(), answeredAt: nowIso(list), answeredBy: '관리자', status: 'replied' });
   saveStore('inquiries', list); S.mode = ''; commit(); say('답변이 저장되었습니다');
   $(`tr[data-id="${S.id}"]`)?.focus();
 });

@@ -180,8 +180,8 @@ function save() {
   if (bad.length) { bad.forEach(([k, m]) => setErr(k, m)); $(ERR_EL[bad[0][0]][0]).focus(); say(`입력을 확인해 주세요 — ${bad.length}곳`); return; }
   const rec = { category: v.cat, title: v.title, startAt: v.startAt, endAt: v.endAt, popupOn: v.popupOn, popupFrom: v.popupFrom, popupTo: v.popupTo, content: v.content, attachments: files.slice() };
   const old = S.mode === 'edit' ? byId(S.id) : null;
-  if (old) Object.assign(old, rec, { updater: '관리자', updatedAt: nowIso() });
-  else { const id = list.reduce((m, x) => Math.max(m, x.id), 0) + 1; list.unshift({ id, ...rec, author: '관리자', createdAt: nowIso(), updater: '', updatedAt: '' }); S.id = id; Object.assign(S, { cat: 'all', field: 'all', kw: '', from: '', to: '', q: 0, page: 1 }); }
+  if (old) Object.assign(old, rec, { updater: '관리자', updatedAt: nowIso(list) });
+  else { const id = list.reduce((m, x) => Math.max(m, x.id), 0) + 1; list.unshift({ id, ...rec, author: '관리자', createdAt: nowIso(list), updater: '', updatedAt: '' }); S.id = id; Object.assign(S, { cat: 'all', field: 'all', kw: '', from: '', to: '', q: 0, page: 1 }); }
   saveStore('notices', list); S.mode = ''; S.panel = ''; commit(); say(old ? '공지사항을 수정했습니다 · 시연' : '공지사항을 등록했습니다 · 시연');
   $(`tr[data-id="${S.id}"]`)?.focus();
 }

@@ -134,8 +134,8 @@ function save() {
   if (bad.length) { bad.forEach(setErr); $(ERR_EL[bad[0]]).focus(); say(`입력을 확인해 주세요 — ${bad.length}곳`); return; }
   const rec = { category: v.cat, question: v.question, answer: v.answer, attachments: files.slice() };
   const old = S.mode === 'edit' ? byId(S.id) : null;
-  if (old) Object.assign(old, rec, { updater: '관리자', updatedAt: nowIso() });
-  else { const id = list.reduce((m, x) => Math.max(m, x.id), 0) + 1; list.unshift({ id, ...rec, author: '관리자', createdAt: nowIso(), updater: '', updatedAt: '' }); S.id = id; Object.assign(S, { cat: 'all', field: 'all', kw: '', page: 1 }); }
+  if (old) Object.assign(old, rec, { updater: '관리자', updatedAt: nowIso(list) });
+  else { const id = list.reduce((m, x) => Math.max(m, x.id), 0) + 1; list.unshift({ id, ...rec, author: '관리자', createdAt: nowIso(list), updater: '', updatedAt: '' }); S.id = id; Object.assign(S, { cat: 'all', field: 'all', kw: '', page: 1 }); }
   saveStore('faqs', list); S.mode = ''; S.panel = ''; commit(); say(old ? '질문을 수정했습니다 · 시연' : '질문을 등록했습니다 · 시연');
   $(`tr[data-id="${S.id}"]`)?.focus();
 }

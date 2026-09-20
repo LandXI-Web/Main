@@ -36,9 +36,29 @@ export function saveStore(name, list) {
   refreshTabCounts();
 }
 
-/* ── 시각 — 기준일(시드 최신일)의 오늘 + 실제 시분초 ───────────────────── */
+/* ── 시각 — 콘티 기준일 안에서 흐른다. **바깥 시계를 보지 않는다** ────────
+ * 원래는 날짜만 기준일에서 가져오고 시분초는 진짜 벽시계를 썼다. 그래서 시드 최신 글보다
+ * 이른 시각에 등록하면 새 글이 목록 맨 위에 서지 않았다 — 오후에 돌리면 맞고 새벽에
+ * 돌리면 틀리는 화면이었다(2026-09-21 새벽에 공지 관리·문의하기에서 동시에 드러남).
+ * 이제 **목록에 있는 가장 최근 시각의 1분 뒤**를 준다. list 를 넘기면 그 목록을 보고,
+ * 안 넘기면 이 화면에서 앞서 찍은 시각을 이어 간다. 같은 화면에서 여러 번 찍어도 겹치지 않는다. */
 const p2 = (n) => String(n).padStart(2, '0');
-export function nowIso() { const d = new Date(); return `${AS_OF}T${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`; }
+const TIME_KEYS = ['createdAt', 'updatedAt', 'answeredAt', 'actionAt', 'withdrawnAt'];
+let lastSec = 0;                                                    // 이 화면에서 마지막으로 찍은 시각(초)
+export function nowIso(list) {
+  let sec = lastSec;
+  for (const row of list || []) {
+    for (const k of TIME_KEYS) {
+      const v = row?.[k];
+      if (typeof v !== 'string' || !v.startsWith(AS_OF)) continue;
+      const [h, m, s] = v.slice(11).split(':').map(Number);
+      sec = Math.max(sec, h * 3600 + (m || 0) * 60 + (s || 0));
+    }
+  }
+  if (!sec) sec = 9 * 3600;                                         // 아무것도 없으면 그날 09:00 부터
+  lastSec = Math.min(sec + 60, 23 * 3600 + 59 * 60);                // 자정을 넘기지 않는다
+  return `${AS_OF}T${p2(Math.floor(lastSec / 3600))}:${p2(Math.floor(lastSec / 60) % 60)}:${p2(lastSec % 60)}`;
+}
 export const dt = (iso, n = 16) => (iso ? iso.replace('T', ' ').replace(/-/g, '.').substring(0, n) : '-');
 export const fsize = (b) => (b < 1024 * 1024 ? (b / 1024).toFixed(1) + ' KB' : (b / 1024 / 1024).toFixed(1) + ' MB');
 const iso10 = (d) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;

@@ -405,13 +405,19 @@ function renderPlate() {
 function positionOverlays() {
   const legend = $('#legend'), scale = $('#scale'), strip = $('#strip');
   if (!legend) return;
-  const w = $('#plates')?.clientWidth || 0;
+  const plates = $('#plates');
+  const w = plates?.clientWidth || 0, h = plates?.clientHeight || 0;
   const narrow = w < 980;
   $('#mw')?.toggleAttribute('data-narrow', narrow);
   if (scale) scale.style.bottom = '14px';
-  const sh = strip ? (narrow ? strip.offsetHeight : 0) : 0;
-  if (strip) strip.style.bottom = narrow ? '48px' : '14px';
-  legend.style.bottom = narrow ? `${48 + sh + 10}px` : '48px';
+  /* 쌓기는 **쌓을 자리가 있을 때만** 한다. 판 위쪽 70px 은 도구 열 · 내보내기 단추의
+     자리라 여기까지 올라오면 안 된다 — 아래 표 판을 펼친 짧은 판에서 실제로
+     범례가 `내보내기` 를 덮어 누를 수 없게 됐다(전체 스펙 6건이 여기서 빨갰다).
+     자리가 없으면 원래대로 좌·우로 나란히 둔다. */
+  const sh = strip ? strip.offsetHeight : 0;
+  const stack = narrow && !!strip && 48 + sh + 10 + legend.offsetHeight <= h - 70;
+  if (strip) strip.style.bottom = stack ? '48px' : '14px';
+  legend.style.bottom = stack ? `${48 + sh + 10}px` : '48px';
 }
 function noneHtml() {
   return `<div class="mw-none"><p class="t">범례 없음</p><p class="m">선택된 작업이 없어요</p><p class="w">왼쪽에서 분석 결과를 체크하세요</p></div>`;
@@ -686,8 +692,7 @@ function renderResultTable(L) {
       <td class="num">${from + i + 1}</td><td>${esc(r.sido)}</td><td>${esc(r.sgg)}</td><td>${esc(r.emd)}</td><td class="num">${esc(r.ri)}</td><td class="c">${esc(r.san)}</td><td class="num r">${esc(String(r.bon))}</td><td class="num r">${esc(String(r.bu))}</td>
       <td>${base ? `<span class="st${r.act === 'done' ? ' st--acc' : r.act === 'doing' ? ' st--warn' : ''}">${esc(D.actLabel(r.act))}</span>` : esc(r.clsLabel)}</td><td class="num r">${nf.format(Math.round(r.area))}</td></tr>`).join('')}</tbody></table></div>
     ${rows.length ? '' : `<div class="empty empty--s">${icon('search', 26)}<p class="empty-t">검색 조건에 맞는 결과가 없습니다</p></div>`}`;
-  mountPager($('#pager'), { total: rows.length, page, size, sizes: [...new Set([size, 10, 20, 50])].sort((a, b) => a - b), onChange: (st) => { page = st.page; sizePref = size = st.size; renderBottom(); frameRows(); } });
-  fitBottomRows();
+  mountPager($('#pager'), { total: rows.length, page, size, sizes: [10, 20, 50], onChange: (st) => { page = st.page; size = st.size; renderBottom(); frameRows(); } });
   bindRows($('#tbody'), (tr) => {
     S.sel = tr.dataset.id; S.side = 'info';
     const r = part.find((x) => x.id === tr.dataset.id);
@@ -700,22 +705,6 @@ function renderResultTable(L) {
   paintNumbers(part);
   // 번호가 창 밖이면 판을 그 쪽으로 — 표의 행 번호가 판 위 번호와 같아야 한다
   queueMicrotask(() => { if (part.length && !anchors.some((a) => a.el.classList.contains('mw-num') && !a.el.hidden)) frameRows(); });
-}
-/* 아래 표의 한 쪽 행 수를 남은 높이에 맞춘다 — 통계 · 보고서 서랍과 같은 장치다.
-   쪽넘김이 `총 2,098건 중 1~N 행` 을 계속 말하므로 지운 것이 아니고,
-   사용자가 페이지 크기를 직접 고르면(sizePref) 그 뜻을 따른다. */
-let sizePref = 0, fitPass = 0;
-function fitBottomRows() {
-  if (sizePref) { fitPass = 0; return; }
-  const box = $('#mb-b'), tb = $('#tbody');
-  if (!box || !tb || !tb.rows.length) { fitPass = 0; return; }
-  const rh = Math.max(20, tb.rows[0].getBoundingClientRect().height);
-  const over = box.scrollHeight - box.clientHeight;
-  let next = size;
-  if (over > 2) next = Math.max(2, size - Math.ceil(over / rh));
-  else if (size < 10 && -over >= rh) next = Math.min(10, size + Math.floor(-over / rh));
-  if (next !== size && fitPass < 6) { fitPass++; size = next; page = 1; renderBottom(); return; }
-  fitPass = 0;
 }
 /** 표의 번호가 판 위 번호이려면 그 쪽의 도형이 창 안에 있어야 한다. */
 function frameRows() {
@@ -757,8 +746,7 @@ function renderRegion(L) {
       ${cls.map((c) => `<td class="num r">${nf.format(Math.round(r.cls[c] || 0))}</td>`).join('')}
       <td class="num r">${nf.format(Math.round(r.area))}</td>
       <td><span class="bar" style="width:${Math.round((r.area / max) * 100)}%"><i style="width:${Math.round(((r.cls[cls[0]] || 0) / (r.area || 1)) * 100)}%"></i></span></td></tr>`).join('')}</tbody></table></div>`;
-  mountPager($('#pager'), { total: rows.length, page, size, sizes: [...new Set([size, 10, 20, 50])].sort((a, b) => a - b), onChange: (st) => { page = st.page; sizePref = size = st.size; renderBottom(); } });
-  fitBottomRows();
+  mountPager($('#pager'), { total: rows.length, page, size, sizes: [10, 20, 50], onChange: (st) => { page = st.page; size = st.size; renderBottom(); } });
   bindRows($('#tbody'), (tr) => { regQ.sel = tr.dataset.emd; paintRegion(tr.dataset.emd); });
   const form = $('#regq');
   form.onsubmit = (e) => { e.preventDefault(); regQ.emd = new FormData(form).get('emd') || ''; page = 1; renderBottom(); paintRegion(regQ.emd); };
