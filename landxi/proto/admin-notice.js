@@ -3,7 +3,7 @@
    URL: ?id= 선택 · panel=off 열람 닫기 · mode=new|edit · cat= 구분 패싯 · field/kw/from/to/q 검색 · page/size. */
 import { say, confirmDialog, openModal, mountPager, bindRows, bindCounters, esc, $, $$ } from './shell.js';
 import { mountAdmin, loadStore, saveStore, urlState, facetBand, periodHtml, searchBtns, bindPeriod, quickOf, nowIso, dt, swapIn, INF,
-  tlBar, tlBig, popupLive, cleanHtml, isBlankHtml, rteHtml, bindRte, makeAskUrl, mountAttach, attachView, metaFoot, weeksAhead } from './admin.js';
+  tlBar, tlBig, popupLive, cleanHtml, isBlankHtml, rteHtml, bindRte, makeAskUrl, mountAttach, attachView, metaFoot, weeksAhead, fitRows, watchFit } from './admin.js';
 import { NOTICE_CAT } from './admin-data.js';
 
 const { main } = mountAdmin('notice');
@@ -44,7 +44,7 @@ main.insertAdjacentHTML('beforeend', `
 </div></div>`);
 
 const form = $('#search'), tbl = $('#tbl'), panel = $('#panel');
-pager = mountPager($('#pager'), { total: 0, page: S.page, size: S.size, onChange: ({ page, size }) => { S.page = page; S.size = size; if (!formMode()) S.id = 0; keepPage = true; commit(); keepPage = false; } });
+pager = mountPager($('#pager'), { total: 0, page: S.page, size: S.size, onChange: ({ page, size }) => { S.page = page; S.size = S._pref = size; if (!formMode()) S.id = 0; keepPage = true; commit(); keepPage = false; } });
 bindRows(tbl, (row) => { S.id = +row.dataset.id; S.mode = ''; S.panel = ''; commit(); $(`tr[data-id="${S.id}"]`)?.focus(); });
 
 function drawBand() {
@@ -89,6 +89,7 @@ function drawList() {
   $('#list-empty').hidden = !!all.length;
   $('#pager').classList.toggle('pager--c', focus);
   pager.set({ total: all.length, page: S.page, size: S.size });
+  fitRows(S, drawList);          // 남은 높이에 맞춰 한 쪽 행 수를 맞춘다(admin.js 주석)
 }
 tbl.addEventListener('change', (e) => { if (e.target.id === 'ck-all') $$('.row-ck', tbl).forEach((c) => { c.checked = e.target.checked; }); });
 
@@ -100,12 +101,18 @@ function drawView(animate) {
 <header class="panel-h"><h2>공지사항 열람</h2><span class="sp"></span><span class="n no">No. ${n.id}</span></header>
 <div class="panel-b" id="panel-b">
   <div class="n-top"><div class="n-cat">${catWord(n.category)}<span class="mic">구분</span></div><h3 class="n-title">${esc(n.title)}</h3></div>
-  <dl class="vrows"><div class="vrow"><dt>게시 기간</dt><dd><span class="n">${periodTxt(n)}</span></dd></div>
-    <div class="vrow"><dt>팝업 설정</dt><dd>${n.popupOn ? `메인화면 팝업 표시 · <span class="n">${dt(n.popupFrom)} ~ ${dt(n.popupTo)}</span>` : '<span class="g" style="color:var(--grey)">표시 안 함</span>'}</dd></div></dl>
-  ${tlBig([n.startAt, n.endAt], n.popupOn ? [n.popupFrom, n.popupTo] : null)}
+  <!-- 기간 글자와 기간 축은 같은 것을 글/그림으로 말한다 — 위아래로 쌓지 않고 좌우로 놓는다.
+       아래 첨부 · 등록자 줄도 마찬가지. 그렇게 비운 자리를 내용(.grow)이 가져간다. -->
+  <div class="n-meta">
+    <dl class="vrows"><div class="vrow"><dt>게시 기간</dt><dd><span class="n">${periodTxt(n)}</span></dd></div>
+      <div class="vrow"><dt>팝업 설정</dt><dd>${n.popupOn ? `메인화면 팝업 표시 · <span class="n">${dt(n.popupFrom)} ~ ${dt(n.popupTo)}</span>` : '<span class="g" style="color:var(--grey)">표시 안 함</span>'}</dd></div></dl>
+    ${tlBig([n.startAt, n.endAt], n.popupOn ? [n.popupFrom, n.popupTo] : null)}
+  </div>
   <div class="n-body grow"><span class="k">내용</span><div class="body-html" tabindex="0" role="region" aria-label="공지 내용">${cleanHtml(n.content)}</div></div>
-  <div class="n-att"><span class="k">첨부 파일</span><div class="v">${attachView(n.attachments)}</div></div>
-  ${metaFoot(n)}
+  <div class="n-foot">
+    <div class="n-att"><span class="k">첨부 파일</span><div class="v">${attachView(n.attachments)}</div></div>
+    ${metaFoot(n)}
+  </div>
 </div>
 <footer class="panel-f"><button type="button" class="btn-br" data-act="list" style="margin-right:auto">목록</button><button type="button" class="btn-br" data-act="delete">삭제</button><button type="button" class="btn" data-act="edit">수정</button></footer>`;
   if (animate) swapIn($('#panel-b'));
@@ -206,3 +213,6 @@ addEventListener('popstate', () => { S = url.read(); render(true); });
 
 render();
 url.write(S, false);
+
+/* 창 크기가 바뀌면 한 쪽 행 수를 다시 맞춘다(모니터마다 최적화) */
+watchFit(() => { if (!S._pref) { S.size = 10; drawList(); } });

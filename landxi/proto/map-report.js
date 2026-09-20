@@ -11,6 +11,8 @@ let q = { k: '전체', q: '', state: 'all', from: '', to: '', quick: 'all' }, pa
 
 export function mountReport(el, ctx, o = {}) {
   host = el; api = o; C = ctx; tab = o.tab === 'list' ? 'list' : 'issue';
+  size = sizePref;                         // 들어올 때마다 원하는 쪽 크기에서 다시 재 본다
+  if (!bound) { bound = true; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (host?.isConnected) { size = sizePref; draw(); } }, 180); }); }
   const rows = ctx.geo ? D.byEmd(ctx.geo) : [];
   if (!form.touched) {
     form.title = `${D.today().getFullYear()}년 ${D.today().getMonth() + 1}월 ${D.adminOf(ctx.geo?.features?.[0]?.properties.pnu).sgg} ${task()} 현황 보고서`;
@@ -26,43 +28,67 @@ const emdsOf = (r) => (!r ? [] : r.all ? (C.geo ? D.byEmd(C.geo).map((x) => x.em
 
 function draw() {
   const n = D.reports().length;
-  host.innerHTML = `<div class="dw">
+  /* 서랍 속 구조 — 왼쪽은 `무엇을 넣을지`(탭 · 폼 · 거르개), 오른쪽은 `그 결과`
+     (미리보기 · 발급 목록). 넓은 서랍에서는 좌우로 선다(map.css `.dw--split`). */
+  host.innerHTML = `<div class="dw dw--split">
   <div class="dw-h"><div><p class="lb">보고서</p><h2>${esc(task())} 보고서 발급 ${tab === 'issue' ? '요청' : '내역'}</h2>
     <p class="dw-sub">AI 분석 과제(${esc(task())} 분석)의 ${esc((C.layer?.classes || []).map(D.clsLabel).join('·'))} 면적을 엑셀 보고서로 발급받을 수 있습니다.</p></div>
     <button type="button" class="x" id="rp-x" aria-label="닫기">${icon('x', 18)}</button></div>
+  <div class="dw-l">
   <div class="dw-tabs" role="tablist"><button type="button" role="tab" data-rt="issue" aria-selected="${tab === 'issue'}">보고서 발급 요청</button>
     <button type="button" role="tab" data-rt="list" aria-selected="${tab === 'list'}">보고서 발급 내역<span class="n" style="margin-left:6px;color:var(--grey)">${n}</span></button></div>
-  <div id="rp-b">${tab === 'issue' ? issueHtml() : listHtml()}</div></div>
+  ${tab === 'issue' ? issueFormHtml() + previewHtml() : listFilterHtml()}</div>
+  <div class="dw-r" id="rp-b">${tab === 'issue' ? scopeHtml() + emdsHtml() : listHtml()}</div></div>
   ${tab === 'issue' ? `<div class="dw-f"><span class="mic">접수되면 발급 내역에서 진행 상태를 확인합니다</span><button type="button" class="btn-br" id="rp-cancel" style="width:84px">취소</button><button type="button" class="btn" id="rp-go" style="width:110px">발급 요청</button></div>` : ''}`;
   bind();
 }
 
 /* ── 발급 요청 ──────────────────────────────────────────────────────── */
-function issueHtml() {
+function issueFormHtml() {
   const rows = C.geo ? D.byEmd(C.geo) : [];
   const all = C.emdGeo ? C.emdGeo.features.map((f) => f.properties.nm) : rows.map((r) => r.emd);
   const ad = D.adminOf(C.geo?.features?.[0]?.properties.pnu);
-  const picked = rows.filter((r) => form.emds.includes(r.emd)).sort((a, b) => b.area - a.area);
-  const nP = picked.reduce((a, r) => a + r.n, 0), area = picked.reduce((a, r) => a + r.area, 0);
-  const max = Math.max(...picked.map((r) => r.area), 1);
   const err = (k) => form.touched && ((k === 'title' && !form.title.trim()) || (k === 'cls' && !form.cls.length) || (k === 'emd' && !form.emds.length));
   return `
   <div class="form">
     <div class="field field--12"><div class="field-h"><label class="field-l" for="rp-title">보고서 제목<em class="req">*</em></label></div>
       <input id="rp-title" class="inp" maxlength="80" value="${esc(form.title)}"${err('title') ? ' aria-invalid="true" aria-describedby="rp-title-e"' : ''}>
       ${err('title') ? '<p class="err" id="rp-title-e">보고서 제목을 입력해 주세요.</p>' : ''}</div>
-    <div class="field field--12"><div class="field-h"><span class="field-l">탐지 클래스<em class="req">*</em></span></div>
+  </div>`;
+  void all; void ad;
+}
+/* 무엇을(탐지 클래스) · 어디를(대상 지역) — 보고서가 담을 범위라 한 칸에 모은다.
+   왼쪽 칸에 다 쌓았을 때 1280×720 에서 32px 가 넘쳤다. */
+function scopeHtml() {
+  const err = (k) => form.touched && ((k === 'cls' && !form.cls.length) || (k === 'emd' && !form.emds.length));
+  return `<div class="field field--12"><div class="field-h"><span class="field-l">탐지 클래스<em class="req">*</em></span></div>
       <div class="rp-cls"><label class="ck"><input type="checkbox" id="rp-cls-all"${form.cls.length === (C.layer?.classes || []).length ? ' checked' : ''}>전체 선택</label><span class="bar"></span>
         ${(C.layer?.classes || []).map((c) => `<label class="ck"><input type="checkbox" data-cls="${esc(c)}"${form.cls.includes(c) ? ' checked' : ''}>${esc(D.clsLabel(c))}</label>`).join('')}</div>
-      ${err('cls') ? '<p class="err">탐지 클래스를 하나 이상 선택해 주세요.</p>' : ''}</div>
-    <div class="field field--12"><div class="field-h"><span class="field-l">대상 지역<em class="req">*</em></span></div>
-      <div class="field-row"><span class="sel" style="flex:1"><select aria-label="시도"><option>${esc(ad.sido)}</option></select></span><span class="arrow">${icon('chevR', 14)}</span>
-        <span class="sel" style="flex:1"><select aria-label="시군구"><option>${esc(ad.sgg)}</option></select></span>
-        <span class="mic">${esc(C.ctx.unitExample)} ${all.length} · 여러 개 선택</span></div>
-      <div class="rp-emds"><div class="all"><label class="ck"><input type="checkbox" id="rp-emd-all"${form.emds.length === all.length ? ' checked' : ''}>전체 선택</label></div>
-        <div class="grid">${all.map((nm) => `<label class="ck"><input type="checkbox" data-emd="${esc(nm)}"${form.emds.includes(nm) ? ' checked' : ''}${rows.some((r) => r.emd === nm) ? '' : ' disabled'}>${esc(nm)}</label>`).join('')}</div></div>
-      ${err('emd') ? '<p class="err">대상 지역을 하나 이상 선택해 주세요.</p>' : ''}</div>
-  </div>
+      ${err('cls') ? '<p class="err">탐지 클래스를 하나 이상 선택해 주세요.</p>' : ''}</div>`;
+}
+/* 대상 지역 — 읍·면·동 32개 체크. 가장 넓은 자리가 필요해서 넓은 칸(.dw-r)에 둔다.
+   왼쪽에 다 쌓았을 때는 왼쪽 칸이 551px 이 되고 오른쪽은 235px 로 비어 있었다. */
+function emdsHtml() {
+  const rows = C.geo ? D.byEmd(C.geo) : [];
+  const all = C.emdGeo ? C.emdGeo.features.map((f) => f.properties.nm) : rows.map((r) => r.emd);
+  const ad = D.adminOf(C.geo?.features?.[0]?.properties.pnu);
+  const err = form.touched && !form.emds.length;
+  return `
+  <div class="field field--12"><div class="field-h"><span class="field-l">대상 지역<em class="req">*</em></span>
+      <span class="mic">${esc(C.ctx.unitExample)} ${all.length} · 여러 개 선택</span></div>
+    <div class="field-row"><span class="sel" style="flex:1"><select aria-label="시도"><option>${esc(ad.sido)}</option></select></span><span class="arrow">${icon('chevR', 14)}</span>
+      <span class="sel" style="flex:1"><select aria-label="시군구"><option>${esc(ad.sgg)}</option></select></span></div>
+    <div class="rp-emds"><div class="all"><label class="ck"><input type="checkbox" id="rp-emd-all"${form.emds.length === all.length ? ' checked' : ''}>전체 선택</label></div>
+      <div class="grid">${all.map((nm) => `<label class="ck"><input type="checkbox" data-emd="${esc(nm)}"${form.emds.includes(nm) ? ' checked' : ''}${rows.some((r) => r.emd === nm) ? '' : ' disabled'}>${esc(nm)}</label>`).join('')}</div></div>
+    ${err ? '<p class="err">대상 지역을 하나 이상 선택해 주세요.</p>' : ''}</div>`;
+}
+/** 미리보기 — 오른쪽 칸. 폼을 건드릴 때마다 여기만 다시 그린다(syncIssue). */
+function previewHtml() {
+  const rows = C.geo ? D.byEmd(C.geo) : [];
+  const picked = rows.filter((r) => form.emds.includes(r.emd)).sort((a, b) => b.area - a.area);
+  const nP = picked.reduce((a, r) => a + r.n, 0), area = picked.reduce((a, r) => a + r.area, 0);
+  const max = Math.max(...picked.map((r) => r.area), 1);
+  return `
   <div class="rp-pre"><div class="l"><p class="t">발급 미리보기 · 엑셀 1 파일</p>
       <b class="k">${nf.format(nP)}</b><span class="u">${esc(C.layer?.unit || '건')}</span>
       <b>${D.ha(area).toFixed(1)}</b><span class="u">ha</span>
@@ -75,19 +101,23 @@ function issueHtml() {
 function list() {
   return D.reports().filter((r) => (q.state === 'all' || r.state === q.state) && (!q.q || r.title.includes(q.q)));
 }
-function listHtml() {
-  const rows = list();
-  const from = (page - 1) * size, part = rows.slice(from, from + size);
+/** 거르개 — 왼쪽 칸(발급 내역 탭) */
+function listFilterHtml() {
   return `
   <form class="dw-filters" id="rp-q" role="search">
     <span class="f" style="flex:26"><span class="lb">검색어</span><span class="sel"><select name="k" aria-label="검색 항목"><option>전체</option><option>제목</option><option>요청자</option></select></span></span>
     <span class="f" style="flex:44"><span class="lb">&nbsp;</span><input class="inp" name="q" placeholder="검색어를 입력하세요." aria-label="검색어" value="${esc(q.q)}"></span>
     <span class="f" style="flex:26"><span class="lb">상태</span><span class="sel"><select name="state" aria-label="상태">${D.REPORT_STATES.map((s) => `<option value="${s.k}"${q.state === s.k ? ' selected' : ''}>${esc(s.label)}</option>`).join('')}</select></span></span>
     <span class="g"><button type="reset" class="mic">초기화</button><button class="btn-br" style="width:84px">검색</button></span>
-    <span class="f" style="flex:100 1 100%"><span class="lb">발급 일자</span><span class="field-row"><input class="inp inp--s" type="date" name="from" aria-label="시작"><span class="tilde">~</span><input class="inp inp--s" type="date" name="to" aria-label="끝">
-      <span class="chips" role="group" aria-label="기간">${[['all', '전체'], ['1', '1개월'], ['3', '3개월'], ['6', '6개월'], ['12', '12개월']].map(([k, l]) => `<button type="button" class="chip-b" data-q="${k}" aria-pressed="${q.quick === k}">${l}</button>`).join('')}</span></span></span>
-  </form>
-  <div class="dw-sec-h" style="margin-top:6px"><span class="lb" style="font-size:16px;color:var(--ink)">보고서 목록</span>
+    <span class="f" style="flex:100 1 100%"><span class="lb">발급 일자</span><span class="field-row"><input class="inp inp--s" type="date" name="from" aria-label="시작"><span class="tilde">~</span><input class="inp inp--s" type="date" name="to" aria-label="끝"></span></span>
+    <span class="f" style="flex:100 1 100%"><span class="chips" role="group" aria-label="기간">${[['all', '전체'], ['1', '1개월'], ['3', '3개월'], ['6', '6개월'], ['12', '12개월']].map(([k, l]) => `<button type="button" class="chip-b" data-q="${k}" aria-pressed="${q.quick === k}">${l}</button>`).join('')}</span></span>
+  </form>`;
+}
+function listHtml() {
+  const rows = list();
+  const from = (page - 1) * size, part = rows.slice(from, from + size);
+  return `
+  <div class="dw-sec-h"><span class="lb" style="font-size:16px;color:var(--ink)">보고서 목록</span>
     <span class="mic">전체 ${rows.length}건 중 ${rows.length ? from + 1 : 0}~${Math.min(rows.length, from + size)}행</span><em class="tag">시연</em>
     <span class="sp"></span><button type="button" class="btn" id="rp-new" style="width:84px">발급</button></div>
   ${rows.length ? `<ul class="rp-list" id="rp-tb">${part.map((r) => `<li><button type="button" class="rp" data-row tabindex="0" data-id="${esc(r.id)}" aria-selected="${sel === r.id}">
@@ -104,7 +134,7 @@ function bind() {
   $('#rp-x').onclick = () => api.onClose?.();
   host.querySelector('.dw-tabs').onclick = (e) => { const t = e.target.closest('[data-rt]'); if (!t) return; tab = t.dataset.rt; api.setTab?.(tab); };
   if (tab === 'issue') {
-    const b = $('#rp-b');
+    const b = host;                                  // 폼이 두 칸에 나뉘어 있어 서랍 전체에서 받는다
     $('#rp-title').oninput = (e) => { form.title = e.target.value; };
     b.onchange = (e) => {
       const t = e.target;
@@ -140,9 +170,29 @@ function bind() {
           if (e.target.closest('.dl')) openPledge({ targets: C.layer ? [C.layer] : [], title: '보안 서약서', kind: '엑셀', onDone: (v) => say(`엑셀 다운로드가 시작되었습니다 · ${esc(r.title)} · ${v.name}`, 6000) });
         };
       });
-      mountPager($('#rp-pg'), { total: list().length, page, size, sizes: [10, 20], onChange: (st) => { page = st.page; size = st.size; draw(); } });
+      mountPager($('#rp-pg'), { total: list().length, page, size, sizes: sizeList(), onChange: (st) => { page = st.page; sizePref = size = st.size; draw(); } });
+      fitRows();
     }
   }
+}
+
+/* 한 쪽 줄 수를 화면 높이에 맞춘다 — map-stats.js 의 같은 장치와 같은 뜻이다.
+   쪽넘김이 `총 N건 중 1~M 행` 을 계속 말하므로 지운 것이 아니다. */
+const MIN_ROWS = 3;
+let sizePref = 10, fitPass = 0, bound = false, rt = 0, raf = 0;
+const sizeList = () => [...new Set([size, 5, 10, 20])].sort((a, b) => a - b);
+function fitRows() {
+  const dw = host.querySelector('.dw'), tb = $('#rp-tb');
+  if (!dw || !tb || !tb.children.length) { fitPass = 0; return; }
+  const rh = Math.max(24, tb.children[0].getBoundingClientRect().height);
+  const over = dw.scrollHeight - dw.clientHeight;
+  let next = size;
+  if (over > 2) next = Math.max(MIN_ROWS, size - Math.ceil(over / rh));
+  else if (size < sizePref && -over >= rh) next = Math.min(sizePref, size + Math.floor(-over / rh));
+  if (next !== size && fitPass < 6) { fitPass++; size = next; page = 1; draw(); return; }
+  fitPass = 0;
+  // 글꼴·그림이 늦게 앉으면 높이가 바뀐다 — 한 프레임 뒤에 한 번 더 잰다
+  cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { if (host?.isConnected) fitRows(); });
 }
 /** 체크 한 번에 다시 그리는 것은 미리보기 · 전체 선택 상태 · 지도뿐이다(폼과 포커스는 그대로). */
 function syncIssue() {
@@ -165,8 +215,7 @@ function syncIssue() {
   api.onFocusEmd?.(form.emds);
 }
 function redrawIssue() {
-  const b = $('#rp-b'); if (!b) return;
-  b.innerHTML = issueHtml(); bind();
+  draw();
   api.onFocusEmd?.(form.emds);
 }
 function submit() {

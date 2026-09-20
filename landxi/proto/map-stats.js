@@ -10,23 +10,37 @@ let tab = 'region', basis = null, filt = { emd: '', cls: '' }, page = 1, size = 
 export function mountStats(el, ctx, o = {}) {
   host = el; api = o; ctxRef = ctx;
   if (!basis) basis = D.statsBasis(ctx.layer?.service || 'farmland')[0];
+  size = sizePref;                         // 들어올 때마다 원하는 쪽 크기에서 다시 재 본다
   draw();
+  if (!bound) { bound = true; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (host?.isConnected) { size = sizePref; draw(); } }, 180); }); }
 }
+let bound = false, rt = 0, raf = 0;
+/* 읍·면·동 막대가 어느 칸에 서는가 —
+   칸이 넓으면 조건 칸(.dw-l) 아래, 좁으면 결과 칸(.dw-r) 으로 옮긴다.
+   좁아지면 거르개가 두 줄이 되어 왼쪽이 494px 까지 커지는데, 오른쪽은 표가
+   쪽 크기를 줄여 스스로 자리를 낸다(fitRows). 무거운 쪽에서 가벼운 쪽으로 옮기는 것이다. */
+const chartLeft = () => innerWidth >= 1560;
 
 function draw() {
   const { layer, geo, ctx } = ctxRef;
   const empty = !layer || !geo || !geo.features.length;
   const all = D.statsBasis(layer?.service || 'farmland');
-  host.innerHTML = `<div class="dw">
+  /* 서랍 속 구조 — `조건(.dw-l)` 과 `결과(.dw-r)` 두 덩어리로 나눠 담는다.
+     좁은 서랍에서는 위아래로 쌓이고, 넓은 서랍(짧은 모니터에서 서랍이 넓어질 때)에서는
+     좌우로 나란히 선다(map.css `.dw--split`). 대시보드에서 쓴 방법과 같다 —
+     세로로 쌓인 줄을 좌우로 펴서 줄 수를 없앤다. 지우는 것은 없다. */
+  host.innerHTML = `<div class="dw dw--split">
   <div class="dw-h"><div><p class="lb">통계 자세히 보기</p><h2>${esc(taskName(ctx, layer))} 통계</h2>
     <p class="dw-sub">AI 분석 과제(${esc(taskName(ctx, layer))} 분석)의 ${esc((layer?.classes || []).map(D.clsLabel).join('·'))} 면적 집계를 확인해요</p></div>
     <button type="button" class="x" id="st-x" aria-label="닫기">${icon('x', 18)}</button></div>
 
-  <section class="dw-sec"><div class="dw-sec-h"><span class="lb">기준 (최근 분석 결과)</span><button type="button" class="link" id="st-more">더 보기 ›</button></div>
+  <div class="dw-l">
+  <section class="dw-sec"><div class="dw-sec-h"><span class="lb">기준 (최근 분석 결과)</span><button type="button" class="link" id="st-more">더 보기 ›</button>
+      <span class="acts"><button type="button" class="btn-br" id="st-reset" style="width:84px">초기화</button><button type="button" class="btn" id="st-run" style="width:100px">통계 보기</button></span></div>
     <ul class="dw-basis" role="radiogroup" aria-label="통계 기준">${all.slice(0, 3).map((b) => `
       <li aria-selected="${basis.id === b.id}"><label class="rd" style="gap:9px"><input type="radio" name="st-basis" value="${esc(b.id)}"${basis.id === b.id ? ' checked' : ''}><span class="t">${esc(b.title)}</span></label>${b.demo ? '<em class="tag">시연</em>' : ''}
       <span class="m">${esc(b.at.replace(/-/g, '.'))}${b.count ? ` · ${esc(b.model)} · ${nf.format(b.count)} ${esc(b.unit)}` : ` · ${esc(b.task)}`}</span></li>`).join('')}</ul>
-    <p class="dw-note">기준을 바꾸면 통계 보기를 다시 누릅니다<span class="acts"><button type="button" class="btn-br" id="st-reset" style="width:96px">초기화</button><button type="button" class="btn" id="st-run" style="width:110px">통계 보기</button></span></p></section>
+    <p class="dw-note">기준을 바꾸면 <b>통계 보기</b>를 다시 누릅니다</p></section>
 
   <form class="dw-filters" id="st-f">
     <span class="f f--sido"><span class="lb">시도</span><span class="sel"><select aria-label="시도"><option>${esc(adminName(geo).sido)}</option></select></span></span>
@@ -34,11 +48,15 @@ function draw() {
     <span class="f f--emd"><span class="lb">${esc(ctx.unitExample)}</span><span class="sel"><select name="emd" aria-label="${esc(ctx.unitExample)}"><option value="">전체</option>${(empty ? [] : D.byEmd(geo)).map((r) => `<option${filt.emd === r.emd ? ' selected' : ''}>${esc(r.emd)}</option>`).join('')}</select></span></span>
     <span class="f f--cls"><span class="lb">클래스</span><span class="sel"><select name="cls" aria-label="클래스"><option value="">전체</option>${(layer?.classes || []).map((c) => `<option value="${esc(c)}"${filt.cls === c ? ' selected' : ''}>${esc(D.clsLabel(c))}</option>`).join('')}</select></span></span>
     <span class="g"><button type="reset" class="mic">초기화</button><button class="btn-br" style="width:84px">조회</button></span></form>
+  ${empty || tab !== 'region' || !chartLeft() ? '' : chartHtml()}</div>
 
+  <div class="dw-r">
+  ${empty ? '' : tab === 'region' ? bigHtml() : ''}
+  ${empty || tab !== 'region' || chartLeft() ? '' : chartHtml()}
   <div class="dw-tabs" role="tablist"><button type="button" role="tab" data-tab="region" aria-selected="${tab === 'region'}">지역별 통계</button>
     <button type="button" role="tab" data-tab="class" aria-selected="${tab === 'class'}">클래스별 통계</button><span class="sp"></span>
     <button type="button" class="dl" id="st-dl">${icon('down', 15)} 엑셀 다운로드</button></div>
-  <div id="st-b">${empty ? emptyHtml() : tab === 'region' ? regionHtml() : classHtml()}</div>
+  <div id="st-b">${empty ? emptyHtml() : tab === 'region' ? regionHtml() : classHtml()}</div></div>
 </div>`;
   bind(empty);
 }
@@ -59,21 +77,38 @@ function rowsOf() {
   if (filt.emd) fs = fs.filter((f) => f.properties.emd === filt.emd);
   return { fc: { type: 'FeatureCollection', features: fs }, n: fs.length };
 }
+/* 요약은 둘로 나눠 두 칸에 나눠 담는다 — 큰 수치는 표 위(.dw-r), 막대는 조건 아래(.dw-l).
+   한 칸에 몰아 두었더니 왼쪽 칸이 507px 이 되어 22px 가 넘쳤다(오른쪽은 413px 로 남고). */
+/** 큰 수치 — 결과 칸(.dw-r) 맨 위 */
+function bigHtml() {
+  const { fc } = rowsOf();
+  const total = D.totalArea(fc), byC = D.byClass(fc);
+  return `
+  <div class="dw-big"><span class="k1"><b>${D.ha(total).toFixed(1)}</b><span class="u">ha 전체</span><span class="s">${nf.format(Math.round(total))} ㎡</span></span>
+    ${byC.map((c) => `<span><b>${D.ha(c.area).toFixed(1)}</b><span class="u">ha</span><span class="s"><span class="sw${D.isDashCls(c.cls) ? ' sw--o' : ''}"></span>${esc(c.label)} · ${Math.round(c.pct)} %</span></span>`).join('')}</div>`;
+}
+/** 읍·면·동별 막대 — 조건 칸(.dw-l) 아래쪽 */
+function chartHtml() {
+  const { layer, ctx } = ctxRef;
+  const { fc } = rowsOf();
+  const rows = D.byEmd(fc), cls = layer.classes;
+  const max = Math.max(...rows.map((r) => r.area), 1);
+  const from = (page - 1) * size;
+  return `
+  <div class="dw-chart"><div class="hd">${esc(ctx.unitExample)}별 분석 면적(㎡) · 큰 순 · ${rows.length}<span class="sp"></span>표 ${rows.length ? from + 1 : 0}~${Math.min(rows.length, from + size)} / ${rows.length}행</div>
+    <div class="dw-bars" role="group" aria-label="${esc(ctx.unitExample)}별 분석 면적">${rows.map((r, i) => `<button type="button" data-bar="${i}" aria-pressed="${pickBar === i}" style="height:${Math.max(6, (r.area / max) * 62)}px" aria-label="${esc(r.emd)} ${nf.format(Math.round(r.area))} 제곱미터" title="${esc(r.emd)} · ${nf.format(Math.round(r.area))} ㎡"><i style="height:${Math.round(((r.cls[cls[0]] || 0) / (r.area || 1)) * 100)}%"></i></button>`).join('')}</div>
+    ${pickBar >= 0 && rows[pickBar] ? `<p class="mic" style="margin-top:6px">${esc(rows[pickBar].emd)} · ${nf.format(Math.round(rows[pickBar].area))} ㎡ · ${nf.format(rows[pickBar].n)} ${esc(layer.unit)}</p>` : ''}</div>`;
+}
 function regionHtml() {
   const { layer, ctx } = ctxRef;
   const { fc } = rowsOf();
   const rows = D.byEmd(fc), cls = layer.classes;
-  const total = D.totalArea(fc), byC = D.byClass(fc);
   const max = Math.max(...rows.map((r) => r.area), 1);
   const from = (page - 1) * size, part = rows.slice(from, from + size);
+  void layer;
   return `
-  <div class="dw-big"><span class="k1"><b>${D.ha(total).toFixed(1)}</b><span class="u">ha 전체</span><span class="s">${nf.format(Math.round(total))} ㎡</span></span>
-    ${byC.map((c) => `<span><b>${D.ha(c.area).toFixed(1)}</b><span class="u">ha</span><span class="s"><span class="sw${D.isDashCls(c.cls) ? ' sw--o' : ''}"></span>${esc(c.label)} · ${Math.round(c.pct)} %</span></span>`).join('')}</div>
-  <div class="dw-chart"><div class="hd">${esc(ctx.unitExample)}별 분석 면적(㎡) · 큰 순 · ${rows.length}<span class="sp"></span>표 ${rows.length ? from + 1 : 0}~${Math.min(rows.length, from + size)} / ${rows.length}행</div>
-    <div class="dw-bars" role="group" aria-label="${esc(ctx.unitExample)}별 분석 면적">${rows.map((r, i) => `<button type="button" data-bar="${i}" aria-pressed="${pickBar === i}" style="height:${Math.max(6, (r.area / max) * 62)}px" aria-label="${esc(r.emd)} ${nf.format(Math.round(r.area))} 제곱미터" title="${esc(r.emd)} · ${nf.format(Math.round(r.area))} ㎡"><i style="height:${Math.round(((r.cls[cls[0]] || 0) / (r.area || 1)) * 100)}%"></i></button>`).join('')}</div>
-    ${pickBar >= 0 && rows[pickBar] ? `<p class="mic" style="margin-top:6px">${esc(rows[pickBar].emd)} · ${nf.format(Math.round(rows[pickBar].area))} ㎡ · ${nf.format(rows[pickBar].n)} ${esc(layer.unit)}</p>` : ''}</div>
-  <div class="tbl-wrap"><table class="tbl tbl--s"><colgroup><col style="width:92px"><col style="width:104px">${cls.map(() => '<col style="width:104px">').join('')}<col></colgroup>
-    <thead><tr><th>${esc(ctx.unitExample)}</th><th class="r">전체(㎡)</th>${cls.map((c) => `<th class="r">${esc(D.clsLabel(c))}(㎡)</th>`).join('')}<th>${cls.map((c, i) => `${i ? ' ' : ''}<span class="sw" style="display:inline-block;width:10px;height:10px;border:1px solid var(--teal);background:${D.isDashCls(c) ? 'none' : 'var(--teal)'}"></span> ${esc(D.clsLabel(c))}`).join('')}</th></tr></thead>
+  <div class="tbl-wrap"><table class="tbl tbl--s"><colgroup><col class="c-emd"><col class="c-n">${cls.map(() => '<col class="c-n">').join('')}<col class="c-bar"></colgroup>
+    <thead><tr><th>${esc(ctx.unitExample)}</th><th class="r">전체(㎡)</th>${cls.map((c) => `<th class="r">${esc(D.clsLabel(c))}(㎡)</th>`).join('')}<th><span class="sr">${cls.map(D.clsLabel).join(' · ')} 비율 막대</span>${cls.map((c) => `<span class="sw" style="display:inline-block;width:10px;height:10px;border:1px solid var(--teal);background:${D.isDashCls(c) ? 'none' : 'var(--teal)'}"></span>`).join(' ')}</th></tr></thead>
     <tbody id="st-tb">${part.map((r) => `<tr data-row tabindex="0" data-emd="${esc(r.emd)}" aria-selected="${pickBar === r.rank - 1}"><td><b>${esc(r.emd)}</b></td><td class="num r">${nf.format(Math.round(r.area))}</td>${cls.map((c) => `<td class="num r">${nf.format(Math.round(r.cls[c] || 0))}</td>`).join('')}
       <td><span class="dw-tbl-bar" style="width:${Math.round((r.area / max) * 100)}%"><i style="width:${Math.round(((r.cls[cls[0]] || 0) / (r.area || 1)) * 100)}%"></i></span></td></tr>`).join('')}</tbody></table></div>
   <nav id="st-pg" style="margin-top:8px"></nav>`;
@@ -116,7 +151,31 @@ function bind(empty) {
     $$('[data-emd]', tb).forEach((tr) => { tr.onmouseenter = () => api.onFocusEmd?.(tr.dataset.emd); });
   }
   const pg = $('#st-pg');
-  if (pg) mountPager(pg, { total: D.byEmd(rowsOf().fc).length, page, size, sizes: [5, 10, 20], onChange: (st) => { page = st.page; size = st.size; draw(); } });
+  if (pg) mountPager(pg, { total: D.byEmd(rowsOf().fc).length, page, size, sizes: sizeList(), onChange: (st) => { page = st.page; sizePref = size = st.size; draw(); } });
+  fitRows();
+}
+
+/* ── 한 쪽 행 수를 화면 높이에 맞춘다 ──────────────────────────────────
+   발주자: "업무 화면은 한 화면에서 끝난다" · "모니터마다 최적화를 해야지".
+   서랍을 두 칸으로 편 뒤에도 짧은 모니터에서는 표가 몇 줄 넘친다.
+   넘치는 만큼만 한 쪽의 행 수를 줄이고, 길면 다시 늘린다.
+   쪽넘김이 `총 32건 중 1~N 행` 을 계속 말하므로 지운 것이 아니다 —
+   사용자가 페이지 크기를 직접 고르면 그 값을 기준으로 삼는다. */
+const MIN_ROWS = 4;
+let sizePref = 10, fitPass = 0;
+const sizeList = () => [...new Set([size, 5, 10, 20])].sort((a, b) => a - b);
+function fitRows() {
+  const dw = host.querySelector('.dw'), tb = $('#st-tb');
+  if (tab !== 'region' || !dw || !tb || !tb.rows.length) { fitPass = 0; return; }
+  const rh = Math.max(20, tb.rows[0].getBoundingClientRect().height);
+  const over = dw.scrollHeight - dw.clientHeight;
+  let next = size;
+  if (over > 2) next = Math.max(MIN_ROWS, size - Math.ceil(over / rh));
+  else if (size < sizePref && -over >= rh) next = Math.min(sizePref, size + Math.floor(-over / rh));
+  if (next !== size && fitPass < 6) { fitPass++; size = next; page = 1; draw(); return; }
+  fitPass = 0;
+  // 글꼴·그림이 늦게 앉으면 높이가 바뀐다 — 한 프레임 뒤에 한 번 더 잰다
+  cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { if (host?.isConnected) fitRows(); });
 }
 
 /* ── 분석 결과 찾기 모달(원본 `더 보기`) ─────────────────────────────── */

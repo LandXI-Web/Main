@@ -239,6 +239,64 @@ html[data-shell="ready"] .lx [data-in]{ animation:my-in 600ms var(--ease) both; 
   .lx .my-tbl .c-cap{ width:118px; } .lx .my-tbl .c-when{ width:156px; } .lx .my-tbl .c-st{ width:96px; } .lx .my-tbl .c-note{ width:120px; }
   .lx .my-new > .mic:last-child{ display:none; }
 }
+/* ══ 한 화면 — 모니터마다 (2026-09-20) ═══════════════════════════════════
+   발주자: "업무 화면은 한 화면에서 끝난다. 마우스 휠로 내리지 않는다."
+           "모니터마다 최적화를 해야지." · 실제 화면 세로 745px
+   원판 조판은 1440×900 에서 잰 값이라 745px 화면에서 150px 이 숨었다
+   (왼쪽은 브랜드 설정이, 오른쪽은 증량 신청 이력 표가 잘렸다).
+
+   지우지 않고 넣는 방법: **큰 것부터 화면 높이에 맞춘다.**
+     · 큰 % (126px) · 신원 원장 줄 높이(40px) · 칸 판 한 칸(23px) · 표 행(56px)
+   전부 clamp 로 화면 높이를 따라가게 했다. 글자 바닥은 법전대로 14px 를 지킨다.
+   되돌린 판단: 칸 판을 3줄로 줄여 봤는데 `1칸 = 16 GB` 눈금이 어긋나
+   용량 감이 사라졌다 — 줄 수는 넷 그대로 두고 칸만 줄였다. */
+@media (max-height:860px){
+  .lx .my{ margin:4px 0 12px; }
+  /* 왼쪽 — 신원 원장 */
+  .lx .my-hello{ margin-top:8px; }
+  .lx .my-hello b{ font-size:clamp(28px, 4.6vh, 46px); line-height:1.16; }
+  .lx .my-ledger{ margin-top:8px; }
+  .lx .my-ledger > div{ height:clamp(26px, 3.7vh, 40px); }
+  .lx .my-acts{ margin-top:10px; }
+  .lx .my-acts .btn-br{ height:36px; }
+  .lx .my .sp{ min-height:8px; }
+  .lx .my-sec--rule{ height:30px; padding-bottom:6px; }
+  .lx .my-brand{ margin-top:8px; }
+  .lx .my-brand-note{ margin-top:6px; }
+  .lx .railhead{ --k:1.05; }
+  .lx .ruler{ height:28px; }
+  /* 오른쪽 — 디스크 판 */
+  .lx .my-sec--cta .btn{ margin-top:10px; height:38px; }
+  .lx .my-hero{ margin-top:2px; }
+  .lx .my-pct b{ font-size:clamp(58px, 10.8vh, 126px); line-height:1.02; }
+  .lx .my-pct-u i{ font-size:22px; line-height:24px; }
+  .lx .my-stats b{ font-size:26px; line-height:30px; }
+  .lx .my-stats dd{ margin-top:4px; }
+  .lx .plate{ margin-top:8px; }
+  .lx .plate-grid{ --c:clamp(13px, 2.25vh, 23px); margin-top:6px; }
+  .lx .plate-axis{ margin-top:6px; }
+  .lx .my-gap{ min-height:10px!important; }
+  .lx .my-hist{ margin-top:8px; }
+  .lx .my-tbl th{ height:32px; }
+  .lx .my-tbl td{ height:clamp(36px, 5.3vh, 56px); }
+  .lx .my-tbl.is-dense td{ height:clamp(36px, 5.6vh, 50px); }
+  .lx .my-tbl .cap b{ font-size:20px; }
+  .lx .my-new{ height:44px; }
+  .lx .my-empty{ height:120px; }
+}
+
+/* 1280×720 — 가장 짧은 화면. 마지막 몇 px 은 글자 크기가 아니라 여백에서 뺀다. */
+@media (max-height:740px){
+  .lx .my{ margin:2px 0 8px; }
+  .lx .my-hello{ margin-top:6px; }
+  .lx .my-ledger{ margin-top:6px; }
+  .lx .my-acts{ margin-top:8px; }
+  .lx .my-brand-note{ margin-top:4px; }
+}
+
+/* 신청 사유 · 처리 내용은 잘라내지 않는다 — 좁아지면 두 줄로 흐른다(법전: `…` 금지) */
+.lx .my-tbl td:nth-child(2),.lx .my-tbl .note{ white-space:normal; overflow:visible; text-overflow:clip; line-height:20px; word-break:keep-all; }
+
 @media (prefers-reduced-motion:reduce){
   .lx [data-in],.lx .plate-grid i,.lx .plate-grid i::after,.lx .my-tbl tr.is-fresh td,.lx .my-ledger > div.is-fresh dd{ animation:none!important; }
   .lx .uf-i::after,.lx .ruler-k,.lx .sr-bar i,.lx .slider-k,.lx .my-new-t,.lx .my-new [data-ic],.lx .my-quiet-a{ transition:none!important; }

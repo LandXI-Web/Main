@@ -15,13 +15,17 @@ body.lx[data-map]{ min-height:700px; }
 .mw[data-mode="parallel"] .mw-l,.mw[data-mode="overlay"] .mw-l{ width:372px; }
 .mw[data-mode="parallel"][data-left="off"] .mw-l,.mw[data-mode="overlay"][data-left="off"] .mw-l{ width:36px; }
 .mw-stage{ grid-column:2; position:relative; min-width:0; min-height:0; display:flex; flex-direction:column; }
-.mw-side{ grid-column:3; width:0; background:#fff; border-left:1px solid var(--line); display:flex; flex-direction:column; min-height:0; overflow:hidden; }
-.mw[data-side="info"] .mw-side{ width:410px; }
-.mw[data-side="drawer"] .mw-side{ width:620px; }
+/* 오른쪽 판 폭은 한 곳(--side-w)에서 정한다 — 왼쪽 판 폭 계산도 이 값을 쓴다 */
+.mw{ --side-w:0px; }
+.mw[data-side="info"]{ --side-w:410px; }
+.mw[data-side="drawer"]{ --side-w:620px; }
+.mw-side{ grid-column:3; width:var(--side-w); background:#fff; border-left:1px solid var(--line); display:flex; flex-direction:column; min-height:0; overflow:hidden; }
 
-/* 판 — 지도 2장(A · B). 겹쳐보기는 B 를 잘라 얹고, 나란히보기는 나란히 놓는다. */
-.mw-plates{ position:relative; flex:1 1 0; min-height:0; display:flex; }
-.mw-plate{ position:relative; flex:1 1 0; min-width:0; }
+/* 판 — 지도 2장(A · B). 겹쳐보기는 B 를 잘라 얹고, 나란히보기는 나란히 놓는다.
+   overflow:clip — 판 위 상자(검색 · 창 안 요약 띠)가 판보다 넓어지면 옆 서랍 위로
+   글자가 쏟아졌다(1280×720 통계 화면에서 눈으로 확인). 판 밖으로는 나가지 않는다. */
+.mw-plates{ position:relative; flex:1 1 0; min-height:0; display:flex; overflow:clip; }
+.mw-plate{ position:relative; flex:1 1 0; min-width:0; overflow:clip; }
 .mw-plate + .mw-plate{ border-left:1px solid #fff; }
 .mw-map{ position:absolute; inset:0; }
 .mw-map canvas{ outline:0; }
@@ -35,14 +39,14 @@ body.lx[data-map]{ min-height:700px; }
 
 /* ══ 판 위 겹치는 것들 ═══════════════════════════════════════════════════ */
 .mw-ov{ position:absolute; z-index:5; }
-.mw-ov--tl{ top:14px; left:14px; }
+.mw-ov--tl{ top:14px; left:14px; right:56px; }
 .mw-ov--tr{ top:14px; right:56px; display:flex; gap:10px; align-items:center; }
 .mw-ov--tr .btn-br{ background:#fff; padding:0 12px; }
 .mw-ov--br{ right:56px; bottom:14px; }
 .mw-ov--bl{ left:14px; bottom:14px; }
 
 /* 검색 입력 */
-.mw-find{ width:372px; height:34px; background:rgba(0,0,0,.52); border:1px solid rgba(255,255,255,.42); display:flex; align-items:center; gap:8px; padding:0 10px; color:#fff; }
+.mw-find{ width:min(372px,100%); height:34px; background:rgba(0,0,0,.52); border:1px solid rgba(255,255,255,.42); display:flex; align-items:center; gap:8px; padding:0 10px; color:#fff; }
 .mw-find svg{ flex:none; opacity:.8; }
 .mw-find input{ flex:1; min-width:0; background:none; border:0; color:#fff; font-size:14px; height:100%; }
 .mw-find input::placeholder{ color:rgba(255,255,255,.62); }
@@ -50,7 +54,9 @@ body.lx[data-map]{ min-height:700px; }
 .mw-find button{ color:#fff; opacity:.8; display:flex; }
 
 /* 어두운 띠 — 위성 위 글자는 전부 이 띠 안에서만(전수 검토 X3m) */
-.mw-bar{ display:inline-flex; align-items:center; gap:10px; height:26px; padding:0 10px; background:rgba(0,0,0,.66); color:#fff; font-size:14px; letter-spacing:-.01em; white-space:nowrap; }
+.mw-bar{ display:inline-flex; align-items:center; gap:10px; min-height:26px; padding:2px 10px; background:rgba(0,0,0,.66); color:#fff; font-size:14px; letter-spacing:-.01em; white-space:nowrap; max-width:100%; }
+/* 좁은 판 — 요약 띠는 잘리지 않고 두 줄로 흐른다(말줄임 금지) */
+.mw[data-narrow] .mw-bar{ white-space:normal; display:flex; }
 .mw-bar b{ font-weight:500; }
 .mw-bar .n{ font-family:var(--num); }
 .mw-hint{ margin-top:10px; }
@@ -125,6 +131,9 @@ body.lx[data-map]{ min-height:700px; }
 .mw-strip [aria-pressed="true"] img{ border-color:#fff; }
 .mw-strip [aria-pressed="true"] .lb2{ color:#7FC4FF; }
 .mw-strip .on{ font-family:var(--body); font-size:14px; }
+/* 좁은 판 — 시점 그림을 줄여 스트립이 판 폭을 다 먹지 않게 한다(map.js positionOverlays) */
+.mw[data-narrow] .mw-strip button,.mw[data-narrow] .mw-strip img{ width:86px; }
+.mw[data-narrow] .mw-strip img{ height:42px; }
 
 /* 스케일 · 좌표 */
 .mw-scale{ display:inline-flex; align-items:center; gap:12px; height:26px; padding:0 10px; background:rgba(0,0,0,.66); color:#fff; font-size:14px; font-family:var(--num); }
@@ -161,8 +170,8 @@ body.lx[data-map]{ min-height:700px; }
 .mw-l-h .cl{ width:28px; height:28px; display:flex; align-items:center; justify-content:center; color:var(--grey); flex:none; }
 .mw-l-b{ flex:1 1 0; min-height:0; overflow:auto; }
 .mw-l-f{ flex:none; border-top:1px solid var(--line); padding:12px 14px; display:flex; align-items:center; gap:12px; }
-.mw-l-chips{ display:flex; gap:8px; padding:12px 14px 10px; flex-wrap:wrap; }
-.mw-l-chips .chip-b{ height:30px; }
+.mw-l-chips{ display:flex; gap:8px; padding:8px 14px; flex-wrap:wrap; }
+.mw-l-chips .chip-b{ height:28px; }
 
 /* 접힌 세로 띠 */
 .mw-l-rail{ display:none; width:36px; height:100%; flex-direction:column; align-items:center; gap:10px; padding:10px 0; }
@@ -173,31 +182,36 @@ body.lx[data-map]{ min-height:700px; }
 
 /* 결과 그룹 · 카드 */
 .mg{ border-bottom:1px solid var(--line); }
-.mg-h{ display:flex; align-items:center; gap:8px; width:100%; padding:10px 14px; font-size:16px; font-weight:500; }
+.mg-h{ display:flex; align-items:center; gap:8px; width:100%; padding:8px 14px; font-size:16px; font-weight:500; }
 .mg-h .n{ margin-left:auto; font-size:14px; color:var(--grey); font-weight:400; }
 .mg-h svg{ color:var(--grey); transition:transform var(--hov) var(--hove); }
 .mg-h[aria-expanded="false"] svg{ transform:rotate(-90deg); }
-.mc{ display:flex; gap:12px; padding:8px 14px 10px; border-top:1px solid var(--line); position:relative; }
+.mc{ display:flex; gap:10px; padding:6px 14px 8px; border-top:1px solid var(--line); position:relative; }
 .mc:first-of-type{ border-top:0; }
 .mc[data-on="1"]{ background:var(--t1); }
 .mc-ck{ flex:none; padding-top:3px; }
-.mc img{ width:88px; height:54px; object-fit:cover; border:1px solid var(--line); flex:none; }
+.mc img{ width:68px; height:42px; object-fit:cover; border:1px solid var(--line); flex:none; }
 .mc-b{ min-width:0; flex:1; }
-.mc-t{ font-size:15px; font-weight:500; display:block; }
-.mc-m{ font-size:14px; color:var(--grey); margin:2px 0 0; }
-.mc-n{ font-size:15px; color:var(--accent); font-family:var(--num); margin:2px 0 0; }
-.mc-x{ position:absolute; right:12px; top:10px; color:var(--grey-3); }
-.mc-share{ position:absolute; right:12px; bottom:10px; color:var(--grey); }
+/* 제목 줄 — 제목은 흐르고(말줄임 금지), 공유 표식·더 보기는 줄 끝에 붙는다 */
+.mc-l1{ display:flex; align-items:flex-start; gap:8px; margin:0; }
+.mc-l2{ display:flex; align-items:baseline; gap:10px; margin:2px 0 0; }
+.mc-t{ font-size:15px; font-weight:500; flex:1; min-width:0; line-height:1.4; }
+.mc-m{ font-size:14px; color:var(--grey); margin:0; min-width:0; }
+.mc-n{ font-size:15px; color:var(--accent); font-family:var(--num); margin:0 0 0 auto; white-space:nowrap; }
+.mc-x{ flex:none; color:var(--grey-3); line-height:1; padding-top:2px; }
+.mc-share{ flex:none; color:var(--grey); line-height:1; padding-top:3px; }
 .mc-op{ display:flex; align-items:center; gap:10px; padding:2px 14px 6px; font-size:14px; color:var(--grey); }
 .mc-op input[type="range"]{ flex:1; height:2px; accent-color:var(--accent); }
 .mc-op .v{ font-family:var(--num); color:var(--ink); width:46px; text-align:right; }
 .mc-ck2{ display:flex; gap:14px; padding:0 14px 10px; font-size:14px; flex-wrap:wrap; }
-.mw-soon{ padding:12px 14px 16px; }
-.mw-soon h4{ margin:0 0 6px; font-size:14px; color:var(--grey); font-weight:400; }
-.mw-soon li{ display:flex; align-items:center; gap:6px; font-size:15px; color:var(--grey); padding:2px 0; list-style:none; }
-.mw-soon ul{ margin:0; padding:0; }
-.mw-soon li .z{ margin-left:auto; font-family:var(--num); }
-.mw-soon .rest{ font-size:14px; color:var(--grey-3); padding-top:4px; }
+/* 준비 중 — 세로 목록을 가로로 흘린다. 자세한 사정은 map.js soonHtml() 주석에. */
+.mw-soon{ padding:9px 14px 12px; }
+.mw-soon h4{ margin:0 0 5px; font-size:14px; color:var(--grey); font-weight:400; }
+.mw-soon h4 .z{ font-family:var(--num); color:var(--grey-3); }
+.mw-soon ul{ margin:0; padding:0; display:flex; flex-wrap:wrap; gap:1px 8px; }
+.mw-soon li{ display:inline-flex; align-items:baseline; gap:5px; font-size:14px; color:var(--grey); list-style:none; }
+.mw-soon li + li::before{ content:"·"; color:var(--grey-3); margin-right:3px; }
+.mw-soon li .z{ font-family:var(--num); color:var(--grey-3); }
 
 /* 레이어 탭 트리 */
 .mt{ padding:6px 0 14px; }
@@ -222,7 +236,10 @@ body.lx[data-map]{ min-height:700px; }
 .mv-k--b{ border-color:var(--ink); color:var(--ink); }
 
 /* ══ 하단 표 패널 ════════════════════════════════════════════════════════ */
-.mb{ flex:none; height:352px; background:#fff; border-top:1px solid var(--line); display:flex; flex-direction:column; }
+/* 아래 표 판 — 352px 고정이었다. 745px 화면에서는 판 안쪽이 241px 넘치고
+   지도는 162px 만 남았다. 이제 남는 높이를 나눠 갖는다: 지도에 최소 190px 을
+   남기고 그 위에서 240~420px 사이. 행 수는 map.js fitBottomRows 가 맞춘다. */
+.mb{ flex:none; height:clamp(240px, calc(100% - 190px), 420px); background:#fff; border-top:1px solid var(--line); display:flex; flex-direction:column; }
 .mb[data-fold]{ height:auto; }
 .mb-h{ display:flex; align-items:center; gap:10px; padding:10px 20px; border-bottom:1px solid var(--line); font-size:15px; }
 .mb-h .crumb{ display:flex; align-items:center; gap:8px; color:var(--grey); }
@@ -334,6 +351,13 @@ body.lx[data-map]{ min-height:700px; }
 .dw-bars button[aria-pressed="true"]{ outline:2px solid var(--accent); outline-offset:1px; }
 .dw-bars button:hover{ transform:translateY(-2px); }
 .dw .tbl th,.dw .tbl td{ font-size:15px; }
+/* 표 칸 폭은 CSS 에서 — 좁은 칸에서 줄일 수 있어야 가로로 넘치지 않는다(인라인 폭이면 못 줄인다) */
+.dw .tbl col.c-emd{ width:84px; } .dw .tbl col.c-n{ width:96px; } .dw .tbl col.c-bar{ width:auto; }
+/* 쪽넘김 줄은 좁으면 접힌다 */
+.dw .pager{ flex-wrap:wrap; row-gap:6px; }
+/* 고른 값(`전체`)이 `전ㅊ` 로 뭉개지지 않을 만큼은 갖는다 — 더 좁아지면 아랫줄로 흐른다 */
+.dw-filters .f{ min-width:92px; }
+.dw-filters .sel,.dw-filters select{ min-width:0; }
 .dw-tbl-bar{ display:block; height:8px; background:var(--t1); border:1px solid var(--teal); position:relative; }
 .dw-tbl-bar i{ position:absolute; inset:0 auto 0 0; background:var(--teal); }
 .dw-ghost{ border-top:1px solid var(--line); margin-top:14px; padding-top:14px; }
@@ -354,7 +378,7 @@ body.lx[data-map]{ min-height:700px; }
 .dw .form .field-h{ margin-bottom:4px; }
 .dw .inp{ height:40px; }
 .rp-list{ list-style:none; margin:0; padding:0; }
-.rp{ display:block; width:100%; padding:11px 156px 11px 10px; border-bottom:1px solid var(--line); position:relative; }
+.rp{ display:block; width:100%; padding:8px 156px 8px 10px; border-bottom:1px solid var(--line); position:relative; }
 .rp[aria-selected="true"]{ background:var(--t1); }
 .rp .l1{ display:flex; align-items:center; gap:12px; font-size:14px; color:var(--grey); }
 .rp .l1 .n{ font-family:var(--num); }
@@ -380,7 +404,9 @@ body.lx[data-map]{ min-height:700px; }
 .rp-pre .r .row .v{ width:88px; text-align:right; font-family:var(--num); }
 .rp-emds{ border:1px solid var(--line); margin-top:8px; }
 .rp-emds .all{ padding:9px 12px; border-bottom:1px solid var(--line); }
-.rp-emds .grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:5px 10px; padding:8px 12px; max-height:86px; overflow:auto; }
+/* 대상 지역 — 읍·면·동 32개. 86px 상자 안에서 스크롤하게 두었더니 126px 가 숨었다.
+   칸 수를 폭에 맞춰 늘려 **전부** 한눈에 들어오게 한다(스크롤 없음). */
+.rp-emds .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(70px,1fr)); gap:2px 10px; padding:7px 12px; }
 .rp-cls{ display:flex; align-items:center; gap:22px; padding:2px 0 4px; }
 .rp-cls .bar{ width:1px; height:16px; background:var(--line); }
 
@@ -435,5 +461,201 @@ body.lx[data-map]{ min-height:700px; }
 .mw-load .bx{ background:#fff; border:1px solid var(--line); padding:14px 18px; font-size:15px; display:flex; align-items:center; gap:12px; }
 .mw-load .bx .n{ font-family:var(--num); color:var(--grey); }
 
-@media (max-width:1400px){ .mw[data-side="drawer"] .mw-side{ width:560px; } .mw-l{ width:340px; } }
+@media (max-width:1400px){ .mw-l{ width:340px; } }
 @media (max-width:1260px){ .mw-l{ width:312px; } .mw-find{ width:300px; } }
+
+/* ══ 한 화면 — 모니터마다 (2026-09-20) ═══════════════════════════════════
+   발주자: "업무 화면은 한 화면에서 끝난다. 마우스 휠로 내리지 않는다."
+           "모니터마다 최적화를 해야지." · 실제 화면 세로 745px
+           "밑에 있는건 아에 잘라 없애 버렸네?"  ← 지워서 맞추면 안 된다
+
+   1996×745 에서 왼쪽 판(#l-b)이 386px 를 감추고 있었다. 차례로 이렇게 풀었다.
+
+   ① 결과 카드를 세 줄 → 두 줄로 (map.js cardHtml)        92px → 66px ×5
+   ② `준비 중` 세로 목록 → 가로 흐름 (map.js soonHtml)     279px → 164px
+      게다가 `그 외 5` 로 접혀 있던 다섯 개가 **다 보이게** 됐다.
+   ③ 그래도 644px 라 514px 에 안 들어간다. 남은 것은 구조다 —
+      **짧은 화면에서는 왼쪽 판을 넓혀 두 칸으로 쓴다.**
+      대시보드에서 쓴 방법과 같다(세로로 쌓인 것을 좌우로 펴서 줄 수를 줄인다).
+      세로가 긴 모니터(861px 이상)는 지금처럼 좁은 한 칸 판 + 큰 지도 그대로다.
+      짧은 모니터만 지도 폭을 조금 내주고 세로를 받는다. 지도는 최소 600px 를
+      남기도록 폭을 계산하므로 읽을 수 없을 만큼 작아지지 않는다.
+
+   되돌린 판단
+     · 카드를 한 줄(제목·시점·건수 가로)로 펴 보았다. 372px 판에서는 제목이
+       말줄임으로 잘려 법전에 걸렸고, 두 칸으로 나눈 뒤에는 어차피 썸네일(42px)이
+       높이의 바닥이라 이득이 4px 뿐이었다 — 접었다.
+     · `준비 중`을 접이식으로 숨기는 안도 있었으나 그건 지운 것이다 — 접었다. */
+
+@media (max-height:860px){
+  /* 제목 줄 — 짧은 화면에서는 64px 가 아깝다. 글자는 그대로 두고 줄 높이만 줄인다. */
+  body.lx[data-map] #page-head{ height:52px; margin-bottom:10px; }
+  body.lx[data-map] #main{ padding-top:calc(var(--mast) + 8px); }
+  /* 아래 표 판 · 오른쪽 탐지 정보 판 — 여백만 줄인다(글자는 법전 바닥 그대로) */
+  .mb-h{ padding:6px 20px; }
+  .mb-t button{ height:36px; }
+  .mb-filters{ padding:6px 20px 8px; }
+  .mb-filters .sel select,.mb-filters .inp{ height:32px; }
+  .mb .tbl--s tbody td{ height:30px; }
+  .mb .tbl--s thead th{ height:28px; }
+  .mb-f{ padding:3px 20px; }
+  .mi{ padding:10px 18px 12px; }
+  .mi h2{ font-size:22px; }
+  .mi-sub{ margin-bottom:8px; }
+  .mi-fig img{ height:104px; }
+  .mi-sum{ margin-top:10px; padding-top:8px; }
+  .mi-sum .row{ margin-bottom:5px; }
+  .mi-act{ margin-top:8px; }
+  .mi-steps{ margin-bottom:8px; }
+  .mi-f{ padding:8px 20px; }
+  .mi .tbl--s tbody td{ height:30px; }
+  .mi .kv > div{ padding:2px 0; }
+  .mi .dw-big{ gap:12px; margin-bottom:4px; }
+  .mi .dw-big b{ font-size:26px; }
+  .mi .dw-big .k1 b{ font-size:28px; }
+  .mi-sum .row{ margin-bottom:4px; }
+  .mi-sum h3{ margin-bottom:6px; }
+  .mi-fig{ margin-bottom:8px; }
+  .mi-memo .inp{ height:34px; }
+  .mi-steps button{ padding-bottom:6px; }
+}
+
+/* 두 칸 판 — 칸 하나가 290px 아래로 내려가면 카드 제목이 세 줄이 되어 역효과다.
+   그래서 가로 1264px 부터만 편다(지도 600px + 판 590px + 레일).
+   세로 1000px 까지 — 900px 화면에서도 레이어를 켜거나 비교 모드로 가면
+   목록이 한 칸에 안 들어간다(켠 레이어 밑에 투명도 · 체크 줄이 붙는다). */
+@media (max-height:1000px) and (min-width:1264px){
+  .mw-l,
+  .mw[data-mode="parallel"] .mw-l,
+  .mw[data-mode="overlay"] .mw-l{ width:clamp(372px, calc(100vw - var(--rail) - 600px), 690px); }
+  .mw[data-left="off"] .mw-l,
+  .mw[data-mode="parallel"][data-left="off"] .mw-l,
+  .mw[data-mode="overlay"][data-left="off"] .mw-l{ width:36px; }
+  .mw-l-b{ column-count:2; column-gap:0; column-rule:1px solid var(--line); }
+  /* 거르개 줄과 `준비 중` 은 두 칸을 가로질러 — 목록만 두 칸으로 나눈다 */
+  .mw-l-b > .mw-l-chips{ column-span:all; border-bottom:1px solid var(--line); }
+  .mw-l-b > .mw-soon{ column-span:all; border-top:1px solid var(--line); }
+  /* 한 덩어리가 칸 경계에서 잘리지 않게 */
+  .mg, .mt-s, .mt-g, .mv, .mv-h, .mc-op, .mc-ck2{ break-inside:avoid; }
+  .mg{ border-bottom:0; border-top:1px solid var(--line); }
+}
+
+/* ══ 통계 · 보고서 서랍 — 한 화면에 ═════════════════════════════════════
+   서랍 안은 세로로 일곱 줄이 쌓여 있었다(제목 · 기준 · 거르개 · 탭 · 큰 수치 ·
+   막대 · 표 · 쪽넘김). 620px 폭에 1,148px — 1996×745 에서 574px 가 숨었다.
+
+   ① 서랍 안을 `조건(.dw-l)` 과 `결과(.dw-r)` 두 덩어리로 나눴다(map-stats.js ·
+      map-report.js). 서랍이 넓으면 두 덩어리가 좌우로 선다 — 줄 수가 절반이 된다.
+   ② 서랍을 열면 왼쪽 설정 판은 띠로 접는다(map.js fitLeft). 한 화면에 판 셋을
+      다 밀어 넣으면 1280×720 에서 지도가 40px 가 됐다 — 눈으로 보고 고쳤다.
+      접기는 이 화면이 원래 가진 장치이고 띠에 `설정 패널 펼치기` 가 남는다.
+   ③ 그러고도 모자라면 표의 한 쪽 행 수를 남은 높이에 맞춘다(fitRows).
+      쪽넘김이 `전체 32행 중 1~N` 을 계속 말해 주므로 지운 것이 아니다.
+      모니터가 길수록 한 쪽에 더 많이 보인다 — 그게 `모니터마다 최적화` 다. */
+/* 서랍 폭 — 두 칸으로 펴려면 칸 하나가 350px 은 돼야 한다(더 좁으면 큰 수치와
+   미리보기가 두 줄로 접혀 오히려 높아진다. 1280 에서 실제로 그랬다).
+   그래서 서랍의 바닥을 760px 로 두고, 남는 폭은 지도가 가진다. */
+.mw[data-side="drawer"]{ --side-w:clamp(760px, calc(100vw - var(--rail) - 36px - 470px), 920px); }
+@media (max-width:1100px){ .mw[data-side="drawer"]{ --side-w:calc(100vw - var(--rail) - 36px); } }
+
+.dw-l,.dw-r{ min-width:0; }
+/* 좌우로 펴는 것은 칸 하나가 260px 보다 넓어질 때만 — 더 좁으면 표가 가로로 넘친다 */
+@media (min-width:1264px){
+  .dw--split{ display:grid; grid-template-columns:minmax(0,48fr) 1px minmax(0,52fr); column-gap:18px; align-content:start; }
+  .dw--split > .dw-h{ grid-column:1 / -1; }
+  .dw--split > .dw-l{ grid-column:1; grid-row:2; }
+  .dw--split::before{ content:""; grid-column:2; grid-row:2; background:var(--line); }
+  .dw--split > .dw-r{ grid-column:3; grid-row:2; }
+  .dw--split .dw-sec{ margin-bottom:10px; }
+}
+
+/* 제목 덩어리 — 작은 이름표와 제목을 한 줄에 놓아 한 줄을 없앤다 */
+.dw-h .lb{ font-size:14px; }
+.dw--split .dw-h h2,.dw-h h2{ margin:2px 0 3px; }
+@media (max-height:900px){
+  .dw{ padding:10px 20px 12px; }
+  .dw h2{ font-size:22px; margin:0 0 2px; }
+  .dw-h .lb{ margin:0; }
+  .dw-sub{ margin:0 0 6px; }
+  .dw-basis li{ padding:4px 8px; line-height:1.34; }
+  .dw-bars{ height:52px; }
+  /* 큰 수치 셋이 한 줄에 서야 한 줄로 끝난다(두 줄이 되면 163px, 한 줄이면 66px) */
+  .dw-big{ gap:16px; margin-bottom:2px; }
+  .dw-big b{ font-size:30px; }
+  .dw-big .k1 b{ font-size:34px; }
+  .dw-big .u{ font-size:14px; }
+  .dw-big .s{ margin-top:3px; }
+  .dw-chart{ margin:8px 0 6px; }
+  .dw .tbl--s tbody td{ height:30px; padding-top:3px; padding-bottom:3px; }
+  .dw .tbl--s thead th{ height:28px; }
+  .dw-tabs button{ height:34px; }
+  .dw-tabs{ margin-bottom:8px; }
+  .dw-f{ padding:8px 20px; }
+  .dw-h{ padding-bottom:0; }
+}
+/* 1280×720 처럼 가장 짧은 화면 — 마지막 20px 을 글자 크기가 아니라 여백에서 뺀다 */
+@media (max-height:760px){
+  .mi h2{ font-size:20px; }
+  .mi .dw-big b{ font-size:22px; }
+  .mi .dw-big .k1 b{ font-size:24px; }
+  .mi .tbl--s tbody td{ height:28px; }
+  .mb-filters{ padding:4px 20px 6px; gap:8px; }
+  .mb-filters .f{ gap:2px; }
+  .mb-h{ padding:4px 20px; }
+  .dw h2{ font-size:20px; }
+  .dw-sub{ margin:0 0 4px; }
+  .dw-sec-h{ margin-bottom:5px; }
+  .dw-filters{ padding-bottom:8px; }
+  .dw .form{ row-gap:8px; }
+  .dw-basis{ margin-bottom:7px; }
+  .dw-basis li{ line-height:1.28; }
+  .dw-bars{ height:44px; }
+  .dw-chart{ margin:6px 0 4px; }
+  .dw-note{ margin:0; }
+}
+
+/* 좁은 칸 — 큰 수치와 미리보기가 두 줄로 접히면 오히려 높아진다. 한 줄로 유지. */
+@media (max-width:1560px){
+  /* 기준 목록 — 좁은 칸에서 이름과 메타가 어긋나 세 줄이 됐다. 메타를 아랫줄 고정으로. */
+  .dw-basis li{ flex-wrap:wrap; row-gap:0; }
+  .dw-basis li .m{ margin-left:0; flex-basis:100%; }
+  /* 좁은 칸의 표 — 칸 사이 여백을 줄여 가로로 넘치지 않게 한다(숫자는 그대로) */
+  .lx .dw .tbl th,.lx .dw .tbl td{ padding:0 6px; }
+  /* 숫자와 머리글이 잘리지 않는 최소 폭 — `비경작지(㎡)` 가 84px 다 */
+  .dw .tbl col.c-emd{ width:60px; } .dw .tbl col.c-n{ width:84px; }
+  /* 거르개 — 네 개를 한 줄에 밀어 넣으면 고른 값(`전체`·`남원시`)이 안 보인다.
+     이름을 위가 아니라 옆에 붙여 두 칸 × 두 줄로 — 줄은 하나 늘지만 값이 읽힌다. */
+  .dw-filters{ gap:6px 10px; }
+  .dw-filters .f--sido,.dw-filters .f--sgg,.dw-filters .f--emd,.dw-filters .f--cls{
+    flex:1 1 calc(50% - 5px); min-width:118px; flex-direction:row; align-items:center; gap:6px; }
+  /* `전북특별자치도` 가 잘리지 않게 시도 칸을 조금 더 — 시군구는 `남원시` 라 좁아도 된다 */
+  .dw-filters .f--sido{ flex-basis:calc(58% - 5px); }
+  .dw-filters .f--sgg{ flex-basis:calc(42% - 5px); min-width:100px; }
+  .dw-filters .f > .lb{ white-space:nowrap; }
+  .dw-filters .g{ margin-left:auto; }
+  /* 제목 줄이 세 줄로 접히지 않게 — 이름은 붙여 두고 단추만 아랫줄로 흐른다 */
+  .dw-sec-h{ flex-wrap:wrap; row-gap:6px; }
+  .dw-sec-h .lb{ white-space:nowrap; }
+  .dw-big{ gap:12px; }
+  .dw-big b{ font-size:26px; }
+  .dw-big .k1 b{ font-size:28px; }
+  .dw-big .u{ font-size:14px; margin-left:2px; }
+  /* 미리보기 — 좁은 칸에서는 좌우(요약 | 지역별 막대)를 위아래로 돌린다.
+     좌우로 둔 채 좁히면 막대 줄이 세 줄씩 접혀 379px 가 된다(위아래면 226px). */
+  .rp-pre{ flex-direction:column; gap:4px; padding:8px 12px; }
+  /* 요약 두 수치는 한 줄로(세로로 쌓으면 이 덩어리만 200px 이 된다) */
+  .rp-pre .l{ display:flex; flex-wrap:wrap; align-items:baseline; gap:0 10px; }
+  .rp-pre .l .t,.rp-pre .l .s{ flex-basis:100%; margin:0; }
+  .rp-pre .l b{ display:inline; font-size:24px; }
+  .rp-pre .l .s{ margin-top:2px; }
+  .rp-pre .r .row{ margin-bottom:1px; line-height:1.4; }
+  .rp-pre .r .row .nm{ width:48px; }
+  .rp-pre .r .row .cnt{ width:52px; }
+  .rp-pre .r .row .v{ width:74px; }
+}
+
+/* 기준 줄 — `초기화 · 통계 보기` 를 안내 문구 아래 줄에서 제목 줄 오른쪽으로 올렸다 */
+.dw-sec-h .acts{ margin-left:auto; display:flex; gap:10px; align-items:center; }
+.dw-sec-h .link + .acts{ margin-left:auto; }
+.dw-note b{ font-weight:500; color:var(--ink); }
+.dw-basis li{ padding:5px 8px; }

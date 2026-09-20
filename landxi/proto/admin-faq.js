@@ -2,7 +2,7 @@
    SPLIT: 좌 목록(체크/구분/제목/등록자/등록 일시) + 우 질문 열람(Q/A). 등록 · 수정 = 집중 모드.
    URL: ?id= 선택 · panel=off · mode=new|edit · cat= 구분 패싯 · field/kw 검색 · page/size. */
 import { say, confirmDialog, openModal, mountPager, bindRows, bindCounters, icon, esc, $, $$ } from './shell.js';
-import { mountAdmin, loadStore, saveStore, urlState, facetBand, searchBtns, nowIso, dt, swapIn, cleanHtml, isBlankHtml, rteHtml, bindRte, makeAskUrl, mountAttach, attachView, metaFoot } from './admin.js';
+import { mountAdmin, loadStore, saveStore, urlState, facetBand, searchBtns, nowIso, dt, swapIn, cleanHtml, isBlankHtml, rteHtml, bindRte, makeAskUrl, mountAttach, attachView, metaFoot, fitRows, watchFit } from './admin.js';
 import { FAQ_CAT } from './admin-data.js';
 
 const { main } = mountAdmin('faq');
@@ -42,7 +42,7 @@ main.insertAdjacentHTML('beforeend', `
 </div></div>`);
 
 const form = $('#search'), tbl = $('#tbl'), panel = $('#panel');
-pager = mountPager($('#pager'), { total: 0, page: S.page, size: S.size, onChange: ({ page, size }) => { S.page = page; S.size = size; if (!formMode()) S.id = 0; keepPage = true; commit(); keepPage = false; } });
+pager = mountPager($('#pager'), { total: 0, page: S.page, size: S.size, onChange: ({ page, size }) => { S.page = page; S.size = S._pref = size; if (!formMode()) S.id = 0; keepPage = true; commit(); keepPage = false; } });
 bindRows(tbl, (row) => { S.id = +row.dataset.id; S.mode = ''; S.panel = ''; commit(); $(`tr[data-id="${S.id}"]`)?.focus(); });
 
 function drawBand() {
@@ -81,6 +81,7 @@ function drawList() {
   $('#list-empty').hidden = !!all.length;
   $('#pager').classList.toggle('pager--c', focus);
   pager.set({ total: all.length, page: S.page, size: S.size });
+  fitRows(S, drawList);          // 남은 높이에 맞춰 한 쪽 행 수를 맞춘다(admin.js 주석)
 }
 tbl.addEventListener('change', (e) => { if (e.target.id === 'ck-all') $$('.row-ck', tbl).forEach((c) => { c.checked = e.target.checked; }); });
 
@@ -166,3 +167,6 @@ addEventListener('popstate', () => { S = url.read(); render(true); });
 
 render();
 url.write(S, false);
+
+/* 창 크기가 바뀌면 한 쪽 행 수를 다시 맞춘다(모니터마다 최적화) */
+watchFit(() => { if (!S._pref) { S.size = 10; drawList(); } });

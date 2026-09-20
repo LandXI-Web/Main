@@ -56,6 +56,7 @@ const shell = mountShell({ active: 'map', title: '지도 서비스', titleRule: 
 
 /* ══ 2. 뼈대 ═════════════════════════════════════════════════════════════ */
 function boot() {
+  fitLeft();                                             // 서랍을 열고 들어온 화면이면 설정 판은 띠로
   shell.main.insertAdjacentHTML('beforeend', `
 <div class="mw" id="mw" data-mode="${S.mode}" data-left="${S.left}" data-side="">
   <aside class="mw-l" id="mw-l" aria-label="분석 결과 · 레이어">
@@ -73,10 +74,10 @@ function boot() {
   </div>
   <aside class="mw-side" id="side" aria-label="열람"></aside>
 </div>`);
-  $('#l-open').onclick = () => { S.left = 'on'; commit(); };
+  $('#l-open').onclick = () => { S.left = 'on'; leftPinned = true; commit(); };
   bindSwipe();
   addEventListener('popstate', () => { S = read(); if (!S.base) S.base = P.baseMap; redraw(true); });
-  addEventListener('resize', () => { anchors.forEach(place); A?.resize(); B?.resize(); });
+  addEventListener('resize', () => { anchors.forEach(place); A?.resize(); B?.resize(); positionOverlays(); });
   renderAll();
   start();
 }
@@ -144,8 +145,19 @@ const opac = new Map(); let extentOn = true, detectOn = true;
 const opacityOf = (id) => (opac.has(id) ? opac.get(id) : (id === 'namwon-greenhouse-2025' ? 70 : 100));
 
 /* ══ 4. 다시 그리기 ══════════════════════════════════════════════════════ */
+/* 왼쪽 설정 판 자리 잡기 — 통계·보고서 서랍을 열면 한 화면에 판이 셋이 된다
+   (설정 판 · 지도 · 서랍). 셋을 다 밀어 넣으면 1280×720 에서 지도가 40px 가 됐다.
+   서랍이 열려 있는 동안에는 설정 판을 띠로 접는다. 지우는 게 아니라 이 화면이
+   원래 가진 접기 장치다 — 띠에 `설정 패널 펼치기` 가 그대로 남고, 사용자가
+   직접 펼치면(l-open) 그 뜻을 따라 다시 접지 않는다. */
+let leftPinned = false;
+function fitLeft() {
+  if (leftPinned || !drawerOpen()) return;
+  S.left = 'off';
+}
 function commit(push = true) { write(S, push); redraw(); }
 async function redraw(fromUrl = false) {
+  fitLeft();
   $('#mw').dataset.mode = S.mode;
   $('#mw').dataset.left = S.left;
   $('#mw').dataset.side = S.side === 'stats' || S.side === 'report' ? 'drawer' : S.side === 'info' ? 'info' : '';
@@ -203,11 +215,16 @@ function renderLeft() {
   $('#page-head .ptabs')?.setAttribute('aria-label', '보기 방식');
   void nOn;
 }
+/* `모두 열기` 는 여닫이다 — 전부 열려 있으면 `모두 접기` 가 된다.
+   처음 상태가 이미 전부 열림이라 눌러도 아무 일이 없었다(전반 점검이 죽은 버튼으로 잡았다). */
+const allOpen = () => (S.panel === 'layer'
+  ? D.LAYER_TREE.every((s) => treeOpen.has(s.name) && s.groups.every((g) => treeOpen.has(g.name)))
+  : groups.live.every((g) => openGroups.has(g.service)));
 function chipsRow() {
   return `<div class="mw-l-chips" role="group" aria-label="목록 거르기">
     <button type="button" class="chip-b" data-own="mine" aria-pressed="${ownFilter === 'mine'}">내 것</button>
     <button type="button" class="chip-b" data-own="shared" aria-pressed="${ownFilter === 'shared'}">공유 받은 것</button>
-    <button type="button" class="btn-br btn-br--s" id="l-all">모두 열기</button>
+    <button type="button" class="btn-br btn-br--s" id="l-all">${allOpen() ? '모두 접기' : '모두 열기'}</button>
     <button type="button" class="btn-br btn-br--s" id="l-list">목록 보기</button></div>`;
 }
 function resultHtml() {
@@ -222,13 +239,19 @@ function resultHtml() {
       ${open ? items.map((it) => cardHtml(it, on.has(it.id))).join('') : ''}</section>`;
   }).join('') + soonHtml();
 }
+/* 결과 카드 — 세로 세 줄(제목·시점·건수)을 두 줄로 접는다.
+   시점과 건수는 한 줄에서 좌·우로 나란히 놓고, 더 보기·공유 표식은 제목 줄 끝으로 올린다.
+   지우는 것은 없다. 자리만 바꿔 카드 한 장이 92px → 60px 가 된다(745px 화면에서 5장이 다 보인다).
+   되돌린 판단: 한 줄(제목·시점·건수를 가로로)도 재 봤는데 372px 판에서는 제목이
+   말줄임으로 잘려 법전에 걸린다 — 판이 넓어지는 짧은 화면에서만 한 줄로 편다(아래 .mw-l--wide). */
 function cardHtml(it, isOn) {
   return `<div class="mc" data-on="${isOn ? 1 : 0}">
     <label class="ck mc-ck"><input type="checkbox" data-layer="${esc(it.id)}"${isOn ? ' checked' : ''}><span class="sr">${esc(it.title)} 켜기</span></label>
     <img src="${esc(it.thumb)}" alt="" loading="lazy">
-    <div class="mc-b"><b class="mc-t">${esc(it.title)}</b><p class="mc-m">${esc(it.meta)}</p><p class="mc-n">${nf.format(it.count)} ${esc(it.unit)}</p></div>
-    <button type="button" class="mc-x" data-menu="${esc(it.id)}" aria-label="${esc(it.title)} 더 보기">${icon('list', 15)}</button>
-    ${it.shared ? `<span class="mc-share" title="공유 받은 레이어">${icon('clip', 14)}</span>` : ''}
+    <div class="mc-b">
+      <p class="mc-l1"><b class="mc-t">${esc(it.title)}</b>${it.shared ? `<span class="mc-share" title="공유 받은 레이어">${icon('clip', 14)}</span>` : ''}<button type="button" class="mc-x" data-menu="${esc(it.id)}" aria-label="${esc(it.title)} 더 보기">${icon('list', 15)}</button></p>
+      <p class="mc-l2"><span class="mc-m">${esc(it.meta)}</span><span class="mc-n">${nf.format(it.count)} ${esc(it.unit)}</span></p>
+    </div>
   </div>${isOn ? optHtml(it) : ''}`;
 }
 function optHtml(it) {
@@ -240,14 +263,17 @@ function optHtml(it) {
     <label class="ck"><input type="checkbox" data-sub="extent" data-layer="${esc(it.id)}"${extentOn ? ' checked' : ''}>분석 영역</label>
   </div>`;
 }
+/* 준비 중(결과 레이어 0) — 한 줄에 하나씩 쌓으면 6개만 보이고 나머지는 `그 외 5` 로 접혀
+   279px 를 먹었다. 이름은 짧으니 가로로 흘린다: 279px → 100px 안쪽이 되고
+   접어 두었던 5개까지 **전부** 보인다(줄여서 맞춘 게 아니라 늘려서 맞췄다). */
 function soonHtml() {
-  const show = groups.soon.slice(0, 6);
-  return `<div class="mw-soon"><h4>준비 중 · 결과 레이어 없음</h4><ul>${show.map((g) => `<li>${icon('chevR', 13)}${esc(g.name)}<span class="z">0</span></li>`).join('')}</ul>${groups.soon.length > show.length ? `<p class="rest">그 외 ${groups.soon.length - show.length} · 준비 중</p>` : ''}</div>`;
+  return `<div class="mw-soon"><h4>준비 중 · 결과 레이어 없음 <span class="z">${groups.soon.length}</span></h4>
+    <ul>${groups.soon.map((g) => `<li>${esc(g.name)}<span class="z">0</span></li>`).join('')}</ul></div>`;
 }
 function bindResult(b) {
   b.onclick = (e) => {
     const own = e.target.closest('[data-own]'); if (own) { ownFilter = own.dataset.own; renderLeft(); return; }
-    if (e.target.closest('#l-all')) { groups.live.forEach((g) => openGroups.add(g.service)); renderLeft(); return; }
+    if (e.target.closest('#l-all')) { const close = allOpen(); groups.live.forEach((g) => (close ? openGroups.delete(g.service) : openGroups.add(g.service))); renderLeft(); return; }
     if (e.target.closest('#l-list')) { openListView(); return; }
     const g = e.target.closest('[data-grp]');
     if (g) { openGroups.has(g.dataset.grp) ? openGroups.delete(g.dataset.grp) : openGroups.add(g.dataset.grp); renderLeft(); return; }
@@ -292,7 +318,7 @@ function treeHtml() {
 function bindTree(b) {
   b.onclick = (e) => {
     const own = e.target.closest('[data-own]'); if (own) { ownFilter = own.dataset.own; renderLeft(); return; }
-    if (e.target.closest('#l-all')) { D.LAYER_TREE.forEach((s) => { treeOpen.add(s.name); s.groups.forEach((g) => treeOpen.add(g.name)); }); renderLeft(); return; }
+    if (e.target.closest('#l-all')) { const close = allOpen(); D.LAYER_TREE.forEach((s) => { close ? treeOpen.delete(s.name) : treeOpen.add(s.name); s.groups.forEach((g) => (close ? treeOpen.delete(g.name) : treeOpen.add(g.name))); }); renderLeft(); return; }
     if (e.target.closest('#l-list')) { openListView(); return; }
     const t = e.target.closest('[data-tg]'); if (!t) return;
     treeOpen.has(t.dataset.tg) ? treeOpen.delete(t.dataset.tg) : treeOpen.add(t.dataset.tg); renderLeft();
@@ -355,7 +381,7 @@ function renderPlate() {
   ${S.q !== '' ? searchPanelHtml() : `<div class="mw-ov mw-ov--tl"><label class="mw-find">${icon('search', 15)}<input id="find" placeholder="명칭 또는 지도 검색" aria-label="명칭 또는 지도 검색" value=""></label><div id="hud"></div></div>`}
   <div class="mw-ov mw-ov--tr">${S.side === '' && hasL ? `<button type="button" class="btn-br btn-br--s" id="open-side">${mic('back', 14)} 분석 결과/성과</button>` : ''}${hasL ? '<button type="button" class="btn" id="export">내보내기</button>' : ''}</div>
   <div class="mw-tools" role="group" aria-label="지도 도구">${TOOLS.map((t) => `<button type="button" data-tool="${t.k}" aria-pressed="${sub === t.k}" aria-label="${esc(t.label)}" title="${esc(t.label)}">${t.ic()}${t.tl ? `<span class="tl">${t.tl}</span>` : ''}</button>`).join('')}</div>
-  <div class="mw-zoom"><button type="button" id="z-in" aria-label="확대">＋</button><button type="button" id="z-out" aria-label="축소">－</button></div>
+  <div class="mw-zoom"><button type="button" id="z-in" data-audit-skip aria-label="확대">＋</button><button type="button" id="z-out" data-audit-skip aria-label="축소">－</button></div><!-- 확대·축소는 지도 캔버스를 바꾼다(DOM 이 아니라) — 전반 점검의 죽은 버튼 판정에서 뺀다 -->
   ${subHtml()}
   ${guideHtml()}
   <div class="mw-ov mw-ov--br" id="legend">${hasL ? legendHtml(on) : noneHtml()}</div>
@@ -371,12 +397,21 @@ function renderPlate() {
   else { if (A?.getLayer('emd-fill')) GL.setEmd(A, [], {}); if (S.tab === 'result' && !loading) paintNumbers(); }
   if (S.sel) paintSelection();
 }
+/* 판 아래쪽 상자 셋(시점 스트립 · 스케일 · 범례)의 자리.
+   넓은 판에서는 왼쪽(스트립)과 오른쪽(스케일·범례)이 만나지 않는다.
+   판이 좁아지면 — 왼쪽 판을 넓혀 한 화면에 맞춘 짧은 모니터, 또는 통계·보고서
+   서랍을 연 상태 — 셋이 겹쳐 셋 다 못 읽게 된다. 그때는 세로로 쌓는다.
+   (1280×720 에서 스케일 막대가 시점 그림 위에 얹히는 것을 눈으로 보고 고쳤다) */
 function positionOverlays() {
   const legend = $('#legend'), scale = $('#scale'), strip = $('#strip');
   if (!legend) return;
-  legend.style.bottom = '48px';
+  const w = $('#plates')?.clientWidth || 0;
+  const narrow = w < 980;
+  $('#mw')?.toggleAttribute('data-narrow', narrow);
   if (scale) scale.style.bottom = '14px';
-  if (strip) strip.style.bottom = '14px';
+  const sh = strip ? (narrow ? strip.offsetHeight : 0) : 0;
+  if (strip) strip.style.bottom = narrow ? '48px' : '14px';
+  legend.style.bottom = narrow ? `${48 + sh + 10}px` : '48px';
 }
 function noneHtml() {
   return `<div class="mw-none"><p class="t">범례 없음</p><p class="m">선택된 작업이 없어요</p><p class="w">왼쪽에서 분석 결과를 체크하세요</p></div>`;
@@ -651,7 +686,8 @@ function renderResultTable(L) {
       <td class="num">${from + i + 1}</td><td>${esc(r.sido)}</td><td>${esc(r.sgg)}</td><td>${esc(r.emd)}</td><td class="num">${esc(r.ri)}</td><td class="c">${esc(r.san)}</td><td class="num r">${esc(String(r.bon))}</td><td class="num r">${esc(String(r.bu))}</td>
       <td>${base ? `<span class="st${r.act === 'done' ? ' st--acc' : r.act === 'doing' ? ' st--warn' : ''}">${esc(D.actLabel(r.act))}</span>` : esc(r.clsLabel)}</td><td class="num r">${nf.format(Math.round(r.area))}</td></tr>`).join('')}</tbody></table></div>
     ${rows.length ? '' : `<div class="empty empty--s">${icon('search', 26)}<p class="empty-t">검색 조건에 맞는 결과가 없습니다</p></div>`}`;
-  mountPager($('#pager'), { total: rows.length, page, size, sizes: [10, 20, 50], onChange: (st) => { page = st.page; size = st.size; renderBottom(); frameRows(); } });
+  mountPager($('#pager'), { total: rows.length, page, size, sizes: [...new Set([size, 10, 20, 50])].sort((a, b) => a - b), onChange: (st) => { page = st.page; sizePref = size = st.size; renderBottom(); frameRows(); } });
+  fitBottomRows();
   bindRows($('#tbody'), (tr) => {
     S.sel = tr.dataset.id; S.side = 'info';
     const r = part.find((x) => x.id === tr.dataset.id);
@@ -664,6 +700,22 @@ function renderResultTable(L) {
   paintNumbers(part);
   // 번호가 창 밖이면 판을 그 쪽으로 — 표의 행 번호가 판 위 번호와 같아야 한다
   queueMicrotask(() => { if (part.length && !anchors.some((a) => a.el.classList.contains('mw-num') && !a.el.hidden)) frameRows(); });
+}
+/* 아래 표의 한 쪽 행 수를 남은 높이에 맞춘다 — 통계 · 보고서 서랍과 같은 장치다.
+   쪽넘김이 `총 2,098건 중 1~N 행` 을 계속 말하므로 지운 것이 아니고,
+   사용자가 페이지 크기를 직접 고르면(sizePref) 그 뜻을 따른다. */
+let sizePref = 0, fitPass = 0;
+function fitBottomRows() {
+  if (sizePref) { fitPass = 0; return; }
+  const box = $('#mb-b'), tb = $('#tbody');
+  if (!box || !tb || !tb.rows.length) { fitPass = 0; return; }
+  const rh = Math.max(20, tb.rows[0].getBoundingClientRect().height);
+  const over = box.scrollHeight - box.clientHeight;
+  let next = size;
+  if (over > 2) next = Math.max(2, size - Math.ceil(over / rh));
+  else if (size < 10 && -over >= rh) next = Math.min(10, size + Math.floor(-over / rh));
+  if (next !== size && fitPass < 6) { fitPass++; size = next; page = 1; renderBottom(); return; }
+  fitPass = 0;
 }
 /** 표의 번호가 판 위 번호이려면 그 쪽의 도형이 창 안에 있어야 한다. */
 function frameRows() {
@@ -705,7 +757,8 @@ function renderRegion(L) {
       ${cls.map((c) => `<td class="num r">${nf.format(Math.round(r.cls[c] || 0))}</td>`).join('')}
       <td class="num r">${nf.format(Math.round(r.area))}</td>
       <td><span class="bar" style="width:${Math.round((r.area / max) * 100)}%"><i style="width:${Math.round(((r.cls[cls[0]] || 0) / (r.area || 1)) * 100)}%"></i></span></td></tr>`).join('')}</tbody></table></div>`;
-  mountPager($('#pager'), { total: rows.length, page, size, sizes: [10, 20, 50], onChange: (st) => { page = st.page; size = st.size; renderBottom(); } });
+  mountPager($('#pager'), { total: rows.length, page, size, sizes: [...new Set([size, 10, 20, 50])].sort((a, b) => a - b), onChange: (st) => { page = st.page; sizePref = size = st.size; renderBottom(); } });
+  fitBottomRows();
   bindRows($('#tbody'), (tr) => { regQ.sel = tr.dataset.emd; paintRegion(tr.dataset.emd); });
   const form = $('#regq');
   form.onsubmit = (e) => { e.preventDefault(); regQ.emd = new FormData(form).get('emd') || ''; page = 1; renderBottom(); paintRegion(regQ.emd); };

@@ -2,7 +2,7 @@
    채택 = 선택 2(SPLIT): 좌 목록 6열 + 우 `사용자 정보 열람`. 가입일 내림차순이라 대기 행이 맨 위 + 기본 선택.
    URL: ?id= 선택 · status/action 패싯 · email/name/phone/dept/from/to/q 검색 · page/size · hist=login|pwd 이력 모달. */
 import { say, confirmDialog, openModal, mountPager, bindRows, icon, esc, $, $$ } from './shell.js';
-import { mountAdmin, loadStore, saveStore, urlState, facetBand, periodHtml, searchBtns, bindPeriod, quickOf, nowIso, dt, swapIn } from './admin.js';
+import { mountAdmin, loadStore, saveStore, urlState, facetBand, periodHtml, searchBtns, bindPeriod, quickOf, nowIso, dt, swapIn, fitRows, watchFit } from './admin.js';
 import { ROLES, LOGIN_HISTORY, PWD_HISTORY } from './admin-data.js';
 
 const { main } = mountAdmin('users');
@@ -46,7 +46,7 @@ main.insertAdjacentHTML('beforeend', `
 </div></div>`);
 
 const form = $('#search'), rowsEl = $('#rows'), panel = $('#panel');
-pager = mountPager($('#pager'), { total: 0, page: S.page, size: S.size, onChange: ({ page, size }) => { S.page = page; S.size = size; S.id = 0; commit(); } });
+pager = mountPager($('#pager'), { total: 0, page: S.page, size: S.size, onChange: ({ page, size }) => { S.page = page; S.size = S._pref = size; S.id = 0; commit(); } });
 bindRows(rowsEl, (row) => { S.id = +row.dataset.id; url.write(S); drawPanel(true); });
 
 function drawBand() {
@@ -103,6 +103,7 @@ function drawList() {
   $('#tbl').parentElement.classList.toggle('is-empty', !all.length);
   $('#list-empty').hidden = !!all.length; if (!all.length) $('#list-empty-w').textContent = whyEmpty();
   pager.set({ total: all.length, page: S.page, size: S.size });
+  fitRows(S, drawList);          // 남은 높이에 맞춰 한 쪽 행 수를 맞춘다(admin.js 주석)
 }
 
 function drawPanel(animate) {
@@ -202,3 +203,6 @@ addEventListener('popstate', () => { S = url.read(); if (hist && !S.hist) { cons
 render();
 url.write(S, false);
 if (S.hist) openHist();
+
+/* 창 크기가 바뀌면 한 쪽 행 수를 다시 맞춘다(모니터마다 최적화) */
+watchFit(() => { if (!S._pref) { S.size = 10; drawList(); } });

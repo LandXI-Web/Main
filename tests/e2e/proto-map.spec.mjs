@@ -529,11 +529,17 @@ test.describe('보안 서약서 · 다운로드', () => {
 
 /* ══ 12. 통계 ══════════════════════════════════════════════════════════ */
 test.describe('통계', () => {
-  test('우 서랍 620 · 큰 수 3은 실 GeoJSON 집계다', async ({ page }) => {
+  /* 서랍 폭은 2026-09-20 에 고정 620 에서 화면 폭에 따르는 값으로 바뀌었다.
+     620 한 칸에는 기준·거르개·큰 수·막대·표·쪽넘김이 다 들어가지 않아 574px 가 숨었다
+     ("업무 화면은 한 화면에서 끝난다"). 이제 서랍은 760~920px 사이에서 두 칸으로 선다.
+     — 지도가 최소 470px 을 갖도록 계산하므로 지도가 쓸모없어지지 않는다(map.css 참고). */
+  test('우 서랍은 760~920 · 큰 수 3은 실 GeoJSON 집계다', async ({ page }) => {
     const errs = watch(page);
     await boot(page, `${STATS}?result=${FARM}&left=off`);
     await layersOn(page);
-    expect(Math.round((await page.locator('#side').boundingBox()).width)).toBe(620);
+    const w = Math.round((await page.locator('#side').boundingBox()).width);
+    expect(w).toBeGreaterThanOrEqual(760);
+    expect(w).toBeLessThanOrEqual(920);
     await expect(page.locator('.dw h2')).toHaveText('농지 활용 통계');
     const big = await page.locator('.dw-big').innerText();
     expect(big).toContain('315.9');

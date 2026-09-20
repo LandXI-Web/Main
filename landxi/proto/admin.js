@@ -231,6 +231,33 @@ export function tlBig(pub, pop) {
   return `<div class="tl" role="img" aria-label="게시 기간과 팝업 기간의 시간 축"><div class="tl-plot">${ticks}${today}</div>${bar(pub, 'tl-bar--pub', '게시')}${bar(pop, 'tl-bar--pop', '팝업')}<div class="tl-axis"></div></div>`;
 }
 
+/* ── 한 쪽 행 수를 화면 높이에 맞춘다 ─────────────────────────────────────
+   발주자: "업무 화면은 한 화면에서 끝난다" · "모니터마다 최적화를 해야지".
+   틀을 줄이고 행 높이를 화면에 맞춘 뒤에도(admin.css 아래쪽) 짧은 모니터에서는
+   표가 몇 줄 넘친다. 넘치는 만큼만 한 쪽의 행 수를 줄이고, 길면 다시 늘린다.
+   쪽넘김이 `총 21건 중 1~N 행` 을 계속 말하므로 지운 것이 아니다.
+   사용자가 페이지 크기를 직접 고르면(S._pref) 그 값을 기준으로 삼는다. */
+let fitPass = 0;
+export function fitRows(S, render, { min = 4, pref = 10 } = {}) {
+  if (S._pref) return;                 // 사용자가 페이지 크기를 직접 골랐으면 그 뜻을 따른다
+  const wrap = $('.split-l > .tbl-wrap');
+  const tb = wrap && $('tbody', wrap);
+  if (!wrap || !tb || !tb.rows.length) { fitPass = 0; return; }
+  const want = pref;
+  const rh = Math.max(24, tb.rows[0].getBoundingClientRect().height);
+  const over = wrap.scrollHeight - wrap.clientHeight;
+  let next = S.size;
+  if (over > 2) next = Math.max(min, S.size - Math.ceil(over / rh));
+  else if (S.size < want && -over >= rh) next = Math.min(want, S.size + Math.floor(-over / rh));
+  if (next !== S.size && fitPass < 6) { fitPass++; S.size = next; S.page = 1; render(); return; }
+  fitPass = 0;
+}
+/** 창 크기가 바뀌면 다시 잰다(한 번만 건다). */
+export function watchFit(fn) {
+  let t = 0;
+  addEventListener('resize', () => { clearTimeout(t); t = setTimeout(fn, 180); });
+}
+
 /* ── 자잘한 것 ──────────────────────────────────────────────────────────── */
 export const metaFoot = (o) => `<p class="meta-foot">${[['등록자', o.author], ['등록 일시', dt(o.createdAt, 19)], ['수정자', o.updater], ['수정 일시', dt(o.updatedAt, 19)]].map(([l, v]) => `<span>${l} <b class="${/일시/.test(l) ? 'n' : ''}">${esc(v || '-')}</b></span>`).join('')}</p>`;
 /** 열람 판을 갈아 끼울 때 500ms 진입(법전 §4). */

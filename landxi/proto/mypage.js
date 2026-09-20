@@ -52,7 +52,13 @@ function boot() {
     const gCellsAll = Math.round(pend / UNIT_GB);
     const gCols = Math.min(GHOST_COLS_MAX, Math.ceil(gCellsAll / PLATE_ROWS)), gCells = Math.min(gCellsAll, gCols * PLATE_ROWS);
     const total = cols + gCols, gap = 3;
-    const cell = Math.max(8, Math.min(30, Math.floor((w - gap * (total - 1)) / total))), pitch = cell + gap;
+    /* 칸 크기 — 폭만 보던 것을 **화면 높이**도 보게 했다(2026-09-20).
+       칸 판은 네 줄이라 칸이 커지면 세로를 네 배로 먹는다. 1996×745 에서 30px 칸이
+       129px 을 차지해 아래 `증량 신청 이력` 표가 통째로 잘려 있었다.
+       745px 화면이면 17px, 900px 이면 25px, 1080px 이상이면 원래대로 30px 이다.
+       줄 수(4)는 건드리지 않는다 — `1칸 = 16 GB` 눈금이 어긋나면 용량 감이 사라진다. */
+    const capH = Math.max(13, Math.min(30, Math.round((innerHeight - 745) * 0.05 + 17)));
+    const cell = Math.max(8, Math.min(capH, Math.floor((w - gap * (total - 1)) / total))), pitch = cell + gap;
     const usedCells = STORAGE.used / UNIT_GB, full = Math.floor(usedCells), frac = usedCells - full;
     const freshCells = Math.min(gCells, Math.round(lastFresh / UNIT_GB));
     const key = `${cell}|${total}|${gCells}`;

@@ -4,7 +4,7 @@
    URL: ?id= 선택 · panel=off · mode=reply · status= 상태 패싯 · field/kw/from/to/q 검색 · page/size. 문의/답변 삭제는 원본 소스에 없다(원판 유보 1). */
 import { say, openModal, mountPager, bindRows, icon, esc, $ } from './shell.js';
 import { mountAdmin, loadStore, saveStore, urlState, facetBand, periodHtml, searchBtns, bindPeriod, quickOf, nowIso, dt, swapIn,
-  cleanHtml, richHtml, isBlankHtml, rteHtml, bindRte, makeAskUrl, mountAttach, attachView, ATT_HINT, ATT_HINT_S } from './admin.js';
+  cleanHtml, richHtml, isBlankHtml, rteHtml, bindRte, makeAskUrl, mountAttach, attachView, ATT_HINT, ATT_HINT_S, fitRows, watchFit } from './admin.js';
 
 const { main } = mountAdmin('inquiry');
 const url = urlState({ id: 0, panel: '', mode: '', status: 'all', field: 'all', kw: '', from: '', to: '', q: 0, page: 1, size: 10 });
@@ -43,7 +43,7 @@ main.insertAdjacentHTML('beforeend', `
 </div></div>`);
 
 const form = $('#search'), tbl = $('#tbl'), panel = $('#panel');
-pager = mountPager($('#pager'), { total: 0, page: S.page, size: S.size, onChange: ({ page, size }) => { S.page = page; S.size = size; if (!focusMode()) S.id = 0; keepPage = true; commit(); keepPage = false; } });
+pager = mountPager($('#pager'), { total: 0, page: S.page, size: S.size, onChange: ({ page, size }) => { S.page = page; S.size = S._pref = size; if (!focusMode()) S.id = 0; keepPage = true; commit(); keepPage = false; } });
 /* 답변 대기 = 집중 모드로 답변 작성 · 답변 완료 = 분할 그대로 답변 수정 */
 bindRows(tbl, (row) => { S.id = +row.dataset.id; S.panel = ''; S.mode = replied(byId(S.id)) ? '' : 'reply'; commit(); if (S.mode === 'reply') $('#v-answer')?.focus(); else $(`tr[data-id="${S.id}"]`)?.focus(); });
 
@@ -81,6 +81,7 @@ function drawList() {
   $('#list-empty').hidden = !!all.length;
   $('#pager').classList.toggle('pager--c', focus);
   pager.set({ total: all.length, page: S.page, size: S.size });
+  fitRows(S, drawList);          // 남은 높이에 맞춰 한 쪽 행 수를 맞춘다(admin.js 주석)
 }
 
 function drawPanel(animate) {
@@ -132,3 +133,6 @@ addEventListener('popstate', () => { S = url.read(); render(true); });
 
 render();
 url.write(S, false);
+
+/* 창 크기가 바뀌면 한 쪽 행 수를 다시 맞춘다(모니터마다 최적화) */
+watchFit(() => { if (!S._pref) { S.size = 10; drawList(); } });
