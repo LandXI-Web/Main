@@ -1,0 +1,103 @@
+/* 공개 게시판 — 메인(스크럽 필름)과 같은 톤 (2026-09-20)
+   발주자: "메인과 톤앤매너를 맞춰 새로 공지사항이랑 활용 사례 게시판 만들어야겠다"
+
+   왜 새로 만드나
+     앞서 서비스 지원(notice.html 등)의 관문만 풀어 손님에게 열었다. 그건 **앱 셸에서
+     레일만 뺀 것**이라 메인과 톤이 달랐다. 로그인 전에 보는 화면은 메인의 연장이어야 한다.
+     그래서 서비스 지원(로그인 후 업무 화면)은 그대로 두고, 공개 판을 여기 따로 세운다.
+
+   무엇을 상속하나
+     system.css 의 토큰과 프리미티브를 그대로 쓴다 — 흰 종이, 헤어라인 하나(79px),
+     Paperlogy 표제, Inter 숫자, 12컬럼 그리드, 라운드 0 · 그림자 0.
+     이 파일은 게시판에만 필요한 것(목록 줄, 읽기 판, 쪽 넘김)만 더한다.
+
+   데이터는 서비스 지원과 같은 것을 읽는다(support-data.js). 두 벌로 나뉘면 공지를
+   두 번 쓰게 된다 — 화면이 둘일 뿐 내용은 하나다. */
+
+/* ── 바탕 ─────────────────────────────────────────────────────────────── */
+/* 밑줄은 쓰지 않는다 — 메인과 같다. 강조는 굵기와 색으로만 한다. */
+.lx.st a{ text-decoration:none; color:inherit; }
+.lx.st{ background:var(--lx-paper); color:var(--lx-ink); min-height:100vh;
+  display:flex; flex-direction:column; }
+.st-main{ flex:1 1 auto; padding-top:var(--lx-bar); }
+
+/* 마스트헤드 — 메인과 같은 부품. 오른쪽은 `로그인` 하나. */
+.st-mast{ position:fixed; inset:0 0 auto; z-index:20; background:var(--lx-paper);
+  border-bottom:var(--lx-hair-w) solid var(--lx-hair); }
+.st-signin{ border-bottom:1.5px solid currentColor; padding-bottom:2px; }
+.st-signin:hover{ color:var(--lx-accent); }
+.st-mast .lx-masthead__meta{ grid-column:9 / -1; }
+@media (max-width:1279.98px){ .st-mast .lx-masthead__meta{ grid-column:3 / -1; } }
+
+/* ── 제목 자리 ────────────────────────────────────────────────────────── */
+/* padding 단축을 쓰면 .lx-grid 의 padding-inline(여백 64px)을 덮어 버린다.
+   세로만 준다 — 한 번 이걸로 좌우 여백이 통째로 사라졌다. */
+.st-head{ padding-block:72px 0; }
+.st-head .lx-label{ margin-bottom:18px; }
+.st-head .lx-h1{ font-size:var(--lx-h2); line-height:var(--lx-h2-lh); letter-spacing:var(--lx-h2-ls); }
+.st-head .lx-lead{ margin-top:16px; color:var(--lx-grey-2); }
+.st-rule{ grid-column:1/-1; height:4px; background:var(--lx-accent); width:96px; margin:26px 0 0; }
+
+/* ── 목록 ─────────────────────────────────────────────────────────────── */
+.st-list{ grid-column:1/-1; margin:44px 0 0; border-top:1px solid var(--lx-ink); list-style:none; padding:0; }
+.st-row{ border-bottom:var(--lx-hair-w) solid var(--lx-hair); }
+.st-row > a{ display:grid; grid-template-columns:78px minmax(0,1fr) 128px; align-items:baseline;
+  column-gap:24px; padding:22px 0; color:inherit;
+  transition:background var(--lx-d1) var(--lx-ease), padding-inline var(--lx-d1) var(--lx-ease); }
+.st-row > a:hover{ background:var(--lx-tint-1); padding-inline:16px; }
+.st-row[aria-current] > a{ background:var(--lx-tint-1); padding-inline:16px; }
+.st-no{ font-family:var(--lx-num); font-size:var(--lx-cap); color:var(--lx-grey-2); font-variant-numeric:tabular-nums; }
+.st-t{ font-family:var(--lx-display); font-weight:700; font-size:var(--lx-h5); line-height:1.35;
+  letter-spacing:var(--lx-h5-ls); min-width:0; }
+.st-d{ font-family:var(--lx-num); font-size:var(--lx-cap); color:var(--lx-grey-2);
+  text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.st-tag{ display:inline-block; margin-right:10px; padding:0 8px; height:24px; line-height:22px;
+  border:1px solid var(--lx-hair); font-family:var(--lx-num); font-size:var(--lx-cap);
+  color:var(--lx-grey-2); vertical-align:3px; }
+.st-tag--on{ border-color:var(--lx-accent); color:var(--lx-accent); }
+
+/* 활용 사례 — 그림이 있는 목록 */
+.st-cards{ grid-column:1/-1; margin:44px 0 0; display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr)); gap:40px var(--lx-gutter); list-style:none; padding:0; }
+.st-card > a{ display:block; color:inherit; }
+.st-card figure{ margin:0 0 18px; aspect-ratio:16/9; overflow:hidden; background:var(--lx-tint-1); }
+.st-card img{ width:100%; height:100%; object-fit:cover; display:block;
+  transition:transform var(--lx-d2) var(--lx-ease); }
+.st-card > a:hover img{ transform:scale(1.03); }
+.st-card .st-t{ font-size:var(--lx-h4); line-height:var(--lx-h4-lh); }
+.st-card .lx-cap{ margin-top:12px; }
+@media (max-width:1023.98px){ .st-cards{ grid-template-columns:1fr; } }
+
+/* ── 읽기 판 ──────────────────────────────────────────────────────────── */
+.st-read{ grid-column:1/-1; margin:44px 0 0; border-top:1px solid var(--lx-ink); }
+.st-read-h{ padding:34px 0 26px; border-bottom:var(--lx-hair-w) solid var(--lx-hair); }
+.st-read-h .st-t{ font-size:var(--lx-h4); line-height:var(--lx-h4-lh); }
+.st-read-h .lx-cap{ margin-top:12px; }
+.st-body{ padding:34px 0 0; max-width:var(--lx-measure); font-size:var(--lx-fs);
+  line-height:var(--lx-lh); letter-spacing:var(--lx-ls); white-space:pre-wrap; }
+.st-files{ margin:34px 0 0; padding:0; list-style:none; border-top:var(--lx-hair-w) solid var(--lx-hair); }
+.st-files li{ border-bottom:var(--lx-hair-w) solid var(--lx-hair); }
+.st-files button{ display:flex; align-items:center; gap:12px; width:100%; padding:16px 0;
+  font-family:var(--lx-body); font-size:var(--lx-fs); color:inherit; background:none; border:0;
+  cursor:pointer; text-align:left; }
+.st-files button:hover{ color:var(--lx-accent); }
+.st-files .n{ margin-left:auto; font-family:var(--lx-num); font-size:var(--lx-cap); color:var(--lx-grey-2); }
+.st-back{ display:inline-flex; align-items:center; gap:10px; margin:40px 0 0;
+  font-family:var(--lx-display); font-weight:700; font-size:var(--lx-name); color:var(--lx-ink); }
+.st-back:hover{ color:var(--lx-accent); }
+
+/* ── 쪽 넘김 ──────────────────────────────────────────────────────────── */
+.st-pager{ grid-column:1/-1; display:flex; align-items:center; justify-content:center; gap:8px;
+  margin:48px 0 0; }
+.st-pager button{ min-width:36px; height:36px; padding:0 10px; background:none; border:0;
+  font-family:var(--lx-num); font-size:var(--lx-cap); color:var(--lx-grey-2); cursor:pointer; }
+.st-pager button[aria-current]{ color:var(--lx-ink); border-bottom:2px solid var(--lx-accent); }
+.st-pager button:disabled{ color:var(--lx-grey); cursor:default; }
+
+/* ── 바닥 ─────────────────────────────────────────────────────────────── */
+.st-foot{ margin-top:96px; border-top:var(--lx-hair-w) solid var(--lx-hair); }
+.st-foot .lx-grid{ padding-block:26px; }
+.st-foot p{ grid-column:1/-1; margin:0; font-family:var(--lx-num); font-size:var(--lx-cap);
+  color:var(--lx-grey-2); }
+
+.st-empty{ grid-column:1/-1; padding:64px 0; color:var(--lx-grey-2); font-size:var(--lx-fs); }
