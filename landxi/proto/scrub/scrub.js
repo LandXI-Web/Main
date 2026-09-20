@@ -39,11 +39,8 @@ const $ = s => document.querySelector(s);
 const el = {
   root: $('[data-sc-mode="worldflight"]'),
   spacer: $('[data-sc-spacer]'),
-  pips: $('#sb-pips'),
-  bearing: $('#sb-bearing'),
-  alt: $('#sb-alt'),
-  gsd: $('#sb-gsd'),
-  coord: $('#sb-coord'),
+  // 계기판(다이얼·방위·고도·지상분해능·좌표)은 2026-09-20 에 걷어냈다 — 그 값들은
+  // manifest 의 가상 카메라였지 측정값이 아니었다. 여기 참조도 함께 지운다.
   caption: $('#sb-caption'),
   route: $('#sb-route-list'),
   hint: $('#sb-hint'),
@@ -152,13 +149,7 @@ function buildRail() {
     if (b) gotoLeg(+b.dataset.goto);
   });
 
-  // 다이얼 핍 — 디스크가 페이지 전체에 정확히 1회전하므로,
-  // 각 지점의 핍은 그 지점에 도착하는 순간 정확히 바늘(12시) 밑에 온다.
-  el.pips.innerHTML = WAYPOINTS.map(w => {
-    const a = (-w.frac * 360 - 90) * Math.PI / 180;
-    const x = 60 + 49 * Math.cos(a), y = 60 + 49 * Math.sin(a);
-    return `<rect class="sb-pip" data-leg="${w.leg}" x="${(x - 3).toFixed(2)}" y="${(y - 3).toFixed(2)}" width="6" height="6"></rect>`;
-  }).join('');
+  // (다이얼 핍 렌더링은 계기판과 함께 걷어냈다. 지금 지점 표시는 항로 목록이 맡는다.)
 }
 
 /* ── 카운트업 — 샷 리스트 v2 레그 5 `비닐하우스 9,664동 · 1,674필지` ───────────
@@ -194,27 +185,8 @@ function paint() {
 
   handoff(t);
   paintProps(t);
-  // 인계 판이 올라와 있으면 계기는 판의 카메라를 읽는다. "같은 카메라로 이어받았다"는
-  // 주장을 계기가 그 순간에 반박하면 안 된다.
-  const live = PLATES.find(r => r && r.on);
-  const c = live ? {
-    lng: live.spec.center[0], lat: live.spec.center[1],
-    alt: live.spec.altitudeM, pitch: live.spec.pitch, bearing: live.spec.bearing,
-  } : camAt(t);
-  const mpp = mppOf(c.alt);
-  const brg = ((c.bearing % 360) + 360) % 360;   // 항공 관례대로 0–360
-  el.bearing.textContent = nf(brg, 1) + '°';
-  el.alt.textContent = c.alt >= 1e6 ? nf(c.alt / 1000, 0) + ' km'
-                     : c.alt >= 1e4 ? nf(c.alt / 1000, 0) + ' km'
-                     : c.alt >= 1000 ? nf(c.alt / 1000, 2) + ' km'
-                     : nf(c.alt, 0) + ' m';
-  el.gsd.textContent = mpp >= 1000 ? nf(mpp / 1000, 1) + ' km/px'
-                     : mpp >= 1 ? nf(mpp, 1) + ' m/px'
-                     : nf(mpp * 100, 1) + ' cm/px';
-  el.coord.textContent = c.lng.toFixed(4) + ', ' + c.lat.toFixed(4);
 
-  // 브랜드 마감 판 — 필름이 끝난 뒤의 2.00vh 를 읽는다. 계기판보다 뒤에 두는 이유는
-  // 마감이 계기 값을 바꾸지 않기 때문이다: 카메라는 이미 멈춰 있고, 크롬만 물러난다.
+  // 브랜드 마감 판 — 필름이 끝난 뒤의 2.00vh 를 읽는다.
   if (END) END.paint();
 
   // 현재 레그는 엔진이 발행한 --sc-seg 를 읽는다(§5 "엔진은 레일을 그리지 않는다" —
@@ -229,8 +201,6 @@ function paint() {
     const wpLeg = (WAYPOINTS.find(w => w.label === wp) || {}).leg;
     el.route.querySelectorAll('li').forEach(li =>
       li.setAttribute('aria-current', String(+li.dataset.leg === wpLeg)));
-    el.pips.querySelectorAll('.sb-pip').forEach(r =>
-      r.setAttribute('data-on', +r.dataset.leg === wpLeg ? '1' : '0'));
     // 실캡션 — 장소 · 날짜 · GSD 는 manifest 가 들고 있는 실제 출처 문자열이다.
     if (el.caption) el.caption.textContent = M.legs[k].place + ' · ' + M.legs[k].caption;
   }

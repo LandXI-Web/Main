@@ -37,6 +37,10 @@ const SCREENS = [
   ['usecase', '활용 사례'], ['manual', '매뉴얼'], ['mypage', '마이페이지'],
   ['produce', '생산 관리'], ['portal', '지자체 포털'], ['portal-dp-nw-farm-25', '포털 · 영농관리'],
   ['login', '로그인'],
+  // 메인(필름)도 본다. 2026-09-20 에 계기판을 걷으면서 JS 참조를 안 지워
+  // 스크롤 엔진이 통째로 죽었는데, 이 목록에 없어서 점검기가 놓쳤다.
+  ['scrub/index', '메인 · 스크럽 필름'],
+  ['map-drift', '표류 예측 지도'],
 ];
 
 const only = process.argv[2];

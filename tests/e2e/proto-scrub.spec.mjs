@@ -70,7 +70,7 @@ test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 14개 �
     return {
       stagePos: getComputedStyle(document.querySelector('[data-sc-world]')).position,
       copyPos: getComputedStyle(document.querySelector('[data-sc-world-copy]')).position,
-      instPos: getComputedStyle(document.querySelector('.sb-inst')).position,
+      routePos: getComputedStyle(document.querySelector('.sb-route')).position,
       flowKids: Array.from(document.querySelector('[data-sc-mode]').children)
         .filter(inFlow).map((e) => e.tagName + '.' + String(e.className || '')),
       spacerPx: document.querySelector('[data-sc-spacer]').getBoundingClientRect().height,
@@ -82,7 +82,7 @@ test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 14개 �
   });
   expect(flow.stagePos).toBe('fixed');
   expect(flow.copyPos).toBe('fixed');
-  expect(flow.instPos).toBe('fixed');
+  expect(flow.routePos).toBe('fixed');
   // 흐름에 남는 것은 스페이서 하나 — 나머지 자식은 전부 fixed 다.
   expect(flow.flowKids.length).toBe(1);
   expect(flow.flowKids[0]).toMatch(/spacer|DIV/);
@@ -178,21 +178,23 @@ test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 14개 �
   expect(plateY.center[1]).toBeCloseTo(M.handoffFinal.center[1], 3);
   expect(plateY.zoom).toBeCloseTo(M.handoffFinal.zoom, 2);
 
-  /* ── 8. 계기판 — 고도는 단조 하강, 좌표·방위는 늘 읽힌다 ────────────────── */
+  /* ── 8. 카메라 — 고도는 단조 하강, 좌표·방위는 늘 유효하다 ────────────────
+     계기판(방위·고도·지상분해능·좌표)은 2026-09-20 에 화면에서 걷어냈다.
+     그 값들은 AI 영상 생성용 가상 카메라여서 실측처럼 보이면 안 됐다.
+     다만 **카메라 트랙이 이어진다**는 성질은 그대로 지켜야 하므로
+     화면 글자 대신 window.__scrub.camera() 를 직접 읽어 검사한다. */
   const dial = [];
   for (let i = 0; i <= 16; i++) {
     await seek(page, i / 16, 90);
-    dial.push(await page.evaluate(() => ({
-      alt: window.__scrub.camera().alt,
-      bearing: document.getElementById('sb-bearing').textContent,
-      coord: document.getElementById('sb-coord').textContent,
-      gsd: document.getElementById('sb-gsd').textContent,
-    })));
+    dial.push(await page.evaluate(() => {
+      const c = window.__scrub.camera();
+      return { alt: c.alt, bearing: c.bearing, lng: c.lng, lat: c.lat };
+    }));
   }
   for (const d of dial) {
-    expect(d.bearing).toMatch(/^[\d,]+\.\d°$/);
-    expect(d.coord).toMatch(/^\d+\.\d{4}, \d+\.\d{4}$/);
-    expect(d.gsd).toMatch(/(cm|m|km)\/px$/);
+    expect(Number.isFinite(d.bearing)).toBe(true);
+    expect(d.lng).toBeGreaterThan(100); expect(d.lng).toBeLessThan(150);
+    expect(d.lat).toBeGreaterThan(20); expect(d.lat).toBeLessThan(50);
     expect(d.alt).toBeGreaterThan(0);
   }
   // 궤도(15,000km) → 울주 공터(0.5km) → 귀환(A12, 1,400km): 최저점이 시작보다 네 자릿수 아래이고, 끝은 다시 수백 km 위다(2026-08-27 레그 11).
@@ -312,7 +314,7 @@ test('브랜드 마감 v2 — 지구본이 물러나고 CI 3종이 순서대로 
   }
 
   /* 6. 마감 동안 크롬(마스트헤드·카피·계기판·항로)은 물러나 있다. */
-  const chrome = await page.evaluate(() => ['.lx-masthead', '.sb-copy-layer', '.sb-inst', '.sb-route']
+  const chrome = await page.evaluate(() => ['.lx-masthead', '.sb-copy-layer', '.sb-route']
     .map((s) => +getComputedStyle(document.querySelector(s)).opacity));
   for (const o of chrome) expect(o).toBeLessThan(0.02);
 
