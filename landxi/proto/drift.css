@@ -1,0 +1,90 @@
+/* 표류 예측 지도 서비스 — 괭생이모자반 도착 예측.
+   법전 design/system.md: 라운드 0 · 그림자 0 · 그라디언트 0 · 유리 0 · 바닥 14px.
+   캔버스 안(해류 유선·입자)은 데이터 표현이므로 잔상을 쓴다 — UI 크롬에는 쓰지 않는다. */
+
+.lx.df #main{ padding:0; display:flex; flex-direction:column; min-height:0; overflow:clip; }
+.lx.df #page-head{ flex:none; }
+.lx.df #main > .df{ flex:1 1 0; min-height:0; }
+.lx .df{ display:grid; grid-template-columns:1fr 380px; height:100%; min-height:520px; }
+.lx .df-map{ position:relative; border-right:1px solid var(--line); background:#EDEFF2; overflow:hidden; }
+.lx .df-map .maplibregl-canvas-container{ position:absolute; inset:0; }
+.lx #df-gl{ position:absolute; inset:0; }
+.lx #df-fx{ position:absolute; inset:0; pointer-events:none; }
+
+/* 지도 위 조작 띠 — 얇은 잉크 판, 라운드 0 */
+.lx .df-bar{ position:absolute; left:0; right:0; bottom:0; z-index:3; display:flex; align-items:center; gap:14px;
+  padding:12px 16px; background:rgba(255,255,255,.96); border-top:1px solid var(--line); }
+.lx .df-play{ width:38px; height:38px; display:flex; align-items:center; justify-content:center; border:1.5px solid var(--ink); flex:none; }
+.lx .df-play:hover{ background:var(--t1); }
+.lx .df-time{ flex:1; display:grid; gap:4px; }
+.lx .df-time input[type="range"]{ width:100%; accent-color:var(--accent); }
+.lx .df-t{ display:flex; justify-content:space-between; font-family:var(--num); font-size:14px; color:var(--grey); font-variant-numeric:tabular-nums; }
+.lx .df-t b{ color:var(--ink); font-weight:700; font-size:16px; }
+.lx .df-speed{ display:flex; gap:0; flex:none; }
+.lx .df-speed button{ height:30px; padding:0 11px; border:1px solid var(--line); border-left-width:0; font-size:14px; color:var(--grey); }
+.lx .df-speed button:first-child{ border-left-width:1px; }
+.lx .df-speed button[aria-pressed="true"]{ color:var(--ink); background:var(--t1); border-color:var(--accent); }
+
+/* 레이어 토글 — 좌상단 */
+.lx .df-lay{ position:absolute; top:14px; left:14px; z-index:3; background:rgba(255,255,255,.96); border:1px solid var(--line); }
+.lx .df-lay button{ display:flex; align-items:center; gap:9px; width:100%; padding:9px 14px; font-size:14.5px; color:var(--grey); border-bottom:1px solid var(--line); }
+.lx .df-lay button:last-child{ border-bottom:0; }
+.lx .df-lay button[aria-pressed="true"]{ color:var(--ink); }
+.lx .df-lay i{ width:14px; height:3px; flex:none; background:var(--grey-3); }
+.lx .df-lay button[aria-pressed="true"] i{ background:var(--acc-l, var(--accent)); }
+.lx .df-lay button:hover{ background:var(--t1); }
+
+/* 모의 표기 — 지어낸 값을 숨기지 않는다 */
+.lx .df-mock{ position:absolute; top:14px; right:14px; z-index:3; max-width:270px; padding:10px 13px;
+  background:rgba(255,255,255,.96); border:1px solid var(--line); font-size:14px; line-height:1.5; color:var(--grey); }
+.lx .df-mock b{ color:var(--ink); font-weight:500; }
+.lx .df-mock > b:first-child{ display:block; margin-bottom:3px; }
+.lx .df-mock--warn{ border-color:var(--warn); }
+.lx .df-mock--warn > b:first-child{ color:var(--warn); }
+.lx .df-mock span{ display:block; margin-top:7px; padding-top:7px; border-top:1px solid var(--line); }
+.lx .df-tag{ display:inline-block; margin-left:7px; padding:0 7px; height:22px; line-height:20px; vertical-align:2px;
+  border:1px dotted var(--warn); color:var(--warn); font-family:var(--body); font-weight:400; font-size:14px; letter-spacing:.04em; }
+.lx .df-warn{ margin:12px 0 0; padding-top:11px; border-top:1px solid var(--line); font-size:14px; line-height:1.55; color:var(--warn); }
+.lx .df-warn b{ font-weight:500; }
+.lx .df-eta-v i{ font-style:normal; font-size:14px; font-weight:400; color:var(--grey); margin-left:2px; }
+
+/* 오른쪽 판 */
+.lx .df-side{ overflow-y:auto; background:var(--paper); }
+.lx .df-s{ padding:18px 22px 22px; border-bottom:1px solid var(--line); }
+.lx .df-s h2{ margin:0 0 4px; font-family:var(--disp); font-weight:700; font-size:17px; letter-spacing:-.02em; }
+.lx .df-s p.k{ margin:0 0 12px; font-size:14px; line-height:1.55; color:var(--grey); }
+.lx .df-s p.k em{ font-style:normal; color:var(--teal); }
+
+.lx .df-step{ display:grid; grid-template-columns:22px 1fr; gap:10px 11px; font-size:14.5px; line-height:1.5; }
+.lx .df-step b{ font-family:var(--num); font-size:14px; color:var(--grey); }
+.lx .df-step span em{ font-style:normal; color:var(--grey); }
+.lx .df-step .who{ display:inline-block; margin-left:7px; font-size:13.5px; }
+.lx .df-step .who[data-w="LX"]{ color:var(--accent); }
+.lx .df-step .who[data-w="외부"]{ color:var(--warn); }
+
+.lx .df-tb{ width:100%; border-collapse:collapse; font-size:14.5px; }
+.lx .df-tb th{ text-align:left; font-weight:500; color:var(--grey); font-size:14px; padding:0 8px 7px 0; border-bottom:1px solid var(--ink); white-space:nowrap; }
+.lx .df-tb td{ padding:8px 8px 8px 0; border-bottom:1px solid var(--line); vertical-align:top; }
+.lx .df-tb td.n,.lx .df-tb th.r{ text-align:right; font-family:var(--num); font-variant-numeric:tabular-nums; padding-right:12px; white-space:nowrap; }
+.lx .df-tb td:last-child,.lx .df-tb th:last-child{ padding-right:0; }
+.lx .df-tb tr.on td{ background:var(--t1); }
+.lx .df-tb button{ width:100%; text-align:left; }
+
+.lx .df-eta{ display:grid; gap:10px; }
+.lx .df-eta-r{ display:grid; grid-template-columns:1fr auto; gap:3px 12px; padding-bottom:10px; border-bottom:1px solid var(--line); }
+.lx .df-eta-r:last-child{ border-bottom:0; }
+.lx .df-eta-n{ font-weight:500; }
+.lx .df-eta-v{ font-family:var(--num); font-weight:500; font-size:16px; color:var(--grey); font-variant-numeric:tabular-nums; }
+.lx .df-eta-t{ grid-column:1/-1; font-size:14px; color:var(--grey); font-family:var(--num); font-variant-numeric:tabular-nums; }
+.lx .df-eta-b{ grid-column:1/-1; height:6px; background:var(--t1); }
+.lx .df-eta-b u{ display:block; height:100%; background:var(--grey-3); }
+
+.lx .df-need{ margin:0; padding:0; list-style:none; font-size:14.5px; }
+.lx .df-need li{ padding:7px 0 7px 16px; position:relative; border-bottom:1px solid var(--line); line-height:1.5; }
+.lx .df-need li::before{ content:""; position:absolute; left:0; top:14px; width:7px; height:1px; background:var(--warn); }
+.lx .df-need li:last-child{ border-bottom:0; }
+
+@media (max-width:1100px){
+  .lx .df{ grid-template-columns:1fr; height:auto; }
+  .lx .df-map{ height:62vh; min-height:420px; border-right:0; border-bottom:1px solid var(--line); }
+}

@@ -59,3 +59,41 @@
   .lx .pd-cap-r{ grid-template-columns:104px 1fr; }
   .lx .pd-cap-v{ grid-column:2; text-align:left; }
 }
+
+/* ── 뼈대 ─────────────────────────────────────────────────────────── */
+.lx .sp{ border-top:1px solid var(--line); }
+.lx .sp-l{ display:grid; grid-template-columns:56px 1fr; gap:0 18px; padding:20px 0 20px; border-bottom:1px solid var(--line); }
+.lx .sp-l[data-kind="fix"]{ background:var(--t1); }
+.lx .sp-id{ font-family:var(--disp); font-weight:700; font-size:24px; letter-spacing:-.02em; color:var(--accent); padding-left:16px; }
+.lx .sp-l[data-kind="var"] .sp-id{ color:var(--grey); }
+.lx .sp-b h3{ margin:0 0 7px; display:flex; align-items:baseline; gap:11px; flex-wrap:wrap;
+  font-family:var(--disp); font-weight:700; font-size:18px; letter-spacing:-.02em; }
+.lx .sp-k{ font-family:var(--body); font-weight:400; font-size:14px; letter-spacing:.04em; padding:0 8px;
+  border:1px solid var(--line); color:var(--grey); }
+.lx .sp-l[data-kind="fix"] .sp-k{ border-color:var(--accent); color:var(--accent); }
+.lx .sp-w{ font-family:var(--body); font-weight:400; font-size:14px; color:var(--grey); }
+.lx .sp-what{ margin:0 0 6px; font-size:15.5px; line-height:1.55; }
+.lx .sp-rule{ margin:0 0 9px; font-size:14.5px; line-height:1.55; color:var(--grey); }
+.lx .sp-rule b{ color:var(--ink); font-weight:500; }
+.lx .sp-f{ margin:0 0 7px; display:flex; flex-wrap:wrap; gap:6px; }
+.lx .sp-f code{ font-family:var(--num); font-size:14px; padding:1px 7px; border:1px solid var(--line); color:var(--grey); }
+.lx .sp-f code.sc{ border-style:dotted; }
+.lx .sp-st{ margin:0; font-size:14px; line-height:1.6; color:var(--grey); padding-right:16px; }
+.lx .sp-st .ok{ color:var(--teal); margin-right:5px; }
+.lx .sp-st .gp{ color:var(--warn); margin:0 5px 0 10px; }
+
+/* 층 사이 계약 — 뼈대가 버티는 자리 */
+.lx .sp-c{ display:grid; grid-template-columns:40px 1fr; gap:3px 14px; padding:14px 16px 16px 16px;
+  border-bottom:1px solid var(--line); border-left:3px solid var(--ink); margin-left:16px; }
+.lx .sp-c b{ grid-row:1/5; font-family:var(--num); font-size:15px; font-weight:700; color:var(--ink); }
+.lx .sp-c .nm{ font-weight:500; }
+.lx .sp-c .wt{ font-size:14.5px; color:var(--ink); font-family:var(--num); }
+.lx .sp-c .wy{ font-size:14px; color:var(--grey); }
+.lx .sp-c .br{ font-size:14px; color:var(--warn); }
+
+.lx .sp-x{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); border-top:1px solid var(--line); }
+.lx .sp-x-c{ padding:16px 18px 18px; border-bottom:1px solid var(--line); border-right:1px solid var(--line); }
+.lx .sp-x-c strong{ display:block; font-weight:500; }
+.lx .sp-x-c p{ margin:7px 0 0; font-size:14.5px; line-height:1.55; color:var(--grey); }
+.lx .sp-x-c p.gets{ color:var(--accent); }
+.lx .sp-x-c code{ display:inline-block; margin-top:9px; font-family:var(--num); font-size:14px; padding:1px 7px; border:1px solid var(--line); color:var(--grey); }

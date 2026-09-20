@@ -9,8 +9,9 @@ import { REQUESTS, loopStats, genQueue, studioScale, BLOCKS } from '../assets/da
 import { TENANTS } from '../assets/data/portal.js';
 import { CARDS, DEPLOYS, cardById } from '../assets/data/cards.js';
 import { PROFILES } from '../assets/data/registry.js';
+import { LAYERS, CONTRACTS, CROSS, WHERE, STATE, spineSummary } from '../assets/data/spine.js';
 
-const TAB = new URLSearchParams(location.search).get('tab') || 'ops';
+const TAB = new URLSearchParams(location.search).get('tab') || 'spine';
 const b = businessView(), inf = infraSummary(), cap = capacityPlan(), loop = loopStats();
 
 mountShell({
@@ -19,6 +20,7 @@ mountShell({
   notice: false, demo: true,
   tabStyle: 'line', tab: TAB,
   tabs: [
+    { key: 'spine', label: '뼈대' },
     { key: 'ops', label: '능동 운영', href: 'produce.html?tab=ops', count: b.이번주기_재학습 + b.검수필요 },
     { key: 'infra', label: '인프라', href: 'produce.html?tab=infra', count: `${cap.rows[0].pct}%` },
     { key: 'brand', label: '포털 생산', href: 'produce.html?tab=brand', count: produceState().tenants },
@@ -32,8 +34,50 @@ const tile = (l, v, u, tone = '') => `<div class="tile${tone ? ` tile--${tone}` 
 const nameOfDeploy = (id) => cardById((DEPLOYS.find((d) => d.id === id) || {}).cardId)?.name || id;
 const h = (t, sub, right = '') => `<h2 class="pd-h">${esc(t)}<span>${esc(sub)}</span><span class="sp"></span>${right}</h2>`;
 
-const VIEWS = { ops, infra, brand, studio };
-main.insertAdjacentHTML('beforeend', `<div class="pd-sec">${(VIEWS[TAB] || ops)()}</div>`);
+const VIEWS = { spine, ops, infra, brand, studio };
+main.insertAdjacentHTML('beforeend', `<div class="pd-sec">${(VIEWS[TAB] || spine)()}</div>`);
+
+
+/* ── 뼈대 ─────────────────────────────────────────────────────────── */
+function spine() {
+  const sp = spineSummary();
+  const st = (id) => STATE.find((x) => x.layer === id) || {};
+  const row = (l, i) => {
+    const c = CONTRACTS.find((x) => x.from === l.id);
+    const s = st(l.id);
+    return `<div class="sp-l" data-kind="${l.kind.startsWith('고정') ? 'fix' : 'var'}">
+      <b class="sp-id">${esc(l.id)}</b>
+      <div class="sp-b">
+        <h3>${esc(l.name)}<span class="sp-k">${esc(l.kind)}</span><span class="sp-w">${esc(l.who)}</span></h3>
+        <p class="sp-what">${esc(l.what)}</p>
+        <p class="sp-rule">${l.rule.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')}</p>
+        <p class="sp-f">${l.data.map((d) => `<code>${esc(d)}</code>`).join('')}${l.screen.map((d) => `<code class="sc">${esc(d)}</code>`).join('')}</p>
+        <p class="sp-st"><span class="ok">세움</span> ${esc(s.built || '')}${s.gap ? ` <span class="gp">남음</span> ${esc(s.gap)}` : ''}</p>
+      </div>
+    </div>${c ? `<div class="sp-c"><b>${esc(c.id)}</b><span class="nm">${esc(c.name)}</span>
+      <span class="wt">${esc(c.what)}</span>
+      <span class="wy">${esc(c.why)}</span>
+      <span class="br">깨지면 — ${esc(c.breaks)}</span></div>` : ''}`;
+  };
+  return `
+  <div class="band band--s">
+    ${tile('층', sp.층, '개')}
+    ${tile('계약', sp.계약, '개', 'ink')}
+    ${tile('가로지르는 것', sp.가로지르는것, '개', 'ink')}
+    ${tile('고정 : 가변', `${sp.고정}:${sp.가변}`, '', 'ink')}
+    <p class="band-note">여기 없는 것은 만들지 않는다 — 있는 층에만 붙인다</p>
+  </div>
+  ${h('뼈대', sp.line)}
+  <div class="sp">${LAYERS.map(row).join('')}</div>
+  ${h('가로지르는 것', '층이 아니라 모든 층에 걸린다')}
+  <div class="sp-x">${CROSS.map((c) => `<div class="sp-x-c">
+    <strong>${esc(c.name)}</strong><p>${esc(c.what)}</p>
+    <p class="gets">→ ${esc(c.gets)}</p><code>${esc(c.data)}</code></div>`).join('')}</div>
+  ${h('새 요구가 오면 어디에 넣나', '뼈대를 지키는 판단표 — 이 표에 없으면 아직 정하지 않은 것이다')}
+  <table class="tb"><thead><tr><th>요구</th><th>들어갈 자리</th><th>어떻게</th></tr></thead><tbody>
+  ${WHERE.map((w) => `<tr><td>${esc(w.ask)}</td><td><b class="n">${esc(w.at)}</b></td><td>${esc(w.how)}</td></tr>`).join('')}
+  </tbody></table>`;
+}
 
 /* ── 능동 운영 ────────────────────────────────────────────────────── */
 function ops() {
