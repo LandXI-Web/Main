@@ -34,7 +34,7 @@
 </aside>
 
 <header id="mast">
-  <a id="b-notice" class="notice" href="../notice.html" title="원본 notice.html">
+  <a id="b-notice" class="notice" href="../notice.html">
     <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter" aria-hidden="true"><path d="M3 3.5h14v9H3z"/><path d="M6 12.5V17"/><path d="M6 7h8M6 9.5h5"/></svg>
     <span class="chip">공지</span>
     <span class="nt" id="notice-t"></span>
@@ -45,15 +45,27 @@
 </header>
 
 <main id="main" aria-label="데이터 관리">
-  <div id="b1-row" data-line><h1 id="b1" class="d"><span class="rule">데이터 관리</span></h1><p id="b1-sub" class="n">V-World 정사영상 · EPSG:4326 · <em class="demo">시연</em></p></div>
+  <div id="b1-row" data-line><h1 id="b1" class="d"><span class="rule">데이터 관리</span></h1><p id="b1-sub" class="n">V-World 정사영상 · EPSG:4326 · <em class="demo">시연</em></p>
+    <!-- 내 디스크 사용량 — 큰 칸이 아니라 얇은 한 줄(발주 2026-09-20: "쓸데없이 크고 넓다").
+         나머지 넷은 `어디로 들어갈지` 고르는 자리이고 이건 상태 경고다. 경고 색은 숫자에만. -->
+    <p id="disk" class="n"><span class="dk">내 디스크 사용량</span><b class="dv warn">96</b><span class="du">%</span>
+      <span class="db"><i></i></span><span class="dr" id="disk-v"></span>
+      <button type="button" id="quota-open" class="ul warn">디스크 증량 신청 ›</button></p>
+  </div>
   <hr class="hr">
 
-  <!-- KPI 카드 5 — 내 디스크 사용량(조치 = warn) · 단계 4(선택 = 틴트) -->
+  <!-- ── 개요(쿼리 없음) — 네 상태를 한눈에. 발주 2026-09-20:
+       "처음에는 업로드 진행, 완료, 발행중, 아카이브 이런 게 한눈에 보여야 한다. 이후 탭으로 넘어가면 자세히."
+       구역 하나 = 그 단계로 들어가는 문. 건수 · 상태 요약 · 최근 것 미리보기 · 그 단계의 지표 한 줄. ── -->
+  <section id="ov" aria-label="개요" hidden></section>
+
+  <!-- 단계 카드 4 — 자세히 보기에서만. 개요에서는 구역이 그 자리를 한다(중복 제거). -->
   <div id="b-kpi" role="tablist" aria-label="단계"></div>
-  <hr class="hr">
+  <hr class="hr" id="kpi-hr">
 
-  <!-- 툴바 — 단계명 + 필터 + 검색 + 쪽당 타일 수 4단(4 · 6 · 8 · 16) -->
+  <!-- 툴바 — 개요로 · 단계명 + 필터 + 검색 + 쪽당 타일 수 4단(4 · 6 · 8 · 16) -->
   <div id="tool">
+    <button type="button" id="to-ov" class="n">‹ 개요</button>
     <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter" aria-hidden="true"><path d="M3 3h14v14H3z"/><path d="M3 7.67h14M3 12.33h14M7.67 3v14M12.33 3v14"/></svg>
     <h2 id="tool-h" class="d"></h2>
     <span id="tool-c" class="n cnt"></span>

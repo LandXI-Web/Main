@@ -100,7 +100,7 @@ export const ARCHIVE = [
     file: 'NW_ortho_202604_section_A.tif', size: '58.3 GB', basis: '2026.04.10',
     by: '김현우', at: '2026.04.11 09:00', hidden: false,
     thumb: crop('namwon-farmland-2025', 0),
-    imagery: 'namwon_2504',
+    imagery: 'namwon_2504', crs: 'EPSG:5186 → 4326',
     detail: {
       데이터명: '남원 정사영상 2026-04 A구역',
       출처: 'LX · 드론 · EPSG:5186 → 4326',
@@ -117,7 +117,7 @@ export const ARCHIVE = [
     file: '남원_운봉_드론_4월.ecw', size: '62.7 GB', basis: '2026.04.08',
     by: '이서연', at: '2026.04.09 10:00', hidden: true,
     thumb: crop('namwon-epoch', 2),
-    imagery: 'namwon_2506',
+    imagery: 'namwon_2506', crs: 'EPSG:5186 → 4326',
     detail: {
       데이터명: '운봉읍 드론 정사영상 2026-04',
       출처: 'LX · 드론 · EPSG:5186 → 4326',
@@ -134,7 +134,7 @@ export const ARCHIVE = [
     file: 'NW_road_defect_labels_202604.shp', size: '48.2 MB', basis: '2026.06.20',
     by: '김현우', at: '2026.06.20 12:30', hidden: false,
     thumb: null,
-    imagery: null,
+    imagery: null, crs: 'EPSG:5186',
     detail: {
       데이터명: '남원 도로파손 라벨 쉐입 2026-04',
       출처: 'LX · 라벨링 · EPSG:5186',
@@ -151,7 +151,7 @@ export const ARCHIVE = [
     file: 'camera_org_202604.zip', size: '4,820장', basis: '2026.04.12',
     by: '김현우', at: '2026.04.13 08:30', hidden: false,
     thumb: null,
-    imagery: null,
+    imagery: null, crs: 'EPSG:4326 · GPS 로그',
     detail: {
       데이터명: '순찰차량 도로영상 2026-04',
       출처: 'LX · 차량 카메라',
@@ -169,7 +169,7 @@ export const ARCHIVE = [
     file: 'yeosu-marine-2026-drone-grid100.geojson', size: '24.4 KB', basis: '2026.03.15',
     by: '이서연', at: '2026.03.20 11:00', hidden: false,
     thumb: '../assets/proto/crops/yeosu-marine-2026-drone/1-clean.jpg',
-    imagery: null,
+    imagery: null, crs: 'EPSG:4326',
     geo: { file: '../assets/data/geo/results/yeosu-marine-2026-drone-grid100.geojson', bounds: [127.6423, 34.5681, 127.7127, 34.6369], count: 86, unit: '100 m 격자' },
     detail: {
       데이터명: '여수 해양쓰레기 조사 2026',
@@ -195,15 +195,26 @@ export const THUMB = {
 /** 벡터 실루엣 — 실좌표 GeoJSON 을 타일 캔버스에 그린다(마스터 유보 3: 판이 아니라 실좌표 렌더). */
 export const SILHOUETTE = {
   // 비닐하우스 라벨 SHP = 남원 비닐하우스 결과 폴리곤의 밀집 셀 하나(EPSG 없음 → 실패 사유와 짝).
-  d7: { file: '../assets/data/geo/results/namwon-greenhouse-2025.geojson', bbox: [127.296, 35.316, 127.308, 35.328], crs: 'EPSG 없음' },
-  p2: { file: '../assets/data/geo/results/namwon-greenhouse-2025.geojson', bbox: [127.296, 35.316, 127.308, 35.328], crs: 'EPSG 없음' },
+  // bbox 는 **미리보기 창**이다(값이 아니다 — 그리는 좌표는 실좌표 그대로다).
+  // 2026-09-20: 0.012° 정사각 창에 84동이 들어가 한 동이 5×11px 로 뭉개졌고, 창이 정사각이라
+  // 가로로 긴 액자 가운데에만 몰렸다(발주 지적: 깨진 점 뭉치). 창을 액자 비율(≈2:1)에 맞춰
+  // 1,000 m × 420 m 로 잡으면 42동이 액자를 채우고 한 동이 6×24px 막대로 읽힌다.
+  d7: { file: '../assets/data/geo/results/namwon-greenhouse-2025.geojson', bbox: [127.2965, 35.3199, 127.3075, 35.3237], crs: 'EPSG 없음' },
+  p2: { file: '../assets/data/geo/results/namwon-greenhouse-2025.geojson', bbox: [127.2965, 35.3199, 127.3075, 35.3237], crs: 'EPSG 없음' },
   a5: { file: '../assets/data/geo/results/yeosu-marine-2026-drone-grid100.geojson', bbox: null, crs: 'EPSG:4326' },
 };
-/** XLSX 첫 행 미리보기 — results.js 의 필드(pnu/emd/cls/area). */
+/** XLSX 첫 행 미리보기 — results/namwon-farmland-2025.geojson 의 **첫 세 피처 실값**이다.
+    2026-09-20: 전에는 `4519025022…0001` 처럼 가운데를 줄인 지어낸 값이라 타일에서 `45190…` 으로
+    읽혔다(발주 지적). PNU 는 19자리가 곧 뜻이므로 줄이지 않는다 — 폭이 모자라면 표가 열을 접고
+    그 사실을 꼬리 줄에 적는다(ds-thumbs.js fitFrames). 꼬리도 `…` 대신 `총 n행` 으로 말한다. */
 export const XLSX_ROWS = {
   head: ['pnu', 'emd', 'cls', 'area'],
-  rows: [['4519025022…0001', '사매면', '경작', '1,284'], ['4519025022…0007', '사매면', '비경작', '612'], ['4519025023…0012', '사매면', '경작', '2,031']],
-  tail: '… 2,098행',
+  rows: [
+    ['5219010600103210001', '금동', '경작지', '2,322.4'],
+    ['5219010600103260000', '금동', '경작지', '3,499.7'],
+    ['5219010600103410000', '금동', '경작지', '47.3'],
+  ],
+  tail: '총 2,098행',
 };
 /** ZIP 파일 트리 — camera_org_202604.zip. */
 export const ZIP_TREE = `camera_org_202604/
@@ -212,7 +223,14 @@ export const ZIP_TREE = `camera_org_202604/
 │  ├ DJI_0002.JPG
 │  └ … 4,820장
 └ index.csv`;
-export const FAIL_ACTIONS = ['crs', 'cancel', 'detail'];
+/** 실패 건의 액션 — **그 실패를 실제로 풀 수 있는 것**만. 2026-09-20 전에는 세 건 모두
+    `좌표계 지정` 이 붙어 있었다(ZIP 안에 이미지가 없는 건 좌표계로 풀리지 않는다). */
+export const FAIL_FIX = {
+  crs: { act: 'crs', name: '좌표계 지정' },
+  unpack: { act: 'unpack', name: '원본 다시 올리기' },
+  join: { act: 'join', name: '필지 연결 안내' },
+};
+export const failActions = (p) => [...(FAIL_FIX[p.fix] ? [FAIL_FIX[p.fix].act] : []), 'cancel', 'detail'];
 
 /** 공유 설정 모달 — 원본 공유 권한 표(기관명 · 권한명). */
 export const ORGS = ['LX 한국국토정보공사', '남원시청'];
@@ -247,12 +265,15 @@ export const PUB_STEPS = ['파일 확인', '공간정보 분석', '지도 데이
 export const PUBLISHING = [
   { id: 'p1', fmt: 'SHP', st: 'run', step: 2, file: 'NW_road_defect_labels_202604.shp', size: '48.2 MB', at: '2026.06.20 10:00', by: '김현우' },
   { id: 'p2', fmt: 'SHP', st: 'fail', step: 2, file: 'NW_greenhouse_labels_202603.shp', size: '39.4 MB', at: '2026.06.18 16:05', by: '이서연',
-    why: '좌표체계 정보를 확인할 수 없습니다. 좌표계를 지정해 다시 발행해 주세요.', short: '좌표계 없음' },
+    why: '좌표체계 정보를 확인할 수 없습니다. 좌표계를 지정해 다시 발행해 주세요.', short: '좌표계 없음', fix: 'crs' },
   { id: 'p3', fmt: 'TIF', st: 'run', step: 3, file: 'NW_ortho_202604_section_A.tif', size: '58.3 GB', at: '2026.04.11 09:20', by: '김현우' },
   { id: 'p4', fmt: 'ECW', st: 'run', step: 1, file: 'NW_ortho_202604_zone_X.ecw', size: '47.6 GB', at: '2026.04.12 09:40', by: '정민재' },
-  { id: 'p5', fmt: 'XLSX', st: 'run', step: 4, file: '농지이용_행정정보_202604.xlsx', size: '287.3 KB', at: '2026.04.09 15:52', by: '이주원' },
+  // 2026-09-20: 표 자료(assets.js table)는 제 좌표가 없어 지도 레이어가 될 수 없다.
+  // 진행 4/4 로 두면 화면이 거짓말을 한다 — 1단계 파일 확인에서 막힌 것으로 바로잡았다.
+  { id: 'p5', fmt: 'XLSX', st: 'fail', step: 1, file: '농지이용_행정정보_202604.xlsx', size: '287.3 KB', at: '2026.04.09 15:52', by: '이주원',
+    why: '좌표 정보가 없는 표 자료입니다. 필지 번호(pnu)로 공간자료에 붙인 뒤 발행해 주세요.', short: '좌표 없음 · 표 자료', fix: 'join' },
   { id: 'p6', fmt: 'ZIP', st: 'fail', step: 1, file: 'camera_org_202604.zip', size: '18.7 GB', at: '2026.04.13 08:41', by: '김현우',
-    why: '압축 파일 안에서 지원하는 이미지 형식을 찾지 못했습니다. 원본을 확인해 주세요.', short: '이미지 형식 없음' },
+    why: '압축 파일 안에서 지원하는 이미지 형식을 찾지 못했습니다. 원본을 확인해 주세요.', short: '이미지 형식 없음', fix: 'unpack' },
   { id: 'p7', fmt: 'ECW', st: 'run', step: 2, file: '남원_운봉_드론_4월.ecw', size: '62.7 GB', at: '2026.04.09 10:12', by: '이서연' },
 ];
 export const PUB_ST = { run: '진행중', fail: '실패' };
@@ -305,13 +326,43 @@ export function resultRow(r) {
 /* ── 데이터 테이블 속성 — 위치가 없는 완료본. 발주(2차): "위치 정보가 없는건 데이터 테이블 속성을 알수있게".
    XLSX · SHP 열은 results.js fields 에서, ZIP 은 파일 트리에서. 예시값은 결과 첫 행(시연). ── */
 export const SCHEMA = {
-  xlsx: { kind: 'XLSX', rows: '2,098행', cols: [['pnu', '문자 19', '4519025022…0001'], ['emd', '문자', '사매면'], ['cls', '문자', '경작'], ['area', '수 · ㎡', '1,284'], ['conf', '수 · 0–1', '0.42']] },
+  xlsx: { kind: 'XLSX', rows: '2,098행', geo: '../assets/data/geo/results/namwon-farmland-2025.geojson',
+    cols: [['pnu', '문자 19', '5219010600103210001'], ['emd', '문자', '금동'], ['cls', '문자', '경작지'], ['area', '수 · ㎡', '2,322.4'], ['conf', '수 · 0–1', '0.422']] },
   shp_road: { kind: 'SHP', rows: '— 행 · 좌표계 없음', cols: [['geom', 'Polygon', '—'], ['cls', '문자', '포트홀 · 크랙 · 보수흔적'], ['sev', '수 · 1–3', '2'], ['len_m', '수 · m', '3.4']] },
   shp_gh: { kind: 'SHP', rows: '1,674행 · EPSG 없음', geo: '../assets/data/geo/results/namwon-greenhouse-2025.geojson', cols: [['geom', 'MultiPolygon', '—'], ['cls', '문자', '비닐하우스_단동'], ['conf', '수 · 0–1', '0.97'], ['area', '수 · ㎡', '1,543'], ['emd', '문자', '금동']] },
   zip: { kind: 'ZIP', rows: '4,820 파일', cols: [['20260412/', '폴더', 'DJI_0001.JPG …'], ['DJI_*.JPG', 'JPEG', '4,820 장'], ['index.csv', 'CSV', 'frame · time · lon · lat']] },
   raster: { kind: '래스터', rows: '3 밴드 · 8bit', cols: [['Band 1', 'Red · 8bit', '0–255'], ['Band 2', 'Green · 8bit', '0–255'], ['Band 3', 'Blue · 8bit', '0–255']] },
 };
 export const SCHEMA_OF = { d1: 'raster', d2: 'raster', d3: 'xlsx', d6: 'shp_road', d7: 'shp_gh', d8: 'zip' };
+
+/* ── 좌표계 결손 자백 — 발주 지적(2026-09-20): "좌표계 없음은 공간정보로서 문제다.
+   정말 없으면 그 사실을 제대로 말하고 무엇을 해야 하는지까지 적어라."
+   사실관계: SHP 는 한 파일이 아니라 .shp/.shx/.dbf 묶음이고 **좌표계는 .prj 사이드카**에 있다.
+   이 두 건은 .prj 가 같이 올라오지 않아 좌표계를 읽을 수 없다 — 있는데 못 읽는 게 아니다.
+     · d6 NW_road_defect_labels_202604.shp — 기하 자체가 이 저장소에 없다(미리보기도 없다).
+     · d7 NW_greenhouse_labels_202603.shp — 기하는 results/namwon-greenhouse-2025 로 있으나 좌표계 선언이 없다.
+   그래서 발행 1단계(파일 확인)에서 실패하고(PUBLISHING p2), `좌표계 지정` 모달로 EPSG 를 찍어야 다시 발행된다.
+   숫자를 지어내지 않는다 — `없음` 이라고 적고 할 일을 붙인다. */
+export const CRS_NONE = {
+  why: '좌표계 없음 · .prj 미동봉',
+  act: '발행 때 좌표계 지정(EPSG)',
+  /** 우 패널 액자 셋째 줄 — 좁은 타일에서는 CSS 가 접는다. */
+  tile: '발행 때 좌표계 지정 필요',
+};
+
+/** 정사영상인데 실측 도엽(imagery.js)이 없는 경우 — 파일에 좌표는 있어도 우리 타일 카탈로그에 없어
+    판에 얹지 못한다. `그냥 사진만` 뜨던 자리(발주 2026-09-20)에 이 문장을 같이 세운다. */
+export const NO_SHEET = {
+  why: '실측 범위 없음 · 지도 미리보기 못 함',
+  act: '실측 도엽 등록 후 지도 표시',
+};
+
+/* ── 자산 종류 선언은 화면 밖에 있다 ──────────────────────────────────
+   발주 2026-09-20: "통일성 있게 체계적으로 해야지. 제대로 설계가 안 되어 있는 것 같다."
+   파일을 만날 때마다 화면이 임기응변하지 않도록, **무엇을 보여 주고 무엇을 할 수 있는가**는
+   assets.js 의 선언(ASSET_KINDS · capsOf · panelOf)이 정한다. 이 화면은 그 선언만 읽는다.
+   화면이 파일 이름을 아는 곳은 여기 한 줄(descOf 가 넘기는 서술자)뿐이다. */
+export { ASSET_KINDS, CAPS, kindOf, capsOf, panelOf, previewOf, assetCheck } from '../assets/data/assets.js';
 
 /* ── 아카이브 우 패널 — 사용 현황 · 발행 이력. 발주(2차): "레이어 4 · 표시 4 · 숨김 0 / 범위 / 표시·숨김 이건 별로 의미 없는듯 … 유용한 컨텐츠".
    사용 현황 = 이 자산을 쓴 프로젝트(assets/data/ai-project-data.js AI_LABELING_DATA · AI_PROJECT_DATASETS 의 같은 파일명) + 분석(RESULT_OF).

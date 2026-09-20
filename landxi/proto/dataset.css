@@ -81,6 +81,16 @@ hr.hr{ border:0; border-top:1px solid var(--line); margin:0; }
 /* ══ 본문 ═══════════════════════════════════════════════════════════════ */
 #main{ margin-left:var(--rail); padding:calc(var(--mast) + 28px) var(--m) 8px; flex:1; display:flex; flex-direction:column; min-height:0; }
 #b1-row{ display:flex; align-items:baseline; gap:14px; height:64px; margin:0; }
+/* 내 디스크 사용량 — 큰 칸에서 내려온 얇은 한 줄. 제목 줄의 남는 오른쪽을 쓰므로 세로를 새로 먹지 않는다.
+   법전: warn 은 글자색에만 — 막대는 무채다. */
+#disk{ margin:0 0 0 auto; display:flex; align-items:baseline; gap:8px; font-size:14px; color:var(--grey); white-space:nowrap; letter-spacing:.01em; }
+#disk .dk{ color:var(--grey); }
+#disk .dv{ font-size:17px; font-weight:400; letter-spacing:-.01em; }
+#disk .du{ margin-left:-5px; }
+#disk .db{ position:relative; width:88px; height:8px; border:1px solid var(--line); align-self:center; }
+#disk .db i{ position:absolute; left:0; top:0; bottom:0; background:var(--grey); display:block; }
+#disk .dr{ color:var(--grey); }
+#disk .ul{ margin-left:4px; }
 #b1{ margin:0; font-size:34px; line-height:42px; font-weight:800; position:relative; }
 #b1 .rule{ position:relative; }
 #b1 .rule::after{ content:""; position:absolute; left:0; right:0; bottom:-8px; height:4px; background:var(--accent); }
@@ -91,7 +101,7 @@ hr.hr{ border:0; border-top:1px solid var(--line); margin:0; }
 html[data-ds] [data-line]>*{ transform:none; }
 
 /* ── KPI 카드 5 — 58px Paperlogy, 세로 헤어라인. 카드 = 단계 선택 ───────── */
-#b-kpi{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); padding:14px 0 16px; }
+#b-kpi{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); padding:14px 0 16px; }
 .k{ position:relative; padding:0 18px; border-left:1px solid var(--line); display:block; color:inherit; text-align:left; transition:transform var(--hov) var(--hove), background var(--hov) var(--hove); }
 .k:first-child{ border-left:0; padding-left:0; }
 .k .kl{ display:block; font-size:14px; color:var(--grey); letter-spacing:.04em; white-space:nowrap; }
@@ -110,6 +120,8 @@ button.k[aria-selected="true"]:first-child::after,button.k[aria-selected="true"]
 /* ── 툴바 — 단계명 · 필터 · 검색 · 타일 크기 ────────────────────────────── */
 #tool{ display:flex; align-items:center; gap:12px; height:52px; flex:none; }
 #tool > svg{ flex:none; color:var(--accent); }
+#to-ov{ font-size:14px; letter-spacing:.02em; color:var(--accent); white-space:nowrap; flex:none; transition:transform var(--hov) var(--hove); }
+#to-ov:hover{ transform:translateX(-4px); }
 #tool-h{ margin:0; font-size:18px; line-height:26px; color:var(--ink); white-space:nowrap; }
 #tool .cnt{ font-size:18px; line-height:1; color:var(--ink); margin-right:6px; }
 .dd{ position:relative; display:flex; align-items:center; gap:8px; border:1px solid var(--line); padding:0 10px; height:28px; font-size:14px; letter-spacing:-.014em; color:var(--grey); white-space:nowrap; }
@@ -126,8 +138,57 @@ button.k[aria-selected="true"]:first-child::after,button.k[aria-selected="true"]
 #pp button:hover{ background:var(--t1); color:var(--ink); }
 #pp button[aria-pressed="true"]{ background:var(--t1); border-color:var(--accent); color:var(--accent); }
 
-/* ══ 단계 뷰 — 좌 그리드 3fr / 헤어라인 / 우 패널 2fr, 같은 높이 ═══════════ */
-#stage{ display:grid; grid-template-columns:minmax(0,3fr) 1px minmax(0,2fr); grid-template-rows:minmax(0,1fr) auto; column-gap:20px; flex:1; min-height:0; padding-bottom:8px; }
+/* ══ 개요 — 네 상태를 나란히. 구역 하나 = 그 단계로 들어가는 문 ═══════════
+   발주 2026-09-20: "처음에는 업로드 진행 · 완료 · 발행중 · 아카이브가 한눈에 보여야 한다."
+   세로 칸막이는 KPI 카드와 같은 헤어라인 하나. 라운드 0 · 그림자 0 · 그라디언트 0. */
+#ov{ flex:1; min-height:0; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); align-items:stretch; padding:14px 0 8px; }
+.ovc{ position:relative; display:flex; flex-direction:column; min-width:0; min-height:0; padding:0 18px; border-left:1px solid var(--line); color:inherit;
+  transition:background var(--hov) var(--hove); }
+.ovc:first-child{ border-left:0; padding-left:0; }
+.ovc:hover{ background:var(--t1); }
+.ovc:hover .ul{ transform:translateX(4px); }
+.ovh{ display:flex; align-items:baseline; gap:10px; }
+.ovt2{ font-size:17px; line-height:1.3; color:var(--ink); white-space:nowrap; }
+.ovn{ margin-left:auto; display:flex; align-items:baseline; gap:3px; font-size:14px; color:var(--grey); white-space:nowrap; }
+.ovn b{ font-size:34px; line-height:1; color:var(--accent); letter-spacing:-.02em; }
+.ovs{ display:block; margin-top:6px; font-size:14px; line-height:18px; color:var(--grey); letter-spacing:.02em; word-break:keep-all; }
+.ovs em{ font-style:normal; }
+/* 최근 셋 — 타일과 같은 미리보기 장치. 종류가 같으면 어디서나 같은 모양이다. */
+.ovt{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:12px; }
+.ovf{ display:flex; flex-direction:column; min-width:0; }
+.ovf .th{ width:100%; aspect-ratio:16/10; height:auto; max-height:none; min-height:40px; cursor:inherit; }
+/* 140px 짜리 썸네일에 세 줄은 안 들어간다 — 여기서는 짧은 사유 한 줄만. 긴 문장은 아래 목록과 우 판이 말한다. */
+.ovf .th--none{ padding:8px 6px; gap:2px; }
+.ovf .th--none .t1,.ovf .th--none .t3{ display:none; }
+.ovf .th .word,.ovf .th .st,.ovf .th .tagb,.ovf .th .ticks{ display:none; }
+.ovfc{ margin-top:5px; font-size:14px; line-height:17px; color:var(--grey); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ovz{ margin:12px 0 0; font-size:14px; color:var(--grey-3); }
+/* 그 단계의 나머지 — 썸네일 아래 남는 자리를 빈 채로 두지 않고 목록으로 채운다(발주: "빈 자리가 화면 절반"). */
+.ovl{ display:block; flex:1; min-height:0; margin-top:10px; overflow:hidden; }
+.ovr{ display:flex; align-items:baseline; gap:10px; height:23px; border-bottom:1px solid var(--line); font-size:14px; }
+.ovrn{ flex:1 1 auto; min-width:0; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ovrm{ flex:none; color:var(--grey); white-space:nowrap; }
+.ovr[data-st="fail"] .ovrm{ color:var(--warn); }
+.ovr--more .ovrn{ color:var(--grey-3); }
+.ovm{ display:flex; align-items:center; gap:10px; margin-top:10px; padding-top:10px; border-top:1px solid var(--ink); }
+.ovb{ position:relative; width:70px; height:8px; border:1px solid var(--line); flex:none; }
+.ovb i{ position:absolute; left:0; top:0; bottom:0; width:var(--pct); background:var(--accent); display:block; }
+.ovv{ font-size:14px; color:var(--grey); white-space:nowrap; overflow:hidden; text-overflow:clip; }
+.ovv b{ font-weight:400; color:var(--ink); }
+.ovv b.warn{ color:var(--warn); }
+.ovd{ margin-top:6px; font-size:14px; line-height:18px; color:var(--grey-3); letter-spacing:.02em; word-break:keep-all; }
+.ovc .ul{ margin-top:8px; align-self:flex-start; }
+/* 세로가 낮으면 미리보기를 조금 낮춘다 — 지우지 않는다 */
+@media (max-height:840px){
+  #ov{ padding:10px 0 6px; }
+  .ovf .th{ aspect-ratio:16/11; }
+  .ovn b{ font-size:30px; }
+}
+
+/* ══ 단계 뷰 — 좌 목록 / 헤어라인 / 우 판, 같은 높이 ═══════════════════════ */
+/* 좌 목록 : 우 판 = 1.1 : 1. 3:2 로는 1996 에서 판이 717px 밖에 안 돼 지도·성과·속성이 다 들어가지 못했다
+   (발주 2026-09-20: "오른쪽 판이 너무 좁고 작다"). 판이 660px 을 넘으면 두 단 조판이 선다. */
+#stage{ display:grid; grid-template-columns:minmax(0,1.1fr) 1px minmax(0,1fr); grid-template-rows:minmax(0,1fr) auto; column-gap:20px; flex:1; min-height:0; padding-bottom:8px; }
 #stage::after{ content:""; grid-column:2; grid-row:1 / 3; background:var(--line); }
 #grid{ grid-column:1; grid-row:1; min-width:0; min-height:0; overflow:auto; padding:2px 6px 4px 0; scrollbar-width:thin; scrollbar-color:var(--grey-3) transparent; outline:0; container-type:size; }
 #side{ grid-column:3; grid-row:1 / 3; min-width:0; min-height:0; display:flex; flex-direction:column; }
@@ -141,11 +202,21 @@ button.k[aria-selected="true"]:first-child::after,button.k[aria-selected="true"]
 
 /* 타일 그리드 — 쪽당 4 · 6 · 8 · 16 = 열 2 · 3 · 4 · 8, 행 2 · 2 · 2 · 2. 타일은 1.63:1 을 기준으로 하되 그리드 높이에 맞춰 높이가 준다(모든 쪽이 스크롤 없이 한 화면). */
 body[data-pp="4"]{ --cols:2; --rows:2; } body[data-pp="6"]{ --cols:3; --rows:2; } body[data-pp="8"]{ --cols:4; --rows:2; } body[data-pp="16"]{ --cols:8; --rows:2; }
-.tiles{ display:grid; grid-template-columns:repeat(var(--cols),minmax(0,1fr)); gap:var(--gap); align-content:start; }
-.tile{ position:relative; margin:0; min-width:0; transition:transform var(--hov) var(--hove); }
+/* 줄 수는 내용이 정한다 — 8건을 4열에 놓으면 2줄, 8열에 놓으면 1줄이다. 남는 높이는 타일이 먹는다.
+   (발주 2026-09-20: "타일 8개 아래로 빈 자리가 화면 절반") 다만 폭 대비 4:3 보다 높아지지는 않는다 —
+   가로로 찍은 정사영상이 세로로 늘어나면 그림이 거짓말을 한다. */
+/* 높이를 잇는다 — 사이에 낀 tabpanel 이 auto 라 `.tiles{height:100%}` 가 풀려 타일이 제 높이를 못 받았다. */
+#grid > section{ height:100%; min-height:0; display:flex; flex-direction:column; }
+.tiles{ display:grid; grid-template-columns:repeat(var(--cols),minmax(0,1fr)); grid-auto-rows:auto; gap:var(--gap); align-content:start; flex:1; min-height:0; }
+.tile{ position:relative; margin:0; min-width:0; min-height:0; display:flex; flex-direction:column; transition:transform var(--hov) var(--hove); }
 .tile:hover{ transform:translateY(-4px); }
-/* 타일 높이 상한 = (그리드 높이 − 행 간격 − 캡션 24 × 행 − 여백) / 행 */
-.th{ position:relative; width:100%; aspect-ratio:240/147; max-height:calc((100cqh - 8px - (var(--rows) - 1) * var(--gap) - var(--rows) * 24px) / var(--rows)); min-height:64px; overflow:hidden; background:#fff; display:block; cursor:pointer; }
+/* 타일 높이 = min(제 폭의 0.78, 그리드가 줄 수 있는 몫). 폭을 따라 커지되 4:3 보다 세로로 길어지지 않는다 —
+   가로로 찍은 정사영상이 세로로 늘어나면 그림이 거짓말을 한다. 남는 높이는 줄 사이가 아니라 **맨 아래**로 모인다. */
+.th{ position:relative; width:100%; overflow:hidden; background:#fff; display:block; cursor:pointer; }
+/* 크기 규칙은 **목록 격자 안에서만** — 개요 썸네일은 제 비율(16:10)로 선다.
+   (#ov 은 컨테이너가 아니라 cqw 가 뷰포트로 떨어져 2560 에서 썸네일이 세로로 늘어났다. 2026-09-20 고침) */
+.tiles .th{ flex:none; height:calc(100cqw / var(--cols) * 0.78);
+  max-height:calc((100cqh - 8px - (var(--rows) - 1) * var(--gap) - var(--rows) * 26px) / var(--rows)); min-height:48px; }
 /* 쪽당 16 = 8×2 — 열이 2·3·4·8 로 늘며 타일이 단계적으로 작아진다(4×4 는 높이만 줄고 폭이 8 과 같아 "16 이 8 보다 작지 않다" — 클라이언트 08-29).
    폭이 좁으니 타일 위 글자(이름·상태)는 상태만 남기고 캡션은 접는다. */
 body[data-pp="16"] .th{ min-height:48px; }
@@ -155,10 +226,14 @@ body[data-pp="16"] .cap .nm, body[data-pp="16"] .cap .sep{ display:none; } body[
 .th canvas{ position:absolute; left:0; top:0; width:100%; height:100%; display:block; }
 .th--box{ border:1px solid var(--line); }
 .th--dash{ border:1px dashed var(--grey-3); }
-.th--none{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; text-align:center; padding:22px 10px 20px; }
-body[data-pp="16"] .th--none .t2{ display:none; }
+.th--none{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; text-align:center; padding:20px 10px 18px; }
+body[data-pp="16"] .th--none .t2,body[data-pp="16"] .th--none .t3{ display:none; }
 .th--none .t1{ font-size:14px; letter-spacing:-.01em; color:var(--grey); }
 .th--none .t2{ font-size:14px; letter-spacing:.04em; color:var(--grey-3); }
+/* 셋째 줄 = 할 일. 좌표계가 없으면 `없다`고만 하지 않고 무엇을 해야 하는지 적는다(발주 2026-09-20).
+   낮은 타일에서는 줄이 겹치므로 접고, 우 패널 액자에서는 항상 보인다. */
+.th--none .t3,.fig--none .t3{ font-size:14px; line-height:1.35; letter-spacing:-.01em; color:var(--ink); border-top:1px solid var(--grey-3); padding-top:4px; margin-top:2px; max-width:100%; word-break:keep-all; }
+.th--none .t2,.fig--none .t2{ line-height:1.35; word-break:keep-all; }
 /* 이미지 리빌 — clip-path inset(100% 0 0) → inset(0), 1s */
 .th img.in{ clip-path:inset(100% 0 0 0); transition:clip-path var(--d3) var(--ease); }
 .th img.in.is-in{ clip-path:inset(0); }
@@ -168,7 +243,9 @@ body[data-pp="16"] .th--none .t2{ display:none; }
 .st{ position:absolute; left:8px; bottom:7px; font-size:14px; letter-spacing:.02em; color:var(--grey); white-space:nowrap; z-index:2; max-width:calc(100% - 16px); overflow:hidden; text-overflow:ellipsis; }
 .th--dark .st{ color:#fff; }
 .st b{ font-weight:400; color:var(--accent); }
-.st.warn,.th--dark .st.warn{ color:var(--warn); }
+.st.warn{ color:var(--warn); }
+/* 사진 위에서는 빨강 글자가 안 읽힌다(그림자·채움은 법전이 금한다) — 글자는 흰색, 경고는 왼쪽 규칙선이 진다. */
+.th--dark .st.warn{ color:#fff; border-left:2px solid var(--warn); padding-left:5px; }
 .th .st:has(+ .tagb),.th .tagb ~ .st,.th:has(.tagb) .st{ max-width:52%; }
 .tagb{ position:absolute; right:8px; bottom:7px; max-width:44%; overflow:hidden; text-overflow:ellipsis; font-size:14px; letter-spacing:.04em; color:var(--grey); z-index:2; white-space:nowrap; }
 .th--dark .tagb{ color:rgba(255,255,255,.72); }
@@ -205,18 +282,27 @@ body[data-pp="8"] .cap .dt,body[data-pp="16"] .cap .dt{ display:none; }
 .tile[aria-current="true"] .cap{ background:var(--t1); }   /* T3 선택 타일 */
 .tile[aria-current="true"] .th{ outline:1px solid var(--accent); outline-offset:-1px; }
 /* XLSX 표 · ZIP 트리 */
-.xt{ position:absolute; left:10px; top:30px; right:10px; bottom:26px; border-collapse:collapse; font-size:14px; line-height:22px; color:var(--ink); overflow:hidden; display:block; }
-.xt td{ padding:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:80px; }
-/* 4열(쪽당 8 · 16)에서는 emd 열을 접는다 — 172px 에 4열은 넘친다(마스터 12.1 과 같이 3열) */
-body[data-pp="8"] .th .xt td:nth-child(2),body[data-pp="16"] .th .xt td:nth-child(2){ display:none; }
-body[data-pp="8"] .th .xt td:first-child,body[data-pp="16"] .th .xt td:first-child{ max-width:66px; }
-body[data-pp="16"] .th .xt{ top:26px; line-height:18px; }
-body[data-pp="16"] .th .tree{ top:24px; line-height:16px; }
+/* XLSX 표 — 값은 자르지 않는다. pnu 는 19자리가 곧 뜻이라 `45190…` 은 읽을 수 없는 값이다(발주 지적).
+   폭 제한(max-width 66/80px)과 쪽당별 열 숨김을 걷고, 모자라면 ds-thumbs.js fitFrames 가
+   가운데 열부터 접으며 꼬리 줄에 접은 열을 적는다. 세로도 반쯤 잘린 줄 없이 들어가는 행까지만 둔다. */
+.xt{ position:absolute; left:8px; top:26px; right:8px; bottom:24px; border-collapse:collapse; font-size:14px; line-height:21px; color:var(--ink); overflow:hidden; display:block; }
+.xt td{ padding:0 6px 0 0; white-space:nowrap; }
+.xt td:last-child{ padding-right:0; }
+.xt tr[hidden],.xt td[hidden]{ display:none; }
+/* 꼬리 줄 = 총 행수(+ 접은 열). 표 밖에 세워 표 폭을 넓히지 않는다. */
+.xtf{ position:absolute; left:8px; right:8px; bottom:4px; font-size:14px; line-height:19px; color:var(--grey); white-space:nowrap; overflow:hidden; z-index:1; }
+/* 타일 바닥에는 상태 줄(.st)이 산다 — 표 꼬리는 그 위층으로 올린다(겹쳐 읽히지 않게). */
+.th .xt{ bottom:48px; } .th .xtf{ bottom:27px; } .th .tree{ bottom:26px; }
+/* 85px 짜리 썸네일(쪽당 16)에서는 19자리 PNU 가 한 줄에 못 들어간다 — 자르지 말고 흘린다. */
+body[data-pp="16"] .th .xt{ top:24px; line-height:18px; }
+body[data-pp="16"] .th .xt td{ white-space:normal; word-break:break-all; }
+body[data-pp="16"] .th .tree{ top:22px; line-height:16px; }
 .xt tr:first-child{ color:var(--grey); border-bottom:1px solid var(--ink); }
 .xt tr + tr{ border-bottom:1px solid var(--line); }
 .xt tr:last-child{ border-bottom:0; color:var(--grey); }
 .xt td:last-child{ text-align:right; }
-.tree{ position:absolute; left:12px; top:26px; right:8px; bottom:26px; margin:0; font-size:14px; line-height:19px; letter-spacing:.01em; color:var(--ink); white-space:pre; font-family:var(--font-num); overflow:hidden; }
+/* ZIP 파일 트리 — 타일 밖으로 넘쳐 반쯤 잘리던 것을 fitFrames 가 줄 단위로 접는다(발주 지적). */
+.tree{ position:absolute; left:12px; top:24px; right:8px; bottom:22px; margin:0; font-size:14px; line-height:19px; letter-spacing:.01em; color:var(--ink); white-space:pre; font-family:var(--font-num); overflow:hidden; }
 .tree--dim{ color:var(--grey-3); }
 /* 드롭존 */
 .th--drop{ border:1px dashed var(--grey-3); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; color:var(--ink); text-align:center; padding:0 8px;
@@ -229,14 +315,69 @@ body[data-pp="16"] .th--drop svg,body[data-pp="16"] .dz-s{ display:none; }
 .empty{ margin:14px 0 0; font-size:14px; color:var(--grey); letter-spacing:.02em; }
 #up-go{ margin-top:8px; }
 
-/* ══ 우 패널 ═══════════════════════════════════════════════════════════ */
+/* ══ 우 패널 ═══════════════════════════════════════════════════════════
+   패널은 **넓고 낮은 상자**다 — 1996×745 에서 717×312 였다. 세로로만 흘리면 내용의 2/3 가
+   휠 아래로 내려간다(발주 지적: "카드를 눌러도 오른쪽이 안 바뀌는 것 같다" = 머리만 바뀌고
+   몸통이 안 보였다). 그래서 패널 폭이 충분하면 조판을 **2단**으로 바꾼다. 숨기지 않는다.
+       fig   meta      ← 판/액자 | 기본 정보(신원)
+       list  list      ← 성과 · 데이터 테이블 · 사용 현황 · 발행 이력 · 메모(2단 흐름)
+   좁은 패널(<520px)에서는 지금처럼 한 단으로 흐른다 — 한 해상도에 맞추는 건 최적화가 아니다.
+   패널 폭에 따라 판/정보의 몫도 달라진다: 좁으면 판을 34% 로 줄여 기본 정보가 네 열을 쓰게 하고,
+   700px 부터는 반반으로 갈라 판을 크게 본다. */
+#side{ container:side / inline-size; }
+.sc-a,.sc-b{ min-width:0; }
+.sc-a{ container:meta / inline-size; }
+/* 기본 정보 dl 은 제 단 폭에 맞춰 열 수를 고른다 — 좁으면 2열(속성 / 값), 넓으면 4열(두 쌍). */
+@container meta (max-width:300px){ .sc-a .info{ grid-template-columns:auto minmax(0,1fr); } .sc-a .info dd.wide{ grid-column:2 / 3; } }
+@container side (min-width:510px){
+  #side[data-mode="tile"] #side-body,#side[data-mode="pub"] #side-body{
+    display:grid; grid-template-columns:minmax(170px,42%) minmax(0,1fr); column-gap:20px;
+    grid-template-areas:"fig meta" "list list"; align-content:start; }
+  #side[data-mode="tile"] #plate-wrap,#side[data-mode="tile"] #fig-wrap,
+  #side[data-mode="pub"] #plate-wrap,#side[data-mode="pub"] #fig-wrap{ grid-area:fig; align-self:start; }
+  #side[data-mode="tile"] #side-info,#side[data-mode="pub"] #side-info{ display:contents; }
+  #side[data-mode="tile"] .sc-a,#side[data-mode="pub"] .sc-a{ grid-area:meta; }
+  #side[data-mode="tile"] .sc-b,#side[data-mode="pub"] .sc-b{ grid-area:list; }
+  .sc-a > .info:first-child{ margin-top:0; }
+  .sc-a > .ph:first-child,.sc-b > .ph:first-child{ margin-top:0; }
+  /* 목록 단 — 덩어리(머리 + 제 줄들)를 두 자리에 나란히 놓는다.
+     처음엔 CSS 다단(columns)으로 흘렸는데 머리만 앞 단 바닥에 남고 줄이 뒷 단으로 넘어가
+     읽을 수 없었다(2026-09-20 1차 시도 → 되돌림). 격자로 덩어리째 앉히면 머리와 줄이 붙어 있다.
+     덩어리가 하나뿐이면(업로드 완료의 데이터 테이블·성과) 두 자리를 다 쓰고 줄만 두 단으로 흘린다. */
+  /* 패널이 700px 아래면 덩어리를 한 자리에 온 폭으로 둔다 — 반 폭(≈262px)에 밀어 넣으면
+     `해양쓰레기 실태조사` 같은 이름이 서너 줄로 흘러 오히려 더 길어졌다(계측 2026-09-20). */
+  .sc-b{ display:grid; grid-template-columns:minmax(0,1fr); column-gap:20px; align-content:start; align-items:start; }
+  .sc-b > *{ min-width:0; }
+  .sc-b > .blk:only-child{ grid-column:1 / -1; columns:240px 2; column-gap:20px; }
+  .sc-b > .blk:only-child .ph{ column-span:all; }
+  .sc-b > .blk:only-child > *{ break-inside:avoid; }
+  .sc-b--flat{ display:block; }
+  /* 두 단으로 흐를 때는 줄 사이를 한 칸씩 좁힌다 — 글자 크기(14px 바닥)는 그대로고 여백만 준다. */
+  /* 머리(.ph)는 제 줄들과 떨어지지 않는다 — 단이 갈릴 때 머리만 앞 단 바닥에 남으면 읽을 수 없다. */
+  .sc-b .ph{ margin-top:12px; padding-bottom:4px; break-after:avoid; }
+  /* 두 줄로 흘린 줄이 늘어난 만큼 줄 간격에서 돌려받는다 — 글자는 14px 그대로. */
+  .sc-b .us,.sc-b .rs,.sc-b .pl,.sc-b .sc{ padding:5px 0 4px; line-height:1.4; }
+  .sc-b .memo{ margin-top:6px; }
+  .sc-b .memo textarea{ min-height:44px; }
+  .sc-b .attrib{ padding-top:6px; }
+}
+/* 판이 640px 을 넘으면 판과 신원을 나란히 놓는다. 그 아래가 좁으면 판을 온 폭으로 크게 보는 편이 낫다 —
+   241×135 짜리 지도는 여수 조사 범위(7 km)를 담지 못했다(2026-09-20 계측: 줌 9.8). */
+@container side (min-width:640px){
+  #side[data-mode="tile"] #side-body,#side[data-mode="pub"] #side-body{ grid-template-columns:minmax(0,1fr) minmax(0,1fr); grid-template-areas:"fig meta" "list list"; }
+  .sc-b{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .sc-b > .blk:only-child{ columns:300px 2; }
+}
 .sh{ display:flex; align-items:baseline; gap:10px; color:var(--grey); height:26px; flex:none; }
 .sh h2{ margin:0; font-size:18px; line-height:26px; color:var(--ink); white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis; }
 .sh .mic{ white-space:nowrap; flex:none; }
 #fig-wrap,#plate-wrap,#side-info{ flex:none; }
 #side-body{ flex:1; min-height:0; overflow:auto; scrollbar-width:thin; scrollbar-color:var(--grey-3) transparent; margin-top:12px; display:flex; flex-direction:column; }
 /* 판 — 지도(V-World + 레이어). 한 번만 mount. 220 → 190(2차): 성과·사용 현황이 판 아래 한 화면에 들어오게. */
-#plate-wrap{ position:relative; width:100%; aspect-ratio:16/9; max-height:190px; flex:none; background:var(--ink); border:1px solid var(--line); overflow:hidden; }
+/* 판·액자 높이는 화면 세로를 따라간다 — 745 짜리 모니터에서 190 을 고집하면 그만큼 정보가 휠 아래로 간다.
+   한 해상도에 맞추는 건 최적화가 아니다(발주 2026-09-20). */
+:root{ --figh:clamp(116px, 19vh, 260px); }
+#plate-wrap{ position:relative; width:100%; aspect-ratio:16/9; max-height:var(--figh); flex:none; background:var(--ink); border:1px solid var(--line); overflow:hidden; }
 #plate{ position:absolute; inset:0; background:#0A1018; }
 #plate canvas{ outline:none; }
 .maplibregl-ctrl-attrib,.maplibregl-ctrl-bottom-right,.maplibregl-ctrl-bottom-left{ display:none!important; }
@@ -249,7 +390,7 @@ body[data-pp="16"] .th--drop svg,body[data-pp="16"] .dz-s{ display:none; }
 #plate-none{ position:absolute; inset:0; margin:0; display:flex; align-items:center; justify-content:center; text-align:center; background:#fff; z-index:4;
   font-size:14px; color:var(--grey); border:1px dashed var(--grey-3); padding:20px; line-height:1.6; }
 /* 그림 액자 — 지도가 아닐 때(썸네일 · 실루엣 · 표 · 트리 · 빈 상태) */
-.fig{ position:relative; width:100%; aspect-ratio:16/9; max-height:190px; overflow:hidden; background:#fff; border:1px solid var(--line); flex:none; }
+.fig{ position:relative; width:100%; aspect-ratio:16/9; max-height:var(--figh); overflow:hidden; background:#fff; border:1px solid var(--line); flex:none; }
 .fig img{ width:100%; height:100%; object-fit:cover; display:block; }
 .fig canvas{ width:100%; height:100%; display:block; }
 .fig .fc{ position:absolute; left:10px; right:10px; bottom:8px; font-size:14px; letter-spacing:.05em; color:#fff; z-index:2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -269,19 +410,33 @@ body[data-pp="16"] .th--drop svg,body[data-pp="16"] .dz-s{ display:none; }
 .fig .ticks i{ width:12px; height:12px; }
 body[data-pp="8"] .st .dt,body[data-pp="16"] .st .dt{ display:none; }
 body[data-pp="8"] .th .tagb,body[data-pp="16"] .th .tagb{ display:none; }
-.fig .xt{ left:14px; right:14px; top:16px; font-size:15px; line-height:26px; }
-.fig .xt td{ max-width:none; }
+.fig .xt{ left:14px; right:14px; top:16px; bottom:28px; font-size:15px; line-height:26px; }
+.fig .xt td{ padding-right:14px; }
+.fig .xtf{ left:14px; right:14px; bottom:6px; font-size:14px; }
 .fig .tree{ left:16px; top:14px; font-size:15px; line-height:22px; }
 /* 발행 폼이 열리면 판은 낮아진다 — 폼과 발행 버튼이 한 화면에 */
-#side[data-mode="pub"] #plate-wrap,#side[data-mode="pub"] .fig{ max-height:140px; }
+#side[data-mode="pub"] #plate-wrap,#side[data-mode="pub"] .fig{ max-height:clamp(96px, 15vh, 170px); }
+/* 액자 아래 한 줄 — 종류 · 지금 되는 것/막힌 이유. 빈 액자를 덩그러니 두지 않는다(발주 2026-09-20). */
+.gap{ margin:6px 0 0; font-size:14px; line-height:1.45; color:var(--grey); word-break:keep-all; }
+.gap b{ font-weight:400; color:var(--ink); }
+.gap.warn{ color:var(--warn); }
+.gap.warn b{ color:var(--warn); }
 /* 기본 정보 — 두 열 dl */
 .info{ margin:12px 0 0; display:grid; grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr); column-gap:14px; row-gap:0; }
 .info dt.wide{ grid-column:1 / 2; }
 .info dd.wide{ grid-column:2 / 5; }
 .info dt{ font-size:14px; letter-spacing:.04em; color:var(--grey); padding:5px 0 4px; border-bottom:1px solid var(--line); white-space:nowrap; font-family:var(--font-num); }
-.info dd{ margin:0; font-size:15px; color:var(--ink); padding:4px 0 3px; border-bottom:1px solid var(--line); min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* 값은 `…` 로 자르지 않는다 — 좁으면 두 줄로 흘린다(발주 2026-09-20: "글자가 … 로 잘리면 안 된다").
+   긴 파일명처럼 끊을 데가 없는 토큰은 아무 데서나 끊어서라도 다 보인다. */
+.info dd{ margin:0; font-size:15px; color:var(--ink); padding:4px 0 3px; border-bottom:1px solid var(--line); min-width:0; white-space:normal; word-break:keep-all; overflow-wrap:anywhere; }
 .info dd.warn{ color:var(--warn); white-space:normal; }
 .info dd b{ font-weight:400; color:var(--accent); }
+/* 현황판 아래 단계 요약 — 표가 아니라 한 줄 띠다. 세로로 3줄을 먹던 것을 가로로 흘려
+   그만큼을 목록에 돌려준다(발주: 한 화면에서 끝난다). 값은 그대로 다 적는다. */
+.info--row{ display:flex; flex-wrap:wrap; align-items:baseline; column-gap:8px; row-gap:0; margin-top:12px; border-top:1px solid var(--ink); padding-top:7px; }
+.info--row dt{ border-bottom:0; padding:0; }
+.info--row dd{ border-bottom:0; padding:0; margin-right:14px; white-space:nowrap; }
+.info--row dd:last-child{ margin-right:0; }
 .ph{ display:flex; align-items:baseline; justify-content:space-between; margin-top:16px; padding-bottom:6px; border-bottom:1px solid var(--ink); }
 .dt-b{ display:flex; align-items:baseline; padding:7px 0 6px; border-bottom:1px solid var(--line); font-size:14px; }
 .dt-b i{ font-style:normal; flex:1; color:var(--ink); }
@@ -326,7 +481,7 @@ body[data-pp="8"] .th .tagb,body[data-pp="16"] .th .tagb{ display:none; }
 .board[data-k="upload"] .pbh,.board[data-k="upload"] .pb{ grid-template-columns:minmax(0,1fr) 58px 112px 62px 62px; }
 .board[data-k="manage"] .pbh,.board[data-k="manage"] .pb{ grid-template-columns:minmax(0,1fr) 40px 62px 86px 58px 28px; }
 .pbh > *{ min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.board[data-k="publishing"] .pbh,.board[data-k="publishing"] .pb{ grid-template-columns:minmax(0,1fr) 52px 122px 44px 62px; }
+.board[data-k="publishing"] .pbh,.board[data-k="publishing"] .pb{ grid-template-columns:minmax(0,1fr) 52px 164px 44px 62px; }
 .board[data-k="archive"] .pbh,.board[data-k="archive"] .pb{ grid-template-columns:minmax(0,1fr) 56px 36px 32px 62px; }
 .pbh{ margin-top:16px; padding-bottom:6px; border-bottom:1px solid var(--ink); }
 .pbh .rt,.pb .rt{ text-align:right; }
@@ -361,7 +516,8 @@ body[data-pp="8"] .th .tagb,body[data-pp="16"] .th .tagb{ display:none; }
 .rs{ display:grid; grid-template-columns:10px minmax(0,1fr) auto auto; column-gap:10px; align-items:baseline; padding:7px 0 6px; border-bottom:1px solid var(--line); font-size:14px; letter-spacing:-.01em; transition:background var(--hov) var(--hove), transform var(--hov) var(--hove); }
 .rs:hover{ background:var(--t1); transform:translateX(4px); }
 .rs .sw{ width:10px; height:10px; background:var(--teal); align-self:center; }
-.rs .nm{ min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--ink); }
+/* 결과명은 `…` 로 자르지 않는다 — 좁으면 두 줄로 흘린다. */
+.rs .nm{ min-width:0; color:var(--ink); word-break:keep-all; overflow-wrap:anywhere; }
 .rs .nm small{ font-size:14px; color:var(--grey); margin-left:6px; }
 .rs .nv{ white-space:nowrap; color:var(--ink); }
 .rs .nv b{ font-family:var(--disp); font-weight:700; font-size:18px; color:var(--teal); letter-spacing:-.01em; }
@@ -377,12 +533,12 @@ body[data-pp="8"] .th .tagb,body[data-pp="16"] .th .tagb{ display:none; }
 .us{ display:grid; grid-template-columns:56px minmax(0,1fr) auto; column-gap:10px; align-items:baseline; padding:7px 0 6px; border-bottom:1px solid var(--line); font-size:14px; letter-spacing:-.01em; transition:background var(--hov) var(--hove), transform var(--hov) var(--hove); }
 .us:hover{ background:var(--t1); transform:translateX(4px); }
 .us .kd{ color:var(--grey); letter-spacing:.04em; white-space:nowrap; }
-.us .nm{ min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--ink); }
+.us .nm{ min-width:0; color:var(--ink); word-break:keep-all; overflow-wrap:anywhere; }
 .us .rf{ white-space:nowrap; color:var(--grey); letter-spacing:.02em; }
 .us-empty{ padding:10px 0; font-size:14px; color:var(--grey); border-bottom:1px solid var(--line); }
 .pl{ display:grid; grid-template-columns:32px minmax(0,1fr) auto auto; column-gap:10px; align-items:baseline; padding:7px 0 6px; border-bottom:1px solid var(--line); font-size:14px; letter-spacing:-.01em; }
 .pl .v{ color:var(--accent); }
-.pl .wh{ min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--ink); }
+.pl .wh{ min-width:0; color:var(--ink); word-break:keep-all; overflow-wrap:anywhere; }
 .pl .by{ color:var(--grey); white-space:nowrap; }
 .pl .at{ color:var(--grey); white-space:nowrap; letter-spacing:.02em; }
 /* 메모 — 이 브라우저에만 저장(localStorage). 서버 기능이 아니다. */
@@ -422,11 +578,32 @@ body[data-pp="8"] .th .tagb,body[data-pp="16"] .th .tagb{ display:none; }
 @media (max-width:1280px){
   :root{ --m:40px; }
   .k .kv b{ font-size:46px; }
-  #stage{ grid-template-columns:minmax(0,1fr) 1px minmax(0,1fr); }
+}
+/* ── 세로가 낮은 모니터(≤840px) — 머리(제목 · KPI · 툴바)를 눌러 단계 뷰에 돌려준다.
+   발주 지적(2026-09-20): 1996×745 에서 우 패널 내용의 2/3 가 휠 아래로 내려갔다.
+   지우지 않는다 — 같은 내용이 그대로 있고 머리가 차지하던 122px 을 목록·패널이 쓴다.
+   1600×900 이상에서는 원래의 여유 있는 머리(58px 숫자)가 그대로다. "모니터마다 최적화". ── */
+@media (max-height:840px){
+  :root{ --mast:52px; }
+  #main{ padding-top:calc(var(--mast) + 10px); padding-bottom:4px; }
+  #b1-row{ height:42px; }
+  #b1-sub{ font-size:14px; }
+  #b-kpi{ padding:5px 0 7px; }
+  .k .kv{ margin-top:1px; height:34px; }
+  .k .kv b{ font-size:34px; }
+  .k .kv span{ font-size:15px; }
+  .k .ks{ margin-top:3px; }
+  #tool{ height:42px; }
+  #stage{ padding-bottom:4px; }
+  #pager{ height:26px; margin-top:2px; }
+  #foot{ height:28px; }
+  #side-body{ margin-top:8px; }
+  #side-acts{ margin-top:8px; }
 }
 @media (max-width:1100px){
-  #b-kpi{ grid-template-columns:repeat(3,minmax(0,1fr)); row-gap:16px; }
-  .k:nth-child(4){ border-left:0; padding-left:0; }
+  #b-kpi{ grid-template-columns:repeat(2,minmax(0,1fr)); row-gap:16px; }
+  .k:nth-child(3){ border-left:0; padding-left:0; }
+  #disk{ margin-left:0; flex-wrap:wrap; }
   #stage{ grid-template-columns:1fr; row-gap:24px; }
   #stage::after{ display:none; }
   #grid,#side{ grid-column:1; }

@@ -98,10 +98,13 @@ export function removeLayer(map, id) {
 }
 export const hasLayer = (map, id) => !!map.getSource(ids(id).src);
 
-/** 카메라 이동 — 표시하면 그 범위로 간다(줌 투 익스텐트). 이징 하나, 1250ms. */
+/** 카메라 이동 — 표시하면 그 범위로 간다(줌 투 익스텐트). 이징 하나, 1250ms.
+ *  여백은 판 크기에 비례한다 — 고정 28px 은 112px 짜리 판에서 그릴 자리의 절반을 먹었다(2026-09-20). */
 export function frame(map, bounds, opts = {}) {
+  const el = map.getContainer();
+  const pad = opts.pad ?? Math.max(8, Math.min(28, Math.min(el.clientWidth || 320, el.clientHeight || 180) * 0.1));
   map.fitBounds([[bounds[0], bounds[1]], [bounds[2], bounds[3]]], {
-    padding: opts.pad ?? 28, duration: opts.instant ? 0 : 1250, maxZoom: opts.maxZoom || 17.2, essential: true,
+    padding: pad, duration: opts.instant ? 0 : 1250, maxZoom: opts.maxZoom || 17.2, essential: true,
   });
 }
 export const KOREA_SW = [125.55, 33.85, 129.35, 37.55];

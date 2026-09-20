@@ -9,6 +9,13 @@ import { test, expect } from '@playwright/test';
 //            발행중 진행 경과는 카드 위 · 액션은 우 패널 · `대기중 n건 더 · 전체 보기` 없음 — 전 건 표출
 //  발주 2차  업로드 선택 없음 = 카드별 진행 현황판 · 쪽당 4 · 6 · 8 · 16 + 페이저 · 완료 = 실제 위치 + 성과 / 위치 없으면 데이터 테이블 속성 ·
 //            아카이브 = 사용 현황 · 발행 이력 · 메모(이 브라우저에만 저장), 레이어 목록 블록 없음
+//  발주 4차(2026-09-20)
+//            · 첫 화면은 **개요** — 네 상태를 한눈에, 탭으로 들어가면 자세히(`?tab=`)
+//            · 내 디스크 사용량은 큰 칸에서 빼고 제목 줄의 얇은 한 줄로(상단 카드는 단계 4 뿐)
+//            · 자산 종류 선언(assets.js)이 화면을 정한다 — 할 수 있는 일만 버튼으로 낸다.
+//              엑셀에 `지도 레이어 발행` 은 없다. 좌표 없는 정사영상도 없다(대신 왜 없는지 한 줄).
+//            · 같은 종류는 같은 자리에 같은 모양 — 좌표가 있으면 지도, 없으면 같은 자리에 사유
+//            · 실패는 그 실패를 풀 수 있는 액션만(ZIP 이미지 형식 문제에 `좌표계 지정` 을 주지 않는다)
 const URL = 'proto/dataset.html';
 const ACCENT = 'rgb(0, 109, 247)', WARN = 'rgb(209, 53, 43)', TINT = 'rgb(232, 241, 255)';
 
@@ -42,7 +49,7 @@ const heads = (page) => page.locator('#side-info .ph .lb:first-child, #side-info
 const STAGES = [
   { id: 'upload', name: '데이터 업로드', panel: '#panel-upload', n: 6, board: '진행 현황', head: '파일 6 · 진행 중 1', cols: ['상태', '진행률', '크기', '잔여'], foot: ['디스크', '잔여', '허용 형식', '한도'], second: 'u2', title: 'NW_ortho_202604_section_D.tif' },
   { id: 'manage', name: '업로드 완료', panel: '#panel-manage', n: 8, board: '완료 현황', head: '파일 8 · 위치 2', cols: ['형식', '크기', '업로드', '아카이빙', '위치'], foot: ['총 용량', '위치 있음', '형식별'], second: 'd2', title: 'NW_ortho_202604_zone_X.ecw' },
-  { id: 'publishing', name: '레이어 발행중', panel: '#panel-publishing', n: 7, board: '발행 현황', head: '파일 7 · 진행 5 · 실패 2', cols: ['단계', '상태', '진행률', '크기'], foot: ['진행', '실패', '총 용량', '단계'], second: 'p2', title: 'NW_greenhouse_labels_202603.shp' },
+  { id: 'publishing', name: '레이어 발행중', panel: '#panel-publishing', n: 7, board: '발행 현황', head: '파일 7 · 진행 4 · 실패 3', cols: ['단계', '상태', '진행률', '크기'], foot: ['진행', '실패', '총 용량', '단계'], second: 'p2', title: 'NW_greenhouse_labels_202603.shp' },
   { id: 'archive', name: '아카이브', panel: '#panel-archive', n: 5, board: '보관 현황', head: '자산 5 · 표시 4 · 숨김 1', cols: ['유형', '표시', '발행', '크기'], foot: ['표시', '숨김', '총 용량', '유형별'], second: 'a2', title: '운봉읍 드론 정사영상 2026-04' },
 ];
 
@@ -70,16 +77,49 @@ test('레일 · 마스트헤드 — 대시보드와 같은 공지 + 기준일, �
   expect(errs).toEqual([]);
 });
 
-/* ── KPI 카드 5 = 디스크 + 단계 4 · 카드 클릭 = ?tab= ──────────────────── */
-test('KPI 카드 5 — 디스크 96 %(warn + 증량 신청) · 단계 4 건수 · 기본 upload 선택(틴트 + 밑줄) · 클릭 = ?tab= · 뒤로가기', async ({ page }) => {
+/* ── 첫 화면 = 개요 · 디스크는 얇은 한 줄 · 카드 4 = 단계 선택 ─────────── */
+test('개요(쿼리 없음) — 네 상태가 한눈에 · 각 구역에 건수·상태·최근 셋·지표·자세히 · 구역 클릭 = ?tab= · 단계 뷰 장치는 숨는다', async ({ page }) => {
   const errs = watch(page);
   await boot(page);
-  expect(await page.locator('#b-kpi .k .kl').allInnerTexts()).toEqual(['내 디스크 사용량', '데이터 업로드', '업로드 완료', '레이어 발행중', '아카이브']);
-  expect(await page.locator('#b-kpi .k .kv').evaluateAll((es) => es.map((e) => e.textContent.replace(/s+/g, '')))).toEqual(['96%', '6건', '8건', '7건', '5건']);
-  await expect(page.locator('#kpi-disk .ks')).toHaveText('1,965 / 2,048 GB · 잔여 83 GB');
-  expect(await page.locator('#kpi-disk .kv b').evaluate((e) => getComputedStyle(e).color)).toBe(WARN);
+  await expect(page.locator('body')).toHaveAttribute('data-view', 'overview');
+  await expect(page.locator('#ov')).toBeVisible();
+  await expect(page.locator('#b-kpi')).toBeHidden();
+  await expect(page.locator('#tool')).toBeHidden();
+  await expect(page.locator('#stage')).toBeHidden();
+  expect(await page.locator('#ov .ovc .ovt2').allInnerTexts()).toEqual(['데이터 업로드', '업로드 완료', '레이어 발행중', '아카이브']);
+  expect(await page.locator('#ov .ovc .ovn b').allInnerTexts()).toEqual(['6', '8', '7', '5']);
+  expect(await page.locator('#ov .ovc .ul').allInnerTexts()).toEqual(Array(4).fill('자세히 ›'));
+  // 구역마다 최근 셋 미리보기 + 그 단계 목록 + 지표 한 줄
+  expect(await page.locator('#ov .ovc').nth(0).locator('.ovf').count()).toBe(3);
+  await expect(page.locator('#ov .ovc').nth(1).locator('.ovv')).toContainText('총 용량');
+  await expect(page.locator('#ov .ovc').nth(2).locator('.ovv b.warn')).toHaveText('실패 3건');
+  expect(await page.locator('#ov .ovl .ovr:not([hidden])').count()).toBeGreaterThan(8);
+  // 디스크는 큰 칸이 아니라 제목 줄의 얇은 한 줄 — 경고는 숫자(글자)에만
+  await expect(page.locator('#disk .dv')).toHaveText('96');
+  await expect(page.locator('#disk-v')).toHaveText('1,965 / 2,048 GB · 잔여 83 GB');
+  expect(await page.locator('#disk .dv').evaluate((e) => getComputedStyle(e).color)).toBe(WARN);
+  expect(await page.locator('#disk').evaluate((e) => Math.round(e.getBoundingClientRect().height))).toBeLessThan(40);
+  expect(await page.locator('#kpi-disk').count()).toBe(0);
+  // 구역을 누르면 그 단계로 — 개요로 되돌아오는 `‹ 개요` 가 툴바에 선다
+  await page.locator('#ov .ovc').nth(1).click();
+  await page.waitForTimeout(300);
+  expect(page.url()).toContain('tab=manage');
+  await expect(page.locator('body')).toHaveAttribute('data-view', 'stage');
+  await expect(page.locator('#ov')).toBeHidden();
+  await expect(page.locator('#to-ov')).toHaveText('‹ 개요');
+  await page.locator('#to-ov').click();
+  await page.waitForTimeout(300);
+  await expect(page.locator('#ov')).toBeVisible();
+  expect(page.url()).not.toContain('tab=');
+  expect(errs).toEqual([]);
+});
+test('단계 카드 4 — 건수 · 선택 = 틴트 + 밑줄 · 클릭 = ?tab= · 뒤로가기 · 탭을 옮기면 필터·검색 초기화', async ({ page }) => {
+  const errs = watch(page);
+  await boot(page, 'upload');
+  expect(await page.locator('#b-kpi .k .kl').allInnerTexts()).toEqual(['데이터 업로드', '업로드 완료', '레이어 발행중', '아카이브']);
+  expect(await page.locator('#b-kpi .k .kv').evaluateAll((es) => es.map((e) => e.textContent.replace(/s+/g, '')))).toEqual(['6건', '8건', '7건', '5건']);
   await expect(page.locator('#quota-open')).toHaveText('디스크 증량 신청 ›');
-  await expect(page.locator('#kpi-publishing .ks')).toHaveText('진행 5 · 실패 2');
+  await expect(page.locator('#kpi-publishing .ks')).toHaveText('진행 4 · 실패 3');
   expect(await page.locator('#kpi-publishing .ks em').evaluate((e) => getComputedStyle(e).color)).toBe(WARN);
   await expect(page.locator('#kpi-upload')).toHaveAttribute('aria-selected', 'true');
   expect(await page.locator('#kpi-upload').evaluate((e) => getComputedStyle(e).backgroundColor)).toBe(TINT);
@@ -104,6 +144,17 @@ test('KPI 카드 5 — 디스크 96 %(warn + 증량 신청) · 단계 4 건수 �
   await page.waitForTimeout(300);
   await expect(page.locator('#kpi-upload')).toHaveAttribute('aria-selected', 'true');
   expect(await page.locator('#ds-filters option').allInnerTexts()).toEqual(['전체', 'ECW', 'TIF', 'ZIP', 'SHP', 'XLSX/XLS', '기타']);
+  // 개발용 URL 표기가 화면 글자·툴팁으로 새지 않는다(발주 2026-09-20)
+  const leak = await page.evaluate(() => {
+    const bad = [];
+    for (const e of document.querySelectorAll('#main *, #mast *, #rail *')) {
+      const t = e.getAttribute('title') || '';
+      if (/\\?[a-z]+=|\\.html|원본/.test(t)) bad.push(t);
+    }
+    if (/\\?tab=|\\?status=|\\?open=|\\.html/.test(document.getElementById('main').innerText)) bad.push('본문 글자');
+    return bad;
+  });
+  expect(leak).toEqual([]);
   expect(errs).toEqual([]);
 });
 
@@ -368,7 +419,8 @@ test('완료 도엽 선택 — 브래킷 + 틴트 캡션, 우 패널에 V-World 
   expect(await page.locator('#side-info dt').allInnerTexts()).toEqual(['이름', '형식', '크기', '업로드 일시', '촬영일', 'GSD', '좌표계', '아카이빙', '등록자', '범위']);
   await expect(page.locator('#side-info dd').nth(5)).toHaveText('1.08 cm');
   await expect(page.locator('#side-info dd').last()).toHaveText('127.3481, 35.5276, 127.3567, 35.5347');
-  expect(await page.locator('#side-acts .act').allInnerTexts()).toEqual(['지도 레이어 발행 ›']);
+  // 정사영상 + 실측 범위 = 지도에서 보기 · 타일 · 분석 · 내려받기(assets.js). 타일 생성은 발행 3단계에 들어 있어 따로 내지 않는다.
+  expect(await page.locator('#side-acts .act').allInnerTexts()).toEqual(['지도 레이어 발행 ›', '분석에 쓰기 ›', '내려받기']);
   await expect(page.locator('#side-acts')).toBeInViewport();                              // 액션은 스크롤 밖 — 항상 보인다
   await plateIdle(page);
   if ((await page.evaluate(() => document.documentElement.dataset.plate)) !== 'off') {
@@ -380,7 +432,11 @@ test('완료 도엽 선택 — 브래킷 + 틴트 캡션, 우 패널에 V-World 
   // 위치가 없는 자산 — 액자 + 자백 + 데이터 테이블 속성(속성명 / 유형 / 예시). 판은 도엽이 있을 때만.
   await select(page, 'd6');
   await expect(page.locator('#plate-wrap')).toBeHidden();
-  await expect(page.locator('#fig-wrap .fig--none')).toContainText('좌표계 없음');
+  // 좌표계가 없다 → 같은 자리에 `왜 없는지`. 지도 레이어 발행 버튼은 서지 않는다(흐리게 두지도 않는다).
+  await expect(page.locator('#fig-wrap .fig--none')).toContainText('좌표계가 없다');
+  await expect(page.locator('#fig-wrap .gap.warn')).toContainText('.prj 를 함께 올려야');
+  expect(await page.locator('#side-acts .act').allInnerTexts()).toEqual(['분석에 쓰기 ›', '내려받기']);
+  expect(await page.locator('#side-info dt').allInnerTexts()).toContain('조치');
   expect(await heads(page)).toEqual(['데이터 테이블 · 4열 · — 행 · 좌표계 없음']);
   expect(await page.locator('#side-info .sc i').allInnerTexts()).toEqual(['geom', 'cls', 'sev', 'len_m']);
   expect(await page.locator('#side-info .rs').count()).toBe(0);
@@ -390,13 +446,23 @@ test('완료 도엽 선택 — 브래킷 + 틴트 캡션, 우 패널에 V-World 
   expect(await heads(page)).toEqual(['데이터 테이블 · 5열 · 2,098행']);
   expect(await page.locator('#side-info .sc i').allInnerTexts()).toEqual(['pnu', 'emd', 'cls', 'area', 'conf']);
   expect(await page.locator('#side-info .sc em').allInnerTexts()).toEqual(['문자 19', '문자', '문자', '수 · ㎡', '수 · 0–1']);
+  // 엑셀은 제 좌표가 없다 — 지도 레이어 발행 버튼을 주지 않는다(발주 2026-09-20). 대신 표로 할 수 있는 일만.
+  expect(await page.locator('#side-acts .act').allInnerTexts()).toEqual(['속성 보기', '필지에 붙이기', '내려받기']);
   await select(page, 'd7');                                                              // SHP(결과 GeoJSON) — 예시 = 첫 행 실값
   await expect(page.locator('#fig-wrap canvas[data-sil="d7"]')).toBeVisible();
   await expect(page.locator('#side-info .sc[data-col="cls"] .exv')).toHaveText('비닐하우스_단동', { timeout: 15000 });
   await expect(page.locator('#side-info .sc[data-col="area"] .exv')).toHaveText('1,543');
+  expect(await page.locator('#side-acts .act').allInnerTexts()).toEqual(['분석에 쓰기 ›', '내려받기']);   // 좌표계 없는 SHP = 발행 없음
   await select(page, 'd8');                                                              // ZIP — 파일 트리
   expect(await page.locator('#side-info .sc i').allInnerTexts()).toEqual(['20260412/', 'DJI_*.JPG', 'index.csv']);
-  await select(page, 'd8');                                                              // 토글 해제
+  expect(await page.locator('#side-acts .act').allInnerTexts()).toEqual(['풀기', '내려받기']);   // 묶음 파일 = 풀기·내려받기
+  // 같은 정사영상인데 하나는 지도, 하나는 그냥 사진 — 그러면 안 된다. 좌표가 없으면 같은 자리에 그 사실이 선다.
+  await select(page, 'd1');
+  await expect(page.locator('#plate-wrap')).toBeHidden();
+  await expect(page.locator('#fig-wrap .gap.warn')).toContainText('월드파일(.tfw)이나 GeoTIFF 태그');
+  expect(await page.locator('#side-acts .act').allInnerTexts()).toEqual(['분석에 쓰기 ›', '내려받기']);
+  await expect(page.locator('.tile[data-id="d1"] .st.warn')).toHaveText('좌표 없음');
+  await select(page, 'd1');                                                              // 토글 해제
   await expect(page.locator('#side')).toHaveAttribute('data-mode', 'none');
   await expect(page.locator('#side-m')).toHaveText('선택 0 / 8');
   expect(errs).toEqual([]);
@@ -404,8 +470,8 @@ test('완료 도엽 선택 — 브래킷 + 틴트 캡션, 우 패널에 V-World 
 test('발행 폼(패널 안) — 5필드 · 공유 권한 표 · 필수 검증 · 취소 · 발행 → ?tab=publishing 맨 앞', async ({ page }) => {
   const errs = watch(page);
   await boot(page, 'manage');
-  await select(page, 'd2');
-  await page.locator('#side-acts .act[data-dn="d2"]').click();
+  await select(page, 'd4');                                                   // 실측 범위가 있는 도엽만 발행할 수 있다
+  await page.locator('#side-acts .act[data-dn="d4"][data-act="pub"]').click();
   await expect(page.locator('#side')).toHaveAttribute('data-mode', 'pub');
   await expect(page.locator('#pubform')).toBeVisible();
   expect(await page.locator('#pubform .fr .k').allInnerTexts()).toEqual(['발행 유형 *', '기준 일자 *', '데이터명 *', '출처', '설명']);
@@ -414,7 +480,7 @@ test('발행 폼(패널 안) — 5필드 · 공유 권한 표 · 필수 검증 �
   expect(await page.locator('#side-acts .act').count()).toBe(0);                        // 액션은 폼 안(취소 / 발행)
   await page.locator('#pubform [data-pf-close]').click();
   await expect(page.locator('#side')).toHaveAttribute('data-mode', 'tile');
-  await page.locator('#side-acts .act[data-dn="d2"]').click();
+  await page.locator('#side-acts .act[data-dn="d4"][data-act="pub"]').click();
   await page.locator('#pf-name').fill('');
   await page.locator('#pubform button[type="submit"]').click();
   await expect(page.locator('#pf-err')).toContainText('데이터명');
@@ -427,7 +493,7 @@ test('발행 폼(패널 안) — 5필드 · 공유 권한 표 · 필수 검증 �
   expect(await page.locator('#panel-publishing .tile[data-id]').count()).toBe(8);
   expect(await kpi(page, 'publishing')).toBe('8');
   expect(await kpi(page, 'manage')).toBe('7');
-  await expect(page.locator('#panel-publishing .tile').first()).toContainText('NW_ortho_202604_zone_X.ecw');
+  await expect(page.locator('#panel-publishing .tile').first()).toContainText('NW_ortho_202604_section_A.tif');
   await expect(page.locator('#say')).toContainText('남원시청 편집');
   expect(errs).toEqual([]);
 });
@@ -441,7 +507,7 @@ test('발행중 — 눈금 4 · 채움 = 완료 단계 · 리빌 % · 실패 2 =
   await expect(page.locator('.tile[data-id="p1"] .st')).toHaveText(/2\/4.*37%/);
   await expect(page.locator('.tile[data-id="p3"] .th')).toHaveAttribute('data-live', '');
   expect(await page.locator('.tile[data-id="p3"] .rv-top').evaluate((e) => e.style.getPropertyValue('--rest'))).toBe('38%');
-  expect(await page.locator('.tile[data-st="fail"]').count()).toBe(2);
+  expect(await page.locator('.tile[data-st="fail"]').count()).toBe(3);   // 표 자료(xlsx)는 지도 레이어가 될 수 없다 — 1단계에서 막힌다
   await expect(page.locator('.tile[data-id="p2"] .st')).toHaveText('실패 2/4 · 좌표계 없음');
   expect(await page.locator('.tile[data-id="p2"] .st').evaluate((e) => getComputedStyle(e).color)).toBe(WARN);
   expect(await page.locator('.tile[data-id="p2"] .bk--tl').evaluate((e) => getComputedStyle(e).borderTopColor)).toBe(WARN);
@@ -458,9 +524,13 @@ test('발행중 — 눈금 4 · 채움 = 완료 단계 · 리빌 % · 실패 2 =
   await page.locator('#m-crs button[type="submit"]').click();
   expect(await page.locator('.tile[data-id="p2"]').getAttribute('data-st')).toBe('run');
   await expect(page.locator('.tile[data-id="p2"] .st')).toHaveText(/1\/4.*12%/);
-  await expect(page.locator('#kpi-publishing .ks')).toHaveText('진행 6 · 실패 1');
+  await expect(page.locator('#kpi-publishing .ks')).toHaveText('진행 5 · 실패 2');
+  // 실패마다 할 일이 다르다 — ZIP 안에 이미지가 없는 건 좌표계로 풀리지 않는다
   await select(page, 'p6');
-  expect(await page.locator('#side-acts .act').allInnerTexts()).toEqual(['좌표계 지정', '발행 취소', '세부 정보']);
+  expect(await page.locator('#side-acts .act').allInnerTexts()).toEqual(['원본 다시 올리기', '발행 취소', '세부 정보']);
+  await select(page, 'p5');
+  expect(await page.locator('#side-acts .act').allInnerTexts()).toEqual(['필지 연결 안내', '발행 취소', '세부 정보']);
+  await select(page, 'p6');
   await page.locator('#side-acts .act[data-pb="p6"][data-act="cancel"]').click();
   await expect(page.locator('.tile[data-id="p6"]')).toHaveCount(0);
   expect(await kpi(page, 'publishing')).toBe('6');
@@ -500,7 +570,7 @@ test('아카이브 선택 → 판의 레이어(줌 투 익스텐트) · 사용 �
   const plate = await page.evaluate(() => document.documentElement.dataset.plate);
   if (plate !== 'off') {
     await expect.poll(() => page.evaluate(() => !!(window.__dsMap && window.__dsMap.getLayer('ly-a5'))), { timeout: 15000 }).toBe(true);
-    await expect.poll(() => page.evaluate(() => { const c = window.__dsMap.getCenter(); return c.lng > 127.6 && c.lng < 127.75 && c.lat > 34.55 && c.lat < 34.65 && window.__dsMap.getZoom() > 10; }), { timeout: 15000 }).toBe(true);
+    await expect.poll(() => page.evaluate(() => { const c = window.__dsMap.getCenter(); return c.lng > 127.6 && c.lng < 127.75 && c.lat > 34.55 && c.lat < 34.65 && window.__dsMap.getZoom() > 9.5; }), { timeout: 15000 }).toBe(true);   // 판은 패널 크기를 따라간다 — 기본 줌 6.4 에서 조사 범위(7 km)로 갔는지를 본다
     await expect(page.locator('#plate-cap')).toContainText('86셀');
     await expect(page.locator('#ex-layer .ex')).toHaveCount(1);
   }
@@ -521,9 +591,11 @@ test('아카이브 선택 → 판의 레이어(줌 투 익스텐트) · 사용 �
     await expect.poll(() => page.evaluate(() => !!window.__dsMap.getLayer('ly-a1')), { timeout: 15000 }).toBe(true);
     await expect(page.locator('#plate-cap')).toContainText('GSD 1.08 cm');
   }
-  // 범위 없는 자산 — 판은 자백한다. 성과 0 · 사용 현황은 있다.
+  // 범위 없는 자산 — 지도 자리에 그 종류의 미리보기와 `무엇인지` 한 줄이 선다. 성과 0 · 사용 현황은 있다.
   await select(page, 'a4');
-  await expect(page.locator('#plate-cap')).toContainText('실측 범위 없음');
+  await expect(page.locator('#plate-wrap')).toBeHidden();
+  await expect(page.locator('#fig-wrap .gap')).toContainText('묶음 파일');
+  await expect(page.locator('#fig-wrap .tree')).toBeVisible();
   expect(await page.locator('#side-info .rs').count()).toBe(0);
   expect(await page.locator('#side-info .us').count()).toBe(2);
   // 삭제 — 레이어가 내려온다.
@@ -549,9 +621,10 @@ test('아카이브 상세(등록·GSD·좌표계 · 데이터명·출처·설명
   await page.locator('#ms-perm .pr').nth(1).locator('button[data-perm="편집"]').click();
   await page.locator('#m-share button[type="submit"]').click();
   await expect(page.locator('#say')).toContainText('남원시청 편집');
+  // 범위가 없는 자산에는 `공간 편집` 버튼 자체를 주지 않는다(흐린 버튼은 궁금증만 만든다).
   await select(page, 'a3');
-  await page.locator('#side-acts .act[data-ar="a3"][data-act="geo"]').click();
-  await expect(page.locator('#say')).toContainText('실측 범위 없음');
+  expect(await page.locator('#side-acts .act').allInnerTexts()).toEqual(['숨김', '공유', '삭제', '상세']);
+  await expect(page.locator('#fig-wrap .gap.warn')).toContainText('기하 범위가 없다');
   await select(page, 'a1');
   await page.locator('#side-acts .act[data-ar="a1"][data-act="geo"]').click();
   await expect(page.locator('#say')).toContainText('범위로 이동');
@@ -600,7 +673,7 @@ test('시스템 — 라운드·그림자·그라디언트 0 · 최소 14px · wa
     expect(bad).toEqual([]);
     const warn = await page.evaluate((W) => [...document.querySelectorAll('#main *')].filter((e) => {
       const cs = getComputedStyle(e); return [cs.color, cs.backgroundColor, cs.borderTopColor, cs.borderLeftColor, cs.borderBottomColor].includes(W) && cs.display !== 'none';
-    }).filter((e) => !e.closest('#kpi-disk, #kpi-publishing, .tile[data-st="fail"], .pb[data-st="fail"], .info dd')).map((e) => e.className), WARN);   // 실패 = 줄 · 요약 kv 도 warn
+    }).filter((e) => !e.closest('#disk, #kpi-publishing, .tile[data-st="fail"], .pb[data-st="fail"], .info dd, .gap, .ovr[data-st="fail"], .th .st')).map((e) => e.className), WARN);   // 디스크 한 줄 · 실패 줄 · 사유 줄
     expect(warn).toEqual([]);
     const filled = await page.evaluate((A) => [...document.querySelectorAll('#main button, #main .k')].filter((e) => getComputedStyle(e).backgroundColor === A).map((e) => e.className), ACCENT);
     expect(filled).toEqual([]);
