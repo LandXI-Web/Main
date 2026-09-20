@@ -146,38 +146,73 @@ test.describe('① 목록', () => {
 
 /* ══ 2. 만들기 ═════════════════════════════════════════════════════════════ */
 test.describe('② 만들기 + 검토', () => {
-  test('폼 한 화면 — 아카이브 선택 · 탐지 유형 2 · 권장 해상도 자동', async ({ page }) => {
+  /* 2026-09-20 개편 — 발주자가 실제로 써 보고 짚은 것을 고쳤다.
+       "처음 하면 뭐가 뭔지 모르겠다" → 번호 붙은 세 단계
+       "디텍션·세그멘테이션이 잘 안 보인다" → 오른쪽 좁은 칸에서 화면 한가운데로
+       "인터렉티브하지 않다" → 고르면 원본 크롭 위로 실제 판독 결과가 덮인다
+       "굳이 첫 화면부터 아카이브 선택?" → 영상은 선택. 누를 때만 아카이브가 열린다
+     그래서 이 묶음의 검사도 새 흐름에 맞춘다. 검사 범위는 줄이지 않는다. */
+  test('폼 한 화면 — 세 단계 · 탐지 유형 2 · 영상은 선택', async ({ page }) => {
     const errs = watch(page);
     await boot(page, CREATE);
-    await expect(page.locator('#cr-name')).toHaveValue('남원 비닐하우스 2026');
-    await expect(page.locator('.pj-pick label')).toHaveCount(2);
-    await expect(page.locator('.pj-tile[data-pick][aria-selected="true"]')).toHaveCount(2);
-    await expect(page.locator('.split-r')).toContainText('선택 영상 GSD 1.08 – 1.69 cm');
+    await expect(page.locator('.cr-step')).toHaveCount(3);
+    await expect(page.locator('#cr-name')).toHaveValue('');
+    await expect(page.locator('#cr-name')).toHaveAttribute('placeholder', /남원 비닐하우스/);
+    await expect(page.locator('.cr-kind')).toHaveCount(2);
+    // 영상은 아직 없어도 되고, 그 사실을 화면이 말한다
+    await expect(page.locator('.cr-src')).toContainText('아직 없음');
+    await expect(page.locator('.split-r')).toContainText('나중에');
     expect(errs).toEqual([]);
   });
 
-  test('영상을 고르면 선택 수와 GSD 범위가 따라 바뀐다', async ({ page }) => {
+  test('탐지 유형을 고르면 그 카드에 판독 결과가 덮이고 요약이 따라 바뀐다', async ({ page }) => {
     await boot(page, CREATE);
-    await page.locator('.pj-tile[data-pick]').nth(2).click();
-    await expect(page.locator('.pj-tile[data-pick][aria-selected="true"]')).toHaveCount(3);
-    await expect(page.locator('.split-l')).toContainText('선택 3');
+    // 기본은 Object Detection — 그 카드만 `판독 결과`, 나머지는 `원본`
+    await expect(page.locator('.cr-kind[data-kind="detect"] .cr-shot-tag')).toHaveText('판독 결과');
+    await expect(page.locator('.cr-kind[data-kind="segment"] .cr-shot-tag')).toHaveText('원본');
+    await expect(page.locator('.split-r')).toContainText('하나씩 세기');
+    await page.locator('.cr-kind[data-kind="segment"]').click();
+    await expect(page.locator('.cr-kind[data-kind="segment"] .cr-shot-tag')).toHaveText('판독 결과');
+    await expect(page.locator('.cr-kind[data-kind="detect"] .cr-shot-tag')).toHaveText('원본');
+    await expect(page.locator('.split-r')).toContainText('윤곽까지 따기');
+  });
+
+  test('영상은 눌러야 열린다 — 고르면 건수와 GSD 범위가 따라 붙는다', async ({ page }) => {
+    await boot(page, CREATE);
+    await expect(page.locator('.pj-tile[data-pick]')).toHaveCount(0);      // 첫 화면에는 아카이브가 없다
+    await page.locator('[data-act="pick-img"]').click();
+    await expect(page.locator('.modal')).toBeVisible();
+    await page.locator('.modal .pj-tile[data-pick]').nth(0).click();
+    await page.locator('.modal .pj-tile[data-pick]').nth(1).click();
+    await page.locator('.modal-f button', { hasText: '넣기' }).click();
+    await expect(page.locator('.cr-src')).toContainText('2건 선택');
+    await expect(page.locator('.cr-src')).toContainText('cm');
+    await expect(page.locator('.split-r')).toContainText('2');
   });
 
   test('검토로 넘어가면 6줄 요약 + 수정 › 이 돌아간다(B5-Project-Create-Review)', async ({ page }) => {
     await boot(page, CREATE);
-    await page.locator('.panel-f button', { hasText: '프로젝트 만들기' }).click();
+    await page.locator('#cr-name').fill('남원 비닐하우스 2026');
+    await page.locator('.panel-f button', { hasText: '다음 · 검토' }).click();
     expect(param(page, 'step')).toBe('review');
     await expect(page.locator('.split-l h2')).toHaveText('남원 비닐하우스 2026');
     await expect(page.locator('.split-l table tbody tr')).toHaveCount(6);
-    await expect(page.locator('.split-r')).toContainText('모든 항목 입력');
+    await expect(page.locator('.split-r')).toContainText('확인하고 만들기');
     await page.locator('.split-l button', { hasText: '수정' }).first().click();
     expect(param(page, 'step')).toBe(null);
+  });
+
+  test('이름이 없으면 넘어가지 않는다', async ({ page }) => {
+    await boot(page, CREATE);
+    await page.locator('.panel-f button', { hasText: '다음 · 검토' }).click();
+    expect(param(page, 'step')).toBe(null);
+    await expect(page.locator('#say')).toContainText('이름');
   });
 
   test('만들면 목록에 실제로 나타난다(세션 저장)', async ({ page }) => {
     await boot(page, CREATE);
     await page.locator('#cr-name').fill('남원 비닐하우스 시험');
-    await page.locator('.panel-f button', { hasText: '프로젝트 만들기' }).click();
+    await page.locator('.panel-f button', { hasText: '다음 · 검토' }).click();
     await page.locator('.panel-f button', { hasText: '프로젝트 만들기' }).click();
     await page.waitForURL(/ai-project\.html\?pid=pj-new/);
     await expect(page.locator('#page-head h1')).toHaveText('남원 비닐하우스 시험');
