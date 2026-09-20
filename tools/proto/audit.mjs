@@ -43,6 +43,9 @@ const SCREENS = [
   // 스크롤 엔진이 통째로 죽었는데, 이 목록에 없어서 점검기가 놓쳤다.
   ['scrub/index', '메인 · 스크럽 필름'],
   ['map-drift', '표류 예측 지도'],
+  // 로그인 없이 보는 공개 게시판 — 메인 톤(2026-09-20)
+  ['site/notice', '공개 · 공지사항'],
+  ['site/usecase', '공개 · 활용 사례'],
 ];
 
 const only = process.argv[2];
@@ -68,6 +71,10 @@ const VP = process.env.VP ? process.env.VP.split('x').map(Number) : [1996, 745];
 const page = await browser.newPage({ viewport: { width: VP[0], height: VP[1] } });
 await page.addInitScript(() => { try { localStorage.setItem('lx_logged_in', '1'); } catch { /* 무시 */ } });
 
+/* 공개 화면은 **로그인 없이** 다시 한 번 본다. 관문에 걸리면 그것이 잘못이다.
+   (2026-09-20: 메인에서 `서비스 지원` 을 걸어 놓고 눌러 보니 로그인으로 튕겼다) */
+const PUBLIC = ['scrub/index', 'site/notice', 'site/usecase', 'login'];
+
 const report = [];
 for (const [id, name] of list) {
   const errs = [];
@@ -77,6 +84,14 @@ for (const [id, name] of list) {
 
   const found = { id, name, errs, over: 0, inner: [], empty: [], dead: [], img: [], unnamed: 0, links: [], dev: [] };
   try {
+    if (PUBLIC.includes(id)) {
+      const ctx = await browser.newContext({ viewport: { width: VP[0], height: VP[1] } });   // 로그인 안 한 창
+      const g = await ctx.newPage();
+      await g.goto(`http://127.0.0.1:${PORT}/landxi/proto/${id}.html`, { waitUntil: 'domcontentloaded', timeout: 25000 }).catch(() => {});
+      await g.waitForTimeout(900);
+      if (/login\.html/.test(g.url())) found.errs.push('공개 화면인데 로그인으로 튕긴다');
+      await ctx.close();
+    }
     await page.goto(`http://127.0.0.1:${PORT}/landxi/proto/${id}.html`, { waitUntil: 'networkidle', timeout: 30000 });
     await page.waitForTimeout(1200);
 
