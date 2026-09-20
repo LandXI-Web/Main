@@ -1,5 +1,6 @@
 /* 공지사항 — 선택 2 "분할 열람": 위 = 구분 건수 타일 4 + 검색, 좌 = 목록, 우 = 열람 판. 원판 B6-Support-Notice-Opt2 · -Detail · -Empty.
    원본 기능 1:1 — 구분(전체/긴급/일반/업무) · 제목+내용 검색 · 초기화 · Enter · 고정 글 위 · 열람(구분/제목/등록일/내용/첨부/목록 · Esc) · ?notice=<id> · 페이저 10/20/50 · 빈 상태.
+   주소는 상태로 쓰되 **화면 글자로는 적지 않는다**(2026-09-21).
    URL: ?cat=urgent&q=…&page=2&size=20&notice=7   (notice=0 = 열람 판을 닫은 상태 · 없으면 첫 행이 열린다) */
 import { mountPager, bindRows, ymd } from './shell.js';
 import { boot, setCrumb, readQ, writeQ, fileRow, bindDownloads, stagger, announce, icon, esc, $, $$ } from './support.js';
@@ -114,8 +115,14 @@ function init() {
       pane.innerHTML = `<div class="empty sp-pane-empty${swap ? ' sp-swap' : ''}">${icon('notice', 30)}<p class="empty-w">${all.length ? '열람 판 — 목록에서 공지를 고르면 여기에 열린다' : '열람 판 — 목록에 행이 없어 비어 있다'}</p></div>`;
       return;
     }
+    /* 오른쪽 끝 — 예전에는 `?notice=7` 을 그대로 적었다. 주소창의 상태를 화면 글자로
+       옮겨 적은 셈이라 걷어냈다(2026-09-21 기준: 주소는 상태로 쓰되 글자로는 적지 않는다).
+       자리를 비우지 않고 **몇 번째 공지인지**를 적는다 — 자주 묻는 질문 열람 판의
+       `질문 05 / 13` 과 같은 자리·같은 말이다. */
+    const no = NOTICES.findIndex((v) => v.id === n.id) + 1;
+    const pad = (v) => String(v).padStart(2, '0');
     pane.innerHTML = `<article class="sp-read${swap ? ' sp-swap' : ''}" aria-labelledby="n-title">
-<div class="sp-meta">${catSpan(n.category)}<i></i><span class="lb">등록일</span><span class="n sp-meta-d">${ymd(n.date)}</span>${n.pinned ? `<i></i><span class="sp-meta-pin">${icon('pin', 14)}<span class="mic">상단 고정</span></span>` : ''}<span class="sp"></span><span class="n mic sp-meta-q">?notice=${n.id}</span>${deep ? `<span class="mic sp-meta-deep">${fromDash ? '대시보드 공지 스트립에서 진입' : '공지 링크로 진입'}</span>` : ''}</div>
+<div class="sp-meta">${catSpan(n.category)}<i></i><span class="lb">등록일</span><span class="n sp-meta-d">${ymd(n.date)}</span>${n.pinned ? `<i></i><span class="sp-meta-pin">${icon('pin', 14)}<span class="mic">상단 고정</span></span>` : ''}<span class="sp"></span><span class="lb">공지</span><span class="n sp-meta-q">${pad(no)} / ${pad(NOTICES.length)}</span>${deep ? `<i></i><span class="mic sp-meta-deep">${fromDash ? '대시보드 공지 스트립에서 진입' : '공지 링크로 진입'}</span>` : ''}</div>
 <h2 class="panel-t sp-read-t" id="n-title">${esc(n.title)}</h2>
 <hr class="hr hr--ink">
 <div class="prose sp-prose">${esc(n.content)}</div>

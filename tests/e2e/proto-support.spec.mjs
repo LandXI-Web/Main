@@ -106,11 +106,14 @@ test.describe('공지사항', () => {
     expect(page.url()).not.toContain('q=');
   });
   test('딥링크 ?notice=7 → 그 글이 열리고 경로가 `공지사항 열람` · 첨부 2 · 첨부 = 다운로드 토스트', async ({ page }) => {
+    // 2026-09-21 — 열람 판 오른쪽 끝의 `?notice=7` 표기를 걷었다(주소는 상태로 쓰되
+    // 화면 글자로는 적지 않는다). 그 자리에는 몇 번째 공지인지가 들어간다.
     await boot(page, 'proto/notice.html?notice=7');
     await expect(page.locator('#n-title')).toHaveText('정사영상 AI 모델 v2.1 배포 완료');
     await expect(page.locator('#n-rows tr[data-id="7"]')).toHaveAttribute('aria-selected', 'true');
     await expect(page.locator('#mast .crumbs li[aria-current]')).toHaveText('공지사항 열람');
-    await expect(page.locator('.sp-meta-q')).toHaveText('?notice=7');
+    await expect(page.locator('.sp-meta-q')).toHaveText('02 / 08');
+    await expect(page.locator('#main')).not.toContainText('?notice=');
     await expect(page.locator('#n-pane .sp-file')).toHaveCount(2);
     await page.locator('#n-pane .sp-file').first().click();
     await expect(page.locator('#say')).toContainText('다운로드를 시작합니다 · v2.1_release_notes.pdf');

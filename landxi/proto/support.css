@@ -58,7 +58,7 @@ body.lx.sp #main{ padding-bottom:8px; }
 .sp-meta .lb{ letter-spacing:.02em; }
 .sp-meta-d{ font-size:15px; letter-spacing:.02em; }
 .sp-meta-pin{ display:inline-flex; align-items:center; gap:6px; color:var(--grey); }
-.sp-meta-q{ letter-spacing:.02em; }
+.sp-meta-q{ font-size:15px; letter-spacing:.02em; }
 .sp-meta-deep{ color:var(--accent); overflow:hidden; text-overflow:ellipsis; }
 .sp .sp-read-t{ margin:12px 0 16px; font-size:27px; line-height:36px; letter-spacing:-.015em; }
 .sp .sp-prose{ margin-top:17px; font-size:16.5px; line-height:27px; }
@@ -447,6 +447,9 @@ body.lx.sp #main{ padding-bottom:8px; }
   .lx.sp #page-title{ font-size:25px; line-height:31px; }
   .sp-top{ height:92px; margin:-12px 0 10px; }
   .sp .sp-band,.sp .sp-band .tile{ height:92px; }
+  /* 큰 숫자를 3px 더 내린다 — 34px 이면 타일 맨 밑 `고정 2` 의 글자 아래가
+     띠 밑줄에 닿는다(1280×720 에서 1px 남았다). 닿아 보이면 잘린 것과 같다. */
+  .sp .sp-band .tile-v b{ font-size:31px; }
   .sp-top .inp,.sp-top .sel > select,.sp-top .btn,.sp-top .btn-br{ height:36px; }
   .sp-search::before,.ct-filter::before{ height:66px; }
   .sp-hint{ margin-top:4px; }
