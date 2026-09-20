@@ -12,6 +12,7 @@
 //   5) 성장 점검          레지스트리 자체의 건강 검사(중복 id · 고아 모듈 · 미충족 의존성)
 import { CARDS, DEPLOYS, CORE_MODULES, EXT_MODULES, SCOPES, cardById, extModules, modelsOfCard } from './cards.js';
 import { SERVICES } from './services.js';
+import { RESULTS } from './results.js';   // 숫자의 출처 검사에 쓴다(countCheck)
 
 /* ══ 1. 분류 축 — 카드가 늘어날수록 목록이 아니라 '찾기'가 된다 ═══════════ */
 /** 업무 분야. 새 카드는 반드시 하나를 고른다(없으면 여기에 추가하고 그 이유를 적는다). */
@@ -218,7 +219,41 @@ export function healthCheck() {
     if (!profileOf(d.region)) issues.push({ kind: '지역 프로파일 없음', at: `${d.id} · ${d.region}` });
   }
   for (const key of Object.keys(EXT_MODULES)) if (!CARDS.some((c) => c.ext === key)) issues.push({ kind: '고아 전용 모듈 묶음', at: key });
+  /* 숫자의 출처(countCheck)는 여기 섞지 않는다 — 성격이 다르다.
+     healthCheck 는 **구조**가 성한가를 본다(없는 참조 · 고아 모듈 · 프로파일 없는 배포본).
+     숫자가 맞는가는 **사람이 정해야 하는 일**이라 배포를 막는 대신 드러내 놓는다.
+     생산 관리가 countCheck() 를 읽어 보여 준다. */
   return { ok: issues.length === 0, issues };
+}
+
+/* ── 숫자의 출처 검사 (2026-09-20) ───────────────────────────────────────
+ * `real: true` 라고 적힌 숫자는 **결과 대장에서 따라갈 수 있어야 한다.**
+ * 그러지 않으면 화면마다 다른 수가 뜬다 — 실제로 그런 일이 있었다:
+ * 2027년 해양쓰레기 포털이 앞 배포본의 38,057건을 제 실적처럼 내걸고 있었고,
+ * 같은 서비스의 결과 대장 합은 3,938건이었다.
+ *
+ * 단위가 다르면 어긋난 것이 아니다 — 비닐하우스는 9,664 **동**이 1,674 **필지**에
+ * 걸쳐 있다. 세는 대상이 다르므로 그대로 둔다. 같은 단위인데 다를 때만 잡는다.
+ */
+export function countCheck() {
+  const issues = [];
+  for (const s of SERVICES) {
+    if (!s.real || !s.count) continue;
+    const rs = (s.results || []).map((id) => RESULTS.find((r) => r.id === id)).filter(Boolean);
+    if (!rs.length) {
+      issues.push({ kind: '실측이라는데 출처가 없음', at: `${s.id} · ${s.count}${s.unit || ''}`,
+        why: '결과 대장에 연결된 산출이 없다 — results 를 잇거나 real 을 내려야 한다' });
+      continue;
+    }
+    const sameUnit = rs.every((r) => r.unit === s.unit);
+    if (!sameUnit) continue;                       // 단위가 다르면 세는 대상이 다른 것이다
+    const sum = rs.reduce((a, r) => a + (r.stats?.count || 0), 0);
+    if (Math.abs(sum - s.count) >= 1) {
+      issues.push({ kind: '실측과 결과 대장이 다름', at: `${s.id} · ${s.count}${s.unit} ≠ ${sum}${s.unit}`,
+        why: `결과 ${rs.map((r) => r.id).join(' + ')} 의 합과 맞지 않는다 — 어느 쪽이 맞는지 정해야 한다` });
+    }
+  }
+  return { ok: !issues.length, issues };
 }
 
 /** 한눈 요약 — 관리자 화면 머리에 쓰는 성장 지표. */
