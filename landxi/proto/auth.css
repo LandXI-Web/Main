@@ -1,0 +1,136 @@
+/* 인증 가족(계정 신청 · 아이디 찾기 · 비밀번호 찾기 + 결과) — 마스터 design-canvas/v2/B6-Auth-*.dc.html.
+   승인된 로그인 카드(login.css)를 그대로 쓴다: 액자 · CI · 필름 · 밑줄 필드(.lx-field) · 체크(.lx-check) · 2차 버튼(.lg-signup__a) · 문의 · 푸터.
+   여기 있는 것은 로그인에 없는 것뿐: 잉크 1차 버튼 · 빨간 검증 문구 · 결과 판 · 계정 신청(좌 40 / 우 60 · 높이 600 · 단계 표시 · 약관 뷰어 · 2열 폼). */
+
+/* 1차 버튼 — 법전대로 잉크 채움(액센트 채움은 로그인 한 곳의 예외). 비활성 = 회색 채움. */
+.au-btn1{ display:flex; align-items:center; justify-content:center; gap:8px; flex:1 1 0; min-width:0; height:56px; margin:0; padding:0; border:0; border-radius:0; background:var(--lx-ink); color:#FFFFFF; cursor:pointer; text-decoration:none; white-space:nowrap;
+  font-family:var(--font-display); font-weight:700; font-size:20px; letter-spacing:.02em; transition:transform var(--lx-hover) var(--lx-hover-ease); }
+.au-btn1 svg{ flex:none; transition:transform var(--lx-hover) var(--lx-hover-ease); }
+.au-btn1:hover svg{ transform:translateX(4px); }
+.au-btn1--plain:hover{ transform:translateY(-2px); }
+.au-btn1:disabled{ background:#CCCCCC; cursor:default; }
+.au-btn1:disabled svg,.au-btn1:disabled:hover{ transform:none; }
+.lx .au-btn1:focus-visible,.lx .au-actions .lg-signup__a:focus-visible{ outline:2px solid var(--lx-accent); outline-offset:3px; }
+.au-actions{ display:flex; gap:10px; margin-top:42px; }
+.au-actions .lg-signup__a{ flex:1 1 0; width:auto; min-width:0; background:transparent; cursor:pointer; padding:0; border-radius:0; }
+.au-actions .au-s6{ flex:.6 1 0; } .au-actions .au-s5{ flex:.5 1 0; }
+.au-form.has-error{ margin-top:30px; }
+.au-form.has-error .au-actions{ margin-top:20px; }
+
+/* 검증 문구 — 빨강은 글자에만. 오류 필드의 밑줄은 잉크 2px. */
+.au .lx-field__msg{ margin:5px 0 0; font-size:14px; line-height:18px; color:#D1352B; display:block; }
+.au .lx-field__msg[hidden]{ display:none; }
+.au .lx-field__msg::before{ content:none; }
+.au .lx-field.is-error .lx-field__input{ border-bottom-width:2px; }
+.au .lx-field.is-error .lx-field__label,.au .lx-field.is-focus .lx-field__label{ color:var(--lx-ink); }
+.au-req{ color:var(--lx-accent); font-style:normal; margin-left:4px; }
+.au-hint{ margin:5px 0 0; font-size:14px; line-height:18px; color:var(--lx-grey-2); white-space:nowrap; }
+.au-hint.is-err{ color:#D1352B; }
+.au-num{ font-family:var(--lx-num); font-variant-numeric:tabular-nums; }
+.au-links{ margin:14px 0 0; height:22px; display:flex; justify-content:center; align-items:center; gap:8px; }
+.au-links .lg-sep{ font-size:16px; line-height:22px; }
+
+/* 꼬리표 · 칩 */
+.au-chip,.au-tag{ display:inline-block; height:24px; line-height:22px; padding:0 9px; border:1px solid var(--lx-hair); color:var(--lx-grey-2); font-size:14px; white-space:nowrap; font-style:normal; font-family:var(--lx-body); font-weight:400; letter-spacing:0; }
+.au-tag{ border-style:dashed; border-color:#CCCCCC; }
+
+/* ── 결과 판 ─────────────────────────────────────────────────────────── */
+.au-result{ position:absolute; left:var(--lg-pad); right:var(--lg-pad); top:24px; bottom:32px; display:flex; flex-direction:column; }
+.au-result .lg-h1{ display:flex; align-items:center; gap:12px; white-space:nowrap; }
+.au-result-b{ flex:1; display:flex; flex-direction:column; justify-content:center; }
+.au-mark{ width:48px; height:48px; border:1px solid var(--lx-accent); color:var(--lx-accent); display:flex; align-items:center; justify-content:center; }
+.au-mark--fail{ border-color:var(--lx-ink); color:var(--lx-ink); }
+.au-lead{ margin:24px 0 0; font-family:var(--font-display); font-weight:700; font-size:31px; line-height:42px; letter-spacing:-.02em; word-break:keep-all; }
+.au-lead--id{ font-family:var(--lx-num); font-weight:400; font-size:32px; letter-spacing:.01em; color:var(--lx-accent); font-variant-numeric:tabular-nums; }
+.au-msg{ margin:12px 0 0; font-size:16px; line-height:24px; color:var(--lx-grey-2); word-break:keep-all; }
+.au-result .au-actions{ margin-top:0; }
+.au-result .lg-contact{ height:22px; align-items:center; }
+.au-result [hidden]{ display:none!important; }
+.au-mark,.au-lead,.au-msg{ animation:au-in 600ms cubic-bezier(.15,1,.3,1) both; }
+.au-lead{ animation-delay:60ms; } .au-msg{ animation-delay:120ms; }
+@keyframes au-in{ from{ transform:translateY(14px); clip-path:inset(0 0 100% 0); } to{ transform:none; clip-path:inset(-20px); } }
+
+/* ── 계정 신청 — 같은 카드, 좌 필름 40 % / 우 폼 60 % · 높이 600 ───────── */
+body.au--signup{ --lg-card-h:600px; overflow:auto; }
+.au--signup .lg{ min-height:800px; }
+.au--signup .lg-film{ flex-basis:40%; }
+.au--signup .lg-film__v{ object-position:42% 50%; }
+.au--signup .lg-panel{ flex:1 1 0; }
+.au-head{ display:flex; align-items:flex-end; white-space:nowrap; }
+.au-steps{ margin:0 0 6px auto; padding:0; list-style:none; display:flex; align-items:center; gap:10px; }
+.au-steps li{ display:flex; align-items:center; gap:6px; color:#CCCCCC; font-family:var(--font-display); font-weight:700; font-size:15px; line-height:22px; letter-spacing:-.01em; }
+.au-steps li > span{ display:flex; align-items:center; gap:6px; padding-bottom:4px; border-bottom:2px solid transparent; }
+.au-steps li b{ font-family:var(--lx-num); font-weight:400; font-size:14px; }
+.au-steps li + li::before{ content:""; width:28px; height:1px; background:#CCCCCC; margin-right:4px; }
+.au-steps li.is-done,.au-steps li[aria-current="step"]{ color:var(--lx-ink); }
+.au-steps li.is-done::before,.au-steps li[aria-current="step"]::before{ background:var(--lx-ink); }
+.au-steps li[aria-current="step"] > span{ border-bottom-color:var(--lx-accent); }
+.au-steps li[aria-current="step"] b{ color:var(--lx-accent); }
+.au-steps li svg{ display:none; } .au-steps li.is-done svg{ display:block; }
+.au--signup .lg-lead{ margin-top:6px; }
+.au-step[hidden]{ display:none; }
+.au-step > *{ animation:au-in 500ms cubic-bezier(.15,1,.3,1) both; }
+.au-step .au-actions{ position:absolute; left:var(--lg-pad); right:var(--lg-pad); bottom:28px; margin:0; animation:none; }
+
+/* 1단계 — 좌 동의 목록(선택한 약관 = 틴트 + 파랑 3px) / 우 약관 전문 뷰어 */
+.au-terms{ margin-top:20px; display:flex; gap:20px; height:366px; }
+.au-agree{ flex:none; width:318px; }
+.au-row{ position:relative; display:flex; align-items:center; height:54px; border-bottom:1px solid var(--lx-hair); }
+.au-row--all{ border-top:1px solid var(--lx-ink); border-bottom-color:var(--lx-ink); }
+.au-row--sub{ height:46px; }
+.au-row .lx-check{ flex:1; min-width:0; align-self:stretch; padding-left:10px; font-family:var(--lx-body); font-weight:400; font-size:15.5px; letter-spacing:-.02em; white-space:nowrap; }
+.au-row--all .lx-check{ font-weight:500; }
+.au-row--sub .lx-check{ padding-left:38px; font-size:15px; }
+.au-row .lx-check em{ font-style:normal; font-size:14px; font-weight:500; color:var(--lx-grey-2); }
+.au-row .lx-check em.is-req{ color:var(--lx-accent); }
+.au-row .lx-check input:focus-visible + .lx-check__box{ outline:2px solid var(--lx-accent); }
+.au-view{ flex:none; width:36px; align-self:stretch; border:0; border-radius:0; background:transparent; padding:0; cursor:pointer; font-size:16px; color:#CCCCCC; font-family:var(--lx-body); transition:transform var(--lx-hover) var(--lx-hover-ease); }
+.au-row:hover .au-view{ transform:translateX(4px); color:var(--lx-ink); }
+.au-row[data-sel]{ background:var(--tint-1); }
+.au-row[data-sel]::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--lx-accent); }
+.au-row[data-sel] .au-view{ color:var(--lx-accent); }
+.au-doc{ flex:1; min-width:0; border:1px solid var(--lx-hair); padding:14px 18px; overflow:auto; scrollbar-width:thin; scrollbar-color:var(--lx-grey-2) var(--lx-hair); }
+.au-doc-h{ margin:0; display:flex; align-items:baseline; gap:8px; white-space:nowrap; font-family:var(--font-display); font-weight:700; font-size:16px; line-height:22px; letter-spacing:-.01em; }
+.au-doc-h span{ font-family:var(--lx-body); font-weight:400; font-size:14px; color:var(--lx-grey-2); }
+.au-doc-b{ font-size:14.5px; line-height:23px; color:var(--lx-grey-2); word-break:keep-all; }
+.au-doc-b h3{ margin:10px 0 0; font-size:14.5px; font-weight:500; line-height:22px; color:var(--lx-ink); }
+.au-doc-b p{ margin:0; }
+.au-doc-b ol{ margin:2px 0 0; padding-left:20px; }
+.au-doc-b ol.tc-circ{ list-style:none; padding-left:0; counter-reset:c; }
+.au-doc-b ol.tc-circ > li{ counter-increment:c; padding-left:22px; position:relative; }
+.au-doc-b ol.tc-circ > li::before{ content:counter(c) ")"; position:absolute; left:2px; font-family:var(--lx-num); }
+
+/* 2단계 — 7필드 2열 · 행 93 */
+.au-grid{ margin-top:18px; display:grid; grid-template-columns:1fr 1fr; column-gap:28px; row-gap:6px; grid-auto-rows:93px; }
+.au-grid .lx-field{ margin:0; padding:0; min-width:0; }
+.au-grid .lx-field--wide{ grid-column:1 / 3; }
+.au-sel{ position:relative; display:block; }
+.au-sel select{ appearance:none; -webkit-appearance:none; cursor:pointer; padding-right:24px; }
+.au-sel select.is-empty{ color:var(--lx-grey); }
+.au-sel select option{ color:var(--lx-ink); }
+.au-sel::after{ content:""; position:absolute; right:5px; bottom:17px; width:7px; height:7px; border-right:1.5px solid var(--lx-grey-2); border-bottom:1.5px solid var(--lx-grey-2); transform:rotate(45deg); pointer-events:none; }
+
+/* 3단계 — 접수 완료 */
+.au-done{ margin-top:40px; display:flex; gap:20px; align-items:flex-start; }
+.au-done .au-mark{ flex:none; width:44px; height:44px; animation:none; }
+.au-done h2{ margin:0; font-family:var(--font-display); font-weight:700; font-size:28px; line-height:36px; letter-spacing:-.02em; white-space:nowrap; }
+.au-done p{ margin:8px 0 0; font-size:16px; line-height:25px; color:var(--lx-grey-2); word-break:keep-all; }
+.au-done p b{ color:var(--lx-ink); font-weight:500; }
+.au-kv{ margin:36px 0 0; border-top:1px solid var(--lx-ink); }
+.au-kv > div{ height:56px; border-bottom:1px solid var(--lx-hair); display:flex; align-items:center; white-space:nowrap; }
+.au-kv dt{ width:120px; flex:none; font-size:14px; letter-spacing:.04em; color:var(--lx-grey-2); }
+.au-kv dd{ margin:0; font-size:16px; letter-spacing:-.01em; min-width:0; overflow:hidden; text-overflow:ellipsis; }
+.au-done-tag{ margin:10px 0 0; }
+
+@media (prefers-reduced-motion: reduce){
+  .au-mark,.au-lead,.au-msg,.au-step > *{ animation:none!important; }
+  .au-btn1,.au-btn1 svg,.au-view{ transition:none!important; }
+}
+@media (max-width: 899px){
+  .au-result{ position:static; padding-bottom:4px; gap:28px; }
+  .au-step .au-actions{ position:static; margin-top:24px; }
+  .au-terms{ flex-direction:column; height:auto; } .au-agree{ width:auto; } .au-doc{ height:260px; flex:none; }
+  .au-grid{ grid-template-columns:1fr; grid-auto-rows:auto; row-gap:12px; } .au-grid .lx-field--wide{ grid-column:auto; }
+  .au-head{ flex-wrap:wrap; row-gap:8px; } .au-steps{ margin-left:0; }
+  .au--signup .lg-panel{ flex:none; }
+}

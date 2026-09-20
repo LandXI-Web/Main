@@ -1,1 +1,97 @@
-<!doctype html><html lang="ko" data-stub="my" data-first="" data-base=""><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>설계 원판 — Land-XI</title><link rel="icon" href="../assets/images/favicon_landxi.png"><link rel="stylesheet" href="fonts-system.css"><link rel="stylesheet" href="stub.css"></head><body><script type="module" src="stub.js"></script><noscript>이 메뉴는 아직 구현 전입니다. <a href="review/masters.html">원판 갤러리</a>에서 설계 원판을 볼 수 있습니다.</noscript></body></html>
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>마이 페이지 — Land-XI</title>
+<link rel="icon" href="../assets/images/favicon_landxi.png">
+<script src="shell-gate.js"></script>
+<link rel="stylesheet" href="fonts-system.css">
+<link rel="stylesheet" href="shell.css">
+<link rel="stylesheet" href="parts.css">
+<link rel="stylesheet" href="account.css">
+</head><body class="lx">
+<!-- 마스터: design-canvas/v2/B6-My-*.dc.html (채택 = 선택 1 · 좌 신원 원장 372 / 우 디스크 판) · 기록 design-canvas/v2/notes/B6-account.md
+     원본: landxi7/mypage.html 1:1 — #view-main / #view-edit · 모달 4(본인 확인 · 비밀번호 변경 · 증량 신청 · 브랜드 심볼) · ?mode=edit 딥링크. -->
+<main id="main">
+
+  <!-- ══ 열람 뷰(#view-main) ══ -->
+  <div class="my" id="view-main">
+    <section class="my-l" aria-labelledby="my-ident-h">
+      <header class="my-sec"><span class="my-sec-ic" data-ic="user"></span><h2 id="my-ident-h" class="d">회원 정보</h2><span class="sp"></span><em class="tag">시연</em></header>
+      <p class="my-hello" data-in><b class="d" id="profile-name"></b><span>님 반갑습니다.</span></p>
+      <dl class="my-ledger" id="my-ledger" data-in></dl>
+      <div class="my-acts" data-in>
+        <button type="button" class="btn-br" id="btn-edit-profile"><span data-ic="edit"></span>회원정보 수정</button>
+        <button type="button" class="btn-br" id="btn-change-pwd"><span data-ic="lock"></span>비밀번호 변경</button>
+      </div>
+      <span class="sp"></span>
+      <header class="my-sec my-sec--rule"><span class="my-sec-ic" data-ic="image"></span><h2 class="d">브랜드 설정</h2><span class="sp"></span><button type="button" class="link link--ink" id="btn-brand-edit">수정 ›</button></header>
+      <div class="my-brand" data-in>
+        <div class="railhead" id="bs-current" aria-hidden="true"></div>
+        <div class="my-brand-b">
+          <p class="my-brand-t">사이드바 브랜드 심볼</p>
+          <p class="my-brand-w"><span class="lb">현재 가로 크기</span><b class="d" id="bs-current-w"></b><span class="mic" id="bs-current-u">px</span></p>
+          <div class="ruler" id="bs-ruler" aria-hidden="true"><i class="ruler-v"></i><i class="ruler-k"></i><span class="n ruler-a">16px</span><span class="n ruler-b">50px</span></div>
+        </div>
+      </div>
+      <p class="mic my-brand-note">사이드바 상단에 표시되는 심볼 이미지입니다. PNG 또는 SVG 파일로 교체할 수 있습니다.</p>
+      <p class="my-quiet"><button type="button" class="my-quiet-a" id="btn-withdraw">계정 탈퇴 ›</button><em class="tag">추정</em></p>
+    </section>
+
+    <section class="my-r" aria-labelledby="my-disk-h">
+      <header class="my-sec my-sec--cta"><span class="my-sec-ic" data-ic="data"></span><h2 id="my-disk-h" class="d">내 디스크 사용량</h2><em class="tag">시연</em><span class="sp"></span>
+        <button type="button" class="btn btn--l" id="btn-request-storage"><span data-ic="plus"></span>내 디스크 증량 신청</button></header>
+      <div class="my-hero" data-in>
+        <p class="my-pct"><b class="d" id="disk-pct"></b><span class="my-pct-u"><i class="d">%</i><span class="mic">사용 중</span></span></p>
+        <dl class="my-stats">
+          <div><dt class="lb">사용</dt><dd><b class="d is-acc" id="disk-used"></b><span class="mic">GB</span></dd></div>
+          <div><dt class="lb">잔여</dt><dd><b class="d" id="disk-free"></b><span class="mic">GB</span></dd></div>
+          <div><dt class="lb">전체</dt><dd><b class="d" id="disk-total"></b><span class="mic">GB</span></dd></div>
+        </dl>
+      </div>
+      <div class="plate" data-in>
+        <p class="plate-legend"><span><i class="lg-used"></i>사용</span><span><i class="lg-free"></i>잔여</span><span id="plate-pend" hidden><i class="lg-ghost"></i>검토 중 증량 <b class="n" id="plate-pend-v"></b></span><span class="sp"></span><span class="n">1칸 = 16 GB</span></p>
+        <div class="plate-grid" id="plate" role="img"></div>
+        <div class="plate-axis n" id="plate-axis" aria-hidden="true"></div>
+      </div>
+      <span class="sp my-gap"></span>
+      <header class="my-sec"><span class="my-sec-ic" data-ic="clock"></span><h2 class="d">내 디스크 증량 신청 이력</h2><span class="n my-sec-n" id="history-count" aria-live="polite"></span></header>
+      <div class="my-hist tbl-wrap" data-in>
+        <table class="tbl my-tbl" id="history-table">
+          <colgroup><col class="c-cap"><col><col class="c-when"><col class="c-st"><col class="c-note"></colgroup>
+          <thead><tr><th>신청 용량 (GB)</th><th>신청 사유</th><th>신청 일시</th><th>처리 여부</th><th>처리 내용</th></tr></thead>
+          <tbody id="history-tbody"></tbody>
+        </table>
+        <div class="my-empty" id="history-empty" hidden><p>조회된 데이터가 없습니다.</p><p class="mic">증량 신청을 저장하면 신청 일시 순으로 이곳에 쌓입니다.</p></div>
+      </div>
+      <button type="button" class="my-new" id="btn-request-storage-2"><span data-ic="plus"></span><span class="my-new-t">새 증량 신청</span><span class="mic n">10 – 10,240 GB</span><span class="sp"></span><span class="mic">신청 → 검토 중 → 승인 · 반려</span></button>
+    </section>
+  </div>
+
+  <!-- ══ 회원정보 수정 뷰(#view-edit) — 좌 원장이 그 자리에서 입력으로 · 우 정보 이용 동의 설정 ══ -->
+  <form class="my my--edit" id="view-edit" hidden novalidate>
+    <section class="my-l" aria-labelledby="ef-h">
+      <header class="my-sec my-sec--rule"><span class="my-sec-ic" data-ic="user"></span><h2 id="ef-h" class="d">기본 정보</h2><span class="sp"></span><span class="mic"><em class="req">*</em> 필수 입력</span></header>
+      <div class="uf uf--ro"><label class="uf-l" for="ef-name">이름</label><div class="uf-i"><input id="ef-name" readonly aria-describedby="ef-name-h"><span class="mic dim">변경 불가</span></div><p class="uf-h" id="ef-name-h">이름은 관리자에게 문의해 변경할 수 있습니다.</p></div>
+      <div class="uf uf--ro"><label class="uf-l" for="ef-email">아이디 (이메일)</label><div class="uf-i"><input id="ef-email" class="n" readonly aria-describedby="ef-email-h"><span class="mic dim">변경 불가</span></div><p class="uf-h" id="ef-email-h">아이디는 변경할 수 없습니다.</p></div>
+      <div class="uf" id="ef-field-phone"><label class="uf-l" for="ef-phone">전화번호<em class="req">*</em></label><div class="uf-i"><input id="ef-phone" class="n" type="tel" autocomplete="tel" placeholder="010-0000-0000" aria-describedby="ef-phone-e"></div><p class="uf-e" id="ef-phone-e" role="alert" hidden></p></div>
+      <div class="uf"><label class="uf-l" for="ef-rank">직위</label><div class="uf-i"><input id="ef-rank" placeholder="예) 주무관"></div></div>
+      <div class="uf"><label class="uf-l" for="ef-dept">부서<em class="req">*</em></label><div class="uf-i uf-i--sel"><select id="ef-dept"></select></div></div>
+    </section>
+    <section class="my-r" aria-labelledby="cs-h">
+      <header class="my-sec my-sec--rule"><span class="my-sec-ic" data-ic="consent"></span><h2 id="cs-h" class="d">정보 이용 동의 설정</h2></header>
+      <label class="ck cs-row"><input type="checkbox" id="consent-marketing"><span class="chip">선택</span><b>홍보를 위한 정보수집 동의</b></label>
+      <div class="cs-box">
+        <p class="cs-box-t">회원정보 수집 및 이용에 관한 사항</p>
+        <dl><div><dt class="lb">수집·이용 목적</dt><dd>광고 홍보 활동 등을 위한 목적으로만 수집됩니다.</dd></div>
+            <div><dt class="lb">수집·이용 항목</dt><dd>휴대전화 번호, 이메일, SMS/이메일 수신 동의</dd></div></dl>
+        <p class="cs-box-n">선택 항목에 동의하지 않은 경우도 회원가입 및 일반적인 서비스를 이용할 수 있습니다.</p>
+      </div>
+      <label class="ck cs-row cs-row--sub"><input type="checkbox" id="consent-sms"><span class="chip">선택</span>광고성 정보 SMS 수신 동의</label>
+      <label class="ck cs-row cs-row--sub"><input type="checkbox" id="consent-email"><span class="chip">선택</span>광고성 정보 Email 수신 동의</label>
+      <p class="mic cs-note">홍보를 위한 정보수집 동의를 해제하면 SMS · Email 수신 동의도 함께 해제됩니다.</p>
+    </section>
+    <footer class="my-bar"><span class="mic">저장하면 마이 페이지로 돌아갑니다.</span><span class="sp"></span><button type="button" class="btn-br my-bar-c" id="btn-edit-cancel">취소</button><button type="submit" class="btn btn--l" id="btn-edit-save">저장</button></footer>
+  </form>
+
+</main>
+<script type="module" src="mypage.js"></script>
+</body></html>

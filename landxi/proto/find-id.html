@@ -1,1 +1,71 @@
-<!doctype html><html lang="ko" data-stub="auth" data-first="FindId" data-base=""><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>설계 원판 — Land-XI</title><link rel="icon" href="../assets/images/favicon_landxi.png"><link rel="stylesheet" href="fonts-system.css"><link rel="stylesheet" href="stub.css"></head><body><script type="module" src="stub.js"></script><noscript>이 메뉴는 아직 구현 전입니다. <a href="review/masters.html">원판 갤러리</a>에서 설계 원판을 볼 수 있습니다.</noscript></body></html>
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>아이디(이메일) 찾기 — Land-XI 플랫폼</title>
+<link rel="icon" href="../assets/images/favicon_landxi.png">
+<!-- 로그인 전 화면 — 관문(shell-gate.js) · 레일 없음. 승인된 로그인과 같은 카드 가족: system.css + login.css 를 그대로 쓰고 auth.css 는 모자란 것만 얹는다. -->
+<link rel="stylesheet" href="system.css">
+<link rel="stylesheet" href="login.css">
+<link rel="stylesheet" href="auth.css">
+</head><body class="lx au" data-page="find-id">
+
+<a class="lx-skip" href="#findForm">본문 건너뛰기</a>
+
+<!-- 마스터: design-canvas/v2/B6-Auth-FindId(-Error).dc.html · 원본: landxi7/find-id.html (문구 · 검증 1:1). 액자 · CI · 필름 · 푸터 = login.html 과 같은 마크업. -->
+<div class="lg" id="lg">
+  <div class="lg-wrap">
+
+    <header class="lg-head">
+      <a class="lg-brand" href="login.html" aria-label="Land-XI 플랫폼 로그인">
+        <img class="lg-brand__ci" src="../assets/brand/landxi-wordmark.png" alt="LAND-XI PLATFORM" width="306" height="17">
+      </a>
+      <p class="lg-intro">LAND-XI의 직관적인 인터페이스를 사용하여 NO-CODE 기반의 AI 학습모델을 구축하고 활용할 수 있습니다.</p>
+    </header>
+
+    <div class="lg-card" id="lgCard">
+      <figure class="lg-film" id="lgPlate" aria-label="디오라마 오프닝 필름">
+        <video class="lg-film__v" id="lgVideo" autoplay muted loop playsinline preload="auto"
+               poster="../assets/proto/film/legs/wfull.webp">
+          <source src="../assets/proto/film/legs/wfull-m.mp4" type="video/mp4" media="(max-width: 900px)">
+          <source src="../assets/proto/film/legs/wfull.mp4" type="video/mp4">
+        </video>
+      </figure>
+
+      <main class="lg-panel" id="main">
+        <h1 class="lg-h1" id="page-title">아이디(이메일) 찾기</h1>
+        <p class="lg-lead">회원가입 시 입력한 이름과 전화번호를 입력해 주세요.</p>
+
+        <form class="lg-form au-form" id="findForm" novalidate>
+          <div class="lx-field" data-field="name">
+            <label class="lx-field__label" for="findName">이름</label>
+            <input class="lx-field__input" id="findName" name="name" type="text" autocomplete="name" placeholder="이름을 입력해 주세요." aria-describedby="findNameMsg" spellcheck="false">
+            <span class="lx-field__rule" aria-hidden="true"></span>
+            <p class="lx-field__msg" id="findNameMsg" role="alert" hidden></p>
+          </div>
+          <div class="lx-field" data-field="phone">
+            <label class="lx-field__label" for="findPhone">전화번호</label>
+            <input class="lx-field__input au-num" id="findPhone" name="phone" type="tel" autocomplete="tel" placeholder="전화번호를 숫자만 입력해 주세요." inputmode="numeric" aria-describedby="findPhoneMsg" spellcheck="false">
+            <span class="lx-field__rule" aria-hidden="true"></span>
+            <p class="lx-field__msg" id="findPhoneMsg" role="alert" hidden></p>
+          </div>
+          <div class="au-actions">
+            <button type="submit" class="au-btn1" id="btnFind"><span>아이디 찾기</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+            <a class="lg-signup__a" id="linkOther" href="find-password.html">비밀번호 찾기</a>
+          </div>
+          <p class="lg-contact"><span class="lg-contact__ink">문의 <b class="lx-num">063-713-1218</b></span><span>· 평일 09:00~18:00</span></p>
+        </form>
+      </main>
+    </div>
+
+    <footer class="lg-foot">
+      <img class="lg-foot__ci" src="../assets/brand/vector/lx-lockup.svg" alt="LX 한국국토정보공사" width="160" height="18">
+      <p class="lg-foot__policy">
+        <a class="lg-foot__ink" href="#privacy" data-policy="privacy">개인정보처리방침</a><span class="lg-sep" aria-hidden="true">|</span><a href="#terms" data-policy="terms">이용약관</a><span class="lg-sep" aria-hidden="true">|</span><a href="#email" data-policy="email">이메일무단수집거부</a>
+      </p>
+      <p class="lg-foot__legal lx-num">Copyright© LX. ALL RIGHTS RESERVED.</p>
+    </footer>
+
+  </div>
+</div>
+
+<script type="module" src="auth.js"></script>
+</body></html>
