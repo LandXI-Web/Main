@@ -1,4 +1,4 @@
-// tools/scrub/assemble.mjs — 월드플라이트 7레그 조립기
+// tools/scrub/assemble.mjs — 월드플라이트 레그 조립기 (13 레그: 01–07 + 08·08b + 09·10·11)
 //
 //   node tools/scrub/assemble.mjs            # 인코딩 + 포스터 + 씸검증 + 매니페스트
 //   node tools/scrub/assemble.mjs --verify   # 인코딩 생략, 씸 diff / 페이스만 재측정
@@ -8,11 +8,13 @@
 // 왜 legs.mjs 와 따로 있나
 //   legs.mjs 는 "하나의 결정론 필름(build/film/frames 575장)"을 6조각으로 자른다.
 //   이 파일은 서로 다른 렌더러가 구운 소스를 한 편으로 잇는다 —
-//     · src/v3-leg-01..03.mp4          (kling v2-1-pro AI 레그 1–3, 앵커 A01→A04. 이미 GOP 8/faststart
-//                                       규격으로 인코딩된 mp4 — 재인코딩 없이 그대로 싣는다)
-//     · build/film/frames              (MapLibre 결정론 필름, 남원→여수)
-//     · build/film/legs/namwon-3d      (maplibre3d 스파이크, 실측 3D 남원)
-//   이전 플레이스홀더(three-globe 궤도 · 구름 스파이크 · MapLibre 한반도)는 AI 레그로 교체됐다.
+//     · src/v3-leg-01..08b.mp4         (kling v2-1-pro AI 레그 1–8b, 앵커 A01→A06→A06b→A07→A08→A08b→A09. 이미 GOP 8/faststart
+//                                       규격으로 인코딩된 mp4 — 재인코딩 없이 그대로 싣는다. 06b 는 2026-08-27
+//                                       "D2 go" 로 들어온 중간 앵커 레그 — 고고도 곡률 구간)
+//     · build/film/frames              (MapLibre 결정론 필름 — 2026-08-27 레그 07 까지 AI 로 교체돼 지금은 쓰지 않는다.
+//                                       concatList/D_ARGS 경로는 다음 플레이스홀더를 위해 남긴다)
+//   이전 플레이스홀더(three-globe 궤도 · 구름 스파이크 · MapLibre 한반도 · MapLibre 남원 · maplibre3d
+//   남원 3D · MapLibre 비닐하우스 · MapLibre 여수)는 전부 AI 레그로 교체됐다.
 //
 // 스크럽 인코딩(worldflight §6): 일반 웹 인코딩은 키프레임을 2–5초에 한 번 넣는다.
 // 스크럽은 랜덤 액세스이므로 긴 GOP 는 seek 마다 디코더가 앞 키프레임부터 걸어오게
@@ -20,7 +22,7 @@
 //
 // 씸 법칙 A: leg N+1 의 첫 프레임 vs leg N 의 **인코딩된** mp4 마지막 프레임.
 //   한 소스를 자른 이음매(03→04, 04→05)는 경계 프레임을 공유시켜 구조적으로 만족시킨다.
-//   렌더러가 바뀌는 이음매(01→02, 02→03, 05→06, 06→07)는 필름 자체가 컷이다.
+//   렌더러가 바뀌는 이음매(06→07)와 AI 레그끼리의 tail→head 이음매(01→…→06)는 필름 자체가 컷이다.
 //   그 자리는 diff 대신 "휘도 단조성"을 검사한다 — 크로스페이드가 삼킬 수 있는 컷인지.
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -28,8 +30,8 @@ import path from 'node:path';
 
 const FFMPEG = process.env.FFMPEG || 'ffmpeg';
 const FFPROBE = process.env.FFPROBE || 'ffprobe';
-const CRF = process.env.CRF || '20';
-const MCRF = process.env.MCRF || '25';
+const CRF = process.env.CRF || '24';   // 2026-08-27: 10 레그 데스크톱 예산(≤60 MB) 때문에 20 → 22, 13 레그(09–11)로 64.75 MB 라 22 → 24
+const MCRF = process.env.MCRF || '27';  // 13 레그 모바일 21.82 MB > 20 MB 라 25 → 27
 const root = process.cwd();
 const OUT = path.resolve(root, 'landxi/assets/proto/film/legs');
 const TMP = path.resolve(root, 'build/film/scrubtmp');
@@ -100,34 +102,133 @@ const PLAN = [
     caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A03 → A04 · 드론 모형',
     authored: true,
   },
+  // 04–06: kling v2-1-pro AI 레그(docs/superpowers/proto/2026-08-27-kie-legs-4-6.md), 앵커 A04→A07.
+  // 카메라는 authored — 04 시작은 레그 03 끝을 이어받고, 05 끝(온실 군락 저공)은 남원 인계 판 #1 의
+  // 카메라가 된다. 06 은 지구본 곡면을 따라 남원→여수 해안으로 옮겨 가는 이동 레그라 좌표가 "먼 이동"
+  // (scrub.js JUMP)이다 — 계기는 중간에서 컷한다.
   {
-    id: '04', wp: '남원', label: '남원', place: '남원 분지', look: 'real',
-    dir: 'build/film/frames', from: 297, to: 362,                   // 2.64 s
+    id: '04', wp: '남원', label: '남원', place: '남원 평야 · 농지이용', look: 'diorama',
+    mp4: 'landxi/assets/proto/film/legs/src/v3-leg-04.mp4',
+    gen: 'landxi/assets/proto/film/legs/gen/v3-leg-04.mp4',
     a: C(127.326, 35.347, 22.2, 62, -25),
-    b: C(127.348, 35.366, 16.3, 46, -13),
-    caption: '항공 정사영상 2025-10 · GSD 25 cm · 남원시 전역',
+    b: C(127.348, 35.366, 8.6, 50, -13),
+    caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A04 → A05 · namwon-farmland-2025 2,098필지',
+    authored: true,
   },
   {
-    id: '05', wp: '남원', label: '남원 3D', place: '금지면 → 남원 시내', look: 'diorama',
-    dir: 'build/film/legs/namwon-3d', from: 0, to: 140,             // 5.64 s
-    // maplibre3d spike.js LEG[] — 실측 건물 풋프린트 위 3D
-    a: C(127.3096, 35.3318, 3.3, 58, -34),
-    b: C(127.3888, 35.4084, 0.88, 68, 26),
-    caption: '건물 풋프린트 실측 + AI 온실 검출 · 남원 금지면 · GSD 1.54 cm',
-  },
-  {
-    id: '06', wp: '남원', label: '비닐하우스', place: '남원 농경지', look: 'real',
-    dir: 'build/film/frames', from: 362, to: 438,                   // 3.08 s
-    a: C(127.348, 35.366, 16.3, 46, -13),
+    id: '05', wp: '남원', label: '비닐하우스', place: '남원 · 비닐하우스 실태', look: 'diorama',
+    mp4: 'landxi/assets/proto/film/legs/src/v3-leg-05.mp4',
+    gen: 'landxi/assets/proto/film/legs/gen/v3-leg-05.mp4',
+    a: C(127.348, 35.366, 8.6, 50, -13),
+    // 끝 카메라 = 인계 판 #1 (남원 온실 검출 9,664동). 이전 플레이스홀더 레그 06 의 끝 카메라를 그대로
+    // 이어받아 판·테스트·카피(127.4250, 35.4290 · ALT 52.4 km)가 바뀌지 않게 한다.
     b: C(127.425, 35.429, 52.4, 23, -3),
-    caption: 'namwon-greenhouse-2025 · 9,664동 · 항공 정사영상 2025-10 · GSD 25 cm',
+    caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A05 → A06 · namwon-greenhouse-2025 9,664동',
+    authored: true,
+  },
+  // 06·06b (2026-08-27 "D1 그대로, D2 go", docs/superpowers/proto/2026-08-27-kie-legs-4-6b.md): 남원→여수 이동을
+  // 중간 앵커 A06b 로 쪼갰다. 06 은 온실 군락에서 수직 상승만(고도 단조 증가, 좌표는 남원에 머문다),
+  // 06b 는 곡면을 따라 남동으로 활강+완만 하강해 여수 해안(레그 07 시작 카메라)에 닿는다.
+  // 06 끝 = 06b 시작 카메라는 authored(A06b: 수천 m 상공, 피치 ~60°).
+  {
+    id: '06', wp: '남원', label: '상승', place: '남원 상공 · 지구본 곡률', look: 'diorama',
+    mp4: 'landxi/assets/proto/film/legs/src/v3-leg-06.mp4',
+    gen: 'landxi/assets/proto/film/legs/gen/v3-leg-06.mp4',
+    a: C(127.425, 35.429, 52.4, 23, -3),
+    b: C(127.470, 35.330, 140.0, 30, 15),
+    caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A06 → A06b · 수직 상승',
+    authored: true,
   },
   {
-    id: '07', wp: '여수', label: '여수', place: '여수 가막만', look: 'real',
-    dir: 'build/film/frames', from: 439, to: 574,                   // 5.44 s
+    id: '06b', wp: '여수', label: '여수 이동', place: '지구본 이동 · 남원 → 여수', look: 'diorama',
+    mp4: 'landxi/assets/proto/film/legs/src/v3-leg-06b.mp4',
+    gen: 'landxi/assets/proto/film/legs/gen/v3-leg-06b.mp4',
+    a: C(127.470, 35.330, 140.0, 30, 15),
+    b: C(127.7305, 34.5630, 17.0, 10, 5),
+    caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A06b → A07 · 여수 국동항 방파제',
+    authored: true,
+  },
+  // 07 (2026-08-27 "D7 GO", docs/superpowers/proto/2026-08-27-kie-leg-7.md): AI 레그 7(A07→A08)이 MapLibre 플레이스홀더를
+  // 교체했다. 카메라는 authored — 시작은 레그 06b 끝(여수 17 km).
+  // rev.3f (2026-08-27 "06, 07은 시작한다", docs/superpowers/proto/2026-08-27-kie-legs-6-7-rev3f.md): A08 이 방파제 발치
+  // 해양쓰레기 클로즈업으로 리롤돼 영상이 정말로 물가까지 내려온다 — 끝 프레임은 방파제 팔(수백 m)이 화면폭 전체를 가로지르고
+  // 모래톱·스티로폼이 프레임을 채운다. 끝 고도 2.4 km → 0.3 km / 피치 50(A08 "약 50°, 수십 m" — 계기판 고도는 지도 카메라로
+  // 환산한 값이라 0.3 km). 좌표는 국동항 방파제 발치 그대로. 여수 인계 판(handoffFinal)과 브랜드 마감은 이 끝 카메라를 이어받는다
+  // (dzFor(z18.82): room 0.80 ≥ 0.35 → dz 0.621, floor 18 불변).
+  {
+    id: '07', wp: '여수', label: '여수', place: '여수 해안 · 해양쓰레기', look: 'diorama',
+    mp4: 'landxi/assets/proto/film/legs/src/v3-leg-07.mp4',
+    gen: 'landxi/assets/proto/film/legs/gen/v3-leg-07.mp4',
     a: C(127.7305, 34.5630, 17.0, 10, 5),
-    b: C(127.7215, 34.5690, 11.2, 2, 0),
-    caption: 'yeosu-marine-2025-aerial · 격자 9,032셀 · 후보 38,057건',
+    b: C(127.7305, 34.5630, 0.3, 50, 5),
+    caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A07 → A08 · yeosu-marine 항공 1,857건 · 드론 2,078건',
+    authored: true,
+  },
+  // 08·08b (2026-08-27 "디오라마 D11을 진행한다", docs/superpowers/proto/2026-08-27-kie-legs-8-8b.md): 여수 → 울주 이동을
+  // 06/06b 와 같은 문법으로 쪼갰다. 08 은 방파제 발치(0.3 km)에서 수직 상승만(고도 단조 증가, 좌표는 국동항에 머문다),
+  // 08b 는 곡면을 따라 북동으로 활강+완만 하강해 울주 산지(A09: 수천 m, 피치 ~65°)에 닿는다. 카메라는 authored.
+  // 여수 인계 판(handoffFinal)은 07 끝에 그대로 남고(BAND_Y 가 08 씸 1/4 에서 닫힌다), 필름은 판 뒤로 이어진다.
+  {
+    id: '08', wp: '여수', label: '상승', place: '여수 상공 · 지구본 곡률', look: 'diorama',
+    mp4: 'landxi/assets/proto/film/legs/src/v3-leg-08.mp4',
+    gen: 'landxi/assets/proto/film/legs/gen/v3-leg-08.mp4',
+    a: C(127.7305, 34.5630, 0.3, 50, 5),
+    b: C(127.7400, 34.5700, 6.0, 60, 20),
+    caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A08 → A08b · 수직 상승',
+    authored: true,
+  },
+  {
+    id: '08b', wp: '울주', label: '울주 이동', place: '지구본 이동 · 여수 → 울주', look: 'diorama',
+    mp4: 'landxi/assets/proto/film/legs/src/v3-leg-08b.mp4',
+    gen: 'landxi/assets/proto/film/legs/gen/v3-leg-08b.mp4',
+    a: C(127.7400, 34.5700, 6.0, 60, 20),
+    b: C(129.1500, 35.5500, 4.5, 65, -40),
+    caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A08b → A09 · 울주 산지 능선',
+    authored: true,
+  },
+  // 09·10·11 (2026-08-27 "전부 go", docs/superpowers/proto/2026-08-27-kie-legs-final.md): 울주 산릉 활강(A09→A10, 피치 65→35)
+  // → 불법소각 공터 접근(A10→A11, 피치 35→30) → 급상승·한반도 전체(A11→A12, 모형 지구본 귀환). 카메라는 authored —
+  // 09 시작은 08b 끝(울주 4.5 km), 11 끝은 A12(한반도 전체가 프레임, 피치 0 · ~1,400 km)로 "먼 이동"이라 계기는 중간에서 컷(JUMP).
+  // 울주 조사 항목(산림식생·급경사지·불법소각)은 실결과가 없다 — 카피는 '조사 항목(시연)' 으로만, 숫자 없음.
+  {
+    id: '09', wp: '울주', label: '산림', place: '울주 산림식생 · 급경사지', look: 'diorama',
+    mp4: 'landxi/assets/proto/film/legs/src/v3-leg-09.mp4',
+    gen: 'landxi/assets/proto/film/legs/gen/v3-leg-09.mp4',
+    a: C(129.1500, 35.5500, 4.5, 65, -40),
+    b: C(129.1600, 35.5600, 1.2, 35, -40),
+    caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A09 → A10 · 산림식생 · 급경사지(조사 항목 시연)',
+    authored: true,
+  },
+  {
+    id: '10', wp: '울주', label: '불법소각', place: '울주 산자락 공터 · 불법소각', look: 'diorama',
+    mp4: 'landxi/assets/proto/film/legs/src/v3-leg-10.mp4',
+    gen: 'landxi/assets/proto/film/legs/gen/v3-leg-10.mp4',
+    a: C(129.1600, 35.5600, 1.2, 35, -40),
+    b: C(129.1650, 35.5650, 0.5, 30, -40),
+    caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A10 → A11 · 불법소각(조사 항목 시연)',
+    authored: true,
+  },
+  {
+    id: '11', wp: '국토', label: '국토 변화', place: '줌아웃 · 한반도 전체 · 국토 변화 분석', look: 'diorama',
+    mp4: 'landxi/assets/proto/film/legs/src/v3-leg-11.mp4',
+    gen: 'landxi/assets/proto/film/legs/gen/v3-leg-11.mp4',
+    a: C(129.1650, 35.5650, 0.5, 30, -40),
+    b: C(127.8000, 36.3000, 1400.0, 0, 0),
+    caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A11 → A12 · 남원 4시점 2025-04→10 · 변화지수 456(비지도)',
+    authored: true,
+  },
+  // 12 (2026-09-01 클라이언트 "필름은 마무리 영상이 더 있어야 될 것 같네 … 한반도가 사라지면서 Land-XI 플랫폼 CI 가 떠야 될 것 같다"):
+  // §2-4 에서 이미 구워 PASS 판정만 받고 미탑재로 보관돼 있던 A12(rev.3l) → A01(rev.3k) 클립을 14번째 레그로 올린다.
+  // 카메라가 계속 물러나며 반도가 모형 지구본으로 말리고, 어두운 작업대 판이 아래에서 올라와 필름이 시작한 자리(A01)로 닫힌다 —
+  // 그래서 끝 카메라는 레그 01 의 시작 카메라와 **같은 값**이다(루프 폐합). 브랜드 마감은 이 A01 프레임 위에서 선다(ending.js v2).
+  {
+    id: '12', wp: '국토', label: '귀환', place: '귀환 · 모형 지구본 · 작업대', look: 'diorama',
+    mp4: 'landxi/assets/proto/film/legs/src/v3-leg-12.mp4',
+    gen: 'landxi/assets/proto/film/legs/gen/v3-leg-12.mp4',
+    a: C(127.8000, 36.3000, 1400.0, 0, 0),
+    b: C(127.95, 36.05, 15000, 0, 0),
+    caption: 'AI 생성 필름 · kling v2-1-pro · 앵커 A12 → A01 · 모형 지구본 귀환',
+    authored: true,
   },
 ];
 
@@ -173,8 +274,9 @@ function encode(L) {
   const d = path.join(OUT, `w${L.id}.mp4`);
   const m = path.join(OUT, `w${L.id}-m.mp4`);
   if (L.mp4) {
-    // 이미 스크럽 규격으로 인코딩된 레그 — 데스크톱본은 재인코딩 없이 그대로.
-    fs.copyFileSync(path.resolve(root, L.mp4), d);
+    // 2026-08-27 레그 8·8b: 10 레그 × src(crf 20) ≈ 63 MB 로 데스크톱 예산(≤60 MB)을 넘겼다. 데스크톱본은 kling 원본(gen)에서
+    // 같은 GOP 규격·crf ${CRF}(기본 22) 로 다시 굽는다 — src/ 는 kie post 산출물 그대로 두고, 씸 프레임은 이 인코딩본에서 뽑는다(씸 법칙 6).
+    run(['-y', '-i', path.resolve(root, L.gen || L.mp4), '-vf', 'scale=-2:1080:flags=lanczos', ...D_ARGS, d]);
     const MA = M_ARGS.map(a => (a.startsWith('scale=') ? 'scale=960:-2:flags=lanczos' : a));
     run(['-y', '-i', path.resolve(root, L.gen || L.mp4), ...MA, m]);
   } else {
@@ -277,15 +379,19 @@ const pTot = legs.reduce((s, L) => s + L.bytesPoster, 0);
 const manifest = {
   generatedAt: new Date().toISOString(),
   builder: 'tools/scrub/assemble.mjs',
-  source: '3개 소스 · kling v2-1-pro AI 레그 1–3(앵커 A01→A04) + MapLibre 결정론 필름 + maplibre3d 실측 3D',
+  source: '단일 소스 · kling v2-1-pro AI 레그 1–12(앵커 A01→A06→A06b→A07→A08→A08b→A09→A10→A11→A12→A01). MapLibre 플레이스홀더 0. 레그 12(귀환)가 루프를 A01 로 닫고, 브랜드 마감은 그 위에서 페이지가 그린다(ending.js v2 — 지구본이 물러나고 CI 가 뜬다)',
   fps: FPS,
-  fpsNote: '레그 01–03 은 24 fps(kling 출력 1946×1080), 나머지는 25 fps 1280×720. 레그별 legs[].fps / legs[].size.',
+  fpsNote: '전 레그 24 fps(kling 출력 1932×1072→1080p 스케일). 레그별 legs[].fps / legs[].size.',
   filmSize: [1280, 720],
   aiLegs: {
-    ids: ['01', '02', '03'],
-    doc: 'docs/superpowers/proto/2026-08-26-kie-legs-1-3.md',
+    ids: ['01', '02', '03', '04', '05', '06', '06b', '07', '08', '08b', '09', '10', '11', '12'],
+    doc: ['docs/superpowers/proto/2026-08-26-kie-legs-1-3.md', 'docs/superpowers/proto/2026-08-27-kie-legs-4-6.md', 'docs/superpowers/proto/2026-08-27-kie-legs-4-6b.md', 'docs/superpowers/proto/2026-08-27-kie-leg-7.md', 'docs/superpowers/proto/2026-08-27-kie-legs-8-8b.md', 'docs/superpowers/proto/2026-08-27-kie-legs-final.md'],
     note: '미니어처 세계라 실카메라가 없다. startCamera/endCamera 는 앵커 문서의 고도대를 따라 authored 이고 ' +
-      '(A02 고궤도 460 km · A03 ~30 km/피치 60°), 레그 03 끝은 이어받는 레그 04 의 실카메라에 맞춘다. ' +
+      '(A02 고궤도 460 km · A03 ~30 km/피치 60° · A05 남원 분지 8.6 km · A06b 남원 상공 140 km · A07 여수 17 km · A08 국동항 방파제 발치 0.3 km/피치 50°), 레그 05 끝은 남원 ' +
+      '인계 판의 카메라, 레그 06 은 남원 위 수직 상승, 06b 는 여수 17 km 로 활강, 07 끝(국동항 방파제 발치 클로즈업)은 여수 인계 판의 카메라가 된다. ' +
+      '08 은 여수 위 수직 상승(0.3 → 6 km), 08b 는 울주 산지(129.15, 35.55 · 4.5 km/피치 65°)로 활강 — 필름은 여수 인계 판 뒤로 이어진다. ' +
+      '09 는 울주 능선 활강(4.5 → 1.2 km/피치 35°), 10 은 소각 공터 접근(0.5 km/피치 30°), 11 은 급상승해 한반도 전체(A12 · 1,400 km/피치 0), ' +
+      '12 는 계속 물러나 모형 지구본으로 귀환(A01 · 15,000 km/피치 0 = 레그 01 시작 카메라, 루프 폐합) — 그 위에 브랜드 마감. ' +
       'cameraSource:"authored" 로 표시. 페이지 오버레이의 숫자는 전부 실데이터다.',
   },
   mobileSize: [960, 540],
@@ -303,9 +409,8 @@ const manifest = {
   spacerVh: +(total + 1).toFixed(3),
   cameraNote: '고도 = 1.5 × 720px × m/px (MapLibre 기본 fov 36.87°, 필름 뷰포트 720px). 줌·GSD 는 고도에서 유도.',
   flightProfile:
-    '레그마다 렌더러가 다르다. 레그 04–07 의 좌표·고도·방위·피치는 그 레그를 구운 렌더러의 실제 ' +
-    '카메라 값이다(MapLibre 필름 SEG · maplibre3d LEG[]); AI 레그 01–03 은 authored(aiLegs.note). 그래서 렌더러가 바뀌는 이음매에서는 고도가 실제로 튄다 — 필름 ' +
-    '자체가 거기서 컷이기 때문이다. 계기 바늘이 스냅하지 않도록 페이지가 씸 밴드(0.16vh) ' +
+    '전 레그가 kling AI 미니어처라 실카메라가 없다 — 카메라는 전부 authored(aiLegs.note) 이고 하나의 단조 하강 프로파일로 ' +
+    '이어 붙였다(레그 06 상승·06b 이동, 08 상승·08b 이동 제외). AI 레그끼리의 tail→head 이음매는 앵커를 공유해 diff 0.2 % 대다. 계기 바늘이 스냅하지 않도록 페이지가 씸 밴드(0.16vh) ' +
     '위에서 두 레그의 판독값을 섞는다(scrub.js camAt). 인계 판은 그 덕분에 필름 마지막 ' +
     '프레임과 정확히 같은 카메라로 뜬다.',
   bytes: { desktop: dTot, mobile: mTot, poster: pTot,
@@ -313,29 +418,50 @@ const manifest = {
   seams,
   legs,
   handoff: {
-    afterLeg: '06',
-    legIndex: 5,
-    center: legs[5].endCamera.center,
-    zoom: legs[5].endCamera.zoom,
-    pitch: legs[5].endCamera.pitch,
-    bearing: legs[5].endCamera.bearing,
-    altitudeM: legs[5].endCamera.altitudeM,
+    afterLeg: '05',
+    legIndex: 4,
+    center: legs[4].endCamera.center,
+    zoom: legs[4].endCamera.zoom,
+    pitch: legs[4].endCamera.pitch,
+    bearing: legs[4].endCamera.bearing,
+    altitudeM: legs[4].endCamera.altitudeM,
     detections: '/landxi/assets/data/geo/results/namwon-greenhouse-2025.geojson',
-    note: '남원 스케일 마지막 레그(06 비닐하우스)의 끝 카메라. 필름이 멈춘 그 자리에서 실지도가 같은 카메라로 이어받는다 — 1프레임 크로스페이드.',
+    note: '남원 스케일 마지막 레그(05 비닐하우스 실태)의 끝 카메라. 레그 06 은 수직 상승, 06b 는 지구본 곡면을 따라 여수로 옮겨 가므로 ' +
+      '남원 인계는 그 앞에서 닫는다. 필름이 멈춘 그 자리에서 실지도가 같은 카메라로 이어받는다 — 1프레임 크로스페이드.',
   },
   handoffFinal: {
-    legIndex: 6,
-    // 필름 끝 카메라(127.7215, 34.569)에서 동쪽으로 1.3 km. 마감 수축(−35 %)이 끝나는 z13.02
-    // 1440×900 프레임이 V-World 위성영상의 회청색 모자이크 공백(서 lon<127.672 · 동 lon≥127.801)
-    // 을 밟지 않는 중심이다 — ending.js dzFor 주석의 실측 참조. 인계 크로스페이드는 이 오프셋만큼
-    // 미세하게 어긋난다(허용: 화면폭의 ~9 %, 카메라가 이미 멈춰 있는 정지 프레임 위에서).
-    center: [127.736, 34.566],
-    zoom: legs[6].endCamera.zoom,
-    pitch: legs[6].endCamera.pitch,
-    bearing: legs[6].endCamera.bearing,
-    altitudeM: legs[6].endCamera.altitudeM,
+    // 2026-08-27 레그 8·8b: 필름이 07 뒤로 이어지므로 여수 판은 "필름 최종 프레임"이 아니라 레그 07 끝(index 7)에 선다.
+    // scrub.js 는 legIndex 가 마지막 레그가 아니면 밴드를 [07 끝 −0.28vh, 07 끝 +씸/4] 로 닫는다(남원 판과 같은 문법).
+    // 브랜드 마감(ending.js)은 여전히 이 판의 줌으로 수축을 잰다 — 필름 끝(08b, 울주)에는 판이 없어 수축은 숨은 지도 위에서 잰다(임시, 09–12 까지).
+    legIndex: legs.findIndex(L => L.id === '07'),
+    // 2026-08-27 AI 레그 7: 필름 끝 카메라 = 국동항 방파제(127.7305, 34.5630) 2.4 km. 판 중심을 그대로 방파제에 둔다.
+    // rev.3f: 끝 카메라 0.3 km / 피치 50 (z18.82). 수축 끝 z18.2 프레임은 lon ±0.002° — 모자이크 공백과 더 멀다.
+    // 이전 오프셋([127.736, 34.566], MapLibre 플레이스홀더 11.2 km 끝 카메라 기준)은 z13.02 수축 끝 프레임이 V-World
+    // 모자이크 공백(서 lon<127.672 · 동 lon≥127.801)을 밟지 않기 위한 것이었다. 지금은 z15.8 → 수축 끝 z15.2 의
+    // 1440×900 프레임이 lon ±0.02° 라 공백 네 곳 모두 프레임 밖이다(ending.js dzFor 주석의 실측 참조).
+    center: legs[7].endCamera.center,
+    zoom: legs[7].endCamera.zoom,
+    pitch: legs[7].endCamera.pitch,
+    bearing: legs[7].endCamera.bearing,
+    altitudeM: legs[7].endCamera.altitudeM,
     detections: '/landxi/assets/data/geo/results/yeosu-marine-2025-aerial.geojson',
-    note: '필름 최종 프레임의 카메라. 마감(귀환) 구간에서 여수 실지도가 이어받는다.',
+    note: '레그 07(여수 해안) 끝 카메라. 07 끝에서 여수 실지도가 이어받고, 08 이 밑에서 올라오면 닫힌다 — 필름은 판 뒤로 이어진다(08 상승 → 08b 울주).',
+  },
+  finale: {
+    // 2026-09-01: 레그 12(귀환)가 탑재되면서 필름 최종 프레임은 A12(한반도)가 아니라 **A01(작업대 위 모형 지구본)** 이다.
+    // 그래서 브랜드 마감은 국토 V-World 실지도 판 위가 아니라 그 A01 프레임 위에서 선다 — 지구본이 어둠 속으로
+    // 물러나고(밝기·크기 감쇠) 빈 어둠에 Land-XI CI 벡터 3종이 뜬다(ending.js FINALE_MODE='globe').
+    // plate:false 가 국토 판(scrub.js PLATES[2]) 생성을 끈다. 되돌리려면 plate:true + ending.js FINALE_MODE='plate'.
+    mode: 'globe',
+    plate: false,
+    legIndex: legs.length - 1,
+    center: legs[legs.length - 1].endCamera.center,
+    zoom: legs[legs.length - 1].endCamera.zoom,
+    pitch: legs[legs.length - 1].endCamera.pitch,
+    bearing: legs[legs.length - 1].endCamera.bearing,
+    altitudeM: legs[legs.length - 1].endCamera.altitudeM,
+    detections: null,
+    note: '레그 12(귀환) 끝 카메라 = A01(작업대 위 모형 지구본) = 레그 01 시작 카메라. 2026-09-01 부터 국토 V-World 실지도 판은 띄우지 않는다(plate:false) — 마감은 이 A01 프레임 위에서 지구본이 물러나고 CI 가 뜨는 방식이다(LEAD 0.30 + SPAN 1.54 + TAIL 0.16vh). center/zoom/pitch 는 되돌리기용으로 남긴다.',
   },
 };
 
@@ -349,3 +475,9 @@ seams.forEach(s => console.log(`  ${s.from}→${s.to} 규칙${s.rule} diff=${s.p
 console.log('── 크기 ──');
 console.log(`  데스크톱 ${(dTot / MB).toFixed(2)} MB (≤60)  ·  모바일 ${(mTot / MB).toFixed(2)} MB (≤20)  ·  포스터 ${(pTot / MB).toFixed(2)} MB`);
 console.log(`  필름 ${manifest.filmSeconds}s  ·  트랙 ${manifest.filmVh}vh  ·  스페이서 ${manifest.spacerVh}vh`);
+
+// 풀 영상본(2026-08-27 "필름타임라인 한 공간에 풀 영상본도") — 매니페스트를 읽어 legs/full.mp4 를 굽고 manifest.full 을 적는다.
+if (!VERIFY_ONLY) {
+  console.log('── 풀 영상 ──');
+  execFileSync(process.execPath, [path.resolve(root, 'tools/film/full.mjs')], { stdio: 'inherit' });
+}

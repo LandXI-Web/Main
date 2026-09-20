@@ -1,0 +1,34 @@
+
+Running 4 tests using 1 worker
+
+  ✓  1 tests\e2e\proto-scrub.spec.mjs:59:1 › 스크럽 비행 — 하나의 카메라, 검은 프레임 없는 10개 레그 이음매 (5.9m)
+  ✘  2 tests\e2e\proto-scrub.spec.mjs:224:1 › 브랜드 마감 — 워드마크 → 태그라인 → LX 락업, 겹침 0, 월드에 붙은 수축 (32.8s)
+  ✓  3 tests\e2e\proto-scrub.spec.mjs:316:1 › 지연 로딩 ±1.6vh — 멀리 있는 레그는 아직 받지 않는다 (3.9s)
+  ✓  4 tests\e2e\proto-scrub.spec.mjs:335:1 › reduced-motion — 클립을 아예 받지 않는다. 포스터와 글이 필름을 대신한다 (3.6s)
+
+
+  1) tests\e2e\proto-scrub.spec.mjs:224:1 › 브랜드 마감 — 워드마크 → 태그라인 → LX 락업, 겹침 0, 월드에 붙은 수축 ──────────
+
+    Error: expect(received).toBeCloseTo(expected, precision)
+
+    Expected: 18.824
+    Received: 18.81861914825329
+
+    Expected precision:    2
+    Expected difference: < 0.005
+    Received difference:   0.005380851746711102
+
+      260 |   const b = await at(0.226);
+      261 |   const zB = await page.evaluate(() => window.__scrub.plate(1).zoom);
+    > 262 |   expect(zA).toBeCloseTo(zSpec, 2);                                  // 시작 = 인계 카메라
+          |              ^
+      263 |   expect(zB).toBeLessThan(zA - 0.3);                                 // 실제로 물러났다
+      264 |   const wordShrink = b.wordmark.liveWidthPct / a.wordmark.liveWidthPct;
+      265 |   const groundShrink = Math.pow(2, zB - zA);
+        at F:\Land-XI 플랫폼\01. 디자인\tests\e2e\proto-scrub.spec.mjs:262:14
+
+    Error Context: test-results\proto-scrub-브랜드-마감-—-워드마크-→-태그라인-→-LX-락업-겹침-0-월드에-붙은-수축\error-context.md
+
+  1 failed
+    tests\e2e\proto-scrub.spec.mjs:224:1 › 브랜드 마감 — 워드마크 → 태그라인 → LX 락업, 겹침 0, 월드에 붙은 수축 ───────────
+  3 passed (6.6m)

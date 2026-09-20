@@ -1,0 +1,33 @@
+[leg 6] backup landxi/assets/proto/film/legs/gen/v3-leg-06.mp4 -> landxi/assets/proto/film/legs/gen/v3-leg-06.rev2.mp4
+[leg 6] backup landxi/assets/proto/film/legs/src/v3-leg-06.mp4 -> landxi/assets/proto/film/legs/src/v3-leg-06.rev2.mp4
+
+[leg 6] A06 -> A06b  attempt 1  balance=9667.5
+[leg 6] pending taskId=e90d223881a8ff54f5b23ca28acecdd8 (원장 기록)
+  v3-leg-06.mp4: generating (0s)
+  v3-leg-06.mp4: generating (5s)
+  v3-leg-06.mp4: generating (10s)
+  v3-leg-06.mp4: generating (16s)
+  v3-leg-06.mp4: generating (24s)
+  v3-leg-06.mp4: generating (35s)
+  v3-leg-06.mp4: generating (47s)
+  v3-leg-06.mp4: generating (63s)
+  v3-leg-06.mp4: generating (78s)
+  v3-leg-06.mp4: generating (93s)
+  v3-leg-06.mp4: generating (109s)
+  v3-leg-06.mp4: generating (124s)
+[leg 6] ok taskId=e90d223881a8ff54f5b23ca28acecdd8 charged=50 spent=750/110
+{
+  "rev": 3,
+  "batch": "6-7-rev3f",
+  "spent_rev": 50,
+  "spent_total": 750,
+  "cap": 110,
+  "done": [
+    {
+      "leg": 6,
+      "taskId": "e90d223881a8ff54f5b23ca28acecdd8",
+      "charged": 50
+    }
+  ]
+}
+EXIT=0

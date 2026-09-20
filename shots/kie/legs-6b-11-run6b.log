@@ -1,0 +1,122 @@
+[leg 6b] backup landxi/assets/proto/film/legs/gen/v3-leg-06b.mp4 -> landxi/assets/proto/film/legs/gen/v3-leg-06b.rev2.mp4
+[leg 6b] backup landxi/assets/proto/film/legs/src/v3-leg-06b.mp4 -> landxi/assets/proto/film/legs/src/v3-leg-06b.rev2.mp4
+
+[leg 6b] A06b -> A07  attempt 1  balance=9438.5
+[leg 6b] pending taskId=f4739b7da6e31ff184d11d0c17960baf (원장 기록)
+  v3-leg-06b.mp4: generating (0s)
+  v3-leg-06b.mp4: generating (5s)
+  v3-leg-06b.mp4: generating (10s)
+  v3-leg-06b.mp4: generating (16s)
+  v3-leg-06b.mp4: generating (24s)
+  v3-leg-06b.mp4: generating (35s)
+  v3-leg-06b.mp4: generating (47s)
+  v3-leg-06b.mp4: generating (63s)
+  v3-leg-06b.mp4: generating (78s)
+  v3-leg-06b.mp4: generating (93s)
+  v3-leg-06b.mp4: generating (109s)
+  v3-leg-06b.mp4: generating (124s)
+  v3-leg-06b.mp4: generating (139s)
+  v3-leg-06b.mp4: generating (155s)
+  v3-leg-06b.mp4: generating (170s)
+  v3-leg-06b.mp4: generating (185s)
+  v3-leg-06b.mp4: generating (201s)
+  v3-leg-06b.mp4: generating (216s)
+  v3-leg-06b.mp4: generating (231s)
+  v3-leg-06b.mp4: generating (247s)
+  v3-leg-06b.mp4: generating (262s)
+  v3-leg-06b.mp4: generating (277s)
+  v3-leg-06b.mp4: generating (293s)
+  v3-leg-06b.mp4: generating (308s)
+  v3-leg-06b.mp4: generating (323s)
+  v3-leg-06b.mp4: generating (339s)
+  v3-leg-06b.mp4: generating (354s)
+  v3-leg-06b.mp4: generating (370s)
+  v3-leg-06b.mp4: generating (385s)
+  v3-leg-06b.mp4: generating (400s)
+  v3-leg-06b.mp4: generating (416s)
+  v3-leg-06b.mp4: generating (431s)
+  v3-leg-06b.mp4: generating (446s)
+  v3-leg-06b.mp4: generating (462s)
+  v3-leg-06b.mp4: generating (477s)
+  v3-leg-06b.mp4: generating (492s)
+  v3-leg-06b.mp4: generating (508s)
+  v3-leg-06b.mp4: generating (523s)
+  v3-leg-06b.mp4: generating (538s)
+  v3-leg-06b.mp4: generating (554s)
+  v3-leg-06b.mp4: generating (569s)
+  v3-leg-06b.mp4: generating (584s)
+  v3-leg-06b.mp4: generating (600s)
+  v3-leg-06b.mp4: generating (615s)
+  v3-leg-06b.mp4: generating (631s)
+  v3-leg-06b.mp4: generating (646s)
+  v3-leg-06b.mp4: generating (661s)
+  v3-leg-06b.mp4: generating (677s)
+  v3-leg-06b.mp4: generating (692s)
+  v3-leg-06b.mp4: generating (707s)
+  v3-leg-06b.mp4: generating (723s)
+  v3-leg-06b.mp4: generating (738s)
+  v3-leg-06b.mp4: generating (753s)
+  v3-leg-06b.mp4: generating (769s)
+  v3-leg-06b.mp4: generating (784s)
+  v3-leg-06b.mp4: generating (800s)
+  v3-leg-06b.mp4: generating (815s)
+  v3-leg-06b.mp4: generating (830s)
+  v3-leg-06b.mp4: generating (846s)
+  v3-leg-06b.mp4: generating (861s)
+  v3-leg-06b.mp4: generating (876s)
+  v3-leg-06b.mp4: generating (892s)
+  v3-leg-06b.mp4: generating (907s)
+  v3-leg-06b.mp4: generating (922s)
+[leg 6b] FAIL charged=0: v3-leg-06b.mp4 실패: The upstream API service timed out and no results were returned, please try again.
+[leg 6b] 무과금 오류 — 1회만 재시도
+
+[leg 6b] A06b -> A07  attempt 2  balance=9438.5
+[leg 6b] pending taskId=525d01c68a5ded3950ea0905ebaa2a14 (원장 기록)
+  v3-leg-06b.mp4: generating (0s)
+  v3-leg-06b.mp4: generating (4s)
+  v3-leg-06b.mp4: generating (10s)
+  v3-leg-06b.mp4: generating (17s)
+  v3-leg-06b.mp4: generating (25s)
+  v3-leg-06b.mp4: generating (35s)
+  v3-leg-06b.mp4: generating (48s)
+  v3-leg-06b.mp4: generating (63s)
+  v3-leg-06b.mp4: generating (79s)
+  v3-leg-06b.mp4: generating (94s)
+  v3-leg-06b.mp4: generating (109s)
+  v3-leg-06b.mp4: generating (125s)
+  v3-leg-06b.mp4: generating (140s)
+  v3-leg-06b.mp4: generating (156s)
+  v3-leg-06b.mp4: generating (171s)
+  v3-leg-06b.mp4: generating (186s)
+  v3-leg-06b.mp4: generating (202s)
+  v3-leg-06b.mp4: generating (217s)
+  v3-leg-06b.mp4: generating (232s)
+  v3-leg-06b.mp4: generating (248s)
+  v3-leg-06b.mp4: generating (263s)
+  v3-leg-06b.mp4: generating (278s)
+  v3-leg-06b.mp4: generating (294s)
+  v3-leg-06b.mp4: generating (309s)
+  v3-leg-06b.mp4: generating (324s)
+  v3-leg-06b.mp4: generating (340s)
+  v3-leg-06b.mp4: generating (355s)
+  v3-leg-06b.mp4: generating (371s)
+  v3-leg-06b.mp4: generating (386s)
+  v3-leg-06b.mp4: generating (402s)
+  v3-leg-06b.mp4: generating (417s)
+  v3-leg-06b.mp4: generating (432s)
+  v3-leg-06b.mp4: generating (448s)
+[leg 6b] ok taskId=525d01c68a5ded3950ea0905ebaa2a14 charged=50 spent=950/280
+{
+  "rev": 3,
+  "batch": "6b-8b-9-11",
+  "spent_rev": 50,
+  "spent_total": 950,
+  "cap": 280,
+  "done": [
+    {
+      "leg": "6b",
+      "taskId": "525d01c68a5ded3950ea0905ebaa2a14",
+      "charged": 50
+    }
+  ]
+}

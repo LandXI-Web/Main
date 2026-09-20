@@ -1,17 +1,22 @@
 import { test, expect } from '@playwright/test';
+// home.html 은 proto/scrub 으로 넘어가는 리다이렉트 스텁이 됐다. 토큰 시트(assets/css/tokens.css)를
+// 그대로 쓰는 살아 있는 페이지는 dev/shell.html 이라 여기서 잰다. 셸은 로그인 게이트가 있어 세션을 심는다.
+const seedLogin = (page) => page.addInitScript(() => localStorage.setItem('lx_logged_in', '1'));
+
 test('tokens resolve and fonts load', async ({ page }) => {
-  await page.goto('home.html');
+  await seedLogin(page);
+  await page.goto('dev/shell.html');
   const v = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--lx').trim());
   // Land-XI 워드마크에서 뽑은 CI 블루(tools/prepare-assets.py 의 sample_ci_blue).
   expect(v).toBe('#006DF7');
-  expect(await page.evaluate(() => getComputedStyle(document.body).getPropertyValue('--scene-bg').trim())).toBe('#0E1726'); // 홈은 body.is-dark 로 시작한다(궤도 장면)
   await page.evaluate(() => document.fonts.load('700 16px "Gothic A1"', '국토'));
   expect(await page.evaluate(() => document.fonts.check('700 16px "Gothic A1"', '국토'))).toBe(true);
   expect(await page.evaluate(() => getComputedStyle(document.body).fontFamily)).toContain('IBM Plex Sans KR');
 });
 
 test('정보 상태색은 주색을 따라간다(--s-info: var(--lx))', async ({ page }) => {
-  await page.goto('home.html');
+  await seedLogin(page);
+  await page.goto('dev/shell.html');
   const [info, lx] = await page.evaluate(() => {
     const cs = getComputedStyle(document.documentElement);
     return [cs.getPropertyValue('--s-info').trim(), cs.getPropertyValue('--lx').trim()];

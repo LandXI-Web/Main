@@ -1,0 +1,118 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LX 관리자 대시보드 — Land-XI</title>
+<link rel="icon" href="../assets/images/favicon_landxi.png">
+<script>
+  // 로그인 관문. 그리기 전에 판정한다 — 관리자 화면이 한 프레임도 새어 나가지 않게.
+  if (localStorage.getItem('lx_logged_in') !== '1') {
+    location.replace('login.html?next=' + encodeURIComponent('dashboard.html' + location.search));
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
+<link rel="stylesheet" href="v3-tokens.css">
+<link rel="stylesheet" href="dashboard.css">
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+</head><body class="v3" data-colorway="light" data-mode="ai">
+
+<a class="skip" href="#b-kpi">현황으로 건너뛰기</a>
+
+<!-- ══ B5 12.8 — 조판 마스터 design-canvas/v2/B5-Dashboard.dc.html · B5-Dashboard-Data.dc.html
+     밴드(§12.4): 0–64 마스트헤드 → 92–132 제목 → hl 156 → 174–278 KPI 띠 → hl 302
+       → 326–694 EVIDENCE-PAIR 1:3(좌 572 판 · 우 648 차트 3단) → hl 708
+       → 720–826 승인 원장 → 840–868 CHIP-RAIL → hl 866 → 푸터.
+     판(§12.8) = 대한민국 전도 한 판 + 토글 2 + 0.25° 그리드 + 등급 범례 + 셀 콜아웃.
+     기능은 원본과 1:1(A1–A11 / B1–B16) — docs/superpowers/proto/2026-08-26-dashboard-parity.md ══ -->
+<div id="stage">
+
+  <!-- ── A1–A11 좌 레일 72 ─────────────────────────────────────────── -->
+  <aside id="rail" aria-label="주 메뉴">
+    <a id="rail-mark" href="../home.html" aria-label="Land-XI 홈">
+      <svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter" aria-hidden="true"><path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/><path d="M8.5 8.5h3v3h-3z" fill="currentColor" stroke="none"/></svg>
+      <span class="wm">LAND XI</span></a>
+    <i id="rail-hl"></i>
+    <nav id="rail-top"></nav>
+    <nav id="rail-foot"></nav>
+  </aside>
+  <i id="rail-edge"></i>
+
+  <!-- ── 마스트헤드 64 = B3 공지 + B2 기준일 ──────────────────────── -->
+  <header id="mast">
+    <a id="b-notice" href="../notice.html"></a>
+    <span class="sp"></span>
+    <span class="mic">기준일 현재</span>
+    <span class="n asof" id="b2"></span>
+  </header>
+  <i class="hl hl--full" style="top:64px"></i>
+
+  <!-- ── B1 제목 ───────────────────────────────────────────────────── -->
+  <div id="b1" data-line><div>
+    <h1 class="d">LX 관리자 대시보드</h1>
+    <span class="sub">서비스 운영 현황과 승인·관리 업무를 한눈에</span>
+  </div></div>
+  <i class="hl" style="top:156px"></i>
+
+  <!-- ── B4–B8 KPI 띠 ──────────────────────────────────────────────── -->
+  <div id="b-kpi"></div>
+  <i class="hl" style="top:302px"></i>
+
+  <!-- ── B9 백본 + 판 (좌 572) ─────────────────────────────────────── -->
+  <div class="wh" id="b-bb"></div>
+  <div class="mic n" id="bb-applied"></div>
+
+  <div id="plate-box">
+    <div id="plate"></div>
+    <div id="pcells"></div>
+    <div id="pmark"></div>
+    <div id="pt" role="radiogroup" aria-label="판 표시 모드"></div>
+    <div id="pc" aria-live="polite" hidden></div>
+    <div id="pl" aria-label="등급 범례"></div>
+    <i class="pfr pfr--tl"></i><i class="pfr pfr--tr"></i><i class="pfr pfr--bl"></i><i class="pfr pfr--br"></i>
+  </div>
+  <div id="plate-cap">
+    <span class="n a">대한민국 전도 · Sentinel-2 cloudless 2024 · 그리드 0.25°</span>
+    <span class="mic n b">셀 호버 = 내용 · 클릭 → XI맵</span>
+  </div>
+  <div class="mic src" id="plate-src"></div>
+  <i class="vl" style="left:712px;top:326px;height:368px"></i>
+
+  <!-- ── 우 648 · ① B10 랭크드 바 ─────────────────────────────────── -->
+  <div class="wh" id="b-proj"></div>
+  <div id="t-proj"></div>
+  <div class="mic src" id="proj-src" style="left:736px;top:438px;width:648px"></div>
+  <i class="hl" style="left:736px;top:460px;width:648px"></i>
+
+  <!-- ── ② B11 7일 폴리라인 ───────────────────────────────────────── -->
+  <div class="wh" id="b-visit"></div>
+  <div id="t-visit" class="n"></div>
+  <div class="mic src" id="visit-src" style="left:736px;top:576px;width:648px"></div>
+  <i class="hl" style="left:736px;top:598px;width:648px"></i>
+
+  <!-- ── ③ B12 스택 바 ────────────────────────────────────────────── -->
+  <div class="wh" id="b-store"></div>
+  <div id="t-store"></div>
+  <div id="store-lg" class="n"></div>
+  <div class="mic src" id="store-src" style="left:736px;top:676px;width:648px"></div>
+
+  <!-- ── B13 승인 대기 원장 ───────────────────────────────────────── -->
+  <i class="hl" style="top:708px"></i>
+  <div class="wh" id="ap-h"></div>
+  <i class="hl" style="top:748px"></i>
+  <div id="ap-head"></div>
+  <i class="hl" style="top:774px"></i>
+  <div id="ap-rows" role="list"></div>
+
+  <!-- ── B14 CHIP-RAIL ────────────────────────────────────────────── -->
+  <div id="ad-rows" role="list"></div>
+
+  <!-- ── B15 푸터 + Family Site ───────────────────────────────────── -->
+  <i class="hl hl--full" style="top:866px"></i>
+  <div class="mic" id="foot">LX 한국국토정보공사 · 고객센터 <span class="n">063-713-1213</span> · 개인정보처리방침 · 이용약관 · 이메일주소무단수집거부</div>
+  <div id="colophon">
+    <span class="mic co">출처 표기 — 태그 없음 = 측정 · <em>시연</em> = 운영 집계 시드 · <em>추정</em> = 우리가 연결한 값</span>
+    <a class="chip" href="../home.html">Family Site ▾</a>
+  </div>
+</div>
+
+<script type="module" src="dashboard.js"></script>
+</body></html>

@@ -1,298 +1,150 @@
-/* Land-XI 로그인 — **B안(에디토리얼 아틀라스) 그대로**, 판만 디오라마.
-   템플릿: design-canvas/B-Home.dc.html (1440×900) — 마스트헤드 64 · 좌 컬럼 색인행 24 ·
-   캡션 흰 띠 · 헤어라인 리듬 · 헤드라인 블록 · CTA 줄. 한 가지만 이탈한다:
-   **판이 오른쪽 위 여백을 넘어 화면 밖으로 흘러나간다.**
+/* Land-XI 로그인 — 마스터 design-canvas/v2/B5-Login.dc.html (NOTES §14 · 7차 개정).
+   구 랜드XI(login.do)의 구도만 가져온다: 페이지 중앙의 작은 카드 하나(1200×520, 1440×900 에서 x 120–1320 · y 190–710),
+   좌 60% = 디오라마 오프닝 필름(Leg 01, 글자 0) · 우 40% = 로그인 제목 + 소개 한 문장 + 폼(7차: 라벨·입력·옵션·링크 = 로그인과 같은 Paperlogy 700, 포인트 20/22/18). 카드 위 = Land-XI CI + 원본 소개 한 줄,
+   카드 아래 = LX 락업 + 정책 링크 + Copyright. 원본의 어두운 배경/글로우는 가져오지 않는다.
+   서체(발주 결정 2026-08-27): 표시 Paperlogy 700 / 본문·버튼 Pretendard / 숫자 Inter tabular. 7차: 폼 라벨·입력·옵션·링크도 Paperlogy 700(로그인 제목과 같은 서체) · 헤어라인 #DDD · radius 0 · shadow 0 · 12px 바닥.
+   톤 T3 흑+청(5차, 발주 "검정과 파란색의 배합"): 액센트 #006DF7 = 워드마크 Land-XI · 로그인 CTA 채움(로그인 예외) · 포커스 밑줄 · 찾기 링크 · 체크. 나머지 잉크/회색. 그라디언트·그림자·radius 0.
 
-   서체는 v3 확정본(SUIT 500 / Pretendard 400 / Inter tabular)을 그대로 쓴다 —
-   B안의 Gothic A1 + IBM Plex 조합은 §3 거부 목록 2번이다.
-
-   프리미티브는 system.css 에서 온다:
-     .lx-skip · .lx-h1/.lx-lines/.lx-line · .lx-num · .lx-live · .lx-cta(+__t/__a) ·
-     .lx-link · .lx-fig__no · [data-reveal]
-   여기 있는 것은 이 화면에만 있는 것뿐이다:
-     B안 마스트헤드/색인행/캡션 띠 · .lx-field(헤어라인 폼) · .lx-check ·
-     판(디오라마 비디오) 블리드·스크림·브래킷 · 핸드오프. */
+   프리미티브는 system.css 에서 온다: .lx-skip · .lx-num · [--lx-*] 토큰.
+   여기 있는 것은 이 화면에만 있는 것뿐이다: 카드 · .lx-field(밑줄 폼) · .lx-check · 필름 판 · 태그라인. */
 
 :root{
-  --lg-error:#B3191C;           /* 오류 하선 — 이 화면에서 유일하게 허용되는 적색 */
-  --lg-m:56px;                  /* B안 좌우 여백 */
-  --lg-bar:64px;                /* B안 마스트헤드 높이 */
-  --lg-col:620px;               /* 좌 컬럼(활자) 폭 — B안 헤드라인 블록 760 대비 축소 */
-  --lg-ledger:400px;            /* B안 색인 폭 */
-  --lg-plate-l:560px;           /* 판 왼쪽 — 여기부터 오른쪽 끝까지 사진 */
-  --lg-plate-h:566px;           /* 판 높이 — 16:9 원본이 거의 안 잘리는 비(880×566) */
-  --lg-ink-48:rgba(1,1,2,.48);  /* B안 잉크 48% */
-  --lg-ink-68:rgba(1,1,2,.68);
-  --lg-hair:rgba(1,1,2,.16);    /* B안 색인행 헤어라인 */
-  --lg-hair-2:rgba(1,1,2,.28);  /* B안 색인 머리줄 */
+  --lg-card-w:1200px;
+  --lg-card-h:520px;            /* 5차 440 → 480, 6차 560, 7차: 폼 글자 줄여 560 → 520 */
+  --lg-gap:24px;                /* 카드 ↔ 위 소개 / 아래 푸터 */
+  --lg-pad:40px;                /* 폼 패널 패딩 */
 }
 
-/* ── 페이지 액자 — 스크롤 없는 한 판 ─────────────────────────────────────── */
 html,body{ height:100%; }
-body.lx{ overflow:hidden; background:var(--lx-paper); }
-.lg{ position:relative; min-height:100vh; overflow:hidden; }
+body.lx{ overflow:hidden; background:var(--lx-paper); color:var(--lx-ink); }
 
-/* ══ 판(FIG. 01) — 디오라마. 오른쪽 위 여백을 넘어 흘러나간다(유일한 이탈). ══ */
-.lg-plate{
-  position:absolute; left:var(--lg-plate-l); top:0; right:0; height:var(--lg-plate-h);
-  margin:0; overflow:hidden; z-index:1; background:var(--lx-paper);
-  clip-path:inset(0 0 100% 0); transition:clip-path var(--lx-d3) var(--lx-ease);
-}
-.lg-plate.is-in{ clip-path:inset(0); }
-.lg-plate__v{
-  position:absolute; inset:0; width:100%; height:100%;
-  object-fit:cover; object-position:60% 52%; display:block;
-  transform:scale(1); transform-origin:60% 52%;
-  transition:transform var(--lx-d4) var(--lx-ease);
+/* Paperlogy — fonts.html 과 같은 noonnu(jsDelivr) 배포. 토큰 --font-display/--tint-* 는 v3-tokens.css 에 아직 없어 여기 로컬 정의. */
+@font-face{font-family:'Paperlogy';font-weight:800;font-display:swap;src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2') format('woff2')}
+@font-face{font-family:'Paperlogy';font-weight:700;font-display:swap;src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2') format('woff2')}
+:root{
+  --font-display:"Paperlogy","Pretendard",system-ui,sans-serif;
+  --tint-1:#E8F1FF;
+  --tint-2:#D6E6FF;
 }
 
-/* B안의 스크림 — 사진이 흰 종이로 녹아든다. 이게 있어야 판이 "따로 놀지" 않는다. */
-.lg-plate__scrim{ position:absolute; inset:0; pointer-events:none; z-index:2; }
-.lg-plate__scrim--l{
-  background:linear-gradient(100deg,#FFF 0%,#FFF 13%,rgba(255,255,255,.86) 22%,
-             rgba(255,255,255,.26) 38%,rgba(255,255,255,0) 52%);
-}
-.lg-plate__scrim--b{
-  background:linear-gradient(0deg,#FFF 0%,#FFF 6%,rgba(255,255,255,.88) 16%,
-             rgba(255,255,255,.20) 33%,rgba(255,255,255,0) 47%);
+/* ── 액자 — 카드가 화면 세로 중앙. 소개/푸터는 카드에 매달린다(카드 중심이 곧 화면 중심). ── */
+.lg{ position:relative; height:100vh; min-height:640px; overflow:hidden; }
+.lg-wrap{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:var(--lg-card-w); max-width:calc(100% - 64px);
 }
 
-/* 락온 프레임 — 액자 안쪽 코너 브래킷 4개. 사진이 선명한 구역만 감싼다. */
-.lx-bracket{
-  position:absolute; width:var(--lx-bracket); height:var(--lx-bracket); pointer-events:none;
-  border:1px solid rgba(1,1,2,.62); z-index:3;
-}
-.lx-bracket--tl{ left:40%; top:26%; border-right:0; border-bottom:0; }
-.lx-bracket--tr{ right:7%;  top:26%; border-left:0;  border-bottom:0; }
-.lx-bracket--bl{ left:40%; bottom:16%; border-right:0; border-top:0; }
-.lx-bracket--br{ right:7%;  bottom:16%; border-left:0;  border-top:0; }
+/* ── 카드 위 — CI 22 + 소개 한 줄(원본 카피, Pretendard 15 회색) ── */
+.lg-head{ position:absolute; left:0; right:0; bottom:calc(100% + var(--lg-gap)); }
+.lg-brand{ display:block; width:max-content; }
+.lg-brand__ci{ display:block; height:22px; width:auto; }   /* 실제 CI — 브랜드 예외, 공식 그라디언트 그대로 */
+.lg-intro{ margin:12px 0 0; font-size:17px; line-height:24px; letter-spacing:-.005em; color:var(--lx-grey-2); }
 
-/* B안 라벨 칩 — 흰 칩 + mono 수치 */
-.lg-chip{
-  position:absolute; left:42%; bottom:8%; z-index:3;
-  background:rgba(255,255,255,.88); padding:4px 7px; display:block;
-}
-.lg-chip b{ display:block; font-weight:400; font-size:10.5px; line-height:14px; letter-spacing:.03em; color:var(--lx-ink); }
-.lg-chip i{ display:block; font-style:normal; font-size:9.5px; line-height:13px; color:var(--lg-ink-68); margin-top:2px; }
-
-/* ══ 캡션 줄 — B안의 흰 띠(.90) 위 FIG 넘버 ═══════════════════════════════ */
-.lg-cap{
-  position:absolute; left:calc(var(--lg-plate-l) + 300px); right:var(--lg-m); top:84px;
-  height:34px; margin:0; z-index:4;
-  display:flex; align-items:center; gap:14px;
-  background:rgba(255,255,255,.90); padding:0 14px;
-  transition:opacity var(--lx-d3) var(--lx-ease);
-}
-.lg-cap__no{ color:var(--lx-accent); letter-spacing:.14em; flex:none; }
-.lg-cap__meta{ font-size:11px; line-height:15px; letter-spacing:.06em; color:var(--lg-ink-68); }
-.lg-cap__t{ margin-left:auto; font-size:11px; line-height:15px; color:var(--lg-ink-48); flex:none; }
-.lg-cap__t b{ font-weight:400; color:var(--lx-ink); font-variant-numeric:tabular-nums; }
-.lg-live{ flex:none; font-size:10.5px; letter-spacing:.14em; }
-
-/* ══ 마스트헤드 — B안 64px 바 ═════════════════════════════════════════════ */
-.lg-mast{
-  position:absolute; left:0; top:0; right:0; height:var(--lg-bar); z-index:6;
-  display:flex; align-items:center; gap:16px; padding:0 var(--lg-m);
-  background:rgba(255,255,255,.72); border-bottom:1px solid var(--lg-hair);
-  transition:opacity var(--lx-d3) var(--lx-ease);
-}
-.lg-mast__mark{ display:inline-flex; align-items:center; gap:12px; text-decoration:none; color:var(--lx-ink); flex:none; }
-.lg-mast__mark svg{ display:block; flex:none; }
-.lg-mast__wm{ font-family:var(--lx-display); font-weight:500; font-size:14px; letter-spacing:.24em; }
-.lg-mast__div{ width:1px; height:16px; background:rgba(1,1,2,.18); flex:none; }
-.lg-mast__vis{ font-size:10.5px; letter-spacing:.10em; color:var(--lg-ink-48); }
-.lg-mast__gap{ flex:1 1 auto; }
-.lg-mast__nav{ display:flex; gap:26px; }
-.lg-mast__nav a{ font-size:12.5px; color:var(--lg-ink-68); text-decoration:none; transition:color var(--lx-hover) var(--lx-hover-ease); }
-.lg-mast__nav a:hover{ color:var(--lx-ink); }
-.lg-mast__here{ font-size:12.5px; font-weight:500; color:var(--lx-ink); font-family:var(--lx-display); flex:none; }
-
-/* ══ 좌측 종이 ═══════════════════════════════════════════════════════════ */
-.lg-left{
-  position:relative; z-index:5;
-  display:flex; flex-direction:column;          /* B안 순서: 색인 → 챕터 → 헤드라인 → 폼 */
-  padding:calc(var(--lg-bar) + 44px) 0 22px var(--lg-m);
-  width:calc(var(--lg-col) + var(--lg-m));
+/* ── 카드 1200×520 — 헤어라인 1, radius 0, shadow 0 ── */
+.lg-card{
+  display:flex; width:100%; height:var(--lg-card-h);
+  border:1px solid var(--lx-hair); background:var(--lx-paper);
 }
 
-/* 챕터 라벨 + 눈금자 — B안 210×7 repeating gradient 그대로 */
-.lg-chap{ margin-bottom:16px; }
-.lg-chap__l{ margin:0; font-size:10.5px; line-height:14px; letter-spacing:.18em; color:var(--lg-ink-48); }
-.lg-rule{
-  display:block; width:210px; height:7px; margin-top:10px;
-  background-image:repeating-linear-gradient(90deg,rgba(1,1,2,.18) 0 1px,transparent 1px 10px),
-                   repeating-linear-gradient(90deg,var(--lx-ink) 0 1px,transparent 1px 50px);
-  background-size:10px 4px,50px 7px; background-repeat:repeat-x; background-position:0 100%;
-}
+/* 좌 60% — 필름 판. 글자·캡션·브래킷 0 — 필름만. */
+.lg-film{ position:relative; flex:0 0 60%; margin:0; min-width:0; overflow:hidden; background:var(--lx-ink); }
+.lg-film__v{ display:block; width:100%; height:100%; object-fit:cover; object-position:50% 50%; }
 
-/* 헤드라인 블록 — B안 리듬(굵고 짧게, 행간 1.0대). 굵기는 SUIT 500 단일. */
-.lg-h1{
-  margin:0; font-family:var(--lx-display); font-weight:500;
-  font-size:62px; line-height:1.06; letter-spacing:-.02em; color:var(--lx-ink);
-  max-width:var(--lg-col);
-}
-.lg-vis{
-  margin:20px 0 0; font-size:16px; line-height:1.66; color:var(--lg-ink-68);
-  max-width:var(--lg-col); letter-spacing:var(--lx-ls);
-}
-.lg-vis__n{ font-size:12.5px; line-height:1.7; color:var(--lg-ink-48); letter-spacing:.01em; }
+/* 우 40% — 제목 + 소개 한 문장 + 폼(7차: Paperlogy 20/22/18). 세로 예산 518: 패딩 24 + 제목 42 + 8 + 소개 48(2줄) + 18 + 필드 78×2+10 + 옵션 6+24(1줄) + 16 + 버튼 56 + 14 + 문의 16 = 438(바닥 여백 80 · 에러 2줄 +44−16 = 466, 여백 52) */
+.lg-panel{ position:relative; flex:0 0 40%; min-width:0; padding:24px var(--lg-pad) 0; }
+.lg-h1{ margin:0; font-family:var(--font-display); font-weight:700; font-size:34px; line-height:42px; letter-spacing:-.02em; }
+/* 로그인 바로 아래 — 상시 소개 한 문장(구 ?logout 배너 자리). Pretendard 16 회색, keep-all, 399 폭에서 2줄. */
+.lg-lead{ margin:8px 0 0; font-size:16px; line-height:24px; letter-spacing:-.005em; color:var(--lx-grey-2); word-break:keep-all; }
 
-/* ── 색인(LEDGER) — B안 index row 그대로: 머리줄 + 24px 행 + 헤어라인 ── */
-.lg-ledger{ order:-1; width:var(--lg-ledger); margin:0 0 30px; }
-.lg-ledger__h{
-  display:flex; align-items:baseline; justify-content:space-between;
-  padding-bottom:8px; border-bottom:1px solid var(--lg-hair-2);
-  font-size:10.5px; line-height:14px; letter-spacing:.18em; color:var(--lg-ink-48);
-}
-.lg-ledger__h span:last-child{ letter-spacing:0; }
-.lg-row{
-  display:flex; align-items:center; gap:10px; height:24px;
-  border-bottom:1px solid var(--lg-hair);
-  transition:background-color var(--lx-hover) var(--lx-hover-ease);
-}
-.lg-row:hover{ background:rgba(1,1,2,.04); }
-.lg-row__n{ font-size:10px; color:var(--lg-ink-48); width:18px; flex:none; }
-.lg-row__g{ display:block; flex:none; }
-.lg-row__t{ font-size:12px; color:var(--lx-ink); flex-grow:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.lg-row__m{ font-size:9.5px; color:var(--lg-ink-48); width:56px; flex:none; }
-.lg-row__v{ font-size:11px; color:var(--lx-ink); width:66px; flex:none; text-align:right; font-variant-numeric:tabular-nums; }
-.lg-row__v i{ font-style:normal; color:var(--lg-ink-48); font-size:9.5px; }
-
-/* ── 헤어라인 폼 ─────────────────────────────────────────────────────────── */
-.lg-form{ margin:22px 0 0; width:var(--lg-ledger); }
-.lx-field{ position:relative; padding-bottom:16px; margin-bottom:8px; }
-.lx-field__label{
-  display:block; font-family:var(--lx-num); font-size:11px; line-height:14px;
-  letter-spacing:.06em; color:var(--lg-ink-48); margin-bottom:5px;
-  transition:color var(--lx-hover) var(--lx-hover-ease);
-}
+/* ── 폼 — 밑줄 필드(박스 0). 포커스 = 밑줄이 액센트로 그어진다. ───────────── */
+.lg-form{ margin-top:36px; }
+.lx-field{ position:relative; padding-bottom:6px; margin-bottom:10px; }
+.lx-field__label{ display:block; font-family:var(--font-display); font-weight:700; font-size:16px; line-height:22px; letter-spacing:-.01em; color:var(--lx-grey-2); }   /* 7차: Paperlogy 700 20(6차 Pretendard 26) */
+.lx-field.is-focus .lx-field__label{ color:var(--lx-ink); }
 .lx-field__input{
-  display:block; width:100%; height:32px; padding:0 0 6px; margin:0;
-  border:0; border-bottom:var(--lx-hair-w) solid var(--lg-hair); background:transparent;
-  font-family:var(--lx-body); font-size:15px; line-height:22px;
-  letter-spacing:var(--lx-ls); color:var(--lx-ink);
-  outline:none; transition:border-color var(--lx-hover) var(--lx-hover-ease);
+  display:block; width:100%; margin-top:8px; height:40px; padding:0; border:0; border-radius:0;
+  border-bottom:1px solid var(--lx-ink); background:transparent; color:var(--lx-ink);
+  font-family:var(--lx-body); font-weight:400; font-size:16px; letter-spacing:-.01em; outline:none;   /* 7차: 입력·플레이스홀더 Paperlogy 700 22(6차 Pretendard 28) */
 }
-.lx-field__input::placeholder{ color:var(--lx-grey); }
-/* system.css 의 사각 포커스 링은 끈다 — 포커스 표시는 아래 헤어라인이 그어지는 사건 자체다. */
+.lx-field__input::placeholder{ color:var(--lx-grey); font-family:var(--lx-body); font-weight:400; }   /* 8차: 예시 글자 = 소개 문장과 같은 Pretendard 400 */
 .lx .lx-field__input:focus-visible{ outline:none; }
-.lx-field:hover .lx-field__input{ border-bottom-color:var(--lg-ink-48); }
 .lx-field__rule{
-  position:absolute; left:0; right:100%; bottom:16px; height:1px; background:var(--lx-accent);
-  transition:right var(--lx-hover) var(--lx-hover-ease), background-color var(--lx-hover) linear;
+  position:absolute; left:0; right:100%; top:71px; height:1px;   /* 라벨 24 + 8 + 입력 40 − 1 */
+  background:var(--lx-accent); transition:right var(--lx-hover) var(--lx-hover-ease);
 }
 .lx-field.is-focus .lx-field__rule{ right:0; }
-.lx-field.is-focus .lx-field__label{ color:var(--lx-accent); }
-.lx-field.is-error .lx-field__rule{ right:0; background:var(--lg-error); }
-.lx-field.is-error .lx-field__label{ color:var(--lg-error); }
 .lx-field__msg{
-  position:absolute; left:0; bottom:0; margin:0;
-  font-family:var(--lx-num); font-size:11px; line-height:15px;
-  letter-spacing:.01em; color:var(--lg-error);
+  margin:6px 0 0; font-size:14px; line-height:16px; letter-spacing:-.005em; color:var(--lx-ink);
+  display:flex; align-items:center; gap:8px;
 }
+.lx-field__msg[hidden]{ display:none; }
+.lx-field.is-error{ margin-bottom:2px; }   /* 에러 줄(22)이 들어오면 필드 간격을 줄여 카드 안에서 끝나게 */
+.lx-field__msg::before{ content:""; width:6px; height:6px; background:var(--lx-ink); flex:none; }
 
-.lx-check{
-  display:flex; width:fit-content; align-items:center; gap:9px; cursor:pointer;
-  font-size:12.5px; color:var(--lg-ink-68); margin:2px 0 14px;
-}
+.lg-opts{ display:flex; flex-wrap:wrap; align-items:center; row-gap:8px; margin-top:6px; }   /* 7차: 18px 는 399 폭에 한 줄(상태 유지 좌 · 찾기 링크 우). 좁은 폭에서만 감싼다 */
+.lx-check{ display:inline-flex; align-items:center; gap:10px; cursor:pointer; font-family:var(--font-display); font-weight:700; font-size:16px; line-height:22px; letter-spacing:-.01em; position:relative; }   /* 7차: Paperlogy 700 18 */
 .lx-check input{ position:absolute; opacity:0; width:0; height:0; }
-.lx-check__box{
-  width:12px; height:12px; border:1px solid var(--lg-ink-48); display:inline-block; flex:none;
-  transition:border-color var(--lx-hover) var(--lx-hover-ease), background-color var(--lx-hover) var(--lx-hover-ease);
-}
-.lx-check:hover .lx-check__box{ border-color:var(--lx-ink); }
-.lx-check input:checked + .lx-check__box{ background:var(--lx-ink); border-color:var(--lx-ink); }
+.lx-check__box{ width:18px; height:18px; border:1px solid var(--lx-ink); flex:none; }
+.lx-check input:checked + .lx-check__box{ background:var(--lx-accent); border-color:var(--lx-accent); }   /* 체크 = 액센트 */
 .lx-check input:focus-visible + .lx-check__box{ outline:1px solid var(--lx-accent); outline-offset:2px; }
+.lg-find{ margin-left:auto; display:flex; align-items:center; gap:8px; }
+.lg-find__a{ font-family:var(--font-display); font-weight:700; font-size:16px; line-height:22px; letter-spacing:-.01em; color:var(--lx-accent); text-decoration:none; border-bottom:1px solid transparent; transition:border-color var(--lx-hover) var(--lx-hover-ease); }   /* 찾기 링크 = 액센트 */
+.lg-find__a:hover{ border-bottom-color:var(--lx-accent); }
+.lg-sep{ font-size:14px; color:var(--lx-grey); }
+.lg-find .lg-sep{ font-size:16px; line-height:22px; }
 
-/* ── CTA 줄 — B안 배치(주 CTA · 보조 · mono 노트). 폼 폭을 넘어간다. ────── */
-.lg-ctarow{ display:flex; align-items:center; gap:22px; width:var(--lg-col); }
-.lg-cta{ margin-left:-22px; flex:none; }        /* 브래킷 안쪽 여백만큼 좌측 정렬선에 맞춘다 */
-.lg-cta[disabled]{ cursor:default; color:var(--lg-ink-48); }
-.lg-see{
-  font-family:var(--lx-display); font-weight:500; font-size:13.5px; color:var(--lx-ink);
-  text-decoration:none; border-bottom:2px solid var(--lx-ink); padding-bottom:3px; flex:none;
-  transition:opacity var(--lx-hover) var(--lx-hover-ease);
+/* 버튼 2 나란히 — 로그인(액센트 채움 — 로그인 페이지의 유일한 색 채움 CTA, NOTES §14 로그인 예외) · 계정 신청하기(헤어라인 잉크) */
+.lg-actions{ display:flex; gap:10px; margin-top:32px; }
+.lg-submit{
+  display:flex; align-items:center; justify-content:center; gap:8px; flex:none; width:calc(50% - 5px); height:56px; margin:0; padding:0;
+  border:0; border-radius:0; background:var(--lx-accent); color:#FFFFFF; cursor:pointer;
+  font-family:var(--font-display); font-weight:700; font-size:20px; letter-spacing:.02em;
 }
-.lg-see:hover{ opacity:.6; }
-.lg-ctarow__n{ font-size:10.5px; line-height:14px; color:var(--lg-ink-48); }
-
-.lg-links{ display:flex; align-items:center; gap:13px; margin:16px 0 0; }
-.lg-link{ font-size:13px; line-height:17px; }
-.lg-dot{ color:var(--lx-grey); font-size:12px; }
-
-.lg-foot{ margin-top:14px; padding-top:11px; border-top:1px solid var(--lg-hair); width:var(--lg-col); }
-.lg-note{ margin:0; font-size:10.5px; line-height:1.8; letter-spacing:.04em; color:var(--lg-ink-68); }
-
-/* ── 판 사양 — 판 아래 흰 종이. B안 색인행 리듬을 그대로 쓴다. ────────── */
-.lg-spec{
-  position:absolute; right:var(--lg-m); top:calc(var(--lg-plate-h) + 54px);
-  width:var(--lg-ledger); z-index:5;
-  transition:opacity var(--lx-d3) var(--lx-ease);
+.lg-submit[disabled]{ cursor:default; opacity:.6; }
+.lg-submit:focus-visible{ outline:1px solid var(--lx-accent); outline-offset:3px; }
+.lg-submit svg{ transition:transform var(--lx-hover) var(--lx-hover-ease); }
+.lg-submit:hover svg{ transform:translateX(4px); }
+.lg-signup__a{
+  display:flex; align-items:center; justify-content:center; flex:none; width:calc(50% - 5px); height:56px;
+  border:1px solid var(--lx-ink); color:var(--lx-ink); text-decoration:none;
+  font-family:var(--font-display); font-weight:700; font-size:20px; letter-spacing:.02em;
+  transition:color var(--lx-hover) var(--lx-hover-ease), border-color var(--lx-hover) var(--lx-hover-ease);
 }
-.lg-spec .lg-ledger__h{ letter-spacing:.14em; }
-.lg-spec .lg-row__t{ font-size:11.5px; color:var(--lg-ink-68); }
+.lg-signup__a:hover{ color:var(--lx-accent); border-color:var(--lx-accent); }
 
-/* ══ 우하단 판 해설 — B안 PLATE 블록 ═════════════════════════════════════ */
-.lg-read{
-  position:absolute; right:var(--lg-m); bottom:40px; z-index:5; margin:0; text-align:right;
-  font-size:10.5px; line-height:1.8; letter-spacing:.04em; color:var(--lg-ink-68);
-  font-variant-numeric:tabular-nums;
-}
+.lg-contact{ margin:14px 0 0; display:flex; justify-content:center; align-items:baseline; gap:6px; font-size:14px; line-height:16px; letter-spacing:.04em; color:var(--lx-grey-2); }
+.lg-contact__ink{ color:var(--lx-ink); }
+.lg-contact__ink b{ font-weight:500; }
 
-.lg-fallback{
-  position:absolute; left:var(--lg-m); bottom:40px; z-index:5; margin:0; max-width:520px;
-  font-size:13px; line-height:1.6; color:var(--lg-error);
-}
+/* ── 카드 아래 — LX 락업 18 + 정책 링크 3 + Copyright, 한 줄 ── */
+.lg-foot{ position:absolute; left:0; right:0; top:calc(100% + var(--lg-gap)); display:flex; align-items:center; white-space:nowrap; }
+.lg-foot__ci{ display:block; height:18px; width:auto; }   /* 실제 LX 락업(민트 심볼 + 네이비 국문) — 브랜드 예외 */
+.lg-foot__policy{ margin:0 0 0 32px; display:flex; align-items:baseline; gap:8px; font-size:14px; line-height:16px; letter-spacing:.04em; color:var(--lx-grey-2); }
+.lg-foot__policy a{ color:inherit; text-decoration:none; }
+.lg-foot__policy a:hover{ color:var(--lx-accent); }
+.lg-foot__ink{ color:var(--lx-ink); }
+.lg-foot__legal{ margin:0 0 0 auto; font-size:14px; line-height:16px; letter-spacing:.02em; color:var(--lx-grey-2); }
 
-/* ══ 성공(핸드오프) — 종이가 물러나고 판이 뷰포트 전체가 된다 ══════════════ */
-.lg.is-leaving .lg-left,.lg.is-leaving .lg-mast,.lg.is-leaving .lg-cap,
-.lg.is-leaving .lg-spec,.lg.is-leaving .lg-plate__scrim{
-  opacity:0; transition:opacity var(--lx-d3) var(--lx-ease); pointer-events:none;
-}
-.lg.is-leaving .lg-read{
-  /* 판이 화면을 다 먹으면 흰 종이가 없다 — 해설은 불투명 잉크 칩으로 살아남는다. */
-  color:#fff; background:rgba(1,1,2,.72); padding:7px 10px;
+/* 축소 모션 — 포스터만(JS 가 source 를 뗀다). */
+@media (prefers-reduced-motion: reduce){
+  .lx-field__rule,.lg-submit svg,.lg-find__a,.lg-signup__a{ transition:none; }
 }
 
-.lg-plate.is-full{
-  left:0 !important; top:0 !important; right:0 !important; height:100vh !important; z-index:50;
-  transition:left var(--lx-d4) var(--lx-ease), height var(--lx-d4) var(--lx-ease),
-             clip-path var(--lx-d4) var(--lx-ease);
+/* ── <1280 — 카드가 100%−64 로 줄어든다(비율 60/40 유지). 우 패널 ≈300 폭 — 옵션 줄이 두 줄로 감싼다(글자 그대로 18) ── */
+@media (max-width: 1279px){
+  .lg-wrap{ width:calc(100% - 64px); }
 }
-/* 카메라가 남원으로 밀고 들어간다 — 판 확대와 같은 1250ms·같은 이징. */
-.lg-plate.is-full .lg-plate__v{ transform:scale(1.18); }
 
-/* ══ 반응형 ══════════════════════════════════════════════════════════════ */
-@media (max-width:1439.98px){
-  :root{ --lg-m:48px; --lg-col:560px; --lg-ledger:380px; --lg-plate-l:520px; --lg-plate-h:520px; }
-  .lg-h1{ font-size:50px; }
-  .lg-vis{ font-size:15.5px; max-width:500px; }
-}
-@media (max-width:1279.98px){
-  :root{ --lg-m:32px; }
+/* ── <900 — 세로 스택: 소개 → 필름 → 폼 → 푸터 ── */
+@media (max-width: 899px){
   body.lx{ overflow:auto; }
-  .lg{ display:flex; flex-direction:column; min-height:100vh; overflow:visible; }
-  .lg-mast{ position:relative; order:1; background:var(--lx-paper); }
-  .lg-plate{ position:relative; order:2; left:auto; right:auto; top:auto; height:300px; }
-  .lg-plate__scrim--l{ background:linear-gradient(100deg,rgba(255,255,255,.55) 0%,rgba(255,255,255,0) 34%); }
-  .lg-plate__scrim--b{ background:linear-gradient(0deg,#FFF 0%,rgba(255,255,255,0) 26%); }
-  .lx-bracket--tl,.lx-bracket--bl{ left:14%; }
-  .lg-chip{ left:16%; }
-  .lg-cap{ position:relative; order:3; left:auto; right:auto; top:auto;
-           margin:0 var(--lg-m); background:none; padding:0; border-bottom:1px solid var(--lg-hair); }
-  .lg-left{ order:4; padding-top:32px; width:100%; padding-right:var(--lg-m); }
-  .lg-spec{ position:relative; order:5; right:auto; top:auto; width:auto; margin:26px var(--lg-m) 0; }
-  .lg-read{ position:relative; order:6; right:auto; bottom:auto; text-align:left;
-            margin:24px var(--lg-m) 40px; }
-  .lg-h1{ font-size:44px; }
-  .lg-ctarow{ width:auto; flex-wrap:wrap; gap:16px; }
-  .lg-foot,.lg-vis{ width:auto; max-width:none; }
-  .lg-fallback{ position:relative; order:7; left:auto; bottom:auto; margin:0 var(--lg-m) 24px; }
-  /* 핸드오프 — 흐름 안에 있는 판을 뷰포트에 고정해서 화면을 다 먹인다. */
-  .lg-plate.is-full{ position:fixed; }
-}
-
-@media (prefers-reduced-motion:reduce){
-  .lg-plate{ clip-path:inset(0) !important; }
-  .lg-plate__v{ transition:none; }
+  .lg{ height:auto; min-height:100vh; overflow:visible; padding:40px 0 48px; }
+  .lg-wrap{ position:static; transform:none; width:auto; margin:0 24px; max-width:none; }
+  .lg-head{ position:static; margin-bottom:24px; }
+  .lg-card{ flex-direction:column; height:auto; }
+  .lg-film{ flex:none; height:40vh; min-height:240px; }
+  .lg-panel{ flex:none; padding:24px 24px 28px; }
+  .lg-foot{ position:static; margin-top:24px; flex-wrap:wrap; gap:12px 24px; white-space:normal; }
+  .lg-foot__policy{ margin-left:0; }
+  .lg-foot__legal{ margin-left:0; flex-basis:100%; }
 }

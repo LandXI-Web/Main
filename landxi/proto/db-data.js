@@ -15,7 +15,7 @@ import { RESULTS } from '../assets/data/results.js';
 import { MODELS } from '../assets/data/models.js';
 import { IMAGERY } from '../assets/data/imagery.js';
 import { CHANGE } from '../assets/data/change.js';
-import { SERVICES } from '../assets/data/services.js';
+import { CROPS } from '../assets/data/crops.js';
 
 export const nf = new Intl.NumberFormat('ko-KR');
 const DAY = 86400000;
@@ -62,6 +62,8 @@ export const DONE = RESULTS.map((r) => ({
   geojson: '../' + r.geojson,
   service: r.service,
   emd: r.stats.emd || null,
+  objTotal: r.stats.objTotal || null,
+  year: r.year,
 }));
 
 export const doneById = (id) => DONE.find((x) => x.id === id);
@@ -111,33 +113,41 @@ export const NOTICE = { ...DASH.notice, id: 8, more: '../notice.html' };
 /* B13. 카드 발행 승인 대기 — 원본 CARD_APPROVALS 2건. 요청자·요청시각까지 원본 값.
    행 클릭은 원본의 `admin-publish.html?open=<id>` 자리다(우리는 지도 핀으로 간다). */
 // 카드 ↔ 지역 연결은 원본에 없다 — A5 과제명에서 되짚은 **연결 추정**이며 화면이 그렇게 말한다.
-// sgg 는 그 emd 가 속한 시군구다 — 결과 폴리곤에 그 emd 가 없어 범위를 그릴 수 없고(D.1),
-// 카드 ↔ 지역 연결 자체가 우리가 되짚은 주장이므로 화면에 `추정` 으로 표기한다.
+// 증거 크롭 = crops.js 의 실크롭 중 요청 지역 기준점에 **가장 가까운 것**(코드가 고른다, 손으로 놓지 않는다).
+//   도통동 = 원본 시드 핀(127.39, 35.41) · 시 중앙권 = 농지이용 결과의 camera.center. 거리(km)를 같이 적는다 → `추정`.
+//   도로안전 카드는 결과 폴리곤이 없으므로 헤어라인 없는 `-clean` 정사영상 크롭을 쓴다.
+const FARM = RESULTS.find((r) => r.id === 'namwon-farmland-2025');
 const APPROVAL_META = {
-  '도로안전 정사영상 v2.1': { id: 'pa-1', at: '2026.06.10 14:30', sgg: '남원시', emd: '도통동' },
-  '농지 활용 분석 v2.0': { id: 'pa-6', at: '2026.05.15 08:50', sgg: '남원시', emd: '시 중앙권' },
+  '도로안전 정사영상 v2.1': { id: 'pa-1', at: '2026.06.10 14:30', emd: '도통동', ref: [127.39, 35.41], set: 'namwon-farmland-2025', clean: true },
+  '농지 활용 분석 v2.0': { id: 'pa-6', at: '2026.05.15 08:50', emd: '시 중앙권', ref: FARM.camera.center, set: 'namwon-farmland-2025', clean: false },
 };
+const kmBetween = (a, b) => Math.hypot((a[0] - b[0]) * 111.32 * Math.cos((b[1] * Math.PI) / 180), (a[1] - b[1]) * 110.57);
+function nearestCrop(set, ref, clean) {
+  const best = CROPS[set].map((c) => ({ c, km: kmBetween(c.lnglat, ref) })).sort((x, y) => x.km - y.km)[0];
+  const { c, km } = best;
+  return { src: '../' + (clean && c.clean ? c.clean : c.file), km: +km.toFixed(1), cls: clean ? null : c.cls, conf: clean ? null : c.conf, source: c.source === 'vworld' ? 'V-World' : '정사영상', gsdCm: +(c.gsd * 100).toFixed(0) };
+}
 export const APPROVALS = DASH.queue
   .filter((q) => APPROVAL_META[q.title])
-  .map((q, i) => ({ i, title: q.title, sub: q.sub, ...APPROVAL_META[q.title], lnglat: q.pin.lnglat }));
+  .map((q, i) => { const m = APPROVAL_META[q.title]; return { i, title: q.title, sub: q.sub, id: m.id, at: m.at, emd: m.emd, lnglat: q.pin.lnglat, crop: nearestCrop(m.set, m.ref, m.clean) }; });
 
-/* B14. 사용자·콘텐츠 관리 타일 4 — 원본 support-grid 그대로. */
-// `ref` = Outage Center 규칙(§12.1 #10): 같은 수치를 두 번 말하지 않는다.
-// 사용자·문의 수치는 KPI 띠에 이미 있으므로 여기서는 어디에 있는지만 가리킨다.
+/* B14. 사용자·콘텐츠 관리 타일 4 — 원본 support-grid 그대로. desc 는 원본 부제 원문,
+   big/sub 는 같은 수치를 타일 큰 숫자로 그리기 위한 분해(값은 desc 와 동일). act = 조치 필요(warn). */
 export const ADMIN_TILES = [
-  { name: '사용자 관리', short: '사용자 관리', desc: '전체 21명 · 가입 대기 1', ref: '수치는 KPI ① · ④에', href: 'admin-users.html' },
-  { name: '공지사항 관리', short: '공지사항 관리', desc: '전체 12건 · 긴급 2', ref: '전체 12건 · 긴급 2', href: 'admin-notice.html' },
-  { name: '문의 관리', short: '문의 관리', desc: '미답변 6 · 전체 12', ref: '수치는 KPI ⑤에', href: 'admin-inquiry.html' },
-  { name: '자주 묻는 질문 관리', short: '자주 묻는 질문', desc: '전체 15건', ref: '전체 15건', href: 'admin-faq.html' },
+  { name: '사용자 관리', short: '사용자 관리', desc: '전체 21명 · 가입 대기 1', href: 'admin-users.html', big: 21, unit: '명', bigLabel: '전체', sub: { label: '가입 대기', n: 1, act: true } },
+  { name: '공지사항 관리', short: '공지사항 관리', desc: '전체 12건 · 긴급 2', href: 'admin-notice.html', big: 12, unit: '건', bigLabel: '전체', sub: { label: '긴급', n: 2, act: true } },
+  { name: '문의 관리', short: '문의 관리', desc: '미답변 6 · 전체 12', href: 'admin-inquiry.html', big: 6, unit: '건', bigLabel: '미답변', act: true, sub: { label: '전체', n: 12 } },
+  { name: '자주 묻는 질문 관리', short: '자주 묻는 질문', desc: '전체 15건', href: 'admin-faq.html', big: 15, unit: '건', bigLabel: '전체' },
 ];
 
-/* B4–B8. KPI 5 — 원본 화면의 값·부제·링크를 그대로 쓴다(우리 목업값으로 갈아치우지 않는다). */
+/* B4–B8. KPI 5 — 원본 화면의 값·부제·링크를 그대로 쓴다(우리 목업값으로 갈아치우지 않는다).
+   act = 조치 필요 → 숫자·상태어가 warn(#D1352B). 정보 KPI(①②)는 액센트 파랑. design/system.md §2 색 역할. */
 export const KPI = [
-  { label: '전체 사용자', value: 21, unit: '명', sub: '정상 19 · 가입 승인 대기 1', href: 'admin-users.html' },
+  { label: '전체 사용자', value: 21, unit: '명', sub: '정상 19', href: 'admin-users.html' },
   { label: '발행 분석 카드', value: 8, unit: '건', sub: '공개 7 · 비공개 1', href: 'ai-card.html' },
-  { label: '카드 발행 승인 대기', value: APPROVALS.length, unit: '건', sub: '검토 필요', href: 'admin-publish.html?status=대기', to: 'b-approve' },
-  { label: '가입 승인 대기', value: 1, unit: '건', sub: '승인 필요', href: 'admin-users.html' },
-  { label: '미답변 문의', value: 6, unit: '건', sub: '전체 12 · 답변 필요', href: 'admin-inquiry.html' },
+  { label: '카드 발행 승인 대기', value: APPROVALS.length, unit: '건', sub: '검토 필요', href: 'admin-publish.html?status=대기', to: 'b-approve', act: true },
+  { label: '가입 승인 대기', value: 1, unit: '건', sub: '승인 필요', href: 'admin-users.html', act: true },
+  { label: '미답변 문의', value: 6, unit: '건', sub: '답변 필요', href: 'admin-inquiry.html', act: true },
 ];
 /* B10 · B12 — 원본 대시보드 ECharts 시드를 그대로 쓴다(우리 목업값으로 갈아치우지 않는다).
    원본 주석이 "사용량=데모"라고 밝힌 값이므로 화면에는 [추정] 꼬리표를 단다. */
@@ -201,283 +211,3 @@ export const CHANGE_PAIRS = CHANGE.map((c) => ({
   pair: c.pair, label: c.label, method: c.method, to: c.toDate, bounds: c.bounds,
   polygons: '../' + c.polygons,
 }));
-
-/* ══════════════════════════════════════════════════════════════════════
-   판 12.8 — 0.25° 셀 집계 (NOTES.md §12.8)
-   손 값 금지. 셀 등급은 전부 여기서 계산한다:
-     ai   = 그 셀과 겹치는 **결과 footprint** 건수
-     data = 그 셀과 겹치는 **정사영상 시점(captured)** 수
-   footprint 출처 = results.js(stats.bbox) · change.js(bounds) · jeju-illegal.geojson.
-   `marine-debris*.geojson`(전남 실태조사)은 넣지 않았다 — 결과 대장(results.js)에
-   레코드가 없고, 원판 §12.8 의 셀 목록(남원·여수·제주·국산리·울주)에도 없다.
-   ══════════════════════════════════════════════════════════════════════ */
-
-export const CELL = 0.25;
-/** 판이 그리는 그리드 범위 — §12.8 "0.25° 셀 GeoJSON(124–131 / 33–39)". */
-export const GRID = { w: 124, s: 33, e: 131, n: 39 };
-/** 판 카메라 — 원판 캡처 bounds. 572×254(2.2520:1)에 fitBounds 한다. */
-export const PLATE_BOUNDS = [119.536, 33.0, 135.964, 38.9];
-
-const r2 = (v) => Math.round(v * 100) / 100;
-/** 값이 속한 셀의 남서 모서리. */
-export const cellOf = (v) => r2(Math.floor(v / CELL + 1e-9) * CELL);
-export const cellKey = (lon, lat) => `${r2(lon).toFixed(2)}|${r2(lat).toFixed(2)}`;
-
-/** bbox 가 실제로 **면적을 나누어 갖는** 셀만 센다.
-    상한이 셀 경계에 정확히 닿는 경우(e = 34.75)는 그 셀을 세지 않는다 — 겹침이 0 이다. */
-export function cellsOfBBox(b) {
-  if (!b || b.length < 4) return [];
-  const [w, s, e, n] = b;
-  const span = (lo, hi) => {
-    const a = Math.floor(lo / CELL + 1e-9);
-    let z = Math.ceil(hi / CELL - 1e-9) - 1;
-    if (z < a) z = a;
-    return [a, z];
-  };
-  const [x0, x1] = span(w, e);
-  const [y0, y1] = span(s, n);
-  const out = [];
-  for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) out.push([r2(x * CELL), r2(y * CELL)]);
-  return out;
-}
-
-const geoBBox = (g) => {
-  let w = 9e9; let s = 9e9; let e = -9e9; let n = -9e9;
-  const eat = (c) => {
-    if (typeof c[0] === 'number') {
-      if (c[0] < w) w = c[0];
-      if (c[0] > e) e = c[0];
-      if (c[1] < s) s = c[1];
-      if (c[1] > n) n = c[1];
-    } else for (const k of c) eat(k);
-  };
-  for (const f of (g && g.features) || []) if (f.geometry) eat(f.geometry.coordinates);
-  return w > e ? null : [w, s, e, n];
-};
-
-/** 결과 표시명 — 대장의 제목에서 지역·행위어를 덜어낸다(`남원시 농지이용 현황` → `농지이용`). */
-const shortTitle = (t) => String(t).replace(/^\S+?[시군도]\s+/, '').replace(/\s*(현황|조사)(?=\(|$)/, '');
-/** 서비스가 이 결과 하나만 가리키면 서비스 대장의 집계값을 쓴다(비닐하우스 = 9,664동). */
-function serviceValue(id) {
-  const s = SERVICES.find((x) => Array.isArray(x.results) && x.results.length === 1 && x.results[0] === id);
-  return s ? { value: s.count, unit: s.unit } : null;
-}
-
-/** 결과 footprint — 판이 세는 단위. bbox 는 전부 데이터에서 온다. */
-export function baseFootprints() {
-  const out = RESULTS.map((r) => {
-    const sv = serviceValue(r.id);
-    return {
-      id: r.id,
-      name: shortTitle(r.title),
-      value: sv ? sv.value : r.stats.count,
-      unit: sv ? sv.unit : r.unit,
-      // 라벨 연결 줄은 대장의 원값(필지 수)을 쓴다 — 서비스 집계값(동)이 아니다.
-      count: r.stats.count,
-      countUnit: r.unit,
-      bbox: r.stats.bbox,
-      region: r.region,
-      ledger: true, // 결과 대장(results.js)에 레코드가 있다 = 라벨셋
-      note: '',
-      tag: '',
-    };
-  });
-  // 변화 지수(비지도) — 학습 모델 탐지가 아니다. 대장이 아니므로 라벨 연결에서 제외한다.
-  const cb = CHANGE[0] && CHANGE[0].bounds;
-  if (cb) {
-    out.push({
-      id: 'namwon-change',
-      name: '변화지수',
-      value: CHANGE.reduce((a, c) => a + c.stats.n, 0),
-      unit: '폴리곤',
-      bbox: cb,
-      region: '전북 남원시',
-      ledger: false,
-      note: '비지도',
-      tag: '',
-    });
-  }
-  return out;
-}
-
-/** 제주 불법건축물 — 결과 대장에 없고 GeoJSON 으로만 있다. bbox 는 파일에서 센다.
-    발행 카드 8건과의 매핑이 데이터에 없으므로 `추정` 태그를 단다(브리프 (c)). */
-export const JEJU_URL = '../assets/data/geo/jeju-illegal.geojson';
-export function jejuFootprint(geo) {
-  const bbox = geoBBox(geo);
-  if (!bbox) return null;
-  return {
-    id: 'jeju-illegal',
-    name: '불법건축물',
-    value: geo.features.length,
-    unit: '동',
-    bbox,
-    region: '제주',
-    ledger: false,
-    note: '',
-    tag: '추정',
-  };
-}
-export async function loadFootprints(get) {
-  const out = baseFootprints();
-  const g = get || ((u) => fetch(u));
-  try {
-    const geo = await g(JEJU_URL).then((r) => r.json());
-    const f = jejuFootprint(geo);
-    if (f) out.push(f);
-  } catch { /* 파일 없음 → 제주 셀은 서지 않는다. 지어내지 않는다. */ }
-  return out;
-}
-
-/** 영상 시점의 센서 — 라벨에 적혀 있으면 그것, 없으면 GSD 로 가른다(10 cm 미만 = 드론). */
-export const sensorOfImg = (i) => (/드론/.test(i.label) ? '드론' : /항공/.test(i.label) ? '항공' : i.gsd < 0.1 ? '드론' : '항공');
-/** 조사 예정 = 서비스 라인업에서 결과가 아직 0인 항목(services.js count 0). */
-export const PLANNED_SERVICES = SERVICES.filter((s) => s.count === 0 && Array.isArray(s.lnglat));
-
-/**
- * 판의 셀 목록. 손 값 0 — bbox ∩ 셀 만으로 만든다.
- * @returns {{lon:number,lat:number,ai:number,data:number,results:object[],imagery:object[],planned:string[]}[]}
- */
-export function cellsFor(footprints, imagery, planned) {
-  const fps = footprints || baseFootprints();
-  const imgs = imagery || IMAGERY;
-  const plan = planned || PLANNED_SERVICES;
-  const by = new Map();
-  const touch = (lon, lat) => {
-    const k = cellKey(lon, lat);
-    let c = by.get(k);
-    if (!c) { c = { lon, lat, ai: 0, data: 0, results: [], imagery: [], planned: [] }; by.set(k, c); }
-    return c;
-  };
-  for (const f of fps) for (const [lon, lat] of cellsOfBBox(f.bbox)) touch(lon, lat).results.push(f);
-  for (const i of imgs) for (const [lon, lat] of cellsOfBBox(i.bounds)) touch(lon, lat).imagery.push(i);
-  for (const s of plan) touch(cellOf(s.lnglat[0]), cellOf(s.lnglat[1])).planned.push(s.name);
-  for (const c of by.values()) {
-    c.ai = c.results.length;
-    c.data = new Set(c.imagery.map((i) => i.captured)).size;
-  }
-  return [...by.values()].sort((a, b) => (b.lat - a.lat) || (a.lon - b.lon));
-}
-
-/** 등급 — 범례 행과 채움 표현식이 같은 규칙을 쓴다. */
-export function gradeOf(cell, mode) {
-  if (cell.planned.length) return 'plan';
-  if (mode === 'data') return cell.data >= 4 ? 'd3' : cell.data >= 2 ? 'd2' : cell.data === 1 ? 'd1' : 'd0';
-  return cell.ai >= 3 ? 'a3' : cell.ai === 2 ? 'a2' : cell.ai === 1 ? 'a1' : 'a0';
-}
-
-/** 범례 — 셀 수는 전부 집계값이다. */
-export function legendFor(cells, mode) {
-  const n = (g) => cells.filter((c) => gradeOf(c, mode) === g).length;
-  return mode === 'data'
-    ? {
-      head: '그리드 0.25° · 흰 진하기 = 영상 시점 수',
-      rows: [
-        { g: 'd3', name: '영상 4시점 이상', n: n('d3') },
-        { g: 'd2', name: '영상 2–3시점', n: n('d2') },
-        { g: 'd1', name: '영상 1시점', n: n('d1') },
-        { g: 'd0', name: '결과만 · 영상 없음', n: n('d0') },
-        { g: 'plan', name: '조사 예정 · 시연', n: n('plan') },
-      ],
-    }
-    : {
-      head: '그리드 0.25° · 청록 진하기 = 결과 건수',
-      rows: [
-        { g: 'a3', name: '결과 3건 이상', n: n('a3') },
-        { g: 'a2', name: '결과 2건', n: n('a2') },
-        { g: 'a1', name: '결과 1건', n: n('a1') },
-        { g: 'a0', name: '학습데이터만 · 결과 없음', n: n('a0') },
-        { g: 'plan', name: '조사 예정 · 시연', n: n('plan') },
-      ],
-    };
-}
-
-/* ── 콜아웃 문구 (§12.8) ─────────────────────────────────────────────── */
-const deg = (v) => v.toFixed(2);
-export const cellBBox = (c) => [c.lon, c.lat, r2(c.lon + CELL), r2(c.lat + CELL)];
-export const cellCoords = (c) => `${deg(c.lon)}–${deg(r2(c.lon + CELL))} E · ${deg(c.lat)}–${deg(r2(c.lat + CELL))} N`;
-/** 지명은 데이터에 적힌 것만 쓴다 — 영상 라벨의 머리말, 없으면 결과의 region. */
-export function placeOf(c) {
-  const img = [...c.imagery].sort((a, b) => a.gsd - b.gsd)[0];
-  if (img) return String(img.label).split(' ')[0];
-  const r = c.results.find((x) => x.region);
-  return r ? r.region.split(' ').pop().replace(/[시군]$/, '') : '';
-}
-/** 시점 목록 — `2025-04 · 06 · 08 · 10`(연이 같으면 월만). */
-function epochText(list) {
-  let year = '';
-  return list.map((s) => {
-    const [y, m] = s.split('-');
-    if (y === year) return m;
-    year = y;
-    return s;
-  }).join(' · ');
-}
-/** GSD — 1 m 미만은 cm, 그 이상은 m. */
-function gsdRange(vals) {
-  const lo = Math.min(...vals);
-  const hi = Math.max(...vals);
-  const one = (v) => (v < 1 ? `${+(v * 100).toFixed(2)} cm` : `${v.toFixed(2)} m`);
-  if (lo === hi) return `GSD ${one(lo)}`;
-  if (hi < 1) return `GSD ${+(lo * 100).toFixed(2)}–${+(hi * 100).toFixed(2)} cm`;
-  return `GSD ${one(lo)}–${one(hi)}`;
-}
-
-/**
- * 셀 콜아웃. 없는 연결은 쓰지 않는다 — 0 을 지어내지 않는다.
- * @returns {{place:string,coords:string,head:string,headTone:string,lines:object[]}}
- */
-export function calloutFor(c, mode) {
-  const place = placeOf(c);
-  const coords = cellCoords(c);
-  if (c.planned.length) {
-    return {
-      place,
-      coords,
-      headTone: 'plan',
-      head: '조사 예정 · 시연',
-      lines: [{ t: c.planned.join(' · ') }, { t: '결과 0건 · 준비 중', tone: 'mute' }],
-    };
-  }
-  if (mode === 'data') {
-    const eps = [...new Set(c.imagery.map((i) => i.captured))].sort();
-    // 시점마다 그 셀에서 가장 고해상인 취득을 대표로 삼는다.
-    const best = eps.map((e) => c.imagery.filter((i) => i.captured === e).sort((a, b) => a.gsd - b.gsd)[0]);
-    const lines = [];
-    if (eps.length) lines.push({ t: `${epochText(eps)} · ${gsdRange(best.map((i) => i.gsd))}` });
-    else lines.push({ t: '정사영상 없음', tone: 'mute' });
-    // 라벨 연결 = 이 셀에 서 있는 결과 대장의 라벨셋.
-    // 영상 시점 ↔ 결과의 연결은 데이터에 없으므로 시점을 적지 않는다(0 을 지어내지 않는다).
-    const lab = c.results.filter((r) => r.ledger);
-    if (lab.length) {
-      const byUnit = new Map();
-      for (const r of lab) byUnit.set(r.countUnit, [...(byUnit.get(r.countUnit) || []), r.count]);
-      lines.push({
-        t: `라벨 연결 ${[...byUnit].map(([u, v]) => `${v.map((x) => nf.format(x)).join(' + ')}${u}`).join(' · ')}`,
-        tone: 'mute',
-      });
-    }
-    const sens = [...new Set(best.map(sensorOfImg))];
-    return {
-      place,
-      coords,
-      headTone: 'data',
-      head: `학습데이터 <b>${eps.length}시점</b>${sens.length ? ` · ${sens.join(' · ')}` : ''}`,
-      lines,
-    };
-  }
-  const led = c.results.filter((r) => r.ledger);
-  const rest = c.results.filter((r) => !r.ledger);
-  const lines = [];
-  const val = (r) => `${r.name} ${nf.format(r.value)}${r.unit}`;
-  if (led.length) lines.push({ t: led.map(val).join(' · ') });
-  for (const r of rest) lines.push({ t: val(r) + (r.note ? ` <i>· ${r.note}</i>` : ''), tag: r.tag });
-  if (!c.results.length) lines.push({ t: `학습데이터 ${c.data}시점 · 결과 없음`, tone: 'mute' });
-  return {
-    place,
-    coords,
-    headTone: 'ai',
-    head: `AI 분석 결과 <b>${c.ai}건</b>`,
-    lines,
-  };
-}

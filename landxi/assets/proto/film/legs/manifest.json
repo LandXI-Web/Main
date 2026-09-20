@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-08-26T06:00:10.486Z",
+  "generatedAt": "2026-08-31T23:00:18.057Z",
   "builder": "tools/scrub/assemble.mjs",
-  "source": "3개 소스 · kling v2-1-pro AI 레그 1–3(앵커 A01→A04) + MapLibre 결정론 필름 + maplibre3d 실측 3D",
+  "source": "단일 소스 · kling v2-1-pro AI 레그 1–12(앵커 A01→A06→A06b→A07→A08→A08b→A09→A10→A11→A12→A01). MapLibre 플레이스홀더 0. 레그 12(귀환)가 루프를 A01 로 닫고, 브랜드 마감은 그 위에서 페이지가 그린다(ending.js v2 — 지구본이 물러나고 CI 가 뜬다)",
   "fps": 25,
-  "fpsNote": "레그 01–03 은 24 fps(kling 출력 1946×1080), 나머지는 25 fps 1280×720. 레그별 legs[].fps / legs[].size.",
+  "fpsNote": "전 레그 24 fps(kling 출력 1932×1072→1080p 스케일). 레그별 legs[].fps / legs[].size.",
   "filmSize": [
     1280,
     720
@@ -12,18 +12,36 @@
     "ids": [
       "01",
       "02",
-      "03"
+      "03",
+      "04",
+      "05",
+      "06",
+      "06b",
+      "07",
+      "08",
+      "08b",
+      "09",
+      "10",
+      "11",
+      "12"
     ],
-    "doc": "docs/superpowers/proto/2026-08-26-kie-legs-1-3.md",
-    "note": "미니어처 세계라 실카메라가 없다. startCamera/endCamera 는 앵커 문서의 고도대를 따라 authored 이고 (A02 고궤도 460 km · A03 ~30 km/피치 60°), 레그 03 끝은 이어받는 레그 04 의 실카메라에 맞춘다. cameraSource:\"authored\" 로 표시. 페이지 오버레이의 숫자는 전부 실데이터다."
+    "doc": [
+      "docs/superpowers/proto/2026-08-26-kie-legs-1-3.md",
+      "docs/superpowers/proto/2026-08-27-kie-legs-4-6.md",
+      "docs/superpowers/proto/2026-08-27-kie-legs-4-6b.md",
+      "docs/superpowers/proto/2026-08-27-kie-leg-7.md",
+      "docs/superpowers/proto/2026-08-27-kie-legs-8-8b.md",
+      "docs/superpowers/proto/2026-08-27-kie-legs-final.md"
+    ],
+    "note": "미니어처 세계라 실카메라가 없다. startCamera/endCamera 는 앵커 문서의 고도대를 따라 authored 이고 (A02 고궤도 460 km · A03 ~30 km/피치 60° · A05 남원 분지 8.6 km · A06b 남원 상공 140 km · A07 여수 17 km · A08 국동항 방파제 발치 0.3 km/피치 50°), 레그 05 끝은 남원 인계 판의 카메라, 레그 06 은 남원 위 수직 상승, 06b 는 여수 17 km 로 활강, 07 끝(국동항 방파제 발치 클로즈업)은 여수 인계 판의 카메라가 된다. 08 은 여수 위 수직 상승(0.3 → 6 km), 08b 는 울주 산지(129.15, 35.55 · 4.5 km/피치 65°)로 활강 — 필름은 여수 인계 판 뒤로 이어진다. 09 는 울주 능선 활강(4.5 → 1.2 km/피치 35°), 10 은 소각 공터 접근(0.5 km/피치 30°), 11 은 급상승해 한반도 전체(A12 · 1,400 km/피치 0), 12 는 계속 물러나 모형 지구본으로 귀환(A01 · 15,000 km/피치 0 = 레그 01 시작 카메라, 루프 폐합) — 그 위에 브랜드 마감. cameraSource:\"authored\" 로 표시. 페이지 오버레이의 숫자는 전부 실데이터다."
   },
   "mobileSize": [
     960,
     540
   ],
   "encode": {
-    "desktop": "-c:v libx264 -profile:v high -preset slow -crf 20 -g 8 -keyint_min 8 -sc_threshold 0 -movflags +faststart -an",
-    "mobile": "-vf scale=960:540 -c:v libx264 -profile:v high -preset slow -crf 25 -g 4 -keyint_min 4 -sc_threshold 0 -movflags +faststart -an"
+    "desktop": "-c:v libx264 -profile:v high -preset slow -crf 24 -g 8 -keyint_min 8 -sc_threshold 0 -movflags +faststart -an",
+    "mobile": "-vf scale=960:540 -c:v libx264 -profile:v high -preset slow -crf 27 -g 4 -keyint_min 4 -sc_threshold 0 -movflags +faststart -an"
   },
   "pace": {
     "targetRate": 0.218,
@@ -32,7 +50,7 @@
       0.212,
       0.225
     ],
-    "deviationPct": 0.14
+    "deviationPct": 0
   },
   "seam": 0.16,
   "lerp": 0.12,
@@ -41,18 +59,18 @@
     "seekMs": 20
   },
   "lazyVh": 1.6,
-  "filmSeconds": 32.049,
-  "filmVh": 6.987,
-  "spacerVh": 7.987,
+  "filmSeconds": 71.162,
+  "filmVh": 15.512,
+  "spacerVh": 16.512,
   "cameraNote": "고도 = 1.5 × 720px × m/px (MapLibre 기본 fov 36.87°, 필름 뷰포트 720px). 줌·GSD 는 고도에서 유도.",
-  "flightProfile": "레그마다 렌더러가 다르다. 레그 04–07 의 좌표·고도·방위·피치는 그 레그를 구운 렌더러의 실제 카메라 값이다(MapLibre 필름 SEG · maplibre3d LEG[]); AI 레그 01–03 은 authored(aiLegs.note). 그래서 렌더러가 바뀌는 이음매에서는 고도가 실제로 튄다 — 필름 자체가 거기서 컷이기 때문이다. 계기 바늘이 스냅하지 않도록 페이지가 씸 밴드(0.16vh) 위에서 두 레그의 판독값을 섞는다(scrub.js camAt). 인계 판은 그 덕분에 필름 마지막 프레임과 정확히 같은 카메라로 뜬다.",
+  "flightProfile": "전 레그가 kling AI 미니어처라 실카메라가 없다 — 카메라는 전부 authored(aiLegs.note) 이고 하나의 단조 하강 프로파일로 이어 붙였다(레그 06 상승·06b 이동, 08 상승·08b 이동 제외). AI 레그끼리의 tail→head 이음매는 앵커를 공유해 diff 0.2 % 대다. 계기 바늘이 스냅하지 않도록 페이지가 씸 밴드(0.16vh) 위에서 두 레그의 판독값을 섞는다(scrub.js camAt). 인계 판은 그 덕분에 필름 마지막 프레임과 정확히 같은 카메라로 뜬다.",
   "bytes": {
-    "desktop": 41135379,
-    "mobile": 14484571,
-    "poster": 976752,
-    "desktopMB": 39.23,
-    "mobileMB": 13.81,
-    "posterMB": 0.93
+    "desktop": 57238777,
+    "mobile": 19725646,
+    "poster": 1354124,
+    "desktopMB": 54.59,
+    "mobileMB": 18.81,
+    "posterMB": 1.29
   },
   "seams": [
     {
@@ -60,10 +78,10 @@
       "to": "02",
       "frameShared": false,
       "rule": "B",
-      "pct": 0.167,
-      "lumaA": 65.94,
-      "lumaB": 65.63,
-      "lumaDelta": -0.31,
+      "pct": 0.175,
+      "lumaA": 59.31,
+      "lumaB": 59.49,
+      "lumaDelta": 0.18,
       "pass": true,
       "monotonic": true
     },
@@ -72,10 +90,10 @@
       "to": "03",
       "frameShared": false,
       "rule": "B",
-      "pct": 0.169,
-      "lumaA": 66.29,
-      "lumaB": 66.07,
-      "lumaDelta": -0.22,
+      "pct": 0.188,
+      "lumaA": 69.59,
+      "lumaB": 69.47,
+      "lumaDelta": -0.12,
       "pass": true,
       "monotonic": true
     },
@@ -84,10 +102,10 @@
       "to": "04",
       "frameShared": false,
       "rule": "B",
-      "pct": 18.094,
+      "pct": 0.236,
       "lumaA": 47.11,
-      "lumaB": 77.74,
-      "lumaDelta": 30.63,
+      "lumaB": 46.88,
+      "lumaDelta": -0.23,
       "pass": true,
       "monotonic": true
     },
@@ -96,10 +114,10 @@
       "to": "05",
       "frameShared": false,
       "rule": "B",
-      "pct": 7.073,
-      "lumaA": 79.17,
-      "lumaB": 89.59,
-      "lumaDelta": 10.42,
+      "pct": 0.267,
+      "lumaA": 57.76,
+      "lumaB": 57.3,
+      "lumaDelta": -0.46,
       "pass": true,
       "monotonic": true
     },
@@ -108,22 +126,106 @@
       "to": "06",
       "frameShared": false,
       "rule": "B",
-      "pct": 12.23,
-      "lumaA": 81,
-      "lumaB": 79.17,
-      "lumaDelta": -1.83,
+      "pct": 0.219,
+      "lumaA": 61.77,
+      "lumaB": 61.71,
+      "lumaDelta": -0.06,
       "pass": true,
       "monotonic": true
     },
     {
       "from": "06",
+      "to": "06b",
+      "frameShared": false,
+      "rule": "B",
+      "pct": 0.203,
+      "lumaA": 54.41,
+      "lumaB": 54.15,
+      "lumaDelta": -0.26,
+      "pass": true,
+      "monotonic": true
+    },
+    {
+      "from": "06b",
       "to": "07",
       "frameShared": false,
       "rule": "B",
-      "pct": 9.766,
-      "lumaA": 64.94,
-      "lumaB": 47.55,
-      "lumaDelta": -17.39,
+      "pct": 0.183,
+      "lumaA": 50.01,
+      "lumaB": 49.77,
+      "lumaDelta": -0.24,
+      "pass": true,
+      "monotonic": true
+    },
+    {
+      "from": "07",
+      "to": "08",
+      "frameShared": false,
+      "rule": "B",
+      "pct": 0.166,
+      "lumaA": 40.09,
+      "lumaB": 40.32,
+      "lumaDelta": 0.23,
+      "pass": true,
+      "monotonic": true
+    },
+    {
+      "from": "08",
+      "to": "08b",
+      "frameShared": false,
+      "rule": "B",
+      "pct": 0.153,
+      "lumaA": 38.3,
+      "lumaB": 38.17,
+      "lumaDelta": -0.13,
+      "pass": true,
+      "monotonic": true
+    },
+    {
+      "from": "08b",
+      "to": "09",
+      "frameShared": false,
+      "rule": "B",
+      "pct": 0.217,
+      "lumaA": 40.92,
+      "lumaB": 40.63,
+      "lumaDelta": -0.29,
+      "pass": true,
+      "monotonic": true
+    },
+    {
+      "from": "09",
+      "to": "10",
+      "frameShared": false,
+      "rule": "B",
+      "pct": 0.173,
+      "lumaA": 41.74,
+      "lumaB": 41.84,
+      "lumaDelta": 0.1,
+      "pass": true,
+      "monotonic": true
+    },
+    {
+      "from": "10",
+      "to": "11",
+      "frameShared": false,
+      "rule": "B",
+      "pct": 0.189,
+      "lumaA": 37.44,
+      "lumaB": 37.27,
+      "lumaDelta": -0.17,
+      "pass": true,
+      "monotonic": true
+    },
+    {
+      "from": "11",
+      "to": "12",
+      "frameShared": false,
+      "rule": "B",
+      "pct": 0.205,
+      "lumaA": 49.13,
+      "lumaB": 49.06,
+      "lumaDelta": -0.07,
       "pass": true,
       "monotonic": true
     }
@@ -156,9 +258,9 @@
       "srcMobile": "/landxi/assets/proto/film/legs/w01-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w01.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w01-last.webp",
-      "bytes": 5442449,
-      "bytesMobile": 1521274,
-      "bytesPoster": 89288,
+      "bytes": 3548302,
+      "bytesMobile": 1280519,
+      "bytesPoster": 82916,
       "cameraSource": "authored",
       "startCamera": {
         "center": [
@@ -212,9 +314,9 @@
       "srcMobile": "/landxi/assets/proto/film/legs/w02-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w02.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w02-last.webp",
-      "bytes": 6434501,
-      "bytesMobile": 1721858,
-      "bytesPoster": 114706,
+      "bytes": 4585387,
+      "bytesMobile": 1408341,
+      "bytesPoster": 106676,
       "cameraSource": "authored",
       "startCamera": {
         "center": [
@@ -268,9 +370,9 @@
       "srcMobile": "/landxi/assets/proto/film/legs/w03-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w03.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w03-last.webp",
-      "bytes": 7512093,
-      "bytesMobile": 1838285,
-      "bytesPoster": 111758,
+      "bytes": 4246234,
+      "bytesMobile": 1539995,
+      "bytesPoster": 111898,
       "cameraSource": "authored",
       "startCamera": {
         "center": [
@@ -301,33 +403,33 @@
       "id": "04",
       "wp": "남원",
       "label": "남원",
-      "place": "남원 분지",
-      "look": "real",
-      "caption": "항공 정사영상 2025-10 · GSD 25 cm · 남원시 전역",
-      "source": "build/film/frames#297..362",
-      "renderer": "build/film/frames",
+      "place": "남원 평야 · 농지이용",
+      "look": "diorama",
+      "caption": "AI 생성 필름 · kling v2-1-pro · 앵커 A04 → A05 · namwon-farmland-2025 2,098필지",
+      "source": "landxi/assets/proto/film/legs/src/v3-leg-04.mp4",
+      "renderer": "kling v2-1-pro (AI)",
       "frames": [
-        297,
-        362
+        0,
+        121
       ],
-      "count": 66,
-      "encodedFrames": 67,
-      "fps": 25,
+      "count": 122,
+      "encodedFrames": 122,
+      "fps": 24,
       "size": [
-        1280,
-        720
+        1946,
+        1080
       ],
-      "seconds": 2.64,
-      "weightVh": 0.576,
-      "rate": 0.2182,
+      "seconds": 5.083,
+      "weightVh": 1.108,
+      "rate": 0.218,
       "src": "/landxi/assets/proto/film/legs/w04.mp4",
       "srcMobile": "/landxi/assets/proto/film/legs/w04-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w04.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w04-last.webp",
-      "bytes": 4082376,
-      "bytesMobile": 1782193,
-      "bytesPoster": 209882,
-      "cameraSource": "renderer",
+      "bytes": 3629464,
+      "bytesMobile": 1586370,
+      "bytesPoster": 113274,
+      "cameraSource": "authored",
       "startCamera": {
         "center": [
           127.326,
@@ -345,112 +447,56 @@
           127.348,
           35.366
         ],
-        "altitudeM": 16300,
-        "zoom": 13.0461,
-        "pitch": 46,
+        "altitudeM": 8600,
+        "zoom": 13.9686,
+        "pitch": 50,
         "bearing": -13,
-        "mpp": 15.093,
+        "mpp": 7.963,
         "seg": "04b"
       }
     },
     {
       "id": "05",
       "wp": "남원",
-      "label": "남원 3D",
-      "place": "금지면 → 남원 시내",
+      "label": "비닐하우스",
+      "place": "남원 · 비닐하우스 실태",
       "look": "diorama",
-      "caption": "건물 풋프린트 실측 + AI 온실 검출 · 남원 금지면 · GSD 1.54 cm",
-      "source": "build/film/legs/namwon-3d#0..140",
-      "renderer": "build/film/legs/namwon-3d",
+      "caption": "AI 생성 필름 · kling v2-1-pro · 앵커 A05 → A06 · namwon-greenhouse-2025 9,664동",
+      "source": "landxi/assets/proto/film/legs/src/v3-leg-05.mp4",
+      "renderer": "kling v2-1-pro (AI)",
       "frames": [
         0,
-        140
+        121
       ],
-      "count": 141,
-      "encodedFrames": 142,
-      "fps": 25,
+      "count": 122,
+      "encodedFrames": 122,
+      "fps": 24,
       "size": [
-        1280,
-        720
+        1946,
+        1080
       ],
-      "seconds": 5.64,
-      "weightVh": 1.23,
-      "rate": 0.2181,
+      "seconds": 5.083,
+      "weightVh": 1.108,
+      "rate": 0.218,
       "src": "/landxi/assets/proto/film/legs/w05.mp4",
       "srcMobile": "/landxi/assets/proto/film/legs/w05-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w05.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w05-last.webp",
-      "bytes": 10276667,
-      "bytesMobile": 4202253,
-      "bytesPoster": 173922,
-      "cameraSource": "renderer",
-      "startCamera": {
-        "center": [
-          127.3096,
-          35.3318
-        ],
-        "altitudeM": 3300,
-        "zoom": 15.3511,
-        "pitch": 58,
-        "bearing": -34,
-        "mpp": 3.056,
-        "seg": "05a"
-      },
-      "endCamera": {
-        "center": [
-          127.3888,
-          35.4084
-        ],
-        "altitudeM": 880,
-        "zoom": 17.2566,
-        "pitch": 68,
-        "bearing": 26,
-        "mpp": 0.815,
-        "seg": "05b"
-      }
-    },
-    {
-      "id": "06",
-      "wp": "남원",
-      "label": "비닐하우스",
-      "place": "남원 농경지",
-      "look": "real",
-      "caption": "namwon-greenhouse-2025 · 9,664동 · 항공 정사영상 2025-10 · GSD 25 cm",
-      "source": "build/film/frames#362..438",
-      "renderer": "build/film/frames",
-      "frames": [
-        362,
-        438
-      ],
-      "count": 77,
-      "encodedFrames": 78,
-      "fps": 25,
-      "size": [
-        1280,
-        720
-      ],
-      "seconds": 3.08,
-      "weightVh": 0.671,
-      "rate": 0.2179,
-      "src": "/landxi/assets/proto/film/legs/w06.mp4",
-      "srcMobile": "/landxi/assets/proto/film/legs/w06-m.mp4",
-      "poster": "/landxi/assets/proto/film/legs/w06.webp",
-      "seamPoster": "/landxi/assets/proto/film/legs/w06-last.webp",
-      "bytes": 4864044,
-      "bytesMobile": 2224525,
-      "bytesPoster": 220846,
-      "cameraSource": "renderer",
+      "bytes": 5384871,
+      "bytesMobile": 1684069,
+      "bytesPoster": 114582,
+      "cameraSource": "authored",
       "startCamera": {
         "center": [
           127.348,
           35.366
         ],
-        "altitudeM": 16300,
-        "zoom": 13.0461,
-        "pitch": 46,
+        "altitudeM": 8600,
+        "zoom": 13.9686,
+        "pitch": 50,
         "bearing": -13,
-        "mpp": 15.093,
-        "seg": "06a"
+        "mpp": 7.963,
+        "seg": "05a"
       },
       "endCamera": {
         "center": [
@@ -462,40 +508,152 @@
         "pitch": 23,
         "bearing": -3,
         "mpp": 48.519,
+        "seg": "05b"
+      }
+    },
+    {
+      "id": "06",
+      "wp": "남원",
+      "label": "상승",
+      "place": "남원 상공 · 지구본 곡률",
+      "look": "diorama",
+      "caption": "AI 생성 필름 · kling v2-1-pro · 앵커 A06 → A06b · 수직 상승",
+      "source": "landxi/assets/proto/film/legs/src/v3-leg-06.mp4",
+      "renderer": "kling v2-1-pro (AI)",
+      "frames": [
+        0,
+        121
+      ],
+      "count": 122,
+      "encodedFrames": 122,
+      "fps": 24,
+      "size": [
+        1946,
+        1080
+      ],
+      "seconds": 5.083,
+      "weightVh": 1.108,
+      "rate": 0.218,
+      "src": "/landxi/assets/proto/film/legs/w06.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/w06-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/w06.webp",
+      "seamPoster": "/landxi/assets/proto/film/legs/w06-last.webp",
+      "bytes": 3792219,
+      "bytesMobile": 1612157,
+      "bytesPoster": 120560,
+      "cameraSource": "authored",
+      "startCamera": {
+        "center": [
+          127.425,
+          35.429
+        ],
+        "altitudeM": 52400,
+        "zoom": 11.3603,
+        "pitch": 23,
+        "bearing": -3,
+        "mpp": 48.519,
+        "seg": "06a"
+      },
+      "endCamera": {
+        "center": [
+          127.47,
+          35.33
+        ],
+        "altitudeM": 140000,
+        "zoom": 9.9443,
+        "pitch": 30,
+        "bearing": 15,
+        "mpp": 129.63,
         "seg": "06b"
+      }
+    },
+    {
+      "id": "06b",
+      "wp": "여수",
+      "label": "여수 이동",
+      "place": "지구본 이동 · 남원 → 여수",
+      "look": "diorama",
+      "caption": "AI 생성 필름 · kling v2-1-pro · 앵커 A06b → A07 · 여수 국동항 방파제",
+      "source": "landxi/assets/proto/film/legs/src/v3-leg-06b.mp4",
+      "renderer": "kling v2-1-pro (AI)",
+      "frames": [
+        0,
+        121
+      ],
+      "count": 122,
+      "encodedFrames": 122,
+      "fps": 24,
+      "size": [
+        1946,
+        1080
+      ],
+      "seconds": 5.083,
+      "weightVh": 1.108,
+      "rate": 0.218,
+      "src": "/landxi/assets/proto/film/legs/w06b.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/w06b-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/w06b.webp",
+      "seamPoster": "/landxi/assets/proto/film/legs/w06b-last.webp",
+      "bytes": 5326433,
+      "bytesMobile": 1535472,
+      "bytesPoster": 102746,
+      "cameraSource": "authored",
+      "startCamera": {
+        "center": [
+          127.47,
+          35.33
+        ],
+        "altitudeM": 140000,
+        "zoom": 9.9443,
+        "pitch": 30,
+        "bearing": 15,
+        "mpp": 129.63,
+        "seg": "06ba"
+      },
+      "endCamera": {
+        "center": [
+          127.7305,
+          34.563
+        ],
+        "altitudeM": 17000,
+        "zoom": 12.9996,
+        "pitch": 10,
+        "bearing": 5,
+        "mpp": 15.741,
+        "seg": "06bb"
       }
     },
     {
       "id": "07",
       "wp": "여수",
       "label": "여수",
-      "place": "여수 가막만",
-      "look": "real",
-      "caption": "yeosu-marine-2025-aerial · 격자 9,032셀 · 후보 38,057건",
-      "source": "build/film/frames#439..574",
-      "renderer": "build/film/frames",
+      "place": "여수 해안 · 해양쓰레기",
+      "look": "diorama",
+      "caption": "AI 생성 필름 · kling v2-1-pro · 앵커 A07 → A08 · yeosu-marine 항공 1,857건 · 드론 2,078건",
+      "source": "landxi/assets/proto/film/legs/src/v3-leg-07.mp4",
+      "renderer": "kling v2-1-pro (AI)",
       "frames": [
-        439,
-        574
+        0,
+        121
       ],
-      "count": 136,
-      "encodedFrames": 137,
-      "fps": 25,
+      "count": 122,
+      "encodedFrames": 122,
+      "fps": 24,
       "size": [
-        1280,
-        720
+        1946,
+        1080
       ],
-      "seconds": 5.44,
-      "weightVh": 1.186,
+      "seconds": 5.083,
+      "weightVh": 1.108,
       "rate": 0.218,
       "src": "/landxi/assets/proto/film/legs/w07.mp4",
       "srcMobile": "/landxi/assets/proto/film/legs/w07-m.mp4",
       "poster": "/landxi/assets/proto/film/legs/w07.webp",
       "seamPoster": "/landxi/assets/proto/film/legs/w07-last.webp",
-      "bytes": 2523249,
-      "bytesMobile": 1194183,
-      "bytesPoster": 56350,
-      "cameraSource": "renderer",
+      "bytes": 3835740,
+      "bytesMobile": 1237765,
+      "bytesPoster": 76344,
+      "cameraSource": "authored",
       "startCamera": {
         "center": [
           127.7305,
@@ -510,21 +668,357 @@
       },
       "endCamera": {
         "center": [
-          127.7215,
-          34.569
+          127.7305,
+          34.563
         ],
-        "altitudeM": 11200,
-        "zoom": 13.6015,
-        "pitch": 2,
-        "bearing": 0,
-        "mpp": 10.37,
+        "altitudeM": 300,
+        "zoom": 18.824,
+        "pitch": 50,
+        "bearing": 5,
+        "mpp": 0.278,
         "seg": "07b"
+      }
+    },
+    {
+      "id": "08",
+      "wp": "여수",
+      "label": "상승",
+      "place": "여수 상공 · 지구본 곡률",
+      "look": "diorama",
+      "caption": "AI 생성 필름 · kling v2-1-pro · 앵커 A08 → A08b · 수직 상승",
+      "source": "landxi/assets/proto/film/legs/src/v3-leg-08.mp4",
+      "renderer": "kling v2-1-pro (AI)",
+      "frames": [
+        0,
+        121
+      ],
+      "count": 122,
+      "encodedFrames": 122,
+      "fps": 24,
+      "size": [
+        1946,
+        1080
+      ],
+      "seconds": 5.083,
+      "weightVh": 1.108,
+      "rate": 0.218,
+      "src": "/landxi/assets/proto/film/legs/w08.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/w08-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/w08.webp",
+      "seamPoster": "/landxi/assets/proto/film/legs/w08-last.webp",
+      "bytes": 3106057,
+      "bytesMobile": 1009702,
+      "bytesPoster": 66556,
+      "cameraSource": "authored",
+      "startCamera": {
+        "center": [
+          127.7305,
+          34.563
+        ],
+        "altitudeM": 300,
+        "zoom": 18.824,
+        "pitch": 50,
+        "bearing": 5,
+        "mpp": 0.278,
+        "seg": "08a"
+      },
+      "endCamera": {
+        "center": [
+          127.74,
+          34.57
+        ],
+        "altitudeM": 6000,
+        "zoom": 14.502,
+        "pitch": 60,
+        "bearing": 20,
+        "mpp": 5.556,
+        "seg": "08b"
+      }
+    },
+    {
+      "id": "08b",
+      "wp": "울주",
+      "label": "울주 이동",
+      "place": "지구본 이동 · 여수 → 울주",
+      "look": "diorama",
+      "caption": "AI 생성 필름 · kling v2-1-pro · 앵커 A08b → A09 · 울주 산지 능선",
+      "source": "landxi/assets/proto/film/legs/src/v3-leg-08b.mp4",
+      "renderer": "kling v2-1-pro (AI)",
+      "frames": [
+        0,
+        121
+      ],
+      "count": 122,
+      "encodedFrames": 122,
+      "fps": 24,
+      "size": [
+        1946,
+        1080
+      ],
+      "seconds": 5.083,
+      "weightVh": 1.108,
+      "rate": 0.218,
+      "src": "/landxi/assets/proto/film/legs/w08b.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/w08b-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/w08b.webp",
+      "seamPoster": "/landxi/assets/proto/film/legs/w08b-last.webp",
+      "bytes": 3809416,
+      "bytesMobile": 1292232,
+      "bytesPoster": 80968,
+      "cameraSource": "authored",
+      "startCamera": {
+        "center": [
+          127.74,
+          34.57
+        ],
+        "altitudeM": 6000,
+        "zoom": 14.502,
+        "pitch": 60,
+        "bearing": 20,
+        "mpp": 5.556,
+        "seg": "08ba"
+      },
+      "endCamera": {
+        "center": [
+          129.15,
+          35.55
+        ],
+        "altitudeM": 4500,
+        "zoom": 14.8997,
+        "pitch": 65,
+        "bearing": -40,
+        "mpp": 4.167,
+        "seg": "08bb"
+      }
+    },
+    {
+      "id": "09",
+      "wp": "울주",
+      "label": "산림",
+      "place": "울주 산림식생 · 급경사지",
+      "look": "diorama",
+      "caption": "AI 생성 필름 · kling v2-1-pro · 앵커 A09 → A10 · 산림식생 · 급경사지(조사 항목 시연)",
+      "source": "landxi/assets/proto/film/legs/src/v3-leg-09.mp4",
+      "renderer": "kling v2-1-pro (AI)",
+      "frames": [
+        0,
+        121
+      ],
+      "count": 122,
+      "encodedFrames": 122,
+      "fps": 24,
+      "size": [
+        1946,
+        1080
+      ],
+      "seconds": 5.083,
+      "weightVh": 1.108,
+      "rate": 0.218,
+      "src": "/landxi/assets/proto/film/legs/w09.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/w09-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/w09.webp",
+      "seamPoster": "/landxi/assets/proto/film/legs/w09-last.webp",
+      "bytes": 4089746,
+      "bytesMobile": 1428960,
+      "bytesPoster": 97098,
+      "cameraSource": "authored",
+      "startCamera": {
+        "center": [
+          129.15,
+          35.55
+        ],
+        "altitudeM": 4500,
+        "zoom": 14.8997,
+        "pitch": 65,
+        "bearing": -40,
+        "mpp": 4.167,
+        "seg": "09a"
+      },
+      "endCamera": {
+        "center": [
+          129.16,
+          35.56
+        ],
+        "altitudeM": 1200,
+        "zoom": 16.8064,
+        "pitch": 35,
+        "bearing": -40,
+        "mpp": 1.111,
+        "seg": "09b"
+      }
+    },
+    {
+      "id": "10",
+      "wp": "울주",
+      "label": "불법소각",
+      "place": "울주 산자락 공터 · 불법소각",
+      "look": "diorama",
+      "caption": "AI 생성 필름 · kling v2-1-pro · 앵커 A10 → A11 · 불법소각(조사 항목 시연)",
+      "source": "landxi/assets/proto/film/legs/src/v3-leg-10.mp4",
+      "renderer": "kling v2-1-pro (AI)",
+      "frames": [
+        0,
+        121
+      ],
+      "count": 122,
+      "encodedFrames": 122,
+      "fps": 24,
+      "size": [
+        1946,
+        1080
+      ],
+      "seconds": 5.083,
+      "weightVh": 1.108,
+      "rate": 0.218,
+      "src": "/landxi/assets/proto/film/legs/w10.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/w10-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/w10.webp",
+      "seamPoster": "/landxi/assets/proto/film/legs/w10-last.webp",
+      "bytes": 3976899,
+      "bytesMobile": 1372296,
+      "bytesPoster": 93922,
+      "cameraSource": "authored",
+      "startCamera": {
+        "center": [
+          129.16,
+          35.56
+        ],
+        "altitudeM": 1200,
+        "zoom": 16.8064,
+        "pitch": 35,
+        "bearing": -40,
+        "mpp": 1.111,
+        "seg": "10a"
+      },
+      "endCamera": {
+        "center": [
+          129.165,
+          35.565
+        ],
+        "altitudeM": 500,
+        "zoom": 18.0694,
+        "pitch": 30,
+        "bearing": -40,
+        "mpp": 0.463,
+        "seg": "10b"
+      }
+    },
+    {
+      "id": "11",
+      "wp": "국토",
+      "label": "국토 변화",
+      "place": "줌아웃 · 한반도 전체 · 국토 변화 분석",
+      "look": "diorama",
+      "caption": "AI 생성 필름 · kling v2-1-pro · 앵커 A11 → A12 · 남원 4시점 2025-04→10 · 변화지수 456(비지도)",
+      "source": "landxi/assets/proto/film/legs/src/v3-leg-11.mp4",
+      "renderer": "kling v2-1-pro (AI)",
+      "frames": [
+        0,
+        121
+      ],
+      "count": 122,
+      "encodedFrames": 122,
+      "fps": 24,
+      "size": [
+        1946,
+        1080
+      ],
+      "seconds": 5.083,
+      "weightVh": 1.108,
+      "rate": 0.218,
+      "src": "/landxi/assets/proto/film/legs/w11.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/w11-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/w11.webp",
+      "seamPoster": "/landxi/assets/proto/film/legs/w11-last.webp",
+      "bytes": 4095388,
+      "bytesMobile": 1474860,
+      "bytesPoster": 98300,
+      "cameraSource": "authored",
+      "startCamera": {
+        "center": [
+          129.165,
+          35.565
+        ],
+        "altitudeM": 500,
+        "zoom": 18.0694,
+        "pitch": 30,
+        "bearing": -40,
+        "mpp": 0.463,
+        "seg": "11a"
+      },
+      "endCamera": {
+        "center": [
+          127.8,
+          36.3
+        ],
+        "altitudeM": 1400000,
+        "zoom": 6.6047,
+        "pitch": 0,
+        "bearing": 0,
+        "mpp": 1296.296,
+        "seg": "11b"
+      }
+    },
+    {
+      "id": "12",
+      "wp": "국토",
+      "label": "귀환",
+      "place": "귀환 · 모형 지구본 · 작업대",
+      "look": "diorama",
+      "caption": "AI 생성 필름 · kling v2-1-pro · 앵커 A12 → A01 · 모형 지구본 귀환",
+      "source": "landxi/assets/proto/film/legs/src/v3-leg-12.mp4",
+      "renderer": "kling v2-1-pro (AI)",
+      "frames": [
+        0,
+        121
+      ],
+      "count": 122,
+      "encodedFrames": 122,
+      "fps": 24,
+      "size": [
+        1946,
+        1080
+      ],
+      "seconds": 5.083,
+      "weightVh": 1.108,
+      "rate": 0.218,
+      "src": "/landxi/assets/proto/film/legs/w12.mp4",
+      "srcMobile": "/landxi/assets/proto/film/legs/w12-m.mp4",
+      "poster": "/landxi/assets/proto/film/legs/w12.webp",
+      "seamPoster": "/landxi/assets/proto/film/legs/w12-last.webp",
+      "bytes": 3812621,
+      "bytesMobile": 1262908,
+      "bytesPoster": 88284,
+      "cameraSource": "authored",
+      "startCamera": {
+        "center": [
+          127.8,
+          36.3
+        ],
+        "altitudeM": 1400000,
+        "zoom": 6.6047,
+        "pitch": 0,
+        "bearing": 0,
+        "mpp": 1296.296,
+        "seg": "12a"
+      },
+      "endCamera": {
+        "center": [
+          127.95,
+          36.05
+        ],
+        "altitudeM": 15000000,
+        "zoom": 3.1879,
+        "pitch": 0,
+        "bearing": 0,
+        "mpp": 13888.889,
+        "seg": "12b"
       }
     }
   ],
   "handoff": {
-    "afterLeg": "06",
-    "legIndex": 5,
+    "afterLeg": "05",
+    "legIndex": 4,
     "center": [
       127.425,
       35.429
@@ -534,19 +1028,67 @@
     "bearing": -3,
     "altitudeM": 52400,
     "detections": "/landxi/assets/data/geo/results/namwon-greenhouse-2025.geojson",
-    "note": "남원 스케일 마지막 레그(06 비닐하우스)의 끝 카메라. 필름이 멈춘 그 자리에서 실지도가 같은 카메라로 이어받는다 — 1프레임 크로스페이드."
+    "note": "남원 스케일 마지막 레그(05 비닐하우스 실태)의 끝 카메라. 레그 06 은 수직 상승, 06b 는 지구본 곡면을 따라 여수로 옮겨 가므로 남원 인계는 그 앞에서 닫는다. 필름이 멈춘 그 자리에서 실지도가 같은 카메라로 이어받는다 — 1프레임 크로스페이드."
   },
   "handoffFinal": {
-    "legIndex": 6,
+    "legIndex": 7,
     "center": [
-      127.736,
-      34.566
+      127.7305,
+      34.563
     ],
-    "zoom": 13.6015,
-    "pitch": 2,
-    "bearing": 0,
-    "altitudeM": 11200,
+    "zoom": 18.824,
+    "pitch": 50,
+    "bearing": 5,
+    "altitudeM": 300,
     "detections": "/landxi/assets/data/geo/results/yeosu-marine-2025-aerial.geojson",
-    "note": "필름 최종 프레임의 카메라. 마감(귀환) 구간에서 여수 실지도가 이어받는다."
+    "note": "레그 07(여수 해안) 끝 카메라. 07 끝에서 여수 실지도가 이어받고, 08 이 밑에서 올라오면 닫힌다 — 필름은 판 뒤로 이어진다(08 상승 → 08b 울주)."
+  },
+  "finale": {
+    "mode": "globe",
+    "plate": false,
+    "legIndex": 13,
+    "center": [
+      127.95,
+      36.05
+    ],
+    "zoom": 3.1879,
+    "pitch": 0,
+    "bearing": 0,
+    "altitudeM": 15000000,
+    "detections": null,
+    "note": "레그 12(귀환) 끝 카메라 = A01(작업대 위 모형 지구본) = 레그 01 시작 카메라. 2026-09-01 부터 국토 V-World 실지도 판은 띄우지 않는다(plate:false) — 마감은 이 A01 프레임 위에서 지구본이 물러나고 CI 가 뜨는 방식이다(LEAD 0.30 + SPAN 1.54 + TAIL 0.16vh). center/zoom/pitch 는 되돌리기용으로 남긴다."
+  },
+  "full": {
+    "src": "/landxi/assets/proto/film/legs/full.mp4",
+    "poster": "/landxi/assets/proto/film/legs/full.webp",
+    "legs": [
+      "01",
+      "02",
+      "03",
+      "04",
+      "05",
+      "06",
+      "06b",
+      "07",
+      "08",
+      "08b",
+      "09",
+      "10",
+      "11",
+      "12"
+    ],
+    "legCount": 14,
+    "size": [
+      1920,
+      1080
+    ],
+    "fps": 24,
+    "frames": 1479,
+    "seconds": 61.625,
+    "legSecondsSum": 71.162,
+    "xfadeSeconds": 0.734,
+    "bytes": 43754810,
+    "encode": "xfade=fade:0.734s × 13 · scale/crop 1920×1080 · libx264 high crf 25 -g 8 -keyint_min 8 -sc_threshold 0 +faststart -an",
+    "note": "레그 사이를 0.734s 씩 xfade(fade) 로 겹쳤다(스크럽 씸 밴드 0.16vh ÷ 0.218 vh/s). 하드컷보다 9.54s 짧다."
   }
 }

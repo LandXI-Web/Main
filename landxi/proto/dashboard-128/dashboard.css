@@ -1,0 +1,235 @@
+/* LX 관리자 대시보드 — B5 12.8.
+   조판 마스터: design-canvas/v2/B5-Dashboard.dc.html · B5-Dashboard-Data.dc.html (1440×900)
+   근거: design-canvas/v2/NOTES.md §12.4(밴드·폰트 실측) + §12.8(판 내부)
+   좌표는 마스터의 인라인 style 값을 그대로 옮긴 것이다 — 반올림하지 않았다.
+   레일 72 · 마스트헤드 64 · 마진 56(x 128–1384) · 판 572×254(y 378–632).
+   흰 종이 · 잉크 · 헤어라인. 라운드 0 · 그림자 0 · 그라디언트 0 · 유리 0 · 앰버 0.
+   액센트 #006DF7 = B10 랭크 1위 바 **한 곳**. 청록 #0FA9A0 = 판 안 셀 + 콜아웃 라벨. */
+
+*,*::before,*::after{ box-sizing:border-box; }
+html{ background:#FFFFFF; }
+body{ margin:0; min-width:1440px; background:#FFFFFF; color:#010102;
+  font-family:'Pretendard','SUIT',system-ui,sans-serif; font-weight:400; font-size:16px; line-height:1.6;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+a{ color:inherit; text-decoration:none; }
+button{ font:inherit; color:inherit; background:none; border:0; padding:0; cursor:pointer; text-align:left; }
+::selection{ background:#010102; color:#FFFFFF; }
+[hidden]{ display:none!important; }
+:focus-visible{ outline:1px solid #010102; outline-offset:2px; }
+.skip{ position:absolute; left:-999px; top:0; z-index:99; background:#FFFFFF; padding:10px 16px; border:1px solid #010102; }
+.skip:focus{ left:8px; top:8px; }
+
+/* 마스터의 세 조판 클래스 — 서체는 정확히 3개다(§1). */
+.d{ font-family:'SUIT','Pretendard',system-ui,sans-serif; font-weight:500; letter-spacing:-.01em; }
+.n{ font-family:'Inter','Pretendard',system-ui,sans-serif; font-weight:400;
+  font-variant-numeric:tabular-nums; font-feature-settings:'tnum' 1; }
+.lab{ font-size:12px; line-height:1.2; color:#686868; letter-spacing:.04em; }
+.mic{ font-size:12px; line-height:1.35; color:#686868; }
+.chip{ height:22px; line-height:20px; padding:0 9px; border:1px solid #DDDDDD; color:#686868;
+  font-size:12px; white-space:nowrap; display:inline-block; }
+.tag{ border:1px dotted #CCCCCC; padding:0 5px; font-size:12px; line-height:16px; color:#686868;
+  margin-left:5px; display:inline-block; vertical-align:1px; font-style:normal;
+  font-family:'Pretendard',system-ui,sans-serif; letter-spacing:0; }
+
+/* 판 하나 = 1440×900. 마스터 좌표를 그대로 쓰기 위해 무대를 고정한다. */
+#stage{ position:relative; width:1440px; height:900px; overflow:hidden; }
+.hl{ position:absolute; left:128px; width:1256px; height:1px; background:#DDDDDD; }
+.hl--full{ left:72px; width:1368px; }
+.vl{ position:absolute; width:1px; background:#DDDDDD; }
+
+/* 진입 모션 — 이징 하나, 사다리 넷(§4). */
+[data-line]{ clip-path:inset(-5px 0px); overflow:clip; display:block; }
+@keyframes lineIn{ from{ transform:translateY(20px); } to{ transform:translateY(0); } }
+@keyframes plateIn{ from{ clip-path:inset(100% 0 0); } to{ clip-path:inset(0); } }
+.in [data-line]>*{ animation:lineIn 600ms cubic-bezier(.15,1,.3,1) both; }
+.in [data-line]:nth-of-type(2)>*{ animation-delay:60ms; }
+.in #plate-box{ animation:plateIn 1000ms cubic-bezier(.15,1,.3,1) both; }
+@media (prefers-reduced-motion:reduce){ *{ animation:none!important; transition:none!important; } }
+
+/* ══ A1–A11 좌 레일 72 — B4 계측 글리프. 선택 항목은 잉크. ═══════════ */
+#rail{ position:absolute; left:0; top:0; width:72px; height:900px; background:#FFFFFF; z-index:9; }
+#rail-mark{ position:absolute; left:0; top:0; width:72px; height:58px; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:4px; color:#010102; }
+#rail-mark .wm{ font-family:'SUIT','Pretendard',system-ui,sans-serif; font-weight:500;
+  font-size:9px; letter-spacing:.18em; margin-right:-.18em; }
+#rail-hl{ position:absolute; left:12px; top:58px; width:48px; height:1px; background:#DDDDDD; }
+.rail-i{ position:absolute; left:0; width:72px; height:58px; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:6px; color:#686868;
+  transition:color 180ms cubic-bezier(.22,1,.36,1); }
+.rail-i svg{ width:20px; height:20px; flex:none; display:block;
+  transition:transform 180ms cubic-bezier(.22,1,.36,1); }
+.rail-i .rl{ font-size:10px; line-height:1.15; letter-spacing:-.02em; text-align:center; white-space:pre-line; }
+.rail-i::before{ content:""; position:absolute; left:0; top:9px; width:2px; height:40px; background:#010102;
+  transform:scaleY(0); transform-origin:50% 50%; transition:transform 180ms cubic-bezier(.22,1,.36,1); }
+.rail-i:hover{ color:#010102; }
+.rail-i:hover svg{ transform:translateY(-2px); }
+.rail-i[aria-current]{ color:#010102; }
+.rail-i[aria-current]::before{ transform:scaleY(1); }
+#rail-edge{ position:absolute; left:72px; top:0; width:1px; height:900px; background:#DDDDDD; z-index:9; }
+
+/* ══ 마스트헤드 64 = B3 공지 + B2 기준일 ════════════════════════════ */
+#mast{ position:absolute; left:128px; top:0; width:1256px; height:64px; display:flex; align-items:center; gap:12px; }
+#mast svg{ color:#686868; flex:none; display:block; }
+#mast .ti{ font-size:14px; letter-spacing:-.01em; }
+#mast .dt{ font-size:12.5px; color:#686868; letter-spacing:.02em; }
+#mast .more{ font-size:12.5px; color:#686868; margin-left:6px; }
+#mast .sp{ flex:1; }
+#mast .asof{ font-size:14px; letter-spacing:.02em; color:#686868; }
+#b-notice{ display:flex; align-items:center; gap:12px; transition:transform 180ms cubic-bezier(.22,1,.36,1); }
+#b-notice:hover{ transform:translateX(4px); }
+
+/* ══ B1 제목 ════════════════════════════════════════════════════════ */
+#b1{ position:absolute; left:128px; top:92px; display:flex; align-items:baseline; gap:16px; }
+#b1 h1{ margin:0; font-weight:500; font-size:32px; line-height:40px; display:inline; }
+#b1 .sub{ font-size:15px; color:#686868; letter-spacing:-.01em; margin-left:14px; }
+
+/* ══ B4–B8 KPI 띠 (y 174–278) — 카드 0, `|` 헤어라인 4 ══════════════ */
+.k{ position:absolute; top:174px; display:block; }
+.k>span{ display:block; }
+.k .kv{ margin-top:8px; display:flex; align-items:baseline; gap:8px; }
+.k .kv b{ font-weight:400; font-size:56px; line-height:1; letter-spacing:-.02em; }
+.k .kv em{ font-style:normal; font-size:15px; color:#686868; }
+.k .ks{ margin-top:10px; letter-spacing:.02em; white-space:nowrap; display:block; }
+.k[data-to]{ cursor:pointer; }
+.kvl{ position:absolute; top:174px; width:1px; height:104px; background:#DDDDDD; }
+
+/* ══ B9 백본 + 판 (좌 572) ═══════════════════════════════════════════ */
+.wh{ position:absolute; display:flex; align-items:baseline; gap:10px; }
+.wh svg{ color:#686868; flex:none; display:block; align-self:center; }
+.wh .t{ font-size:16px; }
+.wh .sp{ flex:1; }
+#b-bb{ left:128px; top:326px; width:572px; }
+#bb-ver{ font-size:24px; line-height:1; letter-spacing:-.01em; }
+#bb-applied{ position:absolute; left:128px; top:354px; letter-spacing:.02em; }
+#bb-applied i{ font-style:normal; color:#CCCCCC; }
+#plate-box{ position:absolute; left:128px; top:378px; width:572px; height:254px; overflow:hidden; background:#010102; }
+#plate{ position:absolute; inset:0; }
+/* maplibre 벤더 CSS 가 Helvetica Neue 를 심는다 — 서체는 정확히 3개여야 한다(§1). */
+#plate, #plate *{ font-family:'Pretendard','SUIT',system-ui,sans-serif; }
+#plate canvas{ outline:none; }
+#plate-cap{ position:absolute; left:128px; top:644px; width:572px; display:flex;
+  justify-content:space-between; align-items:baseline; }
+#plate-cap .a{ font-size:12px; letter-spacing:.06em; white-space:nowrap; }
+#plate-cap .b{ letter-spacing:.02em; white-space:nowrap; }
+.src{ position:absolute; white-space:nowrap; overflow:hidden; color:#686868; }
+.src i{ font-style:normal; color:#CCCCCC; }
+#plate-src{ left:128px; top:676px; width:572px; }
+
+/* ── 판 위 계기 — 토글 · 범례 · 콜아웃 · 셀 · 브래킷 ────────────────── */
+#pt{ position:absolute; left:12px; top:12px; display:flex; gap:0; z-index:4; }
+.pt-seg{ height:24px; line-height:22px; padding:0 10px; font-size:12px; letter-spacing:-.01em;
+  white-space:nowrap; border:1px solid #FFFFFF; background:rgba(1,1,2,.35); color:#FFFFFF;
+  transition:background 180ms cubic-bezier(.22,1,.36,1), color 180ms cubic-bezier(.22,1,.36,1); }
+.pt-seg[aria-checked="true"]{ background:#FFFFFF; color:#010102; }
+.pt-gap{ width:1px; }
+#pl{ position:absolute; right:12px; bottom:10px; display:flex; flex-direction:column; gap:3px;
+  font-size:12px; line-height:14px; color:#FFFFFF; letter-spacing:-.01em; z-index:4; pointer-events:none; }
+#pl .pl-h{ font-size:12px; line-height:1.2; letter-spacing:.04em; color:#FFFFFF; opacity:.7; }
+#pl .pl-r{ display:flex; align-items:center; gap:6px; white-space:nowrap; }
+#pl .sw{ width:10px; height:10px; display:inline-block; flex:none; }
+.sw--a3{ background:rgba(15,169,160,.82); border:1px solid #0FA9A0; }
+.sw--a2{ background:rgba(15,169,160,.55); border:1px solid #0FA9A0; }
+.sw--a1{ background:rgba(15,169,160,.3); border:1px solid #0FA9A0; }
+.sw--a0{ background:none; border:1px solid rgba(255,255,255,.45); }
+.sw--d3{ background:rgba(255,255,255,.78); border:1px solid #FFFFFF; }
+.sw--d2{ background:rgba(255,255,255,.5); border:1px solid #FFFFFF; }
+.sw--d1{ background:rgba(255,255,255,.26); border:1px solid #FFFFFF; }
+.sw--d0{ background:none; border:1px solid rgba(255,255,255,.45); }
+.sw--plan{ background:none; border:1px dashed #FFFFFF; }
+#pc{ position:absolute; left:12px; top:48px; width:244px; background:#FFFFFF; border:1px solid #010102;
+  padding:6px 9px; line-height:14px; letter-spacing:-.01em; color:#010102; overflow:hidden; z-index:5; }
+#pc .pc-t{ font-size:12px; white-space:nowrap; }
+#pc .pc-t .n{ color:#686868; }
+#pc .pc-k{ margin-top:5px; font-size:12px; line-height:1.2; letter-spacing:.04em; color:#686868; }
+#pc .pc-k b{ font-weight:400; font-family:'Inter','Pretendard',system-ui,sans-serif;
+  font-variant-numeric:tabular-nums; }
+#pc .pc-k--ai{ color:#0FA9A0; }
+#pc .pc-k--data{ color:#686868; }
+#pc .pc-k--plan{ color:#686868; }
+#pc .pc-l{ font-size:12px; line-height:1.35; letter-spacing:0; color:#010102; white-space:nowrap; }
+#pc .pc-l i{ font-style:normal; color:#686868; }
+#pc .pc-l.is-mute{ color:#686868; }
+#pcells{ position:absolute; inset:0; z-index:3; }
+.pcell{ position:absolute; display:block; }
+.pbk{ position:absolute; width:5px; height:5px; z-index:4; pointer-events:none; }
+.pbk--tl{ border-left:1px solid #FFFFFF; border-top:1px solid #FFFFFF; }
+.pbk--tr{ border-right:1px solid #FFFFFF; border-top:1px solid #FFFFFF; }
+.pbk--bl{ border-left:1px solid #FFFFFF; border-bottom:1px solid #FFFFFF; }
+.pbk--br{ border-right:1px solid #FFFFFF; border-bottom:1px solid #FFFFFF; }
+.plead{ position:absolute; left:0; top:0; z-index:4; pointer-events:none; }
+#pmark{ position:absolute; inset:0; z-index:4; pointer-events:none; }
+/* 판 4모서리 흰 브래킷 14(12.4) */
+.pfr{ position:absolute; width:14px; height:14px; z-index:6; pointer-events:none; }
+.pfr--tl{ left:0; top:0; border-left:1px solid #FFFFFF; border-top:1px solid #FFFFFF; }
+.pfr--tr{ right:0; top:0; border-right:1px solid #FFFFFF; border-top:1px solid #FFFFFF; }
+.pfr--bl{ left:0; bottom:0; border-left:1px solid #FFFFFF; border-bottom:1px solid #FFFFFF; }
+.pfr--br{ right:0; bottom:0; border-right:1px solid #FFFFFF; border-bottom:1px solid #FFFFFF; }
+
+/* ══ 우 648 — 얇은 헤어라인 차트 3단 ════════════════════════════════ */
+#b-proj{ left:736px; top:326px; width:648px; }
+#b-visit{ left:736px; top:470px; width:648px; }
+#b-store{ left:736px; top:606px; width:648px; }
+.wh .more{ font-size:12px; line-height:1.35; color:#686868; }
+.wh .more:hover{ color:#010102; }
+#store-v{ font-size:24px; line-height:1; letter-spacing:-.01em; }
+
+/* B10 랭크드 바 — 1위만 액센트, 2–5위 #CCC */
+.pr{ position:absolute; left:736px; width:648px; height:12px; display:flex; align-items:center; gap:10px; }
+.pr .pn{ width:160px; font-size:12px; line-height:1; color:#686868; white-space:nowrap; letter-spacing:-.01em; }
+.pr .trk{ width:432px; height:10px; position:relative; }
+.pr .trk::before{ content:""; position:absolute; left:0; top:0; width:432px; height:10px; border-bottom:1px solid #DDDDDD; }
+.pr .trk i{ position:absolute; left:0; top:0; height:10px; background:#CCCCCC; }
+.pr .pv{ width:36px; text-align:right; font-size:12px; line-height:1; letter-spacing:.02em; color:#686868; }
+.pr.is-1 .pn,.pr.is-1 .pv{ color:#010102; }
+.pr.is-1 .trk i{ background:#006DF7; }
+
+/* B11 7일 폴리라인 36 + 값·요일 12 */
+#t-visit{ position:absolute; left:0; top:0; width:1440px; height:900px; pointer-events:none; }
+#t-visit .vl2{ font-size:12px; letter-spacing:.02em; }
+#t-visit .vd{ font-size:12px; letter-spacing:.06em; }
+#t-visit .is-mute{ color:#CCCCCC; }
+#t-visit .is-ink{ color:#010102; }
+#t-visit .is-grey{ color:#686868; }
+#t-visit span{ position:absolute; width:60px; display:block; }
+
+/* B12 스택 바 16 + 범례 12 */
+#t-store{ position:absolute; left:736px; top:634px; width:648px; height:16px; }
+#t-store::before{ content:""; position:absolute; inset:0; border:1px solid #DDDDDD; }
+#t-store i{ position:absolute; top:0; height:16px; display:block; }
+#store-lg{ position:absolute; left:736px; top:656px; width:648px; display:flex; gap:0 14px;
+  font-size:12px; letter-spacing:.02em; white-space:nowrap; }
+#store-lg .sp{ flex:1; }
+#store-lg .rest{ color:#CCCCCC; }
+#store-lg .is-ink{ color:#010102; }
+#store-lg .is-grey{ color:#686868; }
+
+/* ══ B13 승인 대기 원장 (y 720–826) ══════════════════════════════════ */
+#ap-h{ left:128px; top:720px; width:1256px; }
+#ap-h .go{ letter-spacing:.02em; }
+#ap-h .go i{ font-style:normal; color:#CCCCCC; }
+.tc{ position:absolute; line-height:1.2; white-space:nowrap; overflow:hidden; }
+.th{ font-size:12px; color:#686868; letter-spacing:.04em; }
+.td{ font-size:13.5px; color:#010102; }
+.td .mut{ color:#686868; }
+.td .dim{ color:#CCCCCC; }
+.ap-row{ position:absolute; left:128px; width:1256px; height:21px; display:block; }
+.ap-row:hover .go-c{ text-decoration:underline; }
+
+/* ══ B14 CHIP-RAIL (y 840–868) ══════════════════════════════════════ */
+#ad-rows{ position:absolute; left:128px; top:840px; width:1256px; height:28px; display:flex; align-items:center; }
+#ad-rows .lab{ width:110px; }
+#ad-rows .sep{ width:1px; height:20px; background:#DDDDDD; flex:none; }
+.ad{ flex:1; display:flex; align-items:center; gap:10px; padding-left:18px;
+  transition:transform 180ms cubic-bezier(.22,1,.36,1); }
+.ad:hover{ transform:translateX(4px); }
+.ad svg{ color:#686868; flex:none; display:block; }
+.ad .t{ font-size:13.5px; white-space:nowrap; }
+.ad .s{ font-size:12px; line-height:1.35; color:#686868; letter-spacing:.02em; white-space:nowrap; }
+.ad .go{ font-size:12px; color:#686868; }
+
+/* ══ B15 푸터 + Family Site ═════════════════════════════════════════ */
+#foot{ position:absolute; left:128px; top:876px; white-space:nowrap; }
+#colophon{ position:absolute; left:640px; top:873px; width:744px; display:flex;
+  align-items:center; justify-content:flex-end; gap:12px; }
+#colophon .co{ color:#CCCCCC; white-space:nowrap; }
+#colophon .co em{ font-style:normal; color:#686868; }

@@ -1,0 +1,160 @@
+[leg 4] backup landxi/assets/proto/film/legs/gen/v3-leg-04.mp4 -> landxi/assets/proto/film/legs/gen/v3-leg-04.rev1.mp4
+[leg 4] backup landxi/assets/proto/film/legs/src/v3-leg-04.mp4 -> landxi/assets/proto/film/legs/src/v3-leg-04.rev1.mp4
+
+[leg 4] A04 -> A05  attempt 1  balance=9946.5
+  v3-leg-04.mp4: generating (0s)
+  v3-leg-04.mp4: generating (5s)
+  v3-leg-04.mp4: generating (10s)
+  v3-leg-04.mp4: generating (17s)
+  v3-leg-04.mp4: generating (25s)
+  v3-leg-04.mp4: generating (35s)
+  v3-leg-04.mp4: generating (47s)
+  v3-leg-04.mp4: generating (63s)
+  v3-leg-04.mp4: generating (78s)
+  v3-leg-04.mp4: generating (93s)
+  v3-leg-04.mp4: generating (109s)
+  v3-leg-04.mp4: generating (124s)
+  v3-leg-04.mp4: generating (139s)
+  v3-leg-04.mp4: generating (155s)
+  v3-leg-04.mp4: generating (170s)
+[leg 4] ok taskId=7d082b1e19029f6577c28f1c96ac293a charged=50 spent=500/220
+[leg 5] backup landxi/assets/proto/film/legs/gen/v3-leg-05.mp4 -> landxi/assets/proto/film/legs/gen/v3-leg-05.rev1.mp4
+[leg 5] backup landxi/assets/proto/film/legs/src/v3-leg-05.mp4 -> landxi/assets/proto/film/legs/src/v3-leg-05.rev1.mp4
+
+[leg 5] A05 -> A06  attempt 1  balance=9896.5
+  v3-leg-05.mp4: generating (0s)
+  v3-leg-05.mp4: generating (5s)
+  v3-leg-05.mp4: generating (10s)
+  v3-leg-05.mp4: generating (17s)
+  v3-leg-05.mp4: generating (25s)
+  v3-leg-05.mp4: generating (35s)
+  v3-leg-05.mp4: generating (47s)
+  v3-leg-05.mp4: generating (63s)
+  v3-leg-05.mp4: generating (78s)
+  v3-leg-05.mp4: generating (94s)
+  v3-leg-05.mp4: generating (109s)
+  v3-leg-05.mp4: generating (125s)
+  v3-leg-05.mp4: generating (140s)
+  v3-leg-05.mp4: generating (155s)
+  v3-leg-05.mp4: generating (171s)
+  v3-leg-05.mp4: generating (186s)
+  v3-leg-05.mp4: generating (201s)
+  v3-leg-05.mp4: generating (216s)
+  v3-leg-05.mp4: generating (232s)
+  v3-leg-05.mp4: generating (247s)
+  v3-leg-05.mp4: generating (262s)
+  v3-leg-05.mp4: generating (279s)
+  v3-leg-05.mp4: generating (294s)
+  v3-leg-05.mp4: generating (310s)
+  v3-leg-05.mp4: generating (326s)
+  v3-leg-05.mp4: generating (342s)
+  v3-leg-05.mp4: generating (357s)
+  v3-leg-05.mp4: generating (373s)
+  v3-leg-05.mp4: generating (388s)
+  v3-leg-05.mp4: generating (403s)
+  v3-leg-05.mp4: generating (419s)
+  v3-leg-05.mp4: generating (434s)
+  v3-leg-05.mp4: generating (450s)
+  v3-leg-05.mp4: generating (465s)
+  v3-leg-05.mp4: generating (480s)
+  v3-leg-05.mp4: generating (496s)
+  v3-leg-05.mp4: generating (511s)
+  v3-leg-05.mp4: generating (526s)
+[leg 5] ok taskId=ccf714017346797fa5ed86f65d17897f charged=50 spent=550/220
+[leg 6] backup landxi/assets/proto/film/legs/gen/v3-leg-06.mp4 -> landxi/assets/proto/film/legs/gen/v3-leg-06.rev1.mp4
+[leg 6] backup landxi/assets/proto/film/legs/src/v3-leg-06.mp4 -> landxi/assets/proto/film/legs/src/v3-leg-06.rev1.mp4
+
+[leg 6] A06 -> A06b  attempt 1  balance=9846.5
+  v3-leg-06.mp4: generating (0s)
+  v3-leg-06.mp4: generating (4s)
+  v3-leg-06.mp4: generating (10s)
+  v3-leg-06.mp4: generating (16s)
+  v3-leg-06.mp4: generating (24s)
+  v3-leg-06.mp4: generating (34s)
+  v3-leg-06.mp4: generating (47s)
+  v3-leg-06.mp4: generating (62s)
+  v3-leg-06.mp4: generating (78s)
+  v3-leg-06.mp4: generating (93s)
+  v3-leg-06.mp4: generating (108s)
+  v3-leg-06.mp4: generating (124s)
+  v3-leg-06.mp4: generating (139s)
+  v3-leg-06.mp4: generating (154s)
+  v3-leg-06.mp4: generating (170s)
+  v3-leg-06.mp4: generating (185s)
+  v3-leg-06.mp4: generating (201s)
+  v3-leg-06.mp4: generating (216s)
+  v3-leg-06.mp4: generating (231s)
+  v3-leg-06.mp4: generating (247s)
+  v3-leg-06.mp4: generating (262s)
+  v3-leg-06.mp4: generating (277s)
+  v3-leg-06.mp4: generating (293s)
+  v3-leg-06.mp4: generating (308s)
+  v3-leg-06.mp4: generating (323s)
+  v3-leg-06.mp4: generating (339s)
+  v3-leg-06.mp4: generating (354s)
+  v3-leg-06.mp4: generating (369s)
+  v3-leg-06.mp4: generating (385s)
+  v3-leg-06.mp4: generating (400s)
+  v3-leg-06.mp4: generating (415s)
+  v3-leg-06.mp4: generating (430s)
+  v3-leg-06.mp4: generating (446s)
+  v3-leg-06.mp4: generating (461s)
+  v3-leg-06.mp4: generating (477s)
+  v3-leg-06.mp4: generating (492s)
+  v3-leg-06.mp4: generating (507s)
+  v3-leg-06.mp4: generating (522s)
+  v3-leg-06.mp4: generating (538s)
+  v3-leg-06.mp4: generating (553s)
+  v3-leg-06.mp4: generating (569s)
+  v3-leg-06.mp4: generating (584s)
+  v3-leg-06.mp4: generating (599s)
+  v3-leg-06.mp4: generating (615s)
+  v3-leg-06.mp4: generating (630s)
+  v3-leg-06.mp4: generating (645s)
+  v3-leg-06.mp4: generating (661s)
+  v3-leg-06.mp4: generating (676s)
+  v3-leg-06.mp4: generating (691s)
+[leg 6] ok taskId=aa8dbd9f98a9627b1325934e93ab6026 charged=50 spent=600/220
+
+[leg 6b] A06b -> A07  attempt 1  balance=9796.5
+  v3-leg-06b.mp4: generating (0s)
+  v3-leg-06b.mp4: generating (5s)
+  v3-leg-06b.mp4: generating (10s)
+  v3-leg-06b.mp4: generating (17s)
+  v3-leg-06b.mp4: generating (25s)
+  v3-leg-06b.mp4: generating (35s)
+  v3-leg-06b.mp4: generating (47s)
+  v3-leg-06b.mp4: generating (63s)
+  v3-leg-06b.mp4: generating (78s)
+  v3-leg-06b.mp4: generating (93s)
+[leg 6b] ok taskId=4b03a493a7770fd976f904f4b846e27f charged=50 spent=650/220
+{
+  "rev": 3,
+  "batch": "4-6b",
+  "spent_rev": 200,
+  "spent_total": 650,
+  "cap": 220,
+  "done": [
+    {
+      "leg": 4,
+      "taskId": "7d082b1e19029f6577c28f1c96ac293a",
+      "charged": 50
+    },
+    {
+      "leg": 5,
+      "taskId": "ccf714017346797fa5ed86f65d17897f",
+      "charged": 50
+    },
+    {
+      "leg": 6,
+      "taskId": "aa8dbd9f98a9627b1325934e93ab6026",
+      "charged": 50
+    },
+    {
+      "leg": "6b",
+      "taskId": "4b03a493a7770fd976f904f4b846e27f",
+      "charged": 50
+    }
+  ]
+}
+EXIT=0

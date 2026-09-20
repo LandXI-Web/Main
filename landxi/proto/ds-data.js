@@ -14,6 +14,8 @@
 //  3) 판 위 범위·GSD 는 지어내지 않는다. landxi/assets/data/imagery.js 의 실측값이다.
 import { IMAGERY } from '../assets/data/imagery.js';
 import { CROPS } from '../assets/data/crops.js';
+import { RESULTS } from '../assets/data/results.js';
+export const RESULT_BY_ID = Object.fromEntries(RESULTS.map((r) => [r.id, r]));
 
 export const nf = new Intl.NumberFormat('ko-KR');
 
@@ -245,15 +247,95 @@ export const PUB_STEPS = ['파일 확인', '공간정보 분석', '지도 데이
 export const PUBLISHING = [
   { id: 'p1', fmt: 'SHP', st: 'run', step: 2, file: 'NW_road_defect_labels_202604.shp', size: '48.2 MB', at: '2026.06.20 10:00', by: '김현우' },
   { id: 'p2', fmt: 'SHP', st: 'fail', step: 2, file: 'NW_greenhouse_labels_202603.shp', size: '39.4 MB', at: '2026.06.18 16:05', by: '이서연',
-    why: '좌표체계 정보를 확인할 수 없습니다. 좌표계를 지정해 다시 발행해 주세요.' },
+    why: '좌표체계 정보를 확인할 수 없습니다. 좌표계를 지정해 다시 발행해 주세요.', short: '좌표계 없음' },
   { id: 'p3', fmt: 'TIF', st: 'run', step: 3, file: 'NW_ortho_202604_section_A.tif', size: '58.3 GB', at: '2026.04.11 09:20', by: '김현우' },
   { id: 'p4', fmt: 'ECW', st: 'run', step: 1, file: 'NW_ortho_202604_zone_X.ecw', size: '47.6 GB', at: '2026.04.12 09:40', by: '정민재' },
   { id: 'p5', fmt: 'XLSX', st: 'run', step: 4, file: '농지이용_행정정보_202604.xlsx', size: '287.3 KB', at: '2026.04.09 15:52', by: '이주원' },
   { id: 'p6', fmt: 'ZIP', st: 'fail', step: 1, file: 'camera_org_202604.zip', size: '18.7 GB', at: '2026.04.13 08:41', by: '김현우',
-    why: '압축 파일 안에서 지원하는 이미지 형식을 찾지 못했습니다. 원본을 확인해 주세요.' },
+    why: '압축 파일 안에서 지원하는 이미지 형식을 찾지 못했습니다. 원본을 확인해 주세요.', short: '이미지 형식 없음' },
   { id: 'p7', fmt: 'ECW', st: 'run', step: 2, file: '남원_운봉_드론_4월.ecw', size: '62.7 GB', at: '2026.04.09 10:12', by: '이서연' },
 ];
 export const PUB_ST = { run: '진행중', fail: '실패' };
+/** 단계 → 그림 위 리빌 비율(단계 완료분 + 진행분). 4/4 = 레이어 발행 중. */
+export const PUB_PCT = [12, 37, 62, 87];
+/** 쪽당 타일 수 4단 — 열 수. 발주(2026-08-27 2차): "타일은 SMLXL이 아니라 4 6 8 16 이렇게 하고 아래 페이지 수 표기".
+    16 = 4×4. 그리드 높이에 맞춰 타일 높이가 준다(dataset.css `--rows`). 기본 8. */
+export const PER_PAGE = { 4: { cols: 2, rows: 2 }, 6: { cols: 3, rows: 2 }, 8: { cols: 4, rows: 2 }, 16: { cols: 8, rows: 2 } };
+export const PP_LIST = [4, 6, 8, 16];
+export const PP_DEFAULT = 8;
+export const PP_KEY = 'lx_ds_pp';
+/** 메모(아카이브) — 이 브라우저에만 저장. 발주 요청 편의 기능이지 서버 기능이 아니다(parity §11.6). */
+export const MEMO_KEY = (id) => `lx_ds_memo_${id}`;
+export const MEMO_MAX = 500;
+
+/** 크기 문자열 → 바이트. 진행 현황판의 잔여 계산용. */
+const UNIT = { B: 1, KB: 1024, MB: 1024 ** 2, GB: 1024 ** 3, TB: 1024 ** 4 };
+export function bytesOf(size) {
+  const m = /^([\d.,]+)\s*([KMGT]?B)$/i.exec(String(size).trim());
+  return m ? parseFloat(m[1].replace(/,/g, '')) * (UNIT[m[2].toUpperCase()] || 1) : 0;
+}
+export function fmtBytes(b) {
+  if (b >= UNIT.TB) return `${(b / UNIT.TB).toFixed(2)} TB`;
+  if (b >= UNIT.GB) return `${(b / UNIT.GB).toFixed(1)} GB`;
+  if (b >= UNIT.MB) return `${(b / UNIT.MB).toFixed(1)} MB`;
+  if (b >= UNIT.KB) return `${(b / UNIT.KB).toFixed(1)} KB`;
+  return `${Math.round(b)} B`;
+}
+
+/* ── 성과 — 완료본 ↔ 실제 AI 결과(results.js · services.js). 발주(2차): "업로드 완료된건 카드 클릭하면 실제 위치 정보와 성과".
+   남원 도엽(d4 · d5)과 아카이브 정사영상(a1 · a2)은 남원 2025 드론 정사영상 기반 결과 2종에 닿는다.
+   수치는 results.js stats(count · objTotal · analyzedAt) 그대로 — 지어내지 않는다. 연결 자체는 시연. ── */
+export const RESULT_OF = {
+  d4: ['namwon-farmland-2025', 'namwon-greenhouse-2025'],
+  d5: ['namwon-farmland-2025', 'namwon-greenhouse-2025'],
+  d7: ['namwon-greenhouse-2025'],
+  a1: ['namwon-farmland-2025', 'namwon-greenhouse-2025'],
+  a2: ['namwon-farmland-2025', 'namwon-greenhouse-2025'],
+  a5: ['yeosu-marine-2026-drone'],
+};
+/** 결과 한 줄 — 서비스명 · 큰 수(비닐하우스 = objTotal 동, 그 외 = count 단위) · 분석일. services.js 의 count 와 같은 수다. */
+export function resultRow(r) {
+  const st = r.stats;
+  const gh = r.service === 'greenhouse' && st.objTotal;
+  const big = gh ? { n: st.objTotal, unit: '동' } : { n: st.count, unit: r.unit };
+  const sub = gh ? `${nf.format(st.count)} ${r.unit}` : '';
+  return { id: r.id, name: r.title.replace(/^남원시 |^여수시 /, ''), n: big.n, unit: big.unit, sub, at: st.analyzedAt.replace(/-/g, '.'), bbox: st.bbox, geojson: '../' + r.geojson, grid: r.grid ? '../' + r.grid : null };
+}
+
+/* ── 데이터 테이블 속성 — 위치가 없는 완료본. 발주(2차): "위치 정보가 없는건 데이터 테이블 속성을 알수있게".
+   XLSX · SHP 열은 results.js fields 에서, ZIP 은 파일 트리에서. 예시값은 결과 첫 행(시연). ── */
+export const SCHEMA = {
+  xlsx: { kind: 'XLSX', rows: '2,098행', cols: [['pnu', '문자 19', '4519025022…0001'], ['emd', '문자', '사매면'], ['cls', '문자', '경작'], ['area', '수 · ㎡', '1,284'], ['conf', '수 · 0–1', '0.42']] },
+  shp_road: { kind: 'SHP', rows: '— 행 · 좌표계 없음', cols: [['geom', 'Polygon', '—'], ['cls', '문자', '포트홀 · 크랙 · 보수흔적'], ['sev', '수 · 1–3', '2'], ['len_m', '수 · m', '3.4']] },
+  shp_gh: { kind: 'SHP', rows: '1,674행 · EPSG 없음', geo: '../assets/data/geo/results/namwon-greenhouse-2025.geojson', cols: [['geom', 'MultiPolygon', '—'], ['cls', '문자', '비닐하우스_단동'], ['conf', '수 · 0–1', '0.97'], ['area', '수 · ㎡', '1,543'], ['emd', '문자', '금동']] },
+  zip: { kind: 'ZIP', rows: '4,820 파일', cols: [['20260412/', '폴더', 'DJI_0001.JPG …'], ['DJI_*.JPG', 'JPEG', '4,820 장'], ['index.csv', 'CSV', 'frame · time · lon · lat']] },
+  raster: { kind: '래스터', rows: '3 밴드 · 8bit', cols: [['Band 1', 'Red · 8bit', '0–255'], ['Band 2', 'Green · 8bit', '0–255'], ['Band 3', 'Blue · 8bit', '0–255']] },
+};
+export const SCHEMA_OF = { d1: 'raster', d2: 'raster', d3: 'xlsx', d6: 'shp_road', d7: 'shp_gh', d8: 'zip' };
+
+/* ── 아카이브 우 패널 — 사용 현황 · 발행 이력. 발주(2차): "레이어 4 · 표시 4 · 숨김 0 / 범위 / 표시·숨김 이건 별로 의미 없는듯 … 유용한 컨텐츠".
+   사용 현황 = 이 자산을 쓴 프로젝트(assets/data/ai-project-data.js AI_LABELING_DATA · AI_PROJECT_DATASETS 의 같은 파일명) + 분석(RESULT_OF).
+   발행 이력 = 등록 일시(v1) + 아카이빙 회수(DONE_UP arch) 만큼의 재발행. 날짜는 시드에 있는 것만 쓰고 그 외는 기준일(T1)이다 — `시연`. ── */
+export const USAGE = {
+  a1: [
+    { kind: '프로젝트', name: '도로안전 정사영상', ref: '라벨 342 · 2026.05.18', src: 'ai-project #1 · 남원 도로구간 A' },
+    { kind: '데이터셋', name: '도로안전 데이터셋 v2', ref: '이미지 1,840 · 2026.06.12', src: 'ai-project DS-2' },
+  ],
+  a2: [{ kind: '프로젝트', name: '비닐하우스 탐지', ref: '라벨 240 · 2026.04.15', src: 'ai-project #6' }],
+  a3: [{ kind: '프로젝트', name: '도로안전 정사영상', ref: '라벨 342 · 2026.05.18', src: 'ai-project #1' }],
+  a4: [
+    { kind: '프로젝트', name: '도로안전 카메라', ref: '사진 16 · 라벨 121 · 2026.05.19', src: 'ai-project #2 · 4월 원본' },
+    { kind: '데이터셋', name: '도로카메라 데이터셋 v1', ref: '이미지 16 · 2026.05.22', src: 'ai-project DS-1' },
+  ],
+  a5: [{ kind: '서비스', name: '해양쓰레기 실태조사', ref: '38,057 건 · 2026.08.12', src: 'services.js marine' }],
+};
+export const PUBLISH_LOG = {
+  a1: [['v3', '2026.06.08 09:00', '김현우', '재발행 · 아카이빙 2회'], ['v2', '2026.05.21 09:10', '김현우', '재발행 · 데이터셋 v1'], ['v1', '2026.04.11 09:00', '김현우', '레이어 발행']],
+  a2: [['v2', '2026.04.15 08:50', '이서연', '재발행 · 아카이빙 1회'], ['v1', '2026.04.09 10:00', '이서연', '레이어 발행 · 숨김']],
+  a3: [['v1', '2026.06.20 12:30', '김현우', '레이어 발행']],
+  a4: [['v1', '2026.04.13 08:30', '김현우', '이미지셋 발행']],
+  a5: [['v1', '2026.03.20 11:00', '이서연', '레이어 발행 · 100 m 격자']],
+};
 
 /* ── 판 — 실측 범위만 실선, 좌표계 없는 파일은 파선 ─────────────────── */
 export const IMG = IMAGERY;

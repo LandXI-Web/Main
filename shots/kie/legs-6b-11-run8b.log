@@ -1,0 +1,70 @@
+[leg 8b] backup landxi/assets/proto/film/legs/gen/v3-leg-08b.mp4 -> landxi/assets/proto/film/legs/gen/v3-leg-08b.rev2.mp4
+[leg 8b] backup landxi/assets/proto/film/legs/src/v3-leg-08b.mp4 -> landxi/assets/proto/film/legs/src/v3-leg-08b.rev2.mp4
+
+[leg 8b] A08b -> A09  attempt 1  balance=9388.5
+[leg 8b] pending taskId=a6eaabcfdc3b79ca73693203537d1d8c (원장 기록)
+  v3-leg-08b.mp4: generating (0s)
+  v3-leg-08b.mp4: generating (5s)
+  v3-leg-08b.mp4: generating (10s)
+  v3-leg-08b.mp4: generating (17s)
+  v3-leg-08b.mp4: generating (25s)
+  v3-leg-08b.mp4: generating (35s)
+  v3-leg-08b.mp4: generating (47s)
+  v3-leg-08b.mp4: generating (63s)
+  v3-leg-08b.mp4: generating (78s)
+  v3-leg-08b.mp4: generating (93s)
+  v3-leg-08b.mp4: generating (109s)
+  v3-leg-08b.mp4: generating (124s)
+  v3-leg-08b.mp4: generating (139s)
+  v3-leg-08b.mp4: generating (155s)
+  v3-leg-08b.mp4: generating (170s)
+  v3-leg-08b.mp4: generating (185s)
+  v3-leg-08b.mp4: generating (201s)
+  v3-leg-08b.mp4: generating (216s)
+  v3-leg-08b.mp4: generating (231s)
+  v3-leg-08b.mp4: generating (247s)
+  v3-leg-08b.mp4: generating (262s)
+  v3-leg-08b.mp4: generating (277s)
+  v3-leg-08b.mp4: generating (292s)
+  v3-leg-08b.mp4: generating (308s)
+  v3-leg-08b.mp4: generating (323s)
+  v3-leg-08b.mp4: generating (338s)
+  v3-leg-08b.mp4: generating (354s)
+  v3-leg-08b.mp4: generating (369s)
+  v3-leg-08b.mp4: generating (385s)
+  v3-leg-08b.mp4: generating (400s)
+  v3-leg-08b.mp4: generating (415s)
+  v3-leg-08b.mp4: generating (431s)
+  v3-leg-08b.mp4: generating (446s)
+  v3-leg-08b.mp4: generating (461s)
+  v3-leg-08b.mp4: generating (477s)
+  v3-leg-08b.mp4: generating (492s)
+  v3-leg-08b.mp4: generating (508s)
+  v3-leg-08b.mp4: generating (523s)
+  v3-leg-08b.mp4: generating (538s)
+  v3-leg-08b.mp4: generating (554s)
+  v3-leg-08b.mp4: generating (569s)
+  v3-leg-08b.mp4: generating (584s)
+  v3-leg-08b.mp4: generating (600s)
+  v3-leg-08b.mp4: generating (615s)
+  v3-leg-08b.mp4: generating (631s)
+  v3-leg-08b.mp4: generating (646s)
+  v3-leg-08b.mp4: generating (661s)
+  v3-leg-08b.mp4: generating (677s)
+  v3-leg-08b.mp4: generating (692s)
+  v3-leg-08b.mp4: generating (707s)
+[leg 8b] ok taskId=a6eaabcfdc3b79ca73693203537d1d8c charged=50 spent=1000/280
+{
+  "rev": 3,
+  "batch": "6b-8b-9-11",
+  "spent_rev": 100,
+  "spent_total": 1000,
+  "cap": 280,
+  "done": [
+    {
+      "leg": "8b",
+      "taskId": "a6eaabcfdc3b79ca73693203537d1d8c",
+      "charged": 50
+    }
+  ]
+}

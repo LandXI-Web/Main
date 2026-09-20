@@ -1,0 +1,44 @@
+
+[leg 8] A08 -> A08b  attempt 1  balance=9553
+[leg 8] pending taskId=9df3ab8308c5a65a22cff722404a71b7 (원장 기록)
+  v3-leg-08.mp4: generating (0s)
+  v3-leg-08.mp4: generating (4s)
+  v3-leg-08.mp4: generating (10s)
+  v3-leg-08.mp4: generating (17s)
+  v3-leg-08.mp4: generating (25s)
+  v3-leg-08.mp4: generating (35s)
+  v3-leg-08.mp4: generating (47s)
+  v3-leg-08.mp4: generating (63s)
+  v3-leg-08.mp4: generating (78s)
+  v3-leg-08.mp4: generating (93s)
+  v3-leg-08.mp4: generating (109s)
+  v3-leg-08.mp4: generating (124s)
+  v3-leg-08.mp4: generating (140s)
+  v3-leg-08.mp4: generating (155s)
+  v3-leg-08.mp4: generating (170s)
+  v3-leg-08.mp4: generating (186s)
+  v3-leg-08.mp4: generating (201s)
+  v3-leg-08.mp4: generating (216s)
+  v3-leg-08.mp4: generating (232s)
+  v3-leg-08.mp4: generating (247s)
+  v3-leg-08.mp4: generating (262s)
+  v3-leg-08.mp4: generating (278s)
+  v3-leg-08.mp4: generating (293s)
+  v3-leg-08.mp4: generating (308s)
+  v3-leg-08.mp4: generating (324s)
+  v3-leg-08.mp4: generating (339s)
+[leg 8] ok taskId=9df3ab8308c5a65a22cff722404a71b7 charged=50 spent=850/110
+{
+  "rev": 3,
+  "batch": "8-8b",
+  "spent_rev": 50,
+  "spent_total": 850,
+  "cap": 110,
+  "done": [
+    {
+      "leg": 8,
+      "taskId": "9df3ab8308c5a65a22cff722404a71b7",
+      "charged": 50
+    }
+  ]
+}

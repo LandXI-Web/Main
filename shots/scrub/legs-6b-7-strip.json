@@ -1,0 +1,223 @@
+{
+  "url": "http://localhost:4173/landxi/proto/scrub/",
+  "errors": [],
+  "rows": [
+    {
+      "i": 1,
+      "tag": "seam-06-06b-mid",
+      "p": 0.75,
+      "leg": 5,
+      "t": 6.648,
+      "film": 5.08,
+      "op": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0.5,
+        0
+      ],
+      "painted": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "alt": "140 km",
+      "caption": "",
+      "file": "legs-6b-7-1-seam-06-06b-mid.png"
+    },
+    {
+      "i": 2,
+      "tag": "L06b-mid",
+      "p": 0.812,
+      "leg": 6,
+      "t": 7.198,
+      "film": 2.53,
+      "op": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "painted": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "alt": "49 km",
+      "caption": "",
+      "file": "legs-6b-7-2-L06b-mid.png"
+    },
+    {
+      "i": 3,
+      "tag": "seam-06b-07-mid",
+      "p": 0.875,
+      "leg": 6,
+      "t": 7.756,
+      "film": 5.08,
+      "op": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0.5
+      ],
+      "painted": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "alt": "17 km",
+      "caption": "",
+      "file": "legs-6b-7-3-seam-06b-07-mid.png"
+    },
+    {
+      "i": 4,
+      "tag": "L07-mid",
+      "p": 0.937,
+      "leg": 7,
+      "t": 8.306,
+      "film": 2.53,
+      "op": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "painted": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "alt": "6.42 km",
+      "caption": "",
+      "file": "legs-6b-7-4-L07-mid.png"
+    },
+    {
+      "i": 5,
+      "tag": "handoff-07-in",
+      "p": 0.9594,
+      "leg": 7,
+      "t": 8.504,
+      "film": 3.2,
+      "op": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "painted": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "alt": "4.96 km",
+      "caption": "",
+      "file": "legs-6b-7-5-handoff-07-in.png"
+    },
+    {
+      "i": 6,
+      "tag": "handoff-07-mid",
+      "p": 0.9842,
+      "leg": 7,
+      "t": 8.724,
+      "film": 4.19,
+      "op": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "painted": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "alt": "2.40 km",
+      "caption": "",
+      "file": "legs-6b-7-6-handoff-07-mid.png"
+    },
+    {
+      "i": 7,
+      "tag": "handoff-07-end",
+      "p": 1,
+      "leg": 7,
+      "t": 8.864,
+      "film": 5.08,
+      "op": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "painted": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "alt": "2.40 km",
+      "caption": "",
+      "file": "legs-6b-7-7-handoff-07-end.png"
+    }
+  ]
+}

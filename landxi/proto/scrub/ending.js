@@ -1,26 +1,37 @@
 /* ============================================================================
-   landxi/proto/scrub/ending.js — 브랜드 마감 판 (page-drawn brand close)
+   landxi/proto/scrub/ending.js — 브랜드 마감
 
-   근거: docs/superpowers/research/2026-08-26-promo-video.md §2(실측) · §4(9비트)
-         docs/superpowers/proto/2026-08-26-film-shotlist-v2.md 「브랜드 마감 규격」
-         scroll-craft references/worldflight.md §4 카피 창 · finale
+   ── v2 (2026-09-01, FINALE_MODE = 'globe') ───────────────────────
+   클라이언트 원문: *"필름은 마무리 영상이 더 있어야 될 것 같네 느낌상.
+   한반도가 사라지면서 Land-XI 플랫폼 CI 가 떠야 될 것 같다."*
 
-   필름에는 글자를 굽지 않는다(프리앰블 `no text, no lettering, no numbers`).
-   마지막 레그의 마지막 프레임이 붙잡힌 위에서 **페이지가 판을 그린다.**
+   레그 12(A12 → A01, 귀환)가 14번째 레그로 탑재되면서 필름의 마지막 프레임은
+   한반도가 아니라 **A01 — 작업대 위 모형 지구본, 상단이 어두움** 이다.
+   그 프레임을 붙잡은 채로 두 가지가 동시에 일어난다:
 
-   3단은 절대 겹치지 않는다 — 홍보영상의 문법이 그렇다(§2-2 「주의」):
-     제품 워드마크(1.6 s) → 태그라인(1.8 s) → 운영기관 락업(2.4 s, 마지막 화면).
+     ① 지구본이 어둠 속으로 물러난다 — 무대(.sb-world)가 실제로 축소되고(1 → 0.78)
+        밝기·불투명도가 떨어지며(1 → 0.22), 무대 뒤 바닥이 필름의 캔버스색(#08090B)으로 닫힌다.
+        세 값은 하나의 u 를 먹는다 = 하나의 카메라가 뒤로 빠지는 것으로 읽힌다.
+     ② 그 위 빈 어둠에 **실제 브랜드 벡터**가 순서대로 뜬다 —
+        landxi-wordmark.svg(백색) → tagline.svg(민트) → lx-lockup-reverse.svg(역상).
+        AI 로 그린 글자·로고는 하나도 쓰지 않는다.
 
-   핵심 시그니처 = **워드마크가 스크린이 아니라 월드에 붙어 있다.**
-   홍보영상 63.00–64.33 에서 워드마크는 587 → 383 px(−35 %)로 줄어드는데,
-   이는 로고 애니메이션이 아니라 카메라가 뒤로 빠진 결과다. 관객은 "로고가 붙었다"
-   가 아니라 "이 세계가 이 이름을 갖고 있다"로 읽는다.
-   우리는 그것을 이렇게 재현한다: 마지막 프레임을 이어받은 **살아 있는 지도를
-   0.621 줌레벨만큼 실제로 줌아웃**시키고(지상 스케일 ×0.65), 워드마크는 같은 비율로
-   1.538 → 1.000 스케일한다. 두 값은 같은 u 를 먹는다 = 같은 카메라에 물려 있다.
-   (지도 스케일이 줄어도 프레임은 언제나 가득 찬다 — CSS 로 판을 축소했다면
-    가장자리에 종이 바탕이 드러났을 것이다. 그래서 화면이 아니라 카메라를 움직인다.)
+   연출 규칙(고정): 이징은 `cubic-bezier(0.15,1,0.3,1)` **하나**,
+   지속은 500 / 750 / 1000 / 1250 ms **사다리**, 스태거는 워드마크 → 태그라인 → 락업 → CTA.
+   그래서 CI 층은 스크럽하지 않는다 — 스크롤이 문턱을 넘으면 CSS 전이가 제 속도로 뜬다.
+   물러남(①)만 스크럽이다(스크롤을 되감으면 지구본이 그대로 돌아온다).
+   prefers-reduced-motion 이면 전이 없이 즉시 정지 상태(.is-static).
+
+   ── v1 (2026-08-26, FINALE_MODE = 'plate') — 꺼 뒀다. 지우지 않았다 ────────
+   국토 V-World 실지도 판 위에서 워드마크가 지도의 줌아웃과 같은 비율로 수축하던 9비트 판.
+   레그 12 가 붙으면서 인계 카메라(A12 한반도)가 사라져 전제가 무효가 됐다.
+   되돌리려면 FINALE_MODE 를 'plate' 로, manifest.finale.plate 를 true 로 되돌린다
+   (아래 v1 상수·createPlateEnding 이 그대로 있고, index.html 의 .sb-end__v1 마크업도 남아 있다).
+   근거 문서는 그대로다: docs/superpowers/research/2026-08-26-promo-video.md §2·§4.
    ========================================================================= */
+
+/* 되돌리기 스위치. 'globe' = 지구본이 물러나고 CI 가 뜨는 마감(현재) · 'plate' = 국토 판 9비트(v1). */
+export const FINALE_MODE = 'globe';
 
 const clamp01 = v => (v < 0 ? 0 : v > 1 ? 1 : v);
 const seg = (x, a, b) => clamp01((x - a) / (b - a));
@@ -74,11 +85,122 @@ export function dzFor(zoom) {
 }
 
 export function createEnding(ctx) {
+  return FINALE_MODE === 'globe' ? createGlobeEnding(ctx) : createPlateEnding(ctx);
+}
+
+/* ══ v2 — 지구본이 물러나고 CI 가 뜬다 ══════════════════════
+   SPAN 안의 자리(전부 e = 0…1):
+     0.00 – 0.34  물러남   무대 스케일 1 → 0.78 · 밝기 1 → 0.34 · 불투명 1 → 0.22 · 바닥 0 → 1
+     0.22 →       워드마크   500 ms
+     0.40 →       태그라인   750 ms
+     0.58 →       LX 락업   1000 ms
+     0.74 →       CTA        1250 ms
+   문턱을 되넘으면 같은 전이로 되돌아간다. */
+const STEPS = [['wm', 0.22], ['tag', 0.40], ['lx', 0.58], ['cta', 0.74]];
+const RECEDE = 0.34;
+const SCALE_END = 0.78, DIM_END = 0.34, FADE_END = 0.22;
+
+function createGlobeEnding(ctx) {
+  const root = document.documentElement;
+  const host = document.getElementById('sb-end');
+  const ci = document.getElementById('sb-end-ci');
+  if (!host || !ci) return { paint() {}, layout() {}, jump() {}, PAD, mode: 'globe', state: () => null };
+
+  const reduce = ctx.reduce;
+  if (reduce) host.classList.add('is-static');
+
+  let on = false;
+  const lit = new Set();
+
+  function paint() {
+    const vh = innerHeight;
+    const y0 = ctx.trackTop() + ctx.totalVh() * vh;             // 필름이 끝나는 지점
+    const lead = clamp01((scrollY - y0) / (LEAD * vh));
+    const e = clamp01((scrollY - y0 - LEAD * vh) / (SPAN * vh));
+
+    // 크롬(마스트헤드·카피·계기판·항로)은 필름이 끝나는 순간부터 물러난다.
+    root.style.setProperty('--sb-chrome', (1 - lead).toFixed(4));
+    root.classList.toggle('sb-endgame', lead > 0.98);
+
+    const want = lead > 0;
+    if (want !== on) {
+      on = want;
+      host.classList.toggle('is-on', want);
+      host.setAttribute('aria-hidden', want ? 'false' : 'true');
+      // 물러남은 무대(.sb-world)에 거는 transform/filter/opacity 다. 마감 밖에서는 아예 걸지
+      // 않는다 — 필름 13 레그가 도는 동안 무대에 합성 레이어를 하나 더 얹을 이유가 없다.
+      root.classList.toggle('sb-receding', want);
+      if (!want) {   // 되감아 나가면 무대와 CI 를 원래대로 돌려 놓는다
+        lit.clear();
+        for (const st of STEPS) ci.classList.remove('is-' + st[0]);
+        root.style.setProperty('--sb-globe-s', '1');
+        root.style.setProperty('--sb-globe-b', '1');
+        root.style.setProperty('--sb-globe-o', '1');
+        root.style.setProperty('--sb-floor', '0');
+      }
+    }
+    root.style.setProperty('--sb-e', e.toFixed(5));
+    if (!want) return;    // 마감 밖에서는 아무것도 쓰지 않는다
+
+    if (reduce) return;   // 저감 모드 — 전이 없이 정지 상태(CSS .is-static)
+
+    /* ① 물러남 — 하나의 u 가 스케일·밝기·불투명·바닥을 동시에 먹는다. */
+    const u = smooth(seg(e, 0, RECEDE));
+    root.style.setProperty('--sb-globe-s', (1 - (1 - SCALE_END) * u).toFixed(4));
+    root.style.setProperty('--sb-globe-b', (1 - (1 - DIM_END) * u).toFixed(4));
+    root.style.setProperty('--sb-globe-o', (1 - (1 - FADE_END) * u).toFixed(4));
+    root.style.setProperty('--sb-floor', u.toFixed(4));
+
+    /* ② CI — 문턱을 넘으면 클래스가 붙고 CSS 전이가 제 속도(500/750/1000/1250 ms)로 뜬다. */
+    for (const st of STEPS) {
+      const k = st[0], want2 = on && e >= st[1];
+      if (want2 === lit.has(k)) continue;
+      if (want2) lit.add(k); else lit.delete(k);
+      ci.classList.toggle('is-' + k, want2);
+    }
+  }
+
+  function layout() { /* v2 는 벡터라 실측 조판이 없다 — 폭은 CSS 가 vw 로 잡는다. */ }
+
+  function jump() {
+    scrollTo({ top: Math.ceil(ctx.trackTop() + ctx.totalVh() * innerHeight) + 1, behavior: 'auto' });
+    paint();
+  }
+
+  const op = id => +getComputedStyle(document.getElementById(id)).opacity;
+  const num = k => +getComputedStyle(root).getPropertyValue('--sb-' + k);
+
+  return {
+    layout, paint, jump, PAD, mode: 'globe',
+    state() {
+      const vh = innerHeight, y0 = ctx.trackTop() + ctx.totalVh() * vh;
+      const e = clamp01((scrollY - y0 - LEAD * vh) / (SPAN * vh));
+      const r = document.getElementById('sb-end-wm').getBoundingClientRect();
+      const wmo = op('sb-end-wm'), tag = op('sb-end-tag'), lx = op('sb-end-lx');
+      return {
+        mode: 'globe',
+        lead: clamp01((scrollY - y0) / (LEAD * vh)), e, on,
+        stage: e <= 0 ? 'lead' : e < STEPS[0][1] ? 'recede' : e < STEPS[2][1] ? 'wordmark' : 'lockup',
+        steps: { wm: STEPS[0][1], tag: STEPS[1][1], lx: STEPS[2][1], cta: STEPS[3][1] },
+        globe: { scale: num('globe-s'), brightness: num('globe-b'), opacity: num('globe-o'), floor: num('floor') },
+        wordmark: { opacity: wmo, widthPct: r.width / innerWidth, liveWidthPct: r.width / innerWidth,
+          topPct: r.top / vh, bottomPct: r.bottom / vh },
+        tagline: tag,
+        lockup: lx,
+        cta: op('sb-end-cta'),
+        ci: [wmo, tag, lx],
+      };
+    },
+  };
+}
+
+/* ══ v1 — 국토 V-World 판 위 9비트 (꺼 둠) ════════════════════════ */
+function createPlateEnding(ctx) {
   // 값은 <html> 에 흘린다. 마스트헤드는 [data-sc-mode] 밖에 있고, 커스텀 프로퍼티는
   // 상속으로만 내려가므로 트랙 컨테이너에 쓰면 크롬 페이드가 마스트헤드에 닿지 않는다.
   const root = document.documentElement;
   const host = document.getElementById('sb-end');
-  const wm = document.getElementById('sb-end-wm');
+  const wm = document.getElementById('sb-end-wm-v1');
   if (!host || !wm) return { paint() {}, layout() {}, jump() {}, PAD, state: () => null };
 
   const reduce = ctx.reduce;
@@ -206,22 +328,23 @@ export function createEnding(ctx) {
   const op = id => +getComputedStyle(document.getElementById(id)).opacity;
 
   return {
-    layout, paint, jump, PAD,
+    layout, paint, jump, PAD, mode: 'plate',
     state() {
       const vh = innerHeight, y0 = ctx.trackTop() + ctx.totalVh() * vh;
       const e = clamp01((scrollY - y0 - LEAD * vh) / (SPAN * vh));
       const r = wm.getBoundingClientRect();
       return {
+        mode: 'plate',
         lead: clamp01((scrollY - y0) / (LEAD * vh)), e, on, stage: stageOf(e),
         cuts: { B, C, D, E, F, G, H, I },
         dz, shrink: dz === null ? null : Math.pow(2, -dz),
         wordmark: {
           widthPct: wpx / innerWidth, baselinePct: (top + asc) / innerHeight, fontSize: fs,
-          liveWidthPct: r.width / innerWidth, opacity: op('sb-end-wm'),
+          liveWidthPct: r.width / innerWidth, opacity: op('sb-end-wm-v1'),
         },
-        tagline: op('sb-end-tag'),
-        lockup: op('sb-end-lx'),
-        cta: op('sb-end-cta'),
+        tagline: op('sb-end-tag-v1'),
+        lockup: op('sb-end-lx-v1'),
+        cta: op('sb-end-cta-v1'),
       };
     },
   };

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 176" width="256" height="176">
+  <!-- Land-XI 조사 드론 — 클라이언트 지정: 흰 본체 · LX 초록 CI 마크 · 검정 프로펠러.
+       위쪽 약간 뒤에서 내려다본 쿼드콥터(디오라마 카메라 피치 50–62°). 웜 키라이트는 좌상단(레그 4 조명과 일치). -->
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fffaf0"/>
+      <stop offset="0.55" stop-color="#ece8e0"/>
+      <stop offset="1" stop-color="#b8b3ab"/>
+    </linearGradient>
+    <linearGradient id="arm" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f4f0e8"/>
+      <stop offset="1" stop-color="#a9a49d"/>
+    </linearGradient>
+    <radialGradient id="rotor" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#111" stop-opacity="0.95"/>
+      <stop offset="0.35" stop-color="#111" stop-opacity="0.55"/>
+      <stop offset="0.7" stop-color="#111" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#111" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- 팔 4개(X자) — 원근상 뒤쪽 팔이 짧다 -->
+  <g stroke="url(#arm)" stroke-width="7" stroke-linecap="round" fill="none">
+    <path d="M128 92 L62 60"/><path d="M128 92 L194 60"/>
+    <path d="M128 92 L58 132"/><path d="M128 92 L198 132"/>
+  </g>
+  <!-- 프로펠러(검정, 회전 블러 디스크) — 뒤쪽 2개는 타원이 더 납작하다 -->
+  <ellipse cx="62" cy="60" rx="38" ry="14" fill="url(#rotor)"/>
+  <ellipse cx="194" cy="60" rx="38" ry="14" fill="url(#rotor)"/>
+  <ellipse cx="58" cy="132" rx="42" ry="18" fill="url(#rotor)"/>
+  <ellipse cx="198" cy="132" rx="42" ry="18" fill="url(#rotor)"/>
+  <g fill="#111">
+    <circle cx="62" cy="60" r="4"/><circle cx="194" cy="60" r="4"/>
+    <circle cx="58" cy="132" r="4.5"/><circle cx="198" cy="132" r="4.5"/>
+    <!-- 블레이드 2장씩(정지 실루엣) -->
+    <path d="M28 58 Q62 54 96 62 Q62 66 28 58Z" opacity="0.8"/><path d="M160 58 Q194 54 228 62 Q194 66 160 58Z" opacity="0.8"/>
+    <path d="M20 130 Q58 124 96 134 Q58 140 20 130Z" opacity="0.8"/><path d="M160 130 Q198 124 236 134 Q198 140 160 130Z" opacity="0.8"/>
+  </g>
+  <!-- 본체(흰색) + 짐벌/카메라 -->
+  <rect x="98" y="72" width="60" height="44" rx="14" fill="url(#body)"/>
+  <rect x="104" y="112" width="48" height="10" rx="4" fill="#8f8a83"/>
+  <circle cx="128" cy="124" r="6" fill="#222"/>
+  <!-- LX CI 마크(민트그린) — 본체 상판 -->
+  <rect x="116" y="84" width="24" height="14" rx="3" fill="#2FC49B"/>
+  <path d="M120 87 v8 h5 M128 87 l7 8 M135 87 l-7 8" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- 좌상단 키라이트 하이라이트 -->
+  <path d="M104 80 Q120 74 140 76" stroke="#fff" stroke-width="2" opacity="0.7" fill="none" stroke-linecap="round"/>
+</svg>

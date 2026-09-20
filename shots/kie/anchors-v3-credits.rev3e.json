@@ -1,0 +1,57 @@
+{
+  "session": "rev3e-2026-08-27",
+  "cap": 30,
+  "per_still_expected": 14.5,
+  "started": "2026-08-27T01:17:04.058Z",
+  "runs": [
+    {
+      "id": "A06",
+      "reroll": true,
+      "model": "seedream/5-pro-image-to-image",
+      "taskId": "c00c1960a2ef18ff7f37e7604a1ea6b4",
+      "refs": [
+        "landxi/assets/proto/film/legs/anchors-v3/A05.png",
+        "landxi/assets/proto/crops/namwon-greenhouse-2025/2.jpg"
+      ],
+      "credits_reported": 14.5,
+      "credits_balance_before": 9975.5,
+      "credits_balance_after": 9961,
+      "credits_charged": 14.5,
+      "gen_ms": 116,
+      "wall_ms": 125819,
+      "png": "landxi/assets/proto/film/legs/anchors-v3/A06.png",
+      "png_bytes": 7391070,
+      "at": "2026-08-27T01:19:13.318Z",
+      "jpg": "landxi/assets/proto/film/legs/anchors-v3/A06.jpg",
+      "jpg_bytes": 396757
+    },
+    {
+      "id": "A07",
+      "reroll": true,
+      "model": "seedream/5-pro-image-to-image",
+      "taskId": "4d3f79cafe11d286e5c5209a59bc361f",
+      "refs": [
+        "landxi/assets/proto/film/legs/anchors-v3/A06b.png",
+        "landxi/assets/proto/crops/yeosu-marine-2025-aerial/4.jpg"
+      ],
+      "credits_reported": 14.5,
+      "credits_balance_before": 9961,
+      "credits_balance_after": 9946.5,
+      "credits_charged": 14.5,
+      "gen_ms": 78,
+      "wall_ms": 95212,
+      "png": "landxi/assets/proto/film/legs/anchors-v3/A07.png",
+      "png_bytes": 7092713,
+      "at": "2026-08-27T01:20:57.541Z",
+      "jpg": "landxi/assets/proto/film/legs/anchors-v3/A07.jpg",
+      "jpg_bytes": 302624
+    }
+  ],
+  "spent": 29,
+  "rerolls": [
+    "A06",
+    "A07"
+  ],
+  "prev_ledger": "shots/kie/anchors-v3-credits.rev3d.json",
+  "remaining_of_cap": 1
+}

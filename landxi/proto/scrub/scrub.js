@@ -17,6 +17,7 @@
 import { createEnding, dzFor as endDzFor, LEAD as END_LEAD, SPAN as END_SPAN, PAD as END_PAD } from './ending.js';
 
 const MANIFEST = new URL('../../assets/proto/film/legs/manifest.json', import.meta.url).href;
+const PROPS = new URL('../../assets/proto/film/legs/props/props.json', import.meta.url).href;
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -50,6 +51,8 @@ const el = {
   plateY: $('#sb-plate-yeosu'),
   mapN: $('#sb-map-namwon'),
   mapY: $('#sb-map-yeosu'),
+  plateK: $('#sb-plate-korea'),
+  mapK: $('#sb-map-korea'),
   plateCap: $('#sb-plate-cap'),
 };
 
@@ -129,7 +132,7 @@ function filmTimeAt(t) {
 }
 
 /* ── 계기판 ───────────────────────────────────────────────────────────────── */
-const WAYPOINTS = [];    // 이름 붙은 5개 지점 — 궤도 · 성층운 · 한반도 · 남원 · 여수
+const WAYPOINTS = [];    // 이름 붙은 6개 지점 — 궤도 · 성층운 · 한반도 · 남원 · 여수 · 울주
 function buildRail() {
   const seen = new Set();
   M.legs.forEach((L, i) => {
@@ -158,13 +161,39 @@ function buildRail() {
   }).join('');
 }
 
+/* ── 카운트업 — 샷 리스트 v2 레그 5 `비닐하우스 9,664동 · 1,674필지` ───────────
+   엔진의 data-sc-count 는 data-sc-act 안에서만 센다. 월드플라이트 카피는 act 가 아니므로
+   같은 창(data-sc-window from..to)의 진행도로 페이지가 직접 센다. 목표는 마크업에 적힌
+   그대로(쉼표 포함) 렌더되고, 값은 실데이터(namwon-greenhouse-2025.geojson)다. */
+const COUNTS = [];
+function collectCounts() {
+  el.root.querySelectorAll('[data-sc-copy] [data-sb-count]').forEach(n => {
+    const copy = n.closest('[data-sc-copy]');
+    const win = (copy.getAttribute('data-sc-window') || '').trim().split(/\s+/).map(parseFloat);
+    const at = (n.getAttribute('data-sb-count-at') || '0.1 0.6').trim().split(/\s+/).map(parseFloat);
+    const tpl = n.getAttribute('data-sb-count') || '0';
+    COUNTS.push({ el: n, b: parseFloat(tpl.replace(/,/g, '')) || 0, from: win[0], to: win[1], a0: at[0], a1: at[1], last: null });
+  });
+}
+function paintCounts(p) {
+  for (const K of COUNTS) {
+    if (!(K.to > K.from)) continue;
+    const wp = clamp01((p - K.from) / (K.to - K.from));
+    const kt = smooth(clamp01((wp - K.a0) / Math.max(K.a1 - K.a0, 0.001)));
+    const out = nf(Math.round(K.b * kt));
+    if (out !== K.last) { K.el.textContent = out; K.last = out; }
+  }
+}
+
 let lastLeg = -1;
 function paint() {
   const t = trackVh();
   const p = clamp01(t / total);
   el.root.style.setProperty('--sb-p', p.toFixed(5));
+  paintCounts(p);
 
   handoff(t);
+  paintProps(t);
   // 인계 판이 올라와 있으면 계기는 판의 카메라를 읽는다. "같은 카메라로 이어받았다"는
   // 주장을 계기가 그 순간에 반박하면 안 된다.
   const live = PLATES.find(r => r && r.on);
@@ -203,14 +232,15 @@ function paint() {
     el.pips.querySelectorAll('.sb-pip').forEach(r =>
       r.setAttribute('data-on', +r.dataset.leg === wpLeg ? '1' : '0'));
     // 실캡션 — 장소 · 날짜 · GSD 는 manifest 가 들고 있는 실제 출처 문자열이다.
-    el.caption.textContent = M.legs[k].place + ' · ' + M.legs[k].caption;
+    if (el.caption) el.caption.textContent = M.legs[k].place + ' · ' + M.legs[k].caption;
   }
 }
 
 /* ── 인계 — 필름이 멈춘 그 카메라를 살아 있는 지도가 이어받는다 ──────────────
    레그가 아니라 무대의 마지막 두 층이다.
-     #1 남원  레그 06(비닐하우스) 끝 — manifest.handoff, 온실 검출 9,664동
-     #2 여수  필름 최종 프레임      — manifest.handoffFinal, 해양쓰레기 후보
+     #1 남원  레그 05(비닐하우스 실태) 끝 — manifest.handoff, 온실 검출 9,664동
+     #2 여수  레그 07 끝            — manifest.handoffFinal, 해양쓰레기 후보(08 이 올라오면 닫힌다)
+     #3 국토  필름 최종 프레임      — manifest.finale, A12 홀드(레그 11 끝) 위 국토 실지도. 브랜드 마감이 이 판의 줌으로 수축을 잰다
    지도는 각자 자기 구간 1.2vh 앞에서만 만든다. 크로스페이드는 1프레임(≈40ms). */
 const PLATES = [];
 function makePlate(spec, container, host, style, warmZoom) {
@@ -251,11 +281,13 @@ function satStyle(detUrl, color) {
         tiles: ['https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg'],
         tileSize: 256, minzoom: 5, maxzoom: 19, attribution: 'V-World 위성영상',
       },
-      det: { type: 'geojson', data: detUrl },
+      ...(detUrl ? { det: { type: 'geojson', data: detUrl } } : {}),
     },
     layers: [
       { id: 'bg', type: 'background', paint: { 'background-color': '#06080b' } },
       { id: 'sat', type: 'raster', source: 'vsat' },
+      // 검출이 없는 판(국토 마감 판 — 울주 조사 항목은 실결과가 없다)은 위성영상만.
+      ...(!detUrl ? [] : [
       // 탐지는 후보다 — 신뢰도로 감쇠시키되 삭제하지 않는다(카피덱 §4 "감쇠").
       { id: 'det-f', type: 'fill', source: 'det',
         paint: { 'fill-color': color,
@@ -272,16 +304,17 @@ function satStyle(detUrl, color) {
           'circle-opacity': ['interpolate', ['linear'], ['zoom'], 10, 0.85, 14, 0.5, 15, 0],
           'circle-stroke-width': 0,
         } },
+      ]),
     ],
   };
 }
 
 // 각 인계의 트랙 구간(vh). #1 은 레그 06 의 마지막 0.14vh + 씸 1/4(다음 레그가
 // 밑에서 올라오기 전에 닫는다), #2 는 마지막 레그의 마지막 0.28vh 부터 끝까지.
-let BAND_N = [0, 0], BAND_Y = [0, 0];
+let BAND_N = [0, 0], BAND_Y = [0, 0], BAND_K = [0, 0];
 function handoff(t) {
   if (reduce) return;
-  // #1 남원 — 레그 06 끝
+  // #1 남원 — 레그 05 끝(manifest.handoff.legIndex)
   if (!PLATES[0] && t > BAND_N[0] - 1.2) {
     PLATES[0] = makePlate(M.handoff, el.mapN, el.plateN,
       satStyle(M.handoff.detections, '#00D3A7'));
@@ -292,8 +325,18 @@ function handoff(t) {
       satStyle(M.handoffFinal.detections, '#FF9A2E'),
       M.handoffFinal.zoom - endDzFor(M.handoffFinal.zoom));   // 마감 수축의 끝 줌을 예열
   }
+  // #3 국토 — 2026-09-01 부터 **띄우지 않는다**. 레그 12(귀환)가 붙어 필름이 A01(작업대 위 모형 지구본)로
+  // 닫히면서 마감의 인계 카메라(A12 한반도)가 사라졌다 — 마감은 실지도 판이 아니라 그 A01 프레임 위에서
+  // 지구본이 물러나는 방식으로 선다(ending.js FINALE_MODE='globe').
+  // 되돌리려면 manifest.finale.plate 를 true 로(assemble.mjs) + ending.js FINALE_MODE='plate'.
+  if (!PLATES[2] && M.finale && M.finale.plate !== false && t > BAND_K[0] - 1.2) {
+    PLATES[2] = makePlate(M.finale, el.mapK, el.plateK,
+      satStyle(M.finale.detections, '#FFD166'),
+      M.finale.zoom - endDzFor(M.finale.zoom));
+  }
   gate(PLATES[0], t >= BAND_N[0] && t <= BAND_N[1]);
-  gate(PLATES[1], t >= BAND_Y[0]);
+  gate(PLATES[1], t >= BAND_Y[0] && t <= BAND_Y[1]);
+  gate(PLATES[2], t >= BAND_K[0] && t <= BAND_K[1]);
 }
 function gate(rec, want) {
   if (!rec) return;
@@ -325,6 +368,83 @@ function guardPaint() {
   });
 }
 
+/* ── 소품(props) — 영상을 다시 만들지 않고 레그 위에 페이지가 그리는 스프라이트 ─────
+   2026-08-27 드론 오버레이 스파이크(docs/superpowers/proto/2026-08-27-drone-overlay-spike.md).
+   클라이언트: "드론이 나오는 씬이 003 하나밖에 없나?" → 레그 04(남원 평야) 위에 흰 본체·
+   LX 초록 마크·검정 프로펠러 드론을 무대 폭 2.6–5.2 % 로 좌중→우원 으로 날린다.
+   props/props.json 이 전부다(레그 id · 키포인트 · 크기 · 페이드). 같은 재생헤드(filmTimeAt)를
+   읽으므로 스크롤에 묶이고, 첫·끝 0.4 필름초는 투명도로 들어오고 나간다(하드 팝 금지).
+   reduced-motion 이면 층 자체를 만들지 않는다 — 포스터가 필름을 대신하는 화면에 움직이는
+   소품은 없다. 층 z=125: 레그(≤120) 위, 인계 판(130)·카피 아래. */
+const PROP_RECS = [];
+function buildProps(list) {
+  if (reduce || !list || !list.length) return;
+  const world = el.root.querySelector('[data-sc-world]');
+  const layer = document.createElement('div');
+  layer.className = 'sb-props';
+  layer.setAttribute('aria-hidden', 'true');
+  for (const P of list) {
+    const legIdx = M.legs.findIndex(L => L.id === P.leg);
+    if (legIdx < 0) continue;
+    const host = document.createElement('div');
+    host.className = 'sb-prop';
+    host.dataset.prop = P.id;
+    const sh = document.createElement('div'); sh.className = 'sb-prop__shadow';
+    const img = document.createElement('img'); img.className = 'sb-prop__img';
+    img.src = P.src; img.alt = ''; img.decoding = 'async';
+    if (P.filter) img.style.filter = P.filter;   // 필름 그레이드 맞춤(블러·웜·채도) — props.json
+    host.append(sh, img);
+    layer.append(host);
+    PROP_RECS.push({ spec: P, legIdx, host, sh, img, on: false, state: null });
+  }
+  world.append(layer);
+}
+function propKey(keys, u) {
+  if (u <= keys[0].t) return keys[0];
+  for (let i = 1; i < keys.length; i++) {
+    if (u <= keys[i].t) {
+      const A = keys[i - 1], B = keys[i];
+      const w = smooth(clamp01((u - A.t) / Math.max(B.t - A.t, 1e-6)));
+      return { x: lerp(A.x, B.x, w), y: lerp(A.y, B.y, w), s: lerp(A.s, B.s, w) };
+    }
+  }
+  return keys[keys.length - 1];
+}
+function paintProps(t) {
+  if (!PROP_RECS.length) return;
+  const k = legAt(t);
+  const W = innerWidth, H = innerHeight;
+  for (const R of PROP_RECS) {
+    const P = R.spec;
+    const on = k === R.legIdx;
+    if (!on) {
+      if (R.on) { R.on = false; R.host.classList.remove('is-on'); R.host.style.opacity = '0'; R.state = null; }
+      continue;
+    }
+    const L = M.legs[k];
+    const film = filmTimeAt(t);                       // 레그 안의 필름 초 — 재생헤드와 같은 리맵
+    const u = clamp01(film / L.seconds);
+    const ramp = P.ramp || 0.4;
+    const fade = Math.min(smooth(clamp01(film / ramp)), smooth(clamp01((L.seconds - film) / ramp)));
+    const K = propKey(P.keys, u);
+    // 호버링 — 필름 시각에 묶인 작은 상하 흔들림. 스크롤이 서면 드론도 선다(재생헤드 계약).
+    const bob = P.bob ? Math.sin(film * P.bob.hz * Math.PI * 2) * P.bob.amp : 0;
+    const w = K.s * W;                                // 스프라이트 폭(px)
+    const h = w / (P.aspect || 1.4545);
+    const cx = K.x * W, cy = (K.y + bob) * H;
+    R.img.style.transform = `translate(${(cx - w / 2).toFixed(1)}px, ${(cy - h / 2).toFixed(1)}px) scale(${(w / 100).toFixed(4)})`;
+    // 그림자 — 드론 아래 지면. 키라이트가 좌상단이므로 오른쪽·아래로 치우친다. 멀수록(작을수록) 옅다.
+    const S = P.shadow || { dx: 0.16, dy: 0.95, w: 0.95, h: 0.3, alpha: 0.42 };
+    const sw = w * S.w, shh = h * S.h;
+    const sx = cx + w * S.dx - sw / 2, sy = cy + h * S.dy - shh / 2 - bob * H;
+    R.sh.style.transform = `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px) scale(${(sw / 100).toFixed(4)}, ${(shh / 32).toFixed(4)})`;
+    R.sh.style.opacity = (S.alpha * (0.55 + 0.45 * (K.s / P.keys[0].s))).toFixed(3);
+    R.host.style.opacity = fade.toFixed(3);
+    if (!R.on) { R.on = true; R.host.classList.add('is-on'); }
+    R.state = { film: +film.toFixed(3), u: +u.toFixed(4), x: +K.x.toFixed(4), y: +K.y.toFixed(4), s: +K.s.toFixed(4), px: +cx.toFixed(1), py: +cy.toFixed(1), w: +w.toFixed(1), opacity: +fade.toFixed(3) };
+  }
+}
+
 /* ── 이동 ─────────────────────────────────────────────────────────────────── */
 function maxScroll() { return Math.max(document.documentElement.scrollHeight - innerHeight, 1); }
 function trackTop() { return el.root.getBoundingClientRect().top + scrollY; }
@@ -352,6 +472,9 @@ const boot = async () => {
   const SITE_BASE = new URL('../../', import.meta.url).href; // .../landxi/
   M = JSON.parse((await (await fetch(MANIFEST)).text()).split('"/landxi/').join('"' + SITE_BASE));
   SEAM = M.seam || 0.16;
+  // 소품 — 없거나 못 받으면 조용히 없다(필름은 소품 없이도 완전하다).
+  const propsList = await fetch(PROPS).then(r => (r.ok ? r.text() : '{"props":[]}'))
+    .then(txt => JSON.parse(txt.split('"/landxi/').join('"' + SITE_BASE)).props).catch(() => []);
 
   let run = 0;
   cum = M.legs.map(L => { const a = run; run += L.weightVh; return [a, run]; });
@@ -359,21 +482,27 @@ const boot = async () => {
   linger = Array.from(el.root.querySelectorAll('[data-sc-segment]'),
     s => parseFloat(s.getAttribute('data-sc-linger')) || 0);
 
-  // 인계 구간 — #1 은 레그 06 의 마지막 0.10vh 부터 다음 씸의 절반까지,
-  //             #2 는 마지막 레그의 마지막 0.28vh 부터 끝까지.
+  // 인계 구간 — #1 은 레그 05 의 마지막 0.14vh 부터 다음 씸의 1/4 까지,
+  //             #2 는 레그 07 의 마지막 0.28vh 부터 08 씸의 1/4 까지(07 이 마지막 레그였을 땐 끝까지).
   const hi = M.handoff.legIndex;
   BAND_N = [cum[hi][1] - 0.14, cum[hi][1] + SEAM / 4];
+  // 2026-08-27 레그 8·8b: 여수 판은 레그 07 끝에 서고 필름은 그 뒤로 이어진다(08 상승 → 08b 울주).
+  //   legIndex 가 마지막 레그가 아니면 남원 판과 같은 문법으로 닫는다 — 07 의 마지막 0.28vh 부터 08 씸의 1/4 까지.
   const fi = M.handoffFinal.legIndex;
-  BAND_Y = [cum[fi][1] - 0.28, total];
+  BAND_Y = fi + 1 < M.legs.length ? [cum[fi][1] - 0.28, cum[fi][1] + SEAM / 4] : [cum[fi][1] - 0.28, total];
+  // 2026-08-27 레그 9–11: #3 국토 판은 필름 최종 프레임(레그 11 끝 = A12 홀드)의 마지막 0.28vh 부터 끝까지 — 브랜드 마감이 그 위에 선다.
+  if (M.finale) { const ki = M.finale.legIndex; BAND_K = [cum[ki][1] - 0.28, total]; }
 
   buildRail();
+  collectCounts();
+  buildProps(propsList);
 
   // 브랜드 마감 판. 스크롤 예산 2.00vh 는 **흐름에 요소를 더하지 않고** 컨테이너의
   // padding-bottom 으로 낸다 — 스페이서 높이는 엔진이 매 layout 마다 (Σw+1)×vh 로
   // 다시 쓰므로 거기에 얹을 수 없고, 형제 요소를 두면 "흐름에는 스페이서 하나"라는
   // worldflight §8 #1 이 깨진다.
   END = createEnding({
-    root: el.root, reduce, trackTop, totalVh: () => total, plate: () => PLATES[1],
+    root: el.root, reduce, trackTop, totalVh: () => total, plate: () => PLATES[2] || PLATES[1],
   });
   const padEnd = () => { el.root.style.paddingBottom = Math.round(END_PAD * innerHeight) + 'px'; };
   padEnd();
@@ -429,7 +558,7 @@ const boot = async () => {
         alt: live.spec.altitudeM, pitch: live.spec.pitch, bearing: live.spec.bearing } : camAt(trackVh());
     },
     spacerVh: () => total + 1,
-    bands: () => ({ namwon: BAND_N, yeosu: BAND_Y, total }),
+    bands: () => ({ namwon: BAND_N, yeosu: BAND_Y, korea: BAND_K, total }),
     plate: i => {
       const r = PLATES[i];
       if (!r) return null;
@@ -438,6 +567,11 @@ const boot = async () => {
         zoom: r.map.getZoom(), pitch: r.map.getPitch(), bearing: r.map.getBearing() };
     },
     handoffActive: () => PLATES.some(r => r && r.on),
+    prop: id => {                            // 소품 상태(테스트·촬영용). 레그 밖이면 on:false
+      const R = PROP_RECS.find(r => r.spec.id === id);
+      return R ? { on: R.on, leg: R.spec.leg, ...(R.state || {}) } : null;
+    },
+    props: () => PROP_RECS.map(r => r.spec.id),
     plateMap: i => (PLATES[i] ? PLATES[i].map : null),   // 진단·촬영용(타일 상태 조회)
     ready: true,
   };

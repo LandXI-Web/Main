@@ -16,11 +16,18 @@
  *   await still(prompt, { ref, ar, out })        -> { file, credits, ms, taskId }
  *   await video(prompt, { image, seconds, out }) -> { file, credits, ms, taskId }
  *
+ * 내구성(2026-08-27, leg 7 회선 끊김): createTask 가 taskId 를 돌려준 직후 — 폴링에 들어가기 전 —
+ * 원장에 pending 줄을 먼저 남긴다. 그래야 폴링이 죽어도 이미 과금된 taskId 로 결과를 회수할 수 있다.
+ *   opts.onTask(taskId, { model, promptHash, at })  러너가 넘기는 훅. createTask 마다 한 번 호출된다.
+ *   opts.ledger = 'shots/kie/x.json'               파일 원장을 직접 쓰는 경우(CLI --ledger). pending 줄을
+ *                                                  runs[] 에 append 하고 완료 시 같은 taskId 줄을 갱신한다.
+ *
  * 키: .env.local 의 KIE_AI_API_KEY (또는 이미 설정된 process.env). 절대 출력하지 않는다.
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const API = 'https://api.kie.ai';
@@ -93,13 +100,59 @@ export async function uploadLocal(file) {
 
 const asUrl = (v) => (/^https?:\/\//i.test(v) ? Promise.resolve(v) : uploadLocal(v));
 
-// ----------------------------------------------------------------- task --
-// 2026-08-26: 러너가 폴링 중 죽으면 taskId 가 사라져 kie.ai/logs 로 복구해야 했다.
-// createTask 직후 pending 장부(shots/kie/pending-tasks.jsonl)에 한 줄 적고, 결과가 나오면 상태를 덧붙인다.
-const PENDING = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../shots/kie/pending-tasks.jsonl');
-function notePending(rec) {
-  try { fs.mkdirSync(path.dirname(PENDING), { recursive: true }); fs.appendFileSync(PENDING, JSON.stringify({ at: new Date().toISOString(), ...rec }) + '\n'); } catch { /* 장부 실패는 생성 흐름을 막지 않는다 */ }
+// -------------------------------------------------------------- pending --
+/** 프롬프트 식별용 짧은 해시(sha256 앞 16자리). 원장에 프롬프트 전문을 다시 싣지 않아도 대조가 된다. */
+export const promptHash = (s) => crypto.createHash('sha256').update(String(s)).digest('hex').slice(0, 16);
+
+function readJsonLedger(file) {
+  const abs = path.resolve(file);
+  if (!fs.existsSync(abs)) return { runs: [] };
+  const l = JSON.parse(fs.readFileSync(abs, 'utf8'));
+  if (!Array.isArray(l.runs)) l.runs = [];
+  return l;
 }
+function writeJsonLedger(file, l) {
+  const abs = path.resolve(file);
+  fs.mkdirSync(path.dirname(abs), { recursive: true });
+  fs.writeFileSync(abs, JSON.stringify(l, null, 2) + '\n');
+}
+
+/**
+ * createTask 직후 원장 파일에 pending 줄을 append 한다 (동기, 폴링 전에 디스크에 닿는다).
+ * @param {string} file 원장 JSON ({ runs: [] } 형태)
+ * @param {object} entry { taskId, leg|anchor id, prompt_sha256, credits_balance_before, ... }
+ */
+export function ledgerPending(file, entry) {
+  const l = readJsonLedger(file);
+  const rec = { state: 'pending', ...entry, at: entry.at || new Date().toISOString() };
+  l.runs.push(rec);
+  writeJsonLedger(file, l);
+  return rec;
+}
+
+/** 같은 taskId 의 pending 줄을 완료 정보로 갱신한다. pending 줄이 없으면 새 줄로 append. */
+export function ledgerFinalize(file, taskId, patch) {
+  const l = readJsonLedger(file);
+  let rec = l.runs.find((r) => r.taskId === taskId && r.state === 'pending');
+  if (rec) { delete rec.state; Object.assign(rec, patch, { finished_at: new Date().toISOString() }); }
+  else { rec = { taskId, ...patch, finished_at: new Date().toISOString() }; l.runs.push(rec); }
+  writeJsonLedger(file, l);
+  return rec;
+}
+
+/** 원장에서 가장 최근 pending 줄(선택: 필터 일치)을 찾는다. fetch <leg> 에서 taskId 생략 시 사용. */
+export function ledgerLatestPending(runs, match = () => true) {
+  return [...runs].reverse().find((r) => r.state === 'pending' && r.taskId && match(r)) || null;
+}
+
+/** createTask 직후 공통 처리: onTask 훅 + (있으면) 파일 원장 pending 줄. 훅이 던지면 그대로 전파한다. */
+async function notePending(opts, taskId, model, prompt, extra = {}) {
+  const meta = { model, promptHash: promptHash(prompt), at: new Date().toISOString(), ...extra };
+  if (opts.ledger) ledgerPending(opts.ledger, { taskId, model, prompt_sha256: meta.promptHash, ...extra, at: meta.at });
+  if (typeof opts.onTask === 'function') await opts.onTask(taskId, meta);
+}
+
+// ----------------------------------------------------------------- task --
 async function createTask(model, input) {
   const res = await fetch(`${API}/api/v1/jobs/createTask`, {
     method: 'POST',
@@ -108,11 +161,10 @@ async function createTask(model, input) {
   });
   const j = await res.json().catch(() => ({}));
   if (j.code !== 200 || !j?.data?.taskId) throw new Error(`createTask ${model}: ${JSON.stringify(j).slice(0, 500)}`);
-  notePending({ event: 'created', taskId: j.data.taskId, model, image_url: input.image_url, tail_image_url: input.tail_image_url, prompt: String(input.prompt || '').slice(0, 120) });
   return j.data.taskId;
 }
 
-async function waitTask(taskId, { label = 'job', timeoutMs = 20 * 60 * 1000 } = {}) {
+export async function waitTask(taskId, { label = 'job', timeoutMs = 20 * 60 * 1000 } = {}) {
   const t0 = Date.now();
   let delay = 4000;
   for (;;) {
@@ -126,7 +178,6 @@ async function waitTask(taskId, { label = 'job', timeoutMs = 20 * 60 * 1000 } = 
       if (typeof out === 'string') { try { out = JSON.parse(out); } catch { /* noop */ } }
       const urls = out?.resultUrls || out?.result_urls || out?.urls || [];
       if (!urls.length) throw new Error(`${label}: success 인데 결과 URL 없음: ${JSON.stringify(d).slice(0, 400)}`);
-      notePending({ event: 'success', taskId, credits: d.creditsConsumed ?? null, url: urls[0] });
       return { urls, credits: d.creditsConsumed ?? null, ms: d.costTime ?? Date.now() - t0 };
     }
     if (state === 'fail' || state === 'failed') {
@@ -136,7 +187,6 @@ async function waitTask(taskId, { label = 'job', timeoutMs = 20 * 60 * 1000 } = 
       // costTime 0 + failCode 500 + creditsConsumed 0 = 큐에 들어가기도 전에 죽은
       // 서버측 일시 장애. 과금이 없으므로 재시도가 안전하다.
       err.retryable = err.failCode === '500' && (d.creditsConsumed === 0 || d.creditsConsumed == null);
-      notePending({ event: 'fail', taskId, failCode: err.failCode, credits: d.creditsConsumed ?? null, msg: String(d.failMsg || '').slice(0, 160) });
       throw err;
     }
     log(`  ${label}: ${state || 'queued'} ${d.progress != null ? d.progress + '% ' : ''}(${Math.round((Date.now() - t0) / 1000)}s)`);
@@ -173,8 +223,10 @@ export async function still(prompt, opts = {}) {
   }
   const t0 = Date.now();
   const taskId = await createTask(model, input);
+  await notePending(opts, taskId, model, prompt, { out: out || null });
   const r = await waitTask(taskId, { label: out ? path.basename(out) : 'still', timeoutMs: 10 * 60 * 1000 });
   const file = out ? await download(r.urls[0], out) : null;
+  if (opts.ledger) ledgerFinalize(opts.ledger, taskId, { ok: true, url: r.urls[0], file, credits_reported: r.credits, gen_ms: r.ms });
   return { file, url: r.urls[0], credits: r.credits, ms: r.ms, wallMs: Date.now() - t0, taskId, model };
 }
 
@@ -205,12 +257,17 @@ export async function video(prompt, opts = {}) {
   let last;
   for (let i = 1; i <= maxTries; i++) {
     const taskId = await createTask(MODELS.video, input);
+    // 폴링 전에 taskId 를 남긴다. 여기서 회선이 끊겨도 taskId 는 원장에 있다.
+    await notePending(opts, taskId, MODELS.video, prompt, { out: out || null, attempt: i });
     try {
       const r = await waitTask(taskId, { label, timeoutMs: 25 * 60 * 1000 });
       const file = out ? await download(r.urls[0], out) : null;
+      if (opts.ledger) ledgerFinalize(opts.ledger, taskId, { ok: true, url: r.urls[0], file, credits_reported: r.credits, gen_ms: r.ms });
       return { file, url: r.urls[0], credits: r.credits, ms: r.ms, wallMs: Date.now() - t0, taskId, model: MODELS.video, tries: i };
     } catch (e) {
       last = e;
+      // 확정 실패(fail 상태)만 원장에 닫는다. 네트워크 오류(fetch failed 등)는 pending 으로 남겨 회수 가능하게 둔다.
+      if (opts.ledger && e.failCode !== undefined) ledgerFinalize(opts.ledger, taskId, { ok: false, error: String(e.message).slice(0, 600), failCode: e.failCode || null });
       if (!e.retryable || i === maxTries) throw e;
       const wait = Math.min(15000 * i, 90000);
       log(`  ${label}: 무과금 서버 오류(500), ${Math.round(wait / 1000)}s 후 재시도 ${i}/${maxTries}`);
@@ -229,16 +286,17 @@ if (import.meta.url === `file://${process.argv[1]?.replace(/\\/g, '/')}` || proc
       console.log(await credits());
     } else if (cmd === 'still') {
       const [prompt, out] = rest;
-      const r = await still(prompt, { out, ar: flag('--ar', '16:9'), ref: flag('--ref') || undefined });
+      const r = await still(prompt, { out, ar: flag('--ar', '16:9'), ref: flag('--ref') || undefined, ledger: flag('--ledger') || undefined });
       console.log(JSON.stringify({ file: r.file, credits: r.credits, ms: r.ms, taskId: r.taskId }, null, 2));
     } else if (cmd === 'video') {
       const [prompt, image, out] = rest;
-      const r = await video(prompt, { image, out, seconds: flag('--dur', '5'), tail: flag('--tail') || undefined });
+      const r = await video(prompt, { image, out, seconds: flag('--dur', '5'), tail: flag('--tail') || undefined, ledger: flag('--ledger') || undefined });
       console.log(JSON.stringify({ file: r.file, credits: r.credits, ms: r.ms, taskId: r.taskId }, null, 2));
     } else {
       console.error(`node tools/kie/kie.mjs credits
-node tools/kie/kie.mjs still "<prompt>" <out.png> [--ar 16:9] [--ref anchor.jpg]
-node tools/kie/kie.mjs video "<move>" <head.png> <out.mp4> [--dur 5] [--tail t.png]`);
+node tools/kie/kie.mjs still "<prompt>" <out.png> [--ar 16:9] [--ref anchor.jpg] [--ledger shots/kie/x.json]
+node tools/kie/kie.mjs video "<move>" <head.png> <out.mp4> [--dur 5] [--tail t.png] [--ledger shots/kie/x.json]
+  --ledger: createTask 직후 pending 줄(taskId)을 먼저 적고 완료 시 갱신한다 (폴링 중 회선 끊김 대비)`);
       process.exit(1);
     }
   } catch (e) {

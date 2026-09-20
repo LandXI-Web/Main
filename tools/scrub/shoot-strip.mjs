@@ -2,6 +2,10 @@
 //
 //   node tools/scrub/shoot-strip.mjs                 # shots/scrub/legs-1-3-*.png
 //   node tools/scrub/shoot-strip.mjs --out shots/x   # 출력 폴더
+//   node tools/scrub/shoot-strip.mjs --legs 4-6 --prefix legs-4-6   # 레그 4–6 + 씸 03→04 … 06→07
+//   node tools/scrub/shoot-strip.mjs --legs 4-6b --prefix legs-4-6b # 레그 4–6b + 씸 03→04 … 06b→07 (id 는 manifest)
+//   node tools/scrub/shoot-strip.mjs --legs 6b-7 --prefix legs-6b-7   # 레그 6b–7 + 씸 06→06b · 06b→07 + 여수 인계 밴드 3장
+//   node tools/scrub/shoot-strip.mjs --legs 7-8b --prefix legs-7-8b   # 레그 7–8b: 씸 06b→07 · 07 · 여수 인계 3장 · 08 · 씸 08→08b · 08b · 필름 끝
 //
 // 지점은 트랙 진행도(window.__scrub.seek 의 p)다. 씸 밴드(0.16vh)의 한가운데와 양끝을
 // 반드시 포함시킨다 — 이음매의 크로스페이드가 실제 스크린샷에서 어떻게 보이는지 보기 위해.
@@ -37,19 +41,51 @@ const cum = M.legs.map(l => { const a = run; run += l.weightVh; return [a, run];
 const total = run;
 const seam = M.seam;
 const P = v => +(v / total).toFixed(4);
-// 9지점: 레그 1 안 2곳 · 씸 01→02 한가운데 · 레그 2 안 · 씸 02→03 한가운데 · 레그 3 안 ·
+// 9지점(기본, 레그 1–3): 레그 1 안 2곳 · 씸 01→02 한가운데 · 레그 2 안 · 씸 02→03 한가운데 · 레그 3 안 ·
 //        씸 03→04 (시작 · 한가운데 · 끝) — 렌더러가 바뀌는 이음매라 세 장.
-const POINTS = [
-  { p: P(0.10), tag: 'L1-open' },
-  { p: P(cum[0][1] - 0.45), tag: 'L1-mid' },
-  { p: P(cum[0][1]), tag: 'seam-01-02-mid' },
-  { p: P(cum[1][0] + 0.55), tag: 'L2-mid' },
-  { p: P(cum[1][1]), tag: 'seam-02-03-mid' },
-  { p: P(cum[2][0] + 0.55), tag: 'L3-mid' },
-  { p: P(cum[2][1] - seam / 2), tag: 'seam-03-04-in' },
-  { p: P(cum[2][1]), tag: 'seam-03-04-mid' },
-  { p: P(cum[2][1] + seam / 2), tag: 'seam-03-04-out' },
-];
+// --legs 4-6 (2026-08-27): 같은 패턴을 레그 a..b 에 적용한다 — 앞 씸 한가운데 · 각 레그 안 · 사이 씸 · 마지막 씸 3장.
+const LEGS = val('legs', null);
+let POINTS;
+if (!LEGS) {
+  POINTS = [
+    { p: P(0.10), tag: 'L1-open' },
+    { p: P(cum[0][1] - 0.45), tag: 'L1-mid' },
+    { p: P(cum[0][1]), tag: 'seam-01-02-mid' },
+    { p: P(cum[1][0] + 0.55), tag: 'L2-mid' },
+    { p: P(cum[1][1]), tag: 'seam-02-03-mid' },
+    { p: P(cum[2][0] + 0.55), tag: 'L3-mid' },
+    { p: P(cum[2][1] - seam / 2), tag: 'seam-03-04-in' },
+    { p: P(cum[2][1]), tag: 'seam-03-04-mid' },
+    { p: P(cum[2][1] + seam / 2), tag: 'seam-03-04-out' },
+  ];
+} else {
+  // --legs 4-6b : 레그 id 로 (매니페스트 순서). 06b 처럼 숫자가 아닌 id 가 있으므로 index 는 manifest 에서 찾는다.
+  const norm = k => { const m = /^(\d+)([a-z]?)$/.exec(k); return m[1].padStart(2, '0') + m[2]; };
+  const idx = k => { const i = M.legs.findIndex(l => l.id === norm(k)); if (i < 0) throw new Error('레그 없음 ' + k); return i; };
+  const [a, b] = LEGS.split('-').map(idx);
+  const id = i => M.legs[i].id;
+  // 여수 인계 #2 는 manifest.handoffFinal.legIndex 레그의 끝에 선다(2026-08-27 레그 8·8b 뒤로는 07 끝, 필름은 판 뒤로 이어진다).
+  // 그 레그가 범위에 들면 밴드(마지막 0.28vh ~ 다음 씸 1/4)의 앞·가운데·끝을 찍는다 — `--legs 7-8b` 는 07 → 인계 → 08 → 08b 순.
+  const fi = M.handoffFinal.legIndex;
+  POINTS = [{ p: P(cum[a][0]), tag: `seam-${id(a - 1)}-${id(a)}-mid` }];
+  for (let i = a; i <= b; i++) {
+    POINTS.push({ p: P(cum[i][0] + 0.55), tag: `L${id(i)}-mid` });
+    if (i === fi) {
+      POINTS.push({ p: P(cum[i][1] - 0.28 - seam / 2), tag: `handoff-${id(i)}-in` });
+      POINTS.push({ p: P(cum[i][1] - 0.14), tag: `handoff-${id(i)}-mid` });
+      POINTS.push({ p: P(cum[i][1]), tag: `handoff-${id(i)}-end` });
+    }
+    if (i < b && i !== fi) POINTS.push({ p: P(cum[i][1]), tag: `seam-${id(i)}-${id(i + 1)}-mid` });
+  }
+  if (b + 1 < M.legs.length) {
+    POINTS.push({ p: P(cum[b][1] - seam / 2), tag: `seam-${id(b)}-${id(b + 1)}-in` });
+    POINTS.push({ p: P(cum[b][1]), tag: `seam-${id(b)}-${id(b + 1)}-mid` });
+    POINTS.push({ p: P(cum[b][1] + seam / 2), tag: `seam-${id(b)}-${id(b + 1)}-out` });
+  } else if (b !== fi) {
+    // 마지막 레그에 인계 판이 없으면(08b 울주) 필름 끝 프레임을 한 장 찍는다.
+    POINTS.push({ p: P(cum[b][1]), tag: `film-end-${id(b)}` });
+  }
+}
 
 async function settle() {
   await page.waitForFunction(() => {
@@ -61,7 +97,7 @@ async function settle() {
 }
 
 // 첫 번째 훑기 — 레그 1–4 클립을 미리 받아 두게 한다(지연 로딩 ±1.6vh).
-for (const q of [0, 0.25, 0.5]) { await page.evaluate(p => window.__scrub.seek(p), q); await page.waitForTimeout(900); }
+for (const q of (LEGS ? [0, 0.25, 0.5, 0.75, 0.9] : [0, 0.25, 0.5])) { await page.evaluate(p => window.__scrub.seek(p), q); await page.waitForTimeout(900); }
 
 const rows = [];
 for (let i = 0; i < POINTS.length; i++) {
@@ -75,8 +111,8 @@ for (let i = 0; i < POINTS.length; i++) {
       film: +window.__scrub.filmTime().toFixed(2),
       op: segs.map(s => +(+s.style.opacity || 0).toFixed(2)),
       painted: segs.map(s => !!s.querySelector('video.sb-painted')),
-      alt: document.getElementById('sb-alt').textContent,
-      caption: document.getElementById('sb-caption').textContent,
+      alt: (document.getElementById('sb-alt') || {}).textContent || '',
+      caption: (document.getElementById('sb-caption') || {}).textContent || '',
     };
   });
   const f = path.join(OUT, `${PREFIX}-${i + 1}-${tag}.png`);

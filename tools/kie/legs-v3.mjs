@@ -6,6 +6,15 @@
  *   node tools/kie/legs-v3.mjs run 1 2 3        # leg 번호
  *   node tools/kie/legs-v3.mjs post 1 2 3       # 스크럽 인코딩 + 검수 프레임 + 씸 프레임
  *   node tools/kie/legs-v3.mjs sheet 1 2 3      # 3행 × (6 프레임 + 다음 앵커) 콘택트 시트
+ *   LEGS_V3_REV=3 LEGS_V3_BATCH=4-6 node tools/kie/legs-v3.mjs run 4 5 6   # leg 4–6 (2026-08-27)
+ *   LEGS_V3_REV=3 LEGS_V3_BATCH=4-6b LEGS_V3_PREV=rev1 LEGS_V3_CAP=220 node tools/kie/legs-v3.mjs run 4 5 6 6b
+ *       # leg 4·5·6·6b (2026-08-27 "D1 그대로, D2 go") — 13앵커 체인(A06→A06b→A07), 이전 4-6 산출물은 *.rev1.mp4
+ *   LEGS_V3_REV=3 LEGS_V3_BATCH=7 LEGS_V3_CAP=60 node tools/kie/legs-v3.mjs run 7
+ *   LEGS_V3_REV=3 LEGS_V3_BATCH=7 node tools/kie/legs-v3.mjs fetch 7 [taskId]
+ *       # 회선 끊김 등으로 폴링이 죽었을 때: 이미 과금된 taskId 의 결과만 recordInfo 로 가져온다 (새 createTask 없음, 과금 0)
+ *       # taskId 를 생략하면 원장의 그 leg(같은 rev/batch) 최신 pending 줄을 쓴다.
+ *       # run 은 createTask 직후(폴링 전) 원장에 state:"pending" 줄을 먼저 적고, 완료 시 같은 줄을 갱신한다.
+ *       # leg 7 (2026-08-27 "D7 GO") — A07(rev.3e)→A08, 캡 60, 정확히 1회. 시트는 v3-leg-7-sheet.jpg (1행 × 7)
  *
  * 규칙(2026-08-26 클라이언트): leg 당 생성 정확히 1회, 자동 재시도 없음, 캡 160.
  * 매 호출 전후 잔액을 shots/kie/legs-v3-credits.json 에 기록.
@@ -15,7 +24,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { video, credits } from './kie.mjs';
+import { video, credits, waitTask, download, promptHash, ledgerLatestPending } from './kie.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const SPEC = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools/kie/anchors-v3.json'), 'utf8'));
@@ -29,8 +38,12 @@ const PER = 50;
 // rev.3 (2026-08-26, 클라이언트 "go"): 앵커 A02 v3b / A03 v3c / A04 v3b 확정 후 leg 1–3 재생성.
 // LEGS_V3_REV=3 으로 실행하면 이전 rev 산출물을 *.rev2.mp4 로 백업하고, 1회/캡 규칙은 rev 별로 센다.
 const REV = Number(process.env.LEGS_V3_REV || 2);
-const PREV = `rev${REV - 1}`;
-const runsOfRev = (l) => l.runs.filter((r) => (r.rev || 2) === REV);
+// LEGS_V3_PREV 로 백업 접미사를 지정할 수 있다(batch 4-6b 는 4-6 산출물을 .rev1 로 보관).
+const PREV = process.env.LEGS_V3_PREV || `rev${REV - 1}`;
+// 배치(2026-08-27, 클라이언트 "go"): leg 4–6 은 같은 rev.3 앵커지만 별도 캡(160)으로 센다.
+// LEGS_V3_BATCH=4-6 으로 실행. 1회/캡 규칙과 시트 이름은 (rev, batch) 별.
+const BATCH = process.env.LEGS_V3_BATCH || '1-3';
+const runsOfRev = (l) => l.runs.filter((r) => (r.rev || 2) === REV && (r.batch || '1-3') === BATCH);
 const spentOfRev = (l) => Number(runsOfRev(l).reduce((s, x) => s + (x.credits_charged || 0), 0).toFixed(2));
 const TS = [0, 1, 2, 3, 4, 4.85];
 // kling/v2-1-pro 는 negative_prompt 500자 상한 (createTask "Input exceeds maximum length", 무과금).
@@ -41,15 +54,33 @@ const NEG_MAX = 500;
 function trimNeg(s) {
   if (s.length <= NEG_MAX) return s;
   const base = SPEC.negative_base;
-  const specific = s.startsWith(base) ? s.slice(base.length).replace(/^\s*,\s*/, '') : '';
+  let specific;
+  if (s.startsWith(base)) specific = s.slice(base.length).replace(/^\s*,\s*/, '');
+  else {
+    // A12(2026-08-31 발견): negative 가 negative_base 와 마지막 한 항목("grid lines")만 다르다 —
+    // A12 는 땅에 각인된 황동 격자가 주인공이라 그 항목을 뺐다. startsWith 가 false 가 되면서
+    // 예전 코드는 앵커 고유 항목을 **통째로 버리고**(ring, hoop, armature, arc, meridian,
+    // large satellite … 전부 소실) 공통 base 앞 500자만 보냈다. 링 재발 위험이 가장 큰 레그에서
+    // 링 부정어가 사라지는 셈이라 고친다: 공통 접두를 쉼표 경계까지만 인정하고 그 뒤를 고유 항목으로 본다.
+    // negative 가 base 로 시작하는 앵커(A01–A11)는 이 가지를 타지 않으므로 결과가 바뀌지 않는다.
+    let n = 0; while (n < Math.min(base.length, s.length) && base[n] === s[n]) n++;
+    const b = s.lastIndexOf(', ', n);
+    specific = b < 0 ? '' : s.slice(b + 2);
+  }
+  // A08b(2026-08-27): 앵커 고유 항목만으로 500자를 넘는다(specific 573자) → createTask "Input exceeds maximum length"(무과금 2회).
+  // 그때는 고유 항목도 뒤에서부터 쉼표 경계로 잘라 500자 안에 넣고, 공통 base 는 남는 자리에만 채운다. 역시 생략만 한다.
+  if (specific.length > NEG_MAX) { const c = specific.slice(0, NEG_MAX); specific = c.slice(0, c.lastIndexOf(',')).trim(); }
   const head = specific ? specific + ', ' : '';
   const room = NEG_MAX - head.length;
   const cut = base.slice(0, room);
+  if (cut.indexOf(',') < 0) return head.replace(/,\s*$/, '').trim();   // base 가 한 항목도 못 들어가면 고유 항목만
   return (head + cut.slice(0, cut.lastIndexOf(','))).trim();
 }
 
-const id = (n) => `A${String(n).padStart(2, '0')}`;
-const nn = (n) => String(n).padStart(2, '0');
+// leg 키는 4·5·6 같은 숫자 또는 '6b' 같은 문자열. A06b 는 A06→A07 사이의 중간 앵커(rev.3d).
+const nn = (n) => { const m = /^(\d+)([a-z]?)$/.exec(String(n)); if (!m) throw new Error('leg 키 형식: ' + n); return m[1].padStart(2, '0') + m[2]; };
+const id = (n) => `A${nn(n)}`;
+const anchorOf = (n) => { const a = SPEC.anchors.find((x) => x.id === id(n)); if (!a) throw new Error('앵커 없음 ' + id(n)); return a; };
 const raw = (n) => path.join(GEN, `v3-leg-${nn(n)}.mp4`);
 const scrub = (n) => path.join(SRC, `v3-leg-${nn(n)}.mp4`);
 const frame = (n, t) => path.join(SHOTS, `v3-leg-${nn(n)}-t${t.toFixed(2)}.jpg`);
@@ -79,19 +110,20 @@ function writeLedger(l) {
   fs.mkdirSync(SHOTS, { recursive: true });
   l.spent = Number(l.runs.reduce((s, x) => s + (x.credits_charged || 0), 0).toFixed(2));
   l.spent_by_rev = {};
-  for (const r of l.runs) { const k = 'rev' + (r.rev || 2); l.spent_by_rev[k] = Number(((l.spent_by_rev[k] || 0) + (r.credits_charged || 0)).toFixed(2)); }
+  for (const r of l.runs) { const k = 'rev' + (r.rev || 2) + ((r.batch || '1-3') === '1-3' ? '' : '-legs' + r.batch); l.spent_by_rev[k] = Number(((l.spent_by_rev[k] || 0) + (r.credits_charged || 0)).toFixed(2)); }
   l.remaining_of_cap = Number((l.cap - spentOfRev(l)).toFixed(2));
   fs.writeFileSync(LEDGER, JSON.stringify(l, null, 2) + '\n');
 }
 
 async function runOne(n, ledger) {
-  const a = SPEC.anchors.find((x) => x.id === id(n));
-  if (!a) throw new Error('앵커 없음 ' + id(n));
-  const tailId = a.tail;
+  const a = anchorOf(n);
+  const tailId = a.tail;   // 다음 앵커는 n+1 이 아니라 anchors-v3.json 의 tail 로 (A06 → A06b → A07)
   const head = path.join(ANCH, `${a.id}.png`);
   const tail = path.join(ANCH, `${tailId}.png`);
-  if (runsOfRev(ledger).some((r) => r.leg === n && r.ok)) throw new Error(`leg ${n} 은 rev${REV} 성공 기록이 이미 있다.`);
-  if (spentOfRev(ledger) + PER > ledger.cap + 1e-9) throw new Error(`예산 정지(rev${REV}): ${spentOfRev(ledger)}+${PER} > ${ledger.cap}`);
+  if (runsOfRev(ledger).some((r) => r.leg === n && r.ok)) throw new Error(`leg ${n} 은 rev${REV}/batch ${BATCH} 성공 기록이 이미 있다.`);
+  const pend = ledgerLatestPending(runsOfRev(ledger), (r) => r.leg === n);
+  if (pend) throw new Error(`leg ${n} 은 pending taskId=${pend.taskId} 가 원장에 있다 — 새로 만들지 말고 \`fetch ${n}\` 으로 회수해라.`);
+  if (spentOfRev(ledger) + PER > ledger.cap + 1e-9) throw new Error(`예산 정지(rev${REV} batch ${BATCH}): ${spentOfRev(ledger)}+${PER} > ${ledger.cap}`);
   // 이전 rev 산출물 백업(gen + src). 백업본이 이미 있으면 덮어쓰지 않는다.
   for (const f of [raw(n), scrub(n)]) {
     if (!fs.existsSync(f)) continue;
@@ -107,33 +139,94 @@ async function runOne(n, ledger) {
     const before = await credits();
     process.stderr.write(`\n[leg ${n}] ${a.id} -> ${tailId}  attempt ${attempt}  balance=${before}\n`);
     const rec = {
-      leg: n, rev: REV, head: rel(head), tail: rel(tail), attempt, model: 'kling/v2-1-pro', duration: '5', cfg_scale: 0.5,
-      prompt: a.motion_prompt, negative_full_chars: a.negative.length, negative: trimNeg(a.negative), credits_balance_before: before, at: new Date().toISOString(),
+      leg: n, rev: REV, batch: BATCH, head: rel(head), tail: rel(tail), attempt, model: 'kling/v2-1-pro', duration: '5', cfg_scale: 0.5,
+      prompt: a.motion_prompt, prompt_sha256: promptHash(a.motion_prompt), negative_full_chars: a.negative.length, negative: trimNeg(a.negative),
+      credits_balance_before: before, at: new Date().toISOString(),
     };
+    // createTask 가 taskId 를 주는 즉시(폴링 전) pending 줄을 디스크에 남긴다. 회선이 끊겨도 `fetch n` 으로 회수.
+    let pushed = false;
+    const onTask = (taskId) => {
+      rec.taskId = taskId; rec.state = 'pending'; rec.task_created_at = new Date().toISOString();
+      if (!pushed) { ledger.runs.push(rec); pushed = true; }
+      writeLedger(ledger);
+      process.stderr.write(`[leg ${n}] pending taskId=${taskId} (원장 기록)\n`);
+    };
+    const finalize = (patch) => { delete rec.state; Object.assign(rec, patch, { finished_at: new Date().toISOString() }); if (!pushed) { ledger.runs.push(rec); pushed = true; } writeLedger(ledger); };
     try {
       // retries:1 → kie.mjs 내부 무과금 재시도 루프를 끈다. 재시도 판단은 여기서 잔액으로 한다.
-      const r = await video(a.motion_prompt, { image: head, tail, seconds: 5, out: raw(n), negative: trimNeg(a.negative), retries: 1 });
+      const r = await video(a.motion_prompt, { image: head, tail, seconds: 5, out: raw(n), negative: trimNeg(a.negative), retries: 1, onTask });
       const after = await credits();
-      Object.assign(rec, {
+      finalize({
         ok: true, taskId: r.taskId, credits_reported: r.credits, credits_balance_after: after,
         credits_charged: Number((before - after).toFixed(2)), gen_ms: r.ms, wall_ms: r.wallMs,
         mp4: rel(raw(n)), mp4_bytes: fs.statSync(raw(n)).size,
       });
-      ledger.runs.push(rec); writeLedger(ledger);
       process.stderr.write(`[leg ${n}] ok taskId=${r.taskId} charged=${rec.credits_charged} spent=${ledger.spent}/${ledger.cap}\n`);
       return rec;
     } catch (e) {
+      // 폴링 중 네트워크 오류(failCode 없음)이고 taskId 가 있으면 pending 으로 남긴다 — 과금된 결과를 fetch 로 회수해야 한다.
+      if (rec.state === 'pending' && e.failCode === undefined) {
+        rec.last_error = String(e.message).slice(0, 600); writeLedger(ledger);
+        process.stderr.write(`[leg ${n}] 폴링 끊김, taskId=${rec.taskId} 는 pending 으로 남김 → fetch ${n}\n`);
+        throw e;
+      }
       const after = await credits();
-      Object.assign(rec, {
+      finalize({
         ok: false, error: String(e.message).slice(0, 600), failCode: e.failCode || null,
         credits_balance_after: after, credits_charged: Number((before - after).toFixed(2)),
       });
-      ledger.runs.push(rec); writeLedger(ledger);
       process.stderr.write(`[leg ${n}] FAIL charged=${rec.credits_charged}: ${rec.error}\n`);
       if (rec.credits_charged > 0 || attempt === 2) throw e;
       process.stderr.write(`[leg ${n}] 무과금 오류 — 1회만 재시도\n`);
     }
   }
+}
+
+// 폴링 도중 회선이 끊겨 taskId 만 남았을 때(2026-08-27 leg 7). createTask 를 다시 부르지 않고
+// recordInfo 를 success 까지 기다린 뒤 다운로드하고, 원장에 recovered 기록을 남긴다. 과금 0.
+// taskId 를 생략하면 원장의 그 leg(같은 rev/batch) 최신 pending 줄을 쓰고, 완료 시 그 줄을 갱신한다.
+async function fetchOne(n, taskId, ledger) {
+  const a = anchorOf(n);
+  if (fs.existsSync(raw(n))) throw new Error(`${rel(raw(n))} 가 이미 있다.`);
+  const pending = taskId
+    ? ledger.runs.find((r) => r.taskId === taskId && r.state === 'pending')
+    : ledgerLatestPending(runsOfRev(ledger), (r) => r.leg === n);
+  if (!taskId) {
+    if (!pending) throw new Error(`leg ${n} (rev${REV} batch ${BATCH}) 의 pending 줄이 원장에 없다 — taskId 를 직접 넘겨라.`);
+    taskId = pending.taskId;
+    process.stderr.write(`[leg ${n}] 원장 pending taskId=${taskId} (${pending.task_created_at || pending.at})\n`);
+  }
+  const before = await credits();
+  const t0 = Date.now();
+  const r = await waitTask(taskId, { label: `v3-leg-${nn(n)}.mp4 (fetch)`, timeoutMs: 25 * 60 * 1000 });
+  fs.mkdirSync(GEN, { recursive: true });
+  await download(r.urls[0], raw(n));
+  const after = await credits();
+  const done = {
+    recovered: true, recovery_note: 'createTask 는 run 에서 이미 과금됐고 폴링 중 회선 끊김. taskId 로 결과만 회수 (새 createTask 없음).',
+    fetch_balance_before: before, fetched_at: new Date().toISOString(), ok: true, taskId, credits_reported: r.credits,
+    credits_balance_after: after, credits_charged_at_fetch: Number((before - after).toFixed(2)), gen_ms: r.ms, fetch_wall_ms: Date.now() - t0,
+    mp4: rel(raw(n)), mp4_bytes: fs.statSync(raw(n)).size,
+  };
+  let rec;
+  if (pending) {
+    // pending 줄을 그 자리에서 완료로 바꾼다. 과금은 run 시점 잔액 기준(credits_balance_before 는 pending 줄에 있다).
+    rec = pending; delete rec.state;
+    Object.assign(rec, done, { credits_charged: Number((rec.credits_balance_before - after).toFixed(2)), finished_at: done.fetched_at });
+  } else {
+    rec = {
+      leg: n, rev: REV, batch: BATCH, head: rel(path.join(ANCH, `${a.id}.png`)), tail: rel(path.join(ANCH, `${a.tail}.png`)), attempt: 1,
+      model: 'kling/v2-1-pro', duration: '5', cfg_scale: 0.5, prompt: a.motion_prompt, prompt_sha256: promptHash(a.motion_prompt),
+      negative_full_chars: a.negative.length, negative: trimNeg(a.negative),
+      credits_balance_before: before, at: done.fetched_at, ...done,
+      credits_charged: done.credits_charged_at_fetch, credits_charged_at_run: PER, wall_ms: done.fetch_wall_ms,
+    };
+    ledger.runs.push(rec);
+  }
+  writeLedger(ledger);
+  process.stderr.write(`[leg ${n}] fetched taskId=${taskId} charged_now=${done.credits_charged_at_fetch} charged_total=${rec.credits_charged}
+`);
+  return rec;
 }
 
 function post(n) {
@@ -153,12 +246,12 @@ function post(n) {
 }
 
 function sheet(ns) {
-  const out = path.join(SHOTS, REV > 2 ? `v3-legs-1-3-rev${REV}-sheet.jpg` : 'v3-legs-1-3-sheet.jpg');
+  const out = path.join(SHOTS, ns.length === 1 && BATCH !== '1-3' ? `v3-leg-${BATCH}-sheet.jpg` : BATCH !== '1-3' ? `v3-legs-${BATCH}-sheet.jpg` : REV > 2 ? `v3-legs-1-3-rev${REV}-sheet.jpg` : 'v3-legs-1-3-sheet.jpg');
   const rows = ns.map((n) => ({
-    label: `leg ${n}  ${id(n)} -> ${id(n + 1)}`,
-    next: id(n + 1),
+    label: `leg ${n}  ${id(n)} -> ${anchorOf(n).tail}`,
+    next: anchorOf(n).tail,
     frames: TS.map((t) => ({ t, f: slash(frame(n, t)) })),
-    nextFile: slash(path.join(ANCH, `${id(n + 1)}.jpg`)),
+    nextFile: slash(path.join(ANCH, `${anchorOf(n).tail}.jpg`)),
   }));
   const py = `
 import json, sys
@@ -188,15 +281,21 @@ print(out, sh.size)
 }
 
 const [cmd, ...rest] = process.argv.slice(2);
-const ns = rest.map(Number).filter(Boolean);
+const ns = rest.map((x) => (/^\d+$/.test(x) ? Number(x) : x)).filter((x) => x !== '' && x != null);
 try {
   if (cmd === 'credits') console.log(await credits());
   else if (cmd === 'run') {
     const ledger = readLedger(); ledger.cap = CAP; writeLedger(ledger);
     const done = [];
     for (const n of ns) done.push(await runOne(n, ledger));
-    console.log(JSON.stringify({ rev: REV, spent_rev: spentOfRev(ledger), spent_total: ledger.spent, cap: ledger.cap, done: done.map((d) => ({ leg: d.leg, taskId: d.taskId, charged: d.credits_charged })) }, null, 2));
+    console.log(JSON.stringify({ rev: REV, batch: BATCH, spent_rev: spentOfRev(ledger), spent_total: ledger.spent, cap: ledger.cap, done: done.map((d) => ({ leg: d.leg, taskId: d.taskId, charged: d.credits_charged })) }, null, 2));
+  } else if (cmd === 'fetch') {
+    const [n, taskId] = ns;
+    if (n == null) throw new Error('fetch <leg> [taskId]');
+    const ledger = readLedger(); ledger.cap = CAP;
+    const rec = await fetchOne(n, taskId ? String(taskId) : undefined, ledger);
+    console.log(JSON.stringify({ rev: REV, batch: BATCH, leg: rec.leg, taskId: rec.taskId, charged: rec.credits_charged, mp4: rec.mp4, spent_rev: spentOfRev(ledger), cap: ledger.cap }, null, 2));
   } else if (cmd === 'post') { for (const n of ns) console.log(JSON.stringify(post(n))); }
   else if (cmd === 'sheet') console.log(sheet(ns));
-  else { console.error('usage: legs-v3.mjs credits|run n..|post n..|sheet n..'); process.exit(1); }
+  else { console.error('usage: legs-v3.mjs credits|run n..|fetch n [taskId]|post n..|sheet n..'); process.exit(1); }
 } catch (e) { console.error('ERROR:', e.message); process.exit(1); }

@@ -1,27 +1,36 @@
-// 데이터 관리 — 썸네일 그리드. 텍스트 행 0, 썸네일이 목록이다.
+// 데이터 관리 — 대시보드와 같은 골격(공지 · 기준일 · 제목 · KPI 카드 5) 아래의 단계 뷰.
 // 규칙.
 //  1) 기능은 원본과 1:1 — https://mini531.github.io/namwon-smart-village/landxi7/dataset.html
 //     의 4탭(`?tab=upload|manage|publishing|archive`)·필터·검색·폼·액션·모달이 전부다.
 //     대조표: docs/superpowers/proto/2026-08-26-dataset-parity.md
-//  2) 조판은 design-canvas/v2/B5-DataMgmt.dc.html(NOTES.md §13). 유보 3 반영:
-//     ① 활성 칩만 잉크 ② 드로어는 닫힌 채로 시작 ③ 실패 SHP 는 실좌표 캔버스.
-//  3) 발주 추가 — 아카이브 `표시` = 그 자산이 우측 판의 레이어로 선다(ds-plate.js). 좌표가 없으면 `실측 범위 없음`.
-//  4) 콘티 원칙(§5): 목록은 원본 목업 시드 = `시연`. 좌표·GSD 는 imagery.js 실측. 지어낸 운영 서사 없음.
+//  2) 조판은 design-canvas/v2/B5-DataMgmt.dc.html(NOTES.md §13.7). 발주(2026-08-27):
+//     "대시보드와 동일하게 공지는 그대로 두고 아래로 내려서 · 디스크·업로드·완료·발행중은 카드로 상단에 · 그 아래 진행 상황 ·
+//      업로드 완료를 선택하면 자동으로 오른쪽에 지도와 기본 정보 · 발행중은 진행 경과를 카드 위에 시각적으로 ·
+//      미니 카드 아래 표시/숨김/공유/공간 편집/발행 같은 것은 없고 오른쪽 카드를 펼쳐서 정리 · 카드는 4배수로 키우게"
+//     발주 2차(2026-08-27): "업로드는 카드를 선택하면 오른쪽 정보 창, 선택하지 않으면 일반 카드별 진행현황 전체 · 타일은 4 6 8 16, 아래 페이지 수 ·
+//      업로드 완료는 카드 클릭하면 실제 위치 정보와 성과, 위치 정보가 없는 건 데이터 테이블 속성 ·
+//      아카이브 우 패널의 레이어 표시 이력은 의미 없다 — 메모 등 유용한 컨텐츠"
+//  3) KPI 카드 = 단계 선택. 타일에는 선반이 없다 — 상태는 그림 위에, 액션은 우 패널에. 쪽당 4·6·8·16 + 페이저.
+//  4) 아카이브 `표시` = 그 자산이 우측 판의 레이어로 선다(ds-plate.js). 좌표가 없으면 `실측 범위 없음`.
+//  5) 콘티 원칙(§5): 목록은 원본 목업 시드 = `시연`. 좌표·GSD 는 imagery.js 실측. 문장 0 — 라벨·수·상태어만.
 import {
-  nf, SEED_TAG, TABS, TAB_IDS, DEFAULT_TAB, FMT_FILTERS, KIND_FILTERS, matchFmt,
-  DROP, ACCEPT_EXT, UP_ST, UP_ACTIONS, ACT_NAME, UPLOADS, UP_FOLD,
+  nf, SEED_TAG, TABS, TAB_IDS, DEFAULT_TAB, FMT_FILTERS, KIND_FILTERS, matchFmt, extOf,
+  DROP, ACCEPT_EXT, UP_ST, UP_ACTIONS, ACT_NAME, UPLOADS,
   DISK, QUOTA_PRESETS, ARCHIVE, ORGS, PERMS, SHARE_DEFAULT,
-  DONE_UP, PUB_TYPES, PUB_PREFILL, PUB_STEPS, PUBLISHING, PUB_ST,
+  DONE_UP, PUB_TYPES, PUB_PREFILL, PUB_STEPS, PUBLISHING, PUB_ST, PUB_PCT,
+  PER_PAGE, PP_DEFAULT, PP_KEY, MEMO_KEY, MEMO_MAX, bytesOf, fmtBytes,
+  RESULT_OF, RESULT_BY_ID, resultRow, SCHEMA, SCHEMA_OF, USAGE, PUBLISH_LOG,
   IMG, ATTRIB, FOOT_LINKS, FOOT_ADDR, THUMB, SILHOUETTE, XLSX_ROWS, ZIP_TREE, FAIL_ACTIONS,
 } from './ds-data.js';
-import { silhouette, xlsxTable, zipTree, noneBox, bracket, loadGeo, esc } from './ds-thumbs.js';
+import { NOTICE, T1, ymd } from './db-data.js';
+import { silhouette, xlsxTable, zipTree, noneBox, loadGeo, bboxOf, esc } from './ds-thumbs.js';
 import { mountPlate, Brackets, addRaster, addVector, setHidden, removeLayer, hasLayer, frame, KOREA_SW } from './ds-plate.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const REDUCED = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-const INK = '#010102', AMBER = '#FFB633';
-const TW = 240, TH = 147;
+const ACCENT = '#006DF7', WARN = '#D1352B';
+const TW = 480, TH = 294;   // 실루엣 캔버스 — 타일은 열 폭에 맞춰 늘어난다
 
 /* ══ A1–A11 좌측 레일 — 대시보드와 같은 컴포넌트, 활성만 `데이터 관리` ═══ */
 const NAV = [
@@ -58,30 +67,41 @@ $('#rail-foot').innerHTML = NAV_FOOT.map(railItem).join('')
   + `<button type="button" class="rail-i" data-action="logout" title="원본 로그아웃">${railSvg('out')}<span class="rl">로그아웃</span></button>`;
 $('#rail').addEventListener('click', (ev) => {
   const lo = ev.target.closest('[data-action="logout"]');
-  if (lo) { try { localStorage.removeItem('lx_logged_in'); } catch { /* 저장소 차단 */ } location.href = '../home.html'; return; }
+  if (lo) { try { localStorage.removeItem('lx_logged_in'); } catch { /* 저장소 차단 */ } location.href = 'scrub/index.html'; return; }
   const b = ev.target.closest('.rail-i[data-menu]'); if (!b) return;
   const go = b.dataset.go;
   if (go && go !== 'dataset.html') { location.href = go; return; }
-  if (!go) say(`원본 ${b.title.replace('원본 ', '')} — 이 콘티에는 아직 없습니다`);
+  if (!go) say(`원본 ${b.title.replace('원본 ', '')} — 콘티 밖`);
 });
+
+/* ══ 마스트헤드 — 공지 + 기준일(대시보드와 같은 값) ═══════════════════════ */
+$('#notice-t').textContent = NOTICE.title;
+$('#notice-d').textContent = ymd(NOTICE.date);
+$('#b-notice').href = `${NOTICE.more}?notice=${NOTICE.id}`;
+$('#b2-d').textContent = ymd(T1);
 
 /* ══ 상태 ══════════════════════════════════════════════════════════════ */
 const S = {
   tab: DEFAULT_TAB, filter: '전체', q: '',
-  ups: UPLOADS.map((u) => ({ ...u })), upAll: false,
-  done: DONE_UP.map((d) => ({ ...d })), doneSel: null,
+  ups: UPLOADS.map((u) => ({ ...u })),
+  done: DONE_UP.map((d) => ({ ...d })),
   pubs: PUBLISHING.map((p) => ({ ...p })),
-  arch: ARCHIVE.map((a) => ({ ...a, share: SHARE_DEFAULT.map((s) => ({ ...s })) })), archSel: null,
-  side: 'none',            // none | pub | detail | map
+  arch: ARCHIVE.map((a) => ({ ...a, share: SHARE_DEFAULT.map((s) => ({ ...s })) })),
+  sel: null,               // 현재 단계에서 선택된 타일 id
+  mode: 'none',            // none | tile | pub — 우 패널이 보여 주는 것
+  more: false,             // 세부 정보 / 상세 펼침
   layers: [],              // 판에 선 순서(아카이브 id) — 표시된 순서
   focus: null,             // 판이 마지막으로 간 자산
   quotaGb: 256,
+  pp: PP_DEFAULT,          // 쪽당 타일 수 4 · 6 · 8 · 16
+  page: 1,
 };
 const sayEl = $('#say');
 let sayT = 0;
+let map = null, bk = null, mounting = null;   // 판 — 한 번만 mount(아래 ensureMap)
 function say(t) { sayEl.textContent = t; clearTimeout(sayT); sayT = setTimeout(() => { sayEl.textContent = ''; }, 4200); }
 const revealed = new Set();
-/** 이미지 리빌 — 타일이 처음 설 때 한 번만(clip-path inset(100% 0 0) → 0, 1s). 타이머 재렌더에는 다시 하지 않는다. */
+/** 이미지 리빌 — 타일이 처음 설 때 한 번만(clip-path inset(100% 0 0) → 0, 1s). */
 function reveal(root) {
   $$('img[data-rv]', root).forEach((im) => {
     const k = im.dataset.rv;
@@ -92,128 +112,161 @@ function reveal(root) {
   });
 }
 
-/* ══ 탭 · `?tab=` 동기화 — 활성 칩만 잉크(마스터 유보 1) ══════════════════ */
+/* ══ KPI 카드 5 — 디스크(조치 = warn) + 단계 4(선택 = 틴트) · `?tab=` ═══════ */
 const COUNT = { upload: () => S.ups.length, manage: () => S.done.length, publishing: () => S.pubs.length, archive: () => S.arch.length };
-function renderTabs() {
-  $('#ds-tabs').innerHTML = TABS.map((t) => `
-    <button type="button" class="tb" id="tab-${t.id}" role="tab" data-tab="${t.id}"
-      aria-selected="${t.id === S.tab}" aria-controls="panel-${t.id}" title="원본 ${t.frag}">${esc(t.name)}<span class="c n">${COUNT[t.id]()}</span></button>`).join('');
-  const total = TAB_IDS.reduce((n, id) => n + COUNT[id](), 0);
-  $('#ds-sub').textContent = `${total}건 · 업로드 ${COUNT.upload()} · 완료 ${COUNT.manage()} · 발행중 ${COUNT.publishing()} · 아카이브 ${COUNT.archive()} — 원본 4탭 · ${SEED_TAG}`;
+const gb = (v) => nf.format(Math.round(v));
+const by = (rows, f) => rows.reduce((m, r) => { const k = f(r); m[k] = (m[k] || 0) + 1; return m; }, {});
+const fmtOf = (r) => { const e = extOf(r.file).toUpperCase(); return e === 'TIFF' ? 'TIF' : e === 'XLS' ? 'XLSX' : e; };
+function kpiSub(id) {
+  if (id === 'upload') { const c = by(S.ups, (u) => u.st); return `진행 중 ${c.run || 0} · 일시정지 ${c.pause || 0} · 중단 ${c.stop || 0} · 대기 ${c.wait || 0}`; }
+  if (id === 'manage') { const c = by(S.done, fmtOf); return Object.entries(c).map(([k, n]) => `${k} ${n}`).join(' · '); }
+  if (id === 'publishing') { const c = by(S.pubs, (p) => p.st); return `진행 ${c.run || 0} · <em>실패 ${c.fail || 0}</em>`; }
+  const c = by(S.arch, (a) => (a.hidden ? 'h' : 'v')); return `표시 ${c.v || 0} · 숨김 ${c.h || 0}`;
 }
+function renderKpi() {
+  const disk = `<div class="k act" role="presentation" id="kpi-disk" title="원본 dataset-upload.html 내 디스크 사용량">
+    <span class="kl">내 디스크 사용량</span><span class="kv"><b class="big n">${DISK.pct}</b><span>%</span></span>
+    <span class="ks n">${gb(DISK.used)} / ${gb(DISK.total)} GB · 잔여 ${gb(DISK.free)} GB</span><button type="button" id="quota-open" class="ul warn">디스크 증량 신청 ›</button></div>`;
+  $('#b-kpi').innerHTML = disk + TABS.map((t) => `
+    <button type="button" class="k${t.id === 'publishing' && S.pubs.some((p) => p.st === 'fail') ? ' actsub' : ''}" role="tab" id="kpi-${t.id}" data-tab="${t.id}"
+      aria-selected="${t.id === S.tab}" aria-controls="panel-${t.id}" title="원본 ${esc(t.frag)}">
+      <span class="kl">${esc(t.name)}</span><span class="kv"><b class="big n">${COUNT[t.id]()}</b><span>건</span></span>
+      <span class="ks n">${kpiSub(t.id)}</span></button>`).join('');
+  $$('#b-kpi .actsub .ks em').forEach((e) => e.classList.add('warn'));
+  $('#tool-h').textContent = TABS.find((t) => t.id === S.tab).name;
+}
+$('#b-kpi').addEventListener('click', (ev) => {
+  if (ev.target.closest('#quota-open')) { openQuota(); return; }
+  const b = ev.target.closest('.k[data-tab]'); if (b) setTab(b.dataset.tab);
+});
 const tabFromUrl = () => { const t = new URLSearchParams(location.search).get('tab'); return TAB_IDS.includes(t) ? t : DEFAULT_TAB; };
 function setTab(id, push = true) {
   if (!TAB_IDS.includes(id)) id = DEFAULT_TAB;
   S.tab = id;
-  // 원본 동작 — 탭 전환 시 필터·검색·하단 패널 상태가 초기화된다.
+  // 원본 동작 — 탭 전환 시 필터·검색·선택이 초기화된다.
   S.filter = '전체'; S.q = ''; $('#q').value = '';
-  S.doneSel = null; S.archSel = null;
-  if (S.side !== 'map') setSide('none');
+  S.sel = null; S.mode = 'none'; S.more = false; S.page = 1;
   document.body.dataset.tab = id;
   TABS.forEach((t) => { $(`#panel-${t.id}`).hidden = t.id !== id; });
   if (push) { const u = new URL(location.href); u.searchParams.set('tab', id); history.pushState({ tab: id }, '', u); }
-  renderTabs(); renderFilters(); renderPanel();
+  renderKpi(); renderFilters(); renderPanel(); renderSide();
   $('#grid').scrollTop = 0;
 }
 window.addEventListener('popstate', () => setTab(tabFromUrl(), false));
-$('#ds-tabs').addEventListener('click', (ev) => { const b = ev.target.closest('.tb'); if (b) setTab(b.dataset.tab); });
 
-/* ══ 필터(드롭다운) · 검색 ═════════════════════════════════════════════ */
+/* ══ 툴바 — 필터 · 검색 · 쪽당 타일 수 4단(localStorage) + 페이저 ═══════════ */
 function renderFilters() {
   const chips = S.tab === 'archive' ? KIND_FILTERS : FMT_FILTERS;
   $('#fsel-k').textContent = S.tab === 'archive' ? '유형' : '형식';
   $('#ds-filters').innerHTML = chips.map((c) => `<option value="${esc(c)}"${c === S.filter ? ' selected' : ''}>${esc(c)}</option>`).join('');
 }
-$('#ds-filters').addEventListener('change', (ev) => { S.filter = ev.target.value; renderPanel(); });
-$('#q').addEventListener('input', (ev) => { S.q = ev.target.value.trim(); renderPanel(); });
+$('#ds-filters').addEventListener('change', (ev) => { S.filter = ev.target.value; S.page = 1; renderPanel(); });
+$('#q').addEventListener('input', (ev) => { S.q = ev.target.value.trim(); S.page = 1; renderPanel(); });
 const hit = (row) => { const q = S.q.toLowerCase(); return !q || [row.file, row.name, row.by, row.kind].filter(Boolean).some((v) => String(v).toLowerCase().includes(q)); };
 const passFmt = (row) => matchFmt(row.file, S.filter);
 const passKind = (row) => S.filter === '전체' || row.kind === S.filter;
+/** 쪽당 4 · 6 · 8 · 16 = 열 2 · 3 · 4 · 4(16 = 4×4). 바꾸면 1쪽으로. localStorage 에 남는다. */
+function setPp(n, save = true) {
+  n = Number(n); if (!PER_PAGE[n]) n = PP_DEFAULT;
+  S.pp = n; S.page = 1; document.body.dataset.pp = String(n);
+  $$('#pp button').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.pp) === n)));
+  if (save) { try { localStorage.setItem(PP_KEY, String(n)); } catch { /* 저장소 차단 */ } }
+  if (map) requestAnimationFrame(() => map.resize());
+}
+$('#pp').addEventListener('click', (ev) => { const b = ev.target.closest('[data-pp]'); if (b) { setPp(b.dataset.pp); renderPanel(); } });
+try { setPp(localStorage.getItem(PP_KEY) || PP_DEFAULT, false); } catch { setPp(PP_DEFAULT, false); }
+/** 페이저 — 필터·검색을 거친 목록을 쪽당 수로 자른다. slot = 그 쪽에 항상 서는 고정 타일(업로드 드롭존 1). */
+function pageOf(rows, slot = 0) {
+  const per = Math.max(1, S.pp - slot);
+  const pages = Math.max(1, Math.ceil(rows.length / per));
+  if (S.page > pages) S.page = pages;
+  if (S.page < 1) S.page = 1;
+  const pg = $('#pager'); pg.dataset.pages = String(pages);
+  $('#pg-n').textContent = `${S.page} / ${pages}`;
+  $('#pg-prev').disabled = S.page <= 1; $('#pg-next').disabled = S.page >= pages;
+  const start = (S.page - 1) * per;
+  return rows.slice(start, start + per);
+}
+$('#pager').addEventListener('click', (ev) => {
+  if (ev.target.closest('#pg-prev')) S.page -= 1; else if (ev.target.closest('#pg-next')) S.page += 1; else return;
+  renderPanel(); $('#grid').scrollTop = 0;
+});
 
 function renderPanel() {
   if (S.tab === 'upload') renderUpload();
   if (S.tab === 'manage') renderDone();
   if (S.tab === 'publishing') renderPublishing();
   if (S.tab === 'archive') renderArchive();
+  const n = { upload: () => S.ups, manage: () => S.done, publishing: () => S.pubs, archive: () => S.arch }[S.tab]().length;
+  $('#tool-c').textContent = `${n}건`;
 }
 
-/* ══ 타일 조각 ═════════════════════════════════════════════════════════ */
+/* ══ 타일 조각 — 그림 + 이름 + 메타 1줄. 상태는 그림 위에. 선반 없음. ═══════ */
 const word = (t) => `<span class="word n">${esc(t)}</span>`;
-const shelf = (st, acts, ds) => `<div class="shelf"><span class="st n">${st}</span><span class="ax">${
-  acts.map(([k, name]) => `<button type="button" class="act" data-act="${k}" ${ds}>${esc(name)}</button>`).join('')}</span></div>`;
-const cap = (name, meta, sub) => `<p class="cap n"><span class="nm" title="${esc(name)}">${esc(name)}</span><span class="mt">· ${esc(meta)}</span></p>${
-  sub ? `<p class="why n" title="${esc(sub)}">${esc(sub)}</p>` : ''}`;
-const img = (src, id, cls = '') => `<img src="${esc(src)}" alt="" data-rv="${id}" class="${cls}" loading="lazy">`;
-const demo = () => `<span class="tag"><em class="demo">${SEED_TAG}</em></span>`;
+const stw = (html, warn) => `<span class="st n${warn ? ' warn' : ''}">${html}</span>`;
+const corners = (color) => `<i class="bk bk--tl" style="--bk:${color}"></i><i class="bk bk--tr" style="--bk:${color}"></i><i class="bk bk--bl" style="--bk:${color}"></i><i class="bk bk--br" style="--bk:${color}"></i>`;
+/** 캡션 — 이름은 줄고 메타는 남는다. 메타 앞부분(날짜·대기 순번)은 S·M 열에서 접혀 이름이 산다. */
+const cap = (name, meta) => { const i = meta.indexOf(' · '); const a = i > 0 ? meta.slice(0, i) : '', b = i > 0 ? meta.slice(i + 3) : meta;
+  return `<p class="cap n"><span class="nm" title="${esc(name)}">${esc(name)}</span><span class="mt">${a ? `<span class="dt">· ${esc(a)} </span>` : ''}<span class="sep">· </span>${esc(b)}</span></p>`; };
+const img = (src, id, cls = '', eager = false) => `<img src="${esc(src)}" alt="" data-rv="${id}" class="${cls}"${eager ? '' : ' loading="lazy"'}>`;
+const figImg = (src, id) => img(src, 'fig-' + id, '', true);
 const date = (at) => String(at).slice(0, 10);
+const cm = (im) => `${(im.gsd * 100).toFixed(2)} cm`;
+const bounds4 = (b) => b.map((v) => v.toFixed(4)).join(', ');
 /** 파일 종류별 그림 — 그림이 없으면 흰 액자, 좌표도 없으면 점선 액자 + 이유. */
 function body(fmt, id, opts = {}) {
   const t = THUMB[id];
   if (t) return { cls: 'th--dark', html: img(t, id) };
-  if (fmt === 'XLSX') return { cls: 'th--box', html: xlsxTable(XLSX_ROWS) + demo() };
+  if (fmt === 'XLSX') return { cls: 'th--box', html: xlsxTable(XLSX_ROWS) };
   if (fmt === 'ZIP') return { cls: 'th--box', html: zipTree(ZIP_TREE, opts.dim) };
-  if (fmt === 'SHP' && SILHOUETTE[id]) return { cls: 'th--box', html: `<canvas width="${TW * 2}" height="${TH * 2}" data-sil="${id}"></canvas>`, sil: id };
-  if (fmt === 'SHP') return { cls: 'th--dash th--none', html: noneBox('미리보기 없음', '좌표계 없음 · 판에 세우지 않는다') };
+  if (fmt === 'SHP' && SILHOUETTE[id]) return { cls: 'th--box', html: `<canvas width="${TW}" height="${TH}" data-sil="${id}"></canvas>`, sil: id };
+  if (fmt === 'SHP') return { cls: 'th--dash th--none', html: noneBox('미리보기 없음', '좌표계 없음') };
   return { cls: 'th--dash th--none', html: noneBox('미리보기 없음', `${fmt} · 파일 확인 전`) };
 }
+/** 리빌 = 진행률. 그림 위의 그림, 경계 1px. 업로드·발행 공용. */
+const revealPair = (t, id, pct) => `${img(t, id, 'rv-base')}<div class="rv-top" style="--rest:${100 - pct}%">${img(t, id + 'b')}</div><span class="rv-line" style="--pct:${pct}%"></span>`;
 /** 캔버스 실루엣을 그린다 — 실좌표 GeoJSON. 그린 뒤 폴리곤 수를 우하단에 적는다. */
 function drawSilhouettes(root) {
   $$('canvas[data-sil]', root).forEach(async (c) => {
     const spec = SILHOUETTE[c.dataset.sil];
-    const big = c.width > 500;   // 드로어 액자는 여유가 크다
-    const n = await silhouette(c, spec, { width: 1.2, pad: 24, padTop: big ? 30 : 60, padBottom: big ? 30 : 44 });
+    const big = c.width > 500;
+    const n = await silhouette(c, spec, { width: 1.2, pad: 24, padTop: big ? 30 : 56, padBottom: big ? 30 : 44 });
     const tag = c.parentElement.querySelector('.tagb');
     if (tag) tag.textContent = `${spec.crs} · ${nf.format(n)} polygon`;
   });
 }
+const selAttr = (id) => (S.sel === id ? ' aria-current="true"' : '');
+const selBk = (id) => (S.sel === id ? corners(ACCENT) : '');
 
-/* ── 업로드 탭 ─────────────────────────────────────────────────────── */
+/* ── 업로드 — 드롭존 타일 + 진행 4상태(그림 위 리빌 + %) ───────────────── */
 $('#dz-acc').textContent = DROP.accepts.map((a) => a.ext.slice(1).toUpperCase()).join(' ');
 $('#file').accept = ACCEPT_EXT.join(',');
-const upActs = (u) => UP_ACTIONS[u.st].map((k) => [k, ACT_NAME[k]]);
 function upTile(u) {
   const live = u.st === 'run';
-  const dim = !live;
   const t = THUMB[u.id];
-  let inner;
-  if (t) {
-    inner = `${img(t, u.id, 'rv-base')}<div class="rv-top" style="--rest:${100 - u.pct}%">${img(t, u.id + 'b')}</div><span class="rv-line" style="--pct:${u.pct}%"></span>`;
-  } else {
-    const b = body(u.fmt, u.id, { dim: true });
-    inner = b.html;
-  }
+  let inner, cls;
+  if (t) { cls = 'th--dark'; inner = revealPair(t, u.id, u.pct); }
+  else { const b = body(u.fmt, u.id, { dim: true }); cls = b.cls; inner = b.html; }
   const st = live ? `업로드중 <b class="pv">${u.pct}%</b>` : `${UP_ST[u.st]} <span class="pv">${u.pct}%</span>`;
   const meta = u.st === 'wait' ? `대기 ${S.ups.filter((x) => x.st === 'wait').indexOf(u) + 1} · ${u.size}` : `${u.size}`;
-  return `<div class="tile" role="listitem" data-id="${u.id}" data-st="${u.st}"${dim ? ' data-dim' : ''}>
-    <div class="th ${t ? 'th--dark' : 'th--box'}"${live ? ' data-live' : ''}>${inner}${word('업로드')}${shelf(st, upActs(u), `data-up="${u.id}"`)}</div>
+  return `<div class="tile" role="listitem" data-id="${u.id}" data-st="${u.st}"${live ? '' : ' data-dim'}${selAttr(u.id)}>
+    <div class="th ${cls}"${live ? ' data-live' : ''} data-open="${u.id}">${inner}${selBk(u.id)}${word('업로드')}${stw(st)}</div>
     ${cap(u.file, meta)}</div>`;
 }
 function renderUpload() {
-  const rows = S.ups.filter((u) => passFmt(u) && hit(u));
-  const shown = S.upAll ? rows : rows.slice(0, UP_FOLD);
-  $('#up-tiles').innerHTML = shown.map(upTile).join('');
-  const rest = rows.length - shown.length;
-  const more = $('#up-more');
-  more.hidden = rows.length <= UP_FOLD;
-  if (!more.hidden) more.innerHTML = S.upAll ? `<button type="button" id="up-fold">접기</button>` : `대기중 ${rest}건 더 · <button type="button" id="up-fold">전체 보기</button>`;
+  // 발주(2026-08-27): "대기중 n건 더 · 전체 보기 는 필요 없다. 대기중 다 표출" — 접지 않는다. 그리드가 스크롤한다.
+  const rows = pageOf(S.ups.filter((u) => passFmt(u) && hit(u)), 1);   // 드롭존이 매 쪽 첫 타일
+  $('#up-tiles').innerHTML = rows.map(upTile).join('');
   reveal($('#up-tiles'));
 }
-const gb = (v) => nf.format(v) + (Number.isInteger(v) ? '.0' : '');
-$('#disk-pct b').textContent = DISK.pct;
-$('#disk-use').textContent = `${gb(DISK.used)} / ${gb(DISK.total)} GB · 잔여 ${gb(DISK.free)} GB`;
-
-$('#up-more').addEventListener('click', (ev) => { if (ev.target.closest('#up-fold')) { S.upAll = !S.upAll; renderUpload(); } });
-$('#up-tiles').addEventListener('click', (ev) => {
-  const b = ev.target.closest('.act[data-up]'); if (!b) return;
-  const u = S.ups.find((x) => x.id === b.dataset.up); if (!u) return;
-  const k = b.dataset.act;
+function upAct(u, k) {
   if (k === 'pause') { u.st = 'pause'; say(`일시정지 — ${u.file} · ${u.pct}%`); }
-  if (k === 'resume') { u.st = 'run'; say(`재개 — ${u.file} · ${u.pct}%부터`); }
-  if (k === 'retry') { u.st = 'run'; say(`이어 올리기 — ${u.file} · ${u.pct}%부터`); }
-  if (k === 'cancel') { S.ups = S.ups.filter((x) => x.id !== u.id); say(`업로드 취소 — ${u.file}`); renderTabs(); }
-  if (k === 'detail') { openDetailModal(u); return; }
-  renderUpload();
-});
+  if (k === 'resume') { u.st = 'run'; say(`재개 — ${u.file} · ${u.pct}%`); }
+  if (k === 'retry') { u.st = 'run'; say(`이어 올리기 — ${u.file} · ${u.pct}%`); }
+  if (k === 'cancel') { S.ups = S.ups.filter((x) => x.id !== u.id); say(`업로드 취소 — ${u.file}`); S.sel = null; S.mode = 'none'; renderKpi(); }
+  if (k === 'detail') { S.more = !S.more; }
+  renderUpload(); renderSide();
+}
 
 /* 드롭존 — 드래그 & 클릭. 검증 3 = 파일 없음 · 허용 형식 · 1 TB 한도(원본과 같다). */
 const drop = $('#drop');
@@ -234,11 +287,11 @@ function take(files) {
 }
 function validate() {
   const e = $('#up-err');
-  if (!picked.length) { e.hidden = true; return '파일을 선택해 주세요.'; }
+  if (!picked.length) { e.hidden = true; return '파일 없음'; }
   const bad = picked.find((f) => !ACCEPT_EXT.some((x) => f.name.toLowerCase().endsWith(x)));
-  if (bad) { e.hidden = false; e.textContent = `허용하지 않는 형식입니다 — ${bad.name} (${ACCEPT_EXT.join(' · ')})`; return e.textContent; }
+  if (bad) { e.hidden = false; e.textContent = `허용 형식 아님 — ${bad.name} · ${ACCEPT_EXT.map((x) => x.slice(1).toUpperCase()).join(' ')}`; return e.textContent; }
   const big = picked.find((f) => f.size > DROP.maxBytes);
-  if (big) { e.hidden = false; e.textContent = `파일 하나가 1 TB 를 넘습니다 — ${big.name}`; return e.textContent; }
+  if (big) { e.hidden = false; e.textContent = `1 TB 초과 — ${big.name}`; return e.textContent; }
   e.hidden = true; return null;
 }
 $('#up-form').addEventListener('submit', (ev) => {
@@ -249,9 +302,9 @@ $('#up-form').addEventListener('submit', (ev) => {
     S.ups.push({ id: 'u' + (Date.now() + Math.random()).toString(36).slice(-6), st: 'wait', fmt: f.name.split('.').pop().toUpperCase(), file: f.name, pct: 0,
       size: f.size >= 1024 ** 3 ? `${(f.size / 1024 ** 3).toFixed(1)} GB` : `${(f.size / 1024 ** 2).toFixed(1)} MB` });
   }
-  say(`업로드 대기열에 ${picked.length}건 추가 · ${SEED_TAG}`);
+  say(`업로드 대기 +${picked.length}건 · ${SEED_TAG}`);
   take([]); $('#file').value = '';
-  renderTabs(); renderUpload();
+  renderKpi(); renderUpload(); renderSide();   // 현황판에도 한 줄 선다
 });
 
 /* 유휴 운동 1개 — 업로드중 타일의 리빌. 실제로 도는 타이머이고 값은 `시연` 이다. 일시정지 = 멈춤, 재개 = 그 자리부터. */
@@ -264,132 +317,120 @@ function tick() {
     if (top) top.style.setProperty('--rest', `${100 - u.pct}%`);
     if (ln) ln.style.setProperty('--pct', `${u.pct}%`);
     if (pv) pv.textContent = `${u.pct}%`;
+    if (S.sel === u.id) { const sp = $('#side [data-pv]'); if (sp) sp.textContent = `${u.pct}%`; const st = $('#side .rv-top'); if (st) st.style.setProperty('--rest', `${100 - u.pct}%`); const sl = $('#side .rv-line'); if (sl) sl.style.setProperty('--pct', `${u.pct}%`); }
+    // 진행 현황판(선택 없음) — 막대 · % · 잔여가 같이 움직인다
+    const pb = $(`#side .pb[data-id="${u.id}"]`);
+    if (pb) { pb.querySelector('.bar').style.setProperty('--pct', `${u.pct}%`); pb.querySelector('[data-ppct]').textContent = `${u.pct}%`; pb.querySelector('[data-prem]').textContent = remain(u); }
   }
 }
 if (!REDUCED()) setInterval(tick, 1600);
 
-/* ── 업로드 완료 탭 — 조용한 타일. 선택 = 브래킷 + 선반 `지도 레이어 발행 ›` → 드로어 ── */
+/* ── 업로드 완료 — 조용한 타일. 선택 = 브래킷 + 우 패널(지도 + 기본 정보) ── */
 function dnTile(d) {
   const b = body(d.fmt, d.id);
-  const sel = S.doneSel === d.id;
-  return `<div class="tile" role="listitem" data-id="${d.id}"${sel ? ' aria-current="true"' : ''}>
-    <div class="th ${b.cls}" data-open="${d.id}">${b.html}${sel ? bracket(TW, TH, INK) : ''}${word(`완료 · 아카이빙 ${d.arch}회`)}${
-      b.sil ? `<span class="tagb n"></span>` : ''}${sel ? shelf('선택', [['pub', '지도 레이어 발행 ›']], `data-dn="${d.id}"`) : ''}</div>
+  return `<div class="tile" role="listitem" data-id="${d.id}"${selAttr(d.id)}>
+    <div class="th ${b.cls}" data-open="${d.id}">${b.html}${selBk(d.id)}${word(`완료 · 아카이빙 ${d.arch}회`)}${b.sil ? `<span class="tagb n"></span>` : ''}</div>
     ${cap(d.file, `${date(d.at)} · ${d.size}`)}</div>`;
 }
 function renderDone() {
-  const rows = S.done.filter((d) => passFmt(d) && hit(d));
-  $('#dn-empty').hidden = rows.length > 0;
+  const all = S.done.filter((d) => passFmt(d) && hit(d));
+  const rows = pageOf(all);
+  $('#dn-empty').hidden = all.length > 0;
   $('#dn-list').innerHTML = rows.map(dnTile).join('');
   reveal($('#dn-list')); drawSilhouettes($('#dn-list'));
 }
-$('#dn-list').addEventListener('click', (ev) => {
-  const b = ev.target.closest('.act[data-dn]');
-  if (b) { openPubForm(b.dataset.dn); return; }
-  const th = ev.target.closest('[data-open]');
-  if (th) { S.doneSel = S.doneSel === th.dataset.open ? null : th.dataset.open; renderDone(); }
-});
+/** 완료본 ↔ 도엽 — 파일명이 imagery.js 도엽과 같은 자산일 때만 실측 좌표를 적는다. */
+const imFor = (row) => (row.id === 'd4' ? IMG.find((i) => i.id === 'namwon_2504') : row.id === 'd5' ? IMG.find((i) => i.id === 'namwon_2506') : null);
 
-/* 발행 드로어 — 발행 유형 / 기준 일자 / 데이터명 / 출처 / 설명 + 공유 권한 표(기관명 / 권한명 3단) */
-$('#pf-type').innerHTML = PUB_TYPES.map((t) => `<option>${esc(t)}</option>`).join('');
+/* 발행 폼 — 발행 유형 / 기준 일자 / 데이터명 / 출처 / 설명 + 공유 권한 표(기관명 / 권한명 3단). 우 패널의 `발행` 상태. */
 const segRow = (org, cur, i, attr) => `<div class="pr"><span class="o">${esc(org)}</span><span class="seg n" role="group" aria-label="${esc(org)} 권한명">${
   PERMS.map((p) => `<button type="button" ${attr}="${i}" data-perm="${esc(p)}" aria-pressed="${p === cur}">${esc(p)}</button>`).join('')}</span></div>`;
 let pfPerm = SHARE_DEFAULT.map((s) => ({ ...s }));
-const renderPfPerm = () => { $('#pf-perm').innerHTML = pfPerm.map((r, i) => segRow(r.org, r.perm, i, 'data-pf')).join(''); };
-$('#pf-perm').addEventListener('click', (ev) => { const b = ev.target.closest('[data-pf]'); if (!b) return; pfPerm[+b.dataset.pf].perm = b.dataset.perm; renderPfPerm(); });
-function figFor(row, im) {
-  const t = THUMB[row.id] || row.thumb;
-  if (im && t) {
-    const cm = (im.gsd * 100).toFixed(2);
-    return `<div class="fig fig--ink">${img(t, 'fig-' + row.id)}${bracket(416, 200, '#fff')}<span class="fc n">${im.bounds.map((v) => v.toFixed(4)).join(',').replace(/,([^,]*),/, ',$1 ~ ')} · EPSG:5186 → 4326 · GSD ${cm} cm</span><span class="fm n">측정</span></div>`;
-  }
-  if (t) return `<div class="fig">${img(t, 'fig-' + row.id)}</div>`;
-  if (SILHOUETTE[row.id]) return `<div class="fig"><canvas width="832" height="400" data-sil="${row.id}"></canvas><span class="fm n dk">${esc(SILHOUETTE[row.id].crs)}</span></div>`;
-  if (row.fmt === 'XLSX') return `<div class="fig">${xlsxTable(XLSX_ROWS)}</div>`;
-  if (row.fmt === 'ZIP' || row.kind === '이미지셋') return `<div class="fig">${zipTree(ZIP_TREE)}</div>`;
-  return `<div class="fig fig--none">${noneBox('미리보기 없음', '좌표계 없음 · 판에 세우지 않는다')}</div>`;
-}
-/** 완료본 ↔ 도엽 — 파일명이 imagery.js 도엽과 같은 자산일 때만 실측 좌표를 적는다. */
-const imFor = (row) => (row.id === 'd4' ? IMG.find((i) => i.id === 'namwon_2504') : row.id === 'd5' ? IMG.find((i) => i.id === 'namwon_2506') : null);
+const pubFormHtml = (d, pre) => `
+  <form id="pubform" novalidate>
+    <label class="fr"><span class="k">발행 유형 <b>*</b></span><select id="pf-type">${PUB_TYPES.map((t) => `<option${t === (pre.type || '') ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></label>
+    <label class="fr"><span class="k">기준 일자 <b>*</b></span><input id="pf-basis" type="date" class="n" value="${esc(pre.basis || date(d.at).replace(/\./g, '-'))}"></label>
+    <label class="fr"><span class="k">데이터명 <b>*</b></span><input id="pf-name" type="text" placeholder="데이터명" value="${esc(pre.name || '')}"></label>
+    <label class="fr"><span class="k">출처</span><input id="pf-src" type="text" placeholder="출처" value="${esc(pre.src || '')}"></label>
+    <label class="fr"><span class="k">설명</span><input id="pf-desc" type="text" placeholder="설명" value="${esc(pre.desc || '')}"></label>
+    <div class="ph"><span class="lb">공유 권한</span><span class="lb">기관명 / 권한명</span></div>
+    <div id="pf-perm">${pfPerm.map((r, i) => segRow(r.org, r.perm, i, 'data-pf')).join('')}</div>
+    <p class="add n">+ 기관 추가</p>
+    <p id="pf-err" class="err" role="alert" hidden></p>
+    <div class="acts">
+      <button type="button" class="br" data-pf-close>취소</button>
+      <button type="submit" class="fill d">발행</button>
+      <span class="n hint">기준 일자 · 데이터명 필수</span>
+    </div>
+  </form>`;
 function openPubForm(id) {
   const d = S.done.find((x) => x.id === id); if (!d) return;
-  S.doneSel = id;
-  const pre = PUB_PREFILL[id] || {};
-  $('#pf-type').value = pre.type || (d.fmt === 'SHP' || d.fmt === 'XLSX' ? PUB_TYPES[1] : d.fmt === 'ZIP' ? PUB_TYPES[2] : PUB_TYPES[0]);
-  $('#pf-basis').value = pre.basis || date(d.at).replace(/\./g, '-');
-  $('#pf-name').value = pre.name || ''; $('#pf-src').value = pre.src || ''; $('#pf-desc').value = pre.desc || '';
-  $('#pf-sel').innerHTML = `${esc(d.file)} · ${esc(d.size)} · ${esc(date(d.at))} · 아카이빙 ${d.arch}회 <em class="demo">${SEED_TAG}</em>`;
-  $('#pf-fig').innerHTML = figFor(d, imFor(d));
-  drawSilhouettes($('#pf-fig'));
-  pfPerm = SHARE_DEFAULT.map((s) => ({ ...s })); renderPfPerm();
-  $('#pf-err').hidden = true;
-  setSide('pub');
-  renderDone();
+  S.sel = id; S.mode = 'pub';
+  pfPerm = SHARE_DEFAULT.map((s) => ({ ...s }));
+  renderDone(); renderSide();
   $('#pf-name').focus();
 }
-$('#pubform').addEventListener('submit', (ev) => {
+document.addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-pf]'); if (b) { pfPerm[+b.dataset.pf].perm = b.dataset.perm; $('#pf-perm').innerHTML = pfPerm.map((r, i) => segRow(r.org, r.perm, i, 'data-pf')).join(''); return; }
+  if (ev.target.closest('[data-pf-close]')) { S.mode = 'tile'; renderSide(); }
+});
+document.addEventListener('submit', (ev) => {
+  if (ev.target.id !== 'pubform') return;
   ev.preventDefault();
   const e = $('#pf-err');
   const name = $('#pf-name').value.trim();
-  if (!$('#pf-basis').value) { e.hidden = false; e.textContent = '기준 일자를 선택해 주세요.'; return; }
-  if (!name) { e.hidden = false; e.textContent = '데이터명을 입력해 주세요.'; return; }
+  if (!$('#pf-basis').value) { e.hidden = false; e.textContent = '기준 일자 필수'; return; }
+  if (!name) { e.hidden = false; e.textContent = '데이터명 필수'; return; }
   e.hidden = true;
-  const d = S.done.find((x) => x.id === S.doneSel);
+  const d = S.done.find((x) => x.id === S.sel);
   if (d) {
     S.pubs.unshift({ id: 'p' + Date.now().toString(36).slice(-5), fmt: d.fmt, st: 'run', step: 1, file: d.file, size: d.size, at: d.at, by: d.by, thumb: THUMB[d.id] || null, from: d.id });
     S.done = S.done.filter((x) => x.id !== d.id);
   }
-  S.doneSel = null; setSide('none');
-  say(`지도 레이어 발행 시작 — ${name} · ${pfPerm.map((s) => `${s.org} ${s.perm}`).join(' · ')} · ${SEED_TAG}`);
+  say(`지도 레이어 발행 — ${name} · ${pfPerm.map((s) => `${s.org} ${s.perm}`).join(' · ')} · ${SEED_TAG}`);
   setTab('publishing');
 });
-document.addEventListener('click', (ev) => { if (ev.target.closest('[data-close-drawer]')) { S.doneSel = null; setSide('none'); if (S.tab === 'manage') renderDone(); } });
 
-/* ── 레이어 발행중 탭 — 4단계 눈금. 실패 = 앰버 브래킷 + 눈금 1 + 사유 원문. 지우지 않는다. ── */
+/* ── 레이어 발행중 — 진행은 그림 위 4눈금 + 리빌 %, 실패는 warn 브래킷 + 짧은 사유. 지우지 않는다. ── */
 const ticks = (p, ink) => `<span class="ticks${ink ? ' ticks--ink' : ''}">${[1, 2, 3, 4].map((i) => `<i class="${i <= p.step - (p.st === 'fail' ? 1 : 0) ? 'on' : (p.st === 'fail' && i === p.step ? 'fail' : '')}"></i>`).join('')}</span>`;
+const pubPct = (p) => (p.st === 'fail' ? PUB_PCT[p.step - 1] : PUB_PCT[p.step - 1]);
 function pbTile(p) {
   const t = THUMB[p.id] || (p.from && THUMB[p.from]);
-  const b = t ? { cls: 'th--dark', html: img(t, p.id) } : body(p.fmt, p.id);
   const fail = p.st === 'fail';
-  const stepTxt = `${p.step}/4 ${PUB_STEPS[p.step - 1]}`;
-  const acts = fail ? FAIL_ACTIONS.map((k) => [k, { crs: '좌표계 지정', cancel: '발행 취소', detail: '세부 정보' }[k]]) : [['cancel', '발행 취소'], ['detail', '세부 정보']];
-  return `<div class="tile" role="listitem" data-id="${p.id}" data-st="${p.st}">
-    <div class="th ${b.cls}">${b.html}${ticks(p, !t)}${fail ? bracket(TW, TH, AMBER) : ''}${word(fail ? '발행중 · 실패' : '발행중')}${
-      b.sil ? `<span class="tag2 n"></span>` : ''}${shelf(fail ? `실패 ${stepTxt}` : stepTxt, acts, `data-pb="${p.id}"`)}</div>
-    ${cap(p.file, `${date(p.at)} · ${p.size}`, fail ? p.why : '')}</div>`;
+  let cls, inner;
+  if (t) { cls = 'th--dark'; inner = revealPair(t, p.id, pubPct(p)); }
+  else { const b = body(p.fmt, p.id, { dim: fail }); cls = b.cls; inner = b.html + (b.sil ? `<span class="tagb n"></span>` : ''); }
+  const st = fail ? `실패 ${p.step}/4 · ${esc(p.short || '')}` : `${p.step}/4 <span class="dt">${esc(PUB_STEPS[p.step - 1])} </span><b class="pv">${pubPct(p)}%</b>`;
+  return `<div class="tile" role="listitem" data-id="${p.id}" data-st="${p.st}"${fail ? ' data-dim' : ''}${selAttr(p.id)}>
+    <div class="th ${cls}"${fail ? '' : ' data-live'} data-open="${p.id}">${inner}${ticks(p, !t)}${fail ? corners(WARN) : selBk(p.id)}${word('발행중')}${stw(st, fail)}</div>
+    ${cap(p.file, `${date(p.at)} · ${p.size}`)}</div>`;
 }
 function renderPublishing() {
-  const rows = S.pubs.filter((p) => passFmt(p) && hit(p));
-  $('#pb-empty').hidden = rows.length > 0;
+  const all = S.pubs.filter((p) => passFmt(p) && hit(p));
+  const rows = pageOf(all);
+  $('#pb-empty').hidden = all.length > 0;
   $('#pb-list').innerHTML = rows.map(pbTile).join('');
-  reveal($('#pb-list'));
-  $$('canvas[data-sil]', $('#pb-list')).forEach(async (c) => {
-    const spec = SILHOUETTE[c.dataset.sil];
-    const n = await silhouette(c, spec, { width: 1.2, pad: 24, padTop: 70, padBottom: 44 });
-    const tag = c.parentElement.querySelector('.tag2'); if (tag) tag.textContent = `${spec.crs} · ${n} polygon`;
-  });
+  reveal($('#pb-list')); drawSilhouettes($('#pb-list'));
 }
-$('#pb-list').addEventListener('click', (ev) => {
-  const b = ev.target.closest('.act[data-pb]'); if (!b) return;
-  const p = S.pubs.find((x) => x.id === b.dataset.pb); if (!p) return;
-  const k = b.dataset.act;
-  if (k === 'cancel') { S.pubs = S.pubs.filter((x) => x.id !== p.id); say(`발행 취소 — ${p.file}`); renderTabs(); renderPublishing(); }
-  if (k === 'detail') openDetailModal(p, true);
-  if (k === 'crs') { crsId = p.id; $('#mc-sub').textContent = `${p.file} · ${p.why}`; openModal('#m-crs'); }
-});
 let crsId = null;
+function pbAct(p, k) {
+  if (k === 'cancel') { S.pubs = S.pubs.filter((x) => x.id !== p.id); say(`발행 취소 — ${p.file}`); S.sel = null; S.mode = 'none'; renderKpi(); }
+  if (k === 'detail') S.more = !S.more;
+  if (k === 'crs') { crsId = p.id; $('#mc-sub').textContent = `${p.file} · ${p.why}`; openModal('#m-crs'); return; }
+  renderPublishing(); renderSide();
+}
 $('#m-crs').addEventListener('submit', (ev) => {
   ev.preventDefault();
   const p = S.pubs.find((x) => x.id === crsId);
-  if (p) { p.st = 'run'; p.step = 1; p.crs = $('#mc-epsg').value; say(`좌표계 ${p.crs} 지정 — ${p.file} · 1/4 파일 확인부터 다시 · ${SEED_TAG}`); }
-  closeModal(); renderPublishing();
+  if (p) { p.st = 'run'; p.step = 1; p.crs = $('#mc-epsg').value; say(`좌표계 ${p.crs} — ${p.file} · 1/4 파일 확인 · ${SEED_TAG}`); }
+  closeModal(); renderKpi(); renderPublishing(); renderSide();
 });
 
-/* ── 아카이브 탭 — 유형·표시/숨김이 좌상단 단어로, 5액션이 선반으로. 숨김 = 감쇠, 삭제 아님. ── */
+/* ── 아카이브 — 유형·표시/숨김은 그림 위 단어로. 5액션은 우 패널. 숨김 = 감쇠, 삭제 아님. ── */
 /** 자산의 실측 기하 — imagery.js 도엽 타일이거나 results/* GeoJSON. 없으면 null(판이 자백한다). */
 function geomOf(a) {
   const im = a.imagery && IMG.find((i) => i.id === a.imagery);
-  if (im) return { kind: 'raster', bounds: im.bounds, im, cap: `${im.label} · GSD ${(im.gsd * 100).toFixed(2)} cm · 측정` };
+  if (im) return { kind: 'raster', bounds: im.bounds, im, cap: `${im.label} · GSD ${cm(im)} · 측정` };
   if (a.geo) return { kind: 'vector', bounds: a.geo.bounds, file: a.geo.file, cap: `${a.name} · ${a.geo.unit} ${a.geo.count}셀 · EPSG:4326 · 측정` };
   return null;
 }
@@ -398,74 +439,281 @@ function arTile(a) {
   let inner, cls;
   if (a.thumb) { cls = 'th--dark'; inner = img(a.thumb, a.id); }
   else if (a.kind === '이미지셋') { cls = 'th--box'; inner = zipTree(ZIP_TREE); }
-  else if (SILHOUETTE[a.id]) { cls = 'th--box'; inner = `<canvas width="${TW * 2}" height="${TH * 2}" data-sil="${a.id}"></canvas><span class="tagb n"></span>`; }
-  else { cls = 'th--dash th--none'; inner = noneBox('미리보기 없음', g ? '' : '좌표계 없음 · 판에 세우지 않는다'); }
-  const meta = g && g.kind === 'raster' ? `${a.basis} · ${(g.im.gsd * 100).toFixed(2)} cm` : `${a.basis} · ${a.size}`;
-  const acts = [['vis', a.hidden ? '표시' : '숨김'], ['share', '공유'], ['geo', '공간 편집'], ['del', '삭제'], ['detail', '상세']];
-  return `<div class="tile" role="listitem" data-id="${a.id}" data-hidden="${a.hidden ? 1 : 0}"${a.hidden ? ' data-dim' : ''}${S.archSel === a.id ? ' aria-current="true"' : ''}>
-    <div class="th ${cls}" data-open="${a.id}">${inner}${S.archSel === a.id ? bracket(TW, TH, INK) : ''}${word(`아카이브 · ${a.kind} · ${a.hidden ? '숨김' : '표시'}`)}${
-      shelf(a.hidden ? '숨김 — 삭제 아님' : '표시', acts, `data-ar="${a.id}"`)}</div>
+  else if (SILHOUETTE[a.id]) { cls = 'th--box'; inner = `<canvas width="${TW}" height="${TH}" data-sil="${a.id}"></canvas><span class="tagb n"></span>`; }
+  else { cls = 'th--dash th--none'; inner = noneBox('미리보기 없음', g ? '' : '좌표계 없음'); }
+  const meta = g && g.kind === 'raster' ? `${a.basis} · ${cm(g.im)}` : `${a.basis} · ${a.size}`;
+  return `<div class="tile" role="listitem" data-id="${a.id}" data-hidden="${a.hidden ? 1 : 0}"${a.hidden ? ' data-dim' : ''}${selAttr(a.id)}>
+    <div class="th ${cls}" data-open="${a.id}">${inner}${selBk(a.id)}${word(`아카이브 · ${a.kind}`)}${stw(a.hidden ? '숨김 · 삭제 아님' : '표시')}</div>
     ${cap(a.name, meta)}</div>`;
 }
 function renderArchive() {
-  const rows = S.arch.filter((a) => passKind(a) && hit(a));
-  $('#ar-empty').hidden = rows.length > 0;
+  const all = S.arch.filter((a) => passKind(a) && hit(a));
+  const rows = pageOf(all);
+  $('#ar-empty').hidden = all.length > 0;
   $('#ar-list').innerHTML = rows.map(arTile).join('');
   reveal($('#ar-list')); drawSilhouettes($('#ar-list'));
 }
-$('#ar-list').addEventListener('click', (ev) => {
-  const b = ev.target.closest('.act[data-ar]');
-  if (b) { archAct(b.dataset.ar, b.dataset.act); return; }
-  const th = ev.target.closest('[data-open]');
-  if (th) openDetail(th.dataset.open);
-});
-function archAct(id, k) {
-  const a = S.arch.find((x) => x.id === id); if (!a) return;
-  if (k === 'vis') { a.hidden = !a.hidden; renderArchive(); if (S.archSel === id) openDetail(id, true); showOnPlate(a, !a.hidden); return; }
+function archAct(a, k) {
+  if (k === 'vis') { a.hidden = !a.hidden; renderKpi(); renderArchive(); showOnPlate(a, !a.hidden); return; }
   if (k === 'share') { openShare(a); return; }
   if (k === 'geo') { editGeo(a); return; }
-  if (k === 'detail') { openDetail(id); return; }
+  if (k === 'detail') { S.more = !S.more; renderSide(); return; }
   if (k === 'del') {
-    S.arch = S.arch.filter((x) => x.id !== id);
-    S.layers = S.layers.filter((x) => x !== id);
-    if (map) removeLayer(map, id);
-    if (S.archSel === id) { S.archSel = null; if (S.side === 'detail') setSide('none'); }
-    say(`삭제 — ${a.name}`); renderTabs(); renderArchive(); if (S.side === 'map') renderLayers();
+    S.arch = S.arch.filter((x) => x.id !== a.id);
+    S.layers = S.layers.filter((x) => x !== a.id);
+    if (map) removeLayer(map, a.id);
+    if (S.focus === a.id) S.focus = null;
+    S.sel = null; S.mode = 'none';
+    say(`삭제 — ${a.name}`); renderKpi(); renderArchive(); renderSide();
   }
 }
-/** 상세 드로어 — 데이터명 / 출처 / 설명 + 밴드·속성 표. */
-function openDetail(id, keep) {
-  const a = S.arch.find((x) => x.id === id); if (!a) return;
-  S.archSel = id;
-  $('#detail-h').textContent = a.name;
-  $('#detail-sub').innerHTML = `${esc(a.kind)} · ${esc(a.file)} · ${esc(a.size)} · 기준일 ${esc(a.basis)} <em class="demo">${SEED_TAG}</em>`;
-  const g = geomOf(a);
-  $('#detail-fig').innerHTML = figFor(a, g && g.im);
-  drawSilhouettes($('#detail-fig'));
-  $('#detail-rows').innerHTML = Object.entries(a.detail).map(([k, v]) => `<div class="dt-r"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')
-    + `<div class="dt-r"><span>실측 범위</span><b>${g ? g.bounds.map((v) => v.toFixed(4)).join(', ') : '실측 범위 없음'}</b></div>`;
-  $('#detail-bands').innerHTML = a.bands.map(([k, v]) => `<div class="dt-b"><i>${esc(k)}</i><em>${esc(v)}</em></div>`).join('');
-  $('#detail [data-act="vis"]').textContent = a.hidden ? '표시' : '숨김';
-  setSide('detail');
-  if (!keep) renderArchive();
-}
-$('#detail-x').addEventListener('click', () => { S.archSel = null; setSide('none'); renderArchive(); });
-$('#detail').addEventListener('click', (ev) => {
-  const b = ev.target.closest('.act[data-act]'); if (!b || !S.archSel) return;
-  archAct(S.archSel, b.dataset.act);
-});
-/** 공간 편집 — 원본은 판 위에 편집용 벡터를 올리고 그 범위로 fit 한다. 여기서는 판을 열고 그 범위로 간다. */
+/** 공간 편집 — 원본은 판 위에 편집용 벡터를 올리고 그 범위로 fit 한다. 여기서는 판이 그 범위로 간다. */
 function editGeo(a) {
   const g = geomOf(a);
-  if (!g) { say(`공간 편집 — ${a.name} · 실측 범위 없음, 판에 세우지 않습니다`); return; }
+  if (!g) { say(`공간 편집 — ${a.name} · 실측 범위 없음`); return; }
   showOnPlate(a, true, true);
-  say(`공간 편집 — ${a.name} · 판에서 범위를 잡습니다`);
+  say(`공간 편집 — ${a.name} · 범위로 이동`);
 }
 
-/* ══ 판 — 표시 → 레이어 ══════════════════════════════════════════════════
-   표시된 타일 하나 = 레이어 하나. 표시하면 판이 열리고 그 범위로 간다(줌 투 익스텐트).
-   숨김은 레이어 목록에 감쇠로 남고 판에서는 꺼진다. 실측 범위가 없는 자산은 판이 그렇다고 말한다. */
-let map = null, bk = null, mounting = null;
+/* ══ 타일 선택 — 그리드 클릭 하나로 4단계 공용 ═══════════════════════════ */
+$('#grid').addEventListener('click', (ev) => {
+  const th = ev.target.closest('[data-open]'); if (!th) return;
+  const id = th.dataset.open;
+  if (S.sel === id) backToBoard(); else selectTile(id);   // 선택 타일을 다시 누르면 현황판으로
+});
+
+/* ══ 우 패널 — 선택 타일을 펼친다: 판(지도/그림) + 기본 정보 + 액션 ═══════ */
+const rowOf = (id) => ({ upload: S.ups, manage: S.done, publishing: S.pubs, archive: S.arch }[S.tab].find((x) => x.id === id));
+const dl = (rows) => `<dl class="info">${rows.map(([k, v, cls = '']) => `<dt class="${cls.includes('wide') ? 'wide' : ''}">${esc(k)}</dt><dd class="${cls}${/^\d/.test(String(v)) ? ' n' : ''}">${v}</dd>`).join('')}</dl>`;
+const actBtn = (k, name, ds, cls = '') => `<button type="button" class="act${cls ? ' ' + cls : ''}" data-act="${k}" ${ds}>${esc(name)}</button>`;
+/** 그림 액자 — 지도가 아닐 때. */
+function figFor(row, opts = {}) {
+  const t = THUMB[row.id] || row.thumb || (row.from && THUMB[row.from]);
+  if (t && opts.pct != null) return `<div class="fig fig--ink"${opts.live ? ' data-live' : ''}>${revealPair(t, 'fig-' + row.id, opts.pct)}${opts.extra || ''}</div>`;
+  if (t) return `<div class="fig fig--ink">${figImg(t, row.id)}${opts.extra || ''}</div>`;
+  if (SILHOUETTE[row.id]) return `<div class="fig"><canvas width="832" height="468" data-sil="${row.id}"></canvas><span class="fm n dk">${esc(SILHOUETTE[row.id].crs)}</span>${opts.extra || ''}</div>`;
+  if (row.fmt === 'XLSX') return `<div class="fig">${xlsxTable(XLSX_ROWS)}${opts.extra || ''}</div>`;
+  if (row.fmt === 'ZIP' || row.kind === '이미지셋') return `<div class="fig">${zipTree(ZIP_TREE)}${opts.extra || ''}</div>`;
+  return `<div class="fig fig--none">${noneBox('미리보기 없음', row.fmt === 'SHP' ? '좌표계 없음' : `${row.fmt} · 파일 확인 전`)}${opts.extra || ''}</div>`;
+}
+function showFig(html) { $('#plate-wrap').hidden = true; const f = $('#fig-wrap'); f.hidden = false; f.innerHTML = html; drawSilhouettes(f); reveal(f); }
+function showPlate() { $('#fig-wrap').hidden = true; $('#plate-wrap').hidden = false; }
+function hideFrames() { $('#plate-wrap').hidden = true; const f = $('#fig-wrap'); f.hidden = true; f.innerHTML = ''; }
+
+/* ── 현황판(선택 없음) — 4단계 공용 문법(발주 3차 "통일성"): 한 줄 = 한 건, 헤어라인, 줄 = 그 타일 선택. 아래 단계 요약 kv.
+   업로드: 이름 · 상태어 · 막대 % · 크기 · 잔여 / 완료: 이름 · 형식 · 크기 · 업로드 일시 · 아카이빙 · 위치 /
+   발행중: 이름 · 4눈금 · 상태어(실패 warn + 짧은 사유) · 진행률 · 크기 / 아카이브: 이름 · 유형 · 표시/숨김 · 발행 v · 크기. ── */
+const BOARD_TITLE = { upload: '진행 현황', manage: '완료 현황', publishing: '발행 현황', archive: '보관 현황' };
+const remain = (u) => fmtBytes(bytesOf(u.size) * (1 - u.pct / 100));
+const sumBytes = (rows) => fmtBytes(rows.reduce((s, r) => s + bytesOf(r.size), 0));
+const bh = (cells) => `<div class="pbh">${cells.map((c) => `<span class="lb${/^(크기|잔여|진행률|발행)$/.test(c) ? ' rt' : ''}">${esc(c)}</span>`).join('')}</div>`;
+const bRow = (r, st, cells) => `<div class="pb" data-id="${r.id}"${st ? ` data-st="${st}"` : ''} role="button" tabindex="0"${selAttr(r.id)}>${cells}</div>`;
+const bName = (name) => `<span class="nm" title="${esc(name)}">${esc(name)}</span>`;
+function boardHtml() {
+  if (S.tab === 'upload') {
+    const c = by(S.ups, (u) => u.st);
+    return bh([`파일 ${S.ups.length} · 진행 중 ${c.run || 0}`, '상태', '진행률', '크기', '잔여'])
+      + S.ups.map((u) => bRow(u, u.st, `${bName(u.file)}<span class="stw">${esc(UP_ST[u.st])}</span>
+        <span class="bar" style="--pct:${u.pct}%"><i></i><b class="n" data-ppct>${u.pct}%</b></span>
+        <span class="rt n">${esc(u.size)}</span><span class="rt n" data-prem>${remain(u)}</span>`)).join('');
+  }
+  if (S.tab === 'manage') {
+    return bh([`파일 ${S.done.length} · 위치 ${S.done.filter(imFor).length}`, '형식', '크기', '업로드', '아카이빙', '위치'])
+      + S.done.map((d) => bRow(d, '', `${bName(d.file)}<span class="stw">${esc(d.fmt)}</span><span class="rt n">${esc(d.size)}</span>
+        <span class="n dim2" title="${esc(d.at)}">${date(d.at)}</span><span class="n">${d.arch}회</span><span class="n loc${imFor(d) ? ' on' : ''}">${imFor(d) ? '○' : '—'}</span>`)).join('');
+  }
+  if (S.tab === 'publishing') {
+    const c = by(S.pubs, (p) => p.st);
+    return bh([`파일 ${S.pubs.length} · 진행 ${c.run || 0} · 실패 ${c.fail || 0}`, '단계', '상태', '진행률', '크기'])
+      + S.pubs.map((p) => { const fail = p.st === 'fail'; return bRow(p, p.st, `${bName(p.file)}${ticks(p, true)}
+        <span class="stw${fail ? ' warn' : ''}">${fail ? `실패 · ${esc(p.short || '')}` : `${p.step}/4 ${esc(PUB_STEPS[p.step - 1])}`}</span>
+        <span class="rt n">${pubPct(p)}%</span><span class="rt n">${esc(p.size)}</span>`); }).join('');
+  }
+  const c = by(S.arch, (a) => (a.hidden ? 'h' : 'v'));
+  return bh([`자산 ${S.arch.length} · 표시 ${c.v || 0} · 숨김 ${c.h || 0}`, '유형', '표시', '발행', '크기'])
+    + S.arch.map((a) => { const log = PUBLISH_LOG[a.id] || []; return bRow(a, a.hidden ? 'hide' : 'show', `${bName(a.name)}<span class="stw">${esc(a.kind)}</span>
+      <span class="stw vis">${a.hidden ? '숨김' : '표시'}</span><span class="rt n ver">${log.length ? esc(log[0][0]) : '—'}</span><span class="rt n">${esc(a.size)}</span>`); }).join('');
+}
+/** 현황판 아래 단계 요약 kv — 업로드: 디스크 · 허용 형식 · 한도 / 완료: 총 용량 · 형식별 / 발행중: 진행 · 실패 / 아카이브: 표시 · 숨김 · 총 용량. */
+function boardFoot() {
+  if (S.tab === 'upload') return dl([['디스크', `${gb(DISK.used)} / ${gb(DISK.total)} GB`], ['잔여', `${gb(DISK.free)} GB`], ['허용 형식', ACCEPT_EXT.map((x) => x.slice(1).toUpperCase()).join(' · '), 'wide'], ['한도', '1 TB']]);
+  if (S.tab === 'manage') { const c = by(S.done, fmtOf); return dl([['총 용량', sumBytes(S.done)], ['위치 있음', `${S.done.filter(imFor).length}건`], ['형식별', Object.entries(c).map(([k, n]) => `${k} ${n}`).join(' · ') || '—', 'wide']]); }
+  if (S.tab === 'publishing') { const c = by(S.pubs, (p) => p.st); return dl([['진행', `${c.run || 0}건`], ['실패', c.fail ? `<span class="warn">${c.fail}건</span>` : '0건'], ['총 용량', sumBytes(S.pubs)], ['단계', '4']]); }
+  const c = by(S.arch, (a) => (a.hidden ? 'h' : 'v')), k = by(S.arch, (a) => a.kind);
+  return dl([['표시', `${c.v || 0}건`], ['숨김', `${c.h || 0}건`], ['총 용량', sumBytes(S.arch)], ['유형별', Object.entries(k).map(([n, v]) => `${n} ${v}`).join(' · ') || '—', 'wide']]);
+}
+/** 현재 단계의 목록(필터 · 검색 적용). 현황판 줄 → 타일 선택 시 그 타일이 있는 쪽으로 간다. */
+function filtered() {
+  if (S.tab === 'upload') return S.ups.filter((u) => passFmt(u) && hit(u));
+  if (S.tab === 'manage') return S.done.filter((d) => passFmt(d) && hit(d));
+  if (S.tab === 'publishing') return S.pubs.filter((p) => passFmt(p) && hit(p));
+  return S.arch.filter((a) => passKind(a) && hit(a));
+}
+function selectTile(id) {
+  S.sel = id; S.mode = 'tile'; S.more = false;
+  const i = filtered().findIndex((r) => r.id === id);
+  if (i >= 0) S.page = Math.floor(i / Math.max(1, S.pp - (S.tab === 'upload' ? 1 : 0))) + 1;
+  renderPanel(); renderSide();
+}
+function backToBoard() { S.sel = null; S.mode = 'none'; S.more = false; renderPanel(); renderSide(); }
+$('#side-back').addEventListener('click', backToBoard);
+$('#side').addEventListener('click', (ev) => { const r = ev.target.closest('.pb[data-id]'); if (r) selectTile(r.dataset.id); });
+$('#side').addEventListener('keydown', (ev) => { const r = ev.target.closest('.pb[data-id]'); if (r && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); selectTile(r.dataset.id); } });
+
+/* ── 성과 — 이 자산에 닿은 실제 AI 결과(results.js). 판 위에 청록으로 서고, 범위 안 건수는 세어서 적는다. ── */
+const resultsOf = (id) => (RESULT_OF[id] || []).map((rid) => resultRow(RESULT_BY_ID[rid])).filter(Boolean);
+function resultsHtml(res, bounds) {
+  if (!res.length) return '';
+  const head = `<div class="ph"><span class="lb">성과 ${res.length} · AI 결과</span><span class="lb">결과 / 건수 / 분석일</span></div>`;
+  return head + res.map((r) => `<div class="rs" data-res="${r.id}"><span class="sw"></span>
+    <span class="nm">${esc(r.name)}${r.sub ? `<small class="n">· ${esc(r.sub)}</small>` : ''}${bounds ? `<small class="n" data-rin="${r.id}">· 범위 내 …</small>` : ''}</span>
+    <span class="nv n"><b>${nf.format(r.n)}</b><span>${esc(r.unit)}</span></span><span class="at n">${esc(r.at)}</span></div>`).join('');
+}
+const hits = (b, bb) => b[2] >= bb[0] && b[0] <= bb[2] && b[3] >= bb[1] && b[1] <= bb[3];
+/** 범위 안 건수 — 실제 GeoJSON 을 받아 자산 범위와 겹치는 피처를 센다. */
+async function fillInBounds(res, bounds) {
+  for (const r of res) {
+    const g = await loadGeo(r.geojson);
+    const el = $(`#side [data-rin="${r.id}"]`); if (!g || !el) continue;
+    const n = g.features.filter((f) => hits(bboxOf([f]), bounds)).length;
+    el.textContent = `· 범위 내 ${nf.format(n)}`;
+  }
+}
+
+/* ── 데이터 테이블 속성 — 위치가 없는 완료본. 속성명 / 유형 / 예시. SHP(결과 GeoJSON 이 있는 것)는 첫 행 실값으로 바꿔 적는다. ── */
+function schemaHtml(row) {
+  const k = SCHEMA_OF[row.id], sc = k && SCHEMA[k]; if (!sc) return '';
+  const head = `<div class="ph"><span class="lb">데이터 테이블 · ${sc.cols.length}열 · ${esc(sc.rows)}</span><span class="lb">속성명 / 유형 / 예시</span></div>`;
+  return head + sc.cols.map(([n, t, e]) => `<div class="sc" data-col="${esc(n)}"><i>${esc(n)}</i><em>${esc(t)}</em><span class="exv">${esc(e)}</span></div>`).join('')
+    + `<p class="attrib n">${sc.geo ? '예시 = 결과 첫 행 실값' : `예시 · ${SEED_TAG}`}</p>`;
+}
+async function fillSchemaFromGeo(row) {
+  const k = SCHEMA_OF[row.id], sc = k && SCHEMA[k]; if (!sc || !sc.geo) return;
+  const g = await loadGeo(sc.geo); if (!g || !g.features.length) return;
+  const pr = g.features[0].properties || {};
+  for (const [n] of sc.cols) {
+    const el = $(`#side .sc[data-col="${n}"] .exv`); if (!el || pr[n] == null) continue;
+    el.textContent = typeof pr[n] === 'number' ? nf.format(pr[n]) : String(pr[n]);
+  }
+}
+
+/* ── 아카이브 — 사용 현황 · 발행 이력 · 메모(이 브라우저에만 저장). 레이어 목록 블록은 뺐다(발주 2차). ── */
+function usageHtml(a) {
+  const us = USAGE[a.id] || [];
+  const head = `<div class="ph"><span class="lb">사용 현황 · ${us.length}</span><span class="lb">프로젝트 · 데이터셋 · 서비스 / 근거 · ${SEED_TAG}</span></div>`;
+  return head + (us.length ? us.map((u) => `<div class="us" title="${esc(u.src)}"><span class="kd">${esc(u.kind)}</span><span class="nm">${esc(u.name)}</span><span class="rf n">${esc(u.ref)}</span></div>`).join('') : `<p class="us-empty n">사용 0</p>`);
+}
+function publishHtml(a) {
+  const log = PUBLISH_LOG[a.id] || [];
+  return `<div class="ph"><span class="lb">발행 이력 · ${log.length}</span><span class="lb">버전 / 일시 / 등록자 · ${SEED_TAG}</span></div>`
+    + log.map(([v, at, who, wh]) => `<div class="pl"><span class="v n">${esc(v)}</span><span class="wh">${esc(wh)}</span><span class="by">${esc(who)}</span><span class="at n">${esc(at)}</span></div>`).join('');
+}
+const memoGet = (id) => { try { return JSON.parse(localStorage.getItem(MEMO_KEY(id)) || 'null') || { t: '', at: '' }; } catch { return { t: '', at: '' }; } };
+const memoPut = (id, t) => { const at = new Date().toLocaleString('sv-SE').slice(0, 16).replace(/-/g, '.'); try { localStorage.setItem(MEMO_KEY(id), JSON.stringify({ t, at })); } catch { /* 저장소 차단 */ } return at; };
+function memoHtml(a) {
+  const m = memoGet(a.id);
+  return `<div class="ph"><span class="lb">메모 · 이 브라우저에만 저장</span><span class="lb n"><span data-memo-n>${m.t.length}</span> / ${MEMO_MAX}</span></div>
+    <div class="memo"><textarea id="memo" data-memo="${a.id}" maxlength="${MEMO_MAX}" rows="3" placeholder="메모" aria-label="메모 · 이 브라우저에만 저장">${esc(m.t)}</textarea>
+    <p class="mf n"><span data-memo-at>${m.at ? `저장 ${esc(m.at)}` : '저장 없음'}</span><span class="dim">localStorage · 서버 저장 아님</span></p></div>`;
+}
+let memoT = 0;
+$('#side').addEventListener('input', (ev) => {
+  const ta = ev.target.closest('textarea[data-memo]'); if (!ta) return;
+  const n = $('#side [data-memo-n]'); if (n) n.textContent = String(ta.value.length);
+  clearTimeout(memoT);
+  memoT = setTimeout(() => { const at = memoPut(ta.dataset.memo, ta.value); const el = $('#side [data-memo-at]'); if (el) { el.textContent = `저장 ${at}`; el.classList.add('saved'); } }, 300);
+});
+function renderSide() {
+  const side = $('#side'), info = $('#side-info'), acts = $('#side-acts');
+  const name = TABS.find((t) => t.id === S.tab).name;
+  const total = COUNT[S.tab]();
+  const row = S.sel && rowOf(S.sel);
+  if (!row) { S.sel = null; S.mode = 'none'; }
+  side.dataset.mode = S.mode;
+  if (side.dataset.sel !== String(S.sel)) { side.dataset.sel = String(S.sel); $('#side-body').scrollTop = 0; }   // 선택이 바뀌면 맨 위부터
+  $('#side-h').textContent = row ? (row.name || row.file) : BOARD_TITLE[S.tab];
+  $('#side-h').title = row ? (row.name || row.file) : `${name} · ${BOARD_TITLE[S.tab]}`;
+  $('#side-m').textContent = row ? `선택 1 / ${total}` : `선택 0 / ${total}`;
+  $('#side-back').hidden = !row;   // `‹ 현황` — 상세에서 현황판으로. 4단계 같다.
+  info.innerHTML = ''; acts.innerHTML = '';
+  if (!row) {
+    // 선택 없음 = 단계 현황판(4단계 같은 문법) + 단계 요약 kv. 판·액자는 닫는다. 0건이면 빈 줄 하나.
+    hideFrames();
+    info.innerHTML = `<div class="board" data-k="${S.tab}">${boardHtml()}${total ? '' : `<p class="pb-empty n">0건</p>`}</div>` + boardFoot();
+    applyMapMode('none');
+    return;
+  }
+  if (S.tab === 'upload') {
+    const u = row, live = u.st === 'run';
+    showFig(figFor(u, { pct: u.pct, live, extra: `<span class="fc n">${esc(UP_ST[u.st])} <b data-pv>${u.pct}%</b></span>` }));
+    const rows = [['파일명', esc(u.file), 'wide'], ['형식', u.fmt], ['크기', u.size], ['상태', `${live ? '<b>' : ''}${UP_ST[u.st]}${live ? '</b>' : ''}`], ['진행률', `${u.pct}%`]];
+    if (S.more) rows.push(['대기 순번', u.st === 'wait' ? String(S.ups.filter((x) => x.st === 'wait').indexOf(u) + 1) : '—'], ['자료', `원본 목업 시드 · ${SEED_TAG}`]);
+    info.innerHTML = dl(rows);
+    acts.innerHTML = UP_ACTIONS[u.st].map((k) => actBtn(k, k === 'cancel' ? '취소' : ACT_NAME[k], `data-up="${u.id}"`, k === 'detail' && S.more ? 'on' : '')).join('');
+    applyMapMode('none');
+    return;
+  }
+  if (S.tab === 'manage') {
+    // 도엽이 있으면 실제 위치(판 + 도엽 + 성과 청록) · 없으면 액자 + 데이터 테이블 속성(발주 2차)
+    const d = row, im = imFor(d), res = resultsOf(d.id);
+    if (im) { showPlate(); applyMapMode('sel', { id: d.id, im, title: d.file, sub: `GSD ${cm(im)}`, res }); }
+    else { showFig(figFor(d)); applyMapMode('none'); }
+    const base = [['이름', esc(d.file), 'wide'], ['형식', d.fmt], ['크기', d.size], ['업로드 일시', d.at], ['촬영일', im ? ymd(im.captured) : '—'],
+      ['GSD', im ? cm(im) : '—'], ['좌표계', im ? 'EPSG:5186 → 4326' : SILHOUETTE[d.id] ? SILHOUETTE[d.id].crs : '—'],
+      ['아카이빙', `${d.arch}회`], ['등록자', esc(d.by)], ['범위', im ? `<span class="n">${bounds4(im.bounds)}</span>` : '실측 범위 없음', 'wide']];
+    if (S.mode === 'pub') {
+      info.innerHTML = `<div class="ph"><span class="lb">지도 레이어 발행</span><span class="lb">${esc(d.file)} · ${esc(d.size)}</span></div>` + pubFormHtml(d, PUB_PREFILL[d.id] || {});
+      return;
+    }
+    // 위치·성과가 먼저, 기본 정보는 그 아래(스크롤). 위치가 없으면 데이터 테이블 속성이 먼저.
+    info.innerHTML = (im ? resultsHtml(res, im.bounds) : schemaHtml(d)) + dl(base);
+    if (im) fillInBounds(res, im.bounds); else fillSchemaFromGeo(d);
+    acts.innerHTML = actBtn('pub', '지도 레이어 발행 ›', `data-dn="${d.id}"`, 'pri');
+    return;
+  }
+  if (S.tab === 'publishing') {
+    const p = row, fail = p.st === 'fail';
+    showFig(figFor(p, { pct: pubPct(p), live: !fail, extra: `${ticks(p, !(THUMB[p.id] || (p.from && THUMB[p.from])))}<span class="fc n${fail ? ' warn' : ''}">${fail ? `실패 ${p.step}/4 · ${esc(p.short || '')}` : `${p.step}/4 ${esc(PUB_STEPS[p.step - 1])} · ${pubPct(p)}%`}</span>` }));
+    const rows = [['파일명', esc(p.file), 'wide'], ['형식', p.fmt], ['크기', p.size], ['업로드', p.at], ['상태', fail ? `<span class="warn">${PUB_ST[p.st]}</span>` : `<b>${PUB_ST[p.st]}</b>`], ['단계', `${p.step}/4 ${esc(PUB_STEPS[p.step - 1])}`, 'wide']];
+    if (fail) rows.push(['실패 사유', esc(p.why), 'warn wide']);
+    if (p.crs) rows.push(['좌표계', p.crs]);
+    if (S.more) rows.push(['단계 4', PUB_STEPS.map((s, i) => `${i + 1} ${s}`).join(' · '), 'wide'], ['자료', `원본 목업 시드 · ${SEED_TAG}`, 'wide']);
+    info.innerHTML = dl(rows);
+    const list = fail ? FAIL_ACTIONS.map((k) => [k, { crs: '좌표계 지정', cancel: '발행 취소', detail: '세부 정보' }[k]]) : [['cancel', '발행 취소'], ['detail', '세부 정보']];
+    acts.innerHTML = list.map(([k, n]) => actBtn(k, n, `data-pb="${p.id}"`, k === 'crs' ? 'pri' : k === 'detail' && S.more ? 'on' : '')).join('');
+    applyMapMode('none');
+    return;
+  }
+  // 아카이브 — 판(레이어) + 기본 정보 + (상세: 밴드·속성) + 사용 현황 · 성과 · 발행 이력 · 메모 + 5액션.
+  // 표시 상태의 자산은 선택되면 레이어로 선다(숨김은 `표시` 를 눌러야). 레이어 목록·범위·표시 행은 뺐다(발주 2차: 의미 없음).
+  const a = row, g = geomOf(a), res = resultsOf(a.id);
+  if (!a.hidden && !S.layers.includes(a.id)) S.layers.push(a.id);
+  showPlate(); applyMapMode('arch', a);
+  // 사용 현황 → 성과 → 기본 정보 3행(이름 · 원본 파일 · 유형/형식 · 크기/기준일) → 발행 이력 → 메모. 나머지 행은 `상세` 에.
+  const rows = [['이름', esc(a.name), 'wide'], ['원본 파일', esc(a.file), 'wide'], ['유형', a.kind], ['형식', extOf(a.file).toUpperCase()], ['크기', a.size], ['기준일', a.basis]];
+  let html = dl(rows);
+  if (S.more) {
+    html += dl([['등록 일시', a.at], ['등록자', esc(a.by)], ['GSD', g && g.kind === 'raster' ? cm(g.im) : '—'], ['좌표계', g ? (g.kind === 'raster' ? 'EPSG:5186 → 4326' : 'EPSG:4326') : SILHOUETTE[a.id] ? SILHOUETTE[a.id].crs : '—'],
+      ...Object.entries(a.detail).map(([k, v]) => [k, esc(v), 'wide'])]);
+    html += `<div class="ph"><span class="lb">밴드 · 속성</span><span class="lb">속성명 / 속성정보</span></div>` + a.bands.map(([k, v]) => `<div class="dt-b"><i>${esc(k)}</i><em>${esc(v)}</em></div>`).join('');
+  }
+  // 쓰임(사용 현황 · 성과)이 먼저, 그 다음 기본 정보, 발행 이력, 메모.
+  html = usageHtml(a) + resultsHtml(res, g ? g.bounds : null) + html + publishHtml(a) + memoHtml(a) + `<p class="attrib n">${esc(ATTRIB)}</p>`;
+  info.innerHTML = html;
+  if (g) fillInBounds(res, g.bounds);
+  acts.innerHTML = [['vis', a.hidden ? '표시' : '숨김'], ['share', '공유'], ['geo', '공간 편집'], ['del', '삭제'], ['detail', '상세']]
+    .map(([k, n]) => actBtn(k, n, `data-ar="${a.id}"`, k === 'detail' && S.more ? 'on' : '')).join('');
+}
+$('#side').addEventListener('click', (ev) => {
+  const b = ev.target.closest('.act[data-act]'); if (!b) return;
+  if (b.dataset.up) { const u = S.ups.find((x) => x.id === b.dataset.up); if (u) upAct(u, b.dataset.act); return; }
+  if (b.dataset.dn) { openPubForm(b.dataset.dn); return; }
+  if (b.dataset.pb) { const p = S.pubs.find((x) => x.id === b.dataset.pb); if (p) pbAct(p, b.dataset.act); return; }
+  if (b.dataset.ar) { const a = S.arch.find((x) => x.id === b.dataset.ar); if (a) archAct(a, b.dataset.act); return; }
+});
+
+/* ══ 판 — 한 번만 mount. 완료 = 선택 도엽 1장, 아카이브 = 표시된 레이어들 ══════ */
+let mapMode = 'none';
 async function ensureMap() {
   if (map) return map;
   if (!mounting) {
@@ -480,6 +728,55 @@ async function ensureMap() {
   }
   return mounting;
 }
+let mapReq = 0;
+/** 판 모드 — none(닫힘) / sel(완료 도엽 1장) / arch(아카이브 레이어). 모드를 옮기면 다른 모드의 레이어는 끈다. */
+async function applyMapMode(mode, arg) {
+  mapMode = mode;
+  if (mode === 'none') return;
+  const req = ++mapReq;
+  const m = await ensureMap();
+  const none = $('#plate-none');
+  if (!m) { none.hidden = false; none.textContent = 'WebGL 없음 — 판 없음'; return; }
+  if (req !== mapReq || mapMode !== mode) return;
+  m.resize();
+  if (mode === 'sel') {
+    for (const id of S.layers) setHidden(m, id, true);
+    if (!hasLayer(m, 'sel') || m.__selId !== arg.id) { removeLayer(m, 'sel'); addRaster(m, 'sel', arg.im, false); m.__selId = arg.id; }
+    bk.set([{ id: 'sel', bounds: arg.im.bounds, title: arg.title, sub: arg.sub }]);
+    // 성과가 있으면 도엽을 가운데 두고 3배 범위 — 주변의 청록 결과 폴리곤이 같이 보인다
+    const b = arg.im.bounds, hasRes = arg.res && arg.res.length;
+    frame(m, hasRes ? grow(b, 1) : b, { maxZoom: 16.6 });
+    $('#plate-cap').textContent = `${arg.im.label} · GSD ${cm(arg.im)} · 측정${arg.res && arg.res.length ? ` · 성과 ${arg.res.length}` : ''}`;
+    none.hidden = true;
+    syncResults(m, arg.res || [], req);
+    return;
+  }
+  // arch
+  removeLayer(m, 'sel'); m.__selId = null;
+  await syncLayers();
+  const a = arg, g = geomOf(a);
+  syncResults(m, resultsOf(a.id), req);
+  if (S.focus !== a.id && g) { S.focus = a.id; frame(m, g.bounds, { maxZoom: g.kind === 'raster' ? 16.6 : 14.2 }); }
+  const live = S.layers.map((id) => S.arch.find((x) => x.id === id)).filter((x) => x && !x.hidden && geomOf(x));
+  $('#plate-cap').textContent = g ? g.cap : `${a.name} · 실측 범위 없음`;
+  none.hidden = !!g || live.length > 0;
+  if (!none.hidden) none.textContent = `${a.name} · 실측 범위 없음`;
+  if (!g && live.length && !S.focus) frame(m, KOREA_SW, { maxZoom: 8 });
+}
+/** 범위를 사방으로 k 배 키운다(1 = 3× 범위). */
+const grow = (b, k) => { const w = (b[2] - b[0]) * k, h = (b[3] - b[1]) * k; return [b[0] - w, b[1] - h, b[2] + w, b[3] + h]; };
+/** 성과 레이어 — 선택 자산에 닿은 결과 GeoJSON 을 청록으로 올린다(`res-<id>`). 다른 결과는 끈다. */
+const resUp = new Set();
+async function syncResults(m, res, req) {
+  for (const id of resUp) if (!res.some((r) => r.id === id)) setHidden(m, 'res-' + id, true);
+  for (const r of res) {
+    if (!hasLayer(m, 'res-' + r.id)) {
+      const data = await loadGeo(r.geojson);
+      if (req !== mapReq) return;
+      if (data) { addVector(m, 'res-' + r.id, data, false); resUp.add(r.id); }
+    } else setHidden(m, 'res-' + r.id, false);
+  }
+}
 async function putLayer(a) {
   const g = geomOf(a); if (!g || !map) return null;
   if (!hasLayer(map, a.id)) {
@@ -488,84 +785,24 @@ async function putLayer(a) {
   } else setHidden(map, a.id, a.hidden);
   return g;
 }
-/** 표시(on) / 숨김(off) 을 판에 반영한다. on 이면 판을 열고 그 범위로 간다. */
-async function showOnPlate(a, on, fit = true) {
-  if (!S.layers.includes(a.id)) S.layers.push(a.id);
-  S.focus = a.id;
-  const g = geomOf(a);
-  if (on) setSide('map');
-  if (S.side !== 'map') return;
-  const m = await ensureMap();
-  if (!m) { renderLayers(); return; }
-  await syncLayers();
-  if (on && g && fit) frame(m, g.bounds, { maxZoom: g.kind === 'raster' ? 16.6 : 14.2 });
-  if (on && !g) say(`${a.name} — 실측 범위 없음, 판에 세우지 않습니다`);
-  if (!on) say(`${a.name} — 숨김(감쇠). 레이어 목록에 남습니다`);
-  renderLayers();
-}
 /** 판의 레이어 = S.layers 순서. 아카이브에서 지워진 것은 내려온다. */
 async function syncLayers() {
   if (!map) return;
   for (const id of S.layers) { const a = S.arch.find((x) => x.id === id); if (a) await putLayer(a); }
   bk.set(S.layers.map((id) => S.arch.find((x) => x.id === id)).filter(Boolean).map((a) => ({ a, g: geomOf(a) })).filter((x) => x.g)
-    .map(({ a, g }) => ({ id: a.id, bounds: g.bounds, dim: a.hidden, title: a.name, sub: g.kind === 'raster' ? `GSD ${(g.im.gsd * 100).toFixed(2)} cm` : `${a.geo.count}셀` })));
+    .map(({ a, g }) => ({ id: a.id, bounds: g.bounds, dim: a.hidden, title: a.name, sub: g.kind === 'raster' ? `GSD ${cm(g.im)}` : `${a.geo.count}셀` })));
 }
-function renderLayers() {
-  const rows = S.layers.map((id) => S.arch.find((x) => x.id === id)).filter(Boolean);
-  const live = rows.filter((a) => !a.hidden && geomOf(a));
-  $('#map-sub').textContent = `레이어 ${rows.length} · 표시 ${rows.filter((a) => !a.hidden).length} · 숨김 ${rows.filter((a) => a.hidden).length} — V-World 정사영상 · EPSG:4326`;
-  $('#layers').innerHTML = rows.length ? rows.map((a) => {
-    const g = geomOf(a);
-    return `<div class="ly" data-id="${a.id}" data-kind="${g ? g.kind : 'none'}" data-hidden="${a.hidden ? 1 : 0}">
-      <span class="sw"></span><span class="nm">${esc(a.name)}</span>
-      <span class="mt n">${g ? (g.kind === 'raster' ? `도엽 · GSD ${(g.im.gsd * 100).toFixed(2)} cm` : `GeoJSON · ${a.geo.count}셀`) : '실측 범위 없음'}</span>
-      ${g ? `<button type="button" class="act n" data-ly="${a.id}" data-act="fit">범위로</button>` : ''}
-      <button type="button" class="act n" data-ly="${a.id}" data-act="vis">${a.hidden ? '표시' : '숨김'}</button></div>`;
-  }).join('') : `<p class="ly-empty">아카이브 타일의 <b>표시</b>를 누르면 그 자산이 여기 레이어로 섭니다.</p>`;
-  const f = S.arch.find((x) => x.id === S.focus), g = f && geomOf(f);
-  $('#plate-cap').textContent = g ? g.cap : (f ? `${f.name} · 실측 범위 없음` : '');
-  const none = $('#plate-none');
-  none.hidden = live.length > 0 || document.documentElement.dataset.plate === 'off' && false;
-  if (!live.length) none.textContent = rows.length ? '표시된 자산 중 실측 범위가 있는 것이 없습니다 — 실측 범위 없음' : '표시된 레이어 없음';
-  if (document.documentElement.dataset.plate === 'off') { none.hidden = false; none.textContent = 'WebGL 없음 — 판을 세우지 못했습니다'; }
+/** 표시(on) / 숨김(off) 을 판에 반영한다. on 이면 그 자산이 선택되고 판이 그 범위로 간다. */
+async function showOnPlate(a, on, fit = true) {
+  if (!S.layers.includes(a.id)) S.layers.push(a.id);
+  const g = geomOf(a);
+  S.sel = a.id; S.mode = 'tile';
+  if (on && fit) S.focus = null;   // 다시 프레임
+  renderArchive(); renderSide();
+  if (on && g) say(`${a.name} — 레이어 · 범위로 이동`);
+  if (on && !g) say(`${a.name} — 실측 범위 없음`);
+  if (!on) say(`${a.name} — 숨김 · 삭제 아님`);
 }
-$('#layers').addEventListener('click', (ev) => {
-  const b = ev.target.closest('[data-ly]'); if (!b) return;
-  const a = S.arch.find((x) => x.id === b.dataset.ly); if (!a) return;
-  if (b.dataset.act === 'vis') { archAct(a.id, 'vis'); return; }
-  const g = geomOf(a); if (g && map) { S.focus = a.id; frame(map, g.bounds, { maxZoom: g.kind === 'raster' ? 16.6 : 14.2 }); renderLayers(); }
-});
-/** 지도 보기 토글 — 표시된 아카이브 전부를 레이어로 세운다. 그리드가 1급, 판은 3열을 남기고 선다. */
-async function openMap() {
-  for (const a of S.arch) if (!a.hidden && !S.layers.includes(a.id)) S.layers.push(a.id);
-  setSide('map');
-  const m = await ensureMap();
-  renderLayers();
-  if (!m) return;
-  m.resize();
-  await syncLayers();
-  const live = S.layers.map((id) => S.arch.find((x) => x.id === id)).filter((a) => a && !a.hidden).map(geomOf).filter(Boolean);
-  if (live.length && !S.focus) {
-    const b = live.reduce((o, g) => [Math.min(o[0], g.bounds[0]), Math.min(o[1], g.bounds[1]), Math.max(o[2], g.bounds[2]), Math.max(o[3], g.bounds[3])], [Infinity, Infinity, -Infinity, -Infinity]);
-    frame(m, b, { maxZoom: 15 });
-  } else if (!live.length) frame(m, KOREA_SW, { maxZoom: 8 });
-  renderLayers();
-}
-$('#view-map').addEventListener('click', () => (S.side === 'map' ? setSide('none') : openMap()));
-$('#view-grid').addEventListener('click', () => { setSide('none'); S.doneSel = null; S.archSel = null; renderPanel(); });
-
-/* 우측 슬롯 — 드로어 셋이 한 자리를 나눠 쓴다. 닫힌 채로 시작(마스터 유보 2). */
-function setSide(k) {
-  S.side = k;
-  document.body.dataset.side = k;
-  $('#pubdrawer').hidden = k !== 'pub';
-  $('#detail').hidden = k !== 'detail';
-  $('#mapdrawer').hidden = k !== 'map';
-  $('#view-map').setAttribute('aria-pressed', String(k === 'map'));
-  $('#view-grid').setAttribute('aria-pressed', String(k === 'none'));
-  if (k === 'map' && map) requestAnimationFrame(() => map.resize());
-}
-
 /* ══ 모달 ══════════════════════════════════════════════════════════════ */
 let lastFocus = null;
 function openModal(sel) {
@@ -582,8 +819,8 @@ document.addEventListener('click', (ev) => { if (ev.target.closest('[data-close]
 document.addEventListener('keydown', (ev) => {
   if (ev.key !== 'Escape') return;
   if (!$('#scrim').hidden) { closeModal(); return; }
-  if (S.side === 'detail') { S.archSel = null; setSide('none'); renderArchive(); }
-  else if (S.side === 'pub') { S.doneSel = null; setSide('none'); renderDone(); }
+  if (S.mode === 'pub') { S.mode = 'tile'; renderSide(); return; }
+  if (S.sel) { S.sel = null; S.mode = 'none'; S.more = false; renderPanel(); renderSide(); }
 });
 
 /* 디스크 증량 신청 — 32/64/128/256/512/1024 프리셋 + 직접 입력 + 사유 */
@@ -597,17 +834,17 @@ $('#mq-presets').addEventListener('click', (ev) => {
   S.quotaGb = v === 'custom' ? null : Number(v);
   if (v === 'custom') $('#mq-gb').focus();
 });
-$('#quota-open').addEventListener('click', () => {
+function openQuota() {
   $('#mq-tag').textContent = `내 디스크 사용량 · ${gb(DISK.used)} / ${gb(DISK.total)} GB · 잔여 ${gb(DISK.free)} GB · ${SEED_TAG}`;
   $('#mq-err').hidden = true; openModal('#m-quota');
-});
+}
 $('#m-quota').addEventListener('submit', (ev) => {
   ev.preventDefault();
   const e = $('#mq-err');
   const g = S.quotaGb || Number($('#mq-gb').value);
   const why = $('#mq-why').value.trim();
-  if (!g || g <= 0) { e.hidden = false; e.textContent = '신청 용량을 선택하거나 입력해 주세요.'; return; }
-  if (!why) { e.hidden = false; e.textContent = '신청 사유를 입력해 주세요.'; return; }
+  if (!g || g <= 0) { e.hidden = false; e.textContent = '신청 용량 필수'; return; }
+  if (!why) { e.hidden = false; e.textContent = '신청 사유 필수'; return; }
   closeModal(); say(`디스크 증량 신청 접수 — ${nf.format(g)} GB · ${SEED_TAG}`);
 });
 
@@ -628,19 +865,7 @@ $('#m-share').addEventListener('submit', (ev) => {
   closeModal();
 });
 
-/* 세부 정보 — 업로드 · 발행중 */
-function openDetailModal(r, pub) {
-  $('#md-h').textContent = pub ? '레이어 발행 세부 정보' : '업로드 세부 정보';
-  const rows = pub
-    ? [['파일명', r.file], ['형식', r.fmt], ['상태', PUB_ST[r.st]], ['단계', `${r.step}/4 ${PUB_STEPS[r.step - 1]}`], ['크기', r.size], ['업로드', r.at], ...(r.why ? [['실패 사유', r.why]] : []), ...(r.crs ? [['좌표계', r.crs]] : [])]
-    : [['파일명', r.file], ['형식', r.fmt], ['업로드 상태', UP_ST[r.st]], ['진행률', `${r.pct}%`], ['크기', r.size]];
-  rows.push(['자료', `원본 목업 시드 · ${SEED_TAG}`]);
-  $('#md-rows').innerHTML = rows.map(([k, v]) => `<div class="dt-r"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('');
-  openModal('#m-detail');
-}
-
 /* ══ 푸터 · 기동 ═══════════════════════════════════════════════════════ */
-$('#attrib').textContent = ATTRIB;
 $('#foot-links').innerHTML = FOOT_LINKS.map((t) => `<span>${esc(t)}</span>`).join('');
 $('#foot-addr').textContent = FOOT_ADDR;
 $('#foot').insertAdjacentHTML('beforeend', `<span class="fam">Family Site<svg width="8" height="5" viewBox="0 0 9 6" fill="none" stroke="#686868" stroke-width="1.25" aria-hidden="true"><path d="M.5.5 4.5 5 8.5.5"/></svg></span>`);

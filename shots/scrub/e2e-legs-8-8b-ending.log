@@ -1,0 +1,6 @@
+
+Running 1 test using 1 worker
+
+  ✓  1 tests\e2e\proto-scrub.spec.mjs:224:1 › 브랜드 마감 — 워드마크 → 태그라인 → LX 락업, 겹침 0, 월드에 붙은 수축 (43.0s)
+
+  1 passed (44.4s)

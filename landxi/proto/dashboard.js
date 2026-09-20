@@ -1,279 +1,330 @@
-// LX 관리자 대시보드 — B5 12.8.
-// 규칙 둘만 지킨다.
-//  1) 기능은 원본과 1:1 이다(레일 A1–A11 · 위젯 B1–B16, 새 위젯 0).
-//     대조표 docs/superpowers/proto/2026-08-26-dashboard-parity.md
-//  2) 조판은 design-canvas/v2/B5-Dashboard.dc.html / -Data.dc.html 의 좌표 그대로다.
-//     밴드·폰트·헤어라인 근거 = design-canvas/v2/NOTES.md §12.4 · §12.8
-// 콘티 원칙(§5): 지어낸 운영 서사 0 — 담당자명·대기 일수·추세 문구 없음.
-// 판의 셀 등급·범례 셀 수·콜아웃 문구는 전부 db-data.js 의 집계값이다(손 값 0).
+// LX 관리자 대시보드 — 발주자 보드 B5-Dashboard-Data (1 판 + 토글 2 · 우 탭 패널 1).
+// 규칙.
+//  1) 기능은 원본과 1:1 — https://mini531.github.io/namwon-smart-village/landxi7/dashboard.html
+//     의 레일 A1–A11 · 위젯 B1–B16 이 전부. 대조표 docs/superpowers/proto/2026-08-26-dashboard-parity.md
+//  2) 조판은 design-canvas/v2/B5-Dashboard-Data.dc.html. B10·B11·B12 는 우 패널의 탭 3 = 각 1회.
+//  3) 숫자는 results.js · imagery.js · change.js · services.js · dashboard.js 에서만. 원본 시드 = 시연, 우리가 이은 값 = 추정.
+//     판 위 셀은 실좌표(db-cells.js)를 판에 투영한 것 — 손으로 놓은 셀이 아니다.
+//  4) 불필요한 글자 없음: 설명 문장 0. 자세한 값은 호버 콜아웃에.
+//  5) 색 역할(design/system.md §2): 파랑 = 정보/선택 · 빨강(warn) = 조치 필요 · 검정 = 본문 · 청록 = AI 결과 · 앰버 = 탐지 순간.
 import {
-  nf, ymd, T1, DATA_ASOF, IMG, BACKBONE, KPI, NAV, NAV_FOOT, NOTICE, APPROVALS,
-  ADMIN_TILES, PROJECTS, VISITS, VISITS_TOTAL, STORAGE, JOBS, JOB_UNMAPPED,
-  cellsFor, loadFootprints, calloutFor, legendFor,
+  nf, ymd, T1, BACKBONE, KPI, NAV, NAV_FOOT, NAV_MY, NOTICE, APPROVALS, ADMIN_TILES,
+  PROJECTS, VISITS, VISITS_TOTAL, STORAGE, JOBS, JOB_UNMAPPED, IMG,
 } from './db-data.js';
-import { mountPlate, toggleHTML, legendHTML, calloutHTML, cellsHTML, markHTML } from './db-plate.js';
-import { rankedBars, barsTotal, polyline, stackBar, stackLegend, tbPerPx } from './db-charts.js';
+import { RESULTS } from '../assets/data/results.js';
+import { CHANGE } from '../assets/data/change.js';
+import { IMAGERY } from '../assets/data/imagery.js';
+import { SERVICES } from '../assets/data/services.js';
+import { EOX } from './js/sources.js';
+import { buildCells, gradeResult, gradeTrain, fitProjector, gridLines, cellRect, cellRange, PLATE_BOUNDS, STEP } from './db-cells.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const REDUCED = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const EASE4 = (k) => 1 - (1 - k) ** 4;
+const cm = (gsd) => (gsd < 1 ? `${+(gsd * 100).toFixed(2)} cm` : `${gsd} m`);
+const sayEl = $('#say'); let sayT = 0;
+function say(t) { sayEl.textContent = t; clearTimeout(sayT); sayT = setTimeout(() => { sayEl.textContent = ''; }, 4200); }
 
-/* ══ 계측 글리프 — 마스터의 path 를 그대로 옮긴다(B4 공용 세트) ═══════ */
-const G = {
-  dash: '<path d="M3 3h14v14H3z"/><path d="M3 8.5h14M10.5 8.5V17"/>',
-  data: '<path d="M3 3h10v10H3z"/><path d="M7 7h10v10H7z"/>',
-  proj: '<path d="M2.5 2.5h5v5h-5z"/><path d="M12.5 2.5h5v5h-5z"/><path d="M7.5 12.5h5v5h-5z"/><path d="M7.5 5h5M15 7.5v4H10v1"/>',
-  run: '<path d="M3 3h14v14H3z"/><path d="M3 10h14" stroke-dasharray="2 2"/><path d="M6 5.5h3v3H6z"/><path d="M11.5 11.5h3.5v3.5h-3.5z"/>',
-  map: '<path d="M4.5 4.5h11v11h-11z"/><path d="M10 1v18M1 10h18"/>',
-  help: '<path d="M3 3h14v9.5H8.5L4.5 17v-4.5H3z"/><path d="M6.5 7.5h7"/>',
-  stack: '<path d="M3 6h10v11H3z"/><path d="M9 11 17 3M12 3h5v5"/>',
-  gear: '<path d="M6 3v14M14 3v14"/><path d="M4 6.5h4v2.5H4z"/><path d="M12 11h4v2.5h-4z"/>',
-  my: '<path d="M3 3h14v14H3z"/><path d="M8 6h4v4H8z"/><path d="M5.5 17v-3h9v3"/>',
-  out: '<path d="M11 3H3.5v14H11"/><path d="M8.5 10H17M13.5 6.5 17 10l-3.5 3.5"/>',
-  notice: '<path d="M3 3.5h14v9H3z"/><path d="M6 12.5V17"/><path d="M6 7h8M6 9.5h5"/>',
-  backbone: '<path d="M3 3h14v14H3z"/><path d="M3 7.67h14M3 12.33h14M7.67 3v14M12.33 3v14"/><path d="M7.67 7.67h4.66v4.66H7.67z" fill="currentColor" stroke="none"/>',
-  bars: '<path d="M2 13h16"/><path d="M4 13V8M7 13v-3M10 13V8M13 13v-3M16 13V8"/>',
-  line: '<path d="m3 13 3.5-3.5 3 3L14 6l3 3.5"/><path d="M2 15h1.8M16.2 15H18"/>',
-  disk: '<path d="M3 8h14v4H3z"/><path d="M7 8v4M10.5 8v4M13.5 8v4"/><path d="M3 5.5v9"/>',
-  check: '<path d="M3 6V3h3M14 3h3v3M17 14v3h-3M6 17H3v-3"/><path d="M6.5 10 9 12.5 13.5 7"/>',
-  user: '<path d="M8 4.5h4v4H8z"/><path d="M4.5 16v-3.5h11V16"/>',
-  mail: '<path d="M3 5h14v10H3z"/><path d="m3 5 7 5.5L17 5"/>',
-  faq: '<path d="M3 3h14v14H3z"/><path d="M6 7.5h8M8.5 12.5h5.5"/><path d="M5.5 11h2v3h-2z"/>',
+/* ══ A1–A11 좌측 레일 ═══════════════════════════════════════════════════ */
+const ICON = {
+  dash: '<rect x="2.6" y="2.6" width="6.4" height="6.4"/><rect x="11" y="2.6" width="6.4" height="6.4"/><rect x="2.6" y="11" width="6.4" height="6.4"/><rect x="11" y="11" width="6.4" height="6.4"/>',
+  data: '<ellipse cx="10" cy="4.9" rx="7" ry="2.5"/><path d="M3 4.9v10.2c0 1.4 3.14 2.5 7 2.5s7-1.1 7-2.5V4.9"/><path d="M3 10c0 1.4 3.14 2.5 7 2.5s7-1.1 7-2.5"/>',
+  proj: '<path d="M2.4 16.4V4.2h5.1l1.7 2.2h8.4v10z"/>',
+  run: '<path d="M6.2 3.4 16 10l-9.8 6.6z"/>',
+  map: '<path d="M2.4 5.2 7.6 3l4.8 2.2L17.6 3v11.8l-5.2 2.2-4.8-2.2-5.2 2.2z"/><path d="M7.6 3v14M12.4 5.2v11.8"/>',
+  help: '<circle cx="10" cy="10" r="7.3"/><path d="M7.9 7.8a2.15 2.15 0 1 1 3.1 1.9c-.7.4-1 .9-1 1.7"/><circle cx="10" cy="14.3" r=".75" fill="currentColor" stroke="none"/>',
+  stack: '<path d="M10 2.5 17.5 6.8 10 11.1 2.5 6.8z"/><path d="M2.5 11.1 10 15.4l7.5-4.3"/>',
+  gear: '<circle cx="10" cy="10" r="2.9"/><path d="M10 1.6v2.5M10 15.9v2.5M18.4 10h-2.5M4.1 10H1.6M15.94 4.06l-1.77 1.77M5.83 14.17l-1.77 1.77M15.94 15.94l-1.77-1.77M5.83 5.83 4.06 4.06"/>',
+  my: '<circle cx="10" cy="6.9" r="3.1"/><path d="M3.7 17.3c0-3.4 2.9-5.3 6.3-5.3s6.3 1.9 6.3 5.3"/>',
+  out: '<path d="M11.6 2.6H3.4v14.8h8.2"/><path d="M8.6 10h9M14.2 6.6 17.6 10l-3.4 3.4"/>',
 };
-const svg = (k, n = 20) => `<svg width="${n}" height="${n}" viewBox="0 0 20 20" fill="none" stroke="currentColor"`
-  + ` stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter" aria-hidden="true">${G[k] || ''}</svg>`;
-
-/* ══ A1–A11 좌 레일 ═══════════════════════════════════════════════════
-   원본 include/header.html 의 메뉴가 순서까지 그대로다. 원본 페이지는 이 저장소에
-   없으므로 링크를 지어내지 않고, 같은 데이터가 있는 우리 자리로 보낸다. */
-const RAIL_TOP = [72, 130, 188, 246, 304];
-const RAIL_FOOT = [596, 654, 712, 770, 828];
-const railItem = (n, top) => `<button type="button" class="rail-i" data-menu="${n.menu}" data-to="${n.to || ''}"`
-  + ` style="top:${top}px" title="원본 ${esc(n.href)}"${n.menu === 'dashboard' ? ' aria-current="page"' : ''}>`
-  + `${svg(n.icon)}<span class="rl">${esc(n.label || n.name)}</span></button>`;
-
-const RAIL_ICON = { dashboard: 'dash', media: 'data', project: 'proj', analysis: 'run', map: 'map', support: 'help', 'publish-admin': 'stack', admin: 'gear' };
-const RAIL_LABEL = { media: '데이터\n관리', 'publish-admin': '카드 발행\n관리' };
-const withIcon = (n) => ({ ...n, icon: RAIL_ICON[n.menu] || n.icon, label: RAIL_LABEL[n.menu] || n.name });
-
-$('#rail-top').innerHTML = NAV.map((n, i) => railItem(withIcon(n), RAIL_TOP[i])).join('');
-$('#rail-foot').innerHTML = NAV_FOOT.map((n, i) => railItem(withIcon(n), RAIL_FOOT[i])).join('')
-  + railItem({ menu: 'my', name: 'MY', href: 'mypage.html', icon: 'my' }, RAIL_FOOT[3])
-  + `<button type="button" class="rail-i" data-action="logout" style="top:${RAIL_FOOT[4]}px" title="원본 로그아웃">`
-  + `${svg('out')}<span class="rl">로그아웃</span></button>`;
-
+// 원본 페이지가 저장소에 없는 항목은 같은 데이터가 있는 우리 자리로: 프로젝트 → 탭 1, 분석 → 판, 지도 → 판, 지원 → 공지 …
+const RAIL_TO = { project: 'tab:proj', analysis: 'plate', map: 'plate', support: 'b-notice', 'publish-admin': 'b-approve', admin: 'ad-rows' };
+const RAIL_GO = { media: 'dataset.html' };
+const railSvg = (k) => `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${ICON[k] || ''}</svg>`;
+const railItem = (n) => `
+  <button type="button" class="rail-i" data-menu="${n.menu}" data-to="${RAIL_TO[n.menu] || ''}" data-go="${RAIL_GO[n.menu] || ''}"
+    title="원본 ${n.href}"${n.menu === 'dashboard' ? ' aria-current="page"' : ''}${n.menu === 'my' ? ' aria-haspopup="menu" aria-expanded="false"' : ''}>${railSvg(n.icon)}<span class="rl">${esc(n.name)}</span></button>`;
+$('#rail-top').innerHTML = NAV.map(railItem).join('');
+$('#rail-foot').innerHTML = NAV_FOOT.map(railItem).join('')
+  + railItem({ menu: 'my', name: 'MY', href: 'mypage.html', icon: 'my' })
+  + `<button type="button" class="rail-i" data-action="logout" title="원본 로그아웃">${railSvg('out')}<span class="rl">로그아웃</span></button>`;
+$('#rail-my').innerHTML = NAV_MY.map((m) => (m.action
+  ? `<button type="button" data-action="${m.action}">${esc(m.name)}</button>`
+  : `<a href="${m.href}" title="원본 mypage.html">${esc(m.name)}</a>`)).join('');
+function logout() { try { localStorage.removeItem('lx_logged_in'); } catch { /* 저장소 차단 */ } location.href = 'scrub/index.html'; }
+function goTo(id) {
+  if (id.startsWith('tab:')) { setTab(id.slice(4)); $(`#tab-${id.slice(4)}`).focus(); return; }
+  if (id === 'plate') { $('#plate-wrap').scrollIntoView({ behavior: REDUCED() ? 'auto' : 'smooth', block: 'center' }); const c = $('#cells .cell[data-g="4"], #cells .cell[data-g="2"], #cells .cell'); if (c) c.focus({ preventScroll: true }); return; }
+  const el = document.getElementById(id); if (!el) return;
+  el.scrollIntoView({ behavior: REDUCED() ? 'auto' : 'smooth', block: 'center' });
+  const t = el.matches('a,button,[tabindex]') ? el : $('a,button,[tabindex]', el);
+  if (t) t.focus({ preventScroll: true });
+}
 $('#rail').addEventListener('click', (ev) => {
-  const lo = ev.target.closest('[data-action="logout"]');
-  // A11 — 원본과 동작까지 1:1(lx_logged_in 삭제 → home).
-  if (lo) { try { localStorage.removeItem('lx_logged_in'); } catch { /* 저장소 차단 */ } location.href = '../home.html'; return; }
-  const b = ev.target.closest('.rail-i[data-menu]');
-  if (!b) return;
-  $$('.rail-i').forEach((x) => x.removeAttribute('aria-current'));
-  b.setAttribute('aria-current', 'page');
-  if (b.dataset.menu === 'my') { location.href = '../mypage.html'; return; }
-  if (b.dataset.to) focusBlock(b.dataset.to);
+  if (ev.target.closest('[data-action="logout"]')) { logout(); return; }
+  const b = ev.target.closest('.rail-i[data-menu]'); if (!b) return;
+  if (b.dataset.menu === 'my') { const fly = $('#rail-my'); fly.hidden = !fly.hidden; b.setAttribute('aria-expanded', String(!fly.hidden)); return; }
+  if (b.dataset.menu === 'dashboard') { window.scrollTo({ top: 0, behavior: REDUCED() ? 'auto' : 'smooth' }); return; }
+  if (b.dataset.go) { location.href = b.dataset.go; return; }
+  if (b.dataset.to) goTo(b.dataset.to);
 });
-/** 원본 페이지가 없으므로 같은 데이터가 있는 블록으로 초점을 옮긴다. */
-function focusBlock(id) {
-  const t = document.getElementById(id);
-  if (!t) return;
-  t.scrollIntoView({ block: 'nearest', behavior: REDUCED() ? 'auto' : 'smooth' });
+document.addEventListener('click', (ev) => {
+  if (!ev.target.closest('#rail')) { $('#rail-my').hidden = true; $('#rail [data-menu="my"]').setAttribute('aria-expanded', 'false'); }
+});
+
+/* ══ 마스트헤드 — B3 · B2(데이터 기준시점) ═══════════════════════════════ */
+$('#notice-t').textContent = NOTICE.title;
+$('#notice-d').textContent = ymd(NOTICE.date);
+$('#b-notice').href = `${NOTICE.more}?notice=${NOTICE.id}`;
+$('#b2-d').textContent = ymd(T1);
+
+/* ══ B4–B8 KPI 5 ═══════════════════════════════════════════════════════ */
+// 색 역할: 정보 KPI(①②) = 파랑, 조치 필요 KPI(③④⑤ act) = warn — 숫자와 상태어(검토/승인/답변 필요)만.
+const actWord = (t) => esc(t).replace(/(검토 필요|승인 필요|답변 필요)/, '<em>$1</em>');
+$('#b-kpi').innerHTML = KPI.map((k) => {
+  const inner = `<span class="kl">${esc(k.label)}</span><span class="kv"><b class="big cu" data-n="${k.value}">0</b><span>${esc(k.unit)}</span></span>
+    <span class="ks n">${k.act ? actWord(k.sub) : esc(k.sub)}${k.to ? ' · <span class="dim">?status=대기</span>' : ''}</span>`;
+  const cls = `k${k.act ? ' act' : ''}`;
+  return k.to ? `<a class="${cls}" role="listitem" href="dashboard.html?status=대기" title="원본 ${esc(k.href)}">${inner}</a>`
+    : `<div class="${cls}" role="listitem" title="원본 ${esc(k.href)}">${inner}</div>`;
+}).join('');
+
+/* ══ B9 백본 헤더 ══════════════════════════════════════════════════════ */
+$('#bb-name').textContent = `${BACKBONE.name} ${BACKBONE.ver}`;
+$('#bb-sub').innerHTML = `최종 적용 ${BACKBONE.applied} · 연결된 분석 과제 ${BACKBONE.tasks}개 <span class="dim">(측정 ${JOBS.length} · AOI 미지정 ${JOB_UNMAPPED})</span>`;
+
+/* ══ 판 — 대한민국 전도 · 0.25° 그리드 · 셀 = 실자산 위치 ═══════════════════ */
+const CELLS = [...buildCells({ RESULTS, CHANGE, IMAGERY, SERVICES }).values()];
+const wrap = $('#plate-wrap'), gridEl = $('#grid'), cellsEl = $('#cells'), callout = $('#callout'), legendEl = $('#legend');
+let MODE = 'res', PROJ = null, map = null;
+const grade = (c) => (MODE === 'res' ? gradeResult(c) : gradeTrain(c));
+
+function layoutPlate() {
+  const w = wrap.clientWidth, h = wrap.clientHeight; if (!w || !h) return;
+  PROJ = fitProjector(PLATE_BOUNDS, w, h, 6);
+  gridEl.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  gridEl.innerHTML = gridLines(PROJ, w, h).map((l) => (l.d === 'v'
+    ? `<line x1="${l.p.toFixed(2)}" y1="0" x2="${l.p.toFixed(2)}" y2="${h}"${l.major ? ' class="major"' : ''}/>`
+    : `<line x1="0" y1="${l.p.toFixed(2)}" x2="${w}" y2="${l.p.toFixed(2)}"${l.major ? ' class="major"' : ''}/>`)).join('');
+  for (const c of CELLS) {
+    const el = $(`.cell[data-key="${c.key}"]`, cellsEl); if (!el) continue;
+    const r = cellRect(c, PROJ);
+    el.style.cssText = `left:${r.x.toFixed(2)}px;top:${r.y.toFixed(2)}px;width:${r.w.toFixed(2)}px;height:${r.h.toFixed(2)}px`;
+  }
+  if (map) map.jumpTo({ center: PROJ.center, zoom: PROJ.zoom });
 }
-
-/* ══ B3 공지 + B2 기준일 ═════════════════════════════════════════════ */
-$('#b-notice').innerHTML = `${svg('notice', 16)}<span class="chip">공지</span>`
-  + `<span class="ti">${esc(NOTICE.title)}</span>`
-  + `<span class="n dt">${ymd(NOTICE.date)}</span><span class="more">전체 보기 ›</span>`;
-$('#b-notice').href = `../notice.html?notice=${NOTICE.id}`;
-// B2 — 오늘을 지어내지 않는다. 시스템 날짜는 마스트헤드 우측 회색 한 줄뿐이다.
-$('#b2').textContent = ymd(new Date().toISOString().slice(0, 10));
-
-/* ══ B4–B8 KPI 띠 — 카드 0, `|` 헤어라인 4 (y 174–278) ═══════════════ */
-const KPI_X = [128, 397.2, 648.4, 899.6, 1150.8];
-const KPI_W = [243.2, 225.2, 225.2, 225.2, 225.2];
-const KPI_L = [379.2, 630.4, 881.6, 1132.8];
-$('#b-kpi').innerHTML = KPI.map((k, i) => {
-  const q = k.href && k.href.includes('?') ? ` · ?${k.href.split('?')[1]}` : '';
-  const tag = k.to ? 'button' : 'div';
-  const attr = k.to ? ` type="button" data-to="${k.to}"` : '';
-  return `<${tag} class="k"${attr} style="left:${KPI_X[i]}px;width:${KPI_W[i]}px" title="원본 ${esc(k.href)}">`
-    + `<span class="lab">${esc(k.label)}</span>`
-    + `<span class="kv n"><b>${k.value}</b><em>${esc(k.unit)}</em></span>`
-    + `<span class="mic n ks">${esc(k.sub + q)}</span></${tag}>`;
-}).join('') + KPI_L.map((x) => `<i class="kvl" style="left:${x}px"></i>`).join('');
-$('#b-kpi').addEventListener('click', (ev) => {
-  const b = ev.target.closest('[data-to]');
-  if (b) focusBlock(b.dataset.to);
-});
-
-/* ══ B9 백본 ═════════════════════════════════════════════════════════ */
-$('#b-bb').innerHTML = `${svg('backbone', 16)}<span class="d t">AI 기반 모델 (백본)</span>`
-  + '<span class="mic">국토 관측 영상 파운데이션 모델</span><span class="sp"></span>'
-  + `<span class="n" id="bb-ver">${esc(BACKBONE.name)} ${esc(BACKBONE.ver)}</span>`;
-// 원본 B9 는 과제 14개라고 말하지만 실측 목록(A5)은 10건이다 — 그 차를 화면이 자백한다.
-$('#bb-applied').innerHTML = `최종 적용 ${esc(BACKBONE.applied)} · 연결된 분석 과제 ${BACKBONE.tasks}개`
-  + ` <i>(측정 ${JOBS.length} · AOI 미지정 ${JOB_UNMAPPED})</i>`;
-
-/* ══ 판 12.8 ═════════════════════════════════════════════════════════
-   판은 이 파일 맨 끝에서 올린다 — 원장이 지도를 기다리지 않는다(§12.1 #4:
-   판은 위젯이 아니라 증거 자리다. 증거가 늦게 도착해도 원장은 이미 서 있어야 한다). */
-let MODE = 'ai';
-let CELLS = [];
-let PLATE = null;
-
-const pt = $('#pt');
-const pl = $('#pl');
-const pc = $('#pc');
-const pmark = $('#pmark');
-let hovered = -1;
-
-function paintLegend() { pl.innerHTML = legendHTML(CELLS, MODE); }
-/** 콜아웃 높이는 마스터 고정값이다 — AI 96 / 데이터 82(줄 수 상한에 맞춘 값). */
-const PC_H = () => (MODE === 'data' ? 82 : 96);
-function showCell(i) {
-  const cell = CELLS[i];
-  if (!cell || !PLATE) return;
-  hovered = i;
-  pc.hidden = false;
-  pc.style.height = `${PC_H()}px`;
-  pc.innerHTML = calloutHTML(cell, MODE);
-  pmark.innerHTML = markHTML(cell, PLATE.project, { top: 48, h: PC_H(), right: 256 });
+function cellLabel(c) {
+  const g = grade(c); const rg = cellRange(c);
+  const n = c.results.length + c.change.length;
+  const head = `${c.name || '셀'} ${rg.e} · ${rg.n}`;
+  if (MODE === 'res') return `${head} — ${n ? `AI 분석 결과 ${n}건` : g === 'train' ? '학습데이터만' : g === 'plan' ? '조사 예정' : ''}`;
+  return `${head} — 학습데이터 ${c.imagery.length}종`;
 }
-function hideCell() {
-  hovered = -1;
-  pc.hidden = true;
-  pc.innerHTML = '';
-  pmark.innerHTML = '';
-}
-$('#pcells').addEventListener('mouseover', (ev) => {
-  const a = ev.target.closest('.pcell');
-  if (a) showCell(+a.dataset.cell);
-});
-$('#pcells').addEventListener('mouseleave', hideCell);
-$('#pcells').addEventListener('focusin', (ev) => {
-  const a = ev.target.closest('.pcell');
-  if (a) showCell(+a.dataset.cell);
-});
-$('#pcells').addEventListener('focusout', hideCell);
+cellsEl.innerHTML = CELLS.map((c) => `<button type="button" class="cell" role="listitem" data-key="${c.key}" data-x="${c.x0}" data-y="${c.y0}" aria-label="${esc(cellLabel(c))}">
+  <i class="bk bk-tl"></i><i class="bk bk-tr"></i><i class="bk bk-bl"></i><i class="bk bk-br"></i></button>`).join('');
 
+function paintCells() {
+  wrap.dataset.mode = MODE;
+  const tally = {};
+  for (const c of CELLS) {
+    const g = grade(c); const el = $(`.cell[data-key="${c.key}"]`, cellsEl);
+    if (g == null) el.removeAttribute('data-g'); else { el.dataset.g = String(g); tally[g] = (tally[g] || 0) + 1; }
+    el.setAttribute('aria-label', cellLabel(c));
+  }
+  // 범례 = 히트 단계(건수)와 셀 수만. 학습데이터만·조사 예정·영상 미등록 셀은 헤어라인으로 그리되 설명은 호버 콜아웃에서만.
+  const rows = MODE === 'res'
+    ? [['4', '결과 4건 이상'], ['3', '결과 3건'], ['2', '결과 2건'], ['1', '결과 1건']]
+    : [['4', '시점 4 이상'], ['3', '시점 3'], ['2', '시점 2'], ['1', '시점 1']];
+  legendEl.innerHTML = rows.filter(([g]) => tally[g]).map(([g, t]) => `<div class="lg"><span class="sw" data-g="${g}"></span>${t} <span class="n">${tally[g]}셀</span></div>`).join('');
+}
+const fmtRes = (r) => `${r.name} ${nf.format(r.objTotal && r.name === '비닐하우스' ? r.objTotal : r.count)}${r.objTotal && r.name === '비닐하우스' ? '동' : r.unit}`;
+function calloutHtml(c) {
+  const rg = cellRange(c);
+  const c1 = `<div class="c1">${esc(c.name || '셀')} <span class="i">${rg.e} · ${rg.n}</span></div>`;
+  if (MODE === 'res') {
+    const n = c.results.length + c.change.length;
+    if (n) {
+      const rs = c.results.map(fmtRes);
+      const lines = []; for (let i = 0; i < rs.length; i += 2) lines.push(rs.slice(i, i + 2).join(' · '));
+      const ch = c.change.map((x) => `${x.name} ${nf.format(x.count)}${x.unit} <em>· ${x.method}</em>`);
+      return c1 + `<div class="c2">AI 분석 결과 <span class="n">${n}건</span></div>` + [...lines, ...ch].map((l) => `<div class="c3">${l}</div>`).join('');
+    }
+    if (c.imagery.length) return c1 + `<div class="c2">학습데이터만 · 결과 없음</div>` + c.imagery.slice(0, 3).map((i) => `<div class="c3">${esc(i.label)} <em>${cm(i.gsd)}</em></div>`).join('');
+    return c1 + `<div class="c2">조사 예정</div>` + c.planned.map((p) => `<div class="c3">${esc(p.name)} <em>결과 파일 없음</em></div>`).join('');
+  }
+  if (c.imagery.length) {
+    return c1 + `<div class="c2">학습데이터 <span class="n">${c.imagery.length}종</span></div>`
+      + c.imagery.slice(0, 4).map((i) => `<div class="c3">${esc(i.captured)} · GSD ${cm(i.gsd)}${i.city ? ' <em>전역</em>' : ''}${i.kind !== 'ortho' ? ' <em>' + esc(i.kind) + '</em>' : ''}</div>`).join('')
+      + (c.imagery.length > 4 ? `<div class="c3"><em>+${c.imagery.length - 4}</em></div>` : '');
+  }
+  return c1 + `<div class="c2">영상 미등록</div>` + c.results.map((r) => `<div class="c3">${fmtRes(r)} <em>결과만</em></div>`).join('');
+}
+let hot = null;
+function setHot(el) {
+  if (hot === el) return;
+  if (hot) hot.classList.remove('is-hot');
+  hot = el;
+  if (!el) { callout.hidden = true; document.documentElement.dataset.hot = ''; return; }
+  el.classList.add('is-hot');
+  const c = CELLS.find((x) => x.key === el.dataset.key);
+  callout.innerHTML = calloutHtml(c); callout.hidden = false;
+  document.documentElement.dataset.hot = c.key;
+}
+cellsEl.addEventListener('pointerover', (ev) => { const el = ev.target.closest('.cell'); if (el) setHot(el); });
+cellsEl.addEventListener('pointerleave', () => { if (hot && !hot.matches(':focus-visible')) setHot(null); });
+cellsEl.addEventListener('focusin', (ev) => { const el = ev.target.closest('.cell'); if (el) setHot(el); });
+cellsEl.addEventListener('focusout', (ev) => { if (!cellsEl.contains(ev.relatedTarget)) setHot(null); });
+cellsEl.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') { setHot(null); ev.target.blur(); } });
+cellsEl.addEventListener('click', (ev) => {
+  const el = ev.target.closest('.cell'); if (!el) return;
+  location.href = `ximap.html?cell=${el.dataset.x},${el.dataset.y}&mode=${MODE}`;      // 원본 ximap.html 의 자리
+});
+$('#seg').addEventListener('click', (ev) => { const b = ev.target.closest('[role=tab]'); if (b) setMode(b.dataset.mode); });
+$('#seg').addEventListener('keydown', (ev) => { if (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') { setMode(MODE === 'res' ? 'train' : 'res'); $(`#seg-${MODE}`).focus(); } });
 function setMode(m) {
-  if (m === MODE || !PLATE) return;
-  MODE = PLATE.setMode(m);
-  document.body.dataset.mode = MODE;
-  $$('.pt-seg', pt).forEach((b) => {
-    const on = b.dataset.mode === MODE;
-    b.setAttribute('aria-checked', on ? 'true' : 'false');
-    b.tabIndex = on ? 0 : -1;
-  });
-  paintLegend();
-  if (hovered >= 0) showCell(hovered);
+  MODE = m;
+  for (const b of $$('#seg [role=tab]')) b.setAttribute('aria-selected', String(b.dataset.mode === m));
+  paintCells();
+  if (hot) { const c = CELLS.find((x) => x.key === hot.dataset.key); callout.innerHTML = calloutHtml(c); }
 }
-pt.addEventListener('click', (ev) => {
-  const b = ev.target.closest('.pt-seg');
-  if (b) setMode(b.dataset.mode);
-});
-pt.addEventListener('keydown', (ev) => {
-  if (!/^Arrow(Left|Right|Up|Down)$/.test(ev.key)) return;
-  ev.preventDefault();
-  const next = MODE === 'ai' ? 'data' : 'ai';
-  setMode(next);
-  $(`.pt-seg[data-mode="${next}"]`, pt).focus();
-});
+function mountMap() {
+  try {
+    if (!window.maplibregl || !maplibregl.supported?.() && !window.WebGLRenderingContext) throw new Error('no webgl');
+    map = new maplibregl.Map({
+      container: 'plate', interactive: false, attributionControl: false,
+      style: { version: 8, sources: { eox: { type: 'raster', tiles: [EOX], tileSize: 256, attribution: 'Sentinel-2 cloudless 2024 by EOX' } },
+        layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#010102' } }, { id: 'eox', type: 'raster', source: 'eox' }] },
+      center: PROJ.center, zoom: PROJ.zoom,
+    });
+    map.on('load', () => { document.documentElement.dataset.plate = 'ready'; });
+    map.on('error', () => { document.documentElement.dataset.plate = document.documentElement.dataset.plate || 'error'; });
+  } catch { wrap.classList.add('no-map'); document.documentElement.dataset.plate = 'off'; }
+}
+// 출처·기준은 화면 글줄이 아니라 title 로 — 판 아래 글줄 0.
+wrap.title = `대한민국 전도 · EOX Sentinel-2 cloudless 2024 · 그리드 ${STEP}° · 결과 ${RESULTS.length} · 변화지수 ${CHANGE.length}쌍 · 정사영상 ${IMAGERY.length}종 · 기준 ${ymd(T1)} · 셀 호버 = 내용 · 클릭 → XI맵`;
 
-/* ══ ① B10 AI 개발 프로젝트 현황 ════════════════════════════════════ */
-$('#b-proj').innerHTML = `${svg('bars', 16)}<span class="d t">AI 개발 프로젝트 현황</span>`
-  + '<span class="mic">용량 Top5 · GB<i class="tag">시연</i></span><span class="sp"></span>'
-  + '<a class="more" href="../ai-project.html">전체 보기 ›</a>';
-$('#t-proj').innerHTML = rankedBars(PROJECTS);
-$('#proj-src').innerHTML = `Data source: AI 개발 프로젝트 용량 집계(시연) · 상위 5개 합계 ${nf.format(barsTotal(PROJECTS))} GB`
-  + `<i> | </i>기준시점 ${esc(DATA_ASOF.replace('-', '.'))}`;
-
-/* ══ ② B11 사용자 이용 현황 ═════════════════════════════════════════ */
-$('#b-visit').innerHTML = `${svg('line', 16)}<span class="d t">사용자 이용 현황</span>`
-  + '<span class="mic">최근 7일 방문 · 회<i class="tag">시연</i></span><span class="sp"></span>'
-  + `<span class="mic">7일 합계 <span class="n" style="color:#010102">${nf.format(VISITS_TOTAL)}</span></span>`;
-$('#t-visit').innerHTML = polyline(VISITS);
-$('#visit-src').innerHTML = 'Data source: 서비스 접속 로그 최근 7일(시연) · 요일 7값 전부 표기, 양끝·최대만 잉크'
-  + `<i> | </i>기준시점 ${esc(DATA_ASOF.replace('-', '.'))}`;
-
-/* ══ ③ B12 전체 스토리지 사용량 ═════════════════════════════════════ */
-$('#b-store').innerHTML = `${svg('disk', 16)}<span class="d t">전체 스토리지 사용량</span>`
-  + `<span class="mic">${STORAGE.parts.length}분류<i class="tag">시연</i></span><span class="sp"></span>`
-  + `<span class="n" id="store-v">${STORAGE.used}</span><span class="mic">/ ${STORAGE.total} TB</span>`;
-$('#t-store').innerHTML = stackBar(STORAGE);
-$('#store-lg').innerHTML = stackLegend(STORAGE);
-$('#store-src').innerHTML = `Data source: 스토리지 사용량 집계 · 사용 ${STORAGE.used} TB = 측정 · 분류 배분 = 시연`
-  + ` · 1 px ≒ ${tbPerPx(STORAGE)} TB<i> | </i>기준시점 ${esc(DATA_ASOF.replace('-', '.'))}`;
-
-/* ══ B13 카드 발행 승인 대기 ════════════════════════════════════════ */
-$('#ap-h').innerHTML = `${svg('check', 16)}<span class="d t">카드 발행 승인 대기</span>`
-  + '<span class="mic">검토 대상 · 요청 순</span><span class="sp"></span>'
-  + '<span class="mic n go">카드 발행 관리 › <i>?status=대기</i></span>';
-
-const COLS = [
-  { x: 128, w: 28, h: '#', a: 'left' },
-  { x: 164, w: 372, h: '카드명', a: 'left' },
-  { x: 544, w: 92, h: '버전', a: 'left' },
-  { x: 644, w: 212, h: '요청 일시', a: 'left' },
-  { x: 864, w: 152, h: '요청 지역', a: 'left' },
-  { x: 1024, w: 192, h: '상태', a: 'left' },
-  { x: 1224, w: 152, h: '진입', a: 'right' },
-];
-$('#ap-head').innerHTML = COLS.map((c) => `<div class="tc th lab" style="left:${c.x}px;top:755px;width:${c.w}px;text-align:${c.a}">${esc(c.h)}</div>`).join('');
-
-const ROW_TOP = [774, 802];
-$('#ap-rows').innerHTML = APPROVALS.map((a, i) => {
-  const m = /^(.*)\s(v[\d.]+)$/.exec(a.title) || [null, a.title, ''];
-  const cells = [
-    `<span class="n mut">${String(i + 1).padStart(2, '0')}</span>`,
-    esc(m[1]),
-    `<span class="n">${esc(m[2])}</span>`,
-    `<span class="n">${esc(a.at)}</span><i class="tag">시연</i>`,
-    `${esc(a.sgg)} ${esc(a.emd)}<i class="tag">추정</i>`,
-    '승인 대기',
-    `검토 › <span class="dim">?open=…</span>`,
-  ];
-  return `<a class="ap-row" role="listitem" href="../admin-publish.html?open=${esc(a.id)}"`
-    + ` style="top:${ROW_TOP[i]}px" title="원본 admin-publish.html?open=${esc(a.id)}">`
-    + COLS.map((c, j) => `<span class="tc td" style="left:${c.x - 128}px;top:7px;width:${c.w}px;text-align:${c.a}">${cells[j]}</span>`).join('')
-    + '</a>';
-}).join('') + ROW_TOP.map((t) => `<i class="hl" style="left:128px;top:${t + 28}px"></i>`).join('');
-
-/* ══ B14 사용자·콘텐츠 관리 4 — Outage Center 규칙: 수치는 한 번만 ══ */
-const AD_ICON = ['user', 'notice', 'mail', 'faq'];
-$('#ad-rows').innerHTML = '<span class="lab">관리 바로가기</span>'
-  + ADMIN_TILES.map((t, i) => '<i class="sep"></i>'
-    + `<a class="ad" role="listitem" href="../${esc(t.href)}" title="원본 ${esc(t.href)}">${svg(AD_ICON[i], 15)}`
-    + `<span class="d t">${esc(t.name)}</span><span class="n s">${esc(t.ref || t.desc)}</span>`
-    + '<span class="go">›</span></a>').join('');
-
-/* ══ 진입 — 이징 하나, 사다리 넷(§4). 유휴 운동 0. ═════════════════ */
-requestAnimationFrame(() => { if (!REDUCED()) document.body.classList.add('in'); });
-document.documentElement.dataset.dash = 'ready';
-
-// 테스트·비교 촬영용 손잡이 — 판의 상태를 밖에서 읽을 수 있게 한다.
-window.__dash = {
-  get mode() { return MODE; },
-  get cells() { return CELLS; },
-  get map() { return PLATE && PLATE.map; },
-  setMode,
-  showCell,
-  hideCell,
-  legend: (m) => legendFor(CELLS, m || MODE),
-  callout: (i, m) => calloutFor(CELLS[i], m || MODE),
-  indexOf: (lon, lat) => CELLS.findIndex((c) => Math.abs(c.lon - lon) < 1e-6 && Math.abs(c.lat - lat) < 1e-6),
+/* ══ 우 탭 패널 — B10 | B11 | B12 (각 1회) ═════════════════════════════ */
+const PROJ_SUM = PROJECTS.reduce((a, p) => a + p.gb, 0);
+// 숫자는 각 1회 — 합계·최대·잔여는 차트 안에만. 출처·기준은 글줄 대신 패널 title 로(시연 데이터).
+const YM = T1.slice(0, 7).replace('-', '.');
+const TAB_TITLE = {
+  proj: `AI 개발 프로젝트 ${PROJECTS.length}건 · 용량 순(GB) · 출처 AI 개발 프로젝트 용량 집계(시연) · 기준 ${YM}`,
+  visit: `최근 7일 방문(회) · 출처 서비스 접속 로그 7일(시연) · 기준 ${YM}`,
+  store: `스토리지 ${STORAGE.parts.length}분류(TB) · 사용 ${STORAGE.used} TB = 측정 · 분류 배분 시연 · 기준 ${YM}`,
 };
 
-/* ── 판을 올린다 — 위성 타일·CDN 이 늦어도 위 원장은 이미 다 서 있다. ── */
-const footprints = await loadFootprints();
-CELLS = cellsFor(footprints);
-PLATE = await mountPlate($('#plate'), { mode: MODE, footprints, cells: CELLS });
-pt.innerHTML = toggleHTML(MODE);
-$('#pcells').innerHTML = cellsHTML(CELLS, PLATE.project);
-paintLegend();
-// 판 출처 — 지역 이름은 결과가 실제로 선 셀에서 뽑는다.
-const REGIONS = [...new Set(CELLS.filter((c) => c.ai > 0).map((c) => calloutFor(c, 'ai').place).filter(Boolean))];
-$('#plate-src').innerHTML = `Data source: EOX Sentinel-2 cloudless 2024 · ${esc(REGIONS.join('·'))} 분석 결과`
-  + ` · 정사영상 타일 카탈로그 ${IMG.length}종<i> | </i>기준시점 ${ymd(T1)}`;
-document.documentElement.dataset.plate = 'ready';
+// 탭 1 — 랭크드 바(1위 액센트)
+{
+  const max = Math.max(...PROJECTS.map((p) => p.gb));
+  $('#pane-proj').innerHTML = PROJECTS.map((p, i) => `<div class="rk${i ? '' : ' on'}" data-proj="${esc(p.name)}">
+    <span class="no n">${String(i + 1).padStart(2, '0')}</span><span class="nm">${esc(p.name)}</span>
+    <span class="bar"><i style="width:${((p.gb / max) * 100).toFixed(1)}%"></i></span><span class="val"><b class="big cu" data-n="${p.gb}">0</b><span class="u">GB</span></span></div>`).join('')
+    + `<div class="rk-sum n"><span class="no"></span><span class="nm">합계 ${PROJECTS.length}건</span><span class="bar"></span><span class="val"><b class="big cu" data-n="${PROJ_SUM}">0</b><span class="u">GB</span></span></div>`;
+}
+// 탭 2 — 7일 폴리라인, 직접 라벨 7값
+{
+  const W = 600, H = 150, n = VISITS.length, max = Math.max(...VISITS.map((v) => v.count)), min = Math.min(...VISITS.map((v) => v.count));
+  const x = (i) => 10 + (i * (W - 20)) / (n - 1), y = (v) => 12 + ((max - v) / (max - min || 1)) * (H - 24);
+  const imax = VISITS.findIndex((v) => v.count === max);
+  $('#pane-visit').innerHTML = `<svg id="v-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+      <line x1="0" y1="${H - .5}" x2="${W}" y2="${H - .5}" stroke="#DDDDDD"/>
+      ${VISITS.map((v, i) => `<line x1="${x(i).toFixed(1)}" y1="${y(v.count).toFixed(1)}" x2="${x(i).toFixed(1)}" y2="${H}" stroke="#DDDDDD" stroke-dasharray="2 3"/>`).join('')}
+      <polyline points="${VISITS.map((v, i) => `${x(i).toFixed(1)},${y(v.count).toFixed(1)}`).join(' ')}"/>
+      ${VISITS.map((v, i) => `<rect x="${(x(i) - 3).toFixed(1)}" y="${(y(v.count) - 3).toFixed(1)}" width="6" height="6" fill="${i === imax ? '#006DF7' : '#FFF'}" stroke="${i === imax ? '#006DF7' : '#010102'}" vector-effect="non-scaling-stroke"/>`).join('')}
+    </svg><div id="v-ax" class="n">${VISITS.map((v, i) => `<span class="${i === imax ? 'pk' : (i === 0 || i === n - 1) ? 'on' : ''}" style="left:${((x(i) / W) * 100).toFixed(2)}%"><b class="cu" data-n="${v.count}">0<i>회</i></b>${v.day}</span>`).join('')}</div>
+    <div id="v-sum" class="n"><span>7일 합계</span><b class="cu" data-n="${VISITS_TOTAL}">0</b>회</div>`;
+}
+// 탭 3 — 스토리지 스택 40px + 범례 6 + 잔여
+{
+  const W = 600, tot = STORAGE.total; let x = 0;
+  // 범례 색 역할 — 정사영상 = 파랑(정보) · AI 분석 = 청록(AI 결과) · 나머지 무채.
+  const tone = ['#006DF7', '#010102', '#686868', '#0FA9A0', '#CCCCCC', '#CCCCCC'];
+  $('#pane-store').innerHTML = `<div class="pane-big"><b class="big cu" data-n="${STORAGE.used}" data-dec="1">0</b><span class="u">TB</span><span class="u">/ ${tot} TB</span></div>
+    <svg id="s-bar" viewBox="0 0 ${W} 40" preserveAspectRatio="none" aria-hidden="true"><rect x=".5" y=".5" width="${W - 1}" height="39" fill="none" stroke="#DDDDDD"/>
+    ${STORAGE.parts.map((p, i) => { const w = (p.tb / tot) * W; const r = `<rect x="${x.toFixed(2)}" y="0" width="${w.toFixed(2)}" height="40" fill="${tone[i]}"><title>${esc(p.label)} ${p.tb} TB</title></rect>`; x += w; return r; }).join('')}</svg>
+    <div id="s-lg" class="n">${STORAGE.parts.map((p, i) => `<span class="li"><i style="background:${tone[i]}"></i>${esc(p.label)} <b class="cu" data-n="${p.tb}" data-dec="1">0</b>TB</span>`).join('')}<span class="li rest"><i style="border:1px solid #DDDDDD"></i>잔여 <b>${(tot - STORAGE.used).toFixed(1)}</b>TB</span></div>`;
+}
+const TABS = ['proj', 'visit', 'store'];
+let TAB = 'proj';
+function setTab(t, { remember = true } = {}) {
+  if (!TABS.includes(t)) t = 'proj';
+  TAB = t;
+  for (const b of $$('#tabs [role=tab]')) { const on = b.dataset.tab === t; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; }
+  for (const k of TABS) { const p = $(`#pane-${k}`); p.hidden = k !== t; p.classList.toggle('is-in', k === t); }
+  $('#panel').title = TAB_TITLE[t];
+  $('#b10-more').hidden = t !== 'proj';
+  document.documentElement.dataset.tab = t;
+  requestAnimationFrame(() => { $$(`#pane-${t} .cu`).forEach(countUp); });
+  if (remember) { try { localStorage.setItem('lx_dash_tab', t); } catch { /* 저장소 차단 */ } }
+}
+$('#tabs').addEventListener('click', (ev) => { const b = ev.target.closest('[role=tab]'); if (b) setTab(b.dataset.tab); });
+$('#tabs').addEventListener('keydown', (ev) => {
+  const i = TABS.indexOf(TAB); let j = null;
+  if (ev.key === 'ArrowRight') j = (i + 1) % 3; else if (ev.key === 'ArrowLeft') j = (i + 2) % 3; else if (ev.key === 'Home') j = 0; else if (ev.key === 'End') j = 2;
+  if (j == null) return; ev.preventDefault(); setTab(TABS[j]); $(`#tab-${TABS[j]}`).focus();
+});
+
+/* ══ B13 · B14 · B15 ═════════════════════════════════════════════════════ */
+// B13 — EVIDENCE-PAIR. 크롭은 db-data 가 요청 지역 기준점에 가장 가까운 실크롭을 고른 것(거리 km 를 적는다 → 추정).
+$('#ap-cnt').textContent = String(APPROVALS.length);
+$('#ap-rows').innerHTML = APPROVALS.map((a, i) => {
+  const m = a.title.match(/^(.*?)\s+(v[\d.]+)$/); const name = m ? m[1] : a.title, ver = m ? m[2] : '';
+  const href = `dashboard.html?open=${a.id}`; const c = a.crop;
+  const evl = c.cls ? `<i>${esc(c.cls)}</i> ${(c.conf * 100).toFixed(0)}% · ${c.source} ${c.gsdCm} cm` : `${c.source} ${c.gsdCm} cm · 폴리곤 없음`;
+  return `<article class="ap" role="listitem" data-id="${a.id}" title="원본 admin-publish.html?open=${a.id}">
+    <a class="ev" href="${href}" tabindex="-1" aria-hidden="true"><img src="${c.src}" alt="" loading="lazy" width="640" height="420"><span class="ev-l n">${evl}</span></a>
+    <div class="meta">
+      <div class="mh"><span class="no n">${String(i + 1).padStart(2, '0')}</span><span class="nm">${esc(name)}</span><span class="ver n">${esc(ver)}</span><span class="st warn">승인 대기</span></div>
+      <dl class="n"><dt>요청 일시</dt><dd>${esc(a.at)}<span class="tag">시연</span></dd>
+        <dt>요청 지역</dt><dd>남원시 ${esc(a.emd)}<span class="tag">추정</span></dd>
+        <dt>증거 크롭</dt><dd>기준점에서 ${c.km} km<span class="tag">추정</span></dd></dl>
+      <a class="go warn" href="${href}">검토 › <span class="dim">?open=${a.id}</span></a>
+    </div></article>`;
+}).join('');
+// B14 — 타일 4: 큰 수 = 정보(파랑) / 조치 필요(warn). 값은 원본 부제(desc)와 같다.
+const AD_ICON = ['<path d="M8 4.5h4v4H8z"/><path d="M4.5 16v-3.5h11V16"/>', '<path d="M3 3.5h14v9H3z"/><path d="M6 12.5V17"/><path d="M6 7h8M6 9.5h5"/>', '<path d="M3 5h14v10H3z"/><path d="m3 5 7 5.5L17 5"/>', '<path d="M3 3h14v14H3z"/><path d="M6 7.5h8M8.5 12.5h5.5"/><path d="M5.5 11h2v3h-2z"/>'];
+$('#ad-rows').innerHTML = ADMIN_TILES.map((t, i) => `<a class="ad" href="../${esc(t.href)}" title="원본 ${esc(t.href)} — ${esc(t.desc)}">
+  <span class="th"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter" aria-hidden="true">${AD_ICON[i]}</svg><span class="d">${esc(t.name)}</span><span class="mic">›</span></span>
+  <span class="tb"><b class="big cu${t.act ? ' warn' : ''}" data-n="${t.big}">0</b><span>${esc(t.unit)}</span><span class="tl">${esc(t.bigLabel)}</span></span>
+  <span class="ts n">${t.sub ? `${esc(t.sub.label)} <b class="${t.sub.act ? 'warn' : ''}">${t.sub.n}</b>` : '&nbsp;'}</span></a>`).join('');
+$('#foot-l').textContent = 'LX 한국국토정보공사 · 고객센터 063-713-1213 · 개인정보처리방침 · 이용약관 · 이메일주소무단수집거부';
+
+/* ══ B16 딥링크 ═════════════════════════════════════════════════════════ */
+function deepLink() {
+  const q = new URLSearchParams(location.search);
+  if (q.get('status') === '대기') { $('#b-approve').setAttribute('aria-current', 'true'); document.documentElement.dataset.deep = 'status'; setTimeout(() => goTo('b-approve'), 300); }
+  const open = q.get('open');
+  if (open) {
+    const tr = $(`#ap-rows .ap[data-id="${CSS.escape(open)}"]`);
+    if (tr) { tr.setAttribute('aria-current', 'true'); document.documentElement.dataset.deep = 'open:' + open; setTimeout(() => { tr.scrollIntoView({ block: 'center' }); $('.go', tr).focus({ preventScroll: true }); }, 300); }
+    else { document.documentElement.dataset.deep = 'open:missing'; say(`?open=${open} — 승인 대기 목록에 없는 카드`); }
+  }
+  if (q.get('tab')) setTab(q.get('tab'), { remember: false });
+}
+
+/* ══ 도착 — 카운트업 900ms easeOutQuart ══════════════════════════════════ */
+function countUp(el) {
+  const to = parseFloat(el.dataset.n || el.textContent) || 0, dec = +(el.dataset.dec || 0);
+  const fmt = (v) => (dec ? v.toFixed(dec) : nf.format(Math.round(v)));
+  const unit = el.querySelector('i'); const put = (s) => { el.textContent = s; if (unit) el.append(unit); };
+  if (REDUCED()) { put(fmt(to)); return; }
+  const t0 = performance.now();
+  const step = (t) => { const k = Math.min(1, (t - t0) / 900); put(fmt(to * EASE4(k))); if (k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+
+/* ══ 기동 ═══════════════════════════════════════════════════════════════ */
+layoutPlate();
+paintCells();
+mountMap();
+new ResizeObserver(layoutPlate).observe(wrap);
+let saved = null; try { saved = localStorage.getItem('lx_dash_tab'); } catch { /* 저장소 차단 */ }
+setTab(saved || 'proj', { remember: false });
+requestAnimationFrame(() => {
+  document.documentElement.dataset.dash = 'ready';
+  $$('#b-kpi .cu, #ad-rows .cu').forEach(countUp);
+  deepLink();
+});

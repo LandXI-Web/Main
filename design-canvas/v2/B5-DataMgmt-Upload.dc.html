@@ -1,0 +1,165 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><style>
+@font-face{font-family:"Paperlogy";font-weight:800;font-display:swap;src:url("https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2") format("woff2")}
+@font-face{font-family:"Paperlogy";font-weight:700;font-display:swap;src:url("https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2") format("woff2")}
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap");
+*{box-sizing:border-box}
+body{margin:0;background:#FFFFFF;color:#010102;font-family:'Pretendard','Paperlogy',system-ui,sans-serif;font-weight:400;font-size:18px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.d{font-family:'Paperlogy','Pretendard',system-ui,sans-serif;font-weight:700;letter-spacing:-.01em}
+.n{font-family:'Inter','Pretendard',system-ui,sans-serif;font-weight:400;font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
+/* B5-DataMgmt-Upload 12.2 — 업로드 단계 · 선택 없음 = 우 패널이 카드별 진행 현황판(이름 · 상태 · 막대 % · 크기 · 잔여) · 드롭존 = 첫 타일 · 쪽당 8 → `1 / 1`. 본판: 발주 2차(2026-08-27): 쪽당 4 · 6 · 8 · 16 + 페이저 · 완료 선택 = 실제 위치(판 180, 청록 결과) + 성과 2 + 기본 정보 4행 · 액션 826. 12.1: 판 220 · 정보 640 · 액션 812 · XLSX 3열. 대시보드 골격 + 단계 뷰(좌 타일 그리드 8 = 4열 / 우 패널). */
+.ab{position:absolute}
+.k{position:absolute;top:170px;height:132px;padding:0 18px;border-left:1px solid #DDDDDD}
+.k .kl{display:block;font-size:14px;letter-spacing:.04em;color:#686868;white-space:nowrap;line-height:17px}
+.k .kv{margin-top:6px;height:58px;display:flex;align-items:baseline;gap:8px}
+.k .kv b{font-family:'Paperlogy';font-weight:700;font-size:58px;line-height:1;color:#006DF7;letter-spacing:-.02em}
+.k .kv span{font-size:17px;color:#686868}
+.k .ks{display:block;margin-top:8px;font-size:14px;line-height:18px;color:#686868;letter-spacing:.02em;word-break:keep-all}
+.tile{position:absolute;width:172px}
+.th{position:relative;width:172px;height:105px;overflow:hidden;background:#fff}
+.th img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;display:block}
+.word{position:absolute;left:8px;top:8px;font-size:14px;letter-spacing:.06em;color:#fff;white-space:nowrap;z-index:2;max-width:156px;overflow:hidden;text-overflow:ellipsis}
+.box{border:1px solid #DDDDDD}
+.box .word,.dash .word{color:#686868}
+.dash{border:1px dashed #CCCCCC}
+.cap{margin:7px 0 0;font-size:14px;line-height:17px;letter-spacing:-.005em;display:flex;color:#010102;white-space:nowrap}
+.cap .nm{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.cap .mt{flex:none;color:#686868;margin-left:4px}
+.bk{position:absolute;width:12px;height:12px;border:0 solid #006DF7;z-index:3}
+.bk.tl{left:0;top:0;border-left-width:1px;border-top-width:1px}.bk.tr{right:0;top:0;border-right-width:1px;border-top-width:1px}
+.bk.bl{left:0;bottom:0;border-left-width:1px;border-bottom-width:1px}.bk.br{right:0;bottom:0;border-right-width:1px;border-bottom-width:1px}
+.bkw{border-color:#fff}
+.info{position:absolute;left:897px;width:487px;display:grid;grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr);column-gap:14px}
+.info dt{font-family:'Inter','Pretendard',sans-serif;font-size:14px;letter-spacing:.04em;color:#686868;padding:5px 0 4px;border-bottom:1px solid #DDDDDD;white-space:nowrap}
+.info dd{margin:0;font-size:15px;color:#010102;padding:4px 0 3px;border-bottom:1px solid #DDDDDD;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.info dt.w{grid-column:1/2}.info dd.w{grid-column:2/5}
+.act{height:30px;line-height:28px;padding:0 12px;font-size:14px;letter-spacing:-.01em;color:#010102;border:1px solid #DDDDDD;white-space:nowrap;display:inline-block}
+.act.pri{background:#010102;border-color:#010102;color:#fff;font-family:'Paperlogy';font-weight:700}
+.sz{height:26px;line-height:24px;padding:0 10px;font-size:14px;letter-spacing:.02em;border:1px solid #DDDDDD;color:#686868;font-family:'Inter';display:inline-block}
+.sz.on{background:#E8F1FF;border-color:#006DF7;color:#006DF7}
+.rs{position:absolute;left:897px;width:487px;height:31px;display:grid;grid-template-columns:10px minmax(0,1fr) auto auto;column-gap:10px;align-items:baseline;border-bottom:1px solid #DDDDDD;font-size:14px;letter-spacing:-.01em;padding-top:6px}
+.rs .sw{width:10px;height:10px;background:#0FA9A0;align-self:center}
+.rs .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#010102}
+.rs .nm small{font-size:14px;color:#686868;margin-left:6px}
+.rs .nv{white-space:nowrap}.rs .nv b{font-family:'Paperlogy';font-weight:700;font-size:18px;color:#0FA9A0;letter-spacing:-.01em}.rs .nv span{color:#686868;margin-left:2px}
+.rs .at{color:#686868;letter-spacing:.02em}
+.pb{position:absolute;left:897px;width:487px;height:38px;display:grid;grid-template-columns:minmax(0,1fr) 58px 112px 62px 62px;column-gap:10px;align-items:center;border-bottom:1px solid #DDDDDD;font-size:14px;letter-spacing:-.01em;color:#010102}
+.pb .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pb .stw{color:#686868}.pb[data-st=run] .stw,.pb[data-st=run] .bar b{color:#006DF7}
+.pb .bar{position:relative;height:12px;margin-right:34px;border:1px solid #DDDDDD;background:#fff}.pb .bar i{position:absolute;left:0;top:0;bottom:0;width:var(--pct);background:#CCCCCC}.pb[data-st=run] .bar i{background:#006DF7}
+.pb .bar b{position:absolute;left:calc(100% + 6px);top:-1px;font-weight:400;line-height:12px;color:#686868;white-space:nowrap}
+.pb .szv,.pb .rm{text-align:right;color:#686868;white-space:nowrap}.pb[data-st=run] .rm{color:#010102}.pb[data-st=wait] .nm,.pb[data-st=stop] .nm{color:#686868}
+.ph{position:absolute;left:897px;width:487px;height:28px;display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #010102;font-size:14px;letter-spacing:.04em;color:#686868}
+.rl{position:relative;width:72px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#686868}
+.rl div{font-size:14px;line-height:1.15;letter-spacing:-.02em;text-align:center;white-space:pre-line}
+</style></helmet>
+<div style="width:1440px;height:900px;position:relative;overflow:hidden;background:#FFFFFF;font-family:'Pretendard','Paperlogy',system-ui,sans-serif;color:#010102">
+
+<!-- ── 레일 72 ── -->
+<div class="ab" style="left:0;top:0;width:72px;height:900px;border-right:1px solid #DDDDDD;background:#fff;z-index:9">
+  <div style="height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border-bottom:1px solid #DDDDDD">
+    <div class="d" style="font-size:14px;letter-spacing:.16em;margin-right:-.16em">LAND</div>
+    <div class="d" style="font-size:16px;letter-spacing:.16em;margin-right:-.16em">XI</div></div>
+  <div style="padding-top:12px">
+    <div class="rl"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25"><rect x="2.6" y="2.6" width="6.4" height="6.4"/><rect x="11" y="2.6" width="6.4" height="6.4"/><rect x="2.6" y="11" width="6.4" height="6.4"/><rect x="11" y="11" width="6.4" height="6.4"/></svg><div>대시보드</div></div>
+    <div class="rl" style="color:#010102"><div class="ab" style="left:0;top:9px;width:2px;height:40px;background:#010102"></div><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25"><ellipse cx="10" cy="4.9" rx="7" ry="2.5"/><path d="M3 4.9v10.2c0 1.4 3.14 2.5 7 2.5s7-1.1 7-2.5V4.9"/><path d="M3 10c0 1.4 3.14 2.5 7 2.5s7-1.1 7-2.5"/></svg><div>데이터 관리</div></div>
+    <div class="rl"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M2.4 16.4V4.2h5.1l1.7 2.2h8.4v10z"/></svg><div>프로젝트</div></div>
+    <div class="rl"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M6.2 3.4 16 10l-9.8 6.6z"/></svg><div>분석 서비스</div></div>
+    <div class="rl"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M2.4 5.2 7.6 3l4.8 2.2L17.6 3v11.8l-5.2 2.2-4.8-2.2-5.2 2.2z"/><path d="M7.6 3v14M12.4 5.2v11.8"/></svg><div>지도 서비스</div></div>
+  </div>
+  <div class="ab" style="left:0;bottom:8px">
+    <div class="rl"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25"><circle cx="10" cy="10" r="7.3"/><path d="M7.9 7.8a2.15 2.15 0 1 1 3.1 1.9c-.7.4-1 .9-1 1.7"/></svg><div>서비스 지원</div></div>
+    <div class="rl"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M10 2.5 17.5 6.8 10 11.1 2.5 6.8z"/><path d="M2.5 11.1 10 15.4l7.5-4.3"/></svg><div>카드 발행
+관리</div></div>
+    <div class="rl"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25"><circle cx="10" cy="10" r="2.9"/><path d="M10 1.6v2.5M10 15.9v2.5M18.4 10h-2.5M4.1 10H1.6"/></svg><div>서비스 관리</div></div>
+    <div class="rl"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25"><circle cx="10" cy="6.9" r="3.1"/><path d="M3.7 17.3c0-3.4 2.9-5.3 6.3-5.3s6.3 1.9 6.3 5.3"/></svg><div>MY</div></div>
+    <div class="rl"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M11.6 2.6H3.4v14.8h8.2"/><path d="M8.6 10h9M14.2 6.6 17.6 10l-3.4 3.4"/></svg><div>로그아웃</div></div>
+  </div>
+</div>
+
+<!-- ── 마스트헤드 64 — 공지 + 기준일 (대시보드와 동일) ── -->
+<div class="ab" style="left:72px;top:0;width:1368px;height:64px;border-bottom:1px solid #DDDDDD;display:flex;align-items:center;gap:12px;padding:0 56px;color:#686868">
+  <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3.5h14v9H3z"/><path d="M6 12.5V17"/><path d="M6 7h8M6 9.5h5"/></svg>
+  <span style="height:24px;line-height:22px;padding:0 9px;border:1px solid #DDDDDD;font-size:14px">공지</span>
+  <span style="font-size:16px;color:#010102;letter-spacing:-.01em">고위험 탐지 건 긴급 처리 안내</span>
+  <span class="n" style="font-size:14.5px;letter-spacing:.02em">2026.04.15</span>
+  <span style="font-size:14.5px;margin-left:6px">전체 보기 ›</span>
+  <span style="margin-left:auto;font-size:14px">기준일 현재</span><span class="n" style="font-size:16px;letter-spacing:.02em">2026.06.08</span>
+</div>
+
+<!-- ── 제목 — 파랑 룰 ── -->
+<h1 class="d ab" style="left:128px;top:103px;margin:0;font-size:34px;line-height:42px;font-weight:800">데이터 관리</h1>
+<div class="ab" style="left:128px;top:153px;width:155px;height:4px;background:#006DF7"></div>
+<div class="ab n" style="left:298px;top:112px;font-size:15px;color:#686868;letter-spacing:.02em">V-World 정사영상 · EPSG:4326 · <em style="font-style:normal;border:1px dotted #CCCCCC;color:#CCCCCC;padding:0 3px;font-size:14px;letter-spacing:.06em">시연</em></div>
+<div class="ab" style="left:128px;top:156px;width:1256px;height:1px;background:#DDDDDD"></div>
+
+<!-- ── KPI 카드 5 — 디스크(조치 = warn) · 단계 4(선택 = 틴트 + 파랑 밑줄) ── -->
+<div class="k" style="left:128px;width:251px;border-left:0;padding-left:0"><span class="kl">내 디스크 사용량</span><span class="kv"><b class="n" style="color:#D1352B">96</b><span>%</span></span><span class="ks n">1,965 / 2,048 GB · 잔여 83 GB</span><span class="ab" style="left:0;top:112px;font-size:14px;color:#D1352B;border-bottom:1px solid #D1352B;line-height:1.3;white-space:nowrap">디스크 증량 신청 ›</span></div>
+<div class="k" style="left:379px;width:251px;background:#E8F1FF"><span class="kl">데이터 업로드</span><span class="kv"><b class="n">6</b><span>건</span></span><span class="ks n">진행 중 1 · 일시정지 1 · 중단 1 · 대기 3</span><span class="ab" style="left:0;right:0;bottom:-16px;height:3px;background:#006DF7"></span></div>
+<div class="k" style="left:630px;width:251px"><span class="kl">업로드 완료</span><span class="kv"><b class="n">8</b><span>건</span></span><span class="ks n">TIF 2 · ECW 2 · XLSX 1 · SHP 2 · ZIP 1</span></div>
+<div class="k" style="left:881px;width:251px"><span class="kl">레이어 발행중</span><span class="kv"><b class="n">7</b><span>건</span></span><span class="ks n">진행 5 · <em style="font-style:normal;color:#D1352B">실패 2</em></span></div>
+<div class="k" style="left:1132px;width:252px"><span class="kl">아카이브</span><span class="kv"><b class="n">5</b><span>건</span></span><span class="ks n">표시 4 · 숨김 1</span></div>
+<div class="ab" style="left:128px;top:318px;width:1256px;height:1px;background:#DDDDDD"></div>
+
+<!-- ── 툴바 — 단계명 · 건수 · 필터 · 검색 · 쪽당 타일 수 4단(4 · 6 · 8 · 16 = 2 · 3 · 4 · 4열) ── -->
+<div class="ab" style="left:128px;top:318px;width:1256px;height:52px;display:flex;align-items:center;gap:12px">
+  <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="#006DF7" stroke-width="1.5"><path d="M3 3h14v14H3z"/><path d="M3 7.67h14M3 12.33h14M7.67 3v14M12.33 3v14"/></svg>
+  <span class="d" style="font-size:18px;line-height:26px">데이터 업로드</span><span class="n" style="font-size:18px;margin-right:6px">6건</span>
+  <span style="display:inline-flex;align-items:center;gap:8px;border:1px solid #DDDDDD;padding:0 10px;height:28px;font-size:14px;color:#686868">형식 <span style="color:#010102">전체</span> <svg width="9" height="6" viewBox="0 0 9 6" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M.5.5 4.5 5 8.5.5"/></svg></span>
+  <span style="display:inline-flex;align-items:center;gap:8px;width:170px;border-bottom:1px solid #010102;padding-bottom:5px;font-size:14px;color:#CCCCCC"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="#686868" stroke-width="1.25"><circle cx="6.2" cy="6.2" r="4.6"/><path d="M9.6 9.6 13 13"/></svg>파일명 · 데이터명</span>
+  <span style="flex:1"></span>
+  <span style="font-size:14px;letter-spacing:.04em;color:#686868;margin-right:8px">쪽당</span><span class="sz">4</span><span class="sz">6</span><span class="sz on">8</span><span class="sz">16</span>
+</div>
+
+<!-- ── 좌 타일 그리드 쪽당 8 = 4열 — 드롭존 + 업로드 6(진행 4상태 = 그림 위 리빌 %) · 선택 없음 ── -->
+<div class="tile" style="left:128px;top:372px"><div class="th dash" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center"><svg width="20" height="20" viewBox="0 0 22 22" fill="none" stroke="#010102" stroke-width="1.5"><path d="M11 2v13M5.5 9.5 11 15l5.5-5.5"/><path d="M3 19.25h16"/></svg><span style="font-size:15px;letter-spacing:-.014em">끌어다 놓거나 클릭</span><span class="n" style="font-size:14px;color:#686868;letter-spacing:.03em">최대 1 TB · ECW TIF ZIP SHP XLSX</span></div><p class="cap n"><span class="nm">업로드</span><span class="mt">· 검증 3 · 허용 형식 · 1 TB</span></p></div>
+<div class="tile" style="left:312px;top:372px"><div class="th"><img src="tile-up-live.jpg" style="filter:grayscale(1);opacity:.3"><img src="tile-up-live.jpg" style="clip-path:inset(0 38% 0 0)"><span class="ab" style="left:62%;top:0;width:1px;height:105px;background:#006DF7;z-index:2"></span><span class="word n">업로드</span><span class="n" style="position:absolute;left:8px;bottom:7px;font-size:14px;color:#fff;z-index:2">업로드중 <b style="font-weight:400;color:#006DF7">63%</b></span></div><p class="cap n"><span class="nm">NW_ortho_정사영상_202604_section_C_v3.tif</span><span class="mt">· 55.4 GB</span></p></div>
+<div class="tile" style="left:496px;top:372px"><div class="th"><img src="tile-up-pause.jpg" style="filter:grayscale(1);opacity:.18"><img src="tile-up-pause.jpg" style="clip-path:inset(0 59% 0 0);opacity:.5;filter:grayscale(.5)"><span class="ab" style="left:41%;top:0;width:1px;height:105px;background:#CCCCCC;z-index:2"></span><span class="word n">업로드</span><span class="n" style="position:absolute;left:8px;bottom:7px;font-size:14px;color:#fff;z-index:2">일시정지 41%</span></div><p class="cap n" style="color:#CCCCCC"><span class="nm">NW_ortho_202604_section_D.tif</span><span class="mt" style="color:#CCCCCC">· 51.0 GB</span></p></div>
+<div class="tile" style="left:680px;top:372px"><div class="th"><img src="tile-up-abort.jpg" style="filter:grayscale(1);opacity:.18"><img src="tile-up-abort.jpg" style="clip-path:inset(0 66% 0 0);opacity:.5;filter:grayscale(.5)"><span class="ab" style="left:34%;top:0;width:1px;height:105px;background:#CCCCCC;z-index:2"></span><span class="word n">업로드</span><span class="n" style="position:absolute;left:8px;bottom:7px;font-size:14px;color:#fff;z-index:2">중단됨 34%</span></div><p class="cap n" style="color:#CCCCCC"><span class="nm">남원시_산내면_4월_드론촬영_정사영상_권역A.ecw</span><span class="mt" style="color:#CCCCCC">· 60.2 GB</span></p></div>
+<div class="tile" style="left:128px;top:513px"><div class="th box"><span class="word n">업로드</span><pre class="n" style="position:absolute;left:12px;top:26px;right:8px;bottom:26px;margin:0;font-size:14px;line-height:19px;overflow:hidden;color:#CCCCCC">camera_org_202604/
+├ 20260412/
+│  ├ DJI_0001.JPG</pre><span class="n" style="position:absolute;left:8px;bottom:7px;font-size:14px;color:#686868">대기중 0%</span></div><p class="cap n" style="color:#CCCCCC"><span class="nm">camera_org_202604.zip</span><span class="mt" style="color:#CCCCCC">· 18.7 GB</span></p></div>
+<div class="tile" style="left:312px;top:513px"><div class="th dash" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:22px 10px 20px"><span class="word n">업로드</span><span style="font-size:14px;color:#686868">미리보기 없음</span><span class="n" style="font-size:14px;color:#CCCCCC;letter-spacing:.04em">좌표계 없음</span><span class="n" style="position:absolute;left:8px;bottom:7px;font-size:14px;color:#686868">대기중 0%</span></div><p class="cap n" style="color:#CCCCCC"><span class="nm">NW_road_defect_labels_202604.shp</span><span class="mt" style="color:#CCCCCC">· 48.2 MB</span></p></div>
+<div class="tile" style="left:496px;top:513px"><div class="th box"><span class="word n">업로드</span>
+  <table class="n" style="position:absolute;left:10px;top:30px;right:10px;border-collapse:collapse;font-size:14px;line-height:22px;white-space:nowrap;table-layout:fixed;width:152px"><tr style="color:#686868;border-bottom:1px solid #010102"><td style="width:66px">pnu</td><td style="width:46px">cls</td><td style="text-align:right">area</td></tr><tr style="border-bottom:1px solid #DDDDDD"><td>451902…</td><td>경작</td><td style="text-align:right">1,284</td></tr></table><span class="n" style="position:absolute;left:8px;bottom:7px;font-size:14px;color:#686868">대기중 0%</span></div><p class="cap n" style="color:#CCCCCC"><span class="nm">농지이용_행정정보_202604.xlsx</span><span class="mt" style="color:#CCCCCC">· 287.3 KB</span></p></div>
+
+<!-- 페이저 — 그리드 아래. 한 쪽이면 화살표 없음 -->
+<div class="ab n" style="left:128px;top:832px;font-size:14px;letter-spacing:.04em;color:#686868">1 / 1</div>
+
+<!-- 세로 헤어라인 -->
+<div class="ab" style="left:877px;top:370px;width:1px;height:486px;background:#DDDDDD"></div>
+
+<!-- ── 우 패널 — 선택 없음: 카드별 진행 현황판. 한 줄 = 한 건(이름 · 상태어 · 막대 % · 크기 · 잔여). 아래 디스크 · 허용 형식 · 한도 ── -->
+<div class="ab d" style="left:897px;top:370px;width:400px;font-size:18px;line-height:26px">진행 현황</div>
+<div class="ab n" style="left:1320px;top:376px;width:64px;text-align:right;font-size:14px;color:#686868">선택 0 / 6</div>
+<div class="ph" style="top:414px;display:grid;grid-template-columns:minmax(0,1fr) 58px 112px 62px 62px;column-gap:10px"><span>파일 6 · 진행 중 1</span><span>상태</span><span>진행률</span><span style="text-align:right">크기</span><span style="text-align:right">잔여</span></div>
+<div class="pb" data-st="run" style="top:442px"><span class="nm">NW_ortho_정사영상_202604_section_C_v3.tif</span><span class="stw">업로드중</span><span class="bar" style="--pct:63%"><i></i><b class="n">63%</b></span><span class="szv n">55.4 GB</span><span class="rm n">20.5 GB</span></div>
+<div class="pb" data-st="pause" style="top:480px"><span class="nm">NW_ortho_202604_section_D.tif</span><span class="stw">일시정지</span><span class="bar" style="--pct:41%"><i></i><b class="n">41%</b></span><span class="szv n">51.0 GB</span><span class="rm n">30.1 GB</span></div>
+<div class="pb" data-st="stop" style="top:518px"><span class="nm">남원시_산내면_4월_드론촬영_정사영상_권역A.ecw</span><span class="stw">중단됨</span><span class="bar" style="--pct:34%"><i></i><b class="n">34%</b></span><span class="szv n">60.2 GB</span><span class="rm n">39.7 GB</span></div>
+<div class="pb" data-st="wait" style="top:556px"><span class="nm">camera_org_202604.zip</span><span class="stw">대기중</span><span class="bar" style="--pct:0%"><i></i><b class="n">0%</b></span><span class="szv n">18.7 GB</span><span class="rm n">18.7 GB</span></div>
+<div class="pb" data-st="wait" style="top:594px"><span class="nm">NW_road_defect_labels_202604.shp</span><span class="stw">대기중</span><span class="bar" style="--pct:0%"><i></i><b class="n">0%</b></span><span class="szv n">48.2 MB</span><span class="rm n">48.2 MB</span></div>
+<div class="pb" data-st="wait" style="top:632px"><span class="nm">농지이용_행정정보_202604.xlsx</span><span class="stw">대기중</span><span class="bar" style="--pct:0%"><i></i><b class="n">0%</b></span><span class="szv n">287.3 KB</span><span class="rm n">287.3 KB</span></div>
+<dl class="info" style="top:684px;margin:0">
+  <dt>디스크</dt><dd class="n">1,965 / 2,048 GB</dd><dt>잔여</dt><dd class="n">83 GB</dd>
+  <dt class="w">허용 형식</dt><dd class="w">ECW · TIF · ZIP · SHP · XLSX</dd>
+  <dt>한도</dt><dd class="n">1 TB</dd>
+</dl>
+
+<!-- ── 푸터 36 ── -->
+<div class="ab" style="left:72px;top:864px;width:1368px;height:36px;border-top:1px solid #DDDDDD;display:flex;align-items:center;gap:18px;padding:0 56px;font-size:14px;color:#686868;white-space:nowrap">
+  <span style="color:#006DF7">개인정보처리방침</span><span style="color:#006DF7">이용약관</span><span style="color:#006DF7">이메일주소무단수집거부</span>
+  <span class="n" style="color:#CCCCCC;letter-spacing:.02em">(우)54870 전북 전주시 덕진구 기지로 120 · 고객센터 063-713-1213, 1216</span>
+  <span style="margin-left:auto;display:flex;align-items:center;gap:6px">Family Site <svg width="8" height="5" viewBox="0 0 9 6" fill="none" stroke="#686868" stroke-width="1.25"><path d="M.5.5 4.5 5 8.5.5"/></svg></span>
+</div>
+</div>
+</x-dc>
+</body>
+</html>
