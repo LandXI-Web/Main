@@ -1,0 +1,39 @@
+# GitHub Pages 발행 설정 — 무엇을 **내보내지 않을지**만 정한다.
+#
+# 왜 필요한가 (2026-09-20)
+#   Pages 는 발행된 사이트가 **1 GB 를 넘으면 빌드를 거부**한다.
+#   이 저장소의 추적 파일은 1,480 MB 라 어느 순간부터 빌드가 조용히 멈췄고,
+#   사이트가 옛 커밋에 머물러 있었다(지도 서비스·통계·보고서가 404).
+#
+# 고치는 방법
+#   파일을 지우지 않는다. 저장소에는 그대로 두고 **발행에서만 뺀다.**
+#   아래 목록은 전부 사이트가 참조하지 않는 것들이다 — 링크·fetch 를 뒤져 확인했다.
+#
+#   제외 후 발행 크기 670 MB (한도까지 여유 353 MB)
+#
+# 주의 — 여기에 넣으면 안 되는 것
+#   design-canvas/   원판 95장. landxi/proto/review/masters.html 이 실제로 건다.
+#   docs/            기록. 링크가 있을 수 있다.
+#   landxi/assets/proto/film/legs/  의 w*.mp4 · *.webp · anchors-v3/*.jpg
+#                    필름이 실제로 재생하는 파일들이다(manifest.json 의 src·poster).
+
+exclude:
+  # 필름 생성 원본 — kie.ai 산출물과 리비전. 사이트는 이것을 재생하지 않는다.
+  # manifest.json 의 "source" 는 출처 기록일 뿐이고, 재생은 "src"(w01.mp4 …)가 한다.
+  - landxi/assets/proto/film/legs/gen/    # 430 MB
+  - landxi/assets/proto/film/legs/src/    # 236 MB
+
+  # 작업 산출물 — 원판 비교 그림, 테스트, 생성기
+  - shots/                                # 141 MB
+  - tests/
+  - tools/
+  - design-review/
+
+  # 개발 부속
+  - node_modules/
+  - package.json
+  - package-lock.json
+  - playwright.config.mjs
+  - test-results/
+  - playwright-report/
+  - .claude/
