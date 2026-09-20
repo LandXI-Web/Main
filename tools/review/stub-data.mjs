@@ -30,7 +30,8 @@ const PAGES = [
   ['mypage.html', 'my', ''], ['signup.html', 'auth', 'Signup'], ['find-id.html', 'auth', 'FindId'], ['find-password.html', 'auth', 'FindPw'],
 ];
 const html = (key, first) => `<!doctype html><html lang="ko" data-stub="${key}" data-first="${first}" data-base=""><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>설계 원판 — Land-XI</title><link rel="icon" href="../assets/images/favicon_landxi.png"><link rel="stylesheet" href="fonts-system.css"><link rel="stylesheet" href="stub.css"></head><body><script type="module" src="stub.js"></script><noscript>이 메뉴는 아직 구현 전입니다. <a href="review/masters.html">원판 갤러리</a>에서 설계 원판을 볼 수 있습니다.</noscript></body></html>\n`;
-for (const [f, key, first] of PAGES) fs.writeFileSync('landxi/proto/' + f, html(key, first));
+// 구현된 화면은 덮어쓰지 않는다 — data-stub 표식이 있는 자리 파일(또는 없는 파일)만 쓴다
+for (const [f, key, first] of PAGES) { const t = 'landxi/proto/' + f; if (fs.existsSync(t) && !/data-stub=/.test(fs.readFileSync(t, 'utf8'))) continue; fs.writeFileSync(t, html(key, first)); }
 // landxi/ 레벨로 나가는 링크(../notice.html · ../mypage.html · ../admin-*.html)는 proto/ 의 자리 화면으로 보낸다
 for (const [f] of PAGES.filter(([f]) => /^(notice|mypage|admin-)/.test(f))) { const p = 'landxi/' + f; if (fs.existsSync(p) && !/stub-redirect/.test(fs.readFileSync(p, 'utf8'))) continue; fs.writeFileSync(p, `<!doctype html><meta charset="utf-8"><!-- stub-redirect --><title>Land-XI</title><script>location.replace('proto/${f}' + location.search + location.hash)</script><a href="proto/${f}">이동</a>\n`); }
 console.log(Object.entries(GROUPS).map(([k, g]) => `${k} ${g.boards.length}`).join(' · '), '· pages', PAGES.length);
