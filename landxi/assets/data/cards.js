@@ -17,6 +17,53 @@
 // 이식이란 카드를 그대로 두고 DEPLOY 의 지역·경계·기준값·주기만 갈아 끼우는 일이다.
 import { serviceById } from './services.js';
 
+/* ══ 0. 종류 선언 — "튀는 구조"를 흡수하는 자리 ═══════════════════════════
+ * (2026-09-20 발주자: "앞으로 튀는 구조도 많아질 거야. 그래서 조금은 유연한 구조도 필요해.
+ *  인파 관리는 드론 영상에서 사람, 교통혼잡 지도 가시화 하는 서비스를 해야 하거든")
+ *
+ * 카드마다 무엇을 **먹고**(input) 무엇을 **내놓고**(output) 어떻게 **보여주는지**(viz) 선언한다.
+ * 화면은 카드 이름을 모른 채 이 선언만 보고 UI 를 고른다 — 새 종류가 생기면
+ * 여기 한 줄 + 렌더러 하나를 더하면 되고, 화면 코드는 그대로다.
+ *
+ *   정사영상 → 폴리곤 → 레이어      (영농·변화탐지)   … 지금까지의 기본형
+ *   드론 영상 → 점·밀도 → 히트맵·재생 (인파관리)       … 튀는 구조 1호
+ *   차량 카메라 → 구간 → 등급        (도로안전)
+ */
+export const INPUT_KINDS = [
+  { id: 'ortho', name: '정사영상', unit: '도엽', note: '드론·항공 정사영상 한 시점', tier: 'raw' },
+  { id: 'video', name: '드론 영상', unit: '비행', note: '이동 촬영 동영상 — 시간축이 있다', tier: 'raw' },
+  { id: 'camera', name: '차량 카메라', unit: '주행', note: '노선을 따라가는 연속 촬영', tier: 'raw' },
+  { id: 'satellite', name: '위성 영상', unit: '장면', note: '광역·저해상 — 글로벌 사업의 기본 입력', tier: 'raw' },
+];
+export const OUTPUT_KINDS = [
+  { id: 'polygon', name: '면(폴리곤)', note: '필지·건물·훼손지 — 면적을 센다' },
+  { id: 'point', name: '점', note: '개별 객체 — 개수를 센다' },
+  { id: 'density', name: '밀도', note: '격자·면 단위 집계값 — 혼잡도·분포' },
+  { id: 'segment', name: '구간', note: '선형(도로·해안선)을 잘라 등급을 매긴다' },
+  { id: 'series', name: '시계열', note: '같은 자리의 시간에 따른 변화' },
+];
+export const VIZ_KINDS = [
+  { id: 'layer', name: '결과 레이어', note: '지도 위 벡터 — 클릭하면 속성' },
+  { id: 'heatmap', name: '히트맵', note: '밀도를 색 농도로 — 격자/커널' },
+  { id: 'playback', name: '시간 재생', note: '타임라인을 끌면 그 시각의 상태' },
+  { id: 'grade', name: '등급 색칠', note: '구간·구역을 등급으로 칠한다' },
+  { id: 'chart', name: '차트', note: '표·막대·선 — 통계 서랍에서' },
+];
+export const kindName = (list, id) => (list.find((k) => k.id === id) || {}).name || id;
+
+/** 카드의 선언이 요구하는 화면 장치 — 화면은 이 결과만 보고 UI 를 켠다. */
+export function needsOf(card) {
+  const k = card.kind || { input: ['ortho'], output: ['polygon'], viz: ['layer'] };
+  return {
+    ...k,
+    timeAxis: k.output.includes('series') || k.viz.includes('playback'),   // 타임라인·재생 필요
+    grid: k.output.includes('density'),                                     // 격자 집계·히트맵 범례
+    lineRef: k.output.includes('segment'),                                  // 선형 기준(노선·해안선) 필요
+    videoPlayer: k.input.includes('video'),                                 // 영상 플레이어 + 프레임 추출
+    parcelRef: k.output.includes('polygon'),                                // 지적·대장 대조 가능
+  };
+}
+
 /* ══ 1. 모듈 ═══════════════════════════════════════════════════════════ */
 /** 공통 모듈 — 모든 카드가 자동으로 갖는다. 이것이 "기본 틀"이다. */
 export const CORE_MODULES = [
@@ -54,9 +101,12 @@ export const EXT_MODULES = {
     { id: 'repair-plan', name: '보수 우선순위', desc: '등급·교통량으로 보수 순서를 제안', build: 'todo' },
   ],
   crowd: [
-    { id: 'density-ts', name: '시계열 밀도', desc: '같은 구역을 반복 촬영해 밀도 변화를 본다', build: 'todo' },
-    { id: 'threshold', name: '혼잡 임계 경보', desc: '구역별 임계를 넘으면 표시', build: 'todo' },
-    { id: 'event-zone', name: '행사 구역 설정', desc: '행사·축제 구역을 그려 그 안만 집계', build: 'todo' },
+    { id: 'person-detect', name: '사람 탐지·계수', desc: '드론 영상 프레임에서 사람을 세고 중복을 지운다', build: 'todo' },
+    { id: 'density-grid', name: '인파 밀도 격자', desc: '구역을 격자로 나눠 ㎡당 인원을 집계한다', build: 'todo' },
+    { id: 'traffic-flow', name: '교통 혼잡도', desc: '차량 탐지와 이동 속도로 도로 혼잡 등급을 매긴다', build: 'todo' },
+    { id: 'time-scrub', name: '시간 재생', desc: '비행 시각을 끌면 그 시점의 밀도·혼잡을 본다', build: 'todo' },
+    { id: 'event-zone', name: '행사 구역 설정', desc: '행사·축제 구역을 그려 그 안만 집계한다', build: 'todo' },
+    { id: 'threshold', name: '혼잡 임계 경보', desc: '구역별 임계를 넘으면 표시한다', build: 'todo' },
   ],
   change: [
     { id: 'pair-epoch', name: '시점 쌍 정합', desc: '두 시점 영상을 같은 격자에 맞춘다', build: 'done' },
@@ -99,49 +149,58 @@ export const LINK = [
  */
 export const CARDS = [
   { id: 'card-farm', name: '영농관리 행정서비스', scope: 'local', duty: '농지 이용 실태조사 · 농업경영체 등록정보 확인',
+    kind: { input: ['ortho'], output: ['polygon'], viz: ['layer', 'chart'] },
     services: ['farmland', 'greenhouse', 'feedcrop', 'silage'], ext: 'farm',
     status: '운영', version: 'v2.1', projectId: 'pj-greenhouse', portable: true,
     needs: ['지적 필지(PNU) 레이어', '영농기·수확기 2시점 정사영상'],
     summary: '드론 정사영상에서 경작·비경작 필지와 비닐하우스를 자동 판독해 농지 이용 실태조사를 대체한다.' },
   { id: 'card-living', name: '생활환경 위험요소 탐지 서비스', scope: 'local', duty: '생활폐기물 · 불법 소각 · 방치폐기물 단속',
+    kind: { input: ['ortho', 'video'], output: ['point', 'polygon'], viz: ['layer', 'chart'] },
     services: ['trash', 'incinerator', 'river'], ext: 'living',
     status: '운영', version: 'v1.3', projectId: 'pj-living', portable: true,
     needs: ['시·군 행정경계', '민원 접수 좌표(선택)'],
     summary: '항공·드론 영상에서 방치 폐기물 더미와 불법 소각 흔적을 찾아 현장 점검 대상지를 좁힌다.' },
   { id: 'card-road', name: '도로 안전관리 서비스', scope: 'local', duty: '도로 포장 파손 정기 점검 · 보수 계획',
+    kind: { input: ['camera', 'ortho'], output: ['point', 'segment'], viz: ['layer', 'grade', 'chart'] },
     services: ['pothole'], ext: 'road',
     status: '운영', version: 'v2.1', projectId: 'pj-road', portable: true,
     needs: ['도로 노선망 레이어', '차량 카메라 영상(선택)'],
     summary: '차량 카메라와 정사영상을 함께 판독해 포트홀·균열·보수 흔적을 등급화한다.' },
   { id: 'card-crowd', name: '인파관리 서비스', scope: 'local', duty: '다중운집 행사 안전관리',
+    kind: { input: ['video'], output: ['point', 'density', 'series'], viz: ['heatmap', 'playback', 'chart'] },
     services: [], ext: 'crowd',
     status: '준비 중', version: null, projectId: null, portable: true,
-    needs: ['행사 구역 도면', '반복 촬영 계획', '밀도 추정 모델(개발 전)'],
+    needs: ['행사 구역 도면', '드론 비행 계획(반복 항로)', '사람·차량 탐지 모델(개발 전)'],
     gap: '2027년 사업 — 모델 개발 전',
-    summary: '같은 구역을 반복 촬영해 시간에 따른 인파 밀도 변화를 보고 혼잡 임계를 넘는 구역을 알린다.' },
+    summary: '드론 영상에서 사람과 차량을 탐지해 구역별 인파 밀도와 교통 혼잡도를 지도에 가시화한다. 시간을 끌면 그 시각의 상태를 본다.' },
   { id: 'card-change', name: '국토 변화 탐지 서비스', scope: 'local', duty: '지적 재조사 · 무허가 건축물 확인',
+    kind: { input: ['ortho'], output: ['polygon', 'series'], viz: ['layer', 'chart'] },
     services: ['change', 'building', 'greenbelt'], ext: 'change',
     status: '검토', version: 'v1.0', projectId: 'pj-change', portable: true,
     needs: ['같은 지역 2시점 이상 정사영상', '건축물대장(선택)'],
     summary: '같은 지역 두 시점의 정사영상을 비교해 신축·소실·식생 변화를 자동으로 집계한다.' },
   { id: 'card-marine', name: '해양쓰레기 실태조사 서비스', scope: 'local', duty: '해안 쓰레기 실태조사 · 수거 계획',
+    kind: { input: ['ortho', 'video'], output: ['point', 'segment'], viz: ['layer', 'chart'] },
     services: ['marine'], ext: 'marine',
     status: '운영', version: 'v1.2', projectId: 'pj-marine', portable: true,
     needs: ['해안선 레이어', '간조 시각 촬영'],
     summary: '해안선 항공·드론 영상에서 쓰레기 군집을 종류별로 세어 수거 우선순위를 만든다.' },
   { id: 'card-forest', name: '산림·탄소 관리 서비스', scope: 'local', duty: '산림 훼손 점검 · 탄소 흡수량 산정',
+    kind: { input: ['satellite', 'ortho'], output: ['polygon', 'density'], viz: ['layer', 'heatmap'] },
     services: ['forest', 'carbon'], ext: null,
     status: '준비 중', version: null, projectId: null, portable: false,
     needs: ['임상도', '수종별 흡수계수'], gap: '학습 데이터 구축 전',
     summary: '산림 훼손지와 식생 밀도를 판독해 탄소 흡수량 산정의 기초 자료를 만든다.' },
   // ── 글로벌 사업: 같은 카드 문법, 맥락만 다르다. 실데이터가 없어 수치를 지어내지 않는다. ──
   { id: 'card-global-farm', name: '농지 이용 실태 분석 (해외)', scope: 'global', duty: 'Agricultural land use survey',
+    kind: { input: ['satellite'], output: ['polygon'], viz: ['layer', 'chart'] },
     services: ['farmland', 'greenhouse'], ext: 'farm',
     status: '준비 중', version: null, projectId: 'pj-greenhouse', portable: true,
     needs: ['대상국 행정경계', '위성 영상 조달', '현지 필지 체계'],
     gap: '대상국 미정 — 지자체 카드를 위성 기반으로 옮기는 구조만 준비',
     summary: '지자체 영농관리 체계를 위성 영상 기반으로 옮긴 것. 판독 대상과 결과 표현은 같다.' },
   { id: 'card-global-disaster', name: '재해 피해 판독 (해외)', scope: 'global', duty: 'Post-disaster damage assessment',
+    kind: { input: ['satellite'], output: ['polygon', 'series'], viz: ['layer', 'chart'] },
     services: ['building', 'change'], ext: 'change',
     status: '준비 중', version: null, projectId: null, portable: true,
     needs: ['재해 전후 위성 영상', '대상국 건물 레이어'],
