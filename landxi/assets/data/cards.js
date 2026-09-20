@@ -79,47 +79,63 @@ export const CORE_MODULES = [
 /**
  * 전용 모듈 — 그 서비스에만 있는 세부 기능. **공통 표준으로 흡수하지 않는다.**
  * 발주자의 핵심 난제가 여기다: 틀은 같아도 이 칸은 서비스마다 따로 만든다.
+ *
+ * **owner — 누가 만들고 어디서 도는가** (2026-09-20 발주자:
+ *   "노선 구간화 등 특수 기능은 지자체에서 해야 한다. LX에 모든 걸 다 구현하면
+ *    복잡도가 상당해지고 정체성이 떨어진다")
+ *   'lx'    판독 품질에 속하는 것 — 무엇을 어떻게 세고 나누는가. LX 가 만든다(프로젝트).
+ *           결과의 정확도가 여기서 결정되므로 LX 의 정체성이다.
+ *   'local' **행정 가공** — 받은 결과를 그 기관의 업무 규칙으로 바꾸는 것.
+ *           노선 구간화 · 등급 · 우선순위 · 대장 대조 · 민원 연계 …
+ *           기관마다 규칙이 달라 LX 가 표준화할 수 없다. **지자체 작업공간에서 돈다.**
  * build: 'done' 만든 것 · 'wip' 만드는 중 · 'todo' 설계만
  */
 export const EXT_MODULES = {
   farm: [
-    { id: 'parcel-match', name: '필지 대장 대조', desc: '탐지 결과를 지적 필지(PNU)와 맞춰 경작·비경작을 판정', build: 'done' },
-    { id: 'crop-cycle', name: '영농 주기 판정', desc: '4시점 영상으로 휴경·이모작을 구분', build: 'done' },
-    { id: 'house-count', name: '비닐하우스 동수 집계', desc: '단동/다동을 나눠 세고 면적을 환산', build: 'done' },
-    { id: 'farm-subsidy', name: '직불금 대상 검토', desc: '경작 판정 결과를 농업경영체 등록정보와 대조', build: 'todo' },
+    { id: 'parcel-match', name: '필지 대장 대조', desc: '탐지 결과를 지적 필지(PNU)와 맞춰 경작·비경작을 판정', owner: 'local', build: 'done' },
+    { id: 'crop-cycle', name: '영농 주기 판정', desc: '4시점 영상으로 휴경·이모작을 구분', owner: 'lx', build: 'done' },
+    { id: 'house-count', name: '비닐하우스 동수 집계', desc: '단동/다동을 나눠 세고 면적을 환산', owner: 'lx', build: 'done' },
+    { id: 'farm-subsidy', name: '직불금 대상 검토', desc: '경작 판정 결과를 농업경영체 등록정보와 대조', owner: 'local', build: 'todo' },
   ],
   living: [
-    { id: 'pile-size', name: '폐기물 더미 규모 추정', desc: '면적·높이로 처리 물량을 추정', build: 'wip' },
-    { id: 'burn-trace', name: '소각 흔적 판별', desc: '그을음·재 패턴으로 불법 소각을 구분', build: 'wip' },
-    { id: 'civil-link', name: '민원 연계', desc: '접수된 민원 좌표와 탐지 지점을 맞춰 중복을 줄임', build: 'todo' },
-    { id: 'patrol-route', name: '현장 점검 동선', desc: '점검 대상지를 묶어 순회 순서를 만든다', build: 'todo' },
+    { id: 'pile-size', name: '폐기물 더미 규모 추정', desc: '면적·높이로 처리 물량을 추정', owner: 'lx', build: 'wip' },
+    { id: 'burn-trace', name: '소각 흔적 판별', desc: '그을음·재 패턴으로 불법 소각을 구분', owner: 'lx', build: 'wip' },
+    { id: 'civil-link', name: '민원 연계', desc: '접수된 민원 좌표와 탐지 지점을 맞춰 중복을 줄임', owner: 'local', build: 'todo' },
+    { id: 'patrol-route', name: '현장 점검 동선', desc: '점검 대상지를 묶어 순회 순서를 만든다', owner: 'local', build: 'todo' },
   ],
   road: [
-    { id: 'road-seg', name: '노선 구간화', desc: '탐지점을 도로 노선·구간(100 m)에 배정', build: 'done' },
-    { id: 'pave-grade', name: '포장 상태 등급', desc: '파손 밀도로 구간 등급(A–E)을 매김', build: 'done' },
-    { id: 'multi-view', name: '다시점 대조', desc: '차량 카메라와 정사영상 결과를 한 지점에서 합침', build: 'done' },
-    { id: 'repair-plan', name: '보수 우선순위', desc: '등급·교통량으로 보수 순서를 제안', build: 'todo' },
+    { id: 'road-seg', name: '노선 구간화', desc: '탐지점을 도로 노선·구간(100 m)에 배정', owner: 'local', build: 'done' },
+    { id: 'pave-grade', name: '포장 상태 등급', desc: '파손 밀도로 구간 등급(A–E)을 매김', owner: 'local', build: 'done' },
+    { id: 'multi-view', name: '다시점 대조', desc: '차량 카메라와 정사영상 결과를 한 지점에서 합침', owner: 'lx', build: 'done' },
+    { id: 'repair-plan', name: '보수 우선순위', desc: '등급·교통량으로 보수 순서를 제안', owner: 'local', build: 'todo' },
   ],
   crowd: [
-    { id: 'person-detect', name: '사람 탐지·계수', desc: '드론 영상 프레임에서 사람을 세고 중복을 지운다', build: 'todo' },
-    { id: 'density-grid', name: '인파 밀도 격자', desc: '구역을 격자로 나눠 ㎡당 인원을 집계한다', build: 'todo' },
-    { id: 'traffic-flow', name: '교통 혼잡도', desc: '차량 탐지와 이동 속도로 도로 혼잡 등급을 매긴다', build: 'todo' },
-    { id: 'time-scrub', name: '시간 재생', desc: '비행 시각을 끌면 그 시점의 밀도·혼잡을 본다', build: 'todo' },
-    { id: 'event-zone', name: '행사 구역 설정', desc: '행사·축제 구역을 그려 그 안만 집계한다', build: 'todo' },
-    { id: 'threshold', name: '혼잡 임계 경보', desc: '구역별 임계를 넘으면 표시한다', build: 'todo' },
+    { id: 'person-detect', name: '사람 탐지·계수', desc: '드론 영상 프레임에서 사람을 세고 중복을 지운다', owner: 'lx', build: 'todo' },
+    { id: 'density-grid', name: '인파 밀도 격자', desc: '구역을 격자로 나눠 ㎡당 인원을 집계한다', owner: 'lx', build: 'todo' },
+    { id: 'traffic-flow', name: '교통 혼잡도', desc: '차량 탐지와 이동 속도로 도로 혼잡 등급을 매긴다', owner: 'lx', build: 'todo' },
+    { id: 'time-scrub', name: '시간 재생', desc: '비행 시각을 끌면 그 시점의 밀도·혼잡을 본다', owner: 'lx', build: 'todo' },
+    { id: 'event-zone', name: '행사 구역 설정', desc: '행사·축제 구역을 그려 그 안만 집계한다', owner: 'local', build: 'todo' },
+    { id: 'threshold', name: '혼잡 임계 경보', desc: '구역별 임계를 넘으면 표시한다', owner: 'local', build: 'todo' },
   ],
   change: [
-    { id: 'pair-epoch', name: '시점 쌍 정합', desc: '두 시점 영상을 같은 격자에 맞춘다', build: 'done' },
-    { id: 'change-class', name: '변화 유형 분류', desc: '신축·소실·식생 증감으로 나눔', build: 'done' },
-    { id: 'illegal-check', name: '무허가 대조', desc: '건축물대장과 대조해 무허가 후보를 추림', build: 'todo' },
+    { id: 'pair-epoch', name: '시점 쌍 정합', desc: '두 시점 영상을 같은 격자에 맞춘다', owner: 'lx', build: 'done' },
+    { id: 'change-class', name: '변화 유형 분류', desc: '신축·소실·식생 증감으로 나눔', owner: 'lx', build: 'done' },
+    { id: 'illegal-check', name: '무허가 대조', desc: '건축물대장과 대조해 무허가 후보를 추림', owner: 'local', build: 'todo' },
   ],
   marine: [
-    { id: 'debris-type', name: '쓰레기 종류 분류', desc: '스티로폼·어구·플라스틱을 나눠 셈', build: 'done' },
-    { id: 'shore-seg', name: '해안선 구간화', desc: '해안선을 따라 구간별로 집계', build: 'wip' },
-    { id: 'collect-plan', name: '수거 계획 산출', desc: '물량·접근성으로 수거 우선순위', build: 'todo' },
+    { id: 'debris-type', name: '쓰레기 종류 분류', desc: '스티로폼·어구·플라스틱을 나눠 셈', owner: 'lx', build: 'done' },
+    { id: 'shore-seg', name: '해안선 구간화', desc: '해안선을 따라 구간별로 집계', owner: 'local', build: 'wip' },
+    { id: 'collect-plan', name: '수거 계획 산출', desc: '물량·접근성으로 수거 우선순위', owner: 'local', build: 'todo' },
   ],
 };
 export const extModules = (key) => EXT_MODULES[key] || [];
+/** 소유별로 나눈다 — LX 화면에는 lx 것만, 지자체 작업공간에는 local 것이 붙는다. */
+export const extByOwner = (key, owner) => extModules(key).filter((m) => m.owner === owner);
+/** LX 의 정체성 경계: 판독까지가 LX, 그 뒤 행정 가공은 기관. */
+export const OWNER_LINE = {
+  lx: { name: 'LX — 판독', desc: '무엇을 어떻게 세고 나누는가. 모델·학습·결과 품질.', screen: 'ai-project.html' },
+  local: { name: '기관 — 행정 가공', desc: '받은 결과를 그 기관의 업무 규칙으로 바꾼다. 기관마다 다르므로 표준화하지 않는다.', screen: 'portal.html' },
+};
 
 /* ══ 2. 분기(대상 사업) ═════════════════════════════════════════════════ */
 export const SCOPES = [
