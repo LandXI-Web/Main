@@ -36,6 +36,8 @@ const SCREENS = [
   ['notice', '공지사항'], ['faq', '자주 묻는 질문'], ['contact', '문의하기'],
   ['usecase', '활용 사례'], ['manual', '매뉴얼'], ['mypage', '마이페이지'],
   ['produce', '생산 관리'], ['portal', '지자체 포털'], ['portal-dp-nw-farm-25', '포털 · 영농관리'],
+  // 광주전남 해양쓰레기 두 배포본 — 25년(운영·실결과)과 27년(예정·고도화)은 화면이 다르다.
+  ['portal-dp-gj-marine-25', '포털 · 해양쓰레기 25'], ['portal-dp-gj-marine-27', '포털 · 해양쓰레기 27'],
   ['login', '로그인'],
   // 메인(필름)도 본다. 2026-09-20 에 계기판을 걷으면서 JS 참조를 안 지워
   // 스크롤 엔진이 통째로 죽었는데, 이 목록에 없어서 점검기가 놓쳤다.
@@ -73,7 +75,7 @@ for (const [id, name] of list) {
   const onMsg = (m) => { if (m.type() === 'error') errs.push(m.text().slice(0, 140)); };
   page.on('pageerror', onErr); page.on('console', onMsg);
 
-  const found = { id, name, errs, over: 0, inner: [], empty: [], dead: [], img: [], unnamed: 0 };
+  const found = { id, name, errs, over: 0, inner: [], empty: [], dead: [], img: [], unnamed: 0, links: [], dev: [] };
   try {
     await page.goto(`http://127.0.0.1:${PORT}/landxi/proto/${id}.html`, { waitUntil: 'networkidle', timeout: 30000 });
     await page.waitForTimeout(1200);
@@ -102,8 +104,23 @@ for (const [id, name] of list) {
           && !e.getAttribute('title') && !e.querySelector('[aria-label],title,.sr,.rl')).length;
       function sel(e) { return e.tagName.toLowerCase() + (e.id ? '#' + e.id : '')
         + (typeof e.className === 'string' && e.className ? '.' + e.className.trim().split(/\s+/)[0] : ''); }
-      return { over, inner, empty, img, unnamed };
+      // 7 개발용 URL 표기가 화면에 노출되나 — `?status=대기` 같은 것
+      const dev = [...document.querySelectorAll('#main *')]
+        .filter((e) => !e.children.length && /\?(status|open|tab|card|svc|result|pid)=/.test(e.textContent || ''))
+        .map((e) => e.textContent.trim().slice(0, 30));
+      return { over, inner, empty, img, unnamed, dev };
     }));
+
+    /* 8 링크 — 눌러서 갈 수 있는 곳인가. 없는 파일로 가는 링크는 그 자리에서 막다른 길이다.
+       발주자(2026-09-20): "지금 동작하지 않는다는건 안된다. 다 동작되도록 전수 검수~" */
+    const hrefs = await page.locator('#main a[href], #rail a[href], #foot a[href]').evaluateAll((as) =>
+      [...new Set(as.map((a) => a.getAttribute('href')))]
+        .filter((h) => h && !h.startsWith('#') && !h.startsWith('http') && !h.startsWith('mailto') && !h.startsWith('javascript')));
+    for (const h of hrefs) {
+      const u = new URL(h, page.url());
+      const res = await page.request.get(u.href).catch(() => null);
+      if (!res || res.status() >= 400) found.links.push(`${h} (${res ? res.status() : '연결 실패'})`);
+    }
 
     /* 4 죽은 버튼 — 눌러도 아무 일도 없는 것.
        오탐을 줄이는 두 가지:
@@ -165,6 +182,8 @@ for (const r of report) {
   if (r.img.length) issues.push(['깨진 이미지', [...new Set(r.img)].join(' / ')]);
   if (r.dead.length) issues.push(['눌러도 반응 없음', [...new Set(r.dead)].join(' · ')]);
   if (r.unnamed) issues.push(['이름 없는 조작 요소', `${r.unnamed}개`]);
+  if (r.links.length) issues.push(['끊긴 링크', [...new Set(r.links)].join(' / ')]);
+  if (r.dev && r.dev.length) issues.push(['개발용 URL 노출', [...new Set(r.dev)].join(' / ')]);
   if (!issues.length) continue;
   bad++;
   console.log(`\n${line}\n${r.name}  (${r.id}.html)`);

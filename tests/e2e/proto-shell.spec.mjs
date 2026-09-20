@@ -325,8 +325,14 @@ test.describe('법전 · 접근성', () => {
       const k = await page.evaluate(() => document.activeElement?.dataset?.tabWant || '');
       if (k) seen.add(k);
     }
-    const missed = await page.evaluate((got) => [...document.querySelectorAll('[data-tab-want]')].filter((e) => !got.includes(e.dataset.tabWant)).map((e) => e.outerHTML.slice(0, 90)), [...seen]);
+    /* 접힌 <details> 안은 탭 순서에서 빠지는 것이 맞다 — 여는 단추(summary)가 대신 닿는다.
+       2026-09-20 푸터의 패밀리 사이트가 접이식 목록이 되면서 이 예외가 생겼다. */
+    const missed = await page.evaluate((got) => [...document.querySelectorAll('[data-tab-want]')]
+      .filter((e) => !got.includes(e.dataset.tabWant))
+      .filter((e) => !e.closest('details:not([open])'))
+      .map((e) => e.outerHTML.slice(0, 90)), [...seen]);
     expect(missed).toEqual([]);
+    await expect(page.locator('#foot .fam > summary')).toBeVisible();   // 접힌 목록도 여는 단추로 닿는다
   });
   test('이름 없는 상호작용 요소 0 · 랜드마크 · 축소 모션이면 전환 0', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
