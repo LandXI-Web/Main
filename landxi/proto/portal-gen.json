@@ -1,0 +1,381 @@
+{
+  "at": "2026-09-20",
+  "mode": "all",
+  "files": [
+    "landxi/proto/portal.html",
+    "landxi/proto/portal-dp-nw-living-23.html",
+    "landxi/proto/portal-dp-nw-farm-25.html",
+    "landxi/proto/portal-dp-nw-road-26.html",
+    "landxi/proto/portal-dp-nw-crowd-27.html",
+    "landxi/proto/portal-dp-nw-change.html",
+    "landxi/proto/portal-dp-gj-marine-25.html",
+    "landxi/proto/portal-dp-gj-marine-27.html"
+  ],
+  "specs": [
+    {
+      "id": "dp-nw-living-23",
+      "name": "생활환경 위험요소 탐지 서비스",
+      "region": "전북특별자치도 남원시",
+      "tabs": [
+        {
+          "id": "dash",
+          "name": "현황",
+          "blocks": [
+            "kpi",
+            "chart"
+          ]
+        },
+        {
+          "id": "result",
+          "name": "분석 결과",
+          "blocks": [
+            "player",
+            "table"
+          ]
+        },
+        {
+          "id": "map",
+          "name": "지도",
+          "blocks": [
+            "map",
+            "parcel"
+          ]
+        },
+        {
+          "id": "stats",
+          "name": "통계",
+          "blocks": [
+            "stats"
+          ]
+        },
+        {
+          "id": "report",
+          "name": "보고서",
+          "blocks": [
+            "report"
+          ]
+        }
+      ],
+      "applied": [
+        "rq-02"
+      ],
+      "pending": []
+    },
+    {
+      "id": "dp-nw-farm-25",
+      "name": "영농관리 행정서비스",
+      "region": "전북특별자치도 남원시",
+      "tabs": [
+        {
+          "id": "dash",
+          "name": "현황",
+          "blocks": [
+            "kpi"
+          ]
+        },
+        {
+          "id": "result",
+          "name": "분석 결과",
+          "blocks": [
+            "table"
+          ]
+        },
+        {
+          "id": "map",
+          "name": "지도",
+          "blocks": [
+            "map",
+            "parcel"
+          ]
+        },
+        {
+          "id": "stats",
+          "name": "통계",
+          "blocks": [
+            "stats"
+          ]
+        },
+        {
+          "id": "report",
+          "name": "보고서",
+          "blocks": [
+            "report"
+          ]
+        }
+      ],
+      "applied": [
+        "rq-01"
+      ],
+      "pending": []
+    },
+    {
+      "id": "dp-nw-road-26",
+      "name": "도로 안전관리 서비스",
+      "region": "전북특별자치도 남원시",
+      "tabs": [
+        {
+          "id": "dash",
+          "name": "현황",
+          "blocks": [
+            "kpi"
+          ]
+        },
+        {
+          "id": "result",
+          "name": "점검 대상",
+          "blocks": [
+            "table"
+          ]
+        },
+        {
+          "id": "map",
+          "name": "지도",
+          "blocks": [
+            "map",
+            "grade"
+          ]
+        },
+        {
+          "id": "stats",
+          "name": "통계",
+          "blocks": [
+            "stats"
+          ]
+        },
+        {
+          "id": "report",
+          "name": "보고서",
+          "blocks": [
+            "report"
+          ]
+        }
+      ],
+      "applied": [
+        "rq-04"
+      ],
+      "pending": []
+    },
+    {
+      "id": "dp-nw-crowd-27",
+      "name": "인파관리 서비스",
+      "region": "전북특별자치도 남원시",
+      "tabs": [
+        {
+          "id": "dash",
+          "name": "현황",
+          "blocks": [
+            "kpi",
+            "chart"
+          ]
+        },
+        {
+          "id": "result",
+          "name": "분석 결과",
+          "blocks": [
+            "player",
+            "table",
+            "timeline"
+          ]
+        },
+        {
+          "id": "map",
+          "name": "지도",
+          "blocks": [
+            "map",
+            "heatmap"
+          ]
+        },
+        {
+          "id": "stats",
+          "name": "통계",
+          "blocks": [
+            "stats"
+          ]
+        },
+        {
+          "id": "report",
+          "name": "보고서",
+          "blocks": [
+            "report"
+          ]
+        }
+      ],
+      "applied": [],
+      "pending": []
+    },
+    {
+      "id": "dp-nw-change",
+      "name": "국토 변화 탐지 서비스",
+      "region": "전북특별자치도 남원시 · 국산리",
+      "tabs": [
+        {
+          "id": "dash",
+          "name": "현황",
+          "blocks": [
+            "kpi",
+            "chart"
+          ]
+        },
+        {
+          "id": "result",
+          "name": "분석 결과",
+          "blocks": [
+            "table",
+            "timeline"
+          ]
+        },
+        {
+          "id": "map",
+          "name": "지도",
+          "blocks": [
+            "map",
+            "parcel"
+          ]
+        },
+        {
+          "id": "stats",
+          "name": "통계",
+          "blocks": [
+            "stats"
+          ]
+        },
+        {
+          "id": "report",
+          "name": "보고서",
+          "blocks": [
+            "report"
+          ]
+        }
+      ],
+      "applied": [],
+      "pending": []
+    },
+    {
+      "id": "dp-gj-marine-25",
+      "name": "해양쓰레기 실태조사 서비스",
+      "region": "광주전남특별시",
+      "tabs": [
+        {
+          "id": "dash",
+          "name": "현황",
+          "blocks": [
+            "kpi"
+          ]
+        },
+        {
+          "id": "result",
+          "name": "분석 결과",
+          "blocks": [
+            "player",
+            "table"
+          ]
+        },
+        {
+          "id": "map",
+          "name": "지도",
+          "blocks": [
+            "grade",
+            "map"
+          ]
+        },
+        {
+          "id": "stats",
+          "name": "통계",
+          "blocks": [
+            "stats"
+          ]
+        },
+        {
+          "id": "report",
+          "name": "보고서",
+          "blocks": [
+            "report"
+          ]
+        }
+      ],
+      "applied": [
+        "rq-03"
+      ],
+      "pending": [
+        "rq-05"
+      ]
+    },
+    {
+      "id": "dp-gj-marine-27",
+      "name": "해양쓰레기 실태조사 서비스",
+      "region": "광주전남특별시",
+      "tabs": [
+        {
+          "id": "dash",
+          "name": "현황",
+          "blocks": [
+            "kpi"
+          ]
+        },
+        {
+          "id": "result",
+          "name": "분석 결과",
+          "blocks": [
+            "player",
+            "table"
+          ]
+        },
+        {
+          "id": "map",
+          "name": "지도",
+          "blocks": [
+            "map",
+            "grade"
+          ]
+        },
+        {
+          "id": "stats",
+          "name": "통계",
+          "blocks": [
+            "stats"
+          ]
+        },
+        {
+          "id": "report",
+          "name": "보고서",
+          "blocks": [
+            "report"
+          ]
+        }
+      ],
+      "applied": [],
+      "pending": []
+    }
+  ],
+  "loop": {
+    "접수": 5,
+    "배포완료": 3,
+    "반영중": 1,
+    "대기": 1,
+    "평균소요일": 1.3,
+    "최장": 3,
+    "line": "화면을 명세에서 찍기 때문에 요구 하나가 같은 주 안에 배포된다 — 다음 사업을 기다리지 않는다"
+  },
+  "scale": {
+    "화면": 35,
+    "명세": 7,
+    "블록": 51,
+    "블록종류": 12,
+    "손으로짠화면": 0,
+    "line": "배포본 7개 × 5탭 = 35개 화면을 블록 12종으로 찍는다"
+  },
+  "brand": [
+    {
+      "tenant": "namwon",
+      "contrast": 6.12,
+      "ok": true,
+      "bad": []
+    },
+    {
+      "tenant": "gwangju-jeonnam",
+      "contrast": 6.57,
+      "ok": true,
+      "bad": []
+    }
+  ]
+}

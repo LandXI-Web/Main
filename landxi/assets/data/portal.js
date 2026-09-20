@@ -23,7 +23,7 @@ export const TENANTS = [
     desc: '모델을 만들고 결과 품질을 책임진다', menus: 'all' },
   { id: 'namwon', name: '전북특별자치도 남원시', kind: 'user', home: 'portal.html', profile: 'namwon',
     desc: '배포된 서비스로 행정 업무를 한다', menus: ['portal', 'analysis', 'map', 'support'] },
-  { id: 'yeosu', name: '전라남도 여수시', kind: 'user', home: 'portal.html', profile: 'yeosu',
+  { id: 'gwangju-jeonnam', name: '광주전남특별시', kind: 'user', home: 'portal.html', profile: 'gwangju-jeonnam',
     desc: '배포된 서비스로 행정 업무를 한다', menus: ['portal', 'analysis', 'map', 'support'] },
 ];
 export const tenantById = (id) => TENANTS.find((t) => t.id === id) || TENANTS[0];

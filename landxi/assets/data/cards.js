@@ -241,8 +241,10 @@ export const DEPLOYS = [
     scale: '미정', note: '행사 구역 중심 — 모델 개발 전' },
   { id: 'dp-nw-change', cardId: 'card-change', year: 2025, region: '전북특별자치도 남원시 · 국산리', status: '구축',
     scale: '2시점 드론', note: '변화탐지 실증' },
-  { id: 'dp-ys-marine', cardId: 'card-marine', year: 2025, region: '전라남도 여수시', status: '운영',
+  { id: 'dp-gj-marine-25', cardId: 'card-marine', year: 2025, region: '광주전남특별시', status: '운영',
     scale: '해안선 · 항공 + 드론 2시점', note: '남원 밖 첫 이식 사례' },
+  { id: 'dp-gj-marine-27', cardId: 'card-marine', year: 2027, region: '광주전남특별시', status: '예정',
+    scale: '미정 — 대상 해안 확대', note: '2027년 신규사업 — 25년 배포본을 이어 범위를 넓힌다' },
 ];
 
 export const cardById = (id) => CARDS.find((c) => c.id === id) || null;
