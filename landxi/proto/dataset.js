@@ -210,6 +210,23 @@ $('#ov').addEventListener('click', (ev) => {
 });
 $('#to-ov').addEventListener('click', () => setTab(null));
 
+/* 돌아갈 곳 — 다른 화면에서 `업로드는 여기서 한다` 며 보냈으면, 올리고 나서 **돌아갈 길**이 있어야 한다.
+   분석 서비스가 `?next=` 를 들려 보낸다(2026-09-21). 같은 폴더의 화면일 때만 따른다 —
+   바깥 주소로는 보내지 않는다. */
+const backTo = (() => {
+  const raw = new URLSearchParams(location.search).get('next') || '';
+  return /^[\w.-]+\.html(\?[^#]*)?$/.test(raw) ? raw : '';
+})();
+if (backTo) {
+  const NAME = { 'analysis-ai.html': '분석 서비스', 'ai-project.html': '프로젝트', 'ximap.html': '지도 서비스' };
+  const label = NAME[backTo.split('?')[0]] || '이전 화면';
+  const b = document.createElement('button');
+  b.type = 'button'; b.id = 'to-back'; b.className = 'n';
+  b.textContent = `‹ ${label}로 돌아가기`;
+  b.addEventListener('click', () => { location.href = backTo; });
+  $('#to-ov').after(b);
+}
+
 /** `?tab=` 이 없으면 개요다. 값이 틀리면 개요로 — 쿼리를 화면 글자로 적어 보여 주지는 않는다. */
 const tabFromUrl = () => { const t = new URLSearchParams(location.search).get('tab'); return TAB_IDS.includes(t) ? t : null; };
 function setTab(id, push = true) {

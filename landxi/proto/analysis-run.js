@@ -155,7 +155,13 @@ export function renderRun(host, S) {
   $('#ch-card').addEventListener('click', () => commit({ tab: 'cards' }));
   $('#ch-model').addEventListener('click', () => models.length && openModelPick(models, (id) => { pick.model = id; drawModel(); drawSum(); }));
   $('#go-run').addEventListener('click', () => startRun(card, models.find((x) => x.id === pick.model), pick.imgs.map(archiveById)));
-  $('#from-up').addEventListener('click', () => { $('.up-box').scrollIntoView({ block: 'nearest' }); say('영상 업로드는 데이터 관리 › 업로드와 같은 기능입니다 · 시연'); });
+  /* 업로드는 **데이터 관리에 진짜 드롭존이 있다**(드래그·클릭·검증 3). 여기서 흉내만 내면
+     같은 기능이 둘이 되고, 하나는 동작하지 않는 가짜가 된다. 그래서 **그 자리로 보낸다** —
+     돌아올 곳(?next)을 들고 가므로 올리고 나면 이 화면으로 돌아온다(2026-09-21). */
+  $('#from-up').addEventListener('click', () => {
+    say('데이터 관리 › 업로드로 이동합니다');
+    location.href = `dataset.html?tab=upload&next=${encodeURIComponent(location.pathname.split('/').pop() + location.search)}`;
+  });
 
   drawThumbs();
 }
@@ -583,7 +589,18 @@ export function renderDone(host, S) {
 </footer>`;
 
     $('#dp-share')?.addEventListener('click', () => openShare(r, res));
-    $('#dp-down')?.addEventListener('click', () => say(`${r.name} · GeoJSON 내려받기 · 시연`));
+    /* **실제로 떨어진다.** 전에는 토스트만 띄웠다 — 눌렀는데 아무것도 안 받아지는 버튼이었다.
+       결과 GeoJSON 이 저장소에 있으면 그것을, 없으면 무엇을 받았는지 적힌 파일을 만들어 준다. */
+    $('#dp-down')?.addEventListener('click', async () => {
+      const src = res?.geojson ? `../${res.geojson}` : '';
+      const how = await downloadGeoJSON(r.name, src, null);
+      if (how === '원본') { say(`${r.name} · GeoJSON 을 내려받았습니다`); return; }
+      downloadNote(`${String(r.name).replace(/[\/:*?"<>|]/g, '_')}.txt`, [
+        `분석 결과 · ${r.name}`,
+        res ? `건수 ${res.stats?.count ?? '—'} ${res.unit || ''} · 시점 ${res.year || '—'}` : '연결된 산출이 없습니다',
+      ]);
+      say(`${r.name} · 내려받았습니다 — 결과 원본이 연결되면 GeoJSON 으로 떨어집니다`);
+    });
     $('#dp-del')?.addEventListener('click', async () => {
       if (!await confirmDialog({ title: '확인', body: '분석 결과를 삭제하시겠습니까?\n결과의 수정·삭제 권한은 LX 에 있습니다.', okLabel: '삭제', danger: true })) return;
       dropRun(r.id); say('분석 결과를 삭제했습니다 · 시연'); commit({ run: '' });

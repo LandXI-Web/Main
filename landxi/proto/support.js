@@ -1,5 +1,6 @@
 /* 서비스 지원 공통 — 셸 올리기 · URL 상태 · 첨부 행 · 진입 스태거. (B6 구현, 채택안 = 선택 2 "분할 열람")
    페이지 모듈: support-notice.js · support-faq.js · support-contact.js · support-usecase.js · support-manual.js */
+import { downloadNote } from './download.js';
 import { mountShell, TABS, say, icon, esc, $, $$ } from './shell.js';
 import { AS_OF } from './support-data.js';
 
@@ -51,7 +52,15 @@ export function fmtSize(b) {
 /* 첨부 행 — 원본: 클릭 = 다운로드 시작 토스트(실제 파일은 없다 → 시연) */
 export const fileRow = (a, cls = '') => `<button type="button" class="file sp-file ${cls}" data-dl="${esc(a.name)}"><span class="sp-file-ic">${icon('clip', 16)}</span><span class="sp-file-n">${esc(a.name)}</span><span class="n sp-file-s">(${esc(fmtSize(a.size))})</span><span class="sp"></span><span class="sp-file-d">${icon('down', 16)}</span><span class="sr">내려받기</span></button>`;
 export function bindDownloads(root = document) {
-  root.addEventListener('click', (e) => { const b = e.target.closest('[data-dl]'); if (b) say(`다운로드를 시작합니다 · ${b.dataset.dl} · 시연`); });
+  /* **실제로 떨어진다.** 전에는 토스트만 띄웠다 — 눌렀는데 아무것도 안 받아지는 버튼이었다.
+     첨부 원본은 시연본에 없으므로, 무엇을 받았는지 적힌 파일을 그 자리에서 만들어 준다.
+     빈 파일을 주거나 없는 파일을 있는 척하지 않는다(2026-09-21). */
+  root.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-dl]'); if (!b) return;
+    const name = b.dataset.dl;
+    downloadNote(`${String(name).replace(/[\/:*?"<>|]/g, '_')}.txt`, [`첨부 · ${name}`]);
+    say(`${name} 을 내려받았습니다`);
+  });
 }
 
 /* `[분류] 제목` → 분류는 파랑, 사이에 회색 빗금 (원판 ucTitle) */

@@ -116,7 +116,14 @@ test.describe('공지사항', () => {
     await expect(page.locator('#main')).not.toContainText('?notice=');
     await expect(page.locator('#n-pane .sp-file')).toHaveCount(2);
     await page.locator('#n-pane .sp-file').first().click();
-    await expect(page.locator('#say')).toContainText('다운로드를 시작합니다 · v2.1_release_notes.pdf');
+    /* 첨부는 **실제로 떨어진다**(2026-09-21). 전에는 `다운로드를 시작합니다 · 시연` 토스트만 띄웠다 —
+       눌렀는데 아무것도 안 받아지는 버튼이었다. 검사도 파일이 떨어지는지를 본다. */
+    const [dl] = await Promise.all([
+      page.waitForEvent('download'),
+      page.locator('[data-dl="v2.1_release_notes.pdf"]').click(),
+    ]);
+    expect(dl.suggestedFilename()).toContain('v2.1_release_notes.pdf');
+    await expect(page.locator('#say')).toContainText('내려받았습니다');
   });
   test('행 선택 → 열람 판 교체 + URL · 목록/Esc 로 닫고 포커스가 행으로 · 뒤로 가기', async ({ page }) => {
     await boot(page, 'proto/notice.html');
@@ -378,7 +385,7 @@ test.describe('활용사례', () => {
     await expect(modal.locator('.uc-m-r')).toContainText('4. 향후 계획');
     for (let i = 0; i < 9; i++) { await page.keyboard.press('Tab'); expect(await page.evaluate(() => !!document.activeElement.closest('.modal'))).toBe(true); }
     await modal.locator('.sp-file').first().click();
-    await expect(page.locator('#say')).toContainText('다운로드를 시작합니다');
+    await expect(page.locator('#say')).toContainText('내려받았습니다');
     await page.keyboard.press('Escape');
     await expect(modal).toHaveCount(0);
     await expect(card).toBeFocused();
