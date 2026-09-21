@@ -263,18 +263,40 @@ function optHtml(it) {
     <label class="ck"><input type="checkbox" data-sub="extent" data-layer="${esc(it.id)}"${extentOn ? ' checked' : ''}>분석 영역</label>
   </div>`;
 }
-/* 준비 중(결과 레이어 0) — 한 줄에 하나씩 쌓으면 6개만 보이고 나머지는 `그 외 5` 로 접혀
-   279px 를 먹었다. 이름은 짧으니 가로로 흘린다: 279px → 100px 안쪽이 되고
-   접어 두었던 5개까지 **전부** 보인다(줄여서 맞춘 게 아니라 늘려서 맞췄다). */
+/* 준비 중(결과 레이어 없음) — 판에는 **한 줄**, 목록은 창에서 (2026-09-21).
+   발주자: "준비 중 · 결과 레이어 없음 11 … 이런건 또 뭐지?"
+            "실제 오픈한다는 조건으로 좀 프로페셔널하게 해야 한다."
+
+   레이어 판은 **켤 수 있는 것**을 늘어놓는 자리다. 켤 수 없는 줄 열한 개가 늘 `0` 을 달고
+   깔려 있으면 미완성으로 보인다. 그렇다고 지우면 로드맵이 사라진다.
+   판에서 펴 봤더니 열한 줄이 판을 넘어 마지막 줄이 잘렸다 — 판이 감당할 양이 아니다.
+   그래서 판에는 한 줄만 두고, 누르면 **창**에서 이름마다 왜 없는지를 보여 준다.
+   늘 0 이던 숫자는 없앴다. 이유는 지어내지 않고 카드 상태·자산 보유에서 읽는다(map-data.js soonWhy). */
 function soonHtml() {
-  return `<div class="mw-soon"><h4>준비 중 · 결과 레이어 없음 <span class="z">${groups.soon.length}</span></h4>
-    <ul>${groups.soon.map((g) => `<li>${esc(g.name)}<span class="z">0</span></li>`).join('')}</ul></div>`;
+  const n = groups.soon.length;
+  if (!n) return '';
+  return `<div class="mw-soon"><button type="button" id="soon-t" class="mw-soon-t">
+    준비 중 <span class="z">${n}</span>
+    <span class="mw-soon-w">지도에 올릴 결과가 아직 없는 서비스</span>
+    <span class="mw-soon-c" aria-hidden="true">보기 ›</span></button></div>`;
 }
+function openSoonView() {
+  openModal({ title: '준비 중 · 지도에 올릴 결과가 아직 없는 서비스', width: 620,
+    content: `<p class="md-lead">전국 서비스 라인업 가운데 이 지도에 아직 켤 수 있는 결과가 없는 것들입니다.
+      판독이 끝나면 왼쪽 레이어 판에 저절로 올라옵니다.</p>
+      <div class="tbl-wrap"><table class="tbl tbl--s"><colgroup><col style="width:200px"><col></colgroup>
+      <thead><tr><th>서비스</th><th>지금 상태</th></tr></thead>
+      <tbody>${groups.soon.map((g) => `<tr><td>${esc(g.name)}</td><td>${esc(g.why || '—')}</td></tr>`).join('')}</tbody>
+      </table></div>`,
+    actions: [{ label: '닫기', kind: 'bracket' }] });
+}
+
 function bindResult(b) {
   b.onclick = (e) => {
     const own = e.target.closest('[data-own]'); if (own) { ownFilter = own.dataset.own; renderLeft(); return; }
     if (e.target.closest('#l-all')) { const close = allOpen(); groups.live.forEach((g) => (close ? openGroups.delete(g.service) : openGroups.add(g.service))); renderLeft(); return; }
     if (e.target.closest('#l-list')) { openListView(); return; }
+    if (e.target.closest('#soon-t')) { openSoonView(); return; }
     const g = e.target.closest('[data-grp]');
     if (g) { openGroups.has(g.dataset.grp) ? openGroups.delete(g.dataset.grp) : openGroups.add(g.dataset.grp); renderLeft(); return; }
     const m = e.target.closest('[data-menu]'); if (m) { openLayerMenu(D.layerById(m.dataset.menu)); }
@@ -320,6 +342,7 @@ function bindTree(b) {
     const own = e.target.closest('[data-own]'); if (own) { ownFilter = own.dataset.own; renderLeft(); return; }
     if (e.target.closest('#l-all')) { const close = allOpen(); D.LAYER_TREE.forEach((s) => { close ? treeOpen.delete(s.name) : treeOpen.add(s.name); s.groups.forEach((g) => (close ? treeOpen.delete(g.name) : treeOpen.add(g.name))); }); renderLeft(); return; }
     if (e.target.closest('#l-list')) { openListView(); return; }
+    if (e.target.closest('#soon-t')) { openSoonView(); return; }
     const t = e.target.closest('[data-tg]'); if (!t) return;
     treeOpen.has(t.dataset.tg) ? treeOpen.delete(t.dataset.tg) : treeOpen.add(t.dataset.tg); renderLeft();
   };

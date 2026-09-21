@@ -109,6 +109,20 @@ function layersOfService(sv) {
   return [];
 }
 
+/* 결과 레이어가 없는 서비스에 **왜 없는지**를 붙인다 (2026-09-21).
+   발주자: "준비 중 · 결과 레이어 없음 11 … 이런건 또 뭐지?" / "실제 오픈한다는 조건으로
+            좀 프로페셔널하게 해야 한다."
+   전에는 이름 옆에 `0` 만 달려 있었다 — 늘 0 이라 아무 말도 못 하는 숫자였고,
+   켤 수 없는 줄이 열한 개 깔려 있어 미완성으로 보였다. 이유는 저마다 다르다:
+   자료까지 있고 판독만 안 한 것 · 카드는 운영 중인데 그 모델이 없는 것 · 카드가 아직 검토인 것 ·
+   카드조차 없는 전국 라인업. 지어내지 않고 카드 상태와 자산 보유에서 읽어 온다. */
+function soonWhy(sv, card) {
+  if (sv.asset) return '자료 보유 · 판독 전';
+  if (!card) return '전국 라인업 · 배포 전';
+  if (card.status === '운영') return `${card.name} 운영 · 모델 개발 전`;
+  return `${card.name} ${card.status}`;
+}
+
 /** 결과가 있는 서비스 = 그룹, 없는 서비스 = `준비 중`. 둘 다 카드 순서를 따른다. */
 export function resultGroups() {
   const seen = new Set(), live = [], soon = [];
@@ -117,13 +131,13 @@ export function resultGroups() {
       if (seen.has(sid)) continue; seen.add(sid);
       const sv = serviceById(sid); if (!sv) continue;
       const items = layersOfService(sv);
-      (items.length ? live : soon).push({ service: sv.id, name: sv.name, card: card.name, cardId: card.id, scope: card.scope, items, gap: card.gap });
+      (items.length ? live : soon).push({ service: sv.id, name: sv.name, card: card.name, cardId: card.id, scope: card.scope, items, gap: card.gap, why: items.length ? '' : soonWhy(sv, card) });
     }
   }
   for (const sv of SERVICES) {                    // 카드에 묶이지 않은 모델도 빠뜨리지 않는다
     if (seen.has(sv.id)) continue; seen.add(sv.id);
     const items = layersOfService(sv);
-    (items.length ? live : soon).push({ service: sv.id, name: sv.name, card: null, cardId: null, scope: 'local', items, gap: null });
+    (items.length ? live : soon).push({ service: sv.id, name: sv.name, card: null, cardId: null, scope: 'local', items, gap: null, why: items.length ? '' : soonWhy(sv, null) });
   }
   return { live, soon };
 }

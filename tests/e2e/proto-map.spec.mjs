@@ -159,7 +159,19 @@ test.describe('왼쪽 패널', () => {
     expect(groups[1]).toContain('비닐하우스 현황');
     expect(groups[2]).toContain('드론 변화탐지');
     expect(groups[3]).toContain('해양쓰레기 실태조사');
-    await expect(page.locator('.mw-soon')).toContainText('준비 중 · 결과 레이어 없음');
+    /* 준비 중은 판에 **한 줄**, 목록은 창에서 본다(2026-09-21).
+       발주자: "준비 중 · 결과 레이어 없음 11 … 이런건 또 뭐지?" / "실제 오픈한다는 조건으로 프로페셔널하게"
+       전에는 늘 `0` 을 단 줄 열한 개가 판에 깔려 있었다 — 켤 수 없는 줄이라 미완성으로 보였고,
+       펴 보니 판을 넘어 잘렸다. 검사도 새 설계를 본다: 한 줄 + 창 안에서 **이유**가 선다. */
+    await expect(page.locator('.mw-soon')).toContainText('준비 중');
+    await expect(page.locator('.mw-soon')).toContainText('지도에 올릴 결과가 아직 없는 서비스');
+    await expect(page.locator('.mw-soon li')).toHaveCount(0);            // 판에 목록은 없다
+    await page.locator('#soon-t').click();
+    const why = await page.locator('.md tbody tr, [role="dialog"] tbody tr').allInnerTexts();
+    expect(why.length).toBe(11);
+    expect(why.join(' ')).toContain('자료 보유 · 판독 전');                 // 늘 0 이던 숫자 대신 이유가 선다
+    expect(why.join(' ')).not.toMatch(/	0$/m);
+    await page.keyboard.press('Escape');
   });
 
   test('체크하면 URL 에 남고 범례 · 투명도 · 하위 체크 3이 붙는다', async ({ page }) => {

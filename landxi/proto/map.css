@@ -207,7 +207,15 @@ body.lx[data-map]{ min-height:700px; }
 .mc-op .v{ font-family:var(--num); color:var(--ink); width:46px; text-align:right; }
 .mc-ck2{ display:flex; gap:14px; padding:0 14px 10px; font-size:14px; flex-wrap:wrap; }
 /* 준비 중 — 세로 목록을 가로로 흘린다. 자세한 사정은 map.js soonHtml() 주석에. */
-.mw-soon{ padding:9px 14px 12px; }
+/* 준비 중 — 접어 두는 한 줄. 펴면 이름마다 **왜 없는지**가 선다(2026-09-21). */
+.mw-soon{ padding:9px 14px 12px; border-top:1px solid var(--line); }
+.mw-soon-t{ display:flex; align-items:baseline; gap:7px; width:100%; padding:0; font-size:14px;
+  color:var(--grey); text-align:left; transition:color var(--hov) var(--hove); }
+.mw-soon-t:hover{ color:var(--ink); }
+.mw-soon-t .z{ font-family:var(--num); color:var(--ink); }
+.mw-soon-w{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--grey-3); }
+.mw-soon-t .mw-soon-c{ margin-left:auto; flex:none; color:var(--accent); white-space:nowrap; }
+/* 목록은 창에서 본다 — 판에는 이 한 줄뿐이다. */
 .mw-soon h4{ margin:0 0 5px; font-size:14px; color:var(--grey); font-weight:400; }
 .mw-soon h4 .z{ font-family:var(--num); color:var(--grey-3); }
 .mw-soon ul{ margin:0; padding:0; display:flex; flex-wrap:wrap; gap:1px 8px; }
