@@ -19,8 +19,8 @@ html,body{ height:100%; }
 body.lx{ overflow:hidden; background:var(--lx-paper); color:var(--lx-ink); }
 
 /* Paperlogy — fonts.html 과 같은 noonnu(jsDelivr) 배포. 토큰 --font-display/--tint-* 는 v3-tokens.css 에 아직 없어 여기 로컬 정의. */
-@font-face{font-family:'Paperlogy';font-weight:800;font-display:swap;src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2') format('woff2')}
-@font-face{font-family:'Paperlogy';font-weight:700;font-display:swap;src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2') format('woff2')}
+@font-face{font-family:'Paperlogy';font-weight:800;font-display:swap;src:url('../assets/fonts/Paperlogy-8ExtraBold.woff2') format('woff2')}
+@font-face{font-family:'Paperlogy';font-weight:700;font-display:swap;src:url('../assets/fonts/Paperlogy-7Bold.woff2') format('woff2')}
 :root{
   --font-display:"Paperlogy","Pretendard",system-ui,sans-serif;
   --tint-1:#E8F1FF;

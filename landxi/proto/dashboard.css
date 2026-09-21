@@ -8,8 +8,8 @@
    페이지 = flex 세로, 판·패널 254→420 으로 자라 빈 띠를 없앤다. 푸터는 바닥.
    글자 크기(클라이언트 2026-08-27 "전체적으로 2포인트 키우자"): 모든 font-size +2px — 최소 14(라벨·캡션·범례) · 본문 16 · 표 15.5/16 · 섹션 18 · KPI 58. 위계 비율은 그대로. */
 
-@font-face{font-family:'Paperlogy';font-weight:800;font-display:swap;src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2') format('woff2')}
-@font-face{font-family:'Paperlogy';font-weight:700;font-display:swap;src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2') format('woff2')}
+@font-face{font-family:'Paperlogy';font-weight:800;font-display:swap;src:url('../assets/fonts/Paperlogy-8ExtraBold.woff2') format('woff2')}
+@font-face{font-family:'Paperlogy';font-weight:700;font-display:swap;src:url('../assets/fonts/Paperlogy-7Bold.woff2') format('woff2')}
 
 *,*::before,*::after{ box-sizing:border-box; }
 html{ height:100%; scroll-behavior:smooth; }

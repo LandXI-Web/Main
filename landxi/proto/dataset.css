@@ -5,8 +5,8 @@
    글꼴(2026-08-27 T3): Paperlogy(표시·큰 숫자) + Pretendard(본문) · Inter tabular(작은 수치). 최소 14px — 14 미만 글자 없음.
    색 역할(system.md §2): 파랑 = 정보/선택(KPI 숫자 · 선택 카드·타일 · 살아있는 업로드) · 빨강(--warn) = 조치 필요(디스크 96% · 발행 실패) · 청록 = AI 결과(판 위 GeoJSON). 앰버 0. */
 
-@font-face{font-family:'Paperlogy';font-weight:800;font-display:swap;src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2') format('woff2')}
-@font-face{font-family:'Paperlogy';font-weight:700;font-display:swap;src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2') format('woff2')}
+@font-face{font-family:'Paperlogy';font-weight:800;font-display:swap;src:url('../assets/fonts/Paperlogy-8ExtraBold.woff2') format('woff2')}
+@font-face{font-family:'Paperlogy';font-weight:700;font-display:swap;src:url('../assets/fonts/Paperlogy-7Bold.woff2') format('woff2')}
 
 *,*::before,*::after{ box-sizing:border-box; }
 html{ height:100%; }

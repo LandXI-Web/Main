@@ -1,20 +1,38 @@
 /* Land-XI 글꼴 체계 — 클라이언트 결정(2026-08-27, landxi/proto/fonts.html T3):
    "일단 모든 글꼴과 스타일은 Paperlogy + Pretendard, T3로 간다."
    표시 Paperlogy 700/800 · 본문 Pretendard 400/500 · 소형 표 숫자 Inter tabular.
-   모든 프로토 페이지는 이 파일 하나만 불러온다(v3-tokens.css 가 @import 하므로 토큰을 쓰는 페이지는 자동). */
+   모든 프로토 페이지는 이 파일 하나만 불러온다(v3-tokens.css 가 @import 하므로 토큰을 쓰는 페이지는 자동).
 
-/* @import 는 다른 규칙보다 앞에 와야 한다. */
-/* Pretendard — 정적 400/500(family 'Pretendard'). */
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
-/* Inter — 소형 표·좌표·캡션의 tabular 숫자. */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap');
+   ── 바깥에서 받아 오지 않는다 (2026-09-21) ──────────────────────────────────
+   발주자: "dns가 타임아웃되네"
+   글꼴 넷이 각각 다른 바깥 호스트에서 왔다 — cdn.jsdelivr.net · fastly.jsdelivr.net ·
+   fonts.googleapis.com · fonts.gstatic.com. 한 곳만 느려도 글자가 늦게 서고,
+   DNS 가 막히면 아예 안 선다. 화면의 잘못이 아닌데 화면이 멈춘 것처럼 보인다.
+   그래서 **전부 저장소 안으로 내렸다**(landxi/assets/fonts/). 바깥 의존 0.
+   폐쇄망으로 옮길 때도 이 파일은 그대로 돈다.
 
-/* Paperlogy — 눈누 배포(jsDelivr projectnoonnu/2408-3). fonts.html 에서 동작 확인한 소스 그대로. */
-@font-face{font-family:'Paperlogy';font-weight:800;font-style:normal;font-display:swap;
-  src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2') format('woff2')}
+   내려받은 것 · 출처와 라이선스
+     Pretendard 1.3.9  github.com/orioncactus/pretendard (SIL OFL 1.1) — Regular · Medium
+     Paperlogy 1.0     눈누 배포 projectnoonnu/2408-3 — 7Bold · 8ExtraBold
+     Inter 5           @fontsource/inter (SIL OFL 1.1) — 400 · 500, 숫자 전용이라 latin 만 */
+
+/* 경로는 proto/ 기준 — 이 파일을 부르는 화면이 proto/ 안이거나(대부분),
+   proto/site/ · proto/scrub/ 처럼 한 단 아래다. @font-face 의 url 은 **이 CSS 파일 기준**이라
+   어느 화면에서 부르든 같은 곳을 가리킨다. */
+@font-face{font-family:'Pretendard';font-weight:400;font-style:normal;font-display:swap;
+  src:url('../assets/fonts/Pretendard-Regular.woff2') format('woff2')}
+@font-face{font-family:'Pretendard';font-weight:500;font-style:normal;font-display:swap;
+  src:url('../assets/fonts/Pretendard-Medium.woff2') format('woff2')}
+
 @font-face{font-family:'Paperlogy';font-weight:700;font-style:normal;font-display:swap;
-  src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2') format('woff2')}
+  src:url('../assets/fonts/Paperlogy-7Bold.woff2') format('woff2')}
+@font-face{font-family:'Paperlogy';font-weight:800;font-style:normal;font-display:swap;
+  src:url('../assets/fonts/Paperlogy-8ExtraBold.woff2') format('woff2')}
 
+@font-face{font-family:'Inter';font-weight:400;font-style:normal;font-display:swap;
+  src:url('../assets/fonts/Inter-400.woff2') format('woff2')}
+@font-face{font-family:'Inter';font-weight:500;font-style:normal;font-display:swap;
+  src:url('../assets/fonts/Inter-500.woff2') format('woff2')}
 
 :root{
   --font-display:'Paperlogy','Pretendard',system-ui,sans-serif;   /* 700 / 800 — H1·H2·KPI·워드마크 텍스트 */

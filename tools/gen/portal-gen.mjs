@@ -42,7 +42,7 @@ const page = ({ title, tenant, svc = '', mod, skeleton, gl = false }) => {
 <link rel="icon" href="../assets/images/favicon_landxi.png">
 <script src="shell-gate.js" data-login="${esc(loginOf(tenant))}"></script>
 <link rel="stylesheet" href="fonts-system.css">${gl ? `
-<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">` : ''}
+<link rel="stylesheet" href="vendor/maplibre/maplibre-gl.css">` : ''}
 <link rel="stylesheet" href="shell.css">
 <link rel="stylesheet" href="parts.css">
 <link rel="stylesheet" href="portal.css">
@@ -50,7 +50,7 @@ const page = ({ title, tenant, svc = '', mod, skeleton, gl = false }) => {
 </head><body class="lx pt" data-gen="rows" data-page="portal" data-tenant="${esc(tenant)}"${svc ? ` data-svc="${esc(svc)}"` : ''}>
 <main id="main">${skeleton}</main>
 <noscript>${esc(title)} — 이 화면은 자바스크립트가 필요합니다.</noscript>${gl ? `
-<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>` : ''}
+<script src="vendor/maplibre/maplibre-gl.js"></script>` : ''}
 <script type="module" src="${mod}"></script>
 </body></html>
 `;
