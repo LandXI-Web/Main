@@ -78,7 +78,7 @@ test('레일 · 마스트헤드 — 대시보드와 같은 공지 + 기준일, �
 });
 
 /* ── 첫 화면 = 개요 · 디스크는 얇은 한 줄 · 카드 4 = 단계 선택 ─────────── */
-test('개요(쿼리 없음) — 네 상태가 한눈에 · 각 구역에 건수·상태·최근 셋·지표·자세히 · 구역 클릭 = ?tab= · 단계 뷰 장치는 숨는다', async ({ page }) => {
+test('개요(쿼리 없음) — 네 상태가 한눈에 · 각 구역에 건수·상태·대표 그림·지표·자세히 · 구역 클릭 = ?tab= · 단계 뷰 장치는 숨는다', async ({ page }) => {
   const errs = watch(page);
   await boot(page);
   await expect(page.locator('body')).toHaveAttribute('data-view', 'overview');
@@ -89,11 +89,17 @@ test('개요(쿼리 없음) — 네 상태가 한눈에 · 각 구역에 건수�
   expect(await page.locator('#ov .ovc .ovt2').allInnerTexts()).toEqual(['데이터 업로드', '업로드 완료', '레이어 발행중', '아카이브']);
   expect(await page.locator('#ov .ovc .ovn b').allInnerTexts()).toEqual(['6', '8', '7', '5']);
   expect(await page.locator('#ov .ovc .ul').allInnerTexts()).toEqual(Array(4).fill('자세히 ›'));
-  // 구역마다 최근 셋 미리보기 + 그 단계 목록 + 지표 한 줄
-  expect(await page.locator('#ov .ovc').nth(0).locator('.ovf').count()).toBe(3);
+  /* 개요는 **한눈에 고르는 화면**이다 — 대표 그림 한 장 + 지표 한 줄(2026-09-21).
+     발주자: "데이터 관리 메인은 쉽고 간단한 구조여야 하는데 지금은 글자가 너무 많고
+              복잡하게 되어 있어서 안누르고 싶게 생겼다."
+     전에는 썸네일 석 장 + **파일 목록 전부**가 네 칸에 깔려 있었다. 파일명은 각 탭이
+     이미 들고 있으므로(#up-tiles · #dn-list · #pb-list · #ar-list) 개요에서 뺐다 —
+     지운 게 아니라 제자리로 보냈다. 검사도 그 설계를 따른다. */
+  expect(await page.locator('#ov .ovc').nth(0).locator('.ovf').count()).toBe(1);
+  await expect(page.locator('#ov .ovc').nth(0).locator('.ovfc')).toHaveText(/\S/);   // 대표 이름이 잘리지 않고 선다
+  expect(await page.locator('#ov .ovl').count()).toBe(0);                            // 개요에 파일 목록은 없다
   await expect(page.locator('#ov .ovc').nth(1).locator('.ovv')).toContainText('총 용량');
   await expect(page.locator('#ov .ovc').nth(2).locator('.ovv b.warn')).toHaveText('실패 3건');
-  expect(await page.locator('#ov .ovl .ovr:not([hidden])').count()).toBeGreaterThan(8);
   // 디스크는 큰 칸이 아니라 제목 줄의 얇은 한 줄 — 경고는 숫자(글자)에만
   await expect(page.locator('#disk .dv')).toHaveText('96');
   await expect(page.locator('#disk-v')).toHaveText('1,965 / 2,048 GB · 잔여 83 GB');

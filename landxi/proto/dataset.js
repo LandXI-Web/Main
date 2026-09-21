@@ -158,7 +158,9 @@ const OV_NOTE = {
 const ovRows = (id) => ({ upload: S.ups, manage: S.done, publishing: S.pubs, archive: S.arch }[id]);
 /** 최근 셋 — 목록 타일과 **같은 창구**(previewFor)를 지난다. */
 function ovRecent(id) {
-  const rows = ovRows(id).slice(0, 3);
+  /* 대표 **한 장**. 석 장을 세웠더니 그림이 너무 많고 이름이 `NW_ortho_2…` 로 잘려
+     아무 말도 못 했다. 개요는 그 단계가 어떤 그림인지만 보이면 된다(2026-09-21). */
+  const rows = ovRows(id).slice(0, 1);
   if (!rows.length) return `<span class="ovz n">0건</span>`;
   return `<span class="ovt">${rows.map((r) => {
     const b = previewFor(r, { rv: 'ov-' + r.id });
@@ -166,34 +168,18 @@ function ovRecent(id) {
     return `<span class="ovf"><span class="th ${b.cls}">${b.html}</span><span class="ovfc n" title="${esc(name)}">${esc(name)}</span></span>`;
   }).join('')}</span>`;
 }
-/** 그 단계의 나머지 — 이름 + 그 단계가 궁금해하는 값 한 조각. 썸네일 아래 남는 자리를 내용으로 채운다. */
-function ovList(id) {
-  const rows = ovRows(id);
-  const meta = (r) => {
-    if (id === 'upload') return `${UP_ST[r.st]} ${r.pct}%`;
-    if (id === 'manage') return `${r.fmt} · ${r.size}`;
-    if (id === 'publishing') return r.st === 'fail' ? `실패 · ${r.short || ''}` : `${r.step}/4 ${PUB_STEPS[r.step - 1]}`;
-    return `${r.kind} · ${r.hidden ? '숨김' : '표시'}`;
-  };
-  return `<span class="ovl" data-n="${rows.length}">${rows.map((r) => `<span class="ovr"${id === 'publishing' && r.st === 'fail' ? ' data-st="fail"' : ''}>
-    <span class="ovrn" title="${esc(r.name || r.file)}">${esc(r.name || r.file)}</span><span class="ovrm n">${esc(meta(r))}</span></span>`).join('')}</span>`;
-}
-/** 목록은 남은 높이만큼만 세우고, 못 세운 수를 마지막 줄에 적는다 — 지우는 게 아니라 접는 것이다. */
-function fitOvLists() {
-  for (const el of $$('#ov .ovl')) {
-    const rows = [...el.children];
-    rows.forEach((r) => { r.hidden = false; r.classList.remove('ovr--more'); });
-    const box = el.clientHeight;
-    if (!box) continue;
-    let y = 0, cut = -1;
-    rows.forEach((r, i) => { const h = r.offsetHeight || 22; if (cut < 0 && y + h > box) cut = i; else y += h; });
-    if (cut < 0) continue;
-    const keep = Math.max(0, cut - 1);
-    rows.forEach((r, i) => { r.hidden = i >= keep; });
-    const more = rows[keep];
-    if (more) { more.hidden = false; more.classList.add('ovr--more'); more.firstElementChild.textContent = `외 ${rows.length - keep}건`; more.lastElementChild.textContent = ''; }
-  }
-}
+/* ── 파일 목록은 **개요에 두지 않는다** (2026-09-21) ──────────────────────
+   발주자: "데이터 관리 메인은 쉽고 간단한 구조여야 하는데 지금은 글자가 너무 많고
+            복잡하게 되어 있어서 안누르고 싶게 생겼다."
+
+   개요가 `NW_ortho_정사영상_202604_section_C_v3.tif` 같은 기계 이름을 네 칸에 여섯 줄씩
+   이고 있었다. 훑어보고 **어디로 들어갈지 고르는 화면**인데 읽어야 할 글이 깔려 있었다.
+   발주 2026-09-20 의 뜻과도 어긋났다 — "처음에는 한눈에, 이후 탭으로 넘어가면 자세히".
+
+   지우는 게 아니라 **제자리로 보낸다.** 파일 목록은 각 탭이 이미 전부 들고 있다
+   (#up-tiles · #dn-list · #pb-list · #ar-list). 개요에는 그 단계가 어떤 그림인지만 남긴다.
+   비는 자리는 빈칸으로 두지 않고 **미리보기를 키워** 채운다(.ovt 가 남은 높이를 가져간다). */
+
 function ovMetric(id) {
   if (id === 'upload') {
     const run = S.ups.filter((u) => u.st === 'run');
@@ -211,13 +197,12 @@ function renderOverview() {
       <span class="ovh"><span class="d ovt2">${esc(t.name)}</span><span class="ovn n"><b class="big">${COUNT[t.id]()}</b>건</span></span>
       <span class="ovs n">${kpiSub(t.id)}</span>
       ${ovRecent(t.id)}
-      ${ovList(t.id)}
       <span class="ovm">${ovMetric(t.id)}</span>
       <span class="ovd n">${esc(OV_NOTE[t.id])}</span>
       <span class="ul">자세히 ›</span>
     </a>`).join('');
   $$('#ov .ovs em').forEach((e) => e.classList.add('warn'));
-  fitFrames($('#ov')); fitOvLists(); reveal($('#ov')); refit($('#ov'));
+  fitFrames($('#ov')); reveal($('#ov')); refit($('#ov'));
 }
 $('#ov').addEventListener('click', (ev) => {
   const a = ev.target.closest('.ovc[data-go]'); if (!a) return;
@@ -1053,7 +1038,6 @@ addEventListener('resize', () => {
   clearTimeout(rzT);
   rzT = setTimeout(() => {
     for (const root of [$('#grid'), $('#side'), $('#ov')]) { fitFrames(root); drawSilhouettes(root); }
-    fitOvLists();
     if (map) map.resize();
   }, 160);
 });
