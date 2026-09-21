@@ -95,7 +95,7 @@ form.addEventListener('submit', (e) => {
     localStorage.setItem('lx_role', role);
     if (form.remember.checked) localStorage.setItem('lx_saved_email', email);
     else localStorage.removeItem('lx_saved_email');
-    const HOME = { admin: 'dashboard.html', staff: 'ai-project.html', sales: 'ximap.html' };
+    const HOME = { admin: 'admin-home.html', staff: 'ai-project.html', sales: 'ximap.html' };
     const q = new URLSearchParams(location.search).get('next');
     location.assign(q ? nextTarget() : HOME[role]);
   }, REDUCE ? 0 : 240);

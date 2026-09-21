@@ -1,0 +1,86 @@
+/* LX 관리자 홈 — 직원 화면과 **다른 집**으로 보이게.
+   발주자(2026-09-21): "관리자는 사이트도 다르고 모습도 조금 달라야 한다."
+
+   법전은 그대로다(라운드 0 · 그림자 0 · 그라디언트 0 · 유리 0 · 바닥 14px).
+   그래서 색을 하나 더 늘리거나 장식을 붙이지 않고, **명도**로만 가른다 —
+   마스트헤드와 레일에 짙은 띠를 두면 문을 열자마자 다른 집인 줄 안다.
+   한 화면에서 끝난다: 결재 대기(띠) + 관리 네 축(남은 높이) + 한눈 수치(띠). */
+
+/* ── 다른 집이라는 표시 — 짙은 머리띠 ───────────────────────────────────── */
+body.lx[data-site="admin"] #mast{ background:var(--ink); border-bottom-color:var(--ink); }
+body.lx[data-site="admin"] #mast,
+body.lx[data-site="admin"] #mast a,
+body.lx[data-site="admin"] #mast .k,
+body.lx[data-site="admin"] #mast .n{ color:#fff; }
+body.lx[data-site="admin"] #mast .tag{ border-color:#5A5A5A; color:#CFCFCF; }
+body.lx[data-site="admin"] #rail{ background:#F4F4F5; }
+body.lx[data-site="admin"] #page-title .rule{ border-bottom-color:var(--ink); }
+
+/* ── 한 화면 ─────────────────────────────────────────────────────────────── */
+.lx.ah #main{ min-height:0; overflow:clip; }
+.ah-wrap{ flex:1 1 0; min-height:0; display:flex; flex-direction:column; gap:clamp(10px,1.8vh,20px); }
+.ah-h{ display:flex; align-items:baseline; gap:10px; margin:0 0 clamp(8px,1.2vh,12px);
+  font-family:var(--disp); font-weight:700; font-size:17px; letter-spacing:-.02em; }
+.ah-h span{ font-family:var(--body); font-weight:400; font-size:14px; color:var(--grey); }
+
+/* ── 결재 대기 — 관리자가 이 화면을 여는 이유. 맨 위에 얇게. ─────────────── */
+.ah-wait{ flex:none; }
+.ah-wait-b{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border:1px solid var(--line); }
+.ah-w{ display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:14px;
+  padding:clamp(11px,1.6vh,16px) 18px; color:inherit; border-right:1px solid var(--line);
+  transition:background var(--hov) var(--hove); }
+.ah-w:last-child{ border-right:0; }
+.ah-w:hover{ background:var(--t1); }
+.ah-w-n{ font-family:var(--num); font-weight:700; font-size:clamp(26px,2.4vw,34px); line-height:1;
+  letter-spacing:-.02em; color:var(--accent); }
+.ah-w-t{ display:flex; flex-direction:column; min-width:0; }
+.ah-w-t b{ font-size:16px; font-weight:500; }
+.ah-w-t span{ font-size:14px; color:var(--grey); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ah-w-go{ color:var(--grey-3); transition:transform var(--hov) var(--hove), color var(--hov) var(--hove); }
+.ah-w:hover .ah-w-go{ transform:translateX(4px); color:var(--accent); }
+
+/* ── 관리 네 축 — 남은 높이를 넷이 나눠 가진다 ───────────────────────────── */
+.ah-axes{ flex:1 1 0; min-height:0; display:flex; flex-direction:column; }
+.ah-axes-b{ flex:1 1 0; min-height:0; display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
+  border:1px solid var(--line); }
+.ah-ax{ display:flex; flex-direction:column; min-width:0; min-height:0; overflow:hidden;
+  padding:clamp(13px,2vh,20px) 18px; color:inherit; border-right:1px solid var(--line);
+  transition:background var(--hov) var(--hove); }
+.ah-ax:last-child{ border-right:0; }
+.ah-ax:hover{ background:var(--t1); }
+.ah-ax-h{ display:flex; align-items:center; gap:8px; flex:none; }
+.ah-ax-h b{ font-family:var(--disp); font-weight:700; font-size:16px; letter-spacing:-.02em; }
+.ah-ax-h i{ margin-left:auto; color:var(--grey-3); transition:transform var(--hov) var(--hove), color var(--hov) var(--hove); }
+.ah-ax:hover .ah-ax-h i{ transform:translateX(4px); color:var(--accent); }
+/* 빨강은 **글자에만**(법전). 채우거나 테두리를 두르지 않는다. */
+.ah-warn{ font-style:normal; font-size:14px; color:var(--warn); white-space:nowrap; }
+.ah-ax-w{ flex:none; margin-top:6px; font-size:14px; line-height:1.45; color:var(--grey); word-break:keep-all; }
+/* 숫자를 바닥에 붙였더니 설명과 숫자 사이가 크게 비었다 — 남는 높이를 **줄 사이로 나눈다**. */
+.ah-ax-r{ flex:1 1 0; min-height:0; display:flex; flex-direction:column; justify-content:space-evenly;
+  gap:clamp(4px,.9vh,9px); margin-top:clamp(10px,1.6vh,16px); }
+.ah-r{ display:flex; align-items:baseline; gap:10px; font-size:14px; }
+.ah-r .k{ color:var(--grey); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ah-r .v{ margin-left:auto; font-family:var(--num); font-weight:700;
+  font-size:clamp(17px,1.15vw,22px); letter-spacing:-.02em; font-variant-numeric:tabular-nums;
+  white-space:nowrap; }
+.ah-r .v em{ margin-left:3px; font-style:normal; font-weight:400; font-size:14px; color:var(--grey); }
+
+/* ── 한눈 수치 — 아래 두 줄. 읽는 줄이지 누르는 줄이 아니다. ─────────────── */
+.ah-foot{ flex:none; border-top:1px solid var(--ink); padding-top:clamp(8px,1.2vh,12px); }
+.ah-line{ display:flex; align-items:baseline; flex-wrap:wrap; gap:0 6px; margin:0;
+  font-size:14px; line-height:1.6; color:var(--grey); }
+.ah-line + .ah-line{ margin-top:3px; }
+.ah-line b{ font-family:var(--num); font-weight:700; font-size:16px; color:var(--ink); }
+.ah-line .sp{ flex:1; }
+.ah-line--q b{ color:var(--accent); }
+.ah-ok{ color:var(--teal); }
+
+@media (max-width:1320px){
+  .ah-axes-b{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .ah-ax:nth-child(2){ border-right:0; }
+  .ah-ax:nth-child(-n+2){ border-bottom:1px solid var(--line); }
+}
+@media (max-width:860px){
+  .ah-wait-b{ grid-template-columns:1fr; }
+  .ah-w{ border-right:0; border-bottom:1px solid var(--line); }
+}

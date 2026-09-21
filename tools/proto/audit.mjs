@@ -27,6 +27,8 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/jav
   '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.mp4': 'video/mp4' };
 
 const SCREENS = [
+  // 관리자 홈 — **직원 화면과 다른 집**(2026-09-21). 관리자 역할로만 열린다.
+  ['admin-home', '운영 현황 · 관리자'],
   ['dashboard', '대시보드'], ['dataset', '데이터 관리'], ['ai-project', '프로젝트 목록'],
   ['ai-project-create', '프로젝트 만들기'], ['ai-project-label', '라벨링'],
   ['analysis-ai', '분석 서비스'], ['ximap', '지도 서비스'], ['stats-standard', '통계'],

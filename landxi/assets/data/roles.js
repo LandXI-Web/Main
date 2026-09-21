@@ -40,9 +40,12 @@ export const ROLES = [
   {
     id: 'admin', name: 'LX 관리자', short: '관리자',
     what: '플랫폼을 운영한다 — 발행 승인 · 사용자 · 공지 · 생산 공정',
-    menus: ['dashboard', 'media', 'project', 'analysis', 'map', 'support', 'publish', 'produce', 'admin', 'my'],
+    /* 관리자의 첫 화면은 **운영 현황**이다 — 대시보드가 아니다(2026-09-21).
+       발주자: "관리자는 사이트도 다르고 모습도 조금 달라야 한다. 기존 화면은 일반직원 화면일 것 같다."
+       대시보드는 직원도 보는 화면이라 관리자의 집이 될 수 없다. */
+    menus: ['ops', 'dashboard', 'media', 'project', 'analysis', 'map', 'support', 'publish', 'produce', 'admin', 'my'],
     caps: ['approve', 'users', 'notice', 'produce', 'upload', 'build', 'run', 'edit', 'request', 'export'],
-    home: 'dashboard.html',
+    home: 'admin-home.html',
   },
   {
     id: 'staff', name: 'LX 직원', short: '직원',
@@ -90,6 +93,7 @@ export const homeOf = (roleId) => roleById(roleId)?.home || 'dashboard.html';
  *  레일에 없는 화면을 주소로 직접 열어도 막으려면 이 표가 필요하다.
  *  여기 없는 화면은 **로그인만 하면 누구나** 본다(서비스 지원 · 마이페이지 등). */
 export const SCREEN_MENU = {
+  'admin-home.html': 'ops',
   /* 활용 사례는 **막지 않는다** — 영업용 레일에서는 제 이름으로 서고,
      관리자·직원에게는 서비스 지원 안의 탭이다. 여기 적으면 그 둘이 못 본다. */
   'dashboard.html': 'dashboard',

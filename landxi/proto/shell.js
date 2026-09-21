@@ -27,6 +27,8 @@ export const role = roleById(ROLE);
 export const allowed = (cap) => can(ROLE, cap);
 
 export const NAV = [
+  /* 운영 현황 — **관리자만** 보는 첫 화면(roles.js 'ops'). 직원·영업 레일에는 서지 않는다. */
+  { key: 'ops', name: '운영 현황', href: 'admin-home.html', icon: 'gear', group: 'top' },
   { key: 'dashboard', name: '대시보드', href: 'dashboard.html', icon: 'dash', group: 'top' },
   { key: 'media', name: '데이터 관리', href: 'dataset.html', icon: 'data', group: 'top' },
   { key: 'project', name: '프로젝트', href: 'ai-project.html', icon: 'proj', group: 'top' },
