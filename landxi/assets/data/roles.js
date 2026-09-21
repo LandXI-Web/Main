@@ -43,7 +43,27 @@ export const ROLES = [
     /* 관리자의 첫 화면은 **운영 현황**이다 — 대시보드가 아니다(2026-09-21).
        발주자: "관리자는 사이트도 다르고 모습도 조금 달라야 한다. 기존 화면은 일반직원 화면일 것 같다."
        대시보드는 직원도 보는 화면이라 관리자의 집이 될 수 없다. */
-    menus: ['ops', 'dashboard', 'media', 'project', 'analysis', 'map', 'support', 'publish', 'produce', 'admin', 'my'],
+    /* **관리 기능만 둔다 — 완전히 다른 사이트다** (2026-09-22).
+       발주자: "관리자는 프로젝트가 필요할까?"
+                "관리자는 기존 사이트와 완전 다르게 새로운 사이트 인 것 처럼..."
+                "그리고 관리 기능만 있도록 해야 한다."
+
+       처음엔 레일만 줄였다 — 같은 집에서 문 몇 개를 잠근 꼴이었다. 그게 아니다.
+       프로젝트 · 분석 서비스 · 지도 서비스 · 대시보드는 **만드는 화면**이고 직원의 집이다.
+       관리자가 거기 상주하면 두 역할이 도로 섞인다. 그래서 아예 갖지 않는다.
+       개발 진척을 못 보게 되는 것이 아니다 — **생산 관리 · 개발 관리**가 그 자리다
+       (재학습 · 검수 · 감시). 관리자는 만들지 않고 **본다**.
+
+       남기는 여섯:
+         운영 현황      제 집 — 결재 대기 + 관리 네 축
+         데이터 관리    자산 대장 · 아카이브 (발주자: "데이터관리 아카이브 … 관리에 주안점")
+         카드 발행 관리 승인 · 반려
+         생산 관리      인프라 · 개발 관리 · 개발 구현
+         서비스 관리    사용자 · 공지 · 문의 · FAQ · 지도 설정
+         MY
+       서비스 지원(공지·FAQ 열람)도 뺐다 — 관리자는 그것을 **관리하는** 쪽이고,
+       읽는 화면과 고치는 화면을 둘 다 주면 어느 쪽이 제 일인지 흐려진다. */
+    menus: ['ops', 'media', 'publish', 'produce', 'admin', 'my'],
     caps: ['approve', 'users', 'notice', 'produce', 'upload', 'build', 'run', 'edit', 'request', 'export'],
     home: 'admin-home.html',
   },
@@ -83,8 +103,15 @@ export const roleById = (id) => ROLES.find((r) => r.id === id) || null;
 /** 이 역할이 그 일을 할 수 있나. 모르는 역할이면 **아무것도 못 한다**(열어 두지 않는다). */
 export const can = (roleId, cap) => !!roleById(roleId)?.caps.includes(cap);
 
-/** 이 역할의 레일에 그 메뉴가 서나. */
+/** 이 역할이 그 화면에 **들어갈 수 있나**(관문이 묻는다). */
 export const sees = (roleId, menuKey) => !!roleById(roleId)?.menus.includes(menuKey);
+
+/** 이 역할의 **레일에 서나**(셸이 묻는다). rail 을 따로 적지 않은 역할은 menus 그대로다.
+    들어갈 수는 있어도 레일에 안 세우는 화면이 있다 — 관리자의 프로젝트가 그렇다. */
+export const onRail = (roleId, menuKey) => {
+  const r = roleById(roleId); if (!r) return false;
+  return (r.rail || r.menus).includes(menuKey);
+};
 
 /** 역할이 갈 수 없는 화면에 주소로 바로 들어왔을 때 — 어디로 돌려보낼 것인가. */
 export const homeOf = (roleId) => roleById(roleId)?.home || 'dashboard.html';

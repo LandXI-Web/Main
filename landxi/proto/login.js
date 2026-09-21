@@ -27,8 +27,32 @@ const video = $('#lgVideo');
 /* ?logout — 세션만 지운다(6차: 배너 문구 삭제, 로그인 아래에는 소개 문장이 상시). 이미 로그인 상태면 바로 next 로. */
 if (params().has('logout')) {
   localStorage.removeItem('lx_logged_in');
-} else if (isLoggedIn()) {
+/* **이미 로그인돼 있어도 넘기지 않는다** (2026-09-22).
+   발주자: "로그인 창에서 바로 로그인 되버린다." → "아. 로그아웃 해야 그다음 들어가면 되는 구나"
+   계정이 하나뿐일 때는 바로 넘기는 게 편의였다. **계정 종류가 셋으로 갈린 지금은 길을 막는 것**이다 —
+   관리자로 보다가 영업용으로 바꿔 보려고 로그인 화면에 오면 그대로 튕겨 나갔고,
+   로그아웃부터 해야 한다는 걸 사용자가 스스로 알아내야 했다. 그건 설계가 시킨 헤맴이다.
+   로그인 화면은 **계정을 바꾸러 오는 자리**이기도 하므로 늘 선다.
+   ?next 로 온 경우만 예전처럼 바로 넘긴다 — 관문이 잠깐 막아서 보낸 것이니 다시 묻지 않는다. */
+} else if (isLoggedIn() && params().has('next')) {
   location.replace(nextTarget());
+}
+
+/* 이미 들어와 있으면 **지금 어느 계정인지** 알려 주고 고르개를 그 값으로 맞춰 둔다 —
+   모르고 다른 계정으로 갈아타는 일이 없게. */
+if (isLoggedIn()) {
+  const NAME = { admin: 'LX 관리자', staff: 'LX 직원', sales: '영업용 계정' };
+  let cur = 'admin';
+  try { cur = localStorage.getItem('lx_role') || 'admin'; } catch { /* 저장소 차단 */ }
+  const r = form?.role && [...form.role].find((x) => x.value === cur);
+  if (r) r.checked = true;
+  const fs = document.getElementById('lgRole');
+  if (fs && NAME[cur]) {
+    const p2 = document.createElement('p');
+    p2.className = 'lg-role-now';
+    p2.textContent = `지금 ${NAME[cur]}로 들어와 있습니다 — 다시 로그인하면 고른 계정으로 바뀝니다.`;
+    fs.append(p2);
+  }
 }
 
 /* ── 판 — Leg 01 루프. 축소 모션이면 소스를 떼고 포스터만 남긴다. ─────────── */

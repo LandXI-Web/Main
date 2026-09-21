@@ -229,7 +229,18 @@ body.lx[data-lab] #main{ padding:var(--mast) 0 0; margin-left:var(--rail); }
 body.lx[data-lab] #foot{ display:none; }
 .lx .pj-lab{ display:grid; grid-template-columns:288px minmax(0,1fr) 316px; height:calc(100vh - var(--mast)); }
 .lx .pj-lab > *{ min-width:0; min-height:0; display:flex; flex-direction:column; }
-.lx .pj-lab-l{ border-right:1px solid var(--line); overflow:auto; scrollbar-width:thin; }
+/* 영상 목록 — **판 안쪽 스크롤을 만들지 않는다** (2026-09-21). 전에는 overflow:auto 로 49px 를 숨겼다.
+   목록이 남은 높이를 **나눠 갖고**, 그림이 그 몫만큼 줄어든다. 이름·GSD·라벨 수·상태는 그대로 선다 —
+   줄어드는 것은 그림의 키뿐이다(aspect-ratio 로 묶으면 낮은 화면에서 넘친다 — 여러 번 밟은 함정). */
+.lx .pj-lab-l{ border-right:1px solid var(--line); overflow:hidden; display:flex; flex-direction:column; }
+.lx .pj-lab-l .pj-shot{ flex:1 1 0; min-height:0; display:flex; flex-direction:column; }
+.lx .pj-lab-l .pj-shot .imgcard{ flex:1 1 0; min-height:44px; aspect-ratio:auto; }
+.lx .pj-lab-l .pj-shot > b, .lx .pj-lab-l .pj-shot > span{ flex:none; }
+/* 라벨 목록 쪽 넘김 — 글자 바닥 14px, 누를 자리는 28px. */
+.lx .pj-lpg{ display:flex; align-items:center; gap:8px; margin:0; padding:6px 14px; font-size:14px; }
+.lx .pj-lpg button{ width:28px; height:26px; font-size:16px; color:var(--ink); border:1px solid var(--line); }
+.lx .pj-lpg button:disabled{ color:var(--grey-3); }
+.lx .pj-lpg button:not(:disabled):hover{ background:var(--t1); }
 .lx .pj-lab-r{ border-left:1px solid var(--line); overflow:hidden; }
 .lx .pj-lab-h{ display:flex; align-items:baseline; gap:10px; padding:14px 16px 8px; font-size:16.5px; font-weight:500; flex:none; }
 .lx .pj-lab-h .n{ color:var(--accent); }

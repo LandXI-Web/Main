@@ -13,8 +13,13 @@ function watch(page) {
   page.on('console', (m) => { if (m.type() === 'error' && !NETWORK.test(m.text())) errs.push('console: ' + m.text()); });
   return errs;
 }
-async function boot(page, url = URL) {
-  await page.addInitScript(() => localStorage.setItem('lx_logged_in', '1'));
+/* 레일은 **역할마다 다르다**(2026-09-21~22 위계 3단). 기존 화면들은 직원의 집이므로
+   기본 역할을 직원으로 둔다 — 역할을 안 정하면 관리자(DEFAULT_ROLE)로 붙어 레일이 여섯이 된다. */
+async function boot(page, url = URL, role = 'staff') {
+  await page.addInitScript((r) => {
+    localStorage.setItem('lx_logged_in', '1');
+    localStorage.setItem('lx_role', r);
+  }, role);
   await page.goto(url);
   await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
 }
@@ -45,13 +50,16 @@ test.describe('관문', () => {
 });
 
 test.describe('레일', () => {
-  test('원본 10메뉴 · 원본 순서 · 전부 진짜 링크 + 로그아웃', async ({ page }) => {
+  test('직원 레일 7메뉴 · 원본 순서 · 전부 진짜 링크 + 로그아웃', async ({ page }) => {
     const errs = watch(page);
     await boot(page);
     const items = await page.locator('#rail a.rail-i').evaluateAll((a) => a.map((e) => [e.innerText.replace(/\s+/g, ' ').trim(), e.getAttribute('href')]));
+    /* 카드 발행 관리 · 생산 관리 · 서비스 관리는 **직원 레일에 없다** —
+       만든 사람이 스스로 승인하면 검수가 아니다(roles.js). 관리자 레일은 아래 따로 검사한다. */
     expect(items).toEqual([
-      ['대시보드', 'dashboard.html'], ['데이터 관리', 'dataset.html'], ['프로젝트', 'ai-project.html'], ['분석 서비스', 'analysis-ai.html'], ['지도 서비스', 'ximap.html'],
-      ['서비스 지원', 'notice.html'], ['카드 발행 관리', 'admin-publish.html'], ['생산 관리', 'produce.html'], ['서비스 관리', 'admin-notice.html'], ['MY', 'mypage.html'],
+      ['대시보드', 'dashboard.html'], ['데이터 관리', 'dataset.html'], ['프로젝트', 'ai-project.html'],
+      ['분석 서비스', 'analysis-ai.html'], ['지도 서비스', 'ximap.html'],
+      ['서비스 지원', 'notice.html'], ['MY', 'mypage.html'],
     ]);
     await expect(page.locator('#rail button.rail-i')).toHaveText('로그아웃');
     expect(errs).toEqual([]);
@@ -70,10 +78,26 @@ test.describe('레일', () => {
     await page.locator('#rail a[data-menu="map"]').click();                // 2026-09-20: 지도 서비스가 자리 화면에서 구현 화면이 되었다
     await page.waitForURL(/ximap\.html/);
     await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
-    await expect(page.locator('#rail a.rail-i')).toHaveCount(10);
+    await expect(page.locator('#rail a.rail-i')).toHaveCount(7);
     await expect(page.locator('#rail .rail-i[aria-current="page"]')).toHaveAttribute('data-menu', 'map');
     await expect(page.locator('#page-title')).toContainText('지도 서비스');
   });
+  /* 위계 — 세 단이 **분리 운영**된다(2026-09-21 발주자 지시).
+     관리자는 완전히 다른 사이트다: 만드는 화면(프로젝트·분석·지도·대시보드)을 아예 갖지 않는다.
+     영업용은 셋뿐이다 — 할 수 있는 것(분석 카드) · 해낸 것(BP) · 지금 보는 것(XI Map). */
+  test('레일은 역할마다 다르다 — 관리자 6 · 직원 7 · 영업 4', async ({ page }) => {
+    const railOf = async (role, url) => {
+      await boot(page, url, role);
+      return page.$$eval('#rail .rail-i[data-menu]', (a) => a.map((e) => e.dataset.menu));
+    };
+    expect(await railOf('admin', 'proto/admin-home.html'))
+      .toEqual(['ops', 'media', 'publish', 'produce', 'admin', 'my']);
+    expect(await railOf('staff', 'proto/ai-project.html'))
+      .toEqual(['dashboard', 'media', 'project', 'analysis', 'map', 'support', 'my']);
+    expect(await railOf('sales', 'proto/ximap.html'))
+      .toEqual(['analysis', 'map', 'usecase', 'my']);
+  });
+
   test('구현 화면도 셸 부품 한 벌 — 건너뛰기 · 마스트헤드 · 제목 행 · 푸터 · 토스트 자리', async ({ page }) => {
     await boot(page, 'proto/ximap.html');
     for (const sel of ['.skip', '#rail', '#mast', '#page-head', '#foot', '#say']) await expect(page.locator(sel)).toHaveCount(1);

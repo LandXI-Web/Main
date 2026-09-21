@@ -3,7 +3,7 @@
    문서: docs/superpowers/proto/2026-09-20-shell-parts-api.md · 살아있는 견본: shell-demo.html
    디자인 법전: design/system.md (라운드 0 · 그림자 0 · 그라디언트 0 · 유리 0 · 바닥 14px · 채운 파란 버튼 없음). */
 
-import { ROLES, roleById, can, sees, homeOf, DEFAULT_ROLE, SCREEN_MENU } from '../assets/data/roles.js';
+import { ROLES, roleById, can, sees, onRail, homeOf, DEFAULT_ROLE, SCREEN_MENU } from '../assets/data/roles.js';
 
 export const $ = (s, r = document) => r.querySelector(s);
 export const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -190,8 +190,8 @@ export function mountShell(o = {}) {
   const rail = !withRail ? '' : `
 <aside id="rail" aria-label="주 메뉴">
   <a id="rail-mark" href="${base}scrub/index.html" aria-label="Land-XI 홈"><span>LAND</span><span>XI</span></a>
-  <nav id="rail-top" class="rail-group" aria-label="업무">${NAV.filter((n) => n.group === 'top' && sees(ROLE, n.key)).map(item).join('')}</nav>
-  <nav id="rail-foot" class="rail-group" aria-label="지원 · 관리">${NAV.filter((n) => n.group === 'foot' && sees(ROLE, n.key)).map(item).join('')}
+  <nav id="rail-top" class="rail-group" aria-label="업무">${NAV.filter((n) => n.group === 'top' && onRail(ROLE, n.key)).map(item).join('')}</nav>
+  <nav id="rail-foot" class="rail-group" aria-label="지원 · 관리">${NAV.filter((n) => n.group === 'foot' && onRail(ROLE, n.key)).map(item).join('')}
     <div id="rail-my" class="rail-fly" role="group" aria-label="MY" hidden>
       <a href="${base}mypage.html">마이 페이지</a>
       <button type="button" data-action="logout">로그아웃</button>

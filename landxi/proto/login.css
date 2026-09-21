@@ -161,3 +161,6 @@ body.lx{ overflow:hidden; background:var(--lx-paper); color:var(--lx-ink); }
 .lg-role input{ margin:0; accent-color:var(--lx-accent,#006DF7); }
 .lg-role b{ font-size:15px; font-weight:500; white-space:nowrap; }
 .lg-role span{ font-size:14px; color:#686868; word-break:keep-all; }
+
+/* 지금 어느 계정으로 들어와 있는지 — 갈아타러 온 사람에게만 뜬다(2026-09-22). */
+.lg-role-now{ margin:8px 0 0; font-size:14px; line-height:1.45; color:#686868; word-break:keep-all; }

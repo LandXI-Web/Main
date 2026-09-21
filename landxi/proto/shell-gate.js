@@ -15,7 +15,7 @@
       'ai-card-edit.html':'publish', 'ai-publish-create.html':'publish', 'produce.html':'produce',
       'admin-notice.html':'admin', 'admin-users.html':'admin', 'admin-inquiry.html':'admin',
       'admin-faq.html':'admin', 'admin-map.html':'admin' };
-    var MENUS = { admin:['ops','dashboard','media','project','analysis','map','support','publish','produce','admin','my'],
+    var MENUS = { admin:['ops','media','publish','produce','admin','my'],
       staff:['dashboard','media','project','analysis','map','support','my'],
       sales:['analysis','usecase','map','my'] };
     var HOME = { admin:'admin-home.html', staff:'ai-project.html', sales:'ximap.html' };

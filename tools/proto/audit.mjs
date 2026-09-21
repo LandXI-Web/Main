@@ -108,7 +108,11 @@ for (const [id, name] of list) {
       if (id !== 'login' && /login\.html/.test(g.url())) found.errs.push('공개 화면인데 로그인으로 튕긴다');
       await ctx.close();
     }
-    await page.goto(`http://127.0.0.1:${PORT}/landxi/proto/${id}.html`, { waitUntil: 'networkidle', timeout: 30000 });
+    /* 배경 영상이 도는 화면은 `networkidle` 이 **영영 오지 않는다**(로그인 · 메인 필름).
+       2026-09-22 에 로그인 화면이 자동 통과를 멈추자 바로 드러났다 — 전에는 튕겨 나가서 몰랐다.
+       그 화면을 못 보는 점검기는 점검기가 아니므로, 기다리다 안 오면 **그리기까지만** 기다리고 본다. */
+    await page.goto(`http://127.0.0.1:${PORT}/landxi/proto/${id}.html`, { waitUntil: 'networkidle', timeout: 12000 })
+      .catch(() => page.goto(`http://127.0.0.1:${PORT}/landxi/proto/${id}.html`, { waitUntil: 'domcontentloaded', timeout: 20000 }));
     await page.waitForTimeout(1200);
 
     Object.assign(found, await page.evaluate(() => {

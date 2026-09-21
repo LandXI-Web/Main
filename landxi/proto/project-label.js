@@ -31,6 +31,11 @@ const TOOLS = [['rect', '사각형', '사각형'], ['circle', '원형', '사각�
 let tool = 'rect', clsIx = 0, rows = [], geoFeat = [], map = null, tags = [], picked = new Set(), selRow = null;
 
 const main = $('#main');
+/* 라벨 목록 쪽 넘김 상태 — build() 가 이 파일 맨 위에서 도므로 **선언이 그보다 앞서야** 한다.
+   아래에 두었다가 `Cannot access 'PG_H' before initialization` 으로 화면이 통째로 죽었다(2026-09-22). */
+let rowPage = 1;
+const ROW_H = 33, PG_H = 38;
+
 main.innerHTML = p && cur ? shell() : `<div class="pj-body" style="padding:56px">${empty('라벨링할 데이터가 없습니다', '데이터 탭에서 파일을 고르고 라벨링을 시작하세요', 'edit')}</div>`;
 if (p && cur) { build(); wire(); }
 
@@ -60,7 +65,7 @@ function shell() {
       <button type="button" class="pj-invite" data-act="cls-add" style="margin:8px 14px">${icon('plus', 14)}클래스 추가</button>
       <p class="pj-lab-h" style="padding-top:16px">라벨 <span class="n">${n(cur.labels)}</span></p>
       <p style="padding:0 14px 8px"><label class="inp-ic" style="width:100%">${icon('search', 14)}<input class="inp inp--s" id="lab-q" placeholder="라벨 검색" aria-label="라벨 검색"></label></p>
-      <div id="lab-rows" style="flex:1;min-height:0;overflow:auto;scrollbar-width:thin"></div>
+      <div id="lab-rows" style="flex:1;min-height:0;overflow:hidden"></div>
       <div class="pj-lab-f"><label class="ck"><input type="checkbox" id="lab-all">전체 선택</label>
         <span class="n" id="lab-nsel" style="color:var(--accent)">선택 0</span><span class="sp" style="flex:1"></span>
         ${link('클래스 일괄 변경 ›', 'bulk')}</div></aside></div>`;
@@ -84,16 +89,28 @@ function drawCls() {
   });
 }
 function countCls(name) { return rows.filter((r) => r.cls === name).length; }
+/* 라벨 목록은 **잰 높이만큼만** 세우고 나머지는 쪽으로 넘긴다 (2026-09-21).
+   전에는 판(252px) 안에 열다섯 줄을 다 넣고 스크롤시켰다 — 366px 가 숨어 있었다.
+   발주자는 판 안쪽 스크롤도 화면이 안 끝난 것으로 본다. 지우지 않는다: 큰 모니터에서는
+   더 많은 줄이, 낮은 화면에서는 더 적은 줄이 서고, 못 선 줄은 ‹ › 로 넘겨 본다. */
 function drawRows() {
   const f = ($('#lab-q') || {}).value ? $('#lab-q').value.trim().toLowerCase() : '';
-  const list = rows.filter((r) => !f || `${r.cls} #${r.i}`.toLowerCase().includes(f));
+  const all = rows.filter((r) => !f || `${r.cls} #${r.i}`.toLowerCase().includes(f));
+  const per = Math.max(3, Math.floor((($('#lab-rows').clientHeight || 252) - PG_H) / ROW_H));
+  const pages = Math.max(1, Math.ceil(all.length / per));
+  if (rowPage > pages) rowPage = pages;
+  const list = all.slice((rowPage - 1) * per, rowPage * per);
   $('#lab-rows').innerHTML = list.map((r) => `<div class="pj-lrow" data-row="${esc(r.id)}" aria-selected="${selRow === r.id}">
     <input type="checkbox" data-ck="${esc(r.id)}"${picked.has(r.id) ? ' checked' : ''} aria-label="${esc(r.cls)} #${r.i} 선택">
     <span class="pj-sw${p.classes.findIndex((c) => c.name === r.cls) ? ' pj-sw--o' : ''}"></span>
     <span>${esc(r.cls)} #${r.i}${r.seeded ? '' : ' <em class="tag">새 라벨</em>'}</span>
     <span class="mic">${esc(r.shape)}</span>
     <button type="button" class="x" data-act="row-x" data-id="${esc(r.id)}" aria-label="${esc(r.cls)} #${r.i} 삭제">×</button></div>`).join('')
-    + `<p class="mic" style="padding:8px 14px"><span class="n">${list.length} / ${n(cur.labels)}</span> 행</p>`;
+    + `<p class="mic pj-lpg"><button type="button" data-pg="-1" aria-label="앞 쪽"${rowPage <= 1 ? ' disabled' : ''}>‹</button>
+      <span class="n">${rowPage} / ${pages}</span>
+      <button type="button" data-pg="1" aria-label="다음 쪽"${rowPage >= pages ? ' disabled' : ''}>›</button>
+      <span class="sp" style="flex:1"></span><span class="n">${all.length} / ${n(cur.labels)}</span> 행</p>`;
+  $$('#lab-rows [data-pg]').forEach((b) => b.addEventListener('click', () => { rowPage += +b.dataset.pg; drawRows(); }));
   $$('#lab-rows [data-row]').forEach((el) => el.addEventListener('click', (e) => {
     if (e.target.closest('[data-act]') || e.target.matches('input')) return;
     selRow = el.dataset.row; drawRows(); paintTags();
@@ -110,7 +127,8 @@ function wire() {
   $$('#main .pj-shot[data-file]').forEach((b) => b.addEventListener('click', () => {
     location.href = `ai-project-label.html?pid=${encodeURIComponent(pid)}&file=${encodeURIComponent(b.dataset.file)}`;
   }));
-  $('#lab-q').addEventListener('input', drawRows);
+  $('#lab-q').addEventListener('input', () => { rowPage = 1; drawRows(); });
+  let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(drawRows, 160); });
   $('#lab-all').addEventListener('change', (e) => { if (e.target.checked) rows.forEach((r) => picked.add(r.id)); else picked.clear(); drawRows(); });
   $$('#main [data-tool]').forEach((b) => b.addEventListener('click', () => {
     tool = b.dataset.tool; $$('#main [data-tool]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
