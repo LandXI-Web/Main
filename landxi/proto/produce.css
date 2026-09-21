@@ -214,3 +214,9 @@
 .lx .sp-x-c p{ margin:7px 0 0; font-size:14.5px; line-height:1.55; color:var(--grey); }
 .lx .sp-x-c p.gets{ color:var(--accent); }
 .lx .sp-x-c code{ display:inline-block; margin-top:9px; font-family:var(--num); font-size:14px; padding:1px 7px; border:1px solid var(--line); color:var(--grey); }
+
+/* 탭 머리 한 줄 — **이 자리에서 무엇을 하는가**(2026-09-21).
+   발주자: "지금은 뭐라 하는지 도무지 이해가 안된다." 숫자와 표는 있는데 그게 무엇을 재는
+   숫자인지 말하는 문장이 없었다. 머리 숫자 위에 한 줄을 세운다 — 읽고 나서 표를 본다. */
+.lx .pd-lead{ margin:0 0 14px; max-width:92ch; font-size:15px; line-height:1.55; color:var(--grey);
+  word-break:keep-all; }

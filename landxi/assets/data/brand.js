@@ -43,10 +43,16 @@ export const THEMES = {
   lx: { name: 'LX 한국국토정보공사', short: 'LAND XI', mark: 'LAND/XI',
     accent: '#006DF7', tint: '#E8F1FF', unitLabel: '지자체', crs: 'EPSG:5186',
     contact: '063-713-1213', sealNote: 'LX 국토정보플랫폼부' },
-  namwon: { name: '전북특별자치도 남원시', short: '남원시', mark: '남원/XI',
+  /* platform — **그 기관 사이트의 이름**이다(2026-09-21 발주자 지시).
+     기관 포털은 LX 사이트의 하위 화면이 아니라 다른 사이트다. 그래서 간판에 걸리는 이름도
+     'Land-XI 남원 배포본' 이 아니라 그 기관이 부르는 제 이름이어야 한다.
+     CI 한 벌에 이름 한 칸이 더 붙었을 뿐, 골격은 그대로다. */
+  namwon: { name: '전북특별자치도 남원시', short: '남원시', mark: '남원/GV',
+    platform: '남원시 GeoVision 플랫폼',
     accent: '#1F6F4A', tint: '#E9F3ED', unitLabel: '읍·면·동', crs: 'EPSG:5186',
     contact: '063-620-6114', sealNote: '남원시장' },
-  'gwangju-jeonnam': { name: '광주전남특별시', short: '광주전남', mark: '光全/XI',
+  'gwangju-jeonnam': { name: '광주전남특별시', short: '광주전남', mark: '光全/AI',
+    platform: '전남광주 AI 플랫폼',
     accent: '#0B5FA5', tint: '#E6EFF7', unitLabel: '시·군·구', crs: 'EPSG:5186',
     contact: '062-613-2114', sealNote: '광주전남특별시장' },
   kuksan: { name: '해외 사업(대상국 미정)', short: 'GLOBAL', mark: 'G/XI',

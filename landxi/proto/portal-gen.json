@@ -3,6 +3,8 @@
   "mode": "only:dp-nw-",
   "files": [
     "landxi/proto/portal.html",
+    "landxi/proto/portal-login-namwon.html",
+    "landxi/proto/portal-login-gwangju-jeonnam.html",
     "landxi/proto/portal-dp-nw-living-23.html",
     "landxi/proto/portal-dp-nw-farm-25.html",
     "landxi/proto/portal-dp-nw-road-26.html",
@@ -562,14 +564,24 @@
     {
       "tenant": "namwon",
       "contrast": 6.12,
-      "ok": true,
-      "bad": []
+      "ok": false,
+      "bad": [
+        {
+          "key": "platform",
+          "why": "허용 토큰이 아니다 — 골격은 LX 가 정한다"
+        }
+      ]
     },
     {
       "tenant": "gwangju-jeonnam",
       "contrast": 6.57,
-      "ok": true,
-      "bad": []
+      "ok": false,
+      "bad": [
+        {
+          "key": "platform",
+          "why": "허용 토큰이 아니다 — 골격은 LX 가 정한다"
+        }
+      ]
     }
   ]
 }

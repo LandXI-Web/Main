@@ -21,6 +21,7 @@ function mast() {
     <div class="lx-grid lx-masthead__in">
       <a class="lx-masthead__mark" href="../scrub/index.html">LAND-XI</a>
       <nav class="lx-masthead__nav" aria-label="주요">
+        <a class="lx-nav lx-link" href="platform.html"${page === 'platform' ? ' aria-current="page"' : ''}>활용 서비스</a>
         <a class="lx-nav lx-link" href="notice.html"${page === 'notice' ? ' aria-current="page"' : ''}>공지사항</a>
         <a class="lx-nav lx-link" href="usecase.html"${page === 'usecase' ? ' aria-current="page"' : ''}>활용 사례</a>
       </nav>
@@ -36,8 +37,62 @@ function foot() {
   </div></footer>`;
 }
 
-const page = document.body.dataset.page;              // 'notice' | 'usecase'
+const page = document.body.dataset.page;              // 'notice' | 'usecase' | 'platform'
 const rows = () => (page === 'notice' ? (window.SP_NOTICES || []) : (window.SP_USECASES || []));
+
+const LABEL = { notice: 'NOTICE', usecase: 'USE CASE', platform: 'PLATFORMS' };
+const HEAD = { notice: '공지사항', usecase: '활용 사례', platform: '활용 서비스' };
+const LEAD = {
+  notice: '주요 운영 공지와 업데이트 소식입니다.',
+  usecase: '현장에서 실제로 쓰인 사례입니다. 무엇을 풀었고 무엇이 달라졌는지 적었습니다.',
+  platform: 'Land-XI 로 세운 기관 플랫폼입니다. 각 기관이 제 이름으로 운영하고, AI 판독과 모델 갱신은 LX 가 맡습니다.',
+};
+
+/* ── 활용 서비스 — 기관 플랫폼으로 가는 길 ──────────────────────────────
+   발주자(2026-09-21): "활용서비스 탭을 하나 만들고 거기에 남원시 GeoVision 플랫폼,
+                        전남광주 AI 플랫폼 이런 형태로 접근 루트를 만들자."
+
+   기관 포털은 LX 사이트의 하위 화면이 아니라 **다른 사이트**다. 그래서 이 판은 목록이 아니라
+   **입구**다 — 누르면 그 기관의 제 문(portal-login-<기관>.html)으로 간다. LX 로그인이 아니다.
+   숫자와 얼굴은 전부 그 기관의 실제 배포본·판독 결과에서 온다. 지어내지 않는다. */
+let PLATFORMS = [];
+async function loadPlatforms() {
+  const [p, b, c] = await Promise.all([
+    import('../../assets/data/portal.js'),
+    import('../../assets/data/brand.js'),
+    import('../../assets/data/emblems.js'),
+  ]);
+  PLATFORMS = p.TENANTS.filter((t) => t.kind === 'user').map((t) => {
+    const th = b.themeOf(t.id), s = p.portalSummary(t.id);
+    /* 얼굴은 **그 기관의 대표 서비스 판**이다(emblems.js) — 카드 덱·기관 입구와 같은 판.
+       정사영상 크롭을 걸었다가 걷었다: 확대한 사진 조각은 어느 서비스인지 알아볼 수 없다. */
+    const list = p.serviceCards(t.id);
+    const pick = list.find((x) => x.status === '운영') || list[0];
+    const face = pick && c.emblemOf(pick.cardId) ? { svg: c.emblemOf(pick.cardId), cap: pick.name } : null;
+    return { id: t.id, name: th.platform || `${th.short} 플랫폼`, org: th.name, accent: th.accent,
+      total: s.total, live: s.live, years: s.years, face,
+      href: `../portal-login-${t.id}.html`,
+      cards: p.serviceCards(t.id).map((x) => `${x.name} · ${x.year}`) };
+  });
+}
+
+function platforms() {
+  if (!PLATFORMS.length) return '<p class="st-empty">플랫폼을 불러오는 중입니다.</p>';
+  return `<ul class="st-pf">${PLATFORMS.map((f) => {
+    const span = f.years.length ? `${f.years[0]}–${f.years[f.years.length - 1]}년 사업` : '';
+    return `<li class="st-pf-i"><a href="${esc(f.href)}" style="--pf:${esc(f.accent)}">
+      <span class="st-pf-face">${f.face
+    ? `${f.face.svg}<em>${esc(f.face.cap)}</em>`
+    : '<em>판독 결과가 들어오면 이 자리에 실제로 찾아 준 자리가 걸립니다.</em>'}</span>
+      <span class="st-pf-b">
+        <span class="st-pf-org">${esc(f.org)}${span ? ` · ${esc(span)}` : ''}</span>
+        <strong class="st-pf-n">${esc(f.name)}</strong>
+        <span class="st-pf-s">${f.cards.map((n) => `<em>${esc(n)}</em>`).join('')}</span>
+        <span class="st-pf-f"><b>${f.total}</b>개 서비스<i></i>운영 중 <b>${f.live}</b>개<span class="sp"></span><u>들어가기 →</u></span>
+      </span>
+    </a></li>`;
+  }).join('')}</ul>`;
+}
 const readQ = () => new URLSearchParams(location.search);
 const go = (q, push = true) => {
   const u = location.pathname + (q ? `?${q}` : '');
@@ -46,6 +101,8 @@ const go = (q, push = true) => {
 };
 
 render();
+// 활용 서비스는 기관 데이터를 읽어야 그린다 — 먼저 한 번 그려 틀을 세우고, 오면 다시 그린다.
+if (page === 'platform') loadPlatforms().then(render);
 addEventListener('popstate', render);
 
 function render() {
@@ -59,15 +116,14 @@ function render() {
     <main class="st-main" id="main" tabindex="-1">
       <div class="lx-grid st-head">
         <div class="lx-c8">
-          <p class="lx-label"><i class="lx-ret is-in"></i>${page === 'notice' ? 'NOTICE' : 'USE CASE'}</p>
-          <h1 class="lx-h1">${page === 'notice' ? '공지사항' : '활용 사례'}</h1>
-          <p class="lx-lead">${page === 'notice'
-    ? '주요 운영 공지와 업데이트 소식입니다.'
-    : '현장에서 실제로 쓰인 사례입니다. 무엇을 풀었고 무엇이 달라졌는지 적었습니다.'}</p>
+          <p class="lx-label"><i class="lx-ret is-in"></i>${LABEL[page] || 'USE CASE'}</p>
+          <h1 class="lx-h1">${HEAD[page] || '활용 사례'}</h1>
+          <p class="lx-lead">${LEAD[page] || ''}</p>
         </div>
         <span class="st-rule"></span>
       </div>
-      <div class="lx-grid">${item ? read(item) : (page === 'notice' ? list(pg) : cards(pg))}</div>
+      <div class="lx-grid">${page === 'platform' ? platforms()
+    : item ? read(item) : (page === 'notice' ? list(pg) : cards(pg))}</div>
     </main>
     ${foot()}`;
   bind();

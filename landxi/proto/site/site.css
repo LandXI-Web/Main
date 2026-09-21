@@ -137,3 +137,52 @@
   .st-t{ font-size:15.5px; }
   .st-foot{ margin-top:16px; }
 }
+
+/* ══ 활용 서비스 — 기관 플랫폼 입구 (2026-09-21) ═══════════════════════════
+   발주자: "활용서비스 탭을 하나 만들고 거기에 남원시 GeoVision 플랫폼,
+            전남광주 AI 플랫폼 이런 형태로 접근 루트를 만들자."
+
+   목록이 아니라 **입구**다. 누르면 그 기관의 제 문으로 나간다(LX 로그인이 아니다).
+   그래서 판 하나가 크고, 그 기관의 상징색(--pf)이 판 위에 한 줄로 선다. */
+.st-pf{ grid-column:1/-1; list-style:none; margin:44px 0 72px; padding:0; display:grid; gap:0;
+  grid-template-columns:repeat(auto-fit,minmax(360px,1fr)); border-top:1px solid var(--lx-line,#DDD); }
+.st-pf-i > a{ position:relative; display:grid; grid-template-rows:auto 1fr; height:100%; color:inherit;
+  text-decoration:none; border-bottom:1px solid var(--lx-line,#DDD); border-right:1px solid var(--lx-line,#DDD);
+  transition:background 200ms cubic-bezier(.22,1,.36,1); }
+.st-pf-i:last-child > a{ border-right:0; }
+.st-pf-i > a::after{ content:""; position:absolute; left:0; right:0; top:-1px; height:3px; background:var(--pf);
+  transform:scaleX(0); transform-origin:left; transition:transform 260ms cubic-bezier(.22,1,.36,1); }
+.st-pf-i > a:hover::after,.st-pf-i > a:focus-visible::after{ transform:scaleX(1); }
+.st-pf-i > a:hover,.st-pf-i > a:focus-visible{ background:#FAFAFA; }
+
+.st-pf-face{ position:relative; display:block; height:clamp(150px,20vw,226px); overflow:hidden; background:#EFEFEF; }
+.st-pf-face .em{ display:block; width:100%; height:100%; }
+.st-pf-face img{ display:block; width:100%; height:100%; object-fit:cover;
+  transition:transform 460ms cubic-bezier(.22,1,.36,1); }
+.st-pf-i > a:hover .st-pf-face img{ transform:scale(1.03); }
+.st-pf-face em{ position:absolute; left:0; right:0; bottom:0; padding:9px 16px; background:#fff;
+  border-top:1px solid var(--lx-line,#DDD); font-style:normal; font-size:14px; color:#686868; }
+/* 얼굴이 없을 때 — 빈 사진 자리를 두지 않고 왜 없는지 적는다. */
+.st-pf-face:not(:has(img)):not(:has(.em)){ display:flex; align-items:center; justify-content:center; background:#F5F5F5; }
+.st-pf-face:not(:has(img)):not(:has(.em)) em{ position:static; border:0; background:none; text-align:center; max-width:34ch; }
+
+.st-pf-b{ display:flex; flex-direction:column; padding:22px 24px 20px; }
+.st-pf-org{ font-size:14px; letter-spacing:.02em; color:#686868; }
+.st-pf-n{ margin-top:8px; font-family:var(--lx-disp,inherit); font-weight:700;
+  font-size:clamp(20px,1.5vw,26px); line-height:1.24; letter-spacing:-.02em; }
+.st-pf-s{ display:flex; flex-wrap:wrap; gap:6px 8px; margin-top:12px; }
+.st-pf-s em{ font-style:normal; font-size:14px; line-height:1.4; color:#686868;
+  border:1px solid var(--lx-line,#DDD); padding:3px 9px; }
+.st-pf-f{ display:flex; align-items:baseline; gap:8px; margin-top:auto; padding-top:16px;
+  border-top:1px solid var(--lx-line,#DDD); font-size:14px; color:#686868; }
+.st-pf-f b{ font-weight:700; font-size:16px; color:#010102; }
+.st-pf-f i{ width:1px; height:11px; background:var(--lx-line,#DDD); font-style:normal; }
+.st-pf-f .sp{ flex:1; }
+.st-pf-f u{ text-decoration:none; color:var(--pf); white-space:nowrap;
+  transition:transform 200ms cubic-bezier(.22,1,.36,1); display:inline-block; }
+.st-pf-i > a:hover .st-pf-f u{ transform:translateX(4px); }
+
+@media (prefers-reduced-motion:reduce){
+  .st-pf-i > a,.st-pf-face img,.st-pf-f u,.st-pf-i > a::after{ transition:none; }
+  .st-pf-i > a:hover .st-pf-face img{ transform:none; }
+}

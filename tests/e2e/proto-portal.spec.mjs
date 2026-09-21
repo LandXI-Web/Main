@@ -71,9 +71,12 @@ const fitsCheck = () => {
 
 /* ══ 관문 · 이원화 경계 ═══════════════════════════════════════════════════ */
 test.describe('관문 · 이원화 경계', () => {
-  test('로그인 전이면 login.html?next= 로 보낸다', async ({ page }) => {
+  /* 기관 화면은 **그 기관의 문**으로 보낸다 — LX 로그인이 아니다(2026-09-21).
+     발주자: "지자체에서는 나만의 AI 시스템인 것처럼 보여야 한다." 남원시 화면을 보러 왔는데
+     LX 로그인으로 튕기면 남의 집 문간이다. 관문(shell-gate.js)이 data-login 을 보고 고른다. */
+  test('로그인 전이면 그 기관의 문으로 보낸다 — LX 로그인이 아니다', async ({ page }) => {
     await page.goto(HOME);
-    await page.waitForURL(/login\.html/);
+    await page.waitForURL(/portal-login-namwon\.html/);
     expect(new URL(page.url()).searchParams.get('next')).toBe('portal.html');
   });
 
@@ -135,6 +138,8 @@ test.describe('서비스 카드 홈 — 배포본 한 줄 = 카드 한 장', () 
     const b = await page.locator('.pt-deck > li').nth(1).boundingBox();
     expect(b.x - (a.x + a.width)).toBeGreaterThan(4);                    // 붙어 있지 않다
     await page.locator('.pt-c').first().hover();
+    // 물러나는 데 200ms 걸린다 — 곧바로 재면 아직 1이다(전환 중).
+    await page.waitForTimeout(400);
     const dim = await page.locator('.pt-c').nth(1).evaluate((e) => +getComputedStyle(e).opacity);
     expect(dim).toBeLessThan(1);                                         // 고르는 중 = 나머지는 물러난다
   });

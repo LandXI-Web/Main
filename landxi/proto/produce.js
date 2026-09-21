@@ -19,11 +19,16 @@ const mt = matchSummary();
 
 mountShell({
   active: 'produce', title: '생산 관리',
-  subtitle: 'AI 서비스를 양산하고, 기관에 분기하고, 화면까지 찍어내는 자리 — 손으로 하면 용역이고 기능으로 하면 사업이다',
+  /* 부제는 **표어가 아니라 설명**이어야 한다.
+     발주자(2026-09-21): "생산 관리는 개발 키 같은 개념이네? 지금은 뭐라 하는지 도무지 이해가 안된다."
+     전에 있던 '손으로 하면 용역이고 기능으로 하면 사업이다' 는 내 다짐이지 화면 설명이 아니었다.
+     화면은 제가 무엇을 하는 자리인지부터 말해야 한다. */
+  subtitle: 'LX가 AI 서비스를 만들어 기관에 내려 주는 공정을 한자리에서 봅니다 — 무엇을 만들고, 어느 업무에 붙이고, 얼마나 쓰고 있는지',
   notice: false, demo: true,
   tabStyle: 'line', tab: TAB,
   tabs: [
-    { key: 'spine', label: '뼈대' },
+    /* 탭 이름도 사람 말로. '뼈대'는 내가 쓰던 말이고, 화면을 여는 사람에게는 '만드는 순서'다. */
+    { key: 'spine', label: '만드는 순서' },
     /* 매칭 — 뼈대의 L2(표준) · L3(접점)이 가리킬 자리. 계산은 matching.js 가 이미 하고 있었고
        이 탭은 그 결과를 보여 줄 뿐이다(숫자를 새로 만들지 않는다). */
     { key: 'match', label: '매칭', href: 'produce.html?tab=match', count: mt.접점 },
@@ -39,6 +44,10 @@ const tile = (l, v, u, tone = '') => `<div class="tile${tone ? ` tile--${tone}` 
   <span class="tile-l">${esc(l)}</span><span class="tile-v"><b>${typeof v === 'number' ? nf.format(v) : esc(v)}</b><span>${esc(u)}</span></span></div>`;
 const nameOfDeploy = (id) => cardById((DEPLOYS.find((d) => d.id === id) || {}).cardId)?.name || id;
 const h = (t, sub, right = '') => `<h2 class="pd-h">${esc(t)}<span>${esc(sub)}</span><span class="sp"></span>${right}</h2>`;
+/* 탭 머리 한 줄 — **이 자리에서 무엇을 하는가.**
+   발주자(2026-09-21): "지금은 뭐라 하는지 도무지 이해가 안된다."
+   숫자와 표는 있는데 그게 무엇을 재는 숫자인지 말하는 문장이 없었다. 탭마다 한 줄을 세운다. */
+const lead = (t) => `<p class="pd-lead">${esc(t)}</p>`;
 /* 화면은 **이름으로 부른다**. 데이터 파일에는 `produce.html?tab=match` 처럼 파일명으로 적힌
    자리가 있는데(sim.js LX_ROLE), 그대로 찍으면 개발용 URL 이 화면에 새어 나온다 —
    점검기도 그렇게 잡는다. 원본 데이터는 건드리지 않고 **부르는 이름만** 여기서 갈아 끼운다.
@@ -129,13 +138,17 @@ function spine() {
      다섯 칸으로 눕히니 한 층이 70px 대가 되고 계약은 제 구역으로 나갔다. */
   const layerRow = (l) => {
     const s = st(l.id);
+    /* 단계 번호는 **1·2·3**이다. `L1`·`L2` 는 내가 코드에서 쓰던 기호였고,
+       화면에서는 읽는 사람이 순서를 세는 숫자여야 한다(2026-09-21). */
     return `<div class="sp-l" data-kind="${l.kind.startsWith('고정') ? 'fix' : 'var'}">
-      <b class="sp-id">${esc(l.id)}</b>
+      <b class="sp-id">${esc(String(LAYERS.indexOf(l) + 1))}</b>
       <div class="sp-n"><h3>${esc(l.name)}</h3><span class="sp-k">${esc(l.kind)}</span><span class="sp-w">${esc(l.who)}</span></div>
       <div class="sp-t"><p class="sp-what">${esc(l.what)}</p>
         <p class="sp-rule">${l.rule.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')}</p></div>
-      <p class="sp-f">${l.data.map((d) => `<code>${esc(d)}</code>`).join('')}${l.screen.map((d) => `<code class="sc">${esc(screenName(d))}</code>`).join('')}${
-  /* 화면이 아직 없는 층은 **없다고 적는다**(spine.js screenGap). 빈 칸으로 두면 있는 척이 된다. */
+      <p class="sp-f"><span class="sp-fl">여기서 한다</span>${l.screen.map((d) => `<code class="sc">${esc(screenName(d))}</code>`).join('')}${
+  /* 화면이 아직 없는 층은 **없다고 적는다**(screenGap). 빈 칸으로 두면 있는 척이 된다.
+     소스 파일 이름(l.data)은 **찍지 않는다** — `matching.js · GIVES` 는 만든 사람의 말이지
+     쓰는 사람의 말이 아니다. 개발용 URL 을 화면에서 걷어낸 것과 같은 이유다(2026-09-21). */
   l.screenGap ? `<span class="sp-gap">${esc(l.screenGap)}</span>` : ''}</p>
       <p class="sp-st"><span class="ok">세움</span> ${esc(s.built || '')}${s.gap ? `<br><span class="gp">남음</span> ${esc(s.gap)}` : ''}</p>
     </div>`;
@@ -147,30 +160,34 @@ function spine() {
     <span class="wy">${esc(c.why)}</span>
     <span class="br">깨지면 — ${esc(c.breaks)}</span></div>`;
   return `
+  ${lead('AI 서비스 하나가 기관 화면이 되기까지 거치는 다섯 단계입니다. 새 요구가 들어오면 이 중 어느 단계의 일인지부터 고르고, 그 단계에만 손댑니다.')}
   <div class="band band--s">
-    ${tile('층', sp.층, '개')}
-    ${tile('계약', sp.계약, '개', 'ink')}
-    ${tile('가로지르는 것', sp.가로지르는것, '개', 'ink')}
-    ${tile('고정 : 가변', `${sp.고정}:${sp.가변}`, '', 'ink')}
-    <p class="band-note">여기 없는 것은 만들지 않는다 — 있는 층에만 붙인다</p>
+    ${/* 셀 수 있다고 다 머리 숫자가 되는 것은 아니다. '계약 4개' · '고정:가변 3:3' 은
+          읽는 사람이 무엇을 할지 바뀌지 않는 수였다. **지금 무엇이 서 있고 무엇이 남았는지**로 바꾼다. */''}
+    ${tile('단계', sp.층, '개', 'ink')}
+    ${tile('기관 요구로 바뀌지 않는 단계', sp.고정, '개')}
+    ${tile('기관마다 달라지는 단계', sp.가변, '개', 'ink')}
+    ${tile('아직 남은 일', STATE.filter((s) => s.gap).length, '건', 'ink')}
+    <p class="band-note">앞 두 단계는 LX 가 못 박는다 — 기관 요구는 뒤 세 단계에서만 받는다</p>
   </div>
   ${panes([
     /* 좁은 모니터에서 다섯 층을 둘로 나눌 때의 가름선 — **순서 그대로** 반으로 자른다.
        (고정/가변으로 갈라 봤더니 넓은 화면에서 L1·L2·L5·L3·L4 순으로 서서 뒤섞여 보였다.
         고르개가 숨는 화면에서는 가름선이 보이지 않으므로 순서를 흐트러뜨리면 안 된다.) */
-    ['l', `층 ${sp.층}`, `${h('뼈대', sp.line)}${(() => {
+    ['l', `다섯 단계`, `${h('만드는 순서', sp.line)}${(() => {
       const cut = Math.ceil(LAYERS.length / 2), a = LAYERS.slice(0, cut), b2 = LAYERS.slice(cut);
       const nm = (g) => `${g[0].id}–${g[g.length - 1].id}`;
       return splitW(nm(a), `<div class="sp">${a.map(layerRow).join('')}</div>`,
         nm(b2), `<div class="sp">${b2.map(layerRow).join('')}</div>`);
     })()}`],
-    ['c', `층 사이 계약 ${sp.계약}`, `${h('층 사이 계약', '뼈대가 실제로 버티는 자리 — 여기가 깨지면 전부 흔들린다')}
+    ['c', `단계 사이에서 지키는 것 ${sp.계약}`, `${h('층 사이 계약', '뼈대가 실제로 버티는 자리 — 여기가 깨지면 전부 흔들린다')}
       <div class="sp-cs">${CONTRACTS.map(contractRow).join('')}</div>`],
-    ['x', `가로지르는 것 ${sp.가로지르는것} · 판단표 ${WHERE.length}`, two(
+    ['x', `모든 단계에 걸리는 일 ${sp.가로지르는것} · 어디에 넣나 ${WHERE.length}`, two(
       `가로지르는 것 ${sp.가로지르는것}`, `${h('가로지르는 것', '층이 아니라 모든 층에 걸린다')}
       <div class="sp-x">${CROSS.map((c) => `<div class="sp-x-c">
         <strong>${esc(c.name)}</strong><p>${esc(c.what)}</p>
-        <p class="gets">→ ${esc(c.gets)}</p><code>${esc(c.data)}</code></div>`).join('')}</div>`,
+        ${/* 여기도 소스 파일 이름(c.data)을 찍고 있었다 — 걷는다. 화면은 만든 사람의 말을 쓰지 않는다. */''}
+        <p class="gets">→ ${esc(c.gets)}</p></div>`).join('')}</div>`,
       `판단표 ${WHERE.length}`, `${h('새 요구가 오면 어디에 넣나', '이 표에 없으면 아직 정하지 않은 것이다')}
       <table class="tb"><thead><tr><th>요구</th><th>들어갈 자리</th><th>어떻게</th></tr></thead><tbody>
       ${WHERE.map((w) => `<tr><td>${esc(w.ask)}</td><td><b class="n">${esc(w.at)}</b></td><td>${esc(w.how)}</td></tr>`).join('')}

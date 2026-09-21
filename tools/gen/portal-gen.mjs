@@ -33,13 +33,14 @@ const out = (rel, body) => { const p = resolve(ROOT, rel); mkdirSync(dirname(p),
 /* ── 페이지 껍데기 — 모든 기관이 같은 것을 받는다(LX 생산품) ─────────
  * gl:true 인 화면은 MapLibre 를 함께 싣는다. 작업공간에는 **진짜 지도**가 선다 —
  * 연한 상자에 '지도' 라고 적어 둔 자리 화면은 기관이 업무에 못 쓴다. */
+const loginOf = (tenant) => `portal-login-${tenant}.html`;
 const page = ({ title, tenant, svc = '', mod, skeleton, gl = false }) => {
   const th = themeOf(tenant);
   return `<!doctype html><html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)} — ${esc(th.short)}</title>
 <link rel="icon" href="../assets/images/favicon_landxi.png">
-<script src="shell-gate.js"></script>
+<script src="shell-gate.js" data-login="${esc(loginOf(tenant))}"></script>
 <link rel="stylesheet" href="fonts-system.css">${gl ? `
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">` : ''}
 <link rel="stylesheet" href="shell.css">
@@ -105,6 +106,49 @@ written.push(out('landxi/proto/portal.html', page({
      그래서 격자(.pt-grid)가 아니라 **덱(.pt-deck)** 이다. 칸이 아니라 낱장이 선다. */
   skeleton: `\n<div class="pt-home">\n  <div class="pt-sum" data-slot="summary"></div>\n  <ul class="pt-deck" data-slot="cards"></ul>\n</div>`,
 })));
+
+/* 1-b) 기관마다 **제 입구** 한 장.
+ *   발주자(2026-09-21): "사실 다른 사이트라고 생각하고 해야지. 지자체에서는 나만의 AI 시스템인
+ *                        것처럼 보여야 한다. LX에 위탁은 하지만."
+ *   남원시 화면을 보러 온 사람이 LX 로그인으로 튕기면 남의 집 문간이다. 그래서 관문이
+ *   기관 화면에서는 이 문으로 보낸다(shell-gate.js data-login).
+ *   이 문도 **LX 가 한 벌 찍는 생산품**이다 — 기관이 가진 것은 CI 한 벌뿐이고,
+ *   얼굴(실 판독 크롭)은 화면이 제 기관의 결과에서 스스로 고른다(portal-login.js). */
+for (const t of TENANTS.filter((x) => x.kind === 'user')) {
+  const th = themeOf(t.id);
+  written.push(out(`landxi/proto/${loginOf(t.id)}`, `<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>로그인 — ${esc(th.platform || th.short)}</title>
+<link rel="icon" href="../assets/images/favicon_landxi.png">
+<link rel="stylesheet" href="fonts-system.css">
+<link rel="stylesheet" href="shell.css">
+<link rel="stylesheet" href="portal-login.css">
+<style>${cssVars(t.id)}</style>
+</head><body class="lx pl" data-tenant="${esc(t.id)}">
+<main class="pl-wrap" id="main">
+  <div class="pl-card">
+    <section class="pl-face" data-slot="face" aria-hidden="true"></section>
+    <section class="pl-form">
+      <p class="pl-mark">${th.mark.split('/').map((s) => `<span>${esc(s)}</span>`).join('')}</p>
+      <h1 class="pl-t">${esc(th.platform || `${th.short} 플랫폼`)}</h1>
+      <p class="pl-s" data-slot="intro"></p>
+      <form class="pl-f" id="pl-f" novalidate>
+        <label class="pl-l" for="pl-id">아이디</label>
+        <input class="pl-i" id="pl-id" name="id" autocomplete="username" required>
+        <label class="pl-l" for="pl-pw">비밀번호</label>
+        <input class="pl-i" id="pl-pw" name="pw" type="password" autocomplete="current-password" required>
+        <p class="pl-e" id="pl-e" role="alert" hidden></p>
+        <button class="pl-b" type="submit">로그인</button>
+      </form>
+      <p class="pl-note">AI 판독 · 모델 개발과 갱신 — LX 한국국토정보공사</p>
+    </section>
+  </div>
+</main>
+<noscript>${esc(th.short)} AI 행정서비스 — 이 화면은 자바스크립트가 필요합니다.</noscript>
+<script type="module" src="portal-login.js"></script>
+</body></html>
+`));
+}
 
 // 어느 배포본이 어느 기관 것인가 — 서비스 카드가 이미 답을 안다(추측하지 않는다).
 const ownerOf = new Map();

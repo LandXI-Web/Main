@@ -49,6 +49,11 @@ const SCREENS = [
   ['map-drift', '표류 예측 지도'],
   // 로그인 없이 보는 공개 게시판 — 메인 톤(2026-09-20)
   ['site/notice', '공개 · 공지사항'],
+  // 활용 서비스 — 기관 플랫폼 입구. 로그인 없이 보이는 것이 핵심이라 PUBLIC 에도 넣는다(2026-09-21).
+  ['site/platform', '공개 · 활용 서비스'],
+  // 기관 제 입구 — LX 로그인이 아니다. 여기가 로그인으로 튕기면 그것이 잘못이다.
+  ['portal-login-namwon', '입구 · 남원시 GeoVision'],
+  ['portal-login-gwangju-jeonnam', '입구 · 전남광주 AI'],
   ['site/usecase', '공개 · 활용 사례'],
 ];
 
@@ -77,7 +82,8 @@ await page.addInitScript(() => { try { localStorage.setItem('lx_logged_in', '1')
 
 /* 공개 화면은 **로그인 없이** 다시 한 번 본다. 관문에 걸리면 그것이 잘못이다.
    (2026-09-20: 메인에서 `서비스 지원` 을 걸어 놓고 눌러 보니 로그인으로 튕겼다) */
-const PUBLIC = ['scrub/index', 'site/notice', 'site/usecase', 'login'];
+const PUBLIC = ['scrub/index', 'site/notice', 'site/usecase', 'site/platform', 'login',
+  'portal-login-namwon', 'portal-login-gwangju-jeonnam'];
 
 /** 내려가는 것이 **그 화면의 기능**인 곳 — 업무 화면의 '한 화면' 법을 여기에 대지 않는다. */
 const SCROLL_BY_DESIGN = ['scrub/index'];

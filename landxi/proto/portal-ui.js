@@ -22,7 +22,7 @@ import { serviceCards, portalSummary, tenantById, evidenceOf, measuresOf, localM
 import { cardById, modelsOfCard, needsOf, CORE_MODULES } from '../assets/data/cards.js';
 import { specOf, requestsOf } from '../assets/data/studio.js';
 import { themeOf } from '../assets/data/brand.js';
-import { cropsFor } from '../assets/data/crops.js';
+import { emblemOf } from '../assets/data/emblems.js';
 import { profileOf, SHARE_LABEL, tierById } from '../assets/data/registry.js';
 
 const body = document.body;
@@ -160,30 +160,21 @@ if (!SVC) {
 
   /* 분포가 없어도 **기관이 무엇을 하는 서비스인지**는 카드에 선다 —
      owner:'local' 전용 모듈이 곧 2층(기관)의 일이다. */
-  /* 카드 얼굴 — **그 서비스가 실제로 판독한 자리**를 잘라 얹는다.
-     발주자: "실 판독 크롭을 넣는다." 그림이 없으면 카드가 아니라 글자 상자다.
-     다만 **그 서비스의 결과일 때만** 얹는다. 남원 정사영상이 있다고 해서 아직 판독하지 않은
-     서비스(생활환경 · 도로안전 · 인파관리 2027)에 영상을 깔면, 안 한 일을 한 것처럼 보인다.
-     그 카드들은 얼굴 없이 '왜 비었는지' 한 줄로 남는다 — 지어내지 않는다. */
-  const faceOf = (c) => {
-    const e = evidenceOf(c.id);
-    const key = e.runs[0]?.id || (e.pairs.length ? 'kuksan-change' : '');
-    const cr = key ? cropsFor(key)[0] : null;
-    if (!cr) return null;
-    // 판독 표시가 그려진 쪽(file)을 쓴다. clean 은 표시 없는 원본이라 '찾아 준 것'이 안 보인다.
-    return { src: `../${cr.file}`, src2x: cr.file2x ? `../${cr.file2x}` : '',
-      alt: `${c.name} — 실제 판독 자리 (${e.runs[0]?.title || '시점 비교'})` };
-  };
-  /* 얼굴 자리는 **다섯 장 모두 같다.** 있는 카드만 자리를 차지하면 글줄이 어긋나 덱이 흐트러진다.
-     크롭이 없는 카드는 빈 판을 두되 **왜 없는지**를 적는다 — 남의 영상을 빌려다 채우지 않는다. */
+  /* 카드 얼굴 — **그 서비스가 무엇을 찾는지 그린 판.**
+     발주자(2026-09-21): "카드 이미지는 저렇게 정사영상 해놓으면 좀 허접하자나"
+                          "마스코트나 홈페이지 메인 화면 같은 느낌이어야지"
+
+     처음엔 실제 판독 크롭을 얹었다. 증거로는 맞지만 얼굴로는 틀렸다 — 확대한 사진 조각은
+     어느 서비스인지 알아볼 수 없고, 카드 크기로 줄이면 흐릿한 색면이 된다.
+     그래서 얼굴은 기관 상징색으로 그린 판(emblems.js)으로 세운다. 어느 크기에서도 또렷하고,
+     일곱 장이 같은 약속을 쓰므로 한 벌로 보인다 — **진한 것 = AI 가 찾아낸 것.**
+     크롭은 없애지 않았다. 작업공간의 근거 자리에 그대로 있다.
+
+     선언이 없는 카드는 얼굴을 비운다 — 아무 판이나 끼워 넣지 않는다. */
   const face = (c) => {
-    const f = faceOf(c);
-    if (f) {
-      return `<span class="pt-c-face"><img src="${esc(f.src)}"${f.src2x ? ` srcset="${esc(f.src)} 1x, ${esc(f.src2x)} 2x"` : ''}`
-        + ` alt="${esc(f.alt)}" loading="lazy" decoding="async"></span>`;
-    }
-    const why = c.status === '예정' ? `${c.year}년 사업 — 판독 전` : '판독한 자리가 아직 없습니다';
-    return `<span class="pt-c-face pt-c-face--none"><span>${esc(why)}</span></span>`;
+    const em = emblemOf(c.cardId);
+    if (!em) return '<span class="pt-c-face pt-c-face--none"><span>얼굴 판이 아직 없습니다</span></span>';
+    return `<span class="pt-c-face">${em}</span>`;
   };
 
   const S = { done: '운영', wip: '구축 중', todo: '설계' };

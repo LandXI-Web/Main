@@ -6,7 +6,11 @@
   try { ok = localStorage.getItem('lx_logged_in') === '1'; } catch (e) { ok = false; }
   if (ok) return;
   var s = document.currentScript, base = (s && s.getAttribute('data-base')) || '';
+  /* 어느 입구로 보낼 것인가 — 기관 화면은 **그 기관의 입구**로 간다(data-login).
+     발주자(2026-09-21): "지자체에서는 나만의 AI 시스템인 것처럼 보여야 한다."
+     남원시 화면을 보러 왔는데 LX 로그인으로 튕기면 남의 집 문간이다. */
+  var door = (s && s.getAttribute('data-login')) || 'login.html';
   var file = (location.pathname.split('/').pop() || 'index.html') + location.search;
   document.documentElement.style.visibility = 'hidden';
-  location.replace(base + 'login.html?next=' + encodeURIComponent(file));
+  location.replace(base + door + '?next=' + encodeURIComponent(file));
 })();
