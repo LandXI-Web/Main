@@ -9,14 +9,15 @@
      표는 roles.js 가 정본이지만, 관문은 스타일시트보다 먼저 도는 클래식 스크립트라
      모듈을 못 부른다. 그래서 **메뉴 키만** 여기에 옮겨 적고, 늘어나면 같이 고친다. */
   if (ok) {
-    var MENU = { 'dataset.html':'media', 'ai-project.html':'project', 'ai-project-create.html':'project',
+    var MENU = { 'dashboard.html':'dashboard', 'analysis-ai.html':'analysis', 'ximap.html':'map',
+      'stats-standard.html':'map', 'report-standard.html':'map', 'dataset.html':'media', 'ai-project.html':'project', 'ai-project-create.html':'project',
       'ai-project-label.html':'project', 'admin-publish.html':'publish', 'ai-card.html':'publish',
       'ai-card-edit.html':'publish', 'ai-publish-create.html':'publish', 'produce.html':'produce',
       'admin-notice.html':'admin', 'admin-users.html':'admin', 'admin-inquiry.html':'admin',
       'admin-faq.html':'admin', 'admin-map.html':'admin' };
     var MENUS = { admin:['dashboard','media','project','analysis','map','support','publish','produce','admin','my'],
       staff:['dashboard','media','project','analysis','map','support','my'],
-      sales:['dashboard','analysis','map','support','my'] };
+      sales:['analysis','usecase','map','my'] };
     var HOME = { admin:'dashboard.html', staff:'ai-project.html', sales:'ximap.html' };
     var r = 'admin';
     try { r = localStorage.getItem('lx_role') || 'admin'; } catch (e) { r = 'admin'; }

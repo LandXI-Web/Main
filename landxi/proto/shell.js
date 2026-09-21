@@ -32,6 +32,9 @@ export const NAV = [
   { key: 'project', name: '프로젝트', href: 'ai-project.html', icon: 'proj', group: 'top' },
   { key: 'analysis', name: '분석 서비스', href: 'analysis-ai.html', icon: 'run', group: 'top' },
   { key: 'map', name: '지도 서비스', href: 'ximap.html', icon: 'map', group: 'top' },
+  /* 활용 사례(BP) — 영업용 레일에서는 **제 이름으로** 선다. 다른 단에서는 서비스 지원 안의 탭이다.
+     발주자: "영업용은 분석서비스 카드만 표출되고 bp 사례만" (2026-09-21) */
+  { key: 'usecase', name: '활용 사례', href: 'usecase.html', icon: 'stack', group: 'top' },
   { key: 'support', name: '서비스 지원', href: 'notice.html', icon: 'help', group: 'foot' },
   { key: 'publish', name: '카드 발행 관리', href: 'admin-publish.html', icon: 'stack', group: 'foot' },
   { key: 'produce', name: '생산 관리', href: 'produce.html', icon: 'run', group: 'foot' },
