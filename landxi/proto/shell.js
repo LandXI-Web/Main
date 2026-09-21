@@ -3,6 +3,8 @@
    문서: docs/superpowers/proto/2026-09-20-shell-parts-api.md · 살아있는 견본: shell-demo.html
    디자인 법전: design/system.md (라운드 0 · 그림자 0 · 그라디언트 0 · 유리 0 · 바닥 14px · 채운 파란 버튼 없음). */
 
+import { ROLES, roleById, can, sees, homeOf, DEFAULT_ROLE, SCREEN_MENU } from '../assets/data/roles.js';
+
 export const $ = (s, r = document) => r.querySelector(s);
 export const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 export const REDUCED = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -11,6 +13,19 @@ export const ymd = (s) => String(s || '').replace(/-/g, '.');
 export const nf = new Intl.NumberFormat('ko-KR');
 
 /* ══ 내비 — 단 하나의 출처. 원본 9메뉴 · 원본 순서 · 원본 라벨. ═══════════ */
+/* ── 위계 (2026-09-21) ───────────────────────────────────────────────────
+   발주자: "LX 관리자 - LX 직원 - 영업용 계정 3가지가 분리 되어 운영되어야 하는데"
+   전에는 로그인만 하면 **열 개 메뉴가 전부** 떴다. 카드 발행을 승인하는 화면도,
+   사용자 권한을 바꾸는 화면도 누구에게나 열려 있었다.
+   이제 레일은 roles.js 선언만 읽는다 — 못 가는 곳은 **아예 세우지 않는다**(흐리게 두지 않는다). */
+export const ROLE = (() => {
+  try { const r = localStorage.getItem('lx_role'); return roleById(r) ? r : DEFAULT_ROLE; }
+  catch { return DEFAULT_ROLE; }
+})();
+export const role = roleById(ROLE);
+/** 이 계정이 그 일을 할 수 있나 — 화면은 버튼을 세우기 전에 이걸 묻는다. */
+export const allowed = (cap) => can(ROLE, cap);
+
 export const NAV = [
   { key: 'dashboard', name: '대시보드', href: 'dashboard.html', icon: 'dash', group: 'top' },
   { key: 'media', name: '데이터 관리', href: 'dataset.html', icon: 'data', group: 'top' },
@@ -102,7 +117,19 @@ export const icon = (name, size = 16) => `<svg class="ic" width="${size}" height
 const here = () => (location.pathname.split('/').pop() || 'index.html') + location.search;
 export function isLoggedIn() { try { return localStorage.getItem('lx_logged_in') === '1'; } catch { return false; } }
 export function gate(base = '') {
-  if (isLoggedIn()) return true;
+  if (isLoggedIn()) {
+    /* 로그인했어도 **역할이 갈 수 없는 화면**이면 돌려보낸다.
+       shell-gate.js 를 빠뜨린 화면의 안전망이다 — 실제로 대시보드와 데이터 관리가 빠져 있었다.
+       레일에서 치운 것만으로는 부족하다. 주소를 직접 치면 그대로 열렸다(2026-09-21). */
+    const file = location.pathname.split('/').pop() || 'index.html';
+    const need = SCREEN_MENU[file];
+    if (need && !sees(ROLE, need)) {
+      document.documentElement.style.visibility = 'hidden';
+      location.replace(`${base}${homeOf(ROLE)}?denied=${encodeURIComponent(file)}`);
+      return false;
+    }
+    return true;
+  }
   document.documentElement.style.visibility = 'hidden';
   location.replace(`${base}login.html?next=${encodeURIComponent(here())}`);
   return false;
@@ -158,8 +185,8 @@ export function mountShell(o = {}) {
   const rail = !withRail ? '' : `
 <aside id="rail" aria-label="주 메뉴">
   <a id="rail-mark" href="${base}scrub/index.html" aria-label="Land-XI 홈"><span>LAND</span><span>XI</span></a>
-  <nav id="rail-top" class="rail-group" aria-label="업무">${NAV.filter((n) => n.group === 'top').map(item).join('')}</nav>
-  <nav id="rail-foot" class="rail-group" aria-label="지원 · 관리">${NAV.filter((n) => n.group === 'foot').map(item).join('')}
+  <nav id="rail-top" class="rail-group" aria-label="업무">${NAV.filter((n) => n.group === 'top' && sees(ROLE, n.key)).map(item).join('')}</nav>
+  <nav id="rail-foot" class="rail-group" aria-label="지원 · 관리">${NAV.filter((n) => n.group === 'foot' && sees(ROLE, n.key)).map(item).join('')}
     <div id="rail-my" class="rail-fly" role="group" aria-label="MY" hidden>
       <a href="${base}mypage.html">마이 페이지</a>
       <button type="button" data-action="logout">로그아웃</button>

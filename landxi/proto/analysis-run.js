@@ -4,7 +4,7 @@
    실지도는 MapLibre + V-World + 실 GeoJSON(assets/data/geo/results/**) 청록. 손 배치 폴리곤 없음.
    화면 장치(필지 표 · 구간 등급 · 히트맵 · 타임라인 · 영상 플레이어)는 **카드의 종류 선언**이 켠다
    (analysis-kind.js · cards.js `kind`/`needsOf`) — 카드 이름으로 분기하지 않는다. */
-import { esc, icon, openModal, confirmDialog, say, mountPager, bindRows, $, $$, nf } from './shell.js';
+import { esc, icon, openModal, confirmDialog, say, mountPager, bindRows, allowed, $, $$, nf } from './shell.js';
 import { cardById, modelsOfCard, needsOf, kindName, OUTPUT_KINDS } from '../assets/data/cards.js';
 import {
   ARCHIVE, archiveById, modelsForService, allRuns, runById, runsByState, addRun, patchRun, dropRun,
@@ -582,9 +582,12 @@ export function renderDone(host, S) {
   ${ed ? `<p class="mic">이 세션에 저장한 편집 — 이동 <b class="n">${ed.moved}</b> · 삭제 <b class="n">${ed.removed}</b></p>` : ''}
 </div>
 <footer class="panel-f">
-  <button type="button" class="btn-br" id="dp-share"${editing ? ' disabled' : ''} style="width:104px">${icon('layers', 14)} 공유 설정</button>
+  ${/* 고칠 수 없는 계정에는 **버튼을 세우지 않는다** — 흐리게 두면 눌러 보게 되고,
+       눌러서 거절당하는 것은 권한 설계가 아니라 사고다(2026-09-21). */''}
+  ${allowed('edit') ? `<button type="button" class="btn-br" id="dp-share"${editing ? ' disabled' : ''} style="width:104px">${icon('layers', 14)} 공유 설정</button>` : ''}
   <button type="button" class="btn-br" id="dp-down"${res && !editing ? '' : ' disabled'} style="width:104px">${icon('down', 14)} 다운로드</button>
-  <button type="button" class="btn-br" id="dp-del"${editing ? ' disabled' : ''} style="width:72px">삭제</button>
+  ${allowed('edit') ? `<button type="button" class="btn-br" id="dp-del"${editing ? ' disabled' : ''} style="width:72px">삭제</button>` : ''}
+  ${!allowed('edit') ? '<span class="mic dp-hint">열람 계정 — 결과 수정·삭제는 LX 직원 이상</span>' : ''}
   ${editing ? '<span class="mic dp-hint">저장·취소 후 다시 활성</span>' : ''}
 </footer>`;
 

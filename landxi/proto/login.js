@@ -88,9 +88,16 @@ form.addEventListener('submit', (e) => {
   /* 목 인증 — 값이 있으면 통과(기존 프로토와 동일). */
   setTimeout(() => {
     localStorage.setItem('lx_logged_in', '1');
+    /* 계정 종류를 함께 기억한다 — 레일과 관문이 이 값을 읽어 위계를 가른다(roles.js).
+       ?next 가 있으면 그리로, 없으면 **그 역할의 첫 화면**으로 간다.
+       영업용 계정을 대시보드로 떨구면 볼 것이 없다 — 지도부터 여는 게 맞다. */
+    const role = form.role ? [...form.role].find((r) => r.checked)?.value || 'admin' : 'admin';
+    localStorage.setItem('lx_role', role);
     if (form.remember.checked) localStorage.setItem('lx_saved_email', email);
     else localStorage.removeItem('lx_saved_email');
-    location.assign(nextTarget());
+    const HOME = { admin: 'dashboard.html', staff: 'ai-project.html', sales: 'ximap.html' };
+    const q = new URLSearchParams(location.search).get('next');
+    location.assign(q ? nextTarget() : HOME[role]);
   }, REDUCE ? 0 : 240);
 });
 

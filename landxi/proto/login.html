@@ -44,6 +44,16 @@
 
         <form class="lg-form" id="loginForm" novalidate>
 
+          <!-- 계정 종류 — LX 관리자 · LX 직원 · 영업용 계정 세 단이 분리 운영된다(2026-09-21).
+               시연본이라 여기서 고른다. 실서비스에서는 계정에 붙은 권한이 그대로 들어온다. -->
+          <fieldset class="lg-role" id="lgRole">
+            <legend class="lx-field__label">계정 종류</legend>
+            <label><input type="radio" name="role" value="admin" checked><b>LX 관리자</b><span>발행 승인 · 사용자 · 생산 공정</span></label>
+            <label><input type="radio" name="role" value="staff"><b>LX 직원</b><span>자료 · 프로젝트 · 학습 · 분석</span></label>
+            <label><input type="radio" name="role" value="sales"><b>영업용 계정</b><span>결과 열람 — 만들지도 지우지도 않는다</span></label>
+          </fieldset>
+
+
           <div class="lx-field" data-field="email">
             <label class="lx-field__label" for="lgEmail">아이디 (이메일)</label>
             <input class="lx-field__input" id="lgEmail" name="email" type="email"

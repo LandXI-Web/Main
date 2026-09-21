@@ -148,3 +148,16 @@ body.lx{ overflow:hidden; background:var(--lx-paper); color:var(--lx-ink); }
   .lg-foot__policy{ margin-left:0; }
   .lg-foot__legal{ margin-left:0; flex-basis:100%; }
 }
+
+/* 계정 종류 — 세 단이 분리 운영된다(2026-09-21). 법전대로 라운드 0 · 그림자 0.
+   고른 것만 상징색 테두리로 선다. 설명 한 줄이 붙어 무엇을 할 수 있는 계정인지 말한다. */
+.lg-role{ margin:0 0 16px; padding:0; border:0; display:grid; gap:6px; }
+.lg-role legend{ margin-bottom:6px; padding:0; }
+.lg-role label{ display:grid; grid-template-columns:auto auto 1fr; align-items:baseline; gap:8px;
+  padding:8px 10px; border:1px solid var(--lx-line,#DDD); cursor:pointer;
+  transition:border-color 160ms, background 160ms; }
+.lg-role label:hover{ background:#FAFAFA; }
+.lg-role label:has(input:checked){ border-color:var(--lx-accent,#006DF7); background:#F5F9FF; }
+.lg-role input{ margin:0; accent-color:var(--lx-accent,#006DF7); }
+.lg-role b{ font-size:15px; font-weight:500; white-space:nowrap; }
+.lg-role span{ font-size:14px; color:#686868; word-break:keep-all; }
