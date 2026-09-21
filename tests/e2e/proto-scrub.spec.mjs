@@ -167,16 +167,16 @@ test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 14개 �
   expect(plateN.zoom).toBeCloseTo(M.handoff.zoom, 2);
   expect(plateN.bearing).toBeCloseTo(M.handoff.bearing, 1);
 
-  // 여수 판은 레그 07 끝에 선다(2026-08-27 레그 8·8b 뒤로 필름은 판 뒤로 이어진다) — 밴드 한가운데서 본다.
+  /* 여수 판은 **띄우지 않는다**(2026-09-21).
+     발주자: "이 이미지를 찾아서 삭제해야 될 것 같은데 필름 영상에서?"
+     인계 카메라가 국동항 뒤 산비탈을 가득 채워, 필름이 실지도로 넘어가는 장면이 아니라
+     흐릿한 녹색 언덕 한 장이 됐다. #3 국토 판을 껐을 때와 같은 방식으로 조건만 닫았다.
+     그 밴드에서 **판이 서지 않는다는 것**을 검사한다 — 되살리려면 manifest 의 plate 를 켜고
+     중심·줌을 해안 쪽으로 옮긴 뒤 이 검사를 원래대로 되돌린다. */
   const pY = ((bands.yeosu[0] + bands.yeosu[1]) / 2) / bands.total;
   await seek(page, pY, 600);
-  await plateOn(1);
   const plateY = await page.evaluate(() => window.__scrub.plate(1));
-  expect(plateY).not.toBeNull();
-  expect(plateY.on).toBe(true);
-  expect(plateY.center[0]).toBeCloseTo(M.handoffFinal.center[0], 3);
-  expect(plateY.center[1]).toBeCloseTo(M.handoffFinal.center[1], 3);
-  expect(plateY.zoom).toBeCloseTo(M.handoffFinal.zoom, 2);
+  expect(plateY, '여수 인계 판은 꺼 두었다').toBeNull();
 
   /* ── 8. 카메라 — 고도는 단조 하강, 좌표·방위는 늘 유효하다 ────────────────
      계기판(방위·고도·지상분해능·좌표)은 2026-09-20 에 화면에서 걷어냈다.

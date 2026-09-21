@@ -290,7 +290,15 @@ function handoff(t) {
       satStyle(M.handoff.detections, '#00D3A7'));
   }
   // #2 여수 — 필름 최종 프레임
-  if (!PLATES[1] && t > BAND_Y[0] - 1.2) {
+  /* #2 여수 판 — 2026-09-21 부터 **띄우지 않는다.**
+     발주자: "이 이미지를 찾아서 삭제해야 될 것 같은데 필름 영상에서?"
+     인계 카메라(handoffFinal · z18.8 · pitch 50)가 국동항 방파제 뒤 **산비탈**을 가득 채웠다.
+     탐지 결과는 화면 구석에 점만 하게 남아, 필름이 실지도로 넘어가는 장면이 아니라
+     흐릿한 녹색 언덕 한 장이 됐다. 카메라를 다시 잡기 전에는 안 띄우는 편이 낫다.
+     #3 국토 판을 껐을 때(2026-09-01)와 같은 방식이다 — 코드를 지우지 않고 조건만 닫는다.
+     되돌리려면 manifest.handoffFinal.plate 를 true 로 두고 **중심·줌을 해안 쪽으로** 옮긴다. */
+  const yeosuPlate = M.handoffFinal && M.handoffFinal.plate === true;
+  if (yeosuPlate && !PLATES[1] && t > BAND_Y[0] - 1.2) {
     PLATES[1] = makePlate(M.handoffFinal, el.mapY, el.plateY,
       satStyle(M.handoffFinal.detections, '#FF9A2E'),
       M.handoffFinal.zoom - endDzFor(M.handoffFinal.zoom));   // 마감 수축의 끝 줌을 예열
