@@ -99,24 +99,75 @@
 body.lx.pt[data-gen="rows"]{ overflow:hidden; }
 .lx.pt[data-gen="rows"] #main{ min-height:0; overflow:clip; }
 
-/* ══ 1. 홈 · 서비스 카드 격자 ═══════════════════════════════════════════ */
+/* ══ 1. 홈 · 서비스 카드 덱 ═════════════════════════════════════════════
+   발주자(2026-09-21): "타로카드 선택처럼 메인에서는 카드 형태 서비스가 나오고
+                        그걸 클릭하면 새로운 서비스 화면이 펼쳐지는거였어."
+
+   1차 구현은 5칸 격자였다. 칸은 **판을 나눈 자리**지 집어 드는 물건이 아니다.
+   그래서 셋을 바꿨다.
+     1 낱장으로 선다   테두리를 공유하지 않고 사이를 띄운다. 높이는 화면이 정하고
+                       폭이 따라간다 — aspect-ratio 를 쓰면 넓고 낮은 화면에서 되레 넘친다.
+     2 고르는 느낌     올린 장은 떠오르고 나머지는 물러난다. 좌우 키로 옮긴다.
+     3 펼쳐지며 열린다 고른 장이 화면으로 자라고 작업공간이 그 자리에서 열린다.
+                       **글자를 늘리지 않는다** — 빈 판만 키운다(카드 본문을 scale 하면 글자가 일그러진다).
+
+   법전은 그대로다(라운드 0 · 그림자 0 · 그라디언트 0 · 유리 0). 카드다움은 비율과 움직임으로 낸다. */
 .lx[data-gen="rows"] .pt-home{ flex:1 1 0; min-height:0; display:flex; flex-direction:column; }
 .lx[data-gen="rows"] .pt-sum{ flex:none; }
-.lx[data-gen="rows"] .pt-grid{ flex:1 1 0; min-height:0; list-style:none; margin:0; padding:0;
-  display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); grid-auto-rows:minmax(0,1fr);
-  border-top:1px solid var(--line); }
-.lx[data-gen="rows"] .pt-grid > li{ display:flex; min-width:0; min-height:0; }
+.lx[data-gen="rows"] .pt-deck{ flex:1 1 0; min-height:0; list-style:none; margin:0;
+  padding:clamp(12px,2.2vh,26px) 0 clamp(4px,1vh,14px);
+  display:flex; align-items:stretch; justify-content:center; gap:clamp(9px,1.2vw,18px); }
+/* 낱장 한 장이 가져가는 폭. 높이는 줄이 정하고, 폭은 여기서 묶는다 —
+   다섯 장이 가로로 다 들어오면서도 한 장이 판때기처럼 넓어지지 않게. */
+/* 폭을 **높이에도 묶는다**. 폭만 잡으면 낮고 넓은 화면(1996×745)에서 카드가 납작해져
+   세로로 긴 낱장이 아니라 다시 칸처럼 보였다(재 보니 0.80, 높은 화면에서는 0.46).
+   38vh 는 화면이 낮을수록 폭을 함께 줄여 어느 화면에서도 세로 카드로 남게 하는 고삐다.
+   aspect-ratio 는 쓰지 않는다 — 폭이 정해진 쪽에 걸면 넓은 화면에서 되레 키가 자란다. */
+.lx[data-gen="rows"] .pt-deck > li{ display:flex; flex:1 1 0; min-width:0;
+  max-width:min(clamp(206px,23vw,324px), 38vh); }
 
 .lx[data-gen="rows"] .pt-c{ position:relative; flex:1; display:flex; flex-direction:column; min-width:0; min-height:0;
-  padding:clamp(14px,2.2vh,22px) 20px clamp(12px,1.8vh,18px); color:inherit; overflow:hidden;
-  border-bottom:1px solid var(--line); border-right:1px solid var(--line);
-  transition:background var(--hov) var(--hove); }
-.lx[data-gen="rows"] .pt-grid > li:last-child .pt-c{ border-right:0; }
-.lx[data-gen="rows"] .pt-c:hover{ background:var(--t1); }
-.lx[data-gen="rows"] .pt-c::after{ content:""; position:absolute; left:0; right:0; top:-1px; height:3px; background:var(--accent);
-  transform:scaleX(0); transform-origin:left; transition:transform var(--hov) var(--hove); }
-.lx[data-gen="rows"] .pt-c:hover::after{ transform:scaleX(1); }
+  padding:clamp(14px,2.2vh,22px) clamp(14px,1.05vw,19px) clamp(12px,1.8vh,18px);
+  color:inherit; overflow:hidden; background:var(--paper);
+  border:1px solid var(--line); border-top:3px solid var(--grey-3);
+  transition:transform 320ms var(--ease), border-top-color 200ms linear,
+             background 200ms linear, opacity 200ms linear; }
+.lx[data-gen="rows"] .pt-c:hover,
+.lx[data-gen="rows"] .pt-c:focus-visible{ transform:translateY(-10px); border-top-color:var(--accent); background:var(--t1); }
+/* 한 장에 손이 닿으면 나머지는 **물러난다** — 고르는 중이라는 말이다. */
+.lx[data-gen="rows"] .pt-deck:hover .pt-c:not(:hover),
+.lx[data-gen="rows"] .pt-deck:focus-within .pt-c:not(:focus-visible):not(:hover){ opacity:.46; }
 .lx[data-gen="rows"] .pt-c[data-state="예정"]{ color:var(--grey); }
+
+/* 발 — 눌러서 편다는 말이 카드 위에 있어야 한다. 카드가 링크인 줄 모르면 고를 수 없다. */
+.lx[data-gen="rows"] .pt-c-open{ display:flex; align-items:center; gap:6px; margin-top:9px;
+  font-size:14px; color:var(--accent); letter-spacing:-.01em; }
+.lx[data-gen="rows"] .pt-c-open i{ font-style:normal; transition:transform 320ms var(--ease); }
+.lx[data-gen="rows"] .pt-c:hover .pt-c-open i{ transform:translateX(5px); }
+.lx[data-gen="rows"] .pt-c[data-state="예정"] .pt-c-open{ color:var(--grey); }
+
+/* 펴는 중 — 고른 장은 남고 나머지는 비켜선다. 그 위로 판 하나가 화면까지 자란다. */
+.lx[data-gen="rows"] .pt-deck[data-open] .pt-c{ opacity:.12; transform:translateY(14px); }
+/* 고른 장은 **자라는 판 위에** 남는다. 판만 키우고 카드를 덮어 버리면 무엇이 열리는지
+   알 수 없는 흰 화면이 된다 — 카드가 제 면을 펴는 것으로 보여야 한다. */
+.lx[data-gen="rows"] .pt-deck[data-open] li[data-picked]{ position:relative; z-index:41; }
+.lx[data-gen="rows"] .pt-deck[data-open] li[data-picked] .pt-c{ opacity:1; transform:translateY(-10px);
+  background:var(--t1); border-top-color:var(--accent); }
+.lx .pt-veil{ position:fixed; z-index:40; background:var(--t1); border-top:3px solid var(--accent);
+  transition:inset 420ms cubic-bezier(.45,0,.2,1); pointer-events:none; }
+
+/* 펼쳐져 열린 쪽 — 작업공간이 위에서 아래로 펴진다(늘리지 않고 드러낸다). */
+@keyframes pt-unfold{ from{ clip-path:inset(0 0 100% 0); } to{ clip-path:inset(0 0 0 0); } }
+.lx[data-gen="rows"][data-from] .pt-work{ animation:pt-unfold 420ms var(--ease) both; }
+
+@media (prefers-reduced-motion:reduce){
+  .lx[data-gen="rows"] .pt-c,
+  .lx[data-gen="rows"] .pt-c-open i,
+  .lx .pt-veil{ transition:none; }
+  .lx[data-gen="rows"] .pt-c:hover,
+  .lx[data-gen="rows"] .pt-c:focus-visible{ transform:none; }
+  .lx[data-gen="rows"][data-from] .pt-work{ animation:none; }
+}
 .lx[data-gen="rows"] .pt-c-y{ display:block; font-family:var(--num); font-size:14px; letter-spacing:.04em; color:var(--grey);
   white-space:nowrap; overflow:hidden; }
 .lx[data-gen="rows"] .pt-c-n{ display:block; margin-top:6px; font-family:var(--disp); font-weight:700;

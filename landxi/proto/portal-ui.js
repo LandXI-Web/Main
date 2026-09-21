@@ -185,6 +185,7 @@ if (!SVC) {
         ${c.lastRun ? `<span class="n">${esc(ymd(c.lastRun))} 기준</span>` : `<span>${esc(c.scale || '')}</span>`}
         ${c.update && c.update.level !== 'same' ? '<span class="chip chip--on">갱신</span>' : ''}
       </span>
+      <span class="pt-c-open">${c.status === '예정' ? '준비 중인 서비스 열기' : '이 서비스 펴기'}<i aria-hidden="true">→</i></span>
     </a></li>`;
   }).join('') || '<li class="pt-empty"><b>아직 깔린 서비스가 없습니다</b>LX 가 카드를 발행하면 여기에 놓입니다.</li>';
 
@@ -220,6 +221,57 @@ if (!SVC) {
   };
   trimCards();
   let ht; addEventListener('resize', () => { clearTimeout(ht); ht = setTimeout(trimCards, 160); });
+
+  /* ── 고르기 · 펴기 ────────────────────────────────────────────────────
+     발주자: "카드 형태 서비스가 나오고 그걸 클릭하면 새로운 서비스 화면이 펼쳐지는거였어."
+
+     고른 장이 있던 자리에서 판 하나가 화면까지 자라고, 그 뒤에 작업공간으로 넘어간다.
+     **카드 본문을 늘리지 않는다** — 글자를 scale 하면 일그러진다. 자라는 것은 빈 판뿐이고,
+     도착한 화면이 같은 결로 펴지면서(pt-unfold) 한 동작처럼 이어진다.
+
+     움직임을 끈 사람에게는 아무 일도 하지 않는다 — 그냥 링크가 된다. */
+  const deck = slot('cards');
+  const slow = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cards = () => [...deck.querySelectorAll('.pt-c')];
+
+  if (deck && !slow) {
+    deck.addEventListener('click', (e) => {
+      const a = e.target.closest('.pt-c'); if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
+      e.preventDefault();
+      const li = a.closest('li'), r = a.getBoundingClientRect();
+      li.dataset.picked = ''; deck.dataset.open = '';
+
+      const veil = document.createElement('div');
+      veil.className = 'pt-veil';
+      veil.style.inset = `${r.top}px ${innerWidth - r.right}px ${innerHeight - r.bottom}px ${r.left}px`;
+      document.body.append(veil);
+      // 자란 뒤에 넘어간다. 화면 전체를 덮은 판이 다음 화면의 바탕이 된다.
+      requestAnimationFrame(() => { veil.style.inset = '0px'; });
+      try { sessionStorage.setItem('pt.from', a.getAttribute('href') || ''); } catch { /* 저장소 차단 */ }
+      setTimeout(() => { location.href = a.getAttribute('href'); }, 430);
+    });
+  }
+
+  /* 좌우 키로 장을 옮긴다 — 고르는 화면이면 손이 카드 사이를 오갈 수 있어야 한다. */
+  deck?.addEventListener('keydown', (e) => {
+    const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : e.key === 'Home' ? -99 : e.key === 'End' ? 99 : 0;
+    if (!step) return;
+    const list = cards(); const i = list.indexOf(document.activeElement);
+    if (i < 0) return;
+    e.preventDefault();
+    list[Math.min(list.length - 1, Math.max(0, Math.abs(step) > 9 ? (step > 0 ? list.length - 1 : 0) : i + step))].focus();
+  });
+}
+
+/* ══ 도착 — 고른 카드에서 왔으면 같은 결로 펴진다 ══════════════════════ */
+if (SVC && NEW) {
+  let from = '';
+  try { from = sessionStorage.getItem('pt.from') || ''; sessionStorage.removeItem('pt.from'); } catch { /* 저장소 차단 */ }
+  if (from && from.includes(SVC) && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    body.dataset.from = '';
+    // 한 번만 편다. 새로고침하거나 주소로 바로 들어온 사람에게는 펴는 동작이 없다.
+    setTimeout(() => { delete body.dataset.from; }, 700);
+  }
 }
 
 /* ══ 작업공간 ═════════════════════════════════════════════════════════ */

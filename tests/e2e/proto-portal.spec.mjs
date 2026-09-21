@@ -112,15 +112,40 @@ test.describe('서비스 카드 홈 — 배포본 한 줄 = 카드 한 장', () 
       return p.serviceCards('namwon').map((c) => ({ id: c.id, name: c.name, year: c.year, status: c.status }));
     });
     expect(want.map((w) => w.id).sort()).toEqual([...NW].sort());
-    await expect(page.locator('.pt-grid .pt-c')).toHaveCount(want.length);
+    // 홈은 격자(.pt-grid)가 아니라 **덱(.pt-deck)** 이다 — 칸이 아니라 낱장이 선다(2026-09-21).
+    await expect(page.locator('.pt-deck .pt-c')).toHaveCount(want.length);
     for (const w of want) {
       const card = page.locator(`.pt-c[href="portal-${w.id}.html"]`);
       await expect(card).toHaveCount(1);
       await expect(card).toContainText(w.name);
       await expect(card).toContainText(String(w.year));
       await expect(card).toContainText(w.status);
+      await expect(card.locator('.pt-c-open')).toHaveCount(1);          // 눌러서 편다는 말이 카드 위에 있다
     }
     expect(errs).toEqual([]);
+  });
+
+  /* 낱장인가 — 카드가 세로로 길고, 테두리를 나눠 쓰지 않고 사이가 떠 있어야 한다.
+     발주자: "타로카드 선택처럼 … 클릭하면 새로운 서비스 화면이 펼쳐지는거였어." */
+  test('낱장으로 선다 — 세로로 길고, 사이가 떠 있고, 고르면 나머지가 물러난다', async ({ page }) => {
+    await boot(page);
+    const box = await page.locator('.pt-c').first().boundingBox();
+    expect(box.width / box.height).toBeLessThan(0.9);                    // 칸이 아니라 세로 카드
+    const a = await page.locator('.pt-deck > li').nth(0).boundingBox();
+    const b = await page.locator('.pt-deck > li').nth(1).boundingBox();
+    expect(b.x - (a.x + a.width)).toBeGreaterThan(4);                    // 붙어 있지 않다
+    await page.locator('.pt-c').first().hover();
+    const dim = await page.locator('.pt-c').nth(1).evaluate((e) => +getComputedStyle(e).opacity);
+    expect(dim).toBeLessThan(1);                                         // 고르는 중 = 나머지는 물러난다
+  });
+
+  test('카드를 고르면 그 서비스 화면이 펼쳐진다 — 펴는 판이 서고 작업공간에 닿는다', async ({ page }) => {
+    await boot(page);
+    await page.locator('.pt-c[href="portal-dp-nw-farm-25.html"]').click();
+    await expect(page.locator('.pt-veil')).toHaveCount(1);               // 고른 자리에서 판이 자란다
+    await expect(page.locator('.pt-deck')).toHaveAttribute('data-open', '');
+    await page.waitForURL(/portal-dp-nw-farm-25\.html/);
+    await expect(page.locator('.pt-work')).toHaveCount(1);
   });
 
   test('실측은 **제 단위 그대로** 선다 — 필지와 동을 더하지 않는다', async ({ page }) => {

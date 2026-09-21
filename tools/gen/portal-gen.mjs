@@ -99,7 +99,11 @@ const written = [];
 // 1) 기관 홈 — 서비스 카드 격자 (기관마다 내용이 다르지만 화면은 한 벌)
 written.push(out('landxi/proto/portal.html', page({
   title: '내 서비스', tenant: 'namwon', mod: 'portal-ui.js',
-  skeleton: `\n<div class="pt-home">\n  <div class="pt-sum" data-slot="summary"></div>\n  <ul class="pt-grid" data-slot="cards"></ul>\n</div>`,
+  /* 홈은 **고르는 화면**이다 — 대시보드가 아니다.
+     발주자(2026-09-21): "타로카드 선택처럼 메인에서는 카드 형태 서비스가 나오고
+                          그걸 클릭하면 새로운 서비스 화면이 펼쳐지는거였어."
+     그래서 격자(.pt-grid)가 아니라 **덱(.pt-deck)** 이다. 칸이 아니라 낱장이 선다. */
+  skeleton: `\n<div class="pt-home">\n  <div class="pt-sum" data-slot="summary"></div>\n  <ul class="pt-deck" data-slot="cards"></ul>\n</div>`,
 })));
 
 // 어느 배포본이 어느 기관 것인가 — 서비스 카드가 이미 답을 안다(추측하지 않는다).
