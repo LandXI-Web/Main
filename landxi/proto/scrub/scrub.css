@@ -432,3 +432,82 @@ html{ scroll-behavior:auto; }
   100%{ transform:translateY(12px) scaleY(.4); opacity:0; }
 }
 @media (prefers-reduced-motion:reduce){ .sb-hint-w::after{ animation:none; opacity:.6; } }
+
+/* ══ 필름 뒤 세 칸 (2026-09-22) ═══════════════════════════════════════════
+   발주자: "더 내려가면 활용 사례가 카드 처럼 좌우로 슬라이딩 … 그 아래 게스트 게시판 …
+            하단에는 패밀리 사이트 문의하기 등 기본 정보"
+
+   엔진을 건드리지 않는다. 무대(.sb-world)는 position:fixed 로 뒤에 그대로 있고,
+   이 칸들이 **그 위를 덮으며** 올라온다 — 흰 바탕 + z-index 80.
+   법전 그대로: 라운드 0 · 그림자 0 · 그라디언트 0 · 유리 0 · 글자 바닥 14px. */
+/* 덮는 층 — 필름 마감 요소(CI · 태그라인 · CTA)가 z-index 70 대에 있어 80 으로는 비쳐 나왔다.
+   200 으로 올려 **완전히 덮는다**. 무대는 뒤에 그대로 남는다(엔진 건드리지 않음). */
+.sb .sb-tail{ position:relative; z-index:200; background:#fff; }
+/* `.lx-grid` 는 이 화면에서 12칸 격자라 제목이 한 칸에 갇혔다 — 제 컨테이너를 쓴다. */
+.sb .sb-t-in{ width:min(1440px, calc(100% - 2 * clamp(16px, var(--lx-margin,56px), 80px)));
+  margin-inline:auto; }
+.sb .sb-t-sec{ padding:clamp(56px,9vh,110px) 0 clamp(40px,6vh,72px); border-top:1px solid var(--lx-line,#DDD); }
+.sb .sb-t-sec--board{ background:#FAFAFA; }
+.sb .sb-t-h{ margin-bottom:clamp(20px,3vh,36px); }
+.sb .sb-t-h .lx-lead{ max-width:62ch; }
+
+/* 활용 사례 — 가로로 흐른다. 이 칸에서는 가로 스크롤이 **기능**이다. */
+.sb .sb-t-slide{ position:relative; display:flex; align-items:center; gap:10px;
+  padding:0 clamp(16px,var(--lx-margin,56px),80px); }
+.sb .sb-t-strip{ flex:1 1 0; min-width:0; list-style:none; margin:0; padding:2px 0 14px;
+  display:flex; gap:20px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:thin; }
+.sb .sb-t-card{ flex:0 0 clamp(240px,26vw,340px); scroll-snap-align:start; }
+.sb .sb-t-card a{ display:block; color:inherit; text-decoration:none; }
+.sb .sb-t-card figure{ margin:0 0 12px; aspect-ratio:16/10; overflow:hidden; background:#EFEFEF; }
+.sb .sb-t-card img{ display:block; width:100%; height:100%; object-fit:cover;
+  transition:transform 460ms cubic-bezier(.22,1,.36,1); }
+.sb .sb-t-card a:hover img{ transform:scale(1.03); }
+.sb .sb-t-card b{ display:block; font-size:17px; font-weight:500; line-height:1.4; word-break:keep-all; }
+.sb .sb-t-card span{ display:block; margin-top:6px; font-size:14px; color:#686868; }
+.sb .sb-t-arw{ flex:none; width:38px; height:38px; font-size:19px; color:#010102;
+  background:#fff; border:1px solid var(--lx-line,#DDD);
+  transition:background 160ms, color 160ms; }
+.sb .sb-t-arw:not(:disabled):hover{ background:#F2F2F2; }
+.sb .sb-t-arw:disabled{ color:#CCC; }
+.sb .sb-t-more{ margin-top:14px; }
+.sb .sb-t-none{ list-style:none; font-size:15px; color:#686868; }
+
+/* 게스트 게시판 — 세 칸. 공지 · 문의 · 기관 플랫폼. */
+.sb .sb-t-bd{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:clamp(24px,3vw,56px); }
+.sb .sb-t-ct{ display:flex; align-items:baseline; gap:10px; margin:0 0 14px; padding-bottom:10px;
+  border-bottom:1px solid #010102; font-size:17px; font-weight:500; }
+.sb .sb-t-ct .lx-link{ margin-left:auto; font-size:14px; }
+.sb .sb-t-list{ list-style:none; margin:0; padding:0; }
+.sb .sb-t-list li + li{ border-top:1px solid var(--lx-line,#DDD); }
+.sb .sb-t-list a{ display:flex; align-items:baseline; gap:8px; padding:9px 0; color:inherit;
+  text-decoration:none; font-size:15px; transition:color 160ms; }
+.sb .sb-t-list a:hover{ color:var(--lx-accent,#006DF7); }
+.sb .sb-t-list em{ flex:none; font-style:normal; font-size:14px; color:var(--lx-accent,#006DF7); }
+.sb .sb-t-list span{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sb .sb-t-list i{ margin-left:auto; flex:none; font-style:normal; font-size:14px; color:#686868; }
+.sb .sb-t-ask{ margin:0 0 10px; font-size:15px; line-height:1.6; color:#686868; word-break:keep-all; }
+.sb .sb-t-ask--n{ color:#010102; }
+.sb .sb-t-pf{ list-style:none; margin:0; padding:0; display:grid; gap:7px; font-size:15px; }
+
+/* 푸터 — 기본 정보. 읽는 줄이지 누르는 줄이 아니다(링크만 누른다). */
+.sb .sb-t-foot{ position:relative; z-index:80; background:#010102; color:#fff;
+  padding:clamp(34px,5vh,56px) 0 clamp(28px,4vh,44px); }
+.sb .sb-t-foot-in{ display:grid; gap:18px; }
+.sb .sb-t-fb{ margin:0; display:flex; flex-wrap:wrap; gap:4px 18px; font-size:14px; color:#B8B8B8; }
+.sb .sb-t-fb b{ font-size:16px; font-weight:500; color:#fff; }
+.sb .sb-t-fl{ display:flex; flex-wrap:wrap; gap:8px 22px; }
+.sb .sb-t-foot .lx-link{ color:#fff; font-size:15px; }
+.sb .sb-t-fam{ font-size:15px; }
+.sb .sb-t-fam summary{ cursor:pointer; color:#B8B8B8; }
+.sb .sb-t-fam ul{ list-style:none; margin:10px 0 0; padding:0; display:grid; gap:7px; }
+.sb .sb-t-fam a{ color:#fff; text-decoration:none; font-size:15px; }
+.sb .sb-t-fam a:hover{ text-decoration:underline; }
+.sb .sb-t-cp{ margin:0; font-size:14px; color:#7A7A7A; }
+
+@media (max-width:1023.98px){
+  .sb .sb-t-bd{ grid-template-columns:1fr; }
+}
+@media (prefers-reduced-motion:reduce){
+  .sb .sb-t-card img{ transition:none; }
+  .sb .sb-t-card a:hover img{ transform:none; }
+}

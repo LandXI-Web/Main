@@ -90,7 +90,21 @@ test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 14개 �
   // 형제 요소가 아니라 패딩이어야 "흐름에는 스페이서 하나"가 유지된다(위 flowKids 검사).
   expect(flow.endVh).toBeCloseTo(2.0, 5);
   expect(flow.padBottom).toBeCloseTo(flow.endVh * VH, 0);
-  expect(Math.abs(flow.scrollHeight - (flow.spacerVh + flow.endVh) * VH)).toBeLessThan(VH * 0.06);
+  /* 필름 **뒤**로 세 칸이 더 이어진다(2026-09-22): 활용 사례 슬라이더 · 게스트 게시판 · 푸터.
+     발주자: "더 내려가면 활용 사례가 카드 처럼 좌우로 슬라이딩 … 그 아래 게스트 게시판 …
+              하단에는 패밀리 사이트 문의하기 등 기본 정보"
+     그 칸들은 `#top` **바깥**이라 위의 `flowKids === 1` 은 그대로다.
+     그래서 문서 전체가 아니라 **필름 자신의 높이**를 잰다 — 뒷칸이 붙어도 필름의 예산은
+     스페이서 + 마감 2.00vh 그대로여야 한다. 문서 전체로 재면 뒷칸 높이에 검사가 끌려다닌다. */
+  const filmH = await page.evaluate(() => document.querySelector('#top').getBoundingClientRect().height);
+  expect(Math.abs(filmH - (flow.spacerVh + flow.endVh) * VH)).toBeLessThan(VH * 0.06);
+  const tailH = await page.evaluate(() => {
+    const t = document.querySelector('#sb-tail');
+    return t ? t.getBoundingClientRect().height : 0;
+  });
+  expect(tailH, '필름 뒤 세 칸이 서 있어야 한다').toBeGreaterThan(VH * 0.5);
+  expect(await page.locator('.sb-t-card').count(), '활용 사례 카드가 가로로 선다').toBeGreaterThan(0);
+  expect(await page.locator('#sb-t-notice li').count(), '게스트 게시판에 공지가 선다').toBeGreaterThan(0);
 
   /* ── 2. 페이스 — 레그별 vh/필름초 편차 ≤ 6% ─────────────────────────────── */
   const rates = M.legs.map((l) => l.weightVh / l.seconds);

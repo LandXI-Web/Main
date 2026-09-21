@@ -355,6 +355,70 @@
   <div data-sc-spacer aria-hidden="true"></div>
 </div>
 
+<!-- ══ 필름 뒤 — 손님이 더 내려가면 나오는 곳 (2026-09-22) ═══════════════════
+     발주자: "마우스 휠로 끝까지 내리면 로그인 시작하기 에서 끝나지만 더 내려가면
+              활용 사례가 카드 처럼 좌우로 슬라이딩 하는 그런 느낌을 살리는 칸이 필요하고
+              그 아래 내려가면 공지사항이나 문의하기 등 게스트 들이 볼 수 있는 게시판 공간이
+              있어야 한다. 그리고 하단에는 패밀리 사이트 문의하기 등 기본 정보들이 있어야 하고"
+
+     엔진은 건드리지 않는다. 무대(.sb-world)는 position:fixed 로 뒤에 그대로 남고,
+     이 칸들이 그 위를 덮으며 올라온다(z-index 80 · 흰 바탕).
+     문서 흐름에 스페이서 하나뿐이라는 규칙(worldflight §8 #1)은 #top 안의 이야기이고,
+     여기는 그 바깥이다. 내용은 공개 게시판과 **같은 자료**를 읽는다(support-data.js) —
+     두 곳에 따로 쓰면 반드시 어긋난다. -->
+<div class="sb-tail" id="sb-tail">
+  <section class="sb-t-sec" aria-labelledby="sb-t-uc">
+    <div class="sb-t-in sb-t-h">
+      <p class="lx-label">USE CASE</p>
+      <h2 class="lx-h1" id="sb-t-uc">활용 사례</h2>
+      <p class="lx-lead">현장에서 실제로 쓰인 사례입니다. 무엇을 풀었고 무엇이 달라졌는지 적었습니다.</p>
+    </div>
+    <div class="sb-t-slide">
+      <button type="button" class="sb-t-arw" data-uc="-1" aria-label="이전 사례">‹</button>
+      <ul class="sb-t-strip" id="sb-t-strip"></ul>
+      <button type="button" class="sb-t-arw" data-uc="1" aria-label="다음 사례">›</button>
+    </div>
+    <p class="sb-t-in sb-t-more"><a class="lx-link" href="../site/usecase.html">활용 사례 전체 보기 ›</a></p>
+  </section>
+
+  <section class="sb-t-sec sb-t-sec--board" aria-labelledby="sb-t-bd">
+    <div class="sb-t-in sb-t-h">
+      <p class="lx-label">BOARD</p>
+      <h2 class="lx-h1" id="sb-t-bd">공지사항 · 문의</h2>
+      <p class="lx-lead">로그인 없이 볼 수 있습니다.</p>
+    </div>
+    <div class="sb-t-in sb-t-bd">
+      <div class="sb-t-col"><h3 class="sb-t-ct">공지사항<a class="lx-link" href="../site/notice.html">전체 ›</a></h3>
+        <ol class="sb-t-list" id="sb-t-notice"></ol></div>
+      <div class="sb-t-col"><h3 class="sb-t-ct">문의하기</h3>
+        <p class="sb-t-ask">도입 · 기술 · 자료 제공에 관한 문의를 받습니다.</p>
+        <p class="sb-t-ask sb-t-ask--n">고객센터 <span class="n">063-713-1213</span></p>
+        <p><a class="lx-cta" href="../login.html"><span class="lx-cta__t">문의 남기기</span></a></p></div>
+      <div class="sb-t-col"><h3 class="sb-t-ct">활용 서비스<a class="lx-link" href="../site/platform.html">전체 ›</a></h3>
+        <p class="sb-t-ask">Land-XI 로 세운 기관 플랫폼입니다.</p>
+        <ul class="sb-t-pf" id="sb-t-pf"></ul></div>
+    </div>
+  </section>
+
+  <footer class="sb-t-foot">
+    <div class="sb-t-in sb-t-foot-in">
+      <p class="sb-t-fb"><b>LX 한국국토정보공사</b><span>(우)54870 전북 전주시 덕진구 기지로 120</span>
+        <span>고객센터 <i class="n">063-713-1213, 1216</i></span></p>
+      <nav class="sb-t-fl" aria-label="기본 정보">
+        <a class="lx-link" href="../site/notice.html">공지사항</a>
+        <a class="lx-link" href="../site/usecase.html">활용 사례</a>
+        <a class="lx-link" href="../site/platform.html">활용 서비스</a>
+        <a class="lx-link" href="../login.html">로그인</a></nav>
+      <details class="sb-t-fam"><summary>Family Site</summary>
+        <ul id="sb-t-fam"></ul></details>
+      <p class="sb-t-cp">개인정보처리방침 · 이용약관 · 이메일주소무단수집거부</p>
+    </div>
+  </footer>
+</div>
+
+<script src="../../assets/data/support-data.js"></script>
+<script type="module" src="scrub-tail.js"></script>
+
 <p class="sb-hint" id="sb-hint" aria-hidden="true"><span class="sb-hint-w">마우스 휠로 내려보세요</span></p>
 
 </body></html>
