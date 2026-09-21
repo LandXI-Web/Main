@@ -4,7 +4,9 @@ import { openModal, mountPager, bindCounters, say, icon, esc, $, $$ } from './sh
 import * as D from './project-data.js';
 import { n, demo, guess, fig, kv, st, empty, cta, br, link, bars, meter, miss } from './project-ui.js';
 
-const KINDS = ['전체', '정사영상', '이미지셋', '공간정보'];
+/* 거르개는 **대장에 실제로 있는 종류**를 센다 — 손으로 적어 두면 대장이 늘어도 따라오지 못한다.
+   2026-09-21 에 학습데이터·모델이 대장에 올랐는데 여기 목록은 셋 그대로라 걸러지지 않았다. */
+const KINDS = ['전체', ...new Set(D.ARCHIVE.map((a) => a.kind))];
 
 export function dataTab(p, S) {
   const files = p.files, dss = D.datasetsOf(p.id), up = D.uploadOf(p.id);

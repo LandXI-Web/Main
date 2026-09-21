@@ -14,6 +14,9 @@ import { RESULTS } from '../assets/data/results.js';
 import { CROPS } from '../assets/data/crops.js';
 import { serviceById } from '../assets/data/services.js';
 import { cardsOfService, CARDS } from '../assets/data/cards.js';
+// 분류축은 **여기 두 곳이 정본**이다 — 화면도 대장도 여기서 이름과 규칙을 가져온다.
+import { ASSET_TIERS, SHARE_LABEL } from '../assets/data/registry.js';
+const nfInt = (n) => new Intl.NumberFormat('ko-KR').format(n);
 
 export const CROP = '../assets/proto/crops/';
 export const GEO = '../assets/data/geo/results/';
@@ -27,18 +30,41 @@ export const CLEAN = { gh: pool('namwon-greenhouse-2025', true), fl: pool('namwo
 export const MARK = { gh: pool('namwon-greenhouse-2025'), fl: pool('namwon-farmland-2025'), je: pool('jeju-illegal') };
 const ring = (a, i) => a[((i % a.length) + a.length) % a.length];
 
-/* ── 1. 파일(아카이브) ─────────────────────────────────────────────────────
-   데이터 관리 아카이브 = imagery.js 도엽 11 + 원본 목록에 있던 공간정보(shp) 1 · 이미지셋 1(`시연`). */
+/* ── 1. 자산 대장(아카이브) ────────────────────────────────────────────────
+ *
+ *   발주자(2026-09-21): "프로젝트 만들기에서 아카이브에서 고르기는 영상 뿐만아니라
+ *                        AI 학습데이터도 골라야 할텐데. 이런 것도 좀 분류 체계가
+ *                        디테일하게 살아 있어야 한다."
+ *
+ * ── 무엇이 어긋나 있었나 ───────────────────────────────────────────────────
+ * 분류축이 **둘 따로 있었고 아카이브는 어느 쪽과도 안 이어져 있었다.**
+ *   registry.js ASSET_TIERS  공유 방식 5단 — 원본 · 타일 · **학습데이터** · **모델** · 결과
+ *   assets.js   ASSET_KINDS  파일 성격 5종 — 정사영상 · 공간정보 · 이미지셋 · 표 · 묶음
+ * 아카이브의 `kind` 는 id 가 아니라 표시용 한글이라 어느 축에도 못 붙었고, 단(tier)이 없어
+ * **"이건 다른 기관에 줄 수 있나"** 를 말하지 못했다. 그 결과 학습데이터와 모델은
+ * 교리(ASSET_TIERS)에만 있고 **고를 수 있는 자리가 없었다** — 이식의 핵심 자산인데도.
+ *
+ * ── 어떻게 이었나 ─────────────────────────────────────────────────────────
+ * 대장을 하나로 만들고 줄마다 두 축을 **둘 다** 붙인다.
+ *   kindId  파일 성격  (ASSET_KINDS)  → 무엇으로 열고 무엇을 할 수 있나
+ *   tier    공유 방식  (ASSET_TIERS)  → 밖으로 줄 수 있나, 어떻게 주나
+ * `kind`(한글)는 그대로 둔다 — 이미 여러 화면이 그 글자로 거르고 있다(데이터 관리 목록 등).
+ * 이름을 바꾸는 대신 **id 를 더해** 잇는다.
+ */
 const KIND = { ortho: '정사영상', landcover: '공간정보', imageset: '이미지셋' };
 const cm = (g) => (g >= 1 ? `${g} m` : `${(g * 100).toFixed(2)} cm`);
 export const ARCHIVE = [
   ...IMAGERY.map((i, n) => ({
-    id: i.id, name: i.label.replace(' · ', ' '), kind: KIND[i.kind] || '정사영상', captured: i.captured, gsd: i.gsd, gsdLabel: cm(i.gsd),
+    id: i.id, name: i.label.replace(' · ', ' '), kind: KIND[i.kind] || '정사영상',
+    kindId: i.kind === 'landcover' ? 'vector' : i.kind === 'imageset' ? 'imageset' : 'ortho',
+    // 원본은 LX 보관, 타일이 구워져 있으면 권한으로 공유한다 — 대장이 그 사실을 말한다.
+    tier: i.tiles ? 'tile' : 'raw',
+    captured: i.captured, gsd: i.gsd, gsdLabel: cm(i.gsd),
     bounds: i.bounds, tiles: i.tiles, thumb: ring([...CLEAN.gh, ...CLEAN.fl, ...CLEAN.je, ...CLEAN.ks], n),
     sizeGB: [55.4, 51.0, 48.2, 44.6, 12.8, 11.9, 30.4, 8.2, 26.7, 62.1, 58.3][n] ?? 20, demo: true,
   })),
-  { id: 'shp-roadfault-2604', name: '남원 도로파손 라벨 셰입 2026-04', kind: '공간정보', captured: '2026-04', gsd: null, gsdLabel: '—', thumb: null, sizeGB: 0.047, demo: true },
-  { id: 'set-patrol-2604', name: '순찰차량 도로영상 2026-04', kind: '이미지셋', captured: '2026-04', gsd: null, gsdLabel: '4,820장', thumb: ring(CLEAN.fl, 5), sizeGB: 18.7, demo: true },
+  { id: 'shp-roadfault-2604', name: '남원 도로파손 라벨 셰입 2026-04', kind: '공간정보', kindId: 'vector', tier: 'label', captured: '2026-04', gsd: null, gsdLabel: '—', thumb: null, sizeGB: 0.047, demo: true },
+  { id: 'set-patrol-2604', name: '순찰차량 도로영상 2026-04', kind: '이미지셋', kindId: 'imageset', tier: 'raw', captured: '2026-04', gsd: null, gsdLabel: '4,820장', thumb: ring(CLEAN.fl, 5), sizeGB: 18.7, demo: true },
 ];
 export const archiveById = (id) => ARCHIVE.find((a) => a.id === id) || null;
 
@@ -138,6 +164,38 @@ const DATASET_SEED = {
   ],
 };
 export const datasetsOf = (pid) => [...store().datasets(pid), ...(DATASET_SEED[pid] || [])];
+
+/* ── 5-b. 학습데이터 · 모델도 **대장에 올린다** (2026-09-21) ───────────────
+ *   발주자: "아카이브에서 고르기는 영상 뿐만아니라 AI 학습데이터도 골라야 할텐데."
+ *
+ * 라벨셋은 프로젝트 안에만, 모델은 모델 목록에만 있어서 **아카이브에서 고를 수가 없었다.**
+ * 이식의 핵심 자산(영상은 못 줘도 라벨과 모델은 준다)이 정작 고를 자리가 없던 셈이다.
+ * 지어내지 않는다 — 있는 것을 대장 형식으로 옮겨 적을 뿐이다.
+ *   라벨셋  datasetsOf() 가 주는 실제 라벨셋(건수 · 클래스 · 쓰인 영상)
+ *   모델    models.js 의 실 모델(파일 · 크기 · 과제 · 클래스)
+ * 두 줄 모두 tier 가 'copy' 라 **다른 기관에 사본으로 갈 수 있다**고 대장이 말한다. */
+const MB = (n) => Math.round(n * 1000) / 1000000;      // MB → GB (대장은 GB 로 센다)
+ARCHIVE.push(
+  ...Object.entries(DATASET_SEED).flatMap(([pid, list]) => list.map((d) => ({
+    id: `lbl-${d.id}`, name: `${d.name} ${d.ver}`, kind: '학습데이터', kindId: 'bundle', tier: 'label',
+    captured: d.created.replace(/\./g, '-').slice(0, 7), gsd: null,
+    gsdLabel: `라벨 ${nfInt(d.labels)}건 · ${d.cls}`,
+    labels: d.labels, cls: d.cls, fromFiles: d.items, pid,
+    thumb: ring(MARK.gh, d.labels), sizeGB: MB(d.labels * 0.4), inferred: d.inferred,
+  }))),
+  ...MODELS.filter((m) => !/^yolo11/.test(m.id)).map((m, n) => ({
+    id: `mdl-${m.id}`, name: m.name, kind: '학습 모델', kindId: 'bundle', tier: 'model',
+    captured: m.trainedAt, gsd: null,
+    gsdLabel: `${m.task} · 클래스 ${m.classes.length}`,
+    classes: m.classes, file: m.file,
+    thumb: ring([...MARK.fl, ...MARK.je], n), sizeGB: MB(m.sizeMB), inferred: m.inferred,
+  })),
+);
+/** 대장을 **공유 방식(단)** 으로 거른다 — 화면이 직접 문자열을 비교하지 않게. */
+export const archiveByTier = (tier) => (tier && tier !== '전체' ? ARCHIVE.filter((a) => a.tier === tier) : ARCHIVE);
+/** 대장에 실제로 들어 있는 단만, ASSET_TIERS 순서대로. 비어 있는 단은 고르개에 세우지 않는다. */
+export const archiveTiers = () => ASSET_TIERS.filter((t) => ARCHIVE.some((a) => a.tier === t.id))
+  .map((t) => ({ id: t.id, name: t.name, share: SHARE_LABEL[t.share], how: t.how, n: ARCHIVE.filter((a) => a.tier === t.id).length }));
 
 /* 데이터셋 설정 자동 제안 — 선택 영상 GSD 의 중앙값을 기준 해상도로. 타일 1024 px · 겹침 20 %. */
 export function suggest(fileIds) {

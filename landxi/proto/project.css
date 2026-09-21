@@ -410,3 +410,30 @@ body.lx[data-lab] #foot{ display:none; }
   .lx .cr-step{ padding-bottom:7px; }
   .lx .cr-kind-b{ padding:8px 13px 9px; }
 }
+
+/* ── 아카이브 고르기 — 자산 종류 고르개 (2026-09-21) ───────────────────────
+   발주자: "영상 뿐만아니라 AI 학습데이터도 골라야 할텐데. 분류 체계가 디테일하게 살아 있어야 한다."
+   고르개는 **공유 방식(registry.js ASSET_TIERS)** 을 세운다 — 무엇을 밖으로 줄 수 있는지가
+   이 플랫폼에서 자산을 가르는 진짜 기준이기 때문이다. */
+.lx .cr-arc-bar{ padding-bottom:12px; flex-wrap:wrap; row-gap:8px; }
+/* 칩이 **낱개로 보여야** 고르개다. 붙여 놓으면 한 덩어리 글줄로 읽힌다
+   (처음에 `전체 23원본 정사영상 1영상 이미지(타일) 11…` 로 뭉쳐 보였다). */
+.lx .cr-arc-bar .chip-b{ display:flex; flex-wrap:wrap; gap:0; border:1px solid var(--line); }
+.lx .cr-arc-bar .chip-b button{ height:32px; padding:0 12px; font-size:14px; color:var(--grey);
+  border-right:1px solid var(--line); white-space:nowrap;
+  transition:background var(--hov) var(--hove), color var(--hov) var(--hove); }
+.lx .cr-arc-bar .chip-b button:last-child{ border-right:0; }
+.lx .cr-arc-bar .chip-b button:hover{ background:var(--t1); color:var(--ink); }
+.lx .cr-arc-bar .chip-b button[aria-pressed="true"]{ background:var(--t1); color:var(--ink); box-shadow:none; }
+.lx .cr-arc-bar .chip-b button[aria-pressed="true"] b{ color:var(--accent); }
+.lx .cr-arc-bar .chip-b button b{ margin-left:5px; font-weight:500; }
+.lx .cr-arc-how{ margin:0 0 12px; padding:9px 12px; background:var(--t1);
+  font-size:14px; line-height:1.5; color:var(--grey); word-break:keep-all; }
+.lx .cr-arc-none{ grid-column:1/-1; margin:0; padding:34px 0; text-align:center;
+  font-size:15px; line-height:1.55; color:var(--grey); }
+/* 타일 아래 — 종류 배지 · 촬영/규모 · **밖으로 줄 수 있는가**. 셋이 한 줄에 선다. */
+.lx .cr-tile-m{ display:flex; align-items:center; flex-wrap:wrap; gap:4px 8px; }
+/* 종류 배지는 **잘리지 않는다** — `학습데이터` 가 `학..` 으로 뭉개지면 분류가 있으나 마나다. */
+.lx .cr-tile-m .st{ flex:none; white-space:nowrap; max-width:none; overflow:visible; }
+.lx .cr-tile-n .n{ display:block; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lx .cr-tile-s{ margin-left:auto; color:var(--grey); white-space:nowrap; }

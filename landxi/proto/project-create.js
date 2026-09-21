@@ -88,10 +88,10 @@ function formLeft() {
   </section>
 
   <section class="cr-step cr-step--last">
-    <h2 class="cr-h"><b class="cr-n">03</b>영상<span class="cr-opt">선택 — 만든 뒤 데이터 탭에서 넣어도 된다</span></h2>
+    <h2 class="cr-h"><b class="cr-n">03</b>자료<span class="cr-opt">선택 — 영상 · 학습데이터 · 모델. 만든 뒤 데이터 탭에서 넣어도 된다</span></h2>
     <div class="cr-src">
       ${F.files.length ? `<span class="cr-thumbs">${F.files.slice(0, 4).map((f) => `<img src="${esc((D.archiveById(f) || {}).thumb || '')}" alt="" loading="lazy">`).join('')}</span>
-        <span class="cr-src-t"><b>${F.files.length}건 선택</b><span class="mic n">${gsdText()}</span></span>
+        <span class="cr-src-t"><b>${F.files.length}건 선택</b><span class="mic">${pickedText()}</span></span>
         <span class="sp" style="flex:1"></span>${br('바꾸기', 'pick-img')}
         <button type="button" class="link link--ink" data-act="clear-img">비우기</button>`
     : `<span class="cr-src-t"><b>아직 없음</b><span class="mic">나중에 넣어도 프로젝트는 만들어진다</span></span>
@@ -100,6 +100,14 @@ function formLeft() {
   </section>`;
 }
 
+/** 고른 것을 **종류별로** 말한다 — `3건 선택` 만으로는 무엇을 골랐는지 알 수 없다. */
+function pickedText() {
+  const by = new Map();
+  F.files.map((f) => D.archiveById(f)).filter(Boolean).forEach((a) => by.set(a.kind, (by.get(a.kind) || 0) + 1));
+  const parts = [...by].map(([k, n]) => `${k} ${n}`);
+  const g = gsdText();
+  return parts.join(' · ') + (g !== '—' ? ` · GSD ${g}` : '');
+}
 function gsdText() {
   const gs = F.files.map((f) => D.archiveById(f)).filter((a) => a && a.gsd).map((a) => a.gsd * 100);
   return gs.length ? `${Math.min(...gs).toFixed(2)} – ${Math.max(...gs).toFixed(2)} cm` : '—';
@@ -110,39 +118,80 @@ function recoLabel() {
   return `≤ ${(Math.ceil(Math.max(...gs)) / 100).toFixed(2)} m/px`;
 }
 
-/* ── 아카이브 고르기 — 필요할 때만 연다 ───────────────────────────────── */
+/* ── 아카이브 고르기 — 필요할 때만 연다 ───────────────────────────────────
+ *   발주자(2026-09-21): "영상 뿐만아니라 AI 학습데이터도 골라야 할텐데.
+ *                        이런 것도 좀 분류 체계가 디테일하게 살아 있어야 한다."
+ *
+ * 고르개를 **공유 방식(단)** 으로 세운다 — 원본 · 타일 · 학습데이터 · 모델.
+ * 종류 이름을 손으로 적지 않는다(registry.js ASSET_TIERS 가 정본, 대장에 실제로
+ * 들어 있는 단만 선다). 한 장마다 **밖으로 줄 수 있는지**가 배지로 붙는다.
+ * 앞의 고르개는 `전체/정사영상/…` 을 세워 놓고 **아무 데도 안 이어져 있었다**(거르지 않았다). */
+let tierF = '전체';
+let qF = '';
+const tiers = () => D.archiveTiers();
+const filtered = () => {
+  const q = qF.trim().toLowerCase();
+  return D.archiveByTier(tierF).filter((a) => !q || a.name.toLowerCase().includes(q));
+};
+const SHARE_TONE = { raw: 'dim', tile: 'acc', label: 'teal', model: 'teal' };
+
 function archiveBody() {
-  const all = D.ARCHIVE, slice = all.slice((page - 1) * SIZE, page * SIZE);
-  return `<div class="pj-bar" style="padding-bottom:12px">
-    <span class="sel sel--s"><select id="cr-kind-f" aria-label="유형"><option>전체</option><option>정사영상</option><option>이미지셋</option><option>공간정보</option></select></span>
-    <label class="inp-ic">${icon('search', 14)}<input class="inp inp--s" id="cr-q" placeholder="검색어" aria-label="검색어"></label>
+  const all = filtered(), slice = all.slice((page - 1) * SIZE, page * SIZE);
+  return `<div class="pj-bar cr-arc-bar">
+    <span class="chip-b" role="group" aria-label="자산 종류">
+      <button type="button" data-tier="전체" aria-pressed="${tierF === '전체'}">전체 <b class="n">${D.ARCHIVE.length}</b></button>
+      ${tiers().map((t) => `<button type="button" data-tier="${esc(t.id)}" aria-pressed="${tierF === t.id}" title="${esc(t.how)}">${esc(t.name)} <b class="n">${t.n}</b></button>`).join('')}
+    </span>
+    <label class="inp-ic">${icon('search', 14)}<input class="inp inp--s" id="cr-q" value="${esc(qF)}" placeholder="이름 검색" aria-label="이름 검색"></label>
     <span class="sp" style="flex:1"></span><span class="mic">${all.length}건 · 선택 <span class="n" id="cr-selN">${F.files.length}</span></span></div>
-  <div class="pj-tiles" id="cr-tiles" style="grid-template-columns:repeat(3,1fr)">${slice.map((a) => tile(a)).join('')}</div>
+  ${tierF !== '전체' ? `<p class="cr-arc-how">${esc((tiers().find((t) => t.id === tierF) || {}).how || '')}</p>` : ''}
+  <div class="pj-tiles" id="cr-tiles" style="grid-template-columns:repeat(3,1fr)">${
+  slice.length ? slice.map((a) => tile(a)).join('')
+    : '<p class="cr-arc-none">이 조건에 맞는 자산이 없습니다 — 고르개를 전체로 돌리면 대장 전부가 보입니다.</p>'}</div>
   <nav id="cr-pager" style="margin-top:14px"></nav>`;
 }
 function tile(a) {
   const on = F.files.includes(a.id);
+  const t = tiers().find((x) => x.id === a.tier);
   return `<button type="button" class="pj-tile" data-pick="${esc(a.id)}" aria-selected="${on}">
-    <span style="position:relative;display:block">${a.thumb ? fig(a.thumb, a.name, '', { style: '--ar:240/147' }) : '<figure class="imgcard imgcard--none" style="--ar:240/147">SHP</figure>'}
+    <span style="position:relative;display:block">${a.thumb ? fig(a.thumb, a.name, '', { style: '--ar:240/147' }) : `<figure class="imgcard imgcard--none" style="--ar:240/147">${esc(a.kind)}</figure>`}
       ${on ? `<span style="position:absolute;right:8px;top:8px;width:20px;height:20px;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center">${icon('check', 14)}</span>` : ''}</span>
     <span class="pj-tile-c"><span>${esc(a.name)}</span>${a.demo ? demo() : ''}</span>
-    <span class="pj-tile-c" style="padding-top:0"><span class="mic n">${esc(a.captured)} · ${esc(a.gsdLabel)}</span></span></button>`;
+    ${/* 종류 배지와 메타를 **한 줄에 다투게 두지 않는다** — 긴 메타에 밀려 `학..` 으로 뭉갰다.
+         분류가 뭉개지면 분류가 있으나 마나다. 배지 줄 · 메타 줄로 나눈다. */''}
+    <span class="pj-tile-c cr-tile-m" style="padding-top:0">
+      <span class="st st--${SHARE_TONE[a.tier] || 'dim'}">${esc(a.kind)}</span>
+      ${t ? `<span class="mic cr-tile-s">${esc(t.share)}</span>` : ''}</span>
+    <span class="pj-tile-c cr-tile-n" style="padding-top:0"><span class="mic n">${esc(a.captured)} · ${esc(a.gsdLabel)}</span></span></button>`;
 }
 function openArchive() {
-  const m = openModal({ title: '아카이브에서 고르기', tag: '선택', width: 860, content: archiveBody(),
-    actions: [{ label: '취소' }, { label: '넣기', kind: 'primary', onClick: () => { render(); say(`영상 ${F.files.length}건을 넣었습니다 · 시연`); } }] });
-  const wire = () => {
-    mountPager($('#cr-pager', m.el), { total: D.ARCHIVE.length, page, size: SIZE, sizes: [SIZE],
-      onChange: (s) => { page = s.page; $('#cr-tiles', m.el).innerHTML = D.ARCHIVE.slice((page - 1) * SIZE, page * SIZE).map(tile).join(''); wireTiles(); } });
-    wireTiles();
+  const m = openModal({ title: '아카이브에서 고르기', tag: '선택', width: 920, content: archiveBody(),
+    actions: [{ label: '취소' }, { label: '넣기', kind: 'primary', onClick: () => { render(); say(`자료 ${F.files.length}건을 넣었습니다 · 시연`); } }] });
+  /* 판을 통째로 다시 그린다 — 고르개·안내·타일·쪽넘김이 한 몸이라 부분만 갈면 어긋난다. */
+  const redraw = () => { m.el.querySelector('.md-body, [class*="body"]')?.scrollTo?.(0, 0); paint(); };
+  const paint = () => {
+    const host = $('#cr-tiles', m.el)?.parentElement;
+    if (host) host.innerHTML = archiveBody();
+    wire();
   };
-  const wireTiles = () => $$('[data-pick]', m.el).forEach((b) => b.addEventListener('click', () => {
-    const id = b.dataset.pick;
-    F.files = F.files.includes(id) ? F.files.filter((x) => x !== id) : [...F.files, id];
-    $('#cr-tiles', m.el).innerHTML = D.ARCHIVE.slice((page - 1) * SIZE, page * SIZE).map(tile).join('');
-    $('#cr-selN', m.el).textContent = F.files.length;
-    wireTiles();
-  }));
+  const wire = () => {
+    const all = filtered();
+    if (page > Math.max(1, Math.ceil(all.length / SIZE))) page = 1;
+    mountPager($('#cr-pager', m.el), { total: all.length, page, size: SIZE, sizes: [SIZE],
+      onChange: (s) => { page = s.page; paint(); } });
+    $$('[data-tier]', m.el).forEach((b) => b.addEventListener('click', () => {
+      tierF = b.dataset.tier; page = 1; redraw();
+    }));
+    const q = $('#cr-q', m.el);
+    if (q) {
+      q.addEventListener('input', () => { qF = q.value; page = 1; paint(); $('#cr-q', m.el)?.focus(); });
+    }
+    $$('[data-pick]', m.el).forEach((b) => b.addEventListener('click', () => {
+      const id = b.dataset.pick;
+      F.files = F.files.includes(id) ? F.files.filter((x) => x !== id) : [...F.files, id];
+      paint();
+    }));
+  };
   wire();
 }
 

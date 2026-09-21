@@ -12,6 +12,14 @@ import { serviceCards, portalSummary, evidenceOf, tenantById } from '../assets/d
 import { themeOf } from '../assets/data/brand.js';
 import { emblemOf } from '../assets/data/emblems.js';
 
+/* 이 화면은 셸(레일·마스트헤드)을 쓰지 않는다. 토큰 때문에 shell.css 만 빌려 쓴다.
+   그런데 shell.css 에는 **셸이 서기 전 한 프레임을 감추는** 규칙이 있다 —
+   `html:not([data-shell]) body.lx #main { visibility:hidden }`.
+   셸을 안 부르니 `data-shell` 이 영영 안 붙어, 화면이 통째로 비어 보였다(2026-09-21 라이브에서 드러남).
+   글자는 다 있는데 눈에만 안 보이는 종류라 넘침·오류 검사에 걸리지 않았다.
+   이 화면은 제가 다 그렸으므로 **섰다고 선언한다.** 맨 위에서 한다 — 그려지기 전에. */
+document.documentElement.dataset.shell = 'ready';
+
 const body = document.body;
 const TENANT = body.dataset.tenant || 'namwon';
 const th = themeOf(TENANT);

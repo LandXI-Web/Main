@@ -95,7 +95,7 @@ for (const [id, name] of list) {
   const onMsg = (m) => { if (m.type() === 'error') errs.push(m.text().slice(0, 140)); };
   page.on('pageerror', onErr); page.on('console', onMsg);
 
-  const found = { id, name, errs, over: 0, inner: [], empty: [], dead: [], img: [], unnamed: 0, links: [], dev: [] };
+  const found = { id, name, errs, over: 0, inner: [], empty: [], dead: [], img: [], unnamed: 0, links: [], dev: [], seen: 1 };
   try {
     if (PUBLIC.includes(id)) {
       const ctx = await browser.newContext({ viewport: { width: VP[0], height: VP[1] } });   // 로그인 안 한 창
@@ -139,7 +139,13 @@ for (const [id, name] of list) {
         // 이름을 하나씩 세다 보니 `?notice=7` 이 빠져나갔다(2026-09-21). 한 글자짜리 이름은 빼고 본다.
         .filter((e) => !e.children.length && /\?[a-z][a-z0-9_]{1,14}=/.test(e.textContent || ''))
         .map((e) => e.textContent.trim().slice(0, 30));
-      return { over, inner, empty, img, unnamed, dev };
+      /* 9 화면이 **보이기는 하는가**. DOM 은 다 있는데 눈에만 안 보이는 경우가 있다 —
+         2026-09-21 기관 문이 그랬다(셸을 안 불러 `html[data-shell]` 이 안 붙었고,
+         shell.css 의 '셸 서기 전 감추기' 규칙이 본문을 계속 숨겼다).
+         넘침도 0, 콘솔 오류도 0, 링크도 멀쩡해서 어느 검사에도 안 걸렸다.
+         **글자가 보이는지**를 직접 센다 — 이것이 마지막 그물이다. */
+      const seen = (document.querySelector('#main') || document.body).innerText.trim().length;
+      return { over, inner, empty, img, unnamed, dev, seen };
     }));
 
     /* 8 링크 — 눌러서 갈 수 있는 곳인가. 없는 파일로 가는 링크는 그 자리에서 막다른 길이다.
@@ -207,6 +213,7 @@ let bad = 0;
 for (const r of report) {
   const issues = [];
   if (r.errs.length) issues.push(['콘솔 오류', [...new Set(r.errs)].join(' / ')]);
+  if (!r.seen) issues.push(['화면이 보이지 않는다', '본문에 읽히는 글자가 0자다 — DOM 은 있는데 감춰져 있다']);
   /* '업무 화면은 한 화면에서 끝난다'는 업무 화면의 법이다. **메인 필름은 업무 화면이 아니라
      스크롤로 읽는 소개 영상**이고, 내려가는 것 자체가 그 화면의 기능이다 — 여기서는 재지 않는다. */
   if (r.over > 4 && !SCROLL_BY_DESIGN.includes(r.id)) issues.push(['페이지 스크롤', `${r.over}px 더 내려야 본다`]);

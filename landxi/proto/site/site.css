@@ -144,7 +144,9 @@
 
    목록이 아니라 **입구**다. 누르면 그 기관의 제 문으로 나간다(LX 로그인이 아니다).
    그래서 판 하나가 크고, 그 기관의 상징색(--pf)이 판 위에 한 줄로 선다. */
-.st-pf{ grid-column:1/-1; list-style:none; margin:44px 0 72px; padding:0; display:grid; gap:0;
+/* 공개 게시판은 웹페이지라 내려가도 되지만, **입구는 한눈에 다 보여야** 고른다.
+   1996×745 에서 36px 이 숨던 것을 얼굴 높이와 여백으로 맞췄다 — 지운 것은 없다(2026-09-21). */
+.st-pf{ grid-column:1/-1; list-style:none; margin:clamp(18px,3vh,32px) 0 clamp(20px,4vh,48px); padding:0; display:grid; gap:0;
   grid-template-columns:repeat(auto-fit,minmax(360px,1fr)); border-top:1px solid var(--lx-line,#DDD); }
 .st-pf-i > a{ position:relative; display:grid; grid-template-rows:auto 1fr; height:100%; color:inherit;
   text-decoration:none; border-bottom:1px solid var(--lx-line,#DDD); border-right:1px solid var(--lx-line,#DDD);
@@ -155,7 +157,9 @@
 .st-pf-i > a:hover::after,.st-pf-i > a:focus-visible::after{ transform:scaleX(1); }
 .st-pf-i > a:hover,.st-pf-i > a:focus-visible{ background:#FAFAFA; }
 
-.st-pf-face{ position:relative; display:block; height:clamp(150px,20vw,226px); overflow:hidden; background:#EFEFEF; }
+/* 얼굴 높이는 **화면 높이**에 건다. vw 로 걸었더니 1280×720 처럼 넓고 낮은 화면에서
+   폭 기준으로는 커도 되는데 세로가 모자라 5px 이 넘쳤다 — 높이 문제는 높이로 푼다. */
+.st-pf-face{ position:relative; display:block; height:clamp(104px,20vh,190px); overflow:hidden; background:#EFEFEF; }
 .st-pf-face .em{ display:block; width:100%; height:100%; }
 .st-pf-face img{ display:block; width:100%; height:100%; object-fit:cover;
   transition:transform 460ms cubic-bezier(.22,1,.36,1); }
@@ -166,14 +170,14 @@
 .st-pf-face:not(:has(img)):not(:has(.em)){ display:flex; align-items:center; justify-content:center; background:#F5F5F5; }
 .st-pf-face:not(:has(img)):not(:has(.em)) em{ position:static; border:0; background:none; text-align:center; max-width:34ch; }
 
-.st-pf-b{ display:flex; flex-direction:column; padding:22px 24px 20px; }
+.st-pf-b{ display:flex; flex-direction:column; padding:clamp(15px,2.4vh,22px) 24px clamp(13px,2vh,20px); }
 .st-pf-org{ font-size:14px; letter-spacing:.02em; color:#686868; }
 .st-pf-n{ margin-top:8px; font-family:var(--lx-disp,inherit); font-weight:700;
   font-size:clamp(20px,1.5vw,26px); line-height:1.24; letter-spacing:-.02em; }
-.st-pf-s{ display:flex; flex-wrap:wrap; gap:6px 8px; margin-top:12px; }
+.st-pf-s{ display:flex; flex-wrap:wrap; gap:6px 8px; margin-top:clamp(8px,1.4vh,12px); }
 .st-pf-s em{ font-style:normal; font-size:14px; line-height:1.4; color:#686868;
   border:1px solid var(--lx-line,#DDD); padding:3px 9px; }
-.st-pf-f{ display:flex; align-items:baseline; gap:8px; margin-top:auto; padding-top:16px;
+.st-pf-f{ display:flex; align-items:baseline; gap:8px; margin-top:auto; padding-top:clamp(10px,1.6vh,16px);
   border-top:1px solid var(--lx-line,#DDD); font-size:14px; color:#686868; }
 .st-pf-f b{ font-weight:700; font-size:16px; color:#010102; }
 .st-pf-f i{ width:1px; height:11px; background:var(--lx-line,#DDD); font-style:normal; }
