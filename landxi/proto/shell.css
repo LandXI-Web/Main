@@ -126,6 +126,10 @@ html[data-shell] [data-line] > *{ transform:none; }
 #foot{ margin-left:var(--rail); height:var(--foot); border-top:1px solid var(--line); background:#fff; display:flex; align-items:center; gap:18px; padding:0 var(--m); white-space:nowrap; font-size:14px; color:var(--grey); flex:none; }
 #foot-links{ display:flex; gap:18px; }
 #foot-addr{ letter-spacing:.02em; color:var(--grey); overflow:hidden; text-overflow:ellipsis; }
+/* 위탁 각주 — 기관 사이트에서 **누가 AI 를 대고 있는지**를 한 줄로 남기는 자리.
+   간판이 아니라 각주라서 주소와 같은 크기로, 한 칸 띄워 둔다(2026-09-21). */
+#foot-credit{ margin-left:14px; padding-left:14px; border-left:1px solid var(--line);
+  color:var(--grey); overflow:hidden; text-overflow:ellipsis; }
 /* 패밀리 사이트 — 장식이 아니라 실제로 열리는 목록이다(2026-09-20).
    위로 펼친다. 푸터가 화면 바닥이라 아래로 펼치면 화면 밖으로 나간다. */
 #foot .fam{ margin-left:auto; position:relative; flex:none; }

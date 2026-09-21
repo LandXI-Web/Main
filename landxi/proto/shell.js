@@ -187,7 +187,7 @@ export function mountShell(o = {}) {
   }
 
   const foot = `
-<footer id="foot"><span id="foot-links">${FOOT_LINKS.map((t) => `<span>${esc(t)}</span>`).join('')}</span><span id="foot-addr" class="n">${esc(FOOT_ADDR)}</span><details class="fam" id="fam"><summary>Family Site<svg width="8" height="5" viewBox="0 0 9 6" fill="none" stroke="currentColor" stroke-width="1.25" aria-hidden="true"><path d="M.5.5 4.5 5 8.5.5"/></svg></summary>
+<footer id="foot"><span id="foot-links">${FOOT_LINKS.map((t) => `<span>${esc(t)}</span>`).join('')}</span><span id="foot-addr" class="n">${esc(o.footAddr || FOOT_ADDR)}</span>${o.footCredit ? `<span id="foot-credit">${esc(o.footCredit)}</span>` : ''}<details class="fam" id="fam"><summary>Family Site<svg width="8" height="5" viewBox="0 0 9 6" fill="none" stroke="currentColor" stroke-width="1.25" aria-hidden="true"><path d="M.5.5 4.5 5 8.5.5"/></svg></summary>
   <ul class="fam-l">${FAMILY.map((f) => `<li><a href="${base}${esc(f.href)}">${esc(f.name)}${f.kind ? `<em>${esc(f.kind)}</em>` : ''}</a></li>`).join('')}</ul>
 </details></footer>`;
 

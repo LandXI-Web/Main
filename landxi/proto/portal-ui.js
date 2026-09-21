@@ -22,6 +22,7 @@ import { serviceCards, portalSummary, tenantById, evidenceOf, measuresOf, localM
 import { cardById, modelsOfCard, needsOf, CORE_MODULES } from '../assets/data/cards.js';
 import { specOf, requestsOf } from '../assets/data/studio.js';
 import { themeOf } from '../assets/data/brand.js';
+import { cropsFor } from '../assets/data/crops.js';
 import { profileOf, SHARE_LABEL, tierById } from '../assets/data/registry.js';
 
 const body = document.body;
@@ -52,6 +53,13 @@ mountShell({
     ? [{ label: '내 서비스', href: 'portal.html' }, { label: svcCard.name }]
     : null,
   notice: false, asOf: svcCard?.lastRun || undefined, demo: true,
+  /* 기관 포털은 **그 기관의 사이트**다 — LX 사이트의 하위 화면이 아니다.
+     발주자(2026-09-21): "사실 다른 사이트라고 생각하고 해야지. 지자체에서는 나만의 AI 시스템인
+                          것처럼 보여야 한다. LX에 위탁은 하지만."
+     그래서 발의 주소를 그 기관 것으로 갈고, 위탁 사실은 **각주 한 줄**로 남긴다.
+     이원화 구조와 같은 말이다 — 1층(AI 양산)은 LX, 2층(행정 서비스)은 기관 얼굴. */
+  footAddr: `${th.name} · 대표전화 ${th.contact}`,
+  footCredit: 'AI 판독 · 모델 개발과 갱신 — LX 한국국토정보공사',
   // 한 화면 — body[data-fit] 이 #main 을 남은 높이에 가둔다.
   // 옛 골격 화면을 여기에 가두면 넘치는 만큼이 **잘린다**. 새 골격에서만 건다.
   fit: NEW,
@@ -152,6 +160,32 @@ if (!SVC) {
 
   /* 분포가 없어도 **기관이 무엇을 하는 서비스인지**는 카드에 선다 —
      owner:'local' 전용 모듈이 곧 2층(기관)의 일이다. */
+  /* 카드 얼굴 — **그 서비스가 실제로 판독한 자리**를 잘라 얹는다.
+     발주자: "실 판독 크롭을 넣는다." 그림이 없으면 카드가 아니라 글자 상자다.
+     다만 **그 서비스의 결과일 때만** 얹는다. 남원 정사영상이 있다고 해서 아직 판독하지 않은
+     서비스(생활환경 · 도로안전 · 인파관리 2027)에 영상을 깔면, 안 한 일을 한 것처럼 보인다.
+     그 카드들은 얼굴 없이 '왜 비었는지' 한 줄로 남는다 — 지어내지 않는다. */
+  const faceOf = (c) => {
+    const e = evidenceOf(c.id);
+    const key = e.runs[0]?.id || (e.pairs.length ? 'kuksan-change' : '');
+    const cr = key ? cropsFor(key)[0] : null;
+    if (!cr) return null;
+    // 판독 표시가 그려진 쪽(file)을 쓴다. clean 은 표시 없는 원본이라 '찾아 준 것'이 안 보인다.
+    return { src: `../${cr.file}`, src2x: cr.file2x ? `../${cr.file2x}` : '',
+      alt: `${c.name} — 실제 판독 자리 (${e.runs[0]?.title || '시점 비교'})` };
+  };
+  /* 얼굴 자리는 **다섯 장 모두 같다.** 있는 카드만 자리를 차지하면 글줄이 어긋나 덱이 흐트러진다.
+     크롭이 없는 카드는 빈 판을 두되 **왜 없는지**를 적는다 — 남의 영상을 빌려다 채우지 않는다. */
+  const face = (c) => {
+    const f = faceOf(c);
+    if (f) {
+      return `<span class="pt-c-face"><img src="${esc(f.src)}"${f.src2x ? ` srcset="${esc(f.src)} 1x, ${esc(f.src2x)} 2x"` : ''}`
+        + ` alt="${esc(f.alt)}" loading="lazy" decoding="async"></span>`;
+    }
+    const why = c.status === '예정' ? `${c.year}년 사업 — 판독 전` : '판독한 자리가 아직 없습니다';
+    return `<span class="pt-c-face pt-c-face--none"><span>${esc(why)}</span></span>`;
+  };
+
   const S = { done: '운영', wip: '구축 중', todo: '설계' };
   const localLine = (c) => {
     const lm = localModules(c.id);
@@ -174,6 +208,7 @@ if (!SVC) {
       + `<span class="mw"><b class="mv">${nf.format(m.value)}</b><span class="mu">${esc(m.unit)}</span></span></span>`).join('');
     return `
     <li><a class="pt-c" href="portal-${esc(c.id)}.html" data-state="${esc(c.status)}">
+      ${face(c)}
       <span class="pt-c-y">${esc(c.year)} · ${esc(c.region)}</span>
       <strong class="pt-c-n">${esc(c.name)}</strong>
       <span class="pt-c-s">${esc(c.summary || c.duty || '')}</span>
