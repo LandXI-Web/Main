@@ -1,0 +1,1772 @@
+{
+ "states": {
+  "01-overview-1440": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.ovd.n \"올리는 중 · 멈춘 것 · 기다리는 것\"",
+    "span.ovd.n \"올라온 것 · 지도 레이어로 낼 것\"",
+    "span.t2.n \"좌표계가 없다\"",
+    "span.ovd.n \"레이어로 굽는 중 · 막힌 것\"",
+    "span.ovd.n \"보관 중 · 기관에 공유하는 것\""
+   ],
+   "cccN": 5,
+   "trunc": [
+    "span.ovfc.n \"NW_ortho_정사영상_202604_section_C\""
+   ],
+   "truncN": 1,
+   "sideOv": {
+    "sh": 0,
+    "ch": 0
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html",
+   "console": []
+  },
+  "02-upload-board": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.nm \"NW_ortho_202604_section_\"",
+    "span.mt \"· 51.0 GB\"",
+    "span.sep \"·\"",
+    "span.nm \"남원시_산내면_4월_드론촬영_정사영상_권역A\"",
+    "span.mt \"· 60.2 GB\"",
+    "pre.tree.n \"camera_org_202604/\n├ 외 4\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.mt \"· 대기 1 · 18.7 GB\"",
+    "span.t2.n \"좌표계 없음 · .prj 미동봉\"",
+    "span.nm \"NW_road_defect_labels_20\"",
+    "span.mt \"· 대기 2 · 48.2 MB\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\""
+   ],
+   "cccN": 17,
+   "trunc": [
+    "span.nm \"업로드\"",
+    "#dz-cap \"· 검증 3 · 허용 형식 · 1 TB · 파일 없음\"",
+    "span.nm \"NW_ortho_정사영상_202604_section_C\"",
+    "span.nm \"NW_ortho_202604_section_D.tif\"",
+    "span.nm \"남원시_산내면_4월_드론촬영_정사영상_권역A.ecw\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.nm \"NW_road_defect_labels_202604.s\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\""
+   ],
+   "truncN": 10,
+   "sideOv": {
+    "sh": 441,
+    "ch": 441
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=upload",
+   "console": []
+  },
+  "03-upload-sel-run": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.nm \"NW_ortho_202604_section_\"",
+    "span.mt \"· 51.0 GB\"",
+    "span.sep \"·\"",
+    "span.nm \"남원시_산내면_4월_드론촬영_정사영상_권역A\"",
+    "span.mt \"· 60.2 GB\"",
+    "pre.tree.n \"camera_org_202604/\n├ 외 4\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.mt \"· 대기 1 · 18.7 GB\"",
+    "span.t2.n \"좌표계 없음 · .prj 미동봉\"",
+    "span.nm \"NW_road_defect_labels_20\"",
+    "span.mt \"· 대기 2 · 48.2 MB\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\""
+   ],
+   "cccN": 17,
+   "trunc": [
+    "span.nm \"업로드\"",
+    "#dz-cap \"· 검증 3 · 허용 형식 · 1 TB · 파일 없음\"",
+    "span.nm \"NW_ortho_정사영상_202604_section_C\"",
+    "span.nm \"NW_ortho_202604_section_D.tif\"",
+    "span.nm \"남원시_산내면_4월_드론촬영_정사영상_권역A.ecw\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.nm \"NW_road_defect_labels_202604.s\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\""
+   ],
+   "truncN": 8,
+   "sideOv": {
+    "sh": 397,
+    "ch": 397
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=upload",
+   "console": []
+  },
+  "04-upload-detail": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.nm \"NW_ortho_202604_section_\"",
+    "span.mt \"· 51.0 GB\"",
+    "span.sep \"·\"",
+    "span.nm \"남원시_산내면_4월_드론촬영_정사영상_권역A\"",
+    "span.mt \"· 60.2 GB\"",
+    "pre.tree.n \"camera_org_202604/\n├ 외 4\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.mt \"· 대기 1 · 18.7 GB\"",
+    "span.t2.n \"좌표계 없음 · .prj 미동봉\"",
+    "span.nm \"NW_road_defect_labels_20\"",
+    "span.mt \"· 대기 2 · 48.2 MB\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\""
+   ],
+   "cccN": 17,
+   "trunc": [
+    "span.nm \"업로드\"",
+    "#dz-cap \"· 검증 3 · 허용 형식 · 1 TB · 파일 없음\"",
+    "span.nm \"NW_ortho_정사영상_202604_section_C\"",
+    "span.nm \"NW_ortho_202604_section_D.tif\"",
+    "span.nm \"남원시_산내면_4월_드론촬영_정사영상_권역A.ecw\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.nm \"NW_road_defect_labels_202604.s\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\""
+   ],
+   "truncN": 8,
+   "sideOv": {
+    "sh": 397,
+    "ch": 397
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=upload",
+   "console": []
+  },
+  "05-upload-sel-xlsx-wait": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.nm \"NW_ortho_202604_section_\"",
+    "span.mt \"· 51.0 GB\"",
+    "span.sep \"·\"",
+    "pre.tree.n \"camera_org_202604/\n├ 외 4\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.mt \"· 대기 1 · 18.7 GB\"",
+    "span.t2.n \"좌표계 없음 · .prj 미동봉\"",
+    "span.nm \"NW_road_defect_labels_20\"",
+    "span.mt \"· 대기 2 · 48.2 MB\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\"",
+    "span.mt \"· 대기 3 · 287.3 KB\""
+   ],
+   "cccN": 14,
+   "trunc": [
+    "span.nm \"업로드\"",
+    "#dz-cap \"· 검증 3 · 허용 형식 · 1 TB · 파일 없음\"",
+    "span.nm \"NW_ortho_정사영상_202604_section_C\"",
+    "span.nm \"NW_ortho_202604_section_D.tif\"",
+    "span.nm \"남원시_산내면_4월_드론촬영_정사영상_권역A.ecw\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.nm \"NW_road_defect_labels_202604.s\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\""
+   ],
+   "truncN": 8,
+   "sideOv": {
+    "sh": 397,
+    "ch": 397
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=upload",
+   "console": []
+  },
+  "06-upload-bad-exe": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.nm \"NW_ortho_202604_section_\"",
+    "span.mt \"· 51.0 GB\"",
+    "span.sep \"·\"",
+    "pre.tree.n \"camera_org_202604/\n├ 외 4\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.mt \"· 대기 1 · 18.7 GB\"",
+    "span.t2.n \"좌표계 없음 · .prj 미동봉\"",
+    "span.nm \"NW_road_defect_labels_20\"",
+    "span.mt \"· 대기 2 · 48.2 MB\""
+   ],
+   "cccN": 11,
+   "trunc": [
+    "span.nm \"업로드\"",
+    "#dz-cap \"· 검증 3 · 허용 형식 · 1 TB · 파일 없음\"",
+    "span.nm \"NW_ortho_정사영상_202604_section_C\"",
+    "span.nm \"NW_ortho_202604_section_D.tif\"",
+    "span.nm \"남원시_산내면_4월_드론촬영_정사영상_권역A.ecw\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.nm \"NW_road_defect_labels_202604.s\""
+   ],
+   "truncN": 9,
+   "sideOv": {
+    "sh": 441,
+    "ch": 441
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=upload",
+   "console": []
+  },
+  "07-upload-picked": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.nm \"NW_ortho_202604_section_\"",
+    "span.mt \"· 51.0 GB\"",
+    "span.sep \"·\"",
+    "pre.tree.n \"camera_org_202604/\n├ 외 4\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.mt \"· 대기 1 · 18.7 GB\"",
+    "span.t2.n \"좌표계 없음 · .prj 미동봉\"",
+    "span.nm \"NW_road_defect_labels_20\"",
+    "span.mt \"· 대기 2 · 48.2 MB\""
+   ],
+   "cccN": 11,
+   "trunc": [
+    "span.nm \"업로드\"",
+    "#dz-cap \"· 검증 3 · 허용 형식 · 1 TB · 파일 없음\"",
+    "span.nm \"NW_ortho_정사영상_202604_section_C\"",
+    "span.nm \"NW_ortho_202604_section_D.tif\"",
+    "span.nm \"남원시_산내면_4월_드론촬영_정사영상_권역A.ecw\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.nm \"NW_road_defect_labels_202604.s\""
+   ],
+   "truncN": 9,
+   "sideOv": {
+    "sh": 441,
+    "ch": 441
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=upload",
+   "console": []
+  },
+  "08-upload-after-submit": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.nm \"NW_ortho_202604_section_\"",
+    "span.mt \"· 51.0 GB\"",
+    "span.sep \"·\"",
+    "pre.tree.n \"camera_org_202604/\n├ 외 4\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.mt \"· 대기 1 · 18.7 GB\"",
+    "span.t2.n \"좌표계 없음 · .prj 미동봉\"",
+    "span.nm \"NW_road_defect_labels_20\"",
+    "span.mt \"· 대기 2 · 48.2 MB\"",
+    "span.t2.n \"TIF · 파일 확인 전\"",
+    "span.nm \"small.tif\"",
+    "span.mt \"· 대기 3 · 2.0 KB\""
+   ],
+   "cccN": 15,
+   "trunc": [
+    "span.nm \"업로드\"",
+    "#dz-cap \"· 검증 3 · 허용 형식 · 1 TB · 파일 없음\"",
+    "span.nm \"NW_ortho_정사영상_202604_section_C\"",
+    "span.nm \"NW_ortho_202604_section_D.tif\"",
+    "span.nm \"남원시_산내면_4월_드론촬영_정사영상_권역A.ecw\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.nm \"NW_road_defect_labels_202604.s\""
+   ],
+   "truncN": 9,
+   "sideOv": {
+    "sh": 441,
+    "ch": 441
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=upload",
+   "console": []
+  },
+  "09-upload-filter-ecw": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [],
+   "cccN": 0,
+   "trunc": [
+    "span.nm \"업로드\"",
+    "#dz-cap \"· 검증 3 · 허용 형식 · 1 TB · 파일 없음\"",
+    "span.nm \"남원시_산내면_4월_드론촬영_정사영상_권역A.ecw\"",
+    "span.nm \"NW_ortho_정사영상_202604_section_C\""
+   ],
+   "truncN": 5,
+   "sideOv": {
+    "sh": 441,
+    "ch": 441
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=upload",
+   "console": []
+  },
+  "10-upload-search-zero": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [],
+   "cccN": 0,
+   "trunc": [
+    "span.nm \"업로드\"",
+    "#dz-cap \"· 검증 3 · 허용 형식 · 1 TB · 파일 없음\"",
+    "span.nm \"NW_ortho_정사영상_202604_section_C\"",
+    "span.nm \"남원시_산내면_4월_드론촬영_정사영상_권역A.ecw\""
+   ],
+   "truncN": 4,
+   "sideOv": {
+    "sh": 441,
+    "ch": 441
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=upload",
+   "console": []
+  },
+  "11-upload-pp4": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.nm \"NW_ortho_202604_section_\"",
+    "span.mt \"· 51.0 GB\"",
+    "span.sep \"·\"",
+    "#pg-prev \"‹\""
+   ],
+   "cccN": 4,
+   "trunc": [
+    "span.nm \"NW_ortho_정사영상_202604_section_C\"",
+    "span.nm \"남원시_산내면_4월_드론촬영_정사영상_권역A.ecw\""
+   ],
+   "truncN": 4,
+   "sideOv": {
+    "sh": 441,
+    "ch": 441
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=upload",
+   "console": []
+  },
+  "11-upload-pp6": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.nm \"NW_ortho_202604_section_\"",
+    "span.mt \"· 51.0 GB\"",
+    "span.sep \"·\"",
+    "pre.tree.n \"camera_org_202604/\n├ 202\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.mt \"· 대기 1 · 18.7 GB\"",
+    "span.dt \"· 대기 1\"",
+    "span.t2.n \"좌표계 없음 · .prj 미동봉\"",
+    "span.nm \"NW_road_defect_labels_20\"",
+    "span.mt \"· 대기 2 · 48.2 MB\"",
+    "span.dt \"· 대기 2\"",
+    "#pg-prev \"‹\""
+   ],
+   "cccN": 14,
+   "trunc": [
+    "span.nm \"업로드\"",
+    "#dz-cap \"· 검증 3 · 허용 형식 · 1 TB · 파일 없음\"",
+    "span.nm \"NW_ortho_정사영상_202604_section_C\"",
+    "span.nm \"NW_ortho_202604_section_D.tif\"",
+    "span.nm \"남원시_산내면_4월_드론촬영_정사영상_권역A.ecw\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.nm \"NW_road_defect_labels_202604.s\""
+   ],
+   "truncN": 9,
+   "sideOv": {
+    "sh": 441,
+    "ch": 441
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=upload",
+   "console": []
+  },
+  "11-upload-pp16": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.mt \"· 51.0 GB\"",
+    "pre.tree.n \"camera_org_202604/\"",
+    "span.mt \"· 대기 1 · 18.7 GB\"",
+    "span.mt \"· 대기 2 · 48.2 MB\"",
+    "span.mt \"· 대기 3 · 2.0 KB\""
+   ],
+   "cccN": 5,
+   "trunc": [
+    "#dz-cap \"· 검증 3 · 허용 형식 · 1 TB · 파일 없음\"",
+    "span.nm \"NW_ortho_정사영상_202604_section_C\"",
+    "span.nm \"남원시_산내면_4월_드론촬영_정사영상_권역A.ecw\""
+   ],
+   "truncN": 3,
+   "sideOv": {
+    "sh": 441,
+    "ch": 441
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=upload",
+   "console": []
+  },
+  "12-quota-modal": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.nm \"NW_ortho_202604_section_\"",
+    "span.mt \"· 51.0 GB\"",
+    "span.sep \"·\"",
+    "pre.tree.n \"camera_org_202604/\n├ 외 4\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.mt \"· 대기 1 · 18.7 GB\"",
+    "span.t2.n \"좌표계 없음 · .prj 미동봉\"",
+    "span.nm \"NW_road_defect_labels_20\"",
+    "span.mt \"· 대기 2 · 48.2 MB\"",
+    "span.t2.n \"TIF · 파일 확인 전\"",
+    "span.nm \"small.tif\"",
+    "span.mt \"· 대기 3 · 2.0 KB\""
+   ],
+   "cccN": 15,
+   "trunc": [
+    "span.nm \"업로드\"",
+    "#dz-cap \"· 검증 3 · 허용 형식 · 1 TB · 파일 없음\"",
+    "span.nm \"NW_ortho_정사영상_202604_section_C\"",
+    "span.nm \"NW_ortho_202604_section_D.tif\"",
+    "span.nm \"남원시_산내면_4월_드론촬영_정사영상_권역A.ecw\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.nm \"NW_road_defect_labels_202604.s\""
+   ],
+   "truncN": 9,
+   "sideOv": {
+    "sh": 441,
+    "ch": 441
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=upload",
+   "console": []
+  },
+  "13-manage-board": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.t2.n \"좌표계 없음 · .prj 미동봉\"",
+    "span.n.loc \"—\""
+   ],
+   "cccN": 7,
+   "trunc": [
+    "span.nm \"NW_ortho_정사영상_202604_section_C\"",
+    "span.nm \"NW_ortho_202604_zone_X.ecw\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\"",
+    "span.nm \"NW_ortho_202604_section_A.tif\"",
+    "span.nm \"남원_운봉_드론_4월.ecw\"",
+    "span.nm \"NW_road_defect_labels_202604.s\"",
+    "span.nm \"NW_greenhouse_labels_202603.sh\"",
+    "span.nm \"camera_org_202604.zip\""
+   ],
+   "truncN": 9,
+   "sideOv": {
+    "sh": 441,
+    "ch": 441
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=manage",
+   "console": []
+  },
+  "14-manage-d4-map": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.t2.n \"좌표계 없음 · .prj 미동봉\""
+   ],
+   "cccN": 1,
+   "trunc": [
+    "span.nm \"NW_ortho_정사영상_202604_section_C\"",
+    "span.nm \"NW_ortho_202604_zone_X.ecw\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\"",
+    "span.nm \"NW_ortho_202604_section_A.tif\"",
+    "span.nm \"남원_운봉_드론_4월.ecw\"",
+    "span.nm \"NW_road_defect_labels_202604.s\"",
+    "span.nm \"NW_greenhouse_labels_202603.sh\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "#plate-cap \"남원 농경지 · 2025.04 · GSD 1.08 cm\""
+   ],
+   "truncN": 9,
+   "sideOv": {
+    "sh": 440,
+    "ch": 397
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=manage",
+   "console": []
+  },
+  "15-manage-d3-xlsx": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.t2.n \"좌표계 없음 · .prj 미동봉\"",
+    "p.attrib.n \"예시 = 결과 첫 행 실값\""
+   ],
+   "cccN": 2,
+   "trunc": [
+    "span.nm \"NW_ortho_정사영상_202604_section_C\"",
+    "span.nm \"NW_ortho_202604_zone_X.ecw\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\"",
+    "span.nm \"NW_ortho_202604_section_A.tif\"",
+    "span.nm \"남원_운봉_드론_4월.ecw\"",
+    "span.nm \"NW_road_defect_labels_202604.s\"",
+    "span.nm \"NW_greenhouse_labels_202603.sh\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.exv \"5219010600103210001\""
+   ],
+   "truncN": 9,
+   "sideOv": {
+    "sh": 397,
+    "ch": 397
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=manage",
+   "console": []
+  },
+  "16-manage-d7-shp": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.t2.n \"좌표계 없음 · .prj 미동봉\"",
+    "p.attrib.n \"예시 = 결과 첫 행 실값\""
+   ],
+   "cccN": 2,
+   "trunc": [
+    "span.nm \"NW_ortho_정사영상_202604_section_C\"",
+    "span.nm \"NW_ortho_202604_zone_X.ecw\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\"",
+    "span.nm \"NW_ortho_202604_section_A.tif\"",
+    "span.nm \"남원_운봉_드론_4월.ecw\"",
+    "span.nm \"NW_road_defect_labels_202604.s\"",
+    "span.nm \"NW_greenhouse_labels_202603.sh\"",
+    "span.nm \"camera_org_202604.zip\""
+   ],
+   "truncN": 8,
+   "sideOv": {
+    "sh": 429,
+    "ch": 397
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=manage",
+   "console": []
+  },
+  "17-manage-d8-zip": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.t2.n \"좌표계 없음 · .prj 미동봉\"",
+    "p.attrib.n \"예시 · 시연\""
+   ],
+   "cccN": 2,
+   "trunc": [
+    "span.nm \"NW_ortho_정사영상_202604_section_C\"",
+    "span.nm \"NW_ortho_202604_zone_X.ecw\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\"",
+    "span.nm \"NW_ortho_202604_section_A.tif\"",
+    "span.nm \"남원_운봉_드론_4월.ecw\"",
+    "span.nm \"NW_road_defect_labels_202604.s\"",
+    "span.nm \"NW_greenhouse_labels_202603.sh\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.exv \"DJI_0001.JPG …\"",
+    "span.exv \"frame · time · lon · lat\""
+   ],
+   "truncN": 10,
+   "sideOv": {
+    "sh": 397,
+    "ch": 397
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=manage",
+   "console": []
+  },
+  "18-manage-pubform": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.t2.n \"좌표계 없음 · .prj 미동봉\"",
+    "button \"권한 없음\"",
+    "button \"뷰어\"",
+    "button \"편집\""
+   ],
+   "cccN": 5,
+   "trunc": [
+    "span.nm \"NW_ortho_정사영상_202604_section_C\"",
+    "span.nm \"NW_ortho_202604_zone_X.ecw\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\"",
+    "span.nm \"NW_ortho_202604_section_A.tif\"",
+    "span.nm \"남원_운봉_드론_4월.ecw\"",
+    "span.nm \"NW_road_defect_labels_202604.s\"",
+    "span.nm \"NW_greenhouse_labels_202603.sh\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "#plate-cap \"남원 농경지 · 2025.04 · GSD 1.08 cm\""
+   ],
+   "truncN": 9,
+   "sideOv": {
+    "sh": 482,
+    "ch": 441
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=manage",
+   "console": []
+  },
+  "19-publishing-after-submit": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.t2.n \"좌표계 없음 · .prj 미동봉\"",
+    "span.nm \"NW_greenhouse_labels_202\"",
+    "span.mt \"· 2026.06.18 · 39.4 MB\"",
+    "span.sep \"·\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\"",
+    "span.mt \"· 2026.04.09 · 287.3 KB\"",
+    "pre.tree.n \"camera_org_202604/\n├ 외 4\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.mt \"· 2026.04.13 · 18.7 GB\""
+   ],
+   "cccN": 11,
+   "trunc": [
+    "span.nm \"NW_ortho_202604_section_A.tif\"",
+    "span.nm \"NW_road_defect_labels_202604.s\"",
+    "span.st.n \"실패 2/4 · 좌표계 없음\"",
+    "span.nm \"NW_greenhouse_labels_202603.sh\"",
+    "span.nm \"NW_ortho_202604_zone_X.ecw\"",
+    "span.st.n \"실패 1/4 · 좌표 없음 · 표 자료\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\"",
+    "span.st.n \"실패 1/4 · 이미지 형식 없음\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.nm \"남원_운봉_드론_4월.ecw\""
+   ],
+   "truncN": 13,
+   "sideOv": {
+    "sh": 441,
+    "ch": 441
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=publishing",
+   "console": []
+  },
+  "20-publishing-p2-fail": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.t2.n \"좌표계 없음 · .prj 미동봉\"",
+    "span.nm \"NW_greenhouse_labels_202\"",
+    "span.mt \"· 2026.06.18 · 39.4 MB\"",
+    "span.sep \"·\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\"",
+    "span.mt \"· 2026.04.09 · 287.3 KB\"",
+    "pre.tree.n \"camera_org_202604/\n├ 외 4\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.mt \"· 2026.04.13 · 18.7 GB\""
+   ],
+   "cccN": 11,
+   "trunc": [
+    "span.nm \"NW_ortho_202604_section_A.tif\"",
+    "span.nm \"NW_road_defect_labels_202604.s\"",
+    "span.st.n \"실패 2/4 · 좌표계 없음\"",
+    "span.nm \"NW_greenhouse_labels_202603.sh\"",
+    "span.nm \"NW_ortho_202604_zone_X.ecw\"",
+    "span.st.n \"실패 1/4 · 좌표 없음 · 표 자료\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\"",
+    "span.st.n \"실패 1/4 · 이미지 형식 없음\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.nm \"남원_운봉_드론_4월.ecw\""
+   ],
+   "truncN": 11,
+   "sideOv": {
+    "sh": 397,
+    "ch": 397
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=publishing",
+   "console": []
+  },
+  "21-crs-modal": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.t2.n \"좌표계 없음 · .prj 미동봉\"",
+    "span.nm \"NW_greenhouse_labels_202\"",
+    "span.mt \"· 2026.06.18 · 39.4 MB\"",
+    "span.sep \"·\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\"",
+    "span.mt \"· 2026.04.09 · 287.3 KB\"",
+    "pre.tree.n \"camera_org_202604/\n├ 외 4\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.mt \"· 2026.04.13 · 18.7 GB\""
+   ],
+   "cccN": 11,
+   "trunc": [
+    "span.nm \"NW_ortho_202604_section_A.tif\"",
+    "span.nm \"NW_road_defect_labels_202604.s\"",
+    "span.st.n \"실패 2/4 · 좌표계 없음\"",
+    "span.nm \"NW_greenhouse_labels_202603.sh\"",
+    "span.nm \"NW_ortho_202604_zone_X.ecw\"",
+    "span.st.n \"실패 1/4 · 좌표 없음 · 표 자료\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\"",
+    "span.st.n \"실패 1/4 · 이미지 형식 없음\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.nm \"남원_운봉_드론_4월.ecw\"",
+    "#mc-sub \"NW_greenhouse_labels_202603.sh\""
+   ],
+   "truncN": 12,
+   "sideOv": {
+    "sh": 397,
+    "ch": 397
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=publishing",
+   "console": []
+  },
+  "22-publishing-p3-run": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.t2.n \"좌표계 없음 · .prj 미동봉\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\"",
+    "span.mt \"· 2026.04.09 · 287.3 KB\"",
+    "span.sep \"·\"",
+    "pre.tree.n \"camera_org_202604/\n├ 외 4\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.mt \"· 2026.04.13 · 18.7 GB\""
+   ],
+   "cccN": 8,
+   "trunc": [
+    "span.nm \"NW_ortho_202604_section_A.tif\"",
+    "span.nm \"NW_road_defect_labels_202604.s\"",
+    "span.nm \"NW_greenhouse_labels_202603.sh\"",
+    "span.nm \"NW_ortho_202604_zone_X.ecw\"",
+    "span.st.n \"실패 1/4 · 좌표 없음 · 표 자료\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\"",
+    "span.st.n \"실패 1/4 · 이미지 형식 없음\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "span.nm \"남원_운봉_드론_4월.ecw\""
+   ],
+   "truncN": 10,
+   "sideOv": {
+    "sh": 397,
+    "ch": 397
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=publishing",
+   "console": []
+  },
+  "23-archive-board": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.nm \"운봉읍 드론 정사영상 2026-04\"",
+    "span.mt \"· 2026.04.08 · 1.69 cm\"",
+    "span.sep \"·\"",
+    "span.t2.n \"좌표계(EPSG:5186)는 있으나 기하 범\"",
+    "span.stw.vis \"숨김\""
+   ],
+   "cccN": 6,
+   "trunc": [
+    "span.nm \"남원 정사영상 2026-04 A구역\"",
+    "span.nm \"운봉읍 드론 정사영상 2026-04\"",
+    "span.nm \"남원 도로파손 라벨 쉐입 2026-04\"",
+    "span.nm \"순찰차량 도로영상 2026-04\"",
+    "span.nm \"여수 해양쓰레기 조사 2026\""
+   ],
+   "truncN": 5,
+   "sideOv": {
+    "sh": 441,
+    "ch": 441
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=archive",
+   "console": []
+  },
+  "24-archive-a1-map": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.nm \"운봉읍 드론 정사영상 2026-04\"",
+    "span.mt \"· 2026.04.08 · 1.69 cm\"",
+    "span.sep \"·\"",
+    "span.t2.n \"좌표계(EPSG:5186)는 있으나 기하 범\"",
+    "p.attrib.n \"자료제공: 브이월드 · LX 한국국토정보공사\"",
+    "span.dim \"localStorage · 서버 저장 아님\""
+   ],
+   "cccN": 6,
+   "trunc": [
+    "span.nm \"남원 정사영상 2026-04 A구역\"",
+    "span.nm \"운봉읍 드론 정사영상 2026-04\"",
+    "span.nm \"남원 도로파손 라벨 쉐입 2026-04\"",
+    "span.nm \"순찰차량 도로영상 2026-04\"",
+    "span.nm \"여수 해양쓰레기 조사 2026\"",
+    "#plate-cap \"남원 농경지 · 2025.04 · GSD 1.08 cm\""
+   ],
+   "truncN": 6,
+   "sideOv": {
+    "sh": 646,
+    "ch": 371
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=archive",
+   "console": []
+  },
+  "25-archive-a1-detail": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.nm \"운봉읍 드론 정사영상 2026-04\"",
+    "span.mt \"· 2026.04.08 · 1.69 cm\"",
+    "span.sep \"·\"",
+    "span.t2.n \"좌표계(EPSG:5186)는 있으나 기하 범\"",
+    "p.attrib.n \"자료제공: 브이월드 · LX 한국국토정보공사\"",
+    "span.dim \"localStorage · 서버 저장 아님\""
+   ],
+   "cccN": 6,
+   "trunc": [
+    "span.nm \"남원 정사영상 2026-04 A구역\"",
+    "span.nm \"운봉읍 드론 정사영상 2026-04\"",
+    "span.nm \"남원 도로파손 라벨 쉐입 2026-04\"",
+    "span.nm \"순찰차량 도로영상 2026-04\"",
+    "span.nm \"여수 해양쓰레기 조사 2026\"",
+    "#plate-cap \"남원 농경지 · 2025.04 · GSD 1.08 cm\""
+   ],
+   "truncN": 6,
+   "sideOv": {
+    "sh": 1017,
+    "ch": 371
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=archive",
+   "console": []
+  },
+  "26-share-modal": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.nm \"운봉읍 드론 정사영상 2026-04\"",
+    "span.mt \"· 2026.04.08 · 1.69 cm\"",
+    "span.sep \"·\"",
+    "span.t2.n \"좌표계(EPSG:5186)는 있으나 기하 범\"",
+    "p.attrib.n \"자료제공: 브이월드 · LX 한국국토정보공사\"",
+    "span.dim \"localStorage · 서버 저장 아님\"",
+    "button \"권한 없음\"",
+    "button \"뷰어\"",
+    "button \"편집\""
+   ],
+   "cccN": 10,
+   "trunc": [
+    "span.nm \"남원 정사영상 2026-04 A구역\"",
+    "span.nm \"운봉읍 드론 정사영상 2026-04\"",
+    "span.nm \"남원 도로파손 라벨 쉐입 2026-04\"",
+    "span.nm \"순찰차량 도로영상 2026-04\"",
+    "span.nm \"여수 해양쓰레기 조사 2026\"",
+    "#plate-cap \"남원 농경지 · 2025.04 · GSD 1.08 cm\""
+   ],
+   "truncN": 6,
+   "sideOv": {
+    "sh": 1017,
+    "ch": 371
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=archive",
+   "console": []
+  },
+  "27-archive-geo": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.nm \"운봉읍 드론 정사영상 2026-04\"",
+    "span.mt \"· 2026.04.08 · 1.69 cm\"",
+    "span.sep \"·\"",
+    "span.t2.n \"좌표계(EPSG:5186)는 있으나 기하 범\"",
+    "p.attrib.n \"자료제공: 브이월드 · LX 한국국토정보공사\"",
+    "span.dim \"localStorage · 서버 저장 아님\""
+   ],
+   "cccN": 6,
+   "trunc": [
+    "span.nm \"남원 정사영상 2026-04 A구역\"",
+    "span.nm \"운봉읍 드론 정사영상 2026-04\"",
+    "span.nm \"남원 도로파손 라벨 쉐입 2026-04\"",
+    "span.nm \"순찰차량 도로영상 2026-04\"",
+    "span.nm \"여수 해양쓰레기 조사 2026\"",
+    "#plate-cap \"남원 농경지 · 2025.04 · GSD 1.08 cm\""
+   ],
+   "truncN": 6,
+   "sideOv": {
+    "sh": 1017,
+    "ch": 371
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=archive",
+   "console": []
+  },
+  "28-archive-a5-vector": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.nm \"운봉읍 드론 정사영상 2026-04\"",
+    "span.mt \"· 2026.04.08 · 1.69 cm\"",
+    "span.sep \"·\"",
+    "span.t2.n \"좌표계(EPSG:5186)는 있으나 기하 범\"",
+    "p.attrib.n \"자료제공: 브이월드 · LX 한국국토정보공사\"",
+    "span.dim \"localStorage · 서버 저장 아님\""
+   ],
+   "cccN": 6,
+   "trunc": [
+    "span.nm \"남원 정사영상 2026-04 A구역\"",
+    "span.nm \"운봉읍 드론 정사영상 2026-04\"",
+    "span.nm \"남원 도로파손 라벨 쉐입 2026-04\"",
+    "span.nm \"순찰차량 도로영상 2026-04\"",
+    "span.nm \"여수 해양쓰레기 조사 2026\"",
+    "#plate-cap \"여수 해양쓰레기 조사 2026 · 100 m 격자 86\""
+   ],
+   "truncN": 6,
+   "sideOv": {
+    "sh": 543,
+    "ch": 371
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=archive",
+   "console": []
+  },
+  "29-archive-a4-nogeo": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.nm \"운봉읍 드론 정사영상 2026-04\"",
+    "span.mt \"· 2026.04.08 · 1.69 cm\"",
+    "span.sep \"·\"",
+    "span.t2.n \"좌표계(EPSG:5186)는 있으나 기하 범\"",
+    "p.attrib.n \"자료제공: 브이월드 · LX 한국국토정보공사\"",
+    "span.dim \"localStorage · 서버 저장 아님\""
+   ],
+   "cccN": 6,
+   "trunc": [
+    "span.nm \"남원 정사영상 2026-04 A구역\"",
+    "span.nm \"운봉읍 드론 정사영상 2026-04\"",
+    "span.nm \"남원 도로파손 라벨 쉐입 2026-04\"",
+    "span.nm \"순찰차량 도로영상 2026-04\"",
+    "span.nm \"여수 해양쓰레기 조사 2026\""
+   ],
+   "truncN": 5,
+   "sideOv": {
+    "sh": 500,
+    "ch": 397
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=archive",
+   "console": []
+  },
+  "30-archive-a2-show": {
+   "overX": 0,
+   "wideEls": [
+    "div.ex",
+    "i.bk.bk--tl",
+    "i.bk.bk--tr",
+    "i.bk.bk--bl",
+    "i.bk.bk--br",
+    "div.ex-cap.n",
+    "span",
+    "span"
+   ],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.t2.n \"좌표계(EPSG:5186)는 있으나 기하 범\"",
+    "p.attrib.n \"자료제공: 브이월드 · LX 한국국토정보공사\"",
+    "span.dim \"localStorage · 서버 저장 아님\""
+   ],
+   "cccN": 3,
+   "trunc": [
+    "span.nm \"남원 정사영상 2026-04 A구역\"",
+    "span.nm \"운봉읍 드론 정사영상 2026-04\"",
+    "span.nm \"남원 도로파손 라벨 쉐입 2026-04\"",
+    "span.nm \"순찰차량 도로영상 2026-04\"",
+    "span.nm \"여수 해양쓰레기 조사 2026\"",
+    "#plate-cap \"남원 농경지 · 2025.06 · GSD 1.69 cm\""
+   ],
+   "truncN": 6,
+   "sideOv": {
+    "sh": 585,
+    "ch": 371
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=archive",
+   "console": []
+  },
+  "31-archive-after-delete": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [],
+   "cccN": 0,
+   "trunc": [
+    "span.nm \"남원 정사영상 2026-04 A구역\"",
+    "span.nm \"운봉읍 드론 정사영상 2026-04\"",
+    "span.nm \"순찰차량 도로영상 2026-04\"",
+    "span.nm \"여수 해양쓰레기 조사 2026\""
+   ],
+   "truncN": 4,
+   "sideOv": {
+    "sh": 441,
+    "ch": 441
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=archive",
+   "console": []
+  },
+  "32-archive-search-zero": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [],
+   "cccN": 0,
+   "trunc": [],
+   "truncN": 0,
+   "sideOv": {
+    "sh": 441,
+    "ch": 441
+   },
+   "pageH": 900,
+   "vh": 900,
+   "url": "dataset.html?tab=archive",
+   "console": []
+  },
+  "50-overview-1280x800": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.ovd.n \"올리는 중 · 멈춘 것 · 기다리는 것\"",
+    "span.ovd.n \"올라온 것 · 지도 레이어로 낼 것\"",
+    "span.t2.n \"좌표계가 없다\"",
+    "span.ovd.n \"레이어로 굽는 중 · 막힌 것\"",
+    "span.ovd.n \"보관 중 · 기관에 공유하는 것\""
+   ],
+   "cccN": 5,
+   "trunc": [
+    "span.ovfc.n \"NW_ortho_정사영상_202604_section_C\""
+   ],
+   "truncN": 2,
+   "sideOv": {
+    "sh": 0,
+    "ch": 0
+   },
+   "pageH": 800,
+   "vh": 800,
+   "url": "dataset.html",
+   "console": []
+  },
+  "51-archive-a1-1280x800": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.nm \"운봉읍 드론 정사영상 2026-04\"",
+    "span.mt \"· 2026.04.08 · 1.69 cm\"",
+    "span.sep \"·\"",
+    "span.t2.n \"좌표계(EPSG:5186)는 있으나 기하 범\"",
+    "p.attrib.n \"자료제공: 브이월드 · LX 한국국토정보공사\"",
+    "span.dim \"localStorage · 서버 저장 아님\""
+   ],
+   "cccN": 6,
+   "trunc": [
+    "span.word.n \"아카이브 · 정사영상\"",
+    "span.nm \"남원 정사영상 2026-04 A구역\"",
+    "span.nm \"운봉읍 드론 정사영상 2026-04\"",
+    "span.word.n \"아카이브 · 공간정보\"",
+    "span.nm \"남원 도로파손 라벨 쉐입 2026-04\"",
+    "span.word.n \"아카이브 · 이미지셋\"",
+    "span.nm \"순찰차량 도로영상 2026-04\"",
+    "span.nm \"여수 해양쓰레기 조사 2026\"",
+    "#plate-cap \"남원 농경지 · 2025.04 · GSD 1.08 cm\""
+   ],
+   "truncN": 11,
+   "sideOv": {
+    "sh": 711,
+    "ch": 399
+   },
+   "pageH": 800,
+   "vh": 800,
+   "url": "dataset.html?tab=archive",
+   "console": []
+  },
+  "52-manage-pubform-1280x800": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.t2.n \"좌표계 없음 · .prj 미동봉\"",
+    "button \"권한 없음\"",
+    "button \"뷰어\"",
+    "button \"편집\""
+   ],
+   "cccN": 5,
+   "trunc": [
+    "span.word.n \"완료 · 아카이빙 0회\"",
+    "span.nm \"NW_ortho_정사영상_202604_section_C\"",
+    "span.word.n \"완료 · 아카이빙 1회\"",
+    "span.nm \"NW_ortho_202604_zone_X.ecw\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\"",
+    "span.word.n \"완료 · 아카이빙 2회\"",
+    "span.nm \"NW_ortho_202604_section_A.tif\"",
+    "span.nm \"남원_운봉_드론_4월.ecw\"",
+    "span.nm \"NW_road_defect_labels_202604.s\"",
+    "span.nm \"NW_greenhouse_labels_202603.sh\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "#plate-cap \"남원 농경지 · 2025.04 · GSD 1.08 cm\""
+   ],
+   "truncN": 17,
+   "sideOv": {
+    "sh": 482,
+    "ch": 465
+   },
+   "pageH": 800,
+   "vh": 800,
+   "url": "dataset.html?tab=manage",
+   "console": []
+  },
+  "50-overview-1920x1080": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.ovd.n \"올리는 중 · 멈춘 것 · 기다리는 것\"",
+    "span.ovd.n \"올라온 것 · 지도 레이어로 낼 것\"",
+    "span.t2.n \"좌표계가 없다\"",
+    "span.ovd.n \"레이어로 굽는 중 · 막힌 것\"",
+    "span.ovd.n \"보관 중 · 기관에 공유하는 것\""
+   ],
+   "cccN": 5,
+   "trunc": [],
+   "truncN": 0,
+   "sideOv": {
+    "sh": 0,
+    "ch": 0
+   },
+   "pageH": 1080,
+   "vh": 1080,
+   "url": "dataset.html",
+   "console": []
+  },
+  "51-archive-a1-1920x1080": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.nm \"운봉읍 드론 정사영상 2026-04\"",
+    "span.mt \"· 2026.04.08 · 1.69 cm\"",
+    "span.sep \"·\"",
+    "span.t2.n \"좌표계(EPSG:5186)는 있으나 기하 범\"",
+    "p.attrib.n \"자료제공: 브이월드 · LX 한국국토정보공사\"",
+    "span.dim \"localStorage · 서버 저장 아님\""
+   ],
+   "cccN": 6,
+   "trunc": [
+    "span.nm \"남원 정사영상 2026-04 A구역\"",
+    "span.nm \"운봉읍 드론 정사영상 2026-04\"",
+    "span.nm \"남원 도로파손 라벨 쉐입 2026-04\"",
+    "span.nm \"순찰차량 도로영상 2026-04\"",
+    "span.nm \"여수 해양쓰레기 조사 2026\"",
+    "#plate-cap \"남원 농경지 · 2025.04 · GSD 1.08 cm\""
+   ],
+   "truncN": 6,
+   "sideOv": {
+    "sh": 551,
+    "ch": 551
+   },
+   "pageH": 1080,
+   "vh": 1080,
+   "url": "dataset.html?tab=archive",
+   "console": []
+  },
+  "52-manage-pubform-1920x1080": {
+   "overX": 0,
+   "wideEls": [],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.t2.n \"좌표계 없음 · .prj 미동봉\"",
+    "button \"권한 없음\"",
+    "button \"뷰어\"",
+    "button \"편집\""
+   ],
+   "cccN": 5,
+   "trunc": [
+    "span.nm \"NW_ortho_정사영상_202604_section_C\"",
+    "span.nm \"NW_ortho_202604_zone_X.ecw\"",
+    "span.nm \"농지이용_행정정보_202604.xlsx\"",
+    "span.nm \"NW_ortho_202604_section_A.tif\"",
+    "span.nm \"NW_road_defect_labels_202604.s\"",
+    "span.nm \"NW_greenhouse_labels_202603.sh\"",
+    "span.nm \"camera_org_202604.zip\"",
+    "#plate-cap \"남원 농경지 · 2025.04 · GSD 1.08 cm\""
+   ],
+   "truncN": 8,
+   "sideOv": {
+    "sh": 621,
+    "ch": 621
+   },
+   "pageH": 1080,
+   "vh": 1080,
+   "url": "dataset.html?tab=manage",
+   "console": []
+  },
+  "50-overview-390x844": {
+   "overX": 152,
+   "wideEls": [
+    "span.ovn.n",
+    "b.big",
+    "b",
+    "#foot-links",
+    "span",
+    "#fam",
+    "summary",
+    "svg"
+   ],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.ovd.n \"올리는 중 · 멈춘 것 · 기다리는 것\"",
+    "span.ovd.n \"올라온 것 · 지도 레이어로 낼 것\"",
+    "span.t2.n \"좌표계가 없다\"",
+    "span.ovd.n \"레이어로 굽는 중 · 막힌 것\"",
+    "span.ovd.n \"보관 중 · 기관에 공유하는 것\""
+   ],
+   "cccN": 5,
+   "trunc": [
+    "span.ovfc.n \"NW_ortho_정사영상_202604_section_C\"",
+    "span.ovfc.n \"NW_road_defect_labels_202604.s\"",
+    "span.ovfc.n \"남원 정사영상 2026-04 A구역\""
+   ],
+   "truncN": 4,
+   "sideOv": {
+    "sh": 0,
+    "ch": 0
+   },
+   "pageH": 844,
+   "vh": 844,
+   "url": "dataset.html",
+   "console": []
+  },
+  "51-archive-a1-390x844": {
+   "overX": 251,
+   "wideEls": [
+    "#fsel",
+    "#ds-filters",
+    "svg",
+    "path",
+    "#search",
+    "svg",
+    "circle",
+    "path"
+   ],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.mt \"· 2026.04.08 · 1.69 cm\"",
+    "span.sep \"·\"",
+    "span.t2.n \"좌표계(EPSG:5186)는 있으나 기하 범\"",
+    "p.attrib.n \"자료제공: 브이월드 · LX 한국국토정보공사\"",
+    "span.dim \"localStorage · 서버 저장 아님\""
+   ],
+   "cccN": 5,
+   "trunc": [
+    "span.word.n \"아카이브 · 정사영상\"",
+    "span.st.n \"숨김 · 삭제 아님\"",
+    "span.word.n \"아카이브 · 공간정보\"",
+    "span.word.n \"아카이브 · 이미지셋\"",
+    "#side-h \"남원 정사영상 2026-04 A구역\"",
+    "#plate-cap \"남원 농경지 · 2025.04 · GSD 1.08 cm\""
+   ],
+   "truncN": 8,
+   "sideOv": {
+    "sh": 2110,
+    "ch": 0
+   },
+   "pageH": 850,
+   "vh": 844,
+   "url": "dataset.html?tab=archive",
+   "console": []
+  },
+  "52-manage-pubform-390x844": {
+   "overX": 284,
+   "wideEls": [
+    "#fsel",
+    "#ds-filters",
+    "svg",
+    "path",
+    "#search",
+    "svg",
+    "circle",
+    "path"
+   ],
+   "small": [],
+   "smallN": 0,
+   "shadow": [],
+   "radius": [],
+   "grad": [],
+   "glass": [],
+   "ccc": [
+    "span.t2.n \"좌표계 없음 · .prj 미동봉\"",
+    "button \"권한 없음\"",
+    "button \"뷰어\"",
+    "button \"편집\""
+   ],
+   "cccN": 5,
+   "trunc": [
+    "span.word.n \"완료 · 아카이빙 0회\"",
+    "span.st.n \"좌표 없음\"",
+    "span.word.n \"완료 · 아카이빙 1회\"",
+    "span.word.n \"완료 · 아카이빙 2회\"",
+    "#side-h \"NW_ortho_202604_section_A.tif\"",
+    "#plate-cap \"남원 농경지 · 2025.04 · GSD 1.08 cm\""
+   ],
+   "truncN": 14,
+   "sideOv": {
+    "sh": 767,
+    "ch": 62
+   },
+   "pageH": 844,
+   "vh": 844,
+   "url": "dataset.html?tab=manage",
+   "console": []
+  }
+ },
+ "links": {
+  "landxi/proto/dataset.html?tab=archive#main": 200,
+  "landxi/proto/scrub/index.html": 200,
+  "landxi/proto/dashboard.html": 200,
+  "landxi/proto/dataset.html": 200,
+  "landxi/proto/ai-project.html": 200,
+  "landxi/proto/analysis-ai.html": 200,
+  "landxi/proto/ximap.html": 200,
+  "landxi/proto/notice.html": 200,
+  "landxi/proto/mypage.html": 200,
+  "landxi/proto/notice.html?notice=8": 200,
+  "landxi/proto/portal-login-namwon.html": 200,
+  "landxi/proto/portal-login-gwangju-jeonnam.html": 200,
+  "landxi/proto/ai-project-label.html": 200
+ },
+ "roles": {
+  "admin": {
+   "landed": "dataset.html?tab=manage",
+   "railN": 6,
+   "rail": [
+    "admin-home.html",
+    "dataset.html",
+    "admin-publish.html",
+    "produce.html",
+    "admin-notice.html",
+    "mypage.html"
+   ],
+   "deniedFromRail": []
+  },
+  "staff": {
+   "landed": "dataset.html?tab=manage",
+   "railN": 7,
+   "rail": [
+    "dashboard.html",
+    "dataset.html",
+    "ai-project.html",
+    "analysis-ai.html",
+    "ximap.html",
+    "notice.html",
+    "mypage.html"
+   ],
+   "deniedFromRail": []
+  },
+  "sales": {
+   "landed": "ximap.html",
+   "railN": 4,
+   "rail": [
+    "analysis-ai.html",
+    "ximap.html",
+    "usecase.html",
+    "mypage.html"
+   ],
+   "deniedFromRail": []
+  }
+ },
+ "notes": [
+  "idle tick u1 63% → 65%",
+  "pause → null",
+  "retry → 이어 올리기 — 남원시_산내면_4월_드론촬영_정사영상_권역A.ecw · 34%",
+  "cancel(confirm=true) tiles 6 → 5 say=업로드를 취소했습니다 — 농지이용_행정정보_202604.xlsx",
+  "after upload KPI upload count=6 say=null",
+  "pager pp4 → 2 / 2",
+  "quota empty submit → 신청 사유 필수",
+  "quota save → null",
+  "pubform empty → 데이터명 필수",
+  "after publish url=dataset.html?tab=publishing say=지도 레이어 발행 — 감사 발행 테스트 · LX 한국국토정보공사 편집 · 남원시청 뷰어 · 시연",
+  "crs republish → 좌표계 EPSG:5186 — NW_greenhouse_labels_202603.shp · 1/4 파일 확인 · 시연",
+  "p5 join → modal=필지 연결 안내",
+  "p6 unpack → dataset.html?tab=upload · 원본 다시 올리기 — camera_org_202604.zip · 업로드 대기중",
+  "p3 progress after 4s: 3/4 지도 데이터 변환 62%",
+  "memo → 저장 2026.09.24 06:39",
+  "geo(공간 편집) disabled=true · 준비 중 · 지도 편집은 분석 서비스 완료 탭에서",
+  "a2 vis → 운봉읍 드론 정사영상 2026-04 — 레이어 · 범위로 이동"
+ ],
+ "overview": {
+  "cards": [
+   "데이터 업로드 6 건 진행 중 1 · 일시정지 1 · 중단 1 · 대기 3 NW_ortho_정사영상_202604_section_C_v3.tif 진행 중 1건 · 평균 62% 올리는 중 · 멈춘 것 · 기다리는 것 자세히 ›",
+   "업로드 완료 8 건 TIF 2 · ECW 2 · XLSX 1 · SHP 2 · ZIP 1 NW_ortho_정사영상_202604_section_C_v3.tif 총 용량 242.8 GB · 위치 있음 2건 올라온 것 · 지도 레이어로 낼 것 자세히 ›",
+   "레이어 발행중 7 건 진행 4 · 실패 3 좌표계가 없다 NW_road_defect_labels_202604.shp 진행 4건 · 실패 3건 레이어로 굽는 중 · 막힌 것 자세히 ›",
+   "아카이브 5 건 표시 4 · 숨김 1 남원 정사영상 2026-04 A구역 표시 4건 · 숨김 1건 · 총 용량 121.0 GB 보관 중 · 기관에 공유하는 것 자세히 ›"
+  ],
+  "rail": [
+   "대시보드 → dashboard.html",
+   "데이터 관리 → dataset.html",
+   "프로젝트 → ai-project.html",
+   "분석 서비스 → analysis-ai.html",
+   "지도 서비스 → ximap.html",
+   "서비스 지원 → notice.html",
+   "MY → mypage.html",
+   "로그아웃 → logout"
+  ]
+ },
+ "tileFocusable": "6 / 6",
+ "upCancelConfirm": true,
+ "newUpload": "미리보기 없음 TIF · 파일 확인 전 업로드 대기중 0% small.tif · 2.0 KB",
+ "searchZero": {
+  "tiles": 0,
+  "empty": false,
+  "toolCount": "6건",
+  "boardRows": 6
+ },
+ "modalTrap": "escapes at Tab #1",
+ "manageActs": {
+  "d1": [
+   "분석에 쓰기 ›",
+   "내려받기"
+  ],
+  "d3": [
+   "속성 보기",
+   "필지에 붙이기",
+   "내려받기"
+  ],
+  "d4": [
+   "지도 레이어 발행 ›",
+   "분석에 쓰기 ›",
+   "내려받기"
+  ],
+  "d6": [
+   "분석에 쓰기 ›",
+   "내려받기"
+  ],
+  "d7": [
+   "분석에 쓰기 ›",
+   "내려받기"
+  ],
+  "d8": [
+   "풀기",
+   "내려받기"
+  ]
+ },
+ "download": {
+  "button": true,
+  "file": "NW_ortho_202604_section_A.txt",
+  "say": null
+ },
+ "pubProgress": [
+  "발행중 1/4 12% NW_ortho_202604_section_A.tif · 58.3 GB",
+  "미리보기 없음 · SHP 좌표계 없음 · .prj 미동봉 발행 때 좌표계 지정 필요 발행중 2/4 37% NW_road_defect_labels_202604.shp · 48.2 MB"
+ ],
+ "archiveSideOverflow": {
+  "sh": 1017,
+  "ch": 371
+ },
+ "deleteConfirm": {
+  "dialog": null,
+  "modalVisible": true,
+  "tilesWhileAsking": "5 → 5",
+  "tiles": "5 → 4",
+  "say": "삭제했습니다 — 남원 도로파손 라벨 쉐입 2026-04",
+  "undo": true
+ },
+ "archSearchZero": {
+  "empty": true,
+  "toolCount": "4건",
+  "boardRows": 4
+ },
+ "persist": {
+  "archive": "5",
+  "upload": "6",
+  "publishing": "7"
+ },
+ "consoleMain": [],
+ "failedMain": [],
+ "http4xx": [],
+ "roundtrip": {
+  "staff": {
+   "start": "analysis-ai.html?tab=run",
+   "fromUp": true,
+   "landed": "dataset.html?tab=upload&next=analysis-ai.html%3Ftab%3Drun",
+   "backBtn": "‹ 분석 서비스로 돌아가기",
+   "back": "analysis-ai.html?tab=run",
+   "fileSeenBack": false
+  },
+  "sales": {
+   "start": "analysis-ai.html?tab=run",
+   "fromUp": false
+  }
+ }
+}

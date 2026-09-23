@@ -20,11 +20,12 @@ import {
   DONE_UP, PUB_TYPES, PUB_PREFILL, PUB_STEPS, PUBLISHING, PUB_ST, PUB_PCT,
   PER_PAGE, PP_DEFAULT, PP_KEY, MEMO_KEY, MEMO_MAX, bytesOf, fmtBytes,
   RESULT_OF, RESULT_BY_ID, resultRow, SCHEMA, SCHEMA_OF, USAGE, PUBLISH_LOG,
-  IMG, ATTRIB, FOOT_LINKS, FOOT_ADDR, THUMB, SILHOUETTE, XLSX_ROWS, ZIP_TREE, failActions, FAIL_FIX, CRS_NONE,
+  IMG, ATTRIB, THUMB, SILHOUETTE, XLSX_ROWS, ZIP_TREE, failActions, FAIL_FIX, CRS_NONE,
   CAPS, capsOf, panelOf, kindOf, ASSET_KINDS, assetCheck,
 } from './ds-data.js';
-import { NOTICE, T1, ymd } from './db-data.js';
-import { silhouette, xlsxTable, zipTree, noneBox, loadGeo, bboxOf, esc, fitFrames } from './ds-thumbs.js';
+import { silhouette, xlsxTable, zipTree, noneBox, loadGeo, bboxOf, fitFrames } from './ds-thumbs.js';
+import { mountShell, say, openModal, confirmDialog, allowed, AS_OF, esc, ymd } from './shell.js';
+import { downloadFile, downloadNote } from './download.js';
 import { mountPlate, Brackets, addRaster, addVector, setHidden, removeLayer, hasLayer, frame, KOREA_SW } from './ds-plate.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -33,53 +34,17 @@ const REDUCED = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ACCENT = '#006DF7', WARN = '#D1352B';
 const TW = 480, TH = 294;   // 실루엣 캔버스 — 타일은 열 폭에 맞춰 늘어난다
 
-/* ══ A1–A11 좌측 레일 — 대시보드와 같은 컴포넌트, 활성만 `데이터 관리` ═══ */
-const NAV = [
-  { menu: 'dashboard', name: '대시보드', href: 'dashboard.html', icon: 'dash', go: 'dashboard.html' },
-  { menu: 'media', name: '데이터 관리', href: 'dataset.html', icon: 'data', go: 'dataset.html' },
-  { menu: 'project', name: '프로젝트', href: 'ai-project.html', icon: 'proj' },
-  { menu: 'analysis', name: '분석 서비스', href: 'analysis-ai.html', icon: 'run' },
-  { menu: 'map', name: '지도 서비스', href: 'ximap.html', icon: 'map' },
-];
-const NAV_FOOT = [
-  { menu: 'support', name: '서비스 지원', href: 'notice.html', icon: 'help' },
-  { menu: 'publish-admin', name: '카드 발행 관리', href: 'admin-publish.html', icon: 'stack' },
-  { menu: 'produce', name: '생산 관리', href: 'produce.html', icon: 'run' },
-  { menu: 'admin', name: '서비스 관리', href: 'admin-notice.html', icon: 'gear' },
-];
-const ICON = {
-  dash: '<rect x="2.6" y="2.6" width="6.4" height="6.4"/><rect x="11" y="2.6" width="6.4" height="6.4"/><rect x="2.6" y="11" width="6.4" height="6.4"/><rect x="11" y="11" width="6.4" height="6.4"/>',
-  data: '<ellipse cx="10" cy="4.9" rx="7" ry="2.5"/><path d="M3 4.9v10.2c0 1.4 3.14 2.5 7 2.5s7-1.1 7-2.5V4.9"/><path d="M3 10c0 1.4 3.14 2.5 7 2.5s7-1.1 7-2.5"/>',
-  proj: '<path d="M2.4 16.4V4.2h5.1l1.7 2.2h8.4v10z"/>',
-  run: '<path d="M6.2 3.4 16 10l-9.8 6.6z"/>',
-  map: '<path d="M2.4 5.2 7.6 3l4.8 2.2L17.6 3v11.8l-5.2 2.2-4.8-2.2-5.2 2.2z"/><path d="M7.6 3v14M12.4 5.2v11.8"/>',
-  help: '<circle cx="10" cy="10" r="7.3"/><path d="M7.9 7.8a2.15 2.15 0 1 1 3.1 1.9c-.7.4-1 .9-1 1.7"/><circle cx="10" cy="14.3" r=".75" fill="currentColor" stroke="none"/>',
-  stack: '<path d="M10 2.5 17.5 6.8 10 11.1 2.5 6.8z"/><path d="M2.5 11.1 10 15.4l7.5-4.3"/>',
-  gear: '<circle cx="10" cy="10" r="2.9"/><path d="M10 1.6v2.5M10 15.9v2.5M18.4 10h-2.5M4.1 10H1.6M15.94 4.06l-1.77 1.77M5.83 14.17l-1.77 1.77M15.94 15.94l-1.77-1.77M5.83 5.83 4.06 4.06"/>',
-  my: '<circle cx="10" cy="6.9" r="3.1"/><path d="M3.7 17.3c0-3.4 2.9-5.3 6.3-5.3s6.3 1.9 6.3 5.3"/>',
-  out: '<path d="M11.6 2.6H3.4v14.8h8.2"/><path d="M8.6 10h9M14.2 6.6 17.6 10l-3.4 3.4"/>',
-};
-const railSvg = (k) => `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${ICON[k] || ''}</svg>`;
-const railItem = (n) => `
-  <a class="rail-i" href="${n.href}" data-menu="${n.menu}"
-    title="${esc(n.name)}"${n.menu === 'media' ? ' aria-current="page"' : ''}>${railSvg(n.icon)}<span class="rl">${esc(n.name)}</span></a>`;
-$('#rail-top').innerHTML = NAV.map(railItem).join('');
-$('#rail-foot').innerHTML = NAV_FOOT.map(railItem).join('')
-  + railItem({ menu: 'my', name: 'MY', href: 'mypage.html', icon: 'my' })
-  + `<button type="button" class="rail-i" data-action="logout" title="로그아웃">${railSvg('out')}<span class="rl">로그아웃</span></button>`;
-$('#rail').addEventListener('click', (ev) => {
-  const lo = ev.target.closest('[data-action="logout"]');
-  if (lo) { try { localStorage.removeItem('lx_logged_in'); } catch { /* 저장소 차단 */ } location.href = 'scrub/index.html'; return; }
-  const b = ev.target.closest('.rail-i[data-menu]'); if (!b) return;
-  if (b.dataset.menu === 'media') ev.preventDefault();   // 현재 화면
-  // 그 밖의 항목은 진짜 링크다 — 원본 파일명으로 이동한다.
+/* ══ 셸 — 레일 · 마스트헤드(공지 + 기준일) · 제목 행 · 푸터 · 토스트 · 모달 ══════════
+   2026-09-24(E0-7 · 감사 R1 P0): 전에는 이 파일이 레일 열 칸을 직접 적었다. 역할을 몰라서
+   관리자에게 대시보드·프로젝트가, 직원에게 카드 발행 관리·생산 관리가 섰고 누르면 튕겼다.
+   이제 레일은 공용 셸이 roles.js 선언만 읽고 세운다. 로그아웃도 셸 logout() 하나다.
+   기준일은 셸 AS_OF 하나(2026-06-08 · 전에 쓰던 db-data T1 과 같은 값). */
+const shell = mountShell({
+  active: 'media', title: '데이터 관리', subtitle: 'V-World 정사영상 · EPSG:4326',
+  asOf: AS_OF, demo: true, fit: true, keepDocTitle: true,
 });
-
-/* ══ 마스트헤드 — 공지 + 기준일(대시보드와 같은 값) ═══════════════════════ */
-$('#notice-t').textContent = NOTICE.title;
-$('#notice-d').textContent = ymd(NOTICE.date);
-$('#b-notice').href = `${NOTICE.more}?notice=${NOTICE.id}`;
-$('#b2-d').textContent = ymd(T1);
+if (!shell) throw new Error('관문 — 이동 중');   // 로그인 · 역할 관문이 다른 화면으로 보냈다
+$('#page-head').append($('#disk'));                // 내 디스크 사용량 = 제목 행 오른쪽 얇은 한 줄
 
 /* ══ 상태 ══════════════════════════════════════════════════════════════ */
 const S = {
@@ -97,10 +62,7 @@ const S = {
   pp: PP_DEFAULT,          // 쪽당 타일 수 4 · 6 · 8 · 16
   page: 1,
 };
-const sayEl = $('#say');
-let sayT = 0;
 let map = null, bk = null, mounting = null;   // 판 — 한 번만 mount(아래 ensureMap)
-function say(t) { sayEl.textContent = t; clearTimeout(sayT); sayT = setTimeout(() => { sayEl.textContent = ''; }, 4200); }
 const revealed = new Set();
 /** 이미지 리빌 — 타일이 처음 설 때 한 번만(clip-path inset(100% 0 0) → 0, 1s). */
 function reveal(root) {
@@ -334,7 +296,7 @@ function previewFor(row, opts = {}) {
   return body(row.fmt || extOf(row.file).toUpperCase(), row.id, { ...opts, head: pan.head, why: blocked ? blocked.why : '' });
 }
 /** 리빌 = 진행률. 그림 위의 그림, 경계 1px. 업로드·발행 공용. */
-const revealPair = (t, id, pct) => `${img(t, id, 'rv-base')}<div class="rv-top" style="--rest:${100 - pct}%">${img(t, id + 'b')}</div><span class="rv-line" style="--pct:${pct}%"></span>`;
+const revealPair = (t, id, pct) => `${img(t, id, 'rv-base')}<span class="rv-top" style="--rest:${100 - pct}%">${img(t, id + 'b')}</span><span class="rv-line" style="--pct:${pct}%"></span>`;
 /** 캔버스 실루엣을 그린다 — 실좌표 GeoJSON. 그린 뒤 폴리곤 수를 우하단에 적는다.
     여백은 **상자 크기에 비례**한다. 480×294 고정 캔버스 시절의 고정 px(위 56 · 아래 44)를 그대로 쓰면
     113px 짜리 타일에서 그릴 자리가 13px 밖에 남지 않아 도형이 점으로 뭉갰다(2026-09-20 고침). */
@@ -351,6 +313,9 @@ function drawSilhouettes(root) {
 }
 const selAttr = (id) => (S.sel === id ? ' aria-current="true"' : '');
 const selBk = (id) => (S.sel === id ? corners(ACCENT) : '');
+/** 타일의 그림 = 버튼(감사 S1 · F6: 전에는 div + click 이라 키보드로 0 / 6). Tab 으로 닿고 Enter · Space 로 연다.
+    누른 상태(aria-pressed) = 우 패널이 이 건을 펼치고 있다. 이름은 aria-label 로 — 그림 위 글자는 상태어뿐이다. */
+const thBtn = (id, cls, attrs, label, inner) => `<button type="button" class="th ${cls}"${attrs} data-open="${id}" aria-pressed="${S.sel === id}" aria-label="${esc(label)}">${inner}</button>`;
 
 /* ── 업로드 — 드롭존 타일 + 진행 4상태(그림 위 리빌 + %) ───────────────── */
 $('#dz-acc').textContent = DROP.accepts.map((a) => a.ext.slice(1).toUpperCase()).join(' ');
@@ -364,7 +329,7 @@ function upTile(u) {
   const st = live ? `업로드중 <b class="pv">${u.pct}%</b>` : `${UP_ST[u.st]} <span class="pv">${u.pct}%</span>`;
   const meta = u.st === 'wait' ? `대기 ${S.ups.filter((x) => x.st === 'wait').indexOf(u) + 1} · ${u.size}` : `${u.size}`;
   return `<div class="tile" role="listitem" data-id="${u.id}" data-st="${u.st}"${live ? '' : ' data-dim'}${selAttr(u.id)}>
-    <div class="th ${cls}"${live ? ' data-live' : ''} data-open="${u.id}">${inner}${selBk(u.id)}${word('업로드')}${stw(st)}</div>
+    ${thBtn(u.id, cls, live ? ' data-live' : '', `${u.file} · ${UP_ST[u.st]} ${u.pct}%`, `${inner}${selBk(u.id)}${word('업로드')}${stw(st)}`)}
     ${cap(u.file, meta)}</div>`;
 }
 function renderUpload() {
@@ -377,7 +342,10 @@ function upAct(u, k) {
   if (k === 'pause') { u.st = 'pause'; say(`일시정지 — ${u.file} · ${u.pct}%`); }
   if (k === 'resume') { u.st = 'run'; say(`재개 — ${u.file} · ${u.pct}%`); }
   if (k === 'retry') { u.st = 'run'; say(`이어 올리기 — ${u.file} · ${u.pct}%`); }
-  if (k === 'cancel') { S.ups = S.ups.filter((x) => x.id !== u.id); say(`업로드 취소 — ${u.file}`); S.sel = null; S.mode = 'none'; renderKpi(); }
+  if (k === 'cancel') {
+    destroy({ title: '업로드 취소', what: u.file, meta: `${u.size} · ${UP_ST[u.st]} ${u.pct}%`, ok: '업로드 취소', done: '업로드를 취소했습니다', list: () => S.ups, set: (v) => { S.ups = v; }, row: u });
+    return;
+  }
   if (k === 'detail') { S.more = !S.more; }
   renderUpload(); renderSide();
 }
@@ -413,8 +381,9 @@ $('#up-form').addEventListener('submit', (ev) => {
   const err = validate();
   if (err) { const e = $('#up-err'); e.hidden = false; e.textContent = err; return; }
   for (const f of picked) {
+    // 크기는 고른 파일의 실측 바이트다(감사 F13: 2 KB 가 `0.0 MB` 로, 잔여가 `0 B` 로 찍혔다).
     S.ups.push({ id: 'u' + (Date.now() + Math.random()).toString(36).slice(-6), st: 'wait', fmt: f.name.split('.').pop().toUpperCase(), file: f.name, pct: 0,
-      size: f.size >= 1024 ** 3 ? `${(f.size / 1024 ** 3).toFixed(1)} GB` : `${(f.size / 1024 ** 2).toFixed(1)} MB` });
+      fileBytes: f.size, size: fmtBytes(f.size) });
   }
   say(`업로드 대기 +${picked.length}건 · ${SEED_TAG}`);
   take([]); $('#file').value = '';
@@ -446,7 +415,7 @@ function dnTile(d) {
   const pan = panelOf(descOf(d));
   const gap = pan.body === 'map-gap' ? stw('좌표 없음', true) : '';
   return `<div class="tile" role="listitem" data-id="${d.id}"${selAttr(d.id)}>
-    <div class="th ${b.cls}" data-open="${d.id}">${b.html}${selBk(d.id)}${word(`완료 · 아카이빙 ${d.arch}회`)}${gap}${b.sil ? `<span class="tagb n"></span>` : ''}</div>
+    ${thBtn(d.id, b.cls, '', `${d.file} · 업로드 완료`, `${b.html}${selBk(d.id)}${word(`완료 · 아카이빙 ${d.arch}회`)}${gap}${b.sil ? `<span class="tagb n"></span>` : ''}`)}
     ${cap(d.file, `${date(d.at)} · ${d.size}`)}</div>`;
 }
 function renderDone() {
@@ -481,14 +450,38 @@ const CAP_ACT = {
   unpack: { act: 'unpack', name: '풀기' },
   download: { act: 'download', name: '내려받기' },
 };
-const capActs = (row, ds) => capsOf(descOf(row)).caps.filter((c) => CAP_ACT[c])
-  .map((c) => actBtn(CAP_ACT[c].act, CAP_ACT[c].name, ds, `${CAP_ACT[c].cls || ''}${CAP_ACT[c].act === 'detail' && S.more ? ' on' : ''}`.trim())).join('');
+/** 버튼마다 **하는 일이 있거나, 못 하는 이유가 있다**(감사 F3 · 말만 하는 버튼 0).
+    못 하는 것은 누를 수 없게 세우고(disabled) 아래 한 줄에 이유를 적는다 — 흐린 버튼만 두지 않는다. */
+const whyLine = (t) => `<span class="why n" id="acts-why">${esc(t)}</span>`;
+function capActs(row, ds) {
+  let why = '';
+  const btns = capsOf(descOf(row)).caps.filter((c) => CAP_ACT[c]).map((c) => {
+    const a = CAP_ACT[c]; let name = a.name, attrs = ds;
+    if (a.act === 'download' && !allowed('export')) return '';
+    if (a.act === 'join') {
+      if (!joinSrc(row)) { attrs += ' disabled aria-describedby="acts-why"'; why = '준비 중 · 이 결과에는 PNU 속성이 없습니다'; }
+      else if (row.joined) name = '결합 해제';
+    }
+    if (a.act === 'unpack' && row.unpacked) name = '다시 묶기';
+    return actBtn(a.act, name, attrs, `${a.cls || ''}${a.act === 'detail' && S.more ? ' on' : ''}${(a.act === 'join' && row.joined) || (a.act === 'unpack' && row.unpacked) ? ' on' : ''}`.trim());
+  });
+  return btns.join('') + (why ? whyLine(why) : '');
+}
 /** 액자 아래 한 줄 — 이 자산이 무슨 종류이고 **지금 왜 되고 안 되는지**. 빈 액자를 덩그러니 두지 않는다. */
 const gapLine = (pan) => `<p class="gap n${pan.body === 'map-gap' ? ' warn' : ''}"><b>${esc(pan.head)}</b> · ${esc(pan.note)}</p>`;
 
 /* 발행 폼 — 발행 유형 / 기준 일자 / 데이터명 / 출처 / 설명 + 공유 권한 표(기관명 / 권한명 3단). 우 패널의 `발행` 상태. */
-const segRow = (org, cur, i, attr) => `<div class="pr"><span class="o">${esc(org)}</span><span class="seg n" role="group" aria-label="${esc(org)} 권한명">${
-  PERMS.map((p) => `<button type="button" ${attr}="${i}" data-perm="${esc(p)}" aria-pressed="${p === cur}">${esc(p)}</button>`).join('')}</span></div>`;
+/* 원본 정사영상은 LX 가 보관한다(two-tier · card-architecture R7) — LX 밖 기관에는 타일 열람(뷰어)까지.
+   lock = 그 줄의 `편집` 을 누를 수 없게 세운다(흐린 채 이유를 단다). 자산 등급 표 전체는 E1-7. */
+const ORTHO_LOCK = '원본 정사영상은 LX 보관 — 뷰어는 타일 열람';
+const LX_ORG = ORGS[0];
+const segRow = (org, cur, i, attr, lock = false) => `<div class="pr"><span class="o">${esc(org)}</span><span class="seg n" role="group" aria-label="${esc(org)} 권한명">${
+  PERMS.map((p) => { const off = lock && p === '편집';
+    return `<button type="button" ${attr}="${i}" data-perm="${esc(p)}" aria-pressed="${p === cur}"${off ? ` disabled title="${esc(ORTHO_LOCK)}" aria-describedby="${attr.slice(5)}-lock"` : ''}>${esc(p)}</button>`; }).join('')}</span></div>`;
+/** 원본 정사영상인가 — 완료본은 형식(TIF · ECW), 아카이브는 유형(정사영상). */
+const isOrtho = (row) => row.kind === '정사영상' || ['TIF', 'ECW'].includes(String(row.fmt || '').toUpperCase());
+const pfLocked = () => { const d = S.done.find((x) => x.id === S.sel); return !!(d && isOrtho(d)); };
+const pfRows = () => pfPerm.map((r, i) => segRow(r.org, r.perm, i, 'data-pf', pfLocked() && r.org !== LX_ORG)).join('');
 let pfPerm = SHARE_DEFAULT.map((s) => ({ ...s }));
 const pubFormHtml = (d, pre) => `
   <form id="pubform" novalidate>
@@ -498,8 +491,8 @@ const pubFormHtml = (d, pre) => `
     <label class="fr"><span class="k">출처</span><input id="pf-src" type="text" placeholder="출처" value="${esc(pre.src || '')}"></label>
     <label class="fr"><span class="k">설명</span><input id="pf-desc" type="text" placeholder="설명" value="${esc(pre.desc || '')}"></label>
     <div class="ph"><span class="lb">공유 권한</span><span class="lb">기관명 / 권한명</span></div>
-    <div id="pf-perm">${pfPerm.map((r, i) => segRow(r.org, r.perm, i, 'data-pf')).join('')}</div>
-    <p class="add n">+ 기관 추가</p>
+    <div id="pf-perm">${pfRows()}</div>
+    ${pfLocked() ? `<p id="pf-lock" class="lock n">${esc(ORTHO_LOCK)}</p>` : ''}
     <p id="pf-err" class="err" role="alert" hidden></p>
     <div class="acts">
       <button type="button" class="br" data-pf-close>취소</button>
@@ -516,7 +509,7 @@ function openPubForm(id) {
   $('#pf-name').focus();
 }
 document.addEventListener('click', (ev) => {
-  const b = ev.target.closest('[data-pf]'); if (b) { pfPerm[+b.dataset.pf].perm = b.dataset.perm; $('#pf-perm').innerHTML = pfPerm.map((r, i) => segRow(r.org, r.perm, i, 'data-pf')).join(''); return; }
+  const b = ev.target.closest('[data-pf]'); if (b) { if (b.disabled) return; pfPerm[+b.dataset.pf].perm = b.dataset.perm; $('#pf-perm').innerHTML = pfRows(); $(`#pf-perm [data-pf="${b.dataset.pf}"][data-perm="${b.dataset.perm}"]`)?.focus(); return; }
   if (ev.target.closest('[data-pf-close]')) { S.mode = 'tile'; renderSide(); }
 });
 document.addEventListener('submit', (ev) => {
@@ -547,7 +540,7 @@ function pbTile(p) {
   else { const b = body(p.fmt, p.id, { dim: fail }); cls = b.cls; inner = b.html + (b.sil ? `<span class="tagb n"></span>` : ''); }
   const st = fail ? `실패 ${p.step}/4 · ${esc(p.short || '')}` : `${p.step}/4 <span class="dt">${esc(PUB_STEPS[p.step - 1])} </span><b class="pv">${pubPct(p)}%</b>`;
   return `<div class="tile" role="listitem" data-id="${p.id}" data-st="${p.st}"${fail ? ' data-dim' : ''}${selAttr(p.id)}>
-    <div class="th ${cls}"${fail ? '' : ' data-live'} data-open="${p.id}">${inner}${ticks(p, !t)}${fail ? corners(WARN) : selBk(p.id)}${word('발행중')}${stw(st, fail)}</div>
+    ${thBtn(p.id, cls, fail ? '' : ' data-live', `${p.file} · ${fail ? `발행 실패 ${p.step}/4` : `발행 ${p.step}/4`}`, `${inner}${ticks(p, !t)}${fail ? corners(WARN) : selBk(p.id)}${word('발행중')}${stw(st, fail)}`)}
     ${cap(p.file, `${date(p.at)} · ${p.size}`)}</div>`;
 }
 function renderPublishing() {
@@ -559,25 +552,28 @@ function renderPublishing() {
 }
 let crsId = null;
 function pbAct(p, k) {
-  if (k === 'cancel') { S.pubs = S.pubs.filter((x) => x.id !== p.id); say(`발행 취소 — ${p.file}`); S.sel = null; S.mode = 'none'; renderKpi(); }
+  if (k === 'cancel') {
+    destroy({ title: '발행 취소', what: p.file, meta: `${p.size} · ${p.st === 'fail' ? '실패' : '진행'} ${p.step}/4 ${PUB_STEPS[p.step - 1]}`, ok: '발행 취소', done: '발행을 취소했습니다', list: () => S.pubs, set: (v) => { S.pubs = v; }, row: p });
+    return;
+  }
   if (k === 'detail') S.more = !S.more;
-  if (k === 'crs') { crsId = p.id; $('#mc-sub').textContent = `${p.file} · ${p.why}`; openModal('#m-crs'); return; }
-  if (k === 'unpack') { say(`원본 다시 올리기 — ${p.file} · ${p.why}`); return; }
-  if (k === 'join') { say(`필지 연결 — ${p.file} · pnu 로 공간자료에 붙인 뒤 발행 · ${SEED_TAG}`); return; }
+  if (k === 'crs') { crsId = p.id; $('#mc-sub').textContent = `${p.file} · ${p.why}`; openForm('#m-crs', '좌표계 지정'); return; }
+  if (k === 'unpack') { reupload(p); return; }
+  if (k === 'join') { joinGuide(p); return; }
   renderPublishing(); renderSide();
 }
 $('#m-crs').addEventListener('submit', (ev) => {
   ev.preventDefault();
   const p = S.pubs.find((x) => x.id === crsId);
   if (p) { p.st = 'run'; p.step = 1; p.crs = $('#mc-epsg').value; say(`좌표계 ${p.crs} — ${p.file} · 1/4 파일 확인 · ${SEED_TAG}`); }
-  closeModal(); renderKpi(); renderPublishing(); renderSide();
+  closeForm(); renderKpi(); renderPublishing(); renderSide();
 });
 
 /* ── 아카이브 — 유형·표시/숨김은 그림 위 단어로. 5액션은 우 패널. 숨김 = 감쇠, 삭제 아님. ── */
 /** 자산의 실측 기하 — imagery.js 도엽 타일이거나 results/* GeoJSON. 없으면 null(판이 자백한다). */
 function geomOf(a) {
   const im = a.imagery && IMG.find((i) => i.id === a.imagery);
-  if (im) return { kind: 'raster', bounds: im.bounds, im, cap: `${im.label} · GSD ${cm(im)} · 측정` };
+  if (im) { const nt = sheetNote(a, im); return { kind: 'raster', bounds: im.bounds, im, cap: `${im.label} · GSD ${cm(im)} · 측정${nt ? ` · ${nt}` : ''}` }; }
   if (a.geo) return { kind: 'vector', bounds: a.geo.bounds, file: a.geo.file, cap: `${a.name} · ${a.geo.unit} ${a.geo.count}셀 · EPSG:4326 · 측정` };
   return null;
 }
@@ -588,7 +584,7 @@ function arTile(a) {
   const inner = b.html + (b.sil ? `<span class="tagb n"></span>` : '');
   const meta = g && g.kind === 'raster' ? `${a.basis} · ${cm(g.im)}` : `${a.basis} · ${a.size}`;
   return `<div class="tile" role="listitem" data-id="${a.id}" data-hidden="${a.hidden ? 1 : 0}"${a.hidden ? ' data-dim' : ''}${selAttr(a.id)}>
-    <div class="th ${cls}" data-open="${a.id}">${inner}${selBk(a.id)}${word(`아카이브 · ${a.kind}`)}${stw(a.hidden ? '숨김 · 삭제 아님' : '표시')}</div>
+    ${thBtn(a.id, cls, '', `${a.name} · 아카이브 ${a.kind} · ${a.hidden ? '숨김' : '표시'}`, `${inner}${selBk(a.id)}${word(`아카이브 · ${a.kind}`)}${stw(a.hidden ? '숨김 · 삭제 아님' : '표시')}`)}
     ${cap(a.name, meta)}</div>`;
 }
 function renderArchive() {
@@ -601,30 +597,25 @@ function renderArchive() {
 function archAct(a, k) {
   if (k === 'vis') { a.hidden = !a.hidden; renderKpi(); renderArchive(); showOnPlate(a, !a.hidden); return; }
   if (k === 'share') { openShare(a); return; }
-  if (k === 'geo') { editGeo(a); return; }
   if (k === 'detail') { S.more = !S.more; renderSide(); return; }
   if (k === 'del') {
-    S.arch = S.arch.filter((x) => x.id !== a.id);
-    S.layers = S.layers.filter((x) => x !== a.id);
-    if (map) removeLayer(map, a.id);
-    if (S.focus === a.id) S.focus = null;
-    S.sel = null; S.mode = 'none';
-    say(`삭제 — ${a.name}`); renderKpi(); renderArchive(); renderSide();
+    const li = S.layers.indexOf(a.id);
+    destroy({ title: '아카이브 삭제', what: a.name, meta: `${a.file} · ${a.size} · ${a.kind}`, ok: '삭제', done: '삭제했습니다', list: () => S.arch, set: (v) => { S.arch = v; }, row: a,
+      after: () => { S.layers = S.layers.filter((x) => x !== a.id); if (map) removeLayer(map, a.id); if (S.focus === a.id) S.focus = null; },
+      undo: () => { if (li >= 0 && !S.layers.includes(a.id)) S.layers.splice(Math.min(li, S.layers.length), 0, a.id); } });
   }
 }
-/** 공간 편집 — 원본은 판 위에 편집용 벡터를 올리고 그 범위로 fit 한다. 여기서는 판이 그 범위로 간다. */
-function editGeo(a) {
-  const g = geomOf(a);
-  if (!g) { say(`공간 편집 — ${a.name} · 실측 범위 없음`); return; }
-  showOnPlate(a, true, true);
-  say(`공간 편집 — ${a.name} · 범위로 이동`);
-}
+/* 공간 편집 — 감사 S16 · F3: 전에는 판을 그 범위로 옮기고 `공간 편집` 이라고 말만 했다.
+   편집 도구가 없으므로 버튼을 세우되 누를 수 없게 두고 이유를 적는다(아래 GEO_WHY). */
+const GEO_WHY = '준비 중 · 지도 편집은 분석 서비스 완료 탭에서';
 
 /* ══ 타일 선택 — 그리드 클릭 하나로 4단계 공용 ═══════════════════════════ */
 $('#grid').addEventListener('click', (ev) => {
   const th = ev.target.closest('[data-open]'); if (!th) return;
   const id = th.dataset.open;
+  const kb = document.activeElement === th;               // 키보드(또는 포커스 뒤 클릭)로 연 것 — 다시 그린 뒤에도 그 타일에 포커스를 둔다
   if (S.sel === id) backToBoard(); else selectTile(id);   // 선택 타일을 다시 누르면 현황판으로
+  if (kb) $(`#grid .th[data-open="${id}"]`)?.focus();
 });
 
 /* ══ 우 패널 — 선택 타일을 펼친다: 판(지도/그림) + 기본 정보 + 액션 ═══════ */
@@ -809,21 +800,23 @@ function renderSide() {
     // 좌표가 있으면 그 자리에 지도가, 없으면 같은 자리에 그 종류의 미리보기 + 왜 못 얹는지가 선다.
     const d = row, im = imFor(d), res = resultsOf(d.id);
     const pan = panelOf(descOf(d));
-    if (pan.body === 'map') { showPlate(); applyMapMode('sel', { id: d.id, im, title: d.file, sub: `GSD ${cm(im)}`, res }); }
+    const sheet = sheetNote(d, im);   // 파일 시점 ≠ 실측 도엽 시점이면 그 사실을 적는다(감사 F9)
+    if (pan.body === 'map') { showPlate(); applyMapMode('sel', { id: d.id, im, title: d.file, sub: `GSD ${cm(im)}`, res, note: sheet }); }
     else { showFig(figFor(d) + gapLine(pan)); applyMapMode('none'); }
     const blocked = (pan.blocked || []).find((b) => b.cap === 'map');
     const crs = im ? 'EPSG:5186 → 4326' : blocked ? `<span class="warn">${esc(CRS_NONE.why)}</span>` : '—';
     // 날짜·좌표계는 값이 길다 — 반 칸에 밀어 넣으면 두 줄이 되거나 잘린다. 제 줄을 준다.
-    const base = [['이름', esc(d.file), 'wide'], ['형식', d.fmt], ['크기', d.size], ['업로드 일시', d.at, 'wide'], ['촬영일', im ? ymd(im.captured) : '—'],
+    const base = [['이름', esc(d.file), 'wide'], ['형식', d.fmt], ['크기', d.size], ['업로드 일시', d.at, 'wide'], ['촬영일', im ? ymd(im.captured) : '—'], ...(sheet ? [['도엽', esc(sheet), 'wide']] : []),
       ['GSD', im ? cm(im) : '—'], ['좌표계', d.fmt === 'SHP' && blocked ? crs : im ? crs : '—', d.fmt === 'SHP' && blocked ? 'wide' : ''],
       ...(blocked ? [['조치', esc(blocked.why), 'wide']] : []),
-      ['아카이빙', `${d.arch}회`], ['등록자', esc(d.by)], ['범위', im ? `<span class="n">${bounds4(im.bounds)}</span>` : '실측 범위 없음', 'wide']];
+      ['아카이빙', `${d.arch}회`], ['등록자', esc(d.by)], ['범위', im ? `<span class="n">${bounds4(im.bounds)}</span>` : '실측 범위 없음', 'wide'],
+      ...(d.joined ? [['필지 결합', `${nf.format(d.joinN || 0)} 필지 · pnu · ${SEED_TAG}`, 'wide']] : [])];
     if (S.mode === 'pub') {
       info.innerHTML = cols2(`<div class="ph"><span class="lb">지도 레이어 발행</span><span class="lb">${esc(d.file)} · ${esc(d.size)}</span></div>` + pubFormHtml(d, PUB_PREFILL[d.id] || {}));
       return;
     }
     // 판/액자 옆에 신원(기본 정보), 그 아래 한 줄로 성과 또는 데이터 테이블 속성.
-    info.innerHTML = cols2(dl(base), im ? resultsHtml(res, im.bounds) : schemaHtml(d));
+    info.innerHTML = cols2(dl(base), im ? resultsHtml(res, im.bounds) : d.unpacked ? unpackHtml(d) : schemaHtml(d));
     if (im) fillInBounds(res, im.bounds); else fillSchemaFromGeo(d);
     // 액션 = assets.js 가 말한 `할 수 있는 일`만. 엑셀에 지도 레이어 발행 버튼은 서지 않는다.
     acts.innerHTML = capActs(d, `data-dn="${d.id}"`);
@@ -867,9 +860,11 @@ function renderSide() {
   info.innerHTML = cols2(meta + `<p class="attrib n">${esc(ATTRIB)}</p>`, usageHtml(a) + resultsHtml(res, g ? g.bounds : null) + publishHtml(a) + memoHtml(a));
   if (g) fillInBounds(res, g.bounds);
   // 표시/공유/삭제/상세는 보관물이면 늘 할 수 있는 일이고, `공간 편집` 은 **범위가 있을 때만** 뜻이 있다.
+  // `공간 편집` 은 편집 도구가 아직 없다 — 세우되 누를 수 없게, 이유 한 줄과 함께(GEO_WHY).
   const arActs = [['vis', a.hidden ? '표시' : '숨김'], ['share', '공유'],
-    ...(apan.body === 'map' ? [['geo', '공간 편집']] : []), ['del', '삭제'], ['detail', '상세']];
-  acts.innerHTML = arActs.map(([k, nm]) => actBtn(k, nm, `data-ar="${a.id}"`, k === 'detail' && S.more ? 'on' : '')).join('');
+    ...(apan.body === 'map' ? [['geo', '공간 편집']] : []), ...(allowed('edit') ? [['del', '삭제']] : []), ['detail', '상세']];
+  acts.innerHTML = arActs.map(([k, nm]) => actBtn(k, nm, `data-ar="${a.id}"${k === 'geo' ? ' disabled aria-describedby="acts-why"' : ''}`, k === 'detail' && S.more ? 'on' : '')).join('')
+    + (apan.body === 'map' ? whyLine(GEO_WHY) : '');
 }
 $('#side').addEventListener('click', (ev) => {
   const b = ev.target.closest('.act[data-act]'); if (!b) return;
@@ -885,9 +880,155 @@ function dnAct(d, k) {
   if (k === 'detail') { S.more = !S.more; renderSide(); return; }
   if (k === 'analyze') { location.href = 'analysis-ai.html'; return; }
   if (k === 'label') { location.href = 'ai-project-label.html'; return; }
-  if (k === 'download') { say(`내려받기 — ${d.file} · ${d.size} · ${SEED_TAG}`); return; }
-  if (k === 'join') { say(`필지에 붙이기 — ${d.file} · pnu 로 공간자료에 이어 붙인다 · ${SEED_TAG}`); return; }
-  if (k === 'unpack') { say(`풀기 — ${d.file} · 안의 파일을 낱개로 등록한다 · ${SEED_TAG}`); return; }
+  if (k === 'download') { download(d); return; }
+  if (k === 'join') { if (d.joined) { d.joined = false; renderSide(); say(`결합 해제 — ${d.file}`); } else joinTable(d); return; }
+  if (k === 'unpack') { d.unpacked = !d.unpacked; renderSide(); say(d.unpacked ? `풀었습니다 — ${d.file} · 항목 ${zipItems(d).length} · 이 화면에서만` : `다시 묶었습니다 — ${d.file}`); return; }
+}
+
+/* ══ 파괴 동작 — 확인 → 실행 → 8초 되돌리기 (감사 F5 · S2) ═══════════════════════
+   전에는 아카이브 삭제 · 업로드 취소 · 발행 취소가 누르는 즉시 사라졌고 되돌릴 길이 없었다.
+   이제 셸 confirmDialog(danger — 기본 포커스는 `그대로 두기`) 로 한 번 묻고, 실행 뒤 토스트 옆 `되돌리기` 가 8초 선다.
+   셸 say() 는 글자만 받으므로 되돌리기 버튼은 토스트 바로 오른쪽에 붙여 세운다(같은 잉크 1px · 그림자 0). */
+const UNDO_MS = 8000;
+let undo = null;   // { msg, fn, t }
+function refresh() { renderKpi(); if (!S.tab) { renderOverview(); return; } renderPanel(); renderSide(); }
+function destroy({ title, what, meta, ok, done, list, set, row, after, undo: back }) {
+  confirmDialog({ title, body: `${what}\n${meta}\n\n실행 뒤 8초 안에 되돌릴 수 있습니다.`, okLabel: ok, cancelLabel: '그대로 두기', danger: true }).then((yes) => {
+    if (!yes) return;
+    const arr = list(), at = arr.indexOf(row); if (at < 0) return;
+    set(arr.filter((x) => x !== row));
+    after?.();
+    if (S.sel === row.id) { S.sel = null; S.mode = 'none'; S.more = false; }
+    refresh();
+    offerUndo(`${done} — ${what}`, () => {
+      const cur = list(); if (cur.includes(row)) return;
+      const next = cur.slice(); next.splice(Math.min(at, next.length), 0, row); set(next);
+      back?.();
+      refresh();
+      say(`되돌렸습니다 — ${what}`);
+    });
+  });
+}
+function undoBtn() {
+  let b = $('#ds-undo');
+  if (b) return b;
+  b = document.createElement('button');
+  b.type = 'button'; b.id = 'ds-undo'; b.hidden = true; b.textContent = '되돌리기';
+  b.addEventListener('click', () => { const u = undo; dropUndo(); u?.fn(); });
+  document.body.append(b);
+  // 토스트 글자가 다른 말로 바뀌면 이 되돌리기는 더 이상 그 말의 짝이 아니다 — 내린다.
+  new MutationObserver(() => { const t = $('#say')?.textContent || ''; if (undo && t && t !== undo.msg) dropUndo(); })
+    .observe($('#say'), { childList: true, characterData: true, subtree: true });
+  return b;
+}
+function offerUndo(msg, fn) {
+  dropUndo();
+  const b = undoBtn();
+  undo = { msg, fn, t: setTimeout(dropUndo, UNDO_MS) };
+  say(msg, UNDO_MS);
+  // 자리는 토스트의 **레이아웃 상자**로 잰다(offset*) — 들어오는 운동(translateY)에 흔들리지 않게.
+  const place = () => {
+    const t = $('#say'); if (!undo || !t.offsetWidth) return;
+    b.style.left = `${t.offsetLeft + t.offsetWidth - 1}px`; b.style.top = `${t.offsetTop}px`; b.style.height = `${t.offsetHeight}px`;
+    b.hidden = false;
+    // 확인 대화가 닫히며 포커스가 돌아갈 버튼(삭제 · 취소)은 방금 사라졌다 — 키보드 사용자는 여기서 바로 되돌릴 수 있다.
+    if (!document.activeElement || document.activeElement === document.body) b.focus();
+  };
+  requestAnimationFrame(() => requestAnimationFrame(place));
+}
+function dropUndo() {
+  if (undo) clearTimeout(undo.t);
+  undo = null;
+  const b = $('#ds-undo'); if (!b) return;
+  const had = document.activeElement === b;
+  b.hidden = true;
+  if (had) $('#grid').focus();
+}
+
+/* ══ 실패 조치 · 표 결합 · 풀기 — 토스트만 하던 다섯 자리(감사 F3) ════════════════════ */
+/** 원본 다시 올리기 — 업로드 탭으로 가서 **같은 파일의 업로드 건**을 골라 둔다. 없으면 드롭존에 포커스. */
+function reupload(p) {
+  setTab('upload');
+  const u = S.ups.find((x) => x.file === p.file);
+  if (u) { selectTile(u.id); $(`#grid .th[data-open="${u.id}"]`)?.focus(); say(`원본 다시 올리기 — ${u.file} · 업로드 ${UP_ST[u.st]}`); }
+  else { $('#drop').focus(); say(`원본 다시 올리기 — ${p.file} · 드롭존에 다시 놓기`); }
+}
+/** 이 표를 필지에 붙일 수 있나 — 데이터 테이블 선언에 pnu 열이 있고, 그 값을 담은 결과 GeoJSON 이 저장소에 있을 때만. */
+function joinSrc(row) { const sc = SCHEMA[SCHEMA_OF[row.id]]; return sc && sc.geo && sc.cols.some(([n]) => n === 'pnu') ? sc : null; }
+/** 필지 연결 안내 — 발행 1단계에서 막힌 표 자료. 무엇이 있어야 지도 레이어가 되는지를 적고, 붙이는 자리로 보낸다. */
+function joinGuide(p) {
+  const d = S.done.find((x) => x.file === p.file);
+  const sc = d && joinSrc(d);
+  const body = `<p class="modal-msg">${esc(p.file)} 에는 좌표가 없습니다. 지도 레이어가 되려면 세 가지가 필요합니다.</p>
+    <ol class="guide">
+      <li><b>필지 번호 열</b> — pnu · 문자 19자리 · ${sc ? '<em>이 표에 있음</em>' : '<em class="warn">이 표에서 못 찾음</em>'}</li>
+      <li><b>필지 경계</b> — 같은 시점의 연속지적도 또는 AI 결과 필지 폴리곤</li>
+      <li><b>pnu 로 결합</b> — 결합된 표를 공간정보 레이어로 다시 발행</li>
+    </ol>`;
+  openModal({ title: '필지 연결 안내', content: body, width: 560, tag: SEED_TAG,
+    actions: [{ label: '닫기', kind: 'bracket' },
+      ...(d ? [{ label: '업로드 완료에서 붙이기 ›', kind: 'primary', autofocus: true, onClick: () => { setTimeout(() => { setTab('manage'); selectTile(d.id); $('#side-acts .act[data-act="join"]')?.focus(); }, 0); } }] : [])] });
+}
+/** 필지에 붙이기 — 표의 pnu 와 결과 GeoJSON 필지를 실제로 맞춰 본다. 결합 표(앞 8행)를 보이고, 붙이면 이 화면 상태에 남는다. */
+async function joinTable(d) {
+  const sc = joinSrc(d); if (!sc) return;
+  const g = await loadGeo(sc.geo);
+  const feats = (g && g.features) || [];
+  const rows = feats.map((f) => f.properties || {}).filter((pr) => /^\d{19}$/.test(String(pr.pnu || '')));
+  const cols = ['pnu', 'emd', 'cls', 'area'];
+  const table = `<table class="jt n"><thead><tr>${cols.map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${
+    rows.slice(0, 8).map((pr) => `<tr>${cols.map((c) => `<td>${esc(typeof pr[c] === 'number' ? nf.format(pr[c]) : pr[c] ?? '—')}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  const src = sc.geo.split('/').pop();
+  const body = `<p class="jt-h n">${esc(d.file)} ↔ ${esc(src)} · pnu 일치 <b>${nf.format(rows.length)}</b> / ${nf.format(feats.length)} 필지</p>${table}
+    <p class="jt-f n">앞 8행 · 필지 = 결과 GeoJSON 실측 · 표 원본 = 목업 시드(${SEED_TAG})</p>`;
+  openModal({ title: '필지에 붙이기', content: body, width: 640, tag: SEED_TAG,
+    actions: [{ label: '취소', kind: 'bracket' },
+      { label: `${nf.format(rows.length)} 필지에 붙이기`, kind: 'primary', autofocus: true, onClick: () => {
+        d.joined = true; d.joinN = rows.length; renderSide();
+        say(`필지에 붙였습니다 — ${d.file} · ${nf.format(rows.length)} 필지 · ${SEED_TAG}`);
+      } }] });
+}
+/** 묶음 파일의 항목 — 데이터 테이블 선언(SCHEMA zip)의 줄이 곧 안의 항목이다. */
+const zipItems = (row) => (SCHEMA[SCHEMA_OF[row.id]]?.cols || []);
+const unpackHtml = (row) => `<section class="blk"><div class="ph"><span class="lb">풀린 항목 · ${zipItems(row).length} · 이 화면에서만</span><span class="lb">항목 / 형식 / 내용</span></div>${
+  zipItems(row).map(([n, t, e]) => `<div class="sc up-i"><i>${esc(n)}</i><em>${esc(t)}</em><span class="exv">${esc(e)}</span></div>`).join('')}</section>`;
+
+/* ══ 내려받기 — 실제로 파일이 떨어진다(감사 F3 · download.js) ════════════════════════
+   결과 GeoJSON 이 저장소에 있는 표·SHP 는 그 파일을 그대로, 정사영상은 **원본을 주지 않는다** —
+   LX 가 보관하는 원본 대신 도엽 정보(영상 id · 촬영 · GSD · 범위 · 타일 경로)를 적은 메모를 준다.
+   그 밖은 무엇인지 적힌 메모다. 없는 파일을 있는 척하지 않는다. */
+const stem = (f) => String(f).replace(/\.[^.]+$/, '').replace(/[\/:*?"<>|]/g, '_');
+async function download(d) {
+  const im = imFor(d), sc = SCHEMA[SCHEMA_OF[d.id]];
+  const head = ['Land-XI 데이터 관리 · 내려받기', `파일 ${d.file}`, `형식 ${d.fmt} · 크기 ${d.size} · 업로드 ${d.at}`];
+  if (isOrtho(d)) {
+    const lines = [...head, ''];
+    if (im) {
+      const nt = sheetNote(d, im);
+      lines.push(`영상 id ${im.id}`, `촬영 ${ymd(im.captured)}${nt ? ` (${nt})` : ''}`, `GSD ${cm(im)}`, `범위 ${bounds4(im.bounds)} · EPSG:4326`, `타일 ${im.tiles}`);
+    } else lines.push('실측 도엽 없음 — 좌표 확인 전이라 타일 카탈로그에 없다');
+    lines.push('', '원본 정사영상은 LX 가 보관합니다 — 타일 열람만 제공');
+    downloadNote(`${stem(d.file)}.txt`, lines);
+    say(`내려받기 — ${stem(d.file)}.txt · 도엽 정보 · 원본은 LX 보관`);
+    return;
+  }
+  if (sc && sc.geo) {
+    const name = sc.geo.split('/').pop();
+    if (await downloadFile(sc.geo, name)) { say(`내려받기 — ${name} · 결과 GeoJSON(속성 원천) · ${d.fmt} 원본은 목업 시드`); return; }
+  }
+  downloadNote(`${stem(d.file)}.txt`, [...head, '', `이 시연본에는 ${d.fmt} 원본 파일이 없습니다 — 원본 목업 시드(${SEED_TAG})`,
+    ...(sc ? [`구성 ${sc.rows}`, ...sc.cols.map(([n, t]) => `  ${n} · ${t}`)] : [])]);
+  say(`내려받기 — ${stem(d.file)}.txt · 파일 정보 · 원본 없음(${SEED_TAG})`);
+}
+/** 파일 이름의 시점과 실측 도엽의 시점이 다르면 그 사실을 한 줄로(감사 F9).
+    완료 d4 `…202604…` 에 남원 2025.04 도엽을 대신 얹고 있었는데 아무 말이 없었다. */
+function sheetNote(row, im) {
+  if (!im) return '';
+  const m = /20(\d\d)(0[1-9]|1[0-2])/.exec(row.file || '') || /20(\d\d)-(0[1-9]|1[0-2])/.exec(row.name || '');
+  let fm = m ? `20${m[1]}-${m[2]}` : '';
+  if (!fm) { const t = /^(\d{4})[.-](\d{2})/.exec(String(row.basis || row.at || '')); if (t) fm = `${t[1]}-${t[2]}`; }
+  if (!fm || fm === im.captured) return '';
+  return `파일 ${fm} · 실측 도엽 ${ymd(im.captured)} 대체 표시`;
 }
 
 /* ══ 판 — 한 번만 mount. 완료 = 선택 도엽 1장, 아카이브 = 표시된 레이어들 ══════ */
@@ -924,7 +1065,7 @@ async function applyMapMode(mode, arg) {
     // 성과가 있으면 도엽을 가운데 두고 3배 범위 — 주변의 청록 결과 폴리곤이 같이 보인다
     const b = arg.im.bounds, hasRes = arg.res && arg.res.length;
     frame(m, hasRes ? grow(b, 1) : b, { maxZoom: 16.6 });
-    $('#plate-cap').textContent = `${arg.im.label} · GSD ${cm(arg.im)} · 측정${arg.res && arg.res.length ? ` · 성과 ${arg.res.length}` : ''}`;
+    $('#plate-cap').textContent = `${arg.im.label} · GSD ${cm(arg.im)} · 측정${arg.res && arg.res.length ? ` · 성과 ${arg.res.length}` : ''}${arg.note ? ` · ${arg.note}` : ''}`;
     none.hidden = true;
     syncResults(m, arg.res || [], req);
     return;
@@ -981,22 +1122,21 @@ async function showOnPlate(a, on, fit = true) {
   if (on && !g) say(`${a.name} — 실측 범위 없음`);
   if (!on) say(`${a.name} — 숨김 · 삭제 아님`);
 }
-/* ══ 모달 ══════════════════════════════════════════════════════════════ */
-let lastFocus = null;
-function openModal(sel) {
-  lastFocus = document.activeElement;
-  $('#scrim').hidden = false; $(sel).hidden = false;
-  const f = $(sel).querySelector('input:not([hidden]),select,textarea,button'); if (f) f.focus();
+/* ══ 모달 — 셸 openModal 이 감싼다(포커스 가둠 · Esc · 바깥 클릭 · 닫히면 부른 자리로) ══════
+   감사 S4 · F6: 예전 자체 모달은 Tab 한 번에 밖으로 나갔다. 폼 몸통은 dataset.html #ds-forms 에 두고,
+   열 때 셸 모달 안으로 옮겼다가 닫히면 보관함으로 되돌린다 — 폼의 이벤트는 그대로 산다. */
+let dlg = null;   // 지금 열린 폼 모달 { ctx, form }
+function openForm(sel, title, width = 480) {
+  const form = $(sel); form.hidden = false;
+  const ctx = openModal({ title, content: form, width, onClose: () => { form.hidden = true; $('#ds-forms').append(form); if (dlg && dlg.form === form) dlg = null; } });
+  ctx.el.dataset.form = form.id;
+  dlg = { ctx, form };
+  return ctx;
 }
-function closeModal() {
-  $('#scrim').hidden = true; $$('.modal').forEach((m) => { m.hidden = true; });
-  if (lastFocus && lastFocus.focus) lastFocus.focus();
-}
-$('#scrim').addEventListener('click', closeModal);
-document.addEventListener('click', (ev) => { if (ev.target.closest('[data-close]')) closeModal(); });
+const closeForm = () => { if (dlg) dlg.ctx.close(); };
+document.addEventListener('click', (ev) => { if (ev.target.closest('.dsm [data-close]')) closeForm(); });
 document.addEventListener('keydown', (ev) => {
-  if (ev.key !== 'Escape') return;
-  if (!$('#scrim').hidden) { closeModal(); return; }
+  if (ev.key !== 'Escape' || ev.defaultPrevented || document.body.hasAttribute('data-modal')) return;   // 모달의 Esc 는 셸이 먼저 받는다
   if (S.mode === 'pub') { S.mode = 'tile'; renderSide(); return; }
   if (S.sel) { S.sel = null; S.mode = 'none'; S.more = false; renderPanel(); renderSide(); }
 });
@@ -1014,7 +1154,7 @@ $('#mq-presets').addEventListener('click', (ev) => {
 });
 function openQuota() {
   $('#mq-tag').textContent = `내 디스크 사용량 · ${gb(DISK.used)} / ${gb(DISK.total)} GB · 잔여 ${gb(DISK.free)} GB · ${SEED_TAG}`;
-  $('#mq-err').hidden = true; openModal('#m-quota');
+  $('#mq-err').hidden = true; openForm('#m-quota', '디스크 증량 신청');
 }
 $('#m-quota').addEventListener('submit', (ev) => {
   ev.preventDefault();
@@ -1023,30 +1163,35 @@ $('#m-quota').addEventListener('submit', (ev) => {
   const why = $('#mq-why').value.trim();
   if (!g || g <= 0) { e.hidden = false; e.textContent = '신청 용량 필수'; return; }
   if (!why) { e.hidden = false; e.textContent = '신청 사유 필수'; return; }
-  closeModal(); say(`디스크 증량 신청 접수 — ${nf.format(g)} GB · ${SEED_TAG}`);
+  closeForm(); say(`디스크 증량 신청 접수 — ${nf.format(g)} GB · ${SEED_TAG}`);
 });
 
-/* 공유 설정 — 기관명 / 권한명 표 */
-let shareId = null, msPerm = [];
+/* 공유 설정 — 기관명 / 권한명 표.
+   원본 정사영상은 LX 가 보관한다(two-tier · card-architecture R7). 기관에는 타일 열람까지만 —
+   그래서 정사영상의 LX 밖 기관 `편집` 은 누를 수 없게 세우고 이유를 한 줄로 적는다.
+   자산 등급 표 전체(ASSET_TIERS)는 E1-7 몫이다 — 여기서는 이 한 칸만 닫는다. */
+let shareId = null, msPerm = [], msLock = false;
 function openShare(a) {
   shareId = a.id;
+  msLock = isOrtho(a);
   $('#ms-sub').textContent = `${a.name} · ${a.file}`;
-  msPerm = ORGS.map((org) => ({ org, perm: (a.share.find((s) => s.org === org) || { perm: '권한 없음' }).perm }));
-  renderMs(); openModal('#m-share');
+  msPerm = ORGS.map((org) => {
+    const perm = (a.share.find((s) => s.org === org) || { perm: '권한 없음' }).perm;
+    return { org, perm: msLock && org !== LX_ORG && perm === '편집' ? '뷰어' : perm };
+  });
+  const note = $('#ms-lock'); note.hidden = !msLock; note.textContent = msLock ? ORTHO_LOCK : '';
+  renderMs(); openForm('#m-share', '공유 설정');
 }
-const renderMs = () => { $('#ms-perm').innerHTML = msPerm.map((r, i) => segRow(r.org, r.perm, i, 'data-ms')).join(''); };
-$('#ms-perm').addEventListener('click', (ev) => { const b = ev.target.closest('[data-ms]'); if (!b) return; msPerm[+b.dataset.ms].perm = b.dataset.perm; renderMs(); });
+const renderMs = () => { $('#ms-perm').innerHTML = msPerm.map((r, i) => segRow(r.org, r.perm, i, 'data-ms', msLock && r.org !== LX_ORG)).join(''); };
+$('#ms-perm').addEventListener('click', (ev) => { const b = ev.target.closest('[data-ms]'); if (!b || b.disabled) return; msPerm[+b.dataset.ms].perm = b.dataset.perm; renderMs(); $(`#ms-perm [data-ms="${b.dataset.ms}"][data-perm="${b.dataset.perm}"]`)?.focus(); });
 $('#m-share').addEventListener('submit', (ev) => {
   ev.preventDefault();
   const a = S.arch.find((x) => x.id === shareId);
   if (a) { a.share = msPerm.map((s) => ({ ...s })); say(`공유 설정 저장 — ${a.name} · ${a.share.map((s) => `${s.org} ${s.perm}`).join(' · ')}`); }
-  closeModal();
+  closeForm();
 });
 
-/* ══ 푸터 · 기동 ═══════════════════════════════════════════════════════ */
-$('#foot-links').innerHTML = FOOT_LINKS.map((t) => `<span>${esc(t)}</span>`).join('');
-$('#foot-addr').textContent = FOOT_ADDR;
-$('#foot').insertAdjacentHTML('beforeend', `<span class="fam">Family Site<svg width="8" height="5" viewBox="0 0 9 6" fill="none" stroke="#686868" stroke-width="1.25" aria-hidden="true"><path d="M.5.5 4.5 5 8.5.5"/></svg></span>`);
+/* ══ 기동 — 푸터는 셸이 세운다(패밀리 사이트가 실제로 펼쳐진다) ═══════════════ */
 
 /* 창 크기가 바뀌면 액자 안의 것을 다시 맞춘다 — 실루엣은 상자 픽셀로 다시 그리고,
    표·트리는 새 높이에 맞춰 접는 줄 수를 다시 센다. 한 해상도에 맞춰 둔 값이 아니다. */

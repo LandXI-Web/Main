@@ -21,6 +21,8 @@ export const nf = new Intl.NumberFormat('ko-KR');
 
 /** 이 화면의 목록 데이터는 전부 원본 목업 시드다 — 화면이 그렇게 말한다. */
 export const SEED_TAG = '시연';
+/* 등록자(by) · 발행 이력의 등록자는 원본 시드의 담당자명을 쓰지 않는다 — 전부 `LX 직원`(법전 §5 콘티 원칙:
+   담당자명 금지 · 2026-09-24 E0-7 · 감사 F9). 파일명 · 크기 · 일시는 원본 목업 시드 그대로(`시연`). */
 
 /* ── 탭 4종 — 원본 `?tab=` 값과 라벨이 같다 ─────────────────────────── */
 export const TABS = [
@@ -98,7 +100,7 @@ export const ARCHIVE = [
   {
     id: 'a1', kind: '정사영상', name: '남원 정사영상 2026-04 A구역',
     file: 'NW_ortho_202604_section_A.tif', size: '58.3 GB', basis: '2026.04.10',
-    by: '김현우', at: '2026.04.11 09:00', hidden: false,
+    by: 'LX 직원', at: '2026.04.11 09:00', hidden: false,
     thumb: crop('namwon-farmland-2025', 0),
     imagery: 'namwon_2504', crs: 'EPSG:5186 → 4326',
     detail: {
@@ -115,7 +117,7 @@ export const ARCHIVE = [
   {
     id: 'a2', kind: '정사영상', name: '운봉읍 드론 정사영상 2026-04',
     file: '남원_운봉_드론_4월.ecw', size: '62.7 GB', basis: '2026.04.08',
-    by: '이서연', at: '2026.04.09 10:00', hidden: true,
+    by: 'LX 직원', at: '2026.04.09 10:00', hidden: true,
     thumb: crop('namwon-epoch', 2),
     imagery: 'namwon_2506', crs: 'EPSG:5186 → 4326',
     detail: {
@@ -132,7 +134,7 @@ export const ARCHIVE = [
   {
     id: 'a3', kind: '공간정보', name: '남원 도로파손 라벨 쉐입 2026-04',
     file: 'NW_road_defect_labels_202604.shp', size: '48.2 MB', basis: '2026.06.20',
-    by: '김현우', at: '2026.06.20 12:30', hidden: false,
+    by: 'LX 직원', at: '2026.06.20 12:30', hidden: false,
     thumb: null,
     imagery: null, crs: 'EPSG:5186',
     detail: {
@@ -149,7 +151,7 @@ export const ARCHIVE = [
   {
     id: 'a4', kind: '이미지셋', name: '순찰차량 도로영상 2026-04',
     file: 'camera_org_202604.zip', size: '4,820장', basis: '2026.04.12',
-    by: '김현우', at: '2026.04.13 08:30', hidden: false,
+    by: 'LX 직원', at: '2026.04.13 08:30', hidden: false,
     thumb: null,
     imagery: null, crs: 'EPSG:4326 · GPS 로그',
     detail: {
@@ -167,7 +169,7 @@ export const ARCHIVE = [
     // 마스터 B5 r4c5 — 실제 GeoJSON 이 있는 벡터 자산. 판에는 탐지 결과 격자(86셀)가 그대로 선다.
     id: 'a5', kind: '공간정보', name: '여수 해양쓰레기 조사 2026',
     file: 'yeosu-marine-2026-drone-grid100.geojson', size: '24.4 KB', basis: '2026.03.15',
-    by: '이서연', at: '2026.03.20 11:00', hidden: false,
+    by: 'LX 직원', at: '2026.03.20 11:00', hidden: false,
     thumb: '../assets/proto/crops/yeosu-marine-2026-drone/1-clean.jpg',
     imagery: null, crs: 'EPSG:4326',
     geo: { file: '../assets/data/geo/results/yeosu-marine-2026-drone-grid100.geojson', bounds: [127.6423, 34.5681, 127.7127, 34.6369], count: 86, unit: '100 m 격자' },
@@ -242,14 +244,14 @@ export const SHARE_DEFAULT = [
 
 /* ── 업로드 완료 8건 → `지도 레이어 발행` ───────────────────────────── */
 export const DONE_UP = [
-  { id: 'd1', fmt: 'TIF', file: 'NW_ortho_정사영상_202604_section_C_v3.tif', size: '55.4 GB', at: '2026.04.10 14:22', by: '최수현', arch: 0 },
-  { id: 'd2', fmt: 'ECW', file: 'NW_ortho_202604_zone_X.ecw', size: '47.6 GB', at: '2026.04.12 09:30', by: '정민재', arch: 1 },
-  { id: 'd3', fmt: 'XLSX', file: '농지이용_행정정보_202604.xlsx', size: '287.3 KB', at: '2026.04.09 15:40', by: '이주원', arch: 0 },
-  { id: 'd4', fmt: 'TIF', file: 'NW_ortho_202604_section_A.tif', size: '58.3 GB', at: '2026.04.11 09:00', by: '김현우', arch: 2 },
-  { id: 'd5', fmt: 'ECW', file: '남원_운봉_드론_4월.ecw', size: '62.7 GB', at: '2026.04.09 10:00', by: '이서연', arch: 1 },
-  { id: 'd6', fmt: 'SHP', file: 'NW_road_defect_labels_202604.shp', size: '48.2 MB', at: '2026.06.20 10:00', by: '김현우', arch: 0 },
-  { id: 'd7', fmt: 'SHP', file: 'NW_greenhouse_labels_202603.shp', size: '39.4 MB', at: '2026.06.18 16:05', by: '이서연', arch: 0 },
-  { id: 'd8', fmt: 'ZIP', file: 'camera_org_202604.zip', size: '18.7 GB', at: '2026.04.13 08:30', by: '김현우', arch: 0 },
+  { id: 'd1', fmt: 'TIF', file: 'NW_ortho_정사영상_202604_section_C_v3.tif', size: '55.4 GB', at: '2026.04.10 14:22', by: 'LX 직원', arch: 0 },
+  { id: 'd2', fmt: 'ECW', file: 'NW_ortho_202604_zone_X.ecw', size: '47.6 GB', at: '2026.04.12 09:30', by: 'LX 직원', arch: 1 },
+  { id: 'd3', fmt: 'XLSX', file: '농지이용_행정정보_202604.xlsx', size: '287.3 KB', at: '2026.04.09 15:40', by: 'LX 직원', arch: 0 },
+  { id: 'd4', fmt: 'TIF', file: 'NW_ortho_202604_section_A.tif', size: '58.3 GB', at: '2026.04.11 09:00', by: 'LX 직원', arch: 2 },
+  { id: 'd5', fmt: 'ECW', file: '남원_운봉_드론_4월.ecw', size: '62.7 GB', at: '2026.04.09 10:00', by: 'LX 직원', arch: 1 },
+  { id: 'd6', fmt: 'SHP', file: 'NW_road_defect_labels_202604.shp', size: '48.2 MB', at: '2026.06.20 10:00', by: 'LX 직원', arch: 0 },
+  { id: 'd7', fmt: 'SHP', file: 'NW_greenhouse_labels_202603.shp', size: '39.4 MB', at: '2026.06.18 16:05', by: 'LX 직원', arch: 0 },
+  { id: 'd8', fmt: 'ZIP', file: 'camera_org_202604.zip', size: '18.7 GB', at: '2026.04.13 08:30', by: 'LX 직원', arch: 0 },
 ];
 export const DONE_FOLD = 3;
 
@@ -263,18 +265,18 @@ export const PUB_PREFILL = {
 /* ── 레이어 발행중 7건 (진행 5 · 실패 2) ────────────────────────────── */
 export const PUB_STEPS = ['파일 확인', '공간정보 분석', '지도 데이터 변환', '레이어 발행'];
 export const PUBLISHING = [
-  { id: 'p1', fmt: 'SHP', st: 'run', step: 2, file: 'NW_road_defect_labels_202604.shp', size: '48.2 MB', at: '2026.06.20 10:00', by: '김현우' },
-  { id: 'p2', fmt: 'SHP', st: 'fail', step: 2, file: 'NW_greenhouse_labels_202603.shp', size: '39.4 MB', at: '2026.06.18 16:05', by: '이서연',
+  { id: 'p1', fmt: 'SHP', st: 'run', step: 2, file: 'NW_road_defect_labels_202604.shp', size: '48.2 MB', at: '2026.06.20 10:00', by: 'LX 직원' },
+  { id: 'p2', fmt: 'SHP', st: 'fail', step: 2, file: 'NW_greenhouse_labels_202603.shp', size: '39.4 MB', at: '2026.06.18 16:05', by: 'LX 직원',
     why: '좌표체계 정보를 확인할 수 없습니다. 좌표계를 지정해 다시 발행해 주세요.', short: '좌표계 없음', fix: 'crs' },
-  { id: 'p3', fmt: 'TIF', st: 'run', step: 3, file: 'NW_ortho_202604_section_A.tif', size: '58.3 GB', at: '2026.04.11 09:20', by: '김현우' },
-  { id: 'p4', fmt: 'ECW', st: 'run', step: 1, file: 'NW_ortho_202604_zone_X.ecw', size: '47.6 GB', at: '2026.04.12 09:40', by: '정민재' },
+  { id: 'p3', fmt: 'TIF', st: 'run', step: 3, file: 'NW_ortho_202604_section_A.tif', size: '58.3 GB', at: '2026.04.11 09:20', by: 'LX 직원' },
+  { id: 'p4', fmt: 'ECW', st: 'run', step: 1, file: 'NW_ortho_202604_zone_X.ecw', size: '47.6 GB', at: '2026.04.12 09:40', by: 'LX 직원' },
   // 2026-09-20: 표 자료(assets.js table)는 제 좌표가 없어 지도 레이어가 될 수 없다.
   // 진행 4/4 로 두면 화면이 거짓말을 한다 — 1단계 파일 확인에서 막힌 것으로 바로잡았다.
-  { id: 'p5', fmt: 'XLSX', st: 'fail', step: 1, file: '농지이용_행정정보_202604.xlsx', size: '287.3 KB', at: '2026.04.09 15:52', by: '이주원',
+  { id: 'p5', fmt: 'XLSX', st: 'fail', step: 1, file: '농지이용_행정정보_202604.xlsx', size: '287.3 KB', at: '2026.04.09 15:52', by: 'LX 직원',
     why: '좌표 정보가 없는 표 자료입니다. 필지 번호(pnu)로 공간자료에 붙인 뒤 발행해 주세요.', short: '좌표 없음 · 표 자료', fix: 'join' },
-  { id: 'p6', fmt: 'ZIP', st: 'fail', step: 1, file: 'camera_org_202604.zip', size: '18.7 GB', at: '2026.04.13 08:41', by: '김현우',
+  { id: 'p6', fmt: 'ZIP', st: 'fail', step: 1, file: 'camera_org_202604.zip', size: '18.7 GB', at: '2026.04.13 08:41', by: 'LX 직원',
     why: '압축 파일 안에서 지원하는 이미지 형식을 찾지 못했습니다. 원본을 확인해 주세요.', short: '이미지 형식 없음', fix: 'unpack' },
-  { id: 'p7', fmt: 'ECW', st: 'run', step: 2, file: '남원_운봉_드론_4월.ecw', size: '62.7 GB', at: '2026.04.09 10:12', by: '이서연' },
+  { id: 'p7', fmt: 'ECW', st: 'run', step: 2, file: '남원_운봉_드론_4월.ecw', size: '62.7 GB', at: '2026.04.09 10:12', by: 'LX 직원' },
 ];
 export const PUB_ST = { run: '진행중', fail: '실패' };
 /** 단계 → 그림 위 리빌 비율(단계 완료분 + 진행분). 4/4 = 레이어 발행 중. */
@@ -381,11 +383,11 @@ export const USAGE = {
   a5: [{ kind: '서비스', name: '해양쓰레기 실태조사', ref: '38,057 건 · 2026.08.12', src: 'services.js marine' }],
 };
 export const PUBLISH_LOG = {
-  a1: [['v3', '2026.06.08 09:00', '김현우', '재발행 · 아카이빙 2회'], ['v2', '2026.05.21 09:10', '김현우', '재발행 · 데이터셋 v1'], ['v1', '2026.04.11 09:00', '김현우', '레이어 발행']],
-  a2: [['v2', '2026.04.15 08:50', '이서연', '재발행 · 아카이빙 1회'], ['v1', '2026.04.09 10:00', '이서연', '레이어 발행 · 숨김']],
-  a3: [['v1', '2026.06.20 12:30', '김현우', '레이어 발행']],
-  a4: [['v1', '2026.04.13 08:30', '김현우', '이미지셋 발행']],
-  a5: [['v1', '2026.03.20 11:00', '이서연', '레이어 발행 · 100 m 격자']],
+  a1: [['v3', '2026.06.08 09:00', 'LX 직원', '재발행 · 아카이빙 2회'], ['v2', '2026.05.21 09:10', 'LX 직원', '재발행 · 데이터셋 v1'], ['v1', '2026.04.11 09:00', 'LX 직원', '레이어 발행']],
+  a2: [['v2', '2026.04.15 08:50', 'LX 직원', '재발행 · 아카이빙 1회'], ['v1', '2026.04.09 10:00', 'LX 직원', '레이어 발행 · 숨김']],
+  a3: [['v1', '2026.06.20 12:30', 'LX 직원', '레이어 발행']],
+  a4: [['v1', '2026.04.13 08:30', 'LX 직원', '이미지셋 발행']],
+  a5: [['v1', '2026.03.20 11:00', 'LX 직원', '레이어 발행 · 100 m 격자']],
 };
 
 /* ── 판 — 실측 범위만 실선, 좌표계 없는 파일은 파선 ─────────────────── */
