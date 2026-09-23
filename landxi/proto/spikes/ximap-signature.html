@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>XI맵 시그니처 — 스파이크 · 제품 아님</title>
+<meta name="robots" content="noindex">
+<!-- E0-S 스파이크 · 제품 화면에서 이 파일로 오는 링크는 없다(관문 없음 · spikes/ 는 integrity 크롤 제외).
+     W2 E2-0 이 이 코드를 arrive.js · timescrub.js · swipe 부품으로 쪼갠다. -->
+<link rel="stylesheet" href="../fonts-system.css">
+<link rel="stylesheet" href="../vendor/maplibre/maplibre-gl.css">
+<link rel="stylesheet" href="../shell.css">
+<link rel="stylesheet" href="../parts.css">
+<link rel="stylesheet" href="ximap-signature.css">
+<script src="../vendor/maplibre/maplibre-gl.js"></script>
+<script type="module" src="ximap-signature.js"></script>
+</head>
+<body class="lx spk">
+  <p class="spk-band" id="spk-band"><span>스파이크 · 제품 아님 · 실데이터: 남원 농지이용 2025(<span class="n" id="spk-band-n">—</span> 필지) · LX 정사영상 4시점</span></p>
+
+  <div class="spk-stage" id="spk-stage" style="--swipe:50%">
+    <div class="spk-map" id="spk-map-a" aria-label="XI맵 — 남원 판독 결과"></div>
+    <div class="spk-map spk-map--b" id="spk-map-b" hidden aria-hidden="true"></div>
+
+    <!-- S1 스캔 스윕(DOM 오버레이) -->
+    <div class="spk-sweep" id="spk-sweep" aria-hidden="true"><i></i></div>
+    <!-- 락온 브래킷이 꽂히는 층 -->
+    <div class="spk-locks" id="spk-locks" aria-hidden="true"></div>
+
+    <!-- S6 스와이프 손잡이 · 라벨 -->
+    <div class="spk-swipe" id="spk-swipe" hidden>
+      <span class="spk-swipe-lb spk-swipe-lb--l" id="spk-swipe-l">원본</span>
+      <button type="button" class="spk-grip" id="spk-grip" role="slider" aria-label="원본 ↔ AI 판독 가르는 선" aria-valuemin="6" aria-valuemax="94" aria-valuenow="50">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 6 3 12l6 6M15 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="miter"/></svg>
+      </button>
+      <span class="spk-swipe-lb spk-swipe-lb--r" id="spk-swipe-r">AI 판독</span>
+    </div>
+
+    <!-- 판 1 · 좌상 HUD -->
+    <section class="spk-plate spk-hud" id="spk-hud" aria-live="polite">
+      <p class="spk-hud-scene"><b id="hud-scene">S1 도착</b><span id="hud-title">남원시 농지이용 현황 · 2025 · 드론</span></p>
+      <p class="spk-hud-status" id="hud-status">판독 결과 도착 중</p>
+      <p class="spk-hud-big"><span class="spk-big" id="hud-big">—</span><span class="spk-unit" id="hud-unit">필지</span></p>
+      <p class="spk-hud-note" id="hud-note"></p>
+      <p class="spk-hud-chg" id="hud-chg" hidden></p>
+      <div class="spk-hud-act"><button type="button" class="btn-br btn-br--s" id="spk-replay">다시 보기</button></div>
+    </section>
+
+    <!-- 판 2 · 하단 시점 스크러버 띠 -->
+    <p class="spk-void" id="spk-void" hidden></p>
+    <section class="spk-plate spk-scrub" id="spk-scrub" aria-label="정사영상 시점">
+      <button type="button" class="spk-play" id="spk-play" aria-pressed="false" aria-label="시점 재생">
+        <svg class="i-play" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 5v14l12-7z" fill="currentColor"/></svg>
+        <svg class="i-pause" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></svg>
+      </button>
+      <div class="spk-track">
+        <input type="range" id="spk-range" min="0" max="3" step="0.01" value="1" aria-label="정사영상 시점 2025.04–2025.10">
+        <ol class="spk-ticks" id="spk-ticks"></ol>
+      </div>
+    </section>
+
+    <!-- 판 3 · 우하 장면 전환 -->
+    <nav class="spk-plate spk-seg" id="spk-seg" aria-label="장면">
+      <button type="button" data-scene="s1">S1 도착</button>
+      <button type="button" data-scene="s3">S3 시점</button>
+      <button type="button" data-scene="s6">S6 스와이프</button>
+    </nav>
+  </div>
+</body>
+</html>
