@@ -87,7 +87,7 @@ function layersOfService(sv) {
         count: r.stats.count, unit: r.unit, classes: cls, classCounts: r.stats.classes,
         classArea: r.stats.classAreaM2 || {}, areaM2: r.stats.areaM2, bbox: r.stats.bbox,
         camera: r.camera, thumb: `${CROP}${r.id}/1.jpg`, region: r.region, what: r.what,
-        crs: r.stats.crsSrc, analyzedAt: r.stats.analyzedAt, fields: r.fields,
+        crs: r.stats.crsSrc, analyzedAt: r.stats.analyzedAt, fields: r.fields, src: SRC_IMAGERY[r.id] || '',
         shared: r.id !== 'namwon-farmland-2025',   // 공유 받은 것 — 원본 시드의 공유 아이콘 자리
       };
     }).filter(Boolean);
@@ -102,7 +102,7 @@ function layersOfService(sv) {
       classArea: {}, areaM2: c.stats.area_m2, bbox: c.bounds, method: c.method,
       camera: { center: [(c.bounds[0] + c.bounds[2]) / 2, (c.bounds[1] + c.bounds[3]) / 2], zoom: 15.2 },
       thumb: `${CROP}kuksan-change/1.jpg`, region: '전북 남원시', crs: 'EPSG:5186',
-      analyzedAt: '2026-06-08', shared: false,
+      analyzedAt: '2026-06-08', shared: false, src: '',
       filter: ['==', ['get', 'pair'], c.pair],
     }];
   }
@@ -157,14 +157,25 @@ export function scopeCtx(cardId) {
 }
 
 /* ══ 3. 시점 스트립 — LX 정사영상 4시점(실 타일) ═══════════════════════════ */
+/** 정사영상 범위(km²) — bounds 네 모서리의 구면 근사 면적. 손으로 적은 `0.62 km²` 를 대신한다. */
+const boundsKm2 = (b) => (b ? ringAreaM2([[b[0], b[1]], [b[2], b[1]], [b[2], b[3]], [b[0], b[3]]]) / 1e6 : 0);
+const KIND_LABEL = { ortho: '정사영상' };
 export const EPOCHS = EPOCH.map((im, i) => ({
   id: im.id, label: im.label.split(' · ').pop(), full: im.label, gsd: im.gsd,
   gsdCm: (im.gsd * 100).toFixed(2), captured: im.captured, bounds: im.bounds,
   tiles: '../' + im.tiles, minzoom: im.minzoom, maxzoom: im.maxzoom,
   thumb: `${CROP}namwon-epoch/${i + 1}.jpg`,
+  kind: KIND_LABEL[im.kind] || im.kind || '—', areaKm2: boundsKm2(im.bounds),
 }));
 export const CHANGE_PAIRS = CHANGE.map((c) => ({ pair: c.pair, from: c.from, to: c.to, label: c.label, method: c.method, stats: c.stats, bounds: c.bounds }));
 export const epochById = (id) => EPOCHS.find((e) => e.id === id) || EPOCHS[0];
+/** 그 시점 정사영상에서 판독한 결과 레이어(SRC_IMAGERY). 없으면 빈 배열 — 화면은 `—` 를 쓴다. */
+export const resultsOfEpoch = (epochId) => ALL_LAYERS.filter((l) => l.src === epochId);
+/** 두 시점 사이의 변화 지수(비지도) 집계 — change.js 에 그 쌍이 있을 때만. */
+export const changeBetween = (a, b) => {
+  const k = (id) => String(id || '').replace(/^namwon_/, '');
+  return CHANGE_PAIRS.find((c) => c.from === k(a) && c.to === k(b)) || null;
+};
 
 /* ══ 4. 레이어 탭 트리 — 발행된 레이어 12(원본 시드 · 시연) ════════════════ */
 export const LAYER_TREE = [
@@ -192,6 +203,9 @@ export const LAYER_TREE = [
   ] },
 ];
 export const TREE_LEAVES = LAYER_TREE.flatMap((s) => s.groups.flatMap((g) => g.leaves));
+/* 이 12줄은 원본 시드(시연)다 — 지도에 올릴 실자료(GeoJSON · 타일)가 저장소에 없다.
+   리프에 `layer`(ALL_LAYERS 의 id)가 붙은 줄만 지도에 실제로 켠다. 없으면 `시연 · 지도 미연결` + 체크 불가. */
+export const leafLayer = (leaf) => (leaf?.layer ? layerById(leaf.layer) : null);
 
 /* ══ 5. 검색 시드 — 명칭 · 도로명 · 지번(시연) ═════════════════════════════
    총 건수는 원본 시드 그대로, 좌표는 실 위치. 실서비스는 V-World 검색 API 응답을 쓴다. */
@@ -343,7 +357,15 @@ export const isSeedReport = (id) => REP_SEED.some((r) => r.id === id);
 export const PLEDGE_TEXT = '본인은 Land-XI 플랫폼의 공간정보 다운로드 환경을 사용함에 있어 해당 자료를 외부로 유출하지 않을 것이며, 업무(과제) 수행에 한해 사용하고 이를 임의로 가공·편집·유출하지 않으며, 신청한 본인 외 제3자 또는 기관 내 타 사용자에게 공유하지 않고, 자료의 사용 및 활용, 목적 외 사용금지, 자료 보호조치, 자료오용방지 등에 대한 책임이 있음을 서약하고 이에 본 서약서를 제출합니다.';
 export const PLEDGE_ERR = { agree: '보안 서약 내용에 동의해 주셔야 합니다.', name: '요청명을 입력해 주세요.', purpose: '사용 목적을 입력해 주세요.' };
 
-export const today = () => new Date('2026-08-27T00:00:00+09:00');
+/* 날짜는 셸 기준일(AS_OF 2026-06-08) 하나만 쓴다(Q5-b) — 서약서 활용 기간 · 보고서 제목 · 접수 일자.
+   벽시계를 읽지 않는다(시연 화면이 날마다 다른 값을 내면 안 된다). shell.js AS_OF 와 같은 값. */
+export const AS_OF = '2026-06-08';
+export const today = () => new Date(`${AS_OF}T00:00:00+09:00`);
 export const ymd = (d) => `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 export const plusMonth = (d, n = 1) => { const x = new Date(d); x.setMonth(x.getMonth() + n); return x; };
-export const stamp = () => { const d = today(), p = (n) => String(n).padStart(2, '0'); return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())} ${p(new Date().getHours())}:${p(new Date().getMinutes())}:${p(new Date().getSeconds())}`; };
+/** 접수 일자 — 시드와 같은 `YYYY-MM-DD` 꼴 · 기준일 그대로(시각은 지어내지 않는다). */
+export const stamp = () => AS_OF;
+/** `2026-04-23 09:48:12` · `2026.04.23` 어느 꼴이든 `YYYY-MM-DD` 로. */
+export const dayOf = (s) => String(s || '').slice(0, 10).replace(/\./g, '-');
+/** 기준일에서 n개월 전(`YYYY-MM-DD`) — 기간 칩(1 · 3 · 6 · 12개월)이 실제로 거르는 경계. */
+export const monthsAgo = (n) => { const d = plusMonth(today(), -n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };

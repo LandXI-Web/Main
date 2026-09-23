@@ -1,0 +1,218 @@
+· roles {"admin":{"ximap.html":"admin-home.html","stats-standard.html":"admin-home.html","report-standard.html":"admin-home.html","report-standard-issue.html":"admin-home.html","map-drift.html":"admin-home.html"},"staff":{"ximap.html":"ximap.html","stats-standard.html":"stats-standard.html","report-standard
+· shot x01-ximap-initial-1440
+· measure ximap {"ox":0,"small":0,"shadow":0,"radius":0,"grad":0,"blur":0,"blue":0}
+· click 레이어 탭 ok
+· shot x02-layer-tab
+· click 모두 접기/열기 ok
+· click 결과 탭 ok
+· click 목록 보기 ok
+· shot x03-list-modal
+· click 준비중 보기 ok
+· shot x04-soon-modal
+· click 공유받은것 ok
+· click 내것 ok
+· result layer checkboxes 5
+· shot x05-layer-on
+· measure ximap-layer-on {"ox":0,"small":0,"shadow":0,"radius":0,"grad":0,"blur":0,"blue":0}
+· opacity 30 %
+· click 레이어 더보기 ok
+· shot x06-layer-menu
+· click 보기 설정 ok
+· shot x07-view-settings
+· click tool basemap ok
+· shot x08-tool-basemap
+· click tool measure ok
+· shot x08-tool-measure
+· click tool draw ok
+· shot x08-tool-draw
+· click tool lx ok
+· shot x08-tool-lx
+· click basemap reopen ok
+· click 배경 일반 ok
+· shot x09-base-general
+· click basemap reopen2 ok
+· click 배경 위성 ok
+· click measure open ok
+· click 거리 측정 ok
+· shot x10-measure-distance
+· measure tips ["거리 14.24 km"]
+· click aoi ok
+· shot x11-aoi
+· click aoi 저장 ok
+· shot x12-aoi-saved
+· toast after aoi ["관심 구역 1개 · 2382.6 ha 를 저장했습니다 · 시연"]
+· click 검색 도구 ok
+· shot x13-search
+· click 검색 도로명탭 ok
+· click 검색결과 클릭 ok
+· shot x14-search-go
+· shot x15-search-other
+· search other 전체
+명칭
+도로명
+지번
+
+검색 결과가 없습니다
+
+다른 명칭 · 도로명 · 지번으로 다시 찾아 보세요
+· click 검색 닫기 ok
+· click 시점 1 ok
+· shot x16-epoch
+· click 시점 해제 ok
+· click 범례 클래스 숨김 ok
+· shot x17-legend-hidden
+· click 범례 되돌림 ok
+· click 표 펼치기 ok
+· shot x18-table-open
+· measure ximap-table {"ox":0,"small":0,"shadow":0,"radius":0,"grad":0,"blur":0,"blue":0}
+· click 기본정보 ok
+· click 페이지 2 ok
+· click 공간정보탭 ok
+· shot x19-tab-space
+· click 지역구분탭 ok
+· shot x20-tab-region
+· click 지역 행 ok
+· shot x21-region-row
+· click 분석결과탭 ok
+· click 결과 행 → info ok
+· shot x22-info-side
+· measure ximap-info {"ox":0,"small":0,"shadow":0,"radius":0,"grad":0,"blur":0,"blue":0}
+· click 조치중 ok
+· click 조치 저장 ok
+· shot x23-act-saved
+· click 내보내기 ok
+· shot x24-pledge
+· click 서약 빈 제출 ok
+· shot x25-pledge-errors
+· click 서약 제출 ok
+· download ximap export 남원시 농지이용 현황 · 2026.06.08.geojson
+· shot x26-after-export
+· click 분석 결과/성과 버튼 ok
+· shot x27-open-side-empty
+· click 겹쳐보기 ok
+· shot x28-overlay
+· measure ximap-overlay {"ox":0,"small":0,"shadow":0,"radius":0,"grad":0,"blur":0,"blue":0}
+· shot x29-overlay-swiped
+· CLICK-FAIL 시점 교체 locator.click: Timeout 4000ms exceeded.
+· shot x30-overlay-epoch
+· click 기준 변경 링크 ok
+· click 나란히보기 ok
+· shot x31-parallel
+· MISSING 좌 확대 [data-z="in"][data-side="좌"]
+· parallel zoom {"before":15.641013100718737,"after":[15.641013100718737,15.641013100718746]}
+· compare tool buttons 7
+· compare tool click changes DOM true
+· shot x32-parallel-toolclick
+· shot s01-stats-1440
+· measure stats {"ox":0,"small":0,"shadow":0,"radius":0,"grad":0,"blur":0,"blue":0}
+· click 막대 클릭 ok
+· shot s02-bar
+· click 표 행 ok
+· click 클래스별 ok
+· shot s03-class
+· click 클래스 행 ok
+· click 지역별 ok
+· basis radios 3
+· click 통계 보기 ok
+· shot s04-basis-seed
+· stats after seed basis — big numbers 205.0ha 전체
+2,049,934 ㎡
+205.0ha
+경작지 · 100 %
+· click 더 보기 ok
+· shot s05-find-modal
+· click 3개월칩 ok
+· click 찾기 검색 ok
+· click 조회 ok
+· shot s06-filter-emd
+· click 엑셀 다운로드 ok
+· click 엑셀 서약 제출 ok
+· click 서랍 닫기 ok
+· shot s07-closed
+· stats url after close http://localhost:4173/landxi/proto/stats-standard.html?on=namwon-farmland-2025&left=off&tab=region&base=satellite
+· shot s08-stats-empty
+· shot r01-issue-1440
+· measure report-issue {"ox":0,"small":0,"shadow":0,"radius":0,"grad":0,"blur":0,"blue":0}
+· click 빈 발급 요청 ok
+· shot r02-issue-errors
+· shot r03-issue-filled
+· click 발급 요청 ok
+· shot r04-after-submit
+· report list first 접수
+2026-06-08
+요청자 LX 직원
+다운로드 0회
+감사용 보고서
+탐지 클래스 경작지, 비경작지
+대상 지역 운봉읍·송동면
+· report status after 6s 접수
+2026-06-08
+요청자 LX 직원
+다운로드 0회
+감사용 보고서
+탐지 클래스 경작지, 비경작지
+대상 
+· shot r05-list-1440
+· measure report-list {"ox":0,"small":0,"shadow":0,"radius":0,"grad":0,"blur":0,"blue":0}
+· click 내역 행 ok
+· shot r06-list-row
+· click 상태 검색 ok
+· shot r07-list-fail
+· click 빈 결과 검색 ok
+· shot r08-list-empty
+· click 초기화 ok
+· click 1개월칩 ok
+· list rows after 1개월 chip (필터 동작?) 1
+· MISSING 엑셀 다운로드(행) .rp .dl
+· shot r09-list-dl-pledge
+· MISSING 보고서 엑셀 서약 제출 .modal-f .btn
+· shot d01-drift-1440
+· measure drift {"ox":0,"small":0,"shadow":1,"radius":1,"grad":0,"blur":0,"blue":0}
+· click 재생 ok
+· shot d02-drift-playing
+· click 8x ok
+· shot d03-drift-8x
+· click 정지 ok
+· click lay track ok
+· click lay prob ok
+· shot d04-drift-track-prob
+· click tab patch ok
+· shot d05-drift-tab-patch
+· click tab role ok
+· shot d05-drift-tab-role
+· click tab need ok
+· shot d05-drift-tab-need
+· click tab verify ok
+· shot d05-drift-tab-verify
+· click tab eta ok
+· click 상륙 구간 ok
+· shot d06-drift-eta-click
+· shot d07-drift-scrub
+· shot v-ximap-1280x800
+· measure ximap-1280 {"ox":68,"small":0,"shadow":0,"radius":0,"grad":0,"blur":0,"blue":0}
+· shot v-stats-1280x800
+· measure stats-1280 {"ox":0,"small":0,"shadow":0,"radius":0,"grad":0,"blur":0,"blue":0}
+· shot v-rissue-1280x800
+· measure rissue-1280 {"ox":0,"small":0,"shadow":0,"radius":0,"grad":0,"blur":0,"blue":0}
+· shot v-drift-1280x800
+· measure drift-1280 {"ox":0,"small":0,"shadow":1,"radius":1,"grad":0,"blur":0,"blue":0}
+· shot v-ximap-1920x1080
+· measure ximap-1920 {"ox":0,"small":0,"shadow":0,"radius":0,"grad":0,"blur":0,"blue":0}
+· shot v-stats-1920x1080
+· measure stats-1920 {"ox":0,"small":0,"shadow":0,"radius":0,"grad":0,"blur":0,"blue":0}
+· shot v-rissue-1920x1080
+· measure rissue-1920 {"ox":0,"small":0,"shadow":0,"radius":0,"grad":0,"blur":0,"blue":0}
+· shot v-drift-1920x1080
+· measure drift-1920 {"ox":0,"small":0,"shadow":1,"radius":1,"grad":0,"blur":0,"blue":0}
+· shot v-ximap-390x844
+· measure ximap-390 {"ox":662,"small":0,"shadow":0,"radius":0,"grad":0,"blur":0,"blue":0}
+· shot v-stats-390x844
+· measure stats-390 {"ox":137,"small":0,"shadow":0,"radius":0,"grad":0,"blur":0,"blue":0}
+· shot v-rissue-390x844
+· measure rissue-390 {"ox":137,"small":0,"shadow":0,"radius":0,"grad":0,"blur":0,"blue":0}
+· shot v-drift-390x844
+· measure drift-390 {"ox":137,"small":0,"shadow":1,"radius":1,"grad":0,"blur":0,"blue":0}
+· shot x40-sales-ximap
+· sales rail ["LANDXI","분석 서비스","지도 서비스","활용 사례","MY","마이 페이지"]
+· links {"scrub/index.html":200,"dashboard.html":200,"dataset.html":200,"ai-project.html":200,"analysis-ai.html":200,"ximap.html":200,"notice.html":200,"mypage.html":200,"notice.html?notice=8":200,"?mode=basic&on=&panel=result&left=on&tab=result&fold=1&side=&sel=&q=&epoch=&base=satellite&card=&result=&page=
+done

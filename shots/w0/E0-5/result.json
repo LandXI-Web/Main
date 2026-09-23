@@ -1,0 +1,1675 @@
+{
+  "pages": {
+    "ximap": {
+      "console": [],
+      "pageerror": [],
+      "failed": [
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6994/3233.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6994/3234.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/15/27978/12931.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/15/27980/12931.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/17/111919/51733.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/17/111915/51733.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/17/111919/51730.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/17/111915/51730.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/17/111919/51730.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/17/111915/51730.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/15/27981/12932.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/15/27977/12931.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/15/27981/12931.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/15/27981/12934.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/14/13989/6465.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/14/13990/6465.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/14/13988/6467.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/14/13989/6464.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/14/13990/6464.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/14/13991/6466.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/14/13988/6464.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6996/3229.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/14/13986/6460.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/14/13989/6460.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/16/55951/25842.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/14/13987/6458.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/14/13988/6458.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/14/13986/6458.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/14/13989/6458.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/14/13986/6466.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/14/13986/6465.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6996/3234.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/10/873/406.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/10/874/406.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6996/3234.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6996/3235.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6992/3235.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/15/27977/12936.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/15/27978/12936.jpeg"
+      ],
+      "http4xx": [],
+      "measure": {
+        "overflowX": 0,
+        "small": [],
+        "shadow": [],
+        "radius": [],
+        "gradient": [],
+        "blur": [],
+        "filledBlue": [],
+        "smallN": 0,
+        "shadowN": 0,
+        "radiusN": 0,
+        "gradientN": 0,
+        "blurN": 0,
+        "filledBlueN": 0
+      }
+    },
+    "ximap-layer-on": {
+      "measure": {
+        "overflowX": 0,
+        "small": [],
+        "shadow": [],
+        "radius": [],
+        "gradient": [],
+        "blur": [],
+        "filledBlue": [],
+        "smallN": 0,
+        "shadowN": 0,
+        "radiusN": 0,
+        "gradientN": 0,
+        "blurN": 0,
+        "filledBlueN": 0
+      }
+    },
+    "ximap-table": {
+      "measure": {
+        "overflowX": 0,
+        "small": [],
+        "shadow": [],
+        "radius": [],
+        "gradient": [],
+        "blur": [],
+        "filledBlue": [],
+        "smallN": 0,
+        "shadowN": 0,
+        "radiusN": 0,
+        "gradientN": 0,
+        "blurN": 0,
+        "filledBlueN": 0
+      }
+    },
+    "ximap-info": {
+      "measure": {
+        "overflowX": 0,
+        "small": [],
+        "shadow": [],
+        "radius": [],
+        "gradient": [],
+        "blur": [],
+        "filledBlue": [],
+        "smallN": 0,
+        "shadowN": 0,
+        "radiusN": 0,
+        "gradientN": 0,
+        "blurN": 0,
+        "filledBlueN": 0
+      }
+    },
+    "ximap-overlay": {
+      "measure": {
+        "overflowX": 0,
+        "small": [],
+        "shadow": [],
+        "radius": [],
+        "gradient": [],
+        "blur": [],
+        "filledBlue": [],
+        "smallN": 0,
+        "shadowN": 0,
+        "radiusN": 0,
+        "gradientN": 0,
+        "blurN": 0,
+        "filledBlueN": 0
+      }
+    },
+    "stats": {
+      "console": [],
+      "pageerror": [],
+      "failed": [
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/12/3499/1616.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/12/3499/1615.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/12/3499/1617.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/12/3499/1614.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/12/3499/1618.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/12/3493/1619.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/12/3493/1615.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/12/3500/1619.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/12/3500/1615.jpeg"
+      ],
+      "http4xx": [],
+      "measure": {
+        "overflowX": 0,
+        "small": [],
+        "shadow": [],
+        "radius": [],
+        "gradient": [],
+        "blur": [],
+        "filledBlue": [],
+        "smallN": 0,
+        "shadowN": 0,
+        "radiusN": 0,
+        "gradientN": 0,
+        "blurN": 0,
+        "filledBlueN": 0
+      }
+    },
+    "report-issue": {
+      "console": [],
+      "pageerror": [],
+      "failed": [
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/12/3499/1616.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/12/3499/1617.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/12/3499/1614.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/12/3499/1618.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/11/1750/810.jpeg"
+      ],
+      "http4xx": [],
+      "measure": {
+        "overflowX": 0,
+        "small": [],
+        "shadow": [],
+        "radius": [],
+        "gradient": [],
+        "blur": [],
+        "filledBlue": [],
+        "smallN": 0,
+        "shadowN": 0,
+        "radiusN": 0,
+        "gradientN": 0,
+        "blurN": 0,
+        "filledBlueN": 0
+      }
+    },
+    "report-list": {
+      "console": [],
+      "pageerror": [],
+      "failed": [],
+      "http4xx": [],
+      "measure": {
+        "overflowX": 0,
+        "small": [],
+        "shadow": [],
+        "radius": [],
+        "gradient": [],
+        "blur": [],
+        "filledBlue": [],
+        "smallN": 0,
+        "shadowN": 0,
+        "radiusN": 0,
+        "gradientN": 0,
+        "blurN": 0,
+        "filledBlueN": 0
+      }
+    },
+    "drift": {
+      "console": [],
+      "pageerror": [],
+      "failed": [],
+      "http4xx": [],
+      "measure": {
+        "overflowX": 0,
+        "small": [],
+        "shadow": [
+          "div.maplibregl-ctrl.maplibregl-ctrl-group rgba(0, 0, 0, 0.1) 0px 0px 0px 2px"
+        ],
+        "radius": [
+          "div.maplibregl-ctrl.maplibregl-ctrl-group 4px"
+        ],
+        "gradient": [],
+        "blur": [],
+        "filledBlue": [],
+        "smallN": 0,
+        "shadowN": 1,
+        "radiusN": 1,
+        "gradientN": 0,
+        "blurN": 0,
+        "filledBlueN": 0
+      }
+    },
+    "ximap-1280": {
+      "console": [],
+      "pageerror": [],
+      "failed": [
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6995/3231.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6996/3231.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/12/3497/1618.jpeg"
+      ],
+      "http4xx": [],
+      "measure": {
+        "overflowX": 68,
+        "small": [],
+        "shadow": [],
+        "radius": [],
+        "gradient": [],
+        "blur": [],
+        "filledBlue": [],
+        "smallN": 0,
+        "shadowN": 0,
+        "radiusN": 0,
+        "gradientN": 0,
+        "blurN": 0,
+        "filledBlueN": 0
+      }
+    },
+    "stats-1280": {
+      "console": [],
+      "pageerror": [],
+      "failed": [
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6995/3231.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6996/3231.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/12/3497/1618.jpeg"
+      ],
+      "http4xx": [],
+      "measure": {
+        "overflowX": 0,
+        "small": [],
+        "shadow": [],
+        "radius": [],
+        "gradient": [],
+        "blur": [],
+        "filledBlue": [],
+        "smallN": 0,
+        "shadowN": 0,
+        "radiusN": 0,
+        "gradientN": 0,
+        "blurN": 0,
+        "filledBlueN": 0
+      }
+    },
+    "rissue-1280": {
+      "console": [],
+      "pageerror": [],
+      "failed": [
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/12/3497/1618.jpeg"
+      ],
+      "http4xx": [],
+      "measure": {
+        "overflowX": 0,
+        "small": [],
+        "shadow": [],
+        "radius": [],
+        "gradient": [],
+        "blur": [],
+        "filledBlue": [],
+        "smallN": 0,
+        "shadowN": 0,
+        "radiusN": 0,
+        "gradientN": 0,
+        "blurN": 0,
+        "filledBlueN": 0
+      }
+    },
+    "drift-1280": {
+      "console": [],
+      "pageerror": [],
+      "failed": [],
+      "http4xx": [],
+      "measure": {
+        "overflowX": 0,
+        "small": [],
+        "shadow": [
+          "div.maplibregl-ctrl.maplibregl-ctrl-group rgba(0, 0, 0, 0.1) 0px 0px 0px 2px"
+        ],
+        "radius": [
+          "div.maplibregl-ctrl.maplibregl-ctrl-group 4px"
+        ],
+        "gradient": [],
+        "blur": [],
+        "filledBlue": [],
+        "smallN": 0,
+        "shadowN": 1,
+        "radiusN": 1,
+        "gradientN": 0,
+        "blurN": 0,
+        "filledBlueN": 0
+      }
+    },
+    "ximap-1920": {
+      "console": [],
+      "pageerror": [],
+      "failed": [
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/15/27976/12932.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/15/27981/12933.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/15/27981/12934.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/15/27981/12932.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/15/27974/12933.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/15/27974/12934.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/15/27974/12935.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/16/55956/25867.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/16/55952/25867.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6995/3230.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6997/3231.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6993/3231.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6996/3230.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6994/3230.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6997/3234.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6993/3234.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6997/3230.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6995/3235.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6996/3235.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6997/3235.jpeg"
+      ],
+      "http4xx": [],
+      "measure": {
+        "overflowX": 0,
+        "small": [],
+        "shadow": [],
+        "radius": [],
+        "gradient": [],
+        "blur": [],
+        "filledBlue": [],
+        "smallN": 0,
+        "shadowN": 0,
+        "radiusN": 0,
+        "gradientN": 0,
+        "blurN": 0,
+        "filledBlueN": 0
+      }
+    },
+    "stats-1920": {
+      "console": [],
+      "pageerror": [],
+      "failed": [
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6995/3230.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6997/3231.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6993/3231.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6996/3230.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6994/3230.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6997/3234.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6993/3234.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6997/3230.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6995/3235.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6996/3235.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6997/3235.jpeg"
+      ],
+      "http4xx": [],
+      "measure": {
+        "overflowX": 0,
+        "small": [],
+        "shadow": [],
+        "radius": [],
+        "gradient": [],
+        "blur": [],
+        "filledBlue": [],
+        "smallN": 0,
+        "shadowN": 0,
+        "radiusN": 0,
+        "gradientN": 0,
+        "blurN": 0,
+        "filledBlueN": 0
+      }
+    },
+    "rissue-1920": {
+      "console": [],
+      "pageerror": [],
+      "failed": [
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6995/3235.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6996/3235.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6997/3235.jpeg"
+      ],
+      "http4xx": [],
+      "measure": {
+        "overflowX": 0,
+        "small": [],
+        "shadow": [],
+        "radius": [],
+        "gradient": [],
+        "blur": [],
+        "filledBlue": [],
+        "smallN": 0,
+        "shadowN": 0,
+        "radiusN": 0,
+        "gradientN": 0,
+        "blurN": 0,
+        "filledBlueN": 0
+      }
+    },
+    "drift-1920": {
+      "console": [],
+      "pageerror": [],
+      "failed": [],
+      "http4xx": [],
+      "measure": {
+        "overflowX": 0,
+        "small": [],
+        "shadow": [
+          "div.maplibregl-ctrl.maplibregl-ctrl-group rgba(0, 0, 0, 0.1) 0px 0px 0px 2px"
+        ],
+        "radius": [
+          "div.maplibregl-ctrl.maplibregl-ctrl-group 4px"
+        ],
+        "gradient": [],
+        "blur": [],
+        "filledBlue": [],
+        "smallN": 0,
+        "shadowN": 1,
+        "radiusN": 1,
+        "gradientN": 0,
+        "blurN": 0,
+        "filledBlueN": 0
+      }
+    },
+    "ximap-390": {
+      "console": [
+        "warning: Map cannot fit within canvas with the given bounds, padding, and/or offset."
+      ],
+      "pageerror": [],
+      "failed": [
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6995/3231.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6996/3231.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/11/1748/810.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/11/1749/810.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/11/1747/810.jpeg"
+      ],
+      "http4xx": [],
+      "measure": {
+        "overflowX": 662,
+        "small": [],
+        "shadow": [],
+        "radius": [],
+        "gradient": [],
+        "blur": [],
+        "filledBlue": [],
+        "smallN": 0,
+        "shadowN": 0,
+        "radiusN": 0,
+        "gradientN": 0,
+        "blurN": 0,
+        "filledBlueN": 0
+      }
+    },
+    "stats-390": {
+      "console": [],
+      "pageerror": [],
+      "failed": [
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6995/3231.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/13/6996/3231.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/11/1748/810.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/11/1749/810.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/11/1747/810.jpeg"
+      ],
+      "http4xx": [],
+      "measure": {
+        "overflowX": 137,
+        "small": [],
+        "shadow": [],
+        "radius": [],
+        "gradient": [],
+        "blur": [],
+        "filledBlue": [],
+        "smallN": 0,
+        "shadowN": 0,
+        "radiusN": 0,
+        "gradientN": 0,
+        "blurN": 0,
+        "filledBlueN": 0
+      }
+    },
+    "rissue-390": {
+      "console": [],
+      "pageerror": [],
+      "failed": [
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/11/1748/810.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/11/1749/810.jpeg",
+        "net::ERR_ABORTED https://xdworld.vworld.kr/2d/Satellite/service/11/1747/810.jpeg"
+      ],
+      "http4xx": [],
+      "measure": {
+        "overflowX": 137,
+        "small": [],
+        "shadow": [],
+        "radius": [],
+        "gradient": [],
+        "blur": [],
+        "filledBlue": [],
+        "smallN": 0,
+        "shadowN": 0,
+        "radiusN": 0,
+        "gradientN": 0,
+        "blurN": 0,
+        "filledBlueN": 0
+      }
+    },
+    "drift-390": {
+      "console": [],
+      "pageerror": [],
+      "failed": [],
+      "http4xx": [],
+      "measure": {
+        "overflowX": 137,
+        "small": [],
+        "shadow": [
+          "div.maplibregl-ctrl.maplibregl-ctrl-group rgba(0, 0, 0, 0.1) 0px 0px 0px 2px"
+        ],
+        "radius": [
+          "div.maplibregl-ctrl.maplibregl-ctrl-group 4px"
+        ],
+        "gradient": [],
+        "blur": [],
+        "filledBlue": [],
+        "smallN": 0,
+        "shadowN": 1,
+        "radiusN": 1,
+        "gradientN": 0,
+        "blurN": 0,
+        "filledBlueN": 0
+      }
+    },
+    "ximap-sales": {
+      "console": [],
+      "pageerror": [],
+      "failed": [],
+      "http4xx": []
+    }
+  },
+  "steps": [
+    {
+      "k": "roles",
+      "v": {
+        "admin": {
+          "ximap.html": "admin-home.html",
+          "stats-standard.html": "admin-home.html",
+          "report-standard.html": "admin-home.html",
+          "report-standard-issue.html": "admin-home.html",
+          "map-drift.html": "admin-home.html"
+        },
+        "staff": {
+          "ximap.html": "ximap.html",
+          "stats-standard.html": "stats-standard.html",
+          "report-standard.html": "report-standard.html",
+          "report-standard-issue.html": "report-standard-issue.html",
+          "map-drift.html": "map-drift.html"
+        },
+        "sales": {
+          "ximap.html": "ximap.html",
+          "stats-standard.html": "stats-standard.html",
+          "report-standard.html": "report-standard.html",
+          "report-standard-issue.html": "report-standard-issue.html",
+          "map-drift.html": "map-drift.html"
+        },
+        "none(default)": {
+          "ximap.html": "admin-home.html",
+          "stats-standard.html": "admin-home.html",
+          "report-standard.html": "admin-home.html",
+          "report-standard-issue.html": "admin-home.html",
+          "map-drift.html": "admin-home.html"
+        }
+      }
+    },
+    {
+      "k": "shot",
+      "v": "x01-ximap-initial-1440"
+    },
+    {
+      "k": "measure ximap",
+      "v": {
+        "ox": 0,
+        "small": 0,
+        "shadow": 0,
+        "radius": 0,
+        "grad": 0,
+        "blur": 0,
+        "blue": 0
+      }
+    },
+    {
+      "k": "click 레이어 탭",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x02-layer-tab"
+    },
+    {
+      "k": "click 모두 접기/열기",
+      "v": "ok"
+    },
+    {
+      "k": "click 결과 탭",
+      "v": "ok"
+    },
+    {
+      "k": "click 목록 보기",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x03-list-modal"
+    },
+    {
+      "k": "click 준비중 보기",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x04-soon-modal"
+    },
+    {
+      "k": "click 공유받은것",
+      "v": "ok"
+    },
+    {
+      "k": "click 내것",
+      "v": "ok"
+    },
+    {
+      "k": "result layer checkboxes",
+      "v": 5
+    },
+    {
+      "k": "shot",
+      "v": "x05-layer-on"
+    },
+    {
+      "k": "measure ximap-layer-on",
+      "v": {
+        "ox": 0,
+        "small": 0,
+        "shadow": 0,
+        "radius": 0,
+        "grad": 0,
+        "blur": 0,
+        "blue": 0
+      }
+    },
+    {
+      "k": "opacity",
+      "v": "30 %"
+    },
+    {
+      "k": "click 레이어 더보기",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x06-layer-menu"
+    },
+    {
+      "k": "click 보기 설정",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x07-view-settings"
+    },
+    {
+      "k": "click tool basemap",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x08-tool-basemap"
+    },
+    {
+      "k": "click tool measure",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x08-tool-measure"
+    },
+    {
+      "k": "click tool draw",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x08-tool-draw"
+    },
+    {
+      "k": "click tool lx",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x08-tool-lx"
+    },
+    {
+      "k": "click basemap reopen",
+      "v": "ok"
+    },
+    {
+      "k": "click 배경 일반",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x09-base-general"
+    },
+    {
+      "k": "click basemap reopen2",
+      "v": "ok"
+    },
+    {
+      "k": "click 배경 위성",
+      "v": "ok"
+    },
+    {
+      "k": "click measure open",
+      "v": "ok"
+    },
+    {
+      "k": "click 거리 측정",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x10-measure-distance"
+    },
+    {
+      "k": "measure tips",
+      "v": [
+        "거리 14.24 km"
+      ]
+    },
+    {
+      "k": "click aoi",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x11-aoi"
+    },
+    {
+      "k": "click aoi 저장",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x12-aoi-saved"
+    },
+    {
+      "k": "toast after aoi",
+      "v": [
+        "관심 구역 1개 · 2382.6 ha 를 저장했습니다 · 시연"
+      ]
+    },
+    {
+      "k": "click 검색 도구",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x13-search"
+    },
+    {
+      "k": "click 검색 도로명탭",
+      "v": "ok"
+    },
+    {
+      "k": "click 검색결과 클릭",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x14-search-go"
+    },
+    {
+      "k": "shot",
+      "v": "x15-search-other"
+    },
+    {
+      "k": "search other",
+      "v": "전체\n명칭\n도로명\n지번\n\n검색 결과가 없습니다\n\n다른 명칭 · 도로명 · 지번으로 다시 찾아 보세요"
+    },
+    {
+      "k": "click 검색 닫기",
+      "v": "ok"
+    },
+    {
+      "k": "click 시점 1",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x16-epoch"
+    },
+    {
+      "k": "click 시점 해제",
+      "v": "ok"
+    },
+    {
+      "k": "click 범례 클래스 숨김",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x17-legend-hidden"
+    },
+    {
+      "k": "click 범례 되돌림",
+      "v": "ok"
+    },
+    {
+      "k": "click 표 펼치기",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x18-table-open"
+    },
+    {
+      "k": "measure ximap-table",
+      "v": {
+        "ox": 0,
+        "small": 0,
+        "shadow": 0,
+        "radius": 0,
+        "grad": 0,
+        "blur": 0,
+        "blue": 0
+      }
+    },
+    {
+      "k": "click 기본정보",
+      "v": "ok"
+    },
+    {
+      "k": "click 페이지 2",
+      "v": "ok"
+    },
+    {
+      "k": "click 공간정보탭",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x19-tab-space"
+    },
+    {
+      "k": "click 지역구분탭",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x20-tab-region"
+    },
+    {
+      "k": "click 지역 행",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x21-region-row"
+    },
+    {
+      "k": "click 분석결과탭",
+      "v": "ok"
+    },
+    {
+      "k": "click 결과 행 → info",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x22-info-side"
+    },
+    {
+      "k": "measure ximap-info",
+      "v": {
+        "ox": 0,
+        "small": 0,
+        "shadow": 0,
+        "radius": 0,
+        "grad": 0,
+        "blur": 0,
+        "blue": 0
+      }
+    },
+    {
+      "k": "click 조치중",
+      "v": "ok"
+    },
+    {
+      "k": "click 조치 저장",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x23-act-saved"
+    },
+    {
+      "k": "click 내보내기",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x24-pledge"
+    },
+    {
+      "k": "click 서약 빈 제출",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x25-pledge-errors"
+    },
+    {
+      "k": "click 서약 제출",
+      "v": "ok"
+    },
+    {
+      "k": "download ximap export",
+      "v": "남원시 농지이용 현황 · 2026.06.08.geojson"
+    },
+    {
+      "k": "shot",
+      "v": "x26-after-export"
+    },
+    {
+      "k": "click 분석 결과/성과 버튼",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x27-open-side-empty"
+    },
+    {
+      "k": "click 겹쳐보기",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x28-overlay"
+    },
+    {
+      "k": "measure ximap-overlay",
+      "v": {
+        "ox": 0,
+        "small": 0,
+        "shadow": 0,
+        "radius": 0,
+        "grad": 0,
+        "blur": 0,
+        "blue": 0
+      }
+    },
+    {
+      "k": "shot",
+      "v": "x29-overlay-swiped"
+    },
+    {
+      "k": "CLICK-FAIL 시점 교체",
+      "v": "locator.click: Timeout 4000ms exceeded."
+    },
+    {
+      "k": "shot",
+      "v": "x30-overlay-epoch"
+    },
+    {
+      "k": "click 기준 변경 링크",
+      "v": "ok"
+    },
+    {
+      "k": "click 나란히보기",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "x31-parallel"
+    },
+    {
+      "k": "MISSING 좌 확대",
+      "v": "[data-z=\"in\"][data-side=\"좌\"]"
+    },
+    {
+      "k": "parallel zoom",
+      "v": {
+        "before": 15.641013100718737,
+        "after": [
+          15.641013100718737,
+          15.641013100718746
+        ]
+      }
+    },
+    {
+      "k": "compare tool buttons",
+      "v": 7
+    },
+    {
+      "k": "compare tool click changes DOM",
+      "v": true
+    },
+    {
+      "k": "shot",
+      "v": "x32-parallel-toolclick"
+    },
+    {
+      "k": "shot",
+      "v": "s01-stats-1440"
+    },
+    {
+      "k": "measure stats",
+      "v": {
+        "ox": 0,
+        "small": 0,
+        "shadow": 0,
+        "radius": 0,
+        "grad": 0,
+        "blur": 0,
+        "blue": 0
+      }
+    },
+    {
+      "k": "click 막대 클릭",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "s02-bar"
+    },
+    {
+      "k": "click 표 행",
+      "v": "ok"
+    },
+    {
+      "k": "click 클래스별",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "s03-class"
+    },
+    {
+      "k": "click 클래스 행",
+      "v": "ok"
+    },
+    {
+      "k": "click 지역별",
+      "v": "ok"
+    },
+    {
+      "k": "basis radios",
+      "v": 3
+    },
+    {
+      "k": "click 통계 보기",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "s04-basis-seed"
+    },
+    {
+      "k": "stats after seed basis — big numbers",
+      "v": "205.0ha 전체\n2,049,934 ㎡\n205.0ha\n경작지 · 100 %"
+    },
+    {
+      "k": "click 더 보기",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "s05-find-modal"
+    },
+    {
+      "k": "click 3개월칩",
+      "v": "ok"
+    },
+    {
+      "k": "click 찾기 검색",
+      "v": "ok"
+    },
+    {
+      "k": "click 조회",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "s06-filter-emd"
+    },
+    {
+      "k": "click 엑셀 다운로드",
+      "v": "ok"
+    },
+    {
+      "k": "click 엑셀 서약 제출",
+      "v": "ok"
+    },
+    {
+      "k": "click 서랍 닫기",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "s07-closed"
+    },
+    {
+      "k": "stats url after close",
+      "v": "http://localhost:4173/landxi/proto/stats-standard.html?on=namwon-farmland-2025&left=off&tab=region&base=satellite"
+    },
+    {
+      "k": "shot",
+      "v": "s08-stats-empty"
+    },
+    {
+      "k": "shot",
+      "v": "r01-issue-1440"
+    },
+    {
+      "k": "measure report-issue",
+      "v": {
+        "ox": 0,
+        "small": 0,
+        "shadow": 0,
+        "radius": 0,
+        "grad": 0,
+        "blur": 0,
+        "blue": 0
+      }
+    },
+    {
+      "k": "click 빈 발급 요청",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "r02-issue-errors"
+    },
+    {
+      "k": "shot",
+      "v": "r03-issue-filled"
+    },
+    {
+      "k": "click 발급 요청",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "r04-after-submit"
+    },
+    {
+      "k": "report list first",
+      "v": "접수\n2026-06-08\n요청자 LX 직원\n다운로드 0회\n감사용 보고서\n탐지 클래스 경작지, 비경작지\n대상 지역 운봉읍·송동면"
+    },
+    {
+      "k": "report status after 6s",
+      "v": "접수\n2026-06-08\n요청자 LX 직원\n다운로드 0회\n감사용 보고서\n탐지 클래스 경작지, 비경작지\n대상 "
+    },
+    {
+      "k": "shot",
+      "v": "r05-list-1440"
+    },
+    {
+      "k": "measure report-list",
+      "v": {
+        "ox": 0,
+        "small": 0,
+        "shadow": 0,
+        "radius": 0,
+        "grad": 0,
+        "blur": 0,
+        "blue": 0
+      }
+    },
+    {
+      "k": "click 내역 행",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "r06-list-row"
+    },
+    {
+      "k": "click 상태 검색",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "r07-list-fail"
+    },
+    {
+      "k": "click 빈 결과 검색",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "r08-list-empty"
+    },
+    {
+      "k": "click 초기화",
+      "v": "ok"
+    },
+    {
+      "k": "click 1개월칩",
+      "v": "ok"
+    },
+    {
+      "k": "list rows after 1개월 chip (필터 동작?)",
+      "v": 1
+    },
+    {
+      "k": "MISSING 엑셀 다운로드(행)",
+      "v": ".rp .dl"
+    },
+    {
+      "k": "shot",
+      "v": "r09-list-dl-pledge"
+    },
+    {
+      "k": "MISSING 보고서 엑셀 서약 제출",
+      "v": ".modal-f .btn"
+    },
+    {
+      "k": "shot",
+      "v": "d01-drift-1440"
+    },
+    {
+      "k": "measure drift",
+      "v": {
+        "ox": 0,
+        "small": 0,
+        "shadow": 1,
+        "radius": 1,
+        "grad": 0,
+        "blur": 0,
+        "blue": 0
+      }
+    },
+    {
+      "k": "click 재생",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "d02-drift-playing"
+    },
+    {
+      "k": "click 8x",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "d03-drift-8x"
+    },
+    {
+      "k": "click 정지",
+      "v": "ok"
+    },
+    {
+      "k": "click lay track",
+      "v": "ok"
+    },
+    {
+      "k": "click lay prob",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "d04-drift-track-prob"
+    },
+    {
+      "k": "click tab patch",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "d05-drift-tab-patch"
+    },
+    {
+      "k": "click tab role",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "d05-drift-tab-role"
+    },
+    {
+      "k": "click tab need",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "d05-drift-tab-need"
+    },
+    {
+      "k": "click tab verify",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "d05-drift-tab-verify"
+    },
+    {
+      "k": "click tab eta",
+      "v": "ok"
+    },
+    {
+      "k": "click 상륙 구간",
+      "v": "ok"
+    },
+    {
+      "k": "shot",
+      "v": "d06-drift-eta-click"
+    },
+    {
+      "k": "shot",
+      "v": "d07-drift-scrub"
+    },
+    {
+      "k": "shot",
+      "v": "v-ximap-1280x800"
+    },
+    {
+      "k": "measure ximap-1280",
+      "v": {
+        "ox": 68,
+        "small": 0,
+        "shadow": 0,
+        "radius": 0,
+        "grad": 0,
+        "blur": 0,
+        "blue": 0
+      }
+    },
+    {
+      "k": "shot",
+      "v": "v-stats-1280x800"
+    },
+    {
+      "k": "measure stats-1280",
+      "v": {
+        "ox": 0,
+        "small": 0,
+        "shadow": 0,
+        "radius": 0,
+        "grad": 0,
+        "blur": 0,
+        "blue": 0
+      }
+    },
+    {
+      "k": "shot",
+      "v": "v-rissue-1280x800"
+    },
+    {
+      "k": "measure rissue-1280",
+      "v": {
+        "ox": 0,
+        "small": 0,
+        "shadow": 0,
+        "radius": 0,
+        "grad": 0,
+        "blur": 0,
+        "blue": 0
+      }
+    },
+    {
+      "k": "shot",
+      "v": "v-drift-1280x800"
+    },
+    {
+      "k": "measure drift-1280",
+      "v": {
+        "ox": 0,
+        "small": 0,
+        "shadow": 1,
+        "radius": 1,
+        "grad": 0,
+        "blur": 0,
+        "blue": 0
+      }
+    },
+    {
+      "k": "shot",
+      "v": "v-ximap-1920x1080"
+    },
+    {
+      "k": "measure ximap-1920",
+      "v": {
+        "ox": 0,
+        "small": 0,
+        "shadow": 0,
+        "radius": 0,
+        "grad": 0,
+        "blur": 0,
+        "blue": 0
+      }
+    },
+    {
+      "k": "shot",
+      "v": "v-stats-1920x1080"
+    },
+    {
+      "k": "measure stats-1920",
+      "v": {
+        "ox": 0,
+        "small": 0,
+        "shadow": 0,
+        "radius": 0,
+        "grad": 0,
+        "blur": 0,
+        "blue": 0
+      }
+    },
+    {
+      "k": "shot",
+      "v": "v-rissue-1920x1080"
+    },
+    {
+      "k": "measure rissue-1920",
+      "v": {
+        "ox": 0,
+        "small": 0,
+        "shadow": 0,
+        "radius": 0,
+        "grad": 0,
+        "blur": 0,
+        "blue": 0
+      }
+    },
+    {
+      "k": "shot",
+      "v": "v-drift-1920x1080"
+    },
+    {
+      "k": "measure drift-1920",
+      "v": {
+        "ox": 0,
+        "small": 0,
+        "shadow": 1,
+        "radius": 1,
+        "grad": 0,
+        "blur": 0,
+        "blue": 0
+      }
+    },
+    {
+      "k": "shot",
+      "v": "v-ximap-390x844"
+    },
+    {
+      "k": "measure ximap-390",
+      "v": {
+        "ox": 662,
+        "small": 0,
+        "shadow": 0,
+        "radius": 0,
+        "grad": 0,
+        "blur": 0,
+        "blue": 0
+      }
+    },
+    {
+      "k": "shot",
+      "v": "v-stats-390x844"
+    },
+    {
+      "k": "measure stats-390",
+      "v": {
+        "ox": 137,
+        "small": 0,
+        "shadow": 0,
+        "radius": 0,
+        "grad": 0,
+        "blur": 0,
+        "blue": 0
+      }
+    },
+    {
+      "k": "shot",
+      "v": "v-rissue-390x844"
+    },
+    {
+      "k": "measure rissue-390",
+      "v": {
+        "ox": 137,
+        "small": 0,
+        "shadow": 0,
+        "radius": 0,
+        "grad": 0,
+        "blur": 0,
+        "blue": 0
+      }
+    },
+    {
+      "k": "shot",
+      "v": "v-drift-390x844"
+    },
+    {
+      "k": "measure drift-390",
+      "v": {
+        "ox": 137,
+        "small": 0,
+        "shadow": 1,
+        "radius": 1,
+        "grad": 0,
+        "blur": 0,
+        "blue": 0
+      }
+    },
+    {
+      "k": "shot",
+      "v": "x40-sales-ximap"
+    },
+    {
+      "k": "sales rail",
+      "v": [
+        "LANDXI",
+        "분석 서비스",
+        "지도 서비스",
+        "활용 사례",
+        "MY",
+        "마이 페이지"
+      ]
+    },
+    {
+      "k": "links",
+      "v": {
+        "scrub/index.html": 200,
+        "dashboard.html": 200,
+        "dataset.html": 200,
+        "ai-project.html": 200,
+        "analysis-ai.html": 200,
+        "ximap.html": 200,
+        "notice.html": 200,
+        "mypage.html": 200,
+        "notice.html?notice=8": 200,
+        "?mode=basic&on=&panel=result&left=on&tab=result&fold=1&side=&sel=&q=&epoch=&base=satellite&card=&result=&page=1&rtab=issue": 404,
+        "?mode=overlay&on=&panel=result&left=on&tab=result&fold=1&side=&sel=&q=&epoch=&base=satellite&card=&result=&page=1&rtab=issue": 404,
+        "?mode=parallel&on=&panel=result&left=on&tab=result&fold=1&side=&sel=&q=&epoch=&base=satellite&card=&result=&page=1&rtab=issue": 404,
+        "portal-login-namwon.html": 200,
+        "portal-login-gwangju-jeonnam.html": 200
+      }
+    }
+  ],
+  "roles": {
+    "admin": {
+      "ximap.html": "admin-home.html",
+      "stats-standard.html": "admin-home.html",
+      "report-standard.html": "admin-home.html",
+      "report-standard-issue.html": "admin-home.html",
+      "map-drift.html": "admin-home.html"
+    },
+    "staff": {
+      "ximap.html": "ximap.html",
+      "stats-standard.html": "stats-standard.html",
+      "report-standard.html": "report-standard.html",
+      "report-standard-issue.html": "report-standard-issue.html",
+      "map-drift.html": "map-drift.html"
+    },
+    "sales": {
+      "ximap.html": "ximap.html",
+      "stats-standard.html": "stats-standard.html",
+      "report-standard.html": "report-standard.html",
+      "report-standard-issue.html": "report-standard-issue.html",
+      "map-drift.html": "map-drift.html"
+    },
+    "none(default)": {
+      "ximap.html": "admin-home.html",
+      "stats-standard.html": "admin-home.html",
+      "report-standard.html": "admin-home.html",
+      "report-standard-issue.html": "admin-home.html",
+      "map-drift.html": "admin-home.html"
+    }
+  },
+  "downloads": [
+    {
+      "where": "ximap 내보내기",
+      "file": "남원시 농지이용 현황 · 2026.06.08.geojson"
+    },
+    {
+      "where": "stats 엑셀",
+      "file": "농지 활용 통계 · 2026.06.08 · 송동면 · 경작지.csv"
+    },
+    {
+      "where": "report 엑셀",
+      "file": null
+    }
+  ],
+  "links": {
+    "ximap": [
+      "#main",
+      "scrub/index.html",
+      "dashboard.html",
+      "dataset.html",
+      "ai-project.html",
+      "analysis-ai.html",
+      "ximap.html",
+      "notice.html",
+      "mypage.html",
+      "notice.html?notice=8",
+      "?mode=basic&on=&panel=result&left=on&tab=result&fold=1&side=&sel=&q=&epoch=&base=satellite&card=&result=&page=1&rtab=issue",
+      "?mode=overlay&on=&panel=result&left=on&tab=result&fold=1&side=&sel=&q=&epoch=&base=satellite&card=&result=&page=1&rtab=issue",
+      "?mode=parallel&on=&panel=result&left=on&tab=result&fold=1&side=&sel=&q=&epoch=&base=satellite&card=&result=&page=1&rtab=issue",
+      "portal-login-namwon.html",
+      "portal-login-gwangju-jeonnam.html"
+    ],
+    "drift": [
+      "#main",
+      "scrub/index.html",
+      "dashboard.html",
+      "dataset.html",
+      "ai-project.html",
+      "analysis-ai.html",
+      "ximap.html",
+      "notice.html",
+      "mypage.html",
+      "portal-login-namwon.html",
+      "portal-login-gwangju-jeonnam.html"
+    ]
+  },
+  "linkStatus": {
+    "scrub/index.html": 200,
+    "dashboard.html": 200,
+    "dataset.html": 200,
+    "ai-project.html": 200,
+    "analysis-ai.html": 200,
+    "ximap.html": 200,
+    "notice.html": 200,
+    "mypage.html": 200,
+    "notice.html?notice=8": 200,
+    "?mode=basic&on=&panel=result&left=on&tab=result&fold=1&side=&sel=&q=&epoch=&base=satellite&card=&result=&page=1&rtab=issue": 404,
+    "?mode=overlay&on=&panel=result&left=on&tab=result&fold=1&side=&sel=&q=&epoch=&base=satellite&card=&result=&page=1&rtab=issue": 404,
+    "?mode=parallel&on=&panel=result&left=on&tab=result&fold=1&side=&sel=&q=&epoch=&base=satellite&card=&result=&page=1&rtab=issue": 404,
+    "portal-login-namwon.html": 200,
+    "portal-login-gwangju-jeonnam.html": 200
+  }
+}

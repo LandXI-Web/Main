@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 
 // 지도 서비스(XI맵) · 통계 · 보고서 — landxi/proto/ximap.html · stats-standard.html · report-standard{,-issue}.html
 //   모듈 map.js · map-data.js · map-gl.js · map-stats.js · map-report.js · map-pledge.js · map.css
@@ -20,13 +21,25 @@ function watch(page) {
   page.on('console', (m) => { if (m.type() === 'error' && !NETWORK.test(m.text())) errs.push('console: ' + m.text()); });
   return errs;
 }
-async function boot(page, url = MAP, props = null) {
-  await page.addInitScript((p) => {
+/* ── 역할 픽스처(Wave 0 공통 규약 00-COMMON — 스펙 안에 그대로 복사 · M-R2) ── */
+const HOME = { admin: 'admin-home.html', staff: 'ai-project.html', sales: 'ximap.html' };
+void HOME;
+/** LX 세션으로 화면을 연다. 세션은 첫 로드에서만 심는다(sessionStorage 가드). */
+async function bootAs(page, url, role = 'staff', extra = {}) {
+  await page.addInitScript(([r, ex]) => {
+    if (sessionStorage.getItem('lx_e2e_boot')) return;
+    sessionStorage.setItem('lx_e2e_boot', '1');
     localStorage.setItem('lx_logged_in', '1');
-    if (p) localStorage.setItem('lx-map-props', p); else localStorage.removeItem('lx-map-props');
-  }, props ? JSON.stringify(props) : null);
+    localStorage.setItem('lx_role', r);
+    localStorage.removeItem('lx_tenant_session');
+    for (const [k, v] of Object.entries(ex)) (v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v));
+  }, [role, extra]);
   await page.goto(url);
   await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
+}
+/** 지도 화면의 기본 역할 = 직원(staff). 지도 속성(lx-map-props)은 넘기면 심고, 안 넘기면 지운다. */
+async function boot(page, url = MAP, props = null) {
+  await bootAs(page, url, 'staff', { 'lx-map-props': props ? JSON.stringify(props) : null });
   return page;
 }
 const mapReady = (page) => page.waitForFunction(() => document.querySelector('#map-a')?.dataset.map === 'ready', null, { timeout: 20000 });
@@ -200,6 +213,12 @@ test.describe('왼쪽 패널', () => {
     await expect(page.locator('.mt-l')).toHaveCount(12);
     await expect(page.locator('.mt-l .sh')).toHaveCount(2);
     await expect(page.locator('.mt-note')).toContainText('시연');
+    /* 12줄은 원본 시드 — 지도에 올릴 실자료가 없다. 체크해도 카운터만 바뀌던 줄(M-07)은
+       `시연 · 지도 미연결` 로 적고 체크를 막는다(E0-5). */
+    await expect(page.locator('.mt-l input[data-leaf]:disabled')).toHaveCount(12);
+    await expect(page.locator('.mt-l .tag')).toHaveCount(12);
+    await expect(page.locator('.mt-l .tag').first()).toHaveText('시연 · 지도 미연결');
+    await expect(page.locator('.mt-l input:checked')).toHaveCount(0);
   });
 
   test('시점 스트립 = imagery.js 4시점 · 누르면 실 정사영상 타일이 켜진다', async ({ page }) => {
@@ -356,6 +375,9 @@ test.describe('탐지 정보', () => {
     await page.locator('#tbody tr[data-row]').first().click();
     await page.locator('[data-act="doing"]').click();
     await expect(page.locator('.mi-steps [aria-current="step"]')).toHaveText('조치중');
+    /* 정보 판이 열린 동안 표는 고른 행 한 줄(peek) — 그 줄이 먼저 바뀐다(E0-5 · M-01) */
+    await expect(page.locator('.mb-peek')).toContainText('조치중');
+    await page.locator('#mb-full').click();                       // 표 펼치기 → 정보 판을 닫고 표로
     await page.locator('[data-itab="base"]').click();
     await expect(page.locator('#tbody tr').first()).toContainText('조치중');
   });
@@ -446,7 +468,7 @@ test.describe('빈 상태', () => {
   });
 
   test('불러오는 중 — 결과가 오기 전엔 로딩 상자가 뜬다', async ({ page }) => {
-    await page.addInitScript(() => localStorage.setItem('lx_logged_in', '1'));
+    await page.addInitScript(() => { localStorage.setItem('lx_logged_in', '1'); localStorage.setItem('lx_role', 'staff'); localStorage.removeItem('lx_tenant_session'); });
     await page.route('**/geo/results/namwon-farmland-2025.geojson', async (r) => { await new Promise((z) => setTimeout(z, 2500)); await r.continue(); });
     await page.goto(withFarm());
     await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
@@ -463,6 +485,7 @@ test.describe('비교 보기', () => {
     await boot(page, `${MAP}?on=${FARM}&mode=overlay`);
     await page.waitForFunction(() => window.__lxMap?.B?.getStyle() != null, null, { timeout: 20000 });
     await expect(page.locator('#swipe')).toBeVisible();
+    await page.locator('[data-cmp-open]').click();                // 비교 결과 판은 자동으로 열리지 않는다(M-05) — 단추로 연다
     await expect(page.locator('.mw-side .dw-big')).toContainText('156');
     await expect(page.locator('.mw-side .dw-big')).toContainText('5.4');
     await expect(page.locator('.mw-side')).toContainText('학습 모델 탐지 아님');
@@ -495,6 +518,9 @@ test.describe('비교 보기', () => {
     await expect(page.locator('.mv[data-ep]')).toHaveCount(4);
     await expect(page.locator('.mv-k').first()).toHaveText('기준');
     await expect(page.locator('#cmp-apply')).toHaveText('적용');
+    /* 비교 모드에서는 좌 판이 띠로 접혀 들어온다(E0-5 · M-05) — 띠의 `설정 패널 펼치기` 로 편다 */
+    await expect(page.locator('#mw')).toHaveAttribute('data-left', 'off');
+    await page.locator('#l-open').click();
     await page.locator('#cmp-cancel').click();
     await page.waitForURL((u) => !u.searchParams.get('mode'));
   });
@@ -516,7 +542,7 @@ test.describe('보안 서약서 · 다운로드', () => {
     await expect(m.locator('#pl-purpose-e')).toHaveText('사용 목적을 입력해 주세요.');
   });
 
-  test('다 채우면 생성 중 → 다운로드 시작 토스트', async ({ page }) => {
+  test('다 채우면 생성 중 → 파일이 실제로 내려가고 토스트는 사실만', async ({ page }) => {
     await boot(page, `${MAP}?on=${FARM}&fold=0`);
     await layersOn(page);
     await page.locator('#export').click();
@@ -524,18 +550,22 @@ test.describe('보안 서약서 · 다운로드', () => {
     await m.locator('#pl-ok').check();
     await m.locator('#pl-name').fill('금지면 비닐하우스 현황 점검');
     await m.locator('#pl-purpose').fill('현장 점검 대상지 선정');
+    const dl = page.waitForEvent('download');
     await m.locator('.modal-f .btn').click();
     await expect(m.locator('.modal-f .btn')).toHaveText('생성 중…');
-    await expect(page.locator('#say')).toContainText('다운로드가 시작되었습니다');
+    expect((await dl).suggestedFilename()).toMatch(/\.geojson$/);
+    await expect(page.locator('#say')).toContainText('1개 파일이 내려갔습니다');
+    await expect(page.locator('#say')).not.toContainText('시작되었습니다');
     await expect(page.locator('.modal')).toHaveCount(0);
   });
 
-  test('활용 기간 기본값 = 오늘부터 1개월', async ({ page }) => {
+  test('활용 기간 기본값 = 기준일부터 1개월 · 신청자 = 역할명', async ({ page }) => {
     await boot(page, `${MAP}?on=${FARM}&fold=0`);
     await layersOn(page);
     await page.locator('#export').click();
-    expect(await page.locator('#pl-from').inputValue()).toBe('2026-08-27');
-    expect(await page.locator('#pl-to').inputValue()).toBe('2026-09-27');
+    expect(await page.locator('#pl-from').inputValue()).toBe('2026-06-08');   // 기준일 AS_OF 하나(Q5-b)
+    expect(await page.locator('#pl-to').inputValue()).toBe('2026-07-08');
+    await expect(page.locator('.pl-who')).toHaveText('신청자 : LX 직원 님');        // 현재 계정 역할명
   });
 });
 
@@ -594,7 +624,15 @@ test.describe('통계', () => {
     await expect(m.locator('.modal-h h2')).toHaveText('분석 결과 찾기');
     await expect(m.locator('thead th')).toHaveText(['선택', '기준 일자', '영상 명', '분석 범위 유형', '분석 범위 명', '분석명', '분석 과제명']);
     await expect(m.locator('#fd-tb tr')).toHaveCount(4);
-    await m.locator('#fd-tb tr').nth(1).click();
+    await expect(m.locator('#fd-tb input[disabled]')).toHaveCount(3);        // 시연 기준은 고를 수 없다
+    await expect(m.locator('select[aria-label="실행자"]')).toHaveCount(0);    // 거를 자료가 없는 거르개는 걷었다
+    await m.locator('[data-q="1"]').click();                                  // 기간 칩은 실제로 거른다(기준일 06.08 에서 1개월)
+    await expect(m.locator('#fd-tb tr')).toHaveCount(1);
+    await m.locator('[data-q="3"]').click();                                  // 03-08 이후 — 03-05 시드가 빠진다
+    await expect(m.locator('#fd-tb tr')).toHaveCount(3);
+    await m.locator('[data-q="all"]').click();
+    await expect(m.locator('#fd-tb tr')).toHaveCount(4);
+    await m.locator('#fd-tb tr').nth(0).click();
     await m.locator('.modal-f .btn').click();
     await expect(page.locator('#say')).toContainText('기준을');
   });
@@ -812,5 +850,180 @@ test.describe('법전 · 접근성', () => {
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
       expect((await page.locator('#map-a').boundingBox()).width).toBeGreaterThan(400);
     }
+  });
+});
+
+/* ══ 16. E0-5 — 붕괴 처방 · 내려받기 3곳 · 정직화 · ?result= 수신 ═══════ */
+test.describe('E0-5 붕괴 처방 · 내려받기 · 정직화', () => {
+  const ratio = (page) => page.evaluate(() => {
+    const c = document.querySelector('#map-a canvas').getBoundingClientRect(), m = document.querySelector('#mw').getBoundingClientRect();
+    return (c.width * c.height) / (m.width * m.height);
+  });
+
+  test('1440×900 결과 켜기 → 표 펼치기 → 행 클릭: 지도 ≥ 콘텐츠 60 % · 탭 글자 세로 쌓임 0(M-01)', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await boot(page, MAP);
+    await mapReady(page);
+    await page.locator(`input[data-layer="${FARM}"]:not([data-sub])`).check();
+    await layersOn(page);
+    await page.locator('#mb-open').click();
+    const tabs = await page.locator('.mb-t [data-ttab]').evaluateAll((b) => b.map((x) => { const r = x.getBoundingClientRect(); return [r.width, r.height]; }));
+    expect(tabs).toHaveLength(3);
+    for (const [w, h] of tabs) expect(h).toBeLessThan(w);             // 펼친 표의 탭 — 가로로 선다
+    await page.locator('#tbody tr[data-row]').first().click();
+    await expect(page.locator('#mw')).toHaveAttribute('data-side', 'info');
+    await expect(page.locator('#mw')).toHaveAttribute('data-left', 'off');   // 좌 판은 띠로(fitLeft)
+    await page.waitForFunction(() => document.querySelector('#mw-l').getBoundingClientRect().width < 40);
+    await page.waitForTimeout(400);                                      // 폭 전이(180ms) 뒤 캔버스 resize
+    expect(await ratio(page)).toBeGreaterThanOrEqual(0.6);
+    const peekTabs = await page.locator('#mb [data-ttab]').evaluateAll((b) => b.map((x) => { const r = x.getBoundingClientRect(); return [r.width, r.height]; }));
+    expect(peekTabs).toHaveLength(3);
+    for (const [w, h] of peekTabs) expect(h).toBeLessThan(w);
+    // 다음 행 › — 정보 판이 따라간다 · 닫으면 좌 판은 자동으로 접힌 것만 되돌아온다
+    await page.locator('[data-peek="1"]').click();
+    await expect(page.locator('.mb-peek .n').first()).toHaveText('2 / 2,098');
+    await expect(page.locator('.mi h2')).toBeVisible();
+    // 1280×720 — 넘김 · 탭 3 · 표 펼치기는 늘 보이고 peek 줄 가로 넘침 0(고른 행 문구만 말줄임 · 글자 크기 그대로)
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.waitForTimeout(400);
+    const pk = await page.evaluate(() => { const el = document.querySelector('.mb-peek'), pr = el.getBoundingClientRect();
+      return { over: el.scrollWidth - el.clientWidth, font: getComputedStyle(el.querySelector('.row')).fontSize,
+        out: [...el.querySelectorAll('[data-peek],[data-ttab],#mb-full')].filter((x) => { const q = x.getBoundingClientRect(); return q.left < pr.left - 1 || q.right > pr.right + 1; }).length }; });
+    expect(pk).toEqual({ over: 0, font: '15px', out: 0 });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.locator('#side-x').click();
+    await expect(page.locator('#mw')).toHaveAttribute('data-left', 'on');
+  });
+
+  test('겹쳐보기 진입: 비교 판 자동 열림 0 · A ≥ 45 % · 비교 도구 14 전부 동작 · 비교 띠 상수 0(M-05 · M-07 · M-09)', async ({ page }) => {
+    const errs = watch(page);
+    await boot(page, `${MAP}?on=${FARM}&mode=overlay`);
+    await page.waitForFunction(() => window.__lxMap?.B?.getStyle() != null, null, { timeout: 20000 });
+    await expect(page.locator('#mw')).not.toHaveAttribute('data-side', 'info');
+    await expect(page.locator('.mw-side .mi')).toHaveCount(0);
+    await page.waitForTimeout(400);
+    expect(await ratio(page)).toBeGreaterThanOrEqual(0.45);
+    // 도구 14 — 전부 data-tool · 누르면 그 판에서 동작한다
+    await expect(page.locator('.mw-tools [data-tool]')).toHaveCount(14);
+    await expect(page.locator('.mw-tools button:not([data-tool])')).toHaveCount(0);
+    await page.locator('#ov-b [data-tool="basemap"]').click();
+    await expect(page.locator('#ov-b .mw-sub [data-base]')).toHaveCount(5);
+    await page.locator('#ov-b [data-base="base"]').click();
+    expect(await page.evaluate(() => window.__lxMap.B.getLayoutProperty('b-base', 'visibility'))).toBe('visible');
+    await page.locator('#ov-b [data-tool="lx"]').click();
+    await page.locator('#ov-b [data-clx="hyb"]').click();
+    expect(await page.evaluate(() => window.__lxMap.B.getLayoutProperty('b-hyb', 'visibility'))).toBe('visible');
+    await page.locator('#ov-a [data-tool="measure"]').click();
+    await expect(page.locator('#ov-a .mw-sub [data-msr]')).toHaveCount(4);
+    // 비교 띠 · 표 — 손으로 적은 2,098 · 0.62 km² · 드론 0
+    await expect(page.locator('.mw-band').first()).toContainText('판독 결과 —');   // 2025.04 정사영상에서 판독한 결과는 없다
+    await expect(page.locator('.mw-band').nth(1)).toContainText('변화 156');
+    await page.locator('[data-cmp-open]').click();
+    await expect(page.locator('#mw')).toHaveAttribute('data-side', 'info');
+    const side = await page.locator('.mw-side').innerText();
+    expect(side).not.toContain('2,098');
+    expect(side).not.toContain('드론');                                      // imagery.js kind 는 `정사영상` — 센서 기록이 없다
+    const km = await page.evaluate(async () => (await import('./map-data.js')).EPOCHS[0].areaKm2.toFixed(2));
+    expect(side).toContain(`${km} km²`);                                      // 범위는 imagery.js bounds 에서 잰 값(손 상수 아님)
+    expect(side).toContain('판독 결과');
+    // `변경 ›` — 좌 판을 펴기 전에 비교 결과 판을 닫는다 · 두 표지 띠 교차 0 · 배지가 판독 결과 글자를 덮지 않는다(재판정)
+    await page.locator('#ch-base').click();
+    await expect(page.locator('#mw')).toHaveAttribute('data-left', 'on');
+    await expect(page.locator('#mw')).not.toHaveAttribute('data-side', 'info');
+    await page.waitForTimeout(500);
+    expect(await ratio(page)).toBeGreaterThanOrEqual(0.45);
+    const lay = await page.evaluate(() => {
+      const X = (a, c) => Math.max(0, Math.min(a.right, c.right) - Math.max(a.left, c.left)) * Math.max(0, Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top));
+      const r = (s) => document.querySelector(s).getBoundingClientRect();
+      const badge = [...document.querySelectorAll('.mv[data-ep]')].reduce((t, row) => { const k = row.querySelector('.mv-k'); return t + (k ? [...row.querySelectorAll('.mv-m')].reduce((u, m) => u + X(k.getBoundingClientRect(), m.getBoundingClientRect()), 0) : 0); }, 0);
+      const scales = [...document.querySelectorAll('.mw-scale')].map((e) => { const q = e.getBoundingClientRect(); return q.height < q.width && q.height <= 30; });
+      return { head: X(r('#ov-a .mw-ov--tl'), r('#ov-b .mw-ov--tl')), badge, scales };
+    });
+    expect(lay.head).toBe(0);
+    expect(lay.badge).toBe(0);
+    expect(lay.scales.every(Boolean)).toBe(true);
+    expect(errs).toEqual([]);
+  });
+
+  test('내려받기 3곳 — 내보내기 GeoJSON · 통계 CSV(BOM) · 보고서 CSV(BOM) 각 1건(M-03)', async ({ page }, info) => {
+    const fill = async () => {
+      const m = page.locator('.modal');
+      await m.locator('#pl-ok').check(); await m.locator('#pl-name').fill('e2e 내려받기'); await m.locator('#pl-purpose').fill('검사');
+      const dl = page.waitForEvent('download');
+      await m.locator('.modal-f .btn').click();
+      return dl;
+    };
+    const got = [];
+    const keep = async (d) => {
+      const f = info.outputPath(d.suggestedFilename()); await d.saveAs(f);
+      const buf = readFileSync(f);
+      got.push({ name: d.suggestedFilename(), bytes: buf.length, bom: buf[0] === 0xEF && buf[1] === 0xBB && buf[2] === 0xBF, text: buf.toString('utf8') });
+    };
+    // ① 지도 내보내기
+    await boot(page, `${MAP}?on=${FARM}&fold=0`);
+    await layersOn(page);
+    await page.locator('#export').click();
+    await keep(await fill());
+    await expect(page.locator('#say')).toContainText('1개 파일이 내려갔습니다');
+    // ② 통계 엑셀
+    await boot(page, `${STATS}?result=${FARM}&left=off`);
+    await layersOn(page);
+    await page.locator('#st-dl').click();
+    await keep(await fill());
+    // ③ 보고서 엑셀(발급 내역 · 처리 완료 행)
+    await boot(page, `${RLIST}?result=${FARM}&left=off`);
+    await layersOn(page);
+    await page.locator('.rp .dl').first().click();
+    await keep(await fill());
+    const log = got.map((g) => ({ name: g.name, bytes: g.bytes, bom: g.bom }));
+    await info.attach('downloads.json', { body: JSON.stringify(log, null, 1), contentType: 'application/json' });
+    console.log('E0-5 downloads', JSON.stringify(log));
+    expect(got).toHaveLength(3);
+    expect(got[0].name).toMatch(/\.geojson$/);
+    expect(JSON.parse(got[0].text.replace(/^﻿/, '')).features.length).toBe(2098);
+    expect(got[1].name).toMatch(/\.csv$/); expect(got[1].bom).toBe(true);
+    expect(got[1].text).toContain('\r\n'); expect(got[1].text).toContain('운봉읍'); expect(got[1].text).toContain('합계');
+    expect(got[2].name).toMatch(/\.csv$/); expect(got[2].bom).toBe(true);
+    expect(got[2].text.split('\r\n')[0]).toContain('경작지 건수');
+  });
+
+  test('ximap.html?result=<id> → 자동 체크 · ?on= 정규화 · 개관에서 그 결과로 날아간다(C-23 · D-5)', async ({ page }) => {
+    await boot(page, `${MAP}?result=${FARM}`);
+    await mapReady(page);
+    const z0 = await page.evaluate(() => window.__lxMap.A.getZoom());
+    await expect(page.locator(`input[data-layer="${FARM}"]:not([data-sub])`)).toBeChecked();
+    await page.waitForFunction(() => document.querySelector('#map-a').dataset.arrived != null, null, { timeout: 15000 });
+    const z1 = await page.evaluate(() => window.__lxMap.A.getZoom());
+    expect(z1 - z0).toBeGreaterThan(0.5);                                 // 개관(도 단위)에서 그 결과 범위로 들어간다
+    const u = new globalThis.URL(page.url());
+    expect(u.searchParams.get('on')).toBe(FARM);
+    expect(u.searchParams.has('result')).toBe(false);
+  });
+
+  test('통계 정직화 — 시연 기준 disabled 2 · `다시 계산` 0 · 발급 폼 오류 해제 · 요청자 = 역할명(M-04 · M-08)', async ({ page }) => {
+    await boot(page, `${STATS}?result=${FARM}&left=off`);
+    await layersOn(page);
+    await expect(page.locator('.dw-basis input[disabled]')).toHaveCount(2);
+    await expect(page.locator('.dw-basis li[aria-disabled="true"]').first()).toContainText('시연 · 집계 자료 없음');
+    await page.locator('#st-run').click();
+    await expect(page.locator('#say')).toContainText('기준 · ');
+    expect(await page.evaluate(() => document.body.innerText.includes('다시 계산'))).toBe(false);
+    // 보고서 발급 폼 — 비우고 발급 → 오류 3 → 채우면 오류가 걷힌다
+    await boot(page, `${RISSUE}?result=${FARM}&left=off`);
+    await layersOn(page);
+    await page.locator('#rp-title').fill('');
+    await page.locator('#rp-cls-all').uncheck();
+    await page.locator('#rp-emd-all').check();
+    await page.locator('#rp-emd-all').uncheck();
+    await page.locator('#rp-go').click();
+    await expect(page.locator('.dw .err')).toHaveCount(3);
+    await page.locator('#rp-title').fill('e2e 오류 해제');
+    await page.locator('#rp-cls-all').check();
+    await page.locator('.rp-emds [data-emd="운봉읍"]').check();
+    await expect(page.locator('.dw .err')).toHaveCount(0);
+    await page.locator('#rp-go').click();
+    await page.waitForURL(/rtab=list/);
+    await expect(page.locator('.rp .l1').first()).toContainText('요청자 LX 직원');
+    await expect(page.locator('.rp .l1').first()).toContainText('2026-06-08');
   });
 });

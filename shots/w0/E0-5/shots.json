@@ -1,0 +1,83 @@
+{
+  "downloads": [
+    {
+      "name": "남원시 농지이용 현황 · 2026.06.08.geojson",
+      "bytes": 1293982,
+      "bom": false,
+      "head": "{\"type\":\"FeatureCollection\",\"xy_coordinate_resolution\":1e-06,\"features\":[{\"type\":\"Feature\",\"properties\":{\"id\":\"5e43e9c777ca45e7f713ae06e43a8388c12c6520\",\"cls\":\""
+    },
+    {
+      "name": "농지 활용 통계 · 2026.06.08.csv",
+      "bytes": 1338,
+      "bom": true,
+      "head": "읍·면·동,건수(필지),경작지 건수,비경작지 건수,면적(㎡),경작지 면적(㎡),비경작지 면적(㎡)"
+    },
+    {
+      "name": "2026년 4월 농지 활용 현황 보고서.csv",
+      "bytes": 1360,
+      "bom": true,
+      "head": "읍·면·동,경작지 건수(필지),경작지 면적(㎡),비경작지 건수(필지),비경작지 면적(㎡),건수 합계,면적 합계(㎡)"
+    }
+  ],
+  "ratio": {
+    "info-1440": 63.2,
+    "overlay-1440": 91.1,
+    "overlay-open-1440": 63.1,
+    "info-1280": 57.9,
+    "overlay-1280": 88.8,
+    "overlay-open-1280": 57.8
+  },
+  "frames": [
+    {
+      "n": "arrive-frame-00",
+      "zoom": "8.92",
+      "sameAsPrev": null
+    },
+    {
+      "n": "arrive-frame-01",
+      "zoom": "9.56",
+      "sameAsPrev": false
+    },
+    {
+      "n": "arrive-frame-02",
+      "zoom": "9.77",
+      "sameAsPrev": false
+    },
+    {
+      "n": "arrive-frame-03",
+      "zoom": "9.79",
+      "sameAsPrev": false
+    },
+    {
+      "n": "arrive-frame-04",
+      "zoom": "9.79",
+      "sameAsPrev": false
+    },
+    {
+      "n": "arrive-frame-05",
+      "zoom": "9.79",
+      "sameAsPrev": true
+    },
+    {
+      "n": "arrive-frame-06",
+      "zoom": "9.79",
+      "sameAsPrev": true
+    },
+    {
+      "n": "arrive-frame-07",
+      "zoom": "9.79",
+      "sameAsPrev": true
+    },
+    {
+      "n": "arrive-frame-08",
+      "zoom": "9.79",
+      "sameAsPrev": true
+    },
+    {
+      "n": "arrive-frame-09",
+      "zoom": "9.79",
+      "sameAsPrev": true
+    }
+  ],
+  "arriveUrl": "http://localhost:4173/landxi/proto/ximap.html?on=namwon-farmland-2025&base=satellite"
+}

@@ -1,0 +1,16 @@
+· share.initial {"canvasW":677,"canvasH":721,"pctOfContent":45,"pctW":49}
+· gl.camera {"terrain":false,"maxPitch":60,"dragRotate":false,"pitch":0}
+· share.layerOn {"canvasW":677,"canvasH":677,"pctOfContent":42,"pctW":49}
+· gl.resultTransition {"keys":["namwon-farmland-2025"],"fillOpacityTransition":null,"styleTransition":null}
+· table.rowsVisible.1440 null
+· share.tableOpen {"canvasW":677,"canvasH":677,"pctOfContent":42,"pctW":49}
+· share.infoSide {"canvasW":677,"canvasH":677,"pctOfContent":42,"pctW":49}
+· bottom.tabsCollapsedVertically {"tabs":0,"verticalStack":0,"sample":[]}
+· epoch.switch {"epoch":"namwon_2508","fade":200,"hasSlider":false,"ms":264}
+· share.overlay {"canvasW":1331,"canvasH":676,"pctOfContent":82,"pctW":97}
+· overlay.toolButtons {"count":14,"withHandler":14}
+· overlay.canvasB {"w":1331,"h":676}
+· deeplink.on {"on":"namwon-farmland-2025","keys":["namwon-farmland-2025"],"zoom":13.2,"center":[127.421,35.432],"checked":true}
+· sales.ximap {"url":"ximap.html","on":"","exportBtn":true,"textHasExport":false,"textHasAct":false,"railItems":8,"roleShown":false}
+· drift.externalStyle ["tiles.openfreemap.org"]
+done

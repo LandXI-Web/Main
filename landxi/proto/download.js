@@ -50,3 +50,13 @@ export async function downloadGeoJSON(name, url, fallback) {
   }
   return '';
 }
+
+/** 표를 CSV 로 — 엑셀이 한글을 깨지 않게 BOM 을 붙이고 줄은 `\r\n`.
+ *  쉼표 · 따옴표 · 줄바꿈이 든 칸은 따옴표로 감싸고 안의 따옴표는 두 번 쓴다(RFC 4180).
+ *  header = ['읍면동', '건수', …] · rows = [[…], …]. */
+export function downloadCSV(filename, header, rows) {
+  const cell = (v) => { const s = String(v ?? ''); return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  const body = [header, ...rows].map((r) => r.map(cell).join(',')).join('\r\n');
+  const safe = String(filename).replace(/[\/:*?"<>|]/g, '_');
+  saveBlob(new Blob(['﻿' + body], { type: 'text/csv;charset=utf-8' }), /\.csv$/i.test(safe) ? safe : `${safe}.csv`);
+}

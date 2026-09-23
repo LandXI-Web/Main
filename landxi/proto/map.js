@@ -8,6 +8,7 @@ import * as GL from './map-gl.js';
 import { mountStats } from './map-stats.js';
 import { mountReport } from './map-report.js';
 import { openPledge } from './map-pledge.js';
+import { downloadGeoJSON } from './download.js';
 
 /* ── 각진 1.5 stroke 아이콘 — 셸에 없는 것만 여기서 ───────────────────── */
 const MIC = {
@@ -36,11 +37,16 @@ let S = read();
 const P = D.mapProps();                                   // 서비스 관리가 저장한 지도 속성 — 실제 렌더에 그대로 쓴다
 if (!S.base) S.base = P.baseMap;
 
-/* 들어오는 문맥: ?result= 분석 서비스의 결과 · ?card= 대시보드/카드 발행의 카드 */
+/* 들어오는 문맥: ?result= 분석 서비스 · 대시보드 셀(E0-6)의 결과 · ?card= 대시보드/카드 발행의 카드
+   `?result=<id>` 는 **수신 후 `?on=` 으로 정규화**한다(C-23 · D-5). 그 결과를 켜진 목록 맨 앞에 두고,
+   판이 서면 개관(z11.4)에서 그 결과의 범위로 900ms 날아간다(start → arriveFit). `?cell=` 은 받지 않는다. */
+let arriveFit = '';
 if (S.on === 'none') S.on = '';                          // 일부러 아무것도 켜지 않은 상태(빈 상태 확인용)
-else if (!S.on) {
-  if (S.result && D.layerById(S.result)) S.on = S.result;
-  else if (S.card) S.on = D.layersOfCard(S.card).map((l) => l.id).join(',');
+else if (S.result && D.layerById(S.result)) {
+  S.on = [S.result, ...S.on.split(',').filter((x) => x && x !== S.result)].join(',');
+  arriveFit = S.result; S.result = '';
+} else if (!S.on) {
+  if (S.card) S.on = D.layersOfCard(S.card).map((l) => l.id).join(',');
   else if (VIEW !== 'map') S.on = D.ALL_LAYERS[0]?.id || '';
 }
 if (VIEW === 'stats') S.side = 'stats';
@@ -57,6 +63,7 @@ const shell = mountShell({ active: 'map', title: '지도 서비스', titleRule: 
 /* ══ 2. 뼈대 ═════════════════════════════════════════════════════════════ */
 function boot() {
   fitLeft();                                             // 서랍을 열고 들어온 화면이면 설정 판은 띠로
+  if (arriveFit) write(S, false);                        // ?result= → ?on= (주소를 정규화 · 뒤로 가기 한 칸을 더하지 않는다)
   shell.main.insertAdjacentHTML('beforeend', `
 <div class="mw" id="mw" data-mode="${S.mode}" data-left="${S.left}" data-side="">
   <aside class="mw-l" id="mw-l" aria-label="분석 결과 · 레이어">
@@ -74,7 +81,7 @@ function boot() {
   </div>
   <aside class="mw-side" id="side" aria-label="열람"></aside>
 </div>`);
-  $('#l-open').onclick = () => { S.left = 'on'; leftPinned = true; commit(); };
+  $('#l-open').onclick = () => { S.left = 'on'; leftPinned = true; leftAuto = false; commit(); };
   bindSwipe();
   addEventListener('popstate', () => { S = read(); if (!S.base) S.base = P.baseMap; redraw(true); });
   addEventListener('resize', () => { anchors.forEach(place); A?.resize(); B?.resize(); positionOverlays(); });
@@ -108,8 +115,8 @@ const clearAnchors = (pred = () => true) => { for (let i = anchors.length - 1; i
 
 async function start() {
   if (!GL.hasGL()) { $('#map-a').insertAdjacentHTML('afterend', '<div class="mw-load"><div class="bx">지도 라이브러리를 불러오지 못했습니다 — 표와 통계는 그대로 동작합니다</div></div>'); await syncData(); renderAll(); return; }
-  const first = D.layerById(onIds()[0]);
-  A = await GL.createMap($('#map-a'), { center: first?.camera?.center || [127.42136, 35.43203], zoom: first ? 13.2 : 11.4, label: '지도 서비스 — 화살표 키로 이동, +/- 로 확대·축소' });
+  const first = arriveFit ? null : D.layerById(onIds()[0]);   // ?result= 도착은 개관에서 시작해 날아간다
+  A = await GL.createMap($('#map-a'), { center: first?.camera?.center || [127.42136, 35.43203], zoom: first ? 13.2 : arriveFit ? 8.6 : 11.4, label: '지도 서비스 — 화살표 키로 이동, +/- 로 확대·축소' });
   GL.applyProps(A, { ...P, baseMap: S.base });
   toolsA = GL.tools(A, onTool);
   A.on('move', () => { anchors.forEach(place); paintHud(); });
@@ -117,7 +124,10 @@ async function start() {
   A.on('click', onMapClick);
   A.on('mousemove', (e) => { if (toolsA.mode) return; const f = pick(e.point); A.getCanvas().style.cursor = f ? 'pointer' : ''; });
   await syncData();
-  redraw(true);
+  await redraw(true);
+  const land = D.layerById(arriveFit);
+  if (land?.bbox) { GL.fit(A, land.bbox, { maxZoom: 13.6 }); A.once('moveend', () => { $('#map-a').dataset.arrived = land.id; }); }
+  arriveFit = '';
 }
 
 /** 켜 둔 레이어의 실 GeoJSON 을 받아 판에 올린다. */
@@ -150,10 +160,15 @@ const opacityOf = (id) => (opac.has(id) ? opac.get(id) : (id === 'namwon-greenho
    서랍이 열려 있는 동안에는 설정 판을 띠로 접는다. 지우는 게 아니라 이 화면이
    원래 가진 접기 장치다 — 띠에 `설정 패널 펼치기` 가 그대로 남고, 사용자가
    직접 펼치면(l-open) 그 뜻을 따라 다시 접지 않는다. */
-let leftPinned = false;
+/* 2026-09-24 (E0-5 · M-01 P0 · M-05) — 정보 판 · 비교 모드에서도 접는다.
+   1440×900 에서 좌 판 두 칸(690) + 정보 판(410) 사이에 지도가 268px 로 무너졌다(x22 · x28).
+   서랍 · 정보 판 · 비교 모드 = 한 화면에 판이 셋 → 좌 판은 띠. 판이 닫히면 **자동으로 접은 것만**
+   되돌린다(leftAuto). 사용자가 띠를 직접 펼쳤으면(leftPinned) 다시 접지 않는다. */
+let leftPinned = false, leftAuto = false;
+const crowded = () => drawerOpen() || S.side === 'info' || S.mode !== 'basic';
 function fitLeft() {
-  if (leftPinned || !drawerOpen()) return;
-  S.left = 'off';
+  if (crowded()) { if (!leftPinned && S.left !== 'off') { S.left = 'off'; leftAuto = true; } return; }
+  if (leftAuto) { S.left = 'on'; leftAuto = false; }
 }
 function commit(push = true) { write(S, push); redraw(); }
 async function redraw(fromUrl = false) {
@@ -181,7 +196,8 @@ function renderHead() {
           : S.side === 'info' ? ['객체 선택', on.find((l) => l.id === selLayer)?.title || ''] : [`결과 레이어 ${on.length}`, `V-World ${D.baseName(S.base)}`, `기준일 ${(on[0]?.analyzedAt || '2026-06-08').replace(/-/g, '.')}`];
   const sub = $('#page-sub'); if (sub) sub.innerHTML = esc([where, ...bits.filter(Boolean)].join(' · '));
   $$('#page-head .ptabs a').forEach((a) => {
-    a.href = '?' + new URLSearchParams({ ...S, mode: a.dataset.mode, side: a.dataset.mode === 'basic' ? S.side : '', sel: '' }).toString();
+    const left = a.dataset.mode === 'basic' && leftAuto && !(S.side === 'info' || drawerOpen()) ? 'on' : S.left;   // 비교에서 자동으로 접은 판은 기본으로 돌아가면 편다
+    a.href = '?' + new URLSearchParams({ ...S, mode: a.dataset.mode, side: a.dataset.mode === 'basic' ? S.side : '', sel: '', left }).toString();
     a.toggleAttribute('aria-current', a.dataset.mode === S.mode);
     if (a.dataset.mode === S.mode) a.setAttribute('aria-current', 'page');
   });
@@ -192,7 +208,9 @@ const drawerOpen = () => S.side === 'stats' || S.side === 'report';
 const groups = D.resultGroups();
 const openGroups = new Set(groups.live.map((g) => g.service));
 const treeOpen = new Set(D.LAYER_TREE.flatMap((s) => [s.name, ...s.groups.map((g) => g.name)]));
-const treeOn = new Set(['lt-farm-2', 'lt-fac-2']);
+/* 레이어 탭 12줄은 원본 시드 — 지도에 올릴 실자료가 없다. 체크해도 지도에 아무것도 안 올라가던 줄이라
+   (M-07) `시연 · 지도 미연결` 로 적고 체크를 막는다. 실자료가 붙은 리프(leaf.layer)는 결과 체크와 같은 길로 켠다. */
+const treeOn = { has: (id) => { const l = D.leafLayer(D.TREE_LEAVES.find((x) => x.id === id)); return !!l && onIds().includes(l.id); } };
 let ownFilter = 'mine';
 
 function renderLeft() {
@@ -206,7 +224,7 @@ function renderLeft() {
       <button type="button" role="tab" id="t-layer" aria-selected="${S.panel === 'layer'}">레이어<span class="n">${D.TREE_LEAVES.length}</span></button>
     </div><span class="sp"></span>
     <button type="button" id="t-view" class="mic" aria-expanded="false">보기 설정 ${icon('chevD', 14)}</button>`;
-  $('#l-close').onclick = () => { S.left = 'off'; commit(); };
+  $('#l-close').onclick = () => { S.left = 'off'; leftAuto = false; commit(); };
   $('#t-result').onclick = () => { S.panel = 'result'; commit(); };
   $('#t-layer').onclick = () => { S.panel = 'layer'; commit(); };
   $('#t-view').onclick = openViewSettings;
@@ -325,7 +343,8 @@ function bindResult(b) {
   };
 }
 function treeHtml() {
-  return chipsRow() + `<div class="mt"><p class="mt-note">발행된 레이어 · 체크 = 지도에 겹침<em class="tag" style="margin-left:auto">시연</em></p>` + D.LAYER_TREE.map((s) => {
+  const live = D.TREE_LEAVES.filter((l) => D.leafLayer(l)).length;
+  return chipsRow() + `<div class="mt"><p class="mt-note">발행된 레이어 · ${live ? `지도에 올릴 수 있는 것 ${live}` : '원본 시드 목록 · 지도에 올릴 실자료 없음'}<em class="tag" style="margin-left:auto">시연</em></p>` + D.LAYER_TREE.map((s) => {
     const leaves = s.groups.flatMap((g) => g.leaves);
     const k = leaves.filter((l) => treeOn.has(l.id)).length;
     const so = treeOpen.has(s.name);
@@ -333,9 +352,10 @@ function treeHtml() {
       ${so ? s.groups.map((g) => {
     const go = treeOpen.has(g.name);
     return `<div class="mt-g"><button type="button" data-tg="${esc(g.name)}" aria-expanded="${go}">${icon('chevD', 13)}${esc(g.name)}</button>
-        ${go ? g.leaves.map((l) => `<label class="mt-l ck" data-on="${treeOn.has(l.id) ? 1 : 0}"><input type="checkbox" data-leaf="${esc(l.id)}"${treeOn.has(l.id) ? ' checked' : ''}><span class="dt">${esc(l.date)}</span>${esc(l.name)}${l.shared ? `<span class="sh">${icon('clip', 13)}</span>` : ''}</label>`).join('') : ''}</div>`;
+        ${go ? g.leaves.map((l) => { const real = !!D.leafLayer(l);
+    return `<label class="mt-l ck" data-on="${treeOn.has(l.id) ? 1 : 0}"${real ? '' : ' data-demo title="시연 · 지도 미연결 — 이 레이어의 실자료가 저장소에 없습니다"'}><input type="checkbox" data-leaf="${esc(l.id)}"${treeOn.has(l.id) ? ' checked' : ''}${real ? '' : ' disabled aria-describedby="mt-demo"'}><span class="dt">${esc(l.date)}</span>${esc(l.name)}${l.shared ? `<span class="sh">${icon('clip', 13)}</span>` : ''}${real ? '' : '<em class="tag">시연 · 지도 미연결</em>'}</label>`; }).join('') : ''}</div>`;
   }).join('') : ''}</section>`;
-  }).join('') + '</div>';
+  }).join('') + '<p class="sr" id="mt-demo">원본 시드 목록 — 지도에 올릴 실자료가 연결되지 않았습니다</p></div>';
 }
 function bindTree(b) {
   b.onclick = (e) => {
@@ -346,7 +366,13 @@ function bindTree(b) {
     const t = e.target.closest('[data-tg]'); if (!t) return;
     treeOpen.has(t.dataset.tg) ? treeOpen.delete(t.dataset.tg) : treeOpen.add(t.dataset.tg); renderLeft();
   };
-  b.onchange = (e) => { const id = e.target.dataset.leaf; if (!id) return; e.target.checked ? treeOn.add(id) : treeOn.delete(id); renderLeft(); paintHud(); };
+  b.onchange = async (e) => {
+    const leaf = D.TREE_LEAVES.find((x) => x.id === e.target.dataset.leaf), l = D.leafLayer(leaf);
+    if (!l) { e.target.checked = false; return; }              // 미연결 줄은 disabled — 여기 올 일이 없다
+    const cur = new Set(onIds()); e.target.checked ? cur.add(l.id) : cur.delete(l.id); setOn([...cur]);
+    if (e.target.checked) { await syncData(); if (A && l.bbox) GL.fit(A, l.bbox, { maxZoom: 13.6 }); }
+    commit();
+  };
 }
 /** 목록 보기(원본 17) — 같은 카드의 평면 나열. */
 function openListView() {
@@ -455,26 +481,26 @@ function legendHtml(on) {
 }
 function stripHtml() {
   const cur = S.epoch;
-  return `<div class="mw-strip"><div class="h"><span>정사영상 시점 · 남원 농경지 · 드론 · GSD ${D.EPOCHS.map((e) => e.gsdCm).join(' / ')} cm</span><span class="sp"></span><span>LX 정사영상</span></div>
+  return `<div class="mw-strip"><div class="h"><span>정사영상 시점 · 남원 농경지 · GSD ${D.EPOCHS.map((e) => e.gsdCm).join(' / ')} cm</span><span class="sp"></span><span>LX 정사영상</span></div>
   <ul>${D.EPOCHS.map((e) => `<li><button type="button" data-epoch="${esc(e.id)}" aria-pressed="${cur === e.id}"><img src="${esc(e.thumb)}" alt=""><span class="lb2">${esc(e.label)}${cur === e.id ? '<span class="on">표시 중</span>' : ''}</span></button></li>`).join('')}</ul></div>`;
 }
 /* 배경지도 견본 — 남원 z13 실타일(키 없는 xdworld). 위성은 실 정사영상 크롭. */
 const VW13 = (layer, ext) => `background-image:url(https://xdworld.vworld.kr/2d/${layer}/service/13/6995/3231.${ext})`;
 const SWATCH = { base: VW13('Base', 'png'), gray: VW13('Base', 'png') + ';filter:saturate(0)', night: VW13('midnight', 'png'), satellite: VW13('Satellite', 'jpeg'), none: '' };
-function subHtml() {
-  if (sub === 'basemap') return `<div class="mw-sub mw-sub--wide" role="group" aria-label="배경지도 변경"><h4>배경지도 변경</h4>${D.BASE_MAPS.map((b) => `<button type="button" data-base="${b.id}" aria-pressed="${S.base === b.id}"><span class="sw${b.id === 'none' ? ' sw--none' : ''}" style="${SWATCH[b.id] || ''}"></span>${esc(b.name)}${b.id === P.baseMap ? '<span class="df">기본</span>' : ''}</button>`).join('')}</div>`;
-  if (sub === 'measure') return `<div class="mw-sub${toolsA?.mode ? ' mw-sub--down' : ''}" role="group" aria-label="측정 및 분석"><h4>측정 및 분석</h4>
+function subHtml(which = sub, tl = toolsA) {   // 비교 판(cmpSubHtml)도 같은 서브메뉴를 그 판의 도구로 쓴다
+  if (which === 'basemap') return `<div class="mw-sub mw-sub--wide" role="group" aria-label="배경지도 변경"><h4>배경지도 변경</h4>${D.BASE_MAPS.map((b) => `<button type="button" data-base="${b.id}" aria-pressed="${S.base === b.id}"><span class="sw${b.id === 'none' ? ' sw--none' : ''}" style="${SWATCH[b.id] || ''}"></span>${esc(b.name)}${b.id === P.baseMap ? '<span class="df">기본</span>' : ''}</button>`).join('')}</div>`;
+  if (which === 'measure') return `<div class="mw-sub${tl?.mode ? ' mw-sub--down' : ''}" role="group" aria-label="측정 및 분석"><h4>측정 및 분석</h4>
     <button type="button" data-msr="">${icon('x', 15)}취소</button>
-    <button type="button" data-msr="distance" aria-pressed="${toolsA?.mode === 'distance'}">${mic('ruler', 15)}거리<span class="u">m · km</span></button>
-    <button type="button" data-msr="area" aria-pressed="${toolsA?.mode === 'area'}">${icon('grid', 15)}면적<span class="u">m² · km²</span></button>
-    <button type="button" data-msr="radius" aria-pressed="${toolsA?.mode === 'radius'}">${mic('globe', 15)}반경<span class="u">m · km</span></button></div>`;
-  if (sub === 'draw') return `<div class="mw-sub${toolsA?.mode ? ' mw-sub--down' : ''}" role="group" aria-label="그리기 도구"><h4>그리기 도구</h4>
+    <button type="button" data-msr="distance" aria-pressed="${tl?.mode === 'distance'}">${mic('ruler', 15)}거리<span class="u">m · km</span></button>
+    <button type="button" data-msr="area" aria-pressed="${tl?.mode === 'area'}">${icon('grid', 15)}면적<span class="u">m² · km²</span></button>
+    <button type="button" data-msr="radius" aria-pressed="${tl?.mode === 'radius'}">${mic('globe', 15)}반경<span class="u">m · km</span></button></div>`;
+  if (which === 'draw') return `<div class="mw-sub${tl?.mode ? ' mw-sub--down' : ''}" role="group" aria-label="그리기 도구"><h4>그리기 도구</h4>
     <button type="button" data-msr="">${icon('x', 15)}취소</button>
-    <button type="button" data-msr="point" aria-pressed="${toolsA?.mode === 'point'}">${icon('pin', 15)}점</button>
-    <button type="button" data-msr="line" aria-pressed="${toolsA?.mode === 'line'}">${mic('ruler', 15)}선</button>
-    <button type="button" data-msr="circle" aria-pressed="${toolsA?.mode === 'circle'}">${mic('globe', 15)}원</button>
-    <button type="button" data-msr="polygon" aria-pressed="${toolsA?.mode === 'polygon'}">${icon('grid', 15)}면</button></div>`;
-  if (sub === 'lx') return `<div class="mw-sub mw-sub--wide" role="group" aria-label="LX 레이어"><h4>LX 레이어</h4>
+    <button type="button" data-msr="point" aria-pressed="${tl?.mode === 'point'}">${icon('pin', 15)}점</button>
+    <button type="button" data-msr="line" aria-pressed="${tl?.mode === 'line'}">${mic('ruler', 15)}선</button>
+    <button type="button" data-msr="circle" aria-pressed="${tl?.mode === 'circle'}">${mic('globe', 15)}원</button>
+    <button type="button" data-msr="polygon" aria-pressed="${tl?.mode === 'polygon'}">${icon('grid', 15)}면</button></div>`;
+  if (which === 'lx') return `<div class="mw-sub mw-sub--wide" role="group" aria-label="LX 레이어"><h4>LX 레이어</h4>
     <button type="button" data-lx="emd" aria-pressed="${S.tab === 'region'}">${mic('stack', 15)}읍면동 경계</button>
     <button type="button" data-lx="hyb" aria-pressed="${hybOn}">${icon('layers', 15)}지명 · 도로</button>
     <button type="button" data-lx="ext" aria-pressed="${extentOn}">${icon('grid', 15)}분석 영역</button></div>`;
@@ -554,15 +580,18 @@ function paintScale() {
   const s = GL.scaleBar(A);
   el.innerHTML = `<span class="mw-scale"><i style="width:${s.px}px"></i>${esc(s.label)}<span>${s.center.lng.toFixed(4)} E · ${s.center.lat.toFixed(4)} N</span><span>z${A.getZoom().toFixed(0)}</span><span>${esc(D.baseName(S.base))}</span></span>`;
 }
-function onTool(st) {
-  clearAnchors((a) => a.el.classList.contains('mw-tip'));
+const onTool = (st) => onToolOn(A, '#ov-a', st);
+/** 측정 · 그리기 값 꼬리표 — 그 판(A · B)의 것만 지우고 다시 단다. */
+function onToolOn(map, hostSel, st) {
+  clearAnchors((a) => a.map === map && a.el.classList.contains('mw-tip'));
   if (!st.mode) return;
-  for (const d of st.done) anchor(A, $('#ov-a'), d.at, esc(d.label), 'mw-tip');
+  const host = $(hostSel); if (!host) return;
+  for (const d of st.done) anchor(map, host, d.at, esc(d.label), 'mw-tip');
   if (st.live && st.liveLabel) {
     const g = st.live.geometry, c = g.type === 'Point' ? g.coordinates : (g.type === 'Polygon' ? g.coordinates[0] : g.coordinates);
     const mid = Array.isArray(c[0]) ? c[Math.floor(c.length / 2)] : c;
-    anchor(A, $('#ov-a'), mid, esc(st.liveLabel), 'mw-tip mw-tip--acc');
-    if (st.pts) anchor(A, $('#ov-a'), Array.isArray(c[0]) ? c[c.length - 1] : c, '클릭하여 꼭지점 추가', 'mw-tip mw-tip--ink');
+    anchor(map, host, mid, esc(st.liveLabel), 'mw-tip mw-tip--acc');
+    if (st.pts) anchor(map, host, Array.isArray(c[0]) ? c[c.length - 1] : c, '클릭하여 꼭지점 추가', 'mw-tip mw-tip--ink');
   }
 }
 
@@ -606,7 +635,7 @@ function pick(pt) {
   return hits[0] || null;
 }
 function onMapClick(e) {
-  if (toolsA?.mode) return;
+  if (toolsA?.mode || S.mode !== 'basic') return;          // 비교 모드의 A 판 클릭은 탐지 정보 판을 열지 않는다(비교 결과 판이 따로 있다)
   const f = pick(e.point);
   if (!f) return;
   const lid = f.layer.id.replace(/-(fill|line|dash)$/, '');
@@ -646,11 +675,12 @@ function renderBottom() {
   const on = onIds().map(D.layerById).filter(Boolean);
   if (!on.length || drawerOpen() || S.mode !== 'basic') { el.hidden = true; return; }
   el.hidden = false;
-  el.removeAttribute('data-fold');
+  el.removeAttribute('data-fold'); el.removeAttribute('data-peeking'); el.onclick = null;
   if (collapsed()) { el.className = 'mb'; el.setAttribute('data-fold', ''); el.innerHTML = `<div class="mb-collapsed"><b>필지 행정정보</b><span class="mic">총 ${nf.format(on[0].count)}건 중 1~10행 · 연번 · 시도 · 시군구 · ${esc(CTX.unitExample)} · 리 · 산 · 본번 · 부번 · 탐지 클…</span><span class="sp"></span>${TTABS.map((t) => `<button type="button" class="mic" data-ttab="${t.k}">${t.label}</button>`).join('<span class="dim"> · </span>')}<button type="button" class="mic" id="mb-open">${icon('search', 14)} 펼치기 ${icon('chevD', 14)}</button></div>`; $('#mb-open').onclick = () => { S.fold = '0'; commit(); };
     el.querySelector('.mb-collapsed').addEventListener('click', (e) => { const t = e.target.closest('[data-ttab]'); if (!t) return; S.tab = t.dataset.ttab; S.fold = '0'; commit(); });
     return; }
   const L = on.find((l) => l.id === (selLayer || on[0].id)) || on[0];
+  if (S.side === 'info' && S.sel && geo.get(L.id)) return renderPeek(el, L);
   const card = D.cardOfLayer(L.id);
   el.innerHTML = `
   <div class="mb-h"><span class="crumb">${esc(groups.live.find((g) => g.service === L.service)?.name || '')} ${icon('chevR', 13)} <b>${esc(card?.version ? 'XI-VFM ' + card.version : 'XI-VFM')}</b> ${icon('chevR', 13)} <b>${esc(L.title)}</b></span>
@@ -673,6 +703,35 @@ function renderBottom() {
   if (S.tab === 'space') return renderSpace(L);
   if (S.tab === 'region') return renderRegion(L);
   renderResultTable(L);
+}
+/* 정보 판이 열린 동안 하단 표는 **고른 행 한 줄**(peek)로 선다 — E0-5 · M-01.
+   1440×900 에서 좌 판을 접어도 표(352px) + 정보 판(410px)이 남아 지도가 콘텐츠의 34 % 였다.
+   표를 지운 것이 아니다: 고른 행과 그 앞뒤 행으로 넘기는 단추 · 탭 셋 · `표 펼치기` 가 남는다.
+   ‹ › 로 넘기면 정보 판 · 지도 · 번호가 같이 따라간다(표에서 행을 고른 것과 같은 길). */
+function peekRows(L) {
+  return D.detectRows(geo.get(L.id), L).filter((r) => (!tblQ.emd || r.emd === tblQ.emd) && (!tblQ.cls || r.cls === tblQ.cls) && (!tblQ.act || r.act === tblQ.act)
+    && (!tblQ.q || `${r.emd} ${r.bon} ${r.clsLabel} ${r.pnu}`.includes(tblQ.q)));
+}
+function renderPeek(el, L) {
+  const rows = peekRows(L), i = rows.findIndex((r) => r.id === S.sel), r = rows[i];
+  el.className = 'mb'; el.setAttribute('data-fold', ''); el.setAttribute('data-peeking', '');
+  el.innerHTML = `<div class="mb-peek" role="group" aria-label="고른 행">
+    <b>필지 행정정보</b>
+    ${r ? `<span class="n">${nf.format(i + 1)} / ${nf.format(rows.length)}</span><span class="row" title="${esc(`${r.emd} · ${r.ri} ${r.san} ${r.bon}-${r.bu} · ${r.clsLabel} · ${Math.round(r.area)} ㎡ · ${D.actLabel(r.act)}`)}">${esc(r.emd)} · ${esc(r.ri)} ${esc(r.san)} ${esc(String(r.bon))}-${esc(String(r.bu))} · ${esc(r.clsLabel)} · <span class="n">${nf.format(Math.round(r.area))} ㎡</span> · ${esc(D.actLabel(r.act))}</span>` : '<span class="row">고른 행이 거르개 밖에 있습니다</span>'}
+    <button type="button" class="btn-br btn-br--s" data-peek="-1"${i > 0 ? '' : ' disabled'} aria-label="이전 행">‹ 이전</button><button type="button" class="btn-br btn-br--s" data-peek="1"${r && i < rows.length - 1 ? '' : ' disabled'} aria-label="다음 행">다음 ›</button>
+    <span class="sp"></span>${TTABS.map((t) => `<button type="button" class="mic" data-ttab="${t.k}">${t.label}</button>`).join('<span class="dim"> · </span>')}
+    <button type="button" class="mic" id="mb-full">표 펼치기 ${icon('chevD', 14)}</button></div>`;
+  el.onclick = (e) => {
+    const pk = e.target.closest('[data-peek]');
+    if (pk && !pk.disabled) {
+      const nx = rows[i + +pk.dataset.peek]; if (!nx) return;
+      S.sel = nx.id; selFeat = null; page = Math.floor((i + +pk.dataset.peek) / size) + 1;
+      if (A) A.flyTo({ center: nx.lnglat, zoom: Math.max(A.getZoom(), 16.4), duration: 750, essential: true });
+      commit(); return;
+    }
+    const t = e.target.closest('[data-ttab]'); if (t) { S.tab = t.dataset.ttab; S.side = ''; S.fold = '0'; commit(); return; }
+    if (e.target.closest('#mb-full')) { S.side = ''; S.fold = '0'; commit(); }
+  };
 }
 function renderSpace(L) {
   const g = geo.get(L.id); if (!g) return;
@@ -849,7 +908,7 @@ function renderInfo(el) {
   <div class="mi-f"><button type="button" class="btn-br" id="go-stats">${icon('grid', 15)} 통계 자세히 보기</button><button type="button" class="btn-br" id="go-report">${icon('clip', 15)} 보고서 발급</button></div>`;
   $('#side-x').onclick = closeSide;
   $('#act-close').onclick = closeSide;
-  $('#to-table').onclick = () => { S.tab = 'result'; infoTab = 'detect'; commit(); };
+  $('#to-table').onclick = () => { S.tab = 'result'; infoTab = 'detect'; S.side = ''; S.fold = '0'; commit(); };
   el.querySelector('.mi-steps').onclick = (e) => { const b = e.target.closest('[data-act]'); if (!b) return; D.setAct(p.id, b.dataset.act); renderSide(); renderBottom(); };
   $('#act-save').onclick = () => { D.setAct(p.id, D.actOf(p.id), $('#memo').value); say('조치 상태를 저장했습니다 · 시연'); renderBottom(); };
   $('#go-stats').onclick = () => { location.href = `stats-standard.html?result=${encodeURIComponent(selLayer)}&on=${encodeURIComponent(S.on)}`; };
@@ -871,15 +930,37 @@ async function paintReportEmds(names) {
 
 /* ══ 11. 겹쳐보기 · 나란히보기 ══════════════════════════════════════════ */
 const cmp = { baseE: D.EPOCHS[0], cmpE: D.EPOCHS[3], layer: 'namwon-change-2504-2510', ratio: 50 };
+/* 비교 결과 판은 들어올 때 **자동으로 열지 않는다**(M-05 — 좌 690 + 판 410 사이에 지도가 270px 가 됐다).
+   비교 대상 띠의 `변화 결과 보기 ›` 로 연다. 스와이프 지도가 전폭을 먼저 갖는다. */
+let cmpOpen = false;
+const km2 = (v) => (v ? `${v.toFixed(2)} km²` : '—');
+/** 그 시점 정사영상에서 판독한 결과(SRC_IMAGERY) — 없으면 `—`. 손으로 붙인 `2,098` 을 대신한다(M-09). */
+const epochResultText = (e) => { const rs = D.resultsOfEpoch(e.id); return rs.length ? rs.map((l) => `${nf.format(l.count)} ${l.unit}`).join(' · ') : '—'; };
+/** 고른 결과의 집계. 변화 지수는 **고른 두 시점의 쌍**(change.js)에서 읽는다 — 쌍이 없으면 null(= `—`). */
+function cmpStats(L) {
+  if (!L) return null;
+  if (L.kind === 'change') {
+    const p = D.changeBetween(cmp.baseE.id, cmp.cmpE.id);
+    return p ? { n: p.stats.n, area: p.stats.area_m2, byClass: p.stats.byClass, pair: p.pair, method: p.method } : null;
+  }
+  return { n: L.count, area: L.areaM2, byClass: L.classCounts, method: L.method || L.title };
+}
+async function cmpGeo(L) {
+  if (!L) return null;
+  if (L.kind === 'change') {
+    const st = cmpStats(L); if (!st) return null;
+    try { const all = await D.loadGeo(L.geojson); return { ...all, features: all.features.filter((f) => f.properties.pair === st.pair) }; } catch { return null; }
+  }
+  if (!geo.has(L.id)) { try { geo.set(L.id, await D.loadLayer(L)); } catch { geo.set(L.id, { type: 'FeatureCollection', features: [] }); } }
+  return geo.get(L.id);
+}
 function renderCompareLeft(h, b, f) {
   h.innerHTML = `<button type="button" class="cl" id="l-close" aria-label="패널 접기">${mic('back', 18)}</button>
     <div class="tb"><button type="button" aria-selected="true">비교할 분석 선택<span class="n">2</span></button></div>`;
-  $('#l-close').onclick = () => { S.left = 'off'; commit(); };
-  b.innerHTML = chipsRow().replace('모두 열기', '과제별').replace('목록 보기', '목록')
-    + `<p class="mv-h">정사영상 시점 · 남원 농경지 · 드론 ${D.EPOCHS.length}</p>`
+  $('#l-close').onclick = () => { S.left = 'off'; leftAuto = false; commit(); };
+  b.innerHTML = `<p class="mv-h">정사영상 시점 · 남원 농경지 · ${D.EPOCHS.length}</p>`
     + D.EPOCHS.map((e) => `<div class="mv" data-ep="${esc(e.id)}" aria-selected="${cmp.baseE.id === e.id || cmp.cmpE.id === e.id}">
-        <img src="${esc(e.thumb)}" alt=""><div><b class="mv-t">남원 농경지 · ${esc(e.label)}</b><p class="mv-m">드론 · GSD ${esc(e.gsdCm)} cm · 0.62 km²</p><p class="mv-m">LX 정사영상</p></div>
-        ${cmp.baseE.id === e.id ? '<span class="mv-k">기준</span>' : cmp.cmpE.id === e.id ? '<span class="mv-k mv-k--b">비교 대상</span>' : ''}</div>`).join('')
+        <img src="${esc(e.thumb)}" alt=""><div><p class="mv-tr"><b class="mv-t">남원 농경지 · ${esc(e.label)}</b>${cmp.baseE.id === e.id ? '<span class="mv-k">기준</span>' : cmp.cmpE.id === e.id ? '<span class="mv-k mv-k--b">비교 대상</span>' : ''}</p><p class="mv-m">${esc(e.kind)} · GSD ${esc(e.gsdCm)} cm · ${km2(e.areaKm2)}</p><p class="mv-m">판독 결과 ${esc(epochResultText(e))}</p></div></div>`).join('')
     + `<p class="mv-h" style="border-top:1px solid var(--line);padding-top:10px">결과 레이어 · 비교 대상에 겹침</p>`
     + D.ALL_LAYERS.filter((l) => l.region.includes('남원')).map((l) => `<label class="mv ck" data-cmp="${esc(l.id)}"><input type="checkbox" data-cmpl="${esc(l.id)}"${cmp.layer === l.id ? ' checked' : ''}><img src="${esc(l.thumb)}" alt=""><div><b class="mv-t">${esc(l.title)}</b><p class="mc-n">${nf.format(l.count)} ${esc(l.unit)}</p></div></label>`).join('');
   f.hidden = false;
@@ -891,9 +972,10 @@ function renderCompareLeft(h, b, f) {
     renderLeft(); applyCompare();
   };
   b.onchange = (e) => { const id = e.target.dataset.cmpl; if (!id) return; cmp.layer = e.target.checked ? id : ''; renderLeft(); applyCompare(); };
-  $('#cmp-cancel').onclick = () => { S.mode = 'basic'; commit(); };
+  $('#cmp-cancel').onclick = () => { S.mode = 'basic'; cmpOpen = false; commit(); };
   $('#cmp-apply').onclick = () => { applyCompare(); say(`${cmp.baseE.label} → ${cmp.cmpE.label} 를 적용했습니다`); };
 }
+let toolsB = null, cmpBound = false;
 async function ensureMode() {
   const plateB = $('.mw-plate--b'), swipeEl = $('#swipe'), bands = $('#bands');
   if (S.mode === 'basic') { plateB.hidden = true; swipeEl.hidden = true; bands.hidden = true; if ($('#ov-b')) $('#ov-b').innerHTML = ''; return; }
@@ -901,9 +983,15 @@ async function ensureMode() {
   if (!B && GL.hasGL()) {
     B = await GL.createMap($('#map-b'), { center: cmp.cmpE.bounds ? [(cmp.cmpE.bounds[0] + cmp.cmpE.bounds[2]) / 2, (cmp.cmpE.bounds[1] + cmp.cmpE.bounds[3]) / 2] : [127.3524, 35.5312], zoom: 15.6, label: '비교 대상 지도' });
     GL.applyProps(B, { ...P, baseMap: S.base });
+    toolsB = GL.tools(B, (st) => onToolOn(B, '#ov-b', st));
     B.on('move', () => { anchors.forEach(place); if (S.mode === 'overlay' && !syncing) sync(B, A); });
     B.on('click', onMapClickB);
     A.on('move', () => { if (S.mode === 'overlay' && !syncing) sync(A, B); });
+  }
+  if (!cmpBound && A && B) {                     // 축척 띠는 한 번만 묶는다(다시 그릴 때마다 붙이면 쌓인다)
+    cmpBound = true;
+    A.on('move', () => { if (S.mode !== 'basic') scaleOf(A, '#scale-a', '좌'); });
+    B.on('move', () => scaleOf(B, '#scale-b', '우'));
   }
   await applyCompare();
   renderBands();
@@ -916,63 +1004,162 @@ async function applyCompare() {
   GL.setEpoch(A, cmp.baseE); GL.setEpoch(B, cmp.cmpE);
   const L = D.layerById(cmp.layer);
   for (const m of [A, B]) for (const k of GL.resultKeys(m)) GL.removeResult(m, k);
-  if (L) {
-    if (!geo.has(L.id)) { try { geo.set(L.id, await D.loadLayer(L)); } catch { geo.set(L.id, { type: 'FeatureCollection', features: [] }); } }
-    GL.addResult(B, L.id, geo.get(L.id), { polyWidth: P.polyWidth });
-    if (S.mode === 'overlay') GL.addResult(A, L.id, geo.get(L.id), { polyWidth: P.polyWidth });
+  const g = await cmpGeo(L);
+  if (L && g) {
+    GL.addResult(B, L.id, g, { polyWidth: P.polyWidth });
+    if (S.mode === 'overlay') GL.addResult(A, L.id, g, { polyWidth: P.polyWidth });
   }
   GL.fit(A, cmp.baseE.bounds, { pad: 20, maxZoom: 16.4, instant: true });
   GL.fit(B, cmp.cmpE.bounds, { pad: 20, maxZoom: 16.4, instant: true });
   renderCompareOverlays(); renderBands(); renderCompareSide();
 }
+
+/* ── 비교 판 도구 14(좌 7 · 우 7) — A 판 TOOLS 와 같은 일곱을 **각 판에** 잇는다(M-07 · 죽은 단추 14).
+   측정 · 그리기 · 관심 구역은 그 판의 지도에서(toolsA · toolsB), 배경지도는 두 판 함께,
+   검색은 시연 검색 목록으로 그 판을 옮기고, LX 레이어는 그 판에 읍면동 경계 · 지명 · 분석 영역을 켠다. */
+const csub = { a: '', b: '' };
+const SIDE = (k) => (k === 'b' ? { m: B, t: toolsB, host: '#ov-b', nm: '우' } : { m: A, t: toolsA, host: '#ov-a', nm: '좌' });
+function cmpToolsHtml(k) {
+  const { t, nm } = SIDE(k), sb = csub[k];
+  return `<div class="mw-tools" role="group" aria-label="${nm} 지도 도구">${TOOLS.map((x) => `<button type="button" data-tool="${x.k}" data-side="${k}" aria-pressed="${x.k === 'aoi' ? t?.mode === 'aoi' : sb === x.k}" aria-label="${esc(x.label)}" title="${esc(x.label)} · ${nm} 지도">${x.ic()}${x.tl ? `<span class="tl">${x.tl}</span>` : ''}</button>`).join('')}</div>
+    <div class="mw-zoom"><button type="button" data-z="in" data-side="${k}" data-audit-skip aria-label="확대">＋</button><button type="button" data-z="out" data-side="${k}" data-audit-skip aria-label="축소">－</button></div>
+    ${cmpSubHtml(k)}${cmpGuideHtml(k)}`;
+}
+function cmpSubHtml(k) {
+  const { m, t, nm } = SIDE(k), sb = csub[k];
+  if (sb === 'search') {
+    const rows = D.SEARCH_SEED.groups.flatMap((g) => g.rows);
+    return `<div class="mw-sub mw-sub--wide" role="group" aria-label="검색 · ${nm} 지도"><h4>검색 · 시연 목록</h4>${rows.map((r) => `<button type="button" data-cgo="${esc(r.lnglat.join(','))}" data-t="${esc(r.title)}">${icon('pin', 15)}${esc(r.title)}</button>`).join('')}</div>`;
+  }
+  if (sb === 'basemap' || sb === 'measure' || sb === 'draw') return subHtml(sb, t);
+  if (sb === 'lx') return `<div class="mw-sub mw-sub--wide" role="group" aria-label="LX 레이어 · ${nm} 지도"><h4>LX 레이어</h4>
+    <button type="button" data-clx="emd" aria-pressed="${!!m?.__emdOn}">${mic('stack', 15)}읍면동 경계</button>
+    <button type="button" data-clx="hyb" aria-pressed="${!!m?.__hybOn}">${icon('layers', 15)}지명 · 도로</button>
+    <button type="button" data-clx="ext" aria-pressed="${!!m?.__extOn}">${icon('grid', 15)}분석 영역</button></div>`;
+  return '';
+}
+function cmpGuideHtml(k) {
+  const { t } = SIDE(k), mo = t?.mode;
+  if (mo === 'aoi') return `<div class="mw-guide mw-guide--tool"><span>${mic('star', 16)}</span><p>지도 위에 도형을 그려 관심 구역을 지정하세요</p><span class="acts"><button type="button" class="btn-br" data-g="undo">되돌리기</button><button type="button" class="btn-br" data-g="clear">전체 지우기</button><button type="button" class="btn-br" data-g="cancel">취소</button><button type="button" class="btn" data-g="save">저장</button></span></div>`;
+  if (mo) return `<div class="mw-guide"><div><h4>${csub[k] === 'draw' ? '그리기 도구' : '측정'}</h4><p>지도를 클릭하세요. 더블클릭으로 완료</p></div><button type="button" class="mic" data-g="cancel" aria-label="닫기" style="margin-left:auto">${icon('x', 16)}</button></div>`;
+  return '';
+}
+async function cmpClick(e, k) {
+  const { m, t } = SIDE(k);
+  /* 시점은 왼쪽 목록에서 바꾼다 — 판을 펴 준다. 좌 판(690)과 비교 결과 판(410)이 함께 서면 지도가
+     다시 무너진다(M-01 재발 · v7-cmp-left-open) → 좌 판을 펴기 전에 비교 결과 판을 먼저 닫는다. */
+  if (e.target.closest('#ch-base') || e.target.closest('#ch-cmp')) { cmpOpen = false; S.left = 'on'; leftPinned = true; leftAuto = false; commit(); return; }
+  if (e.target.closest('[data-cmp-open]')) { cmpOpen = !cmpOpen; renderCompareSide(); A?.resize(); B?.resize(); renderCompareOverlays(); return; }
+  const z = e.target.closest('[data-z]'); if (z) { z.dataset.z === 'in' ? m?.zoomIn() : m?.zoomOut(); return; }
+  const tb = e.target.closest('.mw-tools [data-tool]');
+  if (tb) {
+    const key = tb.dataset.tool;
+    if (key === 'export') { doExport(); return; }
+    if (key === 'aoi') { csub[k] = ''; t?.set(t.mode === 'aoi' ? null : 'aoi'); renderCompareOverlays(); return; }
+    csub[k] = csub[k] === key ? '' : key; if (key !== 'measure' && key !== 'draw') t?.set(null);
+    renderCompareOverlays(); return;
+  }
+  const bs = e.target.closest('[data-base]'); if (bs) { S.base = bs.dataset.base; GL.setBase(A, S.base); GL.setBase(B, S.base); csub[k] = ''; write(S); renderCompareOverlays(); return; }
+  const ms = e.target.closest('[data-msr]'); if (ms) { t?.set(ms.dataset.msr || null); renderCompareOverlays(); return; }
+  const lx = e.target.closest('[data-clx]');
+  if (lx && m) {
+    const w = lx.dataset.clx;
+    if (w === 'hyb') { m.__hybOn = !m.__hybOn; GL.setHybrid(m, m.__hybOn); }
+    if (w === 'ext') { m.__extOn = !m.__extOn; const L = D.layerById(cmp.layer); GL.setExtent(m, m.__extOn ? [L?.bbox || (k === 'b' ? cmp.cmpE : cmp.baseE).bounds].filter(Boolean) : []); }
+    if (w === 'emd') {
+      m.__emdOn = !m.__emdOn;
+      if (!emdGeo) { try { emdGeo = await D.loadEmd(); } catch { emdGeo = { features: [] }; } }
+      GL.setEmd(m, m.__emdOn ? emdGeo.features.map((f) => ({ ...f, properties: { ...f.properties, fill: 'rgba(0,0,0,0)', sel: false } })) : [], { lxColor: P.lxColor, lxWidth: P.lxWidth });
+    }
+    renderCompareOverlays(); return;
+  }
+  const go = e.target.closest('[data-cgo]');
+  if (go && m) {
+    const c = go.dataset.cgo.split(',').map(Number);
+    m.flyTo({ center: c, zoom: 16.2, duration: 750, essential: true });
+    GL.setSearchShapes(m, [{ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: c } }]);
+    csub[k] = ''; renderCompareOverlays(); say(`${go.dataset.t} 로 옮겼습니다 · 시연 검색 목록`); return;
+  }
+  const g = e.target.closest('[data-g]');
+  if (g && t) {
+    const a = g.dataset.g;
+    if (a === 'undo') t.undo(); else if (a === 'clear') t.clear();
+    else if (a === 'save') { const r = t.saveAoi(); say(`관심 구역 ${r.n}개 · ${r.ha.toFixed(1)} ha 를 저장했습니다 · 시연`); }
+    else { t.cancel(); csub[k] = ''; }
+    renderCompareOverlays();
+  }
+}
+function scaleOf(m, id, nm) { if (!m || !$(id)) return; const s = GL.scaleBar(m, 90); $(id).innerHTML = `<span class="mw-scale"><i style="width:${s.px}px"></i>${esc(s.label)}<span>${nm} 지도</span></span>`; }
 function renderCompareOverlays() {
-  const a = $('#ov-a'), b = $('#ov-b'); if (!a) return;
-  const L = D.layerById(cmp.layer);
-  const tools = (side) => `<div class="mw-tools" role="group" aria-label="${side} 지도 도구">${TOOLS.map((t) => `<button type="button" aria-label="${esc(t.label)}" title="${esc(t.label)}">${t.ic()}${t.tl ? `<span class="tl">${t.tl}</span>` : ''}</button>`).join('')}</div>
-    <div class="mw-zoom"><button type="button" data-z="in" data-side="${side}" aria-label="확대">＋</button><button type="button" data-z="out" data-side="${side}" aria-label="축소">－</button></div>`;
+  const a = $('#ov-a'), b = $('#ov-b'); if (!a || !b || S.mode === 'basic') return;
+  clearAnchors((x) => !x.el.isConnected);
+  const L = D.layerById(cmp.layer), st = cmpStats(L);
   a.innerHTML = `<div class="mw-ov mw-ov--tl"><div class="mw-bar">기준 <b>${esc(cmp.baseE.label)}</b> ${esc(cmp.baseE.gsdCm)} cm <button type="button" class="link" id="ch-base" style="color:#7FC4FF">변경 ›</button></div>
     <div class="mw-bar mw-hint">${L && S.mode === 'overlay' ? `${esc(L.title)} 겹침` : '원본 영상 · 결과 레이어 없음'}</div></div>
-    ${tools('좌')}<div class="mw-ov mw-ov--bl" id="scale-a"></div>`;
-  b.innerHTML = `<div class="mw-ov mw-ov--tl"><div class="mw-bar">비교 대상 <b>${esc(cmp.cmpE.label)}</b> ${esc(cmp.cmpE.gsdCm)} cm <button type="button" class="link" id="ch-cmp" style="color:#7FC4FF">변경 ›</button></div>
-    ${L ? `<div class="mw-bar mw-hint">변화 ${nf.format(L.count)} ${esc(L.unit)} · ${D.ha(L.areaM2).toFixed(1)} ha · ${esc(L.method || L.title)}</div>` : ''}</div>
-    ${tools('우')}${L && S.mode === 'parallel' ? legendBox(L) : ''}
+    ${cmpToolsHtml('a')}<div class="mw-ov mw-ov--bl" id="scale-a"></div>`;
+  b.innerHTML = `<div class="mw-ov mw-ov--tl"><div class="mw-bar">비교 대상 <b>${esc(cmp.cmpE.label)}</b> ${esc(cmp.cmpE.gsdCm)} cm <button type="button" class="link" id="ch-cmp" style="color:#7FC4FF">변경 ›</button>
+      <button type="button" class="link" data-cmp-open aria-expanded="${cmpOpen}" style="color:#7FC4FF">${cmpOpen ? '변화 결과 닫기' : '변화 결과 보기 ›'}</button></div>
+    ${L ? `<div class="mw-bar mw-hint">${st ? `변화 ${nf.format(st.n)} ${esc(L.unit)} · ${D.ha(st.area).toFixed(1)} ha · ${esc(st.method)}` : `${esc(cmp.baseE.label)} → ${esc(cmp.cmpE.label)} 변화 지수 없음 · —`}</div>` : ''}</div>
+    ${cmpToolsHtml('b')}${L && st && S.mode === 'parallel' ? legendBox(L, st) : ''}
     <div class="mw-ov mw-ov--bl" id="scale-b"></div>`;
-  if (L && S.mode === 'overlay') a.insertAdjacentHTML('beforeend', legendBox(L));
-  const zoomIt = (e) => { const z = e.target.closest('[data-z]'); if (!z) return; const m = z.dataset.side === '우' ? B : A; z.dataset.z === 'in' ? m.zoomIn() : m.zoomOut(); };
-  a.onclick = (e) => { if (e.target.closest('#ch-base')) { say('왼쪽 목록에서 기준 시점을 고르세요'); return; } zoomIt(e); };
-  b.onclick = (e) => { if (e.target.closest('#ch-cmp')) { say('왼쪽 목록에서 비교 대상 시점을 고르세요'); return; } zoomIt(e); };
-  const sc = (m, id) => { if (!m || !$(id)) return; const s = GL.scaleBar(m, 90); $(id).innerHTML = `<span class="mw-scale"><i style="width:${s.px}px"></i>${esc(s.label)}<span>${id === '#scale-a' ? '좌' : '우'} 지도</span></span>`; };
-  sc(A, '#scale-a'); sc(B, '#scale-b');
-  A?.on('move', () => sc(A, '#scale-a')); B?.on('move', () => sc(B, '#scale-b'));
+  if (L && st && S.mode === 'overlay') a.insertAdjacentHTML('beforeend', legendBox(L, st));
+  a.onclick = (e) => cmpClick(e, 'a');
+  b.onclick = (e) => cmpClick(e, 'b');
+  scaleOf(A, '#scale-a', '좌'); scaleOf(B, '#scale-b', '우');
+  untangleHeads();
 }
-const legendBox = (L) => `<div class="mw-ov mw-ov--br" style="bottom:14px"><div class="mw-legend"><h4>범례 · ${esc(L.method || L.title)} · ${esc(L.unit)}</h4><ul>${L.classes.map((c) => `<li><span class="sw${D.isDashCls(c) ? ' sw--dash' : ''}"></span>${esc(D.clsLabel(c))}<span class="v">${nf.format(L.classCounts[c] || 0)}</span></li>`).join('')}</ul></div></div>`;
+/* 겹쳐보기 — B 판은 A 판 전체를 덮는 판이라 두 표지 띠(A 위-왼쪽 · B 위-오른쪽)가 같은 줄에 선다.
+   좌 판을 펴서 지도 폭이 677px 까지 줄면 두 띠가 맞닿아 겹쳤다(v7-cmp-left-open). 실측해서 겹치면
+   B 띠(와 그 아래 도구 하위 판)를 A 띠 아래로 내린다 — 글자 축소 · 말줄임 없이. */
+function untangleHeads() {
+  watchHeads();
+  const ta = $('#ov-a .mw-ov--tl'), tb = $('#ov-b .mw-ov--tl'), sb = $('#ov-b .mw-sub');
+  if (!ta || !tb) return;
+  tb.style.top = ''; if (sb) sb.style.top = '';
+  if (S.mode !== 'overlay') return;
+  const a = ta.getBoundingClientRect(), b = tb.getBoundingClientRect();
+  if (a.right + 12 <= b.left || a.bottom + 8 <= b.top || !a.width || !b.width) return;
+  const top0 = tb.offsetParent ? tb.offsetParent.getBoundingClientRect().top : 0;
+  const y = Math.ceil(a.bottom - top0 + 10);
+  tb.style.top = y + 'px';
+  if (sb) sb.style.top = Math.ceil(y + tb.getBoundingClientRect().height + 10) + 'px';
+}
+/* 좌 판 폭 전이(180ms) 뒤에야 판 폭이 확정된다 — 판 크기가 바뀔 때마다 다시 잰다 */
+let headRO = null;
+function watchHeads() {
+  const pl = $('.mw-plate--a'); if (!pl || headRO || typeof ResizeObserver === 'undefined') return;
+  headRO = new ResizeObserver(() => { if (S.mode === 'overlay') untangleHeads(); }); headRO.observe(pl);
+}
+const legendBox = (L, st) => `<div class="mw-ov mw-ov--br" style="bottom:14px"><div class="mw-legend"><h4>범례 · ${esc(st.method)} · ${esc(L.unit)}</h4><ul>${Object.keys(st.byClass).map((c) => `<li><span class="sw${D.isDashCls(c) ? ' sw--dash' : ''}"></span>${esc(D.clsLabel(c))}<span class="v">${nf.format(st.byClass[c] || 0)}</span></li>`).join('')}</ul></div></div>`;
 function renderBands() {
   const el = $('#bands'); if (!el || S.mode === 'basic') return;
-  const L = D.layerById(cmp.layer), base = D.layerById('namwon-farmland-2025');
-  el.innerHTML = `<div class="mw-band"><b>기준 · ${esc(cmp.baseE.label)}</b><span class="sp"></span><span class="n">${nf.format(base?.count || 0)} ${esc(base?.unit || '')}</span></div>
-    <div class="mw-band"><b>비교 대상 · ${esc(cmp.cmpE.label)}</b><span class="sp"></span><span class="n">${L ? nf.format(L.count) + ' ' + L.unit : '결과 없음'}</span></div>`;
+  const L = D.layerById(cmp.layer), st = cmpStats(L);
+  el.innerHTML = `<div class="mw-band"><b>기준 · ${esc(cmp.baseE.label)}</b><span class="sp"></span><span class="n">판독 결과 ${esc(epochResultText(cmp.baseE))}</span></div>
+    <div class="mw-band"><b>비교 대상 · ${esc(cmp.cmpE.label)}</b><span class="sp"></span><span class="n">${L && st ? `${L.kind === 'change' ? '변화' : esc(L.title)} ${nf.format(st.n)} ${esc(L.unit)}` : `판독 결과 ${esc(epochResultText(cmp.cmpE))}`}</span></div>`;
 }
 function renderCompareSide() {
-  const el = $('#side'); if (!el) return;
-  const L = D.layerById(cmp.layer);
-  if (S.mode !== 'overlay' || !L) { if (S.mode !== 'basic') { $('#mw').dataset.side = ''; el.innerHTML = ''; } return; }
+  const el = $('#side'); if (!el || S.mode === 'basic') return;
+  if (!cmpOpen) { $('#mw').dataset.side = ''; el.innerHTML = ''; return; }
   $('#mw').dataset.side = 'info';
-  const base = D.layerById('namwon-farmland-2025');
-  const rows = [['정사영상', cmp.baseE.label, cmp.cmpE.label], ['GSD', cmp.baseE.gsdCm + ' cm', cmp.cmpE.gsdCm + ' cm'], ['촬영', '드론', '드론'], ['범위', '0.62 km²', '0.62 km²'], ['결과 레이어', `농지 ${nf.format(base.count)}`, `변화 ${nf.format(L.count)}`]];
-  const max = Math.max(...Object.values(L.classCounts));
+  const L = D.layerById(cmp.layer), st = cmpStats(L);
+  const rows = [['정사영상', cmp.baseE.label, cmp.cmpE.label], ['GSD', cmp.baseE.gsdCm + ' cm', cmp.cmpE.gsdCm + ' cm'], ['영상 종류', cmp.baseE.kind, cmp.cmpE.kind],
+    ['범위', km2(cmp.baseE.areaKm2), km2(cmp.cmpE.areaKm2)], ['판독 결과', epochResultText(cmp.baseE), epochResultText(cmp.cmpE)]];
+  const cls = st ? Object.entries(st.byClass).sort((x, y) => y[1] - x[1]) : [];
+  const max = Math.max(1, ...cls.map((c) => c[1]));
   el.innerHTML = `<div class="mi"><div class="mi-h"><p class="lb">비교 결과</p><button type="button" class="x" id="side-x" aria-label="닫기">${icon('x', 18)}</button></div>
     <h2>${esc(cmp.baseE.label)} → ${esc(cmp.cmpE.label)}</h2>
-    <p class="mi-sub">남원 농경지 · ${esc(L.method || '변화 지수(비지도)')} · 학습 모델 탐지 아님</p>
-    <div class="dw-big"><span class="k1"><b>${nf.format(L.count)}</b><span class="u">건</span><span class="s">변화 폴리곤</span></span><span><b>${D.ha(L.areaM2).toFixed(1)}</b><span class="u">ha</span><span class="s">변화 면적 합계</span></span></div>
+    <p class="mi-sub">남원 농경지 · ${esc(st?.method || L?.method || '결과 레이어 없음')}${L?.kind === 'change' ? ' · 학습 모델 탐지 아님' : ''}</p>
+    ${st ? `<div class="dw-big"><span class="k1"><b>${nf.format(st.n)}</b><span class="u">${esc(L.unit)}</span><span class="s">${L.kind === 'change' ? '변화 폴리곤' : '탐지 도형'}</span></span><span><b>${D.ha(st.area).toFixed(1)}</b><span class="u">ha</span><span class="s">${L.kind === 'change' ? '변화 면적 합계' : '면적 합계'}</span></span></div>`
+    : `<div class="empty empty--s"><p class="empty-t">${L ? '이 두 시점의 변화 지수가 없습니다' : '결과 레이어를 고르지 않았습니다'}</p><p class="empty-w">${L ? '변화 지수는 계산해 둔 시점 쌍에만 있습니다' : '왼쪽 목록에서 겹칠 결과 레이어를 고르세요'}</p></div>`}
     <div class="tbl-wrap"><table class="tbl tbl--s"><thead><tr><th>항목</th><th>기준</th><th>비교 대상</th></tr></thead><tbody>${rows.map((r) => `<tr><td>${esc(r[0])}</td><td class="num">${esc(r[1])}</td><td class="num">${esc(r[2])}</td></tr>`).join('')}</tbody></table></div>
-    <section class="mi-sum"><h3>클래스별 · 건</h3>${Object.entries(L.classCounts).sort((a, b) => b[1] - a[1]).map(([c, n]) => `<div class="row"><span class="sw${D.isDashCls(c) ? ' sw--dash' : ''}"></span>${esc(D.clsLabel(c))}<span class="m"><i style="width:${(n / max) * 100}%"></i></span><span class="v">${nf.format(n)}</span></div>`).join('')}</section></div>
-    <div class="mi-f"><button type="button" class="btn-br" id="go-stats">${icon('grid', 15)} 통계 자세히</button><button type="button" class="btn" id="go-report">보고서 발급</button></div>`;
-  $('#side-x').onclick = () => { $('#mw').dataset.side = ''; el.innerHTML = ''; };
-  $('#go-stats').onclick = () => { location.href = 'stats-standard.html?result=namwon-farmland-2025'; };
-  $('#go-report').onclick = () => { location.href = 'report-standard-issue.html?result=namwon-farmland-2025'; };
+    ${cls.length ? `<section class="mi-sum"><h3>클래스별 · ${esc(L.unit)}</h3>${cls.map(([c, n]) => `<div class="row"><span class="sw${D.isDashCls(c) ? ' sw--dash' : ''}"></span>${esc(D.clsLabel(c))}<span class="m"><i style="width:${(n / max) * 100}%"></i></span><span class="v">${nf.format(n)}</span></div>`).join('')}</section>` : ''}</div>
+    ${st ? `<div class="mi-f"><button type="button" class="btn-br" id="cmp-dl">${mic('dl', 15)} 이 결과 내려받기</button></div>` : ''}`;
+  const close = () => { cmpOpen = false; renderCompareSide(); A?.resize(); B?.resize(); renderCompareOverlays(); };
+  $('#side-x').onclick = close;
+  $('#cmp-dl')?.addEventListener('click', doExport);
 }
 function onMapClickB(e) {
-  if (!B) return;
+  if (!B || toolsB?.mode) return;
   const keys = GL.resultKeys(B).flatMap((k) => [k + '-fill', k + '-line', k + '-dash']).filter((l) => B.getLayer(l));
   if (!keys.length) return;
   const f = B.queryRenderedFeatures([[e.point.x - 4, e.point.y - 4], [e.point.x + 4, e.point.y + 4]], { layers: keys })[0];
@@ -995,9 +1182,20 @@ function bindSwipe() {
 }
 
 /* ══ 12. 내보내기 = 보안 서약서 ═════════════════════════════════════════ */
+/* 서약을 받았으면 파일을 준다(M-03 · 발주자 9/21 "눌렀는데 아무것도 안 떨어지는 버튼").
+   켜 둔 결과마다 저장소의 원본 GeoJSON 을 그대로 내려보낸다. 한 파일을 여러 결과가 나눠 쓰는
+   변화 지수(쌍 거르개가 붙은 레이어)는 원본 전체가 아니라 **이 쌍만** 걸러 찍어 준다. 토스트는 사실만. */
 function doExport() {
-  const targets = onIds().map(D.layerById).filter(Boolean);
-  openPledge({ targets, onDone: (v) => { say(`다운로드가 시작되었습니다 · ${v.name} · ${v.from}~${v.to} · ${v.purpose}`, 6000); } });
+  const targets = (S.mode !== 'basic' && D.layerById(cmp.layer) ? [D.layerById(cmp.layer)] : onIds().map(D.layerById)).filter(Boolean);
+  openPledge({ targets, onDone: async (v) => {
+    const got = [];
+    for (const l of targets) {
+      if (!geo.has(l.id)) { try { geo.set(l.id, await D.loadLayer(l)); } catch { /* 원본이 없으면 아래에서 빈 결과 */ } }
+      const how = await downloadGeoJSON(`${l.title} · ${l.analyzedAt.replace(/-/g, '.')}`, l.filter ? null : l.geojson, geo.get(l.id));
+      if (how) got.push(how);
+    }
+    say(got.length ? `${got.length}개 파일이 내려갔습니다 · GeoJSON · ${v.name}` : '내려갈 파일이 없습니다 · 켜 둔 결과 레이어가 없습니다', 6000);
+  } });
 }
 
 /* 키보드 — Esc 로 도구·서브메뉴·검색을 닫는다 */

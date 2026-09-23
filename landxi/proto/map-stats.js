@@ -4,6 +4,7 @@
 import { openModal, mountPager, bindRows, say, icon, esc, nf, $, $$ } from './shell.js';
 import * as D from './map-data.js';
 import { openPledge } from './map-pledge.js';
+import { downloadCSV } from './download.js';
 
 let tab = 'region', basis = null, filt = { emd: '', cls: '' }, page = 1, size = 10, pickBar = -1, host = null, api = null, ctxRef = null;
 
@@ -38,9 +39,9 @@ function draw() {
   <section class="dw-sec"><div class="dw-sec-h"><span class="lb">기준 (최근 분석 결과)</span><button type="button" class="link" id="st-more">더 보기 ›</button>
       <span class="acts"><button type="button" class="btn-br" id="st-reset" style="width:84px">초기화</button><button type="button" class="btn" id="st-run" style="width:100px">통계 보기</button></span></div>
     <ul class="dw-basis" role="radiogroup" aria-label="통계 기준">${all.slice(0, 3).map((b) => `
-      <li aria-selected="${basis.id === b.id}"><label class="rd" style="gap:9px"><input type="radio" name="st-basis" value="${esc(b.id)}"${basis.id === b.id ? ' checked' : ''}><span class="t">${esc(b.title)}</span></label>${b.demo ? '<em class="tag">시연</em>' : ''}
+      <li aria-selected="${basis.id === b.id}"${b.demo ? ' aria-disabled="true"' : ''}><label class="rd" style="gap:9px"><input type="radio" name="st-basis" value="${esc(b.id)}"${basis.id === b.id ? ' checked' : ''}${b.demo ? ' disabled' : ''}><span class="t">${esc(b.title)}${b.demo ? ' · 시연 · 집계 자료 없음' : ''}</span></label>${b.demo ? '<em class="tag">시연</em>' : ''}
       <span class="m">${esc(b.at.replace(/-/g, '.'))}${b.count ? ` · ${esc(b.model)} · ${nf.format(b.count)} ${esc(b.unit)}` : ` · ${esc(b.task)}`}</span></li>`).join('')}</ul>
-    <p class="dw-note">기준을 바꾸면 <b>통계 보기</b>를 다시 누릅니다</p></section>
+    <p class="dw-note">집계는 실 결과 기준에서만 섭니다 · 시연 기준은 원본 목록이라 고를 수 없습니다</p></section>
 
   <form class="dw-filters" id="st-f">
     <span class="f f--sido"><span class="lb">시도</span><span class="sel"><select aria-label="시도"><option>${esc(adminName(geo).sido)}</option></select></span></span>
@@ -131,13 +132,35 @@ function classHtml() {
   }).join('')}</div>`;
 }
 
+/** 지금 거르개(읍면동 · 클래스) 그대로의 읍면동별 집계 → CSV. 파일 이름을 돌려준다. */
+function statsCsv() {
+  const { layer, ctx } = ctxRef, { fc } = rowsOf(), cls = layer.classes;
+  const rows = D.byEmd(fc).map((r) => [r.emd, r.n, ...cls.map((c) => r.clsN[c] || 0), Math.round(r.area), ...cls.map((c) => Math.round(r.cls[c] || 0))]);
+  const tot = D.byClass(fc);
+  rows.push(['합계', fc.features.length, ...cls.map((c) => tot.find((x) => x.cls === c)?.n || 0), Math.round(D.totalArea(fc)), ...cls.map((c) => Math.round(tot.find((x) => x.cls === c)?.area || 0))]);
+  const name = `${taskName(ctx, layer)} 통계 · ${layer.analyzedAt.replace(/-/g, '.')}${filt.emd ? ' · ' + filt.emd : ''}${filt.cls ? ' · ' + D.clsLabel(filt.cls) : ''}.csv`;
+  downloadCSV(name, [ctx.unitExample, `건수(${layer.unit})`, ...cls.map((c) => `${D.clsLabel(c)} 건수`), '면적(㎡)', ...cls.map((c) => `${D.clsLabel(c)} 면적(㎡)`)], rows);
+  return name;
+}
+
 function bind(empty) {
   $('#st-x').onclick = () => api.onClose?.();
   $('#st-more').onclick = openFind;
   $('#st-reset').onclick = () => { basis = D.statsBasis(ctxRef.layer?.service || 'farmland')[0]; filt = { emd: '', cls: '' }; page = 1; pickBar = -1; draw(); };
-  $('#st-run').onclick = () => { page = 1; draw(); say(`기준 · ${basis.title} 으로 통계를 다시 계산했습니다`); };
-  $('#st-dl').onclick = () => openPledge({ targets: ctxRef.layer ? [ctxRef.layer] : [], kind: '엑셀', onDone: (v) => say(`엑셀 다운로드가 시작되었습니다 · ${v.name}`, 6000) });
-  host.querySelector('.dw-basis').onchange = (e) => { const b = D.statsBasis(ctxRef.layer?.service || 'farmland').find((x) => x.id === e.target.value); if (b) { basis = b; draw(); } };
+  /* `통계 보기` — 집계는 켜 둔 결과의 실 GeoJSON 그대로다. 다시 계산했다고 말하지 않는다(M-04). 사실만. */
+  $('#st-run').onclick = () => {
+    page = 1; draw();
+    if (empty) { say(`기준 · ${basis.title} · 집계할 결과가 없습니다`); return; }
+    const { fc } = rowsOf();
+    say(`기준 · ${basis.title} · ${nf.format(fc.features.length)} ${ctxRef.layer.unit} · ${D.byEmd(fc).length} ${ctxRef.ctx.unitExample}`);
+  };
+  /* 엑셀 다운로드 = 지금 표의 집계를 CSV(BOM · 엑셀에서 바로 열림)로 내려보낸다(M-03). */
+  $('#st-dl').onclick = () => openPledge({ targets: ctxRef.layer ? [ctxRef.layer] : [], kind: '엑셀', onDone: () => {
+    if (empty) { say('내려갈 집계가 없습니다 · 결과 레이어를 켜세요'); return; }
+    const name = statsCsv();
+    say(`1개 파일이 내려갔습니다 · ${name}`, 6000);
+  } });
+  host.querySelector('.dw-basis').onchange = (e) => { const b = D.statsBasis(ctxRef.layer?.service || 'farmland').find((x) => x.id === e.target.value); if (b && !b.demo) { basis = b; draw(); } };
   host.querySelector('.dw-tabs').onclick = (e) => { const t = e.target.closest('[data-tab]'); if (!t) return; tab = t.dataset.tab; page = 1; draw(); };
   const f = $('#st-f');
   f.onsubmit = (e) => { e.preventDefault(); const d = new FormData(f); filt = { emd: d.get('emd') || '', cls: d.get('cls') || '' }; page = 1; draw(); if (filt.emd) api.onFocusEmd?.(filt.emd); };
@@ -181,14 +204,15 @@ function fitRows() {
 /* ── 분석 결과 찾기 모달(원본 `더 보기`) ─────────────────────────────── */
 function openFind() {
   const all = D.statsBasis(ctxRef.layer?.service || 'farmland');
-  let pick = basis.id, q = '', quick = 'all';
+  /* 거르개는 전부 실제로 거른다(M-07): 검색 항목 · 검색어 · 기준일(from~to) · 기간 칩(기준일 AS_OF 에서 n개월).
+     `실행자` 는 결과 자료에 실행자 기록이 없어 걸러 낼 수 없다 — 말만 하는 컨트롤이라 걷었다. */
+  let pick = basis.id, q = '', k = '전체', from = '', to = '', quick = 'all', fpg = { page: 1, size: 5 };
   const m = openModal({ title: '분석 결과 찾기', width: 1080,
     content: `
 <form class="filters" id="fd-f" role="search" style="padding-bottom:14px">
   <span class="f-lab">검색어</span><span class="sel"><select id="fd-k" aria-label="검색 항목"><option>전체</option><option>분석명</option><option>영상 명</option></select></span>
   <input class="inp" id="fd-q" placeholder="검색어를 입력하세요." aria-label="검색어" style="min-width:230px">
-  <span class="f-lab">실행자</span><span class="sel"><select aria-label="실행자"><option>전체</option><option>관리자</option><option>사용자</option></select></span>
-  <span class="f-lab">기준일</span><input class="inp" type="date" aria-label="시작"><span class="tilde">~</span><input class="inp" type="date" aria-label="끝">
+  <span class="f-lab">기준일</span><input class="inp" type="date" id="fd-from" aria-label="시작"><span class="tilde">~</span><input class="inp" type="date" id="fd-to" aria-label="끝">
   <span class="chips" role="group" aria-label="기간">${[['all', '전체'], ['1', '1개월'], ['3', '3개월'], ['6', '6개월'], ['12', '12개월']].map(([k, l]) => `<button type="button" class="chip-b" data-q="${k}" aria-pressed="${quick === k}">${l}</button>`).join('')}</span>
 </form>
 <div class="dw-sec-h"><span class="lb" style="font-size:16px;color:var(--ink)">AI 분석 내역</span><span class="sp"></span><span class="filters-acts"><button type="button" class="btn-br" id="fd-reset" style="width:96px">초기화</button><button type="button" class="btn-br" id="fd-go" style="width:96px">검색</button></span></div>
@@ -197,24 +221,29 @@ function openFind() {
   <tbody id="fd-tb"></tbody></table></div>
 <p class="mic" style="border:1px solid var(--line);padding:12px 14px;margin:12px 0 0">${esc(taskName(ctxRef.ctx, ctxRef.layer))} 분석으로 끝난 작업은 ${all.length}건입니다 · 다른 과제의 결과는 그 과제의 통계에서 찾습니다</p>
 <nav id="fd-pg" style="margin-top:10px"></nav>`,
-    actions: [{ label: '취소', kind: 'bracket' }, { label: '확인', kind: 'primary', onClick: () => { const b = all.find((x) => x.id === pick); if (b) { basis = b; draw(); say(`기준을 ${b.title} 으로 바꿨습니다 — 통계 보기를 누르세요`); } } }],
+    actions: [{ label: '취소', kind: 'bracket' }, { label: '확인', kind: 'primary', onClick: () => { const b = all.find((x) => x.id === pick && !x.demo); if (b) { basis = b; draw(); say(`기준을 ${b.title} 으로 정했습니다`); } } }],
   });
-  const rows = () => all.filter((b) => !q || (b.title + b.image).includes(q));
+  const hay = (b) => (k === '분석명' ? b.title : k === '영상 명' ? b.image : b.title + ' ' + b.image);
+  const floor = () => (quick === 'all' ? '' : D.monthsAgo(+quick));
+  const rows = () => all.filter((b) => (!q || hay(b).includes(q)) && (!from || b.at >= from) && (!to || b.at <= to) && (!floor() || b.at >= floor()));
   function fill() {
-    const list = rows();
-    $('#fd-tb', m.el).innerHTML = list.length ? list.map((b) => `<tr data-row tabindex="0" data-id="${esc(b.id)}" aria-selected="${pick === b.id}">
-      <td class="c"><label class="rd"><input type="radio" name="fd" value="${esc(b.id)}"${pick === b.id ? ' checked' : ''}><span class="sr">${esc(b.title)}</span></label></td>
-      <td class="num">${esc(b.at.replace(/-/g, '.'))}</td><td>${esc(b.image)}${b.demo ? ' <em class="tag">시연</em>' : ''}</td><td>${esc(b.scopeType)}</td><td>${esc(b.scopeName)}</td><td>${esc(b.title)}</td><td>${esc(b.task)}</td></tr>`).join('')
-      : `<tr><td colspan="7"><div class="empty empty--s">${icon('search', 24)}<p class="empty-t">검색 결과가 없습니다</p></div></td></tr>`;
-    bindRows($('#fd-tb', m.el), (tr) => { if (tr.dataset.id) { pick = tr.dataset.id; $$(`input[name="fd"]`, m.el).forEach((r) => { r.checked = r.value === pick; }); } });
-    mountPager($('#fd-pg', m.el), { total: list.length, page: 1, size: 5, sizes: [5, 10], onChange: () => {} });
+    const all2 = rows(); fpg.page = Math.min(fpg.page, Math.max(1, Math.ceil(all2.length / fpg.size)));
+    const list = all2.slice((fpg.page - 1) * fpg.size, fpg.page * fpg.size);
+    $('#fd-tb', m.el).innerHTML = list.length ? list.map((b) => `<tr data-row tabindex="0" data-id="${esc(b.id)}" aria-selected="${pick === b.id}"${b.demo ? ' aria-disabled="true" class="is-dim"' : ''}>
+      <td class="c"><label class="rd"><input type="radio" name="fd" value="${esc(b.id)}"${pick === b.id ? ' checked' : ''}${b.demo ? ' disabled' : ''}><span class="sr">${esc(b.title)}</span></label></td>
+      <td class="num">${esc(b.at.replace(/-/g, '.'))}</td><td>${esc(b.image)}${b.demo ? ' <em class="tag">시연 · 집계 자료 없음</em>' : ''}</td><td>${esc(b.scopeType)}</td><td>${esc(b.scopeName)}</td><td>${esc(b.title)}</td><td>${esc(b.task)}</td></tr>`).join('')
+      : `<tr><td colspan="7"><div class="empty empty--s">${icon('search', 24)}<p class="empty-t">검색 결과가 없습니다</p><p class="empty-w">기준일 ${esc(D.AS_OF.replace(/-/g, '.'))} 에서 거른 기간 · 검색어를 바꿔 보세요</p></div></td></tr>`;
+    bindRows($('#fd-tb', m.el), (tr) => { const b = all.find((x) => x.id === tr.dataset.id); if (b && !b.demo) { pick = b.id; $$(`input[name="fd"]`, m.el).forEach((r) => { r.checked = r.value === pick; }); } });
+    mountPager($('#fd-pg', m.el), { total: all2.length, page: fpg.page, size: fpg.size, sizes: [5, 10], onChange: (st) => { fpg = { page: st.page, size: st.size }; fill(); } });
   }
   m.el.addEventListener('click', (e) => {
     const c = e.target.closest('[data-q]');
-    if (c) { quick = c.dataset.q; $$('[data-q]', m.el).forEach((b) => b.setAttribute('aria-pressed', String(b === c))); return; }
-    if (e.target.closest('#fd-go')) { q = $('#fd-q', m.el).value.trim(); fill(); return; }
-    if (e.target.closest('#fd-reset')) { q = ''; $('#fd-q', m.el).value = ''; quick = 'all'; $$('[data-q]', m.el).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.q === 'all'))); fill(); }
+    if (c) { quick = c.dataset.q; $$('[data-q]', m.el).forEach((b) => b.setAttribute('aria-pressed', String(b === c))); fill(); return; }
+    if (e.target.closest('#fd-go')) { read(); fill(); return; }
+    if (e.target.closest('#fd-reset')) { q = ''; k = '전체'; from = ''; to = ''; $('#fd-q', m.el).value = ''; $('#fd-k', m.el).value = '전체'; $('#fd-from', m.el).value = ''; $('#fd-to', m.el).value = ''; quick = 'all'; $$('[data-q]', m.el).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.q === 'all'))); fill(); }
   });
-  $('#fd-f', m.el).onsubmit = (e) => { e.preventDefault(); q = $('#fd-q', m.el).value.trim(); fill(); };
+  const read = () => { q = $('#fd-q', m.el).value.trim(); k = $('#fd-k', m.el).value; from = $('#fd-from', m.el).value; to = $('#fd-to', m.el).value; };
+  $('#fd-f', m.el).onsubmit = (e) => { e.preventDefault(); read(); fill(); };
+  $('#fd-f', m.el).onchange = (e) => { if (e.target.type === 'date' || e.target.id === 'fd-k') { read(); fill(); } };
   fill();
 }

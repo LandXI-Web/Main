@@ -1,7 +1,7 @@
 /* 보안 서약서 — 내보내기(지도) · 엑셀 다운로드(통계 · 보고서)가 같은 모달을 쓴다.
    원판 B7-Map-Pledge · B7-Map-Pledge-Busy · B7-Map-Download · B7-Report-Pledge.
    서약문 · 검증 문구는 원본 그대로. 모달·포커스 가둠·토스트는 셸(shell.js)이 한다. */
-import { openModal, icon, esc, nf, $ } from './shell.js';
+import { openModal, icon, esc, nf, role, $ } from './shell.js';
 import * as D from './map-data.js';
 
 export function openPledge({ targets = [], title = '보안 서약서', kind = '내보내기', onDone } = {}) {
@@ -14,14 +14,14 @@ ${targets.length ? `<div class="pl-targets"><p class="t">내보낼 대상 · 켜
   <ul>${targets.map((l) => `<li><img src="${esc(l.thumb)}" alt="">${esc(l.title)}<b class="n">${nf.format(l.count)} ${esc(l.unit)}</b></li>`).join('')}</ul></div>` : ''}
 <p class="mic" style="margin:0 0 12px">다운로드를 받기 위해서는 해당 내용에 대한 동의가 필요합니다.</p>
 <div class="pl-text">${esc(D.PLEDGE_TEXT)}</div>
-<p class="pl-who">신청자 : 관리자 님</p>
+<p class="pl-who">신청자 : ${esc(role?.name || '—')} 님</p>
 <div class="pl-bar" id="pl-bar" hidden><i></i></div>
 <div class="form">
   <div class="field field--12"><label class="ck"><input type="checkbox" id="pl-ok" aria-describedby="pl-ok-e"><span class="pl-req">[필수]</span>&nbsp;위 보안 서약 내용에 동의합니다.</label><p class="err" id="pl-ok-e" hidden>${esc(D.PLEDGE_ERR.agree)}</p></div>
   <div class="field field--12"><div class="field-h"><label class="field-l" for="pl-name">요청명<em class="req">*</em></label></div>
     <input id="pl-name" class="inp" maxlength="60" aria-describedby="pl-name-e" placeholder="예) 금지면 비닐하우스 현황 점검"><p class="err" id="pl-name-e" hidden>${esc(D.PLEDGE_ERR.name)}</p></div>
   <div class="field field--12"><div class="field-h"><label class="field-l" for="pl-from">활용 기간<em class="req">*</em></label></div>
-    <div class="field-row"><input id="pl-from" class="inp" type="date" value="${iso(t0)}" aria-label="활용 시작일"><span class="tilde">~</span><input id="pl-to" class="inp" type="date" value="${iso(t1)}" aria-label="활용 종료일"><span class="mic">기본 = 오늘부터 1개월</span></div></div>
+    <div class="field-row"><input id="pl-from" class="inp" type="date" value="${iso(t0)}" aria-label="활용 시작일"><span class="tilde">~</span><input id="pl-to" class="inp" type="date" value="${iso(t1)}" aria-label="활용 종료일"><span class="mic">기본 = 기준일부터 1개월</span></div></div>
   <div class="field field--12"><div class="field-h"><label class="field-l" for="pl-purpose">사용 목적<em class="req">*</em></label></div>
     <input id="pl-purpose" class="inp" maxlength="80" aria-describedby="pl-purpose-e" placeholder="예) 포트홀 긴급 보수 우선순위 선정"><p class="err" id="pl-purpose-e" hidden>${esc(D.PLEDGE_ERR.purpose)}</p></div>
 </div>`,

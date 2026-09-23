@@ -1,0 +1,9 @@
+1440 cmp-open {"ratio":0.631,"aW":922,"headX":0,"ha":[122,332,220],"hb":[655,974,157],"scales":[[208,26],[208,26]],"side":"info","left":"off","sideMi":1,"mvBadgeOverlap":[0,0,0,0],"mvClip":0}
+1440 after 변경(base) {"ratio":0.463,"aW":677,"headX":0,"ha":[776,986,220],"hb":[1115,1383,157],"scales":[[203,26],[203,26]],"side":"","left":"on","sideMi":0,"mvBadgeOverlap":[0,0,0,0],"mvClip":0}
+1440 nopair 변경(cmp) {"ratio":0.463,"aW":677,"headX":0,"ha":[776,986,220],"hb":[1115,1383,157],"scales":[[203,26],[203,26]],"side":"","left":"on","sideMi":0,"mvBadgeOverlap":[0,0,0,0],"mvClip":0}
+1440 peek {"sw":922,"cw":922,"font":"15px","vis":[["‹ 이전",true,true],["다음 ›",true,true],["공간 정보",true,true],["지역 구분",true,true],["분석 결과",true,true],["표 펼치기",true,true]]}
+1280 cmp-open {"ratio":0.578,"aW":762,"headX":0,"ha":[122,332,212],"hb":[503,814,149],"scales":[[186,26],[186,26]],"side":"info","left":"off","sideMi":1,"mvBadgeOverlap":[0,0,0,0],"mvClip":0}
+1280 after 변경(base) {"ratio":0.454,"aW":599,"headX":0,"ha":[694,904,212],"hb":[994,1223,149],"scales":[[181,26],[181,26]],"side":"","left":"on","sideMi":0,"mvBadgeOverlap":[0,0,0,0],"mvClip":0}
+1280 nopair 변경(cmp) {"ratio":0.454,"aW":599,"headX":0,"ha":[694,904,212],"hb":[994,1223,149],"scales":[[181,26],[181,26]],"side":"","left":"on","sideMi":0,"mvBadgeOverlap":[0,0,0,0],"mvClip":0}
+1280 peek {"sw":762,"cw":762,"font":"15px","vis":[["‹ 이전",true,true],["다음 ›",true,true],["공간 정보",true,true],["지역 구분",true,true],["분석 결과",true,true],["표 펼치기",true,true]]}
+errs []

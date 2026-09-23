@@ -1,9 +1,10 @@
 /* 보고서 — 같은 우 서랍의 탭 둘(원본 mountReportTabs: 발급 요청 · 발급 내역).
    원판 B7-Report-Issue · -Issue-Error · -List · -List-Empty · -Pledge.
    체크한 읍면동은 지도에 켜지고, 미리보기 수치(필지 · ha)는 실 GeoJSON 집계다 — 서버 호출 없음. */
-import { mountPager, bindRows, say, icon, esc, nf, $, $$ } from './shell.js';
+import { mountPager, bindRows, say, icon, esc, nf, role, $, $$ } from './shell.js';
 import * as D from './map-data.js';
 import { openPledge } from './map-pledge.js';
+import { downloadCSV } from './download.js';
 
 let tab = 'issue', host = null, api = null, C = null;
 let form = { title: '', cls: [], emds: [], touched: false };
@@ -98,18 +99,26 @@ function previewHtml() {
 }
 
 /* ── 발급 내역 ──────────────────────────────────────────────────────── */
+/* 거르개는 전부 실제로 거른다(M-07): 검색 항목(전체 · 제목 · 요청자) · 상태 · 발급 일자 from~to ·
+   기간 칩(기준일 AS_OF 에서 1 · 3 · 6 · 12개월). 날짜 꼴이 달라도(`2026-04-23 09:48` · `2026.06.08`) 날짜로 비교한다. */
 function list() {
-  return D.reports().filter((r) => (q.state === 'all' || r.state === q.state) && (!q.q || r.title.includes(q.q)));
+  const hay = (r) => (q.k === '제목' ? r.title : q.k === '요청자' ? r.by : `${r.title} ${r.by}`);
+  const floor = q.quick === 'all' ? '' : D.monthsAgo(+q.quick);
+  return D.reports().filter((r) => {
+    const d = D.dayOf(r.at);
+    return (q.state === 'all' || r.state === q.state) && (!q.q || hay(r).includes(q.q))
+      && (!q.from || d >= q.from) && (!q.to || d <= q.to) && (!floor || d >= floor);
+  });
 }
 /** 거르개 — 왼쪽 칸(발급 내역 탭) */
 function listFilterHtml() {
   return `
   <form class="dw-filters" id="rp-q" role="search">
-    <span class="f" style="flex:26"><span class="lb">검색어</span><span class="sel"><select name="k" aria-label="검색 항목"><option>전체</option><option>제목</option><option>요청자</option></select></span></span>
+    <span class="f" style="flex:26"><span class="lb">검색어</span><span class="sel"><select name="k" aria-label="검색 항목">${['전체', '제목', '요청자'].map((k) => `<option${q.k === k ? ' selected' : ''}>${k}</option>`).join('')}</select></span></span>
     <span class="f" style="flex:44"><span class="lb">&nbsp;</span><input class="inp" name="q" placeholder="검색어를 입력하세요." aria-label="검색어" value="${esc(q.q)}"></span>
     <span class="f" style="flex:26"><span class="lb">상태</span><span class="sel"><select name="state" aria-label="상태">${D.REPORT_STATES.map((s) => `<option value="${s.k}"${q.state === s.k ? ' selected' : ''}>${esc(s.label)}</option>`).join('')}</select></span></span>
     <span class="g"><button type="reset" class="mic">초기화</button><button class="btn-br" style="width:84px">검색</button></span>
-    <span class="f" style="flex:100 1 100%"><span class="lb">발급 일자</span><span class="field-row"><input class="inp inp--s" type="date" name="from" aria-label="시작"><span class="tilde">~</span><input class="inp inp--s" type="date" name="to" aria-label="끝"></span></span>
+    <span class="f" style="flex:100 1 100%"><span class="lb">발급 일자</span><span class="field-row"><input class="inp inp--s" type="date" name="from" aria-label="시작" value="${esc(q.from)}"><span class="tilde">~</span><input class="inp inp--s" type="date" name="to" aria-label="끝" value="${esc(q.to)}"></span></span>
     <span class="f" style="flex:100 1 100%"><span class="chips" role="group" aria-label="기간">${[['all', '전체'], ['1', '1개월'], ['3', '3개월'], ['6', '6개월'], ['12', '12개월']].map(([k, l]) => `<button type="button" class="chip-b" data-q="${k}" aria-pressed="${q.quick === k}">${l}</button>`).join('')}</span></span>
   </form>`;
 }
@@ -135,7 +144,7 @@ function bind() {
   host.querySelector('.dw-tabs').onclick = (e) => { const t = e.target.closest('[data-rt]'); if (!t) return; tab = t.dataset.rt; api.setTab?.(tab); };
   if (tab === 'issue') {
     const b = host;                                  // 폼이 두 칸에 나뉘어 있어 서랍 전체에서 받는다
-    $('#rp-title').oninput = (e) => { form.title = e.target.value; };
+    $('#rp-title').oninput = (e) => { form.title = e.target.value; if (form.touched) clearFixed(); };
     b.onchange = (e) => {
       const t = e.target;
       if (t.id === 'rp-cls-all') { form.cls = t.checked ? [...(C.layer?.classes || [])] : []; $$('[data-cls]', host).forEach((x) => { x.checked = t.checked; }); return syncIssue(); }
@@ -153,9 +162,10 @@ function bind() {
     $('#rp-go').onclick = submit;
   } else {
     const f = $('#rp-q');
-    f.onsubmit = (e) => { e.preventDefault(); const d = new FormData(f); q = { ...q, k: d.get('k'), q: (d.get('q') || '').trim(), state: d.get('state') }; page = 1; draw(); };
+    const readQ = () => { const d = new FormData(f); q = { ...q, k: d.get('k'), q: (d.get('q') || '').trim(), state: d.get('state'), from: d.get('from') || '', to: d.get('to') || '' }; };
+    f.onsubmit = (e) => { e.preventDefault(); readQ(); page = 1; draw(); };
     f.onreset = () => setTimeout(() => { q = { k: '전체', q: '', state: 'all', from: '', to: '', quick: 'all' }; page = 1; draw(); }, 0);
-    f.onclick = (e) => { const c = e.target.closest('[data-q]'); if (!c) return; q.quick = c.dataset.q; $$('[data-q]', f).forEach((x) => x.setAttribute('aria-pressed', String(x === c))); };
+    f.onclick = (e) => { const c = e.target.closest('[data-q]'); if (!c) return; readQ(); q.quick = c.dataset.q; page = 1; draw(); };
     $('#rp-new').onclick = () => { tab = 'issue'; api.setTab?.('issue'); };
     const tb = $('#rp-tb');
     if (tb) {
@@ -167,7 +177,7 @@ function bind() {
           const r = D.reports().find((x) => x.id === sel);
           $$('.rp', tb).forEach((x) => x.setAttribute('aria-selected', String(x === btn)));
           api.onFocusEmd?.(emdsOf(r));
-          if (e.target.closest('.dl')) openPledge({ targets: C.layer ? [C.layer] : [], title: '보안 서약서', kind: '엑셀', onDone: (v) => say(`엑셀 다운로드가 시작되었습니다 · ${esc(r.title)} · ${v.name}`, 6000) });
+          if (e.target.closest('.dl')) openPledge({ targets: C.layer ? [C.layer] : [], title: '보안 서약서', kind: '엑셀', onDone: () => { const name = reportCsv(r); say(`1개 파일이 내려갔습니다 · ${name}`, 6000); } });
         };
       });
       mountPager($('#rp-pg'), { total: list().length, page, size, sizes: sizeList(), onChange: (st) => { page = st.page; sizePref = size = st.size; draw(); } });
@@ -194,7 +204,20 @@ function fitRows() {
   // 글꼴·그림이 늦게 앉으면 높이가 바뀐다 — 한 프레임 뒤에 한 번 더 잰다
   cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { if (host?.isConnected) fitRows(); });
 }
-/** 체크 한 번에 다시 그리는 것은 미리보기 · 전체 선택 상태 · 지도뿐이다(폼과 포커스는 그대로). */
+/** 보고서 엑셀 = 그 발급 건의 대상 지역 × 탐지 클래스 집계 CSV(BOM). 켜 둔 결과의 실 GeoJSON 에서 센다(M-03).
+ *  발급 내역은 원본 시드(시연)라 보관된 원본 파일이 없다 — 같은 조건으로 지금 결과를 집계한 것임을 파일 머리에 적는다. */
+function reportCsv(r) {
+  const cls = r.cls?.length ? r.cls : (C.layer?.classes || []);
+  const emds = new Set(emdsOf(r));
+  const rows = (C.geo ? D.byEmd(C.geo) : []).filter((x) => emds.has(x.emd));
+  const body = rows.map((x) => [x.emd, ...cls.flatMap((c) => [x.clsN[c] || 0, Math.round(x.cls[c] || 0)]), cls.reduce((a, c) => a + (x.clsN[c] || 0), 0), Math.round(cls.reduce((a, c) => a + (x.cls[c] || 0), 0))]);
+  const sum = (i) => body.reduce((a, row) => a + (+row[i] || 0), 0);
+  if (body.length) body.push(['합계', ...body[0].slice(1).map((_, i) => sum(i + 1))]);
+  const name = `${r.title}.csv`;
+  downloadCSV(name, [C.ctx.unitExample, ...cls.flatMap((c) => [`${D.clsLabel(c)} 건수(${C.layer?.unit || '건'})`, `${D.clsLabel(c)} 면적(㎡)`]), '건수 합계', '면적 합계(㎡)'], body);
+  return name;
+}
+/** 체크 한 번에 다시 그리는 것은 미리보기 · 전체 선택 상태 · 지도 · **채워진 칸의 오류 문구**다(M-08 · 폼과 포커스는 그대로). */
 function syncIssue() {
   const rows = C.geo ? D.byEmd(C.geo) : [];
   const all = C.emdGeo ? C.emdGeo.features.map((f) => f.properties.nm) : rows.map((r) => r.emd);
@@ -212,7 +235,15 @@ function syncIssue() {
       <p class="s">${esc(C.ctx.unitExample)} ${picked.length} · 클래스 ${form.cls.length}</p></div>
     <div class="r">${picked.slice(0, 5).map((r) => `<div class="row"><span class="nm">${esc(r.emd)}</span><span class="cnt">${nf.format(r.n)} ${esc(C.layer?.unit || '')}</span><span class="m"><i style="width:${Math.round((r.area / max) * 100)}%"></i></span><span class="v">${nf.format(Math.round(r.area))} ㎡</span></div>`).join('') || '<p class="mic">대상 지역을 고르면 여기에 요약이 섭니다</p>'}
       ${picked.length > 5 ? `<p class="mic">그 외 ${picked.length - 5} ${esc(C.ctx.unitExample)}</p>` : ''}</div>`;
+  if (form.touched) clearFixed();
   api.onFocusEmd?.(form.emds);
+}
+/** 발급을 한 번 눌러 오류가 섰으면, 사용자가 채운 칸부터 오류 문구를 거둔다. 비어 있는 칸의 문구는 그대로. */
+function clearFixed() {
+  const t = $('#rp-title');
+  if (t && form.title.trim()) { t.removeAttribute('aria-invalid'); t.removeAttribute('aria-describedby'); $('#rp-title-e')?.remove(); }
+  if (form.cls.length) host.querySelector('.rp-cls')?.parentElement?.querySelector('.err')?.remove();
+  if (form.emds.length) host.querySelector('.rp-emds')?.parentElement?.querySelector('.err')?.remove();
 }
 function redrawIssue() {
   draw();
@@ -227,7 +258,7 @@ function submit() {
     $('.err', host)?.previousElementSibling?.focus?.();
     return;
   }
-  D.addReport({ id: 'rp-new-' + Date.now(), state: 'wait', at: D.stamp(), by: '관리자', dl: 0, title: form.title.trim(), cls: [...form.cls], emds: [...form.emds] });
+  D.addReport({ id: 'rp-new-' + (D.reports().length + 1), state: 'wait', at: D.stamp(), by: role?.name || '—', dl: 0, title: form.title.trim(), cls: [...form.cls], emds: [...form.emds] });
   say('보고서 발급을 접수했습니다 — 발급 내역에서 진행 상태를 확인하세요');
   tab = 'list'; sel = ''; page = 1; api.setTab?.('list');
 }
