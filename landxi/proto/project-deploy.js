@@ -1,8 +1,11 @@
-/* 프로젝트 · 배포 탭 — 모델 등록(`추정`) + 카드 발행 요청 → admin-publish.html + **카드 역추적**.
+/* 프로젝트 · 배포 탭 — 모델 등록(`추정`) + 카드 발행 요청 → **내 요청 이력**(7열 표) + **카드 역추적**.
+   발행 요청은 lx_publish_v1(publish-data.js) 단일 저장소에 `pa-N` 으로 들어가 관리자 큐 맨 위에 선다(E0-8 · PP-1).
+   직원은 승인 화면으로 보내지 않는다 — 요청 뒤 이 탭의 이력에 착지한다(B1). 승인은 관리자 사이트의 몫이다.
    원판 B5-Project-Deploy.png · B7-Project-{Model-Register,Model-Registered,Deploy-Picker}.png
    역추적: 이 프로젝트의 모델이 어느 서비스 카드로 갔는가 — cards.js 의 cardsOfService / projectId 두 갈래.
    유보 ① 모델 등록 폼은 원본에 없다(원본 = 빈 상태 + "pt 파일 등록 기능은 추후 개발 협의") → `추정` 표식. */
-import { openModal, say, bindCounters, icon, esc, $, $$ } from './shell.js';
+import { openModal, say, bindCounters, bindRows, allowed, icon, esc, $, $$ } from './shell.js';
+import { ST_CLASS } from './publish-data.js';
 import * as D from './project-data.js';
 import { n, demo, guess, fig, kv, st, empty, cta, br, link, miss } from './project-ui.js';
 
@@ -20,14 +23,29 @@ export function deployTab(p, S) {
   <aside class="split-r panel" aria-label="${S.reg ? '모델 등록' : '모델 정보'}">${S.reg ? regForm(p) : mdPanel(p, mds, reqs)}</aside></div>`;
 }
 
+/* 내 요청 이력 — 7열 표. 행은 관리자 큐와 같은 저장소에서 온다(requestsOf). ?req=pa-N 은 방금 보낸 요청 = 선택 행. */
+const reqParam = () => new URLSearchParams(location.search).get('req') || '';
+/* 열 폭은 백분율(합 100 · 과제명이 나머지) — 1280 · 1440 · 1920 어느 판 폭에서도 열이 겹치지 않는다. 긴 이름은 두 줄로 접는다. */
+const REQ_COLS = [['상태', 9], ['과제명', null], ['학습 결과', 16], ['모델명', 16], ['과제 유형', 11], ['요청자', 10], ['요청일', 15]];
+const TD = 'padding:8px;height:auto;line-height:1.35', WRAP = `${TD};white-space:normal;overflow-wrap:anywhere`;
 function reqBody(p, reqs, mds) {
   if (!reqs.length) return `${empty('발행 요청이 없습니다', mds.length ? '등록한 모델로 카드 발행을 요청하세요' : '학습 결과를 모델로 등록한 뒤 카드 발행을 요청합니다', 'layers')}${ptNote()}`;
-  return `${reqs.map((r) => `<div style="border-bottom:1px solid var(--line);padding:10px 4px 12px">
-    <p style="margin:0 0 6px;display:flex;align-items:baseline;gap:12px">${st(r.state)}<b style="font-size:17px">${esc(r.card)}</b><span class="sp" style="flex:1"></span><span class="n mic">${esc(r.at)}</span></p>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0 18px">
-      ${[['학습 결과', esc((D.trainsOf(p.id).find((t) => t.id === r.train) || {}).name || '—')], ['모델명', esc(r.modelName)], ['과제 유형', esc(r.kind)], ['요청자', '내 계정' + (r.demo ? ' <em class="tag">시연</em>' : '')]]
-        .map(([k, v]) => `<div><p class="lb" style="margin:0 0 2px">${k}</p><p style="margin:0;font-size:15px">${v}</p></div>`).join('')}</div>
-    <p class="acts" style="justify-content:flex-start;margin-top:10px">${link('카드 발행 관리에서 보기 ›', 'go-publish')}</p></div>`).join('')}${ptNote()}`;
+  const want = reqParam(), sel = reqs.find((r) => r.id === want) || null, just = !!sel && sel.from === p.id && want.startsWith('pa-');
+  return `${just ? `<div class="pj-ok" id="rq-just">${icon('check', 16)}<b>요청 완료</b><span>“${esc(sel.card)}” 발행을 요청했습니다 — 관리자 검토 큐에 <span class="n">${esc(sel.id)}</span> 로 섰습니다</span><span class="sp" style="flex:1"></span>${link('×', 'ok-x', ' aria-label="알림 닫기"')}</div>` : ''}
+  <div class="pj-hist-h" style="margin-top:${just ? 14 : 0}px"><h3>내 요청 이력</h3><span class="n" style="color:var(--accent)">${reqs.length}</span><span class="sp" style="flex:1"></span><span class="mic">시연 · 이 브라우저에 저장</span></div>
+  <div class="tbl-wrap"><table class="tbl" id="rq-hist" aria-label="카드 발행 요청 이력"><colgroup>${REQ_COLS.map(([, w]) => (w ? `<col style="width:${w}%">` : '<col>')).join('')}</colgroup>
+    <thead><tr>${REQ_COLS.map(([k]) => `<th style="padding:0 8px">${k}</th>`).join('')}</tr></thead>
+    <tbody>${reqs.map((r) => `<tr data-row tabindex="0" data-id="${esc(r.id)}" aria-selected="${r === sel}">
+      <td style="${TD}"><span class="st ${ST_CLASS[r.status] || ''}">${esc(r.status || '—')}</span></td>
+      <td style="${WRAP}"><b>${esc(r.card)}</b>${r.demo ? demo() : ''}</td><td style="${WRAP}">${esc(r.training || '—')}</td><td class="num" style="${WRAP}">${esc(r.model || '—')}</td>
+      <td style="${WRAP}">${esc(r.type || '—')}</td><td style="${WRAP}">${esc(r.requester || '—')}</td><td class="num" style="${TD};padding-right:4px;font-size:14px;letter-spacing:0">${esc(String(r.date || '').slice(0, 10))}</td></tr>`).join('')}</tbody></table></div>
+  <p class="acts" id="rq-go" style="justify-content:flex-start;align-items:baseline;gap:12px;margin-top:10px">${goPublish(sel || reqs[0])}</p>${ptNote()}`;
+}
+/* '카드 발행 관리에서 보기 ›' — 승인 권한(approve)이 있는 계정만 링크. 직원은 비활성 + 이유 한 줄(말만 하는 버튼 0). */
+function goPublish(r) {
+  const label = '카드 발행 관리에서 보기 ›';
+  if (allowed('approve') && r && String(r.id).startsWith('pa-')) return `<a class="link" href="admin-publish.html?open=${encodeURIComponent(r.id)}">${label}</a>`;
+  return `<button type="button" class="link" disabled aria-describedby="rq-go-why">${label}</button><span class="mic" id="rq-go-why">관리자 사이트에서 승인합니다</span>`;
 }
 function mdBody(p, mds) {
   const trains = D.trainsOf(p.id).filter((t) => t.state === '완료');
@@ -75,13 +93,7 @@ function regForm(p) {
       <div class="field"><div class="field-h"><label class="field-l" for="md-name">모델명<em class="req">*</em></label><span class="cnt" data-for="md-name"></span></div>
         <input id="md-name" class="inp" maxlength="100" value="${esc(p.name)} ${esc(trains[0] ? trains[0].name.replace(/^.*?(v[\d.]+)$/, '$1') : 'v1.0')}"></div></div>
     <p class="lb" style="margin:16px 0 6px">학습 결과 <em class="req">*</em><span class="sp" style="flex:1"></span></p>
-    ${trains.length ? `<div class="tbl-wrap"><table class="tbl"><colgroup><col style="width:40px"><col style="width:112px"><col><col style="width:96px"><col style="width:62px"><col style="width:54px"><col style="width:54px"></colgroup>
-      <thead><tr><th class="sr">선택</th><th class="sr">미리보기</th><th>학습 결과</th><th>학습일</th><th class="r">라벨</th><th class="r">IoU</th><th class="r">F1</th></tr></thead>
-      <tbody>${trains.map((t, i) => `<tr><td><input type="radio" name="md-tr" value="${esc(t.id)}"${i === 0 ? ' checked' : ''} aria-label="${esc(t.name)} 선택"></td>
-        <td>${fig(p.thumbs[i % p.thumbs.length], '', '', { style: '--ar:104/58' })}</td>
-        <td><b>${esc(t.name)}</b><br><span class="mic">${i === 0 ? '최근 학습 · ' : ''}${esc(t.base)}</span></td>
-        <td class="num">${esc(t.at.slice(0, 10))}</td><td class="num r">${n(t.labels)}</td>
-        <td class="num r"${t.iou != null ? ' style="color:var(--accent)"' : ''}>${t.iou != null ? t.iou.toFixed(2) : '—'}</td><td class="num r">${t.f1 != null ? t.f1.toFixed(2) : '—'}</td></tr>`).join('')}</tbody></table></div>`
+    ${trains.length ? trainTable(p, trains, 'md-tr')
       : empty('완료된 학습 결과가 없습니다', '학습 탭에서 먼저 학습을 마치세요', 'clock')}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
       ${[['기반 모델', trains[0] ? trains[0].base : '—'], ['탐지 형태', p.taskLabel], ['클래스', p.classes.map((c) => c.name).join(' · ')], ['데이터 유형', p.dataType]]
@@ -89,6 +101,20 @@ function regForm(p) {
     <div class="field" style="margin-top:14px"><label class="field-l" for="md-desc">설명</label><textarea id="md-desc" class="inp" rows="3" placeholder="모델 설명 입력"></textarea></div>
   </form></div>
   <footer class="panel-f"><span class="mic">등록한 모델은 카드 발행 요청에서 선택</span>${br('취소', 'md-cancel')}${cta('모델 등록', 'md-save')}</footer>`;
+}
+
+/* 학습 결과 고르기 표 — 모델 등록 폼(판 440fr)과 발행 요청 픽커(모달 680)가 같이 쓴다(B9).
+   열 폭은 백분율로 합 100 = 표 폭 — 고정 px 합이 판 폭을 넘어 `학습 결과` 열이 22px 로 짜부라지던 것을 없앤다.
+   학습일은 학습 결과 아래 줄로, IoU · F1 은 한 칸 두 줄로 접는다. */
+function trainTable(p, trains, name) {
+  const P = 'padding:6px 8px;height:auto';
+  return `<div class="tbl-wrap"><table class="tbl pj-mdtbl" data-pick="${name}"><colgroup><col style="width:9%"><col style="width:21%"><col style="width:40%"><col style="width:14%"><col style="width:16%"></colgroup>
+      <thead><tr><th><span class="sr">선택</span></th><th><span class="sr">미리보기</span></th><th style="padding:0 8px">학습 결과 · 학습일</th><th class="r" style="padding:0 8px">라벨</th><th class="r" style="padding:0 8px">IoU · F1</th></tr></thead>
+      <tbody>${trains.map((t, i) => `<tr><td style="padding:0 6px;text-align:center"><input type="radio" name="${name}" value="${esc(t.id)}"${i === 0 ? ' checked' : ''} aria-label="${esc(t.name)} 선택"></td>
+        <td style="padding:6px 6px 6px 0">${fig(p.thumbs[i % p.thumbs.length], '', '', { style: '--ar:104/58' })}</td>
+        <td style="${P}" title="${esc(t.name)} · ${esc(t.base || '')}"><b>${esc(t.name)}</b><br><span class="mic n">${esc(t.at.slice(0, 10))}${i === 0 ? ' · 최근' : ''}</span></td>
+        <td class="num r" style="${P}">${n(t.labels)}</td>
+        <td class="num r" style="${P}"><span${t.iou != null ? ' style="color:var(--accent)"' : ''}>${t.iou != null ? t.iou.toFixed(2) : '—'}</span><br>${t.f1 != null ? t.f1.toFixed(2) : '—'}</td></tr>`).join('')}</tbody></table></div>`;
 }
 
 /* ══ 카드 역추적 — 개요 · 배포 양쪽에 ═══════════════════════════════════════
@@ -110,6 +136,14 @@ export function cardTrace(p, { compact = false }) {
 export function bindDeploy(p, S, go) {
   bindCounters($('#pj-root'));
   $$('#main [data-dep]').forEach((b) => b.addEventListener('click', () => go({ dep: b.dataset.dep, reg: false })));
+  const tb = $('#rq-hist tbody');
+  if (tb) {
+    bindRows(tb, (row) => {                                          // 행 선택 = URL 의 req · 아래 링크가 그 요청을 가리킨다
+      const r = D.requestsOf(p.id).find((x) => x.id === row.dataset.id); if (!r) return;
+      const q = new URLSearchParams(location.search); q.set('req', r.id); history.replaceState(null, '', `${location.pathname.split('/').pop()}?${q}`);
+      $('#rq-go').innerHTML = goPublish(r);
+    });
+  }
   $('#pj-root').addEventListener('click', (e) => {
     const a = e.target.closest('[data-act]'); if (!a) return;
     switch (a.dataset.act) {
@@ -119,7 +153,6 @@ export function bindDeploy(p, S, go) {
       case 'md-drop': { const m0 = D.modelsOf(p.id)[0]; if (m0) { D.dropModel(p.id, m0.id); go({}); say('모델 등록을 해제했습니다 · 시연'); } return; }
       case 'md-save': return saveModel(p, go);
       case 'rq-new': return openPicker(p, go);
-      case 'go-publish': return (location.href = 'admin-publish.html');
       case 'ok-x': return a.closest('.pj-ok').remove();
       default: return undefined;
     }
@@ -133,23 +166,18 @@ function saveModel(p, go) {
   go({ dep: 'model', reg: false }); say(`“${name}” 모델을 등록했습니다 · 시연`);
 }
 
-/* 카드 발행 요청 — 학습 결과 픽커(B7-Project-Deploy-Picker) → 실제로 admin-publish.html 로 나간다 */
+/* 카드 발행 요청 — 학습 결과 픽커(B7-Project-Deploy-Picker) → lx_publish_v1 에 `pa-N` → 이 탭의 내 요청 이력에 착지(B1) */
 function openPicker(p, go) {
   const mds = D.modelsOf(p.id), trains = D.trainsOf(p.id).filter((t) => t.state === '완료');
   if (!trains.length) { say('완료된 학습 결과가 없습니다.'); return; }
   const m = openModal({ title: '학습 결과 선택', tag: '시연', width: 680, content: `
-    <div class="tbl-wrap"><table class="tbl"><colgroup><col style="width:40px"><col style="width:120px"><col><col style="width:100px"><col style="width:66px"><col style="width:58px"><col style="width:58px"></colgroup>
-      <thead><tr><th class="sr">선택</th><th class="sr">미리보기</th><th>학습 결과</th><th>학습일</th><th class="r">라벨</th><th class="r">IoU</th><th class="r">F1</th></tr></thead>
-      <tbody>${trains.map((t, i) => `<tr><td><input type="radio" name="pk" value="${esc(t.id)}"${i === 0 ? ' checked' : ''} aria-label="${esc(t.name)} 선택"></td>
-        <td>${fig(p.thumbs[i % p.thumbs.length], '', '', { style: '--ar:112/64' })}</td><td><b>${esc(t.name)}</b></td>
-        <td class="num">${esc(t.at.slice(0, 10))}</td><td class="num r">${n(t.labels)}</td>
-        <td class="num r">${t.iou != null ? t.iou.toFixed(2) : '—'}</td><td class="num r">${t.f1 != null ? t.f1.toFixed(2) : '—'}</td></tr>`).join('')}</tbody></table></div>
-    <p class="mic" style="margin:10px 0 0"><b class="n" id="pk-n" style="color:var(--accent)">선택 1 · ${esc(trains[0].name)}</b> — 카드 발행 관리로 넘어갑니다</p>`,
+    ${trainTable(p, trains, 'pk')}
+    <p class="mic" style="margin:10px 0 0"><b class="n" id="pk-n" style="color:var(--accent)">선택 1 · ${esc(trains[0].name)}</b> — 요청은 관리자 검토 큐에 서고, 이 탭의 내 요청 이력에 남습니다</p>`,
     actions: [{ label: '취소', kind: 'bracket' }, { label: '발행 요청', kind: 'primary', onClick: () => {
       const t = trains.find((x) => x.id === $('input[name="pk"]:checked', m.el).value);
-      D.addRequest(p.id, { card: `${p.name} ${t.name.replace(/^.*?(v[\d.]+|#\d+)$/, '$1')}`, train: t.id, modelName: mds[0] ? mds[0].name : t.name, kind: '신규 과제', state: '대기', at: '2026-06-08' });
-      say('카드 발행을 요청했습니다 — 카드 발행 관리로 이동합니다 · 시연');
-      setTimeout(() => { location.href = 'admin-publish.html'; }, 420);
+      const id = D.addRequest(p.id, { card: `${p.name} ${t.name.replace(/^.*?(v[\d.]+|#\d+)$/, '$1')}`, train: t.id, modelName: mds[0] ? mds[0].name : t.name, kind: '신규 과제' });
+      say(`카드 발행을 요청했습니다 — ${id} · 내 요청 이력으로 갑니다 · 시연`);
+      setTimeout(() => { location.href = `ai-project.html?pid=${encodeURIComponent(p.id)}&tab=deploy&req=${encodeURIComponent(id)}`; }, 420);
       return true;
     } }] });
   $$('input[name="pk"]', m.el).forEach((r) => r.addEventListener('change', () => {

@@ -2,12 +2,24 @@
    선택 카드 3(내 프로젝트 · 학습 결과 · 분석 결과) → 과제 유형(신규 과제 / 과제 고도화) → 과제 정보 → 발행 요청.
    프로젝트 스코프(?pid=N)의 발행 요청은 프로젝트 화면군의 몫이다 — 여기는 전역 진입만.
    URL 이 상태다: ?project=7&result=r7-1&type=enhance&an=AN-7-2,AN-7-3&edit=1
-   발행 요청은 세션에 `대기` 로 들어가 카드 발행 관리의 큐 맨 위에 선다. */
-import { mountShell, say, openModal, bindCounters, icon, esc, $, $$ } from './shell.js';
+   발행 요청은 lx_publish_v1(단일 저장소)에 `대기` 로 들어가 카드 발행 관리의 큐 맨 위에 선다(E0-8).
+   착지 · 목록 · 취소는 역할의 집(homeOf(ROLE))을 따른다 — 승인 권한이 있으면 검토 데스크, 직원이면 자기 요청 이력. */
+import { mountShell, say, openModal, bindCounters, allowed, ROLE, role, icon, esc, $, $$ } from './shell.js';
+import { homeOf } from '../assets/data/roles.js';
 import * as D from './publish-data.js';
+import { ALL as PJ_ALL } from './project-data.js';
 import { fig, classChips } from './publish-ui.js';
 
-const PAGE = 'ai-publish-create.html', BACK = 'ai-project.html';
+const PAGE = 'ai-publish-create.html', BACK = homeOf(ROLE);
+/* 전역 폼의 과제(PROJECTS 1–8)를 직원의 프로젝트(project-data pj-*)에 잇는다 — 같은 이름 · 아니면 같은 실 결과(REAL 키 = resultId).
+   둘 다 없으면 이을 프로젝트가 없다 → 역할의 집(목록)으로 착지. */
+const workOf = (pid) => { const pj = D.PROJECTS[pid]; if (!pj) return null; const all = PJ_ALL();
+  return (all.find((x) => x.name === pj.name) || (pj.real && all.find((x) => x.resultId === pj.real)) || {}).id || null; };
+function landing(id, pid) {
+  if (allowed('approve')) return `admin-publish.html?open=${encodeURIComponent(id)}`;
+  const w = workOf(pid);
+  return w ? `${BACK}?pid=${encodeURIComponent(w)}&tab=deploy&req=${encodeURIComponent(id)}` : BACK;
+}
 const st = { pid: null, result: null, analyses: [], type: 'new', editOpen: false, info: {} };
 (function read() {
   const q = new URLSearchParams(location.search);
@@ -22,7 +34,7 @@ function syncUrl() {
 }
 
 mountShell({ active: 'project', title: '카드 발행 요청', titleRule: 2, subtitle: '분석 과제(프로젝트)와 학습 결과를 선택하고 모델 세부 정보를 입력해 발행을 요청합니다', demo: true, crumbIcon: 'layers',
-  crumbs: [{ label: 'AI 개발 프로젝트', href: BACK }, { label: '카드 발행 요청' }] });
+  crumbs: [allowed('approve') ? { label: '카드 발행 관리', href: 'admin-publish.html' } : { label: 'AI 개발 프로젝트', href: BACK }, { label: '카드 발행 요청' }] });
 $('#page-head').dataset.tight = '';
 $('#main').insertAdjacentHTML('beforeend', `<form class="rq" id="rq" novalidate aria-label="카드 발행 요청">
   <div class="rq-body"><div class="rq-picks" id="rq-picks" role="group" aria-label="선택"></div><p class="err rq-perr" id="rq-perr" role="alert" hidden></p><div class="rq-form" id="rq-form"></div></div>
@@ -123,11 +135,11 @@ form.addEventListener('submit', (e) => {
   if (!enh) for (const [id, v] of [['rq-dash', t.dash], ['rq-card', t.card]]) { const er = $(`#${id}-f .err`); if (er) er.hidden = !!v; if (!v) first ||= $(`[data-thumb="${id}"]`); }
   if (first) { first.focus(); return; }
   const p = pj(), task = $(`#${taskId}`).value.trim(), model = $('#rq-model').value.trim(), now = new Date(), z = (n) => String(n).padStart(2, '0');
-  const id = D.addRequest({ card: `${task} ${model}`, type: enh ? '과제 고도화' : '신규 과제', project: p.name, training: st.result.labeling, model, perms: [], requester: '홍○○', masked: true,
+  const id = D.addRequest({ pid: st.pid, from: workOf(st.pid) || st.pid, card: `${task} ${model}`, type: enh ? '과제 고도화' : '신규 과제', project: p.name, training: st.result.labeling, model, perms: [], requester: role ? role.name : '내 계정', masked: true,
     date: `${now.getFullYear()}.${z(now.getMonth() + 1)}.${z(now.getDate())} ${z(now.getHours())}:${z(now.getMinutes())}`, status: '대기', intro: (st.info['rq-intro'] ?? p.desc ?? '').trim(), purpose: (st.info['rq-purpose'] ?? p.purpose ?? '').trim(),
     ...(t.card ? { cardThumb: t.card } : {}), ...(t.dash ? { dashThumb: t.dash } : {}), analyses: st.analyses.map((a) => a.name) });
   say('카드 발행을 요청했습니다.'); $('button[type="submit"]', form).disabled = true;
-  setTimeout(() => { location.href = `admin-publish.html?open=${id}`; }, 700);
+  setTimeout(() => { location.href = landing(id, st.pid); }, 700);
 });
 
 drawPicks(); drawForm();

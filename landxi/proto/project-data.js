@@ -16,6 +16,9 @@ import { serviceById } from '../assets/data/services.js';
 import { cardsOfService, CARDS } from '../assets/data/cards.js';
 // 분류축은 **여기 두 곳이 정본**이다 — 화면도 대장도 여기서 이름과 규칙을 가져온다.
 import { ASSET_TIERS, SHARE_LABEL } from '../assets/data/registry.js';
+// 발행 요청은 여기 두지 않는다 — lx_publish_v1(publish-data.js)이 단일 저장소다(E0-8 · PP-1).
+import * as PUB from './publish-data.js';
+import { AS_OF, role } from './shell.js';
 const nfInt = (n) => new Intl.NumberFormat('ko-KR').format(n);
 
 export const CROP = '../assets/proto/crops/';
@@ -284,7 +287,15 @@ export const geoUrl = (rid) => GEO + rid + '.geojson';
 const DEPLOY_SEED = {
   'pj-greenhouse': [{ id: 'rq-1', card: '비닐하우스 탐지 v2.1', train: 'tr-6', modelName: 'v2.1', kind: '신규 과제', state: '대기', at: '2026-06-08', demo: true }],
 };
-export const requestsOf = (pid) => [...store().requests(pid), ...(DEPLOY_SEED[pid] || [])];
+/* 요청 이력 = 발행 관리 큐와 같은 저장소(lx_publish_v1)에서 이 프로젝트가 낸 것 + 옛 세션 사본(읽기 호환) + 원본 시연 행.
+   행 모양은 큐와 같다: status · card · training · model · type · requester · date. */
+const legacyRow = (r) => ({ ...r, status: r.status || r.state, training: r.training || (trainsOf(r.pid || '').find((t) => t.id === r.train) || {}).name,
+  model: r.model || r.modelName, type: r.type || r.kind, requester: r.requester || '내 계정', date: r.date || String(r.at || '').replace(/-/g, '.') });
+export const requestsOf = (pid) => [
+  ...PUB.requestsFrom(pid),
+  ...store().requests(pid).map((r) => legacyRow({ ...r, pid })),
+  ...(DEPLOY_SEED[pid] || []).map((r) => legacyRow({ ...r, pid })),
+].map((r) => ({ ...r, state: r.status }));
 export const modelsOf = (pid) => store().models(pid);
 
 /* 카드 역추적 — 이 프로젝트의 모델이 어느 서비스 카드로 갔는가.
@@ -335,7 +346,12 @@ export const uploadOf = (pid) => load().upload[pid] || null;
 export function addDataset(pid, d) { const s = load(); s.datasets[pid] = [{ ...d, id: `ds-new-${(s.datasets[pid] || []).length + 1}` }, ...(s.datasets[pid] || [])]; save(); }
 export function addTrain(pid, t) { const s = load(); s.trains[pid] = [{ ...t, id: `tr-new-${(s.trains[pid] || []).length + 1}` }, ...(s.trains[pid] || [])]; save(); }
 export function addRun(pid, r) { const s = load(); s.runs[pid] = [{ ...r, id: `an-new-${(s.runs[pid] || []).length + 1}` }, ...(s.runs[pid] || [])]; save(); }
-export function addRequest(pid, r) { const s = load(); s.requests[pid] = [{ ...r, id: `rq-new-${(s.requests[pid] || []).length + 1}` }, ...(s.requests[pid] || [])]; save(); }
+/** 카드 발행 요청 — publish-data.addRequest 로 위임한다(자기 저장소 lx_project_v1.requests 에는 쓰지 않는다). 돌려주는 값 = `pa-N`. */
+export function addRequest(pid, r) {
+  const p = byId(pid), t = trainsOf(pid).find((x) => x.id === r.train);
+  return PUB.addRequest({ pid, from: pid, project: p ? p.name : '', card: r.card, train: r.train, training: t ? t.name : (r.training || ''), modelName: r.modelName, model: r.modelName,
+    kind: r.kind, type: r.kind, status: '대기', requester: role ? role.name : '내 계정', masked: true, at: AS_OF, date: AS_OF.replace(/-/g, '.'), perms: [] });
+}
 export function addModel(pid, m) { const s = load(); s.models[pid] = [{ ...m, id: `md-${(s.models[pid] || []).length + 1}` }, ...(s.models[pid] || [])]; save(); }
 export function dropModel(pid, id) { const s = load(); s.models[pid] = (s.models[pid] || []).filter((m) => m.id !== id); save(); }
 export function invite(pid, m) { const s = load(); s.invited[pid] = [...(s.invited[pid] || []), m]; save(); }

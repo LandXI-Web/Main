@@ -14,8 +14,31 @@ function watch(page) {
   page.on('console', (m) => { if (m.type() === 'error' && !NETWORK.test(m.text())) errs.push('console: ' + m.text()); });
   return errs;
 }
-async function boot(page, url) {
-  await page.addInitScript(() => localStorage.setItem('lx_logged_in', '1'));
+// ── 역할 픽스처(MASTER-PLAN §7.3 · Wave 0 동안 파일 안에 복사 — _roles.mjs import 금지) ──
+const HOME = { admin: 'admin-home.html', staff: 'ai-project.html', sales: 'ximap.html' };
+/** LX 세션으로 화면을 연다. 세션은 첫 로드에서만 심는다(sessionStorage 가드). */
+async function bootAs(page, url, role = 'staff', extra = {}) {
+  await page.addInitScript(([r, ex]) => {
+    if (sessionStorage.getItem('lx_e2e_boot')) return;
+    sessionStorage.setItem('lx_e2e_boot', '1');
+    localStorage.setItem('lx_logged_in', '1');
+    localStorage.setItem('lx_role', r);
+    localStorage.removeItem('lx_tenant_session');
+    for (const [k, v] of Object.entries(ex)) (v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v));
+  }, [role, extra]);
+  await page.goto(url);
+  await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
+}
+/** 같은 탭에서 LX 계정을 바꾼다(역할 전환 e2e). 다음 goto 부터 적용. */
+const switchTo = (page, role) => page.evaluate((r) => {
+  localStorage.setItem('lx_logged_in', '1'); localStorage.setItem('lx_role', r); localStorage.removeItem('lx_tenant_session');
+}, role);
+/** 화면별 기본 역할 — 발행 관리 화면군(admin-publish · ai-card · ai-card-edit) = 관리자 · 요청 폼(ai-publish-create) = 직원(E0-1 관문 키 → project).
+    한 테스트 안에서 두 번째 부터는 switchTo 로 계정을 바꾸고 연다(bootAs 는 첫 로드에만 세션을 심는다). */
+const roleOf = (url) => (url.includes('ai-publish-create') ? 'staff' : 'admin');
+async function boot(page, url, role = roleOf(url)) {
+  if (page.url() === 'about:blank') return bootAs(page, url, role);
+  await switchTo(page, role);
   await page.goto(url);
   await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
 }
@@ -61,7 +84,7 @@ test.describe('관문 · 레일', () => {
   });
   test('레일 활성 = 카드 발행 관리(발행 요청은 프로젝트에서 들어오므로 프로젝트) · H1 하나', async ({ page }) => {
     const errs = watch(page);
-    for (const [url, key, h1] of [[REVIEW, 'publish', '카드 발행 관리'], [CARDS, 'publish', '카드 발행'], [EDIT, 'publish', '카드 발행'], [EDIT + '?cid=6&mc=0', 'publish', '카드 수정'], [REQUEST, 'project', '카드 발행 요청']]) {
+    for (const [url, key, h1] of [[REVIEW, 'publish', '카드 발행 관리'], [CARDS, 'publish', '카드 발행'], [EDIT, 'publish', '카드 발행'], [EDIT + '?cid=6&mc=0', 'publish', '카드 수정']]) {
       await boot(page, url);
       await expect(page.locator('#rail .rail-i[aria-current="page"]')).toHaveCount(1);
       await expect(page.locator('#rail .rail-i[aria-current="page"]')).toHaveAttribute('data-menu', key);
@@ -69,6 +92,18 @@ test.describe('관문 · 레일', () => {
       await expect(page.locator('h1')).toHaveText(h1);
     }
     expect(errs).toEqual([]);
+  });
+  // 직원의 요청 폼 — 레일 활성 = 프로젝트. E0-1 관문 키(ai-publish-create → project)가 작업 트리에 들어와 있어 살아 있는 테스트로 둔다.
+  test('직원의 요청 폼은 관문을 통과한다(E0-1 관문 키) · 레일 활성 = 프로젝트 · H1 하나 · 관리자는 튕긴다', async ({ page }) => {
+    await bootAs(page, REQUEST, 'staff');
+    expect(new URL(page.url()).searchParams.get('denied')).toBeNull();
+    await expect(page.locator('#rail .rail-i[aria-current="page"]')).toHaveAttribute('data-menu', 'project');
+    await expect(page.locator('h1')).toHaveCount(1);
+    await expect(page.locator('h1')).toHaveText('카드 발행 요청');
+    for (const i of [0, 1]) await expect(page.locator('.rq-f a').nth(i)).toHaveAttribute('href', HOME.staff);
+    await switchTo(page, 'admin');
+    await page.goto(REQUEST);
+    await page.waitForURL(/admin-home\.html/);                               // ?denied= 는 안내 뒤 replaceState 로 지워진다(R-S5)
   });
   test('한 단계 위 landxi/admin-publish.html 은 쿼리를 들고 proto 로 넘긴다(대시보드 `검토 ›` 딥링크)', async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem('lx_logged_in', '1'));
@@ -621,8 +656,13 @@ test.describe('ai-publish-create.html — 전역 발행 요청', () => {
     await page.locator('#rq-model').fill('v3.0');
     await page.locator('#rq button[type="submit"]').click();
     await expect(page.locator('#say')).toHaveText('카드 발행을 요청했습니다.');
-    await page.waitForURL(/admin-publish\.html\?open=pa-7/);
+    // 직원 = 자기 요청 이력에 착지(농지 활용 분석 → 같은 실 결과의 프로젝트 pj-landuse) · 승인 화면으로 보내지 않는다
+    await page.waitForURL(/ai-project\.html\?pid=pj-landuse&tab=deploy&req=pa-7/);
     await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
+    expect(param(page, 'denied')).toBeNull();
+    await expect(page.locator('#rq-hist tbody tr').first()).toHaveAttribute('data-id', 'pa-7');
+    await expect(page.locator('#rq-hist tbody tr').first().locator('td').first()).toHaveText('대기');
+    await boot(page, REVIEW + '?open=pa-7');
     await expect(page.locator('.q-row').first()).toHaveAttribute('data-id', 'pa-7');
     await expect(page.locator('.q-row').first()).toContainText('농지 활용 분석 v3.0');
     await expect(page.locator('#detail .dt-h .st')).toHaveText('대기');
@@ -631,12 +671,83 @@ test.describe('ai-publish-create.html — 전역 발행 요청', () => {
     await expect(page.locator('.dc .kv div', { hasText: '과제 유형' }).locator('dd')).toHaveText('과제 고도화');
     expect(errs).toEqual([]);
   });
-  test('딥링크가 상태를 되살린다 · 목록/취소는 프로젝트로', async ({ page }) => {
+  test('딥링크가 상태를 되살린다 · 목록/취소는 역할의 집(homeOf)으로', async ({ page }) => {
     await boot(page, REQUEST + '?project=7&result=r7-1&type=enhance&an=AN-7-2');
     await expect(page.locator('.rq-p[data-pick="analysis"] .v')).toHaveText('1건 선택됨');
     await expect(page.locator('input[name="rq-type"][value="enhance"]')).toBeChecked();
     await expect(page.locator('.rq-read')).toContainText('농지 이용 현황');
-    await expect(page.locator('.rq-f a').first()).toHaveAttribute('href', 'ai-project.html');
+    for (const i of [0, 1]) await expect(page.locator('.rq-f a').nth(i)).toHaveAttribute('href', HOME.staff);
+  });
+});
+
+/* ══ 발행 고리 — 직원 요청 → 자기 이력 착지 → 관리자 큐 도착 (E0-8 · PP-1 · B1) ══ */
+test.describe('발행 고리 — 역할 전환 연쇄', () => {
+  test('staff 배포 탭 발행 요청 → ?tab=deploy&req=pa-N · denied 0 · 이력 첫 행 대기 → switchTo(admin) → 큐 첫 행 = 같은 pa-N', async ({ page }) => {
+    const errs = watch(page);
+    const PJ = 'pj-greenhouse';
+    await bootAs(page, `proto/ai-project.html?pid=${PJ}&tab=deploy&dep=model&reg=1`, 'staff');
+    await page.locator('.panel-f button', { hasText: '모델 등록' }).click();
+    await page.locator('#main button', { hasText: '카드 발행 요청' }).first().click();
+    await expect(page.locator('.modal h2').last()).toHaveText('학습 결과 선택');
+    await page.locator('.modal button', { hasText: '발행 요청' }).click();
+    await page.waitForURL(/ai-project\.html\?.*tab=deploy&req=pa-\d+/, { timeout: 8000 });
+    await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
+    const url = new URL(page.url()), id = url.searchParams.get('req');
+    expect(url.searchParams.get('denied')).toBeNull();
+    expect(url.searchParams.get('pid')).toBe(PJ);
+    expect(id).toMatch(/^pa-\d+$/);
+    // 자기 요청 이력 — 7열 표 · 첫 행 = 방금 요청 · 대기 · 선택
+    const hist = page.locator('#rq-hist');
+    expect(await hist.locator('thead th').allInnerTexts()).toEqual(['상태', '과제명', '학습 결과', '모델명', '과제 유형', '요청자', '요청일']);
+    const first = hist.locator('tbody tr').first();
+    await expect(first).toHaveAttribute('data-id', id);
+    await expect(first).toHaveAttribute('aria-selected', 'true');
+    await expect(first.locator('td').first()).toHaveText('대기');
+    await expect(first.locator('td').nth(5)).toHaveText('LX 직원');
+    await expect(page.locator('#rq-just')).toContainText(id);
+    // 직원 = 승인 화면으로 가는 링크 없음 · 비활성 + 이유
+    await expect(page.locator('#main a[href*="admin-publish"]')).toHaveCount(0);
+    await expect(page.locator('#rq-go button', { hasText: '카드 발행 관리에서 보기' })).toBeDisabled();
+    await expect(page.locator('#rq-go')).toContainText('관리자 사이트에서 승인합니다');
+    // 단일 저장소 — lx_publish_v1 에만 쓰고 lx_project_v1.requests 에는 쓰지 않는다
+    const store = await page.evaluate(() => [JSON.parse(localStorage.getItem('lx_publish_v1') || '{}'), JSON.parse(sessionStorage.getItem('lx_project_v1') || '{}')]);
+    expect(store[0].added[0].id).toBe(id);
+    expect(store[0].added[0].pid).toBe(PJ);
+    expect(Object.values(store[1].requests || {}).flat()).toEqual([]);
+    // 새로 고쳐도 이력은 남는다(시연 · 이 브라우저에 저장)
+    await page.reload(); await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
+    await expect(page.locator('#rq-hist tbody tr').first()).toHaveAttribute('data-id', id);
+    // 역할 전환 → 관리자 큐 맨 위에 같은 요청
+    await switchTo(page, 'admin');
+    await page.goto(REVIEW);
+    await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
+    expect(new URL(page.url()).searchParams.get('denied')).toBeNull();
+    await expect(page.locator('.q-card, .q-row').first()).toHaveAttribute('data-id', id);
+    await expect(page.locator('.pst[data-status="대기"] b')).toHaveText('3');
+    await page.goto(`${REVIEW}?open=${id}`);
+    await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
+    await expect(page.locator('.q-row').first()).toHaveAttribute('data-id', id);
+    await expect(page.locator('#detail .dt-h .st')).toHaveText('대기');
+    await expect(page.locator('#detail h2')).toHaveText('비닐하우스 탐지');
+    expect(errs).toEqual([]);
+  });  test('B9 — 학습 결과 표(모델 등록 폼 · 발행 요청 픽커) 1440 에서 열 폭 합 = 표 폭 · 겹침 0 · 잘린 칸 0', async ({ page }) => {
+    const fit = (sel) => page.evaluate((s) => {
+      const t = document.querySelector(s), row = t.querySelector('tbody tr'), cells = [...row.children].map((c) => c.getBoundingClientRect());
+      return { sum: Math.round(cells.reduce((a, r) => a + r.width, 0)), w: Math.round(t.getBoundingClientRect().width),
+        overlap: cells.filter((r, i) => i && cells[i - 1].right > r.left + 0.5).length,
+        clipped: [...t.querySelectorAll('td, th:not(:has(.sr))')].filter((c) => c.scrollWidth > c.clientWidth + 1).map((c) => c.textContent.trim()) };
+    }, sel);
+    await bootAs(page, 'proto/ai-project.html?pid=pj-greenhouse&tab=deploy&dep=model&reg=1', 'staff');
+    const f = await fit('.pj-mdtbl[data-pick="md-tr"]');
+    expect(Math.abs(f.sum - f.w)).toBeLessThanOrEqual(2); expect(f.overlap).toBe(0); expect(f.clipped).toEqual([]);
+    await page.locator('.panel-f button', { hasText: '모델 등록' }).click();
+    await page.locator('#main button', { hasText: '카드 발행 요청' }).first().click();
+    const g = await fit('.modal .pj-mdtbl[data-pick="pk"]');
+    expect(Math.abs(g.sum - g.w)).toBeLessThanOrEqual(2); expect(g.overlap).toBe(0); expect(g.clipped).toEqual([]);
+    await page.keyboard.press('Escape');
+    await page.locator('.pj-seg [data-dep="request"]').click();
+    const h = await fit('#rq-hist');
+    expect(Math.abs(h.sum - h.w)).toBeLessThanOrEqual(2); expect(h.overlap).toBe(0); expect(h.clipped).toEqual([]);
   });
 });
 

@@ -2,7 +2,9 @@
    원본: landxi7/admin-publish.html(REQUESTS 6) · assets/js/ai-project-data.js(AI_PROJECTS 8 · AI_PERMISSIONS 13 ·
    AI_TRAIN_RESULTS · AI_LABELING_DATA · AI_PROJECT_MEMBERS · AI_MODEL_CARDS) · ai-card.html(cards 8) · page-ai-publish6.js.
    값은 원본 그대로(= `시연`). 사람 이름은 성 + ○○ 로 가린다. 실측은 results.js 두 벌(남원 농지이용 · 비닐하우스)뿐이다.
-   변경(발행 처리 · 개요 수정 · 발행 요청 · 카드 발행)은 메모리 + sessionStorage — 탭을 닫으면 시드로 돌아간다. */
+   변경(발행 처리 · 개요 수정 · 발행 요청 · 카드 발행)은 메모리 + localStorage `lx_publish_v1` — **발행 요청의 단일 저장소**다(E0-8).
+   직원의 요청(프로젝트 배포 탭 · 전역 요청 폼)과 관리자의 큐가 같은 곳을 읽고 쓴다. 역할을 바꿔 로그인해도 남는다(시연 · 이 브라우저에 저장).
+   리셋은 MY '시연 초기화'(E3-4). 옛 sessionStorage 사본은 읽기만 한다. */
 import { RESULTS } from '../assets/data/results.js';
 
 const mask = (name) => (name ? `${name[0]}○○` : '—');
@@ -184,28 +186,35 @@ export function analysisCandidates(pid) {
   return Array.from({ length: count }, (_, i) => ({ id: `AN-${pid}-${i + 1}`, name: `${pj.name} 분석 #${i + 1}`, region: AN_REGIONS[(num + i) % AN_REGIONS.length], date: AN_DATES[(num + i) % AN_DATES.length], dets: 40 + ((i * 37 + num * 23) % 180) }));
 }
 
-/* ── 세션 저장 ── */
+/* ── 저장 — localStorage 단일 저장소(시연 · 이 브라우저에 저장) ── */
 const KEY = 'lx_publish_v1';
 let mem = null;
 function load() {
   if (mem) return mem;
-  try { mem = JSON.parse(sessionStorage.getItem(KEY) || 'null'); } catch { mem = null; }
+  try { mem = JSON.parse(localStorage.getItem(KEY) || sessionStorage.getItem(KEY) || 'null'); } catch { mem = null; }
   if (!mem || typeof mem !== 'object') mem = {};
   mem.req ||= {}; mem.added ||= []; mem.cards ||= {}; mem.labels ||= {};
   return mem;
 }
-function save() { try { sessionStorage.setItem(KEY, JSON.stringify(mem)); } catch { /* 저장소 차단 · 용량 초과 — 메모리만 */ } }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(mem)); } catch { /* 저장소 차단 · 용량 초과 — 메모리만 */ } }
 
+/* pid 는 두 이름표를 가진다 — 검토 데스크는 이 파일의 PROJECTS 키(1–8)로 학습 · 라벨 · 분석을 찾고,
+   프로젝트 배포 탭은 project-data.js 의 id(pj-*)로 자기 요청 이력을 찾는다.
+   그래서 저장된 pid 를 `from`(요청이 나온 프로젝트)으로 살리고, 검토용 pid 는 PROJECTS 키면 그대로 · 아니면 과제명으로 잇는다. */
 function hydrate(seed) {
-  const pid = pidByName(seed.project), pj = PROJECTS[pid] || {};
-  const r = { pid, det: pj.type || '-', data: dataTypeLabel(pj.dataType), intro: pj.desc || '', purpose: pj.purpose || '', classes: pj.classes || [],
-    cardThumb: pj.thumb || '', dashThumb: pj.thumbClean || pj.thumb || '', analyses: MOCK_ANALYSES[seed.project] || [], ...seed, requester: seed.masked ? seed.requester : mask(seed.requester) };
+  const pid = PROJECTS[seed.pid] ? String(seed.pid) : pidByName(seed.project), pj = PROJECTS[pid] || {};
+  const r = { det: pj.type || '-', data: dataTypeLabel(pj.dataType), intro: pj.desc || '', purpose: pj.purpose || '', classes: pj.classes || [],
+    cardThumb: pj.thumb || '', dashThumb: pj.thumbClean || pj.thumb || '', analyses: MOCK_ANALYSES[seed.project] || [], perms: [],
+    ...seed, pid, from: seed.from ?? seed.pid ?? pid, requester: seed.masked ? seed.requester : mask(seed.requester) };
   return Object.assign(r, load().req[seed.id] || {});
 }
 export function requests() { const s = load(); return [...s.added.map((a) => hydrate({ ...a, masked: true })), ...SEED_REQUESTS.map(hydrate)]; }
 export const findRequest = (id) => requests().find((r) => r.id === id) || null;
 export function patchRequest(id, patch) { const s = load(); s.req[id] = { ...(s.req[id] || {}), ...patch }; save(); }
-export function addRequest(item) { const s = load(); const id = `pa-${SEED_REQUESTS.length + s.added.length + 1}`; s.added.unshift({ ...item, id }); save(); return id; }
+/** 발행 요청의 정본 입구 — 프로젝트 배포 탭(project-data.addRequest 위임)과 전역 요청 폼이 여기로 쓴다. id = `pa-N`. */
+export function addRequest(item) { const s = load(); const id = `pa-${SEED_REQUESTS.length + s.added.length + 1}`; s.added.unshift({ status: '대기', perms: [], ...item, id }); save(); return id; }
+/** 한 프로젝트(project-data id 또는 PROJECTS 키)에서 나온 요청 — 최신이 먼저. */
+export const requestsFrom = (from) => requests().filter((r) => r.from === from);
 export function counts(list = requests()) { const c = { '전체': list.length }; STATUSES.forEach((k) => { c[k] = list.filter((r) => r.status === k).length; }); return c; }
 export function patchModelCard(pid, idx, patch) { const s = load(); s.cards[pid] ||= {}; s.cards[pid][idx] = { ...(s.cards[pid][idx] || {}), ...patch }; save(); }
 /* 라벨 클래스 일괄 변경 — { [pid:idx]: { [featureId]: className } } */
