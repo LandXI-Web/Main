@@ -4,6 +4,7 @@
    카드 아래 = LX 락업 + 정책 링크 + Copyright. 원본의 어두운 배경/글로우는 가져오지 않는다.
    서체(발주 결정 2026-08-27): 표시 Paperlogy 700 / 본문·버튼 Pretendard / 숫자 Inter tabular. 7차: 폼 라벨·입력·옵션·링크도 Paperlogy 700(로그인 제목과 같은 서체) · 헤어라인 #DDD · radius 0 · shadow 0 · 12px 바닥.
    톤 T3 흑+청(5차, 발주 "검정과 파란색의 배합"): 액센트 #006DF7 = 워드마크 Land-XI · 로그인 CTA 채움(로그인 예외) · 포커스 밑줄 · 찾기 링크 · 체크. 나머지 잉크/회색. 그라디언트·그림자·radius 0.
+   E0-2(2026-09-24): 로그인 화면만의 개정(카드 높이 · 세그먼트 · 잉크 버튼 · 캡션 띠 · 액센트 셋)은 파일 끝 body.lg-login 절이 덮어쓴다.
 
    프리미티브는 system.css 에서 온다: .lx-skip · .lx-num · [--lx-*] 토큰.
    여기 있는 것은 이 화면에만 있는 것뿐이다: 카드 · .lx-field(밑줄 폼) · .lx-check · 필름 판 · 태그라인. */
@@ -149,18 +150,107 @@ body.lx{ overflow:hidden; background:var(--lx-paper); color:var(--lx-ink); }
   .lg-foot__legal{ margin-left:0; flex-basis:100%; }
 }
 
-/* 계정 종류 — 세 단이 분리 운영된다(2026-09-21). 법전대로 라운드 0 · 그림자 0.
-   고른 것만 상징색 테두리로 선다. 설명 한 줄이 붙어 무엇을 할 수 있는 계정인지 말한다. */
-.lg-role{ margin:0 0 16px; padding:0; border:0; display:grid; gap:6px; }
-.lg-role legend{ margin-bottom:6px; padding:0; }
-.lg-role label{ display:grid; grid-template-columns:auto auto 1fr; align-items:baseline; gap:8px;
-  padding:8px 10px; border:1px solid var(--lx-line,#DDD); cursor:pointer;
-  transition:border-color 160ms, background 160ms; }
-.lg-role label:hover{ background:#FAFAFA; }
-.lg-role label:has(input:checked){ border-color:var(--lx-accent,#006DF7); background:#F5F9FF; }
-.lg-role input{ margin:0; accent-color:var(--lx-accent,#006DF7); }
-.lg-role b{ font-size:15px; font-weight:500; white-space:nowrap; }
-.lg-role span{ font-size:14px; color:#686868; word-break:keep-all; }
+/* ═════════════════════════════════════════════════════════════════════════════
+   로그인 화면 전용 — body.lg-login (E0-2 · 2026-09-24)
+   위의 규칙은 인증 가족(find-* · signup)과 함께 쓰는 승인된 카드다. 로그인만 달라진 것은 여기에 둔다 —
+   가족 화면의 자리를 흔들지 않으려고.
+   ① G-01: 카드 높이 고정(520) + 계정 종류 3행 → 폼이 카드를 뚫고 푸터와 겹쳤다(1280×720 버튼 하단 730).
+      → 액자를 흐름으로 바꾼다: 머리 · 카드 · 발이 한 덩이로 세로 중앙, 카드 높이 = 콘텐츠(바닥 --lg-login-h).
+         창이 더 낮으면 잘리지 않고 스크롤된다. 글자 크기는 줄이지 않는다(법전 바닥 14).
+   ② 계정 종류 = 한 줄 세그먼트 3칸 · 선택 = 코너 브래킷 12px(잉크) · 라운드 0 · 채움 없음.
+   ③ 버튼 = 잉크 채움(O7 — 법전 복귀). 정지 상태 액센트 = 워드마크 밑줄 · 찾기 링크 2 = 셋뿐.
+   ④ 호버 = 물리 반응 180ms(4px 이동 · 밑줄 스윕 · 브래킷 성장). 색만 바꾸는 호버 0.
+   ═════════════════════════════════════════════════════════════════════════════ */
+body.lx.lg-login{ height:auto; overflow:auto; --lg-login-h:526px; }
+.lg-login .lg{ height:auto; min-height:100vh; overflow:visible; display:flex; align-items:center; justify-content:center; padding:16px 32px; }
+.lg-login .lg-wrap{ position:static; transform:none; width:100%; max-width:var(--lg-card-w); }
+.lg-login .lg-head{ position:static; margin-bottom:var(--lg-gap); }
+.lg-login .lg-foot{ position:static; margin-top:var(--lg-gap); }
+.lg-login .lg-card{ height:auto; min-height:var(--lg-login-h); }
+
+/* 워드마크 밑줄 — 액센트 1. 호버면 CI 폭까지 쓸어 간다(밑줄 스윕). */
+.lg-login .lg-brand{ position:relative; padding-bottom:8px; text-decoration:none; }
+.lg-login .lg-brand::after{ content:""; position:absolute; left:0; bottom:0; width:32px; height:2px; background:var(--lx-accent);
+  transition:width var(--lx-hover) var(--lx-hover-ease); }
+.lg-login .lg-brand:hover::after{ width:100%; }
+
+/* 좌 60% — 필름 판(위) + 계정 캡션 띠(아래). 필름 안 글자 0 — 캡션은 필름 바깥이다. */
+.lg-login .lg-left{ flex:0 0 60%; min-width:0; display:flex; flex-direction:column; }
+.lg-login .lg-film{ flex:1 1 auto; min-height:0; }
+.lg-login .lg-film__v{ position:absolute; inset:0; height:100%; }
+.lg-cap{ flex:none; padding:14px 24px 16px; border-top:1px solid var(--lx-hair); border-right:1px solid var(--lx-hair); overflow:hidden; background:var(--lx-paper); }
+.lg-cap__who{ margin:0; display:flex; align-items:baseline; gap:12px; min-width:0; }
+.lg-cap__name{ flex:none; font-family:var(--font-display); font-weight:700; font-size:16px; line-height:22px; letter-spacing:-.01em; color:var(--lx-ink); }
+.lg-cap__what{ min-width:0; font-size:16px; line-height:22px; letter-spacing:-.005em; color:var(--lx-grey-2); word-break:keep-all; }
+.lg-cap__caps{ margin:8px 0 0; padding:0; list-style:none; display:flex; flex-wrap:wrap; gap:4px 20px; }
+.lg-cap__caps li{ display:flex; align-items:center; gap:8px; font-size:14px; line-height:18px; letter-spacing:-.005em; color:var(--lx-ink); white-space:nowrap; }
+.lg-cap__caps li::before{ content:""; width:6px; height:6px; background:var(--lx-ink); flex:none; }
+
+/* 우 40% — 세로 예산(1280×720 에 맞춘다): 패딩 24 + 제목 42 + 8 + 소개 48 + 20 + 계정 40+14 + 필드 86×2 + 옵션 28 + 24 + 버튼 56 + 문의 30 + 24 ≈ 530. */
+.lg-login .lg-form{ margin-top:20px; }
+.lg-login .lg-actions{ margin-top:24px; }
+.lg-login .lg-panel{ padding-bottom:24px; }
+
+/* ── 계정 종류 — 한 줄 세그먼트 3칸. 라벨은 넓은 폭에서 세그먼트 왼쪽에 선다(float 레전드). ── */
+.lg-role{ margin:0 0 14px; padding:0; border:0; min-width:0; }
+.lg-role legend{ padding:0; margin:0 0 8px; }
+.lg-seg{ display:flex; min-width:0; }
+.lg-seg__c{ position:relative; flex:1 1 0; min-width:0; height:40px; display:flex; align-items:center; justify-content:center;
+  border:1px solid var(--lx-hair); cursor:pointer; user-select:none; }
+.lg-seg__c + .lg-seg__c{ margin-left:-1px; }
+.lg-seg__c input{ position:absolute; opacity:0; width:0; height:0; margin:0; }
+.lg-seg__c span{ font-family:var(--font-display); font-weight:700; font-size:16px; line-height:22px; letter-spacing:-.01em; color:var(--lx-grey-2); white-space:nowrap; }
+/* 코너 브래킷 — 좌상 · 우하 두 모서리. 쉬면 0, 호버면 6px 로 자라고, 고르면 12px 잉크로 선다. */
+.lg-seg__c::before,.lg-seg__c::after{ content:""; position:absolute; width:2px; height:2px; border:0 solid var(--lx-ink); pointer-events:none; z-index:1; opacity:0;
+  transition:width var(--lx-hover) var(--lx-hover-ease), height var(--lx-hover) var(--lx-hover-ease); }
+.lg-seg__c::before{ left:-1px; top:-1px; border-top-width:2px; border-left-width:2px; }
+.lg-seg__c::after{ right:-1px; bottom:-1px; border-bottom-width:2px; border-right-width:2px; }
+.lg-seg__c:hover::before,.lg-seg__c:hover::after{ width:6px; height:6px; opacity:1; }
+.lg-seg__c:has(input:checked)::before,.lg-seg__c:has(input:checked)::after{ width:12px; height:12px; opacity:1; }
+.lg-seg__c:has(input:checked) span{ color:var(--lx-ink); }
+.lg-seg__c:has(input:focus-visible){ outline:1px solid var(--lx-accent); outline-offset:3px; z-index:2; }
+@media (min-width: 1200px){
+  .lg-role legend{ float:left; margin:0 16px 0 0; line-height:40px; }
+  .lg-seg{ overflow:hidden; }
+}
 
 /* 지금 어느 계정으로 들어와 있는지 — 갈아타러 온 사람에게만 뜬다(2026-09-22). */
-.lg-role-now{ margin:8px 0 0; font-size:14px; line-height:1.45; color:#686868; word-break:keep-all; }
+.lg-role-now{ clear:both; margin:0; padding-top:8px; font-size:14px; line-height:20px; color:var(--lx-grey-2); word-break:keep-all; }
+
+/* ── 버튼 — 로그인 = 잉크 채움 · 호버 = 화살표 4px. 계정 신청하기 = 헤어라인 잉크 · 호버 = 밑줄 스윕. ── */
+.lg-login .lg-submit{ background:var(--lx-ink); color:#FFFFFF; }
+.lg-login .lg-submit[disabled]{ opacity:1; background:var(--lx-grey-2); }
+.lg-login .lg-signup__a:hover{ color:var(--lx-ink); border-color:var(--lx-ink); }
+.lg-signup__t{ position:relative; }
+.lg-signup__t::after{ content:""; position:absolute; left:0; right:0; bottom:-4px; height:1px; background:currentColor; transform:scaleX(0); transform-origin:0 50%;
+  transition:transform var(--lx-hover) var(--lx-hover-ease); }
+.lg-signup__a:hover .lg-signup__t::after{ transform:scaleX(1); }
+
+/* 체크 = 잉크(정지 상태 액센트 셋을 지킨다 — 저장된 아이디가 있으면 처음부터 체크돼 있다). */
+.lg-login .lx-check input:checked + .lx-check__box{ background:var(--lx-ink); border-color:var(--lx-ink); }
+
+/* 찾기 링크 · 정책 링크 — 호버 = 밑줄이 좌→우로 그어진다(색만 바꾸지 않는다). */
+.lg-login .lg-find__a{ position:relative; border-bottom:0; }
+.lg-login .lg-foot__policy a{ position:relative; }
+.lg-login .lg-find__a::after,.lg-login .lg-foot__policy a::after{ content:""; position:absolute; left:0; right:0; bottom:-2px; height:1px; background:currentColor;
+  transform:scaleX(0); transform-origin:0 50%; transition:transform var(--lx-hover) var(--lx-hover-ease); }
+.lg-login .lg-find__a:hover::after,.lg-login .lg-foot__policy a:hover::after{ transform:scaleX(1); }
+.lg-login .lg-foot__policy a:hover{ color:var(--lx-ink); }
+
+@media (prefers-reduced-motion: reduce){
+  .lg-login .lg-brand::after,.lg-seg__c::before,.lg-seg__c::after,.lg-signup__t::after,
+  .lg-login .lg-find__a::after,.lg-login .lg-foot__policy a::after{ transition:none; }
+}
+
+/* ── <900 — 세로 스택: 소개 → 필름 → 캡션 → 폼 → 푸터. 가로 넘침 0(390). ── */
+@media (max-width: 899px){
+  .lg-login .lg{ display:block; padding:40px 0 48px; }
+  .lg-login .lg-wrap{ width:auto; max-width:none; margin:0 24px; }
+  .lg-login .lg-card{ min-height:0; }
+  .lg-login .lg-left{ flex:none; }
+  .lg-login .lg-film{ flex:none; height:40vh; min-height:240px; }
+  .lg-cap{ border-right:0; border-bottom:1px solid var(--lx-hair); padding:14px 20px 16px; }
+  .lg-cap__who{ flex-wrap:wrap; row-gap:2px; }
+  .lg-login .lg-brand__ci{ max-width:100%; height:auto; }
+  .lg-login .lg-foot__policy{ flex-wrap:wrap; }
+}

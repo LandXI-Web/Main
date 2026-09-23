@@ -5,20 +5,22 @@
 <!-- 컴포넌트 시트가 토큰(v3-tokens.css)까지 @import 한다. login.css 는 이 화면 고유의 것만 얹는다. -->
 <link rel="stylesheet" href="system.css">
 <link rel="stylesheet" href="login.css">
-</head><body class="lx">
+</head><body class="lx lg-login">
 
 <a class="lx-skip" href="#loginForm">본문 건너뛰기</a>
 
 <!-- 마스터: design-canvas/v2/B5-Login.dc.html (NOTES §14 · 7차 개정) — 구 랜드XI(login.do) 구도.
-     페이지 중앙의 작은 카드 하나(1200×520): 좌 60% 필름 판(글자 0) · 우 40% 폼(로그인 → 소개 한 문장 → 필드 → 버튼). 7차: 폼 글자 = 로그인과 같은 Paperlogy 700, 포인트 20/22/18.
-     흑 + 청 배합(5차): 워드마크 Land-XI · 로그인 CTA 채움 · 포커스 밑줄 · 찾기 링크 · 체크 = 액센트 #006DF7, 나머지 잉크/회색.
+     페이지 중앙의 작은 카드 하나(폭 1200): 좌 60% = 필름 판(필름 안 글자 0) + 그 아래 계정 캡션 띠 · 우 40% = 폼.
+     E0-2(2026-09-24): 카드 높이 고정(520)을 풀었다 — 계정 종류가 들어오며 폼이 카드를 뚫고 나왔다(G-01).
+       계정 종류는 한 줄 세그먼트(선택 = 코너 브래킷), 설명 줄은 좌측 캡션 띠로 옮겼다(roles.js ROLES[].what · CAPS).
+       로그인 버튼 = 잉크 채움(법전 복귀 · O7). 정지 상태 액센트 = 워드마크 밑줄 · 찾기 링크 2 — 셋뿐.
      카드 위 = 실제 Land-XI CI + 원본 소개 한 줄 · 카드 아래 = LX 락업 + 정책 링크 + Copyright. -->
 <div class="lg" id="lg">
   <div class="lg-wrap">
 
     <!-- ══ 카드 위 — CI + 소개(원본 카피) ══ -->
     <header class="lg-head">
-      <a class="lg-brand" href="dive.html" aria-label="Land-XI 플랫폼 홈">
+      <a class="lg-brand" href="scrub/index.html" aria-label="Land-XI 플랫폼 홈">
         <img class="lg-brand__ci" id="lgCiLandxi" src="../assets/brand/landxi-wordmark.png" alt="LAND-XI PLATFORM" width="306" height="17">
       </a>
       <p class="lg-intro">LAND-XI의 직관적인 인터페이스를 사용하여 NO-CODE 기반의 AI 학습모델을 구축하고 활용할 수 있습니다.</p>
@@ -27,14 +29,22 @@
     <!-- ══ 카드 ══ -->
     <div class="lg-card" id="lgCard">
 
-      <!-- 좌 60% — 디오라마 오프닝 필름(Leg 01). 필름 안 글자 0(발주 지시 5차). 유휴 움직임은 이 루프 하나. reduced-motion = 포스터. -->
-      <figure class="lg-film" id="lgPlate" aria-label="디오라마 오프닝 필름">
-        <video class="lg-film__v" id="lgVideo" autoplay muted loop playsinline preload="auto"
-               poster="../assets/proto/film/legs/wfull.webp">
-          <source src="../assets/proto/film/legs/wfull-m.mp4" type="video/mp4" media="(max-width: 900px)">
-          <source src="../assets/proto/film/legs/wfull.mp4" type="video/mp4">
-        </video>
-      </figure>
+      <!-- 좌 60% — 필름 판 + 계정 캡션 띠. 필름 안 글자 0(발주 지시 5차) — 캡션은 필름 **아래** 띠에 선다.
+           유휴 움직임은 필름 루프 하나. 캡션은 계정 종류를 바꿀 때만 들어온다(600ms · 60ms 스태거). reduced-motion = 포스터 · 즉시. -->
+      <div class="lg-left">
+        <figure class="lg-film" id="lgPlate" aria-label="디오라마 오프닝 필름">
+          <video class="lg-film__v" id="lgVideo" autoplay muted loop playsinline preload="auto"
+                 poster="../assets/proto/film/legs/wfull.webp">
+            <source src="../assets/proto/film/legs/wfull-m.mp4" type="video/mp4" media="(max-width: 900px)">
+            <source src="../assets/proto/film/legs/wfull.mp4" type="video/mp4">
+          </video>
+        </figure>
+        <!-- 고른 계정이 무엇을 하는지 — 문구는 roles.js 에서만 온다(ROLES[].what · CAPS). -->
+        <div class="lg-cap" id="lgCap" aria-live="polite">
+          <p class="lg-cap__who"><b class="lg-cap__name" id="lgCapName"></b><span class="lg-cap__what" id="lgCapWhat"></span></p>
+          <ul class="lg-cap__caps" id="lgCapCaps"></ul>
+        </div>
+      </div>
 
       <!-- 우 40% — 압축 폼 -->
       <main class="lg-panel">
@@ -48,11 +58,12 @@
                시연본이라 여기서 고른다. 실서비스에서는 계정에 붙은 권한이 그대로 들어온다. -->
           <fieldset class="lg-role" id="lgRole">
             <legend class="lx-field__label">계정 종류</legend>
-            <label><input type="radio" name="role" value="admin" checked><b>LX 관리자</b><span>발행 승인 · 사용자 · 생산 공정</span></label>
-            <label><input type="radio" name="role" value="staff"><b>LX 직원</b><span>자료 · 프로젝트 · 학습 · 분석</span></label>
-            <label><input type="radio" name="role" value="sales"><b>영업용 계정</b><span>결과 열람 — 만들지도 지우지도 않는다</span></label>
+            <div class="lg-seg">
+              <label class="lg-seg__c"><input type="radio" name="role" value="admin" checked><span>LX 관리자</span></label>
+              <label class="lg-seg__c"><input type="radio" name="role" value="staff"><span>LX 직원</span></label>
+              <label class="lg-seg__c"><input type="radio" name="role" value="sales"><span>영업용 계정</span></label>
+            </div>
           </fieldset>
-
 
           <div class="lx-field" data-field="email">
             <label class="lx-field__label" for="lgEmail">아이디 (이메일)</label>
@@ -77,13 +88,13 @@
             </nav>
           </div>
 
-          <!-- 버튼 2 나란히 — 로그인(채운 CTA, 액센트 — 로그인 예외) · 계정 신청하기(헤어라인 잉크). 원본의 로그인 · 회원가입 자리. -->
+          <!-- 버튼 2 나란히 — 로그인(잉크 채움 · 법전 1차 버튼) · 계정 신청하기(헤어라인 잉크). 원본의 로그인 · 회원가입 자리. -->
           <div class="lg-actions">
             <button type="submit" class="lg-submit" id="lgSubmit">
               <span class="lg-submit__t">로그인</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </button>
-            <a class="lg-signup__a" id="lgSignup" href="signup.html">계정 신청하기</a>
+            <a class="lg-signup__a" id="lgSignup" href="signup.html"><span class="lg-signup__t">계정 신청하기</span></a>
           </div>
 
           <p class="lg-contact"><span class="lg-contact__ink">문의 <b class="lx-num">063-713-1218</b></span><span>· 평일 09:00~18:00</span></p>
