@@ -10,7 +10,18 @@ import { MODELS } from '../assets/data/models.js';
 import { CROPS } from '../assets/data/crops.js';
 import { cardsOfService, cardById, modelsOfCard, deploysOfCard } from '../assets/data/cards.js';
 
-export const AS_OF = '2026-06-08';
+/* 기준일은 셸의 것 하나만 쓴다(Q5(b)) — 여기에 따로 적으면 두 값이 갈라진다. */
+export { AS_OF } from './shell.js';
+
+/** 새 실행이 보여 줄 실측 결과 — 같은 서비스의 results.js 결과. 고른 영상과 지역이 맞는 것을 우선한다.
+    없으면 null(= 산출물 없음). 새 실행은 엔진이 없으므로 **시연**이다 — 결과를 지어내지 않고 이 실측을 가리킨다. */
+const regionWord = (im) => (im?.label || '').split(/\s/)[0];
+export function resultForRun(serviceId, imageryId) {
+  const pool = RESULTS.filter((r) => r.service === serviceId);
+  const w = regionWord(ARCHIVE_BY_ID(imageryId));
+  return (w && pool.find((r) => (r.region || '').includes(w))) || pool[0] || null;
+}
+const ARCHIVE_BY_ID = (id) => IMAGERY.find((m) => m.id === id) || null;
 
 /* ── 세션 저장소 — 새로고침 = 시드 복귀(콘티) ───────────────────────────── */
 const KEY = (n) => `lx-analysis-v1:${n}`;

@@ -1,0 +1,44 @@
+{
+ "sales-1440": {
+  "errs": [],
+  "hOverflow": 0
+ },
+ "download-1440": {
+  "name": "남원시 농지이용 현황.geojson",
+  "bytes": 1293982,
+  "say": "남원시 농지이용 현황 · 결과 GeoJSON(원본 25년 남원시 농지이용 현황(드론).gpkg) 을 내려받았습니다",
+  "errs": []
+ },
+ "newrun-1440": {
+  "url": "http://localhost:4173/landxi/proto/analysis-ai.html?tab=done&card=card-farm&run=run-new-muemmz42",
+  "features": {
+   "featureCount": 2098,
+   "resultId": "namwon-farmland-2025"
+  },
+  "rows": 5,
+  "src": "이 실행은 같은 서비스의 실측 결과를 시연으로 보여 줍니다 · 원본 25년 남원시 농지이용 현황(드론).gpkg",
+  "errs": []
+ },
+ "asof-1440": "2026.06.08",
+ "sales-1280": {
+  "errs": [],
+  "hOverflow": 0
+ },
+ "download-1280": {
+  "name": "남원시 농지이용 현황.geojson",
+  "bytes": 1293982,
+  "say": "남원시 농지이용 현황 · 결과 GeoJSON(원본 25년 남원시 농지이용 현황(드론).gpkg) 을 내려받았습니다",
+  "errs": []
+ },
+ "newrun-1280": {
+  "url": "http://localhost:4173/landxi/proto/analysis-ai.html?tab=done&card=card-farm&run=run-new-muemnc2y",
+  "features": {
+   "featureCount": 2098,
+   "resultId": "namwon-farmland-2025"
+  },
+  "rows": 5,
+  "src": "이 실행은 같은 서비스의 실측 결과를 시연으로 보여 줍니다 · 원본 25년 남원시 농지이용 현황(드론).gpkg",
+  "errs": []
+ },
+ "asof-1280": "2026.06.08"
+}

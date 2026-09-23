@@ -8,8 +8,9 @@ import { esc, icon, openModal, confirmDialog, say, mountPager, bindRows, allowed
 import { cardById, modelsOfCard, needsOf, kindName, OUTPUT_KINDS } from '../assets/data/cards.js';
 import {
   ARCHIVE, archiveById, modelsForService, allRuns, runById, runsByState, addRun, patchRun, dropRun,
-  RUN_STATE, RUN_STEPS, SHARE_ORGS, SHARE_N, roleName, resultById, serviceById, editsOf, saveEdit, AS_OF, runThumb,
+  RUN_STATE, RUN_STEPS, SHARE_ORGS, SHARE_N, roleName, resultById, serviceById, editsOf, saveEdit, AS_OF, runThumb, resultForRun,
 } from './analysis-data.js';
+import { downloadGeoJSON, downloadNote } from './download.js';
 import { inputSets, devicesOf, kindLine } from './analysis-kind.js';
 import { mountMap, setResult, setPick, frame, loadGeo, bboxOf, setHybrid, setResultVisible, hasGL, centroid } from './analysis-map.js';
 import { commit } from './analysis.js';
@@ -17,6 +18,15 @@ import { commit } from './analysis.js';
 const pct = (n) => `${Math.round(n)} %`;
 const km2 = (n) => `${n.toFixed(2)} km²`;
 const cm = (g) => `${(g * 100).toFixed(2)} cm`;
+
+/* 열람 계정(영업)의 자리 — 버튼을 **숨기지 않고 비활성**으로 둔다. 무엇이 있는지 보여 주는 것이 영업의 일이다.
+   할 수 있는지는 roles.js caps 만 묻는다(allowed). Q4 임시 ① — 시연 실행 연출은 다음 웨이브. */
+export const VIEW_ONLY = '열람 계정 — 실행·수정은 LX 직원';
+/* full=true — 힌트를 한 줄 전폭으로 올려 버튼 줄과 분리한다(완료 판 footer · 1440 에서 3줄 깨짐 방지). */
+const hint = (full) => `<span class="mic dp-hint"${full ? ' style="flex:1 1 100%"' : ''}>${VIEW_ONLY}</span>`;
+const off = (cap) => (allowed(cap) ? '' : ' disabled');
+/** 결과 산출물이 없을 때 이유 한 줄 — 지어내지 않는다. */
+const noResultWhy = (svc) => `${svc?.name || '이 서비스'}의 실측 결과가 결과 대장에 없습니다`;
 
 /* ══════════════════════════════════════════════════════════════════════════
    1. 분석 실행 — 과제 선택 → 모델 → 영상 → 실행 (원본 3단 픽커)
@@ -38,7 +48,7 @@ export function renderRun(host, S) {
       <div class="step-h"><span class="step-n n">01</span><h2>영상</h2>
         <button type="button" class="link" id="sel-sum">선택 <b class="n">0</b> · <span class="n" id="sel-km">0.00 km²</span></button>
         <span class="sp"></span>
-        <span class="chips"><button type="button" class="chip-b" aria-pressed="true" id="from-arch">아카이브에서 불러오기</button><button type="button" class="chip-b" id="from-up">영상 업로드</button></span>
+        <span class="chips"><button type="button" class="chip-b" aria-pressed="true" id="from-arch">아카이브에서 불러오기</button>${allowed('upload') ? '<button type="button" class="chip-b" id="from-up">영상 업로드</button>' : ''}</span>
         <label class="inp-ic run-q">${icon('search')}<input class="inp inp--s" id="rq" placeholder="영상명 · 지역" aria-label="영상 검색"></label>
       </div>
       <div class="run-pick">
@@ -51,7 +61,7 @@ export function renderRun(host, S) {
         <div class="run-side">
           <div class="plate" id="run-plate" aria-label="선택 범위 지도"><p class="plate-wait">지도 준비 중</p></div>
           <p class="mic" id="run-extent">선택 범위 —</p>
-          <div class="up-box"><p class="up-t">${icon('down', 20)}</p><p class="up-l">영상 업로드 — 끌어다 놓거나 클릭</p><p class="mic">최대 1 TB · ECW TIF · 검증 3</p><a class="link link--ink" href="dataset.html">데이터 관리 › 업로드와 같은 기능 ›</a></div>
+          ${allowed('upload') ? `<div class="up-box"><p class="up-t">${icon('down', 20)}</p><p class="up-l">영상 업로드 — 끌어다 놓거나 클릭</p><p class="mic">최대 1 TB · ECW TIF · 검증 3</p><a class="link link--ink" href="dataset.html">데이터 관리 › 업로드와 같은 기능 ›</a></div>` : ''}
           <div class="in-kinds"><p class="lb">이 카드가 받는 입력</p>${sets.map((s) => `<p class="in-k" data-input="${s.id}"><b>${esc(s.name)}</b><span class="n">${s.items.length}</span>${s.gap ? `<span class="mic">${esc(s.gap)}</span>` : `<span class="mic">${esc(s.note)}</span>`}</p>`).join('')}</div>
         </div>
       </div>
@@ -68,7 +78,7 @@ export function renderRun(host, S) {
       <header class="panel-h"><h2>실행 요약</h2><span class="sp"></span><span class="st st--acc">검토</span></header>
       <div class="panel-b"><dl class="kv kv--l" id="run-sum" style="--kw:80px"></dl>
         <p class="help" id="run-why"></p></div>
-      <footer class="panel-f"><button type="button" class="btn btn--block" id="go-run">분석 실행</button></footer>
+      <footer class="panel-f">${allowed('run') ? '' : hint()}<button type="button" class="btn${allowed('run') ? ' btn--block' : ''}" id="go-run"${off('run')}>분석 실행</button></footer>
     </aside>
   </div>
 </div>`;
@@ -122,7 +132,7 @@ export function renderRun(host, S) {
     ].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
     const why = !imgs.length ? '영상을 한 장 이상 골라야 실행할 수 있다.' : !m ? '이 카드에 묶인 학습 모델이 없다 — 프로젝트에서 먼저 학습한다.' : '';
     $('#run-why').textContent = why;
-    $('#go-run').disabled = !!why;
+    $('#go-run').disabled = !!why || !allowed('run');
     drawPlate(imgs);
   }
 
@@ -154,11 +164,11 @@ export function renderRun(host, S) {
   $('#rq').addEventListener('input', (e) => { pick.q = e.target.value.trim(); pick.page = 1; drawThumbs(); });
   $('#ch-card').addEventListener('click', () => commit({ tab: 'cards' }));
   $('#ch-model').addEventListener('click', () => models.length && openModelPick(models, (id) => { pick.model = id; drawModel(); drawSum(); }));
-  $('#go-run').addEventListener('click', () => startRun(card, models.find((x) => x.id === pick.model), pick.imgs.map(archiveById)));
+  $('#go-run').addEventListener('click', () => allowed('run') && startRun(card, models.find((x) => x.id === pick.model), pick.imgs.map(archiveById)));
   /* 업로드는 **데이터 관리에 진짜 드롭존이 있다**(드래그·클릭·검증 3). 여기서 흉내만 내면
      같은 기능이 둘이 되고, 하나는 동작하지 않는 가짜가 된다. 그래서 **그 자리로 보낸다** —
      돌아올 곳(?next)을 들고 가므로 올리고 나면 이 화면으로 돌아온다(2026-09-21). */
-  $('#from-up').addEventListener('click', () => {
+  $('#from-up')?.addEventListener('click', () => {
     say('데이터 관리 › 업로드로 이동합니다');
     location.href = `dataset.html?tab=upload&next=${encodeURIComponent(location.pathname.split('/').pop() + location.search)}`;
   });
@@ -184,10 +194,13 @@ function startRun(card, model, imgs) {
   const svc = modelsOfCard(card)[0];
   const id = `run-new-${Date.now().toString(36)}`;
   const first = imgs[0];
+  /* 엔진이 없으므로 새 실행은 **시연**이다. 같은 서비스의 실측 결과(results.js)를 가리켜 완료 판에서
+     그 도형·표를 보여 준다 — 새 수치를 만들지 않는다. 실측이 없으면 resultId = null(산출물 없음 + 이유). */
+  const res = svc ? resultForRun(svc.id, first?.id) : null;
   const run = {
     id, name: `${AS_OF.slice(0, 4)}년 ${+AS_OF.slice(5, 7)}월 ${card.name} 실행`, serviceId: svc?.id || null, cardId: card.id,
-    imageryId: first?.id || null, state: 'run', at: AS_OF, owner: 'mine', demo: true, resultId: null,
-    count: null, unit: svc?.unit || '건', region: '전북 남원시', share: ['lx-admin'], step: 1, pct: 0,
+    imageryId: first?.id || null, state: 'run', at: AS_OF, owner: 'mine', demo: true, resultId: res?.id || null,
+    count: null, unit: res?.unit || svc?.unit || '건', region: res?.region || '전북 남원시', share: ['lx-admin'], step: 1, pct: 0,
     doneN: 0, totalN: imgs.length, modelId: model?.id || null,
   };
   addRun(run);
@@ -202,14 +215,15 @@ function startRun(card, model, imgs) {
   <div class="meter" id="p-bar" style="--v:0%"><i></i></div>
   <div class="steps prog-steps" id="p-steps">${RUN_STEPS.map((s, i) => `<span${i === 0 ? ' aria-current="step"' : ''}>${s}</span>`).join('')}</div>
   <div class="prog-nums">
-    <p><b class="big" id="p-n">0</b> <span class="n">/ ${nf.format(total ? Math.round(total * 1000) : imgs.length)}</span><span class="lb">처리 단위 진행 <em class="tag">시연</em></span></p>
+    <p><b class="big" id="p-n">0</b> <span class="n">/ ${nf.format(total ? Math.round(total * 1000) : imgs.length)}</span><span class="lb">처리 단위 진행 · <em class="tag">시연</em> · 1 단위 = 선택 영상 1,000 m²</span></p>
     <p><b class="big n" id="p-t">--:--</b><span class="lb">시작 시각 <em class="tag">시연</em></span></p>
   </div>
   <p class="mic" id="p-note">실행중 목록에 추가됨</p>
 </div>`,
     actions: [
       { label: '새로 분석하기', kind: 'bracket', onClick: (ctx) => { ctx.close(); commit({ tab: 'run' }); return false; } },
-      { label: '분석 결과 보기', kind: 'primary', onClick: (ctx) => { ctx.close(); commit({ tab: 'running', run: id }); return false; } },
+      /* 끝났으면 완료 탭의 **그 실행**으로, 아직이면 실행중 탭의 그 실행으로 — 다른 실행을 열지 않는다. */
+      { label: '분석 결과 보기', kind: 'primary', onClick: (ctx) => { ctx.close(); commit(p >= 100 ? { tab: 'done', run: id, edit: '' } : { tab: 'running', run: id }); return false; } },
     ],
     onClose: () => clearInterval(timer),
   });
@@ -229,8 +243,8 @@ function startRun(card, model, imgs) {
     patchRun(id, { pct: p, step });
     if (p >= 100) {
       clearInterval(timer);
-      patchRun(id, { state: 'done', pct: 100, step: 4, count: units, doneN: imgs.length });
-      $('#p-note', m.el).textContent = '완료 — 완료 탭에 추가됨';
+      patchRun(id, { state: 'done', pct: 100, step: 4, count: res?.stats.count ?? null, doneN: imgs.length });
+      $('#p-note', m.el).textContent = res ? '완료 — 완료 탭에 추가됨 · 같은 서비스의 실측 결과를 시연으로 연결' : `완료 — 산출물 없음 · ${noResultWhy(svc)}`;
     }
   }, 380);
 }
@@ -264,6 +278,9 @@ export function renderRunning(host, S) {
     && (!rs.q || `${r.name} ${serviceById(r.serviceId)?.name || ''} ${r.region || ''}`.toLowerCase().includes(rs.q.toLowerCase())));
 
   function draw() {
+    /* 실행중에서 보던 실행이 그 사이 끝났으면 완료 탭의 그 실행으로 넘긴다(분석 결과 보기와 같은 규칙). */
+    const cur = S.run ? runById(S.run) : null;
+    if (cur && cur.state === 'done') { commit({ tab: 'done', run: cur.id, edit: '' }, false); return; }
     const all = list(), page = all.slice((rs.page - 1) * rs.size, rs.page * rs.size);
     if (S.run && !all.some((r) => r.id === S.run)) S.run = '';
     if (!S.run && page.length) S.run = page[0].id;
@@ -304,10 +321,11 @@ export function renderRunning(host, S) {
   </dl>
   <p class="mic">진행 수치는 <em class="tag">시연</em> — 실제 실행 엔진과 연결되어 있지 않다.</p>
 </div>
-<footer class="panel-f">${fail ? '<button type="button" class="btn-br" id="rp-retry" style="width:110px">다시 시도</button>' : ''}<button type="button" class="btn-br" id="rp-cancel" style="width:110px">${fail ? '삭제' : '취소'}</button></footer>`;
+<footer class="panel-f">${allowed('edit') ? '' : hint()}${fail ? `<button type="button" class="btn-br" id="rp-retry"${off('run')} style="width:110px">다시 시도</button>` : ''}<button type="button" class="btn-br" id="rp-cancel"${off('edit')} style="width:110px">${fail ? '삭제' : '취소'}</button></footer>`;
 
-    $('#rp-retry')?.addEventListener('click', () => { patchRun(r.id, { state: 'wait', step: 0, pct: 0 }); say('다시 실행 대기로 돌렸습니다 · 시연'); draw(); });
+    $('#rp-retry')?.addEventListener('click', () => { if (!allowed('run')) return; patchRun(r.id, { state: 'wait', step: 0, pct: 0 }); say('다시 실행 대기로 돌렸습니다 · 시연'); draw(); });
     $('#rp-cancel')?.addEventListener('click', async () => {
+      if (!allowed('edit')) return;
       if (!await confirmDialog({ title: '확인', body: fail ? '실패한 실행을 삭제하시겠습니까?' : '실행을 취소하시겠습니까?', okLabel: fail ? '삭제' : '취소하기', danger: true })) return;
       dropRun(r.id); S.run = ''; say(fail ? '실행을 삭제했습니다 · 시연' : '실행을 취소했습니다 · 시연'); commit({ run: '' });
     });
@@ -410,7 +428,7 @@ export function renderDone(host, S) {
     const res = r?.resultId ? resultById(r.resultId) : null;
     const card = r ? cardById(r.cardId) : null;
     const n = card ? needsOf(card) : { parcelRef: true, grid: false, lineRef: false, timeAxis: false, videoPlayer: false };
-    const editing = S.edit === '1' && !!res;
+    const editing = S.edit === '1' && !!res && allowed('edit');
 
     if (!r) {
       panel.innerHTML = `<header class="panel-h"><h2>결과</h2></header><div class="empty"><p class="empty-t">선택된 분석이 없습니다</p><p class="empty-w">왼쪽 목록에서 완료된 분석을 고르면 지도 · 통계 · 공유를 본다</p></div>`;
@@ -432,17 +450,17 @@ export function renderDone(host, S) {
          <button type="button" class="btn-br btn-br--s" id="ed-cancel">취소</button><button type="button" class="btn btn--s" id="ed-save" style="width:78px">저장</button>`
       : `<button type="button" class="chip-b" data-layer="ortho" aria-pressed="false">정사영상</button>
          <button type="button" class="chip-b" data-layer="res" aria-pressed="true">결과</button>
-         ${res ? '<button type="button" class="btn btn--s" id="ed-open" style="width:98px">결과 편집</button>' : ''}
+         ${res ? `<button type="button" class="btn btn--s" id="ed-open"${off('edit')} style="width:98px">결과 편집</button>` : ''}
          <span class="sp"></span>
          ${res ? `<span class="dm-cnt"><b class="big n">${nf.format(res.stats.count)}</b><span class="n">${esc(res.unit)}</span><span class="lb">${esc(Object.keys(res.stats.classes).length)} 클래스 · 실측</span></span>`
-      : '<span class="dm-cnt"><span class="st st--dim">결과 산출물 없음</span><span class="lb">시드 실행 · 지도에 올릴 도형이 없다</span></span>'}`;
+      : '<span class="dm-cnt"><span class="st st--dim">결과 산출물 없음</span><span class="lb">시연 실행 · 결과 산출물이 없습니다</span></span>'}`;
     $('#dm-bar').addEventListener('click', onBar);
   }
   function onBar(e) {
     const l = e.target.closest('[data-layer]'), t = e.target.closest('[data-tool]');
     if (l) { const on = l.getAttribute('aria-pressed') !== 'true'; l.setAttribute('aria-pressed', String(on)); if (dmap) { if (l.dataset.layer === 'res') setResultVisible(dmap, on); else setHybrid(dmap, on); } return; }
     if (t) { $$('[data-tool]').forEach((x) => x.setAttribute('aria-pressed', String(x === t))); dedit.tool = t.dataset.tool; return; }
-    if (e.target.closest('#ed-open')) { dedit = { moved: [], removed: [], tool: 'move' }; commit({ edit: '1' }); }
+    if (e.target.closest('#ed-open') && allowed('edit')) { dedit = { moved: [], removed: [], tool: 'move' }; commit({ edit: '1' }); }
     if (e.target.closest('#ed-cancel')) { dedit = null; say('편집을 취소했습니다'); commit({ edit: '' }); }
     if (e.target.closest('#ed-save')) {
       saveEdit(S.run, dedit.moved.length, dedit.removed.length);
@@ -456,7 +474,7 @@ export function renderDone(host, S) {
     if (!hasGL()) { el.innerHTML = '<p class="plate-wait">지도 라이브러리를 불러오지 못했습니다 — 결과 수치는 오른쪽 판에서 확인</p>'; return; }
     if (!dmap) { el.textContent = ''; dmap = await mountMap(el, { center: [127.42, 35.43], zoom: 9 }); }
     if (!el.isConnected || !dmap) return;
-    if (!res) { dgeo = null; dfeat = []; setResult(dmap, { type: 'FeatureCollection', features: [] }); setPick(dmap, []); return; }
+    if (!res) { dgeo = null; dfeat = []; setResult(dmap, { type: 'FeatureCollection', features: [] }); setPick(dmap, []); window.__an = { ...(window.__an || {}), featureCount: 0, resultId: null }; return; }
     if (dgeo?._id !== res.id) {
       el.dataset.loading = '1';
       const geo = await loadGeo('../' + res.geojson);
@@ -465,6 +483,7 @@ export function renderDone(host, S) {
       el.removeAttribute('data-loading');
     }
     setResult(dmap, dgeo, { dashClasses: Object.keys(res.stats.classes).slice(1) });
+    window.__an = { ...(window.__an || {}), featureCount: dfeat.length, resultId: res.id };   // e2e 훅 — 지도에 올린 도형 수
     frame(dmap, res.stats.bbox, { pad: 30, instant: true, maxZoom: 13.4 });
     setPick(dmap, editing && dedit ? markFeatures() : []);
   }
@@ -479,17 +498,18 @@ export function renderDone(host, S) {
     const foot = $('#dm-foot');
     const dev = [];
     if (n.parcelRef) dev.push(parcelPanel(res, editing));
-    if (n.lineRef) dev.push(devBox('구간 등급 범례', 'lineRef', res ? '선형 기준(노선 · 해안선) 레이어를 받으면 구간 등급을 칠한다' : '결과 산출물 없음'));
-    if (n.grid) dev.push(devBox('히트맵 · 격자 집계', 'grid', '밀도 출력 — 격자 색 농도로 칠한다'));
-    if (n.timeAxis) dev.push(devBox('타임라인 · 시간 재생', 'timeAxis', '시계열 출력 — 시각을 끌면 그때 상태를 본다'));
-    if (n.videoPlayer) dev.push(devBox('영상 플레이어', 'videoPlayer', '드론 영상 입력 — 프레임을 골라 결과와 맞춘다'));
-    foot.innerHTML = dev.join('') || '<p class="mic">이 카드는 결과 레이어만 켠다</p>';
+    /* 장치마다 **무엇이 없어서 비었는지**를 말한다 — 선언 이야기가 아니라 데이터 이야기다. */
+    if (n.lineRef) dev.push(devBox('구간 등급 범례', 'lineRef', '구간 출력 — 노선 · 해안선을 따라 등급을 칠합니다', '선형 기준 레이어를 받으면 구간 등급을 칠합니다'));
+    if (n.grid) dev.push(devBox('히트맵 · 격자 집계', 'grid', '밀도 출력 — 격자 색 농도로 칠합니다', '밀도 결과가 아직 없습니다 · 준비 중'));
+    if (n.timeAxis) dev.push(devBox('타임라인 · 시간 재생', 'timeAxis', '시계열 출력 — 시각을 끌면 그때 상태를 봅니다', '시계열 결과가 아직 없습니다 · 준비 중'));
+    if (n.videoPlayer) dev.push(devBox('영상 플레이어', 'videoPlayer', '드론 영상 입력 — 프레임을 골라 결과와 맞춥니다', '드론 영상이 아직 없습니다 — 데이터 관리에서 올리면 여기 섭니다'));
+    foot.innerHTML = dev.join('') || '<p class="mic">이 카드는 결과 레이어만 켭니다</p>';
     if (n.parcelRef && res) bindParcel(res, editing);
   }
-  const devBox = (name, key, why) => `<div class="devbox" data-device="${key}"><p class="devbox-t">${esc(name)}</p><p class="mic">${esc(why)}</p><p class="devbox-n">원천 대기 — 이 카드의 선언이 켠 자리다</p></div>`;
+  const devBox = (name, key, why, gap) => `<div class="devbox" data-device="${key}"><p class="devbox-t">${esc(name)}</p><p class="mic">${esc(why)}</p><p class="devbox-n">${esc(gap)}</p></div>`;
 
   function parcelPanel(res, editing) {
-    if (!res) return `<div class="devbox" data-device="parcelRef"><p class="devbox-t">필지 행정정보</p><p class="mic">결과 산출물이 없어 표를 세울 수 없다</p></div>`;
+    if (!res) return `<div class="devbox" data-device="parcelRef"><p class="devbox-t">필지 행정정보</p><p class="mic">결과 산출물이 없어 표를 세우지 않습니다</p></div>`;
     const hasPnu = !!res.fields.pnu;
     const cols = hasPnu ? [['연번', 36], ['시도', 52], ['시군구', 66], ['읍면동', 62], ['본번', 44], ['부번', 40], ['탐지 클래스', 0], ['면적 ㎡', 96]]
       : [['연번', 40], ['탐지 클래스', 0], ['면적 ㎡', 96], ['신뢰도', 64]];
@@ -554,7 +574,8 @@ export function renderDone(host, S) {
     panel.innerHTML = `
 <header class="panel-h"><h2>분석명</h2><span class="sp"></span>${res ? `<a class="link link--ink" href="ximap.html?result=${esc(res.id)}" id="to-map">지도 서비스에서 열기 ›</a>` : ''}</header>
 <div class="panel-b">
-  <h3 class="panel-t">${esc(r.name)}</h3>
+  <h3 class="panel-t">${esc(r.name)}${r.demo ? ' <em class="tag" id="dp-demo">시연</em>' : ''}</h3>
+  ${r.demo && res ? `<p class="mic dp-src">이 실행은 같은 서비스의 실측 결과를 시연으로 보여 줍니다 · 원본 ${esc(res.src)}</p>` : ''}
   <p class="panel-meta"><span>${esc(svc?.name || '과제 미정')}</span><span>${editing ? '결과 편집 중' : '처리 완료'}</span><span>${esc(im?.sensor || '')} ${esc(im?.captured || '')}</span></p>
   ${editing ? `<div class="ed-strip"><p class="lb">저장 전 변경 <b class="n">${chg}</b></p>
     ${dedit.moved.map((i) => `<p><span class="st st--acc">이동</span> #${i + 1} · ${esc(dfeat[i]?.properties.emd || '')} ${esc(dfeat[i]?.properties.cls || '')}<span class="sp"></span><span class="n">${nf.format(Math.round(+dfeat[i]?.properties.area || 0))} m²</span></p>`).join('')}
@@ -578,33 +599,35 @@ export function renderDone(host, S) {
   </div>
   <p class="hist-ax"><span class="n">0</span><span class="sp"></span><span class="n">0.5</span><span class="sp"></span><span class="n">1.0</span></p>
   <p class="mic">GeoJSON · GPKG (${esc(st.crsSrc)}) · 원본 ${esc(res.src)}</p>`
-      : `<p class="empty empty--s">결과 산출물이 없는 시드 실행입니다 — 지도·통계를 세울 도형이 없다</p>`}
+      : `<p class="empty empty--s" id="dp-none">산출물 없음 — ${esc(noResultWhy(svc))}</p>`}
   ${ed ? `<p class="mic">이 세션에 저장한 편집 — 이동 <b class="n">${ed.moved}</b> · 삭제 <b class="n">${ed.removed}</b></p>` : ''}
 </div>
 <footer class="panel-f">
-  ${/* 고칠 수 없는 계정에는 **버튼을 세우지 않는다** — 흐리게 두면 눌러 보게 되고,
-       눌러서 거절당하는 것은 권한 설계가 아니라 사고다(2026-09-21). */''}
-  ${allowed('edit') ? `<button type="button" class="btn-br" id="dp-share"${editing ? ' disabled' : ''} style="width:104px">${icon('layers', 14)} 공유 설정</button>` : ''}
-  <button type="button" class="btn-br" id="dp-down"${res && !editing ? '' : ' disabled'} style="width:104px">${icon('down', 14)} 다운로드</button>
-  ${allowed('edit') ? `<button type="button" class="btn-br" id="dp-del"${editing ? ' disabled' : ''} style="width:72px">삭제</button>` : ''}
-  ${!allowed('edit') ? '<span class="mic dp-hint">열람 계정 — 결과 수정·삭제는 LX 직원 이상</span>' : ''}
+  ${/* 고칠 수 없는 계정에는 버튼을 **비활성**으로 둔다 — 무엇이 있는지는 보여 주고 왜 못 누르는지 한 줄로 말한다
+       (Q4 임시 ① · 2026-09-24). 열람 계정이 누를 수 있는 것은 다운로드뿐이다(caps export). */''}
+  <button type="button" class="btn-br" id="dp-share"${editing || !allowed('edit') ? ' disabled' : ''} style="width:104px">${icon('layers', 14)} 공유 설정</button>
+  <button type="button" class="btn-br" id="dp-down"${res && !editing && allowed('export') ? '' : ' disabled'} style="width:104px">${icon('down', 14)} 다운로드</button>
+  <button type="button" class="btn-br" id="dp-del"${editing || !allowed('edit') ? ' disabled' : ''} style="width:72px">삭제</button>
+  ${!allowed('edit') ? hint(true) : ''}
   ${editing ? '<span class="mic dp-hint">저장·취소 후 다시 활성</span>' : ''}
 </footer>`;
 
-    $('#dp-share')?.addEventListener('click', () => openShare(r, res));
+    $('#dp-share')?.addEventListener('click', () => allowed('edit') && openShare(r, res));
     /* **실제로 떨어진다.** 전에는 토스트만 띄웠다 — 눌렀는데 아무것도 안 받아지는 버튼이었다.
        결과 GeoJSON 이 저장소에 있으면 그것을, 없으면 무엇을 받았는지 적힌 파일을 만들어 준다. */
     $('#dp-down')?.addEventListener('click', async () => {
       const src = res?.geojson ? `../${res.geojson}` : '';
       const how = await downloadGeoJSON(r.name, src, null);
-      if (how === '원본') { say(`${r.name} · GeoJSON 을 내려받았습니다`); return; }
+      if (how === '원본') { say(`${r.name} · 결과 GeoJSON(원본 ${res.src}) 을 내려받았습니다${r.demo ? ' · 시연' : ''}`); return; }
+      if (how === '요약') { say(`${r.name} · 요약 GeoJSON 을 내려받았습니다`); return; }
       downloadNote(`${String(r.name).replace(/[\/:*?"<>|]/g, '_')}.txt`, [
         `분석 결과 · ${r.name}`,
         res ? `건수 ${res.stats?.count ?? '—'} ${res.unit || ''} · 시점 ${res.year || '—'}` : '연결된 산출이 없습니다',
       ]);
-      say(`${r.name} · 내려받았습니다 — 결과 원본이 연결되면 GeoJSON 으로 떨어집니다`);
+      say(`${r.name} · 안내 파일(.txt)을 내려받았습니다 — 결과 원본을 읽지 못해 GeoJSON 대신 받았습니다`);
     });
     $('#dp-del')?.addEventListener('click', async () => {
+      if (!allowed('edit')) return;
       if (!await confirmDialog({ title: '확인', body: '분석 결과를 삭제하시겠습니까?\n결과의 수정·삭제 권한은 LX 에 있습니다.', okLabel: '삭제', danger: true })) return;
       dropRun(r.id); say('분석 결과를 삭제했습니다 · 시연'); commit({ run: '' });
     });

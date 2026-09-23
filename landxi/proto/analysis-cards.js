@@ -11,7 +11,7 @@
 
    **이 파일은 카드를 하드코딩하지 않는다**(R5): 목록은 registry.js 의 `findCards()` 가,
    거르개는 `AXES` 가, 화면 장치는 카드의 `kind` 선언(`needsOf`)이 정한다. */
-import { esc, icon, openModal, say, $, $$, nf } from './shell.js';
+import { esc, icon, openModal, say, allowed, $, $$, nf } from './shell.js';
 import {
   SCOPES, scopeById, scopeSummary, cardById, CORE_MODULES, extModules, extByOwner, OWNER_LINE,
   modelsOfCard, deploysOfCard, cardTotals, STATUS_TONE, DEPLOYS,
@@ -23,6 +23,9 @@ import {
 import { cardCrop, cardResults, cardMinistries, runsOfCard, addedDeploysOf, addDeploy, addedDeploys } from './analysis-data.js';
 import { devicesOf, kindLine, inputSets } from './analysis-kind.js';
 import { commit } from './analysis.js';
+
+/* 열람 계정(영업) — 실행 · 이식 버튼을 숨기지 않고 비활성 + 이유 한 줄(Q4 임시 ①). 판정은 roles.js caps 만. */
+const VIEW_ONLY = '열람 계정 — 실행·수정은 LX 직원';
 
 const BUILD = { done: ['완성', 'st--acc'], wip: ['진행', 'st--teal'], todo: ['설계', 'st--dim'] };
 const TONE = { ok: 'st--acc', accent: 'st--teal', mute: 'st--dim' };
@@ -100,7 +103,7 @@ export function renderShelf(host, S) {
 
   drawGrid(S);
   drawDetail(S);
-  if (S.pick === 'transplant' && cardById(S.card)) openTransplant(S);
+  if (S.pick === 'transplant' && cardById(S.card) && allowed('edit')) openTransplant(S);
 }
 
 /* ══ 2. 진열대 ════════════════════════════════════════════════════════════
@@ -187,7 +190,7 @@ function drawDetail(S) {
     <div><dt>대상 사업</dt><dd>${esc(sc.name)} · ${esc(sc.crs)}</dd></div>
     <div><dt>버전</dt><dd>${c.version ? `<span class="n">${esc(c.version)}</span>` : '<span class="dim">발행 전</span>'}</dd></div>
   </dl>
-  <p class="help">법정 조사 주기는 레지스트리에 없다 — 배포본 연혁으로 읽는다.</p>`,
+  <p class="help">조사 주기 · 준비 중 — 지금은 배포본 연혁을 보여 줍니다.</p>`,
 
     model: `<h4 class="sec-h">묶은 AI 모델 <span class="n">${ms.length}</span></h4>
   ${ms.length ? `<ul class="cd-models">${ms.map((m) => `<li><span class="cd-mn">${esc(m.name)}</span><span class="cd-mm">${esc(m.ministry)}</span>${m.count > 0 ? `<span class="n cd-mc">${nf.format(m.count)} ${esc(m.unit)}</span>` : '<span class="st st--dim cd-mc">준비 중</span>'}</li>`).join('')}</ul>
@@ -201,7 +204,7 @@ function drawDetail(S) {
     ${devs.map((d) => `<li data-device="${d.key}"><span class="cd-dv">${esc(d.name)}</span><span class="cd-dw">${esc(d.where)}</span><span class="cd-md">${esc(d.why)}</span></li>`).join('')
     || '<li class="cd-noext" data-device="none">기본형 — 결과 레이어만 켠다</li>'}
   </ul>
-  <p class="mic">화면은 카드 이름을 모른다 — 이 선언(<span class="n">kind</span>)만 보고 장치를 켠다. 새 종류가 생기면 선언 한 줄이면 된다.</p>`,
+  <p class="mic">이 카드의 종류 선언이 켜는 장치입니다.</p>`,
 
     modlx: `<h4 class="sec-h">공통 <span class="n">${CORE_MODULES.length}</span> + LX 전용 <span class="n">${lxExt.length}</span><span class="sp"></span>
     <button type="button" class="btn-br btn-br--s cd-desc-t" aria-expanded="${modsFull}" style="width:96px">${modsFull ? '설명 접기' : '설명 보기'}</button></h4>
@@ -267,16 +270,16 @@ function drawDetail(S) {
       ${TABS_CD.map(([k, label, n]) => `<button type="button" role="tab" data-cdt="${k}" aria-selected="${k === cdTab}">${label}${n === '' ? '' : `<span class="n">${n}</span>`}</button>`).join('')}
     </nav>
     <p class="acts cd-tp">${c.portable
-    ? `<button type="button" class="btn-br btn-br--s" id="tp-open">다른 지역에 이식 ›</button>`
+    ? `${allowed('edit') ? '' : `<span class="mic dp-hint">${VIEW_ONLY}</span>`}<button type="button" class="btn-br btn-br--s" id="tp-open"${allowed('edit') ? '' : ' disabled'}>다른 지역에 이식 ›</button>`
     : `<span class="mic">이식 불가 — ${esc(c.gap || '지역 의존 자료가 커 배포본을 복제할 수 없다')}</span>`}</p>
   </div>
   ${TABS_CD.map(([k]) => `<div class="cd-pane" role="tabpanel" data-cdp="${k}"${k === cdTab ? '' : ' hidden'}>${panes[k]}</div>`).join('')}
 </div>
 <footer class="panel-f">
-  <span class="mic">${esc(dom?.name || '미분류')} · LX 모듈 ${CORE_MODULES.length + lxExt.length} · 기관 ${localExt.length}</span>
+  ${allowed('run') ? `<span class="mic">${esc(dom?.name || '미분류')} · LX 모듈 ${CORE_MODULES.length + lxExt.length} · 기관 ${localExt.length}</span>` : `<span class="mic dp-hint">${VIEW_ONLY}</span>`}
   <button type="button" class="btn-br" id="cd-results"${res.length ? '' : ' disabled'}>결과 보기</button>
   <button type="button" class="btn-br" id="cd-history">실행 이력</button>
-  ${ready ? '<button type="button" class="btn-br" id="cd-run" disabled>준비 중</button>' : '<button type="button" class="btn" id="cd-run">분석 실행</button>'}
+  ${ready ? '<button type="button" class="btn-br" id="cd-run" disabled>준비 중</button>' : `<button type="button" class="btn" id="cd-run"${allowed('run') ? '' : ' disabled'}>분석 실행</button>`}
 </footer>`;
 
   /* 탭 전환은 다시 그리지 않는다 — 판 전체를 갈아 끼우면 들어오는 애니메이션이 매번 돈다. */
@@ -289,8 +292,8 @@ function drawDetail(S) {
   $$('.cd-desc-t', panel).forEach((b) => b.addEventListener('click', () => { modsFull = !modsFull; drawDetail(S); }));
   $('#cd-results')?.addEventListener('click', () => commit({ tab: 'done', run: res[0]?.id || '' }));
   $('#cd-history')?.addEventListener('click', () => commit({ tab: 'running' }));
-  if (!ready) $('#cd-run')?.addEventListener('click', () => commit({ tab: 'run', card: c.id }));
-  $('#tp-open')?.addEventListener('click', () => commit({ pick: 'transplant' }, true));
+  if (!ready) $('#cd-run')?.addEventListener('click', () => allowed('run') && commit({ tab: 'run', card: c.id }));
+  $('#tp-open')?.addEventListener('click', () => allowed('edit') && commit({ pick: 'transplant' }, true));
   $('#cdetail-b').classList.add('is-in');
 }
 

@@ -47,7 +47,7 @@ const TABS = [
 let S = readUrl();
 
 const shell = mountShell({
-  active: 'analysis', title: '분석 서비스', fit: true, asOf: '2026-08-27', demo: true,
+  active: 'analysis', title: '분석 서비스', fit: true, demo: true,              // 기준일은 셸 AS_OF(2026-06-08) 하나만 — Q5(b)
   subtitle: '&nbsp;', headRight: `<nav class="ptabs an-tabs" data-style="line" id="atabs" aria-label="분석 서비스 메뉴"></nav>`,
 });
 if (!shell) throw new Error('gate');        // 관문이 로그인으로 보냈다

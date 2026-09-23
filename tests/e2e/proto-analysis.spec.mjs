@@ -20,11 +20,23 @@ function watch(page) {
   page.on('console', (m) => { if (m.type() === 'error' && !NETWORK.test(m.text())) errs.push('console: ' + m.text()); });
   return errs;
 }
-async function boot(page, url = P) {
-  await page.addInitScript(() => localStorage.setItem('lx_logged_in', '1'));
+/* ── 역할 픽스처(wave0/00-COMMON.md 그대로 복사 — Wave 0 동안 _roles.mjs import 금지) ── */
+/** LX 세션으로 화면을 연다. 세션은 첫 로드에서만 심는다(sessionStorage 가드). */
+async function bootAs(page, url, role = 'staff', extra = {}) {
+  await page.addInitScript(([r, ex]) => {
+    if (sessionStorage.getItem('lx_e2e_boot')) return;
+    sessionStorage.setItem('lx_e2e_boot', '1');
+    localStorage.setItem('lx_logged_in', '1');
+    localStorage.setItem('lx_role', r);
+    localStorage.removeItem('lx_tenant_session');
+    for (const [k, v] of Object.entries(ex)) (v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v));
+  }, [role, extra]);
   await page.goto(url);
   await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
 }
+/** 분석 서비스의 기본 역할 = LX 직원(staff). */
+const boot = (page, url = P) => bootAs(page, url, 'staff');
+const VIEW_ONLY = '열람 계정 — 실행·수정은 LX 직원';
 const param = (page, k) => new URL(page.url()).searchParams.get(k);
 async function tabTo(page, selector, max = 160) {
   for (let i = 0; i < max; i++) {
@@ -501,9 +513,112 @@ test.describe('분석 실행 · 실행중 · 완료', () => {
   test('결과 산출물이 없는 시드 실행은 지도·표를 세우지 않고 그렇게 말한다', async ({ page }) => {
     await boot(page, P + '?tab=done&run=run-road-2604');
     await expect(page.locator('.dm-cnt')).toContainText('결과 산출물 없음');
+    await expect(page.locator('.dm-cnt')).toContainText('시연 실행 · 결과 산출물이 없습니다');
     await expect(page.locator('#ed-open')).toHaveCount(0);
     await expect(page.locator('#dp-down')).toBeDisabled();
-    await expect(page.locator('#dp .panel-b')).toContainText('결과 산출물이 없는 시드 실행');
+    await expect(page.locator('#dp-none')).toHaveText(/^산출물 없음 — .+의 실측 결과가 결과 대장에 없습니다$/);
+  });
+
+  /* ── Wave 0 · E0-4 ── */
+  test('E0-4 ① 완료 탭 다운로드 — 실제 .geojson 파일 1건 · pageerror 0', async ({ page }) => {
+    const errs = watch(page);
+    await boot(page, P + '?tab=done&run=namwon-farmland-2025');
+    await expect(page.locator('#dp-down')).toBeEnabled();
+    const [dl] = await Promise.all([page.waitForEvent('download'), page.locator('#dp-down').click()]);
+    expect(dl.suggestedFilename()).toMatch(/\.geojson$/);
+    const path = await dl.path();
+    const { statSync } = await import('node:fs');
+    expect(statSync(path).size).toBeGreaterThan(0);
+    await expect(page.locator('#say')).toContainText('GeoJSON');
+    await page.waitForTimeout(300);
+    expect(errs.filter((e) => e.startsWith('pageerror'))).toEqual([]);
+    expect(errs).toEqual([]);
+  });
+
+  test('E0-4 ② 영업 계정 — 실행 · 편집 · 취소 · 이식 비활성 + 이유 한 줄 · 영상 업로드 없음', async ({ page }) => {
+    const errs = watch(page);
+    await bootAs(page, P + '?card=card-farm', 'sales');
+    // 진열대 — 분석 실행 · 이식은 보이되 누를 수 없다
+    await expect(page.locator('#cd-run')).toBeDisabled();
+    await expect(page.locator('#tp-open')).toBeDisabled();
+    await expect(page.locator('#cdetail .dp-hint').first()).toHaveText(VIEW_ONLY);
+    // 분석 실행 — 영상을 골라도 실행 CTA 는 잠겨 있고 업로드 입구는 없다
+    await page.goto(P + '?tab=run&card=card-farm');
+    await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
+    await page.locator('.thumb').first().locator('input').check();
+    await expect(page.locator('#go-run')).toBeDisabled();
+    await expect(page.locator('#go-run[disabled]')).toHaveCount(1);
+    await expect(page.locator('.an-panel .dp-hint')).toHaveText(VIEW_ONLY);
+    await expect(page.locator('#from-up')).toHaveCount(0);
+    await expect(page.locator('.up-box')).toHaveCount(0);
+    await expect(page.getByText('영상 업로드', { exact: false })).toHaveCount(0);
+    await expect(page.locator('#from-arch')).toBeVisible();
+    // 실행중 — 취소 비활성
+    await page.goto(P + '?tab=running');
+    await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
+    await expect(page.locator('#rp-cancel')).toBeDisabled();
+    await expect(page.locator('#rp .dp-hint')).toHaveText(VIEW_ONLY);
+    // 완료 — 결과 편집 · 공유 · 삭제 비활성, 다운로드만 산다
+    await page.goto(P + '?tab=done&run=namwon-farmland-2025');
+    await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
+    await expect(page.locator('#ed-open')).toBeDisabled();
+    await expect(page.locator('#dp-share')).toBeDisabled();
+    await expect(page.locator('#dp-del')).toBeDisabled();
+    await expect(page.locator('#dp-down')).toBeEnabled();
+    await expect(page.locator('#dp .dp-hint')).toHaveText(VIEW_ONLY);
+    // 1440×900 — 힌트는 한 줄 위, 공유 설정·다운로드·삭제 3버튼은 아래 한 줄(3줄로 깨지지 않는다)
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.waitForTimeout(200);
+    const ft = await page.evaluate(() => {
+      const bs = [...document.querySelectorAll('#dp .panel-f button')].map((b) => Math.round(b.getBoundingClientRect().top));
+      const h = document.querySelector('#dp .panel-f .dp-hint').getBoundingClientRect();
+      return { bs, hintLines: Math.round(h.height / parseFloat(getComputedStyle(document.querySelector('#dp .panel-f .dp-hint')).lineHeight)), hintBottom: h.bottom };
+    });
+    expect(ft.bs).toHaveLength(3);
+    expect(new Set(ft.bs).size).toBe(1);
+    expect(ft.hintLines).toBeLessThanOrEqual(1);
+    expect(ft.hintBottom).toBeLessThanOrEqual(ft.bs[0]);
+    // 주소로 편집을 열어도 편집 판이 서지 않는다
+    await page.goto(P + '?tab=done&run=namwon-farmland-2025&edit=1');
+    await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
+    await expect(page.locator('#dp .panel-t')).toHaveCount(1);
+    await expect(page.locator('#ed-save')).toHaveCount(0);
+    expect(errs).toEqual([]);
+  });
+
+  test('E0-4 ③ 직원 새 실행 → 완료 → 분석 결과 보기 = 그 실행 · 도형 · 표 · 시연 꼬리표', async ({ page }) => {
+    test.setTimeout(60000);
+    const errs = watch(page);
+    await boot(page, P + '?tab=run&card=card-farm');
+    await page.locator('.thumb').first().locator('input').check();
+    await page.locator('#go-run').click();
+    const m = page.locator('.modal');
+    await expect(m.locator('.prog-nums')).toContainText('1 단위 = 선택 영상 1,000 m²');
+    await expect(m.locator('#p-note')).toContainText('완료', { timeout: 15000 });
+    await m.locator('.btn').click();                                          // 분석 결과 보기 → 완료 탭의 그 실행
+    await expect.poll(() => param(page, 'tab')).toBe('done');
+    const run = param(page, 'run');
+    expect(run).toMatch(/^run-new-/);
+    await expect(page.locator(`#dl .lcard[data-run="${run}"]`)).toHaveAttribute('aria-selected', 'true');
+    const want = await page.evaluate(async () => (await import('../assets/data/results.js')).RESULTS.find((r) => r.service === 'farmland'));
+    await expect(page.locator('#dp-demo')).toHaveText('시연');
+    await expect(page.locator('.dp-src')).toContainText('같은 서비스의 실측 결과를 시연으로');
+    await expect(page.locator('.dp-src')).toContainText(want.src);
+    await page.waitForFunction(() => (window.__an?.featureCount || 0) > 0, null, { timeout: 20000 });
+    expect(await page.evaluate(() => window.__an.resultId)).toBe(want.id);
+    await expect(page.locator('#pc-tbl tbody tr').first()).toBeVisible();
+    expect(await page.locator('#pc-tbl tbody tr').count()).toBeGreaterThan(0);
+    const stored = await page.evaluate(async (id) => (await import('./analysis-data.js')).runById(id), run);
+    expect(stored.demo).toBe(true);
+    expect(stored.resultId).toBe(want.id);
+    expect(errs).toEqual([]);
+  });
+
+  test('E0-4 ④ 기준일은 셸 하나 — 마스트 2026.06.08', async ({ page }) => {
+    await boot(page);
+    await expect(page.locator('#mast-asof')).toHaveText('2026.06.08');
+    const same = await page.evaluate(async () => (await import('./analysis-data.js')).AS_OF === (await import('./shell.js')).AS_OF);
+    expect(same).toBe(true);
   });
 });
 

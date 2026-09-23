@@ -1,0 +1,47 @@
+{
+ "R": {
+  "salesUrl": "http://localhost:4173/landxi/proto/analysis-ai.html?card=card-farm",
+  "salesRail": [
+   "분석 서비스",
+   "지도 서비스",
+   "활용 사례",
+   "MY",
+   "마이 페이지",
+   "서비스7",
+   "분석 실행",
+   "실행중3",
+   "완료7"
+  ],
+  "salesTabs": [
+   "서비스7",
+   "분석 실행",
+   "실행중3",
+   "완료7"
+  ],
+  "salesRunBtn": {
+   "t": "분석 실행",
+   "d": true
+  },
+  "salesHint": [
+   "열람 계정 — 실행·수정은 LX 직원",
+   "열람 계정 — 실행·수정은 LX 직원"
+  ],
+  "salesTpShown": true,
+  "salesTp": false,
+  "salesProjClick": "http://localhost:4173/landxi/proto/ximap.html",
+  "salesGo": true,
+  "salesRunStarted": false,
+  "salesUploadBtn": false,
+  "salesUpload": "http://localhost:4173/landxi/proto/analysis-ai.html?tab=run&card=card-farm",
+  "salesEditShown": true,
+  "salesEditBtn": false,
+  "salesShare": false,
+  "salesDel": false,
+  "salesDown": true,
+  "salesEditing": false,
+  "salesCancelShown": true,
+  "salesCancel": false,
+  "salesAiCard": "http://localhost:4173/landxi/proto/ximap.html"
+ },
+ "log": []
+}

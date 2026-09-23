@@ -1,5 +1,5 @@
 /* 튀는 구조를 흡수하는 장치 — 카드의 **종류 선언**(cards.js `kind` · `needsOf`)만 보고 UI 를 켠다.
-   (2026-09-20 이원화 확정본 §5) 화면은 카드 이름을 모른다. `card.kind` 를 고치면 여기를 거쳐
+   (2026-09-20 이원화 확정본 §5) 화면 코드는 카드 이름으로 분기하지 않는다. `card.kind` 를 고치면 여기를 거쳐
    카드 상세 · 분석 실행 · 결과 화면의 장치가 따라 바뀐다 — 화면 코드는 그대로다.
    새 종류가 생기면 cards.js 에 한 줄 + 아래 표에 렌더러 한 줄. */
 import { needsOf, INPUT_KINDS, OUTPUT_KINDS, VIZ_KINDS, kindName } from '../assets/data/cards.js';
@@ -28,9 +28,9 @@ const FROM_ARCHIVE = {
   camera: () => false,
 };
 const NO_SOURCE = {
-  video: '드론 영상 아카이브가 아직 없다 — 데이터 관리 › 업로드로 비행 영상을 올리면 여기 선다',
-  camera: '차량 카메라 주행 영상이 아직 없다 — 데이터 관리 › 업로드로 주행분을 올리면 여기 선다',
-  satellite: '위성 장면을 아직 조달하지 않았다 — 대상 지역이 정해지면 조달한다',
+  video: '드론 영상 아카이브가 아직 없습니다 — 데이터 관리 › 업로드로 비행 영상을 올리면 여기 섭니다',
+  camera: '차량 카메라 주행 영상이 아직 없습니다 — 데이터 관리 › 업로드로 주행분을 올리면 여기 섭니다',
+  satellite: '위성 장면은 준비 중입니다 — 대상 지역이 정해지면 조달합니다',
 };
 /** 카드가 받는 입력별 아카이브 묶음. [{ id, name, note, items[], gap }] */
 export function inputSets(card) {
