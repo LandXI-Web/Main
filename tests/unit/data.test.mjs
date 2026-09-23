@@ -193,9 +193,14 @@ test('15 home services: unique ids, real assets, sane coordinates', () => {
   const real = SERVICES.filter(s => s.real);
   // greenhouse 는 25년 남원 비닐하우스 GPKG(1,674필지 / 9,664동) 가 붙으면서 real 로 승격됐다.
   // story 키는 아직 'generic' 이다 — 스토리 카피가 준비되면 별도 키를 부여할 것.
-  assert.deepEqual(real.map(s => s.id).sort(), ['change', 'farmland', 'greenhouse', 'marine', 'pothole']);
-  assert.deepEqual(real.map(s => s.story).sort(), ['generic', 'jeju', 'kuksan', 'marine', 'namwon']);
-  assert.equal(SERVICES.find(s => s.id === 'marine').count, 38057);
+  // 2fe8969("콘티 시각이 벽시계를 따라가던 것을 끊고, 숫자의 출처를 칸으로 가른다")가 pothole·change 를
+  // real:false 로 내렸다 — 산출이 대장(results.js)에 없어 숫자가 실측이 아니라고 정직하게 표기한 쪽이 옳다.
+  // real:true 3종만 남는다(services.js 의 근거 주석과 동일).
+  assert.deepEqual(real.map(s => s.id).sort(), ['farmland', 'greenhouse', 'marine']);
+  assert.deepEqual(real.map(s => s.story).sort(), ['generic', 'jeju', 'marine']);
+  // 같은 2fe8969 가 marine count 도 38,057(신안·완도 포함, 대장 미등재) → 3,938(대장이 받치는 여수
+  // 두 건 1,860+2,078 의 합)로 내렸다 — 이 줄만 갱신에서 빠져 있었다(같은 뿌리 · 별도 단언).
+  assert.equal(SERVICES.find(s => s.id === 'marine').count, 3938);
   assert.equal(serviceById('marine').id, 'marine');
   assert.equal(serviceById('nope'), null);
 });

@@ -12,7 +12,9 @@ const REDIRECTS = [
 
 for (const [from, to, loggedIn] of REDIRECTS) {
   test(`${from} redirects to its proto page`, async ({ page }) => {
-    if (loggedIn) await page.addInitScript(() => localStorage.setItem('lx_logged_in', '1'));
+    // 대시보드(dashboard.html = SCREEN_MENU 'dashboard')는 직원 화면이다 — lx_role 없이 로그인만 하면
+    // 기본 역할(admin)로 관문에 튕긴다(tests.md §2.3). role 도 같이 심는다(00-COMMON 역할 픽스처 표).
+    if (loggedIn) await page.addInitScript(() => { localStorage.setItem('lx_logged_in', '1'); localStorage.setItem('lx_role', 'staff'); });
     const res = await page.goto(from);
     expect(res.status()).toBe(200);
     await page.waitForURL(to, { timeout: 15000 });
