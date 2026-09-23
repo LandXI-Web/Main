@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
 
-// LX 관리자 대시보드 — 발주자 보드 B5-Dashboard-Data(1 판 + 토글 2 · 우 탭 패널 1).
-// 조판 마스터   — design-canvas/v2/B5-Dashboard-Data.dc.html (1440×900)
-// 기능 대조표   — docs/superpowers/proto/2026-08-26-dashboard-parity.md (A1–A11 / B1–B16)
+// 대시보드 — LX 직원의 현황판(발주자 보드 B5-Dashboard-Data 의 판 + 토글 2 · 우 탭 패널).
+// 2026-09-24 E0-6 — 공용 셸(mountShell)로 이관 · 직원 화면으로 · 관리 위젯은 운영 현황으로(E1-6).
+// 조판 마스터   — design-canvas/v2/B5-Dashboard-Data.dc.html
+// 행선지 표     — docs/superpowers/audit-0923/wave0/E0-6-result.md (원본 위젯 8종이 어디로 갔나)
 const URL = 'proto/dashboard.html';
 
 // 오프라인/외부 CDN(EOX 타일·폰트) 실패는 이 프로토의 정상 동작이다. 우리 코드가 던진 것만 실패로 본다.
@@ -13,128 +14,222 @@ function watch(page) {
   page.on('console', (m) => { if (m.type() === 'error' && !NETWORK.test(m.text())) errs.push('console: ' + m.text()); });
   return errs;
 }
+
+/* ── 역할 픽스처 — wave0/00-COMMON.md 그대로 복사(Wave 0 동안 _roles.mjs import 금지) ── */
+const HOME = { admin: 'admin-home.html', staff: 'ai-project.html', sales: 'ximap.html' };
+/** LX 세션으로 화면을 연다. 세션은 첫 로드에서만 심는다(sessionStorage 가드). */
+async function bootAs(page, url, role = 'staff', extra = {}) {
+  await page.addInitScript(([r, ex]) => {
+    if (sessionStorage.getItem('lx_e2e_boot')) return;
+    sessionStorage.setItem('lx_e2e_boot', '1');
+    localStorage.setItem('lx_logged_in', '1');
+    localStorage.setItem('lx_role', r);
+    localStorage.removeItem('lx_tenant_session');
+    for (const [k, v] of Object.entries(ex)) (v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v));
+  }, [role, extra]);
+  await page.goto(url);
+  await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
+}
 async function boot(page, q = '') {
-  await page.addInitScript(() => localStorage.setItem('lx_logged_in', '1'));
-  await page.goto(URL + q);
+  await bootAs(page, URL + q, 'staff');
   await page.waitForFunction(() => document.documentElement.dataset.dash === 'ready', null, { timeout: 30000 });
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(1100);
 }
 
-test('로그인 관문 — 플래그가 없으면 관리자 화면이 한 프레임도 새지 않는다', async ({ page }) => {
+/** 직원이 못 가는 화면 — roles.js SCREEN_MENU 중 staff.menus 밖의 것. 이리로 가는 링크가 있으면 실패. */
+const STAFF_DENIED = ['admin-home.html', 'admin-publish.html', 'ai-card.html', 'ai-card-edit.html', 'ai-publish-create.html',
+  'produce.html', 'admin-notice.html', 'admin-users.html', 'admin-inquiry.html', 'admin-faq.html', 'admin-map.html'];
+const fileOf = (href) => String(href).split('#')[0].split('?')[0].split('/').pop();
+
+/** #main 자식 사이 · 마지막 자식과 푸터 사이 · 판/패널 아래의 빈 띠(px) — 법전 §6 은 80 초과 금지. */
+const bands = (page) => page.evaluate(() => {
+  const kids = [...document.querySelector('#main').children].map((e) => e.getBoundingClientRect());
+  const out = []; for (let i = 1; i < kids.length; i++) out.push(kids[i].top - kids[i - 1].bottom);
+  out.push(document.querySelector('#foot').getBoundingClientRect().top - kids[kids.length - 1].bottom);
+  const split = document.querySelector('#split').getBoundingClientRect();
+  for (const s of ['#plate-wrap', '#panel']) out.push(split.bottom - document.querySelector(s).getBoundingClientRect().bottom);
+  return out.map(Math.round);
+});
+
+/** 우 패널 **안**의 빈 띠 — 보이는 tabpanel 마다 첫 자식 위 · 마지막 자식 아래 · 자식 사이(목록 행 포함, #s-lg 는 펼쳐 잰다).
+ *  두 목록을 한 패널에 세운 조판(data-lay=both)이면 패널 위 · 목록 사이 · 패널 아래도 잰다. 법전 §6: 띠 ≤ 80 · 행 사이 ≤ 32. */
+const paneBands = (page) => page.evaluate(() => {
+  const R = (e) => e.getBoundingClientRect();
+  const panel = document.querySelector('#panel'), lay = panel.dataset.lay;
+  const panes = [...panel.querySelectorAll('[role=tabpanel]')].filter((p) => !p.hidden && R(p).height > 0);
+  const out = { lay, panes: {}, edge: [] };
+  for (const p of panes) {
+    const kids = [...p.children].flatMap((k) => (k.id === 's-lg' ? [...k.children] : [k])).filter((k) => R(k).height > 0).map(R);
+    const pr = R(p), gaps = [];
+    for (let i = 1; i < kids.length; i++) gaps.push(Math.round(kids[i].top - kids[i - 1].bottom));
+    out.panes[p.id] = { top: Math.round(kids[0].top - pr.top), bottom: Math.round(pr.bottom - kids[kids.length - 1].bottom), gaps };
+  }
+  if (lay === 'both') {
+    const a = R(panes[0]), b = R(panes[panes.length - 1]), q = R(panel);
+    out.edge = [a.top - q.top, b.top - a.bottom, q.bottom - b.bottom].map(Math.round);
+  }
+  return out;
+});
+function expectPaneBands(pb, tag) {
+  const s = JSON.stringify(pb);
+  for (const [id, m] of Object.entries(pb.panes)) {
+    expect(m.top, `${tag} ${id} 위 ${s}`).toBeLessThanOrEqual(80);
+    expect(m.bottom, `${tag} ${id} 아래 ${s}`).toBeLessThanOrEqual(80);
+    expect(Math.max(0, ...m.gaps), `${tag} ${id} 행 사이 ${s}`).toBeLessThanOrEqual(32);
+  }
+  for (const g of pb.edge) expect(g, `${tag} 패널 가장자리 ${s}`).toBeLessThanOrEqual(80);
+}
+
+test('로그인 관문 — 세션이 없으면 화면이 한 프레임도 새지 않고 로그인으로 간다', async ({ page }) => {
   await page.goto(URL);
   await page.waitForURL(/login\.html/, { timeout: 10000 });
   expect(decodeURIComponent(page.url())).toContain('next=dashboard.html');
 });
 
-/* ── A. 좌측 레일 ─────────────────────────────────────────────────────── */
+/* ── 셸 — 레일 · MY · 로그아웃은 공용 셸의 것 ─────────────────────────────── */
 
-test('A1–A11 레일 — 원본 include/header.html 의 메뉴 + 새로 더한 생산 관리', async ({ page }) => {
+test('직원 레일 = roles.js staff.menus 7 + 로그아웃 — 관리 메뉴 0', async ({ page }) => {
   const errs = watch(page);
   await boot(page);
   const names = await page.locator('#rail .rail-i .rl').allInnerTexts();
-  // 원본 9메뉴 순서는 그대로 두고, 카드 발행 관리 뒤에 `생산 관리`만 더했다(2026-09-20).
-  // 원본에 없던 메뉴이므로 여기서 한 번 더 못박아 둔다 — 순서가 밀리면 이 시험이 잡는다.
-  expect(names).toEqual(['대시보드', '데이터 관리', '프로젝트', '분석 서비스', '지도 서비스', '서비스 지원', '카드 발행 관리', '생산 관리', '서비스 관리', 'MY', '로그아웃']);
-  await expect(page.locator('#rail [data-menu="produce"]')).toHaveAttribute('href', 'produce.html');
+  expect(names).toEqual(['대시보드', '데이터 관리', '프로젝트', '분석 서비스', '지도 서비스', '서비스 지원', 'MY', '로그아웃']);
+  for (const k of ['publish', 'produce', 'admin', 'ops', 'usecase']) await expect(page.locator(`#rail [data-menu="${k}"]`)).toHaveCount(0);
+  await expect(page.locator('#rail [data-menu="dashboard"]')).toHaveAttribute('aria-current', 'page');
   await expect(page.locator('#rail [data-menu="media"]')).toHaveAttribute('href', 'dataset.html');
   await expect(page.locator('#rail [data-menu="project"]')).toHaveAttribute('href', 'ai-project.html');
-  await expect(page.locator('#rail [data-menu="dashboard"]')).toHaveAttribute('aria-current', 'page');
   await expect(page.locator('#rail-mark')).toHaveAttribute('href', 'scrub/index.html');
-  await page.locator('#rail [data-menu="my"]').click();
+  expect(await page.locator('#rail').count()).toBe(1);                                   // 자체 레일이 겹쳐 서지 않는다
+  expect(await page.locator('#rail').getAttribute('data-shell-part')).toBe('');           // 셸이 그린 레일
+  await page.locator('#rail-my-btn').hover();
   await expect(page.locator('#rail-my')).toBeVisible();
   expect(await page.locator('#rail-my').innerText()).toContain('마이 페이지');
   expect(errs, errs.join(' | ')).toEqual([]);
 });
 
-test('A4–A9 레일 — 원본 파일명으로 실제 이동한다 (2026-09-20: 페이지 안 스크롤 폐기)', async ({ page }) => {
-  for (const [menu, file] of [['project', 'ai-project.html'], ['analysis', 'analysis-ai.html'], ['map', 'ximap.html'],
-    ['publish-admin', 'admin-publish.html'], ['admin', 'admin-notice.html'], ['support', 'notice.html']]) {
+test('자체 레일 · 관문 · 로그아웃 코드 0 — 셸 것만 쓴다', async ({ page }) => {
+  await boot(page);
+  const src = await page.evaluate(async () => Promise.all(['dashboard.html', 'dashboard.js', 'db-data.js'].map(async (f) => (await fetch(f)).text())));
+  for (const s of src) {
+    expect(s).not.toMatch(/rail-top|NAV_FOOT|NAV_MY|removeItem\('lx_logged_in'\)/);
+    expect(s).not.toMatch(/localStorage\.getItem\('lx_logged_in'\)/);                   // 인라인 관문 0(shell-gate.js 가 한다)
+  }
+  expect(src[0]).toContain('shell-gate.js');
+  expect(src[1]).toMatch(/mountShell\(\{[^}]*active: 'dashboard'/);
+});
+
+test('레일 — 직원 메뉴가 실제 화면으로 가고 되돌려 보내지(denied) 않는다', async ({ page }) => {
+  for (const [menu, file] of [['media', 'dataset.html'], ['project', 'ai-project.html'], ['analysis', 'analysis-ai.html'], ['map', 'ximap.html'], ['support', 'notice.html']]) {
     await boot(page);
     await page.locator(`#rail [data-menu="${menu}"]`).click();
-    await page.waitForURL(new RegExp(file.replace('.', '\.')));
+    await page.waitForURL(new RegExp(file.replace('.', '\\.')));
+    expect(page.url(), menu).not.toContain('denied=');
+    await page.evaluate(() => sessionStorage.removeItem('lx_e2e_boot'));
   }
 });
-test('A11 로그아웃 — 로그인 플래그를 지우고 메인(scrub)으로 간다', async ({ page }) => {
+
+test('로그아웃 — 셸 로그아웃이 세션 키를 전부 지우고 떠난다(C-09 · 자체 logout 0)', async ({ page }) => {
   await boot(page);
-  const cleared = page.evaluate(() => new Promise((res) => {
-    const rm = localStorage.removeItem.bind(localStorage);
-    localStorage.removeItem = (k) => { rm(k); if (k === 'lx_logged_in') res(true); };
-  }));
-  await page.locator('#rail-foot [data-action="logout"]').click();
-  expect(await cleared).toBe(true);
-  await page.waitForURL(/scrub\/index\.html/, { timeout: 10000 });
+  await page.locator('#rail-foot > [data-action="logout"]').click();
+  // 착지는 셸 signOut 이 정한다(E0-1: LX → login.html) — 대시보드는 착지를 모른다.
+  await page.waitForURL((u) => !/dashboard\.html/.test(u.href), { timeout: 10000 });
+  const left = await page.evaluate(() => ['lx_logged_in', 'lx_role', 'lx_tenant_session'].filter((k) => localStorage.getItem(k) !== null));
+  expect(left).toEqual([]);
 });
 
-/* ── B. 위젯 — 각 1회 ─────────────────────────────────────────────────── */
+test('MY 플라이아웃 — 포커스로 열리고 Esc 로 닫힌다(D-10)', async ({ page }) => {
+  await boot(page);
+  await page.locator('#rail-my-btn').focus();
+  await expect(page.locator('#rail-my')).toBeVisible();
+  await expect(page.locator('#rail-my-btn')).toHaveAttribute('aria-expanded', 'true');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#rail-my')).toBeHidden();
+  await expect(page.locator('#rail-my-btn')).toHaveAttribute('aria-expanded', 'false');
+  // 안으로 들어갔다가 Esc — MY 로 돌아오며 닫힌다
+  await page.keyboard.press('ArrowDown');
+  await expect(page.locator('#rail-my')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#rail-my')).toBeHidden();
+  expect(await page.evaluate(() => document.activeElement?.id)).toBe('rail-my-btn');
+});
 
-test('B1–B15 — 원본 위젯이 전부, 각 한 번, 한 화면에 든다', async ({ page }) => {
+test('Family Site · 전화번호 — 셸 푸터 한 벌, 링크는 실제로 열린다(D-11)', async ({ page }) => {
+  await boot(page);
+  await expect(page.locator('#foot')).toHaveCount(1);
+  await expect(page.locator('#foot')).toContainText('063-713-1213');
+  await page.locator('#fam > summary').click();
+  const hrefs = await page.locator('#fam a').evaluateAll((els) => els.map((e) => e.href));
+  expect(hrefs.length).toBeGreaterThanOrEqual(3);
+  for (const h of hrefs) expect((await page.request.get(h)).status(), h).toBe(200);
+});
+
+/* ── 본문 — 직원 화면 ──────────────────────────────────────────────────── */
+
+test('제목 "대시보드" · 정보 KPI 3 · 백본 · 판 · 패널 2탭 — 관리 위젯은 화면에 없다', async ({ page }) => {
   const errs = watch(page);
   await boot(page);
-  await expect(page.locator('#b1')).toHaveText('LX 관리자 대시보드');                     // B1
-  await expect(page.locator('#b2')).toContainText('기준일');                              // B2
-  await expect(page.locator('#b-notice')).toContainText('고위험 탐지 건 긴급 처리 안내'); // B3
-  await expect(page.locator('#b-notice')).toContainText('2026.04.15');
-  await expect(page.locator('#b-kpi .k')).toHaveCount(5);                                 // B4–B8
+  await expect(page).toHaveTitle('대시보드 — Land-XI');
+  await expect(page.locator('#page-title')).toHaveText('대시보드');
+  await expect(page.locator('#main')).toHaveAttribute('aria-label', '대시보드');
+  await expect(page.locator('#mast-asof')).toHaveText('2026.06.08');
+  await expect(page.locator('#mast .asof .tag')).toHaveText('시연');
+  await expect(page.locator('#mast-notice')).toContainText('고위험 탐지 건 긴급 처리 안내');
+  await expect(page.locator('#mast-notice')).toContainText('2026.04.15');
+  await expect(page.locator('#mast-notice')).toHaveAttribute('href', 'notice.html?notice=8');
+  await expect(page.locator('#b-kpi .k')).toHaveCount(3);
   const kpi = await page.locator('#b-kpi').innerText();
-  for (const t of ['전체 사용자', '발행 분석 카드', '카드 발행 승인 대기', '가입 승인 대기', '미답변 문의', '정상 19', '공개 7 · 비공개 1', '검토 필요', '승인 필요', '답변 필요']) expect(kpi, t).toContain(t);
-  for (const t of ['가입 승인 대기 1', '전체 12']) expect(kpi, t + ' 는 KPI ④ / 타일에만').not.toContain(t);     // 중복 0
-  await expect(page.locator('#b-bb')).toContainText('XI-VFM v2.1');                       // B9
+  for (const t of ['발행 분석 카드', '공개 7 · 비공개 1', '시연', 'AI 분석 결과', '남원 2 · 여수 2', '학습데이터 영상', '정사영상 10 · 피복 1']) expect(kpi, t).toContain(t);
+  expect(await page.locator('#b-kpi .k .big').allInnerTexts()).toEqual(['8', '4', '11']);
+  await expect(page.locator('#b-bb')).toContainText('XI-VFM v2.1');
   await expect(page.locator('#bb-sub')).toContainText('2026.03.12');
   await expect(page.locator('#bb-sub')).toContainText('14개');
-  await expect(page.locator('#pane-proj .rk')).toHaveCount(5);                            // B10
-  await expect(page.locator('#pane-proj')).toContainText('도로안전 정사영상');
-  await expect(page.locator('#pane-visit polyline')).toHaveCount(1);                       // B11
-  await expect(page.locator('#pane-visit rect')).toHaveCount(7);
-  await expect(page.locator('#pane-store rect')).toHaveCount(7);                          // B12 — 테두리 1 + 6분류
-  await expect(page.locator('#ap-rows .ap')).toHaveCount(2);                               // B13 — 증거 카드 2
-  await expect(page.locator('#ap-rows .ap .ev img')).toHaveCount(2);
-  await expect(page.locator('#ad-rows .ad')).toHaveCount(4);                               // B14
-  await expect(page.locator('#foot')).toContainText('063-713-1213');                       // B15
-  for (const s of ['#b1', '#b-bb', '#ap-rows', '#ad-rows', '#pane-proj', '#pane-visit', '#pane-store', '#b-notice', '#plate']) await expect(page.locator(s)).toHaveCount(1);
-  expect(await page.locator('#main [role=tab]').count()).toBe(5);                          // 탭 = 판 토글 2 + 우 패널 3 뿐
-  expect(await page.evaluate(async () => /FFB633/i.test(await (await fetch('dashboard.css')).text()))).toBe(false);
-  expect(await page.evaluate(() => Math.round(document.querySelector('#foot').getBoundingClientRect().bottom) === document.documentElement.scrollHeight)).toBe(true); // 푸터가 바닥
+  await expect(page.locator('#pane-proj .rk')).toHaveCount(5);
+  await expect(page.locator('#pane-store rect')).toHaveCount(7);                          // 테두리 1 + 6분류
+  // 화면에서 내린 것 — 승인 KPI 3 · EVIDENCE-PAIR · 관리 타일 4 · 7일 방문(콘티 위반)
+  for (const s of ['#b-approve', '#ap-rows', '#b-admin', '#ad-rows', '.tiles', '#pane-visit', '#tab-visit', '#b1', '#b-bottom']) await expect(page.locator(s), s).toHaveCount(0);
+  expect(await page.locator('#main [role=tab]').count()).toBe(4);                          // 판 토글 2 + 우 패널 2
   expect(errs, errs.join(' | ')).toEqual([]);
 });
 
-test('불필요한 글자 없음 — 설명 문장이 없다', async ({ page }) => {
+test('관리 문구 0 — 승인 · 가입 · 미답변 · 관리자 라는 말이 직원 화면에 없다', async ({ page }) => {
   await boot(page);
   const t = await page.locator('body').innerText();
-  for (const s of ['Data source', '출처 표기 —', '검토 대상 · 요청 순', '입력(우)', '출처 ·', '용량 순', '1 px', '호버 = 내용', 'Sentinel-2', '상위 5개', '요일 7값']) expect(t, s).not.toContain(s);
-  expect(t).not.toMatch(/^출처/m);                                                          // 출처·기준은 title 로만
-  expect(await page.locator('#main .cap, #main .src, #tab-meta, #r-sub').count()).toBe(0);  // 판·패널 아래 글줄 0
+  for (const s of ['LX 관리자', '관리자', '승인 대기', '승인 필요', '가입 승인', '가입 대기', '미답변', '답변 필요', '검토 필요', '관리 바로가기',
+    '카드 발행 관리', '서비스 관리', '생산 관리', '사용자 관리', '사용자 이용 현황', '7일', '방문']) expect(t, s).not.toContain(s);
+  expect(await page.locator('#page-sub').innerText()).not.toMatch(/승인|관리/);
+});
+
+test('불필요한 글자 없음 — 설명 문장이 없다, 출처·기준은 title 로', async ({ page }) => {
+  await boot(page);
+  const t = await page.locator('#main').innerText();
+  for (const s of ['Data source', '출처 표기 —', '출처 ·', '용량 순', '1 px', '호버 = 내용', 'Sentinel-2', '상위 5개']) expect(t, s).not.toContain(s);
+  expect(t).not.toMatch(/^출처/m);
+  expect(await page.locator('#main .cap, #main .src, #tab-meta, #r-sub').count()).toBe(0);
   expect(await page.locator('#plate-wrap').getAttribute('title')).toMatch(/Sentinel-2.*기준 2026\.06\.08/);
   expect(await page.locator('#panel').getAttribute('title')).toMatch(/출처/);
 });
 
-test('중복 0 — 합계·최대·잔여는 차트 안에 한 번, 모든 값에 단위, H1 룰 = "LX 관리자" 폭', async ({ page }) => {
+test('중복 0 — 합계·잔여는 차트 안에 한 번, 모든 값에 단위, H1 룰 = "대시보드" 폭', async ({ page }) => {
   await boot(page);
   const once = (txt, s) => expect(txt.split(s).length - 1, s + ' 1회').toBe(1);
-  await page.waitForTimeout(1100);
   let t = await page.locator('#right').innerText();
   once(t, '1,326'); expect(t).not.toContain('Top5');
-  expect(await page.locator('#pane-proj .rk-sum')).toHaveCount(1);
-  for (const v of await page.locator('#pane-proj .rk .val').allInnerTexts()) expect(v).toMatch(/^\d+\s*GB$/);      // 412 GB …
+  for (const v of await page.locator('#pane-proj .rk .val').allInnerTexts()) expect(v).toMatch(/^\d+\s*GB$/);
   expect(await page.locator('#pane-proj .rk-sum .val').innerText()).toMatch(/1,326\s*GB/);
-  await page.locator('#tab-visit').click(); await page.waitForTimeout(1100);
-  t = await page.locator('#right').innerText();
-  once(t, '5,575'); once(t, '1,150'); expect(t).not.toContain('최대');
-  for (const v of await page.locator('#v-ax span b').allInnerTexts()) expect(v).toMatch(/^[\d,]+회$/);
   await page.locator('#tab-store').click(); await page.waitForTimeout(1100);
   t = await page.locator('#right').innerText();
   once(t, '44.5'); once(t, '139.5'); once(t, '184');
   expect(await page.locator('#s-lg .li').count()).toBe(7);
-  for (const v of await page.locator('#s-lg .li').allInnerTexts()) expect(v).toMatch(/[\d.]+\s*TB$/);           // 정사영상 18.2 TB …
-  expect(await page.locator('#pane-store .pane-big').innerText().then((x) => x.replace(/\s+/g, ' '))).toBe('44.5 TB / 184 TB');
-  const rule = await page.evaluate(() => { const r = document.querySelector('#b1 .rule'); return { text: r.textContent, w: r.getBoundingClientRect().width, rule: parseFloat(getComputedStyle(r, '::after').width) }; });
-  expect(rule.text).toBe('LX 관리자'); expect(Math.abs(rule.rule - rule.w)).toBeLessThanOrEqual(4);
+  for (const v of await page.locator('#s-lg .li').allInnerTexts()) expect(v).toMatch(/[\d.]+\s*TB$/);
+  expect(await page.locator('#pane-store .pane-big').innerText().then((x) => x.replace(/\s+/g, ' '))).toBe('44.5 TB / 184 TB 분류 배분 시연');
+  const rule = await page.evaluate(() => { const r = document.querySelector('#page-title .rule'); const cs = getComputedStyle(r); return { text: r.textContent, color: cs.borderBottomColor, w: cs.borderBottomWidth }; });
+  expect(rule).toEqual({ text: '대시보드', color: 'rgb(0, 109, 247)', w: '4px' });
 });
 
 test('판 히트 램프 — 건수가 다르면 채움이 다르고(4단 램프), 범례는 건수 행만', async ({ page }) => {
   await boot(page);
   const fills = async () => page.evaluate(() => { const m = new Map(); for (const c of document.querySelectorAll('#cells .cell[data-g]')) if (/^\d$/.test(c.dataset.g)) m.set(c.dataset.g, getComputedStyle(c).backgroundColor); return [...m.entries()]; });
   let f = await fills();
-  expect(new Set(f.map(([, v]) => v)).size).toBe(f.length);                                   // 등급 수 = 채움 색 수
+  expect(new Set(f.map(([, v]) => v)).size).toBe(f.length);
   expect(f.length).toBeGreaterThanOrEqual(2);
   const css = await page.evaluate(async () => (await (await fetch('dashboard.css')).text()));
   for (const g of ['1', '2', '3', '4']) expect(css).toMatch(new RegExp(`\\.cell\\[data-g="${g}"\\][^{]*\\{[^}]*background:rgba\\(`));
@@ -145,11 +240,8 @@ test('판 히트 램프 — 건수가 다르면 채움이 다르고(4단 램프)
   await page.locator('#seg-train').click(); await page.waitForTimeout(300);
   f = await fills(); expect(new Set(f.map(([, v]) => v)).size).toBe(f.length); expect(f.length).toBeGreaterThanOrEqual(3);
   lg = await page.locator('#legend').innerText();
-  expect(lg).not.toMatch(/그리드|영상 미등록|결과만/);
   expect(lg.split('\n').filter((l) => l.trim()).every((l) => /^(시점 \d( 이상)?|\d셀)$/.test(l.trim()))).toBe(true);
 });
-
-/* ── 판 — 0.25° 그리드 · 실자산 셀 ──────────────────────────────────────── */
 
 test('판 — 셀은 실좌표에서 투영된다: 남원 127.25–127.50 E · 35.25–35.50 N = 결과 2건, 여수 2건, 제주 = 학습데이터만', async ({ page }) => {
   await boot(page);
@@ -157,7 +249,6 @@ test('판 — 셀은 실좌표에서 투영된다: 남원 127.25–127.50 E · 3
   const nw = page.locator('#cells .cell[data-key="127.25,35.25"]');
   await expect(nw).toHaveAttribute('data-g', '2');
   expect(await nw.getAttribute('aria-label')).toContain('남원 127.25–127.50 E · 35.25–35.50 N — AI 분석 결과 2건');
-  // 투영 검증 — 셀의 판 위 좌표가 그리드 선 위에 정확히 놓인다(0.25° 선 = 셀 변)
   const ok = await page.evaluate(() => {
     const el = document.querySelector('#cells .cell[data-key="127.25,35.25"]');
     const xs = [...document.querySelectorAll('#grid line')].filter((l) => l.getAttribute('y1') === '0').map((l) => +l.getAttribute('x1'));
@@ -165,27 +256,23 @@ test('판 — 셀은 실좌표에서 투영된다: 남원 127.25–127.50 E · 3
     return xs.some((x) => Math.abs(x - left) < 0.6) && xs.some((x) => Math.abs(x - right) < 0.6);
   });
   expect(ok).toBe(true);
-  const legend = await page.locator('#legend').innerText();
-  expect(legend).toContain('결과 2건'); expect(legend).not.toContain('학습데이터만');
-  // 셀 등급 = 실데이터 집계
   expect(await page.locator('#cells .cell[data-g="2"]').count()).toBe(2);                 // 남원 · 여수
   expect(await page.locator('#cells .cell[data-g="1"]').count()).toBe(1);                 // 남원 변화지수(비지도)
   expect(await page.locator('#cells .cell[data-g="train"]').count()).toBeGreaterThanOrEqual(3);
-  const jeju = page.locator('#cells .cell[data-g="train"]', { has: page.locator(':scope') }).first();
-  expect(await jeju.getAttribute('aria-label')).toMatch(/학습데이터만/);
+  expect(await page.locator('#cells .cell[data-g="train"]').first().getAttribute('aria-label')).toMatch(/학습데이터만/);
 });
 
-test('셀 호버 — 콜아웃이 실값을 말하고, 브래킷이 서며, Esc 로 내린다', async ({ page }) => {
+test('셀 호버 — 콜아웃이 실값(필지 · 동 병기)과 행선지를 말하고, 브래킷이 서며, Esc 로 내린다', async ({ page }) => {
   await boot(page);
   const nw = page.locator('#cells .cell[data-key="127.25,35.25"]');
   await nw.hover(); await page.waitForTimeout(300);
   await expect(page.locator('#callout')).toBeVisible();
   const c = await page.locator('#callout').innerText();
-  for (const t of ['남원', '127.25–127.50 E', '35.25–35.50 N', 'AI 분석 결과 2건', '농지이용 2,098필지', '비닐하우스 9,664동']) expect(c, t).toContain(t);
+  for (const t of ['남원', '127.25–127.50 E', '35.25–35.50 N', 'AI 분석 결과 2건', '농지이용 2,098필지', '비닐하우스 1,674필지 · 9,664동', 'XI맵에서 열기 ›']) expect(c, t).toContain(t);
   expect(await nw.locator('.bk').evaluateAll((els) => els.map((e) => getComputedStyle(e).opacity))).toEqual(['1', '1', '1', '1']);
   await page.locator('#cells .cell[data-g="1"]').hover(); await page.waitForTimeout(300);
   expect(await page.locator('#callout').innerText()).toContain('변화지수 456폴리곤 · 비지도');
-  await page.mouse.move(400, 760); await page.waitForTimeout(300);
+  await page.mouse.move(700, 150); await page.waitForTimeout(300);
   await expect(page.locator('#callout')).toBeHidden();
   await nw.focus(); await page.waitForTimeout(200);
   await expect(page.locator('#callout')).toBeVisible();
@@ -193,100 +280,116 @@ test('셀 호버 — 콜아웃이 실값을 말하고, 브래킷이 서며, Esc 
   await expect(page.locator('#callout')).toBeHidden();
 });
 
-test('판 토글 — 학습데이터 모드는 정사영상 시점 수로 칠하고 콜아웃도 바뀐다', async ({ page }) => {
+test('판 토글 — 학습데이터 모드는 정사영상 시점 수로 칠하고 콜아웃 · 행선지도 바뀐다', async ({ page }) => {
   await boot(page);
   await page.locator('#seg-train').click(); await page.waitForTimeout(300);
   await expect(page.locator('#plate-wrap')).toHaveAttribute('data-mode', 'train');
   await expect(page.locator('#seg-train')).toHaveAttribute('aria-selected', 'true');
-  await expect(page.locator('#cells .cell[data-key="127.25,35.50"]')).toHaveAttribute('data-g', '4');   // 남원 AOI 4시점 = 램프 최상단
-  await page.locator('#cells .cell[data-key="127.25,35.50"]').hover(); await page.waitForTimeout(300);
+  const aoi = page.locator('#cells .cell[data-key="127.25,35.50"]');
+  await expect(aoi).toHaveAttribute('data-g', '4');
+  await expect(aoi).toHaveAttribute('href', 'dataset.html?tab=archive');
+  await aoi.hover(); await page.waitForTimeout(300);
   const c = await page.locator('#callout').innerText();
-  expect(c).toContain('학습데이터'); expect(c).toContain('2025-06 · GSD 1.69 cm');
+  expect(c).toContain('학습데이터'); expect(c).toContain('2025-06 · GSD 1.69 cm'); expect(c).toContain('데이터 관리에서 열기 ›');
   expect(await page.locator('#legend').innerText()).toContain('시점 4 이상');
   await page.locator('#seg-res').click();
   await expect(page.locator('#cells .cell[data-key="127.25,35.25"]')).toHaveAttribute('data-g', '2');
 });
 
-test('셀 클릭 → XI맵(원본 ximap.html 의 자리) 로 셀 좌표를 넘긴다', async ({ page }) => {
+test('셀 클릭 → XI맵 ?result=<결과 id> (E0-5 수신) — ?cell= 은 더 보내지 않는다', async ({ page }) => {
   await boot(page);
-  const [req] = await Promise.all([
-    page.waitForRequest((r) => /ximap\.html\?cell=/.test(r.url())),
-    page.locator('#cells .cell[data-key="127.25,35.25"]').click(),
-  ]);
-  expect(decodeURIComponent(req.url())).toContain('ximap.html?cell=127.25,35.25&mode=res');
+  const hrefs = await page.locator('#cells .cell').evaluateAll((els) => els.map((e) => e.getAttribute('href')));
+  expect(hrefs.some((h) => /cell=|mode=res/.test(h))).toBe(false);
+  expect(hrefs.filter((h) => h.startsWith('ximap.html?result=')).length).toBeGreaterThanOrEqual(3);   // 남원 · 여수 · 변화지수
+  await expect(page.locator('#cells .cell[data-g="1"]')).toHaveAttribute('href', /^ximap\.html\?result=namwon-change-/);
+  await page.locator('#cells .cell[data-key="127.25,35.25"]').click();
+  await page.waitForURL(/ximap\.html/);
+  expect(decodeURIComponent(page.url())).toMatch(/ximap\.html\?(result=namwon-farmland-2025|.*on=namwon-farmland-2025)/);
+  expect(page.url()).not.toContain('denied=');
 });
 
-/* ── 우 탭 패널 (B10 | B11 | B12) ─────────────────────────────────────── */
+test('링크 전수 — 제자리 0 · 직원 금지 화면 0 · 가서 되돌려 보내지(denied) 않는다(D-3)', async ({ page }) => {
+  test.setTimeout(120000);
+  await boot(page);
+  const links = await page.evaluate(() => [...document.querySelectorAll('a[href]')]
+    .filter((a) => !a.closest('#fam'))                                      // 패밀리 사이트는 위 테스트가 200 으로 본다
+    .map((a) => ({ href: a.getAttribute('href'), abs: a.href, cur: a.getAttribute('aria-current'), id: a.id, cls: a.className })));
+  expect(links.length).toBeGreaterThan(15);
+  for (const l of links) {
+    expect(l.href, `${l.id || l.cls} 빈 링크`).not.toMatch(/^#?$/);
+    if (fileOf(l.href) === 'dashboard.html') expect(l.cur, `${l.href} 제자리 링크`).toBe('page');   // 레일의 현 위치 표시만
+    expect(STAFF_DENIED, `${l.href} 직원 금지 화면`).not.toContain(fileOf(l.href));
+    expect(l.href, 'skip 외 해시 링크').toMatch(/^(?!#)|^#main$/);
+  }
+  const uniq = [...new Set(links.map((l) => l.abs).filter((h) => !/#main$/.test(h) && fileOf(h) !== 'dashboard.html'))];
+  const bad = [];
+  for (const h of uniq) {
+    const r = await page.request.get(h); if (r.status() !== 200) { bad.push(`${h} ${r.status()}`); continue; }
+    await page.evaluate(() => sessionStorage.removeItem('lx_e2e_boot'));
+    await page.goto(h, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(400);
+    if (/denied=|login\.html/.test(page.url())) bad.push(`${h} → ${page.url()}`);
+  }
+  expect(bad, bad.join('\n')).toEqual([]);
+});
 
-test('탭 패널 — 탭 3이 B10·B11·B12 를 전환하고, 키보드·localStorage·카운트업이 산다', async ({ page }) => {
+/* ── 우 탭 패널 ───────────────────────────────────────────────────────── */
+
+test('탭 패널 — 탭 2가 용량 · 스토리지를 전환하고, 키보드·localStorage·카운트업·전체 보기가 산다', async ({ page }) => {
   await boot(page);
   await expect(page.locator('#tab-proj')).toHaveAttribute('aria-selected', 'true');
   await expect(page.locator('#pane-proj .rk.on .val b')).toHaveText('412');
   await expect(page.locator('#pane-proj .rk.on .bar i')).toHaveCSS('background-color', 'rgb(0, 109, 247)');
-  await page.locator('#tab-visit').click();
-  await expect(page.locator('#pane-visit')).toBeVisible(); await expect(page.locator('#pane-proj')).toBeHidden();
-  const early = await page.locator('#v-ax span.pk b').innerText();
-  await page.waitForTimeout(1100);
-  await expect(page.locator('#v-ax span.pk b')).toHaveText('1,150회');
-  expect(+early.replace(/[,회]/g, '')).toBeLessThanOrEqual(1150);
-  expect(await page.locator('#v-sum').innerText()).toContain('5,575');
+  await expect(page.locator('#b10-more')).toHaveAttribute('href', 'ai-project.html');
+  await page.locator('#tab-proj').focus();
   await page.keyboard.press('ArrowRight');
   await expect(page.locator('#tab-store')).toHaveAttribute('aria-selected', 'true');
-  await expect(page.locator('#pane-store')).toBeVisible();
+  await expect(page.locator('#pane-store')).toBeVisible(); await expect(page.locator('#pane-proj')).toBeHidden();
+  const early = await page.locator('#pane-store .pane-big .big').innerText();
   await page.waitForTimeout(1100);
   await expect(page.locator('#pane-store .pane-big .big')).toHaveText('44.5');
+  expect(+early).toBeLessThanOrEqual(44.5);
   expect(await page.locator('#pane-store').innerText()).toMatch(/정사영상\s*18\.2\s*TB/);
+  await expect(page.locator('#b10-more')).toHaveAttribute('href', 'dataset.html?tab=archive');
   expect(await page.evaluate(() => localStorage.getItem('lx_dash_tab'))).toBe('store');
   await page.reload(); await page.waitForFunction(() => document.documentElement.dataset.dash === 'ready');
   await expect(page.locator('#tab-store')).toHaveAttribute('aria-selected', 'true');
   expect(await page.locator('#tabs [role=tab][tabindex="0"]').count()).toBe(1);
+  await page.keyboard.press('Tab');                                                         // 넘어가지 않는다 — 오류 없음 확인용
 });
 
-/* ── B16 딥링크 ─────────────────────────────────────────────────────── */
-
-test('B16 ?status=대기 — KPI ③ 가 승인 대기 블록으로 데려간다', async ({ page }) => {
-  await boot(page);
-  await expect(page.locator('#b-kpi a.k')).toHaveAttribute('href', 'dashboard.html?status=대기');
-  await page.locator('#b-kpi a.k').click();
-  await page.waitForURL(/status=/);
-  await page.waitForFunction(() => document.documentElement.dataset.deep === 'status');
-  await expect(page.locator('#b-approve')).toHaveAttribute('aria-current', 'true');
-  await expect(page.locator('#b-approve')).toBeInViewport();
-});
-
-test('B16 ?open=<id> — 승인 행이 그 카드로 열린다', async ({ page }) => {
-  await boot(page);
-  const hrefs = await page.locator('#ap-rows .ap .go').evaluateAll((els) => els.map((e) => e.getAttribute('href')));
-  expect(hrefs).toEqual(['dashboard.html?open=pa-1', 'dashboard.html?open=pa-6']);
-  await page.locator('#ap-rows .ap').nth(1).locator('.go').click();
-  await page.waitForURL(/open=pa-6/);
-  await page.waitForFunction(() => document.documentElement.dataset.deep === 'open:pa-6');
-  await expect(page.locator('#ap-rows .ap[data-id="pa-6"]')).toHaveAttribute('aria-current', 'true');
-  expect(await page.locator('#ap-rows .ap[data-id="pa-6"]').innerText()).toContain('농지 활용 분석');
-  await expect(page.locator('#ap-rows .ap[data-id="pa-6"]')).toHaveCSS('background-color', 'rgb(214, 230, 255)');
+test('딥링크 ?tab=store — 탭을 연다(승인 ?status= · ?open= 은 운영 현황의 것이라 받지 않는다)', async ({ page }) => {
+  await boot(page, '?tab=store');
+  await expect(page.locator('#tab-store')).toHaveAttribute('aria-selected', 'true');
+  expect(await page.evaluate(() => document.documentElement.dataset.deep || '')).toBe('');
 });
 
 /* ── 도착 · 반응형 · 모션 ─────────────────────────────────────────────── */
 
-test('도착 — KPI 숫자가 900ms 카운트업으로 도착한다', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('lx_logged_in', '1'));
-  await page.goto(URL);
+test('도착 — KPI 숫자가 1000ms 카운트업으로 도착한다', async ({ page }) => {
+  await bootAs(page, URL, 'staff');
   await page.waitForFunction(() => document.documentElement.dataset.dash === 'ready');
-  const early = await page.locator('#b-kpi .k .big').first().innerText();
-  await page.waitForTimeout(1200);
-  await expect(page.locator('#b-kpi .k .big').first()).toHaveText('21');
-  expect(+early.replace(/,/g, '')).toBeLessThanOrEqual(21);
+  const early = await page.locator('#b-kpi .k .big').last().innerText();
+  await page.waitForTimeout(1300);
+  await expect(page.locator('#b-kpi .k .big').last()).toHaveText('11');
+  expect(+early.replace(/,/g, '')).toBeLessThanOrEqual(11);
 });
 
-test('반응형 — 1280 에서 가로 넘침이 없고, 1100 미만이면 판과 패널이 세로로 선다', async ({ page }) => {
+test('반응형 — 1280 가로 넘침 0, 1100 이하 판·패널 세로, 1100px 에서 H1 과 KPI 가 겹치지 않는다(D-6)', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await boot(page);
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
-  await page.setViewportSize({ width: 1000, height: 800 });
-  await page.waitForTimeout(400);
-  const [l, r] = await Promise.all(['#left', '#right'].map((s) => page.locator(s).evaluate((e) => e.getBoundingClientRect().top)));
-  expect(r).toBeGreaterThan(l + 200);
-  // 판이 줄어도 셀은 그리드 선 위에 남는다
+  for (const w of [1100, 1000]) {
+    await page.setViewportSize({ width: w, height: 800 });
+    await page.waitForTimeout(400);
+    const [l, r] = await Promise.all(['#left', '#right'].map((s) => page.locator(s).evaluate((e) => e.getBoundingClientRect().top)));
+    expect(r, `${w} 세로`).toBeGreaterThan(l + 200);
+    const h1 = await page.locator('#page-head').boundingBox(), kpi = await page.locator('#b-kpi').boundingBox();
+    expect(kpi.y, `${w} H1/KPI 겹침`).toBeGreaterThanOrEqual(h1.y + h1.height);
+    const t = await page.locator('#page-title').boundingBox(), k1 = await page.locator('#b-kpi .k').first().boundingBox();
+    expect(k1.y).toBeGreaterThanOrEqual(t.y + t.height);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth), `${w} 넘침`).toBe(false);
+  }
   const ok = await page.evaluate(() => {
     const el = document.querySelector('#cells .cell[data-key="127.25,35.25"]');
     const xs = [...document.querySelectorAll('#grid line')].filter((l) => l.getAttribute('y1') === '0').map((l) => +l.getAttribute('x1'));
@@ -295,112 +398,77 @@ test('반응형 — 1280 에서 가로 넘침이 없고, 1100 미만이면 판�
   expect(ok).toBe(true);
 });
 
+test('390 — 가로 넘침 0, KPI 는 한 줄에 하나', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await boot(page);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
+  const xs = await page.locator('#b-kpi .k').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().left)));
+  expect(new Set(xs).size).toBe(1);
+});
+
 test('접근성·모션 — 감소 모션에서 숫자가 바로 도착하고 막대가 서 있다', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await boot(page);
-  await expect(page.locator('#b-kpi .k .big').first()).toHaveText('21');
+  await expect(page.locator('#b-kpi .k .big').first()).toHaveText('8');
   expect(await page.locator('#pane-proj .rk.on .bar i').evaluate((e) => getComputedStyle(e).transform)).toMatch(/none|matrix\(1, 0, 0, 1, 0, 0\)/);
 });
 
-/* ── 12.10 — 여백은 콘텐츠로 · 색 역할(파랑 정보 / 빨강 조치 / 검정 본문 / 청록 AI / 앰버 탐지) ── */
-
 const WARN = 'rgb(209, 53, 43)', BLUE = 'rgb(0, 109, 247)';
-// warn 이 허용되는 자리 전부. 이 밖의 요소가 warn 색이면 실패한다(상태색 남용 금지).
-const WARN_OK = ['#b-kpi .k.act .kv b', '#b-kpi .k.act .ks em', '#ap-rows .ap .st', '#ap-rows .ap .go', '#ad-rows .ad .tb b.warn', '#ad-rows .ad .ts b.warn'];
 
-test('B13 — 승인 대기 2건이 요청 지역 실크롭(EVIDENCE-PAIR)으로 선다, 크롭은 코드가 고른 가장 가까운 것', async ({ page }) => {
+test('색 역할 — 정보 = 파랑, 조치(warn) 숫자 0, 앰버 0, 라운드·그림자·그라디언트 0', async ({ page }) => {
   await boot(page);
-  const cards = page.locator('#ap-rows .ap');
-  await expect(cards).toHaveCount(2);
-  const srcs = await cards.locator('.ev img').evaluateAll((els) => els.map((e) => e.getAttribute('src')));
-  expect(srcs[0]).toMatch(/crops\/namwon-farmland-2025\/\d+-clean\.jpg$/);      // 도로안전 = 결과 폴리곤 없음 → clean
-  expect(srcs[1]).toMatch(/crops\/namwon-farmland-2025\/\d+\.jpg$/);            // 농지 = 결과 헤어라인 크롭
-  const loaded = await cards.locator('.ev img').evaluateAll((els) => els.map((e) => e.complete && e.naturalWidth > 0));
-  expect(loaded).toEqual([true, true]);
-  const t = await page.locator('#b-approve').innerText();
-  for (const s of ['도로안전 정사영상', 'v2.1', '남원시 도통동', '농지 활용 분석', 'v2.0', '남원시 시 중앙권', '2026.06.10 14:30', '2026.05.15 08:50', '승인 대기', '검토 ›', 'km']) expect(t, s).toContain(s);
-  expect((t.match(/추정/g) || []).length).toBe(4);                                 // 지역 2 + 크롭 거리 2
-  expect(await page.locator('#ap-rows .ap').first().locator('.ev-l').innerText()).toContain('V-World');
-});
-
-test('B14 — 관리 타일 4가 큰 수로 선다(전체 21 · 가입 대기 1 / 12 · 긴급 2 / 미답변 6 / 15)', async ({ page }) => {
-  await boot(page);
-  const tiles = page.locator('#ad-rows .ad');
-  await expect(tiles).toHaveCount(4);
-  await page.waitForTimeout(1100);
-  expect(await tiles.locator('.tb b').allInnerTexts()).toEqual(['21', '12', '6', '15']);
-  const names = await tiles.locator('.th .d').allInnerTexts();
-  expect(names).toEqual(['사용자 관리', '공지사항 관리', '문의 관리', '자주 묻는 질문 관리']);
-  const t = await page.locator('#ad-rows').innerText();
-  for (const s of ['가입 대기 1', '긴급 2', '미답변', '전체 12']) expect(t, s).toContain(s);
-  const hrefs = await tiles.evaluateAll((els) => els.map((e) => e.getAttribute('href')));
-  expect(hrefs).toEqual(['../admin-users.html', '../admin-notice.html', '../admin-inquiry.html', '../admin-faq.html']);
-  await expect(tiles.nth(0).locator('.th')).toHaveCSS('background-color', 'rgb(232, 241, 255)');   // 머리띠 --tint-1
-});
-
-test('색 역할 — warn 은 조치 필요 자리에만, 파랑은 정보에만, 앰버 0', async ({ page }) => {
-  await boot(page);
-  await page.waitForTimeout(1100);
-  // warn 자리(양성)
-  const kpiBig = await page.locator('#b-kpi .k .kv b').evaluateAll((els) => els.map((e) => getComputedStyle(e).color));
-  expect(kpiBig).toEqual([BLUE, BLUE, WARN, WARN, WARN]);
-  for (const s of ['#b-kpi .k.act .ks em', '#ap-rows .ap .st', '#ap-rows .ap .go']) {
-    const cs = await page.locator(s).evaluateAll((els) => els.map((e) => getComputedStyle(e).color));
-    expect(cs.length, s).toBeGreaterThan(0); for (const c of cs) expect(c, s).toBe(WARN);
-  }
-  const tileBig = await page.locator('#ad-rows .ad .tb b').evaluateAll((els) => els.map((e) => getComputedStyle(e).color));
-  expect(tileBig).toEqual([BLUE, BLUE, WARN, BLUE]);
-  const tileSub = await page.locator('#ad-rows .ad .ts b').evaluateAll((els) => els.map((e) => [e.textContent, getComputedStyle(e).color]));
-  expect(tileSub).toEqual([['1', WARN], ['2', WARN], ['12', 'rgb(1, 1, 2)']]);
-  // warn 남용 0 — 화면의 모든 요소 중 warn 색인 것은 허용 자리 안에 있어야 한다
-  const stray = await page.evaluate(([warn, ok]) => [...document.querySelectorAll('body *')]
-    .filter((e) => getComputedStyle(e).color === warn && e.textContent.trim())
-    .filter((e) => !ok.some((s) => e.closest(s)))
-    .map((e) => e.tagName + '.' + e.className + ':' + e.textContent.trim().slice(0, 20)), [WARN, WARN_OK]);
-  expect(stray).toEqual([]);
-  // 파랑 = 정보/선택: 활성 탭 · 1위 막대 · 섹션 글리프 · 제목 룰
+  expect(await page.locator('#b-kpi .k .kv b').evaluateAll((els) => els.map((e) => getComputedStyle(e).color))).toEqual([BLUE, BLUE, BLUE]);
+  const warn = await page.evaluate((w) => [...document.querySelectorAll('body *')].filter((e) => getComputedStyle(e).color === w && e.textContent.trim()).map((e) => e.tagName + ':' + e.textContent.trim().slice(0, 20)), WARN);
+  expect(warn).toEqual([]);
   await expect(page.locator('#tabs [aria-selected=true]')).toHaveCSS('color', BLUE);
   await expect(page.locator('#tabs [aria-selected=true]')).toHaveCSS('background-color', 'rgb(232, 241, 255)');
   await expect(page.locator('#pane-proj .rk.on .bar i')).toHaveCSS('background-color', BLUE);
   await expect(page.locator('#b-bb svg')).toHaveCSS('color', BLUE);
-  expect(await page.locator('#b1 .rule').evaluate((e) => getComputedStyle(e, '::after').backgroundColor)).toBe(BLUE);
-  expect(await page.locator('#b1 .rule').evaluate((e) => getComputedStyle(e, '::after').height)).toBe('4px');
-  // 스토리지 범례 = 파랑(정사영상) + 청록(AI 분석)
   await page.locator('#tab-store').click(); await page.waitForTimeout(300);
   const fills = await page.locator('#s-bar rect').evaluateAll((els) => els.map((e) => e.getAttribute('fill')));
   expect(fills.slice(1)).toEqual(['#006DF7', '#010102', '#686868', '#0FA9A0', '#CCCCCC', '#CCCCCC']);
-  // 채운 파란 버튼 0 · 앰버 0 · 라운드 0 · 그림자 0
   const css = await page.evaluate(async () => (await (await fetch('dashboard.css')).text()));
   expect(/FFB633/i.test(css)).toBe(false);
-  expect(/linear-gradient|box-shadow|border-radius\s*:\s*[1-9]/.test(css)).toBe(false);
+  expect(/linear-gradient|box-shadow|border-radius\s*:\s*[1-9]|backdrop-filter/.test(css)).toBe(false);
   expect(await page.evaluate(([blue]) => [...document.querySelectorAll('button, a')].filter((e) => getComputedStyle(e).backgroundColor === blue).length, [BLUE])).toBe(0);
+  // 바닥 14px — 본문 글자
+  const small = await page.evaluate(() => [...document.querySelectorAll('#main *')].filter((e) => e.childNodes.length && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && parseFloat(getComputedStyle(e).fontSize) < 14).map((e) => e.tagName + ':' + e.textContent.trim().slice(0, 12)));
+  expect(small).toEqual([]);
 });
 
-for (const [w, h] of [[1440, 900], [1920, 1200]]) {
-  test(`한 화면 — ${w}×${h}: 페이지가 안 넘치고, 판·패널이 같이 자라고, 잘리는 내용이 없다`, async ({ page }) => {
+for (const [w, h] of [[1440, 900], [1280, 720], [1920, 1200]]) {
+  test(`한 화면 — ${w}×${h}: 넘치지 않고, 판 = 패널, 빈 띠 ≤ 80px, 잘리는 목록 0`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await boot(page);
     const m = await page.evaluate(() => {
       const r = (s) => document.querySelector(s).getBoundingClientRect();
-      const plate = r('#plate-wrap'), panel = r('#panel'), foot = r('#foot'), ev = r('.ap .ev');
       const pane = document.querySelector('#pane-proj');
-      return { plate: plate.height, panel: panel.height, ev: ev.height,
-        over: document.documentElement.scrollHeight - innerHeight,
-        listClip: pane.scrollHeight - pane.clientHeight,
-        footBottom: Math.round(foot.bottom + scrollY), sh: document.documentElement.scrollHeight,
-        adminBottom: Math.round(r('#b-admin').bottom) };
+      return { plate: r('#plate-wrap').height, panel: r('#panel').height, plateTop: r('#plate-wrap').top, panelTop: r('#panel').top,
+        over: document.documentElement.scrollHeight - innerHeight, listClip: pane.scrollHeight - pane.clientHeight,
+        footBottom: Math.round(r('#foot').bottom + scrollY), sh: document.documentElement.scrollHeight };
     });
-    /* 2026-09-20 개편 — 계약이 바뀌었다.
-       예전엔 다섯 구역이 세로로 쌓여 있어 "판·패널 254~420 + 빈 띠 ≤80" 으로 재었다.
-       발주자가 "대시보드는 한 화면으로" · "밑에 있는건 아에 잘라 없애 버렸네?" 라고 해서
-       아래 두 구역(승인 대기 · 관리 바로가기)을 좌우로 놓아 한 줄을 없앴다.
-       그래서 지금 재야 할 것은 **넘치지 않는가 · 잘리지 않는가 · 같이 자라는가** 다. */
-    expect(m.over).toBeLessThanOrEqual(4);                        // 어느 모니터에서도 한 화면
-    expect(m.listClip).toBeLessThanOrEqual(1);                    // 저장용량 목록이 합계까지 다 보인다
-    expect(Math.abs(m.plate - m.panel)).toBeLessThanOrEqual(1);   // 판 = 패널 높이
-    expect(m.plate).toBeGreaterThanOrEqual(164);                  // 지도가 읽히는 하한
-    expect(m.plate).toBeLessThanOrEqual(420);                     // 사진첩처럼 커지지 않는다
-    expect(m.ev).toBeGreaterThanOrEqual(96);                      // 증거 크롭 — 요청 지역이 보이는 하한
-    expect(m.footBottom).toBe(m.sh);                              // 푸터가 문서 바닥
+    expect(m.over).toBeLessThanOrEqual(4);
+    expect(m.listClip).toBeLessThanOrEqual(1);
+    expect(Math.abs(m.plate - m.panel)).toBeLessThanOrEqual(1);
+    expect(Math.abs(m.plateTop - m.panelTop)).toBeLessThanOrEqual(1);
+    expect(m.plate).toBeGreaterThanOrEqual(h >= 800 ? 254 : 180);
+    expect(m.footBottom).toBe(m.sh);
+    const b = await bands(page);
+    expect(Math.max(...b), `빈 띠 ${b.join(',')}`).toBeLessThanOrEqual(80);
+    // 패널 안 — 두 탭 모두(두 목록 한 패널 조판이면 둘 다 한 번에 보인다)
+    const lay = await page.locator('#panel').getAttribute('data-lay');
+    if (h >= 1100) expect(lay, '높은 화면 = 두 목록 한 패널').toBe('both');
+    for (const t of ['proj', 'store']) {
+      if (lay === 'tabs') { await page.locator(`#tab-${t}`).click(); await page.waitForTimeout(250); }
+      const pb = await paneBands(page);
+      if (lay === 'both') expect(Object.keys(pb.panes)).toEqual(['pane-proj', 'pane-store']);
+      else expect(Object.keys(pb.panes)).toEqual([`pane-${t}`]);
+      expectPaneBands(pb, `${w}×${h} ${t}`);
+      for (const id of ['#pane-proj', '#pane-store']) {
+        const clip = await page.locator(id).evaluate((e) => (e.hidden ? 0 : e.scrollHeight - e.clientHeight));
+        expect(clip, `${id} 잘림`).toBeLessThanOrEqual(1);
+      }
+      expect(await page.evaluate(() => document.documentElement.scrollHeight - innerHeight)).toBeLessThanOrEqual(4);
+    }
   });
 }

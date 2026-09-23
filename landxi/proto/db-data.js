@@ -85,32 +85,17 @@ export const CRS = 'EPSG:5186 → EPSG:4326';
    원본 = https://mini531.github.io/namwon-smart-village/landxi7/dashboard.html
    여기서는 **원본에 있는 것만** 옮긴다. 값도 원본 화면의 값 그대로 쓴다. */
 
-/* A. 좌측 내비게이션 레일 — include/header.html 의 aside.app-sidebar 그대로.
-   원본 페이지들은 이 콘티 저장소에 없다. 링크를 지어내는 대신 같은 데이터를
-   담고 있는 우리 자리로 보낸다(레지스터 전환 `tab` 또는 원장 스크롤 `to`). */
-export const NAV = [
-  { menu: 'dashboard', name: '대시보드', href: 'dashboard.html', icon: 'dash' },
-  { menu: 'media', name: '데이터 관리', href: 'dataset.html', icon: 'data', to: 'b-store' },
-  { menu: 'project', name: '프로젝트', href: 'ai-project.html', icon: 'proj', to: 'b-proj' },
-  { menu: 'analysis', name: '분석 서비스', href: 'analysis-ai.html', icon: 'run', to: 'b-bb' },
-  { menu: 'map', name: '지도 서비스', href: 'ximap.html', icon: 'map', to: 'b-proj' },
-];
-export const NAV_FOOT = [
-  { menu: 'support', name: '서비스 지원', href: 'notice.html', icon: 'help', to: 'b-notice' },
-  { menu: 'publish-admin', name: '카드 발행 관리', href: 'admin-publish.html', icon: 'stack', to: 'b-approve' },
-  { menu: 'produce', name: '생산 관리', href: 'produce.html', icon: 'run' },
-  { menu: 'admin', name: '서비스 관리', href: 'admin-notice.html', icon: 'gear', to: 'ad-rows' },
-];
-/** MY 플라이아웃 — 원본과 항목·동작이 같다(로그아웃은 lx_logged_in 삭제 후 home). */
-export const NAV_MY = [
-  { name: '마이 페이지', href: '../mypage.html' },
-  { name: '로그아웃', action: 'logout' },
-];
+/* A. 좌측 내비게이션 레일 — 2026-09-24(E0-6) 삭제. 레일 · MY 플라이아웃 · 로그아웃은 공용 셸(shell.js mountShell)이
+   roles.js 선언으로 그린다. 여기 있던 자체 NAV 가 직원에게 관리 메뉴 3개를 보이던 원인이었다(shell-dash D-1). */
 
 /* B3. 공지 스트립 — 원본은 SP_NOTICES 를 고정 우선·날짜 역순으로 정렬해 첫 건을 쓴다.
-   그 첫 건이 dashboard.js 의 notice 와 같다(id 8, 2026-04-15, urgent). */
+   그 첫 건이 dashboard.js 의 notice 와 같다(id 8, 2026-04-15, urgent).
+   대시보드는 이제 셸 NOTICE 를 쓴다(값 동일 — id 8 · 제목 · 2026-04-15). 화면이 부르지 않는 기록용 export 다. */
 export const NOTICE = { ...DASH.notice, id: 8, more: '../notice.html' };
 
+/* ── 관리 데이터 — 2026-09-24(E0-6) 대시보드 **화면에서는** 내렸다(직원 화면). 배열은 남긴다:
+   E1-6 이 운영 현황(admin-home)에 APPROVALS(EVIDENCE-PAIR) · ADMIN_TILES · KPI 의 act 항목을 다시 세운다.
+   행선지 표 = docs/superpowers/audit-0923/wave0/E0-6-result.md */
 /* B13. 카드 발행 승인 대기 — 원본 CARD_APPROVALS 2건. 요청자·요청시각까지 원본 값.
    행 클릭은 원본의 `admin-publish.html?open=<id>` 자리다(우리는 지도 핀으로 간다). */
 // 카드 ↔ 지역 연결은 원본에 없다 — A5 과제명에서 되짚은 **연결 추정**이며 화면이 그렇게 말한다.
@@ -212,3 +197,18 @@ export const CHANGE_PAIRS = CHANGE.map((c) => ({
   pair: c.pair, label: c.label, method: c.method, to: c.toDate, bounds: c.bounds,
   polygons: '../' + c.polygons,
 }));
+
+/* ── 직원 대시보드 큰 숫자 밴드(2026-09-24 E0-6) ──────────────────────────
+   원본 KPI 5 중 직원 화면에 남는 것은 `발행 분석 카드` 하나(원본 시드 = 시연). 나머지 넷은 관리 지표라
+   운영 현황으로 간다(행선지 표). 빈자리는 **데이터 파일에서 센 값**으로 채운다 — 지어낸 추세 0.
+   href 는 전부 직원이 들어갈 수 있는 화면(roles.js staff.menus). */
+const regionShort = (s) => String(s || '').replace(/^\S+\s+/, '').replace(/[시군구]$/, '');
+const tally = (arr) => { const m = new Map(); for (const k of arr) m.set(k, (m.get(k) || 0) + 1); return [...m.entries()]; };
+const KIND_KO = { ortho: '정사영상', landcover: '피복' };
+export const KPI_STAFF = [
+  { key: 'cards', label: KPI[1].label, value: KPI[1].value, unit: KPI[1].unit, sub: KPI[1].sub, demo: true, href: 'analysis-ai.html' },
+  { key: 'results', label: 'AI 분석 결과', value: RESULTS.length, unit: '건',
+    sub: tally(RESULTS.map((r) => regionShort(r.region))).map(([k, n]) => `${k} ${n}`).join(' · '), href: 'ximap.html' },
+  { key: 'imagery', label: '학습데이터 영상', value: IMAGERY.length, unit: '종',
+    sub: tally(IMAGERY.map((i) => KIND_KO[i.kind] || i.kind)).map(([k, n]) => `${k} ${n}`).join(' · '), href: 'dataset.html?tab=archive' },
+];

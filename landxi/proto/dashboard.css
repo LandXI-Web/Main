@@ -1,128 +1,41 @@
-/* LX 관리자 대시보드 — 발주자 보드 design-canvas/v2/B5-Dashboard-Data.dc.html (1440×900) 를 그대로 조판한다.
-   레일 72 · 마스트헤드 64 · 마진 56 · KPI 5(56px) · SPLIT 좌 572 / 우 648(가운데 헤어라인) · 판·패널 254 높이.
-   글꼴(발주 2026-08-27): Paperlogy(표시·큰 숫자) + Pretendard(본문) · Inter tabular(작은 수치).
-   T3 = 잉크 + 액센트 #006DF7(KPI 숫자·활성 탭·1위 막대·링크) + 틴트 #E8F1FF/#D6E6FF(호버·선택 행).
-   청록 #0FA9A0 = 판 위 결과 셀·AI 분석 저장 범례. 라운드 0 · 그림자 0 · 그라디언트 0 · 유리 0 · 앰버 0.
-   색 역할(system.md §2): 파랑 = 정보/선택 · 빨강(--warn #D1352B) = 조치 필요 · 검정 = 본문 · 청록 = AI 결과 · 앰버 = 탐지 순간.
-   warn 자리(전부): KPI ③④⑤ 숫자·상태어 · 승인 카드 상태어 `승인 대기`·검토 CTA · 타일 `가입 대기 1`·`긴급 2`·`미답변 6`.
-   페이지 = flex 세로, 판·패널 254→420 으로 자라 빈 띠를 없앤다. 푸터는 바닥.
-   글자 크기(클라이언트 2026-08-27 "전체적으로 2포인트 키우자"): 모든 font-size +2px — 최소 14(라벨·캡션·범례) · 본문 16 · 표 15.5/16 · 섹션 18 · KPI 58. 위계 비율은 그대로. */
+/* 대시보드 — LX 직원의 현황판. 발주자 보드 design-canvas/v2/B5-Dashboard-Data.dc.html 의 판 + 토글 2 · 우 탭 패널.
+   2026-09-24 E0-6 — 공용 셸로 이관. 레일 · 마스트헤드 · 제목 행 · 푸터 · 토스트 · 토큰은 shell.css(+ parts.css)의 것이다.
+   이 파일은 **본문만** 조판한다: 큰 숫자 밴드(정보 3) → SPLIT 좌 백본 + 판 / 우 탭 패널.
+   법전 design/system.md: 라운드 0 · 그림자 0 · 그라디언트 0 · 유리 0 · 앰버 0 · 바닥 14px · 채운 파란 버튼 없음.
+   색 역할(§2): 파랑 = 정보/선택 · 검정 = 본문 · 청록 = AI 결과(판의 결과 셀). 조치 필요(warn) 숫자는 이 화면에 없다
+   — 승인 대기 · 가입 대기 · 미답변은 관리자 운영 현황의 몫이다(행선지 표 wave0/E0-6-result.md).
+   빈 띠(법전 §6 · 80px 초과 금지): 아래 두 구역(승인 대기 · 관리 바로가기)을 뺀 자리는 **판과 패널이 받는다**. */
 
-@font-face{font-family:'Paperlogy';font-weight:800;font-display:swap;src:url('../assets/fonts/Paperlogy-8ExtraBold.woff2') format('woff2')}
-@font-face{font-family:'Paperlogy';font-weight:700;font-display:swap;src:url('../assets/fonts/Paperlogy-7Bold.woff2') format('woff2')}
+/* ══ 큰 숫자 밴드 — 정보 3 ════════════════════════════════════════════════ */
+#b-kpi{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); padding:4px 0 18px; border-bottom:1px solid var(--line); flex:none; }
+#b-kpi .k{ position:relative; display:block; min-width:0; padding:8px 20px 10px; border-left:1px solid var(--line); color:inherit;
+  transition:transform var(--hov) var(--hove), background var(--hov) var(--hove); }
+#b-kpi .k:first-child{ border-left:0; }
+#b-kpi .k .kl{ display:flex; align-items:center; gap:8px; font-size:14px; line-height:22px; color:var(--grey); letter-spacing:.04em; white-space:nowrap; }
+#b-kpi .k .kl .tag{ height:20px; line-height:18px; padding:0 6px; }
+#b-kpi .k .kv{ margin-top:6px; height:58px; display:flex; align-items:baseline; gap:8px; }
+#b-kpi .k .kv b{ font-size:58px; line-height:1; color:var(--accent); font-weight:700; }
+#b-kpi .k .kv span{ font-size:17px; color:var(--grey); }
+#b-kpi .k .ks{ display:flex; align-items:baseline; gap:8px; margin-top:8px; font-size:14px; color:var(--grey); letter-spacing:.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#b-kpi .k .ks .go{ margin-left:auto; display:inline-block; font-size:16px; color:var(--grey-3); transition:transform var(--hov) var(--hove), color var(--hov) var(--hove); }
+#b-kpi .k:hover{ transform:translateY(-4px); background:var(--t1); }
+#b-kpi .k:hover .ks .go{ transform:translateX(4px); color:var(--accent); }
 
-*,*::before,*::after{ box-sizing:border-box; }
-html{ height:100%; scroll-behavior:smooth; }
-body{ margin:0; min-height:100vh; display:flex; flex-direction:column; background:#fff; color:#010102; overflow-x:hidden;
-  font-family:var(--font-body,'Pretendard'),'Pretendard',system-ui,sans-serif; font-weight:400; font-size:18px; line-height:1.6;
-  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
-a{ color:inherit; text-decoration:none; }
-button{ font:inherit; color:inherit; background:none; border:0; padding:0; cursor:pointer; text-align:left; }
-hr.hr{ border:0; border-top:1px solid var(--line); margin:0; }
-.skip{ position:absolute; left:-999px; top:0; z-index:99; background:#fff; padding:10px 16px; border:1px solid #010102; }
-.skip:focus{ left:8px; top:8px; }
-:focus-visible{ outline:1px solid var(--accent); outline-offset:2px; }
-[hidden]{ display:none!important; }
-
-:root{
-  --rail:72px; --mast:64px; --m:56px; --ph:254px;
-  --ink:#010102; --grey:#686868; --grey-3:#CCCCCC; --line:#DDDDDD;
-  --accent:#006DF7; --teal:#0FA9A0; --warn:#D1352B; --ph-max:420px;
-  --t1:var(--tint-1,#E8F1FF); --t2:var(--tint-2,#D6E6FF);
-  --disp:var(--font-display,'Paperlogy'),'Paperlogy','Pretendard',system-ui,sans-serif;
-  --hov:180ms; --hove:cubic-bezier(.22,1,.36,1); --ease:cubic-bezier(0.15,1,0.3,1);
-  --d1:500ms; --d2:750ms; --d3:1000ms;
-}
-.d{ font-family:var(--disp); font-weight:700; letter-spacing:-.01em; }
-.n{ font-family:'Inter','Pretendard',system-ui,sans-serif; font-weight:400; font-variant-numeric:tabular-nums; font-feature-settings:'tnum' 1; }
-.big{ font-family:var(--disp); font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:-.02em; }
-.lb{ font-size:14px; line-height:1.2; letter-spacing:.04em; color:var(--grey); font-weight:400; }
-.mic{ font-size:14px; line-height:1.35; color:var(--grey); }
-.dim{ color:var(--grey-3); }
-.warn{ color:var(--warn); }
-.sp{ flex:1; }
-.chip{ height:24px; line-height:22px; padding:0 9px; border:1px solid var(--line); color:var(--grey); font-size:14px; white-space:nowrap; display:inline-block; }
-.tag{ border:1px dotted var(--grey-3); padding:0 5px; font-size:14px; line-height:18px; color:var(--grey); margin-left:5px; display:inline-block; vertical-align:1px; font-style:normal; letter-spacing:0; }
-.more{ white-space:nowrap; transition:transform var(--hov) var(--hove); display:inline-block; }
-.more:hover{ transform:translateX(4px); color:var(--accent); }
-
-/* ══ A1–A11 좌측 레일 ═══════════════════════════════════════════════════ */
-#rail{ position:fixed; z-index:30; left:0; top:0; bottom:0; width:var(--rail); background:#fff; border-right:1px solid var(--line); display:flex; flex-direction:column; }
-#rail-mark{ height:var(--mast); border-bottom:1px solid var(--line); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; color:var(--ink); font-family:var(--disp); font-weight:700; }
-#rail-mark span{ letter-spacing:.16em; margin-right:-.16em; }
-#rail-mark span:first-child{ font-size:13px; }
-#rail-mark span:last-child{ font-size:16px; }
-.rail-group{ display:flex; flex-direction:column; }
-#rail-top{ padding-top:12px; }
-#rail-foot{ margin-top:auto; padding-bottom:8px; }
-.rail-i{ position:relative; width:var(--rail); height:58px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; color:var(--grey); transition:color var(--hov) var(--hove); }
-.rail-i svg{ width:20px; height:20px; display:block; transition:transform var(--hov) var(--hove); }
-.rail-i .rl{ font-size:12.5px; line-height:1.15; letter-spacing:-.01em; text-align:center; white-space:pre-line; }
-.rail-i::before{ content:""; position:absolute; left:0; top:9px; width:2px; height:40px; background:var(--ink); transform:scaleY(0); transition:transform var(--hov) var(--hove); }
-.rail-i:hover{ color:var(--ink); background:var(--t1); }
-.rail-i:hover svg{ transform:translateY(-2px); }
-.rail-i[aria-current]{ color:var(--ink); }
-.rail-i[aria-current]::before{ transform:scaleY(1); }
-.rail-fly{ position:absolute; left:var(--rail); bottom:66px; min-width:150px; background:#fff; border:1px solid var(--ink); padding:6px 0; z-index:31; }
-.rail-fly a,.rail-fly button{ display:block; width:100%; padding:7px 14px; font-size:15px; white-space:nowrap; transition:background var(--hov) var(--hove); }
-.rail-fly a:hover,.rail-fly button:hover{ background:var(--t1); }
-
-/* ══ 마스트헤드 — B3 공지 + B2 기준일 ═══════════════════════════════════ */
-#mast{ position:fixed; z-index:20; left:var(--rail); right:0; top:0; height:var(--mast); background:#fff; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:12px; padding:0 var(--m); }
-.notice{ display:flex; align-items:center; gap:12px; color:var(--grey); min-width:0; }
-.notice .nt{ font-size:16px; letter-spacing:-.01em; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.notice .nd{ font-size:14.5px; letter-spacing:.02em; }
-.notice .more{ font-size:14.5px; margin-left:6px; }
-.asof{ margin:0 0 0 auto; display:flex; align-items:baseline; gap:10px; }
-.asof .k{ font-size:14px; color:var(--grey); }
-.asof .n{ font-size:16px; letter-spacing:.02em; color:var(--grey); }
-
-/* ══ 본문 ═══════════════════════════════════════════════════════════════ */
-#main{ margin-left:var(--rail); padding:calc(var(--mast) + 28px) var(--m) 8px; flex:1; display:flex; flex-direction:column; min-height:0; }
-#b1-row{ display:flex; align-items:baseline; gap:14px; height:64px; margin:0; }
-#b1{ margin:0; font-size:34px; line-height:42px; font-weight:800; position:relative; }
-#b1 .rule{ position:relative; } /* 파랑 룰 = 'LX 관리자' 글자 폭 */
-#b1 .rule::after{ content:""; position:absolute; left:0; right:0; bottom:-8px; height:4px; background:var(--accent); }
-#b1-sub{ margin:0; font-size:17px; color:var(--grey); letter-spacing:-.01em; }
-[data-line]{ clip-path:inset(-5px 0); }
-[data-line]>*{ transform:translateY(20px); transition:transform 600ms var(--ease); }
-[data-line]>*:nth-child(2){ transition-delay:60ms; }
-html[data-dash] [data-line]>*{ transform:none; }
-
-/* ── KPI 5 (B4–B8) — 56px Paperlogy 액센트, 세로 헤어라인 ─────────────── */
-#b-kpi{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); padding:16px 0 20px; }
-.k{ position:relative; padding:0 18px; border-left:1px solid var(--line); display:block; color:inherit; transition:transform var(--hov) var(--hove), background var(--hov) var(--hove); }
-.k:first-child{ border-left:0; padding-left:0; }
-.k .kl{ display:block; font-size:14px; color:var(--grey); letter-spacing:.04em; white-space:nowrap; }
-.k .kv{ margin-top:8px; height:58px; display:flex; align-items:baseline; gap:8px; }
-.k .kv b{ font-size:58px; line-height:1; color:var(--accent); font-weight:700; }
-.k.act .kv b{ color:var(--warn); }
-.k .ks em{ font-style:normal; }
-.k.act .ks em{ color:var(--warn); }
-.k .kv span{ font-size:17px; color:var(--grey); }
-.k .ks{ display:block; margin-top:10px; font-size:14px; color:var(--grey); letter-spacing:.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-a.k:hover{ transform:translateY(-4px); background:var(--t1); }
-a.k:hover .ks .dim{ color:var(--accent); }
-
-/* ── SPLIT: 좌 572 / 우 나머지 ───────────────────────────────────────── */
-#split{ display:grid; grid-template-columns:572px 1px 1fr; column-gap:23px; padding:20px 0 8px; flex:1; }
+/* ══ SPLIT — 좌 판 / 우 패널 (가운데 헤어라인) ══════════════════════════════ */
+#split{ display:grid; grid-template-columns:minmax(0,1fr) 1px minmax(0,1fr); column-gap:23px; padding:20px 0 0; }
 #split::after{ content:""; grid-column:2; grid-row:1; background:var(--line); }
-#left{ grid-column:1; min-width:0; } #right{ grid-column:3; min-width:0; }
-#left,#right{ display:flex; flex-direction:column; }
-.sh{ display:flex; align-items:baseline; gap:10px; color:var(--grey); height:26px; }
+#left{ grid-column:1; } #right{ grid-column:3; }
+#left,#right{ display:flex; flex-direction:column; min-width:0; min-height:0; }
+.sh{ display:flex; align-items:baseline; gap:10px; color:var(--grey); height:26px; flex:none; }
 .sh svg{ flex:none; align-self:center; color:var(--accent); }
 .sh h2{ margin:0; font-size:18px; line-height:26px; color:var(--ink); white-space:nowrap; }
 .bbv{ font-size:26px; line-height:1; color:var(--ink); white-space:nowrap; }
-.sub{ margin:4px 0 0; height:22px; font-size:14px; line-height:22px; letter-spacing:.02em; color:var(--grey); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.sub b{ font-weight:400; color:var(--ink); }
-.cap{ margin:12px 0 0; display:flex; align-items:baseline; gap:12px; height:18px; overflow:hidden; }
-.cap .mic{ white-space:nowrap; flex:none; }
-.cap-l{ font-size:14px; letter-spacing:.06em; white-space:nowrap; color:var(--ink); min-width:0; overflow:hidden; text-overflow:ellipsis; }
-.src{ margin:14px 0 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; height:18px; }
-.src i{ font-style:normal; color:var(--grey-3); }
+.sub{ margin:4px 0 0; height:22px; font-size:14px; line-height:22px; letter-spacing:.02em; color:var(--grey); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:none; }
+.more{ white-space:nowrap; display:inline-block; transition:transform var(--hov) var(--hove), color var(--hov) var(--hove); }
+.more:hover{ transform:translateX(4px); color:var(--accent); }
 
-/* 판 — MapLibre(EOX Sentinel-2 cloudless) 위 SVG 그리드 + 셀 DOM ───────── */
-#plate-wrap{ position:relative; margin-top:4px; width:100%; flex:1; min-height:var(--ph); max-height:var(--ph-max); background:var(--ink); overflow:hidden; }
+/* 판 — MapLibre(EOX Sentinel-2 cloudless) 위 SVG 그리드 + 셀 링크 ─────────── */
+#plate-wrap{ position:relative; margin-top:4px; width:100%; height:380px; background:var(--ink); overflow:hidden; }
 #plate{ position:absolute; inset:0; }
 #plate .maplibregl-canvas{ filter:saturate(.72) contrast(1.04); }
 #plate .maplibregl-ctrl-bottom-right,#plate .maplibregl-ctrl-bottom-left{ display:none; }
@@ -132,7 +45,7 @@ a.k:hover .ks .dim{ color:var(--accent); }
 #grid line{ stroke:rgba(255,255,255,.13); stroke-width:1; }
 #grid line.major{ stroke:rgba(255,255,255,.3); }
 #cells{ position:absolute; inset:0; }
-.cell{ position:absolute; border:1px solid transparent; background:transparent; cursor:pointer; padding:0; transition:background var(--hov) var(--hove), border-color var(--hov) var(--hove); }
+.cell{ position:absolute; display:block; border:1px solid transparent; background:transparent; cursor:pointer; padding:0; transition:background var(--hov) var(--hove), border-color var(--hov) var(--hove); }
 .cell[data-g="4"],#legend .sw[data-g="4"]{ background:rgba(15,169,160,.95); border-color:var(--teal); }
 .cell[data-g="3"],#legend .sw[data-g="3"]{ background:rgba(63,191,181,.95); border-color:var(--teal); }
 .cell[data-g="2"],#legend .sw[data-g="2"]{ background:rgba(127,214,207,.95); border-color:var(--teal); }
@@ -144,7 +57,7 @@ a.k:hover .ks .dim{ color:var(--accent); }
 #plate-wrap[data-mode="train"] :is(.cell,#legend .sw)[data-g="3"]{ background:rgba(74,146,251,.95); border-color:#fff; }
 #plate-wrap[data-mode="train"] :is(.cell,#legend .sw)[data-g="2"]{ background:rgba(143,187,255,.95); border-color:#fff; }
 #plate-wrap[data-mode="train"] :is(.cell,#legend .sw)[data-g="1"]{ background:rgba(199,222,255,.95); border-color:#fff; }
-.cell.is-hot,.cell:focus-visible{ outline:1px solid #fff; outline-offset:2px; }
+.lx .cell.is-hot,.lx .cell:focus-visible{ outline:1px solid #fff; outline-offset:2px; }
 /* 셀 브래킷(호버) */
 .cell .bk{ position:absolute; width:5px; height:5px; border:0 solid #fff; opacity:0; transition:opacity var(--hov) var(--hove); }
 .cell .bk-tl{ left:-4px; top:-4px; border-left-width:1px; border-top-width:1px; }
@@ -158,35 +71,48 @@ a.k:hover .ks .dim{ color:var(--accent); }
 #seg [role=tab][aria-selected=true]{ background:#fff; color:var(--ink); }
 #seg [role=tab]:hover{ background:var(--t1); color:var(--ink); }
 /* 콜아웃 — 흰 바탕 잉크 테두리 */
-#callout{ position:absolute; left:12px; top:50px; width:272px; min-height:100px; background:#fff; border:1px solid var(--ink); padding:6px 9px; line-height:16px; letter-spacing:-.01em; color:var(--ink); z-index:4; pointer-events:none; }
+#callout{ position:absolute; left:12px; top:50px; width:280px; min-height:100px; background:#fff; border:1px solid var(--ink); padding:6px 9px 8px; line-height:18px; letter-spacing:-.01em; color:var(--ink); z-index:4; pointer-events:none; }
 #callout .c1{ font-size:14px; white-space:nowrap; }
 #callout .c1 .i{ color:var(--grey); }
 #callout .c2{ margin-top:5px; font-size:14px; letter-spacing:.04em; color:var(--teal); }
 #plate-wrap[data-mode="train"] #callout .c2{ color:var(--accent); }
 #callout .c3{ font-size:14px; white-space:nowrap; letter-spacing:0; }
 #callout .c3 em{ font-style:normal; color:var(--grey); }
+#callout .c4{ margin-top:6px; padding-top:5px; border-top:1px solid var(--line); font-size:14px; color:var(--grey); }
 /* 범례 — 판 우하단 */
 #legend{ position:absolute; right:12px; bottom:10px; display:flex; flex-direction:column; gap:3px; font-size:14px; line-height:16px; color:#fff; letter-spacing:-.01em; z-index:3; pointer-events:none; }
 #legend .lg{ display:flex; align-items:center; gap:6px; white-space:nowrap; }
 #legend .sw{ width:10px; height:10px; display:inline-block; border:1px solid var(--teal); flex:none; }
 
 /* 우 탭 패널 — 판과 같은 높이 ───────────────────────────────────────── */
-#tabs{ display:flex; gap:1px; align-self:center; }
+#right .sh{ align-items:center; }
+#tabs{ display:flex; gap:1px; flex-wrap:wrap; min-width:0; }
 #tabs [role=tab]{ height:26px; line-height:24px; padding:0 10px; font-size:14px; letter-spacing:-.01em; white-space:nowrap; border:1px solid var(--line); color:var(--grey); transition:background var(--hov) var(--hove), color var(--hov) var(--hove), border-color var(--hov) var(--hove); }
 #tabs [role=tab][aria-selected=true]{ background:var(--t1); border-color:var(--accent); color:var(--accent); }
 #tabs [role=tab]:hover{ background:var(--t1); color:var(--ink); }
-#tab-meta{ white-space:nowrap; }
-#panel{ position:relative; margin-top:30px; width:100%; flex:1; min-height:var(--ph); max-height:var(--ph-max); border:1px solid var(--line); overflow:hidden; }
-#pane-proj{ display:flex; flex-direction:column; justify-content:space-evenly; }
-#pane-visit{ display:flex; flex-direction:column; }
+#panel{ position:relative; margin-top:30px; width:100%; height:380px; border:1px solid var(--line); overflow:hidden; }
 #panel [role=tabpanel]{ position:absolute; inset:0; padding:18px 20px; }
+/* 행 높이 --rh 는 dashboard.js fitPanel 이 패널 안쪽 높이를 행 수로 나눠 준다(24–58px) — 목록 위아래 · 행 사이에 공기가 고이지 않는다. */
+#pane-proj,#pane-store{ display:flex; flex-direction:column; justify-content:center; }
+#both-h{ display:none; }
+.ph{ display:none; align-items:baseline; gap:10px; height:26px; margin-bottom:6px; flex:none; }
+.ph h3{ margin:0; font-size:16px; line-height:26px; font-weight:400; color:var(--ink); white-space:nowrap; }
+.ph .sp{ flex:1; }
+/* 두 목록 한 패널(높은 화면) — 탭을 내리고 프로젝트 랭크 아래에 스토리지 랭크를 같은 패널로 */
+#right[data-lay="both"] #tabs,#right[data-lay="both"] #b10-more{ display:none; }
+#right[data-lay="both"] #both-h{ display:block; }
+#panel[data-lay="both"]{ display:flex; flex-direction:column; justify-content:center; row-gap:22px; padding:18px 20px; }
+#panel[data-lay="both"] [role=tabpanel]{ position:static; inset:auto; padding:0; flex:none; }
+#panel[data-lay="both"] #pane-store{ border-top:1px solid var(--line); padding-top:14px; }
+#panel[data-lay="both"] .ph{ display:flex; }
 /* 탭 1 — 랭크드 바 */
-.rk,.rk-sum{ display:grid; grid-template-columns:28px 196px 1fr 104px; align-items:center; column-gap:12px; height:36px; }
+.rk,.rk-sum{ display:grid; grid-template-columns:28px minmax(0,196px) minmax(40px,1fr) auto; align-items:center; column-gap:12px; height:var(--rh,36px); flex:none; }
 .rk .no{ font-size:16px; color:var(--grey); }
-.rk .nm{ font-size:17.5px; color:var(--grey); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rk .nm{ font-size:17px; color:var(--grey); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .rk .u,.rk-sum .u{ font-size:14px; color:var(--grey); margin-left:5px; }
-.rk-sum{ height:28px; border-top:1px solid var(--line); font-size:16px; color:var(--grey); }
-.rk-sum .nm{ white-space:nowrap; } .rk-sum .val{ text-align:right; white-space:nowrap; } .rk-sum .val b{ font-weight:400; font-size:20px; color:var(--ink); }
+.rk-sum{ border-top:1px solid var(--line); font-size:16px; color:var(--grey); }
+.rk-sum .nm{ white-space:nowrap; display:flex; align-items:center; gap:8px; }
+.rk-sum .val{ text-align:right; white-space:nowrap; } .rk-sum .val b{ font-weight:400; font-size:20px; color:var(--ink); }
 .rk .bar{ height:14px; position:relative; border-bottom:1px solid var(--line); }
 .rk .bar i{ position:absolute; left:0; top:0; height:14px; background:var(--grey-3); transform-origin:0 50%; transform:scaleX(0); transition:transform var(--d3) var(--ease); }
 .rk .val{ text-align:right; white-space:nowrap; } .rk .val b{ font-size:20px; color:var(--grey); }
@@ -195,226 +121,78 @@ a.k:hover .ks .dim{ color:var(--accent); }
 .rk.on .val b{ color:var(--accent); font-size:26px; }
 .is-in .rk .bar i{ transform:scaleX(1); }
 .rk:nth-child(2) .bar i{ transition-delay:60ms; } .rk:nth-child(3) .bar i{ transition-delay:120ms; } .rk:nth-child(4) .bar i{ transition-delay:180ms; } .rk:nth-child(5) .bar i{ transition-delay:240ms; }
-/* 탭 2 — 7일 폴리라인 */
-#v-svg{ display:block; width:100%; height:120px; flex:1; min-height:120px; overflow:visible; }
-#v-svg polyline{ fill:none; stroke:var(--ink); stroke-width:1.25; vector-effect:non-scaling-stroke; }
-#v-svg .pk{ stroke:var(--accent); }
-#v-ax{ position:relative; height:48px; flex:none; margin-top:8px; }
-#v-ax span{ position:absolute; top:0; width:88px; margin-left:-44px; text-align:center; font-size:14px; letter-spacing:.02em; color:var(--grey-3); line-height:16px; }
-#v-ax span b{ display:block; font-weight:400; font-size:17px; color:var(--grey); }
-#v-ax span.on{ color:var(--grey); } #v-ax span.on b{ color:var(--ink); }
-#v-ax span.pk b{ color:var(--accent); font-size:22px; font-family:var(--disp); font-weight:700; }
-#v-ax span b i{ font-style:normal; font-size:13px; font-family:var(--font-body,'Pretendard'); font-weight:400; color:var(--grey-3); margin-left:1px; }
-#v-sum{ display:flex; justify-content:flex-end; align-items:baseline; gap:6px; margin-top:6px; font-size:14px; color:var(--grey); letter-spacing:.02em; white-space:nowrap; }
-#v-sum b{ font-weight:400; font-size:18px; color:var(--ink); }
-/* 탭 3 — 스토리지 스택 */
-#s-bar{ display:block; width:100%; height:40px; }
-#s-lg{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px 18px; margin-top:16px; }
-#s-lg .li{ display:flex; align-items:baseline; gap:8px; font-size:15px; color:var(--grey); white-space:nowrap; }
-#s-lg .li i{ width:10px; height:10px; flex:none; align-self:center; }
-#s-lg .li b{ font-weight:400; font-size:18px; color:var(--ink); margin-right:-4px; }
-#s-lg .li.rest{ color:var(--grey-3); } #s-lg .li.rest b{ color:var(--grey-3); }
-.pane-big{ display:flex; align-items:baseline; gap:8px; margin-bottom:14px; }
+/* 탭 2 — 스토리지 = 쌓은 막대 + 6분류 랭크드 바 + 잔여(프로젝트 탭과 같은 행 조판) */
+#s-bar{ display:block; width:100%; height:32px; flex:none; margin-bottom:8px; }
+#s-lg{ display:flex; flex-direction:column; flex:none; }
+.rk .no .sw,.rk-sum .no .sw{ display:inline-block; width:10px; height:10px; vertical-align:middle; }
+.rk-sum.rest .no .sw{ border:1px solid #DDDDDD; }
+.rk-sum.rest .val b{ color:var(--grey-3); font-size:20px; }
+#pane-store .rk.on .bar i{ background:var(--accent); }
+.pane-big{ display:flex; align-items:baseline; gap:8px; margin-bottom:10px; flex-wrap:wrap; flex:none; }
 .pane-big .big{ font-size:42px; line-height:1; color:var(--accent); }
 .pane-big .u{ font-size:16px; color:var(--grey); }
+.pane-big .tag{ align-self:center; margin-left:6px; }
 
-/* ── B13 EVIDENCE-PAIR · B14 타일 ──────────────────────────────────── */
-.row{ display:flex; align-items:center; gap:12px; height:30px; color:var(--grey); }
-.row svg{ flex:none; color:var(--accent); }
-.row h3{ margin:0; font-size:18px; color:var(--ink); white-space:nowrap; }
-.row .cnt{ font-size:18px; line-height:1; color:var(--ink); font-weight:400; }
-#ap-more:hover .dim{ color:var(--accent); }
-#b-approve{ position:relative; padding:8px 0 12px; }
-#b-approve[aria-current]::before,#b-approve[aria-current]::after{ content:""; position:absolute; width:12px; height:12px; border:1px solid var(--accent); }
-#b-approve[aria-current]::before{ left:-6px; top:4px; border-right:0; border-bottom:0; }
-#b-approve[aria-current]::after{ right:-6px; bottom:4px; border-left:0; border-top:0; }
-.evpair{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:24px; margin-top:6px; }
-.ap{ display:grid; grid-template-columns:minmax(200px,38%) minmax(0,1fr); border:1px solid var(--line); transition:background var(--hov) var(--hove); }
-.ap:hover{ background:var(--t1); }
-.ap[aria-current]{ background:var(--t2); border-color:var(--accent); }
-.ap .ev{ position:relative; display:block; height:140px; background:var(--ink); overflow:hidden; }
-.ap .ev img{ display:block; width:100%; height:100%; object-fit:cover; filter:saturate(.85); transition:transform var(--hov) var(--hove); }
-.ap:hover .ev img{ transform:scale(1.03); }
-.ap .ev .ev-l{ position:absolute; left:8px; right:8px; bottom:6px; font-size:14px; line-height:16px; color:#fff; letter-spacing:.02em; }
-.ap .ev .ev-l i{ font-style:normal; color:var(--teal); }
-.ap .meta{ min-width:0; display:flex; flex-direction:column; }
-.ap .mh{ display:flex; align-items:center; gap:10px; height:30px; padding:0 12px; background:var(--t1); white-space:nowrap; overflow:hidden; }
-.ap[aria-current] .mh{ background:var(--t2); }
-.ap .mh .no{ font-size:14px; color:var(--grey); }
-.ap .mh .nm{ font-size:16px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; }
-.ap .mh .ver{ font-size:14px; color:var(--grey); letter-spacing:.02em; }
-.ap .mh .st{ margin-left:auto; font-size:14px; letter-spacing:.02em; }
-.ap dl{ margin:0; padding:8px 12px 0; display:grid; grid-template-columns:auto minmax(0,1fr); column-gap:12px; row-gap:4px; font-size:14.5px; line-height:18px; }
-.ap dt{ color:var(--grey); white-space:nowrap; }
-.ap dd{ margin:0; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.ap .go{ margin-top:auto; align-self:flex-end; padding:0 12px 8px; font-size:15px; white-space:nowrap; display:inline-block; transition:transform var(--hov) var(--hove); }
-.ap .go:hover{ transform:translateX(4px); }
-#b-admin{ padding:8px 0 12px; }
-.tiles{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); column-gap:24px; margin-top:6px; }
-.tiles .ad{ display:block; border:1px solid var(--line); color:inherit; transition:transform var(--hov) var(--hove), border-color var(--hov) var(--hove); }
-.tiles .ad:hover{ transform:translateY(-4px); border-color:var(--accent); }
-.tiles .ad .th{ display:flex; align-items:center; gap:8px; height:30px; padding:0 12px; background:var(--t1); color:var(--grey); }
-.tiles .ad .th svg{ flex:none; color:var(--accent); }
-.tiles .ad .th .d{ font-size:15.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.tiles .ad .th .mic{ margin-left:auto; }
-.tiles .ad .tb{ display:flex; align-items:baseline; gap:8px; padding:10px 12px 0; }
-.tiles .ad .tb b{ font-size:34px; line-height:1; color:var(--accent); }
-.tiles .ad .tb b.warn{ color:var(--warn); }
-.tiles .ad .tb span{ font-size:14px; color:var(--grey); }
-.tiles .ad .tb .tl{ margin-left:2px; }
-.tiles .ad .ts{ display:block; padding:6px 12px 10px; font-size:14px; color:var(--grey); letter-spacing:.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.tiles .ad .ts b{ font-weight:400; color:var(--ink); }
-.tiles .ad .ts b.warn{ color:var(--warn); }
-
-#foot{ margin-left:var(--rail); height:36px; border-top:1px solid var(--line); background:#fff; display:flex; align-items:center; gap:12px; padding:0 var(--m); white-space:nowrap; }
-#say{ position:fixed; left:calc(var(--rail) + var(--m)); bottom:8px; margin:0; font-size:14px; color:var(--grey); z-index:21; pointer-events:none; }
-
-/* ══ 반응형 ═══════════════════════════════════════════════════════════ */
-@media (max-width:1280px){
-  :root{ --m:40px; }
-  #split{ grid-template-columns:minmax(0,1fr) 1px minmax(0,1fr); }
-  .k .kv b{ font-size:46px; }
-  .ap{ grid-template-columns:160px minmax(0,1fr); }
+/* ══ 한 화면 — 넓고 충분히 높은 모니터 ══════════════════════════════════════
+   페이지를 뷰포트에 맞추고, 밴드 아래 남는 높이는 **판과 패널이 전부 받는다**(두 판은 같은 격자 행이라 높이가 같다).
+   법전 §6 의 254→420 은 아래에 승인 대기 · 관리 바로가기 두 구역이 있던 조판의 값이다. 두 구역을 내린 지금
+   420 에서 멈추면 그 아래가 빈 띠가 된다(1920×1200 에서 약 380px) — 그래서 판이 뷰포트를 따라 끝까지 자란다.
+   늘어난 패널 안은 **콘텐츠로 채운다**(dashboard.js fitPanel — 행 높이 맞춤, 충분히 높으면 두 목록 한 패널).
+   실측(e2e '한 화면' 3건): 패널 안 목록 위·아래 ≤ 80px · 행 사이 ≤ 32px. 하한 254 는 지킨다. */
+@media (min-width:1101px) and (min-height:640px){
+  body.lx{ height:100vh; overflow-y:hidden; }
+  .lx #main{ flex:1 1 0; min-height:0; padding-bottom:20px; }
+  #split{ flex:1 1 0; min-height:0; }
+  #plate-wrap,#panel{ flex:1 1 0; height:auto; min-height:254px; }
 }
+@media (min-width:1101px) and (max-height:800px){
+  #b-kpi{ padding-bottom:12px; }
+  #b-kpi .k{ padding-top:4px; padding-bottom:6px; }
+  #b-kpi .k .kv{ height:42px; margin-top:4px; }
+  #b-kpi .k .kv b{ font-size:42px; }
+  #b-kpi .k .ks{ margin-top:4px; }
+  #split{ padding-top:14px; }
+  #panel [role=tabpanel]{ padding:12px 20px; }
+  .pane-big{ margin-bottom:6px; }
+  .pane-big .big{ font-size:30px; }
+  #s-bar{ height:18px; margin-bottom:6px; }
+  .rk .nm{ font-size:16px; }
+
+  #plate-wrap,#panel{ min-height:180px; }
+}
+@media (max-width:1280px){
+  #b-kpi .k .kv b{ font-size:48px; }
+}
+/* 1100 아래 — 문서형(페이지 스크롤). 판과 패널이 세로로 선다. 제목 행은 셸이 줄바꿈하고, 밴드는 그 아래 제 줄에 선다. */
 @media (max-width:1100px){
-  #split{ grid-template-columns:1fr; row-gap:24px; }
+  #split{ grid-template-columns:minmax(0,1fr); row-gap:28px; }
   #split::after{ display:none; }
   #left,#right{ grid-column:1; }
-  #b-kpi{ grid-template-columns:repeat(3,minmax(0,1fr)); row-gap:16px; }
-  .k:nth-child(4){ border-left:0; padding-left:0; }
-  .evpair,.tiles{ grid-template-columns:repeat(2,minmax(0,1fr)); row-gap:16px; }
+  #panel{ margin-top:12px; height:320px; }
+}
+@media (max-width:720px){
+  #b-kpi{ grid-template-columns:minmax(0,1fr); }
+  #b-kpi .k{ border-left:0; border-top:1px solid var(--line); padding-left:0; padding-right:0; }
+  #b-kpi .k:first-child{ border-top:0; }
+  #b-kpi .k .kv{ height:44px; }
+  #b-kpi .k .kv b{ font-size:44px; }
+  #plate-wrap{ height:300px; }
+  #panel{ height:340px; }
+  #panel [role=tabpanel]{ padding:14px 12px; }
+  .rk,.rk-sum{ grid-template-columns:24px minmax(0,1fr) auto; column-gap:8px; }
+  .rk .bar,.rk-sum .bar{ display:none; }
+  #right .sh{ flex-wrap:wrap; height:auto; row-gap:8px; }
+  #tabs [role=tab]{ white-space:normal; height:auto; min-height:26px; line-height:1.3; padding:3px 8px; }
+  #callout{ width:auto; right:12px; }
+  #callout .c1,#callout .c3{ white-space:normal; }
+  #seg{ flex-wrap:wrap; right:12px; }
+  #left .sh{ flex-wrap:wrap; height:auto; row-gap:4px; }
+  .sub{ height:auto; white-space:normal; }
+  /* 셸 푸터는 한 줄 nowrap 이라 390 에서 가로로 넘친다 — 모바일 조판은 E3-2 몫이고, 여기서는 넘침 0 까지만 막는다
+     (셸 쪽 요청: wave0/E0-6-result.md '요청'). */
+  #foot{ flex-wrap:wrap; height:auto; row-gap:6px; padding-top:8px; padding-bottom:8px; white-space:normal; }
+  #foot-links{ flex-wrap:wrap; gap:6px 14px; }
 }
 @media (prefers-reduced-motion:reduce){
-  *{ transition:none!important; animation:none!important; }
-  [data-line]>*{ transform:none; }
   .rk .bar i{ transform:scaleX(1)!important; }
 }
-
-/* ══ 한 화면 — 모니터마다 (2026-09-20) ═══════════════════════════════════
-   발주자: "대시보드는 한 화면으로" · "모니터마다 최적화를 해야지"
-           "한화면에 된거 맞음?? 밑에 있는건 아에 잘라 없애 버렸네?"
-
-   두 번 틀렸다.
-     1차 — 1600×900 에 맞춰 고정 px 로 깎았다. 745px 화면에서 그대로 넘쳤다.
-     2차 — 더 깎으니 증거 크롭이 뭉개져서, 짧은 화면에서는 `관리 바로가기` 를
-           숨겼다. 그건 맞춘 게 아니라 **지운 것**이다.
-
-   세로로 쌓인 다섯 줄이 원인이었다. 그래서 **구조를 바꾼다** —
-   아래 두 구역(승인 대기 · 관리 바로가기)을 좌우로 나란히 놓아 한 줄을 없앤다.
-   위의 지도·저장용량과 같은 좌우 비율이라 시선이 한 축으로 떨어진다.
-   지우는 것은 없다. 짧은 화면에서는 값이 조금씩 줄 뿐이다. */
-
-body{ height:100vh; min-height:560px; overflow:hidden; }
-#main{ min-height:0; overflow:clip; padding-bottom:0; }
-#split{ flex:1 1 0; min-height:0; }
-#left, #right{ min-height:0; }
-#plate-wrap{ flex:1 1 0; min-height:0; max-height:none; }
-#panel{ flex:1 1 0; min-height:0; max-height:none; }
-
-/* 아래 두 구역 — 좌우로. **넓은 칸은 증거 카드 쪽**이다.
-   증거 카드는 그림 + 요청일시·지역·크롭 거리를 나란히 읽어야 해서 폭이 필요하고,
-   바로가기는 이름과 숫자뿐이라 좁아도 된다. (한 번 반대로 놓았다가 글자가 다 잘렸다) */
-#b-bottom{ display:grid; grid-template-columns:minmax(0,1fr) 1px 400px; column-gap:23px; flex:none; }
-#b-bottom::before{ content:""; grid-column:2; background:var(--line); }
-#b-approve{ grid-column:1; padding-bottom:0; min-width:0; }
-#b-admin{ grid-column:3; padding:0; min-width:0; }
-/* 좁은 칸이므로 바로가기는 2×2 */
-#b-bottom .tiles{ grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:12px; row-gap:10px; }
-#b-bottom .evpair{ column-gap:18px; }
-
-/* 바로가기 — 링크에 숫자를 34px 로 세울 이유가 없다. 제목 줄 오른쪽으로. */
-.tiles .ad{ position:relative; }
-.tiles .ad .th{ height:clamp(26px, 3.4vh, 30px); }
-.tiles .ad .tb{ position:absolute; right:12px; top:0; padding:0; }
-.tiles .ad .tb b{ font-size:15.5px; line-height:clamp(26px, 3.4vh, 30px); }
-/* 단위 말(`미답변`·`전체`)까지 숨기면 숫자가 무엇인지 모른다 — 숨기지 않고 옆에 작게 둔다.
-   (한 번 display:none 으로 지웠다가 되돌렸다) */
-.tiles .ad .tb span{ display:inline; font-size:14px; color:var(--grey); margin-left:4px; }
-.tiles .ad .tb .tl{ margin-left:4px; }
-.tiles .ad .ts{ padding:clamp(2px, .5vh, 6px) 12px clamp(3px, .6vh, 8px); }
-
-/* 값 — 줄어들되 바닥이 있다. 증거 크롭 84px 이 그 예다:
-   어느 지역 요청인지 영상으로 보여 주는 것이 그 칸의 존재 이유다. */
-@media (max-height: 860px){
-  #main{ padding-top:calc(var(--mast) + 14px); }
-  #b1-row{ height:52px; }
-  #b1{ font-size:28px; line-height:1.24; }
-  #b-kpi{ padding:8px 0 10px; }
-  .k .kv{ margin-top:5px; height:44px; }
-  .k .kv b{ font-size:42px; }
-  #panel{ margin-top:12px; }
-  .rk, .rk-sum{ height:27px; }
-  .ap .ev{ height:104px; }
-  .ap .mh{ height:28px; }
-  .ap dl{ padding:6px 12px 0; row-gap:3px; }
-}
-@media (max-height: 800px){
-  #b1-row{ height:46px; }
-  #b1{ font-size:26px; }
-  .k .kv{ height:38px; }
-  .k .kv b{ font-size:34px; }
-  #panel{ margin-top:9px; }
-  .rk, .rk-sum{ height:24px; }
-  .ap .ev{ height:88px; }     /* 알아볼 수 있는 하한 */
-}
-@media (max-width: 1500px){
-  /* 좁아지면 바로가기 칸을 줄이고, 증거 카드 안에서도 그림 몫을 줄여
-     글자(요청 일시·지역·크롭 거리)가 먼저 자리를 갖게 한다.
-     그림은 '어디쯤인지' 알아보면 되고, 값은 읽혀야 뜻이 있다. */
-  #b-bottom{ grid-template-columns:minmax(0,1fr) 1px 280px; column-gap:18px; }
-  #b-bottom .tiles{ column-gap:10px; row-gap:8px; }
-  .ap{ grid-template-columns:minmax(104px,28%) minmax(0,1fr); }
-  .ap dl{ column-gap:8px; font-size:14px; }
-  .ap .mh{ gap:7px; }
-}
-@media (max-width: 1100px){
-  #b-bottom{ grid-template-columns:1fr; }
-  #b-bottom::before{ display:none; }
-  #b-approve, #b-admin{ grid-column:1; }
-  #b-bottom .tiles{ grid-template-columns:repeat(4,minmax(0,1fr)); }
-}
-
-/* ── 배치 조정 (2026-09-20, 발주자 화면 확인 후) ───────────────────────────
-   "백본과 AI 개발 프로젝트 현황이 쓸데없이 너무 칸을 많이 차지하고 있다."
-   "카드 발행 승인 대기 보면 좀 짤린 느낌이다. 검토? 여기까지 이미지는 세로로 늘려야."
-
-   백본 구역은 **제목 두 줄과 지도·막대 다섯 줄**이 전부인데 화면의 절반을 먹고 있었다.
-   막대 다섯 줄은 22px 이면 읽힌다. 거기서 걷은 높이를 증거 크롭에 준다 —
-   그 칸은 어느 지역 요청인지 영상으로 보여 주는 것이 존재 이유라 세로가 살아야 한다. */
-
-/* 백본 — 목록 줄을 22px 로 조여 구역 자체를 낮추고, 그 높이를 아래(증거 크롭)로 넘긴다.
-   ⚠ `#panel` 안의 판들은 **절대 위치**라 자동 높이가 2px 로 잡힌다. 높이를 명시해야 한다.
-   한 번 `flex:0 0 auto` 로 바꿨다가 목록이 통째로 사라졌다 — 그때의 기록을 남겨 둔다.
-   최소값은 여섯 줄(다섯 + 합계)이 들어가는 높이다. 합계가 잘리면 목록의 뜻이 없다. */
-/* 남는 높이는 **가운데 구역**이 받는다(원판 원칙 "여백은 콘텐츠로").
-   아래 두 구역은 내용 높이로 두고, 지도 판과 목록 판이 같이 자란다 —
-   둘은 같은 격자 행이라 높이가 저절로 같아진다.
-   한 번 반대로(아래가 남는 높이를 받게) 두었다가 판이 254px 아래로 눌렸다. */
-/* 가운데 구역은 **내용 높이**로 두고(판이 스스로 자란다), 남는 높이는 아래가 받는다.
-   반대로 두면 큰 화면에서 판이 420 에 걸린 뒤 빈 띠가 생긴다(1920×1200 에서 105px). */
-/* 남는 높이는 **증거 크롭이 받는다.** 사이 여백으로 흘리면 빈 띠가 되고(1920×1200 에서
-   135px), 판에 몰아주면 판이 420 상한에 걸린다. 크롭은 커질수록 요청 지역이 잘 보이니
-   여기가 받을 자리다. 상한은 둔다 — 카드가 사진첩처럼 커지면 안 된다. */
-#split{ flex:0 0 auto; }
-#b-bottom{ flex:1 1 auto; align-items:stretch; }
-#b-approve{ display:flex; flex-direction:column; min-height:0; }
-#b-approve .evpair{ flex:1 1 auto; min-height:0; }
-/* `.ap` 는 격자(그림 | 값)라 flex 로는 안 늘어난다 — 칸을 늘리고 그림이 그 칸을 채운다. */
-.ap{ min-height:0; align-items:stretch; }
-.ap .ev{ height:100%; min-height:clamp(96px, 14vh, 140px); max-height:300px; }
-#b-approve .evpair > *{ min-height:0; }
-#left, #right{ min-height:0; overflow:visible; }
-.rk, .rk-sum{ height:clamp(22px, 3vh, 30px); }
-/* 판 높이 — 화면을 따라 자라되 254(원판 최소)와 420(원판 최대) 사이를 지킨다.
-   짧은 모니터에서는 164 까지 내려간다(여섯 줄이 들어가는 하한). */
-/* margin-top 은 원판 값(30px)을 지킨다 — 오른쪽은 탭 줄이 있어 이 값이라야 왼쪽 판과
-   아래 끝이 맞는다. 한 번 줄였다가 두 판이 19px 어긋났다. */
-#panel{ flex:1 1 0; min-height:clamp(164px, 29vh, 420px); max-height:420px; }
-#plate-wrap{ flex:1 1 0; min-height:clamp(164px, 29vh, 420px); max-height:420px; }
-.sh{ margin-bottom:2px; }
-
-/* 증거 크롭 — 카드가 세로로 서야 요청 지역이 보인다. */
-/* align-items:start 였는데 그러면 카드가 안 늘어난다 — stretch 로 두고 위 규칙을 따른다 */
-#b-bottom{ min-height:0; }
-
-
