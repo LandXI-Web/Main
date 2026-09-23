@@ -13,16 +13,43 @@ function watch(page) {
   page.on('console', (m) => { if (m.type() === 'error' && !NETWORK.test(m.text())) errs.push('console: ' + m.text()); });
   return errs;
 }
-/* 레일은 **역할마다 다르다**(2026-09-21~22 위계 3단). 기존 화면들은 직원의 집이므로
-   기본 역할을 직원으로 둔다 — 역할을 안 정하면 관리자(DEFAULT_ROLE)로 붙어 레일이 여섯이 된다. */
-async function boot(page, url = URL, role = 'staff') {
-  await page.addInitScript((r) => {
+/* ── 역할 픽스처 — 00-COMMON / MASTER-PLAN §7.3 그대로 복사(Wave 0 동안 _roles.mjs import 금지) ── */
+const HOME = { admin: 'admin-home.html', staff: 'ai-project.html', sales: 'ximap.html' };
+const TENANT_HOME = { namwon: 'portal.html', 'gwangju-jeonnam': 'portal-dp-gj-marine-25.html' };
+const TENANT_DOOR = { namwon: 'portal-login-namwon.html', 'gwangju-jeonnam': 'portal-login-gwangju-jeonnam.html' };
+/** LX 세션으로 화면을 연다. 세션은 첫 로드에서만 심는다(sessionStorage 가드). */
+async function bootAs(page, url, role = 'staff', extra = {}) {
+  await page.addInitScript(([r, ex]) => {
+    if (sessionStorage.getItem('lx_e2e_boot')) return;
+    sessionStorage.setItem('lx_e2e_boot', '1');
     localStorage.setItem('lx_logged_in', '1');
     localStorage.setItem('lx_role', r);
-  }, role);
+    localStorage.removeItem('lx_tenant_session');
+    for (const [k, v] of Object.entries(ex)) (v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v));
+  }, [role, extra]);
   await page.goto(url);
   await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
 }
+/** 기관 세션으로 화면을 연다. */
+async function bootTenant(page, url, tenant = 'namwon') {
+  await page.addInitScript((t) => {
+    if (sessionStorage.getItem('lx_e2e_boot')) return;
+    sessionStorage.setItem('lx_e2e_boot', '1');
+    localStorage.removeItem('lx_logged_in'); localStorage.removeItem('lx_role');
+    localStorage.setItem('lx_tenant_session', JSON.stringify({ tenant: t, at: '2026-06-08T09:00:00+09:00' }));
+  }, tenant);
+  await page.goto(url);
+  await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
+}
+/** 같은 탭에서 LX 계정을 바꾼다(역할 전환 e2e). 다음 goto 부터 적용. */
+const switchTo = (page, role) => page.evaluate((r) => {
+  localStorage.setItem('lx_logged_in', '1'); localStorage.setItem('lx_role', r); localStorage.removeItem('lx_tenant_session');
+}, role);
+/* 레일은 **역할마다 다르다**(2026-09-21~22 위계 3단). 기존 화면들은 직원의 집이므로
+   기본 역할을 직원으로 둔다 — 역할을 안 정하면 관리자(DEFAULT_ROLE)로 붙어 레일이 여섯이 된다. */
+const boot = (page, url = URL, role = 'staff') => bootAs(page, url, role);
+const SESSION_KEYS = ['lx_logged_in', 'lx_role', 'lx_tenant_session'];
+const keysLeft = (page) => page.evaluate((ks) => ks.filter((k) => localStorage.getItem(k) !== null), SESSION_KEYS);
 
 test.describe('관문', () => {
   test('로그인 전이면 그리기 전에 login.html?next=<파일+쿼리> 로 보낸다', async ({ page }) => {
@@ -39,13 +66,37 @@ test.describe('관문', () => {
     await expect(page.locator('#rail')).toHaveCount(0);
     await expect(page.locator('#page-title')).toBeVisible();
   });
-  test('로그아웃 = 세션을 지우고 메인으로', async ({ page }) => {
-    await page.addInitScript(() => { if (!sessionStorage.getItem('lx_e2e')) { localStorage.setItem('lx_logged_in', '1'); sessionStorage.setItem('lx_e2e', '1'); } });
-    await page.goto(URL);
-    await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
+  /* signOut(R-S2 · C-09) — 전에는 lx_logged_in 만 지워 lx_role 이 남았다. 이제 세 키 전부 0, 착지 = LX 로그인 문. */
+  test('로그아웃 = signOut — 세 키 전부 지우고 login.html', async ({ page }) => {
+    await boot(page, URL, 'sales');
+    await page.evaluate(() => localStorage.setItem('lx_tenant_session', '{"tenant":"namwon"}'));   // 잔존 키도 지운다
     await page.locator('#rail > nav .rail-i[data-action="logout"]').click();
-    await page.waitForURL(/scrub\/index\.html/);
-    expect(await page.evaluate(() => localStorage.getItem('lx_logged_in'))).toBeNull();
+    await page.waitForURL(/\/login\.html$/);
+    expect(await keysLeft(page)).toEqual([]);
+  });
+  test('MY 플라이아웃의 로그아웃도 같은 signOut', async ({ page }) => {
+    await boot(page, URL, 'staff');
+    await page.locator('#rail-my-btn').focus();
+    await page.locator('#rail-my button[data-action="logout"]').click();
+    await page.waitForURL(/\/login\.html$/);
+    expect(await keysLeft(page)).toEqual([]);
+  });
+  /* S8 — ?denied= 로 튕겨 온 사람에게 한 줄. 안내 뒤 주소에서 denied 를 걷는다(R-S5). LX 3역할 전부. */
+  for (const [role, tried, line] of [
+    ['admin', 'ximap.html', '지도 서비스 화면은 LX 직원 · 영업용 계정 전용입니다 — 지금은 LX 관리자로 들어와 있습니다'],
+    ['staff', 'admin-publish.html', '카드 발행 관리 화면은 LX 관리자 전용입니다 — 지금은 LX 직원으로 들어와 있습니다'],
+    ['sales', 'notice.html', '서비스 지원 화면은 LX 직원 전용입니다 — 지금은 영업용 계정으로 들어와 있습니다'],
+  ]) {
+    test(`?denied — ${role} 가 ${tried} 를 두드리면 제 집에서 한 줄 안내 + 주소에서 denied 제거`, async ({ page }) => {
+      await bootAs(page, `proto/${tried}`, role);
+      await expect(page).toHaveURL(new RegExp(`${HOME[role].replace('.', '\\.')}$`));
+      await expect(page.locator('#say')).toHaveText(line);
+    });
+  }
+  test('표에 없는 화면 이름이면 일반 문구 · 이상한 값은 글자로만', async ({ page }) => {
+    await boot(page, URL + '?denied=zz%3Cb%3E.html&tab=faq');
+    await expect(page.locator('#say')).toHaveText('zzb.html 화면에는 들어갈 수 없습니다');
+    expect(new globalThis.URL(page.url()).search).toBe('?tab=faq');
   });
 });
 
@@ -86,8 +137,10 @@ test.describe('레일', () => {
      관리자는 완전히 다른 사이트다: 만드는 화면(프로젝트·분석·지도·대시보드)을 아예 갖지 않는다.
      영업용은 셋뿐이다 — 할 수 있는 것(분석 카드) · 해낸 것(BP) · 지금 보는 것(XI Map). */
   test('레일은 역할마다 다르다 — 관리자 6 · 직원 7 · 영업 4', async ({ page }) => {
+    let first = true;
     const railOf = async (role, url) => {
-      await boot(page, url, role);
+      if (first) { first = false; await boot(page, url, role); }
+      else { await switchTo(page, role); await page.goto(url); await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready'); }
       return page.$$eval('#rail .rail-i[data-menu]', (a) => a.map((e) => e.dataset.menu));
     };
     expect(await railOf('admin', 'proto/admin-home.html'))
@@ -96,6 +149,27 @@ test.describe('레일', () => {
       .toEqual(['dashboard', 'media', 'project', 'analysis', 'map', 'support', 'my']);
     expect(await railOf('sales', 'proto/ximap.html'))
       .toEqual(['analysis', 'map', 'usecase', 'my']);
+  });
+
+  /* 관리자 사이트는 다른 집이다(Q3) — 관리자가 여는 화면은 전부 html[data-site=admin]. 모습(명도 반전)은 E1-6. */
+  test('관리자 화면 전부 html[data-site=admin] · 직원·영업은 없다', async ({ page }) => {
+    const ADMIN = ['admin-home.html', 'admin-publish.html', 'admin-notice.html', 'admin-users.html', 'admin-inquiry.html',
+      'admin-faq.html', 'admin-map.html', 'produce.html', 'ai-card.html', 'dataset.html', 'mypage.html'];
+    await boot(page, `proto/${ADMIN[0]}`, 'admin');
+    for (const f of ADMIN) {
+      await page.goto(`proto/${f}`);
+      await page.waitForLoadState('domcontentloaded');
+      expect(new globalThis.URL(page.url()).pathname.split('/').pop(), f).toBe(f);
+      await expect(page.locator('html'), f).toHaveAttribute('data-site', 'admin');
+    }
+    await switchTo(page, 'staff');
+    await page.goto('proto/ai-project.html');
+    await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
+    await expect(page.locator('html')).not.toHaveAttribute('data-site', /./);
+    await switchTo(page, 'sales');
+    await page.goto('proto/ximap.html');
+    await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
+    await expect(page.locator('html')).not.toHaveAttribute('data-site', /./);
   });
 
   test('구현 화면도 셸 부품 한 벌 — 건너뛰기 · 마스트헤드 · 제목 행 · 푸터 · 토스트 자리', async ({ page }) => {
@@ -162,6 +236,15 @@ test.describe('마스트헤드 · 제목 행 · 푸터', () => {
     await expect(page.locator('#foot')).toHaveCount(1);
     await expect(page.locator('#foot-addr')).toContainText('고객센터 063-713-1213, 1216');
     await expect(page.locator('#page-head .ptabs[data-style="line"] a[aria-current="page"]')).toHaveText('사용자 관리');
+  });
+  /* R-S4 — Family Site 의 기관 항목은 **그 기관의 로그인 문**만 가리킨다(작업공간 직접 링크 금지). */
+  test('Family Site 기관 항목 = 그 기관의 로그인 문', async ({ page }) => {
+    await boot(page);
+    const fam = await page.$$eval('#fam .fam-l a', (a) => a.map((e) => [e.textContent.trim(), e.getAttribute('href')]));
+    const orgs = fam.filter(([t]) => /지자체/.test(t));
+    expect(orgs.map(([, h]) => h)).toEqual([TENANT_DOOR.namwon, TENANT_DOOR['gwangju-jeonnam']]);
+    for (const [t] of orgs) expect(t).toContain('지자체 · 로그인');
+    expect(fam.some(([, h]) => /^portal(\.html|-dp-)/.test(h))).toBe(false);
   });
   test('건너뛰기 링크가 첫 Tab 이고 본문으로 간다', async ({ page }) => {
     await boot(page);

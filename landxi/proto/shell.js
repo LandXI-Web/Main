@@ -4,6 +4,8 @@
    디자인 법전: design/system.md (라운드 0 · 그림자 0 · 그라디언트 0 · 유리 0 · 바닥 14px · 채운 파란 버튼 없음). */
 
 import { ROLES, roleById, can, sees, onRail, homeOf, DEFAULT_ROLE, SCREEN_MENU } from '../assets/data/roles.js';
+import { ALL_SESSION_KEYS } from '../assets/data/storage-keys.js';
+import { applyCustomSymbol } from './account-brand.js';
 
 export const $ = (s, r = document) => r.querySelector(s);
 export const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -18,6 +20,12 @@ export const nf = new Intl.NumberFormat('ko-KR');
    전에는 로그인만 하면 **열 개 메뉴가 전부** 떴다. 카드 발행을 승인하는 화면도,
    사용자 권한을 바꾸는 화면도 누구에게나 열려 있었다.
    이제 레일은 roles.js 선언만 읽는다 — 못 가는 곳은 **아예 세우지 않는다**(흐리게 두지 않는다). */
+/* 기관(지자체) 세션 — roles.js 와 무관한 **완전 별도** 계정(Q1 · MASTER-PLAN §7).
+   lx_tenant_session = {"tenant":"namwon","at":"<ISO>"}. 깨졌으면 없는 것으로 본다. */
+export const TENANT = (() => {
+  try { const o = JSON.parse(localStorage.getItem('lx_tenant_session') || 'null'); return o && typeof o.tenant === 'string' ? o : null; }
+  catch { return null; }
+})();
 export const ROLE = (() => {
   try { const r = localStorage.getItem('lx_role'); return roleById(r) ? r : DEFAULT_ROLE; }
   catch { return DEFAULT_ROLE; }
@@ -69,9 +77,15 @@ export const FOOT_LINKS = ['개인정보처리방침', '이용약관', '이메�
    셸이 모든 화면에 실리는데 cards·registry 까지 딸려 오기 때문이다 — 늘어나면 옮긴다. */
 export const FAMILY = [
   { name: 'Land-XI 소개', href: 'scrub/index.html' },
-  { name: '전북특별자치도 남원시', href: 'portal.html', kind: '지자체' },
-  { name: '광주전남특별시', href: 'portal-dp-gj-marine-25.html', kind: '지자체' },
+  /* 기관 항목은 **그 기관의 로그인 문**만 가리킨다(R-S4) — 작업공간 직접 링크 금지.
+     전에는 광주전남 작업공간(portal-dp-gj-marine-25.html)을 곧장 걸어, LX 세션이 남의 작업공간으로 샜다. */
+  { name: '전북특별자치도 남원시', href: 'portal-login-namwon.html', kind: '지자체 · 로그인' },
+  { name: '광주전남특별시', href: 'portal-login-gwangju-jeonnam.html', kind: '지자체 · 로그인' },
 ];
+/* 기관 홈 · 문 — portal.js TENANTS[].home · login 의 미러(셸은 모든 화면에 실리므로 portal.js 를 import 하지 않는다).
+   shell-gate.js 의 TENANT_HOME 과 같은 표다(R-S3). 광주전남 홈은 임시 — E1-2 가 교체. */
+const TENANT_HOME = { namwon: 'portal.html', 'gwangju-jeonnam': 'portal-dp-gj-marine-25.html' };
+const tenantDoor = (id) => `portal-login-${id}.html`;
 export const FOOT_ADDR = '(우)54870 전북 전주시 덕진구 기지로 120 · 고객센터 063-713-1213, 1216';
 export const NOTICE = { id: 8, title: '고위험 탐지 건 긴급 처리 안내', date: '2026-04-15', href: 'notice.html?notice=8' };
 export const AS_OF = '2026-06-08';
@@ -116,32 +130,67 @@ const ICONS = {
 };
 export const icon = (name, size = 16) => `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter" aria-hidden="true">${ICONS[name] || ''}</svg>`;
 
-/* ══ 로그인 관문 ═══════════════════════════════════════════════════════════
+/* ══ 관문 ═══════════════════════════════════════════════════════════════════
    그리기 전에 막으려면 <head> 에 <script src="shell-gate.js"></script>(클래식 · 블로킹)을 둔다.
-   mountShell 도 한 번 더 확인한다(관문 스크립트를 빠뜨린 페이지의 안전망). */
+   mountShell 도 한 번 더 확인한다(관문 스크립트를 빠뜨린 페이지의 안전망).
+   판정표는 shell-gate.js 와 **같은 표**다(MASTER-PLAN §7.2). */
 const here = () => (location.pathname.split('/').pop() || 'index.html') + location.search;
+const fileOf = () => location.pathname.split('/').pop() || 'index.html';
 export function isLoggedIn() { try { return localStorage.getItem('lx_logged_in') === '1'; } catch { return false; } }
-export function gate(base = '') {
-  if (isLoggedIn()) {
-    /* 로그인했어도 **역할이 갈 수 없는 화면**이면 돌려보낸다.
-       shell-gate.js 를 빠뜨린 화면의 안전망이다 — 실제로 대시보드와 데이터 관리가 빠져 있었다.
-       레일에서 치운 것만으로는 부족하다. 주소를 직접 치면 그대로 열렸다(2026-09-21). */
-    const file = location.pathname.split('/').pop() || 'index.html';
+const tenantNow = () => { const t = TENANT?.tenant; return t && TENANT_HOME[t] ? t : null; };
+const bounce = (url) => { document.documentElement.style.visibility = 'hidden'; location.replace(url); return false; };
+const wipe = () => { for (const k of ALL_SESSION_KEYS) { try { localStorage.removeItem(k); } catch { /* 저장소 차단 */ } } };
+/** portal = 포털 화면이면 그 화면의 기관 id(portal-ui 가 넘긴다), LX 화면이면 비운다. */
+export function gate(base = '', portal = null) {
+  const lx = isLoggedIn(), t = tenantNow(), file = fileOf(), q = encodeURIComponent(file);
+  if (lx && t) { wipe(); return bounce(`${base}login.html`); }                    // 손상 — 두 세션 동시
+  if (portal) {
+    if (t) return t === portal ? true : bounce(`${base}${TENANT_HOME[t]}?denied=${q}`);   // 다른 기관의 작업공간
+    if (lx) return bounce(`${base}${tenantDoor(portal)}?denied=${q}`);                    // LX 세션(관리자 포함)
+    return bounce(`${base}${tenantDoor(portal)}?next=${encodeURIComponent(here())}`);
+  }
+  if (t) return bounce(`${base}${TENANT_HOME[t]}?denied=${q}`);                   // 기관 세션은 LX 화면에 못 들어온다
+  if (lx) {
+    /* 로그인했어도 **역할이 갈 수 없는 화면**이면 돌려보낸다(2026-09-21).
+       레일에서 치운 것만으로는 부족하다 — 주소를 직접 치면 그대로 열렸다. */
     const need = SCREEN_MENU[file];
-    if (need && !sees(ROLE, need)) {
-      document.documentElement.style.visibility = 'hidden';
-      location.replace(`${base}${homeOf(ROLE)}?denied=${encodeURIComponent(file)}`);
-      return false;
-    }
+    if (need && !sees(ROLE, need)) return bounce(`${base}${homeOf(ROLE)}?denied=${q}`);
     return true;
   }
-  document.documentElement.style.visibility = 'hidden';
-  location.replace(`${base}login.html?next=${encodeURIComponent(here())}`);
-  return false;
+  return bounce(`${base}login.html?next=${encodeURIComponent(here())}`);
 }
-export function logout(base = '') {
-  try { localStorage.removeItem('lx_logged_in'); } catch { /* 저장소 차단 */ }
-  location.href = `${base}scrub/index.html`;
+
+/** signOut — 세 키를 **전부** 지운다(R-S2 · C-09). 착지: 기관 → 그 기관의 문 · LX(3역할) → login.html
+    (관리자는 E1-6 뒤 admin-login.html). */
+let mountedTenant = null;
+export function signOut(base = '') {
+  const t = mountedTenant?.id || tenantNow();
+  const door = t ? (mountedTenant?.login || tenantDoor(t)) : 'login.html';
+  wipe();
+  location.href = `${base}${door}`;
+}
+/** 옛 이름 — 다른 화면이 import 중(mypage.js). signOut 과 같다. */
+export const logout = signOut;
+
+/* ── S8 한 줄 안내 — ?denied= 로 튕겨 온 사람에게 **왜** 여기 왔는지 말한다(R-S5) ── */
+const ro = (w) => { const c = String(w).trim().slice(-1).charCodeAt(0) - 0xAC00; return c < 0 || c > 11171 || c % 28 === 0 || c % 28 === 8 ? '로' : '으로'; };
+/** LX 셸 문구 — 화면명 · 허용 역할 · 지금 역할(MASTER-PLAN §7.2 안내 문구 규약). */
+export function deniedLine(file, roleId = ROLE) {
+  const key = SCREEN_MENU[file];
+  const nav = key && NAV.find((n) => n.key === key);
+  if (!nav) return `${file} 화면에는 들어갈 수 없습니다`;
+  const who = ROLES.filter((r) => sees(r.id, key)).map((r) => r.name);
+  const me = roleById(roleId)?.name || '';
+  return `${nav.name} 화면은 ${who.join(' · ')} 전용입니다 — 지금은 ${me}${ro(me)} 들어와 있습니다`;
+}
+/** 주소에서 denied 를 걷고 그 값을 돌려준다 — 새로고침해도 같은 안내가 다시 서지 않게. */
+export function takeDenied() {
+  const u = new URL(location.href), d = u.searchParams.get('denied');
+  if (d === null) return null;
+  u.searchParams.delete('denied');
+  const q = u.searchParams.toString();
+  history.replaceState(history.state, '', u.pathname + (q ? `?${q}` : '') + u.hash);
+  return d.replace(/[^\w.-]/g, '').slice(0, 80);
 }
 
 /* 셸 CSS 가 빠진 페이지(자리 화면 등)에는 직접 단다. */
@@ -170,7 +219,9 @@ function ensureCss(base) {
 export function mountShell(o = {}) {
   const base = ensureCss(o.base || '');
   const withRail = o.rail !== false;
-  if (withRail && o.gate !== false && !gate(base)) return null;
+  const tn = withRail && o.tenant ? o.tenant : null;                // 기관 포털 화면 — portal.js TENANTS 한 줄
+  if (withRail && o.gate !== false && !gate(base, tn?.id || null)) return null;
+  if (tn) mountedTenant = tn;
 
   const body = document.body;
   body.classList.add('lx');
@@ -187,7 +238,17 @@ export function mountShell(o = {}) {
     const my = n.key === 'my' ? ' id="rail-my-btn" aria-haspopup="true" aria-expanded="false" aria-controls="rail-my"' : '';
     return `<a class="rail-i" data-menu="${n.key}" href="${base}${n.href}"${cur}${my}>${railSvg(n.icon)}<span class="rl">${esc(n.name)}</span></a>`;
   };
-  const rail = !withRail ? '' : `
+  /* 기관 레일 — LX NAV 를 걸러 쓰지 않는다(C-10). 그 기관의 메뉴만 세운다: 내 서비스 + 로그아웃.
+     MY 없음(기관 MY 는 E1-2 포털판). 마크는 portal-ui.js 가 그 기관 CI 로 바꾼다. */
+  const tenantRail = () => `
+<aside id="rail" aria-label="주 메뉴" data-tenant="${esc(tn.id)}">
+  <a id="rail-mark" href="${base}${esc(tn.home)}" aria-label="${esc(tn.name)} 홈"><span>LAND</span><span>XI</span></a>
+  <nav id="rail-top" class="rail-group" aria-label="업무"><a class="rail-i" data-menu="portal" href="${base}${esc(tn.home)}" aria-current="page">${railSvg('stack')}<span class="rl">내 서비스</span></a></nav>
+  <nav id="rail-foot" class="rail-group" aria-label="계정">
+    <button type="button" class="rail-i" data-action="logout">${railSvg('out')}<span class="rl">로그아웃</span></button>
+  </nav>
+</aside>`;
+  const rail = !withRail ? '' : tn ? tenantRail() : `
 <aside id="rail" aria-label="주 메뉴">
   <a id="rail-mark" href="${base}scrub/index.html" aria-label="Land-XI 홈"><span>LAND</span><span>XI</span></a>
   <nav id="rail-top" class="rail-group" aria-label="업무">${NAV.filter((n) => n.group === 'top' && onRail(ROLE, n.key)).map(item).join('')}</nav>
@@ -232,6 +293,13 @@ export function mountShell(o = {}) {
   if (!$('#say')) body.append(tpl('<p id="say" role="status" aria-live="polite" aria-atomic="true"></p>'));
 
   if (withRail) bindRail(base);
+  if (withRail && !tn) {
+    /* 관리자 사이트는 다른 집이다(Q3) — 표식만 단다(관문도 그리기 전에 단다). 명도 반전 CSS 는 E1-6. */
+    if (ROLE === 'admin' && isLoggedIn()) document.documentElement.dataset.site = 'admin';
+    applyCustomSymbol();
+    const d = takeDenied();
+    if (d) say(deniedLine(d), 7000);
+  }
   if (o.title && !o.keepDocTitle) document.title = `${o.title}${o.tabs && o.tab ? ' · ' + (o.tabs.find((t) => t.key === o.tab)?.label || '') : ''} — Land-XI`;
   requestAnimationFrame(() => { document.documentElement.dataset.shell = 'ready'; });
   return { main, rail: $('#rail'), mast: $('#mast'), head: $('#page-head'), foot: $('#foot') };
@@ -242,6 +310,11 @@ export function mountShell(o = {}) {
 let docBound = false, docClick = () => {};
 function bindRail(base) {
   const btn = $('#rail-my-btn'), fly = $('#rail-my'); let t = 0;
+  if (!btn || !fly) {                                                  // 기관 레일 — MY 없음, 로그아웃만
+    docClick = (e) => { if (e.target.closest('[data-action="logout"]')) signOut(base); };
+    if (!docBound) { docBound = true; document.addEventListener('click', (e) => docClick(e)); }
+    return;
+  }
   const open = (v) => { clearTimeout(t); fly.hidden = !v; btn.setAttribute('aria-expanded', String(v)); };
   const later = () => { clearTimeout(t); t = setTimeout(() => { if (!fly.matches(':hover') && !btn.matches(':hover') && !fly.contains(document.activeElement) && document.activeElement !== btn) open(false); }, 160); };
   const items = () => $$('a,button', fly);
@@ -260,7 +333,7 @@ function bindRail(base) {
     if (e.key === 'Escape' || e.key === 'ArrowLeft') { e.preventDefault(); btn.focus(); open(false); }
   });
   docClick = (e) => {
-    if (e.target.closest('[data-action="logout"]')) { logout(base); return; }
+    if (e.target.closest('[data-action="logout"]')) { signOut(base); return; }
     if (!e.target.closest('#rail-my, #rail-my-btn')) open(false);
   };
   if (!docBound) { docBound = true; document.addEventListener('click', (e) => docClick(e)); }

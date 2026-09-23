@@ -26,10 +26,13 @@ import { specOf, BLOCKS } from './studio.js';
 export const TENANTS = [
   { id: 'lx', name: 'LX 한국국토정보공사', kind: 'maker', home: 'dashboard.html',
     desc: '모델을 만들고 결과 품질을 책임진다', menus: 'all' },
+  /* 기관 세션(lx_tenant_session)은 LX 화면에 들어가지 않는다(Q1 완전 별도 · §7.2) — menus 는 포털뿐.
+     home = 관문이 돌려보내는 그 기관의 집(R-S3 · shell-gate.js 에 미러) · login = 그 기관의 문.
+     광주전남 home 은 임시다 — E1-2 가 portal-gwangju-jeonnam.html 로 바꾼다. */
   { id: 'namwon', name: '전북특별자치도 남원시', kind: 'user', home: 'portal.html', profile: 'namwon',
-    desc: '배포된 서비스로 행정 업무를 한다', menus: ['portal', 'analysis', 'map', 'support'] },
-  { id: 'gwangju-jeonnam', name: '광주전남특별시', kind: 'user', home: 'portal.html', profile: 'gwangju-jeonnam',
-    desc: '배포된 서비스로 행정 업무를 한다', menus: ['portal', 'analysis', 'map', 'support'] },
+    desc: '배포된 서비스로 행정 업무를 한다', menus: ['portal'], login: 'portal-login-namwon.html' },
+  { id: 'gwangju-jeonnam', name: '광주전남특별시', kind: 'user', home: 'portal-dp-gj-marine-25.html', profile: 'gwangju-jeonnam',
+    desc: '배포된 서비스로 행정 업무를 한다', menus: ['portal'], login: 'portal-login-gwangju-jeonnam.html' },
 ];
 export const tenantById = (id) => TENANTS.find((t) => t.id === id) || TENANTS[0];
 

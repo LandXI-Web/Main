@@ -1,0 +1,212 @@
+{
+ "guest": {
+  "title": "Land-XI — 스크럽 비행 · 궤도에서 국토까지",
+  "mast": [
+   "활용 서비스 -> ../site/platform.html",
+   "공지사항 -> ../site/notice.html",
+   "활용 사례 -> ../site/usecase.html",
+   "로그인 -> ../login.html"
+  ],
+  "docHeight": 18155,
+  "links": 16,
+  "bad": []
+ },
+ "guest-platform": {
+  "links": 7,
+  "bad": [],
+  "doors": [
+   "../portal-login-namwon.html",
+   "../portal-login-gwangju-jeonnam.html"
+  ]
+ },
+ "login": {
+  "roles": [
+   "admin",
+   "staff",
+   "sales"
+  ],
+  "links": [
+   "#loginForm",
+   "scrub/index.html",
+   "find-id.html",
+   "find-password.html",
+   "signup.html",
+   "#privacy",
+   "#terms",
+   "#email"
+  ]
+ },
+ "admin": {
+  "title": "운영 현황 — LX 관리자",
+  "rail": [
+   "운영 현황",
+   "데이터 관리",
+   "카드 발행 관리",
+   "생산 관리",
+   "서비스 관리",
+   "MY",
+   "로그아웃"
+  ],
+  "site": "admin",
+  "links": 15,
+  "bad": [],
+  "denied": {
+   "tried": "ai-project.html",
+   "landed": "admin-home.html",
+   "query": "denied=ai-project.html"
+  }
+ },
+ "staff": {
+  "title": "프로젝트 — Land-XI",
+  "rail": [
+   "대시보드",
+   "데이터 관리",
+   "프로젝트",
+   "분석 서비스",
+   "지도 서비스",
+   "서비스 지원",
+   "MY",
+   "로그아웃"
+  ],
+  "site": "",
+  "links": 11,
+  "bad": [],
+  "denied": {
+   "tried": "admin-home.html",
+   "landed": "ai-project.html",
+   "query": "denied=admin-home.html"
+  }
+ },
+ "sales": {
+  "title": "지도 서비스 — Land-XI",
+  "rail": [
+   "분석 서비스",
+   "지도 서비스",
+   "활용 사례",
+   "MY",
+   "로그아웃"
+  ],
+  "site": "",
+  "links": 12,
+  "bad": [],
+  "denied": {
+   "tried": "admin-publish.html",
+   "landed": "ximap.html",
+   "query": "denied=admin-publish.html"
+  },
+  "usecaseTabs": [
+   "공지사항 -> notice.html",
+   "자주 묻는 질문 -> faq.html",
+   "문의하기 -> contact.html",
+   "활용사례 -> usecase.html",
+   "매뉴얼 -> manual.html"
+  ],
+  "usecaseRail": [
+   "분석 서비스",
+   "지도 서비스",
+   "활용 사례",
+   "MY",
+   "로그아웃"
+  ],
+  "noticeReach": "ximap.html",
+  "analysisButtons": [
+   "지자체 사업7",
+   "글로벌 사업2",
+   "초기화",
+   "검색",
+   "영농관리 행정서비스v2.1\n    농림축산식품부\n    모델 4전용 모듈 4배포 1",
+   "생활환경 위험요소 탐지 서비스v1.3\n    환경부\n    모델 3전용 모듈 4배포 1배포 지역 영상",
+   "도로 안전관리 서비스v2.1\n    국토교통부\n    모델 1전용 모듈 4배포 1배포 지역 영상",
+   "준비 중 · 산출물 없음\n  \n    인파관리 서비스준비 중\n    소관 미정\n    모델 0전용 모듈 6배포 1",
+   "국토 변화 탐지 서비스v1.0\n    LX 한국국토정보공사 · 국토교통부\n    모델 3전용 모듈 3배포 1배포 지역 영상",
+   "해양쓰레기 실태조사 서비스v1.2\n    해양수산부\n    모델 1전용 모듈 3배포 2",
+   "준비 중 · 산출물 없음\n  \n    산림·탄소 관리 서비스준비 중\n    산림청\n    모델 2전용 모듈 0배포 0",
+   "개요",
+   "모델4",
+   "종류1",
+   "LX 모듈9",
+   "기관 모듈2",
+   "배포1",
+   "결과2",
+   "다른 지역에 이식 ›",
+   "설명 보기",
+   "설명 보기",
+   "설명 보기",
+   "결과 보기",
+   "실행 이력",
+   "분석 실행"
+  ]
+ },
+ "portal": {
+  "unauthLanded": "portal-login-namwon.html",
+  "loginInputs": [
+   null,
+   "password"
+  ],
+  "afterLogin": "portal.html",
+  "storage": {
+   "role": null,
+   "logged": null,
+   "tenant": "{\"tenant\":\"namwon\",\"at\":\"2026-09-23T21:31:04.422Z\"}"
+  },
+  "rail": [
+   "내 서비스",
+   "로그아웃"
+  ],
+  "title": "내 서비스 — 남원시",
+  "links": 10,
+  "bad": [],
+  "cardLinks": [
+   "portal-dp-nw-living-23.html",
+   "portal-dp-nw-farm-25.html",
+   "portal-dp-nw-road-26.html",
+   "portal-dp-nw-crowd-27.html",
+   "portal-dp-nw-change.html"
+  ],
+  "workspace": {
+   "url": "portal-dp-nw-living-23.html",
+   "title": "생활환경 위험요소 탐지 서비스 — 남원시",
+   "rail": [
+    "내 서비스",
+    "로그아웃"
+   ],
+   "lxLinks": [],
+   "tabs": [
+    "현황",
+    "분석 결과",
+    "지도",
+    "통계",
+    "보고서"
+   ]
+  },
+  "leak_ximap.html": {
+   "landed": "portal.html",
+   "rail": [
+    "내 서비스",
+    "로그아웃"
+   ],
+   "title": "내 서비스 — 남원시"
+  },
+  "leak_analysis-ai.html": {
+   "landed": "portal.html",
+   "rail": [
+    "내 서비스",
+    "로그아웃"
+   ],
+   "title": "내 서비스 — 남원시"
+  },
+  "leak_dashboard.html": {
+   "landed": "portal.html",
+   "rail": [
+    "내 서비스",
+    "로그아웃"
+   ],
+   "title": "내 서비스 — 남원시"
+  }
+ },
+ "portal-workspace": {
+  "links": 5,
+  "bad": []
+ },
+ "pageErrors": []
+}

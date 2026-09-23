@@ -17,7 +17,7 @@
    표·목록·막대는 **잰 높이만큼만** 줄을 채운다(fitRows). 넘치면 스크롤이 아니라
    쪽으로 넘어간다 — 발주자는 판 안쪽 스크롤도 화면이 안 끝난 것으로 본다.
    그래서 2560×1440 에서는 더 많은 줄이, 1280×720 에서는 더 적은 줄이 보인다. */
-import { mountShell, esc, nf, ymd, say } from './shell.js';
+import { mountShell, takeDenied, esc, nf, ymd, say } from './shell.js';
 import { serviceCards, portalSummary, tenantById, evidenceOf, measuresOf, localModules, blockInfo } from '../assets/data/portal.js';
 import { cardById, modelsOfCard, needsOf, CORE_MODULES } from '../assets/data/cards.js';
 import { specOf, requestsOf } from '../assets/data/studio.js';
@@ -39,8 +39,11 @@ const t = tenantById(TENANT);
 
 /* ══ 껍데기 ═══════════════════════════════════════════════════════════ */
 const svcCard = SVC ? serviceCards('lx').find((c) => c.id === SVC) : null;
-mountShell({
-  active: 'analysis',
+const shell = mountShell({
+  /* 기관 세션의 셸 — 레일은 LX NAV 를 걸러 쓰지 않고 TENANTS 한 줄로 세운다(내 서비스 · 로그아웃).
+     관문도 이 값으로 판정한다(§7.2 포털 행) — LX 세션은 관리자여도 여기 못 들어온다. */
+  tenant: t,
+  active: 'portal',
   title: svcCard ? svcCard.name : '내 서비스',
   /* 제목 줄은 짧게 — shell.css 의 #page-sub 는 넘치면 `…` 로 자른다(법전이 금지하는 것).
      1280 폭에서 긴 줄이 잘렸다. 다만 **옛 골격 화면의 글은 줄이지 않는다** — 그 화면은
@@ -66,23 +69,24 @@ mountShell({
 });
 document.title = `${svcCard ? svcCard.name : '내 서비스'} — ${th.short}`;
 
-/* CI 교체 · 메뉴 경계 — 골격(레일 72 · 마스트헤드 64)은 그대로 두고 두 가지만 갈아 끼운다.
-   1) 마크: 간판은 그 기관 것이다.
-   2) 메뉴: 기관은 **행정서비스 쪽만** 본다. 데이터 관리 · 프로젝트 · 카드 발행은 LX 몫이라
-      기관 레일에 뜨면 이원화 경계가 무너진다(TENANTS.menus 가 정하고, 화면은 그것만 읽는다). */
+/* CI 교체 — 골격(레일 72 · 마스트헤드 64)은 그대로 두고 **간판만** 그 기관 것으로 갈아 끼운다.
+   메뉴 경계는 셸이 세운다(mountShell tenant) — 전에는 LX 레일을 세운 뒤 여기서 걸러 냈고,
+   거르고 나면 레일이 비었다(integrity #1 · C-10). 이제 거를 것이 없다. */
 const mark = document.getElementById('rail-mark');
 if (mark) {
-  mark.innerHTML = th.mark.split('/').map((s) => `<span>${esc(s)}</span>`).join('');
+  mark.innerHTML = th.mark.split('/').map((x) => `<span>${esc(x)}</span>`).join('');
   mark.setAttribute('aria-label', `${th.name} 홈`);
-  mark.setAttribute('href', 'portal.html');
+  mark.setAttribute('href', t.home || 'portal.html');
 }
-if (Array.isArray(t.menus)) {
-  const allow = new Set([...t.menus, 'my']);
-  document.querySelectorAll('#rail .rail-i[data-menu]').forEach((a) => {
-    if (!allow.has(a.dataset.menu)) a.remove();
-  });
-  const svcNav = document.querySelector('#rail .rail-i[data-menu="analysis"]');
-  if (svcNav) { svcNav.href = 'portal.html'; svcNav.querySelector('.rl').textContent = '내 서비스'; }
+
+/* S8 한 줄 안내 — 관문이 ?denied= 를 붙여 이 기관의 집으로 돌려보냈다. 왜 왔는지 말하고 주소에서 걷는다(R-S5). */
+if (shell) {
+  const d = takeDenied();
+  if (d) {
+    say(/^portal[-.]/.test(d)
+      ? `${d}은 다른 기관의 작업공간입니다 — ${th.short} 계정으로는 ${th.short}의 서비스만 씁니다`
+      : `${d}은 LX 플랫폼 화면입니다 — 기관 계정은 내 서비스 작업공간에서 씁니다`, 7000);
+  }
 }
 
 /* ══ 공용 조각 ════════════════════════════════════════════════════════ */

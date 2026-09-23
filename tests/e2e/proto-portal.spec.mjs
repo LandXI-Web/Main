@@ -24,10 +24,41 @@ function watch(page) {
   page.on('console', (m) => { if (m.type() === 'error' && !NETWORK.test(m.text())) errs.push('console: ' + m.text()); });
   return errs;
 }
-async function boot(page, url = HOME) {
-  await page.addInitScript(() => localStorage.setItem('lx_logged_in', '1'));
+/* ── 역할 픽스처 — 00-COMMON / MASTER-PLAN §7.3 그대로 복사(Wave 0 동안 _roles.mjs import 금지) ── */
+const LX_HOME = { admin: 'admin-home.html', staff: 'ai-project.html', sales: 'ximap.html' };
+const TENANT_HOME = { namwon: 'portal.html', 'gwangju-jeonnam': 'portal-dp-gj-marine-25.html' };
+const TENANT_DOOR = { namwon: 'portal-login-namwon.html', 'gwangju-jeonnam': 'portal-login-gwangju-jeonnam.html' };
+/** LX 세션으로 화면을 연다. 세션은 첫 로드에서만 심는다(sessionStorage 가드). */
+async function bootAs(page, url, role = 'staff', extra = {}) {
+  await page.addInitScript(([r, ex]) => {
+    if (sessionStorage.getItem('lx_e2e_boot')) return;
+    sessionStorage.setItem('lx_e2e_boot', '1');
+    localStorage.setItem('lx_logged_in', '1');
+    localStorage.setItem('lx_role', r);
+    localStorage.removeItem('lx_tenant_session');
+    for (const [k, v] of Object.entries(ex)) (v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v));
+  }, [role, extra]);
   await page.goto(url);
   await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
+}
+/** 기관 세션으로 화면을 연다. */
+async function bootTenant(page, url, tenant = 'namwon') {
+  await page.addInitScript((t) => {
+    if (sessionStorage.getItem('lx_e2e_boot')) return;
+    sessionStorage.setItem('lx_e2e_boot', '1');
+    localStorage.removeItem('lx_logged_in'); localStorage.removeItem('lx_role');
+    localStorage.setItem('lx_tenant_session', JSON.stringify({ tenant: t, at: '2026-06-08T09:00:00+09:00' }));
+  }, tenant);
+  await page.goto(url);
+  await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
+}
+/** 같은 탭에서 LX 계정을 바꾼다(역할 전환 e2e). 다음 goto 부터 적용. */
+const switchTo = (page, role) => page.evaluate((r) => {
+  localStorage.setItem('lx_logged_in', '1'); localStorage.setItem('lx_role', r); localStorage.removeItem('lx_tenant_session');
+}, role);
+/** 포털 화면은 **기관 세션**으로 연다(Q1 — 기관 계정은 LX 계정과 완전 별도). */
+async function boot(page, url = HOME) {
+  await bootTenant(page, url, 'namwon');
   await page.waitForTimeout(300);
 }
 /** 데이터 정본을 화면 안에서 그대로 읽는다 — 기대값을 스펙에 베껴 적지 않는다. */
@@ -80,19 +111,49 @@ test.describe('관문 · 이원화 경계', () => {
     expect(new URL(page.url()).searchParams.get('next')).toBe('portal.html');
   });
 
-  test('기관 레일에는 LX 전용 메뉴가 없다 — TENANTS.menus 가 허락한 것만', async ({ page }) => {
+  /* 기관 레일은 LX 레일을 걸러 만든 것이 아니다(C-10) — TENANTS 한 줄로 세운다: 내 서비스 · 로그아웃(MY 없음). */
+  test('기관 레일에는 LX 전용 메뉴가 없다 — 내 서비스 · 로그아웃', async ({ page }) => {
     const errs = watch(page);
     await boot(page);
-    const allow = await data(page, async () => {
-      const p = await import('../assets/data/portal.js');
-      return [...p.tenantById('namwon').menus, 'my'];
-    });
+    const allow = await data(page, async () => (await import('../assets/data/portal.js')).tenantById('namwon').menus);
+    expect(allow).toEqual(['portal']);
+    await expect(page.locator('#rail .rail-i')).toHaveText(['내 서비스', '로그아웃']);
     const got = await page.$$eval('#rail .rail-i[data-menu]', (a) => a.map((x) => x.dataset.menu));
-    expect(got.length).toBeGreaterThan(0);
-    for (const m of got) expect(allow, `레일 ${m} 은 허락된 메뉴가 아니다`).toContain(m);
-    // 판독은 LX 몫이다 — 이 셋이 기관 레일에 뜨면 경계가 무너진다
-    for (const lx of ['dataset', 'project', 'publish', 'admin']) expect(got).not.toContain(lx);
+    expect(got).toEqual(['portal']);
+    await expect(page.locator('#rail .rail-i[data-menu="portal"]')).toHaveAttribute('href', 'portal.html');
+    await expect(page.locator('#rail-my, #rail-my-btn')).toHaveCount(0);
     expect(errs).toEqual([]);
+  });
+
+  test('기관 로그인 = 기관 세션 — LX 키를 세우지 않는다(portal P0-1)', async ({ page }) => {
+    await page.goto('proto/portal-login-namwon.html');
+    await page.locator('#pl-id').fill('namwon-ops');
+    await page.locator('#pl-pw').fill('demo');
+    await page.locator('#pl-f button[type="submit"]').click();
+    await page.waitForURL(/portal\.html/);
+    const s = await page.evaluate(() => ({ lx: localStorage.getItem('lx_logged_in'), role: localStorage.getItem('lx_role'), t: JSON.parse(localStorage.getItem('lx_tenant_session')) }));
+    expect(s.lx).toBeNull(); expect(s.role).toBeNull(); expect(s.t.tenant).toBe('namwon');
+  });
+
+  test('기관 세션이 LX 화면을 두드리면 제 집으로 + 한 줄 안내 + 주소에서 denied 제거', async ({ page }) => {
+    await bootTenant(page, 'proto/ximap.html', 'namwon');
+    await expect(page).toHaveURL(/portal\.html$/);
+    await expect(page.locator('#say')).toHaveText('ximap.html은 LX 플랫폼 화면입니다 — 기관 계정은 내 서비스 작업공간에서 씁니다');
+  });
+
+  test('LX 관리자 세션은 기관 작업공간에 못 들어간다 — 그 기관의 문 + 문 위 안내', async ({ page }) => {
+    await bootAs(page, 'proto/portal-dp-nw-farm-25.html', 'admin');
+    await expect(page).toHaveURL(/portal-login-namwon\.html\?next=portal-dp-nw-farm-25\.html$/);
+    await expect(page.locator('#pl-deny')).toHaveText('기관 작업공간은 기관 계정으로만 들어갑니다 — LX 계정은 로그아웃 뒤 기관 아이디로 로그인하세요');
+    expect(await page.evaluate(() => localStorage.getItem('lx_logged_in'))).toBe('1');   // 자동으로 지우지 않는다
+  });
+
+  test('기관 레일 로그아웃 → 그 기관의 문 · 세션 키 0', async ({ page }) => {
+    await boot(page);
+    await page.locator('#rail button[data-action="logout"]').click();
+    await page.waitForURL(/portal-login-namwon\.html$/);
+    const left = await page.evaluate(() => ['lx_logged_in', 'lx_role', 'lx_tenant_session'].filter((k) => localStorage.getItem(k) !== null));
+    expect(left).toEqual([]);
   });
 
   test('간판은 기관 CI 로 바뀐다 — 골격은 LX 것, 마크·상징색만 기관 것', async ({ page }) => {

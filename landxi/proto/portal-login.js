@@ -27,13 +27,32 @@ const t = tenantById(TENANT);
 const $ = (s) => document.querySelector(s);
 const slot = (id) => document.querySelector(`[data-slot="${id}"]`);
 
-/* 어디로 들여보낼 것인가 — 관문이 붙여 준 ?next 가 있으면 그리로, 없으면 그 기관의 홈.
-   **바깥 주소로는 보내지 않는다.** next 는 같은 폴더의 파일 이름일 때만 따른다. */
-const HOME = 'portal.html';
-const nextOf = () => {
-  const raw = new URLSearchParams(location.search).get('next') || '';
-  return /^[\w.-]+\.html(\?[^#]*)?$/.test(raw) ? raw : HOME;
-};
+/* 어디로 들여보낼 것인가 — 관문이 붙여 준 ?next 가 있으면 그리로, 없으면 그 기관의 홈(TENANTS.home).
+   **바깥 주소로는 보내지 않는다.** next 는 같은 폴더의 파일 이름일 때만 따른다.
+   LX 세션으로 작업공간을 두드려 ?denied= 로 온 사람은, 기관 아이디로 들어온 뒤 **두드리던 그 화면**으로 간다. */
+const HOME = t.home || 'portal.html';
+const q = new URLSearchParams(location.search);
+const SAFE = /^[\w.-]+\.html(\?[^#]*)?$/;
+const denied = q.get('denied');
+const want = q.get('next') || (denied && /^portal[-.]/.test(denied) ? denied : '');
+const nextOf = () => (SAFE.test(want) ? want : HOME);
+
+/* ── 세션(MASTER-PLAN §7.1) — 기관 계정은 LX 계정과 **완전 별도**다(Q1). ── */
+const tenantSession = () => { try { return JSON.parse(localStorage.getItem('lx_tenant_session') || 'null'); } catch { return null; } };
+/* 이미 이 기관으로 들어와 있다 — 관문이 잠깐 보낸 것이다. 문 앞에 세워 두지 않는다. */
+if (tenantSession()?.tenant === TENANT) location.replace(nextOf());
+
+/* S8 — LX 세션으로 기관 작업공간을 두드렸다. 문 위에 **왜 막혔는지** 한 줄. LX 세션을 여기서 지우지 않는다
+   (기관 아이디로 로그인하는 순간 R-S1 이 지운다). 주소에서 denied 는 걷는다(R-S5). */
+if (denied !== null) {
+  const line = document.createElement('p');
+  line.className = 'pl-deny'; line.id = 'pl-deny'; line.setAttribute('role', 'status');
+  line.textContent = '기관 작업공간은 기관 계정으로만 들어갑니다 — LX 계정은 로그아웃 뒤 기관 아이디로 로그인하세요';
+  $('#pl-f').before(line);
+  q.delete('denied');
+  if (SAFE.test(want) && !q.get('next')) q.set('next', want);            // 두드리던 화면은 next 로 남긴다
+  history.replaceState(history.state, '', location.pathname + (q.toString() ? `?${q}` : '') + location.hash);
+}
 
 /* ── 얼굴 — 이 기관이 무엇을 찾는 곳인가 ─────────────────────────────
    정사영상 크롭을 걸었다가 걷었다. 확대한 사진 조각은 어느 서비스인지 알아볼 수 없다
@@ -69,6 +88,12 @@ $('#pl-f').addEventListener('submit', (e) => {
     err.hidden = false; miss.focus(); return;
   }
   err.hidden = true;
-  try { localStorage.setItem('lx_logged_in', '1'); } catch { /* 저장소 차단 */ }
+  /* 기관 signIn(R-S1) — 기관 세션을 세우고 LX 세션은 지운다. 전에는 lx_logged_in 을 세워
+     기관 로그인이 곧 LX 관리자 권한이 되었다(portal P0-1 · DEFAULT_ROLE admin). */
+  try {
+    localStorage.setItem('lx_tenant_session', JSON.stringify({ tenant: TENANT, at: new Date().toISOString() }));
+    localStorage.removeItem('lx_logged_in');
+    localStorage.removeItem('lx_role');
+  } catch { /* 저장소 차단 */ }
   location.href = nextOf();
 });

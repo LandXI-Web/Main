@@ -21,6 +21,11 @@
 //   caps   그 화면 안에서 무엇을 하는가 — 승인 · 편집 · 삭제 · 발행 요청 · 내보내기
 // 화면은 이 선언만 읽는다. 화면 안에 `if (역할 === '관리자')` 를 쓰지 않는다 —
 // 단이 늘어도 화면 코드를 고치지 않기 위해서다(성장 규칙 R5 와 같은 뜻).
+//
+// ── 기관(지자체)은 이 표에 없다 (Q1 확정 2026-09-24 · 완전 별도) ────────────────
+// 기관은 portal.js TENANTS + lx_tenant_session(storage-keys.js) — 이 표와 무관하다.
+// 기관 세션은 LX 셸 화면에 들어오지 못하고, LX 세션(관리자 포함)은 기관 작업공간에 들어가지 못한다
+// (판정표 MASTER-PLAN §7.2 · shell-gate.js · shell.js gate()). 네 번째 단을 여기에 더하지 않는다.
 
 /** 할 수 있는 일 — 화면이 버튼을 세울지 말지 이 이름으로 묻는다. */
 export const CAPS = {
@@ -128,8 +133,12 @@ export const SCREEN_MENU = {
   'ai-project.html': 'project', 'ai-project-create.html': 'project', 'ai-project-label.html': 'project',
   'analysis-ai.html': 'analysis',
   'ximap.html': 'map', 'stats-standard.html': 'map', 'report-standard.html': 'map',
+  'report-standard-issue.html': 'map', 'map-drift.html': 'map',
+  /* 서비스 지원 — 영업 레일에는 support 가 없어 막힌다(활용 사례 usecase.html 은 표에 없어 열린다). */
+  'notice.html': 'support', 'faq.html': 'support', 'contact.html': 'support', 'manual.html': 'support',
   'admin-publish.html': 'publish', 'ai-card.html': 'publish', 'ai-card-edit.html': 'publish',
-  'ai-publish-create.html': 'publish',
+  /* 발행 **요청** 폼 — 직원의 것이다(승인 화면 publish 가 아니다 · 2026-09-24 §7.2). */
+  'ai-publish-create.html': 'project',
   'produce.html': 'produce',
   'admin-notice.html': 'admin', 'admin-users.html': 'admin', 'admin-inquiry.html': 'admin',
   'admin-faq.html': 'admin', 'admin-map.html': 'admin',
