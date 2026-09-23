@@ -48,7 +48,10 @@ test.describe('가족 — 로그인과 같은 카드', () => {
   });
   test('제목 · 필드 · 푸터가 로그인과 같은 자리 · 같은 글자', async ({ page }) => {
     const probe = () => page.evaluate(() => {
-      const r = (s) => { const b = document.querySelector(s).getBoundingClientRect(); return [Math.round(b.x), Math.round(b.y)]; };
+      // Wave 0(E0-2): 로그인 카드는 높이 = 콘텐츠(G-01)로 바뀌어 세로 중앙 위치가 가족과 다르다 —
+      // 자리는 카드 기준 상대값으로 잰다(머리 아래끝 · 제목 · 소개 = 카드 위 기준 · 발 = 카드 아래 기준 — 워드마크 밑줄 8px 은 머리 안쪽).
+      const card = document.querySelector('#lgCard').getBoundingClientRect();
+      const r = (s) => { const b = document.querySelector(s).getBoundingClientRect(); const foot = s === '.lg-foot', head = s === '.lg-head'; return [Math.round(b.x), Math.round((head ? b.bottom : b.y) - (foot ? card.bottom : card.y))]; };
       const f = (s) => { const c = getComputedStyle(document.querySelector(s)); return [c.fontFamily, c.fontSize, c.fontWeight, c.color]; };
       return { h1: r('.lg-h1'), lead: r('.lg-lead'), fieldX: r('.lx-field')[0], foot: r('.lg-foot'), head: r('.lg-head'), label: f('.lx-field__label'), input: f('.lx-field__input'), lead2: f('.lg-lead') };
     });

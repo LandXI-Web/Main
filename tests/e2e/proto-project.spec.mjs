@@ -627,18 +627,16 @@ test.describe('⑧ 배포 · 카드 역추적', () => {
     await expect(page.locator('.pj-model')).toContainText('XI-VFM v2.1');
   });
 
-  // E0-8 착지 변경으로 기대값 갱신 필요(tests/e2e/proto-project.spec.mjs:623) — E0-8 이
-  // project-deploy.js:152 의 착지를 admin-publish.html 에서 '자기 요청 이력'
-  // (ai-project.html?pid=<pid>&tab=deploy&req=<id>)로 바꾼다(직원은 admin-publish.html 관문을
-  // 통과하지 못한다 — E0-1 관문 표). 통합 단계에서 이 test.fixme 를 풀고 새 착지 URL 로 갱신한다.
-  test.fixme('카드 발행 요청 → 학습 결과 픽커 → admin-publish.html 로 실제로 이동 — E0-8 착지 변경 대기(자기 요청 이력)', async ({ page }) => {
+  // Wave 0 통합: E0-8 이 착지를 '자기 요청 이력'(ai-project.html?pid=<pid>&tab=deploy&req=pa-N)으로 바꿨다 —
+  // 직원은 admin-publish.html 관문을 통과하지 못한다(E0-1 관문 표).
+  test('카드 발행 요청 → 학습 결과 픽커 → 자기 요청 이력에 착지', async ({ page }) => {
     await bootAs(page, `${LIST}?pid=${PJ}&tab=deploy&dep=model&reg=1`);
     await page.locator('.panel-f button', { hasText: '모델 등록' }).click();
     await page.locator('#main button', { hasText: '카드 발행 요청' }).first().click();
     await expect(page.locator('.modal h2').last()).toHaveText('학습 결과 선택');
     await expect(page.locator('.modal input[name="pk"]')).toHaveCount(1);
     await page.locator('.modal button', { hasText: '발행 요청' }).click();
-    await page.waitForURL(/admin-publish\.html/, { timeout: 8000 });
+    await page.waitForURL(/ai-project\.html\?pid=pj-greenhouse&tab=deploy&req=pa-\d+/, { timeout: 8000 });
   });
 
   test('카드 역추적 — cards.js 가 말하는 카드로 analysis-ai.html?card= 로 간다', async ({ page }) => {

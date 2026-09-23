@@ -307,8 +307,9 @@ test.describe('계정 탈퇴(추정)', () => {
     await page.goto(URL + '?open=withdraw');
     await page.locator('#wd-input').fill('pw');
     await page.keyboard.press('Enter');
-    await page.waitForURL(/scrub\/index\.html/);
-    expect(await page.evaluate(() => localStorage.getItem('lx_logged_in'))).toBeNull();
+    // Wave 0(E0-1 세션 계약 §7.1): 로그아웃 · 탈퇴 착지 = login.html, 세 키 전부 삭제.
+    await page.waitForURL(/login\.html/);
+    expect(await page.evaluate(() => [localStorage.getItem('lx_logged_in'), localStorage.getItem('lx_role'), localStorage.getItem('lx_tenant_session')])).toEqual([null, null, null]);
   });
 });
 

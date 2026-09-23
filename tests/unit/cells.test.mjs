@@ -1,11 +1,18 @@
 // 판 12.8 셀 집계 단위 테스트 — design-canvas/v2/NOTES.md §12.8
 // 판의 등급·범례 셀 수·콜아웃 문구가 **계산값**임을 여기서 못박는다. 손 값이 하나라도 있으면 깨진다.
-import test from 'node:test';
+import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
-const M = await import(pathToFileURL('landxi/proto/dashboard-128/db-data.js').href);
+// Wave 0 통합: E0-6 이 고아 12.8 초안(landxi/proto/dashboard-128/)을 삭제했다. 현행 판 집계는
+// dashboard-cells.test.mjs 가 본다. 이 파일은 삭제 대상(통합 보고 요청) — 그때까지 초안이 없으면 건너뛴다.
+const SRC = 'landxi/proto/dashboard-128/db-data.js';
+const HAS = fs.existsSync(SRC);
+const test = HAS ? nodeTest : (name, fn) => nodeTest.skip(`${name} (dashboard-128 삭제됨)`, fn);
+const M = HAS ? await import(pathToFileURL(SRC).href) : {
+  baseFootprints: () => [], jejuFootprint: () => null, cellsFor: () => [],
+};
 const JEJU = JSON.parse(fs.readFileSync('landxi/assets/data/geo/jeju-illegal.geojson', 'utf8'));
 
 const FPS = (() => {

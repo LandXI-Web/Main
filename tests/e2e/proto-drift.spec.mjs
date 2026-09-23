@@ -29,7 +29,19 @@ function watch(page) {
 }
 
 async function boot(page, url) {
-  await page.addInitScript(() => localStorage.setItem('lx_logged_in', '1'));
+  // Wave 0(E0-1 · Q1): map-drift.html 은 LX 관문 키 'map'(직원 · 영업) → LX 직원 세션.
+  // 기관 배포본(portal-dp-*)은 기관 완전 별도 → 광주전남 기관 세션(lx_tenant_session). 두 세션은 서로의 화면에 못 들어간다.
+  const tenant = /portal-dp-gj-/.test(url);
+  await page.addInitScript((t) => {
+    if (sessionStorage.getItem('lx_e2e_boot')) return;
+    sessionStorage.setItem('lx_e2e_boot', '1');
+    if (t) {
+      localStorage.removeItem('lx_logged_in'); localStorage.removeItem('lx_role');
+      localStorage.setItem('lx_tenant_session', JSON.stringify({ tenant: 'gwangju-jeonnam', at: '2026-06-08T09:00:00+09:00' }));
+    } else {
+      localStorage.setItem('lx_logged_in', '1'); localStorage.setItem('lx_role', 'staff'); localStorage.removeItem('lx_tenant_session');
+    }
+  }, tenant);
   await page.goto(url);
   await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
   return page;

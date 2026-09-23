@@ -154,7 +154,7 @@ const STATUS = {
   'B5-Login': ['로그인', 'apply', 'login.html 적용'],
   'B2-Login': ['로그인', 'drop', '1차 안(소개 카피 + 디오라마 판)'],
   'B5-Dashboard-Data': ['대시보드', 'apply', 'dashboard.html 적용'],
-  'H-Dashboard-128': ['대시보드', 'drop', '12.8 초안(집 PC) — 현 적용판의 전 단계: 한 판 + 0.25° 그리드 + 토글. 구현 사본 landxi/proto/dashboard-128/'],
+  'H-Dashboard-128': ['대시보드', 'drop', '12.8 초안(집 PC) — 현 적용판의 전 단계: 한 판 + 0.25° 그리드 + 토글. (구현 사본은 Wave 0 에서 삭제 — git 이력)'],
   'H-Dashboard-Data-128': ['대시보드', 'drop', '12.8 초안(집 PC) — 학습데이터 토글 상태'],
   'H-Projects-Roboflow': ['프로젝트', 'drop', '목록 초안(집 PC) — 현 검토판(우측 조회)의 전 단계: 만들기 = 우측 드로어'],
   'H-Project-Overview-Roboflow': ['프로젝트', 'drop', '개요 초안(집 PC) — 고정 헤더 276 + 탭 6 + 스탯 패널 288'],
