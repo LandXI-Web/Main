@@ -226,7 +226,7 @@ body.lx[data-map]{ min-height:700px; }
 
 /* 레이어 탭 트리 */
 .mt{ padding:6px 0 14px; }
-.mt-note{ display:flex; align-items:center; gap:8px; padding:8px 14px; font-size:14px; color:var(--grey); }
+.mt-note{ display:flex; align-items:center; gap:8px; padding:8px 14px; font-size:14px; color:var(--grey); word-break:keep-all; }
 .mt-s{ margin:0; }
 .mt-s > button{ display:flex; align-items:center; gap:8px; width:100%; padding:10px 14px 6px; font-size:16px; font-weight:500; }
 .mt-s > button .n{ margin-left:auto; font-size:14px; color:var(--accent); font-weight:400; }
@@ -693,8 +693,9 @@ body.lx[data-map]{ min-height:700px; }
 .mb-collapsed > *{ flex:none; white-space:nowrap; }
 .mb-collapsed .sp{ flex:1 0 12px; }
 /* 비교 띠 — 좁은 판에서 `비교 대 / 상` 으로 접히던 것(x28) */
-.mw-band{ white-space:nowrap; overflow-x:auto; scrollbar-width:thin; }
-.mw-band b,.mw-band .n{ flex:none; }
+/* 재게이트: 가로 스크롤바가 1280 비교 띠에 그대로 보였다(304>299) — 스크롤 대신 낱말 단위 줄바꿈 */
+.mw-band{ flex-wrap:wrap; row-gap:2px; word-break:keep-all; min-width:0; }
+.mw-band b,.mw-band .n{ flex:none; white-space:nowrap; }
 .mw-bar .link{ white-space:nowrap; }
 
 /* ② 겹쳐보기 — B 판이 A 판의 오른쪽을 덮는다. A 판 도구 열은 왼쪽으로, B 판 표지 띠는 오른쪽으로
@@ -712,6 +713,17 @@ body.lx[data-map]{ min-height:700px; }
 .mw[data-mode="overlay"] #ov-b .mw-guide{ left:calc(var(--swipe,50%) + 14px); }
 .mw[data-mode="overlay"] #ov-a .mw-guide{ right:calc(100% - var(--swipe,50%) + 14px); }
 
+/* ②-b 비교 모드 좌 판 — 두 칸 판(column-count:2)은 높이가 모자라면 **셋째 · 넷째 칸을 옆으로** 만든다.
+      1280×720 에서 #l-b 가 942>607 로 넘쳐 판 바닥에 가로 스크롤바가 서고, 넘친 칸의 column-rule 이
+      2025.04 · 2025.06 카드 위 세로선 잔상으로 보였다(c2b-left-open-1280-headed). 비교 목록은 칸 흐름 대신
+      격자 — 칸 하나가 290px 아래면 한 줄, 넘치면 세로로만 흐른다(가로 넘침 0 · 칸 경계선 0). */
+.mw[data-mode="overlay"] .mw-l-b,
+.mw[data-mode="parallel"] .mw-l-b{ column-count:auto; column-rule:none; display:grid; grid-template-columns:repeat(auto-fill, minmax(290px, 1fr)); align-content:start; overflow-x:hidden; overflow-y:auto; }
+.mw[data-mode="overlay"] .mw-l-b > .mv-h,
+.mw[data-mode="parallel"] .mw-l-b > .mv-h{ grid-column:1 / -1; }
+.mw[data-mode="overlay"] .mw-l-b > .mv,
+.mw[data-mode="parallel"] .mw-l-b > .mv{ min-width:0; }
+
 /* ③ 레이어 탭 — 실자료가 없는 원본 시드 줄(시연 · 지도 미연결). 체크 불가 · 무채 점선 꼬리표. */
 .mt-l[data-demo]{ color:var(--grey); cursor:default; }
 .mt-l[data-demo] input{ cursor:not-allowed; }
@@ -722,14 +734,23 @@ body.lx[data-map]{ min-height:700px; }
 /* ④ 통계 기준 — 시연 기준 줄은 고를 수 없다(집계 자료 없음) */
 .dw-basis li[aria-disabled="true"]{ color:var(--grey); }
 .dw-basis li[aria-disabled="true"] input{ cursor:not-allowed; }
+.dw-basis li .tag{ flex:none; white-space:nowrap; }              /* `시연` 은 태그 한 번만 — 라벨 접미와 겹쳐 두 번 서던 것(재게이트) */
 
 /* ⑤ 정보 판이 열린 동안의 하단 표 = 고른 행 한 줄(map.js renderPeek) */
 .mb-peek{ display:flex; align-items:center; gap:12px; padding:7px 20px; border-top:1px solid var(--line); background:#fff; font-size:15px; overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; }
 .mb-peek > *{ flex:none; white-space:nowrap; }
 .mb-peek .n{ font-family:var(--num); color:var(--grey); }
 /* 1280×720 에서 고른 행 문구가 길어 탭 3 · `표 펼치기` 가 화면 밖으로 밀렸다(scrollWidth 946 > 762).
-   줄이는 건 고른 행 문구만 — 말줄임(전체 문구는 title) · 글자 크기 그대로. 넘김 · 탭 · 펼치기는 늘 보인다. */
-.mb-peek .row{ color:var(--ink); flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; }
-.mb-peek .sp{ flex:1 0 12px; }
+   재게이트(2026-09-24): 말줄임은 조치 상태(`발견`)를 잘라 먹었다 — 문구는 온전히 둔다(글자 크기 그대로).
+   1440 = 한 줄에 다 선다. 1280 = 문구 칸만 가로로 밀었더니 스크롤바가 얇아 눈에는 여전히 `321-1 · :` 토막이었다 →
+   한 줄에 안 들어가면 넘김 · 탭 · 펼치기가 **둘째 줄로** 내려선다(문구 온전 · 스크롤바 0 · 버튼 판 안).
+   그보다 더 좁아 문구 하나도 한 줄에 못 서면 그때만 문구 칸(.pk-s)이 가로로 밀린다. */
+.mb-peek{ overflow:visible; flex-wrap:wrap; row-gap:6px; }
+.mb-peek .pk-s{ flex:0 1 auto; min-width:0; display:flex; align-items:center; gap:12px; overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; white-space:nowrap; }
+.mb-peek .pk-s > *{ flex:none; }
+.mb-peek .row{ color:var(--ink); }
+.mb-peek .sp{ flex:1 1 0; min-width:0; }
+.mb-peek .pk-t{ display:flex; align-items:center; gap:6px; }
+.mb-peek .pk-t .dim{ color:var(--grey-3); }
 .mb-peek .dim{ color:var(--grey-3); }
 .mb-peek button:disabled{ color:var(--grey-3); cursor:default; }

@@ -1,0 +1,421 @@
+{
+ "1440 A0 enter": {
+  "left": "off",
+  "side": "",
+  "lw": 36,
+  "sw": 1,
+  "mi": 0,
+  "url": "?on=namwon-farmland-2025&mode=overlay",
+  "ratio": 0.911
+ },
+ "1440 A1 ch-base": {
+  "left": "on",
+  "side": "",
+  "lw": 690,
+  "sw": 1,
+  "mi": 0,
+  "url": "?mode=overlay&on=namwon-farmland-2025&base=satellite",
+  "ratio": 0.463,
+  "bars": [],
+  "ox": []
+ },
+ "1440 A2 cmp-open": {
+  "left": "off",
+  "side": "info",
+  "lw": 36,
+  "sw": 410,
+  "mi": 1,
+  "url": "?mode=overlay&on=namwon-farmland-2025&left=off&base=satellite",
+  "ratio": 0.631,
+  "bars": []
+ },
+ "1440 A3 side-x (auto restore?)": {
+  "left": "off",
+  "side": "",
+  "lw": 36,
+  "sw": 1,
+  "mi": 0,
+  "url": "?mode=overlay&on=namwon-farmland-2025&left=off&base=satellite",
+  "ratio": 0.911
+ },
+ "1440 A4 cmp-open again": {
+  "left": "off",
+  "side": "info",
+  "lw": 36,
+  "sw": 410,
+  "mi": 1,
+  "url": "?mode=overlay&on=namwon-farmland-2025&left=off&base=satellite",
+  "ratio": 0.631
+ },
+ "1440 A5 l-open": {
+  "left": "on",
+  "side": "",
+  "lw": 690,
+  "sw": 1,
+  "mi": 0,
+  "url": "?mode=overlay&on=namwon-farmland-2025&base=satellite",
+  "ratio": 0.463
+ },
+ "1440 A6 back": {
+  "left": "off",
+  "side": "",
+  "lw": 36,
+  "sw": 1,
+  "mi": 0,
+  "url": "?mode=overlay&on=namwon-farmland-2025&left=off&base=satellite",
+  "ratio": 0.911
+ },
+ "1440 A7 band": [
+  {
+   "h": 44,
+   "w": 665,
+   "t": "기준 · 2025.04|판독 결과 —"
+  },
+  {
+   "h": 44,
+   "w": 666,
+   "t": "비교 대상 · 2025.10|변화 156 건"
+  }
+ ],
+ "1440 B0 table open": {
+  "left": "on",
+  "side": "",
+  "lw": 690,
+  "sw": 1,
+  "mi": 0,
+  "url": "?on=namwon-farmland-2025&fold=0",
+  "ratio": 0.253
+ },
+ "1440 B1 info": {
+  "left": "off",
+  "side": "info",
+  "lw": 36,
+  "sw": 410,
+  "mi": 1,
+  "url": "?on=namwon-farmland-2025&fold=0&side=info&sel=5e43e9c777ca45e7f713ae06e43a8388c12c6520&base=satellite",
+  "ratio": 0.632,
+  "bars": []
+ },
+ "1440 B1 peek": {
+  "row": "금동 · 00 — 321-1 · 경작지 · 2,322 ㎡ · 발견",
+  "h": 43,
+  "sClip": 0,
+  "rClip": 0,
+  "btns": [
+   [
+    "‹ 이전",
+    582,
+    829,
+    57
+   ],
+   [
+    "다음 ›",
+    651,
+    829,
+    57
+   ],
+   [
+    "공간 정보",
+    745,
+    834,
+    51
+   ],
+   [
+    "지역 구분",
+    812,
+    834,
+    51
+   ],
+   [
+    "분석 결과",
+    878,
+    834,
+    51
+   ],
+   [
+    "표 펼치기",
+    942,
+    834,
+    68
+   ]
+  ]
+ },
+ "1440 B2 l-open": {
+  "left": "on",
+  "side": "",
+  "lw": 690,
+  "sw": 1,
+  "mi": 0,
+  "url": "?on=namwon-farmland-2025&base=satellite",
+  "ratio": 0.464,
+  "fold": "mb class,id,aria-label,data-fold",
+  "peek": 0
+ },
+ "1440 B3 table reopened": {
+  "left": "on",
+  "side": "",
+  "lw": 690,
+  "sw": 1,
+  "mi": 0,
+  "url": "?on=namwon-farmland-2025&fold=0&base=satellite",
+  "ratio": 0.253
+ },
+ "1440 B4 pinned then row": {
+  "left": "off",
+  "side": "info",
+  "lw": 36,
+  "sw": 410,
+  "mi": 1,
+  "url": "?on=namwon-farmland-2025&fold=0&side=info&sel=22a01c717f55ffe7f6b0f63e40e206ebf1908e59&base=satellite",
+  "ratio": 0.632
+ },
+ "1440 B5 side-x": {
+  "left": "on",
+  "side": "",
+  "lw": 690,
+  "sw": 1,
+  "mi": 0,
+  "url": "?on=namwon-farmland-2025&left=off&fold=0&base=satellite",
+  "ratio": 0.253
+ },
+ "1440 C0 drawer": {
+  "left": "off",
+  "side": "drawer",
+  "lw": 36,
+  "sw": 862,
+  "mi": 0,
+  "url": "?on=namwon-farmland-2025&side=stats",
+  "ratio": 0.343,
+  "lopen": true
+ },
+ "1440 C1 drawer l-open": {
+  "left": "on",
+  "side": "",
+  "lw": 690,
+  "sw": 1,
+  "mi": 0,
+  "url": "?on=namwon-farmland-2025&base=satellite",
+  "ratio": 0.464
+ },
+ "1280 A0 enter": {
+  "left": "off",
+  "side": "",
+  "lw": 36,
+  "sw": 1,
+  "mi": 0,
+  "url": "?on=namwon-farmland-2025&mode=overlay",
+  "ratio": 0.888
+ },
+ "1280 A1 ch-base": {
+  "left": "on",
+  "side": "",
+  "lw": 608,
+  "sw": 1,
+  "mi": 0,
+  "url": "?mode=overlay&on=namwon-farmland-2025&base=satellite",
+  "ratio": 0.431,
+  "bars": [],
+  "ox": []
+ },
+ "1280 A2 cmp-open": {
+  "left": "off",
+  "side": "info",
+  "lw": 36,
+  "sw": 410,
+  "mi": 1,
+  "url": "?mode=overlay&on=namwon-farmland-2025&left=off&base=satellite",
+  "ratio": 0.578,
+  "bars": []
+ },
+ "1280 A3 side-x (auto restore?)": {
+  "left": "off",
+  "side": "",
+  "lw": 36,
+  "sw": 1,
+  "mi": 0,
+  "url": "?mode=overlay&on=namwon-farmland-2025&left=off&base=satellite",
+  "ratio": 0.888
+ },
+ "1280 A4 cmp-open again": {
+  "left": "off",
+  "side": "info",
+  "lw": 36,
+  "sw": 410,
+  "mi": 1,
+  "url": "?mode=overlay&on=namwon-farmland-2025&left=off&base=satellite",
+  "ratio": 0.578
+ },
+ "1280 A5 l-open": {
+  "left": "on",
+  "side": "",
+  "lw": 608,
+  "sw": 1,
+  "mi": 0,
+  "url": "?mode=overlay&on=namwon-farmland-2025&base=satellite",
+  "ratio": 0.431
+ },
+ "1280 A6 back": {
+  "left": "off",
+  "side": "",
+  "lw": 36,
+  "sw": 1,
+  "mi": 0,
+  "url": "?mode=overlay&on=namwon-farmland-2025&left=off&base=satellite",
+  "ratio": 0.888
+ },
+ "1280 A7 band": [
+  {
+   "h": 44,
+   "w": 585,
+   "t": "기준 · 2025.04|판독 결과 —"
+  },
+  {
+   "h": 44,
+   "w": 586,
+   "t": "비교 대상 · 2025.10|변화 156 건"
+  }
+ ],
+ "1280 B0 table open": {
+  "left": "on",
+  "side": "",
+  "lw": 608,
+  "sw": 1,
+  "mi": 0,
+  "url": "?on=namwon-farmland-2025&fold=0",
+  "ratio": 0.178
+ },
+ "1280 B1 info": {
+  "left": "off",
+  "side": "info",
+  "lw": 36,
+  "sw": 410,
+  "mi": 1,
+  "url": "?on=namwon-farmland-2025&fold=0&side=info&sel=5e43e9c777ca45e7f713ae06e43a8388c12c6520&base=satellite",
+  "ratio": 0.545,
+  "bars": []
+ },
+ "1280 B1 peek": {
+  "row": "금동 · 00 — 321-1 · 경작지 · 2,322 ㎡ · 발견",
+  "h": 73,
+  "sClip": 0,
+  "rClip": 0,
+  "btns": [
+   [
+    "‹ 이전",
+    582,
+    619,
+    57
+   ],
+   [
+    "다음 ›",
+    651,
+    619,
+    57
+   ],
+   [
+    "공간 정보",
+    128,
+    656,
+    51
+   ],
+   [
+    "지역 구분",
+    195,
+    656,
+    51
+   ],
+   [
+    "분석 결과",
+    262,
+    656,
+    51
+   ],
+   [
+    "표 펼치기",
+    325,
+    656,
+    68
+   ]
+  ]
+ },
+ "1280 B2 l-open": {
+  "left": "on",
+  "side": "",
+  "lw": 608,
+  "sw": 1,
+  "mi": 0,
+  "url": "?on=namwon-farmland-2025&base=satellite",
+  "ratio": 0.455,
+  "fold": "mb class,id,aria-label,data-fold",
+  "peek": 0
+ },
+ "1280 B3 table reopened": {
+  "left": "on",
+  "side": "",
+  "lw": 608,
+  "sw": 1,
+  "mi": 0,
+  "url": "?on=namwon-farmland-2025&fold=0&base=satellite",
+  "ratio": 0.178
+ },
+ "1280 B4 pinned then row": {
+  "left": "off",
+  "side": "info",
+  "lw": 36,
+  "sw": 410,
+  "mi": 1,
+  "url": "?on=namwon-farmland-2025&fold=0&side=info&sel=22a01c717f55ffe7f6b0f63e40e206ebf1908e59&base=satellite",
+  "ratio": 0.545
+ },
+ "1280 B5 side-x": {
+  "left": "on",
+  "side": "",
+  "lw": 608,
+  "sw": 1,
+  "mi": 0,
+  "url": "?on=namwon-farmland-2025&left=off&fold=0&base=satellite",
+  "ratio": 0.178
+ },
+ "1280 C0 drawer": {
+  "left": "off",
+  "side": "drawer",
+  "lw": 36,
+  "sw": 760,
+  "mi": 0,
+  "url": "?on=namwon-farmland-2025&side=stats",
+  "ratio": 0.34,
+  "lopen": true
+ },
+ "1280 C1 drawer l-open": {
+  "left": "on",
+  "side": "",
+  "lw": 608,
+  "sw": 1,
+  "mi": 0,
+  "url": "?on=namwon-farmland-2025&base=satellite",
+  "ratio": 0.455
+ },
+ "D mt-note": {
+  "text": "발행된 레이어 · 원본 시드 목록 · 지도에 올릴 실자료 없음\n시연",
+  "h": 61,
+  "wb": "keep-all"
+ },
+ "D basis": [
+  {
+   "t": "남원시 농지이용 현황 2026.06.08 · XI-VFM v2.1 · 2,098 필지",
+   "n": 0,
+   "h": 50
+  },
+  {
+   "t": "남원시 3권역 · 농지활용 분석 시연 · 집계 자료 없음 2026.04.07 · 농지 활용 분석",
+   "n": 1,
+   "h": 52
+  },
+  {
+   "t": "남원시 2권역 · 농지활용 분석 시연 · 집계 자료 없음 2026.03.21 · 농지 활용 분석",
+   "n": 1,
+   "h": 52
+  }
+ ],
+ "errs": []
+}

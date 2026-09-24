@@ -1,0 +1,272 @@
+{
+ "1440 landing": {
+  "left": "on",
+  "url": "?on=namwon-farmland-2025",
+  "mb": {
+   "over": 260,
+   "ox": "auto",
+   "x": 762,
+   "y": 821,
+   "w": 677,
+   "h": 43
+  },
+  "legend": {
+   "cls": "mw-ov mw-ov--br",
+   "id": "legend",
+   "x": 1133,
+   "y": 535,
+   "w": 250,
+   "h": 111
+  },
+  "strip": {
+   "x": 776,
+   "y": 656,
+   "w": 453,
+   "h": 116
+  },
+  "overlapPx": 0
+ },
+ "1440 left=off": {
+  "left": "off",
+  "url": "?on=namwon-farmland-2025&left=off",
+  "mb": {
+   "over": 0,
+   "ox": "auto",
+   "x": 108,
+   "y": 821,
+   "w": 1331,
+   "h": 43
+  },
+  "legend": {
+   "cls": "mw-ov mw-ov--br",
+   "id": "legend",
+   "x": 1133,
+   "y": 661,
+   "w": 250,
+   "h": 111
+  },
+  "strip": {
+   "x": 122,
+   "y": 680,
+   "w": 516,
+   "h": 126
+  },
+  "overlapPx": 0
+ },
+ "1440 left=off → l-open": {
+  "left": "on",
+  "url": "?on=namwon-farmland-2025&base=satellite",
+  "mb": {
+   "over": 260,
+   "ox": "auto",
+   "x": 762,
+   "y": 821,
+   "w": 677,
+   "h": 43
+  },
+  "legend": {
+   "cls": "mw-ov mw-ov--br",
+   "id": "legend",
+   "x": 1133,
+   "y": 661,
+   "w": 250,
+   "h": 111
+  },
+  "strip": {
+   "x": 776,
+   "y": 680,
+   "w": 516,
+   "h": 126
+  },
+  "overlapPx": 14593.21875
+ },
+ "1440 info → l-open @700": {
+  "left": "on",
+  "url": "?on=namwon-farmland-2025&base=satellite",
+  "mb": {
+   "over": 260,
+   "ox": "auto",
+   "x": 762,
+   "y": 821,
+   "w": 677,
+   "h": 43
+  },
+  "legend": {
+   "cls": "mw-ov mw-ov--br",
+   "id": "legend",
+   "x": 1133,
+   "y": 661,
+   "w": 250,
+   "h": 111
+  },
+  "strip": {
+   "x": 776,
+   "y": 680,
+   "w": 516,
+   "h": 126
+  },
+  "overlapPx": 14593.21875
+ },
+ "1440 info → l-open @2200": {
+  "left": "on",
+  "url": "?on=namwon-farmland-2025&base=satellite",
+  "mb": {
+   "over": 260,
+   "ox": "auto",
+   "x": 762,
+   "y": 821,
+   "w": 677,
+   "h": 43
+  },
+  "legend": {
+   "cls": "mw-ov mw-ov--br",
+   "id": "legend",
+   "x": 1133,
+   "y": 661,
+   "w": 250,
+   "h": 111
+  },
+  "strip": {
+   "x": 776,
+   "y": 680,
+   "w": 516,
+   "h": 126
+  },
+  "overlapPx": 14593.21875
+ },
+ "1280 landing": {
+  "left": "on",
+  "url": "?on=namwon-farmland-2025",
+  "mb": {
+   "over": 338,
+   "ox": "auto",
+   "x": 680,
+   "y": 641,
+   "w": 599,
+   "h": 43
+  },
+  "legend": {
+   "cls": "mw-ov mw-ov--br",
+   "id": "legend",
+   "x": 973,
+   "y": 355,
+   "w": 250,
+   "h": 111
+  },
+  "strip": {
+   "x": 694,
+   "y": 476,
+   "w": 453,
+   "h": 116
+  },
+  "overlapPx": 0
+ },
+ "1280 left=off": {
+  "left": "off",
+  "url": "?on=namwon-farmland-2025&left=off",
+  "mb": {
+   "over": 0,
+   "ox": "auto",
+   "x": 108,
+   "y": 641,
+   "w": 1171,
+   "h": 43
+  },
+  "legend": {
+   "cls": "mw-ov mw-ov--br",
+   "id": "legend",
+   "x": 973,
+   "y": 481,
+   "w": 250,
+   "h": 111
+  },
+  "strip": {
+   "x": 122,
+   "y": 500,
+   "w": 516,
+   "h": 126
+  },
+  "overlapPx": 0
+ },
+ "1280 left=off → l-open": {
+  "left": "on",
+  "url": "?on=namwon-farmland-2025&base=satellite",
+  "mb": {
+   "over": 338,
+   "ox": "auto",
+   "x": 680,
+   "y": 641,
+   "w": 599,
+   "h": 43
+  },
+  "legend": {
+   "cls": "mw-ov mw-ov--br",
+   "id": "legend",
+   "x": 973,
+   "y": 481,
+   "w": 250,
+   "h": 111
+  },
+  "strip": {
+   "x": 694,
+   "y": 500,
+   "w": 516,
+   "h": 126
+  },
+  "overlapPx": 21752.15625
+ },
+ "1280 info → l-open @700": {
+  "left": "on",
+  "url": "?on=namwon-farmland-2025&base=satellite",
+  "mb": {
+   "over": 338,
+   "ox": "auto",
+   "x": 680,
+   "y": 641,
+   "w": 599,
+   "h": 43
+  },
+  "legend": {
+   "cls": "mw-ov mw-ov--br",
+   "id": "legend",
+   "x": 973,
+   "y": 481,
+   "w": 250,
+   "h": 111
+  },
+  "strip": {
+   "x": 694,
+   "y": 500,
+   "w": 516,
+   "h": 126
+  },
+  "overlapPx": 21752.15625
+ },
+ "1280 info → l-open @2200": {
+  "left": "on",
+  "url": "?on=namwon-farmland-2025&base=satellite",
+  "mb": {
+   "over": 338,
+   "ox": "auto",
+   "x": 680,
+   "y": 641,
+   "w": 599,
+   "h": 43
+  },
+  "legend": {
+   "cls": "mw-ov mw-ov--br",
+   "id": "legend",
+   "x": 973,
+   "y": 481,
+   "w": 250,
+   "h": 111
+  },
+  "strip": {
+   "x": 694,
+   "y": 500,
+   "w": 516,
+   "h": 126
+  },
+  "overlapPx": 21752.15625
+ }
+}

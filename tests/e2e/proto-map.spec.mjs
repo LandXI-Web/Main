@@ -213,6 +213,7 @@ test.describe('왼쪽 패널', () => {
     await expect(page.locator('.mt-l')).toHaveCount(12);
     await expect(page.locator('.mt-l .sh')).toHaveCount(2);
     await expect(page.locator('.mt-note')).toContainText('시연');
+    expect(await page.locator('.mt-note').evaluate((e) => getComputedStyle(e).wordBreak)).toBe('keep-all');   // `실자 / 료` 낱말 꺾임 0(재게이트)
     /* 12줄은 원본 시드 — 지도에 올릴 실자료가 없다. 체크해도 카운터만 바뀌던 줄(M-07)은
        `시연 · 지도 미연결` 로 적고 체크를 막는다(E0-5). */
     await expect(page.locator('.mt-l input[data-leaf]:disabled')).toHaveCount(12);
@@ -883,17 +884,67 @@ test.describe('E0-5 붕괴 처방 · 내려받기 · 정직화', () => {
     await page.locator('[data-peek="1"]').click();
     await expect(page.locator('.mb-peek .n').first()).toHaveText('2 / 2,098');
     await expect(page.locator('.mi h2')).toBeVisible();
-    // 1280×720 — 넘김 · 탭 3 · 표 펼치기는 늘 보이고 peek 줄 가로 넘침 0(고른 행 문구만 말줄임 · 글자 크기 그대로)
+    // peek 줄 — 고른 행 문구(읍면동 · 지번 · 클래스 · 면적 · 조치)는 말줄임 없이 온전히 보이고, 넘김 · 탭 3 · 표 펼치기는 판 안(재게이트)
+    const peek = () => page.evaluate(() => { const el = document.querySelector('.mb-peek'), pr = el.getBoundingClientRect(), s = el.querySelector('.pk-s'), r = el.querySelector('.row');
+      return { clip: s.scrollWidth - s.clientWidth + (r.scrollWidth - r.clientWidth), ellipsis: getComputedStyle(r).textOverflow, font: getComputedStyle(r).fontSize,
+        act: /· \S+$/.test(r.textContent.trim()),
+        out: [...el.querySelectorAll('[data-peek],[data-ttab],#mb-full')].filter((x) => { const q = x.getBoundingClientRect(); return q.left < pr.left - 1 || q.right > pr.right + 1 || q.bottom > pr.bottom + 1; }).length }; });
+    expect(await peek()).toEqual({ clip: 0, ellipsis: 'clip', font: '15px', act: true, out: 0 });
+    // 1280×720 — 한 줄에 안 서면 버튼들이 둘째 줄로 내려선다(문구 토막 0 · 글자 크기 그대로 · 버튼 3종 판 안)
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.waitForTimeout(400);
-    const pk = await page.evaluate(() => { const el = document.querySelector('.mb-peek'), pr = el.getBoundingClientRect();
-      return { over: el.scrollWidth - el.clientWidth, font: getComputedStyle(el.querySelector('.row')).fontSize,
-        out: [...el.querySelectorAll('[data-peek],[data-ttab],#mb-full')].filter((x) => { const q = x.getBoundingClientRect(); return q.left < pr.left - 1 || q.right > pr.right + 1; }).length }; });
-    expect(pk).toEqual({ over: 0, font: '15px', out: 0 });
+    expect(await peek()).toEqual({ clip: 0, ellipsis: 'clip', font: '15px', act: true, out: 0 });
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.locator('#side-x').click();
     await expect(page.locator('#mw')).toHaveAttribute('data-left', 'on');
   });
+
+  /* 범례(#legend) × 시점 스트립(#strip) 교차 면적 — 좌 판 폭 전이(180ms)가 끝난 뒤에 잰다(재게이트 3) */
+  const legendStrip = (page) => page.evaluate(() => {
+    const l = document.querySelector('#legend'), s = document.querySelector('#strip');
+    if (!l || !s) return 0;
+    const a = l.getBoundingClientRect(), c = s.getBoundingClientRect();
+    return Math.max(0, Math.min(a.right, c.right) - Math.max(a.left, c.left)) * Math.max(0, Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top));
+  });
+  for (const [vw, vh] of [[1440, 900], [1280, 720]]) {
+  test(`판 셋 동시 금지 양방향 — 정보 판 열린 채 \`설정 패널 펼치기\` · 펴 둔 좌 판 뒤 행 고르기 · 범례×스트립 0 · ${vw}×${vh}(재게이트 must_fix 1 · 3)`, async ({ page }) => {
+    await page.setViewportSize({ width: vw, height: vh });
+    await boot(page, `${MAP}?on=${FARM}&fold=0`);
+    await layersOn(page);
+    await page.locator('#tbody tr[data-row]').first().click();
+    await expect(page.locator('#mw')).toHaveAttribute('data-side', 'info');
+    await expect(page.locator('#mw')).toHaveAttribute('data-left', 'off');
+    // ① 좌 판을 펴면 정보 판이 먼저 닫힌다 — 표는 peek 이던 그대로 접힌다
+    await page.locator('#l-open').click();
+    await expect(page.locator('#mw')).toHaveAttribute('data-left', 'on');
+    await expect(page.locator('#mw')).not.toHaveAttribute('data-side', 'info');
+    await expect(page.locator('.mw-side .mi')).toHaveCount(0);
+    await page.waitForFunction(() => document.querySelector('#mw-l').getBoundingClientRect().width > 300);
+    await page.waitForTimeout(400);
+    expect(await ratio(page)).toBeGreaterThanOrEqual(0.45);
+    expect(await legendStrip(page)).toBe(0);                            // 전이 뒤 재배치 — 범례가 시점 그림을 덮지 않는다
+    // ② 사용자가 펴 둔(pinned) 좌 판이라도 정보 판이 서면 띠로 접힌다
+    await page.locator('#mb-open').click();
+    await page.locator('#tbody tr[data-row]').nth(2).click();
+    await expect(page.locator('#mw')).toHaveAttribute('data-side', 'info');
+    await expect(page.locator('#mw')).toHaveAttribute('data-left', 'off');
+    await page.waitForFunction(() => document.querySelector('#mw-l').getBoundingClientRect().width < 40);
+    await page.waitForTimeout(400);
+    expect(await ratio(page)).toBeGreaterThanOrEqual(vw === 1440 ? 0.6 : 0.5);   // 1280 정보 판은 peek 두 줄(0.545 · E0-5-close §3)
+    // ③ `닫기`(#side-x) — 자동으로 접힌 좌 판이 되살아난다 · 전이 뒤 범례×스트립 0
+    await page.locator('#side-x').click();
+    await expect(page.locator('#mw')).toHaveAttribute('data-left', 'on');
+    await page.waitForFunction(() => document.querySelector('#mw-l').getBoundingClientRect().width > 300);
+    await page.waitForTimeout(400);
+    expect(await legendStrip(page)).toBe(0);
+    // ④ 표를 접으면 범례 · 시점 스트립이 다시 선다(판이 낮아 내렸던 1280 포함) — 교차 0
+    await page.locator('#mb-fold').click();
+    await page.waitForTimeout(300);
+    await expect(page.locator('#legend')).toBeVisible();
+    await expect(page.locator('#strip')).toBeVisible();
+    expect(await legendStrip(page)).toBe(0);
+  });
+  }
 
   test('겹쳐보기 진입: 비교 판 자동 열림 0 · A ≥ 45 % · 비교 도구 14 전부 동작 · 비교 띠 상수 0(M-05 · M-07 · M-09)', async ({ page }) => {
     const errs = watch(page);
@@ -942,7 +993,35 @@ test.describe('E0-5 붕괴 처방 · 내려받기 · 정직화', () => {
     expect(lay.head).toBe(0);
     expect(lay.badge).toBe(0);
     expect(lay.scales.every(Boolean)).toBe(true);
+    // 좌 판이 펴진 채 `변화 결과 보기 ›` — 좌 판은 띠로 접히고 비교 결과 판만 선다(판 셋 금지 · 재게이트 must_fix 1)
+    await page.locator('[data-cmp-open]').click();
+    await expect(page.locator('#mw')).toHaveAttribute('data-side', 'info');
+    await expect(page.locator('#mw')).toHaveAttribute('data-left', 'off');
+    await page.waitForFunction(() => document.querySelector('#mw-l').getBoundingClientRect().width < 40);
+    await page.waitForTimeout(400);
+    expect(await ratio(page)).toBeGreaterThanOrEqual(0.45);
+    // 반대 방향 — 비교 결과 판이 열린 채 `설정 패널 펼치기` 는 판을 먼저 닫는다
+    await page.locator('#l-open').click();
+    await expect(page.locator('#mw')).toHaveAttribute('data-left', 'on');
+    await expect(page.locator('.mw-side .mi')).toHaveCount(0);
+    await page.waitForTimeout(500);
+    expect(await ratio(page)).toBeGreaterThanOrEqual(0.45);
     expect(errs).toEqual([]);
+  });
+
+  test('1280×720 겹쳐보기 좌 판 펼침 — 좌 판 · 비교 띠 가로 스크롤바 0 · 칸 경계선 잔상 0(재게이트 must_fix 2)', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await boot(page, `${MAP}?on=${FARM}&mode=overlay`);
+    await page.waitForFunction(() => window.__lxMap?.B?.getStyle() != null, null, { timeout: 20000 });
+    await page.locator('#ch-base').click();
+    await expect(page.locator('#mw')).toHaveAttribute('data-left', 'on');
+    await page.waitForTimeout(500);
+    const r = await page.evaluate(() => {
+      const lb = document.querySelector('#l-b'), cs = getComputedStyle(lb);
+      const bars = [...document.querySelectorAll('#mw *')].filter((e) => /auto|scroll/.test(getComputedStyle(e).overflowX) && e.offsetParent && e.scrollWidth > e.clientWidth + 1).length;
+      return { bars, lbOver: lb.scrollWidth - lb.clientWidth, rule: cs.columnRuleStyle, cols: cs.columnCount };
+    });
+    expect(r).toEqual({ bars: 0, lbOver: 0, rule: 'none', cols: 'auto' });
   });
 
   test('내려받기 3곳 — 내보내기 GeoJSON · 통계 CSV(BOM) · 보고서 CSV(BOM) 각 1건(M-03)', async ({ page }, info) => {
@@ -1005,6 +1084,9 @@ test.describe('E0-5 붕괴 처방 · 내려받기 · 정직화', () => {
     await layersOn(page);
     await expect(page.locator('.dw-basis input[disabled]')).toHaveCount(2);
     await expect(page.locator('.dw-basis li[aria-disabled="true"]').first()).toContainText('시연 · 집계 자료 없음');
+    // `시연` 은 줄마다 한 번 — 태그로만(라벨 접미와 태그가 겹쳐 두 번 서던 것 · 재게이트 must_fix 4)
+    expect(await page.locator('.dw-basis li[aria-disabled="true"]').evaluateAll((l) => l.map((x) => (x.innerText.match(/시연/g) || []).length))).toEqual([1, 1]);
+    await expect(page.locator('.dw-basis li[aria-disabled="true"] .tag').first()).toHaveText('시연 · 집계 자료 없음');
     await page.locator('#st-run').click();
     await expect(page.locator('#say')).toContainText('기준 · ');
     expect(await page.evaluate(() => document.body.innerText.includes('다시 계산'))).toBe(false);

@@ -81,8 +81,20 @@ function boot() {
   </div>
   <aside class="mw-side" id="side" aria-label="열람"></aside>
 </div>`);
-  $('#l-open').onclick = () => { S.left = 'on'; leftPinned = true; leftAuto = false; commit(); };
+  /* 좌 판을 펴면 오른쪽 판(정보 판 · 서랍 · 비교 결과 판)을 먼저 닫는다 — 판 셋이 한 화면에 서지 않는다 */
+  $('#l-open').onclick = () => {
+    if (S.mode !== 'basic') cmpOpen = false;
+    else if (S.side) { if (S.side === 'info') S.fold = '1'; S.side = ''; S.sel = ''; }   // 정보 판의 표는 한 줄(peek) — 닫아도 접힌 채로
+    S.left = 'on'; leftPinned = true; leftAuto = false; commit();
+  };
   bindSwipe();
+  /* 좌 판 폭 전이(36↔372/690, 180ms)가 끝난 뒤의 재배치는 여기 한 곳에서 — 전이 도중에 잰 판 폭으로 정한
+     범례 · 시점 스트립 자리(narrow 판정)와 캔버스 크기를 최종 폭으로 다시 맞춘다. #l-open · #side-x 복귀 ·
+     `변화 결과 보기 ›` · 핀 되살림 등 좌 판 폭을 바꾸는 모든 경로가 이 한 줄을 탄다. */
+  $('#mw-l').addEventListener('transitionend', (e) => {
+    if (e.target !== e.currentTarget || e.propertyName !== 'width') return;
+    A?.resize(); B?.resize(); anchors.forEach(place); positionOverlays();
+  });
   addEventListener('popstate', () => { S = read(); if (!S.base) S.base = P.baseMap; redraw(true); });
   addEventListener('resize', () => { anchors.forEach(place); A?.resize(); B?.resize(); positionOverlays(); });
   renderAll();
@@ -164,13 +176,19 @@ const opacityOf = (id) => (opac.has(id) ? opac.get(id) : (id === 'namwon-greenho
    1440×900 에서 좌 판 두 칸(690) + 정보 판(410) 사이에 지도가 268px 로 무너졌다(x22 · x28).
    서랍 · 정보 판 · 비교 모드 = 한 화면에 판이 셋 → 좌 판은 띠. 판이 닫히면 **자동으로 접은 것만**
    되돌린다(leftAuto). 사용자가 띠를 직접 펼쳤으면(leftPinned) 다시 접지 않는다. */
+/* 2026-09-24 (E0-5 재게이트 · 판 셋 동시 금지 **양방향**) — 비교 결과 판은 cmpOpen 으로 열려 fitLeft 를
+   거치지 않았고(좌 690 + 판 410 → 캔버스 268px · c7-left+cmp), 사용자가 띠를 펴 둔(leftPinned) 뒤 행을 고르면
+   정보 판이 그 위에 또 섰다. 오른쪽 판(서랍 · 정보 판 · 비교 결과 판)이 서 있으면 **핀과 상관없이** 좌 판은 띠 —
+   판이 닫히면 자동으로 접은 것만 되돌린다. 반대 방향(좌 판을 펴기)은 #l-open 이 오른쪽 판을 먼저 닫는다. */
 let leftPinned = false, leftAuto = false;
-const crowded = () => drawerOpen() || S.side === 'info' || S.mode !== 'basic';
+const sideOpen = () => drawerOpen() || S.side === 'info' || (S.mode !== 'basic' && cmpOpen);
+const crowded = () => sideOpen() || S.mode !== 'basic';
 function fitLeft() {
+  if (sideOpen()) { if (S.left !== 'off') { S.left = 'off'; leftAuto = true; leftPinned = false; } return; }
   if (crowded()) { if (!leftPinned && S.left !== 'off') { S.left = 'off'; leftAuto = true; } return; }
   if (leftAuto) { S.left = 'on'; leftAuto = false; }
 }
-function commit(push = true) { write(S, push); redraw(); }
+function commit(push = true) { fitLeft(); write(S, push); redraw(); }   // fitLeft 가 바꾼 left 까지 주소에 싣는다
 async function redraw(fromUrl = false) {
   fitLeft();
   $('#mw').dataset.mode = S.mode;
@@ -184,7 +202,7 @@ async function redraw(fromUrl = false) {
   anchors.forEach(place);
   void fromUrl;
 }
-function renderAll() { renderLeft(); renderPlate(); renderBottom(); renderSide(); renderHead(); }
+function renderAll() { renderLeft(); renderPlate(); renderBottom(); renderSide(); renderHead(); positionOverlays(); }   // 표 판 높이가 정해진 뒤 한 번 더(renderPlate 는 표보다 먼저 그린다)
 
 function renderHead() {
   const on = onIds().map(D.layerById).filter(Boolean);
@@ -454,6 +472,7 @@ function renderPlate() {
 function positionOverlays() {
   const legend = $('#legend'), scale = $('#scale'), strip = $('#strip');
   if (!legend) return;
+  legend.style.display = ''; if (strip) strip.style.display = '';   // 지난번에 내린 것을 먼저 세운 뒤 잰다
   const plates = $('#plates');
   const w = plates?.clientWidth || 0, h = plates?.clientHeight || 0;
   const narrow = w < 980;
@@ -467,6 +486,16 @@ function positionOverlays() {
   const stack = narrow && !!strip && 48 + sh + 10 + legend.offsetHeight <= h - 70;
   if (strip) strip.style.bottom = stack ? '48px' : '14px';
   legend.style.bottom = stack ? `${48 + sh + 10}px` : '48px';
+  /* 쌓을 자리도, 나란히 설 폭도 없으면(1280 · 좌 판 690 · 표 펼침 → 판 600×200) 시점 스트립을 내린다 —
+     범례가 시점 그림 위에 숫자를 얹는 것보다 낫다. 시점은 펴진 좌 판 목록 · 표를 접으면 다시 선다. */
+  if (strip && !stack) {
+    const X = (a, c) => Math.max(0, Math.min(a.right, c.right) - Math.max(a.left, c.left)) * Math.max(0, Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top));
+    const r = strip.getBoundingClientRect();
+    if (X(r, legend.getBoundingClientRect()) > 0 || (scale && X(r, scale.getBoundingClientRect()) > 0)) strip.style.display = 'none';
+  }
+  /* 판이 범례 하나도 못 담을 만큼 낮으면(표를 펼친 1280 · 판 높이 ≈ 200) 범례가 위쪽 70px(검색 · 내보내기)을
+     덮는다 — 그때는 범례도 내린다. 표를 접으면 다시 선다. */
+  if (plates && legend.getBoundingClientRect().top < plates.getBoundingClientRect().top + 70) legend.style.display = 'none';
 }
 function noneHtml() {
   return `<div class="mw-none"><p class="t">범례 없음</p><p class="m">선택된 작업이 없어요</p><p class="w">왼쪽에서 분석 결과를 체크하세요</p></div>`;
@@ -715,11 +744,12 @@ function peekRows(L) {
 function renderPeek(el, L) {
   const rows = peekRows(L), i = rows.findIndex((r) => r.id === S.sel), r = rows[i];
   el.className = 'mb'; el.setAttribute('data-fold', ''); el.setAttribute('data-peeking', '');
+  /* 고른 행 문구는 말줄임 없이 온전히 — 좁으면 문구 칸(.pk-s)만 가로로 밀린다. 넘김 · 탭 · 표 펼치기는 판 안에 고정(재게이트) */
   el.innerHTML = `<div class="mb-peek" role="group" aria-label="고른 행">
-    <b>필지 행정정보</b>
-    ${r ? `<span class="n">${nf.format(i + 1)} / ${nf.format(rows.length)}</span><span class="row" title="${esc(`${r.emd} · ${r.ri} ${r.san} ${r.bon}-${r.bu} · ${r.clsLabel} · ${Math.round(r.area)} ㎡ · ${D.actLabel(r.act)}`)}">${esc(r.emd)} · ${esc(r.ri)} ${esc(r.san)} ${esc(String(r.bon))}-${esc(String(r.bu))} · ${esc(r.clsLabel)} · <span class="n">${nf.format(Math.round(r.area))} ㎡</span> · ${esc(D.actLabel(r.act))}</span>` : '<span class="row">고른 행이 거르개 밖에 있습니다</span>'}
+    <span class="pk-s" tabindex="0" aria-label="고른 행 문구 — 좁으면 가로로 밀립니다"><b>필지 행정정보</b>
+    ${r ? `<span class="n">${nf.format(i + 1)} / ${nf.format(rows.length)}</span><span class="row">${esc(r.emd)} · ${esc(r.ri)} ${esc(r.san)} ${esc(String(r.bon))}-${esc(String(r.bu))} · ${esc(r.clsLabel)} · <span class="n">${nf.format(Math.round(r.area))} ㎡</span> · ${esc(D.actLabel(r.act))}</span>` : '<span class="row">고른 행이 거르개 밖에 있습니다</span>'}</span>
     <button type="button" class="btn-br btn-br--s" data-peek="-1"${i > 0 ? '' : ' disabled'} aria-label="이전 행">‹ 이전</button><button type="button" class="btn-br btn-br--s" data-peek="1"${r && i < rows.length - 1 ? '' : ' disabled'} aria-label="다음 행">다음 ›</button>
-    <span class="sp"></span>${TTABS.map((t) => `<button type="button" class="mic" data-ttab="${t.k}">${t.label}</button>`).join('<span class="dim"> · </span>')}
+    <span class="sp"></span><span class="pk-t">${TTABS.map((t) => `<button type="button" class="mic" data-ttab="${t.k}">${t.label}</button>`).join('<span class="dim">·</span>')}</span>
     <button type="button" class="mic" id="mb-full">표 펼치기 ${icon('chevD', 14)}</button></div>`;
   el.onclick = (e) => {
     const pk = e.target.closest('[data-peek]');
@@ -1049,7 +1079,13 @@ async function cmpClick(e, k) {
   /* 시점은 왼쪽 목록에서 바꾼다 — 판을 펴 준다. 좌 판(690)과 비교 결과 판(410)이 함께 서면 지도가
      다시 무너진다(M-01 재발 · v7-cmp-left-open) → 좌 판을 펴기 전에 비교 결과 판을 먼저 닫는다. */
   if (e.target.closest('#ch-base') || e.target.closest('#ch-cmp')) { cmpOpen = false; S.left = 'on'; leftPinned = true; leftAuto = false; commit(); return; }
-  if (e.target.closest('[data-cmp-open]')) { cmpOpen = !cmpOpen; renderCompareSide(); A?.resize(); B?.resize(); renderCompareOverlays(); return; }
+  if (e.target.closest('[data-cmp-open]')) {                  // 비교 결과 판을 열면 좌 판은 띠로(fitLeft · 판 셋 금지)
+    cmpOpen = !cmpOpen;
+    const was = S.left; fitLeft();
+    if (S.left !== was) { $('#mw').dataset.left = S.left; write(S, false); renderLeft(); }
+    renderCompareSide(); A?.resize(); B?.resize(); renderCompareOverlays();   // 폭 전이 뒤 재배치는 #mw-l transitionend 한 곳에서
+    return;
+  }
   const z = e.target.closest('[data-z]'); if (z) { z.dataset.z === 'in' ? m?.zoomIn() : m?.zoomOut(); return; }
   const tb = e.target.closest('.mw-tools [data-tool]');
   if (tb) {

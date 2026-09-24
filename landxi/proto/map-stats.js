@@ -39,7 +39,7 @@ function draw() {
   <section class="dw-sec"><div class="dw-sec-h"><span class="lb">기준 (최근 분석 결과)</span><button type="button" class="link" id="st-more">더 보기 ›</button>
       <span class="acts"><button type="button" class="btn-br" id="st-reset" style="width:84px">초기화</button><button type="button" class="btn" id="st-run" style="width:100px">통계 보기</button></span></div>
     <ul class="dw-basis" role="radiogroup" aria-label="통계 기준">${all.slice(0, 3).map((b) => `
-      <li aria-selected="${basis.id === b.id}"${b.demo ? ' aria-disabled="true"' : ''}><label class="rd" style="gap:9px"><input type="radio" name="st-basis" value="${esc(b.id)}"${basis.id === b.id ? ' checked' : ''}${b.demo ? ' disabled' : ''}><span class="t">${esc(b.title)}${b.demo ? ' · 시연 · 집계 자료 없음' : ''}</span></label>${b.demo ? '<em class="tag">시연</em>' : ''}
+      <li aria-selected="${basis.id === b.id}"${b.demo ? ' aria-disabled="true"' : ''}><label class="rd" style="gap:9px"><input type="radio" name="st-basis" value="${esc(b.id)}"${basis.id === b.id ? ' checked' : ''}${b.demo ? ' disabled' : ''}><span class="t">${esc(b.title)}</span></label>${b.demo ? '<em class="tag">시연 · 집계 자료 없음</em>' : ''}
       <span class="m">${esc(b.at.replace(/-/g, '.'))}${b.count ? ` · ${esc(b.model)} · ${nf.format(b.count)} ${esc(b.unit)}` : ` · ${esc(b.task)}`}</span></li>`).join('')}</ul>
     <p class="dw-note">집계는 실 결과 기준에서만 섭니다 · 시연 기준은 원본 목록이라 고를 수 없습니다</p></section>
 
