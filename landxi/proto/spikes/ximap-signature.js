@@ -11,19 +11,21 @@ import { CHANGE } from '../../assets/data/change.js';
 
 /* ══ 0. 법전 값 ══════════════════════════════════════════════════════════ */
 const D = {
-  frame: 1250,      // S1 결과 bbox 로 카메라 frame
-  dive: 1000,       // S3 · S6 정사영상 범위로 frame
+  frame: 1000,      // S1 남원 전역 frame(부팅 자리 · 다른 장면에서 올라올 때)
+  descend: 1250,    // S1 스윕 뒤 한 필지로 하강(브리프 900–1250 · 법전 사다리 1250)
+  dive: 1000,       // S3 · S6 정사영상 범위 · 필지로 이어지는 카메라
   sweep: 1000,      // 스캔 스윕 1.0s
   fade: 500,        // 스윕이 지난 필지의 현상(0 → 1)
   lock: 380,        // 락온 = 180 + 80 + 120 (CSS .spk-lock)
-  stagger: 120,     // 자동 락온 3곳 사이
   dig: 40,          // 숫자 글자별 현상
   tst: 60,          // 텍스트 인 스태거
   tin: 500,         // 텍스트 인(법전 600 대신 500 — 결과 문서 '남은 것' 참고)
   stop: 750,        // S3 재생 · 정수 시점 자동 정지
   hop: 1000,        // S3 재생 · 한 시점에서 다음 시점까지
+  peel: 1000,       // S6 진입 · 가르는 선이 왼쪽 끝에서 들어와 결과를 벗긴다
   debounce: 120,    // 손으로 끄는 동안 URL 기록 간격
   tileFade: 500,    // 도시 바탕 · 정사영상 타일이 들어올 때(raster-fade-duration)
+  reveal: 120,      // S6 착지 → 가르는 선 진입 사이 상한(B 한 장 그리기만 기다린다)
 };
 /* 재생 주기 = 정지 4 × 750 + 이동 3 × 1000 = 6000ms(법전 유휴 ≥ 6s · 화면 유휴 1개) */
 const CYCLE = 4 * D.stop + 3 * D.hop;
@@ -40,13 +42,19 @@ function bezier(x1, y1, x2, y2) {
   };
 }
 const EASE = bezier(0.15, 1, 0.3, 1);
+/* 카메라 = 법전 이징을 '해상도 공간'에 건다. 이징을 줌(로그 척도)에 바로 걸면 +300ms 에 80 % 가 끝나고
+   뒤 절반이 정지로 읽힌다. 대신 화면 해상도(m/px)가 깊이 2^14(= 14 줌 단계)의 가상 하강에서 법전 이징대로
+   줄어든다고 보고, 그 하강이 지난 줌 단계의 비율을 경로 진행으로 쓴다: DEPTH(x) = -log2(1 - x(1 - 2^-14)) / 14.
+   시작 · 끝 = 0 · 1, 단조 증가. 진행률 +300ms ≈ 22 % · +900ms(1000) ≈ 89 % · +900ms(1250) ≈ 58 %. */
+const DEPTH_Z = 14, DEPTH_C = 1 - 2 ** -DEPTH_Z;
+const CAM_EASE = (t) => (t >= 1 ? 1 : -Math.log2(1 - EASE(t) * DEPTH_C) / DEPTH_Z);
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ══ 1. 실데이터 ═════════════════════════════════════════════════════════ */
 const R = RESULTS.find((r) => r.id === 'namwon-farmland-2025');
 const ST = R.stats;
 const EP = IMAGERY.filter((i) => /^namwon_25\d\d$/.test(i.id)).sort((a, b) => a.captured.localeCompare(b.captured));
-const CITY = IMAGERY.find((i) => i.id === 'namwon_city_2504');
+const CITY = IMAGERY.find((i) => i.id === 'namwon_city_2510');   // 남원 전역 2 m · 2시점 중 판독 범위를 더 넓게 덮는 10월
 const OB = EP[0].bounds;                                   // 정사영상 4시점 공통 범위
 const BB = ST.bbox;                                        // 결과 bbox
 const ROOT = '../../';
@@ -69,11 +77,11 @@ $('#spk-band-n').textContent = nf.format(ST.count);
 
 /* ══ 2. 상태 ═════════════════════════════════════════════════════════════ */
 const S = {
-  scene: 's1', phase: '', phases: [], started: false, arrived: false, ready: false,
-  e: 1, swipe: 50, off: true, playing: false, paused: false, stops: [],
+  scene: 's1', phase: '', phases: [], marks: [], jumps: 0, started: false, arrived: false, ready: false,
+  e: 3, swipe: 50, off: true, playing: false, paused: false, stops: [],
   frames: [], lastT: 0, A: null, B: null, geo: null, pts: null, order: [], chg: null,
 };
-const setPhase = (p) => { S.phase = p; S.phases.push(p); document.documentElement.dataset.phase = p; };
+const setPhase = (p) => { S.phase = p; S.phases.push(p); S.marks.push([p, Math.round(performance.now())]); document.documentElement.dataset.phase = p; };
 
 /* 정사영상 타일셋은 성기다 — 없는 타일에 로컬 서버가 주는 투명 1×1 PNG 가 Chrome 에서 디코드되지 않아
    (tools/serve.mjs BLANK · 결과 문서 '요청') 콘솔 오류가 쌓였다. 스파이크의 타일은 spk:// 로 받아
@@ -83,34 +91,119 @@ const blank = async () => {
   if (!BLANK) { const c = new OffscreenCanvas(1, 1); c.getContext('2d'); BLANK = await (await c.convertToBlob({ type: 'image/png' })).arrayBuffer(); }
   return BLANK.slice(0);
 };
-maplibregl.addProtocol('spk', async (params, ac) => {
-  const r = await fetch(params.url.slice('spk://'.length), { signal: ac.signal });
-  if (!r.ok || !/webp/.test(r.headers.get('content-type') || '')) return { data: await blank() };
-  return { data: await r.arrayBuffer() };
+/* 타일 기억 — 로컬 서버는 검증자(ETag · Last-Modified)를 주지 않아 브라우저 HTTP 캐시가 타일을 다시 받는다.
+   바이트는 URL 마다 한 번만 받고(BYTES), 미리 받아 둘 타일은 디코드까지 끝낸 ImageBitmap 으로 둔다(BMP).
+   MapLibre 는 프로토콜이 ImageBitmap 을 주면 디코드 없이 바로 텍스처로 올린다 — 하강 중 낱장 팝인이 사라진다. */
+const BYTES = new Map(), BMP = new Map();
+const TSTAT = { log: [] };                                  // 테스트용 — 요청마다 [원천, 단계, 미리 받음?, 지연 ms]
+const bytesOf = (url) => {
+  if (!BYTES.has(url)) {
+    const p = fetch(url).then(async (r) => (r.ok && /webp/.test(r.headers.get('content-type') || '') ? r.arrayBuffer() : null));
+    BYTES.set(url, p);
+    p.catch(() => BYTES.delete(url));
+  }
+  return BYTES.get(url);
+};
+/* 원천 타일셋은 줌마다 덮는 자리가 조금씩 다르다(도시 정사영상은 z13 에 있는 자리가 z14 에 빠지기도 한다).
+   빠진 타일을 투명으로 두면 그 자리가 타일 모양 흰 사각형으로 뚫린다 — 부모 타일(최대 4단 위)의 해당 4분면을 확대해 채운다. */
+const TILE_RE = /^(.*\/)(\d+)\/(\d+)\/(\d+)\.webp$/;
+const PARENT = new Map();
+const decode = (b) => createImageBitmap(new Blob([b], { type: 'image/webp' }));
+function tileBitmap(url, depth = 0) {
+  return bytesOf(url).then(async (b) => {
+    if (b) return decode(b);
+    const m = TILE_RE.exec(url);
+    if (!m || depth >= 4 || +m[2] <= 0) return null;
+    const z = +m[2], x = +m[3], y = +m[4], pu = `${m[1]}${z - 1}/${x >> 1}/${y >> 1}.webp`;
+    if (!PARENT.has(pu)) { PARENT.set(pu, tileBitmap(pu, depth + 1).catch(() => null)); if (PARENT.size > 400) PARENT.delete(PARENT.keys().next().value); }
+    const p = await PARENT.get(pu);
+    if (!p) return null;
+    const h = p.width / 2;
+    return createImageBitmap(p, (x & 1) * h, (y & 1) * h, h, h, { resizeWidth: p.width, resizeHeight: p.height, resizeQuality: 'medium' });
+  }).catch(() => null);
+}
+const bitmapOf = (url) => {
+  if (!BMP.has(url)) BMP.set(url, tileBitmap(url));
+  return BMP.get(url);
+};
+const abortable = (p, ac) => new Promise((res, rej) => {
+  const no = () => rej(new Error('AbortError'));
+  if (ac.signal.aborted) return no();
+  ac.signal.addEventListener('abort', no, { once: true });
+  p.then(res, rej);
 });
-const tileURL = (t) => 'spk://' + new URL(ROOT, location.href).href + t;   // {z}/{x}/{y} 가 인코딩되지 않게 뒤에 붙인다
+maplibregl.addProtocol('spk', (params, ac) => abortable((async () => {
+  const url = params.url.slice('spk://'.length), t0 = performance.now(), warm = BMP.has(url);
+  let data;
+  if (warm) { const bm = await BMP.get(url); data = bm ? await createImageBitmap(bm).catch(() => null) : null; }
+  if (!data) { const b = await bytesOf(url); data = b ? b.slice(0) : (await tileBitmap(url)) || (await blank()); }
+  const src = /tiles\/([^/]+)\//.exec(url)?.[1] || '';
+  TSTAT.log.push([src, S.phase, warm, Math.round(performance.now() - t0), S.scene, url.split('/').slice(-3).join('/')]);
+  if (TSTAT.log.length > 4000) TSTAT.log.shift();
+  return { data };
+})(), ac));
+const TILE_BASE = () => new URL(ROOT, location.href).href;
+const tileURL = (t) => 'spk://' + TILE_BASE() + t;   // {z}/{x}/{y} 가 인코딩되지 않게 뒤에 붙인다
 
-/* ══ 3. 지도 꾸미기 — 도시 바탕(무채) · 정사영상 4층 · 읍면동 · 변화 지수 · 결과 ══ */
+/* 미리 받기 — 카메라가 지날 자리의 타일 목록(웹 메르카토르 · 256 px 타일 = 지도 줌 + 1). */
+const mercX = (lng) => (lng + 180) / 360;
+const mercY = (lat) => { const s = Math.sin((lat * Math.PI) / 180); return 0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI); };
+/** 카메라 cam(center · zoom) 화면(W×H px)을 덮는 원천 im 의 타일 URL — 타일 줌 z 들, 원천 bounds 안만. */
+function tilesFor(im, cam, zs, W, H, pad = 1) {
+  const c = maplibregl.LngLat.convert(cam.center), ws = 512 * 2 ** cam.zoom, out = [];
+  const fx0 = mercX(c.lng) - W / 2 / ws, fx1 = mercX(c.lng) + W / 2 / ws, fy0 = mercY(c.lat) - H / 2 / ws, fy1 = mercY(c.lat) + H / 2 / ws;
+  const b = im.bounds;
+  for (const z of zs) {
+    if (z < im.minzoom || z > srcMax(im)) continue;
+    const n = 2 ** z, cl = (v) => Math.max(0, Math.min(n - 1, v));
+    const x0 = cl(Math.max(Math.floor(fx0 * n) - pad, Math.floor(mercX(b[0]) * n))), x1 = cl(Math.min(Math.floor(fx1 * n) + pad, Math.floor(mercX(b[2]) * n)));
+    const y0 = cl(Math.max(Math.floor(fy0 * n) - pad, Math.floor(mercY(b[3]) * n))), y1 = cl(Math.min(Math.floor(fy1 * n) + pad, Math.floor(mercY(b[1]) * n)));
+    for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) out.push(TILE_BASE() + im.tiles.replace('{z}', z).replace('{x}', x).replace('{y}', y));
+  }
+  return out;
+}
+/** 카메라 a → b 사이(해상도 가중 보간)를 k 칸으로 나눠 지나는 화면들의 타일. flyTo 경로의 근사 — 둘레 2 타일로 여유를 둔다. */
+function tilesAlong(im, a, b, W, H, k = 12) {
+  const ca = maplibregl.LngLat.convert(a.center), cb = maplibregl.LngLat.convert(b.center), set = new Set();
+  const ra = 2 ** -a.zoom, rb = 2 ** -b.zoom;
+  for (let i = 0; i <= k; i++) {
+    const z = a.zoom + ((b.zoom - a.zoom) * i) / k, w = Math.abs(ra - rb) < 1e-12 ? i / k : (ra - 2 ** -z) / (ra - rb);
+    const cam = { center: [ca.lng + (cb.lng - ca.lng) * w, ca.lat + (cb.lat - ca.lat) * w], zoom: z };
+    const tz = Math.round(z + 1);
+    for (const u of tilesFor(im, cam, [tz - 1, tz], W, H, 2)) set.add(u);
+  }
+  return [...set];
+}
+const WARM = { n: 0, ms: 0 };
+function prewarm(urls) {
+  const t0 = performance.now();
+  return Promise.all(urls.map(bitmapOf)).then((r) => { WARM.n = r.filter(Boolean).length; WARM.ms = Math.round(performance.now() - t0); return WARM; });
+}
+/** 하강을 마치면 디코드해 둔 비트맵을 놓는다(바이트는 남는다 — 다시 보기 · B 는 바이트에서 곧장 디코드). */
+function releaseBitmaps(keep = () => false) {
+  for (const [u, p] of BMP) if (!keep(u)) { BMP.delete(u); p.then((b) => b?.close()).catch(() => {}); }
+}
+
+/* ══ 3. 지도 꾸미기 — 도시 바탕(실색 · 밑깔개) · 정사영상 4층 · 읍면동 · 변화 지수 · 결과 ══ */
 const FS = ['coalesce', ['feature-state', 'a'], 0];
 function decorate(map, { results = true } = {}) {
   // MapLibre 의 기본 속성 전이(300ms)는 법전 사다리 밖 — 스타일 전체를 0 으로 두고 필요한 곳만 D 값으로 연다.
   if (map.style?.stylesheet) map.style.stylesheet.transition = { duration: 0, delay: 0 };
   setBase(map, 'none');                                    // V-World 끄고 흰 바탕 — 바탕은 LX 도시 정사영상(로컬 타일)
-  map.addSource('city', { type: 'raster', tiles: [tileURL(CITY.tiles)], tileSize: 256, minzoom: CITY.minzoom, maxzoom: CITY.maxzoom, bounds: CITY.bounds, attribution: '' });
-  // 도시 바탕은 도시 스케일에서만 — z13 → 14.5 사이에 줌으로 걷힌다(다이브 중 과확대된 회색 덩어리 0).
-  map.addLayer({ id: 'city', type: 'raster', source: 'city', maxzoom: CITY_OUT, paint: {
-    'raster-opacity': ['interpolate', ['linear'], ['zoom'], CITY_OUT - 1.5, 1, CITY_OUT, 0],
-    'raster-saturation': -1, 'raster-contrast': -0.12, 'raster-brightness-min': 0.16, 'raster-fade-duration': RM ? 0 : D.tileFade } }, 'emd-fill');
+  map.addSource('city', { type: 'raster', tiles: [tileURL(CITY.tiles)], tileSize: 256, minzoom: CITY.minzoom, maxzoom: srcMax(CITY), bounds: CITY.bounds, attribution: '' });
+  // 도시 바탕 = LX 남원 전역 정사영상(2 m · 원천 실색 그대로 — 채도 · 밝기 · 대비 보정 0).
+  // 모든 줌에서 드론 4층 아래 밑깔개로 남는다 — 하강 · S3 · S6 어디서도 영상 밖 흰 종이가 드러나지 않게.
+  map.addLayer({ id: 'city', type: 'raster', source: 'city', paint: { 'raster-fade-duration': RM ? 0 : D.tileFade } }, 'emd-fill');
   EP.forEach((im, k) => {
     map.addSource('ep' + k, { type: 'raster', tiles: [tileURL(im.tiles)], tileSize: 256, minzoom: im.minzoom, maxzoom: im.maxzoom, bounds: im.bounds, attribution: '' });
-    map.addLayer({ id: 'ep' + k, type: 'raster', source: 'ep' + k, paint: { 'raster-opacity': 0, 'raster-opacity-transition': { duration: 0 }, 'raster-fade-duration': RM ? 0 : D.tileFade } }, 'emd-fill');
+    map.addLayer({ id: 'ep' + k, type: 'raster', source: 'ep' + k, layout: { visibility: 'none' }, paint: { 'raster-opacity': 0, 'raster-opacity-transition': { duration: 0 }, 'raster-fade-duration': RM ? 0 : D.tileFade } }, 'emd-fill');
   });
   map.addSource('spk-emd', { type: 'geojson', data: S.emd });
   map.addLayer({ id: 'spk-emd', type: 'line', source: 'spk-emd', maxzoom: 14, layout: { 'line-join': 'miter' }, paint: { 'line-color': '#010102', 'line-width': 0.8, 'line-opacity': 0.22 } }, 'sr-fill');
-  // 정사영상 4시점 범위 = 헤어라인 틀 하나(도시 스케일에서 걷히고 정사영상 스케일에서 들어온다) — 틀 밖은 흰 바탕
+  // 정사영상 4시점 범위 = 헤어라인 틀 하나. S1 에선 없고, S3 · S6 에서 카메라가 서고 영상이 깔린 뒤(idle)에만 들어온다.
   map.addSource('spk-ob', { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [[[OB[0], OB[1]], [OB[2], OB[1]], [OB[2], OB[3]], [OB[0], OB[3]], [OB[0], OB[1]]]] } } });
   map.addLayer({ id: 'spk-ob', type: 'line', source: 'spk-ob', minzoom: 12, layout: { 'line-join': 'miter' },
-    paint: { 'line-color': '#010102', 'line-width': 1, 'line-opacity': ['interpolate', ['linear'], ['zoom'], 13, 0, 14.5, 0.55] } }, 'sr-fill');
+    paint: { 'line-color': '#FFFFFF', 'line-width': 1, 'line-opacity': 0, 'line-opacity-transition': { duration: RM ? 0 : D.fade } } }, 'sr-fill');
   map.addSource('spk-chg', { type: 'geojson', data: S.chg });
   map.addLayer({ id: 'spk-chg', type: 'line', source: 'spk-chg', filter: ['==', ['get', 'pair'], ''], layout: { 'line-join': 'miter' },
     paint: { 'line-color': '#FFFFFF', 'line-width': 1.2, 'line-dasharray': [2, 1.5], 'line-opacity': 0, 'line-opacity-transition': { duration: RM ? 0 : D.fade } } }, 'sr-fill');
@@ -119,32 +212,79 @@ function decorate(map, { results = true } = {}) {
   const k = ['-', 2, FS];                                  // 막 도착한 점은 두 배 크기에서 1 로 가라앉는다
   map.addSource('r', { type: 'geojson', data: S.geo });
   map.addSource('r-pt', { type: 'geojson', data: S.pts });
-  map.addLayer({ id: 'r-pt', type: 'circle', source: 'r-pt', maxzoom: 13.6, paint: {
-    'circle-color': TEAL, 'circle-opacity': ['*', 0.95, FS],
-    'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, ['*', 1.6, k], 11, ['*', 2.4, k], 13.6, ['*', 3.6, k]],
-    'circle-stroke-color': '#FFFFFF', 'circle-stroke-width': 0.6, 'circle-stroke-opacity': ['*', 0.9, FS] } }, 'sr-fill');
-  map.addLayer({ id: 'r-fill', type: 'fill', source: 'r', minzoom: 12, filter: ['!', dash], paint: { 'fill-color': TEAL, 'fill-opacity': rOp(0.18, false) } }, 'sr-fill');
-  map.addLayer({ id: 'r-line', type: 'line', source: 'r', minzoom: 12, filter: ['!', dash], layout: { 'line-join': 'miter' },
-    paint: { 'line-color': TEAL, 'line-width': ['interpolate', ['linear'], ['zoom'], 12, 1, 15, 1.7, 18, 2.6], 'line-opacity': rOp(0.95, false) } }, 'sr-fill');
-  map.addLayer({ id: 'r-dash', type: 'line', source: 'r', minzoom: 12, filter: dash, layout: { 'line-join': 'miter' },
-    paint: { 'line-color': TEAL, 'line-width': ['interpolate', ['linear'], ['zoom'], 12, 1, 15, 1.7, 18, 2.6], 'line-dasharray': [3, 2], 'line-opacity': rOp(0.95, false) } }, 'sr-fill');
+  // 도시 스케일에서 필지(≈ 50 m)는 1 px 안팎 — 폴리곤 자체를 청록 면·선으로 그리고, 막 도착한 자리엔
+  // 두 배 크기에서 가라앉는 점 하나가 '도착' 을 알린다(도착이 끝나면 점은 옅게 남아 폴리곤 위치를 짚는다).
+  map.addLayer({ id: 'r-pt', type: 'circle', source: 'r-pt', maxzoom: 12.5, paint: {
+    'circle-color': TEAL, 'circle-opacity': ['*', ['-', 1.3, FS], 0.7, FS],
+    'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, ['*', 1.5, k], 11, ['*', 2.2, k], 12.5, ['*', 3, k]],
+    'circle-stroke-width': 0 } }, 'sr-fill');
+  const W = ['interpolate', ['linear'], ['zoom'], 9, 2, 11.5, 1.8, 13, 1.2, 15, 1.7, 18, 2.6];
+  map.addLayer({ id: 'r-fill', type: 'fill', source: 'r', filter: ['!', dash], paint: { 'fill-color': TEAL, 'fill-opacity': rOp(0.8, 0.2, false) } }, 'sr-fill');
+  map.addLayer({ id: 'r-line', type: 'line', source: 'r', filter: ['!', dash], layout: { 'line-join': 'miter' },
+    paint: { 'line-color': TEAL, 'line-width': W, 'line-opacity': rOp(0.95, 0.95, false) } }, 'sr-fill');
+  map.addLayer({ id: 'r-dash', type: 'line', source: 'r', filter: dash, layout: { 'line-join': 'miter' },
+    paint: { 'line-color': TEAL, 'line-width': W, 'line-dasharray': [3, 2], 'line-opacity': rOp(0.95, 0.95, false) } }, 'sr-fill');
+  // 범위에 걸치기만 한 필지 = 정사영상 범위로 자른 모양(S3 · S6 에서만). 영상 밖으로 튀어나온 청록 조각이 없다.
+  map.addSource('r-clip', { type: 'geojson', data: S.clip });
+  const cOp = (hi) => ['interpolate', ['linear'], ['zoom'], SCOPE_Z - 1.5, 0, SCOPE_Z, hi];
+  map.addLayer({ id: 'rc-fill', type: 'fill', source: 'r-clip', filter: ['!', dash], layout: { visibility: 'none' }, paint: { 'fill-color': TEAL, 'fill-opacity': cOp(0.2) } }, 'sr-fill');
+  map.addLayer({ id: 'rc-line', type: 'line', source: 'r-clip', filter: ['!', dash], layout: { visibility: 'none', 'line-join': 'miter' }, paint: { 'line-color': TEAL, 'line-width': W, 'line-opacity': cOp(0.95) } }, 'sr-fill');
+  map.addLayer({ id: 'rc-dash', type: 'line', source: 'r-clip', filter: dash, layout: { visibility: 'none', 'line-join': 'miter' }, paint: { 'line-color': TEAL, 'line-width': W, 'line-dasharray': [3, 2], 'line-opacity': cOp(0.95) } }, 'sr-fill');
 }
 const R_LAYERS = ['r-pt', 'r-fill', 'r-line', 'r-dash'];
-/* 결과 면·선의 불투명도. scoped(S3 · S6) = 정사영상 범위에 걸친 필지만 남기고 나머지는 z13 → 14.5 하강하며 걷힌다
-   — 틀 밖 흰 바탕에 청록 조각이 흩어지지 않게. z13 아래에선 두 식이 같아 장면 전환에 튐이 없다. */
-const CITY_OUT = 14.5;
-function rOp(base, scoped) {
-  const v = ['*', base, FS];
-  if (!scoped) return v;
-  return ['interpolate', ['linear'], ['zoom'], CITY_OUT - 1.5, v, CITY_OUT, ['*', base, FS, ['case', ['get', 'inOb'], 1, 0]]];
+/* 도시 정사영상 원천의 실제 최대 줌 — 판독 범위(농경지) 둘레 타일은 z15 까지이고 z16–17 은 시내 core 에만 있다.
+   원천 maxzoom 을 15 로 두면 그 위 줌에선 z15 를 확대해 그린다(빈 z16 타일이 흰 구멍으로 뚫리지 않는다). */
+const CITY_MAX = 15;
+const srcMax = (im) => (im === CITY ? CITY_MAX : im.maxzoom);
+const RC_LAYERS = ['rc-fill', 'rc-line', 'rc-dash'];
+/* 결과 면·선의 불투명도. scoped(S3 · S6) = 정사영상 범위 안에 온전히 든 필지만 원래 모양으로 남고, 범위에 걸친 필지는
+   범위로 자른 모양(r-clip)으로 바뀌며, 범위 밖 필지는 z13 → 14.5 하강하며 걷힌다. z13 아래에선 두 식이 같아 장면 전환에 튐이 없다. */
+const SCOPE_Z = 14.5;
+function rOp(lo, hi, scoped) {
+  const a = ['*', lo, FS], b = ['*', hi, FS];
+  return ['interpolate', ['linear'], ['zoom'], 11, a, SCOPE_Z - 1.5, b, SCOPE_Z, scoped ? ['*', hi, FS, ['case', ['get', 'inside'], 1, 0]] : b];
 }
 function scopeResults(map, scoped) {
   if (!map?.getLayer('r-fill')) return;
-  map.setPaintProperty('r-fill', 'fill-opacity', rOp(0.18, scoped));
-  map.setPaintProperty('r-line', 'line-opacity', rOp(0.95, scoped));
-  map.setPaintProperty('r-dash', 'line-opacity', rOp(0.95, scoped));
+  map.__scoped = scoped;
+  map.setPaintProperty('r-fill', 'fill-opacity', rOp(0.8, 0.2, scoped));
+  map.setPaintProperty('r-line', 'line-opacity', rOp(0.95, 0.95, scoped));
+  map.setPaintProperty('r-dash', 'line-opacity', rOp(0.95, 0.95, scoped));
+  showResults(map, map.__shown !== false);
 }
-const showResults = (map, on) => R_LAYERS.forEach((l) => map.getLayer(l) && map.setLayoutProperty(l, 'visibility', on ? 'visible' : 'none'));
+function showResults(map, on) {
+  if (!map) return;
+  map.__shown = on;
+  const vis = (l, v) => map.getLayer(l) && map.setLayoutProperty(l, 'visibility', v ? 'visible' : 'none');
+  R_LAYERS.forEach((l) => vis(l, on));
+  RC_LAYERS.forEach((l) => vis(l, on && !!map.__scoped));
+}
+/** 정사영상 범위 틀 — S3 · S6 에서 영상이 깔린 뒤에만(D.fade 로 들어온다). */
+const showFrame = (map, on) => map?.getLayer('spk-ob') && map.setPaintProperty('spk-ob', 'line-opacity', on ? 0.6 : 0);
+/** 사각형 [W,S,E,N] 로 폴리곤 자르기(Sutherland–Hodgman · 링마다). */
+function clipRect(geom, r) {
+  const clipRing = (ring) => {
+    let pts = ring.slice(0, -1);
+    const edges = [[(p) => p[0] >= r[0], (a, b) => [r[0], a[1] + ((b[1] - a[1]) * (r[0] - a[0])) / (b[0] - a[0])]],
+      [(p) => p[0] <= r[2], (a, b) => [r[2], a[1] + ((b[1] - a[1]) * (r[2] - a[0])) / (b[0] - a[0])]],
+      [(p) => p[1] >= r[1], (a, b) => [a[0] + ((b[0] - a[0]) * (r[1] - a[1])) / (b[1] - a[1]), r[1]]],
+      [(p) => p[1] <= r[3], (a, b) => [a[0] + ((b[0] - a[0]) * (r[3] - a[1])) / (b[1] - a[1]), r[3]]]];
+    for (const [inside, cut] of edges) {
+      const out = [];
+      for (let i = 0; i < pts.length; i++) {
+        const a = pts[(i + pts.length - 1) % pts.length], b = pts[i];
+        if (inside(b)) { if (!inside(a)) out.push(cut(a, b)); out.push(b); } else if (inside(a)) out.push(cut(a, b));
+      }
+      pts = out;
+      if (!pts.length) break;
+    }
+    return pts.length >= 3 ? [...pts, pts[0]] : null;
+  };
+  const poly = (rings) => { const o = rings.map(clipRing); return o[0] ? o.filter(Boolean) : null; };
+  if (geom.type === 'Polygon') { const p = poly(geom.coordinates); return p && { type: 'Polygon', coordinates: p }; }
+  const ps = geom.coordinates.map(poly).filter(Boolean);
+  return ps.length ? { type: 'MultiPolygon', coordinates: ps } : null;
+}
 function revealAll(map, a = 1) {
   if (map === S.A) S.level.fill(a);
   for (let i = 0; i < S.geo.features.length; i++) { map.setFeatureState({ source: 'r', id: i }, { a }); map.setFeatureState({ source: 'r-pt', id: i }, { a }); }
@@ -156,11 +296,18 @@ function epochLayers(e) {
   if (f < 0.005 || k >= 3) return { a: EP[k].id, b: null, opA: 1, opB: 0, k, f: 0 };
   return { a: EP[k].id, b: EP[k + 1].id, opA: +(1 - f).toFixed(4), opB: f, k, f };
 }
+/* 층 켜기 — 불투명도 0 이어도 켜진 래스터 층은 타일을 받는다. S1 · S6 은 보이는 시점 층만 켜고(하강 · 착지에 4배 적재 없음),
+   S3 는 카메라가 선 뒤 4층을 모두 켠다(재생 · 스크럽이 콜드 타일을 만나지 않게 — epAll). */
 function paintEpoch(map, e) {
   if (!map?.getLayer('ep0')) return;
   const L = epochLayers(e);
-  EP.forEach((im, i) => map.setPaintProperty('ep' + i, 'raster-opacity', im.id === L.a ? L.opA : im.id === L.b ? L.opB : 0));
+  EP.forEach((im, i) => {
+    const op = im.id === L.a ? L.opA : im.id === L.b ? L.opB : 0, id = 'ep' + i, vis = map.__epAll || op > 0 ? 'visible' : 'none';
+    map.setPaintProperty(id, 'raster-opacity', op);
+    if (map.getLayoutProperty(id, 'visibility') !== vis) map.setLayoutProperty(id, 'visibility', vis);
+  });
 }
+function epAll(map, on) { if (!map) return; map.__epAll = on; paintEpoch(map, S.e); }
 const valueText = (e) => { const L = epochLayers(e); return L.b ? `${lab(EP[L.k])} → ${lab(EP[L.k + 1])} · ${Math.round(L.f * 100)} %` : lab(EP[L.k]); };
 const pairAt = (k) => CHANGE[Math.max(0, Math.min(CHANGE.length - 1, k - 1))];
 let urlTimer = 0;
@@ -257,106 +404,167 @@ function hudSwipe(animate = false) {
 /* ══ 6. 락온 — 브래킷 성장 180 → 앰버 80 → 청록 120 ═══════════════════════ */
 const locks = [];
 function lockAt(i) {
-  const f = S.geo.features[i]; if (!f) return;
+  const f = S.geo.features[i]; if (!f) return null;
   const p = f.properties;
   const box = document.createElement('div');
   box.className = 'spk-lock';
   box.dataset.fid = String(i);
   box.dataset.lockAt = String(Math.round(performance.now()));
   box.innerHTML = `<span class="spk-flag"><b>${clsLabel(p.cls)}</b>${p.emd} · ${N(nf.format(Math.round(p.area)))} m² · 신뢰도 ${N(p.conf.toFixed(2))}</span>`;
-  box.addEventListener('animationend', (ev) => { if (ev.animationName === 'spk-settle') box.dataset.lockEnd = String(Math.round(performance.now())); });
+  box.addEventListener('animationend', (ev) => {
+    if (ev.animationName !== 'spk-settle') return;
+    box.dataset.lockEnd = String(Math.round(performance.now()));
+    box.dispatchEvent(new Event('spk-locked'));
+  });
   el.locks.appendChild(box);
   locks.push({ i, box, c: [p.cx, p.cy], bb: S.bbox[i] });
   while (locks.length > 4) locks.shift().box.remove();
   placeLocks();
+  return box;
 }
 function placeLocks() {
   const m = S.A; if (!m) return;
   for (const L of locks) {
     const c = m.project(L.c), a = m.project([L.bb[0], L.bb[3]]), b = m.project([L.bb[2], L.bb[1]]);
-    const w = Math.max(40, Math.min(160, Math.abs(b.x - a.x) + 16)), h = Math.max(40, Math.min(160, Math.abs(b.y - a.y) + 16));
+    const w = Math.max(40, Math.min(380, Math.abs(b.x - a.x) + 24)), h = Math.max(40, Math.min(380, Math.abs(b.y - a.y) + 24));
     L.box.style.setProperty('--w', w + 'px'); L.box.style.setProperty('--h', h + 'px');
     L.box.style.translate = `${(c.x - w / 2).toFixed(1)}px ${(c.y - h / 2).toFixed(1)}px`;
+    // 오른쪽 끝에 닿는 필지는 속성 한 줄을 왼쪽으로 — 창 밖으로 잘리지 않게
+    const fw = L.flagW || (L.flagW = L.box.firstElementChild.offsetWidth);
+    L.box.classList.toggle('flip', c.x + w / 2 + 8 + fw > el.stage.clientWidth - 16);
   }
 }
 const clearLocks = () => { while (locks.length) locks.pop().box.remove(); };
-/** 자동 락온 3곳 — 클래스를 번갈아 신뢰도 높은 순으로, 서로 0.06° 이상 떨어진 필지(결과 GeoJSON 에서 고른다). */
-function autoPicks() {
-  const byConf = S.geo.features.map((f, i) => [i, f.properties.conf]).sort((a, b) => b[1] - a[1]);
-  const want = ['경작지', '비경작지', '경작지'];
-  const out = [];
-  for (let pass = 0; pass < 2 && out.length < 3; pass++) for (const [i] of byConf) {
-    if (out.includes(i)) continue;
-    if (pass === 0 && S.geo.features[i].properties.cls !== want[out.length]) continue;
-    const p = S.geo.features[i].properties;
-    const hud = S.A.project([p.cx, p.cy]);
-    if (hud.x < el.hud.offsetLeft + el.hud.offsetWidth + 24 && hud.y < el.hud.offsetTop + el.hud.offsetHeight + 24) continue;
-    if (hud.x > el.stage.clientWidth - 280 || hud.y > el.stage.clientHeight - 140 || hud.y < 30) continue;
-    if (out.every((j) => Math.hypot(S.geo.features[j].properties.cx - p.cx, S.geo.features[j].properties.cy - p.cy) > 0.06)) out.push(i);
-    if (out.length === 3) break;
-  }
-  return out;
-}
 
-/* ══ 7. S1 도착 ══════════════════════════════════════════════════════════ */
+/* ══ 7. 대기 — 시간이 아니라 사건(카메라 moveend · 지도 idle · animationend · 스윕 끝)을 기다린다 ══ */
+let run = 0;                                               // 다시 보기 · 장면 전환이 이전 흐름을 끊는다
+const bus = new EventTarget();                             // 'sweepline' · 'peeled'
+const once = (t, type) => new Promise((res) => t.addEventListener(type, res, { once: true }));
+const moveEnd = (map) => new Promise((res) => (map.isMoving() ? map.once('moveend', res) : res()));
+/** 타일 적재 + 타일 페이드 + 카메라 정지까지(= MapLibre 'idle'). 이미 멈춘 지도는 한 번 다시 그려 idle 을 받는다. */
+const idleOf = (map) => new Promise((res) => { map.once('idle', res); map.triggerRepaint(); });
+/** 사건 또는 안전핀 — 안전핀은 사건이 오지 않는 경우(타일 결손 등)에만 쓰인다. */
+const either = (p, ms) => Promise.race([p, new Promise((res) => setTimeout(res, ms))]);
+/** 테스트 · 시연용 정지점 — window.__spikeHold = '<phase>' 이면 그 단계 직전에서 멈추고 __spike.release() 를 기다린다. */
+async function gate(p) {
+  if (window.__spikeHold !== p) return;
+  document.documentElement.dataset.hold = p;
+  await new Promise((res) => { S.release = res; });
+  delete document.documentElement.dataset.hold;
+}
+const fly = (map, cam, dur) => {
+  if (map === S.A) S.cam.push([Math.round(performance.now()), +map.getZoom().toFixed(4), S.scene, S.phase, ...map.getCenter().toArray().map((v) => +v.toFixed(6)), 'start']);
+  map.flyTo({ ...cam, duration: dur, easing: CAM_EASE, essential: true });
+  return moveEnd(map);
+};
+
+/* ══ 8. 카메라 한 줄 — 남원 전역 → 한 필지(S1) → 정사영상 범위(S3) → 같은 필지(S6) ══════ */
 const PAD = () => {
   const left = el.hud.offsetLeft + el.hud.offsetWidth + 24;
   const bottom = el.stage.clientHeight - el.scrub.offsetTop + 24;
   return { top: 32, right: 32, bottom: Math.max(48, bottom), left: Math.min(left, el.stage.clientWidth * 0.45) };
 };
-let run = 0;                                               // 다시 보기 · 장면 전환이 이전 타이머를 끊는다
-const wait = (ms, id) => new Promise((res) => setTimeout(() => res(id === run), ms));
-const moveEnd = (map) => new Promise((res) => (map.isMoving() ? map.once('moveend', res) : res()));
+const LAND_Z = 18;                                          // 드론 4시점(1–2 cm)이 화면을 채우는 줌
+const box2 = (b) => [[b[0], b[1]], [b[2], b[3]]];
+const CAM = {
+  city: () => S.A.cameraForBounds(box2(BB), { padding: PAD() }),
+  land: () => S.A.cameraForBounds(box2(S.bbox[IN.focus]), { padding: PAD(), maxZoom: LAND_Z }),
+  ortho: () => S.A.cameraForBounds(box2(OB), { padding: PAD() }),
+  parcel: () => { const p = S.geo.features[IN.focus].properties; return { center: maplibregl.LngLat.convert([p.cx, p.cy]), zoom: LAND_Z }; },
+};
+async function toCam(cam, animate, dur = D.dive) {
+  const c = S.A.getCenter(), z = S.A.getZoom(), cc = maplibregl.LngLat.convert(cam.center);
+  if (Math.abs(z - cam.zoom) < 0.05 && Math.abs(c.lng - cc.lng) < 1e-5 && Math.abs(c.lat - cc.lat) < 1e-5) return;
+  if (!animate) { S.A.jumpTo(cam); return; }
+  await fly(S.A, cam, dur);
+}
 
+/* ══ 9. S1 도착 — 남원 전역 정사영상 → 스윕(필지 폴리곤 청록 도착) → 한 필지로 하강 → 락온 → 숫자 현상 ══ */
 async function arrive({ animate = !RM } = {}) {
   const id = ++run;
-  stopPlay();
-  S.scene = 's1'; S.arrived = false; S.ready = false; S.started = false; S.sweepT0 = 0; S.sweepLo = 0; S.sweepLng = null;
+  stopPlay(); endPeel();
+  S.scene = 's1'; S.arrived = false; S.ready = false; S.sweepT0 = 0; S.sweepLo = 0; S.sweepLng = null;
   document.documentElement.dataset.scene = 's1';
   segCurrent();
   leaveS6();
   el.play.hidden = true;                                    // 재생은 S3 의 것 — S1 의 띠는 눈금만
   scopeResults(S.A, false);
-  checkRange();
   showResults(S.A, true);
+  showFrame(S.A, false);
+  epAll(S.A, false);
   el.locks.hidden = false;
   clearLocks();
   revealAll(S.A, 0);
   paintChg0();
   hudS1(false);
-  const cam = S.A.cameraForBounds([[BB[0], BB[1]], [BB[2], BB[3]]], { padding: PAD() });
   S.perfReset();
   if (!animate) {
-    S.A.jumpTo(cam);
+    S.A.jumpTo(CAM.land());
     revealAll(S.A, 1);
-    for (const p of ['sweep', 'lock', 'count']) setPhase(p);
-    autoPicks().forEach(lockAt);
+    for (const p of ['frame', 'sweep', 'dive', 'lock', 'count']) setPhase(p);
+    lockAt(IN.focus);
     hudS1(true, false);
     setPhase('arrived'); S.arrived = true; S.ready = true; S.started = true;
+    checkRange();
     return;
   }
-  // t=0 — 조금 떨어진 자리에서 결과 0 으로 시작해 frame 1250
-  S.A.jumpTo({ center: [cam.center.lng + (BB[2] - BB[0]) * 0.18, cam.center.lat - (BB[3] - BB[1]) * 0.08], zoom: Math.max(CITY.minzoom + 0.02, cam.zoom - 0.55) });
+  // ① 남원 전역 — 부팅이면 살짝 먼 자리에서 밀어 들어가고, 다른 장면에서 왔으면 그 자리에서 올라온다(끊김 없음)
+  setPhase('frame');
+  const city = CAM.city();
+  if (!S.started) S.A.jumpTo({ center: city.center, zoom: city.zoom - 0.4 });
   S.started = true;
-  S.A.easeTo({ ...cam, duration: D.frame, easing: EASE, essential: true });
-  if (!(await wait(D.frame, id))) return;
-  // 스캔 스윕 1.0s — 지나간 자리에만 결과가 남는다
+  checkRange();
+  await fly(S.A, city, D.frame);
+  if (id !== run) return;
+  // 도시 정사영상이 선 뒤에 스윕한다 — 흰 바탕 위에 점이 떨어지는 장면을 만들지 않는다
+  if (!S.A.areTilesLoaded()) await either(idleOf(S.A), D.frame);
+  await gate('sweep');
+  if (id !== run) return;
+  // ② 스캔 스윕 1.0s — 선이 지나간 자리에만 필지 폴리곤이 청록으로 도착한다.
+  //    스윕이 도는 동안 하강 경로 · 착지 화면의 타일(도시 z12–15 · 드론 2025.10 z12–19)을 받아 디코드해 둔다.
   setPhase('sweep');
-  S.sweepT0 = performance.now();
+  const warm = prewarm(landTiles());
+  S.sweepT0 = performance.now(); S.sweepEmitted = false;
   el.sweep.classList.add('is-on');
-  if (!(await wait(D.sweep, id))) return;
+  await once(bus, 'sweepline');
+  if (id !== run) return;
+  await either(warm, D.frame);                              // 보통은 스윕보다 먼저 끝난다
+  if (id !== run) return;
   el.sweep.classList.remove('is-on');
-  // 락온 3곳 · 120 스태거
+  await gate('dive');
+  if (id !== run) return;
+  // ③ 한 필지로 하강 1250 — 드론 정사영상(1–2 cm) 범위 안에 온전히 들어온 판독 필지
+  setPhase('dive');
+  el.status.textContent = '판독 결과 도착 · 필지 하나로 하강';
+  await fly(S.A, CAM.land(), D.descend);
+  if (id !== run) return;
+  // ④ 락온 380
   setPhase('lock');
-  const picks = autoPicks();
-  picks.forEach((i, n) => setTimeout(() => { if (id === run) lockAt(i); }, n * D.stagger));
-  if (!(await wait(D.lock + (picks.length - 1) * D.stagger, id))) return;
-  // 숫자 현상 — 글자별 40ms · 해설 줄 텍스트 인 60 스태거
+  const box = lockAt(IN.focus);
+  await either(once(box, 'spk-locked'), D.lock + D.tin);
+  if (id !== run) return;
+  // ⑤ 숫자 현상 — 글자별 40ms · 해설 줄 텍스트 인 60 스태거. 마지막 글자의 animationend 가 곧 도착
   setPhase('count');
   hudS1(true, true);
-  const nCh = nf.format(ST.count).length, nSeg = el.note.children.length;
-  if (!(await wait(Math.max(D.tin + (nCh - 1) * D.dig, D.tin + (nSeg - 1) * D.tst), id))) return;
+  await Promise.all([...el.big.getAnimations({ subtree: true }), ...el.note.getAnimations({ subtree: true })].map((a) => a.finished.catch(() => {})));
+  if (id !== run) return;
   setPhase('arrived'); S.arrived = true; S.ready = true;
+  releaseBitmaps();
+  prewarmNext();
+}
+/** 하강 경로 + 착지 화면의 타일 — 도시 바탕(z12–15)과 착지 시점 드론 층(z12–19). */
+function landTiles() {
+  const W = el.stage.clientWidth, H = el.stage.clientHeight, a = { center: S.A.getCenter(), zoom: S.A.getZoom() }, b = CAM.land();
+  const ep = EP[Math.round(S.e)];
+  return [...new Set([...tilesAlong(CITY, a, b, W, H), ...tilesAlong(ep, a, b, W, H), ...tilesFor(ep, b, [18, 19], W, H)])];
+}
+/** S1 이 끝나 쉬는 동안 — S3 화면(4층) · S6 착지(보이는 시점) 타일을 받아 두고, B 를 착지 카메라에 세워 둔다. */
+function prewarmNext() {
+  const W = el.stage.clientWidth, H = el.stage.clientHeight, o = CAM.ortho(), z = Math.round(o.zoom + 1);
+  (window.requestIdleCallback || requestAnimationFrame)(() => {
+    if (!S.arrived) return;
+    prewarm(EP.flatMap((im) => tilesFor(im, o, [z - 1, z], W, H))).then(() => { if (!S.B && !S.bBoot) ensureB(); });
+  });
 }
 /** 스윕 한 프레임 — 선 위치 + 지나간 필지 현상(0 → 1, 500ms · 4단 양자화로 feature-state 호출을 줄인다). */
 function sweepFrame(now) {
@@ -377,32 +585,22 @@ function sweepFrame(now) {
     if (q < 1) allDone = false;
   }
   S.sweepLo = lo;
+  if (p >= 1 && !S.sweepEmitted) { S.sweepEmitted = true; bus.dispatchEvent(new Event('sweepline')); }
   if (allDone && lo >= ord.length) { S.sweepT0 = 0; S.sweepLo = 0; }
 }
 function paintChg0() { for (const m of [S.A, S.B]) if (m?.getLayer('spk-chg')) m.setPaintProperty('spk-chg', 'line-opacity', 0); }
 
-/* ══ 8. S3 · S6 ═════════════════════════════════════════════════════════ */
-async function toOrtho(animate) {
-  // S6 = 정사영상 안에 온전히 들어온 판독 필지 하나에 붙는다 — 가르는 선이 그 필지를 지나가게(화면 가운데)
-  const f = S.scene === 's6' && IN.focus != null ? S.geo.features[IN.focus].properties : null;
-  const cam = f ? { center: maplibregl.LngLat.convert([f.cx, f.cy]), zoom: 18 }
-    : S.A.cameraForBounds([[OB[0], OB[1]], [OB[2], OB[3]]], { padding: PAD() });
-  const c = S.A.getCenter(), z = S.A.getZoom();
-  const near = Math.abs(z - cam.zoom) < 0.3 && Math.abs(c.lng - cam.center.lng) < 0.002 && Math.abs(c.lat - cam.center.lat) < 0.002;
-  if (near) return;
-  if (!animate) { S.A.jumpTo(cam); return; }
-  S.A.easeTo({ ...cam, duration: D.dive, easing: EASE, essential: true });
-  await moveEnd(S.A);
-}
+/* ══ 10. S3 · S6 — 같은 카메라가 이어진다 ═══════════════════════════════════ */
 function finishS1Instant() {
-  // 장면을 URL 로 바로 열었을 때 — S1 은 끝난 상태로 둔다
+  // 장면을 URL 로 바로 열었거나 도착 도중 넘어왔을 때 — S1 은 끝난 상태로(결과 전부 · 필지 락온 1)
+  S.sweepT0 = 0; el.sweep.classList.remove('is-on');
   revealAll(S.A, 1); S.arrived = true; S.started = true;
+  if (!locks.some((L) => L.i === IN.focus)) lockAt(IN.focus);
   if (!S.phases.includes('arrived')) setPhase('arrived');
 }
 async function enterS3({ animate = !RM } = {}) {
   const id = ++run;
-  stopPlay();
-  S.sweepT0 = 0; el.sweep.classList.remove('is-on');
+  stopPlay(); endPeel();
   if (!S.arrived) finishS1Instant();
   S.scene = 's3'; S.ready = false;
   document.documentElement.dataset.scene = 's3';
@@ -412,63 +610,100 @@ async function enterS3({ animate = !RM } = {}) {
   S.perfReset();
   setEpoch(S.e);
   hudEpoch(true);
-  await toOrtho(animate);
+  // 필지에서 정사영상 4시점 범위로 한 걸음 물러선다 — 락온 브래킷은 그 필지에 붙은 채 따라온다
+  await toCam(CAM.ortho(), animate);
   if (id !== run) return;
-  el.play.hidden = false;                                   // 재생은 하강이 끝나 정사영상 위에 섰을 때 나타난다
+  el.play.hidden = false;                                   // 재생은 카메라가 정사영상 위에 섰을 때 나타난다
+  epAll(S.A, true);                                         // 4층을 모두 켜 둔다(미리 받은 비트맵 — 재생 · 스크럽이 콜드 타일을 만나지 않게)
   placeLocks(); checkRange();
   S.ready = true;
+  // 범위 틀은 영상이 다 깔린 뒤에만
+  idleOf(S.A).then(() => { if (id === run && S.scene === 's3') showFrame(S.A, true); });
 }
+/** S6 의 두 번째 지도(결과 겹침). S1 이 끝나 쉬는 동안 S6 착지 카메라(필지 · z18)에 미리 세워 타일까지 받아 두고,
+    S6 전까지는 그 자리에 세워 둔 채 숨긴다(A 를 따라다니지 않는다 — 착지 타일이 캐시에서 밀려나지 않게). */
 async function ensureB() {
   if (S.B) return S.B;
-  el.b.hidden = false; el.b.style.visibility = 'hidden';
-  const B = await createMap(el.b, { center: S.A.getCenter().toArray(), zoom: S.A.getZoom(), label: '지도 B — AI 판독 겹침(오른쪽)' });
-  B.getCanvas().setAttribute('tabindex', '-1');
-  decorate(B, { results: true });
-  scopeResults(B, true);
-  revealAll(B, 1);
-  S.B = B;
-  paintEpoch(B, S.e);
-  B.jumpTo({ center: S.A.getCenter(), zoom: S.A.getZoom() });
-  // 오른쪽 절반이 흰 허공으로 비었다가 타일이 페이드 인하는 '로딩' 장면을 보이지 않는다 — B 는 타일이 다 선 뒤에 드러낸다(상한 1250)
-  await new Promise((res) => { B.once('idle', res); setTimeout(res, D.frame); });
-  el.b.style.visibility = '';
-  return B;
+  S.bBoot = S.bBoot || (async () => {
+    el.b.style.visibility = 'hidden'; el.b.hidden = false;
+    const cam = CAM.parcel();
+    const B = await createMap(el.b, { center: cam.center.toArray(), zoom: cam.zoom, label: '지도 B — AI 판독 겹침(오른쪽)' });
+    B.getCanvas().setAttribute('tabindex', '-1');
+    decorate(B, { results: true });
+    scopeResults(B, true);
+    revealAll(B, 1);
+    paintEpoch(B, S.e);
+    await either(idleOf(B), D.frame);
+    S.B = B;
+    if (S.scene !== 's6') el.b.hidden = true;
+    return B;
+  })();
+  return S.bBoot;
 }
 async function enterS6({ animate = !RM } = {}) {
   const id = ++run;
-  stopPlay();
-  S.sweepT0 = 0; el.sweep.classList.remove('is-on');
+  stopPlay(); endPeel();
   if (!S.arrived) finishS1Instant();
   S.scene = 's6'; S.ready = false;
   document.documentElement.dataset.scene = 's6';
   segCurrent();
   el.play.hidden = true;                                    // 재생(유휴)은 S3 에만 — 화면당 1개
   el.chg.hidden = true; paintChg0();
-  el.locks.hidden = true;
+  showResults(S.A, true); el.locks.hidden = false;
   scopeResults(S.A, true);
   S.perfReset();
   hudSwipe(true);
-  await toOrtho(animate);
+  epAll(S.A, false);                                        // 하강 동안은 보이는 시점 층만
+  // B(결과 겹침)는 이미 착지 카메라에 서 있다(prewarmNext) — 카메라가 내려가는 동안 A 를 따라다니지 않는다
+  const bReady = ensureB();
+  await toCam(CAM.parcel(), animate);
   if (id !== run) return;
-  await ensureB();
+  S.marks.push(['s6-land', Math.round(performance.now())]);
+  const B = await bReady;
   if (id !== run) return;
-  el.b.hidden = false; S.B.resize();
-  S.B.jumpTo({ center: S.A.getCenter(), zoom: S.A.getZoom() });
+  el.b.style.visibility = 'hidden'; el.b.hidden = false; B.resize();
+  B.jumpTo({ center: S.A.getCenter(), zoom: S.A.getZoom() });
+  scopeResults(B, true); paintEpoch(B, S.e);
+  // B 한 장이 그려질 때까지만(상한 D.reveal) — 타일 적재(idle)는 선 진입과 나란히 기다린다
+  await either(new Promise((res) => { B.once('render', res); B.triggerRepaint(); }), D.reveal);
+  if (id !== run) return;
+  const bIdle = B.loaded() && B.areTilesLoaded() ? null : either(idleOf(B), D.frame);
+  // 이음매 없이 — B 가 화면 전체를 덮은 상태(= 지금 A 와 같은 그림)로 드러나고, 선이 왼쪽에서 들어와 결과를 벗긴다
+  el.stage.style.setProperty('--swipe', animate ? '0%' : S.swipe + '%');
+  el.b.style.visibility = '';
+  el.locks.hidden = true;
   showResults(S.A, false);                                  // 왼쪽 = 원본(결과 없음) · 오른쪽 = 원본 + 결과(청록)
   el.swipe.hidden = false;
-  setSwipe(S.swipe);
   setEpoch(S.e);
   checkRange();
+  if (animate) { await Promise.all([peel(S.swipe), bIdle]); if (id !== run) return; }
+  else if (bIdle) { await bIdle; if (id !== run) return; }
+  setSwipe(S.swipe);
+  showFrame(S.A, true); showFrame(B, true);
   S.ready = true;
 }
 function leaveS6() {
+  endPeel();
   el.swipe.hidden = true;
-  if (S.B) el.b.hidden = true;
+  if (S.B) {
+    el.b.hidden = true; el.b.style.visibility = 'hidden';
+    if (S.geo) S.B.jumpTo(CAM.parcel());                    // 다음 S6 착지 자리로 되돌려 세워 둔다
+  }
   showResults(S.A, true);
+}
+/** 가르는 선 진입 — 0 % → 목표, 1000ms 한 이징(rAF tick 이 그린다). */
+const PEEL = { t0: 0, to: 50 };
+function peel(to) { PEEL.t0 = performance.now(); PEEL.to = to; S.marks.push(['s6-peel', Math.round(PEEL.t0)]); return once(bus, 'peeled'); }
+function endPeel() { if (PEEL.t0) { PEEL.t0 = 0; bus.dispatchEvent(new Event('peeled')); } }
+function peelFrame(now) {
+  if (!PEEL.t0) return;
+  const p = Math.min(1, (now - PEEL.t0) / D.peel);
+  el.stage.style.setProperty('--swipe', (PEEL.to * EASE(p)).toFixed(2) + '%');
+  if (p >= 1) endPeel();
 }
 function setSwipe(pct, { url = 'now' } = {}) {
   S.swipe = Math.max(6, Math.min(94, Math.round(pct * 10) / 10));
-  el.stage.style.setProperty('--swipe', S.swipe + '%');
+  if (!PEEL.t0) el.stage.style.setProperty('--swipe', S.swipe + '%');
   el.grip.setAttribute('aria-valuenow', String(Math.round(S.swipe)));
   el.grip.setAttribute('aria-valuetext', `왼쪽 원본 ${Math.round(S.swipe)} % · 오른쪽 AI 판독 ${100 - Math.round(S.swipe)} %`);
   if (S.scene === 's6') { if (url === 'now') writeURL(); else if (url === 'later') { clearTimeout(urlTimer); urlTimer = setTimeout(writeURL, D.debounce); } }
@@ -493,59 +728,80 @@ function checkRange() {
   if (off) stopPlay();
 }
 
-/* ══ 9. S3 재생 — 화면 유휴 1개 · 6s 주기 · 정수 시점마다 750ms 정지 ═════════ */
-const P = { mode: '', t0: 0, from: 0, to: 0, dur: 0, until: 0, stopAt: 0 };
+/* ══ 11. S3 재생 — 화면 유휴 1개 · 6s 주기 · 정수 시점마다 750ms 정지 ═════════
+   시간표(타임라인)로 돈다: 위치 = f(경과 시간). 프레임이 늦게 와도 정지 길이 · 주기가 밀리지 않는다. */
+const SEG = D.stop + D.hop;                                  // 시점 k 정지 시작 = k × SEG
+const P = { t0: 0, k: -1, stopSeen: 0 };
+function posAt(t) {
+  const k = Math.min(3, Math.floor(t / SEG)), r = t - k * SEG;
+  if (r < D.stop || k >= 3) return { e: k, stop: true };
+  return { e: k + (r - D.stop) / D.hop, stop: false };
+}
 function startPlay() {
   if (S.off || S.scene !== 's3') return;
   S.playing = true; el.play.setAttribute('aria-pressed', 'true'); el.play.setAttribute('aria-label', '시점 재생 정지');
-  S.perfReset();
-  const now = performance.now(), r = Math.round(S.e);
-  if (Math.abs(S.e - r) < 0.005) enterStop(r, now);
-  else { P.mode = 'hop'; P.t0 = now; P.from = S.e; P.to = Math.ceil(S.e); P.dur = (P.to - P.from) * D.hop; }
+  // 첫 홉은 4층 타일이 모두 선 뒤(idle)에 — 재생 도중 콜드 타일 적재 · 디코드로 프레임이 멈추지 않게
+  const token = P.token = (P.token || 0) + 1;
+  P.t0 = 0; P.k = -1;
+  epAll(S.A, true);
+  const go = () => {
+    if (!S.playing || P.token !== token) return;
+    S.perfReset();
+    const k = Math.floor(S.e + 1e-6), f = S.e - k;
+    const off = f < 0.005 ? k * SEG : k * SEG + D.stop + f * D.hop;
+    P.t0 = performance.now() - off; P.k = -1;
+    playFrame(performance.now());
+  };
+  if (S.A.loaded() && S.A.areTilesLoaded()) go(); else idleOf(S.A).then(go);
 }
 function stopPlay() {
   if (!S.playing) return;
-  S.playing = false; S.paused = false; P.mode = '';
+  S.playing = false; S.paused = false; P.k = -1;
   el.play.setAttribute('aria-pressed', 'false'); el.play.setAttribute('aria-label', '시점 재생');
   writeURL();
 }
-function enterStop(k, now) {
-  P.mode = 'stop'; P.until = now + D.stop; P.stopAt = now; S.paused = true;
-  setEpoch(k, { url: 'now' });
-}
 function playFrame(now) {
-  if (!S.playing) return;
-  if (P.mode === 'stop' && now >= P.until) {
-    S.stops.push({ e: Math.round(S.e), ms: Math.round(now - P.stopAt) });
-    if (S.stops.length > 24) S.stops.shift();
-    S.paused = false;
-    const k = Math.round(S.e);
-    if (k >= 3) { enterStop(0, now); return; }                 // 0 → 3 한 방향 뒤 0 으로
-    P.mode = 'hop'; P.t0 = now; P.from = k; P.to = k + 1; P.dur = D.hop;
+  if (!S.playing || !P.t0) return;
+  const t = (now - P.t0) % CYCLE, q = posAt(t);
+  if (q.stop) {
+    if (P.k !== q.e) {
+      if (P.k >= 0) closeStop(now);
+      P.k = q.e; P.stopSeen = now; S.paused = true;
+      setEpoch(q.e, { url: 'now' });
+    }
+    return;
   }
-  if (P.mode === 'hop') {
-    const p = Math.min(1, (now - P.t0) / P.dur);
-    if (p >= 1) enterStop(P.to, now);
-    else setEpoch(P.from + (P.to - P.from) * p, { url: 'none' });
-  }
+  if (P.k >= 0) closeStop(now);
+  S.paused = false;
+  setEpoch(q.e, { url: 'none' });
+}
+/** 정지 기록 — ms = 시간표상 정지 길이(엔진이 지키는 값) · seen = 실제 화면에 머문 시간(프레임 해상도) */
+function closeStop(now) {
+  S.stops.push({ e: P.k, ms: D.stop, seen: Math.round(now - P.stopSeen) });
+  if (S.stops.length > 24) S.stops.shift();
+  P.k = -1;
 }
 
-/* ══ 10. 한 박자 — rAF 하나가 스윕 · 재생 · 프레임 간격 측정을 모두 돈다 ═════ */
+/* ══ 12. 한 박자 — rAF 하나가 스윕 · 재생 · 가르는 선 · 프레임 간격 · 카메라 기록을 모두 돈다 ═════ */
 S.perfReset = () => { S.frames = []; };
+S.cam = [];
 function tick(now) {
   if (S.lastT) { S.frames.push(now - S.lastT); if (S.frames.length > 1200) S.frames.shift(); }
   S.lastT = now;
-  if (S.A) { sweepFrame(now); playFrame(now); }
+  if (S.A) {
+    sweepFrame(now); playFrame(now); peelFrame(now);
+    if (S.A.isMoving()) { S.cam.push([Math.round(now), +S.A.getZoom().toFixed(4), S.scene, S.phase, ...S.A.getCenter().toArray().map((v) => +v.toFixed(6))]); if (S.cam.length > 900) S.cam.shift(); }
+  }
   requestAnimationFrame(tick);
 }
 requestAnimationFrame(tick);
 function perf() {
   const a = [...S.frames].sort((x, y) => x - y);
   const p95 = a.length ? a[Math.min(a.length - 1, Math.floor(a.length * 0.95))] : 0;
-  return { p95: +p95.toFixed(2), n: a.length, canvases: document.querySelectorAll('canvas').length };
+  return { p95: +p95.toFixed(2), max: +(a[a.length - 1] || 0).toFixed(2), n: a.length, canvases: document.querySelectorAll('canvas').length };
 }
 
-/* ══ 11. 조작 ═════════════════════════════════════════════════════════════ */
+/* ══ 13. 조작 ═════════════════════════════════════════════════════════════ */
 function segCurrent() { el.seg.querySelectorAll('button').forEach((b) => b.setAttribute('aria-current', String(b.dataset.scene === S.scene))); }
 const play = (scene) => {
   const p = scene === 's3' ? enterS3() : scene === 's6' ? enterS6() : arrive();
@@ -576,7 +832,7 @@ el.grip.addEventListener('keydown', (ev) => {
   ev.preventDefault(); setSwipe(ev.key === 'Home' ? 6 : ev.key === 'End' ? 94 : S.swipe + d);
 });
 
-/* ══ 12. 부팅 ═════════════════════════════════════════════════════════════ */
+/* ══ 14. 부팅 ═════════════════════════════════════════════════════════════ */
 const IN = { n: 0, cls: {} };
 function ticks() {
   el.ticks.innerHTML = EP.map((im, k) => `<li style="left:calc(6px + (100% - 12px) * ${k} / 3)" data-on="0"><b class="n">${lab(im)}</b><br><span class="n">${gsd(im)}</span> cm</li>`).join('');
@@ -590,6 +846,7 @@ async function boot() {
   ]);
   // 피처마다 중심 경도 cx · 위도 cy · bbox — 스윕 · 락온이 읽는다
   S.cx = new Float64Array(geo.features.length); S.level = new Float32Array(geo.features.length); S.bbox = [];
+  const clip = [];
   geo.features.forEach((f, i) => {
     f.id = i;
     const c = centroid(f); f.properties.cx = c[0]; f.properties.cy = c[1]; S.cx[i] = c[0];
@@ -597,12 +854,15 @@ async function boot() {
     const eat = (q) => { if (typeof q[0] === 'number') b = [Math.min(b[0], q[0]), Math.min(b[1], q[1]), Math.max(b[2], q[0]), Math.max(b[3], q[1])]; else q.forEach(eat); };
     eat(f.geometry.coordinates); S.bbox[i] = b;
     f.properties.inOb = b[2] > OB[0] && b[0] < OB[2] && b[3] > OB[1] && b[1] < OB[3];
+    f.properties.inside = b[0] >= OB[0] && b[2] <= OB[2] && b[1] >= OB[1] && b[3] <= OB[3];
     if (f.properties.inOb) {
       IN.n++; IN.cls[f.properties.cls] = (IN.cls[f.properties.cls] || 0) + 1;
-      const inside = b[0] >= OB[0] && b[2] <= OB[2] && b[1] >= OB[1] && b[3] <= OB[3];
-      if (inside && (IN.focus == null || f.properties.area > geo.features[IN.focus].properties.area)) IN.focus = i;
+      if (f.properties.inside && (IN.focus == null || f.properties.area > geo.features[IN.focus].properties.area)) IN.focus = i;
+      else if (!f.properties.inside) { const g = clipRect(f.geometry, OB); if (g) clip.push({ type: 'Feature', properties: { cls: f.properties.cls, src: i }, geometry: g }); }
     }
   });
+  S.clip = { type: 'FeatureCollection', features: clip };
+  IN.clipped = clip.length;
   S.order = geo.features.map((_, i) => i).sort((a, b) => S.cx[a] - S.cx[b]);
   S.geo = geo;
   S.pts = { type: 'FeatureCollection', features: geo.features.map((f, i) => ({ type: 'Feature', id: i, properties: { cls: f.properties.cls }, geometry: { type: 'Point', coordinates: [f.properties.cx, f.properties.cy] } })) };
@@ -617,6 +877,8 @@ async function boot() {
   await new Promise((res) => A.once('render', res));
   el.a.style.visibility = '';
   A.on('move', () => {
+    // 장면 전환(ready=false) 중 애니메이션 없이 카메라가 옮겨진 횟수 = 순간이동. 이음매 없는 한 장면이면 0.
+    if (S.started && !S.ready && !A.isEasing()) S.jumps++;
     placeLocks();
     if (S.B && !el.b.hidden) S.B.jumpTo({ center: A.getCenter(), zoom: A.getZoom() });
   });
@@ -645,13 +907,13 @@ async function boot() {
   else await arrive();
 }
 
-/* ══ 13. 테스트 훅 ═══════════════════════════════════════════════════════ */
+/* ══ 15. 테스트 훅 ═══════════════════════════════════════════════════════ */
 window.__spike = {
   state: () => {
     const L = epochLayers(S.e);
     return { scene: S.scene, phase: S.phase, phases: [...S.phases], started: S.started, arrived: S.arrived, ready: S.ready,
       epoch: S.e, layers: { a: L.a, b: L.b, opA: L.opA, opB: L.opB }, playing: S.playing, paused: S.paused, stops: [...S.stops],
-      swipe: S.swipe, off: S.off, locks: locks.length, cycle: CYCLE,
+      swipe: S.swipe, off: S.off, locks: locks.length, lockIds: locks.map((L) => L.i), jumps: S.jumps, cycle: CYCLE, hold: document.documentElement.dataset.hold || '',
       idle: !!S.A && S.A.loaded() && S.A.areTilesLoaded() && !S.A.isMoving() && (!S.B || el.b.hidden || (S.B.loaded() && S.B.areTilesLoaded() && !S.B.isMoving())),
       centers: [S.A?.getCenter().toArray(), S.B && !el.b.hidden ? S.B.getCenter().toArray() : null] };
   },
@@ -672,6 +934,18 @@ window.__spike = {
     return vis[0] || null;
   },
   jump: (center, zoom) => S.A.jumpTo({ center, zoom }),
+  /** 사건 기반 대기 — 보이는 지도(A · 드러난 B)가 모두 MapLibre 'idle'(타일 적재 + 페이드 + 카메라 정지). */
+  whenIdle: () => Promise.all([S.A, S.B && !el.b.hidden ? S.B : null].filter(Boolean).map(idleOf)).then(() => true),
+  /** window.__spikeHold 로 멈춘 단계를 놓는다. */
+  release: () => { const r = S.release; S.release = null; if (r) r(); return !!r; },
+  /** 카메라 기록 — 움직이는 프레임마다 [t, zoom, phase] · 단계 표식 [phase, t] */
+  camLog: () => [...S.cam],
+  camReset: () => { S.cam.length = 0; S.jumps = 0; },
+  marks: () => [...S.marks],
+  focus: () => IN.focus,
+  /** 테스트용 — 타일 요청 기록([원천, 단계, 미리 받음?, 지연 ms, 장면]) · 미리 받기 결과 · 잘린 필지 수 */
+  tiles: () => ({ log: TSTAT.log.map((r) => [...r]), warm: { ...WARM }, clipped: IN.clipped }),
+  tilesReset: () => { TSTAT.log.length = 0; },
   /** 테스트용 — 지금 보이는(현상된) 필지가 모두 스윕 선 뒤쪽(서쪽)에 있는가. */
   audit: () => {
     let shown = 0, hidden = 0, ahead = 0;

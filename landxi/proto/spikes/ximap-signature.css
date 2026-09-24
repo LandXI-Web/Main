@@ -4,7 +4,7 @@
    이징은 --ease(0.15,1,0.3,1) · --hove(.22,1,.36,1) 둘뿐. 앰버는 .spk-lock 한 규칙에만. */
 
 .spk{
-  --band:34px; --g:16px;
+  --band:34px; --g:16px; --sh:100px;              /* 하단 띠 높이 = 트랙 12 + 손잡이 28 + 눈금 9 + 두 줄 라벨 36 + 바닥 여백 15 */
   --lk1:180ms; --lk2:80ms; --lk3:120ms;          /* 락온 = 성장 180 → 앰버 80 → 청록 120 */
   --tin:500ms; --tst:60ms;                        /* 텍스트 인 · 스태거 */
   --dig:40ms;                                     /* 숫자 글자별 현상 */
@@ -50,6 +50,7 @@
   background:var(--paper); border:1px solid var(--line); padding:4px 8px; font-size:14px; line-height:1.2; color:var(--ink);
   animation:spk-in var(--tin) var(--ease) calc(var(--lk1) + var(--lk2)) both; }
 .spk-flag b{ font-weight:500; color:var(--teal); margin-right:6px; }
+.spk-lock.flip .spk-flag{ left:auto; right:0; top:calc(100% + 8px); transform:none; }   /* 오른쪽 끝 필지 = 브래킷 아래, 오른쪽 맞춤 */
 
 /* ══ 판 1 · HUD ════════════════════════════════════════════════════════ */
 .spk-hud{ top:var(--g); left:var(--g); width:min(440px, calc(100% - 2 * var(--g))); padding:18px 20px 16px; }
@@ -74,7 +75,7 @@
 @keyframes spk-in{ from{ opacity:0; translate:0 20px; } to{ opacity:1; translate:0 0; } }
 
 /* ══ 판 2 · 시점 스크러버 띠 ═══════════════════════════════════════════ */
-.spk-scrub{ left:var(--g); right:calc(var(--g) * 2 + var(--segw, 390px)); bottom:var(--g); height:84px; display:flex; align-items:stretch; }
+.spk-scrub{ left:var(--g); right:calc(var(--g) * 2 + var(--segw, 390px)); bottom:var(--g); height:var(--sh); display:flex; align-items:stretch; }
 .spk-play{ flex:none; width:64px; display:flex !important; align-items:center; justify-content:center !important; background:var(--ink) !important; color:#fff !important;
   transition:transform var(--hov) var(--hove); }
 .spk-play:hover{ transform:translateY(-4px); }
@@ -91,8 +92,8 @@
 .spk-track input:disabled{ cursor:not-allowed; }
 .spk-track input:disabled::-webkit-slider-thumb{ background:var(--grey-3); }
 .spk-track input:disabled::-webkit-slider-runnable-track{ background:var(--grey-3); }
-.spk-ticks{ list-style:none; margin:0; padding:0; position:relative; height:36px; }
-.spk-ticks li{ position:absolute; top:0; transform:translateX(-50%); text-align:center; font-size:14px; line-height:1.25; color:var(--grey); white-space:nowrap; }
+.spk-ticks{ list-style:none; margin:0; padding:0; position:relative; height:45px; }
+.spk-ticks li{ position:absolute; top:0; transform:translateX(-50%); text-align:center; font-size:14px; line-height:18px; color:var(--grey); white-space:nowrap; }
 .spk-ticks li::before{ content:""; display:block; width:1px; height:6px; margin:0 auto 3px; background:var(--ink); }
 .spk-ticks li b{ font-weight:500; color:var(--ink); }
 .spk-ticks li[data-on="1"] b{ color:var(--accent); }
@@ -109,11 +110,11 @@
 .spk-scrub[data-off="1"] .spk-ticks li{ color:var(--grey-3); }
 .spk-scrub[data-off="1"] .spk-ticks li b{ color:var(--grey-3); }
 /* 결손 = 점선 무채 + 이유 한 줄 */
-.spk-void{ position:absolute; z-index:5; left:var(--g); bottom:calc(var(--g) + 84px + 8px); margin:0; padding:6px 12px; background:var(--paper);
+.spk-void{ position:absolute; z-index:5; left:var(--g); bottom:calc(var(--g) + var(--sh) + 8px); margin:0; padding:6px 12px; background:var(--paper);
   border:1px dashed var(--grey); font-size:14px; line-height:1.3; color:var(--grey); }
 
 /* ══ 판 3 · 장면 세그먼트 ═════════════════════════════════════════════ */
-.spk-seg{ right:var(--g); bottom:var(--g); height:84px; display:flex; align-items:center; gap:10px; padding:0 14px; }
+.spk-seg{ right:var(--g); bottom:var(--g); height:var(--sh); display:flex; align-items:center; gap:10px; padding:0 14px; }
 .spk-seg button{ position:relative; height:52px; padding:0 18px; font-size:16px; font-weight:500; color:var(--ink); white-space:nowrap;
   transition:transform var(--hov) var(--hove); }
 .spk-seg button::before{ content:""; position:absolute; inset:0; border:1.5px solid currentColor; pointer-events:none; --b:9px;
@@ -141,8 +142,8 @@
 
 /* 1280 이하 — 띠와 세그먼트를 두 줄로 */
 @media (max-width:1100px){
-  .spk-scrub{ right:var(--g); bottom:calc(var(--g) + 84px + 8px); }
-  .spk-void{ bottom:calc(var(--g) + 184px); }
+  .spk-scrub{ right:var(--g); bottom:calc(var(--g) + var(--sh) + 8px); }
+  .spk-void{ bottom:calc(var(--g) + 2 * var(--sh) + 16px); }
 }
 
 /* reduced-motion = 정지. 스윕 · 락온 · 현상 · 텍스트 인 생략, 최종 상태 즉시 */
