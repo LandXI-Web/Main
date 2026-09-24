@@ -436,7 +436,8 @@ test('색 역할 — 정보 = 파랑, 조치(warn) 숫자 0, 앰버 0, 라운드
   expect(small).toEqual([]);
 });
 
-for (const [w, h] of [[1440, 900], [1280, 720], [1920, 1200]]) {
+// 1920×1017 = 1920×1080 모니터의 Chrome 창(실사용 최다) · 1440×1000 — 행이 상한 58px 에 닿는 구간(regate E0-6). 1101×640 = 한 화면 조판의 하한.
+for (const [w, h] of [[1440, 900], [1280, 720], [1920, 1200], [1920, 1017], [1440, 1000], [1101, 640]]) {
   test(`한 화면 — ${w}×${h}: 넘치지 않고, 판 = 패널, 빈 띠 ≤ 80px, 잘리는 목록 0`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await boot(page);
@@ -472,3 +473,79 @@ for (const [w, h] of [[1440, 900], [1280, 720], [1920, 1200]]) {
     }
   });
 }
+
+/* ── regate E0-6 — 행 상한 구간은 늘린 행이 아니라 실값(용량 비중)으로 채운다 · 탭 호버는 물리 반응 ── */
+test('용량 비중 띠 — 1920×1017 탭 조판에서 5건의 몫(gb ÷ 합계)이 목록 위에 서고, 두 목록 조판에서는 내린다', async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1017 });
+  await boot(page);
+  await expect(page.locator('#panel')).toHaveAttribute('data-lay', 'tabs');
+  await expect(page.locator('#pane-proj .p-share')).toBeVisible();
+  // 기대값은 db-data.js PROJECTS 에서 직접 계산 — 화면이 지어낸 숫자가 아니다.
+  const want = await page.evaluate(async () => {
+    const { PROJECTS } = await import('./db-data.js');
+    const sum = PROJECTS.reduce((a, p) => a + p.gb, 0);
+    return PROJECTS.map((p, i) => `${String(i + 1).padStart(2, '0')} ${Math.round((p.gb / sum) * 100)}%`);
+  });
+  expect(await page.locator('#pane-proj .p-pct span').allInnerTexts()).toEqual(want);
+  expect(await page.locator('#pane-proj .p-bar rect').count()).toBe(5);
+  await expect(page.locator('#pane-proj .p-pct span.on')).toHaveCSS('color', 'rgb(0, 109, 247)');
+  await page.setViewportSize({ width: 1920, height: 1200 }); await page.waitForTimeout(400);
+  await expect(page.locator('#panel')).toHaveAttribute('data-lay', 'both');
+  await expect(page.locator('#pane-proj .p-share')).toBeHidden();
+});
+
+/* regate E0-6 — 좁은 패널(1101–1300 폭)에서도 비중 띠 라벨 5개가 잘리지 않는다('05 11' 처럼 % 가 사라지지 않는다) */
+for (const [w, h] of [[1920, 1017], [1440, 900], [1280, 800], [1101, 1000]]) {
+  test(`용량 비중 띠 라벨 — ${w}×${h} 5칸 전부 잘림 0 · '0N NN%' 온전`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    await boot(page);
+    await expect(page.locator('#panel')).toHaveAttribute('data-lay', 'tabs');
+    await expect(page.locator('#pane-proj .p-share')).toBeVisible();
+    const cells = await page.locator('#pane-proj .p-pct span').evaluateAll((els) => els.map((e) => ({
+      t: e.innerText, sw: e.scrollWidth, cw: e.clientWidth, r: e.getBoundingClientRect().right,
+    })));
+    expect(cells).toHaveLength(5);
+    const row = await page.locator('#pane-proj .p-pct').evaluate((e) => e.getBoundingClientRect().right);
+    for (const c of cells) {
+      expect(c.t, `${w}×${h} 라벨`).toMatch(/^\d\d \d+%$/);
+      expect(c.sw, `${w}×${h} '${c.t}' 잘림`).toBeLessThanOrEqual(Math.ceil(c.cw) + 1);
+    }
+    expect(cells[4].r, `${w}×${h} 마지막 칸이 띠 밖으로`).toBeLessThanOrEqual(row + 1);
+  });
+}
+
+test('낮은 행 — 두 목록 조판 --rh < 34 에서 1위 값 글자는 20px(26px 숫자가 28px 행에 끼지 않는다)', async ({ page }) => {
+  await page.setViewportSize({ width: 1680, height: 1050 });
+  await boot(page);
+  await expect(page.locator('#panel')).toHaveAttribute('data-lay', 'both');
+  const m = await page.evaluate(() => {
+    const p = document.querySelector('#pane-proj'); const rh = parseFloat(getComputedStyle(p).getPropertyValue('--rh'));
+    const b = p.querySelector('.rk.on .val b'); const rows = [...p.querySelectorAll('.rk .val b')].map((e) => e.getBoundingClientRect());
+    let minGap = Infinity; for (let i = 1; i < rows.length; i++) minGap = Math.min(minGap, rows[i].top - rows[i - 1].bottom);
+    return { rh, fs: parseFloat(getComputedStyle(b).fontSize), minGap, clip: p.scrollHeight - p.clientHeight };
+  });
+  expect(m.rh).toBeLessThan(34);
+  expect(m.fs).toBe(20);
+  expect(m.minGap, '값 글자끼리 맞닿지 않는다').toBeGreaterThanOrEqual(4);
+  expect(m.clip).toBeLessThanOrEqual(1);
+});
+
+test('탭 호버 = 물리 반응 — 우 패널 탭 · 판 토글 모두 밑줄이 180ms 로 쓸려 선다(색만 바꾸는 호버 0)', async ({ page }) => {
+  await boot(page);
+  const under = (sel) => page.locator(sel).evaluate((e) => {
+    const cs = getComputedStyle(e, '::after'); return { t: cs.transform, dur: cs.transitionDuration, prop: cs.transitionProperty, h: cs.height };
+  });
+  for (const sel of ['#tab-store', '#seg-train']) {
+    const before = await under(sel);
+    expect(before.t, `${sel} 평시 밑줄 0`).toMatch(/matrix\(0, 0, 0, 1|scaleX\(0\)/);
+    expect(before.prop).toContain('transform');
+    expect(before.dur).toBe('0.18s');
+    expect(before.h).toBe('2px');
+    await page.locator(sel).hover(); await page.waitForTimeout(300);
+    expect((await under(sel)).t, `${sel} 호버 밑줄`).toBe('matrix(1, 0, 0, 1, 0, 0)');
+    await page.mouse.move(5, 5); await page.waitForTimeout(300);
+  }
+  // 선택 상태 색 규칙은 그대로
+  await expect(page.locator('#tab-proj')).toHaveCSS('color', 'rgb(0, 109, 247)');
+  await expect(page.locator('#seg-res')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+});

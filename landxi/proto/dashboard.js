@@ -186,7 +186,15 @@ const TAB_LABEL = { proj: 'AI 개발 프로젝트 현황', store: '전체 스토
 const paneHead = (k) => `<div class="ph"><h3>${TAB_LABEL[k]}</h3><span class="sp"></span><a class="mic more" href="${TAB_MORE[k].href}">${TAB_MORE[k].label}</a></div>`;
 {
   const max = Math.max(...PROJECTS.map((p) => p.gb));
-  $('#pane-proj').innerHTML = paneHead('proj') + PROJECTS.map((p, i) => `<div class="rk${i ? '' : ' on'}" data-proj="${esc(p.name)}">
+  // 용량 비중 띠 — 5건이 합계에서 차지하는 몫(gb / 합계, 데이터 파일 값에서 계산). 탭 조판에서 행이 상한(ROW_MAX)에 닿아
+  // 목록 위아래에 공기가 고일 때만 선다(fitPanel) — 빈 띠를 늘린 행이 아니라 실값으로 채운다.
+  const PW = 600; let px = 0;
+  const pTone = PROJECTS.map((_, i) => (i ? ['#010102', '#686868', '#CCCCCC', '#DDDDDD'][i - 1] : '#006DF7'));
+  const share = PROJECTS.map((p) => p.gb / PROJ_SUM);
+  const shareHtml = `<div class="p-share" hidden><svg class="p-bar" viewBox="0 0 ${PW} 24" preserveAspectRatio="none" aria-hidden="true">${PROJECTS.map((p, i) => {
+    const w = share[i] * PW; const r = `<rect x="${px.toFixed(2)}" y="0" width="${w.toFixed(2)}" height="24" fill="${pTone[i]}"><title>${esc(p.name)} ${p.gb} GB</title></rect>`; px += w; return r; }).join('')}</svg>
+    <div class="p-pct n">${PROJECTS.map((p, i) => `<span style="width:${(share[i] * 100).toFixed(3)}%"${i ? '' : ' class="on"'} title="${esc(p.name)}">${String(i + 1).padStart(2, '0')} ${Math.round(share[i] * 100)}%</span>`).join('')}</div></div>`;
+  $('#pane-proj').innerHTML = paneHead('proj') + shareHtml + PROJECTS.map((p, i) => `<div class="rk${i ? '' : ' on'}" data-proj="${esc(p.name)}">
     <span class="no n">${String(i + 1).padStart(2, '0')}</span><span class="nm">${esc(p.name)}</span>
     <span class="bar"><i style="width:${((p.gb / max) * 100).toFixed(1)}%"></i></span><span class="val"><b class="big cu" data-n="${p.gb}">0</b><span class="u">GB</span></span></div>`).join('')
     + `<div class="rk-sum n"><span class="no"></span><span class="nm">합계 ${PROJECTS.length}건<em class="tag">시연</em></span><span class="bar"></span><span class="val"><b class="big cu" data-n="${PROJ_SUM}">0</b><span class="u">GB</span></span></div>`;
@@ -210,8 +218,10 @@ let LAY = 'tabs';
 /* ══ 패널 맞춤 — 빈 띠(법전 §6 · 80px 초과 금지)를 키우지 않고 콘텐츠로 채운다 ═══════════════
    판과 패널은 같은 격자 행이라 높이가 뷰포트를 따른다. 행 높이(--rh)를 패널 안쪽 높이에 맞춰 나눠
    목록 위아래에 공기가 고이지 않게 한다. 두 목록(6 + 7행)이 행 ≥ BOTH_MIN 으로 다 들어가면 탭을 내리고
-   한 패널에 위아래로 세운다(1920×1200 등) — 탭 뒤에 숨기면 큰 모니터에서 패널이 절반 넘게 빈다. */
-const ROW_MIN = 24, ROW_MAX = 58, BOTH_MIN = 26;
+   한 패널에 위아래로 세운다(1920×1200 등) — 탭 뒤에 숨기면 큰 모니터에서 패널이 절반 넘게 빈다.
+   탭 조판에서 행이 상한에 닿으면(1920×1017 · 1440×1000 등, regate E0-6) 용량 목록 위에 비중 띠를 세우고,
+   하한 밑이면(1101×640) 스토리지 쌓은 막대를 내린다. 낮은 행은 .dense(<34) · .tight(<26) 로 값 글자를 줄인다. */
+const ROW_MIN = 24, ROW_MAX = 58, BOTH_MIN = 26, ROW_FLOOR = 21, DENSE = 34, TIGHT = 26;
 function paneFit(pane, inner) {
   const rows = $$(':scope > .rk, :scope > .rk-sum, #s-lg > *', pane);
   const fixed = [...pane.children].filter((e) => !rows.includes(e) && e.id !== 's-lg')
@@ -222,7 +232,10 @@ function fitPanel() {
   const panel = $('#panel'); if (!panel) return;
   const setLay = (l) => { LAY = l; panel.dataset.lay = l; $('#right').dataset.lay = l; };
   const pad = (e) => { const cs = getComputedStyle(e); return parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom); };
-  const P = $('#pane-proj'), S = $('#pane-store');
+  const P = $('#pane-proj'), S = $('#pane-store'), share = $('.p-share', P), sbar = $('#s-bar', S);
+  // 행이 낮으면(< DENSE) 1위 값 글자를 26 → 20px 로 — 28px 행에 26px 숫자가 끼어 답답하지 않게.
+  const setRh = (p, v) => { p.style.setProperty('--rh', `${v}px`); p.classList.toggle('dense', v < DENSE); p.classList.toggle('tight', v < TIGHT); };
+  share.hidden = true; sbar.style.display = '';
   // 1) 두 목록을 한 패널에 — 행이 BOTH_MIN 이상이면 채택
   const was = LAY; setLay('both'); P.hidden = false; S.hidden = false;
   const gap = parseFloat(getComputedStyle(panel).rowGap) || 0;
@@ -230,17 +243,22 @@ function fitPanel() {
   const a = paneFit(P), b = paneFit(S);
   const rB = (innerB - a.fixed - b.fixed) / (a.rows + b.rows);
   if (rB >= BOTH_MIN && innerWidth > 1100) {
-    const rh = `${Math.min(ROW_MAX, Math.floor(rB))}px`; P.style.setProperty('--rh', rh); S.style.setProperty('--rh', rh);
+    const rh = Math.min(ROW_MAX, Math.floor(rB)); setRh(P, rh); setRh(S, rh);
     if (was !== 'both') { P.classList.add('is-in'); S.classList.add('is-in'); requestAnimationFrame(() => $$('#pane-store .cu').forEach(countUp)); }
     return;
   }
   // 2) 탭 — 목록마다 제 패널 높이에 맞춘다
   setLay('tabs');
   for (const k of TABS) { const p = $(`#pane-${k}`); p.hidden = k !== TAB; p.classList.toggle('is-in', k === TAB); }
+  const rowOf = (p) => { const f = paneFit(p); return (p.clientHeight - pad(p) - f.fixed) / f.rows; };
   for (const p of [P, S]) {
     const was = p.hidden; p.hidden = false;                 // 숨은 목록도 머리 높이를 재야 한다 — 한 프레임 안이라 보이지 않는다
-    const f = paneFit(p); const inner = p.clientHeight - pad(p);
-    p.style.setProperty('--rh', `${Math.max(ROW_MIN, Math.min(ROW_MAX, Math.floor((inner - f.fixed) / f.rows)))}px`);
+    let r = rowOf(p);
+    // 행이 상한에 닿아 공기가 남으면 → 프로젝트 목록 위에 용량 비중 띠를 세운다(실값). 늘린 행으로 채우지 않는다.
+    if (p === P && r > ROW_MAX) { share.hidden = false; r = rowOf(p); if (r < ROW_MIN + 10) { share.hidden = true; r = rowOf(p); } }
+    // 행이 하한 밑이면(1101×640 등 낮은 화면) → 스토리지 쌓은 막대를 내린다(분류 값은 행의 막대가 그대로 말한다).
+    if (p === S && r < ROW_MIN) { sbar.style.display = 'none'; r = rowOf(p); }
+    setRh(p, Math.max(ROW_FLOOR, Math.min(ROW_MAX, Math.floor(r))));
     p.hidden = was;
   }
 }
