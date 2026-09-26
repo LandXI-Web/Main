@@ -1,0 +1,142 @@
+# set → 파일(LX_DATA_ROOT 상대) · F1-CONTRACT §4.2. seed_from_cards_js.py --sets 가 manifest.json 과 대조해 검증한다.
+# catalog.py 는 layers/imagery 항목의 bounds·minzoom·maxzoom·count 를 manifest(id)에서 채운다(지어내지 않음).
+sets:
+  imagery/namwon_ap25_2023: tiles/pmtiles/namwon_ap25_2023.pmtiles
+  imagery/namwon_city_2504: tiles/pmtiles/namwon_city_2504.pmtiles
+  imagery/namwon_city_2510: tiles/pmtiles/namwon_city_2510.pmtiles
+  imagery/namwon_2504: tiles/pmtiles/namwon_2504.pmtiles
+  imagery/namwon_2506: tiles/pmtiles/namwon_2506.pmtiles
+  imagery/namwon_2508: tiles/pmtiles/namwon_2508.pmtiles
+  imagery/namwon_2510: tiles/pmtiles/namwon_2510.pmtiles
+  imagery/namwon_change_2504_2510: tiles/pmtiles/namwon_change_2504_2510.pmtiles
+  imagery/kuksan_a68: tiles/pmtiles/kuksan_a68.pmtiles
+  imagery/kuksan_a71: tiles/pmtiles/kuksan_a71.pmtiles
+  imagery/jeju_2020: tiles/pmtiles/jeju_2020.pmtiles
+  imagery/jeju_2022: tiles/pmtiles/jeju_2022.pmtiles
+  imagery/jeju_landcover: tiles/pmtiles/jeju_landcover.pmtiles
+  imagery/namwon_lc_gt_2020: tiles/pmtiles/namwon_lc_gt_2020.pmtiles
+  terrain/terrain-namwon: tiles/pmtiles/terrain-namwon.pmtiles
+  reference/sido: vector/pmtiles/sido.pmtiles
+  reference/sigungu: vector/pmtiles/sigungu.pmtiles
+  reference/namwon-emd: vector/pmtiles/namwon-emd.pmtiles
+  reference/korea-outline: vector/pmtiles/korea-outline.pmtiles
+  reference/namwon-buildings: vector/pmtiles/namwon-buildings.pmtiles
+  reference/parcels-namwon: parcels/namwon-parcels.pmtiles
+  vector/namwon-lc-gt-2020: vector/namwon-lc-gt-2020.pmtiles
+  results/lx/namwon-landcover-2023: results/namwon-landcover-2023.pmtiles
+  results/lx/namwon-farmland-2025: vector/pmtiles/namwon-farmland-2025.pmtiles
+  results/lx/namwon-greenhouse-2025: vector/pmtiles/namwon-greenhouse-2025.pmtiles
+  results/lx/namwon-change: vector/pmtiles/namwon-change.pmtiles
+  results/lx/namwon-change-grid: vector/pmtiles/namwon-change-grid.pmtiles
+  results/lx/namwon-greenhouse-2023-vh: results/lx/namwon-greenhouse-2023-vh.pmtiles
+  results/lx/yeosu-marine-2025-aerial: vector/pmtiles/yeosu-marine-2025-aerial.pmtiles
+  results/lx/yeosu-marine-2026-drone: vector/pmtiles/yeosu-marine-2026-drone.pmtiles
+  results/lx/marine-debris: vector/pmtiles/marine-debris.pmtiles
+  results/lx/axis-hwangdeung-gt: results/lx/axis-hwangdeung-gt.pmtiles
+  imagery/axis_iksan_hwangdeung: cog/axis_iksan_hwangdeung.pmtiles
+
+# LX 세션 전용 세트 — 무서명 요청 403 · /tiles/sign 은 lx 세션에만 서명(원본급 자체 영상 · 사용자 결정: 원본은 로그인 후)
+signed_sets:
+  - imagery/axis_iksan_hwangdeung
+  - results/lx/axis-hwangdeung-gt
+
+aliases:
+  results/namwon/dp-nw-farm-25@2.1: results/lx/namwon-farmland-2025
+  results/namwon/dp-nw-farm-25@2.0: results/lx/namwon-landcover-2023
+  results/namwon/dp-nw-change@1.0: results/lx/namwon-change
+  results/gwangju-jeonnam/dp-gj-marine-25@1.2: results/lx/yeosu-marine-2025-aerial
+
+# 결과·참조 카탈로그 항목(영상은 imagery 표 — 아래 imagery: 절에서 시드)
+layers:
+  - {id: sido, set: reference/sido, manifest: sido.pmtiles, kind: vector, role: reference, layer: sido, promote_id: code,
+     name: {ko: 시도 경계, en: Provinces}, export_policy: public, security_review: n/a, license: 공공누리(행정경계 · vuski/admdongkor 2021-04),
+     attribution: 행정경계 2021-04, ladder: {stage: domestic, from: 4, to: 10, order: 900}, count_unit: count}
+  - {id: sigungu, set: reference/sigungu, manifest: sigungu.pmtiles, kind: vector, role: reference, layer: sigungu, promote_id: code,
+     name: {ko: 시군구 경계, en: Districts}, export_policy: public, security_review: n/a, license: 공공누리, attribution: 행정경계 2021-04,
+     ladder: {stage: domestic, from: 5, to: 11, order: 910}, count_unit: count}
+  - {id: namwon-emd, set: reference/namwon-emd, manifest: namwon-emd.pmtiles, kind: vector, role: reference, layer: namwon_emd, promote_id: code,
+     name: {ko: 남원 읍면동, en: Namwon eup/myeon/dong}, export_policy: public, security_review: n/a, license: 공공누리, attribution: 행정경계 2021-04,
+     ladder: {stage: domestic, from: 8, to: 14, order: 920}, count_unit: count}
+  - {id: korea-outline, set: reference/korea-outline, manifest: korea-outline.pmtiles, kind: vector, role: reference, layer: korea_outline,
+     name: {ko: 국토 윤곽, en: Korea outline}, export_policy: public, security_review: n/a, license: 공공누리, attribution: 행정경계,
+     ladder: {stage: domestic, from: 3, to: 9, order: 890}, count_unit: count}
+  - {id: parcels-namwon, set: reference/parcels-namwon, manifest: namwon-parcels.pmtiles, kind: vector, role: reference, layer: parcels, promote_id: pnu,
+     name: {ko: 남원 필지(2021-12), en: Namwon parcels (2021-12)}, export_policy: tenant, security_review: pending,
+     license: 국토정보기본도 2.0(LX 내부 · 이용 범위 확인 중), attribution: 국토정보기본도 2.0 · 2021-12 기준, rights_holder: 확인 중(C04 Mobility Convergence 사업 자료),
+     ladder: {stage: domestic, from: 12, to: 17, order: 930}, count_unit: 필지, note: V-World 연속지적 권한 반영 전 대체 소스}
+  - {id: namwon-landcover-2023, set: results/lx/namwon-landcover-2023, manifest: namwon-landcover-2023.pmtiles, kind: vector, role: result,
+     layer: landcover, promote_id: id, name: {ko: 남원 토지피복 4클래스 2023(AI 재추론), en: Namwon land cover 2023 (AI)},
+     export_policy: public, security_review: cleared, license: LX 산출(검수 전), attribution: C01 2023 25cm × aerial25/best · 검수 전,
+     basis: inferred, ladder: {stage: domestic, from: 10, to: 17, order: 500}, count_unit: polygons}
+  - {id: namwon-farmland-2025, set: results/lx/namwon-farmland-2025, manifest: namwon-farmland-2025.pmtiles, kind: vector, role: result,
+     layer: namwon_farmland_2025, promote_id: id, name: {ko: 남원 농경지 2025, en: Namwon farmland 2025}, export_policy: public, security_review: cleared,
+     license: LX 산출, attribution: A02 2025 드론 AI 판독, basis: inferred, ladder: {stage: domestic, from: 10, to: 16, order: 510}, count_unit: 필지}
+  - {id: namwon-greenhouse-2025, set: results/lx/namwon-greenhouse-2025, manifest: namwon-greenhouse-2025.pmtiles, kind: vector, role: result,
+     layer: namwon_greenhouse_2025, promote_id: id, name: {ko: 남원 비닐하우스 2025, en: Namwon greenhouses 2025}, export_policy: public, security_review: cleared,
+     license: LX 산출, attribution: A02 2025 드론 AI 판독, basis: inferred, ladder: {stage: domestic, from: 10, to: 16, order: 520}, count_unit: 동}
+  - {id: namwon-change, set: results/lx/namwon-change, manifest: namwon-change.pmtiles, kind: vector, role: result, layer: namwon_change, promote_id: id,
+     name: {ko: 남원 변화 탐지(국산리 2시점), en: Namwon change}, export_policy: tenant, security_review: pending, license: LX 산출,
+     attribution: A04 비지도 변화 지수 · 학습 결과 아님, basis: inferred, ladder: {stage: domestic, from: 12, to: 17, order: 530}, count_unit: count}
+  - {id: namwon-lc-gt-2020, set: vector/namwon-lc-gt-2020, manifest: namwon-lc-gt-2020.pmtiles, kind: vector, role: reference, layer: lc_gt, promote_id: null,
+     name: {ko: 토지피복 GT 2020(AI Hub 125 · 도엽 35710074), en: Land cover GT 2020}, export_policy: tenant, security_review: pending,
+     license: AI Hub 이용약관, attribution: AI Hub 125 전라 토지피복, ladder: {stage: domestic, from: 12, to: 17, order: 940}, count_unit: count}
+  - {id: namwon-greenhouse-2023-vh, set: results/lx/namwon-greenhouse-2023-vh, manifest: namwon-greenhouse-2023-vh.pmtiles, kind: vector, role: result,
+     layer: results, promote_id: id, name: {ko: 남원 비닐하우스 2023(Vinyl_house 도메인 이식), en: Namwon greenhouses 2023 (domain transfer)},
+     export_policy: tenant, security_review: pending, license: LX 산출(검수 전), attribution: 도메인 이식(드론 → 항공 25cm) · 검수 전,
+     basis: inferred, ladder: {stage: domestic, from: 10, to: 17, order: 540}, count_unit: 동}
+  - {id: axis-hwangdeung-gt, set: results/lx/axis-hwangdeung-gt, manifest: axis-hwangdeung-gt.geojson, kind: vector, role: reference, layer: gt,
+     promote_id: id, name: {ko: 익산 황등 자동차 검수 라벨(AXIS), en: Iksan Hwangdeung vehicle labels}, export_policy: never, security_review: pending,
+     license: LX 내부, attribution: AXIS-Label 검수 라벨(decision=yes), ladder: {stage: domestic, from: 16, to: 22, order: 950}, count_unit: count, lx_only: true}
+
+imagery:
+  - {id: ap25-namwon-2023, set: imagery/namwon_ap25_2023, manifest: namwon_ap25_2023.pmtiles, name: {ko: "2023 25cm 항공 · 남원", en: "2023 aerial 25 cm · Namwon"},
+     tier: tile, gsd_m: 0.25, epoch: "2023", crs: EPSG:5186, kind: ortho, license: 확인 중, attribution: "2023 비도시 정사영상(전북) · 권리 확인 중",
+     export_policy: tenant, security_review: pending, rights_holder: 확인 중, asset_ref: C01, ladder: {stage: domestic, from: 10, to: 18, order: 30},
+     path_internal: "_work/namwon_ap25_2023.vrt", xyz_folder: namwon_ap25_2023, footprint_from: "_work/c01_namwon_sheets.gpkg"}
+  - {id: namwon-city-2504, set: imagery/namwon_city_2504, manifest: namwon_city_2504.pmtiles, name: {ko: "2025-04 2m · 남원 시가지", en: "2025-04 2 m · Namwon city"},
+     tier: tile, gsd_m: 2.0, epoch: "2025-04", crs: EPSG:3857, kind: ortho, license: 확인 중, attribution: "A03 시가지 2m", export_policy: tenant,
+     security_review: pending, rights_holder: 확인 중, asset_ref: A03, ladder: {stage: domestic, from: 11, to: 17, order: 40}}
+  - {id: namwon-city-2510, set: imagery/namwon_city_2510, manifest: namwon_city_2510.pmtiles, name: {ko: "2025-10 2m · 남원 시가지", en: "2025-10 2 m · Namwon city"},
+     tier: tile, gsd_m: 2.0, epoch: "2025-10", crs: EPSG:3857, kind: ortho, license: 확인 중, attribution: "A03 시가지 2m", export_policy: tenant,
+     security_review: pending, rights_holder: 확인 중, asset_ref: A03, ladder: {stage: domestic, from: 11, to: 17, order: 41}}
+  - {id: namwon-aoi-2504, set: imagery/namwon_2504, manifest: namwon_2504.pmtiles, name: {ko: "2025-04 드론 1cm급 · 남원 AOI", en: "2025-04 drone · Namwon AOI"},
+     tier: tile, gsd_m: 0.015, epoch: "2025-04", crs: EPSG:3857, kind: ortho, license: 확인 중, attribution: "A01 드론 정사 4시점", export_policy: tenant,
+     security_review: pending, rights_holder: 확인 중, asset_ref: A01, ladder: {stage: domestic, from: 12, to: 19, order: 50}}
+  - {id: namwon-aoi-2506, set: imagery/namwon_2506, manifest: namwon_2506.pmtiles, name: {ko: "2025-06 드론 · 남원 AOI", en: "2025-06 drone · Namwon AOI"},
+     tier: tile, gsd_m: 0.015, epoch: "2025-06", crs: EPSG:3857, kind: ortho, license: 확인 중, attribution: "A01 드론 정사 4시점", export_policy: tenant,
+     security_review: pending, rights_holder: 확인 중, asset_ref: A01, ladder: {stage: domestic, from: 12, to: 19, order: 51}}
+  - {id: namwon-aoi-2508, set: imagery/namwon_2508, manifest: namwon_2508.pmtiles, name: {ko: "2025-08 드론 · 남원 AOI", en: "2025-08 drone · Namwon AOI"},
+     tier: tile, gsd_m: 0.015, epoch: "2025-08", crs: EPSG:3857, kind: ortho, license: 확인 중, attribution: "A01 드론 정사 4시점", export_policy: tenant,
+     security_review: pending, rights_holder: 확인 중, asset_ref: A01, ladder: {stage: domestic, from: 12, to: 19, order: 52}}
+  - {id: namwon-aoi-2510, set: imagery/namwon_2510, manifest: namwon_2510.pmtiles, name: {ko: "2025-10 드론 · 남원 AOI", en: "2025-10 drone · Namwon AOI"},
+     tier: tile, gsd_m: 0.015, epoch: "2025-10", crs: EPSG:3857, kind: ortho, license: 확인 중, attribution: "A01 드론 정사 4시점", export_policy: tenant,
+     security_review: pending, rights_holder: 확인 중, asset_ref: A01, ladder: {stage: domestic, from: 12, to: 19, order: 53}}
+  - {id: namwon-change-2504-2510, set: imagery/namwon_change_2504_2510, manifest: namwon_change_2504_2510.pmtiles, name: {ko: "변화 지수 2025-04→10 · 국산리", en: "Change index 2025-04→10"},
+     tier: tile, gsd_m: 0.05, epoch: "2025", crs: EPSG:3857, kind: index, license: LX 산출, attribution: "A04 비지도 변화 지수", export_policy: tenant,
+     security_review: pending, rights_holder: LX, asset_ref: A04, ladder: {stage: domestic, from: 14, to: 19, order: 60}}
+  - {id: kuksan-a68, set: imagery/kuksan_a68, manifest: kuksan_a68.pmtiles, name: {ko: "국산리 드론 5cm A68", en: "Kuksan drone A68"},
+     tier: tile, gsd_m: 0.05, epoch: "2025", crs: EPSG:3857, kind: ortho, license: 확인 중, attribution: "국산리 드론 정사", export_policy: tenant,
+     security_review: pending, rights_holder: 확인 중, asset_ref: A09, ladder: {stage: domestic, from: 13, to: 19, order: 70}}
+  - {id: kuksan-a71, set: imagery/kuksan_a71, manifest: kuksan_a71.pmtiles, name: {ko: "국산리 드론 5cm A71", en: "Kuksan drone A71"},
+     tier: tile, gsd_m: 0.05, epoch: "2025", crs: EPSG:3857, kind: ortho, license: 확인 중, attribution: "국산리 드론 정사", export_policy: tenant,
+     security_review: pending, rights_holder: 확인 중, asset_ref: A09, ladder: {stage: domestic, from: 13, to: 19, order: 71}}
+  - {id: jeju-2020, set: imagery/jeju_2020, manifest: jeju_2020.pmtiles, name: {ko: "제주 항공 2020", en: "Jeju aerial 2020"},
+     tier: tile, gsd_m: 0.25, epoch: "2020", crs: EPSG:3857, kind: ortho, license: 확인 중, attribution: "제주 항공", export_policy: tenant,
+     security_review: pending, rights_holder: 확인 중, asset_ref: A10, ladder: {stage: domestic, from: 13, to: 19, order: 80}}
+  - {id: jeju-2022, set: imagery/jeju_2022, manifest: jeju_2022.pmtiles, name: {ko: "제주 항공 2022", en: "Jeju aerial 2022"},
+     tier: tile, gsd_m: 0.25, epoch: "2022", crs: EPSG:3857, kind: ortho, license: 확인 중, attribution: "제주 항공", export_policy: tenant,
+     security_review: pending, rights_holder: 확인 중, asset_ref: A10, ladder: {stage: domestic, from: 13, to: 19, order: 81}}
+  - {id: jeju-landcover, set: imagery/jeju_landcover, manifest: jeju_landcover.pmtiles, name: {ko: "제주 토지피복 분할", en: "Jeju land cover"},
+     tier: tile, gsd_m: 0.25, epoch: "2022", crs: EPSG:3857, kind: index, license: LX 산출, attribution: "제주 segformer 분할", export_policy: tenant,
+     security_review: pending, rights_holder: LX, asset_ref: A10, ladder: {stage: domestic, from: 13, to: 19, order: 82}}
+  - {id: terrain-namwon, set: terrain/terrain-namwon, manifest: terrain-namwon.pmtiles, name: {ko: "남원 지형(Terrarium)", en: "Namwon terrain"},
+     tier: tile, gsd_m: 30, epoch: "-", crs: EPSG:3857, kind: terrain, license: 공개 DEM, attribution: "A08 지형", export_policy: public,
+     security_review: n/a, rights_holder: 공개, asset_ref: A08, role: terrain, ladder: {stage: domestic, from: 9, to: 13, order: 5}}
+  - {id: namwon-lc-gt-2020, set: imagery/namwon_lc_gt_2020, manifest: namwon_lc_gt_2020.pmtiles, name: {ko: "AI Hub 125 원천 칩 2020(도엽 35710074)", en: "AI Hub 125 chips 2020"},
+     tier: tile, gsd_m: 0.25, epoch: "2020", crs: EPSG:3857, kind: ortho, license: AI Hub 이용약관, attribution: "AI Hub 125 전라", export_policy: tenant,
+     security_review: pending, rights_holder: NIA, asset_ref: B09, ladder: {stage: domestic, from: 12, to: 19, order: 90}}
+  - {id: axis-iksan-hwangdeung, set: cog/axis-iksan-hwangdeung, manifest: axis_iksan_hwangdeung.cog, name: {ko: "익산 황등 3·4지구 드론 1.36cm", en: "Iksan Hwangdeung drone 1.36 cm"},
+     tier: raw, gsd_m: 0.0136, epoch: "2025", crs: EPSG:5186, kind: ortho, license: LX 내부, attribution: "B04 AXIS 드론 정사 · LX 내부", export_policy: never,
+     security_review: pending, rights_holder: LX, asset_ref: B04, source: cog, ladder: {stage: domestic, from: 15, to: 22, order: 100},
+     path_internal: "E:/Auto_Label_project/data/images/익산_황등3,4지구.tif", cog_path: "cog/axis_iksan_hwangdeung.tif",
+     pmtiles_set: imagery/axis_iksan_hwangdeung, bounds: [126.94188, 35.99146, 126.95118, 36.00481]}

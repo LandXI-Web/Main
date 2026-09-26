@@ -1,0 +1,60 @@
+{
+ "method": "GET",
+ "path": "/api/v1/results/{set}/stats?by=emd",
+ "status": 200,
+ "body": {
+  "items": [
+   {
+    "key": "운봉읍",
+    "cd": "52190250",
+    "n": {
+     "value": 232,
+     "unit": "polygons",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "emd-stats"
+    },
+    "area_ha": {
+     "value": 1324.8,
+     "unit": "ha",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "emd-stats"
+    },
+    "conf_mean": {
+     "value": null,
+     "unit": "ratio",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "emd-stats"
+    }
+   }
+  ],
+  "total": {
+   "n": {
+    "value": 129420,
+    "unit": "polygons",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "emd-stats"
+   },
+   "area_ha": {
+    "value": 10963.9,
+    "unit": "ha",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "emd-stats"
+   }
+  }
+ },
+ "optional": [
+  "source",
+  "as_of"
+ ],
+ "optional_nested": {
+  "items[]": [
+   "cls"
+  ]
+ },
+ "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
+}

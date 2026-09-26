@@ -1,0 +1,12 @@
+# 지역 프로필(F1-CONTRACT §6) — 배포본 region_profile 이 가리키는 곳. bbox 는 4326.
+profiles:
+  namwon: {name: {ko: 전북특별자치도 남원시, en: "Namwon-si, Jeonbuk"}, crs: EPSG:5186, locale: ko, bbox: [127.1667, 35.2905, 127.6831, 35.5769],
+           aoi_from: landxi/assets/data/geo/namwon-emd.geojson}
+  gwangju-jeonnam: {name: {ko: 광주전남특별시, en: "Gwangju-Jeonnam"}, crs: EPSG:5186, locale: ko, bbox: [126.0, 34.2, 127.9, 35.5]}
+  iksan-hwangdeung: {name: {ko: 전북특별자치도 익산시 황등면, en: "Hwangdeung-myeon, Iksan"}, crs: EPSG:5186, locale: ko,
+                     bbox: [126.94188, 35.99146, 126.95118, 36.00481]}
+  kgz-ysykata: {name: {ko: 키르기스스탄 으슥아타, en: "Ysyk-Ata, Kyrgyzstan"}, crs: EPSG:32643, locale: en, bbox: [74.70, 42.75, 75.20, 43.00]}
+  kgz-sokuluk: {name: {ko: 키르기스스탄 소쿨룩, en: "Sokuluk, Kyrgyzstan"}, crs: EPSG:32643, locale: en, bbox: [74.20, 42.80, 74.45, 42.95],
+                note: "연속지적 시범지 경계 미확보 — bbox 는 행정 중심지 주변 [추정]"}
+  kgz-bishkek: {name: {ko: 키르기스스탄 비슈케크, en: "Bishkek, Kyrgyzstan"}, crs: EPSG:32643, locale: en, bbox: [74.45, 42.78, 74.72, 42.93]}
+  mm-meiktila: {name: {ko: 미얀마 메이크틸라, en: "Meiktila, Myanmar"}, crs: EPSG:32646, locale: en, bbox: [95.82, 20.83, 95.90, 20.91]}

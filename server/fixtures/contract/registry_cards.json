@@ -1,0 +1,31 @@
+{
+ "method": "GET",
+ "path": "/api/v1/registry/cards",
+ "status": 200,
+ "body": {
+  "items": [
+   {
+    "id": "card-farm",
+    "name": "영농관리 행정서비스",
+    "scope": "local",
+    "status": "운영",
+    "versions": [
+     "card-farm@2.0",
+     "card-farm@2.1"
+    ],
+    "modules": {
+     "core": [
+      "mod-auth"
+     ],
+     "ext": {}
+    }
+   }
+  ]
+ },
+ "optional": [
+  "total",
+  "as_of"
+ ],
+ "optional_nested": {},
+ "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
+}

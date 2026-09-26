@@ -1,0 +1,28 @@
+﻿
+Running 12 tests using 1 worker
+
+node.exe : (node:59692) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:59692) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"job":"job_01M3EVD0P8E60V5SBZJS1V6W2D","detections":0,"usage_lx_demo":7,"usage_other":0,"counts":{"vehicle":35}}
+  ✓   1 tests\e2e\f1b-demo-metering.spec.mjs:12:1 › 영업 세션 demo:true → detections 0 · usage_events lx-demo n행 · 결과는 demo 영역에만 (6.3s)
+  ✓   2 tests\e2e\f1b-health.spec.mjs:14:1 › GET /health ok · redis · pg · 워커 하트비트 (30ms)
+  ✓   3 tests\e2e\f1b-health.spec.mjs:20:1 › 계약 §4 라우트 전부 존재(404/405 없음) (913ms)
+  ✓   4 tests\e2e\f1b-health.spec.mjs:33:1 › 봉투 없는 숫자 → 500 envelope_missing(개발 모드) (10ms)
+  ✓   5 tests\e2e\f1b-health.spec.mjs:39:1 › /ops/bench — 모델 3종 × batch 2종 · 외부 점유 조건 기록 (91ms)
+  ✓   6 tests\e2e\f1b-public-guard.spec.mjs:15:1 › 게스트 build=public — 자체 영상 0 · 외부 위성만 · lx 로 올려 달라 해도 public (36ms)
+  ✓   7 tests\e2e\f1b-public-guard.spec.mjs:25:1 › tenant 세션 — raw/cog 없음 · 원본 라우트 403 (134ms)
+  ✓   8 tests\e2e\f1b-public-guard.spec.mjs:37:1 › 무서명 기관 결과 세트 403 · 서명 206 · 다른 기관 서명 403 (166ms)
+  ✓   9 tests\e2e\f1b-public-guard.spec.mjs:48:1 › V-World 프록시 — 키 권한 미반영이면 503 vworld_key_pending (28ms)
+{"id":"job_01M3EVD8673186A3B01A4FEX2A","state":"done","shards":378,"done":378,"counts":{"vehicle":115},"result_set":"results/lx/job_01M3EVD8673186A3B01A4FEX2A"}
+  ✓  10 tests\e2e\f1b-quote-submit.spec.mjs:13:1 › 견적(면적 · shard · GPU·s 추정=bench) → 제출 → done → 스냅샷 206 (20.7s)
+{"id":"job_01M3EVDWAD3DHE1DH9YHPQWP91","events":169,"first_shard_done_ms":1185,"end_ms":5547,"basis":"measured"}
+  ✓  11 tests\e2e\f1b-sse.spec.mjs:34:1 › 순서 · 재개(Last-Event-ID) · 첫 shard.done 실측 (5.6s)
+  ✓  12 tests\e2e\f1b-sse.spec.mjs:64:1 › /events/ops — 관리자 · 폴러 스트림 tail(gpu.sample · queue.sample) (2.4s)
+
+  12 passed (40.6s)

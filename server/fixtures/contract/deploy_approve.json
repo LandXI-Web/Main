@@ -1,0 +1,79 @@
+{
+ "method": "POST",
+ "path": "/api/v1/deploys/{id}/approve",
+ "status": 200,
+ "body": {
+  "approval": {
+   "id": "ap_…",
+   "decision": "approve",
+   "by": "u_lx_admin",
+   "at": "2026-09-24T14:02:11+09:00",
+   "reason": "…"
+  },
+  "deploy": {
+   "id": "dp-nw-farm-25",
+   "name": "남원 영농관리 2025",
+   "tenant_id": "namwon",
+   "card_id": "card-farm",
+   "card_version_id": "card-farm@2.1",
+   "version": "v2.1",
+   "prev_card_version_id": "card-farm@2.0",
+   "region_profile": "namwon",
+   "region_name": {
+    "ko": "전북특별자치도 남원시",
+    "en": "Namwon-si, Jeonbuk"
+   },
+   "aoi": {
+    "type": "MultiPolygon",
+    "coordinates": []
+   },
+   "stage": "ga",
+   "pinned": false,
+   "gpu_pool": "a6000",
+   "from_deploy_id": null,
+   "modules": {
+    "core": [
+     "mod-auth",
+     "mod-map",
+     "mod-result",
+     "mod-stats",
+     "mod-report",
+     "mod-feedback",
+     "mod-usage"
+    ],
+    "ext": {
+     "mod-farm-cycle": true,
+     "mod-farm-parcel": true
+    }
+   },
+   "model_override": null,
+   "snapshot_current": "results/namwon/dp-nw-farm-25@2.1",
+   "snapshot_prev": "results/namwon/dp-nw-farm-25@2.0",
+   "year": 2025,
+   "status_history": "운영",
+   "scale": {
+    "value": 2098,
+    "unit": "필지",
+    "basis": "measured",
+    "as_of": "2026-06-08",
+    "source": "results/namwon-farmland-2025.geojson",
+    "note": "cards.js '비닐하우스 9,664 동' 은 출처 없음 → 미표시"
+   },
+   "basis": "history",
+   "approvals": [
+    {
+     "id": "ap_…",
+     "decision": "approve",
+     "by": "u_lx_admin",
+     "at": "2026-09-24T09:00:00+09:00",
+     "reason": "시드"
+    }
+   ],
+   "created_at": "2026-09-24T09:00:00+09:00",
+   "updated_at": "2026-09-24T09:00:00+09:00"
+  }
+ },
+ "optional": [],
+ "optional_nested": {},
+ "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
+}

@@ -1,0 +1,27 @@
+﻿// 탐색: F1-A 화면(직원 세션 · on 모드)에서 익산 황등 1.36cm 로 가서 프레임 → 견적이 뜨는지
+import { chromium } from 'playwright';
+const API = 'http://localhost:8700', PW = 'landxi-dev-2026', OUT = 'E:/Land-XI 플랫폼/01. 디자인/shots/f1/B/_tools/';
+const role = process.argv[2] || 'staff';
+const b = await chromium.launch({ channel: 'chrome', headless: true, args: ['--use-angle=d3d11', '--enable-gpu'] });
+const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
+const s = await (await fetch(API + '/api/v1/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ realm: 'lx', login: 'lx-' + role, password: PW }) })).json();
+await ctx.addInitScript(([s, role]) => { if (sessionStorage.getItem('b')) return; sessionStorage.setItem('b', '1'); localStorage.setItem('lx_api_base', 'http://localhost:8700'); localStorage.removeItem('lx_api_mode'); localStorage.setItem('lx_api_session', JSON.stringify(s)); localStorage.setItem('lx_logged_in', '1'); localStorage.setItem('lx_role', role); localStorage.removeItem('lx_tenant_session'); }, [s, role]);
+const p = await ctx.newPage();
+p.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') console.log('console', m.type(), m.text().slice(0, 200)); });
+p.on('pageerror', (e) => console.log('pageerror', e.message));
+await p.goto('http://localhost:4173/landxi/xi/index.html?cam=126.9478,35.99655,17.0,0,0&model=car_v2_obb');
+await p.waitForFunction(() => document.documentElement.dataset.restored === '1', null, { timeout: 90000 });
+await p.waitForTimeout(3000);
+await p.screenshot({ path: OUT + 'x1.png' });
+console.log(await p.evaluate(() => ({ mast: document.getElementById('mast-mode')?.textContent, chip: document.querySelector('#chip, .chip, [data-chip]')?.textContent, z: window.__xi.M.A.getZoom() })));
+console.log(JSON.stringify(await p.evaluate(() => { const X = window.__xi, M = X.M; return { ladder: (M.ladder?.items || []).map((i) => i.id + ':' + i.source + ':' + (i.bounds ? 'b' : '-')).join(' '), layers: M.A.getStyle().layers.map((l) => l.id).filter((id) => /axis|img-/.test(id)), items: Object.keys(M.items).filter((k) => /axis/.test(k)), chip: M.ladder?.chipAt ? JSON.stringify(M.ladder.chipAt(M.A.getZoom(), M.A.getCenter().toArray()).text) : null }; })));
+const fr = await p.evaluate(() => { const A = window.__xi.M.A; const a = A.project([126.9467, 35.9975]), c = A.project([126.9495, 35.9956]); return [a.x, a.y, c.x, c.y]; });
+console.log('frame px', fr);
+await p.click('#tool-rect');
+await p.mouse.move(fr[0], fr[1]); await p.mouse.down(); await p.mouse.move(fr[2], fr[3], { steps: 20 }); await p.mouse.up();
+await p.waitForSelector('#quote-card .xi-run', { timeout: 20000 }).catch((e) => console.log('no quote', e.message));
+await p.waitForTimeout(800);
+console.log(JSON.stringify(await p.evaluate(() => ({ frame: !!window.__xi.state.frame, quote: window.__xi.state.quote && Object.keys(window.__xi.state.quote), phases: window.__xi.PHASES.slice(-6), qc: document.getElementById('quote-card').outerHTML.slice(0, 300) }))));
+await p.screenshot({ path: OUT + 'x2.png' });
+console.log((await p.evaluate(() => document.getElementById('quote-card').innerText)).replace(/\s+/g, ' '));
+await b.close();

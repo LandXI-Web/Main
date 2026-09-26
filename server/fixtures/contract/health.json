@@ -1,0 +1,19 @@
+{
+ "method": "GET",
+ "path": "/api/v1/health",
+ "status": 200,
+ "body": {
+  "ok": true,
+  "version": "0.1.0",
+  "redis": true,
+  "pg": true,
+  "workers": {
+   "gpu": 2,
+   "cpu": 1
+  },
+  "at": "2026-09-24T14:02:11+09:00"
+ },
+ "optional": [],
+ "optional_nested": {},
+ "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
+}

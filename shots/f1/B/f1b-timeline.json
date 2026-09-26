@@ -1,0 +1,62 @@
+{
+ "rel_s": {
+  "ctxT": -5.74,
+  "ctxA": -5.45,
+  "T0": 0.0,
+  "fly": 4.24,
+  "frame": 13.44,
+  "quote": 14.03,
+  "run": 16.24,
+  "mid": 23.86,
+  "snapshot": 34.64,
+  "swipe": 39.52,
+  "sales": 39.66,
+  "end": 53.01
+ },
+ "dur_s": 53.8,
+ "offsets": {
+  "screen": 5.446,
+  "term": 5.736
+ },
+ "scenes": [
+  [
+   0,
+   4.24,
+   "① 서버 확인 — compose(redis·postgis) · 워커 VRAM 예산 · Ollama llama-server 생존"
+  ],
+  [
+   4.24,
+   16.24,
+   "② 직원 세션 — 익산 황등 1.36cm 하강 · 사각 프레임 → 견적(면적 실측 · GPU·s = bench 추정)"
+  ],
+  [
+   16.24,
+   34.64,
+   "③ 실행 — A6000 0번 실추론 · 워커 shard.done 로그 ↔ 화면 칸 동기 · HUD 실측"
+  ],
+  [
+   34.64,
+   39.66,
+   "④ job.done · snapshot.ready 교체 · 가르기 · 정답(AXIS 라벨) 대비 P/R 봉투"
+  ],
+  [
+   39.66,
+   53.805,
+   "⑤ 영업 세션 demo:true → '시연' · detections 0행 · usage_events lx-demo"
+  ]
+ ],
+ "job": "job_01M3EW5HFGE5P30RM7ZMNEPP8K",
+ "demo_job": "job_01M3EW6CP34ER73RPQ7VP7BFWZ",
+ "hud": {
+  "big": "115",
+  "job": "실측 · 지금탐지 136shard 368/378GPU0 7%24.0칩/s",
+  "mast": "",
+  "live": true
+ },
+ "sales": {
+  "mast": "",
+  "job": "실측 · 지금탐지 46shard 80/81GPU0 52%27.9칩/s"
+ },
+ "quote": "견적 · POST /jobs/quote × 면적 0.053 km² shard 378 건 예상 GPU·s 11.8 GPU·s 할당 잔여 무제한 허용 허용 모델 → 영상 LX 드론 1.36cm 2025 aerial25/best · 건물·주차장·경작지·비닐하우스 car_v2_obb · vehicle index/ndvi_pc · — 입력 불일치 index/worl",
+ "page_errors": []
+}

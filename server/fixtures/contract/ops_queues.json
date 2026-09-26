@@ -1,0 +1,43 @@
+{
+ "method": "GET",
+ "path": "/api/v1/ops/queues",
+ "status": 200,
+ "body": {
+  "pools": {
+   "a6000": {
+    "queued": 1,
+    "running": 1,
+    "workers": 2,
+    "p95_wait_s": {
+     "value": null,
+     "unit": "s",
+     "basis": "measured",
+     "as_of": "2026-09-24",
+     "source": "jobs"
+    }
+   }
+  },
+  "lanes": [
+   {
+    "worker": "a6000-0",
+    "blocks": [
+     {
+      "job_id": "…",
+      "from": "…",
+      "to": "…",
+      "state": "running",
+      "tenant_id": "lx"
+     }
+    ]
+   }
+  ],
+  "as_of": "…"
+ },
+ "optional": [],
+ "optional_nested": {
+  "pools.*": [
+   "shards_backlog"
+  ]
+ },
+ "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
+}

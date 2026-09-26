@@ -1,0 +1,43 @@
+# GPU/CPU 풀(설계서 §5.5 Phase 0). 워커 = GPU 1장 1프로세스.
+# 전력 예산(2026-09-26 필수 · 1급 제약): 이 PC 전원은 A6000 2장 동시 풀로드를 못 버틴다(셧다운 이력).
+#   gpu_worker 는 shard 를 읽기 전에 Redis 임대 power:hot:{slot}(SET NX EX)을 잡아야 한다 — 슬롯 수 = max_hot_gpus.
+#   임대가 없으면 shard 를 가져가지 않는다(대기). 유휴 idle_release_s 뒤 반납. vLLM 등 다른 GPU 고부하 작업도 같은 키를 존중한다.
+power:
+  max_hot_gpus: 1
+  lease_ttl_s: 20
+  idle_release_s: 3
+  power_limit_w: 300        # nvidia-smi power.limit(장당 · 522.06) — 참고값
+pools:
+  a6000:
+    device: gpu
+    workers: [a6000-0, a6000-1]
+    gpu_indices: [0, 1]
+    # 시작 시 상주 — P0 시연 첫 shard ≤ 5s [목표]를 위해 car_v2_obb 는 미리 올린다
+    resident: [car_v2_obb]
+    lru_max: 3
+    batch: 16
+    fp16: true
+    low_watermark: 48       # shards:a6000 스트림 깊이 — 이보다 얕으면 스케줄러가 우선순위 순으로 채운다(선점 지연 ≤ 1–2s)
+    fill_chunk: 64
+  cpu:
+    device: cpu
+    workers: [cpu-0]
+    low_watermark: 8
+    fill_chunk: 16
+  a100-n1:
+    device: gpu
+    state: pending
+    note: "A100 80GB×4 · 등록 대기(가입 토큰 발급 시 채워짐)"
+  a100-n2:
+    device: gpu
+    state: pending
+    note: "A100 80GB×4 · 등록 대기"
+nodes:
+  - id: node-tr3995wx
+    role: control+gpu
+    pool: a6000
+    cpu: "Threadripper PRO 3995WX 64C"
+    ram_gb: 512
+    gpus: [0, 1]
+  - {id: node-a100-1, state: pending, note: "A100 80GB×4 · 등록 대기 · 가입 토큰 발급 시 채워짐"}
+  - {id: node-a100-2, state: pending, note: "A100 80GB×4 · 등록 대기"}

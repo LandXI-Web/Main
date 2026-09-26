@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>server terminal</title>
+<style>
+  :root { --bg:#0c0f14; --fg:#d7dde6; --dim:#7b8594; --hi:#7fd4ff; --ok:#8fe39a; --warn:#ffcf6b; --err:#ff7b7b; --line:#1c2230; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--fg); font:11.5px/1.42 "Cascadia Mono","Consolas",monospace; overflow:hidden; }
+  .bar { height:28px; display:flex; align-items:center; gap:8px; padding:0 12px; background:#151a23; border-bottom:1px solid var(--line); color:var(--dim); font:12px "Pretendard","Segoe UI",sans-serif; }
+  .bar b { color:var(--fg); font-weight:600; }
+  .dot { width:9px; height:9px; border-radius:50%; background:#2d3442; }
+  #tx { position:absolute; top:29px; left:0; right:0; bottom:318px; padding:8px 12px; overflow:hidden; display:flex; flex-direction:column; justify-content:flex-end; }
+  #tx div { white-space:pre-wrap; word-break:break-all; }
+  .cmd { color:#fff; margin-top:6px; } .cmd::before { content:"PS server> "; color:var(--ok); }
+  .hi { color:var(--hi); } .done { color:#9fb3c8; } .warn { color:var(--warn); } .err { color:var(--err); }
+  #smi { position:absolute; left:0; right:0; bottom:0; height:317px; border-top:1px solid var(--line); background:#0a0d11; padding:8px 12px; box-sizing:border-box; }
+  #smi h3 { margin:0 0 6px; font:600 11.5px "Cascadia Mono","Consolas",monospace; color:var(--dim); }
+  .g { display:grid; grid-template-columns: 58px 1fr 92px; gap:4px 10px; align-items:center; margin:6px 0 10px; }
+  .g .n { color:#fff; } .meter { height:14px; background:#141a24; position:relative; }
+  .meter i { position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg,#2a8cff,#35e0c2); transition:width .35s; }
+  .meter span { position:absolute; right:6px; top:0; font-size:11px; line-height:14px; color:#fff; }
+  .sub { grid-column: 2 / 4; color:var(--dim); font-size:11px; }
+  .pr { color:var(--dim); font-size:11px; line-height:1.5; }
+  .pr b { color:var(--fg); font-weight:400; }
+</style></head>
+<body>
+<div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><b>PowerShell</b> · E:\Land-XI 플랫폼\01. 디자인\server</div>
+<div id="tx"></div>
+<div id="smi"><h3 id="smih">nvidia-smi · 1s</h3><div id="gpus"></div><div class="pr" id="procs"></div></div>
+<script>
+const tx = document.getElementById('tx'); const MAX = 60;
+function add(text, cls) { const d = document.createElement('div'); d.textContent = text; if (cls) d.className = cls; tx.appendChild(d); while (tx.children.length > MAX) tx.removeChild(tx.firstChild); }
+const es = new EventSource('/feed');
+es.onmessage = (e) => {
+  const o = JSON.parse(e.data);
+  if (o.k === 'cmd') add(o.text, 'cmd');
+  else if (o.k === 'out') add(o.text, o.cls || '');
+  else if (o.k === 'smi') {
+    document.getElementById('smih').textContent = `nvidia-smi · 1s · ${o.at}   (Ollama llama-server 종료 금지 · 전력 동시 고부하 ≤ 1장)`;
+    document.getElementById('gpus').innerHTML = o.rows.map((r) => `<div class="g"><div class="n">GPU${r[0]}</div><div class="meter"><i style="width:${+r[2]}%"></i><span>${r[2]}%</span></div><div>${Math.round(+r[5])} / ${Math.round(+r[6])} W</div>
+      <div class="sub">${r[1]} · ${r[8]} · mem ${(+r[3]).toLocaleString()} / ${(+r[4]).toLocaleString()} MiB · ${r[7]}°C</div></div>`).join('');
+    const cnt = {}; for (const p of o.procs) { const k = `GPU${p.gpu} ${p.name}`; cnt[k] = (cnt[k] || 0) + 1; }
+    document.getElementById('procs').innerHTML = 'Processes: ' + Object.entries(cnt).map(([k, v]) => `<b>${k}</b> ×${v}`).join(' · ');
+  }
+};
+</script>
+</body></html>

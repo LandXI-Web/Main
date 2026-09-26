@@ -1,0 +1,14 @@
+{
+ "method": "GET",
+ "path": "/api/v1/ops/alerts",
+ "status": 200,
+ "body": {
+  "items": [],
+  "last_check": "…"
+ },
+ "optional": [
+  "total"
+ ],
+ "optional_nested": {},
+ "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
+}

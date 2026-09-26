@@ -1,0 +1,44 @@
+{
+ "method": "GET",
+ "path": "/api/v1/ops/bench",
+ "status": 200,
+ "body": {
+  "items": [
+   {
+    "model_id": "aerial25/best",
+    "gpu": "A6000",
+    "batch": 16,
+    "fp16": true,
+    "chips_per_s": {
+     "value": 26,
+     "unit": "chips_per_s",
+     "basis": "measured",
+     "as_of": "2026-09-24",
+     "source": "pipeline-run.md",
+     "note": "P4 2026-09-24 · 읽기 포함 · 외부 점유 23,396 MiB"
+    },
+    "at": "2026-09-24"
+   }
+  ]
+ },
+ "optional": [
+  "total",
+  "as_of",
+  "note"
+ ],
+ "optional_nested": {
+  "items[]": [
+   "gpu_index",
+   "chip",
+   "imgsz",
+   "seconds",
+   "chips",
+   "vram_mib",
+   "external_used_mib",
+   "util_pct_mean",
+   "mem_used_during_mib",
+   "kind"
+  ]
+ },
+ "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
+}

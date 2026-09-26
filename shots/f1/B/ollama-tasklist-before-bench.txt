@@ -1,0 +1,7 @@
+
+이미지 이름                    PID 세션 이름              세션#  메모리 사용
+========================= ======== ================ =========== ============
+llama-server.exe             42752 Console                    1  1,860,172 K
+llama-server.exe             40768 Console                    1  4,966,464 K
+llama-server.exe             22328 Console                    1  1,601,520 K
+llama-server.exe             50852 Console                    1  2,952,208 K

@@ -1,0 +1,51 @@
+{
+ "method": "GET",
+ "path": "/api/v1/results/{set}/features",
+ "status": 200,
+ "body": {
+  "type": "FeatureCollection",
+  "features": [
+   {
+    "type": "Feature",
+    "id": "NW23-000000",
+    "geometry": {
+     "type": "MultiPolygon",
+     "coordinates": []
+    },
+    "properties": {
+     "id": "NW23-000000",
+     "cls": "경작지",
+     "cls_en": "farmland",
+     "cid": 2,
+     "conf": 0.82,
+     "area_m2": 1234.5,
+     "emd": "운봉읍",
+     "emd_cd": "52190250",
+     "pnu": null,
+     "edit_state": "raw",
+     "job_id": "results/lx/namwon-landcover-2023",
+     "shard_id": null,
+     "chip_edge": false
+    }
+   }
+  ],
+  "lx": {
+   "count": {
+    "value": 129420,
+    "unit": "count",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "detections"
+   },
+   "total": 129420
+  }
+ },
+ "optional": [],
+ "optional_nested": {
+  "lx": [
+   "limit",
+   "offset"
+  ]
+ },
+ "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
+}

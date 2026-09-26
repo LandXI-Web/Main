@@ -1,0 +1,27 @@
+{
+ "method": "GET",
+ "path": "/api/v1/registry/lineage/dp-nw-farm-25",
+ "status": 200,
+ "body": {
+  "chain": [
+   {
+    "kind": "dataset",
+    "id": "E:/aerial_dataset",
+    "label": "항공 토지피복 15.3만"
+   },
+   {
+    "kind": "model",
+    "id": "aerial25/best"
+   },
+   {
+    "kind": "deploy",
+    "id": "dp-nw-farm-25"
+   }
+  ]
+ },
+ "optional": [
+  "as_of"
+ ],
+ "optional_nested": {},
+ "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
+}

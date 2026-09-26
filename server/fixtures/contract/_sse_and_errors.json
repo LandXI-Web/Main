@@ -1,0 +1,41 @@
+{
+ "jobs": [
+  "job.queued",
+  "job.started",
+  "shard.started",
+  "shard.done",
+  "shard.failed",
+  "job.progress",
+  "job.done",
+  "snapshot.ready",
+  "job.failed",
+  "job.cancelled",
+  "index.month"
+ ],
+ "ops": [
+  "gpu.sample",
+  "queue.sample",
+  "usage.delta",
+  "deploy.changed",
+  "alert",
+  "job.state"
+ ],
+ "errors": [
+  "unauthorized",
+  "forbidden",
+  "demo_required",
+  "not_found",
+  "parcels_unavailable",
+  "vworld_key_pending",
+  "cog_unavailable",
+  "quota_exceeded",
+  "aoi_outside_footprint",
+  "aoi_too_large",
+  "model_input_mismatch",
+  "module_locked",
+  "approval_required",
+  "invalid_stage_transition",
+  "envelope_missing",
+  "worker_unavailable"
+ ]
+}

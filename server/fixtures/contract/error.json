@@ -1,0 +1,20 @@
+{
+ "method": "*",
+ "path": "*",
+ "status": 400,
+ "body": {
+  "error": {
+   "code": "quota_exceeded",
+   "message": "gpu_s_month 한도 36,000 초과 예상",
+   "detail": {
+    "dim": "gpu_s_month",
+    "remaining": 120.5,
+    "requested": 800
+   }
+  },
+  "request_id": "req_01J9…"
+ },
+ "optional": [],
+ "optional_nested": {},
+ "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
+}

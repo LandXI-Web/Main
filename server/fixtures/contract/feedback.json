@@ -1,0 +1,14 @@
+{
+ "method": "POST",
+ "path": "/api/v1/feedback",
+ "status": 201,
+ "body": {
+  "id": "fb_…",
+  "state": "open"
+ },
+ "optional": [
+  "at"
+ ],
+ "optional_nested": {},
+ "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
+}

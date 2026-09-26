@@ -1,0 +1,15 @@
+{
+ "method": "GET",
+ "path": "/tiles/sign?set=results/namwon/dp-nw-farm-25@2.1",
+ "status": 200,
+ "body": {
+  "url": "http://localhost:8700/tiles/pmtiles/results/namwon/dp-nw-farm-25@2.1.pmtiles?exp=1758770000&sig=…",
+  "expires_at": "2026-09-25T02:00:00+09:00"
+ },
+ "optional": [
+  "set",
+  "canonical"
+ ],
+ "optional_nested": {},
+ "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
+}

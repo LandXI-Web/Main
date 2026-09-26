@@ -1,0 +1,7 @@
+﻿
+Image Name                     PID Session Name        Session#    Mem Usage
+========================= ======== ================ =========== ============
+llama-server.exe             21628 Console                    1    713,508 K
+llama-server.exe             30900 Console                    1    786,940 K
+llama-server.exe             36264 Console                    1    592,984 K
+llama-server.exe             36936 Console                    1    666,200 K

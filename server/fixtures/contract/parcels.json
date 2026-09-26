@@ -1,0 +1,36 @@
+{
+ "method": "GET",
+ "path": "/api/v1/parcels?lng=127.39&lat=35.416",
+ "status": 200,
+ "body": {
+  "pnu": "5219025021100010000",
+  "jibun": "…",
+  "jimok": "전",
+  "area_m2": {
+   "value": 1523.0,
+   "unit": "m2",
+   "basis": "measured",
+   "as_of": "2021-12",
+   "source": "국토정보기본도 2.0"
+  },
+  "price_krw_m2": {
+   "value": 21300,
+   "unit": "krw_m2",
+   "basis": "measured",
+   "as_of": "2021-12",
+   "source": "공시지가"
+  },
+  "owner_kind": "…",
+  "source": "reference/parcels-namwon",
+  "as_of": "2021-12"
+ },
+ "optional": [
+  "emd",
+  "emd_cd",
+  "ri",
+  "road",
+  "note"
+ ],
+ "optional_nested": {},
+ "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
+}

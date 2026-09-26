@@ -1,0 +1,83 @@
+{
+ "method": "GET",
+ "path": "/api/v1/catalog/layers",
+ "status": 200,
+ "body": {
+  "items": [
+   {
+    "id": "ap25-namwon-2023",
+    "name": {
+     "ko": "2023 25cm 항공 · 남원",
+     "en": "2023 aerial 25 cm · Namwon"
+    },
+    "kind": "raster",
+    "role": "imagery",
+    "source": "pmtiles",
+    "set": "imagery/namwon_ap25_2023",
+    "path": "tiles/pmtiles/namwon_ap25_2023.pmtiles",
+    "url": "http://localhost:8700/tiles/pmtiles/imagery/namwon_ap25_2023.pmtiles",
+    "tiles": null,
+    "scheme": "xyz",
+    "layer": null,
+    "promote_id": null,
+    "minzoom": 10,
+    "maxzoom": 18,
+    "bounds": [
+     127.166748,
+     35.290469,
+     127.683105,
+     35.576917
+    ],
+    "gsd_m": 0.25,
+    "epoch": "2023",
+    "crs": "EPSG:3857",
+    "tier": "tile",
+    "license": "확인 중",
+    "attribution": "2023 비도시 정사영상(전북) · 권리 확인 중",
+    "export_policy": "tenant",
+    "security_review": "pending",
+    "rights_holder": "확인 중",
+    "ladder": {
+     "stage": "domestic",
+     "from": 10,
+     "to": 18,
+     "order": 30
+    },
+    "count": {
+     "value": 88404,
+     "unit": "count",
+     "basis": "measured",
+     "as_of": "2026-09-24",
+     "source": "manifest.json#namwon_ap25_2023.pmtiles"
+    },
+    "signed": false
+   }
+  ],
+  "ladder": {
+   "domestic": [
+    "gibs-viirs-truecolor",
+    "gibs-hls-s30",
+    "xdworld-satellite",
+    "ap25-namwon-2023"
+   ],
+   "global": [
+    "gibs-viirs-truecolor",
+    "eox-s2cloudless-2025"
+   ]
+  },
+  "as_of": "2026-09-24T14:02:11+09:00"
+ },
+ "optional": [
+  "build",
+  "total"
+ ],
+ "optional_nested": {
+  "items[]": [
+   "params",
+   "note",
+   "basis",
+   "noncommercial"
+  ]
+ },
+ "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
+}

@@ -1,0 +1,96 @@
+{
+ "method": "POST",
+ "path": "/api/v1/jobs",
+ "status": 202,
+ "body": {
+  "job": {
+   "id": "job_01J9K3P7Q8R2S4T6V8W0X2Y4Z6",
+   "tenant_id": "lx",
+   "submitted_by": "u_lx_staff",
+   "kind": "infer",
+   "state": "running",
+   "priority": 0,
+   "demo": false,
+   "pool": "a6000",
+   "model_id": "car_v2_obb",
+   "imagery_id": "axis-iksan-hwangdeung",
+   "deploy_id": null,
+   "card_id": null,
+   "aoi": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       126.944,
+       35.995
+      ],
+      [
+       126.949,
+       35.995
+      ],
+      [
+       126.949,
+       35.999
+      ],
+      [
+       126.944,
+       35.999
+      ],
+      [
+       126.944,
+       35.995
+      ]
+     ]
+    ]
+   },
+   "options": {
+    "chip": 1024,
+    "overlap": 0.2,
+    "conf": 0.25
+   },
+   "shards_total": 1120,
+   "shards_done": 96,
+   "shards_failed": 0,
+   "counts": {
+    "vehicle": 1284
+   },
+   "counts_env": {
+    "value": 1284,
+    "unit": "count",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "job_01J9K…",
+    "note": "[예시] 진행 중 누적"
+   },
+   "chips_per_s": {
+    "value": null,
+    "unit": "chips_per_s",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "gpu_worker 계량",
+    "note": "첫 shard 뒤 채워짐"
+   },
+   "gpu_s": {
+    "value": 0,
+    "unit": "gpu_s",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "usage_events"
+   },
+   "workers": [
+    "a6000-0",
+    "a6000-1"
+   ],
+   "result_set": "results/lx/job_01J9K3P7Q8R2S4T6V8W0X2Y4Z6",
+   "snapshot_ready": false,
+   "created_at": "2026-09-24T14:02:11+09:00",
+   "started_at": "2026-09-24T14:02:12+09:00",
+   "finished_at": null,
+   "error": null
+  },
+  "events_url": "/api/v1/events/jobs/job_01J9K3P7Q8R2S4T6V8W0X2Y4Z6"
+ },
+ "optional": [],
+ "optional_nested": {},
+ "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
+}

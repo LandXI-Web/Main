@@ -1,0 +1,42 @@
+# 쿼터 시드(F1-CONTRACT §4.8) — 전부 [추정 기반 초기값] · Q-E ② 승인 전.
+# 정책: queue_low = P3 강등 · reject = 400 quota_exceeded · notify = 진행 + ops_alerts
+note: "[추정 기반 초기값] Q-E ② 승인 전"
+tenants:
+  lx:
+    storage_gb: {soft: null, hard: null, policy: notify}
+    gpu_s_month: {soft: null, hard: null, policy: queue_low}
+    area_km2_month: {soft: null, hard: null, policy: notify}
+    concurrent_jobs: {soft: null, hard: null, policy: queue_low}
+    egress_gb_month: {soft: null, hard: null, policy: notify}
+    vworld_calls_day: {soft: 40000, hard: 50000, policy: reject}
+  namwon:
+    storage_gb: {soft: 400, hard: 500, policy: notify}
+    gpu_s_month: {soft: 30000, hard: 36000, policy: queue_low}
+    area_km2_month: {soft: 1500, hard: 2000, policy: notify}
+    concurrent_jobs: {soft: 2, hard: 2, policy: queue_low}
+    egress_gb_month: {soft: 40, hard: 50, policy: notify}
+    vworld_calls_day: {soft: 4000, hard: 5000, policy: reject}
+  gwangju-jeonnam:
+    storage_gb: {soft: 240, hard: 300, policy: notify}
+    gpu_s_month: {soft: 18000, hard: 21600, policy: queue_low}
+    area_km2_month: {soft: 800, hard: 1000, policy: notify}
+    concurrent_jobs: {soft: 1, hard: 1, policy: queue_low}
+    egress_gb_month: {soft: 24, hard: 30, policy: notify}
+    vworld_calls_day: {soft: 2400, hard: 3000, policy: reject}
+  kgz-agri:
+    storage_gb: {soft: 160, hard: 200, policy: notify}
+    gpu_s_month: {soft: 15000, hard: 18000, policy: queue_low}
+    area_km2_month: {soft: 4000, hard: 5000, policy: notify}
+    concurrent_jobs: {soft: 1, hard: 1, policy: queue_low}
+    egress_gb_month: {soft: 24, hard: 30, policy: notify}
+    vworld_calls_day: {soft: 0, hard: 0, policy: reject}
+  kgz-land:
+    storage_gb: {soft: 160, hard: 200, policy: notify}
+    gpu_s_month: {soft: 15000, hard: 18000, policy: queue_low}
+    area_km2_month: {soft: 4000, hard: 5000, policy: notify}
+    concurrent_jobs: {soft: 1, hard: 1, policy: queue_low}
+    egress_gb_month: {soft: 24, hard: 30, policy: notify}
+    vworld_calls_day: {soft: 0, hard: 0, policy: reject}
+  lx-demo:
+    gpu_s_month: {soft: 6000, hard: 7200, policy: reject}
+    concurrent_jobs: {soft: 1, hard: 1, policy: queue_low}

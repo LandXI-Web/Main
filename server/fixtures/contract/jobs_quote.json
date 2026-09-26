@@ -1,0 +1,56 @@
+{
+ "method": "POST",
+ "path": "/api/v1/jobs/quote",
+ "status": 200,
+ "body": {
+  "area_km2": {
+   "value": 0.199,
+   "unit": "km2",
+   "basis": "measured",
+   "as_of": "2026-09-24",
+   "source": "shapely area(EPSG:5186)"
+  },
+  "shards": 1120,
+  "shards_env": {
+   "value": 1120,
+   "unit": "count",
+   "basis": "measured",
+   "as_of": "2026-09-24",
+   "source": "scheduler.tile(1024, 0.2, gsd 0.0136)"
+  },
+  "gpu_s": {
+   "value": null,
+   "unit": "gpu_s",
+   "basis": "estimate",
+   "as_of": "2026-09-24",
+   "source": "models.perf(car_v2_obb) 없음 — bench 전",
+   "note": "bench 후 채워짐"
+  },
+  "eta_s": {
+   "value": null,
+   "unit": "s",
+   "basis": "estimate",
+   "as_of": "2026-09-24",
+   "source": "同上"
+  },
+  "quota": {
+   "tenant_id": "lx",
+   "dim": "gpu_s_month",
+   "remaining": {
+    "value": null,
+    "unit": "gpu_s",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "quotas(lx hard=null)",
+    "note": "무제한"
+   },
+   "policy": "queue_low"
+  },
+  "allowed": true,
+  "reasons": [],
+  "pool": "a6000"
+ },
+ "optional": [],
+ "optional_nested": {},
+ "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
+}

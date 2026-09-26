@@ -1,0 +1,116 @@
+{
+ "method": "GET",
+ "path": "/api/v1/ops/tenants",
+ "status": 200,
+ "body": {
+  "items": [
+   {
+    "tenant_id": "namwon",
+    "month": "2026-09",
+    "dims": {
+     "storage_gb": {
+      "used": {
+       "value": 0,
+       "unit": "gpu_s",
+       "basis": "measured",
+       "as_of": "2026-09-24",
+       "source": "du"
+      },
+      "soft": 400,
+      "hard": 500,
+      "policy": "notify",
+      "note": "[추정 기반 초기값]"
+     },
+     "gpu_s_month": {
+      "used": {
+       "value": 0,
+       "unit": "gpu_s",
+       "basis": "measured",
+       "as_of": "2026-09-24",
+       "source": "usage_events"
+      },
+      "soft": 30000,
+      "hard": 36000,
+      "policy": "queue_low",
+      "note": "[추정 기반 초기값]"
+     },
+     "area_km2_month": {
+      "used": {
+       "value": 0,
+       "unit": "gpu_s",
+       "basis": "measured",
+       "as_of": "2026-09-24",
+       "source": "usage_events"
+      },
+      "soft": 1500,
+      "hard": 2000,
+      "policy": "notify",
+      "note": "[추정 기반 초기값]"
+     },
+     "concurrent_jobs": {
+      "used": {
+       "value": 0,
+       "unit": "gpu_s",
+       "basis": "measured",
+       "as_of": "2026-09-24",
+       "source": "jobs"
+      },
+      "soft": 2,
+      "hard": 2,
+      "policy": "queue_low",
+      "note": "[추정 기반 초기값]"
+     },
+     "egress_gb_month": {
+      "used": {
+       "value": null,
+       "unit": "gpu_s",
+       "basis": "measured",
+       "as_of": "2026-09-24",
+       "source": "usage_events"
+      },
+      "soft": 40,
+      "hard": 50,
+      "policy": "notify",
+      "note": "[추정 기반 초기값]"
+     },
+     "vworld_calls_day": {
+      "used": {
+       "value": 0,
+       "unit": "gpu_s",
+       "basis": "measured",
+       "as_of": "2026-09-24",
+       "source": "redis"
+      },
+      "soft": 4000,
+      "hard": 5000,
+      "policy": "reject",
+      "note": "[추정 기반 초기값]"
+     }
+    },
+    "isolation": {
+     "prefix": "tenants/namwon/",
+     "rls": true,
+     "signed_tiles": true,
+     "raw_routes": 0
+    },
+    "forecast": {
+     "gpu_s_month": {
+      "exceed_month": null,
+      "basis": "estimate",
+      "source": "quota.estimator 선형"
+     }
+    }
+   }
+  ]
+ },
+ "optional": [
+  "total",
+  "as_of"
+ ],
+ "optional_nested": {
+  "gpu_s_month": [
+   "projected"
+  ]
+ },
+ "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
+}

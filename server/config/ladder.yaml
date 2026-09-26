@@ -1,0 +1,142 @@
+# 외부 영상 사다리(F1-CONTRACT §4.1) — URL 은 계약 문구 그대로(2026-09-24 검증). 서버가 템플릿을 그대로 준다.
+ladder:
+  domestic: [gibs-viirs-truecolor, gibs-hls-s30, xdworld-satellite, ap25-namwon-2023, namwon-city-2504, namwon-city-2510,
+             namwon-aoi-2504, namwon-aoi-2506, namwon-aoi-2508, namwon-aoi-2510,
+             axis-iksan-hwangdeung]   # 원본 1.36cm — lx 빌드에만 남는다(public·tenant 는 항목 자체가 걸러져 빠진다)
+  global: [gibs-viirs-truecolor, eox-s2cloudless-2025, gibs-hls-s30, pc-s2-mosaic, pc-worldcover-2021, maxar-mm-meiktila]
+external:
+  - id: xdworld-satellite
+    name: {ko: V-World 위성(키 없는 xdworld), en: V-World satellite}
+    kind: raster
+    role: imagery
+    tiles: "https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg"
+    minzoom: 5
+    maxzoom: 19
+    bounds: [124.5, 33.0, 132.0, 38.9]
+    gsd_m: 0.25
+    epoch: "2026-03"
+    license: V-World 이용약관
+    attribution: "© 국토교통부 V-World"
+    export_policy: public
+    security_review: cleared
+    rights_holder: 국토교통부
+    ladder: {stage: domestic, from: 5, to: 19, order: 20}
+  - id: gibs-hls-s30
+    name: {ko: "HLS Sentinel-2 30m(NASA GIBS)", en: "HLS S30 (NASA GIBS)"}
+    kind: raster
+    role: imagery
+    tiles: "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/HLS_S30_Nadir_BRDF_Adjusted_Reflectance/default/{date}/GoogleMapsCompatible_Level12/{z}/{y}/{x}.png"
+    params: {date: yesterday}
+    minzoom: 0
+    maxzoom: 12
+    bounds: [-180, -85, 180, 85]
+    gsd_m: 30
+    epoch: daily
+    license: NASA EOSDIS 공개
+    attribution: "NASA EOSDIS GIBS · HLS"
+    export_policy: public
+    security_review: cleared
+    rights_holder: NASA
+    ladder: {stage: both, from: 6, to: 12, order: 10}
+  - id: gibs-viirs-truecolor
+    name: {ko: "VIIRS 트루컬러(NASA GIBS)", en: "VIIRS true color (NASA GIBS)"}
+    kind: raster
+    role: imagery
+    tiles: "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/{date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg"
+    params: {date: yesterday}
+    minzoom: 0
+    maxzoom: 9
+    bounds: [-180, -85, 180, 85]
+    gsd_m: 375
+    epoch: daily
+    license: NASA EOSDIS 공개
+    attribution: "NASA EOSDIS GIBS · VIIRS NOAA-20"
+    export_policy: public
+    security_review: cleared
+    rights_holder: NASA
+    ladder: {stage: both, from: 0, to: 9, order: 0}
+  - id: eox-s2cloudless-2025
+    name: {ko: "Sentinel-2 cloudless 2025(EOX · 비상업)", en: "Sentinel-2 cloudless 2025 (EOX · non-commercial)"}
+    kind: raster
+    role: imagery
+    tiles: "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-{year}_3857/default/g/{z}/{y}/{x}.jpg"
+    params: {year: "2025"}
+    minzoom: 0
+    maxzoom: 15
+    bounds: [-180, -85, 180, 85]
+    gsd_m: 10
+    epoch: "2025"
+    license: "CC BY-NC-SA 4.0(비상업 · export 빌드 제외)"
+    attribution: "Sentinel-2 cloudless 2025 by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2025)"
+    export_policy: public
+    security_review: cleared
+    rights_holder: EOX
+    noncommercial: true
+    ladder: {stage: global, from: 0, to: 15, order: 15}
+  - id: eox-s2cloudless-2017
+    name: {ko: "Sentinel-2 cloudless 2017(EOX · CC BY)", en: "Sentinel-2 cloudless 2017 (EOX · CC BY)"}
+    kind: raster
+    role: imagery
+    tiles: "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-{year}_3857/default/g/{z}/{y}/{x}.jpg"
+    params: {year: "2017"}
+    minzoom: 0
+    maxzoom: 15
+    bounds: [-180, -85, 180, 85]
+    gsd_m: 10
+    epoch: "2017"
+    license: CC BY 4.0
+    attribution: "Sentinel-2 cloudless 2017 by EOX IT Services GmbH"
+    export_policy: public
+    security_review: cleared
+    rights_holder: EOX
+    ladder: {stage: global, from: 0, to: 15, order: 16}
+  - id: pc-worldcover-2021
+    name: {ko: "ESA WorldCover 2021(Planetary Computer)", en: "ESA WorldCover 2021"}
+    kind: raster
+    role: reference
+    tiles: "https://planetarycomputer.microsoft.com/api/data/v1/item/tiles/WebMercatorQuad/{z}/{x}/{y}@1x?collection=esa-worldcover&item={item}&assets=map&colormap_name=esa-worldcover"
+    params: {items: ["ESA_WorldCover_10m_2021_v200_N42E072", "ESA_WorldCover_10m_2021_v200_N42E075"]}
+    minzoom: 8
+    maxzoom: 15
+    bounds: [72.0, 42.0, 78.0, 45.0]
+    gsd_m: 10
+    epoch: "2021"
+    license: CC BY 4.0
+    attribution: "ESA WorldCover 2021 · Microsoft Planetary Computer"
+    export_policy: public
+    security_review: cleared
+    rights_holder: ESA
+    ladder: {stage: global, from: 8, to: 15, order: 40}
+  - id: pc-s2-mosaic
+    name: {ko: "Sentinel-2 L2A 월 모자이크(Planetary Computer)", en: "Sentinel-2 L2A monthly mosaic"}
+    kind: raster
+    role: imagery
+    tiles: "https://planetarycomputer.microsoft.com/api/data/v1/mosaic/tiles/{searchid}/WebMercatorQuad/{z}/{x}/{y}@1x.png?collection=sentinel-2-l2a&assets=visual&asset_bidx=visual|1,2,3&nodata=0"
+    params_from: global/pc-mosaics.json
+    minzoom: 8
+    maxzoom: 14
+    bounds: [72.0, 42.0, 78.0, 44.0]
+    gsd_m: 10
+    epoch: monthly
+    license: Copernicus 공개
+    attribution: "Copernicus Sentinel-2 · Microsoft Planetary Computer"
+    export_policy: public
+    security_review: cleared
+    rights_holder: ESA
+    ladder: {stage: global, from: 8, to: 14, order: 30}
+  - id: overture-buildings
+    name: {ko: "Overture 건물", en: "Overture buildings"}
+    kind: vector
+    role: reference
+    tiles: "pmtiles://https://overturemaps-extras-us-west-2.s3.us-west-2.amazonaws.com/tiles/2026-09-23.0/buildings.pmtiles"
+    layer: building
+    minzoom: 13
+    maxzoom: 16
+    bounds: [-180, -85, 180, 85]
+    epoch: "2026-09"
+    license: ODbL
+    attribution: "© Overture Maps Foundation"
+    export_policy: public
+    security_review: cleared
+    rights_holder: Overture
+    ladder: {stage: global, from: 13, to: 16, order: 60}

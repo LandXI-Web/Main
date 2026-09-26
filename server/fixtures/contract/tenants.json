@@ -1,0 +1,29 @@
+{
+ "method": "GET",
+ "path": "/api/v1/tenants",
+ "status": 200,
+ "body": {
+  "items": [
+   {
+    "id": "namwon",
+    "name": {
+     "ko": "전북특별자치도 남원시",
+     "en": "Namwon-si"
+    },
+    "kind": "user",
+    "scope": "local",
+    "crs": "EPSG:5186",
+    "locale": "ko",
+    "profile_id": "namwon",
+    "home": "portal",
+    "status": "active"
+   }
+  ]
+ },
+ "optional": [
+  "total",
+  "as_of"
+ ],
+ "optional_nested": {},
+ "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
+}

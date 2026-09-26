@@ -1,0 +1,72 @@
+{
+ "method": "GET",
+ "path": "/api/v1/ops/storage",
+ "status": 200,
+ "body": {
+  "volumes": [
+   {
+    "mount": "E:",
+    "free_gb": {
+     "value": 2085,
+     "unit": "GB",
+     "basis": "measured",
+     "as_of": "2026-09-24",
+     "source": "statfs"
+    },
+    "total_gb": {
+     "value": null,
+     "unit": "GB",
+     "basis": "measured",
+     "as_of": "2026-09-24",
+     "source": "statfs"
+    }
+   }
+  ],
+  "by_tier": {
+   "raw": {
+    "value": null,
+    "unit": "GB",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "-",
+    "note": "원본은 LX_DATA_ROOT 밖 · 목록만"
+   },
+   "tile": {
+    "value": null,
+    "unit": "GB",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "du tiles/"
+   },
+   "result": {
+    "value": null,
+    "unit": "GB",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "du results/ vector/"
+   }
+  },
+  "by_tenant": {
+   "lx": {
+    "value": null,
+    "unit": "GB",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "du"
+   }
+  }
+ },
+ "optional": [
+  "as_of",
+  "source",
+  "data_root",
+  "took_s",
+  "at"
+ ],
+ "optional_nested": {
+  "volumes[]": [
+   "used_gb"
+  ]
+ },
+ "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
+}

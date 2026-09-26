@@ -1,0 +1,38 @@
+# Land-XI Phase 0 — Redis Streams + PostGIS (F1-CONTRACT §1)
+# 항상 프로젝트 이름을 붙여 조작한다: docker compose -p landxi -f server/docker-compose.phase0.yml up -d
+# (같은 데몬에 cleanriver 스택이 있다 — down/prune 류 명령은 반드시 -p landxi 로 한정)
+name: landxi
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: landxi-redis
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1000"]
+    ports: ["6380:6379"]
+    volumes: ["landxi-redis:/data"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  postgis:
+    image: postgis/postgis:16-3.4
+    container_name: landxi-postgis
+    environment:
+      POSTGRES_DB: landxi
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${PG_ADMIN_PASSWORD:-landxi-dev-admin}
+      TZ: Asia/Seoul
+      PGTZ: Asia/Seoul
+    ports: ["5433:5432"]
+    volumes: ["landxi-pg:/var/lib/postgresql/data"]
+    shm_size: 512mb
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d landxi"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+volumes:
+  landxi-redis: {}
+  landxi-pg: {}

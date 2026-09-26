@@ -1,0 +1,81 @@
+{
+ "method": "GET",
+ "path": "/api/v1/ops/gpus",
+ "status": 200,
+ "body": {
+  "node": "node-tr3995wx",
+  "at": "2026-09-24T14:02:11.480+09:00",
+  "gpus": [
+   {
+    "index": 0,
+    "name": "NVIDIA RTX A6000",
+    "util_pct": {
+     "value": 0,
+     "unit": "%",
+     "basis": "measured",
+     "as_of": "2026-09-24",
+     "source": "nvidia-smi utilization.gpu"
+    },
+    "mem_used_mib": {
+     "value": 23396,
+     "unit": "MiB",
+     "basis": "measured",
+     "as_of": "2026-09-24",
+     "source": "nvidia-smi memory.used"
+    },
+    "mem_total_mib": {
+     "value": 49140,
+     "unit": "MiB",
+     "basis": "measured",
+     "as_of": "2026-09-24",
+     "source": "nvidia-smi memory.total"
+    },
+    "temp_c": {
+     "value": 63,
+     "unit": "°C",
+     "basis": "measured",
+     "as_of": "2026-09-24",
+     "source": "nvidia-smi temperature.gpu"
+    },
+    "power_w": {
+     "value": 15.81,
+     "unit": "W",
+     "basis": "measured",
+     "as_of": "2026-09-24",
+     "source": "nvidia-smi power.draw"
+    },
+    "external": [
+     {
+      "pid": 0,
+      "name": "llama-server.exe",
+      "mem_mib": null,
+      "note": "WDDM: 프로세스별 VRAM N/A"
+     }
+    ],
+    "external_used_mib": {
+     "value": 23396,
+     "unit": "MiB",
+     "basis": "measured",
+     "as_of": "2026-09-24",
+     "source": "memory.used − 워커 자기 보고",
+     "note": "워커 미기동 시 = memory.used"
+    },
+    "worker": "a6000-0",
+    "job_id": null,
+    "driver": "522.06",
+    "mode": "WDDM"
+   }
+  ]
+ },
+ "optional": [
+  "note",
+  "source"
+ ],
+ "optional_nested": {
+  "gpus[]": [
+   "worker_vram",
+   "at"
+  ]
+ },
+ "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
+}
