@@ -1,0 +1,153 @@
+{
+ "volumes": [
+  {
+   "mount": "E:",
+   "free_gb": {
+    "value": 2071,
+    "unit": "GB",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:35.111+09:00",
+    "source": "shutil.disk_usage (statfs)"
+   },
+   "total_gb": {
+    "value": 7452,
+    "unit": "GB",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:35.111+09:00",
+    "source": "shutil.disk_usage (statfs)"
+   },
+   "used_gb": {
+    "value": 5381,
+    "unit": "GB",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:35.111+09:00",
+    "source": "shutil.disk_usage (statfs)"
+   }
+  },
+  {
+   "mount": "D:",
+   "free_gb": {
+    "value": 363,
+    "unit": "GB",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:35.111+09:00",
+    "source": "shutil.disk_usage (statfs)"
+   },
+   "total_gb": {
+    "value": 7452,
+    "unit": "GB",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:35.111+09:00",
+    "source": "shutil.disk_usage (statfs)"
+   },
+   "used_gb": {
+    "value": 7089,
+    "unit": "GB",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:35.111+09:00",
+    "source": "shutil.disk_usage (statfs)"
+   }
+  },
+  {
+   "mount": "C:",
+   "free_gb": {
+    "value": 124,
+    "unit": "GB",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:35.111+09:00",
+    "source": "shutil.disk_usage (statfs)"
+   },
+   "total_gb": {
+    "value": 953,
+    "unit": "GB",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:35.111+09:00",
+    "source": "shutil.disk_usage (statfs)"
+   },
+   "used_gb": {
+    "value": 829,
+    "unit": "GB",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:35.111+09:00",
+    "source": "shutil.disk_usage (statfs)"
+   }
+  }
+ ],
+ "by_tier": {
+  "raw": {
+   "value": null,
+   "unit": "GB",
+   "basis": "measured",
+   "as_of": "2026-09-24T10:52:35.111+09:00",
+   "source": "LX_DATA_ROOT 밖",
+   "note": "원본은 LX_DATA_ROOT 밖 · 목록만"
+  },
+  "tile": {
+   "value": 1.86,
+   "unit": "GB",
+   "basis": "measured",
+   "as_of": "2026-09-24T10:52:35.111+09:00",
+   "source": "du E:/Land-XI 플랫폼/02. 데이터\\tiles",
+   "note": "90,404 파일"
+  },
+  "result": {
+   "value": 0.18,
+   "unit": "GB",
+   "basis": "measured",
+   "as_of": "2026-09-24T10:52:35.111+09:00",
+   "source": "du E:/Land-XI 플랫폼/02. 데이터\\results + E:/Land-XI 플랫폼/02. 데이터\\vector",
+   "note": "26 파일"
+  }
+ },
+ "by_tenant": {
+  "lx": {
+   "value": 0.18,
+   "unit": "GB",
+   "basis": "measured",
+   "as_of": "2026-09-24T10:52:35.111+09:00",
+   "source": "du E:/Land-XI 플랫폼/02. 데이터\\results\\lx",
+   "note": "results/lx + 평면 산출물(results/*.* · vector/**) 합"
+  },
+  "namwon": {
+   "value": 0.0,
+   "unit": "GB",
+   "basis": "measured",
+   "as_of": "2026-09-24T10:52:35.111+09:00",
+   "source": "du E:/Land-XI 플랫폼/02. 데이터\\results\\namwon",
+   "note": "tenants/namwon/ · results/namwon/ 없음 — 0"
+  },
+  "gwangju-jeonnam": {
+   "value": 0.0,
+   "unit": "GB",
+   "basis": "measured",
+   "as_of": "2026-09-24T10:52:35.111+09:00",
+   "source": "du E:/Land-XI 플랫폼/02. 데이터\\results\\gwangju-jeonnam",
+   "note": "tenants/gwangju-jeonnam/ · results/gwangju-jeonnam/ 없음 — 0"
+  },
+  "kgz-agri": {
+   "value": 0.0,
+   "unit": "GB",
+   "basis": "measured",
+   "as_of": "2026-09-24T10:52:35.111+09:00",
+   "source": "du E:/Land-XI 플랫폼/02. 데이터\\results\\kgz-agri",
+   "note": "tenants/kgz-agri/ · results/kgz-agri/ 없음 — 0"
+  },
+  "kgz-land": {
+   "value": 0.0,
+   "unit": "GB",
+   "basis": "measured",
+   "as_of": "2026-09-24T10:52:35.111+09:00",
+   "source": "du E:/Land-XI 플랫폼/02. 데이터\\results\\kgz-land",
+   "note": "tenants/kgz-land/ · results/kgz-land/ 없음 — 0"
+  },
+  "lx-demo": {
+   "value": 0.0,
+   "unit": "GB",
+   "basis": "measured",
+   "as_of": "2026-09-24T10:52:35.111+09:00",
+   "source": "du E:/Land-XI 플랫폼/02. 데이터\\results\\lx-demo",
+   "note": "tenants/lx-demo/ · results/lx-demo/ 없음 — 0"
+  }
+ },
+ "as_of": "2026-09-24T10:52:35.111+09:00"
+}

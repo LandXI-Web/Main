@@ -1,0 +1,45 @@
+{
+ "pools": {
+  "a6000": {
+   "queued": 0,
+   "running": 0,
+   "workers": 2,
+   "p95_wait_s": {
+    "value": null,
+    "unit": "s",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:34.648+09:00",
+    "source": "jobs 테이블",
+    "note": "완료 job 0건 — 분포 없음"
+   }
+  },
+  "cpu": {
+   "queued": 0,
+   "running": 0,
+   "workers": 1,
+   "p95_wait_s": {
+    "value": null,
+    "unit": "s",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:34.648+09:00",
+    "source": "jobs 테이블",
+    "note": "완료 job 0건 — 분포 없음"
+   }
+  }
+ },
+ "lanes": [
+  {
+   "worker": "a6000-0",
+   "blocks": []
+  },
+  {
+   "worker": "a6000-1",
+   "blocks": []
+  },
+  {
+   "worker": "cpu-0",
+   "blocks": []
+  }
+ ],
+ "as_of": "2026-09-24T10:52:34.648+09:00"
+}

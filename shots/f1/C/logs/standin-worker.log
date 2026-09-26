@@ -1,0 +1,7 @@
+standin worker: claim loop http://127.0.0.1:8702/landxi/ops/bridge/worker
+claimed job_MUICGOU894D6DE80BF
+job job_MUICGOU894D6DE80BF shards 170/170 n=79 10.7s done
+claimed job_MUICH2GH74D109F7B5
+job job_MUICH2GH74D109F7B5 shards 60/60 n=32 4.1s done
+claimed job_MUICKUN49F8231FC6B
+job job_MUICKUN49F8231FC6B shards 26/1560 n=14 2.6s cancelled

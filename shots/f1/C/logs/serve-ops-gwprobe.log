@@ -1,0 +1,12 @@
+[serve-ops 20:39:32] LX/OPS http://localhost:8702/landxi/ops/  (root E:\Land-XI 플랫폼\01. 디자인 · data junction)
+[serve-ops 20:39:33] [gpu] [gpu_poller 20:39:33] 시작 node=node-tr3995wx interval=2.0s nvsmi=C:\Windows\System32\DriverStore\FileRepository\nv_dispui.inf_amd64_f2b06cc19dadc00f\nvidia-smi.exe
+[serve-ops 20:39:33] [gpu] [gpu_poller 20:39:33] redis 연결 redis://localhost:6380
+[serve-ops 20:39:33] [storage] [storage_poller 20:39:33] redis 연결 redis://localhost:6380
+[serve-ops 20:39:38] 게이트웨이 /events/ops 중계 시작
+[serve-ops 20:40:58] [gpu]   File "E:\Land-XI 플랫폼\01. 디자인\server\ops\gpu_poller.py", line 334, in <module>
+[serve-ops 20:40:58] [gpu] main()
+[serve-ops 20:40:58] [gpu]   File "E:\Land-XI 플랫폼\01. 디자인\server\ops\gpu_poller.py", line 249, in sample
+[serve-ops 20:40:58] [gpu] ValueError: invalid literal for int() with base 10: "NVIDIA-SMI has failed because it couldn't communicate with the NVIDIA driver. Make sure that the latest NVIDIA driver is installed and running. This can also be happening if non-NVIDIA GPU is running
+[serve-ops 20:40:58] gpu 폴러 종료 code=1 — 5s 뒤 재기동
+[serve-ops 20:41:03] [gpu] [gpu_poller 20:41:03] 시작 node=node-tr3995wx interval=2.0s nvsmi=C:\Windows\System32\DriverStore\FileRepository\nv_dispui.inf_amd64_f2b06cc19dadc00f\nvidia-smi.exe
+[serve-ops 20:41:03] [gpu] [gpu_poller 20:41:03] redis 연결 redis://localhost:6380

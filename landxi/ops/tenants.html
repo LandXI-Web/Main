@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LX/OPS — 기관·할당</title>
+<link rel="stylesheet" href="/landxi/proto/fonts-system.css">
+<link rel="stylesheet" href="/landxi/assets/css/v2/tokens-v2.css">
+<link rel="stylesheet" href="/landxi/assets/css/v2/ops-grid.css">
+<link rel="stylesheet" href="/landxi/ops/ops.css">
+</head>
+<body data-stage="ops">
+<script type="module">
+import { gate, ready, get, h, prov, setText, fmt, tag, hhmmss, ymd, SRC, t } from '/landxi/ops/js/boot.js';
+import { mountFrame } from '/landxi/ops/js/rail.js';
+import { mountPalette } from '/landxi/ops/js/palette.js';
+import { DIMS, quotaRing, quotaEditor, project, monthKey } from '/landxi/ops/js/quota.js';
+import { connect } from '/landxi/ops/js/telemetry.js';
+
+const w = await gate();
+if (w) {
+  const frame = mountFrame({ page: 'tenants', title: '기관·할당', crumb: '쿼터 6차원 · 격리 · 결재', user: w });
+  const [tenants, usage, approvals, deploys, jobs] = await Promise.all([get('tenants'), get('opsTenants'), get('approvals'), get('deploys'), get('jobs')]);
+  let brand = null, studio = null; try { brand = await import('/landxi/assets/data/brand.js'); studio = await import('/landxi/assets/data/studio.js'); } catch { /* 원본 데이터 읽기 실패 → 칸 결손 */ }
+  const U = new Map((usage?.items || []).map((u) => [u.tenant_id, u]));
+  const T = tenants?.items || [];
+  const G = h('div', { class: 'tn' }); frame.main.append(G);
+  const q0 = new URLSearchParams(location.search).get('t');
+  let sel = T.find((x) => x.id === q0)?.id || 'lx'; let selDim = 'gpu_s_month';
+
+  // ── 좌: 기관 6
+  const list = h('div', { role: 'listbox', 'aria-label': '기관' });
+  G.append(h('section', { class: 'og-panel tn-list' }, h('header', {}, h('h2', {}, '기관'), h('span', { class: 'og-sub' }, `${T.length}곳 · GPU 초/월`), usage?._fallback ? h('span', { class: 'og-right' }, tag('demo', '픽스처')) : null), list));
+  const bars = new Map();
+  const barScale = (u) => { const q = u.dims.gpu_s_month; const pj = project('gpu_s_month', q.used.value) || 0; return q.hard ?? Math.max(1000, pj * 1.25); };
+  for (const x of T) {
+    const u = U.get(x.id); const q = u?.dims?.gpu_s_month;
+    const num = h('span', { class: 'og-num-s', 'data-k': 'gpu' }); const bar = h('div', { class: 'og-bar' }, h('i'));
+    const item = h('button', { class: 'tn-item', role: 'option', 'aria-selected': x.id === sel ? 'true' : 'false', 'data-t': x.id, type: 'button', onclick: () => pick(x.id) },
+      h('b', {}, x.name?.ko || x.id), h('span', { class: 'og-tag', 'data-dashed': x.scope === 'global' ? '' : null }, x.scope === 'global' ? '해외' : '국내'),
+      h('span', { class: 'og-num-s' }, x.id + (x.id === 'lx-demo' ? ' · 시연 계량' : '')), num, bar);
+    list.append(item); bars.set(x.id, { item, num, bar, scale: u ? barScale(u) : 1 });
+  }
+  const drawBar = (id) => {
+    const b = bars.get(id); const u = U.get(id); if (!b || !u) return; const q = u.dims.gpu_s_month; const v = q.used.value ?? 0;
+    setText(b.num, `${fmt(v, Number.isInteger(v) ? 0 : 1)} / ${q.hard == null ? '무제한' : fmt(q.hard)} gpu_s`);
+    b.bar.querySelector('i').style.width = Math.min(100, v / b.scale * 100) + '%'; b.bar.dataset.caution = q.hard != null && v / q.hard > 0.8 ? '1' : '0';
+    b.item.title = `${q.used.source}${q.used.note ? ' · ' + q.used.note : ''}${q.hard == null ? ' · 막대 기준 = 월말 예측×1.25 [추정]' : ''}`;
+  };
+  T.forEach((x) => drawBar(x.id));
+
+  // ── 우: 머리(격리 · CI) · 링 6 · 편집
+  const headBox = h('div', { class: 'tn-head' }); const ringsBox = h('div', { class: 'tn-rings' }); const edHost = h('div', {});
+  const provBox = h('div', { class: 'og-body', style: { paddingTop: '8px', paddingBottom: '12px' } });
+  const main = h('div', { class: 'tn-main' }); G.append(main);
+  main.append(h('section', { class: 'og-panel' }, headBox, ringsBox, provBox, edHost));
+  const rings = new Map(); for (const d of DIMS) rings.set(d, quotaRing(ringsBox, d, { onPick: (dim) => pickDim(dim) }));
+  const ed = quotaEditor(edHost, {
+    onDraft: (tid, dim, draft) => { if (tid === sel) rings.get(dim).draw(U.get(tid).dims[dim], draft); },
+    onSaved: async (tid, dim, r) => {
+      const fresh = r?.usage || (await get('opsTenants')).items?.find((u) => u.tenant_id === tid);
+      if (fresh) U.set(tid, fresh);
+      rings.get(dim).draw(U.get(tid).dims[dim], null, { rescale: false }); drawBar(tid); loadApprovals(true);
+    },
+  });
+  const low = h('div', { class: 'tn-low' }); main.append(low);
+  const apBody = h('div', { class: 'og-body', style: { paddingTop: '4px' } });
+  const quoteBody = h('div', { class: 'og-body' }); const rqBody = h('div', { class: 'og-body', style: { paddingTop: '4px' } });
+  low.append(h('section', { class: 'og-panel' }, h('header', {}, h('h2', {}, '결재 · 쿼터'), h('span', { class: 'og-sub' }, "approvals subject_type='quota'")), apBody),
+    h('section', { class: 'og-panel' }, h('header', {}, h('h2', {}, '견적 대비 실측'), h('span', { class: 'og-sub' }, 'job gpu_s 봉투 vs quote')), quoteBody),
+    h('section', { class: 'og-panel' }, h('header', {}, h('h2', {}, '화면 요구'), h('span', { class: 'og-sub' }, 'studio.js REQUESTS'), h('span', { class: 'og-right' }, tag('history'))), rqBody));
+
+  function pick(id) {
+    sel = id; for (const [k, b] of bars) b.item.setAttribute('aria-selected', k === id ? 'true' : 'false');
+    history.replaceState(null, '', '?t=' + id);
+    const x = T.find((y) => y.id === id); const u = U.get(id);
+    const iso = u?.isolation || {};
+    const theme = brand ? (brand.THEMES[id] || (x?.scope === 'global' ? brand.THEMES.kuksan : brand.THEMES.lx)) : null;
+    headBox.replaceChildren(h('h2', {}, x?.name?.ko || id), h('span', { class: 'og-num-s' }, `${id} · ${x?.crs || ''} · ${x?.locale || ''}`),
+      h('div', { class: 'tn-iso', 'aria-label': '데이터 격리' },
+        h('span', { class: 'og-tag' }, 'prefix', h('b', {}, iso.prefix || `tenants/${id}/`)), h('span', { class: 'og-tag' }, 'RLS', h('b', {}, iso.rls ? 'ON' : 'OFF')),
+        h('span', { class: 'og-tag' }, '서명 타일', h('b', {}, iso.signed_tiles ? 'ON' : '공용')), h('span', { class: 'og-tag' }, '원본 라우트', h('b', {}, String(iso.raw_routes ?? 0)))),
+      theme ? h('div', { class: 'tn-ci', title: `포털 CI 미리보기 · brand.js THEMES.${brand.THEMES[id] ? id : (x?.scope === 'global' ? 'kuksan' : 'lx')}` },
+        h('span', { class: 'og-lbl' }, '포털 CI'), h('span', { class: 'ci-mark', style: { background: theme.accent } }, theme.mark), h('span', { class: 'og-num-s' }, theme.platform || theme.name)) : null);
+    for (const d of DIMS) rings.get(d).draw(u?.dims?.[d], null, { rescale: true });
+    const g = u?.dims?.gpu_s_month?.used; provBox.replaceChildren(g ? prov(g) : h('span', { class: 'og-why' }, '사용량 없음'), h('span', { class: 'og-note', style: { marginLeft: '12px' } }, '링: 채움 = 사용(실측) · 옅은 채움 = 여유 · 눈금 = soft/hard/주의 80% · 점선 = 월말 예측 [추정]'));
+    pickDim(selDim, true); renderLow();
+  }
+  function pickDim(dim, quiet) {
+    selDim = dim; for (const [k, r] of rings) r.press(k === dim);
+    const u = U.get(sel); if (u) ed.open(sel, dim, u.dims[dim]);
+    if (!quiet) rings.get(dim).el.focus({ preventScroll: true });
+  }
+  let apItems = approvals?.items || [];
+  async function loadApprovals(fetchNew) {
+    if (fetchNew && SRC.kind === 'bridge') { const j = await get('approvals'); const before = new Set(apItems.map((a) => a.id)); apItems = j.items || []; renderAp(before); }
+    else renderAp(new Set(apItems.map((a) => a.id)));
+  }
+  function renderAp(before) {
+    const qa = apItems.filter((a) => a.subject_type === 'quota');
+    if (!qa.length) { apBody.replaceChildren(...[h('div', { class: 'og-note' }, '쿼터 결재 0 · 신청은 포털 MY "디스크 증량 신청"(2차)에서 들어온다'), approvals?._fallback ? h('div', { class: 'og-why', style: { marginTop: '6px' } }, '결재 목록 = 브리지 경로(계약 변경 요청 §4.10)') : null].filter(Boolean)); return; }
+    const tb = h('table', { class: 'og-table' }, h('thead', {}, h('tr', {}, h('th', {}, '시각'), h('th', {}, '기관'), h('th', {}, '결정'), h('th', {}, '사유'))));
+    const body = h('tbody'); for (const a of qa.slice().reverse().slice(0, 6)) body.append(h('tr', { class: before.has(a.id) ? '' : 'is-new' }, h('td', { class: 'n' }, hhmmss(a.at)), h('td', {}, a.subject_id), h('td', {}, a.decision === 'approve' ? '승인' : a.decision || '대기'), h('td', {}, a.reason || '')));
+    tb.append(body); apBody.replaceChildren(tb);
+  }
+  function renderLow() {
+    const js = (jobs?.items || []).filter((j) => j.tenant_id === sel);
+    const withQuote = js.filter((j) => j.quote_gpu_s?.value != null);
+    quoteBody.replaceChildren(
+      h('div', { class: 'pn-row' }, h('span', { class: 'og-kpi' }, withQuote.length ? '' : '—'), h('span', { class: 'og-lbl' }, withQuote.length ? '' : '±% 산출 불가')),
+      h('div', { class: 'og-note' }, `이 기관 job ${js.length}건 · 견적 gpu_s 가 있는 job ${withQuote.length}건. 견적은 models.perf(bench) 뒤에 채워진다 — 지금 bench 실측은 aerial25/best ≈26 칩/s/GPU 1건뿐.`),
+      h('div', { class: 'og-note', style: { marginTop: '6px' } }, `이번 달 실측 ${fmt(U.get(sel)?.dims?.gpu_s_month?.used)} gpu_s · 월말 예측 ${fmt(Math.round(project('gpu_s_month', U.get(sel)?.dims?.gpu_s_month?.used?.value) || 0))} [추정]`));
+    const deps = new Set((deploys?.items || []).filter((d) => d.tenant_id === sel).map((d) => d.id));
+    const rq = (studio?.REQUESTS || []).filter((r) => deps.has(r.deployId));
+    rqBody.replaceChildren(...(rq.length ? rq.map((r) => h('div', { class: 'rq' }, h('span', { class: 'og-num-s' }, ymd(r.got)), h('span', { class: 'og-note', style: { color: 'var(--cw-sub)' } }, `${r.want} — ${r.from}`), h('span', { class: 'og-tag', 'data-basis': 'history' }, r.state))) : [h('div', { class: 'og-note' }, sel === 'lx' ? 'LX 는 요구를 받는 쪽 — 기관 요구는 기관 행에서' : '접수된 화면 요구 0')]));
+  }
+  pick(sel); renderAp(new Set(apItems.map((a) => a.id)));
+
+  // ── usage.delta → 막대·링이 따라온다(값이 바뀔 때만)
+  connect({
+    onGpu: () => frame.tick(false),
+    onUsage: (d) => {
+      const u = U.get(d.tenant_id); if (!u || !u.dims[d.dim]) return;
+      const e = u.dims[d.dim].used; e.value = +((e.value || 0) + (Number(d.amount) || 0)).toFixed(2); e.as_of = d.at || e.as_of;
+      drawBar(d.tenant_id); if (d.tenant_id === sel) { rings.get(d.dim).draw(u.dims[d.dim], ed.cur?.dim === d.dim && ed.cur?.tenantId === sel ? null : null); renderLow(); }
+    },
+    onState: (st, age) => { if (st === 'stale') frame.tick(true, age / 1000); },
+  });
+  mountPalette(); ready();
+}
+</script>
+</body>
+</html>

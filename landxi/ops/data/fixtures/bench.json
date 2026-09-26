@@ -1,0 +1,20 @@
+{
+ "items": [
+  {
+   "model_id": "aerial25/best",
+   "gpu": "A6000",
+   "batch": 16,
+   "fp16": true,
+   "chips_per_s": {
+    "value": 26,
+    "unit": "chips_per_s",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "pipeline-run.md §3 P4",
+    "note": "P4 2026-09-24 · 읽기 포함 · 외부 점유 23,396 MiB"
+   },
+   "at": "2026-09-24"
+  }
+ ],
+ "as_of": "2026-09-24T10:52:34.648+09:00"
+}

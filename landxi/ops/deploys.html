@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LX/OPS — 배포 제어</title>
+<link rel="stylesheet" href="/landxi/proto/fonts-system.css">
+<link rel="stylesheet" href="/landxi/assets/css/v2/tokens-v2.css">
+<link rel="stylesheet" href="/landxi/assets/css/v2/ops-grid.css">
+<link rel="stylesheet" href="/landxi/ops/ops.css">
+</head>
+<body data-stage="ops">
+<script type="module">
+import { gate, ready, get, h, prov, setText, fmt, tag, hhmmss, ymd, SRC, t, write, guardWrite, confirmBox, toast, errText, lineage, regionAoi, STAGE_ORDER, api } from '/landxi/ops/js/boot.js';
+import { mountFrame } from '/landxi/ops/js/rail.js';
+import { mountPalette } from '/landxi/ops/js/palette.js';
+import { matrix } from '/landxi/ops/js/matrix.js';
+import { lineageBand } from '/landxi/ops/js/lineage.js';
+import { connect } from '/landxi/ops/js/telemetry.js';
+import { createMap, loadLibs, DeployLayer, Globe, globePoints, centroid, inKorea, fitCamera, KOREA, legend, STAGE_COLOR, sized, fitOnResize } from '/landxi/ops/js/deploy-map.js';
+
+const SNAP = {   // 계약 §4.2 스냅샷 별칭 → 파일(LX_DATA_ROOT 상대) · MVT 레이어
+  'results/namwon/dp-nw-farm-25@2.1': { path: 'vector/pmtiles/namwon-farmland-2025.pmtiles', layer: 'namwon_farmland_2025', label: '2025 드론 · 경작지 판독' },
+  'results/namwon/dp-nw-farm-25@2.0': { path: 'results/namwon-landcover-2023.pmtiles', layer: 'landcover', filter: ['==', ['get', 'cls'], '경작지'], label: '2023 25cm · 경작지(cls 필터)' },
+  'results/namwon/dp-nw-change@1.0': { path: 'vector/pmtiles/namwon-change.pmtiles', layer: 'namwon_change', label: 'A04 국산리 변화' },
+  'results/gwangju-jeonnam/dp-gj-marine-25@1.2': { path: 'vector/pmtiles/yeosu-marine-2025-aerial.pmtiles', layer: 'yeosu_marine_2025_aerial', label: '여수 2025 항공 · 해양쓰레기' },
+};
+const bboxOf = (g) => { const p = []; const w = (c) => (typeof c[0] === 'number' ? p.push(c) : c.forEach(w)); w(g?.coordinates || []); return p.length ? [Math.min(...p.map((q) => q[0])), Math.min(...p.map((q) => q[1])), Math.max(...p.map((q) => q[0])), Math.max(...p.map((q) => q[1]))] : null; };
+
+const w = await gate();
+if (w) {
+  const frame = mountFrame({ page: 'deploys', title: '배포 제어', crumb: '단계 배포 · 롤백 · 이식 · 모듈 · 모델', user: w });
+  const [deploys, cardsJ, tenantsJ, modelsJ] = await Promise.all([get('deploys'), get('registryCards'), get('tenants'), get('registryModels')]);
+  let D = deploys?.items || [];
+  const cards = cardsJ?.items || []; const tenants = tenantsJ?.items || []; const models = modelsJ?.items || [];
+  const cvs = cardsJ?.card_versions || [];
+  const G = h('div', { class: 'dp' }); frame.main.append(G);
+  const qs = new URLSearchParams(location.search); let sel = qs.get('d') || 'dp-nw-farm-25';
+
+  // ── 매트릭스
+  const mxBody = h('div', {});
+  const mxMeta = h('span', { class: 'og-num-s' });
+  G.append(h('section', { class: 'og-panel dp-mx' }, h('header', {}, h('h2', {}, '카드 × 기관'), h('span', { class: 'og-sub' }, '셀 = 단계 색 + 버전 · 빈 셀 = 이식'), h('span', { class: 'og-right' }, mxMeta)), mxBody));
+  const mx = matrix(mxBody, { cards, tenants, onPick: (id) => pick(id), onPort: (cid, tid, src) => portForm(cid, tid, src) });
+  const setMxMeta = () => setText(mxMeta, `배포본 ${D.length} · 정식 ${D.filter((d) => d.stage === 'ga').length} · 롤백됨 ${D.filter((d) => d.stage === 'rolled_back').length}`);
+  mx.set(D); setMxMeta();
+
+  // ── 열람 판
+  const pn = h('section', { class: 'og-panel dp-panel pn', style: { maxHeight: 'calc(100vh - 96px)', overflow: 'auto', position: 'sticky', top: '0' } }); G.append(pn);
+
+  // ── 배포 지도(잉크) + 글로브
+  const mapSlot = h('div', { class: 'dm-wrap' });
+  G.append(h('section', { class: 'og-panel dp-map' }, h('header', {}, h('h2', {}, '배포 지도'), h('span', { class: 'og-sub' }, '점 = 배포본 · 색 = 단계'), h('span', { class: 'og-right' }, legend())), mapSlot));
+  const mapEl = h('div', { class: 'dm-map' }); mapSlot.append(mapEl);
+  await sized(mapSlot);
+  const cam = fitCamera(mapSlot.clientWidth || 800, mapSlot.clientHeight || 280, [125.8, 33.9, 129.8, 37.9], 16);
+  const map = await createMap(mapEl, { face: false, ...cam });
+  fitOnResize(map, mapSlot, [125.8, 33.9, 129.8, 37.9], 16);
+  for (const id of ['farm-fill', 'farm-line']) map.setLayoutProperty(id, 'visibility', 'none');
+  const layer = new DeployLayer(map, { onPick: (id) => pick(id) }); layer.set(D);
+  const globe = new Globe(mapSlot, { size: 150 });
+  const gpts = () => [...globePoints(D.filter((d) => { const c = centroid(d.aoi); return c && !inKorea(c); })), { id: 'kr', lnglat: [127.6, 36.2], color: '#ABB3BF' }];
+  globe.setPoints(gpts()); globe.rot = [-92, -35]; globe.draw();
+
+  // ── 스냅샷 미니맵(두 번째이자 마지막 WebGL 캔버스)
+  let mini = null; let miniEl = null;
+  async function showSnap(d, box, { swap = false } = {}) {
+    const s = SNAP[d.snapshot_current];
+    if (!miniEl) { miniEl = h('div', { class: 'dm-map' }); }
+    box.replaceChildren(miniEl);
+    const cap = h('div', { class: 'mini-cap' }); box.append(cap);
+    const n = h('b', { 'data-k': 'snapN' }); const lbl = h('span', {});
+    cap.append(n, lbl);
+    const scaleTxt = d.scale?.value == null ? '—' : fmt(d.scale);
+    if (!mini) {
+      const ml = await loadLibs();
+      mini = new ml.Map({ container: miniEl, style: { version: 8, transition: { duration: 0 }, sources: { sat: { type: 'raster', tiles: ['https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg'], tileSize: 256, minzoom: 5, maxzoom: 19 } },
+        layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#010102' } }, { id: 'sat', type: 'raster', source: 'sat', paint: { 'raster-opacity': 0.42, 'raster-saturation': -0.7, 'raster-fade-duration': 500 } }] },
+        center: [127.42, 35.43], zoom: 9.6, attributionControl: false, interactive: true, dragRotate: false, fadeDuration: 0 });
+      await new Promise((r) => mini.once('load', r));
+    } else mini.resize();
+    for (const id of ['snap-fill', 'snap-line', 'snap-pt', 'aoi-line']) if (mini.getLayer(id)) mini.removeLayer(id);
+    for (const id of ['snap', 'aoi']) if (mini.getSource(id)) mini.removeSource(id);
+    mini.addSource('aoi', { type: 'geojson', data: { type: 'Feature', geometry: d.aoi, properties: {} } });
+    mini.addLayer({ id: 'aoi-line', type: 'line', source: 'aoi', paint: { 'line-color': 'rgba(255,255,255,.55)', 'line-width': 1, 'line-dasharray': [3, 3] } });
+    if (s) {
+      mini.addSource('snap', { type: 'vector', url: 'pmtiles://' + location.origin + '/landxi/data/' + s.path });
+      const base = { source: 'snap', 'source-layer': s.layer, ...(s.filter ? { filter: s.filter } : {}) };
+      mini.addLayer({ id: 'snap-fill', type: 'fill', ...base, filter: ['all', ['==', ['geometry-type'], 'Polygon'], ...(s.filter ? [s.filter] : [])], paint: { 'fill-color': '#2BD9CF', 'fill-opacity': 0.26 } });
+      mini.addLayer({ id: 'snap-line', type: 'line', ...base, filter: ['all', ['==', ['geometry-type'], 'Polygon'], ...(s.filter ? [s.filter] : [])], paint: { 'line-color': '#2BD9CF', 'line-width': 0.8 } });
+      mini.addLayer({ id: 'snap-pt', type: 'circle', ...base, filter: ['all', ['==', ['geometry-type'], 'Point'], ...(s.filter ? [s.filter] : [])], paint: { 'circle-color': '#2BD9CF', 'circle-radius': 2.2 } });
+    }
+    const bb = bboxOf(d.aoi);
+    if (bb) { const c = mini.cameraForBounds(bb, { padding: 18, maxZoom: 15 }); const z = Math.max(s ? 10.2 : 3, c?.zoom ?? 10.2); mini.easeTo({ center: c?.center || [(bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2], zoom: z, duration: swap ? 750 : 0 }); }
+    if (swap && n.dataset.v == null) n.dataset.v = box.dataset.prevN || '';
+    setText(n, scaleTxt); box.dataset.prevN = scaleTxt;
+    lbl.replaceChildren(document.createTextNode(s ? `${d.scale?.unit || ''} · ${s.label}` : (d.from_deploy_id ? '결과 0 · 첫 분석 대기' : '스냅샷 없음')));
+    return cap;
+  }
+
+  // ── 선택 · 열람
+  let curLin = null; let snapBox = null; let auditBox = null;
+  async function pick(id, { quiet = false } = {}) {
+    sel = id; const d = D.find((x) => x.id === id); if (!d) return;
+    history.replaceState(null, '', '?d=' + id); mx.select(id); layer.select(id);
+    const card = cards.find((c) => c.id === d.card_id); const ten = tenants.find((x) => x.id === d.tenant_id);
+    const cur = STAGE_ORDER.indexOf(d.stage); const nexts = { draft: ['shadow'], shadow: ['canary'], canary: ['ga'], ga: [], rolled_back: ['shadow', 'canary', 'ga'] }[d.stage] || [];
+    const approves = (d.approvals || []).filter((a) => a.decision === 'approve');
+    const needApprove = nexts.includes('ga') && approves.length < 1;
+    // 머리
+    const head = h('div', { class: 'pn-head' }, h('div', { class: 'pn-meta' }, h('span', { class: 'og-num-s' }, d.id), d.basis === 'history' ? tag('history') : null, d.from_deploy_id ? h('span', { class: 'og-tag' }, '이식 · ' + d.from_deploy_id) : null, d.pinned ? h('span', { class: 'og-tag' }, '버전 고정') : null),
+      h('h2', {}, d.name), h('div', { class: 'pn-meta' }, h('span', { class: 'og-lbl' }, `${ten?.name?.ko || d.tenant_id} · ${d.region_name?.ko || d.region_profile}`),
+        h('span', { class: 'og-tag', style: { borderColor: STAGE_COLOR[d.stage], color: STAGE_COLOR[d.stage] } }, t('stage.' + d.stage, d.stage)), h('span', { class: 'og-num', 'data-k': 'ver' }, d.version || '버전 없음'),
+        d.prev_card_version_id ? h('span', { class: 'og-num-s' }, `직전 ${d.prev_card_version_id.split('@')[1]}`) : null));
+    // 단계
+    const stages = h('div', { class: 'pn-stages' }, ...STAGE_ORDER.map((s, i) => {
+      const isNext = nexts.includes(s); const blocked = s === 'ga' && isNext && needApprove;
+      const b = h('button', { type: 'button', 'data-cur': d.stage === s ? '1' : '0', 'data-next': isNext ? '1' : '0', 'data-blocked': blocked ? '1' : '0', title: isNext ? (blocked ? '승인 1건 필요(approval_required)' : `${t('stage.' + s)} 로 배포`) : '' }, t('stage.' + s, s));
+      if (isNext) { b.addEventListener('click', () => rollout(d, s)); guardWrite(b); } else b.disabled = true;
+      return b;
+    }));
+    const approveBtn = h('button', { class: 'og-btn' + (needApprove ? ' is-primary' : ''), type: 'button', onclick: () => approve(d) }, '승인'); guardWrite(approveBtn);
+    const rbBtn = h('button', { class: 'og-btn is-caution', type: 'button', onclick: () => rollback(d) }, `롤백 → ${d.prev_card_version_id ? d.prev_card_version_id.split('@')[1] : '직전 없음'}`);
+    if (!['canary', 'ga'].includes(d.stage) || !d.prev_card_version_id) { rbBtn.disabled = true; rbBtn.title = !d.prev_card_version_id ? '직전 카드 버전 없음' : `${t('stage.' + d.stage)} 에서는 롤백 불가(canary|ga 만)`; }
+    guardWrite(rbBtn);
+    const pinBtn = h('button', { class: 'og-btn', type: 'button', onclick: () => act(d, 'pin', { card_version_id: d.pinned ? null : d.card_version_id }, d.pinned ? '고정 해제' : '버전 고정') }, d.pinned ? '고정 해제' : '버전 고정'); guardWrite(pinBtn);
+    if (!d.card_version_id) { pinBtn.disabled = true; pinBtn.title = '카드 버전 없음'; }
+    const secStage = h('div', { class: 'pn-sec' }, h('h3', {}, '단계 배포', h('span', { class: 'og-lbl' }, 'draft → shadow → canary → ga · 건너뛰기 없음')), stages,
+      h('div', { class: 'pn-row' }, approveBtn, rbBtn, pinBtn, h('span', { class: 'og-num-s' }, `승인 ${approves.length}건`)),
+      needApprove ? h('div', { class: 'og-why', style: { color: 'var(--cw-caution)' } }, '정식(ga) 전 승인 1건 필요 — approval_required') : null,
+      SRC.writable ? null : h('div', { class: 'og-why' }, SRC.why));
+    // 스냅샷
+    snapBox = h('div', { class: 'mini' });
+    const snapProv = h('div', {});
+    const secSnap = h('div', { class: 'pn-sec' }, h('h3', {}, '결과 스냅샷', h('span', { class: 'og-num-s' }, d.snapshot_current || '없음')), snapBox, snapProv);
+    // 계보
+    const linHost = h('div', {}); curLin = lineageBand(linHost);
+    const secLin = h('div', { class: 'pn-sec' }, h('h3', {}, '계보', h('span', { class: 'og-lbl' }, '/registry/lineage')), linHost);
+    // 모듈
+    // 카드 modules.ext 는 계약 §4.6 예시가 목록([{id,name,build}])인데 게이트웨이는 {id: bool} 맵으로 준다 → 둘 다 받는다(계약 변경 요청 C-3)
+    const rawExt = card?.modules?.ext || [];
+    const extList = Array.isArray(rawExt) ? rawExt : Object.keys(rawExt).map((id) => ({ id, name: t('module.' + id, id.replace(/^mod-/, '')), build: rawExt[id] ? '카드 기본 켬' : '카드 기본 끔' }));
+    const mods = h('div', { class: 'pn-mods' }, ...(d.modules?.core || []).map((m) => h('span', { class: 'pn-mod', 'data-core': '' }, m.replace('mod-', ''))),
+      ...extList.map((m) => { const on = !!d.modules?.ext?.[m.id]; const b = h('button', { class: 'pn-mod', type: 'button', 'aria-pressed': on ? 'true' : 'false', title: `${m.name} · ${m.build}`, onclick: () => act(d, 'modules', { ext: { [m.id]: !on } }, `${m.name} ${on ? '끔' : '켬'}`) }, m.name);
+        if (m.build === 'todo') { b.disabled = true; b.title = `${m.name} · 설계만(todo) — 켤 수 없다`; } guardWrite(b); return b; }));
+    const secMod = h('div', { class: 'pn-sec' }, h('h3', {}, '모듈', h('span', { class: 'og-lbl' }, `공통 ${d.modules?.core?.length || 0} 잠금 · 전용 ${extList.length}`)), mods);
+    // 모델 교체 — 지표 나란히
+    const cv = cvs.find((v) => v.id === d.card_version_id); const curModels = cv?.model_ids || [];
+    const cands = models.filter((m) => m.task === 'seg' || curModels.includes(m.id));
+    const selM = h('select', { class: 'og-select', 'aria-label': '교체할 모델' }, h('option', { value: '' }, '카드 버전 기본 모델'), ...cands.map((m) => h('option', { value: m.id, ...(d.model_override === m.id ? { selected: true } : {}) }, m.id)));
+    const metricOf = (m) => { const k = Object.keys(m?.metrics || {})[0]; return k ? { k, e: m.metrics[k] } : null; };
+    const mRow = (m, label) => { const x = metricOf(m); return [h('span', { class: label === '현재' ? 'm-cur og-num-s' : 'og-num-s' }, `${label} · ${m?.id || '—'}`), x ? h('b', { class: 'og-num' }, `${x.k.replace('mask_', 'mask ')} ${fmt(x.e, 3)}`) : h('span', { class: 'og-why' }, '지표 없음'), x ? h('span', { class: 'og-tag', 'data-basis': x.e.basis, title: `${x.e.source} · ${x.e.note || ''}` }, x.e.note?.includes('체크포인트') ? '체크포인트 내장 지표' : t('basis.' + x.e.basis, x.e.basis)) : h('span')]; };
+    const cmp = h('div', { class: 'pn-models' });
+    const drawCmp = () => { const a = models.find((m) => m.id === (d.model_override || curModels[0])); const b = models.find((m) => m.id === selM.value); cmp.replaceChildren(...mRow(a, '현재'), ...(b && b.id !== a?.id ? mRow(b, '후보') : [])); };
+    selM.addEventListener('change', drawCmp); drawCmp();
+    const swapBtn = h('button', { class: 'og-btn', type: 'button', onclick: () => act(d, 'model', { model_id: selM.value || null }, `모델 ${selM.value || '기본'}`) }, '교체 기록'); guardWrite(swapBtn);
+    const secModel = h('div', { class: 'pn-sec' }, h('h3', {}, '모델 교체', h('span', { class: 'og-lbl' }, '카드 버전을 새로 만들지 않고 override 기록')), cmp, h('div', { class: 'pn-row' }, selM, swapBtn),
+      h('div', { class: 'og-note' }, '서로 다른 데이터셋·과제의 지표 — 나란히 두되 우열로 읽지 않는다.'));
+    // GPU 풀
+    const poolBtns = ['a6000', 'cpu'].map((p) => { const b = h('button', { class: 'og-btn is-s' + (d.gpu_pool === p ? ' is-primary' : ''), type: 'button', onclick: () => act(d, 'gpu', { pool: p }, `GPU 풀 ${p}`) }, p); if (d.gpu_pool === p) b.disabled = true; guardWrite(b); return b; });
+    const secPool = h('div', { class: 'pn-sec' }, h('h3', {}, 'GPU 풀'), h('div', { class: 'pn-row' }, ...poolBtns, h('span', { class: 'og-why' }, 'a6000 = 노드 1 · A6000×2 · A100 노드 등록 대기')));
+    // 감사
+    auditBox = h('div', { class: 'aud' });
+    const secAud = h('div', { class: 'pn-sec' }, h('h3', {}, '이력(audit_log)', h('span', { class: 'og-num-s', 'data-k': 'audN' }, '—')), auditBox);
+    pn.replaceChildren(head, secStage, secSnap, secLin, secMod, secModel, secPool, secAud);
+    await showSnap(d, snapBox);
+    if (d.scale) snapProv.replaceChildren(prov(d.scale, { short: false }));
+    const lin = await lineage(d); await curLin.set(lin.chain || []);
+    loadAudit(d.id);
+  }
+  let seenAudit = new Set();
+  async function loadAudit(id, fresh) {
+    if (!auditBox) return;
+    if (SRC.kind !== 'bridge') { auditBox.replaceChildren(h('div', { class: 'og-why' }, SRC.kind === 'off' ? `${SRC.why} — 이력 없음` : '게이트웨이 감사 조회 경로 없음(계약 변경 요청 §4.10)')); return; }
+    let j = null; try { j = await api('/ops/audit?subject=' + encodeURIComponent(id)); } catch { j = null; }
+    const items = (j?.items || []).slice().reverse();
+    const n = pn.querySelector('[data-k="audN"]'); if (n) setText(n, `${items.length}건 · 실카운트`);
+    auditBox.replaceChildren(...(items.length ? items.slice(0, 6).map((a) => h('div', { class: 'aud-r' + (fresh && !seenAudit.has(a.id) ? ' is-new' : '') }, h('span', { class: 'n' }, hhmmss(a.at)), h('span', {}, `${a.action} · ${a.actor}${a.reason ? ' · “' + a.reason + '”' : ''}${a.after?.card_version_id ? ' → ' + a.after.card_version_id : ''}`))) : [h('div', { class: 'og-note' }, '이 배포본의 쓰기 0건')]));
+    items.forEach((a) => seenAudit.add(a.id));
+  }
+  async function refresh() { const j = await get('deploys'); D = j.items || D; mx.set(D); layer.set(D); setMxMeta(); globe.setPoints(gpts()); return D; }
+  async function act(d, action, body, label) {
+    try { await write(`/deploys/${d.id}/${action}`, 'POST', body); toast(`<b>${label}</b> · ${d.id} · 감사 기록`); await refresh(); await pick(d.id); loadAudit(d.id, true); }
+    catch (e) { toast(`<b>${label} 실패</b> · ${errText(e)}`, 'err'); }
+  }
+  async function rollout(d, stage) {
+    try { await write(`/deploys/${d.id}/rollout`, 'POST', { stage }); toast(`<b>단계 배포</b> · ${d.id} → ${t('stage.' + stage)}`); await refresh(); await pick(d.id); loadAudit(d.id, true); }
+    catch (e) { toast(e.code === 'approval_required' ? `<b>승인 필요</b> · ${d.id} — ga 전 승인 1건(approval_required)` : `<b>배포 실패</b> · ${errText(e)}`, 'err'); }
+  }
+  async function approve(d) {
+    const reason = await confirmBox({ title: '배포 승인', text: `<b>${d.id}</b> 의 다음 단계 배포를 승인한다. 승인은 결재 기록(approvals)에 남는다.`, ok: '승인' }); if (!reason) return;
+    try { await write(`/deploys/${d.id}/approve`, 'POST', { decision: 'approve', reason }); toast(`<b>승인</b> · ${d.id}`); await refresh(); await pick(d.id); loadAudit(d.id, true); }
+    catch (e) { toast(`<b>승인 실패</b> · ${errText(e)}`, 'err'); }
+  }
+  // R-1 롤백: 지도 점 앰버 380 → 정착 · 매트릭스 셀 버전 칩 · 계보 한 칸 되감김 · 스냅샷 교체(미니맵 수치 현상)
+  async function rollback(d) {
+    const prev = d.prev_card_version_id;
+    const reason = await confirmBox({ title: `롤백 · ${d.id}`, text: `<b>${d.card_version_id}</b> → <b>${prev}</b>. 결과 스냅샷이 <b>${d.snapshot_prev}</b> 로 즉시 바뀐다(불변 PMTiles). XI맵 <code>?svc=</code> 는 다음 로드부터 이전 스냅샷을 연다.`, ok: '롤백 실행', danger: true });
+    if (!reason) return;
+    try {
+      const r = await write(`/deploys/${d.id}/rollback`, 'POST', { reason });
+      layer.lock(d.id, r.stage);
+      D = D.map((x) => (x.id === d.id ? r : x)); mx.set(D); setMxMeta(); globe.setPoints(gpts());
+      setText(pn.querySelector('[data-k="ver"]'), r.version);
+      const lin = await lineage(r); const rew = curLin.set(lin.chain || [], { rewind: true });
+      await showSnap(r, snapBox, { swap: true });
+      await rew; toast(`<b>롤백</b> · ${d.id} ${d.version} → ${r.version} · 사유 “${reason}”`);
+      await pick(d.id); loadAudit(d.id, true);
+    } catch (e) { toast(`<b>롤백 실패</b> · ${errText(e)}`, 'err'); }
+  }
+  // P-1 이식: 빈 셀 → 폼 → POST /deploys → draft 셀 S1 도착 · 글로브 점 · '결과 0 · 첫 분석 대기'
+  async function portForm(cid, tid, src) {
+    const card = cards.find((c) => c.id === cid); const ten = tenants.find((x) => x.id === tid);
+    const profiles = tid === 'kgz-land' ? ['kgz-sokuluk', 'kgz-bishkek'] : tid === 'kgz-agri' ? ['kgz-ysykata'] : [tid];
+    const selFrom = h('select', { class: 'og-select', name: 'from' }, ...src.map((d) => h('option', { value: d.id }, `${d.id} · ${d.version || ''}`)));
+    const selReg = h('select', { class: 'og-select', name: 'region' }, ...profiles.map((p) => h('option', { value: p }, p)));
+    const name = h('input', { class: 'og-input', name: 'name', value: tid === 'kgz-land' && cid === 'card-change' ? '소쿨룩 시가지 변화 · 2026' : `${ten?.name?.ko || tid} ${card?.name || cid}` });
+    const selPool = h('select', { class: 'og-select', name: 'pool' }, h('option', { value: 'cpu' }, 'cpu'), h('option', { value: 'a6000' }, 'a6000'));
+    const aoiNote = h('div', { class: 'og-note' }, 'AOI 확인 중…');
+    const go = h('button', { class: 'og-btn is-primary', type: 'button', 'data-k': 'port-go' }, '이식 · POST /deploys'); guardWrite(go);
+    const reason = h('input', { class: 'og-input', name: 'reason', placeholder: '사유(감사 기록)' });
+    pn.replaceChildren(h('div', { class: 'pn-head' }, h('div', { class: 'pn-meta' }, h('span', { class: 'og-tag', 'data-dashed': '' }, '이식'), h('span', { class: 'og-num-s' }, `${cid} × ${tid}`)),
+      h('h2', {}, `${card?.name || cid} → ${ten?.name?.ko || tid}`), h('div', { class: 'og-note' }, '이식 = 같은 카드 버전으로 배포본 하나 더. draft 로 시작하고 결과는 0 — 첫 job 이 돌아야 스냅샷이 생긴다.')),
+      h('div', { class: 'pn-sec' }, h('div', { class: 'port-form' }, h('label', {}, '원본 배포본', selFrom), h('label', {}, '지역 프로파일', selReg), h('label', { class: 'full' }, '이름', name), h('label', {}, 'GPU 풀', selPool), h('label', {}, '사유', reason)), aoiNote,
+        h('div', { class: 'pn-row' }, go, SRC.writable ? null : h('span', { class: 'og-why' }, SRC.why))));
+    let reg = null;
+    const loadAoi = async () => { reg = await regionAoi(selReg.value); aoiNote.replaceChildren(h('span', {}, `AOI · ${reg.boundary}`), ' ', reg.boundary === '경계 미확보' ? h('span', { class: 'og-tag', 'data-dashed': '' }, '경계 미확보') : tag('measured', 'geoBoundaries'), h('div', { class: 'og-why' }, reg.source)); };
+    selReg.addEventListener('change', loadAoi); await loadAoi();
+    go.addEventListener('click', async () => {
+      go.disabled = true;
+      try {
+        const r = await write('/deploys', 'POST', { from_deploy_id: selFrom.value, tenant_id: tid, region_profile: selReg.value, aoi: reg?.aoi, name: name.value, gpu_pool: selPool.value, reason: reason.value || undefined });
+        D = [...D.filter((x) => x.id !== r.id), r]; mx.set(D); setMxMeta();
+        const c = centroid(r.aoi);
+        const arrive = mx.arrive(r.id);
+        if (c && !inKorea(c)) { globe.setPoints(gpts()); globe.focus(c, 1600).then(() => globe.lockPoint(r.id)); } else layer.set(D);
+        await arrive; await pick(r.id); loadAudit(r.id, true);
+        toast(`<b>이식</b> · ${r.id} · draft · 결과 0 · 첫 분석 대기`);
+      } catch (e) { toast(`<b>이식 실패</b> · ${errText(e)}`, 'err'); go.disabled = !SRC.writable; }
+    });
+  }
+
+  await pick(D.find((d) => d.id === sel) ? sel : D[0]?.id);
+  connect({
+    onGpu: () => frame.tick(false),
+    onDeploy: async (ev) => { if (ev.by && ev.by === (w.user?.id)) return; await refresh(); if (ev.deploy_id === sel) pick(sel); },
+    onState: (st, age) => { if (st === 'stale') frame.tick(true, age / 1000); },
+  });
+  mountPalette(); ready();
+}
+</script>
+</body>
+</html>

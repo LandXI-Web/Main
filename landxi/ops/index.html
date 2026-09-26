@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LX/OPS — 운영 현황</title>
+<link rel="stylesheet" href="/landxi/proto/fonts-system.css">
+<link rel="stylesheet" href="/landxi/assets/css/v2/tokens-v2.css">
+<link rel="stylesheet" href="/landxi/assets/css/v2/ops-grid.css">
+<link rel="stylesheet" href="/landxi/ops/ops.css">
+</head>
+<body data-stage="ops">
+<script type="module">
+import { gate, ready } from '/landxi/ops/js/boot.js';
+import { mountFrame } from '/landxi/ops/js/rail.js';
+import { mountOverview } from '/landxi/ops/js/deploy-map.js';
+import { mountPalette } from '/landxi/ops/js/palette.js';
+const w = await gate();
+if (w) {
+  const frame = mountFrame({ page: 'index', title: '운영 현황', crumb: '배포 · 노드 · 결재', user: w });
+  await mountOverview(frame, {});
+  mountPalette(); ready();
+}
+</script>
+</body>
+</html>

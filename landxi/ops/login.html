@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LX/OPS — 관제실 로그인</title>
+<link rel="stylesheet" href="/landxi/proto/fonts-system.css">
+<link rel="stylesheet" href="/landxi/assets/css/v2/tokens-v2.css">
+<link rel="stylesheet" href="/landxi/assets/css/v2/ops-grid.css">
+<link rel="stylesheet" href="/landxi/ops/ops.css">
+</head>
+<!-- 종이 무대(v1 법): 흰 바탕 · 잉크 · 헤어라인 · 그림자 0. 관리자 로그인 뒤 1600ms 명도 반전 → 같은 얼굴판 지도가 운영 현황 배포 지도로 자란다. -->
+<body data-stage="paper">
+<div class="lg" id="lg">
+  <header class="lg-top">
+    <span class="lg-word">LAND<b>-</b>XI</span><span class="lg-sep"></span><span class="lg-where">LX/OPS 관제실 · 관리자 전용 · :8702</span>
+    <span class="lg-sum" id="sum" aria-live="polite"><span class="og-lbl">관제 요약</span><span id="sumText">—</span></span>
+  </header>
+  <section class="lg-left">
+    <p class="lg-eyebrow">LX 한국국토정보공사 · Land-XI 하이퍼 GeoAI 플랫폼</p>
+    <h1 class="lg-h1">LX 전 직원이<br><em>Geo-AI</em> 전문가</h1>
+    <p class="lg-lead">Land-XI 플랫폼은 고해상도 드론·항공·위성영상과 AI기술을 활용하여 공공서비스 혁신을 지원합니다. 직관적인 인터페이스로 NO-CODE 기반 AI 학습모델을 구축하고 활용합니다.</p>
+    <div class="lg-axes">
+      <div><span>01</span><b>노코드 AI</b><p>코드 없이 학습·추론 — 모델은 LX가 만들고 품질을 책임진다</p></div>
+      <div><span>02</span><b>워크플로우 개발</b><p>수집 → 정사화 → 학습 → 배포가 한 흐름으로 이어진다</p></div>
+      <div><span>03</span><b>전국단위 실태조사</b><p>검증된 카드를 지자체·해외로 이식해 같은 체계로 조사한다</p></div>
+    </div>
+    <p class="lg-vision"><span>비전</span>범부처 AI 기반 국토정보 통합조사</p>
+    <form class="lg-form" id="form" autocomplete="on" novalidate>
+      <div class="lg-field"><label for="id">관리자 계정</label><input id="id" name="login" autocomplete="username" spellcheck="false" placeholder="lx-admin" required></div>
+      <div class="lg-field"><label for="pw">비밀번호</label><input id="pw" name="password" type="password" autocomplete="current-password" placeholder="비밀번호"></div>
+      <button class="lg-go" id="go" type="submit">관제실 입장</button>
+      <div class="lg-msg" id="msg" role="alert"></div>
+    </form>
+  </section>
+  <section class="lg-right">
+    <div class="lg-plate" id="plate"><div class="lg-map" id="faceMap" aria-label="남원 경작지 결과 얼굴판 · V-World 위성"></div></div>
+    <div class="lg-cap" id="cap"><span>남원 경작지 판독</span><b id="capN">—</b><span>필지</span></div>
+  </section>
+  <footer class="lg-foot"><span>V-World 위성(xdworld) + AI 결과만 · 자체 원본 영상은 로그인 뒤</span><span>문의 063-713-1218 · Copyright© LX. ALL RIGHTS RESERVED.</span></footer>
+</div>
+<div class="lg-opsmark" aria-hidden="true">LX<b>/</b>OPS</div>
+<script type="module">
+import { portGate, detect, login, who, SRC, prov, ready, hhmmss, h, fmt, setText, errText } from '/landxi/ops/js/boot.js';
+import { createMap, inkMix, tween, eCam, mountOverview } from '/landxi/ops/js/deploy-map.js';
+import { mountFrame } from '/landxi/ops/js/rail.js';
+import { mountPalette } from '/landxi/ops/js/palette.js';
+import { fixture } from '/landxi/shared/api-v1.js';
+
+const $ = (id) => document.getElementById(id);
+if (portGate()) {
+  await detect();
+  const q = new URLSearchParams(location.search);
+  const w = who();
+  if (w && w.realm === 'lx' && w.role === 'admin' && !q.has('stay')) location.replace('/landxi/ops/index.html');
+  if (q.get('denied')) msg('관제실은 관리자 전용입니다');
+
+  // 관제 요약 한 줄 — 로그인 전 공개 최소치(브리지 health) · off 면 시연
+  const summary = async () => {
+    let j = null; try { const r = await fetch('/landxi/ops/bridge/health', { cache: 'no-store' }); j = r.ok ? await r.json() : null; } catch { /* */ }
+    const s = j?.summary; const box = $('sumText');
+    if (SRC.kind !== 'off' && s && s.basis === 'measured') {
+      box.replaceChildren(h('span', {}, '노드 ', h('b', {}, String(s.nodes_up)), ' · GPU ', h('b', {}, String(s.gpus)), ' · 큐 ', h('b', {}, String(s.queued + s.running)), ' · 경보 ', h('b', {}, String(s.alerts_open)), ' · 마지막 점검 ', h('b', { 'data-k': 'lc' }, hhmmss(s.last_check))), ' ', h('span', { class: 'og-tag', 'data-basis': 'measured', title: s.source }, '실측'));
+    } else {
+      const g = await fixture('/landxi/ops/data/fixtures/ops-gpus.json');
+      box.replaceChildren(h('span', {}, '노드 ', h('b', {}, '1'), ' · GPU ', h('b', {}, String(g?.gpus?.length ?? 2)), ' · 큐 ', h('b', {}, '0'), ' · 마지막 점검 ', h('b', {}, hhmmss(g?.at))), ' ', h('span', { class: 'og-tag', 'data-basis': 'demo' }, '시연'));
+    }
+  };
+  summary(); const sumT = setInterval(summary, 2000);
+
+  // 얼굴판: xdworld 위성 z12 남원 + results/lx/namwon-farmland-2025 (카메라 고정)
+  const faceEl = $('faceMap');
+  const map = await createMap(faceEl, { face: true, center: [127.405, 35.43], zoom: 12, interactive: false });
+  const dj = await fixture('/landxi/ops/data/fixtures/deploys.json');
+  const farm = dj?.items?.find((d) => d.id === 'dp-nw-farm-25');
+  if (farm?.scale) { $('capN').textContent = fmt(farm.scale); $('cap').append(prov(farm.scale, { short: true })); }
+  ready();
+
+  function msg(t, kind) { $('msg').textContent = t || ''; $('msg').dataset.kind = kind || ''; }
+  $('form').addEventListener('submit', async (e) => {
+    e.preventDefault(); msg('');
+    const id = $('id').value.trim(); const pw = $('pw').value;
+    if (!id) { msg('관리자 계정을 입력하세요'); $('id').focus(); return; }
+    $('go').disabled = true;
+    try {
+      const s = await login(id, pw);
+      if (s.denied) { msg('관제실은 관리자 전용입니다'); $('go').disabled = false; return; }
+      clearInterval(sumT); await flip(s);
+    } catch (err) { msg(err?.code === 'unauthorized' ? '계정·비밀번호를 확인하세요' : errText(err)); $('go').disabled = false; }
+  });
+
+  async function flip(s) {
+    const t0 = performance.now();
+    const bodyDone = new Promise((res) => { const f = (e) => { if (e.target === document.body && e.propertyName === 'background-color') { document.body.removeEventListener('transitionend', f); res(performance.now()); } }; document.body.addEventListener('transitionend', f); setTimeout(() => res(null), 2400); });
+    document.documentElement.dataset.flip = 'running';
+    document.body.classList.add('is-flip');
+    document.body.setAttribute('data-stage', 'ops');
+    await tween(1600, eCam, (k) => inkMix(map, k));
+    const tEnd = (await bodyDone) || performance.now();
+    document.documentElement.dataset.flipMs = String(Math.round(tEnd - t0));
+    document.documentElement.dataset.flip = 'done';
+    // 같은 지도를 들고 운영 현황으로(점프 0): 얼굴판 자리에 고정 → 셸을 세운다 → 중앙 판으로 자란다
+    const r = $('plate').getBoundingClientRect();
+    const fly = h('div', { class: 'lg-fly', style: { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' } });
+    fly.append(faceEl);
+    history.replaceState(null, '', '/landxi/ops/index.html');
+    document.title = 'LX/OPS — 운영 현황';
+    document.body.classList.remove('is-flip');
+    const frame = mountFrame({ page: 'index', title: '운영 현황', crumb: '배포 · 노드 · 결재', user: s.offline ? who() : s });
+    document.body.append(fly);
+    await mountOverview(frame, { map, fly, mapEl: faceEl });
+    mountPalette();
+    document.documentElement.dataset.flip = 'grown';
+  }
+}
+</script>
+</body>
+</html>

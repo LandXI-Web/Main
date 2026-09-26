@@ -1,0 +1,89 @@
+{
+ "items": [
+  {
+   "id": "lx",
+   "name": {
+    "ko": "LX 한국국토정보공사",
+    "en": "LX Corp."
+   },
+   "kind": "maker",
+   "scope": "local",
+   "crs": "EPSG:5186",
+   "locale": "ko",
+   "profile_id": "lx",
+   "home": "dashboard",
+   "status": "active"
+  },
+  {
+   "id": "namwon",
+   "name": {
+    "ko": "전북특별자치도 남원시",
+    "en": "Namwon-si, Jeonbuk"
+   },
+   "kind": "user",
+   "scope": "local",
+   "crs": "EPSG:5186",
+   "locale": "ko",
+   "profile_id": "namwon",
+   "home": "portal",
+   "status": "active"
+  },
+  {
+   "id": "gwangju-jeonnam",
+   "name": {
+    "ko": "광주전남특별시",
+    "en": "Gwangju-Jeonnam"
+   },
+   "kind": "user",
+   "scope": "local",
+   "crs": "EPSG:5186",
+   "locale": "ko",
+   "profile_id": "gwangju-jeonnam",
+   "home": "portal",
+   "status": "active"
+  },
+  {
+   "id": "kgz-agri",
+   "name": {
+    "ko": "키르기스 농업부(으슥아타)",
+    "en": "Kyrgyz Agri (Ysyk-Ata)"
+   },
+   "kind": "user",
+   "scope": "global",
+   "crs": "EPSG:4326",
+   "locale": "en",
+   "profile_id": "kgz-agri",
+   "home": "portal",
+   "status": "active"
+  },
+  {
+   "id": "kgz-land",
+   "name": {
+    "ko": "키르기즈 토지자원청(소쿨룩·비슈케크)",
+    "en": "Kyrgyz Land Resources"
+   },
+   "kind": "user",
+   "scope": "global",
+   "crs": "EPSG:4326",
+   "locale": "en",
+   "profile_id": "kgz-land",
+   "home": "portal",
+   "status": "active"
+  },
+  {
+   "id": "lx-demo",
+   "name": {
+    "ko": "영업 시연 계량",
+    "en": "Sales demo metering"
+   },
+   "kind": "user",
+   "scope": "local",
+   "crs": "EPSG:5186",
+   "locale": "ko",
+   "profile_id": "lx-demo",
+   "home": "portal",
+   "status": "active"
+  }
+ ],
+ "as_of": "2026-09-24T10:52:34.648+09:00"
+}

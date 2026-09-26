@@ -1,0 +1,103 @@
+{
+ "dp-nw-farm-25@card-farm@2.1": {
+  "chain": [
+   {
+    "kind": "dataset",
+    "id": "E:/namwon/cultivate_uncultivate",
+    "label": "남원 드론 2025 경작·비경작"
+   },
+   {
+    "kind": "run",
+    "id": "namwon/cultivate_uncultivate/train",
+    "label": "yolo11x-seg · 245 epoch"
+   },
+   {
+    "kind": "model",
+    "id": "namwon/cultivate_uncultivate/train",
+    "label": "mask mAP50 .951"
+   },
+   {
+    "kind": "card_version",
+    "id": "card-farm@2.1"
+   },
+   {
+    "kind": "deploy",
+    "id": "dp-nw-farm-25"
+   },
+   {
+    "kind": "tenant",
+    "id": "namwon"
+   },
+   {
+    "kind": "job",
+    "id": "A02-2026-06-08",
+    "label": "경작지 2,098 필지"
+   }
+  ]
+ },
+ "dp-nw-farm-25@card-farm@2.0": {
+  "chain": [
+   {
+    "kind": "dataset",
+    "id": "E:/aerial_dataset",
+    "label": "항공 토지피복 15.3만"
+   },
+   {
+    "kind": "run",
+    "id": "aerial_v2_finetune44"
+   },
+   {
+    "kind": "model",
+    "id": "aerial25/best",
+    "label": "체크포인트 내장 .886"
+   },
+   {
+    "kind": "card_version",
+    "id": "card-farm@2.0"
+   },
+   {
+    "kind": "deploy",
+    "id": "dp-nw-farm-25"
+   },
+   {
+    "kind": "tenant",
+    "id": "namwon"
+   },
+   {
+    "kind": "job",
+    "id": "P4-2026-09-24",
+    "label": "남원 전역 재추론 22,737칩"
+   }
+  ]
+ },
+ "dp-nw-change@card-change@1.0": {
+  "chain": [
+   {
+    "kind": "dataset",
+    "id": "A04 국산리 2시점",
+    "label": "드론 2504·2510"
+   },
+   {
+    "kind": "model",
+    "id": "unsupervised-change"
+   },
+   {
+    "kind": "card_version",
+    "id": "card-change@1.0"
+   },
+   {
+    "kind": "deploy",
+    "id": "dp-nw-change"
+   },
+   {
+    "kind": "tenant",
+    "id": "namwon"
+   },
+   {
+    "kind": "job",
+    "id": "A04",
+    "label": "변화 456"
+   }
+  ]
+ }
+}

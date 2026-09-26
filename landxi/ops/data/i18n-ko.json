@@ -1,0 +1,97 @@
+{
+ "product": "LX/OPS",
+ "motto": "보이는 모든 땅을, 읽히는 행정으로.",
+ "rail": {
+  "index": "운영 현황",
+  "infra": "인프라 관제",
+  "tenants": "기관·할당",
+  "deploys": "배포 제어",
+  "publish": "카드 발행",
+  "data": "데이터 관리",
+  "service": "서비스 관리",
+  "my": "MY"
+ },
+ "stage": {
+  "draft": "초안",
+  "shadow": "그림자",
+  "canary": "카나리",
+  "ga": "정식",
+  "rolled_back": "롤백됨"
+ },
+ "basis": {
+  "measured": "실측",
+  "estimate": "추정",
+  "demo": "시연",
+  "history": "이력",
+  "inferred": "AI 추론 · 검수 전",
+  "recorded": "기록"
+ },
+ "job_state": {
+  "queued": "대기",
+  "running": "실행",
+  "done": "완료",
+  "failed": "실패",
+  "cancelled": "취소"
+ },
+ "dims": {
+  "storage_gb": "저장소",
+  "gpu_s_month": "GPU 초/월",
+  "area_km2_month": "분석 면적/월",
+  "concurrent_jobs": "동시 작업",
+  "egress_gb_month": "전송량/월",
+  "vworld_calls_day": "V-World 호출/일"
+ },
+ "policy": {
+  "queue_low": "초과 시 P3 강등",
+  "reject": "초과 시 거부",
+  "notify": "초과 시 알림"
+ },
+ "tenant_short": {
+  "lx": "LX",
+  "namwon": "남원",
+  "gwangju-jeonnam": "광주전남",
+  "kgz-agri": "KGZ 농업",
+  "kgz-land": "KGZ 토지",
+  "lx-demo": "시연 계량"
+ },
+ "src": {
+  "gateway": "실측 · 게이트웨이 :8700",
+  "bridge": "실측 · 로컬 브리지 · 게이트웨이 없음",
+  "off": "시연 · 서버 연결 없음"
+ },
+ "why_off": "준비 중 · 서버 없음",
+ "no_alerts": "경보 없음",
+ "last_check": "마지막 점검",
+ "no_recv": "수신 없음",
+ "admin_only": "관제실은 관리자 전용입니다",
+ "port_only": "LX/OPS 관제실은 :8702 에서만 열립니다",
+ "orig_links": {
+  "publish": "http://localhost:4173/landxi/proto/admin-publish.html",
+  "data": "http://localhost:4173/landxi/proto/dataset.html",
+  "service": "http://localhost:4173/landxi/proto/admin-notice.html",
+  "my": "http://localhost:4173/landxi/proto/mypage.html"
+ },
+ "module": {
+  "mod-farm-parcel": "필지 대장 대조",
+  "mod-farm-cycle": "영농 주기 판정",
+  "mod-farm-house": "비닐하우스 동수 집계",
+  "mod-farm-subsidy": "직불금 대상 검토",
+  "mod-living-pile": "폐기물 더미 규모 추정",
+  "mod-living-burn": "소각 흔적 판별",
+  "mod-living-civil": "민원 연계",
+  "mod-living-patrol": "현장 점검 동선",
+  "mod-road-seg": "노선 구간화",
+  "mod-road-grade": "포장 상태 등급",
+  "mod-road-multiview": "다시점 대조",
+  "mod-road-repair": "보수 우선순위",
+  "mod-crowd-person": "사람 탐지·계수",
+  "mod-crowd-density": "인파 밀도 격자",
+  "mod-crowd-flow": "교통 혼잡도",
+  "mod-change-pair": "시점 쌍 정합",
+  "mod-change-class": "변화 유형 분류",
+  "mod-change-illegal": "무허가 대조",
+  "mod-marine-type": "쓰레기 종류 분류",
+  "mod-marine-shore": "해안선 구간화",
+  "mod-marine-collect": "수거 계획 산출"
+ }
+}

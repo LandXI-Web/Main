@@ -1,0 +1,617 @@
+{
+ "items": [
+  {
+   "tenant_id": "lx",
+   "month": "2026-09",
+   "dims": {
+    "storage_gb": {
+     "used": {
+      "value": 0.18,
+      "unit": "GB",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:35.111+09:00",
+      "source": "du E:/Land-XI 플랫폼/02. 데이터\\results\\lx",
+      "note": "results/lx + 평면 산출물(results/*.* · vector/**) 합"
+     },
+     "soft": null,
+     "hard": null,
+     "policy": "notify",
+     "note": "무제한 · 한도 없음"
+    },
+    "gpu_s_month": {
+     "used": {
+      "value": 1728,
+      "unit": "gpu_s",
+      "basis": "measured",
+      "as_of": "2026-09-24",
+      "source": "pipeline-run.md §3 P4 (14.4분 × GPU 2)",
+      "note": "usage_events 이관 전 · P4 남원 재추론 2026-09-24"
+     },
+     "soft": null,
+     "hard": null,
+     "policy": "queue_low",
+     "note": "무제한 · 한도 없음"
+    },
+    "area_km2_month": {
+     "used": {
+      "value": null,
+      "unit": "km2",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "usage_events",
+      "note": "P4 면적 계량 전(파이프라인 직접 실행)"
+     },
+     "soft": null,
+     "hard": null,
+     "policy": "notify",
+     "note": "무제한 · 한도 없음"
+    },
+    "concurrent_jobs": {
+     "used": {
+      "value": 0,
+      "unit": "count",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "jobs(state=running)"
+     },
+     "soft": null,
+     "hard": null,
+     "policy": "queue_low",
+     "note": "무제한 · 한도 없음"
+    },
+    "egress_gb_month": {
+     "used": {
+      "value": null,
+      "unit": "GB",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "게이트웨이 계량",
+      "note": "egress 계량 전 — Phase 0 게이트웨이 필요"
+     },
+     "soft": null,
+     "hard": null,
+     "policy": "notify",
+     "note": "무제한 · 한도 없음"
+    },
+    "vworld_calls_day": {
+     "used": {
+      "value": null,
+      "unit": "count",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "proxy 계량",
+      "note": "V-World 키 권한 반영 대기 — 호출 0 · 계량 전"
+     },
+     "soft": null,
+     "hard": null,
+     "policy": "reject",
+     "note": "무제한 · 한도 없음"
+    }
+   },
+   "isolation": {
+    "prefix": "tenants/lx/",
+    "rls": true,
+    "signed_tiles": false,
+    "raw_routes": 0
+   },
+   "forecast": {
+    "gpu_s_month": {
+     "exceed_month": null,
+     "basis": "estimate",
+     "source": "quota.estimator 선형"
+    }
+   }
+  },
+  {
+   "tenant_id": "namwon",
+   "month": "2026-09",
+   "dims": {
+    "storage_gb": {
+     "used": {
+      "value": 0.0,
+      "unit": "GB",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:35.111+09:00",
+      "source": "du E:/Land-XI 플랫폼/02. 데이터\\results\\namwon",
+      "note": "tenants/namwon/ · results/namwon/ 없음 — 0"
+     },
+     "soft": 400,
+     "hard": 500,
+     "policy": "notify",
+     "note": "[추정 기반 초기값]"
+    },
+    "gpu_s_month": {
+     "used": {
+      "value": 0,
+      "unit": "gpu_s",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "usage_events",
+      "note": "2026-09 계량 0건"
+     },
+     "soft": 30000,
+     "hard": 36000,
+     "policy": "queue_low",
+     "note": "[추정 기반 초기값]"
+    },
+    "area_km2_month": {
+     "used": {
+      "value": 0,
+      "unit": "km2",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "usage_events",
+      "note": "2026-09 계량 0건"
+     },
+     "soft": 1500,
+     "hard": 2000,
+     "policy": "notify",
+     "note": "[추정 기반 초기값]"
+    },
+    "concurrent_jobs": {
+     "used": {
+      "value": 0,
+      "unit": "count",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "jobs(state=running)"
+     },
+     "soft": 2,
+     "hard": 2,
+     "policy": "queue_low",
+     "note": "[추정 기반 초기값]"
+    },
+    "egress_gb_month": {
+     "used": {
+      "value": null,
+      "unit": "GB",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "게이트웨이 계량",
+      "note": "egress 계량 전 — Phase 0 게이트웨이 필요"
+     },
+     "soft": 40,
+     "hard": 50,
+     "policy": "notify",
+     "note": "[추정 기반 초기값]"
+    },
+    "vworld_calls_day": {
+     "used": {
+      "value": null,
+      "unit": "count",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "proxy 계량",
+      "note": "V-World 키 권한 반영 대기 — 호출 0 · 계량 전"
+     },
+     "soft": 4000,
+     "hard": 5000,
+     "policy": "reject",
+     "note": "[추정 기반 초기값]"
+    }
+   },
+   "isolation": {
+    "prefix": "tenants/namwon/",
+    "rls": true,
+    "signed_tiles": true,
+    "raw_routes": 0
+   },
+   "forecast": {
+    "gpu_s_month": {
+     "exceed_month": null,
+     "basis": "estimate",
+     "source": "quota.estimator 선형"
+    }
+   }
+  },
+  {
+   "tenant_id": "gwangju-jeonnam",
+   "month": "2026-09",
+   "dims": {
+    "storage_gb": {
+     "used": {
+      "value": 0.0,
+      "unit": "GB",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:35.111+09:00",
+      "source": "du E:/Land-XI 플랫폼/02. 데이터\\results\\gwangju-jeonnam",
+      "note": "tenants/gwangju-jeonnam/ · results/gwangju-jeonnam/ 없음 — 0"
+     },
+     "soft": 240,
+     "hard": 300,
+     "policy": "notify",
+     "note": "[추정 기반 초기값] · soft = hard×0.8"
+    },
+    "gpu_s_month": {
+     "used": {
+      "value": 0,
+      "unit": "gpu_s",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "usage_events",
+      "note": "2026-09 계량 0건"
+     },
+     "soft": 18000,
+     "hard": 21600,
+     "policy": "queue_low",
+     "note": "[추정 기반 초기값] · soft = hard×0.8"
+    },
+    "area_km2_month": {
+     "used": {
+      "value": 0,
+      "unit": "km2",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "usage_events",
+      "note": "2026-09 계량 0건"
+     },
+     "soft": 800,
+     "hard": 1000,
+     "policy": "notify",
+     "note": "[추정 기반 초기값] · soft = hard×0.8"
+    },
+    "concurrent_jobs": {
+     "used": {
+      "value": 0,
+      "unit": "count",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "jobs(state=running)"
+     },
+     "soft": 1,
+     "hard": 1,
+     "policy": "queue_low",
+     "note": "[추정 기반 초기값] · soft = hard×0.8"
+    },
+    "egress_gb_month": {
+     "used": {
+      "value": null,
+      "unit": "GB",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "게이트웨이 계량",
+      "note": "egress 계량 전 — Phase 0 게이트웨이 필요"
+     },
+     "soft": 24,
+     "hard": 30,
+     "policy": "notify",
+     "note": "[추정 기반 초기값] · soft = hard×0.8"
+    },
+    "vworld_calls_day": {
+     "used": {
+      "value": null,
+      "unit": "count",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "proxy 계량",
+      "note": "V-World 키 권한 반영 대기 — 호출 0 · 계량 전"
+     },
+     "soft": 2400,
+     "hard": 3000,
+     "policy": "reject",
+     "note": "[추정 기반 초기값] · soft = hard×0.8"
+    }
+   },
+   "isolation": {
+    "prefix": "tenants/gwangju-jeonnam/",
+    "rls": true,
+    "signed_tiles": true,
+    "raw_routes": 0
+   },
+   "forecast": {
+    "gpu_s_month": {
+     "exceed_month": null,
+     "basis": "estimate",
+     "source": "quota.estimator 선형"
+    }
+   }
+  },
+  {
+   "tenant_id": "kgz-agri",
+   "month": "2026-09",
+   "dims": {
+    "storage_gb": {
+     "used": {
+      "value": 0.0,
+      "unit": "GB",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:35.111+09:00",
+      "source": "du E:/Land-XI 플랫폼/02. 데이터\\results\\kgz-agri",
+      "note": "tenants/kgz-agri/ · results/kgz-agri/ 없음 — 0"
+     },
+     "soft": 160,
+     "hard": 200,
+     "policy": "notify",
+     "note": "[추정 기반 초기값] · soft = hard×0.8"
+    },
+    "gpu_s_month": {
+     "used": {
+      "value": 0,
+      "unit": "gpu_s",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "usage_events",
+      "note": "2026-09 계량 0건"
+     },
+     "soft": 14400,
+     "hard": 18000,
+     "policy": "queue_low",
+     "note": "[추정 기반 초기값] · soft = hard×0.8"
+    },
+    "area_km2_month": {
+     "used": {
+      "value": 0,
+      "unit": "km2",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "usage_events",
+      "note": "2026-09 계량 0건"
+     },
+     "soft": 4000,
+     "hard": 5000,
+     "policy": "notify",
+     "note": "[추정 기반 초기값] · soft = hard×0.8"
+    },
+    "concurrent_jobs": {
+     "used": {
+      "value": 0,
+      "unit": "count",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "jobs(state=running)"
+     },
+     "soft": 1,
+     "hard": 1,
+     "policy": "queue_low",
+     "note": "[추정 기반 초기값] · soft = hard×0.8"
+    },
+    "egress_gb_month": {
+     "used": {
+      "value": null,
+      "unit": "GB",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "게이트웨이 계량",
+      "note": "egress 계량 전 — Phase 0 게이트웨이 필요"
+     },
+     "soft": 24,
+     "hard": 30,
+     "policy": "notify",
+     "note": "[추정 기반 초기값] · soft = hard×0.8"
+    },
+    "vworld_calls_day": {
+     "used": {
+      "value": null,
+      "unit": "count",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "proxy 계량",
+      "note": "V-World 키 권한 반영 대기 — 호출 0 · 계량 전"
+     },
+     "soft": 0,
+     "hard": 0,
+     "policy": "reject",
+     "note": "[추정 기반 초기값] · soft = hard×0.8"
+    }
+   },
+   "isolation": {
+    "prefix": "tenants/kgz-agri/",
+    "rls": true,
+    "signed_tiles": true,
+    "raw_routes": 0
+   },
+   "forecast": {
+    "gpu_s_month": {
+     "exceed_month": null,
+     "basis": "estimate",
+     "source": "quota.estimator 선형"
+    }
+   }
+  },
+  {
+   "tenant_id": "kgz-land",
+   "month": "2026-09",
+   "dims": {
+    "storage_gb": {
+     "used": {
+      "value": 0.0,
+      "unit": "GB",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:35.111+09:00",
+      "source": "du E:/Land-XI 플랫폼/02. 데이터\\results\\kgz-land",
+      "note": "tenants/kgz-land/ · results/kgz-land/ 없음 — 0"
+     },
+     "soft": 160,
+     "hard": 200,
+     "policy": "notify",
+     "note": "[추정 기반 초기값] · soft = hard×0.8"
+    },
+    "gpu_s_month": {
+     "used": {
+      "value": 0,
+      "unit": "gpu_s",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "usage_events",
+      "note": "2026-09 계량 0건"
+     },
+     "soft": 14400,
+     "hard": 18000,
+     "policy": "queue_low",
+     "note": "[추정 기반 초기값] · soft = hard×0.8"
+    },
+    "area_km2_month": {
+     "used": {
+      "value": 0,
+      "unit": "km2",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "usage_events",
+      "note": "2026-09 계량 0건"
+     },
+     "soft": 4000,
+     "hard": 5000,
+     "policy": "notify",
+     "note": "[추정 기반 초기값] · soft = hard×0.8"
+    },
+    "concurrent_jobs": {
+     "used": {
+      "value": 0,
+      "unit": "count",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "jobs(state=running)"
+     },
+     "soft": 1,
+     "hard": 1,
+     "policy": "queue_low",
+     "note": "[추정 기반 초기값] · soft = hard×0.8"
+    },
+    "egress_gb_month": {
+     "used": {
+      "value": null,
+      "unit": "GB",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "게이트웨이 계량",
+      "note": "egress 계량 전 — Phase 0 게이트웨이 필요"
+     },
+     "soft": 24,
+     "hard": 30,
+     "policy": "notify",
+     "note": "[추정 기반 초기값] · soft = hard×0.8"
+    },
+    "vworld_calls_day": {
+     "used": {
+      "value": null,
+      "unit": "count",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "proxy 계량",
+      "note": "V-World 키 권한 반영 대기 — 호출 0 · 계량 전"
+     },
+     "soft": 0,
+     "hard": 0,
+     "policy": "reject",
+     "note": "[추정 기반 초기값] · soft = hard×0.8"
+    }
+   },
+   "isolation": {
+    "prefix": "tenants/kgz-land/",
+    "rls": true,
+    "signed_tiles": true,
+    "raw_routes": 0
+   },
+   "forecast": {
+    "gpu_s_month": {
+     "exceed_month": null,
+     "basis": "estimate",
+     "source": "quota.estimator 선형"
+    }
+   }
+  },
+  {
+   "tenant_id": "lx-demo",
+   "month": "2026-09",
+   "dims": {
+    "storage_gb": {
+     "used": {
+      "value": 0.0,
+      "unit": "GB",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:35.111+09:00",
+      "source": "du E:/Land-XI 플랫폼/02. 데이터\\results\\lx-demo",
+      "note": "tenants/lx-demo/ · results/lx-demo/ 없음 — 0"
+     },
+     "soft": null,
+     "hard": null,
+     "policy": "notify",
+     "note": "무제한 · 한도 없음"
+    },
+    "gpu_s_month": {
+     "used": {
+      "value": 0,
+      "unit": "gpu_s",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "usage_events",
+      "note": "2026-09 계량 0건"
+     },
+     "soft": 5760,
+     "hard": 7200,
+     "policy": "queue_low",
+     "note": "[추정 기반 초기값] · soft = hard×0.8"
+    },
+    "area_km2_month": {
+     "used": {
+      "value": 0,
+      "unit": "km2",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "usage_events",
+      "note": "2026-09 계량 0건"
+     },
+     "soft": null,
+     "hard": null,
+     "policy": "notify",
+     "note": "무제한 · 한도 없음"
+    },
+    "concurrent_jobs": {
+     "used": {
+      "value": 0,
+      "unit": "count",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "jobs(state=running)"
+     },
+     "soft": 1,
+     "hard": 1,
+     "policy": "queue_low",
+     "note": "[추정 기반 초기값] · soft = hard×0.8"
+    },
+    "egress_gb_month": {
+     "used": {
+      "value": null,
+      "unit": "GB",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "게이트웨이 계량",
+      "note": "egress 계량 전 — Phase 0 게이트웨이 필요"
+     },
+     "soft": null,
+     "hard": null,
+     "policy": "notify",
+     "note": "무제한 · 한도 없음"
+    },
+    "vworld_calls_day": {
+     "used": {
+      "value": null,
+      "unit": "count",
+      "basis": "measured",
+      "as_of": "2026-09-24T10:52:34.648+09:00",
+      "source": "proxy 계량",
+      "note": "V-World 키 권한 반영 대기 — 호출 0 · 계량 전"
+     },
+     "soft": null,
+     "hard": null,
+     "policy": "reject",
+     "note": "무제한 · 한도 없음"
+    }
+   },
+   "isolation": {
+    "prefix": "tenants/lx-demo/",
+    "rls": true,
+    "signed_tiles": true,
+    "raw_routes": 0
+   },
+   "forecast": {
+    "gpu_s_month": {
+     "exceed_month": null,
+     "basis": "estimate",
+     "source": "quota.estimator 선형"
+    }
+   }
+  }
+ ],
+ "as_of": "2026-09-24T10:52:34.648+09:00"
+}

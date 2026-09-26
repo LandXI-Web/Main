@@ -1,0 +1,405 @@
+{
+ "items": [
+  {
+   "id": "card-farm",
+   "name": "영농관리 행정서비스",
+   "scope": "local",
+   "status": "운영",
+   "versions": [
+    "card-farm@2.0",
+    "card-farm@2.1"
+   ],
+   "modules": {
+    "core": [
+     "mod-auth",
+     "mod-map",
+     "mod-result",
+     "mod-stats",
+     "mod-report",
+     "mod-feedback",
+     "mod-usage"
+    ],
+    "ext": [
+     {
+      "id": "mod-farm-parcel",
+      "name": "필지 대장 대조",
+      "build": "done"
+     },
+     {
+      "id": "mod-farm-cycle",
+      "name": "영농 주기 판정",
+      "build": "done"
+     },
+     {
+      "id": "mod-farm-house",
+      "name": "비닐하우스 동수 집계",
+      "build": "done"
+     },
+     {
+      "id": "mod-farm-subsidy",
+      "name": "직불금 대상 검토",
+      "build": "todo"
+     }
+    ]
+   }
+  },
+  {
+   "id": "card-living",
+   "name": "생활환경 위험요소 탐지 서비스",
+   "scope": "local",
+   "status": "운영",
+   "versions": [
+    "card-living@1.3"
+   ],
+   "modules": {
+    "core": [
+     "mod-auth",
+     "mod-map",
+     "mod-result",
+     "mod-stats",
+     "mod-report",
+     "mod-feedback",
+     "mod-usage"
+    ],
+    "ext": [
+     {
+      "id": "mod-living-pile",
+      "name": "폐기물 더미 규모 추정",
+      "build": "wip"
+     },
+     {
+      "id": "mod-living-burn",
+      "name": "소각 흔적 판별",
+      "build": "wip"
+     },
+     {
+      "id": "mod-living-civil",
+      "name": "민원 연계",
+      "build": "todo"
+     },
+     {
+      "id": "mod-living-patrol",
+      "name": "현장 점검 동선",
+      "build": "todo"
+     }
+    ]
+   }
+  },
+  {
+   "id": "card-road",
+   "name": "도로 안전관리 서비스",
+   "scope": "local",
+   "status": "운영",
+   "versions": [
+    "card-road@2.1"
+   ],
+   "modules": {
+    "core": [
+     "mod-auth",
+     "mod-map",
+     "mod-result",
+     "mod-stats",
+     "mod-report",
+     "mod-feedback",
+     "mod-usage"
+    ],
+    "ext": [
+     {
+      "id": "mod-road-seg",
+      "name": "노선 구간화",
+      "build": "done"
+     },
+     {
+      "id": "mod-road-grade",
+      "name": "포장 상태 등급",
+      "build": "done"
+     },
+     {
+      "id": "mod-road-multiview",
+      "name": "다시점 대조",
+      "build": "done"
+     },
+     {
+      "id": "mod-road-repair",
+      "name": "보수 우선순위",
+      "build": "todo"
+     }
+    ]
+   }
+  },
+  {
+   "id": "card-crowd",
+   "name": "인파관리 서비스",
+   "scope": "local",
+   "status": "준비 중",
+   "versions": [],
+   "modules": {
+    "core": [
+     "mod-auth",
+     "mod-map",
+     "mod-result",
+     "mod-stats",
+     "mod-report",
+     "mod-feedback",
+     "mod-usage"
+    ],
+    "ext": [
+     {
+      "id": "mod-crowd-person",
+      "name": "사람 탐지·계수",
+      "build": "todo"
+     },
+     {
+      "id": "mod-crowd-density",
+      "name": "인파 밀도 격자",
+      "build": "todo"
+     },
+     {
+      "id": "mod-crowd-flow",
+      "name": "교통 혼잡도",
+      "build": "todo"
+     }
+    ]
+   }
+  },
+  {
+   "id": "card-change",
+   "name": "국토 변화 탐지 서비스",
+   "scope": "local",
+   "status": "검토",
+   "versions": [
+    "card-change@1.0"
+   ],
+   "modules": {
+    "core": [
+     "mod-auth",
+     "mod-map",
+     "mod-result",
+     "mod-stats",
+     "mod-report",
+     "mod-feedback",
+     "mod-usage"
+    ],
+    "ext": [
+     {
+      "id": "mod-change-pair",
+      "name": "시점 쌍 정합",
+      "build": "done"
+     },
+     {
+      "id": "mod-change-class",
+      "name": "변화 유형 분류",
+      "build": "done"
+     },
+     {
+      "id": "mod-change-illegal",
+      "name": "무허가 대조",
+      "build": "todo"
+     }
+    ]
+   }
+  },
+  {
+   "id": "card-marine",
+   "name": "해양쓰레기 실태조사 서비스",
+   "scope": "local",
+   "status": "운영",
+   "versions": [
+    "card-marine@1.2"
+   ],
+   "modules": {
+    "core": [
+     "mod-auth",
+     "mod-map",
+     "mod-result",
+     "mod-stats",
+     "mod-report",
+     "mod-feedback",
+     "mod-usage"
+    ],
+    "ext": [
+     {
+      "id": "mod-marine-type",
+      "name": "쓰레기 종류 분류",
+      "build": "done"
+     },
+     {
+      "id": "mod-marine-shore",
+      "name": "해안선 구간화",
+      "build": "wip"
+     },
+     {
+      "id": "mod-marine-collect",
+      "name": "수거 계획 산출",
+      "build": "todo"
+     }
+    ]
+   }
+  },
+  {
+   "id": "card-forest",
+   "name": "산림·탄소 관리 서비스",
+   "scope": "local",
+   "status": "준비 중",
+   "versions": [],
+   "modules": {
+    "core": [
+     "mod-auth",
+     "mod-map",
+     "mod-result",
+     "mod-stats",
+     "mod-report",
+     "mod-feedback",
+     "mod-usage"
+    ],
+    "ext": []
+   }
+  },
+  {
+   "id": "card-global-farm",
+   "name": "농지 이용 실태 분석 (해외)",
+   "scope": "global",
+   "status": "준비 중",
+   "versions": [
+    "card-global-farm@0.1"
+   ],
+   "modules": {
+    "core": [
+     "mod-auth",
+     "mod-map",
+     "mod-result",
+     "mod-stats",
+     "mod-report",
+     "mod-feedback",
+     "mod-usage"
+    ],
+    "ext": [
+     {
+      "id": "mod-farm-parcel",
+      "name": "필지 대장 대조",
+      "build": "done"
+     },
+     {
+      "id": "mod-farm-cycle",
+      "name": "영농 주기 판정",
+      "build": "done"
+     },
+     {
+      "id": "mod-farm-house",
+      "name": "비닐하우스 동수 집계",
+      "build": "done"
+     },
+     {
+      "id": "mod-farm-subsidy",
+      "name": "직불금 대상 검토",
+      "build": "todo"
+     }
+    ]
+   }
+  },
+  {
+   "id": "card-global-disaster",
+   "name": "재해 피해 판독 (해외)",
+   "scope": "global",
+   "status": "준비 중",
+   "versions": [
+    "card-global-disaster@0.1"
+   ],
+   "modules": {
+    "core": [
+     "mod-auth",
+     "mod-map",
+     "mod-result",
+     "mod-stats",
+     "mod-report",
+     "mod-feedback",
+     "mod-usage"
+    ],
+    "ext": [
+     {
+      "id": "mod-change-pair",
+      "name": "시점 쌍 정합",
+      "build": "done"
+     },
+     {
+      "id": "mod-change-class",
+      "name": "변화 유형 분류",
+      "build": "done"
+     },
+     {
+      "id": "mod-change-illegal",
+      "name": "무허가 대조",
+      "build": "todo"
+     }
+    ]
+   }
+  }
+ ],
+ "card_versions": [
+  {
+   "id": "card-farm@2.0",
+   "card_id": "card-farm",
+   "version": "v2.0",
+   "model_ids": [
+    "aerial25/best"
+   ],
+   "changelog": "2023 25cm 항공 · 4클래스 판독"
+  },
+  {
+   "id": "card-farm@2.1",
+   "card_id": "card-farm",
+   "version": "v2.1",
+   "model_ids": [
+    "namwon/cultivate_uncultivate/train"
+   ],
+   "changelog": "2025 드론 · 경작/비경작"
+  },
+  {
+   "id": "card-living@1.3",
+   "card_id": "card-living",
+   "version": "v1.3",
+   "model_ids": [],
+   "changelog": "이력"
+  },
+  {
+   "id": "card-road@2.1",
+   "card_id": "card-road",
+   "version": "v2.1",
+   "model_ids": [],
+   "changelog": "이력"
+  },
+  {
+   "id": "card-change@1.0",
+   "card_id": "card-change",
+   "version": "v1.0",
+   "model_ids": [
+    "unsupervised-change"
+   ],
+   "changelog": "A04 비지도 변화"
+  },
+  {
+   "id": "card-marine@1.2",
+   "card_id": "card-marine",
+   "version": "v1.2",
+   "model_ids": [],
+   "changelog": "이력"
+  },
+  {
+   "id": "card-global-farm@0.1",
+   "card_id": "card-global-farm",
+   "version": "v0.1",
+   "model_ids": [
+    "index/ndvi_pc"
+   ],
+   "changelog": "draft"
+  },
+  {
+   "id": "card-global-disaster@0.1",
+   "card_id": "card-global-disaster",
+   "version": "v0.1",
+   "model_ids": [],
+   "changelog": "EMS 판독 열람 · draft"
+  }
+ ],
+ "as_of": "2026-09-24T10:52:34.648+09:00"
+}

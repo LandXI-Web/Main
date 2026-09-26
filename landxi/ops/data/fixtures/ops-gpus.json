@@ -1,0 +1,150 @@
+{
+ "node": "node-tr3995wx",
+ "at": "2026-09-24T10:52:34.648+09:00",
+ "gpus": [
+  {
+   "index": 0,
+   "name": "NVIDIA RTX A6000",
+   "util_pct": {
+    "value": 0,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:34.648+09:00",
+    "source": "nvidia-smi utilization.gpu"
+   },
+   "mem_used_mib": {
+    "value": 24524,
+    "unit": "MiB",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:34.648+09:00",
+    "source": "nvidia-smi memory.used"
+   },
+   "mem_total_mib": {
+    "value": 49140,
+    "unit": "MiB",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:34.648+09:00",
+    "source": "nvidia-smi memory.total"
+   },
+   "temp_c": {
+    "value": 64,
+    "unit": "°C",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:34.648+09:00",
+    "source": "nvidia-smi temperature.gpu"
+   },
+   "power_w": {
+    "value": 19.73,
+    "unit": "W",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:34.648+09:00",
+    "source": "nvidia-smi power.draw"
+   },
+   "external": [
+    {
+     "pid": 147832,
+     "name": "python.exe",
+     "mem_mib": null,
+     "note": "WDDM: 프로세스별 VRAM N/A"
+    }
+   ],
+   "external_used_mib": {
+    "value": 24524,
+    "unit": "MiB",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:34.648+09:00",
+    "source": "memory.used − 워커 자기 보고",
+    "note": "워커 미기동 시 = memory.used"
+   },
+   "worker": "a6000-0",
+   "job_id": null,
+   "worker_vram": null,
+   "driver": "522.06",
+   "mode": "WDDM"
+  },
+  {
+   "index": 1,
+   "name": "NVIDIA RTX A6000",
+   "util_pct": {
+    "value": 0,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:34.648+09:00",
+    "source": "nvidia-smi utilization.gpu"
+   },
+   "mem_used_mib": {
+    "value": 24524,
+    "unit": "MiB",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:34.648+09:00",
+    "source": "nvidia-smi memory.used"
+   },
+   "mem_total_mib": {
+    "value": 49140,
+    "unit": "MiB",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:34.648+09:00",
+    "source": "nvidia-smi memory.total"
+   },
+   "temp_c": {
+    "value": 64,
+    "unit": "°C",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:34.648+09:00",
+    "source": "nvidia-smi temperature.gpu"
+   },
+   "power_w": {
+    "value": 38.45,
+    "unit": "W",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:34.648+09:00",
+    "source": "nvidia-smi power.draw"
+   },
+   "external": [
+    {
+     "pid": 146332,
+     "name": "llama-server.exe",
+     "mem_mib": null,
+     "note": "WDDM: 프로세스별 VRAM N/A"
+    },
+    {
+     "pid": 108656,
+     "name": "llama-server.exe",
+     "mem_mib": null,
+     "note": "WDDM: 프로세스별 VRAM N/A"
+    },
+    {
+     "pid": 128956,
+     "name": "llama-server.exe",
+     "mem_mib": null,
+     "note": "WDDM: 프로세스별 VRAM N/A"
+    },
+    {
+     "pid": 140012,
+     "name": "llama-server.exe",
+     "mem_mib": null,
+     "note": "WDDM: 프로세스별 VRAM N/A"
+    },
+    {
+     "pid": 145992,
+     "name": "python.exe",
+     "mem_mib": null,
+     "note": "WDDM: 프로세스별 VRAM N/A"
+    }
+   ],
+   "external_used_mib": {
+    "value": 24524,
+    "unit": "MiB",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:34.648+09:00",
+    "source": "memory.used − 워커 자기 보고",
+    "note": "워커 미기동 시 = memory.used"
+   },
+   "worker": "a6000-1",
+   "job_id": null,
+   "worker_vram": null,
+   "driver": "522.06",
+   "mode": "WDDM"
+  }
+ ]
+}

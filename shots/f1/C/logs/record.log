@@ -1,0 +1,23 @@
+[ok] GPU 두 장 한가 · 8.036s 대기
+[1.1s] login.ready
+[6.2s] flip.start
+[7.9s] flip.done
+[9.5s] overview.grown
+[11.5s] infra.ready
+[12.6s] j1.submit job_MUICGOU894D6DE80BF
+[12.7s] queue.row
+[15.0s] leader
+[26.2s] j1.done
+[29.8s] util.fall
+[30.3s] tenants.ready
+[30.3s] j2.submit job_MUICH2GH74D109F7B5
+[32.9s] slider
+[34.8s] quota.saved
+[37.4s] deploys.ready
+[40.7s] rollback
+[40.7s] snapshot.76215
+[44.1s] port.form
+[45.3s] port.post
+[48.3s] port.arrived
+[50.5s] end
+video shots\f1\C\f1c.webm

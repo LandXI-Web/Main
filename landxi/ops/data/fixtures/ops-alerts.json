@@ -1,0 +1,46 @@
+{
+ "items": [],
+ "last_check": "2026-09-24T10:52:34.648+09:00",
+ "rules": [
+  {
+   "rule": "gpu_temp_gt_85_5m",
+   "threshold": 85,
+   "caution_at": 68,
+   "unit": "°C",
+   "basis": "[목표]"
+  },
+  {
+   "rule": "vram_gt_95_5m",
+   "threshold": 95,
+   "caution_at": 76,
+   "unit": "%",
+   "basis": "[목표]"
+  },
+  {
+   "rule": "worker_heartbeat_miss_30s",
+   "threshold": 30,
+   "unit": "s",
+   "basis": "[목표]"
+  },
+  {
+   "rule": "queue_p95_gt_600s",
+   "threshold": 600,
+   "caution_at": 480,
+   "unit": "s",
+   "basis": "[목표]"
+  },
+  {
+   "rule": "disk_e_free_lt_200gb",
+   "threshold": 200,
+   "caution_at": 250,
+   "unit": "GB",
+   "basis": "[목표]"
+  },
+  {
+   "rule": "vworld_calls_day_80pct",
+   "threshold": 80,
+   "unit": "%",
+   "basis": "[목표]"
+  }
+ ]
+}

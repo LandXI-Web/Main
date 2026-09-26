@@ -1,0 +1,262 @@
+{
+ "items": [
+  {
+   "id": "namwon/cultivate_uncultivate/train",
+   "family": "yolo11x-seg",
+   "task": "seg",
+   "classes": [
+    "경작지",
+    "비경작지"
+   ],
+   "input": [
+    "ortho"
+   ],
+   "gsd_trained_m": 0.02,
+   "tile_size": 1024,
+   "metrics": {
+    "mask_mAP50": {
+     "value": 0.95082,
+     "unit": "ratio",
+     "basis": "recorded",
+     "as_of": "2026-01",
+     "source": "models/namwon/cultivate_uncultivate/train/results.csv",
+     "note": "best epoch 102 · 245 epoch 기록"
+    }
+   },
+   "perf": null,
+   "status": "registered",
+   "card_url": "/files/models/namwon/cultivate_uncultivate/train/card.json",
+   "weights_uri": "E:\\namwon\\cultivate_uncultivate\\runs\\segment\\train\\weights\\best.pt",
+   "image": null,
+   "infer_shape": [
+    1024,
+    1024
+   ]
+  },
+  {
+   "id": "namwon/Vinyl_house/train2",
+   "family": "yolo11x-seg",
+   "task": "seg",
+   "classes": [
+    "비닐하우스_단동",
+    "비닐하우스_다동"
+   ],
+   "input": [
+    "ortho"
+   ],
+   "gsd_trained_m": 0.02,
+   "tile_size": 1024,
+   "metrics": {
+    "mask_mAP50": {
+     "value": 0.93808,
+     "unit": "ratio",
+     "basis": "recorded",
+     "as_of": "2026-01",
+     "source": "models/namwon/Vinyl_house/train2/results.csv",
+     "note": "best epoch 89 · 243 epoch 기록"
+    }
+   },
+   "perf": null,
+   "status": "registered",
+   "card_url": "/files/models/namwon/Vinyl_house/train2/card.json",
+   "weights_uri": "E:\\namwon\\Vinyl_house\\runs\\segment\\train2\\weights\\best.pt",
+   "image": null,
+   "infer_shape": [
+    1024,
+    1024
+   ]
+  },
+  {
+   "id": "namwon/Vinyl_house/train",
+   "family": "yolo11x-seg",
+   "task": "seg",
+   "classes": [
+    "비닐하우스_단동",
+    "비닐하우스_다동"
+   ],
+   "input": [
+    "ortho"
+   ],
+   "gsd_trained_m": 0.02,
+   "tile_size": 1024,
+   "metrics": {
+    "mask_mAP50": {
+     "value": 0.94515,
+     "unit": "ratio",
+     "basis": "recorded",
+     "as_of": "2026-01",
+     "source": "models/namwon/Vinyl_house/train/results.csv",
+     "note": "best epoch 152 · 252 epoch 기록"
+    }
+   },
+   "perf": null,
+   "status": "registered",
+   "card_url": "/files/models/namwon/Vinyl_house/train/card.json",
+   "weights_uri": "E:\\namwon\\Vinyl_house\\runs\\segment\\train\\weights\\best.pt",
+   "image": null,
+   "infer_shape": [
+    1024,
+    1024
+   ]
+  },
+  {
+   "id": "namwon/Silage/train",
+   "family": "yolo11x-seg",
+   "task": "seg",
+   "classes": [
+    "곤포 사일리지"
+   ],
+   "input": [
+    "ortho"
+   ],
+   "gsd_trained_m": 0.02,
+   "tile_size": 1024,
+   "metrics": {
+    "mask_mAP50": {
+     "value": 0.96912,
+     "unit": "ratio",
+     "basis": "recorded",
+     "as_of": "2026-01",
+     "source": "models/namwon/Silage/train/results.csv",
+     "note": "best epoch 303 · 738 epoch 기록"
+    }
+   },
+   "perf": null,
+   "status": "registered",
+   "card_url": "/files/models/namwon/Silage/train/card.json",
+   "weights_uri": "E:\\namwon\\Silage\\runs\\segment\\train\\weights\\best.pt",
+   "image": null,
+   "infer_shape": [
+    1024,
+    1024
+   ]
+  },
+  {
+   "id": "aerial25/best",
+   "family": "yolo11-seg",
+   "task": "seg",
+   "classes": [
+    "건물",
+    "주차장",
+    "경작지",
+    "비닐하우스"
+   ],
+   "input": [
+    "ortho"
+   ],
+   "gsd_trained_m": 0.25,
+   "tile_size": 1024,
+   "metrics": {
+    "mask_mAP50": {
+     "value": 0.88592,
+     "unit": "ratio",
+     "basis": "recorded",
+     "as_of": "2026-05-16",
+     "source": "ckpt train_metrics",
+     "note": "results.csv 없음 — 체크포인트 내장 지표"
+    }
+   },
+   "perf": {
+    "chips_per_s": {
+     "value": 26,
+     "unit": "chips_per_s",
+     "basis": "measured",
+     "as_of": "2026-09-24",
+     "source": "pipeline-run.md §3 P4",
+     "note": "A6000 · batch 16 · 1024칩 · 읽기 포함 · 외부 점유 23,396 MiB 동시"
+    },
+    "vram_mib": {
+     "value": null,
+     "unit": "MiB",
+     "basis": "measured",
+     "as_of": "2026-09-24T10:52:34.648+09:00",
+     "source": "P4 로그",
+     "note": "WDDM — 프로세스별 VRAM N/A"
+    },
+    "bench_at": "2026-09-24"
+   },
+   "status": "registered",
+   "card_url": "/files/models/aerial25/card.json",
+   "weights_uri": "E:\\best.pt",
+   "image": null,
+   "infer_shape": [
+    1024,
+    1024
+   ]
+  },
+  {
+   "id": "car_v2_obb",
+   "family": "yolo11-obb",
+   "task": "obb",
+   "classes": [
+    "vehicle"
+   ],
+   "input": [
+    "ortho"
+   ],
+   "gsd_trained_m": 0.0136,
+   "tile_size": 1024,
+   "metrics": {
+    "mAP50": {
+     "value": 0.992,
+     "unit": "ratio",
+     "basis": "recorded",
+     "as_of": "2026-06",
+     "source": "ASSET-LEDGER B05"
+    }
+   },
+   "perf": null,
+   "status": "registered",
+   "card_url": null,
+   "weights_uri": "E:\\drone_runs\\car_v2_obb\\run\\weights\\best.pt",
+   "image": null,
+   "infer_shape": [
+    1024,
+    1024
+   ]
+  },
+  {
+   "id": "unsupervised-change",
+   "family": "change-index",
+   "task": "index",
+   "classes": [
+    "변화"
+   ],
+   "input": [
+    "ortho",
+    "ortho"
+   ],
+   "gsd_trained_m": null,
+   "tile_size": null,
+   "metrics": {},
+   "perf": null,
+   "status": "registered",
+   "card_url": null,
+   "weights_uri": null,
+   "image": null,
+   "infer_shape": null
+  },
+  {
+   "id": "index/ndvi_pc",
+   "family": "index",
+   "task": "index",
+   "classes": [
+    "ndvi"
+   ],
+   "input": [
+    "satellite"
+   ],
+   "gsd_trained_m": 10,
+   "tile_size": null,
+   "metrics": {},
+   "perf": null,
+   "status": "registered",
+   "card_url": null,
+   "weights_uri": null,
+   "image": null,
+   "infer_shape": null
+  }
+ ],
+ "total": 8,
+ "as_of": "2026-09-24T10:52:34.648+09:00"
+}

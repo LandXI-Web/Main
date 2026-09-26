@@ -1,0 +1,2 @@
+tests\e2e\f1c-contract.spec.mjs:57:1 › 폴러 단독 실행(--stdout --once) — GpuSample · /ops/storage 형
+[gpu_poller 21:09:38] 시작 node=node-tr3995wx interval=2.0s nvsmi=C:\Windows\System32\DriverStore\FileRepository\nv_dispwi.inf_amd64_0214c710c2d6337b\nvidia-smi.exe pdh=on

@@ -1,0 +1,107 @@
+{
+ "items": [
+  {
+   "model_id": "namwon/cultivate_uncultivate/train",
+   "resident_on": [],
+   "vram_mib": {
+    "value": null,
+    "unit": "MiB",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:34.648+09:00",
+    "source": "worker:{id}:vram",
+    "note": "상주 워커 없음"
+   },
+   "perf": null,
+   "pinned": false
+  },
+  {
+   "model_id": "namwon/Vinyl_house/train2",
+   "resident_on": [],
+   "vram_mib": {
+    "value": null,
+    "unit": "MiB",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:34.648+09:00",
+    "source": "worker:{id}:vram",
+    "note": "상주 워커 없음"
+   },
+   "perf": null,
+   "pinned": false
+  },
+  {
+   "model_id": "namwon/Vinyl_house/train",
+   "resident_on": [],
+   "vram_mib": {
+    "value": null,
+    "unit": "MiB",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:34.648+09:00",
+    "source": "worker:{id}:vram",
+    "note": "상주 워커 없음"
+   },
+   "perf": null,
+   "pinned": false
+  },
+  {
+   "model_id": "namwon/Silage/train",
+   "resident_on": [],
+   "vram_mib": {
+    "value": null,
+    "unit": "MiB",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:34.648+09:00",
+    "source": "worker:{id}:vram",
+    "note": "상주 워커 없음"
+   },
+   "perf": null,
+   "pinned": false
+  },
+  {
+   "model_id": "aerial25/best",
+   "resident_on": [],
+   "vram_mib": {
+    "value": null,
+    "unit": "MiB",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:34.648+09:00",
+    "source": "worker:{id}:vram",
+    "note": "상주 워커 없음"
+   },
+   "perf": {
+    "chips_per_s": {
+     "value": 26,
+     "unit": "chips_per_s",
+     "basis": "measured",
+     "as_of": "2026-09-24",
+     "source": "pipeline-run.md §3 P4",
+     "note": "A6000 · batch 16 · 1024칩 · 읽기 포함 · 외부 점유 23,396 MiB 동시"
+    },
+    "vram_mib": {
+     "value": null,
+     "unit": "MiB",
+     "basis": "measured",
+     "as_of": "2026-09-24T10:52:34.648+09:00",
+     "source": "P4 로그",
+     "note": "WDDM — 프로세스별 VRAM N/A"
+    },
+    "bench_at": "2026-09-24"
+   },
+   "pinned": false
+  },
+  {
+   "model_id": "car_v2_obb",
+   "resident_on": [],
+   "vram_mib": {
+    "value": null,
+    "unit": "MiB",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:52:34.648+09:00",
+    "source": "worker:{id}:vram",
+    "note": "상주 워커 없음"
+   },
+   "perf": null,
+   "pinned": false
+  }
+ ],
+ "as_of": "2026-09-24T10:52:34.648+09:00"
+}

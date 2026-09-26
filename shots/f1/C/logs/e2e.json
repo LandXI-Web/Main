@@ -1,0 +1,1165 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "E:\\Land-XI 플랫폼\\01. 디자인\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "tests/e2e/f1c-",
+      "--reporter=json",
+      "--workers=1"
+    ],
+    "configFile": "E:\\Land-XI 플랫폼\\01. 디자인\\playwright.config.mjs",
+    "rootDir": "E:/Land-XI 플랫폼/01. 디자인/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "E:/Land-XI 플랫폼/01. 디자인/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "E:/Land-XI 플랫폼/01. 디자인/tests/e2e",
+        "testIgnore": [
+          "**/_legacy/**"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 1,
+    "webServer": {
+      "command": "node tools/serve.mjs",
+      "url": "http://localhost:4173/landxi/home.html",
+      "reuseExistingServer": true
+    }
+  },
+  "suites": [
+    {
+      "title": "f1c-contract.spec.mjs",
+      "file": "f1c-contract.spec.mjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "픽스처 키 집합 ⊇ 계약 예시(F1-B contract 본문 · optional 제외)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 27,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:09:37.361Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "078141aa6626d077ebb4-415c431a72320946cdf3",
+          "file": "f1c-contract.spec.mjs",
+          "line": 19,
+          "column": 1
+        },
+        {
+          "title": "봉투 — GPU·스토리지·쿼터·배포 규모의 숫자는 전부 봉투(basis 여섯 중 하나)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 44,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:09:37.424Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "078141aa6626d077ebb4-d2a7f201393d544e578b",
+          "file": "f1c-contract.spec.mjs",
+          "line": 43,
+          "column": 1
+        },
+        {
+          "title": "폴러 단독 실행(--stdout --once) — GpuSample · /ops/storage 형",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2480,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "[gpu_poller 21:09:38] 시작 node=node-tr3995wx interval=2.0s nvsmi=C:\\Windows\\System32\\DriverStore\\FileRepository\\nv_dispwi.inf_amd64_0214c710c2d6337b\\nvidia-smi.exe pdh=on\r\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:09:37.482Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "078141aa6626d077ebb4-2ef27458cc32ed11c312",
+          "file": "f1c-contract.spec.mjs",
+          "line": 57,
+          "column": 1
+        },
+        {
+          "title": "Redis 키 형식 = 계약 §5.3 (ops:gpu:{node}:{idx} hash · ops:gpu stream · node:{id} TTL ≤ 30 · ops:storage hash)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 345,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:09:39.976Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "078141aa6626d077ebb4-27c7e1df688e6f7355da",
+          "file": "f1c-contract.spec.mjs",
+          "line": 75,
+          "column": 1
+        },
+        {
+          "title": "리플레이 ops-sample.ndjson — 2s × 30 · gpu.sample · util 0 고정 · basis demo(지어낸 부하 0)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 51,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:09:40.332Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "078141aa6626d077ebb4-eb256af1197ebed49203",
+          "file": "f1c-contract.spec.mjs",
+          "line": 86,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "f1c-deploys-rollback-port.spec.mjs",
+      "file": "f1c-deploys-rollback-port.spec.mjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "매트릭스 9×6 · 공통 모듈 7 잠금 · 모델 교체 지표 나란히(aerial25 = 체크포인트 내장 지표)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1163,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:09:40.406Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4e8d9f4e48a9b1560778-22f117ea313ee14cceef",
+          "file": "f1c-deploys-rollback-port.spec.mjs",
+          "line": 21,
+          "column": 1
+        },
+        {
+          "title": "R-1 롤백: dp-nw-farm-25 v2.1 → v2.0 · 지도 점 앰버 380 · 계보 되감김(aerial25) · 스냅샷 2,098 → 76,215",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2978,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:09:42.192Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4e8d9f4e48a9b1560778-777322fddabc7c36d94b",
+          "file": "f1c-deploys-rollback-port.spec.mjs",
+          "line": 33,
+          "column": 1
+        },
+        {
+          "title": "P-1 이식: card-change × kgz-land → POST /deploys → draft 셀 S1 도착 · 결과 0 · 첫 분석 대기 · 경계 미확보",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3897,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:09:45.183Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4e8d9f4e48a9b1560778-1c67cbef77d536fbba72",
+          "file": "f1c-deploys-rollback-port.spec.mjs",
+          "line": 52,
+          "column": 1
+        },
+        {
+          "title": "approval_required: canary → ga 는 승인 1건 뒤에만(409 → 승인 → ga)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1989,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:09:49.091Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4e8d9f4e48a9b1560778-99e45faf165cad62a1d3",
+          "file": "f1c-deploys-rollback-port.spec.mjs",
+          "line": 66,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "f1c-infra-live.spec.mjs",
+      "file": "f1c-infra-live.spec.mjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "노드 카드: GPU 2행 링 · 외부 점유 띠(WDDM) · 온도·전력 봉투 · A100 점선 2 · join-token 실동작",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 559,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:09:51.125Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "3dbe99e5a0ccae964835-75c05cbe6c8d4cdbeb55",
+          "file": "f1c-infra-live.spec.mjs",
+          "line": 23,
+          "column": 1
+        },
+        {
+          "title": "값이 바뀔 때만 현상 — 숫자 DOM 갱신은 모두 실제 값 변화(무변화 재그리기 0)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7443,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:09:51.716Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "3dbe99e5a0ccae964835-224024e684a94af556cc",
+          "file": "f1c-infra-live.spec.mjs",
+          "line": 43,
+          "column": 1
+        },
+        {
+          "title": "큐 행 → 취소(사유) · 재큐 · 우선순위 실동작 · 배정 순간 리더선 380 · 스윔레인 블록",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2503,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:09:59.170Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "3dbe99e5a0ccae964835-de0a7bb19ecf9fd03227",
+          "file": "f1c-infra-live.spec.mjs",
+          "line": 59,
+          "column": 1
+        },
+        {
+          "title": "전력 규칙 — 동시 고부하 GPU ≤ 1: 실행 중이면 두 번째 claim 은 보류(power_budget) · 끝나면 풀린다 · 칩 표시",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 466,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:10:01.684Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "3dbe99e5a0ccae964835-2c1dd7fa4a87d7f9b44b",
+          "file": "f1c-infra-live.spec.mjs",
+          "line": 86,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "f1c-login-flip.spec.mjs",
+      "file": "f1c-login-flip.spec.mjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "종이 무대: 플랫폼 소개 · 관제 요약 한 줄(실측 시각) · 얼굴판 미니맵 · 봉투",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 575,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:10:02.188Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "763905f7d8181620fc2d-b479c234065d340704cb",
+          "file": "f1c-login-flip.spec.mjs",
+          "line": 14,
+          "column": 1
+        },
+        {
+          "title": "로그인 → 반전 1600±60 · 전환 프레임 12장 상이 쌍 ≥ 8 · index 로 replaceState · 같은 지도",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3967,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:10:02.787Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "763905f7d8181620fc2d-e7941ddee0a146351db9",
+          "file": "f1c-login-flip.spec.mjs",
+          "line": 29,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "f1c-motion-law.spec.mjs",
+      "file": "f1c-motion-law.spec.mjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "소스 스캔: CSS 지속값·JS tween/duration 이 사다리 밖이면 실패 · conic-gradient/파이 0",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 16,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:10:06.787Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d90ccb036988d712c8a4-1f9cd61c57c7d0786b1a",
+          "file": "f1c-motion-law.spec.mjs",
+          "line": 23,
+          "column": 1
+        },
+        {
+          "title": "런타임 법전 — index: getAnimations 사다리 · 14px 바닥 · 앰버 규칙 · 잉크 분량",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [
+                {
+                  "type": "ink-mix",
+                  "description": "index ink 94.6% · white 1.3% · color 0.8%"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3183,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:10:06.830Z",
+                  "annotations": [
+                    {
+                      "type": "ink-mix",
+                      "description": "index ink 94.6% · white 1.3% · color 0.8%"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d90ccb036988d712c8a4-1f2a477da3f2f0dd89f5",
+          "file": "f1c-motion-law.spec.mjs",
+          "line": 44,
+          "column": 3
+        },
+        {
+          "title": "런타임 법전 — infra: getAnimations 사다리 · 14px 바닥 · 앰버 규칙 · 잉크 분량",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [
+                {
+                  "type": "ink-mix",
+                  "description": "infra ink 93.6% · white 2.6% · color 1.3%"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3096,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:10:10.022Z",
+                  "annotations": [
+                    {
+                      "type": "ink-mix",
+                      "description": "infra ink 93.6% · white 2.6% · color 1.3%"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d90ccb036988d712c8a4-ad8f6c1f5d559669885d",
+          "file": "f1c-motion-law.spec.mjs",
+          "line": 44,
+          "column": 3
+        },
+        {
+          "title": "런타임 법전 — tenants: getAnimations 사다리 · 14px 바닥 · 앰버 규칙 · 잉크 분량",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [
+                {
+                  "type": "ink-mix",
+                  "description": "tenants ink 92.9% · white 2.2% · color 1.1%"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3287,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:10:13.128Z",
+                  "annotations": [
+                    {
+                      "type": "ink-mix",
+                      "description": "tenants ink 92.9% · white 2.2% · color 1.1%"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d90ccb036988d712c8a4-13edfbee1010fb2fab52",
+          "file": "f1c-motion-law.spec.mjs",
+          "line": 44,
+          "column": 3
+        },
+        {
+          "title": "런타임 법전 — deploys: getAnimations 사다리 · 14px 바닥 · 앰버 규칙 · 잉크 분량",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [
+                {
+                  "type": "ink-mix",
+                  "description": "deploys ink 93.8% · white 2.2% · color 0.9%"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3504,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:10:16.425Z",
+                  "annotations": [
+                    {
+                      "type": "ink-mix",
+                      "description": "deploys ink 93.8% · white 2.2% · color 0.9%"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d90ccb036988d712c8a4-68cf60728a93c6d7c9c4",
+          "file": "f1c-motion-law.spec.mjs",
+          "line": 44,
+          "column": 3
+        },
+        {
+          "title": "off 모드: 다섯 화면 콘솔 오류 0 · 시연 표기 · 쓰기 버튼 disabled + 이유",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6523,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:10:19.942Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d90ccb036988d712c8a4-62fc86e14518f3def63c",
+          "file": "f1c-motion-law.spec.mjs",
+          "line": 88,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "f1c-origin-guard.spec.mjs",
+      "file": "f1c-origin-guard.spec.mjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "4173 에서 관제 index 를 열면 boot.js 가 안내 화면으로 바꾼다(서버는 200 이어도)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 271,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:10:26.501Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c2496b05790fb3f4b698-4edd122423fc418001f2",
+          "file": "f1c-origin-guard.spec.mjs",
+          "line": 18,
+          "column": 1
+        },
+        {
+          "title": "serve-ops 허용 접두 밖은 404 · 안은 200 · Range 206",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 23,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:10:26.796Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c2496b05790fb3f4b698-4ccd7a3b59ba671bf7d6",
+          "file": "f1c-origin-guard.spec.mjs",
+          "line": 25,
+          "column": 1
+        },
+        {
+          "title": "/events/ops — 8702 Origin + admin 만(4173 Origin · staff · 토큰 없음 = 403)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 16,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:10:26.828Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c2496b05790fb3f4b698-a6e1bab8279e05815be4",
+          "file": "f1c-origin-guard.spec.mjs",
+          "line": 33,
+          "column": 1
+        },
+        {
+          "title": "staff 로그인은 관제 진입 불가 — 문구 한 줄 · 세션 저장 안 함",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 695,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:10:26.852Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c2496b05790fb3f4b698-eabeaff2d2f9677f9801",
+          "file": "f1c-origin-guard.spec.mjs",
+          "line": 43,
+          "column": 1
+        },
+        {
+          "title": "4173 origin 의 세션은 8702 에 보이지 않는다(localStorage 분리)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 545,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:10:27.560Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c2496b05790fb3f4b698-e64b427ddc6caf180b4a",
+          "file": "f1c-origin-guard.spec.mjs",
+          "line": 53,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "f1c-tenants-quota.spec.mjs",
+      "file": "f1c-tenants-quota.spec.mjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "6기관 · 링 6 · 격리 4 · 한도 [추정 기반 초기값] · 사용 봉투",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 365,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:10:28.132Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e70b1debbf86e6f2a700-25fd618c885907b117ba",
+          "file": "f1c-tenants-quota.spec.mjs",
+          "line": 20,
+          "column": 1
+        },
+        {
+          "title": "슬라이더 → 링 여유 구간 500 · hard 를 월말 예측 아래로 → 초과 예상 [추정] 고스트 → 사유 없이 저장 거부 → 사유와 저장 → approvals 행",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 520,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:10:28.524Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e70b1debbf86e6f2a700-163b5389af52e58f3e1b",
+          "file": "f1c-tenants-quota.spec.mjs",
+          "line": 35,
+          "column": 1
+        },
+        {
+          "title": "usage.delta → lx gpu_s 막대·숫자가 따라온다",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2201,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-26T12:10:29.055Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e70b1debbf86e6f2a700-7d09a72f5f75cba00ee9",
+          "file": "f1c-tenants-quota.spec.mjs",
+          "line": 53,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-09-26T12:09:36.497Z",
+    "duration": 55321.489,
+    "expected": 29,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
