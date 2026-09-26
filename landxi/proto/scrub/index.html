@@ -4,12 +4,12 @@
 <meta name="description" content="스크롤이 필름의 재생 위치를 고른다. 14개 레그, 71.2초, 하나의 카메라. 모형 지구본 → 구름 → 드론 → 남원 농지 → 비닐하우스 → 여수 → 울주 산림 · 불법소각 → 한반도 전체 → 다시 모형 지구본, 그리고 지구본이 어둠 속으로 물러나며 뜨는 Land-XI CI.">
 <link rel="icon" href="../../assets/images/favicon_landxi.png">
 
-<link rel="stylesheet" href="../vendor/maplibre/maplibre-gl.css">
 <link rel="stylesheet" href="../fonts-system.css">
 <link rel="stylesheet" href="../system.css">
 <link rel="stylesheet" href="../vendor/scrollcraft/scrollcraft.css">
 <link rel="stylesheet" href="scrub.css">
-<script src="../vendor/maplibre/maplibre-gl.js"></script>
+<!-- MapLibre(0.94 MB)·V-World 키(env.js)는 첫 화면에 싣지 않는다 — 남원 인계 판 2.4vh 앞에서
+     scrub.js ensureMap() 이 건다(2026-09-26 전송 예산, 감사 G-15). -->
 <script src="../vendor/scrollcraft/scrollcraft.js"></script>
 <script type="module" src="scrub.js"></script>
 </head><body class="lx sb" data-colorway="light">
@@ -61,101 +61,101 @@
     <!-- 01 모형 지구본 · 위성 · 5.08s (AI, A01→A02) -->
     <div data-sc-segment data-sc-w="1.108" data-sc-linger="0.20" data-sc-waypoint="궤도">
       <img class="sc-world__poster" src="../../assets/proto/film/legs/w01.webp" alt="" decoding="async" fetchpriority="high">
-      <video data-sc-src="../../assets/proto/film/legs/w01.mp4"
-             data-sc-src-mobile="../../assets/proto/film/legs/w01-m.mp4"></video>
+      <video data-sb-src="../../assets/proto/film/legs/w01.mp4"
+             data-sb-src-mobile="../../assets/proto/film/legs/w01-m.mp4"></video>
     </div>
 
     <!-- 02 하강 · 구름 · 항공기 · 5.08s (AI, A02→A03) -->
     <div data-sc-segment data-sc-w="1.108" data-sc-linger="0.22" data-sc-waypoint="성층운">
-      <img class="sc-world__poster" src="../../assets/proto/film/legs/w02.webp" alt="" decoding="async">
-      <video data-sc-src="../../assets/proto/film/legs/w02.mp4"
-             data-sc-src-mobile="../../assets/proto/film/legs/w02-m.mp4"></video>
+      <img class="sc-world__poster" data-sb-poster="../../assets/proto/film/legs/w02.webp" alt="" decoding="async">
+      <video data-sb-src="../../assets/proto/film/legs/w02.mp4"
+             data-sb-src-mobile="../../assets/proto/film/legs/w02-m.mp4"></video>
     </div>
 
     <!-- 03 드론 이동 · 5.08s (AI, A03→A04) -->
     <div data-sc-segment data-sc-w="1.108" data-sc-linger="0.22" data-sc-waypoint="한반도">
-      <img class="sc-world__poster" src="../../assets/proto/film/legs/w03.webp" alt="" decoding="async">
-      <video data-sc-src="../../assets/proto/film/legs/w03.mp4"
-             data-sc-src-mobile="../../assets/proto/film/legs/w03-m.mp4"></video>
+      <img class="sc-world__poster" data-sb-poster="../../assets/proto/film/legs/w03.webp" alt="" decoding="async">
+      <video data-sb-src="../../assets/proto/film/legs/w03.mp4"
+             data-sb-src-mobile="../../assets/proto/film/legs/w03-m.mp4"></video>
     </div>
 
     <!-- 04 남원 평야 · 농지이용 · 5.08s (AI, A04→A05) -->
     <div data-sc-segment data-sc-w="1.108" data-sc-linger="0.22" data-sc-waypoint="남원">
-      <img class="sc-world__poster" src="../../assets/proto/film/legs/w04.webp" alt="" decoding="async">
-      <video data-sc-src="../../assets/proto/film/legs/w04.mp4"
-             data-sc-src-mobile="../../assets/proto/film/legs/w04-m.mp4"></video>
+      <img class="sc-world__poster" data-sb-poster="../../assets/proto/film/legs/w04.webp" alt="" decoding="async">
+      <video data-sb-src="../../assets/proto/film/legs/w04.mp4"
+             data-sb-src-mobile="../../assets/proto/film/legs/w04-m.mp4"></video>
     </div>
 
     <!-- 05 비닐하우스 실태 · 5.08s (AI, A05→A06) — 이 레그 끝에서 실지도가 이어받는다(인계 #1) -->
     <div data-sc-segment data-sc-w="1.108" data-sc-linger="0.30" data-sc-waypoint="남원">
-      <img class="sc-world__poster" src="../../assets/proto/film/legs/w05.webp" alt="" decoding="async">
-      <video data-sc-src="../../assets/proto/film/legs/w05.mp4"
-             data-sc-src-mobile="../../assets/proto/film/legs/w05-m.mp4"></video>
+      <img class="sc-world__poster" data-sb-poster="../../assets/proto/film/legs/w05.webp" alt="" decoding="async">
+      <video data-sb-src="../../assets/proto/film/legs/w05.mp4"
+             data-sb-src-mobile="../../assets/proto/film/legs/w05-m.mp4"></video>
     </div>
 
     <!-- 06 상승 · 남원 상공 · 5.08s (AI, A06→A06b) — 수직 상승, 룰러는 아직 `남원` -->
     <div data-sc-segment data-sc-w="1.108" data-sc-linger="0.22" data-sc-waypoint="남원">
-      <img class="sc-world__poster" src="../../assets/proto/film/legs/w06.webp" alt="" decoding="async">
-      <video data-sc-src="../../assets/proto/film/legs/w06.mp4"
-             data-sc-src-mobile="../../assets/proto/film/legs/w06-m.mp4"></video>
+      <img class="sc-world__poster" data-sb-poster="../../assets/proto/film/legs/w06.webp" alt="" decoding="async">
+      <video data-sb-src="../../assets/proto/film/legs/w06.mp4"
+             data-sb-src-mobile="../../assets/proto/film/legs/w06-m.mp4"></video>
     </div>
 
     <!-- 06b 지구본 이동 → 여수 · 5.08s (AI, A06b→A07) — 룰러 `여수` 점등 -->
     <div data-sc-segment data-sc-w="1.108" data-sc-linger="0.22" data-sc-waypoint="여수">
-      <img class="sc-world__poster" src="../../assets/proto/film/legs/w06b.webp" alt="" decoding="async">
-      <video data-sc-src="../../assets/proto/film/legs/w06b.mp4"
-             data-sc-src-mobile="../../assets/proto/film/legs/w06b-m.mp4"></video>
+      <img class="sc-world__poster" data-sb-poster="../../assets/proto/film/legs/w06b.webp" alt="" decoding="async">
+      <video data-sb-src="../../assets/proto/film/legs/w06b.mp4"
+             data-sb-src-mobile="../../assets/proto/film/legs/w06b-m.mp4"></video>
     </div>
 
     <!-- 07 여수 해안 · 해양쓰레기 · 5.08s (AI, A07→A08 rev.3f) — 국동항 방파제 발치 모래톱까지 다이브(0.3 km). 인계 #2 는 이 끝 카메라 -->
     <div data-sc-segment data-sc-w="1.108" data-sc-linger="0.30" data-sc-waypoint="여수">
-      <img class="sc-world__poster" src="../../assets/proto/film/legs/w07.webp" alt="" decoding="async">
-      <video data-sc-src="../../assets/proto/film/legs/w07.mp4"
-             data-sc-src-mobile="../../assets/proto/film/legs/w07-m.mp4"></video>
+      <img class="sc-world__poster" data-sb-poster="../../assets/proto/film/legs/w07.webp" alt="" decoding="async">
+      <video data-sb-src="../../assets/proto/film/legs/w07.mp4"
+             data-sb-src-mobile="../../assets/proto/film/legs/w07-m.mp4"></video>
     </div>
 
     <!-- 08 상승 · 여수 상공 · 5.08s (AI, A08→A08b) — 방파제 발치에서 수직 상승, 룰러는 아직 `여수`. 여수 인계 #2 는 이 레그 씸 1/4 에서 닫힌다 -->
     <div data-sc-segment data-sc-w="1.108" data-sc-linger="0.22" data-sc-waypoint="여수">
-      <img class="sc-world__poster" src="../../assets/proto/film/legs/w08.webp" alt="" decoding="async">
-      <video data-sc-src="../../assets/proto/film/legs/w08.mp4"
-             data-sc-src-mobile="../../assets/proto/film/legs/w08-m.mp4"></video>
+      <img class="sc-world__poster" data-sb-poster="../../assets/proto/film/legs/w08.webp" alt="" decoding="async">
+      <video data-sb-src="../../assets/proto/film/legs/w08.mp4"
+             data-sb-src-mobile="../../assets/proto/film/legs/w08-m.mp4"></video>
     </div>
 
     <!-- 08b 지구본 이동 → 울주 · 5.08s (AI, A08b→A09 rev.3h) — 룰러 `울주` 점등 -->
     <div data-sc-segment data-sc-w="1.108" data-sc-linger="0.22" data-sc-waypoint="울주">
-      <img class="sc-world__poster" src="../../assets/proto/film/legs/w08b.webp" alt="" decoding="async">
-      <video data-sc-src="../../assets/proto/film/legs/w08b.mp4"
-             data-sc-src-mobile="../../assets/proto/film/legs/w08b-m.mp4"></video>
+      <img class="sc-world__poster" data-sb-poster="../../assets/proto/film/legs/w08b.webp" alt="" decoding="async">
+      <video data-sb-src="../../assets/proto/film/legs/w08b.mp4"
+             data-sb-src-mobile="../../assets/proto/film/legs/w08b-m.mp4"></video>
     </div>
 
     <!-- 09 산림식생 · 급경사지 · 5.08s (AI, A09→A10) — 능선 활강, 절개면 -->
     <div data-sc-segment data-sc-w="1.108" data-sc-linger="0.22" data-sc-waypoint="울주">
-      <img class="sc-world__poster" src="../../assets/proto/film/legs/w09.webp" alt="" decoding="async">
-      <video data-sc-src="../../assets/proto/film/legs/w09.mp4"
-             data-sc-src-mobile="../../assets/proto/film/legs/w09-m.mp4"></video>
+      <img class="sc-world__poster" data-sb-poster="../../assets/proto/film/legs/w09.webp" alt="" decoding="async">
+      <video data-sb-src="../../assets/proto/film/legs/w09.mp4"
+             data-sb-src-mobile="../../assets/proto/film/legs/w09-m.mp4"></video>
     </div>
 
     <!-- 10 불법소각 · 5.08s (AI, A10→A11) — 산자락 공터 접근 -->
     <div data-sc-segment data-sc-w="1.108" data-sc-linger="0.22" data-sc-waypoint="울주">
-      <img class="sc-world__poster" src="../../assets/proto/film/legs/w10.webp" alt="" decoding="async">
-      <video data-sc-src="../../assets/proto/film/legs/w10.mp4"
-             data-sc-src-mobile="../../assets/proto/film/legs/w10-m.mp4"></video>
+      <img class="sc-world__poster" data-sb-poster="../../assets/proto/film/legs/w10.webp" alt="" decoding="async">
+      <video data-sb-src="../../assets/proto/film/legs/w10.mp4"
+             data-sb-src-mobile="../../assets/proto/film/legs/w10-m.mp4"></video>
     </div>
 
     <!-- 11 줌아웃 · 국토 변화 · 5.08s (AI, A11→A12) — 급상승, 한반도 전체. 룰러 `국토` 점등 -->
     <div data-sc-segment data-sc-w="1.108" data-sc-linger="0.22" data-sc-waypoint="국토">
-      <img class="sc-world__poster" src="../../assets/proto/film/legs/w11.webp" alt="" decoding="async">
-      <video data-sc-src="../../assets/proto/film/legs/w11.mp4"
-             data-sc-src-mobile="../../assets/proto/film/legs/w11-m.mp4"></video>
+      <img class="sc-world__poster" data-sb-poster="../../assets/proto/film/legs/w11.webp" alt="" decoding="async">
+      <video data-sb-src="../../assets/proto/film/legs/w11.mp4"
+             data-sb-src-mobile="../../assets/proto/film/legs/w11-m.mp4"></video>
     </div>
 
     <!-- 12 귀환 · 5.08s (AI, A12→A01) — 2026-09-01 마운트. 카메라가 계속 물러나 한반도가 모형 지구본으로 말리고
          어두운 작업대 판이 아래에서 올라온다. 끝 프레임 = A01 = 레그 01 의 첫 프레임(루프 폐합).
          룰러는 아직 `국토` — 지점이 늘지 않는다. 브랜드 마감은 이 A01 프레임 위에서 선다(ending.js FINALE_MODE='globe'). -->
     <div data-sc-segment data-sc-w="1.108" data-sc-linger="0.30" data-sc-waypoint="국토">
-      <img class="sc-world__poster" src="../../assets/proto/film/legs/w12.webp" alt="" decoding="async">
-      <video data-sc-src="../../assets/proto/film/legs/w12.mp4"
-             data-sc-src-mobile="../../assets/proto/film/legs/w12-m.mp4"></video>
+      <img class="sc-world__poster" data-sb-poster="../../assets/proto/film/legs/w12.webp" alt="" decoding="async">
+      <video data-sb-src="../../assets/proto/film/legs/w12.mp4"
+             data-sb-src-mobile="../../assets/proto/film/legs/w12-m.mp4"></video>
     </div>
 
     <!-- 인계(handoff) — 필름 프레임과 같은 카메라로 살아 있는 지도가 이어받는다.

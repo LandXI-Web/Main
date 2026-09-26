@@ -15,6 +15,7 @@
    ========================================================================= */
 
 import { createEnding, dzFor as endDzFor, LEAD as END_LEAD, SPAN as END_SPAN, PAD as END_PAD } from './ending.js';
+import { createFilmLoader } from './loader.js';
 
 const MANIFEST = new URL('../../assets/proto/film/legs/manifest.json', import.meta.url).href;
 const PROPS = new URL('../../assets/proto/film/legs/props/props.json', import.meta.url).href;
@@ -54,6 +55,7 @@ const el = {
 };
 
 let END = null;          // 브랜드 마감 판 (ending.js)
+let LOADER = null;       // 필름 로더 (loader.js) — 어느 레그를 언제 받는가
 let M = null;            // manifest
 let cum = [];            // leg 별 [c0, c1] (vh)
 let total = 0;           // Σ weight (vh)
@@ -213,8 +215,41 @@ function paint() {
      #3 국토  필름 최종 프레임      — manifest.finale, A12 홀드(레그 11 끝) 위 국토 실지도. 브랜드 마감이 이 판의 줌으로 수축을 잰다
    지도는 각자 자기 구간 1.2vh 앞에서만 만든다. 크로스페이드는 1프레임(≈40ms). */
 const PLATES = [];
+
+/* ── 지도 라이브러리 지연 로드 (2026-09-26 전송 예산) ─────────────────────────
+   MapLibre(JS 0.94 MB + CSS 0.07 MB)는 남원 인계 판 하나를 위해서만 쓴다. 그 판은 트랙
+   4.4vh 뒤에 있으므로 첫 화면에 실을 이유가 없다 — 판 구간 2.4vh 앞에서 건다.
+   V-World 는 공용 해석기(js/sources.js resolveVWorld)를 쓴다: 키(.env.local → env.js)가
+   살아 있으면 발급형 WMTS, 아니면 키 없는 xdworld. 둘 다 위성영상이다 — 판에 흰 바탕은 없다. */
+let MAP_READY = null;     // Promise<{sat, minzoom, maxzoom, keyed}>
+let VW = null;            // 해석된 V-World 소스
+const addScript = src => new Promise(res => {
+  const s = document.createElement('script'); s.src = src; s.async = true;
+  s.onload = () => res(true); s.onerror = () => res(false);
+  document.head.append(s);
+});
+function ensureMap() {
+  if (MAP_READY) return MAP_READY;
+  const base = new URL('../', import.meta.url).href;     // .../landxi/proto/
+  const css = document.createElement('link');
+  css.rel = 'stylesheet'; css.href = base + 'vendor/maplibre/maplibre-gl.css';
+  // 캐스케이드 순서를 예전 그대로 둔다 — maplibre-gl.css 의 `.maplibregl-map{position:relative}` 가
+  // scrub.css 의 `.sb-plate__map{position:absolute; inset:0}` 보다 **뒤에** 오면 판 높이가 0 이 되어
+  // 켜져 있어도 보이지 않는다. 첫 스타일시트 앞에 끼운다(원래 <head> 맨 앞에 있던 자리).
+  const first = document.head.querySelector('link[rel="stylesheet"]');
+  if (first) first.before(css); else document.head.append(css);
+  MAP_READY = Promise.all([
+    window.maplibregl ? true : addScript(base + 'vendor/maplibre/maplibre-gl.js'),
+    ('VWORLD_KEY' in window) ? true : addScript(base + 'env.js'),
+  ]).then(() => import('../js/sources.js'))
+    .then(m => m.resolveVWorld())
+    .catch(() => ({ sat: 'https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg', minzoom: 5, maxzoom: 19, keyed: false }))
+    .then(v => { VW = v; handoff(trackVh()); return v; });
+  return MAP_READY;
+}
+
 function makePlate(spec, container, host, style, warmZoom) {
-  if (reduce || !window.maplibregl) return null;
+  if (reduce || !window.maplibregl || !VW) return null;
   const map = new maplibregl.Map({
     container,
     center: spec.center, zoom: spec.zoom, pitch: spec.pitch, bearing: spec.bearing,
@@ -248,8 +283,9 @@ function satStyle(detUrl, color) {
     sources: {
       vsat: {
         type: 'raster',
-        tiles: ['https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg'],
-        tileSize: 256, minzoom: 5, maxzoom: 19, attribution: 'V-World 위성영상',
+        // 키가 살아 있으면 발급형 WMTS(resolveVWorld), 아니면 키 없는 xdworld — 둘 다 V-World 위성영상.
+        tiles: [(VW && VW.sat) || 'https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg'],
+        tileSize: 256, minzoom: VW ? VW.minzoom : 5, maxzoom: VW ? VW.maxzoom : 19, attribution: 'V-World 위성영상',
       },
       ...(detUrl ? { det: { type: 'geojson', data: detUrl } } : {}),
     },
@@ -284,8 +320,13 @@ function satStyle(detUrl, color) {
 let BAND_N = [0, 0], BAND_Y = [0, 0], BAND_K = [0, 0];
 function handoff(t) {
   if (reduce) return;
+  // 지도 라이브러리는 첫 판 2.4vh 앞에서 받기 시작한다(판 생성은 1.2vh 앞 — 그 사이에 도착한다).
+  // 판 구간을 **지나쳐** 도착한 독자(End 키·항로 점프·되감기 전)는 판을 볼 일이 없다 — 받지 않는다.
+  const nearN = (pad) => t > BAND_N[0] - pad && t < BAND_N[1] + 1.2;
+  if (!MAP_READY && nearN(2.4)) ensureMap();
+  if (!VW) return;
   // #1 남원 — 레그 05 끝(manifest.handoff.legIndex)
-  if (!PLATES[0] && t > BAND_N[0] - 1.2) {
+  if (!PLATES[0] && nearN(1.2)) {
     PLATES[0] = makePlate(M.handoff, el.mapN, el.plateN,
       satStyle(M.handoff.detections, '#00D3A7'));
   }
@@ -487,6 +528,8 @@ const boot = async () => {
 
   // 엔진 마운트. 이 한 줄 아래로는 재생헤드·크로스페이드·로딩이 전부 엔진 소관이다.
   window.ScrollCraft.mount(document);
+  // 필름 로더 — 엔진이 받을 레그를 고른다(의도 전 0 · 현재+진행 방향 1~2 · 훑고 지나간 레그 0).
+  LOADER = createFilmLoader({ root: el.root, reduce, cum, trackVh });
   guardPaint();
   END.layout();
 
@@ -545,6 +588,9 @@ const boot = async () => {
         zoom: r.map.getZoom(), pitch: r.map.getPitch(), bearing: r.map.getBearing() };
     },
     handoffActive: () => PLATES.some(r => r && r.on),
+    loader: () => LOADER.state(),           // 전송 예산 — 붙인 레그·포스터·의도·속도
+    // 키는 싣지 않는다 — 어떤 소스를 골랐는지만(keyed = 발급형 WMTS, 아니면 키 없는 xdworld).
+    mapLib: () => ({ requested: !!MAP_READY, loaded: !!window.maplibregl, keyed: !!(VW && VW.keyed) }),
     prop: id => {                            // 소품 상태(테스트·촬영용). 레그 밖이면 on:false
       const R = PROP_RECS.find(r => r.spec.id === id);
       return R ? { on: R.on, leg: R.spec.leg, ...(R.state || {}) } : null;

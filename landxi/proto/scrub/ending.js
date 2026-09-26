@@ -99,6 +99,8 @@ export function createEnding(ctx) {
 const STEPS = [['wm', 0.22], ['tag', 0.40], ['lx', 0.58], ['cta', 0.74]];
 const RECEDE = 0.34;
 const SCALE_END = 0.78, DIM_END = 0.34, FADE_END = 0.22;
+// 물러남 끝의 마스크 — 타원(closest-side) 안쪽 58 % 까지 완전, 변(100 %)에서 0. 지구본 반경은 무대 높이의 ≈36 %.
+const MASK_IN_END = 58;
 
 function createGlobeEnding(ctx) {
   const root = document.documentElement;
@@ -137,6 +139,8 @@ function createGlobeEnding(ctx) {
         root.style.setProperty('--sb-globe-b', '1');
         root.style.setProperty('--sb-globe-o', '1');
         root.style.setProperty('--sb-floor', '0');
+        root.style.setProperty('--sb-mask-in', '100%');
+        root.style.setProperty('--sb-mask-edge', '1');
       }
     }
     root.style.setProperty('--sb-e', e.toFixed(5));
@@ -150,6 +154,12 @@ function createGlobeEnding(ctx) {
     root.style.setProperty('--sb-globe-b', (1 - (1 - DIM_END) * u).toFixed(4));
     root.style.setProperty('--sb-globe-o', (1 - (1 - FADE_END) * u).toFixed(4));
     root.style.setProperty('--sb-floor', u.toFixed(4));
+    /* ①' 가장자리 — 무대가 줄어들면 필름 판의 사각 경계가 어둠 위에 밝은 직사각형으로 남았다
+       (감사 G-14, 1440 에서 x≈157–1283 · y≈100–800). 같은 u 로 타원 마스크를 조여 판의 네 변을
+       바닥색(#08090B) 속으로 녹인다. 가운데(지구본)는 그대로 두고 가장자리만 먹는다 —
+       u=0 에서는 마스크가 완전 불투명이라 필름 마지막 프레임은 한 픽셀도 바뀌지 않는다. */
+    root.style.setProperty('--sb-mask-in', (100 - (100 - MASK_IN_END) * u).toFixed(2) + '%');
+    root.style.setProperty('--sb-mask-edge', Math.pow(1 - u, 3).toFixed(4));   // 변은 안쪽보다 먼저 닫힌다
 
     /* ② CI — 문턱을 넘으면 클래스가 붙고 CSS 전이가 제 속도(500/750/1000/1250 ms)로 뜬다. */
     for (const st of STEPS) {
@@ -182,7 +192,8 @@ function createGlobeEnding(ctx) {
         lead: clamp01((scrollY - y0) / (LEAD * vh)), e, on,
         stage: e <= 0 ? 'lead' : e < STEPS[0][1] ? 'recede' : e < STEPS[2][1] ? 'wordmark' : 'lockup',
         steps: { wm: STEPS[0][1], tag: STEPS[1][1], lx: STEPS[2][1], cta: STEPS[3][1] },
-        globe: { scale: num('globe-s'), brightness: num('globe-b'), opacity: num('globe-o'), floor: num('floor') },
+        globe: { scale: num('globe-s'), brightness: num('globe-b'), opacity: num('globe-o'), floor: num('floor'),
+          maskIn: parseFloat(getComputedStyle(root).getPropertyValue('--sb-mask-in')) || 100, maskEdge: num('mask-edge') },
         wordmark: { opacity: wmo, widthPct: r.width / innerWidth, liveWidthPct: r.width / innerWidth,
           topPct: r.top / vh, bottomPct: r.bottom / vh },
         tagline: tag,

@@ -9,7 +9,8 @@ import { test, expect } from '@playwright/test';
  *      → 씸에서 페이지 바탕(검정)이 드러나지 않는다.
  *   4) 재생헤드는 lerp 0.12 + 데드밴드 8/20ms + 시크 병합으로 움직인다.
  *   5) 비행 페이스는 하나 — 레그별 vh/필름초 편차 ≤ 6%.
- *   6) 지연 로딩은 ±1.6vh. 멀리 있는 레그는 아직 받지 않는다.
+ *   6) 지연 로딩 — 엔진 반경 ±1.6vh 안에서도 필름 로더(loader.js)가 고른 레그만 받는다(2026-09-26 전송 예산:
+ *      의도 전 클립 0 · 현재 + 진행 방향 1~2 레그 · 지나친 레그 0 · 첫 4초 ≤ 3 MB · 390 은 -m 변형).
  *   7) 인계 판은 manifest 가 적어 둔 카메라 그대로 뜬다.
  *   8) 브랜드 마감(2.00vh, v2 — 2026-09-01)은 두 박자다: 필름 마지막 프레임(A01 · 모형 지구본)이
  *      어둠 속으로 물러나고(무대 스케일·밝기·불투명 감쇠 + 바닥 닫힘), 그 위에 **실제 브랜드 벡터**
@@ -180,6 +181,20 @@ test('스크럽 비행 — 하나의 카메라, 검은 프레임 없는 14개 �
   expect(plateN.center[1]).toBeCloseTo(M.handoff.center[1], 3);
   expect(plateN.zoom).toBeCloseTo(M.handoff.zoom, 2);
   expect(plateN.bearing).toBeCloseTo(M.handoff.bearing, 1);
+  /* 켜졌다는 상태만이 아니라 **보인다** — 판이 무대를 가득 채운다(2026-09-26).
+     MapLibre CSS 를 지연 로드하면서 `.maplibregl-map{position:relative}` 가 판의 absolute 를 이겨
+     높이 0 인 채로 on:true 가 된 적이 있다(상태 검사는 통과, 화면에는 필름만). */
+  const plateBox = await page.evaluate(() => {
+    const m = document.getElementById('sb-map-namwon'), r = m.getBoundingClientRect();
+    const cv = m.querySelector('canvas');
+    return { h: r.height, w: r.width, cv: cv ? cv.getBoundingClientRect().height : 0,
+      op: +getComputedStyle(document.getElementById('sb-plate-namwon')).opacity,
+      keyed: window.__scrub.mapLib().keyed };
+  });
+  expect(plateBox.h, '판 높이').toBeGreaterThan(VH * 0.9);
+  expect(plateBox.w, '판 폭').toBeGreaterThan(1440 * 0.9);
+  expect(plateBox.cv, '지도 캔버스 높이').toBeGreaterThan(VH * 0.9);
+  expect(plateBox.op).toBe(1);
 
   /* 여수 판은 **띄우지 않는다**(2026-09-21).
      발주자: "이 이미지를 찾아서 삭제해야 될 것 같은데 필름 영상에서?"
@@ -276,6 +291,46 @@ test('브랜드 마감 v2 — 지구본이 물러나고 CI 3종이 순서대로 
   expect(g2.scale).toBeCloseTo(0.78, 2);      // 무대가 실제로 22 % 물러났다
   expect(g2.opacity).toBeCloseTo(0.22, 2);
   expect(g2.floor).toBeCloseTo(1, 2);
+  /* ①' 가장자리 마스크(2026-09-26, 감사 G-14) — 물러남과 같은 u 로 조여 필름 판의 사각 경계를 지운다.
+     필름이 끝나는 자리(u=0)에서는 완전 불투명이다 — 마지막 프레임은 한 픽셀도 바뀌지 않는다. */
+  expect(lead.globe.maskIn).toBe(100);
+  expect(g0.maskIn).toBeGreaterThan(g1.maskIn);
+  expect(g1.maskIn).toBeGreaterThan(g2.maskIn);
+  expect(g2.maskIn).toBeCloseTo(58, 0);
+  expect(g0.maskEdge).toBeGreaterThan(g2.maskEdge);
+  expect(g2.maskEdge).toBeLessThan(0.01);
+  /* 픽셀로 본다 — 물러나는 동안 무대 둘레에 흰 테·회색 액자·밝은 사각 경계가 없다.
+     예전: e 0.02 에 흰 테 1–2px, e 0.20 에 흰 종이 + 검정 바닥이 섞인 회색 판(≈ #5F6166),
+           e 0.40 에 x≈157–1283 · y≈100–800 사각 경계. 바닥은 이제 처음부터 필름 캔버스색(#08090B)이다. */
+  for (const e of [0.02, 0.10, 0.20, 0.40]) {
+    const st = await at(e, 500);
+    const png = (await page.screenshot()).toString('base64');
+    const edge = await page.evaluate(async ({ png, s }) => {
+      const img = new Image(); img.src = 'data:image/png;base64,' + png; await img.decode();
+      const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+      const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(img, 0, 0);
+      const W = img.width, H = img.height;
+      const lum = (x, y) => { const d = g.getImageData(x, y, 1, 1).data; return 0.2126 * d[0] + 0.7152 * d[1] + 0.0722 * d[2]; };
+      // 무대 바로 바깥 둘레(무대 스케일 s 로 계산) — 바닥색이어야 한다
+      const x0 = Math.floor(W * (1 - s) / 2) - 3, y0 = Math.floor(H * (1 - s) / 2) - 3;
+      let outMax = 0;
+      if (x0 > 0 && y0 > 0) for (let k = 0; k < 40; k++) {
+        const y = Math.round(H * 0.15 + (H * 0.7 * k) / 39), x = Math.round(W * 0.15 + (W * 0.7 * k) / 39);
+        outMax = Math.max(outMax, lum(x0, y), lum(W - 1 - x0, y), lum(x, y0), lum(x, H - 1 - y0));
+      }
+      // 무대 왼쪽 경계를 가로지르는 계단 — 경계 안팎 3–4px 평균 차
+      let step = 0;
+      const xi = Math.floor(W * (1 - s) / 2);
+      if (xi > 5) for (let y = Math.round(H * 0.3); y < H * 0.7; y += 12) {
+        const a = (lum(xi - 4, y) + lum(xi - 3, y)) / 2, b = (lum(xi + 3, y) + lum(xi + 4, y)) / 2;
+        step = Math.max(step, Math.abs(b - a));
+      }
+      return { outMax, step };
+    }, { png, s: st.globe.scale });
+    expect(edge.outMax, `e ${e} 무대 바깥이 밝다(흰 테·회색 판)`).toBeLessThan(16);
+    expect(edge.step, `e ${e} 사각 경계가 보인다`).toBeLessThan(6);
+  }
+
 
   /* 3. ② 스태거 — 워드마크가 먼저, 태그라인이 다음, 락업이 그다음, CTA 가 마지막. */
   const marks = [];
@@ -395,26 +450,95 @@ test('마감 박자 — 스크롤 끝에서 Land-XI CI 3종이 보인다', async
   expect(errors, '콘솔 오류').toEqual([]);
 });
 
-/* 지연 로딩은 "아직 한 번도 안 간 곳"에서만 관찰된다. 트랙을 훑고 난 페이지에서는
-   모든 레그가 이미 반경 안에 들어왔던 적이 있으므로, 새 페이지에서 따로 본다. */
-test('지연 로딩 ±1.6vh — 멀리 있는 레그는 아직 받지 않는다', async ({ page }) => {
-  const errors = await boot(page);
-  const reqs = [];
-  page.on('request', (r) => { const m = /\/legs\/(w\d\d[a-z]?)(-m)?\.mp4$/.exec(r.url()); if (m) reqs.push(m[1]); });
+/* ── 전송 예산 (2026-09-26, 감사 G-15) ─────────────────────────────────────
+   이전: 엔진이 트랙 ±1.6vh 안의 레그를 무조건 받아, 첫 화면 4초에 11.5 MB(w01 + w02 + MapLibre
+         + 포스터 14장), End 키 한 번에 15.3 MB(w01 · w02 · w11 · w12)가 나갔다.
+   지금: 필름 로더(scrub/loader.js)가 엔진에 넘길 레그를 고른다. 엔진은 그대로다 —
+         마크업은 주소를 data-sb-src 에 숨겨 두고, 로더가 data-sc-src 를 **한 번** 붙인다.
+     ① 의도(휠·터치·키·포인터·스크롤) 전에는 클립 0 · 포스터 1장 · 지도 라이브러리 0 → 첫 4초 ≤ 3 MB
+     ② 손을 대면 현재 + 진행 방향 다음 레그(절반을 넘으면 그다음까지)
+     ③ 훑고 지나간 레그(점프·플링)는 0 바이트, 판 구간을 지나쳐 도착하면 MapLibre 도 0 바이트
+     ④ 좁은 화면·터치는 저해상 변형(-m, 960×540)만
+   지연 로딩은 "아직 한 번도 안 간 곳"에서만 관찰된다 — 새 페이지에서 본다. */
+async function fresh(page) {
+  const errors = [], mp4 = [], rows = [];
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
+  page.on('request', (r) => { const m = /\/legs\/(w\d\d[a-z]?(?:-m)?)\.mp4$/.exec(r.url()); if (m) mp4.push(m[1]); });
+  const t0 = Date.now();
+  page.on('requestfinished', async (r) => {
+    try { const z = await r.sizes(); rows.push({ t: Date.now() - t0, b: z.responseBodySize + z.responseHeadersSize }); } catch { /* 닫힌 페이지 */ }
+  });
+  await page.goto(URL, { waitUntil: 'load' });
+  await page.waitForFunction('window.__scrub && window.__scrub.ready === true', null, { timeout: 60000 });
+  await page.waitForTimeout(Math.max(0, 4000 - (Date.now() - t0)));
+  return { errors, mp4, bytes: (ms) => rows.filter((r) => r.t <= ms).reduce((a, r) => a + r.b, 0) };
+}
+const MB = (b) => (b / 1048576).toFixed(2) + ' MB';
 
-  await seek(page, 0);
+test('전송 예산 — 첫 화면 ≤ 3 MB, 손을 대면 현재+다음 레그, 지나친 레그는 받지 않는다', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: VH });
+  const F = await fresh(page);
+
+  /* ① 첫 화면 — 손대기 전 4초 */
+  const s0 = await page.evaluate(() => ({ L: window.__scrub.loader(), map: window.__scrub.mapLib() }));
+  expect(F.mp4, '의도 전에는 mp4 를 받지 않는다').toEqual([]);
+  expect(s0.L.intent).toBe(false);
+  expect(s0.L.armed).toEqual([]);
+  expect(s0.L.posters, '포스터는 레그 01(= 필름 첫 프레임) 한 장').toEqual([0]);
+  expect(s0.map.requested, 'MapLibre 는 첫 화면에 없다').toBe(false);
+  expect(await page.$eval('.sc-world__poster', (e) => e.naturalWidth > 0), '히어로 포스터가 서 있다').toBe(true);
+  const b4 = F.bytes(4000);
+  expect(b4, `첫 4초 ${MB(b4)}`).toBeLessThanOrEqual(3 * 1048576);
+
+  /* ② 휠 한 번 — 현재(01) + 다음(02). 멀리 있는 레그는 아직이다. */
+  await page.mouse.move(720, 450);
+  await page.mouse.wheel(0, 240);
+  await page.waitForFunction(() => window.__scrub.loader().armed.length >= 2, null, { timeout: 5000 });
+  await page.waitForFunction(() => !!document.querySelector('[data-sc-segment] video').src, null, { timeout: 15000 });
+  const s1 = await page.evaluate(() => window.__scrub.loader());
+  expect(s1.engaged).toBe(true);
+  expect([...s1.armed].sort((a, b) => a - b)).toEqual([0, 1]);
+  expect([...F.mp4].sort()).toEqual(['w01', 'w02']);
   const early = await stageState(page);
   expect(early[0].srcSet, '레그 01 은 받았다').toBe(true);
-  // 15.512vh 트랙에서 마지막 레그 12(14.40vh~, index 13)은 1.6vh 반경 밖 — 아직 받지 않았다.
-  // (2026-09-01: 레그 12 마운트로 마지막 인덱스가 12 → 13, 감시 대상이 w11 → w12 로 바뀌었다.)
   expect(early[13].srcSet, '레그 12 는 아직이다').toBe(false);
-  expect(reqs).not.toContain('w12');
 
-  await seek(page, 0.985, 1200);
+  /* ③ 끝으로 점프 — 도착한 레그만 받는다. 지나친 03 … 11 과 남원 판(MapLibre)은 0 바이트. */
+  await seek(page, 0.985, 400);
+  await page.waitForFunction(() => !!document.querySelectorAll('[data-sc-segment] video')[13].src, null, { timeout: 15000 });
   const late = await stageState(page);
   expect(late[13].srcSet, '도착하면 받는다').toBe(true);
+  for (const id of ['w03', 'w04', 'w05', 'w06', 'w06b', 'w07', 'w08', 'w08b', 'w09', 'w10', 'w11']) {
+    expect(F.mp4, `${id} 는 지나쳤을 뿐이다`).not.toContain(id);
+  }
+  expect((await page.evaluate(() => window.__scrub.mapLib())).requested, '판 구간을 건너뛰었다').toBe(false);
+  // src 는 한 번 붙으면 바뀌지 않는다(worldflight §8 #2) — 붙인 속성 = 받은 주소
+  const attrs = await page.$$eval('[data-sc-segment] video', (n) => n.map((v) => v.getAttribute('data-sc-src')));
+  expect(attrs[0]).toMatch(/w01\.mp4$/);
+  expect(attrs[13]).toMatch(/w12\.mp4$/);
+  expect(attrs.slice(2, 13).every((a) => a === null)).toBe(true);
   expect(late.every((s) => s.op <= 1)).toBe(true);
-  expect(errors, '콘솔 오류').toEqual([]);
+  expect(F.errors, '콘솔 오류').toEqual([]);
+});
+
+test('전송 예산 — 390 은 저해상 변형(-m)만 받고, 첫 화면 ≤ 3 MB', async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  const page = await ctx.newPage();
+  const F = await fresh(page);
+  expect(F.mp4).toEqual([]);
+  const b4 = F.bytes(4000);
+  expect(b4, `390 첫 4초 ${MB(b4)}`).toBeLessThanOrEqual(3 * 1048576);
+  await page.evaluate(() => scrollBy(0, 220));
+  await page.waitForFunction(() => window.__scrub.loader().armed.length >= 1, null, { timeout: 5000 });
+  await page.waitForTimeout(1500);
+  expect(F.mp4.length).toBeGreaterThan(0);
+  for (const n of F.mp4) expect(n, '모바일은 -m 변형').toMatch(/-m$/);
+  // 마스트헤드 이름은 한 줄이다(390 에서 LAND- / XI 로 갈라지던 것)
+  const mark = await page.$eval('.lx-masthead__mark', (e) => e.getBoundingClientRect().height);
+  expect(mark).toBeLessThan(34);
+  expect(F.errors, '콘솔 오류').toEqual([]);
+  await ctx.close();
 });
 
 test('reduced-motion — 클립을 아예 받지 않는다. 포스터와 글이 필름을 대신한다', async ({ browser }) => {

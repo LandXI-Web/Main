@@ -19,6 +19,8 @@ html{ scroll-behavior:auto; }
 .sb{ overflow-x:hidden; }
 .sb .lx-masthead{ position:fixed; inset:0 0 auto 0; }
 .sb-mast__cap{ font-variant-numeric:tabular-nums; }
+/* 390 에서 `LAND-` / `XI` 로 두 줄이 되던 마크 — 이름은 한 줄이다. */
+.sb .lx-masthead__mark{ white-space:nowrap; }
 
 /* ── 무대 ────────────────────────────────────────────────────────────────
    position:fixed 하나. 엔진이 opacity/visibility/z-index 를 쓴다 — 여기서 건드리지 않는다. */
@@ -29,6 +31,11 @@ html{ scroll-behavior:auto; }
    프레임"이 있는 클립만 포스터를 덮는다. 엔진의 2.5초 타이머 리빌이 디코드보다
    먼저 와서 검은 프레임이 한 번 스치는 것을 막는다(scrub.js guardPaint). */
 .sb-rvfc .sb-world .sc-world__seg > video:not(.sb-painted){ opacity:0 !important; }
+/* 첫 화면의 포스터는 필름 첫 프레임 **그대로** 선다(2026-09-26 전송 예산).
+   클립을 의도 뒤에 받게 되면서 히어로가 한동안 포스터다. 엔진은 칠해지지 않은 레그의 포스터를
+   scale(1.03 + local×0.14)로 밀어 넣는데, 히어로에서 그러면 첫 화면이 3 % 잘리고, 클립이 도착하는
+   순간 1.00 으로 줌이 튄다. 레그 01 만 밀지 않는다 — 포스터와 클립 첫 프레임이 픽셀 단위로 겹친다. */
+.sb-world .sc-world__seg:first-child > .sc-world__poster{ transform:none !important; }
 
 /* 인계 판(plate) — 레그가 아니라 무대의 마지막 두 층.
    #1 남원(레그 05 끝) · #2 여수(레그 07 끝) · #3 국토(필름 최종 프레임 = A12 홀드, 브랜드 마감이 그 위). 크로스페이드는 1프레임(40ms). */
@@ -39,7 +46,7 @@ html{ scroll-behavior:auto; }
 .sb-plate.is-on{ opacity:1; visibility:visible; }
 #sb-plate-yeosu{ z-index:132; }
 #sb-plate-korea{ z-index:134; }
-.sb-plate__map{ position:absolute; inset:0; }
+.sb-plate .sb-plate__map{ position:absolute; inset:0; }   /* 지도 CSS 가 늦게 와도(지연 로드) .maplibregl-map{position:relative} 에 지지 않게 */
 .sb-plate .maplibregl-ctrl-attrib{ font-family:var(--lx-num); font-size:14px; }
 /* 인계 판이 올라와 있는 동안 계기판·항로는 그대로 남는다 — 같은 카메라를
    읽고 있다는 사실이 인계의 증거이기 때문이다. 다만 판 위에 헤어라인 하나. */
@@ -208,6 +215,7 @@ html{ scroll-behavior:auto; }
 :root{
   --sb-ease-end:cubic-bezier(0.15,1,0.3,1);
   --sb-globe-s:1; --sb-globe-b:1; --sb-globe-o:1; --sb-floor:0;
+  --sb-mask-in:100%; --sb-mask-edge:1;
 }
 
 /* ① 물러남 — .sb-receding 은 필름이 끝나는 순간 ending.js 가 <html> 에 건다.
@@ -216,11 +224,19 @@ html{ scroll-behavior:auto; }
   transform:scale(var(--sb-globe-s)); transform-origin:50% 50%;
   filter:brightness(var(--sb-globe-b)); opacity:var(--sb-globe-o);
   will-change:transform, opacity;
+  /* 사각 경계 지우기(G-14) — ending.js 가 같은 u 로 조인다. u=0 이면 완전 불투명(필름 불변). */
+  -webkit-mask-image:radial-gradient(ellipse closest-side at 50% 50%, #000 var(--sb-mask-in), rgba(0,0,0,var(--sb-mask-edge)) 100%);
+          mask-image:radial-gradient(ellipse closest-side at 50% 50%, #000 var(--sb-mask-in), rgba(0,0,0,var(--sb-mask-edge)) 100%);
 }
-/* 무대 뒤 바닥. 무대(z 1)보다 아래(z 0)이므로 무대가 줄어든 자리에만 보인다. */
+/* 무대 뒤 바닥. 무대(z 1)보다 아래(z 0)이므로 무대가 줄어든 자리에만 보인다.
+   2026-09-26: 바닥은 **처음부터 완전 불투명**이다. 예전에는 opacity 가 --sb-floor(0 → 1)를 따라가서
+   물러남 초입(e 0.02)에 무대 둘레로 흰 종이(body)가 1–2px 테로 비치고, 중간(e 0.2)에는 흰 종이와
+   검정 바닥이 섞인 **회색 판**(#5F6166 전후)이 무대를 둘러쌌다 — 어둠 속으로 물러나는 장면이 회색 액자
+   안으로 줄어드는 장면이 됐다. 바닥은 필름의 캔버스색 그대로 깔고, "닫힘"(--sb-floor)은
+   무대 가장자리 마스크(ending.js --sb-mask-*)가 맡는다 — 같은 u 다. */
 .sb-receding .sb::before{
   content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
-  background:#08090B; opacity:var(--sb-floor);
+  background:#08090B;
 }
 
 /* ② CI 기둥 */
