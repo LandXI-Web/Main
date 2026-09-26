@@ -14,6 +14,8 @@
 /* ══ 상단 헤어라인 띠 — 시연 표식 ══════════════════════════════════════ */
 .spk-band{ flex:none; height:var(--band); margin:0; padding:0 var(--g); display:flex; align-items:center;
   font-size:14px; line-height:1; color:var(--ink); border-bottom:1px solid var(--line); background:var(--paper); white-space:nowrap; overflow:hidden; }
+.spk-band-t{ min-width:0; overflow:hidden; text-overflow:ellipsis; }
+.spk-band-base{ flex:none; margin-left:auto; padding-left:16px; color:var(--ink); }
 .spk-band::before{ content:""; width:8px; height:8px; margin-right:10px; background:var(--ink); flex:none; }
 
 /* ══ 무대 = 지도 전부 ═══════════════════════════════════════════════════ */

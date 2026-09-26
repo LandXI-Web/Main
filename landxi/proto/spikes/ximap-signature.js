@@ -92,36 +92,135 @@ const blank = async () => {
   return BLANK.slice(0);
 };
 /* 타일 기억 — 로컬 서버는 검증자(ETag · Last-Modified)를 주지 않아 브라우저 HTTP 캐시가 타일을 다시 받는다.
-   바이트는 URL 마다 한 번만 받고(BYTES), 미리 받아 둘 타일은 디코드까지 끝낸 ImageBitmap 으로 둔다(BMP).
-   MapLibre 는 프로토콜이 ImageBitmap 을 주면 디코드 없이 바로 텍스처로 올린다 — 하강 중 낱장 팝인이 사라진다. */
-const BYTES = new Map(), BMP = new Map();
+   바이트는 URL 마다 한 번만 받고, 미리 받아 둘 타일은 디코드까지 끝낸 ImageBitmap 으로 둔다(BMP).
+   MapLibre 는 프로토콜이 ImageBitmap 을 주면 디코드 없이 바로 텍스처로 올린다 — 하강 중 낱장 팝인이 사라진다.
+   받기 · 디코드 · 부모 채움 · 페더링은 전부 워커(makePipe) 안에서 돈다 — 주 스레드는 스윕 · 하강 프레임만 그린다. */
+const BMP = new Map();
 const TSTAT = { log: [] };                                  // 테스트용 — 요청마다 [원천, 단계, 미리 받음?, 지연 ms]
-const bytesOf = (url) => {
-  if (!BYTES.has(url)) {
-    const p = fetch(url).then(async (r) => (r.ok && /webp/.test(r.headers.get('content-type') || '') ? r.arrayBuffer() : null));
-    BYTES.set(url, p);
-    p.catch(() => BYTES.delete(url));
+/* 가장자리 페더링 — LX 영상(도시 2 m · 드론 cm)의 원천 경계가 V-World 밑깔개 위에서 칼로 자른 듯 튀지 않게,
+   영상 안쪽으로 FEATHER px 에 걸쳐 알파를 0 → 1 로 풀어 준다. 알파 마스크를 가우시안으로 흐린 값 a 를
+   smoothstep(0.5, 1, a) 로 다시 매핑하면 원천 경계에서 0, 안쪽 2σ(= FEATHER) 에서 1 이 된다(바깥으로는 번지지 않는다).
+   마스크는 이 타일 + 이웃 8장의 알파 모자이크로 만든다 — 원천 경계가 타일 경계와 겹쳐도(성긴 타일셋) 페더가 걸리고,
+   이웃과 맞닿는 자리에는 가짜 경계(격자 무늬)가 생기지 않는다. 9장이 모두 불투명이면(원천 안쪽 대부분) 그대로 돌려준다. */
+const FEATHER = 48, FP = FEATHER * 2, TS = 256, FQ = 4;     // 256 타일은 화면에서 0.7–1.4 배 — 어느 줌에서나 화면 34–68 px 에 걸쳐 풀린다
+/** 타일 파이프라인 — 워커와 (워커를 못 만들 때) 주 스레드에서 같은 코드가 돈다. 바깥 변수를 쓰지 않는다. */
+function makePipe(FEATHER, FP, TS, FQ) {
+  const AS = TS / FQ;                                       // 알파는 1/FQ 격자(64²)로만 들고 다닌다 — 마스크가 그 해상도다
+  const TILE_RE = /^(.*\/)(\d+)\/(\d+)\/(\d+)\.webp$/;
+  const lru = (m, n) => { if (m.size > n) m.delete(m.keys().next().value); };
+  const BYTES = new Map(), PARENT = new Map(), DEC = new Map();
+  const bytesOf = (url) => {
+    if (!BYTES.has(url)) {
+      const p = fetch(url).then(async (r) => (r.ok && /webp/.test(r.headers.get('content-type') || '') ? r.arrayBuffer() : null)).catch(() => null);
+      BYTES.set(url, p); lru(BYTES, 4000);
+    }
+    return BYTES.get(url);
+  };
+  const decode = (b) => createImageBitmap(new Blob([b], { type: 'image/webp' }));
+  /* 원천 타일셋은 줌마다 덮는 자리가 조금씩 다르다(도시 정사영상은 z13 에 있는 자리가 z14 에 빠지기도 한다).
+     빠진 타일을 투명으로 두면 그 자리가 타일 모양 흰 사각형으로 뚫린다 — 부모 타일(최대 4단 위)의 해당 4분면을 확대해 채운다. */
+  function rawBitmap(url, depth = 0) {
+    return bytesOf(url).then(async (b) => {
+      if (b) return decode(b);
+      const m = TILE_RE.exec(url);
+      if (!m || depth >= 4 || +m[2] <= 0) return null;
+      const z = +m[2], x = +m[3], y = +m[4], pu = `${m[1]}${z - 1}/${x >> 1}/${y >> 1}.webp`;
+      if (!PARENT.has(pu)) { PARENT.set(pu, rawBitmap(pu, depth + 1).catch(() => null)); lru(PARENT, 400); }
+      const p = await PARENT.get(pu);
+      if (!p) return null;
+      const h = p.width / 2;
+      return createImageBitmap(p, (x & 1) * h, (y & 1) * h, h, h, { resizeWidth: p.width, resizeHeight: p.height, resizeQuality: 'medium' });
+    }).catch(() => null);
   }
-  return BYTES.get(url);
-};
-/* 원천 타일셋은 줌마다 덮는 자리가 조금씩 다르다(도시 정사영상은 z13 에 있는 자리가 z14 에 빠지기도 한다).
-   빠진 타일을 투명으로 두면 그 자리가 타일 모양 흰 사각형으로 뚫린다 — 부모 타일(최대 4단 위)의 해당 4분면을 확대해 채운다. */
-const TILE_RE = /^(.*\/)(\d+)\/(\d+)\/(\d+)\.webp$/;
-const PARENT = new Map();
-const decode = (b) => createImageBitmap(new Blob([b], { type: 'image/webp' }));
-function tileBitmap(url, depth = 0) {
-  return bytesOf(url).then(async (b) => {
-    if (b) return decode(b);
+  const scratch = new OffscreenCanvas(AS, AS).getContext('2d', { willReadFrequently: true });
+  function alphaFrom(bm) {
+    if (!bm) return 'none';
+    scratch.clearRect(0, 0, AS, AS);
+    scratch.drawImage(bm, 0, 0, AS, AS);                    // 4×4 평균으로 줄여 읽는다
+    const d = scratch.getImageData(0, 0, AS, AS).data, a = new Uint8Array(AS * AS);
+    // 원천 webp 는 손실 압축이라 안쪽 알파도 251–254 로 흔들린다 — 250 이상이면 '불투명', 4 이하면 '비었음'으로 본다.
+    let soft = 0, any = 0;
+    for (let i = 0, j = 3; i < a.length; i++, j += 4) { a[i] = d[j]; if (d[j] < 250) soft++; if (d[j] > 4) any++; }
+    return !soft ? 'full' : !any ? 'none' : a;
+  }
+  /* 디코드 한 번 — 가운데 타일로 쓰일 비트맵과 이웃이 볼 알파를 같은 약속에서 나눠 갖는다(같은 타일을 두 번 풀지 않는다). */
+  const decOf = (url) => {
+    if (!DEC.has(url)) {
+      DEC.set(url, rawBitmap(url).then((bm) => ({ bm, a: alphaFrom(bm) })).catch(() => ({ bm: null, a: 'none' })));
+      if (DEC.size > 2400) { const [k, p] = DEC.entries().next().value; DEC.delete(k); p.then((r) => { r.bm?.close?.(); r.bm = null; }); }
+    }
+    return DEC.get(url);
+  };
+  function featherCore(bm, ma) {
+    // 마스크(1/FQ 격자 N²)를 흐리고 되읽을 때 쌍선형 보간 — 흐림 반경 FEATHER/2 는 저주파라 1/4 로 충분하다.
+    const N = AS + 2 * (FP / FQ), mask = new ImageData(N, N), md = mask.data;
+    for (let i = 0; i < ma.length; i++) md[i * 4 + 3] = ma[i];
+    const M = new OffscreenCanvas(N, N); M.getContext('2d').putImageData(mask, 0, 0);
+    const B = new OffscreenCanvas(N, N), bg = B.getContext('2d', { willReadFrequently: true });
+    bg.filter = `blur(${FEATHER / 2 / FQ}px)`;
+    bg.drawImage(M, 0, 0);
+    const sm = bg.getImageData(0, 0, N, N).data;
+    const c = new OffscreenCanvas(TS, TS), g = c.getContext('2d', { willReadFrequently: true });
+    g.drawImage(bm, 0, 0, TS, TS);
+    bm.close();
+    const img = g.getImageData(0, 0, TS, TS), d = img.data;
+    for (let y = 0; y < TS; y++) {
+      const fy = (y + FP + 0.5) / FQ - 0.5, y0 = Math.max(0, Math.min(N - 2, Math.floor(fy))), v = Math.max(0, Math.min(1, fy - y0));
+      for (let x = 0; x < TS; x++) {
+        const i = (y * TS + x) * 4 + 3;
+        if (!d[i]) continue;
+        const fx = (x + FP + 0.5) / FQ - 0.5, x0 = Math.max(0, Math.min(N - 2, Math.floor(fx))), u = Math.max(0, Math.min(1, fx - x0)), k = (y0 * N + x0) * 4 + 3;
+        const a = ((sm[k] * (1 - u) + sm[k + 4] * u) * (1 - v) + (sm[k + N * 4] * (1 - u) + sm[k + N * 4 + 4] * u) * v) / 255;
+        const t = Math.max(0, Math.min(1, (a - 0.5) * 2));
+        d[i] = Math.round(d[i] * t * t * (3 - 2 * t));
+      }
+    }
+    g.putImageData(img, 0, 0);
+    return c.transferToImageBitmap();
+  }
+  /** 한 장 — 원천(+부모 채움) → 3×3 알파 모자이크 마스크 → 페더. 비었으면 null. */
+  async function tile(url) {
+    const r = await decOf(url);
+    let bm = r.bm; r.bm = null;                             // 가운데로 한 번 쓰면 놓는다 — 다시 필요하면(콜드 재요청) 다시 푼다
+    if (r.a === 'none') { bm?.close?.(); return null; }
+    if (!bm) bm = await rawBitmap(url);
+    if (!bm) return null;
     const m = TILE_RE.exec(url);
-    if (!m || depth >= 4 || +m[2] <= 0) return null;
-    const z = +m[2], x = +m[3], y = +m[4], pu = `${m[1]}${z - 1}/${x >> 1}/${y >> 1}.webp`;
-    if (!PARENT.has(pu)) { PARENT.set(pu, tileBitmap(pu, depth + 1).catch(() => null)); if (PARENT.size > 400) PARENT.delete(PARENT.keys().next().value); }
-    const p = await PARENT.get(pu);
-    if (!p) return null;
-    const h = p.width / 2;
-    return createImageBitmap(p, (x & 1) * h, (y & 1) * h, h, h, { resizeWidth: p.width, resizeHeight: p.height, resizeQuality: 'medium' });
-  }).catch(() => null);
+    if (!m) return bm;
+    const z = m[2], x = +m[3], y = +m[4], nu = (dx, dy) => `${m[1]}${z}/${x + dx}/${y + dy}.webp`;
+    const nb = await Promise.all([-1, 0, 1].flatMap((dy) => [-1, 0, 1].map((dx) => (dx || dy ? decOf(nu(dx, dy)).then((q) => q.a) : r.a))));
+    if (nb.every((a) => a === 'full')) return bm;
+    const G = FP / FQ, N = AS + 2 * G, ma = new Uint8Array(N * N);
+    for (let gy = 0; gy < N; gy++) {
+      const ty = gy < G ? 0 : gy < G + AS ? 1 : 2, sy = ty === 0 ? AS - G + gy : ty === 1 ? gy - G : gy - G - AS;
+      for (let gx = 0; gx < N; gx++) {
+        const tx = gx < G ? 0 : gx < G + AS ? 1 : 2, sx = tx === 0 ? AS - G + gx : tx === 1 ? gx - G : gx - G - AS;
+        const q = nb[ty * 3 + tx];
+        ma[gy * N + gx] = q === 'full' ? 255 : q === 'none' ? 0 : q[sy * AS + sx];
+      }
+    }
+    return featherCore(bm, ma);
+  }
+  return { tile, rawBitmap };
 }
+/* 워커 몇 개 — 이웃 타일이 같은 워커(같은 캐시)로 가도록 8×8 타일 블록 단위로 나눈다. 워커를 못 만들면 주 스레드에서 같은 파이프. */
+const PIPE = makePipe(FEATHER, FP, TS, FQ);
+const FW = (() => {
+  try {
+    const src = `const P = (${makePipe.toString()})(${FEATHER}, ${FP}, ${TS}, ${FQ});
+onmessage = async (e) => { const { id, url } = e.data; let out = null; try { out = await P.tile(url); } catch (err) { out = null; } postMessage({ id, out }, out ? [out] : []); };`;
+    const blobUrl = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+    const n = Math.max(1, Math.min(3, (navigator.hardwareConcurrency || 4) - 2)), pool = [], wait = new Map();
+    for (let i = 0; i < n; i++) { const w = new Worker(blobUrl); w.onmessage = (e) => { const r = wait.get(e.data.id); wait.delete(e.data.id); r?.(e.data.out); }; pool.push(w); }
+    let seq = 0;
+    return (url) => new Promise((res) => {
+      const id = ++seq, m = /\/(\d+)\/(\d+)\/(\d+)\.webp$/.exec(url), k = m ? ((+m[2] >> 3) * 31 + (+m[3] >> 3)) % n : id % n;
+      wait.set(id, res); pool[k].postMessage({ id, url });
+    });
+  } catch { return null; }
+})();
+const tileBitmap = (url) => (FW ? FW(url) : PIPE.tile(url)).catch(() => null);
+const rawBitmap = (url) => PIPE.rawBitmap(url);             // 테스트용(featherProbe) — 페더 전 원천
 const bitmapOf = (url) => {
   if (!BMP.has(url)) BMP.set(url, tileBitmap(url));
   return BMP.get(url);
@@ -136,11 +235,31 @@ maplibregl.addProtocol('spk', (params, ac) => abortable((async () => {
   const url = params.url.slice('spk://'.length), t0 = performance.now(), warm = BMP.has(url);
   let data;
   if (warm) { const bm = await BMP.get(url); data = bm ? await createImageBitmap(bm).catch(() => null) : null; }
-  if (!data) { const b = await bytesOf(url); data = b ? b.slice(0) : (await tileBitmap(url)) || (await blank()); }
+  if (!data) data = (await tileBitmap(url)) || (await blank());
   const src = /tiles\/([^/]+)\//.exec(url)?.[1] || '';
   TSTAT.log.push([src, S.phase, warm, Math.round(performance.now() - t0), S.scene, url.split('/').slice(-3).join('/')]);
   if (TSTAT.log.length > 4000) TSTAT.log.shift();
   return { data };
+})(), ac));
+/* V-World 밑깔개 — 키 WMTS(없으면 키 없는 xdworld)를 spkv:// 로 받는다. 바이트를 URL 마다 한 번만 받아 두고(하강 경로는
+   스윕 동안 미리 받음), 이미지가 아닌 응답(범위 밖 줌의 XML 예외 등)은 투명 1×1 로 바꿔 디코드 오류를 내지 않는다.
+   VSTAT = 성공 · 실패 수 — 한 장도 못 받고 실패만 쌓이면 폐쇄망으로 보고 띠에 '로컬 폴백' 을 정직하게 표기한다. */
+const VBYTES = new Map(), VSTAT = { ok: 0, fail: 0 };
+const vbytesOf = (url) => {
+  if (!VBYTES.has(url)) {
+    const p = fetch(url).then(async (r) => (r.ok && /image/.test(r.headers.get('content-type') || '') ? r.arrayBuffer() : null)).catch(() => null)
+      .then((b) => { if (b) VSTAT.ok++; else VSTAT.fail++; baseLabel(); return b; });
+    VBYTES.set(url, p);
+    if (VBYTES.size > 3000) VBYTES.delete(VBYTES.keys().next().value);
+  }
+  return VBYTES.get(url);
+};
+maplibregl.addProtocol('spkv', (params, ac) => abortable((async () => {
+  const url = params.url.slice('spkv://'.length), t0 = performance.now(), warm = VBYTES.has(url);
+  const b = await vbytesOf(url);
+  TSTAT.log.push(['vworld', S.phase, warm, Math.round(performance.now() - t0), S.scene, url.split('/').slice(-3).join('/')]);
+  if (TSTAT.log.length > 4000) TSTAT.log.shift();
+  return { data: b ? b.slice(0) : await blank() };
 })(), ac));
 const TILE_BASE = () => new URL(ROOT, location.href).href;
 const tileURL = (t) => 'spk://' + TILE_BASE() + t;   // {z}/{x}/{y} 가 인코딩되지 않게 뒤에 붙인다
@@ -158,26 +277,28 @@ function tilesFor(im, cam, zs, W, H, pad = 1) {
     const n = 2 ** z, cl = (v) => Math.max(0, Math.min(n - 1, v));
     const x0 = cl(Math.max(Math.floor(fx0 * n) - pad, Math.floor(mercX(b[0]) * n))), x1 = cl(Math.min(Math.floor(fx1 * n) + pad, Math.floor(mercX(b[2]) * n)));
     const y0 = cl(Math.max(Math.floor(fy0 * n) - pad, Math.floor(mercY(b[3]) * n))), y1 = cl(Math.min(Math.floor(fy1 * n) + pad, Math.floor(mercY(b[1]) * n)));
-    for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) out.push(TILE_BASE() + im.tiles.replace('{z}', z).replace('{x}', x).replace('{y}', y));
+    const base = /^https?:/.test(im.tiles) ? '' : TILE_BASE();
+    for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) out.push(base + im.tiles.replace('{z}', z).replace('{x}', x).replace('{y}', y));
   }
   return out;
 }
 /** 카메라 a → b 사이(해상도 가중 보간)를 k 칸으로 나눠 지나는 화면들의 타일. flyTo 경로의 근사 — 둘레 2 타일로 여유를 둔다. */
-function tilesAlong(im, a, b, W, H, k = 12) {
+function tilesAlong(im, a, b, W, H, k = 12, lean = false) {
   const ca = maplibregl.LngLat.convert(a.center), cb = maplibregl.LngLat.convert(b.center), set = new Set();
   const ra = 2 ** -a.zoom, rb = 2 ** -b.zoom;
   for (let i = 0; i <= k; i++) {
     const z = a.zoom + ((b.zoom - a.zoom) * i) / k, w = Math.abs(ra - rb) < 1e-12 ? i / k : (ra - 2 ** -z) / (ra - rb);
     const cam = { center: [ca.lng + (cb.lng - ca.lng) * w, ca.lat + (cb.lat - ca.lat) * w], zoom: z };
     const tz = Math.round(z + 1);
-    for (const u of tilesFor(im, cam, [tz - 1, tz], W, H, 2)) set.add(u);
+    // lean(V-World 밑깔개) = 그 줌에 그려질 한 단계만 · 둘레 1 타일 — 대부분 LX 영상 아래에 깔려 가려지므로 여유를 줄인다
+    for (const u of (lean ? tilesFor(im, cam, [tz], W, H, 1) : tilesFor(im, cam, [tz - 1, tz], W, H, 2))) set.add(u);
   }
   return [...set];
 }
 const WARM = { n: 0, ms: 0 };
 function prewarm(urls) {
   const t0 = performance.now();
-  return Promise.all(urls.map(bitmapOf)).then((r) => { WARM.n = r.filter(Boolean).length; WARM.ms = Math.round(performance.now() - t0); return WARM; });
+  return Promise.all(urls.map((u) => (/^https?:/.test(u) && !u.startsWith(TILE_BASE()) ? vbytesOf(u) : bitmapOf(u)))).then((r) => { WARM.n = r.filter(Boolean).length; WARM.ms = Math.round(performance.now() - t0); return WARM; });
 }
 /** 하강을 마치면 디코드해 둔 비트맵을 놓는다(바이트는 남는다 — 다시 보기 · B 는 바이트에서 곧장 디코드). */
 function releaseBitmaps(keep = () => false) {
@@ -189,11 +310,22 @@ const FS = ['coalesce', ['feature-state', 'a'], 0];
 function decorate(map, { results = true } = {}) {
   // MapLibre 의 기본 속성 전이(300ms)는 법전 사다리 밖 — 스타일 전체를 0 으로 두고 필요한 곳만 D 값으로 연다.
   if (map.style?.stylesheet) map.style.stylesheet.transition = { duration: 0, delay: 0 };
-  setBase(map, 'none');                                    // V-World 끄고 흰 바탕 — 바탕은 LX 도시 정사영상(로컬 타일)
+  /* 바탕 사다리 — V-World 위성(키 · 전국 · 모든 줌) → LX 남원 전역 2 m → 드론 4시점 1–2 cm.
+     V-World 는 createMap 의 b-sat 대신 spkv:// 층으로 따로 깐다(미리 받기 · 비이미지 응답 흡수). 연결이 안 되면(폐쇄망)
+     층을 만들지 않고 예전 로컬 폴백(흰 종이 위 LX 영상만)으로 서고, 띠에 그렇게 적는다. */
+  setBase(map, 'none');
+  const vw = S.vw = map.__vworld;
+  if (vw?.online) {
+    map.setPaintProperty('bg', 'background-color', '#0A1018');
+    map.addSource('vw', { type: 'raster', tiles: ['spkv://' + vw.sat], tileSize: 256, minzoom: vw.minzoom, maxzoom: vw.maxzoom, attribution: '' });
+    map.addLayer({ id: 'vw', type: 'raster', source: 'vw', paint: { 'raster-fade-duration': RM ? 0 : D.tileFade, 'raster-saturation': -0.08 } }, 'emd-fill');
+  }
   map.addSource('city', { type: 'raster', tiles: [tileURL(CITY.tiles)], tileSize: 256, minzoom: CITY.minzoom, maxzoom: srcMax(CITY), bounds: CITY.bounds, attribution: '' });
   // 도시 바탕 = LX 남원 전역 정사영상(2 m · 원천 실색 그대로 — 채도 · 밝기 · 대비 보정 0).
   // 모든 줌에서 드론 4층 아래 밑깔개로 남는다 — 하강 · S3 · S6 어디서도 영상 밖 흰 종이가 드러나지 않게.
-  map.addLayer({ id: 'city', type: 'raster', source: 'city', paint: { 'raster-fade-duration': RM ? 0 : D.tileFade } }, 'emd-fill');
+  // V-World 가 깔려 있으면 z16 → 17.2 에서 도시 2 m(z15 확대)를 걷어 더 선명한 V-World 에 넘긴다 — 드론 범위 밖 착지 화면이 뭉개지지 않게.
+  map.addLayer({ id: 'city', type: 'raster', source: 'city', paint: { 'raster-fade-duration': RM ? 0 : D.tileFade,
+    'raster-opacity': vw?.online ? ['interpolate', ['linear'], ['zoom'], 16, 1, 17.2, 0] : 1 } }, 'emd-fill');
   EP.forEach((im, k) => {
     map.addSource('ep' + k, { type: 'raster', tiles: [tileURL(im.tiles)], tileSize: 256, minzoom: im.minzoom, maxzoom: im.maxzoom, bounds: im.bounds, attribution: '' });
     map.addLayer({ id: 'ep' + k, type: 'raster', source: 'ep' + k, layout: { visibility: 'none' }, paint: { 'raster-opacity': 0, 'raster-opacity-transition': { duration: 0 }, 'raster-fade-duration': RM ? 0 : D.tileFade } }, 'emd-fill');
@@ -236,6 +368,19 @@ const R_LAYERS = ['r-pt', 'r-fill', 'r-line', 'r-dash'];
    원천 maxzoom 을 15 로 두면 그 위 줌에선 z15 를 확대해 그린다(빈 z16 타일이 흰 구멍으로 뚫리지 않는다). */
 const CITY_MAX = 15;
 const srcMax = (im) => (im === CITY ? CITY_MAX : im.maxzoom);
+/** V-World 를 미리 받기용 원천처럼 — 템플릿 · 줌 범위 · 국토 bounds. 바탕이 없으면(폐쇄망) null. */
+const vwIm = () => (S.vw?.online ? { tiles: S.vw.sat, minzoom: S.vw.minzoom, maxzoom: S.vw.maxzoom, bounds: [124, 33, 132, 39] } : null);
+/** 바탕 출처를 띠에 정직하게 — 키 WMTS · 키 없는 xdworld · 폐쇄망(외부 위성 없음 → 로컬 폴백). */
+function baseLabel() {
+  const node = document.getElementById('spk-band-base');
+  if (!node || !S.vw) return;
+  const dead = !S.vw.online || (VSTAT.ok === 0 && VSTAT.fail >= 8);
+  const via = dead ? 'offline' : S.vw.via;
+  if (document.documentElement.dataset.base === via) return;
+  document.documentElement.dataset.base = via;
+  node.textContent = dead ? '외부 위성 연결 없음 · 로컬 폴백(LX 영상 범위 밖은 빈 바탕)'
+    : via === 'keyed' ? '바탕 V-World 위성(키) → LX 2 m → 드론 cm' : '바탕 V-World 위성(키 없는 xdworld) → LX 2 m → 드론 cm';
+}
 const RC_LAYERS = ['rc-fill', 'rc-line', 'rc-dash'];
 /* 결과 면·선의 불투명도. scoped(S3 · S6) = 정사영상 범위 안에 온전히 든 필지만 원래 모양으로 남고, 범위에 걸친 필지는
    범위로 자른 모양(r-clip)으로 바뀌며, 범위 밖 필지는 z13 → 14.5 하강하며 걷힌다. z13 아래에선 두 식이 같아 장면 전환에 튐이 없다. */
@@ -556,14 +701,16 @@ async function arrive({ animate = !RM } = {}) {
 function landTiles() {
   const W = el.stage.clientWidth, H = el.stage.clientHeight, a = { center: S.A.getCenter(), zoom: S.A.getZoom() }, b = CAM.land();
   const ep = EP[Math.round(S.e)];
-  return [...new Set([...tilesAlong(CITY, a, b, W, H), ...tilesAlong(ep, a, b, W, H), ...tilesFor(ep, b, [18, 19], W, H)])];
+  const v = vwIm();
+  return [...new Set([...tilesAlong(CITY, a, b, W, H), ...tilesAlong(ep, a, b, W, H), ...tilesFor(ep, b, [18, 19], W, H), ...(v ? tilesAlong(v, a, b, W, H, 12, true) : [])])];
 }
 /** S1 이 끝나 쉬는 동안 — S3 화면(4층) · S6 착지(보이는 시점) 타일을 받아 두고, B 를 착지 카메라에 세워 둔다. */
 function prewarmNext() {
   const W = el.stage.clientWidth, H = el.stage.clientHeight, o = CAM.ortho(), z = Math.round(o.zoom + 1);
   (window.requestIdleCallback || requestAnimationFrame)(() => {
     if (!S.arrived) return;
-    prewarm(EP.flatMap((im) => tilesFor(im, o, [z - 1, z], W, H))).then(() => { if (!S.B && !S.bBoot) ensureB(); });
+    const v = vwIm();
+    prewarm([...EP.flatMap((im) => tilesFor(im, o, [z - 1, z], W, H)), ...(v ? tilesFor(v, o, [z - 1, z], W, H) : [])]).then(() => { if (!S.B && !S.bBoot) ensureB(); });
   });
 }
 /** 스윕 한 프레임 — 선 위치 + 지나간 필지 현상(0 → 1, 500ms · 4단 양자화로 feature-state 호출을 줄인다). */
@@ -627,7 +774,7 @@ async function ensureB() {
   S.bBoot = S.bBoot || (async () => {
     el.b.style.visibility = 'hidden'; el.b.hidden = false;
     const cam = CAM.parcel();
-    const B = await createMap(el.b, { center: cam.center.toArray(), zoom: cam.zoom, label: '지도 B — AI 판독 겹침(오른쪽)' });
+    const B = await createMap(el.b, { base: 'none', center: cam.center.toArray(), zoom: cam.zoom, label: '지도 B — AI 판독 겹침(오른쪽)' });
     B.getCanvas().setAttribute('tabindex', '-1');
     decorate(B, { results: true });
     scopeResults(B, true);
@@ -870,9 +1017,10 @@ async function boot() {
   S.chg = chg;
 
   el.a.style.visibility = 'hidden';                        // createMap 의 기본 어두운 바탕 한 장면을 보이지 않는다
-  const A = await createMap(el.a, { center: [(BB[0] + BB[2]) / 2, (BB[1] + BB[3]) / 2], zoom: 11.2, label: '지도 — 남원 판독 결과 · 화살표 키로 이동, +/- 로 확대·축소' });
+  const A = await createMap(el.a, { base: 'none', center: [(BB[0] + BB[2]) / 2, (BB[1] + BB[3]) / 2], zoom: 11.2, label: '지도 — 남원 판독 결과 · 화살표 키로 이동, +/- 로 확대·축소' });
   S.A = A;
   decorate(A, { results: true });
+  baseLabel();
   revealAll(A, 0);
   await new Promise((res) => A.once('render', res));
   el.a.style.visibility = '';
@@ -946,6 +1094,19 @@ window.__spike = {
   /** 테스트용 — 타일 요청 기록([원천, 단계, 미리 받음?, 지연 ms, 장면]) · 미리 받기 결과 · 잘린 필지 수 */
   tiles: () => ({ log: TSTAT.log.map((r) => [...r]), warm: { ...WARM }, clipped: IN.clipped }),
   tilesReset: () => { TSTAT.log.length = 0; },
+  /** 테스트용 — 원천 타일 한 장의 페더 전 · 후 알파(열 x 한 줄 · 위 → 아래) · 바탕 출처 · V-World 성공/실패 */
+  featherProbe: async (rel, col = 128) => {
+    const colOf = (bm) => {
+      if (!bm) return 'none';
+      const g = new OffscreenCanvas(TS, TS).getContext('2d', { willReadFrequently: true });
+      g.drawImage(bm, 0, 0, TS, TS);
+      const d = g.getImageData(col, 0, 1, TS).data;
+      return Array.from({ length: TS }, (_, y) => d[y * 4 + 3]);
+    };
+    const url = TILE_BASE() + rel;
+    return { raw: colOf(await rawBitmap(url)), out: colOf(await tileBitmap(url)) };
+  },
+  base: () => ({ via: document.documentElement.dataset.base || '', ...VSTAT }),
   /** 테스트용 — 지금 보이는(현상된) 필지가 모두 스윕 선 뒤쪽(서쪽)에 있는가. */
   audit: () => {
     let shown = 0, hidden = 0, ahead = 0;

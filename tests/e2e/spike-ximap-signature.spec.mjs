@@ -206,11 +206,13 @@ test.describe('S1 도착', () => {
     expect(dive[0][1]).toBeLessThan(11.5);
     // 착지 = 드론 정사영상(1–2 cm) 위 · 락온 1 = 정사영상 범위 안에 온전히 든 판독 필지
     const s = await st(page);
-    const land = await page.evaluate(() => { const m = window.__spike.map; return { z: m.getZoom(), ep3: m.getPaintProperty('ep3', 'raster-opacity'), city: m.getLayer('city').maxzoom ?? 24, cityOp: m.getPaintProperty('city', 'raster-opacity') ?? 1, ep: ['ep0', 'ep1', 'ep2'].map((l) => m.getLayoutProperty(l, 'visibility')) }; });
+    const land = await page.evaluate(() => { const m = window.__spike.map; return { z: m.getZoom(), ep3: m.getPaintProperty('ep3', 'raster-opacity'), city: m.getLayer('city').maxzoom ?? 24, cityOp: m.getPaintProperty('city', 'raster-opacity') ?? 1, vw: !!m.getLayer('vw'), ep: ['ep0', 'ep1', 'ep2'].map((l) => m.getLayoutProperty(l, 'visibility')) }; });
     expect(land.z).toBeGreaterThanOrEqual(17.5);
     expect(land.ep3).toBe(1);                                               // 2025.10 드론 — 도시 바탕(2025.10)과 같은 계절
     expect(land.city).toBeGreaterThan(land.z);                              // 도시 정사영상은 착지 줌에서도 드론 아래 밑깔개로 남는다
-    expect(land.cityOp).toBe(1);
+    // p0926 map-base — V-World 가 밑깔개로 깔리면 도시 2 m(z15 확대)는 z16 → 17.2 에서 더 선명한 V-World 에 넘긴다. 폐쇄망이면 1 그대로
+    if (land.vw) expect(JSON.stringify(land.cityOp)).toBe(JSON.stringify(['interpolate', ['linear'], ['zoom'], 16, 1, 17.2, 0]));
+    else expect(land.cityOp).toBe(1);
     expect(land.ep).toEqual(['none', 'none', 'none']);                      // S1 은 보이는 시점 층만 타일을 받는다
     expect(s.locks).toBe(1);
     expect(s.lockIds).toEqual([await page.evaluate(() => window.__spike.focus())]);
@@ -745,7 +747,7 @@ test.describe('법전', () => {
       for (const f of fs.readdirSync(d, { withFileTypes: true })) {
         const p = path.join(d, f.name);
         if (f.isDirectory()) { if (!/spikes|vendor|assets|node_modules/.test(f.name)) walk(p); continue; }
-        if (/\.(html|js|mjs)$/.test(f.name) && fs.readFileSync(p, 'utf8').includes('ximap-signature')) hits.push(p);
+        if (/\.(html|js|mjs)$/.test(f.name) && strip(fs.readFileSync(p, 'utf8')).replace(/<!--[\s\S]*?-->/g, '').includes('ximap-signature')) hits.push(p);   // 주석 속 출처 표기(승격 기록)는 링크가 아니다
       }
     };
     walk('landxi');

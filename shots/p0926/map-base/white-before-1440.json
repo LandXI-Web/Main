@@ -1,0 +1,63 @@
+{
+ "frames": 149,
+ "gapMaxAll": 0.837,
+ "bands": [
+  {
+   "band": "z11–12",
+   "n": 14,
+   "whiteMax": 0.7909,
+   "whiteAvg": 0.7802,
+   "voidMax": 0,
+   "gapMax": 0.7909
+  },
+  {
+   "band": "z12–13",
+   "n": 13,
+   "whiteMax": 0.7539,
+   "whiteAvg": 0.7009,
+   "voidMax": 0,
+   "gapMax": 0.7539
+  },
+  {
+   "band": "z13–14",
+   "n": 11,
+   "whiteMax": 0.6563,
+   "whiteAvg": 0.6359,
+   "voidMax": 0,
+   "gapMax": 0.6563
+  },
+  {
+   "band": "z14–15",
+   "n": 9,
+   "whiteMax": 0.5506,
+   "whiteAvg": 0.3969,
+   "voidMax": 0,
+   "gapMax": 0.5506
+  },
+  {
+   "band": "z15–16",
+   "n": 6,
+   "whiteMax": 0.2536,
+   "whiteAvg": 0.2129,
+   "voidMax": 0,
+   "gapMax": 0.2536
+  },
+  {
+   "band": "z16–17",
+   "n": 5,
+   "whiteMax": 0.1491,
+   "whiteAvg": 0.0717,
+   "voidMax": 0,
+   "gapMax": 0.1491
+  },
+  {
+   "band": "z17–18.5",
+   "n": 32,
+   "whiteMax": 0.0001,
+   "whiteAvg": 0,
+   "voidMax": 0,
+   "gapMax": 0.0001
+  }
+ ]
+}
+

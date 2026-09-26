@@ -1,0 +1,72 @@
+{
+ "viewport": "1440x900",
+ "base": {
+  "via": "keyed",
+  "ok": 479,
+  "fail": 0
+ },
+ "warm": {
+  "n": 830,
+  "ms": 1737
+ },
+ "frames": 188,
+ "gapMaxAll": 0.0003,
+ "bands": [
+  {
+   "band": "z11–12",
+   "n": 14,
+   "whiteMax": 0,
+   "whiteAvg": 0,
+   "voidMax": 0.0003,
+   "gapMax": 0.0003
+  },
+  {
+   "band": "z12–13",
+   "n": 13,
+   "whiteMax": 0,
+   "whiteAvg": 0,
+   "voidMax": 0,
+   "gapMax": 0
+  },
+  {
+   "band": "z13–14",
+   "n": 11,
+   "whiteMax": 0,
+   "whiteAvg": 0,
+   "voidMax": 0,
+   "gapMax": 0
+  },
+  {
+   "band": "z14–15",
+   "n": 9,
+   "whiteMax": 0,
+   "whiteAvg": 0,
+   "voidMax": 0,
+   "gapMax": 0
+  },
+  {
+   "band": "z15–16",
+   "n": 6,
+   "whiteMax": 0,
+   "whiteAvg": 0,
+   "voidMax": 0,
+   "gapMax": 0
+  },
+  {
+   "band": "z16–17",
+   "n": 4,
+   "whiteMax": 0,
+   "whiteAvg": 0,
+   "voidMax": 0,
+   "gapMax": 0
+  },
+  {
+   "band": "z17–18.5",
+   "n": 33,
+   "whiteMax": 0,
+   "whiteAvg": 0,
+   "voidMax": 0,
+   "gapMax": 0
+  }
+ ]
+}

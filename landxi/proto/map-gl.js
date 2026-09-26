@@ -24,7 +24,8 @@ export async function createMap(el, opt = {}) {
       },
       layers: [
         { id: 'bg', type: 'background', paint: { 'background-color': '#0A1018' } },
-        { id: 'b-sat', type: 'raster', source: 'vsat', paint: { 'raster-saturation': -0.1, 'raster-contrast': 0.04, 'raster-fade-duration': 200 } },
+        // opt.base === 'none' — 호출부가 바탕을 따로 깐다(첫 load 에서 쓰지 않을 위성 타일을 받지 않는다 · 폐쇄망에서 실패 요청 0)
+        { id: 'b-sat', type: 'raster', source: 'vsat', layout: { visibility: opt.base === 'none' ? 'none' : 'visible' }, paint: { 'raster-saturation': -0.1, 'raster-contrast': 0.04, 'raster-fade-duration': 200 } },
         { id: 'b-base', type: 'raster', source: 'vbase', layout: { visibility: 'none' }, paint: { 'raster-fade-duration': 200 } },
         { id: 'b-night', type: 'raster', source: 'vnight', layout: { visibility: 'none' }, paint: { 'raster-fade-duration': 200 } },
         { id: 'b-hyb', type: 'raster', source: 'vhyb', layout: { visibility: 'none' }, paint: { 'raster-fade-duration': 200 } },
@@ -58,6 +59,8 @@ export async function createMap(el, opt = {}) {
   map.addLayer({ id: 'msr-line', type: 'line', source: 'msr', layout: { 'line-join': 'miter' }, paint: { 'line-color': '#FFFFFF', 'line-width': 1.8 } });
   map.addLayer({ id: 'msr-vx', type: 'circle', source: 'msr-pt', paint: { 'circle-radius': 3.6, 'circle-color': ['coalesce', ['get', 'c'], '#FFFFFF'], 'circle-stroke-color': '#010102', 'circle-stroke-width': 1 } });
   el.dataset.map = 'ready';
+  el.dataset.base = v?.via || 'eox';                        // 바탕 출처 정직 표기용 — keyed | free | offline | eox
+  map.__vworld = v;
   map.__keys = new Set();
   return map;
 }
