@@ -11,3 +11,12 @@ build/
 # 로컬 LLM 실행 설정·로그 (2026-09-26)
 infra/llm/.env
 infra/llm/logs/
+
+# F1 1차 플래그십 통합 (2026-09-27) — 데이터 junction · 서버 비밀 · 실행 부산물
+landxi/data
+server/.env
+server/**/__pycache__/
+server/.*.pids
+server/.*.pid
+server/ops/.pollers.pids
+server/.setup-smoke.json

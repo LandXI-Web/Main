@@ -13,6 +13,7 @@ export const KEYS = [
   { key: 'lx_logged_in', owner: 'E0-1', life: 'lx-session', store: 'local', reset: true, note: "'1'" },
   { key: 'lx_role', owner: 'E0-1', life: 'lx-session', store: 'local', reset: true, note: 'admin | staff | sales' },
   { key: 'lx_tenant_session', owner: 'E0-1', life: 'tenant-session', store: 'local', reset: true, note: 'JSON {tenant, at}' },
+  { key: 'lx_api_session', owner: 'F1', life: 'lx-session', store: 'local', reset: true, note: 'JSON {token, realm, role, tenant_id, expires_at} · 새 화면(xi · ops · global)만 · F1-CONTRACT §3' },
   { key: 'lx_saved_email', owner: 'E0-2', life: 'pref', store: 'local', reset: false },
   { key: 'lx_publish_v1', owner: 'E0-8', life: 'data', store: 'local', reset: true },
   { key: 'lx_project_v1', owner: 'E1-5', life: 'data', store: 'session', reset: true },

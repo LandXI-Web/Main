@@ -1,0 +1,2449 @@
+{
+ "at": "2026-09-26T16:39:49.009Z",
+ "tA0": 0.143,
+ "tB0": 0.241,
+ "jobId": "job_01M3F8Q9T1G2NBDAA0F9BV5XVA",
+ "marks": [
+  {
+   "k": "A.goto",
+   "t": 0.435
+  },
+  {
+   "k": "B.login.ready",
+   "t": 1.488
+  },
+  {
+   "k": "A.ready",
+   "t": 4.006,
+   "mode": "on"
+  },
+  {
+   "k": "B.flip.start",
+   "t": 5.462
+  },
+  {
+   "k": "B.overview.grown",
+   "t": 8.808
+  },
+  {
+   "k": "B.infra.ready",
+   "t": 10.885,
+   "src": "bridge"
+  },
+  {
+   "k": "A.sweep",
+   "t": 11.222
+  },
+  {
+   "k": "A.city.arrived",
+   "t": 12.25,
+   "big": "129,420"
+  },
+  {
+   "k": "A.emd.click",
+   "t": 14.393
+  },
+  {
+   "k": "A.aoi.descend",
+   "t": 16.174
+  },
+  {
+   "k": "A.aoi.arrived",
+   "t": 20.279,
+   "big": "456"
+  },
+  {
+   "k": "A.parcel.click",
+   "t": 20.579
+  },
+  {
+   "k": "A.parcel.card",
+   "t": 22.524
+  },
+  {
+   "k": "A.frame.start",
+   "t": 25.15
+  },
+  {
+   "k": "A.frame.drawn",
+   "t": 25.683
+  },
+  {
+   "k": "A.run",
+   "t": 27.413,
+   "at": "1시 28분 9초"
+  },
+  {
+   "k": "A.job.id",
+   "t": 27.523,
+   "jobId": "job_01M3F8Q9T1G2NBDAA0F9BV5XVA"
+  },
+  {
+   "k": "A.job.started",
+   "t": 28.034
+  },
+  {
+   "k": "A.job.done",
+   "t": 29.573,
+   "job": "실측 · 지금탐지 86shard 6/6GPU0 이용률(공유) 0%12.0칩/s",
+   "big": "71",
+   "live": "1"
+  },
+  {
+   "k": "A.snapshot",
+   "t": 30.196
+  },
+  {
+   "k": "B.after.job",
+   "t": 32.701,
+   "focusRow": true
+  },
+  {
+   "k": "B.deploys.ready",
+   "t": 36.835
+  },
+  {
+   "k": "B.rollback",
+   "t": 40.26
+  },
+  {
+   "k": "B.snapshot",
+   "t": 40.292,
+   "snap": "76,215"
+  },
+  {
+   "k": "B.end",
+   "t": 42.898
+  },
+  {
+   "k": "A.global.goto",
+   "t": 43.051
+  },
+  {
+   "k": "A.global.ready",
+   "t": 43.666,
+   "mode": "on"
+  },
+  {
+   "k": "A.global.rolling",
+   "t": 59.11
+  },
+  {
+   "k": "A.global.play-done",
+   "t": 74.769
+  },
+  {
+   "k": "A.global.gj1-done",
+   "t": 699.61
+  },
+  {
+   "k": "A.global.hudLog",
+   "t": 699.611,
+   "hudLog": [
+    {
+     "t": 76.28,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 queued · cpu · #2 live · PC reads B04/B08"
+    },
+    {
+     "t": 145.09,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 0.0 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 146.11,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 1.0 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 147.11,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 2.0 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 148.11,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 3.0 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 149.13,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 4.0 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 150.13,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 5.0 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 151.13,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 6.0 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 152.14,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 7.0 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 153.16,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 8.0 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 154.17,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 9.0 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 155.19,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 10 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 155.69,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 11 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 156.71,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 12 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 157.73,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 13 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 158.74,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 14 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 159.76,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 15 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 160.76,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 16 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 161.76,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 17 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 162.76,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 18 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 163.77,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 19 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 164.78,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 20 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 165.8,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 21 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 166.8,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 22 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 167.81,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 23 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 168.82,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 24 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 169.84,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 25 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 170.85,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 26 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 171.88,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 27 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 172.89,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 28 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 173.91,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 29 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 174.92,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 30 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 175.94,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 31 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 176.94,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 32 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 177.96,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 33 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 178.98,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 34 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 180,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 35 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 181.03,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 36 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 182.03,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 37 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 183.05,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 38 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 184.06,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 39 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 185.07,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 40 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 186.08,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 41 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 187.09,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 42 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 188.09,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 43 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 189.12,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 44 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 190.14,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 45 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 191.16,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 46 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 192.17,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 47 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 192.69,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 48 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 193.71,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 49 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 194.71,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 50 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 195.71,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 51 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 196.73,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 52 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 197.75,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 53 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 198.76,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 54 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 199.77,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 55 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 200.79,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 56 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 201.8,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 57 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 202.8,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 58 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 203.8,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 59 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 204.82,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 60 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 205.84,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 61 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 206.84,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 62 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 207.84,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 63 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 208.85,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 64 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 209.86,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 65 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 210.86,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 66 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 211.88,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 67 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 212.88,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 68 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 213.9,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 69 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 214.9,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 70 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 215.91,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 71 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 216.92,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 72 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 217.93,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 73 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 218.96,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 74 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 219.99,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 75 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 221,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 76 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 222.01,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 77 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 223.03,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 78 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 224.04,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 79 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 225.05,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 80 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 226.07,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 81 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 227.09,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 82 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 228.1,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 83 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 229.11,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 84 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 230.14,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 85 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 231.15,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 86 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 232.17,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 87 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 233.17,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 88 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 233.68,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 89 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 234.68,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 90 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 235.71,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 91 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 236.72,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 92 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 237.75,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 93 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 238.76,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 94 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 239.79,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 95 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 240.8,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 96 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 241.82,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 97 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 242.85,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 98 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 243.86,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 99 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 244.86,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 100 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 245.86,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 101 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 246.87,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 102 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 247.89,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 103 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 248.91,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 104 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 249.93,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 105 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 250.95,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 106 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 251.96,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 107 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 252.98,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 108 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 254,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 109 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 255,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 110 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 256,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 111 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 257,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 112 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 258.02,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 113 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 259.05,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 114 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 260.06,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 115 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 261.06,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 116 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 262.07,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 117 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 263.08,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 118 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 264.08,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 119 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 265.08,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 120 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 266.1,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 121 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 267.1,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 122 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 268.1,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 123 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 269.12,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 124 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 270.14,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 125 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 271.15,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 126 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 272.15,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 127 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 273.18,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 128 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 273.68,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 129 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 274.69,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 130 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 275.73,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 131 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 276.74,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 132 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 277.75,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 133 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 278.77,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 134 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 279.79,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 135 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 280.79,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 136 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 281.8,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 137 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 282.82,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 138 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 283.84,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 139 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 284.85,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 140 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 285.88,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 141 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 286.88,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 142 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 287.9,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 143 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 288.91,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 144 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 289.92,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 145 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 290.95,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 146 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 291.98,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 147 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 292.99,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 148 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 294.01,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 149 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 295.01,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 150 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 296.01,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 151 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 297.01,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 152 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 298.01,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 153 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 299.01,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 154 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 300.01,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 155 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 301.01,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 156 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 302.02,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 157 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 303.02,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 158 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 304.02,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 159 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 305.05,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 160 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 306.07,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 161 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 307.09,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 162 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 308.1,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 163 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 309.11,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 164 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 310.12,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 165 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 311.14,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 166 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 312.16,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 167 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 313.16,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 168 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 314.16,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 169 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 315.18,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 170 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 315.68,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 171 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 316.7,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 172 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 317.72,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 173 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 318.74,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 174 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 319.75,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 175 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 320.76,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 176 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 321.77,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 177 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 322.77,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 178 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 323.78,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 179 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 324.8,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 180 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 325.82,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 181 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 326.85,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 182 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 327.86,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 183 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 328.88,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 184 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 329.89,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 185 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 330.91,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 186 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 331.93,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 187 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 332.94,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 188 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 333.96,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 189 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 334.96,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 190 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 335.97,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 191 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 336.98,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 192 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 338.01,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 193 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 339.03,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 194 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 340.06,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 195 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 341.09,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 196 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 342.11,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 197 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 343.11,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 198 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 344.12,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 199 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 345.12,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 200 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 346.13,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 201 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 347.14,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 202 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 348.16,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 203 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 349.18,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 204 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 349.69,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 205 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 350.71,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 206 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 351.73,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 207 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 352.75,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 208 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 353.76,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 209 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 354.77,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 210 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 355.77,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 211 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 356.79,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 212 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 357.8,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 213 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 358.82,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 214 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 359.82,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 215 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 360.82,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 216 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 361.84,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 217 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 362.87,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 218 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 363.89,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 219 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 364.91,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 220 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 365.93,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 221 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 366.94,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 222 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 367.96,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 223 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 368.98,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 224 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 370,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 225 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 371.02,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 226 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 372.02,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 227 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 373.02,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 228 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 374.02,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 229 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 375.05,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 230 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 376.06,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 231 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 377.06,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 232 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 378.07,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 233 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 379.1,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 234 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 380.11,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 235 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 381.13,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 236 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 382.13,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 237 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 383.13,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 238 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 384.14,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 239 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 385.15,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 240 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 386.16,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 241 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 387.17,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 242 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 388.18,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 243 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 388.69,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 244 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 389.72,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 245 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 390.72,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 246 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 391.74,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 247 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 392.75,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 248 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 393.76,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 249 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 394.77,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 250 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 395.8,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 251 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 396.82,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 252 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 397.84,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 253 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 398.87,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 254 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 399.88,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 255 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 400.9,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 256 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 401.91,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 257 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 402.92,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 258 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 403.93,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 259 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 404.93,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 260 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 405.94,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 261 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 406.97,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 262 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 407.99,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 263 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 409,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 264 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 410.02,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 265 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 411.05,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 266 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 412.07,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 267 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 413.09,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 268 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 414.12,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 269 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 415.13,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 270 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 416.14,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 271 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 417.17,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 272 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 417.68,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 0/8 · 273 s elapsed live · PC reads B04/B08"
+    },
+    {
+     "t": 418.18,
+     "x": "NDVI MEAN · CROPLAND MASK — Index calc · not model inference · T43TEH — scenes · cpu-0 shard 1/8 · 274 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 419.18,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 274 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 419.69,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 275 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 420.71,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 276 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 421.73,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 277 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 422.75,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 278 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 423.75,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 279 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 424.76,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 280 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 425.79,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 281 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 426.8,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 282 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 427.81,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 283 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 428.83,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 284 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 429.86,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 285 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 430.88,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 286 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 431.89,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 287 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 432.89,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 288 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 433.92,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 289 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 434.95,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 290 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 435.96,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 291 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 436.98,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 292 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 438,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 293 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 439.01,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 294 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 440.04,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 295 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 441.06,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 296 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 442.08,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 297 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 443.09,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 298 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 444.09,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 299 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 445.12,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 300 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 446.13,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 301 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 447.14,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 302 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 448.17,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 303 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 448.68,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 1/8 · 304 s elapsed last month 25 s · next slot ≈ 25 s live · PC reads B04/B08"
+    },
+    {
+     "t": 449.7,
+     "x": "NDVI MEAN · CROPLAND MASK 0.17NDVI Index calc · not model inference · T43TEH 4 scenes · cpu-0 shard 2/8 · 305 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 450.7,
+     "x": "NDVI MEAN · CROPLAND MASK 0.29NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 306 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 451.2,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 306 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 451.7,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 307 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 452.71,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 308 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 453.72,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 309 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 454.73,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 310 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 455.75,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 311 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 456.77,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 312 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 457.77,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 313 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 458.78,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 314 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 459.81,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 315 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 460.83,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 316 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 461.84,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 317 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 462.84,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 318 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 463.86,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 319 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 464.86,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 320 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 465.88,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 321 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 466.89,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 322 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 467.91,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 323 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 468.93,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 324 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 469.95,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 325 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 470.96,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 326 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 471.98,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 327 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 473,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 328 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 474.02,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 329 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 475.02,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 330 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 476.04,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 331 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 477.05,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 332 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 478.06,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 333 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 479.06,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 334 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 480.06,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 335 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 481.06,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 336 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 482.06,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 337 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 483.06,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 2/8 · 338 s elapsed last month 32 s · next slot ≈ 32 s live · PC reads B04/B08"
+    },
+    {
+     "t": 484.08,
+     "x": "NDVI MEAN · CROPLAND MASK 0.30NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 339 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 485.08,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 340 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 486.1,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 341 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 487.11,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 342 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 488.12,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 343 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 489.12,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 344 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 490.14,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 345 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 491.17,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 346 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 492.17,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 347 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 493.17,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 348 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 493.68,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 349 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 494.7,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 350 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 495.71,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 351 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 496.72,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 352 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 497.75,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 353 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 498.77,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 354 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 499.78,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 355 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 500.78,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 356 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 501.78,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 357 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 502.8,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 358 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 503.8,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 359 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 504.81,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 360 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 505.83,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 361 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 506.85,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 362 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 507.88,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 363 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 508.89,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 364 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 509.9,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 365 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 510.92,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 366 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 511.94,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 367 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 512.95,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 368 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 513.96,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 369 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 514.96,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 370 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 515.97,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 371 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 516.98,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 372 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 517.98,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 373 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 518.98,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 3/8 · 374 s elapsed last month 34 s · next slot ≈ 34 s live · PC reads B04/B08"
+    },
+    {
+     "t": 519.48,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 5 scenes · cpu-0 shard 4/8 · 375 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 520.49,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 375 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 521,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 376 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 522,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 377 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 523,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 378 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 524.02,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 379 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 525.05,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 380 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 526.05,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 381 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 527.05,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 382 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 528.07,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 383 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 529.09,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 384 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 530.09,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 385 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 531.09,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 386 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 532.09,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 387 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 533.11,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 388 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 534.11,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 389 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 535.12,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 390 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 536.15,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 391 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 537.18,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 392 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 537.69,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 393 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 538.71,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 394 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 539.72,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 395 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 540.74,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 396 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 541.74,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 397 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 542.75,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 398 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 543.75,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 399 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 544.77,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 400 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 545.77,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 401 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 546.8,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 402 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 547.83,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 403 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 548.86,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 404 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 549.88,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 405 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 550.88,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 406 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 551.89,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 407 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 552.91,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 408 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 553.93,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 409 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 554.95,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 410 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 555.96,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 411 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 556.98,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 412 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 557.98,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 413 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 558.98,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 414 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 560,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 415 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 561.02,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 416 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 562.03,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 417 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 563.05,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 418 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 564.07,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 419 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 565.07,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 420 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 566.07,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 421 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 567.09,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 422 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 568.09,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 423 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 569.12,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 4/8 · 424 s elapsed last month 35 s · next slot ≈ 35 s live · PC reads B04/B08"
+    },
+    {
+     "t": 570.12,
+     "x": "NDVI MEAN · CROPLAND MASK 0.44NDVI Index calc · not model inference · T43TEH 6 scenes · cpu-0 shard 5/8 · 426 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 571.13,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 426 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 572.14,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 427 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 573.16,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 428 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 574.17,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 429 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 574.69,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 430 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 575.7,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 431 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 576.72,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 432 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 577.74,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 433 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 578.77,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 434 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 579.79,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 435 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 580.81,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 436 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 581.82,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 437 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 582.82,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 438 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 583.84,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 439 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 584.87,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 440 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 585.88,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 441 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 586.88,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 442 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 587.88,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 443 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 588.88,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 444 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 589.89,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 445 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 590.91,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 446 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 591.92,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 447 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 592.93,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 448 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 593.96,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 449 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 594.98,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 450 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 595.99,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 451 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 597,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 452 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 598.01,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 453 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 599.04,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 454 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 600.04,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 455 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 601.04,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 456 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 602.05,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 457 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 603.06,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 458 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 604.08,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 459 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 605.08,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 460 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 606.08,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 461 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 607.1,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 462 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 608.1,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 463 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 609.11,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 464 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 610.13,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 465 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 611.14,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 466 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 612.16,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 467 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 613.17,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 468 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 613.68,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 5/8 · 469 s elapsed last month 50 s · next slot ≈ 50 s live · PC reads B04/B08"
+    },
+    {
+     "t": 614.18,
+     "x": "NDVI MEAN · CROPLAND MASK 0.43NDVI Index calc · not model inference · T43TEH 11 scenes · cpu-0 shard 6/8 · 470 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 615.19,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 470 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 615.71,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 471 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 616.72,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 472 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 617.73,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 473 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 618.74,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 474 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 619.75,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 475 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 620.75,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 476 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 621.78,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 477 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 622.8,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 478 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 623.8,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 479 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 624.82,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 480 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 625.84,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 481 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 626.87,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 482 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 627.88,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 483 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 628.88,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 484 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 629.89,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 485 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 630.91,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 486 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 631.92,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 487 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 632.92,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 488 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 633.95,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 489 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 634.96,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 490 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 635.97,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 491 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 636.98,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 492 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 638,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 493 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 639.02,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 494 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 640.04,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 495 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 641.05,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 496 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 642.05,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 497 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 643.05,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 498 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 644.07,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 499 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 645.08,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 500 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 646.11,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 501 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 647.12,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 502 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 648.14,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 503 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 649.17,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 504 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 649.68,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 505 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 650.69,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 506 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 651.71,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 507 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 652.71,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 508 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 653.71,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 509 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 654.71,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 510 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 655.72,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 6/8 · 511 s elapsed last month 44 s · next slot ≈ 44 s live · PC reads B04/B08"
+    },
+    {
+     "t": 656.23,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 9 scenes · cpu-0 shard 7/8 · 512 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 657.24,
+     "x": "NDVI MEAN · CROPLAND MASK 0.41NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 512 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 657.75,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 513 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 658.74,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 514 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 659.77,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 515 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 660.8,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 516 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 661.82,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 517 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 662.82,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 518 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 663.84,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 519 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 664.84,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 520 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 665.86,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 521 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 666.86,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 522 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 667.88,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 523 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 668.88,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 524 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 669.89,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 525 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 670.9,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 526 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 671.92,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 527 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 672.92,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 528 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 673.94,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 529 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 674.96,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 530 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 675.97,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 531 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 676.97,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 532 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 677.98,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 533 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 678.99,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 534 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 680.02,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 535 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 681.04,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 536 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 682.07,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 537 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 683.1,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 538 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 684.11,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 539 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 685.11,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 540 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 686.11,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 541 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 687.12,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 542 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 688.13,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 543 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 689.16,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 544 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 690.16,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 545 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 691.16,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 546 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 691.68,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 547 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 692.68,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 548 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 693.7,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 549 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 694.71,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 550 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 695.73,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 551 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 696.73,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 552 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 697.74,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 7/8 · 553 s elapsed last month 42 s · next slot ≈ 42 s live · PC reads B04/B08"
+    },
+    {
+     "t": 698.74,
+     "x": "NDVI MEAN · CROPLAND MASK 0.33NDVI Index calc · not model inference · T43TEH 8 scenes · cpu-0 shard 8/8 · 554 s elapsed mean 38 s per month · measured live · PC reads B04/B08"
+    }
+   ]
+  },
+  {
+   "k": "A.global.sokuluk",
+   "t": 704.035
+  },
+  {
+   "k": "A.global.meiktila",
+   "t": 718.712
+  },
+  {
+   "k": "A.global.end",
+   "t": 724.791,
+   "f1dMarks": [
+    {
+     "k": "start",
+     "t": 16203
+    },
+    {
+     "k": "globe",
+     "t": 19375
+    },
+    {
+     "k": "descend",
+     "t": 20943
+    },
+    {
+     "k": "ysykata",
+     "t": 25180
+    },
+    {
+     "k": "play-done",
+     "t": 31700
+    },
+    {
+     "k": "gj1-done",
+     "t": 656618
+    },
+    {
+     "k": "sokuluk",
+     "t": 661103
+    },
+    {
+     "k": "sokuluk-done",
+     "t": 670079
+    },
+    {
+     "k": "meiktila",
+     "t": 675788
+    },
+    {
+     "k": "end",
+     "t": 681773
+    }
+   ]
+  },
+  {
+   "k": "A.end",
+   "t": 725.596
+  }
+ ],
+ "errs": []
+}

@@ -1,0 +1,135 @@
+{
+ "at": "2026-09-26T16:43:02.890Z",
+ "duration_s": 107.77,
+ "size_mb": 22.7,
+ "jobId": "job_01M3F8Q9T1G2NBDAA0F9BV5XVA",
+ "skipped_gj1_s": 609.3,
+ "edl": [
+  {
+   "i": 0,
+   "src": "A",
+   "raw_s": 3.66,
+   "dur": 10.24,
+   "at": 0,
+   "name": "XI맵 글로브 → 남원 25cm · P4 129,420 도착",
+   "cap": null
+  },
+  {
+   "i": 1,
+   "src": "A",
+   "raw_s": 13.85,
+   "dur": 11.13,
+   "at": 10.24,
+   "name": "운봉읍 집계 → 드론 AOI 1cm 하강 → 필지 카드",
+   "cap": null
+  },
+  {
+   "i": 2,
+   "src": "A",
+   "raw_s": 24.71,
+   "dur": 10.85,
+   "at": 21.38,
+   "name": "프레임 → 견적 → 실행 · 실추론 shard 도착 · job.done · 스냅샷",
+   "cap": null
+  },
+  {
+   "i": 3,
+   "src": "B",
+   "raw_s": 1.55,
+   "dur": 8.52,
+   "at": 32.22,
+   "name": "관제 종이 무대 → 잉크 반전 → 운영 현황",
+   "cap": null
+  },
+  {
+   "i": 4,
+   "src": "B",
+   "raw_s": 26.57,
+   "dur": 8.72,
+   "at": 40.74,
+   "name": "같은 시각 관제 인프라 · 같은 job 큐 행 · GPU0 실측",
+   "cap": null
+  },
+  {
+   "i": 5,
+   "src": "B",
+   "raw_s": 36.29,
+   "dur": 6.36,
+   "at": 49.46,
+   "name": "배포 제어 · R-1 롤백 v2.1 → v2.0",
+   "cap": null
+  },
+  {
+   "i": 6,
+   "src": "A",
+   "raw_s": 58.77,
+   "dur": 22.86,
+   "at": 55.83,
+   "name": "Global 영문판 · 남원 → 글로브 → 으슥아타 · G-J1 프레임 → 견적 → 제출(큐 대기)",
+   "cap": null
+  },
+  {
+   "i": 7,
+   "src": "A",
+   "raw_s": 418.04,
+   "dur": 6,
+   "at": 78.69,
+   "name": "G-J1 첫 NDVI 값 도착(CPU 워커 · 실측)",
+   "cap": "+5 min 36 s later (skipped) · queued, then CPU worker reads Sentinel-2 months from Planetary Computer"
+  },
+  {
+   "i": 8,
+   "src": "A",
+   "raw_s": 696.97,
+   "dur": 6.7,
+   "at": 84.69,
+   "name": "G-J1 8/8 도착 · job.done",
+   "cap": "+4 min 33 s later (skipped) · 8 / 8 months arrived · 554 s measured run"
+  },
+  {
+   "i": 9,
+   "src": "A",
+   "raw_s": 703.69,
+   "dur": 10.2,
+   "at": 91.39,
+   "name": "소쿨룩·비슈케크 시가지 확산",
+   "cap": null
+  },
+  {
+   "i": 10,
+   "src": "A",
+   "raw_s": 718.27,
+   "dur": 6.38,
+   "at": 101.59,
+   "name": "메이크틸라 EMSR798 전후 스와이프",
+   "cap": null
+  }
+ ],
+ "stills": [
+  {
+   "n": "01-xi-namwon-p4-arrived",
+   "at": 9.64
+  },
+  {
+   "n": "02-xi-aoi-parcel-card",
+   "at": 20.87
+  },
+  {
+   "n": "03-xi-job-done-live",
+   "at": 31.03
+  },
+  {
+   "n": "04-ops-infra-same-job",
+   "at": 47.46
+  },
+  {
+   "n": "05-ops-rollback",
+   "at": 55.02
+  },
+  {
+   "n": "06-global-en-gj1-done",
+   "at": 87.09
+  }
+ ],
+ "errors": []
+}
