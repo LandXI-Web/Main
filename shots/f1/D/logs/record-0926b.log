@@ -1,0 +1,93 @@
+{
+ "tiles": {
+  "samples": 526,
+  "runs": [
+   {
+    "at_s": 0.82,
+    "ms": 294,
+    "worst": 8,
+    "scene": "globe"
+   },
+   {
+    "at_s": 6.41,
+    "ms": 100,
+    "worst": 2,
+    "scene": "ysykata"
+   },
+   {
+    "at_s": 32.81,
+    "ms": 100,
+    "worst": 2,
+    "scene": "sokuluk"
+   },
+   {
+    "at_s": 39.91,
+    "ms": 200,
+    "worst": 99,
+    "scene": "transit"
+   },
+   {
+    "at_s": 43.41,
+    "ms": 201,
+    "worst": 4,
+    "scene": "meiktila"
+   }
+  ],
+  "long_runs_over_500ms": 0
+ },
+ "video_raw": "E:\\Land-XI 플랫폼\\01. 디자인\\shots\\f1\\D\\_raw\\page@71adef779ae73d4a92c8881e14ff67a7.webm",
+ "t_start_s": 15.132,
+ "t_end_s": 70.889,
+ "marks": [
+  {
+   "k": "start",
+   "s": 0
+  },
+  {
+   "k": "globe",
+   "s": 3.16
+  },
+  {
+   "k": "descend",
+   "s": 5.35
+  },
+  {
+   "k": "ysykata",
+   "s": 9.61
+  },
+  {
+   "k": "play-done",
+   "s": 16.17
+  },
+  {
+   "k": "gj1-done",
+   "s": 26.47
+  },
+  {
+   "k": "sokuluk",
+   "s": 30.23
+  },
+  {
+   "k": "sokuluk-done",
+   "s": 39.49
+  },
+  {
+   "k": "meiktila",
+   "s": 46.78
+  },
+  {
+   "k": "end",
+   "s": 52.76
+  }
+ ],
+ "perf": {
+  "n": 3983,
+  "p50": 16.7,
+  "p95": 16.8,
+  "max": 300.3,
+  "canvases": 2
+ },
+ "errors": [],
+ "mode": "off",
+ "reason": "저장 결과 재생"
+}

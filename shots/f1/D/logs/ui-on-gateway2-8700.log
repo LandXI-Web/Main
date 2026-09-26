@@ -1,0 +1,22 @@
+{
+ "mode": "on",
+ "elapsed_s": 329.031,
+ "snaps": 66,
+ "next": "RESULT\nlive · gateway\nOpen results\nCSV\nGeoJSON\nAttach to report\njob_01M3EZ3VQM24C8PG0K70Z2H710\nresults/kgz-agri/job_01M3EZ3VQM24C8PG0K70Z2H710\nOps lineage →\ngateway · done · 8/8 shard · results/kgz-agri/job_01M3EZ3VQM24C8PG0K70Z2H710",
+ "http": [
+  "200 GET /api/v1/health",
+  "200 GET /api/v1/catalog/layers",
+  "200 GET /api/v1/deploys",
+  "200 POST /api/v1/jobs/quote",
+  "202 POST /api/v1/jobs",
+  "200 GET /api/v1/jobs/job_01M3EZ3VQM24C8PG0K70Z2H710"
+ ],
+ "errors": [],
+ "perf": {
+  "n": 4000,
+  "p50": 16.7,
+  "p95": 16.8,
+  "max": 17.2,
+  "canvases": 1
+ }
+}

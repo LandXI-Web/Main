@@ -1,0 +1,23 @@
+import { chromium } from '@playwright/test';
+const b = await chromium.launch({ channel: 'chrome', args: ['--use-angle=d3d11', '--ignore-gpu-blocklist'] });
+const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
+await ctx.addInitScript(() => { localStorage.setItem('lx_api_mode', 'off'); localStorage.setItem('lx_logged_in', '1'); localStorage.setItem('lx_role', 'staff'); });
+const p = await ctx.newPage();
+const logs = [];
+p.on('console', (m) => logs.push(`[${m.type()}] ${m.text()}`.slice(0, 300)));
+p.on('pageerror', (e) => logs.push('[pageerror] ' + e.message));
+p.on('requestfailed', (r) => logs.push('[fail] ' + r.url().slice(0, 140)));
+p.on('response', (r) => { if (r.status() >= 400) logs.push('[http ' + r.status() + '] ' + r.url().slice(0, 160)); });
+await p.goto('http://localhost:4173/landxi/global/index.html?tenant=lx&locale=en' + (process.argv[2] || ''));
+await p.waitForFunction(() => document.documentElement.dataset.lx === 'ready', null, { timeout: 30000 });
+const scene = process.argv[3] || 'meiktila';
+await p.evaluate((s) => window.__f1d.go(s), scene);
+await p.waitForTimeout(7000);
+if (process.argv[4]) { await p.evaluate(process.argv[4]); await p.waitForTimeout(5000); }
+const sy = await p.evaluate(() => { const m = window.__f1d.stage.map, B = window.__f1d.stage.mapB; const f = (x) => x ? [x.getCenter().lng.toFixed(5), x.getCenter().lat.toFixed(5), x.getZoom().toFixed(2), JSON.stringify(x.getPadding()), x.getContainer().clientWidth, x.getContainer().clientHeight, x.getProjection await p.screenshotawait p.screenshot JSON.stringify(x.getProjection())] : null; return [f(m), f(B)]; }); console.log(JSON.stringify(sy));
+await p.screenshot({ path: 'shots/f1/D/_tools/dbg-' + scene + '.png' });
+const st = await p.evaluate(() => { const m = window.__f1d.stage.map; const B = window.__f1d.stage.mapB;
+  const info = (mm) => mm ? mm.getStyle().layers.filter(l => (l.layout||{}).visibility !== 'none').map(l => l.id + (mm.getSource(l.source||'') ? (mm.isSourceLoaded(l.source)?'':'*') : '')).join(',') : null;
+  return { z: m.getZoom(), c: m.getCenter(), A: info(m), B: info(B), errs: window.__f1d.stage.errors.slice(-8) }; });
+console.log(logs.slice(-20).join('\n')); console.log(JSON.stringify(st, null, 1));
+await b.close();

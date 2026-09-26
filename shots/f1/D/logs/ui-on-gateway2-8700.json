@@ -1,0 +1,483 @@
+{
+ "mode": "on",
+ "elapsed_s": 329.031,
+ "snaps": [
+  {
+   "s": 0,
+   "shard": "shard 0/8",
+   "eta": "",
+   "job": "running"
+  },
+  {
+   "s": 5,
+   "shard": "shard 0/8 · 4.0 s elapsed",
+   "eta": "",
+   "running": "4.0 s",
+   "job": "running"
+  },
+  {
+   "s": 10,
+   "shard": "shard 0/8 · 9.0 s elapsed",
+   "eta": "",
+   "running": "9.0 s",
+   "job": "running"
+  },
+  {
+   "s": 15,
+   "shard": "shard 0/8 · 14 s elapsed",
+   "eta": "",
+   "running": "14 s",
+   "job": "running"
+  },
+  {
+   "s": 20,
+   "shard": "shard 0/8 · 19 s elapsed",
+   "eta": "",
+   "running": "19 s",
+   "job": "running"
+  },
+  {
+   "s": 25.1,
+   "shard": "shard 1/8 · 24 s elapsed",
+   "eta": "last month 21 s · next slot ≈ 21 s",
+   "running": "2.5 s",
+   "job": "running"
+  },
+  {
+   "s": 30.1,
+   "shard": "shard 1/8 · 29 s elapsed",
+   "eta": "last month 21 s · next slot ≈ 21 s",
+   "running": "7.5 s",
+   "job": "running"
+  },
+  {
+   "s": 35.1,
+   "shard": "shard 1/8 · 34 s elapsed",
+   "eta": "last month 21 s · next slot ≈ 21 s",
+   "running": "12 s",
+   "job": "running"
+  },
+  {
+   "s": 40.1,
+   "shard": "shard 1/8 · 39 s elapsed",
+   "eta": "last month 21 s · next slot ≈ 21 s",
+   "running": "17 s",
+   "job": "running"
+  },
+  {
+   "s": 45.1,
+   "shard": "shard 1/8 · 44 s elapsed",
+   "eta": "last month 21 s · next slot ≈ 21 s",
+   "running": "22 s",
+   "job": "running"
+  },
+  {
+   "s": 50.1,
+   "shard": "shard 1/8 · 49 s elapsed",
+   "eta": "last month 21 s · next slot ≈ 21 s",
+   "running": "27 s",
+   "job": "running"
+  },
+  {
+   "s": 55.1,
+   "shard": "shard 1/8 · 54 s elapsed",
+   "eta": "last month 21 s · next slot ≈ 21 s",
+   "running": "32 s",
+   "job": "running"
+  },
+  {
+   "s": 60.1,
+   "shard": "shard 2/8 · 59 s elapsed",
+   "eta": "last month 34 s · next slot ≈ 34 s",
+   "running": "3.5 s",
+   "job": "running"
+  },
+  {
+   "s": 65.3,
+   "shard": "shard 2/8 · 65 s elapsed",
+   "eta": "last month 34 s · next slot ≈ 34 s",
+   "running": "9.5 s",
+   "job": "running"
+  },
+  {
+   "s": 70.3,
+   "shard": "shard 2/8 · 70 s elapsed",
+   "eta": "last month 34 s · next slot ≈ 34 s",
+   "running": "15 s",
+   "job": "running"
+  },
+  {
+   "s": 75.3,
+   "shard": "shard 2/8 · 75 s elapsed",
+   "eta": "last month 34 s · next slot ≈ 34 s",
+   "running": "20 s",
+   "job": "running"
+  },
+  {
+   "s": 80.3,
+   "shard": "shard 2/8 · 80 s elapsed",
+   "eta": "last month 34 s · next slot ≈ 34 s",
+   "running": "25 s",
+   "job": "running"
+  },
+  {
+   "s": 85.3,
+   "shard": "shard 2/8 · 85 s elapsed",
+   "eta": "last month 34 s · next slot ≈ 34 s",
+   "running": "30 s",
+   "job": "running"
+  },
+  {
+   "s": 90.4,
+   "shard": "shard 2/8 · 90 s elapsed",
+   "eta": "last month 34 s · next slot ≈ 34 s",
+   "running": "35 s",
+   "job": "running"
+  },
+  {
+   "s": 95.4,
+   "shard": "shard 3/8 · 95 s elapsed",
+   "eta": "last month 36 s · next slot ≈ 36 s",
+   "running": "3.9 s",
+   "job": "running"
+  },
+  {
+   "s": 100.4,
+   "shard": "shard 3/8 · 100 s elapsed",
+   "eta": "last month 36 s · next slot ≈ 36 s",
+   "running": "8.9 s",
+   "job": "running"
+  },
+  {
+   "s": 105.4,
+   "shard": "shard 3/8 · 105 s elapsed",
+   "eta": "last month 36 s · next slot ≈ 36 s",
+   "running": "14 s",
+   "job": "running"
+  },
+  {
+   "s": 110.4,
+   "shard": "shard 3/8 · 110 s elapsed",
+   "eta": "last month 36 s · next slot ≈ 36 s",
+   "running": "19 s",
+   "job": "running"
+  },
+  {
+   "s": 115.4,
+   "shard": "shard 3/8 · 115 s elapsed",
+   "eta": "last month 36 s · next slot ≈ 36 s",
+   "running": "24 s",
+   "job": "running"
+  },
+  {
+   "s": 120.4,
+   "shard": "shard 3/8 · 120 s elapsed",
+   "eta": "last month 36 s · next slot ≈ 36 s",
+   "running": "29 s",
+   "job": "running"
+  },
+  {
+   "s": 125.4,
+   "shard": "shard 4/8 · 125 s elapsed",
+   "eta": "last month 33 s · next slot ≈ 33 s",
+   "running": "33 s",
+   "job": "running"
+  },
+  {
+   "s": 130.4,
+   "shard": "shard 4/8 · 130 s elapsed",
+   "eta": "last month 33 s · next slot ≈ 33 s",
+   "running": "5.8 s",
+   "job": "running"
+  },
+  {
+   "s": 135.4,
+   "shard": "shard 4/8 · 135 s elapsed",
+   "eta": "last month 33 s · next slot ≈ 33 s",
+   "running": "11 s",
+   "job": "running"
+  },
+  {
+   "s": 140.5,
+   "shard": "shard 4/8 · 140 s elapsed",
+   "eta": "last month 33 s · next slot ≈ 33 s",
+   "running": "16 s",
+   "job": "running"
+  },
+  {
+   "s": 145.5,
+   "shard": "shard 4/8 · 145 s elapsed",
+   "eta": "last month 33 s · next slot ≈ 33 s",
+   "running": "21 s",
+   "job": "running"
+  },
+  {
+   "s": 150.5,
+   "shard": "shard 4/8 · 150 s elapsed",
+   "eta": "last month 33 s · next slot ≈ 33 s",
+   "running": "26 s",
+   "job": "running"
+  },
+  {
+   "s": 155.5,
+   "shard": "shard 4/8 · 155 s elapsed",
+   "eta": "last month 33 s · next slot ≈ 33 s",
+   "running": "31 s",
+   "job": "running"
+  },
+  {
+   "s": 160.5,
+   "shard": "shard 4/8 · 160 s elapsed",
+   "eta": "last month 33 s · next slot ≈ 33 s",
+   "running": "36 s",
+   "job": "running"
+  },
+  {
+   "s": 165.5,
+   "shard": "shard 4/8 · 165 s elapsed",
+   "eta": "last month 33 s · next slot ≈ 33 s",
+   "running": "41 s",
+   "job": "running"
+  },
+  {
+   "s": 170.5,
+   "shard": "shard 4/8 · 170 s elapsed",
+   "eta": "last month 33 s · next slot ≈ 33 s",
+   "running": "46 s",
+   "job": "running"
+  },
+  {
+   "s": 175.5,
+   "shard": "shard 4/8 · 175 s elapsed",
+   "eta": "last month 33 s · next slot ≈ 33 s",
+   "running": "51 s",
+   "job": "running"
+  },
+  {
+   "s": 180.5,
+   "shard": "shard 4/8 · 180 s elapsed",
+   "eta": "last month 33 s · next slot ≈ 33 s",
+   "running": "56 s",
+   "job": "running"
+  },
+  {
+   "s": 185.5,
+   "shard": "shard 4/8 · 185 s elapsed",
+   "eta": "last month 33 s · next slot ≈ 33 s",
+   "running": "61 s",
+   "job": "running"
+  },
+  {
+   "s": 190.5,
+   "shard": "shard 5/8 · 190 s elapsed",
+   "eta": "last month 64 s · next slot ≈ 64 s",
+   "running": "2.0 s",
+   "job": "running"
+  },
+  {
+   "s": 195.5,
+   "shard": "shard 5/8 · 195 s elapsed",
+   "eta": "last month 64 s · next slot ≈ 64 s",
+   "running": "7.0 s",
+   "job": "running"
+  },
+  {
+   "s": 200.5,
+   "shard": "shard 5/8 · 200 s elapsed",
+   "eta": "last month 64 s · next slot ≈ 64 s",
+   "running": "12 s",
+   "job": "running"
+  },
+  {
+   "s": 205.6,
+   "shard": "shard 5/8 · 205 s elapsed",
+   "eta": "last month 64 s · next slot ≈ 64 s",
+   "running": "17 s",
+   "job": "running"
+  },
+  {
+   "s": 210.6,
+   "shard": "shard 5/8 · 210 s elapsed",
+   "eta": "last month 64 s · next slot ≈ 64 s",
+   "running": "22 s",
+   "job": "running"
+  },
+  {
+   "s": 215.6,
+   "shard": "shard 5/8 · 215 s elapsed",
+   "eta": "last month 64 s · next slot ≈ 64 s",
+   "running": "27 s",
+   "job": "running"
+  },
+  {
+   "s": 220.6,
+   "shard": "shard 5/8 · 220 s elapsed",
+   "eta": "last month 64 s · next slot ≈ 64 s",
+   "running": "32 s",
+   "job": "running"
+  },
+  {
+   "s": 225.6,
+   "shard": "shard 5/8 · 225 s elapsed",
+   "eta": "last month 64 s · next slot ≈ 64 s",
+   "running": "37 s",
+   "job": "running"
+  },
+  {
+   "s": 230.6,
+   "shard": "shard 5/8 · 230 s elapsed",
+   "eta": "last month 64 s · next slot ≈ 64 s",
+   "running": "42 s",
+   "job": "running"
+  },
+  {
+   "s": 235.6,
+   "shard": "shard 5/8 · 235 s elapsed",
+   "eta": "last month 64 s · next slot ≈ 64 s",
+   "running": "47 s",
+   "job": "running"
+  },
+  {
+   "s": 240.6,
+   "shard": "shard 6/8 · 240 s elapsed",
+   "eta": "last month 49 s · next slot ≈ 49 s",
+   "running": "2.8 s",
+   "job": "running"
+  },
+  {
+   "s": 245.6,
+   "shard": "shard 6/8 · 245 s elapsed",
+   "eta": "last month 49 s · next slot ≈ 49 s",
+   "running": "7.8 s",
+   "job": "running"
+  },
+  {
+   "s": 250.6,
+   "shard": "shard 6/8 · 250 s elapsed",
+   "eta": "last month 49 s · next slot ≈ 49 s",
+   "running": "13 s",
+   "job": "running"
+  },
+  {
+   "s": 255.7,
+   "shard": "shard 6/8 · 255 s elapsed",
+   "eta": "last month 49 s · next slot ≈ 49 s",
+   "running": "18 s",
+   "job": "running"
+  },
+  {
+   "s": 260.7,
+   "shard": "shard 6/8 · 260 s elapsed",
+   "eta": "last month 49 s · next slot ≈ 49 s",
+   "running": "23 s",
+   "job": "running"
+  },
+  {
+   "s": 265.7,
+   "shard": "shard 6/8 · 265 s elapsed",
+   "eta": "last month 49 s · next slot ≈ 49 s",
+   "running": "28 s",
+   "job": "running"
+  },
+  {
+   "s": 270.7,
+   "shard": "shard 6/8 · 270 s elapsed",
+   "eta": "last month 49 s · next slot ≈ 49 s",
+   "running": "33 s",
+   "job": "running"
+  },
+  {
+   "s": 275.7,
+   "shard": "shard 6/8 · 275 s elapsed",
+   "eta": "last month 49 s · next slot ≈ 49 s",
+   "running": "38 s",
+   "job": "running"
+  },
+  {
+   "s": 280.7,
+   "shard": "shard 6/8 · 280 s elapsed",
+   "eta": "last month 49 s · next slot ≈ 49 s",
+   "running": "43 s",
+   "job": "running"
+  },
+  {
+   "s": 285.7,
+   "shard": "shard 7/8 · 285 s elapsed",
+   "eta": "last month 45 s · next slot ≈ 45 s",
+   "running": "3.0 s",
+   "job": "running"
+  },
+  {
+   "s": 290.7,
+   "shard": "shard 7/8 · 290 s elapsed",
+   "eta": "last month 45 s · next slot ≈ 45 s",
+   "running": "8.0 s",
+   "job": "running"
+  },
+  {
+   "s": 295.7,
+   "shard": "shard 7/8 · 295 s elapsed",
+   "eta": "last month 45 s · next slot ≈ 45 s",
+   "running": "13 s",
+   "job": "running"
+  },
+  {
+   "s": 300.7,
+   "shard": "shard 7/8 · 300 s elapsed",
+   "eta": "last month 45 s · next slot ≈ 45 s",
+   "running": "18 s",
+   "job": "running"
+  },
+  {
+   "s": 305.7,
+   "shard": "shard 7/8 · 305 s elapsed",
+   "eta": "last month 45 s · next slot ≈ 45 s",
+   "running": "23 s",
+   "job": "running"
+  },
+  {
+   "s": 310.8,
+   "shard": "shard 7/8 · 310 s elapsed",
+   "eta": "last month 45 s · next slot ≈ 45 s",
+   "running": "28 s",
+   "job": "running"
+  },
+  {
+   "s": 315.8,
+   "shard": "shard 7/8 · 315 s elapsed",
+   "eta": "last month 45 s · next slot ≈ 45 s",
+   "running": "33 s",
+   "job": "running"
+  },
+  {
+   "s": 320.8,
+   "shard": "shard 7/8 · 320 s elapsed",
+   "eta": "last month 45 s · next slot ≈ 45 s",
+   "running": "38 s",
+   "job": "running"
+  },
+  {
+   "s": 325.8,
+   "shard": "job.done · 320.9 s · 8/8 shard",
+   "eta": "mean 40 s per month · measured",
+   "job": "done"
+  }
+ ],
+ "next": "RESULT\nlive · gateway\nOpen results\nCSV\nGeoJSON\nAttach to report\njob_01M3EZ3VQM24C8PG0K70Z2H710\nresults/kgz-agri/job_01M3EZ3VQM24C8PG0K70Z2H710\nOps lineage →\ngateway · done · 8/8 shard · results/kgz-agri/job_01M3EZ3VQM24C8PG0K70Z2H710",
+ "http": [
+  "200 GET /api/v1/health",
+  "200 GET /api/v1/catalog/layers",
+  "200 GET /api/v1/deploys",
+  "200 POST /api/v1/jobs/quote",
+  "202 POST /api/v1/jobs",
+  "200 GET /api/v1/jobs/job_01M3EZ3VQM24C8PG0K70Z2H710"
+ ],
+ "errors": [],
+ "perf": {
+  "n": 4000,
+  "p50": 16.7,
+  "p95": 16.8,
+  "max": 17.2,
+  "canvases": 1
+ }
+}

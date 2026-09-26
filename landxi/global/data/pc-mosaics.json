@@ -1,0 +1,36 @@
+{
+ "source": "https://planetarycomputer.microsoft.com/api/data/v1/mosaic/register (CQL2 · sentinel-2-l2a · eo:cloud_cover ≤ 10 · 구름 적은 순)",
+ "fetched_at": "2026-09-24T10:55:43+09:00",
+ "license": "Copernicus Sentinel data (free · 상업 포함) · 'Contains modified Copernicus Sentinel data 2025' · Microsoft Planetary Computer",
+ "bbox": [
+  73.8,
+  42.4,
+  76.0,
+  43.35
+ ],
+ "bbox_note": "브리프 bbox [74.70,42.75,75.20,43.00] 의 상위집합(추이 평원 전체)",
+ "tiles": "https://planetarycomputer.microsoft.com/api/data/v1/mosaic/tiles/{searchid}/WebMercatorQuad/{z}/{x}/{y}@1x.png?collection=sentinel-2-l2a&assets=visual&asset_bidx=visual|1,2,3&nodata=0",
+ "minzoom": 9,
+ "maxzoom": 14,
+ "months": {
+  "2025-03": "df914fad52eab488e578685c65455f53",
+  "2025-04": "db1a083e911c69ea322df88816d9f003",
+  "2025-05": "de1745264701eb3658be3e03b8401938",
+  "2025-06": "fabaff6f755a23ce2bb0433a22402421",
+  "2025-07": "e0d79834ff0bddd1817feb824f5b943b",
+  "2025-08": "d7ffd3ead2e827438834fc1b208c6b9b",
+  "2025-09": "fc0ea193863cf9813066103bc5e659a7",
+  "2025-10": "745b598f22c8047594285de8d5591af1"
+ },
+ "swipe": {
+  "2017": "108a857d49678e856ee7ce734650d363",
+  "2025": "2a23063749172205a4f1777f401a29eb"
+ },
+ "swipe_bbox": [
+  74.15,
+  42.74,
+  74.8,
+  43.02
+ ],
+ "swipe_note": "Jul–Sep · cloud ≤ 5 · least-cloudy first · 2017 = L2A reprocessed (2021) · EOX 2017 blank over KGZ"
+}

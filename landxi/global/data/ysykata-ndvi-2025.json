@@ -1,0 +1,865 @@
+{
+ "source": "https://planetarycomputer.microsoft.com/api/stac/v1/search (sentinel-2-l2a · T43TEH · cloud<15)",
+ "fetched_at": "2026-09-24T10:43:45+09:00",
+ "license": "Copernicus Sentinel data (free) · Microsoft Planetary Computer",
+ "aoi": [
+  74.7,
+  42.75,
+  75.2,
+  43.0
+ ],
+ "mgrs": "43TEH",
+ "cloud_max": 15,
+ "mask": "worldcover-40",
+ "note": "T43TEH 만 센다(§10.3 — recon 107장면은 T43TEH+T43TDH 합)",
+ "months": [
+  {
+   "p10": 0.1072,
+   "p50": 0.1504,
+   "p90": 0.2674,
+   "hist": {
+    "bins": [
+     -0.2,
+     -0.1,
+     0.0,
+     0.1,
+     0.2,
+     0.3,
+     0.4,
+     0.5,
+     0.6,
+     0.7,
+     0.8
+    ],
+    "counts": [
+     3,
+     16,
+     35777,
+     488232,
+     146267,
+     35199,
+     6375,
+     944,
+     99,
+     10
+    ]
+   },
+   "valid_px": 712925,
+   "crop_px": 469717,
+   "scenes_used": [
+    {
+     "id": "S2B_MSIL2A_20250310T054639_R048_T43TEH_20250310T074812",
+     "cloud": 9.6,
+     "valid_px": 174250,
+     "ndvi_mean": 0.1729
+    },
+    {
+     "id": "S2C_MSIL2A_20250318T055701_R091_T43TEH_20250318T091613",
+     "cloud": 0.0,
+     "valid_px": 192490,
+     "ndvi_mean": 0.1754
+    },
+    {
+     "id": "S2B_MSIL2A_20250320T054639_R048_T43TEH_20250320T080133",
+     "cloud": 12.5,
+     "valid_px": 153687,
+     "ndvi_mean": 0.1763
+    },
+    {
+     "id": "S2B_MSIL2A_20250323T055639_R091_T43TEH_20250323T080556",
+     "cloud": 7.2,
+     "valid_px": 192498,
+     "ndvi_mean": 0.1638
+    }
+   ],
+   "ms": 22069,
+   "month": "2025-03",
+   "shard_id": "m2025-03",
+   "n_scenes": {
+    "value": 4,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "PC STAC search s2:mgrs_tile=43TEH · eo:cloud_cover<15"
+   },
+   "scenes": [
+    "S2C_MSIL2A_20250318T055701_R091_T43TEH_20250318T091613",
+    "S2B_MSIL2A_20250323T055639_R091_T43TEH_20250323T080556",
+    "S2B_MSIL2A_20250310T054639_R048_T43TEH_20250310T074812",
+    "S2B_MSIL2A_20250320T054639_R048_T43TEH_20250320T080133"
+   ],
+   "ndvi_mean": {
+    "value": 0.1719,
+    "unit": "ndvi",
+    "basis": "measured",
+    "as_of": "2026-09-26T20:51:37+09:00",
+    "source": "PC S2 L2A B04/B08 · WorldCover 40 mask",
+    "note": "T43TEH 4 scenes · cloud<15 · SCL masked · 40 m grid pixel-pooled"
+   }
+  },
+  {
+   "p10": 0.0984,
+   "p50": 0.2197,
+   "p90": 0.6411,
+   "hist": {
+    "bins": [
+     -0.2,
+     -0.1,
+     0.0,
+     0.1,
+     0.2,
+     0.3,
+     0.4,
+     0.5,
+     0.6,
+     0.7,
+     0.8
+    ],
+    "counts": [
+     5,
+     27,
+     99234,
+     321793,
+     138151,
+     103817,
+     77755,
+     56078,
+     39678,
+     30669
+    ]
+   },
+   "valid_px": 905211,
+   "crop_px": 469717,
+   "scenes_used": [
+    {
+     "id": "S2B_MSIL2A_20250402T055639_R091_T43TEH_20250402T080626",
+     "cloud": 7.6,
+     "valid_px": 192498,
+     "ndvi_mean": 0.215
+    },
+    {
+     "id": "S2C_MSIL2A_20250404T054701_R048_T43TEH_20250404T091413",
+     "cloud": 0.6,
+     "valid_px": 172725,
+     "ndvi_mean": 0.2145
+    },
+    {
+     "id": "S2B_MSIL2A_20250412T055639_R091_T43TEH_20250412T081011",
+     "cloud": 4.9,
+     "valid_px": 192498,
+     "ndvi_mean": 0.2939
+    },
+    {
+     "id": "S2C_MSIL2A_20250427T055701_R091_T43TEH_20250427T093311",
+     "cloud": 0.6,
+     "valid_px": 192495,
+     "ndvi_mean": 0.391
+    },
+    {
+     "id": "S2B_MSIL2A_20250429T054639_R048_T43TEH_20250429T075112",
+     "cloud": 11.5,
+     "valid_px": 154995,
+     "ndvi_mean": 0.3878
+    }
+   ],
+   "ms": 38913,
+   "month": "2025-04",
+   "shard_id": "m2025-04",
+   "n_scenes": {
+    "value": 5,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "PC STAC search s2:mgrs_tile=43TEH · eo:cloud_cover<15"
+   },
+   "scenes": [
+    "S2C_MSIL2A_20250427T055701_R091_T43TEH_20250427T093311",
+    "S2C_MSIL2A_20250404T054701_R048_T43TEH_20250404T091413",
+    "S2B_MSIL2A_20250412T055639_R091_T43TEH_20250412T081011",
+    "S2B_MSIL2A_20250402T055639_R091_T43TEH_20250402T080626",
+    "S2B_MSIL2A_20250429T054639_R048_T43TEH_20250429T075112"
+   ],
+   "ndvi_mean": {
+    "value": 0.2987,
+    "unit": "ndvi",
+    "basis": "measured",
+    "as_of": "2026-09-26T20:52:16+09:00",
+    "source": "PC S2 L2A B04/B08 · WorldCover 40 mask",
+    "note": "T43TEH 5 scenes · cloud<15 · SCL masked · 40 m grid pixel-pooled"
+   }
+  },
+  {
+   "p10": 0.1291,
+   "p50": 0.4092,
+   "p90": 0.7966,
+   "hist": {
+    "bins": [
+     -0.2,
+     -0.1,
+     0.0,
+     0.1,
+     0.2,
+     0.3,
+     0.4,
+     0.5,
+     0.6,
+     0.7,
+     0.8
+    ],
+    "counts": [
+     0,
+     47,
+     46293,
+     147757,
+     136742,
+     137339,
+     131883,
+     112232,
+     86783,
+     69020
+    ]
+   },
+   "valid_px": 962473,
+   "crop_px": 469717,
+   "scenes_used": [
+    {
+     "id": "S2C_MSIL2A_20250504T054701_R048_T43TEH_20250504T090811",
+     "cloud": 0.1,
+     "valid_px": 192491,
+     "ndvi_mean": 0.4264
+    },
+    {
+     "id": "S2A_MSIL2A_20250506T055251_R048_T43TEH_20250506T085504",
+     "cloud": 2.0,
+     "valid_px": 192493,
+     "ndvi_mean": 0.4239
+    },
+    {
+     "id": "S2C_MSIL2A_20250507T055651_R091_T43TEH_20250507T083016",
+     "cloud": 10.0,
+     "valid_px": 192498,
+     "ndvi_mean": 0.44
+    },
+    {
+     "id": "S2C_MSIL2A_20250517T055651_R091_T43TEH_20250517T094715",
+     "cloud": 1.0,
+     "valid_px": 192498,
+     "ndvi_mean": 0.4595
+    },
+    {
+     "id": "S2B_MSIL2A_20250529T054639_R048_T43TEH_20250529T075106",
+     "cloud": 14.1,
+     "valid_px": 192493,
+     "ndvi_mean": 0.4263
+    }
+   ],
+   "ms": 40861,
+   "month": "2025-05",
+   "shard_id": "m2025-05",
+   "n_scenes": {
+    "value": 5,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "PC STAC search s2:mgrs_tile=43TEH · eo:cloud_cover<15"
+   },
+   "scenes": [
+    "S2C_MSIL2A_20250504T054701_R048_T43TEH_20250504T090811",
+    "S2C_MSIL2A_20250517T055651_R091_T43TEH_20250517T094715",
+    "S2A_MSIL2A_20250506T055251_R048_T43TEH_20250506T085504",
+    "S2C_MSIL2A_20250507T055651_R091_T43TEH_20250507T083016",
+    "S2B_MSIL2A_20250529T054639_R048_T43TEH_20250529T075106"
+   ],
+   "ndvi_mean": {
+    "value": 0.4352,
+    "unit": "ndvi",
+    "basis": "measured",
+    "as_of": "2026-09-26T20:52:57+09:00",
+    "source": "PC S2 L2A B04/B08 · WorldCover 40 mask",
+    "note": "T43TEH 5 scenes · cloud<15 · SCL masked · 40 m grid pixel-pooled"
+   }
+  },
+  {
+   "p10": 0.1432,
+   "p50": 0.4272,
+   "p90": 0.7602,
+   "hist": {
+    "bins": [
+     -0.2,
+     -0.1,
+     0.0,
+     0.1,
+     0.2,
+     0.3,
+     0.4,
+     0.5,
+     0.6,
+     0.7,
+     0.8
+    ],
+    "counts": [
+     0,
+     35,
+     17030,
+     220739,
+     156186,
+     135915,
+     139833,
+     142942,
+     135781,
+     114170
+    ]
+   },
+   "valid_px": 1135488,
+   "crop_px": 469717,
+   "scenes_used": [
+    {
+     "id": "S2C_MSIL2A_20250606T055651_R091_T43TEH_20250606T083313",
+     "cloud": 2.7,
+     "valid_px": 178494,
+     "ndvi_mean": 0.4155
+    },
+    {
+     "id": "S2B_MSIL2A_20250621T055639_R091_T43TEH_20250621T075616",
+     "cloud": 0.1,
+     "valid_px": 192498,
+     "ndvi_mean": 0.4487
+    },
+    {
+     "id": "S2C_MSIL2A_20250623T054701_R048_T43TEH_20250623T093720",
+     "cloud": 13.4,
+     "valid_px": 192498,
+     "ndvi_mean": 0.4284
+    },
+    {
+     "id": "S2C_MSIL2A_20250626T055651_R091_T43TEH_20250626T100017",
+     "cloud": 6.6,
+     "valid_px": 187002,
+     "ndvi_mean": 0.4403
+    },
+    {
+     "id": "S2B_MSIL2A_20250628T054639_R048_T43TEH_20250628T074853",
+     "cloud": 2.2,
+     "valid_px": 192498,
+     "ndvi_mean": 0.4401
+    },
+    {
+     "id": "S2A_MSIL2A_20250628T060301_R091_T43TEH_20250628T083917",
+     "cloud": 0.7,
+     "valid_px": 192498,
+     "ndvi_mean": 0.4533
+    }
+   ],
+   "ms": 38020,
+   "month": "2025-06",
+   "shard_id": "m2025-06",
+   "n_scenes": {
+    "value": 6,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "PC STAC search s2:mgrs_tile=43TEH · eo:cloud_cover<15"
+   },
+   "scenes": [
+    "S2B_MSIL2A_20250621T055639_R091_T43TEH_20250621T075616",
+    "S2A_MSIL2A_20250628T060301_R091_T43TEH_20250628T083917",
+    "S2C_MSIL2A_20250606T055651_R091_T43TEH_20250606T083313",
+    "S2B_MSIL2A_20250628T054639_R048_T43TEH_20250628T074853",
+    "S2C_MSIL2A_20250626T055651_R091_T43TEH_20250626T100017",
+    "S2C_MSIL2A_20250623T054701_R048_T43TEH_20250623T093720"
+   ],
+   "ndvi_mean": {
+    "value": 0.438,
+    "unit": "ndvi",
+    "basis": "measured",
+    "as_of": "2026-09-26T20:53:35+09:00",
+    "source": "PC S2 L2A B04/B08 · WorldCover 40 mask",
+    "note": "T43TEH 6 scenes · cloud<15 · SCL masked · 40 m grid pixel-pooled"
+   }
+  },
+  {
+   "p10": 0.1043,
+   "p50": 0.3973,
+   "p90": 0.8314,
+   "hist": {
+    "bins": [
+     -0.2,
+     -0.1,
+     0.0,
+     0.1,
+     0.2,
+     0.3,
+     0.4,
+     0.5,
+     0.6,
+     0.7,
+     0.8
+    ],
+    "counts": [
+     0,
+     81,
+     176945,
+     525861,
+     193790,
+     165880,
+     171733,
+     180533,
+     193703,
+     220528
+    ]
+   },
+   "valid_px": 2117287,
+   "crop_px": 469717,
+   "scenes_used": [
+    {
+     "id": "S2C_MSIL2A_20250703T054701_R048_T43TEH_20250703T090914",
+     "cloud": 1.1,
+     "valid_px": 192498,
+     "ndvi_mean": 0.4304
+    },
+    {
+     "id": "S2A_MSIL2A_20250705T055301_R048_T43TEH_20250705T084502",
+     "cloud": 10.4,
+     "valid_px": 192498,
+     "ndvi_mean": 0.4187
+    },
+    {
+     "id": "S2C_MSIL2A_20250706T055701_R091_T43TEH_20250706T093231",
+     "cloud": 3.3,
+     "valid_px": 192463,
+     "ndvi_mean": 0.4469
+    },
+    {
+     "id": "S2C_MSIL2A_20250713T054701_R048_T43TEH_20250713T092714",
+     "cloud": 0.0,
+     "valid_px": 192498,
+     "ndvi_mean": 0.4314
+    },
+    {
+     "id": "S2B_MSIL2A_20250718T054639_R048_T43TEH_20250718T075728",
+     "cloud": 3.2,
+     "valid_px": 192498,
+     "ndvi_mean": 0.4256
+    },
+    {
+     "id": "S2A_MSIL2A_20250718T060301_R091_T43TEH_20250718T083016",
+     "cloud": 3.8,
+     "valid_px": 192498,
+     "ndvi_mean": 0.438
+    },
+    {
+     "id": "S2B_MSIL2A_20250721T055639_R091_T43TEH_20250721T075947",
+     "cloud": 14.5,
+     "valid_px": 192352,
+     "ndvi_mean": 0.4321
+    },
+    {
+     "id": "S2C_MSIL2A_20250723T054701_R048_T43TEH_20250723T093014",
+     "cloud": 0.1,
+     "valid_px": 192498,
+     "ndvi_mean": 0.4109
+    },
+    {
+     "id": "S2A_MSIL2A_20250725T055301_R048_T43TEH_20250725T083015",
+     "cloud": 6.8,
+     "valid_px": 192498,
+     "ndvi_mean": 0.4203
+    },
+    {
+     "id": "S2C_MSIL2A_20250726T055701_R091_T43TEH_20250726T093117",
+     "cloud": 6.3,
+     "valid_px": 192497,
+     "ndvi_mean": 0.432
+    },
+    {
+     "id": "S2B_MSIL2A_20250731T055639_R091_T43TEH_20250731T082337",
+     "cloud": 9.9,
+     "valid_px": 192489,
+     "ndvi_mean": 0.4463
+    }
+   ],
+   "ms": 49007,
+   "month": "2025-07",
+   "shard_id": "m2025-07",
+   "n_scenes": {
+    "value": 11,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "PC STAC search s2:mgrs_tile=43TEH · eo:cloud_cover<15"
+   },
+   "scenes": [
+    "S2C_MSIL2A_20250723T054701_R048_T43TEH_20250723T093014",
+    "S2C_MSIL2A_20250713T054701_R048_T43TEH_20250713T092714",
+    "S2C_MSIL2A_20250703T054701_R048_T43TEH_20250703T090914",
+    "S2C_MSIL2A_20250706T055701_R091_T43TEH_20250706T093231",
+    "S2B_MSIL2A_20250718T054639_R048_T43TEH_20250718T075728",
+    "S2A_MSIL2A_20250718T060301_R091_T43TEH_20250718T083016",
+    "S2C_MSIL2A_20250726T055701_R091_T43TEH_20250726T093117",
+    "S2A_MSIL2A_20250725T055301_R048_T43TEH_20250725T083015",
+    "S2B_MSIL2A_20250731T055639_R091_T43TEH_20250731T082337",
+    "S2A_MSIL2A_20250705T055301_R048_T43TEH_20250705T084502",
+    "S2B_MSIL2A_20250721T055639_R091_T43TEH_20250721T075947"
+   ],
+   "ndvi_mean": {
+    "value": 0.4302,
+    "unit": "ndvi",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:59:37+09:00",
+    "source": "PC S2 L2A B04/B08 · WorldCover 40 마스크",
+    "note": "T43TEH 11 scenes · cloud<15 · SCL masked · 40 m grid pixel-pooled"
+   }
+  },
+  {
+   "p10": 0.1062,
+   "p50": 0.3685,
+   "p90": 0.7797,
+   "hist": {
+    "bins": [
+     -0.2,
+     -0.1,
+     0.0,
+     0.1,
+     0.2,
+     0.3,
+     0.4,
+     0.5,
+     0.6,
+     0.7,
+     0.8
+    ],
+    "counts": [
+     14,
+     93,
+     122164,
+     481898,
+     168675,
+     135371,
+     142280,
+     160217,
+     186375,
+     198554
+    ]
+   },
+   "valid_px": 1732454,
+   "crop_px": 469717,
+   "scenes_used": [
+    {
+     "id": "S2B_MSIL2A_20250810T055639_R091_T43TEH_20250810T080656",
+     "cloud": 1.8,
+     "valid_px": 192498,
+     "ndvi_mean": 0.4497
+    },
+    {
+     "id": "S2C_MSIL2A_20250812T054701_R048_T43TEH_20250812T091415",
+     "cloud": 8.6,
+     "valid_px": 192498,
+     "ndvi_mean": 0.43
+    },
+    {
+     "id": "S2C_MSIL2A_20250815T055651_R091_T43TEH_20250815T092814",
+     "cloud": 9.3,
+     "valid_px": 192470,
+     "ndvi_mean": 0.4052
+    },
+    {
+     "id": "S2B_MSIL2A_20250820T055639_R091_T43TEH_20250820T083502",
+     "cloud": 3.8,
+     "valid_px": 192498,
+     "ndvi_mean": 0.416
+    },
+    {
+     "id": "S2C_MSIL2A_20250822T054701_R048_T43TEH_20250822T091710",
+     "cloud": 11.0,
+     "valid_px": 192498,
+     "ndvi_mean": 0.3958
+    },
+    {
+     "id": "S2C_MSIL2A_20250825T055651_R091_T43TEH_20250825T092714",
+     "cloud": 0.1,
+     "valid_px": 192498,
+     "ndvi_mean": 0.412
+    },
+    {
+     "id": "S2B_MSIL2A_20250827T054639_R048_T43TEH_20250827T074851",
+     "cloud": 0.0,
+     "valid_px": 192498,
+     "ndvi_mean": 0.3835
+    },
+    {
+     "id": "S2A_MSIL2A_20250827T060301_R091_T43TEH_20250827T085317",
+     "cloud": 0.0,
+     "valid_px": 192498,
+     "ndvi_mean": 0.3919
+    },
+    {
+     "id": "S2B_MSIL2A_20250830T055639_R091_T43TEH_20250830T081340",
+     "cloud": 0.4,
+     "valid_px": 192498,
+     "ndvi_mean": 0.3789
+    }
+   ],
+   "ms": 42980,
+   "month": "2025-08",
+   "shard_id": "m2025-08",
+   "n_scenes": {
+    "value": 9,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "PC STAC search s2:mgrs_tile=43TEH · eo:cloud_cover<15"
+   },
+   "scenes": [
+    "S2C_MSIL2A_20250825T055651_R091_T43TEH_20250825T092714",
+    "S2B_MSIL2A_20250830T055639_R091_T43TEH_20250830T081340",
+    "S2B_MSIL2A_20250827T054639_R048_T43TEH_20250827T074851",
+    "S2A_MSIL2A_20250827T060301_R091_T43TEH_20250827T085317",
+    "S2B_MSIL2A_20250810T055639_R091_T43TEH_20250810T080656",
+    "S2B_MSIL2A_20250820T055639_R091_T43TEH_20250820T083502",
+    "S2C_MSIL2A_20250812T054701_R048_T43TEH_20250812T091415",
+    "S2C_MSIL2A_20250815T055651_R091_T43TEH_20250815T092814",
+    "S2C_MSIL2A_20250822T054701_R048_T43TEH_20250822T091710"
+   ],
+   "ndvi_mean": {
+    "value": 0.407,
+    "unit": "ndvi",
+    "basis": "measured",
+    "as_of": "2026-09-24T11:00:20+09:00",
+    "source": "PC S2 L2A B04/B08 · WorldCover 40 마스크",
+    "note": "T43TEH 9 scenes · cloud<15 · SCL masked · 40 m grid pixel-pooled"
+   }
+  },
+  {
+   "p10": 0.1128,
+   "p50": 0.2791,
+   "p90": 0.6455,
+   "hist": {
+    "bins": [
+     -0.2,
+     -0.1,
+     0.0,
+     0.1,
+     0.2,
+     0.3,
+     0.4,
+     0.5,
+     0.6,
+     0.7,
+     0.8
+    ],
+    "counts": [
+     3,
+     44,
+     61685,
+     511968,
+     241209,
+     195237,
+     172787,
+     145377,
+     110173,
+     70670
+    ]
+   },
+   "valid_px": 1536971,
+   "crop_px": 469717,
+   "scenes_used": [
+    {
+     "id": "S2C_MSIL2A_20250901T054651_R048_T43TEH_20250901T100216",
+     "cloud": 0.0,
+     "valid_px": 192498,
+     "ndvi_mean": 0.371
+    },
+    {
+     "id": "S2A_MSIL2A_20250903T055251_R048_T43TEH_20250903T112918",
+     "cloud": 6.9,
+     "valid_px": 192498,
+     "ndvi_mean": 0.3469
+    },
+    {
+     "id": "S2C_MSIL2A_20250904T055651_R091_T43TEH_20250904T095057",
+     "cloud": 0.2,
+     "valid_px": 192498,
+     "ndvi_mean": 0.3707
+    },
+    {
+     "id": "S2B_MSIL2A_20250906T054639_R048_T43TEH_20250906T074733",
+     "cloud": 5.2,
+     "valid_px": 192498,
+     "ndvi_mean": 0.3186
+    },
+    {
+     "id": "S2C_MSIL2A_20250914T055651_R091_T43TEH_20250914T110913",
+     "cloud": 3.4,
+     "valid_px": 192497,
+     "ndvi_mean": 0.3114
+    },
+    {
+     "id": "S2C_MSIL2A_20250921T054651_R048_T43TEH_20250921T092613",
+     "cloud": 1.6,
+     "valid_px": 192494,
+     "ndvi_mean": 0.3204
+    },
+    {
+     "id": "S2C_MSIL2A_20250924T055651_R091_T43TEH_20250924T092330",
+     "cloud": 1.7,
+     "valid_px": 192498,
+     "ndvi_mean": 0.3281
+    },
+    {
+     "id": "S2B_MSIL2A_20250929T055639_R091_T43TEH_20250929T081651",
+     "cloud": 3.4,
+     "valid_px": 189490,
+     "ndvi_mean": 0.285
+    }
+   ],
+   "ms": 35307,
+   "month": "2025-09",
+   "shard_id": "m2025-09",
+   "n_scenes": {
+    "value": 8,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "PC STAC search s2:mgrs_tile=43TEH · eo:cloud_cover<15"
+   },
+   "scenes": [
+    "S2C_MSIL2A_20250904T055651_R091_T43TEH_20250904T095057",
+    "S2C_MSIL2A_20250901T054651_R048_T43TEH_20250901T100216",
+    "S2C_MSIL2A_20250924T055651_R091_T43TEH_20250924T092330",
+    "S2C_MSIL2A_20250921T054651_R048_T43TEH_20250921T092613",
+    "S2C_MSIL2A_20250914T055651_R091_T43TEH_20250914T110913",
+    "S2B_MSIL2A_20250929T055639_R091_T43TEH_20250929T081651",
+    "S2B_MSIL2A_20250906T054639_R048_T43TEH_20250906T074733",
+    "S2A_MSIL2A_20250903T055251_R048_T43TEH_20250903T112918"
+   ],
+   "ndvi_mean": {
+    "value": 0.3316,
+    "unit": "ndvi",
+    "basis": "measured",
+    "as_of": "2026-09-24T11:00:56+09:00",
+    "source": "PC S2 L2A B04/B08 · WorldCover 40 마스크",
+    "note": "T43TEH 8 scenes · cloud<15 · SCL masked · 40 m grid pixel-pooled"
+   }
+  },
+  {
+   "p10": 0.1084,
+   "p50": 0.2081,
+   "p90": 0.4635,
+   "hist": {
+    "bins": [
+     -0.2,
+     -0.1,
+     0.0,
+     0.1,
+     0.2,
+     0.3,
+     0.4,
+     0.5,
+     0.6,
+     0.7,
+     0.8
+    ],
+    "counts": [
+     2,
+     55,
+     63899,
+     671863,
+     350737,
+     209881,
+     127763,
+     70853,
+     31982,
+     10389
+    ]
+   },
+   "valid_px": 1539574,
+   "crop_px": 469717,
+   "scenes_used": [
+    {
+     "id": "S2C_MSIL2A_20251004T055721_R091_T43TEH_20251004T092917",
+     "cloud": 0.0,
+     "valid_px": 192498,
+     "ndvi_mean": 0.2875
+    },
+    {
+     "id": "S2B_MSIL2A_20251006T054639_R048_T43TEH_20251006T075538",
+     "cloud": 0.3,
+     "valid_px": 192498,
+     "ndvi_mean": 0.2837
+    },
+    {
+     "id": "S2B_MSIL2A_20251009T055639_R091_T43TEH_20251009T081701",
+     "cloud": 0.8,
+     "valid_px": 192090,
+     "ndvi_mean": 0.2584
+    },
+    {
+     "id": "S2C_MSIL2A_20251011T054801_R048_T43TEH_20251011T091703",
+     "cloud": 0.0,
+     "valid_px": 192498,
+     "ndvi_mean": 0.2601
+    },
+    {
+     "id": "S2C_MSIL2A_20251014T055821_R091_T43TEH_20251014T095517",
+     "cloud": 0.0,
+     "valid_px": 192498,
+     "ndvi_mean": 0.2421
+    },
+    {
+     "id": "S2B_MSIL2A_20251019T055749_R091_T43TEH_20251019T080452",
+     "cloud": 6.6,
+     "valid_px": 192498,
+     "ndvi_mean": 0.2304
+    },
+    {
+     "id": "S2C_MSIL2A_20251024T055931_R091_T43TEH_20251024T094615",
+     "cloud": 1.1,
+     "valid_px": 192498,
+     "ndvi_mean": 0.2175
+    },
+    {
+     "id": "S2C_MSIL2A_20251031T055031_R048_T43TEH_20251031T092122",
+     "cloud": 0.1,
+     "valid_px": 192496,
+     "ndvi_mean": 0.2203
+    }
+   ],
+   "ms": 38513,
+   "month": "2025-10",
+   "shard_id": "m2025-10",
+   "n_scenes": {
+    "value": 8,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "PC STAC search s2:mgrs_tile=43TEH · eo:cloud_cover<15"
+   },
+   "scenes": [
+    "S2C_MSIL2A_20251031T055031_R048_T43TEH_20251031T092122",
+    "S2C_MSIL2A_20251014T055821_R091_T43TEH_20251014T095517",
+    "S2C_MSIL2A_20251011T054801_R048_T43TEH_20251011T091703",
+    "S2C_MSIL2A_20251004T055721_R091_T43TEH_20251004T092917",
+    "S2B_MSIL2A_20251009T055639_R091_T43TEH_20251009T081701",
+    "S2B_MSIL2A_20251006T054639_R048_T43TEH_20251006T075538",
+    "S2C_MSIL2A_20251024T055931_R091_T43TEH_20251024T094615",
+    "S2B_MSIL2A_20251019T055749_R091_T43TEH_20251019T080452"
+   ],
+   "ndvi_mean": {
+    "value": 0.25,
+    "unit": "ndvi",
+    "basis": "measured",
+    "as_of": "2026-09-24T11:01:34+09:00",
+    "source": "PC S2 L2A B04/B08 · WorldCover 40 마스크",
+    "note": "T43TEH 8 scenes · cloud<15 · SCL masked · 40 m grid pixel-pooled"
+   }
+  }
+ ],
+ "total_scenes": {
+  "value": 56,
+  "unit": "count",
+  "basis": "measured",
+  "as_of": "2026-09-24",
+  "source": "sum of months"
+ },
+ "updated_by": "adapter_ndvi_pc (G-J1)"
+}

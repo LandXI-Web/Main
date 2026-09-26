@@ -1,0 +1,1 @@
+{"ndvi_mean": {"value": 0.438, "unit": "ndvi", "basis": "recorded", "as_of": "2026-09-24T11:13:19+09:00", "source": "ysykata-ndvi-2025.json (PC outage fallback)", "note": "PC error: [Errno 11001] getaddrinfo failed"}, "n_scenes": 6, "basis": "recorded", "error": "[Errno 11001] getaddrinfo failed"}

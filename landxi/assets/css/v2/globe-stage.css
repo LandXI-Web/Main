@@ -1,0 +1,128 @@
+/* GLOBE-STAGE — system-v2 §2 명명 레이아웃(F1-D 소유)
+   순백 배경 글로브 · 국가 면 채색 · 상단 날짜 스크러버 · 우 사업국 목록.
+   토큰은 tokens-v2.css(동결)만 쓴다. 지속값은 모션 사다리 안(40·60·80·120·180·380·500·750·1000·1250·1600·2400). 라운드 0. */
+
+.gs-root { position: fixed; inset: 0; overflow: hidden; background: #FFFFFF; }
+.gs-map { position: absolute; inset: 0; background: #FFFFFF; }
+.gs-map canvas { outline: none; }
+.gs-map--b { pointer-events: none; clip-path: inset(0 0 0 var(--swipe, 50%)); }
+.gs-root[data-scene="globe"] .gs-map--b, .gs-root:not([data-swipe]) .gs-map--b { visibility: hidden; }
+
+/* ── 무대 전환: 글로브(종이 위 지도) ↔ 영상(유리) ─────────────────────── */
+.gs-paper { color: var(--cw-ink); }
+.gs-fade { transition: opacity var(--d-500) var(--e-ui), transform var(--d-500) var(--e-arrive); }
+.gs-root:not([data-scene="globe"]) .gs-only-globe { opacity: 0; transform: translateY(20px); pointer-events: none; }
+.gs-root[data-scene="globe"] .gs-only-region { opacity: 0; transform: translateY(20px); pointer-events: none; }
+
+/* ── 마스트 ────────────────────────────────────────────────────────── */
+.gs-mast { position: absolute; left: 0; right: 0; top: 0; height: var(--mast); display: flex; align-items: center; gap: 24px;
+           padding: 0 24px; z-index: 20; pointer-events: none; }
+.gs-mast > * { pointer-events: auto; }
+.gs-brand { display: flex; align-items: baseline; gap: 12px; white-space: nowrap; }
+.gs-brand b { font: var(--g-display-w, 700) 22px/24px var(--g-display); letter-spacing: -0.01em; color: var(--cw-ink); }
+.gs-brand span { font: 500 14px/16px var(--g-num); color: var(--cw-sub); letter-spacing: .04em; text-transform: uppercase; }
+.gs-root:not([data-scene="globe"]) .gs-brand b { color: #FFFFFF; text-shadow: 0 1px 2px rgba(1,1,2,.45); }
+.gs-root:not([data-scene="globe"]) .gs-brand span { color: rgba(255,255,255,.86); text-shadow: 0 1px 2px rgba(1,1,2,.45); }
+.gs-chip { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; font: 500 14px/16px var(--g-num);
+           color: var(--cw-ink); background: #FFFFFF; border: 1px solid var(--cw-rule); border-radius: 0; white-space: nowrap; }
+.gs-chip[data-kind="demo"] { border-style: dashed; color: var(--cw-sub); }
+.gs-chip[data-kind="live"] i { width: 8px; height: 8px; background: var(--cw-ai); display: inline-block; }
+.gs-chip[data-kind="demo"] i { width: 8px; height: 8px; border: 1px dashed var(--cw-sub); display: inline-block; }
+.gs-root:not([data-scene="globe"]) .gs-chip { background: rgba(255,255,255,.78); border-color: rgba(255,255,255,.55);
+           backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2); }
+.gs-spacer { flex: 1; }
+
+/* ── 상단 날짜 스크러버(GIBS {date} · 어제 기준 −30일) ────────────────── */
+.gs-date { position: absolute; top: 80px; left: calc((100% - 352px + 470px) / 2); transform: translateX(-50%); width: 560px; z-index: 21; }
+.gs-date__cap { display: flex; justify-content: space-between; gap: 16px; white-space: nowrap; font: 500 14px/16px var(--g-num); color: var(--cw-sub); }
+.gs-date__cap b { color: var(--cw-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.gs-date__track { position: relative; height: 24px; margin-top: 6px; display: grid; grid-template-columns: repeat(31, 1fr); cursor: pointer; }
+.gs-date__tick { position: relative; border: 0; background: none; padding: 0; cursor: pointer; height: 24px; }
+.gs-date__tick::after { content: ''; position: absolute; left: 50%; bottom: 0; width: 1px; height: 8px; background: var(--cw-rule); }
+.gs-date__tick[data-week]::after { height: 14px; background: var(--cw-sub); }
+.gs-date__tick[aria-current="true"]::after { width: 3px; margin-left: -1px; height: 24px; background: var(--cw-accent); transition: height var(--d-180) var(--e-ui); }
+.gs-date__tick:hover::after { height: 18px; transition: height var(--d-180) var(--e-ui); }
+.gs-root:not([data-scene="globe"]) .gs-date { opacity: 0; transform: translate(-50%, -20px); pointer-events: none; }
+
+/* ── 글로브 헤드라인(종이) ───────────────────────────────────────────── */
+.gs-hero { position: absolute; left: var(--margin); top: 150px; max-width: 400px; z-index: 10; pointer-events: none; }
+.gs-hero h1 { margin: 0; font: var(--g-display-w, 700) 66px/82px var(--g-display); letter-spacing: -0.01em; color: var(--cw-ink); }
+.gs-hero h1 em { font-style: normal; color: var(--cw-accent); }
+.gs-hero p { margin: 20px 0 0; font: 400 18px/26px var(--g-body); color: var(--cw-sub); max-width: 360px; }
+.gs-hero .gs-prov { margin-top: 20px; max-width: 360px; }
+.gs-hero .cw-prov { margin-top: 20px; }
+
+/* ── 우 사업국 목록(종이 무대 · 헤어라인) ─────────────────────────────── */
+.gs-list { position: absolute; right: 24px; top: 88px; bottom: 24px; width: 328px; z-index: 12; display: flex; flex-direction: column;
+           background: #FFFFFF; border-left: 1px solid var(--cw-rule); padding: 0 0 0 20px; }
+.gs-list__head { padding-bottom: 12px; border-bottom: 1px solid var(--cw-ink); }
+.gs-list__head h2 { margin: 0; font: var(--g-display-w, 700) 26px/32px var(--g-display); letter-spacing: -0.01em; }
+.gs-list__head p { margin: 6px 0 0; font: 400 14px/16px var(--g-num); color: var(--cw-sub); }
+.gs-list__legend { display: flex; gap: 16px; margin-top: 10px; font: 500 14px/16px var(--g-num); color: var(--cw-sub); }
+.gs-list__legend i { display: inline-block; width: 14px; height: 14px; margin-right: 6px; vertical-align: -2px; }
+.gs-list__rows { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; scrollbar-width: thin; }
+.gs-row { display: grid; grid-template-columns: 14px 1fr auto; gap: 10px; align-items: baseline; padding: 9px 4px 9px 0;
+          border-bottom: 1px solid var(--cw-rule); cursor: pointer; transition: transform var(--d-180) var(--e-ui); }
+.gs-row:hover, .gs-row[aria-selected="true"] { transform: translateX(-4px); }
+.gs-row i { width: 10px; height: 10px; align-self: center; }
+.gs-row[data-status="active"] i { background: var(--cw-accent); }
+.gs-row[data-status="history"] i { background: var(--cw-tint-2); outline: 1px solid #93BDFF; }
+.gs-row[data-status="point"] i { background: #FFFFFF; outline: 1.5px solid var(--cw-ink); }
+.gs-row b { font: 600 16px/20px var(--g-body); color: var(--cw-ink); display: block; }
+.gs-row small { display: block; font: 400 14px/18px var(--g-body); color: var(--cw-sub); margin-top: 2px; }
+.gs-row em { font: 500 14px/16px var(--g-num); font-style: normal; color: var(--cw-sub); font-variant-numeric: tabular-nums; }
+.gs-row[data-open] em { color: var(--cw-accent); }
+.gs-row[data-open] b::after { content: ' →'; color: var(--cw-accent); }
+
+/* ── 락온 브래킷(380 = 180 · 80 · 120 · tokens-v2 키프레임) ─────────────── */
+.gs-lock { position: absolute; pointer-events: none; z-index: 14; }
+.gs-lock i { position: absolute; width: 16px; height: 16px; border: 0 solid var(--cw-ai);
+             animation: cw-lock-grow var(--lock-grow) var(--e-ui) both, cw-lock-amber var(--lock-amber) linear var(--lock-grow) both,
+                        cw-lock-settle var(--lock-settle) var(--e-ui) calc(var(--lock-grow) + var(--lock-amber)) both; }
+.gs-lock i:nth-child(1) { left: 0; top: 0; border-left-width: 2px; border-top-width: 2px; }
+.gs-lock i:nth-child(2) { right: 0; top: 0; border-right-width: 2px; border-top-width: 2px; animation-delay: 0ms, var(--lock-grow), calc(var(--lock-grow) + var(--lock-amber)); }
+.gs-lock i:nth-child(3) { left: 0; bottom: 0; border-left-width: 2px; border-bottom-width: 2px; }
+.gs-lock i:nth-child(4) { right: 0; bottom: 0; border-right-width: 2px; border-bottom-width: 2px; }
+.gs-lock__tag { position: absolute; left: 0; top: -40px; display: flex; gap: 10px; align-items: baseline; white-space: nowrap;
+                font: 600 16px/20px var(--g-body); color: #FFFFFF; text-shadow: 0 1px 2px rgba(1,1,2,.55); }
+.gs-lock__tag .g-cyr { font-size: 16px; color: rgba(255,255,255,.9); }
+.gs-lock__tag small { font: 500 14px/16px var(--g-num); color: rgba(255,255,255,.86); }
+
+/* ── 스윕(1000 · 지나간 뒤에만 현상) ─────────────────────────────────── */
+@keyframes gs-sweep { from { transform: translateX(0); } to { transform: translateX(var(--sweep-w, 100px)); } }
+.gs-sweep { position: absolute; pointer-events: none; z-index: 13; overflow: visible; }
+.gs-sweep .cw-sweep { left: 0; animation: gs-sweep var(--d-1000) linear both; }
+
+/* ── 스와이프(system-v2 §5 문법 5) ────────────────────────────────────── */
+.gs-swipe { position: absolute; top: 0; bottom: 0; left: var(--swipe, 50%); width: 0; z-index: 15; pointer-events: none; }
+.gs-swipe::before { content: ''; position: absolute; top: 0; bottom: 0; left: -1px; width: 2px; background: #FFFFFF; box-shadow: 0 0 0 1px rgba(1,1,2,.18); }
+.gs-swipe__grip { position: absolute; top: 50%; left: -22px; width: 44px; height: 44px; margin-top: -22px; background: #FFFFFF; border: 1px solid var(--cw-ink);
+                  pointer-events: auto; cursor: ew-resize; display: grid; place-items: center; font: 600 14px/16px var(--g-num); }
+.gs-swipe__grip::before, .gs-swipe__grip::after { content: ''; position: absolute; width: 12px; height: 12px; border: 0 solid var(--cw-ink); }
+.gs-swipe__grip::before { left: -7px; top: -7px; border-left-width: 1.5px; border-top-width: 1.5px; }
+.gs-swipe__grip::after { right: -7px; bottom: -7px; border-right-width: 1.5px; border-bottom-width: 1.5px; }
+.gs-swipe__side { position: absolute; bottom: 112px; white-space: nowrap; }
+.gs-swipe__side--l { right: 16px; }
+.gs-swipe__side--r { left: 16px; }
+.gs-root:not([data-swipe]) .gs-swipe { display: none; }
+
+/* ── 프로비넌스(유리 위) ───────────────────────────────────────────── */
+.gs-prov { display: inline-flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; font: 500 14px/16px var(--g-num); color: var(--cw-sub);
+           border-top: 1px solid var(--cw-rule); padding-top: 6px; }
+.gs-prov b { font-weight: 600; color: var(--cw-ink); }
+.gs-prov[data-basis="measured"] b { color: var(--cw-ink); }
+.gs-prov[data-basis="inferred"] b { color: var(--cw-ai); }
+.gs-prov[data-basis="demo"], .gs-prov[data-basis="estimate"], .gs-prov[data-basis="history"], .gs-prov[data-basis="recorded"] { border-top-style: dashed; }
+.gs-void { border: 1px dashed var(--cw-mute); color: var(--cw-sub); font: 500 14px/18px var(--g-body); padding: 10px 12px; }
+.gs-void b { color: var(--cw-ink); font-weight: 600; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gs-fade, .gs-row, .gs-date__tick::after { transition: none; }
+  .gs-lock i, .gs-sweep .cw-sweep { animation-duration: 1ms !important; animation-delay: 0ms !important; }
+}
+
+/* 도착 크로스페이드(arriveCross) — 두 번째 지도가 목표 화면을 먼저 완성해 두었다가 도착 500 전부터 전면에 겹친다 */
+/* 숨은 동안 불투명도 0 — 겹치기 시작 때 1→0 으로 번쩍이는 전이 방지 */
+.gs-root:not([data-swipe]):not([data-bcover="1"]) .gs-map.gs-map--b { opacity: 0; }
+.gs-root[data-bcover] .gs-map.gs-map--b { visibility: visible; clip-path: none; transition: opacity var(--d-500) var(--e-ui); }
+.gs-root[data-bcover="1"] .gs-map.gs-map--b { opacity: 1; }

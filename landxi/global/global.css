@@ -1,0 +1,201 @@
+/* Land-XI Global — 글로벌판 XI맵 전용(F1-D). CANVAS-FULL 위 유리 부품 · 라운드 0 · 지속값은 모션 사다리 안. */
+html, body { margin: 0; height: 100%; }
+body { -webkit-font-smoothing: antialiased; font-family: var(--g-body); }
+button { font: inherit; color: inherit; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* ── 유리 패널(영상 무대 elev-2) ─────────────────────────────────────── */
+.g-glass { background: rgba(255,255,255,.78); border: 1px solid rgba(255,255,255,.55); border-radius: 0;
+           backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2);
+           box-shadow: 0 1px 0 rgba(1,1,2,.06), 0 12px 32px rgba(1,1,2,.14); }
+
+/* ── 좌 카드(배포본) ────────────────────────────────────────────────── */
+.g-card { position: absolute; left: 24px; top: 88px; width: 352px; z-index: 16; padding: 20px 20px 16px; color: var(--cw-ink);
+          max-height: calc(100% - 184px); overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; }
+.g-card[hidden] { display: none; }
+.g-card__eyebrow { display: flex; gap: 8px; align-items: center; font: 500 14px/16px var(--g-num); color: var(--cw-sub); letter-spacing: .02em; }
+.g-card__eyebrow .g-stage { border: 1px solid var(--cw-ink); padding: 2px 6px; color: var(--cw-ink); text-transform: uppercase; }
+.g-card__eyebrow .g-stage[data-stage="draft"], .g-card__eyebrow .g-stage[data-stage="shadow"] { border-style: dashed; }
+.g-card h2 { margin: 10px 0 4px; font: var(--g-display-w, 700) 26px/30px var(--g-display); letter-spacing: -0.01em; }
+.g-card__place { font: 400 16px/22px var(--g-body); color: var(--cw-sub); }
+.g-card .gs-prov { display: flex; margin-top: 6px; }
+.g-card .gs-prov span:nth-child(3) { display: none; }
+.g-card__place .g-cyr { color: var(--cw-ink); }
+.g-sec { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--cw-rule); }
+.g-sec__t { display: flex; justify-content: space-between; align-items: baseline; font: 500 14px/16px var(--g-num); color: var(--cw-sub); letter-spacing: .02em; text-transform: uppercase; }
+.g-sec__t b { color: var(--cw-ink); font-weight: 600; text-transform: none; letter-spacing: 0; }
+
+/* WorldCover 비율 막대(헤어라인 막대 · 데이터 잉크) */
+.g-bars { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+.g-bar { display: grid; grid-template-columns: 112px 1fr 52px; gap: 10px; align-items: center; font: 400 14px/16px var(--g-body); }
+.g-bar__track { position: relative; height: 10px; background: var(--sl-2); }
+.g-bar__fill { position: absolute; left: 0; top: 0; bottom: 0; width: var(--w, 0%); background: var(--sl-6); transform-origin: left; transform: scaleX(0);
+               transition: transform var(--d-750) var(--e-arrive); }
+.g-bars[data-on] .g-bar__fill { transform: scaleX(1); }
+.g-bar[data-hl] { font-weight: 600; }
+.g-bar[data-hl] .g-bar__fill { background: var(--cw-accent); }
+.g-bar em { font-style: normal; text-align: right; font: 500 14px/16px var(--g-num); font-variant-numeric: tabular-nums; }
+.g-bar[data-hl] em { font-weight: 600; color: var(--cw-accent); }
+
+/* 견적 · 실행 */
+.g-quote { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 10px; border-top: 1px solid var(--cw-rule); }
+.g-quote div { padding: 8px 8px 8px 0; border-bottom: 1px solid var(--cw-rule); }
+.g-quote dt { font: 500 14px/16px var(--g-num); color: var(--cw-sub); }
+.g-quote dd { margin: 4px 0 0; font: 600 22px/26px var(--g-num); font-variant-numeric: tabular-nums; }
+.g-quote dd small { font: 500 14px/16px var(--g-num); color: var(--cw-sub); margin-left: 4px; }
+.g-run { display: flex; gap: 10px; align-items: center; margin-top: 12px; }
+.g-btn { height: 40px; padding: 0 16px; background: var(--cw-ink); color: #FFFFFF; border: 0; border-radius: 0; cursor: pointer; font: 600 16px/20px var(--g-body);
+         position: relative; transition: transform var(--d-180) var(--e-ui); }
+.g-btn:hover { transform: translateY(-2px); }
+.g-btn[disabled] { background: var(--sl-5); cursor: default; transform: none; }
+.g-btn--ghost { background: transparent; color: var(--cw-ink); border: 1px solid var(--cw-ink); }
+.g-note { font: 400 14px/18px var(--g-body); color: var(--cw-sub); }
+.g-gap { margin-top: 12px; }
+
+/* 등급 차트(메이크틸라) */
+.g-grades { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+.g-grade { display: grid; grid-template-columns: 132px 1fr 36px; gap: 10px; align-items: center; font: 400 14px/16px var(--g-body); }
+.g-grade i { height: 14px; display: block; transform-origin: left; transform: scaleX(0); transition: transform var(--d-750) var(--e-arrive); }
+.g-grades[data-on] .g-grade i { transform: scaleX(1); }
+.g-grade em { font: 600 16px/20px var(--g-num); font-style: normal; text-align: right; font-variant-numeric: tabular-nums; }
+.g-sw { display: inline-block; width: 12px; height: 12px; margin-right: 6px; vertical-align: -1px; }
+
+/* ── 우상 HUD(영상 위 흰 글자 · 124 큰 숫자) ────────────────────────── */
+.g-hud { position: absolute; right: 24px; top: 88px; width: 420px; z-index: 16; color: #FFFFFF; text-align: right; pointer-events: none;
+         text-shadow: 0 1px 2px rgba(1,1,2,.5), 0 0 24px rgba(1,1,2,.25); }
+.g-hud[hidden] { display: none; }
+.g-hud__k { font: 500 14px/16px var(--g-num); letter-spacing: .06em; text-transform: uppercase; opacity: .92; }
+.g-hud-big { font: var(--g-display-w, 700) var(--fs-hud)/1 var(--g-display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin-top: 4px; }
+.g-hud-big small { font: 600 26px/1 var(--g-num); letter-spacing: 0; margin-left: 8px; }
+.g-hud__line { margin-top: 8px; font: 500 16px/22px var(--g-num); font-variant-numeric: tabular-nums; }
+.g-hud__line b { font-weight: 700; }
+.g-hud__tag { display: inline-block; margin-top: 10px; padding: 4px 8px; border: 1px dashed rgba(255,255,255,.8); font: 500 14px/16px var(--g-num); }
+
+/* ── 하단 월 스크러버 + 히스토그램 자리(timescrub · job-theater) ─────── */
+.g-scrub { position: absolute; left: calc(400px + (100% - 424px - 60%) / 2); bottom: 24px; width: 60%; z-index: 16; padding: 12px 20px 12px; }
+.g-scrub[hidden] { display: none; }
+.g-scrub__head { display: flex; justify-content: space-between; align-items: baseline; font: 500 14px/16px var(--g-num); color: var(--cw-sub); }
+.g-scrub__head b { color: var(--cw-ink); font-weight: 600; }
+.g-scrub__plot { position: relative; height: 104px; margin-top: 8px; }
+.g-scrub__plot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.g-slots { position: absolute; inset: 0 0 24px 0; display: grid; grid-template-columns: repeat(8, 1fr); gap: 0 10px; }
+.g-slot { position: relative; border-bottom: 1px solid var(--cw-rule); }
+.g-slot::before { content: ''; position: absolute; inset: 0; border: 1px dashed var(--sl-4); border-bottom: 0; }
+.g-slot[data-state="running"]::before { border-color: var(--cw-ai); border-style: solid; }
+.g-slot[data-state="done"]::before { border-color: transparent; }
+.g-slot__hist { position: absolute; inset: 0; opacity: 0; transition: opacity var(--d-500) var(--e-arrive); }
+.g-slot__hist i { position: absolute; display: block; opacity: .62; }
+.g-slot[data-state="done"] .g-slot__hist { opacity: 1; }
+.g-slot__bar { position: absolute; left: 0; right: 0; bottom: var(--h, 0%); height: 2px; background: var(--cw-ink);
+               transform-origin: center; transform: scaleX(0); transition: transform var(--d-500) var(--e-arrive); }
+.g-slot[data-state="done"] .g-slot__bar { transform: scaleX(1); }
+.g-slot__v { position: absolute; left: 0; right: 0; bottom: calc(var(--h, 0%) + 6px); text-align: center; font: 600 14px/16px var(--g-num);
+             font-variant-numeric: tabular-nums; opacity: 0; transition: opacity var(--d-500) var(--e-arrive); text-shadow: 0 0 3px #FFFFFF, 0 0 6px #FFFFFF; }
+.g-slot[data-state="done"] .g-slot__v { opacity: 1; }
+.g-slot__n { position: absolute; left: 0; right: 0; top: 4px; text-align: center; font: 500 14px/16px var(--g-num); color: var(--cw-sub); opacity: 0; }
+.g-slot[data-state="done"] .g-slot__n { opacity: 1; }
+.g-months { position: absolute; left: 0; right: 0; bottom: 0; height: 24px; display: grid; grid-template-columns: repeat(8, 1fr); gap: 0 10px; }
+.g-month { border: 0; background: none; padding: 4px 0 0; font: 500 14px/16px var(--g-num); color: var(--cw-sub); cursor: pointer; text-align: center;
+           position: relative; transition: transform var(--d-180) var(--e-ui); }
+.g-month:hover { transform: translateY(-2px); }
+.g-month[aria-current="true"] { color: var(--cw-ink); font-weight: 600; }
+.g-month[aria-current="true"]::before { content: ''; position: absolute; left: 50%; top: -4px; width: 2px; height: 8px; margin-left: -1px; background: var(--cw-accent); }
+.g-curve { fill: none; stroke: var(--cw-ai); stroke-width: 2; }
+.g-curve--ghost { stroke: var(--sl-5); stroke-dasharray: 3 4; stroke-width: 1.5; }
+.g-curve__pt { fill: #FFFFFF; stroke: var(--cw-ai); stroke-width: 2; }
+.g-scrub__foot { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
+
+/* ── 좌하 사다리 칩(현재 영상 층 · 라이선스) ─────────────────────────── */
+.g-ladder { position: absolute; left: 24px; bottom: 24px; z-index: 17; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.g-ladder__now { display: inline-flex; gap: 8px; align-items: center; padding: 8px 12px; font: 500 14px/16px var(--g-num); color: var(--cw-ink); }
+.g-ladder__now b { font-weight: 600; }
+.g-ladder__now i { font-style: normal; color: var(--cw-sub); }
+.g-ladder__now[data-nc] i { color: var(--cw-ink); border: 1px dashed var(--cw-ink); padding: 0 4px; }
+.gs-root[data-scene="globe"] .g-ladder__now { background: #FFFFFF; border: 1px solid var(--cw-rule); box-shadow: none; backdrop-filter: none; }
+
+/* ── 시범지 라벨(연속지적 · 경계 미확보) · 지명 ──────────────────────── */
+.g-pin { position: absolute; transform: translate(-50%, -100%); pointer-events: none; z-index: 14; text-align: left; white-space: nowrap; }
+.g-pin__box { padding: 6px 10px; border: 1px dashed #FFFFFF; background: rgba(1,1,2,.28); color: #FFFFFF; }
+.g-pin__box b { font: 600 16px/20px var(--g-body); }
+.g-pin__box .g-cyr { font-size: 14px; margin-left: 6px; opacity: .92; }
+.g-pin__box small { display: block; font: 500 14px/16px var(--g-num); opacity: .9; }
+.g-pin::after { content: ''; position: absolute; left: 50%; bottom: -14px; width: 1px; height: 14px; background: #FFFFFF; }
+.g-place { position: absolute; transform: translate(-50%, -50%); pointer-events: none; z-index: 13; white-space: nowrap; color: #FFFFFF;
+           font: 600 16px/20px var(--g-body); text-shadow: 0 1px 2px rgba(1,1,2,.6); }
+.g-place .g-cyr { display: block; font-size: 14px; opacity: .9; }
+
+/* ── 토글 · 스위치 ──────────────────────────────────────────────────── */
+.g-toggles { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.g-tg { height: 32px; padding: 0 10px; border: 1px solid var(--cw-ink); background: transparent; border-radius: 0; cursor: pointer; font: 500 14px/16px var(--g-num);
+        transition: transform var(--d-180) var(--e-ui); }
+.g-tg:hover { transform: translateY(-2px); }
+.g-tg[aria-pressed="true"] { background: var(--cw-ink); color: #FFFFFF; }
+
+/* 등장 */
+.g-in { animation: cw-text-in var(--d-500) var(--e-arrive) both; }
+.g-in-2 { animation: cw-text-in var(--d-500) var(--e-arrive) var(--d-60) both; }
+.g-in-3 { animation: cw-text-in var(--d-500) var(--e-arrive) var(--d-120) both; }
+.g-in-4 { animation: cw-text-in var(--d-500) var(--e-arrive) var(--d-180) both; }
+
+/* 장면 버튼(마스트) */
+.g-scenes { display: flex; gap: 0; border: 1px solid var(--cw-rule); background: #FFFFFF; }
+.g-scenes button { height: 32px; padding: 0 12px; border: 0; background: transparent; cursor: pointer; font: 500 14px/16px var(--g-num); color: var(--cw-sub); }
+.g-scenes button[aria-current="true"] { color: var(--cw-ink); box-shadow: inset 0 -2px 0 var(--cw-accent); }
+.gs-root:not([data-scene="globe"]) .g-scenes { background: rgba(255,255,255,.78); border-color: rgba(255,255,255,.55); backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2); }
+.g-lang { display: flex; border: 1px solid var(--cw-rule); background: #FFFFFF; }
+.g-lang a { height: 30px; padding: 0 10px; display: grid; place-items: center; font: 500 14px/16px var(--g-num); color: var(--cw-sub); text-decoration: none; }
+.g-lang a[aria-current="true"] { color: var(--cw-ink); background: var(--cw-tint); }
+
+@media (max-width: 1360px) {
+  .gs-list { width: 280px; }
+  .gs-date { width: 440px; }
+  .gs-hero h1 { font-size: 54px; line-height: 59px; }
+  .g-hud { width: 340px; }
+  .g-hud-big { font-size: 96px; }
+  .g-scenes button { padding: 0 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .g-in, .g-in-2, .g-in-3, .g-in-4 { animation-duration: 1ms !important; animation-delay: 0ms !important; }
+  .g-bar__fill, .g-slot__bar, .g-slot__v, .g-grade i, .g-btn, .g-tg, .g-month { transition: none; }
+}
+
+/* ── 영상 미리 받기(하강 전 · 정직 표기) · 부트 가림막 ───────────────────── */
+.g-pf { position: absolute; left: 24px; bottom: 72px; z-index: 17; display: inline-flex; gap: 10px; align-items: center; padding: 8px 12px;
+        font: 500 14px/16px var(--g-num); color: var(--cw-ink); font-variant-numeric: tabular-nums; }
+.g-pf[hidden] { display: none; }
+.g-pf i { position: relative; width: 96px; height: 2px; background: var(--cw-rule); }
+.g-pf i::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: var(--k, 0%); background: var(--cw-ai, #0FA9A0); transition: width var(--d-120) linear; }
+
+/* ── G-J1 진행 · 결과 다음 행동(시작 → 결과 → 다음 행동) ───────────────── */
+.g-hud__eta { font-size: 15px; opacity: .92; min-height: 22px; }
+.g-slot[data-state="running"] .g-slot__n { opacity: 1; color: var(--cw-ai); }
+.g-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.g-actions .g-btn { height: 36px; padding: 0 12px; font-size: 14px; }
+.g-lineage { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin-top: 10px; font: 500 14px/18px var(--g-num); color: var(--cw-sub); }
+.g-lineage__id { color: var(--cw-ink); border: 1px solid var(--cw-ink); padding: 1px 6px; font-variant-numeric: tabular-nums; }
+.g-lineage a { color: var(--cw-ink); text-decoration: none; border-bottom: 1px solid var(--cw-ink); }
+.g-lineage a:hover { color: var(--lx-accent, #006DF7); border-color: currentColor; }
+.g-table { width: 100%; border-collapse: collapse; margin-top: 10px; font: 500 14px/18px var(--g-num); font-variant-numeric: tabular-nums; }
+.g-table th { text-align: right; color: var(--cw-sub); font-weight: 500; padding: 4px 6px; border-bottom: 1px solid var(--cw-rule); }
+.g-table td { text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--cw-rule); }
+.g-table th:first-child, .g-table td:first-child { text-align: left; }
+.g-xchip { display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; padding: 1px 6px; border: 1px dashed var(--cw-sub); color: var(--cw-sub);
+           font: 500 14px/16px var(--g-num); text-transform: none; letter-spacing: 0; white-space: nowrap; }
+.g-pre { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 4px; font: 500 14px/18px var(--g-body); }
+.g-pre li { display: grid; grid-template-columns: 18px 1fr; gap: 6px; color: var(--cw-sub); }
+.g-pre li[data-ok="1"] i::before { content: '✓'; color: var(--cw-ai); font-style: normal; }
+.g-pre li[data-ok="0"] i::before { content: '✕'; color: var(--cw-ink); font-style: normal; }
+.g-pre li[data-ok="-"] i::before { content: '·'; font-style: normal; }
+.g-pre li b { color: var(--cw-ink); font-weight: 600; }
+.g-run { flex-wrap: wrap; }
+.g-run .g-btn { white-space: nowrap; }
+
+/* 판정 2차: 관제 딥링크 대기 — 동작하지 않는 링크를 완성형처럼 보이지 않게(점선 결손 칩) */
+.g-lineage__wait { border: 1px dashed var(--cw-sub); color: var(--cw-sub); padding: 1px 6px; }
+/* 큰 숫자 — 자리별 캐스케이드 대신 이전 값 → 새 값 트윈(380) */
+.g-hud-big__v { display: inline-block; }
+
+/* F1-∑ 통합 — 국내 XI맵 · 관제로 가는 길 */
+.g-go { display: flex; border: 1px solid var(--cw-rule); background: #FFFFFF; margin-right: 8px; }
+.g-go a { height: 30px; padding: 0 10px; display: grid; place-items: center; font: 500 14px/16px var(--g-num); color: var(--cw-sub); text-decoration: none; white-space: nowrap; }
+.g-go a:hover { color: var(--cw-ink); background: var(--cw-tint); }

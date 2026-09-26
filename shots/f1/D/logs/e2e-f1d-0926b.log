@@ -1,0 +1,47 @@
+
+Running 33 tests using 1 worker
+
+[1/33] tests\e2e\f1d-contract.spec.mjs:45:3 › F1-D contract › 사전 수집 6파일 존재 · source · fetched_at · license
+[2/33] tests\e2e\f1d-contract.spec.mjs:63:3 › F1-D contract › 모든 봉투 = value · unit · basis(6) · as_of · source (§2)
+[3/33] tests\e2e\f1d-contract.spec.mjs:72:3 › F1-D contract › catalog-fixture-global = LayerItem 키 집합(§4.1) · deploys-fixture = Deploy 키 집합(§4.7) · 시드 ID
+[4/33] tests\e2e\f1d-contract.spec.mjs:91:3 › F1-D contract › 리플레이 gj1-ysykata.ndjson — §5.1 이벤트 이름만 · t 단조 · 8 shard m{YYYY-MM} · index.month 봉투
+[5/33] tests\e2e\f1d-contract.spec.mjs:101:3 › F1-D contract › 어댑터 ADAPTER 상수(§7) — 워커 스캔 형
+[6/33] tests\e2e\f1d-descent-tiles.spec.mjs:6:1 › 하강·전환 중 2단계 이상 낮은 타일이 500 ms 넘게 보이는 구간 0(빈 캐시)
+tests\e2e\f1d-descent-tiles.spec.mjs:6:1 › 하강·전환 중 2단계 이상 낮은 타일이 500 ms 넘게 보이는 구간 0(빈 캐시)
+samples 528 runs 6 long []
+
+[7/33] tests\e2e\f1d-globe.spec.mjs:33:3 › F1-D globe stage › 순백 배경 · GIBS 어제 · LX 사업국 36 + 사할린 점 · 우 목록 37행
+[8/33] tests\e2e\f1d-globe.spec.mjs:68:3 › F1-D globe stage › 날짜 스크러버 31칸 · 한 칸 이동 = 두 GIBS 층 크로스페이드 500 · 타일 페이드 500
+[9/33] tests\e2e\f1d-globe.spec.mjs:88:3 › F1-D globe stage › 남원 → 글로브 → 비슈케크 카메라 연속 · 페이지 이동 0 · 2400 × 2
+[10/33] tests\e2e\f1d-globe.spec.mjs:112:5 › F1-D globe stage › 캔버스 ≥ 90 % · 가로 스크롤 0 · 폭 1280
+[11/33] tests\e2e\f1d-globe.spec.mjs:112:5 › F1-D globe stage › 캔버스 ≥ 90 % · 가로 스크롤 0 · 폭 1440
+[12/33] tests\e2e\f1d-globe.spec.mjs:112:5 › F1-D globe stage › 캔버스 ≥ 90 % · 가로 스크롤 0 · 폭 1920
+[13/33] tests\e2e\f1d-globe.spec.mjs:123:3 › F1-D globe stage › rAF p95 ≤ 20 ms · 캔버스 ≤ 2 (글로브 → 으슥아타 하강 동안)
+tests\e2e\f1d-globe.spec.mjs:123:3 › F1-D globe stage › rAF p95 ≤ 20 ms · 캔버스 ≤ 2 (글로브 → 으슥아타 하강 동안)
+perf {"n":469,"p50":16.7,"p95":16.8,"max":17.1,"canvases":1}
+
+[14/33] tests\e2e\f1d-i18n-fonts.spec.mjs:42:3 › F1-D i18n · fonts › lang=en — H1 Inter 700 · Inter 600/700 로드 · 키릴 글리프 있음 · 14px 미만 0 (글로브 · 으슥아타 · 소쿨룩)
+[15/33] tests\e2e\f1d-i18n-fonts.spec.mjs:66:3 › F1-D i18n · fonts › locale=ko — 국문판 표시체 Paperlogy · 지명 키릴 병기 유지 · ru UI 없음
+[16/33] tests\e2e\f1d-i18n-fonts.spec.mjs:76:3 › F1-D i18n · fonts › fonts-compare.html — Paperlogy 라틴 vs Inter 나란히 · 실측 폭 표 · 키릴 판정
+[17/33] tests\e2e\f1d-i18n-fonts.spec.mjs:88:3 › F1-D i18n · fonts › login.html — 기관 문(realm tenant) · off 는 lx_tenant_session 흉내 · LX 키 제거 · 기관 화면으로
+[18/33] tests\e2e\f1d-license-guard.spec.mjs:36:3 › F1-D license guard › build=export — 카탈로그에 비상업(NC)·Maxar·EOX 2018+ 없음 · 메이크틸라는 S2 전후로 대체 표기
+[19/33] tests\e2e\f1d-license-guard.spec.mjs:53:3 › F1-D license guard › build=public(게스트) — 자체 영상(xyz/pmtiles/cog) 0 · 외부 위성만
+[20/33] tests\e2e\f1d-license-guard.spec.mjs:64:3 › F1-D license guard › build=lx — EOX 2025 칩 CC BY-NC-SA 표기 · 하니스 /catalog/layers build=export 도 같은 규칙(켜져 있으면)
+[21/33] tests\e2e\f1d-meiktila.spec.mjs:36:3 › F1-D Meiktila › Maxar 전후 스와이프 · 38동 등급 · 차트 · 시연 한정 칩 · 타일 404 0
+[22/33] tests\e2e\f1d-motion-law.spec.mjs:37:3 › F1-D motion law › 소스 스캔 — CSS·JS 의 ms 리터럴 · duration 숫자 ⊆ 사다리
+[23/33] tests\e2e\f1d-motion-law.spec.mjs:49:3 › F1-D motion law › 실행 중 getAnimations ⊆ 사다리 · 락온 380 · 스윕 1000 · 스타일 전이 0 · raster-fade 500 · 카메라 1600/2400
+tests\e2e\f1d-motion-law.spec.mjs:49:3 › F1-D motion law › 실행 중 getAnimations ⊆ 사다리 · 락온 380 · 스윕 1000 · 스타일 전이 0 · raster-fade 500 · 카메라 1600/2400
+anims 23 cams [2400,1600,2400,2400]
+
+[24/33] tests\e2e\f1d-motion-law.spec.mjs:86:3 › F1-D motion law › prefers-reduced-motion — 카메라 jumpTo · 애니메이션 1ms
+[25/33] tests\e2e\f1d-sprawl.spec.mjs:36:3 › F1-D Sokuluk · Bishkek › 배포본 있음(off 픽스처) → 초안 카드 · Δ 격자 · 필라멘트 · 시범지 3 · Сокулук Бишкек
+[26/33] tests\e2e\f1d-sprawl.spec.mjs:72:3 › F1-D Sokuluk · Bishkek › 배포본 없음 → 이식 전 결손 칩(정직)
+[27/33] tests\e2e\f1d-sprawl.spec.mjs:86:3 › F1-D Sokuluk · Bishkek › Overture 압출 토글(기본 OFF → ON · pitch 45) · 스와이프 2017 ↔ 2025(두 지도 · clip-path)
+[28/33] tests\e2e\f1d-ysykata-ndvi.spec.mjs:36:3 › F1-D Ysyk-Ata · G-J1 › 경계 락온 · Ысык-Ата · WorldCover 농경지 33.0 % · 비율만 유효 · 10 m ha
+[29/33] tests\e2e\f1d-ysykata-ndvi.spec.mjs:51:3 › F1-D Ysyk-Ata · G-J1 › 월별 스크럽 3→10 · 크로스페이드 500 · 정수 750 정지(6 s)
+[30/33] tests\e2e\f1d-ysykata-ndvi.spec.mjs:74:3 › F1-D Ysyk-Ata · G-J1 › G-J1 off — 프레임 → 견적 → 실행 · 리플레이 8칸 순서 도착 · HUD 지수 계산 문구 · job.done 곡선 · 작물 분류 결손
+[31/33] tests\e2e\f1d-ysykata-ndvi.spec.mjs:117:3 › F1-D Ysyk-Ata · G-J1 › G-J1 HUD 진행 카운터 — 실 게이트웨이처럼 job.progress 없이 shard.done 만으로 a/b · 경과 s · 다음 칸 ≈ 직전 달 실측
+[32/33] tests\e2e\f1d-ysykata-ndvi.spec.mjs:137:3 › F1-D Ysyk-Ata · G-J1 › G-J1 on — F1-D 하니스 큐(POST /jobs kind index) → SSE shard=월 · index.month measured(실제 PC B04/B08)
+[33/33] tests\e2e\f1d-ysykata-ndvi.spec.mjs:164:3 › F1-D Ysyk-Ata · G-J1 › G-J1 on — 실 F1-B 게이트웨이(Redis 큐 · CPU 워커) · 화면에서 프레임→견적→실행 · 8칸 measured · 콘솔 오류 0
+  2 skipped
+  31 passed (5.5m)

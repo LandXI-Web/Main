@@ -1,0 +1,383 @@
+{
+ "source": "https://planetarycomputer.microsoft.com/api/data/v1/item/statistics?collection=esa-worldcover&assets=map&categorical=true&max_size=2048 · body = geoBoundaries ADM2 Ysyk-Ata (92254566B31675215078110)",
+ "fetched_at": "2026-09-24T10:43:35+09:00",
+ "license": "CC BY 4.0 · © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium",
+ "district": {
+  "name": "Ysyk-Ata",
+  "name_cyr": "Ысык-Ата",
+  "code": "92254566B31675215078110"
+ },
+ "note": "비율만 유효 — 정밀 면적(ha)은 원해상도 COG 재집계 필요(adapter_worldcover.py)",
+ "items": [
+  {
+   "item": "ESA_WorldCover_10m_2021_v200_N42E072",
+   "valid_pixels": 1856410.0,
+   "part_area_km2": 1375.6
+  },
+  {
+   "item": "ESA_WorldCover_10m_2021_v200_N42E075",
+   "valid_pixels": 757446.0,
+   "part_area_km2": 559.7
+  }
+ ],
+ "classes": [
+  {
+   "code": 30,
+   "name_en": "Grassland",
+   "name_ko": "초지",
+   "pct": {
+    "value": 40.3,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "PC item/statistics esa-worldcover 2021 · N42E072+N42E075 · Ysyk-Ata ADM2",
+    "note": "max_size 2048 downsample — ratio only valid"
+   },
+   "pct_area_weighted": {
+    "value": 40.3,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "same response · area-weighted per tile",
+    "note": "cross-check — ratio only valid"
+   },
+   "area_ha": {
+    "value": 77196.9,
+    "unit": "ha",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:55:51+09:00",
+    "source": "ESA WorldCover 2021 COG 10 m · latitude-corrected pixel area"
+   },
+   "pct_10m": {
+    "value": 40.14,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:55:51+09:00",
+    "source": "ESA WorldCover 2021 COG 10 m · latitude-corrected pixel area"
+   }
+  },
+  {
+   "code": 40,
+   "name_en": "Cropland",
+   "name_ko": "농경지",
+   "pct": {
+    "value": 33.0,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "PC item/statistics esa-worldcover 2021 · N42E072+N42E075 · Ysyk-Ata ADM2",
+    "note": "max_size 2048 downsample — ratio only valid"
+   },
+   "pct_area_weighted": {
+    "value": 33.0,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "same response · area-weighted per tile",
+    "note": "cross-check — ratio only valid"
+   },
+   "area_ha": {
+    "value": 63347.8,
+    "unit": "ha",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:55:51+09:00",
+    "source": "ESA WorldCover 2021 COG 10 m · latitude-corrected pixel area"
+   },
+   "pct_10m": {
+    "value": 32.94,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:55:51+09:00",
+    "source": "ESA WorldCover 2021 COG 10 m · latitude-corrected pixel area"
+   }
+  },
+  {
+   "code": 60,
+   "name_en": "Bare / sparse vegetation",
+   "name_ko": "나지",
+   "pct": {
+    "value": 12.6,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "PC item/statistics esa-worldcover 2021 · N42E072+N42E075 · Ysyk-Ata ADM2",
+    "note": "max_size 2048 downsample — ratio only valid"
+   },
+   "pct_area_weighted": {
+    "value": 12.6,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "same response · area-weighted per tile",
+    "note": "cross-check — ratio only valid"
+   },
+   "area_ha": {
+    "value": 24075.2,
+    "unit": "ha",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:55:51+09:00",
+    "source": "ESA WorldCover 2021 COG 10 m · latitude-corrected pixel area"
+   },
+   "pct_10m": {
+    "value": 12.52,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:55:51+09:00",
+    "source": "ESA WorldCover 2021 COG 10 m · latitude-corrected pixel area"
+   }
+  },
+  {
+   "code": 10,
+   "name_en": "Tree cover",
+   "name_ko": "수목",
+   "pct": {
+    "value": 4.8,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "PC item/statistics esa-worldcover 2021 · N42E072+N42E075 · Ysyk-Ata ADM2",
+    "note": "max_size 2048 downsample — ratio only valid"
+   },
+   "pct_area_weighted": {
+    "value": 4.8,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "same response · area-weighted per tile",
+    "note": "cross-check — ratio only valid"
+   },
+   "area_ha": {
+    "value": 9502.8,
+    "unit": "ha",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:55:51+09:00",
+    "source": "ESA WorldCover 2021 COG 10 m · latitude-corrected pixel area"
+   },
+   "pct_10m": {
+    "value": 4.94,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:55:51+09:00",
+    "source": "ESA WorldCover 2021 COG 10 m · latitude-corrected pixel area"
+   }
+  },
+  {
+   "code": 50,
+   "name_en": "Built-up",
+   "name_ko": "시가화",
+   "pct": {
+    "value": 3.1,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "PC item/statistics esa-worldcover 2021 · N42E072+N42E075 · Ysyk-Ata ADM2",
+    "note": "max_size 2048 downsample — ratio only valid"
+   },
+   "pct_area_weighted": {
+    "value": 3.1,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "same response · area-weighted per tile",
+    "note": "cross-check — ratio only valid"
+   },
+   "area_ha": {
+    "value": 5917.7,
+    "unit": "ha",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:55:51+09:00",
+    "source": "ESA WorldCover 2021 COG 10 m · latitude-corrected pixel area"
+   },
+   "pct_10m": {
+    "value": 3.08,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:55:51+09:00",
+    "source": "ESA WorldCover 2021 COG 10 m · latitude-corrected pixel area"
+   }
+  },
+  {
+   "code": 70,
+   "name_en": "Snow and ice",
+   "name_ko": "눈·빙하",
+   "pct": {
+    "value": 2.7,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "PC item/statistics esa-worldcover 2021 · N42E072+N42E075 · Ysyk-Ata ADM2",
+    "note": "max_size 2048 downsample — ratio only valid"
+   },
+   "pct_area_weighted": {
+    "value": 2.7,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "same response · area-weighted per tile",
+    "note": "cross-check — ratio only valid"
+   },
+   "area_ha": {
+    "value": 5280.4,
+    "unit": "ha",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:55:51+09:00",
+    "source": "ESA WorldCover 2021 COG 10 m · latitude-corrected pixel area"
+   },
+   "pct_10m": {
+    "value": 2.75,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:55:51+09:00",
+    "source": "ESA WorldCover 2021 COG 10 m · latitude-corrected pixel area"
+   }
+  },
+  {
+   "code": 100,
+   "name_en": "Moss and lichen",
+   "name_ko": "이끼·지의류",
+   "pct": {
+    "value": 2.6,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "PC item/statistics esa-worldcover 2021 · N42E072+N42E075 · Ysyk-Ata ADM2",
+    "note": "max_size 2048 downsample — ratio only valid"
+   },
+   "pct_area_weighted": {
+    "value": 2.6,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "same response · area-weighted per tile",
+    "note": "cross-check — ratio only valid"
+   },
+   "area_ha": {
+    "value": 5195.6,
+    "unit": "ha",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:55:51+09:00",
+    "source": "ESA WorldCover 2021 COG 10 m · latitude-corrected pixel area"
+   },
+   "pct_10m": {
+    "value": 2.7,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:55:51+09:00",
+    "source": "ESA WorldCover 2021 COG 10 m · latitude-corrected pixel area"
+   }
+  },
+  {
+   "code": 80,
+   "name_en": "Permanent water",
+   "name_ko": "영구수역",
+   "pct": {
+    "value": 0.5,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "PC item/statistics esa-worldcover 2021 · N42E072+N42E075 · Ysyk-Ata ADM2",
+    "note": "max_size 2048 downsample — ratio only valid"
+   },
+   "pct_area_weighted": {
+    "value": 0.5,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "same response · area-weighted per tile",
+    "note": "cross-check — ratio only valid"
+   },
+   "area_ha": {
+    "value": 878.5,
+    "unit": "ha",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:55:51+09:00",
+    "source": "ESA WorldCover 2021 COG 10 m · latitude-corrected pixel area"
+   },
+   "pct_10m": {
+    "value": 0.46,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:55:51+09:00",
+    "source": "ESA WorldCover 2021 COG 10 m · latitude-corrected pixel area"
+   }
+  },
+  {
+   "code": 20,
+   "name_en": "Shrubland",
+   "name_ko": "관목",
+   "pct": {
+    "value": 0.4,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "PC item/statistics esa-worldcover 2021 · N42E072+N42E075 · Ysyk-Ata ADM2",
+    "note": "max_size 2048 downsample — ratio only valid"
+   },
+   "pct_area_weighted": {
+    "value": 0.4,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "same response · area-weighted per tile",
+    "note": "cross-check — ratio only valid"
+   },
+   "area_ha": {
+    "value": 932.1,
+    "unit": "ha",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:55:51+09:00",
+    "source": "ESA WorldCover 2021 COG 10 m · latitude-corrected pixel area"
+   },
+   "pct_10m": {
+    "value": 0.48,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:55:51+09:00",
+    "source": "ESA WorldCover 2021 COG 10 m · latitude-corrected pixel area"
+   }
+  },
+  {
+   "code": 90,
+   "name_en": "Herbaceous wetland",
+   "name_ko": "초본 습지",
+   "pct": {
+    "value": 0.0,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "PC item/statistics esa-worldcover 2021 · N42E072+N42E075 · Ysyk-Ata ADM2",
+    "note": "max_size 2048 downsample — ratio only valid"
+   },
+   "pct_area_weighted": {
+    "value": 0.0,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "same response · area-weighted per tile",
+    "note": "cross-check — ratio only valid"
+   },
+   "area_ha": {
+    "value": 12.7,
+    "unit": "ha",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:55:51+09:00",
+    "source": "ESA WorldCover 2021 COG 10 m · latitude-corrected pixel area"
+   },
+   "pct_10m": {
+    "value": 0.01,
+    "unit": "%",
+    "basis": "measured",
+    "as_of": "2026-09-24T10:55:51+09:00",
+    "source": "ESA WorldCover 2021 COG 10 m · latitude-corrected pixel area"
+   }
+  }
+ ],
+ "total_ha": {
+  "value": 192339.7,
+  "unit": "ha",
+  "basis": "measured",
+  "as_of": "2026-09-24T10:55:51+09:00",
+  "source": "same calc · inside district boundary"
+ },
+ "note_10m": "area_ha = 원해상도 10 m 재집계(adapter_worldcover) — 정밀 면적"
+}

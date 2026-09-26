@@ -1,0 +1,21 @@
+import { chromium } from '@playwright/test';
+const b = await chromium.launch({ channel: 'chrome', args: ['--use-angle=d3d11', '--ignore-gpu-blocklist'] });
+const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
+await ctx.addInitScript(() => { localStorage.setItem('lx_api_mode', 'off'); localStorage.setItem('lx_logged_in', '1'); localStorage.setItem('lx_role', 'staff'); });
+const p = await ctx.newPage();
+await p.goto('http://localhost:4173/landxi/global/index.html?tenant=lx');
+await p.waitForFunction(() => document.documentElement.dataset.lx === 'ready', null, { timeout: 30000 });
+const r = await p.evaluate(async () => {
+  const m = window.__f1d.stage.map; const ev = { sd: 0, render: 0, idle: 0 };
+  m.on('sourcedata', () => ev.sd++); m.on('render', () => ev.render++); m.on('idle', () => ev.idle++);
+  m.jumpTo({ center: [74.505, 42.872], zoom: 12.5, pitch: 0, bearing: 0 });
+  await new Promise(r => setTimeout(r, 4000));
+  return { ...ev, loaded: m.loaded(), tiles: m.areTilesLoaded(), z: m.getZoom(), c: m.getCenter() };
+});
+console.log(JSON.stringify(r));
+const mean = async (f) => { await p.screenshot({ path: f }); };
+await mean('shots/f1/D/_tools/d4a.png');
+const r2 = await p.evaluate(async () => { const m = window.__f1d.stage.map; let n = 0; m.on('render', () => n++); m.triggerRepaint(); await new Promise(r => setTimeout(r, 1500)); return n; });
+console.log('renders after trigger', r2);
+await mean('shots/f1/D/_tools/d4b.png');
+await b.close();

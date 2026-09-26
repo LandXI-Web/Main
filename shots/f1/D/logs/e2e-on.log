@@ -1,0 +1,5 @@
+
+Running 1 test using 1 worker
+
+[1/1] tests\e2e\f1d-ysykata-ndvi.spec.mjs:106:3 › F1-D Ysyk-Ata · G-J1 › G-J1 on — F1-D 하니스 큐(POST /jobs kind index) → SSE shard=월 · index.month measured(실제 PC B04/B08)
+  1 passed (39.2s)

@@ -1,0 +1,139 @@
+{
+ "tiles": {
+  "samples": 525,
+  "runs": [
+   {
+    "at_s": 5.92,
+    "ms": 100,
+    "worst": 2,
+    "scene": "ysykata"
+   },
+   {
+    "at_s": 40.85,
+    "ms": 100,
+    "worst": 2,
+    "scene": "transit"
+   }
+  ],
+  "long_runs_over_500ms": 0
+ },
+ "video_raw": "E:\\Land-XI 플랫폼\\01. 디자인\\shots\\f1\\D\\_raw\\page@cb419a30ae216df40340a95ffb8fa97f.webm",
+ "t_start_s": 13.9675,
+ "t_end_s": 69.416,
+ "marks": [
+  {
+   "k": "start",
+   "s": 0
+  },
+  {
+   "k": "globe",
+   "s": 3.17
+  },
+  {
+   "k": "descend",
+   "s": 4.72
+  },
+  {
+   "k": "ysykata",
+   "s": 9.57
+  },
+  {
+   "k": "play-done",
+   "s": 16.11
+  },
+  {
+   "k": "gj1-done",
+   "s": 26.42
+  },
+  {
+   "k": "sokuluk",
+   "s": 30.44
+  },
+  {
+   "k": "sokuluk-done",
+   "s": 40.75
+  },
+  {
+   "k": "meiktila",
+   "s": 46.53
+  },
+  {
+   "k": "end",
+   "s": 52.48
+  }
+ ],
+ "perf": {
+  "n": 3902,
+  "p50": 16.7,
+  "p95": 16.8,
+  "max": 250.3,
+  "canvases": 2
+ },
+ "ready_ms": 722,
+ "firstPaint": {
+  "pf_visible": true,
+  "map_opacity": "1"
+ },
+ "warm": {
+  "tiles": 922,
+  "ok": 922,
+  "cams": 20,
+  "pull_ms": 12888,
+  "ms": 13392
+ },
+ "transit": [
+  {
+   "hold_ms": 3
+  }
+ ],
+ "pf": [
+  {
+   "to": [
+    74.93,
+    42.86
+   ],
+   "tiles": 323,
+   "ok": 323,
+   "ms": 679
+  },
+  {
+   "to": [
+    74.43,
+    42.855
+   ],
+   "tiles": 69,
+   "ok": 69,
+   "ms": 5
+  },
+  {
+   "to": [
+    74.512,
+    42.868
+   ],
+   "tiles": 205,
+   "ok": 205,
+   "ms": 2
+  },
+  {
+   "to": [
+    88,
+    26
+   ],
+   "tiles": 427,
+   "ok": 427,
+   "ms": 7
+  },
+  {
+   "to": [
+    95.884,
+    20.892
+   ],
+   "tiles": 296,
+   "ok": 296,
+   "ms": 2
+  }
+ ],
+ "errors": [],
+ "mode": "off",
+ "reason": "저장 결과 재생"
+}

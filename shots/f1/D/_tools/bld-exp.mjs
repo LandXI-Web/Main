@@ -1,0 +1,22 @@
+import { chromium } from '@playwright/test';
+const b = await chromium.launchPersistentContext('C:/Users/User/AppData/Local/Temp/claude/E--Land-XI----/8755e9e1-c9d4-4ccc-ae31-8eb0e35a24df/scratchpad/chrome-prof', { channel: 'chrome', viewport: { width: 1440, height: 900 }, args: ['--use-angle=d3d11', '--ignore-gpu-blocklist'] });
+const p = await b.newPage();
+const errs = []; p.on('console', (m) => { if (m.type() === 'error') errs.push(m.text().slice(0, 120)); });
+await p.goto('http://localhost:4173/landxi/global/index.html?tenant=lx&locale=en');
+await p.waitForFunction(() => document.documentElement.dataset.lx === 'ready', null, { timeout: 60000 });
+await p.evaluate(() => window.__f1d.go('sokuluk'));
+await p.waitForFunction(() => window.__f1dBg, null, { timeout: 120000 });
+await p.waitForTimeout(1500);
+const r = await p.evaluate(async () => {
+  const F = window.__f1d, map = F.stage.map; const log = [];
+  const cam = { center: [74.512, 42.868], zoom: 14.0, pitch: 45, bearing: -18, padding: { top: 64, right: 0, bottom: 0, left: 380 } };
+  const pf = await F.prefetch(cam, [], { mode: 'ease' });
+  const t0 = performance.now(); let reqs = 0;
+  map.on('dataloading', () => reqs++);
+  const iv = setInterval(() => { const d = F.tileDeficit(); log.push([Math.round(performance.now() - t0), d.zoom, d.max]); }, 50);
+  await new Promise((res) => { map.once('moveend', res); map.easeTo({ ...cam, duration: 1600 }); });
+  await new Promise((res) => setTimeout(res, 1500)); clearInterval(iv);
+  return { pf, log: log.filter((x) => x[2] >= 2), n: log.length };
+});
+console.log(JSON.stringify({ ...r, errs: errs.length, e0: errs[0] }));
+await b.close();

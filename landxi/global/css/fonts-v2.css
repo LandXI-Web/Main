@@ -1,0 +1,38 @@
+/* Land-XI 글로벌판 서체 — system-v2 §7 · <html lang="en"> 한 줄 스왑.
+   표시(H1~H3 · KPI · HUD) = Inter 600/700 −0.01em · 본문·라벨·숫자 = Inter 400/500 tabular.
+   국문판(lang="ko")은 Paperlogy 700/800 + Pretendard 400/500 그대로(한글이 섞인 LX 직원 화면).
+
+   파일 · 라이선스
+     Inter 600/700  landxi/global/fonts/Inter-{600,700}.woff2 — @fontsource/inter 5.2.8 (SIL OFL 1.1)
+                    latin + cyrillic 두 서브셋을 fontTools 로 합친 것(키릴 지명 병기 Ысык-Ата · Сокулук · Бишкек).
+     Inter 400/500  landxi/assets/fonts/Inter-{400,500}.woff2 (기존 · latin 만 · 읽기)
+     Paperlogy · Pretendard  landxi/assets/fonts (기존 · 읽기) — 국문판과 fonts-compare.html 용
+   바깥 호스트 0(폐쇄망 그대로 동작). */
+
+@font-face { font-family: 'Inter'; font-weight: 400; font-style: normal; font-display: swap; src: url('../../assets/fonts/Inter-400.woff2') format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 500; font-style: normal; font-display: swap; src: url('../../assets/fonts/Inter-500.woff2') format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 600; font-style: normal; font-display: swap; src: url('../fonts/Inter-600.woff2') format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 700; font-style: normal; font-display: swap; src: url('../fonts/Inter-700.woff2') format('woff2'); }
+@font-face { font-family: 'Paperlogy'; font-weight: 700; font-style: normal; font-display: swap; src: url('../../assets/fonts/Paperlogy-7Bold.woff2') format('woff2'); }
+@font-face { font-family: 'Paperlogy'; font-weight: 800; font-style: normal; font-display: swap; src: url('../../assets/fonts/Paperlogy-8ExtraBold.woff2') format('woff2'); }
+@font-face { font-family: 'Pretendard'; font-weight: 400; font-style: normal; font-display: swap; src: url('../../assets/fonts/Pretendard-Regular.woff2') format('woff2'); }
+@font-face { font-family: 'Pretendard'; font-weight: 500; font-style: normal; font-display: swap; src: url('../../assets/fonts/Pretendard-Medium.woff2') format('woff2'); }
+
+:root {
+  --g-display: 'Paperlogy', 'Pretendard', system-ui, sans-serif;
+  --g-display-w: 700;
+  --g-display-track: -0.01em;
+  --g-body: 'Pretendard', 'Inter', system-ui, sans-serif;
+  --g-num: 'Inter', 'Pretendard', system-ui, sans-serif;
+  --g-cyr: 'Inter', system-ui, sans-serif;
+}
+html[lang="en"] {
+  --g-display: 'Inter', system-ui, sans-serif;
+  --g-display-w: 700;
+  --g-body: 'Inter', system-ui, sans-serif;
+  --font-display: 'Inter', system-ui, sans-serif;   /* tokens-v2 의 표시 서체 별칭을 글로벌판에서만 덮는다(파일은 건드리지 않음) */
+  --font-body: 'Inter', system-ui, sans-serif;
+}
+html[lang="en"] .g-h1, html[lang="en"] .g-h2, html[lang="en"] .g-h3, html[lang="en"] .g-kpi, html[lang="en"] .g-hud-big { font-family: var(--g-display); letter-spacing: var(--g-display-track); }
+.g-cyr { font-family: var(--g-cyr); font-weight: 600; }
+.g-num { font-family: var(--g-num); font-variant-numeric: tabular-nums; }

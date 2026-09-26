@@ -1,0 +1,22 @@
+// 소쿨룩 'Run change detection' 실 게이트웨이(8700) 사전 점검 — lx-staff
+import { chromium } from '@playwright/test';
+import fs from 'node:fs';
+const API = 'http://localhost:8700';
+const pw = fs.readFileSync('server/.env', 'utf8').match(/^DEV_PASSWORD=(.*)$/m)[1].trim();
+const s = await (await fetch(API + '/api/v1/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ realm: 'lx', login: 'lx-staff', password: pw }) })).json();
+const b = await chromium.launch({ channel: 'chrome', args: ['--use-angle=d3d11', '--ignore-gpu-blocklist'] });
+const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
+await ctx.addInitScript(([s, api]) => { localStorage.setItem('lx_api_base', api); localStorage.removeItem('lx_api_mode'); localStorage.setItem('lx_api_session', JSON.stringify(s)); localStorage.setItem('lx_logged_in', '1'); localStorage.setItem('lx_role', 'staff'); localStorage.removeItem('lx_tenant_session'); }, [s, API]);
+const p = await ctx.newPage(); const errs = [], http = [];
+p.on('console', (m) => { if (m.type() === 'error') errs.push(m.text().slice(0, 220)); });
+p.on('response', (r) => { if (r.url().includes(':8700')) http.push(r.status() + ' ' + r.request().method() + ' ' + r.url().replace(API, '').split('?')[0]); });
+await p.goto('http://localhost:4173/landxi/global/index.html?tenant=lx&locale=en&svc=dp-kgz-land-change-26');
+await p.waitForSelector('#sk-run', { timeout: 60000 }); await p.waitForTimeout(2000);
+await p.click('#sk-run');
+await p.waitForSelector('#sk-gap .gs-void, #sk-run-note:has-text("job_")', { timeout: 30000 });
+await p.waitForTimeout(800);
+await p.screenshot({ path: 'shots/f1/D/still/sokuluk-preflight-ON-gateway-1440.png' });
+const out = { mode: await p.evaluate(() => window.__f1d.state().mode), pre: await p.locator('#sk-pre').innerText(), gap: await p.locator('#sk-gap').innerText(), http, errors: errs };
+fs.writeFileSync('shots/f1/D/logs/sk-preflight-on-8700.json', JSON.stringify(out, null, 1));
+console.log(JSON.stringify(out, null, 1));
+await b.close();

@@ -1,0 +1,631 @@
+{
+ "items": [
+  {
+   "id": "gibs-viirs-truecolor",
+   "name": {
+    "ko": "NASA GIBS VIIRS NOAA-20 트루컬러 · 일자별",
+    "en": "NASA GIBS VIIRS NOAA-20 true colour · daily"
+   },
+   "kind": "raster",
+   "role": "imagery",
+   "source": "external",
+   "set": null,
+   "path": null,
+   "url": null,
+   "tiles": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/{date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg",
+   "scheme": "xyz",
+   "layer": null,
+   "promote_id": null,
+   "minzoom": 0,
+   "maxzoom": 9,
+   "bounds": [
+    -180,
+    -85,
+    180,
+    85
+   ],
+   "gsd_m": 375,
+   "epoch": "daily",
+   "crs": "EPSG:3857",
+   "tier": "tile",
+   "license": "NASA open data (no restriction)",
+   "attribution": "Imagery: NASA GIBS / ESDIS",
+   "export_policy": "public",
+   "security_review": "n/a",
+   "rights_holder": "NASA",
+   "ladder": {
+    "stage": "global",
+    "from": 0,
+    "to": 5,
+    "order": 10
+   },
+   "count": null,
+   "signed": false,
+   "params": {
+    "date": "yesterday(UTC)"
+   }
+  },
+  {
+   "id": "eox-s2cloudless-2025",
+   "name": {
+    "ko": "EOX Sentinel-2 cloudless 2025",
+    "en": "EOX Sentinel-2 cloudless 2025"
+   },
+   "kind": "raster",
+   "role": "imagery",
+   "source": "external",
+   "set": null,
+   "path": null,
+   "url": null,
+   "tiles": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/{z}/{y}/{x}.jpg",
+   "scheme": "xyz",
+   "layer": null,
+   "promote_id": null,
+   "minzoom": 3,
+   "maxzoom": 14,
+   "bounds": [
+    -180,
+    -85,
+    180,
+    85
+   ],
+   "gsd_m": 10,
+   "epoch": "2025",
+   "crs": "EPSG:3857",
+   "tier": "tile",
+   "license": "CC BY-NC-SA 4.0",
+   "attribution": "Sentinel-2 cloudless – https://s2maps.eu by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2025)",
+   "export_policy": "public",
+   "security_review": "n/a",
+   "rights_holder": "EOX IT Services GmbH",
+   "ladder": {
+    "stage": "global",
+    "from": 5,
+    "to": 9,
+    "order": 20
+   },
+   "count": null,
+   "signed": false,
+   "note": "non-commercial — build=lx|tenant public demo only · excluded from build=export (2017 edition instead)"
+  },
+  {
+   "id": "eox-s2cloudless-2017",
+   "name": {
+    "ko": "EOX Sentinel-2 cloudless 2017",
+    "en": "EOX Sentinel-2 cloudless 2017"
+   },
+   "kind": "raster",
+   "role": "imagery",
+   "source": "external",
+   "set": null,
+   "path": null,
+   "url": null,
+   "tiles": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2017_3857/default/g/{z}/{y}/{x}.jpg",
+   "scheme": "xyz",
+   "layer": null,
+   "promote_id": null,
+   "minzoom": 3,
+   "maxzoom": 14,
+   "bounds": [
+    -180,
+    -85,
+    180,
+    85
+   ],
+   "gsd_m": 10,
+   "epoch": "2017",
+   "crs": "EPSG:3857",
+   "tier": "tile",
+   "license": "CC BY 4.0",
+   "attribution": "Sentinel-2 cloudless – https://s2maps.eu by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2016 & 2017)",
+   "export_policy": "public",
+   "security_review": "n/a",
+   "rights_holder": "EOX IT Services GmbH",
+   "ladder": {
+    "stage": "global",
+    "from": 5,
+    "to": 9,
+    "order": 21
+   },
+   "count": null,
+   "signed": false,
+   "note": "verified blank (white tiles) over Kyrgyzstan 2026-09-24 — not used in KGZ scenes"
+  },
+  {
+   "id": "gibs-hls-s30",
+   "name": {
+    "ko": "NASA GIBS HLS S30 30 m · 일자별",
+    "en": "NASA GIBS HLS S30 30 m · daily"
+   },
+   "kind": "raster",
+   "role": "imagery",
+   "source": "external",
+   "set": null,
+   "path": null,
+   "url": null,
+   "tiles": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/HLS_S30_Nadir_BRDF_Adjusted_Reflectance/default/{date}/GoogleMapsCompatible_Level12/{z}/{y}/{x}.png",
+   "scheme": "xyz",
+   "layer": null,
+   "promote_id": null,
+   "minzoom": 8,
+   "maxzoom": 12,
+   "bounds": [
+    -180,
+    -85,
+    180,
+    85
+   ],
+   "gsd_m": 30,
+   "epoch": "daily",
+   "crs": "EPSG:3857",
+   "tier": "tile",
+   "license": "NASA open data (no restriction)",
+   "attribution": "Imagery: NASA GIBS / ESDIS · HLS",
+   "export_policy": "public",
+   "security_review": "n/a",
+   "rights_holder": "NASA",
+   "ladder": {
+    "stage": "global",
+    "from": 9,
+    "to": 12,
+    "order": 30
+   },
+   "count": null,
+   "signed": false,
+   "params": {
+    "date": "yesterday(UTC)"
+   }
+  },
+  {
+   "id": "pc-s2-mosaic",
+   "name": {
+    "ko": "PC Sentinel-2 L2A 월별 모자이크",
+    "en": "Planetary Computer Sentinel-2 L2A monthly mosaic"
+   },
+   "kind": "raster",
+   "role": "imagery",
+   "source": "external",
+   "set": null,
+   "path": null,
+   "url": null,
+   "tiles": "https://planetarycomputer.microsoft.com/api/data/v1/mosaic/tiles/{searchid}/WebMercatorQuad/{z}/{x}/{y}@1x.png?collection=sentinel-2-l2a&assets=visual&asset_bidx=visual|1,2,3&nodata=0",
+   "scheme": "xyz",
+   "layer": null,
+   "promote_id": null,
+   "minzoom": 9,
+   "maxzoom": 14,
+   "bounds": [
+    73.8,
+    42.4,
+    76.0,
+    43.35
+   ],
+   "gsd_m": 10,
+   "epoch": "2025-03…10",
+   "crs": "EPSG:3857",
+   "tier": "tile",
+   "license": "Copernicus Sentinel data (free · commercial OK)",
+   "attribution": "Contains modified Copernicus Sentinel data 2025 · Microsoft Planetary Computer",
+   "export_policy": "public",
+   "security_review": "n/a",
+   "rights_holder": "ESA / Copernicus",
+   "ladder": {
+    "stage": "global",
+    "from": 9,
+    "to": 14,
+    "order": 40
+   },
+   "count": null,
+   "signed": false,
+   "params": {
+    "months": {
+     "2025-03": "df914fad52eab488e578685c65455f53",
+     "2025-04": "db1a083e911c69ea322df88816d9f003",
+     "2025-05": "de1745264701eb3658be3e03b8401938",
+     "2025-06": "fabaff6f755a23ce2bb0433a22402421",
+     "2025-07": "e0d79834ff0bddd1817feb824f5b943b",
+     "2025-08": "d7ffd3ead2e827438834fc1b208c6b9b",
+     "2025-09": "fc0ea193863cf9813066103bc5e659a7",
+     "2025-10": "745b598f22c8047594285de8d5591af1"
+    },
+    "searchid": "fabaff6f755a23ce2bb0433a22402421",
+    "swipe": {
+     "2017": "108a857d49678e856ee7ce734650d363",
+     "2025": "2a23063749172205a4f1777f401a29eb"
+    },
+    "swipe_bbox": [
+     74.15,
+     42.74,
+     74.8,
+     43.02
+    ]
+   }
+  },
+  {
+   "id": "pc-worldcover-2021",
+   "name": {
+    "ko": "ESA WorldCover 10 m 2021",
+    "en": "ESA WorldCover 10 m 2021"
+   },
+   "kind": "raster",
+   "role": "reference",
+   "source": "external",
+   "set": null,
+   "path": null,
+   "url": null,
+   "tiles": "https://planetarycomputer.microsoft.com/api/data/v1/item/tiles/WebMercatorQuad/{z}/{x}/{y}@1x?collection=esa-worldcover&item={item}&assets=map&colormap_name=esa-worldcover",
+   "scheme": "xyz",
+   "layer": null,
+   "promote_id": null,
+   "minzoom": 9,
+   "maxzoom": 14,
+   "bounds": [
+    72,
+    42,
+    78,
+    45
+   ],
+   "gsd_m": 10,
+   "epoch": "2021",
+   "crs": "EPSG:3857",
+   "tier": "tile",
+   "license": "CC BY 4.0",
+   "attribution": "© ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium",
+   "export_policy": "public",
+   "security_review": "n/a",
+   "rights_holder": "ESA",
+   "ladder": {
+    "stage": "global",
+    "from": 9,
+    "to": 14,
+    "order": 50
+   },
+   "count": null,
+   "signed": false,
+   "params": {
+    "items": [
+     "ESA_WorldCover_10m_2021_v200_N42E072",
+     "ESA_WorldCover_10m_2021_v200_N42E075"
+    ]
+   }
+  },
+  {
+   "id": "pc-ndvi-mosaic",
+   "name": {
+    "ko": "NDVI 지수 · 월별 모자이크 · 지수 계산",
+    "en": "NDVI (B08−B04)/(B08+B04) · monthly mosaic · index calc"
+   },
+   "kind": "raster",
+   "role": "result",
+   "source": "external",
+   "set": null,
+   "path": null,
+   "url": null,
+   "tiles": "https://planetarycomputer.microsoft.com/api/data/v1/mosaic/tiles/{searchid}/WebMercatorQuad/{z}/{x}/{y}@1x.png?collection=sentinel-2-l2a&assets=B04&assets=B08&expression=(B08-B04)/(B08%2BB04)&asset_as_band=true&rescale=-0.2,0.8&colormap_name=rdylgn&nodata=0",
+   "scheme": "xyz",
+   "layer": null,
+   "promote_id": null,
+   "minzoom": 9,
+   "maxzoom": 14,
+   "bounds": [
+    74.7,
+    42.75,
+    75.2,
+    43.0
+   ],
+   "gsd_m": 10,
+   "epoch": "2025-03…10",
+   "crs": "EPSG:3857",
+   "tier": "tile",
+   "license": "Copernicus Sentinel data (free)",
+   "attribution": "Contains modified Copernicus Sentinel data 2025 · Microsoft Planetary Computer · index calc, not model inference",
+   "export_policy": "public",
+   "security_review": "n/a",
+   "rights_holder": "ESA / Copernicus",
+   "ladder": {
+    "stage": "global",
+    "from": 10,
+    "to": 14,
+    "order": 60
+   },
+   "count": null,
+   "signed": false,
+   "params": {
+    "months": {
+     "2025-03": "df914fad52eab488e578685c65455f53",
+     "2025-04": "db1a083e911c69ea322df88816d9f003",
+     "2025-05": "de1745264701eb3658be3e03b8401938",
+     "2025-06": "fabaff6f755a23ce2bb0433a22402421",
+     "2025-07": "e0d79834ff0bddd1817feb824f5b943b",
+     "2025-08": "d7ffd3ead2e827438834fc1b208c6b9b",
+     "2025-09": "fc0ea193863cf9813066103bc5e659a7",
+     "2025-10": "745b598f22c8047594285de8d5591af1"
+    }
+   }
+  },
+  {
+   "id": "overture-buildings",
+   "name": {
+    "ko": "Overture 건물 2026-09-23.0",
+    "en": "Overture Maps buildings 2026-09-23.0"
+   },
+   "kind": "vector",
+   "role": "reference",
+   "source": "external",
+   "set": null,
+   "path": null,
+   "url": null,
+   "tiles": "pmtiles://https://overturemaps-extras-us-west-2.s3.us-west-2.amazonaws.com/tiles/2026-09-23.0/buildings.pmtiles",
+   "scheme": "xyz",
+   "layer": "building",
+   "promote_id": null,
+   "minzoom": 13,
+   "maxzoom": 18,
+   "bounds": [
+    -180,
+    -85,
+    180,
+    85
+   ],
+   "gsd_m": null,
+   "epoch": "2026-09-23.0",
+   "crs": "EPSG:3857",
+   "tier": "tile",
+   "license": "ODbL / CDLA-Permissive-2.0",
+   "attribution": "© OpenStreetMap contributors, Overture Maps Foundation",
+   "export_policy": "public",
+   "security_review": "n/a",
+   "rights_holder": "Overture Maps Foundation",
+   "ladder": {
+    "stage": "global",
+    "from": 13,
+    "to": 18,
+    "order": 70
+   },
+   "count": null,
+   "signed": false
+  },
+  {
+   "id": "maxar-mm-meiktila",
+   "name": {
+    "ko": "Maxar Open Data · 메이크틸라 사후 2025-04-03 (0.5 m)",
+    "en": "Maxar Open Data · Meiktila post-event 2025-04-03 (0.5 m)"
+   },
+   "kind": "raster",
+   "role": "imagery",
+   "source": "xyz",
+   "set": "global/maxar_meiktila_post",
+   "path": "global/tiles/maxar_meiktila_post/{z}/{x}/{y}.webp",
+   "url": null,
+   "tiles": null,
+   "scheme": "xyz",
+   "layer": null,
+   "promote_id": null,
+   "minzoom": 12,
+   "maxzoom": 17,
+   "bounds": [
+    95.858,
+    20.864,
+    95.934,
+    20.937
+   ],
+   "gsd_m": 0.5,
+   "epoch": "2025-04-03",
+   "crs": "EPSG:3857",
+   "tier": "tile",
+   "license": "CC BY-NC 4.0",
+   "attribution": "Maxar Open Data (CC BY-NC 4.0) · 10300101112F4700",
+   "export_policy": "never",
+   "security_review": "n/a",
+   "rights_holder": "Maxar Technologies (Vantor)",
+   "ladder": {
+    "stage": "global",
+    "from": 14,
+    "to": 18,
+    "order": 80
+   },
+   "count": null,
+   "signed": false,
+   "note": "demo only · non-commercial · excluded from build=export"
+  },
+  {
+   "id": "maxar-mm-meiktila-pre",
+   "name": {
+    "ko": "Maxar Open Data · 메이크틸라 사전 2025-03-06 (0.5 m)",
+    "en": "Maxar Open Data · Meiktila pre-event 2025-03-06 (0.5 m)"
+   },
+   "kind": "raster",
+   "role": "imagery",
+   "source": "xyz",
+   "set": "global/maxar_meiktila_pre",
+   "path": "global/tiles/maxar_meiktila_pre/{z}/{x}/{y}.webp",
+   "url": null,
+   "tiles": null,
+   "scheme": "xyz",
+   "layer": null,
+   "promote_id": null,
+   "minzoom": 12,
+   "maxzoom": 17,
+   "bounds": [
+    95.858,
+    20.864,
+    95.934,
+    20.937
+   ],
+   "gsd_m": 0.5,
+   "epoch": "2025-03-06",
+   "crs": "EPSG:3857",
+   "tier": "tile",
+   "license": "CC BY-NC 4.0",
+   "attribution": "Maxar Open Data (CC BY-NC 4.0) · 103001010E80EA00",
+   "export_policy": "never",
+   "security_review": "n/a",
+   "rights_holder": "Maxar Technologies (Vantor)",
+   "ladder": {
+    "stage": "global",
+    "from": 14,
+    "to": 18,
+    "order": 81
+   },
+   "count": null,
+   "signed": false,
+   "note": "demo only · non-commercial · excluded from build=export"
+  },
+  {
+   "id": "xdworld-satellite",
+   "name": {
+    "ko": "V-World 위성(xdworld)",
+    "en": "V-World satellite (xdworld)"
+   },
+   "kind": "raster",
+   "role": "imagery",
+   "source": "external",
+   "set": null,
+   "path": null,
+   "url": null,
+   "tiles": "https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg",
+   "scheme": "xyz",
+   "layer": null,
+   "promote_id": null,
+   "minzoom": 5,
+   "maxzoom": 19,
+   "bounds": [
+    124.5,
+    33.0,
+    131.9,
+    38.9
+   ],
+   "gsd_m": 0.25,
+   "epoch": "2026-03",
+   "crs": "EPSG:3857",
+   "tier": "tile",
+   "license": "KOGL (MOLIT V-World)",
+   "attribution": "© V-World (MOLIT)",
+   "export_policy": "public",
+   "security_review": "cleared",
+   "rights_holder": "MOLIT",
+   "ladder": {
+    "stage": "global",
+    "from": 5,
+    "to": 19,
+    "order": 5
+   },
+   "count": null,
+   "signed": false,
+   "note": "Namwon start camera · the only imagery layer in public mode (R6)"
+  },
+  {
+   "id": "s2-mm-meiktila-pre",
+   "name": {
+    "ko": "Sentinel-2 L2A · 메이크틸라 사전 2025-03-15",
+    "en": "Sentinel-2 L2A · Meiktila pre-event 2025-03-15"
+   },
+   "kind": "raster",
+   "role": "imagery",
+   "source": "external",
+   "set": null,
+   "path": null,
+   "url": null,
+   "tiles": "https://planetarycomputer.microsoft.com/api/data/v1/item/tiles/WebMercatorQuad/{z}/{x}/{y}@1x.png?collection=sentinel-2-l2a&item=S2C_MSIL2A_20250315T040611_R047_T46QHJ_20250315T072013&assets=visual&asset_bidx=visual|1,2,3&nodata=0",
+   "scheme": "xyz",
+   "layer": null,
+   "promote_id": null,
+   "minzoom": 10,
+   "maxzoom": 14,
+   "bounds": [
+    95.8795,
+    20.6746,
+    96.7687,
+    21.6781
+   ],
+   "gsd_m": 10,
+   "epoch": "2025-03-15",
+   "crs": "EPSG:3857",
+   "tier": "tile",
+   "license": "Copernicus Sentinel data (free · commercial OK)",
+   "attribution": "Contains modified Copernicus Sentinel data 2025 · Microsoft Planetary Computer",
+   "export_policy": "public",
+   "security_review": "n/a",
+   "rights_holder": "ESA / Copernicus",
+   "ladder": {
+    "stage": "global",
+    "from": 10,
+    "to": 14,
+    "order": 82
+   },
+   "count": null,
+   "signed": false,
+   "params": {
+    "item": "S2C_MSIL2A_20250315T040611_R047_T46QHJ_20250315T072013",
+    "cloud": 0.0
+   },
+   "note": "Maxar fallback (build=export|public)"
+  },
+  {
+   "id": "s2-mm-meiktila-post",
+   "name": {
+    "ko": "Sentinel-2 L2A · 메이크틸라 사후 2025-04-04",
+    "en": "Sentinel-2 L2A · Meiktila post-event 2025-04-04"
+   },
+   "kind": "raster",
+   "role": "imagery",
+   "source": "external",
+   "set": null,
+   "path": null,
+   "url": null,
+   "tiles": "https://planetarycomputer.microsoft.com/api/data/v1/item/tiles/WebMercatorQuad/{z}/{x}/{y}@1x.png?collection=sentinel-2-l2a&item=S2C_MSIL2A_20250404T040611_R047_T46QHJ_20250404T092818&assets=visual&asset_bidx=visual|1,2,3&nodata=0",
+   "scheme": "xyz",
+   "layer": null,
+   "promote_id": null,
+   "minzoom": 10,
+   "maxzoom": 14,
+   "bounds": [
+    95.8795,
+    20.6747,
+    96.7632,
+    21.6781
+   ],
+   "gsd_m": 10,
+   "epoch": "2025-04-04",
+   "crs": "EPSG:3857",
+   "tier": "tile",
+   "license": "Copernicus Sentinel data (free · commercial OK)",
+   "attribution": "Contains modified Copernicus Sentinel data 2025 · Microsoft Planetary Computer",
+   "export_policy": "public",
+   "security_review": "n/a",
+   "rights_holder": "ESA / Copernicus",
+   "ladder": {
+    "stage": "global",
+    "from": 10,
+    "to": 14,
+    "order": 83
+   },
+   "count": null,
+   "signed": false,
+   "params": {
+    "item": "S2C_MSIL2A_20250404T040611_R047_T46QHJ_20250404T092818",
+    "cloud": 0.0
+   },
+   "note": "Maxar fallback (build=export|public)"
+  }
+ ],
+ "ladder": {
+  "global": [
+   "gibs-viirs-truecolor",
+   "eox-s2cloudless-2025",
+   "gibs-hls-s30",
+   "pc-s2-mosaic",
+   "pc-worldcover-2021",
+   "pc-ndvi-mosaic",
+   "overture-buildings",
+   "maxar-mm-meiktila"
+  ],
+  "domestic_bridge": [
+   "xdworld-satellite"
+  ]
+ },
+ "as_of": "2026-09-24",
+ "source": "F1-D fixture · F1-CONTRACT §4.1 LayerItem · external URLs verified in recon-0924/global-map.md §1",
+ "fetched_at": "2026-09-24T10:55:43+09:00",
+ "license": "per item (license field)"
+}

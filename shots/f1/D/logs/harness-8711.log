@@ -1,0 +1,20 @@
+F1-D harness http://localhost:8711/api/v1 · F1-D harness · in-process queue (Redis 없음) · F1-B 게이트웨이 도착 시 폐기
+INFO:     Started server process [63412]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8711 (Press CTRL+C to quit)
+INFO:     127.0.0.1:57258 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60835 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60837 - "POST /api/v1/jobs HTTP/1.1" 202 Accepted
+INFO:     127.0.0.1:60835 - "GET /api/v1/events/jobs/job_07AE4C8037D646CC8C4AC49B HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60176 - "GET /api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60176 - "GET /api/v1/catalog/layers?stage=global&build=lx&locale=en HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61572 - "GET /api/v1/deploys HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60819 - "OPTIONS /api/v1/jobs/quote HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60819 - "POST /api/v1/jobs/quote HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60819 - "OPTIONS /api/v1/jobs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64355 - "POST /api/v1/jobs HTTP/1.1" 202 Accepted
+INFO:     127.0.0.1:64355 - "GET /api/v1/events/jobs/job_639AE400D7CA4DFA81BB587A HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61902 - "GET /api/v1/events/jobs/job_639AE400D7CA4DFA81BB587A?last_event_id=7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58573 - "GET /api/v1/events/jobs/job_639AE400D7CA4DFA81BB587A?last_event_id=11 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65134 - "GET /api/v1/events/jobs/job_639AE400D7CA4DFA81BB587A?last_event_id=15 HTTP/1.1" 200 OK

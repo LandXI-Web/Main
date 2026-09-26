@@ -1,0 +1,40 @@
+      108 |   });
+      109 |
+      110 |   for (const [w, h] of [[1280, 800], [1440, 900], [1920, 1080]]) {
+        at E:\Land-XI 플랫폼\01. 디자인\tests\e2e\f1d-globe.spec.mjs:107:18
+
+    Error Context: test-results\f1d-globe-F1-D-globe-stage-b7749-메라-연속-·-페이지-이동-0-·-2400-×-2\error-context.md
+
+
+[9/30] tests\e2e\f1d-globe.spec.mjs:111:5 › F1-D globe stage › 캔버스 ≥ 90 % · 가로 스크롤 0 · 폭 1280
+[10/30] tests\e2e\f1d-globe.spec.mjs:111:5 › F1-D globe stage › 캔버스 ≥ 90 % · 가로 스크롤 0 · 폭 1440
+[11/30] tests\e2e\f1d-globe.spec.mjs:111:5 › F1-D globe stage › 캔버스 ≥ 90 % · 가로 스크롤 0 · 폭 1920
+[12/30] tests\e2e\f1d-globe.spec.mjs:122:3 › F1-D globe stage › rAF p95 ≤ 20 ms · 캔버스 ≤ 2 (글로브 → 으슥아타 하강 동안)
+tests\e2e\f1d-globe.spec.mjs:122:3 › F1-D globe stage › rAF p95 ≤ 20 ms · 캔버스 ≤ 2 (글로브 → 으슥아타 하강 동안)
+perf {"n":167,"p50":16.7,"p95":16.9,"max":50,"canvases":1}
+
+[13/30] tests\e2e\f1d-i18n-fonts.spec.mjs:42:3 › F1-D i18n · fonts › lang=en — H1 Inter 700 · Inter 600/700 로드 · 키릴 글리프 있음 · 14px 미만 0 (글로브 · 으슥아타 · 소쿨룩)
+[14/30] tests\e2e\f1d-i18n-fonts.spec.mjs:66:3 › F1-D i18n · fonts › locale=ko — 국문판 표시체 Paperlogy · 지명 키릴 병기 유지 · ru UI 없음
+[15/30] tests\e2e\f1d-i18n-fonts.spec.mjs:76:3 › F1-D i18n · fonts › fonts-compare.html — Paperlogy 라틴 vs Inter 나란히 · 실측 폭 표 · 키릴 판정
+[16/30] tests\e2e\f1d-i18n-fonts.spec.mjs:88:3 › F1-D i18n · fonts › login.html — 기관 문(realm tenant) · off 는 lx_tenant_session 흉내 · LX 키 제거 · 기관 화면으로
+[17/30] tests\e2e\f1d-license-guard.spec.mjs:36:3 › F1-D license guard › build=export — 카탈로그에 비상업(NC)·Maxar·EOX 2018+ 없음 · 메이크틸라는 S2 전후로 대체 표기
+[18/30] tests\e2e\f1d-license-guard.spec.mjs:53:3 › F1-D license guard › build=public(게스트) — 자체 영상(xyz/pmtiles/cog) 0 · 외부 위성만
+[19/30] tests\e2e\f1d-license-guard.spec.mjs:64:3 › F1-D license guard › build=lx — EOX 2025 칩 CC BY-NC-SA 표기 · 하니스 /catalog/layers build=export 도 같은 규칙(켜져 있으면)
+[20/30] tests\e2e\f1d-meiktila.spec.mjs:36:3 › F1-D Meiktila › Maxar 전후 스와이프 · 38동 등급 · 차트 · 시연 한정 칩 · 타일 404 0
+[21/30] tests\e2e\f1d-motion-law.spec.mjs:37:3 › F1-D motion law › 소스 스캔 — CSS·JS 의 ms 리터럴 · duration 숫자 ⊆ 사다리
+[22/30] tests\e2e\f1d-motion-law.spec.mjs:49:3 › F1-D motion law › 실행 중 getAnimations ⊆ 사다리 · 락온 380 · 스윕 1000 · 스타일 전이 0 · raster-fade 500 · 카메라 1600/2400
+tests\e2e\f1d-motion-law.spec.mjs:49:3 › F1-D motion law › 실행 중 getAnimations ⊆ 사다리 · 락온 380 · 스윕 1000 · 스타일 전이 0 · raster-fade 500 · 카메라 1600/2400
+anims 23 cams [2400,1600,2400,2400]
+
+[23/30] tests\e2e\f1d-motion-law.spec.mjs:86:3 › F1-D motion law › prefers-reduced-motion — 카메라 jumpTo · 애니메이션 1ms
+[24/30] tests\e2e\f1d-sprawl.spec.mjs:36:3 › F1-D Sokuluk · Bishkek › 배포본 있음(off 픽스처) → 초안 카드 · Δ 격자 · 필라멘트 · 시범지 3 · Сокулук Бишкек
+[25/30] tests\e2e\f1d-sprawl.spec.mjs:63:3 › F1-D Sokuluk · Bishkek › 배포본 없음 → 이식 전 결손 칩(정직)
+[26/30] tests\e2e\f1d-sprawl.spec.mjs:77:3 › F1-D Sokuluk · Bishkek › Overture 압출 토글(기본 OFF → ON · pitch 45) · 스와이프 2017 ↔ 2025(두 지도 · clip-path)
+[27/30] tests\e2e\f1d-ysykata-ndvi.spec.mjs:36:3 › F1-D Ysyk-Ata · G-J1 › 경계 락온 · Ысык-Ата · WorldCover 농경지 33.0 % · 비율만 유효 · 10 m ha
+[28/30] tests\e2e\f1d-ysykata-ndvi.spec.mjs:51:3 › F1-D Ysyk-Ata · G-J1 › 월별 스크럽 3→10 · 크로스페이드 500 · 정수 750 정지(6 s)
+[29/30] tests\e2e\f1d-ysykata-ndvi.spec.mjs:74:3 › F1-D Ysyk-Ata · G-J1 › G-J1 off — 프레임 → 견적 → 실행 · 리플레이 8칸 순서 도착 · HUD 지수 계산 문구 · job.done 곡선 · 작물 분류 결손
+[30/30] tests\e2e\f1d-ysykata-ndvi.spec.mjs:106:3 › F1-D Ysyk-Ata · G-J1 › G-J1 on — F1-D 하니스 큐(POST /jobs kind index) → SSE shard=월 · index.month measured(실제 PC B04/B08)
+  1 failed
+    tests\e2e\f1d-globe.spec.mjs:87:3 › F1-D globe stage › 남원 → 글로브 → 비슈케크 카메라 연속 · 페이지 이동 0 · 2400 × 2 
+  1 skipped
+  28 passed (3.0m)

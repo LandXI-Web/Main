@@ -1,0 +1,14 @@
+{
+ "mode": "on",
+ "pre": "Gateway · localhost:8700\nDeployment · dp-kgz-land-change-26 not in the gateway · port it in LX/OPS\nPermission · lx · staff\nModel · unsupervised-change · no runnable adapter registered\nImagery pair · 0 gateway imagery over Sokuluk · PC Sentinel-2 is external, not registered",
+ "gap": "Not queued · Deployment — dp-kgz-land-change-26 not in the gateway · port it in LX/OPS",
+ "http": [
+  "200 GET /api/v1/health",
+  "200 GET /api/v1/catalog/layers",
+  "200 GET /api/v1/deploys",
+  "200 GET /api/v1/deploys",
+  "200 GET /api/v1/registry/models/unsupervised-change",
+  "200 GET /api/v1/catalog/layers"
+ ],
+ "errors": []
+}

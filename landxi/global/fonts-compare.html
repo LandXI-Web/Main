@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en" data-lx="boot">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Display type · Paperlogy Latin vs Inter</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/landxi/assets/css/v2/tokens-v2.css">
+<link rel="stylesheet" href="css/fonts-v2.css">
+<style>
+  body { margin: 0; background: #FFFFFF; color: var(--cw-ink); font: 400 16px/23px 'Inter', system-ui, sans-serif; }
+  .fc { padding: 40px 56px 32px; }
+  .fc-head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--cw-ink); padding-bottom: 14px; }
+  .fc-head h1 { margin: 0; font: 700 26px/32px 'Inter', sans-serif; letter-spacing: -0.01em; }
+  .fc-head p { margin: 0; font: 500 14px/16px 'Inter', sans-serif; color: var(--cw-sub); }
+  .fc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 48px; margin-top: 20px; }
+  .fc-col { border-top: 1px solid var(--cw-rule); padding-top: 12px; }
+  .fc-col > header { display: flex; justify-content: space-between; font: 500 14px/16px 'Inter', sans-serif; color: var(--cw-sub); text-transform: uppercase; letter-spacing: .04em; }
+  .fc-col > header b { color: var(--cw-ink); text-transform: none; letter-spacing: 0; }
+  .fc-sample { margin: 18px 0 0; }
+  .fc-h1 { font-size: 66px; line-height: 82px; letter-spacing: -0.01em; margin: 0; }
+  .fc-h2 { font-size: 34px; line-height: 42px; letter-spacing: -0.01em; margin: 16px 0 0; }
+  .fc-hud { font-size: 124px; line-height: 1; letter-spacing: -0.02em; margin: 18px 0 0; font-variant-numeric: tabular-nums; }
+  .fc-hud small { font-size: 26px; margin-left: 8px; letter-spacing: 0; }
+  .fc-lab { font-size: 22px; line-height: 30px; margin: 12px 0 0; }
+  .fc-cyr { font-size: 26px; line-height: 32px; margin: 12px 0 0; }
+  .fc-p { font-size: 16px; line-height: 23px; margin: 12px 0 0; }
+  .fc-L .fc-h1, .fc-L .fc-h2, .fc-L .fc-hud, .fc-L .fc-lab, .fc-L .fc-cyr { font-family: 'Paperlogy', 'Pretendard', sans-serif; font-weight: 700; }
+  .fc-L .fc-h1, .fc-L .fc-hud { font-weight: 800; }
+  .fc-L .fc-p { font-family: 'Pretendard', sans-serif; }
+  .fc-R .fc-h1, .fc-R .fc-h2, .fc-R .fc-hud, .fc-R .fc-lab, .fc-R .fc-cyr { font-family: 'Inter', sans-serif; font-weight: 700; }
+  .fc-R .fc-h2, .fc-R .fc-lab, .fc-R .fc-cyr { font-weight: 600; }
+  .fc-R .fc-p { font-family: 'Inter', sans-serif; }
+  .fc-m { margin-top: 18px; width: 100%; border-collapse: collapse; font: 500 14px/18px 'Inter', sans-serif; font-variant-numeric: tabular-nums; }
+  .fc-m td, .fc-m th { border-top: 1px solid var(--cw-rule); padding: 6px 8px 6px 0; text-align: left; }
+  .fc-m th { color: var(--cw-sub); font-weight: 500; }
+  .fc-m td.warn { color: var(--cw-warn); }
+  .fc-foot { margin-top: 18px; font: 500 14px/18px 'Inter', sans-serif; color: var(--cw-sub); border-top: 1px dashed var(--cw-mute); padding-top: 10px; }
+</style>
+</head>
+<body data-stage="paper">
+<main class="fc">
+  <div class="fc-head"><h1>Display type for the global edition — side by side</h1><p>Q-D(b) ③ · system-v2 §7 · same strings, same sizes · submitted for Fable decision</p></div>
+  <div class="fc-grid">
+    <section class="fc-col fc-L" data-font="Paperlogy">
+      <header><span>A · current display face (Korean edition)</span><b>Paperlogy 700/800 Latin</b></header>
+      <div class="fc-sample"></div>
+    </section>
+    <section class="fc-col fc-R" data-font="Inter">
+      <header><span>B · proposed global display face</span><b>Inter 600/700 (+ Cyrillic)</b></header>
+      <div class="fc-sample"></div>
+    </section>
+  </div>
+  <p class="fc-foot" id="fc-foot"></p>
+</main>
+<script type="module" src="js/fonts-compare.js"></script>
+</body>
+</html>

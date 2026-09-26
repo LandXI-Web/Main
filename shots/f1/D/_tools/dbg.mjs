@@ -1,0 +1,18 @@
+import { chromium } from '@playwright/test';
+const b = await chromium.launch({ channel: 'chrome', args: ['--use-angle=d3d11', '--ignore-gpu-blocklist'] });
+const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
+await ctx.addInitScript(() => { localStorage.setItem('lx_api_mode', 'off'); localStorage.setItem('lx_logged_in', '1'); localStorage.setItem('lx_role', 'staff'); });
+const p = await ctx.newPage();
+const reqs = [];
+p.on('request', (r) => { if (/eox|gibs/.test(r.url())) reqs.push(r.url().replace(/^https:\/\/[^/]+/, '').slice(0, 110)); });
+p.on('response', (r) => { if (r.status() >= 400) reqs.push('HTTP ' + r.status() + ' ' + r.url().slice(0, 120)); });
+await p.goto('http://localhost:4173/landxi/global/index.html?tenant=lx');
+await p.waitForFunction(() => document.documentElement.dataset.lx === 'ready', null, { timeout: 30000 });
+const V = JSON.parse(process.argv[2] || '{}');
+await p.evaluate(async (V) => { const m = window.__f1d.stage.map; const cam = { center: [74.505, 42.872], zoom: 13.7, pitch: 45, bearing: -18, ...V }; if (V.fly) { await new Promise(r => { m.once('moveend', r); m.flyTo({ ...cam, duration: V.fly }); }); } else m.jumpTo(cam); }, V);
+await p.evaluate(() => { const m = window.__f1d.stage.map; m.setLayoutProperty('eox-s2cloudless-2017', 'visibility', 'visible'); m.setPaintProperty('eox-s2cloudless-2017', 'raster-opacity', 1); m.setPaintProperty('eox-s2cloudless-2025', 'raster-opacity', 0); });
+await p.waitForTimeout(5000);
+await p.screenshot({ path: 'shots/f1/D/_tools/dbg' + (process.argv[3] || '') + '.png' });
+console.log(JSON.stringify(await p.evaluate(() => { const m = window.__f1d.stage.map; return ['gibs-a', 'eox-s2cloudless-2017', 'eox-s2cloudless-2025'].map((id) => [id, m.getLayoutProperty(id, 'visibility'), JSON.stringify(m.getPaintProperty(id, 'raster-opacity')), m.isSourceLoaded(id)]).concat([[m.getProjection && JSON.stringify(m.getProjection())]]); })));
+console.log(reqs.slice(-12).join('\n'));
+await b.close();

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en" data-lx="boot">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Land-XI Global — institution sign-in</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/landxi/assets/css/v2/tokens-v2.css">
+<link rel="stylesheet" href="css/fonts-v2.css">
+<link rel="stylesheet" href="global.css">
+<style>
+  body { background: #FFFFFF; }
+  .lg { display: grid; grid-template-columns: 1.1fr 1fr; min-height: 100vh; }
+  .lg-l { padding: 56px; display: flex; flex-direction: column; justify-content: space-between; border-right: 1px solid var(--cw-rule); }
+  .lg-l h1 { margin: 0; font: 700 66px/82px var(--g-display); letter-spacing: -0.01em; max-width: 620px; }
+  .lg-l h1 em { font-style: normal; color: var(--cw-accent); }
+  .lg-l p { font: 400 22px/32px var(--g-body); color: var(--cw-sub); max-width: 560px; margin: 20px 0 0; }
+  .lg-l ul { list-style: none; padding: 0; margin: 32px 0 0; display: grid; gap: 0; max-width: 560px; }
+  .lg-l li { display: grid; grid-template-columns: 120px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid var(--cw-rule); font: 400 16px/22px var(--g-body); }
+  .lg-l li b { font: 600 14px/22px var(--g-num); text-transform: uppercase; letter-spacing: .04em; color: var(--cw-sub); }
+  .lg-r { padding: 56px; display: flex; align-items: center; }
+  form { width: 100%; max-width: 420px; }
+  form h2 { margin: 0 0 6px; font: 700 34px/42px var(--g-display); letter-spacing: -0.01em; }
+  form .g-note { margin-bottom: 24px; }
+  label { display: block; font: 500 14px/16px var(--g-num); color: var(--cw-sub); margin: 18px 0 6px; text-transform: uppercase; letter-spacing: .04em; }
+  input, select { width: 100%; box-sizing: border-box; height: 48px; padding: 0 14px; border: 1px solid var(--cw-ink); border-radius: 0; font: 400 18px/24px var(--g-body); background: #FFFFFF; color: var(--cw-ink); }
+  input:focus, select:focus { outline: 2px solid var(--cw-accent); outline-offset: 2px; }
+  .g-btn { width: 100%; height: 52px; margin-top: 28px; font-size: 18px; }
+  .lg-msg { margin-top: 16px; min-height: 22px; font: 500 16px/22px var(--g-body); }
+  .lg-msg[data-k="err"] { color: var(--cw-warn); }
+  .lg-foot { font: 500 14px/18px var(--g-num); color: var(--cw-sub); border-top: 1px dashed var(--cw-mute); padding-top: 10px; }
+  .lg-realm { display: inline-flex; gap: 8px; align-items: center; border: 1px solid var(--cw-ink); padding: 4px 10px; font: 600 14px/16px var(--g-num); }
+  @media (max-width: 1100px) { .lg { grid-template-columns: 1fr; } .lg-l { border-right: 0; border-bottom: 1px solid var(--cw-rule); } .lg-l h1 { font-size: 54px; line-height: 59px; } }
+</style>
+</head>
+<!-- 기관 문(계약 §3 · realm 'tenant') — LX 직원 셸과 완전 분리. on: POST /auth/login → lx_api_session · off: lx_tenant_session 흉내(토큰 없음) -->
+<body data-stage="paper">
+<main class="lg">
+  <section class="lg-l">
+    <div>
+      <span class="lg-realm">Institution realm · tenant</span>
+      <h1 style="margin-top:28px">Your district, read <em>month by month</em>.</h1>
+      <p>Land-XI Global gives partner institutions the same GeoAI engine LX runs in Korea — on satellite imagery, with every number labelled by where it came from.</p>
+      <ul>
+        <li><b>kgz-agri</b><span>Ministry of Agriculture · Ysyk-Ata farmland use · <span class="g-cyr" lang="ru">Ысык-Ата</span></span></li>
+        <li><b>kgz-land</b><span>State Agency on Land Resources · Sokuluk · Bishkek built-up change · <span class="g-cyr" lang="ru">Сокулук · Бишкек</span></span></li>
+      </ul>
+    </div>
+    <p class="lg-foot">Separate from the LX staff shell · institution sessions never see raw imagery routes (contract §3) · original imagery only after sign-in</p>
+  </section>
+  <section class="lg-r">
+    <form id="f" autocomplete="on" novalidate>
+      <h2>Institution sign-in</h2>
+      <p class="g-note" id="mode">Checking server…</p>
+      <label for="tenant">Institution</label>
+      <select id="tenant" name="tenant">
+        <option value="kgz-agri">Kyrgyz Ministry of Agriculture (kgz-agri)</option>
+        <option value="kgz-land">Kyrgyz State Agency on Land Resources (kgz-land)</option>
+      </select>
+      <label for="login">User ID</label>
+      <input id="login" name="login" autocomplete="username" value="kgz-agri-manager">
+      <label for="pw">Password</label>
+      <input id="pw" name="pw" type="password" autocomplete="current-password">
+      <button class="g-btn" type="submit">Sign in</button>
+      <div class="lg-msg" id="msg" role="status" aria-live="polite"></div>
+    </form>
+  </section>
+</main>
+<script type="module">
+import { API, probe, api, session, mastLabel } from '/landxi/shared/api-v1.js';
+const $ = (id) => document.getElementById(id);
+const svc = { 'kgz-agri': 'dp-kgz-agri-farm-26', 'kgz-land': 'dp-kgz-land-change-26' };
+$('tenant').addEventListener('change', () => { $('login').value = $('tenant').value + '-manager'; });
+await probe();
+$('mode').textContent = API.mode === 'on' ? `Live · ${API.base.replace(/^https?:\/\//, '')}` : mastLabel('en') + ' — sign-in is simulated on this device';
+document.documentElement.dataset.lx = 'ready';
+$('f').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const tenant = $('tenant').value, msg = $('msg');
+  msg.dataset.k = ''; msg.textContent = 'Signing in…';
+  if (API.mode === 'on') {
+    try {
+      const s = await api('/auth/login', { method: 'POST', body: { realm: 'tenant', tenant_id: tenant, login: $('login').value, password: $('pw').value } });
+      session.set(s);
+    } catch (err) { msg.dataset.k = 'err'; msg.textContent = err.code === 'unauthorized' ? 'ID or password does not match.' : `Sign-in failed (${err.code}).`; return; }
+  } else {
+    // off: 계약 §3 — 기존 E0-1 키로 realm 흉내(토큰 없음) · LX 키는 지운다(셸 분리)
+    try { localStorage.removeItem('lx_logged_in'); localStorage.removeItem('lx_role'); localStorage.setItem('lx_tenant_session', JSON.stringify({ tenant, at: new Date().toISOString() })); } catch { /* */ }
+  }
+  location.href = `index.html?svc=${svc[tenant]}&locale=en`;
+});
+</script>
+</body>
+</html>

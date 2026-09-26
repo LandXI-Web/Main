@@ -1,0 +1,22 @@
+// node run.mjs <query> <shotname> <js-file>  — js file body is an async function body; `f`=window.__f1d; `wait(ms)`
+import { chromium } from '@playwright/test';
+import fs from 'node:fs';
+const [q = '', shot = 'dbg', js] = process.argv.slice(2);
+const b = await chromium.launch({ channel: 'chrome', args: ['--use-angle=d3d11', '--ignore-gpu-blocklist'] });
+const ctx = await b.newContext({ viewport: { width: +(process.env.W || 1440), height: +(process.env.H || 900) } });
+const on = process.env.ON;
+await ctx.addInitScript((on) => { if (sessionStorage.getItem('b')) return; sessionStorage.setItem('b', 1);
+  if (on) { localStorage.setItem('lx_api_base', on); localStorage.removeItem('lx_api_mode'); } else localStorage.setItem('lx_api_mode', 'off');
+  localStorage.setItem('lx_logged_in', '1'); localStorage.setItem('lx_role', 'staff'); localStorage.removeItem('lx_tenant_session'); }, on);
+const p = await ctx.newPage();
+const logs = [];
+p.on('console', (m) => { if (!/performance warning/.test(m.text())) logs.push(`[${m.type()}] ${m.text()}`.slice(0, 300)); });
+p.on('pageerror', (e) => logs.push('[pageerror] ' + e.message));
+p.on('response', (r) => { if (r.status() >= 400) logs.push('[http ' + r.status() + '] ' + r.url().slice(0, 160)); });
+await p.goto('http://localhost:4173/landxi/global/index.html?tenant=lx&locale=en' + q);
+await p.waitForFunction(() => document.documentElement.dataset.lx === 'ready', null, { timeout: 30000 });
+let out = null;
+if (js) out = await p.evaluate(`(async()=>{const f=window.__f1d;const wait=(ms)=>new Promise(r=>setTimeout(r,ms));${fs.readFileSync(js, 'utf8')}})()`);
+await p.screenshot({ path: `shots/f1/D/_tools/${shot}.png` });
+console.log(logs.slice(-25).join('\n')); console.log(JSON.stringify(out, null, 1));
+await b.close();

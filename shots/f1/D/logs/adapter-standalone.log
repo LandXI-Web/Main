@@ -1,0 +1,5 @@
+{"shard": "m2025-06", "n": 6, "ms": 149964, "metrics": {"ndvi_mean": {"value": 0.438, "unit": "ndvi", "basis": "measured", "as_of": "2026-09-26T20:35:56+09:00", "source": "PC S2 L2A B04/B08 ， WorldCover 40 mask", "note": "T43TEH 6 scenes ， cloud<15 ， SCL masked ， 40 m grid pixel-pooled"}, "n_scenes": 6, "valid_px": 1135488, "crop_px": 469717, "p10": 0.1432, "p50": 0.4272, "p90": 0.7602, "hist": {"bins": [-0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8], "counts": [0, 35, 17030, 220739, 156186, 135915, 139833, 142942, 135781, 114170]}, "cloud_max": 15.0, "mgrs": "43TEH", "res_m": 40, "basis": "measured"}}
+
+real	2m30.683s
+user	0m0.000s
+sys	0m0.030s

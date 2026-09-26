@@ -1,0 +1,21 @@
+import { chromium } from '@playwright/test';
+const b = await chromium.launch({ channel: 'chrome', args: ['--use-angle=d3d11', '--ignore-gpu-blocklist'] });
+const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
+await ctx.addInitScript(() => { localStorage.setItem('lx_api_mode', 'off'); localStorage.setItem('lx_logged_in', '1'); localStorage.setItem('lx_role', 'staff'); });
+const p = await ctx.newPage();
+await p.goto('http://localhost:4173/landxi/global/index.html?tenant=lx');
+await p.waitForFunction(() => document.documentElement.dataset.lx === 'ready', null, { timeout: 30000 });
+const out = await p.evaluate(async () => {
+  const m = window.__f1d.stage.map; const res = [];
+  const snap = () => { const c = m.getCanvas(); const g = c.getContext('webgl2') || c.getContext('webgl'); return null; };
+  m.jumpTo({ center: [74.505, 42.872], zoom: 12.5, pitch: 0, bearing: 0 });
+  await new Promise(r => setTimeout(r, 4000));
+  res.push(['layers', m.getStyle().layers.map(l => l.id + ':' + (m.getLayoutProperty(l.id, 'visibility') || 'v')).join(' ')]);
+  res.push(['zoom', m.getZoom(), 'proj', JSON.stringify(m.getProjection()), 'globeProgress', m.transform?.projectionProgress ?? m.style?.projection?.transitionState]);
+  return res;
+});
+console.log(JSON.stringify(out, null, 1));
+await p.evaluate(() => window.__f1d.stage.map.triggerRepaint());
+await p.waitForTimeout(2500);
+await p.screenshot({ path: 'shots/f1/D/_tools/dbg-noc.png' });
+await b.close();
