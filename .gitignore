@@ -7,3 +7,7 @@ shots/
 build/
 .env.local
 *홍보영상*.mp4
+
+# 로컬 LLM 실행 설정·로그 (2026-09-26)
+infra/llm/.env
+infra/llm/logs/

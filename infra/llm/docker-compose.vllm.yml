@@ -1,0 +1,112 @@
+# Land-XI 로컬 LLM 플레인 — vLLM (OpenAI 호환)
+#
+#   두뇌  : Gemma 4 12B-it QAT W4A16 (google/gemma-4-12B-it-qat-w4a16-ct)  → :8000/v1  served-name "gemma-4-12b-it"
+#   라우터: HyperCLOVAX-SEED-Text-Instruct-1.5B (profile "router")          → :8001/v1  served-name "hyperclovax-seed-1.5b"
+#
+# 직접 `docker compose up` 하지 말고 launch-vllm.ps1 을 쓴다(드라이버·VRAM·전력 사전 점검 후 기동).
+#   docker compose -f docker-compose.vllm.yml --env-file .env up -d                 # 두뇌만
+#   docker compose -f docker-compose.vllm.yml --env-file .env --profile router up -d  # 두뇌 + 라우터
+#
+# 전력 안전 규칙(2026-09-26 전력 부족 셧다운 이후):
+#   - GPU 한 장만. tensor-parallel 1. 두 서비스 모두 같은 GPU(VLLM_GPU) 에 올린다.
+#   - Docker Desktop(WSL2) 는 --gpus/device_ids 로 GPU 를 격리하지 못한다(컨테이너에 두 장 다 보임 [실측 2026-09-26]).
+#     → CUDA_VISIBLE_DEVICES + CUDA_DEVICE_ORDER=PCI_BUS_ID 로 한 장만 보이게 한다. 이 두 줄을 지우지 말 것.
+#   - restart: "no" — 재부팅·Docker 재시작 뒤 스스로 GPU 를 잡지 않는다(스케줄러/사람이 기동).
+#   - max-num-seqs·max-num-batched-tokens 로 순간 연산 폭주(=전력 피크)를 억제.
+#   - 전력 상한 자체는 호스트 `nvidia-smi -pl 200`(관리자) — DRIVER-UPGRADE.md §4.
+#   - Ollama(종료 금지)·Land-XI gpu_worker 와 공존: gpu-memory-utilization 은 launch-vllm.ps1 이 여유 VRAM 으로 계산.
+
+name: landxi-llm
+
+x-vllm-common: &vllm-common
+  # v0.30.0 (2026-09-22) — CUDA 13.0.2 빌드 → Windows 드라이버 R580(580.xx/58x.xx) 이상 필요.
+  # 드라이버를 R575~R579 로만 올릴 수 있으면 .env 에서 VLLM_IMAGE 를 cu129 태그(아래 .env.example)로 바꾼다.
+  image: ${VLLM_IMAGE:-vllm/vllm-openai:v0.30.0@sha256:5f5e535216848d0c52159c8c13a0af04be5f6fe1a84e79914300610796f76d40}
+  restart: "no"
+  ipc: host                      # PyTorch 공유 메모리(공식 권장). 대안: shm_size
+  entrypoint: ["/bin/bash", "-c"]
+  volumes:
+    # 모델 가중치: E: 캐시(download_models.py 로 미리 받음). 읽기 전용.
+    - "${LANDXI_MODELS_DIR:-E:/Land-XI 플랫폼/_env/models}:/models:ro"
+    # vLLM 컴파일/torch.compile 캐시 — 재기동 가속. 쓰기 가능.
+    - "${LANDXI_VLLM_CACHE:-E:/Land-XI 플랫폼/_env/models/vllm-cache}:/root/.cache/vllm"
+  environment: &vllm-env
+    CUDA_DEVICE_ORDER: PCI_BUS_ID
+    CUDA_VISIBLE_DEVICES: ${VLLM_GPU:-1}
+    HF_HUB_OFFLINE: "1"            # 기동 중 외부 다운로드 금지(가중치는 미리 받음)
+    TRANSFORMERS_OFFLINE: "1"
+    HF_HOME: /root/.cache/huggingface   # 쓰기 가능(컨테이너 임시). 가중치는 /models 스냅샷 경로로 직접 지정
+    VLLM_NO_USAGE_STATS: "1"
+    DO_NOT_TRACK: "1"
+    NCCL_P2P_DISABLE: "1"          # WSL2 에 GPU P2P 없음(TP=1 이라 실사용 없음, 안전값)
+    VLLM_API_KEY: ${VLLM_API_KEY:-}
+  deploy:
+    resources:
+      limits:
+        cpus: "16"
+        memory: 48g
+      reservations:
+        devices:
+          - driver: nvidia
+            capabilities: [gpu]
+            # WSL2 에서는 무시되지만 Linux 네이티브 호스트로 옮길 때를 위해 둔다.
+            device_ids: ["${VLLM_GPU:-1}"]
+  logging:
+    driver: json-file
+    options: { max-size: "20m", max-file: "3" }
+
+services:
+  gemma:
+    <<: *vllm-common
+    container_name: landxi-vllm-gemma
+    ports:
+      - "${VLLM_BIND:-127.0.0.1}:${VLLM_PORT:-8000}:8000"
+    command:
+      - >-
+        exec vllm serve
+        /models/hf-cache/models--google--gemma-4-12B-it-qat-w4a16-ct/snapshots/1d2c2d7f2466070e69d6fb3fd5ce9a7d75f2f6ee
+        --served-model-name gemma-4-12b-it
+        --host 0.0.0.0 --port 8000
+        --tensor-parallel-size 1
+        --gpu-memory-utilization ${GEMMA_GPU_UTIL:-0.36}
+        --max-model-len ${GEMMA_MAX_LEN:-16384}
+        --max-num-seqs ${GEMMA_MAX_SEQS:-8}
+        --max-num-batched-tokens ${GEMMA_MAX_BATCHED:-4096}
+        --enable-auto-tool-choice
+        --tool-call-parser gemma4
+        --reasoning-parser gemma4
+        --default-chat-template-kwargs '{"enable_thinking": false}'
+        --limit-mm-per-prompt '{"image": ${GEMMA_MAX_IMAGES:-4}, "audio": 0}'
+        --mm-processor-kwargs '{"max_soft_tokens": ${GEMMA_IMAGE_TOKENS:-560}}'
+        ${GEMMA_EXTRA_ARGS:-}
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/health',timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 600s
+
+  router:
+    <<: *vllm-common
+    container_name: landxi-vllm-router
+    profiles: ["router"]
+    ports:
+      - "${VLLM_BIND:-127.0.0.1}:${ROUTER_PORT:-8001}:8000"
+    command:
+      - >-
+        exec vllm serve
+        /models/hf-cache/models--naver-hyperclovax--HyperCLOVAX-SEED-Text-Instruct-1.5B/snapshots/0728a47d632019a8da5f53b663db1c175dc04115
+        --served-model-name hyperclovax-seed-1.5b
+        --host 0.0.0.0 --port 8000
+        --tensor-parallel-size 1
+        --gpu-memory-utilization ${ROUTER_GPU_UTIL:-0.09}
+        --max-model-len ${ROUTER_MAX_LEN:-4096}
+        --max-num-seqs ${ROUTER_MAX_SEQS:-8}
+        --dtype bfloat16
+        ${ROUTER_EXTRA_ARGS:-}
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/health',timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 300s
