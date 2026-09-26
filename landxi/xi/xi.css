@@ -1,0 +1,4 @@
+/* xi.css — XI맵 운영판 스타일 진입점. 토큰 정본은 ../assets/css/v2/tokens-v2.css(동결 · 읽기만). */
+@import url('css/canvas-full.css');
+@import url('css/hud.css');
+@import url('css/panels.css');

@@ -1,0 +1,79 @@
+
+Running 8 tests using 1 worker
+
+[1/8] tests\e2e\f1a-motion-law.spec.mjs:43:1 › 소스 스캔 — landxi/xi 의 CSS·JS ms 리터럴 · duration 숫자 ⊆ 사다리 · 앰버 직접 사용 0
+tests\e2e\f1a-motion-law.spec.mjs:43:1 › 소스 스캔 — landxi/xi 의 CSS·JS ms 리터럴 · duration 숫자 ⊆ 사다리 · 앰버 직접 사용 0
+files 28 bad [] amber []
+
+[2/8] tests\e2e\f1a-motion-law.spec.mjs:60:1 › 실행 중 — 전 장면 getAnimations ⊆ 사다리 · 이징 3 · 카메라 · 락온 · 스윕 · 전이 0 · 페이드 500 · perf · 14px · 캔버스
+tests\e2e\f1a-motion-law.spec.mjs:60:1 › 실행 중 — 전 장면 getAnimations ⊆ 사다리 · 이징 3 · 카메라 · 락온 · 스윕 · 전이 0 · 페이드 500 · perf · 14px · 캔버스
+anims 36 ["waapi@hud-chip|180|0|cubic-bezier(0.22, 1, 0.36, 1)/linear","cw-lock-grow|180|0|linear/cubic-bezier(0.22, 1, 0.36, 1)","cw-lock-amber|80|180|linear","cw-lock-settle|120|260|linear/cubic-bezier(0.22, 1, 0.36, 1)","cw-text-in|500|380|linear/cubic-bezier(0.15, 1, 0.3, 1)","cw-text-in|40|0|linear/cubic-bezier(0.22, 1, 0.36, 1)","cw-text-in|40|40|linear/cubic-bezier(0.22, 1, 0.36, 1)","cw-text-in|40|80|linear/cubic-bezier(0.22, 1, 0.36, 1)","cw-text-in|40|120|linear/cubic-bezier(0.22, 1, 0.36, 1)","cw-text-in|40|160|linear/cubic-bezier(0.22, 1, 0.36, 1)","cw-text-in|40|200|linear/cubic-bezier(0.22, 1, 0.36, 1)","cw-text-in|40|240|linear/cubic-bezier(0.22, 1, 0.36, 1)","waapi@seg|500|0|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@seg|500|60|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@seg|500|120|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@seg|500|180|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@seg|500|240|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@seg|500|300|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@emd-card|380|0|cubic-bezier(0.22, 1, 0.36, 1)/linear","waapi@|500|0|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@|500|60|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@|500|120|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@|500|180|cubic-bezier(0.15, 1, 0.3, 1)/linear","tr:transform@xi-btn|180|0|cubic-bezier(0.22, 1, 0.36, 1)/linear","waapi@emd-card|180|0|cubic-bezier(0.22, 1, 0.36, 1)/linear","waapi@parcel-card|380|0|cubic-bezier(0.22, 1, 0.36, 1)/linear","waapi@|1000|0|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@|1000|120|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@|1000|240|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@|1000|360|cubic-bezier(0.15, 1, 0.3, 1)/linear","tr:height@xi-btn|180|0|cubic-bezier(0.22, 1, 0.36, 1)/linear","tr:width@xi-btn|180|0|cubic-bezier(0.22, 1, 0.36, 1)/linear","waapi@parcel-card|180|0|cubic-bezier(0.22, 1, 0.36, 1)/linear","waapi@quote-card|380|0|cubic-bezier(0.22, 1, 0.36, 1)/linear","tr:transform@xi-play|180|0|cubic-bezier(0.22, 1, 0.36, 1)/linear","tr:transform@tool-swipe|180|0|cubic-bezier(0.22, 1, 0.36, 1)/linear"]
+
+flights [2400,1600,1250] jumps 0 sweeps [954,1012] stops [{"k":0,"ms":758},{"k":1,"ms":751},{"k":2,"ms":751},{"k":3,"ms":751}]
+
+law {"tr":{"duration":0,"delay":0},"fades":6,"small":[],"amberNow":[],"canvases":2,"share":1,"tier":{"tier":"T1","p95":17,"gpu":{"vendor":"Google Inc. (AMD)","renderer":"ANGLE (AMD, AMD Radeon RX 5700 XT (0x0000731F) Direct3D11 vs_5_0 ps_5_0, D3D11)","webgl":2}},"perf":{"n":600,"p50":16.699999999999818,"p95":16.800000000000182,"max":100}}
+
+perf {"idle":{"n":600,"p50":16.699999999999818,"p95":16.800000000000182,"max":100},"aoi":{"n":276,"p50":16.700000000000728,"p95":16.799999999999272,"max":33.400000000001455},"job":{"n":124,"p50":16.700000000000728,"p95":16.799999999999272,"max":16.80000000000291},"all":{"n":1728,"p50":16.69999999999999,"p95":16.800000000000182,"max":133.3}}
+
+[3/8] tests\e2e\f1a-motion-law.spec.mjs:172:1 › prefers-reduced-motion — 카메라 jumpTo · 도착 즉시 · 애니메이션 1ms
+tests\e2e\f1a-motion-law.spec.mjs:172:1 › prefers-reduced-motion — 카메라 jumpTo · 도착 즉시 · 애니메이션 1ms
+{"frames":0,"big":"129,420","long":[]}
+
+[4/8] tests\e2e\f1a-parcel.spec.mjs:35:1 › 읍면동 클릭 → 집계 카드(봉투) → AOI 하강 3단 → 도착 → 필지 카드 P8 + 4시점 크롭
+tests\e2e\f1a-parcel.spec.mjs:35:1 › 읍면동 클릭 → 집계 카드(봉투) → AOI 하강 3단 → 도착 → 필지 카드 P8 + 4시점 크롭
+집계 읍면동 집계 · P4 2023 25cm 재추론 × 운봉읍 52190250 · 면적 —ha 클래스 개수 면적 비중 경작지 8,638 1,324.8ha 건물 4,125 91.9ha 비닐하우스 232 19.8ha 주차장 174 2.5ha 합계 AI 추론 · 검수 전 results/namwon-landcover-2023-emd-stats.json 2026-09-2
+
+AOI {"chips":["ap25-namwon-2023","namwon-city-2504","namwon-aoi-2504"],"big":"456","note":"A02 농경지 2필지 AOI 걸침 · 온전히 1변화 지수(비지도) · 학습 결과 아님2025.04 → 10 · 4시점","parcels":2,"on":["namwon-landcover-2023","namwon-farmland-2025","namwon-change"]}
+
+필지 {"text":"필지 · A02 농지이용 2025 · 드론 × PNU · P8 필지 2021-12 4519039024113400001 1340-1답 판독 경작지 AI 추론 · 검수 전 면적(AI 경계) 2,437m² 신뢰도 0.43 지목 답 개인 공시지가 2021-12 기준 11,000원/m² 공부 면적 3,788m² 읍면동 덕과면 2025.04 1.50 cm 2025.06 1.50 cm 2025.08 1.","crops":4,"canv":4,"parcel":"4519039024113400001","price":"11,000원/m²","priceBasis":"measured","jimok":"답 개인","note":"LX 드론 4시점 · 타일에서 실시간 크롭","openMs":517}
+
+  1) tests\e2e\f1a-parcel.spec.mjs:35:1 › 읍면동 클릭 → 집계 카드(봉투) → AOI 하강 3단 → 도착 → 필지 카드 P8 + 4시점 크롭 ──
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: "recorded"
+    Received: "measured"
+
+      88 |   expect(c.text).toContain('2021-12');
+      89 |   expect(c.price).toMatch(/원\/m²|—/);
+    > 90 |   if (c.priceBasis) expect(c.priceBasis).toBe('recorded');
+         |                                          ^
+      91 |   expect(c.crops).toBe(4); expect(c.canv).toBe(4);
+      92 |   expect(c.note).toContain('4시점');
+      93 |   expect(errs).toEqual([]);
+        at E:\Land-XI 플랫폼\01. 디자인\tests\e2e\f1a-parcel.spec.mjs:90:42
+
+    Error Context: test-results\f1a-parcel-읍면동-클릭-→-집계-카드--769ab-강-3단-→-도착-→-필지-카드-P8-4시점-크롭\error-context.md
+
+
+[5/8] tests\e2e\f1a-parcel.spec.mjs:96:1 › AOI 밖 필지 = A03 2시점 크롭 + "4시점은 드론 AOI 안만"
+tests\e2e\f1a-parcel.spec.mjs:96:1 › AOI 밖 필지 = A03 2시점 크롭 + "4시점은 드론 AOI 안만"
+{"n":2,"note":"A03 남원 전역 2시점(2 m) · 4시점은 드론 AOI 안만"}
+
+[6/8] tests\e2e\f1a-parcel.spec.mjs:114:1 › P8 없음 → 지목·공시지가 = "필지 · P8 대기" 결손 칩 · 필지 타일 요청 0
+[7/8] tests\e2e\f1a-theater.spec.mjs:32:1 › 프레임 → 견적 → 실행 → 칸 도착 → job.done → 스냅샷 교체
+tests\e2e\f1a-theater.spec.mjs:32:1 › 프레임 → 견적 → 실행 → 칸 도착 → job.done → 스냅샷 교체
+견적 견적 · POST /jobs/quote × 면적 0.306 km² shard 9 건 예상 GPU·s 0.4 GPU·s 할당 잔여 무제한 허용 허용 모델 → 영상 2023 25cm 항공 · 권리 확인 중 aerial25/best · 건물·주차장·경작지·비닐하우스 car_v2_obb · vehicle index/ndvi_pc · — 입력 불일치 index/worldcover_hist · — 입력 불일치 namwon/cultivate_uncultivate/train 
+
+  2) tests\e2e\f1a-theater.spec.mjs:32:1 › 프레임 → 견적 → 실행 → 칸 도착 → job.done → 스냅샷 교체 ────────────────
+
+    TimeoutError: page.waitForFunction: Timeout 150000ms exceeded.
+
+      49 |   if (!API) expect(q.gpu).toContain('bench 전');
+      50 |   await page.click('#quote-card .xi-run');
+    > 51 |   await page.waitForFunction(() => window.__xi.PHASES.some((x) => x.p === 'snapshot'), null, { timeout: API ? 150000 : 60000 });
+         |              ^
+      52 |   const r = await page.evaluate(() => {
+      53 |     const T = window.__xi.theater, log = T.S.log, cells = [...T.S.cells.values()];
+      54 |     const states = cells.map((c) => window.__xi.A.getFeatureState({ source: 'th-cells', id: c.i }).st);
+        at E:\Land-XI 플랫폼\01. 디자인\tests\e2e\f1a-theater.spec.mjs:51:14
+
+    Error Context: test-results\f1a-theater-프레임-→-견적-→-실행-→-칸-도착-→-job-done-→-스냅샷-교체\error-context.md
+
+
+[8/8] tests\e2e\f1a-theater.spec.mjs:76:1 › 저장 리플레이 파일(j1-hwangdeung.ndjson) — 계약 형식 그대로 재생
+  2 failed
+    tests\e2e\f1a-parcel.spec.mjs:35:1 › 읍면동 클릭 → 집계 카드(봉투) → AOI 하강 3단 → 도착 → 필지 카드 P8 + 4시점 크롭 ───
+    tests\e2e\f1a-theater.spec.mjs:32:1 › 프레임 → 견적 → 실행 → 칸 도착 → job.done → 스냅샷 교체 ─────────────────
+  2 skipped
+  4 passed (3.5m)

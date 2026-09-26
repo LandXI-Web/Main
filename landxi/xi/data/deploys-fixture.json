@@ -1,0 +1,761 @@
+{
+ "_note": "F1-A off 모드 배포본 픽스처 · 계약 §6 시드 + dp-kgz-land-change-26(off 전용) · cards.js DEPLOYS 이관(basis history) · 계보는 GET /registry/lineage 형식(chain)",
+ "as_of": "2026-09-24",
+ "items": [
+  {
+   "name": "남원 영농관리 2025",
+   "tenant_id": "namwon",
+   "card_version_id": "card-farm@2.1",
+   "version": "v2.1",
+   "prev_card_version_id": "card-farm@2.0",
+   "region_profile": "namwon",
+   "region_name": {
+    "ko": "전북특별자치도 남원시",
+    "en": "Namwon-si, Jeonbuk"
+   },
+   "aoi": {
+    "type": "MultiPolygon",
+    "coordinates": [
+     [
+      [
+       [
+        127.18411,
+        35.30246
+       ],
+       [
+        127.67407,
+        35.30246
+       ],
+       [
+        127.67407,
+        35.56051
+       ],
+       [
+        127.18411,
+        35.56051
+       ],
+       [
+        127.18411,
+        35.30246
+       ]
+      ]
+     ]
+    ]
+   },
+   "pinned": false,
+   "gpu_pool": "a6000",
+   "from_deploy_id": null,
+   "modules": {
+    "core": [
+     "mod-auth",
+     "mod-map",
+     "mod-result",
+     "mod-stats",
+     "mod-report",
+     "mod-feedback",
+     "mod-usage"
+    ],
+    "ext": {
+     "mod-farm-cycle": true,
+     "mod-farm-parcel": true
+    }
+   },
+   "model_override": null,
+   "snapshot_current": "results/namwon/dp-nw-farm-25@2.1",
+   "snapshot_prev": "results/namwon/dp-nw-farm-25@2.0",
+   "scale": {
+    "value": 2098,
+    "unit": "필지",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "results/namwon-farmland-2025.geojson",
+    "note": "cards.js '비닐하우스 9,664 동' 은 출처 없음 → 미표시"
+   },
+   "basis": "history",
+   "approvals": [
+    {
+     "id": "ap_seed_farm",
+     "decision": "approve",
+     "by": "u_lx_admin",
+     "at": "2026-09-24T09:00:00+09:00",
+     "reason": "시드"
+    }
+   ],
+   "created_at": "2026-09-24T09:00:00+09:00",
+   "updated_at": "2026-09-24T09:00:00+09:00",
+   "id": "dp-nw-farm-25",
+   "card_id": "card-farm",
+   "stage": "ga",
+   "year": 2025,
+   "status_history": "운영"
+  },
+  {
+   "name": "남원 생활환경 2023",
+   "tenant_id": "namwon",
+   "card_version_id": "card-living@1.3",
+   "version": "v1.3",
+   "prev_card_version_id": null,
+   "region_profile": "namwon",
+   "region_name": {
+    "ko": "전북특별자치도 남원시",
+    "en": "Namwon-si, Jeonbuk"
+   },
+   "aoi": {
+    "type": "MultiPolygon",
+    "coordinates": [
+     [
+      [
+       [
+        127.18411,
+        35.30246
+       ],
+       [
+        127.67407,
+        35.30246
+       ],
+       [
+        127.67407,
+        35.56051
+       ],
+       [
+        127.18411,
+        35.56051
+       ],
+       [
+        127.18411,
+        35.30246
+       ]
+      ]
+     ]
+    ]
+   },
+   "pinned": false,
+   "gpu_pool": "a6000",
+   "from_deploy_id": null,
+   "modules": {
+    "core": [
+     "mod-auth",
+     "mod-map",
+     "mod-result",
+     "mod-stats",
+     "mod-report",
+     "mod-feedback",
+     "mod-usage"
+    ],
+    "ext": {}
+   },
+   "model_override": null,
+   "snapshot_current": null,
+   "snapshot_prev": null,
+   "scale": null,
+   "basis": "history",
+   "approvals": [],
+   "created_at": "2026-09-24T09:00:00+09:00",
+   "updated_at": "2026-09-24T09:00:00+09:00",
+   "id": "dp-nw-living-23",
+   "card_id": "card-living",
+   "stage": "ga",
+   "year": 2023,
+   "status_history": "운영"
+  },
+  {
+   "name": "남원 도로안전 2026",
+   "tenant_id": "namwon",
+   "card_version_id": "card-road@2.1",
+   "version": "v2.1",
+   "prev_card_version_id": null,
+   "region_profile": "namwon",
+   "region_name": {
+    "ko": "전북특별자치도 남원시",
+    "en": "Namwon-si, Jeonbuk"
+   },
+   "aoi": {
+    "type": "MultiPolygon",
+    "coordinates": [
+     [
+      [
+       [
+        127.18411,
+        35.30246
+       ],
+       [
+        127.67407,
+        35.30246
+       ],
+       [
+        127.67407,
+        35.56051
+       ],
+       [
+        127.18411,
+        35.56051
+       ],
+       [
+        127.18411,
+        35.30246
+       ]
+      ]
+     ]
+    ]
+   },
+   "pinned": false,
+   "gpu_pool": "a6000",
+   "from_deploy_id": null,
+   "modules": {
+    "core": [
+     "mod-auth",
+     "mod-map",
+     "mod-result",
+     "mod-stats",
+     "mod-report",
+     "mod-feedback",
+     "mod-usage"
+    ],
+    "ext": {}
+   },
+   "model_override": null,
+   "snapshot_current": null,
+   "snapshot_prev": null,
+   "scale": null,
+   "basis": "history",
+   "approvals": [],
+   "created_at": "2026-09-24T09:00:00+09:00",
+   "updated_at": "2026-09-24T09:00:00+09:00",
+   "id": "dp-nw-road-26",
+   "card_id": "card-road",
+   "stage": "canary",
+   "year": 2026,
+   "status_history": "구축"
+  },
+  {
+   "name": "남원 인파관리 2027",
+   "tenant_id": "namwon",
+   "card_version_id": null,
+   "version": null,
+   "prev_card_version_id": null,
+   "region_profile": "namwon",
+   "region_name": {
+    "ko": "전북특별자치도 남원시",
+    "en": "Namwon-si, Jeonbuk"
+   },
+   "aoi": {
+    "type": "MultiPolygon",
+    "coordinates": [
+     [
+      [
+       [
+        127.18411,
+        35.30246
+       ],
+       [
+        127.67407,
+        35.30246
+       ],
+       [
+        127.67407,
+        35.56051
+       ],
+       [
+        127.18411,
+        35.56051
+       ],
+       [
+        127.18411,
+        35.30246
+       ]
+      ]
+     ]
+    ]
+   },
+   "pinned": false,
+   "gpu_pool": "a6000",
+   "from_deploy_id": null,
+   "modules": {
+    "core": [
+     "mod-auth",
+     "mod-map",
+     "mod-result",
+     "mod-stats",
+     "mod-report",
+     "mod-feedback",
+     "mod-usage"
+    ],
+    "ext": {}
+   },
+   "model_override": null,
+   "snapshot_current": null,
+   "snapshot_prev": null,
+   "scale": null,
+   "basis": "history",
+   "approvals": [],
+   "created_at": "2026-09-24T09:00:00+09:00",
+   "updated_at": "2026-09-24T09:00:00+09:00",
+   "id": "dp-nw-crowd-27",
+   "card_id": "card-crowd",
+   "stage": "draft",
+   "year": 2027,
+   "status_history": "예정"
+  },
+  {
+   "name": "남원 변화탐지 2025",
+   "tenant_id": "namwon",
+   "card_version_id": "card-change@1.0",
+   "version": "v1.0",
+   "prev_card_version_id": null,
+   "region_profile": "namwon",
+   "region_name": {
+    "ko": "전북특별자치도 남원시",
+    "en": "Namwon-si, Jeonbuk"
+   },
+   "aoi": {
+    "type": "MultiPolygon",
+    "coordinates": [
+     [
+      [
+       [
+        127.18411,
+        35.30246
+       ],
+       [
+        127.67407,
+        35.30246
+       ],
+       [
+        127.67407,
+        35.56051
+       ],
+       [
+        127.18411,
+        35.56051
+       ],
+       [
+        127.18411,
+        35.30246
+       ]
+      ]
+     ]
+    ]
+   },
+   "pinned": false,
+   "gpu_pool": "a6000",
+   "from_deploy_id": null,
+   "modules": {
+    "core": [
+     "mod-auth",
+     "mod-map",
+     "mod-result",
+     "mod-stats",
+     "mod-report",
+     "mod-feedback",
+     "mod-usage"
+    ],
+    "ext": {}
+   },
+   "model_override": null,
+   "snapshot_current": "results/lx/namwon-change",
+   "snapshot_prev": null,
+   "scale": {
+    "value": 456,
+    "unit": "count",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "landxi/assets/data/geo/namwon-change.geojson",
+    "note": "비지도 변화 지수 · 학습 결과 아님"
+   },
+   "basis": "history",
+   "approvals": [],
+   "created_at": "2026-09-24T09:00:00+09:00",
+   "updated_at": "2026-09-24T09:00:00+09:00",
+   "id": "dp-nw-change",
+   "card_id": "card-change",
+   "stage": "canary",
+   "year": 2025,
+   "status_history": "구축"
+  },
+  {
+   "name": "광주전남 해양쓰레기 2025",
+   "tenant_id": "gwangju-jeonnam",
+   "card_version_id": "card-marine@1.2",
+   "version": "v1.2",
+   "prev_card_version_id": null,
+   "region_profile": "gwangju-jeonnam",
+   "region_name": {
+    "ko": "광주전남특별시",
+    "en": "Gwangju-Jeonnam"
+   },
+   "aoi": {
+    "type": "MultiPolygon",
+    "coordinates": [
+     [
+      [
+       [
+        127.18411,
+        35.30246
+       ],
+       [
+        127.67407,
+        35.30246
+       ],
+       [
+        127.67407,
+        35.56051
+       ],
+       [
+        127.18411,
+        35.56051
+       ],
+       [
+        127.18411,
+        35.30246
+       ]
+      ]
+     ]
+    ]
+   },
+   "pinned": false,
+   "gpu_pool": "a6000",
+   "from_deploy_id": null,
+   "modules": {
+    "core": [
+     "mod-auth",
+     "mod-map",
+     "mod-result",
+     "mod-stats",
+     "mod-report",
+     "mod-feedback",
+     "mod-usage"
+    ],
+    "ext": {}
+   },
+   "model_override": null,
+   "snapshot_current": "results/lx/yeosu-marine-2025-aerial",
+   "snapshot_prev": null,
+   "scale": null,
+   "basis": "history",
+   "approvals": [],
+   "created_at": "2026-09-24T09:00:00+09:00",
+   "updated_at": "2026-09-24T09:00:00+09:00",
+   "id": "dp-gj-marine-25",
+   "card_id": "card-marine",
+   "stage": "ga",
+   "year": 2025,
+   "status_history": "운영"
+  },
+  {
+   "name": "광주전남 해양쓰레기 2027",
+   "tenant_id": "gwangju-jeonnam",
+   "card_version_id": null,
+   "version": null,
+   "prev_card_version_id": null,
+   "region_profile": "gwangju-jeonnam",
+   "region_name": {
+    "ko": "광주전남특별시",
+    "en": "Gwangju-Jeonnam"
+   },
+   "aoi": {
+    "type": "MultiPolygon",
+    "coordinates": [
+     [
+      [
+       [
+        127.18411,
+        35.30246
+       ],
+       [
+        127.67407,
+        35.30246
+       ],
+       [
+        127.67407,
+        35.56051
+       ],
+       [
+        127.18411,
+        35.56051
+       ],
+       [
+        127.18411,
+        35.30246
+       ]
+      ]
+     ]
+    ]
+   },
+   "pinned": false,
+   "gpu_pool": "a6000",
+   "from_deploy_id": null,
+   "modules": {
+    "core": [
+     "mod-auth",
+     "mod-map",
+     "mod-result",
+     "mod-stats",
+     "mod-report",
+     "mod-feedback",
+     "mod-usage"
+    ],
+    "ext": {}
+   },
+   "model_override": null,
+   "snapshot_current": null,
+   "snapshot_prev": null,
+   "scale": null,
+   "basis": "history",
+   "approvals": [],
+   "created_at": "2026-09-24T09:00:00+09:00",
+   "updated_at": "2026-09-24T09:00:00+09:00",
+   "id": "dp-gj-marine-27",
+   "card_id": "card-marine",
+   "stage": "draft",
+   "year": 2027,
+   "status_history": "예정"
+  },
+  {
+   "name": "Ysyk-Ata farmland 2026",
+   "tenant_id": "kgz-agri",
+   "card_version_id": "card-global-farm@0.1",
+   "version": "v0.1",
+   "prev_card_version_id": null,
+   "region_profile": "kgz-ysykata",
+   "region_name": {
+    "ko": "키르기스스탄 으슥아타",
+    "en": "Ysyk-Ata, Kyrgyzstan"
+   },
+   "aoi": {
+    "type": "MultiPolygon",
+    "coordinates": [
+     [
+      [
+       [
+        74.7,
+        42.75
+       ],
+       [
+        75.2,
+        42.75
+       ],
+       [
+        75.2,
+        43
+       ],
+       [
+        74.7,
+        43
+       ],
+       [
+        74.7,
+        42.75
+       ]
+      ]
+     ]
+    ]
+   },
+   "pinned": false,
+   "gpu_pool": "cpu",
+   "from_deploy_id": null,
+   "modules": {
+    "core": [
+     "mod-auth",
+     "mod-map",
+     "mod-result",
+     "mod-stats",
+     "mod-report",
+     "mod-feedback",
+     "mod-usage"
+    ],
+    "ext": {}
+   },
+   "model_override": null,
+   "snapshot_current": null,
+   "snapshot_prev": null,
+   "scale": null,
+   "basis": "history",
+   "approvals": [],
+   "created_at": "2026-09-24T09:00:00+09:00",
+   "updated_at": "2026-09-24T09:00:00+09:00",
+   "id": "dp-kgz-agri-farm-26",
+   "card_id": "card-global-farm",
+   "stage": "canary",
+   "year": 2026,
+   "status_history": "구축"
+  },
+  {
+   "name": "Meiktila disaster 2025",
+   "tenant_id": "lx",
+   "card_version_id": "card-global-disaster@0.1",
+   "version": "v0.1",
+   "prev_card_version_id": null,
+   "region_profile": "mm-meiktila",
+   "region_name": {
+    "ko": "미얀마 메이크틸라",
+    "en": "Meiktila, Myanmar"
+   },
+   "aoi": {
+    "type": "MultiPolygon",
+    "coordinates": [
+     [
+      [
+       [
+        127.18411,
+        35.30246
+       ],
+       [
+        127.67407,
+        35.30246
+       ],
+       [
+        127.67407,
+        35.56051
+       ],
+       [
+        127.18411,
+        35.56051
+       ],
+       [
+        127.18411,
+        35.30246
+       ]
+      ]
+     ]
+    ]
+   },
+   "pinned": false,
+   "gpu_pool": "a6000",
+   "from_deploy_id": null,
+   "modules": {
+    "core": [
+     "mod-auth",
+     "mod-map",
+     "mod-result",
+     "mod-stats",
+     "mod-report",
+     "mod-feedback",
+     "mod-usage"
+    ],
+    "ext": {}
+   },
+   "model_override": null,
+   "snapshot_current": null,
+   "snapshot_prev": null,
+   "scale": null,
+   "basis": "history",
+   "approvals": [],
+   "created_at": "2026-09-24T09:00:00+09:00",
+   "updated_at": "2026-09-24T09:00:00+09:00",
+   "id": "dp-mm-meiktila-25",
+   "card_id": "card-global-disaster",
+   "stage": "shadow",
+   "year": 2025,
+   "status_history": "시연"
+  },
+  {
+   "name": "소쿨룩 시가지 변화 · 2026",
+   "tenant_id": "kgz-land",
+   "card_version_id": "card-change@1.0",
+   "version": "v1.0",
+   "prev_card_version_id": null,
+   "region_profile": "kgz-sokuluk",
+   "region_name": {
+    "ko": "키르기스스탄 소쿨룩",
+    "en": "Sokuluk, Kyrgyzstan"
+   },
+   "aoi": {
+    "type": "MultiPolygon",
+    "coordinates": [
+     [
+      [
+       [
+        127.18411,
+        35.30246
+       ],
+       [
+        127.67407,
+        35.30246
+       ],
+       [
+        127.67407,
+        35.56051
+       ],
+       [
+        127.18411,
+        35.56051
+       ],
+       [
+        127.18411,
+        35.30246
+       ]
+      ]
+     ]
+    ]
+   },
+   "pinned": false,
+   "gpu_pool": "cpu",
+   "from_deploy_id": "dp-nw-change",
+   "modules": {
+    "core": [
+     "mod-auth",
+     "mod-map",
+     "mod-result",
+     "mod-stats",
+     "mod-report",
+     "mod-feedback",
+     "mod-usage"
+    ],
+    "ext": {}
+   },
+   "model_override": null,
+   "snapshot_current": null,
+   "snapshot_prev": null,
+   "scale": null,
+   "basis": "history",
+   "approvals": [],
+   "created_at": "2026-09-24T09:00:00+09:00",
+   "updated_at": "2026-09-24T09:00:00+09:00",
+   "id": "dp-kgz-land-change-26",
+   "card_id": "card-change",
+   "stage": "draft",
+   "year": 2026,
+   "status_history": "예정"
+  }
+ ],
+ "total": 10,
+ "off_only": [
+  "dp-kgz-land-change-26"
+ ],
+ "lineage": {
+  "dp-nw-farm-25": {
+   "chain": [
+    {
+     "kind": "dataset",
+     "id": "E:/aerial_dataset",
+     "label": "항공 토지피복 학습데이터"
+    },
+    {
+     "kind": "run",
+     "id": "aerial_v2_finetune44"
+    },
+    {
+     "kind": "model",
+     "id": "aerial25/best"
+    },
+    {
+     "kind": "card_version",
+     "id": "card-farm@2.0"
+    },
+    {
+     "kind": "deploy",
+     "id": "dp-nw-farm-25"
+    },
+    {
+     "kind": "tenant",
+     "id": "namwon"
+    },
+    {
+     "kind": "job",
+     "id": "P4-2026-09-24",
+     "label": "남원 전역 재추론 22,737칩"
+    }
+   ]
+  }
+ }
+}

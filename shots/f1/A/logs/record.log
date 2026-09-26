@@ -1,0 +1,29 @@
+mode on · duration 43.7s
+queue job_01M3EW9F7T8BF276Q44QM9JMQP lx reinfer a6000 p1 62002/81574
+-2.96	0.21	goto	{}
+0.2	3.37	ready	{}
+6.62	9.79	sweep	{}
+9.02	12.18	city.arrived	{"big":"129,420","basis":"inferred"}
+11.56	14.73	emd.click	{"emd":"운봉읍"}
+13.13	16.30	aoi.descend	{"button":"덕과면 드론 AOI로 이동 ›"}
+17.26	20.43	aoi.arrived	{"big":"456","title":"덕과면 · LX 드론 1.5cm · 2025-04","chip":"출처 LX 드론 1.5cm 2025-04 · 권리 확인 중"}
+17.58	20.75	parcel.click	{}
+19.52	22.69	parcel.card	{"crops":"4"}
+22.28	25.45	frame.drawn	{}
+22.5	25.67	quote	{"q":" 견적 · POST /jobs/quote× 면적0.269km² shard6건 예상 GPU·s0.3GPU·s 할당 잔여무제한 허용허용 모델 → 영상 2023 25cm 항공 · 권리 확인 중 aerial25/best · 건물·주차장·경작지·비닐하우스car_v2_obb · vehicleindex/ndvi_pc · — 입력 불일치index/worldcover_hist · — 입력 불일치namwon/cultivate_uncultivat"}
+23.92	27.09	run	{}
+25.56	28.73	job.started	{}
+28.22	31.39	job.done	{"shown":[["on","r000c000",29859],["on","r000c001",29991],["on","r000c002",30113],["on","r001c000",30241],["on","r001c001",30367],["on","r001c002",30489],["done","r000c000",30669],["done","r000c001",30797],["done","r000c002",30917],["done","r001c000",31052],["done","r001c001",31181],["done","r001c002",31308]],"job":"실측 · 지금탐지 86shard 6/6GPU0 이용률(공유) 29%12.0칩/s","big":"71","live":"1","id":"job_01M3EZZKBJ13RX0VC5QDSFBTJ6"}
+28.84	32.00	snapshot	{"set":"results/lx/job_01M3EZZKBJ13RX0VC5QDSFBTJ6"}
+29.89	33.06	scrub.play	{}
+35.91	39.07	scrub.end	{"stops":[{"k":0,"ms":759},{"k":1,"ms":751},{"k":2,"ms":751},{"k":3,"ms":751}]}
+36.75	39.92	swipe.open	{}
+39.46	42.63	swipe.20to80	{}
+—	43.34	public.goto	{"cam":"127.35240,35.53075,16.60,35,0"}
+40.16	44.38	public.ready	{}
+40.16	44.38	public.canvas	{}
+41.92	46.13	public.arrived	{"mast":"공개 · 위성 + AI 결과","big":"2,098","basis":"inferred","ownImageryRequests":0,"exportDisabled":true}
+43.73	47.95	end	{}
+job	28.89	실측 · 지금워커 배정 · shard 6 · a6000-0
+job	31.36	실측 · 지금탐지 86shard 6/6GPU0 이용률(공유) 29%12.0칩/s
+job	31.98	실측 · 지금shard 합 86 → 전역 NMS 후 71shard 6/6GPU0 이용률(공유) 29%12.0칩/s이 작업 0.56 GPU·s · 2.4 s

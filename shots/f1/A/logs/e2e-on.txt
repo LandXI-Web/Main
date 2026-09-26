@@ -1,0 +1,121 @@
+
+Running 25 tests using 2 workers
+
+[1/25] tests\e2e\f1a-arrive.spec.mjs:45:1 › 남원 전역 도착 — 스윕 뒤에만 현상 · 락온 380 · 124px 40ms · 시간 · 봉투
+[2/25] tests\e2e\f1a-contract.spec.mjs:38:3 › F1-A 계약 › 카탈로그 픽스처 키 집합 = 계약 §4.1 LayerItem(선택 키 허용)
+[3/25] tests\e2e\f1a-contract.spec.mjs:56:3 › F1-A 계약 › 배포본 픽스처 키 집합 = 계약 §4.7 Deploy
+[4/25] tests\e2e\f1a-contract.spec.mjs:63:3 › F1-A 계약 › 리플레이 이벤트 이름 ⊆ 계약 §5.1 · 숫자는 봉투
+[5/25] tests\e2e\f1a-contract.spec.mjs:70:3 › F1-A 계약 › 부팅 · on · data-lx=ready · 콘솔 오류 0 · 마스트
+tests\e2e\f1a-contract.spec.mjs:70:3 › F1-A 계약 › 부팅 · on · data-lx=ready · 콘솔 오류 0 · 마스트
+boot {"mode":"on","mast":"","via":{"catalog":"api","deploys":"api","models":"lazy"},"big":"129,420"}
+
+[6/25] tests\e2e\f1a-ladder.spec.mjs:26:1 › 글로브 → 남원 하강: 출처 칩 전환 · 점프 0 · pitch 0→35 · 국내 무대
+tests\e2e\f1a-arrive.spec.mjs:45:1 › 남원 전역 도착 — 스윕 뒤에만 현상 · 락온 380 · 124px 40ms · 시간 · 봉투
+스윕 정지 x=710 · B 가 그린 화소 왼쪽 29035 · 오른쪽 0
+
+{"order":["frame","sweep","lock","count","arrived"],"frameToArrived":4612,"text":"129,420","fs":"124px","delays":["0ms","40ms","80ms","120ms","160ms","200ms","240ms"],"digitDur":"0.04s","locks":[{"dt":384,"at":12341},{"dt":384,"at":12541},{"dt":384,"at":12692}],"lockAnim":"0.18s, 0.08s, 0.12s | 0s, 0.18s, 0.26s","prov":"결과AI 추론 · 검수 전manifest.json#namwon-landcover-2023.pmtiles2026-09-26\n    AI 추론 · 검수 전 · 값 129,420 polygons출처 manifest.json#namwon-landcover-2023.pmtiles시각 2026-09-26검수 전 · C01 2023 25cm × aerial25/best","note":"건물 49,800경작지 76,215주차장 2,677비닐하우스 728AI 추론 · 검수 전2023 25cm","unit":"폴리곤","chip":"ap25-namwon-2023"}
+
+[7/25] tests\e2e\f1a-arrive.spec.mjs:98:1 › 도착 시간(정지점 없이) — off 4.5s / on 6s
+tests\e2e\f1a-ladder.spec.mjs:26:1 › 글로브 → 남원 하강: 출처 칩 전환 · 점프 0 · pitch 0→35 · 국내 무대
+칩 순서 gibs-viirs-truecolor → gibs-hls-s30 → xdworld-satellite → ap25-namwon-2023 · 비행 2400/1600 · 점프 0 · pitch 0 → 35 · 무대 domestic
+
+AOI 하강 칩 namwon-city-2504 → namwon-aoi-2504
+
+[8/25] tests\e2e\f1a-motion-law.spec.mjs:43:1 › 소스 스캔 — landxi/xi 의 CSS·JS ms 리터럴 · duration 숫자 ⊆ 사다리 · 앰버 직접 사용 0
+tests\e2e\f1a-motion-law.spec.mjs:43:1 › 소스 스캔 — landxi/xi 의 CSS·JS ms 리터럴 · duration 숫자 ⊆ 사다리 · 앰버 직접 사용 0
+files 28 bad [] amber []
+
+[9/25] tests\e2e\f1a-motion-law.spec.mjs:60:1 › 실행 중 — 전 장면 getAnimations ⊆ 사다리 · 이징 3 · 카메라 · 락온 · 스윕 · 전이 0 · 페이드 500 · perf · 14px · 캔버스
+tests\e2e\f1a-arrive.spec.mjs:98:1 › 도착 시간(정지점 없이) — off 4.5s / on 6s
+frame→arrived 3124 ms · sweep→arrived 2475 ms
+
+[10/25] tests\e2e\f1a-parcel.spec.mjs:35:1 › 읍면동 클릭 → 집계 카드(봉투) → AOI 하강 3단 → 도착 → 필지 카드 P8 + 4시점 크롭
+tests\e2e\f1a-parcel.spec.mjs:35:1 › 읍면동 클릭 → 집계 카드(봉투) → AOI 하강 3단 → 도착 → 필지 카드 P8 + 4시점 크롭
+집계 읍면동 집계 · P4 2023 25cm 재추론 × 운봉읍 52190250 · 면적 —ha 클래스 개수 면적 비중 경작지 8,638 1,324.8ha 건물 4,125 91.9ha 비닐하우스 232 19.8ha 주차장 174 2.5ha 합계 AI 추론 · 검수 전 results/namwon-landcover-2023-emd-stats.json 2026-09-2
+
+AOI {"chips":["ap25-namwon-2023","namwon-city-2504","namwon-aoi-2504"],"big":"456","bigBasis":"inferred","title":"덕과면 · LX 드론 1.5cm · 2025-04","prov":"변화변화 지수 · 검수 전manifest.json#namwon-change.pmtiles2026-09-26\n    변화 지수 · 검수 전 · 값 456 count출처 manifest.json#namwon-change.pmtiles시각 2026-09-26검수 전 · A04 비지도 변화 지수 · 학습 결과 아님","note":"A02 농경지 2필지 AOI 걸침 · 온전히 1변화 지수(비지도) · 학습 결과 아님2025.04 → 10 · 4시점","parcels":2,"on":["namwon-landcover-2023","namwon-farmland-2025","namwon-change"]}
+
+필지 {"text":"필지 · A02 농지이용 2025 · 드론 × PNU · P8 필지 2021-12 4519039024113400001 1340-1답 판독 경작지 AI 추론 · 검수 전 면적(AI 경계) 2,437m² 신뢰도 0.43 지목 답 개인 공시지가 2021-12 기준 11,000원/m² 공부 면적 3,788m² 읍면동 덕과면 2025.04 1.50 cm 2025.06 1.50 cm 2025.08 1.","crops":4,"canv":4,"parcel":"4519039024113400001","price":"11,000원/m²","priceBasis":"measured","jimok":"답 개인","note":"LX 드론 4시점 · 타일에서 실시간 크롭","openMs":415}
+
+[11/25] tests\e2e\f1a-parcel.spec.mjs:102:1 › AOI 밖 필지 = A03 2시점 크롭 + "4시점은 드론 AOI 안만"
+tests\e2e\f1a-parcel.spec.mjs:102:1 › AOI 밖 필지 = A03 2시점 크롭 + "4시점은 드론 AOI 안만"
+{"n":2,"note":"A03 남원 전역 2시점(2 m) · 4시점은 드론 AOI 안만"}
+
+[12/25] tests\e2e\f1a-parcel.spec.mjs:120:1 › P8 없음 → 지목·공시지가 = "필지 · P8 대기" 결손 칩 · 필지 타일 요청 0
+[13/25] tests\e2e\f1a-public.spec.mjs:45:1 › ?public=1 (직원 로그인 상태여도) — 자체 영상 요청 0 · xdworld 있음 · 결과 벡터 도착 · 마스트 · 내보내기 비활성 · 동사 V1 V5 V6 V8
+tests\e2e\f1a-public.spec.mjs:45:1 › ?public=1 (직원 로그인 상태여도) — 자체 영상 요청 0 · xdworld 있음 · 결과 벡터 도착 · 마스트 · 내보내기 비활성 · 동사 V1 V5 V6 V8
+public {"own":0,"xd":1759,"build":"public","verbs":"V1 V5 V6 V8","mast":"공개 · 위성 + AI 결과","big":"2,098","bigBasis":"inferred","prov":"공개 결과AI 추론 · 검수 전manifest.json#namwon-farmland-2025.pmtiles2026-09-26\n    AI 추론 · 검수 전 · 값 2,098 필지출처 manifest.json#namwon-farmland-2025.pmtiles시각 2026-09-26검수 전 · A02 2025 드론 AI 판독","chip":"xdworld-satellite","results":["namwon-farmland-2025"],"items":11,"hidden":["tool-rect","tool-poly","tool-emd","tool-3d","tool-stats","tool-report"],"tileLog":0}
+
+export {"dis":[true,true],"why":"공개 보기 · 내보내기 비활성"}
+
+[14/25] tests\e2e\f1a-public.spec.mjs:82:1 › 게스트(로그인 없음) = 공개 빌드 · 같은 단언 · 같은 카메라 복원(?public=1&cam=)
+tests\e2e\f1a-motion-law.spec.mjs:60:1 › 실행 중 — 전 장면 getAnimations ⊆ 사다리 · 이징 3 · 카메라 · 락온 · 스윕 · 전이 0 · 페이드 500 · perf · 14px · 캔버스
+anims 37 ["waapi@hud-chip|180|0|cubic-bezier(0.22, 1, 0.36, 1)/linear","waapi@map|500|0|cubic-bezier(0.22, 1, 0.36, 1)/linear","cw-lock-grow|180|0|linear/cubic-bezier(0.22, 1, 0.36, 1)","cw-lock-amber|80|180|linear","cw-lock-settle|120|260|linear/cubic-bezier(0.22, 1, 0.36, 1)","cw-text-in|500|380|linear/cubic-bezier(0.15, 1, 0.3, 1)","cw-text-in|40|0|linear/cubic-bezier(0.22, 1, 0.36, 1)","cw-text-in|40|40|linear/cubic-bezier(0.22, 1, 0.36, 1)","cw-text-in|40|80|linear/cubic-bezier(0.22, 1, 0.36, 1)","cw-text-in|40|120|linear/cubic-bezier(0.22, 1, 0.36, 1)","cw-text-in|40|160|linear/cubic-bezier(0.22, 1, 0.36, 1)","cw-text-in|40|200|linear/cubic-bezier(0.22, 1, 0.36, 1)","cw-text-in|40|240|linear/cubic-bezier(0.22, 1, 0.36, 1)","waapi@seg|500|0|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@seg|500|60|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@seg|500|120|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@seg|500|180|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@seg|500|240|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@seg|500|300|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@emd-card|380|0|cubic-bezier(0.22, 1, 0.36, 1)/linear","waapi@|500|0|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@|500|60|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@|500|120|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@|500|180|cubic-bezier(0.15, 1, 0.3, 1)/linear","tr:transform@xi-btn|180|0|cubic-bezier(0.22, 1, 0.36, 1)/linear","waapi@emd-card|180|0|cubic-bezier(0.22, 1, 0.36, 1)/linear","waapi@parcel-card|380|0|cubic-bezier(0.22, 1, 0.36, 1)/linear","waapi@|1000|0|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@|1000|120|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@|1000|360|cubic-bezier(0.15, 1, 0.3, 1)/linear","waapi@|1000|240|cubic-bezier(0.15, 1, 0.3, 1)/linear","tr:height@xi-btn|180|0|cubic-bezier(0.22, 1, 0.36, 1)/linear","tr:width@xi-btn|180|0|cubic-bezier(0.22, 1, 0.36, 1)/linear","waapi@parcel-card|180|0|cubic-bezier(0.22, 1, 0.36, 1)/linear","waapi@quote-card|380|0|cubic-bezier(0.22, 1, 0.36, 1)/linear","tr:transform@xi-play|180|0|cubic-bezier(0.22, 1, 0.36, 1)/linear","tr:transform@tool-swipe|180|0|cubic-bezier(0.22, 1, 0.36, 1)/linear"]
+
+flights [2400,1600,1250] jumps 0 sweeps [935,1013] stops [{"k":0,"ms":757},{"k":1,"ms":751},{"k":2,"ms":751},{"k":3,"ms":751}]
+
+law {"tr":{"duration":0,"delay":0},"fades":8,"small":[],"amberNow":[],"canvases":2,"share":1,"tier":{"tier":"T1","p95":16.800000000000068,"gpu":{"vendor":"Google Inc. (AMD)","renderer":"ANGLE (AMD, AMD Radeon RX 5700 XT (0x0000731F) Direct3D11 vs_5_0 ps_5_0, D3D11)","webgl":2}},"perf":{"n":600,"p50":16.699999999999818,"p95":16.80000000000109,"max":66.89999999999964}}
+
+perf {"idle":{"n":600,"p50":16.699999999999818,"p95":16.80000000000109,"max":66.89999999999964},"aoi":{"n":266,"p50":16.700000000000728,"p95":16.80000000000109,"max":33.400000000001455},"job":{"n":209,"p50":16.700000000000728,"p95":16.80000000000291,"max":33.30000000000291},"all":{"n":1879,"p50":16.700000000000045,"p95":16.80000000000109,"max":83.39999999999782}}
+
+[15/25] tests\e2e\f1a-motion-law.spec.mjs:172:1 › prefers-reduced-motion — 카메라 jumpTo · 도착 즉시 · 애니메이션 1ms
+tests\e2e\f1a-public.spec.mjs:82:1 › 게스트(로그인 없음) = 공개 빌드 · 같은 단언 · 같은 카메라 복원(?public=1&cam=)
+{"role":"guest","build":"public","c":[127.47,35.425],"z":12.5,"p":35}
+
+tests\e2e\f1a-motion-law.spec.mjs:172:1 › prefers-reduced-motion — 카메라 jumpTo · 도착 즉시 · 애니메이션 1ms
+{"frames":0,"big":"129,420","long":[]}
+
+[16/25] tests\e2e\f1a-roles.spec.mjs:50:3 › 역할 관문 › 게스트 — V1 V5 V6 V8 · 공개 빌드 · 프레임/입체/서랍 없음
+[17/25] tests\e2e\f1a-scrub-swipe.spec.mjs:34:1 › 스크럽 — 재생 6s · 정수 정지 750±40 · 히스토그램 3막대(봉투) · 출처 칩이 시점을 따른다 · ?epoch 복원
+tests\e2e\f1a-scrub-swipe.spec.mjs:34:1 › 스크럽 — 재생 6s · 정수 정지 750±40 · 히스토그램 3막대(봉투) · 출처 칩이 시점을 따른다 · ?epoch 복원
+hist [{"basis":"measured","h":24,"t":"112"},{"basis":"measured","h":17,"t":"79"},{"basis":"measured","h":23,"t":"109"}]
+
+tests\e2e\f1a-roles.spec.mjs:50:3 › 역할 관문 › 게스트 — V1 V5 V6 V8 · 공개 빌드 · 프레임/입체/서랍 없음
+{"role":"guest","build":"public","verbs":"V1 V5 V6 V8","shown":["tool-swipe"],"mastRole":"게스트"}
+
+[18/25] tests\e2e\f1a-roles.spec.mjs:59:3 › 역할 관문 › 직원 — 전 동사 · lx 빌드 · 프레임 → 견적(실행 가능)
+tests\e2e\f1a-scrub-swipe.spec.mjs:34:1 › 스크럽 — 재생 6s · 정수 정지 750±40 · 히스토그램 3막대(봉투) · 출처 칩이 시점을 따른다 · ?epoch 복원
+play 6069 [{"k":0,"ms":760},{"k":1,"ms":751},{"k":2,"ms":751},{"k":3,"ms":751}] ["namwon-aoi-2506","namwon-aoi-2508","namwon-aoi-2510"]
+
+tests\e2e\f1a-roles.spec.mjs:59:3 › 역할 관문 › 직원 — 전 동사 · lx 빌드 · 프레임 → 견적(실행 가능)
+{"role":"staff","build":"lx","verbs":"V1 V2 V3 V4 V5 V6 V7 V8","shown":["tool-rect","tool-poly","tool-emd","tool-swipe","tool-3d","tool-stats","tool-report"],"mastRole":"LX 직원"}
+
+[19/25] tests\e2e\f1a-roles.spec.mjs:71:3 › 역할 관문 › 영업 — 프레임·실행 있음 · demo:true 강제 표기 · 내보내기 없음
+[20/25] tests\e2e\f1a-scrub-swipe.spec.mjs:69:1 › 스와이프 — 열기 · ←/→ ±4 % · 6–94 % · 양쪽 출처 칩 · 끌기 20→80 · ?swipe 복원
+tests\e2e\f1a-roles.spec.mjs:71:3 › 역할 관문 › 영업 — 프레임·실행 있음 · demo:true 강제 표기 · 내보내기 없음
+{"role":"sales","build":"lx","verbs":"V1 V2 V3 V4 V5 V6 V7 V8","shown":["tool-rect","tool-poly","tool-emd","tool-swipe","tool-3d","tool-stats","tool-report"],"mastRole":"영업 · 시연"}
+
+sales quote 시연 영업 계정 · demo:true 강제(계약 §3)
+
+tests\e2e\f1a-scrub-swipe.spec.mjs:69:1 › 스와이프 — 열기 · ←/→ ±4 % · 6–94 % · 양쪽 출처 칩 · 끌기 20→80 · ?swipe 복원
+{"l":"원본LX 드론 1.5cm 2025-04 · 권리 확인 중","r":"+ AI 결과남원 농경지 2025 · 남원 변화 탐지(국산리 2시점)","lv":true,"rv":true,"canv":2}
+
+[21/25] tests\e2e\f1a-roles.spec.mjs:87:3 › 역할 관문 › 기관(남원시) — 프레임·실행 없음 · tenant 빌드 · 필지 카드 + 오류 신고
+drag 20 80
+
+[22/25] tests\e2e\f1a-scrub-swipe.spec.mjs:105:1 › 압출 — 기본 OFF · 켜면 fill-extrusion + pitch ≤ 60 · 끄면 원래대로
+tests\e2e\f1a-roles.spec.mjs:87:3 › 역할 관문 › 기관(남원시) — 프레임·실행 없음 · tenant 빌드 · 필지 카드 + 오류 신고
+{"role":"agency","build":"tenant:namwon","verbs":"V1 V4 V5 V6 V8","shown":["tool-swipe","tool-3d","tool-stats","tool-report"],"mastRole":"남원시 · 기관"}
+
+feedback toast 오류 신고 접수
+
+[23/25] tests\e2e\f1a-roles.spec.mjs:105:1 › URL 상태 전부 복원 — cam · on · epoch · swipe · card · panel · 3d · model · 새로고침 뒤 같음
+tests\e2e\f1a-scrub-swipe.spec.mjs:105:1 › 압출 — 기본 OFF · 켜면 fill-extrusion + pitch ≤ 60 · 끄면 원래대로
+{"vis":"visible","pitch":55.00000000000001,"maxPitch":60,"url":"?cam=127.52000%2C35.43000%2C14.50%2C55%2C-18&on=namwon-farmland-2025&3d=1"}
+
+[24/25] tests\e2e\f1a-theater.spec.mjs:32:1 › 프레임 → 견적 → 실행 → 칸 도착 → job.done → 스냅샷 교체
+tests\e2e\f1a-roles.spec.mjs:105:1 › URL 상태 전부 복원 — cam · on · epoch · swipe · card · panel · 3d · model · 새로고침 뒤 같음
+restore {"cam":[127.3524,35.5307,16.4,40,-12],"on":["namwon-change","namwon-farmland-2025"],"epoch":2,"swipe":30,"card":"5219039024113400001","panel":"layers","model":"aerial25/best"}
+
+written ?cam=127.35240%2C35.53075%2C16.40%2C40%2C-12&on=namwon-farmland-2025%2Cnamwon-change&epoch=2&swipe=30&card=5219039024113400001&model=aerial25%2Fbest&panel=layers
+
+tests\e2e\f1a-theater.spec.mjs:32:1 › 프레임 → 견적 → 실행 → 칸 도착 → job.done → 스냅샷 교체
+견적 견적 · POST /jobs/quote × 면적 0.306 km² shard 9 건 예상 GPU·s 0.4 GPU·s 할당 잔여 무제한 허용 허용 모델 → 영상 2023 25cm 항공 · 권리 확인 중 aerial25/best · 건물·주차장·경작지·비닐하우스 car_v2_obb · vehicle index/ndvi_pc · — 입력 불일치 index/worldcover_hist · — 입력 불일치 namwon/cultivate_uncultivate/train 
+
+{"gaps":[130,134,133,132,133,902,122,133],"beam":[795,789,775,772,774,774,501,501,501],"names":["job.queued","job.started","shard.started","shard.done","job.progress","job.done","snapshot.ready"],"done":9,"cells":9,"states":"222222222","prog":1,"mut":5,"live":true,"snap":true,"snapOp":0.2,"resOp":0,"big":"100","job":"실측 · 지금shard 합 126 → 전역 NMS 후 100shard 9/9GPU0 이용률(공유) 100%12.0칩/s이 작업 0.89 GPU·s · 3.0 s","mast":""}
+
+칸 켜짐 간격 [130,134,133,132,133,902,122,133] 빔 노출 [795,789,775,772,774,774,501,501,501]
+
+[25/25] tests\e2e\f1a-theater.spec.mjs:83:1 › 저장 리플레이 파일(j1-hwangdeung.ndjson) — 계약 형식 그대로 재생
+  2 skipped
+  23 passed (1.7m)

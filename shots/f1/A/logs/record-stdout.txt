@@ -1,0 +1,106 @@
+[queue] 녹화 시작 때 게이트웨이에 진행 중 작업 1건 [ 'job_01M3EW9F7T8BF276Q44QM9JMQP lx reinfer a6000 p1 62002/81574' ]
+[mode] on
+[0.2s] goto
+[3.4s] ready
+[9.8s] sweep
+[12.2s] city.arrived {"big":"129,420","basis":"inferred"}
+[14.7s] emd.click {"emd":"운봉읍"}
+[16.3s] aoi.descend {"button":"덕과면 드론 AOI로 이동 ›"}
+[20.4s] aoi.arrived {"big":"456","title":"덕과면 · LX 드론 1.5cm · 2025-04","chip":"출처 LX 드론 1.5cm 2025-04 · 권리 확인 중"}
+[20.7s] parcel.click
+[22.7s] parcel.card {"crops":"4"}
+[25.4s] frame.drawn
+[25.7s] quote {"q":" 견적 · POST /jobs/quote× 면적0.269km² shard6건 예상 GPU·s0.3GPU·s 할당 잔여무제한 허용허용 모델 → 영상 2023 25cm 항공 · 권리 확인 중 aerial25/best · 건물·주차장·경작지·비닐하우스car_v2_obb · vehicleindex/ndvi_pc · — 입력 불일치index/worldcover_hist · — 입력 불일치namwon/cultivate_uncultivat"}
+[27.1s] run
+[28.7s] job.started
+[31.4s] job.done {"shown":[["on","r000c000",29859],["on","r000c001",29991],["on","r000c002",30113],["on","r001c000",30241],["on","r001c001",30367],["on","r001c002",30489],["done","r000c000",30669],["done","r000c001",30797],["done","r000c002",30917],["done","r001c000",31052],["done","r001c001",31181],["done","r001c002",31308]],"job":"실측 · 지금탐지 86shard 6/6GPU0 이용률(공유) 29%12.0칩/s","big":"71","live":"1","id":"job_01M3EZZKBJ13RX0VC5QDSFBTJ6"}
+[32.0s] snapshot {"set":"results/lx/job_01M3EZZKBJ13RX0VC5QDSFBTJ6"}
+[33.1s] scrub.play
+[39.1s] scrub.end {"stops":[{"k":0,"ms":759},{"k":1,"ms":751},{"k":2,"ms":751},{"k":3,"ms":751}]}
+[39.9s] swipe.open
+[42.6s] swipe.20to80
+[43.3s] public.goto {"cam":"127.35240,35.53075,16.60,35,0"}
+[44.4s] public.ready
+[44.4s] public.canvas
+[46.1s] public.arrived {"mast":"공개 · 위성 + AI 결과","big":"2,098","basis":"inferred","ownImageryRequests":0,"exportDisabled":true}
+[47.9s] end
+[seam] {"white":43.095,"open":44.095}
+[chips] -2.8 출처 — | -1.17 출처 VIIRS 위성 · 2026-09-25 | 3.37 출처 HLS 30m · 2026-09-23 | 4.68 출처 V-World 위성 | 5.4 출처 2023 25cm 항공 · 권리 확인 중
+[duration] 43.7 s · errors 0
+{
+ "video": "shots\\f1\\A\\f1a.webm",
+ "method": "ffmpeg fps=20 scale=720x450 · 픽셀 max(R,G,B) < 24 비율 · 전체 화면(UI 포함)",
+ "frames": 874,
+ "descent": {
+  "from": 0,
+  "to": 9.02,
+  "frames": 181,
+  "max_pct": 0.05,
+  "at_s": 6.7,
+  "over1pct": 0,
+  "neutral_max_pct": 0.04,
+  "neutral_at_s": 2.55
+ },
+ "aoi": {
+  "from": 13.13,
+  "to": 17.76,
+  "frames": 93,
+  "max_pct": 0.17,
+  "at_s": 13.5,
+  "over1pct": 0,
+  "neutral_max_pct": 0.12,
+  "neutral_at_s": 17.3
+ },
+ "all": {
+  "from": null,
+  "to": null,
+  "frames": 874,
+  "max_pct": 0.52,
+  "at_s": 11.85,
+  "over1pct": 0,
+  "neutral_max_pct": 0.47,
+  "neutral_at_s": 11.6
+ },
+ "top": [
+  {
+   "t": 11.85,
+   "pct": 0.52,
+   "neutral_pct": 0.46
+  },
+  {
+   "t": 11.9,
+   "pct": 0.52,
+   "neutral_pct": 0.46
+  },
+  {
+   "t": 11.95,
+   "pct": 0.52,
+   "neutral_pct": 0.46
+  },
+  {
+   "t": 11.6,
+   "pct": 0.52,
+   "neutral_pct": 0.47
+  },
+  {
+   "t": 12,
+   "pct": 0.52,
+   "neutral_pct": 0.46
+  },
+  {
+   "t": 12.05,
+   "pct": 0.52,
+   "neutral_pct": 0.45
+  },
+  {
+   "t": 12.1,
+   "pct": 0.52,
+   "neutral_pct": 0.45
+  },
+  {
+   "t": 11.55,
+   "pct": 0.52,
+   "neutral_pct": 0.47
+  }
+ ]
+}

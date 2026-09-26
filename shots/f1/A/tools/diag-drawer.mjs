@@ -1,0 +1,35 @@
+// 진단: 입체(지형) ON + 통계 서랍(iframe) + 표 패널 구간 p95 · 서랍 캡처 — node shots/f1/A/tools/diag-drawer.mjs [off|on]
+import { chromium } from 'playwright';
+import fs from 'node:fs';
+const MODE = process.argv[2] || 'off';
+let session = null;
+if (MODE === 'on') session = await (await fetch('http://localhost:8700/api/v1/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ realm: 'lx', login: 'lx-staff', password: process.env.DEV_PASSWORD }) })).json();
+const b = await chromium.launch({ channel: 'chrome', args: ['--enable-gpu', '--ignore-gpu-blocklist'] });
+const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
+await ctx.addInitScript(([s, mode]) => { if (sessionStorage.getItem('d')) return; sessionStorage.setItem('d', '1'); if (mode === 'on') { localStorage.setItem('lx_api_base', 'http://localhost:8700'); localStorage.removeItem('lx_api_mode'); localStorage.setItem('lx_api_session', JSON.stringify(s)); } else { localStorage.setItem('lx_api_mode', 'off'); localStorage.removeItem('lx_api_session'); } localStorage.setItem('lx_logged_in', '1'); localStorage.setItem('lx_role', 'staff'); }, [session, MODE]);
+const p = await ctx.newPage();
+const errs = []; p.on('console', (m) => { if (m.type() === 'error') errs.push(m.text().slice(0, 200)); }); p.on('pageerror', (e) => errs.push('pe ' + e.message));
+await p.goto('http://localhost:4173/landxi/xi/index.html?cam=127.35240,35.53075,16.40,35,0&on=namwon-farmland-2025,namwon-change');
+await p.waitForFunction(() => document.documentElement.dataset.restored === '1', null, { timeout: 60000 });
+await p.waitForTimeout(1500);
+const span = () => p.evaluate(() => { window.__sp = window.__xi.perf.all.length; });
+const got = () => p.evaluate(() => window.__xi.perfStats(window.__xi.perf.all.slice(window.__sp)));
+await span();
+await p.evaluate(() => window.__xi.setExtrude(true)); await p.waitForTimeout(1500);
+await p.click('#panel .xi-panel-toggle'); await p.waitForTimeout(500);
+await p.click('#panel [data-tab=table]'); await p.waitForTimeout(900);
+await p.click('#tool-stats'); await p.waitForTimeout(2500);
+const inj = await p.evaluate(() => ({ embed: document.getElementById('drawer').dataset.embed, vis: document.querySelector('#drawer iframe').style.visibility, src: document.querySelector('#drawer iframe').getAttribute('src') }));
+await p.screenshot({ path: 'shots/f1/A/raw/diag-drawer-' + MODE + '.png' });
+// 서랍 열린 채 입체 끄기(기울기 비행은 서랍 닫을 때로 미룬다)
+await p.evaluate(() => window.__xi.setExtrude(false)); await p.waitForTimeout(600);
+const pitchWhileOpen = await p.evaluate(() => window.__xi.A.getPitch());
+await p.click('#drawer .xi-x'); await p.waitForTimeout(1400);
+const after = await p.evaluate(() => ({ pitch: window.__xi.A.getPitch(), src: document.querySelector('#drawer iframe').getAttribute('src'), hidden: document.getElementById('drawer').hidden }));
+await p.click('#tool-report'); await p.waitForTimeout(2200);
+await p.screenshot({ path: 'shots/f1/A/raw/diag-report-' + MODE + '.png' });
+await p.click('#drawer .xi-x'); await p.waitForTimeout(600);
+const seg = await got();
+const last600 = await p.evaluate(() => window.__xi.perfStats());
+console.log(JSON.stringify({ MODE, inj, pitchWhileOpen, after, seg, last600, errs }));
+await b.close();

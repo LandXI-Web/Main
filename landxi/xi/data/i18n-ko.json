@@ -1,0 +1,50 @@
+{
+  "_note": "XI맵 국문 문자열 — 1차는 국문판만(locale=en 은 URL 보존 · 문자열은 2차 · F1-D 글로벌판 Inter 스왑과 함께)",
+  "role": {
+    "guest": "게스트",
+    "staff": "LX 직원",
+    "sales": "영업 · 시연",
+    "agency": "남원시 · 기관"
+  },
+  "mast": {
+    "public": "공개 · 위성 + AI 결과",
+    "public_view": " · 공개 보기"
+  },
+  "void": {
+    "parcels": "필지 · P8 대기",
+    "vworld_search": "장소 검색 · V-World 키 대기",
+    "road": "준비 중 · 도로 결과 없음",
+    "deploy_nomap": "시연 · 지도 미연결",
+    "scrub_login": "시점 원본 · 로그인 후 열람",
+    "scrub_aoi": "시점 · 드론 AOI 로 내려가면 4시점",
+    "crop_aoi_only": "A03 남원 전역 2시점(2 m) · 4시점은 드론 AOI 안만",
+    "bench": "bench 전 · —"
+  },
+  "scene": {
+    "globe": "글로브",
+    "korea": "국내 무대",
+    "city": "도착 · 남원 전역",
+    "aoi": "도착 · 드론 AOI",
+    "frame": "프레임 분석"
+  },
+  "basis": {
+    "measured": "실측",
+    "estimate": "추정",
+    "demo": "시연",
+    "history": "이력",
+    "inferred": "AI 추론 · 검수 전",
+    "recorded": "기록"
+  },
+  "cls": {
+    "building": "건물",
+    "parking": "주차장",
+    "farmland": "경작지",
+    "non_farmland": "비경작지",
+    "greenhouse": "비닐하우스",
+    "greenhouse_single": "비닐하우스 단동",
+    "greenhouse_multi": "비닐하우스 다동",
+    "silage_bale": "곤포사일리지",
+    "vehicle": "차량",
+    "_note": "job.done/job.progress counts 의 cls_en 키 → 화면 라벨(server/adapters/adapter_yolo_seg.py EN 의 역) · 한글 키는 그대로"
+  }
+}

@@ -1,0 +1,34 @@
+/* canvas-full.css — CANVAS-FULL(system-v2 §2): 캔버스 ≥ 90 % · 사진이 바탕 · 크롬은 유리(≤ 15 %) · 라운드 0.
+   모션: 지속은 사다리(--d-*) · 이징은 --e-ui / --e-arrive / --e-cam 만. */
+html, body { margin: 0; height: 100%; overflow: hidden; }
+body[data-stage="imagery"] { font-size: 16px; line-height: 24px; -webkit-font-smoothing: antialiased; }
+.xi-stage { position: fixed; inset: 0; overflow: hidden; background: #FFFFFF; }
+.xi-map { position: absolute; inset: 0; background: #FFFFFF; }
+.xi-map .maplibregl-canvas { outline: none; }
+.xi-map--b { pointer-events: none; background: transparent; }
+.xi-map--b[hidden] { display: block !important; visibility: hidden; }
+/* 도착 스윕: B(결과 전용 캔버스)를 선 뒤만 드러낸다 — --sx 선 위치 · --sf 현상 폭(500ms 거리) */
+.xi-map--b.is-masked { visibility: visible;
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(var(--sx) - var(--sf)), transparent var(--sx));
+          mask-image: linear-gradient(90deg, #000 calc(var(--sx) - var(--sf)), transparent var(--sx)); }
+/* 가르기: B(원본 + 결과)를 손잡이 오른쪽만 */
+.xi-map--b.is-swipe { visibility: visible; clip-path: inset(0 0 0 var(--swipe, 50%)); }
+.xi-sweep { left: 0; z-index: 3; will-change: transform; }
+.xi-sweep[hidden] { display: none; }
+.xi-dim { position: absolute; inset: 0; z-index: 2; pointer-events: none; -webkit-backdrop-filter: saturate(.2) brightness(.85); backdrop-filter: saturate(.2) brightness(.85); }
+.xi-dim[hidden] { display: none; }
+.xi-locks { position: absolute; inset: 0; z-index: 4; pointer-events: none; overflow: hidden; }
+.xi-lock { top: 0; left: 0; box-sizing: border-box; }
+.xi-lock .c { display: none; }
+.xi-lock-flag { position: absolute; left: calc(100% + 8px); top: -1px; white-space: nowrap; display: inline-flex; gap: 6px; align-items: baseline;
+  padding: 4px 8px; background: rgba(255,255,255,.86); color: var(--cw-ink); font: 500 14px/18px var(--font-body); border-left: 2px solid var(--cw-ai);
+  animation: cw-text-in var(--d-500) var(--e-arrive) both; animation-delay: var(--d-380); }
+.xi-lock-flag b { font-weight: 500; color: var(--cw-ai); }
+.xi-lock.flip .xi-lock-flag { left: auto; right: calc(100% + 8px); }
+.xi-beams { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.xi-beam { position: absolute; top: 0; left: 0; width: 1px; background: var(--cw-ai); }
+.xi-beam::after { content: ''; position: absolute; top: 0; bottom: 0; right: 1px; width: var(--sweep-tail); background: linear-gradient(90deg, transparent, var(--sweep-color)); }
+.xi-filament { position: absolute; inset: 0; z-index: 1; pointer-events: none; width: 100%; height: 100%; }
+.maplibregl-ctrl-attrib, .maplibregl-ctrl-logo { display: none !important; }
+[data-embed="1"] .xi-mast, [data-embed="1"] .xi-search, [data-embed="1"] .xi-panel, [data-embed="1"] .xi-drawer { display: none !important; }
+@media (prefers-reduced-motion: reduce) { .xi-lock-flag { animation: none; } }

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>XI맵 · Land-XI</title>
+<meta name="description" content="Land-XI XI맵 운영판 — 남원 전역 25cm 도착 · cm 하강 · 프레임 실행 · 열람">
+<link rel="icon" href="../assets/images/favicon_landxi.png">
+<link rel="stylesheet" href="../proto/fonts-system.css">
+<link rel="stylesheet" href="../assets/css/v2/tokens-v2.css">
+<link rel="stylesheet" href="../proto/vendor/maplibre/maplibre-gl.css">
+<link rel="stylesheet" href="xi.css">
+<script src="../proto/vendor/maplibre/maplibre-gl.js"></script>
+<script src="vendor/pmtiles/pmtiles.js"></script>
+<script type="module" src="xi.js"></script>
+</head>
+<body data-stage="imagery">
+<main class="xi-stage" id="stage" aria-label="XI맵">
+  <div class="xi-map" id="map"></div>
+  <div class="xi-map xi-map--b" id="map-b" hidden aria-hidden="true"></div>
+  <div class="xi-dim" id="dim" hidden aria-hidden="true"></div>
+  <svg class="xi-frame-brackets" id="frame-br" hidden aria-hidden="true"></svg>
+  <div class="cw-sweep xi-sweep" id="sweep" hidden aria-hidden="true"></div>
+  <div class="xi-locks" id="locks" aria-hidden="true"></div>
+
+  <!-- 마스트 + 검색 + 좌 레일/레이어 패널 -->
+  <header class="xi-mast cw-glass" id="mast">
+    <a class="xi-brand" href="../index.html" aria-label="Land-XI 처음으로"><img src="../assets/brand/vector/landxi-wordmark-dark.svg" alt="Land-XI" height="14"></a>
+    <span class="xi-mast-t">XI맵</span>
+    <span class="xi-mast-mode" id="mast-mode"></span>
+    <span class="xi-mast-role" id="mast-role"></span>
+    <nav class="xi-mast-go" aria-label="다른 무대"><a href="../global/?locale=en" title="Land-XI Global — 같은 지도의 해외 무대">Global</a><a id="mast-ops" href="http://localhost:8702/landxi/ops/infra.html" title="LX/OPS 관제 — 같은 작업의 GPU 실측(:8702 · 관리자)">관제</a></nav>
+  </header>
+  <div class="xi-search cw-glass" id="search" role="search">
+    <svg width="16" height="16" aria-hidden="true"><use href="../assets/icons.svg#i-search"/></svg>
+    <input type="search" placeholder="읍면동 · 장소" aria-label="장소 검색" autocomplete="off">
+    <ul class="xi-search-list cw-glass" role="listbox" hidden></ul>
+    <p class="xi-search-void" hidden></p>
+  </div>
+  <aside class="xi-panel cw-glass" id="panel" data-open="0" aria-label="레이어 · 표">
+    <nav class="xi-rail" aria-label="도구">
+      <button type="button" class="xi-panel-toggle xi-tool" aria-expanded="false" aria-controls="panel-body" title="레이어 · 표"><svg width="20" height="20" aria-hidden="true"><use href="../assets/icons.svg#i-layers"/></svg><span>층</span></button>
+      <button type="button" class="xi-tool" id="tool-rect" data-gate="frame" aria-pressed="false"><i class="xi-g-rect" aria-hidden="true"></i><span>사각</span></button>
+      <button type="button" class="xi-tool" id="tool-poly" data-gate="frame" aria-pressed="false"><svg width="20" height="20" aria-hidden="true"><use href="../assets/icons.svg#i-pen"/></svg><span>다각</span></button>
+      <button type="button" class="xi-tool" id="tool-emd" data-gate="frame" aria-pressed="false"><i class="xi-g-emd" aria-hidden="true"></i><span>읍면동</span></button>
+      <hr>
+      <button type="button" class="xi-tool" id="tool-swipe" aria-pressed="false"><i class="xi-g-swipe" aria-hidden="true"></i><span>가르기</span></button>
+      <button type="button" class="xi-tool" id="tool-3d" data-gate="extrude" aria-pressed="false"><i class="xi-g-3d" aria-hidden="true"></i><span>입체</span></button>
+      <hr>
+      <button type="button" class="xi-tool" id="tool-stats" data-gate="drawer"><svg width="20" height="20" aria-hidden="true"><use href="../assets/icons.svg#i-data"/></svg><span>통계</span></button>
+      <button type="button" class="xi-tool" id="tool-report" data-gate="drawer"><svg width="20" height="20" aria-hidden="true"><use href="../assets/icons.svg#i-download"/></svg><span>보고서</span></button>
+    </nav>
+    <div class="xi-panel-main" id="panel-body">
+      <nav class="xi-tabs" role="tablist"><button type="button" role="tab" data-tab="layers" aria-selected="true">층</button><button type="button" role="tab" data-tab="table" aria-selected="false">표</button></nav>
+      <div class="xi-panel-body"></div>
+    </div>
+  </aside>
+
+  <!-- 우상 HUD -->
+  <section class="xi-hud" id="hud" aria-live="polite">
+    <div class="cw-glass xi-hud-top">
+      <p class="xi-hud-src"><i class="xi-live" id="hud-live" data-on="0" aria-hidden="true"></i><span id="hud-chip" class="xi-chip"><b>출처</b> —</span></p>
+      <p class="xi-hud-scene"><b id="hud-scene">부팅</b><span id="hud-title">XI맵 · 영상 무대</span></p>
+      <p class="xi-hud-status" id="hud-status">카탈로그를 읽는 중</p>
+    </div>
+    <p class="xi-hud-big"><span class="xi-big" id="hud-big"></span><span class="xi-unit" id="hud-unit"></span></p>
+    <div class="cw-glass xi-hud-bot" id="hud-bot" hidden>
+      <p class="xi-hud-note" id="hud-note"></p>
+      <p class="xi-hud-prov" id="hud-prov"></p>
+      <p class="xi-hud-job" id="hud-job" hidden></p>
+    </div>
+  </section>
+
+  <!-- 카드들(유리) -->
+  <article class="xi-card cw-glass" id="emd-card" hidden aria-label="읍면동 집계"></article>
+  <article class="xi-card cw-glass" id="parcel-card" hidden aria-label="필지"></article>
+  <article class="xi-card cw-glass" id="quote-card" hidden aria-label="견적"></article>
+  <article class="xi-card xi-card--tip cw-glass" id="tip" hidden aria-hidden="true"></article>
+
+  <!-- 스와이프 -->
+  <p class="xi-swchip xi-swchip--l" id="sw-l" hidden></p>
+  <p class="xi-swchip xi-swchip--r" id="sw-r" hidden></p>
+  <button type="button" class="xi-grip" id="grip" hidden role="slider" aria-label="원본 ↔ AI 결과 가르는 선" aria-valuemin="6" aria-valuemax="94" aria-valuenow="50">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 6 3 12l6 6M15 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+  </button>
+
+  <!-- 하단 스크러버(60 %) -->
+  <section class="xi-scrub cw-glass" id="scrub" aria-label="시점">
+    <div class="xi-hist" aria-hidden="true"></div>
+    <button type="button" class="xi-play" aria-pressed="false" aria-label="시점 재생 6초" disabled>
+      <svg class="i-play" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 5v14l12-7z" fill="currentColor"/></svg>
+      <svg class="i-pause" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></svg>
+    </button>
+    <div class="xi-track"><input type="range" min="0" max="3" step="0.01" value="0" aria-label="시점" disabled><ol class="xi-ticks"></ol></div>
+    <p class="xi-scrub-label" aria-hidden="true"></p>
+    <p class="xi-scrub-void"></p>
+  </section>
+
+  <!-- 우하 헤어라인 계기 -->
+  <footer class="xi-gauge" id="gauge">
+    <span class="xi-scale" id="scale"><i></i><b></b></span>
+    <span id="hud-z" class="xi-hud-z"></span>
+    <span id="hud-tier" class="xi-tier"></span>
+    <span id="gpu" class="xi-gpu"></span>
+    <span id="attrib" class="xi-attrib"></span>
+    <span id="gauge-miss" class="xi-attrib" hidden></span>
+  </footer>
+
+  <!-- 우 서랍 -->
+  <aside class="xi-drawer cw-glass" id="drawer" hidden aria-label="통계 · 보고서">
+    <header><b class="xi-drawer-t">통계</b><span class="xi-periods"><button type="button" data-period="2023">2023</button><button type="button" data-period="2025">2025</button></span><button type="button" class="xi-x" aria-label="닫기">×</button></header>
+    <iframe title="통계·보고서 서랍" loading="lazy"></iframe>
+  </aside>
+</main>
+<noscript><p class="cw-void">XI맵은 자바스크립트가 필요합니다.</p></noscript>
+</body>
+</html>
