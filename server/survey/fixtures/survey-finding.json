@@ -1,0 +1,280 @@
+{
+ "_fixture": {
+  "request": "GET /api/v1/survey/findings/f_R1_5219045021110530012",
+  "realm": "tenant namwon-manager",
+  "recorded_at": "2026-09-27T02:44:06+09:00",
+  "note": "실제 응답 저장(목 아님) · F2-S s7"
+ },
+ "id": "f_R1_5219045021110530012",
+ "rule": "R1",
+ "rule_nm": "무허가 건축 의심",
+ "priority": "A",
+ "rank": {
+  "value": 1,
+  "unit": "count",
+  "basis": "estimate",
+  "as_of": "2026-09-24",
+  "source": "survey/namwon-parcel-suspects.csv",
+  "note": "전체 20,872건 점수 순위"
+ },
+ "score": {
+  "value": 90.5,
+  "unit": "score",
+  "basis": "estimate",
+  "as_of": "2026-09-24",
+  "source": "survey/namwon-parcel-suspects.csv",
+  "note": "규칙 기본점 + 근거면적 + 신뢰도 + 보강근거 [추정 초기값]"
+ },
+ "pnu": "5219045021110530012",
+ "addr": "전북특별자치도 남원시 아영면 아곡리 1053-12",
+ "emd": "아영면",
+ "emd_cd": "52190450",
+ "jimok": "답",
+ "yongdo": "농림지역",
+ "nongup": "농업진흥구역",
+ "parcel_m2": {
+  "value": 4556.1,
+  "unit": "m2",
+  "basis": "measured",
+  "as_of": "2026-09-24",
+  "source": "survey/namwon-parcels.gpkg (EPSG:5186 면적)"
+ },
+ "evid_m2": {
+  "value": 2415.2,
+  "unit": "m2",
+  "basis": "inferred",
+  "as_of": "2026-09-24",
+  "source": "survey/namwon-parcel-survey.gpkg suspects",
+  "note": "검수 전"
+ },
+ "evid_pct": {
+  "value": 53.0,
+  "unit": "%",
+  "basis": "inferred",
+  "as_of": "2026-09-24",
+  "source": "evid_m2 ÷ parcel_m2",
+  "note": "검수 전"
+ },
+ "conf": {
+  "value": 0.967,
+  "unit": "ratio",
+  "basis": "inferred",
+  "as_of": "2026-09-24",
+  "source": "AI 객체 평균 신뢰도(면적 가중)",
+  "note": "검수 전"
+ },
+ "corroboration": [
+  "농업진흥구역"
+ ],
+ "img_date": "2023 항공정사 25cm(전북 비도시 도엽)",
+ "evidence": "지목 답·필지 4,556㎡·농림지역·농업진흥구역 | AI 건물 3동 2,415㎡(필지 53%), 평균신뢰도 0.97 [2023 항공정사 25cm(전북 비도시 도엽)]",
+ "ai_ids": [
+  "NW23-103798",
+  "NW23-103799",
+  "NW23-112179"
+ ],
+ "lnglat": [
+  127.580471,
+  35.475693
+ ],
+ "geometry": {
+  "type": "Point",
+  "coordinates": [
+   127.580471,
+   35.475693
+  ]
+ },
+ "state": "open",
+ "assignee": null,
+ "planned_for": null,
+ "reason": null,
+ "updated_by": null,
+ "updated_at": null,
+ "basis": "inferred",
+ "explain": {
+  "rule": "R1",
+  "rule_nm": "무허가 건축 의심",
+  "condition": "지목 전·답·과수원 필지 안에 AI 건물 합계 ≥ 33㎡",
+  "evidence": "지목 답·필지 4,556㎡·농림지역·농업진흥구역 | AI 건물 3동 2,415㎡(필지 53%), 평균신뢰도 0.97 [2023 항공정사 25cm(전북 비도시 도엽)]",
+  "lines": [
+   "규칙 R1 무허가 건축 의심: 지목 전·답·과수원 필지 안에 AI 건물 합계 ≥ 33㎡",
+   "근거: AI 건물 2,415㎡ — 필지 4,556㎡ 대비 53% [2023 항공정사 25cm(전북 비도시 도엽) · AI 추론 · 검수 전]",
+   "신뢰도: 평균 0.97 · 보강근거: 농업진흥구역",
+   "임계 [추정 초기값]: AI 건물 합계 하한 33.0 · 객체 과반 포함 0.5 · 신뢰도 하한 0.5",
+   "대장 결손: 건축물대장 미대조 · 농지전용 허가 대장 미대조 — 현장조사 전 대조 필요",
+   "한계: 오탐 요인: 합법 농업용 시설(축사·농막·창고) · 건축물대장엔 있으나 지목변경 미정리 · 칩 경계에서 잘린 폴리곤(chip_edge) — 건축물대장·농지전용 허가 대조 전(README §6-5)"
+  ],
+  "evid_m2": {
+   "value": 2415.2,
+   "unit": "m2",
+   "basis": "inferred",
+   "as_of": "2026-09-24",
+   "source": "survey/namwon-parcel-survey.gpkg suspects",
+   "note": "검수 전"
+  },
+  "parcel_m2": {
+   "value": 4556.1,
+   "unit": "m2",
+   "basis": "measured",
+   "as_of": "2026-09-24",
+   "source": "survey/namwon-parcels.gpkg (EPSG:5186 면적)"
+  },
+  "evid_pct": {
+   "value": 53.0,
+   "unit": "%",
+   "basis": "inferred",
+   "as_of": "2026-09-24",
+   "source": "evid_m2 ÷ parcel_m2",
+   "note": "검수 전"
+  },
+  "conf": {
+   "value": 0.967,
+   "unit": "ratio",
+   "basis": "inferred",
+   "as_of": "2026-09-24",
+   "source": "AI 객체 평균 신뢰도(면적 가중 · 과반 포함 · ≥0.5)",
+   "note": "검수 전"
+  },
+  "corroboration": [
+   "농업진흥구역"
+  ],
+  "thresholds": [
+   {
+    "key": "R1_bld_m2",
+    "label": "AI 건물 합계 하한",
+    "value": {
+     "value": 33.0,
+     "unit": "m2",
+     "basis": "estimate",
+     "as_of": "2026-09-24",
+     "source": "server/survey/rules/R1.yaml",
+     "note": "[추정 초기값] · 법령 기준 아님 · 현장조사로 보정"
+    }
+   },
+   {
+    "key": "obj_in_frac",
+    "label": "객체 과반 포함",
+    "value": {
+     "value": 0.5,
+     "unit": "ratio",
+     "basis": "estimate",
+     "as_of": "2026-09-24",
+     "source": "s3_survey.py TH 공통",
+     "note": "[추정 초기값] · 법령 기준 아님 · 현장조사로 보정"
+    }
+   },
+   {
+    "key": "conf_min",
+    "label": "신뢰도 하한",
+    "value": {
+     "value": 0.5,
+     "unit": "ratio",
+     "basis": "estimate",
+     "as_of": "2026-09-24",
+     "source": "s3_survey.py TH 공통",
+     "note": "[추정 초기값] · 법령 기준 아님 · 현장조사로 보정"
+    }
+   }
+  ],
+  "threshold_basis": "농막 연면적 20㎡ + 25cm 영상 경계오차 여유",
+  "score": {
+   "value": 90.5,
+   "unit": "score",
+   "basis": "estimate",
+   "as_of": "2026-09-24",
+   "source": "survey/namwon-parcel-suspects.csv",
+   "note": "등급 절단: A ≥ 76.4 · B ≥ 65.5(전체 점수 상위 5% · 다음 20%)"
+  },
+  "score_parts": [
+   {
+    "label": "규칙 기본점(R1)",
+    "points": {
+     "value": 40,
+     "unit": "score",
+     "basis": "estimate",
+     "as_of": "2026-09-24",
+     "source": "s3_survey.py 점수식"
+    }
+   },
+   {
+    "label": "근거면적 8·log10(㎡) (최대 25)",
+    "points": {
+     "value": 25.0,
+     "unit": "score",
+     "basis": "estimate",
+     "as_of": "2026-09-24",
+     "source": "s3_survey.py 점수식"
+    }
+   },
+   {
+    "label": "15 × 평균신뢰도(없으면 0.5)",
+    "points": {
+     "value": 14.5,
+     "unit": "score",
+     "basis": "estimate",
+     "as_of": "2026-09-24",
+     "source": "s3_survey.py 점수식"
+    }
+   },
+   {
+    "label": "보강: 농업진흥구역",
+    "points": {
+     "value": 8,
+     "unit": "score",
+     "basis": "estimate",
+     "as_of": "2026-09-24",
+     "source": "s3_survey.py 점수식"
+    }
+   },
+   {
+    "label": "객체 3개 이상",
+    "points": {
+     "value": 3,
+     "unit": "score",
+     "basis": "estimate",
+     "as_of": "2026-09-24",
+     "source": "s3_survey.py 점수식"
+    }
+   }
+  ],
+  "score_check": {
+   "recomputed": {
+    "value": 90.5,
+    "unit": "score",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "explain.score_parts"
+   },
+   "equal": true
+  },
+  "ledger_gaps": [
+   {
+    "key": "building_ledger",
+    "label": "건축물대장 미대조",
+    "note": "공공데이터포털 건축HUB API 키 대기 — 합법 건축물·농업용 시설 구분 불가"
+   },
+   {
+    "key": "farmland_conversion",
+    "label": "농지전용 허가 대장 미대조",
+    "note": "기관 대장 표본 대기"
+   },
+   {
+    "key": "owner_kind",
+    "label": "소유구분 연속지적 미제공",
+    "note": "V-World 연속지적에 소유 정보 없음 · 성명 열 없음"
+   }
+  ],
+  "note": "오탐 요인: 합법 농업용 시설(축사·농막·창고) · 건축물대장엔 있으나 지목변경 미정리 · 칩 경계에서 잘린 폴리곤(chip_edge) — 건축물대장·농지전용 허가 대조 전(README §6-5)",
+  "fixed": "AI 추론 · 검수 전 · 현장 확인 전 · 위법 판정 아님"
+ },
+ "history": [],
+ "history_summary": [],
+ "history_note": "이력 대상 아님(2025 A02 또는 변화탐지가 걸린 6,818필지만 이력이 있다)",
+ "state_log": [],
+ "same_parcel": [],
+ "allowed_next": [
+  "assigned",
+  "dismissed"
+ ],
+ "as_of": "2026-09-24"
+}

@@ -1,0 +1,639 @@
+{
+ "_fixture": {
+  "request": "GET /api/v1/survey/rules",
+  "realm": "tenant namwon-manager",
+  "recorded_at": "2026-09-27T02:44:06+09:00",
+  "note": "실제 응답 저장(목 아님) · F2-S s7"
+ },
+ "items": [
+  {
+   "id": "R1",
+   "name": "무허가 건축 의심",
+   "condition": "지목 전·답·과수원 필지 안에 AI 건물 합계 ≥ 33㎡",
+   "basis": "estimate",
+   "thresholds": [
+    {
+     "key": "conf_min",
+     "label": "신뢰도 하한",
+     "value": {
+      "value": 0.5,
+      "unit": "ratio",
+      "basis": "estimate",
+      "as_of": "2026-09-24",
+      "source": "server/survey/rules/R1.yaml",
+      "note": "[추정 초기값] · 법령 기준 아님"
+     }
+    },
+    {
+     "key": "R1_bld_m2",
+     "label": "AI 건물 합계 하한",
+     "value": {
+      "value": 33.0,
+      "unit": "m2",
+      "basis": "estimate",
+      "as_of": "2026-09-24",
+      "source": "server/survey/rules/R1.yaml",
+      "note": "[추정 초기값] · 법령 기준 아님"
+     }
+    },
+    {
+     "key": "obj_in_frac",
+     "label": "객체 과반 포함",
+     "value": {
+      "value": 0.5,
+      "unit": "ratio",
+      "basis": "estimate",
+      "as_of": "2026-09-24",
+      "source": "server/survey/rules/R1.yaml",
+      "note": "[추정 초기값] · 법령 기준 아님"
+     }
+    }
+   ],
+   "threshold_basis": "농막 연면적 20㎡ + 25cm 영상 경계오차 여유",
+   "jimok": [
+    "전",
+    "답",
+    "과"
+   ],
+   "requires": [
+    "a23_bld_in_m2"
+   ],
+   "base_score": {
+    "value": 40,
+    "unit": "score",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "s3_survey.py BASE_SCORE"
+   },
+   "counts": {
+    "A": {
+     "value": 759,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    },
+    "B": {
+     "value": 2750,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    },
+    "C": {
+     "value": 631,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    },
+    "total": {
+     "value": 4140,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    }
+   },
+   "note": "오탐 요인: 합법 농업용 시설(축사·농막·창고) · 건축물대장엔 있으나 지목변경 미정리 · 칩 경계에서 잘린 폴리곤(chip_edge) — 건축물대장·농지전용 허가 대조 전(README §6-5)"
+  },
+  {
+   "id": "R2",
+   "name": "휴경·전용 의심",
+   "condition": "지목 전·답·과수원, 필지 ≥ 1000㎡, AI 농경(경작지+비닐하우스) 비율 < 15%, 건물 비율 < 30%",
+   "basis": "estimate",
+   "thresholds": [
+    {
+     "key": "conf_min",
+     "label": "신뢰도 하한",
+     "value": {
+      "value": 0.5,
+      "unit": "ratio",
+      "basis": "estimate",
+      "as_of": "2026-09-24",
+      "source": "server/survey/rules/R2.yaml",
+      "note": "[추정 초기값] · 법령 기준 아님"
+     }
+    },
+    {
+     "key": "obj_in_frac",
+     "label": "객체 과반 포함",
+     "value": {
+      "value": 0.5,
+      "unit": "ratio",
+      "basis": "estimate",
+      "as_of": "2026-09-24",
+      "source": "server/survey/rules/R2.yaml",
+      "note": "[추정 초기값] · 법령 기준 아님"
+     }
+    },
+    {
+     "key": "R2_bld_ratio_max",
+     "label": "AI 건물 비율 상한",
+     "value": {
+      "value": 0.3,
+      "unit": "ratio",
+      "basis": "estimate",
+      "as_of": "2026-09-24",
+      "source": "server/survey/rules/R2.yaml",
+      "note": "[추정 초기값] · 법령 기준 아님"
+     }
+    },
+    {
+     "key": "R2_parcel_min_m2",
+     "label": "최소 필지면적",
+     "value": {
+      "value": 1000,
+      "unit": "m2",
+      "basis": "estimate",
+      "as_of": "2026-09-24",
+      "source": "server/survey/rules/R2.yaml",
+      "note": "[추정 초기값] · 법령 기준 아님"
+     }
+    },
+    {
+     "key": "R2_crop_ratio_max",
+     "label": "AI 농경 비율 상한",
+     "value": {
+      "value": 0.15,
+      "unit": "ratio",
+      "basis": "estimate",
+      "as_of": "2026-09-24",
+      "source": "server/survey/rules/R2.yaml",
+      "note": "[추정 초기값] · 법령 기준 아님"
+     }
+    }
+   ],
+   "threshold_basis": "작은 필지는 비율이 불안정 · 건물 30% 이상은 R1 로 본다",
+   "jimok": [
+    "전",
+    "답",
+    "과"
+   ],
+   "requires": [
+    "r23_farm",
+    "r23_bld"
+   ],
+   "base_score": {
+    "value": 25,
+    "unit": "score",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "s3_survey.py BASE_SCORE"
+   },
+   "counts": {
+    "A": {
+     "value": 46,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    },
+    "B": {
+     "value": 4295,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    },
+    "C": {
+     "value": 11310,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    },
+    "total": {
+     "value": 15651,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    }
+   },
+   "note": "과다 추정 가능 · 2025 반증 시 감점 — 1,000㎡ 이상 농지의 25.8%가 걸리고 70%는 AI 농경 0(모델 미탐·촬영 계절·과수원/묘포). A02 교차: R2 필지 48%(138/286) vs 비R2 35%(677/1,939) 2025 비경작 우세 — 신호는 있으나 약함(README §6-4)"
+  },
+  {
+   "id": "R3",
+   "name": "용도 불일치(비농지 위 비닐하우스)",
+   "condition": "지목 대·잡종지·공장·창고 등 비농지 필지 안에 AI 비닐하우스 합계 ≥ 100㎡",
+   "basis": "estimate",
+   "thresholds": [
+    {
+     "key": "R3_gh_m2",
+     "label": "AI 비닐하우스 합계 하한",
+     "value": {
+      "value": 100.0,
+      "unit": "m2",
+      "basis": "estimate",
+      "as_of": "2026-09-24",
+      "source": "server/survey/rules/R3.yaml",
+      "note": "[추정 초기값] · 법령 기준 아님"
+     }
+    },
+    {
+     "key": "conf_min",
+     "label": "신뢰도 하한",
+     "value": {
+      "value": 0.5,
+      "unit": "ratio",
+      "basis": "estimate",
+      "as_of": "2026-09-24",
+      "source": "server/survey/rules/R3.yaml",
+      "note": "[추정 초기값] · 법령 기준 아님"
+     }
+    },
+    {
+     "key": "obj_in_frac",
+     "label": "객체 과반 포함",
+     "value": {
+      "value": 0.5,
+      "unit": "ratio",
+      "basis": "estimate",
+      "as_of": "2026-09-24",
+      "source": "server/survey/rules/R3.yaml",
+      "note": "[추정 초기값] · 법령 기준 아님"
+     }
+    }
+   ],
+   "threshold_basis": "비닐하우스 1동 규모",
+   "jimok": [
+    "대",
+    "잡",
+    "장",
+    "창",
+    "학",
+    "종",
+    "체",
+    "원",
+    "주",
+    "차",
+    "공",
+    "사",
+    "수"
+   ],
+   "requires": [
+    "a23_gh_in_m2",
+    "a25_gh_in_m2"
+   ],
+   "base_score": {
+    "value": 30,
+    "unit": "score",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "s3_survey.py BASE_SCORE"
+   },
+   "counts": {
+    "A": {
+     "value": 0,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    },
+    "B": {
+     "value": 6,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    },
+    "C": {
+     "value": 14,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    },
+    "total": {
+     "value": 20,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    }
+   },
+   "note": "과소 추정 — 25cm 모델은 비닐하우스를 거의 못 잡는다(전역 728개) · 태양광 패널이 비닐하우스로 오탐될 수 있음(README §6-3)"
+  },
+  {
+   "id": "R4",
+   "name": "농지 전용 의심(주차장)",
+   "condition": "지목 전·답·과수원 필지 안에 AI 주차장 합계 ≥ 100㎡",
+   "basis": "estimate",
+   "thresholds": [
+    {
+     "key": "conf_min",
+     "label": "신뢰도 하한",
+     "value": {
+      "value": 0.5,
+      "unit": "ratio",
+      "basis": "estimate",
+      "as_of": "2026-09-24",
+      "source": "server/survey/rules/R4.yaml",
+      "note": "[추정 초기값] · 법령 기준 아님"
+     }
+    },
+    {
+     "key": "R4_park_m2",
+     "label": "AI 주차장 합계 하한",
+     "value": {
+      "value": 100.0,
+      "unit": "m2",
+      "basis": "estimate",
+      "as_of": "2026-09-24",
+      "source": "server/survey/rules/R4.yaml",
+      "note": "[추정 초기값] · 법령 기준 아님"
+     }
+    },
+    {
+     "key": "obj_in_frac",
+     "label": "객체 과반 포함",
+     "value": {
+      "value": 0.5,
+      "unit": "ratio",
+      "basis": "estimate",
+      "as_of": "2026-09-24",
+      "source": "server/survey/rules/R4.yaml",
+      "note": "[추정 초기값] · 법령 기준 아님"
+     }
+    }
+   ],
+   "threshold_basis": "주차 약 4면",
+   "jimok": [
+    "전",
+    "답",
+    "과"
+   ],
+   "requires": [
+    "a23_park_in_m2"
+   ],
+   "base_score": {
+    "value": 40,
+    "unit": "score",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "s3_survey.py BASE_SCORE"
+   },
+   "counts": {
+    "A": {
+     "value": 9,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    },
+    "B": {
+     "value": 24,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    },
+    "C": {
+     "value": 0,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    },
+    "total": {
+     "value": 33,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    }
+   },
+   "note": "농로·작업장 포장면이 주차장으로 추론될 수 있음 · 농지전용 허가 대장 대조 전(README §6-3·5)"
+  },
+  {
+   "id": "R5",
+   "name": "산지 개간 의심",
+   "condition": "지목 임야 필지 안에 AI 경작지+비닐하우스 ≥ 1000㎡ 이고 필지의 30% 이상",
+   "basis": "estimate",
+   "thresholds": [
+    {
+     "key": "conf_min",
+     "label": "신뢰도 하한",
+     "value": {
+      "value": 0.5,
+      "unit": "ratio",
+      "basis": "estimate",
+      "as_of": "2026-09-24",
+      "source": "server/survey/rules/R5.yaml",
+      "note": "[추정 초기값] · 법령 기준 아님"
+     }
+    },
+    {
+     "key": "R5_crop_m2",
+     "label": "AI 경작지+비닐하우스 하한",
+     "value": {
+      "value": 1000.0,
+      "unit": "m2",
+      "basis": "estimate",
+      "as_of": "2026-09-24",
+      "source": "server/survey/rules/R5.yaml",
+      "note": "[추정 초기값] · 법령 기준 아님"
+     }
+    },
+    {
+     "key": "obj_in_frac",
+     "label": "객체 과반 포함",
+     "value": {
+      "value": 0.5,
+      "unit": "ratio",
+      "basis": "estimate",
+      "as_of": "2026-09-24",
+      "source": "server/survey/rules/R5.yaml",
+      "note": "[추정 초기값] · 법령 기준 아님"
+     }
+    },
+    {
+     "key": "R5_crop_ratio",
+     "label": "필지 대비 비율 하한",
+     "value": {
+      "value": 0.3,
+      "unit": "ratio",
+      "basis": "estimate",
+      "as_of": "2026-09-24",
+      "source": "server/survey/rules/R5.yaml",
+      "note": "[추정 초기값] · 법령 기준 아님"
+     }
+    }
+   ],
+   "threshold_basis": "소규모 텃밭 제외",
+   "jimok": [
+    "임"
+   ],
+   "requires": [
+    "a23_crop_m2",
+    "a23_gh_m2",
+    "a25_gh_m2"
+   ],
+   "base_score": {
+    "value": 38,
+    "unit": "score",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "s3_survey.py BASE_SCORE"
+   },
+   "counts": {
+    "A": {
+     "value": 236,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    },
+    "B": {
+     "value": 228,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    },
+    "C": {
+     "value": 0,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    },
+    "total": {
+     "value": 464,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    }
+   },
+   "note": "산지전용 허가·지목변경 미정리 필지 포함 가능 · 연속지적 경계 수 m 오차(README §6-1·5)"
+  },
+  {
+   "id": "R6",
+   "name": "공공용지 점유 의심",
+   "condition": "지목 도로·구거·하천·제방·유지 필지 안에 AI 건물 합계 ≥ 30㎡",
+   "basis": "estimate",
+   "thresholds": [
+    {
+     "key": "conf_min",
+     "label": "신뢰도 하한",
+     "value": {
+      "value": 0.5,
+      "unit": "ratio",
+      "basis": "estimate",
+      "as_of": "2026-09-24",
+      "source": "server/survey/rules/R6.yaml",
+      "note": "[추정 초기값] · 법령 기준 아님"
+     }
+    },
+    {
+     "key": "R6_bld_m2",
+     "label": "AI 건물 합계 하한",
+     "value": {
+      "value": 30.0,
+      "unit": "m2",
+      "basis": "estimate",
+      "as_of": "2026-09-24",
+      "source": "server/survey/rules/R6.yaml",
+      "note": "[추정 초기값] · 법령 기준 아님"
+     }
+    },
+    {
+     "key": "obj_in_frac",
+     "label": "객체 과반 포함",
+     "value": {
+      "value": 0.5,
+      "unit": "ratio",
+      "basis": "estimate",
+      "as_of": "2026-09-24",
+      "source": "server/survey/rules/R6.yaml",
+      "note": "[추정 초기값] · 법령 기준 아님"
+     }
+    }
+   ],
+   "threshold_basis": "소형 창고 1동",
+   "jimok": [
+    "도",
+    "구",
+    "천",
+    "제",
+    "유"
+   ],
+   "requires": [
+    "a23_bld_in_m2"
+   ],
+   "base_score": {
+    "value": 36,
+    "unit": "score",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "s3_survey.py BASE_SCORE"
+   },
+   "counts": {
+    "A": {
+     "value": 3,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    },
+    "B": {
+     "value": 83,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    },
+    "C": {
+     "value": 478,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    },
+    "total": {
+     "value": 564,
+     "unit": "count",
+     "basis": "inferred",
+     "as_of": "2026-09-24",
+     "source": "survey/namwon-parcel-suspects.csv",
+     "note": "검수 전"
+    }
+   },
+   "note": "오탐 요인: 도로 필지와 겹친 대지 건물(연속지적 어긋남) · 칩 경계에서 잘린 폴리곤(chip_edge) · 지목변경 미정리 — 건축물대장 대조 전(README §6-5)"
+  }
+ ],
+ "total": {
+  "value": 6,
+  "unit": "count",
+  "basis": "recorded",
+  "as_of": "2026-09-24",
+  "source": "server/survey/rules/*.yaml"
+ },
+ "as_of": "2026-09-24",
+ "note": "임계는 전부 [추정 초기값] — 현장조사 결과로 보정. 공통: 객체 과반 포함 0.5 · 신뢰도 하한 0.5"
+}

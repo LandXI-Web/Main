@@ -1,0 +1,536 @@
+{
+ "_fixture": {
+  "request": "GET /api/v1/survey/findings?rule=R1&priority=A&limit=5",
+  "realm": "tenant namwon-manager",
+  "recorded_at": "2026-09-27T02:44:06+09:00",
+  "note": "실제 응답 저장(목 아님) · F2-S s7"
+ },
+ "items": [
+  {
+   "id": "f_R1_5219045021110530012",
+   "rule": "R1",
+   "rule_nm": "무허가 건축 의심",
+   "priority": "A",
+   "rank": {
+    "value": 1,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "전체 20,872건 점수 순위"
+   },
+   "score": {
+    "value": 90.5,
+    "unit": "score",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "규칙 기본점 + 근거면적 + 신뢰도 + 보강근거 [추정 초기값]"
+   },
+   "pnu": "5219045021110530012",
+   "addr": "전북특별자치도 남원시 아영면 아곡리 1053-12",
+   "emd": "아영면",
+   "emd_cd": "52190450",
+   "jimok": "답",
+   "yongdo": "농림지역",
+   "nongup": "농업진흥구역",
+   "parcel_m2": {
+    "value": 4556.1,
+    "unit": "m2",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcels.gpkg (EPSG:5186 면적)"
+   },
+   "evid_m2": {
+    "value": 2415.2,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-survey.gpkg suspects",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 53.0,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid_m2 ÷ parcel_m2",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.967,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "AI 객체 평균 신뢰도(면적 가중)",
+    "note": "검수 전"
+   },
+   "corroboration": [
+    "농업진흥구역"
+   ],
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)",
+   "evidence": "지목 답·필지 4,556㎡·농림지역·농업진흥구역 | AI 건물 3동 2,415㎡(필지 53%), 평균신뢰도 0.97 [2023 항공정사 25cm(전북 비도시 도엽)]",
+   "ai_ids": [
+    "NW23-103798",
+    "NW23-103799",
+    "NW23-112179"
+   ],
+   "lnglat": [
+    127.580471,
+    35.475693
+   ],
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     127.580471,
+     35.475693
+    ]
+   },
+   "state": "open",
+   "assignee": null,
+   "planned_for": null,
+   "reason": null,
+   "updated_by": null,
+   "updated_at": null,
+   "basis": "inferred"
+  },
+  {
+   "id": "f_R1_5219025032112290003",
+   "rule": "R1",
+   "rule_nm": "무허가 건축 의심",
+   "priority": "A",
+   "rank": {
+    "value": 2,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "전체 20,872건 점수 순위"
+   },
+   "score": {
+    "value": 90.5,
+    "unit": "score",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "규칙 기본점 + 근거면적 + 신뢰도 + 보강근거 [추정 초기값]"
+   },
+   "pnu": "5219025032112290003",
+   "addr": "전북특별자치도 남원시 운봉읍 권포리 1229-3",
+   "emd": "운봉읍",
+   "emd_cd": "52190250",
+   "jimok": "답",
+   "yongdo": "농림지역",
+   "nongup": "농업진흥구역",
+   "parcel_m2": {
+    "value": 6420.8,
+    "unit": "m2",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcels.gpkg (EPSG:5186 면적)"
+   },
+   "evid_m2": {
+    "value": 5352.0,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-survey.gpkg suspects",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 83.4,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid_m2 ÷ parcel_m2",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.967,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "AI 객체 평균 신뢰도(면적 가중)",
+    "note": "검수 전"
+   },
+   "corroboration": [
+    "농업진흥구역"
+   ],
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)",
+   "evidence": "지목 답·필지 6,421㎡·농림지역·농업진흥구역 | AI 건물 3동 5,352㎡(필지 83%), 평균신뢰도 0.97 [2023 항공정사 25cm(전북 비도시 도엽)]",
+   "ai_ids": [
+    "NW23-107555",
+    "NW23-107554",
+    "NW23-107556"
+   ],
+   "lnglat": [
+    127.523531,
+    35.4607
+   ],
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     127.523531,
+     35.4607
+    ]
+   },
+   "state": "assigned",
+   "assignee": null,
+   "planned_for": null,
+   "reason": null,
+   "updated_by": "u_namwon_manager",
+   "updated_at": "2026-09-27T02:35:44+09:00",
+   "basis": "inferred"
+  },
+  {
+   "id": "f_R1_5219040024109990002",
+   "rule": "R1",
+   "rule_nm": "무허가 건축 의심",
+   "priority": "A",
+   "rank": {
+    "value": 3,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "전체 20,872건 점수 순위"
+   },
+   "score": {
+    "value": 90.5,
+    "unit": "score",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "규칙 기본점 + 근거면적 + 신뢰도 + 보강근거 [추정 초기값]"
+   },
+   "pnu": "5219040024109990002",
+   "addr": "전북특별자치도 남원시 보절면 금다리 999-2",
+   "emd": "보절면",
+   "emd_cd": "52190400",
+   "jimok": "답",
+   "yongdo": "농림지역",
+   "nongup": "농업진흥구역",
+   "parcel_m2": {
+    "value": 3492.0,
+    "unit": "m2",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcels.gpkg (EPSG:5186 면적)"
+   },
+   "evid_m2": {
+    "value": 3378.0,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-survey.gpkg suspects",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 96.7,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid_m2 ÷ parcel_m2",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.969,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "AI 객체 평균 신뢰도(면적 가중)",
+    "note": "검수 전"
+   },
+   "corroboration": [
+    "농업진흥구역"
+   ],
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)",
+   "evidence": "지목 답·필지 3,492㎡·농림지역·농업진흥구역 | AI 건물 3동 3,378㎡(필지 97%), 평균신뢰도 0.97 [2023 항공정사 25cm(전북 비도시 도엽)]",
+   "ai_ids": [
+    "NW23-009560",
+    "NW23-009575",
+    "NW23-009561"
+   ],
+   "lnglat": [
+    127.419158,
+    35.509166
+   ],
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     127.419158,
+     35.509166
+    ]
+   },
+   "state": "open",
+   "assignee": null,
+   "planned_for": null,
+   "reason": null,
+   "updated_by": null,
+   "updated_at": null,
+   "basis": "inferred"
+  },
+  {
+   "id": "f_R1_5219025031110840007",
+   "rule": "R1",
+   "rule_nm": "무허가 건축 의심",
+   "priority": "A",
+   "rank": {
+    "value": 4,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "전체 20,872건 점수 순위"
+   },
+   "score": {
+    "value": 90.4,
+    "unit": "score",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "규칙 기본점 + 근거면적 + 신뢰도 + 보강근거 [추정 초기값]"
+   },
+   "pnu": "5219025031110840007",
+   "addr": "전북특별자치도 남원시 운봉읍 장교리 1084-7",
+   "emd": "운봉읍",
+   "emd_cd": "52190250",
+   "jimok": "답",
+   "yongdo": "농림지역",
+   "nongup": "농업진흥구역",
+   "parcel_m2": {
+    "value": 3040.4,
+    "unit": "m2",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcels.gpkg (EPSG:5186 면적)"
+   },
+   "evid_m2": {
+    "value": 2183.8,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-survey.gpkg suspects",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 71.8,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid_m2 ÷ parcel_m2",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.957,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "AI 객체 평균 신뢰도(면적 가중)",
+    "note": "검수 전"
+   },
+   "corroboration": [
+    "농업진흥구역"
+   ],
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)",
+   "evidence": "지목 답·필지 3,040㎡·농림지역·농업진흥구역 | AI 건물 3동 2,184㎡(필지 72%), 평균신뢰도 0.96 [2023 항공정사 25cm(전북 비도시 도엽)]",
+   "ai_ids": [
+    "NW23-107782",
+    "NW23-107784",
+    "NW23-107783"
+   ],
+   "lnglat": [
+    127.512913,
+    35.450455
+   ],
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     127.512913,
+     35.450455
+    ]
+   },
+   "state": "open",
+   "assignee": null,
+   "planned_for": null,
+   "reason": null,
+   "updated_by": null,
+   "updated_at": null,
+   "basis": "inferred"
+  },
+  {
+   "id": "f_R1_5219035021114580005",
+   "rule": "R1",
+   "rule_nm": "무허가 건축 의심",
+   "priority": "A",
+   "rank": {
+    "value": 5,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "전체 20,872건 점수 순위"
+   },
+   "score": {
+    "value": 90.4,
+    "unit": "score",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "규칙 기본점 + 근거면적 + 신뢰도 + 보강근거 [추정 초기값]"
+   },
+   "pnu": "5219035021114580005",
+   "addr": "전북특별자치도 남원시 금지면 옹정리 1458-5",
+   "emd": "금지면",
+   "emd_cd": "52190350",
+   "jimok": "답",
+   "yongdo": "농림지역",
+   "nongup": "농업진흥구역",
+   "parcel_m2": {
+    "value": 3881.7,
+    "unit": "m2",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcels.gpkg (EPSG:5186 면적)"
+   },
+   "evid_m2": {
+    "value": 2647.5,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-survey.gpkg suspects",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 68.2,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid_m2 ÷ parcel_m2",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.961,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "AI 객체 평균 신뢰도(면적 가중)",
+    "note": "검수 전"
+   },
+   "corroboration": [
+    "농업진흥구역"
+   ],
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)",
+   "evidence": "지목 답·필지 3,882㎡·농림지역·농업진흥구역 | AI 건물 3동 2,648㎡(필지 68%), 평균신뢰도 0.96 [2023 항공정사 25cm(전북 비도시 도엽)]",
+   "ai_ids": [
+    "NW23-082041",
+    "NW23-082042",
+    "NW23-082043"
+   ],
+   "lnglat": [
+    127.30008,
+    35.369918
+   ],
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     127.30008,
+     35.369918
+    ]
+   },
+   "state": "open",
+   "assignee": null,
+   "planned_for": null,
+   "reason": null,
+   "updated_by": null,
+   "updated_at": null,
+   "basis": "inferred"
+  }
+ ],
+ "total": {
+  "value": 759,
+  "unit": "count",
+  "basis": "inferred",
+  "as_of": "2026-09-24",
+  "source": "PostGIS survey_findings",
+  "note": "의심 후보 · 검수 전 · 위법 판정 아님"
+ },
+ "counts": {
+  "open": 758,
+  "assigned": 1,
+  "inspected": 0,
+  "closed": 0,
+  "dismissed": 0
+ },
+ "by_rule": {
+  "R1": {
+   "value": 759,
+   "unit": "count",
+   "basis": "inferred",
+   "as_of": "2026-09-24",
+   "source": "PostGIS survey_findings",
+   "note": "검수 전"
+  },
+  "R2": {
+   "value": 46,
+   "unit": "count",
+   "basis": "inferred",
+   "as_of": "2026-09-24",
+   "source": "PostGIS survey_findings",
+   "note": "검수 전"
+  },
+  "R3": {
+   "value": 0,
+   "unit": "count",
+   "basis": "inferred",
+   "as_of": "2026-09-24",
+   "source": "PostGIS survey_findings",
+   "note": "검수 전"
+  },
+  "R4": {
+   "value": 9,
+   "unit": "count",
+   "basis": "inferred",
+   "as_of": "2026-09-24",
+   "source": "PostGIS survey_findings",
+   "note": "검수 전"
+  },
+  "R5": {
+   "value": 236,
+   "unit": "count",
+   "basis": "inferred",
+   "as_of": "2026-09-24",
+   "source": "PostGIS survey_findings",
+   "note": "검수 전"
+  },
+  "R6": {
+   "value": 3,
+   "unit": "count",
+   "basis": "inferred",
+   "as_of": "2026-09-24",
+   "source": "PostGIS survey_findings",
+   "note": "검수 전"
+  }
+ },
+ "limit": 5,
+ "offset": 0,
+ "sort": "score",
+ "filters": {
+  "rule": [
+   "R1"
+  ],
+  "priority": [
+   "A"
+  ]
+ },
+ "as_of": "2026-09-24",
+ "source": "survey/namwon-parcel-suspects.csv",
+ "fixed": "AI 추론 · 검수 전 · 현장 확인 전 · 위법 판정 아님",
+ "db_ms": {
+  "value": 20.2,
+  "unit": "ms",
+  "basis": "measured",
+  "as_of": "2026-09-24",
+  "source": "gateway survey.findings"
+ }
+}

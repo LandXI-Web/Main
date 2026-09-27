@@ -1,0 +1,10 @@
+id: R3
+name: 용도 불일치(비농지 위 비닐하우스)
+condition: "지목 대·잡종지·공장·창고 등 비농지 필지 안에 AI 비닐하우스 합계 ≥ {R3_gh_m2:.0f}㎡"
+jimok: [대, 잡, 장, 창, 학, 종, 체, 원, 주, 차, 공, 사, 수]
+thresholds: {R3_gh_m2: 100.0}
+threshold_basis: "비닐하우스 1동 규모"
+base_score: 30
+evidence_cls: gh
+requires: [a23_gh_in_m2, a25_gh_in_m2]
+note: "과소 추정 — 25cm 모델은 비닐하우스를 거의 못 잡는다(전역 728개) · 태양광 패널이 비닐하우스로 오탐될 수 있음(README §6-3)"

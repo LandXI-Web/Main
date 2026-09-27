@@ -1,0 +1,10 @@
+id: R6
+name: 공공용지 점유 의심
+condition: "지목 도로·구거·하천·제방·유지 필지 안에 AI 건물 합계 ≥ {R6_bld_m2:.0f}㎡"
+jimok: [도, 구, 천, 제, 유]
+thresholds: {R6_bld_m2: 30.0}
+threshold_basis: "소형 창고 1동"
+base_score: 36
+evidence_cls: bld
+requires: [a23_bld_in_m2]
+note: "오탐 요인: 도로 필지와 겹친 대지 건물(연속지적 어긋남) · 칩 경계에서 잘린 폴리곤(chip_edge) · 지목변경 미정리 — 건축물대장 대조 전(README §6-5)"

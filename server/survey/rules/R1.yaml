@@ -1,0 +1,11 @@
+# R1 무허가 건축 의심 — 임계는 모두 [추정 초기값](법령 기준 아님 · 현장조사로 보정). 원천: 02. 데이터/_scripts/survey/s3_survey.py TH
+id: R1
+name: 무허가 건축 의심
+condition: "지목 전·답·과수원 필지 안에 AI 건물 합계 ≥ {R1_bld_m2:.0f}㎡"
+jimok: [전, 답, 과]
+thresholds: {R1_bld_m2: 33.0}
+threshold_basis: "농막 연면적 20㎡ + 25cm 영상 경계오차 여유"
+base_score: 40
+evidence_cls: bld
+requires: [a23_bld_in_m2]
+note: "오탐 요인: 합법 농업용 시설(축사·농막·창고) · 건축물대장엔 있으나 지목변경 미정리 · 칩 경계에서 잘린 폴리곤(chip_edge) — 건축물대장·농지전용 허가 대조 전(README §6-5)"

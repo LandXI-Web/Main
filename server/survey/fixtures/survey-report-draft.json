@@ -1,0 +1,1135 @@
+{
+ "_fixture": {
+  "request": "GET /api/v1/survey/reports/draft?emd_cd=52190450&rule=R1&top=20&format=json",
+  "realm": "tenant namwon-manager",
+  "recorded_at": "2026-09-27T02:44:06+09:00",
+  "note": "실제 응답 저장(목 아님) · F2-S s7"
+ },
+ "template": "survey-emd",
+ "emd_cd": "52190450",
+ "emd": "아영면",
+ "rule": "R1",
+ "limit": 20,
+ "title": "아영면 실태조사 대상 후보 보고서(초안)",
+ "fixed": "AI 추론 · 검수 전 · 현장 확인 전 · 위법 판정 아님",
+ "overview": {
+  "emd": "아영면",
+  "parcels": {
+   "value": 21080,
+   "unit": "필지",
+   "basis": "measured",
+   "as_of": "2026-09-24",
+   "source": "V-World 연속지적 2026-09-24"
+  },
+  "area_ha": {
+   "value": 3534.3,
+   "unit": "ha",
+   "basis": "measured",
+   "as_of": "2026-09-24",
+   "source": "survey/namwon-parcel-emd-summary.json"
+  },
+  "imagery": [
+   "2023 항공정사 25cm(전북 비도시 도엽)",
+   "2025 드론 정사(A02, 촬영월 미상)"
+  ],
+  "ledger": "V-World 연속지적 2026-09-24",
+  "rules": [
+   {
+    "id": "R1",
+    "name": "무허가 건축 의심",
+    "condition": "지목 전·답·과수원 필지 안에 AI 건물 합계 ≥ 33㎡"
+   }
+  ],
+  "thresholds_note": "임계는 전부 [추정 초기값] — 법령 기준 아님 · 현장조사로 보정"
+ },
+ "table": [
+  {
+   "rule": "R1",
+   "name": "무허가 건축 의심",
+   "A": {
+    "value": 67,
+    "unit": "count",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "PostGIS survey_findings (emd_cd 52190450)",
+    "note": "검수 전"
+   },
+   "B": {
+    "value": 272,
+    "unit": "count",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "PostGIS survey_findings (emd_cd 52190450)",
+    "note": "검수 전"
+   },
+   "C": {
+    "value": 48,
+    "unit": "count",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "PostGIS survey_findings (emd_cd 52190450)",
+    "note": "검수 전"
+   },
+   "total": {
+    "value": 387,
+    "unit": "count",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "PostGIS survey_findings (emd_cd 52190450)",
+    "note": "검수 전"
+   },
+   "by_state": {
+    "open": {
+     "value": 387,
+     "unit": "count",
+     "basis": "recorded",
+     "as_of": "2026-09-24",
+     "source": "survey_findings.state"
+    },
+    "assigned": {
+     "value": 0,
+     "unit": "count",
+     "basis": "recorded",
+     "as_of": "2026-09-24",
+     "source": "survey_findings.state"
+    },
+    "inspected": {
+     "value": 0,
+     "unit": "count",
+     "basis": "recorded",
+     "as_of": "2026-09-24",
+     "source": "survey_findings.state"
+    },
+    "closed": {
+     "value": 0,
+     "unit": "count",
+     "basis": "recorded",
+     "as_of": "2026-09-24",
+     "source": "survey_findings.state"
+    },
+    "dismissed": {
+     "value": 0,
+     "unit": "count",
+     "basis": "recorded",
+     "as_of": "2026-09-24",
+     "source": "survey_findings.state"
+    }
+   }
+  }
+ ],
+ "top_items": [
+  {
+   "order": 1,
+   "id": "f_R1_5219045021110530012",
+   "pnu": "5219045021110530012",
+   "addr": "전북특별자치도 남원시 아영면 아곡리 1053-12",
+   "jibun": "1053-12답",
+   "jimok": "답",
+   "rule": "R1",
+   "priority": "A",
+   "state": "open",
+   "rank": {
+    "value": 1,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv"
+   },
+   "evid_m2": {
+    "value": 2415.2,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 53.0,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid ÷ 필지",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.967,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "imagery": "2시점(2023 25cm · 2025 A02)",
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)"
+  },
+  {
+   "order": 2,
+   "id": "f_R1_5219045031109060001",
+   "pnu": "5219045031109060001",
+   "addr": "전북특별자치도 남원시 아영면 두락리 906-1",
+   "jibun": "906-1답",
+   "jimok": "답",
+   "rule": "R1",
+   "priority": "A",
+   "state": "open",
+   "rank": {
+    "value": 13,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv"
+   },
+   "evid_m2": {
+    "value": 2402.5,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 77.7,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid ÷ 필지",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.941,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "imagery": "2시점(2023 25cm · 2025 A02)",
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)"
+  },
+  {
+   "order": 3,
+   "id": "f_R1_5219045021110440003",
+   "pnu": "5219045021110440003",
+   "addr": "전북특별자치도 남원시 아영면 아곡리 1044-3",
+   "jibun": "1044-3답",
+   "jimok": "답",
+   "rule": "R1",
+   "priority": "A",
+   "state": "open",
+   "rank": {
+    "value": 55,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv"
+   },
+   "evid_m2": {
+    "value": 1597.5,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 62.8,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid ÷ 필지",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.974,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "imagery": "2시점(2023 25cm · 2025 A02)",
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)"
+  },
+  {
+   "order": 4,
+   "id": "f_R1_5219045023109340000",
+   "pnu": "5219045023109340000",
+   "addr": "전북특별자치도 남원시 아영면 인풍리 934",
+   "jibun": "934답",
+   "jimok": "답",
+   "rule": "R1",
+   "priority": "A",
+   "state": "open",
+   "rank": {
+    "value": 85,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv"
+   },
+   "evid_m2": {
+    "value": 1472.2,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 55.1,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid ÷ 필지",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.97,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "imagery": "2시점(2023 25cm · 2025 A02)",
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)"
+  },
+  {
+   "order": 5,
+   "id": "f_R1_5219045027108700010",
+   "pnu": "5219045027108700010",
+   "addr": "전북특별자치도 남원시 아영면 성리 870-10",
+   "jibun": "870-10 답",
+   "jimok": "답",
+   "rule": "R1",
+   "priority": "A",
+   "state": "open",
+   "rank": {
+    "value": 110,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv"
+   },
+   "evid_m2": {
+    "value": 1247.8,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 31.5,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid ÷ 필지",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.969,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "imagery": "2시점(2023 25cm · 2025 A02)",
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)"
+  },
+  {
+   "order": 6,
+   "id": "f_R1_5219045027109090006",
+   "pnu": "5219045027109090006",
+   "addr": "전북특별자치도 남원시 아영면 성리 909-6",
+   "jibun": "909-6 답",
+   "jimok": "답",
+   "rule": "R1",
+   "priority": "A",
+   "state": "open",
+   "rank": {
+    "value": 148,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv"
+   },
+   "evid_m2": {
+    "value": 1421.8,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 44.6,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid ÷ 필지",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.928,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "imagery": "2시점(2023 25cm · 2025 A02)",
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)"
+  },
+  {
+   "order": 7,
+   "id": "f_R1_5219045023108830000",
+   "pnu": "5219045023108830000",
+   "addr": "전북특별자치도 남원시 아영면 인풍리 883",
+   "jibun": "883답",
+   "jimok": "답",
+   "rule": "R1",
+   "priority": "A",
+   "state": "open",
+   "rank": {
+    "value": 151,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv"
+   },
+   "evid_m2": {
+    "value": 1180.8,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 36.3,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid ÷ 필지",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.952,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "imagery": "2시점(2023 25cm · 2025 A02)",
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)"
+  },
+  {
+   "order": 8,
+   "id": "f_R1_5219045030110410001",
+   "pnu": "5219045030110410001",
+   "addr": "전북특별자치도 남원시 아영면 의지리 1041-1",
+   "jibun": "1041-1 답",
+   "jimok": "답",
+   "rule": "R1",
+   "priority": "A",
+   "state": "open",
+   "rank": {
+    "value": 188,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv"
+   },
+   "evid_m2": {
+    "value": 778.2,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 20.2,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid ÷ 필지",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.966,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "imagery": "2시점(2023 25cm · 2025 A02)",
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)"
+  },
+  {
+   "order": 9,
+   "id": "f_R1_5219045027109090009",
+   "pnu": "5219045027109090009",
+   "addr": "전북특별자치도 남원시 아영면 성리 909-9",
+   "jibun": "909-9 답",
+   "jimok": "답",
+   "rule": "R1",
+   "priority": "A",
+   "state": "open",
+   "rank": {
+    "value": 189,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv"
+   },
+   "evid_m2": {
+    "value": 1299.7,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 40.7,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid ÷ 필지",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.847,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "imagery": "2시점(2023 25cm · 2025 A02)",
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)"
+  },
+  {
+   "order": 10,
+   "id": "f_R1_5219045025105320000",
+   "pnu": "5219045025105320000",
+   "addr": "전북특별자치도 남원시 아영면 청계리 532",
+   "jibun": "532답",
+   "jimok": "답",
+   "rule": "R1",
+   "priority": "A",
+   "state": "open",
+   "rank": {
+    "value": 194,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv"
+   },
+   "evid_m2": {
+    "value": 811.7,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 37.9,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid ÷ 필지",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.95,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "imagery": "2시점(2023 25cm · 2025 A02)",
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)"
+  },
+  {
+   "order": 11,
+   "id": "f_R1_5219045023108710000",
+   "pnu": "5219045023108710000",
+   "addr": "전북특별자치도 남원시 아영면 인풍리 871",
+   "jibun": "871답",
+   "jimok": "답",
+   "rule": "R1",
+   "priority": "A",
+   "state": "open",
+   "rank": {
+    "value": 198,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv"
+   },
+   "evid_m2": {
+    "value": 743.2,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 28.9,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid ÷ 필지",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.959,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "imagery": "2시점(2023 25cm · 2025 A02)",
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)"
+  },
+  {
+   "order": 12,
+   "id": "f_R1_5219045027109710010",
+   "pnu": "5219045027109710010",
+   "addr": "전북특별자치도 남원시 아영면 성리 971-10",
+   "jibun": "971-10 답",
+   "jimok": "답",
+   "rule": "R1",
+   "priority": "A",
+   "state": "open",
+   "rank": {
+    "value": 204,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv"
+   },
+   "evid_m2": {
+    "value": 404.9,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 31.4,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid ÷ 필지",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.906,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "imagery": "2시점(2023 25cm · 2025 A02)",
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)"
+  },
+  {
+   "order": 13,
+   "id": "f_R1_5219045023106110000",
+   "pnu": "5219045023106110000",
+   "addr": "전북특별자치도 남원시 아영면 인풍리 611",
+   "jibun": "611답",
+   "jimok": "답",
+   "rule": "R1",
+   "priority": "A",
+   "state": "open",
+   "rank": {
+    "value": 213,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv"
+   },
+   "evid_m2": {
+    "value": 683.6,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 56.6,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid ÷ 필지",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.944,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "imagery": "2시점(2023 25cm · 2025 A02)",
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)"
+  },
+  {
+   "order": 14,
+   "id": "f_R1_5219045023108620000",
+   "pnu": "5219045023108620000",
+   "addr": "전북특별자치도 남원시 아영면 인풍리 862",
+   "jibun": "862답",
+   "jimok": "답",
+   "rule": "R1",
+   "priority": "A",
+   "state": "open",
+   "rank": {
+    "value": 216,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv"
+   },
+   "evid_m2": {
+    "value": 667.1,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 27.8,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid ÷ 필지",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.947,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "imagery": "2시점(2023 25cm · 2025 A02)",
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)"
+  },
+  {
+   "order": 15,
+   "id": "f_R1_5219045022108500001",
+   "pnu": "5219045022108500001",
+   "addr": "전북특별자치도 남원시 아영면 봉대리 850-1",
+   "jibun": "850-1답",
+   "jimok": "답",
+   "rule": "R1",
+   "priority": "A",
+   "state": "open",
+   "rank": {
+    "value": 230,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv"
+   },
+   "evid_m2": {
+    "value": 622.0,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 28.9,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid ÷ 필지",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.93,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "imagery": "2시점(2023 25cm · 2025 A02)",
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)"
+  },
+  {
+   "order": 16,
+   "id": "f_R1_5219045026109020001",
+   "pnu": "5219045026109020001",
+   "addr": "전북특별자치도 남원시 아영면 월산리 902-1",
+   "jibun": "902-1답",
+   "jimok": "답",
+   "rule": "R1",
+   "priority": "A",
+   "state": "open",
+   "rank": {
+    "value": 239,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv"
+   },
+   "evid_m2": {
+    "value": 371.5,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 25.9,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid ÷ 필지",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.829,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "imagery": "2시점(2023 25cm · 2025 A02)",
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)"
+  },
+  {
+   "order": 17,
+   "id": "f_R1_5219045023109340004",
+   "pnu": "5219045023109340004",
+   "addr": "전북특별자치도 남원시 아영면 인풍리 934-4",
+   "jibun": "934-4 답",
+   "jimok": "답",
+   "rule": "R1",
+   "priority": "A",
+   "state": "open",
+   "rank": {
+    "value": 243,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv"
+   },
+   "evid_m2": {
+    "value": 922.6,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 89.2,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid ÷ 필지",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.814,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "imagery": "2시점(2023 25cm · 2025 A02)",
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)"
+  },
+  {
+   "order": 18,
+   "id": "f_R1_5219045023108050000",
+   "pnu": "5219045023108050000",
+   "addr": "전북특별자치도 남원시 아영면 인풍리 805",
+   "jibun": "805답",
+   "jimok": "답",
+   "rule": "R1",
+   "priority": "A",
+   "state": "open",
+   "rank": {
+    "value": 248,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv"
+   },
+   "evid_m2": {
+    "value": 606.9,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 23.3,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid ÷ 필지",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.898,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "imagery": "2시점(2023 25cm · 2025 A02)",
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)"
+  },
+  {
+   "order": 19,
+   "id": "f_R1_5219045023106820000",
+   "pnu": "5219045023106820000",
+   "addr": "전북특별자치도 남원시 아영면 인풍리 682",
+   "jibun": "682답",
+   "jimok": "답",
+   "rule": "R1",
+   "priority": "A",
+   "state": "open",
+   "rank": {
+    "value": 255,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv"
+   },
+   "evid_m2": {
+    "value": 463.3,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 20.2,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid ÷ 필지",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.929,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "imagery": "2시점(2023 25cm · 2025 A02)",
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)"
+  },
+  {
+   "order": 20,
+   "id": "f_R1_5219045026108450012",
+   "pnu": "5219045026108450012",
+   "addr": "전북특별자치도 남원시 아영면 월산리 845-12",
+   "jibun": "845-12 답",
+   "jimok": "답",
+   "rule": "R1",
+   "priority": "A",
+   "state": "open",
+   "rank": {
+    "value": 261,
+    "unit": "count",
+    "basis": "estimate",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv"
+   },
+   "evid_m2": {
+    "value": 387.2,
+    "unit": "m2",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "evid_pct": {
+    "value": 64.0,
+    "unit": "%",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "evid ÷ 필지",
+    "note": "검수 전"
+   },
+   "conf": {
+    "value": 0.955,
+    "unit": "ratio",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "survey/namwon-parcel-suspects.csv",
+    "note": "검수 전"
+   },
+   "imagery": "2시점(2023 25cm · 2025 A02)",
+   "img_date": "2023 항공정사 25cm(전북 비도시 도엽)"
+  }
+ ],
+ "imagery_note": {
+  "aoi_in": {
+   "value": 0,
+   "unit": "count",
+   "basis": "recorded",
+   "as_of": "2026-09-24",
+   "source": "survey_timeline change 이벤트"
+  },
+  "aoi_out": {
+   "value": 20,
+   "unit": "count",
+   "basis": "recorded",
+   "as_of": "2026-09-24",
+   "source": "survey_timeline"
+  },
+  "note": "드론 4시점은 0.8×0.9km AOI(A01)만 덮는다 — 그 밖은 2023 ↔ 2025 두 시점(README §5)"
+ },
+ "law": [
+  {
+   "rule": "R1",
+   "candidates": "건축법 · 농지법(농지전용)",
+   "status": "[법령 확인 · 2차 RAG]"
+  }
+ ],
+ "actions": {
+  "field_targets": {
+   "value": 67,
+   "unit": "count",
+   "basis": "inferred",
+   "as_of": "2026-09-24",
+   "source": "PostGIS survey_findings (emd_cd 52190450)",
+   "note": "A등급 우선 · 검수 전"
+  },
+  "checklist": [
+   "건축물대장 대조(건축HUB API 키 대기)",
+   "농지·산지전용 허가 대장 대조(기관 대장 표본 대기)",
+   "현장 사진·측량 확인",
+   "결과 입력: 조사완료(inspected) → 종결(closed) 또는 오탐(dismissed · 사유)"
+  ],
+  "fixed": "AI 추론 · 검수 전 · 현장 확인 전 · 위법 판정 아님"
+ },
+ "citations": [
+  {
+   "n": 1,
+   "label": "아영면 연속지적 필지 수",
+   "value": {
+    "value": 21080,
+    "unit": "필지",
+    "basis": "measured",
+    "as_of": "2026-09-24",
+    "source": "V-World 연속지적 2026-09-24"
+   }
+  },
+  {
+   "n": 2,
+   "label": "실태조사 대상 후보(의심) 건수 · R1",
+   "value": {
+    "value": 387,
+    "unit": "count",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "PostGIS survey_findings (emd_cd 52190450)",
+    "note": "검수 전"
+   }
+  },
+  {
+   "n": 3,
+   "label": "그중 A등급(전체 점수 상위 5%)",
+   "value": {
+    "value": 67,
+    "unit": "count",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "PostGIS survey_findings (emd_cd 52190450)",
+    "note": "검수 전"
+   }
+  },
+  {
+   "n": 4,
+   "label": "후보 필지 수",
+   "value": {
+    "value": 387,
+    "unit": "필지",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "PostGIS survey_findings (emd_cd 52190450)",
+    "note": "검수 전"
+   }
+  },
+  {
+   "n": 5,
+   "label": "미조치(open) 건수",
+   "value": {
+    "value": 387,
+    "unit": "count",
+    "basis": "recorded",
+    "as_of": "2026-09-24",
+    "source": "survey_findings.state"
+   }
+  },
+  {
+   "n": 6,
+   "label": "R1 무허가 건축 의심 건수",
+   "value": {
+    "value": 387,
+    "unit": "count",
+    "basis": "inferred",
+    "as_of": "2026-09-24",
+    "source": "PostGIS survey_findings (emd_cd 52190450)",
+    "note": "검수 전"
+   }
+  }
+ ],
+ "narrative": {
+  "overview": [
+   "아영면의 연속지적 21,080필지를 2023년 25cm 항공정사 AI 결과와 대조했다 [1].",
+   "규칙에 걸린 실태조사 대상 후보는 387건이며 후보 필지는 387필지다 [2][4]."
+  ],
+  "findings": [
+   "규칙별로는 R1 무허가 건축 의심 387건 [6]이다.",
+   "점수 상위 5%인 A등급은 67건으로 현장 확인 우선 대상이다 [3]."
+  ],
+  "actions": [
+   "미조치 387건 가운데 A등급부터 현장조사 담당을 배정한다 [5][3].",
+   "현장 확인 전에 건축물대장과 허가 대장을 먼저 대조해 오탐을 줄인다 [2]."
+  ]
+ },
+ "narrative_source": "정형 문장(LLM 미사용)",
+ "narrative_rejected": [],
+ "as_of": "2026-09-24",
+ "generated": "2026-09-27T02:44:07+09:00",
+ "source": "PostGIS survey_findings (emd_cd 52190450)",
+ "filename": "실태조사_초안_아영면_20260927.docx"
+}

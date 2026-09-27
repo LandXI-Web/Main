@@ -1,0 +1,10 @@
+id: R2
+name: 휴경·전용 의심
+condition: "지목 전·답·과수원, 필지 ≥ {R2_parcel_min_m2:.0f}㎡, AI 농경(경작지+비닐하우스) 비율 < {R2_crop_ratio_max_pct:.0f}%, 건물 비율 < {R2_bld_ratio_max_pct:.0f}%"
+jimok: [전, 답, 과]
+thresholds: {R2_parcel_min_m2: 1000, R2_crop_ratio_max: 0.15, R2_bld_ratio_max: 0.30}
+threshold_basis: "작은 필지는 비율이 불안정 · 건물 30% 이상은 R1 로 본다"
+base_score: 25
+evidence_cls: crop
+requires: [r23_farm, r23_bld]
+note: "과다 추정 가능 · 2025 반증 시 감점 — 1,000㎡ 이상 농지의 25.8%가 걸리고 70%는 AI 농경 0(모델 미탐·촬영 계절·과수원/묘포). A02 교차: R2 필지 48%(138/286) vs 비R2 35%(677/1,939) 2025 비경작 우세 — 신호는 있으나 약함(README §6-4)"

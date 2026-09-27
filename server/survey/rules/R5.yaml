@@ -1,0 +1,10 @@
+id: R5
+name: 산지 개간 의심
+condition: "지목 임야 필지 안에 AI 경작지+비닐하우스 ≥ {R5_crop_m2:.0f}㎡ 이고 필지의 {R5_crop_ratio_pct:.0f}% 이상"
+jimok: [임]
+thresholds: {R5_crop_m2: 1000.0, R5_crop_ratio: 0.30}
+threshold_basis: "소규모 텃밭 제외"
+base_score: 38
+evidence_cls: crop
+requires: [a23_crop_m2, a23_gh_m2, a25_gh_m2]
+note: "산지전용 허가·지목변경 미정리 필지 포함 가능 · 연속지적 경계 수 m 오차(README §6-1·5)"

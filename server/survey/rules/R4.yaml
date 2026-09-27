@@ -1,0 +1,10 @@
+id: R4
+name: 농지 전용 의심(주차장)
+condition: "지목 전·답·과수원 필지 안에 AI 주차장 합계 ≥ {R4_park_m2:.0f}㎡"
+jimok: [전, 답, 과]
+thresholds: {R4_park_m2: 100.0}
+threshold_basis: "주차 약 4면"
+base_score: 40
+evidence_cls: park
+requires: [a23_park_in_m2]
+note: "농로·작업장 포장면이 주차장으로 추론될 수 있음 · 농지전용 허가 대장 대조 전(README §6-3·5)"
