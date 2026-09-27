@@ -122,8 +122,16 @@
 .og-ring .rg-tick { stroke: var(--cw-ink); stroke-width: 1.5; }
 .og-ring .rg-tick[data-kind="soft"] { stroke: var(--og-dim); }
 .og-ring .rg-tick[data-kind="caution"] { stroke: var(--cw-caution); }
-.og-ring[data-caution="1"] .rg-seg[data-kind="value"] { stroke: var(--cw-caution); }
-.og-ring[data-fault="1"] .rg-seg[data-kind="value"] { stroke: var(--cw-warn); }
+/* 주의·장애(F1-C must_fix 4) — caution 이면 값 세그먼트 전부(워커 ai · 값 · 외부 점유 띠까지) + 중앙 % 가 Ops 주의 앰버, fault 는 경고색.
+   트랙도 옅은 앰버로 바뀌어 '이 링이 주의 상태'가 한눈에 읽힌다. 임계는 전부 [목표](VRAM 76% = 95%×.8 · 이용률 80%). */
+.og-ring[data-caution="1"] .rg-seg[data-kind="value"], .og-ring[data-caution="1"] .rg-seg[data-kind="ai"] { stroke: var(--cw-caution); }
+.og-ring[data-caution="1"] .rg-seg[data-kind="ext"] { stroke: rgba(255,182,51,.52); }
+.og-ring[data-caution="1"] .rg-track { stroke: rgba(255,182,51,.16); }
+.og-ring[data-caution="1"] .rg-center b, .og-ring[data-caution="1"] .rg-center [data-k="vpct"] { color: var(--cw-caution); }
+.og-ring[data-fault="1"] .rg-seg[data-kind="value"], .og-ring[data-fault="1"] .rg-seg[data-kind="ai"] { stroke: var(--cw-warn); }
+.og-ring[data-fault="1"] .rg-seg[data-kind="ext"] { stroke: rgba(255,90,78,.55); }
+.og-ring[data-fault="1"] .rg-track { stroke: rgba(255,90,78,.16); }
+.og-ring[data-fault="1"] .rg-center b, .og-ring[data-fault="1"] .rg-center [data-k="vpct"] { color: var(--cw-warn); }
 .og-ring[data-stale="1"] .rg-track { stroke: var(--og-dim); stroke-dasharray: 3 3; }
 .og-ring[data-void="1"] .rg-track { stroke: var(--og-line-2); stroke-dasharray: 3 5; }
 .og-ring .rg-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; }

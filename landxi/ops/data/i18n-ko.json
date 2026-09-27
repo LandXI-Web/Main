@@ -31,7 +31,8 @@
   "running": "실행",
   "done": "완료",
   "failed": "실패",
-  "cancelled": "취소"
+  "cancelled": "취소",
+  "recovered": "복구"
  },
  "dims": {
   "storage_gb": "저장소",
@@ -39,7 +40,9 @@
   "area_km2_month": "분석 면적/월",
   "concurrent_jobs": "동시 작업",
   "egress_gb_month": "전송량/월",
-  "vworld_calls_day": "V-World 호출/일"
+  "vworld_calls_day": "V-World 호출/일",
+  "llm_tokens_month": "LLM 토큰/월",
+  "llm_runs_day": "에이전트 실행/일"
  },
  "policy": {
   "queue_low": "초과 시 P3 강등",
@@ -56,7 +59,7 @@
  },
  "src": {
   "gateway": "실측 · 게이트웨이 :8700",
-  "bridge": "실측 · 로컬 브리지 · 게이트웨이 없음",
+  "bridge": "실측 · 브리지 · 메모리 · 게이트웨이 없음",
   "off": "시연 · 서버 연결 없음"
  },
  "why_off": "준비 중 · 서버 없음",
@@ -93,5 +96,12 @@
   "mod-marine-type": "쓰레기 종류 분류",
   "mod-marine-shore": "해안선 구간화",
   "mod-marine-collect": "수거 계획 산출"
+ },
+ "finding_state": {
+  "open": "미조치",
+  "assigned": "배정",
+  "inspected": "조사",
+  "closed": "종결",
+  "dismissed": "오탐"
  }
 }

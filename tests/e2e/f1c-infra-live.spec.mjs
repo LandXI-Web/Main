@@ -13,7 +13,7 @@ test.afterAll(() => { child?.kill(); });
 const login = async () => (await fetch(B + '/api/v1/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ realm: 'lx', login: 'lx-admin', password: PW }) })).json();
 async function admin(page) {
   const s = await login();
-  await page.addInitScript(([s, base]) => { if (sessionStorage.getItem('f1c')) return; sessionStorage.setItem('f1c', '1'); localStorage.setItem('lx_api_session', JSON.stringify(s)); localStorage.setItem('lx_ops_base', base); localStorage.setItem('lx_api_base', base); localStorage.removeItem('lx_api_mode'); }, [s, B]);
+  await page.addInitScript(([s, base]) => { if (sessionStorage.getItem('f1c')) return; sessionStorage.setItem('f1c', '1'); localStorage.setItem('lx_api_session', JSON.stringify(s)); localStorage.setItem('lx_ops_base', base); localStorage.setItem('lx_api_base', base); localStorage.removeItem('lx_api_mode'); localStorage.setItem('lx_ops_src', 'bridge'); }, [s, B]);
   return s;
 }
 const apiP = (s, p, body) => fetch(B + '/api/v1' + p, { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + s.token }, body: JSON.stringify(body || {}) }).then((r) => r.json());
@@ -33,7 +33,7 @@ test('노드 카드: GPU 2행 링 · 외부 점유 띠(WDDM) · 온도·전력 �
   await expect(page.locator('.gpu-row [data-k="temp"]').first()).toContainText('°C');
   await expect(page.locator('.gpu-row .cw-prov').first()).toContainText('nvidia-smi');
   await expect(page.locator('.a100')).toHaveCount(2);
-  await expect(page.locator('.og-alerts')).toContainText(/경보 없음|GPU|VRAM|E:/);
+  await expect(page.locator('.og-alerts').first()).toContainText(/경보 없음|GPU|VRAM|E:/);
   await expect(page.locator('.og-alerts [data-k="last-check"]')).toHaveText(/\d\d:\d\d:\d\d/);
   await page.locator('.a100 .og-btn').first().click();
   await expect(page.locator('.a100 [data-k="token"]').first()).toHaveText(/^nj_[\w-]{20,}$/);
@@ -98,4 +98,34 @@ test('전력 규칙 — 동시 고부하 GPU ≤ 1: 실행 중이면 두 번째 
   await wk('job.done', { job_id: a.id });
   const c3 = await claim(); expect(c3.job.id).toBe(b.id);
   await wk('job.cancelled', { job_id: b.id });
+});
+
+// F2-C 3차 판정: 고부하 = 이용률(2.5 s) ≥ 50% 만이라 GPU0 151.5 W(순간 145.7 W)에도 '고부하 GPU 0/1' 이었다 → 이용률 OR 전력 ≥ power.limit × 0.5.
+test('전력 규칙 W 케이스 — 이용률 21% · 151.5 W(한도 200 W) = 고부하 · 45% · 80 W = 아님 · caution_why 에 전력 사유 · 칩 title 에 GPU 별 W', async ({ page }) => {
+  const { execFileSync } = await import('node:child_process');
+  const PY = process.env.LX_PYTHON || 'python';
+  const code = [
+    'import sys, json; sys.path.insert(0, "server/ops"); import gpu_poller as g',
+    'E = lambda v, u="W": g.env(v, u, "e2e", "x")',
+    'gs = [{"index": 0, "util_ma5": E(21.0, "%"), "power_w": E(151.5), "power_limit_w": E(200)}, {"index": 1, "util_ma5": E(45.0, "%"), "power_w": E(80.2), "power_limit_w": E(200)}, {"index": 2, "util_ma5": E(62.0, "%"), "power_w": E(60.0), "power_limit_w": E(None)}]',
+    'pb = g.power_budget(g.Store(None), gs, "x")',
+    'print(json.dumps({"pb": pb, "c0": g.caution_reasons(0.3, 21.0, 151.5, 200, 60), "c1": g.caution_reasons(0.3, 45.0, 80.2, 200, 60)}, ensure_ascii=False))'].join('\n');
+  const out = JSON.parse(execFileSync(PY, ['-c', code], { env: { ...process.env, PYTHONIOENCODING: 'utf-8' }, encoding: 'utf8' }));
+  const hn = out.pb.hot_now;
+  expect(hn.gpus).toEqual([0, 2]);                                   // W 로 0 · 이용률로 2
+  expect(hn.value).toBe(2);
+  expect(hn.per[0].why.join(' ')).toMatch(/전력 151\.5 W ≥ 100 W\(한도 200 W × 0\.5\)/);
+  expect(hn.per[1].hot).toBe(false);
+  expect(hn.per[2].thr_w).toBe(100);                                 // 한도를 못 읽으면 100 W
+  expect(out.c0[0].join(' ')).toMatch(/전력 151\.5 W ≥ 100 W/);       // caution_why 에 'W' 사유
+  expect(out.c1[0]).toEqual([]);
+  // 화면(게이트웨이 직결): 칩 title 에 GPU 별 W / 한도 / 임계
+  const gw = await fetch(B + '/health').then((r) => r.json()).catch(() => null);
+  test.skip(!gw?.gateway?.full, '게이트웨이 없음(화면 단언 생략)');
+  const s = await (await fetch('http://localhost:8700/api/v1/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ realm: 'lx', login: 'lx-admin', password: PW }) })).json();
+  await page.addInitScript(([s]) => { localStorage.removeItem('lx_ops_src'); localStorage.removeItem('lx_api_mode'); localStorage.setItem('lx_ops_base', 'http://localhost:8700'); localStorage.setItem('lx_api_base', 'http://localhost:8700'); localStorage.setItem('lx_api_session', JSON.stringify(s)); }, [s]);
+  await page.goto(OPS + '/landxi/ops/infra.html'); await page.waitForFunction(() => document.documentElement.dataset.lx === 'ready');
+  const chip = page.locator('[data-k="power-budget"]');
+  await expect.poll(() => chip.getAttribute('title'), { timeout: 8000 }).toMatch(/GPU0 [\d.—]+ W \/ 한도 \d+ W\(임계 \d+ W\)[\s\S]*GPU1 [\d.—]+ W \/ 한도 \d+ W/);
+  expect(['ok', 'hot', 'caution']).toContain(await chip.getAttribute('data-level'));
 });

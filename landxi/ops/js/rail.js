@@ -12,16 +12,17 @@ export function railNav(page) {
   for (const p of PAGES) nav.append(h('a', { href: `/landxi/ops/${p}.html`, 'data-page': p, ...(p === page ? { 'aria-current': 'page' } : {}) }, icon(ICON[p]), t('rail.' + p)));
   nav.append(h('hr'));
   for (const p of EXT) nav.append(h('a', { href: t('orig_links.' + p), target: '_blank', rel: 'noopener', 'data-ext': '', 'data-page': p, title: '원본 관리자 화면(:4173) · 새 탭 · 2차 이식' }, icon(ICON[p]), t('rail.' + p)));
-  /* F1-∑ 통합 — 같은 작업을 생산 무대(XI맵 · 거기서 Global)로 본다. ?job= 이 있으면 그대로 넘긴다(계보 딥링크). */
+  /* 일원화(v1.1-29) — 같은 작업을 생산·서비스 무대(XI맵 · Global)로 본다. ?job= 이 있으면 그대로 넘긴다(계보 딥링크 왕복). */
   const job = new URLSearchParams(location.search).get('job');
   nav.append(h('hr'));
-  for (const [p, href, label, ic] of [['xi', 'http://localhost:4173/landxi/xi/' + (job ? '?job=' + encodeURIComponent(job) : ''), 'XI맵', 'i-map']])
-    nav.append(h('a', { href, target: '_blank', rel: 'noopener', 'data-ext': '', 'data-page': p, title: '생산·서비스 무대(:4173) · 새 탭' }, icon(ic), label));
+  for (const [p, href, label, ic] of [['xi', 'http://localhost:4173/landxi/xi/' + (job ? '?job=' + encodeURIComponent(job) : ''), 'XI맵', 'i-map'],
+    ['global', 'http://localhost:4173/landxi/global/' + (job ? '?job=' + encodeURIComponent(job) : ''), 'Global', 'i-map']])
+    nav.append(h('a', { href, target: '_blank', rel: 'noopener', 'data-ext': '', 'data-page': p, title: '생산·서비스 무대(:4173) · 새 탭' + (job ? ' · ?job=' + job : '') }, icon(ic), label));
   return nav;
 }
 
 /** 셸을 만든다 → { main, mast, setMeta(), tick() } */
-export function mountFrame({ page, title, crumb = '', user }) {
+export function mountFrame({ page, title, crumb = '', user, assemble = false }) {
   document.body.setAttribute('data-stage', 'ops');
   const src = h('span', { class: 'og-src', 'data-kind': SRC.kind, title: srcTitle() }, h('i'), h('span', { class: 'og-src-t' }, SRC.label));
   const clock = h('span', { class: 'og-clock', 'aria-label': '현재 시각' });
@@ -32,19 +33,26 @@ export function mountFrame({ page, title, crumb = '', user }) {
   const main = h('main', { class: 'og-main', id: 'main' });
   const shell = h('div', { class: 'og-shell' },
     h('aside', { class: 'og-rail' }, h('a', { class: 'og-mark', href: '/landxi/ops/index.html', 'aria-label': 'LX/OPS 운영 현황' }, 'LX', h('b', {}, '/'), 'OPS'), railNav(page)), mast, main);
-  document.body.replaceChildren(shell);
+  if (assemble) { shell.classList.add('is-assemble'); document.body.append(shell); }   // 반전 중: 종이 무대 위에 셸이 카메라 이동과 함께 선다(검정 공백 0)
+  else { const sk = document.getElementById('ogSkel'); document.body.replaceChildren(...[shell, sk].filter(Boolean)); }   // 첫 페인트 골격(#ogSkel)은 위에 남겨 두고 밑에 셸을 세운다 — boot.js unveil() 이 걷는다
   const sm = SRC.health?.summary;   // 브리지 공개 요약으로 먼저 채우고, 화면이 실데이터로 덮는다
   if (sm) { setText(meta.querySelector('[data-k="nodes"]'), String(sm.nodes_up ?? '—')); setText(meta.querySelector('[data-k="gpus"]'), String(sm.gpus ?? '—')); setText(meta.querySelector('[data-k="queued"]'), String(sm.queued ?? 0)); }
   const tickClock = () => setText(clock, hhmmss(new Date().toISOString()));
   tickClock(); setInterval(tickClock, 1000);
+  const rec = SRC.recovered; const recChip = h('span', { class: 'og-tag og-rec', 'data-k': 'recovered', hidden: true });
+  const setRecovered = (r) => { if (!r) return; const n = (r.resumed || 0) + (r.requeued || 0); recChip.hidden = !(n || r.failed); recChip.textContent = `재부팅 복구 ${n}건 · 실패 ${r.failed || 0}`; recChip.title = `게이트웨이 /health.recovered_at_boot · ${JSON.stringify(r)}`; recChip.dataset.level = r.failed ? 'caution' : 'ok'; };
+  setRecovered(rec); src.after(recChip);
   return {
-    main, mast, src,
+    main, mast, src, setRecovered,
+    /** 반전 끝: 종이 무대를 걷고 셸을 제자리(흐름)로 */
+    settle() { for (const el of [...document.body.children]) if (el !== shell && !el.classList.contains('lg-fly') && !el.classList.contains('og-toast')) el.remove(); shell.classList.remove('is-assemble'); document.body.classList.remove('is-flip'); },
     setMeta(k, v) { const b = meta.querySelector(`[data-k="${k}"]`); if (b) setText(b, v); },
     /** 샘플 수신: 점 한 번(120) — 값이 온 순간에만 */
     tick(stale = false, ageS = 0) {
       src.dataset.stale = stale ? '1' : '0';
       const tx = src.querySelector('.og-src-t');
-      tx.textContent = stale ? `${SRC.label} · 수신 없음 ${Math.round(ageS)} s` : SRC.label;
+      // 첫 표본 전(age=Infinity/NaN)은 '수신 대기 n s'(페이지 열림 기준) — Infinity/NaN 글자 0
+      tx.textContent = stale ? (Number.isFinite(ageS) ? `${SRC.label} · 수신 없음 ${Math.round(ageS)} s` : `${SRC.label} · 수신 대기 ${Math.round(performance.now() / 1000)} s`) : SRC.label;
       if (!stale) { const i = src.querySelector('i'); i.classList.remove('og-tick'); void i.offsetWidth; i.classList.add('og-tick'); }
     },
   };

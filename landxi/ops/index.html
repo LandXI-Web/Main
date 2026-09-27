@@ -2,6 +2,10 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<style>@view-transition { navigation: auto; }</style>
+<script>/* 교차문서 전환 옵트인을 head 인라인에 두고(CSS 늦게 도착 시 opt-in disabled 방지) 전환 약속 거부를 삼킨다 — 레일 클릭 이동 pageerror 0 (F2-C must_fix) */
+(function () { var h = function (e) { var vt = e.viewTransition; if (!vt) return; ['ready', 'finished', 'updateCallbackDone'].forEach(function (k) { if (vt[k] && vt[k].catch) vt[k].catch(function () {}); }); };
+  addEventListener('pagereveal', h); addEventListener('pageswap', h); })();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LX/OPS — 운영 현황</title>
 <link rel="stylesheet" href="/landxi/proto/fonts-system.css">
@@ -9,15 +13,19 @@
 <link rel="stylesheet" href="/landxi/assets/css/v2/ops-grid.css">
 <link rel="stylesheet" href="/landxi/ops/ops.css">
 </head>
-<body data-stage="ops">
+<body data-stage="ops" data-page="index">
+<!-- 첫 페인트 골격(F2-C 3차): 모듈이 데이터를 받기 전에도 레일·마스트·판 머리가 선다(화면 이동 시 검정 판 0).
+     직전 방문 스냅샷이 있으면 그 화면으로 덮고('직전 화면 hh:mm:ss · 수신 중' 꼬리표), 실데이터가 서면 boot.js unveil() 이 걷는다. -->
+<div class="og-shell og-skel" id="ogSkel" aria-hidden="true" inert><aside class="og-rail"><a class="og-mark" href="/landxi/ops/index.html">LX<b>/</b>OPS</a><nav class="og-nav"><a href="/landxi/ops/index.html" data-page="index" aria-current="page"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-map"/></svg>운영 현황</a><a href="/landxi/ops/infra.html" data-page="infra"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-run"/></svg>인프라 관제</a><a href="/landxi/ops/tenants.html" data-page="tenants"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-user"/></svg>기관·할당</a><a href="/landxi/ops/deploys.html" data-page="deploys"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-upload"/></svg>배포 제어</a><hr><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-card"/></svg>카드 발행</a><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-data"/></svg>데이터 관리</a><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-settings"/></svg>서비스 관리</a><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-user"/></svg>MY</a><hr><a data-ext="" data-page="xi"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-map"/></svg>XI맵</a><a data-ext="" data-page="global"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-map"/></svg>Global</a></nav></aside><header class="og-mast"><h1>운영 현황</h1><span class="og-crumb">배포 · 노드 · 결재 · 실태조사</span><span class="og-spacer"></span><span class="og-src" data-kind="gateway"><i></i><span class="og-src-t">연결 중 · 게이트웨이</span></span><span class="og-clock" id="skClock"></span></header><main class="og-main"><div class="sk-grid" data-page="index"><section class="og-panel sk-panel" style="--i:0"><header><h2>결재 대기</h2><span class="og-sub">실카운트</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section><section class="og-panel sk-panel" style="--i:1"><header><h2>배포 지도</h2><span class="og-sub">잉크 · 시도·시군구 헤어라인 · 배포 밀집</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section><section class="og-panel sk-panel" style="--i:2"><header><h2>노드</h2><span class="og-sub">node-tr3995wx</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section><section class="og-panel sk-panel" style="--i:3"><header><h2>작업</h2><span class="og-sub">job.state</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section><section class="og-panel sk-panel" style="--i:4"><header><h2>기관별 배포 · 실태조사</h2><span class="og-sub">6기관</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section><section class="og-panel sk-panel" style="--i:5"><header><h2>최근 경보</h2><span class="og-sub">임계 [목표]</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section></div></main></div>
+<script>/* 스냅샷 복원 · 시계 · 안전 타이머(모듈 오류 시에도 8 s 뒤 걷힘) */(function(){try{var d=document,b=d.body,sk=d.getElementById("ogSkel"),pg=b.dataset.page;b.classList.add("has-skel");var c=d.getElementById("skClock");if(c)c.textContent=new Date().toLocaleTimeString("ko-KR",{hour12:false,hour:"2-digit",minute:"2-digit",second:"2-digit",timeZone:"Asia/Seoul"});var v=null;try{v=JSON.parse(localStorage.getItem("lxops:snap:"+pg)||"null")}catch(e){}if(v&&v.h&&Date.now()-v.t<1800000&&Math.abs(v.w-innerWidth)<2){sk.innerHTML=v.h;sk.dataset.snap="1";var m=sk.querySelector(".og-main");if(m)m.scrollTop=v.st||0;var tg=d.createElement("span");tg.className="og-snap-tag";tg.textContent="직전 화면 "+v.at+" · 수신 중";var ms=sk.querySelector(".og-mast .og-spacer");if(ms)ms.after(tg);}setTimeout(function(){var s=d.getElementById("ogSkel");if(s){s.remove();b.classList.remove("has-skel");}},8000);}catch(e){}})();</script>
 <script type="module">
 import { gate, ready } from '/landxi/ops/js/boot.js';
 import { mountFrame } from '/landxi/ops/js/rail.js';
-import { mountOverview } from '/landxi/ops/js/deploy-map.js';
+import { mountOverview } from '/landxi/ops/js/overview.js';
 import { mountPalette } from '/landxi/ops/js/palette.js';
 const w = await gate();
 if (w) {
-  const frame = mountFrame({ page: 'index', title: '운영 현황', crumb: '배포 · 노드 · 결재', user: w });
+  const frame = mountFrame({ page: 'index', title: '운영 현황', crumb: '배포 · 노드 · 결재 · 실태조사', user: w });
   await mountOverview(frame, {});
   mountPalette(); ready();
 }

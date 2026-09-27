@@ -1,4 +1,4 @@
-﻿# LX/OPS 폴러 2개(gpu 2s · storage 60s) — F1-CONTRACT §5.3 Redis 키를 쓴다. 읽기 전용: GPU 위 어떤 프로세스도 건드리지 않는다(Ollama 종료 금지).
+﻿# LX/OPS 폴러 3개(gpu 2s · -lms 500 이동평균 · storage 60s · llm 3s) — F1-CONTRACT §5.3 Redis 키를 쓴다. 읽기 전용: GPU 위 어떤 프로세스도 건드리지 않는다(Ollama 종료 금지).
 # 사용:
 #   powershell -File server/ops/run-pollers.ps1                  # Redis(기본 redis://localhost:6380)로 백그라운드 기동
 #   powershell -File server/ops/run-pollers.ps1 -Stdout -Once    # 단독 검증: 한 번 읽어 JSON 한 줄씩 표준출력(Redis 없이)
@@ -37,13 +37,14 @@ if ($Stdout) {
   $extra = @(); if ($Once) { $extra += "--once" }
   python (Join-Path $here "gpu_poller.py") --stdout "--redis=" --interval $GpuInterval @extra
   python (Join-Path $here "storage_poller.py") --stdout "--redis=" --interval $StorageInterval @extra
+  python (Join-Path $here "llm_poller.py") --stdout "--redis=" --interval 3 @extra
   return
 }
 
 $logs = if ($env:LX_DATA_ROOT) { Join-Path $env:LX_DATA_ROOT "_logs" } else { "E:\Land-XI 플랫폼\02. 데이터\_logs" }
 New-Item -ItemType Directory -Force $logs | Out-Null
 $started = @()
-foreach ($spec in @(@("gpu", "gpu_poller.py", $GpuInterval), @("storage", "storage_poller.py", $StorageInterval))) {
+foreach ($spec in @(@("gpu", "gpu_poller.py", $GpuInterval), @("storage", "storage_poller.py", $StorageInterval), @("llm", "llm_poller.py", 3))) {
   $p = Start-Process python -ArgumentList @(("`"" + (Join-Path $here $spec[1]) + "`""), "--redis", $Redis, "--interval", "$($spec[2])") `
     -RedirectStandardOutput "$logs\f1c-$($spec[0])-poller.log" -RedirectStandardError "$logs\f1c-$($spec[0])-poller.err" -WindowStyle Hidden -PassThru
   $started += $p.Id

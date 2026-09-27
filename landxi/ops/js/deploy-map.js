@@ -33,7 +33,8 @@ export function loadLibs() {
 const D = (p) => 'pmtiles://' + location.origin + '/landxi/data/' + p;
 
 /* ── 스타일 ─────────────────────────────────────────────────────── */
-export const INK = { bg: '#010102', land: '#07090C', rule: 'rgba(255,255,255,.30)', rule2: 'rgba(255,255,255,.12)', rule3: 'rgba(255,255,255,.055)', ai: '#2BD9CF' };
+// F1-C must_fix 3 — 헤어라인 대비 ↑(빈 판으로 읽히지 않게): 해안선 .46 · 시도 .26 · 시군구 .12 (1차 .30 · .12 · .055)
+export const INK = { bg: '#010102', land: '#080B0F', rule: 'rgba(255,255,255,.46)', rule2: 'rgba(255,255,255,.26)', rule3: 'rgba(255,255,255,.12)', ai: '#2BD9CF' };
 export function baseStyle({ face = false } = {}) {
   return {
     version: 8, transition: { duration: 0, delay: 0 },
@@ -44,13 +45,17 @@ export function baseStyle({ face = false } = {}) {
       sgg: { type: 'vector', url: D('vector/pmtiles/sigungu.pmtiles') },
       emd: { type: 'vector', url: D('vector/pmtiles/namwon-emd.pmtiles') },
       farm: { type: 'vector', url: D('vector/pmtiles/namwon-farmland-2025.pmtiles') },
+      // 시도 GeoJSON(199KB · 반전 전에 이미 읽혀 있다) — 남원 z12 → 전국으로 물러날 때 새 타일을 기다리지 않고 헤어라인이 유지된다(검정 판 0)
+      sidoj: { type: 'geojson', data: '/landxi/assets/data/geo/sido.geojson', tolerance: 0.6 },
     },
     layers: [
       { id: 'bg', type: 'background', paint: { 'background-color': face ? '#FFFFFF' : INK.bg } },
       { id: 'sat', type: 'raster', source: 'sat', paint: { 'raster-opacity': face ? 1 : 0, 'raster-fade-duration': 500, 'raster-saturation': 0 } },
       { id: 'outline-fill', type: 'fill', source: 'outline', 'source-layer': 'korea_outline', paint: { 'fill-color': INK.land, 'fill-opacity': face ? 0 : 1 } },
-      { id: 'sgg-line', type: 'line', source: 'sgg', 'source-layer': 'sigungu', minzoom: 5.5, paint: { 'line-color': INK.rule3, 'line-width': 0.6, 'line-opacity': face ? 0 : 1 } },
-      { id: 'sido-line', type: 'line', source: 'sido', 'source-layer': 'sido', paint: { 'line-color': INK.rule2, 'line-width': 0.8, 'line-opacity': face ? 0 : 1 } },
+      { id: 'sidoj-fill', type: 'fill', source: 'sidoj', paint: { 'fill-color': INK.land, 'fill-opacity': face ? 0 : 1 } },
+      { id: 'sidoj-line', type: 'line', source: 'sidoj', paint: { 'line-color': INK.rule2, 'line-width': 1, 'line-opacity': face ? 0 : 1 } },
+      { id: 'sgg-line', type: 'line', source: 'sgg', 'source-layer': 'sigungu', minzoom: 4, paint: { 'line-color': INK.rule3, 'line-width': 0.7, 'line-opacity': face ? 0 : 1 } },
+      { id: 'sido-line', type: 'line', source: 'sido', 'source-layer': 'sido', paint: { 'line-color': INK.rule2, 'line-width': 1, 'line-opacity': face ? 0 : 1 } },
       { id: 'outline-line', type: 'line', source: 'outline', 'source-layer': 'korea_outline', paint: { 'line-color': INK.rule, 'line-width': 1, 'line-opacity': face ? 0 : 1 } },
       { id: 'emd-line', type: 'line', source: 'emd', 'source-layer': 'namwon_emd', minzoom: 8, paint: { 'line-color': face ? 'rgba(255,255,255,.55)' : INK.rule2, 'line-width': 0.8, 'line-opacity': 1 } },
       { id: 'farm-fill', type: 'fill', source: 'farm', 'source-layer': 'namwon_farmland_2025', paint: { 'fill-color': face ? '#0FA9A0' : INK.ai, 'fill-opacity': face ? 0.38 : 0.22 } },
@@ -66,13 +71,14 @@ export async function createMap(container, { face = false, center = [127.8, 36.0
   return map;
 }
 /** 종이 얼굴판 → 잉크(0..1). 1600 --e-cam 동안 rAF 로 호출된다. */
-export function inkMix(map, k) {
+export function inkMix(map, k, lin = k) {   // k = --e-cam 명도 · lin = 선형 시간(위성은 선형으로 물러나 줌아웃 동안 땅이 보인다)
   const lerp = (a, b) => a + (b - a) * k;
   const c = Math.round(lerp(255, 1));
   map.setPaintProperty('bg', 'background-color', `rgb(${c},${c},${Math.round(lerp(255, 2))})`);
-  map.setPaintProperty('sat', 'raster-opacity', lerp(1, 0));
-  map.setPaintProperty('outline-fill', 'fill-opacity', k);
-  for (const id of ['sgg-line', 'sido-line', 'outline-line']) map.setPaintProperty(id, 'line-opacity', k);
+  map.setPaintProperty('sat', 'raster-opacity', Math.max(0, 1 - lin * 1.1) * 0.95);
+  map.setPaintProperty('emd-line', 'line-opacity', 1);
+  map.setPaintProperty('outline-fill', 'fill-opacity', k); map.setPaintProperty('sidoj-fill', 'fill-opacity', k);
+  for (const id of ['sgg-line', 'sido-line', 'outline-line', 'sidoj-line']) map.setPaintProperty(id, 'line-opacity', k);
   map.setPaintProperty('farm-fill', 'fill-opacity', lerp(0.38, 0.26));
   const ai = (a, b) => `rgb(${Math.round(lerp(a[0], b[0]))},${Math.round(lerp(a[1], b[1]))},${Math.round(lerp(a[2], b[2]))})`;
   map.setPaintProperty('farm-fill', 'fill-color', ai([15, 169, 160], [43, 217, 207]));
@@ -109,8 +115,8 @@ export class DeployLayer {
           el.addEventListener('click', (e) => { e.stopPropagation(); this.onPick && this.onPick(d.id); });
           const wrap = h('div', { class: 'dm-mk' }, el);   // 마커 위치 transform 은 wrap 이, 락온·호버 transform 은 el 이 갖는다
           const mk = new ml.Marker({ element: wrap, offset: off, anchor: 'center' }).setLngLat(g.c).addTo(this.map);
-          rec = { el, mk }; this.m.set(d.id, rec);
-          if (arrive) { el.style.animationDelay = (i * 60) + 'ms'; el.classList.add('is-arrive'); }
+          rec = { el, mk, arrived: null }; this.m.set(d.id, rec);
+          if (arrive) { el.style.animationDelay = (i * 60) + 'ms'; el.classList.add('is-arrive'); el.style.setProperty('--lk-delay', (i * 60) + 'ms'); el.classList.add('is-arrive-lock'); rec.arrived = new Promise((r) => setTimeout(r, i * 60 + 380)); }
         } else rec.mk.setOffset(off);
         rec.el.dataset.stage = d.stage; rec.el.dataset.basis = d.basis;
         rec.d = d; i++;
@@ -242,130 +248,4 @@ export function fitOnResize(map, el, bounds, pad) {
 }
 export const panel = (title, sub, right, ...body) => h('section', { class: 'og-panel' }, h('header', {}, h('h2', {}, title), sub ? h('span', { class: 'og-sub' }, sub) : null, right ? h('span', { class: 'og-right' }, right) : null), ...body);
 
-export async function mountOverview(frame, { map = null, fly = null, mapEl = null } = {}) {
-  const { main } = frame;
-  const [deploys, approvals, nodes, gpus, alerts, storage, jobs] = await Promise.all([get('deploys'), get('approvals'), get('nodes'), get('gpus'), get('alerts'), get('storage'), get('jobs')]);
-  const D = deploys?.items || [];
-  const L = h('div', { class: 'ov-l' }), C = h('div', { class: 'ov-c' }), R = h('div', { class: 'ov-r' });
-  main.append(h('div', { class: 'ov' }, L, C, R));
-
-  // ── 좌: 결재 대기 · 배포 단계 · 작업
-  const pend = (approvals?.items || []).filter((a) => a.decision == null);
-  const apK = h('div', { class: 'og-kpi og-kpi-xl', 'data-k': 'approvals' });
-  setText(apK, String(pend.length));
-  const apList = h('div', { class: 'og-note' }, pend.length ? pend.map((a) => `${a.subject_type} · ${a.subject_id}`).join(' / ') : '0 · 대기 없음');
-  L.append(panel('결재 대기', '실카운트', h('a', { class: 'og-lbl', href: '/landxi/ops/deploys.html' }, '배포 제어 →'),
-    h('div', { class: 'og-body' }, h('div', { style: { display: 'flex', alignItems: 'baseline', gap: '12px' } }, apK, h('span', { class: 'og-lbl' }, '건')), apList,
-      approvals?._fallback ? h('div', { class: 'og-why', style: { marginTop: '8px' } }, '게이트웨이에 결재 목록 경로 없음 — 픽스처(계약 변경 요청 §4.10)') : null)));
-  const counts = ['draft', 'shadow', 'canary', 'ga', 'rolled_back'].map((s) => [s, D.filter((d) => d.stage === s).length]);
-  const stageBox = h('div', { class: 'ov-stage' });
-  for (const [s, n] of counts) {
-    const bar = h('div', { class: 'og-bar' }, h('i', { style: { width: (D.length ? (n / D.length) * 100 : 0) + '%', background: STAGE_COLOR[s] } }));
-    stageBox.append(h('span', { class: 'dm-leg', 'data-stage': s }, h('i'), t('stage.' + s, s)), bar, h('span', { class: 'og-num-s', 'data-stage-n': s }, String(n)));
-  }
-  L.append(panel('배포 단계', `배포본 ${D.length}`, tag('history', '이력 시드'), h('div', { class: 'og-body' }, stageBox)));
-  const jobBox = h('div', { class: 'ov-jobs' });
-  const jobRow = (j) => h('div', { class: 'ov-job', 'data-job': j.job_id || j.id }, h('span', { class: 'og-num-s', style: { color: 'var(--cw-ink)' } }, (j.job_id || j.id).slice(0, 18)), h('span', { class: 'og-lbl', 'data-s': j.state }, t('job_state.' + j.state, j.state)), h('span', { class: 'og-note' }, `${j.tenant_id} · ${j.pool}${j.label ? ' · ' + j.label : ''}`), h('span', { class: 'og-num-s' }, hhmmss(j.at || j.created_at)));
-  const js = (jobs?.items || []).slice(0, 5);
-  if (js.length) js.forEach((j) => jobBox.append(jobRow(j))); else jobBox.append(h('div', { class: 'og-note', 'data-empty': '' }, '작업 0 · 대기열 비어 있음'));
-  L.append(panel('작업', 'job.state', null, h('div', { class: 'og-body', style: { paddingTop: '4px' } }, jobBox)));
-  const byT = new Map(); for (const d of D) { if (!byT.has(d.tenant_id)) byT.set(d.tenant_id, []); byT.get(d.tenant_id).push(d); }
-  const tBox = h('div', { class: 'ov-ten' });
-  const drawTen = (list) => { const m = new Map(); for (const d of list) { if (!m.has(d.tenant_id)) m.set(d.tenant_id, []); m.get(d.tenant_id).push(d); }
-    tBox.replaceChildren(...['lx', 'namwon', 'gwangju-jeonnam', 'kgz-agri', 'kgz-land', 'lx-demo'].map((tid) => { const ds = m.get(tid) || [];
-      return h('a', { class: 'ov-ten-r', href: '/landxi/ops/tenants.html?t=' + tid }, h('span', { class: 'og-lbl' }, t('tenant_short.' + tid, tid)), h('span', { class: 'ov-ten-d' }, ...ds.map((d) => h('i', { 'data-stage': d.stage, title: `${d.id} · ${t('stage.' + d.stage)}` }))), h('span', { class: 'og-num-s' }, String(ds.length))); })); };
-  drawTen(D);
-  L.append(panel('기관별 배포', '6기관', h('a', { class: 'og-lbl', href: '/landxi/ops/tenants.html' }, '할당 →'), h('div', { class: 'og-body', style: { paddingTop: '6px' } }, tBox)));
-
-  // ── 우: 노드 요약 · 경보 · 스토리지
-  const nodeBox = h('div', { class: 'ov-nodes' });
-  const gpuRings = new Map();
-  for (const g of gpus?.gpus || [0, 1].map((index) => ({ index }))) {
-    const host = h('div', { class: 'ov-gpu', 'data-gpu': g.index });
-    const r = ring(host, { size: 64, stroke: 6, label: `GPU${g.index} VRAM` });
-    const txt = h('div', {}, h('div', { class: 'og-lbl' }, `GPU ${g.index} · A6000`), h('div', {}, h('span', { class: 'og-num', 'data-k': 'util' }, '—'), h('span', { class: 'og-lbl' }, ' 사용률 · '), h('span', { class: 'og-num', 'data-k': 'temp' }, '—')));
-    host.append(txt); nodeBox.append(host); gpuRings.set(g.index, { r, host });
-  }
-  for (const n of (nodes?.items || []).filter((x) => x.state === 'pending')) nodeBox.append(h('div', { class: 'ov-a100' }, h('span', { class: 'og-lbl' }, n.id + ' · A100 80GB×4'), h('span', { class: 'og-tag', 'data-dashed': '' }, '등록 대기')));
-  const gpuProv = h('div', { style: { marginTop: '10px' } });
-  R.append(panel('노드', 'node-tr3995wx', h('a', { class: 'og-lbl', href: '/landxi/ops/infra.html' }, '인프라 →'), h('div', { class: 'og-body' }, nodeBox, gpuProv)));
-  const alBox = h('div', {}); const strip = alertStrip(alBox, { compact: true }); strip.load(alerts);
-  R.append(panel('최근 경보', '임계 [목표]', null, h('div', { class: 'og-body' }, alBox)));
-  const stBox = h('div', { class: 'og-body' });
-  const renderStorage = (st) => {
-    if (!st?.volumes) { stBox.replaceChildren(h('div', { class: 'cw-void' }, '스토리지 폴러 첫 수집 전')); return; }
-    stBox.replaceChildren(...st.volumes.map((v) => h('div', { style: { display: 'grid', gridTemplateColumns: '28px 1fr auto', gap: '10px', alignItems: 'center', padding: '6px 0' } },
-      h('span', { class: 'og-num' }, v.mount), h('div', { class: 'og-bar', 'data-caution': v.free_gb.value != null && v.total_gb.value && v.free_gb.value / v.total_gb.value < 0.2 ? '1' : '0' }, h('i', { style: { width: v.total_gb.value ? ((1 - v.free_gb.value / v.total_gb.value) * 100).toFixed(1) + '%' : '0%' } })),
-      h('span', { class: 'og-num-s' }, `${fmt(v.free_gb)} GB 여유`))), h('div', { style: { marginTop: '8px' } }, prov(st.volumes[0].free_gb, { short: true })));
-  };
-  renderStorage(storage);
-  R.append(panel('스토리지', 'E · D · C', null, stBox));
-
-  // ── 중앙: 배포 지도
-  const slot = h('div', { class: 'ov-slot dm-wrap' });
-  const over = h('div', { class: 'dm-over' }, h('span', { class: 'og-lbl' }, '배포본'), h('span', { class: 'og-kpi', 'data-k': 'deploys' }, String(D.length)));
-  C.append(panel('배포 지도', '잉크 · 시도·시군구 헤어라인', h('span', { class: 'og-lbl' }, '점 = 배포본 · 색 = 단계'), slot));
-  slot.append(over, h('div', { class: 'dm-scalebar dm-legbox' }, legend()));
-  await sized(slot);
-  const { center, zoom } = fitCamera(slot.clientWidth || 640, slot.clientHeight || 700, KOREA);
-  if (!map) {
-    mapEl = h('div', { class: 'dm-map' }); slot.prepend(mapEl);
-    map = await createMap(mapEl, { face: false, center, zoom });
-    fitOnResize(map, slot, KOREA);
-  } else {
-    // 같은 지도가 자란다: fly(고정 위치) → slot 자리로 1600 --e-cam, 카메라도 같은 1600 으로 남원 → 전국
-    document.body.append(fly);
-    const r = slot.getBoundingClientRect();
-    const ro = new ResizeObserver(() => map.resize()); ro.observe(fly);
-    map.easeTo({ center, zoom, duration: 1600, easing: eCam });
-    requestAnimationFrame(() => { Object.assign(fly.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' }); });
-    await new Promise((res) => { const done = (e) => { if (e.target === fly && e.propertyName === 'width') { fly.removeEventListener('transitionend', done); res(); } }; fly.addEventListener('transitionend', done); setTimeout(res, 1800); });
-    ro.disconnect(); mapEl.className = 'dm-map'; slot.prepend(mapEl); fly.remove(); map.resize();
-    for (const id of ['farm-fill', 'farm-line']) map.setLayoutProperty(id, 'visibility', 'none');
-    map.dragPan.enable(); map.scrollZoom.enable();
-  }
-  map.getCanvas().setAttribute('aria-label', '배포 지도');
-  const layer = new DeployLayer(map, { onPick: (id) => { location.href = '/landxi/ops/deploys.html?d=' + id; } });
-  layer.set(D, { arrive: true });
-  const globe = new Globe(slot, { size: 168 });
-  const gp = globePoints(D.filter((d) => { const c = centroid(d.aoi); return c && !inKorea(c); }));
-  gp.push({ id: 'kr', lnglat: [127.6, 36.2], color: '#ABB3BF' });
-  globe.setPoints(gp); globe.rot = [-98, -32]; globe.draw();
-
-  // ── 텔레메트리
-  const nodesUp = (nodes?.items || []).filter((n) => n.state !== 'pending').length;
-  frame.setMeta('nodes', String(nodesUp)); frame.setMeta('gpus', String(gpus?.gpus?.length ?? 2)); frame.setMeta('queued', '0');
-  const drawGpu = (s) => {
-    for (const g of s.gpus || []) {
-      const x = gpuRings.get(g.index); if (!x) continue;
-      const tot = g.mem_total_mib.value || 1; const ext = g.external_used_mib?.value ?? 0; const used = g.mem_used_mib.value ?? 0;
-      x.r.set({ segs: [{ id: 'ext', kind: 'ext', from: 0, to: ext / tot, title: `외부 점유 ${fmt(ext)} MiB` }, { id: 'wk', kind: 'value', from: ext / tot, to: used / tot }] })
-        .state({ caution: used / tot > 0.76, fault: used / tot > 0.95 });
-      setText(x.host.querySelector('[data-k="util"]'), `${fmt(g.util_pct)}%`);
-      const te = x.host.querySelector('[data-k="temp"]'); setText(te, `${fmt(g.temp_c)}°C`); te.classList.toggle('og-caution', (g.temp_c.value ?? 0) > 68);
-    }
-    if (s.gpus?.[0]) gpuProv.replaceChildren(prov(s.gpus[0].util_pct, { short: true }));
-  };
-  if (gpus?.gpus) drawGpu(gpus);
-  const tel = connect({
-    onGpu: (s) => { drawGpu(s); frame.tick(false); },
-    onQueue: (q) => { frame.setMeta('queued', String((q.pools?.a6000?.queued || 0) + (q.pools?.cpu?.queued || 0))); },
-    onAlert: (a) => strip.event(a),
-    onJob: (ev) => {
-      layer.job(ev);
-      jobBox.querySelector('[data-empty]')?.remove();
-      const old = jobBox.querySelector(`[data-job="${ev.job_id}"]`); const row = jobRow(ev);
-      if (old) old.replaceWith(row); else { row.classList.add('is-new'); jobBox.prepend(row); }
-      while (jobBox.children.length > 5) jobBox.lastChild.remove();
-    },
-    onDeploy: async (ev) => {
-      const j = await get('deploys'); const d = (j.items || []).find((x) => x.id === ev.deploy_id);
-      layer.set(j.items || []); drawTen(j.items || []); if (ev.action === 'rollback') layer.lock(ev.deploy_id, ev.stage);
-      setText(over.querySelector('[data-k="deploys"]'), String((j.items || []).length));
-      if (d && !inKorea(centroid(d.aoi))) { globe.setPoints([...globePoints((j.items || []).filter((x) => !inKorea(centroid(x.aoi)))), { id: 'kr', lnglat: [127.6, 36.2], color: '#ABB3BF' }]); }
-    },
-    onState: (st, age) => { if (st === 'stale') frame.tick(true, age / 1000); },
-  });
-  if (SRC.kind !== 'off') setInterval(async () => { renderStorage(await get('storage')); }, 60000);
-  return { map, layer, globe, tel };
-}
+/* 운영 현황 조립은 overview.js(F2-C) — 반전 중 셸을 세우고 같은 지도를 전국 → 배포 밀집으로 이어 움직인다. */

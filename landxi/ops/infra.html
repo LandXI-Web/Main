@@ -2,6 +2,10 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<style>@view-transition { navigation: auto; }</style>
+<script>/* 교차문서 전환 옵트인을 head 인라인에 두고(CSS 늦게 도착 시 opt-in disabled 방지) 전환 약속 거부를 삼킨다 — 레일 클릭 이동 pageerror 0 (F2-C must_fix) */
+(function () { var h = function (e) { var vt = e.viewTransition; if (!vt) return; ['ready', 'finished', 'updateCallbackDone'].forEach(function (k) { if (vt[k] && vt[k].catch) vt[k].catch(function () {}); }); };
+  addEventListener('pagereveal', h); addEventListener('pageswap', h); })();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LX/OPS — 인프라 관제</title>
 <link rel="stylesheet" href="/landxi/proto/fonts-system.css">
@@ -9,88 +13,180 @@
 <link rel="stylesheet" href="/landxi/assets/css/v2/ops-grid.css">
 <link rel="stylesheet" href="/landxi/ops/ops.css">
 </head>
-<body data-stage="ops">
+<body data-stage="ops" data-page="infra">
+<!-- 첫 페인트 골격(F2-C 3차): 모듈이 데이터를 받기 전에도 레일·마스트·판 머리가 선다(화면 이동 시 검정 판 0).
+     직전 방문 스냅샷이 있으면 그 화면으로 덮고('직전 화면 hh:mm:ss · 수신 중' 꼬리표), 실데이터가 서면 boot.js unveil() 이 걷는다. -->
+<div class="og-shell og-skel" id="ogSkel" aria-hidden="true" inert><aside class="og-rail"><a class="og-mark" href="/landxi/ops/index.html">LX<b>/</b>OPS</a><nav class="og-nav"><a href="/landxi/ops/index.html" data-page="index"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-map"/></svg>운영 현황</a><a href="/landxi/ops/infra.html" data-page="infra" aria-current="page"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-run"/></svg>인프라 관제</a><a href="/landxi/ops/tenants.html" data-page="tenants"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-user"/></svg>기관·할당</a><a href="/landxi/ops/deploys.html" data-page="deploys"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-upload"/></svg>배포 제어</a><hr><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-card"/></svg>카드 발행</a><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-data"/></svg>데이터 관리</a><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-settings"/></svg>서비스 관리</a><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-user"/></svg>MY</a><hr><a data-ext="" data-page="xi"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-map"/></svg>XI맵</a><a data-ext="" data-page="global"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-map"/></svg>Global</a></nav></aside><header class="og-mast"><h1>인프라 관제</h1><span class="og-crumb">GPU · LLM · 대기열 · 모델 배치 · 스토리지</span><span class="og-spacer"></span><span class="og-src" data-kind="gateway"><i></i><span class="og-src-t">연결 중 · 게이트웨이</span></span><span class="og-clock" id="skClock"></span></header><main class="og-main"><div class="sk-grid" data-page="infra"><section class="og-panel sk-panel" style="--i:0"><header><h2>GPU 노드</h2><span class="og-sub">nvidia-smi -lms 100 · 이용률 = 10 s 추세</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section><section class="og-panel sk-panel" style="--i:1"><header><h2>작업 대기열</h2><span class="og-sub">행 = 워커 · 가로 30분</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section><section class="og-panel sk-panel" style="--i:2"><header><h2>모델 배치</h2><span class="og-sub">영상 모델 × GPU · LLM</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section><section class="og-panel sk-panel" style="--i:3"><header><h2>스토리지</h2><span class="og-sub">statfs · du 60s</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section></div></main></div>
+<script>/* 스냅샷 복원 · 시계 · 안전 타이머(모듈 오류 시에도 8 s 뒤 걷힘) */(function(){try{var d=document,b=d.body,sk=d.getElementById("ogSkel"),pg=b.dataset.page;b.classList.add("has-skel");var c=d.getElementById("skClock");if(c)c.textContent=new Date().toLocaleTimeString("ko-KR",{hour12:false,hour:"2-digit",minute:"2-digit",second:"2-digit",timeZone:"Asia/Seoul"});var v=null;try{v=JSON.parse(localStorage.getItem("lxops:snap:"+pg)||"null")}catch(e){}if(v&&v.h&&Date.now()-v.t<1800000&&Math.abs(v.w-innerWidth)<2){sk.innerHTML=v.h;sk.dataset.snap="1";var m=sk.querySelector(".og-main");if(m)m.scrollTop=v.st||0;var tg=d.createElement("span");tg.className="og-snap-tag";tg.textContent="직전 화면 "+v.at+" · 수신 중";var ms=sk.querySelector(".og-mast .og-spacer");if(ms)ms.after(tg);}setTimeout(function(){var s=d.getElementById("ogSkel");if(s){s.remove();b.classList.remove("has-skel");}},8000);}catch(e){}})();</script>
 <script type="module">
-import { gate, ready, get, h, prov, setText, fmt, tag, goal, hhmmss, SRC, write, guardWrite, toast, errText } from '/landxi/ops/js/boot.js';
+import { gate, ready, get, h, prov, setText, fmt, tag, goal, hhmmss, SRC, write, guardWrite, toast, errText, api, t } from '/landxi/ops/js/boot.js';
 import { mountFrame } from '/landxi/ops/js/rail.js';
 import { mountPalette } from '/landxi/ops/js/palette.js';
 import { ring } from '/landxi/ops/js/rings.js';
 import { spark } from '/landxi/ops/js/sparkline.js';
 import { swimlanes, queueRows, leader } from '/landxi/ops/js/lanes.js';
 import { alertStrip } from '/landxi/ops/js/alerts.js';
-import { connect, STALE_MS } from '/landxi/ops/js/telemetry.js';
+import { connect, utilOf, reactOf } from '/landxi/ops/js/telemetry.js';
 import { panel } from '/landxi/ops/js/deploy-map.js';
+import { sse, JOB_EVENTS } from '/landxi/shared/api-v1.js';
 
-const CAUTION = { temp: 68, vram: 0.76 };   // 임계 80% 규칙: 85°C×.8 · 95%×.8 — 전부 [목표]
+// 임계 — 전부 [목표](Ops 80% 규칙: 온도 85°C×.8 · VRAM 95%×.8 · 이용률 100×.8). 폴러가 caution/fault 를 주면 그것을 쓴다(v1.1-28).
+const CAUTION = { temp: 68, vram: 0.76, util: 80 };
+const XI = 'http://localhost:4173/landxi/xi/'; const GLOBAL = 'http://localhost:4173/landxi/global/';
+const IMAGERY_KO = { 'axis-iksan-hwangdeung': '익산 황등 1.36cm', 'ap25-namwon-2023': '남원 25cm 2023' };
 const w = await gate();
 if (w) {
-  const frame = mountFrame({ page: 'infra', title: '인프라 관제', crumb: 'GPU · 대기열 · 모델 배치 · 스토리지', user: w });
+  const frame = mountFrame({ page: 'infra', title: '인프라 관제', crumb: 'GPU · LLM · 대기열 · 모델 배치 · 스토리지', user: w });
   const [nodes, gpus, queues, storage, alerts, models, bench, jobs] = await Promise.all([get('nodes'), get('gpus'), get('queues'), get('storage'), get('alerts'), get('models'), get('bench'), get('jobs')]);
   const G = h('div', { class: 'inf' }); frame.main.append(G);
 
-  // ── 경보 스트립
+  // ── 경보 스트립 + 재부팅 복구 한 줄(v1.1-15 · /health.recovered_at_boot · job.state reason recovered)
   const alHost = h('div', { class: 'inf-alerts' }); G.append(alHost); const strip = alertStrip(alHost); strip.load(alerts);
+  const recLine = h('div', { class: 'og-alerts inf-rec', 'data-level': 'caution', 'data-k': 'rec-line', hidden: true, role: 'status', 'aria-live': 'polite' }, h('i', { class: 'al-dot' }), h('span', { class: 'og-num' }), h('span', { class: 'og-lbl', style: { marginLeft: 'auto' } }));
+  alHost.append(recLine);
+  const recs = new Map();   // job_id → {mode, shards_done, shards_total}
+  const drawRec = () => {
+    const boot = SRC.recovered || null; const list = [...recs.values()];
+    const n = list.filter((r) => r.mode !== 'failed').length + (boot ? (boot.resumed || 0) + (boot.requeued || 0) : 0);
+    const f = list.filter((r) => r.mode === 'failed').length + (boot?.failed || 0);
+    recLine.hidden = !(n || f);
+    setText(recLine.children[1], `재부팅 복구 ${n}건 · 실패 ${f}${list.length ? ' · ' + list.slice(-2).map((r) => `${r.job_id.slice(-8)} ${r.mode === 'failed' ? '실패' : '재개 ' + (r.shards_done ?? '?') + '/' + (r.shards_total ?? '?')}`).join(' · ') : ''}`);
+    setText(recLine.children[2], boot ? `게이트웨이 기동 시 점검 · ${hhmmss(boot.at || boot.checked_at)}` : 'job.state · reason recovered');
+    recLine.dataset.level = f ? 'fault' : 'caution';
+  };
+  drawRec();
 
   // ── 노드 카드
   const n0 = (nodes?.items || []).find((n) => n.state !== 'pending') || { id: 'node-tr3995wx' };
   const lastSeen = h('span', { class: 'og-num', 'data-k': 'last-seen' }, hhmmss(n0.last_seen));
+  // 전력 예산 칩 title — GPU 별 W · 한도 · 판정 사유(폴러 power_budget.hot_now.per)
+  const pbTitle = (pb, s) => { const per = pb.hot_now?.per || (s?.gpus || []).map((g) => ({ gpu: g.index, util_ma5: g.util_ma5?.value, power_w: g.power_w?.value, limit_w: g.power_limit_w?.value, hot: false, why: [] }));
+    return [`전력 규칙(2026-09-26): 동시 고부하 GPU ≤ ${pb.max_hot} · 고부하 = 이용률(2.5 s) ≥ 50% 또는 전력 ≥ 한도 × 0.5 [목표]`,
+      ...per.map((p) => `GPU${p.gpu} ${p.power_w ?? '—'} W / 한도 ${p.limit_w ?? '—'} W(임계 ${p.thr_w ?? '—'} W) · 이용률 ${p.util_ma5 ?? '—'}%${p.hot ? ' → 고부하 · ' + p.why.join(' · ') : ''}`),
+      pb.leases?.length ? '임대 ' + pb.leases.map((l) => `${l.holder}(${l.ttl_s}s)`).join(', ') : '임대 없음'].join('\n'); };
+  const pwChip = h('span', { class: 'og-tag q-power', 'data-k': 'power-budget', title: '전력 규칙(2026-09-26): GPU 2장 동시 풀로드 → 전력 부족 셧다운. 동시 고부하 GPU ≤ 1 — 워커 임대(Redis power:hot:*) + 측정(이용률 2.5 s ≥ 50% 또는 전력 ≥ 한도 × 0.5 [목표])' }, '고부하 GPU —');
   const head = h('div', { class: 'nd-head' },
     h('div', {}, h('div', { class: 'og-lbl' }, '노드'), h('div', { class: 'og-num', id: n0.id }, n0.id)),
     h('div', {}, h('div', { class: 'og-lbl' }, 'CPU'), h('div', { class: 'og-num' }, n0.cpu || '—')),
     h('div', {}, h('div', { class: 'og-lbl' }, 'RAM'), h('div', { class: 'og-num' }, n0.ram_gb ? `${fmt(n0.ram_gb)} GB` : '—')),
     h('div', {}, h('div', { class: 'og-lbl' }, '풀 · 드라이버'), h('div', { class: 'og-num', 'data-k': 'drv' }, `a6000 · ${gpus?.gpus?.[0]?.driver || '—'} ${gpus?.gpus?.[0]?.mode || ''}`)),
-    h('div', { class: 'og-right' }, h('span', { class: 'og-lbl' }, '마지막 수신 '), lastSeen));
+    h('div', { class: 'og-right' }, pwChip, h('span', { class: 'og-lbl' }, ' 마지막 수신 '), lastSeen));
   const rowsBox = h('div', {});
-  G.append(h('section', { class: 'og-panel inf-node' }, h('header', {}, h('h2', {}, 'GPU 노드'), h('span', { class: 'og-sub' }, 'nvidia-smi 2s · 값이 바뀔 때만 현상'), h('span', { class: 'og-right' }, tag(SRC.kind === 'off' ? 'demo' : 'measured'))), head, rowsBox));
+  G.append(h('section', { class: 'og-panel inf-node' }, h('header', {}, h('h2', {}, 'GPU 노드'), h('span', { class: 'og-sub', 'data-k': 'sampler' }, 'nvidia-smi -lms 100 · 이용률 = 10 s 추세 · 반응 2.5 s · 값이 바뀔 때만 현상'), h('span', { class: 'og-right' }, tag(SRC.kind === 'off' ? 'demo' : 'measured'))), head, rowsBox));
   const R = new Map();
-  // 외부 프로세스: 이름 ×n (+ PDH 가 준 프로세스별 전용 메모리 합). 64 MiB 미만(System 등)은 한 줄에서 빼고 툴팁에만.
-  const extNames = (gs, full = false) => { const all = gs.flatMap((g) => g.external || []).filter((p) => full || p.mem_mib == null || p.mem_mib >= 64); const by = {};
-    for (const p of all) { const b = by[p.name] || (by[p.name] = { n: 0, mib: null }); b.n++; if (p.mem_mib != null) b.mib = (b.mib || 0) + p.mem_mib; }
-    return Object.entries(by).map(([k, v]) => `${k} ×${v.n}${full && v.mib != null ? ' ' + fmt(v.mib) + ' MiB' : ''}`).join(' · '); };
+  const extNames = (gs, full = false) => { const all = gs.flatMap((g) => (g.external || []).filter((p) => !p.llm)).filter((p) => full || p.mem_mib == null || (p.mem_mib?.value ?? p.mem_mib) >= 64); const by = {};
+    for (const p of all) { const b = by[p.name] || (by[p.name] = { n: 0, mib: null }); b.n++; const v = p.mem_mib?.value ?? p.mem_mib; if (typeof v === 'number') b.mib = (b.mib || 0) + v; }
+    return Object.entries(by).map(([k, v]) => `${k} ×${v.n}${v.mib != null ? ' ' + fmt(v.mib) + ' MiB' : ''}`).join(' · '); };
   const perProc = (g) => ((g.external || []).some((p) => p.mem_mib != null) ? '프로세스별 VRAM = Windows 커널 집계(PDH · 커밋 기준 — 합이 어댑터 사용량과 다를 수 있음)' : '프로세스별 VRAM N/A(WDDM)');
   for (const g of gpus?.gpus || [{ index: 0 }, { index: 1 }]) {
     const row = h('div', { class: 'gpu-row', 'data-gpu': g.index });
     const ringHost = h('div', { class: 'g-ringc' }); const rg = ring(ringHost, { size: 132, stroke: 6, label: `GPU ${g.index} VRAM` });
     rg.center.append(h('b', { 'data-k': 'vpct' }, '—'), h('span', { 'data-k': 'vmib' }, '—'), h('span', { 'data-k': 'vtot' }, '—'));
-    const util = h('span', { class: 'og-kpi', 'data-k': 'util' }, '—');
-    const spHost = h('div', {}); const sp = spark(spHost, { width: 340, height: 24, max: 100, label: `GPU ${g.index} 사용률 60s` });
+    const cChip = h('div', { class: 'g-cchip', 'data-k': 'caution', hidden: true });
+    ringHost.append(cChip);
+    // 대표 숫자 = 10 s 추세(util_ma10 · v1.1-28 결정 (a)) — 작업의 shard 주기(GPU 버스트 0.5 s + CPU 디코드 1 s)를 평균해 연속 변동 ≤ 10%p.
+    // 2.5 s 이동평균은 '반응' 보조 숫자 + 원표본 25개 막대 + 순간값으로 한 줄 아래(≤ 900 에서도 겹침 0).
+    const util = h('span', { class: 'og-kpi', 'data-k': 'util', title: 'nvidia-smi -lms 100 · 최근 100표본(10 s) 평균 = util_ma10 — 운영 현황 노드 카드 · 큐 행 펼침과 같은 필드' }, '—');
+    const ma5 = h('b', { class: 'og-num-s', 'data-k': 'ma5', title: 'nvidia-smi -lms 100 · 최근 25표본(2.5 s) 이동평균 = util_ma5 — 반응(부하 시작·끝을 빨리 보여 줌) · 전력 예산 판정에 쓴다' }, '—');
+    const smp = h('span', { class: 'g-smp', 'data-k': 'samples', title: 'nvidia-smi -lms 100 원표본 25개(2.5 s) — 이동평균의 재료 · WDDM 이용률은 버스트라 0/100 에 가깝게 뛴다' });
+    const now = h('span', { class: 'og-num-s', 'data-k': 'now', title: 'nvidia-smi 마지막 표본(0.1 s)' }, '');
+    const spHost = h('div', {}); const sp = spark(spHost, { width: 340, height: 24, max: 100, goal: CAUTION.util, label: `GPU ${g.index} 이용률(10 s 추세) 60s` });
+    const band = h('div', { class: 'g-band', 'data-k': 'band', role: 'img' });
     const ext = h('div', { class: 'g-ext', 'data-k': 'ext' }, h('i'), h('span', {}, '외부 점유 —'));
+    const llm = h('div', { class: 'g-llm', 'data-k': 'llm', hidden: true }, h('i'), h('span', {}));
     const budget = h('div', { class: 'og-num-s', 'data-k': 'budget' }, '—');
     const job = h('div', { class: 'g-job', 'data-k': 'job' }, '현재 job 없음');
-    const temp = h('span', { class: 'g-big', 'data-k': 'temp' }, '—'); const pw = h('span', { class: 'g-big', 'data-k': 'pw' }, '—');
+    const temp = h('span', { class: 'g-big', 'data-k': 'temp' }, '—'); const pw = h('span', { class: 'g-big', 'data-k': 'pw' }, '—'); const pwNow = h('div', { class: 'og-num-s', 'data-k': 'pw-now' });
     const provBox = h('div', { 'data-k': 'prov' });
     row.append(ringHost,
-      h('div', { class: 'g-util' }, h('div', { class: 'g-name' }, `GPU ${g.index} · ${g.name || 'NVIDIA RTX A6000'} · 워커 a6000-${g.index}`), h('div', { class: 'g-util-top' }, util, h('span', { class: 'og-lbl' }, '사용률 · 60s')), spHost, ext, budget, job),
+      h('div', { class: 'g-util' }, h('div', { class: 'g-name' }, `GPU ${g.index} · ${g.name || 'NVIDIA RTX A6000'} · 워커 a6000-${g.index}`),
+        h('div', { class: 'g-util-top' }, util, h('span', { class: 'og-lbl' }, '이용률 · 10 s 추세')),
+        h('div', { class: 'g-react' }, h('span', { class: 'og-lbl' }, '반응 2.5 s'), ma5, smp, now), spHost, band, ext, llm, budget, job),
       h('div', { class: 'g-stat' }, h('div', { class: 'og-lbl' }, '온도'), temp, h('div', { class: 'og-lbl', style: { marginTop: '4px' } }, '주의 68°C ', goal())),
-      h('div', { class: 'g-stat' }, h('div', { class: 'og-lbl' }, '전력'), pw, provBox));
-    rowsBox.append(row); R.set(g.index, { row, rg, util, sp, ext, budget, job, temp, pw, provBox });
+      h('div', { class: 'g-stat' }, h('div', { class: 'og-lbl' }, '전력(이동평균)'), pw, pwNow, provBox));
+    rowsBox.append(row); R.set(g.index, { row, rg, util, ma5, smp, now, sp, band, ext, llm, budget, job, temp, pw, pwNow, provBox, cChip });
   }
+  const llmHist = new Map();   // model → [{t, v}] 토큰/초
+  // GPU 카드 '현재 job' — 폴러 표본(worker:{w}:hb.job_id · 2s) 또는 job.state running 이벤트(워커 배정 · 즉시) 중 먼저 온 것. 큐 행 워커와 같은 id.
+  const runOn = new Map();   // gpu index → Map(job id → model) — 한 워커가 여러 작업의 shard 를 번갈아 처리할 수 있다(동시 n건)
+  const endedJobs = new Set();
+  function drawJobCard(i) {
+    const x = R.get(i); if (!x) return;
+    const evs = runOn.get(i) || new Map(); const pj = x.pollJob && !endedJobs.has(x.pollJob) ? x.pollJob : null;   // hb 는 10s 주기 — 끝난 작업 id 가 잠깐 남는 것을 거른다
+    const ids = [...new Set([...(pj ? [pj] : []), ...evs.keys()])].filter((id) => !endedJobs.has(id));
+    const fj = new URLSearchParams(location.search).get('job');   // 행을 누르면 URL ?job= 이 따라간다(lanes.js)
+    const j = ids.includes(fj) ? fj : ids[0] || null;   // 펼친(강조) 작업을 먼저
+    const model = evs.get(j) || (j === pj ? x.pollModel : '') || '';
+    setText(x.job, j ? `현재 job ${j}${model ? ' · ' + model : ''}${ids.length > 1 ? ` · 동시 ${ids.length}건` : ''}` : '현재 job 없음');
+    x.job.dataset.on = j ? '1' : '0'; x.job.dataset.job = j || ''; x.job.title = ids.length > 1 ? `이 워커가 번갈아 처리 중인 작업 ${ids.length}건 · ${ids.join(' · ')}` : '';
+  }
+  let lastGpu = null;   // 큐 행 펼침 'GPU 이용률(10 s 추세)' — 노드 카드 큰 숫자와 같은 필드
   const drawGpu = (s, changed, hist) => {
+    lastGpu = s;
     const names = extNames(s.gpus || []);
     for (const g of s.gpus || []) {
       const x = R.get(g.index); if (!x) continue; const ch = changed?.get(g.index);
       const tot = g.mem_total_mib.value || 1, used = g.mem_used_mib.value ?? 0, extMib = g.external_used_mib?.value ?? used; const wk = Math.max(0, used - extMib);
+      const caution = g.caution ?? (used / tot >= CAUTION.vram || (utilOf(g)?.value ?? 0) >= CAUTION.util); const fault = g.fault ?? used / tot >= 0.95;
+      const vFault = used / tot >= 0.95; const vCaution = !vFault && used / tot >= CAUTION.vram;   // 링 = VRAM 만(전력·이용률 주의는 칩 · 사유)
+      const llms = (g.external || []).filter((p) => p.llm);
+      const procMib = (g.external || []).filter((p) => !p.llm).reduce((a, p) => a + (typeof (p.mem_mib?.value ?? p.mem_mib) === 'number' ? (p.mem_mib?.value ?? p.mem_mib) : 0), 0);
+      const una = g.unattributed_mib?.value ?? null;
       const extTitle = `외부 점유 ${fmt(extMib)} MiB · ${(g.external || []).length ? extNames([g], true) : (names || '프로세스 이름 미보고') + '(노드 전체)'} · ${perProc(g)} · 사용량 출처 ${g.mem_used_mib.source || ''}${g.mem_used_mib.note ? ' · ' + g.mem_used_mib.note : ''}`;
-      if (!ch || ch.has('mem_used_mib') || ch.has('external_used_mib') || ch.has('mem_total_mib') || ch.has('external')) {
+      {   // 주의 칩 — VRAM · 이용률 · 전력(W) 사유(폴러 caution_why) — 사유가 바뀔 때만 글자가 바뀐다
+        x.cChip.hidden = !(caution || fault); x.cChip.dataset.level = fault ? 'fault' : 'caution';
+        const cw = g.caution_why || []; const why = cw.join(' · ') || (fault ? 'VRAM ≥ 95% [목표]' : 'VRAM ≥ 76% · 이용률 ≥ 80% · 전력 ≥ 한도 × 0.5 [목표]');
+        const lbl = fault ? '장애' : cw.some((w) => /^전력/.test(w)) && !cw.some((w) => /^VRAM/.test(w)) ? '주의 · W' : '주의';
+        if (x.cChip.dataset.lbl !== lbl) { x.cChip.dataset.lbl = lbl; x.cChip.replaceChildren(lbl, ' ', goal()); }
+        x.cChip.title = why; x.cChip.dataset.why = why;
+      }
+      if (!ch || ch.has('mem_used_mib') || ch.has('external_used_mib') || ch.has('mem_total_mib') || ch.has('external') || ch.has('state') || ch.has('unattributed_mib')) {
         x.rg.set({ segs: [{ id: 'ext', kind: 'ext', from: 0, to: extMib / tot, title: extTitle }, { id: 'wk', kind: 'ai', from: extMib / tot, to: used / tot, title: `워커 ${fmt(wk)} MiB` }],
-          ticks: [{ kind: 'caution', at: CAUTION.vram }, { kind: 'hard', at: 0.95 }] }).state({ caution: used / tot > CAUTION.vram, fault: used / tot > 0.95 });
+          ticks: [{ kind: 'caution', at: CAUTION.vram }, { kind: 'hard', at: 0.95 }] }).state({ caution: vCaution, fault: vFault });
         setText(x.rg.center.querySelector('[data-k="vpct"]'), `${(used / tot * 100).toFixed(1)}%`);
         setText(x.rg.center.querySelector('[data-k="vmib"]'), `${fmt(used)} MiB`); setText(x.rg.center.querySelector('[data-k="vtot"]'), `/ ${fmt(tot)}`);
-        x.ext.title = extTitle; setText(x.ext.querySelector('span'), `외부 점유 ${fmt(extMib)} MiB · ${(g.external || []).length ? extNames([g]) : (names ? names + ' (노드)' : '이름 미보고')} · WDDM`);
+        x.ext.title = extTitle; setText(x.ext.querySelector('span'), `외부 점유 ${fmt(extMib)} MiB · ${(g.external || []).filter((p) => !p.llm).length ? extNames([g]) : (names ? names + ' (노드)' : '이름 미보고')} · WDDM`);
+        // VRAM 구성 띠: 프로세스(PDH) · LLM/미귀속(WSL) · 워커 · 여유 — 합치지 않는다(각자 출처)
+        const seg = (k, mib, title) => (mib > 0 ? h('i', { 'data-kind': k, style: { width: (mib / tot * 100).toFixed(2) + '%' }, title }) : null);
+        x.band.replaceChildren(...[seg('proc', procMib, `프로세스(PDH) ${fmt(procMib)} MiB`), llms.length && una != null ? seg('llm', una, `LLM · WSL 컨테이너 몫(미귀속 잔차 ${fmt(una)} MiB · 추정)`) : seg('una', una ?? 0, `미귀속 ${fmt(una ?? 0)} MiB`),
+          seg('wk', wk, `워커 ${fmt(wk)} MiB`), seg('free', Math.max(0, tot - used), `여유 ${fmt(Math.max(0, tot - used))} MiB`)].filter(Boolean));   // mib ≤ 0 조각은 빼고(null 문자열화 금지)
+        x.band.setAttribute('aria-label', `VRAM 구성 · 프로세스 ${procMib} · 미귀속 ${una ?? 0} · 워커 ${wk} · 여유 ${Math.max(0, tot - used)} MiB`);
         const bud = Math.max(0, tot - extMib - 2048);
         setText(x.budget, `워커 예산 ${fmt(bud)} MiB = 총 − 외부 − 2,048 · 워커 사용 ${fmt(wk)} MiB`);
       }
-      if (!ch || ch.has('util_pct')) { setText(x.util, `${fmt(g.util_pct)}%`); }
+      // LLM(vLLM) 띠 — 외부 점유 띠와 분리 · VRAM 은 결손(WSL)으로 정직
+      x.llm.hidden = !llms.length;
+      if (llms.length) {
+        // 두 숫자를 이름 붙여 나눈다(3차 판정): 처리량 = 10 s 창 Δ생성 토큰 ÷ 창(유휴 포함 평균) · 생성 속도 = 토큰 간격 히스토그램 Δcount ÷ Δsum(요청 한 줄기)
+        const txt = llms.map((p) => { const l = p.llm; const win = l.tps_window_s?.value;
+          const gen = l.gen_tps?.value == null ? '' : ` · 생성 속도 ${fmt(l.gen_tps, 1)} tok/s${l.gen_basis === 'live' ? '' : l.gen_basis === 'cum' ? '(기동 뒤 평균)' : `(마지막 ${hhmmss(l.gen_tps.as_of)})`}`;
+          return `${l.model || '?'}${l.role ? ' ' + l.role.split('(')[0] : ''} · 처리량 ${l.tps?.value == null ? '—' : fmt(l.tps, 1)} tok/s(${win ? Math.round(win) : 10} s 평균)${gen} · 요청 ${l.reqs_active ?? '—'}`; }).join(' │ ');
+        setText(x.llm.querySelector('span'), `LLM 띠 · vLLM ${txt} │ VRAM 미노출(WSL)${una != null ? ' · 미귀속 ' + fmt(una) + ' MiB [추정]' : ''}`);
+        x.llm.dataset.live = llms.some((p) => p.llm.gen_live || (p.llm.reqs_active ?? 0) > 0) ? '1' : '0';
+        x.llm.title = `vLLM /metrics 대리 읽기(server/ops/llm_poller.py · 3 s 주기) · 처리량 = ${llms[0].llm.tps?.source || ''} · 생성 속도 = ${llms[0].llm.gen_tps?.source || ''} · ${llms[0].llm.gen_tps?.note || ''} · ${llms[0].llm.note}`;
+        for (const p of llms) { const l = p.llm; if (l.tps?.value == null) continue; const hs = llmHist.get(l.model) || []; const tt = Date.parse(l.tps.as_of) || Date.now(); if (!hs.length || hs.at(-1).t !== tt) hs.push({ t: tt, v: l.tps.value }); while (hs.length > 60) hs.shift(); llmHist.set(l.model, hs); }
+      }
+      const um = utilOf(g);
+      if (!ch || ch.has('util_pct') || ch.has('util_ma5') || ch.has('util_ma10')) {
+        setText(x.util, `${um?.value == null ? '—' : fmt(um, 0)}%`); x.util.classList.toggle('og-caution', (um?.value ?? 0) >= CAUTION.util);
+        x.util.dataset.field = um === g.util_ma10 ? 'util_ma10' : um === g.util_ma5 ? 'util_ma5' : 'util_pct';
+        const rm = reactOf(g); setText(x.ma5, `${rm?.value == null ? '—' : fmt(rm, 0)}%`);
+        const smps = g.util_ma5?.samples || []; x.smp.replaceChildren(...smps.map((v) => h('i', { style: { height: Math.max(1, (v.v ?? 0) / 100 * 16) + 'px' }, title: `${v.v}% · ${hhmmss(new Date(v.t).toISOString())}` })));
+        setText(x.now, smps.length ? `순간 ${smps.at(-1).v}%` : '');
+      }
       x.sp.draw(hist?.get(g.index) || []);
       if (!ch || ch.has('temp_c')) { setText(x.temp, `${fmt(g.temp_c)}°C`); x.temp.classList.toggle('og-caution', (g.temp_c.value ?? 0) > CAUTION.temp); }
-      if (!ch || ch.has('power_w')) setText(x.pw, `${fmt(g.power_w, 1)} W`);
-      if (!ch || ch.has('job_id') || ch.has('worker_vram')) { const j = g.job_id || g.worker_vram?.job_id; setText(x.job, j ? `현재 job ${j}${g.worker_vram?.model_id ? ' · ' + g.worker_vram.model_id : ''}` : '현재 job 없음'); x.job.dataset.on = j ? '1' : '0'; }
+      if (!ch || ch.has('power_w')) { setText(x.pw, `${fmt(g.power_w, 1)} W`); setText(x.pwNow, g.power_w_now ? `순간 ${fmt(g.power_w_now, 1)} W` : ''); }
+      x.pollJob = g.job_id || g.worker_vram?.job_id || null; x.pollModel = g.worker_vram?.model_id || null;
+      drawJobCard(g.index);
       x.provBox.replaceChildren(prov(g.power_w, { short: true }));
     }
+    const pb = s.power_budget;
+    if (pb) { const hot = pb.hot_now?.value; setText(pwChip, `고부하 GPU ${hot ?? '—'}/${pb.max_hot} · 임대 ${pb.leases_n}/${pb.max_hot}`); pwChip.title = pbTitle(pb, s); pwChip.dataset.level = (hot ?? 0) > pb.max_hot || pb.leases_n > pb.max_hot ? 'caution' : (hot ?? 0) > 0 ? 'hot' : 'ok'; pwChip.dataset.hot = (pb.hot_now?.gpus || []).join(','); }
+    if (s.nvsmi?.stream) setText(frame.main.querySelector('[data-k="sampler"]'), `nvidia-smi ${s.nvsmi.stream} · 이용률 = 10 s 추세 · 반응 ${((s.nvsmi.ma_window_ms ?? 2500) / 1000).toFixed(1)} s(${s.nvsmi.ma_n ?? 25}표본) · 값이 바뀔 때만 현상`);
     setText(lastSeen, hhmmss(s.at));
+    drawLlmRows(s);
   };
-  if (gpus?.gpus) drawGpu(gpus, null, new Map());
-  else for (const x of R.values()) { x.rg.state({ void: true }); setText(x.util, '—'); x.provBox.replaceChildren(h('div', { class: 'og-why' }, '폴러 미기동 — 수신 없음')); }
 
   // ── A100 노드 2 (등록 대기 · join-token 실동작)
   const side = h('div', { class: 'inf-side' }); G.append(side);
@@ -111,26 +207,106 @@ if (w) {
       h('div', { class: 'pn-row' }, btn, SRC.writable ? null : h('span', { class: 'og-why' }, SRC.why)), tokBox));
   }
 
-  // ── 대기열 · 스윔레인
+  // ── 대기열 · 스윔레인 · 계량(usage.delta)
   const qWrap = h('div', { class: 'q-wrap' });
   const qMeta = h('span', { class: 'og-num-s' }, '—');
-  const qPow = h('span', { class: 'og-tag q-power', 'data-k': 'power', title: '전력 규칙(2026-09-26): GPU 2장 동시 풀로드 → 전력 부족 셧다운. 스케줄러가 동시 고부하 GPU 를 한도 이하로 묶는다 · 측정 = nvidia-smi 사용률' }, '—');
-  G.append(h('section', { class: 'og-panel inf-queue' }, h('header', {}, h('h2', {}, '작업 대기열'), h('span', { class: 'og-sub' }, '행 = 워커 · 가로 30분 · 블록 = job'), h('span', { class: 'og-right' }, qPow, ' ', qMeta)), qWrap));
-  const qr = queueRows(qWrap);
+  const qPow = h('span', { class: 'og-tag q-power', 'data-k': 'power', title: '전력 규칙(2026-09-26): GPU 2장 동시 풀로드 → 전력 부족 셧다운. 스케줄러가 동시 고부하 GPU 를 한도 이하로 묶는다 · 측정 = nvidia-smi 이동평균' }, '—');
+  G.append(h('section', { class: 'og-panel inf-queue' }, h('header', {}, h('h2', {}, '작업 대기열'), h('span', { class: 'og-sub' }, '행 = 워커 · 가로 30분 · 블록 = job · 행 누르면 펼침'), h('span', { class: 'og-right' }, qPow, ' ', qMeta)), qWrap));
+  const jobSse = new Map();
+  const num = (x) => (typeof x === 'number' ? x : x && typeof x.value === 'number' ? x.value : null);
+  const two = (j) => {   // v1.1-6 · job.done 두 줄 — 서버 값(chips_per_gpu_s · chips_per_wall_s) 우선, 없으면 관제가 shards ÷ gpu_s · shards ÷ 벽시계로 계산(표기)
+    const gs = num(j.gpu_s); const el = num(j.elapsed_s) ?? (j.started_at && j.finished_at ? (Date.parse(j.finished_at) - Date.parse(j.started_at)) / 1000 : null);
+    const scg = num(j.chips_per_gpu_s), scw = num(j.chips_per_wall_s);
+    const cg = scg ?? (gs ? j.shards_total / gs : null); const cw = scw ?? (el ? j.shards_total / el : null);
+    return { cg, cw, gs, el, derived: scg == null };
+  };
+  const qr = queueRows(qWrap, {
+    detail: (j, box) => {
+      const sig = JSON.stringify([j.state, j.shards_done, j.shards_total, j.gpu_s?.value, j.finished_at, j._prog?.at, j.recovered?.shards_done, j.workers, ['queued', 'running'].includes(j.state) ? lastGpu?.at : 0]);
+      if (box.dataset.sig === sig) return; box.dataset.sig = sig;
+      const pct = j.shards_total ? (j.shards_done || 0) / j.shards_total : 0;
+      const p = j._prog || {}; const g0 = (p.gpu || [])[0];
+      const d = two(j);
+      const live = ['queued', 'running'].includes(j.state);
+      const gi = Number(String((j.workers || [])[0] || 'a6000-0').split('-').pop()) || 0; const gg = (lastGpu?.gpus || []).find((x) => x.index === gi) || null;
+      const cpsE = p.chips_per_s?.value != null ? p.chips_per_s : null; const cpsV = cpsE ? cpsE.value : null;
+      const cpsWin = cpsE ? (/창 ([\d.]+)\s*s/.exec(cpsE.source || '') || [])[1] || null : null;
+      const isGlobal = /^kgz/.test(j.tenant_id || '') || j.kind === 'index';
+      const kv = (k, v, title) => h('div', { class: 'qd-kv', title }, h('span', { class: 'og-lbl' }, k), h('b', { class: 'og-num-s' }, v ?? '—'));
+      box.replaceChildren(
+        h('div', { class: 'qd-prog' }, h('div', { class: 'og-bar' }, h('i', { 'data-kind': j.state === 'done' ? 'ai' : '', style: { width: (pct * 100).toFixed(1) + '%' } })), h('span', { class: 'og-num-s' }, `${(j.shards_done ?? 0).toLocaleString('ko-KR')}/${(j.shards_total ?? 0).toLocaleString('ko-KR')} shard · ${(pct * 100).toFixed(0)}%`)),
+        h('div', { class: 'qd-grid' },
+          kv('워커', (j.workers || []).join(' · ') || '—'), kv('기관', j.tenant_id), kv('배포본', j.deploy_id || '—'), kv('모델', j.model_id || j.kind),
+          kv('영상', IMAGERY_KO[j.imagery_id] || j.imagery_id || '—'),
+          kv('GPU·s(이 작업)', p.gpu_s_so_far != null ? `${fmt(p.gpu_s_so_far?.value ?? p.gpu_s_so_far, 2)}` : j.gpu_s?.value != null ? fmt(j.gpu_s, 2) : '—', 'gpu_s_so_far — usage_events 누적(이 작업 몫) · 실측'),
+          ...(live ? [
+            kv(`GPU${gi} 이용률(10 s 추세 · 공유)`, gg ? `${fmt(utilOf(gg), 0)}% · ${fmt(gg.power_w, 0)} W` : g0 ? `${g0.util_pct ?? '—'}%` : '—', gg ? 'nvidia-smi -lms 100 · util_ma10 — GPU 노드 큰 숫자와 같은 필드(카드 전체 공유)' : 'job.progress.gpu[] — 워커 이동평균(폴러 표본 전)'),
+            kv('최근 창 칩/s', cpsV != null ? `${cpsV.toFixed(1)}칩/s${cpsWin ? `(창 ${cpsWin} s)` : ''}` : (p.chips_per_s?.note || '창 짧음'), 'job.progress chips_per_s — 진행 중 최근 창(≤ 10 s)의 완료 칩 ÷ 창 · 창 ≥ 1 s · shard ≥ 8 일 때만 값(v1.1-5) · 끝나면 숨기고 두 줄(GPU 초당 · 벽시계)만 남긴다')] : [])),
+        j.state === 'done' && d.cg != null ? h('div', { class: 'qd-done', 'data-k': 'done-two' },
+          h('div', {}, h('b', {}, `GPU 초당 ${d.cg.toFixed(1)}칩`), ' · ', h('b', {}, `벽시계 ${d.cw != null ? d.cw.toFixed(1) : '—'}칩/s`)),
+          h('div', { class: 'og-num-s' }, `이 작업 ${d.gs != null ? d.gs.toFixed(2) : '—'} GPU·s · ${d.el != null ? d.el.toFixed(1) : '—'} s · ${d.derived ? '관제 계산(shards ÷ gpu_s · shards ÷ 경과)' : 'job.done 실측'}`)) : (j.state === 'failed' ? h('div', { class: 'og-why' }, `실패 · ${j.error || '사유 미보고'}`) : ''),
+        h('div', { class: 'qd-links' },
+          h('a', { href: XI + '?job=' + encodeURIComponent(j.id), target: '_blank', rel: 'noopener', 'data-k': 'to-xi' }, 'XI맵에서 보기 ↗'),
+          isGlobal ? h('a', { href: GLOBAL + '?job=' + encodeURIComponent(j.id), target: '_blank', rel: 'noopener', 'data-k': 'to-global' }, 'Global ↗') : null,
+          j.deploy_id ? h('a', { href: '/landxi/ops/deploys.html?deploy=' + encodeURIComponent(j.deploy_id), 'data-k': 'to-deploy' }, '배포 제어 ↗') : null,
+          h('a', { href: '/landxi/ops/tenants.html?tenant=' + encodeURIComponent(j.tenant_id || 'lx'), 'data-k': 'to-tenant' }, '기관·할당 ↗'),
+          h('span', { class: 'og-num-s' }, `생성 ${hhmmss(j.created_at)}${j.started_at ? ' · 시작 ' + hhmmss(j.started_at) : ''}${j.finished_at ? ' · 끝 ' + hhmmss(j.finished_at) : ''}`)));
+      watchJob(j);
+    },
+  });
+  // 펼친 실행 작업은 작업 스트림(SSE /events/jobs/{id})으로 shard 마다 따라간다(게이트웨이) — 브리지는 2s GET
+  function watchJob(j) {
+    if (SRC.kind !== 'gateway' || jobSse.has(j.id) || !['queued', 'running'].includes(j.state)) return;
+    const st = sse('/events/jobs/' + j.id, { events: [...JOB_EVENTS, 'job.recovered'], on: async (name, d) => {
+      if (!d) return;
+      if (name === 'job.progress') qr.patch(j.id, { shards_done: d.shards_done, shards_total: d.shards_total, state: 'running', _prog: d });
+      else if (name === 'job.started') qr.patch(j.id, { state: 'running', workers: d.workers, shards_total: d.shards_total });
+      else if (name === 'job.recovered') { qr.recovered({ ...d, job_id: j.id }); recs.set(j.id, { job_id: j.id, ...d }); drawRec(); }
+      else if (name === 'job.done' || name === 'job.failed' || name === 'job.cancelled') {
+        try { const jj = await api('/jobs/' + j.id); qr.patch(j.id, { ...jj, chips_per_gpu_s: d.chips_per_gpu_s || jj.chips_per_gpu_s, chips_per_wall_s: d.chips_per_wall_s || jj.chips_per_wall_s, elapsed_s: d.elapsed_s ?? jj.elapsed_s, gpu_s: d.gpu_s || jj.gpu_s }); } catch { /* */ }
+        st.close(); jobSse.delete(j.id);
+      }
+    } });
+    jobSse.set(j.id, st);
+  }
   const lnHost = h('div', {}); qWrap.append(lnHost); const ln = swimlanes(lnHost);
-  qr.load((jobs?.items || []).filter((j) => ['queued', 'running'].includes(j.state)).concat((jobs?.items || []).filter((j) => !['queued', 'running'].includes(j.state)).slice(0, 2)));
+  const udBox = h('div', { class: 'ud', 'data-k': 'usage' }, h('div', { class: 'og-lbl' }, '계량 · usage.delta(이 화면을 연 뒤)'), h('div', { class: 'ud-rows' }, h('span', { class: 'og-note' }, 'job 이 GPU 를 쓰면 기관별 gpu_s 가 여기 쌓인다')));
+  qWrap.append(udBox);
+  const ud = new Map();
+  const drawUsage = (d) => {
+    const u = ud.get(d.tenant_id) || { sum: 0, n: 0 }; u.sum += Number(d.amount) || 0; u.n++; u.last = d; ud.set(d.tenant_id, u);
+    const max = Math.max(...[...ud.values()].map((x) => x.sum), 1);
+    const rows = udBox.querySelector('.ud-rows'); rows.querySelector('.og-note')?.remove();
+    for (const [tid, x] of ud) {
+      let r = rows.querySelector(`[data-t="${tid}"]`);
+      if (!r) { r = h('div', { class: 'ud-r', 'data-t': tid }, h('span', { class: 'og-lbl' }, t('tenant_short.' + tid, tid)), h('div', { class: 'og-bar' }, h('i', { 'data-kind': 'ai' })), h('span', { class: 'og-num-s', 'data-k': 'sum' }), h('span', { class: 'og-num-s ud-last', 'data-k': 'last' })); rows.append(r); }
+      r.querySelector('.og-bar i').style.width = (x.sum / max * 100).toFixed(1) + '%';
+      setText(r.querySelector('[data-k="sum"]'), `+${x.sum.toFixed(1)} gpu_s`);
+      if (tid === d.tenant_id) { setText(r.querySelector('[data-k="last"]'), `+${Number(d.amount).toFixed(1)} · ${String(d.job_id || '').slice(-8)} · ${hhmmss(d.at)}`); r.classList.remove('is-tick'); void r.offsetWidth; r.classList.add('is-tick'); }
+    }
+  };
+  const fj = new URLSearchParams(location.search).get('job');
+  let seed = (jobs?.items || []).filter((j) => ['queued', 'running'].includes(j.state)).concat((jobs?.items || []).filter((j) => !['queued', 'running'].includes(j.state)).slice(0, 3));
+  // ?job= 핀 행(3차 판정: data-lx=ready 가 핀 행 도착 전에 찍혀 복구 칩 단언이 1건 실패) — 목록에 있어도 **단건 GET 을 ready 전에** 기다려
+  // 행을 그 작업의 정본 값(recovered · workers · gpu_s)으로 세운다. 게이트웨이 재기동 등으로 실패하면 0.7 s 간격 3회 더.
+  if (fj && SRC.kind !== 'off') {
+    let one = null;
+    for (let k = 0; k < 4 && !one; k++) { try { one = await api('/jobs/' + encodeURIComponent(fj)); } catch (e) { if (e?.code === 'not_found' || e?.status === 404) break; await new Promise((r) => setTimeout(r, 700)); } }
+    if (one) seed = [one, ...seed.filter((j) => j.id !== fj)];
+    else toast(`<b>?job=${fj}</b> · 작업을 찾지 못함`, 'err');   // 없는 작업 — 칩으로 알린다
+  }
+  qr.load(seed);
+  if (fj) document.documentElement.dataset.pin = qr.row(fj) ? 'row' : 'none';   // e2e · 녹화: 핀 행이 섰는지(ready 전)
   const drawQueue = (q) => {
     ln.set(q); const a = q?.pools?.a6000 || {}; const c = q?.pools?.cpu || {};
     setText(qMeta, `a6000 대기 ${a.queued ?? 0} · 실행 ${a.running ?? 0} · cpu 대기 ${c.queued ?? 0} · p95 대기 ${a.p95_wait_s?.value == null ? '—' : fmt(a.p95_wait_s) + 's'}`);
     frame.setMeta('queued', String((a.queued || 0) + (c.queued || 0)));
     const pw = q?.power;
-    if (pw) {
-      const now = pw.heavy_now?.value;
-      setText(qPow, `전력 예산 · 고부하 GPU ${now == null ? '—' : now}/${pw.heavy_max} · 배정 ${pw.booked}/${pw.heavy_max}`);
-      qPow.dataset.level = now != null && now > pw.heavy_max ? 'caution' : 'ok';
-    } else setText(qPow, '전력 예산 · 수신 전');
+    if (pw) { const now = pw.heavy_now?.value; setText(qPow, `전력 예산 · 고부하 GPU ${now == null ? '—' : now}/${pw.heavy_max} · 배정 ${pw.booked}/${pw.heavy_max}`); qPow.dataset.level = now != null && now > pw.heavy_max ? 'caution' : 'ok'; }
+    else if (!qPow.dataset.fromGpu) setText(qPow, '전력 예산 · GPU 표본 대기');
   };
   drawQueue(queues);
+  const syncPow = (s) => { const pb = s?.power_budget; if (!pb || queues?.power) return; qPow.dataset.fromGpu = '1'; setText(qPow, `전력 예산 · 고부하 GPU ${pb.hot_now?.value ?? '—'}/${pb.max_hot} · 임대 ${pb.leases_n}/${pb.max_hot}`); qPow.title = pbTitle(pb, s); qPow.dataset.level = (pb.hot_now?.value ?? 0) > pb.max_hot ? 'caution' : (pb.hot_now?.value ?? 0) > 0 ? 'hot' : 'ok'; };
 
   // ── 스토리지
   const stBody = h('div', { class: 'og-body' });
@@ -156,12 +332,14 @@ if (w) {
   };
   drawStorage(storage);
 
-  // ── 모델 배치 매트릭스(모델 × GPU 상주 · VRAM · bench · 고정/해제)
+  // ── 모델 배치 매트릭스(영상 모델 × GPU + LLM 백엔드 행 · 토큰/초 스파크라인 24px)
   const mdBody = h('div', { class: 'og-body', style: { paddingTop: '4px' } });
-  G.append(h('section', { class: 'og-panel inf-models' }, h('header', {}, h('h2', {}, '모델 배치'), h('span', { class: 'og-sub' }, '모델 × GPU 상주 · VRAM · 처리량 bench'), h('span', { class: 'og-right' }, tag('measured', 'bench 실측 1건'))), mdBody));
+  G.append(h('section', { class: 'og-panel inf-models' }, h('header', {}, h('h2', {}, '모델 배치'), h('span', { class: 'og-sub' }, '영상 모델 × GPU · LLM(vLLM · Ollama) · VRAM · 처리량'), h('span', { class: 'og-right' }, tag('measured', 'bench · /metrics 실측'))), mdBody));
   const benchOf = (id) => (bench?.items || []).find((b) => b.model_id === id);
+  const llmTb = h('tbody', { 'data-k': 'llm-rows' });
+  const llmSparks = new Map();
   const drawModels = (ms) => {
-    const tb = h('table', { class: 'mdl-mx' }, h('thead', {}, h('tr', {}, h('th', {}, '모델'), h('th', {}, 'a6000-0'), h('th', {}, 'a6000-1'), h('th', {}, 'VRAM'), h('th', {}, '처리량(bench)'), h('th', {}, '상주'))));
+    const tb = h('table', { class: 'mdl-mx' }, h('thead', {}, h('tr', {}, h('th', {}, '모델'), h('th', {}, 'a6000-0'), h('th', {}, 'a6000-1'), h('th', {}, 'VRAM'), h('th', {}, '처리량'), h('th', {}, '상주'))));
     const body = h('tbody');
     for (const m of ms?.items || []) {
       const b = benchOf(m.model_id) || null; const cps = b?.chips_per_s || m.perf?.chips_per_s || null;
@@ -178,46 +356,86 @@ if (w) {
         h('td', {}, cps && cps.value != null ? h('span', { title: `${cps.source} · ${cps.note || ''}` }, h('b', { class: 'og-num' }, `≈${fmt(cps)} 칩/s/GPU`), ' ', tag(cps.basis)) : h('span', { class: 'og-why' }, 'bench 전')),
         h('td', {}, pinBtn, m.pin_note ? h('span', { class: 'og-why', style: { marginLeft: '6px' } }, m.pin_note) : null)));
     }
-    tb.append(body); mdBody.replaceChildren(tb, SRC.writable ? null : h('div', { class: 'og-why', style: { marginTop: '8px' } }, `고정/해제 · ${SRC.why}`));
+    tb.append(body, llmTb); mdBody.replaceChildren(...[tb, h('div', { class: 'og-note', style: { marginTop: '8px' } }, 'LLM 행: vLLM 은 WSL2 컨테이너라 프로세스별 VRAM 을 Windows 가 보지 못한다(결손 · 정직) · 컨테이너 제어 0(읽기만) · Ollama 는 종료 금지 — 자기 보고 VRAM.'),
+      SRC.writable ? null : h('div', { class: 'og-why', style: { marginTop: '8px' } }, `고정/해제 · ${SRC.why}`)].filter(Boolean));
   };
+  function drawLlmRows(s) {
+    const byGpu = []; for (const g of s.gpus || []) for (const p of g.external || []) if (p.llm) byGpu.push([g.index, p.llm]);
+    for (const [gi, l] of byGpu) {
+      let r = llmTb.querySelector(`[data-model="${l.model}"]`);
+      if (!r) {
+        const spH = h('span', { class: 'llm-sp' }); const sp = spark(spH, { width: 96, height: 24, max: 50, label: `${l.model} 토큰/초` }); llmSparks.set(l.model, sp);
+        r = h('tr', { 'data-model': l.model, class: 'llm-row' }, h('td', { style: { color: 'var(--cw-ink)' } }, `${l.model} · vllm${l.endpoint ? ' ' + l.endpoint : ''}`, h('div', { class: 'og-num-s' }, l.role || '')),
+          h('td', { class: 'c' }, h('span', { class: 'res', 'data-on': gi === 0 ? '1' : '0', 'data-llm': '1' })), h('td', { class: 'c' }, h('span', { class: 'res', 'data-on': gi === 1 ? '1' : '0', 'data-llm': '1' })),
+          h('td', {}, h('span', { class: 'og-why', title: l.note }, 'WSL 미노출')), h('td', { 'data-k': 'tps' }, h('b', { class: 'og-num' }, '—'), ' ', spH, h('span', { class: 'og-num-s', 'data-k': 'req' })),
+          h('td', {}, h('span', { class: 'og-tag', 'data-dashed': '' }, `GPU${gi} · 컨테이너`)));
+        llmTb.append(r);
+      }
+      const b = r.querySelector('[data-k="tps"] b'); if (setText(b, l.tps?.value == null ? '— tok/s' : `${fmt(l.tps, 1)} tok/s`)) b.title = `${l.tps?.source} · ${l.tps?.note}`;
+      setText(r.querySelector('[data-k="req"]'), ` 요청 ${l.reqs_active ?? '—'} · KV ${l.kv_cache_pct?.value ?? '—'}%`);
+      llmSparks.get(l.model)?.draw(llmHist.get(l.model) || []);
+    }
+    const ol = s.llm_ollama;
+    if (ol?.models?.length) {
+      let r = llmTb.querySelector('[data-model="ollama"]');
+      const sum = ol.models.reduce((a, m) => a + (m.size_vram_mib?.value || 0), 0);
+      if (!r) { r = h('tr', { 'data-model': 'ollama', class: 'llm-row' }, h('td', { style: { color: 'var(--cw-ink)' } }, 'Ollama(llama-server)', h('div', { class: 'og-num-s', 'data-k': 'names' })), h('td', { class: 'c' }, h('span', { class: 'res', 'data-on': '1', 'data-llm': '1' })), h('td', { class: 'c' }, h('span', { class: 'res', 'data-on': '1', 'data-llm': '1' })), h('td', { 'data-k': 'vram' }), h('td', {}, h('span', { class: 'og-why' }, '/metrics 없음')), h('td', {}, h('span', { class: 'og-tag', 'data-dashed': '' }, '종료 금지'))); llmTb.append(r); }
+      setText(r.querySelector('[data-k="names"]'), ol.models.map((m) => m.name).join(' · '));
+      const v = r.querySelector('[data-k="vram"]'); setText(v, `${fmt(sum)} MiB`); v.title = 'Ollama /api/ps size_vram 자기 보고(두 장 분할 합) · 실측';
+    }
+  }
   drawModels(models);
 
-  // ── 용량 계획 [추정] — infra.js capacityPlan() · GPU 보유는 nodes 합계로 교정
+  // ── 용량 계획 [추정]
   const capBody = h('div', { class: 'og-body' });
   G.append(h('section', { class: 'og-panel og-dash inf-cap' }, h('header', {}, h('h2', {}, '용량 계획'), h('span', { class: 'og-sub' }, 'infra.js capacityPlan()'), h('span', { class: 'og-right' }, tag('estimate', '추정'))), capBody));
   try {
     const inf = await import('/landxi/assets/data/infra.js');
     const plan = inf.capacityPlan(); const gpuN = (gpus?.gpus || []).length || 2;
-    const capGpu = gpuN * 24 * 300;   // 가동률 300일/년 [추정] — CAPACITY.gpuCards(4) 대신 등록 노드 합계
+    const capGpu = gpuN * 24 * 300;
     const rows = plan.rows.map((r) => r.id === 'gpu' ? { ...r, cap: capGpu, pct: Math.round(r.use / capGpu * 100), afterPct: Math.round(r.after / capGpu * 100), note: `GPU ${gpuN}장(nodes 합계 · infra.js gpuCards ${inf.CAPACITY.gpuCards} 아님) × 24h × 300일` } : r);
     capBody.append(...rows.map((r) => h('div', { class: 'cap-row' }, h('span', { class: 'og-lbl' }, r.name), h('div', { class: 'og-bar', 'data-caution': r.afterPct >= 80 ? '1' : '0', title: r.note }, h('i', { style: { width: Math.min(100, r.afterPct) + '%' } }), h('em', { style: { left: '80%' } })), h('span', { class: 'og-num-s', style: { color: r.afterPct >= 80 ? 'var(--cw-caution)' : '' } }, `${r.afterPct}%`))),
       h('div', { class: 'og-note', style: { marginTop: '10px' } }, '점선 = 예정 사업 포함 소요 ÷ 보유. 눈금 80% ', goal(), '. 계수 RATES 는 견적용 — bench·계량 실측으로 보정 전.'),
       h('div', { class: 'og-note' }, `GPU 보유 교정: 등록 노드 합계 ${gpuN}장 · A100 노드 2 는 등록 대기(미포함).`));
   } catch (e) { capBody.append(h('div', { class: 'cw-void' }, 'infra.js 읽기 실패 — ' + errText(e))); }
 
-  // ── 텔레메트리
+  // ── 첫 그림 · 텔레메트리
+  if (gpus?.gpus) { drawGpu(gpus, null, new Map()); syncPow(gpus); }
+  else for (const x of R.values()) { x.rg.state({ void: true }); setText(x.util, '—'); x.provBox.replaceChildren(h('div', { class: 'og-why' }, '폴러 미기동 — 수신 없음')); }
   frame.setMeta('nodes', String((nodes?.items || []).filter((n) => n.state !== 'pending').length)); frame.setMeta('gpus', String(gpus?.gpus?.length ?? 2));
   const running = new Set((jobs?.items || []).filter((j) => j.state === 'running').map((j) => j.id));
-  const tel = connect({
-    onGpu: (s, changed, hist) => { drawGpu(s, changed, hist); ln.tick(); frame.tick(false); for (const x of R.values()) { x.row.dataset.stale = '0'; x.rg.el.dataset.stale = '0'; x.rg.el.dataset.void = '0'; } },
+  // ops 스트림의 job.state 는 게이트웨이 밖(다른 에픽 pytest · e2e 주입)에서도 온다 — 없는 id 를 GET /jobs/{id} 로 두드리면 404 가 콘솔에 남는다(판정: 간헐 404 1건).
+  // 그래서 이벤트로 알게 된 작업은 목록(GET /jobs?state=…  · 늘 200)에서 찾는다. 딥링크(?job=)만 단건 GET(없으면 칩으로 알린다).
+  const findJob = async (id, state) => { const l = await api(`/jobs?${state ? 'state=' + state + '&' : ''}limit=100`); return (l?.items || []).find((x) => x.id === id) || null; };
+  connect({
+    onGpu: (s, changed, hist) => { drawGpu(s, changed, hist); syncPow(s); ln.tick(); frame.tick(false); for (const x of R.values()) { x.row.dataset.stale = '0'; x.rg.el.dataset.stale = '0'; x.rg.el.dataset.void = '0'; } },
     onQueue: (q) => drawQueue(q),
     onAlert: (a) => strip.event(a),
+    onUsage: (d) => drawUsage(d),
+    onRecovered: (ev) => { qr.recovered(ev); recs.set(ev.job_id, { job_id: ev.job_id, mode: ev.mode || 'resumed', shards_done: ev.shards_done, shards_total: ev.shards_total }); drawRec(); },
     onJob: async (ev) => {
       qr.event(ev);
       if (ev.state === 'running' && !running.has(ev.job_id)) {
         running.add(ev.job_id);
-        let workers = []; try { const j = await get('jobs'); const jj = (j.items || []).find((x) => x.id === ev.job_id); if (jj) { workers = jj.workers || []; qr.patch(ev.job_id, jj); } } catch { /* */ }
-        const idx = (workers.length ? workers : ['a6000-0', 'a6000-1']).map((w) => Number(String(w).split('-').pop())).filter((i) => R.has(i));
+        let workers = []; try { const jj = SRC.kind !== 'off' ? await findJob(ev.job_id) : null; if (jj) { workers = jj.workers || []; qr.patch(ev.job_id, jj); } } catch { /* */ }
+        // 워커 배정 전(첫 shard 전)이면 a6000 풀의 첫 워커로 먼저 세우고, 1s 간격으로 /jobs 를 다시 읽어 실제 워커로 바로잡는다(최대 6회)
+        // GPU 카드에는 a6000 풀 · a6000-* 워커만(cpu-0/cpu-1 의 접미 숫자를 GPU 0/1 로 읽지 않는다 — F2-C must_fix)
+        const place = (ws) => { const pool = qr.jobs.get(ev.job_id)?.pool || ev.pool; const gw = ws.filter((w) => /^a6000-\d+$/.test(String(w)));
+          const idx = (pool && pool !== 'a6000' ? [] : gw.length ? gw : ws.length ? [] : ['a6000-0']).map((w) => Number(String(w).split('-').pop())).filter((i) => R.has(i));
+          for (const [i, m] of runOn) if (m.has(ev.job_id) && !idx.includes(i)) { m.delete(ev.job_id); drawJobCard(i); }
+          for (const i of idx) { if (!runOn.has(i)) runOn.set(i, new Map()); runOn.get(i).set(ev.job_id, qr.jobs.get(ev.job_id)?.model_id || ev.model_id || ''); drawJobCard(i); } return idx; };
+        const idx = place(workers);
+        if (!workers.length && SRC.kind !== 'off') (async () => { for (let k = 0; k < 6 && running.has(ev.job_id); k++) { await new Promise((r) => setTimeout(r, 1000)); try { const jj = await findJob(ev.job_id); if (jj?.workers?.length) { qr.patch(ev.job_id, jj); place(jj.workers); break; } } catch { break; } } })();
         requestAnimationFrame(() => leader(qr.row(ev.job_id), idx.map((i) => R.get(i).row)));
       }
-      if (['done', 'cancelled', 'failed'].includes(ev.state)) { running.delete(ev.job_id); try { const j = await get('jobs'); const jj = (j.items || []).find((x) => x.id === ev.job_id); if (jj) qr.patch(ev.job_id, jj); } catch { /* */ } }
+      if (['done', 'cancelled', 'failed'].includes(ev.state)) { running.delete(ev.job_id); endedJobs.add(ev.job_id); for (const [i, m] of runOn) if (m.delete(ev.job_id) || R.get(i)?.pollJob === ev.job_id) { const x = R.get(i); if (x && x.pollJob === ev.job_id) x.pollJob = null; drawJobCard(i); } try { const jj = SRC.kind !== 'off' ? await findJob(ev.job_id) : null; if (jj) qr.patch(ev.job_id, jj); } catch { /* */ } }
     },
     onState: (st, age) => {
       if (st === 'stale') { frame.tick(true, age / 1000); for (const x of R.values()) { x.row.dataset.stale = '1'; x.rg.el.dataset.stale = '1'; } }
     },
   });
-  // shard 진행(행의 a/b) — job.state 는 상태 변화만 오므로 실행 중일 때 2s 마다 GET /jobs 로 맞춘다(값이 바뀔 때만 행이 다시 그려진다)
-  if (SRC.kind !== 'off') setInterval(async () => { if (!running.size) return; const j = await get('jobs'); for (const x of j.items || []) if (qr.jobs.has(x.id)) qr.patch(x.id, x); }, 2000);
+  // shard 진행(행의 a/b) — 실행 중일 때 2s 마다 GET /jobs 로 맞춘다(값이 바뀔 때만 행이 다시 그려진다)
+  if (SRC.kind !== 'off') setInterval(async () => { if (!running.size) return; const j = await get('jobs'); for (const x of j.items || []) if (qr.jobs.has(x.id) && !jobSse.has(x.id)) qr.patch(x.id, x); }, 2000);
   if (SRC.kind !== 'off') setInterval(async () => { drawStorage(await get('storage')); }, 60000);
   if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'center' });
   mountPalette(); ready();

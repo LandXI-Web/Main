@@ -1,13 +1,23 @@
 /* LX/OPS 부트 — 포트 관문 · 데이터 원천(게이트웨이 / 로컬 브리지 / 픽스처) · 관리자 세션 · 공용 표기
  * 원천 판정(콘솔 오류 0 — 브라우저가 닫힌 포트를 두드리지 않는다):
  *   localStorage.lx_api_mode === 'off'            → off (픽스처 · 리플레이 · 쓰기 disabled)
- *   /landxi/ops/bridge/health .gateway.up          → gateway (F1-B :8700 · 계약 정본)
- *   /landxi/ops/bridge/health .ok                  → bridge (serve-ops 로컬 브리지 · 폴러 실측 · 쓰기 = 브리지 메모리)
+ *   /landxi/ops/bridge/health .gateway.full        → gateway (F1-B :8700 · 계약 정본 · **기본** — v1.1 결정 · F2-C)
+ *   /landxi/ops/bridge/health .ok                  → bridge (게이트웨이가 죽었을 때만 자동 전환 · 마스트 '브리지 · 메모리' · 쓰기 = 브리지 메모리)
+ *   localStorage.lx_ops_src === 'bridge'           → bridge 강제(e2e 로컬 워커 프로토콜 · 시연 재현)
  * api-v1.js 는 동결 파일이라 고치지 않는다 — base 는 이 origin 의 localStorage.lx_api_base 로만 바꾼다(:4173 과 분리). */
 import { API, session, probe, api, fixture, assertEnvelope, isEnvelope, BASIS_KO, fmt, mastLabel, ApiError } from '/landxi/shared/api-v1.js';
 
 export { API, api, fmt, isEnvelope, BASIS_KO, ApiError };
 export const OPS_PORT = '8702';
+/* 안전망(F2-C 2차 판정): 네이티브 append/prepend/replaceChildren 은 null·undefined 를 "null" 글자로 만든다.
+ * 관제 5화면이 모두 이 모듈을 먼저 부르므로 여기서 한 번 걸러 준다(false 도 무시 — h() 와 같은 규칙). 호출부도 filter(Boolean) 로 고쳤다. */
+for (const P of [Element.prototype, DocumentFragment.prototype]) {
+  for (const m of ['append', 'prepend', 'replaceChildren']) {
+    const orig = P[m]; if (orig.__lxSafe) continue;
+    const safe = function (...kids) { return orig.apply(this, kids.filter((k) => k != null && k !== false)); };
+    safe.__lxSafe = true; P[m] = safe;
+  }
+}
 const FX = '/landxi/ops/data/fixtures/';
 export const SRC = { kind: 'off', label: '', writable: false, why: '', base: '', health: null };
 let I18N = null;
@@ -36,9 +46,9 @@ export async function detect() {
   let h = null;
   if (!off) { try { const r = await fetch('/landxi/ops/bridge/health', { cache: 'no-store' }); h = r.ok ? await r.json() : null; } catch { h = null; } }
   SRC.health = h;
-  // 게이트웨이 직결은 명시 선택(lx_ops_src=gateway) + 관제 경로 전부 200 일 때만 — 기본은 브리지(게이트웨이 읽기 중계 · 쓰기 격리)
+  // v1.1 결정(F1-C must_fix 6): 게이트웨이 직결이 기본 — 관제 경로 전부 200 이면 gateway. 브리지는 게이트웨이가 죽었을 때만(또는 lx_ops_src=bridge 강제).
   let want = null; try { want = localStorage.getItem('lx_ops_src'); } catch { /* */ }
-  if (!off && h && h.gateway && h.gateway.full && want === 'gateway') { SRC.kind = 'gateway'; SRC.base = h.gateway.base; }
+  if (!off && h && h.gateway && h.gateway.full && want !== 'bridge') { SRC.kind = 'gateway'; SRC.base = h.gateway.base; }
   else if (!off && h && h.ok) { SRC.kind = 'bridge'; SRC.base = location.origin + '/landxi/ops/bridge'; }
   else { SRC.kind = 'off'; SRC.base = ''; }
   SRC.gw = h?.gateway || null;
@@ -54,8 +64,9 @@ export async function detect() {
   SRC.writable = SRC.kind !== 'off';
   SRC.why = SRC.writable ? '' : t('why_off', '준비 중 · 서버 없음');
   SRC.label = SRC.kind === 'gateway' ? t('src.gateway').replace(':8700', ':' + (new URL(SRC.base, location.href).port || '80'))
-    : SRC.kind === 'bridge' ? (SRC.gw?.up ? '실측 · 로컬 브리지 · 게이트웨이 중계' : t('src.bridge'))
+    : SRC.kind === 'bridge' ? (want === 'bridge' && SRC.gw?.up ? '실측 · 브리지 · 메모리(강제) · 게이트웨이 중계' : SRC.gw?.up ? '실측 · 브리지 · 메모리 · 게이트웨이 경로 일부 없음' : t('src.bridge'))
     : mastLabel('ko');
+  SRC.recovered = h?.gateway?.recovered_at_boot || null;
   document.documentElement.dataset.src = SRC.kind;
   return SRC;
 }
@@ -73,8 +84,15 @@ export async function gate() {
   if (!w) { location.replace('/landxi/ops/login.html'); return null; }
   if (!(w.realm === 'lx' && w.role === 'admin')) { location.replace('/landxi/ops/login.html?denied=' + encodeURIComponent(w.role || '')); return null; }
   if (SRC.kind !== 'off') {
-    try { const me = await api('/me'); if (!(me.realm === 'lx' && me.role === 'admin')) throw new ApiError('forbidden'); }
-    catch { session.clear(); location.replace('/landxi/ops/login.html'); return null; }
+    // 3차: 게이트웨이 재기동(다른 에픽 · 수 초) 중 /me 네트워크 오류로 세션을 지워 관리자가 로그인 화면으로 튕겼다(녹화 05:12:4x).
+    // 세션은 401/403(인증 실패)일 때만 지운다 — 네트워크 · 5xx 는 0.8 s 간격 6회 다시 묻고, 그래도 안 되면 원천을 다시 판정(브리지 폴백)한다.
+    let me = null, bad = null;
+    for (let k = 0; k < 6 && !me && !bad; k++) {
+      try { me = await api('/me'); }
+      catch (e) { if (e?.status === 401 || e?.status === 403 || ['unauthorized', 'forbidden', 'session_expired'].includes(e?.code)) bad = e; else await new Promise((r) => setTimeout(r, 800)); }
+    }
+    if (!me && !bad) { await detect(); if (SRC.kind !== 'off') { try { me = await api('/me'); } catch (e) { bad = e; } } else return who(); }
+    if (bad || !(me && me.realm === 'lx' && me.role === 'admin')) { session.clear(); location.replace('/landxi/ops/login.html'); return null; }
   }
   return w;
 }
@@ -106,9 +124,22 @@ const MAP = {
   approvals: ['/approvals', 'approvals.json'], jobs: ['/jobs?limit=50', null], audit: ['/ops/audit', null],
 };
 const BRIDGE_ONLY = new Set(['approvals', 'audit']);   // 계약 밖(결과 문서 '계약 변경 요청' §4.10) — 게이트웨이에는 부르지 않는다(404 콘솔 0)
+/** 게이트웨이 직결 모드: 계약 밖 읽기(approvals · audit)는 :8702 가 정본 DB 를 읽기만 해서 준다(server/ops/audit_read.py). */
+export async function gwRead(kind, q = {}) {
+  const tok = session.get()?.token; const u = new URL('/landxi/ops/bridge/gw/' + kind, location.origin);
+  for (const [k, v] of Object.entries(q)) if (v != null) u.searchParams.set(k, v);
+  try { const r = await fetch(u, { headers: { authorization: 'Bearer ' + tok }, cache: 'no-store' }); return r.ok ? await r.json() : { items: [], _fallback: 'http_' + r.status }; }
+  catch { return { items: [], _fallback: 'network' }; }
+}
+/** 배포본 감사 이력 — 게이트웨이: 정본 DB · 브리지: 브리지 메모리 · off: 없음 */
+export async function auditOf(subject) {
+  if (SRC.kind === 'gateway') return gwRead('audit', { subject, limit: 50 });
+  if (SRC.kind === 'bridge') { try { return await api('/ops/audit?subject=' + encodeURIComponent(subject)); } catch { return { items: [] }; } }
+  return null;
+}
 export async function get(name) {
   const [path, fx] = MAP[name];
-  if (SRC.kind === 'gateway' && BRIDGE_ONLY.has(name)) { const j = fx ? await fixture(FX + fx) : { items: [] }; if (j) j._fallback = 'not_in_contract'; return j; }
+  if (SRC.kind === 'gateway' && BRIDGE_ONLY.has(name)) { const j = await gwRead(name, { limit: 100 }); if (j && !j._fallback) return j; const f = fx ? await fixture(FX + fx) : { items: [] }; if (f) f._fallback = 'not_in_contract'; return f; }
   if (SRC.kind !== 'off') {
     try { return await api(path); }
     catch (e) {
@@ -196,5 +227,31 @@ export function confirmBox({ title, text, reason = true, ok = '확인', danger =
   });
 }
 export function errText(e) { return e && e.code ? `${e.code}${e.message && e.message !== e.code ? ' · ' + e.message : ''}` : String(e); }
-export function ready() { requestAnimationFrame(() => { document.documentElement.dataset.lx = 'ready'; }); }
+export function ready() { unveil(); requestAnimationFrame(() => { document.documentElement.dataset.lx = 'ready'; }); }
+
+/* ── 첫 페인트 골격 · 직전 화면 스냅샷(F2-C 3차 판정: 화면 이동마다 오른쪽 판이 순수 검정 25프레임) ─────────────
+ * 각 화면 HTML 이 정적 골격(#ogSkel · 레일 · 마스트 · 판 머리)을 첫 페인트에 세우고, 직전 방문 스냅샷이 있으면 그것으로 덮는다(인라인 스크립트).
+ * 모듈이 실데이터로 셸을 세우는 동안 골격은 위에 덮여 있고(rail.js mountFrame 이 밑에 셸을 넣는다), unveil() 이 걷는다 — 빈 판 · '—' 골격 노출 0.
+ * 떠날 때(pagehide) 지금 셸을 스냅샷으로 남긴다: 캔버스 · 토스트 · 리더선 빼고 · id 와 data-k 는 바꿔 적어(e2e 선택자 · 중복 id 0) · 60만 자 넘으면 안 남긴다. */
+export function unveil() {
+  const sk = document.getElementById('ogSkel'); if (!sk) return false;
+  sk.remove(); document.body.classList.remove('has-skel');
+  document.documentElement.dataset.unveil = String(Math.round(performance.now()));
+  return true;
+}
+const SNAP_MAX = 600000;
+function saveSnap() {
+  try {
+    const pg = document.body.dataset.page; const sh = document.querySelector('.og-shell:not(.og-skel)');
+    if (!pg || !sh || document.documentElement.dataset.lx !== 'ready') return;
+    const c = sh.cloneNode(true);
+    c.querySelectorAll('canvas, .og-toast, .leader, .og-modal-back, .maplibregl-control-container, script').forEach((e) => e.remove());
+    c.querySelectorAll('[id]').forEach((e) => { e.removeAttribute('id'); });
+    c.querySelectorAll('[data-k]').forEach((e) => { e.setAttribute('data-sk', e.getAttribute('data-k')); e.removeAttribute('data-k'); });
+    c.querySelectorAll('.is-new, .is-tick').forEach((e) => e.classList.remove('is-new', 'is-tick'));
+    const html = c.innerHTML; if (html.length > SNAP_MAX) return;
+    localStorage.setItem('lxops:snap:' + pg, JSON.stringify({ t: Date.now(), w: innerWidth, st: sh.querySelector('.og-main')?.scrollTop || 0, at: hhmmss(new Date().toISOString()), h: html }));
+  } catch { /* 저장소 가득 · 사생활 모드 — 스냅샷 없이 정적 골격만 */ }
+}
+addEventListener('pagehide', saveSnap);
 export const STAGE_ORDER = ['draft', 'shadow', 'canary', 'ga'];

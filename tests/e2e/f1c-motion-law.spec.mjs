@@ -16,7 +16,7 @@ test.afterAll(() => { child?.kill(); });
 const login = async () => (await fetch(B + '/api/v1/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ realm: 'lx', login: 'lx-admin', password: PW }) })).json();
 async function admin(page) {
   const s = await login();
-  await page.addInitScript(([s, base]) => { if (sessionStorage.getItem('f1c')) return; sessionStorage.setItem('f1c', '1'); localStorage.setItem('lx_api_session', JSON.stringify(s)); localStorage.setItem('lx_ops_base', base); localStorage.setItem('lx_api_base', base); localStorage.removeItem('lx_api_mode'); }, [s, B]);
+  await page.addInitScript(([s, base]) => { if (sessionStorage.getItem('f1c')) return; sessionStorage.setItem('f1c', '1'); localStorage.setItem('lx_api_session', JSON.stringify(s)); localStorage.setItem('lx_ops_base', base); localStorage.setItem('lx_api_base', base); localStorage.removeItem('lx_api_mode'); localStorage.setItem('lx_ops_src', 'bridge'); }, [s, B]);
 }
 async function offMode(page) { await page.addInitScript(() => { localStorage.setItem('lx_api_mode', 'off'); localStorage.setItem('lx_logged_in', '1'); localStorage.setItem('lx_role', 'admin'); localStorage.removeItem('lx_api_session'); }); }
 
@@ -60,7 +60,7 @@ for (const pg of PAGES) {
     });
     expect(small).toEqual([]);
     const amberOut = await page.evaluate(() => {
-      const A = 'rgb(255, 182, 51)'; const ok = '.og-caution,.is-caution,[data-goal],[data-stage="rolled_back"],[data-caution="1"],[data-blocked="1"],.rg-tick[data-kind="caution"],.og-alerts,.cap-row,.st-ring,.tn-ghost,.dm-leg,.leader,.is-lock,.cw-lock';
+      const A = 'rgb(255, 182, 51)'; const ok = '.g-cchip,.q-rec,.og-rec,.og-caution,.is-caution,[data-goal],[data-stage="rolled_back"],[data-caution="1"],[data-blocked="1"],.rg-tick[data-kind="caution"],.og-alerts,.cap-row,.st-ring,.tn-ghost,.dm-leg,.leader,.is-lock,.cw-lock';
       const out = [];
       for (const el of document.querySelectorAll('body *')) {
         const cs = getComputedStyle(el);

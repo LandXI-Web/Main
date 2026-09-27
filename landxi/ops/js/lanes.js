@@ -6,6 +6,9 @@ const focusJob = () => new URLSearchParams(location.search).get('job');   // F1-
 const NS = 'http://www.w3.org/2000/svg';
 const sv = (tag, a = {}) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(a)) e.setAttribute(k, v); return e; };
 const WIN = 30 * 60e3;
+/** 서버 문자열의 깨진 조각(짝 없는 서로게이트 · U+FFFD — 원문 인코딩 손상)을 걷어 낸다 — 보이는 글자만 */
+const BROKEN = new RegExp('[\\uD800-\\uDBFF](?![\\uDC00-\\uDFFF])|(?<![\\uD800-\\uDBFF])[\\uDC00-\\uDFFF]|\\uFFFD', 'g');
+const clean = (x) => { const s0 = String(x ?? ''); const c = s0.replace(BROKEN, '').replace(/\s{2,}/g, ' ').trim(); return c === s0.trim() ? c : c + ' (원문 일부 인코딩 손상)'; };
 
 export function swimlanes(host, { workers = ['a6000-0', 'a6000-1', 'cpu-0'], height = 30 } = {}) {
   const wrap = h('div', { class: 'ln' }); host.append(wrap);
@@ -44,12 +47,17 @@ export function swimlanes(host, { workers = ['a6000-0', 'a6000-1', 'cpu-0'], hei
   };
 }
 
-/** 큐 행 — GET /jobs + job.state. 버튼은 계약 §4.4 POST /jobs/{id}/cancel|requeue|priority */
-export function queueRows(host, { onChange } = {}) {
+/** 큐 행 — GET /jobs + job.state. 버튼은 계약 §4.4 POST /jobs/{id}/cancel|requeue|priority
+ * v1.1-29(F2-C): 행을 누르거나 ?job= 로 들어오면 **펼친다**(shard 진행 · gpu_s_so_far · 워커 · 기관 · 배포본 · job.done 두 줄 · XI맵/Global 왕복)
+ * + 강조(is-focus) + 스크롤. 펼친 내용은 detail(j, box) 콜백이 채운다(값이 바뀔 때만). 복구된 작업은 '복구 · 재개 a/b' 칩(v1.1-15). */
+export function queueRows(host, { onChange, detail, max = 5 } = {}) {
   const box = h('div', { class: 'q-rows' }); host.append(box);
-  const jobs = new Map();
+  const jobs = new Map(); const open = new Set(); const more = new Map(); let scrolled = false;
+  const fj = focusJob(); if (fj) open.add(fj);
   const render = () => {
-    const list = [...jobs.values()].sort((a, b) => ({ running: 0, queued: 1 }[a.state] ?? 2) - ({ running: 0, queued: 1 }[b.state] ?? 2) || String(b.created_at || b.at).localeCompare(String(a.created_at || a.at))).slice(0, 5);
+    const f = focusJob();
+    const all = [...jobs.values()].sort((a, b) => ({ running: 0, queued: 1 }[a.state] ?? 2) - ({ running: 0, queued: 1 }[b.state] ?? 2) || String(b.created_at || b.at).localeCompare(String(a.created_at || a.at)));
+    let list = all.slice(0, max); const pin = all.find((j) => j.id === f); if (pin && !list.includes(pin)) list = [pin, ...list.slice(0, max - 1)];   // 딥링크 작업은 늘 보인다
     const keep = new Set(list.map((j) => j.id));
     for (const el of [...box.children]) if (!keep.has(el.dataset.job)) el.remove();
     if (!list.length) { if (!box.querySelector('.q-empty')) box.replaceChildren(h('div', { class: 'q-empty og-note' }, '대기열 비어 있음 · job 0 — 제출되면 여기에 행이 서고 노드로 리더선이 간다')); return; }
@@ -58,24 +66,41 @@ export function queueRows(host, { onChange } = {}) {
       let row = box.querySelector(`[data-job="${j.id}"]`);
       if (!row) { row = h('div', { class: 'q-row is-new', 'data-job': j.id }); box.insertBefore(row, box.children[i] || null); }
       else if (box.children[i] !== row) box.insertBefore(row, box.children[i] || null);
-      row.classList.toggle('is-focus', !!j.id && j.id === focusJob());   // F1-∑ — XI맵에서 ?job= 로 넘어온 같은 작업
-      const sig = [j.state, j.priority, j.shards_done, j.shards_total].join('|'); if (row.dataset.sig === sig) return; row.dataset.sig = sig;
-      const st = h('span', { class: 'q-st', 'data-s': j.state }, t('job_state.' + j.state, j.state));
-      const prog = j.shards_total ? `${(j.shards_done ?? 0).toLocaleString('ko-KR')}/${j.shards_total.toLocaleString('ko-KR')} shard` : '';
-      const act = h('div', { class: 'q-act' });
-      const btn = (label, kind, on) => { const b = h('button', { class: 'og-btn is-s' + (kind ? ' ' + kind : ''), type: 'button', onclick: on }, label); guardWrite(b); return b; };
-      if (['queued', 'running'].includes(j.state)) act.append(btn('취소', 'is-caution', () => doAct(j, 'cancel')));
-      if (['cancelled', 'failed', 'done'].includes(j.state)) act.append(btn('재큐', '', () => doAct(j, 'requeue')));
-      if (j.state === 'queued' || j.state === 'running') {
-        const sel = h('select', { class: 'og-select', 'aria-label': '우선순위' }, ...[0, 1, 2, 3].map((p) => h('option', { value: p, ...(p === j.priority ? { selected: true } : {}) }, `P${p}`)));
-        sel.addEventListener('change', () => doAct(j, 'priority', { priority: Number(sel.value) }));
-        if (!SRC.writable) { sel.disabled = true; sel.title = SRC.why; }
-        act.append(sel);
+      row.classList.toggle('is-focus', !!j.id && j.id === f);   // XI맵 · Global 에서 ?job= 로 넘어온 같은 작업
+      row.classList.toggle('is-open', open.has(j.id));
+      const sig = [j.state, j.priority, j.shards_done, j.shards_total, j.recovered?.mode, j.recovered?.shards_done, open.has(j.id)].join('|');
+      if (row.dataset.sig !== sig) {
+        row.dataset.sig = sig;
+        const st = h('span', { class: 'q-st', 'data-s': j.state }, t('job_state.' + j.state, j.state));
+        const prog = j.shards_total ? `${(j.shards_done ?? 0).toLocaleString('ko-KR')}/${j.shards_total.toLocaleString('ko-KR')} shard` : '';
+        const act = h('div', { class: 'q-act' });
+        const btn = (label, kind, on) => { const b = h('button', { class: 'og-btn is-s' + (kind ? ' ' + kind : ''), type: 'button', onclick: (e) => { e.stopPropagation(); on(); } }, label); guardWrite(b); return b; };
+        if (['queued', 'running'].includes(j.state)) act.append(btn('취소', 'is-caution', () => doAct(j, 'cancel')));
+        if (['cancelled', 'failed', 'done'].includes(j.state)) act.append(btn('재큐', '', () => doAct(j, 'requeue')));
+        if (j.state === 'queued' || j.state === 'running') {
+          const sel = h('select', { class: 'og-select', 'aria-label': '우선순위', onclick: (e) => e.stopPropagation() }, ...[0, 1, 2, 3].map((p) => h('option', { value: p, ...(p === j.priority ? { selected: true } : {}) }, `P${p}`)));
+          sel.addEventListener('change', () => doAct(j, 'priority', { priority: Number(sel.value) }));
+          if (!SRC.writable) { sel.disabled = true; sel.title = SRC.why; }
+          act.append(sel);
+        }
+        const rec = j.recovered ? h('span', { class: 'og-tag q-rec', 'data-k': 'recovered', 'data-mode': j.recovered.mode || 'resumed', title: `재부팅 복구 · ${j.recovered.mode || 'resumed'} · ${clean(j.recovered.reason)}` },
+          j.recovered.mode === 'failed' ? '복구 실패' : `복구 · 재개 ${(j.recovered.shards_done ?? j.shards_done ?? 0).toLocaleString('ko-KR')}/${(j.recovered.shards_total ?? j.shards_total ?? 0).toLocaleString('ko-KR')}`) : null;
+        act.append(h('span', { class: 'og-num-s', style: { marginLeft: 'auto' } }, prog));
+        if (!SRC.writable) act.append(h('span', { class: 'og-why' }, SRC.why));
+        const tog = h('button', { class: 'q-tog', type: 'button', 'aria-expanded': open.has(j.id) ? 'true' : 'false', 'aria-label': '작업 펼치기', onclick: (e) => { e.stopPropagation(); toggle(j.id); } }, open.has(j.id) ? '▾' : '▸');
+        let m = more.get(j.id); if (!m) { m = h('div', { class: 'q-more' }); more.set(j.id, m); }
+        row.replaceChildren(h('span', { class: 'q-id', title: j.id }, tog, j.id), h('span', { class: 'q-st-w' }, rec, st), h('span', { class: 'og-note', style: { gridColumn: '1 / -1' } }, `${j.tenant_id} · ${j.model_id || j.kind || ''} · ${j.pool}${j.label ? ' · ' + j.label : ''}${j.via ? ' · 게이트웨이' : ''}`), act, m);
+        row.onclick = (e) => { if (e.target.closest('a, button, select, input')) return; toggle(j.id); };
       }
-      act.append(h('span', { class: 'og-num-s', style: { marginLeft: 'auto' } }, prog));
-      if (!SRC.writable) act.append(h('span', { class: 'og-why' }, SRC.why));
-      row.replaceChildren(h('span', { class: 'q-id', title: j.id }, j.id), st, h('span', { class: 'og-note', style: { gridColumn: '1 / -1' } }, `${j.tenant_id} · ${j.model_id || j.kind || ''} · ${j.pool}${j.label ? ' · ' + j.label : ''}${j.via ? ' · 게이트웨이' : ''}`), act);
+      const m = more.get(j.id); m.hidden = !open.has(j.id);
+      if (open.has(j.id) && detail) detail(j, m);
     });
+    if (f && !scrolled) { const r = box.querySelector(`[data-job="${f}"]`); if (r) { scrolled = true; requestAnimationFrame(() => r.scrollIntoView({ block: 'nearest' })); } }
+  };
+  const toggle = (id) => {
+    if (open.has(id)) open.delete(id);
+    else { open.add(id); const u = new URL(location.href); u.searchParams.set('job', id); history.replaceState(null, '', u); scrolled = true; }   // 누른 행 = 초점(공유 가능한 ?job= 딥링크)
+    const r = box.querySelector(`[data-job="${id}"]`); if (r) r.dataset.sig = ''; render();
   };
   async function doAct(j, action, extra = {}) {
     let reason = null;
@@ -85,11 +110,16 @@ export function queueRows(host, { onChange } = {}) {
   }
   return {
     el: box,
-    load(items) { for (const j of items || []) jobs.set(j.id, j); render(); },
+    load(items) { for (const j of items || []) { const o = jobs.get(j.id) || {}; jobs.set(j.id, { ...o, ...j, recovered: j.recovered || o.recovered || null }); } render(); },   // 완료 행에도 '복구' 칩 유지
     event(ev) { const j = jobs.get(ev.job_id) || { id: ev.job_id, created_at: ev.at };
       if (j._at && Date.parse(ev.at) < j._at - 50) return;   // 쓰기 응답보다 먼저 발행된 이벤트가 늦게 도착 — 되돌리지 않는다
-      jobs.set(ev.job_id, { ...j, state: ev.state, tenant_id: ev.tenant_id, pool: ev.pool, label: ev.label ?? j.label, priority: ev.priority ?? j.priority, via: ev.via || j.via }); render(); },
-    patch(id, p) { const j = jobs.get(id); if (j) { jobs.set(id, { ...j, ...p }); render(); } },
+      jobs.set(ev.job_id, { ...j, state: ev.state || j.state, tenant_id: ev.tenant_id ?? j.tenant_id, pool: ev.pool ?? j.pool, label: ev.label ?? j.label, priority: ev.priority ?? j.priority, via: ev.via || j.via,
+        ...(ev.reason === 'recovered' ? { recovered: { mode: ev.mode || 'resumed', shards_done: ev.shards_done ?? j.shards_done, shards_total: ev.shards_total ?? j.shards_total, reason: ev.detail || ev.reason, at: ev.at } } : {}) }); render(); },
+    recovered(ev) { const j = jobs.get(ev.job_id) || { id: ev.job_id, created_at: ev.at, state: ev.mode === 'failed' ? 'failed' : 'running' };
+      jobs.set(ev.job_id, { ...j, shards_done: ev.shards_done ?? j.shards_done, shards_total: ev.shards_total ?? j.shards_total, recovered: { mode: ev.mode || 'resumed', shards_done: ev.shards_done, shards_total: ev.shards_total, reason: ev.reason, at: ev.at } }); render(); },
+    patch(id, p) { const j = jobs.get(id); if (j) { jobs.set(id, { ...j, ...p, recovered: p.recovered || j.recovered || null }); render(); } },   // 스트림으로 받은 복구 표시는 GET 응답의 null 로 지우지 않는다
+    open(id) { open.add(id); render(); },
+    isOpen(id) { return open.has(id); },
     row(id) { return box.querySelector(`[data-job="${id}"]`); },
     get jobs() { return jobs; },
   };

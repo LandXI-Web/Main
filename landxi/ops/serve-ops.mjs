@@ -128,7 +128,8 @@ const S = {
   gpu: null, gpuHist: [], gpuAt: 0, storage: null, storageAt: 0,
   wvram: new Map(),               // worker:{id}:vram (로컬 워커 자기 보고)
   pendingUsage: new Map(),        // tenant → {amount, job_id}
-  pollers: { gpu: { state: 'off', restarts: 0, last_error: null }, storage: { state: 'off', restarts: 0, last_error: null } },
+  pollers: { gpu: { state: 'off', restarts: 0, last_error: null }, storage: { state: 'off', restarts: 0, last_error: null }, llm: { state: 'off', restarts: 0, last_error: null } },
+  llm: null, llmAt: 0,
   gateway: { up: false, checked: 0 },
 };
 // 시드 approvals 를 표로 편다(결재 대기 실카운트는 decision=null 행)
@@ -162,7 +163,7 @@ function startPoller(kind, args) {
       if (!line) continue;
       let j = null; try { j = JSON.parse(line); } catch { continue; }
       st.state = 'up'; st.last_at = kst();
-      if (kind === 'gpu') onGpu(j); else onStorage(j);
+      if (kind === 'gpu') onGpu(j); else if (kind === 'llm') { S.llm = j; S.llmAt = Date.now(); } else onStorage(j);
     }
   });
   p.stderr.on('data', (b) => { const s = b.toString('utf8').trim(); if (s) { st.last_error = s.split('\n').pop(); log(`[${kind}]`, s.split('\n').pop()); } });
@@ -215,7 +216,7 @@ function evalAlerts() {
     if (t != null) (t > 85 ? open('gpu_temp_gt_85_5m', 'g' + g.index, 'fault', S.gpu.node, g.index, g.temp_c) : close('gpu_temp_gt_85_5m', 'g' + g.index));
     if (mu != null && mt) (mu / mt > 0.95 ? open('vram_gt_95_5m', 'g' + g.index, 'fault', S.gpu.node, g.index, g.mem_used_mib) : close('vram_gt_95_5m', 'g' + g.index));
   }
-  const hot = (S.gpu?.gpus || []).filter((g) => (g.util_pct?.value ?? 0) >= HEAVY_UTIL);
+  const hot = (S.gpu?.gpus || []).filter((g) => utilOf(g) >= HEAVY_UTIL);
   if (S.gpu) (hot.length > HEAVY_MAX ? open('gpu_power_concurrency', 'node', 'caution', S.gpu.node, null, E(hot.length, 'GPU', 'measured', `nvidia-smi utilization.gpu ≥ ${HEAVY_UTIL}%`, '전력 규칙 동시 고부하 ≤ ' + HEAVY_MAX)) : close('gpu_power_concurrency', 'node'));
   const e = S.storage?.volumes?.find((v) => v.mount === 'E:')?.free_gb;
   if (e?.value != null) (e.value < 200 ? open('disk_e_free_lt_200gb', 'E', 'fault', null, null, e) : close('disk_e_free_lt_200gb', 'E'));
@@ -245,10 +246,13 @@ function queueSample() {
   return { pools, lanes, power: powerState(), as_of: kst(), sources: g ? ['bridge', 'gateway'] : ['bridge'] };
 }
 function heavyGpusBooked() { return [...S.jobs.values()].filter((j) => j.pool === 'a6000' && (j.state === 'running' || (j.state === 'queued' && j._claimed))).reduce((n, j) => n + Math.max(1, (j.workers || []).length), 0); }
+const utilOf = (g) => g.util_ma5?.value ?? g.util_pct?.value ?? 0;   // v1.1-28 이동평균 우선(WDDM 순간값 0↔100 금지)
 function powerState() {
-  const gs = S.gpu?.gpus || []; const hot = gs.filter((g) => (g.util_pct?.value ?? 0) >= HEAVY_UTIL).map((g) => g.index);
+  const gs = S.gpu?.gpus || []; const hot = gs.filter((g) => utilOf(g) >= HEAVY_UTIL).map((g) => g.index);
+  const pb = S.gpu?.power_budget;
   return { heavy_max: HEAVY_MAX, booked: heavyGpusBooked(), rule: '전력 규칙 2026-09-26 · 동시 고부하 GPU ≤ ' + HEAVY_MAX,
-    heavy_now: E(gs.length ? hot.length : null, 'GPU', 'measured', `nvidia-smi utilization.gpu ≥ ${HEAVY_UTIL}% [목표]`, hot.length ? 'GPU ' + hot.join(',') : '고부하 GPU 없음') };
+    leases_n: pb?.leases_n ?? null, leases: pb?.leases || [],
+    heavy_now: E(gs.length ? hot.length : null, 'GPU', 'measured', `nvidia-smi 이동평균 ≥ ${HEAVY_UTIL}% [목표]`, hot.length ? 'GPU ' + hot.join(',') : '고부하 GPU 없음') };
 }
 let lastQueue = '';
 function pushQueue(force = false) {
@@ -548,7 +552,7 @@ async function worker(req, res, url, p) {
     const b = (await body(req)) || {}; const pool = b.pool || 'a6000';
     if (pool === 'a6000' && heavyGpusBooked() >= HEAVY_MAX) return json(res, 200, { job: null, hold: 'power_budget', heavy_max: HEAVY_MAX });
     // 브리지 밖(게이트웨이 워커 · 벤치 · 다른 프로세스)이 이미 GPU 를 고부하로 쓰고 있으면 기다린다 — 전력 규칙은 이 PC 전체에 걸린다
-    const extHot = (S.gpu?.gpus || []).filter((g) => (g.util_pct?.value ?? 0) >= HEAVY_UTIL).length + (GW.queue?.pools?.a6000?.running || 0);
+    const extHot = (S.gpu?.gpus || []).filter((g) => utilOf(g) >= HEAVY_UTIL).length + (GW.queue?.pools?.a6000?.running || 0);
     if (pool === 'a6000' && extHot >= HEAVY_MAX && !b.ignore_external) return json(res, 200, { job: null, hold: 'power_budget_external', heavy_max: HEAVY_MAX, heavy_now: extHot });
     const j = [...S.jobs.values()].filter((x) => x.pool === pool && x.state === 'queued' && !x._claimed).sort((a, c) => a.priority - c.priority || a.created_at.localeCompare(c.created_at))[0];
     if (!j) return json(res, 200, { job: null });
@@ -562,6 +566,7 @@ async function worker(req, res, url, p) {
     log('브리지 상태 초기화(시드)'); pushQueue(true);
     return json(res, 200, { ok: true, at: kst() });
   }
+  if (p === '/llm') return json(res, 200, S.llm && Date.now() - S.llmAt < 120000 ? S.llm : {});
   if (p === '/control') { const j = S.jobs.get(url.searchParams.get('job_id')); return json(res, 200, j ? { state: j.state, priority: j.priority, cancel: j.state === 'cancelled' } : { state: null, cancel: true }); }
   if (p === '/event' && req.method === 'POST') {
     const b = (await body(req)) || {}; const d = b.data || {}; const j = d.job_id ? S.jobs.get(d.job_id) : null;
@@ -616,10 +621,14 @@ async function gwLogin() {
   GW.token = null; return null;
 }
 const GW_NEEDS = ['/ops/nodes', '/ops/gpus', '/ops/queues', '/ops/storage', '/ops/alerts', '/ops/models', '/ops/tenants', '/ops/bench', '/deploys', '/tenants', '/registry/models', '/registry/cards', '/jobs?limit=1'];
+// 선택 경로(v1.1 — 다른 에픽이 올리는 중): 있으면 화면이 쓰고, 없으면 부르지 않는다(브라우저 404 콘솔 0)
+const GW_OPT = { survey: '/survey/findings?limit=1', survey_stats: '/survey/stats?by=state' };
 async function gwCaps() {
   if (Date.now() - GW.capsAt < 30000) return GW.caps;
-  GW.capsAt = Date.now(); if (!(await gwLogin())) { GW.caps = {}; return GW.caps; }
-  const out = {}; await Promise.all(GW_NEEDS.map(async (p) => { out[p] = (await gwFetch(p)).status; })); GW.caps = out; return out;
+  GW.capsAt = Date.now(); if (!(await gwLogin())) { GW.caps = {}; GW.opt = {}; return GW.caps; }
+  const out = {}; await Promise.all(GW_NEEDS.map(async (p) => { out[p] = (await gwFetch(p)).status; })); GW.caps = out;
+  const opt = {}; await Promise.all(Object.entries(GW_OPT).map(async ([k, p]) => { opt[k] = (await gwFetch(p)).status; })); GW.opt = opt;
+  return out;
 }
 function gwStream() {
   if (GW.sse || shuttingDown || !GW.token) return;
@@ -652,15 +661,37 @@ function gwEvent(ev, d) {
     if (u && u.dims[d.dim]) { const e = u.dims[d.dim].used; e.value = +((e.value || 0) + (Number(d.amount) || 0)).toFixed(2); e.as_of = kst(); e.source = 'usage_events(게이트웨이 중계)'; forecast(u); }
     emit('usage.delta', { ...d, via: 'gateway' });
   } else if (ev === 'alert') emit('alert', { ...d, via: 'gateway' });
+  else if (ev === 'deploy.changed' || ev === 'finding.state' || ev === 'job.recovered') emit(ev, { ...d, via: 'gateway' });   // v1.1-15 · 16 · 22 — 서비스 층의 쓰기가 관리 층에 실시간
 }
 setInterval(async () => { if (await gatewayUp()) { await gwLogin(); gwStream(); } }, 5000).unref();
 
 async function gatewayUp() {
   if (Date.now() - S.gateway.checked < 5000) return S.gateway.up;
   S.gateway.checked = Date.now();
-  try { const ac = new AbortController(); const t = setTimeout(() => ac.abort(), 400); const r = await fetch(GATEWAY + '/api/v1/health', { signal: ac.signal }); clearTimeout(t); const j = r.ok ? await r.json() : null; S.gateway.up = !!(j && j.ok && !j.bridge); }
+  try { const ac = new AbortController(); const t = setTimeout(() => ac.abort(), 400); const r = await fetch(GATEWAY + '/api/v1/health', { signal: ac.signal }); clearTimeout(t); const j = r.ok ? await r.json() : null; S.gateway.up = !!(j && j.ok && !j.bridge); S.gateway.health = j; }
   catch { S.gateway.up = false; }
   return S.gateway.up;
+}
+
+/* ══ 게이트웨이 직결 모드의 감사·결재 읽기 — 게이트웨이에 /ops/audit · /approvals 가 없어(계약 밖) 정본 DB 를 읽기만 한다 ══
+ * 관리자 확인: 요청의 Bearer(게이트웨이 토큰)로 게이트웨이 /me → realm lx · role admin 일 때만. */
+const meCache = new Map();
+async function gwRead(req, res, url, kind) {
+  const o = req.headers.origin; if (o && !ORIGINS.has(o)) return fail(res, 'forbidden', 403, ':8702 전용');
+  const tok = (req.headers.authorization || '').replace(/^Bearer /, '') || url.searchParams.get('access_token');
+  if (!tok) return fail(res, 'unauthorized', 401, '로그인 필요');
+  let me = meCache.get(tok);
+  if (!me || Date.now() - me.t > 60000) {
+    try { const ac = new AbortController(); const t = setTimeout(() => ac.abort(), 2500); const r = await fetch(GATEWAY + '/api/v1/me', { signal: ac.signal, headers: { authorization: 'Bearer ' + tok } }); clearTimeout(t); me = { t: Date.now(), ok: r.ok, j: r.ok ? await r.json() : null }; }
+    catch { me = { t: Date.now(), ok: false, j: null }; }
+    meCache.set(tok, me);
+  }
+  if (!me.ok || me.j?.realm !== 'lx' || me.j?.role !== 'admin') return fail(res, 'forbidden', 403, '관리자 전용');
+  const args = ['server/ops/audit_read.py', kind, '--limit', String(Math.min(200, Number(url.searchParams.get('limit')) || 50))];
+  const subj = url.searchParams.get('subject'); if (subj && /^[\w.@:-]{1,80}$/.test(subj)) args.push('--subject', subj);
+  const out = await new Promise((resolve) => { let b = ''; const c = spawn(PY, args, { cwd: ROOT, env: { ...process.env, PYTHONIOENCODING: 'utf-8' }, windowsHide: true }); c.stdout.on('data', (d) => { b += d.toString('utf8'); }); c.on('close', () => resolve(b)); c.on('error', () => resolve('')); setTimeout(() => { try { c.kill(); } catch { /* */ } }, 10000).unref(); });
+  let j = null; try { j = JSON.parse(out); } catch { j = { items: [], total: 0, error: 'audit_read 실패' }; }
+  return json(res, j.error ? 503 : 200, { ...j, as_of: kst() });
 }
 
 /* ══ 서버 ═════════════════════════════════════════════════════════ */
@@ -675,8 +706,9 @@ const server = http.createServer(async (req, res) => {
       const up = await gatewayUp(); const caps = up ? await gwCaps() : {};
       const bad = Object.entries(caps).filter(([, v]) => v !== 200).map(([k, v]) => `${k.replace('?limit=1', '')} ${v}`);
       return json(res, 200, { ok: true, bridge: true, at: kst(), started: S.started,
-        gateway: { base: GATEWAY, up, full: up && Object.keys(caps).length > 0 && bad.length === 0, bad, relay: { sse: GW.sseStatus || null, events: GW.events, last_event: GW.lastEvent } },
-        pollers: { gpu: { ...S.pollers.gpu, last_sample_age_s: S.gpuAt ? +((Date.now() - S.gpuAt) / 1000).toFixed(1) : null }, storage: { ...S.pollers.storage, last_sample_age_s: S.storageAt ? +((Date.now() - S.storageAt) / 1000).toFixed(1) : null } },
+        gateway: { base: GATEWAY, up, full: up && Object.keys(caps).length > 0 && bad.length === 0, bad, relay: { sse: GW.sseStatus || null, events: GW.events, last_event: GW.lastEvent },
+          recovered_at_boot: S.gateway.health?.recovered_at_boot ?? null, version: S.gateway.health?.version ?? null, workers: S.gateway.health?.workers ?? null, opt: up ? (GW.opt || {}) : {} },
+        pollers: { gpu: { ...S.pollers.gpu, last_sample_age_s: S.gpuAt ? +((Date.now() - S.gpuAt) / 1000).toFixed(1) : null }, storage: { ...S.pollers.storage, last_sample_age_s: S.storageAt ? +((Date.now() - S.storageAt) / 1000).toFixed(1) : null }, llm: { ...S.pollers.llm, last_sample_age_s: S.llmAt ? +((Date.now() - S.llmAt) / 1000).toFixed(1) : null } },
         dev_password_configured: !!devPassword(), workers_live: [...S.wvram.keys()],
         // 로그인 전 종이 무대 '관제 요약 한 줄' — 공개 최소치(수치 봉투는 로그인 뒤 /ops/*)
         summary: { nodes_up: S.nodes.filter((n) => n.state === 'up' && S.gpuAt && Date.now() - S.gpuAt < 10000).length, nodes_pending: S.nodes.filter((n) => n.state === 'pending').length,
@@ -690,6 +722,7 @@ const server = http.createServer(async (req, res) => {
       return await api(req, res, url, p.slice((B + '/api/v1').length));
     }
     if (p.startsWith(B + '/worker/')) return await worker(req, res, url, p.slice((B + '/worker').length));
+    if (p === B + '/gw/audit' || p === B + '/gw/approvals' || p === B + '/gw/llm') return await gwRead(req, res, url, p.split('/').pop());
     if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, 'text/plain', '405');
     return serveStatic(req, res, p);
   } catch (e) { log('오류', e); if (!res.headersSent) fail(res, 'internal', 500, String(e.message)); }
@@ -697,7 +730,8 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, () => {
   log(`LX/OPS http://localhost:${PORT}/landxi/ops/  (root ${ROOT} · data ${fs.existsSync(path.join(ROOT, 'landxi', 'data')) ? 'junction' : DATA_ROOT})`);
   if (!NO_POLLERS) {
-    startPoller('gpu', ['server/ops/gpu_poller.py', '--stdout', '--interval', '2', '--worker-vram-url', `http://127.0.0.1:${PORT}/landxi/ops/bridge/worker/vram`]);
+    startPoller('gpu', ['server/ops/gpu_poller.py', '--stdout', '--interval', '2', '--lms', '100', '--worker-vram-url', `http://127.0.0.1:${PORT}/landxi/ops/bridge/worker/vram`, '--llm-url', `http://127.0.0.1:${PORT}/landxi/ops/bridge/worker/llm`]);
     startPoller('storage', ['server/ops/storage_poller.py', '--stdout', '--interval', '60']);
+    startPoller('llm', ['server/ops/llm_poller.py', '--stdout', '--interval', String(Number(process.env.OPS_LLM_INTERVAL) || 3)]);
   } else log('OPS_NO_POLLERS=1 — 폴러 없이(리플레이 확인용)');
 });

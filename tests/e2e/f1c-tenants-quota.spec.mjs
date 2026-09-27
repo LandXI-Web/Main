@@ -12,7 +12,7 @@ test.afterAll(() => { child?.kill(); });
 const login = async () => (await fetch(B + '/api/v1/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ realm: 'lx', login: 'lx-admin', password: PW }) })).json();
 async function admin(page) {
   const s = await login();
-  await page.addInitScript(([s, base]) => { if (sessionStorage.getItem('f1c')) return; sessionStorage.setItem('f1c', '1'); localStorage.setItem('lx_api_session', JSON.stringify(s)); localStorage.setItem('lx_ops_base', base); localStorage.setItem('lx_api_base', base); localStorage.removeItem('lx_api_mode'); }, [s, B]);
+  await page.addInitScript(([s, base]) => { if (sessionStorage.getItem('f1c')) return; sessionStorage.setItem('f1c', '1'); localStorage.setItem('lx_api_session', JSON.stringify(s)); localStorage.setItem('lx_ops_base', base); localStorage.setItem('lx_api_base', base); localStorage.removeItem('lx_api_mode'); localStorage.setItem('lx_ops_src', 'bridge'); }, [s, B]);
   return s;
 }
 const wk = (event, data) => fetch(B + '/worker/event', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ event, data }) });
@@ -23,7 +23,7 @@ test('6기관 · 링 6 · 격리 4 · 한도 [추정 기반 초기값] · 사용
   await page.waitForFunction(() => document.documentElement.dataset.lx === 'ready');
   await expect(page.locator('.tn-item')).toHaveCount(6);
   for (const id of ['lx', 'namwon', 'gwangju-jeonnam', 'kgz-agri', 'kgz-land', 'lx-demo']) await expect(page.locator(`.tn-item[data-t="${id}"]`)).toHaveCount(1);
-  await expect(page.locator('.tn-ring')).toHaveCount(6);
+  await expect(page.locator('.tn-ring')).toHaveCount(8);   // F2-C: + LLM 토큰/월 · 에이전트 실행/일
   await expect(page.locator('.tn-iso .og-tag')).toHaveCount(4);
   await expect(page.locator('.tn-iso')).toContainText('원본 라우트0');
   await expect(page.locator('.tn-iso')).toContainText('tenants/namwon/');

@@ -22,11 +22,13 @@ export function matrix(host, { cards, tenants, onPick, onPort }) {
         continue;
       }
       const row = h('div', { class: 'mx-stack', style: { display: 'flex', flexDirection: ds.length > 1 ? 'column' : 'row', gap: ds.length > 1 ? '2px' : '4px' } });
-      for (const d of ds) {
+      const shown = ds.length > 2 ? [...ds.filter((d) => d.id === sel), ...ds.filter((d) => d.id !== sel)].slice(0, 2) : ds;
+      for (const d of shown) {
         const b = h('button', { class: 'mx-cell', type: 'button', 'data-id': d.id, 'data-stage': d.stage, 'aria-pressed': d.id === sel ? 'true' : 'false', title: `${d.name} · ${d.id} · ${t('stage.' + d.stage, d.stage)}${d.basis === 'history' ? ' · 이력' : ''}`, onclick: () => onPick && onPick(d.id), style: { flex: '1 1 0', minWidth: 0 } },
           h('i'), h('span', { class: 'v', 'data-k': 'v' }, d.version || '—'), ds.length === 1 ? h('span', { class: 's' }, t('stage.' + d.stage, d.stage)) : null);
         row.append(b);
       }
+      if (ds.length > shown.length) row.append(h('span', { class: 'mx-more og-num-s', title: ds.slice(2).map((d) => d.id).join(' · ') }, `+${ds.length - shown.length} 배포본`));
       cell.replaceChildren(row);
     }
   };

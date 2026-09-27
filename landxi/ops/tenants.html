@@ -2,6 +2,10 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<style>@view-transition { navigation: auto; }</style>
+<script>/* 교차문서 전환 옵트인을 head 인라인에 두고(CSS 늦게 도착 시 opt-in disabled 방지) 전환 약속 거부를 삼킨다 — 레일 클릭 이동 pageerror 0 (F2-C must_fix) */
+(function () { var h = function (e) { var vt = e.viewTransition; if (!vt) return; ['ready', 'finished', 'updateCallbackDone'].forEach(function (k) { if (vt[k] && vt[k].catch) vt[k].catch(function () {}); }); };
+  addEventListener('pagereveal', h); addEventListener('pageswap', h); })();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LX/OPS — 기관·할당</title>
 <link rel="stylesheet" href="/landxi/proto/fonts-system.css">
@@ -9,23 +13,29 @@
 <link rel="stylesheet" href="/landxi/assets/css/v2/ops-grid.css">
 <link rel="stylesheet" href="/landxi/ops/ops.css">
 </head>
-<body data-stage="ops">
+<body data-stage="ops" data-page="tenants">
+<!-- 첫 페인트 골격(F2-C 3차): 모듈이 데이터를 받기 전에도 레일·마스트·판 머리가 선다(화면 이동 시 검정 판 0).
+     직전 방문 스냅샷이 있으면 그 화면으로 덮고('직전 화면 hh:mm:ss · 수신 중' 꼬리표), 실데이터가 서면 boot.js unveil() 이 걷는다. -->
+<div class="og-shell og-skel" id="ogSkel" aria-hidden="true" inert><aside class="og-rail"><a class="og-mark" href="/landxi/ops/index.html">LX<b>/</b>OPS</a><nav class="og-nav"><a href="/landxi/ops/index.html" data-page="index"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-map"/></svg>운영 현황</a><a href="/landxi/ops/infra.html" data-page="infra"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-run"/></svg>인프라 관제</a><a href="/landxi/ops/tenants.html" data-page="tenants" aria-current="page"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-user"/></svg>기관·할당</a><a href="/landxi/ops/deploys.html" data-page="deploys"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-upload"/></svg>배포 제어</a><hr><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-card"/></svg>카드 발행</a><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-data"/></svg>데이터 관리</a><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-settings"/></svg>서비스 관리</a><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-user"/></svg>MY</a><hr><a data-ext="" data-page="xi"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-map"/></svg>XI맵</a><a data-ext="" data-page="global"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-map"/></svg>Global</a></nav></aside><header class="og-mast"><h1>기관·할당</h1><span class="og-crumb">쿼터 8차원 · LLM 계량 · 격리 · 결재</span><span class="og-spacer"></span><span class="og-src" data-kind="gateway"><i></i><span class="og-src-t">연결 중 · 게이트웨이</span></span><span class="og-clock" id="skClock"></span></header><main class="og-main"><div class="sk-grid" data-page="tenants"><section class="og-panel sk-panel" style="--i:0"><header><h2>기관</h2><span class="og-sub">6곳 · GPU 초/월</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section><section class="og-panel sk-panel" style="--i:1"><header><h2>쿼터 8차원</h2><span class="og-sub">GPU·s · 저장 · 면적 · 동시 · LLM</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section><section class="og-panel sk-panel" style="--i:2"><header><h2>사용량 추이</h2><span class="og-sub">usage_events</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section><section class="og-panel sk-panel" style="--i:3"><header><h2>결재</h2><span class="og-sub">2인 승인</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section></div></main></div>
+<script>/* 스냅샷 복원 · 시계 · 안전 타이머(모듈 오류 시에도 8 s 뒤 걷힘) */(function(){try{var d=document,b=d.body,sk=d.getElementById("ogSkel"),pg=b.dataset.page;b.classList.add("has-skel");var c=d.getElementById("skClock");if(c)c.textContent=new Date().toLocaleTimeString("ko-KR",{hour12:false,hour:"2-digit",minute:"2-digit",second:"2-digit",timeZone:"Asia/Seoul"});var v=null;try{v=JSON.parse(localStorage.getItem("lxops:snap:"+pg)||"null")}catch(e){}if(v&&v.h&&Date.now()-v.t<1800000&&Math.abs(v.w-innerWidth)<2){sk.innerHTML=v.h;sk.dataset.snap="1";var m=sk.querySelector(".og-main");if(m)m.scrollTop=v.st||0;var tg=d.createElement("span");tg.className="og-snap-tag";tg.textContent="직전 화면 "+v.at+" · 수신 중";var ms=sk.querySelector(".og-mast .og-spacer");if(ms)ms.after(tg);}setTimeout(function(){var s=d.getElementById("ogSkel");if(s){s.remove();b.classList.remove("has-skel");}},8000);}catch(e){}})();</script>
 <script type="module">
-import { gate, ready, get, h, prov, setText, fmt, tag, hhmmss, ymd, SRC, t } from '/landxi/ops/js/boot.js';
+import { gate, ready, get, h, prov, setText, fmt, tag, hhmmss, ymd, SRC, t, gwRead } from '/landxi/ops/js/boot.js';
 import { mountFrame } from '/landxi/ops/js/rail.js';
 import { mountPalette } from '/landxi/ops/js/palette.js';
-import { DIMS, quotaRing, quotaEditor, project, monthKey } from '/landxi/ops/js/quota.js';
+import { DIMS, quotaRing, quotaEditor, project, monthKey, llmDims } from '/landxi/ops/js/quota.js';
 import { connect } from '/landxi/ops/js/telemetry.js';
 
 const w = await gate();
 if (w) {
-  const frame = mountFrame({ page: 'tenants', title: '기관·할당', crumb: '쿼터 6차원 · 격리 · 결재', user: w });
-  const [tenants, usage, approvals, deploys, jobs] = await Promise.all([get('tenants'), get('opsTenants'), get('approvals'), get('deploys'), get('jobs')]);
+  const frame = mountFrame({ page: 'tenants', title: '기관·할당', crumb: '쿼터 8차원 · LLM 계량 · 격리 · 결재', user: w });
+  const [tenants, usage, approvals, deploys, jobs, llm] = await Promise.all([get('tenants'), get('opsTenants'), get('approvals'), get('deploys'), get('jobs'), SRC.kind === 'gateway' ? gwRead('llm') : null]);
   let brand = null, studio = null; try { brand = await import('/landxi/assets/data/brand.js'); studio = await import('/landxi/assets/data/studio.js'); } catch { /* 원본 데이터 읽기 실패 → 칸 결손 */ }
   const U = new Map((usage?.items || []).map((u) => [u.tenant_id, u]));
+  // 링 7·8(LLM) — 게이트웨이 Usage 에 차원이 없으면 정본 usage_events(llm_tokens) 계량을 읽기만 해서 붙인다(없으면 결손)
+  for (const u of U.values()) llmDims(u, (llm?.items || []).find((x) => x.tenant_id === u.tenant_id), llm?.as_of || new Date().toISOString(), llm?.source || '계량 경로 없음(브리지 · off)');
   const T = tenants?.items || [];
   const G = h('div', { class: 'tn' }); frame.main.append(G);
-  const q0 = new URLSearchParams(location.search).get('t');
+  const q0 = new URLSearchParams(location.search).get('tenant') || new URLSearchParams(location.search).get('t');   // v1.1-29 ?tenant= (구 ?t= 호환)
   let sel = T.find((x) => x.id === q0)?.id || 'lx'; let selDim = 'gpu_s_month';
 
   // ── 좌: 기관 6
@@ -54,7 +64,7 @@ if (w) {
   const provBox = h('div', { class: 'og-body', style: { paddingTop: '8px', paddingBottom: '12px' } });
   const main = h('div', { class: 'tn-main' }); G.append(main);
   main.append(h('section', { class: 'og-panel' }, headBox, ringsBox, provBox, edHost));
-  const rings = new Map(); for (const d of DIMS) rings.set(d, quotaRing(ringsBox, d, { onPick: (dim) => pickDim(dim) }));
+  const rings = new Map(); for (const d of DIMS) rings.set(d, quotaRing(ringsBox, d, { size: 100, onPick: (dim) => pickDim(dim) }));
   const ed = quotaEditor(edHost, {
     onDraft: (tid, dim, draft) => { if (tid === sel) rings.get(dim).draw(U.get(tid).dims[dim], draft); },
     onSaved: async (tid, dim, r) => {
@@ -72,7 +82,7 @@ if (w) {
 
   function pick(id) {
     sel = id; for (const [k, b] of bars) b.item.setAttribute('aria-selected', k === id ? 'true' : 'false');
-    history.replaceState(null, '', '?t=' + id);
+    history.replaceState(null, '', '?tenant=' + id);
     const x = T.find((y) => y.id === id); const u = U.get(id);
     const iso = u?.isolation || {};
     const theme = brand ? (brand.THEMES[id] || (x?.scope === 'global' ? brand.THEMES.kuksan : brand.THEMES.lx)) : null;
@@ -120,9 +130,11 @@ if (w) {
   connect({
     onGpu: () => frame.tick(false),
     onUsage: (d) => {
-      const u = U.get(d.tenant_id); if (!u || !u.dims[d.dim]) return;
-      const e = u.dims[d.dim].used; e.value = +((e.value || 0) + (Number(d.amount) || 0)).toFixed(2); e.as_of = d.at || e.as_of;
-      drawBar(d.tenant_id); if (d.tenant_id === sel) { rings.get(d.dim).draw(u.dims[d.dim], ed.cur?.dim === d.dim && ed.cur?.tenantId === sel ? null : null); renderLow(); }
+      const dim = d.dim === 'llm_tokens' ? 'llm_tokens_month' : d.dim;   // F2-E 계량 이벤트 이름 → 링 차원
+      const u = U.get(d.tenant_id); if (!u || !u.dims[dim]) return;
+      const e = u.dims[dim].used; e.value = +((e.value || 0) + (Number(d.amount) || 0)).toFixed(2); e.as_of = d.at || e.as_of;
+      if (d.dim === 'llm_tokens' && u.dims.llm_runs_day?.used && d.job_id && !(u._runs || (u._runs = new Set())).has(d.job_id)) { u._runs.add(d.job_id); const r = u.dims.llm_runs_day.used; r.value = (r.value || 0) + 1; if (d.tenant_id === sel) rings.get('llm_runs_day').draw(u.dims.llm_runs_day); }
+      drawBar(d.tenant_id); if (d.tenant_id === sel) { rings.get(dim).draw(u.dims[dim]); renderLow(); }
     },
     onState: (st, age) => { if (st === 'stale') frame.tick(true, age / 1000); },
   });

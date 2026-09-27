@@ -6,7 +6,9 @@
 |---|---|---|---|
 | `gpu_poller.py` | 2s | `nvidia-smi --query-gpu` · `--query-compute-apps` · Windows PDH `GPU Adapter Memory` / `GPU Process Memory` · `worker:{id}:vram` | `ops:gpu:{node}:{idx}` hash · `ops:gpu` stream(MAXLEN ~3600) · `node:{node}` hash + TTL 30s(10s 하트비트) |
 | `storage_poller.py` | 60s | `shutil.disk_usage`(E: D: C:) · `du`(LX_DATA_ROOT `tiles/` `results/` `vector/` · 기관별) | `ops:storage` hash + TTL 180s |
-| `run-pollers.ps1` | — | 두 폴러 기동·정지 · 단독 검증 | — |
+| `llm_poller.py` (F2-C) | 10s | vLLM `:8000` `:8001` `/metrics`(generation_tokens_total 차분 → tps · 요청 · KV) · Ollama `/api/ps`(자기 보고 VRAM) · `docker inspect`(GPU 배치 · 읽기만) · Redis `agent:models` | `ops:llm`(SET EX 120) → gpu_poller 가 `external[].llm` 띠로 싣는다 |
+| `audit_read.py` (F2-C) | 요청 시 | PostGIS `audit_log` · `approvals` · `usage_events(dim='llm_tokens')` — **SELECT 만** | — (게이트웨이 직결 관제의 이력·결재·LLM 링을 :8702 가 대신 읽는다) |
+| `run-pollers.ps1` | — | 세 폴러 기동·정지 · 단독 검증 | — |
 
 ## 실행
 
@@ -81,3 +83,15 @@ json {"index": 0, "name": "NVIDIA RTX A6000", "util_pct": {"value": 0, "unit": "
 ## 검증
 
 `tests/e2e/f1c-contract.spec.mjs` — 폴러 단독 실행(`--stdout --once`)의 GpuSample·`/ops/storage` 형 · Redis 키 형식(`ops:gpu:{node}:{idx}` hash · `ops:gpu` stream · `node:{id}` TTL ≤ 30 · `ops:storage` hash).
+
+## F2-C(2026-09-27) — v1.1-18 · 28
+
+- **0.5 s 표본 스트림**: `nvidia-smi --query-gpu=index,utilization.gpu,power.draw,temperature.gpu -lms 500` 한 프로세스를 띄워 두고 GPU 별 링버퍼. 2 s 마다 내는 GpuSample 에
+  `util_ma5`(최근 5표본 = 2.5 s 이동평균 · `samples[]` 원표본을 봉투 안에) · `power_w`(5표본 평균) · `power_w_now` · `util_pct`(순간 · 화면은 쓰지 않음) · `caution`(VRAM ≥ 76% 또는 이동평균 ≥ 80% [목표]) · `fault`(VRAM ≥ 95% · 온도 ≥ 85°C [목표]) · `caution_why[]`.
+  WDDM 순간값 0↔100 깜빡임 제거. 폴러가 죽으면 Windows Job Object(KILL_ON_JOB_CLOSE)가 nvidia-smi 도 끝낸다(고아 0).
+- **nvidia-smi 경로**: `--nvsmi` → `LX_NVSMI` → DriverStore 안 **응답하는(-L 성공)** 최신 → 기본 → PATH. 고른 이유가 `nvsmi.why`.
+- **memory.used 이상**: 597.16 WDDM 에서 (a) 음수 언더플로 (b) **두 장이 같은 값**(2026-09-27 02:15 · 43,256 / 43,256 — 실제 GPU0 16,281 · GPU1 43,275) → PDH `GPU Adapter Memory` 로 대체 + `note` 에 원값·이유.
+- **외부 점유 실측 표시**: 예시값 문구 없음. PDH 프로세스별 + **미귀속 잔차** `unattributed_mib`(basis estimate · 어댑터 − Σ프로세스 − 워커 = WSL/vLLM 몫 추정).
+- **LLM 띠**: `external[]` 에 `{name:'vLLM · gemma-4-12b-it', mem_mib:null, llm:{backend, model, role, endpoint, tps, prompt_tps, reqs_active, reqs_waiting, kv_cache_pct, gen_tokens_total, note:'WSL 프로세스 VRAM 미노출'}}` — 외부 점유(프로세스)와 합치지 않는다.
+- **전력 예산**: `power_budget{max_hot(pools.yaml), leases[](Redis power:hot:*), leases_n, hot_now(이동평균 ≥ 50%)}` → 화면 칩 `고부하 GPU n/1 · 임대 n/1`.
+- 게이트웨이 봉투 검사(맨 숫자 금지)를 통과하도록 새 숫자는 전부 봉투 안(원표본은 `util_ma5.samples`).

@@ -1,10 +1,17 @@
-/* 쿼터 링 6차원 — 사용 실측 vs 한도[추정 기반 초기값] · 여유 구간 · 초과 예상 월 [추정] 점선 고스트 · 슬라이더 → 링 500 → PUT(사유) */
+/* 쿼터 링 8차원(F2-C: + LLM 토큰/월 · 에이전트 실행/일 — F2-E 계량 usage_events llm_tokens · 쿼터 시드 없으면 한도 없는 실측 링, 계량도 없으면 결손 링) — 사용 실측 vs 한도[추정 기반 초기값] · 여유 구간 · 초과 예상 월 [추정] 점선 고스트 · 슬라이더 → 링 500 → PUT(사유) */
 import { h, t, fmt, setText, prov, tag, SRC, write, guardWrite, toast, errText } from './boot.js';
 import { ring } from './rings.js';
 
-export const DIMS = ['storage_gb', 'gpu_s_month', 'area_km2_month', 'concurrent_jobs', 'egress_gb_month', 'vworld_calls_day'];
-const MONTHLY = new Set(['gpu_s_month', 'area_km2_month', 'egress_gb_month']);
-const UNIT = { storage_gb: 'GB', gpu_s_month: 'gpu_s', area_km2_month: 'km²', concurrent_jobs: '건', egress_gb_month: 'GB', vworld_calls_day: '회' };
+export const DIMS = ['storage_gb', 'gpu_s_month', 'area_km2_month', 'concurrent_jobs', 'egress_gb_month', 'vworld_calls_day', 'llm_tokens_month', 'llm_runs_day'];
+const MONTHLY = new Set(['gpu_s_month', 'area_km2_month', 'egress_gb_month', 'llm_tokens_month']);
+const UNIT = { storage_gb: 'GB', gpu_s_month: 'gpu_s', area_km2_month: 'km²', concurrent_jobs: '건', egress_gb_month: 'GB', vworld_calls_day: '회', llm_tokens_month: '토큰', llm_runs_day: '회' };
+/** 게이트웨이 Usage 에 LLM 차원이 없을 때(쿼터 시드 전) — 정본 usage_events 계량으로 '한도 없는 실측' 링, 계량도 없으면 결손 */
+export function llmDims(u, row, asOf, source) {
+  const d = u.dims || (u.dims = {});
+  const mk = (key, v, unit, note) => { if (d[key]) return; d[key] = { used: { value: v, unit, basis: 'measured', as_of: asOf, source, note }, soft: null, hard: null, policy: 'notify', note: null, _synthetic: true }; };
+  mk('llm_tokens_month', row ? row.tokens_month : null, 'tokens', row ? `이번 달 · 이벤트 ${row.events} · 쿼터 시드 없음(한도 미정)` : 'F2-E 계량 전 — 결손');
+  mk('llm_runs_day', row ? row.runs_day : null, 'count', row ? '오늘 에이전트 실행(run) 수 · 쿼터 시드 없음' : 'F2-E 계량 전 — 결손');
+}
 
 /** 선형 예측(quota.estimator 와 같은 식) — 월 누계 ÷ 경과일 × 월 일수. 월 단위 차원만. [추정] */
 export function project(dim, used) {
@@ -52,7 +59,7 @@ export function quotaRing(host, dim, { size = 116, onPick } = {}) {
         if (pj != null) ghost.textContent = over ? `초과 예상 ${monthKey()} [추정]` : `월말 ${fmt(Math.round(pj))} [추정]`;
         btn.title = `${t('dims.' + dim)} · 사용 ${fmt(used)} ${UNIT[dim]} (${q.used.basis === 'measured' ? '실측' : q.used.basis}) · ${q.used.source}${q.used.note ? ' · ' + q.used.note : ''}`;
       }
-      pol.textContent = `${t('policy.' + (draft?.policy || q.policy), q.policy)}${q.note ? ' · ' + (hard == null ? '무제한' : '[추정 기반 초기값]') : ''}`;
+      pol.textContent = q._synthetic ? (used == null ? '계량 전 · 한도 미정' : '한도 미정 · 쿼터 시드 전') : `${t('policy.' + (draft?.policy || q.policy), q.policy)}${q.note ? ' · ' + (hard == null ? '무제한' : '[추정 기반 초기값]') : ''}`;
     },
     press(on) { btn.setAttribute('aria-pressed', on ? 'true' : 'false'); },
   };
@@ -63,6 +70,7 @@ export function quotaEditor(host, { onDraft, onSaved } = {}) {
   const box = h('div', { class: 'tn-edit' }); host.append(box);
   let cur = null;
   const open = (tenantId, dim, q) => {
+    if (q?._synthetic) { cur = { tenantId, dim, q, draft: null }; box.replaceChildren(h('div', { class: 'og-note', style: { gridColumn: '1 / -1' } }, `${t('dims.' + dim, dim)} · ${q.used?.value == null ? '계량 전(usage_events llm_tokens 없음)' : '실측 ' + fmt(q.used) + ' ' + UNIT[dim]} — 쿼터 시드(llm_tokens_month · F2-E)가 게이트웨이에 들어오면 한도 편집이 열린다. 지금은 한도 없음을 정직하게 둔다.`)); return; }
     const used = q.used?.value ?? 0; const pj = project(dim, used) ?? used;
     const max = Math.max(10, Math.ceil(Math.max(q.hard ?? 0, pj * 2, used * 2, dim === 'gpu_s_month' ? 10000 : 10) / 100) * 100);
     const step = max > 1000 ? 100 : max > 100 ? 10 : 1;

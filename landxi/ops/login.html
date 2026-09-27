@@ -2,6 +2,10 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<style>@view-transition { navigation: auto; }</style>
+<script>/* 교차문서 전환 옵트인을 head 인라인에 두고(CSS 늦게 도착 시 opt-in disabled 방지) 전환 약속 거부를 삼킨다 — 레일 클릭 이동 pageerror 0 (F2-C must_fix) */
+(function () { var h = function (e) { var vt = e.viewTransition; if (!vt) return; ['ready', 'finished', 'updateCallbackDone'].forEach(function (k) { if (vt[k] && vt[k].catch) vt[k].catch(function () {}); }); };
+  addEventListener('pagereveal', h); addEventListener('pageswap', h); })();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LX/OPS — 관제실 로그인</title>
 <link rel="stylesheet" href="/landxi/proto/fonts-system.css">
@@ -42,7 +46,8 @@
 <div class="lg-opsmark" aria-hidden="true">LX<b>/</b>OPS</div>
 <script type="module">
 import { portGate, detect, login, who, SRC, prov, ready, hhmmss, h, fmt, setText, errText } from '/landxi/ops/js/boot.js';
-import { createMap, inkMix, tween, eCam, mountOverview } from '/landxi/ops/js/deploy-map.js';
+import { createMap, inkMix, tween, eCam } from '/landxi/ops/js/deploy-map.js';
+import { mountOverview } from '/landxi/ops/js/overview.js';
 import { mountFrame } from '/landxi/ops/js/rail.js';
 import { mountPalette } from '/landxi/ops/js/palette.js';
 import { fixture } from '/landxi/shared/api-v1.js';
@@ -52,7 +57,9 @@ if (portGate()) {
   await detect();
   const q = new URLSearchParams(location.search);
   const w = who();
-  if (w && w.realm === 'lx' && w.role === 'admin' && !q.has('stay')) location.replace('/landxi/ops/index.html');
+  // F2-R 인계: ?next=infra.html 등(화이트리스트 · 같은 origin 관제 화면만) — 쿼리(?job= ?deploy= ?tenant=)는 그대로 넘긴다
+  const NEXT = (() => { const n = q.get('next') || ''; const m = /^(index|infra|tenants|deploys)\.html(\?[\w=&%.:-]*)?$/.exec(n); return m ? '/landxi/ops/' + m[0] : null; })();
+  if (w && w.realm === 'lx' && w.role === 'admin' && !q.has('stay')) location.replace(NEXT || '/landxi/ops/index.html');
   if (q.get('denied')) msg('관제실은 관리자 전용입니다');
 
   // 관제 요약 한 줄 — 로그인 전 공개 최소치(브리지 health) · off 면 시연
@@ -85,31 +92,40 @@ if (portGate()) {
     try {
       const s = await login(id, pw);
       if (s.denied) { msg('관제실은 관리자 전용입니다'); $('go').disabled = false; return; }
-      clearInterval(sumT); await flip(s);
+      clearInterval(sumT);
+      if (NEXT && !/^\/landxi\/ops\/index\.html/.test(NEXT)) { location.replace(NEXT); return; }
+      await flip(s);
     } catch (err) { msg(err?.code === 'unauthorized' ? '계정·비밀번호를 확인하세요' : errText(err)); $('go').disabled = false; }
   });
 
+  // 잉크 반전(F1-C must_fix 1): 명도 반전 1600 한 번 · 같은 1600 안에 ① 지도가 판 자리로 옮겨 가며 남원 z12 → 전국 easeTo(--e-cam)
+  // ② 셸(레일·마스트·판)이 카메라 이동과 함께 선다 → 검정 공백 0. 이어서 배포 밀집(호남) 1250 + 인셋 → 점 앰버 락온 → grown.
   async function flip(s) {
-    const t0 = performance.now();
+    let trBg = null; let t0 = performance.now();   // 반전 시간 = 바탕색 전이의 실제 시작(transitionstart) → 끝(transitionend)
+    document.body.addEventListener('transitionstart', function f(e) { if (e.target === document.body && e.propertyName === 'background-color') { t0 = performance.now(); trBg = document.body.getAnimations?.().find((a) => a.transitionProperty === 'background-color') || null; document.body.removeEventListener('transitionstart', f); } });
     const bodyDone = new Promise((res) => { const f = (e) => { if (e.target === document.body && e.propertyName === 'background-color') { document.body.removeEventListener('transitionend', f); res(performance.now()); } }; document.body.addEventListener('transitionend', f); setTimeout(() => res(null), 2400); });
     document.documentElement.dataset.flip = 'running';
     document.body.classList.add('is-flip');
     document.body.setAttribute('data-stage', 'ops');
-    await tween(1600, eCam, (k) => inkMix(map, k));
-    const tEnd = (await bodyDone) || performance.now();
-    document.documentElement.dataset.flipMs = String(Math.round(tEnd - t0));
-    document.documentElement.dataset.flip = 'done';
-    // 같은 지도를 들고 운영 현황으로(점프 0): 얼굴판 자리에 고정 → 셸을 세운다 → 중앙 판으로 자란다
     const r = $('plate').getBoundingClientRect();
     const fly = h('div', { class: 'lg-fly', style: { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' } });
-    fly.append(faceEl);
+    fly.append(faceEl); document.body.append(fly);
     history.replaceState(null, '', '/landxi/ops/index.html');
     document.title = 'LX/OPS — 운영 현황';
-    document.body.classList.remove('is-flip');
-    const frame = mountFrame({ page: 'index', title: '운영 현황', crumb: '배포 · 노드 · 결재', user: s.offline ? who() : s });
-    document.body.append(fly);
-    await mountOverview(frame, { map, fly, mapEl: faceEl });
+    const frame = mountFrame({ page: 'index', title: '운영 현황', crumb: '배포 · 노드 · 결재 · 실태조사', user: s.offline ? who() : s, assemble: true });
+    const ink = tween(1600, (x) => x, (x) => inkMix(map, eCam(x), x));
+    const ov = mountOverview(frame, { map, fly, mapEl: faceEl });
+    await ink;
+    const tEnd = (await bodyDone) || performance.now();
+    // 반전 시간 = 바탕색 CSS 전이의 선언 길이(1600) · 벽시계 = transitionstart → end(메인 스레드 부하가 끼면 한두 프레임 길어진다)
+    const tr = trBg;
+    document.documentElement.dataset.flipWallMs = String(Math.round(tEnd - t0));
+    document.documentElement.dataset.flipMs = String(Math.round(tr ? tr.effect.getTiming().duration : tEnd - t0) || Math.round(tEnd - t0));
+    document.documentElement.dataset.flip = 'done';
+    frame.settle();
+    await ov;
     mountPalette();
+    document.documentElement.dataset.grownMs = String(Math.round(performance.now() - t0));
     document.documentElement.dataset.flip = 'grown';
   }
 }
