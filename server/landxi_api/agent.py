@@ -1,0 +1,297 @@
+"""에이전트 라우터(F1-CONTRACT v1.1-23~27 · 소유 F2-E) — F2-B 확장 훅이 `app.include_router(agent.router, prefix='/api/v1')` 로 붙인다.
+
+POST /agent/runs                     → 202 {run, events_url} · 사슬 전부 죽음 → 503 llm_unavailable(프론트 리플레이)
+GET  /events/agent/{run_id}          → SSE(agent.route/plan/tool.call/tool.result/confirm/token/done/failed/rejected · 24h 재생)
+POST /agent/runs/{id}/confirm        → {confirm_id, decision: approve|reject} · 만료 409 confirm_expired
+POST /agent/runs/{id}/client         → 클라이언트 도구 ms(브라우저 실측) 기록
+GET  /agent/runs · /agent/runs/{id}  → 감사(본인 · 기관 · LX 전체 — RLS)
+GET  /agent/models                   → 실제 백엔드 헬스(agent:models 30s)
+POST /agent/report/draft             → 202 {run, events_url} · 완료 시 agent.done.artifact.docx_url
+GET  /agent/runs/{id}/draft.docx     → 초안 파일(Bearer)
+게스트 0(401). 외부 클라우드 호출 0.
+"""
+from __future__ import annotations
+
+import asyncio
+import json
+import threading
+import time
+from urllib.parse import quote as urlquote
+
+from fastapi import APIRouter, Request
+from fastapi.responses import FileResponse
+from sse_starlette.sse import EventSourceResponse, ServerSentEvent
+
+from .deps import ApiError, db, principal, redis, require
+from .envelope import now_iso
+
+router = APIRouter()
+TERMINAL = {"agent.done", "agent.failed", "agent.rejected"}
+HEADERS = {"Cache-Control": "no-store", "X-Accel-Buffering": "no"}
+_health_task: asyncio.Task | None = None
+_warm_started = False
+
+
+def _agent():
+    from agent import backends, config, report, runner   # server/agent (sys.path 에 server/ 가 있다)
+    return backends, config, report, runner
+
+
+def _bg():
+    """첫 호출 때 한 번: 필지 색인 데우기(스레드) + 백엔드 헬스 30s 루프(agent:models)."""
+    global _health_task, _warm_started
+    if not _warm_started:
+        _warm_started = True
+        from agent.tools import survey_local
+        threading.Thread(target=lambda: (survey_local.warm(), survey_local.suspects(), survey_local.summary()), daemon=True).start()
+    if _health_task is None or _health_task.done():
+        backends, config, _, _ = _agent()
+
+        async def loop():
+            while True:
+                try:
+                    await backends.health(await redis())
+                except Exception:
+                    pass
+                await asyncio.sleep(config.HEALTH_TTL_S)
+        _health_task = asyncio.get_running_loop().create_task(loop())
+
+
+def _token(request: Request) -> str | None:
+    h = request.headers.get("authorization", "")
+    return h[7:].strip() if h.lower().startswith("bearer ") else None
+
+
+def _run_public(run_id: str, p, mode: str, state: str) -> dict:
+    return {"id": run_id, "tenant_id": p.tenant_id, "user": p.user_id, "realm": p.realm, "mode": mode, "state": state, "created_at": now_iso()}
+
+
+async def _unavailable(tried):
+    raise ApiError("llm_unavailable", "LLM 백엔드 사슬(vLLM :8000 → Ollama :11434) 전부 응답 없음 — 저장된 실제 run 녹음을 재생하세요",
+                   {"tried": tried, "replay": "/landxi/agent/data/replay/ag0-namwon.ndjson"}, 503)
+
+
+@router.get("/agent/alive")
+async def alive(request: Request):
+    """신선한 사슬 헬스(200 · 503 을 쓰지 않는다 — 프론트가 POST 전에 물어 콘솔 오류 없이 리플레이로 간다)."""
+    require(principal(request))
+    backends, _, _, _ = _agent()
+    first, tried = await backends.first_alive(await redis())
+    return {"alive": first, "tried": tried, "at": now_iso()}
+
+
+@router.post("/agent/runs", status_code=202)
+async def create_run(body: dict, request: Request):
+    p = require(principal(request))
+    _bg()
+    backends, config, _, runner = _agent()
+    msg = str(body.get("message") or "").strip()
+    if not msg:
+        raise ApiError("bad_request", "message 가 비었습니다")
+    if len(msg) > 1000:
+        raise ApiError("bad_request", "message 는 1,000자 이하")
+    mode = body.get("mode") or "map"
+    if mode not in ("map", "report", "ops"):
+        raise ApiError("bad_request", "mode 는 map|report|ops")
+    r = await redis()
+    alive, tried = await backends.first_alive(r)
+    if alive is None:
+        await _unavailable(tried)
+    run_id = runner.ulid("run_")
+    ctx = runner.make_ctx(run_id, p, _token(request), body.get("context") or {}, mode, r)
+    if tried:
+        ctx.state["prefallback"] = tried
+    runner.start(ctx, runner.execute(ctx, msg))
+    return {"run": _run_public(run_id, p, mode, "planning"), "events_url": f"/api/v1/events/agent/{run_id}",
+            "backend": {"first": alive, "skipped": [t["backend"] for t in tried]}}
+
+
+@router.post("/agent/report/draft", status_code=202)
+async def report_draft(body: dict, request: Request):
+    p = require(principal(request))
+    _bg()
+    backends, config, report, runner = _agent()
+    if (body.get("template") or "survey-emd") != "survey-emd":
+        raise ApiError("bad_request", "template 은 survey-emd(1차 유일)")
+    if not (body.get("emd_cd") or body.get("emd")):
+        raise ApiError("bad_request", "emd_cd 가 필요합니다")
+    r = await redis()
+    alive, tried = await backends.first_alive(r)
+    if alive is None:
+        await _unavailable(tried)
+    run_id = runner.ulid("run_")
+    ctx = runner.make_ctx(run_id, p, _token(request), body.get("context") or {}, "report", r)
+    runner.start(ctx, report.draft(ctx, body))
+    return {"run": _run_public(run_id, p, "report", "planning"), "events_url": f"/api/v1/events/agent/{run_id}"}
+
+
+async def _own_run(p, run_id: str):
+    async with db(p) as conn:
+        row = await conn.fetchrow("SELECT id, tenant_id, user_id, state, artifact FROM agent_runs WHERE id=$1", run_id)
+    if not row:
+        raise ApiError("not_found", f"run {run_id} 없음(또는 다른 기관)")
+    if not (p.is_admin or row["user_id"] == p.user_id or (p.realm == "tenant" and row["tenant_id"] == p.tenant_id)):
+        raise ApiError("forbidden", "다른 사용자의 run")
+    return row
+
+
+@router.get("/events/agent/{run_id}")
+async def run_events(run_id: str, request: Request):
+    p = require(principal(request))
+    r = await redis()
+    key = f"agent:runs:{run_id}"
+    # PG 행이 막 쓰이는 중일 수 있어 짧게 기다린다(스트림은 이미 있을 수 있음)
+    for _ in range(10):
+        try:
+            await _own_run(p, run_id)
+            break
+        except ApiError as e:
+            if e.code != "not_found":
+                raise
+            await asyncio.sleep(0.1)
+    else:
+        await _own_run(p, run_id)
+    start = request.headers.get("last-event-id") or request.query_params.get("last_event_id")
+
+    async def gen():
+        cursor = start or "0-0"
+        first = True
+        while True:
+            if await request.is_disconnected():
+                return
+            if first:
+                rows = await r.xrange(key, min=f"({cursor}" if cursor != "0-0" else "-", max="+", count=5000)
+                first = False
+                batch = rows
+            else:
+                res = await r.xread({key: cursor}, block=10000, count=500)
+                batch = res[0][1] if res else []
+                if not batch:
+                    yield ServerSentEvent(comment="hb")
+                    continue
+            ended = False
+            for eid, f in batch:
+                cursor = eid
+                yield ServerSentEvent(data=f.get("data", "{}"), event=f.get("event", "message"), id=eid)
+                if f.get("event") in TERMINAL:
+                    ended = True
+            if ended:
+                await asyncio.sleep(1)
+                return
+
+    return EventSourceResponse(gen(), headers=HEADERS, ping=10, send_timeout=30)
+
+
+@router.post("/agent/runs/{run_id}/confirm")
+async def confirm(run_id: str, body: dict, request: Request):
+    p = require(principal(request))
+    cid = str(body.get("confirm_id") or "")
+    decision = body.get("decision")
+    if decision not in ("approve", "reject"):
+        raise ApiError("bad_request", "decision 은 approve|reject")
+    await _own_run(p, run_id)
+    r = await redis()
+    raw = await r.get(f"agent:confirm:{cid}")
+    st = json.loads(raw) if raw else None
+    if not st or st.get("run_id") != run_id:
+        raise ApiError("confirm_expired", "확인 카드가 만료됐거나 없습니다(60s)", {"confirm_id": cid}, 409)
+    if st.get("state") != "pending":
+        raise ApiError("confirm_expired" if st.get("state") == "expired" else "conflict", f"이미 처리됨({st.get('state')})", {"confirm_id": cid}, 409)
+    if p.realm == "lx" and p.role == "sales":
+        pass                                   # 영업: 승인 가능하나 제출은 demo:true 강제(jobs 도구)
+    st.update({"state": decision, "by": p.user_id, "at": now_iso()})
+    await r.set(f"agent:confirm:{cid}", json.dumps(st), ex=300)
+    return {"confirm_id": cid, "decision": decision, "run_id": run_id}
+
+
+@router.post("/agent/runs/{run_id}/client")
+async def client_ms(run_id: str, body: dict, request: Request):
+    """클라이언트 도구(map_arrive 등) 단계의 브라우저 실측 ms → agent_tool_calls.ms (ms_source='browser')."""
+    p = require(principal(request))
+    await _own_run(p, run_id)
+    try:
+        i, ms = int(body.get("i")), float(body.get("ms"))
+    except (TypeError, ValueError):
+        raise ApiError("bad_request", "i · ms 필요")
+    if not (0 <= ms < 600000):
+        raise ApiError("bad_request", "ms 범위")
+    async with db(p) as conn:
+        n = await conn.execute("UPDATE agent_tool_calls SET ms=$3, ms_source='browser' WHERE run_id=$1 AND i=$2", run_id, i, round(ms, 1))
+    r = await redis()
+    await r.xadd(f"agent:runs:{run_id}", {"event": "agent.tool.client", "data": json.dumps({"run_id": run_id, "i": i, "ms": round(ms, 1), "ms_source": "browser", "at": now_iso()})},
+                 maxlen=2000, approximate=True)
+    return {"ok": n.endswith("1"), "run_id": run_id}
+
+
+@router.get("/agent/runs")
+async def list_runs(request: Request, limit: int = 20):
+    p = require(principal(request))
+    async with db(p) as conn:
+        rows = await conn.fetch("SELECT id, tenant_id, user_id, realm, mode, intent, state, model, tokens_in, tokens_out, error, created_at, finished_at "
+                                "FROM agent_runs WHERE ($1 OR user_id=$2 OR tenant_id=$3) ORDER BY created_at DESC LIMIT $4",
+                                p.is_admin, p.user_id, p.tenant_id or "", max(1, min(limit, 100)))
+    items = []
+    for x in rows:
+        d = dict(x)
+        tin, tout = d.pop("tokens_in") or 0, d.pop("tokens_out") or 0
+        d["tokens"] = {"value": tin + tout, "unit": "tokens", "basis": "measured", "as_of": d["created_at"].isoformat() if d.get("created_at") else now_iso(),
+                       "source": "agent_runs(chat/completions usage)"}
+        items.append(d)
+    return {"items": items}
+
+
+@router.get("/agent/runs/{run_id}")
+async def get_run(run_id: str, request: Request):
+    p = require(principal(request))
+    await _own_run(p, run_id)
+    async with db(p) as conn:
+        row = await conn.fetchrow("SELECT id, tenant_id, user_id, realm, mode, intent, state, model, answer_md, envelopes, unverified, citations, artifact, "
+                                  "perf, tokens_in, tokens_out, error, created_at, finished_at FROM agent_runs WHERE id=$1", run_id)
+        calls = await conn.fetch("SELECT i, tool, args, result_ref, ms, ms_source, ok, error, at FROM agent_tool_calls WHERE run_id=$1 ORDER BY i, id", run_id)
+        cfs = await conn.fetch("SELECT id, tool, decision, decided_by, expires_at, at FROM agent_confirms WHERE run_id=$1 ORDER BY at", run_id)
+    d = dict(row)
+    tin, tout = d.pop("tokens_in") or 0, d.pop("tokens_out") or 0
+    d["tokens"] = {"value": tin + tout, "unit": "tokens", "basis": "measured", "as_of": now_iso(), "source": "agent_runs"}
+    d["perf_raw"] = d.pop("perf")
+    d["steps"] = [{**dict(c), "ms": float(c["ms"]) if c["ms"] is not None else None} for c in calls]
+    d["confirms"] = [dict(c) for c in cfs]
+    from .envelope import RawJSON
+    from .envelope import dumps
+    return RawJSON(json.loads(dumps(d)))
+
+
+@router.get("/agent/models")
+async def models(request: Request):
+    require(principal(request))
+    _bg()
+    backends, config, _, _ = _agent()
+    r = await redis()
+    raw = await r.hgetall("agent:models")
+    if not raw:
+        h = await backends.health(r)
+    else:
+        h = {k: json.loads(v) for k, v in raw.items()}
+    items = []
+    for name, v in h.items():
+        items.append({"id": v["id"], "name": name, "backend": v["backend"], "role": v["role"], "resident": bool(v["ok"]), "license": v["license"],
+                      "family": v["family"], "gpu": v["gpu"], "onprem": True, "base": v["base"], "error": v.get("error"),
+                      "probe": {"value": v.get("probe_ms"), "unit": "ms", "basis": "measured", "as_of": v["as_of"], "source": "GET /v1/models"}})
+    order = {"vllm": 0, "router": 1, "ollama": 2}
+    items.sort(key=lambda x: order.get(x["name"], 9))
+    active = next((x for x in items if x["name"] in ("vllm", "ollama") and x["resident"]), None)
+    return {"items": items, "active": active["name"] if active else None, "external": False, "chain": config.CHAIN, "as_of": now_iso()}
+
+
+@router.get("/agent/runs/{run_id}/draft.docx")
+async def draft_file(run_id: str, request: Request):
+    p = require(principal(request))
+    row = await _own_run(p, run_id)
+    _, config, _, _ = _agent()
+    f = config.ARTIFACT_DIR / run_id / "draft.docx"
+    if not f.exists():
+        raise ApiError("not_found", "초안 파일 없음(작성 중이거나 실패)")
+    art = row["artifact"] or {}
+    name = art.get("filename") or "실태조사_초안.docx"
+    return FileResponse(str(f), media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        headers={"Content-Disposition": f"attachment; filename=\"draft.docx\"; filename*=UTF-8''{urlquote(name)}",
+                                 "Access-Control-Expose-Headers": "Content-Disposition"})
