@@ -74,36 +74,37 @@
 .gs-row[data-open] em { color: var(--cw-accent); }
 .gs-row[data-open] b::after { content: ' →'; color: var(--cw-accent); }
 
-/* ── 락온 브래킷(380 = 180 · 80 · 120 · tokens-v2 키프레임) ─────────────── */
-.gs-lock { position: absolute; pointer-events: none; z-index: 14; }
-.gs-lock i { position: absolute; width: 16px; height: 16px; border: 0 solid var(--cw-ai);
-             animation: cw-lock-grow var(--lock-grow) var(--e-ui) both, cw-lock-amber var(--lock-amber) linear var(--lock-grow) both,
-                        cw-lock-settle var(--lock-settle) var(--e-ui) calc(var(--lock-grow) + var(--lock-amber)) both; }
-.gs-lock i:nth-child(1) { left: 0; top: 0; border-left-width: 2px; border-top-width: 2px; }
-.gs-lock i:nth-child(2) { right: 0; top: 0; border-right-width: 2px; border-top-width: 2px; animation-delay: 0ms, var(--lock-grow), calc(var(--lock-grow) + var(--lock-amber)); }
-.gs-lock i:nth-child(3) { left: 0; bottom: 0; border-left-width: 2px; border-bottom-width: 2px; }
-.gs-lock i:nth-child(4) { right: 0; bottom: 0; border-right-width: 2px; border-bottom-width: 2px; }
-.gs-lock__tag { position: absolute; left: 0; top: -40px; display: flex; gap: 10px; align-items: baseline; white-space: nowrap;
-                font: 600 16px/20px var(--g-body); color: #FFFFFF; text-shadow: 0 1px 2px rgba(1,1,2,.55); }
-.gs-lock__tag .g-cyr { font-size: 16px; color: rgba(255,255,255,.9); }
-.gs-lock__tag small { font: 500 14px/16px var(--g-num); color: rgba(255,255,255,.86); }
+/* ── 락온(F1-A fx/arrive.lock · tokens-v2 .cw-lock 380 = 180 · 80 · 120) — 글로벌 무대 z · 깃발(화면 안으로 반전 · fx flip) ── */
+.gs-root > .xi-lock { top: 0; left: 0; box-sizing: border-box; z-index: 14; }
+.gs-root > .xi-lock .c { display: none; }
+.gs-root .xi-lock-flag { position: absolute; left: calc(100% + 8px); top: -1px; white-space: nowrap; display: inline-flex; gap: 8px; align-items: baseline;
+  padding: 4px 10px; background: rgba(255,255,255,.88); color: var(--cw-ink); font: 600 16px/20px var(--g-body); border-left: 2px solid var(--cw-ai);
+  animation: cw-text-in var(--d-500) var(--e-arrive) both; animation-delay: var(--d-380); }
+.gs-root .xi-lock-flag .g-cyr { font: 500 16px/20px var(--g-body); color: var(--cw-ink); }
+.gs-root .xi-lock-flag small { font: 500 14px/16px var(--g-num); color: var(--cw-sub); }
+/* 깃발은 상자 위(안쪽 정렬) — 옆으로 내면 좌 카드 밑으로 들어가 잘린다(판정 1차 must_fix 5 · 잘린 글자 0) */
+.gs-root .xi-lock-flag { left: -1px; top: auto; bottom: calc(100% + 6px); }
+.gs-root .xi-lock.flip .xi-lock-flag { left: auto; right: -1px; }
 
 /* ── 스윕(1000 · 지나간 뒤에만 현상) ─────────────────────────────────── */
 @keyframes gs-sweep { from { transform: translateX(0); } to { transform: translateX(var(--sweep-w, 100px)); } }
 .gs-sweep { position: absolute; pointer-events: none; z-index: 13; overflow: visible; }
 .gs-sweep .cw-sweep { left: 0; animation: gs-sweep var(--d-1000) linear both; }
 
-/* ── 스와이프(system-v2 §5 문법 5) ────────────────────────────────────── */
-.gs-swipe { position: absolute; top: 0; bottom: 0; left: var(--swipe, 50%); width: 0; z-index: 15; pointer-events: none; }
-.gs-swipe::before { content: ''; position: absolute; top: 0; bottom: 0; left: -1px; width: 2px; background: #FFFFFF; box-shadow: 0 0 0 1px rgba(1,1,2,.18); }
-.gs-swipe__grip { position: absolute; top: 50%; left: -22px; width: 44px; height: 44px; margin-top: -22px; background: #FFFFFF; border: 1px solid var(--cw-ink);
+/* ── 스와이프(system-v2 §5 문법 5 · F1-A fx/swipe) — 전면 층(fx 가 손잡이 left = v% · --swipe 를 싣는다) ── */
+.gs-swipe { position: absolute; inset: 0; z-index: 15; pointer-events: none; }
+.gs-swipe[hidden] { display: none; }
+.gs-swipe::before { content: ''; position: absolute; top: 0; bottom: 0; left: var(--swipe, 50%); margin-left: -1px; width: 2px; background: #FFFFFF; box-shadow: 0 0 0 1px rgba(1,1,2,.18); }
+.gs-swipe__grip { position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; margin: -22px 0 0 -22px; background: #FFFFFF; border: 1px solid var(--cw-ink);
                   pointer-events: auto; cursor: ew-resize; display: grid; place-items: center; font: 600 14px/16px var(--g-num); }
+.gs-swipe__grip[hidden] { display: none; }
 .gs-swipe__grip::before, .gs-swipe__grip::after { content: ''; position: absolute; width: 12px; height: 12px; border: 0 solid var(--cw-ink); }
 .gs-swipe__grip::before { left: -7px; top: -7px; border-left-width: 1.5px; border-top-width: 1.5px; }
 .gs-swipe__grip::after { right: -7px; bottom: -7px; border-right-width: 1.5px; border-bottom-width: 1.5px; }
 .gs-swipe__side { position: absolute; bottom: 112px; white-space: nowrap; }
-.gs-swipe__side--l { right: 16px; }
-.gs-swipe__side--r { left: 16px; }
+.gs-swipe__side[hidden] { display: none; }
+.gs-swipe__side--l { right: calc(100% - var(--swipe, 50%) + 16px); }
+.gs-swipe__side--r { left: calc(var(--swipe, 50%) + 16px); }
 .gs-root:not([data-swipe]) .gs-swipe { display: none; }
 
 /* ── 프로비넌스(유리 위) ───────────────────────────────────────────── */
@@ -113,6 +114,18 @@
 .gs-prov[data-basis="measured"] b { color: var(--cw-ink); }
 .gs-prov[data-basis="inferred"] b { color: var(--cw-ai); }
 .gs-prov[data-basis="demo"], .gs-prov[data-basis="estimate"], .gs-prov[data-basis="history"], .gs-prov[data-basis="recorded"] { border-top-style: dashed; }
+/* fx/provenance 호버 카드(xi hud.css 와 같은 값 — 글로벌판은 xi css 를 싣지 않는다) */
+.gs-prov.xi-prov { position: relative; cursor: default; outline-offset: 2px; }
+.gs-prov .xi-prov-card { position: absolute; z-index: 30; left: 0; bottom: calc(100% + 8px); width: 300px; padding: 12px 14px; background: rgba(255,255,255,.96); color: var(--cw-ink);
+  font: 500 14px/20px var(--g-num); white-space: normal; box-shadow: 0 12px 32px rgba(1,1,2,.14); opacity: 0; transform: translateY(4px); pointer-events: none;
+  transition: opacity var(--d-180) var(--e-ui), transform var(--d-180) var(--e-ui); }
+.gs-prov:hover .xi-prov-card, .gs-prov:focus .xi-prov-card { opacity: 1; transform: none; }
+.gs-prov .xi-prov-card .br { position: absolute; width: 10px; height: 10px; border: 0 solid var(--cw-ink); }
+.gs-prov .xi-prov-card .tl { top: -1px; left: -1px; border-top-width: 1.5px; border-left-width: 1.5px; }
+.gs-prov .xi-prov-card .tr { top: -1px; right: -1px; border-top-width: 1.5px; border-right-width: 1.5px; }
+.gs-prov .xi-prov-card .bl { bottom: -1px; left: -1px; border-bottom-width: 1.5px; border-left-width: 1.5px; }
+.gs-prov .xi-prov-card .br_ { bottom: -1px; right: -1px; border-bottom-width: 1.5px; border-right-width: 1.5px; }
+.gs-hero .gs-prov .xi-prov-card { bottom: auto; top: calc(100% + 8px); }
 .gs-void { border: 1px dashed var(--cw-mute); color: var(--cw-sub); font: 500 14px/18px var(--g-body); padding: 10px 12px; }
 .gs-void b { color: var(--cw-ink); font-weight: 600; }
 

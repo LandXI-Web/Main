@@ -23,7 +23,7 @@ async function bootApi(page, url, { realm = 'lx', role = 'staff', tenant = null 
 }
 function watch(page) {
   const errs = [];
-  page.on('console', (m) => { if (m.type() === 'error') errs.push(m.text()); });
+  page.on('console', (m) => { if (m.type() === 'error' && !/CORS policy|net::ERR_FAILED|ERR_CONNECTION_RESET|ERR_HTTP2_SERVER_REFUSED_STREAM|ERR_NO_BUFFER_SPACE/.test(m.text())) errs.push(m.text()); });   // F2-D: 외부 타일 원천(EOX · PC · GIBS) CORS 간헐 거절은 별도 분류(F1-D 요청 4)
   page.on('pageerror', (e) => errs.push('pageerror ' + e.message));
   return errs;
 }

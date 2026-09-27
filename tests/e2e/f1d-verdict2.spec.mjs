@@ -13,7 +13,7 @@ async function boot(page, url) {
 }
 function watch(page) {
   const errs = [];
-  page.on('console', (m) => { if (m.type() === 'error') errs.push(m.text()); });
+  page.on('console', (m) => { if (m.type() === 'error' && !/CORS policy|net::ERR_FAILED|ERR_CONNECTION_RESET|ERR_HTTP2_SERVER_REFUSED_STREAM|ERR_NO_BUFFER_SPACE/.test(m.text())) errs.push(m.text()); });   // F2-D: 외부 타일 원천(EOX · PC · GIBS) CORS 간헐 거절은 별도 분류(F1-D 요청 4)
   page.on('pageerror', (e) => errs.push('pageerror ' + e.message));
   return errs;
 }
@@ -29,6 +29,7 @@ test.describe('F1-D verdict 2', () => {
     expect(s.opA).toBe('1');
     if (s.cover === '1') expect(s.pf).toMatch(/Pre-fetching imagery\s*\d+\/\d+/);   // 대역이 덮는 동안에는 반드시 진행 표시
     await page.waitForFunction(() => window.__f1dWarm, null, { timeout: 40000 });
+    await page.waitForFunction(() => document.getElementById('root').dataset.bcover === undefined, null, { timeout: 3000 });   // F2-D: 대역이 걷히는 500 동안 출발 가능
     const after = await page.evaluate(() => ({ cover: document.getElementById('root').dataset.bcover, pf: document.getElementById('pf').hidden, z: window.__f1d.stage.map.getZoom() }));
     expect(after.cover).toBeUndefined();
     expect(after.pf).toBe(true);
@@ -53,7 +54,8 @@ test.describe('F1-D verdict 2', () => {
     await boot(page, '/landxi/global/index.html?tenant=lx&locale=en');
     await page.evaluate(() => window.__f1d.go('ysykata'));
     await page.waitForSelector('#card:not([hidden])');
-    const card = await page.evaluate(() => { const c = document.getElementById('card'); return { self: c.classList.contains('g-in'), kids: c.querySelectorAll('.g-in-2, .g-in-3, .g-in-4').length }; });
+    // F2-D: 카드 한 번에 = F1-A fx/glass.textIn(카드 자신 · 500 · 자식 스태거 0)
+    const card = await page.evaluate(() => { const c = document.getElementById('card'); return { self: c.getAnimations().some((a) => a.effect.getTiming().duration === 500) || c.classList.contains('g-in'), kids: c.querySelectorAll('.g-in-2, .g-in-3, .g-in-4').length }; });
     expect(card).toEqual({ self: true, kids: 0 });
     await page.evaluate(() => { const S = window.__f1d.scenes.ys; S.frame(); return S.quote(); });
     await page.evaluate(() => { window.__big = []; const f = () => { const el = document.querySelector('#hud-big'); if (el) window.__big.push(el.textContent); if (!window.__stopBig) requestAnimationFrame(f); }; requestAnimationFrame(f); window.__f1d.scenes.ys.run(); });
@@ -64,7 +66,7 @@ test.describe('F1-D verdict 2', () => {
     expect(big.filter((x) => x.startsWith('0.00')).length).toBe(0);
     await expect(page.locator('#hud-big .cw-digit')).toHaveCount(0);
     await expect(page.locator('#ys-next .g-lineage a')).toHaveCount(0);
-    await expect(page.locator('#ys-next .g-lineage__wait')).toContainText('contract change request 9');
+    await expect(page.locator('#ys-next .g-lineage__wait')).toContainText('live runs only');   // F2-D: 라이브 작업은 관제 실링크(f2d-lineage-link)
     expect(errs).toEqual([]);
   });
 

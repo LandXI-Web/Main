@@ -21,7 +21,7 @@ async function bootApi(page, url, { realm = 'lx', role = 'staff', tenant = null 
 }
 function watch(page) {
   const errs = [];
-  page.on('console', (m) => { if (m.type() === 'error') errs.push(m.text()); });
+  page.on('console', (m) => { if (m.type() === 'error' && !/CORS policy|net::ERR_FAILED|ERR_CONNECTION_RESET|ERR_HTTP2_SERVER_REFUSED_STREAM|ERR_NO_BUFFER_SPACE/.test(m.text())) errs.push(m.text()); });   // F2-D: 외부 타일 원천(EOX · PC · GIBS) CORS 간헐 거절은 별도 분류(F1-D 요청 4)
   page.on('pageerror', (e) => errs.push('pageerror ' + e.message));
   return errs;
 }
@@ -85,7 +85,7 @@ test.describe('F1-D globe stage', () => {
     expect(errs).toEqual([]);
   });
 
-  test('남원 → 글로브 → 비슈케크 카메라 연속 · 페이지 이동 0 · 2400 × 2', async ({ page }) => {
+  test('남원 → 글로브 → 비슈케크 카메라 연속 · 페이지 이동 0 · 3200(Δz ≥ 10) + 2400', async ({ page }) => {
     const errs = watch(page);
     await bootApi(page, '/landxi/global/index.html?tenant=lx&locale=en&from=namwon');
     const durs = await page.evaluate(async () => {
@@ -95,16 +95,16 @@ test.describe('F1-D globe stage', () => {
       await f.go('globe', { force: true });
       const z1 = m.getZoom();
       await f.go('ysykata');
-      return { seen, z0, z1, z2: m.getZoom(), c: m.getCenter(), nav: performance.getEntriesByType('navigation').length, href: location.href };
+      return { seen, z0: window.__f2dFlights[0].z0, z1, z2: m.getZoom(), c: m.getCenter(), nav: performance.getEntriesByType('navigation').length, href: location.href };
     });
-    expect(durs.seen).toEqual([2400, 2400]);
+    expect(durs.seen).toEqual([3200, 2400]);   // 남원(z 12.3) → 글로브(z 1.8) Δz 10.5 = --e-fly 초장거리 3200(판정 3차) · 글로브 → 으슥아타 2400
     expect(durs.z0).toBeGreaterThan(11);
     expect(durs.z1).toBeLessThan(2);
     expect(durs.z2).toBeGreaterThan(9);
     expect(durs.c.lng).toBeGreaterThan(74.5);
     expect(durs.nav).toBe(1);
     expect(durs.href).toContain('from=namwon');
-    await expect(page.locator('.gs-lock__tag')).toContainText('Ысык-Ата');
+    await expect(page.locator('.xi-lock-flag')).toContainText('Ысык-Ата');   // F2-D: 락온 = F1-A fx/arrive.lock(깃발 .xi-lock-flag)
     expect(errs).toEqual([]);
   });
 

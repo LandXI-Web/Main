@@ -3,7 +3,7 @@
    · 스와이프 EOX 2017 ↔ 2025 · 연속지적 시범지 3곳 라벨 + 경계 미확보 · Сокулук · Бишкек 병기. */
 import { API, fixture, env, api, session, catalog, quote, submit, sse } from '/landxi/shared/api-v1.js';
 import { t, num, area } from './i18n.js';
-import { D, ease, fly, prov, pin, tween, wait, ensureMapB, baseStyle, swipe, idle } from './globe-stage.js';
+import { D, prov, pinBox, tween, ensureMapB, swipe, idle, eoxB, dcache } from './globe-stage.js';
 import { cardHead, gap, reveal } from './cards-global.js';
 import { opacity, show, rawTiles } from './ladder-global.js';
 
@@ -11,7 +11,7 @@ const DATA = new URL('../data/', import.meta.url);
 export const CAM_SK = { center: [74.43, 42.855], zoom: 10.35, pitch: 40, bearing: -8 };
 export const CAM_SK_BLD = { center: [74.512, 42.868], zoom: 14.0, pitch: 45, bearing: -18 };
 const PILOTS = [
-  { name: 'Bishkek', cyr: 'Бишкек', at: [74.60, 42.875] },
+  { name: 'Bishkek', cyr: 'Бишкек', at: [74.60, 42.875], below: true },   // 이웃과 위·아래 엇갈림(라벨 겹침 0)
   { name: 'Ysyk-Ata', cyr: 'Ысык-Ата', at: [74.94, 42.885] },
   { name: 'Sokuluk', cyr: 'Сокулук', at: [74.30, 42.86] },
 ];
@@ -112,6 +112,7 @@ export function sprawlScene(stage, ctx) {
     const line = (k, ok, txt) => { L.push({ k, ok, txt }); ul.innerHTML = L.map((i) => `<li data-ok="${i.ok}"><i></i><span><b>${t('sk.pre.' + i.k)}</b> · ${i.txt}</span></li>`).join(''); };
     const stop = (why) => { gapEl.appendChild(gap(t('sk.run.cant'), why)); btn.disabled = false; btn.textContent = t('sk.run'); S.change = { blocked: why }; root.dispatchEvent(new CustomEvent('f1d:sk-preflight', { detail: { items: L, blocked: why } })); };
     if (API.mode !== 'on') { line('gw', 0, t('sk.pre.gw.off')); return stop(t('sk.run.cant.off')); }
+    if (!session.get()) { line('gw', 1, t('sk.pre.gw.guest')); return stop(t('sk.run.cant.guest')); }   // 인증 라우트(401 콘솔 오류 0) — 게스트는 부르지 않는다
     line('gw', 1, API.base.replace(/^https?:\/\//, ''));
     let dep = null;
     // 목록에서 찾는다(단건 GET 의 404 는 브라우저 콘솔 오류가 된다)
@@ -170,7 +171,7 @@ export function sprawlScene(stage, ctx) {
   const swipeSrc = (yr) => swipeSrcOf(ctx, yr);
   async function swipeOn(on = !S.swipe) {
     pressed('swipe', on);
-    if (!on) { S.swipe && S.swipe.off(); S.swipe = null; show(map, 'sw-2017', false); if (stage.mapB) ['b-eox', 'b-sw'].forEach((l) => show(stage.mapB, l, false)); return; }
+    if (!on) { S.swipe && S.swipe.off(); S.swipe = null; show(map, 'sw-2017', false); if (stage.mapB) { show(stage.mapB, 'b-sw', false); eoxB(stage.mapB, false); } return; }
     if (!map.getSource('sw-2017')) {
       map.addSource('sw-2017', swipeSrc('2017'));
       map.addLayer({ id: 'sw-2017', type: 'raster', source: 'sw-2017', paint: { 'raster-fade-duration': D[500] } }, map.getLayer('lx-fill') ? 'lx-fill' : undefined);
@@ -189,7 +190,7 @@ export function sprawlScene(stage, ctx) {
     await stage.mapBReady;
     if (!b.getSource('b-sw')) {
       const eox = ctx.ladder.cat.by['eox-s2cloudless-2025'];
-      if (eox) { b.addSource('b-eox', { type: 'raster', tileSize: 256, tiles: [rawTiles(eox)], minzoom: 3, maxzoom: 14 }); b.addLayer({ id: 'b-eox', type: 'raster', source: 'b-eox', paint: { 'raster-fade-duration': D[500] } }); }
+      if (eox && !b.getSource('b-eox')) { b.addSource('b-eox', { type: 'raster', tileSize: 256, tiles: [dcache(rawTiles(eox))], minzoom: 3, maxzoom: 14 }); b.addLayer({ id: 'b-eox', type: 'raster', source: 'b-eox', paint: { 'raster-fade-duration': D[500] } }); }
       b.addSource('b-sw', swipeSrc('2025'));
       b.addLayer({ id: 'b-sw', type: 'raster', source: 'b-sw', paint: { 'raster-fade-duration': D[500] } });
     }
@@ -197,7 +198,8 @@ export function sprawlScene(stage, ctx) {
     show(b, 'b-ovt', S.bld);
     if (S.bld) b.setPaintProperty('b-ovt', 'fill-extrusion-height', ['coalesce', ['get', 'height'], ['*', ['coalesce', ['get', 'num_floors'], 2], 3]]);
     ['b-maxar', 'b-base'].forEach((l) => b.getLayer(l) && b.setLayoutProperty(l, 'visibility', 'none'));
-    ['b-eox', 'b-sw'].forEach((l) => b.getLayer(l) && b.setLayoutProperty(l, 'visibility', visible ? 'visible' : 'none'));
+    if (b.getLayer('b-sw')) b.setLayoutProperty('b-sw', 'visibility', visible ? 'visible' : 'none');
+    eoxB(b, visible);
     if (b.getLayer('b-ovt')) show(b, 'b-ovt', S.bld);
     return b;
   }
@@ -208,13 +210,15 @@ export function sprawlScene(stage, ctx) {
     async enter() {
       addLayers(); renderCard();
       stage.inKgz = true;
-      PILOTS.forEach((p) => pin(stage, p.at, `<div class="g-pin__box"><b>${p.name}</b><span class="g-cyr" lang="ru">${p.cyr}</span><small>${t('pilot.h')} · ${t('pilot.void')}</small></div>`));
+      // 시범지 라벨 — fx anchor(화면 안으로 반전 · 카드·HUD 회피 · 판정 1차 must_fix 5)
+      const avoid = [root.querySelector('#hud')].filter(Boolean);   // fx anchor 는 왼쪽으로만 비킨다 — 좌 카드는 카메라 여백(PAD_REGION left 380)이 피한다
+      PILOTS.forEach((p) => pinBox(stage, p.at, `<b>${p.name}</b><span class="g-cyr" lang="ru">${p.cyr}</span><small>${t('pilot.h')} · ${t('pilot.void')}</small>`, { avoid, below: !!p.below }));
     },
     leave() {
       S.swipe && S.swipe.off(); S.swipe = null;
       ['sprawl-grid'].forEach((l) => map.getLayer(l) && map.setPaintProperty(l, 'fill-opacity', 0));
       map.getLayer('filament') && map.setPaintProperty('filament', 'fill-extrusion-height', 0);
-      show(map, 'ovt-3d', false); show(map, 'sw-2017', false); if (stage.mapB) ['b-ovt', 'b-eox', 'b-sw'].forEach((l) => show(stage.mapB, l, false));
+      show(map, 'ovt-3d', false); show(map, 'sw-2017', false); if (stage.mapB) { ['b-ovt', 'b-sw'].forEach((l) => show(stage.mapB, l, false)); eoxB(stage.mapB, false); }
       S.grid = S.fil = S.bld = false;
     },
   };

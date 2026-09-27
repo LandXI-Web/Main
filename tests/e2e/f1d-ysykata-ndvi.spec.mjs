@@ -23,7 +23,7 @@ async function bootApi(page, url, { realm = 'lx', role = 'staff', tenant = null 
 }
 function watch(page) {
   const errs = [];
-  page.on('console', (m) => { if (m.type() === 'error') errs.push(m.text()); });
+  page.on('console', (m) => { if (m.type() === 'error' && !/CORS policy|net::ERR_FAILED|ERR_CONNECTION_RESET|ERR_HTTP2_SERVER_REFUSED_STREAM|ERR_NO_BUFFER_SPACE/.test(m.text())) errs.push(m.text()); });   // F2-D: 외부 타일 원천(EOX · PC · GIBS) CORS 간헐 거절은 별도 분류(F1-D 요청 4)
   page.on('pageerror', (e) => errs.push('pageerror ' + e.message));
   return errs;
 }
@@ -37,8 +37,8 @@ test.describe('F1-D Ysyk-Ata · G-J1', () => {
     const errs = watch(page);
     await bootApi(page, PAGE);
     await page.evaluate(() => window.__f1d.go('ysykata'));
-    await expect(page.locator('.gs-lock__tag')).toContainText('Ysyk-Ata');
-    await expect(page.locator('.gs-lock__tag')).toContainText('Ысык-Ата');
+    await expect(page.locator('.xi-lock-flag')).toContainText('Ysyk-Ata');   // F2-D: fx/arrive.lock 깃발
+    await expect(page.locator('.xi-lock-flag')).toContainText('Ысык-Ата');
     await expect(page.locator('#card .g-stage')).toHaveText(/canary/i);
     await expect(page.locator('#card')).toContainText('dp-kgz-agri-farm-26');
     await expect(page.locator('.g-bar[data-hl]')).toContainText('33.0%');
@@ -48,26 +48,28 @@ test.describe('F1-D Ysyk-Ata · G-J1', () => {
     expect(errs).toEqual([]);
   });
 
-  test('월별 스크럽 3→10 · 크로스페이드 500 · 정수 750 정지(6 s)', async ({ page }) => {
+  // F2-D: 월 스크러버 = F1-A fx/timescrub(정수 시점 750 정지 · 이동 1000 · 8 시점 = 8 × 750 + 7 × 1000 · 크로스페이드는 소수 시점 불투명도)
+  test('월별 스크럽 3→10 · fx timescrub · 정수 750 정지 · 이동 1000', async ({ page }) => {
     const errs = watch(page);
     await bootApi(page, PAGE);
     await page.evaluate(() => window.__f1d.go('ysykata'));
+    await page.waitForSelector('#scrub .xi-ticks li');
     const r = await page.evaluate(async () => {
-      const f = window.__f1d, m = f.stage.map, seen = [];
+      const f = window.__f1d, m = f.stage.map;
       const t0 = performance.now();
-      const obs = new MutationObserver(() => { const c = document.querySelector('.g-month[aria-current="true"]'); if (c && seen[seen.length - 1]?.m !== c.dataset.m) seen.push({ m: c.dataset.m, t: Math.round(performance.now() - t0) }); });
-      obs.observe(document.getElementById('scrub'), { attributes: true, subtree: true });
       await f.scenes.ys.play();
-      obs.disconnect();
+      const ts = f.scenes.ys.S.ts.S;
       const tr = m.getStyle().layers.find((l) => l.id === 'pc-2025-07').paint['raster-opacity-transition'].duration;
-      return { seen, total: Math.round(performance.now() - t0), tr, op: m.getPaintProperty('pc-2025-10', 'raster-opacity') };
+      return { stops: ts.stops.slice(-8), total: Math.round(performance.now() - t0), tr, op: m.getPaintProperty('pc-2025-10', 'raster-opacity'), ticks: [...document.querySelectorAll('#scrub .xi-ticks li')].map((l) => l.textContent), on: document.querySelector('#scrub .xi-ticks li[data-on="1"]')?.textContent };
     });
-    expect(r.seen.map((x) => x.m)).toEqual(['2025-03', '2025-04', '2025-05', '2025-06', '2025-07', '2025-08', '2025-09', '2025-10']);
+    expect(r.stops.map((x) => x.k)).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+    for (const s of r.stops) expect(Math.abs(s.ms - 750)).toBeLessThanOrEqual(60);
+    expect(r.ticks.map((x) => x.replace(/10 m$/, ''))).toEqual(['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct']);
+    expect(r.on).toContain('Oct');
     expect(r.tr).toBe(500);
     expect(r.op).toBe(1);
-    expect(r.total).toBeGreaterThanOrEqual(5900);
-    expect(r.total).toBeLessThanOrEqual(6800);
-    for (let i = 1; i < r.seen.length; i++) expect(Math.abs(r.seen[i].t - r.seen[i - 1].t - 750)).toBeLessThanOrEqual(60);
+    expect(r.total).toBeGreaterThanOrEqual(12600);
+    expect(r.total).toBeLessThanOrEqual(13900);
     expect(errs).toEqual([]);
   });
 
@@ -105,10 +107,11 @@ test.describe('F1-D Ysyk-Ata · G-J1', () => {
     await expect(page.locator('#ys-next [data-a="csv"]')).toBeVisible();
     await expect(page.locator('#ys-next [data-a="geojson"]')).toBeVisible();
     await expect(page.locator('#ys-next [data-a="report"]')).toBeVisible();
-    // 관제(ops)가 ?job= 을 아직 받지 않음 → 죽은 링크 대신 결손 칩(계약 변경 요청 9) · 링크 0
+    // F2-D: 관제 실링크는 라이브 작업만(게이트웨이 jobs 에 있는 id) — 리플레이의 기록 job 은 정직한 결손 칩 · 계보는 fx/lineage 3마디
     await expect(page.locator('#ys-next .g-lineage a')).toHaveCount(0);
     await expect(page.locator('#ys-next .g-lineage__wait')).toHaveAttribute('data-job', /^job_/);
-    await expect(page.locator('#ys-next .g-lineage__wait')).toContainText('deep link pending');
+    await expect(page.locator('#ys-next .g-lineage__wait')).toContainText('live runs only');
+    await expect(page.locator('#ys-next .xi-ln')).toHaveCount(3);
     await page.click('#ys-next [data-a="open"]');
     await expect(page.locator('#ys-table tr')).toHaveCount(9);
     const dl = page.waitForEvent('download'); await page.click('#ys-next [data-a="csv"]');

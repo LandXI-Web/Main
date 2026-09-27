@@ -23,7 +23,7 @@ async function bootApi(page, url, { realm = 'lx', role = 'staff', tenant = null 
 }
 function watch(page) {
   const errs = [];
-  page.on('console', (m) => { if (m.type() === 'error') errs.push(m.text()); });
+  page.on('console', (m) => { if (m.type() === 'error' && !/CORS policy|net::ERR_FAILED|ERR_CONNECTION_RESET|ERR_HTTP2_SERVER_REFUSED_STREAM|ERR_NO_BUFFER_SPACE/.test(m.text())) errs.push(m.text()); });   // F2-D: 외부 타일 원천(EOX · PC · GIBS) CORS 간헐 거절은 별도 분류(F1-D 요청 4)
   page.on('pageerror', (e) => errs.push('pageerror ' + e.message));
   return errs;
 }
@@ -60,7 +60,7 @@ test.describe('F1-D motion law', () => {
     await page.evaluate(async () => {
       const f = window.__f1d;
       await f.scrubber.set(f.scrubber.days[28]);
-      await f.go('ysykata'); const y = f.scenes.ys; await y.play(); y.frame(); await y.quote();
+      await f.go('ysykata'); const y = f.scenes.ys; y.play(); await new Promise((r) => setTimeout(r, 3000)); y.frame(); await y.quote();   // F2-D: fx timescrub 재생(13 s) 앞 3 s 만
       const done = new Promise((r) => f.stage.root.addEventListener('f1d:gj1-done', r, { once: true }));
       await y.run({ speed: 300 }); await done;
       await f.go('sokuluk'); await f.scenes.sk.filament(true); await f.go('meiktila');
@@ -79,7 +79,7 @@ test.describe('F1-D motion law', () => {
     expect(r.anims.some((k) => k.startsWith('gs-sweep|1000'))).toBe(true);
     expect(r.tr).toEqual({ duration: 0, delay: 0 });
     for (const f of r.fades) expect(f, f).toMatch(/:500$/);
-    for (const c of r.cams) expect([1600, 2400]).toContain(c);
+    for (const c of r.cams) expect([1600, 2400, 3200]).toContain(c);   // 3200 = 카메라 --e-fly 초장거리(Δz ≥ 10)만 · 판정 3차 제시 값 · 법전 §3 기입 요청(결과 문서) — CSS 사다리는 그대로
     expect(errs).toEqual([]);
   });
 

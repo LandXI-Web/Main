@@ -225,7 +225,11 @@ def catalog_fixture():
     for key, (dt, when) in {"pre": ("2025-03-01T00:00:00Z/2025-03-27T23:59:59Z", "pre-event"), "post": ("2025-03-29T00:00:00Z/2025-04-20T23:59:59Z", "post-event")}.items():
         body = {"collections": ["sentinel-2-l2a"], "bbox": [95.82, 20.85, 95.91, 20.92], "datetime": dt, "limit": 20, "sortby": [{"field": "eo:cloud_cover", "direction": "asc"}]}
         raw, meta = G.cached_fetch(PC + "/stac/v1/search", f"pc-stac-meiktila-{key}.json", method="POST", body=body)
-        f = json.loads(raw)["features"][0]
+        # 화면(메이크틸라 전 AOI · 스와이프 상세 95.862)을 통째로 덮는 그래뉼 먼저(F2-D 2차: 구름 최소 T46QHJ 는 95.8795 동쪽만 → export 빌드 스와이프 왼쪽 절반 공백)
+        view = (95.83, 20.85, 95.94, 20.94)
+        feats = json.loads(raw)["features"]
+        covers = lambda b: b[0] <= view[0] and b[1] <= view[1] and b[2] >= view[2] and b[3] >= view[3]
+        f = sorted(feats, key=lambda x: (not covers(x["bbox"]), x["properties"]["eo:cloud_cover"]))[0]
         items.append(item(f"s2-mm-meiktila-{key}", f"Sentinel-2 L2A · Meiktila {when} {f['properties']['datetime'][:10]}", f"Sentinel-2 L2A · 메이크틸라 {'사전' if key == 'pre' else '사후'} {f['properties']['datetime'][:10]}",
                           "raster", "imagery", "external",
                           PCD + f"/item/tiles/WebMercatorQuad/{{z}}/{{x}}/{{y}}@1x.png?collection=sentinel-2-l2a&item={f['id']}&assets=visual&asset_bidx=visual|1,2,3&nodata=0",

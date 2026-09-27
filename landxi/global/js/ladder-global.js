@@ -4,7 +4,7 @@
    카탈로그: on = GET /catalog/layers · off = data/catalog-fixture-global.json + 같은 라이선스 가드(서버 build_ok 와 같은 규칙). */
 import { API, api, catalog, fixture, tileUrl } from '/landxi/shared/api-v1.js';
 import { t } from './i18n.js';
-import { D, mem } from './globe-stage.js';
+import { D, mem, dcache } from './globe-stage.js';
 
 const DATA = new URL('../data/', import.meta.url);
 export const MONTHS = ['2025-03', '2025-04', '2025-05', '2025-06', '2025-07', '2025-08', '2025-09', '2025-10'];
@@ -33,10 +33,24 @@ export async function loadCatalog(build, locale) {
       else if (f.params) a.params = { ...f.params, ...(a.params || {}) };
     }
   }
+  // 영문판 순수(F2-D · integrate 지적 '영문판 라이선스 칩에 국문 (비상업 · export 빌드 제외)'): 게이트웨이 카탈로그의 국문 표기를
+  // 픽스처(영문 정본) 값으로 바꾸고, 픽스처에 없는 항목은 알려진 구절을 영문으로 옮긴다(계약 요청: 카탈로그가 locale=en 을 따르기).
+  if (locale !== 'ko') {
+    const fxBy = Object.fromEntries((fx?.items || []).map((i) => [i.id, i]));
+    for (const it of doc?.items || []) for (const k of ['license', 'attribution', 'title', 'note']) {
+      if (typeof it[k] !== 'string' || !HANGUL.test(it[k])) continue;
+      it[k] = fxBy[it.id] && typeof fxBy[it.id][k] === 'string' && !HANGUL.test(fxBy[it.id][k]) ? fxBy[it.id][k] : enText(it[k]);
+    }
+  }
   const items = (doc?.items || []).filter((i) => buildOk(i, build));
   const by = Object.fromEntries(items.map((i) => [i.id, i]));
   return { items, by, via, ladder: doc?.ladder?.global || [], build };
 }
+
+const HANGUL = /[ㄱ-ㆎ가-힣]/;
+const EN = [[/비상업\s*·\s*export\s*빌드\s*제외/g, 'non-commercial · excluded from export build'], [/공개/g, 'open data'], [/비상업/g, 'non-commercial'], [/시연 한정/g, 'demo only'], [/무제한/g, 'no restriction']];
+/** 국문 구절 → 영문(알려진 것) · 남는 한글은 지운다(영문판에 국문 0). */
+export function enText(x) { let v = String(x); for (const [re, en] of EN) v = v.replace(re, en); return v.replace(/[ㄱ-ㆎ가-힣]+/g, '').replace(/\(\s*\)/g, '').replace(/\s{2,}/g, ' ').replace(/(\S)\(/g, '$1 (').trim(); }
 
 const rasterPaint = (op = 0, fade = D[500]) => ({ 'raster-opacity': op, 'raster-opacity-transition': { duration: fade, delay: 0 }, 'raster-fade-duration': D[500] });
 
@@ -56,10 +70,13 @@ export async function addLadder(map, cat, { mapB = null } = {}) {
     const src = await srcOf(it);
     // V-World 는 캐시 헤더 없음(휴리스틱) → 메모리 캐시(lxm) — 남원 후퇴 전 z10–12 를 확실히 쥐고 출발(판정 2차 · 첫 0.3 s 뭉개짐)
     if (id === 'xdworld-satellite' && src.tiles) src.tiles = src.tiles.map((u) => (/^https:\/\//.test(u) ? mem(u) : u));
+    // EOX(7 d) → 영속 캐시(lxc · Cache Storage) — 재방문 네트워크 0(판정 3차 · HTTP 캐시 밀려남)
+    if (id === eoxId && src.tiles) src.tiles = src.tiles.map((u) => (/^https:\/\//.test(u) ? dcache(u) : u));
     map.addSource(id, { type: 'raster', ...src, tileSize: 256, minzoom: it.minzoom, maxzoom: it.maxzoom, bounds: it.bounds, attribution: it.attribution });
-    const op = id === 'xdworld-satellite' ? ['interpolate', ['linear'], ['zoom'], 5, 0, 6, 1]
-      : ['interpolate', ['linear'], ['zoom'], 3, 0, 4, 1];   // 글로브(≤2.4)는 GIBS 어제 · 하강은 3→4 에서 EOX 로(캐시 가능 원천 · GIBS 중간 줌 의존 0)
-    map.addLayer({ id, type: 'raster', source: id, paint: { ...rasterPaint(0), 'raster-opacity': op } });
+    // V-World: z 8 → 7 에서 1 → 0(판정 2차: 후퇴 z7→5 에서 한반도 좌우로 회색·베이지 무자료 타일 사각형 · bounds 는 카탈로그 한국 bbox) — 그 아래는 EOX
+    const op = id === 'xdworld-satellite' ? ['interpolate', ['linear'], ['zoom'], 7, 0, 8, 1]
+      : ['interpolate', ['linear'], ['zoom'], 3, 0, 4, 1];   // 글로브(≤2.4)는 GIBS 어제 · 하강은 3→4 에서 EOX 로(캐시 가능 원천 · GIBS 중간 줌 의존 0)   // 글로브(≤2.4)는 GIBS 어제 · 하강은 3→4 에서 EOX 로(캐시 가능 원천 · GIBS 중간 줌 의존 0)
+    map.addLayer({ id, type: 'raster', source: id, paint: { ...rasterPaint(0), 'raster-opacity': op } });   // 글로브에서도 EOX z3 를 받는다(투명) — 하강 z5+ 의 조상 타일(없으면 흰 구멍 · 판정 3차 실측 부족 99 0.4 s)
     L.has[id] = true;
   }
   const mos = cat.by['pc-s2-mosaic'];

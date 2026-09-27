@@ -4,7 +4,7 @@
    · 등급별 차트(봉투 measured · EMS) · 출처 칩 '© EU Copernicus EMS · Maxar Open Data CC BY-NC 4.0 · 시연 한정'. */
 import { fixture } from '/landxi/shared/api-v1.js';
 import { t, num } from './i18n.js';
-import { D, prov, lockOn, wait, ensureMapB, swipe, STAGGER, idle } from './globe-stage.js';
+import { D, prov, lockOn, wait, ensureMapB, swipe, idle, eoxB, dcache } from './globe-stage.js';
 import { cardHead, reveal } from './cards-global.js';
 import { show, s2Pair, rawTiles } from './ladder-global.js';
 
@@ -76,10 +76,9 @@ export function meiktilaScene(stage, ctx) {
     }
     const b = ensureMapB(stage);
     await stage.mapBReady;
-    if (b.getLayer('b-eox')) b.setLayoutProperty('b-eox', 'visibility', 'none');
     const eox = cat.by['eox-s2cloudless-2025'];
     if (eox && !b.getSource('b-base')) {
-      b.addSource('b-base', { type: 'raster', tiles: [rawTiles(eox)], tileSize: 256, minzoom: 3, maxzoom: 14 });
+      b.addSource('b-base', { type: 'raster', tiles: [dcache(rawTiles(eox))], tileSize: 256, minzoom: 3, maxzoom: 14 });
       b.addLayer({ id: 'b-base', type: 'raster', source: 'b-base', paint: { 'raster-fade-duration': D[500] } });
     }
     if (A && !b.getSource('b-pre')) {   // 도착 크로스페이드용 — 본 지도와 같은 사전 영상(평소 숨김)
@@ -90,14 +89,18 @@ export function meiktilaScene(stage, ctx) {
       b.addSource('b-maxar', { type: 'raster', tileSize: 256, ...B });
       b.addLayer({ id: 'b-maxar', type: 'raster', source: 'b-maxar', paint: { 'raster-fade-duration': D[500] } });
     }
-    bImagery(false);   // 스와이프를 켤 때만 받는다(하강 중 가려진 두 번째 지도가 타일 슬롯을 먹지 않게)
-    ['b-eox', 'b-sw'].forEach((l) => b.getLayer(l) && b.setLayoutProperty(l, 'visibility', 'none'));
+    if (!S.bOn) bImagery(false);   // 스와이프를 켤 때만 받는다(하강 중 가려진 두 번째 지도가 타일 슬롯을 먹지 않게) — 이미 켜졌으면 끄지 않는다(순서 경합 0)
+    if (b.getLayer('b-sw')) b.setLayoutProperty('b-sw', 'visibility', 'none');
     addDamage(b, d, 'b-');
   }
 
+  /** 스와이프 사후 층(b-base · b-maxar) — 켜면 '원함'(S.bOn)을 기록해 imagery() 끝 · 도착 크로스페이드 마무리(arriveCross → coverLayers)가 끄지 못하게 한다.
+      판정 2차: swipeOn 500 ms 뒤 켜진 층이 2 s 뒤 대역 마무리에 꺼져 post 쪽이 배경색만(tileDeficitB 99). */
   function bImagery(on) {
+    S.bOn = on;
     const b = stage.mapB; if (!b) return;
     ['b-maxar', 'b-base'].forEach((l) => b.getLayer(l) && b.setLayoutProperty(l, 'visibility', on ? 'visible' : 'none'));
+    if (on) { eoxB(b, false); if (b.getLayer('b-pre')) b.setLayoutProperty('b-pre', 'visibility', 'none'); }
   }
   function renderCard() {
     const dep = ctx.deploys.byId['dp-mm-meiktila-25'];
@@ -108,7 +111,7 @@ export function meiktilaScene(stage, ctx) {
         <ul class="g-grades" id="mk-grades">${GRADE.map((g) => `<li class="g-grade"><span><i class="g-sw" style="background:${g.color};transform:none;display:inline-block"></i>${t(g.i18n)}</span><i style="width:${(c[g.k].value / max * 100).toFixed(1)}%;background:${g.color}"></i><em>${c[g.k].value}</em></li>`).join('')}</ul>
         <div id="mk-prov" style="margin-top:10px;display:grid;gap:6px"></div></section>
       <div class="g-toggles" role="group" style="margin-top:12px"><button class="g-tg" data-k="swipe" aria-pressed="false">${t('mk.tg.swipe')}</button></div>
-      <section class="g-sec g-in-4"><div class="gs-void" id="mk-lic"><b>CC BY-NC</b> · ${t('mk.lic')}</div><div class="g-note" style="margin-top:8px">${t('mk.not')}</div></section>`;
+      <section class="g-sec g-in-4">${licChip()}<div class="g-note" style="margin-top:8px">${t('mk.not')}</div></section>`;
     card.querySelector('.g-tg[data-k="swipe"]').onclick = (e) => {
       const on = !S.swipe; e.currentTarget.setAttribute('aria-pressed', String(on));
       if (on) { bImagery(true); idle(stage.mapB, D[1250]).then(() => { if (!S.swipe) { const { L, R } = chips(); S.swipe = swipe(stage, { left: L, right: R, at: 50 }); } }); }
@@ -120,6 +123,12 @@ export function meiktilaScene(stage, ctx) {
     reveal(card);   // 내용이 다 찬 뒤 카드 전체를 한 번에(빈 유리 상자 선행 0 · 판정 2차)
   }
 
+  /** 라이선스 칩 — Maxar(시연 · CC BY-NC)일 때만 Maxar 표기. 게스트(public)·export 에서 S2 전후로 대체되면
+      'Copernicus Sentinel-2 · EMS'(판정 1차 must_fix 6②: S.maxar false 인데 Maxar 칩이 그대로). */
+  function licChip() {
+    return S.maxar ? `<div class="gs-void" id="mk-lic" data-lic="maxar"><b>CC BY-NC</b> · ${t('mk.lic')}</div>`
+      : `<div class="gs-void" id="mk-lic" data-lic="s2"><b>${t('mk.lic.s2.h')}</b> · ${t('mk.lic.s2')}</div>`;
+  }
   function chips() {
     const L = document.createElement('span'); L.className = 'gs-chip';
     const R = document.createElement('span'); R.className = 'gs-chip';
@@ -153,7 +162,11 @@ export function meiktilaScene(stage, ctx) {
     },
     bOn() { bImagery(true); },
     /** 도착 크로스페이드 층(arriveCross) — 두 번째 지도에 본 지도와 같은 화면(EOX + 사전 Maxar). */
-    coverLayers(B, on) { const v = (l, x) => B.getLayer(l) && B.setLayoutProperty(l, 'visibility', x ? 'visible' : 'none'); v('b-base', on); v('b-pre', on); v('b-maxar', false); if (B.getLayer('b-eox')) v('b-eox', false); if (B.getLayer('b-sw')) v('b-sw', false); },
+    coverLayers(B, on) {
+      const v = (l, x) => B.getLayer(l) && B.setLayoutProperty(l, 'visibility', x ? 'visible' : 'none');
+      if (S.bOn && !on) { v('b-pre', false); v('b-base', true); v('b-maxar', true); return; }   // 스와이프 중이면 사후 층 유지(경합 0)
+      v('b-base', on); v('b-pre', on); v('b-maxar', false); eoxB(B, false); if (B.getLayer('b-sw')) v('b-sw', false);
+    },
     swipeOn(at = 50) { bImagery(true); const { L, R } = chips(); S.swipe = swipe(stage, { left: L, right: R, at }); card.querySelector('.g-tg[data-k="swipe"]')?.setAttribute('aria-pressed', 'true'); return S.swipe; },
     leave() { S.swipe && S.swipe.off(); S.swipe = null; bImagery(false); damageOn(map, '', false); if (stage.mapB) { damageOn(stage.mapB, 'b-', false); } ctx.chip.set(null); },
   };

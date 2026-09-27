@@ -30,6 +30,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 G = importlib.import_module("server.adapters.global")
 
+HIST_BINS = 20   # 계약 v1.1-10: index.month hist bins 20 (-0.2…0.8 · 폭 0.05)
 ADAPTER = {"id": "index/ndvi_pc", "kinds": ["index"], "device": "cpu", "input": "params", "output": "metrics",
            "models": ["index/ndvi_pc"], "owner": "F1-D"}
 
@@ -192,7 +193,7 @@ class NdviPcAdapter:
                     per.append({"id": it["id"], "cloud": round(it["properties"]["eo:cloud_cover"], 1), "valid_px": n,
                                 "ndvi_mean": round(float(np.nanmean(v)), 4) if n else None})
             allv = np.concatenate(vals) if vals else np.array([])
-            hist, _ = np.histogram(allv, bins=10, range=(-0.2, 0.8)) if allv.size else (np.zeros(10, int), None)
+            hist, _ = np.histogram(allv, bins=HIST_BINS, range=(-0.2, 0.8)) if allv.size else (np.zeros(HIST_BINS, int), None)   # 계약 v1.1-10 · bins 20(0.05)
             ms = int((time.time() - t0) * 1000)
             asof = G.now_iso()
             metrics = {
@@ -202,7 +203,7 @@ class NdviPcAdapter:
                 "p10": round(float(np.percentile(allv, 10)), 4) if allv.size else None,
                 "p50": round(float(np.percentile(allv, 50)), 4) if allv.size else None,
                 "p90": round(float(np.percentile(allv, 90)), 4) if allv.size else None,
-                "hist": {"bins": [round(-0.2 + 0.1 * i, 1) for i in range(11)], "counts": [int(c) for c in hist]},
+                "hist": {"bins": [round(-0.2 + 1.0 / HIST_BINS * i, 3) for i in range(HIST_BINS + 1)], "counts": [int(c) for c in hist]},
                 "scenes": per, "cloud_max": cloud_max, "mgrs": MGRS, "res_m": RES_M, "basis": "measured"}
             return ShardResult(features=[], metrics=metrics, n=len(items), ms=ms)
         except Exception as ex:  # noqa: BLE001 — PC 장애 → 기록 폴백(계약 §7)

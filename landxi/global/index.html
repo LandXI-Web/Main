@@ -13,8 +13,7 @@
 <script src="/landxi/proto/vendor/maplibre/maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pmtiles@4.5.0/dist/pmtiles.js"></script>
 </head>
-<!-- 글로벌판 XI맵 · ?tenant=kgz-agri|kgz-land|lx & svc=<deploy_id> & locale=en|ko & build=lx|tenant|public|export & from=namwon & tour=1
-     GLOBE-STAGE(순백 글로브) → CANVAS-FULL(영상 무대) · 같은 지도 한 장 · 페이지 이동 0 -->
+<!-- Land-XI Global · ?tenant=kgz-agri|kgz-land|lx & svc=<deploy_id> & job=<job_id> & locale=en|ko & build=lx|tenant|public|export & from=namwon & tour=1 -->
 <body data-stage="imagery">
 <div class="gs-root" id="root" data-scene="globe">
   <div class="gs-map" id="map" aria-label="map"></div>
@@ -31,7 +30,7 @@
       <button data-scene="sokuluk" data-i18n="scene.sokuluk">Sokuluk · Bishkek</button>
       <button data-scene="meiktila" data-i18n="scene.meiktila">Meiktila</button>
     </nav>
-    <nav class="g-go" aria-label="other stages"><a href="../xi/" data-i18n-skip title="XI맵 — domestic stage (Namwon 25 cm · live inference)">XI map · KR</a><a href="http://localhost:8702/landxi/ops/index.html" title="LX/OPS console (:8702 · admin)">OPS</a></nav>
+    <nav class="g-go" aria-label="other stages"><a href="../xi/" data-go="xi" data-i18n="go.xi" data-i18n-title="go.xi.title">XI map · KR ↗</a><a href="http://localhost:8702/landxi/ops/index.html" data-go="ops" data-i18n-title="go.ops.title">OPS</a></nav>
     <nav class="g-lang" id="lang" aria-label="language"><a href="?locale=en" data-l="en">EN</a><a href="?locale=ko" data-l="ko">KO</a></nav>
   </header>
 
@@ -47,6 +46,7 @@
     <div class="gs-list__head">
       <h2 class="g-h2" data-i18n="list.h"></h2>
       <p id="list-sub"></p>
+      <p class="gs-list__ru" data-i18n="ru.note"></p>
       <div class="gs-list__legend"><span><i style="background:#006DF7;opacity:.6"></i><span data-i18n="list.active"></span></span><span><i style="background:#D6E6FF;outline:1px solid #93BDFF"></i><span data-i18n="list.history"></span></span><span><i style="background:#fff;outline:1.5px solid #010102;width:10px;height:10px"></i><span data-i18n="list.point"></span></span></div>
     </div>
     <ul class="gs-list__rows" role="listbox"></ul>

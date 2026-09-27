@@ -526,17 +526,17 @@
    "set": null,
    "path": null,
    "url": null,
-   "tiles": "https://planetarycomputer.microsoft.com/api/data/v1/item/tiles/WebMercatorQuad/{z}/{x}/{y}@1x.png?collection=sentinel-2-l2a&item=S2C_MSIL2A_20250315T040611_R047_T46QHJ_20250315T072013&assets=visual&asset_bidx=visual|1,2,3&nodata=0",
+   "tiles": "https://planetarycomputer.microsoft.com/api/data/v1/item/tiles/WebMercatorQuad/{z}/{x}/{y}@1x.png?collection=sentinel-2-l2a&item=S2C_MSIL2A_20250315T040611_R047_T46QGJ_20250315T072013&assets=visual&asset_bidx=visual|1,2,3&nodata=0",
    "scheme": "xyz",
    "layer": null,
    "promote_id": null,
    "minzoom": 10,
    "maxzoom": 14,
    "bounds": [
-    95.8795,
-    20.6746,
-    96.7687,
-    21.6781
+    94.9199,
+    20.6857,
+    95.9932,
+    21.6922
    ],
    "gsd_m": 10,
    "epoch": "2025-03-15",
@@ -556,7 +556,7 @@
    "count": null,
    "signed": false,
    "params": {
-    "item": "S2C_MSIL2A_20250315T040611_R047_T46QHJ_20250315T072013",
+    "item": "S2C_MSIL2A_20250315T040611_R047_T46QGJ_20250315T072013",
     "cloud": 0.0
    },
    "note": "Maxar fallback (build=export|public)"
@@ -573,17 +573,17 @@
    "set": null,
    "path": null,
    "url": null,
-   "tiles": "https://planetarycomputer.microsoft.com/api/data/v1/item/tiles/WebMercatorQuad/{z}/{x}/{y}@1x.png?collection=sentinel-2-l2a&item=S2C_MSIL2A_20250404T040611_R047_T46QHJ_20250404T092818&assets=visual&asset_bidx=visual|1,2,3&nodata=0",
+   "tiles": "https://planetarycomputer.microsoft.com/api/data/v1/item/tiles/WebMercatorQuad/{z}/{x}/{y}@1x.png?collection=sentinel-2-l2a&item=S2C_MSIL2A_20250404T040611_R047_T46QGJ_20250404T092818&assets=visual&asset_bidx=visual|1,2,3&nodata=0",
    "scheme": "xyz",
    "layer": null,
    "promote_id": null,
    "minzoom": 10,
    "maxzoom": 14,
    "bounds": [
-    95.8795,
-    20.6747,
-    96.7632,
-    21.6781
+    94.9199,
+    20.6857,
+    95.9932,
+    21.6922
    ],
    "gsd_m": 10,
    "epoch": "2025-04-04",
@@ -603,7 +603,7 @@
    "count": null,
    "signed": false,
    "params": {
-    "item": "S2C_MSIL2A_20250404T040611_R047_T46QHJ_20250404T092818",
+    "item": "S2C_MSIL2A_20250404T040611_R047_T46QGJ_20250404T092818",
     "cloud": 0.0
    },
    "note": "Maxar fallback (build=export|public)"

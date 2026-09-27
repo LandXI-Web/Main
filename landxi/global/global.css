@@ -1,4 +1,6 @@
 /* Land-XI Global — 글로벌판 XI맵 전용(F1-D). CANVAS-FULL 위 유리 부품 · 라운드 0 · 지속값은 모션 사다리 안. */
+/* --e-fly — 장거리 비행 ease-in-out(system-v2 §3 추가 · Fable 채택 · tokens-v2 반영 전 로컬 변수) */
+:root { --e-fly: cubic-bezier(.45,0,.25,1); }
 html, body { margin: 0; height: 100%; }
 body { -webkit-font-smoothing: antialiased; font-family: var(--g-body); }
 button { font: inherit; color: inherit; }
@@ -13,6 +15,13 @@ button { font: inherit; color: inherit; }
 .g-card { position: absolute; left: 24px; top: 88px; width: 352px; z-index: 16; padding: 20px 20px 16px; color: var(--cw-ink);
           max-height: calc(100% - 184px); overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; }
 .g-card[hidden] { display: none; }
+/* 카드 머리 sticky + 아래 페이드 마스크(판정 1차 must_fix 5 — 결과 절로 스크롤돼도 제목 행 잘림 0) */
+.g-card__head { position: sticky; top: -20px; z-index: 2; margin: -20px -20px 0; padding: 20px 20px 8px; background: #F8F9FB; }
+/* 카드 아래 가장자리 — 스크롤이 남으면 마지막 줄이 칼로 잘리지 않고 옅어진다(sticky 그라디언트 · 잘린 글자 0) */
+.g-card::after { content: ''; display: block; position: sticky; bottom: -16px; height: 28px; margin: -28px -20px -16px; pointer-events: none;
+                 background: linear-gradient(rgba(248,249,251,0), rgba(248,249,251,.97)); }
+.g-card__head::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 16px; pointer-events: none;
+                       background: linear-gradient(#F8F9FB, rgba(248,249,251,0)); }
 .g-card__eyebrow { display: flex; gap: 8px; align-items: center; font: 500 14px/16px var(--g-num); color: var(--cw-sub); letter-spacing: .02em; }
 .g-card__eyebrow .g-stage { border: 1px solid var(--cw-ink); padding: 2px 6px; color: var(--cw-ink); text-transform: uppercase; }
 .g-card__eyebrow .g-stage[data-stage="draft"], .g-card__eyebrow .g-stage[data-stage="shadow"] { border-style: dashed; }
@@ -76,16 +85,22 @@ button { font: inherit; color: inherit; }
 .g-scrub[hidden] { display: none; }
 .g-scrub__head { display: flex; justify-content: space-between; align-items: baseline; font: 500 14px/16px var(--g-num); color: var(--cw-sub); }
 .g-scrub__head b { color: var(--cw-ink); font-weight: 600; }
-.g-scrub__plot { position: relative; height: 104px; margin-top: 8px; }
+.g-scrub__plot { position: relative; height: 84px; margin-top: 8px; }
 .g-scrub__plot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.g-slots { position: absolute; inset: 0 0 24px 0; display: grid; grid-template-columns: repeat(8, 1fr); gap: 0 10px; }
+.g-slots { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(8, 1fr); gap: 0 10px; }
 .g-slot { position: relative; border-bottom: 1px solid var(--cw-rule); }
 .g-slot::before { content: ''; position: absolute; inset: 0; border: 1px dashed var(--sl-4); border-bottom: 0; }
 .g-slot[data-state="running"]::before { border-color: var(--cw-ai); border-style: solid; }
 .g-slot[data-state="done"]::before { border-color: transparent; }
-.g-slot__hist { position: absolute; inset: 0; opacity: 0; transition: opacity var(--d-500) var(--e-arrive); }
-.g-slot__hist i { position: absolute; display: block; opacity: .62; }
-.g-slot[data-state="done"] .g-slot__hist { opacity: 1; }
+.g-slot__hist { position: absolute; inset: 0; }
+/* 분포 막대 — 도착한 칸에서 가운데부터 자란다(500 · e-arrive · 데이터 사건 모션) */
+.g-slot__hist i { position: absolute; display: block; opacity: .66; transform: scaleX(0); transition: transform var(--d-500) var(--e-arrive); }
+.g-slot[data-state="done"] .g-slot__hist i { transform: scaleX(1); }
+.g-slot__pq { position: absolute; right: 2px; width: 5px; border: 1.5px solid var(--cw-ink); border-left: 0; opacity: 0; transition: opacity var(--d-500) var(--e-arrive); }
+.g-slot__pq i { position: absolute; right: -4px; width: 6px; height: 6px; margin-bottom: -3px; background: var(--cw-ink); }
+.g-slot[data-state="done"] .g-slot__pq { opacity: 1; }
+.g-slot[data-state="done"][data-dist="pending"]::before { border-color: var(--sl-4); border-style: dashed; }
+.g-slot[data-cur]::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--cw-accent); }
 .g-slot__bar { position: absolute; left: 0; right: 0; bottom: var(--h, 0%); height: 2px; background: var(--cw-ink);
                transform-origin: center; transform: scaleX(0); transition: transform var(--d-500) var(--e-arrive); }
 .g-slot[data-state="done"] .g-slot__bar { transform: scaleX(1); }
@@ -94,7 +109,27 @@ button { font: inherit; color: inherit; }
 .g-slot[data-state="done"] .g-slot__v { opacity: 1; }
 .g-slot__n { position: absolute; left: 0; right: 0; top: 4px; text-align: center; font: 500 14px/16px var(--g-num); color: var(--cw-sub); opacity: 0; }
 .g-slot[data-state="done"] .g-slot__n { opacity: 1; }
-.g-months { position: absolute; left: 0; right: 0; bottom: 0; height: 24px; display: grid; grid-template-columns: repeat(8, 1fr); gap: 0 10px; }
+/* 시간 막대 — F1-A fx/timescrub(재생 · 범위 · 눈금). 눈금이 칸 가운데에 맞도록 좌우 반 칸 들임 */
+.g-ts { position: relative; height: 40px; margin: 6px calc((100% - 70px) / 16) 0; }
+.g-ts input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 22px; margin: 0; background: transparent; cursor: pointer; display: block; }
+.g-ts input[type=range]::-webkit-slider-runnable-track { height: 1px; background: var(--cw-ink); }
+.g-ts input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 3px; height: 22px; margin-top: -10.5px; background: var(--cw-ai); border: 0; }
+.g-ts .xi-ticks { position: absolute; left: 0; right: 0; top: 20px; margin: 0; padding: 0; list-style: none; height: 18px; pointer-events: none; }
+.g-ts .xi-ticks li { position: absolute; transform: translateX(-50%); font: 500 14px/16px var(--g-num); color: var(--cw-sub); white-space: nowrap; }
+.g-ts .xi-ticks li span { display: none; }
+.g-ts .xi-ticks li[data-on="1"] { color: var(--cw-ink); font-weight: 600; }
+.g-ts .xi-hist, .g-ts .xi-scrub-label, .g-ts .xi-scrub-void { display: none; }
+.g-ts__play { width: 32px; height: 28px; border: 0; background: var(--cw-ink); color: #FFFFFF; display: inline-grid; place-items: center; cursor: pointer; font: 600 14px/1 var(--g-num);
+              margin-left: 12px; transition: transform var(--d-180) var(--e-ui); }
+.g-ts__play:hover { transform: translateY(-2px); }
+.g-ts__play .i-pause, .g-ts__play[aria-pressed="true"] .i-play { display: none; }
+.g-ts__play[aria-pressed="true"] .i-pause { display: inline; }
+.g-scrub__head { align-items: center; }
+.g-scrub__idx { margin-left: auto; }
+.g-scrub__idx .g-xchip { margin-left: 0; }
+.g-scrub__from { color: var(--cw-sub); }
+.g-eta { margin-top: 8px; }
+.g-eta b { color: var(--cw-ink); font-weight: 600; }
 .g-month { border: 0; background: none; padding: 4px 0 0; font: 500 14px/16px var(--g-num); color: var(--cw-sub); cursor: pointer; text-align: center;
            position: relative; transition: transform var(--d-180) var(--e-ui); }
 .g-month:hover { transform: translateY(-2px); }
@@ -120,6 +155,14 @@ button { font: inherit; color: inherit; }
 .g-pin__box .g-cyr { font-size: 14px; margin-left: 6px; opacity: .92; }
 .g-pin__box small { display: block; font: 500 14px/16px var(--g-num); opacity: .9; }
 .g-pin::after { content: ''; position: absolute; left: 50%; bottom: -14px; width: 1px; height: 14px; background: #FFFFFF; }
+/* fx/glass.anchor 로 놓는 시범지 상자(점 옆 · 화면 안으로 반전) + 점 표지 */
+@keyframes gs-op-in { from { opacity: 0; } to { opacity: 1; } }
+.g-pin--anchored { left: 0; top: 0; transform: none; animation: gs-op-in var(--d-500) var(--e-arrive) both; }
+.g-pin--anchored::after { display: none; }
+.g-pin--anchored .g-pin__box { max-width: 250px; white-space: normal; }
+.g-pin--anchored .g-pin__box small { white-space: normal; }
+.g-pin__dot { position: absolute; left: -4px; top: -4px; width: 8px; height: 8px; background: #FFFFFF; border: 1.5px solid var(--cw-ink); z-index: 14; pointer-events: none; }
+.g-pin__dot[hidden] { display: none; }
 .g-place { position: absolute; transform: translate(-50%, -50%); pointer-events: none; z-index: 13; white-space: nowrap; color: #FFFFFF;
            font: 600 16px/20px var(--g-body); text-shadow: 0 1px 2px rgba(1,1,2,.6); }
 .g-place .g-cyr { display: block; font-size: 14px; opacity: .9; }
@@ -199,3 +242,13 @@ button { font: inherit; color: inherit; }
 .g-go { display: flex; border: 1px solid var(--cw-rule); background: #FFFFFF; margin-right: 8px; }
 .g-go a { height: 30px; padding: 0 10px; display: grid; place-items: center; font: 500 14px/16px var(--g-num); color: var(--cw-sub); text-decoration: none; white-space: nowrap; }
 .g-go a:hover { color: var(--cw-ink); background: var(--cw-tint); }
+
+/* 계보(F1-A fx/lineage) + 관제 실링크 */
+.g-lineage__chain { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; width: 100%; }
+.g-lineage .xi-ln { display: inline-flex; flex-direction: column; padding: 4px 8px; border: 1px solid var(--cw-rule); }
+.g-lineage .xi-ln i { font-style: normal; color: var(--cw-sub); font: 500 14px/16px var(--g-num); }
+.g-lineage .xi-ln b { font: 600 14px/18px var(--g-num); color: var(--cw-ink); font-variant-numeric: tabular-nums; }
+.g-lineage .xi-ln-to { color: var(--cw-sub); }
+.g-lineage a.g-lineage__ops { font-weight: 600; }
+/* 러시아어 UI 미착수 — 정직 표기 */
+.gs-list__head p.gs-list__ru { margin: 6px 0 0; font: 400 14px/18px var(--g-body); color: var(--cw-sub); }
