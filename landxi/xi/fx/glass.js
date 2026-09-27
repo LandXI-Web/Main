@@ -21,7 +21,8 @@ export function clipIn(el, delay = 0) {
 export function panelIn(el) {
   el.hidden = false;
   if (RM()) return Promise.resolve();
-  return el.animate([{ transform: 'translateY(4px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: D.d380, easing: EASE.ui }).finished.catch(() => {});
+  // transform 만 움직인다 — 자리는 CSS translate 속성(개별 변환 · transform 과 따로 합성)이라 진입 애니메이션이 자리를 덮지 않는다
+  return el.animate([{ transform: 'translateY(4px)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }], { duration: D.d380, easing: EASE.ui }).finished.catch(() => {});
 }
 export function panelOut(el) {
   if (el.hidden) return Promise.resolve();
@@ -29,16 +30,46 @@ export function panelOut(el) {
   return el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: D.d180, easing: EASE.ui }).finished.catch(() => {}).then(() => { el.hidden = true; });
 }
 
+/* 카드 자리(1차 판정 must_fix 1): 위치는 CSS `translate` 속성(개별 변환)으로만 준다 — panelIn 의 WAAPI `transform`(translateY 4px → none)과
+   겹쳐 더해지므로(덮어쓰지 않으므로) 첫 프레임부터 최종 자리에서 4px 아래 → 제자리. 크롬(마스트 · 검색 · 모드 스위치 · 레일/패널)과 교차 0. */
+const CHROME = ['mast', 'search', 'mode-sw', 'panel'];
+const hit = (a, b) => a.x < b.right && a.x + a.w > b.left && a.y < b.bottom && a.y + a.h > b.top;
+/** 화면 좌표 (x, y) 에 w×h 카드를 둘 때 크롬·avoid 와 겹치지 않는 자리 */
+export function safeSpot(x, y, w, h, { avoid = [], bottom = 192 } = {}) {   // bottom 192 = 스크러버(100) · 우하 계기 + 가르기 칩 줄(152–182) 위
+  const W = window.innerWidth, H = window.innerHeight;
+  const rects = (ids) => ids.map((r) => (typeof r === 'string' ? document.getElementById(r) : r)).filter((e) => e && !e.hidden && e.offsetParent !== null).map((e) => e.getBoundingClientRect()).filter((b) => b.width && b.height);
+  const chrome = rects(CHROME), av = rects(avoid);
+  x = Math.max(16, Math.min(W - w - 16, x)); y = Math.max(16, Math.min(H - h - bottom, y));
+  for (let k = 0; k < 3; k++) {
+    for (const b of chrome) if (hit({ x, y, w, h }, b)) { if (b.right + 12 + w <= W - 16 && b.height > 60) x = b.right + 12; else y = b.bottom + 8; }
+    for (const b of av) if (hit({ x, y, w, h }, b)) { if (b.left - 12 - w >= 16) x = b.left - 12 - w; else y = b.bottom + 8; }
+    x = Math.max(16, Math.min(W - w - 16, x)); y = Math.max(16, Math.min(H - h - bottom, y));
+  }
+  return { x: Math.round(x), y: Math.round(y) };
+}
+/** 숨긴 요소의 크기(보이지 않게 잠깐 펼쳐 잰다 · 첫 프레임 자리용) */
+export function measure(el, fw = 380, fh = 300) {
+  if (!el.hidden) return { w: el.offsetWidth || fw, h: el.offsetHeight || fh };
+  el.style.visibility = 'hidden'; el.hidden = false;
+  const r = { w: el.offsetWidth || fw, h: el.offsetHeight || fh };
+  el.hidden = true; el.style.visibility = '';
+  return r;
+}
+export function placeAt(el, x, y, opt = {}) {
+  const { w, h } = measure(el);
+  const p = safeSpot(x, y, w, h, opt);
+  el.style.transform = ''; el.style.translate = `${p.x}px ${p.y}px`;
+  el.dataset.x = p.x; el.dataset.y = p.y;
+  return p;
+}
 /** 지도 위 한 점에 카드를 붙인다(화면 밖이면 안쪽으로 접는다). 반환 detach() */
 export function anchor(el, map, lngLat, { dx = 18, dy = -24, avoid = [] } = {}) {
   const place = () => {
-    const p = map.project(lngLat), W = window.innerWidth, H = window.innerHeight;
-    const w = el.offsetWidth || 380, h = el.offsetHeight || 300;
-    let x = p.x + dx, y = p.y + dy;
+    const p = map.project(lngLat), W = window.innerWidth;
+    const { w } = measure(el);
+    let x = p.x + dx; const y = p.y + dy;
     if (x + w > W - 16) x = p.x - dx - w;
-    for (const r of avoid) { const b = r.getBoundingClientRect?.(); if (b && b.width && x + w > b.left - 12 && x < b.right && y < b.bottom) x = Math.min(x, b.left - 12 - w); }
-    x = Math.max(16, Math.min(W - w - 16, x)); y = Math.max(16, Math.min(H - h - 112, y));
-    el.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+    placeAt(el, x, y, { avoid });
   };
   place();
   map.on('move', place);

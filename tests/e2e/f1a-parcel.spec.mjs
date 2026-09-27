@@ -81,21 +81,20 @@ test('읍면동 클릭 → 집계 카드(봉투) → AOI 하강 3단 → 도착 
   });
   const t0 = await page.evaluate(() => performance.now());
   await page.mouse.click(pp[0], pp[1]);
-  await page.waitForFunction(() => !document.getElementById('parcel-card').hidden, null, { timeout: 15000 });
+  // F2-A: 기관·직원의 필지 카드 = v2(EVIDENCE-PAIR · 연속지적 2026-09-24 × AI) — 판독 모드도 같은 부품
+  await page.waitForFunction(() => !document.getElementById('pcard2').hidden, null, { timeout: 20000 });
   const t1 = await page.evaluate(() => performance.now());
-  await page.waitForFunction(() => document.getElementById('parcel-card').dataset.ready === '1', null, { timeout: 20000 });
-  const c = await page.evaluate(() => { const el = document.getElementById('parcel-card'); return { text: el.innerText, crops: +el.dataset.crops, canv: el.querySelectorAll('.xi-crop canvas').length, parcel: el.dataset.parcel,
-    price: el.querySelector('.xi-price')?.innerText, priceBasis: el.querySelector('.xi-price [data-basis]')?.dataset.basis, jimok: el.querySelector('.xi-jimok')?.innerText, note: el.querySelector('.xi-crop-note').textContent }; });
+  await page.waitForFunction(() => document.getElementById('pcard2').dataset.ready === '1' && document.getElementById('pcard2').dataset.cropsDone === '1', null, { timeout: 30000 });
+  const c = await page.evaluate(() => { const el = document.getElementById('pcard2'); return { text: el.innerText, crops: +el.dataset.crops, slots: el.querySelectorAll('.sv-crops > div').length, canv: el.querySelectorAll('.sv-crops canvas').length, pnu: el.dataset.pnu,
+    jimok: el.querySelector('.sv-lcol .sv-cell')?.innerText, fig: el.querySelector('.sv-crops').getAttribute('aria-label'), rows: el.querySelector('.sv-pair').dataset.rows }; });
   console.log('필지', JSON.stringify({ ...c, text: c.text.replace(/\s+/g, ' ').slice(0, 220), openMs: Math.round(t1 - t0) }));
   expect(t1 - t0).toBeGreaterThanOrEqual(380 - 40);        // 락온 380 뒤에 연다
-  expect(c.parcel).toMatch(/^\d{19}$/);                    // P8 PNU(19자리)
-  expect(c.jimok.length).toBeGreaterThan(0);
-  expect(c.jimok).not.toContain('P8 대기');
-  expect(c.text).toContain('2021-12');
-  expect(c.price).toMatch(/원\/m²|—/);
-  if (c.priceBasis) expect(['recorded', 'measured']).toContain(c.priceBasis);   // off = 기록(2021-12 공시값 사본) · on = 게이트웨이 봉투 그대로(계약 §5.4 은 basis 를 고정하지 않음)
-  expect(c.crops).toBe(4); expect(c.canv).toBe(4);
-  expect(c.note).toContain('4시점');
+  expect(c.pnu).toMatch(/^\d{19}$/);                       // 연속지적 PNU(19자리)
+  expect(c.jimok).toContain('지목');
+  expect(c.text).toContain('2026-09-24');                  // 연속지적 수집일(대장 기준)
+  expect(c.rows).toBe('7/7');
+  expect(c.slots).toBe(5); expect(c.canv).toBeGreaterThanOrEqual(4);   // 2023 25cm + 드론 4시점(AOI 안)
+  expect(c.fig).toContain('4시점');
   expect(errs).toEqual([]);
 });
 
@@ -109,29 +108,30 @@ test('AOI 밖 필지 = A03 2시점 크롭 + "4시점은 드론 AOI 안만"', asy
     const f = fa.features.find((x) => { const g = x.geometry.type === 'Polygon' ? x.geometry.coordinates[0] : x.geometry.coordinates[0][0]; return g[0][0] > A[2] + 0.1; }) || fa.features[100];
     X.openParcel(f);
   });
-  await page.waitForFunction(() => document.getElementById('parcel-card').dataset.ready === '1', null, { timeout: 30000 });
-  const c = await page.evaluate(() => { const el = document.getElementById('parcel-card'); return { n: el.querySelectorAll('.xi-crop').length, note: el.querySelector('.xi-crop-note').textContent }; });
+  await page.waitForFunction(() => document.getElementById('pcard2').dataset.ready === '1', null, { timeout: 30000 });
+  const c = await page.evaluate(() => { const el = document.getElementById('pcard2'); return { n: el.querySelectorAll('.sv-crops > div').length, note: el.querySelector('.sv-crops').getAttribute('aria-label'), eps: [...el.querySelectorAll('.sv-crops > div')].map((d) => d.dataset.ep) }; });
   console.log(JSON.stringify(c));
-  expect(c.n).toBe(2);
-  expect(c.note).toContain('4시점은 드론 AOI 안만');
+  expect(c.n).toBe(3);                                       // 2023 25cm + A03 2시점(2m)
+  expect(c.eps).toEqual(['ap25-namwon-2023', 'namwon-city-2504', 'namwon-city-2510']);
+  expect(c.note).toContain('A03 2시점');
   expect(errs).toEqual([]);
 });
 
-test('P8 없음 → 지목·공시지가 = "필지 · P8 대기" 결손 칩 · 필지 타일 요청 0', async ({ page }) => {
+test('게스트(공개) · P8 없음 → 지목·공시지가 = "필지 · P8 대기" 결손 칩 · 필지·실태조사 타일 요청 0', async ({ page }) => {
   test.setTimeout(120000);
   if (API) test.skip(true, 'on 모드는 서버 GET /parcels 가 정본');
   const errs = watch(page);
   const reqs = [];
-  page.on('request', (r) => { if (/parcels.*\.pmtiles/.test(r.url())) reqs.push(r.url()); });
+  page.on('request', (r) => { if (/parcels.*\.pmtiles|parcel-survey|\/survey/.test(r.url())) reqs.push(r.url()); });
   await page.route('**/landxi/xi/data/catalog-fixture.json', async (route) => {
     const r = await route.fetch(); const j = await r.json();
     for (const k of ['lx', 'tenant:namwon', 'public']) j[k].items = j[k].items.filter((i) => i.id !== 'parcels-namwon');
     j._parcels = 'absent — P8 대기'; await route.fulfill({ response: r, json: j });
   });
   await page.route('**/landxi/data/manifest.json', async (route) => { const r = await route.fetch(); const j = await r.json(); j.items = j.items.filter((i) => !/parcels/.test(i.id)); await route.fulfill({ response: r, json: j }); });
-  await bootApi(page, XI + '?cam=127.3524,35.5308,16.6,35,0&on=namwon-farmland-2025,namwon-change');
+  await bootApi(page, XI + '?cam=127.3524,35.5308,16.6,35,0&on=namwon-farmland-2025', { realm: null });
   await page.waitForFunction(() => document.documentElement.dataset.restored === '1', null, { timeout: 60000 });
-  await page.evaluate(async () => { const X = window.__xi; const fa = await X.loadA02(); X.openParcel(fa.features.find((x) => x.properties.id === X.state.aoiParcels[0])); });
+  await page.evaluate(async () => { const X = window.__xi; const fa = await X.loadA02(); const A = X.CAMS.A01; X.openParcel(fa.features.find((x) => { const g = x.geometry.type === 'Polygon' ? x.geometry.coordinates[0] : x.geometry.coordinates[0][0]; return g[0][0] >= A[0] && g[0][0] <= A[2] && g[0][1] >= A[1] && g[0][1] <= A[3]; }) || fa.features[0]); });
   await page.waitForFunction(() => document.getElementById('parcel-card').dataset.ready === '1', null, { timeout: 30000 });
   const c = await page.evaluate(() => ({ jimok: document.querySelector('#parcel-card .xi-jimok').innerText, price: document.querySelector('#parcel-card .xi-price').innerText }));
   console.log(JSON.stringify(c), 'parcel pmtiles reqs', reqs.length);

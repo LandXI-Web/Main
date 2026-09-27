@@ -201,8 +201,11 @@ export function theater(ctx, { frame, hud, onDone, clsLabel = (k) => k }) {
       A.getSource('th-res').setData(S.res);
       g.features.forEach((f, k) => fades.push(['res', base + k + 1, performance.now()]));
       if (d.n > 0) {
-        clearLocks(2);
-        lock(stageEl, A, { lngLat: [(c.bb[0] + c.bb[2]) / 2, (c.bb[1] + c.bb[3]) / 2], bbox: c.bb, html: `<b>${d.shard_id}</b>도착 ${d.n}` });
+        clearLocks(3);   // 꼬리표 최대 4개(칸 1/4 … 4/4 가 모두 보이게 · 2차 판정) — 더 큰 작업은 최근 4칸
+        // 꼬리표는 사람이 읽는 말(칸 a/b · 도착 n건 · 클래스 한글) — 내부 shard id 는 title 툴팁으로만(1차 판정 must_fix 6)
+        const cls = Object.entries(d.classes || {}).filter(([, v]) => v > 0).sort((x, y) => y[1] - x[1]).map(([k, v]) => `${clsLabel(k)} ${v}`).join(' · ');
+        const L = lock(stageEl, A, { lngLat: [(c.bb[0] + c.bb[2]) / 2, (c.bb[1] + c.bb[3]) / 2], bbox: c.bb, html: `<b>칸 ${S.done}/${S.total || S.cells.size}</b>도착 ${d.n}건${cls ? ' · ' + cls : ''}` });
+        const fl = L.box.querySelector('.xi-lock-flag'); if (fl) { fl.title = `shard ${d.shard_id}`; fl.dataset.shard = d.shard_id; }
       }
     } else if (name === 'job.progress') {
       if (S.finished) return;   // job.done 뒤에 늦게 온 progress 는 최종 줄을 덮지 않는다
@@ -212,12 +215,12 @@ export function theater(ctx, { frame, hud, onDone, clsLabel = (k) => k }) {
       if (live && d.shards_done >= d.shards_total) { const t0 = performance.now(); S.stall = setTimeout(function tick() { if (S.finished) return; hud.jobNote(`병합 대기 · 전역 NMS·스냅샷(서버 CPU 워커) ${Math.round((performance.now() - t0) / 1000)}s`); S.stall = setTimeout(tick, D.d1000); }, D.d2400); }
     }
     else if (name === 'job.done') {
-      S.finished = true; clearTimeout(S.stall); hud.jobNote('');
+      S.finished = true; S.final = d.counts_env?.value ?? null; clearTimeout(S.stall); hud.jobNote('');
       for (const r of S.running.values()) r.el.remove(); S.running.clear();
       setPhase('job-done');
       await hud.count(d.counts_env, { scene: '프레임 분석', title: live ? '실행 결과 · 실측' : '시연 · 저장 결과 재생', unit: '건', done: `완료 · ${d.elapsed_s}s` },
         Object.entries(d.counts || {}).map(([k, v]) => `${clsLabel(k)} <span class="n">${v.toLocaleString('ko-KR')}</span>`));
-      hud.jobFinal && hud.jobFinal(d.counts_env, { shardSum: S.nSum || 0, shardsDone: S.done, shardsTotal: S.total || S.done, live, gpuS: d.gpu_s, elapsedS: d.elapsed_s, jobId: d.job_id });
+      hud.jobFinal && hud.jobFinal(d.counts_env, { shardSum: S.nSum || 0, shardsDone: S.done, shardsTotal: S.total || S.done, live, gpuS: d.gpu_s, elapsedS: d.elapsed_s, perGpu: d.chips_per_gpu_s, perWall: d.chips_per_wall_s, jobId: d.job_id });
       onDone && onDone(d);
     } else if (name === 'snapshot.ready') await swapSnapshot(d);
     else if (name === 'job.failed' || name === 'job.cancelled') { hud.jobState(name === 'job.failed' ? `실패 · ${d.error || ''}` : '취소됨'); setPhase(name); }

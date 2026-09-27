@@ -111,10 +111,12 @@ test('압출 — 기본 OFF · 켜면 fill-extrusion + pitch ≤ 60 · 끄면 �
   expect(off.pressed).toBe('false'); expect(off.ex).toBe(false); expect(['absent', 'none']).toContain(off.vis);
   await page.click('#tool-3d');
   await page.waitForFunction(() => window.__xi.state.extrude && location.search.includes('3d=1'), null, { timeout: 15000 });
-  const on = await page.evaluate(() => ({ vis: window.__xi.A.getLayoutProperty('ex-3d', 'visibility'), pitch: window.__xi.A.getPitch(), maxPitch: window.__xi.A.getMaxPitch(), url: location.search }));
+  const on = await page.evaluate(() => ({ vis: window.__xi.A.getLayoutProperty('ex-3d', 'visibility'), pitch: window.__xi.A.getPitch(), maxPitch: window.__xi.A.getMaxPitch(), url: location.search, tier: window.__xi.tier?.tier || null, tierLog: window.__xi.tierLog }));
   console.log(JSON.stringify(on));
   expect(on.vis).toBe('visible');
-  expect(on.pitch).toBeGreaterThan(45); expect(on.pitch).toBeLessThanOrEqual(60); expect(on.maxPitch).toBeLessThanOrEqual(60);
+  // 티어(정상 창 판정): T1 → 기울기 45 초과 · 60 이하 / T2 → 45 이하(헤드리스 병렬 실행에서는 T2 가 정직한 판정일 수 있다)
+  if (on.tier === 'T2') expect(on.pitch).toBeLessThanOrEqual(45); else expect(on.pitch).toBeGreaterThan(45);
+  expect(on.pitch).toBeLessThanOrEqual(60); expect(on.maxPitch).toBeLessThanOrEqual(60);
   // 사용자가 끝까지 기울여도 60 을 넘지 않는다
   await page.evaluate(() => window.__xi.A.jumpTo({ pitch: 85 }));
   expect(await page.evaluate(() => window.__xi.A.getPitch())).toBeLessThanOrEqual(60);

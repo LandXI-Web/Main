@@ -4,14 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>XI맵 · Land-XI</title>
-<meta name="description" content="Land-XI XI맵 운영판 — 남원 전역 25cm 도착 · cm 하강 · 프레임 실행 · 열람">
+<meta name="description" content="Land-XI XI맵 운영판 v2 — 남원 전역 25cm 도착 · cm 하강 · 프레임 실행 · 실태조사(대장 대조 · 의심 큐 · 필지 카드 · 이력 · 조치)">
 <link rel="icon" href="../assets/images/favicon_landxi.png">
 <link rel="stylesheet" href="../proto/fonts-system.css">
 <link rel="stylesheet" href="../assets/css/v2/tokens-v2.css">
 <link rel="stylesheet" href="../proto/vendor/maplibre/maplibre-gl.css">
 <link rel="stylesheet" href="xi.css">
+<!-- survey/survey.css 는 기관·직원 세션에서만 xi.js 가 붙인다(게스트/공개 = 실태조사 요청 0) -->
 <script src="../proto/vendor/maplibre/maplibre-gl.js"></script>
 <script src="vendor/pmtiles/pmtiles.js"></script>
+<script type="module" src="bridge.js"></script>
 <script type="module" src="xi.js"></script>
 </head>
 <body data-stage="imagery">
@@ -21,6 +23,7 @@
   <div class="xi-dim" id="dim" hidden aria-hidden="true"></div>
   <svg class="xi-frame-brackets" id="frame-br" hidden aria-hidden="true"></svg>
   <div class="cw-sweep xi-sweep" id="sweep" hidden aria-hidden="true"></div>
+  <div class="sv-sweeps" id="sv-sweeps" aria-hidden="true"></div>
   <div class="xi-locks" id="locks" aria-hidden="true"></div>
 
   <!-- 마스트 + 검색 + 좌 레일/레이어 패널 -->
@@ -37,6 +40,8 @@
     <ul class="xi-search-list cw-glass" role="listbox" hidden></ul>
     <p class="xi-search-void" hidden></p>
   </div>
+  <!-- 모드 스위치(판독 · 실태조사) — 게스트(public=1)에는 없다 -->
+  <nav class="xi-modesw cw-glass" id="mode-sw" hidden aria-label="모드"></nav>
   <aside class="xi-panel cw-glass" id="panel" data-open="0" aria-label="레이어 · 표">
     <nav class="xi-rail" aria-label="도구">
       <button type="button" class="xi-panel-toggle xi-tool" aria-expanded="false" aria-controls="panel-body" title="레이어 · 표"><svg width="20" height="20" aria-hidden="true"><use href="../assets/icons.svg#i-layers"/></svg><span>층</span></button>
@@ -59,9 +64,10 @@
   <!-- 우상 HUD -->
   <section class="xi-hud" id="hud" aria-live="polite">
     <div class="cw-glass xi-hud-top">
-      <p class="xi-hud-src"><i class="xi-live" id="hud-live" data-on="0" aria-hidden="true"></i><span id="hud-chip" class="xi-chip"><b>출처</b> —</span></p>
+      <p class="xi-hud-src"><i class="xi-live" id="hud-live" data-on="0" aria-hidden="true"></i><span id="hud-chip" class="xi-chip"><b>출처</b> —</span><span id="hud-miss" class="cw-void xi-void xi-miss" hidden></span></p>
       <p class="xi-hud-scene"><b id="hud-scene">부팅</b><span id="hud-title">XI맵 · 영상 무대</span></p>
       <p class="xi-hud-status" id="hud-status">카탈로그를 읽는 중</p>
+      <p class="xi-hud-lin" id="hud-lin" hidden></p>
     </div>
     <p class="xi-hud-big"><span class="xi-big" id="hud-big"></span><span class="xi-unit" id="hud-unit"></span></p>
     <div class="cw-glass xi-hud-bot" id="hud-bot" hidden>
@@ -71,11 +77,18 @@
     </div>
   </section>
 
+  <!-- 에이전트 · 명령 바 마운트 지점(F2-E · window.XI 브리지로만 지도에 닿는다) -->
+  <div id="agent-slot" data-slot="agent"></div>
+  <div id="cmdk-slot" data-slot="cmdk"></div>
+
   <!-- 카드들(유리) -->
   <article class="xi-card cw-glass" id="emd-card" hidden aria-label="읍면동 집계"></article>
   <article class="xi-card cw-glass" id="parcel-card" hidden aria-label="필지"></article>
   <article class="xi-card cw-glass" id="quote-card" hidden aria-label="견적"></article>
   <article class="xi-card xi-card--tip cw-glass" id="tip" hidden aria-hidden="true"></article>
+  <!-- 실태조사: 필지 카드 v2(EVIDENCE-PAIR · 종이) · 의심 큐 서랍(종이) -->
+  <article class="sv-card sv-sheet" id="pcard2" hidden aria-label="필지 카드 · 대장 vs 현황"></article>
+  <aside class="sv-drawer sv-sheet" id="fdrawer" hidden aria-label="의심 큐"></aside>
 
   <!-- 스와이프 -->
   <p class="xi-swchip xi-swchip--l" id="sw-l" hidden></p>
@@ -108,8 +121,9 @@
 
   <!-- 우 서랍 -->
   <aside class="xi-drawer cw-glass" id="drawer" hidden aria-label="통계 · 보고서">
-    <header><b class="xi-drawer-t">통계</b><span class="xi-periods"><button type="button" data-period="2023">2023</button><button type="button" data-period="2025">2025</button></span><button type="button" class="xi-x" aria-label="닫기">×</button></header>
+    <header><b class="xi-drawer-t">통계</b><nav class="xi-dtabs" hidden><button type="button" data-dtab="std" aria-selected="true">표준 보고서</button><button type="button" data-dtab="draft" aria-selected="false">초안 작성</button></nav><span class="xi-periods"><button type="button" data-period="2023">2023</button><button type="button" data-period="2025">2025</button></span><button type="button" class="xi-x" aria-label="닫기">×</button></header>
     <iframe title="통계·보고서 서랍" loading="lazy"></iframe>
+    <section class="xi-draft" id="report-draft-slot" data-slot="report-draft" aria-label="보고서 초안"></section>
   </aside>
 </main>
 <noscript><p class="cw-void">XI맵은 자바스크립트가 필요합니다.</p></noscript>

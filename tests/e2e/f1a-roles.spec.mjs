@@ -42,7 +42,7 @@ async function drawFrame(page) {
 }
 async function openAoiParcel(page) {
   await page.evaluate(async () => { const X = window.__xi; const fa = await X.loadA02(); X.openParcel(fa.features.find((x) => x.properties.id === X.state.aoiParcels[0])); });
-  await page.waitForFunction(() => document.getElementById('parcel-card').dataset.ready === '1', null, { timeout: 30000 });
+  await page.waitForFunction(() => document.getElementById('pcard2').dataset.ready === '1', null, { timeout: 30000 });
 }
 
 test.describe('역할 관문', () => {
@@ -84,7 +84,7 @@ test.describe('역할 관문', () => {
     expect(await page.evaluate(() => [...document.querySelectorAll('#panel .xi-export button')].every((b) => b.disabled))).toBe(true);
     expect(errs).toEqual([]);
   });
-  test('기관(남원시) — 프레임·실행 없음 · tenant 빌드 · 필지 카드 + 오류 신고', async ({ page }) => {
+  test('기관(남원시) — 프레임·실행 없음 · tenant 빌드 · 기본 실태조사 모드 · 필지 카드 v2 + 오탐 신고 시트', async ({ page }) => {
     const errs = watch(page);
     await bootApi(page, XI + AOI, { realm: 'tenant', tenant: 'namwon' });
     await page.waitForFunction(() => document.documentElement.dataset.restored === '1', null, { timeout: 60000 });
@@ -92,12 +92,16 @@ test.describe('역할 관문', () => {
     expect(g.role).toBe('agency'); expect(g.build).toBe('tenant:namwon'); expect(g.verbs).toBe('V1 V4 V5 V6 V8');
     expect(g.shown).not.toContain('tool-rect'); expect(g.shown).not.toContain('tool-poly');
     expect(await page.evaluate(() => window.__xi.data.cat.items.filter((i) => i.role === 'result').every((i) => /namwon/.test(i.id)))).toBe(true);
-    await openAoiParcel(page);
-    await page.click('#parcel-card .xi-fb');
-    await page.waitForTimeout(500);
-    const t = await page.evaluate(() => document.getElementById('xi-toasts')?.textContent || '');
-    console.log('feedback toast', t);
-    expect(t).toContain(API ? '신고' : '저장 안 됨');
+    expect(await page.evaluate(() => window.XI.view().mode)).toBe('survey');   // 기관 세션 기본 = 실태조사(SURVEY-SPEC §4.1)
+    // 의심 필지(덕과면 AOI 밖이어도 된다) — 카드 v2 · 오탐 신고 시트(사유 필수)
+    await page.evaluate(() => window.XI.parcelCard('5219045021110530012'));
+    await page.waitForFunction(() => document.getElementById('pcard2').dataset.ready === '1', null, { timeout: 40000 });
+    await page.click('#pcard2 .sv-ds');
+    const sh = await page.evaluate(() => ({ open: !document.querySelector('#pcard2 .sv-card-sheet').hidden, reasons: document.querySelectorAll('#pcard2 .sv-card-sheet select option').length, go: document.querySelector('#pcard2 .sv-card-sheet .sv-go')?.textContent, note: document.querySelector('#pcard2 .sv-card-sheet small')?.textContent }));
+    console.log('dismiss sheet', JSON.stringify(sh));
+    expect(sh.open).toBe(true); expect(sh.reasons).toBeGreaterThanOrEqual(5); expect(sh.go).toContain('오탐 처리');
+    if (!API) expect(sh.note).toContain('시연 · 저장 안 됨');
+    await page.click('#pcard2 .sv-card-sheet .sv-cancel');
     expect(errs).toEqual([]);
   });
 });
@@ -111,11 +115,11 @@ test('URL 상태 전부 복원 — cam · on · epoch · swipe · card · panel 
   const url = XI + `?cam=127.35240,35.53075,16.40,40,-12&on=namwon-farmland-2025,namwon-change&epoch=2&swipe=30&card=${pnu}&panel=layers&model=aerial25/best`;
   const read = () => page.evaluate(() => { const X = window.__xi, A = X.A; return {
     cam: [+A.getCenter().lng.toFixed(4), +A.getCenter().lat.toFixed(4), +A.getZoom().toFixed(2), Math.round(A.getPitch()), Math.round(A.getBearing())],
-    on: [...X.state.results].sort(), epoch: X.scrub.S.e, swipe: X.swipe.S.on ? X.swipe.S.v : null, card: document.getElementById('parcel-card').hidden ? null : document.getElementById('parcel-card').dataset.pnu,
+    on: [...X.state.results].sort(), epoch: X.scrub.S.e, swipe: X.swipe.S.on ? X.swipe.S.v : null, card: document.getElementById('pcard2').hidden ? null : document.getElementById('pcard2').dataset.pnu,
     panel: X.panel.S.open ? X.panel.S.tab : null, model: X.state.model }; });
   await page.goto(url);
   await page.waitForFunction(() => document.documentElement.dataset.restored === '1', null, { timeout: 60000 });
-  await page.waitForFunction(() => !document.getElementById('parcel-card').hidden, null, { timeout: 20000 });
+  await page.waitForFunction(() => document.getElementById('pcard2').dataset.ready === '1', null, { timeout: 40000 });
   const a = await read();
   console.log('restore', JSON.stringify(a));
   expect(Math.abs(a.cam[0] - 127.3524)).toBeLessThan(2e-4); expect(Math.abs(a.cam[1] - 35.53075)).toBeLessThan(2e-4); expect(a.cam.slice(2)).toEqual([16.4, 40, -12]);
@@ -125,10 +129,10 @@ test('URL 상태 전부 복원 — cam · on · epoch · swipe · card · panel 
   await page.waitForTimeout(600);
   const written = await page.evaluate(() => location.search);
   console.log('written', written);
-  for (const k of ['cam=', 'on=', 'epoch=2', 'swipe=30', 'card=', 'panel=layers', 'model=']) expect(written).toContain(k);
+  for (const k of ['cam=', 'on=', 'epoch=2', 'swipe=30', 'pnu=', 'panel=layers', 'model=']) expect(written).toContain(k);   // F2-A: 카드 v2 는 ?pnu= (옛 ?card= 도 읽는다)
   await page.reload();
   await page.waitForFunction(() => document.documentElement.dataset.restored === '1', null, { timeout: 60000 });
-  await page.waitForFunction(() => !document.getElementById('parcel-card').hidden, null, { timeout: 20000 });
+  await page.waitForFunction(() => document.getElementById('pcard2').dataset.ready === '1', null, { timeout: 40000 });
   const b = await read();
   expect(b).toEqual(a);
   // 3d 복원

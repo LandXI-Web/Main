@@ -71,9 +71,9 @@ body.lx{padding:0!important;margin:0!important;background:#FFFFFF!important}
 .mw-stage{display:none!important}
 #side{width:100%!important;max-width:none!important;border:0!important}
 #side .dw{width:100%!important;border:0!important;box-shadow:none!important}`;
-export function drawer(el, { onUrl, onClose } = {}) {
-  const frame = el.querySelector('iframe'), title = el.querySelector('.xi-drawer-t');
-  const S = { kind: null, embed: null };
+export function drawer(el, { onUrl, onClose, onDraft } = {}) {
+  const frame = el.querySelector('iframe'), title = el.querySelector('.xi-drawer-t'), tabs = el.querySelector('.xi-dtabs'), slot = el.querySelector('.xi-draft');
+  const S = { kind: null, embed: null, tab: 'std', q: {} };
   const SRC = { stats: '../proto/stats-standard.html', report: '../proto/report-standard.html' };
   frame.removeAttribute('loading');
   frame.style.visibility = 'hidden';
@@ -88,11 +88,25 @@ export function drawer(el, { onUrl, onClose } = {}) {
     el.dataset.embed = S.embed;
   });
   el.querySelector('.xi-x').addEventListener('click', () => close());
-  el.querySelectorAll('[data-period]').forEach((b) => b.addEventListener('click', () => { el.dataset.period = b.dataset.period; if (S.kind) open(S.kind); }));
+  el.querySelectorAll('[data-period]').forEach((b) => b.addEventListener('click', () => { el.dataset.period = b.dataset.period; if (S.kind) open(S.kind, S.q); }));
+  tabs?.querySelectorAll('[data-dtab]').forEach((b) => b.addEventListener('click', () => { if (S.kind === 'report') open('report', { ...S.q, tab: b.dataset.dtab }); }));
+  /** open('stats' | 'report', q) — report 는 탭 2개: 'std'(기존 표준 보고서 iframe) · 'draft'(초안 슬롯 · F2-E 가 채우고, 없으면 F2-A 규칙 초안) */
   function open(kind, q = {}) {
-    S.kind = kind;
-    const u = new URLSearchParams({ embed: '1', period: el.dataset.period || '2025', ...q });
-    title.textContent = kind === 'stats' ? '통계 · 지역별/클래스별' : '보고서 · 표준';
+    const { tab = kind === 'report' ? S.tab || 'std' : 'std', ...rest } = q;
+    S.kind = kind; S.q = q; S.tab = kind === 'report' ? tab : 'std';
+    el.dataset.tab = S.tab;
+    if (tabs) { tabs.hidden = kind !== 'report'; tabs.querySelectorAll('[data-dtab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.dtab === S.tab))); }
+    title.textContent = kind === 'stats' ? '통계 · 지역별/클래스별' : '보고서';
+    if (S.tab === 'draft') {
+      // 초안 탭: iframe 은 비운다(같은 스레드 비용 0) · 슬롯을 채운다
+      if (frame.getAttribute('src') !== 'about:blank') { frame.style.visibility = 'hidden'; frame.setAttribute('src', 'about:blank'); }
+      el.hidden = false; el.dataset.kind = kind;
+      panelIn(el);
+      onDraft && onDraft(slot, rest);
+      onUrl && onUrl();
+      return;
+    }
+    const u = new URLSearchParams({ embed: '1', period: el.dataset.period || '2025', ...Object.fromEntries(Object.entries(rest).filter(([k]) => !['emd_cd', 'rule', 'top', 'pnu'].includes(k))) });
     const src = `${SRC[kind]}?${u}`;
     if (frame.getAttribute('src') !== src) { frame.style.visibility = 'hidden'; el.dataset.embed = ''; frame.setAttribute('src', src); }
     el.hidden = false; el.dataset.kind = kind;
@@ -107,5 +121,5 @@ export function drawer(el, { onUrl, onClose } = {}) {
     if (!S.kind) { frame.style.visibility = 'hidden'; frame.setAttribute('src', 'about:blank'); }
     onClose && onClose();
   }
-  return { S, open, close };
+  return { S, open, close, slot };
 }

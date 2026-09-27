@@ -59,3 +59,26 @@
 .xi-gauge .xi-hud-z, .xi-gauge small, .xi-gauge .xi-n small { color: #FFFFFF; opacity: .9; }
 :root[data-paper="1"] .xi-gauge, :root[data-paper="1"] .xi-gauge .xi-hud-z, :root[data-paper="1"] .xi-gauge small, :root[data-paper="1"] .xi-tier .xi-prov b, :root[data-paper="1"] .xi-tier .xi-prov-l { color: var(--cw-ink); text-shadow: none; }
 :root[data-paper="1"] .xi-scale i { border-color: var(--cw-ink); }
+
+/* F2-A: 보조 칩(글로브 '어제 · 구름 n%' 실측 · 하강 'HLS 30m · 궤도 밖' 결손) · 진행 중 처리량 결손 · 두 줄 실측 */
+.xi-hud-src .xi-miss { flex: none; padding: 0 6px; line-height: 18px; font: 500 14px/18px var(--font-body); }
+.xi-hud-src .xi-miss[hidden] { display: none; }
+.xi-hud-src .xi-miss[data-kind="sky"] { border-style: solid; border-color: var(--cw-rule); color: var(--cw-ink); }
+.xi-hud-job i.xi-cps { font-style: normal; color: var(--cw-sub); border-bottom: 1px dashed var(--cw-mute); }
+.xi-hud-job .xi-own1 { border-top: 1px solid var(--cw-rule); padding-top: 6px; margin-top: 2px; }
+.xi-hud-job .xi-own[data-basis="demo"] { color: var(--cw-sub); }
+
+/* ── 계보 칩(HUD · GET /deploys + tenant 스트림) ── */
+.xi-hud-lin { margin: 6px 0 0; display: flex; gap: 8px; align-items: baseline; font: 500 14px/18px var(--font-num); color: var(--cw-ink); white-space: nowrap; overflow: hidden; }
+.xi-hud-lin[hidden] { display: none; }
+.xi-hud-lin > b { font: 500 14px/18px var(--font-body); color: var(--cw-sub); }
+.xi-hud-lin .v { padding: 0 4px; background: linear-gradient(var(--cw-ai), var(--cw-ai)) left bottom / 100% 1px no-repeat; }
+.xi-hud-lin i { font-style: normal; font: 400 14px/18px var(--font-body); color: var(--cw-sub); margin-left: auto; }
+.xi-hud-lin .m { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.xi-hud-lin a.c { font: 500 14px/18px var(--font-body); color: var(--cw-ink); text-decoration: none; border-bottom: 1px solid currentColor; flex: none; }
+
+/* ── 마운트 지점(F2-E) ── */
+#agent-slot { position: absolute; right: 16px; top: var(--agent-top, 360px); width: 420px; z-index: 7; pointer-events: none; }
+#agent-slot > * { pointer-events: auto; }
+#cmdk-slot { position: absolute; top: 16px; left: 50%; width: 480px; margin-left: -240px; z-index: 11; pointer-events: none; }
+#cmdk-slot > * { pointer-events: auto; }

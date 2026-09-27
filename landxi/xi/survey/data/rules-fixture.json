@@ -1,0 +1,147 @@
+{
+ "as_of": "2026-09-24",
+ "source": "02. 데이터/survey/namwon-parcel-emd-summary.json#rules · README §3",
+ "basis": "inferred",
+ "note": "V-World 연속지적 2026-09-24 × AI 2023 25cm·2025 A02(검수 전) · 의심 후보이며 위법 판정 아님 · 임계 [추정 초기값]",
+ "priority_cut": {
+  "A_score_ge": 76.4,
+  "B_score_ge": 65.5
+ },
+ "items": [
+  {
+   "id": "R1",
+   "version": "1.0",
+   "name": "무허가 건축 의심",
+   "condition": "지목 전·답·과수원 필지 안에 AI 건물 합계 ≥ 33㎡",
+   "thresholds": {
+    "bld_m2_min": 33.0
+   },
+   "thresholds_basis": "estimate",
+   "count": 4140,
+   "by_priority": {
+    "A": 759,
+    "B": 2750,
+    "C": 631
+   },
+   "basis": "inferred",
+   "common": {
+    "obj_in_frac": 0.5,
+    "conf_min": 0.5
+   },
+   "limits": "합법 농업용 시설(축사·농막·창고) · 지목변경 미정리 · 연속지적 경계 어긋남 · 칩 경계 잘림이 오탐을 만든다"
+  },
+  {
+   "id": "R2",
+   "version": "1.0",
+   "name": "휴경·전용 의심",
+   "condition": "지목 전·답·과수원, 필지 ≥ 1000㎡, AI 농경(경작지+비닐하우스) 비율 < 15%, 건물 비율 < 30%",
+   "thresholds": {
+    "parcel_m2_min": 1000,
+    "farm_ratio_max": 0.15,
+    "bld_ratio_max": 0.3
+   },
+   "thresholds_basis": "estimate",
+   "count": 15651,
+   "by_priority": {
+    "A": 46,
+    "B": 4295,
+    "C": 11310
+   },
+   "basis": "inferred",
+   "common": {
+    "obj_in_frac": 0.5,
+    "conf_min": 0.5
+   },
+   "limits": "과다 추정 가능 — 1,000㎡ 이상 농지의 25.8%가 걸리고 70%는 AI 농경 0(미탐·촬영 계절) · 2025 반증 시 감점"
+  },
+  {
+   "id": "R3",
+   "version": "1.0",
+   "name": "용도 불일치(비농지 위 비닐하우스)",
+   "condition": "지목 대·잡종지·공장·창고 등 비농지 필지 안에 AI 비닐하우스 합계 ≥ 100㎡",
+   "thresholds": {
+    "gh_m2_min": 100.0
+   },
+   "thresholds_basis": "estimate",
+   "count": 20,
+   "by_priority": {
+    "A": 0,
+    "B": 6,
+    "C": 14
+   },
+   "basis": "inferred",
+   "common": {
+    "obj_in_frac": 0.5,
+    "conf_min": 0.5
+   },
+   "limits": "25cm 모델은 비닐하우스를 거의 못 잡는다(전역 728) — 실제보다 크게 적다"
+  },
+  {
+   "id": "R4",
+   "version": "1.0",
+   "name": "농지 전용 의심(주차장)",
+   "condition": "지목 전·답·과수원 필지 안에 AI 주차장 합계 ≥ 100㎡",
+   "thresholds": {
+    "park_m2_min": 100.0
+   },
+   "thresholds_basis": "estimate",
+   "count": 33,
+   "by_priority": {
+    "A": 9,
+    "B": 24,
+    "C": 0
+   },
+   "basis": "inferred",
+   "common": {
+    "obj_in_frac": 0.5,
+    "conf_min": 0.5
+   },
+   "limits": "주차장 판독 · 농업용 작업장과 구분 어려움"
+  },
+  {
+   "id": "R5",
+   "version": "1.0",
+   "name": "산지 개간 의심",
+   "condition": "지목 임야 필지 안에 AI 경작지+비닐하우스 ≥ 1000㎡ 이고 필지의 30% 이상",
+   "thresholds": {
+    "farm_m2_min": 1000.0,
+    "farm_ratio_min": 0.3
+   },
+   "thresholds_basis": "estimate",
+   "count": 464,
+   "by_priority": {
+    "A": 236,
+    "B": 228,
+    "C": 0
+   },
+   "basis": "inferred",
+   "common": {
+    "obj_in_frac": 0.5,
+    "conf_min": 0.5
+   },
+   "limits": "태양광 패널이 경작지·비닐하우스로 오탐될 수 있다"
+  },
+  {
+   "id": "R6",
+   "version": "1.0",
+   "name": "공공용지 점유 의심",
+   "condition": "지목 도로·구거·하천·제방·유지 필지 안에 AI 건물 합계 ≥ 30㎡",
+   "thresholds": {
+    "bld_m2_min": 30.0
+   },
+   "thresholds_basis": "estimate",
+   "count": 564,
+   "by_priority": {
+    "A": 3,
+    "B": 83,
+    "C": 478
+   },
+   "basis": "inferred",
+   "common": {
+    "obj_in_frac": 0.5,
+    "conf_min": 0.5
+   },
+   "limits": "도로 필지와 겹친 대지 건물(연속지적 어긋남)이 오탐을 만든다"
+  }
+ ]
+}

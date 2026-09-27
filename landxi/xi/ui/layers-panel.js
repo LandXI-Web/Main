@@ -8,7 +8,7 @@ import { toast } from '../fx/glass.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 export function layersPanel(root, ctx) {
-  const S = { open: false, tab: 'layers', table: 'parcel', page: 0, per: 8, rows: [], hoverRow: null };
+  const S = { open: false, tab: 'layers', table: 'parcel', page: 0, per: 8, rows: [], hoverRow: null, temp: [], survey: null };
   const el = { rail: root.querySelector('.xi-rail'), body: root.querySelector('.xi-panel-body'), toggle: root.querySelector('.xi-panel-toggle') };
   const setOpen = (on) => { S.open = on; root.dataset.open = on ? '1' : '0'; el.toggle.setAttribute('aria-expanded', String(on)); if (on) render(); ctx.onUrl && ctx.onUrl(); };
   el.toggle.addEventListener('click', () => setOpen(!S.open));
@@ -48,6 +48,7 @@ export function layersPanel(root, ctx) {
           <label class="xi-switch"><input type="checkbox" class="xi-ex" ${state.extrude ? 'checked' : ''} ${roleGates.extrude ? '' : 'disabled'}><span>비닐하우스 1,674 세우기 · 지형</span></label>
           <p class="xi-hint">높이 = 신뢰도 × 12 m <b data-basis="estimate">추정</b> · pitch ≤ ${ctx.maxPitch}</p></details></section>
       <section class="xi-sec"><h3>결과 · 배포본 순</h3><ul class="xi-list">${layerRows()}</ul></section>
+      ${S.temp.length ? `<section class="xi-sec"><h3>에이전트 질의 · 저장 안 됨</h3><ul class="xi-list">${S.temp.map((t) => `<li class="xi-row" data-temp="${esc(t.id)}"><button type="button" class="xi-check" aria-pressed="${t.on !== false}" aria-label="${esc(t.label)}"></button><span class="xi-row-n">${esc(t.label)}<small>${esc(t.note || '저장 안 됨')}</small></span>${t.count ? numHtml(t.count, { unit: true }) : ''}</li>`).join('')}</ul></section>` : ''}
       <section class="xi-sec"><h3>참조</h3><ul class="xi-list">
         <li class="xi-row" data-ref="emd" data-on="${state.emd ? 1 : 0}"><button type="button" class="xi-check" aria-pressed="${state.emd}" aria-label="읍면동 경계"></button><span class="xi-row-n">남원 읍면동 39<small>A11 행정경계</small></span></li>
         <li class="xi-row" data-ref="filament" data-on="${state.filament ? 1 : 0}"><button type="button" class="xi-check" aria-pressed="${state.filament}" aria-label="읍면동 필라멘트"></button><span class="xi-row-n">읍면동 필라멘트<small>z &lt; 11.8 · 경작지 면적</small></span></li>
@@ -58,6 +59,7 @@ export function layersPanel(root, ctx) {
     el.body.querySelector('[data-ref=filament] .xi-check').addEventListener('click', () => { ctx.toggleRef('filament'); renderLayers(); });
     el.body.querySelector('[data-ref=parcels] .xi-check')?.addEventListener('click', () => { ctx.toggleRef('parcels'); renderLayers(); });
     el.body.querySelector('.xi-ex').addEventListener('change', (e) => ctx.setExtrude(e.target.checked));
+    el.body.querySelectorAll('[data-temp] .xi-check').forEach((b) => b.addEventListener('click', () => { const t = S.temp.find((x) => x.id === b.closest('li').dataset.temp); if (t) { t.on = t.on === false; ctx.toggleTemp?.(t.id, t.on); renderLayers(); } }));
   }
   /* ── 표 ── */
   async function renderTable() {
@@ -112,9 +114,21 @@ export function layersPanel(root, ctx) {
   function render() {
     root.querySelectorAll('.xi-tabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === S.tab)));
     root.dataset.tab = S.tab;   // 표 탭은 PNU 19자리 + 판독 + 면적이 한 줄에 들도록 넓힌다(css)
-    if (S.tab === 'layers') renderLayers(); else renderTable();
+    if (S.tab === 'survey' && S.survey) S.survey(el.body); else if (S.tab === 'layers') renderLayers(); else renderTable();
   }
-  root.querySelectorAll('.xi-tabs [data-tab]').forEach((b) => b.addEventListener('click', () => { S.tab = b.dataset.tab; render(); ctx.onUrl && ctx.onUrl(); }));
-  return { S, setOpen, render, markRow, openTable(t = 'parcel') { S.tab = 'table'; S.table = t; setOpen(true); } };
+  const bindTab = (b) => b.addEventListener('click', () => { S.tab = b.dataset.tab; render(); ctx.onUrl && ctx.onUrl(); });
+  root.querySelectorAll('.xi-tabs [data-tab]').forEach(bindTab);
+  /** 실태조사 모드: '조사' 탭(업무 판 · 규칙)을 맨 앞에 — fn(body) 가 그린다 */
+  function showSurvey(fn, { open = true } = {}) {
+    S.survey = fn;
+    const nav = root.querySelector('.xi-tabs');
+    if (!nav.querySelector('[data-tab=survey]')) { const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.dataset.tab = 'survey'; b.textContent = '조사'; nav.prepend(b); bindTab(b); }
+    S.tab = 'survey';
+    if (open) setOpen(true); else render();
+  }
+  function hideSurvey() { S.survey = null; root.querySelector('.xi-tabs [data-tab=survey]')?.remove(); if (S.tab === 'survey') S.tab = 'layers'; if (S.open) render(); }
+  return { S, setOpen, render, markRow, showSurvey, hideSurvey, openTable(t = 'parcel') { S.tab = 'table'; S.table = t; setOpen(true); },
+    addTemp(t) { S.temp = S.temp.filter((x) => x.id !== t.id).concat([t]); if (S.open && S.tab === 'layers') renderLayers(); },
+    removeTemp(id) { S.temp = S.temp.filter((x) => x.id !== id); if (S.open && S.tab === 'layers') renderLayers(); } };
 }
 export { void_ };

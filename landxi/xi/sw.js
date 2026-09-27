@@ -14,8 +14,16 @@ self.addEventListener('activate', (e) => e.waitUntil((async () => {
   for (const k of await caches.keys()) if (k.startsWith('lx-ext-') && k !== CACHE) await caches.delete(k);
   await self.clients.claim();
 })()));
+/* ③ 선택 모듈 · 선택 API(F2-A): 다른 에픽이 아직 도착하지 않았을 수 있는 경로 —
+      · 모듈 /landxi/agent/panel.js(F2-E) 가 없으면(404) 빈 모듈로 답한다(import 는 성공 · mount 없음 · 콘솔 오류 0)
+      · 요청(API · 다른 에픽이 만들 정적 파일)에 _lxopt=1 이 붙어 있으면 오류 상태도 200 + {"__lxerr":{status, body}} 로 감싸 준다 — 경로가 아직 없는 서버(404)·
+        계약 오류(409 finding_state_invalid 등)를 화면이 정직한 결손 칩으로 읽되, 브라우저 콘솔에 'Failed to load resource' 가 남지 않게.
+        (화면 쪽 api-survey.js 가 풀어서 ApiError 로 되돌린다 · 성공 응답은 손대지 않는다 · SSE 는 스트림 그대로 통과) */
+const OPTIONAL_MODULES = ['/landxi/agent/panel.js'];
 self.addEventListener('fetch', (e) => {
   const u = new URL(e.request.url);
+  if (OPTIONAL_MODULES.includes(u.pathname) && e.request.method === 'GET') { e.respondWith(optionalModule(e.request)); return; }
+  if (u.searchParams.get('_lxopt') === '1') { e.respondWith(optionalApi(e.request)); return; }
   if (e.request.method !== 'GET' || !HOSTS.includes(u.hostname) || !/\.(png|jpe?g|webp)$/i.test(u.pathname)) return;
   e.respondWith(serve(e.request, u));
 });
@@ -29,6 +37,17 @@ async function serve(req, u) {
     c.put(req.url, r.clone()).then(() => { if (++puts % 200 === 0) trim(c); }).catch(() => {});
   }
   return r;
+}
+async function optionalModule(req) {
+  try { const r = await fetch(req); if (r.ok) return r; } catch { /* 없음 */ }
+  return new Response('export const missing = true;', { status: 200, headers: { 'content-type': 'text/javascript; charset=utf-8', 'x-lx-optional': 'missing' } });
+}
+async function optionalApi(req) {
+  let r;
+  try { r = await fetch(req); } catch { return new Response(JSON.stringify({ __lxerr: { status: 0, body: null } }), { status: 200, headers: { 'content-type': 'application/json' } }); }
+  if (r.ok || r.status === 204) return r;
+  let body = null; try { body = await r.json(); } catch { /* 본문 없음 */ }
+  return new Response(JSON.stringify({ __lxerr: { status: r.status, body } }), { status: 200, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 }
 async function trim(c) {
   try { const ks = await c.keys(); for (let i = 0; i < ks.length - MAX; i++) await c.delete(ks[i]); } catch { /* */ }

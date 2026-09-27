@@ -1,0 +1,16 @@
+{
+ "built_at": "2026-09-26T19:36:30.120Z",
+ "note": "선택 모듈 존재 표 — present:false 면 화면이 import 하지 않는다(404 0). 서비스 워커가 있으면 sw.js 가 빈 모듈로 한 번 더 막는다.",
+ "items": [
+  {
+   "id": "agent",
+   "path": "/landxi/agent/panel.js",
+   "owner": "F2-E",
+   "export": "mount(XI)",
+   "present": true,
+   "bytes": 20912,
+   "sha1": "c0fa88e39bee",
+   "mtime": "2026-09-26T19:18:05.834Z"
+  }
+ ]
+}

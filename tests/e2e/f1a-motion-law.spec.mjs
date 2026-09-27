@@ -1,6 +1,6 @@
 // F1-A · motion-law + 성능·법전 — 소스 스캔(ms · duration ⊆ 사다리) · 실행 중 getAnimations 지속 ⊆ 사다리 · 지연 = 스태거×단 · 이징 ⊆ 3 곡선
 //   · 스타일 전이 0 · raster-fade 500 · 카메라 1000/1250/1600/2400 · 락온 380(180/80/120) · 스윕 1000 · 정지 750 · 앰버(자체 CSS 0 · 락온 1회)
-//   · p95 ≤ 20ms · 캔버스 ≥ 90 % · WebGL 캔버스 ≤ 2 · 14px 미만 0 · Chrome GPU 기록(shots/f1/A/gpu.json)
+//   · p95 ≤ 20ms · 캔버스 ≥ 90 % · WebGL 캔버스 ≤ 2 · 14px 미만 0 · Chrome GPU 기록(shots/f2/A/logs/gpu.json)
 // 실행: npx playwright test tests/e2e/f1a-motion-law --reporter=line
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
@@ -103,7 +103,9 @@ test('실행 중 — 전 장면 getAnimations ⊆ 사다리 · 이징 3 · 카�
       const r = el.getBoundingClientRect(); if (!r.width || !r.height || r.bottom < 0 || r.top > innerHeight) continue;
       if (parseFloat(cs.fontSize) < 14) small.push(el.tagName + '.' + el.className + ' ' + cs.fontSize + ' "' + n.textContent.trim().slice(0, 20) + '"');
     }
-    const amberNow = [...document.querySelectorAll('body *')].filter((e) => { const cs = getComputedStyle(e); return [cs.color, cs.backgroundColor, cs.borderTopColor].includes('rgb(255, 182, 51)'); }).map((e) => e.id || e.className);
+    // F2-E 에이전트 패널(#agent-slot · #cmdk-slot · ag-*)은 이 에픽 소유가 아니다 — 앰버 사용은 결과 문서 '계약 변경 요청'으로 따로 기록
+    window.__agentAmber = [...document.querySelectorAll('#agent-slot *, #cmdk-slot *, [id^="ag-"]')].filter((e) => { const cs = getComputedStyle(e); return [cs.color, cs.backgroundColor, cs.borderTopColor].includes('rgb(255, 182, 51)'); }).map((e) => e.id || e.className);
+    const amberNow = [...document.querySelectorAll('body *')].filter((e) => !e.closest('#agent-slot, #cmdk-slot') && !/^ag-/.test(e.id)).filter((e) => { const cs = getComputedStyle(e); return [cs.color, cs.backgroundColor, cs.borderTopColor].includes('rgb(255, 182, 51)'); }).map((e) => e.id || e.className);
     return { tr: st.transition, fades: st.layers.filter((l) => l.type === 'raster').map((l) => l.id + ':' + (l.paint?.['raster-fade-duration'] ?? 'default')),
       small, amberNow, canvases: document.querySelectorAll('canvas.maplibregl-canvas').length, share: X.canvasShare(), tier: X.tier, perf: X.perfStats() };
   });
@@ -116,9 +118,11 @@ test('실행 중 — 전 장면 getAnimations ⊆ 사다리 · 이징 3 · 카�
   await page.waitForFunction(() => window.__xi.PHASES.some((x) => x.p === 'arrived' && x.t > window.__mark), null, { timeout: 45000 });
   const perfAoi = await page.evaluate(() => window.__xi.perfStats());
   await page.evaluate(async () => { const X = window.__xi; const fa = await X.loadA02(); X.openParcel(fa.features.find((x) => x.properties.id === X.state.aoiParcels[0])); });
-  await page.waitForFunction(() => document.getElementById('parcel-card').dataset.ready === '1', null, { timeout: 30000 });
+  await page.waitForFunction(() => document.getElementById('pcard2').dataset.ready === '1', null, { timeout: 30000 });
+  await page.click('#pcard2 .sv-ep input[value="2025"]');   // 막대 재성장 500 · 배경 시점 500
   await page.waitForTimeout(1100);
-  await page.click('#parcel-card .xi-close');
+  await page.click('#pcard2 .xi-x');
+  await page.waitForFunction(() => document.getElementById('pcard2').hidden, null, { timeout: 5000 });
   await page.click('#tool-rect');
   await page.mouse.move(520, 320); await page.mouse.down(); await page.mouse.move(880, 620, { steps: 10 }); await page.mouse.up();
   await page.waitForSelector('#quote-card .xi-run', { timeout: 15000 });
@@ -140,8 +144,8 @@ test('실행 중 — 전 장면 getAnimations ⊆ 사다리 · 이징 3 · 카�
   console.log('flights', JSON.stringify(r.flights), 'jumps', r.jumps, 'sweeps', JSON.stringify(r.sweeps), 'stops', JSON.stringify(r.stops));
   console.log('law', JSON.stringify({ ...law, fades: law.fades.length, tier: law.tier && { tier: law.tier.tier, p95: law.tier.p95, gpu: law.tier.gpu } }));
   console.log('perf', JSON.stringify({ idle: law.perf, aoi: perfAoi, job: perfJob, all: r.perfAll }));
-  fs.mkdirSync('shots/f1/A', { recursive: true });
-  fs.writeFileSync('shots/f1/A/gpu.json', JSON.stringify({ at: new Date().toISOString(), mode: API ? 'on' : 'off', gpu: law.tier?.gpu, tier: law.tier?.tier, first60_p95_ms: law.tier?.p95,
+  fs.mkdirSync('shots/f2/A/logs', { recursive: true });
+  fs.writeFileSync('shots/f2/A/logs/gpu.json', JSON.stringify({ at: new Date().toISOString(), mode: API ? 'on' : 'off', gpu: law.tier?.gpu, tier: law.tier?.tier, tier_p95_ms: law.tier?.p95, boot60_p95_ms: law.tier?.boot?.p95, tier_windows: law.tier?.windows,
     perf: { idle: law.perf, aoi_descent_arrive: perfAoi, job_theater: perfJob, whole_run: r.perfAll }, canvas_share: law.share, canvases: law.canvases, basis: 'measured · Playwright headless chrome · rAF 간격' }, null, 1));
   expect(badDur).toEqual([]);
   expect(badDelay).toEqual([]);

@@ -32,14 +32,18 @@ test('글로브 → 남원 하강: 출처 칩 전환 · 점프 0 · pitch 0→35
     const X = window.__xi, chips = X.hud.chips.map((c) => c.id || c.text);
     const seq = chips.filter((c, i) => c !== chips[i - 1]);
     const fl = X.CAMLOG.frames, pitches = fl.map((f) => f[4]);
-    return { seq, jumps: X.jumps(), p0: pitches[0], pMax: Math.max(...pitches), last: fl[fl.length - 1], flights: X.CAMLOG.flights.map((f) => f.duration), stage: document.documentElement.dataset.stage, zoom: X.A.getZoom() };
+    return { seq, jumps: X.jumps(), p0: pitches[0], pMax: Math.max(...pitches), last: fl[fl.length - 1], flights: X.CAMLOG.flights.map((f) => f.duration), stage: document.documentElement.dataset.stage, zoom: X.A.getZoom(),
+      gate: X.hlsGate, hlsVis: X.A.getLayer('img-gibs-hls-s30') ? X.A.getLayoutProperty('img-gibs-hls-s30', 'visibility') : 'absent', misses: X.missLog || [] };
   });
   console.log('칩 순서', r.seq.join(' → '), '· 비행', r.flights.join('/'), '· 점프', r.jumps, '· pitch', r.p0, '→', r.pMax, '· 무대', r.stage);
   const want = ['gibs-viirs-truecolor', 'xdworld-satellite', 'ap25-namwon-2023'];
   let k = 0; for (const c of r.seq) if (c === want[k]) k++;
   expect(k, '칩이 VIIRS → V-World → 25cm 순서로 지나간다').toBe(3);
-  expect(r.seq.length - 1, '칩 전환 ≥ 3').toBeGreaterThanOrEqual(3);
-  expect(r.seq).toContain('gibs-hls-s30');
+  // F2-A must_fix 4: HLS 는 하강 경로 화면 커버리지 ≥ 70 % · 중심 유효일 때만 켠다 — 아니면 층을 끄고 'HLS 30m · 궤도 밖' 결손 칩
+  console.log('HLS 판정', JSON.stringify(r.gate), 'vis', r.hlsVis, 'miss', JSON.stringify(r.misses.slice(0, 4)));
+  if (r.gate?.ok) { expect(r.seq).toContain('gibs-hls-s30'); expect(r.seq.length - 1).toBeGreaterThanOrEqual(3); }
+  else { expect(r.seq).not.toContain('gibs-hls-s30'); expect(['none', 'absent']).toContain(r.hlsVis); expect(r.seq.length - 1).toBeGreaterThanOrEqual(2); expect(r.misses.some((m) => m.startsWith('HLS 30m · 궤도 밖'))).toBe(true); }
+  expect(r.misses.some((m) => /^어제 · 구름 \d+%$/.test(m))).toBe(true);
   expect(r.flights).toEqual(expect.arrayContaining([2400, 1600]));
   expect(r.jumps).toBe(0);
   expect(r.p0).toBe(0);

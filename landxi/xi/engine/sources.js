@@ -8,6 +8,37 @@ let protocol = null;
 export const TILE_LOG = [];   // 테스트용 — 자체 래스터 타일 요청(공개 모드 0 단언)
 let BLANK = null;
 const blank = async () => (BLANK ||= await createImageBitmap(new ImageData(1, 1)));
+
+/* ── 서비스 워커 없는 방패(2차 판정): 첫 방문(컨트롤러 대기)·SW 차단·시크릿 창에서도 외부 타일 5xx/404 가 콘솔 오류가 되지 않게
+   외부 호스트(GIBS · V-World xdworld · EOX) 요청을 전용 Worker 의 fetch 로 받는다(Worker 안 fetch 의 실패 상태는 페이지 콘솔에 남지 않는다 · 실측).
+   실패는 투명 1×1 + 결손 수(onMiss) — SW 방패(sw.js blank)와 같은 정직 표기. 모드는 xi.js 가 부팅 때 정한다(setExtMode). */
+const EXT_HOSTS = /^https:\/\/(gibs\.earthdata\.nasa\.gov|xdworld\.vworld\.kr|tiles\.maps\.eox\.at)\//;
+let EXT_MODE = 'sw', EW = null, ESEQ = 0; const EPEND = new Map();
+export const EXT_MISS = { n: 0, last: null, onMiss: null };
+export function setExtMode(m) { EXT_MODE = m === 'worker' ? 'worker' : 'sw'; return EXT_MODE; }
+export const extMode = () => EXT_MODE;
+function extWorker() {
+  if (EW) return EW;
+  const src = `onmessage = async (e) => { const { id, url } = e.data; try { const r = await fetch(url, { mode: 'cors' }); const b = r.ok ? await r.arrayBuffer() : null; postMessage({ id, ok: r.ok, status: r.status, b, ct: r.headers.get('content-type') || '' }, b ? [b] : []); } catch (x) { postMessage({ id, ok: false, status: 0 }); } };`;
+  EW = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+  EW.onmessage = (e) => { const f = EPEND.get(e.data.id); if (f) { EPEND.delete(e.data.id); f(e.data); } };
+  return EW;
+}
+const missed = (url, status) => { EXT_MISS.n++; EXT_MISS.last = { host: (/^https:\/\/([^/]+)/.exec(url) || [])[1], status }; EXT_MISS.onMiss?.(EXT_MISS); };
+/** 외부 요청(fetch 와 같은 모양의 응답) — SW 모드면 그냥 fetch(방패가 받는다) · worker 모드면 Worker 가 받는다 */
+export function extFetch(url, { signal } = {}) {
+  if (EXT_MODE !== 'worker' || !EXT_HOSTS.test(url)) return fetch(url, { mode: 'cors', signal });
+  return new Promise((res, rej) => {
+    const id = ++ESEQ;
+    EPEND.set(id, (d) => {
+      if (!d.ok) missed(url, d.status);
+      const b = d.b || new ArrayBuffer(0);
+      res({ ok: d.ok, status: d.status, arrayBuffer: async () => b, blob: async () => new Blob([b], { type: d.ct }), text: async () => new TextDecoder().decode(b) });
+    });
+    extWorker().postMessage({ id, url });
+    signal?.addEventListener('abort', () => { if (EPEND.delete(id)) rej(new DOMException('aborted', 'AbortError')); }, { once: true });
+  });
+}
 export function registerPmtiles() {
   if (protocol || !window.pmtiles || !window.maplibregl) return protocol;
   protocol = new window.pmtiles.Protocol({ metadata: true });
@@ -29,9 +60,17 @@ export function registerPmtiles() {
   window.maplibregl.addProtocol('lxext', async (params, ac) => {
     const url = 'https://' + params.url.slice('lxext://'.length);
     let r;
-    try { r = await fetch(url, { signal: ac.signal, mode: 'cors' }); } catch { return { data: await blank() }; }
+    try { r = await extFetch(url, { signal: ac.signal }); } catch { return { data: await blank() }; }
     if (!r.ok) return { data: await blank() };
     try { return { data: await clearNoData(await createImageBitmap(await r.blob()), url) }; } catch { return { data: await blank() }; }
+  });
+  /* lxw://<host>/<path> — SW 없는 창의 외부 타일(Worker fetch · 실패 = 투명 + 결손 수) */
+  window.maplibregl.addProtocol('lxw', async (params, ac) => {
+    const url = 'https://' + params.url.slice('lxw://'.length);
+    let r;
+    try { r = await extFetch(url, { signal: ac.signal }); } catch { return { data: await blank() }; }
+    if (!r.ok) return { data: await blank() };
+    try { return { data: await createImageBitmap(await r.blob()) }; } catch { return { data: await blank() }; }
   });
   return protocol;
 }
@@ -113,7 +152,7 @@ export async function prewarm(jobs, { concurrency = 12, signal } = {}) {
       const url = q[i++];
       const m = /^lxpm:\/\/(.+)\/(\d+)\/(\d+)\/(\d+)$/.exec(url);
       if (m) { own++; await pmBytes(m[1], +m[2], +m[3], +m[4]); }
-      else { ext++; try { const r = await fetch(url.replace(/^lxext:\/\//, 'https://'), { mode: 'cors', credentials: 'same-origin' }); await r.arrayBuffer(); } catch { /* 방패가 투명으로 */ } }
+      else { ext++; try { const r = await extFetch(url.replace(/^lx(ext|w):\/\//, 'https://')); await r.arrayBuffer(); } catch { /* 방패가 투명으로 */ } }
     }
   };
   await Promise.all(Array.from({ length: concurrency }, one));
@@ -139,7 +178,7 @@ async function hlsDomain() {
   const url = `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/1.0.0/${HLS_LAYER}/default/GoogleMapsCompatible_Level12/all/${from}--${to}.xml`;
   const ac = new AbortController(); const t = setTimeout(() => ac.abort(), 4000);
   try {
-    const x = await (await fetch(url, { signal: ac.signal })).text();
+    const x = await (await extFetch(url, { signal: ac.signal })).text();
     const doms = [...x.matchAll(/(\d{4}-\d{2}-\d{2})\/(\d{4}-\d{2}-\d{2})\/P1D|(?<![\/\d])(\d{4}-\d{2}-\d{2})(?![\/\d-])/g)];
     const days = new Set();
     for (const m of doms) {
@@ -149,7 +188,7 @@ async function hlsDomain() {
   } catch { return []; } finally { clearTimeout(t); }
 }
 const hlsTile = (date, [z, x, y] = HLS_PROBE) => `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/${HLS_LAYER}/default/${date}/GoogleMapsCompatible_Level12/${z}/${y}/${x}.png`;
-async function tileBytes(url) { try { const r = await fetch(url); return r.ok ? (await r.arrayBuffer()).byteLength : 0; } catch { return 0; } }
+async function tileBytes(url) { try { const r = await extFetch(url); return r.ok ? (await r.arrayBuffer()).byteLength : 0; } catch { return 0; } }
 let hlsMemo = null;
 /** { date, dates:[...최근 내용 있는 날], note } — 결손이면 date:null. sessionStorage 로 하루 보관. */
 export function pickHls({ want = 1 } = {}) {
@@ -176,6 +215,7 @@ export async function sourceSpec(item, params = {}) {
   if (item.kind === 'terrain') return { type: 'raster-dem', ...u, encoding: 'terrarium', tileSize: 256, attribution: item.attribution || '' };
   const t = u.url && u.url.startsWith('pmtiles://') ? { tiles: ['lxpm://' + u.url.slice('pmtiles://'.length) + '/{z}/{x}/{y}'] } : u;
   if (NO_DATA_BLACK.has(item.id) && t.tiles) t.tiles = t.tiles.map((x) => x.replace(/^https:\/\//, 'lxext://'));
+  else if (EXT_MODE === 'worker' && t.tiles) t.tiles = t.tiles.map((x) => (EXT_HOSTS.test(x) ? x.replace(/^https:\/\//, 'lxw://') : x));
   const s = { type: 'raster', ...t, tileSize: 256, attribution: item.attribution || '' };
   if (t.tiles) { s.minzoom = item.minzoom ?? 0; s.maxzoom = item.maxzoom ?? 19; if (item.bounds) s.bounds = item.bounds; }
   return s;
@@ -194,4 +234,88 @@ export function chipText(item, date) {
     return (g >= 0.2 && g < 1 ? `${item.epoch} ${gs} 항공` : `LX 드론 ${gs} ${item.epoch}`) + pending;
   }
   return (item.name?.ko || item.id) + pending;
+}
+
+/* ── 외부 래스터 표본 통계(F2-A · 1차 판정 must_fix 4) ──
+   HLS 는 하루 궤도 띠라 하강 경로 화면의 대부분이 no-data 일 수 있다 — 조각 띠가 '고장 난 지도'로 읽히지 않게,
+   하강 경로 카메라마다 화면 가운데 3×3 타일의 유효 픽셀 비율(= 커버리지)을 실측해 ≥ 70 % 이고 화면 중심이 유효할 때만 켠다.
+   VIIRS 어제 영상은 한국 상공 타일의 밝기·구름 비율을 재어 글로브 첫 화면에 '어제 · 구름 n%' 칩으로 밝힌다(의도된 실영상). */
+let SCV = null;
+async function pixelsOf(url) {
+  try {
+    const r = await extFetch(url); if (!r.ok) return null;
+    const bm = await createImageBitmap(await r.blob());
+    SCV ||= new OffscreenCanvas(bm.width, bm.height);
+    if (SCV.width !== bm.width || SCV.height !== bm.height) { SCV.width = bm.width; SCV.height = bm.height; }
+    const g = SCV.getContext('2d', { willReadFrequently: true });
+    g.clearRect(0, 0, bm.width, bm.height); g.drawImage(bm, 0, 0); bm.close?.();
+    return g.getImageData(0, 0, SCV.width, SCV.height);
+  } catch { return null; }
+}
+const tplOf = async (item, params) => { const s = await sourceSpec(item, params); return (s.tiles?.[0] || '').replace(/^lx(ext|w):\/\//, 'https://'); };
+const fill = (tpl, z, x, y) => tpl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+/** 한 카메라의 화면 가운데 3×3 타일 유효 비율 · 중심 픽셀 유효 여부 */
+export async function hlsCoverage(item, date, cams) {
+  const tpl = await tplOf(item, { date });
+  const out = [];
+  for (const cam of cams) {
+    const tz = Math.max(item.minzoom ?? 5, Math.min(item.maxzoom ?? 12, Math.round(cam.zoom + 1)));
+    const n = 2 ** tz, cx = lon2x(cam.center[0], n), cy = lat2y(cam.center[1], n);
+    const tx = Math.floor(cx), ty = Math.floor(cy);
+    let valid = 0, total = 0, center = false;
+    await Promise.all([-1, 0, 1].flatMap((dy) => [-1, 0, 1].map(async (dx) => {
+      const im = await pixelsOf(fill(tpl, tz, tx + dx, ty + dy));
+      if (!im) { total += 65536; return; }
+      const a = im.data; let v = 0;
+      for (let i = 0; i < a.length; i += 4) if (a[i + 3] > 0 && !(a[i] <= 6 && a[i + 1] <= 6 && a[i + 2] <= 6)) v++;
+      valid += v; total += im.width * im.height;
+      if (!dx && !dy) { const px = Math.floor((cx - tx) * im.width), py = Math.floor((cy - ty) * im.height), k = (py * im.width + px) * 4; center = a[k + 3] > 0 && !(a[k] <= 6 && a[k + 1] <= 6 && a[k + 2] <= 6); }
+    })));
+    out.push({ zoom: +cam.zoom.toFixed(2), tz, cov: total ? +(valid / total).toFixed(3) : 0, center });
+  }
+  const min = out.length ? Math.min(...out.map((o) => o.cov)) : 0;
+  return { date, cams: out, min, ok: out.length > 0 && out.every((o) => o.cov >= 0.7 && o.center), at: new Date().toISOString() };
+}
+/** 지금 뷰포트의 HLS 실측 커버리지(3차 판정 · 공개 도착 뒤 자동 표시 판정) — 화면 32px 격자 점마다 unproject → 그 날 타일 픽셀.
+    유효 = 궤도 안(불투명 · 검정 아님) 이고 구름 아님(min(RGB) < 200). 반환 { date, cov(유효/전체), orbit(궤도 안 비율), cloud, center, tiles, ok = cov ≥ .7 && center } */
+export async function hlsViewCoverage(item, date, map, { step = 32, maxTiles = 24 } = {}) {
+  const tpl = await tplOf(item, { date });
+  const W = map.getCanvas().clientWidth, H = map.getCanvas().clientHeight;
+  const tz = Math.max(item.minzoom ?? 5, Math.min(item.maxzoom ?? 12, Math.floor(map.getZoom()))), n = 2 ** tz;
+  const pts = [];
+  for (let y = step / 2; y < H; y += step) for (let x = step / 2; x < W; x += step) { const ll = map.unproject([x, y]); pts.push({ fx: lon2x(ll.lng, n), fy: lat2y(ll.lat, n) }); }
+  const c = map.getCenter(); pts.push({ fx: lon2x(c.lng, n), fy: lat2y(c.lat, n), center: true });
+  const keys = [...new Set(pts.map((p) => `${Math.floor(p.fx)}/${Math.floor(p.fy)}`))].slice(0, maxTiles);
+  const tiles = new Map(await Promise.all(keys.map(async (k) => { const [x, y] = k.split('/').map(Number); return [k, await pixelsOf(fill(tpl, tz, x, y))]; })));
+  let ok = 0, orbit = 0, cloud = 0, tot = 0, center = false;
+  for (const p of pts) {
+    const tx = Math.floor(p.fx), ty = Math.floor(p.fy), im = tiles.get(`${tx}/${ty}`);
+    let v = false, o = false, cl = false;
+    if (im) {
+      const px = Math.min(im.width - 1, Math.floor((p.fx - tx) * im.width)), py = Math.min(im.height - 1, Math.floor((p.fy - ty) * im.height)), k = (py * im.width + px) * 4, a = im.data;
+      o = a[k + 3] > 0 && !(a[k] <= 6 && a[k + 1] <= 6 && a[k + 2] <= 6);
+      cl = o && Math.min(a[k], a[k + 1], a[k + 2]) >= 200; v = o && !cl;
+    }
+    if (p.center) { center = v; continue; }
+    tot++; if (o) orbit++; if (cl) cloud++; if (v) ok++;
+  }
+  const cov = tot ? +(ok / tot).toFixed(3) : 0;
+  return { date, tz, zoom: +map.getZoom().toFixed(2), cov, orbit: tot ? +(orbit / tot).toFixed(3) : 0, cloud: tot ? +(cloud / tot).toFixed(3) : 0, center, tiles: keys.length, ok: cov >= 0.7 && center };
+}
+/** VIIRS 어제 · 한국 상공(z4 타일의 [124.5,33,131,38.7] 창) 밝기 평균 · 구름 비율(min(RGB) ≥ 180) */
+export async function skyStats(item, date, bounds = [124.5, 33, 131, 38.7], z = 4) {
+  const tpl = await tplOf(item, { date });
+  const n = 2 ** z, x0 = lon2x(bounds[0], n), x1 = lon2x(bounds[2], n), y0 = lat2y(bounds[3], n), y1 = lat2y(bounds[1], n);
+  let sum = 0, cnt = 0, cloud = 0;
+  for (let ty = Math.floor(y0); ty <= Math.floor(y1); ty++) for (let tx = Math.floor(x0); tx <= Math.floor(x1); tx++) {
+    const im = await pixelsOf(fill(tpl, z, tx, ty)); if (!im) continue;
+    const W = im.width, H = im.height, a = im.data;
+    const px0 = Math.max(0, Math.floor((x0 - tx) * W)), px1 = Math.min(W, Math.ceil((x1 - tx) * W)), py0 = Math.max(0, Math.floor((y0 - ty) * H)), py1 = Math.min(H, Math.ceil((y1 - ty) * H));
+    for (let py = py0; py < py1; py++) for (let px = px0; px < px1; px++) {
+      const k = (py * W + px) * 4; if (!a[k + 3]) continue;
+      const r = a[k], g = a[k + 1], b = a[k + 2];
+      sum += (r + g + b) / 3; cnt++; if (Math.min(r, g, b) >= 180) cloud++;
+    }
+  }
+  return cnt ? { date, mean: +(sum / cnt).toFixed(1), cloud: +((cloud / cnt) * 100).toFixed(0), px: cnt, z } : null;
 }
