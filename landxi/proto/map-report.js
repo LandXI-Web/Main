@@ -1,7 +1,7 @@
 /* 보고서 — 같은 우 서랍의 탭 둘(원본 mountReportTabs: 발급 요청 · 발급 내역).
    원판 B7-Report-Issue · -Issue-Error · -List · -List-Empty · -Pledge.
    체크한 읍면동은 지도에 켜지고, 미리보기 수치(필지 · ha)는 실 GeoJSON 집계다 — 서버 호출 없음. */
-import { mountPager, bindRows, say, icon, esc, nf, role, $, $$ } from './shell.js';
+import { mountPager, bindRows, say, icon, esc, nf, role, $, $$, EMBED, embedReady } from './shell.js';
 import * as D from './map-data.js';
 import { openPledge } from './map-pledge.js';
 import { downloadCSV } from './download.js';
@@ -9,6 +9,12 @@ import { downloadCSV } from './download.js';
 let tab = 'issue', host = null, api = null, C = null;
 let form = { title: '', cls: [], emds: [], touched: false };
 let q = { k: '전체', q: '', state: 'all', from: '', to: '', quick: 'all' }, page = 1, size = 10, sel = '';
+
+/* ── embed=1(F2-R) — XI맵 서랍 · 기관 포털 iframe. 크롬 0 은 셸이, 여기서는 기간 칩(?period) 표기 ·
+   ?emd= 로 받은 읍면동을 발급 범위 첫 줄로 · 다 그리면 부모에게 lx:embed:ready. 안쪽 닫기 · 취소(=서랍 닫기)는 세우지 않는다. */
+const EQ = new URLSearchParams(location.search);
+const period = /^\d{4}$/.test(EQ.get('period') || '') ? EQ.get('period') : '';
+let emdSeed = EQ.get('emd') || '', readySent = false;
 
 export function mountReport(el, ctx, o = {}) {
   host = el; api = o; C = ctx; tab = o.tab === 'list' ? 'list' : 'issue';
@@ -19,7 +25,9 @@ export function mountReport(el, ctx, o = {}) {
     form.title = `${D.today().getFullYear()}년 ${D.today().getMonth() + 1}월 ${D.adminOf(ctx.geo?.features?.[0]?.properties.pnu).sgg} ${task()} 현황 보고서`;
     form.cls = [...(ctx.layer?.classes || [])];
     form.emds = [...rows].sort((a, b) => b.n - a.n).slice(0, 5).map((r) => r.emd);
+    if (emdSeed && rows.some((r) => r.emd === emdSeed)) form.emds = [emdSeed, ...form.emds.filter((x) => x !== emdSeed)].slice(0, 5);
   }
+  emdSeed = '';
   draw();
   if (tab === 'issue') api.onFocusEmd?.(form.emds);
   else api.onFocusEmd?.(emdsOf(list()[0]));
@@ -32,16 +40,20 @@ function draw() {
   /* 서랍 속 구조 — 왼쪽은 `무엇을 넣을지`(탭 · 폼 · 거르개), 오른쪽은 `그 결과`
      (미리보기 · 발급 목록). 넓은 서랍에서는 좌우로 선다(map.css `.dw--split`). */
   host.innerHTML = `<div class="dw dw--split">
-  <div class="dw-h"><div><p class="lb">보고서</p><h2>${esc(task())} 보고서 발급 ${tab === 'issue' ? '요청' : '내역'}</h2>
+  <div class="dw-h"><div>${EMBED() && period ? `<p class="lb" id="rp-period" data-period="${esc(period)}" style="margin:0 0 4px"><span class="chip" style="font-size:14px">기간 ${esc(period)}</span></p>` : ''}<p class="lb">보고서</p><h2>${esc(task())} 보고서 발급 ${tab === 'issue' ? '요청' : '내역'}</h2>
     <p class="dw-sub">AI 분석 과제(${esc(task())} 분석)의 ${esc((C.layer?.classes || []).map(D.clsLabel).join('·'))} 면적을 엑셀 보고서로 발급받을 수 있습니다.</p></div>
-    <button type="button" class="x" id="rp-x" aria-label="닫기">${icon('x', 18)}</button></div>
+    ${EMBED() ? '' : `<button type="button" class="x" id="rp-x" aria-label="닫기">${icon('x', 18)}</button>`}</div>
   <div class="dw-l">
   <div class="dw-tabs" role="tablist"><button type="button" role="tab" data-rt="issue" aria-selected="${tab === 'issue'}">보고서 발급 요청</button>
     <button type="button" role="tab" data-rt="list" aria-selected="${tab === 'list'}">보고서 발급 내역<span class="n" style="margin-left:6px;color:var(--grey)">${n}</span></button></div>
   ${tab === 'issue' ? issueFormHtml() + previewHtml() : listFilterHtml()}</div>
   <div class="dw-r" id="rp-b">${tab === 'issue' ? scopeHtml() + emdsHtml() : listHtml()}</div></div>
-  ${tab === 'issue' ? `<div class="dw-f"><span class="mic">접수되면 발급 내역에서 진행 상태를 확인합니다</span><button type="button" class="btn-br" id="rp-cancel" style="width:84px">취소</button><button type="button" class="btn" id="rp-go" style="width:110px">발급 요청</button></div>` : ''}`;
+  ${tab === 'issue' ? `<div class="dw-f"><span class="mic">접수되면 발급 내역에서 진행 상태를 확인합니다</span>${EMBED() ? '' : '<button type="button" class="btn-br" id="rp-cancel" style="width:84px">취소</button>'}<button type="button" class="btn" id="rp-go" style="width:110px">발급 요청</button></div>` : ''}`;
   bind();
+  if (EMBED()) {
+    document.documentElement.dataset.embedView = 'report';
+    if (!readySent) { readySent = true; requestAnimationFrame(() => embedReady('report', { period: period || null, tab })); }
+  }
 }
 
 /* ── 발급 요청 ──────────────────────────────────────────────────────── */
@@ -140,7 +152,7 @@ function listHtml() {
 }
 
 function bind() {
-  $('#rp-x').onclick = () => api.onClose?.();
+  if ($('#rp-x')) $('#rp-x').onclick = () => api.onClose?.();
   host.querySelector('.dw-tabs').onclick = (e) => { const t = e.target.closest('[data-rt]'); if (!t) return; tab = t.dataset.rt; api.setTab?.(tab); };
   if (tab === 'issue') {
     const b = host;                                  // 폼이 두 칸에 나뉘어 있어 서랍 전체에서 받는다
@@ -158,7 +170,7 @@ function bind() {
       }
       if (t.dataset.emd) { form.emds = t.checked ? [...new Set([...form.emds, t.dataset.emd])] : form.emds.filter((x) => x !== t.dataset.emd); return syncIssue(); }
     };
-    $('#rp-cancel').onclick = () => api.onClose?.();
+    if ($('#rp-cancel')) $('#rp-cancel').onclick = () => api.onClose?.();
     $('#rp-go').onclick = submit;
   } else {
     const f = $('#rp-q');

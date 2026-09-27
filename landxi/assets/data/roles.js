@@ -68,9 +68,18 @@ export const ROLES = [
          MY
        서비스 지원(공지·FAQ 열람)도 뺐다 — 관리자는 그것을 **관리하는** 쪽이고,
        읽는 화면과 고치는 화면을 둘 다 주면 어느 쪽이 제 일인지 흐려진다. */
-    menus: ['ops', 'media', 'publish', 'produce', 'admin', 'my'],
+    /* **F2-R(2026-09-27) — 관리자 레일 10 = 운영 현황(home · admin-home) + 관제 4 + 기존 5.** (1차엔 9 — 아래 판정 1차 참고) 설계서 §2.2 ③ LX/OPS 의 8(운영 현황 · 인프라 관제 ·
+       기관·할당 · 배포 제어 · 카드 발행 · 데이터 관리 · 서비스 관리 · MY)에 **생산 관리**를 더한 9다 —
+       원본 기능 삭제 0 원칙(생산 공정 · 재학습 · 검수 화면은 관제로 옮겨지지 않았다).
+       관제 넷(ops · infra · tenants · deploys)은 **다른 origin(:8702)** 이다. 4173 의 세션은 거기 없으므로
+       레일은 관제 로그인 문(`login.html?next=`)을 가리킨다 — 자동 인계는 2차(정직 표기 · shell.js OPS).
+       관리자의 첫 화면은 그대로 admin-home.html(이 origin 의 운영 현황 · 결재 대기)이다. */
+    /* F2-R 판정 1차 반영: 레일 10 = **운영 현황(결재 대기 · 이 origin admin-home)** + 관제 4 + 기존 5.
+       'ops' 가 관제로 간 뒤 admin-home 이 어느 화면에서도 링크 0 으로 고립됐다 — 'home' 키로 되살린다. */
+    menus: ['home', 'ops', 'infra', 'tenants', 'deploys', 'media', 'publish', 'produce', 'admin', 'my'],
     caps: ['approve', 'users', 'notice', 'produce', 'upload', 'build', 'run', 'edit', 'request', 'export'],
     home: 'admin-home.html',
+    mapLine: '관제 = LX/OPS :8702 — 인프라 · 기관·할당 · 배포 제어(관제 로그인 한 번 더)',
   },
   {
     id: 'staff', name: 'LX 직원', short: '직원',
@@ -80,6 +89,7 @@ export const ROLES = [
     menus: ['dashboard', 'media', 'project', 'analysis', 'map', 'support', 'my'],
     caps: ['upload', 'build', 'run', 'edit', 'request', 'export'],
     home: 'ai-project.html',
+    mapLine: '지도 서비스 = XI맵 실시간 분석 — 프레임을 씌우면 GPU 워커가 판독한다',
   },
   {
     id: 'sales', name: '영업용 계정', short: '영업',
@@ -98,7 +108,10 @@ export const ROLES = [
        자료·프로젝트도 없다. 고치지도 못한다 — 시연 중 실수로 지워지는 일이 없어야 한다. */
     menus: ['analysis', 'usecase', 'map', 'my'],
     caps: ['export'],
-    home: 'ximap.html',
+    /* F2-R: 첫 화면 = **새 XI맵**(landxi/xi) — 영업 · 시연(demo:true) 관문은 XI맵이 session.shadow() 로 읽는다.
+       구 ximap.html 은 레일에서 빠지되 파일 · 직접 URL 은 그대로 동작한다(원본 기능 삭제 0). */
+    home: '../xi/index.html',
+    mapLine: '지도 서비스 = XI맵 실시간 분석 — 시연 작업(demo)으로 판독을 보여 준다',
   },
 ];
 
@@ -121,17 +134,31 @@ export const onRail = (roleId, menuKey) => {
 /** 역할이 갈 수 없는 화면에 주소로 바로 들어왔을 때 — 어디로 돌려보낼 것인가. */
 export const homeOf = (roleId) => roleById(roleId)?.home || 'dashboard.html';
 
+/* ── 다른 무대 — 이 셸(proto · :4173) 밖의 새 화면(F2-R) ─────────────────────────
+   XI맵(landxi/xi) 은 같은 origin — localStorage(lx_logged_in · lx_role) 를 XI맵 session.shadow() 가 그대로 읽는다.
+   관제(landxi/ops) 는 **다른 origin(:8702)** — 세션이 건너가지 않는다. 그래서 관제 로그인 문의 ?next= 로 보낸다. */
+export const XI_MAP = '../xi/index.html';
+/** 관제 origin — 지금 주소의 호스트를 따른다(localhost ↔ 127.0.0.1 섞임 0). */
+export const OPS_ORIGIN = (() => { try { return `${location.protocol}//${location.hostname}:8702`; } catch { return 'http://localhost:8702'; } })();
+/** 관제 화면 주소 — 관제 로그인 문을 거쳐 그 화면으로(next 는 관제 쪽 화이트리스트가 판정 · F2-C). */
+export const opsUrl = (page = 'index.html', q = '') => `${OPS_ORIGIN}/landxi/ops/login.html?next=${encodeURIComponent(page + (q ? (q.startsWith('?') ? q : '?' + q) : ''))}`;
+/** 외부 origin 메뉴 — 관리자만(sees 가 menus 로 거른다 · 직원·영업 menus 에 없다). */
+export const EXTERNAL_MENUS = ['ops', 'infra', 'tenants', 'deploys'];
+
 /** 화면 → 그 화면을 보려면 있어야 하는 메뉴 권한.
  *  레일에 없는 화면을 주소로 직접 열어도 막으려면 이 표가 필요하다.
  *  여기 없는 화면은 **로그인만 하면 누구나** 본다(서비스 지원 · 마이페이지 등). */
 export const SCREEN_MENU = {
-  'admin-home.html': 'ops',
+  'admin-home.html': 'home',
   /* 활용 사례는 **막지 않는다** — 영업용 레일에서는 제 이름으로 서고,
      관리자·직원에게는 서비스 지원 안의 탭이다. 여기 적으면 그 둘이 못 본다. */
   'dashboard.html': 'dashboard',
   'dataset.html': 'media',
   'ai-project.html': 'project', 'ai-project-create.html': 'project', 'ai-project-label.html': 'project',
   'analysis-ai.html': 'analysis',
+  /* 지도 서비스의 정본 = 새 XI맵(F2-R). 그 화면은 셸 밖 앱이라 이 표로 막지 않는다(XI맵이 session.shadow() 로 스스로 관문) —
+     여기 적는 것은 '어느 메뉴의 화면인가'를 말하기 위해서다(deniedLine · 레일 활성). 구 ximap.html 은 직접 URL 로만. */
+  '../xi/index.html': 'map',
   'ximap.html': 'map', 'stats-standard.html': 'map', 'report-standard.html': 'map',
   'report-standard-issue.html': 'map', 'map-drift.html': 'map',
   /* 서비스 지원 — 영업 레일에는 support 가 없어 막힌다(활용 사례 usecase.html 은 표에 없어 열린다). */
@@ -143,3 +170,19 @@ export const SCREEN_MENU = {
   'admin-notice.html': 'admin', 'admin-users.html': 'admin', 'admin-inquiry.html': 'admin',
   'admin-faq.html': 'admin', 'admin-map.html': 'admin',
 };
+
+/** 딥링크 열람 — 그 인자를 달고 오면 **또 하나의 메뉴**로도 열린다(F2-R · v1.1-29).
+ *  ai-card.html?card= 는 카드 버전 · 배포 계보를 **읽기만** 하는 자리다. 카드를 만든 직원(project)이
+ *  XI맵 계보 칩 '카드 ↗' 로 왔을 때 되돌려 보내지 않는다. 인자 없이 열면 여전히 관리자 화면(publish)이다. */
+/** 레일 활성 키 정본 — 화면이 mountShell({active}) 로 넘긴 키보다 먼저 선다(키 정리 · F2-R 판정 1차).
+ *  admin-home.js 는 active:'admin' 을 넘기지만 그 화면은 '운영 현황'(home) 이다. */
+export const RAIL_ACTIVE = { 'admin-home.html': 'home' };
+
+export const SCREEN_DEEP = { 'ai-card.html': { param: 'card', menu: 'project' } };
+/** 이 화면(+쿼리)을 이 역할이 볼 수 있나 — 관문 두 곳(shell.js gate · shell-gate.js)이 같은 답을 낸다. */
+export function screenOpen(roleId, file, search = '') {
+  const need = SCREEN_MENU[file];
+  if (!need || sees(roleId, need)) return true;
+  const d = SCREEN_DEEP[file];
+  return !!(d && new URLSearchParams(search).get(d.param) && sees(roleId, d.menu));
+}

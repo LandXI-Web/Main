@@ -3,6 +3,16 @@
 <title>보고서 발급 요청 — Land-XI</title>
 <link rel="icon" href="../assets/images/favicon_landxi.png">
 <script src="shell-gate.js"></script>
+<script>/* F2-R embed=1 — 다른 화면(XI맵 서랍 · 기관 포털)의 iframe 안에서 본문만 선다. 셸(mountShell)은 이 표식을 보고 레일·마스트·공지·푸터·쪽 제목을 세우지 않는다. */
+if (new URLSearchParams(location.search).get('embed') === '1') document.documentElement.dataset.embed = '1';</script>
+<style>/* embed=1 — 본문(서랍) 100% · 지도 판 · 설정 판 · 닫기 0. 부모는 스타일을 주입하지 않는다. */
+html[data-embed="1"] body.lx{ min-height:0; height:100vh; background:#fff; }
+html[data-embed="1"] body.lx #main{ margin:0; padding:0; width:100%; max-width:none; }
+html[data-embed="1"] .mw{ margin:0; grid-template-columns:0 0 minmax(0,1fr); height:100vh; border:0; background:#fff; }
+html[data-embed="1"] .mw-l,html[data-embed="1"] .mw-stage{ display:none; }
+html[data-embed="1"] .mw-side{ width:100%; border:0; }
+html[data-embed="1"] #st-x,html[data-embed="1"] #rp-x{ display:none; }
+</style>
 <link rel="stylesheet" href="fonts-system.css">
 <link rel="stylesheet" href="vendor/maplibre/maplibre-gl.css">
 <link rel="stylesheet" href="shell.css">

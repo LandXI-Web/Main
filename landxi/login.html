@@ -1,1 +1,6 @@
-<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=proto/login.html"><title>Land-XI</title><a href="proto/login.html">Land-XI</a>
+<!doctype html><meta charset="utf-8"><title>Land-XI</title>
+<!-- 로그인 정본은 proto/login.html — 여기는 문패다. F2-R: ?next · ?logout 을 그대로 넘긴다(전에는 meta refresh 가 쿼리를 버렸다).
+     next 의 안전 판정은 proto/login.js safeNext 한 곳에서만 한다(여기서 해석하지 않는다). -->
+<script>location.replace('proto/login.html' + location.search);</script>
+<noscript><meta http-equiv="refresh" content="0; url=proto/login.html"></noscript>
+<a href="proto/login.html">Land-XI</a>

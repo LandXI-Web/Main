@@ -33,9 +33,16 @@ const MSG = {
   pw: '비밀번호를 입력해 주세요.',
 };
 
-/* 오픈 리다이렉트 방지 — 같은 사이트의 "이름.html(?쿼리)" 만 허용. 아니면 null(→ 역할의 첫 화면). */
-const safeNext = (v) =>
-  (/^[a-z0-9_-]+\.html(?:\?[^\s#]*)?$/i.test(v || '') && !/[:\/\\]/.test(v)) ? v : null;
+/* 오픈 리다이렉트 방지 — 같은 사이트의 "이름.html(?쿼리)" 만 허용. 아니면 null(→ 역할의 첫 화면).
+   F2-R: **화이트리스트 두 줄**을 더한다 — 새 XI맵(`../xi/index.html` · `../xi/`)과 Global(`../global/index.html`).
+   경로는 고정 문자열이고 쿼리만 자유다 — 쿼리 안의 `//` `:` 는 경로를 바꾸지 못한다(상대 경로 해석은 ? 앞에서 끝난다).
+   `..` 로 다른 폴더를 여는 일반 규칙은 여전히 없다(`../secret.html` 차단). 역슬래시 · 공백 · # 는 어디서도 불가. */
+const NEXT_FIXED = /^\.\.\/(?:xi|global)\/(?:index\.html)?(?:\?[^\s#\\]*)?$/;
+const safeNext = (v) => {
+  const s = v || '';
+  if (/^[a-z0-9_-]+\.html(?:\?[^\s#]*)?$/i.test(s) && !/[:\/\\]/.test(s)) return s;
+  return NEXT_FIXED.test(s) ? s : null;
+};
 const params = () => new URLSearchParams(location.search);
 const nextTarget = () => safeNext(params().get('next'));
 const isLoggedIn = () => ls.get(K.in) === '1';
@@ -94,7 +101,7 @@ if (isLoggedIn()) {
 
 /* ── 계정 캡션 — 고른 계정이 하는 일. 문구는 roles.js 에서만(ROLES[].what · CAPS). ─────
    바뀔 때마다 이름 → 설명 → 할 수 있는 일 3개가 600ms · 60ms 스태거로 들어온다. 축소 모션 = 즉시. */
-const cap = { name: $('#lgCapName'), what: $('#lgCapWhat'), caps: $('#lgCapCaps'), who: $('.lg-cap__who') };
+const cap = { name: $('#lgCapName'), what: $('#lgCapWhat'), caps: $('#lgCapCaps'), who: $('.lg-cap__who'), map: $('#lgCapMap') };
 const CAP_N = 3;
 const checkedRole = () => [...form.role].find((r) => r.checked)?.value || ROLES[0].id;
 function caption(roleId, animate = !REDUCE) {
@@ -108,9 +115,10 @@ function caption(roleId, animate = !REDUCE) {
     li.dataset.cap = k;
     return li;
   }));
+  if (cap.map) cap.map.textContent = r.mapLine || '';
   document.getElementById('lgCap').dataset.role = r.id;
   if (!animate || typeof Element.prototype.animate !== 'function') return;
-  const items = [cap.who, ...cap.caps.children];
+  const items = [cap.who, ...cap.caps.children, ...(cap.map ? [cap.map] : [])];
   items.forEach((el, i) => {
     for (const a of el.getAnimations()) a.cancel();
     el.animate([{ transform: 'translateY(20px)', opacity: 0 }, { transform: 'none', opacity: 1 }],
@@ -195,6 +203,7 @@ window.__login = {
   next: nextTarget,
   destination,
   role: checkedRole,
+  mapLine: () => cap.map?.textContent || '',
   caption: () => ({ role: document.getElementById('lgCap')?.dataset.role || null, name: cap.name?.textContent || '', what: cap.what?.textContent || '', caps: [...(cap.caps?.children || [])].map((li) => li.textContent) }),
   source: () => (video.currentSrc || null),
   drifting: () => !!(video && !video.paused && !video.ended && video.readyState > 2),

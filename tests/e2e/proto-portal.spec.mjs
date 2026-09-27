@@ -96,7 +96,12 @@ const fitsCheck = () => {
   const inner = [...document.querySelectorAll('#main *')].filter((e) => {
     const c = getComputedStyle(e);
     return /auto|scroll/.test(c.overflowY) && e.scrollHeight - e.clientHeight > 40 && e.clientHeight > 80;
-  }).map((e) => e.className);
+  })
+    /* 예외 하나(F2-R 판정 1차): 실태조사 카드 '지도' 탭의 XI맵 임베드 보기(.pt-pane[data-xi-full])는
+       지도를 본문 전폭 · 높이 ≥ 720 으로 세우고 필지 표를 아래로 내린다 — 그 판만 스크롤한다(HUD 겹침 0 이 한 화면 규칙보다 먼저).
+       '결과 지도' 보기로 돌아가면 한 화면 규칙 그대로(아래 단언이 그 보기도 잰다). */
+    .filter((e) => !e.matches('.pt-pane[data-xi-full]'))
+    .map((e) => e.className);
   return { over, inner };
 };
 
@@ -374,6 +379,9 @@ test.describe('kind 선언 → 장치', () => {
     await expect(page.locator('.pt-b[data-block="map"] [data-epoch]')).toHaveCount(0);
     await boot(page, pageOf('dp-nw-farm-25'));
     await page.locator('.pt-tabs button[data-tab="map"]').click();
+    /* F2-R: 영농관리 지도 탭의 기본 보기 = 새 XI맵 실태조사 임베드. 기존 결과 지도(시점 단추)는 '결과 지도' 한 번 눌러 연다(삭제 0) */
+    await expect(page.locator('#pt-xi')).toHaveAttribute('src', '../xi/index.html?mode=survey&svc=dp-nw-farm-25&survey=farmland&embed=1');
+    await page.locator('[data-xi-view="native"]').click();
     await page.waitForTimeout(400);
     expect(await page.locator('.pt-b[data-block="map"] [data-epoch]').count()).toBeGreaterThan(0);
   });
@@ -463,6 +471,14 @@ test.describe('한 화면에서 끝난다', () => {
           r = await page.evaluate(fitsCheck);
           expect(r.over, `${id}/${t} ${w}x${h}`).toBeLessThanOrEqual(4);
           expect(r.inner, `${id}/${t} ${w}x${h} 판 안쪽`).toEqual([]);
+          if (t === 'map' && await page.locator('[data-xi-view="native"]').count()) {   // 실태조사 카드 — 결과 지도 보기는 한 화면 그대로
+            await page.locator('[data-xi-view="native"]').click();
+            await page.waitForTimeout(220);
+            r = await page.evaluate(fitsCheck);
+            expect(r.over, `${id}/map(결과 지도) ${w}x${h}`).toBeLessThanOrEqual(4);
+            expect(r.inner, `${id}/map(결과 지도) ${w}x${h} 판 안쪽`).toEqual([]);
+            await page.locator('[data-xi-view="xi"]').click();
+          }
         }
       }
     });

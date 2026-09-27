@@ -10,7 +10,9 @@ const ACCENT = 'rgb(0, 109, 247)';
 const INK = 'rgb(1, 1, 2)';
 const CARD_MIN = 526;
 // §7.3 역할 픽스처 — Wave 0 동안 자기 spec 안에 복사(_roles.mjs import 금지).
-const HOME = { admin: 'admin-home.html', staff: 'ai-project.html', sales: 'ximap.html' };
+/* F2-R(2026-09-27): 영업 첫 화면 = 새 XI맵 — proto 밖(landxi/xi). 도착 판정은 경로 끝(HOME_PATH)으로 한다. */
+const HOME = { admin: 'admin-home.html', staff: 'ai-project.html', sales: '../xi/index.html' };
+const HOME_PATH = { admin: '/landxi/proto/admin-home.html', staff: '/landxi/proto/ai-project.html', sales: '/landxi/xi/index.html' };
 const SHOTS_W0 = 'shots/w0/E0-2';
 fs.mkdirSync(SHOTS_W0, { recursive: true });
 const KEYS = () => ({ in: localStorage.getItem('lx_logged_in'), role: localStorage.getItem('lx_role'), tenant: localStorage.getItem('lx_tenant_session') });
@@ -376,10 +378,40 @@ for (const [role, label] of [['admin', 'LX 관리자'], ['staff', 'LX 직원'], 
     await page.locator('#lgPw').fill('lx-2026');
     await page.locator('#lgSubmit').click();
     await expect(page.locator('#lgSubmit')).toBeDisabled();
-    await page.waitForURL((u) => u.pathname.endsWith('/' + HOME[role]), { timeout: 15000 });
+    await page.waitForURL((u) => u.pathname.endsWith(HOME_PATH[role]), { timeout: 15000 });
     expect(await page.evaluate(KEYS)).toEqual({ in: '1', role, tenant: null });
   });
 }
+
+/* F2-R — ?next 화이트리스트: 새 XI맵(../xi/…) · Global(../global/…) 만 폴더 밖으로 허용(open redirect 0) */
+test('리다이렉트 — ?next=../xi/index.html?mode=survey 는 허용 → 로그인 뒤 새 XI맵 · 세션 인계(data-lx=ready · 직원)', async ({ page }) => {
+  await boot(page, '?next=' + encodeURIComponent('../xi/index.html?mode=survey&svc=dp-nw-farm-25'));
+  await page.locator('.lg-seg__c', { hasText: 'LX 직원' }).click();
+  expect(await page.evaluate(() => window.__login.destination('staff'))).toBe('../xi/index.html?mode=survey&svc=dp-nw-farm-25');
+  await page.locator('#lgEmail').fill('hong@lx.or.kr');
+  await page.locator('#lgPw').fill('lx-2026');
+  await page.locator('#lgSubmit').click();
+  await page.waitForURL((u) => u.pathname.endsWith('/landxi/xi/index.html'), { timeout: 15000 });
+  await page.waitForFunction(() => document.documentElement.dataset.lx === 'ready', null, { timeout: 30000 });
+  expect(await page.evaluate(() => window.__xi.state.session)).toMatchObject({ realm: 'lx', role: 'staff' });
+});
+test('영업 로그인 → 첫 화면 새 XI맵 · XI맵 관문 = 영업(시연)', async ({ page }) => {
+  await boot(page);
+  await page.locator('.lg-seg__c', { hasText: '영업용 계정' }).click();
+  await page.locator('#lgEmail').fill('hong@lx.or.kr');
+  await page.locator('#lgPw').fill('lx-2026');
+  await page.locator('#lgSubmit').click();
+  await page.waitForURL((u) => u.pathname.endsWith('/landxi/xi/index.html'), { timeout: 15000 });
+  await page.waitForFunction(() => document.documentElement.dataset.lx === 'ready', null, { timeout: 30000 });
+  expect(await page.evaluate(() => window.__xi.state.role)).toBe('sales');
+});
+test('문패 landxi/login.html — ?next 를 그대로 넘긴다(meta refresh 가 쿼리를 버리던 것 교정)', async ({ page }) => {
+  await clearOnce(page);
+  await page.goto('login.html?next=' + encodeURIComponent('../xi/index.html'));
+  await page.waitForFunction(() => window.__login && window.__login.ready, null, { timeout: 30000 });
+  expect(new globalThis.URL(page.url()).pathname).toBe('/landxi/proto/login.html');
+  expect(await page.evaluate(() => window.__login.next())).toBe('../xi/index.html');
+});
 
 test('이미 로그인 — 다시 열면 next 로 바로 넘어간다', async ({ page }) => {
   await clearOnce(page, { lx_logged_in: '1' });
@@ -449,12 +481,15 @@ test('safeNext — 허용/차단 목록 단위 점검', async ({ page }) => {
   const r = await page.evaluate(() => {
     const f = window.__login.safeNext;
     return {
-      ok: [f('dashboard.html'), f('map.html?x=1'), f('my-page.html')],
+      ok: [f('dashboard.html'), f('map.html?x=1'), f('my-page.html'),
+           f('../xi/index.html'), f('../xi/'), f('../xi/index.html?mode=survey&svc=dp-nw-farm-25'), f('../global/index.html?locale=en')],
       no: [f('https://evil.example/a.html'), f('//evil.example/a.html'), f('../secret.html'),
-           f('javascript:alert(1)'), f(''), f('dashboard.php')],
+           f('javascript:alert(1)'), f(''), f('dashboard.php'),
+           f('../xi/../../evil.html'), f('../xi//evil.example'), f('../ops/index.html'), f('../xi/index.html#x'), f('../xi\\index.html'), f('../xi/other.html')],
     };
   });
-  expect(r.ok).toEqual(['dashboard.html', 'map.html?x=1', 'my-page.html']);
+  expect(r.ok).toEqual(['dashboard.html', 'map.html?x=1', 'my-page.html',
+    '../xi/index.html', '../xi/', '../xi/index.html?mode=survey&svc=dp-nw-farm-25', '../global/index.html?locale=en']);
   expect(new Set(r.no)).toEqual(new Set([null]));   // 거른 것은 null → 목적지는 homeOf(role)
 });
 
@@ -652,6 +687,8 @@ test('계정 캡션 — 라디오가 바뀌면 좌측 캡션이 ROLES[].what · 
   await expect(page.locator('#lgCapWhat')).toHaveText(WHAT.sales);
   await expect(page.locator('#lgCapName')).toHaveText('영업용 계정');
   expect((await page.evaluate(() => window.__login.caption())).caps).toEqual(['결과 내려받기 · 보고서']);
+  /* F2-R — 지도 서비스 = XI맵 실시간 분석 한 줄(roles.js ROLES[].mapLine) */
+  await expect(page.locator('#lgCapMap')).toHaveText('지도 서비스 = XI맵 실시간 분석 — 시연 작업(demo)으로 판독을 보여 준다');
   await page.waitForTimeout(900);
   await page.screenshot({ path: `${SHOTS_W0}/06-role-caption-sales.png` });
 });

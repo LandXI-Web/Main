@@ -14,7 +14,9 @@ function watch(page) {
   return errs;
 }
 /* ── 역할 픽스처 — 00-COMMON / MASTER-PLAN §7.3 그대로 복사(Wave 0 동안 _roles.mjs import 금지) ── */
-const HOME = { admin: 'admin-home.html', staff: 'ai-project.html', sales: 'ximap.html' };
+/* F2-R(2026-09-27): 영업 첫 화면 = 새 XI맵(landxi/xi · proto 밖) — 레일 '지도 서비스'의 정본도 새 XI맵 */
+const HOME = { admin: 'admin-home.html', staff: 'ai-project.html', sales: '../xi/index.html' };
+const OPS = 'http://localhost:8702/landxi/ops/login.html?next=';
 const TENANT_HOME = { namwon: 'portal.html', 'gwangju-jeonnam': 'portal-dp-gj-marine-25.html' };
 const TENANT_DOOR = { namwon: 'portal-login-namwon.html', 'gwangju-jeonnam': 'portal-login-gwangju-jeonnam.html' };
 /** LX 세션으로 화면을 연다. 세션은 첫 로드에서만 심는다(sessionStorage 가드). */
@@ -85,7 +87,6 @@ test.describe('관문', () => {
   for (const [role, tried, line] of [
     ['admin', 'ximap.html', '지도 서비스 화면은 LX 직원 · 영업용 계정 전용입니다 — 지금은 LX 관리자로 들어와 있습니다'],
     ['staff', 'admin-publish.html', '카드 발행 관리 화면은 LX 관리자 전용입니다 — 지금은 LX 직원으로 들어와 있습니다'],
-    ['sales', 'notice.html', '서비스 지원 화면은 LX 직원 전용입니다 — 지금은 영업용 계정으로 들어와 있습니다'],
   ]) {
     test(`?denied — ${role} 가 ${tried} 를 두드리면 제 집에서 한 줄 안내 + 주소에서 denied 제거`, async ({ page }) => {
       await bootAs(page, `proto/${tried}`, role);
@@ -93,6 +94,15 @@ test.describe('관문', () => {
       await expect(page.locator('#say')).toHaveText(line);
     });
   }
+  /* F2-R — 영업의 집은 새 XI맵(proto 밖 앱)이다. 관문은 그리로 돌려보내고(denied 인자를 싣는다) XI맵이 부팅한다.
+     XI맵은 셸 토스트(#say)가 없어 안내 문구를 싣지 않는다 — 2차(F2-A 에 요청 · 결과 문서 §F2-A). */
+  test('?denied — sales 가 notice.html 을 두드리면 새 XI맵(/landxi/xi/)으로 · data-lx=ready', async ({ page }) => {
+    await page.addInitScript(() => { if (sessionStorage.getItem('b')) return; sessionStorage.setItem('b', '1'); localStorage.setItem('lx_logged_in', '1'); localStorage.setItem('lx_role', 'sales'); localStorage.removeItem('lx_tenant_session'); });
+    await page.goto('proto/notice.html');
+    await page.waitForURL(/\/landxi\/xi\/index\.html/);
+    await page.waitForFunction(() => document.documentElement.dataset.lx === 'ready', null, { timeout: 30000 });
+    expect(await page.evaluate(() => window.__xi?.state?.role)).toBe('sales');
+  });
   test('표에 없는 화면 이름이면 일반 문구 · 이상한 값은 글자로만', async ({ page }) => {
     await boot(page, URL + '?denied=zz%3Cb%3E.html&tab=faq');
     await expect(page.locator('#say')).toHaveText('zzb.html 화면에는 들어갈 수 없습니다');
@@ -101,7 +111,7 @@ test.describe('관문', () => {
 });
 
 test.describe('레일', () => {
-  test('직원 레일 7메뉴 · 원본 순서 · 전부 진짜 링크 + 로그아웃', async ({ page }) => {
+  test('직원 레일 7메뉴 · 원본 순서 · 전부 진짜 링크 + 로그아웃 — 지도 서비스 = 새 XI맵(F2-R)', async ({ page }) => {
     const errs = watch(page);
     await boot(page);
     const items = await page.locator('#rail a.rail-i').evaluateAll((a) => a.map((e) => [e.innerText.replace(/\s+/g, ' ').trim(), e.getAttribute('href')]));
@@ -109,7 +119,7 @@ test.describe('레일', () => {
        만든 사람이 스스로 승인하면 검수가 아니다(roles.js). 관리자 레일은 아래 따로 검사한다. */
     expect(items).toEqual([
       ['대시보드', 'dashboard.html'], ['데이터 관리', 'dataset.html'], ['프로젝트', 'ai-project.html'],
-      ['분석 서비스', 'analysis-ai.html'], ['지도 서비스', 'ximap.html'],
+      ['분석 서비스', 'analysis-ai.html'], ['지도 서비스', '../xi/index.html'],
       ['서비스 지원', 'notice.html'], ['MY', 'mypage.html'],
     ]);
     await expect(page.locator('#rail button.rail-i')).toHaveText('로그아웃');
@@ -124,19 +134,26 @@ test.describe('레일', () => {
     expect(await page.locator('#rail').evaluate((e) => e.getBoundingClientRect().width)).toBe(72);
     expect(await page.locator('#mast').evaluate((e) => e.getBoundingClientRect().height)).toBe(64);
   });
-  test('레일 링크는 실제로 이동한다 — 구현된 화면도 같은 레일', async ({ page }) => {
+  /* F2-R — '지도 서비스' 클릭 = 새 XI맵(landxi/xi) 도착 · 세션 인계(같은 origin localStorage → XI맵 session.shadow()) */
+  test('레일 링크는 실제로 이동한다 — 지도 서비스 → /landxi/xi/ · data-lx=ready · 직원 관문', async ({ page }) => {
     await boot(page);
-    await page.locator('#rail a[data-menu="map"]').click();                // 2026-09-20: 지도 서비스가 자리 화면에서 구현 화면이 되었다
-    await page.waitForURL(/ximap\.html/);
-    await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
+    await page.locator('#rail a[data-menu="map"]').click();
+    await page.waitForURL(/\/landxi\/xi\/index\.html/);
+    await page.waitForFunction(() => document.documentElement.dataset.lx === 'ready', null, { timeout: 30000 });
+    expect(await page.evaluate(() => window.__xi.state.session)).toMatchObject({ realm: 'lx', role: 'staff' });
+    expect(await page.evaluate(() => window.__xi.state.role)).toBe('staff');
+  });
+  test('구 XI맵(ximap.html)은 직접 URL 로 그대로 열린다 — 그 화면의 레일도 새 XI맵을 가리킨다(원본 기능 삭제 0)', async ({ page }) => {
+    await boot(page, 'proto/ximap.html');
     await expect(page.locator('#rail a.rail-i')).toHaveCount(7);
     await expect(page.locator('#rail .rail-i[aria-current="page"]')).toHaveAttribute('data-menu', 'map');
+    await expect(page.locator('#rail a[data-menu="map"]')).toHaveAttribute('href', '../xi/index.html');
     await expect(page.locator('#page-title')).toContainText('지도 서비스');
   });
   /* 위계 — 세 단이 **분리 운영**된다(2026-09-21 발주자 지시).
      관리자는 완전히 다른 사이트다: 만드는 화면(프로젝트·분석·지도·대시보드)을 아예 갖지 않는다.
      영업용은 셋뿐이다 — 할 수 있는 것(분석 카드) · 해낸 것(BP) · 지금 보는 것(XI Map). */
-  test('레일은 역할마다 다르다 — 관리자 6 · 직원 7 · 영업 4', async ({ page }) => {
+  test('레일은 역할마다 다르다 — 관리자 10(운영 현황 + 관제 4 + 5) · 직원 7 · 영업 4', async ({ page }) => {
     let first = true;
     const railOf = async (role, url) => {
       if (first) { first = false; await boot(page, url, role); }
@@ -144,11 +161,35 @@ test.describe('레일', () => {
       return page.$$eval('#rail .rail-i[data-menu]', (a) => a.map((e) => e.dataset.menu));
     };
     expect(await railOf('admin', 'proto/admin-home.html'))
-      .toEqual(['ops', 'media', 'publish', 'produce', 'admin', 'my']);
+      .toEqual(['home', 'ops', 'infra', 'tenants', 'deploys', 'media', 'publish', 'produce', 'admin', 'my']);
     expect(await railOf('staff', 'proto/ai-project.html'))
       .toEqual(['dashboard', 'media', 'project', 'analysis', 'map', 'support', 'my']);
     expect(await railOf('sales', 'proto/ximap.html'))
       .toEqual(['analysis', 'map', 'usecase', 'my']);
+  });
+
+  /* F2-R — 관제 넷은 다른 origin(:8702). href 는 관제 로그인 문 + ?next=(자동 인계는 2차) · 같은 탭(target 없음) · rel 없음.
+     실제 이동은 :8702 를 route 로 막아 ?next= 만 확인한다(관제 서버가 꺼져 있어도 이 단언은 선다). */
+  test('관리자 관제 넷 — :8702 login.html?next= · 같은 탭 · 클릭하면 그 주소로 간다', async ({ page }) => {
+    await boot(page, 'proto/admin-home.html', 'admin');
+    const ext = await page.$$eval('#rail a.rail-i[data-ext]', (a) => a.map((e) => [e.dataset.menu, e.innerText.trim(), e.getAttribute('href'), e.getAttribute('target'), e.getAttribute('rel')]));
+    expect(ext).toEqual([
+      ['ops', '관제 현황', OPS + 'index.html', null, null], ['infra', '인프라 관제', OPS + 'infra.html', null, null],
+      ['tenants', '기관·할당', OPS + 'tenants.html', null, null], ['deploys', '배포 제어', OPS + 'deploys.html', null, null],
+    ]);
+    await page.route('http://localhost:8702/**', (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>ops-stub</title><p>ops</p>' }));
+    await page.locator('#rail a[data-menu="infra"]').click();
+    await page.waitForURL(/localhost:8702\/landxi\/ops\/login\.html\?next=infra\.html$/);
+  });
+  test('관리자 · 직원 · 영업 — 관제 넷은 관리자 레일에만(외부 origin 키를 sees() 가 거른다)', async ({ page }) => {
+    await boot(page, 'proto/ai-project.html', 'staff');
+    await expect(page.locator('#rail [data-ext]')).toHaveCount(0);
+    await switchTo(page, 'sales');
+    await page.goto('proto/usecase.html');
+    await page.waitForFunction(() => document.documentElement.dataset.shell === 'ready');
+    await expect(page.locator('#rail [data-ext]')).toHaveCount(0);
+    const r = await page.evaluate(async () => { const m = await import('../assets/data/roles.js'); return ['admin', 'staff', 'sales'].map((id) => m.EXTERNAL_MENUS.filter((k) => m.sees(id, k)).length); });
+    expect(r).toEqual([4, 0, 0]);
   });
 
   /* 관리자 사이트는 다른 집이다(Q3) — 관리자가 여는 화면은 전부 html[data-site=admin]. 모습(명도 반전)은 E1-6. */

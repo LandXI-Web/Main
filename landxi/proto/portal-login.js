@@ -32,7 +32,10 @@ const slot = (id) => document.querySelector(`[data-slot="${id}"]`);
    LX 세션으로 작업공간을 두드려 ?denied= 로 온 사람은, 기관 아이디로 들어온 뒤 **두드리던 그 화면**으로 간다. */
 const HOME = t.home || 'portal.html';
 const q = new URLSearchParams(location.search);
-const SAFE = /^[\w.-]+\.html(\?[^#]*)?$/;
+const SAFE0 = /^[\w.-]+\.html(\?[^#]*)?$/;
+/* F2-R — 기관도 새 XI맵(실태조사 모드)으로 곧장 들어간다: `../xi/index.html?…` 한 줄만 더 허용(경로 고정 · 쿼리만 자유 · login.js 와 같은 규칙). */
+const XI_NEXT = /^\.\.\/xi\/(?:index\.html)?(?:\?[^\s#\\]*)?$/;
+const SAFE = { test: (v) => SAFE0.test(v) || XI_NEXT.test(v) };
 const denied = q.get('denied');
 const want = q.get('next') || (denied && /^portal[-.]/.test(denied) ? denied : '');
 const nextOf = () => (SAFE.test(want) ? want : HOME);

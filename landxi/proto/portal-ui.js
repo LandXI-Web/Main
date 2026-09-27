@@ -89,6 +89,17 @@ if (shell) {
   }
 }
 
+/* ══ F2-R — 새 XI맵으로 잇는 길(기관 포털) ═════════════════════════════════
+   실태조사가 서는 카드(SURVEY-SPEC — 영농관리 = 농지 이용 실태조사)면
+     '지도' 탭  = 새 XI맵 **실태조사 모드 임베드**(iframe · ?mode=survey&svc=&survey=&embed=1) — 기존 결과 지도는 옆 단추로 남긴다(삭제 0)
+     '분석 결과' 탭 = `의심 큐 ↗`(XI맵 실태조사 큐 딥링크 ?mode=survey&…&queue=1 — XI맵 survey-mode.js restore/urlState 의 규약.
+                    1차의 &drawer=findings 는 XI맵 일반 서랍 키라 큐가 서지 않았다(판정 1차 '죽은 버튼'))
+   세션은 같은 origin(:4173) localStorage 그대로 — XI맵 session.shadow() 가 realm tenant · tenant_id 로 읽어 기관 관문(V1 V4 V5 V6 V8 + 필지 카드 · 오류 신고)을 세운다.
+   해외 기관(scope global · kgz-*)은 셸 기관 레일에 `Global ↗`(shell.js tenantRail). */
+const SURVEY_OF = { 'card-farm': 'farmland' };
+const SURVEY = svcCard ? SURVEY_OF[svcCard.cardId] || null : null;
+const xiSurvey = (extra = {}) => `../xi/index.html?${new URLSearchParams({ mode: 'survey', svc: svcCard?.id || '', survey: SURVEY || '', ...extra })}`;
+
 /* ══ 공용 조각 ════════════════════════════════════════════════════════ */
 const slot = (id, root = document) => root.querySelector(`[data-slot="${id}"]`);
 const pct = (v) => `${Math.round(v * 100)}%`;
@@ -404,6 +415,7 @@ if (SVC && svcCard) {
     /* 탐지 결과 목록 — 건별. 쪽으로 넘긴다(안쪽 스크롤 없음). */
     table: (el) => {
       if (!NEW) { el.innerHTML = legacyTable(); return; }      // 옛 골격: 그 화면이 제 손으로 채운다
+      if (SURVEY) queueLink(el);
       if (pick.run) return featureTable(el, pick.run);
       if (ev.pairs.length) return pairTable(el);
       el.innerHTML = empty('건별 목록이 없습니다', why) + gapNote();
@@ -418,7 +430,7 @@ if (SVC && svcCard) {
     },
 
     /* 지도 — 진짜 MapLibre. 배경은 V-World, 그 위에 이 지역 정사영상 시점과 결과 레이어. */
-    map: (el) => (NEW ? mapBlock(el)
+    map: (el) => (NEW ? (SURVEY ? xiBlock(el) : mapBlock(el))
       : el.innerHTML = `<div class="pt-map">지도 · ${esc(svcCard.region)} 결과 레이어<br>좌표계 ${esc(th.crs)}</div>`),
 
     /* 밀도 격자 — 격자 크기는 고를 수 있고, 값은 분석 실행 뒤에 들어온다. */
@@ -811,6 +823,53 @@ if (SVC && svcCard) {
     const what = String(e.label).replace(/^[^\s·]+\s*/, '').split('·')[0].trim();
     return `${String(e.captured).replace('-', '.')} ${what}`;      // 2025.10 농경지
   };
+
+  /** 결과 탭 머리 — `의심 큐 ↗` 한 줄(XI맵 실태조사 서랍으로). 표는 그 아래 그대로 선다. */
+  function queueLink(el) {
+    const sec = el.closest('.pt-b'); const head = sec?.querySelector('.pt-b-h');
+    if (!head || head.querySelector('#pt-queue')) return;
+    head.insertAdjacentHTML('beforeend', `<a id="pt-queue" href="${esc(xiSurvey({ queue: '1' }))}" style="margin-left:auto;font-family:var(--body);font-weight:500;font-size:14.5px;border-bottom:1px solid var(--ink);white-space:nowrap" title="XI맵 실태조사 — 규칙 R1–R6 의심 필지 큐(AI 추론 · 검수 전 · 현장 확인 전)">의심 큐 ↗</a>`);
+  }
+
+  /** 지도 탭 — 새 XI맵 실태조사 모드 임베드 + 기존 결과 지도(단추 하나로 오간다 · 원본 기능 삭제 0). */
+  function xiBlock(el) {
+    if (el.dataset.built === '1') { if (el.dataset.view === 'native') maps.get(el.querySelector('.pt-native'))?.resize(); return; }
+    el.dataset.built = '1'; el.dataset.view = 'xi';
+    if (!document.getElementById('pt-xi-css')) {                // 고른 보기 = 잉크 채움(두 단추가 같아 보이면 지금 무엇을 보는지 모른다)
+      const st = document.createElement('style'); st.id = 'pt-xi-css';
+      /* 실태조사 보기 = **본문 전폭 · 높이 ≥ 720px**(F2-R 판정 1차: 720×560 칸에서는 XI맵 HUD 가 서로 덮었다).
+         그 보기에서만 지도 · 필지 두 칸 행을 한 칸으로 접고 필지 표를 지도 아래로 내린다 — 판은 스크롤한다.
+         결과 지도(기존)로 돌아가면 원래 두 칸 · 한 화면 배치 그대로(삭제 0). */
+      st.textContent = '.lx .pt-map-bar [data-xi-view][aria-pressed="true"]{ background:var(--ink); color:#fff; }'
+        + '.lx[data-gen="rows"] .pt-pane[data-xi-full]{ overflow-y:auto; overscroll-behavior:contain; }'
+        + '.lx[data-gen="rows"] .pt-pane[data-xi-full] .pt-row--grow{ flex:none; display:block; }'
+        + '.lx[data-gen="rows"] .pt-pane[data-xi-full] .pt-row--grow > .pt-b{ display:flex; flex-direction:column; height:auto; min-height:0; overflow:visible; }'
+        + '.lx[data-gen="rows"] .pt-pane[data-xi-full] .pt-row--grow > .pt-b[data-block="map"] > .pt-b-body{ flex:none; height:auto; min-height:0; overflow:visible; display:block; }'
+        + '.lx[data-gen="rows"] .pt-pane[data-xi-full] .pt-row--grow > .pt-b + .pt-b{ margin:28px 0 0; padding:24px 0 0; border-left:0; border-top:1px solid var(--line); height:640px; }'
+        + '.lx .pt-native[hidden]{ display:none !important; }'
+        + '.lx[data-gen="rows"] .pt-pane[data-xi-full] #pt-xi-host{ flex:none; height:max(720px, calc(100vh - 250px)); }';
+      document.head.append(st);
+    }
+    const src = xiSurvey({ embed: '1' });
+    el.innerHTML = `<div class="pt-map-bar" id="pt-xi-bar"><span class="lb">보기</span>
+        <button type="button" class="btn-br btn-br--s" data-xi-view="xi" aria-pressed="true">실태조사 · XI맵</button>
+        <button type="button" class="btn-br btn-br--s" data-xi-view="native" aria-pressed="false">결과 지도</button>
+        <a id="pt-xi-open" href="${esc(xiSurvey())}" style="margin-left:auto;font-size:14.5px;font-weight:500;border-bottom:1px solid var(--ink);white-space:nowrap">XI맵 전체 화면 ↗</a></div>
+      <div class="pt-map" id="pt-xi-host"><iframe id="pt-xi" title="${esc(svcCard.region)} ${esc(svcCard.name)} — XI맵 실태조사" src="${esc(src)}" style="position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#0A1018" allow="fullscreen"></iframe></div>
+      <div class="pt-native" hidden style="flex:1 1 0;min-height:0;display:flex;flex-direction:column"></div>`;
+    const host = el.querySelector('#pt-xi-host'), nat = el.querySelector('.pt-native');
+    const show = (v) => {
+      el.dataset.view = v;
+      el.querySelectorAll('[data-xi-view]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.xiView === v)));
+      host.hidden = v !== 'xi'; nat.hidden = v !== 'native';
+      const pane = el.closest('.pt-pane'); if (pane) { pane.toggleAttribute('data-xi-full', v === 'xi'); if (v !== 'xi') pane.scrollTop = 0; }
+      if (v === 'native') { if (nat.dataset.built === '1') maps.get(nat)?.resize(); else mapBlock(nat); }
+    };
+    el.closest('.pt-pane')?.setAttribute('data-xi-full', '');
+    el.querySelector('#pt-xi-bar').addEventListener('click', (e) => { const b = e.target.closest('[data-xi-view]'); if (b) show(b.dataset.xiView); });
+    /* 필지 표의 줄을 누르면 지도가 그 필지로 — 결과 지도(기존)로 넘겨서 날아간다 */
+    el.__fly = (f) => { show('native'); setTimeout(() => nat.__fly?.(f), nat.__fly ? 0 : 900); };
+  }
 
   function mapBlock(el) {
     if (el.dataset.built === '1') { maps.get(el)?.resize(); return; }

@@ -118,7 +118,7 @@ test('자체 레일 · 관문 · 로그아웃 코드 0 — 셸 것만 쓴다', a
 });
 
 test('레일 — 직원 메뉴가 실제 화면으로 가고 되돌려 보내지(denied) 않는다', async ({ page }) => {
-  for (const [menu, file] of [['media', 'dataset.html'], ['project', 'ai-project.html'], ['analysis', 'analysis-ai.html'], ['map', 'ximap.html'], ['support', 'notice.html']]) {
+  for (const [menu, file] of [['media', 'dataset.html'], ['project', 'ai-project.html'], ['analysis', 'analysis-ai.html'], ['map', 'xi/index.html'], ['support', 'notice.html']]) {
     await boot(page);
     await page.locator(`#rail [data-menu="${menu}"]`).click();
     await page.waitForURL(new RegExp(file.replace('.', '\\.')));

@@ -20,7 +20,7 @@
   var file = location.pathname.split('/').pop() || 'index.html';
 
   /* roles.js SCREEN_MENU 미러 */
-  var MENU = { 'admin-home.html':'ops', 'dashboard.html':'dashboard', 'analysis-ai.html':'analysis', 'ximap.html':'map',
+  var MENU = { 'admin-home.html':'home', 'dashboard.html':'dashboard', 'analysis-ai.html':'analysis', 'ximap.html':'map',
     'stats-standard.html':'map', 'report-standard.html':'map', 'report-standard-issue.html':'map', 'map-drift.html':'map',
     'notice.html':'support', 'faq.html':'support', 'contact.html':'support', 'manual.html':'support',
     'dataset.html':'media', 'ai-project.html':'project', 'ai-project-create.html':'project',
@@ -29,10 +29,12 @@
     'admin-notice.html':'admin', 'admin-users.html':'admin', 'admin-inquiry.html':'admin',
     'admin-faq.html':'admin', 'admin-map.html':'admin' };
   /* roles.js ROLES[].menus · home 미러 */
-  var MENUS = { admin:['ops','media','publish','produce','admin','my'],
+  var MENUS = { admin:['home','ops','infra','tenants','deploys','media','publish','produce','admin','my'],
     staff:['dashboard','media','project','analysis','map','support','my'],
     sales:['analysis','usecase','map','my'] };
-  var HOME = { admin:'admin-home.html', staff:'ai-project.html', sales:'ximap.html' };
+  var HOME = { admin:'admin-home.html', staff:'ai-project.html', sales:'../xi/index.html' };   // F2-R: 영업 첫 화면 = 새 XI맵
+  /* roles.js SCREEN_DEEP 미러 — 이 인자를 달고 오면 또 하나의 메뉴로도 열린다(카드 계보 열람 · v1.1-29) */
+  var DEEP = { 'ai-card.html': { param:'card', menu:'project' } };
   /* portal.js TENANTS[].home 미러(R-S3 · 광주전남은 임시 — E1-2 가 교체) */
   var TENANT_HOME = { 'namwon':'portal.html', 'gwangju-jeonnam':'portal-dp-gj-marine-25.html' };
 
@@ -71,7 +73,9 @@
     var r = get('lx_role') || 'admin';
     if (!MENUS[r]) r = 'admin';
     var need = MENU[file];
-    if (need && MENUS[r].indexOf(need) < 0) { go(HOME[r] + '?denied=' + enc(file)); return; }
+    var deep = DEEP[file], open = !need || MENUS[r].indexOf(need) >= 0;
+    if (!open && deep && new RegExp('[?&]' + deep.param + '=[^&]').test(location.search) && MENUS[r].indexOf(deep.menu) >= 0) open = true;
+    if (!open) { go(HOME[r] + '?denied=' + enc(file)); return; }
     /* 관리자 사이트는 다른 집이다(Q3) — 그리기 전에 표식을 단다. 모습(명도 반전)은 E1-6 의 CSS 가 맡는다. */
     if (r === 'admin') document.documentElement.setAttribute('data-site', 'admin');
     return;

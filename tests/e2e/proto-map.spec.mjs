@@ -54,12 +54,14 @@ test.describe('셸 · 뼈대', () => {
     expect(new globalThis.URL(page.url()).searchParams.get('next')).toBe('ximap.html');
   });
 
+  /* F2-R: 구 XI맵(ximap.html)은 직접 URL 로만 열린다 — 이 네 페이지의 레일 '지도 서비스'는 새 XI맵(../xi/index.html)을 가리킨다.
+     통계 · 보고서는 ?embed=1 이 아니면 예전 셸 그대로(embed 는 f2r-embed.spec). */
   test('네 페이지 모두 같은 셸 — 레일 9 · 지도 서비스 활성 · 푸터 정본', async ({ page }) => {
     for (const url of [MAP, STATS, RLIST, RISSUE]) {
       await boot(page, url);
       await expect(page.locator('#rail .rail-i[aria-current="page"]')).toHaveCount(1);
       await expect(page.locator('#rail .rail-i[aria-current="page"]')).toHaveAttribute('data-menu', 'map');
-      await expect(page.locator('#rail a[data-menu="map"]')).toHaveAttribute('href', 'ximap.html');
+      await expect(page.locator('#rail a[data-menu="map"]')).toHaveAttribute('href', '../xi/index.html');
       await expect(page.locator('#page-title')).toContainText('지도 서비스');
       await expect(page.locator('#foot-addr')).toContainText('063-713-1213');
       expect(await page.locator('#mast-asof').innerText()).toBe('2026.06.08');   // 기준일은 셸 값

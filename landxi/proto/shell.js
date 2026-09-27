@@ -3,7 +3,7 @@
    문서: docs/superpowers/proto/2026-09-20-shell-parts-api.md · 살아있는 견본: shell-demo.html
    디자인 법전: design/system.md (라운드 0 · 그림자 0 · 그라디언트 0 · 유리 0 · 바닥 14px · 채운 파란 버튼 없음). */
 
-import { ROLES, roleById, can, sees, onRail, homeOf, DEFAULT_ROLE, SCREEN_MENU } from '../assets/data/roles.js';
+import { ROLES, roleById, can, sees, onRail, homeOf, DEFAULT_ROLE, SCREEN_MENU, screenOpen, XI_MAP, opsUrl, RAIL_ACTIVE } from '../assets/data/roles.js';
 import { ALL_SESSION_KEYS } from '../assets/data/storage-keys.js';
 import { applyCustomSymbol } from './account-brand.js';
 
@@ -34,14 +34,26 @@ export const role = roleById(ROLE);
 /** 이 계정이 그 일을 할 수 있나 — 화면은 버튼을 세우기 전에 이걸 묻는다. */
 export const allowed = (cap) => can(ROLE, cap);
 
+/* ── F2-R 레일 정본(2026-09-27) ──────────────────────────────────────────────
+   '지도 서비스' = **새 XI맵**(landxi/xi · 같은 origin · 세션은 localStorage 그대로 인계 → XI맵 session.shadow()).
+   관리자 관제 넷(운영 현황 · 인프라 관제 · 기관·할당 · 배포 제어) = **LX/OPS :8702**(다른 origin · ext).
+   ext 항목은 base 를 붙이지 않는 절대 주소 · target 없이 같은 탭(_self) · rel 없음 · 새 아이콘 발명 0(기존 세트).
+   관제는 origin 이 달라 세션이 없다 → 관제 로그인 문의 ?next= 로 간다(자동 인계는 2차 · 정직 표기 `관제 로그인`). */
 export const NAV = [
-  /* 운영 현황 — **관리자만** 보는 첫 화면(roles.js 'ops'). 직원·영업 레일에는 서지 않는다. */
-  { key: 'ops', name: '운영 현황', href: 'admin-home.html', icon: 'gear', group: 'top' },
+  /* 운영 현황(결재 대기) — **관리자만**(roles.js 'home'). 이 origin 의 관리자 첫 화면 admin-home.html(결재 대기 · 관리 네 축).
+     F2-R 판정 1차(2026-09-27): 'ops' 를 관제로 돌린 뒤 이 화면이 레일에서 고립됐다 → 제 이름으로 되살린다(원본 기능 삭제 0).
+     관제 :8702 의 운영 현황은 '관제 현황'(title · 칩 = LX/OPS :8702)으로 이름을 갈라 둘이 헷갈리지 않게 한다 —
+     'LX/OPS 운영 현황' 은 레일 폭(72px)에서 두 줄로 넘쳐 아래 항목 아이콘을 덮었다(1440 실측). */
+  { key: 'home', name: '운영 현황', href: 'admin-home.html', icon: 'dash', group: 'top' },
+  { key: 'ops', name: '관제 현황', href: opsUrl('index.html'), ext: true, icon: 'gear', group: 'top' },
+  { key: 'infra', name: '인프라 관제', href: opsUrl('infra.html'), ext: true, icon: 'run', group: 'top' },
+  { key: 'tenants', name: '기관·할당', href: opsUrl('tenants.html'), ext: true, icon: 'proj', group: 'top' },
+  { key: 'deploys', name: '배포 제어', href: opsUrl('deploys.html'), ext: true, icon: 'stack', group: 'top' },
   { key: 'dashboard', name: '대시보드', href: 'dashboard.html', icon: 'dash', group: 'top' },
   { key: 'media', name: '데이터 관리', href: 'dataset.html', icon: 'data', group: 'top' },
   { key: 'project', name: '프로젝트', href: 'ai-project.html', icon: 'proj', group: 'top' },
   { key: 'analysis', name: '분석 서비스', href: 'analysis-ai.html', icon: 'run', group: 'top' },
-  { key: 'map', name: '지도 서비스', href: 'ximap.html', icon: 'map', group: 'top' },
+  { key: 'map', name: '지도 서비스', href: XI_MAP, icon: 'map', group: 'top' },
   /* 활용 사례(BP) — 영업용 레일에서는 **제 이름으로** 선다. 다른 단에서는 서비스 지원 안의 탭이다.
      발주자: "영업용은 분석서비스 카드만 표출되고 bp 사례만" (2026-09-21) */
   { key: 'usecase', name: '활용 사례', href: 'usecase.html', icon: 'stack', group: 'top' },
@@ -153,8 +165,7 @@ export function gate(base = '', portal = null) {
   if (lx) {
     /* 로그인했어도 **역할이 갈 수 없는 화면**이면 돌려보낸다(2026-09-21).
        레일에서 치운 것만으로는 부족하다 — 주소를 직접 치면 그대로 열렸다. */
-    const need = SCREEN_MENU[file];
-    if (need && !sees(ROLE, need)) return bounce(`${base}${homeOf(ROLE)}?denied=${q}`);
+    if (!screenOpen(ROLE, file, location.search)) return bounce(`${base}${homeOf(ROLE)}?denied=${q}`);
     return true;
   }
   return bounce(`${base}login.html?next=${encodeURIComponent(here())}`);
@@ -205,7 +216,8 @@ function ensureCss(base) {
 }
 
 /* ══ mountShell ═══════════════════════════════════════════════════════════
-   active    레일 활성 키: dashboard · media · project · analysis · map · support · publish · admin · my
+   active    레일 활성 키: home · dashboard · media · project · analysis · map · support · publish · produce · admin · my
+             (roles.js RAIL_ACTIVE 에 적힌 화면은 그 키가 이긴다)
    title     H1 (문자열). titleRule = 파랑 4px 룰을 받는 앞 단어 수(기본 전체)
    subtitle  H1 옆 회색 한 줄(HTML 허용 — 직접 esc() 할 것)
    crumbs    [{ label, href? }, …] — 주면 마스트헤드 왼쪽이 경로, 없으면 공지 띠
@@ -216,12 +228,42 @@ function ensureCss(base) {
    headRight 제목 행 오른쪽에 넣을 HTML(탭 대신 — 예: 카드 발행 관리의 건수 타일)
    fit       true = 100vh 에 맞춘 앱형(본문 안에서 스크롤) · 기본 = 문서형(페이지 스크롤, 푸터는 바닥)
    rail      false = 레일·관문 없음(가입/찾기 같은 로그인 전 화면) · base = proto/ 까지의 상대 경로 */
+/* ══ embed=1 (F2-R · F1-A 요청 9) ═══════════════════════════════════════════
+   다른 화면(XI맵 서랍 · 기관 포털)의 iframe 안에서 **본문만** 선다 — 레일 · 마스트헤드 · 공지 · 푸터 · 쪽 제목 0.
+   켜는 쪽은 화면 자신이다: html[data-embed="1"](stats-standard · report-standard(-issue) 가 <head> 에서
+   ?embed=1 을 읽어 단다). 셸은 그 표식만 본다 — 아무 화면이나 ?embed=1 로 크롬을 벗지 않게(관문은 그대로 돈다).
+   다 서면 부모에게 postMessage({type:'lx:embed:ready', view, height}) 를 보낸다(같은 origin 만). */
+export const EMBED = () => document.documentElement.dataset.embed === '1';
+export function embedReady(view, extra = {}) {
+  if (!EMBED() || window.parent === window) return;
+  const height = Math.ceil(document.documentElement.scrollHeight);
+  try { window.parent.postMessage({ type: 'lx:embed:ready', view, height, href: location.pathname.split('/').pop() + location.search, ...extra }, location.origin); } catch { /* 부모 없음 */ }
+}
+function mountEmbed(o, base) {
+  const body = document.body;
+  body.classList.add('lx');
+  body.dataset.embed = '1'; body.dataset.norail = '';
+  if (o.fit) body.dataset.fit = '';
+  let main = $('#main') || $('main');
+  if (!main) { main = document.createElement('main'); body.prepend(main); }
+  main.id = 'main';
+  if (!main.hasAttribute('tabindex')) main.tabIndex = -1;
+  if (o.title && !main.hasAttribute('aria-label')) main.setAttribute('aria-label', o.title);
+  $$('[data-shell-part]').forEach((e) => e.remove());
+  if (!$('#say')) { const p = document.createElement('p'); p.id = 'say'; p.setAttribute('role', 'status'); p.setAttribute('aria-live', 'polite'); p.setAttribute('aria-atomic', 'true'); p.dataset.shellPart = ''; body.append(p); }
+  if (ROLE === 'admin' && isLoggedIn()) document.documentElement.dataset.site = 'admin';
+  void base;
+  requestAnimationFrame(() => { document.documentElement.dataset.shell = 'ready'; });
+  return { main, rail: null, mast: null, head: null, foot: null, embed: true };
+}
+
 export function mountShell(o = {}) {
   const base = ensureCss(o.base || '');
   const withRail = o.rail !== false;
   const tn = withRail && o.tenant ? o.tenant : null;                // 기관 포털 화면 — portal.js TENANTS 한 줄
   if (withRail && o.gate !== false && !gate(base, tn?.id || null)) return null;
   if (tn) mountedTenant = tn;
+  if (!tn && EMBED()) return mountEmbed(o, base);
 
   const body = document.body;
   body.classList.add('lx');
@@ -233,17 +275,23 @@ export function mountShell(o = {}) {
   if (!main.hasAttribute('tabindex')) main.tabIndex = -1;
   if (o.title && !main.hasAttribute('aria-label')) main.setAttribute('aria-label', o.title);
 
+  /* 레일 활성 키 — 화면이 넘긴 active 보다 **화면 파일의 정본 키**(roles.js RAIL_ACTIVE)가 먼저다.
+     admin-home.js 는 옛 키 active:'admin' 을 넘기는데(그 파일은 F2-R 소유 밖), 그대로 두면 '서비스 관리'가 현재로 선다. */
+  const activeKey = RAIL_ACTIVE[location.pathname.split('/').pop()] || o.active;
   const item = (n) => {
-    const cur = n.key === o.active ? ' aria-current="page"' : '';
+    const cur = n.key === activeKey ? ' aria-current="page"' : '';
     const my = n.key === 'my' ? ' id="rail-my-btn" aria-haspopup="true" aria-expanded="false" aria-controls="rail-my"' : '';
-    return `<a class="rail-i" data-menu="${n.key}" href="${base}${n.href}"${cur}${my}>${railSvg(n.icon)}<span class="rl">${esc(n.name)}</span></a>`;
+    /* ext = 다른 origin(관제 :8702) — base 를 붙이지 않고 같은 탭으로. 칩 `:8702` 로 다른 무대임을 말한다. */
+    const href = n.ext ? n.href : `${base}${n.href}`;
+    const ext = n.ext ? ` data-ext="ops" title="${esc(n.key === 'ops' ? 'LX/OPS 운영 현황' : n.name)} — LX/OPS 관제(:8702 · 관제 로그인)"` : '';
+    return `<a class="rail-i" data-menu="${n.key}" href="${esc(href)}"${cur}${my}${ext}>${railSvg(n.icon)}<span class="rl">${esc(n.name)}</span></a>`;
   };
   /* 기관 레일 — LX NAV 를 걸러 쓰지 않는다(C-10). 그 기관의 메뉴만 세운다: 내 서비스 + 로그아웃.
      MY 없음(기관 MY 는 E1-2 포털판). 마크는 portal-ui.js 가 그 기관 CI 로 바꾼다. */
   const tenantRail = () => `
 <aside id="rail" aria-label="주 메뉴" data-tenant="${esc(tn.id)}">
   <a id="rail-mark" href="${base}${esc(tn.home)}" aria-label="${esc(tn.name)} 홈"><span>LAND</span><span>XI</span></a>
-  <nav id="rail-top" class="rail-group" aria-label="업무"><a class="rail-i" data-menu="portal" href="${base}${esc(tn.home)}" aria-current="page">${railSvg('stack')}<span class="rl">내 서비스</span></a></nav>
+  <nav id="rail-top" class="rail-group" aria-label="업무"><a class="rail-i" data-menu="portal" href="${base}${esc(tn.home)}" aria-current="page">${railSvg('stack')}<span class="rl">내 서비스</span></a>${tn.scope === 'global' || /^kgz-/.test(tn.id) ? `<a class="rail-i" data-menu="global" href="${base}../global/index.html?locale=en" title="Land-XI Global — 같은 지도의 해외 무대">${railSvg('map')}<span class="rl">Global ↗</span></a>` : ''}</nav>
   <nav id="rail-foot" class="rail-group" aria-label="계정">
     <button type="button" class="rail-i" data-action="logout">${railSvg('out')}<span class="rl">로그아웃</span></button>
   </nav>

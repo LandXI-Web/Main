@@ -1,7 +1,8 @@
 /* 생산 관리 — LX 운영자 화면.
    데이터 파일에 세워 둔 네 기능(능동 운영 · 인프라 · 포털 생산 · 화면 요구)을
    한자리에서 본다. 이 화면은 숫자를 만들지 않는다 — 전부 규칙에서 나온 값을 옮길 뿐이다. */
-import { mountShell, esc, nf, ymd, openModal } from './shell.js';
+import { mountShell, esc, nf, ymd, openModal, say } from './shell.js';
+import { opsUrl, XI_MAP } from '../assets/data/roles.js';
 import { DUTIES, AGENCY_DUTY, THRESHOLDS, opsSummary, businessView } from '../assets/data/ops.js';
 import { infraSummary, capacityPlan, costOfNewRegion, RATES, COVER_RATIO } from '../assets/data/infra.js';
 import { SHELL_PARTS, LOCKED, PRODUCE, INTAKE, THEMES, themeOf, brandGuard, produceState } from '../assets/data/brand.js';
@@ -13,7 +14,12 @@ import { LAYERS, CONTRACTS, CROSS, WHERE, STATE, spineSummary } from '../assets/
 import { GIVES, TASKS, matchPoints, coverage, orgMatrix, finishPlan, matchSummary } from '../assets/data/matching.js';
 import { SIMS, LX_ROLE, LX_LINE, STANDARD_LINE } from '../assets/data/sim.js';
 
-const TAB = new URLSearchParams(location.search).get('tab') || 'spine';
+/* 생산 딥링크(F2-R · v1.1-29) — produce.html?deploy=<배포본 id>: 관제 배포 행 · 카드 계보 칩의 '생산 공정 ↗' 가 온다.
+   탭을 안 정했으면 그 배포본이 행으로 서는 '능동 운영' 탭을 연다 → 그 행 강조 + 머리 띠(카드 ↗ · 관제 ↗ · XI맵 ↗ 왕복). */
+const PQ = new URLSearchParams(location.search);
+const DEPLOY = DEPLOYS.some((d) => d.id === PQ.get('deploy')) ? PQ.get('deploy') : '';
+const DEPLOY_ASK = PQ.get('deploy') || '';
+const TAB = PQ.get('tab') || (DEPLOY_ASK ? 'ops' : 'spine');
 const b = businessView(), inf = infraSummary(), cap = capacityPlan(), loop = loopStats();
 const mt = matchSummary();
 
@@ -28,14 +34,14 @@ mountShell({
   tabStyle: 'line', tab: TAB,
   tabs: [
     /* 탭 이름도 사람 말로. '뼈대'는 내가 쓰던 말이고, 화면을 여는 사람에게는 '만드는 순서'다. */
-    { key: 'spine', label: '만드는 순서' },
+    { key: 'spine', label: '만드는 순서', href: DEPLOY ? `produce.html?tab=spine&deploy=${DEPLOY}` : undefined },
     /* 매칭 — 뼈대의 L2(표준) · L3(접점)이 가리킬 자리. 계산은 matching.js 가 이미 하고 있었고
        이 탭은 그 결과를 보여 줄 뿐이다(숫자를 새로 만들지 않는다). */
-    { key: 'match', label: '매칭', href: 'produce.html?tab=match', count: mt.접점 },
-    { key: 'ops', label: '능동 운영', href: 'produce.html?tab=ops', count: b.이번주기_재학습 + b.검수필요 },
-    { key: 'infra', label: '인프라', href: 'produce.html?tab=infra', count: `${cap.rows[0].pct}%` },
-    { key: 'brand', label: '포털 생산', href: 'produce.html?tab=brand', count: produceState().tenants },
-    { key: 'studio', label: '화면 요구', href: 'produce.html?tab=studio', count: loop.반영중 + loop.대기 },
+    { key: 'match', label: '매칭', href: `produce.html?tab=match${DEPLOY ? '&deploy=' + DEPLOY : ''}`, count: mt.접점 },
+    { key: 'ops', label: '능동 운영', href: `produce.html?tab=ops${DEPLOY ? '&deploy=' + DEPLOY : ''}`, count: b.이번주기_재학습 + b.검수필요 },
+    { key: 'infra', label: '인프라', href: `produce.html?tab=infra${DEPLOY ? '&deploy=' + DEPLOY : ''}`, count: `${cap.rows[0].pct}%` },
+    { key: 'brand', label: '포털 생산', href: `produce.html?tab=brand${DEPLOY ? '&deploy=' + DEPLOY : ''}`, count: produceState().tenants },
+    { key: 'studio', label: '화면 요구', href: `produce.html?tab=studio${DEPLOY ? '&deploy=' + DEPLOY : ''}`, count: loop.반영중 + loop.대기 },
   ],
 });
 
@@ -210,7 +216,7 @@ const BY_NAME = { emd: '읍·면·동', class: '종류', time: '시각', zone: '
 const MEASURE_NAME = { count: '건수', area: '면적', sum: '합계' };
 /* 어느 배포본 · 어느 지역을 보고 있나 — 화면 안에서만 바뀌는 상태다(URL 은 탭까지만 담는다).
    기본값은 **운영 중인 첫 배포본**. 예정 배포본을 기본으로 두면 빈 표부터 보게 된다. */
-let matchDp = (DEPLOYS.find((d) => d.status === '운영') || DEPLOYS[0]).id;
+let matchDp = DEPLOY || (DEPLOYS.find((d) => d.status === '운영') || DEPLOYS[0]).id;
 let matchPf = PROFILES[0].id;
 
 /* 고르개는 구역 제목 줄의 **오른쪽 칸**에 얹는다. 제목 아래에 따로 한 줄을 내주면
@@ -340,7 +346,7 @@ function ops() {
   ${two(
     '지금 해야 할 일', `${h('지금 해야 할 일', `기준 미달이면 기계가 먼저 든다 · 신뢰도 ${THRESHOLDS.conf} · IoU ${THRESHOLDS.iou} · 학습 후 ${THRESHOLDS.staleDays}일 · 표본 ${THRESHOLDS.sampleMin}건`)}
     <table class="tb"><thead><tr><th>배포본</th><th>지역</th><th class="r">신뢰도</th><th class="r">IoU</th><th>마지막 학습</th><th>할 일</th><th>근거</th></tr></thead><tbody>
-    ${s.rows.map((r) => `<tr>
+    ${s.rows.map((r) => `<tr data-deploy="${esc(r.deploy.id)}">
       <td>${esc(r.card.name || r.deploy.id)}</td><td>${esc(r.deploy.region)}</td>
       <td class="n">${r.ops.conf.toFixed(2)}</td><td class="n">${r.ops.iou.toFixed(2)}</td>
       <td class="n">${esc(ymd(r.ops.lastTrain))} <span class="st st--dim">${r.stale}일</span></td>
@@ -381,7 +387,7 @@ function infra() {
     '배포본이 쓰는 자원', `${h('배포본이 쓰는 자원', '그 서비스가 실제로 보는 범위로 잰다',
     '<button type="button" class="btn-br btn-br--s" data-act="cost">새 지역 비용 산출</button>')}
     <table class="tb"><thead><tr><th>서비스</th><th>지역</th><th class="r">대상 범위</th><th class="r">원본</th><th class="r">타일</th><th class="r">추론/년</th><th>상태</th></tr></thead><tbody>
-    ${inf.rows.map((r) => `<tr>
+    ${inf.rows.map((r) => `<tr data-deploy="${esc(r.deploy.id)}">
       <td>${esc(r.card.name || r.deploy.id)}</td><td>${esc(r.deploy.region)} <span class="st st--dim n">${esc(r.deploy.year)}</span></td>
       <td class="n">${nf.format(r.area)} km²${r.regionArea ? ` <span class="st st--dim">/${nf.format(r.regionArea)}</span>` : ''}</td>
       <td class="n">${nf.format(r.storage.raw)} GB</td><td class="n">${nf.format(r.storage.tile)} GB</td>
@@ -519,3 +525,32 @@ document.addEventListener('click', (e) => {
    (함수 선언은 호이스팅되어 VIEWS 에 담는 것은 문제가 없다.) */
 const VIEWS = { spine, match, ops, infra, brand, studio };
 main.insertAdjacentHTML('beforeend', `<div class="pd-sec">${(VIEWS[TAB] || spine)()}</div>`);
+
+/* ── ?deploy= 강조(F2-R) — 그 배포본의 행을 표에서 찾아 강조하고, 머리에 왕복 띠를 세운다 ── */
+(function deployFocus() {
+  if (!DEPLOY_ASK) return;
+  const st = document.createElement('style'); st.id = 'pd-deploy-css';
+  st.textContent = `.pd-dp{ display:flex; align-items:center; flex-wrap:wrap; gap:8px 14px; margin:0 0 14px; padding:10px 14px; border:1px solid var(--accent); background:var(--t1, #E8F1FF); font-size:15px; }
+.pd-dp .lb{ font-size:14px; color:var(--grey); } .pd-dp b{ font-weight:700; } .pd-dp .sp{ flex:1; }
+.pd-dp a{ display:inline-flex; align-items:center; height:32px; padding:0 12px; border:1px solid var(--ink); background:#fff; font-size:14.5px; font-weight:500; white-space:nowrap; }
+.pd-dp a:hover,.pd-dp a:focus-visible{ background:var(--ink); color:#fff; }
+tr[data-deploy][aria-current="true"] td{ background:var(--t1, #E8F1FF); }
+tr[data-deploy][aria-current="true"] td:first-child{ box-shadow:inset 3px 0 0 var(--accent); font-weight:700; }`;
+  document.head.append(st);
+  const d = DEPLOYS.find((x) => x.id === DEPLOY);
+  const card = d ? cardById(d.cardId) : null;
+  const rows = [...document.querySelectorAll(`tr[data-deploy="${CSS.escape(DEPLOY_ASK)}"]`)];
+  rows.forEach((tr) => tr.setAttribute('aria-current', 'true'));
+  const band = document.createElement('div');
+  band.className = 'pd-dp'; band.id = 'pd-deploy'; band.dataset.deploy = DEPLOY_ASK; band.dataset.rows = String(rows.length);
+  band.innerHTML = d
+    ? `<span class="lb">배포본</span><b>${esc(d.id)}</b><span>${esc(card?.name || d.cardId)} · ${esc(d.region)} · ${esc(String(d.year))} · ${esc(d.status)}</span>
+       <span class="lb">${rows.length ? `이 탭의 ${rows.length}행 강조` : '이 탭에는 이 배포본의 행이 없습니다 — 능동 운영 · 인프라 탭'}</span><span class="sp"></span>
+       <a id="pd-go-card" href="ai-card.html?card=${encodeURIComponent(d.cardId)}${card?.version ? '&version=' + encodeURIComponent(card.version) : ''}">카드 ↗</a>
+       <a id="pd-go-ops" href="${esc(opsUrl('deploys.html', 'deploy=' + d.id))}">관제 배포 제어 ↗</a>
+       <a id="pd-go-xi" href="${esc(XI_MAP)}?svc=${encodeURIComponent(d.id)}">XI맵에서 보기 ↗</a>`
+    : `<span class="lb">배포본</span><b>${esc(DEPLOY_ASK)}</b><span>등록된 배포본이 아닙니다 — 이 화면의 배포본 ${DEPLOYS.length}개 중에 없습니다</span>`;
+  main.querySelector('.pd-sec')?.before(band);
+  rows[0]?.scrollIntoView?.({ block: 'center' });
+  say(d ? `${d.id} · ${card?.name || ''} — ${rows.length}행을 강조했습니다` : `${DEPLOY_ASK} — 등록된 배포본이 아닙니다`);
+})();

@@ -115,13 +115,13 @@ test('레일 · 마스트헤드(공용 셸) — LX 직원 레일 = roles.js 7항
   expect(src).toMatch(/mountShell\(/);
   expect(errs).toEqual([]);
 });
-test('LX 관리자 레일 = roles.js 6항목(운영 현황 · 데이터 관리 · 카드 발행 관리 · 생산 관리 · 서비스 관리 · MY) · 만드는 화면(대시보드 · 프로젝트 · 분석 · 지도)은 없다', async ({ page }) => {
+test('LX 관리자 레일 = roles.js 10항목(운영 현황 · 관제 4화면 · 데이터 관리 · 카드 발행 관리 · 생산 관리 · 서비스 관리 · MY) · 만드는 화면(대시보드 · 프로젝트 · 분석 · 지도)은 없다', async ({ page }) => {
   const errs = watch(page);
   await boot(page, 'archive', 'admin');
-  const admin = ['운영 현황', '데이터 관리', '카드 발행 관리', '생산 관리', '서비스 관리', 'MY'];
+  const admin = ['운영 현황', '관제 현황', '인프라 관제', '기관·할당', '배포 제어', '데이터 관리', '카드 발행 관리', '생산 관리', '서비스 관리', 'MY'];   // F2-R 레일 정본(관제 :8702 4화면)
   expect(await railFromRoles(page, 'admin')).toEqual(admin);
   expect(await page.locator('#rail .rail-i[data-menu] .rl').allInnerTexts()).toEqual(admin);
-  await expect(page.locator('#rail .rail-i[data-menu="ops"]')).toHaveAttribute('href', 'admin-home.html');
+  await expect(page.locator('#rail .rail-i[data-menu="home"]')).toHaveAttribute('href', 'admin-home.html');
   await expect(page.locator('#rail .rail-i[data-menu="dashboard"], #rail .rail-i[data-menu="project"], #rail .rail-i[data-menu="analysis"], #rail .rail-i[data-menu="map"]')).toHaveCount(0);
   await expect(page.locator('.rail-i[data-menu="media"]')).toHaveAttribute('aria-current', 'page');
   // 레일의 모든 항목이 실제로 들어가진다 — 튕기는 메뉴 0

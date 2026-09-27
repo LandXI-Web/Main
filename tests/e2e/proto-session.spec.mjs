@@ -6,7 +6,9 @@ import { test, expect } from '@playwright/test';
 //   기관(지자체) 계정은 roles.js 와 무관한 **완전 별도** 계정이다(Q1) — lx_tenant_session.
 
 /* ── 역할 픽스처 — 00-COMMON / §7.3 그대로 복사(Wave 0 동안 _roles.mjs import 금지) ── */
-const HOME = { admin: 'admin-home.html', staff: 'ai-project.html', sales: 'ximap.html' };
+/* F2-R(2026-09-27): 영업 첫 화면 = 새 XI맵(landxi/xi · 셸 밖 앱). 셸 레일 로그아웃을 재는 자리는 LOGOUT_AT(셸 화면). */
+const HOME = { admin: 'admin-home.html', staff: 'ai-project.html', sales: '../xi/index.html' };
+const LOGOUT_AT = { admin: 'admin-home.html', staff: 'ai-project.html', sales: 'usecase.html' };
 const TENANT_HOME = { namwon: 'portal.html', 'gwangju-jeonnam': 'portal-dp-gj-marine-25.html' };
 const TENANT_DOOR = { namwon: 'portal-login-namwon.html', 'gwangju-jeonnam': 'portal-login-gwangju-jeonnam.html' };
 /** LX 세션으로 화면을 연다. 세션은 첫 로드에서만 심는다(sessionStorage 가드). */
@@ -239,7 +241,7 @@ test.describe('signOut — 세 키 전부 0(R-S2 · C-09)', () => {
   });
   for (const role of ['admin', 'staff', 'sales']) {
     test(`${role} 레일 로그아웃 → login.html · 세 키 0`, async ({ page }) => {
-      await bootAs(page, `proto/${HOME[role]}`, role);
+      await bootAs(page, `proto/${LOGOUT_AT[role]}`, role);
       await page.locator('#rail > nav > button.rail-i[data-action="logout"]').click();
       await page.waitForURL((u) => fileOf(u.href) === 'login.html');
       expect(await keys(page)).toEqual([]);
@@ -290,4 +292,27 @@ test.describe('기관 문 — 안내가 서도 카드 안에 들어온다', () =
     expect(s.bc).toBe(s.accent);
     expect(s.color).toBe(s.accent);
   });
+});
+
+/* ── F2-R 세션 인계 — 같은 origin(:4173)의 localStorage 를 새 XI맵 session.shadow() 가 그대로 읽는다 ──
+   직원 = 전부(V1–V8) · 영업 = 시연(demo:true) · 기관(남원) = 실태조사 기본(agency · 프레임/실행 없음).
+   관리자는 XI맵 레일이 없지만 주소로 오면 LX realm(직원 관문)으로 본다 — XI맵 roleOf(F2-A) 규칙. */
+test.describe('세션 인계 — 새 XI맵 session.shadow() 가 realm/role 을 읽어 역할 관문이 맞다', () => {
+  for (const [name, s, want] of [
+    ['staff', { lx: 'staff' }, { realm: 'lx', role: 'staff', gate: 'staff', demo: undefined, frame: true }],
+    ['sales', { lx: 'sales' }, { realm: 'lx', role: 'sales', gate: 'sales', demo: true, frame: true }],
+    ['tenant:namwon', { tenant: 'namwon' }, { realm: 'tenant', role: 'manager', gate: 'agency', demo: undefined, frame: false }],
+  ]) {
+    test(`${name} → XI맵 state.role = ${want.gate}`, async ({ page }) => {
+      await seed(page, s);
+      await page.goto('xi/index.html');
+      await page.waitForFunction(() => document.documentElement.dataset.lx === 'ready', null, { timeout: 30000 });
+      const got = await page.evaluate(() => ({ sh: window.__xi.state.session, role: window.__xi.state.role }));
+      expect(got.sh).toMatchObject({ realm: want.realm, role: want.role });
+      expect(got.role).toBe(want.gate);
+      if (s.tenant) expect(got.sh.tenant_id).toBe('namwon');
+      // 인계는 세션을 바꾸지 않는다
+      expect(await keys(page)).toEqual(s.lx ? ['lx_logged_in', 'lx_role'] : ['lx_tenant_session']);
+    });
+  }
 });

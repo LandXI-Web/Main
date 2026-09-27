@@ -1,16 +1,30 @@
 /* 통계 — 지도 작업공간 안 우 서랍 620(B7 선택 1). 원판 B7-Stats-Opt1 · -Class · -Empty · -Find.
    수치는 전부 실 GeoJSON 집계다(byEmd · byClass). 표의 행 = 지도의 읍면동 — 행에 올리면 그 읍면동이 켜진다.
    모달 · 표 · 페이저 · 토스트는 셸 것을 그대로 쓴다. */
-import { openModal, mountPager, bindRows, say, icon, esc, nf, $, $$ } from './shell.js';
+import { openModal, mountPager, bindRows, say, icon, esc, nf, $, $$, EMBED, embedReady } from './shell.js';
 import * as D from './map-data.js';
 import { openPledge } from './map-pledge.js';
 import { downloadCSV } from './download.js';
 
 let tab = 'region', basis = null, filt = { emd: '', cls: '' }, page = 1, size = 10, pickBar = -1, host = null, api = null, ctxRef = null;
 
+/* ── embed=1(F2-R) — XI맵 서랍 · 기관 포털 iframe 안. 크롬은 셸이 안 세우고(mountShell embed),
+   여기서는 ① 기간 칩(?period=YYYY)을 받아 머리에 세우고 그 해의 결과가 아니면 **왜 비었는지** 말하고,
+   ② ?emd= 를 첫 거르개로 받고, ③ 다 그린 뒤 부모에게 lx:embed:ready 를 보낸다. 부모가 기간을 바꾸면
+   src 를 갈거나(XI맵 서랍) postMessage({type:'lx:embed:period', period}) 로 알린다 — 둘 다 받는다. */
+const EQ = new URLSearchParams(location.search);
+let period = /^\d{4}$/.test(EQ.get('period') || '') ? EQ.get('period') : '', emdSeed = EQ.get('emd') || '', readySent = false;
+const yearOf = (l) => (l ? +(l.year || (/(20\d\d)/.exec(l.id || '') || [])[1] || 0) : 0);
+const periodMiss = (l) => !!(period && l && yearOf(l) && yearOf(l) !== +period);
+if (EMBED()) addEventListener('message', (e) => {
+  if (e.origin !== location.origin || e.data?.type !== 'lx:embed:period' || !/^\d{4}$/.test(String(e.data.period))) return;
+  period = String(e.data.period); page = 1; if (host?.isConnected) draw();
+});
+
 export function mountStats(el, ctx, o = {}) {
   host = el; api = o; ctxRef = ctx;
   if (!basis) basis = D.statsBasis(ctx.layer?.service || 'farmland')[0];
+  if (emdSeed && ctx.geo?.features?.length) { if (D.byEmd(ctx.geo).some((r) => r.emd === emdSeed)) filt.emd = emdSeed; emdSeed = ''; }
   size = sizePref;                         // 들어올 때마다 원하는 쪽 크기에서 다시 재 본다
   draw();
   if (!bound) { bound = true; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (host?.isConnected) { size = sizePref; draw(); } }, 180); }); }
@@ -24,16 +38,18 @@ const chartLeft = () => innerWidth >= 1560;
 
 function draw() {
   const { layer, geo, ctx } = ctxRef;
-  const empty = !layer || !geo || !geo.features.length;
+  const miss = periodMiss(layer);
+  const empty = !layer || !geo || !geo.features.length || miss;
   const all = D.statsBasis(layer?.service || 'farmland');
   /* 서랍 속 구조 — `조건(.dw-l)` 과 `결과(.dw-r)` 두 덩어리로 나눠 담는다.
      좁은 서랍에서는 위아래로 쌓이고, 넓은 서랍(짧은 모니터에서 서랍이 넓어질 때)에서는
      좌우로 나란히 선다(map.css `.dw--split`). 대시보드에서 쓴 방법과 같다 —
      세로로 쌓인 줄을 좌우로 펴서 줄 수를 없앤다. 지우는 것은 없다. */
+  const pchip = EMBED() && period ? `<p class="lb" id="st-period" data-period="${esc(period)}" style="display:flex;gap:8px;align-items:center;margin:0 0 4px"><span class="chip" style="font-size:14px">기간 ${esc(period)}</span><span style="font-size:14px;color:var(--grey)">${miss ? `이 결과는 ${esc(String(yearOf(layer)))}년 판독 — ${esc(period)}년 집계는 없습니다` : `${esc(String(yearOf(layer) || period))}년 판독 결과 집계`}</span></p>` : '';
   host.innerHTML = `<div class="dw dw--split">
-  <div class="dw-h"><div><p class="lb">통계 자세히 보기</p><h2>${esc(taskName(ctx, layer))} 통계</h2>
+  <div class="dw-h"><div>${pchip}<p class="lb">통계 자세히 보기</p><h2>${esc(taskName(ctx, layer))} 통계</h2>
     <p class="dw-sub">AI 분석 과제(${esc(taskName(ctx, layer))} 분석)의 ${esc((layer?.classes || []).map(D.clsLabel).join('·'))} 면적 집계를 확인해요</p></div>
-    <button type="button" class="x" id="st-x" aria-label="닫기">${icon('x', 18)}</button></div>
+    ${EMBED() ? '' : `<button type="button" class="x" id="st-x" aria-label="닫기">${icon('x', 18)}</button>`}</div>
 
   <div class="dw-l">
   <section class="dw-sec"><div class="dw-sec-h"><span class="lb">기준 (최근 분석 결과)</span><button type="button" class="link" id="st-more">더 보기 ›</button>
@@ -60,11 +76,16 @@ function draw() {
   <div id="st-b">${empty ? emptyHtml() : tab === 'region' ? regionHtml() : classHtml()}</div></div>
 </div>`;
   bind(empty);
+  if (EMBED()) {
+    document.documentElement.dataset.embedView = 'stats';
+    if (!readySent) { readySent = true; requestAnimationFrame(() => embedReady('stats', { period: period || null, emd: filt.emd || null, empty })); }
+  }
 }
 const taskName = (ctx, l) => (l?.service === 'farmland' ? '농지 활용' : l?.service === 'greenhouse' ? '비닐하우스' : l?.service === 'marine' ? '해양쓰레기' : l?.title || '분석');
 function adminName(geo) { return D.adminOf(geo?.features?.[0]?.properties.pnu); }
 
 function emptyHtml() {
+  if (periodMiss(ctxRef.layer)) return `<div class="empty" id="st-period-empty">${icon('grid', 30)}<p class="empty-t">${esc(period)}년 판독 결과가 이 화면에 없습니다</p><p class="empty-w">이 서랍의 집계는 ${esc(String(yearOf(ctxRef.layer)))}년 결과(${esc(ctxRef.layer.title || ctxRef.layer.id)})입니다 — 2023 25cm 전역 재추론 집계는 XI맵 읍면동 카드에서 봅니다</p></div>`;
   return `<div class="empty">${icon('grid', 30)}<p class="empty-t">AI 분석이 완료된 후 이용할 수 있어요</p><p class="empty-w">왼쪽에서 결과 레이어를 켜면 그 결과의 집계가 여기에 섭니다</p></div>
   <div class="dw-ghost"><p class="mic">집계가 서면 이 자리에 ${esc(ctxRef.ctx.unitExample)}별 막대와 표가 그려집니다</p>
     <div class="gb">${Array.from({ length: 32 }, () => '<span style="height:' + (14 + Math.random() * 30).toFixed(0) + 'px"></span>').join('')}</div><div class="gc"></div></div>
@@ -144,7 +165,7 @@ function statsCsv() {
 }
 
 function bind(empty) {
-  $('#st-x').onclick = () => api.onClose?.();
+  if ($('#st-x')) $('#st-x').onclick = () => api.onClose?.();
   $('#st-more').onclick = openFind;
   $('#st-reset').onclick = () => { basis = D.statsBasis(ctxRef.layer?.service || 'farmland')[0]; filt = { emd: '', cls: '' }; page = 1; pickBar = -1; draw(); };
   /* `통계 보기` — 집계는 켜 둔 결과의 실 GeoJSON 그대로다. 다시 계산했다고 말하지 않는다(M-04). 사실만. */
