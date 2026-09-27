@@ -506,6 +506,25 @@ for (const m of SPECS) {
   assets.push({ id: m.id, kind: '스펙시먼', name: m.name, screen: m.screen, variant: m.variant, verdict: m.verdict, target: m.target, reason: m.reason, later: m.later,
     made: isK ? '2026-09-03' : '2026-09-27', files: { 원천: isK ? KAKAO + (m.anchor || '') : TOSS, 캡처: img && fs.existsSync(img) ? img : null } });
 }
+// 사용자 결정 덮어쓰기 — 갤러리 [결정 발행] → tools/review/apply-decisions.mjs 가 assets.json 의 user_decision 에 적어 둔 것을
+// 다시 구울 때도 지킨다(판정표보다 우선). 표를 고쳐 같은 판정이 되면 assets.json 에서 user_decision 을 지워도 된다.
+const LEDGER = `${OUT_DIR}/assets.json`;
+const prevUD = {};
+try { for (const a of JSON.parse(fs.readFileSync(LEDGER, 'utf8')).assets || []) if (a.user_decision) prevUD[a.id] = a.user_decision; } catch { /* 첫 생성 */ }
+for (const a of assets) {
+  const u = prevUD[a.id]; if (!u) continue;
+  dieIf(!VERDICTS.includes(u.verdict), `user_decision 판정 오류: ${a.id} ${u.verdict}`);
+  a.user_decision = u; a.table_verdict = a.verdict; a.reason_before = a.reason;
+  a.reason = `사용자 결정 ${u.date}` + (u.memo ? ` — ${u.memo}` : '');
+  if (u.verdict !== a.verdict) {
+    const self = a.files?.구현 ? String(a.files.구현).replace(/^:8702\//, '') : null;
+    a.target = u.verdict === '적용' && self ? self : `사용자 결정 ${u.date}(${a.verdict} → ${u.verdict})`;
+    a.verdict = u.verdict;
+  }
+}
+const lostUD = Object.keys(prevUD).filter((id) => !assets.some((a) => a.id === id));
+if (lostUD.length) console.warn(`! 대장에서 사라진 자산의 사용자 결정(버림): ${lostUD.join(', ')}`);
+
 // 검사 — 화면 키 · 판정 · 중복 · 원판 누락
 const ids = new Set();
 for (const a of assets) {
@@ -531,6 +550,7 @@ const out = assets.map((a) => {
   if (a.later) o.later = a.later;
   if (a.title) o.title = a.title;
   if (a.impl_state) o.impl_state = a.impl_state;
+  if (a.user_decision) { o.user_decision = a.user_decision; o.table_verdict = a.table_verdict; o.reason_before = a.reason_before; }
   return o;
 });
 // 기능·화면 키가 '통계/보고서' 처럼 슬래시를 품으므로 다시 정확히 나눈다
@@ -542,11 +562,12 @@ const ledger = {
   생성기: 'node tools/review/masters.mjs',
   판정_기준: { 적용: '지금 사용자가 레일로 닿는 화면에 들어가 있음(적용 위치 = applied_to)', 검토: '아직 화면에 없음 — 다음 차수에서 쓸 곳(next)', 폐기: '다른 안·결정이 대체함(replaced_by)' },
   계층: '기능(function) → 화면(screen) → 버전·변형(variant)',
+  사용자_결정: '갤러리(masters.html) 카드의 적용·검토·폐기 → [결정 발행] 글 → node tools/review/apply-decisions.mjs <글 파일> 로 반영. user_decision 이 있으면 판정표보다 우선(table_verdict = 표의 원래 판정, reason_before = 원래 근거)',
   집계: { 전체: out.length, ...count(), 원판: count('원판'), 구현: count('구현'), 시안: count('시안'), 스펙시먼: count('스펙시먼') },
   기능: TAX.map(([f, ss]) => ({ function: f, screens: ss.filter((s) => out.some((a) => a.function === f && a.screen === s)) })).filter((x) => x.screens.length),
   assets: out,
 };
-fs.writeFileSync(`${OUT_DIR}/assets.json`, JSON.stringify(ledger, null, 1) + '\n');
+fs.writeFileSync(LEDGER, JSON.stringify(ledger, null, 1) + '\n');
 
 // 구현 현황판용 화면 매핑 — inventory id → 기능/화면 (+ 대장 판정)
 const smap = { 설명: '구현 현황판(status/)이 자산 대장과 같은 화면 키로 묶기 위한 매핑 — node tools/review/masters.mjs 가 생성', 기능_순서: ledger.기능, screens: {} };
@@ -572,17 +593,18 @@ function card(a) {
   const thumb = src ? `<button type="button" class="th lb" data-src="${esc(rel(src))}" aria-label="${esc(a.name)} 크게 보기"><img loading="lazy" src="${esc(rel(src))}" alt=""></button>`
     : `<div class="th tx"><span>${esc(a.name)}</span></div>`;
   const open = openHref(a);
-  return `<article class="card v-${VCLS[a.verdict]}" id="${esc(a.id)}" data-v="${a.verdict}" data-k="${a.kind}" data-later="${esc(a.later || '')}">${thumb}
-<div class="bd"><div class="hd"><span class="bdg ${VCLS[a.verdict]}">${a.verdict}</span><span class="var">${esc(a.variant)}</span></div>
+  return `<article class="card v-${VCLS[a.verdict]}" id="${esc(a.id)}" data-v="${a.verdict}" data-base="${a.verdict}" data-k="${a.kind}" data-later="${esc(a.later || '')}">${thumb}
+<div class="bd"><div class="hd"><span class="bdg ${VCLS[a.verdict]}">${a.verdict}</span><span class="var">${esc(a.variant)}</span><span class="chgm">바뀜 · 미발행</span></div>
 <h4>${esc(a.name)}</h4><p class="why">${esc(a.reason)}</p><p class="tg">${targetLine(a)}</p>
-<p class="meta"><span>${esc(a.id)}</span>${a.made ? `<span>${esc(a.made.slice(5).replace('-', '.'))}</span>` : ''}${open ? `<a href="${esc(open)}">열기</a>` : ''}</p></div></article>`;
+<p class="meta"><span>${esc(a.id)}</span>${a.made ? `<span>${esc(a.made.slice(5).replace('-', '.'))}</span>` : ''}${a.user_decision ? `<span class="ud" title="판정표 원래 판정: ${esc(a.table_verdict)}">사용자 결정 ${esc(a.user_decision.date.slice(5).replace('-', '.'))}</span>` : ''}${open ? `<a href="${esc(open)}">열기</a>` : ''}</p>
+<div class="ctl" role="group" aria-label="${esc(a.id)} 판정 바꾸기">${VERDICTS.map((v) => `<button type="button" class="${VCLS[v]}" data-set="${v}" aria-pressed="${v === a.verdict}">${v}</button>`).join('')}</div></div></article>`;
 }
 const stepCls = (a) => `st ${VCLS[a.verdict]}`;
 let body = '';
 for (const { function: fn, screens } of ledger.기능) {
   const inFn = out.filter((a) => a.function === fn);
   const c = count(); for (const v of VERDICTS) c[v] = inFn.filter((a) => a.verdict === v).length;
-  body += `<section class="fn" data-fn="${esc(fn)}"><h2 id="fn-${esc(fn)}">${esc(fn)}<small>${VERDICTS.map((v) => `<i class="${VCLS[v]}">${v} ${c[v]}</i>`).join('')}</small></h2>`;
+  body += `<section class="fn" data-fn="${esc(fn)}"><h2 id="fn-${esc(fn)}">${esc(fn)}<small>${VERDICTS.map((v) => `<i class="${VCLS[v]}" data-c="${v}">${v} ${c[v]}</i>`).join('')}</small></h2>`;
   for (const sc of screens) {
     const items = inFn.filter((a) => a.screen === sc).sort((p, q) => KIND_ORDER[p.kind] - KIND_ORDER[q.kind] || String(p.made).localeCompare(String(q.made)));
     const live = items.filter((a) => a.verdict !== '폐기'), dead = items.filter((a) => a.verdict === '폐기');
@@ -594,7 +616,7 @@ for (const { function: fn, screens } of ledger.기능) {
     }
     body += `<div class="sc" data-sc="${esc(sc)}"><div class="sch"><h3>${esc(sc)}</h3><div class="flow">${stages.join('<span class="ar">→</span>')}</div></div>`;
     if (live.length) body += `<div class="grid">${live.map(card).join('')}</div>`;
-    if (dead.length) body += `<details class="dead"><summary>폐기 ${dead.length}</summary><div class="grid">${dead.map(card).join('')}</div></details>`;
+    if (dead.length) body += `<details class="dead"><summary>폐기 <span class="dn">${dead.length}</span></summary><div class="grid">${dead.map(card).join('')}</div></details>`;
     body += `</div>`;
   }
   body += `</section>`;
@@ -660,13 +682,47 @@ body.f-v details.dead{margin-top:0}
 #lb-t{color:#fff;font:600 14px/1.4 Pretendard,sans-serif;max-width:1100px;text-align:center}#lb-t small{display:block;color:#B8B8B8;font-weight:400}
 #lb-x{position:fixed;top:12px;right:12px;font:600 14px Pretendard,sans-serif;background:#fff;color:var(--ink);border:0;padding:10px 14px;cursor:pointer}
 #lb-p,#lb-n{position:fixed;top:50%;transform:translateY(-50%);width:48px;height:88px;background:rgba(255,255,255,.12);color:#fff;border:0;font:300 40px/1 Pretendard,sans-serif;cursor:pointer}#lb-p{left:6px}#lb-n{right:6px}
-@media (max-width:640px){#bar{position:static}.w{padding:20px 16px 64px}h1{font-size:26px}#lb-p,#lb-n{display:none}}
+.ctl{display:flex;gap:4px;margin-top:8px}
+.ctl button{flex:1 1 0;min-width:0;font:600 13px/1 Pretendard,sans-serif;padding:9px 4px;background:#fff;border:1px solid var(--line);color:var(--ink2);cursor:pointer}
+.ctl button:hover{border-color:var(--ink)}
+.ctl button[aria-pressed=true]{color:#fff;cursor:default}
+.ctl button.ok[aria-pressed=true]{background:var(--ok);border-color:var(--ok)}.ctl button.rv[aria-pressed=true]{background:var(--rv);border-color:var(--rv)}.ctl button.dp[aria-pressed=true]{background:#6B6B6B;border-color:#6B6B6B}
+.chgm{display:none;margin-left:auto;font:700 11px/1 Pretendard,sans-serif;color:#B7791F;white-space:nowrap}
+.card.chg{outline:2px solid #B7791F;outline-offset:-1px}.card.chg .chgm{display:inline}
+details.dead .card.chg{opacity:1}
+.meta .ud{color:#B7791F}
+#dec{border:1px solid var(--ink);padding:14px 16px;margin:0 0 18px;background:#fff}
+.dec-t{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+.dec-t b{font:700 18px/1.2 Paperlogy,Pretendard,sans-serif;letter-spacing:-.02em}.dec-t b span{font-family:Inter,Pretendard,sans-serif;color:#B7791F;margin-left:6px}
+.dec-t p{margin:0;font-size:13px;color:var(--ink2)}
+#dec-list{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+#dec-list li{border-top:1px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.dl{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;font-size:13px;min-width:0}
+.dl .id{font:600 12px Inter,Pretendard,sans-serif;overflow-wrap:anywhere}.dl .nm{color:var(--ink2);overflow-wrap:anywhere;min-width:0}
+.dl .ch{font-weight:700;white-space:nowrap}.dl .ch s{color:var(--mute);font-weight:500}.dl .ch .ok{color:var(--ok)}.dl .ch .rv{color:var(--rv)}.dl .ch .dp{color:#6B6B6B}
+.dl .x{margin-left:auto;font:500 12px Pretendard,sans-serif;background:none;border:0;color:var(--mute);cursor:pointer;padding:2px 0;text-decoration:underline}
+#dec-list input{width:100%;min-width:0;font:13px Pretendard,sans-serif;padding:7px 9px;border:1px solid var(--line);color:var(--ink)}
+#dec-list input:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
+#dec-empty{margin:8px 0 0;font-size:13px;color:var(--mute)}
+.dec-act{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin-top:12px}
+.dec-act button{font:600 14px/1 Pretendard,sans-serif;padding:10px 16px;border:1px solid var(--ink);background:#fff;color:var(--ink);cursor:pointer}
+.dec-act button.pri{background:var(--ink);color:#fff}
+.dec-act button:disabled{opacity:.35;cursor:default}
+#dec-msg{font-size:13px;color:var(--ok);font-weight:600;min-width:0;overflow-wrap:anywhere}#dec-msg.warn{color:#B7791F}
+#dec-out{display:block;width:100%;margin-top:10px;font:12px/1.5 Inter,Pretendard,monospace;border:1px solid var(--line);padding:8px;min-height:84px;resize:vertical}
+#dec-out[hidden]{display:none}
+.dj{font:600 13px Pretendard,sans-serif;padding:6px 12px;border:1px solid #B7791F;color:#B7791F;white-space:nowrap}.dj b{font:600 13px Inter,sans-serif;margin-left:6px}.dj[hidden]{display:none}
+@media (max-width:640px){#bar{position:static}#dec{padding:12px}.w{padding:20px 16px 64px}h1{font-size:26px}#lb-p,#lb-n{display:none}}
 </style></head>
 <body><div class="w">
 <div class="eb">LAND-XI · 자산 대장 · ${esc(ledger.generated_at)}</div>
 <h1>원판 · 구현 · 스펙시먼 ${S.전체}건</h1>
 <div class="links"><a href="index.html">검토 허브</a><a href="status/index.html">구현 현황판</a><a href="assets.json">assets.json</a><a href="bench-kakao.html">카카오 벤치</a></div>
-<div id="bar"><div class="tot" role="group" aria-label="판정">
+<section id="dec" aria-labelledby="dec-h"><div class="dec-t"><b id="dec-h">내 결정<span id="dec-n">0</span></b><p>카드의 <b>적용 · 검토 · 폐기</b>로 판정을 바꾸면 여기 모입니다. <b>결정 발행</b>으로 복사해 Claude 에게 붙여 넣으면 대장에 반영합니다.</p></div>
+<ol id="dec-list"></ol><p id="dec-empty">변경 없음</p>
+<div class="dec-act"><button type="button" id="dec-pub" class="pri" disabled>결정 발행</button><button type="button" id="dec-reset" disabled>되돌리기</button><span id="dec-msg" role="status" aria-live="polite"></span></div>
+<textarea id="dec-out" readonly hidden aria-label="발행 글"></textarea></section>
+<div id="bar"><a href="#dec" class="dj" id="dec-jump" hidden>내 결정<b>0</b></a><div class="tot" role="group" aria-label="판정">
 <button type="button" class="fb" data-v="" aria-pressed="true">전체<b>${S.전체}</b></button>
 ${VERDICTS.map((v) => `<button type="button" class="fb ${VCLS[v]}" data-v="${v}" aria-pressed="false">${v}<b>${S[v]}</b></button>`).join('')}</div>
 <div class="tot" role="group" aria-label="종류">${['원판', '구현', '시안', '스펙시먼'].map((k) => `<button type="button" class="fb" data-k="${k}" aria-pressed="false">${k}<b>${out.filter((a) => a.kind === k).length}</b></button>`).join('')}</div>
@@ -685,6 +741,50 @@ document.getElementById('bar').addEventListener('click',function(e){var b=e.targ
 try{var q=new URLSearchParams(location.search);if(q.get('v'))F.v=q.get('v');if(q.get('k'))F.k=q.get('k');if(F.v||F.k)apply();}catch(e){}
 if(location.hash){var t=document.getElementById(location.hash.slice(1));if(t){var d=t.closest('details');if(d)d.open=true;}}
 document.addEventListener('click',function(e){var a=e.target.closest('a.jump');if(!a)return;var t=document.getElementById(a.getAttribute('href').slice(1));if(t){var d=t.closest('details');if(d)d.open=true;if(F.v||F.k){F.v='';F.k='';apply();}}});
+// ── 내 결정: 카드 적용·검토·폐기 → 브라우저 저장 → [결정 발행] 글 복사 (apply-decisions.mjs 가 읽는 형식)
+var KEY='lx_assets_decisions_v1',VS=['적용','검토','폐기'],VC={'적용':'ok','검토':'rv','폐기':'dp'};
+var D={};try{D=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){D={};}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){}}
+var cards=Array.prototype.slice.call(document.querySelectorAll('.card')),byId={};cards.forEach(function(c){byId[c.id]=c;});
+Object.keys(D).forEach(function(id){var c=byId[id],d=D[id];if(!c||!d||VS.indexOf(d.v)<0||d.v===c.dataset.base)delete D[id];});save();
+function grid(sc,dead){if(!dead){var g=sc.querySelector(':scope>.grid');if(!g){g=document.createElement('div');g.className='grid';sc.querySelector('.sch').after(g);}return g;}
+var d=sc.querySelector('details.dead');if(!d){d=document.createElement('details');d.className='dead';d.innerHTML='<summary>폐기 <span class="dn">0</span></summary><div class="grid"></div>';sc.appendChild(d);}return d.querySelector('.grid');}
+function setCard(c,v,user){c.dataset.v=v;c.classList.remove('v-ok','v-rv','v-dp');c.classList.add('v-'+VC[v]);var b=c.querySelector('.bdg');b.className='bdg '+VC[v];b.textContent=v;
+c.classList.toggle('chg',v!==c.dataset.base);c.querySelectorAll('.ctl button').forEach(function(x){x.setAttribute('aria-pressed',String(x.dataset.set===v));});
+var sc=c.closest('.sc'),inDead=!!c.closest('details.dead');if((v==='폐기')!==inDead){grid(sc,v==='폐기').appendChild(c);if(user){var d=c.closest('details');if(d)d.open=true;c.scrollIntoView({block:'nearest'});}}}
+function recount(){var T={'적용':0,'검토':0,'폐기':0};cards.forEach(function(c){T[c.dataset.v]++;});
+document.querySelectorAll('#bar .fb[data-v]').forEach(function(b){if(b.dataset.v)b.querySelector('b').textContent=T[b.dataset.v];});
+document.querySelectorAll('section.fn').forEach(function(s){var n={'적용':0,'검토':0,'폐기':0};s.querySelectorAll('.card').forEach(function(c){n[c.dataset.v]++;});s.querySelectorAll('h2 i[data-c]').forEach(function(i){i.textContent=i.dataset.c+' '+n[i.dataset.c];});});
+document.querySelectorAll('details.dead').forEach(function(d){var k=d.querySelectorAll('.card').length;d.querySelector('.dn').textContent=k;d.hidden=!k;});}
+function changed(){return cards.filter(function(c){return D[c.id];});}
+function renderList(){var L=changed(),ol=document.getElementById('dec-list');ol.innerHTML='';
+L.forEach(function(c){var d=D[c.id],li=document.createElement('li');li.dataset.id=c.id;
+var r=document.createElement('div');r.className='dl';var a=document.createElement('a');a.className='id jump';a.href='#'+c.id;a.textContent=c.id;
+var nm=document.createElement('span');nm.className='nm';nm.textContent=c.querySelector('h4').textContent;
+var ch=document.createElement('span');ch.className='ch';var s=document.createElement('s');s.textContent=c.dataset.base;var nv=document.createElement('span');nv.className=VC[d.v];nv.textContent=d.v;ch.appendChild(s);ch.appendChild(document.createTextNode(' → '));ch.appendChild(nv);
+var x=document.createElement('button');x.type='button';x.className='x';x.textContent='취소';x.setAttribute('aria-label',c.id+' 결정 취소');
+r.appendChild(a);r.appendChild(nm);r.appendChild(ch);r.appendChild(x);
+var m=document.createElement('input');m.type='text';m.maxLength=140;m.placeholder='메모(선택) — 왜 바꾸는지 한 줄';m.value=d.m||'';m.setAttribute('aria-label',c.id+' 메모');
+li.appendChild(r);li.appendChild(m);ol.appendChild(li);});
+var n=L.length;document.getElementById('dec-n').textContent=n;document.getElementById('dec-empty').hidden=!!n;
+document.getElementById('dec-pub').disabled=!n;document.getElementById('dec-reset').disabled=!n;
+var j=document.getElementById('dec-jump');j.hidden=!n;j.querySelector('b').textContent=n;}
+function decide(c,v,user){if(v===c.dataset.base)delete D[c.id];else D[c.id]={v:v,m:(D[c.id]&&D[c.id].m)||''};save();setCard(c,v,user);recount();renderList();msg('');if(F.v||F.k)apply();}
+document.addEventListener('click',function(e){var b=e.target.closest('.ctl button');if(!b)return;var c=b.closest('.card');if(c.dataset.v!==b.dataset.set)decide(c,b.dataset.set,true);});
+var ol=document.getElementById('dec-list');
+ol.addEventListener('input',function(e){var li=e.target.closest('li');if(!li||!D[li.dataset.id])return;D[li.dataset.id].m=e.target.value;save();});
+ol.addEventListener('click',function(e){var x=e.target.closest('button.x');if(!x)return;var c=byId[x.closest('li').dataset.id];decide(c,c.dataset.base,false);});
+function msg(t,warn){var m=document.getElementById('dec-msg');m.textContent=t;m.classList.toggle('warn',!!warn);if(!t)document.getElementById('dec-out').hidden=true;}
+function p2(n){return (n<10?'0':'')+n;}
+function text(){var d=new Date(),L=changed(),o=['[자산 결정] '+d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())+' '+p2(d.getHours())+':'+p2(d.getMinutes())];
+L.forEach(function(c){var m=(D[c.id].m||'').replace(/\\s+/g,' ').trim();o.push('- '+c.id+' '+c.querySelector('h4').textContent+': '+c.dataset.base+' → '+D[c.id].v+(m?' ('+m+')':''));});
+o.push('('+L.length+'건 · 반영: node tools/review/apply-decisions.mjs <이 글 파일>)');return o.join('\\n');}
+document.getElementById('dec-pub').addEventListener('click',function(){var t=text(),ta=document.getElementById('dec-out');ta.value=t;ta.hidden=false;
+function fb(){ta.focus();ta.select();var ok=false;try{ok=document.execCommand('copy');}catch(e){}
+if(ok)msg('복사됨 — Claude 에게 붙여 넣으면 대장에 반영합니다');else msg('자동 복사가 막혀 아래 글을 선택해 두었습니다 — Ctrl+C 로 복사해 Claude 에게 붙여 넣으세요',true);}
+try{if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(function(){msg('복사됨 — Claude 에게 붙여 넣으면 대장에 반영합니다');document.getElementById('dec-out').hidden=false;},fb);else fb();}catch(e){fb();}});
+document.getElementById('dec-reset').addEventListener('click',function(){D={};save();cards.forEach(function(c){if(c.dataset.v!==c.dataset.base)setCard(c,c.dataset.base,false);});recount();renderList();msg('되돌렸습니다 — 대장 판정 그대로');if(F.v||F.k)apply();});
+cards.forEach(function(c){if(D[c.id])setCard(c,D[c.id].v,false);});recount();renderList();if(F.v||F.k)apply();
 var lb=document.getElementById('lb'),im=document.getElementById('lb-i'),tt=document.getElementById('lb-t'),cur=-1;
 function vis(){return Array.prototype.filter.call(document.querySelectorAll('button.lb'),function(b){return b.offsetParent!==null;});}
 function show(i){var L=vis();if(!L.length)return;cur=(i+L.length)%L.length;var b=L[cur],c=b.closest('.card');im.src=b.dataset.src;

@@ -1,6 +1,6 @@
 {
  "title": "Land-XI 자산 대장 — 원판 · 구현 · 스펙시먼",
- "generated_at": "2026-09-27 12:02 KST",
+ "generated_at": "2026-09-27 12:23 KST",
  "생성기": "node tools/review/masters.mjs",
  "판정_기준": {
   "적용": "지금 사용자가 레일로 닿는 화면에 들어가 있음(적용 위치 = applied_to)",
@@ -8,6 +8,7 @@
   "폐기": "다른 안·결정이 대체함(replaced_by)"
  },
  "계층": "기능(function) → 화면(screen) → 버전·변형(variant)",
+ "사용자_결정": "갤러리(masters.html) 카드의 적용·검토·폐기 → [결정 발행] 글 → node tools/review/apply-decisions.mjs <글 파일> 로 반영. user_decision 이 있으면 판정표보다 우선(table_verdict = 표의 원래 판정, reason_before = 원래 근거)",
  "집계": {
   "전체": 294,
   "적용": 195,
@@ -3788,7 +3789,7 @@
    "screen": "로그인",
    "variant": "시안 v3",
    "name": "정문 로그인(v3 시안)",
-   "made": "",
+   "made": "2026-09-27",
    "files": {
     "구현": "landxi/v3/login/index.html",
     "썸네일": null
@@ -4055,7 +4056,7 @@
    "screen": "직원 첫 화면",
    "variant": "시안 v3",
    "name": "생산 콘솔 '오늘' 띠(v3 시안)",
-   "made": "",
+   "made": "2026-09-27",
    "files": {
     "구현": "landxi/v3/lx-console/index.html",
     "썸네일": null
@@ -4360,7 +4361,7 @@
    "screen": "기본 지도",
    "variant": "시안 v3",
    "name": "XI맵 정돈판(v3 시안)",
-   "made": "",
+   "made": "2026-09-27",
    "files": {
     "구현": "landxi/v3/xi-clean/index.html",
     "썸네일": null
@@ -4437,7 +4438,7 @@
    "screen": "대장 융합(기관 첫 화면)",
    "variant": "시안 v3",
    "name": "대장 융합(v3 시안)",
-   "made": "",
+   "made": "2026-09-27",
    "files": {
     "구현": "landxi/v3/gov-fusion/index.html",
     "썸네일": null
@@ -4601,7 +4602,7 @@
    "screen": "운영 현황",
    "variant": "시안 v3",
    "name": "관제 핵심판(v3 시안)",
-   "made": "",
+   "made": "2026-09-27",
    "files": {
     "구현": "landxi/v3/ops-core/index.html",
     "썸네일": null
