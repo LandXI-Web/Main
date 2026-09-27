@@ -62,6 +62,9 @@ header p{margin:0;color:var(--sub);max-width:62ch}
 .group{display:grid;gap:14px}
 .group h2{font-size:20px;font-weight:700;display:flex;align-items:baseline;gap:10px}
 .group h2 small{font-size:13px;color:var(--faint);font-weight:400}
+.xlinks{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px}.xlinks a{color:var(--accent);text-decoration:none}.xlinks a:hover{text-decoration:underline}
+.scr{display:grid;gap:10px}.scr h3{font-size:15px;font-weight:700;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.scr h3 small{font-size:12px;color:var(--faint);font-weight:400}.scr h3 a{font-size:12px;font-weight:500;color:var(--accent);text-decoration:none}
+.group{gap:18px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
 .card{background:var(--paper);border:1px solid var(--rule);border-radius:12px;overflow:hidden;display:grid;grid-template-rows:auto 1fr;cursor:pointer;text-align:left;font:inherit;color:inherit;padding:0}
 .card:hover{box-shadow:var(--shadow)}
@@ -106,6 +109,7 @@ footer{font-size:12px;color:var(--faint)}
     <div class="eyebrow">Land-XI · 전체 화면 전수 점검 · <span id="gen"></span></div>
     <h1>플랫폼 전체를 펼쳐 본 구현 상황</h1>
     <p>모든 화면을 실제 로그인 경로로 열어 찍은 결과입니다. 새로 만든 XI맵·관제·Global만 실제 서버에 연결돼 있고, 나머지 대부분은 예전 고정값 화면입니다.</p>
+    <p class="xlinks"><a href="../index.html">검토 허브</a><a href="../masters.html">자산 대장(원판·스펙시먼)</a></p>
   </header>
 
   <section class="summary" id="summary"></section>
@@ -180,11 +184,19 @@ document.getElementById('filters').addEventListener('click',e=>{const b=e.target
 function renderGroups(){
  const list=S.filter(x=>(F.axis==='전체'||x['사용자_축']===F.axis)&&(F.status==='전체'||x['상태']===F.status));
  document.getElementById('count').textContent=`${list.length}개 표시`;
- document.getElementById('groups').innerHTML=AXES.map(a=>{
-   const items=list.filter(x=>x['사용자_축']===a);
-   if(!items.length) return '';
-   items.sort((p,q)=>GEN.indexOf(p['세대'])-GEN.indexOf(q['세대'])||STATUS.indexOf(p['상태'])-STATUS.indexOf(q['상태']));
-   return `<section class="group"><h2>${AXLABEL[a]}<small class="num">${items.length}개</small></h2><div class="grid">${items.map(card).join('')}</div></section>`;
+ // 자산 대장(screen-map.json)과 같은 키로 묶는다: 기능 → 화면
+ const ORDER=(D.order||[]).map(o=>[o.function,o.screens]);
+ const extra=[...new Set(list.map(x=>x.function))].filter(f=>!ORDER.some(o=>o[0]===f)).map(f=>[f,[...new Set(list.filter(x=>x.function===f).map(x=>x.screen))]]);
+ document.getElementById('groups').innerHTML=ORDER.concat(extra).map(([fn,scs])=>{
+   const inFn=list.filter(x=>x.function===fn);
+   if(!inFn.length) return '';
+   const blocks=scs.map(sc=>{
+     const items=inFn.filter(x=>x.screen===sc);
+     if(!items.length) return '';
+     items.sort((p,q)=>GEN.indexOf(p['세대'])-GEN.indexOf(q['세대'])||STATUS.indexOf(p['상태'])-STATUS.indexOf(q['상태']));
+     return `<div class="scr"><h3>${esc(sc)}<small class="num">${items.length}개</small><a href="../masters.html#fn-${encodeURIComponent(fn)}">원판·스펙시먼 보기 ›</a></h3><div class="grid">${items.map(card).join('')}</div></div>`;
+   }).join('');
+   return `<section class="group"><h2>${esc(fn)}<small class="num">${inFn.length}개</small></h2>${blocks}</section>`;
  }).join('')||'<p style="color:var(--sub)">조건에 맞는 화면이 없습니다.</p>';
 }
 function card(x){
@@ -193,7 +205,7 @@ function card(x){
  const live=String(x['실데이터']||'').startsWith('API');
  return `<button type="button" class="card" data-i="${i}"><div class="thumb">${x.thumb?`<img loading="lazy" src="${esc(x.thumb)}" alt="${esc(x['제목'])} 화면">`:'<span>제작 중 · 썸네일 없음</span>'}</div>
  <div class="body"><div class="title">${esc(x['제목']||x.id)}</div><div class="path">${esc(x['경로']||'')}</div>
- <div class="meta"><span class="pill ${cls(x['상태'])}">${SLABEL[x['상태']]||esc(x['상태'])}</span><span class="pill g">${gen}</span><span class="pill g">${esc(x['기능군'])}</span>${live?'<span class="pill s-제작중">서버 연결</span>':''}</div>
+ <div class="meta"><span class="pill ${cls(x['상태'])}">${SLABEL[x['상태']]||esc(x['상태'])}</span><span class="pill g">${gen}</span><span class="pill g">${esc((AXLABEL[x['사용자_축']]||x['사용자_축']||'').split(' (')[0])}</span>${x.verdict?`<span class="pill g">대장 ${esc(x.verdict)}</span>`:''}${live?'<span class="pill s-제작중">서버 연결</span>':''}</div>
  ${x['문제']&&x['문제']!=='-'?`<div class="problem">${esc(x['문제'])}</div>`:''}</div></button>`;
 }
 document.getElementById('groups').addEventListener('click',e=>{const c=e.target.closest('.card');if(!c)return;openCard(S[+c.dataset.i]);});
@@ -201,7 +213,7 @@ const dlg=document.getElementById('dlg');
 function openCard(x){
  const img=document.getElementById('dimg'); if(x.thumb){img.src=x.thumb;img.hidden=false}else img.hidden=true;
  document.getElementById('dtitle').textContent=x['제목']||x.id;
- const rows=[['경로',x['경로']],['사용자',AXLABEL[x['사용자_축']]||x['사용자_축']],['기능',x['기능군']],['세대',x['세대']],['상태',SLABEL[x['상태']]||x['상태']],['데이터',x['실데이터']],['문제',x['문제']]];
+ const rows=[['화면',x.function+' › '+x.screen],['대장 판정',x.verdict],['경로',x['경로']],['사용자',AXLABEL[x['사용자_축']]||x['사용자_축']],['기능',x['기능군']],['세대',x['세대']],['상태',SLABEL[x['상태']]||x['상태']],['데이터',x['실데이터']],['문제',x['문제']]];
  document.getElementById('ddl').innerHTML=rows.filter(r=>r[1]&&r[1]!=='-').map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join('');
  if(dlg.showModal) dlg.showModal();
 }

@@ -1,0 +1,5830 @@
+{
+ "title": "Land-XI 자산 대장 — 원판 · 구현 · 스펙시먼",
+ "generated_at": "2026-09-27 12:02 KST",
+ "생성기": "node tools/review/masters.mjs",
+ "판정_기준": {
+  "적용": "지금 사용자가 레일로 닿는 화면에 들어가 있음(적용 위치 = applied_to)",
+  "검토": "아직 화면에 없음 — 다음 차수에서 쓸 곳(next)",
+  "폐기": "다른 안·결정이 대체함(replaced_by)"
+ },
+ "계층": "기능(function) → 화면(screen) → 버전·변형(variant)",
+ "집계": {
+  "전체": 294,
+  "적용": 195,
+  "검토": 45,
+  "폐기": 54,
+  "원판": {
+   "적용": 135,
+   "검토": 15,
+   "폐기": 35
+  },
+  "구현": {
+   "적용": 60,
+   "검토": 2,
+   "폐기": 9
+  },
+  "시안": {
+   "적용": 0,
+   "검토": 5,
+   "폐기": 0
+  },
+  "스펙시먼": {
+   "적용": 0,
+   "검토": 23,
+   "폐기": 10
+  }
+ },
+ "기능": [
+  {
+   "function": "인증",
+   "screens": [
+    "로그인",
+    "계정 신청",
+    "아이디 찾기",
+    "비밀번호 찾기"
+   ]
+  },
+  {
+   "function": "메인",
+   "screens": [
+    "스크럽 필름",
+    "소개 챕터(토스)",
+    "서비스 소개 판",
+    "성과·결과 띠",
+    "홈 초기안",
+    "공개 사이트",
+    "필름 제작 도구"
+   ]
+  },
+  {
+   "function": "대시보드",
+   "screens": [
+    "직원 첫 화면",
+    "사용자 대시보드",
+    "뷰어 대시보드"
+   ]
+  },
+  {
+   "function": "데이터 관리",
+   "screens": [
+    "목록(아카이브·완료·발행중)",
+    "업로드",
+    "파이프라인 단계"
+   ]
+  },
+  {
+   "function": "프로젝트",
+   "screens": [
+    "목록(메인)",
+    "만들기",
+    "만들기 검토",
+    "개요",
+    "삭제 모달",
+    "데이터",
+    "라벨링",
+    "학습",
+    "분석",
+    "배포·발행",
+    "지도 작업공간(컨셉)"
+   ]
+  },
+  {
+   "function": "분석 서비스",
+   "screens": [
+    "카드 목록",
+    "카드 상세",
+    "실행 검토",
+    "실행 중",
+    "실행 결과"
+   ]
+  },
+  {
+   "function": "카드 발행",
+   "screens": [
+    "승인·검토 데스크",
+    "카드 목록",
+    "카드 편집",
+    "발행 요청"
+   ]
+  },
+  {
+   "function": "XI맵",
+   "screens": [
+    "기본 지도",
+    "객체 정보",
+    "시점 비교",
+    "검색",
+    "도구(측정·그리기·구역·내려받기)",
+    "지역 구분·속성 표",
+    "보안 서약",
+    "표류 예측"
+   ]
+  },
+  {
+   "function": "실태조사",
+   "screens": [
+    "실태조사 모드",
+    "대장 융합(기관 첫 화면)"
+   ]
+  },
+  {
+   "function": "에이전트",
+   "screens": [
+    "융합 분석 질문"
+   ]
+  },
+  {
+   "function": "통계/보고서",
+   "screens": [
+    "통계",
+    "보고서"
+   ]
+  },
+  {
+   "function": "관제",
+   "screens": [
+    "관제 로그인",
+    "운영 현황",
+    "인프라",
+    "기관·할당",
+    "배포",
+    "생산 관리"
+   ]
+  },
+  {
+   "function": "서비스 관리",
+   "screens": [
+    "사용자 관리",
+    "공지 관리",
+    "문의 관리",
+    "FAQ 관리",
+    "지도 속성 관리"
+   ]
+  },
+  {
+   "function": "기관 포털",
+   "screens": [
+    "기관 로그인",
+    "내 서비스",
+    "서비스 상세"
+   ]
+  },
+  {
+   "function": "서비스 지원",
+   "screens": [
+    "공지",
+    "FAQ",
+    "문의",
+    "활용사례",
+    "매뉴얼"
+   ]
+  },
+  {
+   "function": "MY",
+   "screens": [
+    "마이 페이지",
+    "정보 수정",
+    "비밀번호 변경",
+    "브랜드(CI)",
+    "저장 공간",
+    "탈퇴"
+   ]
+  },
+  {
+   "function": "글로벌",
+   "screens": [
+    "로그인",
+    "해외 서비스"
+   ]
+  },
+  {
+   "function": "공통",
+   "screens": [
+    "서체·색·형태",
+    "토스 톤",
+    "빈 상태·캐릭터",
+    "출처 띠·푸터",
+    "기능 소개 틀",
+    "상태 패턴(로딩·오류)",
+    "디자인 실험"
+   ]
+  }
+ ],
+ "assets": [
+  {
+   "id": "B5-Login",
+   "kind": "원판",
+   "function": "인증",
+   "screen": "로그인",
+   "variant": "원판 B5",
+   "name": "로그인 — 좌 디오라마 영상 / 우 폼",
+   "made": "2026-08-27",
+   "files": {
+    "원판": "design-canvas/v2/B5-Login.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-Login.png"
+   },
+   "verdict": "적용",
+   "reason": "8/27 구 Land-XI 구도·실제 CI 로 확정 → 구현",
+   "applied_to": [
+    "landxi/proto/login.html"
+   ],
+   "later": "F3 B0: v3 정문 로그인(landxi/v3/login)으로 이관",
+   "title": "B5 · 로그인 — 구 Land-XI 구도(가운데 카드: 좌 디오라마 영상 / 우 폼) · 실제 CI"
+  },
+  {
+   "id": "B2-Login",
+   "kind": "원판",
+   "function": "인증",
+   "screen": "로그인",
+   "variant": "원판 B2",
+   "name": "로그인 — 플랫폼 소개(1차)",
+   "made": "2026-08-26",
+   "files": {
+    "원판": "design-canvas/v2/B2-Login.dc.html",
+    "렌더": "design-canvas/v2/renders/B2-Login.png"
+   },
+   "verdict": "폐기",
+   "reason": "8/26 3차 피드백 '플랫폼 소개가 아니다' → B5 구도로 교체",
+   "replaced_by": "B5-Login (로그인 — 좌 디오라마 영상 / 우 폼)",
+   "title": "B2 · 로그인 — 플랫폼 소개"
+  },
+  {
+   "id": "B6-Auth-Signup-1",
+   "kind": "원판",
+   "function": "인증",
+   "screen": "계정 신청",
+   "variant": "원판 B6",
+   "name": "1단계 · 약관",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Auth-Signup-1.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Auth-Signup-1.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 권장안 자동 채택(9/20) → 인증 가족 구현",
+   "applied_to": [
+    "landxi/proto/signup.html"
+   ],
+   "later": "F3 B0: 신청은 정문 서랍으로 축소",
+   "title": "B6 · Auth Signup 1"
+  },
+  {
+   "id": "B6-Auth-Signup-1-Init",
+   "kind": "원판",
+   "function": "인증",
+   "screen": "계정 신청",
+   "variant": "원판 B6",
+   "name": "1단계 · 처음",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Auth-Signup-1-Init.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Auth-Signup-1-Init.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 권장안 자동 채택(9/20) → 인증 가족 구현",
+   "applied_to": [
+    "landxi/proto/signup.html"
+   ],
+   "later": "F3 B0: 신청은 정문 서랍으로 축소",
+   "title": "B6 · Auth Signup 1 Init"
+  },
+  {
+   "id": "B6-Auth-Signup-2",
+   "kind": "원판",
+   "function": "인증",
+   "screen": "계정 신청",
+   "variant": "원판 B6",
+   "name": "2단계 · 정보 입력",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Auth-Signup-2.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Auth-Signup-2.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 권장안 자동 채택(9/20) → 인증 가족 구현",
+   "applied_to": [
+    "landxi/proto/signup.html"
+   ],
+   "later": "F3 B0: 신청은 정문 서랍으로 축소",
+   "title": "B6 · Auth Signup 2"
+  },
+  {
+   "id": "B6-Auth-Signup-2-Error",
+   "kind": "원판",
+   "function": "인증",
+   "screen": "계정 신청",
+   "variant": "원판 B6",
+   "name": "2단계 · 입력 오류",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Auth-Signup-2-Error.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Auth-Signup-2-Error.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 권장안 자동 채택(9/20) → 인증 가족 구현",
+   "applied_to": [
+    "landxi/proto/signup.html"
+   ],
+   "later": "F3 B0: 신청은 정문 서랍으로 축소",
+   "title": "B6 · Auth Signup 2 Error"
+  },
+  {
+   "id": "B6-Auth-Signup-3",
+   "kind": "원판",
+   "function": "인증",
+   "screen": "계정 신청",
+   "variant": "원판 B6",
+   "name": "3단계 · 완료",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Auth-Signup-3.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Auth-Signup-3.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 권장안 자동 채택(9/20) → 인증 가족 구현",
+   "applied_to": [
+    "landxi/proto/signup.html"
+   ],
+   "later": "F3 B0: 신청은 정문 서랍으로 축소",
+   "title": "B6 · Auth Signup 3"
+  },
+  {
+   "id": "B6-Auth-FindId",
+   "kind": "원판",
+   "function": "인증",
+   "screen": "아이디 찾기",
+   "variant": "원판 B6",
+   "name": "입력",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Auth-FindId.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Auth-FindId.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 권장안 자동 채택(9/20) → 인증 가족 구현",
+   "applied_to": [
+    "landxi/proto/find-id.html"
+   ],
+   "later": "F3 B0: 정문 서랍으로 축소",
+   "title": "B6 · Auth FindId"
+  },
+  {
+   "id": "B6-Auth-FindId-Error",
+   "kind": "원판",
+   "function": "인증",
+   "screen": "아이디 찾기",
+   "variant": "원판 B6",
+   "name": "입력 오류",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Auth-FindId-Error.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Auth-FindId-Error.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 권장안 자동 채택(9/20) → 인증 가족 구현",
+   "applied_to": [
+    "landxi/proto/find-id.html"
+   ],
+   "later": "F3 B0: 정문 서랍으로 축소",
+   "title": "B6 · Auth FindId Error"
+  },
+  {
+   "id": "B6-Auth-FindId-Fail",
+   "kind": "원판",
+   "function": "인증",
+   "screen": "아이디 찾기",
+   "variant": "원판 B6",
+   "name": "찾기 실패",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Auth-FindId-Fail.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Auth-FindId-Fail.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 권장안 자동 채택(9/20) → 인증 가족 구현",
+   "applied_to": [
+    "landxi/proto/find-id.html"
+   ],
+   "later": "F3 B0: 정문 서랍으로 축소",
+   "title": "B6 · Auth FindId Fail"
+  },
+  {
+   "id": "B6-Auth-FindId-Result",
+   "kind": "원판",
+   "function": "인증",
+   "screen": "아이디 찾기",
+   "variant": "원판 B6",
+   "name": "결과",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Auth-FindId-Result.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Auth-FindId-Result.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 권장안 자동 채택(9/20) → 인증 가족 구현",
+   "applied_to": [
+    "landxi/proto/find-id-result.html"
+   ],
+   "later": "F3 B0: 정문 서랍으로 축소",
+   "title": "B6 · Auth FindId Result"
+  },
+  {
+   "id": "B6-Auth-FindPw",
+   "kind": "원판",
+   "function": "인증",
+   "screen": "비밀번호 찾기",
+   "variant": "원판 B6",
+   "name": "입력",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Auth-FindPw.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Auth-FindPw.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 권장안 자동 채택(9/20) → 인증 가족 구현",
+   "applied_to": [
+    "landxi/proto/find-password.html"
+   ],
+   "later": "F3 B0: 정문 서랍으로 축소",
+   "title": "B6 · Auth FindPw"
+  },
+  {
+   "id": "B6-Auth-FindPw-Error",
+   "kind": "원판",
+   "function": "인증",
+   "screen": "비밀번호 찾기",
+   "variant": "원판 B6",
+   "name": "입력 오류",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Auth-FindPw-Error.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Auth-FindPw-Error.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 권장안 자동 채택(9/20) → 인증 가족 구현",
+   "applied_to": [
+    "landxi/proto/find-password.html"
+   ],
+   "later": "F3 B0: 정문 서랍으로 축소",
+   "title": "B6 · Auth FindPw Error"
+  },
+  {
+   "id": "B6-Auth-FindPw-Fail",
+   "kind": "원판",
+   "function": "인증",
+   "screen": "비밀번호 찾기",
+   "variant": "원판 B6",
+   "name": "찾기 실패",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Auth-FindPw-Fail.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Auth-FindPw-Fail.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 권장안 자동 채택(9/20) → 인증 가족 구현",
+   "applied_to": [
+    "landxi/proto/find-password.html"
+   ],
+   "later": "F3 B0: 정문 서랍으로 축소",
+   "title": "B6 · Auth FindPw Fail"
+  },
+  {
+   "id": "B6-Auth-FindPw-Result",
+   "kind": "원판",
+   "function": "인증",
+   "screen": "비밀번호 찾기",
+   "variant": "원판 B6",
+   "name": "결과",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Auth-FindPw-Result.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Auth-FindPw-Result.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 권장안 자동 채택(9/20) → 인증 가족 구현",
+   "applied_to": [
+    "landxi/proto/find-password-result.html"
+   ],
+   "later": "F3 B0: 정문 서랍으로 축소",
+   "title": "B6 · Auth FindPw Result"
+  },
+  {
+   "id": "B2-HomeFilm",
+   "kind": "원판",
+   "function": "메인",
+   "screen": "홈 초기안",
+   "variant": "원판 B2",
+   "name": "홈 — 필름 스테이지(카피 판)",
+   "made": "2026-08-26",
+   "files": {
+    "원판": "design-canvas/v2/B2-HomeFilm.dc.html",
+    "렌더": "design-canvas/v2/renders/B2-HomeFilm.png"
+   },
+   "verdict": "폐기",
+   "reason": "8/27 메인은 스크럽 필름 구현본이 원판",
+   "replaced_by": "scrub-main (스크럽 필름(구현본))",
+   "title": "B2 · 홈 — 필름 스테이지 (CHAPTER 01)"
+  },
+  {
+   "id": "B2-HomeAtlas",
+   "kind": "원판",
+   "function": "메인",
+   "screen": "홈 초기안",
+   "variant": "원판 B2",
+   "name": "홈 — 필름 뒤 아틀라스",
+   "made": "2026-08-26",
+   "files": {
+    "원판": "design-canvas/v2/B2-HomeAtlas.dc.html",
+    "렌더": "design-canvas/v2/renders/B2-HomeAtlas.png"
+   },
+   "verdict": "폐기",
+   "reason": "D28 A3 ② 채택 — 사례·문의는 서비스 지원으로, 메인엔 푸터만",
+   "replaced_by": "scrub-main (스크럽 필름(구현본))",
+   "title": "B2 · 홈 — 아틀라스 (CHAPTER 02)"
+  },
+  {
+   "id": "B5-Dashboard-Data",
+   "kind": "원판",
+   "function": "대시보드",
+   "screen": "직원 첫 화면",
+   "variant": "원판 B5",
+   "name": "대시보드 — 전국 한 판 · 학습데이터 토글",
+   "made": "2026-08-26",
+   "files": {
+    "원판": "design-canvas/v2/B5-Dashboard-Data.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-Dashboard-Data.png"
+   },
+   "verdict": "적용",
+   "reason": "8/27 12.8 전국 판 적용판",
+   "applied_to": [
+    "landxi/proto/dashboard.html"
+   ],
+   "later": "F3 §5: 대시보드 폐지 → v3 생산 콘솔 '오늘' 띠로 대체 예정",
+   "title": "B5 · 대시보드 — 12.8 토글 [AI 학습데이터 구축 현황] 선택 상태"
+  },
+  {
+   "id": "B5-Dashboard",
+   "kind": "원판",
+   "function": "대시보드",
+   "screen": "직원 첫 화면",
+   "variant": "원판 B5",
+   "name": "관리자 대시보드 — AI 결과 토글",
+   "made": "2026-08-26",
+   "files": {
+    "원판": "design-canvas/v2/B5-Dashboard.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-Dashboard.png"
+   },
+   "verdict": "폐기",
+   "reason": "9/21 계정 3단 분리·9/24 직원 화면 전환으로 관리 위젯 제거 — 같은 판은 적용판이 대표",
+   "replaced_by": "B5-Dashboard-Data (대시보드 — 전국 한 판 · 학습데이터 토글)",
+   "title": "B5 · 대시보드 — 12.8 대한민국 한 판 · 토글 [AI 분석 결과] 선택 · 0.25° 그리드 · 등급 범례"
+  },
+  {
+   "id": "B4-Dashboard",
+   "kind": "원판",
+   "function": "대시보드",
+   "screen": "직원 첫 화면",
+   "variant": "원판 B4",
+   "name": "전면 개편 4차 — 124px 진술·검정 반전",
+   "made": "2026-08-26",
+   "files": {
+    "원판": "design-canvas/v2/B4-Dashboard.dc.html",
+    "렌더": "design-canvas/v2/renders/B4-Dashboard.png"
+   },
+   "verdict": "폐기",
+   "reason": "8/27 B5 로 대체 · 검정 반전·큰 진술은 9/27 결정(관리자 검정 톤 폐기·내부 지표 과장 금지)과도 충돌",
+   "replaced_by": "B5-Dashboard-Data (대시보드 — 전국 한 판 · 학습데이터 토글)",
+   "title": "B4 · 대시보드 — 전면 개편 (124px 진술 · 스캔 스트립 · 검정 반전 판 · 신규 계측 글리프)"
+  },
+  {
+   "id": "B3-Dashboard",
+   "kind": "원판",
+   "function": "대시보드",
+   "screen": "직원 첫 화면",
+   "variant": "원판 B3",
+   "name": "축소 현황 원장(지도 없음)",
+   "made": "2026-08-26",
+   "files": {
+    "원판": "design-canvas/v2/B3-Dashboard.dc.html",
+    "렌더": "design-canvas/v2/renders/B3-Dashboard.png"
+   },
+   "verdict": "폐기",
+   "reason": "8/26 7차 피드백 '기존과 별반 다를 게 없다'",
+   "replaced_by": "B4-Dashboard (전면 개편 4차 — 124px 진술·검정 반전)",
+   "title": "B3 · 대시보드 — 축소 현황 원장 (지도 없음 · 벤치마킹 안 C ESRI-LEDGER)"
+  },
+  {
+   "id": "B2-Dashboard",
+   "kind": "원판",
+   "function": "대시보드",
+   "screen": "직원 첫 화면",
+   "variant": "원판 B2",
+   "name": "A안 지도 위 원장",
+   "made": "2026-08-26",
+   "files": {
+    "원판": "design-canvas/v2/B2-Dashboard.dc.html",
+    "렌더": "design-canvas/v2/renders/B2-Dashboard.png"
+   },
+   "verdict": "폐기",
+   "reason": "8/26 '대시보드 지도 없음(보여줄 공간 데이터 부족)' 결정으로 축소",
+   "replaced_by": "B3-Dashboard (축소 현황 원장(지도 없음))",
+   "title": "B2 · 대시보드 — A안 지도 위 원장"
+  },
+  {
+   "id": "H-Dashboard-128",
+   "kind": "원판",
+   "function": "대시보드",
+   "screen": "직원 첫 화면",
+   "variant": "원판 H(집 PC 초안)",
+   "name": "12.8 초안 — AI 결과 토글(집 PC)",
+   "made": "",
+   "files": {
+    "원판": "design-canvas/v2/H-Dashboard-128.dc.html",
+    "렌더": "design-canvas/v2/renders/H-Dashboard-128.png"
+   },
+   "verdict": "폐기",
+   "reason": "현 적용판의 전 단계 초안",
+   "replaced_by": "B5-Dashboard-Data (대시보드 — 전국 한 판 · 학습데이터 토글)",
+   "title": "H · 대시보드 12.8 초안 — 한 판 + 0.25° 그리드 + 토글(AI 분석 결과)"
+  },
+  {
+   "id": "H-Dashboard-Data-128",
+   "kind": "원판",
+   "function": "대시보드",
+   "screen": "직원 첫 화면",
+   "variant": "원판 H(집 PC 초안)",
+   "name": "12.8 초안 — 학습데이터 토글(집 PC)",
+   "made": "",
+   "files": {
+    "원판": "design-canvas/v2/H-Dashboard-Data-128.dc.html",
+    "렌더": "design-canvas/v2/renders/H-Dashboard-Data-128.png"
+   },
+   "verdict": "폐기",
+   "reason": "현 적용판의 전 단계 초안",
+   "replaced_by": "B5-Dashboard-Data (대시보드 — 전국 한 판 · 학습데이터 토글)",
+   "title": "H · 대시보드 12.8 초안 — 토글(AI 학습데이터 구축 현황)"
+  },
+  {
+   "id": "B5-Dashboard-User",
+   "kind": "원판",
+   "function": "대시보드",
+   "screen": "사용자 대시보드",
+   "variant": "원판 B5",
+   "name": "사용자(직원) 대시보드",
+   "made": "2026-08-29",
+   "files": {
+    "원판": "design-canvas/v2/B5-Dashboard-User.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-Dashboard-User.png"
+   },
+   "verdict": "검토",
+   "reason": "D17 원본 dashboard2 1:1 — 아직 구현 안 됨",
+   "next": "F3 B1 — 역할별 첫 화면('오늘' 띠) 설계 때 흡수 여부 결정",
+   "title": "B5-Dashboard-User"
+  },
+  {
+   "id": "B5-Dashboard-Viewer",
+   "kind": "원판",
+   "function": "대시보드",
+   "screen": "뷰어 대시보드",
+   "variant": "원판 B5",
+   "name": "뷰어 대시보드",
+   "made": "2026-08-29",
+   "files": {
+    "원판": "design-canvas/v2/B5-Dashboard-Viewer.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-Dashboard-Viewer.png"
+   },
+   "verdict": "검토",
+   "reason": "D17 원본 dashboard3 1:1 — 아직 구현 안 됨",
+   "next": "F3 B2 — 기관 서비스 첫 화면(v3 gov-fusion)의 결과 탭 참고",
+   "title": "B5-Dashboard-Viewer"
+  },
+  {
+   "id": "B5-DataMgmt",
+   "kind": "원판",
+   "function": "데이터 관리",
+   "screen": "목록(아카이브·완료·발행중)",
+   "variant": "원판 B5",
+   "name": "목록 — 이미지 그리드 + 우 패널",
+   "made": "2026-08-26",
+   "files": {
+    "원판": "design-canvas/v2/B5-DataMgmt.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-DataMgmt.png"
+   },
+   "verdict": "적용",
+   "reason": "발주 확정안(Roboflow 그리드 × 아카이브/완료/발행중) → 구현",
+   "applied_to": [
+    "landxi/proto/dataset.html"
+   ],
+   "later": "F3 B4: v3 생산 콘솔 ① 반입 서랍으로 흡수",
+   "title": "B5 · 데이터 관리 — Roboflow Images 그리드 골격 × B2 아카이브/완료/발행중 처리 (발주 확정안)"
+  },
+  {
+   "id": "B3-DataMgmt",
+   "kind": "원판",
+   "function": "데이터 관리",
+   "screen": "목록(아카이브·완료·발행중)",
+   "variant": "원판 B3",
+   "name": "4탭 파이프라인 원장",
+   "made": "2026-08-26",
+   "files": {
+    "원판": "design-canvas/v2/B3-DataMgmt.dc.html",
+    "렌더": "design-canvas/v2/renders/B3-DataMgmt.png"
+   },
+   "verdict": "폐기",
+   "reason": "8/26 6차 피드백 후 B5 로 확정",
+   "replaced_by": "B5-DataMgmt (목록 — 이미지 그리드 + 우 패널)",
+   "title": "B3 · 데이터 관리 — 4탭 = 파이프라인 4단계 · 영상 프레임 우선 원장 (전면 재설계)"
+  },
+  {
+   "id": "B2-DataMgmt-List",
+   "kind": "원판",
+   "function": "데이터 관리",
+   "screen": "목록(아카이브·완료·발행중)",
+   "variant": "원판 B2",
+   "name": "2차 안 — 아카이브/완료/발행중",
+   "made": "2026-08-26",
+   "files": {
+    "원판": "design-canvas/v2/B2-DataMgmt-List.dc.html",
+    "렌더": "design-canvas/v2/renders/B2-DataMgmt-List.png"
+   },
+   "verdict": "폐기",
+   "reason": "8/26 6차 '기존과 거의 똑같다'",
+   "replaced_by": "B5-DataMgmt (목록 — 이미지 그리드 + 우 패널)",
+   "title": "B2 · 데이터 관리 — 아카이브 / 완료 / 발행중"
+  },
+  {
+   "id": "B5-DataMgmt-Upload",
+   "kind": "원판",
+   "function": "데이터 관리",
+   "screen": "업로드",
+   "variant": "원판 B5",
+   "name": "업로드 탭",
+   "made": "2026-08-27",
+   "files": {
+    "원판": "design-canvas/v2/B5-DataMgmt-Upload.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-DataMgmt-Upload.png"
+   },
+   "verdict": "적용",
+   "reason": "발주 확정안 업로드 탭 → 구현",
+   "applied_to": [
+    "landxi/proto/dataset.html?tab=upload"
+   ],
+   "later": "F3 B4: ① 반입 서랍"
+  },
+  {
+   "id": "B2-DataMgmt-Upload",
+   "kind": "원판",
+   "function": "데이터 관리",
+   "screen": "업로드",
+   "variant": "원판 B2",
+   "name": "2차 안 — 업로드",
+   "made": "2026-08-26",
+   "files": {
+    "원판": "design-canvas/v2/B2-DataMgmt-Upload.dc.html",
+    "렌더": "design-canvas/v2/renders/B2-DataMgmt-Upload.png"
+   },
+   "verdict": "폐기",
+   "reason": "8/26 6차 '기존과 거의 똑같다'",
+   "replaced_by": "B5-DataMgmt-Upload (업로드 탭)",
+   "title": "B2 · 데이터 관리 — 데이터 업로드 탭"
+  },
+  {
+   "id": "B5-Projects",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "목록(메인)",
+   "variant": "원판 B5",
+   "name": "목록 + 우 프로젝트 조회",
+   "made": "2026-08-27",
+   "files": {
+    "원판": "design-canvas/v2/B5-Projects.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-Projects.png"
+   },
+   "verdict": "적용",
+   "reason": "D5 원판 → 9/20 프로젝트 8단계 완전체 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4: 8단계 → 라벨·학습·모델 3으로 축소, v3 생산 콘솔 서랍",
+   "title": "프로젝트 0 · 프로젝트 목록 — 우 패널 = 프로젝트 조회(선택 카드: 대표 이미지 · 주요 정보 · 구성원 · 데이터 요약 · 열기/수정/삭제)"
+  },
+  {
+   "id": "B7-Projects-Empty",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "목록(메인)",
+   "variant": "원판 B7",
+   "name": "목록 0건",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Projects-Empty.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Projects-Empty.png"
+   },
+   "verdict": "적용",
+   "reason": "D5 원판 → 9/20 프로젝트 8단계 완전체 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4: 8단계 → 라벨·학습·모델 3으로 축소, v3 생산 콘솔 서랍",
+   "title": "B7 Projects Empty"
+  },
+  {
+   "id": "B7-Projects-NoResult",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "목록(메인)",
+   "variant": "원판 B7",
+   "name": "검색 0건",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Projects-NoResult.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Projects-NoResult.png"
+   },
+   "verdict": "적용",
+   "reason": "D5 원판 → 9/20 프로젝트 8단계 완전체 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4: 8단계 → 라벨·학습·모델 3으로 축소, v3 생산 콘솔 서랍",
+   "title": "B7 Projects NoResult"
+  },
+  {
+   "id": "H-Projects-Roboflow",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "목록(메인)",
+   "variant": "원판 H(집 PC 초안)",
+   "name": "목록 초안 — 만들기 드로어(집 PC)",
+   "made": "",
+   "files": {
+    "원판": "design-canvas/v2/H-Projects-Roboflow.dc.html",
+    "렌더": "design-canvas/v2/renders/H-Projects-Roboflow.png"
+   },
+   "verdict": "폐기",
+   "reason": "B5 원판의 전 단계 초안",
+   "replaced_by": "B5-Projects (목록 + 우 프로젝트 조회)",
+   "title": "H · 프로젝트 목록 초안 — Roboflow 골격 + 만들기 드로어"
+  },
+  {
+   "id": "B2-Projects",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "목록(메인)",
+   "variant": "원판 B2",
+   "name": "2차 안 — 목록 + 워크플로우 캔버스",
+   "made": "2026-08-26",
+   "files": {
+    "원판": "design-canvas/v2/B2-Projects.dc.html",
+    "렌더": "design-canvas/v2/renders/B2-Projects.png"
+   },
+   "verdict": "폐기",
+   "reason": "8/25 '워크플로우가 업무 시스템' 거부 → B5 로 교체",
+   "replaced_by": "B5-Projects (목록 + 우 프로젝트 조회)",
+   "title": "B2 · 프로젝트 — 목록 + 워크플로우 캔버스"
+  },
+  {
+   "id": "B5-Project-Create",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "만들기",
+   "variant": "원판 B5",
+   "name": "만들기 — 한 화면 폼",
+   "made": "2026-08-27",
+   "files": {
+    "원판": "design-canvas/v2/B5-Project-Create.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-Project-Create.png"
+   },
+   "verdict": "적용",
+   "reason": "D5 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project-create.html"
+   ],
+   "later": "F3 B4 생산 콘솔 ② 학습 서랍",
+   "title": "프로젝트 1 · 프로젝트 만들기 — 한 화면(단계 레일 0) · 우 = 폼 7필드(편집 중 필드 틴트 띠) · 좌 = 편집 중 필드의 문맥(영상 불러오기 = 아카이브 픽커 + 회백 벡터 풋프린트)"
+  },
+  {
+   "id": "B5-Project-Create-Review",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "만들기 검토",
+   "variant": "원판 B5",
+   "name": "만들기 검토",
+   "made": "2026-08-27",
+   "files": {
+    "원판": "design-canvas/v2/B5-Project-Create-Review.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-Project-Create-Review.png"
+   },
+   "verdict": "적용",
+   "reason": "D5 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project-create.html"
+   ],
+   "later": "F3 B4 생산 콘솔 ② 학습 서랍",
+   "title": "프로젝트 1-검토 · 만들기 검토 — 좌 = 대표 이미지(자동) + 이름 + kv 6(수정 ›) · 우 = 채운 값 요약 + CTA"
+  },
+  {
+   "id": "B5-Project-Overview",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "개요",
+   "variant": "원판 B5",
+   "name": "개요(허브 탭 1)",
+   "made": "2026-08-27",
+   "files": {
+    "원판": "design-canvas/v2/B5-Project-Overview.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-Project-Overview.png"
+   },
+   "verdict": "적용",
+   "reason": "D5·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4 생산 콘솔",
+   "title": "프로젝트 2-1 · 개요(허브 탭 1)"
+  },
+  {
+   "id": "B7-Project-Overview-Edit",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "개요",
+   "variant": "원판 B7",
+   "name": "개요 수정",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Project-Overview-Edit.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Project-Overview-Edit.png"
+   },
+   "verdict": "적용",
+   "reason": "D5·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4 생산 콘솔",
+   "title": "B7 Project Overview Edit"
+  },
+  {
+   "id": "B7-Project-Overview-Members",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "개요",
+   "variant": "원판 B7",
+   "name": "구성원",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Project-Overview-Members.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Project-Overview-Members.png"
+   },
+   "verdict": "적용",
+   "reason": "D5·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4 생산 콘솔",
+   "title": "B7 Project Overview Members"
+  },
+  {
+   "id": "B7-Project-Invite",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "개요",
+   "variant": "원판 B7",
+   "name": "구성원 초대",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Project-Invite.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Project-Invite.png"
+   },
+   "verdict": "적용",
+   "reason": "D5·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4 생산 콘솔",
+   "title": "B7 Project Invite"
+  },
+  {
+   "id": "B7-Project-Invite-Error",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "개요",
+   "variant": "원판 B7",
+   "name": "초대 오류",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Project-Invite-Error.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Project-Invite-Error.png"
+   },
+   "verdict": "적용",
+   "reason": "D5·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4 생산 콘솔",
+   "title": "B7 Project Invite Error"
+  },
+  {
+   "id": "H-Project-Overview-Roboflow",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "개요",
+   "variant": "원판 H(집 PC 초안)",
+   "name": "개요 초안 — 고정 헤더 + 탭 6(집 PC)",
+   "made": "",
+   "files": {
+    "원판": "design-canvas/v2/H-Project-Overview-Roboflow.dc.html",
+    "렌더": "design-canvas/v2/renders/H-Project-Overview-Roboflow.png"
+   },
+   "verdict": "폐기",
+   "reason": "B5 원판의 전 단계 초안",
+   "replaced_by": "B5-Project-Overview (개요(허브 탭 1))",
+   "title": "H · 프로젝트 개요 초안 — 고정 헤더 + 탭 6 + 스탯 패널"
+  },
+  {
+   "id": "B5-Project-Delete",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "삭제 모달",
+   "variant": "원판 B5",
+   "name": "삭제 확인",
+   "made": "2026-08-27",
+   "files": {
+    "원판": "design-canvas/v2/B5-Project-Delete.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-Project-Delete.png"
+   },
+   "verdict": "적용",
+   "reason": "D5 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4 생산 콘솔",
+   "title": "프로젝트 2-1a · 삭제 확인(개요 모달)"
+  },
+  {
+   "id": "B5-Project-Data",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "데이터",
+   "variant": "원판 B5",
+   "name": "데이터(파일 · 데이터셋)",
+   "made": "2026-08-27",
+   "files": {
+    "원판": "design-canvas/v2/B5-Project-Data.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-Project-Data.png"
+   },
+   "verdict": "적용",
+   "reason": "D5·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4 생산 콘솔 ① 반입",
+   "title": "프로젝트 2-2 · 데이터(파일 | 데이터셋)"
+  },
+  {
+   "id": "B7-Project-File-Add",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "데이터",
+   "variant": "원판 B7",
+   "name": "파일 추가",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Project-File-Add.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Project-File-Add.png"
+   },
+   "verdict": "적용",
+   "reason": "D5·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4 생산 콘솔 ① 반입",
+   "title": "B7 Project File Add"
+  },
+  {
+   "id": "B7-Project-File-Progress",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "데이터",
+   "variant": "원판 B7",
+   "name": "업로드 진행 중",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Project-File-Progress.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Project-File-Progress.png"
+   },
+   "verdict": "적용",
+   "reason": "D5·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4 생산 콘솔 ① 반입",
+   "title": "B7 Project File Progress"
+  },
+  {
+   "id": "B7-Project-File-Fail",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "데이터",
+   "variant": "원판 B7",
+   "name": "업로드 실패",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Project-File-Fail.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Project-File-Fail.png"
+   },
+   "verdict": "적용",
+   "reason": "D5·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4 생산 콘솔 ① 반입",
+   "title": "B7 Project File Fail"
+  },
+  {
+   "id": "B7-Project-Dataset-Create",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "데이터",
+   "variant": "원판 B7",
+   "name": "데이터셋 만들기",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Project-Dataset-Create.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Project-Dataset-Create.png"
+   },
+   "verdict": "적용",
+   "reason": "D5·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4 생산 콘솔 ① 반입",
+   "title": "B7 Project Dataset Create"
+  },
+  {
+   "id": "B7-Project-Dataset-Detail",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "데이터",
+   "variant": "원판 B7",
+   "name": "데이터셋 상세",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Project-Dataset-Detail.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Project-Dataset-Detail.png"
+   },
+   "verdict": "적용",
+   "reason": "D5·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4 생산 콘솔 ① 반입",
+   "title": "B7 Project Dataset Detail"
+  },
+  {
+   "id": "H-Project-Data-Roboflow",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "데이터",
+   "variant": "원판 H(집 PC 초안)",
+   "name": "데이터 탭 초안 — 5열 그리드(집 PC)",
+   "made": "",
+   "files": {
+    "원판": "design-canvas/v2/H-Project-Data-Roboflow.dc.html",
+    "렌더": "design-canvas/v2/renders/H-Project-Data-Roboflow.png"
+   },
+   "verdict": "폐기",
+   "reason": "B5 원판의 전 단계 초안",
+   "replaced_by": "B5-Project-Data (데이터(파일 · 데이터셋))",
+   "title": "H · 프로젝트 데이터 탭 초안 — 5열 주석 썸네일"
+  },
+  {
+   "id": "B5-Project-Labeling",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "라벨링",
+   "variant": "원판 B5",
+   "name": "라벨링 + 클래스 편집기",
+   "made": "2026-08-27",
+   "files": {
+    "원판": "design-canvas/v2/B5-Project-Labeling.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-Project-Labeling.png"
+   },
+   "verdict": "적용",
+   "reason": "D5·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project-label.html"
+   ],
+   "later": "F3 B4 생산 콘솔 ② 학습",
+   "title": "프로젝트 2-3 · 라벨링 + 클래스 편집기"
+  },
+  {
+   "id": "B7-Project-Labeling-Fix",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "라벨링",
+   "variant": "원판 B7",
+   "name": "툴바 겹침 수정판",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Project-Labeling-Fix.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Project-Labeling-Fix.png"
+   },
+   "verdict": "적용",
+   "reason": "D5·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project-label.html"
+   ],
+   "later": "F3 B4 생산 콘솔 ② 학습",
+   "title": "B7 Project Labeling Fix"
+  },
+  {
+   "id": "B5-Project-Train",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "학습",
+   "variant": "원판 B5",
+   "name": "학습 워크플로우",
+   "made": "2026-08-27",
+   "files": {
+    "원판": "design-canvas/v2/B5-Project-Train.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-Project-Train.png"
+   },
+   "verdict": "적용",
+   "reason": "D5·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4 생산 콘솔 ② 학습",
+   "title": "프로젝트 2-4 · 학습 워크플로우"
+  },
+  {
+   "id": "B7-Project-Train-New",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "학습",
+   "variant": "원판 B7",
+   "name": "새로 학습하기",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Project-Train-New.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Project-Train-New.png"
+   },
+   "verdict": "적용",
+   "reason": "D5·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4 생산 콘솔 ② 학습",
+   "title": "B7 Project Train New"
+  },
+  {
+   "id": "B7-Project-Train-Running",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "학습",
+   "variant": "원판 B7",
+   "name": "학습 진행 중",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Project-Train-Running.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Project-Train-Running.png"
+   },
+   "verdict": "적용",
+   "reason": "D5·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4 생산 콘솔 ② 학습",
+   "title": "B7 Project Train Running"
+  },
+  {
+   "id": "B7-Project-Train-Fix",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "학습",
+   "variant": "원판 B7",
+   "name": "학습 화면 겹침 수정판",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Project-Train-Fix.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Project-Train-Fix.png"
+   },
+   "verdict": "적용",
+   "reason": "D5·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4 생산 콘솔 ② 학습",
+   "title": "B7 Project Train Fix"
+  },
+  {
+   "id": "B7-Project-Model-Register",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "학습",
+   "variant": "원판 B7",
+   "name": "모델 등록(추정)",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Project-Model-Register.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Project-Model-Register.png"
+   },
+   "verdict": "적용",
+   "reason": "D5·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4 생산 콘솔 ② 학습",
+   "title": "B7 Project Model Register"
+  },
+  {
+   "id": "B7-Project-Model-Registered",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "학습",
+   "variant": "원판 B7",
+   "name": "모델 등록됨(추정)",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Project-Model-Registered.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Project-Model-Registered.png"
+   },
+   "verdict": "적용",
+   "reason": "D5·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4 생산 콘솔 ② 학습",
+   "title": "B7 Project Model Registered"
+  },
+  {
+   "id": "B5-Project-Analysis",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "분석",
+   "variant": "원판 B5",
+   "name": "분석 탭",
+   "made": "2026-08-27",
+   "files": {
+    "원판": "design-canvas/v2/B5-Project-Analysis.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-Project-Analysis.png"
+   },
+   "verdict": "적용",
+   "reason": "D5 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4 생산 콘솔",
+   "title": "프로젝트 2-5 · 분석"
+  },
+  {
+   "id": "B5-Project-Deploy",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "배포·발행",
+   "variant": "원판 B5",
+   "name": "배포 · 발행 폼",
+   "made": "2026-08-27",
+   "files": {
+    "원판": "design-canvas/v2/B5-Project-Deploy.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-Project-Deploy.png"
+   },
+   "verdict": "적용",
+   "reason": "D5·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4 생산 콘솔 ⑤ 배포·이식",
+   "title": "프로젝트 2-6 · 배포 · 발행 폼"
+  },
+  {
+   "id": "B7-Project-Deploy-Picker",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "배포·발행",
+   "variant": "원판 B7",
+   "name": "발행 학습결과 선택",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Project-Deploy-Picker.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Project-Deploy-Picker.png"
+   },
+   "verdict": "적용",
+   "reason": "D5·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4 생산 콘솔 ⑤ 배포·이식",
+   "title": "B7 Project Deploy Picker"
+  },
+  {
+   "id": "B6-MapWork-Opt3",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "지도 작업공간(컨셉)",
+   "variant": "원판 B6",
+   "name": "선택 3 · 레이어가 곧 작업(권장)",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-MapWork-Opt3.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-MapWork-Opt3.png"
+   },
+   "verdict": "검토",
+   "reason": "D27 권장안 — 아직 구현 안 됨(자리 화면만)",
+   "next": "v3 생산 콘솔(landxi/v3/lx-console) — XI맵 위 6단 서랍과 같은 개념, 시안 승인 때 흡수",
+   "title": "B6 · MapWork Opt3"
+  },
+  {
+   "id": "B6-MapWork-Opt1",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "지도 작업공간(컨셉)",
+   "variant": "원판 B6",
+   "name": "선택 1 · 파이프라인 도크",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-MapWork-Opt1.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-MapWork-Opt1.png"
+   },
+   "verdict": "폐기",
+   "reason": "D27 권장안(선택 3) 자동 채택(9/20)",
+   "replaced_by": "B6-MapWork-Opt3 (선택 3 · 레이어가 곧 작업(권장))",
+   "title": "B6 · MapWork Opt1"
+  },
+  {
+   "id": "B6-MapWork-Opt2",
+   "kind": "원판",
+   "function": "프로젝트",
+   "screen": "지도 작업공간(컨셉)",
+   "variant": "원판 B6",
+   "name": "선택 2 · 단계 분할",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-MapWork-Opt2.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-MapWork-Opt2.png"
+   },
+   "verdict": "폐기",
+   "reason": "D27 권장안(선택 3) 자동 채택(9/20)",
+   "replaced_by": "B6-MapWork-Opt3 (선택 3 · 레이어가 곧 작업(권장))",
+   "title": "B6 · MapWork Opt2"
+  },
+  {
+   "id": "B5-Analysis-List",
+   "kind": "원판",
+   "function": "분석 서비스",
+   "screen": "카드 목록",
+   "variant": "원판 B5",
+   "name": "서비스 홈 — 카드 15 + 우 정보",
+   "made": "2026-08-27",
+   "files": {
+    "원판": "design-canvas/v2/B5-Analysis-List.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-Analysis-List.png"
+   },
+   "verdict": "적용",
+   "reason": "D10·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/analysis-ai.html"
+   ],
+   "later": "F3 B4: v3 생산 콘솔 ③ 조립(카탈로그)",
+   "title": "B5 · 분석 서비스 — 서비스: 카드 15(실크롭 244×84 + 이름 + 부처만 · 3열) + 우 정보 패널 444(선택 = 남원 농지이용 · 큰 이미지 · kv 6 · 숫자는 여기만) · 부처 칩 8 · CTA 분석 실행 1"
+  },
+  {
+   "id": "B7-Analysis-List",
+   "kind": "원판",
+   "function": "분석 서비스",
+   "screen": "카드 목록",
+   "variant": "원판 B7",
+   "name": "목록 — 준비 중 카드 표기",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Analysis-List.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Analysis-List.png"
+   },
+   "verdict": "적용",
+   "reason": "D10·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/analysis-ai.html"
+   ],
+   "later": "F3 B4: v3 생산 콘솔 ③ 조립(카탈로그)",
+   "title": "B7 Analysis List"
+  },
+  {
+   "id": "B5-Analysis-Run-Review",
+   "kind": "원판",
+   "function": "분석 서비스",
+   "screen": "실행 검토",
+   "variant": "원판 B5",
+   "name": "실행 검토 — 영상 중심",
+   "made": "2026-08-27",
+   "files": {
+    "원판": "design-canvas/v2/B5-Analysis-Run-Review.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-Analysis-Run-Review.png"
+   },
+   "verdict": "적용",
+   "reason": "D10 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/analysis-ai.html?tab=run"
+   ],
+   "later": "F3 B4 생산 콘솔",
+   "title": "분석 실행 1 · 실행 검토 — 01 영상이 중심(아카이브에서 불러오기: 탭 4 · 실썸네일 9/11 · 선택 2 · 페이지 1·2 · 회백 풋프린트 지도 / 영상 업로드 드롭존 = 데이터 관리 업로드 기능) · 02 과제 · 03 모델 압축 블록 + 변경 › · 우 실행 요약 kv 7 · 검정 CTA 분석 실행 1"
+  },
+  {
+   "id": "B5-Analysis-Run-Progress",
+   "kind": "원판",
+   "function": "분석 서비스",
+   "screen": "실행 중",
+   "variant": "원판 B5",
+   "name": "실행 중 — 영상별 진행",
+   "made": "2026-08-27",
+   "files": {
+    "원판": "design-canvas/v2/B5-Analysis-Run-Progress.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-Analysis-Run-Progress.png"
+   },
+   "verdict": "적용",
+   "reason": "D10·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/analysis-ai.html?tab=running"
+   ],
+   "later": "F3 B4 생산 콘솔",
+   "title": "분석 실행 2 · 실행중 — 세그먼트 실행중 3 · 우 패널 제목 실행중(정정) · 처리 중 영상(스캔 스트립 72 %) · 레일 5단계 1 · 영상별 진행 행 2(원본 상태어 분석중/대기 · % · 검출) · 누적 큰 수 4(검출 1,205 필지 · 처리 면적 0.45/1.24 km² · 경과 24분 · 잔여 42분) · 취소 헤어라인 · 검정 CTA 0"
+  },
+  {
+   "id": "B7-Analysis-Progress-Overlay",
+   "kind": "원판",
+   "function": "분석 서비스",
+   "screen": "실행 중",
+   "variant": "원판 B7",
+   "name": "진행 오버레이",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Analysis-Progress-Overlay.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Analysis-Progress-Overlay.png"
+   },
+   "verdict": "적용",
+   "reason": "D10·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/analysis-ai.html?tab=running"
+   ],
+   "later": "F3 B4 생산 콘솔",
+   "title": "B7 Analysis Progress Overlay"
+  },
+  {
+   "id": "B5-Analysis-Result",
+   "kind": "원판",
+   "function": "분석 서비스",
+   "screen": "실행 결과",
+   "variant": "원판 B5",
+   "name": "실행 결과 — 정사영상 + 청록 결과",
+   "made": "2026-08-27",
+   "files": {
+    "원판": "design-canvas/v2/B5-Analysis-Result.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-Analysis-Result.png"
+   },
+   "verdict": "적용",
+   "reason": "D10·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/analysis-ai.html?tab=done"
+   ],
+   "later": "F3 B4 생산 콘솔",
+   "title": "분석 실행 3 · 실행 결과 — 풀블리드 정사영상 + 청록 결과 · 스캔 스트립 → DETECTED → 카운트업 1,216/2,098 · 좌 실행중 3/완료 7(원본 탭) · 우 결과 요약 · 공유/다운로드"
+  },
+  {
+   "id": "B7-Analysis-Result-Edit",
+   "kind": "원판",
+   "function": "분석 서비스",
+   "screen": "실행 결과",
+   "variant": "원판 B7",
+   "name": "결과 편집",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Analysis-Result-Edit.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Analysis-Result-Edit.png"
+   },
+   "verdict": "적용",
+   "reason": "D10·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/analysis-ai.html?tab=done"
+   ],
+   "later": "F3 B4 생산 콘솔",
+   "title": "B7 Analysis Result Edit"
+  },
+  {
+   "id": "B7-Analysis-Share",
+   "kind": "원판",
+   "function": "분석 서비스",
+   "screen": "실행 결과",
+   "variant": "원판 B7",
+   "name": "공유 설정",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Analysis-Share.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Analysis-Share.png"
+   },
+   "verdict": "적용",
+   "reason": "D10·D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/analysis-ai.html?tab=done"
+   ],
+   "later": "F3 B4 생산 콘솔",
+   "title": "B7 Analysis Share"
+  },
+  {
+   "id": "B6-Publish-Opt3",
+   "kind": "원판",
+   "function": "카드 발행",
+   "screen": "승인·검토 데스크",
+   "variant": "원판 B6",
+   "name": "선택 3 · 분할 검토 데스크(권장)",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Publish-Opt3.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Publish-Opt3.png"
+   },
+   "verdict": "적용",
+   "reason": "D24 권장안(선택 3 분할 검토 데스크) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-publish.html"
+   ],
+   "later": "F3 B3: v3 관제 결재함 · 9/27 토스 톤 재조정",
+   "title": "B6 · Publish Opt3"
+  },
+  {
+   "id": "B6-Publish-Opt1",
+   "kind": "원판",
+   "function": "카드 발행",
+   "screen": "승인·검토 데스크",
+   "variant": "원판 B6",
+   "name": "선택 1 · 원장 + 드로어",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Publish-Opt1.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Publish-Opt1.png"
+   },
+   "verdict": "폐기",
+   "reason": "D24 권장안(선택 3) 자동 채택",
+   "replaced_by": "B6-Publish-Opt3 (선택 3 · 분할 검토 데스크(권장))",
+   "title": "B6 · Publish Opt1"
+  },
+  {
+   "id": "B6-Publish-Opt2",
+   "kind": "원판",
+   "function": "카드 발행",
+   "screen": "승인·검토 데스크",
+   "variant": "원판 B6",
+   "name": "선택 2 · 상태 열 보드",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Publish-Opt2.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Publish-Opt2.png"
+   },
+   "verdict": "폐기",
+   "reason": "D24 권장안(선택 3) 자동 채택",
+   "replaced_by": "B6-Publish-Opt3 (선택 3 · 분할 검토 데스크(권장))",
+   "title": "B6 · Publish Opt2"
+  },
+  {
+   "id": "B6-Publish-List",
+   "kind": "원판",
+   "function": "카드 발행",
+   "screen": "승인·검토 데스크",
+   "variant": "원판 B6",
+   "name": "승인 목록",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Publish-List.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Publish-List.png"
+   },
+   "verdict": "적용",
+   "reason": "D24 권장안(선택 3 분할 검토 데스크) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-publish.html"
+   ],
+   "later": "F3 B3: v3 관제 결재함 · 9/27 토스 톤 재조정",
+   "title": "B6 · Publish List"
+  },
+  {
+   "id": "B6-Publish-List-Empty",
+   "kind": "원판",
+   "function": "카드 발행",
+   "screen": "승인·검토 데스크",
+   "variant": "원판 B6",
+   "name": "승인 목록 0건",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Publish-List-Empty.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Publish-List-Empty.png"
+   },
+   "verdict": "적용",
+   "reason": "D24 권장안(선택 3 분할 검토 데스크) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-publish.html"
+   ],
+   "later": "F3 B3: v3 관제 결재함 · 9/27 토스 톤 재조정",
+   "title": "B6 · Publish List Empty"
+  },
+  {
+   "id": "B6-Publish-List-Pending",
+   "kind": "원판",
+   "function": "카드 발행",
+   "screen": "승인·검토 데스크",
+   "variant": "원판 B6",
+   "name": "승인 대기",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Publish-List-Pending.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Publish-List-Pending.png"
+   },
+   "verdict": "적용",
+   "reason": "D24 권장안(선택 3 분할 검토 데스크) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-publish.html"
+   ],
+   "later": "F3 B3: v3 관제 결재함 · 9/27 토스 톤 재조정",
+   "title": "B6 · Publish List Pending"
+  },
+  {
+   "id": "B6-Publish-Review-Analysis",
+   "kind": "원판",
+   "function": "카드 발행",
+   "screen": "승인·검토 데스크",
+   "variant": "원판 B6",
+   "name": "검토 · 분석",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Publish-Review-Analysis.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Publish-Review-Analysis.png"
+   },
+   "verdict": "적용",
+   "reason": "D24 권장안(선택 3 분할 검토 데스크) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-publish.html"
+   ],
+   "later": "F3 B3: v3 관제 결재함 · 9/27 토스 톤 재조정",
+   "title": "B6 · Publish Review Analysis"
+  },
+  {
+   "id": "B6-Publish-Review-ClassModal",
+   "kind": "원판",
+   "function": "카드 발행",
+   "screen": "승인·검토 데스크",
+   "variant": "원판 B6",
+   "name": "검토 · 클래스 모달",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Publish-Review-ClassModal.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Publish-Review-ClassModal.png"
+   },
+   "verdict": "적용",
+   "reason": "D24 권장안(선택 3 분할 검토 데스크) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-publish.html"
+   ],
+   "later": "F3 B3: v3 관제 결재함 · 9/27 토스 톤 재조정",
+   "title": "B6 · Publish Review ClassModal"
+  },
+  {
+   "id": "B6-Publish-Review-Edit",
+   "kind": "원판",
+   "function": "카드 발행",
+   "screen": "승인·검토 데스크",
+   "variant": "원판 B6",
+   "name": "검토 · 수정",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Publish-Review-Edit.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Publish-Review-Edit.png"
+   },
+   "verdict": "적용",
+   "reason": "D24 권장안(선택 3 분할 검토 데스크) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-publish.html"
+   ],
+   "later": "F3 B3: v3 관제 결재함 · 9/27 토스 톤 재조정",
+   "title": "B6 · Publish Review Edit"
+  },
+  {
+   "id": "B6-Publish-Review-Labeling",
+   "kind": "원판",
+   "function": "카드 발행",
+   "screen": "승인·검토 데스크",
+   "variant": "원판 B6",
+   "name": "검토 · 라벨링",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Publish-Review-Labeling.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Publish-Review-Labeling.png"
+   },
+   "verdict": "적용",
+   "reason": "D24 권장안(선택 3 분할 검토 데스크) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-publish.html"
+   ],
+   "later": "F3 B3: v3 관제 결재함 · 9/27 토스 톤 재조정",
+   "title": "B6 · Publish Review Labeling"
+  },
+  {
+   "id": "B6-Publish-Review-Members",
+   "kind": "원판",
+   "function": "카드 발행",
+   "screen": "승인·검토 데스크",
+   "variant": "원판 B6",
+   "name": "검토 · 구성원",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Publish-Review-Members.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Publish-Review-Members.png"
+   },
+   "verdict": "적용",
+   "reason": "D24 권장안(선택 3 분할 검토 데스크) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-publish.html"
+   ],
+   "later": "F3 B3: v3 관제 결재함 · 9/27 토스 톤 재조정",
+   "title": "B6 · Publish Review Members"
+  },
+  {
+   "id": "B6-Publish-Review-Process",
+   "kind": "원판",
+   "function": "카드 발행",
+   "screen": "승인·검토 데스크",
+   "variant": "원판 B6",
+   "name": "검토 · 처리",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Publish-Review-Process.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Publish-Review-Process.png"
+   },
+   "verdict": "적용",
+   "reason": "D24 권장안(선택 3 분할 검토 데스크) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-publish.html"
+   ],
+   "later": "F3 B3: v3 관제 결재함 · 9/27 토스 톤 재조정",
+   "title": "B6 · Publish Review Process"
+  },
+  {
+   "id": "B6-Publish-Review-Reject",
+   "kind": "원판",
+   "function": "카드 발행",
+   "screen": "승인·검토 데스크",
+   "variant": "원판 B6",
+   "name": "검토 · 반려 입력",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Publish-Review-Reject.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Publish-Review-Reject.png"
+   },
+   "verdict": "적용",
+   "reason": "D24 권장안(선택 3 분할 검토 데스크) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-publish.html"
+   ],
+   "later": "F3 B3: v3 관제 결재함 · 9/27 토스 톤 재조정",
+   "title": "B6 · Publish Review Reject"
+  },
+  {
+   "id": "B6-Publish-Review-Rejected",
+   "kind": "원판",
+   "function": "카드 발행",
+   "screen": "승인·검토 데스크",
+   "variant": "원판 B6",
+   "name": "검토 · 반려됨",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Publish-Review-Rejected.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Publish-Review-Rejected.png"
+   },
+   "verdict": "적용",
+   "reason": "D24 권장안(선택 3 분할 검토 데스크) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-publish.html"
+   ],
+   "later": "F3 B3: v3 관제 결재함 · 9/27 토스 톤 재조정",
+   "title": "B6 · Publish Review Rejected"
+  },
+  {
+   "id": "B6-Publish-Review-Train",
+   "kind": "원판",
+   "function": "카드 발행",
+   "screen": "승인·검토 데스크",
+   "variant": "원판 B6",
+   "name": "검토 · 학습",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Publish-Review-Train.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Publish-Review-Train.png"
+   },
+   "verdict": "적용",
+   "reason": "D24 권장안(선택 3 분할 검토 데스크) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-publish.html"
+   ],
+   "later": "F3 B3: v3 관제 결재함 · 9/27 토스 톤 재조정",
+   "title": "B6 · Publish Review Train"
+  },
+  {
+   "id": "B6-Publish-Cards",
+   "kind": "원판",
+   "function": "카드 발행",
+   "screen": "카드 목록",
+   "variant": "원판 B6",
+   "name": "카드 목록",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Publish-Cards.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Publish-Cards.png"
+   },
+   "verdict": "적용",
+   "reason": "D24 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-card.html"
+   ],
+   "later": "F3 B4: v3 생산 콘솔 ③ 조립 · 카드 = 스펙시먼 B 문법(D21ⓒ)",
+   "title": "B6 · Publish Cards"
+  },
+  {
+   "id": "B6-Publish-Cards-Empty",
+   "kind": "원판",
+   "function": "카드 발행",
+   "screen": "카드 목록",
+   "variant": "원판 B6",
+   "name": "카드 0건",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Publish-Cards-Empty.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Publish-Cards-Empty.png"
+   },
+   "verdict": "적용",
+   "reason": "D24 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-card.html"
+   ],
+   "later": "F3 B4: v3 생산 콘솔 ③ 조립 · 카드 = 스펙시먼 B 문법(D21ⓒ)",
+   "title": "B6 · Publish Cards Empty"
+  },
+  {
+   "id": "B6-Publish-Card-Edit",
+   "kind": "원판",
+   "function": "카드 발행",
+   "screen": "카드 편집",
+   "variant": "원판 B6",
+   "name": "카드 편집",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Publish-Card-Edit.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Publish-Card-Edit.png"
+   },
+   "verdict": "적용",
+   "reason": "D24 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-card-edit.html"
+   ],
+   "later": "F3 B4 생산 콘솔 ③ 조립",
+   "title": "B6 · Publish Card Edit"
+  },
+  {
+   "id": "B6-Publish-Card-Edit-Locked",
+   "kind": "원판",
+   "function": "카드 발행",
+   "screen": "카드 편집",
+   "variant": "원판 B6",
+   "name": "편집 잠김",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Publish-Card-Edit-Locked.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Publish-Card-Edit-Locked.png"
+   },
+   "verdict": "적용",
+   "reason": "D24 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-card-edit.html"
+   ],
+   "later": "F3 B4 생산 콘솔 ③ 조립",
+   "title": "B6 · Publish Card Edit Locked"
+  },
+  {
+   "id": "B6-Publish-Request",
+   "kind": "원판",
+   "function": "카드 발행",
+   "screen": "발행 요청",
+   "variant": "원판 B6",
+   "name": "발행 요청",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Publish-Request.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Publish-Request.png"
+   },
+   "verdict": "적용",
+   "reason": "D24 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/ai-publish-create.html"
+   ],
+   "later": "F3 §5: 발행 요청 폼 폐지 예정 → 카탈로그 매트릭스",
+   "title": "B6 · Publish Request"
+  },
+  {
+   "id": "B5-Map",
+   "kind": "원판",
+   "function": "XI맵",
+   "screen": "기본 지도",
+   "variant": "원판 B5",
+   "name": "기본 — V-World 실타일 + 레이어 카드 + 시점 스트립",
+   "made": "2026-08-27",
+   "files": {
+    "원판": "design-canvas/v2/B5-Map.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-Map.png"
+   },
+   "verdict": "폐기",
+   "reason": "구 XI맵(proto/ximap)에 들어갔던 판 — 레일이 새 XI맵으로 옮겨감",
+   "replaced_by": "새 XI맵 landxi/xi (F1·F2) — 9/27 레일 정본화(F2-R)",
+   "title": "지도 서비스 1 · 기본 — V-World 실타일 + 레이어 카드 + 시점 스트립"
+  },
+  {
+   "id": "B2-XiMap",
+   "kind": "원판",
+   "function": "XI맵",
+   "screen": "기본 지도",
+   "variant": "원판 B2",
+   "name": "XI맵 초안 — 분석 지도",
+   "made": "2026-08-26",
+   "files": {
+    "원판": "design-canvas/v2/B2-XiMap.dc.html",
+    "렌더": "design-canvas/v2/renders/B2-XiMap.png"
+   },
+   "verdict": "폐기",
+   "reason": "원본 기능의 1/4 · 임계/스캔은 원본에 없음(NOTES §20)",
+   "replaced_by": "B5-Map (기본 — V-World 실타일 + 레이어 카드 + 시점 스트립)",
+   "title": "B2 · 지도 서비스 (XI맵) — 분석 지도"
+  },
+  {
+   "id": "B7-Map-Basemap",
+   "kind": "원판",
+   "function": "XI맵",
+   "screen": "기본 지도",
+   "variant": "원판 B7",
+   "name": "배경지도 선택",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Map-Basemap.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Map-Basemap.png"
+   },
+   "verdict": "폐기",
+   "reason": "구 XI맵(proto/ximap)에 들어갔던 판 — 레일이 새 XI맵으로 옮겨감",
+   "replaced_by": "새 XI맵 landxi/xi (F1·F2) — 9/27 레일 정본화(F2-R)",
+   "title": "B7 Map Basemap"
+  },
+  {
+   "id": "B7-Map-LayerTab",
+   "kind": "원판",
+   "function": "XI맵",
+   "screen": "기본 지도",
+   "variant": "원판 B7",
+   "name": "레이어 탭 펼침",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Map-LayerTab.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Map-LayerTab.png"
+   },
+   "verdict": "폐기",
+   "reason": "구 XI맵(proto/ximap)에 들어갔던 판 — 레일이 새 XI맵으로 옮겨감",
+   "replaced_by": "새 XI맵 landxi/xi (F1·F2) — 9/27 레일 정본화(F2-R)",
+   "title": "B7 Map LayerTab"
+  },
+  {
+   "id": "B7-Map-Empty",
+   "kind": "원판",
+   "function": "XI맵",
+   "screen": "기본 지도",
+   "variant": "원판 B7",
+   "name": "레이어 0",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Map-Empty.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Map-Empty.png"
+   },
+   "verdict": "검토",
+   "reason": "새 XI맵에 같은 상태 설계 없음",
+   "next": "v3 XI맵 정돈판(xi-clean) 빈 지역 상태 — '영상 반입 필요' 다음 행동",
+   "title": "B7 Map Empty"
+  },
+  {
+   "id": "B7-Map-Loading",
+   "kind": "원판",
+   "function": "XI맵",
+   "screen": "기본 지도",
+   "variant": "원판 B7",
+   "name": "로딩",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Map-Loading.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Map-Loading.png"
+   },
+   "verdict": "검토",
+   "reason": "새 XI맵에 같은 상태 설계 없음",
+   "next": "v3 XI맵 정돈판 로딩 상태 — 캐릭터(D20②)와 함께",
+   "title": "B7 Map Loading"
+  },
+  {
+   "id": "B5-Map-Info",
+   "kind": "원판",
+   "function": "XI맵",
+   "screen": "객체 정보",
+   "variant": "원판 B5",
+   "name": "객체 정보 — 브래킷 콜아웃 + 탐지 정보",
+   "made": "2026-08-27",
+   "files": {
+    "원판": "design-canvas/v2/B5-Map-Info.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-Map-Info.png"
+   },
+   "verdict": "검토",
+   "reason": "구 XI맵에만 들어감 · 새 XI맵 이관 미정",
+   "next": "v3 XI맵 정돈판(xi-clean) HUD — 객체 정보 콜아웃 문법 재사용 여부",
+   "title": "지도 서비스 2 · 객체 정보 — 브래킷 콜아웃 + 탐지 정보"
+  },
+  {
+   "id": "B5-Map-Compare",
+   "kind": "원판",
+   "function": "XI맵",
+   "screen": "시점 비교",
+   "variant": "원판 B5",
+   "name": "겹쳐보기 — 두 시점 스와이프",
+   "made": "2026-08-27",
+   "files": {
+    "원판": "design-canvas/v2/B5-Map-Compare.dc.html",
+    "렌더": "design-canvas/v2/renders/B5-Map-Compare.png"
+   },
+   "verdict": "폐기",
+   "reason": "구 XI맵 판 — 새 XI맵이 같은 기능을 가짐",
+   "replaced_by": "새 XI맵 시점 스와이프(landxi/xi)",
+   "title": "지도 서비스 3 · 겹쳐보기 — 2025.04 | 2025.10 + 변화 지수"
+  },
+  {
+   "id": "B7-Map-Parallel",
+   "kind": "원판",
+   "function": "XI맵",
+   "screen": "시점 비교",
+   "variant": "원판 B7",
+   "name": "나란히 보기",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Map-Parallel.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Map-Parallel.png"
+   },
+   "verdict": "폐기",
+   "reason": "구 XI맵 판 — 새 XI맵이 같은 기능을 가짐",
+   "replaced_by": "새 XI맵 시점 스와이프(landxi/xi)",
+   "title": "B7 Map Parallel"
+  },
+  {
+   "id": "B7-Map-Search",
+   "kind": "원판",
+   "function": "XI맵",
+   "screen": "검색",
+   "variant": "원판 B7",
+   "name": "검색",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Map-Search.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Map-Search.png"
+   },
+   "verdict": "폐기",
+   "reason": "구 XI맵 판 — 새 XI맵이 같은 기능을 가짐",
+   "replaced_by": "새 XI맵 검색(landxi/xi)",
+   "title": "B7 Map Search"
+  },
+  {
+   "id": "B7-Map-Search-Empty",
+   "kind": "원판",
+   "function": "XI맵",
+   "screen": "검색",
+   "variant": "원판 B7",
+   "name": "검색 0건",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Map-Search-Empty.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Map-Search-Empty.png"
+   },
+   "verdict": "검토",
+   "reason": "새 XI맵에 0건 상태 설계 없음",
+   "next": "v3 XI맵 정돈판 — 0건 안내 한 줄",
+   "title": "B7 Map Search Empty"
+  },
+  {
+   "id": "B7-Map-Measure",
+   "kind": "원판",
+   "function": "XI맵",
+   "screen": "도구(측정·그리기·구역·내려받기)",
+   "variant": "원판 B7",
+   "name": "측정",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Map-Measure.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Map-Measure.png"
+   },
+   "verdict": "검토",
+   "reason": "원본 기능 — 새 XI맵에 아직 없음",
+   "next": "v3 XI맵 정돈판 '도구 7' 재구현 때 이식",
+   "title": "B7 Map Measure"
+  },
+  {
+   "id": "B7-Map-Draw",
+   "kind": "원판",
+   "function": "XI맵",
+   "screen": "도구(측정·그리기·구역·내려받기)",
+   "variant": "원판 B7",
+   "name": "그리기",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Map-Draw.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Map-Draw.png"
+   },
+   "verdict": "검토",
+   "reason": "원본 기능 — 새 XI맵에 아직 없음",
+   "next": "v3 XI맵 정돈판 '도구 7' 재구현 때 이식",
+   "title": "B7 Map Draw"
+  },
+  {
+   "id": "B7-Map-AOI",
+   "kind": "원판",
+   "function": "XI맵",
+   "screen": "도구(측정·그리기·구역·내려받기)",
+   "variant": "원판 B7",
+   "name": "관심 구역",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Map-AOI.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Map-AOI.png"
+   },
+   "verdict": "검토",
+   "reason": "원본 기능 — 새 XI맵에 아직 없음",
+   "next": "v3 XI맵 정돈판 '도구 7' 재구현 때 이식",
+   "title": "B7 Map AOI"
+  },
+  {
+   "id": "B7-Map-Download",
+   "kind": "원판",
+   "function": "XI맵",
+   "screen": "도구(측정·그리기·구역·내려받기)",
+   "variant": "원판 B7",
+   "name": "내려받기",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Map-Download.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Map-Download.png"
+   },
+   "verdict": "검토",
+   "reason": "원본 기능 — 새 XI맵에 아직 없음",
+   "next": "v3 XI맵 정돈판 '도구 7' 재구현 때 이식",
+   "title": "B7 Map Download"
+  },
+  {
+   "id": "B7-Map-Region",
+   "kind": "원판",
+   "function": "XI맵",
+   "screen": "지역 구분·속성 표",
+   "variant": "원판 B7",
+   "name": "지역 구분(읍면동 5분위)",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Map-Region.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Map-Region.png"
+   },
+   "verdict": "검토",
+   "reason": "구 XI맵에만 들어감 · 새 XI맵 이관 미정",
+   "next": "F3 B2 — v3 서비스 화면 시군구 집계·보고서 서랍",
+   "title": "B7 Map Region"
+  },
+  {
+   "id": "B7-Map-Table",
+   "kind": "원판",
+   "function": "XI맵",
+   "screen": "지역 구분·속성 표",
+   "variant": "원판 B7",
+   "name": "속성 표 펼침",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Map-Table.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Map-Table.png"
+   },
+   "verdict": "검토",
+   "reason": "구 XI맵에만 들어감 · 새 XI맵 이관 미정",
+   "next": "F3 B2 — v3 서비스 화면 시군구 집계·보고서 서랍",
+   "title": "B7 Map Table"
+  },
+  {
+   "id": "B7-Map-Pledge",
+   "kind": "원판",
+   "function": "XI맵",
+   "screen": "보안 서약",
+   "variant": "원판 B7",
+   "name": "보안 서약서",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Map-Pledge.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Map-Pledge.png"
+   },
+   "verdict": "검토",
+   "reason": "원본 기능 — 새 XI맵에 없음",
+   "next": "v3 XI맵 정돈판 — 원본 기능 이식(내려받기 전 서약)",
+   "title": "B7 Map Pledge"
+  },
+  {
+   "id": "B7-Map-Pledge-Busy",
+   "kind": "원판",
+   "function": "XI맵",
+   "screen": "보안 서약",
+   "variant": "원판 B7",
+   "name": "서약 처리 중",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Map-Pledge-Busy.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Map-Pledge-Busy.png"
+   },
+   "verdict": "검토",
+   "reason": "원본 기능 — 새 XI맵에 없음",
+   "next": "v3 XI맵 정돈판 — 원본 기능 이식(내려받기 전 서약)",
+   "title": "B7 Map Pledge Busy"
+  },
+  {
+   "id": "B7-Stats-Opt1",
+   "kind": "원판",
+   "function": "통계/보고서",
+   "screen": "통계",
+   "variant": "원판 B7",
+   "name": "선택 1 · 지도 안 우 서랍(권장)",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Stats-Opt1.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Stats-Opt1.png"
+   },
+   "verdict": "적용",
+   "reason": "D29 선택 1(지도 안 우 서랍) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/stats-standard.html"
+   ],
+   "later": "F3 B2: v3 서비스 보고서 서랍",
+   "title": "B7 Stats Opt1"
+  },
+  {
+   "id": "B7-Stats-Opt2",
+   "kind": "원판",
+   "function": "통계/보고서",
+   "screen": "통계",
+   "variant": "원판 B7",
+   "name": "선택 2 · 전면 보고서형",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Stats-Opt2.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Stats-Opt2.png"
+   },
+   "verdict": "폐기",
+   "reason": "D29 선택 1 자동 채택",
+   "replaced_by": "B7-Stats-Opt1 (선택 1 · 지도 안 우 서랍(권장))",
+   "title": "B7 Stats Opt2"
+  },
+  {
+   "id": "B7-Stats-Opt3",
+   "kind": "원판",
+   "function": "통계/보고서",
+   "screen": "통계",
+   "variant": "원판 B7",
+   "name": "선택 3 · 하단 시트 + 스크러버",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Stats-Opt3.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Stats-Opt3.png"
+   },
+   "verdict": "폐기",
+   "reason": "D29 선택 1 자동 채택",
+   "replaced_by": "B7-Stats-Opt1 (선택 1 · 지도 안 우 서랍(권장))",
+   "title": "B7 Stats Opt3"
+  },
+  {
+   "id": "B7-Stats-Class",
+   "kind": "원판",
+   "function": "통계/보고서",
+   "screen": "통계",
+   "variant": "원판 B7",
+   "name": "클래스별",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Stats-Class.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Stats-Class.png"
+   },
+   "verdict": "적용",
+   "reason": "D29 선택 1(지도 안 우 서랍) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/stats-standard.html"
+   ],
+   "later": "F3 B2: v3 서비스 보고서 서랍",
+   "title": "B7 Stats Class"
+  },
+  {
+   "id": "B7-Stats-Find",
+   "kind": "원판",
+   "function": "통계/보고서",
+   "screen": "통계",
+   "variant": "원판 B7",
+   "name": "찾기",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Stats-Find.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Stats-Find.png"
+   },
+   "verdict": "적용",
+   "reason": "D29 선택 1(지도 안 우 서랍) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/stats-standard.html"
+   ],
+   "later": "F3 B2: v3 서비스 보고서 서랍",
+   "title": "B7 Stats Find"
+  },
+  {
+   "id": "B7-Stats-Empty",
+   "kind": "원판",
+   "function": "통계/보고서",
+   "screen": "통계",
+   "variant": "원판 B7",
+   "name": "0건",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Stats-Empty.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Stats-Empty.png"
+   },
+   "verdict": "적용",
+   "reason": "D29 선택 1(지도 안 우 서랍) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/stats-standard.html"
+   ],
+   "later": "F3 B2: v3 서비스 보고서 서랍",
+   "title": "B7 Stats Empty"
+  },
+  {
+   "id": "B7-Report-List",
+   "kind": "원판",
+   "function": "통계/보고서",
+   "screen": "보고서",
+   "variant": "원판 B7",
+   "name": "보고서 목록",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Report-List.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Report-List.png"
+   },
+   "verdict": "적용",
+   "reason": "D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/report-standard.html"
+   ],
+   "later": "F3 B2: v3 서비스 보고서 서랍",
+   "title": "B7 Report List"
+  },
+  {
+   "id": "B7-Report-List-Empty",
+   "kind": "원판",
+   "function": "통계/보고서",
+   "screen": "보고서",
+   "variant": "원판 B7",
+   "name": "보고서 0건",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Report-List-Empty.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Report-List-Empty.png"
+   },
+   "verdict": "적용",
+   "reason": "D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/report-standard.html"
+   ],
+   "later": "F3 B2: v3 서비스 보고서 서랍",
+   "title": "B7 Report List Empty"
+  },
+  {
+   "id": "B7-Report-Pledge",
+   "kind": "원판",
+   "function": "통계/보고서",
+   "screen": "보고서",
+   "variant": "원판 B7",
+   "name": "보고서 서약",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Report-Pledge.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Report-Pledge.png"
+   },
+   "verdict": "적용",
+   "reason": "D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/report-standard.html"
+   ],
+   "later": "F3 B2: v3 서비스 보고서 서랍",
+   "title": "B7 Report Pledge"
+  },
+  {
+   "id": "B7-Report-Issue",
+   "kind": "원판",
+   "function": "통계/보고서",
+   "screen": "보고서",
+   "variant": "원판 B7",
+   "name": "오류 신고",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Report-Issue.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Report-Issue.png"
+   },
+   "verdict": "적용",
+   "reason": "D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/report-standard-issue.html"
+   ],
+   "later": "F3 B2: v3 서비스 보고서 서랍",
+   "title": "B7 Report Issue"
+  },
+  {
+   "id": "B7-Report-Issue-Error",
+   "kind": "원판",
+   "function": "통계/보고서",
+   "screen": "보고서",
+   "variant": "원판 B7",
+   "name": "신고 입력 오류",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-Report-Issue-Error.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-Report-Issue-Error.png"
+   },
+   "verdict": "적용",
+   "reason": "D29 원판 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/report-standard-issue.html"
+   ],
+   "later": "F3 B2: v3 서비스 보고서 서랍",
+   "title": "B7 Report Issue Error"
+  },
+  {
+   "id": "B6-Admin-Users-Opt2",
+   "kind": "원판",
+   "function": "서비스 관리",
+   "screen": "사용자 관리",
+   "variant": "원판 B6",
+   "name": "선택 2 · 목록 + 우 열람(권장)",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Admin-Users-Opt2.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Admin-Users-Opt2.png"
+   },
+   "verdict": "적용",
+   "reason": "D25 권장안(선택 2) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-users.html"
+   ],
+   "later": "F3 B3: v3 관제 5메뉴 · 9/27 토스 톤 재조정",
+   "title": "B6 · Admin Users Opt2"
+  },
+  {
+   "id": "B6-Admin-Users-Opt1",
+   "kind": "원판",
+   "function": "서비스 관리",
+   "screen": "사용자 관리",
+   "variant": "원판 B6",
+   "name": "선택 1 · 승인 띠 + 10열 원장",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Admin-Users-Opt1.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Admin-Users-Opt1.png"
+   },
+   "verdict": "폐기",
+   "reason": "D25 권장안(선택 2) 자동 채택",
+   "replaced_by": "B6-Admin-Users-Opt2 (선택 2 · 목록 + 우 열람(권장))",
+   "title": "B6 · Admin Users Opt1"
+  },
+  {
+   "id": "B6-Admin-Users-Opt3",
+   "kind": "원판",
+   "function": "서비스 관리",
+   "screen": "사용자 관리",
+   "variant": "원판 B6",
+   "name": "선택 3 · 승인 데스크 + 카드 보드",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Admin-Users-Opt3.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Admin-Users-Opt3.png"
+   },
+   "verdict": "폐기",
+   "reason": "D25 권장안(선택 2) 자동 채택",
+   "replaced_by": "B6-Admin-Users-Opt2 (선택 2 · 목록 + 우 열람(권장))",
+   "title": "B6 · Admin Users Opt3"
+  },
+  {
+   "id": "B6-Admin-Users-Approve",
+   "kind": "원판",
+   "function": "서비스 관리",
+   "screen": "사용자 관리",
+   "variant": "원판 B6",
+   "name": "가입 승인",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Admin-Users-Approve.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Admin-Users-Approve.png"
+   },
+   "verdict": "적용",
+   "reason": "D25 권장안(선택 2) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-users.html"
+   ],
+   "later": "F3 B3: v3 관제 5메뉴 · 9/27 토스 톤 재조정",
+   "title": "B6 · Admin Users Approve"
+  },
+  {
+   "id": "B6-Admin-Users-Detail",
+   "kind": "원판",
+   "function": "서비스 관리",
+   "screen": "사용자 관리",
+   "variant": "원판 B6",
+   "name": "사용자 상세",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Admin-Users-Detail.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Admin-Users-Detail.png"
+   },
+   "verdict": "적용",
+   "reason": "D25 권장안(선택 2) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-users.html"
+   ],
+   "later": "F3 B3: v3 관제 5메뉴 · 9/27 토스 톤 재조정",
+   "title": "B6 · Admin Users Detail"
+  },
+  {
+   "id": "B6-Admin-Users-Empty",
+   "kind": "원판",
+   "function": "서비스 관리",
+   "screen": "사용자 관리",
+   "variant": "원판 B6",
+   "name": "0명",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Admin-Users-Empty.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Admin-Users-Empty.png"
+   },
+   "verdict": "적용",
+   "reason": "D25 권장안(선택 2) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-users.html"
+   ],
+   "later": "F3 B3: v3 관제 5메뉴 · 9/27 토스 톤 재조정",
+   "title": "B6 · Admin Users Empty"
+  },
+  {
+   "id": "B6-Admin-Users-Login",
+   "kind": "원판",
+   "function": "서비스 관리",
+   "screen": "사용자 관리",
+   "variant": "원판 B6",
+   "name": "접속 이력",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Admin-Users-Login.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Admin-Users-Login.png"
+   },
+   "verdict": "적용",
+   "reason": "D25 권장안(선택 2) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-users.html"
+   ],
+   "later": "F3 B3: v3 관제 5메뉴 · 9/27 토스 톤 재조정",
+   "title": "B6 · Admin Users Login"
+  },
+  {
+   "id": "B6-Admin-Users-Login-Empty",
+   "kind": "원판",
+   "function": "서비스 관리",
+   "screen": "사용자 관리",
+   "variant": "원판 B6",
+   "name": "접속 이력 0건",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Admin-Users-Login-Empty.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Admin-Users-Login-Empty.png"
+   },
+   "verdict": "적용",
+   "reason": "D25 권장안(선택 2) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-users.html"
+   ],
+   "later": "F3 B3: v3 관제 5메뉴 · 9/27 토스 톤 재조정",
+   "title": "B6 · Admin Users Login Empty"
+  },
+  {
+   "id": "B6-Admin-Users-Pwd",
+   "kind": "원판",
+   "function": "서비스 관리",
+   "screen": "사용자 관리",
+   "variant": "원판 B6",
+   "name": "비밀번호 초기화",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Admin-Users-Pwd.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Admin-Users-Pwd.png"
+   },
+   "verdict": "적용",
+   "reason": "D25 권장안(선택 2) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-users.html"
+   ],
+   "later": "F3 B3: v3 관제 5메뉴 · 9/27 토스 톤 재조정",
+   "title": "B6 · Admin Users Pwd"
+  },
+  {
+   "id": "B6-Admin-Users-Pwd-Empty",
+   "kind": "원판",
+   "function": "서비스 관리",
+   "screen": "사용자 관리",
+   "variant": "원판 B6",
+   "name": "초기화 요청 0건",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Admin-Users-Pwd-Empty.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Admin-Users-Pwd-Empty.png"
+   },
+   "verdict": "적용",
+   "reason": "D25 권장안(선택 2) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-users.html"
+   ],
+   "later": "F3 B3: v3 관제 5메뉴 · 9/27 토스 톤 재조정",
+   "title": "B6 · Admin Users Pwd Empty"
+  },
+  {
+   "id": "B6-Admin-Notice",
+   "kind": "원판",
+   "function": "서비스 관리",
+   "screen": "공지 관리",
+   "variant": "원판 B6",
+   "name": "공지 목록",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Admin-Notice.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Admin-Notice.png"
+   },
+   "verdict": "적용",
+   "reason": "D25 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-notice.html"
+   ],
+   "later": "F3 B3: v3 관제 설정 하위 · 9/27 토스 톤",
+   "title": "B6 · Admin Notice"
+  },
+  {
+   "id": "B6-Admin-Notice-Form",
+   "kind": "원판",
+   "function": "서비스 관리",
+   "screen": "공지 관리",
+   "variant": "원판 B6",
+   "name": "공지 작성",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Admin-Notice-Form.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Admin-Notice-Form.png"
+   },
+   "verdict": "적용",
+   "reason": "D25 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-notice.html"
+   ],
+   "later": "F3 B3: v3 관제 설정 하위 · 9/27 토스 톤",
+   "title": "B6 · Admin Notice Form"
+  },
+  {
+   "id": "B6-Admin-Notice-Form-Error",
+   "kind": "원판",
+   "function": "서비스 관리",
+   "screen": "공지 관리",
+   "variant": "원판 B6",
+   "name": "작성 오류",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Admin-Notice-Form-Error.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Admin-Notice-Form-Error.png"
+   },
+   "verdict": "적용",
+   "reason": "D25 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-notice.html"
+   ],
+   "later": "F3 B3: v3 관제 설정 하위 · 9/27 토스 톤",
+   "title": "B6 · Admin Notice Form Error"
+  },
+  {
+   "id": "B6-Admin-Notice-Delete",
+   "kind": "원판",
+   "function": "서비스 관리",
+   "screen": "공지 관리",
+   "variant": "원판 B6",
+   "name": "삭제 확인",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Admin-Notice-Delete.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Admin-Notice-Delete.png"
+   },
+   "verdict": "적용",
+   "reason": "D25 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-notice.html"
+   ],
+   "later": "F3 B3: v3 관제 설정 하위 · 9/27 토스 톤",
+   "title": "B6 · Admin Notice Delete"
+  },
+  {
+   "id": "B6-Admin-Inquiry",
+   "kind": "원판",
+   "function": "서비스 관리",
+   "screen": "문의 관리",
+   "variant": "원판 B6",
+   "name": "문의 목록",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Admin-Inquiry.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Admin-Inquiry.png"
+   },
+   "verdict": "적용",
+   "reason": "D25 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-inquiry.html"
+   ],
+   "later": "F3 B3: v3 관제 설정 하위 · 9/27 토스 톤",
+   "title": "B6 · Admin Inquiry"
+  },
+  {
+   "id": "B6-Admin-Inquiry-Reply",
+   "kind": "원판",
+   "function": "서비스 관리",
+   "screen": "문의 관리",
+   "variant": "원판 B6",
+   "name": "답변",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Admin-Inquiry-Reply.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Admin-Inquiry-Reply.png"
+   },
+   "verdict": "적용",
+   "reason": "D25 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-inquiry.html"
+   ],
+   "later": "F3 B3: v3 관제 설정 하위 · 9/27 토스 톤",
+   "title": "B6 · Admin Inquiry Reply"
+  },
+  {
+   "id": "B6-Admin-Faq",
+   "kind": "원판",
+   "function": "서비스 관리",
+   "screen": "FAQ 관리",
+   "variant": "원판 B6",
+   "name": "FAQ 목록",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Admin-Faq.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Admin-Faq.png"
+   },
+   "verdict": "적용",
+   "reason": "D25 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-faq.html"
+   ],
+   "later": "F3 B3: v3 관제 설정 하위 · 9/27 토스 톤",
+   "title": "B6 · Admin Faq"
+  },
+  {
+   "id": "B6-Admin-Faq-Form",
+   "kind": "원판",
+   "function": "서비스 관리",
+   "screen": "FAQ 관리",
+   "variant": "원판 B6",
+   "name": "FAQ 작성",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Admin-Faq-Form.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Admin-Faq-Form.png"
+   },
+   "verdict": "적용",
+   "reason": "D25 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-faq.html"
+   ],
+   "later": "F3 B3: v3 관제 설정 하위 · 9/27 토스 톤",
+   "title": "B6 · Admin Faq Form"
+  },
+  {
+   "id": "B6-Admin-Map",
+   "kind": "원판",
+   "function": "서비스 관리",
+   "screen": "지도 속성 관리",
+   "variant": "원판 B6",
+   "name": "지도 속성 — 실시간 미리보기",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Admin-Map.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Admin-Map.png"
+   },
+   "verdict": "적용",
+   "reason": "D25 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-map.html"
+   ],
+   "later": "F3 B1: XI맵으로 흡수",
+   "title": "B6 · Admin Map"
+  },
+  {
+   "id": "B6-Admin-Map-Edit",
+   "kind": "원판",
+   "function": "서비스 관리",
+   "screen": "지도 속성 관리",
+   "variant": "원판 B6",
+   "name": "속성 수정",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Admin-Map-Edit.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Admin-Map-Edit.png"
+   },
+   "verdict": "적용",
+   "reason": "D25 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/admin-map.html"
+   ],
+   "later": "F3 B1: XI맵으로 흡수",
+   "title": "B6 · Admin Map Edit"
+  },
+  {
+   "id": "B6-Support-Notice-Opt2",
+   "kind": "원판",
+   "function": "서비스 지원",
+   "screen": "공지",
+   "variant": "원판 B6",
+   "name": "선택 2 · 건수 타일 + 목록/열람(권장)",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Support-Notice-Opt2.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Support-Notice-Opt2.png"
+   },
+   "verdict": "적용",
+   "reason": "D23 권장안(선택 2) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/notice.html"
+   ],
+   "later": "F3 B5: '?' 서랍으로 축소",
+   "title": "B6 · Support Notice Opt2"
+  },
+  {
+   "id": "B6-Support-Notice-Opt1",
+   "kind": "원판",
+   "function": "서비스 지원",
+   "screen": "공지",
+   "variant": "원판 B6",
+   "name": "선택 1 · 표 + 제자리 펼침",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Support-Notice-Opt1.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Support-Notice-Opt1.png"
+   },
+   "verdict": "폐기",
+   "reason": "D23 권장안(선택 2) 자동 채택",
+   "replaced_by": "B6-Support-Notice-Opt2 (선택 2 · 건수 타일 + 목록/열람(권장))",
+   "title": "B6 · Support Notice Opt1"
+  },
+  {
+   "id": "B6-Support-Notice-Opt3",
+   "kind": "원판",
+   "function": "서비스 지원",
+   "screen": "공지",
+   "variant": "원판 B6",
+   "name": "선택 3 · 3열 보드 + 서랍",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Support-Notice-Opt3.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Support-Notice-Opt3.png"
+   },
+   "verdict": "폐기",
+   "reason": "D23 권장안(선택 2) 자동 채택",
+   "replaced_by": "B6-Support-Notice-Opt2 (선택 2 · 건수 타일 + 목록/열람(권장))",
+   "title": "B6 · Support Notice Opt3"
+  },
+  {
+   "id": "B6-Support-Notice-Detail",
+   "kind": "원판",
+   "function": "서비스 지원",
+   "screen": "공지",
+   "variant": "원판 B6",
+   "name": "공지 상세",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Support-Notice-Detail.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Support-Notice-Detail.png"
+   },
+   "verdict": "적용",
+   "reason": "D23 권장안(선택 2) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/notice.html"
+   ],
+   "later": "F3 B5: '?' 서랍으로 축소",
+   "title": "B6 · Support Notice Detail"
+  },
+  {
+   "id": "B6-Support-Notice-Empty",
+   "kind": "원판",
+   "function": "서비스 지원",
+   "screen": "공지",
+   "variant": "원판 B6",
+   "name": "공지 0건",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Support-Notice-Empty.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Support-Notice-Empty.png"
+   },
+   "verdict": "적용",
+   "reason": "D23 권장안(선택 2) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/notice.html"
+   ],
+   "later": "F3 B5: '?' 서랍으로 축소",
+   "title": "B6 · Support Notice Empty"
+  },
+  {
+   "id": "B6-Support-FAQ",
+   "kind": "원판",
+   "function": "서비스 지원",
+   "screen": "FAQ",
+   "variant": "원판 B6",
+   "name": "FAQ",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Support-FAQ.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Support-FAQ.png"
+   },
+   "verdict": "적용",
+   "reason": "D23 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/faq.html"
+   ],
+   "later": "F3 B5: '?' 서랍",
+   "title": "B6 · Support FAQ"
+  },
+  {
+   "id": "B6-Support-FAQ-Empty",
+   "kind": "원판",
+   "function": "서비스 지원",
+   "screen": "FAQ",
+   "variant": "원판 B6",
+   "name": "FAQ 0건",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Support-FAQ-Empty.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Support-FAQ-Empty.png"
+   },
+   "verdict": "적용",
+   "reason": "D23 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/faq.html"
+   ],
+   "later": "F3 B5: '?' 서랍",
+   "title": "B6 · Support FAQ Empty"
+  },
+  {
+   "id": "B6-Support-Contact",
+   "kind": "원판",
+   "function": "서비스 지원",
+   "screen": "문의",
+   "variant": "원판 B6",
+   "name": "문의하기",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Support-Contact.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Support-Contact.png"
+   },
+   "verdict": "적용",
+   "reason": "D23 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/contact.html"
+   ],
+   "later": "F3 B5: '?' 서랍",
+   "title": "B6 · Support Contact"
+  },
+  {
+   "id": "B6-Support-Contact-Empty",
+   "kind": "원판",
+   "function": "서비스 지원",
+   "screen": "문의",
+   "variant": "원판 B6",
+   "name": "문의 0건",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Support-Contact-Empty.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Support-Contact-Empty.png"
+   },
+   "verdict": "적용",
+   "reason": "D23 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/contact.html"
+   ],
+   "later": "F3 B5: '?' 서랍",
+   "title": "B6 · Support Contact Empty"
+  },
+  {
+   "id": "B6-Support-Contact-Error",
+   "kind": "원판",
+   "function": "서비스 지원",
+   "screen": "문의",
+   "variant": "원판 B6",
+   "name": "입력 오류",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Support-Contact-Error.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Support-Contact-Error.png"
+   },
+   "verdict": "적용",
+   "reason": "D23 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/contact.html"
+   ],
+   "later": "F3 B5: '?' 서랍",
+   "title": "B6 · Support Contact Error"
+  },
+  {
+   "id": "B6-Support-Contact-Cancel",
+   "kind": "원판",
+   "function": "서비스 지원",
+   "screen": "문의",
+   "variant": "원판 B6",
+   "name": "취소 확인",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Support-Contact-Cancel.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Support-Contact-Cancel.png"
+   },
+   "verdict": "적용",
+   "reason": "D23 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/contact.html"
+   ],
+   "later": "F3 B5: '?' 서랍",
+   "title": "B6 · Support Contact Cancel"
+  },
+  {
+   "id": "B6-Support-Contact-View",
+   "kind": "원판",
+   "function": "서비스 지원",
+   "screen": "문의",
+   "variant": "원판 B6",
+   "name": "문의 열람",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Support-Contact-View.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Support-Contact-View.png"
+   },
+   "verdict": "적용",
+   "reason": "D23 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/contact.html"
+   ],
+   "later": "F3 B5: '?' 서랍",
+   "title": "B6 · Support Contact View"
+  },
+  {
+   "id": "B6-Support-Contact-View-Pending",
+   "kind": "원판",
+   "function": "서비스 지원",
+   "screen": "문의",
+   "variant": "원판 B6",
+   "name": "답변 대기",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Support-Contact-View-Pending.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Support-Contact-View-Pending.png"
+   },
+   "verdict": "적용",
+   "reason": "D23 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/contact.html"
+   ],
+   "later": "F3 B5: '?' 서랍",
+   "title": "B6 · Support Contact View Pending"
+  },
+  {
+   "id": "B6-Support-Usecase",
+   "kind": "원판",
+   "function": "서비스 지원",
+   "screen": "활용사례",
+   "variant": "원판 B6",
+   "name": "활용사례",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Support-Usecase.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Support-Usecase.png"
+   },
+   "verdict": "적용",
+   "reason": "D23 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/usecase.html"
+   ],
+   "later": "F3 B5: '?' 서랍 · 메인 소개 챕터와 겹침 정리",
+   "title": "B6 · Support Usecase"
+  },
+  {
+   "id": "B6-Support-Usecase-Empty",
+   "kind": "원판",
+   "function": "서비스 지원",
+   "screen": "활용사례",
+   "variant": "원판 B6",
+   "name": "활용사례 0건",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Support-Usecase-Empty.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Support-Usecase-Empty.png"
+   },
+   "verdict": "적용",
+   "reason": "D23 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/usecase.html"
+   ],
+   "later": "F3 B5: '?' 서랍 · 메인 소개 챕터와 겹침 정리",
+   "title": "B6 · Support Usecase Empty"
+  },
+  {
+   "id": "B6-Support-Usecase-Modal",
+   "kind": "원판",
+   "function": "서비스 지원",
+   "screen": "활용사례",
+   "variant": "원판 B6",
+   "name": "사례 상세 모달",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Support-Usecase-Modal.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Support-Usecase-Modal.png"
+   },
+   "verdict": "적용",
+   "reason": "D23 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/usecase.html"
+   ],
+   "later": "F3 B5: '?' 서랍 · 메인 소개 챕터와 겹침 정리",
+   "title": "B6 · Support Usecase Modal"
+  },
+  {
+   "id": "B6-Support-Manual",
+   "kind": "원판",
+   "function": "서비스 지원",
+   "screen": "매뉴얼",
+   "variant": "원판 B6",
+   "name": "매뉴얼",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-Support-Manual.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-Support-Manual.png"
+   },
+   "verdict": "적용",
+   "reason": "D23 자동 채택 → 9/20 구현(본문은 원본이 비어 결손 표기)",
+   "applied_to": [
+    "landxi/proto/manual.html"
+   ],
+   "later": "F3 B5: '?' 서랍",
+   "title": "B6 · Support Manual"
+  },
+  {
+   "id": "B6-My-Opt1",
+   "kind": "원판",
+   "function": "MY",
+   "screen": "마이 페이지",
+   "variant": "원판 B6",
+   "name": "선택 1 · 신원 원장 + 디스크 판(권장)",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-My-Opt1.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-My-Opt1.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 권장안(선택 1) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/mypage.html"
+   ],
+   "later": "F3 B5: MY 서랍",
+   "title": "B6 · My Opt1"
+  },
+  {
+   "id": "B6-My-Opt2",
+   "kind": "원판",
+   "function": "MY",
+   "screen": "마이 페이지",
+   "variant": "원판 B6",
+   "name": "선택 2 · 현황 밴드 + 세로 스택",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-My-Opt2.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-My-Opt2.png"
+   },
+   "verdict": "폐기",
+   "reason": "D26 권장안(선택 1) 자동 채택",
+   "replaced_by": "B6-My-Opt1 (선택 1 · 신원 원장 + 디스크 판(권장))",
+   "title": "B6 · My Opt2"
+  },
+  {
+   "id": "B6-My-Opt3",
+   "kind": "원판",
+   "function": "MY",
+   "screen": "마이 페이지",
+   "variant": "원판 B6",
+   "name": "선택 3 · 설정 작업공간",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-My-Opt3.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-My-Opt3.png"
+   },
+   "verdict": "폐기",
+   "reason": "D26 권장안(선택 1) 자동 채택",
+   "replaced_by": "B6-My-Opt1 (선택 1 · 신원 원장 + 디스크 판(권장))",
+   "title": "B6 · My Opt3"
+  },
+  {
+   "id": "B6-My-Flyout",
+   "kind": "원판",
+   "function": "MY",
+   "screen": "마이 페이지",
+   "variant": "원판 B6",
+   "name": "MY 플라이아웃",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-My-Flyout.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-My-Flyout.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 권장안(선택 1) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/mypage.html"
+   ],
+   "later": "F3 B5: MY 서랍",
+   "title": "B6 · My Flyout"
+  },
+  {
+   "id": "B6-My-History-Empty",
+   "kind": "원판",
+   "function": "MY",
+   "screen": "마이 페이지",
+   "variant": "원판 B6",
+   "name": "신청 이력 0건",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-My-History-Empty.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-My-History-Empty.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 권장안(선택 1) 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/mypage.html"
+   ],
+   "later": "F3 B5: MY 서랍",
+   "title": "B6 · My History Empty"
+  },
+  {
+   "id": "B6-My-Edit",
+   "kind": "원판",
+   "function": "MY",
+   "screen": "정보 수정",
+   "variant": "원판 B6",
+   "name": "정보 수정",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-My-Edit.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-My-Edit.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/mypage.html"
+   ],
+   "later": "F3 B5: MY 서랍",
+   "title": "B6 · My Edit"
+  },
+  {
+   "id": "B6-My-Edit-Error",
+   "kind": "원판",
+   "function": "MY",
+   "screen": "정보 수정",
+   "variant": "원판 B6",
+   "name": "입력 오류",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-My-Edit-Error.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-My-Edit-Error.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/mypage.html"
+   ],
+   "later": "F3 B5: MY 서랍",
+   "title": "B6 · My Edit Error"
+  },
+  {
+   "id": "B6-My-Edit-Saved",
+   "kind": "원판",
+   "function": "MY",
+   "screen": "정보 수정",
+   "variant": "원판 B6",
+   "name": "저장됨",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-My-Edit-Saved.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-My-Edit-Saved.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/mypage.html"
+   ],
+   "later": "F3 B5: MY 서랍",
+   "title": "B6 · My Edit Saved"
+  },
+  {
+   "id": "B6-My-PwdConfirm",
+   "kind": "원판",
+   "function": "MY",
+   "screen": "비밀번호 변경",
+   "variant": "원판 B6",
+   "name": "현재 비밀번호 확인",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-My-PwdConfirm.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-My-PwdConfirm.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/mypage.html"
+   ],
+   "later": "F3 B5: MY 서랍",
+   "title": "B6 · My PwdConfirm"
+  },
+  {
+   "id": "B6-My-PwdConfirm-Error",
+   "kind": "원판",
+   "function": "MY",
+   "screen": "비밀번호 변경",
+   "variant": "원판 B6",
+   "name": "확인 오류",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-My-PwdConfirm-Error.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-My-PwdConfirm-Error.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/mypage.html"
+   ],
+   "later": "F3 B5: MY 서랍",
+   "title": "B6 · My PwdConfirm Error"
+  },
+  {
+   "id": "B6-My-Password",
+   "kind": "원판",
+   "function": "MY",
+   "screen": "비밀번호 변경",
+   "variant": "원판 B6",
+   "name": "새 비밀번호",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-My-Password.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-My-Password.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/mypage.html"
+   ],
+   "later": "F3 B5: MY 서랍",
+   "title": "B6 · My Password"
+  },
+  {
+   "id": "B6-My-Password-Error",
+   "kind": "원판",
+   "function": "MY",
+   "screen": "비밀번호 변경",
+   "variant": "원판 B6",
+   "name": "입력 오류",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-My-Password-Error.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-My-Password-Error.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/mypage.html"
+   ],
+   "later": "F3 B5: MY 서랍",
+   "title": "B6 · My Password Error"
+  },
+  {
+   "id": "B6-My-Password-Saved",
+   "kind": "원판",
+   "function": "MY",
+   "screen": "비밀번호 변경",
+   "variant": "원판 B6",
+   "name": "변경됨",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-My-Password-Saved.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-My-Password-Saved.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/mypage.html"
+   ],
+   "later": "F3 B5: MY 서랍",
+   "title": "B6 · My Password Saved"
+  },
+  {
+   "id": "B6-My-Brand",
+   "kind": "원판",
+   "function": "MY",
+   "screen": "브랜드(CI)",
+   "variant": "원판 B6",
+   "name": "브랜드 설정",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-My-Brand.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-My-Brand.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/mypage.html"
+   ],
+   "later": "F3 B5: MY 서랍",
+   "title": "B6 · My Brand"
+  },
+  {
+   "id": "B6-My-Brand-Empty",
+   "kind": "원판",
+   "function": "MY",
+   "screen": "브랜드(CI)",
+   "variant": "원판 B6",
+   "name": "미등록",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-My-Brand-Empty.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-My-Brand-Empty.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/mypage.html"
+   ],
+   "later": "F3 B5: MY 서랍",
+   "title": "B6 · My Brand Empty"
+  },
+  {
+   "id": "B6-My-Brand-Error",
+   "kind": "원판",
+   "function": "MY",
+   "screen": "브랜드(CI)",
+   "variant": "원판 B6",
+   "name": "파일 오류",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-My-Brand-Error.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-My-Brand-Error.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/mypage.html"
+   ],
+   "later": "F3 B5: MY 서랍",
+   "title": "B6 · My Brand Error"
+  },
+  {
+   "id": "B6-My-Brand-Applied",
+   "kind": "원판",
+   "function": "MY",
+   "screen": "브랜드(CI)",
+   "variant": "원판 B6",
+   "name": "적용됨",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-My-Brand-Applied.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-My-Brand-Applied.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/mypage.html"
+   ],
+   "later": "F3 B5: MY 서랍",
+   "title": "B6 · My Brand Applied"
+  },
+  {
+   "id": "B6-My-Brand-Reset",
+   "kind": "원판",
+   "function": "MY",
+   "screen": "브랜드(CI)",
+   "variant": "원판 B6",
+   "name": "되돌리기",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-My-Brand-Reset.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-My-Brand-Reset.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/mypage.html"
+   ],
+   "later": "F3 B5: MY 서랍",
+   "title": "B6 · My Brand Reset"
+  },
+  {
+   "id": "B6-My-Storage",
+   "kind": "원판",
+   "function": "MY",
+   "screen": "저장 공간",
+   "variant": "원판 B6",
+   "name": "증량 신청",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-My-Storage.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-My-Storage.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/mypage.html"
+   ],
+   "later": "F3 B5: MY 서랍",
+   "title": "B6 · My Storage"
+  },
+  {
+   "id": "B6-My-Storage-Done",
+   "kind": "원판",
+   "function": "MY",
+   "screen": "저장 공간",
+   "variant": "원판 B6",
+   "name": "신청 완료",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-My-Storage-Done.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-My-Storage-Done.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/mypage.html"
+   ],
+   "later": "F3 B5: MY 서랍",
+   "title": "B6 · My Storage Done"
+  },
+  {
+   "id": "B6-My-Storage-Error",
+   "kind": "원판",
+   "function": "MY",
+   "screen": "저장 공간",
+   "variant": "원판 B6",
+   "name": "신청 오류",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-My-Storage-Error.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-My-Storage-Error.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 자동 채택 → 9/20 구현",
+   "applied_to": [
+    "landxi/proto/mypage.html"
+   ],
+   "later": "F3 B5: MY 서랍",
+   "title": "B6 · My Storage Error"
+  },
+  {
+   "id": "B6-My-Withdraw",
+   "kind": "원판",
+   "function": "MY",
+   "screen": "탈퇴",
+   "variant": "원판 B6",
+   "name": "계정 탈퇴(추정)",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B6-My-Withdraw.dc.html",
+    "렌더": "design-canvas/v2/renders/B6-My-Withdraw.png"
+   },
+   "verdict": "적용",
+   "reason": "D26 자동 채택 → 9/20 구현(원본 UI 없음 — 추정 1장)",
+   "applied_to": [
+    "landxi/proto/mypage.html"
+   ],
+   "later": "F3 B5: MY 서랍",
+   "title": "B6 · My Withdraw"
+  },
+  {
+   "id": "B7-State-Loading",
+   "kind": "원판",
+   "function": "공통",
+   "screen": "상태 패턴(로딩·오류)",
+   "variant": "원판 B7",
+   "name": "로딩 패턴",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-State-Loading.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-State-Loading.png"
+   },
+   "verdict": "적용",
+   "reason": "D29 원판 → 9/20 로딩·오류 패턴 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "27화면 재구현: 빈 상태·로딩은 캐릭터(D20②)와 합침",
+   "title": "B7 State Loading"
+  },
+  {
+   "id": "B7-State-Error",
+   "kind": "원판",
+   "function": "공통",
+   "screen": "상태 패턴(로딩·오류)",
+   "variant": "원판 B7",
+   "name": "오류 패턴",
+   "made": "2026-09-20",
+   "files": {
+    "원판": "design-canvas/v2/B7-State-Error.dc.html",
+    "렌더": "design-canvas/v2/renders/B7-State-Error.png"
+   },
+   "verdict": "적용",
+   "reason": "D29 원판 → 9/20 로딩·오류 패턴 구현",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "27화면 재구현: 빈 상태·로딩은 캐릭터(D20②)와 합침",
+   "title": "B7 State Error"
+  },
+  {
+   "id": "proto-login",
+   "kind": "구현",
+   "function": "인증",
+   "screen": "로그인",
+   "variant": "구현 v1",
+   "name": "로그인(v1)",
+   "made": "2026-08-26",
+   "files": {
+    "구현": "landxi/proto/login.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-login.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 정문 — 역할 라디오·목 인증",
+   "applied_to": [
+    "landxi/proto/login.html"
+   ],
+   "later": "F3 B0: v3 정문 로그인(실인증)으로 교체",
+   "title": "로그인 — Land-XI 플랫폼",
+   "impl_state": "완성"
+  },
+  {
+   "id": "v3-login",
+   "kind": "시안",
+   "function": "인증",
+   "screen": "로그인",
+   "variant": "시안 v3",
+   "name": "정문 로그인(v3 시안)",
+   "made": "",
+   "files": {
+    "구현": "landxi/v3/login/index.html",
+    "썸네일": null
+   },
+   "verdict": "검토",
+   "reason": "F3 §7 ⑤ 제작 중 시안",
+   "next": "시안 승인 → 정문 교체(F3 B0) · 소개 판 3장면(토스 5-3)·로그인 3축(D21ⓑ) 반영",
+   "impl_state": "제작 중"
+  },
+  {
+   "id": "proto-signup",
+   "kind": "구현",
+   "function": "인증",
+   "screen": "계정 신청",
+   "variant": "구현 v1",
+   "name": "계정 신청(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/signup.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-signup.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 신청 저장 없음",
+   "applied_to": [
+    "landxi/proto/signup.html"
+   ],
+   "later": "F3 B0: 정문 서랍으로 축소",
+   "title": "계정 신청 — Land-XI 플랫폼",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-find-id",
+   "kind": "구현",
+   "function": "인증",
+   "screen": "아이디 찾기",
+   "variant": "구현 v1",
+   "name": "아이디 찾기(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/find-id.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-find-id.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 조회 로직 없음",
+   "applied_to": [
+    "landxi/proto/find-id.html"
+   ],
+   "later": "F3 B0: 정문 서랍으로 축소",
+   "title": "아이디(이메일) 찾기 — Land-XI 플랫폼",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-find-id-result",
+   "kind": "구현",
+   "function": "인증",
+   "screen": "아이디 찾기",
+   "variant": "구현 v1",
+   "name": "아이디 찾기 결과(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/find-id-result.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-find-id-result.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 조회 로직 없음",
+   "applied_to": [
+    "landxi/proto/find-id-result.html"
+   ],
+   "later": "F3 B0: 정문 서랍으로 축소",
+   "title": "아이디(이메일) 찾기 결과 — Land-XI 플랫폼",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-find-password",
+   "kind": "구현",
+   "function": "인증",
+   "screen": "비밀번호 찾기",
+   "variant": "구현 v1",
+   "name": "비밀번호 찾기(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/find-password.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-find-password.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 조회 로직 없음",
+   "applied_to": [
+    "landxi/proto/find-password.html"
+   ],
+   "later": "F3 B0: 정문 서랍으로 축소",
+   "title": "비밀번호 찾기 — Land-XI 플랫폼",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-find-password-result",
+   "kind": "구현",
+   "function": "인증",
+   "screen": "비밀번호 찾기",
+   "variant": "구현 v1",
+   "name": "비밀번호 찾기 결과(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/find-password-result.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-find-password-result.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 조회 로직 없음",
+   "applied_to": [
+    "landxi/proto/find-password-result.html"
+   ],
+   "later": "F3 B0: 정문 서랍으로 축소",
+   "title": "비밀번호 찾기 결과 — Land-XI 플랫폼",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "scrub-main",
+   "kind": "구현",
+   "function": "메인",
+   "screen": "스크럽 필름",
+   "variant": "구현 v1",
+   "name": "스크럽 필름(구현본)",
+   "made": "2026-08-26",
+   "files": {
+    "구현": "landxi/proto/scrub/index.html",
+    "썸네일": "landxi/proto/review/status/thumbs/scrub-main.webp"
+   },
+   "verdict": "적용",
+   "reason": "메인 원판 = 구현본(14 leg + 브랜드 마감)",
+   "applied_to": [
+    "landxi/proto/scrub/index.html"
+   ],
+   "later": "메인 재구성: 토스 7챕터로 쪼개기(leg 1–2 · 11–12만 메인, leg 4–10 은 서비스 상세로)",
+   "title": "Land-XI — 스크럽 비행 · 궤도에서 국토까지",
+   "impl_state": "완성"
+  },
+  {
+   "id": "site-platform",
+   "kind": "구현",
+   "function": "메인",
+   "screen": "공개 사이트",
+   "variant": "구현 v1",
+   "name": "활용 서비스",
+   "made": "2026-09-21",
+   "files": {
+    "구현": "landxi/proto/site/platform.html",
+    "썸네일": "landxi/proto/review/status/thumbs/site-platform.webp"
+   },
+   "verdict": "적용",
+   "reason": "게스트 공개 페이지",
+   "applied_to": [
+    "landxi/proto/site/platform.html"
+   ],
+   "later": "서비스 카드는 스펙시먼 B 문법(D21ⓒ)으로 교체",
+   "title": "활용 서비스 — Land-XI",
+   "impl_state": "부분"
+  },
+  {
+   "id": "site-usecase",
+   "kind": "구현",
+   "function": "메인",
+   "screen": "공개 사이트",
+   "variant": "구현 v1",
+   "name": "활용 사례",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/site/usecase.html",
+    "썸네일": "landxi/proto/review/status/thumbs/site-usecase.webp"
+   },
+   "verdict": "적용",
+   "reason": "게스트 공개 페이지",
+   "applied_to": [
+    "landxi/proto/site/usecase.html"
+   ],
+   "later": "서비스 카드는 스펙시먼 B 문법(D21ⓒ)으로 교체",
+   "title": "활용 사례 — Land-XI",
+   "impl_state": "부분"
+  },
+  {
+   "id": "site-notice",
+   "kind": "구현",
+   "function": "메인",
+   "screen": "공개 사이트",
+   "variant": "구현 v1",
+   "name": "공지사항",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/site/notice.html",
+    "썸네일": "landxi/proto/review/status/thumbs/site-notice.webp"
+   },
+   "verdict": "적용",
+   "reason": "게스트 공개 페이지",
+   "applied_to": [
+    "landxi/proto/site/notice.html"
+   ],
+   "later": "서비스 카드는 스펙시먼 B 문법(D21ⓒ)으로 교체",
+   "title": "공지사항 — Land-XI",
+   "impl_state": "완성"
+  },
+  {
+   "id": "film-timeline",
+   "kind": "구현",
+   "function": "메인",
+   "screen": "필름 제작 도구",
+   "variant": "구현 v1",
+   "name": "필름 타임라인",
+   "made": "2026-08-27",
+   "files": {
+    "구현": "landxi/proto/film/timeline.html",
+    "썸네일": "landxi/proto/review/status/thumbs/film-timeline.webp"
+   },
+   "verdict": "적용",
+   "reason": "필름 검토용 내부 도구",
+   "applied_to": [
+    "landxi/proto/film/timeline.html"
+   ],
+   "title": "Land-XI 필름",
+   "impl_state": "부분"
+  },
+  {
+   "id": "film-anchors",
+   "kind": "구현",
+   "function": "메인",
+   "screen": "필름 제작 도구",
+   "variant": "구현 v1",
+   "name": "앵커 스틸",
+   "made": "2026-08-26",
+   "files": {
+    "구현": "landxi/proto/film/anchors.html",
+    "썸네일": "landxi/proto/review/status/thumbs/film-anchors.webp"
+   },
+   "verdict": "적용",
+   "reason": "필름 검토용 내부 도구",
+   "applied_to": [
+    "landxi/proto/film/anchors.html"
+   ],
+   "title": "앵커 스틸 v3",
+   "impl_state": "부분"
+  },
+  {
+   "id": "proto-dashboard",
+   "kind": "구현",
+   "function": "대시보드",
+   "screen": "직원 첫 화면",
+   "variant": "구현 v1",
+   "name": "대시보드(v1)",
+   "made": "2026-08-25",
+   "files": {
+    "구현": "landxi/proto/dashboard.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-dashboard.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 LX 직원 착지 — 전국 한 판",
+   "applied_to": [
+    "landxi/proto/dashboard.html"
+   ],
+   "later": "F3 §5: 대시보드 폐지 → v3 생산 콘솔 '오늘' 띠",
+   "title": "대시보드 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "v3-lx-console",
+   "kind": "시안",
+   "function": "대시보드",
+   "screen": "직원 첫 화면",
+   "variant": "시안 v3",
+   "name": "생산 콘솔 '오늘' 띠(v3 시안)",
+   "made": "",
+   "files": {
+    "구현": "landxi/v3/lx-console/index.html",
+    "썸네일": null
+   },
+   "verdict": "검토",
+   "reason": "F3 §7 ① 제작 중 시안",
+   "next": "시안 승인 → 직원 첫 화면 교체(F3 B1·B4) · 카드 문법(D21ⓒ)·스텝퍼(스펙시먼 H) 반영",
+   "impl_state": "제작 중"
+  },
+  {
+   "id": "proto-dataset",
+   "kind": "구현",
+   "function": "데이터 관리",
+   "screen": "목록(아카이브·완료·발행중)",
+   "variant": "구현 v1",
+   "name": "데이터 관리(v1)",
+   "made": "2026-08-26",
+   "files": {
+    "구현": "landxi/proto/dataset.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-dataset.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/dataset.html"
+   ],
+   "later": "F3 B4: v3 생산 콘솔 ① 반입 서랍",
+   "title": "데이터 관리 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-ai-project",
+   "kind": "구현",
+   "function": "프로젝트",
+   "screen": "목록(메인)",
+   "variant": "구현 v1",
+   "name": "프로젝트(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/ai-project.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-ai-project.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 8단계 탭 · 고정값",
+   "applied_to": [
+    "landxi/proto/ai-project.html"
+   ],
+   "later": "F3 B4: v3 생산 콘솔 서랍(라벨·학습·모델 3)",
+   "title": "프로젝트 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-ai-project-create",
+   "kind": "구현",
+   "function": "프로젝트",
+   "screen": "만들기",
+   "variant": "구현 v1",
+   "name": "프로젝트 만들기(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/ai-project-create.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-ai-project-create.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/ai-project-create.html"
+   ],
+   "later": "F3 B4 생산 콘솔",
+   "title": "프로젝트 만들기 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-ai-project-label",
+   "kind": "구현",
+   "function": "프로젝트",
+   "screen": "라벨링",
+   "variant": "구현 v1",
+   "name": "라벨링(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/ai-project-label.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-ai-project-label.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/ai-project-label.html"
+   ],
+   "later": "F3 B4 생산 콘솔 ② 학습",
+   "title": "라벨링 · 비닐하우스 탐지 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-workflow",
+   "kind": "구현",
+   "function": "프로젝트",
+   "screen": "학습",
+   "variant": "구현 v1",
+   "name": "국토 조사 보드(8/25 워크플로우)",
+   "made": "2026-08-25",
+   "files": {
+    "구현": "landxi/proto/workflow.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-workflow.webp"
+   },
+   "verdict": "폐기",
+   "reason": "레일에서 닿지 않음 · 8/25 '워크플로우가 너무 업무 시스템' 거부",
+   "replaced_by": "proto-ai-project (프로젝트(v1))",
+   "title": "Land-XI — 국토 조사 보드 · 남원시 비닐하우스 9,664동",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-analysis-ai",
+   "kind": "구현",
+   "function": "분석 서비스",
+   "screen": "카드 목록",
+   "variant": "구현 v1",
+   "name": "분석 서비스(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/analysis-ai.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-analysis-ai.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 실행 검토·실행 중·결과 탭 포함 · 고정값",
+   "applied_to": [
+    "landxi/proto/analysis-ai.html"
+   ],
+   "later": "F3 B4: 생산 콘솔 ③ 조립 · 카드 = 스펙시먼 B 문법",
+   "title": "분석 서비스 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-admin-publish",
+   "kind": "구현",
+   "function": "카드 발행",
+   "screen": "승인·검토 데스크",
+   "variant": "구현 v1",
+   "name": "카드 발행 관리(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/admin-publish.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-admin-publish.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/admin-publish.html"
+   ],
+   "later": "F3 B3: v3 관제 결재함",
+   "title": "카드 발행 관리 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-ai-card",
+   "kind": "구현",
+   "function": "카드 발행",
+   "screen": "카드 목록",
+   "variant": "구현 v1",
+   "name": "카드 목록(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/ai-card.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-ai-card.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/ai-card.html"
+   ],
+   "later": "F3 B4 생산 콘솔 ③ 조립",
+   "title": "카드 발행 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-ai-card-edit",
+   "kind": "구현",
+   "function": "카드 발행",
+   "screen": "카드 편집",
+   "variant": "구현 v1",
+   "name": "카드 편집(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/ai-card-edit.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-ai-card-edit.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/ai-card-edit.html"
+   ],
+   "later": "F3 B4 생산 콘솔 ③ 조립",
+   "title": "카드 발행 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-ai-publish-create",
+   "kind": "구현",
+   "function": "카드 발행",
+   "screen": "발행 요청",
+   "variant": "구현 v1",
+   "name": "발행 요청(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/ai-publish-create.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-ai-publish-create.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/ai-publish-create.html"
+   ],
+   "later": "F3 §5: 발행 요청 폼 폐지 예정",
+   "title": "카드 발행 요청 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "xi-read-staff",
+   "kind": "구현",
+   "function": "XI맵",
+   "screen": "기본 지도",
+   "variant": "구현 v2",
+   "name": "XI맵 · LX 직원(v2)",
+   "made": "2026-09-27",
+   "files": {
+    "구현": "landxi/xi/index.html",
+    "썸네일": "landxi/proto/review/status/thumbs/xi-read-staff.webp"
+   },
+   "verdict": "적용",
+   "reason": "새 XI맵 정본 — 서버 연결",
+   "applied_to": [
+    "landxi/xi/index.html"
+   ],
+   "later": "v3 XI맵 정돈판: 글 60% 삭감·개발 정보 제거(9/27)",
+   "title": "XI맵 · Land-XI",
+   "impl_state": "완성"
+  },
+  {
+   "id": "xi-public",
+   "kind": "구현",
+   "function": "XI맵",
+   "screen": "기본 지도",
+   "variant": "구현 v2",
+   "name": "XI맵 · 공개(v2)",
+   "made": "2026-09-27",
+   "files": {
+    "구현": "landxi/xi/index.html?public=1",
+    "썸네일": "landxi/proto/review/status/thumbs/xi-public.webp"
+   },
+   "verdict": "적용",
+   "reason": "새 XI맵 정본 — 서버 연결",
+   "applied_to": [
+    "landxi/xi/index.html?public=1"
+   ],
+   "later": "v3 XI맵 정돈판: 글 60% 삭감·개발 정보 제거(9/27)",
+   "title": "XI맵 · Land-XI",
+   "impl_state": "완성"
+  },
+  {
+   "id": "xi-sales",
+   "kind": "구현",
+   "function": "XI맵",
+   "screen": "기본 지도",
+   "variant": "구현 v2",
+   "name": "XI맵 · 영업(v2)",
+   "made": "2026-09-27",
+   "files": {
+    "구현": "landxi/xi/index.html",
+    "썸네일": "landxi/proto/review/status/thumbs/xi-sales.webp"
+   },
+   "verdict": "적용",
+   "reason": "새 XI맵 정본 — 서버 연결",
+   "applied_to": [
+    "landxi/xi/index.html"
+   ],
+   "later": "v3 XI맵 정돈판: 글 60% 삭감·개발 정보 제거(9/27)",
+   "title": "XI맵 · Land-XI",
+   "impl_state": "완성"
+  },
+  {
+   "id": "proto-ximap",
+   "kind": "구현",
+   "function": "XI맵",
+   "screen": "기본 지도",
+   "variant": "구현 v1",
+   "name": "구 XI맵(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/ximap.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-ximap.webp"
+   },
+   "verdict": "폐기",
+   "reason": "9/27 레일 정본화(F2-R) — 지도 서비스 = 새 XI맵",
+   "replaced_by": "xi-read-staff (XI맵 · LX 직원(v2))",
+   "title": "지도 서비스 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "v3-xi-clean",
+   "kind": "시안",
+   "function": "XI맵",
+   "screen": "기본 지도",
+   "variant": "시안 v3",
+   "name": "XI맵 정돈판(v3 시안)",
+   "made": "",
+   "files": {
+    "구현": "landxi/v3/xi-clean/index.html",
+    "썸네일": null
+   },
+   "verdict": "검토",
+   "reason": "F3 §7 ③ 제작 중 시안",
+   "next": "시안 승인 → 새 XI맵 교체 · 도구 7·보안 서약 이식",
+   "impl_state": "제작 중"
+  },
+  {
+   "id": "proto-map-drift",
+   "kind": "구현",
+   "function": "XI맵",
+   "screen": "표류 예측",
+   "variant": "구현 v1",
+   "name": "괭생이모자반 도착 예측(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/map-drift.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-map-drift.webp"
+   },
+   "verdict": "폐기",
+   "reason": "레일에서 닿지 않는 단독 실험 화면",
+   "replaced_by": "F3 §5 폐지 목록(레일 밖)",
+   "title": "괭생이모자반 도착 예측 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "xi-survey-staff",
+   "kind": "구현",
+   "function": "실태조사",
+   "screen": "실태조사 모드",
+   "variant": "구현 v2",
+   "name": "실태조사 · LX 직원(v2)",
+   "made": "2026-09-27",
+   "files": {
+    "구현": "landxi/xi/index.html?mode=survey",
+    "썸네일": "landxi/proto/review/status/thumbs/xi-survey-staff.webp"
+   },
+   "verdict": "적용",
+   "reason": "새 XI맵 실태조사 — 서버 연결",
+   "applied_to": [
+    "landxi/xi/index.html?mode=survey"
+   ],
+   "later": "9/27 '남원 한정 금지' — 지역 = 변수로, v3 대장 융합과 합침",
+   "title": "XI맵 · Land-XI",
+   "impl_state": "완성"
+  },
+  {
+   "id": "xi-survey-namwon",
+   "kind": "구현",
+   "function": "실태조사",
+   "screen": "실태조사 모드",
+   "variant": "구현 v2",
+   "name": "실태조사 · 기관(v2)",
+   "made": "2026-09-27",
+   "files": {
+    "구현": "landxi/xi/index.html",
+    "썸네일": "landxi/proto/review/status/thumbs/xi-survey-namwon.webp"
+   },
+   "verdict": "적용",
+   "reason": "새 XI맵 실태조사 — 서버 연결",
+   "applied_to": [
+    "landxi/xi/index.html"
+   ],
+   "later": "9/27 '남원 한정 금지' — 지역 = 변수로, v3 대장 융합과 합침",
+   "title": "XI맵 · Land-XI",
+   "impl_state": "완성"
+  },
+  {
+   "id": "v3-gov-fusion",
+   "kind": "시안",
+   "function": "실태조사",
+   "screen": "대장 융합(기관 첫 화면)",
+   "variant": "시안 v3",
+   "name": "대장 융합(v3 시안)",
+   "made": "",
+   "files": {
+    "구현": "landxi/v3/gov-fusion/index.html",
+    "썸네일": null
+   },
+   "verdict": "검토",
+   "reason": "F3 §7 ② 제작 중 시안 — 업로드 대장 × AI 융합",
+   "next": "시안 승인 → 기관 첫 화면(F3 B2)",
+   "impl_state": "제작 중"
+  },
+  {
+   "id": "xi-agent",
+   "kind": "구현",
+   "function": "에이전트",
+   "screen": "융합 분석 질문",
+   "variant": "구현 v2",
+   "name": "에이전트(v2)",
+   "made": "2026-09-27",
+   "files": {
+    "구현": "landxi/xi/index.html",
+    "썸네일": "landxi/proto/review/status/thumbs/xi-agent.webp"
+   },
+   "verdict": "적용",
+   "reason": "새 XI맵 에이전트 — vLLM 연결",
+   "applied_to": [
+    "landxi/xi/index.html"
+   ],
+   "later": "9/27 재정의: 업로드 행정데이터 × AI 융합 → v3 gov-fusion ⌘K",
+   "title": "XI맵 · Land-XI",
+   "impl_state": "완성"
+  },
+  {
+   "id": "proto-stats-standard",
+   "kind": "구현",
+   "function": "통계/보고서",
+   "screen": "통계",
+   "variant": "구현 v1",
+   "name": "통계(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/stats-standard.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-stats-standard.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/stats-standard.html"
+   ],
+   "later": "F3 B2: v3 서비스 보고서 서랍",
+   "title": "지도 서비스 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-report-standard",
+   "kind": "구현",
+   "function": "통계/보고서",
+   "screen": "보고서",
+   "variant": "구현 v1",
+   "name": "보고서(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/report-standard.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-report-standard.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/report-standard.html"
+   ],
+   "later": "F3 B2: v3 서비스 보고서 서랍",
+   "title": "지도 서비스 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-report-standard-issue",
+   "kind": "구현",
+   "function": "통계/보고서",
+   "screen": "보고서",
+   "variant": "구현 v1",
+   "name": "오류 신고(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/report-standard-issue.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-report-standard-issue.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/report-standard-issue.html"
+   ],
+   "later": "F3 B2: v3 서비스 보고서 서랍",
+   "title": "지도 서비스 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "ops-login",
+   "kind": "구현",
+   "function": "관제",
+   "screen": "관제 로그인",
+   "variant": "구현 v2",
+   "name": "관제 로그인(v2)",
+   "made": "2026-09-27",
+   "files": {
+    "구현": ":8702/landxi/ops/login.html",
+    "썸네일": "landxi/proto/review/status/thumbs/ops-login.webp"
+   },
+   "verdict": "적용",
+   "reason": "관제 실인증(:8702)",
+   "applied_to": [
+    "landxi/ops/login.html"
+   ],
+   "later": "9/27 검정 톤(잉크 반전) 폐기 → 토스 톤 · F3 B0 정문 하나로",
+   "title": "LX/OPS — 관제실 로그인",
+   "impl_state": "완성"
+  },
+  {
+   "id": "ops-index",
+   "kind": "구현",
+   "function": "관제",
+   "screen": "운영 현황",
+   "variant": "구현 v2",
+   "name": "운영 현황(v2)",
+   "made": "2026-09-27",
+   "files": {
+    "구현": ":8702/landxi/ops/index.html",
+    "썸네일": "landxi/proto/review/status/thumbs/ops-index.webp"
+   },
+   "verdict": "적용",
+   "reason": "관제 정본(:8702) — 서버 연결",
+   "applied_to": [
+    "landxi/ops/index.html"
+   ],
+   "later": "9/27 검정 톤 폐기 → v3 관제 핵심판 토스 톤",
+   "title": "LX/OPS — 운영 현황",
+   "impl_state": "완성"
+  },
+  {
+   "id": "proto-admin-home",
+   "kind": "구현",
+   "function": "관제",
+   "screen": "운영 현황",
+   "variant": "구현 v1",
+   "name": "관리자 운영 현황(v1)",
+   "made": "2026-09-21",
+   "files": {
+    "구현": "landxi/proto/admin-home.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-admin-home.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 관리자 착지(v1) — 고정값",
+   "applied_to": [
+    "landxi/proto/admin-home.html"
+   ],
+   "later": "F3 B1: 흡수 · 관제로 일원화",
+   "title": "운영 현황 — LX 관리자",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "v3-ops-core",
+   "kind": "시안",
+   "function": "관제",
+   "screen": "운영 현황",
+   "variant": "시안 v3",
+   "name": "관제 핵심판(v3 시안)",
+   "made": "",
+   "files": {
+    "구현": "landxi/v3/ops-core/index.html",
+    "썸네일": null
+   },
+   "verdict": "검토",
+   "reason": "F3 §7 ④ 제작 중 시안",
+   "next": "시안 승인 → 관제 교체(F3 B3) · 토스 톤(9/27)",
+   "impl_state": "제작 중"
+  },
+  {
+   "id": "ops-infra",
+   "kind": "구현",
+   "function": "관제",
+   "screen": "인프라",
+   "variant": "구현 v2",
+   "name": "인프라 관제(v2)",
+   "made": "2026-09-27",
+   "files": {
+    "구현": ":8702/landxi/ops/infra.html",
+    "썸네일": "landxi/proto/review/status/thumbs/ops-infra.webp"
+   },
+   "verdict": "적용",
+   "reason": "관제 정본(:8702) — 서버 연결",
+   "applied_to": [
+    "landxi/ops/infra.html"
+   ],
+   "later": "9/27 검정 톤 폐기 → 토스 톤 · 성능 수치는 관제 한 곳에만",
+   "title": "LX/OPS — 인프라 관제",
+   "impl_state": "완성"
+  },
+  {
+   "id": "ops-tenants",
+   "kind": "구현",
+   "function": "관제",
+   "screen": "기관·할당",
+   "variant": "구현 v2",
+   "name": "기관·할당(v2)",
+   "made": "2026-09-27",
+   "files": {
+    "구현": ":8702/landxi/ops/tenants.html",
+    "썸네일": "landxi/proto/review/status/thumbs/ops-tenants.webp"
+   },
+   "verdict": "적용",
+   "reason": "관제 정본(:8702) — 서버 연결",
+   "applied_to": [
+    "landxi/ops/tenants.html"
+   ],
+   "later": "9/27 검정 톤 폐기 → 토스 톤 · 링 8 → 3",
+   "title": "LX/OPS — 기관·할당",
+   "impl_state": "완성"
+  },
+  {
+   "id": "ops-deploys",
+   "kind": "구현",
+   "function": "관제",
+   "screen": "배포",
+   "variant": "구현 v2",
+   "name": "배포 제어(v2)",
+   "made": "2026-09-27",
+   "files": {
+    "구현": ":8702/landxi/ops/deploys.html",
+    "썸네일": "landxi/proto/review/status/thumbs/ops-deploys.webp"
+   },
+   "verdict": "적용",
+   "reason": "관제 정본(:8702) — 부분 구현",
+   "applied_to": [
+    "landxi/ops/deploys.html"
+   ],
+   "later": "9/27 검정 톤 폐기 → 토스 톤",
+   "title": "LX/OPS — 배포 제어",
+   "impl_state": "부분"
+  },
+  {
+   "id": "proto-produce",
+   "kind": "구현",
+   "function": "관제",
+   "screen": "생산 관리",
+   "variant": "구현 v1",
+   "name": "생산 관리(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/produce.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-produce.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/produce.html"
+   ],
+   "later": "F3 B4: v3 생산 콘솔로 흡수",
+   "title": "생산 관리 · 만드는 순서 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-admin-users",
+   "kind": "구현",
+   "function": "서비스 관리",
+   "screen": "사용자 관리",
+   "variant": "구현 v1",
+   "name": "사용자 관리(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/admin-users.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-admin-users.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/admin-users.html"
+   ],
+   "later": "F3 B3: v3 관제 5메뉴 · 9/27 토스 톤",
+   "title": "서비스 관리 · 사용자 관리 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-admin-notice",
+   "kind": "구현",
+   "function": "서비스 관리",
+   "screen": "공지 관리",
+   "variant": "구현 v1",
+   "name": "공지 관리(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/admin-notice.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-admin-notice.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/admin-notice.html"
+   ],
+   "later": "F3 B3: v3 관제 설정 하위",
+   "title": "서비스 관리 · 공지사항 관리 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-admin-inquiry",
+   "kind": "구현",
+   "function": "서비스 관리",
+   "screen": "문의 관리",
+   "variant": "구현 v1",
+   "name": "문의 관리(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/admin-inquiry.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-admin-inquiry.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/admin-inquiry.html"
+   ],
+   "later": "F3 B3: v3 관제 설정 하위",
+   "title": "서비스 관리 · 문의 관리 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-admin-faq",
+   "kind": "구현",
+   "function": "서비스 관리",
+   "screen": "FAQ 관리",
+   "variant": "구현 v1",
+   "name": "FAQ 관리(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/admin-faq.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-admin-faq.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/admin-faq.html"
+   ],
+   "later": "F3 B3: v3 관제 설정 하위",
+   "title": "서비스 관리 · 자주 묻는 질문 관리 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-admin-map",
+   "kind": "구현",
+   "function": "서비스 관리",
+   "screen": "지도 속성 관리",
+   "variant": "구현 v1",
+   "name": "지도 속성 관리(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/admin-map.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-admin-map.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/admin-map.html"
+   ],
+   "later": "F3 B1: XI맵으로 흡수",
+   "title": "서비스 관리 · 지도 속성 관리 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-portal-login-namwon",
+   "kind": "구현",
+   "function": "기관 포털",
+   "screen": "기관 로그인",
+   "variant": "구현 v1",
+   "name": "기관 로그인 · 남원(v1)",
+   "made": "2026-09-21",
+   "files": {
+    "구현": "landxi/proto/portal-login-namwon.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-portal-login-namwon.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 기관 정문 — 목 인증",
+   "applied_to": [
+    "landxi/proto/portal-login-namwon.html"
+   ],
+   "later": "F3 B0: 정문 하나로 통합",
+   "title": "로그인 — 남원시 GeoVision 플랫폼",
+   "impl_state": "부분"
+  },
+  {
+   "id": "proto-portal-login-gwangju-jeonnam",
+   "kind": "구현",
+   "function": "기관 포털",
+   "screen": "기관 로그인",
+   "variant": "구현 v1",
+   "name": "기관 로그인 · 광주전남(v1)",
+   "made": "2026-09-21",
+   "files": {
+    "구현": "landxi/proto/portal-login-gwangju-jeonnam.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-portal-login-gwangju-jeonnam.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 기관 정문 — 목 인증",
+   "applied_to": [
+    "landxi/proto/portal-login-gwangju-jeonnam.html"
+   ],
+   "later": "F3 B0: 정문 하나로 통합",
+   "title": "로그인 — 전남광주 AI 플랫폼",
+   "impl_state": "부분"
+  },
+  {
+   "id": "proto-portal",
+   "kind": "구현",
+   "function": "기관 포털",
+   "screen": "내 서비스",
+   "variant": "구현 v1",
+   "name": "내 서비스(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/portal.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-portal.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 기관 착지 — 고정값",
+   "applied_to": [
+    "landxi/proto/portal.html"
+   ],
+   "later": "F3 B2: v3 서비스 화면 1 + 서랍 · 카드 덱 5장 폐지 예정",
+   "title": "내 서비스 — 남원시",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-portal-dp-nw-change",
+   "kind": "구현",
+   "function": "기관 포털",
+   "screen": "서비스 상세",
+   "variant": "구현 v1",
+   "name": "국토 변화 탐지(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/portal-dp-nw-change.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-portal-dp-nw-change.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 기관 서비스 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/portal-dp-nw-change.html"
+   ],
+   "later": "F3 B2: v3 서비스 화면으로 흡수",
+   "title": "국토 변화 탐지 서비스 — 남원시",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-portal-dp-nw-farm-25",
+   "kind": "구현",
+   "function": "기관 포털",
+   "screen": "서비스 상세",
+   "variant": "구현 v1",
+   "name": "영농관리(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/portal-dp-nw-farm-25.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-portal-dp-nw-farm-25.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 기관 서비스 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/portal-dp-nw-farm-25.html"
+   ],
+   "later": "F3 B2: v3 서비스 화면으로 흡수",
+   "title": "영농관리 행정서비스 — 남원시",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-portal-dp-nw-living-23",
+   "kind": "구현",
+   "function": "기관 포털",
+   "screen": "서비스 상세",
+   "variant": "구현 v1",
+   "name": "생활환경 위험요소(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/portal-dp-nw-living-23.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-portal-dp-nw-living-23.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 기관 서비스 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/portal-dp-nw-living-23.html"
+   ],
+   "later": "F3 B2: v3 서비스 화면으로 흡수",
+   "title": "생활환경 위험요소 탐지 서비스 — 남원시",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-portal-dp-gj-marine-25",
+   "kind": "구현",
+   "function": "기관 포털",
+   "screen": "서비스 상세",
+   "variant": "구현 v1",
+   "name": "해양쓰레기 실태조사 25(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/portal-dp-gj-marine-25.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-portal-dp-gj-marine-25.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 기관 서비스 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/portal-dp-gj-marine-25.html"
+   ],
+   "later": "F3 B2: v3 서비스 화면으로 흡수",
+   "title": "해양쓰레기 실태조사 서비스 — 광주전남",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-portal-dp-gj-marine-27",
+   "kind": "구현",
+   "function": "기관 포털",
+   "screen": "서비스 상세",
+   "variant": "구현 v1",
+   "name": "해양쓰레기 실태조사 27(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/portal-dp-gj-marine-27.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-portal-dp-gj-marine-27.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 기관 서비스 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/portal-dp-gj-marine-27.html"
+   ],
+   "later": "F3 B2: v3 서비스 화면으로 흡수",
+   "title": "해양쓰레기 실태조사 서비스 — 광주전남",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-portal-dp-nw-crowd-27",
+   "kind": "구현",
+   "function": "기관 포털",
+   "screen": "서비스 상세",
+   "variant": "구현 v1",
+   "name": "인파관리(빈 자리)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/portal-dp-nw-crowd-27.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-portal-dp-nw-crowd-27.webp"
+   },
+   "verdict": "검토",
+   "reason": "빈 자리 — 서비스 미완",
+   "next": "F3 B2 흡수 때 정리 — 그 전까지 '준비 중' 캐릭터(D20②)",
+   "title": "인파관리 서비스 — 남원시",
+   "impl_state": "자리"
+  },
+  {
+   "id": "proto-portal-dp-nw-road-26",
+   "kind": "구현",
+   "function": "기관 포털",
+   "screen": "서비스 상세",
+   "variant": "구현 v1",
+   "name": "도로 안전관리(빈 자리)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/portal-dp-nw-road-26.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-portal-dp-nw-road-26.webp"
+   },
+   "verdict": "검토",
+   "reason": "빈 자리 — 서비스 미완",
+   "next": "F3 B2 흡수 때 정리 — 그 전까지 '준비 중' 캐릭터(D20②)",
+   "title": "도로 안전관리 서비스 — 남원시",
+   "impl_state": "자리"
+  },
+  {
+   "id": "proto-notice",
+   "kind": "구현",
+   "function": "서비스 지원",
+   "screen": "공지",
+   "variant": "구현 v1",
+   "name": "공지사항(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/notice.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-notice.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/notice.html"
+   ],
+   "later": "F3 B5: '?' 서랍",
+   "title": "서비스 지원 · 공지사항 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-faq",
+   "kind": "구현",
+   "function": "서비스 지원",
+   "screen": "FAQ",
+   "variant": "구현 v1",
+   "name": "자주 묻는 질문(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/faq.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-faq.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/faq.html"
+   ],
+   "later": "F3 B5: '?' 서랍 · 아코디언(스펙시먼 I)",
+   "title": "서비스 지원 · 자주 묻는 질문 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-contact",
+   "kind": "구현",
+   "function": "서비스 지원",
+   "screen": "문의",
+   "variant": "구현 v1",
+   "name": "문의하기(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/contact.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-contact.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/contact.html"
+   ],
+   "later": "F3 B5: '?' 서랍",
+   "title": "서비스 지원 · 문의하기 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-usecase",
+   "kind": "구현",
+   "function": "서비스 지원",
+   "screen": "활용사례",
+   "variant": "구현 v1",
+   "name": "활용사례(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/usecase.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-usecase.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/usecase.html"
+   ],
+   "later": "F3 B5: '?' 서랍",
+   "title": "서비스 지원 · 활용사례 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-manual",
+   "kind": "구현",
+   "function": "서비스 지원",
+   "screen": "매뉴얼",
+   "variant": "구현 v1",
+   "name": "매뉴얼(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/manual.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-manual.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/manual.html"
+   ],
+   "later": "F3 B5: '?' 서랍",
+   "title": "서비스 지원 · 매뉴얼 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "proto-mypage",
+   "kind": "구현",
+   "function": "MY",
+   "screen": "마이 페이지",
+   "variant": "구현 v1",
+   "name": "마이 페이지(v1)",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/mypage.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-mypage.webp"
+   },
+   "verdict": "적용",
+   "reason": "현재 화면 — 고정값",
+   "applied_to": [
+    "landxi/proto/mypage.html"
+   ],
+   "later": "F3 B5: MY 서랍",
+   "title": "마이 페이지 — Land-XI",
+   "impl_state": "시연고정값"
+  },
+  {
+   "id": "global-login",
+   "kind": "구현",
+   "function": "글로벌",
+   "screen": "로그인",
+   "variant": "구현 v2",
+   "name": "Global 로그인(v2)",
+   "made": "2026-09-27",
+   "files": {
+    "구현": "landxi/global/login.html",
+    "썸네일": "landxi/proto/review/status/thumbs/global-login.webp"
+   },
+   "verdict": "적용",
+   "reason": "해외 기관 실인증",
+   "applied_to": [
+    "landxi/global/login.html"
+   ],
+   "title": "Land-XI Global — institution sign-in",
+   "impl_state": "완성"
+  },
+  {
+   "id": "global-index",
+   "kind": "구현",
+   "function": "글로벌",
+   "screen": "해외 서비스",
+   "variant": "구현 v2",
+   "name": "키르기스 농업부(v2)",
+   "made": "2026-09-27",
+   "files": {
+    "구현": "landxi/global/index.html?svc=dp-kgz-agri-farm-26&locale=en",
+    "썸네일": "landxi/proto/review/status/thumbs/global-index.webp"
+   },
+   "verdict": "적용",
+   "reason": "해외 서비스 정본 — 서버 연결",
+   "applied_to": [
+    "landxi/global/index.html?svc=dp-kgz-agri-farm-26&locale=en"
+   ],
+   "title": "Land-XI Global — LX GeoAI",
+   "impl_state": "완성"
+  },
+  {
+   "id": "global-index-land",
+   "kind": "구현",
+   "function": "글로벌",
+   "screen": "해외 서비스",
+   "variant": "구현 v2",
+   "name": "키르기스 토지청(v2)",
+   "made": "2026-09-27",
+   "files": {
+    "구현": "landxi/global/index.html?svc=dp-kgz-land-change-26&locale=en",
+    "썸네일": "landxi/proto/review/status/thumbs/global-index-land.webp"
+   },
+   "verdict": "적용",
+   "reason": "해외 서비스 정본 — 서버 연결",
+   "applied_to": [
+    "landxi/global/index.html?svc=dp-kgz-land-change-26&locale=en"
+   ],
+   "title": "Land-XI Global — LX GeoAI",
+   "impl_state": "완성"
+  },
+  {
+   "id": "proto-dive",
+   "kind": "구현",
+   "function": "공통",
+   "screen": "디자인 실험",
+   "variant": "구현 v1",
+   "name": "하강 실험(8/25)",
+   "made": "2026-08-25",
+   "files": {
+    "구현": "landxi/proto/dive.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-dive.webp"
+   },
+   "verdict": "폐기",
+   "reason": "8/25 1차 하강 실험 — 8/26 '플랫폼 소개' 피드백 뒤 스크럽 필름으로 대체",
+   "replaced_by": "scrub-main (스크럽 필름(구현본))",
+   "title": "Land-XI — 국토는 매일 조금씩 달라진다",
+   "impl_state": "부분"
+  },
+  {
+   "id": "proto-charts",
+   "kind": "구현",
+   "function": "공통",
+   "screen": "디자인 실험",
+   "variant": "구현 v1",
+   "name": "표·차트 후보 6종(D3)",
+   "made": "2026-08-27",
+   "files": {
+    "구현": "landxi/proto/charts.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-charts.webp"
+   },
+   "verdict": "폐기",
+   "reason": "D3 비교판 — 선택 뒤 역할 끝",
+   "replaced_by": "F3 §5 폐지 목록",
+   "title": "Land-XI 차트·표 디자인 후보 6종 (Bake-off)",
+   "impl_state": "부분"
+  },
+  {
+   "id": "proto-fonts",
+   "kind": "구현",
+   "function": "공통",
+   "screen": "디자인 실험",
+   "variant": "구현 v1",
+   "name": "글꼴·블루 톤 후보",
+   "made": "2026-08-27",
+   "files": {
+    "구현": "landxi/proto/fonts.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-fonts.webp"
+   },
+   "verdict": "폐기",
+   "reason": "9/22 서체 확정으로 역할 끝",
+   "replaced_by": "법전 서체(Paperlogy + Pretendard)",
+   "title": "Land-XI 글꼴 · 블루 톤 후보 (Bake-off)",
+   "impl_state": "부분"
+  },
+  {
+   "id": "proto-system",
+   "kind": "구현",
+   "function": "공통",
+   "screen": "디자인 실험",
+   "variant": "구현 v1",
+   "name": "컴포넌트 시트",
+   "made": "2026-08-25",
+   "files": {
+    "구현": "landxi/proto/system.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-system.webp"
+   },
+   "verdict": "폐기",
+   "reason": "F3 §5 폐지 — 법전이 대체",
+   "replaced_by": "법전 design/system-v2.md",
+   "title": "Land-XI — 컴포넌트 시트 · 에디토리얼 아틀라스",
+   "impl_state": "부분"
+  },
+  {
+   "id": "proto-shell-demo",
+   "kind": "구현",
+   "function": "공통",
+   "screen": "디자인 실험",
+   "variant": "구현 v1",
+   "name": "공용 셸 데모",
+   "made": "2026-09-20",
+   "files": {
+    "구현": "landxi/proto/shell-demo.html",
+    "썸네일": "landxi/proto/review/status/thumbs/proto-shell-demo.webp"
+   },
+   "verdict": "폐기",
+   "reason": "F3 §5 폐지 — 셸 적용 완료",
+   "replaced_by": "공용 셸(shell.js)",
+   "title": "서비스 지원 · 공지사항 — Land-XI",
+   "impl_state": "부분"
+  },
+  {
+   "id": "global-fonts-compare",
+   "kind": "구현",
+   "function": "공통",
+   "screen": "디자인 실험",
+   "variant": "구현 v2",
+   "name": "Global 서체 비교",
+   "made": "2026-09-27",
+   "files": {
+    "구현": "landxi/global/fonts-compare.html",
+    "썸네일": "landxi/proto/review/status/thumbs/global-fonts-compare.webp"
+   },
+   "verdict": "폐기",
+   "reason": "9/26 결정(글로벌 Inter)으로 역할 끝",
+   "replaced_by": "Inter 글로벌 서체",
+   "title": "Display type · Paperlogy Latin vs Inter",
+   "impl_state": "부분"
+  },
+  {
+   "id": "K-A",
+   "kind": "스펙시먼",
+   "function": "대시보드",
+   "screen": "직원 첫 화면",
+   "variant": "스펙시먼 카카오 A",
+   "name": "대시보드 상단 — 서체·색·형태 토글 기준판",
+   "made": "2026-09-03",
+   "files": {
+    "원천": "landxi/proto/review/bench-kakao.html#spec",
+    "캡처": "landxi/proto/review/assets-thumbs/kakao-A.jpg"
+   },
+   "verdict": "폐기",
+   "reason": "토글 판정은 D19③ 로 결론 — 판 자체는 역할 끝",
+   "replaced_by": "대상 화면(LX 관리자 대시보드)이 9/21 계정 분리·9/24 직원 화면 전환으로 사라짐"
+  },
+  {
+   "id": "K-B",
+   "kind": "스펙시먼",
+   "function": "분석 서비스",
+   "screen": "카드 목록",
+   "variant": "스펙시먼 카카오 B",
+   "name": "서비스 카드 — 크롭 + 기준일 + 상태 + 제목 2줄 + 결과 수",
+   "made": "2026-09-03",
+   "files": {
+    "원천": "landxi/proto/review/bench-kakao.html#spec2",
+    "캡처": "landxi/proto/review/assets-thumbs/kakao-B.jpg"
+   },
+   "verdict": "검토",
+   "reason": "9/27 D21ⓒ 적용 결정 — 아직 어느 화면에도 없음",
+   "next": "적용 예정(D21ⓒ): 분석 카드 목록·프로젝트 목록·데이터 목록·공개 사이트 서비스 카드 — 27화면 재구현 + v3 생산 콘솔 카탈로그"
+  },
+  {
+   "id": "K-C",
+   "kind": "스펙시먼",
+   "function": "인증",
+   "screen": "로그인",
+   "variant": "스펙시먼 카카오 C",
+   "name": "로그인 소개 — 3축(영문 대제목 + 한글 한 줄 + 크롭)",
+   "made": "2026-09-03",
+   "files": {
+    "원천": "landxi/proto/review/bench-kakao.html#specC",
+    "캡처": "landxi/proto/review/assets-thumbs/kakao-C.jpg"
+   },
+   "verdict": "검토",
+   "reason": "9/27 D21ⓑ 적용 결정 — 아직 어느 화면에도 없음",
+   "next": "적용 예정(D21ⓑ): v3 정문 로그인(landxi/v3/login) 소개 판 — 토스 5-3 장면 순환과 합침"
+  },
+  {
+   "id": "K-D",
+   "kind": "스펙시먼",
+   "function": "메인",
+   "screen": "서비스 소개 판",
+   "variant": "스펙시먼 카카오 D",
+   "name": "서비스 소개 판 — 실영상 판",
+   "made": "2026-09-03",
+   "files": {
+    "원천": "landxi/proto/review/bench-kakao.html#specD",
+    "캡처": "landxi/proto/review/assets-thumbs/kakao-D.jpg"
+   },
+   "verdict": "검토",
+   "reason": "9/27 지시 — D·F·H 는 토스식 소개 문법과 합쳐 메인·서비스 상세·생산 콘솔로",
+   "next": "메인 재구성: 토스 챕터(5-2)의 비주얼 판 · 서비스 상세 히어로"
+  },
+  {
+   "id": "K-E",
+   "kind": "스펙시먼",
+   "function": "메인",
+   "screen": "성과·결과 띠",
+   "variant": "스펙시먼 카카오 E",
+   "name": "성과 숫자 띠 + 결과 카드",
+   "made": "2026-09-03",
+   "files": {
+    "원천": "landxi/proto/review/bench-kakao.html#specE",
+    "캡처": "landxi/proto/review/assets-thumbs/kakao-E.jpg"
+   },
+   "verdict": "검토",
+   "reason": "9/27 D21ⓓ 적용 결정 · 같은 날 내부 지표 과장 금지 조건",
+   "next": "적용 예정(D21ⓓ): 메인 재구성 챕터 2·분석 실행 결과 — 숫자는 업무 결과만(현장 확인 필요 n필지 등)"
+  },
+  {
+   "id": "K-F",
+   "kind": "스펙시먼",
+   "function": "분석 서비스",
+   "screen": "카드 상세",
+   "variant": "스펙시먼 카카오 F",
+   "name": "분석 서비스 소개 아이템(EVIDENCE-PAIR)",
+   "made": "2026-09-03",
+   "files": {
+    "원천": "landxi/proto/review/bench-kakao.html#specF",
+    "캡처": "landxi/proto/review/assets-thumbs/kakao-F.jpg"
+   },
+   "verdict": "검토",
+   "reason": "9/27 지시 — 토스식 소개 문법과 합침",
+   "next": "서비스 카탈로그 상세 — 토스 5-4 기능 소개 틀과 합침(27화면 재구현)"
+  },
+  {
+   "id": "K-G",
+   "kind": "스펙시먼",
+   "function": "공통",
+   "screen": "빈 상태·캐릭터",
+   "variant": "스펙시먼 카카오 G",
+   "name": "빈 상태 · 진행 중 · 결손 — 필름 캐릭터 3종",
+   "made": "2026-09-03",
+   "files": {
+    "원천": "landxi/proto/review/bench-kakao.html#specG",
+    "캡처": "landxi/proto/review/assets-thumbs/kakao-G.jpg"
+   },
+   "verdict": "검토",
+   "reason": "9/27 D20② 적용 결정 — 크레딧 0, 신규 제작 0",
+   "next": "적용 예정(D20②): 27화면 재구현의 빈 상태·로딩·준비 중·404 · 기관 포털 빈 서비스(인파·도로)"
+  },
+  {
+   "id": "K-H",
+   "kind": "스펙시먼",
+   "function": "데이터 관리",
+   "screen": "파이프라인 단계",
+   "variant": "스펙시먼 카카오 H",
+   "name": "파이프라인 스텝퍼(데이터 관리 4단계)",
+   "made": "2026-09-03",
+   "files": {
+    "원천": "landxi/proto/review/bench-kakao.html#specH",
+    "캡처": "landxi/proto/review/assets-thumbs/kakao-H.jpg"
+   },
+   "verdict": "검토",
+   "reason": "9/27 지시 — 생산 콘솔로",
+   "next": "v3 생산 콘솔 6단 레일(반입 → 학습 → 조립 → 검수 → 배포 → 운영)"
+  },
+  {
+   "id": "K-I",
+   "kind": "스펙시먼",
+   "function": "서비스 지원",
+   "screen": "FAQ",
+   "variant": "스펙시먼 카카오 I",
+   "name": "서비스 지원 아코디언 3줄",
+   "made": "2026-09-03",
+   "files": {
+    "원천": "landxi/proto/review/bench-kakao.html#specI",
+    "캡처": "landxi/proto/review/assets-thumbs/kakao-I.jpg"
+   },
+   "verdict": "검토",
+   "reason": "결정 없음 — 지원 서랍 재구현 때 판단",
+   "next": "F3 B5 — 지원 '?' 서랍의 FAQ 문법"
+  },
+  {
+   "id": "K-J",
+   "kind": "스펙시먼",
+   "function": "공통",
+   "screen": "출처 띠·푸터",
+   "variant": "스펙시먼 카카오 J",
+   "name": "데이터 출처 로고 띠 + 푸터",
+   "made": "2026-09-03",
+   "files": {
+    "원천": "landxi/proto/review/bench-kakao.html#specJ",
+    "캡처": "landxi/proto/review/assets-thumbs/kakao-J.jpg"
+   },
+   "verdict": "검토",
+   "reason": "9/27 D21ⓔ 적용 결정",
+   "next": "적용 예정(D21ⓔ): 메인 마감·로그인 하단 출처 로고 띠(푸터 워터마크 ⓕ 는 제외)"
+  },
+  {
+   "id": "K-D19-3",
+   "kind": "스펙시먼",
+   "function": "공통",
+   "screen": "서체·색·형태",
+   "variant": "결정 카카오 D19",
+   "name": "D19 ③ 서체 유지 · 제목 자간 −0.03em",
+   "made": "2026-09-03",
+   "files": {
+    "원천": "landxi/proto/review/bench-kakao.html#spec",
+    "캡처": null
+   },
+   "verdict": "검토",
+   "reason": "9/27 D19③ 적용 결정 — 토큰 미반영",
+   "next": "적용 예정: v3 공통 토큰(제목 letter-spacing −0.03em) → 27화면 재구현"
+  },
+  {
+   "id": "K-F1",
+   "kind": "스펙시먼",
+   "function": "공통",
+   "screen": "서체·색·형태",
+   "variant": "토글 카카오 F1",
+   "name": "F1 본문만 Kakao Big Sans",
+   "made": "2026-09-03",
+   "files": {
+    "원천": "landxi/proto/review/bench-kakao.html#spec",
+    "캡처": "landxi/proto/review/assets-thumbs/kakao-F1.jpg"
+   },
+   "verdict": "폐기",
+   "reason": "9/27 D19③ 채택으로 탈락",
+   "replaced_by": "D19 ③(서체 유지) — 9/27 결정"
+  },
+  {
+   "id": "K-F2",
+   "kind": "스펙시먼",
+   "function": "공통",
+   "screen": "서체·색·형태",
+   "variant": "토글 카카오 F2",
+   "name": "F2 전부 Kakao Big Sans",
+   "made": "2026-09-03",
+   "files": {
+    "원천": "landxi/proto/review/bench-kakao.html#spec",
+    "캡처": "landxi/proto/review/assets-thumbs/kakao-F2.jpg"
+   },
+   "verdict": "폐기",
+   "reason": "9/27 D19③ 채택으로 탈락",
+   "replaced_by": "D19 ③(서체 유지) — 9/27 결정"
+  },
+  {
+   "id": "K-F3",
+   "kind": "스펙시먼",
+   "function": "공통",
+   "screen": "서체·색·형태",
+   "variant": "토글 카카오 F3",
+   "name": "F3 내로우 제목(Black Han Sans)",
+   "made": "2026-09-03",
+   "files": {
+    "원천": "landxi/proto/review/bench-kakao.html#spec",
+    "캡처": "landxi/proto/review/assets-thumbs/kakao-F3.jpg"
+   },
+   "verdict": "폐기",
+   "reason": "9/27 D19③ 채택으로 탈락",
+   "replaced_by": "D19 ③(서체 유지) — 9/27 결정"
+  },
+  {
+   "id": "K-C1",
+   "kind": "스펙시먼",
+   "function": "공통",
+   "screen": "서체·색·형태",
+   "variant": "토글 카카오 C1",
+   "name": "C1 카카오식 딥블루 #19199B",
+   "made": "2026-09-03",
+   "files": {
+    "원천": "landxi/proto/review/bench-kakao.html#spec",
+    "캡처": "landxi/proto/review/assets-thumbs/kakao-C1.jpg"
+   },
+   "verdict": "폐기",
+   "reason": "CI 블루와 어긋남 — 벤치 §7 '가져오지 말 것'",
+   "replaced_by": "T3 액센트 #006DF7 유지"
+  },
+  {
+   "id": "K-S1",
+   "kind": "스펙시먼",
+   "function": "공통",
+   "screen": "서체·색·형태",
+   "variant": "토글 카카오 S1",
+   "name": "S1 라운드 12 · 필 · 채운 파란 버튼",
+   "made": "2026-09-03",
+   "files": {
+    "원천": "landxi/proto/review/bench-kakao.html#spec",
+    "캡처": "landxi/proto/review/assets-thumbs/kakao-S1.jpg"
+   },
+   "verdict": "폐기",
+   "reason": "법전 §2 충돌 · 토스 벤치도 라운드 0 유지(5-6)",
+   "replaced_by": "라운드 0 · 잉크 버튼 유지(법전)"
+  },
+  {
+   "id": "K-D21a",
+   "kind": "스펙시먼",
+   "function": "공통",
+   "screen": "서체·색·형태",
+   "variant": "결정 카카오 D21",
+   "name": "D21 ⓐ 섹션 영문 도장 4종",
+   "made": "2026-09-03",
+   "files": {
+    "원천": "landxi/proto/review/bench-kakao.html#spec",
+    "캡처": null
+   },
+   "verdict": "폐기",
+   "reason": "9/27 선택에서 제외 · 글 다이어트(글자 최소)",
+   "replaced_by": "D21 ⓑⓒⓓⓔ 만 채택(9/27)"
+  },
+  {
+   "id": "K-D21f",
+   "kind": "스펙시먼",
+   "function": "공통",
+   "screen": "출처 띠·푸터",
+   "variant": "결정 카카오 D21",
+   "name": "D21 ⓕ 푸터 LX 워터마크",
+   "made": "2026-09-03",
+   "files": {
+    "원천": "landxi/proto/review/bench-kakao.html#specJ",
+    "캡처": null
+   },
+   "verdict": "폐기",
+   "reason": "9/27 선택에서 제외 · 서비스 푸터는 1줄로",
+   "replaced_by": "푸터 1줄(F3 §5)"
+  },
+  {
+   "id": "K-D20-3",
+   "kind": "스펙시먼",
+   "function": "공통",
+   "screen": "빈 상태·캐릭터",
+   "variant": "결정 카카오 D20",
+   "name": "D20 ③ 신규 3D 마스코트 제작",
+   "made": "2026-09-03",
+   "files": {
+    "원천": "landxi/proto/review/bench-kakao.html#specG",
+    "캡처": null
+   },
+   "verdict": "폐기",
+   "reason": "별도 예산·LX 승인 필요 · 벤치 §7 '가져오지 말 것'",
+   "replaced_by": "D20 ② 필름 캐릭터 3종 승격"
+  },
+  {
+   "id": "T-5-1",
+   "kind": "스펙시먼",
+   "function": "공통",
+   "screen": "토스 톤",
+   "variant": "제안 토스 5-1",
+   "name": "원칙 번역 — 스크럽 = 실시간 지도 카메라, 실제 UI 그대로, 업무 결과 숫자만",
+   "made": "2026-09-27",
+   "files": {
+    "원천": "docs/superpowers/research/2026-09-27-bench-toss.md",
+    "캡처": null
+   },
+   "verdict": "검토",
+   "reason": "9/27 토스 벤치 적용안 — 판정 전",
+   "next": "v3 시안 5화면 공통 원칙 → 27화면 재구현"
+  },
+  {
+   "id": "T-TONE",
+   "kind": "스펙시먼",
+   "function": "공통",
+   "screen": "토스 톤",
+   "variant": "결정 토스 톤",
+   "name": "관리자·직원·영업 밝은 토스 톤(#F2F4F6 · 잉크 #1C1F25 · 보조 #727780)",
+   "made": "2026-09-27",
+   "files": {
+    "원천": "docs/superpowers/research/2026-09-27-bench-toss.md",
+    "캡처": null
+   },
+   "verdict": "검토",
+   "reason": "9/27 사용자 지시 — 9/24 Q3 잉크 반전을 뒤집음",
+   "next": "적용 예정: v3 관제 핵심판·생산 콘솔·로그인 → 27화면 재구현"
+  },
+  {
+   "id": "T-CH0",
+   "kind": "스펙시먼",
+   "function": "메인",
+   "screen": "소개 챕터(토스)",
+   "variant": "제안 토스 5-2",
+   "name": "챕터 0 히어로 — 국토를 / 한 번에 읽는다",
+   "made": "2026-09-27",
+   "files": {
+    "원천": "docs/superpowers/research/2026-09-27-bench-toss.md",
+    "캡처": null
+   },
+   "verdict": "검토",
+   "reason": "9/27 토스 벤치 적용안 — 판정 전",
+   "next": "메인 재구성(7챕터)"
+  },
+  {
+   "id": "T-CH1",
+   "kind": "스펙시먼",
+   "function": "메인",
+   "screen": "소개 챕터(토스)",
+   "variant": "제안 토스 5-2",
+   "name": "챕터 1 XI맵 전역 추론 — 전국이 / 한 화면에 차오른다",
+   "made": "2026-09-27",
+   "files": {
+    "원천": "docs/superpowers/research/2026-09-27-bench-toss.md",
+    "캡처": null
+   },
+   "verdict": "검토",
+   "reason": "9/27 토스 벤치 적용안 — 판정 전",
+   "next": "메인 재구성(7챕터)"
+  },
+  {
+   "id": "T-CH2",
+   "kind": "스펙시먼",
+   "function": "메인",
+   "screen": "소개 챕터(토스)",
+   "variant": "제안 토스 5-2",
+   "name": "챕터 2 실태조사 대조 — 대장과 다른 땅을 / 찾아낸다",
+   "made": "2026-09-27",
+   "files": {
+    "원천": "docs/superpowers/research/2026-09-27-bench-toss.md",
+    "캡처": null
+   },
+   "verdict": "검토",
+   "reason": "9/27 토스 벤치 적용안 — 판정 전",
+   "next": "메인 재구성(7챕터) · 성과 띠(스펙시먼 E)와 합침"
+  },
+  {
+   "id": "T-CH3",
+   "kind": "스펙시먼",
+   "function": "메인",
+   "screen": "소개 챕터(토스)",
+   "variant": "제안 토스 5-2",
+   "name": "챕터 3 융합 분석 에이전트 — 올린 행정 자료에 / 묻는다",
+   "made": "2026-09-27",
+   "files": {
+    "원천": "docs/superpowers/research/2026-09-27-bench-toss.md",
+    "캡처": null
+   },
+   "verdict": "검토",
+   "reason": "9/27 토스 벤치 적용안 — 판정 전",
+   "next": "메인 재구성(7챕터)"
+  },
+  {
+   "id": "T-CH4",
+   "kind": "스펙시먼",
+   "function": "메인",
+   "screen": "소개 챕터(토스)",
+   "variant": "제안 토스 5-2",
+   "name": "챕터 4 서비스 카드 생산 — 한 번 만든 분석이 / 서비스가 된다",
+   "made": "2026-09-27",
+   "files": {
+    "원천": "docs/superpowers/research/2026-09-27-bench-toss.md",
+    "캡처": null
+   },
+   "verdict": "검토",
+   "reason": "9/27 토스 벤치 적용안 — 판정 전",
+   "next": "메인 재구성(7챕터) · 카드 문법(스펙시먼 B)"
+  },
+  {
+   "id": "T-CH5",
+   "kind": "스펙시먼",
+   "function": "메인",
+   "screen": "소개 챕터(토스)",
+   "variant": "제안 토스 5-2",
+   "name": "챕터 5 지자체 제공 — 어느 시군구든 / 그대로 배포한다",
+   "made": "2026-09-27",
+   "files": {
+    "원천": "docs/superpowers/research/2026-09-27-bench-toss.md",
+    "캡처": null
+   },
+   "verdict": "검토",
+   "reason": "9/27 토스 벤치 적용안 — 판정 전",
+   "next": "메인 재구성(7챕터)"
+  },
+  {
+   "id": "T-CH6",
+   "kind": "스펙시먼",
+   "function": "메인",
+   "screen": "소개 챕터(토스)",
+   "variant": "제안 토스 5-2",
+   "name": "챕터 6 글로벌 — 국경 밖에서도 / 같은 지도",
+   "made": "2026-09-27",
+   "files": {
+    "원천": "docs/superpowers/research/2026-09-27-bench-toss.md",
+    "캡처": null
+   },
+   "verdict": "검토",
+   "reason": "9/27 토스 벤치 적용안 — 판정 전",
+   "next": "메인 재구성(7챕터)"
+  },
+  {
+   "id": "T-CH7",
+   "kind": "스펙시먼",
+   "function": "메인",
+   "screen": "소개 챕터(토스)",
+   "variant": "제안 토스 5-2",
+   "name": "챕터 7 마감 — Hyper Performance · Hyper Solution · Hyper GeoAI",
+   "made": "2026-09-27",
+   "files": {
+    "원천": "docs/superpowers/research/2026-09-27-bench-toss.md",
+    "캡처": null
+   },
+   "verdict": "검토",
+   "reason": "9/27 토스 벤치 적용안 — 판정 전",
+   "next": "메인 재구성(7챕터) · 출처 띠(스펙시먼 J)"
+  },
+  {
+   "id": "T-5-3",
+   "kind": "스펙시먼",
+   "function": "인증",
+   "screen": "로그인",
+   "variant": "제안 토스 5-3",
+   "name": "로그인 소개 판 3장면 자동 순환",
+   "made": "2026-09-27",
+   "files": {
+    "원천": "docs/superpowers/research/2026-09-27-bench-toss.md",
+    "캡처": null
+   },
+   "verdict": "검토",
+   "reason": "9/27 토스 벤치 적용안 — 판정 전",
+   "next": "v3 정문 로그인(landxi/v3/login) — 로그인 3축(스펙시먼 C)과 합침"
+  },
+  {
+   "id": "T-5-4",
+   "kind": "스펙시먼",
+   "function": "공통",
+   "screen": "기능 소개 틀",
+   "variant": "제안 토스 5-4",
+   "name": "기능별 소개 섹션 틀 — 히어로 → 교차 블록 → 관련 카드 → 마감",
+   "made": "2026-09-27",
+   "files": {
+    "원천": "docs/superpowers/research/2026-09-27-bench-toss.md",
+    "캡처": null
+   },
+   "verdict": "검토",
+   "reason": "9/27 토스 벤치 적용안 — 판정 전",
+   "next": "서비스 카탈로그 상세·각 화면 첫 진입 — 27화면 재구현(스펙시먼 D·F 합침)"
+  },
+  {
+   "id": "T-5-5",
+   "kind": "스펙시먼",
+   "function": "메인",
+   "screen": "스크럽 필름",
+   "variant": "제안 토스 5-5",
+   "name": "필름 쪼개기 — leg 1–2 여는 카메라 · leg 11–12 마감 · leg 4–10 은 서비스 상세로",
+   "made": "2026-09-27",
+   "files": {
+    "원천": "docs/superpowers/research/2026-09-27-bench-toss.md",
+    "캡처": null
+   },
+   "verdict": "검토",
+   "reason": "9/27 토스 벤치 적용안 · 남원 한정·'시연' 프레이밍 금지와 맞춤",
+   "next": "메인 재구성 — 지역 이름·'시연' 라벨이 앞에 나오는 leg 는 메인에서 뺌"
+  },
+  {
+   "id": "T-5-6",
+   "kind": "스펙시먼",
+   "function": "공통",
+   "screen": "토스 톤",
+   "variant": "제안 토스 5-6",
+   "name": "가져오지 않을 것 — 오버슈트 이징·둥근 카드·실사 인물·56화면·채움 버튼·지도 위 관성 스크롤",
+   "made": "2026-09-27",
+   "files": {
+    "원천": "docs/superpowers/research/2026-09-27-bench-toss.md",
+    "캡처": null
+   },
+   "verdict": "폐기",
+   "reason": "법전·지도 제스처와 충돌 — 토스 벤치 스스로 제외",
+   "replaced_by": "법전(라운드 0 · 액센트 절제) 유지"
+  }
+ ]
+}

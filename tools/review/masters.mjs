@@ -1,243 +1,700 @@
-// 원판 갤러리(landxi/proto/review/masters.html) 생성 — canvas.json + renders/*.png.
-// 카테고리(화면) × 상태(적용/검토/폐기). 상태는 STATUS 표가 기준이고, 페이지에서 바꾼 값은
-// localStorage 에 임시 저장되어 '변경 요약'으로 복사해 전달 → 여기 STATUS 에 반영한다.
-// 실행: node tools/review/masters.mjs
+// 자산 대장 + 원판 갤러리 생성기 — 원판(design-canvas/v2) · 구현(shots/overview/inventory.json) · 스펙시먼(카카오·토스 벤치)을
+// 기능 → 화면 → 버전·변형 3단으로 묶고 항목마다 적용 / 검토 / 폐기 를 판정한다.
+// 출력: landxi/proto/review/assets.json (자산 대장) · landxi/proto/review/masters.html (갤러리)
+//       landxi/proto/review/screen-map.json (구현 현황판이 같은 화면 키로 묶는 매핑 — tools/review/build-status.py 가 읽음)
+// 판정 기준표는 아래 MASTERS · IMPL · SPECS 세 표. 판정을 바꾸려면 표를 고치고 다시 굽는다.
+// 실행: node tools/review/masters.mjs   (저장소 루트)
 import fs from 'node:fs';
+import path from 'node:path';
+import { execSync } from 'node:child_process';
 
-// [카테고리, 상태(apply|review|drop), 메모]
-const STATUS = {
-  'B6-Admin-Faq': ['서비스 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Admin-Faq-Form': ['서비스 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Admin-Inquiry': ['서비스 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Admin-Inquiry-Reply': ['서비스 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Admin-Map': ['서비스 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Admin-Map-Edit': ['서비스 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Admin-Notice': ['서비스 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Admin-Notice-Delete': ['서비스 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Admin-Notice-Form': ['서비스 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Admin-Notice-Form-Error': ['서비스 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Admin-Users-Approve': ['서비스 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Admin-Users-Detail': ['서비스 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Admin-Users-Empty': ['서비스 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Admin-Users-Login': ['서비스 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Admin-Users-Login-Empty': ['서비스 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Admin-Users-Opt1': ['서비스 관리', 'review', "선택 1 · 승인 대기 띠 + 원본 10열 원장"],
-  'B6-Admin-Users-Opt2': ['서비스 관리', 'review', "선택 2 · 권장 — 좌 목록 6열 + 우 사용자 정보 열람(승인/거부·권한 저장)"],
-  'B6-Admin-Users-Opt3': ['서비스 관리', 'review', "선택 3 · 승인 데스크 + 부서별 카드 보드"],
-  'B6-Admin-Users-Pwd': ['서비스 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Admin-Users-Pwd-Empty': ['서비스 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Auth-FindId': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-Auth-FindId-Error': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-Auth-FindId-Fail': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-Auth-FindId-Result': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-Auth-FindPw': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-Auth-FindPw-Error': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-Auth-FindPw-Fail': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-Auth-FindPw-Result': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-Auth-Signup-1': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-Auth-Signup-1-Init': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-Auth-Signup-2': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-Auth-Signup-2-Error': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-Auth-Signup-3': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-MapWork-Opt1': ['지도 작업공간(컨셉)', 'review', "선택 1 · 파이프라인 도크 — 판 풀블리드 + 아래 단계 5칸(큰 숫자) + 좌 목록 + 우 인스펙터"],
-  'B6-MapWork-Opt2': ['지도 작업공간(컨셉)', 'review', "선택 2 · 단계 분할 — 좌 600 = 지금 단계의 일 / 우 = 판"],
-  'B6-MapWork-Opt3': ['지도 작업공간(컨셉)', 'review', "선택 3 · 권장 — 레이어가 곧 작업: 레이어 스택 + 판 위 콜아웃(다음 일 4) + 시점 스트립"],
-  'B6-My-Brand': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-My-Brand-Applied': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-My-Brand-Empty': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-My-Brand-Error': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-My-Brand-Reset': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-My-Edit': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-My-Edit-Error': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-My-Edit-Saved': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-My-Flyout': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-My-History-Empty': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-My-Opt1': ['MY · 인증', 'review', "선택 1 · 권장 — 좌 신원 원장 372 / 우 디스크 판(30 % + 칸 판 + 신청 이력)"],
-  'B6-My-Opt2': ['MY · 인증', 'review', "선택 2 · 현황 밴드 4칸 + 원본 순서 세로 스택"],
-  'B6-My-Opt3': ['MY · 인증', 'review', "선택 3 · 설정 작업공간(좌 절 목록 + 우 상세)"],
-  'B6-My-Password': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-My-Password-Error': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-My-Password-Saved': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-My-PwdConfirm': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-My-PwdConfirm-Error': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-My-Storage': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-My-Storage-Done': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-My-Storage-Error': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-My-Withdraw': ['MY · 인증', 'review', "2026-09-20 자동 설계"],
-  'B6-Publish-Card-Edit': ['카드 발행 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Publish-Card-Edit-Locked': ['카드 발행 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Publish-Cards': ['카드 발행 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Publish-Cards-Empty': ['카드 발행 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Publish-List': ['카드 발행 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Publish-List-Empty': ['카드 발행 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Publish-List-Pending': ['카드 발행 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Publish-Opt1': ['카드 발행 관리', 'review', "선택 1 · 원장(표) + 우 드로어 480"],
-  'B6-Publish-Opt2': ['카드 발행 관리', 'review', "선택 2 · 상태 열 보드 4 + 선택 요약 띠"],
-  'B6-Publish-Opt3': ['카드 발행 관리', 'review', "선택 3 · 권장 — 분할 검토 데스크: 큐 344 · 증거(실크롭+청록) 520 · 결정 328"],
-  'B6-Publish-Request': ['카드 발행 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Publish-Review-Analysis': ['카드 발행 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Publish-Review-ClassModal': ['카드 발행 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Publish-Review-Edit': ['카드 발행 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Publish-Review-Labeling': ['카드 발행 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Publish-Review-Members': ['카드 발행 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Publish-Review-Process': ['카드 발행 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Publish-Review-Reject': ['카드 발행 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Publish-Review-Rejected': ['카드 발행 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Publish-Review-Train': ['카드 발행 관리', 'review', "2026-09-20 자동 설계"],
-  'B6-Support-Contact': ['서비스 지원', 'review', "2026-09-20 자동 설계"],
-  'B6-Support-Contact-Cancel': ['서비스 지원', 'review', "2026-09-20 자동 설계"],
-  'B6-Support-Contact-Empty': ['서비스 지원', 'review', "2026-09-20 자동 설계"],
-  'B6-Support-Contact-Error': ['서비스 지원', 'review', "2026-09-20 자동 설계"],
-  'B6-Support-Contact-View': ['서비스 지원', 'review', "2026-09-20 자동 설계"],
-  'B6-Support-Contact-View-Pending': ['서비스 지원', 'review', "2026-09-20 자동 설계"],
-  'B6-Support-FAQ': ['서비스 지원', 'review', "2026-09-20 자동 설계"],
-  'B6-Support-FAQ-Empty': ['서비스 지원', 'review', "2026-09-20 자동 설계"],
-  'B6-Support-Manual': ['서비스 지원', 'review', "2026-09-20 자동 설계"],
-  'B6-Support-Notice-Detail': ['서비스 지원', 'review', "2026-09-20 자동 설계"],
-  'B6-Support-Notice-Empty': ['서비스 지원', 'review', "2026-09-20 자동 설계"],
-  'B6-Support-Notice-Opt1': ['서비스 지원', 'review', "선택 1 · 표 + 행 제자리 펼침"],
-  'B6-Support-Notice-Opt2': ['서비스 지원', 'review', "선택 2 · 권장 — 구분 건수 타일 4 + 좌 목록 / 우 열람 판"],
-  'B6-Support-Notice-Opt3': ['서비스 지원', 'review', "선택 3 · 구분 3열 보드 + 우측 서랍"],
-  'B6-Support-Usecase': ['서비스 지원', 'review', "2026-09-20 자동 설계"],
-  'B6-Support-Usecase-Empty': ['서비스 지원', 'review', "2026-09-20 자동 설계"],
-  'B6-Support-Usecase-Modal': ['서비스 지원', 'review', "2026-09-20 자동 설계"],
-  'B7-Analysis-List': ['분석 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Analysis-Progress-Overlay': ['분석 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Analysis-Result-Edit': ['분석 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Analysis-Share': ['분석 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Map-AOI': ['지도 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Map-Basemap': ['지도 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Map-Download': ['지도 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Map-Draw': ['지도 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Map-Empty': ['지도 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Map-LayerTab': ['지도 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Map-Loading': ['지도 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Map-Measure': ['지도 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Map-Parallel': ['지도 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Map-Pledge': ['지도 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Map-Pledge-Busy': ['지도 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Map-Region': ['지도 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Map-Search': ['지도 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Map-Search-Empty': ['지도 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Map-Table': ['지도 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Project-Dataset-Create': ['프로젝트', 'review', "2026-09-20 자동 설계"],
-  'B7-Project-Dataset-Detail': ['프로젝트', 'review', "2026-09-20 자동 설계"],
-  'B7-Project-Deploy-Picker': ['프로젝트', 'review', "2026-09-20 자동 설계"],
-  'B7-Project-File-Add': ['프로젝트', 'review', "2026-09-20 자동 설계"],
-  'B7-Project-File-Fail': ['프로젝트', 'review', "2026-09-20 자동 설계"],
-  'B7-Project-File-Progress': ['프로젝트', 'review', "2026-09-20 자동 설계"],
-  'B7-Project-Invite': ['프로젝트', 'review', "2026-09-20 자동 설계"],
-  'B7-Project-Invite-Error': ['프로젝트', 'review', "2026-09-20 자동 설계"],
-  'B7-Project-Labeling-Fix': ['프로젝트', 'review', "2026-09-20 자동 설계"],
-  'B7-Project-Model-Register': ['프로젝트', 'review', "2026-09-20 자동 설계"],
-  'B7-Project-Model-Registered': ['프로젝트', 'review', "2026-09-20 자동 설계"],
-  'B7-Project-Overview-Edit': ['프로젝트', 'review', "2026-09-20 자동 설계"],
-  'B7-Project-Overview-Members': ['프로젝트', 'review', "2026-09-20 자동 설계"],
-  'B7-Project-Train-Fix': ['프로젝트', 'review', "2026-09-20 자동 설계"],
-  'B7-Project-Train-New': ['프로젝트', 'review', "2026-09-20 자동 설계"],
-  'B7-Project-Train-Running': ['프로젝트', 'review', "2026-09-20 자동 설계"],
-  'B7-Projects-Empty': ['프로젝트', 'review', "2026-09-20 자동 설계"],
-  'B7-Projects-NoResult': ['프로젝트', 'review', "2026-09-20 자동 설계"],
-  'B7-Report-Issue': ['지도 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Report-Issue-Error': ['지도 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Report-List': ['지도 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Report-List-Empty': ['지도 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Report-Pledge': ['지도 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-State-Error': ['프로젝트', 'review', "2026-09-20 자동 설계"],
-  'B7-State-Loading': ['프로젝트', 'review', "2026-09-20 자동 설계"],
-  'B7-Stats-Class': ['지도 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Stats-Empty': ['지도 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Stats-Find': ['지도 서비스', 'review', "2026-09-20 자동 설계"],
-  'B7-Stats-Opt1': ['지도 서비스', 'review', "선택 1"],
-  'B7-Stats-Opt2': ['지도 서비스', 'review', "선택 2"],
-  'B7-Stats-Opt3': ['지도 서비스', 'review', "선택 3"],
-  'B5-Login': ['로그인', 'apply', 'login.html 적용'],
-  'B2-Login': ['로그인', 'drop', '1차 안(소개 카피 + 디오라마 판)'],
-  'B5-Dashboard-Data': ['대시보드', 'apply', 'dashboard.html 적용'],
-  'H-Dashboard-128': ['대시보드', 'drop', '12.8 초안(집 PC) — 현 적용판의 전 단계: 한 판 + 0.25° 그리드 + 토글. (구현 사본은 Wave 0 에서 삭제 — git 이력)'],
-  'H-Dashboard-Data-128': ['대시보드', 'drop', '12.8 초안(집 PC) — 학습데이터 토글 상태'],
-  'H-Projects-Roboflow': ['프로젝트', 'drop', '목록 초안(집 PC) — 현 검토판(우측 조회)의 전 단계: 만들기 = 우측 드로어'],
-  'H-Project-Overview-Roboflow': ['프로젝트', 'drop', '개요 초안(집 PC) — 고정 헤더 276 + 탭 6 + 스탯 패널 288'],
-  'H-Project-Data-Roboflow': ['프로젝트', 'drop', '데이터 탭 초안(집 PC) — 세그먼트 2 + 5열 그리드'],
-  'B5-Dashboard-User': ['대시보드','review','사용자(직원) 대시보드 — 원본 dashboard2 1:1'],
-  'B5-Dashboard-Viewer': ['대시보드','review','뷰어 대시보드 — 원본 dashboard3 1:1'],
-  'B5-Dashboard': ['대시보드', 'drop', '이등분 스택 안'],
-  'B4-Dashboard': ['대시보드', 'drop', '전면 개편 4차'],
-  'B3-Dashboard': ['대시보드', 'drop', '축소 원장'],
-  'B2-Dashboard': ['대시보드', 'drop', '지도 위 원장'],
-  'B5-DataMgmt': ['데이터 관리', 'apply', 'dataset.html 적용'],
-  'B5-DataMgmt-Upload': ['데이터 관리', 'apply', 'dataset.html?tab=upload 적용'],
-  'B3-DataMgmt': ['데이터 관리', 'drop', '파이프라인 4단계 원장'],
-  'B2-DataMgmt-Upload': ['데이터 관리', 'drop', '2차 안'],
-  'B2-DataMgmt-List': ['데이터 관리', 'drop', '2차 안'],
-  'B5-Projects': ['프로젝트', 'review', '목록 + 우 프로젝트 조회'],
-  'B5-Project-Create': ['프로젝트', 'review', '만들기 — 한 화면 · 우 폼 · 좌 = 편집 중 필드 문맥'],
-  'B5-Project-Create-Review': ['프로젝트', 'review', '만들기 검토 — 좌 검토 판 · 우 요약 + CTA'],
-  'B5-Project-Overview': ['프로젝트', 'review', '개요 · 구현 대기'],
-  'B5-Project-Data': ['프로젝트', 'review', '데이터 탭 · 구현 대기'],
-  'B5-Project-Labeling': ['프로젝트', 'review', '라벨링 + 클래스 편집기'],
-  'B5-Project-Train': ['프로젝트', 'review', '학습 워크플로우 캔버스'],
-  'B5-Project-Analysis': ['프로젝트', 'review', '분석 탭'],
-  'B5-Project-Deploy': ['프로젝트', 'review', '배포 · 발행 폼'],
-  'B5-Project-Delete': ['프로젝트', 'review', '삭제 확인'],
-  'B2-Projects': ['프로젝트', 'drop', '2차 안'],
-  'B5-Analysis-List': ['분석 서비스', 'review', '서비스 홈'],
-  'B5-Analysis-Run-Review': ['분석 서비스', 'review', '분석 실행 1 · 실행 검토 — 영상 중심(불러오기 · 업로드)'],
-  'B5-Analysis-Run-Progress': ['분석 서비스', 'review', '분석 실행 2 · 실행중 — 제목 정정 · 영상별 진행 · 누적'],
-  'B5-Analysis-Result': ['분석 서비스', 'review', '분석 실행 3 · 실행 결과'],
-  // B5-Analysis-Run · Run-1…5: drop — 5단계 안 → 3화면으로 통합(2026-08-27 · NOTES §19.6) · 파일은 git 이력에만
-  'B2-HomeFilm': ['메인(필름)', 'drop', '초기 카피 판 — 메인은 스크럽 필름 구현본(scrub/index.html)이 원판'],
-  'B2-HomeAtlas': ['메인(필름)', 'drop', '홈 아틀라스(필름 뒤 페이지) — 미사용'],
-  'B5-Map': ['지도 서비스', 'review', '기본 — V-World 실타일 + 레이어 카드 + 시점 스트립'],
-  'B5-Map-Info': ['지도 서비스', 'review', '객체 정보 — 브래킷 콜아웃 + 탐지 정보 + 조치 상태'],
-  'B5-Map-Compare': ['지도 서비스', 'review', '겹쳐보기 — 2025.04 | 2025.10 스와이프 + 변화 지수'],
-  'B2-XiMap': ['지도 서비스', 'drop', 'XI맵 초안 — 원본 지도 서비스 기능의 1/4 · 임계/스캔은 원본에 없음(NOTES §20)'],
+const OUT_DIR = 'landxi/proto/review';
+const V = 'design-canvas/v2/';
+
+// ── 1. 기능(대분류) → 화면(중분류) ─────────────────────────────────────────────
+const TAX = [
+  ['인증', ['로그인', '계정 신청', '아이디 찾기', '비밀번호 찾기']],
+  ['메인', ['스크럽 필름', '소개 챕터(토스)', '서비스 소개 판', '성과·결과 띠', '홈 초기안', '공개 사이트', '필름 제작 도구']],
+  ['대시보드', ['직원 첫 화면', '사용자 대시보드', '뷰어 대시보드']],
+  ['데이터 관리', ['목록(아카이브·완료·발행중)', '업로드', '파이프라인 단계']],
+  ['프로젝트', ['목록(메인)', '만들기', '만들기 검토', '개요', '삭제 모달', '데이터', '라벨링', '학습', '분석', '배포·발행', '지도 작업공간(컨셉)']],
+  ['분석 서비스', ['카드 목록', '카드 상세', '실행 검토', '실행 중', '실행 결과']],
+  ['카드 발행', ['승인·검토 데스크', '카드 목록', '카드 편집', '발행 요청']],
+  ['XI맵', ['기본 지도', '객체 정보', '시점 비교', '검색', '도구(측정·그리기·구역·내려받기)', '지역 구분·속성 표', '보안 서약', '표류 예측']],
+  ['실태조사', ['실태조사 모드', '대장 융합(기관 첫 화면)']],
+  ['에이전트', ['융합 분석 질문']],
+  ['통계/보고서', ['통계', '보고서']],
+  ['관제', ['관제 로그인', '운영 현황', '인프라', '기관·할당', '배포', '생산 관리']],
+  ['서비스 관리', ['사용자 관리', '공지 관리', '문의 관리', 'FAQ 관리', '지도 속성 관리']],
+  ['기관 포털', ['기관 로그인', '내 서비스', '서비스 상세']],
+  ['서비스 지원', ['공지', 'FAQ', '문의', '활용사례', '매뉴얼']],
+  ['MY', ['마이 페이지', '정보 수정', '비밀번호 변경', '브랜드(CI)', '저장 공간', '탈퇴']],
+  ['글로벌', ['로그인', '해외 서비스']],
+  ['공통', ['서체·색·형태', '토스 톤', '빈 상태·캐릭터', '출처 띠·푸터', '기능 소개 틀', '상태 패턴(로딩·오류)', '디자인 실험']],
+];
+const SCREEN_KEYS = new Set(TAX.flatMap(([f, ss]) => ss.map((s) => `${f}/${s}`)));
+const VERDICTS = ['적용', '검토', '폐기'];
+
+// 표 파서 — '#' 줄 = 묶음 기본값(화면 | 판정 | 대상 | 근거 | 다음 단계), 항목 줄 = id | 이름 [| 판정 | 대상 | 근거 | 다음 단계]
+// 대상: 적용 → 들어간 구현 경로(쉼표로 여럿) · 폐기 → 대체한 것 · 검토 → 어느 차수에서 무엇으로
+function table(src) {
+  const rows = []; let g = null;
+  for (const raw of src.split('\n')) {
+    const line = raw.trim(); if (!line) continue;
+    const cells = line.replace(/^#\s*/, '').split('|').map((s) => s.trim());
+    if (line.startsWith('#')) { const [screen, verdict, target, reason, later] = cells; g = { screen, verdict, target, reason, later }; continue; }
+    const [id, name, verdict, target, reason, later] = cells;
+    rows.push({ id, name, screen: g.screen, verdict: verdict || g.verdict, target: target || (verdict && verdict !== g.verdict ? '' : g.target), reason: reason || g.reason, later: later ?? g.later ?? '' });
+  }
+  return rows;
+}
+
+// ── 2. 원판(아트보드) 판정표 ─────────────────────────────────────────────────
+const MASTERS = table(`
+# 인증/로그인 | 적용 | landxi/proto/login.html | 8/27 구 Land-XI 구도·실제 CI 로 확정 → 구현 | F3 B0: v3 정문 로그인(landxi/v3/login)으로 이관
+B5-Login | 로그인 — 좌 디오라마 영상 / 우 폼
+B2-Login | 로그인 — 플랫폼 소개(1차) | 폐기 | B5-Login | 8/26 3차 피드백 '플랫폼 소개가 아니다' → B5 구도로 교체 |
+# 인증/계정 신청 | 적용 | landxi/proto/signup.html | D26 권장안 자동 채택(9/20) → 인증 가족 구현 | F3 B0: 신청은 정문 서랍으로 축소
+B6-Auth-Signup-1 | 1단계 · 약관
+B6-Auth-Signup-1-Init | 1단계 · 처음
+B6-Auth-Signup-2 | 2단계 · 정보 입력
+B6-Auth-Signup-2-Error | 2단계 · 입력 오류
+B6-Auth-Signup-3 | 3단계 · 완료
+# 인증/아이디 찾기 | 적용 | landxi/proto/find-id.html | D26 권장안 자동 채택(9/20) → 인증 가족 구현 | F3 B0: 정문 서랍으로 축소
+B6-Auth-FindId | 입력
+B6-Auth-FindId-Error | 입력 오류
+B6-Auth-FindId-Fail | 찾기 실패
+B6-Auth-FindId-Result | 결과 | 적용 | landxi/proto/find-id-result.html
+# 인증/비밀번호 찾기 | 적용 | landxi/proto/find-password.html | D26 권장안 자동 채택(9/20) → 인증 가족 구현 | F3 B0: 정문 서랍으로 축소
+B6-Auth-FindPw | 입력
+B6-Auth-FindPw-Error | 입력 오류
+B6-Auth-FindPw-Fail | 찾기 실패
+B6-Auth-FindPw-Result | 결과 | 적용 | landxi/proto/find-password-result.html
+
+# 메인/홈 초기안 | 폐기 | scrub-main | 8/27 메인은 스크럽 필름 구현본이 원판 |
+B2-HomeFilm | 홈 — 필름 스테이지(카피 판)
+B2-HomeAtlas | 홈 — 필름 뒤 아틀라스 | 폐기 | scrub-main | D28 A3 ② 채택 — 사례·문의는 서비스 지원으로, 메인엔 푸터만 |
+
+# 대시보드/직원 첫 화면 | 폐기 | B5-Dashboard-Data | 대시보드 전 단계 안 |
+B5-Dashboard-Data | 대시보드 — 전국 한 판 · 학습데이터 토글 | 적용 | landxi/proto/dashboard.html | 8/27 12.8 전국 판 적용판 | F3 §5: 대시보드 폐지 → v3 생산 콘솔 '오늘' 띠로 대체 예정
+B5-Dashboard | 관리자 대시보드 — AI 결과 토글 | 폐기 | B5-Dashboard-Data | 9/21 계정 3단 분리·9/24 직원 화면 전환으로 관리 위젯 제거 — 같은 판은 적용판이 대표 |
+B4-Dashboard | 전면 개편 4차 — 124px 진술·검정 반전 | 폐기 | B5-Dashboard-Data | 8/27 B5 로 대체 · 검정 반전·큰 진술은 9/27 결정(관리자 검정 톤 폐기·내부 지표 과장 금지)과도 충돌 |
+B3-Dashboard | 축소 현황 원장(지도 없음) | 폐기 | B4-Dashboard | 8/26 7차 피드백 '기존과 별반 다를 게 없다' |
+B2-Dashboard | A안 지도 위 원장 | 폐기 | B3-Dashboard | 8/26 '대시보드 지도 없음(보여줄 공간 데이터 부족)' 결정으로 축소 |
+H-Dashboard-128 | 12.8 초안 — AI 결과 토글(집 PC) | 폐기 | B5-Dashboard-Data | 현 적용판의 전 단계 초안 |
+H-Dashboard-Data-128 | 12.8 초안 — 학습데이터 토글(집 PC) | 폐기 | B5-Dashboard-Data | 현 적용판의 전 단계 초안 |
+# 대시보드/사용자 대시보드 | 검토 | F3 B1 — 역할별 첫 화면('오늘' 띠) 설계 때 흡수 여부 결정 | D17 원본 dashboard2 1:1 — 아직 구현 안 됨 |
+B5-Dashboard-User | 사용자(직원) 대시보드
+# 대시보드/뷰어 대시보드 | 검토 | F3 B2 — 기관 서비스 첫 화면(v3 gov-fusion)의 결과 탭 참고 | D17 원본 dashboard3 1:1 — 아직 구현 안 됨 |
+B5-Dashboard-Viewer | 뷰어 대시보드
+
+# 데이터 관리/목록(아카이브·완료·발행중) | 적용 | landxi/proto/dataset.html | 발주 확정안(Roboflow 그리드 × 아카이브/완료/발행중) → 구현 | F3 B4: v3 생산 콘솔 ① 반입 서랍으로 흡수
+B5-DataMgmt | 목록 — 이미지 그리드 + 우 패널
+B3-DataMgmt | 4탭 파이프라인 원장 | 폐기 | B5-DataMgmt | 8/26 6차 피드백 후 B5 로 확정 |
+B2-DataMgmt-List | 2차 안 — 아카이브/완료/발행중 | 폐기 | B5-DataMgmt | 8/26 6차 '기존과 거의 똑같다' |
+# 데이터 관리/업로드 | 적용 | landxi/proto/dataset.html?tab=upload | 발주 확정안 업로드 탭 → 구현 | F3 B4: ① 반입 서랍
+B5-DataMgmt-Upload | 업로드 탭
+B2-DataMgmt-Upload | 2차 안 — 업로드 | 폐기 | B5-DataMgmt-Upload | 8/26 6차 '기존과 거의 똑같다' |
+
+# 프로젝트/목록(메인) | 적용 | landxi/proto/ai-project.html | D5 원판 → 9/20 프로젝트 8단계 완전체 구현 | F3 B4: 8단계 → 라벨·학습·모델 3으로 축소, v3 생산 콘솔 서랍
+B5-Projects | 목록 + 우 프로젝트 조회
+B7-Projects-Empty | 목록 0건
+B7-Projects-NoResult | 검색 0건
+H-Projects-Roboflow | 목록 초안 — 만들기 드로어(집 PC) | 폐기 | B5-Projects | B5 원판의 전 단계 초안 |
+B2-Projects | 2차 안 — 목록 + 워크플로우 캔버스 | 폐기 | B5-Projects | 8/25 '워크플로우가 업무 시스템' 거부 → B5 로 교체 |
+# 프로젝트/만들기 | 적용 | landxi/proto/ai-project-create.html | D5 원판 → 9/20 구현 | F3 B4 생산 콘솔 ② 학습 서랍
+B5-Project-Create | 만들기 — 한 화면 폼
+# 프로젝트/만들기 검토 | 적용 | landxi/proto/ai-project-create.html | D5 원판 → 9/20 구현 | F3 B4 생산 콘솔 ② 학습 서랍
+B5-Project-Create-Review | 만들기 검토
+# 프로젝트/개요 | 적용 | landxi/proto/ai-project.html | D5·D29 원판 → 9/20 구현 | F3 B4 생산 콘솔
+B5-Project-Overview | 개요(허브 탭 1)
+B7-Project-Overview-Edit | 개요 수정
+B7-Project-Overview-Members | 구성원
+B7-Project-Invite | 구성원 초대
+B7-Project-Invite-Error | 초대 오류
+H-Project-Overview-Roboflow | 개요 초안 — 고정 헤더 + 탭 6(집 PC) | 폐기 | B5-Project-Overview | B5 원판의 전 단계 초안 |
+# 프로젝트/삭제 모달 | 적용 | landxi/proto/ai-project.html | D5 원판 → 9/20 구현 | F3 B4 생산 콘솔
+B5-Project-Delete | 삭제 확인
+# 프로젝트/데이터 | 적용 | landxi/proto/ai-project.html | D5·D29 원판 → 9/20 구현 | F3 B4 생산 콘솔 ① 반입
+B5-Project-Data | 데이터(파일 · 데이터셋)
+B7-Project-File-Add | 파일 추가
+B7-Project-File-Progress | 업로드 진행 중
+B7-Project-File-Fail | 업로드 실패
+B7-Project-Dataset-Create | 데이터셋 만들기
+B7-Project-Dataset-Detail | 데이터셋 상세
+H-Project-Data-Roboflow | 데이터 탭 초안 — 5열 그리드(집 PC) | 폐기 | B5-Project-Data | B5 원판의 전 단계 초안 |
+# 프로젝트/라벨링 | 적용 | landxi/proto/ai-project-label.html | D5·D29 원판 → 9/20 구현 | F3 B4 생산 콘솔 ② 학습
+B5-Project-Labeling | 라벨링 + 클래스 편집기
+B7-Project-Labeling-Fix | 툴바 겹침 수정판
+# 프로젝트/학습 | 적용 | landxi/proto/ai-project.html | D5·D29 원판 → 9/20 구현 | F3 B4 생산 콘솔 ② 학습
+B5-Project-Train | 학습 워크플로우
+B7-Project-Train-New | 새로 학습하기
+B7-Project-Train-Running | 학습 진행 중
+B7-Project-Train-Fix | 학습 화면 겹침 수정판
+B7-Project-Model-Register | 모델 등록(추정)
+B7-Project-Model-Registered | 모델 등록됨(추정)
+# 프로젝트/분석 | 적용 | landxi/proto/ai-project.html | D5 원판 → 9/20 구현 | F3 B4 생산 콘솔
+B5-Project-Analysis | 분석 탭
+# 프로젝트/배포·발행 | 적용 | landxi/proto/ai-project.html | D5·D29 원판 → 9/20 구현 | F3 B4 생산 콘솔 ⑤ 배포·이식
+B5-Project-Deploy | 배포 · 발행 폼
+B7-Project-Deploy-Picker | 발행 학습결과 선택
+# 프로젝트/지도 작업공간(컨셉) | 폐기 | B6-MapWork-Opt3 | D27 권장안(선택 3) 자동 채택(9/20) |
+B6-MapWork-Opt3 | 선택 3 · 레이어가 곧 작업(권장) | 검토 | v3 생산 콘솔(landxi/v3/lx-console) — XI맵 위 6단 서랍과 같은 개념, 시안 승인 때 흡수 | D27 권장안 — 아직 구현 안 됨(자리 화면만) |
+B6-MapWork-Opt1 | 선택 1 · 파이프라인 도크
+B6-MapWork-Opt2 | 선택 2 · 단계 분할
+
+# 분석 서비스/카드 목록 | 적용 | landxi/proto/analysis-ai.html | D10·D29 원판 → 9/20 구현 | F3 B4: v3 생산 콘솔 ③ 조립(카탈로그)
+B5-Analysis-List | 서비스 홈 — 카드 15 + 우 정보
+B7-Analysis-List | 목록 — 준비 중 카드 표기
+# 분석 서비스/실행 검토 | 적용 | landxi/proto/analysis-ai.html?tab=run | D10 원판 → 9/20 구현 | F3 B4 생산 콘솔
+B5-Analysis-Run-Review | 실행 검토 — 영상 중심
+# 분석 서비스/실행 중 | 적용 | landxi/proto/analysis-ai.html?tab=running | D10·D29 원판 → 9/20 구현 | F3 B4 생산 콘솔
+B5-Analysis-Run-Progress | 실행 중 — 영상별 진행
+B7-Analysis-Progress-Overlay | 진행 오버레이
+# 분석 서비스/실행 결과 | 적용 | landxi/proto/analysis-ai.html?tab=done | D10·D29 원판 → 9/20 구현 | F3 B4 생산 콘솔
+B5-Analysis-Result | 실행 결과 — 정사영상 + 청록 결과
+B7-Analysis-Result-Edit | 결과 편집
+B7-Analysis-Share | 공유 설정
+
+# 카드 발행/승인·검토 데스크 | 적용 | landxi/proto/admin-publish.html | D24 권장안(선택 3 분할 검토 데스크) 자동 채택 → 9/20 구현 | F3 B3: v3 관제 결재함 · 9/27 토스 톤 재조정
+B6-Publish-Opt3 | 선택 3 · 분할 검토 데스크(권장)
+B6-Publish-Opt1 | 선택 1 · 원장 + 드로어 | 폐기 | B6-Publish-Opt3 | D24 권장안(선택 3) 자동 채택 |
+B6-Publish-Opt2 | 선택 2 · 상태 열 보드 | 폐기 | B6-Publish-Opt3 | D24 권장안(선택 3) 자동 채택 |
+B6-Publish-List | 승인 목록
+B6-Publish-List-Empty | 승인 목록 0건
+B6-Publish-List-Pending | 승인 대기
+B6-Publish-Review-Analysis | 검토 · 분석
+B6-Publish-Review-ClassModal | 검토 · 클래스 모달
+B6-Publish-Review-Edit | 검토 · 수정
+B6-Publish-Review-Labeling | 검토 · 라벨링
+B6-Publish-Review-Members | 검토 · 구성원
+B6-Publish-Review-Process | 검토 · 처리
+B6-Publish-Review-Reject | 검토 · 반려 입력
+B6-Publish-Review-Rejected | 검토 · 반려됨
+B6-Publish-Review-Train | 검토 · 학습
+# 카드 발행/카드 목록 | 적용 | landxi/proto/ai-card.html | D24 자동 채택 → 9/20 구현 | F3 B4: v3 생산 콘솔 ③ 조립 · 카드 = 스펙시먼 B 문법(D21ⓒ)
+B6-Publish-Cards | 카드 목록
+B6-Publish-Cards-Empty | 카드 0건
+# 카드 발행/카드 편집 | 적용 | landxi/proto/ai-card-edit.html | D24 자동 채택 → 9/20 구현 | F3 B4 생산 콘솔 ③ 조립
+B6-Publish-Card-Edit | 카드 편집
+B6-Publish-Card-Edit-Locked | 편집 잠김
+# 카드 발행/발행 요청 | 적용 | landxi/proto/ai-publish-create.html | D24 자동 채택 → 9/20 구현 | F3 §5: 발행 요청 폼 폐지 예정 → 카탈로그 매트릭스
+B6-Publish-Request | 발행 요청
+
+# XI맵/기본 지도 | 폐기 | 새 XI맵 landxi/xi (F1·F2) — 9/27 레일 정본화(F2-R) | 구 XI맵(proto/ximap)에 들어갔던 판 — 레일이 새 XI맵으로 옮겨감 |
+B5-Map | 기본 — V-World 실타일 + 레이어 카드 + 시점 스트립
+B2-XiMap | XI맵 초안 — 분석 지도 | 폐기 | B5-Map | 원본 기능의 1/4 · 임계/스캔은 원본에 없음(NOTES §20) |
+B7-Map-Basemap | 배경지도 선택
+B7-Map-LayerTab | 레이어 탭 펼침
+B7-Map-Empty | 레이어 0 | 검토 | v3 XI맵 정돈판(xi-clean) 빈 지역 상태 — '영상 반입 필요' 다음 행동 | 새 XI맵에 같은 상태 설계 없음 |
+B7-Map-Loading | 로딩 | 검토 | v3 XI맵 정돈판 로딩 상태 — 캐릭터(D20②)와 함께 | 새 XI맵에 같은 상태 설계 없음 |
+# XI맵/객체 정보 | 검토 | v3 XI맵 정돈판(xi-clean) HUD — 객체 정보 콜아웃 문법 재사용 여부 | 구 XI맵에만 들어감 · 새 XI맵 이관 미정 |
+B5-Map-Info | 객체 정보 — 브래킷 콜아웃 + 탐지 정보
+# XI맵/시점 비교 | 폐기 | 새 XI맵 시점 스와이프(landxi/xi) | 구 XI맵 판 — 새 XI맵이 같은 기능을 가짐 |
+B5-Map-Compare | 겹쳐보기 — 두 시점 스와이프
+B7-Map-Parallel | 나란히 보기
+# XI맵/검색 | 폐기 | 새 XI맵 검색(landxi/xi) | 구 XI맵 판 — 새 XI맵이 같은 기능을 가짐 |
+B7-Map-Search | 검색
+B7-Map-Search-Empty | 검색 0건 | 검토 | v3 XI맵 정돈판 — 0건 안내 한 줄 | 새 XI맵에 0건 상태 설계 없음 |
+# XI맵/도구(측정·그리기·구역·내려받기) | 검토 | v3 XI맵 정돈판 '도구 7' 재구현 때 이식 | 원본 기능 — 새 XI맵에 아직 없음 |
+B7-Map-Measure | 측정
+B7-Map-Draw | 그리기
+B7-Map-AOI | 관심 구역
+B7-Map-Download | 내려받기
+# XI맵/지역 구분·속성 표 | 검토 | F3 B2 — v3 서비스 화면 시군구 집계·보고서 서랍 | 구 XI맵에만 들어감 · 새 XI맵 이관 미정 |
+B7-Map-Region | 지역 구분(읍면동 5분위)
+B7-Map-Table | 속성 표 펼침
+# XI맵/보안 서약 | 검토 | v3 XI맵 정돈판 — 원본 기능 이식(내려받기 전 서약) | 원본 기능 — 새 XI맵에 없음 |
+B7-Map-Pledge | 보안 서약서
+B7-Map-Pledge-Busy | 서약 처리 중
+
+# 통계/보고서/통계 | 적용 | landxi/proto/stats-standard.html | D29 선택 1(지도 안 우 서랍) 자동 채택 → 9/20 구현 | F3 B2: v3 서비스 보고서 서랍
+B7-Stats-Opt1 | 선택 1 · 지도 안 우 서랍(권장)
+B7-Stats-Opt2 | 선택 2 · 전면 보고서형 | 폐기 | B7-Stats-Opt1 | D29 선택 1 자동 채택 |
+B7-Stats-Opt3 | 선택 3 · 하단 시트 + 스크러버 | 폐기 | B7-Stats-Opt1 | D29 선택 1 자동 채택 |
+B7-Stats-Class | 클래스별
+B7-Stats-Find | 찾기
+B7-Stats-Empty | 0건
+# 통계/보고서/보고서 | 적용 | landxi/proto/report-standard.html | D29 원판 → 9/20 구현 | F3 B2: v3 서비스 보고서 서랍
+B7-Report-List | 보고서 목록
+B7-Report-List-Empty | 보고서 0건
+B7-Report-Pledge | 보고서 서약
+B7-Report-Issue | 오류 신고 | 적용 | landxi/proto/report-standard-issue.html
+B7-Report-Issue-Error | 신고 입력 오류 | 적용 | landxi/proto/report-standard-issue.html
+
+# 서비스 관리/사용자 관리 | 적용 | landxi/proto/admin-users.html | D25 권장안(선택 2) 자동 채택 → 9/20 구현 | F3 B3: v3 관제 5메뉴 · 9/27 토스 톤 재조정
+B6-Admin-Users-Opt2 | 선택 2 · 목록 + 우 열람(권장)
+B6-Admin-Users-Opt1 | 선택 1 · 승인 띠 + 10열 원장 | 폐기 | B6-Admin-Users-Opt2 | D25 권장안(선택 2) 자동 채택 |
+B6-Admin-Users-Opt3 | 선택 3 · 승인 데스크 + 카드 보드 | 폐기 | B6-Admin-Users-Opt2 | D25 권장안(선택 2) 자동 채택 |
+B6-Admin-Users-Approve | 가입 승인
+B6-Admin-Users-Detail | 사용자 상세
+B6-Admin-Users-Empty | 0명
+B6-Admin-Users-Login | 접속 이력
+B6-Admin-Users-Login-Empty | 접속 이력 0건
+B6-Admin-Users-Pwd | 비밀번호 초기화
+B6-Admin-Users-Pwd-Empty | 초기화 요청 0건
+# 서비스 관리/공지 관리 | 적용 | landxi/proto/admin-notice.html | D25 자동 채택 → 9/20 구현 | F3 B3: v3 관제 설정 하위 · 9/27 토스 톤
+B6-Admin-Notice | 공지 목록
+B6-Admin-Notice-Form | 공지 작성
+B6-Admin-Notice-Form-Error | 작성 오류
+B6-Admin-Notice-Delete | 삭제 확인
+# 서비스 관리/문의 관리 | 적용 | landxi/proto/admin-inquiry.html | D25 자동 채택 → 9/20 구현 | F3 B3: v3 관제 설정 하위 · 9/27 토스 톤
+B6-Admin-Inquiry | 문의 목록
+B6-Admin-Inquiry-Reply | 답변
+# 서비스 관리/FAQ 관리 | 적용 | landxi/proto/admin-faq.html | D25 자동 채택 → 9/20 구현 | F3 B3: v3 관제 설정 하위 · 9/27 토스 톤
+B6-Admin-Faq | FAQ 목록
+B6-Admin-Faq-Form | FAQ 작성
+# 서비스 관리/지도 속성 관리 | 적용 | landxi/proto/admin-map.html | D25 자동 채택 → 9/20 구현 | F3 B1: XI맵으로 흡수
+B6-Admin-Map | 지도 속성 — 실시간 미리보기
+B6-Admin-Map-Edit | 속성 수정
+
+# 서비스 지원/공지 | 적용 | landxi/proto/notice.html | D23 권장안(선택 2) 자동 채택 → 9/20 구현 | F3 B5: '?' 서랍으로 축소
+B6-Support-Notice-Opt2 | 선택 2 · 건수 타일 + 목록/열람(권장)
+B6-Support-Notice-Opt1 | 선택 1 · 표 + 제자리 펼침 | 폐기 | B6-Support-Notice-Opt2 | D23 권장안(선택 2) 자동 채택 |
+B6-Support-Notice-Opt3 | 선택 3 · 3열 보드 + 서랍 | 폐기 | B6-Support-Notice-Opt2 | D23 권장안(선택 2) 자동 채택 |
+B6-Support-Notice-Detail | 공지 상세
+B6-Support-Notice-Empty | 공지 0건
+# 서비스 지원/FAQ | 적용 | landxi/proto/faq.html | D23 자동 채택 → 9/20 구현 | F3 B5: '?' 서랍
+B6-Support-FAQ | FAQ
+B6-Support-FAQ-Empty | FAQ 0건
+# 서비스 지원/문의 | 적용 | landxi/proto/contact.html | D23 자동 채택 → 9/20 구현 | F3 B5: '?' 서랍
+B6-Support-Contact | 문의하기
+B6-Support-Contact-Empty | 문의 0건
+B6-Support-Contact-Error | 입력 오류
+B6-Support-Contact-Cancel | 취소 확인
+B6-Support-Contact-View | 문의 열람
+B6-Support-Contact-View-Pending | 답변 대기
+# 서비스 지원/활용사례 | 적용 | landxi/proto/usecase.html | D23 자동 채택 → 9/20 구현 | F3 B5: '?' 서랍 · 메인 소개 챕터와 겹침 정리
+B6-Support-Usecase | 활용사례
+B6-Support-Usecase-Empty | 활용사례 0건
+B6-Support-Usecase-Modal | 사례 상세 모달
+# 서비스 지원/매뉴얼 | 적용 | landxi/proto/manual.html | D23 자동 채택 → 9/20 구현(본문은 원본이 비어 결손 표기) | F3 B5: '?' 서랍
+B6-Support-Manual | 매뉴얼
+
+# MY/마이 페이지 | 적용 | landxi/proto/mypage.html | D26 권장안(선택 1) 자동 채택 → 9/20 구현 | F3 B5: MY 서랍
+B6-My-Opt1 | 선택 1 · 신원 원장 + 디스크 판(권장)
+B6-My-Opt2 | 선택 2 · 현황 밴드 + 세로 스택 | 폐기 | B6-My-Opt1 | D26 권장안(선택 1) 자동 채택 |
+B6-My-Opt3 | 선택 3 · 설정 작업공간 | 폐기 | B6-My-Opt1 | D26 권장안(선택 1) 자동 채택 |
+B6-My-Flyout | MY 플라이아웃
+B6-My-History-Empty | 신청 이력 0건
+# MY/정보 수정 | 적용 | landxi/proto/mypage.html | D26 자동 채택 → 9/20 구현 | F3 B5: MY 서랍
+B6-My-Edit | 정보 수정
+B6-My-Edit-Error | 입력 오류
+B6-My-Edit-Saved | 저장됨
+# MY/비밀번호 변경 | 적용 | landxi/proto/mypage.html | D26 자동 채택 → 9/20 구현 | F3 B5: MY 서랍
+B6-My-PwdConfirm | 현재 비밀번호 확인
+B6-My-PwdConfirm-Error | 확인 오류
+B6-My-Password | 새 비밀번호
+B6-My-Password-Error | 입력 오류
+B6-My-Password-Saved | 변경됨
+# MY/브랜드(CI) | 적용 | landxi/proto/mypage.html | D26 자동 채택 → 9/20 구현 | F3 B5: MY 서랍
+B6-My-Brand | 브랜드 설정
+B6-My-Brand-Empty | 미등록
+B6-My-Brand-Error | 파일 오류
+B6-My-Brand-Applied | 적용됨
+B6-My-Brand-Reset | 되돌리기
+# MY/저장 공간 | 적용 | landxi/proto/mypage.html | D26 자동 채택 → 9/20 구현 | F3 B5: MY 서랍
+B6-My-Storage | 증량 신청
+B6-My-Storage-Done | 신청 완료
+B6-My-Storage-Error | 신청 오류
+# MY/탈퇴 | 적용 | landxi/proto/mypage.html | D26 자동 채택 → 9/20 구현(원본 UI 없음 — 추정 1장) | F3 B5: MY 서랍
+B6-My-Withdraw | 계정 탈퇴(추정)
+
+# 공통/상태 패턴(로딩·오류) | 적용 | landxi/proto/ai-project.html | D29 원판 → 9/20 로딩·오류 패턴 구현 | 27화면 재구현: 빈 상태·로딩은 캐릭터(D20②)와 합침
+B7-State-Loading | 로딩 패턴
+B7-State-Error | 오류 패턴
+`);
+
+// ── 3. 구현 화면 판정표 (shots/overview/inventory.json 의 id) ───────────────────
+// id | 화면 | 판정 | 대상 | 근거 | 다음 단계    — 적용이면 대상은 비워 두면 자기 경로
+const IMPL = table(`
+# 인증/로그인 | 적용 | | 현재 정문 — 역할 라디오·목 인증 | F3 B0: v3 정문 로그인(실인증)으로 교체
+proto-login | 로그인(v1)
+v3-login | 정문 로그인(v3 시안) | 검토 | 시안 승인 → 정문 교체(F3 B0) · 소개 판 3장면(토스 5-3)·로그인 3축(D21ⓑ) 반영 | F3 §7 ⑤ 제작 중 시안 |
+# 인증/계정 신청 | 적용 | | 현재 화면 — 신청 저장 없음 | F3 B0: 정문 서랍으로 축소
+proto-signup | 계정 신청(v1)
+# 인증/아이디 찾기 | 적용 | | 현재 화면 — 조회 로직 없음 | F3 B0: 정문 서랍으로 축소
+proto-find-id | 아이디 찾기(v1)
+proto-find-id-result | 아이디 찾기 결과(v1)
+# 인증/비밀번호 찾기 | 적용 | | 현재 화면 — 조회 로직 없음 | F3 B0: 정문 서랍으로 축소
+proto-find-password | 비밀번호 찾기(v1)
+proto-find-password-result | 비밀번호 찾기 결과(v1)
+# 메인/스크럽 필름 | 적용 | | 메인 원판 = 구현본(14 leg + 브랜드 마감) | 메인 재구성: 토스 7챕터로 쪼개기(leg 1–2 · 11–12만 메인, leg 4–10 은 서비스 상세로)
+scrub-main | 스크럽 필름(구현본)
+# 메인/공개 사이트 | 적용 | | 게스트 공개 페이지 | 서비스 카드는 스펙시먼 B 문법(D21ⓒ)으로 교체
+site-platform | 활용 서비스
+site-usecase | 활용 사례
+site-notice | 공지사항
+# 메인/필름 제작 도구 | 적용 | | 필름 검토용 내부 도구 |
+film-timeline | 필름 타임라인
+film-anchors | 앵커 스틸
+# 대시보드/직원 첫 화면 | 적용 | | 현재 LX 직원 착지 — 전국 한 판 | F3 §5: 대시보드 폐지 → v3 생산 콘솔 '오늘' 띠
+proto-dashboard | 대시보드(v1)
+v3-lx-console | 생산 콘솔 '오늘' 띠(v3 시안) | 검토 | 시안 승인 → 직원 첫 화면 교체(F3 B1·B4) · 카드 문법(D21ⓒ)·스텝퍼(스펙시먼 H) 반영 | F3 §7 ① 제작 중 시안 |
+# 데이터 관리/목록(아카이브·완료·발행중) | 적용 | | 현재 화면 — 고정값 | F3 B4: v3 생산 콘솔 ① 반입 서랍
+proto-dataset | 데이터 관리(v1)
+# 프로젝트/목록(메인) | 적용 | | 현재 화면 — 8단계 탭 · 고정값 | F3 B4: v3 생산 콘솔 서랍(라벨·학습·모델 3)
+proto-ai-project | 프로젝트(v1)
+# 프로젝트/만들기 | 적용 | | 현재 화면 — 고정값 | F3 B4 생산 콘솔
+proto-ai-project-create | 프로젝트 만들기(v1)
+# 프로젝트/라벨링 | 적용 | | 현재 화면 — 고정값 | F3 B4 생산 콘솔 ② 학습
+proto-ai-project-label | 라벨링(v1)
+# 프로젝트/학습 | 폐기 | proto-ai-project | 레일에서 닿지 않음 · 8/25 '워크플로우가 너무 업무 시스템' 거부 |
+proto-workflow | 국토 조사 보드(8/25 워크플로우)
+# 분석 서비스/카드 목록 | 적용 | | 현재 화면 — 실행 검토·실행 중·결과 탭 포함 · 고정값 | F3 B4: 생산 콘솔 ③ 조립 · 카드 = 스펙시먼 B 문법
+proto-analysis-ai | 분석 서비스(v1)
+# 카드 발행/승인·검토 데스크 | 적용 | | 현재 화면 — 고정값 | F3 B3: v3 관제 결재함
+proto-admin-publish | 카드 발행 관리(v1)
+# 카드 발행/카드 목록 | 적용 | | 현재 화면 — 고정값 | F3 B4 생산 콘솔 ③ 조립
+proto-ai-card | 카드 목록(v1)
+# 카드 발행/카드 편집 | 적용 | | 현재 화면 — 고정값 | F3 B4 생산 콘솔 ③ 조립
+proto-ai-card-edit | 카드 편집(v1)
+# 카드 발행/발행 요청 | 적용 | | 현재 화면 — 고정값 | F3 §5: 발행 요청 폼 폐지 예정
+proto-ai-publish-create | 발행 요청(v1)
+# XI맵/기본 지도 | 적용 | | 새 XI맵 정본 — 서버 연결 | v3 XI맵 정돈판: 글 60% 삭감·개발 정보 제거(9/27)
+xi-read-staff | XI맵 · LX 직원(v2)
+xi-public | XI맵 · 공개(v2)
+xi-sales | XI맵 · 영업(v2)
+proto-ximap | 구 XI맵(v1) | 폐기 | xi-read-staff | 9/27 레일 정본화(F2-R) — 지도 서비스 = 새 XI맵 |
+v3-xi-clean | XI맵 정돈판(v3 시안) | 검토 | 시안 승인 → 새 XI맵 교체 · 도구 7·보안 서약 이식 | F3 §7 ③ 제작 중 시안 |
+# XI맵/표류 예측 | 폐기 | F3 §5 폐지 목록(레일 밖) | 레일에서 닿지 않는 단독 실험 화면 |
+proto-map-drift | 괭생이모자반 도착 예측(v1)
+# 실태조사/실태조사 모드 | 적용 | | 새 XI맵 실태조사 — 서버 연결 | 9/27 '남원 한정 금지' — 지역 = 변수로, v3 대장 융합과 합침
+xi-survey-staff | 실태조사 · LX 직원(v2)
+xi-survey-namwon | 실태조사 · 기관(v2)
+# 실태조사/대장 융합(기관 첫 화면) | 검토 | 시안 승인 → 기관 첫 화면(F3 B2) | F3 §7 ② 제작 중 시안 — 업로드 대장 × AI 융합 |
+v3-gov-fusion | 대장 융합(v3 시안)
+# 에이전트/융합 분석 질문 | 적용 | | 새 XI맵 에이전트 — vLLM 연결 | 9/27 재정의: 업로드 행정데이터 × AI 융합 → v3 gov-fusion ⌘K
+xi-agent | 에이전트(v2)
+# 통계/보고서/통계 | 적용 | | 현재 화면 — 고정값 | F3 B2: v3 서비스 보고서 서랍
+proto-stats-standard | 통계(v1)
+# 통계/보고서/보고서 | 적용 | | 현재 화면 — 고정값 | F3 B2: v3 서비스 보고서 서랍
+proto-report-standard | 보고서(v1)
+proto-report-standard-issue | 오류 신고(v1)
+# 관제/관제 로그인 | 적용 | | 관제 실인증(:8702) | 9/27 검정 톤(잉크 반전) 폐기 → 토스 톤 · F3 B0 정문 하나로
+ops-login | 관제 로그인(v2)
+# 관제/운영 현황 | 적용 | | 관제 정본(:8702) — 서버 연결 | 9/27 검정 톤 폐기 → v3 관제 핵심판 토스 톤
+ops-index | 운영 현황(v2)
+proto-admin-home | 관리자 운영 현황(v1) | 적용 | | 현재 관리자 착지(v1) — 고정값 | F3 B1: 흡수 · 관제로 일원화
+v3-ops-core | 관제 핵심판(v3 시안) | 검토 | 시안 승인 → 관제 교체(F3 B3) · 토스 톤(9/27) | F3 §7 ④ 제작 중 시안 |
+# 관제/인프라 | 적용 | | 관제 정본(:8702) — 서버 연결 | 9/27 검정 톤 폐기 → 토스 톤 · 성능 수치는 관제 한 곳에만
+ops-infra | 인프라 관제(v2)
+# 관제/기관·할당 | 적용 | | 관제 정본(:8702) — 서버 연결 | 9/27 검정 톤 폐기 → 토스 톤 · 링 8 → 3
+ops-tenants | 기관·할당(v2)
+# 관제/배포 | 적용 | | 관제 정본(:8702) — 부분 구현 | 9/27 검정 톤 폐기 → 토스 톤
+ops-deploys | 배포 제어(v2)
+# 관제/생산 관리 | 적용 | | 현재 화면 — 고정값 | F3 B4: v3 생산 콘솔로 흡수
+proto-produce | 생산 관리(v1)
+# 서비스 관리/사용자 관리 | 적용 | | 현재 화면 — 고정값 | F3 B3: v3 관제 5메뉴 · 9/27 토스 톤
+proto-admin-users | 사용자 관리(v1)
+# 서비스 관리/공지 관리 | 적용 | | 현재 화면 — 고정값 | F3 B3: v3 관제 설정 하위
+proto-admin-notice | 공지 관리(v1)
+# 서비스 관리/문의 관리 | 적용 | | 현재 화면 — 고정값 | F3 B3: v3 관제 설정 하위
+proto-admin-inquiry | 문의 관리(v1)
+# 서비스 관리/FAQ 관리 | 적용 | | 현재 화면 — 고정값 | F3 B3: v3 관제 설정 하위
+proto-admin-faq | FAQ 관리(v1)
+# 서비스 관리/지도 속성 관리 | 적용 | | 현재 화면 — 고정값 | F3 B1: XI맵으로 흡수
+proto-admin-map | 지도 속성 관리(v1)
+# 기관 포털/기관 로그인 | 적용 | | 현재 기관 정문 — 목 인증 | F3 B0: 정문 하나로 통합
+proto-portal-login-namwon | 기관 로그인 · 남원(v1)
+proto-portal-login-gwangju-jeonnam | 기관 로그인 · 광주전남(v1)
+# 기관 포털/내 서비스 | 적용 | | 현재 기관 착지 — 고정값 | F3 B2: v3 서비스 화면 1 + 서랍 · 카드 덱 5장 폐지 예정
+proto-portal | 내 서비스(v1)
+# 기관 포털/서비스 상세 | 적용 | | 현재 기관 서비스 화면 — 고정값 | F3 B2: v3 서비스 화면으로 흡수
+proto-portal-dp-nw-change | 국토 변화 탐지(v1)
+proto-portal-dp-nw-farm-25 | 영농관리(v1)
+proto-portal-dp-nw-living-23 | 생활환경 위험요소(v1)
+proto-portal-dp-gj-marine-25 | 해양쓰레기 실태조사 25(v1)
+proto-portal-dp-gj-marine-27 | 해양쓰레기 실태조사 27(v1)
+proto-portal-dp-nw-crowd-27 | 인파관리(빈 자리) | 검토 | F3 B2 흡수 때 정리 — 그 전까지 '준비 중' 캐릭터(D20②) | 빈 자리 — 서비스 미완 |
+proto-portal-dp-nw-road-26 | 도로 안전관리(빈 자리) | 검토 | F3 B2 흡수 때 정리 — 그 전까지 '준비 중' 캐릭터(D20②) | 빈 자리 — 서비스 미완 |
+# 서비스 지원/공지 | 적용 | | 현재 화면 — 고정값 | F3 B5: '?' 서랍
+proto-notice | 공지사항(v1)
+# 서비스 지원/FAQ | 적용 | | 현재 화면 — 고정값 | F3 B5: '?' 서랍 · 아코디언(스펙시먼 I)
+proto-faq | 자주 묻는 질문(v1)
+# 서비스 지원/문의 | 적용 | | 현재 화면 — 고정값 | F3 B5: '?' 서랍
+proto-contact | 문의하기(v1)
+# 서비스 지원/활용사례 | 적용 | | 현재 화면 — 고정값 | F3 B5: '?' 서랍
+proto-usecase | 활용사례(v1)
+# 서비스 지원/매뉴얼 | 적용 | | 현재 화면 — 고정값 | F3 B5: '?' 서랍
+proto-manual | 매뉴얼(v1)
+# MY/마이 페이지 | 적용 | | 현재 화면 — 고정값 | F3 B5: MY 서랍
+proto-mypage | 마이 페이지(v1)
+# 글로벌/로그인 | 적용 | | 해외 기관 실인증 |
+global-login | Global 로그인(v2)
+# 글로벌/해외 서비스 | 적용 | | 해외 서비스 정본 — 서버 연결 |
+global-index | 키르기스 농업부(v2)
+global-index-land | 키르기스 토지청(v2)
+# 공통/디자인 실험 | 폐기 | F3 §5 폐지 목록 — 개발 잔재·레일 밖 | 레일에서 닿지 않는 실험 화면 |
+proto-dive | 하강 실험(8/25) | 폐기 | scrub-main | 8/25 1차 하강 실험 — 8/26 '플랫폼 소개' 피드백 뒤 스크럽 필름으로 대체 |
+proto-charts | 표·차트 후보 6종(D3) | 폐기 | F3 §5 폐지 목록 | D3 비교판 — 선택 뒤 역할 끝 |
+proto-fonts | 글꼴·블루 톤 후보 | 폐기 | 법전 서체(Paperlogy + Pretendard) | 9/22 서체 확정으로 역할 끝 |
+proto-system | 컴포넌트 시트 | 폐기 | 법전 design/system-v2.md | F3 §5 폐지 — 법전이 대체 |
+proto-shell-demo | 공용 셸 데모 | 폐기 | 공용 셸(shell.js) | F3 §5 폐지 — 셸 적용 완료 |
+global-fonts-compare | Global 서체 비교 | 폐기 | Inter 글로벌 서체 | 9/26 결정(글로벌 Inter)으로 역할 끝 |
+`);
+
+// ── 4. 스펙시먼 · 제안 판정표 (카카오 벤치 §6 · 토스 벤치 §5) ───────────────────
+const KAKAO = 'landxi/proto/review/bench-kakao.html';
+const TOSS = 'docs/superpowers/research/2026-09-27-bench-toss.md';
+const SPECS = [
+  // 카카오 §6 스펙시먼 A–J (2026-09-03)
+  ['K-A', '대시보드/직원 첫 화면', '대시보드 상단 — 서체·색·형태 토글 기준판', '스펙시먼 카카오 A', '폐기', '대상 화면(LX 관리자 대시보드)이 9/21 계정 분리·9/24 직원 화면 전환으로 사라짐', '토글 판정은 D19③ 로 결론 — 판 자체는 역할 끝', '', 'kakao-A', '#spec'],
+  ['K-B', '분석 서비스/카드 목록', '서비스 카드 — 크롭 + 기준일 + 상태 + 제목 2줄 + 결과 수', '스펙시먼 카카오 B', '검토', '적용 예정(D21ⓒ): 분석 카드 목록·프로젝트 목록·데이터 목록·공개 사이트 서비스 카드 — 27화면 재구현 + v3 생산 콘솔 카탈로그', '9/27 D21ⓒ 적용 결정 — 아직 어느 화면에도 없음', '', 'kakao-B', '#spec2'],
+  ['K-C', '인증/로그인', '로그인 소개 — 3축(영문 대제목 + 한글 한 줄 + 크롭)', '스펙시먼 카카오 C', '검토', '적용 예정(D21ⓑ): v3 정문 로그인(landxi/v3/login) 소개 판 — 토스 5-3 장면 순환과 합침', '9/27 D21ⓑ 적용 결정 — 아직 어느 화면에도 없음', '', 'kakao-C', '#specC'],
+  ['K-D', '메인/서비스 소개 판', '서비스 소개 판 — 실영상 판', '스펙시먼 카카오 D', '검토', '메인 재구성: 토스 챕터(5-2)의 비주얼 판 · 서비스 상세 히어로', '9/27 지시 — D·F·H 는 토스식 소개 문법과 합쳐 메인·서비스 상세·생산 콘솔로', '', 'kakao-D', '#specD'],
+  ['K-E', '메인/성과·결과 띠', '성과 숫자 띠 + 결과 카드', '스펙시먼 카카오 E', '검토', '적용 예정(D21ⓓ): 메인 재구성 챕터 2·분석 실행 결과 — 숫자는 업무 결과만(현장 확인 필요 n필지 등)', '9/27 D21ⓓ 적용 결정 · 같은 날 내부 지표 과장 금지 조건', '', 'kakao-E', '#specE'],
+  ['K-F', '분석 서비스/카드 상세', '분석 서비스 소개 아이템(EVIDENCE-PAIR)', '스펙시먼 카카오 F', '검토', '서비스 카탈로그 상세 — 토스 5-4 기능 소개 틀과 합침(27화면 재구현)', '9/27 지시 — 토스식 소개 문법과 합침', '', 'kakao-F', '#specF'],
+  ['K-G', '공통/빈 상태·캐릭터', '빈 상태 · 진행 중 · 결손 — 필름 캐릭터 3종', '스펙시먼 카카오 G', '검토', '적용 예정(D20②): 27화면 재구현의 빈 상태·로딩·준비 중·404 · 기관 포털 빈 서비스(인파·도로)', '9/27 D20② 적용 결정 — 크레딧 0, 신규 제작 0', '', 'kakao-G', '#specG'],
+  ['K-H', '데이터 관리/파이프라인 단계', '파이프라인 스텝퍼(데이터 관리 4단계)', '스펙시먼 카카오 H', '검토', 'v3 생산 콘솔 6단 레일(반입 → 학습 → 조립 → 검수 → 배포 → 운영)', '9/27 지시 — 생산 콘솔로', '', 'kakao-H', '#specH'],
+  ['K-I', '서비스 지원/FAQ', '서비스 지원 아코디언 3줄', '스펙시먼 카카오 I', '검토', 'F3 B5 — 지원 \'?\' 서랍의 FAQ 문법', '결정 없음 — 지원 서랍 재구현 때 판단', '', 'kakao-I', '#specI'],
+  ['K-J', '공통/출처 띠·푸터', '데이터 출처 로고 띠 + 푸터', '스펙시먼 카카오 J', '검토', '적용 예정(D21ⓔ): 메인 마감·로그인 하단 출처 로고 띠(푸터 워터마크 ⓕ 는 제외)', '9/27 D21ⓔ 적용 결정', '', 'kakao-J', '#specJ'],
+  ['K-D19-3', '공통/서체·색·형태', 'D19 ③ 서체 유지 · 제목 자간 −0.03em', '결정 카카오 D19', '검토', '적용 예정: v3 공통 토큰(제목 letter-spacing −0.03em) → 27화면 재구현', '9/27 D19③ 적용 결정 — 토큰 미반영', '', '', '#spec'],
+  ['K-F1', '공통/서체·색·형태', 'F1 본문만 Kakao Big Sans', '토글 카카오 F1', '폐기', 'D19 ③(서체 유지) — 9/27 결정', '9/27 D19③ 채택으로 탈락', '', 'kakao-F1', '#spec'],
+  ['K-F2', '공통/서체·색·형태', 'F2 전부 Kakao Big Sans', '토글 카카오 F2', '폐기', 'D19 ③(서체 유지) — 9/27 결정', '9/27 D19③ 채택으로 탈락', '', 'kakao-F2', '#spec'],
+  ['K-F3', '공통/서체·색·형태', 'F3 내로우 제목(Black Han Sans)', '토글 카카오 F3', '폐기', 'D19 ③(서체 유지) — 9/27 결정', '9/27 D19③ 채택으로 탈락', '', 'kakao-F3', '#spec'],
+  ['K-C1', '공통/서체·색·형태', 'C1 카카오식 딥블루 #19199B', '토글 카카오 C1', '폐기', 'T3 액센트 #006DF7 유지', 'CI 블루와 어긋남 — 벤치 §7 \'가져오지 말 것\'', '', 'kakao-C1', '#spec'],
+  ['K-S1', '공통/서체·색·형태', 'S1 라운드 12 · 필 · 채운 파란 버튼', '토글 카카오 S1', '폐기', '라운드 0 · 잉크 버튼 유지(법전)', '법전 §2 충돌 · 토스 벤치도 라운드 0 유지(5-6)', '', 'kakao-S1', '#spec'],
+  ['K-D21a', '공통/서체·색·형태', 'D21 ⓐ 섹션 영문 도장 4종', '결정 카카오 D21', '폐기', 'D21 ⓑⓒⓓⓔ 만 채택(9/27)', '9/27 선택에서 제외 · 글 다이어트(글자 최소)', '', '', '#spec'],
+  ['K-D21f', '공통/출처 띠·푸터', 'D21 ⓕ 푸터 LX 워터마크', '결정 카카오 D21', '폐기', '푸터 1줄(F3 §5)', '9/27 선택에서 제외 · 서비스 푸터는 1줄로', '', '', '#specJ'],
+  ['K-D20-3', '공통/빈 상태·캐릭터', 'D20 ③ 신규 3D 마스코트 제작', '결정 카카오 D20', '폐기', 'D20 ② 필름 캐릭터 3종 승격', '별도 예산·LX 승인 필요 · 벤치 §7 \'가져오지 말 것\'', '', '', '#specG'],
+  // 토스 §5 적용안 (2026-09-27)
+  ['T-5-1', '공통/토스 톤', '원칙 번역 — 스크럽 = 실시간 지도 카메라, 실제 UI 그대로, 업무 결과 숫자만', '제안 토스 5-1', '검토', 'v3 시안 5화면 공통 원칙 → 27화면 재구현', '9/27 토스 벤치 적용안 — 판정 전', '', '', ''],
+  ['T-TONE', '공통/토스 톤', '관리자·직원·영업 밝은 토스 톤(#F2F4F6 · 잉크 #1C1F25 · 보조 #727780)', '결정 토스 톤', '검토', '적용 예정: v3 관제 핵심판·생산 콘솔·로그인 → 27화면 재구현', '9/27 사용자 지시 — 9/24 Q3 잉크 반전을 뒤집음', '', '', ''],
+  ['T-CH0', '메인/소개 챕터(토스)', '챕터 0 히어로 — 국토를 / 한 번에 읽는다', '제안 토스 5-2', '검토', '메인 재구성(7챕터)', '9/27 토스 벤치 적용안 — 판정 전', '', '', ''],
+  ['T-CH1', '메인/소개 챕터(토스)', '챕터 1 XI맵 전역 추론 — 전국이 / 한 화면에 차오른다', '제안 토스 5-2', '검토', '메인 재구성(7챕터)', '9/27 토스 벤치 적용안 — 판정 전', '', '', ''],
+  ['T-CH2', '메인/소개 챕터(토스)', '챕터 2 실태조사 대조 — 대장과 다른 땅을 / 찾아낸다', '제안 토스 5-2', '검토', '메인 재구성(7챕터) · 성과 띠(스펙시먼 E)와 합침', '9/27 토스 벤치 적용안 — 판정 전', '', '', ''],
+  ['T-CH3', '메인/소개 챕터(토스)', '챕터 3 융합 분석 에이전트 — 올린 행정 자료에 / 묻는다', '제안 토스 5-2', '검토', '메인 재구성(7챕터)', '9/27 토스 벤치 적용안 — 판정 전', '', '', ''],
+  ['T-CH4', '메인/소개 챕터(토스)', '챕터 4 서비스 카드 생산 — 한 번 만든 분석이 / 서비스가 된다', '제안 토스 5-2', '검토', '메인 재구성(7챕터) · 카드 문법(스펙시먼 B)', '9/27 토스 벤치 적용안 — 판정 전', '', '', ''],
+  ['T-CH5', '메인/소개 챕터(토스)', '챕터 5 지자체 제공 — 어느 시군구든 / 그대로 배포한다', '제안 토스 5-2', '검토', '메인 재구성(7챕터)', '9/27 토스 벤치 적용안 — 판정 전', '', '', ''],
+  ['T-CH6', '메인/소개 챕터(토스)', '챕터 6 글로벌 — 국경 밖에서도 / 같은 지도', '제안 토스 5-2', '검토', '메인 재구성(7챕터)', '9/27 토스 벤치 적용안 — 판정 전', '', '', ''],
+  ['T-CH7', '메인/소개 챕터(토스)', '챕터 7 마감 — Hyper Performance · Hyper Solution · Hyper GeoAI', '제안 토스 5-2', '검토', '메인 재구성(7챕터) · 출처 띠(스펙시먼 J)', '9/27 토스 벤치 적용안 — 판정 전', '', '', ''],
+  ['T-5-3', '인증/로그인', '로그인 소개 판 3장면 자동 순환', '제안 토스 5-3', '검토', 'v3 정문 로그인(landxi/v3/login) — 로그인 3축(스펙시먼 C)과 합침', '9/27 토스 벤치 적용안 — 판정 전', '', '', ''],
+  ['T-5-4', '공통/기능 소개 틀', '기능별 소개 섹션 틀 — 히어로 → 교차 블록 → 관련 카드 → 마감', '제안 토스 5-4', '검토', '서비스 카탈로그 상세·각 화면 첫 진입 — 27화면 재구현(스펙시먼 D·F 합침)', '9/27 토스 벤치 적용안 — 판정 전', '', '', ''],
+  ['T-5-5', '메인/스크럽 필름', '필름 쪼개기 — leg 1–2 여는 카메라 · leg 11–12 마감 · leg 4–10 은 서비스 상세로', '제안 토스 5-5', '검토', '메인 재구성 — 지역 이름·\'시연\' 라벨이 앞에 나오는 leg 는 메인에서 뺌', '9/27 토스 벤치 적용안 · 남원 한정·\'시연\' 프레이밍 금지와 맞춤', '', '', ''],
+  ['T-5-6', '공통/토스 톤', '가져오지 않을 것 — 오버슈트 이징·둥근 카드·실사 인물·56화면·채움 버튼·지도 위 관성 스크롤', '제안 토스 5-6', '폐기', '법전(라운드 0 · 액센트 절제) 유지', '법전·지도 제스처와 충돌 — 토스 벤치 스스로 제외', '', '', ''],
+].map(([id, screen, name, variant, verdict, target, reason, later, img, anchor]) => ({ id, screen, name, variant, verdict, target, reason, later, img, anchor }));
+
+// ── 5. 조립 ─────────────────────────────────────────────────────────────────
+const sh = (cmd) => execSync(cmd, { encoding: 'utf8', maxBuffer: 64 << 20 });
+const addDates = {}; // repo path → 처음 들어온 날
+{ let d = null; for (const line of sh('git log --diff-filter=A --reverse --format=@%ad --date=short --name-only -- design-canvas/v2 landxi').split('\n')) { if (line.startsWith('@')) d = line.slice(1); else if (line.trim() && !addDates[line.trim()]) addDates[line.trim()] = d; } }
+const canvas = JSON.parse(fs.readFileSync(V + 'canvas.json', 'utf8'));
+const inv = JSON.parse(fs.readFileSync('shots/overview/inventory.json', 'utf8'));
+const byInv = Object.fromEntries(inv.screens.map((s) => [s.id, s]));
+const dieIf = (c, m) => { if (c) { console.error('✗ ' + m); process.exit(1); } };
+
+const stage = (id) => (/^H-/.test(id) ? '원판 H(집 PC 초안)' : `원판 ${id.split('-')[0]}`);
+const assets = [];
+for (const m of MASTERS) {
+  const file = `${V}${m.id}.dc.html`, render = `${V}renders/${m.id}.png`;
+  dieIf(!fs.existsSync(render), `렌더 없음: ${m.id}`);
+  assets.push({ id: m.id, kind: '원판', name: m.name, screen: m.screen, variant: stage(m.id), verdict: m.verdict, target: m.target, reason: m.reason, later: m.later,
+    made: addDates[file] || addDates[render] || '', files: { 원판: fs.existsSync(file) ? file : null, 렌더: render }, title: canvas.artboards.find((a) => a.file === m.id + '.dc.html')?.title || '' });
+}
+for (const m of IMPL) {
+  const s = byInv[m.id]; dieIf(!s, `인벤토리에 없음: ${m.id}`);
+  const p = String(s['경로']).replace(/^:8702\//, '').split('?')[0];
+  const gen = s['세대'] === 'v3 시안' ? '시안 v3' : s['세대'] === '구 proto v1' ? '구현 v1' : '구현 v2';
+  const thumb = s['썸네일'] ? `${OUT_DIR}/status/${s['썸네일']}` : null;
+  assets.push({ id: m.id, kind: gen === '시안 v3' ? '시안' : '구현', name: m.name, screen: m.screen, variant: gen, verdict: m.verdict, target: m.verdict === '적용' ? (m.target || String(s['경로']).replace(/^:8702\//, '')) : m.target,
+    reason: m.reason, later: m.later, made: addDates[p] || '', files: { 구현: s['경로'], 썸네일: thumb && fs.existsSync(thumb) ? thumb : null }, title: s['제목'] || '', impl_state: s['상태'] });
+}
+for (const m of SPECS) {
+  const img = m.img ? `${OUT_DIR}/assets-thumbs/${m.img}.jpg` : null;
+  const isK = m.id.startsWith('K-');
+  assets.push({ id: m.id, kind: '스펙시먼', name: m.name, screen: m.screen, variant: m.variant, verdict: m.verdict, target: m.target, reason: m.reason, later: m.later,
+    made: isK ? '2026-09-03' : '2026-09-27', files: { 원천: isK ? KAKAO + (m.anchor || '') : TOSS, 캡처: img && fs.existsSync(img) ? img : null } });
+}
+// 검사 — 화면 키 · 판정 · 중복 · 원판 누락
+const ids = new Set();
+for (const a of assets) {
+  dieIf(!SCREEN_KEYS.has(a.screen), `화면 키 없음: ${a.id} → ${a.screen}`);
+  dieIf(!VERDICTS.includes(a.verdict), `판정 오류: ${a.id} ${a.verdict}`);
+  dieIf(ids.has(a.id), `중복: ${a.id}`); ids.add(a.id);
+  dieIf(!a.target, `대상 비어 있음: ${a.id}`);
+}
+const orphan = fs.readdirSync(V + 'renders').map((f) => f.replace('.png', '')).filter((id) => !ids.has(id));
+dieIf(orphan.length, `대장에 없는 원판: ${orphan.join(', ')}`);
+const orphanInv = inv.screens.filter((s) => !ids.has(s.id)).map((s) => s.id);
+dieIf(orphanInv.length, `대장에 없는 구현: ${orphanInv.join(', ')}`);
+
+// 대상이 다른 자산 id 면 연결
+for (const a of assets) if (a.verdict === '폐기' && ids.has(a.target)) a.replaced_by_id = a.target;
+const FN_ORDER = TAX.map(([f]) => f);
+const out = assets.map((a) => {
+  const [fn, sc] = a.screen.split('/').length > 2 ? [a.screen.split('/').slice(0, 2).join('/'), a.screen.split('/').slice(2).join('/')] : a.screen.split('/');
+  const o = { id: a.id, kind: a.kind, function: fn, screen: sc, variant: a.variant, name: a.name, made: a.made, files: a.files, verdict: a.verdict, reason: a.reason };
+  if (a.verdict === '적용') o.applied_to = a.target.split(',').map((s) => s.trim());
+  if (a.verdict === '폐기') o.replaced_by = a.replaced_by_id ? `${a.target} (${assets.find((x) => x.id === a.target).name})` : a.target;
+  if (a.verdict === '검토') o.next = a.target;
+  if (a.later) o.later = a.later;
+  if (a.title) o.title = a.title;
+  if (a.impl_state) o.impl_state = a.impl_state;
+  return o;
+});
+// 기능·화면 키가 '통계/보고서' 처럼 슬래시를 품으므로 다시 정확히 나눈다
+for (const o of out) { const a = assets.find((x) => x.id === o.id); const f = FN_ORDER.find((fn) => a.screen.startsWith(fn + '/')); o.function = f; o.screen = a.screen.slice(f.length + 1); }
+const count = (k) => Object.fromEntries(VERDICTS.map((v) => [v, out.filter((a) => a.verdict === v && (!k || a.kind === k)).length]));
+const ledger = {
+  title: 'Land-XI 자산 대장 — 원판 · 구현 · 스펙시먼',
+  generated_at: new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 16).replace('T', ' ') + ' KST',
+  생성기: 'node tools/review/masters.mjs',
+  판정_기준: { 적용: '지금 사용자가 레일로 닿는 화면에 들어가 있음(적용 위치 = applied_to)', 검토: '아직 화면에 없음 — 다음 차수에서 쓸 곳(next)', 폐기: '다른 안·결정이 대체함(replaced_by)' },
+  계층: '기능(function) → 화면(screen) → 버전·변형(variant)',
+  집계: { 전체: out.length, ...count(), 원판: count('원판'), 구현: count('구현'), 시안: count('시안'), 스펙시먼: count('스펙시먼') },
+  기능: TAX.map(([f, ss]) => ({ function: f, screens: ss.filter((s) => out.some((a) => a.function === f && a.screen === s)) })).filter((x) => x.screens.length),
+  assets: out,
 };
-const CATS = ['메인(필름)', '로그인', '대시보드', '데이터 관리', '프로젝트', '분석 서비스', '지도 서비스', '지도 작업공간(컨셉)', '서비스 지원', '카드 발행 관리', '서비스 관리', 'MY · 인증', '기타'];
-// 원판 없이 구현본이 곧 원판인 화면 — 갤러리에 카드로 노출
-const EXTRA = [{ id: 'LIVE-Main', cat: '메인(필름)', st: 'apply', note: 'scrub/index.html — 스크럽 필름 구현본이 원판 (타임라인: film/timeline.html)', title: '메인 · 스크럽 필름 (구현본)', img: '../../assets/proto/film/legs/full.webp', href: '../scrub/index.html' }];
-const LABEL = { apply: ['적용', '#0FA9A0'], review: ['검토', '#006DF7'], drop: ['폐기', '#8A8A8A'] };
+fs.writeFileSync(`${OUT_DIR}/assets.json`, JSON.stringify(ledger, null, 1) + '\n');
 
-const c = JSON.parse(fs.readFileSync('design-canvas/v2/canvas.json', 'utf8'));
-const boards = c.artboards.map(a => a.file.replace('.dc.html', '')).filter(id => fs.existsSync(`design-canvas/v2/renders/${id}.png`))
-  .map(id => { const [cat, st, note] = STATUS[id] || ['기타', 'drop', '미분류']; const t = c.artboards.find(a => a.file === id + '.dc.html'); return { id, cat, st, note, title: t?.title || id }; }).concat(EXTRA);
+// 구현 현황판용 화면 매핑 — inventory id → 기능/화면 (+ 대장 판정)
+const smap = { 설명: '구현 현황판(status/)이 자산 대장과 같은 화면 키로 묶기 위한 매핑 — node tools/review/masters.mjs 가 생성', 기능_순서: ledger.기능, screens: {} };
+for (const o of out.filter((a) => a.kind === '구현' || a.kind === '시안')) smap.screens[o.id] = { function: o.function, screen: o.screen, variant: o.variant, verdict: o.verdict };
+fs.writeFileSync(`${OUT_DIR}/screen-map.json`, JSON.stringify(smap, null, 1) + '\n');
 
-const card = b => { const img = b.img || `../../../design-canvas/v2/renders/${b.id}.png`; const open = b.href ? `<a href="${b.href}" class="live-link" title="구현 화면 열기">` : `<a href="${img}" class="lb" data-title="${b.title}">`; return `<figure class="card" data-id="${b.id}" data-cat="${b.cat}" data-st="${b.st}">${open}<img loading="lazy" src="${img}" alt="${b.id}"></a><figcaption><div class="row"><span class="badge"></span><b>${b.title}</b></div><span class="meta">${b.id} · ${b.note}</span><div class="ctl"><button type="button" data-set="apply">적용</button><button type="button" data-set="review">검토</button><button type="button" data-set="drop">폐기</button></div></figcaption></figure>`; };
+// ── 6. 갤러리 HTML ──────────────────────────────────────────────────────────
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const rel = (repoPath) => { const [p, q] = String(repoPath).split(/(?=[?#])/); return path.posix.relative(OUT_DIR, p) + (q || ''); };
+const isRepoPath = (s) => /^(landxi|design-canvas|docs)\//.test(s);
+const KIND_ORDER = { 원판: 0, 구현: 1, 시안: 2, 스펙시먼: 3 };
+const VCLS = { 적용: 'ok', 검토: 'rv', 폐기: 'dp' };
+const img = (a) => a.files.렌더 || a.files.썸네일 || a.files.캡처 || null;
+const openHref = (a) => a.files.원천 ? rel(a.files.원천) : a.files.구현 ? rel(a.files.구현.replace(/^:8702\//, '')) : null;
 
+function targetLine(a) {
+  if (a.verdict === '적용') return `<span class="k">적용</span> ${a.applied_to.map((p) => isRepoPath(p) ? `<a href="${esc(rel(p))}">${esc(p.replace(/^landxi\//, ''))}</a>` : esc(p)).join(' · ')}`;
+  if (a.verdict === '폐기') return `<span class="k">대체</span> ${ids.has(a.replaced_by.split(' ')[0]) ? `<a href="#${esc(a.replaced_by.split(' ')[0])}" class="jump">${esc(a.replaced_by)}</a>` : esc(a.replaced_by)}`;
+  return `<span class="k">다음</span> ${esc(a.next)}`;
+}
+function card(a) {
+  const src = img(a);
+  const thumb = src ? `<button type="button" class="th lb" data-src="${esc(rel(src))}" aria-label="${esc(a.name)} 크게 보기"><img loading="lazy" src="${esc(rel(src))}" alt=""></button>`
+    : `<div class="th tx"><span>${esc(a.name)}</span></div>`;
+  const open = openHref(a);
+  return `<article class="card v-${VCLS[a.verdict]}" id="${esc(a.id)}" data-v="${a.verdict}" data-k="${a.kind}" data-later="${esc(a.later || '')}">${thumb}
+<div class="bd"><div class="hd"><span class="bdg ${VCLS[a.verdict]}">${a.verdict}</span><span class="var">${esc(a.variant)}</span></div>
+<h4>${esc(a.name)}</h4><p class="why">${esc(a.reason)}</p><p class="tg">${targetLine(a)}</p>
+<p class="meta"><span>${esc(a.id)}</span>${a.made ? `<span>${esc(a.made.slice(5).replace('-', '.'))}</span>` : ''}${open ? `<a href="${esc(open)}">열기</a>` : ''}</p></div></article>`;
+}
+const stepCls = (a) => `st ${VCLS[a.verdict]}`;
 let body = '';
-for (const cat of CATS) {
-  const live = boards.filter(b => b.cat === cat && b.st !== 'drop');
-  if (!live.length) continue;
-  body += `<section class="cat" data-cat="${cat}"><h2>${cat} <span class="n">적용 ${live.filter(b => b.st === 'apply').length} · 검토 ${live.filter(b => b.st === 'review').length}</span></h2><div class="grid">${live.map(card).join('')}</div></section>`;
+for (const { function: fn, screens } of ledger.기능) {
+  const inFn = out.filter((a) => a.function === fn);
+  const c = count(); for (const v of VERDICTS) c[v] = inFn.filter((a) => a.verdict === v).length;
+  body += `<section class="fn" data-fn="${esc(fn)}"><h2 id="fn-${esc(fn)}">${esc(fn)}<small>${VERDICTS.map((v) => `<i class="${VCLS[v]}">${v} ${c[v]}</i>`).join('')}</small></h2>`;
+  for (const sc of screens) {
+    const items = inFn.filter((a) => a.screen === sc).sort((p, q) => KIND_ORDER[p.kind] - KIND_ORDER[q.kind] || String(p.made).localeCompare(String(q.made)));
+    const live = items.filter((a) => a.verdict !== '폐기'), dead = items.filter((a) => a.verdict === '폐기');
+    // 한 줄 진행: 원판 → 구현 v1 → 구현 v2 → 시안 v3 → 스펙시먼, 단계마다 판정 색
+    const stages = []; for (const k of ['원판', '구현 v1', '구현 v2', '시안 v3', '스펙시먼']) {
+      const g = items.filter((a) => (k === '원판' ? a.kind === '원판' : k === '스펙시먼' ? a.kind === '스펙시먼' : a.variant === k)); if (!g.length) continue;
+      const best = g.find((a) => a.verdict === '적용') || g.find((a) => a.verdict === '검토') || g[0];
+      stages.push(`<span class="${stepCls(best)}" title="${esc(k)} — ${g.map((a) => a.verdict).join(', ')}">${k}<b>${g.length}</b></span>`);
+    }
+    body += `<div class="sc" data-sc="${esc(sc)}"><div class="sch"><h3>${esc(sc)}</h3><div class="flow">${stages.join('<span class="ar">→</span>')}</div></div>`;
+    if (live.length) body += `<div class="grid">${live.map(card).join('')}</div>`;
+    if (dead.length) body += `<details class="dead"><summary>폐기 ${dead.length}</summary><div class="grid">${dead.map(card).join('')}</div></details>`;
+    body += `</div>`;
+  }
+  body += `</section>`;
 }
-body += `<section class="drop-zone"><h2>폐기 <span class="n">카테고리별 · 승격 가능</span></h2>`;
-for (const cat of CATS) {
-  const d = boards.filter(b => b.cat === cat && b.st === 'drop');
-  if (!d.length) continue;
-  body += `<h3>${cat}</h3><div class="grid">${d.map(card).join('')}</div>`;
-}
-body += `</section>`;
-
-const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Land-XI 원판 갤러리</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<style>body{margin:0;background:#fff;color:#010102;font:15px/1.6 Pretendard,system-ui,sans-serif}.w{max-width:1400px;margin:0 auto;padding:28px 32px 64px}h1{font-size:30px;margin:0 0 4px;letter-spacing:-.02em}h2{font-size:22px;margin:0 0 12px}h3{font-size:15px;color:#8A8A8A;margin:18px 0 8px}h2 .n{font:600 12px Inter,sans-serif;color:#8A8A8A;margin-left:8px}.sub{color:#8A8A8A;font-size:13px}section{padding:24px 0;border-top:1px solid #DDD}.drop-zone{border-top:2px solid #010102;margin-top:24px}.drop-zone .card{opacity:.6}.drop-zone .card:hover{opacity:1}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:20px}figure{margin:0}img{width:100%;display:block;border:1px solid #DDD}.card[data-st=apply] img{border:2px solid #0FA9A0}.card[data-st=review] img{border:2px solid #006DF7}figcaption{font-size:13px;margin-top:6px}.row{display:flex;align-items:center;gap:8px}.meta{color:#8A8A8A;font-family:Inter,monospace;font-size:12px;display:block}.badge{font:600 10.5px/1 Inter,sans-serif;letter-spacing:.06em;padding:4px 6px;border:1px solid;white-space:nowrap;flex:none}.ctl{display:flex;gap:6px;margin-top:6px}.ctl button{font:500 12px Pretendard,sans-serif;padding:4px 10px;background:#fff;border:1px solid #DDD;cursor:pointer}.ctl button.on{border-color:#010102;background:#010102;color:#fff}.card.changed .meta::after{content:' · 변경됨(미반영)';color:#B7791F}#sum{position:sticky;top:0;background:#fff;border-bottom:1px solid #DDD;padding:10px 0;z-index:5;font-size:13px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}#sum textarea{flex:1;min-width:320px;font:12px Inter,monospace;border:1px solid #DDD;padding:6px;height:34px;resize:vertical}#sum button{font:500 12px Pretendard,sans-serif;padding:6px 10px;background:#fff;border:1px solid #DDD;cursor:pointer}a{color:#006DF7;text-decoration:none}
-#lb{position:fixed;inset:0;background:rgba(1,1,2,.92);z-index:50;display:flex;align-items:center;justify-content:center;padding:56px 24px 24px}#lb[hidden]{display:none}#lb img{max-width:100%;max-height:100%;border:1px solid #444;background:#fff}#lb-x{position:fixed;top:14px;right:16px;font:600 14px Pretendard,sans-serif;background:#fff;color:#010102;border:0;padding:10px 14px;cursor:pointer}#lb-t{position:fixed;top:20px;left:24px;color:#fff;font:600 15px Pretendard,sans-serif}#lb-prev,#lb-next{position:fixed;top:50%;transform:translateY(-50%);width:56px;height:96px;background:rgba(255,255,255,.12);color:#fff;border:0;font:300 44px/1 Pretendard,sans-serif;cursor:pointer}#lb-prev{left:8px}#lb-next{right:8px}#lb-prev:hover,#lb-next:hover{background:rgba(255,255,255,.28)}</style></head>
-<body><div class="w"><div class="sub">Land-XI · 원판 갤러리 · GitHub 버전 · 자동 생성 (node tools/review/masters.mjs)</div><h1>디자인 원판 ${boards.length}장</h1><p class="sub">카테고리별로 <b>적용</b>(사이트에 구현됨)과 <b>검토</b>(확장·구현 대기)를 보여주고, <b>폐기</b>는 맨 아래 카테고리별로 둡니다. 카드의 버튼으로 상태를 바꾸면(승격 포함) 아래 요약에 모입니다 — 복사해 전달하시면 기준표에 반영합니다. <a href="index.html">검토 허브</a></p>
-<div id="sum"><b>상태 변경</b><textarea id="sum-t" readonly>변경 없음</textarea><button id="sum-reset" type="button">되돌리기</button></div>
-${body}</div>
-<div id="lb" hidden><button id="lb-x" type="button" aria-label="닫기">닫기 ×</button><button id="lb-prev" type="button" aria-label="이전">‹</button><button id="lb-next" type="button" aria-label="다음">›</button><div id="lb-t"></div><img id="lb-img" alt=""></div>
+const S = ledger.집계;
+const jump = ledger.기능.map(({ function: f }) => `<a href="#fn-${esc(f)}">${esc(f)}</a>`).join('');
+const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Land-XI 자산 대장</title>
+<link rel="stylesheet" href="../fonts-system.css">
+<style>
+:root{--ink:#010102;--ink2:#4A4A4A;--mute:#8A8A8A;--line:#DDDDDD;--tint:#E8F1FF;--accent:#006DF7;--ok:#0FA9A0;--rv:#006DF7;--dp:#8A8A8A}
+*{box-sizing:border-box}html{scroll-padding-top:120px}
+body{margin:0;background:#fff;color:var(--ink);font:15px/1.55 Pretendard,system-ui,sans-serif}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.w{max-width:1400px;margin:0 auto;padding:28px 32px 80px}
+.eb{font:600 12px/1 Inter,Pretendard,sans-serif;letter-spacing:.08em;color:var(--mute)}
+h1{font:700 32px/1.2 Paperlogy,Pretendard,sans-serif;letter-spacing:-.03em;margin:8px 0 6px}
+.links{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;margin:0 0 18px}
+#bar{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--line);padding:10px 0;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
+.tot{display:flex;gap:4px;flex-wrap:wrap}
+.fb{font:500 13px Pretendard,sans-serif;padding:6px 12px;background:#fff;border:1px solid var(--line);color:var(--ink);cursor:pointer;white-space:nowrap}
+.fb b{font:600 13px Inter,sans-serif;margin-left:6px}
+.fb[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.fb.ok b{color:var(--ok)}.fb.rv b{color:var(--rv)}.fb.dp b{color:var(--dp)}.fb[aria-pressed=true] b{color:#fff}
+.jumps{display:flex;gap:4px 12px;flex-wrap:wrap;font-size:13px;width:100%}
+.jumps a{color:var(--ink2)}
+section.fn{padding:28px 0 8px;border-top:2px solid var(--ink);margin-top:28px}
+h2{font:700 24px/1.2 Paperlogy,Pretendard,sans-serif;letter-spacing:-.03em;margin:0 0 6px;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+h2 small{display:flex;gap:10px;font:600 12px Inter,Pretendard,sans-serif}
+h2 small i{font-style:normal}i.ok{color:var(--ok)}i.rv{color:var(--rv)}i.dp{color:var(--dp)}
+.sc{padding:18px 0;border-top:1px solid var(--line)}
+.sch{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin-bottom:12px}
+h3{font:700 17px/1.3 Pretendard,sans-serif;margin:0}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:12px}
+.st{border:1px solid;padding:3px 7px;white-space:nowrap;font-weight:600}.st b{font:600 11px Inter,sans-serif;margin-left:5px;opacity:.7}
+.st.ok{color:var(--ok)}.st.rv{color:var(--rv)}.st.dp{color:var(--dp);border-style:dashed}
+.ar{color:var(--mute)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:16px}
+.card{border:1px solid var(--line);display:flex;flex-direction:column;min-width:0;background:#fff}
+.card.v-ok{border-top:3px solid var(--ok)}.card.v-rv{border-top:3px solid var(--rv)}.card.v-dp{border-top:3px solid var(--dp)}
+.card:target{outline:2px solid var(--accent);outline-offset:2px}
+.th{display:block;width:100%;aspect-ratio:16/10;padding:0;border:0;border-bottom:1px solid var(--line);background:#F4F5F7;cursor:zoom-in;overflow:hidden}
+.th img{width:100%;height:100%;object-fit:cover;object-position:top left;display:block}
+.th.tx{cursor:default;display:flex;align-items:flex-end;padding:14px;background:var(--tint)}
+.th.tx span{font:700 16px/1.35 Paperlogy,Pretendard,sans-serif;letter-spacing:-.02em;color:var(--ink)}
+.v-dp .th.tx{background:#F4F5F7}.v-dp .th.tx span{color:var(--mute)}
+.bd{padding:10px 12px 12px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.hd{display:flex;align-items:center;gap:8px;min-width:0}
+.bdg{font:700 11px/1 Pretendard,sans-serif;padding:4px 6px;border:1px solid;white-space:nowrap;flex:none}
+.bdg.ok{color:var(--ok)}.bdg.rv{color:var(--rv)}.bdg.dp{color:var(--dp)}
+.var{font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+h4{font-size:15px;line-height:1.4;margin:2px 0 0;overflow-wrap:anywhere}
+.why{margin:0;font-size:13px;color:var(--ink2);overflow-wrap:anywhere}
+.tg{margin:0;font-size:13px;overflow-wrap:anywhere}.tg .k{font-weight:700;color:var(--ink);margin-right:4px}
+.meta{margin:2px 0 0;display:flex;flex-wrap:wrap;gap:4px 10px;font:12px Inter,Pretendard,sans-serif;color:var(--mute)}
+details.dead{margin-top:14px}
+details.dead summary{cursor:pointer;font-size:13px;color:var(--mute);width:max-content;padding:4px 0}
+details.dead .card{opacity:.55}details.dead .card:hover,details.dead .card:target{opacity:1}
+body.f-v .card:not(.show),body.f-v .sc:not(.show),body.f-v section.fn:not(.show){display:none}
+body.f-v details.dead{margin-top:0}
+.empty{color:var(--mute);padding:30px 0}
+#lb{position:fixed;inset:0;background:rgba(1,1,2,.92);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 16px 16px;gap:10px}
+#lb[hidden]{display:none}#lb img{max-width:100%;max-height:calc(100% - 60px);background:#fff}
+#lb-t{color:#fff;font:600 14px/1.4 Pretendard,sans-serif;max-width:1100px;text-align:center}#lb-t small{display:block;color:#B8B8B8;font-weight:400}
+#lb-x{position:fixed;top:12px;right:12px;font:600 14px Pretendard,sans-serif;background:#fff;color:var(--ink);border:0;padding:10px 14px;cursor:pointer}
+#lb-p,#lb-n{position:fixed;top:50%;transform:translateY(-50%);width:48px;height:88px;background:rgba(255,255,255,.12);color:#fff;border:0;font:300 40px/1 Pretendard,sans-serif;cursor:pointer}#lb-p{left:6px}#lb-n{right:6px}
+@media (max-width:640px){#bar{position:static}.w{padding:20px 16px 64px}h1{font-size:26px}#lb-p,#lb-n{display:none}}
+</style></head>
+<body><div class="w">
+<div class="eb">LAND-XI · 자산 대장 · ${esc(ledger.generated_at)}</div>
+<h1>원판 · 구현 · 스펙시먼 ${S.전체}건</h1>
+<div class="links"><a href="index.html">검토 허브</a><a href="status/index.html">구현 현황판</a><a href="assets.json">assets.json</a><a href="bench-kakao.html">카카오 벤치</a></div>
+<div id="bar"><div class="tot" role="group" aria-label="판정">
+<button type="button" class="fb" data-v="" aria-pressed="true">전체<b>${S.전체}</b></button>
+${VERDICTS.map((v) => `<button type="button" class="fb ${VCLS[v]}" data-v="${v}" aria-pressed="false">${v}<b>${S[v]}</b></button>`).join('')}</div>
+<div class="tot" role="group" aria-label="종류">${['원판', '구현', '시안', '스펙시먼'].map((k) => `<button type="button" class="fb" data-k="${k}" aria-pressed="false">${k}<b>${out.filter((a) => a.kind === k).length}</b></button>`).join('')}</div>
+<nav class="jumps" aria-label="기능">${jump}</nav></div>
+${body}<p class="empty" id="empty" hidden>조건에 맞는 자산이 없습니다.</p></div>
+<div id="lb" hidden><button id="lb-x" type="button">닫기 ×</button><button id="lb-p" type="button" aria-label="이전">‹</button><button id="lb-n" type="button" aria-label="다음">›</button><img id="lb-i" alt=""><div id="lb-t"></div></div>
 <script>(function(){
-var KEY='lx_masters_status',LABEL={apply:['적용','#0FA9A0'],review:['검토','#006DF7'],drop:['폐기','#8A8A8A']};var ov={};try{ov=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){}
-function paint(){var lines=[];document.querySelectorAll('.card').forEach(function(c){var id=c.dataset.id,base=c.getAttribute('data-base')||c.dataset.st;if(!c.getAttribute('data-base'))c.setAttribute('data-base',base);var st=ov[id]||base;c.dataset.st=st;c.classList.toggle('changed',st!==base);var b=c.querySelector('.badge');b.textContent=LABEL[st][0];b.style.borderColor=b.style.color=LABEL[st][1];c.querySelectorAll('.ctl button').forEach(function(x){x.classList.toggle('on',x.dataset.set===st)});if(st!==base)lines.push(id+': '+LABEL[base][0]+' → '+LABEL[st][0]);});document.getElementById('sum-t').value=lines.length?lines.join('\\n'):'변경 없음';}
-document.querySelectorAll('.ctl button').forEach(function(x){x.addEventListener('click',function(){var c=x.closest('.card');var base=c.getAttribute('data-base');var v=x.dataset.set;if(v===base)delete ov[c.dataset.id];else ov[c.dataset.id]=v;try{localStorage.setItem(KEY,JSON.stringify(ov))}catch(e){}paint();});});
-document.getElementById('sum-reset').addEventListener('click',function(){ov={};try{localStorage.removeItem(KEY)}catch(e){}paint();});paint();
-var lb=document.getElementById('lb'),im=document.getElementById('lb-img'),t=document.getElementById('lb-t'),links=Array.prototype.slice.call(document.querySelectorAll('a.lb')),cur=-1;
-function show(i){if(i<0)i=links.length-1;if(i>=links.length)i=0;cur=i;var a=links[i];im.src=a.getAttribute('href');var c=a.closest('.card');t.textContent=(i+1)+' / '+links.length+' · '+(a.dataset.title||'')+(c?'  ['+c.dataset.cat+' · '+c.querySelector('.badge').textContent+']':'');lb.hidden=false;document.body.style.overflow='hidden';}
-function close(){lb.hidden=true;im.src='';document.body.style.overflow='';}
-links.forEach(function(a,i){a.addEventListener('click',function(e){e.preventDefault();show(i);});});
-document.getElementById('lb-x').addEventListener('click',close);document.getElementById('lb-prev').addEventListener('click',function(){show(cur-1)});document.getElementById('lb-next').addEventListener('click',function(){show(cur+1)});
+var F={v:'',k:''},B=document.body;
+function apply(){var any=F.v||F.k;B.classList.toggle('f-v',!!any);var n=0;
+document.querySelectorAll('.card').forEach(function(c){var ok=(!F.v||c.dataset.v===F.v)&&(!F.k||c.dataset.k===F.k);c.classList.toggle('show',ok);if(ok)n++;});
+document.querySelectorAll('.sc').forEach(function(s){s.classList.toggle('show',!!s.querySelector('.card.show'));var d=s.querySelector('details.dead');if(d&&any)d.open=!!d.querySelector('.card.show');});
+document.querySelectorAll('section.fn').forEach(function(s){s.classList.toggle('show',!!s.querySelector('.card.show'));});
+document.getElementById('empty').hidden=!(any&&!n);
+document.querySelectorAll('.fb').forEach(function(b){var on=b.hasAttribute('data-v')?(b.dataset.v===F.v):(b.dataset.k===F.k);b.setAttribute('aria-pressed',String(on));});}
+document.getElementById('bar').addEventListener('click',function(e){var b=e.target.closest('.fb');if(!b)return;if(b.hasAttribute('data-v'))F.v=b.dataset.v;else F.k=(F.k===b.dataset.k?'':b.dataset.k);apply();});
+try{var q=new URLSearchParams(location.search);if(q.get('v'))F.v=q.get('v');if(q.get('k'))F.k=q.get('k');if(F.v||F.k)apply();}catch(e){}
+if(location.hash){var t=document.getElementById(location.hash.slice(1));if(t){var d=t.closest('details');if(d)d.open=true;}}
+document.addEventListener('click',function(e){var a=e.target.closest('a.jump');if(!a)return;var t=document.getElementById(a.getAttribute('href').slice(1));if(t){var d=t.closest('details');if(d)d.open=true;if(F.v||F.k){F.v='';F.k='';apply();}}});
+var lb=document.getElementById('lb'),im=document.getElementById('lb-i'),tt=document.getElementById('lb-t'),cur=-1;
+function vis(){return Array.prototype.filter.call(document.querySelectorAll('button.lb'),function(b){return b.offsetParent!==null;});}
+function show(i){var L=vis();if(!L.length)return;cur=(i+L.length)%L.length;var b=L[cur],c=b.closest('.card');im.src=b.dataset.src;
+tt.innerHTML='';var h=document.createElement('span');h.textContent=(cur+1)+' / '+L.length+' · '+c.querySelector('h4').textContent+' ['+c.querySelector('.bdg').textContent+']';tt.appendChild(h);
+var s=document.createElement('small');s.textContent=c.querySelector('.tg').textContent+(c.dataset.later?'  ·  이후: '+c.dataset.later:'');tt.appendChild(s);lb.hidden=false;document.body.style.overflow='hidden';}
+function close(){lb.hidden=true;im.removeAttribute('src');document.body.style.overflow='';}
+document.addEventListener('click',function(e){var b=e.target.closest('button.lb');if(!b)return;show(vis().indexOf(b));});
+document.getElementById('lb-x').onclick=close;document.getElementById('lb-p').onclick=function(){show(cur-1)};document.getElementById('lb-n').onclick=function(){show(cur+1)};
 lb.addEventListener('click',function(e){if(e.target===lb)close();});
-document.addEventListener('keydown',function(e){if(lb.hidden)return;if(e.key==='Escape')close();else if(e.key==='ArrowLeft')show(cur-1);else if(e.key==='ArrowRight'||e.key===' ')show(cur+1);});
-var sx=null;lb.addEventListener('touchstart',function(e){sx=e.touches[0].clientX},{passive:true});lb.addEventListener('touchend',function(e){if(sx===null)return;var dx=e.changedTouches[0].clientX-sx;sx=null;if(dx>50)show(cur-1);else if(dx<-50)show(cur+1);});
+document.addEventListener('keydown',function(e){if(lb.hidden)return;if(e.key==='Escape')close();else if(e.key==='ArrowLeft')show(cur-1);else if(e.key==='ArrowRight')show(cur+1);});
 })();</script></body></html>`;
-fs.writeFileSync('landxi/proto/review/masters.html', html);
-console.log(boards.length, 'boards;', boards.filter(b => b.st === 'apply').length, 'apply,', boards.filter(b => b.st === 'review').length, 'review,', boards.filter(b => b.st === 'drop').length, 'drop');
+fs.writeFileSync(`${OUT_DIR}/masters.html`, html);
+console.log(`자산 ${S.전체}: 적용 ${S.적용} · 검토 ${S.검토} · 폐기 ${S.폐기} | 원판 ${JSON.stringify(S.원판)} 구현 ${JSON.stringify(S.구현)} 시안 ${JSON.stringify(S.시안)} 스펙시먼 ${JSON.stringify(S.스펙시먼)}`);

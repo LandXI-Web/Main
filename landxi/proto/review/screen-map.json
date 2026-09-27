@@ -1,0 +1,637 @@
+{
+ "설명": "구현 현황판(status/)이 자산 대장과 같은 화면 키로 묶기 위한 매핑 — node tools/review/masters.mjs 가 생성",
+ "기능_순서": [
+  {
+   "function": "인증",
+   "screens": [
+    "로그인",
+    "계정 신청",
+    "아이디 찾기",
+    "비밀번호 찾기"
+   ]
+  },
+  {
+   "function": "메인",
+   "screens": [
+    "스크럽 필름",
+    "소개 챕터(토스)",
+    "서비스 소개 판",
+    "성과·결과 띠",
+    "홈 초기안",
+    "공개 사이트",
+    "필름 제작 도구"
+   ]
+  },
+  {
+   "function": "대시보드",
+   "screens": [
+    "직원 첫 화면",
+    "사용자 대시보드",
+    "뷰어 대시보드"
+   ]
+  },
+  {
+   "function": "데이터 관리",
+   "screens": [
+    "목록(아카이브·완료·발행중)",
+    "업로드",
+    "파이프라인 단계"
+   ]
+  },
+  {
+   "function": "프로젝트",
+   "screens": [
+    "목록(메인)",
+    "만들기",
+    "만들기 검토",
+    "개요",
+    "삭제 모달",
+    "데이터",
+    "라벨링",
+    "학습",
+    "분석",
+    "배포·발행",
+    "지도 작업공간(컨셉)"
+   ]
+  },
+  {
+   "function": "분석 서비스",
+   "screens": [
+    "카드 목록",
+    "카드 상세",
+    "실행 검토",
+    "실행 중",
+    "실행 결과"
+   ]
+  },
+  {
+   "function": "카드 발행",
+   "screens": [
+    "승인·검토 데스크",
+    "카드 목록",
+    "카드 편집",
+    "발행 요청"
+   ]
+  },
+  {
+   "function": "XI맵",
+   "screens": [
+    "기본 지도",
+    "객체 정보",
+    "시점 비교",
+    "검색",
+    "도구(측정·그리기·구역·내려받기)",
+    "지역 구분·속성 표",
+    "보안 서약",
+    "표류 예측"
+   ]
+  },
+  {
+   "function": "실태조사",
+   "screens": [
+    "실태조사 모드",
+    "대장 융합(기관 첫 화면)"
+   ]
+  },
+  {
+   "function": "에이전트",
+   "screens": [
+    "융합 분석 질문"
+   ]
+  },
+  {
+   "function": "통계/보고서",
+   "screens": [
+    "통계",
+    "보고서"
+   ]
+  },
+  {
+   "function": "관제",
+   "screens": [
+    "관제 로그인",
+    "운영 현황",
+    "인프라",
+    "기관·할당",
+    "배포",
+    "생산 관리"
+   ]
+  },
+  {
+   "function": "서비스 관리",
+   "screens": [
+    "사용자 관리",
+    "공지 관리",
+    "문의 관리",
+    "FAQ 관리",
+    "지도 속성 관리"
+   ]
+  },
+  {
+   "function": "기관 포털",
+   "screens": [
+    "기관 로그인",
+    "내 서비스",
+    "서비스 상세"
+   ]
+  },
+  {
+   "function": "서비스 지원",
+   "screens": [
+    "공지",
+    "FAQ",
+    "문의",
+    "활용사례",
+    "매뉴얼"
+   ]
+  },
+  {
+   "function": "MY",
+   "screens": [
+    "마이 페이지",
+    "정보 수정",
+    "비밀번호 변경",
+    "브랜드(CI)",
+    "저장 공간",
+    "탈퇴"
+   ]
+  },
+  {
+   "function": "글로벌",
+   "screens": [
+    "로그인",
+    "해외 서비스"
+   ]
+  },
+  {
+   "function": "공통",
+   "screens": [
+    "서체·색·형태",
+    "토스 톤",
+    "빈 상태·캐릭터",
+    "출처 띠·푸터",
+    "기능 소개 틀",
+    "상태 패턴(로딩·오류)",
+    "디자인 실험"
+   ]
+  }
+ ],
+ "screens": {
+  "proto-login": {
+   "function": "인증",
+   "screen": "로그인",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "v3-login": {
+   "function": "인증",
+   "screen": "로그인",
+   "variant": "시안 v3",
+   "verdict": "검토"
+  },
+  "proto-signup": {
+   "function": "인증",
+   "screen": "계정 신청",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-find-id": {
+   "function": "인증",
+   "screen": "아이디 찾기",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-find-id-result": {
+   "function": "인증",
+   "screen": "아이디 찾기",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-find-password": {
+   "function": "인증",
+   "screen": "비밀번호 찾기",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-find-password-result": {
+   "function": "인증",
+   "screen": "비밀번호 찾기",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "scrub-main": {
+   "function": "메인",
+   "screen": "스크럽 필름",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "site-platform": {
+   "function": "메인",
+   "screen": "공개 사이트",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "site-usecase": {
+   "function": "메인",
+   "screen": "공개 사이트",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "site-notice": {
+   "function": "메인",
+   "screen": "공개 사이트",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "film-timeline": {
+   "function": "메인",
+   "screen": "필름 제작 도구",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "film-anchors": {
+   "function": "메인",
+   "screen": "필름 제작 도구",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-dashboard": {
+   "function": "대시보드",
+   "screen": "직원 첫 화면",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "v3-lx-console": {
+   "function": "대시보드",
+   "screen": "직원 첫 화면",
+   "variant": "시안 v3",
+   "verdict": "검토"
+  },
+  "proto-dataset": {
+   "function": "데이터 관리",
+   "screen": "목록(아카이브·완료·발행중)",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-ai-project": {
+   "function": "프로젝트",
+   "screen": "목록(메인)",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-ai-project-create": {
+   "function": "프로젝트",
+   "screen": "만들기",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-ai-project-label": {
+   "function": "프로젝트",
+   "screen": "라벨링",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-workflow": {
+   "function": "프로젝트",
+   "screen": "학습",
+   "variant": "구현 v1",
+   "verdict": "폐기"
+  },
+  "proto-analysis-ai": {
+   "function": "분석 서비스",
+   "screen": "카드 목록",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-admin-publish": {
+   "function": "카드 발행",
+   "screen": "승인·검토 데스크",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-ai-card": {
+   "function": "카드 발행",
+   "screen": "카드 목록",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-ai-card-edit": {
+   "function": "카드 발행",
+   "screen": "카드 편집",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-ai-publish-create": {
+   "function": "카드 발행",
+   "screen": "발행 요청",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "xi-read-staff": {
+   "function": "XI맵",
+   "screen": "기본 지도",
+   "variant": "구현 v2",
+   "verdict": "적용"
+  },
+  "xi-public": {
+   "function": "XI맵",
+   "screen": "기본 지도",
+   "variant": "구현 v2",
+   "verdict": "적용"
+  },
+  "xi-sales": {
+   "function": "XI맵",
+   "screen": "기본 지도",
+   "variant": "구현 v2",
+   "verdict": "적용"
+  },
+  "proto-ximap": {
+   "function": "XI맵",
+   "screen": "기본 지도",
+   "variant": "구현 v1",
+   "verdict": "폐기"
+  },
+  "v3-xi-clean": {
+   "function": "XI맵",
+   "screen": "기본 지도",
+   "variant": "시안 v3",
+   "verdict": "검토"
+  },
+  "proto-map-drift": {
+   "function": "XI맵",
+   "screen": "표류 예측",
+   "variant": "구현 v1",
+   "verdict": "폐기"
+  },
+  "xi-survey-staff": {
+   "function": "실태조사",
+   "screen": "실태조사 모드",
+   "variant": "구현 v2",
+   "verdict": "적용"
+  },
+  "xi-survey-namwon": {
+   "function": "실태조사",
+   "screen": "실태조사 모드",
+   "variant": "구현 v2",
+   "verdict": "적용"
+  },
+  "v3-gov-fusion": {
+   "function": "실태조사",
+   "screen": "대장 융합(기관 첫 화면)",
+   "variant": "시안 v3",
+   "verdict": "검토"
+  },
+  "xi-agent": {
+   "function": "에이전트",
+   "screen": "융합 분석 질문",
+   "variant": "구현 v2",
+   "verdict": "적용"
+  },
+  "proto-stats-standard": {
+   "function": "통계/보고서",
+   "screen": "통계",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-report-standard": {
+   "function": "통계/보고서",
+   "screen": "보고서",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-report-standard-issue": {
+   "function": "통계/보고서",
+   "screen": "보고서",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "ops-login": {
+   "function": "관제",
+   "screen": "관제 로그인",
+   "variant": "구현 v2",
+   "verdict": "적용"
+  },
+  "ops-index": {
+   "function": "관제",
+   "screen": "운영 현황",
+   "variant": "구현 v2",
+   "verdict": "적용"
+  },
+  "proto-admin-home": {
+   "function": "관제",
+   "screen": "운영 현황",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "v3-ops-core": {
+   "function": "관제",
+   "screen": "운영 현황",
+   "variant": "시안 v3",
+   "verdict": "검토"
+  },
+  "ops-infra": {
+   "function": "관제",
+   "screen": "인프라",
+   "variant": "구현 v2",
+   "verdict": "적용"
+  },
+  "ops-tenants": {
+   "function": "관제",
+   "screen": "기관·할당",
+   "variant": "구현 v2",
+   "verdict": "적용"
+  },
+  "ops-deploys": {
+   "function": "관제",
+   "screen": "배포",
+   "variant": "구현 v2",
+   "verdict": "적용"
+  },
+  "proto-produce": {
+   "function": "관제",
+   "screen": "생산 관리",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-admin-users": {
+   "function": "서비스 관리",
+   "screen": "사용자 관리",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-admin-notice": {
+   "function": "서비스 관리",
+   "screen": "공지 관리",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-admin-inquiry": {
+   "function": "서비스 관리",
+   "screen": "문의 관리",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-admin-faq": {
+   "function": "서비스 관리",
+   "screen": "FAQ 관리",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-admin-map": {
+   "function": "서비스 관리",
+   "screen": "지도 속성 관리",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-portal-login-namwon": {
+   "function": "기관 포털",
+   "screen": "기관 로그인",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-portal-login-gwangju-jeonnam": {
+   "function": "기관 포털",
+   "screen": "기관 로그인",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-portal": {
+   "function": "기관 포털",
+   "screen": "내 서비스",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-portal-dp-nw-change": {
+   "function": "기관 포털",
+   "screen": "서비스 상세",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-portal-dp-nw-farm-25": {
+   "function": "기관 포털",
+   "screen": "서비스 상세",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-portal-dp-nw-living-23": {
+   "function": "기관 포털",
+   "screen": "서비스 상세",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-portal-dp-gj-marine-25": {
+   "function": "기관 포털",
+   "screen": "서비스 상세",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-portal-dp-gj-marine-27": {
+   "function": "기관 포털",
+   "screen": "서비스 상세",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-portal-dp-nw-crowd-27": {
+   "function": "기관 포털",
+   "screen": "서비스 상세",
+   "variant": "구현 v1",
+   "verdict": "검토"
+  },
+  "proto-portal-dp-nw-road-26": {
+   "function": "기관 포털",
+   "screen": "서비스 상세",
+   "variant": "구현 v1",
+   "verdict": "검토"
+  },
+  "proto-notice": {
+   "function": "서비스 지원",
+   "screen": "공지",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-faq": {
+   "function": "서비스 지원",
+   "screen": "FAQ",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-contact": {
+   "function": "서비스 지원",
+   "screen": "문의",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-usecase": {
+   "function": "서비스 지원",
+   "screen": "활용사례",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-manual": {
+   "function": "서비스 지원",
+   "screen": "매뉴얼",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "proto-mypage": {
+   "function": "MY",
+   "screen": "마이 페이지",
+   "variant": "구현 v1",
+   "verdict": "적용"
+  },
+  "global-login": {
+   "function": "글로벌",
+   "screen": "로그인",
+   "variant": "구현 v2",
+   "verdict": "적용"
+  },
+  "global-index": {
+   "function": "글로벌",
+   "screen": "해외 서비스",
+   "variant": "구현 v2",
+   "verdict": "적용"
+  },
+  "global-index-land": {
+   "function": "글로벌",
+   "screen": "해외 서비스",
+   "variant": "구현 v2",
+   "verdict": "적용"
+  },
+  "proto-dive": {
+   "function": "공통",
+   "screen": "디자인 실험",
+   "variant": "구현 v1",
+   "verdict": "폐기"
+  },
+  "proto-charts": {
+   "function": "공통",
+   "screen": "디자인 실험",
+   "variant": "구현 v1",
+   "verdict": "폐기"
+  },
+  "proto-fonts": {
+   "function": "공통",
+   "screen": "디자인 실험",
+   "variant": "구현 v1",
+   "verdict": "폐기"
+  },
+  "proto-system": {
+   "function": "공통",
+   "screen": "디자인 실험",
+   "variant": "구현 v1",
+   "verdict": "폐기"
+  },
+  "proto-shell-demo": {
+   "function": "공통",
+   "screen": "디자인 실험",
+   "variant": "구현 v1",
+   "verdict": "폐기"
+  },
+  "global-fonts-compare": {
+   "function": "공통",
+   "screen": "디자인 실험",
+   "variant": "구현 v2",
+   "verdict": "폐기"
+  }
+ }
+}

@@ -13,13 +13,19 @@ INV = os.path.join(ROOT, 'shots', 'overview', 'inventory.json')
 THUMBS = os.path.join(ROOT, 'shots', 'overview', 'thumbs')
 TPL = os.path.join(os.path.dirname(__file__), 'status-tpl.html')
 OUT = os.path.join(ROOT, 'landxi', 'proto', 'review', 'status')
+SMAP = os.path.join(ROOT, 'landxi', 'proto', 'review', 'screen-map.json')  # node tools/review/masters.mjs 가 생성
 KEEP = ['id', '경로', '제목', '사용자_축', '기능군', '세대', '상태', '실데이터', '문제', '콘솔_오류']
 
 inv = json.load(open(INV, encoding='utf-8'))
+smap = json.load(open(SMAP, encoding='utf-8')) if os.path.exists(SMAP) else {'기능_순서': [], 'screens': {}}
 os.makedirs(os.path.join(OUT, 'thumbs'), exist_ok=True)
 screens = []
 for s in inv['screens']:
     x = {k: s.get(k) for k in KEEP}
+    m = smap['screens'].get(s['id'], {})  # 자산 대장과 같은 화면 키(기능 → 화면)
+    x['function'] = m.get('function', '미분류')
+    x['screen'] = m.get('screen', '미분류')
+    x['verdict'] = m.get('verdict')
     t = s.get('썸네일')
     src = os.path.join(ROOT, 'shots', 'overview', t) if t else None
     if src and os.path.exists(src):
@@ -28,7 +34,7 @@ for s in inv['screens']:
     else:
         x['thumb'] = None
     screens.append(x)
-payload = {'screens': screens, 'backend': inv.get('backend', []), 'data': inv.get('data', []),
+payload = {'screens': screens, 'order': smap.get('기능_순서', []), 'backend': inv.get('backend', []), 'data': inv.get('data', []),
            'generated_at': inv.get('generated_at')}
 data = json.dumps(payload, ensure_ascii=False).replace('</', '<\\/')
 body = open(TPL, encoding='utf-8').read().replace('__DATA__', data)
