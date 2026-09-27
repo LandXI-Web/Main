@@ -475,7 +475,159 @@ const SPECS = [
   ['T-5-6', '공통/토스 톤', '가져오지 않을 것 — 오버슈트 이징·둥근 카드·실사 인물·56화면·채움 버튼·지도 위 관성 스크롤', '제안 토스 5-6', '폐기', '법전(라운드 0 · 액센트 절제) 유지', '법전·지도 제스처와 충돌 — 토스 벤치 스스로 제외', '', '', ''],
 ].map(([id, screen, name, variant, verdict, target, reason, later, img, anchor]) => ({ id, screen, name, variant, verdict, target, reason, later, img, anchor }));
 
-// ── 5. 조립 ─────────────────────────────────────────────────────────────────
+// ── 5. 사용자 말 — 화면 행 한 문장(지금 → 다음) · 항목 이름 · 매체 ─────────────────
+// 대장은 사용자에게 보이는 문서다(2026-09-27 13차 피드백: "내부 코드로 쓰여 있고, 링크는 접속이 안 되거나 열기해야만 보이고, 같은 화면이 세 줄").
+// 그래서 (1) 화면 하나 = 한 행, 행마다 '지금'·'다음' 한 문장씩을 사용자 말로 적고, (2) 항목 이름에서 내부 코드를 걷어내며,
+// (3) 판정표의 원래 글(reason·target·later)은 dev 로 남겨 '개발 기록' 접기와 호버에만 보인다. 판정 논리는 그대로다.
+// 행 글: 기능/화면 | 지금(한 문장) | 다음 할 일(한 문장)
+const ROWS = Object.fromEntries(`
+인증/로그인 | 지금은 예전 로그인이 쓰이고, 새 로그인은 시안 단계입니다. 새 로그인 왼쪽에는 Land-XI 소개(Hyper Performance · Solution · GeoAI 3축)가 실제 결과 지도 3장면(비슈케크 · 남원 · 여수)으로 돌아갑니다 — 8월 26일 결정 "로그인 = 플랫폼 소개". 카카오식 3축 소개와 토스식 장면 순환은 이 새 로그인에 이미 들어가 있습니다. | 새 로그인을 확정하면 예전 로그인을 교체하고, 관제·기관·해외 로그인도 이 문 하나로 합칩니다.
+인증/계정 신청 | 3단계 신청 화면(약관 → 정보 입력 → 완료)이 원판대로 만들어져 있지만, 신청을 저장하지는 않습니다. | 새 로그인이 확정되면 신청은 로그인 화면 안의 작은 서랍으로 줄입니다.
+인증/아이디 찾기 | 입력 → 결과 화면이 있지만 실제 조회는 하지 않습니다. | 새 로그인 안의 서랍으로 줄입니다.
+인증/비밀번호 찾기 | 입력 → 결과 화면이 있지만 실제 조회는 하지 않습니다. | 새 로그인 안의 서랍으로 줄입니다.
+메인/스크럽 필름 | 메인은 스크롤로 돌리는 디오라마 필름(12장면)이 그대로 쓰입니다. 원판 없이 만든 화면이 곧 기준입니다. | 토스 방식 제안(앞뒤 장면만 메인에 남기고 지역 장면은 각 서비스 소개로 옮김)이 판정을 기다립니다.
+메인/소개 챕터(토스) | 아직 없는 화면입니다. 토스 홈처럼 '한 화면에 한 메시지'로 메인을 8개 장으로 나누는 제안만 있습니다(9월 27일). | 제안을 확정하면 메인을 8개 장으로 다시 만듭니다.
+메인/서비스 소개 판 | 아직 없는 화면입니다. 실영상 위에 서비스를 소개하는 판(카카오 참고)이 제안 단계입니다. | 메인 재구성 때 각 장의 그림과 서비스 소개 페이지 첫 화면으로 씁니다.
+메인/성과·결과 띠 | 아직 없는 화면입니다. 성과 숫자 띠와 결과 카드(카카오 참고)를 쓰기로 9월 27일 결정했고, 숫자는 업무 결과(예: 현장 확인 필요 n필지)만 씁니다. | 메인 '실태조사' 장과 분석 결과 화면에 넣습니다.
+메인/홈 초기안 | 8월의 첫 홈 안 두 장은 폐기됐고, 스크롤 필름 메인이 대신합니다. | 없음 — 기록만 남깁니다.
+메인/공개 사이트 | 로그인 전에 보는 공개 페이지 3장(활용 서비스 · 활용 사례 · 공지)이 있습니다. 서비스 카드 자리는 도형 자리표시입니다. | 서비스 카드를 카카오 참고의 카드 모양(사진 + 기준일 + 상태 + 제목)으로 바꿉니다.
+메인/필름 제작 도구 | 필름을 검토하는 내부 도구 2장(타임라인 · 앵커 스틸)입니다. 사용자 화면이 아닙니다. | 그대로 둡니다.
+대시보드/직원 첫 화면 | 지금 LX 직원이 로그인하면 전국 한 판 대시보드가 뜹니다. 새 안은 '생산 콘솔'(오늘 할 일 띠 + 지도 위 6단 서랍) 시안입니다. | 생산 콘솔 시안을 확정하면 대시보드를 없애고 첫 화면을 교체합니다.
+대시보드/사용자 대시보드 | 원판 1장만 있고 만들지 않았습니다(원본 시스템의 사용자 대시보드 그대로). | 역할별 첫 화면을 설계할 때 흡수할지 결정합니다.
+대시보드/뷰어 대시보드 | 원판 1장만 있고 만들지 않았습니다. | 기관 첫 화면(내 대장 × AI)의 결과 탭을 만들 때 참고합니다.
+데이터 관리/목록(아카이브·완료·발행중) | 이미지 그리드 + 오른쪽 패널 화면이 원판대로 있고, 데이터는 고정값입니다. | 생산 콘솔의 '반입' 서랍으로 흡수합니다.
+데이터 관리/업로드 | 업로드 탭이 있지만 실제 업로드는 되지 않습니다. | 생산 콘솔 '반입' 서랍으로 흡수합니다.
+데이터 관리/파이프라인 단계 | 아직 없는 화면입니다. 4단계 스텝퍼(카카오 참고) 제안만 있습니다. | 생산 콘솔의 6단 레일(반입 → 학습 → 조립 → 검수 → 배포 → 운영)로 씁니다.
+프로젝트/목록(메인) | 프로젝트 목록 + 오른쪽 조회 화면이 있고(8단계 탭), 데이터는 고정값입니다. | 8단계를 라벨 · 학습 · 모델 3개로 줄여 생산 콘솔 서랍으로 옮깁니다.
+프로젝트/만들기 | 한 화면 폼으로 만들어져 있습니다(고정값). | 생산 콘솔 '학습' 서랍으로 옮깁니다.
+프로젝트/만들기 검토 | 만들기 검토 화면이 있습니다(고정값). | 생산 콘솔 '학습' 서랍으로 옮깁니다.
+프로젝트/개요 | 개요 · 수정 · 구성원 · 초대 화면이 원판대로 있습니다(고정값). | 생산 콘솔로 옮깁니다.
+프로젝트/삭제 모달 | 삭제 확인 창이 있습니다. | 생산 콘솔로 옮깁니다.
+프로젝트/데이터 | 파일 · 데이터셋 화면 6장이 있습니다(고정값). | 생산 콘솔 '반입' 서랍으로 옮깁니다.
+프로젝트/라벨링 | 라벨링 + 클래스 편집기가 있습니다(고정값). | 생산 콘솔 '학습' 서랍으로 옮깁니다.
+프로젝트/학습 | 학습 화면들이 원판대로 있습니다. 8월의 워크플로우 보드는 "너무 업무 시스템"이라 폐기됐습니다. | 생산 콘솔 '학습' 서랍으로 옮깁니다.
+프로젝트/분석 | 분석 탭이 있습니다(고정값). | 생산 콘솔로 옮깁니다.
+프로젝트/배포·발행 | 배포 · 발행 폼이 있습니다(고정값). | 생산 콘솔 '배포 · 이식' 서랍으로 옮깁니다.
+프로젝트/지도 작업공간(컨셉) | 원판 3안 중 '레이어가 곧 작업' 안이 뽑혔지만 만들지 않았습니다. | 생산 콘솔(지도 위 6단 서랍)이 같은 생각입니다 — 시안을 확정할 때 흡수합니다.
+분석 서비스/카드 목록 | 서비스 카드 15장 + 오른쪽 정보 화면이 있습니다(고정값). 카드 모양은 카카오 참고로 바꾸기로 9월 27일 결정했습니다. | 생산 콘솔 '조립'(카탈로그)로 옮기고 카드 모양을 바꿉니다.
+분석 서비스/카드 상세 | 아직 없는 화면입니다. 서비스 소개 아이템(영상과 결과를 짝으로, 카카오 참고)이 제안 단계입니다. | 서비스 카탈로그 상세를 토스식 소개 틀과 합쳐 만듭니다.
+분석 서비스/실행 검토 | 영상 중심 실행 검토 화면이 있습니다(고정값). | 생산 콘솔로 옮깁니다.
+분석 서비스/실행 중 | 영상별 진행 화면이 있습니다(고정값). | 생산 콘솔로 옮깁니다.
+분석 서비스/실행 결과 | 정사영상 + 결과 화면, 결과 편집 · 공유가 있습니다(고정값). | 생산 콘솔로 옮깁니다.
+카드 발행/승인·검토 데스크 | 분할 검토 데스크(원판 14장)가 만들어져 있고 데이터는 고정값입니다. | 관제의 결재함으로 옮기고 밝은 톤으로 다시 그립니다.
+카드 발행/카드 목록 | 카드 목록 화면이 있습니다(고정값). | 생산 콘솔 '조립'로 옮기고 카드 모양은 카카오 참고로 바꿉니다.
+카드 발행/카드 편집 | 카드 편집 · 잠김 화면이 있습니다(고정값). | 생산 콘솔 '조립'로 옮깁니다.
+카드 발행/발행 요청 | 발행 요청 폼이 있습니다(고정값). | 폼을 없애고 카탈로그 매트릭스로 대체할 예정입니다.
+XI맵/기본 지도 | 새 XI맵(직원 · 공개 · 영업 3개 문)이 서버에 연결돼 실제로 돕니다. 예전 XI맵은 폐기. 글을 60% 줄이고 개발 정보를 뺀 '정돈판' 시안이 있습니다. | 정돈판 시안을 확정하면 새 XI맵을 교체하고 도구 7종 · 보안 서약을 옮겨 넣습니다.
+XI맵/객체 정보 | 예전 XI맵의 객체 정보 콜아웃 원판입니다. 새 XI맵에는 아직 없습니다. | 정돈판 시안에서 다시 쓸지 결정합니다.
+XI맵/시점 비교 | 새 XI맵이 시점 비교(스와이프)를 이미 갖고 있어 예전 원판은 폐기했습니다. | 없음.
+XI맵/검색 | 새 XI맵 검색이 대신합니다. 0건 안내만 정돈판에 넣을지 검토 중입니다. | 정돈판에 0건 안내 한 줄을 넣습니다.
+XI맵/도구(측정·그리기·구역·내려받기) | 측정 · 그리기 · 관심 구역 · 내려받기는 원본 기능인데 새 XI맵에는 아직 없습니다. | 정돈판의 '도구 7' 을 만들 때 옮겨 넣습니다.
+XI맵/지역 구분·속성 표 | 예전 XI맵에만 있습니다. | 기관 서비스 화면의 시군구 집계 · 보고서 서랍으로 옮깁니다.
+XI맵/보안 서약 | 내려받기 전 서약은 원본 기능인데 새 XI맵에 없습니다. | 정돈판에 옮겨 넣습니다.
+XI맵/표류 예측 | 괭생이모자반 도착 예측 단독 화면 — 메뉴에서 닿지 않아 폐기했습니다. | 없음.
+실태조사/실태조사 모드 | 새 XI맵의 실태조사 모드(직원 · 기관)가 서버에 연결돼 돕니다. 지금은 남원이 예시 지역입니다. | 지역을 변수로 바꾸고 '내 대장 × AI' 시안과 합칩니다.
+실태조사/대장 융합(기관 첫 화면) | 기관이 올린 대장과 AI 결과를 겹쳐 보는 '내 대장 × AI' 시안이 있습니다. | 시안을 확정하면 기관 첫 화면이 됩니다.
+에이전트/융합 분석 질문 | 새 XI맵의 '물어보기'(Ctrl K)가 실제 언어모델에 연결돼 돕니다. | 9월 27일 재정의 — 질문 대상을 '올린 행정 자료 × AI 결과'로 바꿔 '내 대장 × AI' 시안의 질문창으로 옮깁니다.
+통계/보고서/통계 | '지도 안 오른쪽 서랍' 안이 뽑혀 만들어져 있습니다(고정값). | 기관 서비스 화면의 보고서 서랍으로 옮깁니다.
+통계/보고서/보고서 | 보고서 목록 · 서약 · 오류 신고 화면이 있습니다(고정값). | 기관 서비스 화면의 보고서 서랍으로 옮깁니다.
+관제/관제 로그인 | 관제 전용 로그인이 실제 인증으로 돕니다(검정 톤). | 검정 톤은 9월 27일 폐기 → 밝은 톤으로 바꾸고, 새 로그인 하나로 합칩니다.
+관제/운영 현황 | 관제 운영 현황이 서버에 연결돼 돕니다(검정 톤). 예전 관리자 운영 현황(고정값)도 남아 있고, 밝은 톤의 '관제 핵심판' 시안이 있습니다. | 시안을 확정하면 관제를 밝은 톤으로 교체하고 예전 관리자 화면은 흡수합니다.
+관제/인프라 | GPU · 노드 실측이 서버에서 들어옵니다(검정 톤). | 밝은 톤으로 다시 그립니다. 성능 수치는 관제 한 곳에만 둡니다.
+관제/기관·할당 | 기관별 할당 화면이 서버에 연결돼 있습니다(검정 톤). | 밝은 톤으로 다시 그리고 링 8개를 3개로 줄입니다.
+관제/배포 | 배포 제어가 부분적으로 만들어져 있습니다. | 밝은 톤으로 다시 그립니다.
+관제/생산 관리 | 예전 생산 관리 화면이 있습니다(고정값). | 생산 콘솔로 흡수합니다.
+서비스 관리/사용자 관리 | '목록 + 오른쪽 열람' 안이 뽑혀 만들어져 있습니다(고정값). | 관제의 5개 메뉴로 옮기고 밝은 톤으로 바꿉니다.
+서비스 관리/공지 관리 | 공지 목록 · 작성 · 삭제 화면이 있습니다(고정값). | 관제 설정 아래로 옮깁니다.
+서비스 관리/문의 관리 | 문의 목록 · 답변 화면이 있습니다(고정값). | 관제 설정 아래로 옮깁니다.
+서비스 관리/FAQ 관리 | FAQ 목록 · 작성 화면이 있습니다(고정값). | 관제 설정 아래로 옮깁니다.
+서비스 관리/지도 속성 관리 | 실시간 미리보기가 있는 지도 속성 화면이 있습니다(고정값). | XI맵으로 흡수합니다.
+기관 포털/기관 로그인 | 남원 · 광주전남 두 기관 로그인이 있지만 값만 넣으면 통과합니다. | 새 로그인 하나로 합칩니다.
+기관 포털/내 서비스 | 기관 첫 화면(서비스 카드 5장, 고정값)이 있습니다. | '내 대장 × AI' 시안이 기관 첫 화면이 되면 카드 덱은 없앱니다.
+기관 포털/서비스 상세 | 기관 서비스 화면 7장이 있습니다(고정값). 인파관리 · 도로안전은 빈 자리입니다. | 기관 서비스 화면으로 흡수하고, 빈 자리에는 '준비 중' 캐릭터를 둡니다.
+서비스 지원/공지 | '건수 타일 + 목록/열람' 안이 뽑혀 만들어져 있습니다(고정값). | '?' 서랍으로 줄입니다.
+서비스 지원/FAQ | FAQ 화면이 있습니다(고정값). | '?' 서랍으로 줄이고 아코디언(카카오 참고)을 씁니다.
+서비스 지원/문의 | 문의하기 · 열람 · 답변 대기 화면이 있습니다(고정값). | '?' 서랍으로 줄입니다.
+서비스 지원/활용사례 | 활용사례 화면이 있습니다(고정값). | '?' 서랍으로 줄이고 메인 소개와 겹치는 것을 정리합니다.
+서비스 지원/매뉴얼 | 매뉴얼 화면이 있지만 본문은 원본이 비어 있습니다. | '?' 서랍으로 줄입니다.
+MY/마이 페이지 | '신원 원장 + 디스크 판' 안이 뽑혀 만들어져 있습니다(고정값). | MY 서랍으로 줄입니다.
+MY/정보 수정 | 정보 수정 · 오류 · 저장됨 화면이 있습니다. | MY 서랍으로 줄입니다.
+MY/비밀번호 변경 | 현재 비밀번호 확인 → 새 비밀번호 화면이 있습니다. | MY 서랍으로 줄입니다.
+MY/브랜드(CI) | 브랜드 설정 화면(미등록 · 오류 · 적용됨 · 되돌리기)이 있습니다. | MY 서랍으로 줄입니다.
+MY/저장 공간 | 증량 신청 화면이 있습니다. | MY 서랍으로 줄입니다.
+MY/탈퇴 | 원본에 화면이 없어 추정으로 1장 만들었습니다. | MY 서랍으로 줄입니다.
+글로벌/로그인 | 해외 기관 로그인이 실제 인증으로 돕니다. | 새 로그인 하나로 합칩니다.
+글로벌/해외 서비스 | 키르기스 농업부 · 토지청 화면이 서버에 연결돼 돕니다. | 그대로 둡니다.
+공통/서체·색·형태 | 카카오 벤치의 서체 · 색 · 모양 비교는 "서체는 그대로, 제목 자간만 조정"으로 9월 27일 결론났습니다. 아직 공통 토큰에 넣지 않았습니다. | 공통 토큰에 넣고 27화면을 다시 만들 때 적용합니다.
+공통/토스 톤 | 관리자 · 직원 · 영업 모두 밝은 토스 톤으로 통일하기로 9월 27일 결정했습니다(검정 톤 뒤집음). 토스 원칙을 우리 말로 옮긴 것과 '가져오지 않을 것'도 정리돼 있습니다. | 새 시안 5개 → 27화면 재구현에 적용합니다.
+공통/빈 상태·캐릭터 | 빈 상태 · 진행 중 · 결손 자리에 필름 캐릭터 3종을 쓰기로 9월 27일 결정했습니다. 새 마스코트 제작은 폐기. | 27화면을 다시 만들 때 빈 상태 · 로딩에 넣습니다.
+공통/출처 띠·푸터 | 데이터 출처 로고 띠는 채택(9월 27일), 푸터 워터마크는 제외했습니다. | 메인 마감과 로그인 하단에 넣습니다.
+공통/기능 소개 틀 | 기능별 소개 섹션 틀(큰 제목 → 글·그림 교차 → 관련 카드 → 마감, 토스 참고)이 제안 단계입니다. | 서비스 카탈로그 상세와 각 화면 첫 진입에 적용합니다.
+공통/상태 패턴(로딩·오류) | 로딩 · 오류 패턴 원판이 있고 프로젝트 화면에 들어가 있습니다. | 빈 상태 · 로딩은 캐릭터와 합칩니다.
+공통/디자인 실험 | 만들며 쓴 실험 화면 6장 — 역할이 끝나 전부 폐기했습니다. | 없음.
+`.trim().split('\n').map((l) => l.split('|').map((s) => s.trim())).map(([k, now, next]) => [k, { now, next }]));
+
+// 항목 이름 — 내부 코드가 섞인 이름은 여기서 사용자 말로 바꾼다(없으면 say() 가 기계적으로 걷어낸다)
+const LABEL = {
+  'B5-Login': '로그인 원판 — 왼쪽 디오라마 영상 / 오른쪽 폼', 'B2-Login': '로그인 1차 안 — 플랫폼 소개',
+  'proto-login': '지금 쓰는 로그인', 'v3-login': '새 로그인 — 왼쪽 소개 3장면(Hyper 3축) + 오른쪽 로그인',
+  'K-C': '카카오식 3축 소개 — 영문 큰 제목 + 한글 한 줄 + 사진', 'T-5-3': '소개 판 3장면 자동 순환(토스식) — 새 로그인에 들어감',
+  'T-5-1': '토스 원칙을 우리 말로 — 실시간 지도 카메라 · 실제 화면 그대로 · 업무 결과 숫자만', 'T-TONE': '밝은 톤(토스식) — 관리자 · 직원 · 영업 공통',
+  'T-5-4': '기능 소개 틀 — 큰 제목 → 글·그림 교차 → 관련 카드 → 마감', 'T-5-5': '필름 나누기 — 앞뒤 장면만 메인, 지역 장면은 서비스 소개로',
+  'T-5-6': '가져오지 않을 것 — 튀는 이징 · 둥근 카드 · 실사 인물 · 채움 버튼 · 관성 스크롤',
+  'T-CH0': '1장 여는 화면 — 국토를 / 한 번에 읽는다', 'T-CH1': '2장 XI맵 — 전국이 / 한 화면에 차오른다', 'T-CH2': '3장 실태조사 — 대장과 다른 땅을 / 찾아낸다',
+  'T-CH3': '4장 에이전트 — 올린 행정 자료에 / 묻는다', 'T-CH4': '5장 서비스 카드 — 한 번 만든 분석이 / 서비스가 된다', 'T-CH5': '6장 지자체 제공 — 어느 시군구든 / 그대로 배포한다',
+  'T-CH6': '7장 글로벌 — 국경 밖에서도 / 같은 지도', 'T-CH7': '8장 마감 — Hyper Performance · Hyper Solution · Hyper GeoAI',
+  'K-A': '대시보드 위 서체 · 색 · 모양 비교판', 'K-B': '서비스 카드 — 사진 + 기준일 + 상태 + 제목 2줄 + 결과 수', 'K-D': '실영상 위 서비스 소개 판',
+  'K-E': '성과 숫자 띠 + 결과 카드', 'K-F': '서비스 소개 아이템 — 영상과 결과를 짝으로', 'K-G': '빈 상태 · 진행 중 · 결손 — 필름 캐릭터 3종',
+  'K-H': '데이터 관리 4단계 스텝퍼', 'K-I': '자주 묻는 질문 아코디언 3줄', 'K-J': '데이터 출처 로고 띠 + 푸터',
+  'K-D19-3': '서체는 그대로, 제목 자간만 조정(결정)', 'K-F1': '본문만 카카오 서체', 'K-F2': '전부 카카오 서체', 'K-F3': '좁은 제목 서체',
+  'K-C1': '카카오식 딥블루', 'K-S1': '둥근 모서리 · 채운 파란 버튼', 'K-D21a': '섹션 영문 도장 4종', 'K-D21f': '푸터 LX 워터마크', 'K-D20-3': '새 3D 마스코트 제작',
+  'v3-lx-console': '새 첫 화면 — 생산 콘솔(오늘 띠 + 지도 위 6단 서랍)', 'v3-xi-clean': 'XI맵 정돈판 — 글을 줄이고 개발 정보를 뺀 지도',
+  'v3-ops-core': '관제 핵심판 — 밝은 톤', 'v3-gov-fusion': '기관 첫 화면 — 내 대장 × AI',
+  'proto-admin-home': '예전 관리자 운영 현황', 'scrub-main': '스크롤 필름 메인', 'proto-ximap': '예전 XI맵', 'proto-workflow': '국토 조사 보드(8월 25일 워크플로우)',
+  'xi-read-staff': 'XI맵 — LX 직원', 'xi-public': 'XI맵 — 공개(로그인 전)', 'xi-sales': 'XI맵 — 영업', 'xi-survey-staff': '실태조사 — LX 직원', 'xi-survey-namwon': '실태조사 — 기관(남원 예시)',
+  'xi-agent': '물어보기(에이전트) — 지도에 묻기', 'global-login': '해외 기관 로그인', 'global-index': '해외 서비스 — 키르기스 농업부', 'global-index-land': '해외 서비스 — 키르기스 토지청',
+  'global-fonts-compare': '해외판 서체 비교', 'proto-dive': '하강 실험(8월 25일)', 'proto-charts': '표 · 차트 후보 6종', 'proto-fonts': '글꼴 · 블루 톤 후보', 'proto-system': '컴포넌트 시트', 'proto-shell-demo': '공용 셸 데모',
+  'B6-MapWork-Opt3': '안 3 · 레이어가 곧 작업(뽑힘)', 'B6-MapWork-Opt1': '안 1 · 파이프라인 도크', 'B6-MapWork-Opt2': '안 2 · 단계 분할',
+};
+const say = (s) => String(s || '')
+  .replace(/\((v1|v2|v3 시안)\)/g, '').replace(/^D\d+ [①-⑩ⓐ-ⓩ] /, '').replace(/^(F\d|C\d|S\d) /, '').replace(/\(D\d+\)/g, '').replace(/\(집 PC\)/g, '')
+  .replace(/\(구현본\)/g, '').replace(/\bleg /g, '장면 ').replace(/선택 (\d)/g, '안 $1').replace(/\(권장\)/g, '(뽑힘)')
+  .replace(/\b(\d{1,2})\/(\d{1,2})\b/g, '$1월 $2일').replace(/\s+/g, ' ').replace(/\s*—\s*$/, '').trim();
+const label = (a) => LABEL[a.id] || say(a.name);
+// 폐기 항목의 '대신:' — 다른 자산이 아니라 결정·규칙이 대체한 경우의 사용자 말
+const SAY_TARGET = {
+  '새 XI맵 landxi/xi (F1·F2) — 9/27 레일 정본화(F2-R)': '새 XI맵(9월 27일 메뉴 정리)', '새 XI맵 시점 스와이프(landxi/xi)': '새 XI맵의 시점 비교', '새 XI맵 검색(landxi/xi)': '새 XI맵의 검색',
+  'F3 §5 폐지 목록(레일 밖)': '폐지 목록(메뉴에서 닿지 않는 화면)', 'F3 §5 폐지 목록': '폐지 목록(역할이 끝난 화면)', '법전 서체(Paperlogy + Pretendard)': '확정 서체(Paperlogy + Pretendard)',
+  '법전 design/system-v2.md': '디자인 규칙서', '공용 셸(shell.js)': '공용 틀(셸) 적용 완료', 'Inter 글로벌 서체': '해외판 서체 Inter 확정',
+  '대상 화면(LX 관리자 대시보드)이 9/21 계정 분리·9/24 직원 화면 전환으로 사라짐': '대상 화면(관리자 대시보드)이 9월 24일 직원 첫 화면으로 바뀌며 사라짐',
+  'D19 ③(서체 유지) — 9/27 결정': '서체는 그대로 두기로 한 결정(9월 27일)', 'T3 액센트 #006DF7 유지': '우리 파랑(#006DF7) 유지', '라운드 0 · 잉크 버튼 유지(법전)': '각진 모서리 · 잉크 버튼 유지',
+  'D21 ⓑⓒⓓⓔ 만 채택(9/27)': '카카오 참고 중 3축 소개 · 카드 · 성과 띠 · 출처 띠만 채택(9월 27일)', '푸터 1줄(F3 §5)': '푸터 한 줄', 'D20 ② 필름 캐릭터 3종 승격': '필름 캐릭터 3종을 쓰기로(9월 27일)',
+  '법전(라운드 0 · 액센트 절제) 유지': '우리 규칙(각진 모서리 · 강조색 절제) 유지',
+};
+const sayTarget = (t) => SAY_TARGET[t] || say(String(t).replace(/\(F\d[^)]*\)/g, '').replace(/F\d §\d/g, '').replace(/§\d/g, ''));
+const kdate = (d) => (d ? `${Number(d.slice(5, 7))}월 ${Number(d.slice(8, 10))}일` : '');
+
+// 칸(슬롯) — 원판 → 예전 구현 → 새 구현 → 시안 → 참고
+const SLOT_ORDER = ['원판', '예전 구현', '새 구현', '시안', '참고'];
+const slotOf = (a) => a.kind === '원판' ? '원판' : a.kind === '스펙시먼' ? '참고' : a.kind === '시안' ? '시안' : a.variant === '구현 v1' ? '예전 구현' : '새 구현';
+
+// 매체 — Pages 에서 실제로 열리는 파일만(shots/ 는 발행에서 빠져 있다 → tools/review/ledger-media.mjs 가 assets-thumbs/ 로 옮긴다)
+const TH = `${OUT_DIR}/assets-thumbs`;
+const V3_STILLS = { 'v3-login': ['v3-login', 'v3-login-2', 'v3-login-3', 'v3-login-scenes', 'v3-login-390'], 'v3-lx-console': ['v3-lx-console', 'v3-lx-console-2', 'v3-lx-console-3'],
+  'v3-xi-clean': ['v3-xi-clean', 'v3-xi-clean-2', 'v3-xi-clean-3'], 'v3-ops-core': ['v3-ops-core', 'v3-ops-core-2', 'v3-ops-core-3'], 'v3-gov-fusion': ['v3-gov-fusion', 'v3-gov-fusion-2', 'v3-gov-fusion-3', 'v3-gov-fusion-4'] };
+const VIDEO = { 'v3-login': 'v3-login', 'v3-lx-console': 'v3-lx-console', 'v3-xi-clean': 'v3-xi-clean', 'v3-ops-core': 'v3-ops-core', 'v3-gov-fusion': 'v3-gov-fusion',
+  'xi-read-staff': 'xi-map', 'xi-public': 'xi-map', 'xi-sales': 'xi-map', 'xi-survey-staff': 'xi-survey', 'xi-survey-namwon': 'xi-survey', 'xi-agent': 'xi-agent',
+  'ops-login': 'ops', 'ops-index': 'ops', 'ops-infra': 'ops', 'ops-tenants': 'ops', 'ops-deploys': 'ops', 'global-login': 'global', 'global-index': 'global', 'global-index-land': 'global' };
+const SPEC_IMG = { 'K-D19-3': ['kakao-sec-spec'], 'K-D21a': ['kakao-sec-spec'], 'K-D21f': ['kakao-sec-J'], 'K-D20-3': ['kakao-sec-G'],
+  'T-5-1': ['toss-sheet-home', 'toss-webgl'], 'T-TONE': ['toss-sheet-sec'], 'T-CH0': ['toss-hero'], 'T-CH1': ['toss-seq'], 'T-CH2': ['toss-asset'], 'T-CH3': ['toss-invert'],
+  'T-CH4': ['toss-shop'], 'T-CH5': ['toss-ad'], 'T-CH6': ['toss-globe'], 'T-CH7': ['toss-end'], 'T-5-3': ['v3-login-scenes', 'v3-login'], 'T-5-4': ['toss-sheet-pos', 'toss-sheet-sec'],
+  'T-5-5': ['toss-strip-video'], 'T-5-6': ['toss-sheet-career'] };
+const TOSS_DOC = 'https://github.com/LandXI-Web/Main/blob/plan1-foundation/docs/superpowers/research/2026-09-27-bench-toss.md';
+const thumbFile = (n, ext = 'jpg') => { const p = `${TH}/${n}.${ext}`; return fs.existsSync(p) ? p : null; };
+
+// ── 6. 조립 ─────────────────────────────────────────────────────────────────
 const sh = (cmd) => execSync(cmd, { encoding: 'utf8', maxBuffer: 64 << 20 });
 const addDates = {}; // repo path → 처음 들어온 날
 { let d = null; for (const line of sh('git log --diff-filter=A --reverse --format=@%ad --date=short --name-only -- design-canvas/v2 landxi').split('\n')) { if (line.startsWith('@')) d = line.slice(1); else if (line.trim() && !addDates[line.trim()]) addDates[line.trim()] = d; } }
@@ -490,21 +642,39 @@ for (const m of MASTERS) {
   const file = `${V}${m.id}.dc.html`, render = `${V}renders/${m.id}.png`;
   dieIf(!fs.existsSync(render), `렌더 없음: ${m.id}`);
   assets.push({ id: m.id, kind: '원판', name: m.name, screen: m.screen, variant: stage(m.id), verdict: m.verdict, target: m.target, reason: m.reason, later: m.later,
-    made: addDates[file] || addDates[render] || '', files: { 원판: fs.existsSync(file) ? file : null, 렌더: render }, title: canvas.artboards.find((a) => a.file === m.id + '.dc.html')?.title || '' });
+    made: addDates[file] || addDates[render] || '', files: { 원판: fs.existsSync(file) ? file : null, 렌더: render }, title: canvas.artboards.find((a) => a.file === m.id + '.dc.html')?.title || '',
+    media: [{ kind: 'image', src: render, label: '원판' }], open: null });
 }
 for (const m of IMPL) {
   const s = byInv[m.id]; dieIf(!s, `인벤토리에 없음: ${m.id}`);
   const p = String(s['경로']).replace(/^:8702\//, '').split('?')[0];
   const gen = s['세대'] === 'v3 시안' ? '시안 v3' : s['세대'] === '구 proto v1' ? '구현 v1' : '구현 v2';
   const thumb = s['썸네일'] ? `${OUT_DIR}/status/${s['썸네일']}` : null;
-  assets.push({ id: m.id, kind: gen === '시안 v3' ? '시안' : '구현', name: m.name, screen: m.screen, variant: gen, verdict: m.verdict, target: m.verdict === '적용' ? (m.target || String(s['경로']).replace(/^:8702\//, '')) : m.target,
-    reason: m.reason, later: m.later, made: addDates[p] || '', files: { 구현: s['경로'], 썸네일: thumb && fs.existsSync(thumb) ? thumb : null }, title: s['제목'] || '', impl_state: s['상태'] });
+  const stills = (V3_STILLS[m.id] || []).map((n) => thumbFile(n)).filter(Boolean);
+  const media = [];
+  if (thumb && fs.existsSync(thumb)) media.push({ kind: 'image', src: thumb, label: '캡처' });
+  for (const f of stills) media.push({ kind: 'image', src: f, label: '캡처' });
+  const vf = VIDEO[m.id] && thumbFile(VIDEO[m.id], 'mp4'); if (vf) media.push({ kind: 'video', src: vf, label: '영상', poster: media[0]?.src || null });
+  // 열기 — Pages 에서 실제로 되는 것만 1순위. 서버(:8700·:8702)가 필요하면 캡처·영상, 로그인 가드가 있으면 캡처 + '실제 화면(로그인 뒤)'
+  const needsServer = /^API/.test(String(s['실데이터'] || '')) || /^:8702\//.test(String(s['경로'])) || gen === '시안 v3';
+  const guarded = !/^게스트/.test(String(s['로그인_경로'] || '')) && gen !== '시안 v3';
+  const href = String(s['경로']).replace(/^:8702\//, '');
+  const open = needsServer
+    ? (m.id === 'v3-login' ? { kind: 'capture', href, live: '실제 화면(남원 장면은 서버가 있어야 나옵니다)', note: '서버가 있어야 도는 화면 — 캡처 · 영상으로 봅니다' } : { kind: 'capture', href: null, live: null, note: '서버가 있어야 도는 화면 — 캡처 · 영상으로 봅니다' })
+    : guarded ? { kind: 'capture', href, live: '실제 화면(로그인 뒤에 열립니다)', note: '로그인이 필요한 화면 — 캡처로 먼저 봅니다' }
+      : { kind: 'live', href, live: '실제 화면 열기', note: '' };
+  assets.push({ id: m.id, kind: gen === '시안 v3' ? '시안' : '구현', name: m.name, screen: m.screen, variant: gen, verdict: m.verdict, target: m.verdict === '적용' ? (m.target || href) : m.target,
+    reason: m.reason, later: m.later, made: addDates[p] || '', files: { 구현: s['경로'], 썸네일: thumb && fs.existsSync(thumb) ? thumb : null }, title: s['제목'] || '', impl_state: s['상태'], media, open, access: needsServer ? 'server' : guarded ? 'login' : 'guest' });
 }
 for (const m of SPECS) {
   const img = m.img ? `${OUT_DIR}/assets-thumbs/${m.img}.jpg` : null;
   const isK = m.id.startsWith('K-');
+  const media = [];
+  if (img && fs.existsSync(img)) media.push({ kind: 'image', src: img, label: isK ? '카카오 벤치' : '토스 벤치' });
+  for (const n of SPEC_IMG[m.id] || []) { const f = thumbFile(n); if (f) media.push({ kind: 'image', src: f, label: n.startsWith('v3-') ? '새 로그인 캡처' : isK ? '카카오 벤치' : '토스 벤치' }); }
+  const open = isK ? { kind: 'live', href: KAKAO + (m.anchor || ''), live: '벤치 페이지에서 보기', note: '' } : { kind: 'doc', href: TOSS_DOC, live: '조사 문서(GitHub)', note: '' };
   assets.push({ id: m.id, kind: '스펙시먼', name: m.name, screen: m.screen, variant: m.variant, verdict: m.verdict, target: m.target, reason: m.reason, later: m.later,
-    made: isK ? '2026-09-03' : '2026-09-27', files: { 원천: isK ? KAKAO + (m.anchor || '') : TOSS, 캡처: img && fs.existsSync(img) ? img : null } });
+    made: isK ? '2026-09-03' : '2026-09-27', files: { 원천: isK ? KAKAO + (m.anchor || '') : TOSS, 캡처: img && fs.existsSync(img) ? img : null }, media, open });
 }
 // 사용자 결정 덮어쓰기 — 갤러리 [결정 발행] → tools/review/apply-decisions.mjs 가 assets.json 의 user_decision 에 적어 둔 것을
 // 다시 구울 때도 지킨다(판정표보다 우선). 표를 고쳐 같은 판정이 되면 assets.json 에서 user_decision 을 지워도 된다.
@@ -525,14 +695,17 @@ for (const a of assets) {
 const lostUD = Object.keys(prevUD).filter((id) => !assets.some((a) => a.id === id));
 if (lostUD.length) console.warn(`! 대장에서 사라진 자산의 사용자 결정(버림): ${lostUD.join(', ')}`);
 
-// 검사 — 화면 키 · 판정 · 중복 · 원판 누락
+// 검사 — 화면 키 · 판정 · 중복 · 원판 누락 · 매체(모든 항목에 Pages 에서 열리는 그림이 있어야 한다) · 행 글
 const ids = new Set();
 for (const a of assets) {
   dieIf(!SCREEN_KEYS.has(a.screen), `화면 키 없음: ${a.id} → ${a.screen}`);
   dieIf(!VERDICTS.includes(a.verdict), `판정 오류: ${a.id} ${a.verdict}`);
   dieIf(ids.has(a.id), `중복: ${a.id}`); ids.add(a.id);
   dieIf(!a.target, `대상 비어 있음: ${a.id}`);
+  dieIf(!a.media.length, `그림 없음(Pages 에서 빈 칸이 된다): ${a.id} — node tools/review/ledger-media.mjs 로 만든다`);
+  for (const m of a.media) dieIf(!fs.existsSync(m.src), `매체 파일 없음: ${a.id} ${m.src}`);
 }
+for (const k of SCREEN_KEYS) if (assets.some((a) => a.screen === k) && !ROWS[k]) console.warn(`! 행 글 없음(기계 문장으로 대체): ${k}`);
 const orphan = fs.readdirSync(V + 'renders').map((f) => f.replace('.png', '')).filter((id) => !ids.has(id));
 dieIf(orphan.length, `대장에 없는 원판: ${orphan.join(', ')}`);
 const orphanInv = inv.screens.filter((s) => !ids.has(s.id)).map((s) => s.id);
@@ -541,99 +714,123 @@ dieIf(orphanInv.length, `대장에 없는 구현: ${orphanInv.join(', ')}`);
 // 대상이 다른 자산 id 면 연결
 for (const a of assets) if (a.verdict === '폐기' && ids.has(a.target)) a.replaced_by_id = a.target;
 const FN_ORDER = TAX.map(([f]) => f);
+const byIdA = Object.fromEntries(assets.map((a) => [a.id, a]));
 const out = assets.map((a) => {
-  const [fn, sc] = a.screen.split('/').length > 2 ? [a.screen.split('/').slice(0, 2).join('/'), a.screen.split('/').slice(2).join('/')] : a.screen.split('/');
-  const o = { id: a.id, kind: a.kind, function: fn, screen: sc, variant: a.variant, name: a.name, made: a.made, files: a.files, verdict: a.verdict, reason: a.reason };
+  const f = FN_ORDER.find((fn) => a.screen.startsWith(fn + '/'));
+  const o = { id: a.id, kind: a.kind, slot: slotOf(a), function: f, screen: a.screen.slice(f.length + 1), variant: a.variant, name: a.name, label: label(a), made: a.made, files: a.files, verdict: a.verdict, reason: a.reason };
   if (a.verdict === '적용') o.applied_to = a.target.split(',').map((s) => s.trim());
-  if (a.verdict === '폐기') o.replaced_by = a.replaced_by_id ? `${a.target} (${assets.find((x) => x.id === a.target).name})` : a.target;
+  if (a.verdict === '폐기') { o.replaced_by = a.replaced_by_id ? `${a.target} (${byIdA[a.target].name})` : a.target; if (a.replaced_by_id) o.replaced_by_id = a.replaced_by_id; }
   if (a.verdict === '검토') o.next = a.target;
   if (a.later) o.later = a.later;
   if (a.title) o.title = a.title;
   if (a.impl_state) o.impl_state = a.impl_state;
+  if (a.access) o.access = a.access;
+  o.media = a.media; o.open = a.open;
   if (a.user_decision) { o.user_decision = a.user_decision; o.table_verdict = a.table_verdict; o.reason_before = a.reason_before; }
   return o;
 });
-// 기능·화면 키가 '통계/보고서' 처럼 슬래시를 품으므로 다시 정확히 나눈다
-for (const o of out) { const a = assets.find((x) => x.id === o.id); const f = FN_ORDER.find((fn) => a.screen.startsWith(fn + '/')); o.function = f; o.screen = a.screen.slice(f.length + 1); }
-const count = (k) => Object.fromEntries(VERDICTS.map((v) => [v, out.filter((a) => a.verdict === v && (!k || a.kind === k)).length]));
+const cnt = (list) => Object.fromEntries(VERDICTS.map((v) => [v, list.filter((a) => a.verdict === v).length]));
+const anchor = (fn, sc) => 'sc-' + `${fn}-${sc}`.replace(/[\s/·()]+/g, '-').replace(/-+$/, '');
+const rowState = (items) => {
+  const live = items.filter((a) => a.verdict !== '폐기');
+  if (!live.length) return '폐기됨';
+  if (live.some((a) => a.kind === '구현' && a.verdict === '적용')) return live.some((a) => a.kind === '시안') ? '쓰는 중 · 새 시안 있음' : '쓰는 중';
+  if (live.some((a) => a.kind === '시안')) return '새 시안만 있음';
+  if (live.some((a) => a.kind === '원판' && a.verdict === '적용')) return '원판만 적용(구현 목록에 없음)';
+  return '아직 화면 없음';
+};
+const rows = [];
+for (const [fn, screens] of TAX) for (const sc of screens) {
+  const items = out.filter((a) => a.function === fn && a.screen === sc); if (!items.length) continue;
+  const r = ROWS[`${fn}/${sc}`] || { now: `원판 ${items.filter((a) => a.kind === '원판').length}장 · 구현 ${items.filter((a) => a.kind !== '원판' && a.kind !== '스펙시먼').length}장 · 참고 ${items.filter((a) => a.kind === '스펙시먼').length}장.`, next: '' };
+  rows.push({ function: fn, screen: sc, key: `${fn}/${sc}`, anchor: anchor(fn, sc), state: rowState(items), now: r.now, next: r.next, ids: items.map((a) => a.id), ...cnt(items) });
+}
 const ledger = {
-  title: 'Land-XI 자산 대장 — 원판 · 구현 · 스펙시먼',
+  title: 'Land-XI 자산 대장 — 화면마다 한 줄',
   generated_at: new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 16).replace('T', ' ') + ' KST',
-  생성기: 'node tools/review/masters.mjs',
-  판정_기준: { 적용: '지금 사용자가 레일로 닿는 화면에 들어가 있음(적용 위치 = applied_to)', 검토: '아직 화면에 없음 — 다음 차수에서 쓸 곳(next)', 폐기: '다른 안·결정이 대체함(replaced_by)' },
-  계층: '기능(function) → 화면(screen) → 버전·변형(variant)',
-  사용자_결정: '갤러리(masters.html) 카드의 적용·검토·폐기 → [결정 발행] 글 → node tools/review/apply-decisions.mjs <글 파일> 로 반영. user_decision 이 있으면 판정표보다 우선(table_verdict = 표의 원래 판정, reason_before = 원래 근거)',
-  집계: { 전체: out.length, ...count(), 원판: count('원판'), 구현: count('구현'), 시안: count('시안'), 스펙시먼: count('스펙시먼') },
+  생성기: 'node tools/review/masters.mjs (매체: node tools/review/ledger-media.mjs)',
+  판정_기준: { 적용: '지금 사용자가 메뉴로 닿는 화면에 들어가 있음(applied_to)', 검토: '아직 화면에 없음 — 다음에 쓸 곳(next)이 정해지면 적용', 폐기: '다른 안·결정이 대체함(replaced_by)' },
+  계층: '기능(function) → 화면(screen) → 칸(slot: 원판 → 예전 구현 → 새 구현 → 시안 → 참고)',
+  사용자_결정: '대장(masters.html)에서 항목 또는 화면 행의 적용·검토·폐기 → [결정 발행] 글 → node tools/review/apply-decisions.mjs <글 파일> 로 반영. user_decision 이 있으면 판정표보다 우선(table_verdict = 표의 원래 판정, reason_before = 원래 근거)',
+  매체: '모든 항목은 Pages 에서 실제로 열리는 그림(media)을 가진다. 서버가 필요한 화면은 캡처·영상(assets-thumbs/)으로 연다(open.kind = capture). 원문·경로 등 내부 정보는 reason·later·files 에 남긴다',
+  집계: { 전체: out.length, ...cnt(out), 원판: cnt(out.filter((a) => a.kind === '원판')), 구현: cnt(out.filter((a) => a.kind === '구현')), 시안: cnt(out.filter((a) => a.kind === '시안')), 스펙시먼: cnt(out.filter((a) => a.kind === '스펙시먼')) },
   기능: TAX.map(([f, ss]) => ({ function: f, screens: ss.filter((s) => out.some((a) => a.function === f && a.screen === s)) })).filter((x) => x.screens.length),
+  화면: rows,
   assets: out,
 };
 fs.writeFileSync(LEDGER, JSON.stringify(ledger, null, 1) + '\n');
 
-// 구현 현황판용 화면 매핑 — inventory id → 기능/화면 (+ 대장 판정)
-const smap = { 설명: '구현 현황판(status/)이 자산 대장과 같은 화면 키로 묶기 위한 매핑 — node tools/review/masters.mjs 가 생성', 기능_순서: ledger.기능, screens: {} };
-for (const o of out.filter((a) => a.kind === '구현' || a.kind === '시안')) smap.screens[o.id] = { function: o.function, screen: o.screen, variant: o.variant, verdict: o.verdict };
+// 구현 현황판용 화면 매핑 — inventory id → 기능/화면 (+ 대장 판정 · 사용자 이름 · 매체 · 열기) · 행 글
+const smap = { 설명: '구현 현황판(status/)이 자산 대장과 같은 화면 키로 묶기 위한 매핑 — node tools/review/masters.mjs 가 생성', 기능_순서: ledger.기능, 화면: rows.map(({ ids, ...r }) => r), screens: {} };
+for (const o of out.filter((a) => a.kind === '구현' || a.kind === '시안')) smap.screens[o.id] = { function: o.function, screen: o.screen, anchor: anchor(o.function, o.screen), variant: o.variant, slot: o.slot, verdict: o.verdict, label: o.label, access: o.access, media: o.media, open: o.open };
 fs.writeFileSync(`${OUT_DIR}/screen-map.json`, JSON.stringify(smap, null, 1) + '\n');
 
-// ── 6. 갤러리 HTML ──────────────────────────────────────────────────────────
+// ── 7. 대장 HTML — 화면 하나 = 한 행 ───────────────────────────────────────────
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const rel = (repoPath) => { const [p, q] = String(repoPath).split(/(?=[?#])/); return path.posix.relative(OUT_DIR, p) + (q || ''); };
-const isRepoPath = (s) => /^(landxi|design-canvas|docs)\//.test(s);
-const KIND_ORDER = { 원판: 0, 구현: 1, 시안: 2, 스펙시먼: 3 };
+const href = (h) => (/^https?:/.test(h) ? h : rel(h));
 const VCLS = { 적용: 'ok', 검토: 'rv', 폐기: 'dp' };
-const img = (a) => a.files.렌더 || a.files.썸네일 || a.files.캡처 || null;
-const openHref = (a) => a.files.원천 ? rel(a.files.원천) : a.files.구현 ? rel(a.files.구현.replace(/^:8702\//, '')) : null;
-
-function targetLine(a) {
-  if (a.verdict === '적용') return `<span class="k">적용</span> ${a.applied_to.map((p) => isRepoPath(p) ? `<a href="${esc(rel(p))}">${esc(p.replace(/^landxi\//, ''))}</a>` : esc(p)).join(' · ')}`;
-  if (a.verdict === '폐기') return `<span class="k">대체</span> ${ids.has(a.replaced_by.split(' ')[0]) ? `<a href="#${esc(a.replaced_by.split(' ')[0])}" class="jump">${esc(a.replaced_by)}</a>` : esc(a.replaced_by)}`;
-  return `<span class="k">다음</span> ${esc(a.next)}`;
+const SLOT_CLS = { 원판: 'master', '예전 구현': 'v1', '새 구현': 'v2', 시안: 'v3', 참고: 'ref' };
+const devText = (a) => [`${a.id} · ${a.variant}${a.title ? ` · ${a.title}` : ''}`, `근거: ${a.reason}`, a.applied_to ? `적용 위치: ${a.applied_to.join(', ')}` : a.next ? `다음: ${a.next}` : a.replaced_by ? `대체: ${a.replaced_by}` : '', a.later ? `이후: ${a.later}` : '', a.files?.구현 ? `경로: ${a.files.구현}` : a.files?.원판 ? `원판: ${a.files.원판}` : a.files?.원천 ? `원천: ${a.files.원천}` : ''].filter(Boolean);
+const aside = (a) => { // 폐기면 무엇이 대신하는지 한 마디, 사용자 결정이면 그 표시
+  if (a.verdict === '폐기') return a.replaced_by_id ? `대신: ${esc(byIdA[a.replaced_by_id] ? label(byIdA[a.replaced_by_id]) : a.replaced_by)}` : `대신: ${esc(sayTarget(a.replaced_by))}`;
+  return '';
+};
+function tile(a) {
+  const m0 = a.media[0];
+  const vid = a.media.find((m) => m.kind === 'video');
+  const poster = m0.kind === 'video' ? (m0.poster ? rel(m0.poster) : '') : rel(m0.src);
+  const media = a.media.map((m) => ({ k: m.kind, s: rel(m.src), l: m.label, p: m.poster ? rel(m.poster) : null }));
+  const o = a.open;
+  const links = [];
+  if (o && o.kind === 'live' && o.href) links.push(`<a href="${esc(href(o.href))}" target="_blank" rel="noopener">${esc(o.live)}</a>`);
+  if (o && o.kind === 'doc' && o.href) links.push(`<a href="${esc(href(o.href))}" target="_blank" rel="noopener">${esc(o.live)}</a>`);
+  if (o && o.kind === 'capture' && o.href) links.push(`<a href="${esc(href(o.href))}" target="_blank" rel="noopener" class="dim">${esc(o.live)}</a>`);
+  const ud = a.user_decision ? `<span class="ud" title="판정표 원래 판정: ${esc(a.table_verdict)}">사용자 결정 ${esc(kdate(a.user_decision.date))}</span>` : '';
+  return `<article class="card v-${VCLS[a.verdict]} s-${SLOT_CLS[a.slot]}" id="${esc(a.id)}" data-v="${a.verdict}" data-base="${a.verdict}" data-k="${esc(a.slot)}" data-media='${esc(JSON.stringify(media))}' title="${esc(devText(a).join('\n'))}">
+<button type="button" class="th lb" aria-label="${esc(label(a))} 크게 보기"><img loading="lazy" src="${esc(poster)}" alt="">${vid ? '<span class="play" aria-hidden="true">▶ 영상</span>' : ''}${a.media.length > 1 ? `<span class="cnt" aria-hidden="true">${a.media.length}</span>` : ''}</button>
+<div class="bd"><div class="hd"><span class="slot">${esc(a.slot)}</span><span class="bdg ${VCLS[a.verdict]}">${a.verdict}</span><span class="chgm">바뀜 · 미발행</span></div>
+<h4>${esc(label(a))}</h4>${aside(a) ? `<p class="why">${aside(a)}</p>` : ''}${o && o.note ? `<p class="note">${esc(o.note)}</p>` : ''}
+<p class="meta">${a.made ? `<span>${esc(kdate(a.made))}</span>` : ''}${ud}${links.join('')}</p>
+<div class="ctl" role="group" aria-label="${esc(label(a))} 판정 바꾸기">${VERDICTS.map((v) => `<button type="button" class="${VCLS[v]}" data-set="${v}" aria-pressed="${v === a.verdict}">${v}</button>`).join('')}</div></div></article>`;
 }
-function card(a) {
-  const src = img(a);
-  const thumb = src ? `<button type="button" class="th lb" data-src="${esc(rel(src))}" aria-label="${esc(a.name)} 크게 보기"><img loading="lazy" src="${esc(rel(src))}" alt=""></button>`
-    : `<div class="th tx"><span>${esc(a.name)}</span></div>`;
-  const open = openHref(a);
-  return `<article class="card v-${VCLS[a.verdict]}" id="${esc(a.id)}" data-v="${a.verdict}" data-base="${a.verdict}" data-k="${a.kind}" data-later="${esc(a.later || '')}">${thumb}
-<div class="bd"><div class="hd"><span class="bdg ${VCLS[a.verdict]}">${a.verdict}</span><span class="var">${esc(a.variant)}</span><span class="chgm">바뀜 · 미발행</span></div>
-<h4>${esc(a.name)}</h4><p class="why">${esc(a.reason)}</p><p class="tg">${targetLine(a)}</p>
-<p class="meta"><span>${esc(a.id)}</span>${a.made ? `<span>${esc(a.made.slice(5).replace('-', '.'))}</span>` : ''}${a.user_decision ? `<span class="ud" title="판정표 원래 판정: ${esc(a.table_verdict)}">사용자 결정 ${esc(a.user_decision.date.slice(5).replace('-', '.'))}</span>` : ''}${open ? `<a href="${esc(open)}">열기</a>` : ''}</p>
-<div class="ctl" role="group" aria-label="${esc(a.id)} 판정 바꾸기">${VERDICTS.map((v) => `<button type="button" class="${VCLS[v]}" data-set="${v}" aria-pressed="${v === a.verdict}">${v}</button>`).join('')}</div></div></article>`;
-}
-const stepCls = (a) => `st ${VCLS[a.verdict]}`;
+const SLOT_ORDER_IDX = Object.fromEntries(SLOT_ORDER.map((s, i) => [s, i]));
 let body = '';
 for (const { function: fn, screens } of ledger.기능) {
   const inFn = out.filter((a) => a.function === fn);
-  const c = count(); for (const v of VERDICTS) c[v] = inFn.filter((a) => a.verdict === v).length;
-  body += `<section class="fn" data-fn="${esc(fn)}"><h2 id="fn-${esc(fn)}">${esc(fn)}<small>${VERDICTS.map((v) => `<i class="${VCLS[v]}" data-c="${v}">${v} ${c[v]}</i>`).join('')}</small></h2>`;
+  const c = cnt(inFn);
+  const fnTitle = fn === '공통' ? '공통 디자인 참고' : fn;
+  body += `<section class="fn" data-fn="${esc(fn)}"><h2 id="fn-${esc(fn)}">${esc(fnTitle)}<small>${VERDICTS.map((v) => `<i class="${VCLS[v]}" data-c="${v}">${v} ${c[v]}</i>`).join('')}</small></h2>`;
   for (const sc of screens) {
-    const items = inFn.filter((a) => a.screen === sc).sort((p, q) => KIND_ORDER[p.kind] - KIND_ORDER[q.kind] || String(p.made).localeCompare(String(q.made)));
+    const row = rows.find((r) => r.function === fn && r.screen === sc);
+    const items = inFn.filter((a) => a.screen === sc).sort((p, q) => SLOT_ORDER_IDX[p.slot] - SLOT_ORDER_IDX[q.slot] || String(p.made).localeCompare(String(q.made)));
     const live = items.filter((a) => a.verdict !== '폐기'), dead = items.filter((a) => a.verdict === '폐기');
-    // 한 줄 진행: 원판 → 구현 v1 → 구현 v2 → 시안 v3 → 스펙시먼, 단계마다 판정 색
-    const stages = []; for (const k of ['원판', '구현 v1', '구현 v2', '시안 v3', '스펙시먼']) {
-      const g = items.filter((a) => (k === '원판' ? a.kind === '원판' : k === '스펙시먼' ? a.kind === '스펙시먼' : a.variant === k)); if (!g.length) continue;
-      const best = g.find((a) => a.verdict === '적용') || g.find((a) => a.verdict === '검토') || g[0];
-      stages.push(`<span class="${stepCls(best)}" title="${esc(k)} — ${g.map((a) => a.verdict).join(', ')}">${k}<b>${g.length}</b></span>`);
-    }
-    body += `<div class="sc" data-sc="${esc(sc)}"><div class="sch"><h3>${esc(sc)}</h3><div class="flow">${stages.join('<span class="ar">→</span>')}</div></div>`;
-    if (live.length) body += `<div class="grid">${live.map(card).join('')}</div>`;
-    if (dead.length) body += `<details class="dead"><summary>폐기 <span class="dn">${dead.length}</span></summary><div class="grid">${dead.map(card).join('')}</div></details>`;
-    body += `</div>`;
+    const slots = SLOT_ORDER.map((s) => [s, items.filter((a) => a.slot === s).length]).filter(([, n]) => n);
+    const st = row.state;
+    body += `<div class="sc" id="${esc(row.anchor)}" data-sc="${esc(sc)}"><div class="sch"><h3>${esc(sc)}</h3><span class="state ${st.startsWith('쓰는 중') ? 'on' : st === '폐기됨' ? 'off' : ''}">${esc(st)}</span><span class="slots">${slots.map(([s, n]) => `<i>${esc(s)}<b>${n}</b></i>`).join('')}</span><a class="stl" href="status/index.html#st-${esc(row.anchor)}">구현 현황판 ›</a></div>
+<p class="now"><b>지금</b> ${esc(row.now)}</p>${row.next ? `<p class="next"><b>다음 할 일</b> ${esc(row.next)}</p>` : ''}
+<div class="rowctl" role="group" aria-label="${esc(sc)} 화면 전체 판정"><span>이 화면 전체를</span>${VERDICTS.map((v) => `<button type="button" class="${VCLS[v]}" data-row-set="${v}">${v}</button>`).join('')}</div>`;
+    if (live.length) body += `<div class="strip">${live.map(tile).join('')}</div>`;
+    if (dead.length) body += `<details class="dead"><summary>지난 안 <span class="dn">${dead.length}</span> — 다른 안이 대신함</summary><div class="strip">${dead.map(tile).join('')}</div></details>`;
+    body += `<details class="dev"><summary>개발 기록(내부 코드 · 경로)</summary><ul>${items.map((a) => `<li id="dev-${esc(a.id)}"><b>${esc(a.id)}</b> ${devText(a).slice(1).map(esc).join(' · ')}</li>`).join('')}</ul></details></div>`;
   }
   body += `</section>`;
 }
 const S = ledger.집계;
-const jump = ledger.기능.map(({ function: f }) => `<a href="#fn-${esc(f)}">${esc(f)}</a>`).join('');
+const jump = ledger.기능.map(({ function: f }) => `<a href="#fn-${esc(f)}">${esc(f === '공통' ? '공통 디자인 참고' : f)}</a>`).join('');
 const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Land-XI 자산 대장</title>
 <link rel="stylesheet" href="../fonts-system.css">
 <style>
-:root{--ink:#010102;--ink2:#4A4A4A;--mute:#8A8A8A;--line:#DDDDDD;--tint:#E8F1FF;--accent:#006DF7;--ok:#0FA9A0;--rv:#006DF7;--dp:#8A8A8A}
+:root{--ink:#010102;--ink2:#4A4A4A;--mute:#8A8A8A;--line:#DDDDDD;--tint:#E8F1FF;--accent:#006DF7;--ok:#0FA9A0;--rv:#006DF7;--dp:#8A8A8A;--paper:#F5F6F8}
 *{box-sizing:border-box}html{scroll-padding-top:120px}
 body{margin:0;background:#fff;color:var(--ink);font:15px/1.55 Pretendard,system-ui,sans-serif}
 a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 .w{max-width:1400px;margin:0 auto;padding:28px 32px 80px}
 .eb{font:600 12px/1 Inter,Pretendard,sans-serif;letter-spacing:.08em;color:var(--mute)}
 h1{font:700 32px/1.2 Paperlogy,Pretendard,sans-serif;letter-spacing:-.03em;margin:8px 0 6px}
+.lead{margin:0 0 10px;color:var(--ink2);max-width:72ch}
 .links{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;margin:0 0 18px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--ink2);margin:0 0 18px}.legend b{font-weight:700}.legend .ok{color:var(--ok)}.legend .rv{color:var(--rv)}.legend .dp{color:var(--dp)}
 #bar{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--line);padding:10px 0;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
 .tot{display:flex;gap:4px;flex-wrap:wrap}
 .fb{font:500 13px Pretendard,sans-serif;padding:6px 12px;background:#fff;border:1px solid var(--line);color:var(--ink);cursor:pointer;white-space:nowrap}
@@ -646,39 +843,41 @@ section.fn{padding:28px 0 8px;border-top:2px solid var(--ink);margin-top:28px}
 h2{font:700 24px/1.2 Paperlogy,Pretendard,sans-serif;letter-spacing:-.03em;margin:0 0 6px;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
 h2 small{display:flex;gap:10px;font:600 12px Inter,Pretendard,sans-serif}
 h2 small i{font-style:normal}i.ok{color:var(--ok)}i.rv{color:var(--rv)}i.dp{color:var(--dp)}
-.sc{padding:18px 0;border-top:1px solid var(--line)}
-.sch{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin-bottom:12px}
-h3{font:700 17px/1.3 Pretendard,sans-serif;margin:0}
-.flow{display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:12px}
-.st{border:1px solid;padding:3px 7px;white-space:nowrap;font-weight:600}.st b{font:600 11px Inter,sans-serif;margin-left:5px;opacity:.7}
-.st.ok{color:var(--ok)}.st.rv{color:var(--rv)}.st.dp{color:var(--dp);border-style:dashed}
-.ar{color:var(--mute)}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:16px}
-.card{border:1px solid var(--line);display:flex;flex-direction:column;min-width:0;background:#fff}
+.sc{padding:20px 0 16px;border-top:1px solid var(--line)}
+.sc:target{background:linear-gradient(90deg,var(--tint),#fff 40%);margin:0 -12px;padding-left:12px;padding-right:12px}
+.sch{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-bottom:8px}
+h3{font:700 19px/1.3 Paperlogy,Pretendard,sans-serif;letter-spacing:-.02em;margin:0}
+.state{font:600 12px/1 Pretendard,sans-serif;padding:5px 8px;border:1px solid var(--line);color:var(--ink2);white-space:nowrap}.state.on{border-color:var(--ok);color:var(--ok)}.state.off{border-style:dashed;color:var(--mute)}
+.slots{display:flex;gap:8px;font-size:12px;color:var(--mute)}.slots i{font-style:normal;white-space:nowrap}.slots b{font:600 11px Inter,sans-serif;margin-left:3px}
+.stl{font-size:12px;margin-left:auto;white-space:nowrap}
+.now,.next{margin:0 0 4px;font-size:14px;color:var(--ink2);max-width:100ch;overflow-wrap:anywhere}.now b,.next b{color:var(--ink);font-weight:700;margin-right:6px}.next b{color:var(--accent)}
+.rowctl{display:flex;align-items:center;gap:4px;margin:8px 0 10px;font-size:12px;color:var(--mute)}.rowctl span{margin-right:4px}
+.rowctl button{font:600 12px/1 Pretendard,sans-serif;padding:6px 10px;background:#fff;border:1px solid var(--line);color:var(--ink2);cursor:pointer}.rowctl button:hover{border-color:var(--ink);color:var(--ink)}
+.strip{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x proximity;padding:2px 2px 10px;-webkit-overflow-scrolling:touch}
+.strip::-webkit-scrollbar{height:8px}.strip::-webkit-scrollbar-thumb{background:var(--line)}
+.card{flex:0 0 272px;scroll-snap-align:start;border:1px solid var(--line);display:flex;flex-direction:column;min-width:0;background:#fff}
 .card.v-ok{border-top:3px solid var(--ok)}.card.v-rv{border-top:3px solid var(--rv)}.card.v-dp{border-top:3px solid var(--dp)}
 .card:target{outline:2px solid var(--accent);outline-offset:2px}
-.th{display:block;width:100%;aspect-ratio:16/10;padding:0;border:0;border-bottom:1px solid var(--line);background:#F4F5F7;cursor:zoom-in;overflow:hidden}
+.th{position:relative;display:block;width:100%;aspect-ratio:16/10;padding:0;border:0;border-bottom:1px solid var(--line);background:var(--paper);cursor:zoom-in;overflow:hidden}
 .th img{width:100%;height:100%;object-fit:cover;object-position:top left;display:block}
-.th.tx{cursor:default;display:flex;align-items:flex-end;padding:14px;background:var(--tint)}
-.th.tx span{font:700 16px/1.35 Paperlogy,Pretendard,sans-serif;letter-spacing:-.02em;color:var(--ink)}
-.v-dp .th.tx{background:#F4F5F7}.v-dp .th.tx span{color:var(--mute)}
-.bd{padding:10px 12px 12px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.play,.cnt{position:absolute;bottom:6px;font:600 11px/1 Inter,Pretendard,sans-serif;padding:5px 7px;background:rgba(1,1,2,.78);color:#fff}.play{left:6px}.cnt{right:6px}
+.bd{padding:10px 12px 12px;display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
 .hd{display:flex;align-items:center;gap:8px;min-width:0}
+.slot{font:600 11px/1 Pretendard,sans-serif;padding:4px 6px;background:var(--paper);color:var(--ink2);white-space:nowrap}
+.s-v3 .slot{background:var(--tint);color:var(--accent)}.s-ref .slot{background:#FFF4E5;color:#B7791F}
 .bdg{font:700 11px/1 Pretendard,sans-serif;padding:4px 6px;border:1px solid;white-space:nowrap;flex:none}
 .bdg.ok{color:var(--ok)}.bdg.rv{color:var(--rv)}.bdg.dp{color:var(--dp)}
-.var{font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-h4{font-size:15px;line-height:1.4;margin:2px 0 0;overflow-wrap:anywhere}
-.why{margin:0;font-size:13px;color:var(--ink2);overflow-wrap:anywhere}
-.tg{margin:0;font-size:13px;overflow-wrap:anywhere}.tg .k{font-weight:700;color:var(--ink);margin-right:4px}
-.meta{margin:2px 0 0;display:flex;flex-wrap:wrap;gap:4px 10px;font:12px Inter,Pretendard,sans-serif;color:var(--mute)}
-details.dead{margin-top:14px}
-details.dead summary{cursor:pointer;font-size:13px;color:var(--mute);width:max-content;padding:4px 0}
-details.dead .card{opacity:.55}details.dead .card:hover,details.dead .card:target{opacity:1}
+h4{font-size:14px;line-height:1.4;margin:2px 0 0;overflow-wrap:anywhere;font-weight:600}
+.why{margin:0;font-size:12.5px;color:var(--ink2);overflow-wrap:anywhere}
+.note{margin:0;font-size:12px;color:var(--mute);overflow-wrap:anywhere}
+.meta{margin:auto 0 0;padding-top:4px;display:flex;flex-wrap:wrap;gap:4px 10px;font:12px Inter,Pretendard,sans-serif;color:var(--mute)}.meta a.dim{color:var(--mute);text-decoration:underline dotted}
+details.dead{margin-top:6px}details.dead summary,details.dev summary{cursor:pointer;font-size:13px;color:var(--mute);width:max-content;padding:4px 0}
+details.dead .card{opacity:.6}details.dead .card:hover,details.dead .card:target{opacity:1}
+details.dev{margin-top:4px}details.dev summary{font-size:12px}details.dev ul{margin:4px 0 0;padding:0 0 0 18px;font:12px/1.6 Inter,Pretendard,sans-serif;color:var(--ink2);overflow-wrap:anywhere}details.dev b{font-weight:600}
 body.f-v .card:not(.show),body.f-v .sc:not(.show),body.f-v section.fn:not(.show){display:none}
-body.f-v details.dead{margin-top:0}
 .empty{color:var(--mute);padding:30px 0}
 #lb{position:fixed;inset:0;background:rgba(1,1,2,.92);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 16px 16px;gap:10px}
-#lb[hidden]{display:none}#lb img{max-width:100%;max-height:calc(100% - 60px);background:#fff}
+#lb[hidden]{display:none}#lb img,#lb video{max-width:100%;max-height:calc(100% - 76px);background:#000}#lb img[hidden],#lb video[hidden]{display:none}
 #lb-t{color:#fff;font:600 14px/1.4 Pretendard,sans-serif;max-width:1100px;text-align:center}#lb-t small{display:block;color:#B8B8B8;font-weight:400}
 #lb-x{position:fixed;top:12px;right:12px;font:600 14px Pretendard,sans-serif;background:#fff;color:var(--ink);border:0;padding:10px 14px;cursor:pointer}
 #lb-p,#lb-n{position:fixed;top:50%;transform:translateY(-50%);width:48px;height:88px;background:rgba(255,255,255,.12);color:#fff;border:0;font:300 40px/1 Pretendard,sans-serif;cursor:pointer}#lb-p{left:6px}#lb-n{right:6px}
@@ -712,23 +911,25 @@ details.dead .card.chg{opacity:1}
 #dec-out{display:block;width:100%;margin-top:10px;font:12px/1.5 Inter,Pretendard,monospace;border:1px solid var(--line);padding:8px;min-height:84px;resize:vertical}
 #dec-out[hidden]{display:none}
 .dj{font:600 13px Pretendard,sans-serif;padding:6px 12px;border:1px solid #B7791F;color:#B7791F;white-space:nowrap}.dj b{font:600 13px Inter,sans-serif;margin-left:6px}.dj[hidden]{display:none}
-@media (max-width:640px){#bar{position:static}#dec{padding:12px}.w{padding:20px 16px 64px}h1{font-size:26px}#lb-p,#lb-n{display:none}}
+@media (max-width:640px){#bar{position:static}#dec{padding:12px}.w{padding:20px 16px 64px}h1{font-size:26px}#lb-p,#lb-n{display:none}.card{flex-basis:236px}.stl{margin-left:0}.sc:target{margin:0;padding-left:0;padding-right:0;background:none}}
 </style></head>
 <body><div class="w">
 <div class="eb">LAND-XI · 자산 대장 · ${esc(ledger.generated_at)}</div>
-<h1>원판 · 구현 · 스펙시먼 ${S.전체}건</h1>
-<div class="links"><a href="index.html">검토 허브</a><a href="status/index.html">구현 현황판</a><a href="assets.json">assets.json</a><a href="bench-kakao.html">카카오 벤치</a></div>
-<section id="dec" aria-labelledby="dec-h"><div class="dec-t"><b id="dec-h">내 결정<span id="dec-n">0</span></b><p>카드의 <b>적용 · 검토 · 폐기</b>로 판정을 바꾸면 여기 모입니다. <b>결정 발행</b>으로 복사해 Claude 에게 붙여 넣으면 대장에 반영합니다.</p></div>
+<h1>화면마다 한 줄 — 지금 · 다음 · 그림</h1>
+<p class="lead">화면 하나가 한 줄입니다. 줄마다 <b>지금</b> 어떤 상태인지, <b>다음 할 일</b>이 무엇인지 한 문장으로 적고, 그 아래에 원판 → 예전 구현 → 새 구현 → 시안 → 참고 순서로 그림을 나란히 놓았습니다. 그림은 전부 이 사이트에서 바로 열립니다(서버가 있어야 도는 화면은 캡처·영상). 내부 코드·경로는 '개발 기록'에 접어 두었습니다.</p>
+<p class="legend"><b class="ok">적용</b> 지금 화면에 들어가 있음 · <b class="rv">검토</b> 다음에 쓸지 결정 대기 · <b class="dp">폐기</b> 다른 안이 대신함 &nbsp;|&nbsp; 화면 ${rows.length}줄 · 항목 ${S.전체}개</p>
+<div class="links"><a href="index.html">검토 허브</a><a href="status/index.html">구현 현황판</a><a href="bench-kakao.html">카카오 벤치</a><a href="assets.json">assets.json</a></div>
+<section id="dec" aria-labelledby="dec-h"><div class="dec-t"><b id="dec-h">내 결정<span id="dec-n">0</span></b><p>항목의 <b>적용 · 검토 · 폐기</b>를 누르거나, 줄 머리의 <b>이 화면 전체를</b> 버튼으로 한 번에 바꾸면 여기 모입니다. <b>결정 발행</b>으로 복사해 Claude 에게 붙여 넣으면 대장에 반영합니다.</p></div>
 <ol id="dec-list"></ol><p id="dec-empty">변경 없음</p>
 <div class="dec-act"><button type="button" id="dec-pub" class="pri" disabled>결정 발행</button><button type="button" id="dec-reset" disabled>되돌리기</button><span id="dec-msg" role="status" aria-live="polite"></span></div>
 <textarea id="dec-out" readonly hidden aria-label="발행 글"></textarea></section>
 <div id="bar"><a href="#dec" class="dj" id="dec-jump" hidden>내 결정<b>0</b></a><div class="tot" role="group" aria-label="판정">
 <button type="button" class="fb" data-v="" aria-pressed="true">전체<b>${S.전체}</b></button>
 ${VERDICTS.map((v) => `<button type="button" class="fb ${VCLS[v]}" data-v="${v}" aria-pressed="false">${v}<b>${S[v]}</b></button>`).join('')}</div>
-<div class="tot" role="group" aria-label="종류">${['원판', '구현', '시안', '스펙시먼'].map((k) => `<button type="button" class="fb" data-k="${k}" aria-pressed="false">${k}<b>${out.filter((a) => a.kind === k).length}</b></button>`).join('')}</div>
+<div class="tot" role="group" aria-label="칸">${SLOT_ORDER.map((k) => `<button type="button" class="fb" data-k="${k}" aria-pressed="false">${k}<b>${out.filter((a) => a.slot === k).length}</b></button>`).join('')}</div>
 <nav class="jumps" aria-label="기능">${jump}</nav></div>
 ${body}<p class="empty" id="empty" hidden>조건에 맞는 자산이 없습니다.</p></div>
-<div id="lb" hidden><button id="lb-x" type="button">닫기 ×</button><button id="lb-p" type="button" aria-label="이전">‹</button><button id="lb-n" type="button" aria-label="다음">›</button><img id="lb-i" alt=""><div id="lb-t"></div></div>
+<div id="lb" hidden><button id="lb-x" type="button">닫기 ×</button><button id="lb-p" type="button" aria-label="이전">‹</button><button id="lb-n" type="button" aria-label="다음">›</button><img id="lb-i" alt="" hidden><video id="lb-v" controls playsinline hidden></video><div id="lb-t"></div></div>
 <script>(function(){
 var F={v:'',k:''},B=document.body;
 function apply(){var any=F.v||F.k;B.classList.toggle('f-v',!!any);var n=0;
@@ -741,17 +942,17 @@ document.getElementById('bar').addEventListener('click',function(e){var b=e.targ
 try{var q=new URLSearchParams(location.search);if(q.get('v'))F.v=q.get('v');if(q.get('k'))F.k=q.get('k');if(F.v||F.k)apply();}catch(e){}
 if(location.hash){var t=document.getElementById(location.hash.slice(1));if(t){var d=t.closest('details');if(d)d.open=true;}}
 document.addEventListener('click',function(e){var a=e.target.closest('a.jump');if(!a)return;var t=document.getElementById(a.getAttribute('href').slice(1));if(t){var d=t.closest('details');if(d)d.open=true;if(F.v||F.k){F.v='';F.k='';apply();}}});
-// ── 내 결정: 카드 적용·검토·폐기 → 브라우저 저장 → [결정 발행] 글 복사 (apply-decisions.mjs 가 읽는 형식)
+// ── 내 결정: 항목·화면 행의 적용·검토·폐기 → 브라우저 저장 → [결정 발행] 글 복사 (apply-decisions.mjs 가 읽는 형식 — 항목마다 한 줄)
 var KEY='lx_assets_decisions_v1',VS=['적용','검토','폐기'],VC={'적용':'ok','검토':'rv','폐기':'dp'};
 var D={};try{D=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){D={};}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){}}
 var cards=Array.prototype.slice.call(document.querySelectorAll('.card')),byId={};cards.forEach(function(c){byId[c.id]=c;});
 Object.keys(D).forEach(function(id){var c=byId[id],d=D[id];if(!c||!d||VS.indexOf(d.v)<0||d.v===c.dataset.base)delete D[id];});save();
-function grid(sc,dead){if(!dead){var g=sc.querySelector(':scope>.grid');if(!g){g=document.createElement('div');g.className='grid';sc.querySelector('.sch').after(g);}return g;}
-var d=sc.querySelector('details.dead');if(!d){d=document.createElement('details');d.className='dead';d.innerHTML='<summary>폐기 <span class="dn">0</span></summary><div class="grid"></div>';sc.appendChild(d);}return d.querySelector('.grid');}
+function strip(sc,dead){if(!dead){var g=sc.querySelector(':scope>.strip');if(!g){g=document.createElement('div');g.className='strip';sc.querySelector('.rowctl').after(g);}return g;}
+var d=sc.querySelector('details.dead');if(!d){d=document.createElement('details');d.className='dead';d.innerHTML='<summary>지난 안 <span class="dn">0</span> — 다른 안이 대신함</summary><div class="strip"></div>';var dv=sc.querySelector('details.dev');sc.insertBefore(d,dv);}return d.querySelector('.strip');}
 function setCard(c,v,user){c.dataset.v=v;c.classList.remove('v-ok','v-rv','v-dp');c.classList.add('v-'+VC[v]);var b=c.querySelector('.bdg');b.className='bdg '+VC[v];b.textContent=v;
 c.classList.toggle('chg',v!==c.dataset.base);c.querySelectorAll('.ctl button').forEach(function(x){x.setAttribute('aria-pressed',String(x.dataset.set===v));});
-var sc=c.closest('.sc'),inDead=!!c.closest('details.dead');if((v==='폐기')!==inDead){grid(sc,v==='폐기').appendChild(c);if(user){var d=c.closest('details');if(d)d.open=true;c.scrollIntoView({block:'nearest'});}}}
+var sc=c.closest('.sc'),inDead=!!c.closest('details.dead');if((v==='폐기')!==inDead){strip(sc,v==='폐기').appendChild(c);if(user){var d=c.closest('details');if(d)d.open=true;c.scrollIntoView({block:'nearest',inline:'nearest'});}}}
 function recount(){var T={'적용':0,'검토':0,'폐기':0};cards.forEach(function(c){T[c.dataset.v]++;});
 document.querySelectorAll('#bar .fb[data-v]').forEach(function(b){if(b.dataset.v)b.querySelector('b').textContent=T[b.dataset.v];});
 document.querySelectorAll('section.fn').forEach(function(s){var n={'적용':0,'검토':0,'폐기':0};s.querySelectorAll('.card').forEach(function(c){n[c.dataset.v]++;});s.querySelectorAll('h2 i[data-c]').forEach(function(i){i.textContent=i.dataset.c+' '+n[i.dataset.c];});});
@@ -759,7 +960,7 @@ document.querySelectorAll('details.dead').forEach(function(d){var k=d.querySelec
 function changed(){return cards.filter(function(c){return D[c.id];});}
 function renderList(){var L=changed(),ol=document.getElementById('dec-list');ol.innerHTML='';
 L.forEach(function(c){var d=D[c.id],li=document.createElement('li');li.dataset.id=c.id;
-var r=document.createElement('div');r.className='dl';var a=document.createElement('a');a.className='id jump';a.href='#'+c.id;a.textContent=c.id;
+var r=document.createElement('div');r.className='dl';var a=document.createElement('a');a.className='id jump';a.href='#'+c.id;a.textContent=c.closest('.sc').querySelector('h3').textContent;
 var nm=document.createElement('span');nm.className='nm';nm.textContent=c.querySelector('h4').textContent;
 var ch=document.createElement('span');ch.className='ch';var s=document.createElement('s');s.textContent=c.dataset.base;var nv=document.createElement('span');nv.className=VC[d.v];nv.textContent=d.v;ch.appendChild(s);ch.appendChild(document.createTextNode(' → '));ch.appendChild(nv);
 var x=document.createElement('button');x.type='button';x.className='x';x.textContent='취소';x.setAttribute('aria-label',c.id+' 결정 취소');
@@ -769,11 +970,13 @@ li.appendChild(r);li.appendChild(m);ol.appendChild(li);});
 var n=L.length;document.getElementById('dec-n').textContent=n;document.getElementById('dec-empty').hidden=!!n;
 document.getElementById('dec-pub').disabled=!n;document.getElementById('dec-reset').disabled=!n;
 var j=document.getElementById('dec-jump');j.hidden=!n;j.querySelector('b').textContent=n;}
-function decide(c,v,user){if(v===c.dataset.base)delete D[c.id];else D[c.id]={v:v,m:(D[c.id]&&D[c.id].m)||''};save();setCard(c,v,user);recount();renderList();msg('');if(F.v||F.k)apply();}
-document.addEventListener('click',function(e){var b=e.target.closest('.ctl button');if(!b)return;var c=b.closest('.card');if(c.dataset.v!==b.dataset.set)decide(c,b.dataset.set,true);});
+function decide(c,v,user){if(v===c.dataset.base)delete D[c.id];else D[c.id]={v:v,m:(D[c.id]&&D[c.id].m)||''};save();setCard(c,v,user);}
+function after(){recount();renderList();msg('');if(F.v||F.k)apply();}
+document.addEventListener('click',function(e){var b=e.target.closest('.ctl button');if(b){var c=b.closest('.card');if(c.dataset.v!==b.dataset.set){decide(c,b.dataset.set,true);after();}return;}
+var rb=e.target.closest('.rowctl button');if(rb){var v=rb.dataset.rowSet,sc=rb.closest('.sc'),n=0;sc.querySelectorAll('.card').forEach(function(c){if(c.dataset.v!==v){decide(c,v,false);n++;}});after();msg(n?sc.querySelector('h3').textContent+' 화면 '+n+'개를 '+v+'(으)로 표시했습니다 — 발행 전까지 브라우저에만 저장':'이미 전부 '+v+'입니다');}});
 var ol=document.getElementById('dec-list');
 ol.addEventListener('input',function(e){var li=e.target.closest('li');if(!li||!D[li.dataset.id])return;D[li.dataset.id].m=e.target.value;save();});
-ol.addEventListener('click',function(e){var x=e.target.closest('button.x');if(!x)return;var c=byId[x.closest('li').dataset.id];decide(c,c.dataset.base,false);});
+ol.addEventListener('click',function(e){var x=e.target.closest('button.x');if(!x)return;var c=byId[x.closest('li').dataset.id];decide(c,c.dataset.base,false);after();});
 function msg(t,warn){var m=document.getElementById('dec-msg');m.textContent=t;m.classList.toggle('warn',!!warn);if(!t)document.getElementById('dec-out').hidden=true;}
 function p2(n){return (n<10?'0':'')+n;}
 function text(){var d=new Date(),L=changed(),o=['[자산 결정] '+d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())+' '+p2(d.getHours())+':'+p2(d.getMinutes())];
@@ -785,16 +988,18 @@ if(ok)msg('복사됨 — Claude 에게 붙여 넣으면 대장에 반영합니�
 try{if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(function(){msg('복사됨 — Claude 에게 붙여 넣으면 대장에 반영합니다');document.getElementById('dec-out').hidden=false;},fb);else fb();}catch(e){fb();}});
 document.getElementById('dec-reset').addEventListener('click',function(){D={};save();cards.forEach(function(c){if(c.dataset.v!==c.dataset.base)setCard(c,c.dataset.base,false);});recount();renderList();msg('되돌렸습니다 — 대장 판정 그대로');if(F.v||F.k)apply();});
 cards.forEach(function(c){if(D[c.id])setCard(c,D[c.id].v,false);});recount();renderList();if(F.v||F.k)apply();
-var lb=document.getElementById('lb'),im=document.getElementById('lb-i'),tt=document.getElementById('lb-t'),cur=-1;
-function vis(){return Array.prototype.filter.call(document.querySelectorAll('button.lb'),function(b){return b.offsetParent!==null;});}
-function show(i){var L=vis();if(!L.length)return;cur=(i+L.length)%L.length;var b=L[cur],c=b.closest('.card');im.src=b.dataset.src;
-tt.innerHTML='';var h=document.createElement('span');h.textContent=(cur+1)+' / '+L.length+' · '+c.querySelector('h4').textContent+' ['+c.querySelector('.bdg').textContent+']';tt.appendChild(h);
-var s=document.createElement('small');s.textContent=c.querySelector('.tg').textContent+(c.dataset.later?'  ·  이후: '+c.dataset.later:'');tt.appendChild(s);lb.hidden=false;document.body.style.overflow='hidden';}
-function close(){lb.hidden=true;im.removeAttribute('src');document.body.style.overflow='';}
-document.addEventListener('click',function(e){var b=e.target.closest('button.lb');if(!b)return;show(vis().indexOf(b));});
+// ── 크게 보기: 카드의 그림·영상 전부(스트립 안 보이는 카드는 건너뜀)
+var lb=document.getElementById('lb'),im=document.getElementById('lb-i'),vd=document.getElementById('lb-v'),tt=document.getElementById('lb-t'),L=[],cur=-1;
+function build(){L=[];Array.prototype.forEach.call(document.querySelectorAll('.card'),function(c){if(c.offsetParent===null)return;var ms=[];try{ms=JSON.parse(c.dataset.media||'[]');}catch(e){}ms.forEach(function(m,i){L.push({c:c,m:m,i:i,n:ms.length});});});}
+function show(i){if(!L.length)return;cur=(i+L.length)%L.length;var x=L[cur],c=x.c;vd.pause();
+if(x.m.k==='video'){im.hidden=true;im.removeAttribute('src');vd.hidden=false;vd.src=x.m.s;if(x.m.p)vd.poster=x.m.p;vd.play().catch(function(){});}else{vd.hidden=true;vd.removeAttribute('src');im.hidden=false;im.src=x.m.s;}
+tt.innerHTML='';var h=document.createElement('span');h.textContent=c.closest('.sc').querySelector('h3').textContent+' · '+c.querySelector('h4').textContent+' ['+c.querySelector('.bdg').textContent+']'+(x.n>1?'  ·  '+x.m.l+' '+(x.i+1)+'/'+x.n:'');tt.appendChild(h);
+var s=document.createElement('small');s.textContent=(cur+1)+' / '+L.length;tt.appendChild(s);lb.hidden=false;document.body.style.overflow='hidden';}
+function close(){lb.hidden=true;im.removeAttribute('src');vd.pause();vd.removeAttribute('src');document.body.style.overflow='';}
+document.addEventListener('click',function(e){var b=e.target.closest('button.lb');if(!b)return;build();var c=b.closest('.card'),k=-1;for(var i=0;i<L.length;i++)if(L[i].c===c){k=i;break;}if(k>=0)show(k);});
 document.getElementById('lb-x').onclick=close;document.getElementById('lb-p').onclick=function(){show(cur-1)};document.getElementById('lb-n').onclick=function(){show(cur+1)};
 lb.addEventListener('click',function(e){if(e.target===lb)close();});
 document.addEventListener('keydown',function(e){if(lb.hidden)return;if(e.key==='Escape')close();else if(e.key==='ArrowLeft')show(cur-1);else if(e.key==='ArrowRight')show(cur+1);});
 })();</script></body></html>`;
 fs.writeFileSync(`${OUT_DIR}/masters.html`, html);
-console.log(`자산 ${S.전체}: 적용 ${S.적용} · 검토 ${S.검토} · 폐기 ${S.폐기} | 원판 ${JSON.stringify(S.원판)} 구현 ${JSON.stringify(S.구현)} 시안 ${JSON.stringify(S.시안)} 스펙시먼 ${JSON.stringify(S.스펙시먼)}`);
+console.log(`화면 ${rows.length}줄 · 자산 ${S.전체}: 적용 ${S.적용} · 검토 ${S.검토} · 폐기 ${S.폐기} | 원판 ${JSON.stringify(S.원판)} 구현 ${JSON.stringify(S.구현)} 시안 ${JSON.stringify(S.시안)} 참고 ${JSON.stringify(S.스펙시먼)}`);
