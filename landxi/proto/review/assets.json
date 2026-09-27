@@ -1,6 +1,6 @@
 {
  "title": "Land-XI 자산 대장 — 화면마다 한 줄",
- "generated_at": "2026-09-27 13:14 KST",
+ "generated_at": "2026-09-27 13:20 KST",
  "생성기": "node tools/review/masters.mjs (매체: node tools/review/ledger-media.mjs)",
  "판정_기준": {
   "적용": "지금 사용자가 메뉴로 닿는 화면에 들어가 있음(applied_to)",

@@ -818,7 +818,7 @@ for (const { function: fn, screens } of ledger.기능) {
 }
 const S = ledger.집계;
 const jump = ledger.기능.map(({ function: f }) => `<a href="#fn-${esc(f)}">${esc(f === '공통' ? '공통 디자인 참고' : f)}</a>`).join('');
-const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Land-XI 자산 대장</title>
+const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Land-XI 자산 대장</title><link rel="icon" href="data:,">
 <link rel="stylesheet" href="../fonts-system.css">
 <style>
 :root{--ink:#010102;--ink2:#4A4A4A;--mute:#8A8A8A;--line:#DDDDDD;--tint:#E8F1FF;--accent:#006DF7;--ok:#0FA9A0;--rv:#006DF7;--dp:#8A8A8A;--paper:#F5F6F8}
