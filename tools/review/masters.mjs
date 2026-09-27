@@ -19,7 +19,7 @@ const TAX = [
   ['데이터 관리', ['목록(아카이브·완료·발행중)', '업로드', '파이프라인 단계']],
   ['프로젝트', ['목록(메인)', '만들기', '만들기 검토', '개요', '삭제 모달', '데이터', '라벨링', '학습', '분석', '배포·발행', '지도 작업공간(컨셉)']],
   ['분석 서비스', ['카드 목록', '카드 상세', '실행 검토', '실행 중', '실행 결과']],
-  ['카드 발행', ['승인·검토 데스크', '카드 목록', '카드 편집', '발행 요청']],
+  ['카드 발행', ['승인·검토 데스크', '발행 카드 목록', '카드 편집', '발행 요청']],
   ['XI맵', ['기본 지도', '객체 정보', '시점 비교', '검색', '도구(측정·그리기·구역·내려받기)', '지역 구분·속성 표', '보안 서약', '표류 예측']],
   ['실태조사', ['실태조사 모드', '대장 융합(기관 첫 화면)']],
   ['에이전트', ['융합 분석 질문']],
@@ -29,7 +29,7 @@ const TAX = [
   ['기관 포털', ['기관 로그인', '내 서비스', '서비스 상세']],
   ['서비스 지원', ['공지', 'FAQ', '문의', '활용사례', '매뉴얼']],
   ['MY', ['마이 페이지', '정보 수정', '비밀번호 변경', '브랜드(CI)', '저장 공간', '탈퇴']],
-  ['글로벌', ['로그인', '해외 서비스']],
+  ['글로벌', ['해외 기관 로그인', '해외 서비스']],
   ['공통', ['서체·색·형태', '토스 톤', '빈 상태·캐릭터', '출처 띠·푸터', '기능 소개 틀', '상태 패턴(로딩·오류)', '디자인 실험']],
 ];
 const SCREEN_KEYS = new Set(TAX.flatMap(([f, ss]) => ss.map((s) => `${f}/${s}`)));
@@ -172,7 +172,7 @@ B6-Publish-Review-Process | 검토 · 처리
 B6-Publish-Review-Reject | 검토 · 반려 입력
 B6-Publish-Review-Rejected | 검토 · 반려됨
 B6-Publish-Review-Train | 검토 · 학습
-# 카드 발행/카드 목록 | 적용 | landxi/proto/ai-card.html | D24 자동 채택 → 9/20 구현 | F3 B4: v3 생산 콘솔 ③ 조립 · 카드 = 스펙시먼 B 문법(D21ⓒ)
+# 카드 발행/발행 카드 목록 | 적용 | landxi/proto/ai-card.html | D24 자동 채택 → 9/20 구현 | F3 B4: v3 생산 콘솔 ③ 조립 · 카드 = 스펙시먼 B 문법(D21ⓒ)
 B6-Publish-Cards | 카드 목록
 B6-Publish-Cards-Empty | 카드 0건
 # 카드 발행/카드 편집 | 적용 | landxi/proto/ai-card-edit.html | D24 자동 채택 → 9/20 구현 | F3 B4 생산 콘솔 ③ 조립
@@ -345,7 +345,7 @@ proto-workflow | 국토 조사 보드(8/25 워크플로우)
 proto-analysis-ai | 분석 서비스(v1)
 # 카드 발행/승인·검토 데스크 | 적용 | | 현재 화면 — 고정값 | F3 B3: v3 관제 결재함
 proto-admin-publish | 카드 발행 관리(v1)
-# 카드 발행/카드 목록 | 적용 | | 현재 화면 — 고정값 | F3 B4 생산 콘솔 ③ 조립
+# 카드 발행/발행 카드 목록 | 적용 | | 현재 화면 — 고정값 | F3 B4 생산 콘솔 ③ 조립
 proto-ai-card | 카드 목록(v1)
 # 카드 발행/카드 편집 | 적용 | | 현재 화면 — 고정값 | F3 B4 생산 콘솔 ③ 조립
 proto-ai-card-edit | 카드 편집(v1)
@@ -420,7 +420,7 @@ proto-usecase | 활용사례(v1)
 proto-manual | 매뉴얼(v1)
 # MY/마이 페이지 | 적용 | | 현재 화면 — 고정값 | F3 B5: MY 서랍
 proto-mypage | 마이 페이지(v1)
-# 글로벌/로그인 | 적용 | | 해외 기관 실인증 |
+# 글로벌/해외 기관 로그인 | 적용 | | 해외 기관 실인증 |
 global-login | Global 로그인(v2)
 # 글로벌/해외 서비스 | 적용 | | 해외 서비스 정본 — 서버 연결 |
 global-index | 키르기스 농업부(v2)
@@ -441,7 +441,7 @@ const SPECS = [
   // 카카오 §6 스펙시먼 A–J (2026-09-03)
   ['K-A', '대시보드/직원 첫 화면', '대시보드 상단 — 서체·색·형태 토글 기준판', '스펙시먼 카카오 A', '폐기', '대상 화면(LX 관리자 대시보드)이 9/21 계정 분리·9/24 직원 화면 전환으로 사라짐', '토글 판정은 D19③ 로 결론 — 판 자체는 역할 끝', '', 'kakao-A', '#spec'],
   ['K-B', '분석 서비스/카드 목록', '서비스 카드 — 크롭 + 기준일 + 상태 + 제목 2줄 + 결과 수', '스펙시먼 카카오 B', '검토', '적용 예정(D21ⓒ): 분석 카드 목록·프로젝트 목록·데이터 목록·공개 사이트 서비스 카드 — 27화면 재구현 + v3 생산 콘솔 카탈로그', '9/27 D21ⓒ 적용 결정 — 아직 어느 화면에도 없음', '', 'kakao-B', '#spec2'],
-  ['K-C', '인증/로그인', '로그인 소개 — 3축(영문 대제목 + 한글 한 줄 + 크롭)', '스펙시먼 카카오 C', '검토', '적용 예정(D21ⓑ): v3 정문 로그인(landxi/v3/login) 소개 판 — 토스 5-3 장면 순환과 합침', '9/27 D21ⓑ 적용 결정 — 아직 어느 화면에도 없음', '', 'kakao-C', '#specC'],
+  ['K-C', '인증/로그인', '로그인 소개 — 3축(영문 대제목 + 한글 한 줄 + 크롭)', '스펙시먼 카카오 C', '검토', 'v3 정문 로그인(landxi/v3/login) 소개 판에 반영됨(D21ⓑ) — 토스 5-3 장면 순환과 합침 · 새 로그인 시안과 함께 판정', '9/27 D21ⓑ 적용 결정 → 새 로그인 시안(v3-login)에 들어감 · 시안 판정 대기', '', 'kakao-C', '#specC'],
   ['K-D', '메인/서비스 소개 판', '서비스 소개 판 — 실영상 판', '스펙시먼 카카오 D', '검토', '메인 재구성: 토스 챕터(5-2)의 비주얼 판 · 서비스 상세 히어로', '9/27 지시 — D·F·H 는 토스식 소개 문법과 합쳐 메인·서비스 상세·생산 콘솔로', '', 'kakao-D', '#specD'],
   ['K-E', '메인/성과·결과 띠', '성과 숫자 띠 + 결과 카드', '스펙시먼 카카오 E', '검토', '적용 예정(D21ⓓ): 메인 재구성 챕터 2·분석 실행 결과 — 숫자는 업무 결과만(현장 확인 필요 n필지 등)', '9/27 D21ⓓ 적용 결정 · 같은 날 내부 지표 과장 금지 조건', '', 'kakao-E', '#specE'],
   ['K-F', '분석 서비스/카드 상세', '분석 서비스 소개 아이템(EVIDENCE-PAIR)', '스펙시먼 카카오 F', '검토', '서비스 카탈로그 상세 — 토스 5-4 기능 소개 틀과 합침(27화면 재구현)', '9/27 지시 — 토스식 소개 문법과 합침', '', 'kakao-F', '#specF'],
@@ -469,7 +469,7 @@ const SPECS = [
   ['T-CH5', '메인/소개 챕터(토스)', '챕터 5 지자체 제공 — 어느 시군구든 / 그대로 배포한다', '제안 토스 5-2', '검토', '메인 재구성(7챕터)', '9/27 토스 벤치 적용안 — 판정 전', '', '', ''],
   ['T-CH6', '메인/소개 챕터(토스)', '챕터 6 글로벌 — 국경 밖에서도 / 같은 지도', '제안 토스 5-2', '검토', '메인 재구성(7챕터)', '9/27 토스 벤치 적용안 — 판정 전', '', '', ''],
   ['T-CH7', '메인/소개 챕터(토스)', '챕터 7 마감 — Hyper Performance · Hyper Solution · Hyper GeoAI', '제안 토스 5-2', '검토', '메인 재구성(7챕터) · 출처 띠(스펙시먼 J)', '9/27 토스 벤치 적용안 — 판정 전', '', '', ''],
-  ['T-5-3', '인증/로그인', '로그인 소개 판 3장면 자동 순환', '제안 토스 5-3', '검토', 'v3 정문 로그인(landxi/v3/login) — 로그인 3축(스펙시먼 C)과 합침', '9/27 토스 벤치 적용안 — 판정 전', '', '', ''],
+  ['T-5-3', '인증/로그인', '로그인 소개 판 3장면 자동 순환', '제안 토스 5-3', '검토', 'v3 정문 로그인(landxi/v3/login) 소개 판에 반영됨 — 로그인 3축(스펙시먼 C)과 합침 · 새 로그인 시안과 함께 판정', '9/27 토스 벤치 적용안 → 새 로그인 시안(v3-login)에 들어감 · 시안 판정 대기', '', '', ''],
   ['T-5-4', '공통/기능 소개 틀', '기능별 소개 섹션 틀 — 히어로 → 교차 블록 → 관련 카드 → 마감', '제안 토스 5-4', '검토', '서비스 카탈로그 상세·각 화면 첫 진입 — 27화면 재구현(스펙시먼 D·F 합침)', '9/27 토스 벤치 적용안 — 판정 전', '', '', ''],
   ['T-5-5', '메인/스크럽 필름', '필름 쪼개기 — leg 1–2 여는 카메라 · leg 11–12 마감 · leg 4–10 은 서비스 상세로', '제안 토스 5-5', '검토', '메인 재구성 — 지역 이름·\'시연\' 라벨이 앞에 나오는 leg 는 메인에서 뺌', '9/27 토스 벤치 적용안 · 남원 한정·\'시연\' 프레이밍 금지와 맞춤', '', '', ''],
   ['T-5-6', '공통/토스 톤', '가져오지 않을 것 — 오버슈트 이징·둥근 카드·실사 인물·56화면·채움 버튼·지도 위 관성 스크롤', '제안 토스 5-6', '폐기', '법전(라운드 0 · 액센트 절제) 유지', '법전·지도 제스처와 충돌 — 토스 벤치 스스로 제외', '', '', ''],
@@ -481,7 +481,7 @@ const SPECS = [
 // (3) 판정표의 원래 글(reason·target·later)은 dev 로 남겨 '개발 기록' 접기와 호버에만 보인다. 판정 논리는 그대로다.
 // 행 글: 기능/화면 | 지금(한 문장) | 다음 할 일(한 문장)
 const ROWS = Object.fromEntries(`
-인증/로그인 | 지금은 예전 로그인이 쓰이고, 새 로그인은 시안 단계입니다. 새 로그인 왼쪽에는 Land-XI 소개(Hyper Performance · Solution · GeoAI 3축)가 실제 결과 지도 3장면(비슈케크 · 남원 · 여수)으로 돌아갑니다 — 8월 26일 결정 "로그인 = 플랫폼 소개". 카카오식 3축 소개와 토스식 장면 순환은 이 새 로그인에 이미 들어가 있습니다. | 새 로그인을 확정하면 예전 로그인을 교체하고, 관제·기관·해외 로그인도 이 문 하나로 합칩니다.
+인증/로그인 | 예전 로그인이 쓰이고 있고, 새 로그인은 시안 단계입니다. 새 로그인 왼쪽에는 Land-XI 소개(Hyper Performance · Solution · GeoAI 3축)가 실제 결과 지도 3장면(비슈케크 · 남원 · 여수)으로 돌아갑니다 — 8월 26일 결정 "로그인 = 플랫폼 소개". 카카오식 3축 소개와 토스식 장면 순환은 이 새 로그인에 이미 들어가 있습니다. | 새 로그인을 확정하면 예전 로그인을 교체하고, 관제·기관·해외 로그인도 이 문 하나로 합칩니다.
 인증/계정 신청 | 3단계 신청 화면(약관 → 정보 입력 → 완료)이 원판대로 만들어져 있지만, 신청을 저장하지는 않습니다. | 새 로그인이 확정되면 신청은 로그인 화면 안의 작은 서랍으로 줄입니다.
 인증/아이디 찾기 | 입력 → 결과 화면이 있지만 실제 조회는 하지 않습니다. | 새 로그인 안의 서랍으로 줄입니다.
 인증/비밀번호 찾기 | 입력 → 결과 화면이 있지만 실제 조회는 하지 않습니다. | 새 로그인 안의 서랍으로 줄입니다.
@@ -492,7 +492,7 @@ const ROWS = Object.fromEntries(`
 메인/홈 초기안 | 8월의 첫 홈 안 두 장은 폐기됐고, 스크롤 필름 메인이 대신합니다. | 없음 — 기록만 남깁니다.
 메인/공개 사이트 | 로그인 전에 보는 공개 페이지 3장(활용 서비스 · 활용 사례 · 공지)이 있습니다. 서비스 카드 자리는 도형 자리표시입니다. | 서비스 카드를 카카오 참고의 카드 모양(사진 + 기준일 + 상태 + 제목)으로 바꿉니다.
 메인/필름 제작 도구 | 필름을 검토하는 내부 도구 2장(타임라인 · 앵커 스틸)입니다. 사용자 화면이 아닙니다. | 그대로 둡니다.
-대시보드/직원 첫 화면 | 지금 LX 직원이 로그인하면 전국 한 판 대시보드가 뜹니다. 새 안은 '생산 콘솔'(오늘 할 일 띠 + 지도 위 6단 서랍) 시안입니다. | 생산 콘솔 시안을 확정하면 대시보드를 없애고 첫 화면을 교체합니다.
+대시보드/직원 첫 화면 | LX 직원이 로그인하면 전국 한 판 대시보드가 뜹니다. 새 안은 '생산 콘솔'(오늘 할 일 띠 + 지도 위 6단 서랍) 시안입니다. | 생산 콘솔 시안을 확정하면 대시보드를 없애고 첫 화면을 교체합니다.
 대시보드/사용자 대시보드 | 원판 1장만 있고 만들지 않았습니다(원본 시스템의 사용자 대시보드 그대로). | 역할별 첫 화면을 설계할 때 흡수할지 결정합니다.
 대시보드/뷰어 대시보드 | 원판 1장만 있고 만들지 않았습니다. | 기관 첫 화면(내 대장 × AI)의 결과 탭을 만들 때 참고합니다.
 데이터 관리/목록(아카이브·완료·발행중) | 이미지 그리드 + 오른쪽 패널 화면이 원판대로 있고, 데이터는 고정값입니다. | 생산 콘솔의 '반입' 서랍으로 흡수합니다.
@@ -515,7 +515,7 @@ const ROWS = Object.fromEntries(`
 분석 서비스/실행 중 | 영상별 진행 화면이 있습니다(고정값). | 생산 콘솔로 옮깁니다.
 분석 서비스/실행 결과 | 정사영상 + 결과 화면, 결과 편집 · 공유가 있습니다(고정값). | 생산 콘솔로 옮깁니다.
 카드 발행/승인·검토 데스크 | 분할 검토 데스크(원판 14장)가 만들어져 있고 데이터는 고정값입니다. | 관제의 결재함으로 옮기고 밝은 톤으로 다시 그립니다.
-카드 발행/카드 목록 | 카드 목록 화면이 있습니다(고정값). | 생산 콘솔 '조립'로 옮기고 카드 모양은 카카오 참고로 바꿉니다.
+카드 발행/발행 카드 목록 | 발행된 카드를 모아 보는 목록 화면이 있습니다(고정값). 분석 서비스의 카드 목록(서비스 카탈로그)과는 다른 화면입니다. | 생산 콘솔 '조립'로 옮기고 카드 모양은 카카오 참고로 바꿉니다.
 카드 발행/카드 편집 | 카드 편집 · 잠김 화면이 있습니다(고정값). | 생산 콘솔 '조립'로 옮깁니다.
 카드 발행/발행 요청 | 발행 요청 폼이 있습니다(고정값). | 폼을 없애고 카탈로그 매트릭스로 대체할 예정입니다.
 XI맵/기본 지도 | 새 XI맵(직원 · 공개 · 영업 3개 문)이 서버에 연결돼 실제로 돕니다. 예전 XI맵은 폐기. 글을 60% 줄이고 개발 정보를 뺀 '정돈판' 시안이 있습니다. | 정돈판 시안을 확정하면 새 XI맵을 교체하고 도구 7종 · 보안 서약을 옮겨 넣습니다.
@@ -556,7 +556,7 @@ MY/비밀번호 변경 | 현재 비밀번호 확인 → 새 비밀번호 화면�
 MY/브랜드(CI) | 브랜드 설정 화면(미등록 · 오류 · 적용됨 · 되돌리기)이 있습니다. | MY 서랍으로 줄입니다.
 MY/저장 공간 | 증량 신청 화면이 있습니다. | MY 서랍으로 줄입니다.
 MY/탈퇴 | 원본에 화면이 없어 추정으로 1장 만들었습니다. | MY 서랍으로 줄입니다.
-글로벌/로그인 | 해외 기관 로그인이 실제 인증으로 돕니다. | 새 로그인 하나로 합칩니다.
+글로벌/해외 기관 로그인 | 해외 기관(키르기스) 전용 로그인이 실제 인증으로 돕니다. 국내 로그인(인증 › 로그인)과는 다른 문입니다. | 새 로그인 하나로 합칩니다.
 글로벌/해외 서비스 | 키르기스 농업부 · 토지청 화면이 서버에 연결돼 돕니다. | 그대로 둡니다.
 공통/서체·색·형태 | 카카오 벤치의 서체 · 색 · 모양 비교는 "서체는 그대로, 제목 자간만 조정"으로 9월 27일 결론났습니다. 아직 공통 토큰에 넣지 않았습니다. | 공통 토큰에 넣고 27화면을 다시 만들 때 적용합니다.
 공통/토스 톤 | 관리자 · 직원 · 영업 모두 밝은 토스 톤으로 통일하기로 9월 27일 결정했습니다(검정 톤 뒤집음). 토스 원칙을 우리 말로 옮긴 것과 '가져오지 않을 것'도 정리돼 있습니다. | 새 시안 5개 → 27화면 재구현에 적용합니다.
@@ -590,6 +590,16 @@ const LABEL = {
   'xi-agent': '물어보기(에이전트) — 지도에 묻기', 'global-login': '해외 기관 로그인', 'global-index': '해외 서비스 — 키르기스 농업부', 'global-index-land': '해외 서비스 — 키르기스 토지청',
   'global-fonts-compare': '해외판 서체 비교', 'proto-dive': '하강 실험(8월 25일)', 'proto-charts': '표 · 차트 후보 6종', 'proto-fonts': '글꼴 · 블루 톤 후보', 'proto-system': '컴포넌트 시트', 'proto-shell-demo': '공용 셸 데모',
   'B6-MapWork-Opt3': '안 3 · 레이어가 곧 작업(뽑힘)', 'B6-MapWork-Opt1': '안 1 · 파이프라인 도크', 'B6-MapWork-Opt2': '안 2 · 단계 분할',
+  'B5-Dashboard-Data': '대시보드 원판 — 전국 한 판 · 학습데이터 켜고 끄기', 'B5-Dashboard': '관리자 대시보드 — AI 결과 켜고 끄기',
+  'B4-Dashboard': '4차 개편안 — 큰 숫자 문장 · 검정 바탕', 'B3-Dashboard': '축소안 — 지도 없는 현황 원장', 'B2-Dashboard': '1차 안 — 지도 위 원장',
+  'H-Dashboard-128': '대시보드 초안(집 PC에서 그린 것) — AI 결과 켜고 끄기', 'H-Dashboard-Data-128': '대시보드 초안(집 PC에서 그린 것) — 학습데이터 켜고 끄기',
+  'H-Projects-Roboflow': '프로젝트 목록 초안(집 PC) — 만들기 서랍', 'H-Project-Overview-Roboflow': '개요 초안(집 PC) — 고정 머리 + 탭 6', 'H-Project-Data-Roboflow': '데이터 탭 초안(집 PC) — 5열 격자',
+  'B6-Publish-Cards': '발행 카드 목록', 'B6-Publish-Cards-Empty': '발행 카드 0건', 'proto-ai-card': '발행 카드 목록(예전 화면)',
+};
+// 항목 아래 한 줄 설명 — 배지만으로 오해될 곳(예: 참고 자료가 이미 시안에 들어갔는데 배지는 '검토')
+const NOTE = {
+  'K-C': '새 로그인 시안의 왼쪽 소개 판에 이미 들어가 있습니다 — 새 로그인과 함께 판정합니다.',
+  'T-5-3': '새 로그인 시안의 왼쪽 소개 판에 이미 들어가 있습니다 — 새 로그인과 함께 판정합니다.',
 };
 const say = (s) => String(s || '')
   .replace(/\((v1|v2|v3 시안)\)/g, '').replace(/^D\d+ [①-⑩ⓐ-ⓩ] /, '').replace(/^(F\d|C\d|S\d) /, '').replace(/\(D\d+\)/g, '').replace(/\(집 PC\)/g, '')
@@ -624,11 +634,14 @@ const SPEC_IMG = { 'K-D19-3': ['kakao-sec-spec'], 'K-D21a': ['kakao-sec-spec'], 
   'T-5-1': ['toss-sheet-home', 'toss-webgl'], 'T-TONE': ['toss-sheet-sec'], 'T-CH0': ['toss-hero'], 'T-CH1': ['toss-seq'], 'T-CH2': ['toss-asset'], 'T-CH3': ['toss-invert'],
   'T-CH4': ['toss-shop'], 'T-CH5': ['toss-ad'], 'T-CH6': ['toss-globe'], 'T-CH7': ['toss-end'], 'T-5-3': ['v3-login-scenes', 'v3-login'], 'T-5-4': ['toss-sheet-pos', 'toss-sheet-sec'],
   'T-5-5': ['toss-strip-video'], 'T-5-6': ['toss-sheet-career'] };
-const TOSS_DOC = 'https://github.com/LandXI-Web/Main/blob/plan1-foundation/docs/superpowers/research/2026-09-27-bench-toss.md';
+const TOSS_DOC = `https://github.com/LandXI-Web/Main/blob/plan1-foundation/${TOSS}`;
 const thumbFile = (n, ext = 'jpg') => { const p = `${TH}/${n}.${ext}`; return fs.existsSync(p) ? p : null; };
 
 // ── 6. 조립 ─────────────────────────────────────────────────────────────────
 const sh = (cmd) => execSync(cmd, { encoding: 'utf8', maxBuffer: 64 << 20 });
+// 조사 문서 링크는 GitHub 에 올라간(커밋된) 파일만 건다 — 미커밋 파일이면 404 가 되므로 캡처만 둔다(다음 굽기에서 자동 복구)
+const tossPushed = sh(`git ls-files -- "${TOSS}"`).trim() !== '';
+if (!tossPushed) console.warn(`! 토스 조사 문서가 아직 커밋되지 않음 — 대장에 GitHub 링크를 걸지 않고 캡처만 둔다: ${TOSS}`);
 const addDates = {}; // repo path → 처음 들어온 날
 { let d = null; for (const line of sh('git log --diff-filter=A --reverse --format=@%ad --date=short --name-only -- design-canvas/v2 landxi').split('\n')) { if (line.startsWith('@')) d = line.slice(1); else if (line.trim() && !addDates[line.trim()]) addDates[line.trim()] = d; } }
 const canvas = JSON.parse(fs.readFileSync(V + 'canvas.json', 'utf8'));
@@ -672,7 +685,8 @@ for (const m of SPECS) {
   const media = [];
   if (img && fs.existsSync(img)) media.push({ kind: 'image', src: img, label: isK ? '카카오 벤치' : '토스 벤치' });
   for (const n of SPEC_IMG[m.id] || []) { const f = thumbFile(n); if (f) media.push({ kind: 'image', src: f, label: n.startsWith('v3-') ? '새 로그인 캡처' : isK ? '카카오 벤치' : '토스 벤치' }); }
-  const open = isK ? { kind: 'live', href: KAKAO + (m.anchor || ''), live: '벤치 페이지에서 보기', note: '' } : { kind: 'doc', href: TOSS_DOC, live: '조사 문서(GitHub)', note: '' };
+  const open = isK ? { kind: 'live', href: KAKAO + (m.anchor || ''), live: '벤치 페이지에서 보기', note: NOTE[m.id] || '' }
+    : tossPushed ? { kind: 'doc', href: TOSS_DOC, live: '조사 문서(GitHub)', note: NOTE[m.id] || '' } : { kind: 'capture', href: null, live: null, note: NOTE[m.id] || '' };
   assets.push({ id: m.id, kind: '스펙시먼', name: m.name, screen: m.screen, variant: m.variant, verdict: m.verdict, target: m.target, reason: m.reason, later: m.later,
     made: isK ? '2026-09-03' : '2026-09-27', files: { 원천: isK ? KAKAO + (m.anchor || '') : TOSS, 캡처: img && fs.existsSync(img) ? img : null }, media, open });
 }
@@ -807,7 +821,9 @@ for (const { function: fn, screens } of ledger.기능) {
     const live = items.filter((a) => a.verdict !== '폐기'), dead = items.filter((a) => a.verdict === '폐기');
     const slots = SLOT_ORDER.map((s) => [s, items.filter((a) => a.slot === s).length]).filter(([, n]) => n);
     const st = row.state;
-    body += `<div class="sc" id="${esc(row.anchor)}" data-sc="${esc(sc)}"><div class="sch"><h3>${esc(sc)}</h3><span class="state ${st.startsWith('쓰는 중') ? 'on' : st === '폐기됨' ? 'off' : ''}">${esc(st)}</span><span class="slots">${slots.map(([s, n]) => `<i>${esc(s)}<b>${n}</b></i>`).join('')}</span><a class="stl" href="status/index.html#st-${esc(row.anchor)}">구현 현황판 ›</a></div>
+    // 현황판 링크는 현황판에 실제로 그 행이 있을 때만(현황판은 구현·시안 화면만 다룬다 — 원판·참고만 있는 행으로 보내면 빈 곳에 떨어진다)
+    const onStatus = items.some((a) => a.kind === '구현' || a.kind === '시안');
+    body += `<div class="sc" id="${esc(row.anchor)}" data-sc="${esc(sc)}"><div class="sch"><h3>${esc(sc)}</h3><span class="state ${st.startsWith('쓰는 중') ? 'on' : st === '폐기됨' ? 'off' : ''}">${esc(st)}</span><span class="slots">${slots.map(([s, n]) => `<i>${esc(s)}<b>${n}</b></i>`).join('')}</span>${onStatus ? `<a class="stl" href="status/index.html#st-${esc(row.anchor)}">구현 현황판 ›</a>` : ''}</div>
 <p class="now"><b>지금</b> ${esc(row.now)}</p>${row.next ? `<p class="next"><b>다음 할 일</b> ${esc(row.next)}</p>` : ''}
 <div class="rowctl" role="group" aria-label="${esc(sc)} 화면 전체 판정"><span>이 화면 전체를</span>${VERDICTS.map((v) => `<button type="button" class="${VCLS[v]}" data-row-set="${v}">${v}</button>`).join('')}</div>`;
     if (live.length) body += `<div class="strip">${live.map(tile).join('')}</div>`;
@@ -829,7 +845,7 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 .eb{font:600 12px/1 Inter,Pretendard,sans-serif;letter-spacing:.08em;color:var(--mute)}
 h1{font:700 32px/1.2 Paperlogy,Pretendard,sans-serif;letter-spacing:-.03em;margin:8px 0 6px}
 .lead{margin:0 0 10px;color:var(--ink2);max-width:72ch}
-.links{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;margin:0 0 18px}
+.links{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;margin:0 0 18px}.links a.dim{color:var(--mute)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--ink2);margin:0 0 18px}.legend b{font-weight:700}.legend .ok{color:var(--ok)}.legend .rv{color:var(--rv)}.legend .dp{color:var(--dp)}
 #bar{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--line);padding:10px 0;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
 .tot{display:flex;gap:4px;flex-wrap:wrap}
@@ -918,7 +934,7 @@ details.dead .card.chg{opacity:1}
 <h1>화면마다 한 줄 — 지금 · 다음 · 그림</h1>
 <p class="lead">화면 하나가 한 줄입니다. 줄마다 <b>지금</b> 어떤 상태인지, <b>다음 할 일</b>이 무엇인지 한 문장으로 적고, 그 아래에 원판 → 예전 구현 → 새 구현 → 시안 → 참고 순서로 그림을 나란히 놓았습니다. 그림은 전부 이 사이트에서 바로 열립니다(서버가 있어야 도는 화면은 캡처·영상). 내부 코드·경로는 '개발 기록'에 접어 두었습니다.</p>
 <p class="legend"><b class="ok">적용</b> 지금 화면에 들어가 있음 · <b class="rv">검토</b> 다음에 쓸지 결정 대기 · <b class="dp">폐기</b> 다른 안이 대신함 &nbsp;|&nbsp; 화면 ${rows.length}줄 · 항목 ${S.전체}개</p>
-<div class="links"><a href="index.html">검토 허브</a><a href="status/index.html">구현 현황판</a><a href="bench-kakao.html">카카오 벤치</a><a href="assets.json">assets.json</a></div>
+<div class="links"><a href="index.html">검토 허브</a><a href="status/index.html">구현 현황판</a><a href="bench-kakao.html">카카오 벤치</a><a href="assets.json" class="dim" title="assets.json — 이 대장의 원본 자료(개발용)">원본 자료(개발)</a></div>
 <section id="dec" aria-labelledby="dec-h"><div class="dec-t"><b id="dec-h">내 결정<span id="dec-n">0</span></b><p>항목의 <b>적용 · 검토 · 폐기</b>를 누르거나, 줄 머리의 <b>이 화면 전체를</b> 버튼으로 한 번에 바꾸면 여기 모입니다. <b>결정 발행</b>으로 복사해 Claude 에게 붙여 넣으면 대장에 반영합니다.</p></div>
 <ol id="dec-list"></ol><p id="dec-empty">변경 없음</p>
 <div class="dec-act"><button type="button" id="dec-pub" class="pri" disabled>결정 발행</button><button type="button" id="dec-reset" disabled>되돌리기</button><span id="dec-msg" role="status" aria-live="polite"></span></div>

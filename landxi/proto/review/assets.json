@@ -1,6 +1,6 @@
 {
  "title": "Land-XI 자산 대장 — 화면마다 한 줄",
- "generated_at": "2026-09-27 13:20 KST",
+ "generated_at": "2026-09-27 13:47 KST",
  "생성기": "node tools/review/masters.mjs (매체: node tools/review/ledger-media.mjs)",
  "판정_기준": {
   "적용": "지금 사용자가 메뉴로 닿는 화면에 들어가 있음(applied_to)",
@@ -104,7 +104,7 @@
    "function": "카드 발행",
    "screens": [
     "승인·검토 데스크",
-    "카드 목록",
+    "발행 카드 목록",
     "카드 편집",
     "발행 요청"
    ]
@@ -195,7 +195,7 @@
   {
    "function": "글로벌",
    "screens": [
-    "로그인",
+    "해외 기관 로그인",
     "해외 서비스"
    ]
   },
@@ -219,7 +219,7 @@
    "key": "인증/로그인",
    "anchor": "sc-인증-로그인",
    "state": "쓰는 중 · 새 시안 있음",
-   "now": "지금은 예전 로그인이 쓰이고, 새 로그인은 시안 단계입니다. 새 로그인 왼쪽에는 Land-XI 소개(Hyper Performance · Solution · GeoAI 3축)가 실제 결과 지도 3장면(비슈케크 · 남원 · 여수)으로 돌아갑니다 — 8월 26일 결정 \"로그인 = 플랫폼 소개\". 카카오식 3축 소개와 토스식 장면 순환은 이 새 로그인에 이미 들어가 있습니다.",
+   "now": "예전 로그인이 쓰이고 있고, 새 로그인은 시안 단계입니다. 새 로그인 왼쪽에는 Land-XI 소개(Hyper Performance · Solution · GeoAI 3축)가 실제 결과 지도 3장면(비슈케크 · 남원 · 여수)으로 돌아갑니다 — 8월 26일 결정 \"로그인 = 플랫폼 소개\". 카카오식 3축 소개와 토스식 장면 순환은 이 새 로그인에 이미 들어가 있습니다.",
    "next": "새 로그인을 확정하면 예전 로그인을 교체하고, 관제·기관·해외 로그인도 이 문 하나로 합칩니다.",
    "ids": [
     "B5-Login",
@@ -416,7 +416,7 @@
    "key": "대시보드/직원 첫 화면",
    "anchor": "sc-대시보드-직원-첫-화면",
    "state": "쓰는 중 · 새 시안 있음",
-   "now": "지금 LX 직원이 로그인하면 전국 한 판 대시보드가 뜹니다. 새 안은 '생산 콘솔'(오늘 할 일 띠 + 지도 위 6단 서랍) 시안입니다.",
+   "now": "LX 직원이 로그인하면 전국 한 판 대시보드가 뜹니다. 새 안은 '생산 콘솔'(오늘 할 일 띠 + 지도 위 6단 서랍) 시안입니다.",
    "next": "생산 콘솔 시안을 확정하면 대시보드를 없애고 첫 화면을 교체합니다.",
    "ids": [
     "B5-Dashboard-Data",
@@ -819,11 +819,11 @@
   },
   {
    "function": "카드 발행",
-   "screen": "카드 목록",
-   "key": "카드 발행/카드 목록",
-   "anchor": "sc-카드-발행-카드-목록",
+   "screen": "발행 카드 목록",
+   "key": "카드 발행/발행 카드 목록",
+   "anchor": "sc-카드-발행-발행-카드-목록",
    "state": "쓰는 중",
-   "now": "카드 목록 화면이 있습니다(고정값).",
+   "now": "발행된 카드를 모아 보는 목록 화면이 있습니다(고정값). 분석 서비스의 카드 목록(서비스 카탈로그)과는 다른 화면입니다.",
    "next": "생산 콘솔 '조립'로 옮기고 카드 모양은 카카오 참고로 바꿉니다.",
    "ids": [
     "B6-Publish-Cards",
@@ -1533,11 +1533,11 @@
   },
   {
    "function": "글로벌",
-   "screen": "로그인",
-   "key": "글로벌/로그인",
-   "anchor": "sc-글로벌-로그인",
+   "screen": "해외 기관 로그인",
+   "key": "글로벌/해외 기관 로그인",
+   "anchor": "sc-글로벌-해외-기관-로그인",
    "state": "쓰는 중",
-   "now": "해외 기관 로그인이 실제 인증으로 돕니다.",
+   "now": "해외 기관(키르기스) 전용 로그인이 실제 인증으로 돕니다. 국내 로그인(인증 › 로그인)과는 다른 문입니다.",
    "next": "새 로그인 하나로 합칩니다.",
    "ids": [
     "global-login"
@@ -2197,7 +2197,7 @@
    "screen": "직원 첫 화면",
    "variant": "원판 B5",
    "name": "대시보드 — 전국 한 판 · 학습데이터 토글",
-   "label": "대시보드 — 전국 한 판 · 학습데이터 토글",
+   "label": "대시보드 원판 — 전국 한 판 · 학습데이터 켜고 끄기",
    "made": "2026-08-26",
    "files": {
     "원판": "design-canvas/v2/B5-Dashboard-Data.dc.html",
@@ -2227,7 +2227,7 @@
    "screen": "직원 첫 화면",
    "variant": "원판 B5",
    "name": "관리자 대시보드 — AI 결과 토글",
-   "label": "관리자 대시보드 — AI 결과 토글",
+   "label": "관리자 대시보드 — AI 결과 켜고 끄기",
    "made": "2026-08-26",
    "files": {
     "원판": "design-canvas/v2/B5-Dashboard.dc.html",
@@ -2255,7 +2255,7 @@
    "screen": "직원 첫 화면",
    "variant": "원판 B4",
    "name": "전면 개편 4차 — 124px 진술·검정 반전",
-   "label": "전면 개편 4차 — 124px 진술·검정 반전",
+   "label": "4차 개편안 — 큰 숫자 문장 · 검정 바탕",
    "made": "2026-08-26",
    "files": {
     "원판": "design-canvas/v2/B4-Dashboard.dc.html",
@@ -2283,7 +2283,7 @@
    "screen": "직원 첫 화면",
    "variant": "원판 B3",
    "name": "축소 현황 원장(지도 없음)",
-   "label": "축소 현황 원장(지도 없음)",
+   "label": "축소안 — 지도 없는 현황 원장",
    "made": "2026-08-26",
    "files": {
     "원판": "design-canvas/v2/B3-Dashboard.dc.html",
@@ -2311,7 +2311,7 @@
    "screen": "직원 첫 화면",
    "variant": "원판 B2",
    "name": "A안 지도 위 원장",
-   "label": "A안 지도 위 원장",
+   "label": "1차 안 — 지도 위 원장",
    "made": "2026-08-26",
    "files": {
     "원판": "design-canvas/v2/B2-Dashboard.dc.html",
@@ -2339,7 +2339,7 @@
    "screen": "직원 첫 화면",
    "variant": "원판 H(집 PC 초안)",
    "name": "12.8 초안 — AI 결과 토글(집 PC)",
-   "label": "12.8 초안 — AI 결과 토글",
+   "label": "대시보드 초안(집 PC에서 그린 것) — AI 결과 켜고 끄기",
    "made": "",
    "files": {
     "원판": "design-canvas/v2/H-Dashboard-128.dc.html",
@@ -2367,7 +2367,7 @@
    "screen": "직원 첫 화면",
    "variant": "원판 H(집 PC 초안)",
    "name": "12.8 초안 — 학습데이터 토글(집 PC)",
-   "label": "12.8 초안 — 학습데이터 토글",
+   "label": "대시보드 초안(집 PC에서 그린 것) — 학습데이터 켜고 끄기",
    "made": "",
    "files": {
     "원판": "design-canvas/v2/H-Dashboard-Data-128.dc.html",
@@ -2682,7 +2682,7 @@
    "screen": "목록(메인)",
    "variant": "원판 H(집 PC 초안)",
    "name": "목록 초안 — 만들기 드로어(집 PC)",
-   "label": "목록 초안 — 만들기 드로어",
+   "label": "프로젝트 목록 초안(집 PC) — 만들기 서랍",
    "made": "",
    "files": {
     "원판": "design-canvas/v2/H-Projects-Roboflow.dc.html",
@@ -2948,7 +2948,7 @@
    "screen": "개요",
    "variant": "원판 H(집 PC 초안)",
    "name": "개요 초안 — 고정 헤더 + 탭 6(집 PC)",
-   "label": "개요 초안 — 고정 헤더 + 탭 6",
+   "label": "개요 초안(집 PC) — 고정 머리 + 탭 6",
    "made": "",
    "files": {
     "원판": "design-canvas/v2/H-Project-Overview-Roboflow.dc.html",
@@ -3186,7 +3186,7 @@
    "screen": "데이터",
    "variant": "원판 H(집 PC 초안)",
    "name": "데이터 탭 초안 — 5열 그리드(집 PC)",
-   "label": "데이터 탭 초안 — 5열 그리드",
+   "label": "데이터 탭 초안(집 PC) — 5열 격자",
    "made": "",
    "files": {
     "원판": "design-canvas/v2/H-Project-Data-Roboflow.dc.html",
@@ -4310,10 +4310,10 @@
    "kind": "원판",
    "slot": "원판",
    "function": "카드 발행",
-   "screen": "카드 목록",
+   "screen": "발행 카드 목록",
    "variant": "원판 B6",
    "name": "카드 목록",
-   "label": "카드 목록",
+   "label": "발행 카드 목록",
    "made": "2026-09-20",
    "files": {
     "원판": "design-canvas/v2/B6-Publish-Cards.dc.html",
@@ -4340,10 +4340,10 @@
    "kind": "원판",
    "slot": "원판",
    "function": "카드 발행",
-   "screen": "카드 목록",
+   "screen": "발행 카드 목록",
    "variant": "원판 B6",
    "name": "카드 0건",
-   "label": "카드 0건",
+   "label": "발행 카드 0건",
    "made": "2026-09-20",
    "files": {
     "원판": "design-canvas/v2/B6-Publish-Cards-Empty.dc.html",
@@ -7962,10 +7962,10 @@
    "kind": "구현",
    "slot": "예전 구현",
    "function": "카드 발행",
-   "screen": "카드 목록",
+   "screen": "발행 카드 목록",
    "variant": "구현 v1",
    "name": "카드 목록(v1)",
-   "label": "카드 목록",
+   "label": "발행 카드 목록(예전 화면)",
    "made": "2026-09-20",
    "files": {
     "구현": "landxi/proto/ai-card.html",
@@ -9723,7 +9723,7 @@
    "kind": "구현",
    "slot": "새 구현",
    "function": "글로벌",
-   "screen": "로그인",
+   "screen": "해외 기관 로그인",
    "variant": "구현 v2",
    "name": "Global 로그인(v2)",
    "label": "해외 기관 로그인",
@@ -10126,8 +10126,8 @@
     "캡처": "landxi/proto/review/assets-thumbs/kakao-C.jpg"
    },
    "verdict": "검토",
-   "reason": "9/27 D21ⓑ 적용 결정 — 아직 어느 화면에도 없음",
-   "next": "적용 예정(D21ⓑ): v3 정문 로그인(landxi/v3/login) 소개 판 — 토스 5-3 장면 순환과 합침",
+   "reason": "9/27 D21ⓑ 적용 결정 → 새 로그인 시안(v3-login)에 들어감 · 시안 판정 대기",
+   "next": "v3 정문 로그인(landxi/v3/login) 소개 판에 반영됨(D21ⓑ) — 토스 5-3 장면 순환과 합침 · 새 로그인 시안과 함께 판정",
    "media": [
     {
      "kind": "image",
@@ -10139,7 +10139,7 @@
     "kind": "live",
     "href": "landxi/proto/review/bench-kakao.html#specC",
     "live": "벤치 페이지에서 보기",
-    "note": ""
+    "note": "새 로그인 시안의 왼쪽 소개 판에 이미 들어가 있습니다 — 새 로그인과 함께 판정합니다."
    }
   },
   {
@@ -10668,9 +10668,9 @@
     }
    ],
    "open": {
-    "kind": "doc",
-    "href": "https://github.com/LandXI-Web/Main/blob/plan1-foundation/docs/superpowers/research/2026-09-27-bench-toss.md",
-    "live": "조사 문서(GitHub)",
+    "kind": "capture",
+    "href": null,
+    "live": null,
     "note": ""
    }
   },
@@ -10699,9 +10699,9 @@
     }
    ],
    "open": {
-    "kind": "doc",
-    "href": "https://github.com/LandXI-Web/Main/blob/plan1-foundation/docs/superpowers/research/2026-09-27-bench-toss.md",
-    "live": "조사 문서(GitHub)",
+    "kind": "capture",
+    "href": null,
+    "live": null,
     "note": ""
    }
   },
@@ -10730,9 +10730,9 @@
     }
    ],
    "open": {
-    "kind": "doc",
-    "href": "https://github.com/LandXI-Web/Main/blob/plan1-foundation/docs/superpowers/research/2026-09-27-bench-toss.md",
-    "live": "조사 문서(GitHub)",
+    "kind": "capture",
+    "href": null,
+    "live": null,
     "note": ""
    }
   },
@@ -10761,9 +10761,9 @@
     }
    ],
    "open": {
-    "kind": "doc",
-    "href": "https://github.com/LandXI-Web/Main/blob/plan1-foundation/docs/superpowers/research/2026-09-27-bench-toss.md",
-    "live": "조사 문서(GitHub)",
+    "kind": "capture",
+    "href": null,
+    "live": null,
     "note": ""
    }
   },
@@ -10792,9 +10792,9 @@
     }
    ],
    "open": {
-    "kind": "doc",
-    "href": "https://github.com/LandXI-Web/Main/blob/plan1-foundation/docs/superpowers/research/2026-09-27-bench-toss.md",
-    "live": "조사 문서(GitHub)",
+    "kind": "capture",
+    "href": null,
+    "live": null,
     "note": ""
    }
   },
@@ -10823,9 +10823,9 @@
     }
    ],
    "open": {
-    "kind": "doc",
-    "href": "https://github.com/LandXI-Web/Main/blob/plan1-foundation/docs/superpowers/research/2026-09-27-bench-toss.md",
-    "live": "조사 문서(GitHub)",
+    "kind": "capture",
+    "href": null,
+    "live": null,
     "note": ""
    }
   },
@@ -10854,9 +10854,9 @@
     }
    ],
    "open": {
-    "kind": "doc",
-    "href": "https://github.com/LandXI-Web/Main/blob/plan1-foundation/docs/superpowers/research/2026-09-27-bench-toss.md",
-    "live": "조사 문서(GitHub)",
+    "kind": "capture",
+    "href": null,
+    "live": null,
     "note": ""
    }
   },
@@ -10885,9 +10885,9 @@
     }
    ],
    "open": {
-    "kind": "doc",
-    "href": "https://github.com/LandXI-Web/Main/blob/plan1-foundation/docs/superpowers/research/2026-09-27-bench-toss.md",
-    "live": "조사 문서(GitHub)",
+    "kind": "capture",
+    "href": null,
+    "live": null,
     "note": ""
    }
   },
@@ -10916,9 +10916,9 @@
     }
    ],
    "open": {
-    "kind": "doc",
-    "href": "https://github.com/LandXI-Web/Main/blob/plan1-foundation/docs/superpowers/research/2026-09-27-bench-toss.md",
-    "live": "조사 문서(GitHub)",
+    "kind": "capture",
+    "href": null,
+    "live": null,
     "note": ""
    }
   },
@@ -10947,9 +10947,9 @@
     }
    ],
    "open": {
-    "kind": "doc",
-    "href": "https://github.com/LandXI-Web/Main/blob/plan1-foundation/docs/superpowers/research/2026-09-27-bench-toss.md",
-    "live": "조사 문서(GitHub)",
+    "kind": "capture",
+    "href": null,
+    "live": null,
     "note": ""
    }
   },
@@ -10968,8 +10968,8 @@
     "캡처": null
    },
    "verdict": "검토",
-   "reason": "9/27 토스 벤치 적용안 — 판정 전",
-   "next": "v3 정문 로그인(landxi/v3/login) — 로그인 3축(스펙시먼 C)과 합침",
+   "reason": "9/27 토스 벤치 적용안 → 새 로그인 시안(v3-login)에 들어감 · 시안 판정 대기",
+   "next": "v3 정문 로그인(landxi/v3/login) 소개 판에 반영됨 — 로그인 3축(스펙시먼 C)과 합침 · 새 로그인 시안과 함께 판정",
    "media": [
     {
      "kind": "image",
@@ -10983,10 +10983,10 @@
     }
    ],
    "open": {
-    "kind": "doc",
-    "href": "https://github.com/LandXI-Web/Main/blob/plan1-foundation/docs/superpowers/research/2026-09-27-bench-toss.md",
-    "live": "조사 문서(GitHub)",
-    "note": ""
+    "kind": "capture",
+    "href": null,
+    "live": null,
+    "note": "새 로그인 시안의 왼쪽 소개 판에 이미 들어가 있습니다 — 새 로그인과 함께 판정합니다."
    }
   },
   {
@@ -11019,9 +11019,9 @@
     }
    ],
    "open": {
-    "kind": "doc",
-    "href": "https://github.com/LandXI-Web/Main/blob/plan1-foundation/docs/superpowers/research/2026-09-27-bench-toss.md",
-    "live": "조사 문서(GitHub)",
+    "kind": "capture",
+    "href": null,
+    "live": null,
     "note": ""
    }
   },
@@ -11050,9 +11050,9 @@
     }
    ],
    "open": {
-    "kind": "doc",
-    "href": "https://github.com/LandXI-Web/Main/blob/plan1-foundation/docs/superpowers/research/2026-09-27-bench-toss.md",
-    "live": "조사 문서(GitHub)",
+    "kind": "capture",
+    "href": null,
+    "live": null,
     "note": ""
    }
   },
@@ -11081,9 +11081,9 @@
     }
    ],
    "open": {
-    "kind": "doc",
-    "href": "https://github.com/LandXI-Web/Main/blob/plan1-foundation/docs/superpowers/research/2026-09-27-bench-toss.md",
-    "live": "조사 문서(GitHub)",
+    "kind": "capture",
+    "href": null,
+    "live": null,
     "note": ""
    }
   }
