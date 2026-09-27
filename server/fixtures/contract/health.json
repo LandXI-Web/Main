@@ -11,9 +11,33 @@
    "gpu": 2,
    "cpu": 1
   },
-  "at": "2026-09-24T14:02:11+09:00"
+  "at": "2026-09-24T14:02:11+09:00",
+  "recovered_at_boot": {
+   "resumed": 1,
+   "requeued": 0,
+   "failed": 0,
+   "by": "gateway",
+   "at": "2026-09-27T02:33:49+09:00",
+   "jobs": [
+    {
+     "job_id": "job_01M3FCEVNBEKDY69D50BTFZ92P",
+     "mode": "resumed",
+     "shards_done": 224,
+     "shards_total": 378,
+     "reason": "worker heartbeat 0 (a6000-0) · 재부팅/종료"
+    }
+   ],
+   "gateway_sweep": {
+    "resumed": 1,
+    "already": 0,
+    "skipped": false
+   }
+  }
  },
- "optional": [],
+ "optional": [
+  "boot_at",
+  "ext_routers"
+ ],
  "optional_nested": {},
  "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
 }

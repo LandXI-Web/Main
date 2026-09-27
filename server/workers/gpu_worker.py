@@ -45,6 +45,11 @@ WHO = WID
 PWR = config.load_yaml("pools").get("power", {}) or {}
 MAX_HOT = int(PWR.get("max_hot_gpus", 1))
 LEASE_TTL = int(PWR.get("lease_ttl_s", 20))
+OTHER_HOT_W = float(PWR.get("other_gpu_hot_w", 120))       # 다른 GPU(vLLM · Ollama 등 · 임대 밖) 전력 이동평균이 이보다 높으면 새 묶음을 잠시 미룬다
+OTHER_WAIT_LOG_S = float(PWR.get("other_wait_log_s", 15))  # 대기 중 로그·HUD 사유 갱신 주기(폴백 진행 없음 — 사용자 절대 규칙: 두 장 동시 고부하 금지)
+GATE_CHUNK = max(1, int(PWR.get("gate_chunk", 8)))          # 읽어 간 묶음 안에서도 이 칸 수마다 다른 GPU 를 다시 본다(이미 읽은 묶음과의 겹침 제거)
+FAST_POLL_S = float(PWR.get("fast_poll_s", 0.1))            # NVML 순간 전력 폴링(반응 지연 ↓)
+QUIET_S = float(PWR.get("other_quiet_s", 20))               # 다른 GPU 가 내려간 뒤 이만큼 조용해야 재개(에이전트 LLM 호출은 몇 초 간격으로 몰려 온다 — 실측 겹침 3구간 중 2구간이 재개 2·14 s 뒤)
 IDLE_RELEASE = float(PWR.get("idle_release_s", 3))
 lease = {"slot": None, "last_work": 0.0, "waiting": False}
 
@@ -79,7 +84,145 @@ def power_release(reason: str = "idle"):
     log(WHO, f"power lease {k} 반납({reason})")
     lease["slot"] = None
 
-state = {"job_id": None, "budget": 0, "external": 0, "gpu_util": {}, "gpu_mem": {}}
+state = {"job_id": None, "budget": 0, "external": 0, "gpu_util": {}, "gpu_mem": {}, "other_since": None, "other_logged": 0.0,
+         "gate_total_s": 0.0, "gate_job": None, "last_job": None}
+
+
+def nvml_loop():
+    """NVML 순간 전력 0.1 s 폴링 → smi['pfast'] — nvidia-smi -lms 500 스트림은 0.5–1 s 늦게 안다(겹침 원인 2)."""
+    from workers import nvml_power
+    if not nvml_power.available():
+        log(WHO, "NVML 전력 폴링 불가 — nvidia-smi 스트림(0.5 s)만으로 게이트")
+        return
+    log(WHO, f"NVML 전력 폴링 {FAST_POLL_S * 1000:.0f} ms · {nvml_power.read()} W")
+    while True:
+        try:
+            v = nvml_power.read()
+            if v:
+                smi["pfast"], smi["pfast_at"], smi["pfast_mode"] = v, time.time(), nvml_power.mode()
+        except Exception as e:
+            log(WHO, "nvml error", repr(e))
+            time.sleep(2)
+        time.sleep(FAST_POLL_S)
+
+
+def other_gpu_hot():
+    """이 워커 밖 GPU 가 고부하인가 → (index, W) | None. 전력 규칙(동시 고부하 ≤ 1장)을 임대 밖 부하(vLLM · Ollama)까지.
+    NVML 순간값(0.1 s · 신선할 때) · nvidia-smi 최신 표본 · 5표본 이동평균 중 가장 큰 값으로 본다(켜질 땐 빨리 · 꺼질 땐 보수적으로)."""
+    fast = smi.get("pfast") or {}
+    fresh = time.time() - float(smi.get("pfast_at") or 0) < 0.5
+    idx = set(fast) | set((smi.get("pring") or {}).keys())
+    for i in sorted(idx):
+        if i == A.gpu:
+            continue
+        ring = list((smi.get("pring") or {}).get(i) or [])
+        cand = []
+        if ring:
+            cand += [sum(ring) / len(ring), ring[-1]]
+        if fresh and i in fast:
+            cand.append(fast[i])
+        if cand and max(cand) > OTHER_HOT_W:
+            return i, round(max(cand), 1)
+    return None
+
+
+def gate_block():
+    """→ (gpu, W, 남은 조용 s) | None. 다른 GPU 가 지금 고부하이거나, 내려간 지 QUIET_S 가 안 됐으면 막는다(히스테리시스)."""
+    hot = other_gpu_hot()
+    now = time.time()
+    if not hot:
+        try:
+            req = r().get(bus.LLM_REQ)          # LLM 호출 예고(협조 임대) — GPU1 이 오르기 전에 먼저 멈춘다
+        except Exception:
+            req = None
+        if req:
+            g = 1 if A.gpu != 1 else 0
+            hot = (g, round(float((smi.get("pfast") or {}).get(g) or 0), 1))
+            state["other_req"] = req
+    if hot:
+        state["other_last_hot"], state["other_last"] = now, hot
+        return hot[0], hot[1], QUIET_S
+    left = QUIET_S - (now - float(state.get("other_last_hot") or 0))
+    if left > 0 and state.get("other_last"):
+        g = state["other_last"][0]
+        cur = (smi.get("pfast") or {}).get(g) or (smi.get("power") or {}).get(g) or 0
+        return g, round(float(cur), 1), round(left, 1)
+    return None
+
+
+def _gate_note(hot, waited: float, where: str):
+    """대기 로그 · 하트비트 · HUD 사유(job.progress.power_gate) 갱신 — 진행은 하지 않는다."""
+    cooling = hot[1] <= OTHER_HOT_W
+    req = r().get(bus.LLM_REQ)
+    msg = (f"LLM 호출 예고({req}) · GPU{hot[0]} {hot[1]} W · 대기 {waited:.0f}s" if req else
+           f"GPU{hot[0]} {hot[1]} W · 식는 중(조용 {QUIET_S:.0f}s 확인 · 남은 {hot[2]:.0f}s) · 대기 {waited:.0f}s" if cooling
+           else f"GPU{hot[0]} {hot[1]} W > {OTHER_HOT_W:.0f} W · 대기 {waited:.0f}s")
+    r().hset(f"worker:{WID}:hb", mapping={"power_gate": msg, "power_gate_since": state["other_since"] or time.time()})
+    log(WHO, f"power gate 대기({where}) · {msg} · 임대 밖 부하(vLLM/Ollama) — 두 장 동시 고부하 금지 · 폴백 진행 없음")
+    jid = state.get("job_id") or state.get("gate_job") or state.get("last_job")
+    if jid:
+        jh = bus.job(jid)
+        if jh and jh.get("state") == "running":
+            progress(jid, jh, force=True, gate={"waiting": True, "gpu": hot[0], "w": hot[1], "limit_w": OTHER_HOT_W,
+                                                "waited_s": round(waited, 1), "where": where,
+                                                "quiet_left_s": hot[2],
+                                                "reason": (f"전력 규칙 · LLM 호출 예고 — GPU{hot[0]} 차례" if req else
+                                                           f"전력 규칙 · GPU{hot[0]} 식는 중 — {hot[2]:.0f}s 뒤 재개" if cooling
+                                                           else f"전력 규칙 · GPU{hot[0]} 고부하 {hot[1]:.0f} W — 내려갈 때까지 대기")})
+
+
+def _gate_clear():
+    if state["other_since"]:
+        waited = time.time() - state["other_since"]
+        state["gate_total_s"] = state.get("gate_total_s", 0.0) + waited
+        log(WHO, f"power gate 해제 · 다른 GPU 부하 내려감({waited:.1f}s 대기 · 누적 {state['gate_total_s']:.1f}s)")
+        r().hdel(f"worker:{WID}:hb", "power_gate", "power_gate_since")
+    state["other_since"], state["other_logged"] = None, 0.0
+
+
+def power_gate() -> int:
+    """→ 이번 묶음 크기(0 = 기다림). 다른 GPU 가 고부하면 내려갈 때까지 새 묶음을 읽지 않는다.
+    (v2 의 '30 s 뒤 batch 4 폴백'은 없앰 — 판정 실측 겹침 12표본의 원인 · 사용자 절대 규칙이 기아 방지보다 우선)"""
+    hot = gate_block()
+    if not hot:
+        _gate_clear()
+        return BATCH
+    now = time.time()
+    if not state["other_since"]:
+        state["other_since"] = now
+    if now - (state["other_logged"] or 0) >= OTHER_WAIT_LOG_S:
+        state["other_logged"] = now
+        _gate_note(hot, now - state["other_since"], "묶음 전")
+    return 0
+
+
+def hold_while_other_hot(job_id: str, shard_ids: list) -> float:
+    """읽어 간 묶음 안(칸 사이)에서 다른 GPU 가 고부하가 되면 멈춘다 → 멈춘 초(계량 gpu_s 에서 뺀다).
+    멈춘 동안 임대 TTL · 비행 기록 ts 를 갱신해 고아 감시가 재배정하지 않게 한다."""
+    hot = gate_block()
+    if not hot:
+        return 0.0
+    t0 = time.time()
+    state["gate_job"] = job_id
+    if not state["other_since"]:
+        state["other_since"] = t0
+    last_note = 0.0
+    while hot:
+        now = time.time()
+        if now - last_note >= OTHER_WAIT_LOG_S:
+            last_note = now
+            _gate_note(hot, now - state["other_since"], "묶음 안")
+            if lease["slot"] is not None:
+                r().expire(f"power:hot:{lease['slot']}", LEASE_TTL)
+            for sid in shard_ids:
+                bus.inflight_touch(POOL, job_id, sid)
+        time.sleep(0.1)
+        hot = gate_block()
+    _gate_clear()
+    state["gate_job"] = None
+    return time.time() - t0
+
+
 models: "OrderedDict[str, tuple]" = OrderedDict()   # model_id → (adapter, meta, mib)
 _local = threading.local()
 
@@ -183,40 +326,157 @@ def vram_reporter():
         time.sleep(2)
 
 
-def smi_sampler():
+SMI_WIN = 5          # 이동평균 표본 수(0.5 s × 5 ≈ 2.5 s · v1.1-7)
+smi = {"ring": {}, "power": {}, "mem": {}, "total": {}, "raw": {}, "at": 0.0, "pdh": {}, "pdh_at": 0.0, "src": None,
+       "linked": False, "invalid": False}
+
+
+def _pdh_dedicated() -> dict:
+    """Windows PDH 'GPU Adapter Memory(*_phys_i)/Dedicated Usage' → {i: MiB}. 연결 어댑터(두 장이 한 LUID)일 때만(≈2.5 s)."""
+    import re as _re
+    import subprocess
+    out = subprocess.run(["typeperf", "\\GPU Adapter Memory(*)\\Dedicated Usage", "-sc", "1"], capture_output=True, text=True, timeout=15,
+                         encoding="mbcs", errors="replace", creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0)).stdout
+    lines = [ln for ln in out.splitlines() if ln.startswith('"')]
+    if len(lines) < 2:
+        return {}
+    hdr = [h.strip('"') for h in lines[0].split('","')]
+    val = [v.strip('"') for v in lines[1].split('","')]
+    groups: dict = {}
+    for h, v in zip(hdr[1:], val[1:]):
+        m = _re.search(r"luid_(0x[0-9A-Fa-f]+_0x[0-9A-Fa-f]+)_phys_(\d+)", h)
+        if m:
+            try:
+                groups.setdefault(m.group(1), {})[int(m.group(2))] = int(float(v) / 2**20)
+            except ValueError:
+                pass
+    best = max(groups.values(), key=lambda g: (len(g), sum(g.values())), default={})
+    return best if len(best) >= 2 else {}
+
+
+def _pdh_loop():
     while True:
         try:
-            for g in vram.query_raw():          # 표시용 — nvidia-smi 그대로(WDDM 연결 어댑터면 mem 은 두 장이 같은 값)
-                state["gpu_util"][g["index"]] = g["util"]
-                state["gpu_mem"][g["index"]] = g["used"]
+            if smi.get("linked") or smi.get("invalid"):
+                d = _pdh_dedicated()
+                if d:
+                    smi["pdh"], smi["pdh_at"] = d, time.time()
         except Exception:
             pass
-        time.sleep(1)
+        time.sleep(15)
+
+
+def smi_sampler():
+    """nvidia-smi -lms 500 스트림(DriverStore 최신 · LX_NVSMI 우선) → GPU 별 링버퍼 5 → util 이동평균 · power_w(v1.1-7 · v1.1-18)."""
+    import subprocess
+    cmd = [bus.nvsmi(), "--query-gpu=index,utilization.gpu,power.draw,memory.used,memory.total", "--format=csv,noheader,nounits", "-lms", "500"]
+    smi["src"] = "nvidia-smi -lms 500"
+    threading.Thread(target=_pdh_loop, daemon=True).start()
+    while True:
+        try:
+            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1,
+                                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            for line in p.stdout:
+                v = [x.strip() for x in line.split(",")]
+                if len(v) < 5:
+                    continue
+                try:
+                    i, u = int(v[0]), float(v[1])
+                except ValueError:
+                    continue
+                smi["ring"].setdefault(i, deque(maxlen=SMI_WIN)).append(u)
+                smi["raw"][i] = u
+                try:
+                    smi["power"][i] = round(float(v[2]), 1)
+                    smi.setdefault("pring", {}).setdefault(i, deque(maxlen=SMI_WIN)).append(float(v[2]))
+                except ValueError:
+                    smi["power"][i] = None
+                try:
+                    used, tot = float(v[3]), float(v[4])
+                    smi["total"][i] = tot
+                    smi["invalid"] = not (0 <= used <= tot)
+                    smi["mem"][i] = None if smi["invalid"] else int(used)
+                except ValueError:
+                    smi["mem"][i] = None
+                vals = [x for x in smi["mem"].values() if x is not None]
+                smi["linked"] = len(smi["mem"]) > 1 and len(vals) == len(smi["mem"]) and len(set(vals)) == 1
+                smi["at"] = time.time()
+                state["gpu_util"][i] = u          # 호환(예전 이름)
+                state["gpu_mem"][i] = smi["mem"][i]
+        except Exception as e:
+            log(WHO, "smi stream error", repr(e))
+        time.sleep(2)
+
+
+def gpu_list(job_id):
+    """job.progress.gpu[] — util_pct = 최근 5표본 이동평균(카드 전체 · 공유) · power_w · mem · gpu_s_so_far(이 작업 · 그 GPU 워커 몫)."""
+    out = []
+    per = {}
+    if job_id:
+        h = r().hgetall(f"job:{job_id}")
+        per = {kk.split(":", 1)[1]: float(vv) for kk, vv in h.items() if kk.startswith("gpu_s:")}
+    for i in sorted(smi["ring"]):
+        ring = list(smi["ring"][i])
+        ma = moving_avg(ring)
+        mem, note = smi["mem"].get(i), None
+        if (smi.get("linked") or mem is None) and smi.get("pdh"):
+            mem, note = smi["pdh"].get(i, mem), "PDH Dedicated Usage(phys_%d · index 대응은 PCI 순서 가정) — nvidia-smi 는 연결 어댑터 합계값" % i
+        elif smi.get("linked"):
+            note = "nvidia-smi 연결 어댑터 합계값(두 장 같은 값) — 장별 아님"
+        elif mem is None:
+            note = "nvidia-smi memory.used 무효값(언더플로) — 결손"
+        wid = f"{POOL}-{i}"
+        out.append({"index": i, "util_pct": ma, "util_raw": smi["raw"].get(i), "samples": len(ring), "power_w": smi["power"].get(i),
+                    "mem_used_mib": mem, "mem_note": note, "shared": True, "worker": wid,
+                    "gpu_s_so_far": round(per[wid], 2) if wid in per else (0.0 if job_id else None),
+                    "source": f"{smi['src']} · 이동평균 {SMI_WIN}표본(≈{SMI_WIN * 0.5:.1f}s) · 카드 전체(공유)"})
+    return out
 
 
 # ── 진행 이벤트 ────────────────────────────────────────────────────────────────
-def progress(job_id: str, jh: dict):
-    if not r().set(f"job:{job_id}:progress_lock", WID, nx=True, px=900):
+from workers.perf import CPS_WINDOW_S, chips_rate as _rate, moving_avg  # noqa: E402
+
+
+def chips_rate(job_id: str, jh: dict, done: int, now: float):
+    """진행 중 chips_per_s(v1.1-5 · workers/perf.py 규칙): 창 ≥ 1 s 이고 완료 shard ≥ 8 일 때만 값 · 그 전엔 None + '창 짧음'."""
+    k = f"job:{job_id}:ts"
+    r().zremrangebyscore(k, 0, now - CPS_WINDOW_S)
+    n10 = r().zcount(k, now - CPS_WINDOW_S, now)
+    first = float(jh.get("first_done_ts") or now)
+    span = min(CPS_WINDOW_S, now - first)
+    v, note = _rate(n10, now - first, done)
+    return v, round(max(span, 0), 2), note
+
+
+def progress(job_id: str, jh: dict, force: bool = False, gate: dict | None = None):
+    """≤ 1회/s(progress_lock 900 ms) · 마지막 shard 뒤에는 lock 을 우회해 shards_done == shards_total 인 progress 를 1회 반드시(v1.1-8)."""
+    done = int(r().hget(f"job:{job_id}", "shards_done") or 0)
+    failed = int(r().hget(f"job:{job_id}", "shards_failed") or 0)
+    total = int(jh.get("shards_total") or 0)
+    final = total > 0 and done + failed >= total
+    if final and gate:
+        return
+    if final:
+        if not r().set(f"job:{job_id}:final_progress", WID, nx=True, ex=7 * 86400):
+            return
+    elif not force and not r().set(f"job:{job_id}:progress_lock", WID, nx=True, px=900):
         return
     now = time.time()
-    k = f"job:{job_id}:ts"
-    r().zremrangebyscore(k, 0, now - 10)
-    n10 = r().zcount(k, now - 10, now)
-    first = float(jh.get("first_done_ts") or now)
-    span = min(10.0, max(now - first, 0.5))
-    cps = round(n10 / span, 2) if n10 else None
+    cps, span, cps_note = chips_rate(job_id, jh, done, now)
     counts = {kk: int(v) for kk, v in r().hgetall(f"job:{job_id}:counts").items()}
-    done = int(r().hget(f"job:{job_id}", "shards_done") or 0)
-    total = int(jh.get("shards_total") or 0)
     started = float(jh.get("started_ts") or now)
     if cps is not None:
         r().hset(f"job:{job_id}", "chips_per_s", cps)
     r().hset(f"job:{job_id}", "counts", json.dumps(counts, ensure_ascii=False))
+    gs = float(r().hget(f"job:{job_id}", "gpu_s") or 0)
     emit(job_id, "job.progress", {
-        "job_id": job_id, "shards_done": done, "shards_total": total, "counts": counts,
-        "chips_per_s": env(cps, "chips_per_s", "measured", "gpu_worker 계량(창 10s · 전 워커 합)", None if cps else "첫 shard 뒤 채워짐"),
-        "elapsed_s": round(now - started, 1),
-        "gpu": [{"index": i, "util_pct": state["gpu_util"].get(i), "mem_used_mib": state["gpu_mem"].get(i)} for i in sorted(state["gpu_util"])],
+        "job_id": job_id, "shards_done": done, "shards_total": total, "shards_failed": failed, "counts": counts,
+        "chips_per_s": env(cps, "chips_per_s", "measured", f"gpu_worker 계량(창 {span:.1f}s · 전 워커 합)",
+                           cps_note or f"최근 {CPS_WINDOW_S:.0f}s 창"),
+        "gpu_s_so_far": env(round(gs, 2), "gpu_s", "measured", "usage_events(이 작업 누적)"),
+        "elapsed_s": round(now - started, 1), "final": final,
+        "gpu": gpu_list(job_id),
+        "power_gate": gate or {"waiting": False, "waited_total_s": round(state.get("gate_total_s", 0.0), 1)},
         "at": now_iso(ms=True)})
 
 
@@ -270,7 +530,7 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
     mid = jh.get("model_id")
     ad, meta, _ = ensure_model(mid)
     path = imagery_path(jh.get("imagery_id"))
-    state["job_id"] = job_id
+    state["job_id"] = state["last_job"] = job_id
     if not r().hget(f"job:{job_id}", "worker_seen:" + WID):
         r().hset(f"job:{job_id}", "worker_seen:" + WID, 1)
         ws = json.loads(r().hget(f"job:{job_id}", "workers") or "[]")
@@ -279,10 +539,12 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
             r().hset(f"job:{job_id}", "workers", json.dumps(sorted(ws)))
         bus.lane(WID, {"job_id": job_id, "from": now_iso(), "to": None, "state": "running", "tenant_id": tenant})
     shards = []
+    attempts = {}
     for eid, f in entries:
         w = json.loads(f.get("window") or "null")
         s = Shard(f["shard_id"], job_id, tuple(json.loads(f["bbox"])), w, json.loads(f.get("params") or "null"))
         shards.append(s)
+        attempts[s.id] = bus.inflight_start(POOL, job_id, s.id, f, WID)      # 고아 감시(v1.1-14)
         emit(job_id, "shard.started", {"job_id": job_id, "shard_id": s.id, "bbox": list(s.bbox4326), "worker": WID, "at": now_iso(ms=True)})
     t0 = time.perf_counter()
     futs = {s.id: pool_io.submit(read_window, path, s.window) for s in shards}
@@ -297,8 +559,12 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
         reader(s)
     t_read = time.perf_counter() - t0
     run = getattr(ad, "run_batch", None)
-    results = run(shards, reader, opts) if run else run_batch_default(ad, shards, reader, opts)
-    t_all = time.perf_counter() - t0
+    results, held = [], 0.0
+    for c0 in range(0, len(shards), GATE_CHUNK):       # 칸 묶음 사이마다 다른 GPU 확인 — 고부하면 멈춤(전력 규칙 · 폴백 없음)
+        part = shards[c0:c0 + GATE_CHUNK]
+        held += hold_while_other_hot(job_id, [x.id for x in shards[c0:]])
+        results += run(part, reader, opts) if run else run_batch_default(ad, part, reader, opts)
+    t_all = time.perf_counter() - t0 - held             # 전력 게이트 대기는 GPU 시간이 아니다
     per_ms = int(t_all * 1000 / max(1, len(shards)))
     sdir = bus.shard_dir(tenant, job_id, demo)
     sdir.mkdir(parents=True, exist_ok=True)
@@ -322,12 +588,19 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
             write_db(conn_db, job_id, tenant, rows)
         meter(conn_db, tenant=tenant, demo=demo, job_id=job_id, dim="gpu_s", amount=round(t_all, 3))
         conn_db.commit()
+        r().hincrbyfloat(f"job:{job_id}", "gpu_s:" + WID, round(t_all, 3))     # 이 작업 · 이 GPU 몫(gpu[].gpu_s_so_far)
+        bus.shard_ms_record(meta.get("id") or "gpu", per_ms)
     except Exception as e:
         conn_db.rollback()
         log(WHO, "db error", e)
         raise
     now = time.time()
+    live = bus.job(job_id).get("state")
     for s, res in done_now:
+        if live in ("cancelled", "failed") or not bus.inflight_owned(POOL, job_id, s.id, attempts.get(s.id, 0)):
+            log(WHO, f"shard {s.id} 결과 버림(감시자가 재배정했거나 작업 종료: {live})")
+            continue
+        bus.inflight_end(POOL, job_id, s.id)
         new = r().sadd(f"job:{job_id}:done", s.id)
         if new:
             r().hincrby(f"job:{job_id}", "shards_done", 1)
@@ -351,15 +624,17 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
     failed = int(jh.get("shards_failed") or 0)
     total = int(jh.get("shards_total") or 0)
     if total and done + failed >= total and r().set(f"job:{job_id}:finalize", WID, nx=True):
-        r().xadd("finalize:cpu", {"job_id": job_id, "by": WID, "at": now_iso()})
+        lane = "finalize:cpu:small" if total <= 16 else "finalize:cpu"          # 작은 작업 우선 레인(v1.1-17)
+        r().xadd(lane, {"job_id": job_id, "by": WID, "at": now_iso()})
         bus.lane(WID, {"job_id": job_id, "to": now_iso(), "state": "done"})
-        log(WHO, f"job {job_id} 전 shard 완료 → finalize:cpu (read {t_read*1000:.0f}ms/batch)")
+        log(WHO, f"job {job_id} 전 shard 완료 → {lane} (read {t_read*1000:.0f}ms/batch)")
     state["job_id"] = None
 
 
 def fail(job_id: str, entries, err: str):
     for eid, f in entries:
         att = int(f.get("attempt", 0))
+        bus.inflight_end(POOL, job_id, f["shard_id"])
         if att < 2:
             r().xadd(STREAM, {**f, "attempt": att + 1})
         else:
@@ -403,7 +678,7 @@ def main():
              f"{vram.fmt(config.VRAM_RESERVE_MIB)}) · external {vram.fmt(g.used_mib)} MiB({vram.external_label(allp)}) · total {vram.fmt(g.total_mib)}")
     ads = scan_adapters()
     log(WHO, "adapters:", ", ".join(f"{k}({v['_scope']}·{v.get('device')})" for k, v in ads.items()))
-    for t in (heartbeat, vram_reporter, smi_sampler):
+    for t in (heartbeat, vram_reporter, smi_sampler, nvml_loop):
         threading.Thread(target=t, daemon=True).start()
     for mid in PCFG.get("resident", []):
         try:
@@ -427,10 +702,14 @@ def loop_once(last_claim: float) -> float:
         if lease["slot"] is None and r().xlen(STREAM) == 0:
             time.sleep(0.3)          # 일이 없으면 임대를 잡지 않는다(유휴 GPU 는 전력 슬롯을 비워 둔다)
             return last_claim
+        n_batch = power_gate()
+        if n_batch == 0:
+            time.sleep(0.5)
+            return last_claim
         if not power_acquire():
             time.sleep(0.5)
             return last_claim
-        res = r().xreadgroup(GROUP, WID, {STREAM: ">"}, count=BATCH, block=1000)
+        res = r().xreadgroup(GROUP, WID, {STREAM: ">"}, count=n_batch, block=1000)
         entries = res[0][1] if res else []
         if not entries and time.time() - last_claim > 5:
             last_claim = time.time()

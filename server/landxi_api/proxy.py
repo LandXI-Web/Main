@@ -2,6 +2,7 @@
 
 V-World: /proxy/vworld/{wmts|wms|data|search|address} — 키·domain 주입 · 디스크 캐시 cache/vworld/ · 일일 계량(Redis).
   키가 비었거나 V-World 가 키 오류(EXPIRE_KEY · INVALID_KEY · 권한 미반영 …)를 주면 503 vworld_key_pending.
+  키가 아닌 오류(status ERROR · PARAM_REQUIRED 등 · 200 으로 옴)는 캐시하지 않고 502 upstream_error(v1.1 · F1-B must_fix 4).
   상태는 60s 동안 기억(연타 방지) — server/.env 의 키가 바뀌면 즉시 다시 시도(키 살아나면 바로 활성).
 Planetary Computer: mosaic/register(30일) · statistics(7일) · stac/search(6h) 대리 + 캐시. 타일은 CORS * 이라 브라우저 직통.
 """
@@ -69,6 +70,19 @@ def cache_put(ns: str, key: str, body: bytes, ctype: str, extra: dict | None = N
     m.write_text(json.dumps({"t": time.time(), "ctype": ctype, "key": key[:300], **(extra or {})}, ensure_ascii=False), encoding="utf-8")
 
 
+_RAW_STATUS_ERR = re.compile(rb'"status"\s*:\s*"ERROR"')
+_RAW_CODE = re.compile(rb'"code"\s*:\s*"([A-Za-z0-9_]+)"')
+
+
+def _raw_status_error(body: bytes) -> str | None:
+    """JSON 파싱과 무관하게 원문 바이트에서 `"status" : "ERROR"` 를 찾는다 → 오류 코드(없으면 'ERROR')."""
+    head = body[:8000]
+    if not _RAW_STATUS_ERR.search(head):
+        return None
+    m = _RAW_CODE.search(head)
+    return m.group(1).decode("ascii", "replace") if m else "ERROR"
+
+
 def _key_error(body: bytes, ctype: str) -> str | None:
     """V-World 응답에서 키 오류 코드를 찾는다(200 으로 오는 오류 포함)."""
     head = body[:4000]
@@ -79,8 +93,11 @@ def _key_error(body: bytes, ctype: str) -> str | None:
             if str(resp.get("status", "")).upper() == "ERROR":
                 code = (resp.get("error") or {}).get("code") or "ERROR"
                 return code if KEY_ERR.search(code) else None
-        except Exception:
             return None
+        except Exception:
+            # V-World 는 text 안의 따옴표를 이스케이프하지 않아 JSON 이 깨진 채로 온다 → 원문 바이트로 판정
+            st = _raw_status_error(body)
+            return st if (st and KEY_ERR.search(st)) else None
     if b"ExceptionReport" in head or b"ServiceException" in head:
         txt = head.decode("euc-kr", "replace")
         if 'locator="key"' in txt or "인증키" in txt or "key" in txt.lower():
@@ -89,6 +106,29 @@ def _key_error(body: bytes, ctype: str) -> str | None:
         m = re.search(rb'"code"\s*:\s*"([A-Z_]+)"', head)
         if m and KEY_ERR.search(m.group(1).decode()):
             return m.group(1).decode()
+    return None
+
+
+def upstream_status_error(body: bytes, ctype: str) -> str | None:
+    """키 오류가 아닌 V-World 오류(PARAM_REQUIRED · INVALID_RANGE …)를 200 본문에서 찾는다 → 캐시 금지 · 502(F1-B must_fix 4)."""
+    head = body[:4000]
+    if "json" in ctype or head.strip()[:1] in (b"{", b"["):
+        try:
+            j = json.loads(body.decode("utf-8", "replace"))
+            resp = j.get("response", j) if isinstance(j, dict) else {}
+            if str(resp.get("status", "")).upper() == "ERROR":
+                e = resp.get("error") or {}
+                return (e.get("code") or "ERROR") + (f" · {e.get('text') or e.get('message')}" if (e.get("text") or e.get("message")) else "")
+            return None
+        except Exception:
+            # json.loads 실패(예: INVALID_RANGE 본문 text 안의 `단일검색="Y"` 따옴표) — 원문 바이트 정규식으로 판정.
+            # 여기서 None 을 돌려주면 ERROR 가 7일 캐시되고 200·hit 로 재전송된다(F2-B 1차 판정 불합격 1).
+            return _raw_status_error(body)
+    st = _raw_status_error(body)        # JSONP 등 JSON 이 아닌 포장
+    if st:
+        return st
+    if b"ExceptionReport" in head or b"ServiceException" in head:
+        return "OWS_EXCEPTION"
     return None
 
 
@@ -123,6 +163,10 @@ async def vworld(kind: str, request: Request):
     q = dict(request.query_params)
     ck = kind + "?" + urlencode(sorted((k, v) for k, v in q.items() if k not in ("access_token",)))
     body, meta = cache_get("vworld", ck, TTL[kind])
+    if body is not None and upstream_status_error(body, meta["ctype"]):
+        for f in _cache_paths("vworld", ck):           # 예전(v1.0)에 캐시된 ERROR 본문 — 지우고 상류를 다시 부른다
+            f.unlink(missing_ok=True)
+        body = None
     if body is not None:
         return Response(content=body, media_type=meta["ctype"], headers={"X-LX-Cache": "hit", "Access-Control-Allow-Origin": "*"})
     key, domain = vworld_key()
@@ -148,6 +192,10 @@ async def vworld(kind: str, request: Request):
     if r.status_code != 200:
         raise ApiError("upstream_error", f"V-World HTTP {r.status_code}", status=502)
     _state.update(pending_until=0.0, last_error=None)
+    uerr = upstream_status_error(r.content, ctype)
+    if uerr:          # 키는 살아 있으나 요청 오류 — 캐시하지 않는다(7일 hit 로 굳지 않게)
+        raise ApiError("upstream_error", f"V-World status ERROR: {uerr}", {"upstream_code": uerr.split(" · ")[0], "cached": False,
+                                                                          "upstream_body": r.content[:300].decode("utf-8", "replace")}, status=502)
     cache_put("vworld", ck, r.content, ctype)
     return Response(content=r.content, media_type=ctype, headers={"X-LX-Cache": "miss", "Access-Control-Allow-Origin": "*"})
 

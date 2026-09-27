@@ -50,7 +50,9 @@
   "reasons": [],
   "pool": "a6000"
  },
- "optional": [],
+ "optional": [
+  "power_budget"
+ ],
  "optional_nested": {},
  "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
 }

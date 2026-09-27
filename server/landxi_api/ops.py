@@ -87,6 +87,8 @@ async def gpus(request: Request):
                 if isinstance(e, dict) and isinstance(e.get("mem_mib"), (int, float)):
                     e["mem_mib"] = env(e["mem_mib"], "MiB", "measured", "ops:gpu (F1-C 폴러) · Windows PDH GPU Process Memory",
                                        e.get("note"), as_of=g.get("at"))
+            if isinstance(g, dict):
+                _v11_fields(g, g.get("at") or now_iso(), "ops:gpu (F2-C 폴러)")
             gl.append(g)
         at = max((g.get("at") or "" for g in gl), default=None) if gl and isinstance(gl[0], dict) else None
         return {"node": config.NODE_ID, "at": at or now_iso(), "gpus": gl, "source": "ops:gpu (F1-C 폴러)"}
@@ -98,8 +100,39 @@ async def gpus(request: Request):
         g["external_used_mib"] = env(ext, "MiB", "measured", "memory.used − 워커 자기 보고" if w else "memory.used(워커 미기동)",
                                      "워커 미기동 시 = memory.used" if not w else f"워커 {w:.0f} MiB 제외", as_of=s["at"])
         g["job_id"] = await r.hget(f"worker:{g['worker']}:hb", "job_id") or None
+        _v11_fields(g, s["at"], "게이트웨이 직접(폴러 미기동)")
     s["note"] = "F1-C 폴러 미기동 — 게이트웨이가 nvidia-smi 를 직접 읽음(폴백)"
     return s
+
+
+_NUM_FIELDS = {"util_pct": "%", "util_ma5": "%", "mem_used_mib": "MiB", "mem_total_mib": "MiB", "temp_c": "°C", "power_w": "W",
+               "external_used_mib": "MiB", "power_limit_w": "W"}
+
+
+def _v11_fields(g: dict, at: str, src: str):
+    """GpuSample.gpus[i] v1.1-28 필드 통과: util_ma5 · power_w · caution · fault — 폴러(F2-C)가 준 값은 그대로, 맨 숫자는 봉투로 감싸고,
+    없는 필드는 결손(null + note). /ops/gpus 500(envelope_missing) 재발 0."""
+    for k, unit in _NUM_FIELDS.items():
+        v = g.get(k)
+        if isinstance(v, (int, float)) and not isinstance(v, bool):
+            g[k] = env(v, unit, "measured", f"{src} · {k}", as_of=at)
+    if "util_ma5" not in g or g["util_ma5"] is None:
+        g["util_ma5"] = env(None, "%", "measured", src, "이동평균 필드 없음(F2-C 폴러 v1.1 이전 또는 폴백)", as_of=at)
+    if "power_w" not in g or g["power_w"] is None:
+        g["power_w"] = env(None, "W", "measured", src, "power.draw 없음", as_of=at)
+    for k in ("caution", "fault"):
+        if not isinstance(g.get(k), bool):
+            g[k] = None if k not in g or g.get(k) is None else bool(g.get(k))
+    for e in g.get("external") or []:
+        if isinstance(e, dict):
+            for kk in ("mem_mib",):
+                if isinstance(e.get(kk), (int, float)) and not isinstance(e.get(kk), bool):
+                    e[kk] = env(e[kk], "MiB", "measured", f"{src} · PDH", e.get("note"), as_of=at)
+            llm = e.get("llm")
+            if isinstance(llm, dict):
+                for kk, vv in list(llm.items()):
+                    if isinstance(vv, (int, float)) and not isinstance(vv, bool) and kk not in ("reqs_active",):
+                        llm[kk] = env(vv, "tokens" if "tok" in kk or kk == "tps" else "count", "measured", f"{src} · vLLM /metrics", as_of=at)
 
 
 async def queues_snapshot() -> dict:

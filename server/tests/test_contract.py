@@ -1,4 +1,4 @@
-﻿"""계약 검사(F1-CONTRACT §13) — 라우트 응답 키 집합 = 픽스처 키 집합(+선택 키) · 봉투 자리 = 봉투 · SSE 이벤트 이름 · 오류 코드.
+"""계약 검사(F1-CONTRACT §13) — 라우트 응답 키 집합 = 픽스처 키 집합(+선택 키) · 봉투 자리 = 봉투 · SSE 이벤트 이름 · 오류 코드.
 값은 검사하지 않는다. 게이트웨이 :8700 가 떠 있어야 한다(없으면 skip)."""
 import json
 from pathlib import Path
@@ -27,6 +27,8 @@ def check_shape(resp, fix, path="$", optional=(), nested=None):
         missing = fk - rk - {"detail"}
         assert not missing, f"{path}: 빠진 키 {missing}"
         extra = rk - fk - set(optional)
+        if "*" in optional:     # 폴러(F2-C) 통과 필드 — 추가 키는 허용하되 숫자는 봉투여야(scan 이 이미 검사)
+            extra = set()
         assert not extra, f"{path}: 계약에 없는 키 {extra}"
         for k in fk:
             if k in ("coordinates", "geometry", "aoi", "footprint", "options", "counts", "modules", "detail", "params", "metrics", "perf", "chain"):

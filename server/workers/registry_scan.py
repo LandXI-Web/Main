@@ -40,8 +40,85 @@ def scan_adapters() -> dict[str, dict]:
     return out
 
 
+def _device_of(a: dict) -> str:
+    return a.get("device") or ("cpu" if a.get("pool") == "cpu" else "gpu")
+
+
+def _kinds_of(a: dict) -> list[str]:
+    k = a.get("kinds") or a.get("kind") or []
+    return [k] if isinstance(k, str) else list(k)
+
+
 def adapter_device(adapter_id: str) -> str:
-    return scan_adapters().get(adapter_id, {}).get("device", "gpu")
+    return _device_of(scan_adapters().get(adapter_id, {}))
+
+
+def adapter_for_kind(kind: str) -> str | None:
+    """kind 전용 어댑터(예: F2-S survey/rules · kind 'survey'|'join') — 모델 없이 도는 작업의 어댑터 해석(D0 plan 훅)."""
+    for aid, a in scan_adapters().items():
+        if kind in _kinds_of(a) and not a.get("hidden"):
+            return aid
+    return None
+
+
+_mods: dict = {}
+
+
+def adapter_module(adapter_id: str):
+    """어댑터 모듈(plan() 훅 조회용 · 파일이 바뀌면 다시 읽음)."""
+    a = scan_adapters().get(adapter_id)
+    if not a:
+        raise KeyError(f"adapter {adapter_id} 없음")
+    mt = Path(a["_path"]).stat().st_mtime
+    c = _mods.get(adapter_id)
+    if c and c[0] == mt:
+        return c[1]
+    name = "lx_adapter_" + adapter_id.replace("/", "_")
+    spec = importlib.util.spec_from_file_location(name, a["_path"])
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[name] = mod
+    spec.loader.exec_module(mod)
+    _mods[adapter_id] = (mt, mod)
+    return mod
+
+
+def plan_hook(adapter_id: str | None):
+    """어댑터가 plan(job) -> [shard] 을 정의하면 그 함수(모듈 함수 또는 Adapter 클래스 메서드) · 없으면 None."""
+    if not adapter_id:
+        return None
+    try:
+        mod = adapter_module(adapter_id)
+    except KeyError:
+        return None
+    fn = getattr(mod, "plan", None)
+    if callable(fn):
+        return fn
+    for cand in ("Adapter", "make_adapter"):
+        obj = getattr(mod, cand, None)
+        if obj is None:
+            continue
+        inst = obj() if cand == "make_adapter" else obj()
+        if callable(getattr(inst, "plan", None)):
+            return inst.plan
+    return None
+
+
+def normalize_plan(items: list) -> list[dict]:
+    """어댑터 plan() 결과 → 스케줄러 shard 형 {shard_id, bbox, window, params}. shard_id 외 키는 params 로."""
+    out = []
+    for it in items or []:
+        if isinstance(it, str):
+            it = {"shard_id": it}
+        it = dict(it)
+        sid = it.pop("shard_id", None) or it.pop("id", None)
+        if not sid:
+            continue
+        bbox = it.pop("bbox", None) or [0, 0, 0, 0]
+        window = it.pop("window", None)
+        params = dict(it.pop("params", None) or {})
+        params.update(it)
+        out.append({"shard_id": str(sid), "bbox": list(bbox), "window": window, "params": params})
+    return out
 
 
 def adapter_for_model(model_id: str, task: str | None = None) -> str | None:

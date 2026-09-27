@@ -1,4 +1,4 @@
-// F1-B 관문 — build=public 카탈로그 자체 영상 0 · tenant 세션 raw/cog 403 · 무서명 기관 결과 세트 403 · V-World 프록시 503(키 권한 미반영) · LX_API=on 전용
+// F1-B 관문 — build=public 카탈로그 자체 영상 0 · tenant 세션 raw/cog 403 · 무서명 기관 결과 세트 403 · V-World 프록시(키 활성 200 · ERROR 502 캐시 금지 · v1.1) · LX_API=on 전용
 import { test, expect } from '@playwright/test';
 
 const API = process.env.LX_API === 'on' ? (process.env.LX_API_BASE || 'http://localhost:8700') : null;
@@ -45,8 +45,29 @@ test('무서명 기관 결과 세트 403 · 서명 206 · 다른 기관 서명 4
   expect((await request.get(`${API}/tiles/sign?set=${set}`, { headers: { authorization: 'Bearer ' + gj } })).status()).toBe(403);
 });
 
-test('V-World 프록시 — 키 권한 미반영이면 503 vworld_key_pending', async ({ request }) => {
-  const r = await request.get(API + '/api/v1/proxy/vworld/data?service=data&request=GetFeature&data=LP_PA_CBND_BUBUN&geomFilter=POINT(127.39%2035.416)');
-  if (r.status() === 200) test.info().annotations.push({ type: 'note', description: 'V-World 키 권한 반영됨 — 200' });
-  else { expect(r.status()).toBe(503); expect((await r.json()).error.code).toBe('vworld_key_pending'); }
+test('V-World 프록시 — 키 활성(200 · X-LX-Cache) · status ERROR 는 캐시 없이 502 upstream_error(v1.1)', async ({ request }) => {
+  const ok = await request.get(API + '/api/v1/proxy/vworld/data?service=data&request=GetFeature&data=LP_PA_CBND_BUBUN&geomFilter=POINT(127.39%2035.416)&size=1');
+  if (ok.status() === 503) { expect((await ok.json()).error.code).toBe('vworld_key_pending'); test.info().annotations.push({ type: 'note', description: '키 권한 미반영 — 503' }); return; }
+  expect(ok.status()).toBe(200);
+  expect(['hit', 'miss']).toContain(ok.headers()['x-lx-cache']);
+  expect((await ok.json()).response.status).toBe('OK');
+  const again = await request.get(API + '/api/v1/proxy/vworld/data?service=data&request=GetFeature&data=LP_PA_CBND_BUBUN&geomFilter=POINT(127.39%2035.416)&size=1');
+  expect(again.headers()['x-lx-cache']).toBe('hit');
+  // request 파라미터 빠진 요청 → V-World 는 200 + status ERROR(PARAM_REQUIRED) → 게이트웨이 502 · 캐시 없음(두 번째도 상류)
+  for (let i = 0; i < 2; i++) {
+    const bad = await request.get(API + '/api/v1/proxy/vworld/data?data=LP_PA_CBND_BUBUN');
+    expect(bad.status()).toBe(502);
+    const e = (await bad.json()).error;
+    expect(e.code).toBe('upstream_error'); expect(e.detail.upstream_code).toBe('PARAM_REQUIRED'); expect(e.detail.cached).toBe(false);
+    expect(bad.headers()['x-lx-cache']).toBeUndefined();
+  }
+  // F2-B 1차 판정 재현: geomFilter 없는 GetFeature → V-World 200 + INVALID_RANGE 본문(text 안 `단일검색="Y"` 로 JSON 이 깨짐)
+  // 예전: json.loads 실패 → 7일 캐시 → 200 · hit. 지금: 원문 바이트 판정 → 502 · 캐시 없음(두 번째도 상류)
+  for (let i = 0; i < 2; i++) {
+    const bad = await request.get(API + '/api/v1/proxy/vworld/data?service=data&request=GetFeature&data=LP_PA_CBND_BUBUN&size=1');
+    expect(bad.status()).toBe(502);
+    const e = (await bad.json()).error;
+    expect(e.code).toBe('upstream_error'); expect(e.detail.upstream_code).toBe('INVALID_RANGE'); expect(e.detail.cached).toBe(false);
+    expect(bad.headers()['x-lx-cache']).toBeUndefined();
+  }
 });

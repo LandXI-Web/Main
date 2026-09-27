@@ -1,8 +1,8 @@
 {
- "job_id": "job_01M3EV47T44GBMXF3D90G41515",
- "events": 2785,
- "first_shard_done_ms": 1881,
- "t_end_ms": 67258,
+ "job_id": "job_01M3FEMN9C9B1J84EE2NDMBV2A",
+ "events": 2787,
+ "first_shard_done_ms": 4016,
+ "t_end_ms": 91087,
  "order_compressed": [
   "job.queued",
   "job.started",
@@ -17,19 +17,19 @@
   "shard.started",
   "shard.done",
   "…",
-  "shard.done",
+  "job.progress",
   "job.done",
   "snapshot.ready"
  ],
  "counts": {
   "job.done": 1,
-  "job.progress": 43,
+  "job.progress": 45,
   "job.queued": 1,
   "job.started": 1,
   "shard.done": 1369,
   "shard.started": 1369,
   "snapshot.ready": 1
  },
- "recorded_at": "2026-09-26T21:31:40+09:00",
+ "recorded_at": "2026-09-27T03:13:03+09:00",
  "source": "게이트웨이 SSE 실수신(httpx)"
 }

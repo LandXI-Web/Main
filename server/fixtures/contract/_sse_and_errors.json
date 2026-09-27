@@ -10,7 +10,9 @@
   "snapshot.ready",
   "job.failed",
   "job.cancelled",
-  "index.month"
+  "index.month",
+  "job.recovered",
+  "survey.finding"
  ],
  "ops": [
   "gpu.sample",
@@ -18,7 +20,14 @@
   "usage.delta",
   "deploy.changed",
   "alert",
-  "job.state"
+  "job.state",
+  "finding.state"
+ ],
+ "tenant": [
+  "job.state",
+  "deploy.changed",
+  "finding.state",
+  "usage.delta"
  ],
  "errors": [
   "unauthorized",
@@ -36,6 +45,8 @@
   "approval_required",
   "invalid_stage_transition",
   "envelope_missing",
-  "worker_unavailable"
+  "worker_unavailable",
+  "upstream_error",
+  "registry_unavailable"
  ]
 }

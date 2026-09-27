@@ -32,9 +32,10 @@ function Launch($name, $argv, $cuda) {
 }
 Launch "scheduler" @("workers/scheduler.py") $null
 Launch "cpu-0" @("workers/cpu_worker.py") $null
+Launch "cpu-1" @("workers/cpu_worker.py", "--id", "cpu-1", "--no-finalize") $null   # shard 전용(느린 원격 지수가 빠른 실태조사를 굶기지 않게)
 foreach ($g in $Gpus) { Launch "a6000-$g" @("workers/gpu_worker.py", "--gpu", "$g") $g }
 $started | Set-Content $pidFile
 Remove-Item Env:CUDA_VISIBLE_DEVICES -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 12
-foreach ($n in @("scheduler", "cpu-0") + ($Gpus | % { "a6000-$_" })) { Get-Content "$logs\f1b-$n.log" -Encoding utf8 -ErrorAction SilentlyContinue | Select -First 6 }
+foreach ($n in @("scheduler", "cpu-0", "cpu-1") + ($Gpus | % { "a6000-$_" })) { Get-Content "$logs\f1b-$n.log" -Encoding utf8 -ErrorAction SilentlyContinue | Select -First 6 }
 if ($Tail) { Get-Content ($Gpus | % { "$logs\f1b-a6000-$_.log" }) -Wait -Tail 5 -Encoding utf8 }

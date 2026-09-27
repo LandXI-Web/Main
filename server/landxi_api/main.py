@@ -6,6 +6,9 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import importlib
+import json
+import logging
 import sys
 import time
 from pathlib import Path
@@ -23,10 +26,32 @@ from .deps import ApiError, close, pool, redis
 from .envelope import LXJSON, dumps, now_iso
 
 
+log = logging.getLogger("landxi")
+BOOT = {"recovered_at_boot": None, "boot_at": None}
+
+
+async def _boot_recovery():
+    """재부팅 복구(v1.1-15) — workers.recovery.sweep(동기 · Redis/PG) 을 스레드에서. 스케줄러가 먼저 돌았으면 skipped + 그쪽 결과."""
+    from starlette.concurrency import run_in_threadpool
+    from workers.recovery import sweep
+    try:
+        st = await run_in_threadpool(sweep, "gateway")
+    except Exception as e:  # pragma: no cover
+        st = {"resumed": 0, "requeued": 0, "failed": 0, "error": repr(e), "at": now_iso()}
+    BOOT["recovered_at_boot"] = st
+    print(f"[gateway] recovery sweep: resumed {st.get('resumed')} · requeued {st.get('requeued')} · failed {st.get('failed')}"
+          + (f" (skipped — {st.get('held_by')})" if st.get("skipped") else "")
+          + (f" · 이미 재개됨 {st.get('already')}건(앞선 sweep · 중복 알림 없음)" if st.get("already") else "")
+          + "".join(f"\n[gateway] recovery: {j['job_id']} {j['mode']} {j.get('shards_done', '')}/{j.get('shards_total', '')} ({j.get('reason')})"
+                    for j in st.get("jobs", [])), flush=True)
+
+
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI):
     await pool()
     await redis()
+    BOOT["boot_at"] = now_iso()
+    await _boot_recovery()
     task = asyncio.create_task(ops.alert_loop())
     yield
     task.cancel()
@@ -80,6 +105,22 @@ for m in (auth, catalog, jobs, events, results, parcels, feedback, registry, dep
     app.include_router(m.router, prefix=API)
 app.include_router(tiles.router)
 
+# 확장 라우터 훅(D0 · F2-S survey · F2-E agent) — main.py 를 만지지 않고 붙는다.
+# 모듈이 없으면 조용히(로그 1줄) · 있는데 import 오류면 기동 실패로 드러나게(예외 그대로).
+EXT_ROUTERS: dict[str, str] = {}
+for _name in ("survey", "agent"):
+    try:
+        _m = importlib.import_module(f"landxi_api.{_name}")
+    except ModuleNotFoundError as _e:
+        if _e.name != f"landxi_api.{_name}":
+            raise
+        EXT_ROUTERS[_name] = "absent"
+        print(f"[gateway] ext router landxi_api.{_name}: 없음(건너뜀)", flush=True)
+        continue
+    app.include_router(_m.router, prefix=API)
+    EXT_ROUTERS[_name] = "mounted"
+    print(f"[gateway] ext router landxi_api.{_name}: 등록({len(_m.router.routes)} routes)", flush=True)
+
 
 @app.get(API + "/health")
 async def health():
@@ -106,7 +147,23 @@ async def health():
                     gpu += 1
     except Exception:
         pass
-    return {"ok": ok_r and ok_p, "version": config.VERSION, "redis": ok_r, "pg": ok_p, "workers": {"gpu": gpu, "cpu": cpu}, "at": now_iso()}
+    last = None
+    try:
+        raw = await r.get("recovery:last")
+        last = json.loads(raw) if raw else None
+    except Exception:
+        pass
+    rb = BOOT.get("recovered_at_boot") or {}
+    acted = int(rb.get("resumed") or 0) + int(rb.get("requeued") or 0) + int(rb.get("failed") or 0)
+    # 스케줄러가 먼저 sweep 했으면(잠금 skipped · 또는 이미 재개된 작업만 봤으면 already) 그쪽 결과
+    src = rb if not (rb.get("skipped") or (not acted and rb.get("already"))) else (last or rb)
+    return {"ok": ok_r and ok_p, "version": config.VERSION, "redis": ok_r, "pg": ok_p, "workers": {"gpu": gpu, "cpu": cpu}, "at": now_iso(),
+            "recovered_at_boot": {"resumed": int(src.get("resumed") or 0), "requeued": int(src.get("requeued") or 0),
+                                  "failed": int(src.get("failed") or 0), "by": src.get("by"), "at": src.get("at"),
+                                  "jobs": [{k: j.get(k) for k in ("job_id", "mode", "shards_done", "shards_total", "reason")} for j in src.get("jobs", [])][:20],
+                                  "gateway_sweep": {"resumed": int(rb.get("resumed") or 0), "already": int(rb.get("already") or 0),
+                                                    "skipped": bool(rb.get("skipped"))} if rb else None},
+            "boot_at": BOOT.get("boot_at"), "ext_routers": EXT_ROUTERS}
 
 
 if config.DEV:

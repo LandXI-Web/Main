@@ -76,6 +76,8 @@ Row "junction landxi/data" (Test-Path $j) $(if (Test-Path $j) { "있음" } else 
 
 # 7) 마이그레이션 · 시드 · countCheck
 if (-not $SkipSeed) { python seed/seed_from_cards_js.py 2>&1 | Select -Last 3 | % { Write-Host "  $_" } }
+$mg = python migrate.py 2>&1 | Out-String
+Row "migrations/*.sql 번호순(0001·0002·0003·0004 …)" ($LASTEXITCODE -eq 0) (($mg -split "`n" | Select-Object -Last 2) -join " ")
 $cc = python seed/count_check.py 2>$null | Out-String
 Row "countCheck" ($LASTEXITCODE -eq 0) ("exit $LASTEXITCODE")
 

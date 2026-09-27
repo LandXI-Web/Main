@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import time
 
 from fastapi import APIRouter, Request
 from sse_starlette.sse import EventSourceResponse, ServerSentEvent
@@ -139,5 +140,83 @@ async def ops_events(request: Request):
                 yield ServerSentEvent(event="queue.sample", data=json.dumps(q, ensure_ascii=False, default=str), id=_ops_id(cur))
             if not res and tick % 5 == 0:
                 yield ServerSentEvent(comment="hb")
+
+    return EventSourceResponse(gen(), headers=HEADERS, ping=HB_S, send_timeout=30)
+
+
+# ── 기관 스트림(v1.1-16) ─────────────────────────────────────────────────────────
+TENANT_EVENTS = ("job.state", "deploy.changed", "finding.state", "usage.delta", "job.recovered")
+
+
+def _replay_s(v: str | None) -> int:
+    if not v:
+        return 0
+    v = v.strip().lower()
+    try:
+        if v.endswith("h"):
+            return int(float(v[:-1]) * 3600)
+        if v.endswith("m"):
+            return int(float(v[:-1]) * 60)
+        if v in ("1", "true", "yes"):
+            return 86400
+        return int(float(v))
+    except ValueError:
+        return 0
+
+
+@router.get("/events/tenant")
+async def tenant_events(request: Request, tenant: str | None = None, replay: str | None = None, events: str | None = None):
+    """GET /api/v1/events/tenant?access_token=[&tenant=][&replay=24h][&events=a,b]
+
+    - realm tenant: 자기 기관 스트림만(tenant= 다른 값 → 403). realm lx: 기본 'lx' · tenant= 로 기관 지정(관제·XI맵 직원 세션).
+    - 게스트 401 · 허용 오리진(4173 · 8702) 밖 403. 이벤트: job.state · deploy.changed · finding.state · usage.delta (+ job.recovered 칩).
+    - id = Redis entry id → Last-Event-ID 재개. replay=24h 면 최근 24h 를 먼저 흘린다(스트림은 24h · MAXLEN 10,000 으로 잘림).
+    """
+    p = require(principal(request))
+    origin = request.headers.get("origin")
+    if origin and origin not in config.CORS_ORIGINS:
+        raise ApiError("forbidden", "허용되지 않은 오리진")
+    if p.realm == "tenant":
+        if tenant and tenant != p.tenant_id:
+            raise ApiError("forbidden", "다른 기관의 스트림")
+        tid = p.tenant_id
+    else:
+        tid = tenant or "lx"
+    want = set((events or "").split(",")) - {""}
+    r = await redis()
+    key = f"events:tenant:{tid}"
+    start = _last_id(request)
+    rs = _replay_s(replay)
+    if start:
+        cursor = start
+    elif rs:
+        cursor = f"{int((time.time() - min(rs, 86400)) * 1000)}-0"
+    else:
+        last = await r.xrevrange(key, count=1)
+        cursor = last[0][0] if last else "0-0"
+
+    async def gen():
+        nonlocal cursor
+        yield ServerSentEvent(comment=f"tenant {tid} · events {','.join(sorted(want)) or 'all'}")
+        first = True
+        while True:
+            if await request.is_disconnected():
+                return
+            if first and (start or rs):
+                rows = await r.xrange(key, min=f"({cursor}" if start else cursor, max="+", count=5000)
+                batch = rows
+            else:
+                res = await r.xread({key: cursor}, block=HB_S * 1000, count=500)
+                batch = res[0][1] if res else []
+                if not batch:
+                    yield ServerSentEvent(comment="hb")
+                    continue
+            first = False
+            for eid, f in batch:
+                cursor = eid
+                ev = f.get("event", "message")
+                if want and ev not in want:
+                    continue
+                yield ServerSentEvent(data=f.get("data", "{}"), event=ev, id=eid)
 
     return EventSourceResponse(gen(), headers=HEADERS, ping=HB_S, send_timeout=30)

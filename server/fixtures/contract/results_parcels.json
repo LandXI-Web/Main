@@ -1,0 +1,73 @@
+{
+ "method": "GET",
+ "path": "/api/v1/results/{set}/parcels",
+ "status": 200,
+ "body": {
+  "type": "FeatureCollection",
+  "features": [
+   {
+    "type": "Feature",
+    "id": "5219025021100010000",
+    "geometry": {
+     "type": "MultiPolygon",
+     "coordinates": []
+    },
+    "properties": {
+     "pnu": "5219025021100010000",
+     "emd": "운봉읍",
+     "emd_cd": "52190250",
+     "jimok": "전",
+     "jimok_nm": "전",
+     "parcel_m2": 1523.0,
+     "n": 2,
+     "hit_m2": 412.6,
+     "ratio": 0.2709,
+     "conf_mean": 0.61,
+     "classes": [
+      "비닐하우스_다동"
+     ]
+    }
+   }
+  ],
+  "lx": {
+   "count": {
+    "value": 1,
+    "unit": "필지",
+    "basis": "inferred",
+    "as_of": "2026-09-27",
+    "source": "ST_Intersects(detections(job_id=…), survey_parcels)",
+    "note": "검수 전"
+   },
+   "total": 1,
+   "limit": 2000,
+   "ms": 180,
+   "by_emd": [
+    {
+     "emd": "운봉읍",
+     "emd_cd": "52190250",
+     "parcels": {
+      "value": 1,
+      "unit": "필지",
+      "basis": "inferred",
+      "as_of": "2026-09-27",
+      "source": "…"
+     },
+     "n": {
+      "value": 2,
+      "unit": "count",
+      "basis": "inferred",
+      "as_of": "2026-09-27",
+      "source": "…"
+     }
+    }
+   ],
+   "set": "results/lx/namwon-greenhouse-2023-vh",
+   "job_id": "job_01M3EW9F…"
+  }
+ },
+ "optional": [],
+ "optional_nested": {
+  "lx": []
+ },
+ "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
+}

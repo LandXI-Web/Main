@@ -1,0 +1,1 @@
+{"response" : {"service" : {"name" : "data", "version" : "2.0", "operation" : "GetFeature", "time" : "14(ms)"}, "status" : "ERROR", "error" : {"level" : "1", "code" : "INVALID_RANGE", "text" : "요청 파라미터의 값이 유효한 범위를 넘었습니다. 유효한 파라미터 값의 범위 : 다음 2가지 [geomFilter, attrFilter(단일검색="Y"인 속성명 포함)] 중 하나 이상을 포함해야 합니다., 입력한 파라미터 값 : "}}}

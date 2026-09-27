@@ -6,7 +6,20 @@ power:
   max_hot_gpus: 1
   lease_ttl_s: 20
   idle_release_s: 3
-  power_limit_w: 300        # nvidia-smi power.limit(장당 · 522.06) — 참고값
+  # 임대 밖 부하(vLLM · Ollama — WSL/Docker 라 power:hot 을 잡지 않는다)도 전력 규칙에 넣는다(2026-09-27 F2-B 녹화 중 GPU1 vLLM 171 W 와 겹침 실측 → 추가)
+  other_gpu_hot_w: 100       # 다른 GPU 전력(NVML 순간값 · nvidia-smi 최신 · 5표본 이동평균 중 큰 값)이 이보다 높으면 멈춘다(판정 기준 '동시 >100 W' 와 같은 선)
+  # v3(F2-B 판정 불합격 2 반영): 30 s 폴백(batch 4 진행) 삭제 — 다른 GPU 가 내려갈 때까지 새 묶음을 읽지 않고, 읽어 간 묶음도 gate_chunk 칸마다 멈춘다.
+  other_wait_log_s: 15       # 대기 중 로그 · 하트비트 · job.progress.power_gate(HUD 사유) 갱신 주기
+  gate_chunk: 8              # 읽어 간 묶음 안의 재확인 간격(칸)
+  other_quiet_s: 20          # 다른 GPU 가 내려간 뒤 이만큼 조용해야 재개(히스테리시스 · 몰려 오는 LLM 호출 사이에 끼어들지 않게)
+  fast_poll_s: 0.1           # NVML 순간 전력 폴링(workers/nvml_power.py · pynvml 없이 ctypes)
+  power_limit_w: 200        # nvidia-smi power.limit(장당) — 2026-09-26 전력 상한 200 W × 2 적용(LandXI-GPU-PowerLimit-200W 예약 작업)
+# 새 작업의 첫 묶음 선점(v1.1-17) — 깊이와 상관없이 바로 넣는 shard 수
+first_chunk: 16
+# shard 고아 감시(v1.1-14) — shard.started 뒤 max(floor_s, 5×중앙값 ms) 안에 done/failed 없으면 timeout → 1회 재배정
+orphan:
+  floor_s: 120
+  scan_s: 10
 pools:
   a6000:
     device: gpu
@@ -21,9 +34,10 @@ pools:
     fill_chunk: 64
   cpu:
     device: cpu
-    workers: [cpu-0]
-    low_watermark: 8
-    fill_chunk: 16
+    workers: [cpu-0, cpu-1]   # cpu-0 = shard + finalize · cpu-1 = shard 전용(2026-09-27: 원격 NDVI 8칸 321 s 가 실태조사 39칸을 200 s+ 굶긴 실측 → 추가)
+    low_watermark: 4
+    fill_chunk: 8
+    slow_shard_ms: 5000       # 중앙값이 이보다 긴 어댑터 작업은 한 번에 1 shard(나머지 cpu 워커는 빠른 작업)
   a100-n1:
     device: gpu
     state: pending

@@ -73,8 +73,26 @@
  ],
  "optional_nested": {
   "gpus[]": [
+   "util_ma5",
+   "caution",
+   "fault",
    "worker_vram",
-   "at"
+   "at",
+   "note",
+   "source",
+   "power_limit_w",
+   "llm",
+   "mem_note",
+   "caution_why",
+   "unattributed_mib",
+   "power_w_now",
+   "fault_why",
+   "util_raw",
+   "*"
+  ],
+  "external[]": [
+   "llm",
+   "mem_note"
   ]
  },
  "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"

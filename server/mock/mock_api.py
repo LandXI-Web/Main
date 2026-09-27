@@ -1,9 +1,11 @@
-﻿"""목(mock) 게이트웨이 :8701 (F1-CONTRACT §1 · D0+1) — DB·Redis·GPU 없이 프론트 세 에픽이 붙는 대상.
+"""목(mock) 게이트웨이 :8701 (F1-CONTRACT §1 · D0+1) — DB·Redis·GPU 없이 프론트 세 에픽이 붙는 대상.
 
 - REST: server/fixtures/contract/*.json 의 body 를 그대로 낸다(경로 패턴 매칭 · {id} 자리는 요청 값으로 바꿔 줌).
 - SSE /api/v1/events/jobs/{id}: server/fixtures/replay/*.ndjson(정본 = J1 실녹음 j1-hwangdeung.ndjson)을 t(ms) 대로 흘린다.
   data 에 "basis":"demo","replay":true 를 덧댄다(리플레이는 시연). Last-Event-ID(=t) 로 재개.
 - SSE /api/v1/events/ops: 합성 샘플(basis 'demo') 2s — 실측이 아님을 note 로 적는다.
+- SSE /api/v1/events/tenant(v1.1-16): _events_v11.json 'tenant' 목록(deploy.changed · finding.state · job.state(recovered) · usage.delta) 3s 순환.
+- v1.1 라우트 픽스처: /results/{set}/index · /results/{set}/parcels · job.recovered 는 replay/f2b-recovery.ndjson(실녹음).
 - 타일: /tiles/pmtiles/{set}.pmtiles 는 config/sets.yaml 로 LX_DATA_ROOT 파일을 Range 206 으로(읽기 전용).
 사용: powershell -File server/run-mock.ps1  (또는 uvicorn mock.mock_api:app --port 8701)
 """
@@ -120,6 +122,25 @@ async def ops_events(request: Request):
             if i % 3 == 1:
                 yield ServerSentEvent(event="queue.sample", data=json.dumps(q, ensure_ascii=False), id=str(i))
             await asyncio.sleep(2)
+
+    return EventSourceResponse(gen(), headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"}, ping=10)
+
+
+@app.get("/api/v1/events/tenant")
+async def tenant_events(request: Request, tenant: str | None = None):
+    """v1.1-16 기관 스트림 시연 — fixtures/contract/_events_v11.json 'tenant' 목록을 3 s 간격으로 돌린다(basis demo · 실측 아님)."""
+    evs = json.loads((FIX / "_events_v11.json").read_text(encoding="utf-8"))["tenant"]
+    tid = tenant or "namwon"
+
+    async def gen():
+        i = 0
+        yield ServerSentEvent(comment=f"mock tenant {tid} · 시연 · 서버 연결 없음")
+        while not await request.is_disconnected():
+            e = evs[i % len(evs)]
+            i += 1
+            d = {**e["data"], "tenant_id": tid, "basis": "demo", "replay": True, "at": time.strftime("%Y-%m-%dT%H:%M:%S+09:00")}
+            yield ServerSentEvent(event=e["event"], data=json.dumps(d, ensure_ascii=False), id=str(i))
+            await asyncio.sleep(3)
 
     return EventSourceResponse(gen(), headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"}, ping=10)
 

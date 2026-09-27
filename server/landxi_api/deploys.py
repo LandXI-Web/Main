@@ -49,7 +49,9 @@ async def _get(conn, did: str):
 
 
 async def _changed(p: Principal, did: str, action: str, row):
+    # tenant_id 를 실어 기관 스트림(v1.1-16 · events:tenant:{tenant})에도 같은 모양으로 복사된다 — XI맵 계보 칩 실시간
     await ops_event("deploy.changed", {"deploy_id": did, "action": action, "stage": row["stage"], "card_version_id": row["card_version_id"],
+                                       "tenant_id": row["tenant_id"], "snapshot_current": row["snapshot_current"],
                                        "by": p.user_id, "at": now_iso()})
 
 

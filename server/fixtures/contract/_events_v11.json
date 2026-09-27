@@ -1,0 +1,268 @@
+{
+ "job.progress": {
+  "job_id": "job_01M3FCDA8MPEGB83MHG340V92N",
+  "shards_done": 272,
+  "shards_total": 378,
+  "shards_failed": 0,
+  "counts": {
+   "vehicle": 88
+  },
+  "chips_per_s": {
+   "value": 22.4,
+   "unit": "chips_per_s",
+   "basis": "measured",
+   "as_of": "2026-09-27T02:32:52+09:00",
+   "source": "gpu_worker 계량(창 10.0s · 전 워커 합)",
+   "note": "최근 10s 창"
+  },
+  "gpu_s_so_far": {
+   "value": 9.95,
+   "unit": "gpu_s",
+   "basis": "measured",
+   "as_of": "2026-09-27T02:32:52+09:00",
+   "source": "usage_events(이 작업 누적)"
+  },
+  "elapsed_s": 14.1,
+  "final": false,
+  "gpu": [
+   {
+    "index": 0,
+    "util_pct": 55.2,
+    "util_raw": 100.0,
+    "samples": 5,
+    "power_w": 149.9,
+    "mem_used_mib": 43337,
+    "mem_note": "PDH Dedicated Usage(phys_0 · index 대응은 PCI 순서 가정) — nvidia-smi 는 연결 어댑터 합계값",
+    "shared": true,
+    "worker": "a6000-0",
+    "gpu_s_so_far": 9.95,
+    "source": "nvidia-smi -lms 500 · 이동평균 5표본(≈2.5s) · 카드 전체(공유)"
+   }
+  ],
+  "power_gate": {
+   "waiting": false,
+   "waited_total_s": 0.0
+  },
+  "at": "2026-09-27T02:32:52.101+09:00"
+ },
+ "job.progress(전력 대기)": {
+  "job_id": "job_01M3FPED31F06NX48KGDWPBZZM",
+  "shards_done": 272,
+  "shards_total": 378,
+  "shards_failed": 0,
+  "final": false,
+  "power_gate": {
+   "waiting": true,
+   "gpu": 1,
+   "w": 202.3,
+   "limit_w": 100.0,
+   "waited_s": 15.2,
+   "where": "묶음 전",
+   "quiet_left_s": 20.0,
+   "reason": "전력 규칙 · GPU1 고부하 202 W — 내려갈 때까지 대기"
+  },
+  "at": "2026-09-27T05:29:13.410+09:00"
+ },
+ "job.progress(창 짧음)": {
+  "job_id": "job_01M3FCDA8MPEGB83MHG340V92N",
+  "shards_done": 16,
+  "shards_total": 378,
+  "chips_per_s": {
+   "value": null,
+   "unit": "chips_per_s",
+   "basis": "measured",
+   "as_of": "2026-09-27T02:32:38+09:00",
+   "source": "gpu_worker 계량(창 0.4s · 전 워커 합)",
+   "note": "창 짧음"
+  }
+ },
+ "job.done": {
+  "job_id": "job_01M3FCDA8MPEGB83MHG340V92N",
+  "counts": {
+   "vehicle": 115
+  },
+  "shards_total": 378,
+  "shards_done": 378,
+  "gpu_s": {
+   "value": 13.6,
+   "unit": "gpu_s",
+   "basis": "measured",
+   "as_of": "2026-09-27T02:32:56+09:00",
+   "source": "usage_events(dim gpu_s · 이 작업 합)"
+  },
+  "chips_per_gpu_s": {
+   "value": 27.8,
+   "unit": "chips_per_gpu_s",
+   "basis": "measured",
+   "as_of": "2026-09-27T02:32:56+09:00",
+   "source": "shards_total 378 ÷ gpu_s 13.60",
+   "note": "GPU 초당 칩(모델+창 읽기 · 워커 벽시계 합)"
+  },
+  "chips_per_wall_s": {
+   "value": 19.3,
+   "unit": "chips_per_wall_s",
+   "basis": "measured",
+   "as_of": "2026-09-27T02:32:56+09:00",
+   "source": "shards_total 378 ÷ elapsed_s 19.6",
+   "note": "벽시계(첫 배정 → job.done · 전역 NMS 포함 · 스냅샷 제외)"
+  },
+  "elapsed_env": {
+   "value": 19.6,
+   "unit": "s",
+   "basis": "measured",
+   "as_of": "2026-09-27T02:32:56+09:00",
+   "source": "job.started → job.done(scheduler started_ts · 벽시계)"
+  },
+  "elapsed_s": 19.6,
+  "result_set": "results/lx/job_01M3FCDA8MPEGB83MHG340V92N"
+ },
+ "job.recovered": {
+  "job_id": "job_01M3FCEVNBEKDY69D50BTFZ92P",
+  "mode": "resumed",
+  "shards_done": 224,
+  "shards_total": 378,
+  "remaining": 154,
+  "reason": "worker heartbeat 0 (a6000-0) · 재부팅/종료",
+  "at": "2026-09-27T02:33:49+09:00",
+  "resume_seq": 1
+ },
+ "index.month": {
+  "job_id": "job_…",
+  "shard_id": "m2025-06",
+  "month": "2025-06",
+  "ndvi_mean": {
+   "value": 0.512,
+   "unit": "ndvi",
+   "basis": "measured",
+   "as_of": "2026-09-24",
+   "source": "PC S2 L2A B04/B08 · WorldCover 40 마스크"
+  },
+  "n_scenes": 14,
+  "cloud_max": 15,
+  "hist": {
+   "bins": [
+    -0.2,
+    -0.15,
+    -0.1,
+    -0.05,
+    0.0,
+    0.05,
+    0.1,
+    0.15,
+    0.2,
+    0.25,
+    0.3,
+    0.35,
+    0.4,
+    0.45,
+    0.5,
+    0.55,
+    0.6,
+    0.65,
+    0.7,
+    0.75,
+    0.8
+   ],
+   "counts": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    9,
+    20,
+    40,
+    30,
+    12,
+    4,
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "p10": 0.31,
+  "p50": 0.52,
+  "p90": 0.71,
+  "valid_px": 1203344,
+  "crop_px": 1310000,
+  "ms": 21840,
+  "basis": "measured"
+ },
+ "tenant": [
+  {
+   "event": "deploy.changed",
+   "data": {
+    "deploy_id": "dp-nw-farm-25",
+    "action": "rollback",
+    "stage": "rolled_back",
+    "card_version_id": "card-farm@2.0",
+    "tenant_id": "namwon",
+    "snapshot_current": "results/namwon/dp-nw-farm-25@2.0",
+    "by": "u_lx_admin"
+   }
+  },
+  {
+   "event": "finding.state",
+   "data": {
+    "id": "f_R1_5219025021100010000",
+    "pnu": "5219025021100010000",
+    "rule": "R1",
+    "from": "open",
+    "to": "assigned",
+    "by": "u_namwon_manager",
+    "tenant_id": "namwon"
+   }
+  },
+  {
+   "event": "job.state",
+   "data": {
+    "job_id": "job_01M3FCZF4YRNEQWKR8KM8FP3ZJ",
+    "tenant_id": "namwon",
+    "state": "running",
+    "pool": "cpu",
+    "aoi_centroid": null
+   }
+  },
+  {
+   "event": "job.state",
+   "data": {
+    "job_id": "job_01M3FCEVNBEKDY69D50BTFZ92P",
+    "tenant_id": "namwon",
+    "state": "running",
+    "reason": "recovered",
+    "mode": "resumed",
+    "shards_done": 224,
+    "shards_total": 378,
+    "pool": "a6000",
+    "aoi_centroid": null
+   }
+  },
+  {
+   "event": "usage.delta",
+   "data": {
+    "tenant_id": "namwon",
+    "dim": "gpu_s_month",
+    "amount": 1.12,
+    "job_id": "job_…"
+   }
+  },
+  {
+   "event": "deploy.changed",
+   "data": {
+    "deploy_id": "dp-nw-farm-25",
+    "action": "rollout",
+    "stage": "ga",
+    "card_version_id": "card-farm@2.1",
+    "tenant_id": "namwon",
+    "snapshot_current": "results/namwon/dp-nw-farm-25@2.1",
+    "by": "u_lx_admin"
+   }
+  }
+ ]
+}

@@ -21,6 +21,7 @@ ERROR_STATUS = {
     "aoi_too_large": 400, "model_input_mismatch": 400, "module_locked": 400, "approval_required": 409,
     "invalid_stage_transition": 409, "envelope_missing": 500, "worker_unavailable": 503, "bad_request": 400,
     "imagery_forbidden": 403, "conflict": 409, "upstream_error": 502,
+    "registry_unavailable": 404, "recovery_failed": 500,
 }
 
 
@@ -49,6 +50,18 @@ async def pool() -> asyncpg.Pool:
     return _pool
 
 
+_pool_sys: asyncpg.Pool | None = None
+
+
+async def pool_sys() -> asyncpg.Pool:
+    """시스템 읽기 전용 경로(BYPASSRLS 워커 역할) — RLS 보안 장벽이 공간 조인(ST_Intersects)의 인덱스 사용을 막는 무거운 결합 전용.
+    호출자가 관문(resolve · tenant 필터)을 SQL 에 직접 넣어야 한다(v1.1-21 /results/{set}/parcels)."""
+    global _pool_sys
+    if _pool_sys is None:
+        _pool_sys = await asyncpg.create_pool(config.PG_WORKER_DSN, min_size=1, max_size=4, init=_init_conn, command_timeout=120)
+    return _pool_sys
+
+
 async def redis() -> aioredis.Redis:
     global _redis
     if _redis is None:
@@ -58,10 +71,13 @@ async def redis() -> aioredis.Redis:
 
 
 async def close():
-    global _pool, _redis
+    global _pool, _redis, _pool_sys
     if _pool:
         await _pool.close()
         _pool = None
+    if _pool_sys:
+        await _pool_sys.close()
+        _pool_sys = None
     if _redis:
         await _redis.aclose()
         _redis = None

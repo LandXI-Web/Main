@@ -49,8 +49,160 @@ def emit(job_id: str, event: str, data: dict) -> str:
     return r().xadd(f"events:{job_id}", {"event": event, "data": json.dumps(data, ensure_ascii=False)}, maxlen=10000, approximate=True)
 
 
+# 기관 스트림(v1.1-16) — ops 스트림에 나가는 이 이벤트들은 data.tenant_id 기관의 스트림에도 같은 모양으로 복사한다.
+# finding.state 는 F2-S 가 tenant_event() 를 직접 부른다(여기서 복사하지 않음 — 중복 0).
+TENANT_MIRROR = ("job.state", "usage.delta", "deploy.changed")
+TENANT_MAXLEN = 10000
+TENANT_REPLAY_S = 24 * 3600
+
+
+def tenant_event(tenant_id: str | None, event: str, data: dict) -> str | None:
+    """기관 스트림 events:tenant:{tenant_id} 에 한 줄(MAXLEN 10,000 · 24h 재생). GET /api/v1/events/tenant 가 tail 한다.
+
+    시그니처(F2-S · F2-E 가 import 해 쓴다): bus.tenant_event(tenant_id, event, data) -> entry id | None
+    - tenant_id 가 비면 아무것도 안 한다. data 에 tenant_id 가 없으면 채운다. 'at' 이 없으면 지금(ms).
+    """
+    if not tenant_id:
+        return None
+    d = {**data}
+    d.setdefault("tenant_id", tenant_id)
+    d.setdefault("at", now_iso(ms=True))
+    k = f"events:tenant:{tenant_id}"
+    eid = r().xadd(k, {"event": event, "data": json.dumps(d, ensure_ascii=False)}, maxlen=TENANT_MAXLEN, approximate=True)
+    try:   # 24h 보다 오래된 항목은 잘라낸다(MINID · Redis ≥ 6.2)
+        r().xtrim(k, minid=f"{int((time.time() - TENANT_REPLAY_S) * 1000)}-0", approximate=True)
+    except Exception:
+        pass
+    return eid
+
+
 def ops_event(event: str, data: dict):
     r().xadd("ops:events", {"event": event, "data": json.dumps(data, ensure_ascii=False)}, maxlen=5000, approximate=True)
+    if event in TENANT_MIRROR and data.get("tenant_id"):
+        tenant_event(data["tenant_id"], event, data)
+
+
+# ── nvidia-smi 경로(v1.1-18) — LX_NVSMI > DriverStore 최신 > config.NVIDIA_SMI ─────────────────
+_nvsmi: list = []
+
+
+def nvsmi() -> str:
+    if _nvsmi:
+        return _nvsmi[0]
+    import glob
+    import os
+    cand = os.environ.get("LX_NVSMI") or config.get("LX_NVSMI")
+    if not cand or not os.path.exists(cand):
+        found = glob.glob("C:/Windows/System32/DriverStore/FileRepository/nv*/nvidia-smi.exe")
+        cand = max(found, key=os.path.getmtime) if found else config.NVIDIA_SMI
+    _nvsmi.append(cand)
+    return cand
+
+
+def pid_alive(pid: int | str | None) -> bool | None:
+    """같은 호스트의 PID 가 살아 있는가(None = 모름). 재부팅·kill 뒤 하트비트 TTL(30s)을 기다리지 않고 판정."""
+    try:
+        pid = int(pid)
+    except (TypeError, ValueError):
+        return None
+    try:
+        import psutil
+        if not psutil.pid_exists(pid):
+            return False
+        p = psutil.Process(pid)
+        return "python" in (p.name() or "").lower()
+    except Exception:
+        return None
+
+
+def worker_alive(worker_id: str, max_age_s: float = 30) -> bool:
+    """worker:{id}:hb 가 있고 ts 가 30s 안이며(같은 호스트면) PID 가 살아 있으면 True."""
+    import socket
+    h = r().hgetall(f"worker:{worker_id}:hb")
+    if not h:
+        return False
+    if time.time() - float(h.get("ts") or 0) > max_age_s:
+        return False
+    if h.get("node") in (None, "", config.NODE_ID) and (h.get("host") in (None, "", socket.gethostname())):
+        alive = pid_alive(h.get("pid"))
+        if alive is False:
+            return False
+    return True
+
+
+# ── shard 비행 기록(v1.1-14 고아 감시) — inflight:{pool} 해시 {job_id}|{shard_id} → {entry, attempt, ts, worker} ──────
+def inflight_start(pool: str, job_id: str, shard_id: str, entry: dict, worker: str) -> int:
+    k = f"inflight:{pool}"
+    f = f"{job_id}|{shard_id}"
+    att = int(entry.get("attempt") or 0)
+    r().hset(k, f, json.dumps({"entry": entry, "attempt": att, "ts": time.time(), "worker": worker}, ensure_ascii=False))
+    return att
+
+
+LLM_REQ = "power:llm_request"
+
+
+def llm_power_request(holder: str = "llm", llm_gpu: int = 1, ttl_s: int = 30, wait_max_s: float = 6.0, limit_w: float = 100.0) -> dict:
+    """GPU1 LLM(vLLM · Ollama) 호출 **전에** 부르는 협조 헬퍼(전력 규칙 · 두 장 동시 고부하 금지).
+    ① power:llm_request 를 건다 → gpu_worker 가 칸 묶음 사이에서 즉시 멈춤(묶음 안 게이트)
+    ② 다른 GPU 의 드라이버 평균 전력(nvidia-smi power.draw 와 같은 값)이 limit_w 아래로 내려갈 때까지 최대 wait_max_s 기다린다.
+    → {waited_s, other_w, ok}. 호출이 끝나면 llm_power_done(). 긴 세션은 ttl_s 안에 다시 부르면 갱신된다.
+    GPU0 가 놀고 있으면 기다림 0 s(추가 지연 없음)."""
+    r().set(LLM_REQ, holder, ex=ttl_s)
+    t0 = time.time()
+    other = {}
+    try:
+        from workers import nvml_power
+        while True:
+            v = nvml_power.read_avg()
+            other = {i: w for i, w in v.items() if i != llm_gpu}
+            if not other or max(other.values()) < limit_w or time.time() - t0 >= wait_max_s:
+                break
+            time.sleep(0.1)
+    except Exception:
+        pass
+    ok = not other or max(other.values()) < limit_w
+    return {"waited_s": round(time.time() - t0, 2), "other_w": other, "ok": ok}
+
+
+def llm_power_done(holder: str = "llm"):
+    if r().get(LLM_REQ) == holder:
+        r().delete(LLM_REQ)
+
+
+def inflight_touch(pool: str, job_id: str, shard_id: str):
+    """비행 기록 ts 갱신 — 전력 게이트로 멈춘 칸을 고아 감시가 타임아웃으로 재배정하지 않게."""
+    k = f"inflight:{pool}"
+    v = r().hget(k, f"{job_id}|{shard_id}")
+    if v:
+        try:
+            d = json.loads(v)
+            d["ts"] = time.time()
+            r().hset(k, f"{job_id}|{shard_id}", json.dumps(d, ensure_ascii=False))
+        except Exception:
+            pass
+
+
+def inflight_owned(pool: str, job_id: str, shard_id: str, attempt: int) -> bool:
+    """이 시도의 결과를 써도 되는가 — 감시자가 타임아웃으로 재배정했으면(attempt 가 바뀜) 늦게 온 결과는 버린다."""
+    v = r().hget(f"inflight:{pool}", f"{job_id}|{shard_id}")
+    if not v:
+        return True
+    try:
+        return int(json.loads(v).get("attempt", 0)) == int(attempt)
+    except Exception:
+        return True
+
+
+def inflight_end(pool: str, job_id: str, shard_id: str):
+    r().hdel(f"inflight:{pool}", f"{job_id}|{shard_id}")
+
+
+def shard_ms_record(key: str, ms: int):
+    """kind 별 shard ms 최근 200 — 견적 eta_s(v1.1-11) 중앙값 재료."""
+    k = f"perf:shard_ms:{key}"
+    r().lpush(k, int(ms))
+    r().ltrim(k, 0, 199)
 
 
 def env(value, unit, basis, source, note=None, as_of=None):

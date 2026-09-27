@@ -17,7 +17,8 @@ from . import config
 
 BASIS = {"measured", "estimate", "demo", "history", "inferred", "recorded"}
 UNITS = {"polygons", "필지", "동", "ha", "km2", "m2", "%", "s", "gpu_s", "MiB", "GB", "chips_per_s", "ms", "count", "ratio",
-         "ndvi", "°C", "W", "krw_m2", "krw", "calls", "tiles", "bytes", "features"}
+         "ndvi", "°C", "W", "krw_m2", "krw", "calls", "tiles", "bytes", "features",
+         "chips_per_gpu_s", "chips_per_wall_s", "power_w", "tokens"}          # v1.1-1
 KST = dt.timezone(dt.timedelta(hours=9))
 
 # 봉투가 아니어도 되는 구조 필드(키 이름) — 계약 §2 "구조 필드"
@@ -29,11 +30,13 @@ STRUCT_KEYS = {
     "max_km2", "batch", "status", "http_status", "elapsed_s", "gpus", "bytes", "size", "zoom", "util_pct", "mem_used_mib",
     "position_in_queue", "age_s", "ttl_s", "iou", "min_conf", "lanes_total", "seq", "attempt", "gsd_m", "gsd_trained_m",
     "expires_in_s", "cpu", "raw_routes", "gpu_index", "imgsz", "seconds", "chips",
+    "reqs_active", "util_raw", "samples", "slot", "hot_now", "max_hot_gpus", "parcels_raw", "month_n", "resume_seq",
 }
 # 이 키 아래 서브트리는 통째로 데이터(좌표·속성·요청 본문 되돌림)
 STRUCT_SUBTREES = {"coordinates", "bbox", "bounds", "geometry", "aoi", "footprint", "counts", "params", "options", "detail",
                    "properties", "infer_shape", "aoi_centroid", "center", "classes", "window", "items_raw", "compose",
-                   "gpu_indices", "gpus_measured", "dims_raw", "ladder", "lnglat"}
+                   "gpu_indices", "gpus_measured", "dims_raw", "ladder", "lnglat",
+                   "recovered_at_boot", "power_budget", "power_gate", "hist", "recovery", "last_sweep"}          # v1.1(F2-B) 구조 블록
 
 
 def now_iso() -> str:

@@ -59,6 +59,17 @@ test('순서 · 재개(Last-Event-ID) · 첫 shard.done 실측', async ({ reques
   expect(firstDone.t).toBeLessThan(15000);   // 목표 ≤ 5s — 실측은 결과 문서에 기록(여기선 여유 있게)
   const done = JSON.parse(all.find((e) => e.event === 'job.done').data);
   expect(done.counts_env.basis).toBe('inferred');   // AI 추론 · 검수 전(계약 §0)
+  // v1.1-5·6·7·8: 창 짧음 규칙 · 마지막 progress 1회(n/n) · job.done 두 줄 = GET /jobs/{id}
+  const prog = all.filter((e) => e.event === 'job.progress').map((e) => JSON.parse(e.data));
+  for (const p of prog) if (p.shards_done < 8) { expect(p.chips_per_s.value).toBeNull(); expect(p.chips_per_s.note).toBe('창 짧음'); }
+  expect(prog.filter((p) => p.shards_done === p.shards_total).length).toBe(1);
+  expect(prog[prog.length - 1].shards_done).toBe(prog[prog.length - 1].shards_total);
+  const g0 = prog[prog.length - 1].gpu.find((g) => g.index === 0);
+  expect(g0.shared).toBe(true); expect(typeof g0.power_w).toBe('number');
+  const j = await (await request.get(API + '/api/v1/jobs/' + id, { headers: h })).json();
+  expect(j.chips_per_gpu_s.value).toBe(done.chips_per_gpu_s.value);
+  expect(j.chips_per_wall_s.value).toBe(done.chips_per_wall_s.value);
+  expect(j.elapsed_s.value).toBe(done.elapsed_s);
 });
 
 test('/events/ops — 관리자 · 폴러 스트림 tail(gpu.sample · queue.sample)', async ({ request }) => {

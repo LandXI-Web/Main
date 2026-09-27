@@ -91,6 +91,8 @@ async def active_workers(pool: str) -> list[str]:
 
 async def build_quote(p: Principal, body: dict) -> dict:
     kind = body.get("kind", "infer")
+    if kind not in ("infer", "reinfer", "index", "survey", "join"):
+        raise ApiError("bad_request", f"kind {kind} — infer|reinfer|index|survey|join")
     demo = bool(body.get("demo"))
     opts = dict(body.get("options") or {})
     chip = int(opts.get("chip", 1024))
@@ -112,30 +114,39 @@ async def build_quote(p: Principal, body: dict) -> dict:
     if kind == "reinfer" and not aoi and img and img["fp"]:
         aoi = None      # footprint 전체
     area = None
+    area_src = "shapely area(EPSG:5186)"
     shards_n = 0
     tile_src = "params"
-    if kind == "index":
-        months = (body.get("params") or opts.get("params") or {}).get("months") or opts.get("months") or []
-        shards_n = len(months)
+    adapter_id = None
+    if kind in ("survey", "join") or (kind == "index" and not model):
+        from workers.registry_scan import adapter_for_kind
+        adapter_id = body.get("adapter") if (config.DEV and body.get("adapter")) else adapter_for_kind(kind)
+        if config.DEV and opts.get("adapter"):
+            adapter_id = opts["adapter"]            # 개발 모드 전용(고아 감시 테스트 어댑터 등)
+        if not adapter_id:
+            raise ApiError("registry_unavailable", f"kind {kind}: 어댑터 없음(plan 훅 · F2-S server/adapters/survey 미도착)",
+                           {"kind": kind}, status=404)
+    elif model and kind == "index":
+        adapter_id = model["adapter"]
+    if kind in ("index", "survey", "join"):
+        sh = await run_in_threadpool(_plan_preview, kind, adapter_id, body, opts, aoi)
+        shards_n = len(sh)
+        tile_src = f"plan({adapter_id})" if adapter_id else "params.months"
         if aoi:
-            from workers.tiling import area_km2
-            area = area_km2(aoi)
-        tile_src = "params.months"
+            area, area_src = aoi_area(aoi)
     elif img:
         path = resolve_internal(img["path_internal"])
         meta = await run_in_threadpool(raster_meta, path)
         fp_parts = _footprint_parts(img["fp"], meta["crs"])
         if aoi:
             g = shape(aoi)
-            from workers.tiling import area_km2
-            area = area_km2(aoi)
+            area, area_src = aoi_area(aoi)
             if img["fp"] and not shape(img["fp"]).intersects(g):
                 reasons.append("aoi_outside_footprint")
             if kind == "infer" and area > float(opts.get("max_km2", 5)):
                 reasons.append("aoi_too_large")
         elif img["fp"]:
-            from workers.tiling import area_km2
-            area = area_km2(img["fp"])
+            area, area_src = aoi_area(img["fp"])
         from workers.tiling import shards as mk_shards
         if "aoi_outside_footprint" not in reasons and "aoi_too_large" not in reasons:
             grid, sh = await run_in_threadpool(mk_shards, meta, aoi, chip=chip, overlap=opts.get("overlap"),
@@ -143,6 +154,8 @@ async def build_quote(p: Principal, body: dict) -> dict:
             shards_n = len(sh)
             tile_src = f"workers.tiling(chip {chip} · overlap {grid.overlap}px(원본) · upsample {grid.upsample:g} · gsd {meta['res']:.4f})"
     pool = pool_of(model) if model else "cpu"
+    if kind in ("survey", "join"):
+        pool = "cpu"
     perf = (model["perf"] if model else None) or None
     cps = (perf or {}).get("chips_per_s", {}).get("value") if perf else None
     if kind != "index" and cps:
@@ -153,9 +166,9 @@ async def build_quote(p: Principal, body: dict) -> dict:
         n = max(1, len(wk))
         eta = env(round(shards_n / cps / n + 3.0, 1), "s", "estimate", f"gpu_s ÷ 워커 {n} + 스냅샷 3s",
                   "워커 수는 지금 하트비트 기준" if wk else "워커 하트비트 없음 — 1 로 계산")
-    elif kind == "index":
-        gpu_s = env(None, "gpu_s", "estimate", "kind index — CPU 워커(지수 계산 · 모델 추론 아님)", "GPU 사용 없음")
-        eta = env(None, "s", "estimate", "PC STAC 응답 시간에 좌우", "bench 대상 아님")
+    elif kind in ("index", "survey", "join"):
+        gpu_s = env(0 if kind != "index" else None, "gpu_s", "estimate", f"kind {kind} — CPU 워커(모델 추론 아님)", "GPU 사용 없음")
+        eta = await eta_estimate(adapter_id or kind, shards_n)
     else:
         gpu_s = env(None, "gpu_s", "estimate", f"models.perf({model['id'] if model else '-'}) 없음 — bench 전", "bench 후 채워짐")
         eta = env(None, "s", "estimate", "同上")
@@ -163,7 +176,8 @@ async def build_quote(p: Principal, body: dict) -> dict:
     req = gpu_s["value"] or 0
     if q["hard"] is not None and q["used"] + req > q["hard"] and q["policy"] == "reject":
         reasons.append("quota_exceeded")
-    area_env = env(round(area, 4) if area is not None else None, "km2", "measured", "shapely area(EPSG:5186)")
+    area_env = env(round(area, 4) if area is not None else None, "km2", "measured", area_src,
+                   None if area is not None else ("AOI 없음(읍면동 목록 · 규칙 재평가)" if kind in ("survey", "join") else None))
     return {
         "area_km2": area_env,
         "shards": shards_n,
@@ -174,12 +188,85 @@ async def build_quote(p: Principal, body: dict) -> dict:
                                    f"quotas({tenant} hard={q['hard']}) − usage_events", "무제한" if q["hard"] is None else q.get("note")),
                   "policy": q["policy"]},
         "allowed": not reasons, "reasons": reasons, "pool": pool, "kind": kind, "demo": demo,
+        "power_budget": await power_budget() if pool != "cpu" else None,
         "_aoi": aoi, "_tenant": tenant, "_model": dict(model) if model else None, "_img": dict(img) if img else None,
+        "_adapter": adapter_id,
     }
 
 
+def aoi_area(g: dict) -> tuple[float, str]:
+    """면적(km²): AOI 중심이 EPSG:5186 유효 범위(한국 · 124–132°E · 33–39°N) 안이면 5186 평면, 밖이면 측지(GRS80 · v1.1-12)."""
+    c = shape(g).centroid
+    if 124.0 <= c.x <= 132.0 and 33.0 <= c.y <= 39.0:
+        from workers.tiling import area_km2
+        return area_km2(g), "shapely area(EPSG:5186)"
+    from pyproj import Geod
+    a = abs(Geod(ellps="GRS80").geometry_area_perimeter(shape(g))[0]) / 1e6
+    return a, f"geodesic(GRS80 · pyproj.Geod) — AOI 중심 {c.x:.2f},{c.y:.2f} 가 EPSG:5186 범위 밖"
+
+
+def _plan_preview(kind: str, adapter_id: str | None, body: dict, opts: dict, aoi) -> list:
+    """견적용 shard 목록 — 스케줄러와 같은 plan_job()(어댑터 plan 훅 · index 월 목록)."""
+    from workers.scheduler import plan_job
+    o = dict(opts)
+    if body.get("params"):
+        o["params"] = body["params"]
+    for k in ("survey_id", "rules", "emd_cd", "thresholds"):
+        if k in body and k not in o:
+            o[k] = body[k]
+    jh = {"kind": kind, "adapter": adapter_id or "", "options": json.dumps(o, ensure_ascii=False), "aoi": json.dumps(aoi) if aoi else "",
+          "tenant_id": body.get("tenant_id") or "", "deploy_id": body.get("deploy_id") or ""}
+    try:
+        return plan_job(jh)
+    except ValueError as e:
+        m = str(e)
+        if m.startswith("rule_requires_missing:"):
+            raise ApiError("rule_requires_missing", m.split(":", 1)[1].strip(), {"rules": o.get("rules"), "thresholds": o.get("thresholds")}, status=400) from None
+        raise
+
+
+async def eta_estimate(key: str, shards_n: int) -> dict:
+    """kind index · survey eta_s(v1.1-11): 최근 shard ms 중앙값(perf:shard_ms:{어댑터} · 없으면 index_results.metrics.ms) × shards."""
+    import statistics
+    r = await redis()
+    vals = [int(x) for x in await r.lrange(f"perf:shard_ms:{key}", 0, 99)]
+    src = f"perf:shard_ms:{key} 최근 {len(vals)}건 중앙값"
+    if not vals:
+        try:
+            async with db(realm="lx") as conn:
+                rows = await conn.fetch("SELECT (metrics->>'ms')::float AS ms FROM index_results i JOIN jobs j ON j.id=i.job_id "
+                                        "WHERE metrics ? 'ms' AND (j.options->>'adapter'=$1 OR j.model_id=$1 OR j.kind=$1) "
+                                        "ORDER BY i.id DESC LIMIT 100", key)
+            vals = [x["ms"] for x in rows if x["ms"] is not None]
+            src = f"index_results.metrics.ms 최근 {len(vals)}건 중앙값"
+        except Exception:
+            vals = []
+    if not vals or not shards_n:
+        return env(None, "s", "estimate", src if vals else f"{key} 실측 shard 없음", "첫 실행 뒤 채워짐")
+    med = statistics.median(vals)
+    return env(round(med * shards_n / 1000, 1), "s", "estimate", f"{src} {med:.0f} ms × {shards_n} shard",
+               "순수 shard 시간(cpu 워커 1 · 순차) — 큐 대기·finalize(전역 집계·기록) 제외 · 실측 elapsed 는 이보다 길다")
+
+
+async def power_budget() -> dict:
+    """전력 예산(v1.1-18) — power:hot:{slot} 임대 상태. 지금 다른 워커가 쥐고 있으면 '보류 사유'로 보여 준다(제출은 막지 않음)."""
+    r = await redis()
+    pw = config.load_yaml("pools").get("power", {}) or {}
+    mx = int(pw.get("max_hot_gpus", 1))
+    leases = []
+    for i in range(mx):
+        h = await r.get(f"power:hot:{i}")
+        ttl = await r.ttl(f"power:hot:{i}") if h else None
+        leases.append({"slot": i, "holder": h, "ttl_s": ttl})
+    held = [x for x in leases if x["holder"]]
+    return {"max_hot_gpus": mx, "leases": leases, "hot_now": len(held),
+            "hold_reason": "power_budget" if len(held) >= mx else None,
+            "note": (f"고부하 GPU {len(held)}/{mx} — 같은 워커가 이어받거나 임대 반납 뒤 시작" if len(held) >= mx else f"고부하 GPU {len(held)}/{mx}"),
+            "power_limit_w": pw.get("power_limit_w")}
+
+
 def _public_quote(q: dict) -> dict:
-    return {k: v for k, v in q.items() if not k.startswith("_") and k not in ("kind", "demo")}
+    return {k: v for k, v in q.items() if not k.startswith("_") and k not in ("kind", "demo") and not (k == "power_budget" and v is None)}
 
 
 @router.post("/jobs/quote")
@@ -222,12 +309,47 @@ async def job_dict(row, live: dict | None = None) -> dict:
         "result_set": row["result_set"], "snapshot_ready": (live.get("snapshot_ready") == "1") if live.get("snapshot_ready") else row["snapshot_ready"],
         "created_at": _iso(row["created_at"]), "started_at": live.get("started_at") or _iso(row["started_at"]),
         "finished_at": live.get("finished_at") or _iso(row["finished_at"]), "error": live.get("error") or row["error"],
+        **_perf_fields(row, live, state),
+        "recovered": _recovered(live),
     }
+
+
+def _perf_fields(row, live: dict, state: str) -> dict:
+    """v1.1-6: job.done 과 같은 두 줄 실측 — 끝난 작업은 perf(jsonb · Redis 미러) 그대로, 진행 중이면 null + note."""
+    perf = None
+    if live.get("perf"):
+        try:
+            perf = json.loads(live["perf"])
+        except Exception:
+            perf = None
+    if perf is None:
+        try:
+            perf = row["perf"]
+        except (KeyError, IndexError):
+            perf = None
+        if isinstance(perf, str):
+            perf = json.loads(perf)
+    if perf:
+        el = perf.get("elapsed_env") or env(perf.get("elapsed_s"), "s", "measured", "job.started → job.done")
+        return {"chips_per_gpu_s": perf.get("chips_per_gpu_s"), "chips_per_wall_s": perf.get("chips_per_wall_s"), "elapsed_s": el}
+    note = "job.done 뒤 채워짐" if state in ("queued", "running") else "이 작업은 v1.1 이전 실행 — 기록 없음"
+    return {"chips_per_gpu_s": env(None, "chips_per_gpu_s", "measured", "shards_total ÷ gpu_s", note),
+            "chips_per_wall_s": env(None, "chips_per_wall_s", "measured", "shards_total ÷ elapsed_s", note),
+            "elapsed_s": env(None, "s", "measured", "job.started → job.done", note)}
+
+
+def _recovered(live: dict) -> dict | None:
+    if not live.get("recovered_mode"):
+        return None
+    return {"mode": live.get("recovered_mode"), "shards_done": int(live.get("recovered_done") or 0),
+            "shards_total": int(live.get("recovered_total") or 0), "reason": live.get("recovered_reason"), "at": live.get("recovered_at"),
+            "chip": (f"복구 · 재개 {live.get('recovered_done')}/{live.get('recovered_total')}" if live.get("recovered_mode") == "resumed"
+                     else "복구 · 재투입" if live.get("recovered_mode") == "requeued" else "복구 실패")}
 
 
 JOB_COLS = ("id, tenant_id, submitted_by, kind, state, priority, demo, pool, model_id, imagery_id, deploy_id, card_id, "
             "ST_AsGeoJSON(aoi)::json AS aoi, options, shards_total, shards_done, shards_failed, counts, gpu_s, workers, result_set, "
-            "snapshot_ready, created_at, started_at, finished_at, error, label")
+            "snapshot_ready, created_at, started_at, finished_at, error, label, perf")
 
 
 async def publish(job_id: str, event: str, data: dict, *, ops: bool = False):
@@ -238,9 +360,31 @@ async def publish(job_id: str, event: str, data: dict, *, ops: bool = False):
     return eid
 
 
+TENANT_MIRROR = ("job.state", "usage.delta", "deploy.changed")
+
+
+async def tenant_event(tenant_id: str | None, event: str, data: dict):
+    """기관 스트림(v1.1-16) — workers.bus.tenant_event 의 async 판(게이트웨이용 · 같은 키 events:tenant:{tenant_id})."""
+    if not tenant_id:
+        return None
+    r = await redis()
+    d = {**data}
+    d.setdefault("tenant_id", tenant_id)
+    d.setdefault("at", now_iso())
+    k = f"events:tenant:{tenant_id}"
+    eid = await r.xadd(k, {"event": event, "data": json.dumps(d, ensure_ascii=False)}, maxlen=10000, approximate=True)
+    try:
+        await r.xtrim(k, minid=f"{int((time.time() - 86400) * 1000)}-0", approximate=True)
+    except Exception:
+        pass
+    return eid
+
+
 async def ops_event(event: str, data: dict):
     r = await redis()
     await r.xadd("ops:events", {"event": event, "data": json.dumps(data, ensure_ascii=False)}, maxlen=5000, approximate=True)
+    if event in TENANT_MIRROR and data.get("tenant_id"):
+        await tenant_event(data["tenant_id"], event, data)
 
 
 def _centroid(aoi, img) -> list | None:
@@ -275,6 +419,11 @@ async def submit(body: dict, request: Request):
     opts = dict(body.get("options") or {})
     if body.get("params"):
         opts["params"] = body["params"]
+    for k in ("survey_id", "rules", "emd_cd", "thresholds"):
+        if k in body and k not in opts:
+            opts[k] = body[k]
+    if q.get("_adapter"):
+        opts.setdefault("adapter", q["_adapter"])
     async with db(p) if p.realm == "tenant" else db(realm="lx") as conn:
         await conn.execute(
             "INSERT INTO jobs(id, tenant_id, submitted_by, kind, state, priority, demo, pool, model_id, imagery_id, deploy_id, card_id, aoi, "
@@ -291,7 +440,8 @@ async def submit(body: dict, request: Request):
         "priority": prio, "model_id": body.get("model_id") or "", "imagery_id": body.get("imagery_id") or "",
         "options": json.dumps(opts), "aoi": json.dumps(aoi) if aoi else "", "shards_total": q["shards"], "shards_done": 0,
         "shards_failed": 0, "counts": "{}", "gpu_s": 0, "result_set": rs, "created_at": now, "submitted_by": p.user_id or "",
-        "centroid": json.dumps(_centroid(aoi, img)), "queued_at_ms": int(time.time() * 1000)})
+        "centroid": json.dumps(_centroid(aoi, img)), "queued_at_ms": int(time.time() * 1000), "adapter": q.get("_adapter") or "",
+        "deploy_id": body.get("deploy_id") or ""})
     await r.xadd(f"jobs:{q['pool']}", {"job_id": job_id, "priority": prio}, maxlen=10000, approximate=True)
     # 대기 위치 = 같은 풀에서 이 작업보다 먼저 처리될 작업 수
     async with db(realm="lx") as conn:
@@ -365,7 +515,9 @@ async def requeue(job_id: str, request: Request):
     await _owner_or_admin(p, row)
     r = await redis()
     now = now_iso()
-    await r.delete(f"job:{job_id}:done", f"job:{job_id}:failed", f"job:{job_id}:cursor")
+    await r.delete(f"job:{job_id}:done", f"job:{job_id}:failed", f"job:{job_id}:cursor", f"job:{job_id}:final_progress",
+                   f"job:{job_id}:finalize", f"job:{job_id}:ts", f"job:{job_id}:counts", f"job:{job_id}:progress_lock")
+    await r.hdel(f"job:{job_id}", "first_done_ts", "perf", "chips_per_s", "recovering")
     await r.hset(f"job:{job_id}", mapping={"state": "queued", "shards_done": 0, "shards_failed": 0, "counts": "{}", "gpu_s": 0,
                                            "snapshot_ready": "0", "error": "", "finished_at": "", "started_at": "",
                                            "queued_at_ms": int(time.time() * 1000)})

@@ -1,0 +1,109 @@
+{
+ "method": "GET",
+ "path": "/api/v1/results/{set}/index",
+ "status": 200,
+ "body": {
+  "job_id": "job_01M3…",
+  "set": "results/kgz-agri/job_01M3…",
+  "kind": "index",
+  "items": [
+   {
+    "shard_id": "m2025-06",
+    "month": "2025-06",
+    "ndvi_mean": {
+     "value": 0.512,
+     "unit": "ndvi",
+     "basis": "measured",
+     "as_of": "2026-09-27",
+     "source": "PC S2 L2A B04/B08 · WorldCover 40 마스크"
+    },
+    "p10": {
+     "value": 0.31,
+     "unit": "ndvi",
+     "basis": "measured",
+     "as_of": "2026-09-27",
+     "source": "index_results"
+    },
+    "p50": {
+     "value": 0.52,
+     "unit": "ndvi",
+     "basis": "measured",
+     "as_of": "2026-09-27",
+     "source": "index_results"
+    },
+    "p90": {
+     "value": 0.71,
+     "unit": "ndvi",
+     "basis": "measured",
+     "as_of": "2026-09-27",
+     "source": "index_results"
+    },
+    "n_scenes": 14,
+    "valid_px": {
+     "value": 1203344,
+     "unit": "count",
+     "basis": "measured",
+     "as_of": "2026-09-27",
+     "source": "index_results"
+    },
+    "hist": {
+     "bins": [
+      -0.2,
+      -0.15,
+      -0.1,
+      -0.05,
+      0.0,
+      0.05,
+      0.1,
+      0.15,
+      0.2,
+      0.25,
+      0.3,
+      0.35,
+      0.4,
+      0.45,
+      0.5,
+      0.55,
+      0.6,
+      0.65,
+      0.7,
+      0.75,
+      0.8
+     ],
+     "counts": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      3,
+      9,
+      20,
+      40,
+      30,
+      12,
+      4,
+      0,
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    "ms": 21840,
+    "basis": "measured"
+   }
+  ],
+  "total": 1,
+  "source": "index_results(job_id=job_01M3…)",
+  "as_of": "2026-09-27T02:00:00+09:00"
+ },
+ "optional": [],
+ "optional_nested": {
+  "items[]": []
+ },
+ "note": "F1-CONTRACT.md v1.0 예시 — 값은 [예시]/계약 기록값"
+}

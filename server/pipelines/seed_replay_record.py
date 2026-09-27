@@ -18,7 +18,7 @@ import httpx
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from landxi_api import config  # noqa: E402
 
-B = f"http://localhost:{config.API_PORT}/api/v1"
+B = f"http://127.0.0.1:{config.API_PORT}/api/v1"
 OUT = config.SERVER_ROOT / "fixtures" / "replay"
 J1 = {"kind": "infer", "model_id": "car_v2_obb", "imagery_id": "axis-iksan-hwangdeung",
       "aoi": {"type": "Polygon", "coordinates": [[[126.9440, 35.9950], [126.9490, 35.9950], [126.9490, 35.9990], [126.9440, 35.9990], [126.9440, 35.9950]]]},
@@ -31,7 +31,19 @@ def login(c: httpx.Client, role: str = "staff") -> str:
     return r.json()["token"]
 
 
-def record(c: httpx.Client, tok: str, job_id: str, out: Path, t_submit: float | None = None, timeout: float = 600) -> dict:
+def _at_ms(d: dict) -> float | None:
+    import datetime as dt
+    a = d.get("at")
+    if not a:
+        return None
+    try:
+        return dt.datetime.fromisoformat(a).timestamp() * 1000
+    except ValueError:
+        return None
+
+
+def record(c: httpx.Client, tok: str, job_id: str, out: Path, t_submit: float | None = None, timeout: float = 600, timing: str = "recv") -> dict:
+    """timing='recv' = 받은 시각(실행 중 녹음) · 'at' = 이벤트 data.at 기준(끝난 작업을 24h 스트림에서 다시 받을 때 — 원래 간격 보존)."""
     url = f"{B}/events/jobs/{job_id}?access_token={tok}"
     lines, t0, first_done, names = [], None, None, []
     ev, data, eid = None, None, None
@@ -48,10 +60,13 @@ def record(c: httpx.Client, tok: str, job_id: str, out: Path, t_submit: float | 
                 eid = raw[3:].strip()
             elif raw == "" and ev:
                 now = time.time()
+                d = json.loads(data or "{}")
+                if timing == "at":
+                    am = _at_ms(d)
+                    now = (am / 1000) if am else (lines[-1]["t"] / 1000 + t0 if lines and t0 else now)
                 if t0 is None:
                     t0 = t_submit or now
-                d = json.loads(data or "{}")
-                t = int((now - t0) * 1000)
+                t = max(int((now - t0) * 1000), lines[-1]["t"] if lines else 0)
                 lines.append({"t": t, "event": ev, "data": d, "id": eid})
                 names.append(ev)
                 if ev == "shard.done" and first_done is None:
@@ -72,7 +87,7 @@ def record(c: httpx.Client, tok: str, job_id: str, out: Path, t_submit: float | 
     summ = {"job_id": job_id, "events": len(lines), "first_shard_done_ms": first_done,
             "t_end_ms": lines[-1]["t"] if lines else None, "order_compressed": order[:12] + (["…"] if len(order) > 12 else []) + order[-3:],
             "counts": {n: names.count(n) for n in sorted(set(names))}, "recorded_at": time.strftime("%Y-%m-%dT%H:%M:%S+09:00"),
-            "source": "게이트웨이 SSE 실수신(httpx)"}
+            "source": "게이트웨이 SSE 실수신(httpx)" + (" · t = data.at 기준(24h 스트림 재수신)" if timing == "at" else "")}
     out.with_suffix(".summary.json").write_text(json.dumps(summ, ensure_ascii=False, indent=1), encoding="utf-8")
     return summ
 
@@ -84,6 +99,7 @@ def main():
     ap.add_argument("--role", default="staff")
     ap.add_argument("--demo", action="store_true")
     ap.add_argument("--out", default=str(OUT / "j1-hwangdeung.ndjson"))
+    ap.add_argument("--timing", choices=["recv", "at"], default="recv")
     a = ap.parse_args()
     c = httpx.Client(timeout=60)
     tok = login(c, a.role)
@@ -99,7 +115,7 @@ def main():
         r.raise_for_status()
         job_id = r.json()["job"]["id"]
         print("submitted", job_id)
-    summ = record(c, tok, job_id, Path(a.out), t_submit)
+    summ = record(c, tok, job_id, Path(a.out), t_submit, timing=a.timing)
     print(json.dumps(summ, ensure_ascii=False, indent=1))
 
 

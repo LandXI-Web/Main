@@ -87,7 +87,38 @@
     "created_at": "2026-09-24T14:02:11+09:00",
     "started_at": "2026-09-24T14:02:12+09:00",
     "finished_at": null,
-    "error": null
+    "error": null,
+    "chips_per_gpu_s": {
+     "value": 27.8,
+     "unit": "chips_per_gpu_s",
+     "basis": "measured",
+     "as_of": "2026-09-27",
+     "source": "shards_total 378 ÷ gpu_s 13.60",
+     "note": "GPU 초당 칩(모델+창 읽기 · 워커 벽시계 합)"
+    },
+    "chips_per_wall_s": {
+     "value": 19.3,
+     "unit": "chips_per_wall_s",
+     "basis": "measured",
+     "as_of": "2026-09-27",
+     "source": "shards_total 378 ÷ elapsed_s 19.6",
+     "note": "벽시계(첫 배정 → job.done · 전역 NMS 포함 · 스냅샷 제외)"
+    },
+    "elapsed_s": {
+     "value": 19.6,
+     "unit": "s",
+     "basis": "measured",
+     "as_of": "2026-09-27",
+     "source": "job.started → job.done(scheduler started_ts · 벽시계)"
+    },
+    "recovered": {
+     "mode": "resumed",
+     "shards_done": 224,
+     "shards_total": 378,
+     "reason": "worker heartbeat 0 (a6000-0) · 재부팅/종료",
+     "at": "2026-09-27T02:33:49+09:00",
+     "chip": "복구 · 재개 224/378"
+    }
    }
   ]
  },

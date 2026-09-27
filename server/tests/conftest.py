@@ -7,8 +7,8 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from landxi_api import config  # noqa: E402
 
-B = f"http://localhost:{config.API_PORT}/api/v1"
-BASE = f"http://localhost:{config.API_PORT}"
+B = f"http://127.0.0.1:{config.API_PORT}/api/v1"     # localhost 는 Windows httpx 가 ::1 먼저 시도해 요청마다 +2 s
+BASE = f"http://127.0.0.1:{config.API_PORT}"
 
 
 def _login(body):
