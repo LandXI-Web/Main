@@ -1,0 +1,164 @@
+/* lx-deploy — ⑤ 배포·이식 + ⑥ 운영·신고. 토큰·부품은 kit.css(법전 v2.2 토스 톤). 여기는 배치만. */
+
+.dp{position:absolute;inset:0}
+.dp-stage{position:absolute;inset:0}
+
+/* 윗줄: 탭 2 + 새 지역에 심기 */
+.dp-top{position:absolute;top:24px;left:24px;right:24px;z-index:12;display:flex;align-items:center;gap:12px;pointer-events:none}
+.dp-top > *{pointer-events:auto}
+.dp-tabs{display:inline-flex;padding:4px;border-radius:var(--r-16);background:var(--bg-1);box-shadow:var(--elev-map)}
+.dp-tab{height:40px;padding:0 18px;border:0;border-radius:12px;background:none;color:var(--sub);font:500 15px/1 var(--font-body);cursor:pointer;transition:background var(--d-180) var(--e-ui),color var(--d-180) var(--e-ui)}
+.dp-tab:hover{color:var(--ink)}
+.dp-tab[aria-selected="true"]{background:var(--ink);color:#fff}
+.dp-top .sp{flex:1}
+.dp-plant{box-shadow:var(--elev-map)}
+.dp-plant svg{width:16px;height:16px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round}
+
+/* 지도 위 점(지역) — 사진 위 흰 글자 · 운영 = 잉크 채움 · 시범 = 흰 채움 · 이식 요청 = 액센트 고리 맥박 */
+.dp-pin{position:relative;display:flex;align-items:center;gap:8px;cursor:pointer;transform:translate(-9px,0)}
+.dp-pin i{position:relative;width:18px;height:18px;border-radius:50%;box-sizing:border-box;background:#fff;border:0;box-shadow:0 1px 4px rgba(0,0,0,.35);transition:transform var(--d-380) var(--e-ui)}
+.dp-pin[data-stage="pilot"] i{background:none;border:2.5px solid #fff}  /* 명세·콘솔 기호 한 벌: ● 운영 ○ 시범 ◌ 이식 요청 */
+.dp-pin[data-stage="draft"] i{background:none;border:2.5px dashed #fff}
+.dp-pin[data-stage="draft"] i::after{content:"";position:absolute;inset:-9px;border-radius:50%;border:2px solid #fff;opacity:0;animation:dp-ring 2.4s var(--e-ui) infinite}
+.dp-pin span{font:700 15px/1 var(--font-body);color:#fff;text-shadow:var(--hud-shadow);white-space:nowrap}
+.dp-pin b{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;margin-left:6px;padding:0 5px;border-radius:10px;background:rgba(255,255,255,.92);color:var(--ink);font:500 12px/1 var(--font-num);text-shadow:none;vertical-align:1px}
+.dp-pin:hover i{transform:scale(1.15)}
+.dp-pin.is-on i{transform:scale(1.35);box-shadow:0 0 0 4px rgba(0,109,247,.45),0 1px 4px rgba(0,0,0,.35)}
+.dp-pin.is-new i{animation:dp-drop 900ms var(--e-arrive) both}
+@keyframes dp-ring{0%{transform:scale(.6);opacity:.9}80%,100%{transform:scale(1.8);opacity:0}}
+@keyframes dp-drop{0%{transform:translateY(-40px) scale(.4);opacity:0}60%{opacity:1}100%{transform:none}}
+
+/* 범례(사진 위 흰 글자) */
+.dp-legend{position:absolute;left:24px;bottom:48px;z-index:6;display:flex;gap:16px;font:500 13px/1 var(--font-body);color:#fff;text-shadow:var(--hud-shadow);pointer-events:none}
+.dp-legend span{display:inline-flex;align-items:center;gap:6px}
+.dp-legend i{width:12px;height:12px;border-radius:50%;box-sizing:border-box;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.dp-legend i[data-s="pilot"]{background:none;border:2px solid #fff}
+.dp-legend i[data-s="draft"]{background:none;border:2px dashed #fff}
+
+/* 서랍 안 — 단계 칩 · 같은 지역 · 6단 세로 스텝퍼 · 남은 일 · 포털 */
+.dp-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 20px}
+.dp-chip[data-stage="draft"]{background:var(--tint);color:var(--accent)}
+.dp-chip[data-stage="ga"]{background:var(--ink);color:#fff}
+.dp-sib{font:500 var(--fs-label)/1 var(--font-body);color:var(--sub);text-decoration:none;padding:7px 10px;border-radius:var(--r-8);border:1px solid var(--rule)}
+.dp-sib:hover{color:var(--ink);border-color:var(--ink)}
+.dp-steps.t-steps--v{gap:0}
+.dp-steps.t-steps--v::before{top:18px;bottom:18px}
+.dp-steps .t-step{align-items:flex-start!important;padding:10px 0;opacity:0;transform:translateY(12px);animation:dp-in var(--d-500) var(--e-ui) forwards;animation-delay:calc(var(--i) * var(--stagger))}
+.dp-steps .t-step .n{flex:none}
+.dp-steps .k-step-tx{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;padding-top:3px}
+.dp-steps .dp-sr{display:flex;align-items:baseline;gap:10px}
+.dp-steps .dp-sr a{font:700 17px/24px var(--font-body);color:var(--ink);text-decoration:none}
+.dp-steps .dp-sr a:hover{text-decoration:underline;text-underline-offset:3px}
+.dp-steps em{font:500 13px/1 var(--font-body);font-style:normal;color:var(--sub)}
+.dp-steps .t-step[data-todo] em{color:var(--accent)}
+.dp-steps .t-step[data-st="done"] em{color:var(--ink-2)}
+.dp-steps .d{font:400 14px/20px var(--font-body)!important;color:var(--sub)}
+.dp-steps .d .k-num{font:500 14px/1 var(--font-num)}
+.dp-steps .d .k-num small{font-size:13px}
+.dp-act{margin-top:10px;align-self:flex-start;height:36px;padding:0 14px}
+.dp-act.t-btn--text{height:auto;padding:0;margin-top:8px}
+.dp-prog{margin-top:10px;height:4px}
+.dp-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px;padding-top:20px;border-top:1px solid var(--rule);opacity:0;animation:dp-in var(--d-500) var(--e-ui) forwards;animation-delay:calc(6 * var(--stagger))}
+.dp-left{font:500 15px/1 var(--font-body);color:var(--sub)}
+.dp-left b{margin-left:6px;font:800 24px/1 var(--font-display);color:var(--ink);font-variant-numeric:tabular-nums}
+.dp-foot .t-btn{height:40px;padding:0 16px;text-decoration:none}
+@keyframes dp-in{to{opacity:1;transform:none}}
+
+/* 운영·신고 판 — 지도 위 흰 카드 한 장(큰 숫자 + 표) */
+.dp-ops{position:absolute;z-index:10;top:92px;left:24px;bottom:24px;width:min(760px,calc(100% - 48px));display:flex;flex-direction:column;gap:20px;overflow:auto;transform:translateY(12px);transition:transform var(--d-380) var(--e-ui)}
+.dp-ops.is-in{transform:none}
+/* 운영 카드는 첫 프레임부터 불투명(지도 점이 비치지 않게) — 들어올 때 위치만 움직인다 */
+.dp-ops .t-card{background:var(--bg-1)}
+.dp-nop{color:var(--sub);font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.dp-ops[hidden]{display:none}
+.dp-ops .k-table td:last-child{white-space:nowrap}
+.dp-next{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:var(--r-8);background:var(--bg-0);font:500 13px/1 var(--font-body);color:var(--ink)}
+.dp-next[data-n="재학습"]{background:rgba(240,68,82,.1);color:var(--warn)}
+.dp-next[data-n="없음"]{color:var(--sub);background:none;padding:0}
+.dp-wk{display:block;color:var(--ink);font-weight:500}
+.dp-wk small{display:block;font:400 13px/18px var(--font-body);color:var(--sub)}
+
+/* 심기 시트 */
+.dp-form{display:flex;flex-direction:column;gap:20px}
+.dp-f{display:flex;flex-direction:column;gap:8px}
+.dp-f > .t-label{color:var(--ink-2)}
+.dp-f select.t-input{appearance:none;background:var(--bg-1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M6 8l4 4 4-4' fill='none' stroke='%23727780' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 12px center/18px}
+.dp-list{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
+.dp-list li{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:var(--r-8);background:var(--bg-0);font:500 13px/1 var(--font-body);color:var(--ink)}
+.dp-list li[data-ok]::before{content:"✓";color:var(--ai)}
+.dp-list li[data-need]{background:none;border:1px dashed var(--mute);color:var(--sub-2)}
+.dp-ci{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dp-ci label{display:flex;flex-direction:column;gap:6px;font:500 13px/18px var(--font-body);color:var(--sub-2);min-width:0}
+.dp-ci .t-input{height:40px}
+.dp-ci input[type=color]{padding:4px;height:40px;cursor:pointer}
+.dp-go{width:100%;margin-top:4px}
+.dp-f .k-region{width:100%}
+
+.dp-empty{margin-top:4px}
+
+/* 모바일 */
+@media (max-width:960px){
+  .dp-top{top:12px;left:12px;right:12px}
+  .dp-legend{bottom:40px;left:16px}
+  .dp-ops{top:72px;left:12px;right:12px;bottom:12px;width:auto}
+}
+@media (max-width:640px){
+  .dp-tab{height:36px;padding:0 12px;font-size:14px}
+  .dp-plant{height:44px;padding:0 14px}
+  .dp-plant span{display:none}
+  .dp-plant::after{content:"심기";font:500 14px/1 var(--font-body)}
+  .dp-legend{gap:10px;font-size:12px;bottom:36px}
+  .dp-ops .k-table{font-size:14px}
+  .dp-ops .k-table th,.dp-ops .k-table td{padding:10px 6px}
+  .dp-ops .t-card{padding:16px}
+  .dp-ci{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  .dp-steps .t-step,.dp-foot{animation:none;opacity:1;transform:none}
+  .dp-pin[data-stage="draft"] i::after,.dp-pin.is-new i{animation:none}
+}
+
+/* 9/27 보정 — 운영 판 한 장 · 파일 칸 · 입력 상자 크기 */
+.dp-opscard{display:flex;flex-direction:column;gap:24px}
+.dp-big{padding-bottom:4px}
+.dp-form .t-input{box-sizing:border-box;max-width:100%}
+.dp-file{position:relative;display:flex;align-items:center;font:500 13px/1 var(--font-body);color:var(--sub-2);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer}
+.dp-file:hover{border-color:var(--ink)}
+.dp-file span{overflow:hidden;text-overflow:ellipsis}
+.dp-file-i{position:absolute;inset:0;opacity:0;cursor:pointer}
+.dp-top{transition:right var(--d-380) var(--e-ui)}
+.dp.has-drawer .dp-top{right:calc(var(--sheet) + 40px)}
+@media (max-width:640px){
+  .dp.has-drawer .dp-top{right:12px}
+  .dp-ops .k-table th:nth-child(4),.dp-ops .k-table td:nth-child(4){display:none}
+  .dp-ops .dp-next{padding:0 8px;white-space:nowrap}
+}
+
+/* 9/27 2차 — 판정 보정 */
+/* CI 칸: select 는 카드 select 와 같은 chevron · 색은 24px 원형 견본 + 값 글자(검정 블록 0) */
+.dp-ci select.t-input{appearance:none;padding-right:36px;background:var(--bg-1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M6 8l4 4 4-4' fill='none' stroke='%23727780' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 12px center/18px}
+.dp-color{display:flex;align-items:center;gap:10px;padding-left:10px}
+.dp-sw-w{position:relative;flex:none;display:inline-flex;cursor:pointer}
+.dp-sw{width:24px;height:24px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.dp-sw[data-empty]{background:var(--bg-0)!important;box-shadow:inset 0 0 0 1.5px var(--rule)}
+.dp-color-p{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0}
+.dp-color-t{flex:1;min-width:0;height:100%;border:0;outline:0;background:none;font:500 14px/1 var(--font-num);color:var(--ink);text-transform:uppercase}
+.dp-color-t::placeholder{color:var(--mute);text-transform:none}
+.dp-color:focus-within{border-color:var(--ink)}
+/* 직원 세션(S-7 전) — 안내는 제목 바로 아래 · 입력은 잠금 */
+.dp-note{margin:0;padding:12px 14px;border-radius:var(--r-8);background:var(--bg-0);font:500 14px/20px var(--font-body);color:var(--ink-2)}
+.dp-form.is-locked .dp-f,.dp-form.is-locked .dp-ci{opacity:.5;pointer-events:none}
+/* 운영 탭 — 축척 막대 · 범례를 흰 카드 오른쪽으로 */
+.dp .k-stage .maplibregl-ctrl-bottom-left{transition:left var(--d-380) var(--e-ui)}
+.dp.is-ops .k-stage .maplibregl-ctrl-bottom-left{left:calc(min(760px, 100% - 48px) + 40px)}
+.dp.is-ops .dp-legend{left:calc(min(760px, 100% - 48px) + 40px)}
+@media (max-width:960px){ .dp.is-ops .k-stage .maplibregl-ctrl-bottom-left,.dp.is-ops .dp-legend{display:none} }
+/* 서랍 — 도착 중에도 바탕 불투명(지도 위 반투명 겹침 0): 투명도 대신 밀려 들어오기 */
+body.t .k-drawer{opacity:1;transform:translateX(calc(100% + 24px));transition:transform var(--d-380) var(--e-ui)}
+body.t .k-drawer.is-open{transform:none}
+body.t .k-drawer.is-closing{opacity:1;transform:translateX(calc(100% + 24px))}
+@media (max-width:640px){
+  body.t .k-drawer{transform:translateY(100%)}
+  body.t .k-drawer.is-open{transform:none}
+  body.t .k-drawer.is-closing{transform:translateY(100%)}
+}

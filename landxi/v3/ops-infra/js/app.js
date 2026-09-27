@@ -1,0 +1,98 @@
+/* ops-infra — 인프라 · 기관 · 배포(관제 메뉴 5 중 3). 셸은 ops-core 와 같은 메뉴 5.
+   정문 로그인(관리자)만 들어온다(K2). GPU 표는 관제 스트림(S-9 · Origin 4173)이 열리면 그것으로, 아니면 2.5초 조회로 갱신. */
+import { gate, shell, devDrawer, devlog, closeAll, empty, sse } from './kit.js';
+import { S, loadGpus, loadInfra, loadOrg } from './data.js';
+import { mountInfra } from './infra.js';
+import { mountTenants } from './tenants.js';
+import { mountDeploys } from './deploys.js';
+// 결재 대기 수 — ops-core 와 같은 규칙 하나(pending())를 그대로 센다(셸 = ops-core 와 동일)
+import { loadAll as loadApprovals, pending } from '/landxi/v3/ops-core/js/data.js';
+
+const OPS = '/landxi/v3/ops-core/';
+const VIEWS = ['infra', 'tenants', 'deploys'];
+const RAIL = [
+  { id: 'overview', label: '현황', icon: 'map', href: OPS + '#/overview' },
+  { id: 'infra', label: '인프라', icon: 'gear', href: '#/infra' },
+  { id: 'tenants', label: '기관', icon: 'org', href: '#/tenants' },
+  { id: 'deploys', label: '배포', icon: 'deploy', href: '#/deploys' },
+  { id: 'approvals', label: '결재', icon: 'inbox', href: OPS + '#/approvals' },
+];
+
+const who = await gate('ops-infra');
+const qs = new URLSearchParams(location.search);
+const deepDeploy = qs.get('deploy');
+const want = () => { const v = (location.hash.match(/^#\/(\w+)/) || [])[1] || qs.get('view'); return VIEWS.includes(v) ? v : deepDeploy ? 'deploys' : 'infra'; };
+
+const Sh = shell({ who, home: 'ops-infra', rail: { kind: 'menu', items: RAIL, current: RAIL.findIndex((r) => r.id === want()) } });
+// 역할 칩 중복 방지(ops-core 와 같은 처리): 이름이 역할 문구와 같으면 한 번만 → 'LX 관리자'
+{ const r = document.querySelector('.k-role'), b = r?.querySelector('b');
+  if (b && r.textContent.slice(b.textContent.length).trim() === b.textContent.trim()) b.remove(); }
+/* 레일 '결재' 배지 — ops-core 와 같은 대기 건수 */
+let pendN = 0;
+const putBadge = () => { const el = Sh.rail?.querySelector('[data-i="4"]'); if (el) el.dataset.n = pendN ? String(pendN) : ''; };
+async function badge() {
+  try { await loadApprovals(); } catch { return; }
+  pendN = pending().length; putBadge();
+}
+badge(); setInterval(badge, 30000);
+devDrawer({ who });
+const main = Sh.main;
+main.classList.add('oi');
+
+const panes = Object.fromEntries(VIEWS.map((v) => [v, Object.assign(document.createElement('div'), { className: 'pane', id: 'pane-' + v, hidden: true })]));
+main.append(...Object.values(panes));
+const boot = document.createElement('div'); boot.className = 'oi-boot'; main.append(boot);
+empty(boot, { kind: 'loading' });
+
+const V = { infra: mountInfra(panes.infra), tenants: mountTenants(panes.tenants), deploys: mountDeploys(panes.deploys) };
+
+let cur = null;
+function show() {
+  const v = want();
+  if (v === cur) return;
+  closeAll();
+  cur = v;
+  for (const k of VIEWS) panes[k].hidden = k !== v;
+  Sh.go(RAIL.findIndex((r) => r.id === v)); putBadge();
+  document.body.dataset.view = v;
+  document.title = { infra: 'Land-XI 관제 · 인프라', tenants: 'Land-XI 관제 · 기관', deploys: 'Land-XI 관제 · 배포' }[v];
+  paint(v);
+}
+function paint(v = cur) {
+  if (v === 'infra') { V.infra.paintGpus(); V.infra.paintRest(); }
+  else if (v === 'tenants') V.tenants.paint();
+  else if (v === 'deploys') V.deploys.paint();
+}
+addEventListener('hashchange', show);
+
+await Promise.all([loadGpus(), loadInfra(), loadOrg()]);
+boot.remove();
+show();
+Sh.fresh(new Date());
+if (deepDeploy) V.deploys.open(deepDeploy);
+const deepOrg = qs.get('tenant'); if (deepOrg && cur === 'tenants') V.tenants.open(deepOrg);
+
+/* ── 갱신 — 숫자만 바뀐다 ─────────────────────── */
+let live = false;
+async function tickGpu() {
+  if (live) return;
+  if (await loadGpus()) { if (cur === 'infra') V.infra.paintGpus(); Sh.fresh(new Date()); }
+}
+setInterval(tickGpu, 2500);
+setInterval(async () => { await loadInfra(); if (cur === 'infra') V.infra.paintRest(); }, 15000);
+setInterval(async () => { await loadOrg(); if (cur !== 'infra') paint(); }, 30000);
+
+/* 관제 스트림은 서버가 4173 을 허용한 뒤(S-9 = power_budget 이 응답에 있음)에만 연다 — 거절로 콘솔을 더럽히지 않게 */
+if (S.gpus?.power_budget) {
+  try {
+    sse('/events/ops', {
+      events: ['gpu.sample', 'deploy.changed', 'usage.delta'],
+      on: async (ev, data) => {
+        if (ev === 'gpu.sample' && data?.gpus?.length) { live = true; await loadGpus(); if (cur === 'infra') V.infra.paintGpus(); Sh.fresh(new Date()); }
+        else if (ev === 'deploy.changed') { await loadOrg(); if (cur === 'deploys') V.deploys.paint(); }
+        else if (ev === 'usage.delta') { await loadOrg(); if (cur === 'tenants') V.tenants.paint(); }
+      },
+      onState: (s) => { devlog('관제 스트림', s); if (s !== 'open') live = false; },
+    });
+  } catch { live = false; }
+} else devlog('관제 스트림', '서버 S-9 전 · 2.5초 조회');

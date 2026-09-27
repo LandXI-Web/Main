@@ -305,7 +305,7 @@ def heartbeat():
             r().hset(f"worker:{WID}:hb", mapping={"id": WID, "pool": POOL, "device": "gpu", "gpu": A.gpu, "ts": now, "pid": os.getpid(),
                                                   "job_id": state["job_id"] or "", "node": config.NODE_ID})
             r().expire(f"worker:{WID}:hb", 30)
-            ws = sorted(k.split(":")[1] for k in r().scan_iter(match="worker:*:hb"))
+            ws = sorted(k.split(":")[1] for k in r().scan_iter(match="worker:*:hb", count=2000))
             r().hset(f"node:{config.NODE_ID}", mapping={"hostname": host, "last_seen": now_iso(), "joined_at": joined, "workers": json.dumps(ws)})
             r().expire(f"node:{config.NODE_ID}", 30)
         except Exception as e:  # pragma: no cover
@@ -631,6 +631,92 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
     state["job_id"] = None
 
 
+def process_train(job_id: str, entries: list[tuple[str, dict]]):
+    """kind 'train'(S-8) — 전력 임대를 쥔 채 미세조정 1회. 임대는 별도 스레드가 LEASE_TTL/3 마다 연장하고,
+    배치마다 다른 GPU 고부하(vLLM 등)를 확인해 그동안 학습을 멈춘다(두 장 동시 고부하 0). 결과 = 새 모델 행(candidate)."""
+    jh = bus.job(job_id)
+    ids = [e[0] for e in entries]
+    r().xack(STREAM, GROUP, *ids)
+    r().xdel(STREAM, *ids)
+    if not jh or jh.get("state") in ("cancelled", "failed", "done"):
+        return
+    from workers.registry_scan import adapter_module
+    mod = adapter_module("train/yolo")
+    ad = mod.Adapter()
+    ad.load(None, "cuda:0", state.get("budget") or 0)
+    stop = threading.Event()
+
+    def keep():
+        while not stop.wait(max(2.0, LEASE_TTL / 3)):
+            if lease["slot"] is not None:
+                r().expire(f"power:hot:{lease['slot']}", LEASE_TTL)
+            r().hset(f"worker:{WID}:hb", mapping={"ts": time.time(), "job_id": job_id})
+    threading.Thread(target=keep, daemon=True).start()
+    state["job_id"] = state["last_job"] = job_id
+    r().hset(f"job:{job_id}", "workers", json.dumps([WID]))
+    bus.lane(WID, {"job_id": job_id, "from": now_iso(), "to": None, "state": "running", "tenant_id": jh.get("tenant_id")})
+    held = {"s": 0.0, "note": False}
+
+    def ev(name, data):
+        emit(job_id, name, {"job_id": job_id, **data, "at": now_iso(ms=True)})
+
+    def gate_batch(_tr=None):
+        t0 = time.time()
+        while other_gpu_hot():
+            if not held["note"]:
+                held["note"] = True
+                ev("train.hold", {"reason": "power_budget", "note": "다른 GPU 고부하 — 학습 일시 정지"})
+            time.sleep(0.5)
+            if bus.job(job_id).get("state") == "cancelled":
+                raise RuntimeError("cancelled")
+        if held["note"]:
+            held["note"] = False
+            held["s"] += time.time() - t0
+            ev("train.resume", {})
+    f0 = entries[0][1]
+    shard = Shard(f0["shard_id"], job_id, (0, 0, 0, 0), None, json.loads(f0.get("params") or "null"))
+    ev("shard.started", {"shard_id": shard.id, "bbox": [0, 0, 0, 0], "worker": WID})
+    t0 = time.perf_counter()
+    try:
+        opts = {**json.loads(jh.get("options") or "{}"), "_emit": ev, "_gate": gate_batch}
+        res = ad.run_shard(shard, None, opts)
+        m = res.metrics or {}
+        extra = mod.finalize(bus_job_view(jh), m) or {}
+        ok = True
+    except Exception as e:
+        ok, m, extra = False, {"error": f"{type(e).__name__}: {str(e)[:200]}"}, {}
+    finally:
+        stop.set()
+        ad.unload()
+    el = round(time.perf_counter() - t0, 1)
+    now = now_iso()
+    if ok:
+        r().hset(f"job:{job_id}", mapping={"state": "done", "finished_at": now, "shards_done": 1, "counts": json.dumps(extra.get("counts") or {})})
+        ev("shard.done", {"shard_id": shard.id, "n": 1, "ms": int(el * 1000), "worker": WID})
+        ev("job.done", {"counts": extra.get("counts") or {}, "model_id": extra.get("model_id"), "elapsed_s": el,
+                        "held_s": env(round(held["s"], 1), "s", "measured", "전력 규칙 대기(다른 GPU 고부하)"),
+                        "shards_total": 1, "shards_done": 1})
+        st = "done"
+    else:
+        r().hset(f"job:{job_id}", mapping={"state": "failed", "finished_at": now, "error": m.get("error")})
+        ev("job.failed", {"error": m.get("error")})
+        st = "failed"
+    with bus.pg() as conn:
+        bus.lx_tx(conn)
+        conn.execute("UPDATE jobs SET state=%s, finished_at=now(), shards_done=%s, error=%s, counts=%s WHERE id=%s",
+                     (st, 1 if ok else 0, None if ok else m.get("error"), json.dumps(extra.get("counts") or {}), job_id))
+        conn.commit()
+    ops_event("job.state", {"job_id": job_id, "tenant_id": jh.get("tenant_id"), "state": st, "pool": POOL, "at": now})
+    bus.lane(WID, {"job_id": job_id, "from": None, "to": now, "state": st, "tenant_id": jh.get("tenant_id")})
+    state["job_id"] = None
+    log(WHO, f"train {job_id} {st} · {el}s · 전력 대기 {held['s']:.1f}s")
+
+
+def bus_job_view(jh: dict) -> dict:
+    from workers.scheduler import job_view
+    return job_view(jh)
+
+
 def fail(job_id: str, entries, err: str):
     for eid, f in entries:
         att = int(f.get("attempt", 0))
@@ -730,6 +816,9 @@ def loop_once(last_claim: float) -> float:
             byjob.setdefault(f["job_id"], []).append((eid, f))
         for job_id, es in byjob.items():
             try:
+                if (bus.job(job_id) or {}).get("kind") == "train":
+                    process_train(job_id, es)          # S-8 학습(임대 유지 · 배치마다 전력 규칙)
+                    continue
                 process(job_id, es)
             except RuntimeError as e:
                 err = "cuda_oom" if "out of memory" in str(e).lower() else "vram_budget" if "vram_budget" in str(e) else "runtime"

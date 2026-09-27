@@ -32,11 +32,11 @@ def _db_jobs() -> dict[str, dict]:
     try:
         with bus.pg() as conn:
             bus.lx_tx(conn)
-            rows = conn.execute("SELECT id, state, pool, tenant_id, kind, imagery_id, model_id, deploy_id, shards_total, priority, demo "
-                                "FROM jobs WHERE state IN ('queued','running')").fetchall()
+            rows = conn.execute("SELECT id, state, pool, tenant_id, kind, imagery_id, model_id, deploy_id, shards_total, priority, demo, "
+                                "coalesce(test,false) FROM jobs WHERE state IN ('queued','running')").fetchall()
         for x in rows:
             out[x[0]] = {"id": x[0], "state": x[1], "pool": x[2], "tenant_id": x[3], "kind": x[4], "imagery_id": x[5], "model_id": x[6],
-                         "deploy_id": x[7], "shards_total": x[8], "priority": x[9], "demo": x[10]}
+                         "deploy_id": x[7], "shards_total": x[8], "priority": x[9], "demo": x[10], "test": x[11]}
     except Exception as e:
         log("recovery", "db read error", repr(e))
     return out
@@ -195,8 +195,26 @@ def _announce(job_id: str, jh: dict, mode: str, reason: str, done: int, total: i
     log("recovery", f"{job_id} {mode} {done}/{total} ({reason})")
 
 
+def _cancel_test(job_id: str, stats: dict):
+    """S-12 기동 안정: 재부팅 전에 남은 시험 작업(pytest · test=true)은 되살리지 않고 취소(GPU·CPU 를 시험 찌꺼기에 쓰지 않는다)."""
+    now = now_iso()
+    r().hset(f"job:{job_id}", mapping={"state": "cancelled", "finished_at": now, "error": "recovery: 시험 작업 취소"})
+    with bus.pg() as conn:
+        bus.lx_tx(conn)
+        conn.execute("UPDATE jobs SET state='cancelled', finished_at=now(), error='recovery: 시험 작업 취소' WHERE id=%s", (job_id,))
+        conn.commit()
+    stats["cancelled_test"] = stats.get("cancelled_test", 0) + 1
+
+
 def recover_one(job_id: str, db: dict | None, stats: dict, who: str):
+    if db and db.get("test"):
+        _cancel_test(job_id, stats)
+        return
     jh = bus.job(job_id)
+    if jh and jh.get("kind") == "train" and jh.get("state") == "running":
+        # 학습은 shard 중간 재개가 없다(에포크 체크포인트 ≠ 작업 커서) — 정직하게 실패 · 다시 제출 안내
+        _fail(job_id, jh, "학습 중 재부팅 — 다시 제출해 주세요", stats)
+        return
     if not jh:
         # Redis 미러가 없다(볼륨 유실) — DB 행으로는 shard 목록·커서를 되살릴 수 없으니 실패로 정직하게
         if db:
@@ -216,7 +234,7 @@ def recover_one(job_id: str, db: dict | None, stats: dict, who: str):
     # running
     workers = json.loads(jh.get("workers") or "[]")
     if not workers:
-        workers = [k.split(":")[1] for k in r().scan_iter(match="worker:*:hb") if r().hget(k, "pool") == pool]
+        workers = [k.split(":")[1] for k in r().scan_iter(match="worker:*:hb", count=2000) if r().hget(k, "pool") == pool]
     alive = [w for w in workers if bus.worker_alive(w)]
     total = int(jh.get("shards_total") or 0)
     done_ids = r().smembers(f"job:{job_id}:done")

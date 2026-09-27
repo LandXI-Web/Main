@@ -21,8 +21,52 @@ from typing import Any
 import httpx
 
 from . import audit, backends, config, lint
-from .tools import Out, ToolError, registry
+from .tools import Out, ToolError, from_contract, registry
 from .tools import jobs as jobs_tool
+from .tools import ledger_findings, ledger_ingest, ledger_match, ledger_rule, parcel_lookup
+
+# ── F3 §3 S-10 대장 도구 5 — 계약 엔드포인트(v1.2) · 명세 · 핸들러를 레지스트리에 붙인다(레지스트리 파일은 그대로 · 여기서 확장) ──
+LEDGER_CONTRACT = {
+    "ledger_ingest": (None, "GET", "/api/v1/t/{tenant}/survey/registry?kind=&latest="),
+    "ledger_match": (None, "GET", "/api/v1/t/{tenant}/survey/registry/{import_id}"),
+    "ledger_rule": (None, "POST", "/api/v1/t/{tenant}/survey/rules/evaluate"),
+    "ledger_findings": (None, "GET", "/api/v1/survey/findings?rule=&ledger=&sort=&limit="),
+    "parcel_lookup": (None, "GET", "/api/v1/survey/parcels/{pnu}?with="),
+}
+from_contract.CONTRACT.update(LEDGER_CONTRACT)
+KINDS_ENUM = ["farm_ledger", "dev_permit", "public_asset", "river_permit", "greenhouse"]
+registry.SPECS.update({
+    "ledger_ingest": {"description": "기관이 올린 대장(농지대장 등)의 반입 상태 — 행 수 · 열 자동 인식 · 더 필요한 열. 대장 질문의 첫 단계.",
+                      "properties": {"kind": {"type": "string", "enum": KINDS_ENUM}, "import_id": {"type": "string"}, "tenant_id": {"type": "string"}}},
+    "ledger_match": {"description": "대장 × 연속지적 매칭 결과(결합률 · 미매칭 사유). 결합률이 낮으면 열 확인 표를 연다.",
+                     "properties": {"kind": {"type": "string", "enum": KINDS_ENUM}, "import_id": {"type": "string"}, "tenant_id": {"type": "string"}}},
+    "ledger_rule": {"description": "자연어 조건('대장상 농지인데 AI가 건물로 본 필지' · '경작 신고인데 경작 흔적 없음' · '허가 필지인데 건물 없음')을 "
+                                   "규칙 L1–L3 과 임계로 바꿔 이 기관 결과를 다시 계산. 사람이 확인 카드를 승인해야 실행.",
+                    "properties": {"text": {"type": "string"}, "tenant_id": {"type": "string"}}, "required": ["text"]},
+    "ledger_findings": {"description": "대장과 AI 판독이 어긋난 필지(규칙 L1 대장 농지 위 건물 · L2 경작 흔적 없음 · L3 허가 필지 건물 없음) 목록 · 건수 · 읍면동별. "
+                                       "결과는 map_arrive 로 지도에 도착시킨다.",
+                        "properties": {"rule_id": {"type": "string", "enum": ["L1", "L2", "L3"]}, "top": {"type": "integer"}, "tenant_id": {"type": "string"}}},
+    "parcel_lookup": {"description": "지번(예: '대강면 방동리 123-4') 또는 PNU 로 필지 1곳 — 대장 · AI · 의심 · 이력.",
+                      "properties": {"jibun": {"type": "string"}, "pnu": {"type": "string"}}},
+})
+registry.HANDLERS.update({"ledger_ingest": ledger_ingest.ledger_ingest, "ledger_match": ledger_match.ledger_match,
+                          "ledger_findings": ledger_findings.ledger_findings, "parcel_lookup": parcel_lookup.parcel_lookup})
+registry.WRITE.add("ledger_rule")
+registry.CONFIRM.add("ledger_rule")
+_allowed_base = registry.allowed
+
+
+def _allowed(name: str, p) -> bool:
+    if name in LEDGER_CONTRACT:
+        if p.realm is None:
+            return False
+        if name == "ledger_rule":
+            return (p.realm == "tenant" and p.role == "manager") or (p.realm == "lx" and p.role in ("staff", "admin"))
+        return p.realm in ("tenant", "lx")
+    return _allowed_base(name, p)
+
+
+registry.allowed = _allowed
 
 KST = dt.timezone(dt.timedelta(hours=9))
 _TASKS: dict[str, asyncio.Task] = {}
@@ -35,6 +79,9 @@ WHY = {
     "jobs_submit": "실행 — 사람 승인 필요", "survey_state": "상태 변경 — 사람 승인 필요", "survey_reports_draft": "초안 .docx 조립(F2-S 서식)",
     "llm_write": "서술 3단락 작성(Gemma 4)", "llm_review": "검토: 숫자 검증기(인용 봉투만) · 봉투 뜻 검사(규칙 + 교정자)",
 }
+
+WHY.update({"ledger_ingest": "대장 반입 상태", "ledger_match": "대장 × 필지 결합률", "ledger_rule": "조건 → 규칙 — 사람 승인 필요",
+            "ledger_findings": "대장과 다른 필지", "parcel_lookup": "지번 → 필지"})
 
 
 EXEC_RX = re.compile(r"분석해|실행해|돌려|추론해|분석\s*(시작|실행|진행)|해줘|해 줘|run", re.I)
@@ -309,6 +356,8 @@ async def confirm_then(ctx: Ctx, i: int, name: str, args: dict) -> Out:
     """쓰기 도구: 확인 카드 → 사람 승인(60s) → 실행. 승인 전 POST 0."""
     if name == "jobs_submit" and not ctx.state.get("pending_submit"):
         raise ToolError("bad_request", "견적(jobs_quote) 없이 제출할 수 없습니다 — 먼저 jobs_quote")
+    if name == "ledger_rule":
+        args = ledger_rule.prepare(args, ctx)            # 해석은 결정적(규칙 사전) — 확인 카드에 규칙·임계를 그대로 보인다
     cid = "cf_" + secrets.token_hex(6)
     exp = dt.datetime.now(KST) + dt.timedelta(seconds=config.CONFIRM_TTL_S)
     ps = ctx.state.get("pending_submit") or {}
@@ -348,6 +397,8 @@ async def confirm_then(ctx: Ctx, i: int, name: str, args: dict) -> Out:
             done = await jobs_tool.await_job(ctx, job_id)
             out.ui_actions = []
             return jobs_tool.job_done_out(out, done, job_id)
+        if name == "ledger_rule":
+            return await ledger_rule.ledger_rule_exec(args, ctx)
         from .tools import survey as sv
         return await sv.survey_state(args, ctx)
     if decision == "reject":
@@ -395,6 +446,13 @@ async def execute(ctx: Ctx, message: str):
         await audit.log(p, "agent.tool_forbidden", ctx.run_id, {"category": rj["category"], "message": msg[:300]})
         await emit(ctx, "agent.rejected", {"error": rj["code"], "category": rj["category"], "message": rj["message"], "pii": scr["pii"]})
         await persist_state(ctx, state="rejected", error=rj["category"], finished_at=dt.datetime.now(KST))
+        return
+    sg = await scope_guard(ctx, msg)
+    if sg:
+        await audit.log(p, "agent.out_of_scope", ctx.run_id, {"category": sg["category"], "message": msg[:300], "region": sg.get("region")})
+        await emit(ctx, "agent.rejected", {"error": "out_of_scope", "category": sg["category"], "message": sg["message"], "pii": scr["pii"],
+                                           "region": sg.get("region")})
+        await persist_state(ctx, state="rejected", error=sg["category"], finished_at=dt.datetime.now(KST))
         return
     route = await backends.classify(msg, ctx.r)
     await emit(ctx, "agent.route", {"intent": route["intent"], "ms": route["ms"], "backend": route["backend"], "model": route["model"],
@@ -464,7 +522,7 @@ async def execute(ctx: Ctx, message: str):
                 messages.append({"role": "user", "content": "[런타임] 확인 카드 결과:\n" + r3["block"] + "\n이제 결과를 한두 문장으로 답한다(도구 더 부르지 말 것)."})
         await persist_state(ctx, state="writing")
     except backends.LLMUnavailable as e:
-        await emit(ctx, "agent.failed", {"error": "llm_unavailable", "tried": e.tried, "message": "LLM 백엔드 사슬(vLLM → Ollama) 전부 응답 없음"})
+        await emit(ctx, "agent.failed", {"error": "llm_unavailable", "tried": e.tried, "message": "지금은 답할 수 없습니다", "detail": "LLM 사슬(vLLM → Ollama) 응답 없음"})
         await persist_state(ctx, state="failed", error="llm_unavailable", finished_at=dt.datetime.now(KST))
         return
     except Exception as e:  # noqa: BLE001
@@ -475,9 +533,63 @@ async def execute(ctx: Ctx, message: str):
     await finish(ctx, answer, last_res, started, route, {"first_token_ms": first_ms, "fallback_from": fallbacks})
 
 
+# 단위 뒤에 조사(이고·이며·입니다·이·가·은·는·을·를·에·으로·의·과·와·도·만…)가 오면 단위로 본다 · '건물' 처럼 낱말이 이어지면 건드리지 않는다
+_JOSA = r"(?:이고|이며|이다|입니다|이에요|이야|이나|으로|에서|에게|까지|부터|정도|씩|쯤|이|가|은|는|을|를|에|로|의|과|와|도|만|나)"
+UNIT_AFTER = re.compile(r"(\{\{env:e\d+\}\})\s?(필지|건|동|개|곳|㎡|m²|m2|ha|km²|km2|%|퍼센트|명|회|초|원)(?=" + _JOSA + r"(?![가-힣])|[^가-힣A-Za-z]|$)")
+
+
+def dedupe_units(answer: str) -> str:
+    """자리표 뒤에 모델이 붙인 단위 제거 — 봉투 칩이 단위를 이미 낸다(S-10 자리표 단위 중복 0)."""
+    return UNIT_AFTER.sub(r"\1", answer or "")
+
+
+async def scope_guard(ctx: Ctx, msg: str) -> dict | None:
+    """범위 가드(S-10) — tenant · region · 대장 유무를 LLM 전에 판정. 범위 밖이면 도구 호출 없이 거절 문구.
+    · 기관 세션이 관할 밖 시군구를 말하면 '이 기관의 데이터가 아닙니다'
+    · 말한 시군구에 실태조사·결과 데이터가 없으면 '해당 지역 데이터가 없습니다'"""
+    try:
+        from landxi_api.regions import derived, find, in_scope, regions_base, tenant_scope
+    except Exception:
+        return None
+    text = re.sub(r"\s+", " ", msg or "")
+    regs, _, _ = regions_base()
+    hits = []
+    for r in regs:
+        nm = r["name"] or ""
+        city = nm.split(" ")[0]            # '전주시 완산구' → '전주시'(구가 있는 시는 시 이름으로도 부른다)
+        for key in {nm, city}:
+            stem = key[:-1] if len(key) >= 3 and key[-1] in "시군" else None
+            # '남원' '남원시' '여수에서' — 이름 또는 어간이 단어 앞머리에 오는 경우만(부분 문자열 오탐 방지: '서구' 같은 구 이름은 어간 없음)
+            if re.search(r"(^|[\s·,(])" + re.escape(key), text) or (stem and re.search(r"(^|[\s·,(])" + re.escape(stem) + r"(?![가-힣]{2,}[시군구])", text)):
+                hits.append({**r, "_key": key})
+                break
+    if not hits:
+        return None
+    # 같은 이름(중구·동구 등)이 여러 시도에 있으면 가드하지 않는다(모호 → 모델이 되묻는다) · 한 시의 여러 구는 한 이름으로 본다
+    by_key: dict = {}
+    for h in hits:
+        by_key.setdefault(h["_key"], set()).add(h["full"].split(" ")[0])
+    if any(len(v) > 1 for v in by_key.values()):
+        return None
+    p = ctx.principal
+    dv = await derived()
+    groups: dict = {}
+    for h in hits:                          # 시 단위로 묶어 판정(구 하나라도 관할·데이터가 있으면 통과)
+        groups.setdefault(h["_key"], []).append(h)
+    sc = tenant_scope(p.tenant_id) if p.realm == "tenant" else None
+    for key, hs in groups.items():
+        if p.realm == "tenant" and not any(in_scope(h["sgg_cd"], sc) for h in hs):
+            return {"category": "cross_tenant_region", "message": "이 기관의 데이터가 아닙니다", "region": hs[0]["full"].rsplit(" ", 1)[0] if len(hs) > 1 else hs[0]["full"]}
+        has = any(h["sgg_cd"] in dv["parcels"] or bool([d for d in dv["dp"].get(h["sgg_cd"], []) if not d["_test"] and d["stage"] in ("ga", "canary")])
+                  for h in hs)
+        if not has:
+            return {"category": "no_region_data", "message": "해당 지역 데이터가 없습니다", "region": hs[0]["full"]}
+    return None
+
+
 async def finish(ctx: Ctx, answer: str, res, started: float, route: dict, perf: dict, artifact: dict | None = None, extra: dict | None = None,
                  lint_on: bool = True, scope: "lint.Scope | None" = None, lint_result: "lint.LintResult | None" = None):
-    answer = audit.scrub_answer(answer)
+    answer = dedupe_units(audit.scrub_answer(answer))
     answer, bad_cites = lint.fix_cites(answer, {c["n"] for c in ctx.citations})
     if lint_result is not None:
         lr = lint_result
@@ -539,3 +651,85 @@ def make_ctx(run_id, principal, token, context, mode, r) -> Ctx:
     headers = {"authorization": f"Bearer {token}"} if token else {}
     http = httpx.AsyncClient(base_url=config.GATEWAY, headers=headers, timeout=httpx.Timeout(30.0, connect=3.0))
     return Ctx(run_id=run_id, principal=principal, token=token, context=context or {}, mode=mode, r=r, http=http)
+
+
+# ── 회귀셋 50문(redteam.yaml) 평가 — 가드 수준(LLM 호출 0 · GPU 0) · 관제 LLM 줄(GET /ops/llm)이 읽는다 ─────────
+async def redteam_eval(store: bool = True) -> dict:
+    """RT01–RT20: audit.screen 범주 · 검증기 · 도구 권한 · 게스트 / RT21–RT50: scope_guard 거절 문구 · 가드 통과 + 기대 도구가 권한 안.
+    LLM 이 실제로 그 도구를 고르는지(도구 선택 정확도)는 --llm 로만 잰다(vLLM 호출 50회 · GPU1)."""
+    import yaml
+    from landxi_api.deps import CAPS, Principal
+    cases = yaml.safe_load((config.SERVER_ROOT / "agent" / "redteam.yaml").read_text(encoding="utf-8"))
+    who = {"staff": Principal("lx", "staff", None, "u_lx_staff", caps=CAPS[("lx", "staff")]),
+           "admin": Principal("lx", "admin", None, "u_lx_admin", caps=CAPS[("lx", "admin")]),
+           "sales": Principal("lx", "sales", None, "u_lx_sales", caps=CAPS[("lx", "sales")]),
+           "namwon": Principal("tenant", "manager", "namwon", "u_nw", caps=CAPS[("tenant", "manager")]),
+           "gj": Principal("tenant", "manager", "gwangju-jeonnam", "u_gj", caps=CAPS[("tenant", "manager")]),
+           "guest": Principal()}
+    envs = {"e1": {"value": 20872, "unit": "count", "basis": "inferred", "as_of": "2026-09-24", "source": "survey/stats"}}
+    rows = []
+    for c in cases:
+        p = who[c["who"]]
+        exp = c["expect"]
+        got, ok = None, False
+        try:
+            if exp == "lint":
+                r = lint.lint(c["answer"], envs)
+                got = "lint" if r.unverified_numbers == c["unverified"] else f"lint:{r.unverified_numbers}"
+            elif exp == "tool_forbidden":
+                names = {t["function"]["name"] for t in registry.tools_for(p)}
+                got = "tool_forbidden" if c["tool"] not in names else "tool_allowed"
+            elif exp == "unauthorized":
+                got = "unauthorized" if not registry.tools_for(p) else "tools_open"
+            else:
+                scr = audit.screen(c["message"], p)
+                if scr["reject"]:
+                    got = "rejected:" + scr["reject"]["category"]
+                else:
+                    ctx = Ctx(run_id="rt_eval", principal=p, token=None, context={})
+                    sg = await scope_guard(ctx, scr["message"])
+                    if sg:
+                        got = "rejected:" + sg["category"]
+                    else:
+                        tool = c.get("tool")
+                        got = "answer" if (not tool or tool in registry.SPECS and registry.allowed(tool, p)) else f"tool_denied:{tool}"
+            ok = got == exp
+        except Exception as e:  # noqa: BLE001
+            got = f"error:{type(e).__name__}"
+        rows.append({"id": c["id"], "who": c["who"], "expect": exp, "got": got, "ok": ok})
+    n = len(rows)
+    n_ok = sum(r["ok"] for r in rows)
+    rej = [r for r in rows if r["expect"].startswith("rejected") or r["expect"] in ("tool_forbidden", "unauthorized", "lint")]
+    ans = [r for r in rows if r["expect"] == "answer"]
+    at = now_iso()
+    src = "server/agent/redteam.yaml 50문 · 가드 수준(LLM 호출 0)"
+    out = {"at": at, "n": n, "level": "guard",
+           "accuracy": {"value": round(100 * n_ok / n, 1), "unit": "%", "basis": "measured", "as_of": at, "source": src},
+           "reject_accuracy": {"value": round(100 * sum(r["ok"] for r in rej) / max(len(rej), 1), 1), "unit": "%", "basis": "measured", "as_of": at,
+                               "source": src, "note": f"거절 기대 {len(rej)}문"},
+           "answer_accuracy": {"value": round(100 * sum(r["ok"] for r in ans) / max(len(ans), 1), 1), "unit": "%", "basis": "measured", "as_of": at,
+                               "source": src, "note": f"답 기대 {len(ans)}문 · 가드 통과 + 기대 도구 권한 안"},
+           "failed": [r for r in rows if not r["ok"]], "rows": rows}
+    if store:
+        p = config.ARTIFACT_DIR / "redteam-last.json"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
+        try:
+            import redis as _r
+            from landxi_api import config as gcfg
+            _r.from_url(gcfg.REDIS_URL, decode_responses=True).set("agent:redteam:last", json.dumps(out, ensure_ascii=False))
+        except Exception:
+            pass
+    return out
+
+
+if __name__ == "__main__":
+    import sys as _sys
+    if "--redteam" in _sys.argv:
+        async def _main():
+            from landxi_api.deps import close
+            res = await redteam_eval()
+            await close()
+            return res
+        res = asyncio.run(_main())
+        print(json.dumps({k: v for k, v in res.items() if k != "rows"}, ensure_ascii=False, indent=1))

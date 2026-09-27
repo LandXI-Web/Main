@@ -21,7 +21,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import auth, catalog, config, deploys, events, feedback, jobs, ops, parcels, proxy, quota, registry, results, tiles
+from . import approvals, auth, catalog, config, deploys, events, feedback, jobs, ledger, ops, parcels, proxy, public, quota, regions, registry, results, tiles
 from .deps import ApiError, close, pool, redis
 from .envelope import LXJSON, dumps, now_iso
 
@@ -52,6 +52,17 @@ async def lifespan(app: FastAPI):
     await redis()
     BOOT["boot_at"] = now_iso()
     await _boot_recovery()
+    try:                                   # 전국 시군구 뼈대를 스레드에서 미리 읽는다(첫 /regions 요청이 이벤트 루프를 막지 않게)
+        from starlette.concurrency import run_in_threadpool
+        await run_in_threadpool(regions.regions_base)
+    except Exception as e:  # noqa: BLE001
+        print(f"[gateway] regions warm 실패: {e!r}", flush=True)
+    try:                                   # 재기동으로 끊긴 대장 매칭 이어 돌리기(S-2 · S-12)
+        BOOT["ledger_resume"] = await ledger.resume_stuck_imports()
+        if BOOT["ledger_resume"]["resumed"] or BOOT["ledger_resume"]["failed"]:
+            print(f"[gateway] ledger resume: {BOOT['ledger_resume']}", flush=True)
+    except Exception as e:  # noqa: BLE001
+        print(f"[gateway] ledger resume 실패: {e!r}", flush=True)
     task = asyncio.create_task(ops.alert_loop())
     yield
     task.cancel()
@@ -101,7 +112,8 @@ async def validation_error(request: Request, exc: RequestValidationError):
 
 
 API = "/api/v1"
-for m in (auth, catalog, jobs, events, results, parcels, feedback, registry, deploys, quota, ops, proxy):
+for m in (auth, catalog, jobs, events, results, parcels, feedback, registry, deploys, quota, ops, proxy,
+          regions, public, ledger, approvals):          # F3 최종 명세 §3 S-1…S-9
     app.include_router(m.router, prefix=API)
 app.include_router(tiles.router)
 
@@ -138,7 +150,7 @@ async def health():
     gpu = cpu = 0
     now = time.time()
     try:
-        async for k in r.scan_iter(match="worker:*:hb"):
+        async for k in r.scan_iter(match="worker:*:hb", count=2000):
             h = await r.hgetall(k)
             if now - float(h.get("ts", 0)) < 30:
                 if h.get("device") == "cpu":

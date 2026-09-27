@@ -1,0 +1,118 @@
+/* lx-review — ④ 검수. 토큰·부품은 kit.css. 이 파일은 배치만. */
+.rv-stage{position:absolute;inset:0}
+
+/* HUD — 사진 위 흰 124 · 좌상단 */
+.rv-hud{position:absolute;left:40px;top:28px;z-index:5;pointer-events:none;max-width:calc(100% - 480px);opacity:0;transition:opacity var(--d-380) var(--e-ui)}
+.rv-hud[hidden]{display:none}
+.rv-hud.is-in{opacity:1}
+.rv-hud .k-big-l{font-size:16px;line-height:24px}
+.rv-hud .k-big-u{font-size:24px}
+/* 신뢰 기호(~) — 단위와 같은 크기 · 같은 그림자(사진 위 점 무리 옆에서도 읽히게). 첫 보드 · 규칙 전환 모두 같은 봉투(by_rule · inferred) */
+.rv-hud .k-big-s .t-sig{font-size:24px;margin-left:6px;text-shadow:var(--hud-shadow)}
+/* 결과 없음(hud.set(null)) — 124 '—' 막대 대신 라벨 + '아직 결과가 없습니다' 한 줄만 */
+.rv-hud[data-v=""] .k-big-row{display:none}
+.rv-hud[data-v=""] .k-big-none{margin-top:6px;font:500 20px/28px var(--font-body)}
+
+/* HUD 전 — 진행 막대 1개('불러오는 중') · HUD 자리 */
+.rv-load{position:absolute;left:40px;top:36px;z-index:5;display:flex;flex-direction:column;gap:10px;width:220px;padding:14px 16px;border-radius:var(--r-12,12px);background:var(--glass,rgba(255,255,255,.86));box-shadow:var(--elev-map);font:500 var(--fs-label)/1 var(--font-body);color:var(--sub);pointer-events:none;transition:opacity var(--d-380) var(--e-ui)}
+.rv-load .k-empty-p{margin:0;max-width:none}
+.rv-load.is-out{opacity:0;visibility:hidden;transition:opacity var(--d-380) var(--e-ui),visibility 0s var(--d-380)}
+
+/* 서랍 보드 */
+.rv-board{display:flex;flex-direction:column;gap:20px;padding-top:4px}
+.rv-rules{gap:4px}
+.rv-rules .k-bar{grid-template-columns:minmax(132px,176px) 1fr auto;padding:8px 10px;margin:0 -10px;border-radius:var(--r-8);cursor:pointer;transition:background var(--d-180) var(--e-ui)}
+/* 서버 규칙 이름 전부 읽히게 — 줄임표 대신 두 줄까지 */
+.rv-rules .k-bar-l{white-space:normal;overflow:visible;text-overflow:clip;word-break:keep-all;line-height:18px}
+.rv-skel .k-bar{cursor:default}
+.rv-skel .k-bar-t{background:var(--bg-0);border-radius:2px}
+.rv-skel .k-bar-l:empty{height:18px;border-radius:4px;background:var(--bg-0)}
+.rv-rules .k-bar:hover{background:var(--bg-0)}
+.rv-rules .k-bar[aria-checked="true"]{background:var(--bg-0)}
+.rv-rules .k-bar[aria-checked="true"] .k-bar-l{color:var(--ink)}
+.rv-rules .k-bar[aria-checked="false"] .k-bar-t i{background:var(--mute)}
+.rv-rules .k-bar:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.rv-sec{display:flex;flex-direction:column;gap:10px;padding-top:20px;border-top:1px solid var(--rule)}
+.rv-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.rv-k{font:500 var(--fs-label)/1 var(--font-num);color:var(--sub)}
+.rv-k b{font:800 24px/1 var(--font-display);color:var(--ink);letter-spacing:-0.02em;margin-right:2px}
+.rv-prog{margin:2px 0 6px}
+.rv-wide{width:100%}
+.rv-prec{display:grid;grid-template-columns:1fr auto;align-items:end;gap:16px}
+.rv-prec > div{display:flex;flex-direction:column;gap:8px}
+.rv-p{display:flex;align-items:baseline;height:32px}
+.rv-gate{align-items:flex-end}
+.rv-g{display:flex;align-items:flex-end;height:32px;font:500 20px/1 var(--font-num);color:var(--ink-2)}
+.rv-acts{display:flex;gap:8px;flex-wrap:wrap}
+.rv-acts > *{flex:1}
+.rv-acts .t-btn{width:100%}
+.rv-tipw{display:flex}
+.rv-done{height:44px;justify-content:center;color:var(--ai)}
+.rv-list .k-table td{padding:9px 8px}
+.rv-list .k-table th{padding:8px}
+.rv-list tr.is-on td{background:var(--tint)}
+.rv-v{font:500 13px/1 var(--font-body);color:var(--sub)}
+.rv-v[data-v="tp"]{color:var(--ink)}
+.rv-v[data-v="fp"]{color:var(--warn)}
+
+.rv-reopen{position:absolute;top:16px;right:16px;z-index:6;box-shadow:var(--elev-map)}
+
+/* 필지 카드 — 좌하단 · 대장 | AI 나란히 */
+.rv-card{position:absolute;left:24px;bottom:56px;z-index:30;width:392px;max-width:calc(100% - 48px);display:flex;flex-direction:column;gap:14px;opacity:0;transform:translateY(20px);transition:opacity var(--d-380) var(--e-ui),transform var(--d-380) var(--e-ui)}
+.rv-card.is-in{opacity:1;transform:none}
+.rv-card-h{display:flex;align-items:center;gap:10px}
+.rv-tag{color:var(--sub)}
+.rv-tag.is-ok{color:var(--ai)}
+.rv-seq{margin-left:auto;font:500 var(--fs-label)/1 var(--font-num);color:var(--sub)}
+.rv-addr{margin:-4px 0 0;font:500 var(--fs-sub)/var(--lh-sub) var(--font-body);color:var(--ink)}
+.rv-pair{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.rv-pair > div{display:flex;flex-direction:column;gap:6px;padding:14px 0}
+.rv-pair > div + div{padding-left:16px;border-left:1px solid var(--rule)}
+.rv-pair b{font:500 17px/1.35 var(--font-body);color:var(--ink);font-variant-numeric:tabular-nums}
+.rv-pair .is-ai .t-label{color:var(--ai)}
+.rv-verdict{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rv-verdict .t-btn:disabled{opacity:.4;cursor:default}
+/* 사진이 필지 위에 깔리기 전 — 얇은 진행 막대(판정 버튼은 비활성) */
+.rv-photo{display:flex;align-items:center;gap:12px;margin:-4px 0 -6px;font:500 var(--fs-label)/1 var(--font-body);color:var(--sub);transition:opacity var(--d-180) var(--e-ui)}
+.rv-photo .k-empty-p{flex:1;margin:0;max-width:none;height:3px}
+.rv-photo.is-out{display:none}
+.rv-verdict .is-was{outline:2px solid var(--accent);outline-offset:1px}
+
+/* 시험 규칙 표시(?stage=1) */
+.rv-stagechip{align-self:flex-start;color:var(--warn)}
+
+/* 임계 시트 — 보드 왼쪽 */
+.k-drawer--in.rv-sheet{right:424px;bottom:auto;max-height:calc(100% - 32px)}
+.rv-th{display:flex;flex-direction:column;gap:16px}
+.rv-th-k{margin:0;font:500 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--ink-2)}
+.rv-th-row{display:flex;flex-direction:column;gap:6px;padding-bottom:14px;border-bottom:1px solid var(--rule)}
+.rv-th-row p{margin:4px 0 0}
+
+@media (max-width:1100px){.rv-hud{max-width:calc(100% - 440px)}.rv-hud .t-hud{font-size:96px}
+  /* 임계 시트(서랍 왼쪽)가 HUD 숫자를 덮지 않게 — 시트가 열린 동안 HUD 를 숨긴다 */
+  body.rv-has-sheet .rv-hud{opacity:0!important}}
+@media (max-width:640px){
+  .rv-hud{left:16px;top:12px;max-width:calc(100% - 32px)}
+  .rv-load{left:16px;top:16px;width:180px}
+  .rv-hud .k-big-l{font-size:14px;line-height:20px}
+  .rv-hud .k-big-u{font-size:18px}
+  .rv-hud .k-big-s .t-sig{font-size:18px}
+  /* 하단 탭(64)과 겹치지 않게 — 키트 K5 요청 전 화면 쪽 보정 */
+  .k-drawer.k-drawer--in{max-height:52%;bottom:calc(64px + env(safe-area-inset-bottom))}
+  /* 첫 뷰에 '표본 검수 k/100 + 표본 20 보기'가 온전히 — 규칙 막대 간격을 줄이고, 서랍은 버튼 아래(정밀도 위)에서 끊긴다 */
+  .rv-board{gap:14px}
+  .rv-rules{gap:0}
+  .rv-rules .k-bar{padding:5px 10px}
+  .rv-sec{padding-top:14px;gap:8px}
+  .rv-card{position:fixed;left:8px;right:8px;bottom:72px;width:auto;max-width:none;padding:18px}
+  .rv-addr{font-size:17px;line-height:24px}
+  .rv-pair b{font-size:15px}
+  body.rv-has-card .k-drawer{opacity:0!important;pointer-events:none}
+  /* 카드가 열려 있으면 토스트는 카드 위로(판정 버튼을 가리지 않게) — 키트 K14 요청 전 화면 쪽 보정 */
+  body.rv-has-card .k-toast{bottom:var(--rv-toast-b,340px)}
+  /* 임계 시트가 열리면 시트 한 장만 — 서랍(52%)은 숨긴다 */
+  body.rv-has-sheet .k-drawer:not(.rv-sheet){opacity:0!important;pointer-events:none}
+  .k-drawer--in.rv-sheet{max-height:60%}
+  .k-drawer--in.rv-sheet{right:0}
+  .rv-reopen{top:auto;bottom:80px;right:16px}
+}

@@ -10,6 +10,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import re
+import secrets
 import time
 import urllib.parse
 
@@ -18,8 +19,9 @@ from fastapi import APIRouter, Request
 from fastapi.responses import Response
 from starlette.concurrency import run_in_threadpool
 
+from . import ledger as LG
 from .deps import ApiError, audit, db, principal, redis, require
-from .envelope import KST, now_iso
+from .envelope import KST, env, now_iso
 
 import sys
 from pathlib import Path
@@ -32,9 +34,10 @@ from survey.db import AS_OF, FIXED_PHRASE, RULE_IDS, SRC_SUMMARY, SRC_SUSPECTS, 
 router = APIRouter()
 
 FCOLS = ("id, rank, priority, score, rule, rule_nm, pnu, addr, emd, emd_cd, jimok, parcel_m2, yongdo, nongup, evid_m2, conf, "
-         "corroboration, img_date, evidence, ai_ids, lon, lat, state, assignee, planned_for, reason, updated_at, updated_by, demo, tenant_id")
+         "corroboration, img_date, evidence, ai_ids, lon, lat, state, assignee, planned_for, reason, updated_at, updated_by, demo, tenant_id, "
+         "verdict, verdict_code, note, import_id")
 PCOLS_ALL = "*"
-TRANSITIONS = {"open": {"assigned", "dismissed"}, "assigned": {"inspected", "dismissed"}, "inspected": {"closed"},
+TRANSITIONS = {"open": {"assigned", "dismissed"}, "assigned": {"assigned", "inspected", "dismissed"}, "inspected": {"closed"},
                "closed": set(), "dismissed": set()}
 SORTS = {"score": "score DESC, rank ASC", "evid_m2": "evid_m2 DESC NULLS LAST, rank ASC", "updated": "updated_at DESC NULLS LAST, rank ASC",
          "rank": "rank ASC"}
@@ -42,6 +45,11 @@ PNU_RE = re.compile(r"^\d{19}$")
 EMD_RE = re.compile(r"^\d{8}$")
 DEMO_TTL_H = 24
 _revert = {"t": 0.0}
+
+
+def all_rule_ids() -> list[str]:
+    """R1–R6(연속지적 × AI) + L-*(대장 × AI × V-World · F3 §3 S-2)."""
+    return list(RULE_IDS) + LG.rule_ids()
 
 
 def _err_missing(e: Exception):
@@ -104,6 +112,8 @@ def _filters(q: dict, *, skip: str | None = None) -> tuple[list[str], list]:
         add("(addr ILIKE '%' || ? || '%' OR pnu LIKE ? || '%')", q["q"], q["q"])
     if q["pnu"]:
         add("pnu = ANY(?::text[])", q["pnu"])
+    if q.get("ledger") is not None:
+        add("pnu IN (SELECT pnu FROM registry_snapshots WHERE import_id = ANY(?::text[]) AND pnu IS NOT NULL)", q["ledger"])
     return w, a
 
 
@@ -118,7 +128,7 @@ def _row(r) -> dict:
 @router.get("/survey/findings")
 async def findings(request: Request, rule: str | None = None, priority: str | None = None, emd_cd: str | None = None,
                    state: str | None = None, bbox: str | None = None, q: str | None = None, pnu: str | None = None,
-                   deploy_id: str | None = None, sort: str = "score", limit: int = 200, offset: int = 0):
+                   deploy_id: str | None = None, sort: str = "score", limit: int = 200, offset: int = 0, ledger: str | None = None):
     p = _read(principal(request))
     t0 = time.perf_counter()
     if sort not in SORTS:
@@ -132,17 +142,20 @@ async def findings(request: Request, rule: str | None = None, priority: str | No
             assert len(bb) == 4
         except Exception:
             raise ApiError("bad_request", "bbox = minx,miny,maxx,maxy (EPSG:4326)")
-    qq = {"rule": _list_param(rule, set(RULE_IDS), "rule"), "priority": _list_param(priority, {"A", "B", "C"}, "priority"),
+    rids = all_rule_ids()
+    qq = {"rule": _list_param(rule, set(rids), "rule"), "priority": _list_param(priority, {"A", "B", "C"}, "priority"),
           "emd_cd": _list_param(emd_cd, None), "state": _list_param(state, set(STATES), "state"), "bbox": bb,
           "q": (q or "").strip()[:60] or None, "pnu": _list_param(pnu, None)}
+    if ledger:
+        qq["ledger"] = await LG.resolve_ledger_param(p, ledger)
     try:
         async with db(p) as conn:
             if deploy_id:
                 t = await conn.fetchval("SELECT tenant_id FROM deploys WHERE id=$1", deploy_id)
                 if t is None:
                     raise ApiError("not_found", f"deploy {deploy_id} 없음")
-                if t != "namwon":      # 1차 실태조사 정본은 남원뿐
-                    qq["pnu"] = ["__none__"]
+                if not await conn.fetchval("SELECT EXISTS(SELECT 1 FROM survey_findings WHERE tenant_id=$1)", t):
+                    qq["pnu"] = ["__none__"]      # 이 배포본의 기관에는 실태조사 정본이 아직 없다(지역 고정값 없음 — 표에서 판정)
             await _maybe_revert_demo(conn)
             w, a = _filters(qq)
             rows = await conn.fetch(f"SELECT {FCOLS} FROM survey_findings {_where(w)} ORDER BY {SORTS[sort]} "
@@ -153,7 +166,7 @@ async def findings(request: Request, rule: str | None = None, priority: str | No
     except asyncpg.UndefinedTableError as e:
         _err_missing(e)
     counts = {s: 0 for s in STATES}
-    rc = {rid: 0 for rid in RULE_IDS}
+    rc = {rid: 0 for rid in rids}
     total = 0
     for c in cells:
         in_rule = not qq["rule"] or c["rule"] in qq["rule"]
@@ -165,10 +178,11 @@ async def findings(request: Request, rule: str | None = None, priority: str | No
         if in_rule and in_state:
             total += int(c["n"])
     by_rule = {rid: X.env(n, "count", "inferred", "PostGIS survey_findings", "검수 전") for rid, n in rc.items()}
-    return {"items": [X.finding_item(_row(r)) for r in rows],
+    return {"items": [X.finding_item(_row(r)) | {"verdict": r["verdict"], "verdict_code": r["verdict_code"]} for r in rows],
             "total": X.env(int(total), "count", "inferred", "PostGIS survey_findings", "의심 후보 · 검수 전 · 위법 판정 아님"),
             "counts": counts, "by_rule": by_rule, "limit": limit, "offset": offset, "sort": sort,
-            "filters": {k: v for k, v in qq.items() if v and k != "pnu"} | ({"deploy_id": deploy_id} if deploy_id else {}),
+            "filters": {k: v for k, v in qq.items() if v and k not in ("pnu", "ledger")} | ({"deploy_id": deploy_id} if deploy_id else {})
+            | ({"ledger": ledger} if ledger else {}),
             "as_of": AS_OF, "source": SRC_SUSPECTS, "fixed": FIXED_PHRASE,
             "db_ms": X.env(round((time.perf_counter() - t0) * 1000, 1), "ms", "measured", "gateway survey.findings · SQL 구간만(조회·집계 · 직렬화 제외 — 서버 전체 처리는 응답 헤더 X-LX-Time-ms)")}
 
@@ -202,18 +216,21 @@ async def finding(fid: str, request: Request):
             parcel = await _parcel(conn, row["pnu"])
             cut = await _cut(conn)
             hist, summ, hnote = await _history(conn, row["pnu"])
-            ev = await conn.fetch("SELECT from_state, to_state, by, realm, reason, assignee, planned_for, demo, at FROM survey_finding_events "
+            ev = await conn.fetch("SELECT from_state, to_state, by, realm, reason, assignee, planned_for, demo, at, verdict, verdict_code, note FROM survey_finding_events "
                                   "WHERE finding_id=$1 ORDER BY at", fid)
             others = await conn.fetch("SELECT id, rule, rule_nm, priority, state FROM survey_findings WHERE pnu=$1 AND id<>$2", row["pnu"], fid)
     except asyncpg.UndefinedTableError as e:
         _err_missing(e)
     out = X.finding_item(row)
-    out["explain"] = X.explain(row, parcel or {}, cut)
+    out["explain"] = LG.explain_ledger(row, parcel) if row["rule"] not in RULE_IDS else X.explain(row, parcel or {}, cut)
+    for k in ("verdict", "verdict_code", "note", "import_id"):
+        out[k] = row.get(k)
     out["history"] = hist
     out["history_summary"] = summ
     if hnote:
         out["history_note"] = hnote
     out["state_log"] = [{"from": e["from_state"], "to": e["to_state"], "by": e["by"], "realm": e["realm"], "reason": e["reason"],
+                         "verdict": e["verdict"], "verdict_code": e["verdict_code"], "note": e["note"],
                          "assignee": e["assignee"], "planned_for": e["planned_for"].isoformat() if e["planned_for"] else None,
                          "basis": "demo" if e["demo"] else "recorded", "at": e["at"].astimezone(KST).isoformat(timespec="seconds")} for e in ev]
     out["same_parcel"] = [dict(o) for o in others]
@@ -228,14 +245,14 @@ async def parcel(pnu: str, request: Request, with_: str | None = None):
     if not PNU_RE.match(pnu):
         raise ApiError("bad_request", "pnu 는 19자리 숫자")
     want = set(_list_param(request.query_params.get("with") or with_ or "facts,findings,history",
-                           {"facts", "findings", "history", "geom", "all"}, "with"))
+                           {"facts", "findings", "history", "geom", "ledger", "all"}, "with"))
     if "all" in want:
-        want = {"facts", "findings", "history", "geom"}
+        want = {"facts", "findings", "history", "geom", "ledger"}
     try:
         async with db(p) as conn:
             pr = await _parcel(conn, pnu)
             if not pr:
-                raise ApiError("not_found", f"필지 {pnu} 없음(남원 연속지적 밖이거나 다른 기관)")
+                raise ApiError("not_found", f"필지 {pnu} 없음(적재된 연속지적 밖이거나 다른 기관)")
             out = {"pnu": pnu, "addr": pr["addr"], "emd": pr["emd"], "emd_cd": pr["emd_cd"], "ri": pr["ri"], "jibun": pr["jibun"],
                    "as_of": AS_OF, "source": "PostGIS survey_parcels ← survey/namwon-parcel-survey.gpkg", "fixed": FIXED_PHRASE}
             if "facts" in want:
@@ -243,9 +260,10 @@ async def parcel(pnu: str, request: Request, with_: str | None = None):
             if "findings" in want:
                 rows = await conn.fetch(f"SELECT {FCOLS} FROM survey_findings WHERE pnu=$1 ORDER BY score DESC", pnu)
                 cut = await _cut(conn)
-                out["findings"] = [X.finding_item(_row(r)) | {"explain": X.explain(_row(r), pr, cut)} for r in rows]
+                out["findings"] = [X.finding_item(_row(r)) | {"explain": LG.explain_ledger(_row(r), pr) if r["rule"] not in RULE_IDS
+                                                              else X.explain(_row(r), pr, cut)} for r in rows]
                 if not rows:
-                    out["findings_note"] = "규칙 R1–R6 어디에도 걸리지 않은 필지"
+                    out["findings_note"] = "어떤 규칙에도 걸리지 않은 필지"
             if "history" in want:
                 hist, summ, hnote = await _history(conn, pnu)
                 out["history"] = hist
@@ -256,12 +274,17 @@ async def parcel(pnu: str, request: Request, with_: str | None = None):
                 out["geometry"] = json.loads(await conn.fetchval("SELECT ST_AsGeoJSON(geom, 7) FROM survey_parcels WHERE pnu=$1", pnu))
     except asyncpg.UndefinedTableError as e:
         _err_missing(e)
+    if "ledger" in want:
+        out["ledger"] = await LG.ledger_rows(p, pnu)
+        if not out["ledger"]:
+            out["ledger_note"] = "이 필지는 올린 대장에 없습니다"
     return out
 
 
 @router.get("/survey/stats")
-async def stats(request: Request, by: str = "emd"):
+async def stats(request: Request, by: str = "emd", ledger: str | None = None):
     p = _read(principal(request))
+    led_ids = await LG.resolve_ledger_param(p, ledger) if ledger else None
     if by not in ("emd", "rule", "priority", "state"):
         raise ApiError("bad_request", "by 는 emd|rule|priority|state")
     src = "PostGIS survey_findings (= " + SRC_SUMMARY + ")"
@@ -292,6 +315,17 @@ async def stats(request: Request, by: str = "emd"):
                                             "rank": X.env(t["rank"], "count", "estimate", SRC_SUSPECTS),
                                             "evid_m2": X.env(t["evid_m2"], "m2", "inferred", SRC_SUMMARY, "검수 전")} for t in (e["top5"] or [])],
                                   "bbox": list(e["bbox"] or [])})
+                if led_ids is not None:
+                    lm = {r["emd_cd"]: r for r in await conn.fetch(
+                        "SELECT p.emd_cd, count(DISTINCT s.pnu) matched FROM registry_snapshots s JOIN survey_parcels p ON p.pnu=s.pnu "
+                        "WHERE s.import_id = ANY($1::text[]) GROUP BY 1", led_ids)}
+                    lf = {(r["emd_cd"], r["rule"]): r["n"] for r in await conn.fetch(
+                        "SELECT emd_cd, rule, count(*) n FROM survey_findings WHERE import_id = ANY($1::text[]) GROUP BY 1,2", led_ids)}
+                    lsrc = "대장 × 연속지적 매칭(registry_snapshots)"
+                    for it in items:
+                        it["ledger_matched"] = X.env(int((lm.get(it["cd"]) or {}).get("matched") or 0), "필지", "measured", lsrc)
+                        it["ledger_findings"] = {rid: X.env(int(lf.get((it["cd"], rid), 0)), "count", "inferred", "규칙 L-* · 검수 전", "검수 전")
+                                                 for rid in LG.rule_ids()}
             elif by == "rule":
                 rows = await conn.fetch("SELECT rule, priority, count(*) n FROM survey_findings GROUP BY 1,2")
                 defs = RL.definitions()
@@ -301,6 +335,14 @@ async def stats(request: Request, by: str = "emd"):
                 items = [{"key": rid, "name": defs[rid]["name"], "condition": RL.condition_text(rid),
                           "n": E(sum(a.get(rid, {}).values())), "by_priority": {k: E(a.get(rid, {}).get(k, 0)) for k in "ABC"},
                           "note": defs[rid].get("note")} for rid in RULE_IDS]
+                lrows = await conn.fetch("SELECT rule, priority, count(*) n FROM survey_findings WHERE rule LIKE 'L%' GROUP BY 1,2")
+                la: dict = {}
+                for r in lrows:
+                    la.setdefault(r["rule"], {})[r["priority"]] = r["n"]
+                for rid, d in LG.ledger_rules().items():
+                    items.append({"key": rid, "name": d["name"], "condition": LG.condition_text(d), "requires": d.get("requires") or [],
+                                  "n": E(sum(la.get(rid, {}).values())), "by_priority": {k: E(la.get(rid, {}).get(k, 0)) for k in "ABC"},
+                                  "note": d.get("note")})
             elif by == "priority":
                 rows = {r["priority"]: r["n"] for r in await conn.fetch("SELECT priority, count(*) n FROM survey_findings GROUP BY 1")}
                 cut = await _cut(conn)
@@ -315,7 +357,8 @@ async def stats(request: Request, by: str = "emd"):
             parcels_n = await conn.fetchval("SELECT coalesce(sum(parcels),0) FROM survey_emd")
     except asyncpg.UndefinedTableError as e:
         _err_missing(e)
-    return {"by": by, "items": items, "total": E(total, "의심 후보 · 검수 전 · 위법 판정 아님"),
+    out_ledger = {"ledger": ledger, "imports": led_ids} if ledger else {}
+    return {**out_ledger, "by": by, "items": items, "total": E(total, "의심 후보 · 검수 전 · 위법 판정 아님"),
             "parcels": X.env(int(parcels_n), "필지", "measured", "survey/namwon-parcels.gpkg"), "as_of": AS_OF, "source": src}
 
 
@@ -324,7 +367,8 @@ async def rules_(request: Request):
     p = _read(principal(request))
     try:
         async with db(p) as conn:
-            rows = await conn.fetch("SELECT id, name, condition, thresholds, basis, counts, base_score, note FROM survey_rules ORDER BY id")
+            rows = await conn.fetch("SELECT id, name, condition, thresholds, basis, counts, base_score, note, coalesce(reviewed,false) AS reviewed, "
+                                    "reviewed_at FROM survey_rules ORDER BY id")
     except asyncpg.UndefinedTableError as e:
         _err_missing(e)
     defs = RL.definitions()
@@ -340,7 +384,8 @@ async def rules_(request: Request):
                       "requires": defs[r["id"]].get("requires"),
                       "base_score": X.env(r["base_score"], "score", "estimate", "s3_survey.py BASE_SCORE"),
                       "counts": {k: X.env(v, "count", "inferred", SRC_SUSPECTS, "검수 전") for k, v in c.items()},
-                      "note": r["note"]})
+                      "note": r["note"], "reviewed": bool(r["reviewed"]),
+                      "reviewed_at": r["reviewed_at"].astimezone(KST).isoformat(timespec="seconds") if r["reviewed_at"] else None})
     return {"items": items, "total": X.env(len(items), "count", "recorded", "server/survey/rules/*.yaml"), "as_of": AS_OF,
             "note": "임계는 전부 [추정 초기값] — 현장조사 결과로 보정. 공통: 객체 과반 포함 0.5 · 신뢰도 하한 0.5"}
 
@@ -355,21 +400,38 @@ async def _publish(tenant: str, data: dict):
     await r.xadd("ops:events", {"event": "finding.state", "data": raw}, maxlen=5000, approximate=True)
 
 
+VERDICTS = {"match", "violation", "match_fp", "unclear"}      # 현장 일치(의심 맞음) · 위반 확인 · 오탐(AI 틀림) · 판단 보류
+ACTION_KINDS = {"notice", "correction", "penalty", "restore", "revisit", "referral", "none", "other"}
+# 화면 말 -> kind(gov-report 5종: 안내 · 시정명령 · 이행강제금 · 원상복구 · 없음)
+ACTION_KO = {"안내": "notice", "시정명령": "correction", "이행강제금": "penalty", "원상복구": "restore", "없음": "none", "재방문": "revisit", "이관": "referral"}
+
+
 @router.post("/survey/findings/{fid}/state")
 async def set_state(fid: str, body: dict, request: Request):
+    """상태 확장(F3 §3 S-2): {state, verdict, verdict_code, note, assignee, planned_for, reason, client_id?}.
+    closed + verdict match_fp(또는 dismissed) → 오탐 피드백 자동(feedback kind 'fp' · 재학습 표본). client_id 없으면 서버가 만든다."""
     p = require(principal(request))
     if p.realm == "tenant" and p.role != "manager":
         raise ApiError("forbidden", "기관 담당자(manager)만 상태를 바꿀 수 있습니다")
     if p.realm == "lx" and p.role not in ("staff", "admin"):
         raise ApiError("forbidden", "LX 영업 계정은 읽기 전용")
     to = body.get("state")
+    if p.realm == "lx" and body.get("verdict") and to in (None, "", "sample"):
+        return await _lx_verdict(p, fid, body)       # LX 표본 검수 = 판정만 영구 기록(기관 필지 상태는 그대로)
     if to not in ("assigned", "dismissed", "inspected", "closed"):
         raise ApiError("bad_request", "state 는 assigned|dismissed|inspected|closed")
-    cid = str(body.get("client_id") or "").strip()
-    if not cid or len(cid) > 80:
-        raise ApiError("bad_request", "client_id(멱등 키 · 80자 이하) 필수")
+    cid = str(body.get("client_id") or "").strip() or ("srv_" + secrets.token_hex(8))
+    if len(cid) > 80:
+        raise ApiError("bad_request", "client_id(멱등 키 · 80자 이하)")
     reason = (body.get("reason") or None)
     assignee = (body.get("assignee") or None)
+    verdict = body.get("verdict") or None
+    vcode = (str(body.get("verdict_code")).strip()[:40] if body.get("verdict_code") else None)
+    note = (str(body.get("note")).strip()[:500] if body.get("note") else None)
+    if verdict and verdict not in VERDICTS:
+        raise ApiError("bad_request", "verdict 는 match|violation|match_fp|unclear", {"allowed": sorted(VERDICTS)})
+    if to == "closed" and not verdict:
+        raise ApiError("verdict_required", "종결(closed)에는 판정(verdict)이 필요합니다", {"allowed": sorted(VERDICTS)}, 400)
     planned = body.get("planned_for")
     pdate = None
     if planned:
@@ -377,10 +439,12 @@ async def set_state(fid: str, body: dict, request: Request):
             pdate = dt.date.fromisoformat(str(planned)[:10])
         except Exception:
             raise ApiError("bad_request", "planned_for = YYYY-MM-DD")
-    if to == "dismissed" and not reason:
-        raise ApiError("bad_request", "오탐(dismissed)은 사유(reason) 필수")
+    if to == "dismissed" and not (reason or note):
+        raise ApiError("bad_request", "오탐(dismissed)은 사유(reason 또는 note) 필수")
+    reason = reason or (note if to == "dismissed" else None)
     demo = p.realm == "lx"
     by = p.user_id or "unknown"
+    fb_id = None
     try:
         async with db(p) as conn:
             dup = await conn.fetchrow("SELECT finding_id, from_state, to_state, at FROM survey_finding_events WHERE client_id=$1", cid)
@@ -400,30 +464,286 @@ async def set_state(fid: str, body: dict, request: Request):
             if to not in allowed:
                 raise ApiError("finding_state_invalid", f"{cur} → {to} 전이 불가(역방향·종결 뒤 변경 금지)",
                                {"from": cur, "to": to, "allowed": sorted(allowed)}, 409)
+            if to == cur and not assignee:
+                raise ApiError("bad_request", "같은 상태에서는 담당(assignee)만 바꿀 수 있습니다")
             now = dt.datetime.now(KST)
-            new_assignee = assignee if to == "assigned" else r["assignee"]
+            new_assignee = assignee if to == "assigned" else (assignee or r["assignee"])
+            if to == cur:                              # 담당 재지정 - 판정·사유는 그대로
+                reason = r["reason"]
             await conn.execute("UPDATE survey_findings SET state=$2, assignee=$3, planned_for=COALESCE($4, planned_for), reason=$5, "
-                               "updated_at=$6, updated_by=$7, demo=$8 WHERE id=$1",
-                               fid, to, new_assignee, pdate, reason, now, by, demo or bool(r["demo"]))
+                               "updated_at=$6, updated_by=$7, demo=$8, verdict=COALESCE($9, verdict), verdict_code=COALESCE($10, verdict_code), "
+                               "note=COALESCE($11, note) WHERE id=$1",
+                               fid, to, new_assignee, pdate, reason, now, by, demo or bool(r["demo"]), verdict, vcode, note)
             await conn.execute("INSERT INTO survey_finding_events(tenant_id, finding_id, from_state, to_state, by, realm, reason, assignee, "
-                               "planned_for, demo, at, client_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)",
-                               r["tenant_id"], fid, cur, to, by, p.realm, reason, new_assignee, pdate, demo, now, cid)
+                               "planned_for, demo, at, client_id, verdict, verdict_code, note) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)",
+                               r["tenant_id"], fid, cur, to, by, p.realm, reason, new_assignee, pdate, demo, now, cid, verdict, vcode, note)
+            if (to == "closed" and verdict == "match_fp") or to == "dismissed":
+                # 오탐 → 재학습 표본(feedback · lx-review 정밀도 보드 · 학습 samples)
+                fb_id = "fb_" + secrets.token_hex(8)
+                await conn.execute("INSERT INTO feedback(id, tenant_id, job_id, set_id, fid, pnu, lnglat, kind, note, state) VALUES "
+                                   "($1,$2,NULL,$3,$4,$5,CASE WHEN $6::float8 IS NULL THEN NULL ELSE ST_SetSRID(ST_MakePoint($6,$7),4326) END,'fp',$8,'open')",
+                                   fb_id, r["tenant_id"], f"survey/{r['rule']}", fid, r["pnu"], r["lon"], r["lat"],
+                                   (note or reason or "현장 확인 결과 오탐")[:500])
             await audit(conn, p, "finding.state", fid, {"state": cur}, {"state": to, "reason": reason, "assignee": new_assignee,
-                                                                      "planned_for": planned, "client_id": cid, "demo": demo})
+                                                                      "planned_for": planned, "client_id": cid, "demo": demo, "verdict": verdict,
+                                                                      "verdict_code": vcode, "feedback": fb_id})
             r2 = await conn.fetchrow(f"SELECT {FCOLS} FROM survey_findings WHERE id=$1", fid)
     except asyncpg.UndefinedTableError as e:
         _err_missing(e)
     at = now.isoformat(timespec="milliseconds")
     data = {"id": fid, "pnu": r["pnu"], "rule": r["rule"], "priority": r["priority"], "emd_cd": r["emd_cd"], "from": cur, "to": to,
-            "by": by, "realm": p.realm, "assignee": new_assignee, "reason": reason, "client_id": cid, "at": at,
+            "by": by, "realm": p.realm, "assignee": new_assignee, "reason": reason, "client_id": cid, "at": at, "verdict": verdict,
             "lnglat": [r["lon"], r["lat"]], "basis": "demo" if demo else "recorded", "tenant_id": r["tenant_id"]}
     await _publish(r["tenant_id"], data)
     out = X.finding_item(_row(r2))
-    out["event"] = {"from": cur, "to": to, "at": at, "basis": data["basis"]}
+    for k in ("verdict", "verdict_code", "note"):
+        out[k] = r2[k]
+    out["event"] = {"from": cur, "to": to, "at": at, "basis": data["basis"], "verdict": verdict}
     out["allowed_next"] = sorted(TRANSITIONS.get(to, set()))
+    if fb_id:
+        out["feedback_id"] = fb_id
     if demo:
         out["demo_note"] = f"LX 직원 시연 쓰기 — basis 'demo' · {DEMO_TTL_H}h 뒤 자동 원복"
     return out
+
+
+# ─────────────────────────── 조치(F3 §3 S-2) ───────────────────────────
+@router.post("/survey/actions", status_code=201)
+async def create_action(body: dict, request: Request):
+    """조치 한 줄(시정 안내 · 원상복구 · 재방문 · 이관) — 행정 문서가 아니라 할 일 기록. 기관 manager · LX staff/admin."""
+    p = require(principal(request))
+    if p.realm == "tenant" and p.role != "manager":
+        raise ApiError("forbidden", "기관 담당자(manager)만 조치를 기록할 수 있습니다")
+    if p.realm == "lx" and p.role not in ("staff", "admin"):
+        raise ApiError("forbidden", "LX 영업 계정은 읽기 전용")
+    fid = body.get("finding_id")
+    kind = ACTION_KO.get(body.get("kind") or "", body.get("kind") or "other")
+    if kind not in ACTION_KINDS:
+        raise ApiError("bad_request", "kind 는 " + "|".join(sorted(ACTION_KINDS)), {"allowed": sorted(ACTION_KINDS)})
+    law = (str(body.get("law")).strip()[:120] if body.get("law") else None)
+    due = None
+    if body.get("due"):
+        try:
+            due = dt.date.fromisoformat(str(body["due"])[:10])
+        except Exception:
+            raise ApiError("bad_request", "due = YYYY-MM-DD")
+    aid = "act_" + secrets.token_hex(8)
+    async with db(p) as conn:
+        f = await conn.fetchrow("SELECT id, pnu, tenant_id FROM survey_findings WHERE id=$1", fid) if fid else None
+        if fid and not f:
+            raise ApiError("not_found", f"finding {fid} 없음")
+        tenant = (f["tenant_id"] if f else None) or p.tenant_id
+        if not tenant:
+            raise ApiError("bad_request", "finding_id 가 필요합니다")
+        await conn.execute("INSERT INTO survey_actions(id, tenant_id, finding_id, pnu, kind, note, due, by, law) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)",
+                           aid, tenant, fid, f["pnu"] if f else body.get("pnu"), kind, (body.get("note") or "")[:500] or None, due, p.user_id, law)
+        await audit(conn, p, "survey.action", aid, None, {"finding_id": fid, "kind": kind, "due": str(due) if due else None})
+        row = await conn.fetchrow("SELECT * FROM survey_actions WHERE id=$1", aid)
+    return _action(row)
+
+
+def _action(r) -> dict:
+    return {"id": r["id"], "tenant_id": r["tenant_id"], "finding_id": r["finding_id"], "pnu": r["pnu"], "kind": r["kind"], "note": r["note"],
+            "law": r["law"],
+            "due": r["due"].isoformat() if r["due"] else None, "state": r["state"], "by": r["by"],
+            "at": r["at"].astimezone(KST).isoformat(timespec="seconds") if r["at"] else None}
+
+
+@router.get("/survey/actions")
+async def list_actions(request: Request, finding_id: str | None = None, state: str | None = None, limit: int = 200):
+    p = _read(principal(request))
+    async with db(p) as conn:
+        rows = await conn.fetch("SELECT * FROM survey_actions WHERE ($1::text IS NULL OR finding_id=$1) AND ($2::text IS NULL OR state=$2) "
+                                "ORDER BY at DESC LIMIT $3", finding_id, state, max(1, min(limit, 1000)))
+    return {"items": [_action(r) for r in rows], "total": X.env(len(rows), "count", "recorded", "survey_actions"), "as_of": now_iso()}
+
+
+@router.post("/survey/actions/{aid}")
+async def update_action(aid: str, body: dict, request: Request):
+    p = require(principal(request))
+    if (p.realm == "tenant" and p.role != "manager") or (p.realm == "lx" and p.role not in ("staff", "admin")):
+        raise ApiError("forbidden", "권한 없음")
+    st = body.get("state")
+    if st not in ("open", "done", "cancelled"):
+        raise ApiError("bad_request", "state 는 open|done|cancelled")
+    async with db(p) as conn:
+        r = await conn.fetchrow("UPDATE survey_actions SET state=$2 WHERE id=$1 RETURNING *", aid, st)
+        if not r:
+            raise ApiError("not_found", f"action {aid} 없음")
+        await audit(conn, p, "survey.action.state", aid, None, {"state": st})
+    return _action(r)
+
+
+# ─────────────────────────── 규칙 활성화 · 통계 · 재보정 ───────────────────────────
+def _rule_def(rid: str) -> dict:
+    if rid in RULE_IDS:
+        d = RL.definitions()[rid]
+        return {"id": rid, "name": d["name"], "thresholds": d.get("thresholds") or {}, "condition": RL.condition_text(rid)}
+    d = LG.ledger_rules().get(rid)
+    if not d:
+        raise ApiError("not_found", f"규칙 {rid} 없음")
+    return {"id": rid, "name": d["name"], "thresholds": d.get("thresholds") or {}, "condition": LG.condition_text(d)}
+
+
+async def _rule_stats(conn, rid: str) -> dict:
+    rows = await conn.fetch("SELECT state, verdict, count(*) n FROM survey_findings WHERE rule=$1 GROUP BY 1,2", rid)
+    by_state = {s: 0 for s in STATES}
+    ver = {"match": 0, "violation": 0, "match_fp": 0, "unclear": 0}
+    for r in rows:
+        by_state[r["state"]] = by_state.get(r["state"], 0) + r["n"]
+        if r["verdict"] in ver:
+            ver[r["verdict"]] += r["n"]
+    tp = ver["match"] + ver["violation"]
+    fp = ver["match_fp"] + by_state.get("dismissed", 0)
+    fbk = await conn.fetchval("SELECT count(*) FROM feedback WHERE set_id=$1 AND kind='fp'", f"survey/{rid}")
+    return {"by_state": by_state, "verdicts": ver, "tp": tp, "fp": fp, "feedback_fp": int(fbk or 0), "total": sum(by_state.values())}
+
+
+@router.get("/survey/rules/{rid}/stats")
+async def rule_stats(rid: str, request: Request):
+    """규칙 정밀도 보드(lx-review) — 현장 판정(verdict)이 쌓인 만큼만 정밀도. 표본 0 이면 null(추정하지 않음)."""
+    p = _read(principal(request))
+    d = _rule_def(rid)
+    async with db(p) as conn:
+        st = await _rule_stats(conn, rid)
+    async with db(realm="lx") as conn:
+        pend = await conn.fetchval("SELECT count(*) FROM approvals WHERE subject_type='rule' AND subject_id=$1 AND state='pending'", rid)
+    src = "survey_findings.verdict(현장 판정) · 오탐 = match_fp + dismissed"
+    n = st["tp"] + st["fp"]
+    lx = await _lx_stats(rid)
+    field_blk = {"judged": X.env(n, "count", "recorded", src),
+                 "precision": X.env(round(100 * st["tp"] / n, 1) if n else None, "%", "measured", src, None if n else "현장 판정 표본 없음")}
+    async with db(realm="lx") as conn:
+        rv = await conn.fetchval("SELECT coalesce(reviewed,false) FROM survey_rules WHERE id=$1", rid)
+    return {"id": rid, "name": d["name"], "condition": d["condition"], "lx": lx, "field": field_blk, "reviewed": bool(rv),
+            "gate": X.env(REVIEW_GATE["precision"], "%", "estimate", "검수 전 떼기 조건(정밀도)", "[추정 초기값]"),
+            "gate_samples": X.env(REVIEW_GATE["samples"], "count", "recorded", "검수 전 떼기 조건(표본)"),
+            "total": X.env(st["total"], "count", "inferred", "survey_findings", "검수 전 포함"),
+            "by_state": {k: X.env(v, "count", "recorded", "survey_findings.state") for k, v in st["by_state"].items()},
+            "verdicts": {k: X.env(v, "count", "recorded", "survey_findings.verdict") for k, v in st["verdicts"].items()},
+            "judged": X.env(n, "count", "recorded", src),
+            "precision": X.env(round(100 * st["tp"] / n, 1) if n else None, "%", "measured", src, None if n else "현장 판정 표본 없음"),
+            "fp_reports": X.env(st["feedback_fp"], "count", "recorded", "feedback kind fp"),
+            "thresholds": [{"key": k, "value": X.env(v, "ratio" if v < 1 else "m2", "estimate", f"server/survey/rules/{rid}.yaml", "[추정 초기값]")}
+                           for k, v in d["thresholds"].items()],
+            "pending_activation": bool(pend), "as_of": now_iso()}
+
+
+@router.post("/survey/rules/{rid}/recalibrate")
+async def rule_recalibrate(rid: str, request: Request, body: dict | None = None, scope: str | None = None):
+    """재보정 제안 — 현장 판정된 건의 근거면적 분포에서 임계 후보를 낸다(제안만 · 적용은 activate → 결재).
+    표본(오탐 ≥ 5 · 정탐 ≥ 5)이 모자라면 제안 null + 더 필요한 수. ?scope=lx = LX 표본 검수 판정만."""
+    p = require(principal(request), lx=True)
+    d = _rule_def(rid)
+    scope = scope or (body or {}).get("scope") or "field"
+    async with db(p) as conn:
+        if scope == "lx":
+            lv = await conn.fetch(
+                "SELECT DISTINCT ON (v.finding_id) v.finding_id, v.verdict, f.evid_m2 FROM finding_verdicts v JOIN survey_findings f ON f.id=v.finding_id "
+                "WHERE v.rule=$1 AND v.realm='lx' ORDER BY v.finding_id, v.at DESC", rid)
+            tp = [r["evid_m2"] for r in lv if r["verdict"] == "match" and r["evid_m2"] is not None]
+            fp = [r["evid_m2"] for r in lv if r["verdict"] == "match_fp" and r["evid_m2"] is not None]
+        else:
+            tp = [r["evid_m2"] for r in await conn.fetch(
+                "SELECT evid_m2 FROM survey_findings WHERE rule=$1 AND verdict IN ('match','violation') AND evid_m2 IS NOT NULL", rid)]
+            fp = [r["evid_m2"] for r in await conn.fetch(
+                "SELECT evid_m2 FROM survey_findings WHERE rule=$1 AND (verdict='match_fp' OR state='dismissed') AND evid_m2 IS NOT NULL", rid)]
+    key = next(iter(d["thresholds"]), None)
+    cur = d["thresholds"].get(key) if key else None
+    need = {"tp": max(0, 5 - len(tp)), "fp": max(0, 5 - len(fp))}
+    prop = None
+    if key and not need["tp"] and not need["fp"] and cur is not None and cur >= 1:
+        fps, tps = sorted(fp), sorted(tp)
+        f80 = fps[int(0.8 * (len(fps) - 1))]
+        t20 = tps[int(0.2 * (len(tps) - 1))]
+        prop = round(min(max(cur, (f80 + t20) / 2), t20), 1) if t20 > cur else cur
+    src = "현장 판정(verdict) 분포 · 오탐 80분위 ↔ 정탐 20분위"
+    u = "m2" if (cur or 0) >= 1 else "ratio"
+    return {"id": rid, "key": key, "scope": scope, "current": X.env(cur, u, "estimate", f"server/survey/rules/{rid}.yaml", "[추정 초기값]"),
+            "proposed": X.env(prop, u, "estimate", src, None if prop is not None else "현장 판정 표본 부족"),
+            "samples": {"tp": X.env(len(tp), "count", "recorded", "verdict match·violation"),
+                        "fp": X.env(len(fp), "count", "recorded", "verdict match_fp·dismissed")},
+            "need": {k: X.env(v, "count", "recorded", "재보정 최소 표본 5") for k, v in need.items()}, "as_of": now_iso()}
+
+
+@router.post("/survey/rules/{rid}/activate", status_code=202)
+async def rule_activate(rid: str, request: Request, body: dict | None = None):
+    """규칙(임계) 활성화 요청 → 결재함 행(approvals · state pending). 관리자가 /approvals/{id}/decide 로 승인하면 적용."""
+    p = require(principal(request), lx=True)
+    if p.role == "sales":
+        raise ApiError("forbidden", "LX 영업 계정은 읽기 전용")
+    d = _rule_def(rid)
+    th = dict((body or {}).get("thresholds") or {})
+    bad = [k for k in th if k not in d["thresholds"]]
+    if bad:
+        raise ApiError("bad_request", "이 규칙에 없는 임계", {"keys": bad, "allowed": list(d["thresholds"])})
+    for k, v in th.items():
+        try:
+            th[k] = float(v)
+        except (TypeError, ValueError):
+            raise ApiError("bad_request", f"{k} 는 숫자")
+    review = bool((body or {}).get("review")) if (body or {}).get("review") is not None else not th
+    if review:                                    # 검수 전 떼기 = LX 표본 ≥ 100 · 정밀도 ≥ 조건(서버가 판정)
+        lx = await _lx_stats(rid)
+        k, pr = lx["judged"]["value"] or 0, lx["precision"]["value"]
+        if k < REVIEW_GATE["samples"] or pr is None or pr < REVIEW_GATE["precision"]:
+            raise ApiError("conflict", f"표본 {k}/{REVIEW_GATE['samples']}", {"judged": k, "precision": pr, "need": REVIEW_GATE}, 409)
+    aid = "ap_" + secrets.token_hex(6)
+    async with db(realm="lx") as conn:
+        dup = await conn.fetchval("SELECT id FROM approvals WHERE subject_type='rule' AND subject_id=$1 AND state='pending'", rid)
+        if dup:
+            raise ApiError("conflict", "이미 결재 대기 중입니다", {"approval_id": dup}, 409)
+        await conn.execute("INSERT INTO approvals(id, subject_type, subject_id, requested_by, state, payload, reason, at) "
+                           "VALUES ($1,'rule',$2,$3,'pending',$4,$5,now())", aid, rid, p.user_id,
+                           {"thresholds": th or d["thresholds"], "name": d["name"], "note": (body or {}).get("note"), "review": review},
+                           (body or {}).get("note"))
+        await conn.execute("UPDATE survey_rules SET pending=$2 WHERE id=$1", rid, th or d["thresholds"])
+        await audit(conn, p, "rule.activate.request", rid, None, {"approval_id": aid, "thresholds": th})
+    from .jobs import ops_event
+    await ops_event("approval.requested", {"approval_id": aid, "subject_type": "rule", "subject_id": rid, "by": p.user_id, "at": now_iso()})
+    return {"approval_id": aid, "state": "pending", "review": review, "subject": {"type": "rule", "id": rid, "name": d["name"]}, "as_of": now_iso()}
+
+
+# ─────────────────────────── LX 표본 검수(판정만 · 상태 불변) ───────────────────────────
+REVIEW_GATE = {"samples": 100, "precision": 80.0}          # 검수 전 떼기 조건(명세 §2.6 · 표본 100 · 정밀도 임계 추정 초기값 80%)
+LX_VERDICT = {"match": "match", "violation": "match", "match_fp": "match_fp", "unclear": "unclear"}
+
+
+async def _lx_verdict(p, fid: str, body: dict) -> dict:
+    v = LX_VERDICT.get(body.get("verdict") or "")
+    if not v:
+        raise ApiError("bad_request", "verdict 는 match|match_fp|unclear", {"allowed": ["match", "match_fp", "unclear"]})
+    if p.role not in ("staff", "admin"):
+        raise ApiError("forbidden", "LX 영업 계정은 읽기 전용")
+    vcode = str(body.get("verdict_code")).strip()[:40] if body.get("verdict_code") else None
+    note = str(body.get("note")).strip()[:500] if body.get("note") else None
+    async with db(p) as conn:
+        r = await conn.fetchrow(f"SELECT {FCOLS} FROM survey_findings WHERE id=$1", fid)
+        if not r:
+            raise ApiError("not_found", f"finding {fid} 없음")
+        vid = await conn.fetchval("INSERT INTO finding_verdicts(realm, tenant_id, finding_id, rule, verdict, verdict_code, note, by) "
+                                  "VALUES ('lx',$1,$2,$3,$4,$5,$6,$7) RETURNING id", r["tenant_id"], fid, r["rule"], v, vcode, note, p.user_id)
+        await audit(conn, p, "finding.verdict.lx", fid, None, {"verdict": v, "verdict_code": vcode})
+    out = X.finding_item(_row(r))
+    out["lx_verdict"] = {"id": str(vid), "verdict": v, "verdict_code": vcode, "at": now_iso(), "basis": "recorded"}
+    out["allowed_next"] = sorted(TRANSITIONS.get(r["state"], set()))
+    out["lx_stats"] = await _lx_stats(r["rule"])
+    return out
+
+
+async def _lx_stats(rid: str) -> dict:
+    """LX 표본 검수 통계 — 필지당 마지막 LX 판정만 · 기관 현장 판정(tenant · dismissed)은 섞지 않는다."""
+    async with db(realm="lx") as conn:
+        rows = await conn.fetch("SELECT verdict, count(*) n FROM (SELECT DISTINCT ON (finding_id) finding_id, verdict FROM finding_verdicts "
+                                "WHERE rule=$1 AND realm='lx' ORDER BY finding_id, at DESC) t GROUP BY 1", rid)
+    ver = {"match": 0, "match_fp": 0, "unclear": 0}
+    for r in rows:
+        ver[r["verdict"]] = int(r["n"])
+    n = ver["match"] + ver["match_fp"]
+    src = "LX 표본 검수 판정(필지당 마지막)"
+    return {"judged": X.env(n + ver["unclear"], "count", "recorded", src),
+            "precision": X.env(round(100 * ver["match"] / n, 1) if n else None, "%", "measured", src, None if n else "표본 검수 전"),
+            "verdicts": {k: X.env(v, "count", "recorded", src) for k, v in ver.items()}}
 
 
 # ─────────────────────────── 보고서 초안(LLM 없이) ───────────────────────────

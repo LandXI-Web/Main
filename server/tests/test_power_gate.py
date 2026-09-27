@@ -26,6 +26,16 @@ def gw():
     return m
 
 
+@pytest.fixture(autouse=True)
+def _own_llm_req_key(monkeypatch):
+    """실서버의 LLM 호출 예고(power:llm_request · 백엔드 프로브·에이전트 실행이 건다)와 격리 — 시험 프로세스 안에서만 키 이름을 바꾼다.
+    실키를 지우지 않는다(지우면 실워커가 LLM 과 동시에 GPU 를 올릴 수 있다 · 전력 규칙). 동시 LLM 활동이 있어도 결과가 같다."""
+    key = f"power:llm_request:pytest:{time.time_ns()}"
+    monkeypatch.setattr(bus, "LLM_REQ", key)
+    yield
+    bus.r().delete(key)
+
+
 def _set(gw, other_w, fresh=True, ring=None):
     gw.smi["pfast"] = {0: 150.0, 1: other_w}
     gw.smi["pfast_at"] = time.time() if fresh else time.time() - 5

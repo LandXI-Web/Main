@@ -63,6 +63,8 @@ def resolve_set_path(set_id: str) -> str | None:
     parts = set_id.split("/")
     if len(parts) == 3 and parts[0] == "results":
         return f"results/{parts[1]}/{parts[2]}.pmtiles"
+    if len(parts) == 2 and parts[0] == "public":            # 공개 타일 폴더(S-4 · 서명 면제)
+        return f"tiles/public/{parts[1]}.pmtiles"
     if len(parts) == 2 and parts[0] == "demo":
         return f"cache/demo/{parts[1]}.pmtiles"
     return None
@@ -135,7 +137,7 @@ def _layer_items(stage: str | None) -> list[dict]:
 async def _imagery_items(stage: str | None) -> list[dict]:
     async with db(realm="lx") as conn:
         rows = await conn.fetch("SELECT id, name, tier, gsd_m, epoch, crs, pmtiles_set, xyz_folder, license, attribution, export_policy, "
-                                "security_review, rights_holder, asset_ref, ladder, kind, layer, "
+                                "security_review, rights_holder, asset_ref, ladder, kind, layer, sgg_cd, tile_job_id, "
                                 "ST_AsGeoJSON(footprint)::json AS fp, CASE WHEN footprint IS NULL THEN NULL ELSE "
                                 "ARRAY[ST_XMin(footprint), ST_YMin(footprint), ST_XMax(footprint), ST_YMax(footprint)] END AS bb FROM imagery")
     s = config.load_yaml("sets")
@@ -169,6 +171,13 @@ async def _imagery_items(stage: str | None) -> list[dict]:
             gsd_m=float(r["gsd_m"]) if r["gsd_m"] is not None else None, epoch=r["epoch"], crs="EPSG:3857", tier=r["tier"],
             license=r["license"], attribution=r["attribution"], export_policy=r["export_policy"], security_review=r["security_review"],
             rights_holder=r["rights_holder"], ladder=lad, count=_count_env(m, "count", meta.get("manifest", "")), signed=signed))
+        out[-1]["sgg_cd"] = r["sgg_cd"]          # 소유 시군구(v1.2 · 등록 S-5 또는 seed/backfill_imagery_sgg.py)
+        # 타일 준비(v1.2) — 원본(raw)은 등록 타일 작업(tile/cog finalize)이 끝나야 true · 미리 구운 PMTiles 는 파일이 있으면 true
+        if r["tile_job_id"]:                     # 등록(S-5)한 영상 = 그 타일 작업이 끝났는가
+            ready = bool(meta.get("tile_ready"))
+        else:                                    # 등록 전부터 있던 영상 = 타일 원천(COG 경로 · 구운 PMTiles)이 있는가
+            ready = bool(meta.get("tile_ready") or path or meta.get("cog_path"))
+        out[-1]["tile_ready"] = ready
         out[-1]["_fp"] = r["fp"]
         out[-1]["_lx_only"] = r["tier"] == "raw"
     return out
@@ -269,4 +278,109 @@ async def catalog_imagery(iid: str, request: Request):
     if p.is_admin:
         async with db(realm="lx") as conn:
             out["path_internal"] = await conn.fetchval("SELECT path_internal FROM imagery WHERE id=$1", iid)
+    return out
+
+
+# ── S-5 영상 등록(F3 최종 명세 §3) ────────────────────────────────────────────
+IMAGERY_KINDS = {"ortho": "정사영상", "aerial": "항공영상", "drone": "드론 정사영상", "satellite": "위성영상"}
+RASTER_EXT = (".tif", ".tiff", ".vrt", ".jp2", ".img", ".ecw")
+UPLOAD_MAX = 2 * 1024 ** 3
+
+
+@router.post("/catalog/imagery", status_code=201)
+async def register_imagery(request: Request):
+    """영상 등록 — {path | upload(multipart file), region(sgg_cd), year, gsd, kind, name?} → 카탈로그 행(tier raw · LX 전용) + 타일 작업(kind tile · CPU).
+    LX staff/admin. 경로는 서버 안(02. 데이터 또는 절대 경로) · 응답은 /catalog/layers 항목 형식 그대로 + job."""
+    import datetime as dt
+    import re
+    from pathlib import Path
+    from .deps import audit, require
+    p = require(principal(request), lx=True)
+    if p.role not in ("staff", "admin"):
+        raise ApiError("forbidden", "LX 직원·관리자만 영상을 등록할 수 있습니다")
+    ctype = request.headers.get("content-type", "")
+    upload = None
+    if ctype.startswith("multipart/"):
+        form = await request.form()
+        body = {k: v for k, v in form.items() if isinstance(v, str)}
+        upload = form.get("upload") or form.get("file")
+    else:
+        body = await request.json()
+    sgg = str(body.get("region") or body.get("sgg_cd") or "").strip()
+    kind = body.get("kind") or "ortho"
+    if kind not in IMAGERY_KINDS:
+        raise ApiError("bad_request", "영상 종류", {"allowed": list(IMAGERY_KINDS)})
+    try:
+        year = int(body.get("year"))
+        assert 1990 <= year <= dt.date.today().year + 1
+    except Exception:
+        raise ApiError("bad_request", "촬영 연도(year)가 필요합니다")
+    gsd = None
+    if body.get("gsd") not in (None, ""):
+        try:
+            gsd = float(body.get("gsd"))
+        except (TypeError, ValueError):
+            raise ApiError("bad_request", "gsd 는 m 단위 숫자")
+    from .regions import regions_base
+    regs, _, _ = regions_base()
+    rg = next((x for x in regs if x["sgg_cd"] == sgg), None)
+    if not rg:
+        raise ApiError("bad_request", "해당 지역이 없습니다", {"region": sgg})
+    if upload is not None and hasattr(upload, "filename"):
+        name = re.sub(r"[^\w.\-]", "_", upload.filename or "upload.tif")
+        if not name.lower().endswith(RASTER_EXT):
+            raise ApiError("bad_request", "래스터 파일(GeoTIFF 등)만", {"allowed": list(RASTER_EXT)})
+        dest = config.DATA_ROOT / "cog" / "uploads" / f"{sgg}-{year}-{name}"
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        size = 0
+        with open(dest, "wb") as f:
+            while True:
+                chunk = await upload.read(1 << 20)
+                if not chunk:
+                    break
+                size += len(chunk)
+                if size > UPLOAD_MAX:
+                    f.close()
+                    dest.unlink(missing_ok=True)
+                    raise ApiError("bad_request", "파일이 너무 큽니다(2GB) — 서버 경로로 등록하세요", status=413)
+                f.write(chunk)
+        path = str(dest)
+    else:
+        path = str(body.get("path") or "").strip()
+        if not path:
+            raise ApiError("bad_request", "path 또는 upload 가 필요합니다")
+        full = path if (":" in path[:3] or Path(path).is_absolute()) else str(config.DATA_ROOT / path)
+        if not Path(full).exists() or not full.lower().endswith(RASTER_EXT):
+            raise ApiError("not_found", "영상 파일이 없습니다(서버 경로)")
+    iid = body.get("id") or f"img-{sgg}-{year}-{kind}"
+    async with db(realm="lx") as conn:
+        base, n = iid, 1
+        while await conn.fetchval("SELECT 1 FROM imagery WHERE id=$1", iid):
+            n += 1
+            iid = f"{base}-{n}"
+        nm = body.get("name") or f"{rg['name']} {year} {IMAGERY_KINDS[kind]}"
+        await conn.execute(
+            "INSERT INTO imagery(id, name, tier, gsd_m, epoch, crs, footprint, path_internal, license, attribution, export_policy, security_review, "
+            "rights_holder, ladder, kind, layer, sgg_cd, year, registered_by, registered_at) VALUES ($1,$2,'raw',$3,$4,NULL,NULL,$5,$6,$7,'never',"
+            "'pending',$8,$9,$10,$11,$12,$13,$14,now())",
+            iid, {"ko": nm, "en": nm}, gsd, str(year), path, body.get("license") or "기관 제공(이용 범위 협의)", body.get("attribution") or "LX",
+            body.get("rights_holder") or "기관", {"stage": "domestic", "from": 12, "to": 22, "order": 60},
+            "ortho" if kind in ("ortho", "aerial", "drone") else kind, {"role": "imagery", "cog_path": path, "source_kind": kind},
+            sgg, year, p.user_id)
+        await audit(conn, p, "imagery.register", iid, None, {"sgg_cd": sgg, "year": year, "kind": kind, "gsd": gsd})
+    from . import jobs as jobs_mod
+    job = await jobs_mod.submit({"kind": "tile", "options": {"imagery_id": iid, "path": path}, "label": f"영상 등록 · {nm}",
+                                 "test": bool(body.get("test"))}, request)
+    async with db(realm="lx") as conn:
+        await conn.execute("UPDATE imagery SET tile_job_id=$2 WHERE id=$1", iid, job["job"]["id"])
+    try:
+        from .regions import _derived
+        _derived["t"] = 0
+    except Exception:
+        pass
+    _, items = await layer_items(p, "lx")
+    hit = next((i for i in items if i["id"] == iid), None)
+    out = public_view(hit) if hit else {"id": iid}
+    out.update({"sgg_cd": sgg, "year": year, "job": {"id": job["job"]["id"], "kind": "tile", "state": job["job"]["state"],
+                                                     "events_url": job["events_url"]}})
     return out

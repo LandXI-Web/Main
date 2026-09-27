@@ -1,0 +1,101 @@
+/* lx-train — ② 학습. 토큰·부품은 kit.css(법전 v2.2 토스 톤). 이 파일은 배치만. 지도 없음(※ 명세 §2.5). */
+
+.tr-pane{position:absolute;inset:0;overflow:auto;padding:32px var(--margin) 48px;transition:padding-right var(--d-380) var(--e-ui);overscroll-behavior:contain}
+.tr-pane.has-drawer{padding-right:calc(var(--sheet) + 48px)}
+.tr-h{display:flex;align-items:baseline;gap:16px;max-width:var(--content-max);margin:0 auto 24px}
+.tr-title{margin:0}
+
+/* 카드 목록 — K7 변형(크롭 = 표본 칩) · 1440 에서 5 × 2 한 판 */
+.tr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:var(--gutter);max-width:var(--content-max);margin:0 auto}
+.tr-card{padding-bottom:20px;gap:8px;text-decoration:none;cursor:pointer}
+.tr-card > *:not(.k-svc-crop){margin:0 20px}
+.tr-card .k-svc-crop{aspect-ratio:16/10;margin-bottom:4px}
+.tr-card .k-svc-t{min-height:0;-webkit-line-clamp:1;font-size:20px;line-height:28px}
+.tr-card .k-svc-n{min-height:28px;margin-top:0;gap:8px;align-items:baseline}
+.tr-card .k-svc-n .t-label{margin-right:2px}
+.tr-card .k-num{font-size:24px}
+.tr-card .tr-year:empty::before{content:"\00a0"}
+.tr-card[aria-current]{box-shadow:0 0 0 2px var(--ink)}
+.tr-card[data-state="load"] .tr-chip{width:72px;color:transparent}
+.tr-card[data-state="load"] img{visibility:hidden}
+.tr-card:hover .k-svc-crop img{transform:scale(1.03)}
+.tr-card:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+/* 서랍 본문 */
+.tr-dr{display:flex;flex-direction:column;gap:24px}
+.tr-big{padding-top:4px}
+.tr-dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 20px;margin:0;padding:20px 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.tr-dl dt{margin:0}
+.tr-dl dd{margin:4px 0 0;font:500 var(--fs-sub)/1.2 var(--font-num);color:var(--ink)}
+.tr-dl dd .t-sig{font-size:14px}
+.tr-warn{color:var(--warn)}
+.tr-curve .t-label{margin:0 0 8px}
+
+.tr-none{margin:0;font:500 var(--fs-sub)/1 var(--font-num);color:var(--mute)}
+.tr-act{display:flex;gap:8px}
+.tr-act .t-btn{flex:1}
+.tr-label{align-self:flex-start;margin-top:-8px}
+.tr-run{display:flex;flex-direction:column;gap:8px}
+.tr-run .tr-q{margin:0;min-height:20px;color:var(--ink-2)}
+.tr-run.is-fail .t-progress{display:none}
+.tr-run.is-fail .tr-q{color:var(--warn)}
+
+/* 시트: 미세조정 */
+.tr-sheet{display:flex;flex-direction:column;gap:8px}
+.tr-sheet > label{margin-top:12px}
+.tr-sheet > label:first-child{margin-top:0}
+.tr-sheet select.t-input{appearance:none;background:var(--bg-1) url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22%3E%3Cpath d=%22M6 8l4 4 4-4%22 fill=%22none%22 stroke=%22%23727780%22 stroke-width=%221.6%22/%3E%3C/svg%3E') no-repeat right 12px center/18px;padding-right:40px}
+.tr-sheet select.t-input:disabled{color:var(--mute)}
+.tr-go{margin-top:20px}
+.tr-noimg{margin-top:8px}
+
+@media (max-width:1100px){
+  .tr-pane.has-drawer{padding-right:calc(320px + 40px)}
+  .k-main .k-drawer--in{--k-dr-w:320px}
+}
+@media (max-width:960px){
+  .tr-pane{padding:20px 16px 32px}
+  .tr-pane.has-drawer{padding-right:16px}
+  .tr-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .tr-h{margin-bottom:16px}
+  .tr-title{font-size:24px;line-height:32px}
+  .tr-card{padding-bottom:14px;gap:6px}
+  .tr-card > *:not(.k-svc-crop){margin:0 14px}
+  .tr-card .k-svc-t{font-size:17px;line-height:24px}
+  .tr-card .k-svc-meta{flex-wrap:wrap;gap:6px}
+  .tr-card .k-svc-n .t-label{display:none}
+  .tr-card .k-num{font-size:20px}
+}
+@media (max-width:640px){
+  .tr-card .t-chip{height:24px;padding:0 8px;font-size:13px}
+}
+@media (prefers-reduced-motion:reduce){.tr-pane{transition:none}}
+
+/* 결손(현장 확인 전) — 큰 숫자 자리의 줄표를 가볍게 */
+.tr-big.k-big[data-v=""] .t-big{color:var(--mute);font-weight:700}
+.tr-big.k-big[data-v=""] .t-big{font-size:48px;line-height:56px}
+
+/* 판정 1차 반영 — 결손 접기 · 현장 확인 한 줄 · 곡선 높이 · 라벨 도구 연결 전 */
+.tr-dr [hidden]{display:none!important}
+.tr-fc{display:block;margin:-18px 0 0;font-family:var(--font-ui, inherit);color:var(--sub)}
+.tr-hint{margin:0;padding:12px 0;color:var(--sub)}
+.tr-fc[hidden],.tr-hint[hidden],.tr-sheet select[hidden]{display:none}
+.tr-curve .k-line svg{height:112px}
+.tr-curve .k-line-x{margin-top:-22px}
+.tr-off{color:var(--mute);cursor:default}
+.tr-off.tr-label{align-self:flex-start;margin-top:-8px}
+.k-empty-b .tr-off{display:block;margin-top:12px}
+
+/* 판정 2차 반영 — 크롭 없는 '쓸 수 있음' 자리(밝은 타일 + 클래스 명사) · 확대 크롭 · 결손 카드 */
+.tr-card .k-svc-crop.is-ph{display:flex;align-items:center;justify-content:center;background-color:var(--bg-0);
+  background-image:linear-gradient(var(--rule) 1px,transparent 1px),linear-gradient(90deg,var(--rule) 1px,transparent 1px);background-size:28px 28px;background-position:-1px -1px}
+.tr-ph{padding:6px 14px;border-radius:999px;background:var(--bg-1, #fff);font:500 15px/1.3 var(--font-ui, inherit);color:var(--ink-2, var(--sub));letter-spacing:-.01em;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.tr-card .k-svc-crop.is-zoom img{transform:scale(var(--tr-zoom,1));transform-origin:var(--tr-origin,center)}
+.tr-card:hover .k-svc-crop.is-zoom img{transform:scale(calc(var(--tr-zoom,1) * 1.03))}
+.tr-fail{max-width:560px;margin:8px auto 0}
+
+/* 판정 3차 반영 — 곡선 표시점(서랍 정밀도와 같은 회차·같은 값) · 첫 학습 전 타일 */
+.tr-curve .k-line{padding-top:12px}
+.tr-mark{position:absolute;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 3px var(--bg-1, #fff);pointer-events:none}
+.tr-curve .k-line-v.tr-mark-v{right:auto;transform:translate(-50%,calc(-100% - 8px));font-weight:600;background:var(--bg-1, #fff);padding:2px 6px;border-radius:6px}
+.tr-card[data-state="first"] .tr-ph{color:var(--sub)}

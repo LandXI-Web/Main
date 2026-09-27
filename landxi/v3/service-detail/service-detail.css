@@ -1,0 +1,204 @@
+/* service-detail.css — 서비스 상세(토스 5-4). 토큰·부품은 kit.css(import 만). 이 파일은 배치만.
+   셸(K1)이 뷰포트를 잡으므로 판(.k-main) 안이 세로로 흐른다 — 소개형 화면만의 예외(법전 §3). */
+.sd .k-main.sd-main{overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth;padding:0 var(--margin)}
+@media (prefers-reduced-motion:reduce){.sd .k-main.sd-main{scroll-behavior:auto}}
+.sd-main > *{max-width:var(--content-max);margin-left:auto;margin-right:auto}
+.sd-guest .k-help{display:none}
+.sd-in{display:inline-flex;align-items:center;color:var(--ink);text-decoration:none;border:1px solid var(--rule)}
+body.sd[data-state="boot"] .k-main{background:var(--bg-0)}
+
+/* ── 히어로 ─────────────────────────────── */
+.sd-hero{display:grid;grid-template-columns:minmax(340px,5fr) 7fr;gap:56px;align-items:center;min-height:calc(100vh - var(--mast));min-height:calc(100svh - var(--mast));padding:32px 0}
+.sd-meta{display:flex;align-items:center;gap:12px;margin:0 0 24px}
+.sd-hero h1{margin:0 0 24px;word-break:keep-all}
+.sd-line{margin:0;max-width:26em;font:400 var(--fs-sub)/var(--lh-sub) var(--font-body);color:var(--sub-2);word-break:keep-all}
+.sd-hero__vis{position:relative;margin:0;height:min(680px,calc(100vh - var(--mast) - 96px));height:min(680px,calc(100svh - var(--mast) - 96px));min-height:420px;border-radius:var(--r-24);overflow:hidden;background:var(--bg-0)}
+.sd-hero__vis.is-empty{background:var(--bg-1)}
+.sd-film,.sd-crop{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.sd-hero__vis > .sd-hero__empty{position:absolute;inset:0;border-radius:0;min-height:0;padding:40px}
+/* 실결과 한 장 — 디오라마 위 흰 카드(지도·영상 위 카드 규칙 §6) */
+.sd-inset{position:absolute;left:24px;bottom:24px;width:292px;padding:0;overflow:hidden;box-shadow:var(--elev-map);border-radius:var(--r-16)}
+.sd-inset img{display:block;width:100%;aspect-ratio:3/2;object-fit:cover}
+.sd-inset__b{display:flex;flex-direction:column;gap:6px;padding:14px 18px 16px}
+.sd-inset__n .k-num{font-size:28px}
+
+
+/* ── 교차 블록 ───────────────────────────── */
+.sd-blocks{display:flex;flex-direction:column;gap:var(--section);padding:calc(var(--section) / 2) 0 0}
+.sd-block{display:grid;grid-template-columns:5fr 7fr;gap:72px;align-items:center}
+.sd-block.is-rev{grid-template-columns:7fr 5fr}
+.sd-block.is-rev .sd-block__tx{order:2}
+.sd-no{margin:0 0 16px;font-family:var(--font-num)}
+.sd-block h2{margin:0 0 16px;word-break:keep-all}
+.sd-desc{margin:0 0 28px;max-width:24em;font:400 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--sub-2);word-break:keep-all}
+.sd-block__vis{position:relative;margin:0;aspect-ratio:3/2;border-radius:var(--r-24);overflow:hidden;background:var(--bg-1)}
+.sd-block__vis img{width:100%;height:100%;object-fit:cover;display:block;transition:transform var(--d-750) var(--e-cam)}
+.sd-block__vis.is-link{cursor:zoom-in}
+.sd-block__vis.is-link:hover img{transform:scale(1.03)}
+.sd-block__vis.is-empty > div{position:absolute;inset:0;box-sizing:border-box;border-radius:0;min-height:0;padding:40px;background:var(--bg-1)}
+.sd-cap{position:absolute;left:20px;bottom:20px;padding:6px 10px;border-radius:var(--r-8);background:var(--bg-1);font:500 var(--fs-label)/1 var(--font-body);color:var(--ink);box-shadow:var(--elev-map)}
+
+/* ── 관련 카드 · 마감 · 출처 ─────────────── */
+.sd-rel{padding:var(--section) 0 0}
+.sd-sec-l{margin:0 0 24px}
+.sd-end{margin-top:calc(var(--section) / 2);padding:40px;display:flex;flex-direction:column;gap:16px}
+.sd-end > .t-label{margin:0}
+.sd-end__go{display:flex;justify-content:flex-end;padding-top:8px}
+.sd-guest .sd-end,.sd-end:not(:has(.sd-table)){flex-direction:row;align-items:center;justify-content:space-between}
+.sd-table tbody tr{cursor:pointer}
+.sd-table tbody tr[aria-selected="true"] td{background:var(--bg-0);color:var(--ink)}
+.sd-table tbody tr[aria-selected="true"] td:first-child{box-shadow:inset 2px 0 0 var(--accent)}
+.sd-src{padding:calc(var(--section) / 2) 0 48px}
+.sd-src .t-label{margin:0 0 16px}
+.sd-src ul{list-style:none;margin:0;padding:24px 32px;display:flex;flex-wrap:wrap;gap:16px 48px;background:var(--bg-1);border-radius:var(--r-16)}
+.sd-src li{display:flex;align-items:baseline;gap:10px}
+.sd-src b{font:700 18px/1 var(--font-display);color:var(--ink)}
+.sd-src span{font:400 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub)}
+.sd-foot{display:flex;justify-content:space-between;gap:16px;padding:24px 0 40px;border-top:1px solid var(--rule);font:500 var(--fs-label)/1 var(--font-body);color:var(--sub)}
+.sd-404{margin:15vh auto 0;max-width:640px}
+
+/* ── 서랍(자세히 보기) ───────────────────── */
+.sd-dr{display:flex;flex-direction:column;gap:12px}
+.sd-dr-img{width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:var(--r-16);background:var(--bg-0)}
+.sd-dr-cap{margin:0}
+.sd-thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.sd-thumb{padding:0;border:0;border-radius:var(--r-8);overflow:hidden;cursor:pointer;background:var(--bg-0);aspect-ratio:3/2;outline:2px solid transparent;outline-offset:-2px;transition:outline-color var(--d-180) var(--e-ui)}
+.sd-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.sd-thumb[aria-selected="true"]{outline-color:var(--accent)}
+.sd-dr-go{align-self:flex-start;margin-top:8px}
+
+/* ── 좁은 화면 ───────────────────────────── */
+@media (max-width:960px){
+  .sd-hero{grid-template-columns:1fr;gap:28px;min-height:0;padding:32px 0 0}
+  .sd-hero__vis{height:62vw;min-height:280px}
+  .sd-block,.sd-block.is-rev{grid-template-columns:1fr;gap:28px}
+  .sd-block.is-rev .sd-block__tx{order:0}
+  .sd-inset{width:220px;left:16px;bottom:16px}
+}
+@media (max-width:640px){
+  .sd-hero{padding-top:24px}
+  .sd-hero h1{margin-bottom:16px}
+  .sd-meta{margin-bottom:16px}
+  .sd-hero__vis{height:auto;aspect-ratio:4/5;min-height:0}
+  .sd-inset{width:auto;right:12px;left:12px;bottom:12px;display:grid;grid-template-columns:96px 1fr;align-items:center}
+  .sd-inset img{height:100%;aspect-ratio:auto}
+  .sd-inset__b{padding:10px 14px}
+  .sd-inset__n .k-num{font-size:22px}
+  .sd-desc{margin-bottom:20px}
+  .sd-block__vis.is-empty > div{padding:24px}
+  .sd-end{padding:24px}
+  .sd-guest .sd-end,.sd-end:not(:has(.sd-table)){flex-direction:column;align-items:stretch}
+  .sd-cta{width:100%}
+  .sd-end__go{justify-content:stretch}
+  .sd-src ul{padding:20px;gap:12px 24px}
+  .sd-foot{flex-direction:column}
+}
+.sd-meta .t-chip{background:var(--bg-1)}
+/* 히어로 빈 상태(K9) — 판 전체를 캐릭터 카드로 */
+.sd-hero__vis.is-empty .k-empty{box-sizing:border-box;height:auto;padding:48px;background:var(--bg-1);display:flex;flex-direction:column;justify-content:flex-end}
+.sd-hero__vis.is-empty .k-empty img{top:6%;right:4%;width:68%}
+.sd-hero__vis.is-empty .k-empty-b h6{font:700 var(--fs-h3)/var(--lh-h3) var(--font-display)}
+@media (max-width:640px){.sd-hero__vis.is-empty .k-empty{padding:24px}.sd-hero__vis.is-empty .k-empty-b h6{font-size:22px;line-height:30px}}
+
+/* ── 2차: 가르기 히어로 · 밝은 빈 상태 · 390 행 카드 · K9 한 줄 마감 ── */
+.sd-sw{position:absolute;top:20px;padding:6px 10px;border-radius:var(--r-8);background:var(--bg-1);color:var(--ink);font:600 var(--fs-label)/1 var(--font-num);font-variant-numeric:tabular-nums;box-shadow:var(--elev-map)}
+.sd-sw--l{left:20px}
+.sd-sw--r{left:calc(50% + 12px)}
+.sd-inset.is-text{width:auto;min-width:220px}
+.sd-hero__vis.is-empty .k-empty img{top:8%;right:6%;width:56%;aspect-ratio:4/3;-webkit-mask-image:none;mask-image:none;border-radius:var(--r-16)}
+.sd-block__vis.is-empty .k-empty img{width:52%;right:6%;top:8%;-webkit-mask-image:none;mask-image:none}
+.sd-block__vis.is-screen{background:var(--bg-0);box-shadow:inset 0 0 0 1px var(--rule)}
+.sd-dr-img.is-screen{object-fit:contain;background:var(--bg-0)}
+.k-role.sd-role1{color:var(--ink)}
+/* 마감: 배포본 없음 = K9 한 줄 */
+.sd-end.is-none{padding:0;overflow:hidden}
+.sd-none.k-empty{min-height:0;flex-direction:row;align-items:center;gap:20px;padding:20px 28px;background:var(--bg-1)}
+.sd-none.k-empty img{position:static;width:96px;height:64px;aspect-ratio:auto;flex:none;-webkit-mask-image:none;mask-image:none;border-radius:var(--r-8);opacity:1}
+.sd-none .k-empty-b{max-width:none}
+.sd-none .k-empty-b h6{font:600 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--ink)}
+/* ≤ 640 서비스 지역 = 행 카드 */
+.sd-rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.sd-rows li + li{border-top:1px solid var(--rule)}
+.sd-row{all:unset;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;width:100%;padding:14px 12px;cursor:pointer;border-radius:var(--r-8)}
+.sd-row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.sd-row[aria-selected="true"]{background:var(--bg-0);box-shadow:inset 2px 0 0 var(--accent)}
+.sd-row__a,.sd-row__b{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
+.sd-row__a b{font:600 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.sd-row__a .t-chip{flex:none;white-space:nowrap}
+.sd-row__b > span:first-child{font:400 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub)}
+.sd-row__n{flex:none;text-align:right;font-family:var(--font-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.sd-row__n .k-num{font-size:20px}
+@media (max-width:640px){
+  .sd-sw{top:12px;padding:5px 8px}
+  .sd-sw--l{left:12px}
+  .sd-hero__vis.is-empty .k-empty img{width:64%;opacity:1}
+  .sd-block__vis.is-empty .k-empty img{opacity:1}
+  .sd-none.k-empty{padding:16px 20px;gap:14px}
+  .sd-none.k-empty img{width:72px;height:48px;opacity:1}
+  .sd-inset.is-text{left:12px;right:auto;display:flex}
+}
+@media (max-width:640px){.sd-hero__vis.is-empty{aspect-ratio:1/1}.sd-hero__vis.is-empty .k-empty img{top:6%;width:70%}}
+
+/* ── 3차: 네 시점 히어로 · 결과 지도(실시간) · 세션 확인 실패 ── */
+.sd-q{top:auto}
+.sd-q--0{top:20px;left:20px}
+.sd-q--1{top:20px;left:calc(50% + 12px)}
+.sd-q--2{top:calc(50% + 12px);left:20px}
+.sd-q--3{top:calc(50% + 12px);left:calc(50% + 12px)}
+.sd-inset.is-text{left:auto;right:24px;bottom:24px}
+.sd-block__vis.is-live{background:var(--bg-0)}
+.sd-block__vis .sd-live,.sd-block__vis .sd-live.k-stage{position:absolute;inset:0;width:auto;height:auto}
+.sd-live .k-stage-map{opacity:0}
+.sd-block__vis.is-on .sd-live .k-stage-map,.sd-live.is-ready .k-stage-map{opacity:1}
+.sd-live__n{position:absolute;right:20px;top:20px;padding:10px 14px;border-radius:var(--r-16);box-shadow:var(--elev-map)}
+.sd-live__n .k-num{font-size:24px}
+.sd-block__vis.is-live .sd-cap{z-index:2}
+.sd-block__vis.is-live .maplibregl-ctrl-bottom-left{left:auto;right:16px;bottom:16px}
+.sd-off{margin:18vh auto 0;max-width:560px}
+@media (max-width:640px){
+  .sd-q--0,.sd-q--2{left:10px}
+  .sd-q--0,.sd-q--1{top:10px}
+  .sd-q--1,.sd-q--3{left:calc(50% + 8px)}
+  .sd-q--2,.sd-q--3{top:calc(50% + 8px)}
+  .sd-inset.is-text{right:12px;left:auto;bottom:12px}
+  .sd-live__n{right:12px;top:12px;padding:8px 12px}
+  .sd-live__n .k-num{font-size:20px}
+  .sd-off{margin-top:10vh}
+}
+
+/* ── 4차: 예시 표기 · 블록 K9 compact(제목 없음) · 결과 지도 로드 전 판 ── */
+.sd-cap .t-sig,.sd-inset .t-label .t-sig,.sd-dr-cap .t-sig,.k-svc-meta .t-label .t-sig{margin-left:6px;padding:2px 6px;border-radius:var(--r-8);background:var(--bg-0);color:var(--ink);font-weight:600}
+.sd-block__vis.is-empty > .k-empty--sm{display:flex;flex-direction:column;justify-content:flex-end}
+.sd-block__vis.is-empty .k-empty--sm img{width:46%;top:10%;right:8%}
+.sd-block__vis.is-empty .k-empty--sm .k-empty-b p{font:500 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--ink);max-width:22em;word-break:keep-all}
+.sd-block__vis.is-live{background:var(--bg-1)}
+.sd-block__vis.is-live .sd-cap,.sd-block__vis.is-live .sd-live__n{opacity:0;transition:opacity var(--d-420,.42s) var(--e-ui)}
+.sd-block__vis.is-live.is-on .sd-cap,.sd-block__vis.is-live.is-on .sd-live__n{opacity:1}
+.sd-live__ld{position:absolute;inset:0;box-sizing:border-box;border-radius:0;min-height:0;padding:40px;background:var(--bg-1);display:flex;flex-direction:column;justify-content:flex-end}
+.sd-live__ld.k-empty img{display:none}
+@media (max-width:640px){.sd-live__ld{padding:24px}.sd-block__vis.is-empty .k-empty--sm img{width:58%}}
+/* 블록 K9 compact — 3:2 전체 판 대신 낮은 카드(크롭 블록보다 가볍게) · 캐릭터는 제 비율 */
+.sd-block__vis.is-empty{aspect-ratio:auto;height:300px}
+.sd-block__vis.is-empty .k-empty img{height:auto;aspect-ratio:4/3;object-fit:cover}
+.sd-block__vis.is-empty .k-empty--sm img{width:44%;top:32px;right:32px;border-radius:var(--r-16)}
+.sd-block__vis.is-empty .k-empty--sm .k-empty-b{max-width:46%}
+@media (max-width:640px){
+  .sd-block__vis.is-empty{height:auto;min-height:0}
+  .sd-block__vis.is-empty > .k-empty--sm{position:relative;inset:auto;padding:20px;flex-direction:row;align-items:center;gap:16px}
+  .sd-block__vis.is-empty .k-empty--sm img{position:static;width:112px;flex:none;order:2}
+  .sd-block__vis.is-empty .k-empty--sm .k-empty-b{max-width:none;flex:1}
+}
+.sd-block[data-kind="empty"] + .sd-block[data-kind="empty"]{margin-top:calc(var(--section) * -0.5)}
+/* 5차: 큰 숫자 라벨(현장 확인 필요) · 스틸 없는 블록 K9 문장 카드 */
+.sd-nl{display:block;font:500 var(--fs-label)/1.4 var(--font-body);color:var(--sub);margin-bottom:2px}
+.sd-row__n .sd-nl,.k-svc-n .sd-nl{display:inline;margin:0 6px 0 0;font-size:12px}
+.sd-live__n .sd-nl{margin-bottom:0}
+.sd-block__vis.is-empty{height:188px}
+.sd-block__vis.is-empty > .sd-k9t{justify-content:flex-end}
+.sd-block__vis.is-empty .sd-k9t .k-empty-b{max-width:34em}
+.sd-block__vis.is-empty .sd-k9t .k-empty-b p{font:600 var(--fs-h4,20px)/1.45 var(--font-display,var(--font-body));color:var(--ink)}
+@media (max-width:640px){
+  .sd-block__vis.is-empty{height:auto}
+  .sd-block__vis.is-empty > .sd-k9t{padding:20px}
+  .sd-block__vis.is-empty .sd-k9t .k-empty-b p{font-size:17px}
+}

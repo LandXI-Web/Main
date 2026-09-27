@@ -5,102 +5,95 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Land-XI</title>
 <link rel="icon" href="../../assets/images/favicon_landxi.png">
-<!-- F3 §7-⑤ 정문 — 문 하나. 모토 3축 · 한 문장 · 계정 3택 · 폼 · 실결과 판 1장. 글 예산 ≤ 200자(공백 제외). -->
-<link rel="stylesheet" href="../../proto/fonts-system.css">
-<link rel="stylesheet" href="../../assets/css/v2/tokens-v2.css">
+<!-- 정문 — 법전 v2.2 '토스 톤'. 회백 바탕 위 흰 문 카드(좌 440) + 둥근 24 히어로 카드(우 · 실결과 지도 3장면 = 모토 3축).
+     글 예산 ≤ 200자(공백 제외) · 버튼 3(로그인 · 계정 찾기 · 이어서) · 역할은 색이 아니라 탭 밑줄로. -->
+<link rel="stylesheet" href="../kit/kit.css"><!-- 토큰 포함 키트 CSS 한 벌 -->
 <link rel="stylesheet" href="../../proto/vendor/maplibre/maplibre-gl.css">
 <link rel="stylesheet" href="login.css">
+<link rel="preload" as="image" href="still-national.webp" fetchpriority="high">
 <script src="../../proto/vendor/maplibre/maplibre-gl.js" defer></script>
 <script src="../../xi/vendor/pmtiles/pmtiles.js" defer></script>
 </head>
-<body data-stage="paper" class="g3">
+<body class="t">
 
 <main class="gate" id="gate">
 
-  <!-- 실결과 판 — 실제 영상 위 실제 판독 결과. 지역은 변수(국내 2 · 해외 1). -->
-  <section class="plate" id="plate" aria-label="Land-XI 분석 결과">
-    <div class="plate__map" id="map" aria-hidden="true"></div>
-    <div class="plate__shade" aria-hidden="true"></div>
-    <i class="plate__sweep" id="sweep" aria-hidden="true"></i>
+  <!-- 문 — 흰 카드 하나. 헤드라인 1 · 문장 1 · 계정 3택 · 폼 -->
+  <section class="door t-card t-card--hero" id="door">
+    <header class="door__top e">
+      <img class="door__mark" src="../../assets/brand/vector/landxi-wordmark-dark.svg" alt="LAND-XI PLATFORM" width="152" height="16">
+    </header>
 
-    <figure class="cap" id="cap" aria-live="polite">
-      <ol class="cap__ticks" id="ticks" aria-hidden="true"></ol>
-      <figcaption class="cap__where"><b id="capName">&nbsp;</b><span id="capTask">&nbsp;</span></figcaption>
-      <p class="cap__num"><b class="cap__v" id="capNum">&nbsp;</b><span class="cap__u" id="capUnit"></span><span class="sig" id="capSig" tabindex="0"><span class="sig__k" id="capSigK"></span><span class="sig__tip" id="capTip" role="tooltip"></span></span></p>
-    </figure>
-    <p class="plate__credit" id="credit"></p>
+    <div class="door__body">
+      <h1 class="door__h e">실태조사,<br>AI로 끝낸다</h1>
+      <p class="door__lead e">LX가 운영하는 유일한 실태조사 특화<br>GeoAI 플랫폼입니다</p>
+
+      <form class="form e" id="form" method="post" action="#" novalidate autocomplete="on">
+        <fieldset class="seg" id="seg">
+          <legend class="vh">계정</legend>
+          <label class="seg__c"><input type="radio" name="who" value="staff" checked><span>LX 직원</span></label>
+          <label class="seg__c"><input type="radio" name="who" value="admin"><span>LX 관리자</span></label>
+          <label class="seg__c"><input type="radio" name="who" value="tenant"><span>기관</span></label>
+          <i class="seg__bar" aria-hidden="true"></i>
+        </fieldset>
+
+        <div class="fld fld--org" data-f="org" id="orgRow" hidden>
+          <label class="fld__l" for="org">기관</label>
+          <div class="sel">
+            <select class="t-input sel__i" id="org" name="tenant"><option value="">기관 선택</option></select>
+            <svg class="sel__c" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+
+        <div class="fld" data-f="id">
+          <label class="fld__l" for="id">아이디</label>
+          <input class="t-input" id="id" name="username" type="text" autocomplete="username" spellcheck="false" autocapitalize="off" required>
+        </div>
+        <div class="fld" data-f="pw">
+          <label class="fld__l" for="pw">비밀번호</label>
+          <input class="t-input" id="pw" name="password" type="password" autocomplete="current-password" required>
+        </div>
+
+        <p class="msg" id="msg" role="alert" hidden></p>
+
+        <button class="t-btn go" id="go" type="submit"><span>로그인</span><i class="go__line" aria-hidden="true"></i></button>
+      </form>
+
+      <div class="door__aux e">
+        <a class="t-btn t-btn--text resume" id="resume" href="#" hidden></a>
+        <button class="aux" id="helpBtn" type="button" aria-haspopup="dialog">계정 찾기 · 신청</button>
+      </div>
+    </div>
+
+    <footer class="door__foot e">
+      <img src="../../assets/brand/vector/lx-lockup.svg" alt="LX 한국국토정보공사" width="132" height="15">
+    </footer>
   </section>
 
-  <!-- 문 — 종이. 관리자를 고르면 잉크로 반전(관제의 집). -->
-  <section class="door" id="door">
-    <i class="door__ink" id="doorInk" aria-hidden="true"></i>
-    <div class="door__col">
-      <header class="door__top">
-        <img class="door__mark door__mark--paper" src="../../assets/brand/vector/landxi-wordmark-dark.svg" alt="LAND-XI PLATFORM" width="171" height="18">
-        <img class="door__mark door__mark--ink" src="../../assets/brand/vector/landxi-wordmark.svg" alt="" width="171" height="18" aria-hidden="true">
-      </header>
+  <!-- 히어로 카드 — 실제 영상 위 실제 판독 결과. 장면 3 = 모토 3축. 지역은 변수(국내 2 · 해외 1). -->
+  <section class="hero" id="hero" aria-label="Land-XI 모토와 분석 결과">
+    <div class="hero__map" id="map" aria-hidden="true"></div>
+    <!-- 덮개 — 0초부터 카드가 비지 않게 첫 장면 스틸, 장면을 옮길 때는 떠나는 장면의 마지막 프레임 -->
+    <img class="hero__cover" id="cover" src="still-national.webp" alt="" aria-hidden="true" decoding="async" fetchpriority="high">
+    <div class="hero__shade" aria-hidden="true"></div>
+    <i class="hero__sweep" id="sweep" aria-hidden="true"></i>
 
-      <div class="door__body">
-        <h1 class="door__h">실태조사,<br>AI로 끝낸다</h1>
-        <p class="door__lead">LX가 운영하는 유일한 실태조사 특화 GeoAI 플랫폼</p>
-
-        <ul class="motto" aria-label="모토">
-          <li><b>Hyper Performance</b><span>전역 추론, 바로 지도에</span></li>
-          <li><b>Hyper Solution</b><span>내 대장 × AI 융합 분석</span></li>
-          <li><b>Hyper GeoAI</b><span>위성·항공·드론을 한 지도에</span></li>
-        </ul>
-
-        <form class="form" id="form" method="post" action="#" novalidate autocomplete="on">
-          <fieldset class="seg" id="seg">
-            <legend class="vh">계정</legend>
-            <label class="seg__c"><input type="radio" name="who" value="staff" checked><span>LX 직원</span></label>
-            <label class="seg__c"><input type="radio" name="who" value="admin"><span>LX 관리자</span></label>
-            <label class="seg__c"><input type="radio" name="who" value="tenant"><span>기관</span></label>
-            <i class="seg__bar" aria-hidden="true"></i>
-          </fieldset>
-
-          <label class="fld" data-f="id">
-            <span class="fld__l">아이디</span>
-            <input class="fld__i" id="id" name="username" type="text" autocomplete="username" spellcheck="false" autocapitalize="off" required>
-            <i class="fld__rule" aria-hidden="true"></i>
-          </label>
-          <label class="fld" data-f="pw">
-            <span class="fld__l">비밀번호</span>
-            <input class="fld__i" id="pw" name="password" type="password" autocomplete="current-password" required>
-            <i class="fld__rule" aria-hidden="true"></i>
-          </label>
-
-          <p class="msg" id="msg" role="alert" hidden></p>
-
-          <button class="go" id="go" type="submit"><span class="go__t">로그인</span><svg class="go__a" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" aria-hidden="true"><line x1="4" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg><i class="go__line" aria-hidden="true"></i></button>
-        </form>
-
-        <div class="door__aux">
-          <a class="resume" id="resume" href="#" hidden></a>
-          <button class="aux" id="helpBtn" type="button" aria-haspopup="dialog" aria-controls="help">계정 찾기 · 신청</button>
-        </div>
-      </div>
-
-      <footer class="door__foot">
-        <img class="door__lx door__lx--paper" src="../../assets/brand/vector/lx-lockup.svg" alt="LX 한국국토정보공사" width="150" height="17">
-        <img class="door__lx door__lx--ink" src="../../assets/brand/vector/lx-lockup-reverse.svg" alt="" width="150" height="17" aria-hidden="true">
-      </footer>
+    <div class="axis" id="axis">
+      <ol class="axis__ix" id="ix" aria-label="모토"></ol>
+      <p class="axis__t" id="axisT" aria-live="polite">&nbsp;</p>
+      <p class="axis__l" id="axisL">&nbsp;</p>
     </div>
+
+    <figure class="res t-card t-card--map away" id="res">
+      <figcaption class="res__where" id="resWhere">&nbsp;</figcaption>
+      <p class="res__row"><b class="res__v" id="resNum">&nbsp;</b><span class="res__u" id="resUnit"></span><span class="res__s" id="resSig"></span></p>
+      <p class="res__cr" id="credit2" aria-hidden="true"></p>
+    </figure>
+    <p class="hero__credit" id="credit"></p>
+    <!-- 장면 3 — Ctrl K 한 줄 → 지도 -->
+    <div class="ask t-card t-card--map" id="ask" aria-hidden="true"><kbd class="ask__k">Ctrl K</kbd><span class="ask__t" id="askT"></span><i class="ask__c"></i></div>
   </section>
 </main>
-
-<!-- 계정 찾기 · 신청 — 서랍 하나(구 find-id · find-password · signup 흡수) -->
-<dialog class="help" id="help" aria-labelledby="helpH">
-  <form method="dialog" class="help__in">
-    <h2 class="help__h" id="helpH">계정 찾기 · 신청</h2>
-    <dl class="help__dl">
-      <div><dt>LX 직원 · 관리자</dt><dd>관리자 승인 후 발급</dd></div>
-      <div><dt>기관</dt><dd>배포 계약 시 LX가 발급</dd></div>
-      <div><dt>문의</dt><dd class="n">063-713-1218</dd></div>
-    </dl>
-    <button class="help__x" value="close" aria-label="닫기"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg></button>
-  </form>
-</dialog>
 
 <script type="module" src="auth.js"></script>
 </body>

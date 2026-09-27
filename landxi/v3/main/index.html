@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LAND-XI</title>
+<meta name="description" content="위성·항공·드론 영상을 AI가 전국 단위로 분석합니다.">
+<link rel="preload" href="/landxi/assets/fonts/Paperlogy-7Bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/landxi/assets/fonts/Pretendard-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/landxi/proto/vendor/maplibre/maplibre-gl.css">
+<link rel="stylesheet" href="/landxi/v3/kit/kit.css">
+<link rel="stylesheet" href="./main.css">
+<script src="/landxi/proto/vendor/maplibre/maplibre-gl.js" defer></script>
+<script src="/landxi/xi/vendor/pmtiles/pmtiles.js" defer></script>
+</head>
+<body class="t m">
+<script>/* 좁은 화면 · 저사양: 첫 페인트부터 순백 지구 스틸(지도 첫 타일 전) */
+(function(){var n=matchMedia('(max-width: 960px)').matches,l=(navigator.deviceMemory&&navigator.deviceMemory<4)||(navigator.connection&&navigator.connection.saveData);if(!n&&!l)return;document.documentElement.dataset.poster=n?'m':'d';})();</script>
+
+<header class="m-mast" id="top">
+  <a class="m-word" href="#top">LAND-XI</a>
+  <nav class="m-nav">
+    <a href="#ch4">서비스</a>
+    <a href="#ch5">활용 사례</a>
+    <a href="/landxi/v3/login/" data-login>로그인</a>
+  </nav>
+</header>
+
+<div class="m-bd" id="bd" aria-hidden="true"></div>
+<!-- 지도 무대 하나(K3) — 챕터마다 창(.m-win)의 자리를 따라 잘린다. 페이지 이동 대신 카메라가 움직인다. -->
+<div class="m-stage" id="stage" aria-hidden="true"></div>
+<div class="m-labels" id="labels" aria-hidden="true"></div>
+
+<main>
+  <!-- 트랙 A: ch0 히어로 → ch1 전역 → ch2 필지 → ch3 융합(반전) · 판 하나(sticky) 안에서 장면이 이어진다 -->
+  <section class="m-track" id="trackA" data-track="A">
+    <div class="m-frame" id="frameA">
+      <div class="m-win" id="winA"><img class="m-poster is-off" id="poster" alt="" decoding="async" fetchpriority="high"></div>
+
+      <div class="m-ch m-hero" id="ch0" data-ch="0">
+        <h1 class="t-hero m-h"><span>국토를</span><span>한 번에 읽는다</span></h1>
+        <p class="t-body m-p">위성·항공·드론 영상을 AI가 전국 단위로 분석합니다.</p>
+        <div class="m-cta">
+          <a class="t-btn" href="/landxi/v3/login/" data-login>로그인</a>
+          <a class="t-btn t-btn--2" href="#ch4">서비스 보기</a>
+        </div>
+      </div>
+
+      <div class="m-ch m-over" id="ch1" data-ch="1">
+        <div class="t-card t-card--map m-card">
+          <p class="m-bridge">어느 시군구든</p>
+          <h2 class="t-h2 m-h"><span>전국이</span><span>한 화면에 차오른다</span></h2>
+          <p class="t-body m-p" id="ch1-p">하천구역 안 건물 점유를 전국에서 같은 기준으로 찾았습니다.</p>
+          <div class="m-big" id="ch1-big"></div>
+        </div>
+        <p class="m-cap" id="ch1-cap"></p>
+      </div>
+
+      <div class="m-ch m-side" id="ch2" data-ch="2">
+        <p class="m-bridge">필지 단위로</p>
+        <h2 class="t-h2 m-h"><span>대장과 다른 땅을</span><span>찾아낸다</span></h2>
+        <p class="t-body m-p">AI 판독을 필지와 대장에 겹쳐 확인이 필요한 곳만 남깁니다.</p>
+        <ol class="m-items" id="ch2-items">
+          <li data-i="0">필지 결합</li>
+          <li data-i="1">대장 대조</li>
+          <li data-i="2">현장 확인 목록</li>
+        </ol>
+      </div>
+      <div class="m-ch m-onwin" id="ch2-card" data-ch="2"></div>
+
+      <div class="m-ch m-side m-inv" id="ch3" data-ch="3">
+        <p class="m-bridge">말 한마디로</p>
+        <h2 class="t-h2 m-h"><span>올린 행정 자료에</span><span>묻는다</span></h2>
+        <p class="t-body m-p">기관이 올린 대장과 AI 결과를 섞어 바로 지도에 그립니다.</p>
+      </div>
+      <div class="m-ch m-onwin" id="ch3-ask" data-ch="3"></div>
+    </div>
+  </section>
+
+  <!-- ch4 서비스 생산 — 흰 숨 구간 · 지도 없음 -->
+  <section class="m-flow" id="ch4">
+    <div class="m-flow-in">
+      <p class="m-bridge t-enter">한 번 만들면</p>
+      <h2 class="t-h2 m-h t-enter"><span>한 번 만든 분석이</span><span>서비스가 된다</span></h2>
+      <p class="t-body m-p t-enter">모델·규칙·대장 형식을 한 벌로 묶어 실태조사 서비스로 만듭니다.</p>
+      <div class="m-cards" id="cards"></div>
+    </div>
+  </section>
+
+  <!-- 트랙 B: ch5 배포 → ch6 글로벌 → 마감 -->
+  <section class="m-track" id="trackB" data-track="B">
+    <div class="m-frame" id="frameB">
+      <div class="m-win" id="winB"></div>
+
+      <div class="m-ch m-over" id="ch5" data-ch="5">
+        <div class="t-card t-card--map m-card">
+          <p class="m-bridge">지역만 바꾸면</p>
+          <h2 class="t-h2 m-h"><span>어느 시군구든</span><span>그대로 배포한다</span></h2>
+          <p class="t-body m-p">같은 서비스가 그 지역 영상과 대장으로 바로 열립니다.</p>
+          <p class="m-tag" id="ch5-tag"></p>
+        </div>
+      </div>
+
+      <div class="m-ch m-over" id="ch6" data-ch="6">
+        <div class="t-card t-card--map m-card">
+          <p class="m-bridge">위성 한 장으로</p>
+          <h2 class="t-h2 m-h"><span>국경 밖에서도</span><span>같은 지도</span></h2>
+          <p class="t-body m-p">위성 영상으로 해외 사업지를 같은 방식으로 분석합니다.</p>
+          <p class="m-tag" id="ch6-tag"></p>
+        </div>
+      </div>
+
+      <div class="m-ch m-fin" id="fin" data-ch="7">
+        <h2 class="t-h2 m-h m-motto"><span>Hyper Performance<i> · </i>Hyper Solution<i> · </i>Hyper GeoAI</span></h2>
+        <p class="t-body m-p">실태조사를 AI로 끝내는 유일한 공공 GeoAI 플랫폼입니다.</p>
+        <div class="m-cta"><a class="t-btn" href="/landxi/v3/login/" data-login>로그인</a></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="m-foot">
+  <div class="m-foot-in">
+    <span>한국국토정보공사</span><span>문의 063-713-1218</span>
+    <span class="m-src" aria-label="데이터 출처"><b>LX</b><b>V-World</b><b>국토지리정보원</b><b>AI Hub</b></span>
+  </div>
+</footer>
+
+<script type="module" src="./main.js"></script>
+</body>
+</html>

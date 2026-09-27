@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>공용 부품 키트 · Land-XI</title>
+<meta name="description" content="Land-XI 화면이 함께 쓰는 부품 16종">
+<link rel="icon" href="../../assets/images/favicon_landxi.png">
+<link rel="stylesheet" href="../../proto/vendor/maplibre/maplibre-gl.css">
+<link rel="stylesheet" href="kit.css">
+<link rel="stylesheet" href="gallery.css">
+<script src="../../proto/vendor/maplibre/maplibre-gl.js"></script>
+<script src="../../xi/vendor/pmtiles/pmtiles.js"></script>
+</head>
+<body class="t">
+<header class="g-top">
+  <div class="g-in">
+    <span class="g-word">LAND-XI</span>
+    <span class="t-label">공용 부품 키트</span>
+  </div>
+</header>
+
+<main class="g-in g-main">
+  <section class="g-hero t-enter">
+    <h1 class="t-h2">화면은 조합만 합니다</h1>
+    <p class="t-body">열여섯 부품이 같은 데이터로 같은 모양을 냅니다.</p>
+  </section>
+
+  <!-- K1 · K3 · K4 · K5 · K6 · K10 : 앱 셸 안의 지도 무대 -->
+  <section class="g-sec t-enter" id="k1">
+    <div class="g-h"><h2 class="t-h4">앱 셸과 지도 무대</h2></div>
+    <div class="g-frame" id="frame"></div>
+  </section>
+
+  <section class="g-sec t-enter" id="k1b">
+    <div class="g-h"><h2 class="t-h4">관제 메뉴 다섯</h2></div>
+    <div class="g-frame g-frame--sm" id="frame2"></div>
+  </section>
+
+  <div class="g-grid">
+    <section class="g-sec t-enter" id="k6">
+      <div class="g-h"><h2 class="t-h4">큰 숫자와 신뢰 기호</h2></div>
+      <div class="t-card g-pad"><div id="big"></div></div>
+      <div class="g-sigs t-card" id="sigs"></div>
+    </section>
+
+    <section class="g-sec t-enter" id="k8">
+      <div class="g-h"><h2 class="t-h4">공정 스텝퍼</h2></div>
+      <div class="t-card g-pad"><div id="steps"></div></div>
+      <div class="t-card g-pad g-steps-v"><div id="stepsV"></div></div>
+    </section>
+  </div>
+
+  <section class="g-sec t-enter" id="k7">
+    <div class="g-h"><h2 class="t-h4">서비스 카드</h2></div>
+    <div id="cards"></div>
+  </section>
+
+  <section class="g-sec t-enter" id="k9">
+    <div class="g-h"><h2 class="t-h4">빈 상태</h2></div>
+    <div class="t-card g-well"><div class="g-empties">
+      <div id="e1"></div><div id="e2"></div><div id="e3"></div><div id="e4"></div>
+    </div></div>
+  </section>
+
+  <div class="g-grid">
+    <section class="g-sec t-enter" id="k11">
+      <div class="g-h"><h2 class="t-h4">업로드</h2></div>
+      <div class="t-card g-well"><div id="drop"></div></div>
+    </section>
+    <section class="g-sec t-enter" id="k13">
+      <div class="g-h"><h2 class="t-h4">알림 · 개발자 · 다국어</h2></div>
+      <div class="t-card g-pad g-row">
+        <button class="t-btn" type="button" id="toastBtn">알림 띄우기</button>
+        <button class="t-btn t-btn--2" type="button" id="devBtn">개발자 서랍</button>
+      </div>
+      <div class="t-card g-pad" id="i18n"></div>
+    </section>
+  </div>
+
+  <section class="g-sec t-enter" id="k12">
+    <div class="g-h"><h2 class="t-h4">표와 차트</h2></div>
+    <div class="g-grid g-grid--in">
+      <div class="t-card g-pad" id="tbl"></div>
+      <div class="g-col">
+        <div class="t-card g-pad"><div class="t-label g-cap">읍면동별 의심 필지</div><div id="bars"></div></div>
+        <div class="t-card g-pad"><div class="t-label g-cap">시간별 분석 작업</div><div id="line"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="g-sec t-enter" id="k16">
+    <div class="g-h"><h2 class="t-h4">관문과 검사기</h2></div>
+    <div class="t-stats" id="lint"></div>
+  </section>
+</main>
+<script type="module" src="gallery.js"></script>
+</body>
+</html>

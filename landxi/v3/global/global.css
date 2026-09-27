@@ -1,0 +1,111 @@
+/* v3 global — 서비스 사용자 집 · 해외. 토큰은 kit.css(tokens-v2.2) 그대로 · 이 파일은 배치만. */
+.gl{background:#F2F4F6}
+.gl-stage{position:absolute;inset:0;opacity:0;transition:opacity var(--d-380,380ms) var(--e-ui,ease)}
+.gl-stage.gl-on{opacity:1}
+.gl-stage .k-stage-map{background:#F2F4F6}
+.gl:not([data-level="district"]) .maplibregl-ctrl-scale{opacity:0}
+
+/* 위치 — 글로브 › 나라 › 지역(흰 칩 · 지도 위) */
+.gl-crumbs{position:absolute;left:16px;top:16px;z-index:6;display:flex;align-items:center;gap:6px;padding:4px;border-radius:var(--r-8);background:var(--bg-1);box-shadow:var(--elev-map)}
+.gl-crumb{height:32px;padding:0 10px;border:0;border-radius:6px;background:none;color:var(--sub);font:500 var(--fs-label)/32px var(--font-body);white-space:nowrap;cursor:pointer;transition:background var(--d-180) var(--e-ui),color var(--d-180) var(--e-ui)}
+button.gl-crumb:hover{background:var(--bg-0);color:var(--ink)}
+.gl-crumb.is-now{color:var(--ink);cursor:default;box-shadow:inset 0 -2px 0 var(--accent);border-radius:0}
+.gl-crumb--globe{width:32px;padding:0;display:inline-flex;align-items:center;justify-content:center}
+.gl-crumb--globe svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.5;fill:none}
+.gl-crumb--globe[aria-current="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent);border-radius:0}
+.gl-sep{color:var(--mute);font:400 14px/1 var(--font-body)}
+
+/* HUD — 사진 위 흰 글자 직접(카드 없음) */
+.gl-hud{position:absolute;left:32px;bottom:56px;z-index:5;pointer-events:none;max-width:calc(100% - 392px - 96px)}
+.gl-hud[hidden]{display:none}
+.gl-hud .k-big{gap:0}
+.gl-hud .k-big-l{font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:#fff;text-shadow:var(--hud-shadow)}
+.gl-hud .k-big-u{font-size:24px}
+.gl-hud .k-sig{pointer-events:auto;font-size:24px}
+.gl-hud .is-wait .t-hud{opacity:0}
+.gl-hud .is-none .k-big-row{display:none}
+.gl-hud .k-big-none{color:#fff;text-shadow:var(--hud-shadow);font:500 var(--fs-sub)/var(--lh-sub) var(--font-body)}
+.gl-hud .k-big{animation:gl-up var(--d-750) var(--e-cam) both}
+@keyframes gl-up{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+/* 배포 없음 — 글로브 위 K9 한 장 */
+.gl-none{position:absolute;left:32px;bottom:56px;z-index:5;width:min(360px,calc(100% - 64px));margin:0;background:var(--bg-1);border-radius:var(--r-16,16px);box-shadow:var(--elev-map)}
+
+/* 경계 밖 — 한 줄 */
+.gl-guard{position:absolute;left:16px;top:72px;z-index:7;padding:8px 14px;border-radius:var(--r-8);background:var(--ink);color:#fff;font:500 var(--fs-label)/20px var(--font-body);box-shadow:var(--elev-map)}
+.gl-guard[hidden]{display:none}
+.gl-tip{position:absolute;left:0;top:0;z-index:8;pointer-events:none;padding:4px 10px;border-radius:6px;background:var(--bg-1);color:var(--ink);font:500 13px/20px var(--font-body);box-shadow:var(--elev-map);white-space:nowrap}
+.gl-tip[hidden]{display:none}
+
+/* 시트 392 — 지역에 닿으면 들어온다 */
+.gl-sheet{position:absolute;top:16px;right:16px;max-height:calc(100% - 32px);z-index:6;width:var(--sheet);box-sizing:border-box;display:flex;flex-direction:column;gap:20px;padding:20px 24px 24px;
+  transition:transform var(--d-750) var(--e-cam),opacity var(--d-500) var(--e-ui)}
+.gl:not([data-level="district"]) .gl-sheet{transform:translateX(calc(100% + 32px));opacity:0;pointer-events:none;visibility:hidden;transition:transform var(--d-750) var(--e-cam),opacity var(--d-500) var(--e-ui),visibility 0s linear var(--d-750)}
+.gl-grip{display:none}
+.gl-tabs{display:flex;gap:24px;border-bottom:1px solid var(--rule)}
+.gl-tab{height:44px;padding:0;border:0;background:none;color:var(--sub);font:500 var(--fs-body)/44px var(--font-body);cursor:pointer;box-shadow:inset 0 0 0 var(--accent);transition:color var(--d-180) var(--e-ui),box-shadow var(--d-380) var(--e-ui)}
+.gl-tab:hover{color:var(--ink)}
+.gl-tab[aria-selected="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent)}
+.gl-body{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:20px}
+.gl-season{appearance:none;background:var(--bg-1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M6 8l4 4 4-4' fill='none' stroke='%23727780' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 12px center/18px;padding-right:40px;font:500 var(--fs-body)/1 var(--font-body)}
+.gl-months .k-bar-l,.gl-sprawl .k-bar-l{min-width:72px}
+.gl-sprawl .k-bar-v small{white-space:pre}
+.gl-line{min-height:160px}
+.gl-act{display:flex;flex-direction:column;gap:12px}
+.gl-btns{display:grid;grid-template-columns:1fr auto;gap:8px}
+.gl-why{margin:0;color:var(--sub);font:400 var(--fs-label)/var(--lh-label) var(--font-body)}
+.gl-why[hidden],.gl-prog[hidden],.gl-run[hidden],.gl-dl[hidden]{display:none}
+.gl-btns:has(.gl-run[hidden]),.gl-btns:has(.gl-dl[hidden]){grid-template-columns:1fr}
+.gl-btns:not(:has(button:not([hidden]))){display:none}
+.gl-prog{display:flex;flex-direction:column;gap:8px}
+.gl-prog-t{margin:0;color:var(--ink);font:500 var(--fs-label)/var(--lh-label) var(--font-body);font-variant-numeric:tabular-nums}
+.gl-sheet .k-empty{margin:0}
+
+.gl-err{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px}
+.gl-err .k-empty{max-width:400px;width:100%;margin:0;background:var(--bg-1);border-radius:var(--r-16,16px);box-shadow:var(--elev-map)}
+
+/* 영문판 — 신뢰 기호 '예시' 를 영문으로(키트 요청: t-sig ex 문구 로캘화) */
+html[lang="en"] .t-sig[data-sig="ex"]::before{content:"Example"}
+
+/* 도움 서랍(영문) — 안내 3줄 + 문의 1줄 */
+.gl-help{display:flex;flex-direction:column;gap:12px}
+.gl-help p{margin:0;color:var(--ink-2);font:400 var(--fs-body)/var(--lh-body) var(--font-body)}
+.gl-help .gl-help-c{margin-top:8px;padding-top:16px;border-top:1px solid var(--rule);color:var(--sub);font-size:var(--fs-label)}
+.gl-help-c a{color:var(--ink);text-decoration:none;font-weight:500}
+
+/* Ctrl K 트리거 */
+.gl-ask{flex:none;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--rule);color:var(--ink)}
+.gl-ask kbd{font:500 12px/1 var(--font-num);color:var(--sub);padding:3px 6px;border-radius:4px;background:var(--bg-0)}
+
+@media (max-width:960px){
+  .gl-crumbs{left:12px;top:12px;right:12px;width:max-content;max-width:calc(100% - 24px);overflow:hidden}
+  .gl-hud{left:20px;top:68px;bottom:auto;max-width:calc(100% - 40px)}
+  .gl-hud .k-big-u,.gl-hud .k-sig{font-size:18px}
+  .gl-guard{top:64px;left:12px}
+  .gl-sheet{top:auto;left:0;right:0;bottom:0;width:auto;height:46%;border-radius:var(--r-24) var(--r-24) 0 0;padding:8px 20px 16px;gap:14px}
+  .gl:not([data-level="district"]) .gl-sheet{transform:translateY(105%)}
+  .gl-grip{display:block;width:40px;height:4px;margin:0 auto;border-radius:2px;background:var(--rule)}
+  .gl-ask kbd{display:none}
+  .k-app .k-mast .k-help,.k-app .k-mast .k-exit,.k-app .k-mast .k-mast-slot{flex:none}
+  .k-app .k-role{max-width:34vw}
+  .gl-none{left:16px;right:16px;bottom:24px;width:auto}
+}
+/* 좁은 화면 마스트 좌 짧은 이름 */
+.gl-home-s{display:none;max-width:min(30vw,108px);white-space:pre;color:var(--sub);font:500 var(--fs-label)/1 var(--font-body)}
+@media (max-width:960px){.k-word .gl-home-s{display:inline-flex;min-width:0}}
+.gl-home-n{min-width:0;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:420px){
+  .k-app .k-role{display:none}
+}
+/* Ctrl K — 좁은 화면: 여는 동안 HUD·위치 칩을 비킨다 · ≤640 은 마스트 바로 아래 전폭 시트 */
+@media (max-width:960px){
+  body:has(.k-ck:not([hidden])) .gl-hud,body:has(.k-ck:not([hidden])) .gl-crumbs,body:has(.k-ck:not([hidden])) .gl-guard{visibility:hidden}
+}
+@media (max-width:640px){
+  .k-ck{top:56px;left:0;right:0;width:100%;transform:none;border-radius:0 0 var(--r-16) var(--r-16);animation:gl-ck-in var(--d-380) var(--e-ui)}
+  .k-ck-dim{top:56px}
+}
+@keyframes gl-ck-in{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.k-ck{animation:none}}
+@media (prefers-reduced-motion:reduce){.gl-sheet,.gl-hud .k-big{transition:none;animation:none}}
+.gl-ck-where{color:var(--t-3, #8B95A1)}

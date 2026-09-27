@@ -1,0 +1,205 @@
+/* Land-XI 법전 v2.2 '토스 톤' — 토큰 정본 (design/system-v2.2-toss.md 와 1:1)
+   작성 Fable 5.1 · 2026-09-27. 화면 에이전트는 import 만 한다. 변경 요청은 보고서 '요청' 절로.
+   무대 하나: 회백 바탕 + 흰 면 · 짙은 잉크 · 색은 지도·사진·AI 결과 위에서만. 라운드 24/16/8 · 유리 0 · 바탕 위 그림자 0. */
+
+@font-face{font-family:'Pretendard';font-weight:400;font-display:swap;src:url('/landxi/assets/fonts/Pretendard-Regular.woff2') format('woff2')}
+@font-face{font-family:'Pretendard';font-weight:500;font-display:swap;src:url('/landxi/assets/fonts/Pretendard-Medium.woff2') format('woff2')}
+@font-face{font-family:'Paperlogy';font-weight:700;font-display:swap;src:url('/landxi/assets/fonts/Paperlogy-7Bold.woff2') format('woff2')}
+@font-face{font-family:'Paperlogy';font-weight:800;font-display:swap;src:url('/landxi/assets/fonts/Paperlogy-8ExtraBold.woff2') format('woff2')}
+@font-face{font-family:'Inter';font-weight:400;font-display:swap;src:url('/landxi/assets/fonts/Inter-400.woff2') format('woff2')}
+@font-face{font-family:'Inter';font-weight:500;font-display:swap;src:url('/landxi/assets/fonts/Inter-500.woff2') format('woff2')}
+
+:root{
+  /* 서체 */
+  --font-display:'Paperlogy','Pretendard',sans-serif;
+  --font-body:'Pretendard','Inter',sans-serif;
+  --font-num:'Inter','Pretendard',sans-serif;
+
+  /* 색 §1 */
+  --bg-0:#F2F4F6;          /* 페이지 바탕 · 지도 로드 전 · 빈 상태 카드 */
+  --bg-1:#FFFFFF;          /* 면: 카드 · 시트 · 마스트 · 레일 · 입력 */
+  --ink:#1C1F25;
+  --ink-2:#333840;
+  --sub:#727780;
+  --sub-2:#4E535C;
+  --rule:#E5E8EB;
+  --mute:#B0B8C1;
+  --accent:#006DF7;        /* 링크 · 포커스 · 현재 위치 · 진행 막대 — 4곳만 */
+  --tint:rgba(0,109,247,.12);
+  --ai:#0FA9A0;            /* AI 결과 위에서만 */
+  --ai-glow:rgba(15,169,160,.35);
+  --lock:#FFB633;          /* 탐지 380ms · 주의는 점·눈금만 */
+  --warn:#F04452;          /* 조치 필요 글자 · 장애 */
+  --ink-inv:#111317;       /* 반전 섹션(소개형 1구간) */
+  --hud-ink:#FFFFFF;
+  --hud-shadow:0 1px 2px rgba(0,0,0,.35);
+
+  /* 라운드 §3 */
+  --r-24:24px; --r-16:16px; --r-8:8px;
+
+  /* 깊이 §3 — 바탕 위 0 · 지도 위 카드만 · 모달 */
+  --elev-map:0 1px 0 rgba(28,31,37,.04), 0 8px 24px rgba(28,31,37,.12);
+  --elev-3:0 24px 64px rgba(28,31,37,.18);
+  --dim-modal:rgba(28,31,37,.35);
+
+  /* 타이포 §2 (데스크톱) */
+  --fs-big:80px;   --lh-big:88px;    /* 큰 숫자 · Paperlogy 800 */
+  --fs-hero:80px;  --lh-hero:96px;   /* 소개형 한 줄 · 700 */
+  --fs-h2:48px;    --lh-h2:60px;
+  --fs-h3:32px;    --lh-h3:42px;
+  --fs-h4:24px;    --lh-h4:32px;
+  --fs-sub:20px;   --lh-sub:30px;
+  --fs-body:16px;  --lh-body:26px;
+  --fs-label:14px; --lh-label:20px;
+  --fs-hud:124px;                    /* 지도 HUD 한 곳만 */
+  --ls-big:-0.03em; --ls-h2:-0.02em; --ls-h3:-0.01em; --ls-h4:-0.02em;
+
+  /* 여백 §3 */
+  --margin:48px; --content-max:1344px; --gutter:24px;
+  --pad:24px; --gap:16px;
+  --rail:72px; --mast:64px; --sheet:392px;
+  --section:200px;
+
+  /* 모션 §4 — 사다리 v2 유지 */
+  --e-ui:cubic-bezier(.22,1,.36,1);
+  --e-arrive:cubic-bezier(.15,1,.3,1);
+  --e-cam:cubic-bezier(.16,1,.3,1);
+  --d-40:40ms; --d-60:60ms; --d-80:80ms; --d-120:120ms; --d-180:180ms; --d-380:380ms;
+  --d-500:500ms; --d-750:750ms; --d-1000:1000ms; --d-1250:1250ms; --d-1600:1600ms; --d-2400:2400ms;
+  --lock-grow:180ms; --lock-amber:80ms; --lock-settle:120ms;
+  --enter-y:40px; --enter-y-card:20px; --stagger:120ms;
+
+  /* 데이터 램프(v2 유지 · 데이터 위에서만) */
+  --conf-0:#BFD9FF; --conf-1:#93BDFF; --conf-2:#5E9BFF; --conf-3:#2F78F0; --conf-4:#0F55C7; --conf-5:#003B85;
+  --ndvi-0:#A50026; --ndvi-1:#F46D43; --ndvi-2:#FEE08B; --ndvi-3:#A6D96A; --ndvi-4:#1A9850;
+}
+
+@media (max-width:640px){
+  :root{
+    --fs-big:48px; --lh-big:54px; --fs-hero:40px; --lh-hero:46px;
+    --fs-h2:36px; --lh-h2:46px; --fs-h3:28px; --lh-h3:38px; --fs-h4:20px; --lh-h4:28px;
+    --fs-sub:18px; --lh-sub:26px; --fs-body:15px; --lh-body:22px;
+    --margin:20px; --section:100px; --sheet:100%;
+  }
+}
+
+/* ── 바탕 ─────────────────────────────── */
+html{background:var(--bg-0)}
+body.t{margin:0;background:var(--bg-0);color:var(--ink);font:400 var(--fs-body)/var(--lh-body) var(--font-body);-webkit-font-smoothing:antialiased;word-break:keep-all}
+.t :where(button,input,select){font:inherit;color:inherit}   /* :where = 특이성 0 — .t-btn 흰 글자를 덮지 않게(키트 9/27) */
+.t :where(a){color:inherit;text-decoration:none}
+.t :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.t .num{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+
+/* ── 타이포 ─────────────────────────────── */
+.t-big{font:800 var(--fs-big)/var(--lh-big) var(--font-display);letter-spacing:var(--ls-big);font-variant-numeric:tabular-nums;color:var(--ink)}
+.t-hero{font:700 var(--fs-hero)/var(--lh-hero) var(--font-display);letter-spacing:var(--ls-big);color:var(--ink)}
+.t-h2{font:700 var(--fs-h2)/var(--lh-h2) var(--font-display);letter-spacing:var(--ls-h2);color:var(--ink)}
+.t-h3{font:700 var(--fs-h3)/var(--lh-h3) var(--font-display);letter-spacing:var(--ls-h3);color:var(--ink)}
+.t-h4{font:700 var(--fs-h4)/var(--lh-h4) var(--font-display);letter-spacing:var(--ls-h4);color:var(--ink)}
+.t-sub{font:500 var(--fs-sub)/var(--lh-sub) var(--font-body);color:var(--ink-2)}
+.t-body{font:400 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--sub-2)}
+.t-label{font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub)}
+.t-hud{font:800 var(--fs-hud)/1 var(--font-display);letter-spacing:var(--ls-big);color:var(--hud-ink);text-shadow:var(--hud-shadow);font-variant-numeric:tabular-nums}
+.t-hud + .t-label{color:var(--hud-ink);text-shadow:var(--hud-shadow)}
+
+/* 신뢰 기호 3종 (v2.1-2) */
+.t-sig{display:inline-block;margin-left:6px;font:500 var(--fs-label)/1 var(--font-num);color:var(--sub);vertical-align:middle;cursor:default}
+.t-sig[data-sig="ok"]::before{content:"✓";color:var(--ai)}
+.t-sig[data-sig="est"]::before{content:"~"}
+.t-sig[data-sig="ex"]::before{content:"예시"}
+
+/* ── 면 · 카드 §3 §6 ─────────────────────── */
+.t-card{background:var(--bg-1);border-radius:var(--r-16);padding:var(--pad)}
+.t-card--hero{border-radius:var(--r-24)}
+.t-card--map{box-shadow:var(--elev-map)}                     /* 지도 위 카드만 그림자 */
+.t-card--hair{border:1px solid var(--rule)}                  /* 흰 면 위 흰 카드일 때만 */
+.t-card > img.crop{display:block;width:calc(100% + var(--pad)*2);margin:calc(var(--pad)*-1) calc(var(--pad)*-1) 16px;aspect-ratio:3/2;object-fit:cover;border-radius:var(--r-16) var(--r-16) 0 0}
+.t-sheet{position:absolute;top:var(--pad);right:var(--pad);bottom:var(--pad);width:var(--sheet);background:var(--bg-1);border-radius:var(--r-16);box-shadow:var(--elev-map);padding:var(--pad);overflow:auto}
+@media (max-width:640px){.t-sheet{top:auto;left:0;right:0;bottom:0;width:auto;max-height:60vh;border-radius:var(--r-16) var(--r-16) 0 0}}
+.t-modal{background:var(--bg-1);border-radius:var(--r-16);box-shadow:var(--elev-3)}
+.t-dim{background:var(--dim-modal)}
+
+/* ── 마스트 · 레일 · 역할 §7 §8 ─────────────── */
+.t-mast{height:var(--mast);display:flex;align-items:center;gap:16px;padding:0 var(--pad);background:var(--bg-1);border-bottom:1px solid var(--rule)}
+.t-mast .word{font:700 16px/1 var(--font-display);letter-spacing:-0.01em}
+.t-mast .home{font:500 var(--fs-label)/1 var(--font-body);color:var(--sub)}
+.t-mast .home::before{content:"·";margin-right:10px;color:var(--mute)}
+.t-mast .sp{flex:1}
+.t-role{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;border-radius:var(--r-8);background:var(--bg-0);font:500 var(--fs-label)/1 var(--font-body);color:var(--ink)}
+.t-role b{font-weight:500;color:var(--sub)}
+.t-fresh{display:inline-flex;align-items:center;gap:8px;font:500 var(--fs-label)/1 var(--font-num);color:var(--sub)}
+.t-fresh i{width:8px;height:8px;border-radius:50%;background:var(--mute)}
+.t-fresh[data-live="1"] i{background:var(--ai)}
+.t-rail{width:var(--rail);background:var(--bg-1);border-right:1px solid var(--rule);display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:4px}
+.t-rail button{width:56px;padding:8px 0;border:0;background:none;border-radius:var(--r-8);display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--sub);cursor:pointer;transition:background var(--d-180) var(--e-ui),color var(--d-180) var(--e-ui)}
+.t-rail button svg{width:20px;height:20px;stroke:currentColor;stroke-width:1.5;fill:none}
+.t-rail button span{font:500 var(--fs-label)/1 var(--font-body)}
+.t-rail button:hover{background:var(--bg-0);color:var(--ink)}
+.t-rail button[aria-current="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent)}
+
+/* ── 버튼 · 칩 · 입력 §7 ─────────────────── */
+.t-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 20px;border:0;border-radius:var(--r-8);background:var(--ink);color:#fff;font:500 var(--fs-label)/1 var(--font-body);cursor:pointer;transition:transform var(--d-180) var(--e-ui),background var(--d-180) var(--e-ui)}
+.t-btn:hover{transform:translateY(-1px)}
+.t-btn:disabled{background:var(--mute);cursor:default;transform:none}
+.t-btn--2{background:var(--bg-1);color:var(--ink);border:1px solid var(--rule)}
+.t-btn--2:hover{border-color:var(--ink)}
+.t-btn--text{height:auto;padding:0;background:none;color:var(--ink);position:relative}
+.t-btn--text::after{content:"→";margin-left:6px}
+.t-btn--text::before{content:"";position:absolute;left:0;bottom:-2px;height:1px;width:0;background:var(--ink);transition:width var(--d-380) var(--e-ui)}
+.t-btn--text:hover::before{width:100%}
+.t-chip{display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:var(--r-8);background:var(--bg-0);font:500 var(--fs-label)/1 var(--font-body);color:var(--ink)}
+.t-chip[data-lv="wait"]{color:var(--sub)}
+.t-chip[data-lv="gap"]{color:var(--mute);border:1px dashed var(--mute);background:transparent}
+.t-chip[data-lv="warn"]{color:var(--warn)}
+.t-input{height:44px;padding:0 14px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);color:var(--ink);width:100%}
+.t-input:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 2px var(--tint)}
+.t-progress{height:4px;background:var(--rule);border-radius:2px;overflow:hidden}
+.t-progress i{display:block;height:100%;background:var(--accent);transition:width var(--d-500) var(--e-arrive)}
+
+/* ── 스텝퍼 §9-H (가로 · 세로) ─────────────── */
+.t-steps{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;position:relative;gap:0}
+.t-steps::before{content:"";position:absolute;left:calc(50% / var(--n,4));right:calc(50% / var(--n,4));top:14px;height:2px;background:var(--rule)}
+.t-step{text-align:center;position:relative}
+.t-step .n{width:28px;height:28px;margin:0 auto 10px;border:2px solid var(--ink);border-radius:50%;background:var(--bg-1);color:var(--ink);display:flex;align-items:center;justify-content:center;font:500 13px/1 var(--font-num)}
+.t-step[data-st="done"] .n{background:var(--ink);color:#fff}
+.t-step[data-st="now"] .n{background:var(--accent);border-color:var(--accent);color:#fff}
+.t-step[data-st="wait"] .n{border-color:var(--rule);color:var(--mute)}
+.t-step .t{font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--ink)}
+.t-step[data-st="wait"] .t{color:var(--sub)}
+.t-step .d{font:400 var(--fs-label)/var(--lh-label) var(--font-num);color:var(--sub);font-variant-numeric:tabular-nums}
+.t-steps--v{grid-auto-flow:row;grid-auto-rows:auto;gap:8px}
+.t-steps--v::before{left:13px;right:auto;top:14px;bottom:14px;width:2px;height:auto}
+.t-steps--v .t-step{text-align:left;display:flex;align-items:center;gap:12px}
+.t-steps--v .t-step .n{margin:0}
+
+/* ── 빈 상태 §9-G ─────────────────────────── */
+.t-empty{position:relative;background:var(--bg-0);border-radius:var(--r-16);min-height:220px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:var(--pad)}
+.t-empty img{position:absolute;right:-8%;top:-6%;width:60%;aspect-ratio:4/3;object-fit:cover;border-radius:var(--r-16);opacity:.95}
+.t-empty .t-label{margin-bottom:6px}
+.t-empty h6{margin:0 0 6px;font:500 var(--fs-sub)/var(--lh-sub) var(--font-body);color:var(--ink)}
+.t-empty p{margin:0;font:400 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--sub-2)}
+
+/* ── 성과 띠 §9-E ─────────────────────────── */
+.t-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--gutter);background:var(--bg-1);border-radius:var(--r-16);padding:var(--pad)}
+.t-stats .l{font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub);margin-bottom:6px}
+.t-stats .v{font:800 var(--fs-h2)/1 var(--font-display);letter-spacing:var(--ls-h2);color:var(--ink);font-variant-numeric:tabular-nums}
+.t-stats .v small{font:400 var(--fs-body)/1 var(--font-body);color:var(--sub);margin-left:6px;letter-spacing:0}
+
+/* ── 등장 모션 §4 ─────────────────────────── */
+.t-enter{opacity:0;transform:translateY(var(--enter-y));transition:opacity var(--d-750) var(--e-cam),transform var(--d-750) var(--e-cam)}
+.t-enter.t-card,.t-enter.t-stats{transform:translateY(var(--enter-y-card))}
+.t-enter.is-in{opacity:1;transform:none}
+.t-enter:nth-child(2){transition-delay:calc(var(--stagger)*1)}
+.t-enter:nth-child(3){transition-delay:calc(var(--stagger)*2)}
+.t-enter:nth-child(4){transition-delay:calc(var(--stagger)*3)}
+.t-enter:nth-child(5){transition-delay:calc(var(--stagger)*4)}
+@media (prefers-reduced-motion:reduce){.t-enter{transition:none;opacity:1;transform:none}}
+
+/* ── 반전 섹션(소개형 1구간만) ─────────────── */
+.t-inv{background:var(--ink-inv);color:#fff}
+.t-inv .t-h2,.t-inv .t-hero,.t-inv .t-big{color:#fff}
+.t-inv .t-body,.t-inv .t-label{color:rgba(255,255,255,.75)}
+
+/* MapLibre 기본 컨트롤은 숨긴다(§6) */
+.t .maplibregl-ctrl-attrib,.t .maplibregl-ctrl-logo{display:none!important}

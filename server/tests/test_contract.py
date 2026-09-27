@@ -92,7 +92,27 @@ def test_route_shape(live, tok, name, method, path, who, body):
     assert r.status_code == f["status"], r.text[:300]
     j = r.json()
     scan(j) if name not in ("results_features",) else scan(j["lx"])
-    check_shape(j, f["body"], "$", f.get("optional", []), f.get("optional_nested", {}))
+    opt = list(f.get("optional", [])) + V12_OPTIONAL.get(name, [])
+    nested = dict(f.get("optional_nested", {}))
+    for k, v in V12_NESTED.get(name, {}).items():
+        nested[k] = list(nested.get(k, [])) + v
+    check_shape(j, f["body"], "$", opt, nested)
+
+
+# v1.2(F3 최종 명세 §3) 추가 키 — 픽스처는 v1.1 그대로 두고 여기서 '선택 키'로 허용(F1-CONTRACT v1.2 절)
+V12_OPTIONAL = {
+    "registry_cards": ["n", "public"],                          # S-6 ?public=1
+    "deploys_list": [],
+    "deploy": ["sgg_cd", "test", "ci"],                         # S-7 이식(시군구 · CI 9키 · 시험 표시)
+    "ops_gpus": ["power_budget"],                               # S-9 전력 예산
+    "catalog_imagery": ["sgg_cd", "tile_ready"],                # 영상 소유 시군구 · 타일 준비
+}
+V12_NESTED = {
+    "registry_cards": {"items[]": ["crop_url", "deploys", "models", "ledger_schema", "intro", "status_label", "status3"]},   # S-6
+    "deploys_list": {"items[]": ["sgg_cd", "test", "ci"], "approvals[]": ["state", "action"]},                            # S-7 결재 행
+    "deploy": {"approvals[]": ["state", "action"]},
+    "catalog_layers": {"items[]": ["sgg_cd", "tile_ready"]},    # 영상 소유 시군구 · 타일 준비
+}
 
 
 def test_job_shape(live, tok):

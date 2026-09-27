@@ -76,7 +76,7 @@ async def _worker_self_mib(r, worker: str) -> float | None:
 async def gpus(request: Request):
     require(principal(request), admin=True)
     r = await redis()
-    keys = sorted([k async for k in r.scan_iter(match=f"ops:gpu:{config.NODE_ID}:*")])
+    keys = sorted([k async for k in r.scan_iter(match=f"ops:gpu:{config.NODE_ID}:*", count=2000)])
     if keys:
         gl = []
         for k in keys:
@@ -91,7 +91,8 @@ async def gpus(request: Request):
                 _v11_fields(g, g.get("at") or now_iso(), "ops:gpu (F2-C 폴러)")
             gl.append(g)
         at = max((g.get("at") or "" for g in gl), default=None) if gl and isinstance(gl[0], dict) else None
-        return {"node": config.NODE_ID, "at": at or now_iso(), "gpus": gl, "source": "ops:gpu (F1-C 폴러)"}
+        return {"node": config.NODE_ID, "at": at or now_iso(), "gpus": gl, "source": "ops:gpu (F1-C 폴러)",
+                "power_budget": await power_budget_now([g for g in gl if isinstance(g, dict)])}
     s = await run_in_threadpool(nvidia_smi_sample)
     for g in s["gpus"]:
         w = await _worker_self_mib(r, g["worker"])
@@ -102,7 +103,35 @@ async def gpus(request: Request):
         g["job_id"] = await r.hget(f"worker:{g['worker']}:hb", "job_id") or None
         _v11_fields(g, s["at"], "게이트웨이 직접(폴러 미기동)")
     s["note"] = "F1-C 폴러 미기동 — 게이트웨이가 nvidia-smi 를 직접 읽음(폴백)"
+    s["power_budget"] = await power_budget_now(s["gpus"])
     return s
+
+
+async def power_budget_now(gl: list[dict]) -> dict:
+    """전력 예산(S-9) — 동시 고부하 GPU 수(실측: power.draw > other_gpu_hot_w 인 장 + 워커 임대) ≤ max_hot_gpus 인가.
+    {max_hot, hot_now, ok, hot[], leases} · 관제 큰 숫자 '동시 고부하 GPU' 의 한 출처."""
+    from .jobs import power_budget
+    pb = await power_budget()
+    pw = config.load_yaml("pools").get("power", {}) or {}
+    th = float(pw.get("other_gpu_hot_w", 100))
+    hot = []
+    for g in gl:
+        v = (g.get("power_w") or {}).get("value") if isinstance(g.get("power_w"), dict) else g.get("power_w")
+        if isinstance(v, (int, float)) and v > th:
+            hot.append(g.get("index"))
+    lease_gpu = []
+    r = await redis()
+    for ls in pb["leases"]:
+        if ls.get("holder"):
+            h = await r.hgetall(f"worker:{ls['holder']}:hb")
+            gi = h.get("gpu") or h.get("gpu_index")
+            if gi not in (None, "") and str(gi).isdigit() and int(gi) not in hot:
+                lease_gpu.append(int(gi))
+    hot_now = len(hot) + len(lease_gpu)
+    mx = int(pb["max_hot_gpus"])
+    return {"max_hot": mx, "hot_now": hot_now, "ok": hot_now <= mx, "hot": sorted(hot + lease_gpu), "threshold_w": th,
+            "power_limit_w": pb.get("power_limit_w"), "leases": pb["leases"], "at": now_iso(),
+            "source": "nvidia-smi power.draw(장별) + power:hot 임대", "unit": "GPU"}
 
 
 _NUM_FIELDS = {"util_pct": "%", "util_ma5": "%", "mem_used_mib": "MiB", "mem_total_mib": "MiB", "temp_c": "°C", "power_w": "W",
@@ -145,7 +174,7 @@ async def queues_snapshot() -> dict:
                                  "FROM jobs WHERE started_at IS NOT NULL AND created_at > now() - interval '24 hours' GROUP BY 1")
     wmap = {w["pool"]: w["p95"] for w in waits}
     hb = {}
-    async for k in r.scan_iter(match="worker:*:hb"):
+    async for k in r.scan_iter(match="worker:*:hb", count=2000):
         h = await r.hgetall(k)
         hb.setdefault(h.get("pool"), []).append(h)
     for name, pl in pools.items():
@@ -163,10 +192,22 @@ async def queues_snapshot() -> dict:
                                        None if p95 is not None else "시작된 작업 없음"),
                      "shards_backlog": env(depth, "count", "measured", f"XLEN shards:{name}")}
     lanes = []
-    async for k in r.scan_iter(match="lane:*"):
+    async for k in r.scan_iter(match="lane:*", count=2000):
         w = k.split(":", 1)[1]
         blocks = [json.loads(b) for b in await r.lrange(k, 0, 49)]
         lanes.append({"worker": w, "blocks": blocks})
+    # 끝나지 않은 블록(running · to 없음) 중 작업이 이미 끝난 것 → 작업 표의 상태·종료 시각으로 닫는다(ops-infra 요청 · 유령 막대 0)
+    open_ids = list({b["job_id"] for ln in lanes for b in ln["blocks"] if b.get("state") == "running" and not b.get("to") and b.get("job_id")})
+    if open_ids:
+        async with db(realm="lx") as conn:
+            fin = {x["id"]: x for x in await conn.fetch("SELECT id, state, finished_at FROM jobs WHERE id = ANY($1::text[]) "
+                                                          "AND state IN ('done','failed','cancelled')", open_ids)}
+        for ln in lanes:
+            for b in ln["blocks"]:
+                f = fin.get(b.get("job_id"))
+                if f and b.get("state") == "running" and not b.get("to"):
+                    b["state"] = f["state"]
+                    b["to"] = f["finished_at"].astimezone(KST).isoformat(timespec="seconds") if f["finished_at"] else None
     lanes.sort(key=lambda x: x["worker"])
     return {"pools": out, "lanes": lanes, "as_of": now_iso()}
 
@@ -250,7 +291,7 @@ async def ops_models(request: Request):
     r = await redis()
     resident: dict[str, list[str]] = {}
     vram: dict[str, float] = {}
-    async for k in r.scan_iter(match="worker:*:vram"):
+    async for k in r.scan_iter(match="worker:*:vram", count=2000):
         h = await r.hgetall(k)
         w = k.split(":")[1]
         for mid in json.loads(h.get("models", "[]")):
@@ -338,12 +379,12 @@ async def evaluate_alerts_once():
     now = time.time()
     metrics: dict[str, list[tuple[str, int | None, float]]] = {}
     # 워커 하트비트
-    async for k in r.scan_iter(match="worker:*:hb"):
+    async for k in r.scan_iter(match="worker:*:hb", count=2000):
         h = await r.hgetall(k)
         age = now - float(h.get("ts", now))
         metrics.setdefault("worker.heartbeat_age_s", []).append((h.get("id"), None, age))
     # 폴러 GPU 해시(없으면 건너뜀)
-    async for k in r.scan_iter(match=f"ops:gpu:{config.NODE_ID}:*"):
+    async for k in r.scan_iter(match=f"ops:gpu:{config.NODE_ID}:*", count=2000):
         h = await r.hgetall(k)
         try:
             g = json.loads(h["json"]) if "json" in h else None
@@ -389,3 +430,67 @@ async def alert_loop():
         except Exception as e:  # pragma: no cover
             print("alert loop error", e, flush=True)
         await asyncio.sleep(60)
+
+
+# ── 관제 LLM 줄(S-10) · 가동 시간(S-12) ───────────────────────────────────────
+@router.get("/ops/llm")
+async def ops_llm(request: Request):
+    """에이전트 회귀셋 50문 정확도(정답·거절 · 가드 수준) + 백엔드 헬스 — 관제 LLM 줄의 한 출처."""
+    require(principal(request), admin=True)
+    r = await redis()
+    raw = await r.get("agent:redteam:last")
+    if not raw:
+        f = config.DATA_ROOT / "agent" / "redteam-last.json"
+        raw = f.read_text(encoding="utf-8") if f.exists() else None
+    rt = json.loads(raw) if raw else None
+    models = await r.hgetall("agent:models")          # backends.py 가 hash 로 쓴다(키 = 백엔드 이름)
+    bk = {}
+    for k, v in (models or {}).items():
+        try:
+            bk[k] = json.loads(v)
+            if isinstance(bk[k], dict) and isinstance(bk[k].get("probe_ms"), (int, float)):
+                bk[k]["probe_ms"] = env(bk[k]["probe_ms"], "ms", "measured", "GET /models 헬스 탐침", as_of=bk[k].get("as_of"))
+        except Exception:
+            bk[k] = v
+    out = {"redteam": None, "backends": bk or None, "as_of": now_iso()}
+    if rt:
+        out["redteam"] = {k: rt.get(k) for k in ("at", "level", "accuracy", "reject_accuracy", "answer_accuracy")}
+        out["redteam"]["cases"] = env(rt.get("n"), "count", "recorded", "server/agent/redteam.yaml")
+        out["redteam"]["failed"] = [x.get("id") for x in rt.get("failed") or []]
+    else:
+        out["redteam_note"] = "아직 평가 전 — python -m agent.runner --redteam"
+    return out
+
+
+@router.get("/ops/uptime")
+async def ops_uptime(request: Request):
+    """가동 시간(S-12) — 게이트웨이 기동 시각 · 워커별 프로세스 시작(psutil) · 마지막 하트비트."""
+    require(principal(request), admin=True)
+    import psutil
+    from .main import BOOT
+    now = time.time()
+    at = now_iso()
+
+    def up(ts):
+        return env(round(now - ts) if ts else None, "s", "measured", "process create_time", None if ts else "알 수 없음", as_of=at)
+    items = []
+    try:
+        gw = psutil.Process().create_time()
+    except Exception:
+        gw = None
+    items.append({"name": "gateway", "boot_at": BOOT.get("boot_at"), "uptime_s": up(gw), "state": "up"})
+    r = await redis()
+    async for k in r.scan_iter(match="worker:*:hb", count=2000):
+        h = await r.hgetall(k)
+        pid = h.get("pid")
+        ct = None
+        try:
+            ct = psutil.Process(int(pid)).create_time() if pid else None
+        except Exception:
+            ct = None
+        age = now - float(h.get("ts", now))
+        items.append({"name": h.get("id"), "pid_alive": ct is not None, "uptime_s": up(ct),
+                      "heartbeat_age_s": env(round(age, 1), "s", "measured", "worker hb"), "state": "up" if age < 30 else "stale"})
+    lock = config.SERVER_ROOT / ".workers.lock"
+    return {"items": sorted(items, key=lambda x: x["name"] or ""), "lock": lock.read_text(encoding="utf-8").strip() if lock.exists() else None,
+            "as_of": at}

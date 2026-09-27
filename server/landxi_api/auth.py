@@ -11,6 +11,7 @@ import secrets
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError, InvalidHashError
+from starlette.concurrency import run_in_threadpool
 from fastapi import APIRouter, Request
 from fastapi.responses import Response
 
@@ -71,7 +72,7 @@ async def login(body: dict):
     ok = False
     if u and u["status"] == "active":
         try:
-            ok = ph.verify(u["pw_hash"], pw)
+            ok = await run_in_threadpool(ph.verify, u["pw_hash"], pw)     # argon2 는 CPU 를 쓴다 — 이벤트 루프를 막지 않게(동시 로그인 · 헬스 지연 0)
         except (VerifyMismatchError, InvalidHashError):
             ok = False
     if not ok:
@@ -85,6 +86,16 @@ async def login(body: dict):
         await conn.execute("INSERT INTO audit_log(actor, realm, action, subject) VALUES ($1,$2,'login',$3)", u["id"], realm, login_)
     return {"token": tok, "realm": realm, "role": u["role"], "tenant_id": tenant_id,
             "user": {"id": u["id"], "name": u["name"]}, "expires_at": exp.isoformat(timespec="seconds")}
+
+
+@router.get("/auth/tenants")
+async def public_tenants():
+    """공개 기관 디렉터리(F3 최종 명세 §3 S-1) — 정문이 픽스처 없이 기관 목록을 얻는다. 인증 불필요.
+    active 이고 이용 기관(kind user)만 · LX 자신(maker)·영업 계량 기관(lx-demo) 제외 · 이름과 범위만(계정·쿼터·경로 0)."""
+    pl = await pool()
+    rows = await pl.fetch("SELECT id, name, scope FROM tenants WHERE status='active' AND kind='user' AND id <> 'lx-demo' ORDER BY (scope = 'global'), id")   # 국내 먼저
+    items = [{"id": r["id"], "name": {"ko": (r["name"] or {}).get("ko"), "en": (r["name"] or {}).get("en")}, "scope": r["scope"]} for r in rows]
+    return {"items": items, "as_of": now_iso()}
 
 
 @router.post("/auth/logout", status_code=204)

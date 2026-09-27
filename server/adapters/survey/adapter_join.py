@@ -35,6 +35,22 @@ def plan(job: dict) -> list[dict]:
     return [{**s, "params": {**s["params"], "source_set": (job.get("options") or {}).get("source_set", SOURCE_SET)}} for s in rules_plan(job)]
 
 
+def finalize(job: dict) -> dict:
+    """작업 마감 훅(cpu_worker.finalize_cpu) — 셔드 metrics 를 모아 counts {joined_parcels, parcels}(lx-ingest '결합률 = /jobs/{id}').
+    결합률 = joined_parcels / parcels(AI 폴리곤이 하나라도 겹친 필지 / 읍면동 필지 전체) — 화면이 봉투로 나눈다."""
+    from survey.db import lx_tx, pg
+    jid = job.get("id") or job.get("job_id")
+    with pg() as c:
+        lx_tx(c)
+        rows = c.execute("SELECT metrics FROM index_results WHERE job_id=%s", (jid,)).fetchall()
+    parcels = joined = 0
+    for (m,) in rows:
+        m = m or {}
+        parcels += int(m.get("parcels") or 0)
+        joined += int(m.get("joined_parcels") or 0)
+    return {"counts": {"joined_parcels": joined, "parcels": parcels}}
+
+
 class Adapter:
     def load(self, model: dict, device: str = "cpu", vram_budget_mib: int = 0):
         return None
@@ -64,7 +80,8 @@ class Adapter:
             diff_max = max(diff_max, m)
             n_diff += m > 0.5
         ms = int((time.perf_counter() - t0) * 1000)
-        return ShardResult(features=[], metrics={"parcels": len(ref), "pairs": len(rows), "diff_max_m2": round(diff_max, 3),
+        return ShardResult(features=[], metrics={"parcels": len(ref), "joined_parcels": sum(1 for pn in ref if pn in got),
+                                                 "pairs": len(rows), "diff_max_m2": round(diff_max, 3),
                                                  "parcels_diff_gt_0_5m2": n_diff, "ms": ms, "write": False,
                                                  "note": "뼈대 — 재결합 대조만(적재값 교체는 2차)"}, n=len(rows), ms=ms)
 

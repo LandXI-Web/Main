@@ -1,0 +1,55 @@
+/* 부품 갤러리 전용(키트 부품 아님) — 토스 톤 소개형 한 페이지 */
+.g-in{max-width:var(--content-max);margin:0 auto;padding:0 var(--margin)}
+.g-top{position:sticky;top:0;z-index:30;background:var(--bg-1);border-bottom:1px solid var(--rule)}
+.g-top .g-in{height:var(--mast);display:flex;align-items:center;gap:14px}
+.g-word{font:700 16px/1 var(--font-display);letter-spacing:-0.01em}
+.g-top .sp{flex:1}
+.g-main{padding-bottom:120px}
+.g-hero{padding:88px 0 48px}
+.g-hero h1{margin:0 0 12px}
+.g-hero p{margin:0}
+.g-sec{margin-top:56px}
+.g-h{display:flex;align-items:baseline;gap:12px;margin-bottom:16px}
+.g-h h2{margin:0}
+.g-pad{padding:28px}
+.g-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gutter)}
+.g-grid > .g-sec{margin-top:56px}
+.g-grid--in{margin:0}
+.g-col{display:flex;flex-direction:column;gap:var(--gutter)}
+.g-cap{margin-bottom:16px}
+.g-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:var(--gutter)}
+.g-frame{position:relative;height:620px;border-radius:var(--r-24);overflow:hidden;background:var(--bg-0);box-shadow:0 0 0 1px var(--rule)}
+.g-frame--sm{height:440px}
+.g-frame .k-main .k-stage{position:absolute;inset:0}
+.g-hud{position:absolute;left:32px;bottom:48px;z-index:5;pointer-events:none}
+.g-card-on{position:absolute;left:24px;top:24px;z-index:6;width:300px}
+.g-card-on .t-label{margin-bottom:10px}
+.g-card-on .g-acts{display:flex;gap:8px;margin-top:16px}
+.g-sigs{display:flex;gap:40px;flex-wrap:wrap;margin-top:var(--gutter);padding:28px}
+.g-sigs > span{display:flex;flex-direction:column;gap:8px}
+.g-sigs .k-num{font-size:32px}
+.g-steps-v{margin-top:var(--gutter)}
+.g-empties{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--gutter)}
+.g-i18n{width:100%;border-collapse:collapse;font:400 15px/22px var(--font-body)}
+.g-i18n th,.g-i18n td{padding:10px 8px;border-bottom:1px solid var(--rule);text-align:left}
+.g-i18n th{font:500 var(--fs-label)/1 var(--font-body);color:var(--sub)}
+.g-ops{position:absolute;inset:0;display:grid;grid-template-columns:1fr 320px;gap:16px;padding:16px}
+.g-ops .t-card{align-self:start}
+@media (max-width:960px){
+  .g-grid{grid-template-columns:1fr}
+  .g-grid > .g-sec + .g-sec{margin-top:40px}
+  .g-frame{height:640px}
+  .g-ops{grid-template-columns:1fr}
+}
+@media (max-width:640px){
+  .g-hero{padding:56px 0 24px}
+  .g-sec,.g-grid > .g-sec{margin-top:40px}
+  .g-pad{padding:20px}
+  .g-empties{grid-template-columns:1fr}
+  .g-card-on{left:12px;right:12px;top:12px;width:auto}
+  .g-hud{left:20px;bottom:40px}
+  .g-frame{height:700px;border-radius:var(--r-16)}
+}
+.g-well{padding:12px}
+.g-well .g-empties{gap:12px}
+.g-n{display:inline-flex;align-items:baseline}

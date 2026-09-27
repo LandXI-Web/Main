@@ -1,0 +1,40 @@
+{
+  "_": "정문 히어로 카드 장면 메타데이터. 지역·업무·카메라·결과 파일은 전부 여기(plate.js 는 kind 별 읽기만 한다). 순서 = 축 순서. 지역은 변수 — 행을 바꾸면 장면이 바뀐다.",
+  "national": {
+    "_": "장면 1 (HYPER PERFORMANCE). 공개 결과(S-4 GET /public/stats)가 있으면 이 캡션·숫자로 세우고 shape(시군구 면 GeoJSON)를 스윕과 함께 채운다. 없으면 scenes[0] 전국 지도만(캡션·숫자 없음).",
+    "query": "/public/stats?set=river-occupy&by=sigungu",
+    "shape": "/public/stats?set=river-occupy&by=sigungu&geom=1",
+    "where": "전국 · 하천구역 건물 점유",
+    "unit": "건",
+    "credit": "© EOX"
+  },
+  "scenes": [
+    {
+      "id": "national", "axis": "Performance", "kind": "view",
+      "cam": "korea", "pitch": 0, "bearing": 0,
+      "credit": "© EOX"
+    },
+    {
+      "id": "ledger", "axis": "Solution", "kind": "findings",
+      "where": "남원시 · 농지 실태조사", "unit": "대장과 다른 필지", "credit": "© V-World",
+      "cam": { "center": [127.6245, 35.5150], "zoom": 15.0, "pitch": 42, "bearing": -14 },
+      "data": "data:survey/findings-emd.json", "tiles": "data:survey/namwon-parcel-survey.pmtiles",
+      "value": "totals.suspect_parcels", "basis": "inferred", "source": "AI 실태조사 결과"
+    },
+    {
+      "id": "marine", "axis": "GeoAI", "kind": "points",
+      "where": "여수시 · 해양쓰레기", "unit": "건 드론 탐지", "credit": "© V-World",
+      "ask": "여수시 해양쓰레기 지도에 보여줘",
+      "cam": { "center": [127.6842, 34.5738], "zoom": 17.4, "pitch": 38, "bearing": 24 },
+      "data": "geo:yeosu-marine-2026-drone.geojson",
+      "basis": "inferred", "as_of": "2026-08-25", "source": "drone 드론 영상"
+    },
+    {
+      "id": "sprawl", "axis": "GeoAI", "kind": "grid",
+      "where": "비슈케크 · 도시 확장", "unit": "㎢ 늘어남", "credit": "© EOX · Esri",
+      "cam": { "center": [74.58, 42.875], "zoom": 10.5, "pitch": 36, "bearing": 0 },
+      "data": "data:global/kgz-sprawl-2017-2025.json", "min": 8, "digits": 1,
+      "value": "summary.delta_km2", "basis": "estimate", "source": "Sentinel 위성 영상 2025"
+    }
+  ]
+}

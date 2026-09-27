@@ -1,0 +1,20 @@
+/* K5 흰 카드 · 서랍 · 시트 — 우측 392 · 지도 위 --elev-map · 모바일 하단 시트 · 등장 380 --e-ui */
+.k-drawer{position:fixed;top:calc(var(--mast) + 16px);right:16px;bottom:16px;width:var(--k-dr-w,var(--sheet));max-width:calc(100vw - 32px);z-index:40;display:flex;flex-direction:column;background:var(--bg-1);border-radius:var(--r-16);box-shadow:var(--elev-map);opacity:0;transform:translateX(24px);transition:opacity var(--d-380) var(--e-ui),transform var(--d-380) var(--e-ui)}
+.k-drawer--in{position:absolute;top:16px}
+.k-drawer.is-open{opacity:1;transform:none}
+.k-drawer.is-closing{opacity:0;transform:translateX(24px)}
+.k-dr-grip{display:none}
+.k-dr-h{display:flex;align-items:center;gap:12px;padding:20px 16px 12px 24px}
+.k-dr-t{flex:1;margin:0;font:700 var(--fs-h4)/var(--lh-h4) var(--font-display);letter-spacing:var(--ls-h4);color:var(--ink)}
+.k-dr-x{width:36px;height:36px;border:0;border-radius:var(--r-8);background:none;color:var(--sub);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.k-dr-x:hover{background:var(--bg-0);color:var(--ink)}
+.k-dr-x svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round}
+.k-dr-b{flex:1;overflow:auto;padding:4px 24px 24px;overscroll-behavior:contain}
+.k-card-t{margin:0 0 12px;font:500 var(--fs-sub)/var(--lh-sub) var(--font-body);color:var(--ink)}
+@media (max-width:640px){
+  .k-drawer,.k-drawer--in{position:fixed;top:auto;left:0;right:0;bottom:0;width:auto;max-width:none;max-height:72vh;border-radius:var(--r-16) var(--r-16) 0 0;transform:translateY(40px)}
+  .k-drawer.is-closing{transform:translateY(40px)}
+  .k-dr-grip{display:block;width:36px;height:4px;border-radius:2px;background:var(--rule);margin:10px auto 0}
+  .k-dr-h{padding:10px 12px 8px 20px}
+  .k-dr-b{padding:4px 20px 24px}
+}

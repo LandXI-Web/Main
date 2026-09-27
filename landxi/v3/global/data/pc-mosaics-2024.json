@@ -1,0 +1,20 @@
+{
+ "source": "Planetary Computer mosaic register (sentinel-2-l2a · cloud ≤ 10 · least-cloudy first) — same body as server/pipelines/global/g2_pc_cache.py, year 2024",
+ "fetched_at": "2026-09-27T09:25:58Z",
+ "bbox": [
+  73.8,
+  42.4,
+  76.0,
+  43.35
+ ],
+ "months": {
+  "2024-03": "86b59ca79850f83050ef2c0d2ce22c70",
+  "2024-04": "bda08c9ea11be627814d3ed147418de1",
+  "2024-05": "29184a190bc4c24585f2d54f9d12c3ab",
+  "2024-06": "71056e1e31144177a86c5ce829bb6ee7",
+  "2024-07": "52368c469d77085537b65e4f58804b71",
+  "2024-08": "9fe234fc2dc8b91ff5efe759be2ea893",
+  "2024-09": "cfac26cb756a3a08db296d4890a8ea1e",
+  "2024-10": "a043a62b6e9351a2339f3d8d24695516"
+ }
+}

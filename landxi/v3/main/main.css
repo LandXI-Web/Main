@@ -1,0 +1,186 @@
+/* 게스트 메인 — 토스식 7장 + 마감 · 법전 v2.2(토큰은 kit.css 가 싣는다) · 화면 고유 규칙만 여기 */
+
+/* ── 층: 바탕(색 전환) → 지도 무대(창으로 잘림) → 점 라벨 → 글 판 → 마스트 ── */
+.m{--mx:var(--margin)}
+.m-bd{position:fixed;inset:0;z-index:0;background:var(--bg-0);transition:background var(--d-750) var(--e-cam)}
+.m-bd.is-inv{background:var(--ink-inv)}
+.m-stage{position:fixed;inset:0;z-index:1;background:#fff;visibility:hidden;will-change:clip-path}
+.m-stage.is-on{visibility:visible}
+.m-stage .k-stage{background:transparent}
+.m-labels{position:fixed;inset:0;z-index:2;pointer-events:none;visibility:hidden}
+.m-labels.is-on{visibility:visible}
+.m-lbl{position:absolute;left:0;top:0;display:flex;align-items:center;gap:8px;font:500 var(--fs-label)/1 var(--font-body);color:#fff;text-shadow:var(--hud-shadow);white-space:nowrap;transform:translate(-50%,-50%)}
+.m-dot{width:14px;height:14px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 3px #fff;position:relative;flex:none}
+.m-dot::after{content:"";position:absolute;inset:-3px;border-radius:50%;border:2px solid #fff;animation:m-ring 2.4s var(--e-cam) infinite}
+.m-dot[data-st="pilot"]{background:#fff;box-shadow:0 0 0 3px var(--ink)}
+.m-dot[data-st="pilot"]::after{display:none}
+@keyframes m-ring{0%{transform:scale(1);opacity:.9}100%{transform:scale(2.6);opacity:0}}
+.m-lbl span{padding-left:2px}
+
+main{position:relative;z-index:3}
+.m-track{position:relative}
+.m-frame{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;pointer-events:none}
+.m-frame a,.m-frame button,.m-frame .k-sig{pointer-events:auto}
+.m-win{position:absolute;left:0;top:0;width:0;height:0}
+
+/* ── 마스트 ── */
+.m-mast{position:fixed;top:0;left:0;right:0;z-index:20;height:var(--mast);display:flex;align-items:center;padding:0 var(--mx);background:rgba(255,255,255,.96);border-bottom:1px solid var(--rule)}
+.m-word{font:700 18px/1 var(--font-display);letter-spacing:-0.01em;color:var(--ink)}
+.m-nav{margin-left:auto;display:flex;gap:28px}
+.m-nav a{position:relative;font:500 var(--fs-label)/1 var(--font-body);color:var(--ink-2);padding:6px 0}
+.m-nav a::before{content:"";position:absolute;left:0;bottom:0;height:1px;width:0;background:var(--ink);transition:width var(--d-380) var(--e-ui)}
+.m-nav a:hover::before{width:100%}
+
+/* ── 챕터 글 층(공통) ── */
+.m-ch{position:absolute;visibility:hidden}
+.m-ch.is-on{visibility:visible}
+.m-ch .m-h{margin:0;display:flex;flex-direction:column}
+.m-ch .m-h span,.m-ch .m-bridge,.m-ch .m-p,.m-ch .m-cta,.m-ch .m-big,.m-ch .m-items,.m-ch .m-tag,.m-ch.m-onwin > *{opacity:0;transform:translateY(var(--enter-y));transition:opacity var(--d-750) var(--e-cam),transform var(--d-750) var(--e-cam)}
+.m-ch.is-in .m-h span,.m-ch.is-in .m-bridge,.m-ch.is-in .m-p,.m-ch.is-in .m-cta,.m-ch.is-in .m-big,.m-ch.is-in .m-items,.m-ch.is-in .m-tag,.m-ch.is-in.m-onwin > *{opacity:1;transform:none}
+.m-ch.is-out .m-h span,.m-ch.is-out .m-bridge,.m-ch.is-out .m-p,.m-ch.is-out .m-cta,.m-ch.is-out .m-big,.m-ch.is-out .m-items,.m-ch.is-out .m-tag,.m-ch.is-out.m-onwin > *{opacity:0;transform:translateY(calc(var(--enter-y) * -1))}
+/* 스태거 120: 브리지 → 헤드라인 1 → 2 → 문장 → 나머지 */
+.m-ch .m-h span:nth-child(1){transition-delay:var(--d-120)}
+.m-ch .m-h span:nth-child(2){transition-delay:calc(var(--stagger) * 2)}
+.m-ch .m-p{transition-delay:calc(var(--stagger) * 3)}
+.m-ch .m-cta,.m-ch .m-big,.m-ch .m-items,.m-ch .m-tag{transition-delay:calc(var(--stagger) * 4)}
+.m-ch.is-out *{transition-delay:0s!important}
+.m-card{transition:opacity var(--d-750) var(--e-cam)}
+.m-ch.is-out .m-card{opacity:0}
+.m-ch:not(.is-in) .m-card{opacity:0}
+.m-ch.is-in .m-card{opacity:1}
+
+.m-bridge{margin:0 0 16px;font:500 var(--fs-sub)/var(--lh-sub) var(--font-body);color:var(--sub)}
+.m-p{margin:20px 0 0;max-width:30em}
+.m-cta{margin-top:40px;display:flex;gap:12px;flex-wrap:wrap}
+
+/* ch0 히어로 · ch2 · ch3 — 왼쪽 글 · 오른쪽 창 */
+.m-hero,.m-side{left:var(--mx);top:var(--mast);bottom:0;width:calc(46vw - var(--mx) - 24px);display:flex;flex-direction:column;justify-content:center}
+.m-hero .t-hero{display:flex;flex-direction:column}
+
+/* 지도 위 흰 카드(ch1 · ch5 · ch6) */
+.m-over{left:var(--mx);top:calc(var(--mast) + 40px);width:440px}
+.m-over .m-card{padding:32px}
+.m-over .m-bridge{margin-bottom:12px;font-size:var(--fs-label);line-height:var(--lh-label)}
+.m-over .m-p{margin-top:16px}
+.m-big{margin-top:28px;padding-top:24px;border-top:1px solid var(--rule)}
+.m-tag{margin:24px 0 0;padding-top:20px;border-top:1px solid var(--rule);font:500 var(--fs-sub)/var(--lh-sub) var(--font-body);color:var(--ink)}
+.m-cap{position:fixed;right:var(--mx);bottom:28px;margin:0;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:#fff;text-shadow:var(--hud-shadow);opacity:0;transition:opacity var(--d-750) var(--e-cam)}
+.m-ch.is-in .m-cap{opacity:1}
+.m-ch.is-out .m-cap{opacity:0}
+
+/* ch2 하위 항목 — 하나만 진하게(나머지 20%) */
+.m-items{list-style:none;margin:40px 0 0;padding:0;display:grid;gap:4px}
+.m-items li{position:relative;padding:12px 0 12px 20px;font:700 var(--fs-h4)/var(--lh-h4) var(--font-display);letter-spacing:var(--ls-h4);color:var(--ink);opacity:.2;transition:opacity var(--d-380) var(--e-ui)}
+.m-items li::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:2px;background:var(--accent);transform:scaleY(0);transition:transform var(--d-380) var(--e-ui)}
+.m-items li.is-on{opacity:1}
+.m-items li.is-on::before{transform:none}
+
+/* 창 위 카드(ch2 필지 카드 · ch3 질문 바) — 위치는 JS 가 창에 맞춘다 */
+.m-onwin{left:0;top:0;width:0;height:0}
+.m-pc{position:absolute;left:24px;bottom:24px;width:min(400px,calc(100% - 48px));box-shadow:var(--elev-map);padding:24px}
+.m-pc-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.m-pc-cols{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--rule)}
+.m-pc-col{padding:16px 0 4px;display:flex;flex-direction:column;gap:6px}
+.m-pc-col + .m-pc-col{padding-left:20px;border-left:1px solid var(--rule)}
+.m-pc-col:first-child{padding-right:20px}
+.m-pc-col .t-h4{margin:2px 0 0}
+.m-pc-col .k-num{font-size:24px}
+.m-pc-col.is-ai .t-h4{color:var(--ai)}
+.m-pc-foot{margin-top:16px;padding-top:16px;border-top:1px solid var(--rule);display:flex;align-items:center;gap:10px;opacity:.25;transition:opacity var(--d-380) var(--e-ui)}
+.m-pc-foot.is-on{opacity:1}
+.m-pc-foot .m-ok{width:20px;height:20px;border-radius:50%;background:var(--ink);color:#fff;display:inline-flex;align-items:center;justify-content:center;font:500 12px/1 var(--font-num)}
+.m-pc[data-step="0"] .m-pc-cols{opacity:.25}
+.m-pc-cols{transition:opacity var(--d-380) var(--e-ui)}
+
+.m-ask{position:absolute;left:24px;right:24px;top:24px;max-width:560px;margin:0 auto}
+.m-ask .k-ck{position:static;transform:none;width:100%;animation:none;box-shadow:var(--elev-3)}
+.m-ask .k-ck-i{pointer-events:none}
+.m-ask .k-ck-t{flex:1;min-width:0;font:500 var(--fs-sub)/1.2 var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m-ask .k-ck-t:empty::before{content:attr(data-ph);color:var(--sub)}
+.m-caret{display:inline-block;width:2px;height:1.05em;margin-left:2px;vertical-align:-.15em;background:var(--ink);animation:m-caret 1s steps(1) infinite}
+@keyframes m-caret{50%{opacity:0}}
+.m-ask .k-ck-plan,.m-ask .k-ck-a{transition:opacity var(--d-380) var(--e-ui)}
+.m-ask .k-ck-a{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.m-ask .k-ck-a .t-label{color:var(--sub)}
+
+/* 반전 구간 글자 */
+.m-inv .m-bridge{color:rgba(255,255,255,.6)}
+.m-inv .t-h2{color:#fff}
+.m-inv .t-body{color:rgba(255,255,255,.75)}
+
+/* 마감 */
+.m-fin{left:var(--mx);right:var(--mx);bottom:56px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.m-fin .m-p{margin-top:16px}
+.m-fin .m-cta{margin-top:28px;justify-content:center}
+.m-motto{font-size:40px;line-height:52px}
+.m-motto i{font-style:normal}
+
+/* ch4 — 흰 숨 구간 · 카드 3 */
+.m-flow{position:relative;z-index:4;background:var(--bg-0);padding:var(--section) var(--mx)}
+.m-flow-in{max-width:var(--content-max);margin:0 auto}
+.m-flow .m-h{margin:0;display:flex;flex-direction:column}
+.m-flow .m-bridge{margin-bottom:16px}
+.m-cards{margin-top:64px}
+.m-cards .k-svc-t{min-height:0}
+.m-more{margin:4px 24px 0!important;align-self:flex-start;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--ink)}
+.m-more::after{content:"→";margin-left:6px;display:inline-block;transition:transform var(--d-380) var(--e-ui)}
+a.k-svc:hover .m-more::after{transform:translateX(4px)}
+
+/* 히어로 첫 그림(지도 첫 타일 전 · 저사양) — 순백 지구 스틸, 지도가 차면 걷힌다 */
+.m-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;border-radius:var(--r-24);background:#fff;z-index:2;transition:opacity var(--d-750) var(--e-cam)}
+.m-poster.is-off{opacity:0;visibility:hidden;transition:opacity var(--d-750) var(--e-cam),visibility 0s linear var(--d-750)}
+/* 이동 중 막(위성 타일 미적재 구간) */
+.m-veil{position:absolute;inset:0;z-index:4;background:var(--bg-0);opacity:0;pointer-events:none}
+
+/* 푸터 1줄 + 출처 띠 */
+.m-foot{position:relative;z-index:4;background:var(--bg-1);border-top:1px solid var(--rule)}
+.m-foot-in{max-width:var(--content-max);margin:0 auto;padding:24px var(--mx);display:flex;align-items:center;gap:24px;flex-wrap:wrap;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub)}
+.m-foot-in > span:first-child{color:var(--ink)}
+.m-src{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}
+.m-src b{display:inline-flex;align-items:center;height:32px;padding:0 12px;border-radius:var(--r-8);background:var(--bg-0);font:700 13px/1 var(--font-display);letter-spacing:0;color:var(--sub-2)}
+
+/* 결손 · 오류 */
+.m-miss{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub)}
+
+/* ── 태블릿 ── */
+@media (max-width:1100px){
+  .m-hero,.m-side{width:calc(44vw - var(--mx))}
+  .m-motto{font-size:32px;line-height:42px}
+}
+/* ── 모바일(≤ 640): 글 위 · 창 아래 ── */
+@media (max-width:640px){
+  .m-nav{gap:18px}
+  .m-hero,.m-side{left:var(--mx);right:var(--mx);width:auto;top:calc(var(--mast) + 28px);bottom:auto;justify-content:flex-start}
+  .m-cta{margin-top:24px}
+  .m-p{margin-top:12px}
+  .m-bridge{margin-bottom:8px;font-size:var(--fs-label);line-height:var(--lh-label)}
+  .m-items{margin-top:16px;grid-auto-flow:column;gap:12px}
+  .m-items li{padding:8px 0 0;font-size:15px;line-height:20px}
+  .m-items li::before{left:0;right:0;top:0;bottom:auto;width:auto;height:3px;transform:scaleX(0)}
+  .m-items li.is-on::before{transform:none}
+  .m-over{left:var(--mx);right:var(--mx);width:auto;top:calc(var(--mast) + 16px)}
+  .m-over .m-card{padding:20px}
+  .m-over .m-p{margin-top:8px}
+  .m-big{margin-top:16px;padding-top:16px}
+  .m-tag{margin-top:14px;padding-top:12px;font-size:var(--fs-body)}
+  .m-cap{bottom:20px}
+  .m-pc{left:12px;right:12px;bottom:12px;width:auto;padding:16px}
+  .m-pc-top{margin-bottom:10px}
+  .m-pc-col{padding-top:10px}
+  .m-pc-col .k-num{font-size:20px}
+  .m-pc-foot{margin-top:10px;padding-top:10px}
+  .m-ask{top:12px;left:12px;right:12px}
+  .m-ask .k-ck-f{height:52px;padding:0 12px}
+  .m-ask .k-ck-t{font-size:15px}
+  .m-ask kbd{display:none}
+  .m-fin{bottom:32px}
+  .m-motto{font-size:28px;line-height:36px}
+  .m-motto i{display:block;font-size:0;line-height:0}
+  .m-cards{margin-top:40px}
+  .m-src{margin-left:0}
+  .m-foot-in{gap:12px 18px}
+}
+@media (prefers-reduced-motion:reduce){
+  .m-ch *{transition:none!important}
+  .m-dot::after,.m-caret{animation:none}
+}

@@ -76,40 +76,54 @@ def test_tenant_isolation_rls(live, tok):
 
 
 def test_deploy_state_machine(live, tok):
+    """S-7: 이식(draft) → 심기 결재 → shadow → canary → ga(승인) · 롤백 왕복. 시험 행은 끝에서 지운다(관제 결재함 오염 0)."""
+    import psycopg
+    from landxi_api import config
     a = H(tok["admin"])
     aoi = {"type": "Polygon", "coordinates": [[[74.20, 42.80], [74.45, 42.80], [74.45, 42.95], [74.20, 42.95], [74.20, 42.80]]]}
     r = httpx.post(B + "/deploys", headers=a, json={"from_deploy_id": "dp-nw-change", "tenant_id": "kgz-land", "region_profile": "kgz-sokuluk",
                                                    "aoi": aoi, "name": "소쿨룩 시가지 변화 · 2026 (테스트)", "gpu_pool": "cpu", "year": 2026,
-                                                   "id": "dp-kgz-land-change-26-test"}, timeout=30)
+                                                   "id": "dp-kgz-land-change-26-test", "test": True}, timeout=30)
     assert r.status_code == 201, r.text
     d = r.json()
-    assert d["stage"] == "draft" and d["card_version_id"] == "card-change@1.0" and d["from_deploy_id"] == "dp-nw-change"
     did = d["id"]
-    r = httpx.post(B + f"/deploys/{did}/rollout", headers=a, json={"stage": "ga"}, timeout=30)
-    assert r.status_code == 409 and r.json()["error"]["code"] == "invalid_stage_transition"
-    for st in ("shadow", "canary"):
-        assert httpx.post(B + f"/deploys/{did}/rollout", headers=a, json={"stage": st}, timeout=30).status_code == 200
-    r = httpx.post(B + f"/deploys/{did}/rollout", headers=a, json={"stage": "ga"}, timeout=30)
-    assert r.status_code == 409 and r.json()["error"]["code"] == "approval_required"
-    assert httpx.post(B + f"/deploys/{did}/approve", headers=a, json={"decision": "approve", "reason": "test"}, timeout=30).status_code == 200
-    assert httpx.post(B + f"/deploys/{did}/rollout", headers=a, json={"stage": "ga"}, timeout=30).json()["stage"] == "ga"
-    r = httpx.post(B + f"/deploys/{did}/modules", headers=a, json={"ext": {"mod-auth": False}}, timeout=30)
-    assert r.status_code == 400 and r.json()["error"]["code"] == "module_locked"
-    # 롤백: 스냅샷 current ↔ prev
     before = httpx.get(B + "/deploys/dp-nw-farm-25", headers=a, timeout=30).json()
-    r = httpx.post(B + "/deploys/dp-nw-farm-25/rollback", headers=a, json={}, timeout=30).json()
-    assert r["stage"] == "rolled_back" and r["snapshot_current"] == before["snapshot_prev"] and r["snapshot_prev"] == before["snapshot_current"]
-    assert r["card_version_id"] == before["prev_card_version_id"]
-    # 되돌려 놓기: shadow → canary → ga(승인)
-    for st in ("canary",):
-        assert httpx.post(B + "/deploys/dp-nw-farm-25/rollout", headers=a, json={"stage": st}, timeout=30).status_code == 200
-    httpx.post(B + "/deploys/dp-nw-farm-25/approve", headers=a, json={"decision": "approve", "reason": "test restore"}, timeout=30)
-    httpx.post(B + "/deploys/dp-nw-farm-25/rollout", headers=a, json={"stage": "ga"}, timeout=30)
-    httpx.post(B + "/deploys/dp-nw-farm-25/rollback", headers=a, json={}, timeout=30)       # 버전 되돌림(2.0 → 2.1)
-    httpx.post(B + "/deploys/dp-nw-farm-25/rollout", headers=a, json={"stage": "canary"}, timeout=30)
-    httpx.post(B + "/deploys/dp-nw-farm-25/approve", headers=a, json={"decision": "approve", "reason": "test restore 2"}, timeout=30)
-    after = httpx.post(B + "/deploys/dp-nw-farm-25/rollout", headers=a, json={"stage": "ga"}, timeout=30).json()
-    assert after["card_version_id"] == before["card_version_id"] and after["snapshot_current"] == before["snapshot_current"]
+    t0 = None
+    with psycopg.connect(config.PG_ADMIN_DSN) as c:
+        t0 = c.execute("SELECT now()").fetchone()[0]
+    try:
+        assert d["stage"] == "draft" and d["card_version_id"] == "card-change@1.0" and d["from_deploy_id"] == "dp-nw-change" and d["approval_id"]
+        r = httpx.post(B + f"/deploys/{did}/rollout", headers=a, json={"stage": "ga"}, timeout=30)
+        assert r.status_code == 409 and r.json()["error"]["code"] == "invalid_stage_transition"
+        r = httpx.post(B + f"/deploys/{did}/rollout", headers=a, json={"stage": "shadow"}, timeout=30)
+        assert r.status_code == 409 and r.json()["error"]["code"] == "approval_required"          # 심기 결재 전
+        assert httpx.post(B + f"/approvals/{d['approval_id']}/decide", headers=a, json={"decision": "approve"}, timeout=30).status_code == 200
+        for st in ("shadow", "canary"):
+            assert httpx.post(B + f"/deploys/{did}/rollout", headers=a, json={"stage": st}, timeout=30).status_code == 200
+        r = httpx.post(B + f"/deploys/{did}/rollout", headers=a, json={"stage": "ga"}, timeout=30)
+        assert r.status_code == 409 and r.json()["error"]["code"] == "approval_required"
+        assert httpx.post(B + f"/deploys/{did}/approve", headers=a, json={"decision": "approve", "reason": "test"}, timeout=30).status_code == 200
+        assert httpx.post(B + f"/deploys/{did}/rollout", headers=a, json={"stage": "ga"}, timeout=30).json()["stage"] == "ga"
+        r = httpx.post(B + f"/deploys/{did}/modules", headers=a, json={"ext": {"mod-auth": False}}, timeout=30)
+        assert r.status_code == 400 and r.json()["error"]["code"] == "module_locked"
+        # 롤백: 스냅샷 current ↔ prev
+        r = httpx.post(B + "/deploys/dp-nw-farm-25/rollback", headers=a, json={}, timeout=30).json()
+        assert r["stage"] == "rolled_back" and r["snapshot_current"] == before["snapshot_prev"] and r["snapshot_prev"] == before["snapshot_current"]
+        assert r["card_version_id"] == before["prev_card_version_id"]
+        # 되돌려 놓기: canary → ga(승인) → 버전 되돌림 → canary → ga
+        assert httpx.post(B + "/deploys/dp-nw-farm-25/rollout", headers=a, json={"stage": "canary"}, timeout=30).status_code == 200
+        httpx.post(B + "/deploys/dp-nw-farm-25/approve", headers=a, json={"decision": "approve", "reason": "test restore"}, timeout=30)
+        httpx.post(B + "/deploys/dp-nw-farm-25/rollout", headers=a, json={"stage": "ga"}, timeout=30)
+        httpx.post(B + "/deploys/dp-nw-farm-25/rollback", headers=a, json={}, timeout=30)       # 버전 되돌림(2.0 → 2.1)
+        httpx.post(B + "/deploys/dp-nw-farm-25/rollout", headers=a, json={"stage": "canary"}, timeout=30)
+        httpx.post(B + "/deploys/dp-nw-farm-25/approve", headers=a, json={"decision": "approve", "reason": "test restore 2"}, timeout=30)
+        after = httpx.post(B + "/deploys/dp-nw-farm-25/rollout", headers=a, json={"stage": "ga"}, timeout=30).json()
+        assert after["card_version_id"] == before["card_version_id"] and after["snapshot_current"] == before["snapshot_current"]
+    finally:
+        httpx.delete(B + f"/deploys/{did}", headers=a, timeout=30)
+        with psycopg.connect(config.PG_ADMIN_DSN, autocommit=True) as c:        # 시험 결재 행(test restore) 정리 — S-9 시드 정리 기준
+            c.execute("DELETE FROM approvals WHERE subject_id='dp-nw-farm-25' AND reason LIKE 'test restore%%' AND at >= %s", (t0,))
+            c.execute("UPDATE deploys SET stage='ga' WHERE id='dp-nw-farm-25' AND stage <> 'ga'")
 
 
 def test_audit_log_written(live):

@@ -247,3 +247,179 @@ async def pc_search(request: Request):
     body["limit"] = int(q.get("limit", 100))
     raw = json.dumps(body, sort_keys=True).encode()
     return await _pc("POST", f"{PC}/stac/v1/search", raw, "pc/search", 6 * 3600, "search:" + raw.decode())
+
+
+# ── S-11 글로벌 타일 프록시·캐시(EOX → PC → V-World 사다리) ─────────────────────────
+# 첫 방문 하강 실패 0: 상류 하나가 느리거나 막히면 다음 단으로 · 받은 타일은 디스크 캐시(30일) · 착지 타일은 견적과 분리해 미리 데운다(warm).
+TILE_TTL = 30 * 86400
+TILE_LADDER = [
+    ("eox", "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-{year}_3857/default/g/{z}/{y}/{x}.jpg", 0, 15, None),
+    ("pc", "https://planetarycomputer.microsoft.com/api/data/v1/mosaic/tiles/{searchid}/WebMercatorQuad/{z}/{x}/{y}@1x.png"
+           "?collection=sentinel-2-l2a&assets=visual&asset_bidx=visual|1,2,3&nodata=0", 8, 14, "searchid"),
+    ("vworld", "https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg", 5, 19, None),
+]
+_tile_stats = {"hit": 0, "miss": 0, "fail": 0, "by_source": {}}
+
+
+def _tile_in_korea(z: int, x: int, y: int) -> bool:
+    import math
+    n = 2 ** z
+    lon = x / n * 360 - 180
+    lat = math.degrees(math.atan(math.sinh(math.pi * (1 - 2 * y / n))))
+    return 124.0 <= lon <= 132.5 and 32.5 <= lat <= 39.5
+
+
+async def fetch_tile(z: int, x: int, y: int, year: str = "2025", searchid: str | None = None, only: str | None = None) -> tuple[bytes, str, str, str]:
+    """→ (본문, content-type, 단 이름, 캐시 hit|miss). 모든 단 실패면 ApiError(upstream_error)."""
+    tried = []
+    for name, tpl, zmin, zmax, need in TILE_LADDER:
+        if only and name != only:
+            continue
+        if not (zmin <= z <= zmax):
+            continue
+        if need == "searchid" and not searchid:
+            continue
+        if name == "vworld" and not _tile_in_korea(z, x, y):
+            continue
+        ck = f"{name}/{year if name == 'eox' else (searchid or '')}/{z}/{x}/{y}"
+        body, meta = cache_get("tiles", ck, TILE_TTL)
+        if body is not None:
+            _tile_stats["hit"] += 1
+            return body, meta["ctype"], name, "hit"
+        url = tpl.format(z=z, x=x, y=y, year=year, searchid=searchid or "")
+        try:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(6.0, connect=3.0), transport=transport,
+                                         headers={"User-Agent": "LandXI-gateway/0.1"}) as c:
+                r = await c.get(url)
+            ctype = r.headers.get("content-type", "")
+            if r.status_code == 200 and ctype.startswith("image/") and len(r.content) > 100:
+                cache_put("tiles", ck, r.content, ctype, {"source": name})
+                _tile_stats["miss"] += 1
+                _tile_stats["by_source"][name] = _tile_stats["by_source"].get(name, 0) + 1
+                return r.content, ctype, name, "miss"
+            tried.append({"source": name, "status": r.status_code})
+        except httpx.HTTPError as e:
+            tried.append({"source": name, "error": type(e).__name__})
+    _tile_stats["fail"] += 1
+    raise ApiError("upstream_error", "영상 타일을 받지 못했습니다", {"tried": tried}, status=502)
+
+
+@router.get("/proxy/tiles/global/{z}/{x}/{y}")
+async def global_tile(z: int, x: int, y: int, year: str = "2025", searchid: str | None = None, source: str | None = None):
+    """사다리 타일(인증 불필요 · 공개 영상만) — 응답 헤더 X-LX-Tile-Source(eox|pc|vworld) · X-LX-Cache(hit|miss)."""
+    if not (0 <= z <= 19) or not (0 <= x < 2 ** z) or not (0 <= y < 2 ** z):
+        raise ApiError("bad_request", "타일 좌표 오류")
+    body, ctype, src, cache = await fetch_tile(z, x, y, year, searchid, source)
+    return Response(content=body, media_type=ctype, headers={"X-LX-Cache": cache, "X-LX-Tile-Source": src,
+                                                            "Cache-Control": "public, max-age=86400", "Access-Control-Allow-Origin": "*",
+                                                            "Access-Control-Expose-Headers": "X-LX-Cache, X-LX-Tile-Source"})
+
+
+def _tiles_for(bbox: list[float], z: int) -> list[tuple[int, int, int]]:
+    import math
+
+    def tx(lon):
+        return min(2 ** z - 1, max(0, int((lon + 180) / 360 * 2 ** z)))
+
+    def ty(lat):
+        la = math.radians(max(min(lat, 85.0), -85.0))
+        return min(2 ** z - 1, max(0, int((1 - math.log(math.tan(la) + 1 / math.cos(la)) / math.pi) / 2 * 2 ** z)))
+    x0, x1 = sorted((tx(bbox[0]), tx(bbox[2])))
+    y0, y1 = sorted((ty(bbox[1]), ty(bbox[3])))
+    return [(z, x, y) for x in range(x0, x1 + 1) for y in range(y0, y1 + 1)]
+
+
+@router.post("/proxy/tiles/warm", status_code=202)
+async def warm_tiles(body: dict, request: Request):
+    """착지 데우기(견적과 분리) — {bbox, zmin, zmax, year?, searchid?} · 최대 400 타일 · 백그라운드. 로그인 필요."""
+    import asyncio
+    from .deps import require
+    require(principal(request))
+    bb = body.get("bbox")
+    if not (isinstance(bb, list) and len(bb) == 4):
+        raise ApiError("bad_request", "bbox = [minx,miny,maxx,maxy]")
+    zmin, zmax = int(body.get("zmin", 6)), int(body.get("zmax", 12))
+    tiles = []
+    for z in range(max(0, zmin), min(zmax, 16) + 1):
+        tiles += _tiles_for([float(v) for v in bb], z)
+        if len(tiles) > 400:
+            break
+    tiles = tiles[:400]
+    year, sid = str(body.get("year") or "2025"), body.get("searchid")
+
+    async def run():
+        sem = asyncio.Semaphore(8)
+
+        async def one(t):
+            async with sem:
+                try:
+                    await fetch_tile(*t, year=year, searchid=sid)
+                except Exception:
+                    pass
+        await asyncio.gather(*(one(t) for t in tiles))
+    asyncio.get_running_loop().create_task(run())
+    return {"queued": len(tiles), "minzoom": zmin, "maxzoom": zmax, "as_of": dt.datetime.now(KST).isoformat(timespec="seconds")}
+
+
+@router.get("/proxy/tiles/stats")
+async def tile_stats(request: Request):
+    from .deps import require
+    from .envelope import env
+    require(principal(request), lx=True)
+    s = _tile_stats
+    return {"hit": env(s["hit"], "tiles", "measured", "게이트웨이 타일 캐시(기동 후)"), "miss": env(s["miss"], "tiles", "measured", "상류 받음"),
+            "fail": env(s["fail"], "tiles", "measured", "모든 단 실패"),
+            "by_source": {k: env(v, "tiles", "measured", f"상류 {k}") for k, v in s["by_source"].items()},
+            "ladder": [n for n, *_ in TILE_LADDER]}
+
+
+# ── 월별 S2 지수 사전 계산(S-11) — 해외 배포본 AOI 의 최근 N개월을 index 작업으로 미리 · 결과는 index_results ──────────
+@router.get("/proxy/global/s2-index")
+async def s2_index(request: Request, deploy_id: str):
+    """사전 계산된 월별 지수(가장 최근 완료 index 작업) — 화면은 착지 즉시 월 막대를 그린다(대기 0)."""
+    from .deps import db, require
+    from .envelope import env
+    p = require(principal(request))
+    async with db(p) as conn:
+        d = await conn.fetchrow("SELECT id, tenant_id FROM deploys WHERE id=$1", deploy_id)
+        if not d:
+            raise ApiError("not_found", f"deploy {deploy_id} 없음")
+        j = await conn.fetchrow("SELECT id, finished_at FROM jobs WHERE kind='index' AND state='done' AND (deploy_id=$1 OR (tenant_id=$2 AND deploy_id IS NULL)) "
+                                "AND NOT coalesce(test,false) ORDER BY finished_at DESC NULLS LAST LIMIT 1", deploy_id, d["tenant_id"])
+        rows = await conn.fetch("SELECT key, metrics FROM index_results WHERE job_id=$1 ORDER BY key", j["id"]) if j else []
+    fin = j["finished_at"].isoformat() if j and j["finished_at"] else None
+    months = []
+    for r in rows:
+        m = r["metrics"] or {}
+        nd = m.get("ndvi_mean")
+        months.append({"month": r["key"], "ndvi_mean": nd if isinstance(nd, dict) else env(nd, "ndvi", m.get("basis", "measured") if m.get("basis") in
+                                                                                            ("measured", "estimate", "demo") else "measured",
+                                                                                            "Sentinel-2 L2A 월 지수", m.get("error"), as_of=fin)})
+    return {"deploy_id": deploy_id, "job_id": j["id"] if j else None, "months": months, "precomputed": bool(months),
+            "as_of": dt.datetime.now(KST).isoformat(timespec="seconds")}
+
+
+@router.post("/proxy/global/s2-index/precompute", status_code=202)
+async def s2_precompute(body: dict, request: Request):
+    """최근 N개월(기본 6) 지수 작업을 큐에 — kind index · CPU 워커(GPU 0). lx admin/staff 또는 그 기관 manager."""
+    from . import jobs as jobs_mod
+    from .deps import db, require
+    p = require(principal(request))
+    did = body.get("deploy_id")
+    n = max(1, min(int(body.get("months", 6)), 12))
+    async with db(p) as conn:
+        d = await conn.fetchrow("SELECT id, tenant_id, ST_AsGeoJSON(ST_Envelope(aoi))::json AS env FROM deploys WHERE id=$1", did)
+    if not d:
+        raise ApiError("not_found", f"deploy {did} 없음")
+    y, m = dt.date.today().year, dt.date.today().month
+    months = []
+    for _ in range(n):
+        m -= 1
+        if m == 0:
+            y, m = y - 1, 12
+        months.append(f"{y}-{m:02d}")
+    months.reverse()
+    res = await jobs_mod.submit({"kind": "index", "model_id": body.get("model_id") or "index/ndvi_pc", "deploy_id": did,
+                                 "aoi": d["env"], "params": {"months": months, "cloud_max": 20}, "label": f"S2 월별 사전 계산 · {did}",
+                                 "test": bool(body.get("test"))}, request)
+    return {"job_id": res["job"]["id"], "months": months, "events_url": res["events_url"]}

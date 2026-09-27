@@ -82,17 +82,77 @@ def pool_of(model) -> str:
 async def active_workers(pool: str) -> list[str]:
     r = await redis()
     out = []
-    async for k in r.scan_iter(match="worker:*:hb"):
+    async for k in r.scan_iter(match="worker:*:hb", count=2000):
         h = await r.hgetall(k)
         if h.get("pool") == pool:
             out.append(h.get("id"))
     return sorted(w for w in out if w)
 
 
+# 작업 상한(S-8 · 서버측 shard 계획의 천장) — 넘으면 too_large(쪼개서 다시). 값은 이 PC(A6000 1장 고부하) 기준 [추정 초기값].
+SHARD_CAP = {"infer": 20000, "reinfer": 120000, "index": 120, "survey": 5000, "join": 5000, "tile": 2, "train": 1}
+TRAIN_EPOCHS_MAX = 50
+
+
+async def _quote_train_tile(p: Principal, body: dict, kind: str) -> dict:
+    """kind train(학습 · GPU 임대) · tile(영상 등록 타일 · CPU) 견적 — 모델 추론 견적과 같은 모양."""
+    reasons: list[str] = []
+    opts = dict(body.get("options") or {})
+    tenant = "lx"
+    model = None
+    if kind == "train":
+        if not (p.is_lx and p.role in ("staff", "admin")):
+            raise ApiError("forbidden", "학습은 LX 직원·관리자만")
+        base = body.get("base_model") or opts.get("base_model")
+        samples = body.get("samples") or opts.get("samples")
+        async with db(realm="lx") as conn:
+            model = await conn.fetchrow("SELECT * FROM models WHERE id=$1", base) if base else None
+            busy = await conn.fetchval("SELECT count(*) FROM jobs WHERE kind='train' AND state IN ('queued','running')")
+        if not model or not model["weights_uri"]:
+            raise ApiError("not_found", "기반 모델(가중치)이 없습니다", {"base_model": base})
+        from workers.registry_scan import load_adapter  # noqa: F401  (어댑터 등록 확인)
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("lx_train_probe", str(config.SERVER_ROOT / "adapters" / "adapter_train_yolo.py"))
+        mod = importlib.util.module_from_spec(spec)
+        import sys as _s
+        _s.path.insert(0, str(config.SERVER_ROOT))
+        spec.loader.exec_module(mod)
+        if not mod.dataset_yaml(samples):
+            raise ApiError("not_found", "학습 표본이 없습니다", {"samples": samples, "allowed": list(mod.DATASETS)})
+        gpus = int(opts.get("gpus", 1) or 1)
+        pw = config.load_yaml("pools").get("power", {}) or {}
+        if gpus > int(pw.get("max_hot_gpus", 1)) or busy:
+            reasons.append("power_budget")          # 동시 고부하 GPU ≤ max_hot(1) — 두 번째 학습·다중 GPU 학습은 거절
+        ep = int(opts.get("epochs", 10))
+        if ep > TRAIN_EPOCHS_MAX:
+            reasons.append("too_large")
+        opts.update({"base_model": base, "samples": samples, "region": body.get("region") or opts.get("region"),
+                     "epochs": min(ep, TRAIN_EPOCHS_MAX), "imgsz": int(opts.get("imgsz", 640)), "batch": int(opts.get("batch", 8))})
+        adapter, pool, shards_n = "train/yolo", config.POOL, 1
+        gpu_s = env(None, "gpu_s", "estimate", "학습 실측 없음", "첫 학습 뒤 채워짐")
+        eta = env(None, "s", "estimate", "학습 실측 없음", "첫 학습 뒤 채워짐")
+    else:
+        if not (p.is_lx and p.role in ("staff", "admin")):
+            raise ApiError("forbidden", "영상 등록은 LX 직원·관리자만")
+        adapter, pool, shards_n = "tile/cog", "cpu", 2
+        gpu_s = env(0, "gpu_s", "estimate", "kind tile — CPU 워커", "GPU 사용 없음")
+        eta = await eta_estimate(adapter, shards_n)
+    if shards_n > SHARD_CAP.get(kind, 10 ** 9):
+        reasons.append("too_large")
+    return {"area_km2": env(None, "km2", "measured", "-", "학습·타일 작업 — 면적 없음"), "shards": shards_n,
+            "shards_env": env(shards_n, "count", "measured", f"plan({adapter})"), "gpu_s": gpu_s, "eta_s": eta,
+            "quota": {"tenant_id": tenant, "dim": "gpu_s_month", "remaining": env(None, "gpu_s", "measured", "quotas(lx)", "무제한"), "policy": "queue_low"},
+            "allowed": not reasons, "reasons": reasons, "pool": pool, "kind": kind, "demo": False,
+            "power_budget": await power_budget() if pool != "cpu" else None,
+            "_aoi": None, "_tenant": tenant, "_model": dict(model) if model else None, "_img": None, "_adapter": adapter, "_opts": opts}
+
+
 async def build_quote(p: Principal, body: dict) -> dict:
     kind = body.get("kind", "infer")
-    if kind not in ("infer", "reinfer", "index", "survey", "join"):
-        raise ApiError("bad_request", f"kind {kind} — infer|reinfer|index|survey|join")
+    if kind not in ("infer", "reinfer", "index", "survey", "join", "train", "tile"):
+        raise ApiError("bad_request", f"kind {kind} — infer|reinfer|index|survey|join|train|tile")
+    if kind in ("train", "tile"):
+        return await _quote_train_tile(p, body, kind)
     demo = bool(body.get("demo"))
     opts = dict(body.get("options") or {})
     chip = int(opts.get("chip", 1024))
@@ -176,6 +236,10 @@ async def build_quote(p: Principal, body: dict) -> dict:
     req = gpu_s["value"] or 0
     if q["hard"] is not None and q["used"] + req > q["hard"] and q["policy"] == "reject":
         reasons.append("quota_exceeded")
+    if shards_n > SHARD_CAP.get(kind, 10 ** 9):
+        reasons.append("too_large")                 # 서버측 shard 계획 상한(S-8) — AOI 를 나눠 다시
+    if int(opts.get("gpus", 1) or 1) > int((config.load_yaml("pools").get("power", {}) or {}).get("max_hot_gpus", 1)):
+        reasons.append("power_budget")              # 동시 고부하 GPU 상한(전력 예산 · 1급 제약)
     area_env = env(round(area, 4) if area is not None else None, "km2", "measured", area_src,
                    None if area is not None else ("AOI 없음(읍면동 목록 · 규칙 재평가)" if kind in ("survey", "join") else None))
     return {
@@ -405,7 +469,9 @@ async def submit(body: dict, request: Request):
     q = await build_quote(p, body)
     if not q["allowed"]:
         code = q["reasons"][0]
-        raise ApiError(code, f"제출 불가: {', '.join(q['reasons'])}", {"reasons": q["reasons"]})
+        msg = {"power_budget": "전력 예산 초과 — 동시 고부하 GPU 는 1장까지입니다", "too_large": "작업이 너무 큽니다 — 범위를 나눠 주세요"}.get(code)
+        raise ApiError(code, msg or f"제출 불가: {', '.join(q['reasons'])}", {"reasons": q["reasons"]},
+                       status=409 if code == "power_budget" else None)
     prio = int(body.get("priority", 0 if body.get("demo") else (1 if body.get("kind") == "reinfer" else 0)))
     tenant = q["_tenant"]
     qpol = await quota_mod.remaining(tenant, "gpu_s_month")
@@ -424,13 +490,17 @@ async def submit(body: dict, request: Request):
             opts[k] = body[k]
     if q.get("_adapter"):
         opts.setdefault("adapter", q["_adapter"])
+    if q.get("_opts"):
+        opts.update(q["_opts"])
+    is_test = bool(body.get("test")) or str(body.get("label") or "").lower().startswith(("pytest", "test/"))
     async with db(p) if p.realm == "tenant" else db(realm="lx") as conn:
         await conn.execute(
             "INSERT INTO jobs(id, tenant_id, submitted_by, kind, state, priority, demo, pool, model_id, imagery_id, deploy_id, card_id, aoi, "
-            "options, shards_total, result_set, label) VALUES ($1,$2,$3,$4,'queued',$5,$6,$7,$8,$9,$10,$11,"
-            "CASE WHEN $12::text IS NULL THEN NULL ELSE ST_SetSRID(ST_GeomFromGeoJSON($12),4326) END,$13,$14,$15,$16)",
-            job_id, tenant, p.user_id, q["kind"], prio, demo, q["pool"], body.get("model_id"), body.get("imagery_id"),
-            body.get("deploy_id"), body.get("card_id"), json.dumps(aoi) if aoi else None, opts, q["shards"], rs, body.get("label"))
+            "options, shards_total, result_set, label, test) VALUES ($1,$2,$3,$4,'queued',$5,$6,$7,$8,$9,$10,$11,"
+            "CASE WHEN $12::text IS NULL THEN NULL ELSE ST_SetSRID(ST_GeomFromGeoJSON($12),4326) END,$13,$14,$15,$16,$17)",
+            job_id, tenant, p.user_id, q["kind"], prio, demo, q["pool"], body.get("model_id") or (opts.get("base_model") if q["kind"] == "train" else None),
+            body.get("imagery_id") or (opts.get("imagery_id") if q["kind"] == "tile" else None),
+            body.get("deploy_id"), body.get("card_id"), json.dumps(aoi) if aoi else None, opts, q["shards"], rs, body.get("label"), is_test)
         await audit(conn, p, "job.submit", job_id, None, {"kind": q["kind"], "model_id": body.get("model_id"), "imagery_id": body.get("imagery_id"),
                                                            "demo": demo, "priority": prio})
     r = await redis()
@@ -457,14 +527,32 @@ async def submit(body: dict, request: Request):
 
 
 @router.get("/jobs")
-async def list_jobs(request: Request, state: str | None = None, tenant_id: str | None = None, limit: int = 50):
+async def list_jobs(request: Request, state: str | None = None, tenant_id: str | None = None, limit: int = 50, include_test: int | None = None,
+                    kind: str | None = None, since: str | None = None):
+    """pytest·시험 작업(test=true)은 기본 제외(관제·콘솔 목록 · S-9 시드 정리) — include_test=1 이면 포함.
+    ?since=YYYY-MM-DD[THH:MM] → 그 뒤 작업만 + 기간 전체 건수(count · 목록 상한 500 과 무관 · ops-infra 요청)."""
     p = require(principal(request))
+    since_ts = None
+    if since:
+        try:
+            since_ts = dt.datetime.fromisoformat(since.replace("Z", "+00:00"))
+            if since_ts.tzinfo is None:
+                since_ts = since_ts.replace(tzinfo=KST)
+        except ValueError:
+            raise ApiError("bad_request", "since = YYYY-MM-DD 또는 ISO 시각")
     r = await redis()
+    where = ("($1::text IS NULL OR state=$1) AND ($2::text IS NULL OR tenant_id=$2) AND ($3 OR NOT coalesce(test,false)) "
+             "AND ($4::text IS NULL OR kind=$4) AND ($5::timestamptz IS NULL OR created_at >= $5)")
+    args = (state, tenant_id, bool(include_test), kind, since_ts)
     async with db(p) as conn:
-        rows = await conn.fetch(f"SELECT {JOB_COLS} FROM jobs WHERE ($1::text IS NULL OR state=$1) AND ($2::text IS NULL OR tenant_id=$2) "
-                                "ORDER BY created_at DESC LIMIT $3", state, tenant_id, min(limit, 500))
+        rows = await conn.fetch(f"SELECT {JOB_COLS} FROM jobs WHERE {where} ORDER BY created_at DESC LIMIT {max(1, min(limit, 500))}", *args)
+        n_all = await conn.fetchval(f"SELECT count(*) FROM jobs WHERE {where}", *args) if since_ts else None
     items = [await job_dict(x, await r.hgetall(f"job:{x['id']}")) for x in rows]
-    return {"items": items, "total": len(items), "as_of": now_iso()}
+    out = {"items": items, "total": len(items), "as_of": now_iso()}
+    if since_ts:
+        out["since"] = since_ts.isoformat(timespec="seconds")
+        out["count"] = env(int(n_all or 0), "count", "recorded", "jobs(created_at ≥ since)")
+    return out
 
 
 async def get_job_row(p: Principal, job_id: str):

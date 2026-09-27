@@ -4,105 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>내 대장 × AI · Land-XI</title>
-<meta name="description" content="지자체가 올린 행정 대장을 AI 판독과 필지로 결합해, 대장과 다른 필지를 바로 지도에 보여 준다.">
+<meta name="description" content="기관이 올린 행정 대장을 AI 판독과 필지로 결합해, 대장과 어긋난 필지를 바로 지도에 보여 줍니다.">
 <link rel="icon" href="../../assets/images/favicon_landxi.png">
-<link rel="stylesheet" href="../../proto/fonts-system.css">
-<link rel="stylesheet" href="../../assets/css/v2/tokens-v2.css">
 <link rel="stylesheet" href="../../proto/vendor/maplibre/maplibre-gl.css">
+<link rel="stylesheet" href="../kit/kit.css">
 <link rel="stylesheet" href="gov-fusion.css">
 <script src="../../proto/vendor/maplibre/maplibre-gl.js"></script>
 <script src="../../xi/vendor/pmtiles/pmtiles.js"></script>
 <script type="module" src="app.js"></script>
 </head>
-<body data-stage="imagery" data-state="boot">
-<main class="gf" id="stage">
-  <div class="gf-map" id="map" aria-label="지도"></div>
-  <div class="gf-sweep" id="sweep" hidden aria-hidden="true"></div>
-
-  <header class="gf-mast cw-glass" id="mast">
-    <img src="../../assets/brand/vector/landxi-wordmark-dark.svg" alt="Land-XI" height="13">
-    <span class="gf-mast-sep" aria-hidden="true"></span>
-    <b class="gf-mast-region" id="mast-region"></b>
-    <span class="gf-fresh" id="fresh" title=""><i></i></span>
-    <button type="button" class="gf-mast-out" id="btn-out" hidden>나가기</button>
-  </header>
-
-  <!-- 왼쪽 시트: 올리기 → 열 확인 → 결합 → 융합 -->
-  <section class="gf-sheet cw-glass" id="sheet" aria-live="polite" hidden>
-    <!-- 0 · 올리기 -->
-    <div class="gf-pane" data-pane="drop">
-      <h1 class="gf-h">내 대장 × AI</h1>
-      <label class="gf-drop" id="drop">
-        <input type="file" id="file" accept=".xlsx,.csv,.txt" hidden>
-        <svg width="28" height="28" aria-hidden="true"><use href="../../assets/icons.svg#i-upload"/></svg>
-        <b>대장 파일을 여기에</b>
-        <span>XLSX · CSV</span>
-      </label>
-      <ul class="gf-todo" id="todo"></ul>
-    </div>
-
-    <!-- 1 · 열 확인 -->
-    <div class="gf-pane" data-pane="cols" hidden>
-      <p class="gf-file" id="file-name"></p>
-      <h2 class="gf-h2">열 확인</h2>
-      <table class="gf-cols"><tbody id="cols"></tbody></table>
-      <p class="gf-hint" id="cols-hint"></p>
-      <div class="gf-acts">
-        <button type="button" class="gf-btn gf-btn--ink" id="btn-join">결합</button>
-        <button type="button" class="gf-btn gf-btn--br" id="btn-reset1">다른 파일</button>
-      </div>
-    </div>
-
-    <!-- 2 · 결합 · 융합 -->
-    <div class="gf-pane" data-pane="fused" hidden>
-      <p class="gf-file"><span id="fused-name"></span><span class="gf-rate" id="rate"></span></p>
-      <div class="gf-ladder" id="ladder"></div>
-      <div class="gf-hero" id="hero">
-        <span class="gf-hero-l" id="hero-l"></span>
-        <b class="gf-hero-n" id="hero-n">—</b>
-      </div>
-      <ul class="gf-cats" id="cats"></ul>
-      <ol class="gf-list" id="list"></ol>
-      <div class="gf-acts gf-acts--end">
-        <button type="button" class="gf-btn gf-btn--br" id="btn-csv">내려받기</button>
-        <button type="button" class="gf-btn gf-btn--br" id="btn-reset2">다른 파일</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- 필지 카드: 대장 · AI · V-World 세 값 나란히 -->
-  <aside class="gf-card cw-glass" id="card" hidden aria-label="필지">
-    <button type="button" class="gf-x" id="card-x" aria-label="닫기"><svg width="16" height="16"><use href="../../assets/icons.svg#i-close"/></svg></button>
-    <h3 id="card-t"></h3>
-    <dl class="gf-tri" id="card-tri"></dl>
-    <div class="gf-card-act" id="card-act"></div>
-  </aside>
-
-  <!-- ⌘K: 말 한마디 → 계획 3줄 → 지도 -->
-  <div class="gf-ask" id="ask" hidden>
-    <ol class="gf-plan cw-glass" id="plan" hidden></ol>
-    <form class="gf-askbar cw-glass" id="ask-form" autocomplete="off">
-      <svg width="18" height="18" aria-hidden="true"><use href="../../assets/icons.svg#i-search"/></svg>
-      <input id="ask-in" type="text" placeholder="대장에 물어보기" aria-label="대장에 물어보기" disabled>
-      <kbd>Ctrl K</kbd>
-    </form>
-  </div>
-
-  <!-- 정문: 기관 로그인(실제 인증) -->
-  <div class="gf-gate" id="gate" hidden>
-    <form class="gf-gate-card cw-glass" id="gate-form">
-      <img src="../../assets/brand/vector/landxi-wordmark-dark.svg" alt="Land-XI" height="16">
-      <p class="gf-gate-t">기관 로그인</p>
-      <label><span>기관</span><select id="g-tenant"></select></label>
-      <label><span>아이디</span><input id="g-login" autocomplete="username" required></label>
-      <label><span>비밀번호</span><input id="g-pw" type="password" autocomplete="current-password" required></label>
-      <p class="gf-gate-err" id="g-err" role="alert"></p>
-      <button type="submit" class="gf-btn gf-btn--ink gf-btn--wide">들어가기</button>
-    </form>
-  </div>
-
-  <div class="gf-toast" id="toast" role="status" hidden></div>
-  <pre class="gf-dev" id="dev" hidden></pre>
-</main>
-</body>
+<body class="t"></body>
 </html>

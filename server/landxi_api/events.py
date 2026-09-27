@@ -2,7 +2,7 @@
 
 /events/jobs/{id}   events:{job} 스트림 tail · id = Redis entry id · Last-Event-ID(헤더) 또는 ?last_event_id= 로 재개(XRANGE (id +)
                     · 10s ': hb' · X-Accel-Buffering: no · Cache-Control: no-store. 끝난 작업도 스트림이 남아 있는 동안 재생.
-/events/ops         lx admin · Origin 8702(또는 Origin 없음 = 서버 간). F1-C 폴러 스트림 ops:gpu 와 게이트웨이 ops:events(deploy.changed ·
+/events/ops         lx admin · Origin 4173(앱 ops-core) · 8702(관제) · 없음(서버 간) — S-9 관제 일원화. F1-C 폴러 스트림 ops:gpu 와 게이트웨이 ops:events(deploy.changed ·
                     job.state · usage.delta) · ops:alerts 를 한 줄로 합친다. queue.sample 은 게이트웨이가 2s 마다 값이 바뀌면 낸다.
                     id = 'g:<id>|e:<id>|a:<id>' (세 스트림 커서) → 재개.
 """
@@ -94,10 +94,10 @@ def _ops_id(c: dict) -> str:
 
 @router.get("/events/ops")
 async def ops_events(request: Request):
-    p = require(principal(request), admin=True)
+    p = require(principal(request), admin=True)          # 판정은 역할(lx admin) — 오리진은 허용 목록(4173 앱 · 8702 관제)이면 된다(S-9 관제 일원화)
     origin = request.headers.get("origin")
-    if origin and origin != config.OPS_ORIGIN:
-        raise ApiError("forbidden", "관제 스트림은 LX/OPS origin(:8702) 전용")
+    if origin and origin not in config.CORS_ORIGINS:
+        raise ApiError("forbidden", "허용되지 않은 오리진")
     r = await redis()
     cur = _parse_ops_id(_last_id(request))
     streams = {"g": "ops:gpu", "e": "ops:events", "a": "ops:alerts"}

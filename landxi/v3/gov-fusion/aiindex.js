@@ -5,7 +5,7 @@
 const Z = 14;
 
 export class AiIndex {
-  constructor(url) { this.url = url; this.pm = new pmtiles.PMTiles(url); this.map = new Map(); this.tiles = new Set(); this.ms = 0; this.bytes = 0; }
+  constructor(url, pm) { this.url = url; this.pm = pm || new pmtiles.PMTiles(url); this.map = new Map(); this.tiles = new Set(); this.ms = 0; this.bytes = 0; }
 
   /** bbox 들을 덮는 z14 타일을 모두 읽는다. onTile(done,total) */
   async load(bboxes, onTile) {
@@ -31,6 +31,14 @@ export class AiIndex {
     return N;
   }
   get(pnu) { return this.map.get(pnu); }
+  /** 이어 열기용 — 대장 필지만 뽑아 두고(IndexedDB), 다음 방문엔 타일을 다시 읽지 않는다 */
+  dump(pnus) {
+    const K = ['jimok', 'yongdo', 'nongup', 'area_m2', 'bld_m2', 'crop_m2', 'park_m2', 'gh_m2', 'r23_farm'];
+    const out = [];
+    for (const pn of pnus) { const e = this.map.get(pn); if (!e) continue; const p = { pnu: pn }; for (const k of K) if (e.p[k] !== undefined) p[k] = e.p[k]; out.push([pn, p, e.bb]); }
+    return out;
+  }
+  seed(list) { for (const [pn, p, bb] of list || []) if (!this.map.has(pn)) this.map.set(pn, { p, bb }); return this; }
   get size() { return this.map.size; }
 }
 
@@ -114,6 +122,6 @@ class Pbf {
     return r;
   }
   string() { const len = this.varint(); const s = td.decode(this.u8.subarray(this.pos, this.pos + len)); this.pos += len; return s; }
-  skip(w) { if (w === 0) this.varint(); else if (w === 1) this.pos += 8; else if (w === 2) this.pos += this.varint(); else if (w === 5) this.pos += 4; }
+  skip(w) { if (w === 0) this.varint(); else if (w === 1) this.pos += 8; else if (w === 2) { const l = this.varint(); this.pos += l; } else if (w === 5) this.pos += 4; }
 }
 const td = new TextDecoder();

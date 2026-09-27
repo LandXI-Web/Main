@@ -1,0 +1,15 @@
+# L1 대장 농지 위 건물 — 행정데이터(농지대장) × AI 판독 × V-World 연속지적. 임계는 [추정 초기값](법령 기준 아님 · 현장조사로 보정)
+id: L1
+name: 대장 농지 위 건물
+kind: farm_ledger
+requires: [farm_ledger]
+condition: "농지대장에 오른 필지 안에 AI 건물 합계 ≥ {L1_bld_m2:.0f}㎡"
+when_:
+  all:
+    - {op: exists, left: ledger.farm_ledger.row}
+    - {op: nin, left: ledger.farm_ledger.use, right: [농막, 축사, 창고, 농업용시설, 버섯재배사]}
+    - {op: gte, left: ai.a23_bld_in_m2, right: {th: L1_bld_m2}}
+thresholds: {L1_bld_m2: 33.0}
+base_score: 45
+evidence: {ledger: status, ai: bld, vworld: jimok}
+note: "대장상 농업용 시설(농막·축사 등)은 제외 · 건축물대장 대조 전"

@@ -111,6 +111,30 @@ async def xyz(folder: str, z: int, x: int, y: int):
     return Response(content=p.read_bytes(), media_type="image/webp", headers={"Cache-Control": "public, max-age=86400"})
 
 
+@router.get("/tiles/xyz/public/{set_name}/{z}/{x}/{y}.{ext}")
+async def xyz_public(set_name: str, z: int, x: int, y: int, ext: str):
+    """공개 타일 폴더(S-4 · 서명 면제) — LX_DATA_ROOT/tiles/public/{set}/ · 공개 결과(시군구 집계 등)만 둔다. 원본 영상 0."""
+    if "/" in set_name or ".." in set_name or ext not in ("pbf", "mvt", "webp", "png"):
+        raise ApiError("not_found")
+    p = config.DATA_ROOT / "tiles" / "public" / set_name / str(z) / str(x) / f"{y}.{ext}"
+    if not p.exists():
+        return Response(status_code=204)
+    mt = {"pbf": "application/x-protobuf", "mvt": "application/vnd.mapbox-vector-tile", "webp": "image/webp", "png": "image/png"}[ext]
+    return Response(content=p.read_bytes(), media_type=mt, headers={"Cache-Control": "public, max-age=86400"})
+
+
+@router.get("/files/public/{name}")
+async def files_public(name: str):
+    """공개 파일(S-6 카드 크롭 등 · 서명 면제) — LX_DATA_ROOT/tiles/public/files/ 의 이미지만."""
+    if "/" in name or ".." in name or not name.lower().endswith((".webp", ".png", ".jpg")):
+        raise ApiError("not_found")
+    p = config.DATA_ROOT / "tiles" / "public" / "files" / name
+    if not p.exists():
+        raise ApiError("not_found", "파일 없음")
+    mt = "image/webp" if name.endswith(".webp") else "image/png" if name.endswith(".png") else "image/jpeg"
+    return Response(content=p.read_bytes(), media_type=mt, headers={"Cache-Control": "public, max-age=86400"})
+
+
 @router.get("/tiles/sign")
 async def tiles_sign(set: str, request: Request):
     p = require(principal(request))

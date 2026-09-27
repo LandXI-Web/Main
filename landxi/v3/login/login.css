@@ -1,142 +1,71 @@
-/* v3 정문 — F3 §7-⑤ · 법전 v2(+v2.1 글 다이어트 제안)
-   구도: 실결과 판(영상 무대 · 풀블리드) 위에 오른쪽 종이 문 520. 관리자 = 문이 잉크로 반전(clip-path 원 · Vantor 반전 섹션).
-   색은 결과 위에서만(청록). 크롬은 잉크 · 흰 · 회. 라운드 0. */
+/* v3 정문 — 법전 v2.2 '토스 톤'(design/system-v2.2-toss.md) · 토큰은 ../shared/tokens-v2.2.css 만.
+   구도: 회백 바탕(--bg-0) 위 좌 흰 문 카드 440(라운드 24 · 그림자 0) + 우 둥근 24 히어로 카드(실결과 지도 3장면).
+   역할 구분은 색이 아니라 탭 밑줄. 잉크 반전 · 유리 · 검정 판 0. 라운드는 24 · 16 · 8 만. */
 
-:root {
-  --door: 520px;
-  --pad: 56px;
-  --paper: #FFFFFF;
-  --ink: #010102;
-  --sub: #686868;
-  --rule: #DDDDDD;
-  --warn: #D1352B;
-  --ai: #0FA9A0;
-}
+:root { --door: 440px; }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
-body.g3 {
-  background: var(--ink);
-  color: var(--ink);
-  font-family: var(--font-body);
-  font-size: 16px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  overflow: hidden;
-  word-break: keep-all;
-}
+body.t { overflow: hidden; }
+[hidden] { display: none !important; }
 .vh { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-.gate { position: fixed; inset: 0; }
+.gate { position: fixed; inset: 0; display: grid; grid-template-columns: var(--door) minmax(0, 1fr); gap: var(--gutter);
+  padding: var(--margin); max-width: calc(var(--content-max) + var(--margin) * 2); margin: 0 auto; }
 
-/* ══ 판 ═══════════════════════════════════════════════════════════ */
-.plate { position: absolute; inset: 0; overflow: hidden; background: #0b0f14;
-  clip-path: inset(0 100% 0 0); }
-.is-ready .plate { clip-path: inset(0 0 0 0); transition: clip-path var(--d-1250) var(--e-arrive); }
-.plate__map { position: absolute; inset: 0; }
-.plate__map .maplibregl-ctrl-bottom-right, .plate__map .maplibregl-ctrl-bottom-left { display: none; }
-/* 캡션 가독용 바닥 음영 — 판 아래 28%만(장식 아님: 글자 대비) */
-.plate__shade { position: absolute; left: 0; right: var(--door); bottom: 0; height: 36%; pointer-events: none;
-  background: linear-gradient(to top, rgba(1,1,2,.62), rgba(1,1,2,0)); }
+/* ══ 등장 — 750 · e-cam · 40px · 스태거 120 (§4) ════════════════════ */
+.e { opacity: 0; transform: translateY(var(--enter-y)); transition: opacity var(--d-750) var(--e-cam), transform var(--d-750) var(--e-cam); }
+.is-ready .e { opacity: 1; transform: none; }
+.is-ready .door__top.e { transition-delay: 0ms; }
+.is-ready .door__h.e { transition-delay: 120ms; }
+.is-ready .door__lead.e { transition-delay: 240ms; }
+.is-ready .form.e { transition-delay: 360ms; }
+.is-ready .door__aux.e, .is-ready .door__foot.e { transition-delay: 480ms; }
+/* 히어로 카드는 0초부터 면이 있다(스틸 · 잉크) — 투명도 등장 없이 20px 만 올라선다 */
+.hero { transform: translateY(var(--enter-y-card)); transition: transform var(--d-750) var(--e-cam); }
+.is-ready .hero { transform: none; }
 
-/* 스윕 — 지역에 도착하면 청록 1px 선이 판을 한 번 지나가고, 지나간 뒤에 결과가 선다(법전 §4 --sweep) */
-.plate__sweep { position: absolute; top: 0; bottom: 0; left: 0; width: 1px; background: var(--ai); opacity: 0; pointer-events: none;
-  box-shadow: -24px 0 24px -12px var(--sweep-color); }
-.plate__sweep.run { animation: sweep var(--d-1000) var(--e-arrive) both; }
-@keyframes sweep { 0% { opacity: .9; transform: translateX(0); } 92% { opacity: .9; } 100% { opacity: 0; transform: translateX(calc(100vw - var(--door))); } }
+/* ══ 문 카드 ═══════════════════════════════════════════════════════ */
+.door { position: relative; display: flex; flex-direction: column; min-height: 0; padding: 40px; overflow: auto; }
+.door__top { height: 16px; }
+.door__mark { display: block; height: 16px; width: auto; }
 
-/* 캡션 — 지역 · 업무 · 숫자 하나 · 신뢰 기호 */
-.cap { position: absolute; left: var(--pad); bottom: 52px; margin: 0; color: #fff; max-width: calc(100vw - var(--door) - 2 * var(--pad)); }
-.cap { transition: opacity var(--d-380) var(--e-ui); }
-.cap.away { opacity: 0; }
-.cap__ticks { display: flex; gap: 6px; margin: 0 0 22px; padding: 0; list-style: none; }
-.cap__ticks li { width: 28px; height: 2px; background: rgba(255,255,255,.28); transition: background var(--d-380) var(--e-ui), width var(--d-380) var(--e-ui); }
-.cap__ticks li.on { width: 56px; background: #fff; }
-.cap__where { display: flex; align-items: baseline; gap: 12px; margin: 0 0 6px; }
-.cap__where b { font-family: var(--font-display); font-weight: 700; font-size: 26px; line-height: 32px; letter-spacing: -.01em; }
-.cap__where span { font-size: 16px; color: rgba(255,255,255,.78); }
-.cap__num { display: flex; align-items: baseline; gap: 10px; margin: 0; }
-.cap__v { font-family: var(--font-display); font-weight: 800; font-size: 44px; line-height: 48px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-.cap__u { font-size: 16px; color: rgba(255,255,255,.86); }
-.cap .t-in { animation: tin var(--d-500) var(--e-arrive) both; }
-@keyframes tin { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+.door__body { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 32px 0; }
+.door__h { margin: 0 0 12px; font: 700 var(--fs-h2)/var(--lh-h2) var(--font-display); letter-spacing: var(--ls-h2); color: var(--ink); }
+.door__lead { margin: 0 0 40px; font: 400 var(--fs-body)/var(--lh-body) var(--font-body); color: var(--sub); }
 
-/* 신뢰 기호 ✓ / ~ — 근거는 호버 한 줄 */
-.sig { position: relative; display: inline-block; margin-left: 2px; padding: 0 0 1px;
-  font: 500 16px/1 var(--font-num); color: rgba(255,255,255,.86); border-bottom: 1px dotted rgba(255,255,255,.6); cursor: help; outline: none; }
-.sig:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
-.sig__tip { position: absolute; left: 0; bottom: calc(100% + 10px); width: max-content; max-width: 420px; padding: 8px 12px;
-  font: 400 14px/20px var(--font-body); color: var(--ink); background: rgba(255,255,255,.92);
-  backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2);
-  box-shadow: var(--elev-2); opacity: 0; visibility: hidden; transform: translateY(4px); pointer-events: none;
-  transition: opacity var(--d-180) var(--e-ui), transform var(--d-180) var(--e-ui), visibility 0s linear var(--d-180); white-space: nowrap; }
-.sig:hover .sig__tip, .sig:focus .sig__tip { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
-
-.plate__credit { position: absolute; right: calc(var(--door) + 16px); bottom: 12px; margin: 0; font: 400 14px/1 var(--font-body);
-  color: rgba(255,255,255,.5); }
-
-/* ══ 문 ═══════════════════════════════════════════════════════════ */
-.door { position: absolute; top: 0; right: 0; bottom: 0; width: var(--door); background: var(--paper); color: var(--ink);
-  clip-path: inset(0 0 0 0); overflow: hidden;
-  --c-ink: var(--ink); --c-sub: var(--sub); --c-rule: var(--rule); --c-bg: var(--paper); }
-.door__ink { position: absolute; inset: 0; background: var(--ink); pointer-events: none;
-  clip-path: circle(0px at var(--ox, 50%) var(--oy, 50%)); transition: clip-path var(--d-1000) var(--e-arrive); }
-.door[data-house="ops"] { --c-ink: #FFFFFF; --c-sub: #A8A8A8; --c-rule: #2A2A2A; --c-bg: var(--ink); color: #fff; }
-.door[data-house="ops"] .door__ink { clip-path: circle(150% at var(--ox, 50%) var(--oy, 50%)); }
-.door, .door * { transition-property: color, border-color, background-color, opacity; transition-duration: var(--d-500); transition-timing-function: var(--e-ui); }
-
-.door__col { position: relative; height: 100%; display: flex; flex-direction: column; padding: 48px var(--pad) 36px; }
-.door__top { height: 20px; position: relative; }
-.door__mark { position: absolute; left: 0; top: 0; height: 18px; width: auto; }
-.door__mark--ink, .door__lx--ink { opacity: 0; }
-.door[data-house="ops"] .door__mark--paper, .door[data-house="ops"] .door__lx--paper { opacity: 0; }
-.door[data-house="ops"] .door__mark--ink, .door[data-house="ops"] .door__lx--ink { opacity: 1; }
-
-.door__body { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 24px 0; }
-.door__h { margin: 0 0 16px; font-family: var(--font-display); font-weight: 800; font-size: 46px; line-height: 54px; letter-spacing: -.025em; color: var(--c-ink); }
-.door__lead { margin: 0 0 32px; font-size: 17px; line-height: 26px; color: var(--c-sub); }
-
-/* 모토 3축 — 한 줄씩. 영문 축 이름 + 한 줄 뜻 */
-.motto { margin: 0 0 36px; padding: 0; list-style: none; border-top: 1px solid var(--c-rule); }
-.motto li { display: grid; grid-template-columns: 172px 1fr; align-items: baseline; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--c-rule); }
-.motto b { font: 500 14px/20px var(--font-num); letter-spacing: .06em; text-transform: uppercase; color: var(--c-ink); }
-.motto span { font-size: 15px; line-height: 20px; color: var(--c-sub); }
-
-/* 계정 3택 — 선택 = 잉크 밑줄이 미끄러진다(물리 반응) */
+/* 계정 3택 — 잉크 밑줄이 미끄러진다. 관리자도 같은 색(§8) */
 .form { margin: 0; }
-.seg { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); margin: 0 0 20px; padding: 0; border: 0; border-bottom: 1px solid var(--c-rule); }
+.seg { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); margin: 0 0 24px; padding: 0; border: 0; border-bottom: 1px solid var(--rule); }
 .seg__c { position: relative; cursor: pointer; }
 .seg__c input { position: absolute; opacity: 0; pointer-events: none; }
-.seg__c span { display: block; padding: 10px 0 12px; text-align: center; font-size: 16px; font-weight: 500; color: var(--c-sub); transition: color var(--d-180) var(--e-ui), transform var(--d-180) var(--e-ui); }
-.seg__c:hover span { color: var(--c-ink); transform: translateY(-2px); }
-.seg__c input:checked + span { color: var(--c-ink); }
-.seg__c input:focus-visible + span { outline: 2px solid var(--cw-accent); outline-offset: -2px; }
-.seg__bar { position: absolute; left: 0; bottom: -1px; width: calc(100% / 3); height: 2px; background: var(--c-ink);
-  transform: translateX(calc(var(--i, 0) * 100%)); transition: transform var(--d-380) var(--e-ui), background-color var(--d-500) var(--e-ui); }
+.seg__c span { display: block; padding: 10px 0 12px; text-align: center; font: 500 var(--fs-label)/var(--lh-label) var(--font-body); color: var(--sub);
+  transition: color var(--d-180) var(--e-ui); }
+.seg__c:hover span, .seg__c input:checked + span { color: var(--ink); }
+.seg__c input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--r-8); }
+.seg__bar { position: absolute; left: 0; bottom: -1px; width: calc(100% / 3); height: 2px; background: var(--ink);
+  transform: translateX(calc(var(--i, 0) * 100%)); transition: transform var(--d-380) var(--e-ui); }
 
-/* 필드 — 밑줄. 포커스는 선이 그어지는 사건 */
-.fld { position: relative; display: block; margin: 0 0 8px; padding-top: 6px; }
-.fld__l { display: block; font-size: 14px; line-height: 16px; color: var(--c-sub); }
-.fld__i { display: block; width: 100%; height: 42px; padding: 0; border: 0; border-bottom: 1px solid var(--c-rule); border-radius: 0;
-  background: transparent; color: var(--c-ink); font: 400 18px/1 var(--font-body); outline: none; }
-.fld__rule { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; background: var(--c-ink); transform: scaleX(0); transform-origin: left;
-  transition: transform var(--d-380) var(--e-ui); }
-.fld__i:focus ~ .fld__rule { transform: scaleX(1); }
-.fld.bad .fld__rule { background: var(--warn); transform: scaleX(1); }
-.door[data-house="ops"] .fld.bad .fld__rule { background: #FF5A4E; }
-.fld__i:-webkit-autofill { -webkit-text-fill-color: var(--c-ink); transition: background-color 9999s; }
+/* 필드 — 라벨 위 · 흰 입력 44 · 라운드 8 · 포커스 = 액센트 링 */
+.fld { display: block; margin: 0 0 12px; }
+.fld__l { display: block; margin: 0 0 6px; font: 500 var(--fs-label)/var(--lh-label) var(--font-body); color: var(--sub); }
+.fld .t-input { font: 400 var(--fs-body)/1 var(--font-body); }
+.fld.bad .t-input { border-color: var(--warn); }
+.fld .t-input:-webkit-autofill { -webkit-text-fill-color: var(--ink); -webkit-box-shadow: 0 0 0 44px var(--bg-1) inset; }
+.fld--org:not([hidden]) { animation: open var(--d-380) var(--e-ui) both; }
+@keyframes open { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+.sel { position: relative; }
+.sel__i { appearance: none; -webkit-appearance: none; padding-right: 40px; cursor: pointer; }
+.sel__c { position: absolute; right: 14px; top: 14px; color: var(--sub); pointer-events: none; }
 
-.msg { margin: 12px 0 0; font-size: 14px; line-height: 20px; color: var(--warn); }
-.door[data-house="ops"] .msg { color: #FF5A4E; }
+.msg { margin: 4px 0 0; font: 500 var(--fs-label)/var(--lh-label) var(--font-body); color: var(--warn); }
 .msg.t-in { animation: tin var(--d-380) var(--e-ui) both; }
+@keyframes tin { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
-/* 1차 행동 = 잉크 채움(관리자 문에서는 흰 채움) */
-.go { position: relative; display: flex; align-items: center; justify-content: space-between; width: 100%; height: 56px; margin: 24px 0 0; padding: 0 20px;
-  border: 0; border-radius: 0; background: var(--c-ink); color: var(--c-bg); font: 500 17px/1 var(--font-body); cursor: pointer; overflow: hidden; }
-.go__a { transition: transform var(--d-180) var(--e-ui); }
-.go:hover .go__a { transform: translateX(4px); }
-.go:focus-visible { outline: 2px solid var(--cw-accent); outline-offset: 2px; }
-.go__line { position: absolute; left: 0; bottom: 0; height: 2px; width: 30%; background: var(--ai); transform: translateX(-100%); opacity: 0; }
+/* 1차 행동 — 잉크 채움 44 · 폭 가득. 진행 막대(액센트)는 기다리는 동안만 */
+.t .go { color: #fff; }
+.go { position: relative; width: 100%; margin: 20px 0 0; overflow: hidden; font-size: var(--fs-body); }
+.go__line { position: absolute; left: 0; bottom: 0; height: 2px; width: 30%; background: var(--accent); transform: translateX(-100%); opacity: 0; }
 .go[aria-busy="true"] { cursor: progress; }
 .go[aria-busy="true"] .go__line { opacity: 1; animation: busy var(--d-1000) var(--e-ui) infinite; }
 @keyframes busy { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
@@ -144,59 +73,170 @@ body.g3 {
 @keyframes nudge { 0%, 100% { transform: none; } 25% { transform: translateX(-4px); } 60% { transform: translateX(4px); } }
 
 .door__aux { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 16px; min-height: 24px; }
-.aux, .resume { padding: 0; border: 0; background: none; font: 400 14px/20px var(--font-body); color: var(--c-sub); cursor: pointer; text-decoration: none;
+.aux { margin-left: auto; padding: 0; border: 0; background: none; font: 500 var(--fs-label)/var(--lh-label) var(--font-body); color: var(--sub); cursor: pointer;
   background-image: linear-gradient(currentColor, currentColor); background-size: 0 1px; background-repeat: no-repeat; background-position: 0 100%;
   transition: background-size var(--d-380) var(--e-ui), color var(--d-180) var(--e-ui); }
-.aux:hover, .resume:hover { color: var(--c-ink); background-size: 100% 1px; }
-.aux { margin-left: auto; }
-.resume { color: var(--c-ink); }
+.aux:hover { color: var(--ink); background-size: 100% 1px; }
+.resume { font-size: var(--fs-label); }
 
-.door__foot { position: relative; height: 18px; }
-.door__lx { position: absolute; left: 0; top: 0; height: 17px; width: auto; }
+.door__foot { height: 15px; }
+.door__foot img { display: block; height: 15px; width: auto; }
 
-/* ══ 서랍 ═════════════════════════════════════════════════════════ */
-.help { position: fixed; inset: 0 0 0 auto; width: var(--door); height: 100%; max-height: none; margin: 0; padding: 0; border: 0;
-  background: var(--paper); color: var(--ink); box-shadow: var(--elev-3); }
-.help::backdrop { background: var(--dim-modal); }
-.help[open] { animation: drawer var(--d-500) var(--e-arrive) both; }
-@keyframes drawer { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
-.help__in { position: relative; padding: 48px var(--pad); }
-.help__h { margin: 0 0 32px; font: 700 26px/32px var(--font-display); }
-.help__dl { margin: 0; border-top: 1px solid var(--rule); }
-.help__dl div { display: grid; grid-template-columns: 150px 1fr; padding: 16px 0; border-bottom: 1px solid var(--rule); }
-.help__dl dt { font-size: 14px; color: var(--sub); }
-.help__dl dd { margin: 0; font-size: 16px; }
-.help__dl .n { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
-.help__x { position: absolute; top: 40px; right: 40px; width: 40px; height: 40px; display: grid; place-items: center; border: 0; background: none; color: var(--ink); cursor: pointer; }
-.help__x:hover svg { transform: rotate(90deg); }
-.help__x svg { transition: transform var(--d-380) var(--e-ui); }
+/* ══ 히어로 카드 — 둥근 24 · 속은 실영상 ═══════════════════════════ */
+.hero { position: relative; min-height: 0; border-radius: var(--r-24); overflow: hidden; background: var(--ink); isolation: isolate; }
+.hero__map { position: absolute; inset: 0; }
+/* 덮개 — 사진 한 장이 0초부터 카드 면을 채운다(첫 장면 스틸 → 이후 떠나는 장면의 마지막 프레임).
+   도착지 영상이 다 차면 750 으로 걷힌다. 기다리는 동안 아주 느리게 다가선다(멈춘 화면처럼 보이지 않게) */
+.hero__cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; user-select: none;
+  transition: opacity var(--d-750) var(--e-ui); transform-origin: 50% 40%; }
+.hero__cover.off { opacity: 0; }
+.hero__cover.drift { animation: drift 9s var(--e-cam) both; }
+@keyframes drift { from { transform: none; } to { transform: scale(1.06); } }
+.hero__map .maplibregl-ctrl-bottom-right, .hero__map .maplibregl-ctrl-bottom-left { display: none; }
+/* 글자 받침(장식 아님) — 법전 §6 '지도 딤 없음'. 3축 글자 바로 밑 30%에만 ≤ .28 로 옅게 · 가독은 text-shadow 가 맡는다 */
+.hero__shade { position: absolute; left: 0; right: 0; bottom: 0; height: 30%; pointer-events: none;
+  background: linear-gradient(to top, rgba(17,19,23,.28), rgba(17,19,23,0)); }
 
-/* ══ 들어가기 — 문이 걷히고 판이 전면이 된다 ═══════════════════════ */
-.gate.leaving .door { clip-path: inset(0 0 0 100%); transition: clip-path var(--d-750) var(--e-arrive); }
-.gate.leaving .plate__shade, .gate.leaving .plate__credit { right: 0; }
-.gate.leaving .cap { opacity: 0; transition: opacity var(--d-380) var(--e-ui); }
+/* 스윕 — 장면에 도착하면 청록 1px 선이 한 번 지나가고, 지나간 뒤 결과가 선다(v2 §4) */
+.hero__sweep { position: absolute; top: 0; bottom: 0; left: 0; width: 1px; background: var(--ai); opacity: 0; pointer-events: none; }
+.hero__sweep.run { animation: sweep var(--d-1000) var(--e-arrive) both; }
+/* 장면 1 채움 스윕 — 선이 지나간 자리부터 252 시군구가 차오른다(plate.js 가 선 위치를 매 프레임 읽는다) */
+.hero__sweep.run.fill { animation-duration: 1800ms; animation-timing-function: linear; box-shadow: 0 0 12px 1px rgba(15,169,160,.55); }
+@keyframes sweep { 0% { opacity: .9; left: 0; } 92% { opacity: .9; } 100% { opacity: 0; left: 100%; } }
 
-/* ══ 좁은 화면 ═══════════════════════════════════════════════════ */
+/* 모토 3축 — 색인(3줄 이름 · 현재 = 흰 + 진행 막대) · 대제목 48 · 한글 한 줄 (스펙시먼 C) */
+.axis { position: absolute; left: 40px; bottom: 40px; right: 360px; color: var(--hud-ink);
+  --axis-shadow: 0 1px 2px rgba(0,0,0,.45), 0 0 12px rgba(0,0,0,.35); }
+.axis__ix { display: flex; gap: 24px; margin: 0 0 20px; padding: 0; list-style: none; }
+.axis__ix li { position: relative; padding-bottom: 10px; font: 500 var(--fs-label)/var(--lh-label) var(--font-num); color: rgba(255,255,255,.72); text-shadow: var(--axis-shadow);
+  transition: color var(--d-380) var(--e-ui); white-space: nowrap; }
+.axis__ix li::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(255,255,255,.28); }
+.axis__ix li i { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: var(--hud-ink); }
+.axis__ix li.on { color: var(--hud-ink); }
+.axis__ix li.on i { animation: fill var(--hold, 8900ms) linear both; }
+@keyframes fill { from { width: 0; } to { width: 100%; } }
+.axis__t { margin: 0 0 8px; font: 700 var(--fs-h3)/var(--lh-h3) var(--font-display); letter-spacing: .01em; text-shadow: var(--axis-shadow); white-space: nowrap; }
+.axis__l { margin: 0; font: 500 var(--fs-sub)/var(--lh-sub) var(--font-body); color: rgba(255,255,255,.94); text-shadow: var(--axis-shadow); }
+.axis .t-in { animation: rise var(--d-750) var(--e-cam) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(var(--enter-y)); } to { opacity: 1; transform: none; } }
+.axis.away .axis__t, .axis.away .axis__l { opacity: 0; transition: opacity var(--d-380) var(--e-ui); }
+
+/* 결과 카드 — 지도 위 흰 카드 1장(§6) · 지역 캡션 14 한 줄 · 숫자 · 신뢰 기호 */
+.res { position: absolute; right: 24px; bottom: 24px; width: 312px; margin: 0; transition: opacity var(--d-380) var(--e-ui), transform var(--d-380) var(--e-ui); }
+.res.away { opacity: 0; transform: translateY(8px); }
+.res__where { margin: 0 0 8px; font: 500 var(--fs-label)/var(--lh-label) var(--font-body); color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.res__row { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; margin: 0; }
+.res__v { font: 800 var(--fs-h3)/var(--lh-h3) var(--font-display); letter-spacing: var(--ls-big); font-variant-numeric: tabular-nums; color: var(--ink); }
+.res__u { font: 500 var(--fs-label)/var(--lh-label) var(--font-body); color: var(--ink-2); }
+
+/* 신뢰 기호 — 키트 K6(.t-sig · 호버 풍선은 키트가 낸다) */
+.res__s { display: inline-flex; align-items: baseline; }
+.res__s .t-sig { font-size: var(--fs-label); }
+
+.res__cr { display: none; }
+.hero__credit { position: absolute; right: 24px; top: 20px; margin: 0; font: 400 var(--fs-label)/1 var(--font-body); color: rgba(255,255,255,.7); text-shadow: var(--hud-shadow); }
+
+/* ══ 서랍 — 키트 K5(.k-drawer) 안의 3행. 정문엔 마스트가 없어 위 여백만 맞춘다 ══ */
+.k-drawer.help { top: var(--margin); }
+.help__dl { margin: 0; }
+.help__dl div { display: grid; grid-template-columns: 120px 1fr; gap: 12px; padding: 14px 0; border-top: 1px solid var(--rule); }
+.help__dl dt { font: 500 var(--fs-label)/var(--lh-label) var(--font-body); color: var(--sub); }
+.help__dl dd { margin: 0; font: 400 var(--fs-body)/var(--lh-label) var(--font-body); color: var(--ink); }
+.help__dl .n a { color: inherit; font-family: var(--font-num); font-variant-numeric: tabular-nums; text-decoration: none; }
+.help__dl .n a:hover { text-decoration: underline; }
+
+/* ══ 장면 3 — Ctrl K 한 줄(흰 카드 · 지도 위) ══════════════════════ */
+.ask { position: absolute; left: 50%; top: 32%; display: flex; align-items: center; gap: 12px; width: min(440px, calc(100% - 48px)); padding: 14px 16px; margin: 0;
+  transform: translate(-50%, 8px); opacity: 0; pointer-events: none; transition: opacity var(--d-380) var(--e-ui), transform var(--d-380) var(--e-ui); }
+.ask.on { opacity: 1; transform: translate(-50%, 0); }
+.ask__k { flex: none; padding: 3px 8px; border-radius: var(--r-8); background: var(--bg-0); font: 500 12px/1.4 var(--font-num); color: var(--sub); }
+.ask__t { font: 500 var(--fs-body)/var(--lh-label) var(--font-body); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ask__c { flex: none; width: 2px; height: 18px; margin-left: -8px; background: var(--accent); animation: caret 1s steps(1) infinite; }
+@keyframes caret { 50% { opacity: 0; } }
+.gate.leaving .ask { opacity: 0; }
+
+/* ══ 들어가기 — 문 카드가 비켜서고 히어로 카드가 화면 전체가 된다 ═══ */
+.gate.leaving .door { opacity: 0; transform: translateX(-24px); transition: opacity var(--d-380) var(--e-ui), transform var(--d-750) var(--e-cam); }
+.gate.leaving .hero { position: fixed; z-index: 2; margin: 0; transition: top var(--d-750) var(--e-cam), left var(--d-750) var(--e-cam), width var(--d-750) var(--e-cam), height var(--d-750) var(--e-cam), border-radius var(--d-750) var(--e-cam); }
+.gate.leaving .axis, .gate.leaving .res, .gate.leaving .hero__credit { opacity: 0; transition: opacity var(--d-380) var(--e-ui); }
+
+/* ══ 중간 폭 ═════════════════════════════════════════════════════ */
+/* ≤1300 — 축 제목이 두 줄로 접혀 색인에 붙지 않게 한 단 내린다 */
+@media (max-width: 1300px) {
+  .axis__t { font-size: var(--fs-h3); line-height: var(--lh-h3); letter-spacing: var(--ls-h3); }
+}
+@media (max-width: 1200px) {
+  :root { --door: 400px; }
+  .door { padding: 32px; }
+  .axis { right: 24px; bottom: 168px; left: 32px; }
+  .axis__t { font-size: var(--fs-h3); line-height: var(--lh-h3); }
+}
+/* 낮은 화면(≤ 800) — 문 카드 넘침 0: 바깥 여백 32 · 카드 안 32 · 간격을 한 단씩 줄인다. 가운데 정렬은 'safe'(넘치면 위부터) */
+@media (max-height: 800px) and (min-width: 961px) {
+  .gate { padding-top: 32px; padding-bottom: 32px; }
+  .door { padding: 32px; }
+  .door__body { justify-content: safe center; padding: 24px 0 12px; }
+  .door__lead { margin-bottom: 28px; }
+  .seg { margin-bottom: 16px; }
+  .fld { margin-bottom: 8px; }
+  .fld__l { margin-bottom: 4px; }
+  .go { margin-top: 16px; }
+  .door__aux { margin-top: 12px; }
+}
+/* ≤ 740 — 헤드라인 32/42 로 한 단 내린다 */
+@media (max-height: 740px) and (min-width: 961px) {
+  .door__h { margin-bottom: 8px; font-size: var(--fs-h3); line-height: var(--lh-h3); letter-spacing: var(--ls-h3); }
+  .door__body { padding: 16px 0 8px; }
+  .door__lead { margin-bottom: 20px; }
+}
+
+/* 기관 문(기관 칸 한 줄 +76) — 늘어난 만큼 위 여백을 먼저 내준다(오류 문구까지 켜도 넘침 0) */
+@media (min-width: 961px) {
+  .door:has(.fld--org:not([hidden])) .door__body { padding: 12px 0 8px; }
+}
+@media (max-height: 800px) and (min-width: 961px) {
+  .door:has(.fld--org:not([hidden])) .door__body { padding: 4px 0 0; }
+  .door:has(.fld--org:not([hidden])) .door__lead { margin-bottom: 16px; }
+  .door:has(.fld--org:not([hidden])) .seg { margin-bottom: 12px; }
+}
+@media (max-height: 740px) and (min-width: 961px) {
+  .door:has(.fld--org:not([hidden])) .door__body { padding: 0; }
+  .door:has(.fld--org:not([hidden])) .door__lead { margin-bottom: 12px; }
+}
+
+/* ══ 좁은 화면(모바일) — 히어로 카드 위, 문 카드 아래 · 가로 스크롤 0 ═══ */
 @media (max-width: 960px) {
-  :root { --door: 100vw; --pad: 24px; }
-  body.g3 { overflow: auto; }
-  .gate { position: static; }
-  .plate { position: relative; height: 44vh; min-height: 300px; }
-  .plate__shade { right: 0; }
-  .plate__credit { right: 16px; }
-  .cap { left: 24px; bottom: 28px; max-width: calc(100vw - 48px); }
-  .cap__v { font-size: 34px; line-height: 40px; }
-  .door { position: relative; width: 100%; }
-  .door__col { padding: 32px 24px; }
-  .door__h { font-size: 36px; line-height: 44px; }
-  .motto li { grid-template-columns: 1fr; gap: 2px; }
-  .help { width: 100vw; }
-  @keyframes sweep { 0% { opacity: .9; transform: translateX(0); } 100% { opacity: 0; transform: translateX(100vw); } }
+  body.t { overflow: auto; }
+  .gate { position: static; display: flex; flex-direction: column; gap: 12px; padding: 12px var(--margin) 32px; min-height: 100%; }
+  .hero { order: 0; flex: none; height: 280px; border-radius: var(--r-24); }
+  .door { order: 1; padding: 20px 24px 24px; overflow: visible; }
+  .door__body { padding: 16px 0 12px; }
+  .door__h { font-size: var(--fs-h3); line-height: var(--lh-h3); }
+  .door__lead { margin-bottom: 20px; font-size: var(--fs-label); line-height: var(--lh-label); }
+  .axis { left: 20px; right: 20px; top: 20px; bottom: auto; }
+  .axis__ix { gap: 14px; margin-bottom: 10px; }
+  .axis__ix li { padding-bottom: 8px; }
+  .axis__ix li { font-size: var(--fs-label); }
+  .axis__t { font-size: 22px; line-height: 30px; }
+  .axis__l { font-size: var(--fs-label); line-height: var(--lh-label); }
+  .hero__shade { top: 0; bottom: auto; height: 30%; background: linear-gradient(to bottom, rgba(17,19,23,.28), rgba(17,19,23,0)); }
+  .res { left: 12px; right: 12px; bottom: 12px; width: auto; padding: 12px 16px; }
+  .res__where { margin: 0 0 2px; }
+  .res__v { font-size: var(--fs-h4); line-height: var(--lh-h4); }
+  /* 크레딧은 결과 카드 안 한 줄로 합친다(카드 위 글 덩어리 1개 줄임) */
+  .hero__credit { display: none; }
+  .res { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; column-gap: 12px; }
+  .res__where { grid-column: 1 / -1; }
+  .res__cr { display: block; margin: 0; font: 400 var(--fs-label)/var(--lh-label) var(--font-body); color: var(--sub); white-space: nowrap; }
+  .ask { top: auto; bottom: 96px; }
+  .gate.leaving .hero { position: relative; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .plate, .is-ready .plate { clip-path: none; transition: none; }
-  .plate__sweep { display: none; }
-  .door__ink, .seg__bar, .fld__rule, .go__a { transition: none; }
-  .cap .t-in, .msg.t-in, .help[open], .form.nudge { animation: none; }
+  .e, .hero { opacity: 1; transform: none; transition: none; }
+  .hero__sweep { display: none; }
+  .seg__bar, .aux { transition: none; }
+  .axis__ix li.on i { animation: none; width: 100%; }
+  .hero__cover { transition: none; animation: none; }
+  .axis .t-in, .msg.t-in, .ask__c, .form.nudge, .fld--org:not([hidden]) { animation: none; }
 }

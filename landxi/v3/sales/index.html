@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>서비스 카탈로그 · Land-XI</title>
+<meta name="description" content="어느 시군구든 같은 서비스 — 지역만 바꾸면 같은 실태조사 서비스가 그 지역에서 바로 열립니다.">
+<link rel="icon" href="/landxi/assets/images/favicon_landxi.png">
+<link rel="stylesheet" href="/landxi/proto/vendor/maplibre/maplibre-gl.css">
+<link rel="stylesheet" href="/landxi/v3/kit/kit.css">
+<link rel="stylesheet" href="sales.css">
+<link rel="preload" href="/landxi/proto/vendor/maplibre/maplibre-gl.js" as="script">
+<script type="module" src="app.js"></script>
+</head>
+<body class="t" data-state="boot">
+
+<div id="page" class="sl" hidden>
+  <!-- 히어로 : H2 2줄 + 문장 1 + 둥근 24 카드 속 실결과 지도 -->
+  <section class="sl-hero">
+    <div class="sl-hero__tx">
+      <h1 class="t-h2 t-enter">어느 시군구든<br>같은 서비스</h1>
+      <p class="t-body t-enter">지역만 바꾸면 같은 실태조사 서비스가 그 지역에서 바로 열립니다.</p>
+    </div>
+    <figure class="sl-hero__map t-card--hero t-enter">
+      <div class="sl-map" id="heroMap"></div>
+    </figure>
+  </section>
+
+  <!-- ① 서비스 (K7 · 실배포·실결과만) -->
+  <section class="sl-sec" id="svc">
+    <div class="sl-head">
+      <p class="t-label">서비스</p>
+      <h2 class="t-h2 t-enter">한 번 만든 분석이<br>서비스가 된다</h2>
+    </div>
+    <div id="grid" aria-live="polite"></div>
+  </section>
+
+  <!-- ② 활용 사례 (성과 띠 E · 지역 ≥ 2) -->
+  <section class="sl-sec" id="cases">
+    <div class="sl-head">
+      <p class="t-label">활용 사례</p>
+      <h2 class="t-h2 t-enter">같은 서비스,<br>다른 지역</h2>
+    </div>
+    <div class="sl-cases__body">
+      <ol class="sl-list" id="caseList"></ol>
+      <figure class="sl-cases__map t-card--hero">
+        <div class="sl-map" id="caseMap"></div>
+        <figcaption class="sl-cap" id="caseCap" hidden></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ③ 제공 경로 (스텝퍼 H 4단) -->
+  <section class="sl-sec" id="path">
+    <div class="sl-head">
+      <p class="t-label">제공 경로</p>
+      <h2 class="t-h2 t-enter">대장을 올리면<br>기관 포털까지</h2>
+    </div>
+    <div class="t-card sl-steps"><div id="steps"></div></div>
+  </section>
+
+  <!-- ④ 출처 띠 · 마감 모토 -->
+  <section class="sl-src">
+    <p class="t-label">데이터 출처</p>
+    <ul>
+      <li><b>LX</b> <span>한국국토정보공사</span></li>
+      <li><b>V-World</b> <span>공간정보 오픈플랫폼</span></li>
+      <li><b>NGII</b> <span>국토지리정보원</span></li>
+      <li><b>AI Hub</b> <span>토지피복 학습데이터</span></li>
+    </ul>
+  </section>
+  <footer class="sl-foot">Land-XI · Hyper Performance · Hyper Solution · Hyper GeoAI</footer>
+</div>
+
+</body>
+</html>

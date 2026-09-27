@@ -1,0 +1,16 @@
+# L2 대장상 경작 · AI 경작 흔적 없음(휴경 의심) — 임계 [추정 초기값]
+id: L2
+name: 대장상 경작 · 경작 흔적 없음
+kind: farm_ledger
+requires: [farm_ledger]
+condition: "농지대장 '경작' 필지에서 AI 경작지 비율 < {L2_crop_ratio:.2f} · 비닐하우스 비율 < {L2_crop_ratio:.2f}"
+when_:
+  all:
+    - {op: contains_any, left: ledger.farm_ledger.status, right: [경작, 자경, 임차]}
+    - {op: in, left: parcel.jimok, right: [전, 답, 과]}
+    - {op: lt, left: ai.r23_crop, right: {th: L2_crop_ratio}}
+    - {op: lt, left: ai.r23_gh, right: {th: L2_crop_ratio}}
+thresholds: {L2_crop_ratio: 0.10}
+base_score: 35
+evidence: {ledger: status, ai: crop, vworld: jimok}
+note: "2023 영상 1시점 기준 — 계절·작부 시기에 따라 오탐 가능"

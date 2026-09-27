@@ -1,0 +1,240 @@
+# lx-review — ④ 검수 구현 보고 (6차 · 2026-09-27)
+
+화면: `/landxi/v3/lx-review/`. 이번에 바꾼 파일은 `app.js` · `data.js` · `review.css` 세 개이고, 모두 소유 범위 `landxi/v3/lx-review/**` 안이다. 커밋하지 않았다. 키트 · 서버 · 다른 화면 파일은 건드리지 않았다(`xi/engine/sources.js` 는 import 만 했다). 확인은 모두 정문 폼 로그인으로 했다(`/landxi/v3/login/` → `#id` · `#pw` → `#go`, 계정 `lx-staff`). 매 회 새 브라우저 컨텍스트로 열었다.
+
+## 6차 — 3차 판정 불합격 항목
+
+| # | 항목 | 처리 | 실측(1440×900 · 390×844) |
+|---|---|---|---|
+| 1 | **합격선 장면**(떼기 → `결재를 요청했습니다` → 승인 → `✓ 검수됨`) | **이번에도 찍지 못했다(막힘).** 서버 실측: 규칙 6개 모두 `lx.judged 0` · `precision null` · `reviewed false` · `pending_activation false`. 조건을 채운 스테이징 규칙 id 도 오지 않았다. 판정 100건을 지어내거나 AI 가 대신 실판정을 넣지 않았다. 관리자 승인도 대신하지 않았다. 연습 칩(`?dev=1&stage=1`)이 보이는 영상은 모두 지웠다 | 떼기는 비활성이고, 호버하면 `표본 0/100` 이 뜬다. 조건은 서버 `gate_samples`(100)와 `gate`(80 %)에서 읽는다 |
+| 2 | HUD 회백 · 전국 판 노출(app.js setHud tick) | 6초 상한 폴백을 없앴다. HUD 는 **바탕 사진 타일(z ≥ 10) ≥ 4장 · 카메라 도착(비행 끝 · `isMoving` false · zoom ≥ 11) · 보이는 타일 다 옴** 세 조건이 모두 맞을 때만 연다. 그 전에는 K9 진행 막대 1개(`불러오는 중`)만 보인다. 무대(`createStage`)는 지역을 안 뒤에 만들고, **지역 bbox 를 초기 카메라 `bounds` 로** 넘긴다. 그래서 map load 를 기다리지 않고, 전국 뷰나 비행도 거치지 않는다. 지역 맞춤 줌이 11보다 작으면 11로 올린다 | 100ms 표본에서 **HUD 가 회백 · 전국 판 위에 뜬 횟수 0**(1440 27표본 · 390 17표본). 본 줌은 **11 하나뿐**이었다(`z0 = 11`, 전국 줌 0회). HUD 가 뜰 때 줌은 11.00 |
+| 3 | 카드를 열면 판정 근거를 지도에 | 필지 경계 = `sel` 흰 **2px**(채움 0). AI 판독 폴리곤 = `/survey/parcels/{pnu}?with=findings` 의 **`ai_ids`**(서버 detections id)로 카탈로그 결과 벡터 층(`/catalog/layers` role result · 이 필지를 덮는 층)을 걸러 그린다. 선은 `--ai` 2px, 채움은 12 %. ※ `findings[].geometry` 는 폴리곤이 아니라 **Point** 다. 그래서 명세 문장 그대로는 그릴 수 없었다(아래 서버 요청 ②) | 두 폭 모두 `sel` 선 2 · AI 폴리곤 렌더 1개 이상(`queryRenderedFeatures`) · 흰 점만 있던 상태 해소(`*-card.png`) |
+| 3b | 390 카드 카메라 | 카메라 여백을 **카드 실제 높이** 기준으로 다시 계산한다: 아래 = 무대 아래 − 카드 윗변 + 16(카드 246 + 하단 탭 64 반영), 위 = HUD 아래 + 8. 상자는 필지 bbox 를 1.85배(1440 은 2.1배)로 잡는다 | 390: **z 17.17 · 필지 폭 153px = 화면 폭 39 %**(이전 z 14.97 · 약 20px). 1440: z 17.33 · 171px |
+| 4 | 사진이 깔리기 전 `맞음/오탐/모름` 활성 | 카드는 `disabled` 상태로 열린다. 얇은 진행 막대(`사진 불러오는 중`)도 함께 보인다. 판정 버튼은 **비행 끝 + V-World z ≥ 16 타일 ≥ 4장 + 보이는 타일 다 옴** 뒤에만 열린다 | 카드가 열린 뒤 약 0.25s 시점: 두 폭 모두 막대가 보이고 버튼 3개가 비활성이었다(`*-card-loading.png`). 버튼이 열린 시점: 1440 은 카드 열림 뒤 0.75s(그 전 0.25s + 0.50s) · 390 은 0.6s |
+| 5a | ≤1100px 에서 임계 시트가 HUD `745` 를 덮음 | 시트가 열려 있는 동안(≤1100) HUD 를 숨긴다(`body.rv-has-sheet .rv-hud{opacity:0}`) | 1024×768: 두 상자는 겹치지만 HUD opacity 가 `0` 이라 보이지 않는다(`1024x768-threshold.png`) |
+| 5b | `ready` 의 상수 GOAL(100) | `ruleStat()` 이 `goal = stats.gate_samples.value` 를 돌려준다. 보드 · 진행 막대 · 떼기 조건 · 호버 문구가 모두 이 값을 쓴다. 상수 100은 서버 값이 없을 때만 폴백으로 쓴다 | `표본 0/100` 은 서버 값이다 |
+| 5c | 지역 도착 때 점 무리가 서랍 밑으로 잘림 | `stage.pad.right = 392 + 16 + 24 = 432`. 큐가 오면 규칙 점 무리의 가운데 90 %(양끝 5 % 뗌) 상자로 한 번 다시 맞춘다(`toRule` · 줌 ≥ 11 유지). 규칙을 바꿀 때와 표본 20을 다 끝냈을 때도 같은 함수를 쓴다 | 1440 `board.png`: 점 무리가 서랍 왼쪽에 있다. 단, 1440 의 남원 전체 맞춤 줌은 10.29 다. 줌 ≥ 11 조건 때문에 **가장자리 5 % 점은 화면 밖**에 남는다(조건끼리 부딪침 · 판정 요청) |
+
+### 도착 · 카드 실측(정문 로그인 클릭 기준 · 녹화 중 측정)
+
+| | 1440×900 | 390×844 |
+|---|---|---|
+| 무대 생성(화면 로드 뒤) | 0.28–0.93s | 0.21–0.23s |
+| HUD(클릭 → 사진 위 · 줌 11) | 4.0–5.7s | 4.2–4.4s |
+| 카드: 판정 버튼 열림(카드 열림 뒤) | 0.75–1.0s | 0.6–0.8s |
+| 첫 뷰 글자 · 버튼 | 168자 · 6 | 150자 · 4 |
+| 카드 상태 글자 · 버튼 | 269자 · 8 | 207자 · 8 |
+| 금지어(K16) · 콘솔 오류 | 0 · 0 | 0 · 0 |
+
+- HUD 는 5차(상한 6초 폴백 · 2.7–3.3s)보다 1초쯤 늦다. 이유는 '보이는 타일 다 옴' 조건이 새로 붙었기 때문이다. 이 조건이 없으면 HUD 가 뜰 때 z11 판에 회색 빈칸이 남는다(실측 스크린샷으로 확인한 뒤 조건을 넣었다).
+- 1440 무대 생성이 0.9s 까지 늦어지는 회차가 있다. `/regions` 응답을 기다리기 때문이다(`/me` 와 나란히 보냄).
+
+### 증거(`shots/final/lx-review/`)
+
+- `lx-review-1440.mp4`(20.0초 · 1배속) · `lx-review-390.mp4`(15.3초): 정문 로그인 → `불러오는 중` 막대 → 사진 위 HUD `745 필지 ~` → `표본 20 보기` → 카드(`사진 불러오는 중` · 버튼 비활성) → 필지 흰 경계 + AI 폴리곤 · 버튼 활성 → (1440) 두 번째 표본 → 떼기 호버 `표본 0/100` → `임계 조정` 시트. **판정 버튼은 누르지 않았다.** 실보드(S-2)의 판정은 `finding_verdicts` 에 영구로 남는 사람의 검수 기록이라서다. 연습 칩이 나오는 장면은 없다.
+- 스크린샷: `1440x900-board / -card-loading / -card / -threshold.png` · `390x844-board / -card-loading / -card / -threshold.png` · `1024x768-threshold.png`.
+- 지운 것: 5차의 `lx-review-judge-1440.mp4` · `lx-review-judge-390.mp4` · `*-judged-practice.png`(연습 칩) · `*-untag-hover.png`(옛 로딩). 이전 `other-region-empty` · `unknown-region` 은 그대로 둔다.
+- 이번 작업에서 서버에 쓴 것은 없다. DB 쓰기 0 · approvals 0 · feedback 0.
+
+### 6차 요청
+
+- **서버(막힘 해소 · 필수)**: ① 조건을 채운 규칙 id — 스테이징(표본 ≥ 100 · 정밀도 ≥ 80)이든 사람의 실검수든. 오면 화면 코드를 바꾸지 않고 `?rule={id}` 로 떼기 → 토스트 → (ops-core 승인) → `✓ 검수됨` 1테이크를 찍는다. ② `GET /survey/parcels/{pnu}?with=findings` 의 finding `geometry` 가 Point 다. AI 판독 폴리곤(`ai_geom` · detections 도형)을 함께 실어 주기를 요청한다. 지금은 `ai_ids` × 카탈로그 결과 벡터 층으로 그린다. ③ `GET /results/{set}/features?bbox=…` 가 **500** 을 낸다(bbox 없이는 200). 원인은 `ST_MakeEnvelope($2[1]…)` 의 배열 파라미터 형 추론으로 보인다(`$2::float8[]` 제안 · 확인 안 됨).
+- **판정 요청**: 'HUD = zoom ≥ 11' 과 '점 무리가 서랍 밑으로 잘리지 않게'가 1440 남원(맞춤 줌 10.29)에서 부딪친다. 지금은 줌 11을 지키고, 가운데 90 % 점 무리로 맞춘다.
+- **키트**: K3 `createStage` — `bounds` 가 초기 카메라와 `home()` 을 함께 정한다. 초기 카메라에만 쓰는 `minZoom` 옵션을 요청한다(이 화면은 `jumpTo` 로 보정). K9 — HUD 자리용 '막대만' 변형(캐릭터 없이). 이 화면은 K9 막대 클래스(`k-empty-p is-indet`)를 빌려 썼다.
+
+---
+
+
+# (이전) 5차 보고 — lx-review (5차 · 2026-09-27)
+
+화면: `/landxi/v3/lx-review/` · 소유 `landxi/v3/lx-review/**`(app.js · data.js · review.css) · 명세 LANDXI-FINAL-SPEC §2.6. 커밋 없음. 키트·서버·다른 화면 파일은 건드리지 않았다. 확인은 모두 정문 폼 로그인(`/landxi/v3/login/` → `#id` `#pw` → `#go`, `lx-staff`)으로 했다.
+
+## 5차 — 2차 판정 불합격 항목 처리
+
+| # | 항목 | 처리 | 실측 |
+|---|---|---|---|
+| 1 | 서버 S-2(`stats.lx` · `reviewed`) | 이번 작업 중(19:01) 서버에 들어왔다: `GET /survey/rules/{id}/stats` 에 `lx:{judged, precision, verdicts}` · `gate`(%) · `gate_samples` · `reviewed`, `GET /survey/rules` 에 `reviewed`, LX 판정 = `POST /survey/findings/{fid}/state {state:'sample', verdict}` → `finding_verdicts`(기관 필지 상태 불변), `activate {review:true}` 는 서버가 조건을 다시 판정(미달 409 `표본 k/100`). 화면을 이 계약에 맞췄다(아래 '계약 반영'). **조건(표본 ≥ 100 · 정밀도 ≥ 80)을 채운 스테이징 규칙 id 는 오지 않았다** — 9개 규칙 모두 `lx.judged 0` | 실보드 `D.s2 = true` · R1 `0/100 · —` · 떼기 비활성 · 호버 `표본 0/100` |
+| 2 | 도착 시간(셸+서랍 2초 · HUD 4초) | ① 규칙 · 지역 · 판정 기록 · 첫 순위 의심(limit 1)을 `/me` 와 **나란히** 보낸다(세션이 있을 때만). ② `/me` 직후 셸 + 서랍 골격(규칙 이름 6줄 · 숫자 자리 비움)을 바로 그린다. ③ 지역을 알자마자 카메라가 떠난다(1.6초). ④ 지역 집계 `findings?bbox&limit=1`(by_rule · 약 20ms)로 막대·HUD 를 먼저 그리고, 큐 전체(limit 2000 · 1.8MB)는 그 뒤 점·표본용으로. ⑤ 규칙별 stats 는 현재 규칙 1건만 첫 보드 전에, 나머지 5건은 첫 보드 뒤(지연). ⑥ HUD 는 바탕 사진 타일 ≥ 4장 + (카메라 멈춤 또는 자료 뒤 0.9초)에 연다(상한 6초). ⑦ 판정마다 막대가 0에서 다시 자라던 것을 막았다(규칙·집계가 같으면 같은 막대 재사용) | 아래 표 |
+| 3 | HUD 신뢰 기호 일관성 | `setHud()` 하나로 첫 보드 · 규칙 전환 · 지역 보정이 모두 **같은 봉투**(`by_rule[규칙]` · basis `inferred` → `~`)를 넘긴다. 1440 에서 `~` 가 16px 로 점 무리 옆에 묻혀 안 보이던 것 → 단위와 같은 24px(390 18px) + HUD 그림자 | 첫 보드 1440 · 390 모두 `745 필지 ~`(`data-sig="est"`) |
+| 4 | 390 첫 뷰 `표본 20 보기` 반 잘림 | 모바일에서 규칙 막대 간격 축소(행 패딩 8→5 · 간격 0) + 서랍 높이를 **`표본 20 보기` 버튼 아래(정밀도 위)에서 끊는다**(`fitMobile` · 표본을 보는 중이면 기본 52%). 카드를 닫으면 서랍 안을 `표본 검수 · 정밀도` 로 내린다 | 서랍 381–780 · 버튼 725–769(온전) · 정밀도는 서랍 밖(스크롤) |
+| 5 | (추가) 390 판정 토스트가 카드 버튼을 가림 | 카드가 열려 있으면 토스트를 카드 위로(`--rv-toast-b` = 카드 윗변 + 28) | 영상 확인 |
+
+### 도착 시간 실측(정문 로그인 클릭 기준 · 매 회 새 브라우저 컨텍스트 = 브라우저 캐시 콜드 · 서버 warm · 5회)
+
+| | 로그인 → 이 화면 이동 | 셸 + 서랍 골격(규칙 6줄) | 규칙 6 막대(숫자) | HUD(사진 위) | 콘솔 오류 |
+|---|---|---|---|---|---|
+| 1440×900 | 0.98–1.66s | **1.25–1.34s**(최악 2.03) | **1.54–1.71s**(최악 3.03) | **2.67–3.30s** | 0 |
+| 390×844 | 0.94–1.16s | **1.20–1.36s** | **1.46–1.61s** | **2.42–2.67s** | 0 |
+| (4차) 1440 | — | — | — | 5.3s(콜드 12s) | — |
+
+- 셸이 뜨기 전 약 1초는 **정문 로그인 화면이 클릭 뒤 이동하기까지** 걸리는 시간이다(이 화면 밖). 이동 뒤 `/me` 0.16–0.32s → 골격 +0.03s → 막대 +0.2–0.35s.
+- 측정 중 게이트웨이가 여러 번 재기동·지연됐다(다른 워크플로 동시 작업 · `ERR_CONNECTION_REFUSED` · `/survey/rules` 1–5초). 그 구간 측정(HUD 7–11초)은 표에서 뺐다. 영상 녹화분(녹화 부하 포함): 클릭 → HUD 1440 3.99s · 390 3.77s.
+- 회백 판 위 HUD: 0회(200ms 표본 · 1440 · 390). HUD 가 뜨기 전에는 결손 문구도 없다(`noneWhileLoading 0`).
+
+### 계약 반영(S-2 · data.js)
+
+- 판정: `POST /survey/findings/{fid}/state {state:'sample', verdict: match|match_fp|unclear, verdict_code: tp|fp|unk, note:'검수:…', client_id}` → 응답 `lx_stats` 로 보드 즉시 갱신. 기관 필지 상태를 바꾸지 않는다.
+- 정밀도·표본: `stats.lx.judged` · `lx.precision`(% → 0–1) · 표본 < `gate_samples`(100)이면 `~`. 임계 = `stats.gate`(80 % → 0.80). 꼬리표 = `stats.reviewed`(규칙 `reviewed`).
+- 떼기: `activate {review:true, note}` → approvals → 토스트 `결재를 요청했습니다` → 관리자 승인 시 규칙 `reviewed:true` → 카드 꼬리표 `✓ 검수됨`. 409 → `이미 결재 대기 중입니다`(대기 중) · 조건 미달은 버튼 자체가 비활성.
+- 재교정: `recalibrate?scope=lx`(읽기 · 제안만).
+- 계약 시험(curl · 1건): `state:'sample', verdict:'match'` → 201 · `lx.judged 0→1 · precision 100.0` · 필지 상태 `assigned` 그대로. 시험 행은 `finding_verdicts` 에서 지웠다(`DELETE 1` → lx 0). 감사 로그 1행(`finding.verdict.lx`)은 남아 있다. `activate {review:true}` → 409 `표본 0/100`(서버 조건 판정 확인 · approvals 행 없음).
+
+### 판정 장면 영상(`shots/final/lx-review/`)
+
+- `lx-review-judge-1440.mp4`(19.6초 · 1배속) · `lx-review-judge-390.mp4`(16.0초 · 1배속): 정문 로그인 → 서랍 골격 → 막대·HUD `745 필지 ~` → `표본 20 보기` → 카드 → `맞음 · 오탐 · 맞음 · 맞음 · 모름` → 정밀도 `1.00 → 0.50 → 0.67 → 0.75 → 0.75 ~` · 표본 `5/100` → (1440) 떼기 호버 `표본 5/100`.
+- **이 5건은 연습 판정이다**(`?dev=1&stage=1` · 서랍 칩 `연습 판정 · 실제 정밀도에 들어가지 않음` · `/feedback` 세트 `review-stage:` 에만 씀). 실판정 100건을 지어낼 수 없어서 실보드(S-2)에는 쓰지 않았다. 녹화 뒤 연습 행은 모두 지웠다(마지막 `DELETE 5` · 남은 연습 행 0).
+- **`검수 전 떼기 → 결재 요청 토스트 → ✓ 검수됨` 장면은 아직 없다.** 화면·서버 경로는 모두 준비됐고(위 계약 시험), 막힌 것은 '조건을 채운 규칙'뿐이다. 사람이 실검수로 한 규칙을 100건 채우거나, 서버 팀이 스테이징 규칙 id(표본 ≥ 100 · 정밀도 ≥ 80)를 주면 `?rule={id}` 로 바로 찍는다.
+- 스크린샷(5차 다시 찍음 · 실보드 · S-2): `1440x900-board/-card/-threshold/-untag-hover.png` · `390x844-board/-card/-threshold/-untag-hover.png` · 연습 판정 뒤 `1440x900-judged-practice.png` · `390x844-judged-practice.png`. 4차 `lx-review-load-*.mp4` 는 옛 로딩이라 지웠다.
+
+### 5차 합격선 실측(정문 로그인 · 실보드)
+
+| 항목 | 1440×900 | 390×844 |
+|---|---|---|
+| 첫 뷰 글자 | 168자 | 151자 |
+| 버튼(첫 뷰 · 카드 · 시트) | 7 · 8 · 7 | 5 · 8 · 6 |
+| 금지어 | 0 | 0 |
+| 규칙 라벨 잘림 | 0/6 | 0/6 |
+| 겹침(HUD · 서랍 · 카드 · 탭) | 0 | 0 |
+| 서버 쓰기 | `recalibrate?scope=lx`(읽기성 제안)만 | 같음 |
+
+### 5차 요청
+
+- **서버**: ① 조건 충족 스테이징 규칙 id(합격선 장면용). ② `GET /survey/findings` 항목에 LX 판정(`lx_verdict`)을 실어 주기 — 지금은 S-2 에서 '이미 판정한 필지'를 표본에서 빼는 근거가 이 세션 기록뿐이다. ③ LX `match_fp` 판정도 재학습 표본(feedback kind `fp`)으로 남길지 결정 — 지금 `_lx_verdict` 는 feedback 을 만들지 않는다.
+- **키트**: K14 토스트 — 하단 카드/시트가 있으면 그 위로 올리는 규약(이 화면은 CSS 변수로 보정). K5 서랍 — 모바일 높이를 '내용 첫 묶음'에 맞추는 옵션. 4차 요청(K6 대기 상태 · K12 라벨 두 줄)은 그대로.
+- **정문 로그인**: 클릭 → 다음 화면 이동까지 약 1초(도착 시간의 절반 가까이). 로그인 화면 쪽 확인 요청.
+
+---
+
+# (이전) 4차 보고
+
+화면: `/landxi/v3/lx-review/` · 소유 `landxi/v3/lx-review/**` · 명세 LANDXI-FINAL-SPEC §2.6. 커밋 없음. 키트·서버·다른 화면 파일은 건드리지 않았다. 확인은 모두 정문 폼 로그인(`/landxi/v3/login/` → `#id` `#pw` → `#go`, `lx-staff`)으로 했다.
+
+## 4차 — 1차 판정 불합격 항목 처리
+
+| # | 항목 | 처리 | 실측 |
+|---|---|---|---|
+| 1 | 로딩 중 HUD 결손 문구('아직 결과가 없습니다') · 회백 바탕 흰 글자 | `.rv-hud` 를 `hidden` 으로 만들고, `hud.set()` 뒤 **첫 카메라 이동이 끝나고 사진 타일이 깔린 뒤**(`map idle` · `!isMoving() && areTilesLoaded()`) 연다(opacity 380ms). 타일이 끝내 안 오면 10초 뒤 연다 | 정문 로그인부터 200ms 간격 표본: 준비 전 결손 문구 노출 **0회**(1440 · 390). HUD 첫 노출 = 자료 준비 시점과 같거나 뒤(1440 6.4s · 390 4.0s, 이때 사진 위). 영상 4초 지점 = 회백 바탕 · HUD 없음 |
+| 2 | 규칙 막대 라벨 잘림 | `.rv-rules .k-bar` 라벨 열 `minmax(132px,176px)` · 라벨 `white-space:normal; word-break:keep-all`(두 줄 허용, 줄임표 없음) | 6 이름 전부 잘림 0. `용도 불일치(비농지 위 비닐하우스)` 만 두 줄(36px), 나머지 한 줄. 1440 · 390 같음 |
+| 3 | `?stage=1` 칩 내부 말 | 시험 규칙은 이제 `?dev=1&stage=1` 일 때만 켜진다(`data.js STAGE`). 칩 문구도 `연습 판정 · 실제 정밀도에 들어가지 않음` 으로 바꿨다. 사용자 화면(`?dev` 없음)에는 칩과 시험 모드가 없다 | `?stage=1` 만 주면 실보드 · 칩 0 |
+| 3b | review-stage 행 삭제 | `DELETE FROM feedback WHERE set_id LIKE 'review-stage:%'` | `DELETE 3` → 남은 행 0 |
+| 4 | **'검수 전 떼기' 첫 사례 1건** | **미충족(차단).** 서버에 조건(표본 ≥ 100 · 정밀도 ≥ 임계)을 채운 스테이징 규칙도, `stats.lx` 필드도 아직 없다(`survey.py` `rule_stats` 에 `lx` 없음 · `survey_rules` 6행 모두 version 1 · 규칙 결재 행 0). 이 워크플로 안에 서버 팀 세션이 없어 받을 수 없었다. 판정 100건을 지어내지 않았고, 서버 파일은 소유 밖이라 고치지 않았다 | 실보드 R1: 표본 0/100 · 정밀도 — · 떼기 비활성 · 호버 `표본 0/100` |
+
+### 4번을 풀려면(서버 팀 요청 · 화면 쪽은 준비됨)
+
+화면 코드는 바꿀 필요가 없다. 아래 둘 중 하나가 오면 그대로 떼기 → 결재 → 꼬리표까지 간다.
+
+1. `GET /survey/rules/{rid}/stats` 에 `lx: { judged: env(count ≥ 100), precision: env(%, ≥ 80) }` 를 주는 규칙 1개(스테이징이면 규칙 id 를 알려 주면 `?rule=` 로 연다). `probeS2()` 가 켜지고 `ruleStat()` 이 이 값을 쓴다.
+2. 흐름: `검수 전 떼기` → `POST /survey/rules/{id}/activate {note}`(202 · approvals 행) → 토스트 `결재를 요청했습니다` → ops-core 결재함 1건 → 승인 시 규칙 `reviewed:true` → 카드 꼬리표 `✓ 검수됨`. 현재 서버에는 규칙 `reviewed` 필드가 없어서, 화면은 activate 202 직후 `/feedback '검수:떼기'` 로 꼬리표를 바꾼다. 승인 뒤에 떼려면 서버가 `GET /survey/rules` 에 `reviewed` 를 실어 주면 된다(그러면 `ruleStat` S-2 분기가 `r.reviewed` 를 읽는다).
+
+### 4차 실측(정문 로그인 · 콘솔 오류 0 · 금지어 0 · 서버 쓰기 0)
+
+| 항목 | 1440×900 | 390×844 |
+|---|---|---|
+| 로딩 중 결손 문구 노출 | 0회 | 0회 |
+| 규칙 라벨 잘림 | 0/6 | 0/6 |
+| 시험 칩 | 없음 | 없음 |
+| 비활성 떼기 호버 | `표본 0/100` | `표본 0/100` |
+| HUD | 748 = `/survey/findings` `by_rule.R1`(다른 화면 쓰기로 749 → 748) | 같음 |
+
+참고: 측정 중 게이트웨이(:8700)가 몇 분 간격으로 다시 떴다(`boot_at` 18:26:40 → 18:30:16, 다른 워크플로의 서버 재기동으로 보임). 그 사이 로그인 폼은 `서버에 연결할 수 없습니다` 를 냈고, 측정 스크립트는 재시도해서 정상 기동 때 값만 적었다.
+
+### 4차 증거(`shots/final/lx-review/`)
+
+- `lx-review-load-1440.mp4`(18.8초 · 1.12배속) · `lx-review-load-390.mp4`(18.8초): 정문 로그인 → 회백 바탕(HUD 없음) → 사진이 깔린 뒤 HUD → 규칙 6 막대(라벨 전부) → 떼기 호버 `표본 0/100` → 규칙 전환 → `표본 20 보기` → 카드 → `임계 조정` 시트. 실판정은 누르지 않았다.
+- `1440x900-board.png` · `-card.png` · `-threshold.png` · `390x844-board.png` · `-card.png` · `-threshold.png`(4차에서 다시 찍음).
+- 지운 것: `1440x900-stage-judged.png` · `lx-review-stage-judge-1440.mp4`(내부 칩과 지운 review-stage 행이 찍혀 있음) · `lx-review-1440.mp4`(2차 · 로딩 결손 문구 노출본).
+
+### 4차 키트 요청
+
+- **K6 `bignum(hud:true)`**: 첫 `set()` 전에는 결손 문구를 그리지 않는 '대기' 상태(예 `bignum(el, undefined)` = 라벨만 · 숫자/결손 숨김)를 키트가 주기를 요청한다. 지금은 `set(null)`(진짜 결과 없음)과 '아직 안 불러옴'이 구별되지 않아 화면이 `hidden` 으로 막았다.
+- **K12 `bars`**: 라벨 두 줄 허용 옵션(`wrap:true`). 이 화면은 CSS 로 덮었다.
+
+---
+
+# (이전) 3차 보고
+
+화면: `/landxi/v3/lx-review/` · 소유 `landxi/v3/lx-review/**` (index.html · app.js · data.js · review.css) · 명세 LANDXI-FINAL-SPEC §2.6
+커밋 없음. 키트·서버·다른 화면 파일은 건드리지 않았다. 모든 확인은 정문 폼 로그인(`/landxi/v3/login/` → `#id` `#pw` 입력 → `#go`, `lx-staff`)으로 했다.
+
+## 0. 2차 보고 정정
+
+2차 §5의 "S-2 경로가 없어서(openapi 에 stats·activate 없음) 어댑터로 동작"은 **틀렸다.** 실서버 openapi 에는 `GET /survey/rules/{rid}/stats` · `POST /survey/rules/{rid}/recalibrate` · `POST /survey/rules/{rid}/activate` · `POST /survey/findings/{fid}/state` 가 모두 있다(`server/landxi_api/survey.py` 590–670행). 2차 화면이 어댑터로 떨어진 진짜 이유는 경로 유무가 아니었다. `loadVerdicts()`가 `Promise.all` 안에서 `loadRules()`보다 먼저 돌아 `D.rules=[]` → `ruleStats={}` 가 됐고, 그래서 통계가 소리 없이 어댑터로 넘어갔다. 아래는 실경로를 다시 재고 쓴 내용이다.
+
+## 1. 3차 불합격 항목 처리
+
+| # | 항목 | 처리 | 실측 |
+|---|---|---|---|
+| 1 | S-2 판정 payload(한글 verdict → 400) | `S2V = {tp:'match', fp:'match_fp', unk:'unclear'}` 로 바꿨다. `verdict_code`는 `tp/fp/unk` 로 따로 둔다. 한글은 `note: '검수:{맞음\|오탐\|모름}'` 로만 보낸다. 오탐은 `state:'dismissed'` + `reason:'검수 오탐'`(필수). 그 밖에는 open→`assigned`, assigned→`inspected`(서버 TRANSITIONS) | 코드 반영. 지금은 §2 결정에 따라 이 분기가 꺼져 있다(실서버로 400 재현·해소 시험은 하지 않음 — S-2 판정은 LX 쓰기가 기관 필지 상태를 바꾸고 24h 자동 원복 대상이라 표본 검수 경로로 쓰지 않기로 함) |
+| 2 | ruleStat S-2 분기가 서버 봉투와 안 맞음 | 서버 봉투(`judged` · `precision` 단위 `%` 0–100 · `pending_activation`)에 맞췄다: `judged.value → k`, `precision.value/100 → ratio`(basis 는 k ≥ 100 이면 measured), `gate = 규칙 gate ?? 0.80`, `reviewed = 규칙 reviewed`, `pending = pending_activation`. `samples/gate/reviewed` 는 읽지 않는다 | 코드 반영 |
+| 3 | `loadVerdicts()` 순서 | `loadRules().then(() => loadVerdicts())` — 규칙이 채워진 뒤 규칙별 `stats` 를 모은다 | 실측 `D.ruleStats` 6규칙 모두 채워짐, `pending_activation` 읽힘 |
+| 4 | 정밀도 출처 한 곳(S-2 가 깨뜨림) | **결정: 통계·판정 모두 어댑터 한 경로로 고정.** 서버 `stats` 는 `survey_findings.verdict` 전체(기관 현장 판정 · `dismissed` 포함)를 센다. 실측 R1: `judged 8`(match_fp 4 · dismissed 4) · `precision 0.0 %`. LX 표본 정밀도가 아니다. `probeS2()`는 이제 경로 유무만 보지 않는다. `stats` 가 **LX 표본 전용 필드 `lx:{judged, precision}`** 를 줄 때만 S-2 로 넘어간다. 지금은 그 필드가 없어서 `D.s2=false` 다. 이유는 `D.s2why` 에 문자열로 남긴다 | `D.s2=false` · `s2why='stats 가 기관 현장 판정을 함께 셈 — LX 전용 필드 대기'` |
+| 4b | 개발자 서랍 표기 | `?dev=1` 서랍의 `검수 경로`는 `판정·정밀도 = /feedback · tenant lx · 세트 review:{규칙} (사유)` 로 나온다. `결재 경로`는 `POST /survey/rules/{id}/activate → approvals` 다. 서버가 `lx` 필드를 주면 자동으로 `판정 POST /survey/findings/{fid}/state · 정밀도 GET /survey/rules/{id}/stats(lx)` 로 바뀐다 | 보고서와 같음 |
+| 5 | suggest() S-2 파싱 | recalibrate 응답 `{key, current, proposed(봉투)}` 에 맞췄다. `j.key === th.key` 이고 `proposed.value != null` 이고 현재값과 다를 때만 제안한다. `dry_run` 은 보내지 않는다(body `{}`) | 실측 R1: `key R1_bld_m2 · current 33 · proposed null`(`need tp 5`) → 서버 경로였다면 `—` 가 정답. 지금 경로(어댑터)는 LX 표본 ≥ 20 · 오탐 ≥ 1 일 때 면적 임계 하나를 제안 |
+| 6 | 결재(떼기·임계 적용 요청) | 명세대로 **실경로** `POST /survey/rules/{id}/activate`(approvals 행 → 관리자 결재함)로 보낸다. 떼기는 `{note:'검수 전 떼기 · 표본 k · 정밀도 p'}` 이고, 꼬리표 기록은 `/feedback '검수:떼기'` 로 남긴다(서버에 규칙 `reviewed` 필드가 없음). 409 `conflict` → 토스트 `이미 결재 대기 중입니다`. `pending_activation` 이면 시트에 `결재 대기 중` 을 띄우고 `적용 요청` 을 끈다 | 실쓰기 안 함(조건 미충족 · 제안 없음 → 버튼 비활성) |
+| 7 | 390 임계 시트 겹침 | 시트가 열리면 `body.rv-has-sheet` 를 달고 모바일에서 서랍을 숨긴다(카드와 같은 방식). 한 장만 보인다. 함께 모바일 서랍이 하단 탭(64)을 덮던 것을 `bottom: 64px` 로 비켰고, 다시 열기 버튼도 탭 위로 올렸다 | 시트 열림 시 서랍 opacity `0` · 버튼 4 · `390x844-threshold.png` |
+| 8 | (경미) `/regions` 에 없는 시군구 | `?region=46130`(여수시) → 토스트 `이 지역은 아직 목록에 없습니다` 를 띄우고 기본 지역(첫 순위 의심 = 남원시)으로 간다 | 토스트 DOM 확인 · `1440x900-unknown-region.png`(토스트가 사라진 뒤의 착지) |
+
+## 2. 실판정 증명 — 시험 규칙(`?stage=1`)
+
+지어낸 판정을 실보드에 넣지 않으려고 이 화면에 **시험 규칙** 모드를 두었다. `?stage=1` 이면:
+- 판정 · 정밀도는 세트 `review-stage:{규칙}` 에만 쓰고, 그 세트만 읽는다. 실보드(`review:`)는 이 행을 세지 않는다(`isLx` 접두 검사).
+- 오탐도 `kind:'other'` 로 쓴다. 그래서 학습 표본(`kind fp`)에 들어가지 않는다. 결재(activate)도 부르지 않는다(결재함 밖).
+- 서랍 맨 위에 `시험 규칙 · 실정밀도와 따로 셈` 칩을 띄운다.
+
+실측(정문 로그인 `lx-staff` → `/landxi/v3/lx-review/?stage=1` → `표본 20 보기` → `맞음` → `오탐` → 새로고침):
+
+| 시점 | 표본 k | 정밀도 | 서버 쓰기 |
+|---|---|---|---|
+| 시작 | 0/100 | — | — |
+| `맞음` | 1/100 | 1.00 (~ estimate) | `POST /feedback 201` |
+| `오탐` | 2/100 | 0.50 (~) | `POST /feedback 201` |
+| 새로고침 뒤 | 2/100 | 0.50 | (서버에서 다시 읽음) |
+
+저장된 행: `fb_c01c084113c9bf2e`(맞음 · f_R1_5219039025111940000) · `fb_363725281f4c3410`(오탐 · f_R1_5219033021117430002), 둘 다 `tenant lx · review-stage:R1 · kind other`. 이 두 값은 흐름을 증명하려고 넣은 **시험 입력이고 현장 판정이 아니다.** 실보드(`?stage` 없이)에서는 여전히 표본 0/100 · 정밀도 — 로 나온다(실측). 지울 때: `DELETE FROM feedback WHERE set_id LIKE 'review-stage:%'`.
+
+`검수 전 떼기` 첫 사례(표본 ≥ 100 · 정밀도 ≥ 임계)는 이번에도 없다. 시험 규칙에서 100건을 채우면 찍을 수 있지만, 입력 100개를 지어내야 해서 하지 않았다. 사람이 실검수로 채우거나, 서버 팀이 조건을 충족한 스테이징 규칙을 주면 찍는다.
+
+## 3. 합격선 실측(3차 · 정문 로그인 · 콘솔 오류 0 · 금지어 0)
+
+| 항목 | 1440×900 | 390×844 |
+|---|---|---|
+| 버튼(첫 뷰 · 카드 · 시트) | 6 · 8 · 8 | 4 · 5 · 4 |
+| 금지어(K16 규칙) | 0 (모든 상태) | 0 |
+| 콘솔 오류 | 0 | 0 |
+| 실보드 표본/정밀도 | 0/100 · —(기관 판정 4행 제외 `orgN=4`) | 같음 |
+| HUD | 752 = `/survey/findings` `by_rule.R1` 봉투(다른 화면의 쓰기로 755 → 752 로 바뀜) | 같음 |
+
+## 4. 증거 (`shots/final/lx-review/`)
+
+- `lx-review-stage-judge-1440.mp4` — **19.2초**. 정문 로그인 → 시험 규칙 보드(0/100 · —) → `표본 20 보기` → 카드 → `맞음`(1/100 · 1.00) → `오탐`(2/100 · 0.50, 목록 판정 `맞음`·`오탐`) → 새로고침 뒤 2/100 · 0.50 유지. 가운데의 새로고침 대기(약 11초)는 잘라 냈고, 1.2배속이다.
+- 1440: `1440x900-board.png` · `-card.png` · `-threshold.png` · `-stage-judged.png` · `-unknown-region.png` · (2차) `-other-region-empty.png`
+- 390: `390x844-board.png` · `-card.png` · `-threshold.png`(시트 한 장) · (2차) `-other-region-empty.png`
+- 2차의 `lx-review-1440.mp4` 와 `deleted-agent-verdicts.json` 은 그대로 둔다.
+
+## 5. 서버 요청 — S-2 `stats` 에 LX 표본 전용 필드
+
+화면은 아래 필드가 생기면 코드를 바꾸지 않고 S-2 로 넘어간다(`probeS2`).
+
+```
+GET /survey/rules/{rid}/stats
+  + "lx": { "judged": env(count),            // realm 'lx' 판정 필지 수(필지당 마지막 LX 판정)
+            "precision": env(%, 0–100),      // match ÷ (match + match_fp) · LX 판정만
+            "verdicts": {match, match_fp, unclear} }
+```
+1. 기관 현장 판정(tenant realm · `dismissed`)은 `lx` 에 섞지 않는다. 지금의 `judged/precision` 은 `field` 같은 이름으로 따로 두면 된다.
+2. LX 판정은 기관 필지 **상태**를 바꾸지 않는 판정 표(예 `finding_verdicts(realm, fid, verdict, by, at)`)에 쓰는 게 맞다. 지금 `/state` 는 LX 쓰기를 `demo` 로 표시하고 24h 뒤 상태를 원복한다. 그래서 표본 검수의 영구 기록이 될 수 없다.
+3. `recalibrate` 도 같은 `lx` 표본 기준 옵션(`?scope=lx`)이 필요하다.
+4. 규칙 `reviewed`(꼬리표 뗌) 필드. 지금은 activate 승인 뒤에도 규칙에 `reviewed` 가 없어서, 화면이 `/feedback '검수:떼기'` 로 표시한다.
+
+## 6. 키트 요청
+
+- **K5 서랍(모바일)**: ≤ 960 에서 `.k-drawer` 가 `bottom:0` 이라 하단 탭(64)에 가린다. 이 화면은 `bottom: calc(64px + safe-area)` 로 보정했다. 셸에 레일이 있으면 키트가 비켜 주기를 요청한다. 같은 host 에 두 번째 서랍이 열릴 때(모바일) '한 장만' 규칙도 함께 요청한다.
+- **K4 `/regions`**: 목록에 없는 실제 시군구 코드(사례 `46130` 여수시)를 받았을 때의 규약(토스트 문구 · 폴백)을 키트가 정해 주기를 요청한다. 이 화면은 `이 지역은 아직 목록에 없습니다` + 기본 지역으로 간다.
+- 2차 요청(K1 역할 칩 중복 · K6 HUD 결손 · K16 `frontDoor` 라디오 · K12 `bars` 선택 · K4 기관 id → 시군구)은 그대로 유효하다.
+
+## 7. 정직 항목
+
+1. S-2 판정 payload 수정은 코드로만 반영했다. 실서버로 `/state` 에 쓰는 시험은 하지 않았다. 기관 필지 상태를 바꾸는 쓰기라서다.
+2. 시험 규칙 판정 2건은 흐름 증명용 입력이고 실측 정밀도가 아니다. 실보드에는 섞이지 않는다(§2).
+3. 떼기 첫 사례는 없다(§2 끝).
+4. 이번 작업에서 DB 에 쓴 것은 `/feedback` 2행(`review-stage:R1`)뿐이다. approvals 행은 만들지 않았다.

@@ -311,6 +311,9 @@ def main():
         seed_quotas_accounts_nodes(conn)
         if not a.no_results:
             seed_results(conn)
+    # F3 §3 S-6 카드 확장(intro · ledger_schema · crop_url) + S-9 시드 정리(시험 배포본 · 시험 결재 · pytest 작업 관제 제외)
+    from seed_f3 import main as seed_f3_main
+    seed_f3_main()
     log("seed done")
 
 

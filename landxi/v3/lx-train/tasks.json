@@ -1,0 +1,127 @@
+{
+  "_": "② 학습 — 업무 10(SURVEY-SPEC §1.1 · FINAL-SPEC §2.3 행 이름). 예시 데이터 파일: 크롭 경로는 그 업무 결과층에서 자른 실제 AI 결과 크롭(assets/proto/crops) · 그 업무 결과 크롭이 없거나 첫 학습 전이면 밝은 타일 + 업무 명사 알약(noun · 없으면 cls[0]) · K9 캐릭터는 서랍 빈 상태에만. cropPos·cropZoom = 같은 결과 크롭의 다른 부분을 확대해 보일 때. cls = 이 업무를 판독하는 모델 클래스 · sets = 이 업무 결과층 이름 조각(기관 신고 묶음) · rules = 대조 규칙(현장 확인 건수·현장 확인 기준 정밀도). labelUrl = 서버 설정(/me label_url)이 없을 때만 쓰는 대체 주소 — 열려 있을 때만 링크를 그린다.",
+  "labelUrl": "http://localhost:8010/",
+  "reportMin": 5,
+  "tasks": [
+    {
+      "id": "farmland",
+      "name": "농지이용",
+      "cls": [
+        "경작지",
+        "비경작지"
+      ],
+      "sets": "farmland",
+      "rules": [
+        "R2"
+      ],
+      "crop": "namwon-farmland-2025/2.jpg"
+    },
+    {
+      "id": "greenhouse",
+      "name": "비닐하우스",
+      "cls": [
+        "비닐하우스",
+        "비닐하우스_단동",
+        "비닐하우스_다동"
+      ],
+      "sets": "greenhouse",
+      "rules": [
+        "R3"
+      ],
+      "crop": "namwon-greenhouse-2025/2.jpg"
+    },
+    {
+      "id": "illegal_bldg",
+      "name": "무허가 건축물",
+      "cls": [
+        "건물"
+      ],
+      "sets": "illegal",
+      "rules": [
+        "R1"
+      ],
+      "crop": "jeju-illegal/3.jpg"
+    },
+    {
+      "id": "greenbelt",
+      "name": "개발제한구역",
+      "cls": [],
+      "sets": "greenbelt",
+      "rules": [],
+      "crop": null,
+      "noun": "형질변경"
+    },
+    {
+      "id": "landuse",
+      "name": "지목 불부합",
+      "cls": [
+        "주차장"
+      ],
+      "sets": "landuse",
+      "rules": [
+        "R4",
+        "R5"
+      ],
+      "crop": null,
+      "noun": "주차장"
+    },
+    {
+      "id": "dev_permit",
+      "name": "개발행위 사후관리",
+      "cls": [],
+      "sets": "permit",
+      "rules": [],
+      "crop": null,
+      "noun": "허가 부지"
+    },
+    {
+      "id": "public_asset",
+      "name": "공유재산",
+      "cls": [
+        "건물"
+      ],
+      "sets": "public-asset",
+      "rules": [
+        "R6"
+      ],
+      "crop": "jeju-illegal/4.jpg"
+    },
+    {
+      "id": "river_occupy",
+      "name": "하천구역 점용",
+      "cls": [
+        "건물"
+      ],
+      "sets": "river",
+      "rules": [],
+      "crop": "jeju-illegal/3-clean.jpg",
+      "cropPos": "38% 88%",
+      "cropZoom": 1.8
+    },
+    {
+      "id": "trash",
+      "name": "방치폐기물·소각",
+      "cls": [
+        "폐기물",
+        "쓰레기",
+        "소각"
+      ],
+      "sets": "trash",
+      "rules": [],
+      "crop": null,
+      "noun": "폐기물"
+    },
+    {
+      "id": "marine",
+      "name": "해양쓰레기",
+      "cls": [
+        "해양쓰레기",
+        "해안쓰레기"
+      ],
+      "sets": "marine",
+      "rules": [],
+      "crop": null,
+      "noun": "해안쓰레기"
+    }
+  ]
+}

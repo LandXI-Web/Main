@@ -31,6 +31,8 @@ ORPHAN = _PCFG.get("orphan", {}) or {}
 ORPHAN_FLOOR_S = float(ORPHAN.get("floor_s", 120))
 ORPHAN_SCAN_S = float(ORPHAN.get("scan_s", 10))
 FIRST_CHUNK = int(_PCFG.get("first_chunk", 16))
+# 작업 종류별 shard 상한(S-8 · landxi_api.jobs.SHARD_CAP 와 같은 값 — 게이트웨이 견적이 먼저 too_large 로 거절)
+SHARD_CAP = {"infer": 20000, "reinfer": 120000, "index": 120, "survey": 5000, "join": 5000, "tile": 2, "train": 1}
 active: dict[str, dict] = {}        # job_id → {pool, priority, tenant, total, cursor, started, created, resume_seq}
 deficit: dict[str, float] = {}      # tenant → 받은 shard 수(적을수록 먼저)
 
@@ -142,6 +144,16 @@ def admit(pool: str):
                                         "aoi_centroid": json.loads(jh.get("centroid") or "null"), "pool": pool, "at": now_iso()})
                 r().xack(stream, "g:sched", eid)
                 continue
+            cap = SHARD_CAP.get(jh.get("kind") or "", 10 ** 9)
+            if len(sh) > cap:
+                # S-8 서버측 상한(게이트웨이 견적이 먼저 거른다 · 여기는 이중 방어) — 쪼개서 다시
+                log(WHO, f"too_large {job_id} shards {len(sh)} > {cap}")
+                r().hset(f"job:{job_id}", mapping={"state": "failed", "error": f"too_large: {len(sh)} shard", "finished_at": now_iso()})
+                emit(job_id, "job.failed", {"job_id": job_id, "error": "too_large", "at": now_iso()})
+                ops_event("job.state", {"job_id": job_id, "tenant_id": jh.get("tenant_id"), "state": "failed",
+                                        "aoi_centroid": json.loads(jh.get("centroid") or "null"), "pool": pool, "at": now_iso()})
+                r().xack(stream, "g:sched", eid)
+                continue
             k = f"jobshards:{job_id}"
             r().delete(k)
             for i in range(0, len(sh), 2000):
@@ -233,7 +245,7 @@ def _dispatch(pool: str, jid: str, n: int) -> int:
     if not j["started"]:
         j["started"] = True
         now = now_iso()
-        ws = sorted(h.split(":")[1] for h in r().scan_iter(match="worker:*:hb") if r().hget(h, "pool") == pool)
+        ws = sorted(h.split(":")[1] for h in r().scan_iter(match="worker:*:hb", count=2000) if r().hget(h, "pool") == pool)
         r().hset(f"job:{jid}", mapping={"state": "running", "started_at": now, "started_ts": time.time()})
         emit(jid, "job.started", {"job_id": jid, "shards_total": int(bus.job(jid).get("shards_total") or j["total"]), "workers": ws, "at": now})
         jh = bus.job(jid)
@@ -344,7 +356,7 @@ def orphan_watch():
 
 def sync_db():
     """Redis 미러 → jobs 표(2s)."""
-    ids = [k.split(":")[1] for k in r().scan_iter(match="job:job_*") if k.count(":") == 1]
+    ids = [k.split(":")[1] for k in r().scan_iter(match="job:job_*", count=2000) if k.count(":") == 1]
     if not ids:
         return
     with bus.pg() as conn:
@@ -375,7 +387,7 @@ def restore():
                  + (f" (skipped — {st.get('held_by')} 가 진행 중)" if st.get("skipped") else ""))
     except Exception as e:
         log(WHO, "recovery sweep error", repr(e))
-    for k in r().scan_iter(match="jobshards:*"):
+    for k in r().scan_iter(match="jobshards:*", count=2000):
         jid = k.split(":", 1)[1]
         jh = bus.job(jid)
         if not jh or jh.get("state") in ("done", "cancelled", "failed"):

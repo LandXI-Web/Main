@@ -1,0 +1,14 @@
+# L3 개발행위 허가 · 건물 없음(착공 전 또는 미이행) — 임계 [추정 초기값]
+id: L3
+name: 허가 필지 · 건물 없음
+kind: dev_permit
+requires: [dev_permit]
+condition: "개발행위 허가 대장에 오른 필지에 AI 건물 합계 < {L3_bld_m2:.0f}㎡"
+when_:
+  all:
+    - {op: exists, left: ledger.dev_permit.row}
+    - {op: lt, left: ai.a23_bld_in_m2, right: {th: L3_bld_m2}}
+thresholds: {L3_bld_m2: 10.0}
+base_score: 30
+evidence: {ledger: date, ai: bld, vworld: jimok}
+note: "허가일 이후 영상이 필요 — 영상 시점이 허가보다 이르면 판정 보류"

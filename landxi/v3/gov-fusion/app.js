@@ -1,472 +1,967 @@
-/* gov-fusion — 지자체 담당자 첫 화면. 정문(POST /auth/login) → 관내 지도 → 대장 올리기 → 열 확인 → 결합(PNU 사다리)
-   → 대장 × AI 판독 × V-World 융합 → ⌘K(vLLM) 한 문장 → 지도 채색 · 집계 · 목록 → 필지 카드 → 현장 배정(실제 쓰기).
-   숫자는 모두 이 브라우저가 올린 대장과 AI 색인(정본 PMTiles)에서 센다. 서버 쓰기는 상태 전이 한 곳뿐. */
-import { API, api, probe, session } from '../../shared/api-v1.js';
-import { readLedger, guessColumns, ledgerKind, ROLES } from './ledger.js';
+/* gov-fusion — 서비스 사용자 집 · 지자체(내 대장 × AI). 명세 LANDXI-FINAL-SPEC §2.9 그대로.
+   정문(K2 관문) → 전국 → 관내 카메라(K3) → 시트(K5 카드 · K8 스텝 4) : 올리기(K11 × K9) → 열 확인(K12) → 결합(K9 진행) → 결과(K6 · K12)
+   → Ctrl K(K10 · 게이트웨이 /agent/runs) 한 문장 → 채색 · 리별 막대 · 목록 · 카메라 → 필지 카드(K5 서랍) → 현장 배정(K13 토스트).
+   관할 = 로그인한 기관(세션). 지역 문자열 고정값 0.
+   숫자 한 출처 = 서버: 큰 숫자 · 작은 2 · 표 · 채색은 GET /survey/findings?ledger={import_id}(규칙 L-* · 대장 필지의 실태조사 규칙)에서,
+   결합률은 서버 반입 기록(+ 서버가 조회 상한으로 못 본 행은 브라우저 V-World 확인으로 합쳐 하나)에서. 새 기기·새로고침도 같은 경로.
+   바탕 = 육지 마스크 위성(land.js) · 바다는 단일 바다색 · 타일 없는 육지는 --bg-0. */
+import * as K from '../kit/index.js';
+import { api, esc, h, bboxOf, hasRoute, RM, E_CAM } from '../kit/util.js';
+import { env, sse, API } from '../../shared/api-v1.js';
+import { pmtilesOf, tilesFor } from '../../xi/engine/sources.js';
+import { ROLES } from './ledger.js';
 import { AiIndex } from './aiindex.js';
-import { matchLedger } from './match.js';
-import { plan, run, AI_FIELDS, VW_FIELDS } from './ask.js';
+import { matchLedger, parseAddr } from './match.js';
+import { plan, run, AI_FIELDS, VW_FIELDS, rulePlan, agrees, merge, labelOf, conditionLines, keysOf } from './ask.js';
+import { ledgerStore, lastMark, ledgerKind, KIND_LABEL } from './registry.js';
+import { vwParcels, bboxOfFeature } from './vworld.js';
+import { landSetup, warmTiles, tilesIn } from './land.js';
 
-const $ = (s) => document.querySelector(s);
-const DEV = new URLSearchParams(location.search).has('dev');
-const nf = (v, d = 0) => (v === null || v === undefined || Number.isNaN(+v) ? '—' : Number(v).toLocaleString('ko-KR', { maximumFractionDigits: d, minimumFractionDigits: d }));
-const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const REPORT = '/landxi/v3/gov-report/';
+const $ = (s, r = document) => r.querySelector(s);
+const nf = K.nf;
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const KOREA = K.KOREA;
+const VW_BOUNDS = [124.0, 32.8, 132.0, 38.9];
+const SEA = '#D4E3EB';        // 바다 — 단일 색(위성 바다 · V-World 빈 타일을 쓰지 않는다)
+const OTHER = '#E8E6E0';      // 이웃 나라 육지(대한민국 밖)
+const SGG_URL = API.base + '/tiles/pmtiles/reference/sigungu.pmtiles';
+const inVW = (b) => b[0] < VW_BOUNDS[2] && b[2] > VW_BOUNDS[0] && b[1] < VW_BOUNDS[3] && b[3] > VW_BOUNDS[1];
+const grow = (a, b) => (b ? [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[2], b[2]), Math.max(a[3], b[3])] : a);
+const NONE = [180, 90, -180, -90];
+const P = { base: 1, bld: 2, fal: 3, park: 4, q: 9 };
+const STATE_KO = { open: '—', assigned: '배정', inspected: '확인됨', closed: '종결', dismissed: '종결' };
+const YD = (s) => String(s || '').replace(/^제(\d)종일반주거지역$/, '$1종주거').replace(/^제(\d)종전용주거지역$/, '$1종전용').replace(/지역$/, '').replace(/미세분류$/, '') || '—';
+const SIDO = ['서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종', '경기', '강원', '충북', '충청북', '충남', '충청남', '전북', '전라북', '전남', '전라남', '경북', '경상북', '경남', '경상남', '제주'];
+/* 시도 이름 → 법정동 코드 앞자리(전국 공통 기준표 · 관할 경계선 필터용 · 통합 시도 12 는 옛 코드와 함께) */
+const SIDO_CD = [['서울', '11'], ['부산', '26'], ['대구', '27'], ['인천', '28'], ['광주', '29'], ['대전', '30'], ['울산', '31'], ['세종', '36'], ['경기', '41'],
+  ['강원', '51'], ['충북', '43'], ['충청북', '43'], ['충남', '44'], ['충청남', '44'], ['전북', '52'], ['전라북', '52'], ['전남', '46'], ['전라남', '46'],
+  ['경북', '47'], ['경상북', '47'], ['경남', '48'], ['경상남', '48'], ['제주', '50'], ['광주전남', '12'], ['전남광주', '12']];
 
-/* ── 관할(지역 = 변수) ── 기관 세션의 tenant_id 로 고른다. AI 색인이 없는 관할은 '판독 전'으로 동작한다. */
-const REGIONS = {
-  namwon: { name: '남원시', sgg: ['52190'], sggName: '남원시', bbox: [127.18, 35.30, 127.68, 35.56], ai: '/landxi/data/survey/namwon-parcel-survey.pmtiles' },
-  'gwangju-jeonnam': { name: '광주·전남', sgg: ['29', '46'], sggName: '', bbox: [125.9, 34.2, 127.9, 35.45], ai: null },
-};
-const KOREA = [124.6, 33.0, 131.0, 38.7];
-const C = { k1: '#0FA9A0', k2: '#FF5A4E', k3: '#FFB633', k4: '#9B7BFF', q: '#2F8BFF' };
-
+/* ═════════════ 관문 · 셸 · 무대(바탕부터) ═════════════ */
+landSetup(SGG_URL);                                           // 육지 마스크 · 위성 파이프라인 — 관문을 기다리지 않고
+const pre = warmTiles(tilesIn(KOREA, 7), { n: 12, budget: 3000 });   // 전국 착지 타일(z7 · 바다 칸은 받지 않음)
+const who = await K.gate('gov-fusion');
+const MARK = lastMark(who);               // 이 창의 최근 반입 캐시 표시(동기)
 const S = {
-  me: null, region: null, index: null, emd: new Map(),
-  ledger: null, cols: null, kind: 'generic',
-  fused: [],          // i → { ...대장 열, ...AI 열, ...V-World 열, _pnu, _bb }
-  byPnu: new Map(), matched: null, cats: null, active: null, query: null, sel: null,
-  dev: {},
+  who, store: null, region: null, index: null, emd: new Map(), rec: null, cols: null, vw: null, srv: null, F: null,
+  fused: [], byPnu: new Map(), cat: 'bld', query: null, states: new Map(), counts: null, kind: '농지대장',
+  log: [], tm: {}, regions: null,
 };
+const tm = (k) => { S.tm[k] = Math.round(performance.now()); };
+tm('gate');
+const isDevMode = new URLSearchParams(location.search).get('dev') === '1';
+if (isDevMode) window.__gf = S;   // 개발 모드 점검용
 
-/* ═════════════ 지도 ═════════════ */
-const proto = new pmtiles.Protocol();
-maplibregl.addProtocol('pmtiles', proto.tile);
-const map = new maplibregl.Map({
-  container: 'map', attributionControl: { compact: true }, bounds: KOREA, fitBoundsOptions: { padding: 40 }, maxPitch: 45, dragRotate: false,
-  style: {
-    version: 8,
-    sources: { vw: { type: 'raster', tiles: ['https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg'], tileSize: 256, maxzoom: 19, attribution: 'V-World 위성' } },
-    layers: [
-      { id: 'bg', type: 'background', paint: { 'background-color': '#0B0D10' } },
-      { id: 'vw', type: 'raster', source: 'vw', paint: { 'raster-saturation': -0.3, 'raster-brightness-max': 0.86, 'raster-contrast': 0.06, 'raster-fade-duration': 240 } },
+const shell = K.shell({ who, home: 'gov-fusion', title: String(who.org || '').trim().split(/\s+/).pop() });   // 관할 이름(끝 낱말) — 배포 기록을 읽은 뒤 같은 값으로 확정
+const mastEl = shell.app.querySelector('.k-mast');
+const stageEl = h('div.gf-stage'); shell.main.append(stageEl);
+const stage = K.createStage(stageEl);
+const baseReady = stage.ready.then(mountBase);
+K.devDrawer({ stage, who });
+
+/* 바탕 층 — 바다색 · 이웃 육지 · 대한민국 육지(--bg-0 · 타일 오기 전) · 육지 마스크 위성(저줌 받침 z6–8 + 본 층 z9–19) */
+function mountBase(map) {
+  map.setPaintProperty('bg', 'background-color', SEA);
+  for (const id of ['k-eox', 'k-vw']) if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
+  const before = map.getLayer('k-eox') ? 'k-eox' : 'slot-imagery';
+  map.addSource('gf-other', { type: 'geojson', data: new URL('./geo/neighbors.geojson', import.meta.url).href });
+  map.addLayer({ id: 'gf-other', type: 'fill', source: 'gf-other', paint: { 'fill-color': OTHER, 'fill-antialias': true } }, before);
+  map.addSource('gf-sgg', { type: 'vector', url: 'pmtiles://' + SGG_URL });
+  // 타일이 오기 전 육지(--bg-0) — 시군구 경계는 해안선이 거칠어 깊은 줌에선 걷는다(정밀 해안선은 위성 마스크가 맡는다)
+  map.addLayer({ id: 'gf-land0', type: 'fill', source: 'gf-sgg', 'source-layer': 'sigungu', maxzoom: 11, paint: { 'fill-color': css('--bg-0') || '#F2F4F6', 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 9.5, 1, 10.6, 0] } }, before);
+  map.addSource('gf-lo', { type: 'raster', tiles: ['gfland://{z}/{x}/{y}'], tileSize: 256, minzoom: 6, maxzoom: 8, bounds: VW_BOUNDS });
+  // 받침은 비행 중(저줌)에만 — 깊은 줌에서는 흐린 해안이 바다에 비치지 않게 걷는다
+  map.addLayer({ id: 'gf-lo', type: 'raster', source: 'gf-lo', maxzoom: 11.5, paint: { 'raster-fade-duration': 200, 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 10, 1, 11.2, 0] } }, before);
+  map.addSource('gf-hi', { type: 'raster', tiles: ['gfland://{z}/{x}/{y}'], tileSize: 256, minzoom: 9, maxzoom: 19, bounds: VW_BOUNDS });
+  map.addLayer({ id: 'gf-hi', type: 'raster', source: 'gf-hi', paint: { 'raster-fade-duration': 300 } }, before);
+  return map;
+}
+/* 저줌 받침(z6–8 · 대한민국 전역 · 바다 타일은 받지 않는다) — 카메라를 움직이기 전에 */
+const loReady = Promise.all([pre, baseReady]).then(() => warmTiles([6, 7, 8].flatMap((z) => tilesIn(KOREA, z)), { n: 12, budget: 4000 }));
+
+const [dep, fin, emd, regs] = await Promise.all([
+  api('/deploys').catch(() => null),
+  api('/survey/findings?limit=1').catch(() => null),
+  api('/survey/stats?by=emd').catch(() => null),
+  api('/regions').catch(() => null),
+]);
+S.region = resolveRegion(dep, fin, emd); tm('apis');
+S.regions = (regs && regs.items) || [];
+S.counts = fin?.counts || null;
+const own = ((dep && dep.items) || []).filter((d) => d.tenant_id === who.me.tenant_id);
+{ const k = await ledgerKind(own.map((d) => d.card_id)); S.kind = k.label; S.kindFrom = k.from; }   // 대장 종류 = 카드 ledger_schema(S-6) · 반입이 있으면 그 반입의 종류
+const orgName = S.region.name || who.org;
+document.title = `${orgName} · 내 대장 × AI · Land-XI`;
+{ const hm = mastEl.querySelector('.k-word .home'); if (hm) hm.textContent = orgName; }
+
+/* Ctrl K — 마스트 `물어보기 Ctrl K` · 자리표는 명세 예시 */
+const cmdk = K.mountCmdk({ stage, context: () => ({ tenant: who.me.tenant_id, region: S.region.sgg?.[0] || null, ledger: S.srv?.import_id || null }) });
+const ckBtn = cmdk.button(); ckBtn.querySelector('span').textContent = '물어보기';
+shell.mast(ckBtn);
+const ckInput = $('.k-ck-i', cmdk.el);
+ckInput.placeholder = '대장상 농지인데 AI가 건물로 본 필지';
+
+/* `할 일 {n}` → gov-report (역할 칩 뒤 · `?` 앞) */
+const todo = h('a.k-mast-b.gf-todo', { href: REPORT }, h('span', { text: '할 일' }), h('b.num'));
+mastEl.insertBefore(todo, $('.k-help', mastEl));
+function paintTodo() {
+  const c = S.counts; const n = c ? (c.assigned || 0) + (c.inspected || 0) : null;
+  todo.querySelector('b').textContent = n === null ? '' : nf(n);
+}
+paintTodo();
+shell.fresh(new Date());
+
+/* ═════════════ 시트(K5 흰 카드) · 큰 숫자 카드 ═════════════ */
+const sheet = K.card({ map: true, cls: 'gf-sheet' });
+sheet.setAttribute('aria-label', '내 대장 × AI');
+const stepEl = h('div.gf-steps');
+const panes = { drop: h('div.gf-pane', { hidden: true }), cols: h('div.gf-pane', { hidden: true }), join: h('div.gf-pane', { hidden: true }), result: h('div.gf-pane', { hidden: true }) };
+sheet.append(stepEl, ...Object.values(panes));
+stageEl.append(sheet);
+const steps = K.stepper(stepEl, [{ t: '올리기' }, { t: '열 확인' }, { t: '결합' }, { t: '결과' }], { current: 0 });
+const ORDER = ['drop', 'cols', 'join', 'result'];
+function pane(k, { step } = {}) {
+  for (const [n, el] of Object.entries(panes)) el.hidden = n !== k;
+  steps.go(step ?? Math.max(0, ORDER.indexOf(k)));
+  document.body.dataset.view = k;
+  if (k === 'result') steps.go(4);   // 4 결과까지 모두 완료
+  requestAnimationFrame(padStage);
+}
+let prog = null;
+function joinPane({ resume = false } = {}) {
+  panes.join.innerHTML = '';
+  const pe = h('div'); panes.join.append(pe);
+  prog = K.empty(pe, { kind: 'loading', title: '필지에 이어 붙이는 중', char: 'drone', progress: resume ? null : 0, compact: true });
+  eager(pe);
+  pane('join', { step: resume ? 3 : 2 });
+}
+const eager = (el) => el.querySelectorAll('img').forEach((i) => { i.loading = 'eager'; i.fetchPriority = 'high'; });
+
+const bigCard = K.card({ map: true, cls: 'gf-big' }); bigCard.hidden = true;
+const bigEl = h('div');
+const smallEl = h('div.gf-small');
+bigCard.append(bigEl, smallEl);
+stageEl.append(bigCard);
+const BIG0 = '대장은 농지 · AI는 건물';
+const big = K.bignum(bigEl, null, { label: BIG0, unit: '필지' });
+
+const ingestCard = K.card({ map: true, cls: 'gf-ingest' }); ingestCard.hidden = true;
+stageEl.append(ingestCard);
+const sweep = h('div.gf-sweep', { hidden: true, 'aria-hidden': 'true' }); stageEl.append(sweep);
+
+if (MARK) joinPane({ resume: true }); else pane('none', { step: 0 });   // 캐시 없는 창 — 서버 기록을 확인할 때까지 빈 상태도 그리지 않는다
+
+const small = () => matchMedia('(max-width: 640px)').matches;
+function padStage() {
+  if (small()) {
+    stage.pad({ top: 16 + (bigCard.hidden ? 0 : bigCard.offsetHeight + 12) + (ingestCard.hidden ? 0 : ingestCard.offsetHeight + 12), bottom: (document.body.classList.contains('gf-dr') ? 0 : sheet.offsetHeight) + 20, left: 20, right: 20 });
+  } else {
+    const w = sheet.offsetWidth || 392;
+    const lb = Math.max(bigCard.hidden ? 0 : bigCard.offsetHeight, ingestCard.hidden ? 0 : ingestCard.offsetHeight);
+    stage.pad({ top: 48, left: 48, right: w + 48, bottom: lb ? Math.min(lb + 48, 260) : 48 });
+  }
+  document.body.style.setProperty('--gf-sheet-h', (small() && !document.body.classList.contains('gf-dr') ? sheet.offsetHeight : 0) + 'px');
+}
+addEventListener('resize', () => requestAnimationFrame(padStage));
+new ResizeObserver(() => padStage()).observe(sheet);
+document.addEventListener('kit:drawer', (e) => { document.body.classList.toggle('gf-dr', (e.detail?.open || 0) > 0); requestAnimationFrame(padStage); });
+
+/* ═════════════ 카메라 — 저줌 받침 + 목표 줌 타일을 먼저 받고 움직인다(도착 뒤 흐린 타일 0 · 바다색 위 육지 0) ═════════════ */
+async function warm(b, maxZoom, budget) {
+  await baseReady;
+  const map = stage.map;
+  const cam = map.cameraForBounds(b, { padding: stage.padding, maxZoom });
+  if (!cam) return;
+  const z = Math.min(cam.zoom, maxZoom);
+  const c = map.getContainer();
+  const ctr = cam.center.lng !== undefined ? [cam.center.lng, cam.center.lat] : cam.center;
+  const tz = Math.min(19, Math.round(z + 1));
+  const list = tz >= 9 ? tilesFor({ center: ctr, zoom: z, pitch: 0 }, tz, { W: c.clientWidth, H: c.clientHeight, bounds: VW_BOUNDS }) : [];
+  await Promise.race([Promise.all([loReady, warmTiles(list, { n: 12, budget })]), wait(budget + 400)]);
+}
+async function goReady(b, { ms = 1600, maxZoom = 15, budget = 2200 } = {}) {
+  if (!b) return false;
+  await warm(b, maxZoom, budget);
+  return stage.go(b, { ms, maxZoom });
+}
+
+/* ═════════════ 1 · 올리기 ═════════════ */
+S.store = await ledgerStore(who); tm('store');
+const dzEl = h('div.gf-drop');
+panes.drop.append(dzEl);
+const dz = K.dropzone(dzEl, {
+  onFile: (f, p) => S.store.importFile(f, S.kind, p),
+  onDone: (out) => toCols(out),
+  onError: (e) => { if (!e || !['bad_ext', 'too_large'].includes(e.code)) K.toast('파일을 읽지 못했습니다'); },
+});
+const emptyEl = h('div');
+dzEl.prepend(emptyEl);
+function paintDrop() {
+  K.empty(emptyEl, { kind: 'first', title: '내 대장 × AI', char: 'satellite', text: `${S.kind}${/[가-힣]$/.test(S.kind) && (S.kind.charCodeAt(S.kind.length - 1) - 0xac00) % 28 ? '을' : '를'} 올리면 AI와 어긋난 필지가 지도에 표시됩니다.`, action: { label: '대장 올리기', onClick: () => {} } });
+  eager(emptyEl);
+}
+paintDrop();
+
+function showIngest() {
+  ingestCard.hidden = false;
+  const e = h('div');
+  K.empty(e, { kind: 'ingest', char: 'drone', title: '영상 반입 필요', text: '이 지역 영상이 등록되면 판독이 시작됩니다', compact: true, action: { label: '영상 반입 요청', onClick: requestImagery } });
+  eager(e);
+  ingestCard.innerHTML = ''; ingestCard.append(e);
+  requestAnimationFrame(padStage);
+}
+async function requestImagery(ev) {
+  const b = ev?.currentTarget; if (b) b.disabled = true;
+  const bb = S.region.bbox;
+  try {
+    // 계약 kind 'imagery_request' — 서버 feedback 이 아직 fp|fn|other 만 받아서 other + 메모 머리말로 보낸다(보고서 '서버 요청')
+    await api('/feedback', { method: 'POST', body: { kind: 'other', lnglat: [(bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2], note: `영상 반입 요청 · ${S.region.full}${S.rec ? ` · ${S.rec.name}` : ''}` } });
+    K.toast('영상 반입을 요청했습니다');
+  } catch { K.toast('요청하지 못했습니다'); if (b) b.disabled = false; }
+}
+
+/* ═════════════ 2 · 열 확인 ═════════════ */
+const VW_TWIN = /용도\s*지역|농업\s*진흥|진흥\s*구역|면적/;
+function toCols(out) {
+  S.rec = { import_id: out.import_id, columns_guess: out.columns_guess };
+  S.cols = out.columns_guess.map((c) => ({ ...c }));
+  panes.cols.innerHTML = '';
+  const tbl = h('div.gf-cols');
+  const ok = h('button.t-btn.gf-join', { type: 'button', text: '결합' });
+  panes.cols.append(h('h3.gf-h', { text: '열 확인' }), tbl, h('p.gf-note', { text: '성명·연락처 열은 읽지 않습니다' }), h('div.gf-acts', {}, ok));
+  const opt = (v) => ROLES.map(([k, l]) => `<option value="${k}"${k === v ? ' selected' : ''}>${esc(l)}</option>`).join('');
+  const sub = (r) => (r.role === 'skip' && VW_TWIN.test(r.col) ? 'V-World 값으로 대조' : r.sample);
+  K.table(tbl, {
+    cols: [
+      { key: 'col', label: '파일의 열', fmt: (v, r) => `<b>${esc(v)}</b><small data-i="${r.i}">${esc(sub(S.cols[r.i]))}</small>` },
+      { key: 'role', label: '뜻', width: '46%', fmt: (v, r) => `<select class="t-input gf-sel" data-i="${r.i}" aria-label="${esc(r.col)} 뜻">${opt(v)}</select>` },
     ],
-  },
-});
-const mapReady = new Promise((res) => map.once('load', res));
-
-async function mountRegionLayers() {
-  await mapReady;
-  const R = S.region;
-  if (!map.getSource('sgg')) {
-    map.addSource('sgg', { type: 'vector', url: 'pmtiles://' + API.base + '/tiles/pmtiles/reference/sigungu.pmtiles' });
-    const mine = R.sgg ? ['any', ...R.sgg.map((c) => ['==', ['slice', ['get', 'code'], 0, c.length], c])] : ['==', 1, 0];
-    map.addLayer({ id: 'sgg-dim', type: 'fill', source: 'sgg', 'source-layer': 'sigungu', filter: ['!', mine], paint: { 'fill-color': '#010102', 'fill-opacity': R.sgg ? ['interpolate', ['linear'], ['zoom'], 10.5, 0.42, 12, 0] : 0 } });
-    map.addLayer({ id: 'sgg-glow', type: 'line', source: 'sgg', 'source-layer': 'sigungu', filter: mine, paint: { 'line-color': '#FFFFFF', 'line-width': 7, 'line-opacity': ['interpolate', ['linear'], ['zoom'], 10.5, 0.12, 12, 0], 'line-blur': 4 } });
-    map.addLayer({ id: 'sgg-line', type: 'line', source: 'sgg', 'source-layer': 'sigungu', filter: mine, paint: { 'line-color': '#FFFFFF', 'line-width': 1.6, 'line-opacity': ['interpolate', ['linear'], ['zoom'], 10.5, 0.9, 12, 0] } });
-  }
-  if (R.ai && !map.getSource('sv')) {
-    const url = location.origin + R.ai;
-    S.index = new AiIndex(url);
-    proto.add(S.index.pm);
-    map.addSource('sv', { type: 'vector', url: 'pmtiles://' + url, promoteId: { parcels: 'pnu' } });
-    const k = ['coalesce', ['feature-state', 'k'], 0];
-    map.addLayer({ id: 'lg-fill', type: 'fill', source: 'sv', 'source-layer': 'parcels',
-      paint: { 'fill-color': ['match', k, 1, C.k1, 2, C.k2, 3, C.k3, 4, C.k4, 9, C.q, '#000000'],
-        'fill-opacity': ['interpolate', ['linear'], ['zoom'], 11, ['match', k, 0, 0, 1, 0.26, 0.95], 15, ['match', k, 0, 0, 1, 0.1, 0.62]] } }, 'sgg-glow');
-    map.addLayer({ id: 'lg-glow', type: 'line', source: 'sv', 'source-layer': 'parcels',
-      paint: { 'line-color': ['match', k, 2, C.k2, 3, C.k3, 4, C.k4, 9, C.q, '#000000'], 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 3, 16, 8], 'line-blur': ['interpolate', ['linear'], ['zoom'], 11, 2, 16, 6],
-        'line-opacity': ['match', k, 0, 0, 1, 0, 0.55] } }, 'sgg-glow');
-    map.addLayer({ id: 'lg-line', type: 'line', source: 'sv', 'source-layer': 'parcels', minzoom: 12.5,
-      paint: { 'line-color': ['match', k, 2, C.k2, 3, C.k3, 4, C.k4, 9, '#FFFFFF', '#FFFFFF'], 'line-width': ['interpolate', ['linear'], ['zoom'], 12.5, 0.3, 16, 1.2],
-        'line-opacity': ['match', k, 0, 0, 1, 0.22, 0.95] } }, 'sgg-glow');
-    map.addLayer({ id: 'lg-hl', type: 'line', source: 'sv', 'source-layer': 'parcels', filter: ['==', ['get', 'pnu'], '__'], paint: { 'line-color': '#FFFFFF', 'line-width': 3 } });
-    map.on('click', 'lg-fill', (e) => { const f = e.features && e.features[0]; if (f && S.byPnu.has(f.properties.pnu)) openCard(f.properties.pnu); });
-    map.on('mousemove', 'lg-fill', (e) => { const f = e.features && e.features[0]; map.getCanvas().style.cursor = f && S.byPnu.has(f.properties.pnu) ? 'pointer' : ''; });
-    map.on('mouseleave', 'lg-fill', () => { map.getCanvas().style.cursor = ''; });
-  }
-}
-const cam = (bb, pad = {}, duration = 2400) => map.fitBounds(bb, { padding: { left: 440, right: 60, top: 80, bottom: 120, ...pad }, duration, easing: (t) => 1 - Math.pow(1 - t, 4), maxZoom: 16.5 });
-
-/* ═════════════ 정문 ═════════════ */
-function showGate(msg = '') {
-  document.body.dataset.state = 'gate';
-  $('#gate').hidden = false; $('#sheet').hidden = true; $('#ask').hidden = true; $('#btn-out').hidden = true;
-  $('#mast-region').textContent = '';
-  $('#g-err').textContent = msg;
-  const sel = $('#g-tenant');
-  if (!sel.options.length) for (const [id, r] of Object.entries(REGIONS)) sel.add(new Option(r.name, id));
-  setTimeout(() => $('#g-login').focus(), 50);
-}
-$('#gate-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  $('#g-err').textContent = '';
-  const btn = e.submitter || $('#gate-form button'); btn.disabled = true;
-  try {
-    const r = await fetch(API.prefix + '/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ realm: 'tenant', tenant_id: $('#g-tenant').value, login: $('#g-login').value.trim(), password: $('#g-pw').value }) });
-    const j = await r.json().catch(() => null);
-    if (!r.ok) { $('#g-err').textContent = (j && j.error && j.error.message) || '로그인하지 못했습니다'; $('#g-pw').select(); return; }
-    session.set(j);
-    $('#g-pw').value = '';
-    await enter();
-  } catch { $('#g-err').textContent = '서버에 연결하지 못했습니다'; }
-  finally { btn.disabled = false; }
-});
-$('#btn-out').addEventListener('click', async () => {
-  try { await api('/auth/logout', { method: 'POST' }); } catch { /* */ }
-  session.clear(); location.reload();
-});
-
-async function enter() {
-  let me;
-  try { me = await api('/me'); } catch (e) { session.clear(); return showGate(e.status === 401 ? '' : '서버에 연결하지 못했습니다'); }
-  if (me.realm !== 'tenant') { return showGate('기관 계정으로 들어오세요'); }
-  S.me = me;
-  S.region = REGIONS[me.tenant_id] || { name: me.tenant_id, sgg: null, bbox: KOREA, ai: null };
-  $('#gate').hidden = true; $('#btn-out').hidden = false;
-  $('#mast-region').textContent = S.region.name;
-  document.body.dataset.state = 'drop';
-  await mountRegionLayers();
-  cam(S.region.bbox, { left: 420 }, 2400);
-  setTimeout(() => { $('#sheet').hidden = false; }, 500);
-  $('#ask').hidden = false;
-  loadTodo(); loadEmd(); health();
-}
-
-async function health() {
-  const f = $('#fresh');
-  let llm = false;
-  try { const r = await fetch('http://127.0.0.1:8000/v1/models', { cache: 'no-store' }); llm = r.ok; } catch { /* */ }
-  f.dataset.ok = llm ? '1' : '0';
-  f.title = llm ? '연결됨' : 'AI 비서 연결 없음';
-}
-
-/* 오늘 할 일 — 기관의 현장 확인 흐름(실태조사 상태 기록) */
-async function loadTodo() {
-  const ul = $('#todo'); ul.innerHTML = '';
-  try {
-    const j = await api('/survey/findings?limit=1');
-    const c = j.counts || {};
-    ul.innerHTML = `<li>현장 확인 배정<b>${nf(c.assigned)}</b></li><li>판정 대기<b>${nf(c.inspected)}</b></li>`;
-  } catch { /* 이 기관은 실태조사 기록이 없다 — 줄을 두지 않는다 */ }
-}
-async function loadEmd() {
-  try {
-    const j = await api('/survey/stats?by=emd');
-    for (const it of j.items || []) if (it.bbox && it.bbox.length === 4) S.emd.set(it.cd, { name: it.key, bbox: it.bbox });
-  } catch { /* 색인 없는 관할 */ }
-}
-
-/* ═════════════ 올리기 → 열 확인 ═════════════ */
-const pane = (name) => { for (const p of document.querySelectorAll('.gf-pane')) p.hidden = p.dataset.pane !== name; document.body.dataset.state = name; };
-const drop = $('#drop');
-$('#file').addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; if (f) take(f); e.target.value = ''; });
-addEventListener('dragover', (e) => { e.preventDefault(); if (document.body.dataset.state === 'drop') drop.dataset.over = '1'; });
-addEventListener('dragleave', (e) => { if (e.target === document.documentElement || !e.relatedTarget) drop.dataset.over = '0'; });
-addEventListener('drop', (e) => { e.preventDefault(); drop.dataset.over = '0'; const f = e.dataTransfer.files && e.dataTransfer.files[0]; if (f && S.me) take(f); });
-
-async function take(file) {
-  drop.dataset.busy = '1';
-  const t0 = performance.now();
-  try {
-    S.ledger = await readLedger(file);
-  } catch (e) { toast(e.message || '파일을 읽지 못했습니다'); drop.dataset.busy = '0'; return; }
-  drop.dataset.busy = '0';
-  S.dev.read_ms = Math.round(performance.now() - t0);
-  S.cols = guessColumns(S.ledger.headers, S.ledger.rows);
-  S.kind = ledgerKind(S.cols, S.ledger.rows);
-  renderCols();
-  pane('cols');
-  devOut();
-}
-function renderCols() {
-  $('#file-name').innerHTML = `<span>${esc(S.ledger.name)}</span><span class="gf-rate">${nf(S.ledger.rows.length)}행</span>`;
-  const tb = $('#cols'); tb.innerHTML = '';
-  for (const c of S.cols) {
-    const tr = document.createElement('tr'); tr.dataset.role = c.role; tr.dataset.key = ['pnu', 'addr', 'jibun'].includes(c.role) ? '1' : '0';
-    tr.innerHTML = `<td><b>${esc(c.col)}</b><span>${esc(c.sample)}</span></td><td><select aria-label="${esc(c.col)}의 뜻">${ROLES.map(([k, l]) => `<option value="${k}"${k === c.role ? ' selected' : ''}>${l}</option>`).join('')}</select></td>`;
-    tr.querySelector('select').addEventListener('change', (e) => { c.role = e.target.value; tr.dataset.role = c.role; tr.dataset.key = ['pnu', 'addr', 'jibun'].includes(c.role) ? '1' : '0'; hint(); });
-    tb.appendChild(tr);
-  }
-  hint();
-}
-function hint() {
-  const has = (r) => S.cols.some((c) => c.role === r);
-  const ok = has('pnu') || has('addr');
-  $('#btn-join').disabled = !ok;
-  $('#cols-hint').textContent = !ok ? '필지번호 또는 소재지 열을 골라 주세요' : S.kind === 'farm_ledger' ? '농지 대장으로 읽었습니다' : '';
-}
-$('#btn-reset1').addEventListener('click', reset);
-$('#btn-reset2').addEventListener('click', reset);
-function reset() {
-  clearStates(); S.ledger = null; S.fused = []; S.byPnu.clear(); S.cats = null; S.active = null; S.query = null;
-  $('#plan').hidden = true; $('#ask-in').disabled = true; $('#ask-in').value = ''; closeCard();
-  pane('drop'); cam(S.region.bbox, { left: 420 }, 1600);
-}
-
-/* ═════════════ 결합 ═════════════ */
-$('#btn-join').addEventListener('click', join);
-async function join() {
-  pane('fused');
-  $('#fused-name').textContent = S.ledger.name;
-  $('#rate').innerHTML = '';
-  $('#cats').innerHTML = ''; $('#list').innerHTML = ''; $('.gf-acts--end').hidden = true;
-  setHero('결합 중', 0, { dot: C.k1 });
-  const lad = $('#ladder'); lad.innerHTML = '<i data-k="direct"></i><i data-k="jibun"></i><i data-k="vworld"></i><i data-k="miss"></i>';
-  const N = S.ledger.rows.length;
-  const t0 = performance.now();
-  const upd = (c) => { for (const k of ['direct', 'jibun', 'vworld', 'miss']) lad.querySelector(`[data-k="${k}"]`).style.width = (100 * (c[k] || 0) / N) + '%'; };
-  const res = await matchLedger({
-    rows: S.ledger.rows, cols: S.cols, index: S.index,
-    region: { name: S.region.sggName || '', sgg: S.region.sgg, emdBBox: (cd) => (S.emd.get(cd) || {}).bbox },
-    onStep: (s) => {
-      if (s.phase === 'keys') setHeroLabel(`소재지 해석 ${nf(s.resolved || 0)}/${nf(s.keys)}`);
-      else if (s.phase === 'tiles') setHeroLabel(`AI 판독 불러오기 ${nf(s.tiles || 0)}/${nf(s.tilesN || 0)}`);
-      else if (s.phase === 'verify' || s.phase === 'vworld') { setHeroLabel('필지 확인'); upd(s.counts); }
-    },
+    rows: S.cols.map((c, i) => ({ ...c, i })), limit: 40,
   });
-  S.dev.match_ms = Math.round(performance.now() - t0);
-  S.matched = res;
-  upd(res.counts);
-  // 결합표(대장 열 × AI 열 × V-World 열)
-  const areaCol = (S.cols.find((c) => c.role === 'area') || {}).col;
-  S.fused = S.ledger.rows.map((r, i) => {
-    const m = res.rows[i]; if (!m.pnu) return null;
-    const ix = S.index && S.index.get(m.pnu);
-    const o = {};
-    for (const c of S.cols) if (c.role !== 'skip') o[c.col] = c.col === areaCol ? +String(r[c.col]).replace(/,/g, '') : r[c.col];
+  const check = () => { ok.disabled = !S.cols.some((c) => c.role === 'pnu' || c.role === 'jibun'); };
+  tbl.addEventListener('change', (e) => {
+    const s = e.target.closest('select'); if (!s) return;
+    const c = S.cols[+s.dataset.i]; c.role = s.value;
+    const sm = tbl.querySelector(`small[data-i="${s.dataset.i}"]`); if (sm) sm.textContent = sub(c);
+    check();
+  });
+  check();
+  ok.addEventListener('click', () => join());
+  pane('cols');
+}
+
+/* ═════════════ 3 · 결합 ═════════════
+   브라우저가 필지를 잇고(PNU → 지번 → V-World) 곧바로 서버 반입(import → confirm)을 건다.
+   지도가 서→동으로 차오르는 동안 서버가 결합 · 규칙 L-* 평가를 마치면, 결과는 서버 기록으로 그린다(새 기기와 같은 경로). */
+const mapping = () => Object.fromEntries(S.cols.map((c) => [c.col, c.role]));
+const colOf = (role) => (S.cols || []).find((c) => c.role === role)?.col;
+async function join({ resume = null } = {}) {
+  if (!resume || !prog || panes.join.hidden) joinPane({ resume: !!resume });
+  const t0 = performance.now();
+  let rec;
+  const matcher = (r) => matchLedger({
+    rows: r.rows, cols: S.cols, index: S.index,
+    region: { name: S.region.name, sgg: S.region.sgg, emdBBox: (cd) => (S.emd.get(cd) || {}).bbox },
+    onStep: (s) => prog.set({ progress: s.phase === 'keys' ? 0.2 * (s.resolved || 0) / (s.keys || 1) : s.phase === 'tiles' ? 0.2 + 0.3 * (s.tiles || 0) / (s.tilesN || 1) : 0.5 }),
+  });
+  try {
+    if (resume) {
+      rec = resume;
+      if (S.index) {
+        if (rec.aiCache?.length) S.index.seed(rec.aiCache);
+        else {
+          const emds = [...new Set(rec.match.filter(Boolean).map((p) => p.slice(0, 8)))];
+          const bbs = emds.map((cd) => (S.emd.get(cd) || {}).bbox).filter(Boolean);
+          await S.index.load(bbs.length ? bbs : [S.region.bbox], (d, n) => prog.set({ progress: 0.1 + 0.5 * d / (n || 1) }));
+          rec.aiCache = S.index.dump(rec.match.filter(Boolean)); S.store.save(rec);
+        }
+      }
+    } else {
+      rec = await S.store.confirm(S.rec.import_id, mapping(), matcher);
+      if (S.index) rec.aiCache = S.index.dump(rec.match.filter(Boolean));
+      S.kind = rec.kind || S.kind;
+    }
+    if (!S.index) {
+      if (!rec.vwCache) rec.vwCache = await vwParcels(rec.match.filter(Boolean), (p) => prog.set({ progress: 0.5 + 0.1 * p }));
+      mountVw(rec.vwCache);
+    }
+    if (!resume) await S.store.save(rec);
+  } catch { K.toast('파일을 읽지 못했습니다'); pane('drop'); dz.reset(); return; }
+  K.devlog('match', `${Math.round(performance.now() - t0)} ms · ${S.store.mode}`);
+  S.rec = rec;
+  tm('matched'); fuse(rec); tm('fused');
+  // 서버 반입(새 결합) 또는 서버 기록(이어 열기) — 결과의 정본
+  const srvP = resume ? serverDone(S.srv?.import_id) : S.store.serverSave(rec, S.cols).then((id) => { K.devlog('registry', `서버 반입 ${id}`); return serverDone(id); }).catch((e) => { K.devlog('registry', `서버 반입 실패 · ${e.message}`); return null; });
+  let pr = 0.6; const tick = setInterval(() => { pr = Math.min(0.95, pr + 0.02); prog?.set({ progress: pr }); }, 250);
+  await sweepIn(!!resume);
+  // 영상 있는 관할은 서버 규칙 결과(큰 숫자 · 표)를 기다린다. 영상 없는 관할은 결합률만 서버와 합치므로 기다리지 않는다(끝나면 그 자리에서 갱신)
+  const d = await Promise.race([srvP, wait(!S.index ? 600 : resume ? 8000 : 25000).then(() => null)]);
+  clearInterval(tick);
+  if (d) await takeServer(d);
+  prog?.set({ progress: 1 });
+  result(); tm('result');
+  if (!resume) K.toast('결합을 마쳤습니다');
+  if (!d) srvP.then((dd) => dd && S.rec === rec && takeServer(dd).then(() => { if (S.rec !== rec) return; if (S.index && !S.query) result(); else paintRate(); }));   // 서버가 늦으면 끝나는 대로 그 자리에서 바꾼다
+}
+
+/* 서버 반입 한 건이 결합을 마칠 때까지 */
+async function serverDone(id) {
+  if (!id) return null;
+  for (let i = 0; i < 120; i++) {
+    const d = await S.store.detail(id).catch(() => null);
+    if (d && d.state === 'matched') return d;
+    if (d && d.state === 'failed') return null;
+    await wait(i < 20 ? 700 : 2000);
+  }
+  return null;
+}
+/* 서버 기록 → 결과 정본(규칙 결과 · 결합률 · 미결합) */
+async function takeServer(d) {
+  S.srv = d;
+  if (KIND_LABEL[d.kind]) S.kind = KIND_LABEL[d.kind];
+  if (S.index) { S.F = await loadFindings(d.import_id).catch(() => null); addServerRows(); applySets(); }
+  await verifyCapped();
+}
+/* 대장 필지의 실태조사 결과 — 규칙별 집계(by_rule)와 필지 목록 */
+async function loadFindings(id) {
+  const q = `ledger=${encodeURIComponent(id)}&rule=L1,L2,R1,R2,R4&limit=2000&sort=evid_m2`;
+  const items = []; let by = null;
+  for (let off = 0; off < 8000; off += 2000) {
+    const j = await api(`/survey/findings?${q}&offset=${off}`);
+    by ||= j.by_rule; items.push(...(j.items || []));
+    if ((j.items || []).length < 2000) break;
+  }
+  const set = (rules) => { const m = new Map(); for (const f of items) if (rules.includes(f.rule)) { const v = +f.evid_m2?.value || 0; if (!m.has(f.pnu) || v > m.get(f.pnu).v) m.set(f.pnu, { v, f }); } return m; };
+  const bldRule = by && by.L1 && +by.L1.value > 0 ? ['L1'] : ['R1'];
+  const F = { by, items, bld: set(bldRule), park: set(['R4']), fal: set(['L2', 'R2']), bldRule, as_of: items[0]?.evid_m2?.as_of };
+  for (const f of items) if (!S.states.has(f.pnu) || f.state !== 'open') S.states.set(f.pnu, f.state);
+  return F;
+}
+/* 서버가 V-World 조회 상한으로 못 본 행(브라우저가 PNU 를 잡아 보낸 행)은 브라우저가 V-World 로 확인해 합친다 — 결합률 하나 */
+async function verifyCapped() {
+  const d = S.srv; if (!d) return;
+  const capped = (d.unmatched || []).filter((u) => /상한/.test(String(u.reason || '')) && /^\d{19}$/.test(String(u.pnu || '')));
+  S.capOk = new Set();
+  if (!capped.length) return;
+  const feats = await vwParcels(capped.map((u) => u.pnu)).catch(() => []);
+  const got = new Set(feats.map((f) => f.properties.pnu));
+  for (const u of capped) if (got.has(u.pnu)) S.capOk.add(u.seq);
+  S.capFeats = feats;
+}
+
+/* 대장 × AI 판독 × V-World 한 줄씩(이 창에 행이 있을 때) */
+function fuse(rec) {
+  const st = colOf('state'), dt = colOf('date');
+  const jc = (S.cols || []).filter((c) => c.role === 'jibun').map((c) => c.col);
+  S.fused = rec.rows.map((r, i) => {
+    const pnu = rec.match[i]; if (!pnu) return null;
+    const ix = S.index && S.index.get(pnu);
+    const txt = jc.map((c) => String(r[c] ?? '').trim()).filter(Boolean).join(' ');
+    const a = parseAddr(txt, '');
+    const o = { _pnu: pnu, _bb: ix ? ix.bb : (S.vw && S.vw.get(pnu)) || null, _ri: a.ri || a.emd || '', _jb: [a.ri || a.emd, a.jb].filter(Boolean).join(' ') || txt, _state: st ? String(r[st] ?? '').trim() : '' };
+    for (const c of S.cols) if (c.role !== 'skip') o[c.col] = r[c.col];
+    if (dt) o._date = r[dt];
     if (ix) { for (const [k, f] of Object.entries(AI_FIELDS)) o[k] = f(ix.p); for (const [k, f] of Object.entries(VW_FIELDS)) o[k] = f(ix.p); }
-    o._pnu = m.pnu; o._bb = ix && ix.bb; o._area = areaCol ? o[areaCol] : (ix ? ix.p.area_m2 : null);
     return o;
   });
   S.byPnu.clear(); S.fused.forEach((o, i) => { if (o) S.byPnu.set(o._pnu, i); });
-  const matchedN = N - res.counts.miss;
-  const rate = N ? Math.floor((1000 * matchedN) / N) / 10 : 0;
-  $('#rate').innerHTML = rate >= 50 ? `결합 ${nf(rate, 1)}%<b title="확인됨">✓</b>` : `결합 ${nf(rate, 1)}%`;
-  setHero('대장과 이어진 필지', matchedN, { dot: C.k1 });
-  $('#rate').title = res.counts.miss ? Object.entries(res.reasons).map(([k, v]) => `${k} ${nf(v)}`).join(' · ') : '모든 행이 필지와 이어졌습니다';
-  await sweepIn();
-  S.dev.fused = matchedN;
-  $('.gf-acts--end').hidden = false;
-  if (!matchedN) {
-    const top = Object.entries(res.reasons).sort((x, y) => y[1] - x[1])[0];
-    setHero(top ? `이어진 필지 없음 · ${top[0]}` : '이어진 필지 없음', 0, { dot: '#D1352B' });
-    $('#cats').innerHTML = `<li class="gf-note">${S.region.name} 관내 대장인지 확인해 주세요</li>`; devOut(); return;
+  applySets();
+}
+/* 서버 결과 필지 한 줄(행이 없는 새 기기 · 브라우저가 못 이은 필지) — AI 판독 색인 · V-World 속성은 같은 파일에서 */
+function rowFromFinding(f, stCol, adCol) {
+  const ix = S.index && S.index.get(f.pnu);
+  let ev = null; try { ev = typeof f.evidence === 'string' ? JSON.parse(f.evidence) : f.evidence; } catch { /* */ }
+  const a = parseAddr(f.addr || '', '');
+  const lg = ev?.ledger?.value || (VW_FIELDS['V-World 지목'](ix ? ix.p : { jimok: f.jimok }) || f.jimok || '');
+  const ll = f.lnglat || [];
+  const o = { _pnu: f.pnu, _bb: ix ? ix.bb : (Number.isFinite(ll[0]) ? [ll[0] - 0.0004, ll[1] - 0.0003, ll[0] + 0.0004, ll[1] + 0.0003] : null), _ri: a.ri || a.emd || '', _jb: [a.ri || a.emd, a.jb].filter(Boolean).join(' ') || f.addr || f.pnu, _state: lg, _srv: 1 };
+  if (stCol) o[stCol] = lg;
+  if (adCol) o[adCol] = f.addr || '';
+  if (ix) { for (const [k, fn] of Object.entries(AI_FIELDS)) o[k] = fn(ix.p); for (const [k, fn] of Object.entries(VW_FIELDS)) o[k] = fn(ix.p); }
+  else { o['V-World 지목'] = f.jimok || ''; o['V-World 용도지역'] = f.yongdo || ''; o['V-World 농업진흥'] = f.nongup || ''; o['V-World 면적(㎡)'] = +f.parcel_m2?.value || 0; }
+  return o;
+}
+/* 새 기기 — 행이 없으면 서버 결과의 필지로 결합표를 만든다 */
+function fuseFromFindings() {
+  const F = S.F; if (!F) return;
+  S.cols = [{ col: '대장 상태', role: 'state' }, { col: '소재지', role: 'jibun' }];
+  const seen = new Map();
+  for (const f of F.items) if (!seen.has(f.pnu)) seen.set(f.pnu, rowFromFinding(f, '대장 상태', '소재지'));
+  S.fused = [...seen.values()];
+  S.byPnu.clear(); S.fused.forEach((o, i) => S.byPnu.set(o._pnu, i));
+  applySets();
+}
+/* 이 창의 결합표에 없는 서버 결과 필지(서버가 V-World 로 더 이은 행)를 덧붙인다 — 큰 숫자 = 지도 = 표 = Ctrl K */
+function addServerRows() {
+  const F = S.F; if (!F || !S.rec?.rows) return;
+  const st = colOf('state'), ad = (S.cols || []).find((c) => c.role === 'jibun')?.col;
+  for (const f of F.items) if (!S.byPnu.has(f.pnu)) { S.fused.push(rowFromFinding(f, st, ad)); S.byPnu.set(f.pnu, S.fused.length - 1); }
+}
+/* 서버 규칙 결과를 결합표에 — 큰 숫자 · 작은 2 · Ctrl K 답이 같은 필지 집합에서 나온다 */
+function applySets() {
+  const F = S.F; if (!F || !S.fused.length) return;
+  for (const o of S.fused) {
+    if (!o) continue;
+    o['AI 건물(㎡)'] = F.bld.get(o._pnu)?.v || 0;
+    o['AI 주차장(㎡)'] = F.park.get(o._pnu)?.v || 0;
+    o['AI 경작 흔적 없음'] = F.fal.has(o._pnu) ? 1 : 0;
   }
-  if (!S.index) { setHero('AI 판독 전 관할', matchedN, { dot: '#CCCCCC' }); $('#cats').innerHTML = '<li class="gf-note">영상 반입 뒤 대조합니다</li>'; devOut(); return; }
-  categorize();
-  $('#ask-in').disabled = false;
-  devOut();
 }
 
-/* 결합된 필지가 서쪽에서 동쪽으로 차오른다(적재된 실제 필지 순서 · 1.4초) */
-async function sweepIn() {
+/* 결합된 필지가 서쪽에서 동쪽으로 차오른다(실제 필지 순서) · 이어 열기는 한 번에 */
+async function sweepIn(resume) {
   const items = S.fused.filter((o) => o && o._bb).sort((a, b) => a._bb[0] - b._bb[0]);
-  if (!items.length) return;
-  const bb = items.reduce((a, o) => [Math.min(a[0], o._bb[0]), Math.min(a[1], o._bb[1]), Math.max(a[2], o._bb[2]), Math.max(a[3], o._bb[3])], [180, 90, -180, -90]);
+  if (!items.length || !srcId()) return;
+  const bb = items.reduce((a, o) => grow(a, o._bb), NONE);
   S.ledgerBB = bb;
-  cam(bb, {}, 1600);
-  await new Promise((r) => setTimeout(r, 1650));
-  const sw = $('#sweep'); sw.hidden = false;
-  const T = 1400; const t0 = performance.now(); let k = 0;
+  const mz = S.index ? 15.5 : 15;
+  if (resume || RM()) { for (const o of items) setK(o._pnu, P.base); await goReady(bb, { ms: 1600, maxZoom: mz, budget: 1600 }); return; }
+  await goReady(bb, { ms: 1600, maxZoom: mz });
+  sweep.hidden = false;
+  const T = 1400, t0 = performance.now(); let k = 0; const map = stage.map;
   await new Promise((done) => {
     const tick = () => {
       const t = Math.min(1, (performance.now() - t0) / T);
-      const lon = bb[0] + (bb[2] - bb[0]) * t;
-      while (k < items.length && items[k]._bb[0] <= lon) { map.setFeatureState({ source: 'sv', sourceLayer: 'parcels', id: items[k]._pnu }, { k: 1 }); k++; }
-      sw.style.transform = `translateX(${map.project([lon, (bb[1] + bb[3]) / 2]).x}px)`;
-      if (t < 1) requestAnimationFrame(tick); else { for (; k < items.length; k++) map.setFeatureState({ source: 'sv', sourceLayer: 'parcels', id: items[k]._pnu }, { k: 1 }); sw.hidden = true; done(); }
+      const lon = bb[0] + (bb[2] - bb[0]) * E_CAM(t);
+      while (k < items.length && items[k]._bb[0] <= lon) setK(items[k++]._pnu, P.base);
+      sweep.style.transform = `translateX(${map.project([lon, (bb[1] + bb[3]) / 2]).x}px)`;
+      if (t < 1) requestAnimationFrame(tick); else { for (; k < items.length; k++) setK(items[k]._pnu, P.base); sweep.hidden = true; done(); }
     };
     requestAnimationFrame(tick);
   });
 }
-function clearStates() { painted = new Map(); if (map.getSource('sv')) map.removeFeatureState({ source: 'sv', sourceLayer: 'parcels' }); map.getLayer('lg-hl') && map.setFilter('lg-hl', ['==', ['get', 'pnu'], '__']); }
+const srcId = () => (S.index ? (stage.map.getSource('sv') ? 'sv' : null) : (stage.map.getSource('gf-vw') ? 'gf-vw' : null));
+let painted = new Map();
+function setK(pnu, k) {
+  const src = srcId(); if (!src) return;
+  stage.map.setFeatureState(src === 'sv' ? { source: 'sv', sourceLayer: 'parcels', id: pnu } : { source: 'gf-vw', id: pnu }, { k });
+  painted.set(pnu, k);
+}
+/* 채색 — 이 창에 행이 있으면 대장 필지 전체를 옅게(바탕), 아니면 결과 필지만 */
+function paint(fn) {
+  if (!srcId()) return;
+  const base = S.rec?.rows ? P.base : 0;
+  S.fused.forEach((o, i) => { if (!o) return; const k = fn(i) || base; if ((painted.get(o._pnu) || 0) !== k) setK(o._pnu, k); });
+}
 
-/* ═════════════ 3분류(대장 지목 × AI) ═════════════ */
-function categorize() {
-  const jc = (S.cols.find((c) => c.role === 'jimok') || {}).col;
-  const farm = (o) => !jc || ['전', '답', '과수원', '과'].includes(String(o[jc]).trim());
-  const defs = [
-    { id: 2, dot: C.k2, label: '대장은 농지 · AI는 건물', short: '농지 위 건물', test: (o) => farm(o) && o['AI 건물(㎡)'] >= 33, ev: (o) => ['건물', o['AI 건물(㎡)']] },
-    { id: 4, dot: C.k4, label: '대장은 농지 · AI는 주차장', short: '주차장', test: (o) => farm(o) && o['AI 주차장(㎡)'] >= 100, ev: (o) => ['주차장', o['AI 주차장(㎡)']] },
-    { id: 3, dot: C.k3, label: '경작 흔적 없음', short: '경작 흔적 없음', test: (o) => farm(o) && o._area >= 1000 && o['AI 농경 비율'] < 0.15 && o['AI 건물(㎡)'] / o._area < 0.3, ev: (o) => ['농경', `${Math.round(o['AI 농경 비율'] * 100)}% · ${nf(o._area)}㎡`] },
-  ];
-  for (const d of defs) d.hits = [];
-  S.catOf = new Map();
-  S.fused.forEach((o, i) => { if (!o || o['AI 건물(㎡)'] === undefined) return; for (const d of defs) if (d.test(o)) { d.hits.push(i); S.catOf.set(i, d.id); break; } });
-  S.cats = defs;
-  showCat(2);
+/* ═════════════ 4 · 결과 ═════════════ */
+const SMALL = [['park', '주차장'], ['fal', '경작 흔적 없음(확인 필요)']];
+let resTable = null, ansEl = null, rateEl = null;
+const est = (n) => { const e = env(n, '필지', 'estimate', '대장 × 2023 25cm 항공영상 AI 판독 · 규칙 L-*', '검수 전'); e.as_of = S.srv?.confirmed_at || S.F?.as_of || e.as_of; return e; };
+function setBig(label, e) { big.set(e); big.label(label); }
+function catIdx(id) { const m = S.F?.[id]; if (!m) return []; const out = []; for (const pn of m.keys()) { const i = S.byPnu.get(pn); if (i !== undefined) out.push(i); } return out; }
+const catN = (id) => (S.F?.[id] ? S.F[id].size : null);
+/* 필지의 실태조사 결과 한 건 — 지금 보는 분류의 규칙 결과를 먼저(표의 '상태' = 필지 카드의 상태 = 배정 대상) */
+function findingOf(pnu) {
+  const F = S.F; if (!F) return null;
+  for (const id of [S.cat, 'bld', 'park', 'fal']) { const e = F[id]?.get(pnu); if (e) return e.f; }
+  return null;
+}
+const stateOf = (pnu) => findingOf(pnu)?.state || S.states.get(pnu);
+function bigDefault() { const n = catN('bld'); setBig(BIG0, n === null ? null : est(n)); }
+
+/* 결합률 — 한 숫자. 이 창에 행이 있으면 브라우저 ∪ 서버, 새 기기면 서버 + 상한으로 못 본 행의 브라우저 V-World 확인 */
+function rateNow() {
+  const R = S.rec?.rows ? S.rec : null, d = S.srv;
+  if (R) {
+    const N = R.rows.length;
+    const all = R.match.every(Boolean);
+    const miss = d && d.state === 'matched' ? new Set((d.unmatched || []).map((u) => +u.seq)) : null;
+    if (!all && !miss) return { final: false, N };
+    let n = 0; const why = {};
+    R.match.forEach((p, i) => {
+      if (p || (miss && !miss.has(i + 1)) || S.capOk?.has(i + 1)) { n++; return; }
+      const u = (R.unmatched || []).find((x) => x.row === i) || {}; const k = String(u.reason || '기타').split(' · ')[0]; why[k] = (why[k] || 0) + 1;
+    });
+    return { final: true, n, N, why, as_of: d?.confirmed_at || R.as_of };
+  }
+  if (!d) return { final: false, N: 0 };
+  const N = +d.rows?.value || 0, Ms = +d.matched?.value || 0, add = S.capOk ? S.capOk.size : 0;
+  const why = {}; for (const u of d.unmatched || []) { if (S.capOk?.has(+u.seq)) continue; const k = String(u.reason || '기타').split(' · ')[0]; why[k] = (why[k] || 0) + 1; }
+  return { final: true, n: Math.min(N, Ms + add), N, why, as_of: d.confirmed_at };
+}
+function paintRate() {
+  if (!rateEl) return;
+  rateEl.innerHTML = '';
+  const r = rateNow();
+  if (!r.final) { rateEl.append(h('span.t-label', { text: '대장 필지 결합 확인 중' })); return; }
+  const pct = r.N ? Math.floor((1000 * r.n) / r.N) / 10 : 0;
+  const e = env(pct, '%', 'measured', '대장 × 연속지적 매칭(PNU → 지번 → V-World)', `대장 ${r.N}행`); e.as_of = r.as_of || e.as_of;
+  rateEl.append(h('span.t-label', { text: '대장 필지 결합' }), h('b.num', { text: `${nf(pct, 1)}%`, dataset: { metric: '대장 필지 결합', v: String(pct) } }), K.sigEl(e));
+  const miss = r.N - r.n;
+  if (miss > 0) {
+    const b = h('button.t-btn.t-btn--text.gf-miss', { type: 'button', text: `미결합 ${nf(miss)} · 사유 보기` });
+    b.addEventListener('click', () => {
+      const t = h('div');
+      K.table(t, { cols: [{ key: 'why', label: '사유' }, { key: 'n', label: '행', num: true }], rows: Object.entries(r.why).sort((a, b) => b[1] - a[1]).map(([why, n]) => ({ why, n })), limit: 10 });
+      K.drawer({ title: '미결합', body: t, host: stageEl, slot: 'parcel' });
+    });
+    rateEl.append(h('span.gf-dot', { text: '·' }), b);
+  }
+}
+const fileName = () => S.rec?.name || S.srv?.filename || '';
+
+function result() {
+  pane('result');
+  panes.result.innerHTML = '';
+  panes.result.append(h('p.gf-file', { text: fileName() }));
+  ansEl = h('div.gf-ans'); panes.result.append(ansEl);
+  const tblEl = h('div.gf-table'); panes.result.append(tblEl);
+  rateEl = h('div.gf-rh'); panes.result.append(rateEl); paintRate();
+  const dl = h('button.t-btn.t-btn--2', { type: 'button', text: '내려받기' });
+  const again = h('button.t-btn.t-btn--2', { type: 'button', text: '다른 파일' });
+  panes.result.append(h('div.gf-acts.gf-foot', {}, dl, again));
+  dl.addEventListener('click', download);
+  again.addEventListener('click', reset);
+  resTable = null;
+
+  if (!S.index) {
+    // 영상 없는 관할: 결합된 필지를 V-World 경계로 칠하고 대장 필지 수 · 리별 막대 — 대조 숫자는 영상이 들어온 뒤(지어내지 않는다)
+    tblEl.hidden = true; bigCard.hidden = true; showIngest();
+    const r = rateNow();
+    const known = S.fused.filter(Boolean);
+    const n = r.final ? r.n : known.length;
+    ansEl.append(h('p.gf-ans-h', {}, h('span', { text: '대장 필지' }), h('span.gf-ans-n', { html: `<b class="num" data-metric="대장 필지" data-v="${n}">${nf(n)}<small>필지</small></b>` }, K.sigEl(env(n, '필지', 'measured', '대장 × V-World 연속지적', '')))));
+    if (S.rec?.rows) {
+      const g = new Map(); for (const o of known) g.set(o._ri || '—', (g.get(o._ri || '—') || 0) + 1);
+      const items = [...g.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([label, value]) => ({ label, value }));
+      if (items.length > 1) { const be = h('div'); ansEl.append(be); K.bars(be, { items, ai: true, unit: '필지' }); }
+    }
+    if (!S.ledgerBB) {
+      const p = known.map((o) => o._bb).filter(Boolean);
+      const b = p.length ? p.reduce((a, q) => grow(a, q), NONE) : null;
+      requestAnimationFrame(() => { padStage(); goReady(b || S.region.bbox, { ms: 2000, maxZoom: 14 }); });
+    }
+    requestAnimationFrame(padStage);
+    return;
+  }
+  resTable = K.table(tblEl, {
+    cols: [
+      { key: 'jb', label: '지번' }, { key: 'lg', label: '대장' }, { key: 'ai', label: 'AI 판독' }, { key: 'yd', label: '용도지역' },
+      { key: 'st', label: '상태', fmt: (v, r) => esc(STATE_KO[stateOf(r.pnu)] || '—') },
+    ],
+    rows: [], limit: TOP(), onRow: (r) => openParcel(r.pnu, true),
+  });
+  bigCard.hidden = false;
+  bigDefault();
+  smallEl.innerHTML = '';
+  for (const [id, label] of SMALL) {
+    const n = catN(id);
+    const b = h('button.gf-chip', { type: 'button', 'aria-pressed': 'false', dataset: { cat: id } }, h('span', { text: label }), h('b.num', { text: n === null ? '—' : nf(n), dataset: { metric: label, v: n === null ? '' : String(n) } }));
+    b.addEventListener('click', () => showCat(S.cat === id && !S.query ? 'bld' : id));
+    smallEl.append(b);
+  }
+  showCat('bld');
+  requestAnimationFrame(padStage);
+}
+
+/* 시트 표 = 근거가 큰 순 상위 몇 필지(전체는 지도 · 내려받기) — 카드 합 ≤ 20% */
+const TOP = () => (S.query ? 2 : 3);   // 질문 답(조건 이름 · 리별 막대)이 붙으면 표는 2행
+function rowsOf(idx, evKey, all = false) {
+  const rows = idx.map((i) => S.fused[i]).filter(Boolean).map((o) => ({
+    pnu: o._pnu, jb: o._jb, lg: o._state || '—', ai: aiText(o, evKey), yd: YD(o['V-World 용도지역']), _ev: evKey ? +o[evKey] || 0 : 0,
+  })).sort((a, b) => b._ev - a._ev);
+  return all ? rows : rows.slice(0, TOP());
+}
+function aiText(o, key) {
+  if (key === 'AI 경작 흔적 없음' || key === 'V-World 면적(㎡)') return o['AI 농경 비율'] !== undefined ? `농경 ${Math.round((o['AI 농경 비율'] || 0) * 100)}%` : '경작 흔적 없음';
+  if (key) return `${key.replace(/^AI |\(㎡\)$/g, '')} ${nf(Math.round(o[key] || 0))}㎡`;
+  const list = [['건물', 'AI 건물(㎡)', 33], ['주차장', 'AI 주차장(㎡)', 100], ['비닐하우스', 'AI 비닐하우스(㎡)', 100]].filter(([, k, t]) => o[k] >= t);
+  return list.length ? list.map(([l, k]) => `${l} ${nf(Math.round(o[k]))}㎡`).join(' · ') : `농경 ${Math.round((o['AI 농경 비율'] || 0) * 100)}%`;
+}
+const EVKEY = { bld: 'AI 건물(㎡)', park: 'AI 주차장(㎡)', fal: 'V-World 면적(㎡)' };
+const CAT_LABEL = { bld: BIG0, park: '대장은 농지 · AI는 주차장', fal: '경작 흔적 없음(확인 필요)' };
+function ansHead(label, n, e) {
+  ansEl.innerHTML = ''; ansEl.hidden = false;
+  if (n === null) { ansEl.append(h('p.gf-ans-h', {}, h('span', { text: label }), h('span.gf-ans-n', { html: '<b class="num">—</b>' }))); return; }
+  const nb = h('span.gf-ans-n', { html: `<b class="num" data-metric="${esc(label)}" data-v="${n}">${nf(n)}<small>필지</small></b>` }, K.sigEl(e || est(n)));
+  ansEl.append(h('p.gf-ans-h', {}, h('span', { text: label }), nb));
 }
 function showCat(id) {
-  S.query = null; S.active = id;
-  const d = S.cats.find((x) => x.id === id);
-  paintStates((i) => (S.catOf.get(i) === id ? id : 1));
-  setHero(d.label, d.hits.length, { dot: d.dot, est: true });
-  const ul = $('#cats'); ul.innerHTML = '';
-  for (const c of S.cats) if (c.id !== id) {
-    const li = document.createElement('li');
-    li.innerHTML = `<button type="button" aria-pressed="false" style="--dot:${c.dot}"><i></i><span>${c.short}</span><b>${nf(c.hits.length)}</b></button>`;
-    li.firstChild.addEventListener('click', () => showCat(c.id));
-    ul.appendChild(li);
+  S.cat = id; S.query = null;
+  bigDefault();
+  for (const b of smallEl.querySelectorAll('.gf-chip')) b.setAttribute('aria-pressed', String(b.dataset.cat === id && id !== 'bld'));
+  const idx = catIdx(id); const hit = new Set(idx);
+  const kk = { bld: P.bld, park: P.park, fal: P.fal }[id];
+  paint((i) => (hit.has(i) ? kk : 0));
+  ansHead(CAT_LABEL[id], catN(id));
+  const rows = rowsOf(idx, EVKEY[id]);
+  resTable?.set(rows);
+  loadLedgerCells(rows);
+}
+/* 새 기기에서 표의 '대장' 칸 — 보이는 몇 행만 필지 조회(대장 값) */
+async function loadLedgerCells(rows) {
+  if (S.rec?.rows) return;
+  const need = rows.filter((r) => !S.ledgerCell?.has(r.pnu)).slice(0, 6);
+  S.ledgerCell ||= new Map();
+  await Promise.all(need.map(async (r) => {
+    try { const j = await api(`/survey/parcels/${r.pnu}?with=ledger`); const v = (j.ledger || []).find((x) => x.import_id === S.srv?.import_id) || (j.ledger || [])[0]; S.ledgerCell.set(r.pnu, v?.values?.status || null); }
+    catch { S.ledgerCell.set(r.pnu, null); }
+  }));
+  let ch = false;
+  for (const o of S.fused) if (o && S.ledgerCell.get(o._pnu) && o._state !== S.ledgerCell.get(o._pnu)) { o._state = S.ledgerCell.get(o._pnu); ch = true; }
+  if (ch) resTable?.set(currentRows());
+}
+function currentRows() {
+  if (S.query) return rowsOf(S.query.hits, S.query.evKey);
+  return rowsOf(catIdx(S.cat), EVKEY[S.cat]);
+}
+
+/* ═════════════ 필지 카드(K5 서랍) — 대장 · AI 판독 · V-World ═════════════ */
+async function openParcel(pnu, fly) {
+  const i = S.byPnu.get(pnu); if (i === undefined) return;
+  const o = S.fused[i];
+  const hl = S.index ? 'lg-hl' : 'gv-hl';
+  stage.map.getLayer(hl) && stage.map.setFilter(hl, ['==', ['get', 'pnu'], pnu]);
+  if (fly && o._bb) goReady(o._bb, { ms: 1400, maxZoom: 17, budget: 1500 });
+  const body = h('div.gf-parcel');
+  const vw = S.index ? [o['V-World 지목'], o['V-World 용도지역'], o['V-World 농업진흥']].filter(Boolean).join(' · ') || '—' : ((S.vwProps && S.vwProps.get(pnu)) || '—');
+  const ai = S.index ? aiText(o) : '영상 반입 필요';
+  body.append(h('dl.gf-tri', { html: `<dt>대장</dt><dd>${esc(o._state || '—')}${o._date ? ` · ${esc(o._date)}` : ''}</dd><dt>AI 판독</dt><dd>${esc(ai)}</dd><dt>V-World</dt><dd>${esc(vw)}${o['V-World 면적(㎡)'] ? ` · ${nf(Math.round(o['V-World 면적(㎡)']))}㎡` : ''}</dd>` }));
+  const act = h('div.gf-act'); body.append(act);
+  const d = K.drawer({ title: o._jb, body, host: stageEl, slot: 'parcel', onClose: () => stage.map.getLayer(hl) && stage.map.setFilter(hl, ['==', ['get', 'pnu'], '__']) });
+  if (!S.index) return;
+  try {
+    let f = findingOf(pnu);
+    if (!f) { const j = await api(`/survey/findings?pnu=${pnu}&limit=5`); f = (j.items || []).find((x) => x.state === 'open') || (j.items || [])[0]; }
+    if (!f) return;
+    S.states.set(pnu, f.state);
+    act.append(h('p.gf-st', {}, h('span.t-label', { text: '상태' }), h('b', { text: STATE_KO[f.state] === '—' ? '확인 전' : STATE_KO[f.state] })));
+    if (f.state === 'open') {
+      const b = h('button.t-btn', { type: 'button', text: '현장 배정' });
+      b.addEventListener('click', async () => {
+        b.disabled = true;
+        try {
+          const r = await api(`/survey/findings/${encodeURIComponent(f.id)}/state`, { method: 'POST', body: { client_id: 'gf-' + crypto.randomUUID(), state: 'assigned', assignee: who.name } });
+          f.state = r.state || 'assigned'; S.states.set(pnu, f.state); d.close(); K.toast('배정했습니다', { action: { label: '할 일', href: REPORT } });
+          refreshTodo(); resTable?.set(currentRows());
+        } catch { b.disabled = false; K.toast('배정하지 못했습니다'); }
+      });
+      act.append(b);
+    }
+  } catch { /* 실태조사 기록이 없는 필지 */ }
+}
+
+/* ═════════════ Ctrl K — 한 문장 → 필터 · 채색 · 리별 막대 · 목록 · 카메라 ═════════════
+   ⓪ 관할 가드: 질문 속 시도 · 시군구 · 읍면동이 관할 밖이면 규칙도 모델도 걸지 않고 한 줄로 답한다(지도 무반응)
+   ① 규칙 매핑(명세 어휘)을 모델 호출 전에 건다 → 지도가 바로 바뀐다
+   ② 모델(vLLM · 게이트웨이)은 규칙이 없거나 조건을 더할 때만
+   ③ 영상 없는 관할은 대장 × V-World 조건만으로(리별 n필지) — AI 조건이면 '영상 반입 필요 · 판독 전' 한 줄 */
+cmdk.el.addEventListener('submit', (e) => {
+  const q = ckInput.value.trim();
+  const out = outsideOf(q);
+  if (out) { e.preventDefault(); e.stopPropagation(); sayOnly(`관할 밖 지역입니다 · ${S.region.name || orgName} 안에서 물어 주세요`, 2600); S.log.push({ q, guard: out }); return; }
+  if (!S.fused.filter(Boolean).length) return;              // 대장 결합 전 → 키트 기본(일반 질문)
+  e.preventDefault(); e.stopPropagation();
+  if (!S.index) askNoImagery(q); else ask(q);
+}, true);
+function sayOnly(text, ms = 1800) {
+  const planEl = $('.k-ck-plan', cmdk.el), ans = $('.k-ck-a', cmdk.el);
+  planEl.hidden = true; planEl.innerHTML = '';
+  ans.hidden = false; ans.innerHTML = `<b>${esc(text)}</b>`;
+  delete cmdk.el.dataset.busy;
+  const seq = ++askSeq; setTimeout(() => { if (askSeq === seq) cmdk.close(); }, ms);
+}
+/* 관할 가드 — 관할 안 이름을 지운 뒤 남는 시도 · 시군구(전국 목록) · 읍면동(관할 목록이 온전할 때) */
+function outsideOf(q) {
+  if (!q) return null;
+  const R = S.region;
+  const inside = new Set([R.name, ...String(R.full || '').split(/\s+/), ...(S.places || placesOf())].filter((x) => x && x.length >= 2));
+  for (const r of S.regions || []) if (r.in_scope) { inside.add(r.name); inside.add(r.full); }
+  let s = q; for (const n of [...inside].sort((a, b) => b.length - a.length)) s = s.split(n).join(' ');
+  const full = String(R.full || '') + ' ' + [...inside].join(' ');
+  for (const sd of SIDO) if (s.includes(sd) && !full.includes(sd)) return sd;
+  for (const r of S.regions || []) {
+    if (r.in_scope) continue;
+    const nm = String(r.name || ''); const short = nm.replace(/(시|군|구)$/, '');
+    if (nm.length >= 2 && s.includes(nm)) return nm;
+    if (short.length >= 2 && new RegExp(short + '(?:시|군|구|에서|의|\\s|$)').test(s)) return nm;
   }
-  list(d.hits, (o) => { const [k, v] = d.ev(o); return typeof v === 'number' ? `${k} ${nf(v)}㎡` : `${k} ${v}`; }, (o) => d.id === 3 ? -o._area : -(d.ev(o)[1]));
-}
-
-/* 상태 칠하기: 바뀐 필지만 */
-let painted = new Map();
-function paintStates(fn) {
-  const next = new Map();
-  S.fused.forEach((o, i) => { if (o) next.set(o._pnu, fn(i)); });
-  for (const [pnu, k] of next) if (painted.get(pnu) !== k) map.setFeatureState({ source: 'sv', sourceLayer: 'parcels', id: pnu }, { k });
-  painted = next;
-}
-
-function setHero(label, n, { dot, est } = {}) {
-  $('#hero-l').innerHTML = `<i style="--dot:${dot || C.k1}"></i>${esc(label)}`;
-  countTo($('#hero-n'), n, est);
-}
-function setHeroLabel(t) { const l = $('#hero-l'); l.lastChild && l.lastChild.nodeType === 3 ? (l.lastChild.textContent = t) : (l.textContent = t); }
-function countTo(el, n, est) {
-  cancelAnimationFrame(el._raf);
-  if (n === null || n === undefined) { el.innerHTML = ''; el.dataset.v = 0; return; }
-  const from = +(el.dataset.v || 0); const t0 = performance.now(); const T = 750;
-  const tail = `${est ? '<sup title="AI 판독 기준 추정치 · 검수 전">~</sup>' : ''}<small>필지</small>`;
-  const step = () => { const t = Math.min(1, (performance.now() - t0) / T); const e = 1 - Math.pow(1 - t, 4); el.innerHTML = nf(Math.round(from + (n - from) * e)) + tail; if (t < 1) el._raf = requestAnimationFrame(step); };
-  el.dataset.v = n; el.style.fontSize = nf(n).length >= 6 ? '80px' : ''; step();
-}
-function list(idx, evFmt, sortKey) {
-  const ol = $('#list'); ol.innerHTML = '';
-  const ac = (S.cols.find((c) => c.role === 'addr') || {}).col, jb = (S.cols.find((c) => c.role === 'jibun') || {}).col;
-  const top = idx.map((i) => S.fused[i]).sort((a, b) => sortKey(a) - sortKey(b)).slice(0, 3);
-  for (const o of top) {
-    const li = document.createElement('li');
-    const addr = [ac ? String(o[ac]).split(/\s+/).pop() : '', jb ? o[jb] : ''].join(' ').trim() || o._pnu;
-    li.innerHTML = `<button type="button"><span>${esc(addr)}</span><b>${esc(evFmt(o))}</b></button>`;
-    li.firstChild.addEventListener('click', () => openCard(o._pnu, true));
-    ol.appendChild(li);
+  if (S.emd.size) {   // 읍면동 목록이 온전한 관할만 — 낱말 앞이 띄어 쓴 이름이고, '…하면 · 없으면 · 이동' 같은 말은 빼고
+    const m = [...s.matchAll(/(?:^|\s)([가-힣]{1,5}(?:읍|면|동))(?=$|[\s,?·]|에서|에|의|은|는|이|가)/g)].map((x) => x[1]);
+    for (const t of m) {
+      if (/동$/.test(t) && t.length < 3) continue;
+      if (/(으|하|이|라|다|려|나|되|지|없|있|않|보|오|가|해|했|된|는)면$/.test(t)) continue;
+      if (!inside.has(t)) return t;
+    }
   }
+  return null;
+}
+function placesOf() {
+  const pl = new Set(); for (const o of S.fused) if (o && o._ri) pl.add(o._ri); for (const [, e] of S.emd) if (e.name) pl.add(e.name);
+  return [...pl];
+}
+let asking = null;
+function askCtx() {
+  const stCol = colOf('state'), adCol = (S.cols || []).find((c) => c.role === 'jibun')?.col;
+  const ledgerCols = (S.cols || []).filter((c) => c.role !== 'skip').map((c) => c.col);
+  const samples = {};
+  const rows = S.rec?.rows || null;
+  for (const c of S.cols || []) if (c.role === 'state' || c.role === 'jibun') {
+    const seen = new Map(); for (const r of (rows || S.fused).slice(0, 3000)) { const v = String((r && r[c.col]) ?? '').trim(); if (v) seen.set(v, (seen.get(v) || 0) + 1); }
+    samples[c.col] = seen.size <= 40 ? [...seen.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map((x) => x[0]).join(', ') : [...seen.keys()][0];
+  }
+  for (const k of ['V-World 지목', 'V-World 용도지역', 'V-World 농업진흥']) {
+    const seen = new Map(); for (const o of S.fused.slice(0, 4000)) { const v = o && String(o[k] ?? '').trim(); if (v) seen.set(v, (seen.get(v) || 0) + 1); }
+    if (seen.size) samples[k] = [...seen.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map((x) => x[0]).join(', ');
+  }
+  if (!S.places) S.places = placesOf();
+  return { ledgerCols, samples, region: S.region.name, stateCol: stCol, addrCol: adCol, places: S.places };
+}
+let askSeq = 0;
+/* 영상 없는 관할 — 모델을 부르지 않는다(판독 전 · 지어내지 않는다) */
+function askNoImagery(q) {
+  const ctx = askCtx(); const k = keysOf(q);
+  if (k.bld || k.park || k.gh || k.fal) { sayOnly('영상 반입 필요 · 판독 전', 2200); S.log.push({ q, used: 'no-imagery' }); return; }
+  const R = rulePlan(q, ctx);
+  const where = R.where.filter((w) => !/^AI |^V-World /.test(w.field));
+  const hits = run(where, S.fused);
+  const planEl = $('.k-ck-plan', cmdk.el), ans = $('.k-ck-a', cmdk.el);
+  const lines = conditionLines(where, ctx);
+  planEl.hidden = !lines.length; planEl.innerHTML = lines.map((l) => `<li class="is-done">${esc(l)}</li>`).join('');
+  const label = [R.focus, '대장 필지'].filter(Boolean).join(' · ');
+  ans.hidden = false; delete cmdk.el.dataset.busy;
+  ans.innerHTML = hits.length ? `<b>${esc(label)}</b> <span class="k-num" data-metric="${esc(label)}" data-v="${hits.length}">${nf(hits.length)}<small>필지</small></span>` : '<b>조건에 맞는 필지가 없습니다</b>';
+  S.query = { where, hits, label, focus: R.focus, lines };
+  const hit = new Set(hits);
+  paint((i) => (hit.has(i) ? P.q : P.base));
+  ansHead(label, hits.length, env(hits.length, '필지', 'measured', '대장 × V-World 연속지적', ''));
+  const g = new Map(); for (const i of hits) { const kk = S.fused[i]._ri || '—'; g.set(kk, (g.get(kk) || 0) + 1); }
+  const items = [...g.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([l, value]) => ({ label: l, value }));
+  if (items.length > 1) { const be = h('div'); ansEl.append(be); K.bars(be, { items, ai: true, unit: '필지' }); }
+  const pool = hits.map((i) => S.fused[i]).filter((o) => o._bb);
+  if (pool.length) goReady(pool.reduce((a, o) => grow(a, o._bb), NONE), { ms: 1600, maxZoom: 15, budget: 1200 });
+  const seq = ++askSeq; setTimeout(() => { if (askSeq === seq) cmdk.close(); }, 1600);
+  S.log.push({ q, used: 'ledger-only', n: hits.length });
+}
+async function ask(q) {
+  if (!q) return;
+  asking?.abort(); asking = new AbortController(); const sig = asking.signal; const seq = ++askSeq;
+  const planEl = $('.k-ck-plan', cmdk.el), ans = $('.k-ck-a', cmdk.el);
+  planEl.hidden = false; planEl.innerHTML = '<li>&nbsp;</li><li>&nbsp;</li><li>&nbsp;</li>';
+  ans.hidden = false; ans.innerHTML = '<span class="k-ck-dots" aria-hidden="true"><i></i><i></i><i></i></span>';
+  cmdk.el.dataset.busy = '1';
+  const t0 = performance.now();
+  const ctx = askCtx();
+  const R = rulePlan(q, ctx);
+  const rec = { q, rule: R.where.length };
+  S.log.push(rec);
+  const closeLater = (ms) => setTimeout(() => { if (askSeq === seq) cmdk.close(); }, ms);
+  const show = (where, focus, runId) => {
+    delete cmdk.el.dataset.busy;
+    const hits = run(where, S.fused);
+    const lb = labelOf(where, ctx, focus);
+    const aiW = where.find((w) => /^AI (건물|주차장|비닐하우스)\(/.test(w.field));
+    const evKey = aiW ? aiW.field : where.some((w) => w.field === 'AI 경작 흔적 없음') ? 'V-World 면적(㎡)' : 'AI 건물(㎡)';
+    S.query = { where, hits, label: lb.label, big: lb.big, focus, evKey, lines: conditionLines(where, ctx), run_id: runId };
+    planEl.innerHTML = S.query.lines.map((l) => `<li class="is-done">${esc(l)}</li>`).join('');
+    ans.innerHTML = hits.length
+      ? `<b>${esc(lb.label)}</b> <span class="k-num" data-metric="${esc(lb.label)}" data-v="${hits.length}">${nf(hits.length)}<small>필지</small></span>`
+      : '<b>조건에 맞는 필지가 없습니다</b>';
+    applyQuery();
+    return hits.length;
+  };
+  if (R.where.length) { show(R.where, R.focus, null); rec.answer_ms = Math.round(performance.now() - t0); rec.used = 'rule'; closeLater(1400); }
+  const onStep = R.where.length ? null : (i, s) => { const li = planEl.children[i]; if (li) { li.textContent = String(s).replace(/[.。]\s*$/, ''); li.classList.add('is-done'); } };
+  let final = null, p = null, tries = 0;
+  for (; tries < (R.where.length ? 1 : 2) && !final; tries++) {
+    try { p = await plan(tries ? `${q} (질문에 있는 조건만)` : q, ctx, onStep, sig); }
+    catch (err) { if (err.name === 'AbortError') return; K.devlog('ask error', String(err && err.message || err)); rec.err = String(err && err.message || err); p = null; break; }
+    const ok = agrees(p.where, q, ctx);
+    (rec.model ||= []).push({ ms: Math.round(p.ms), first_ms: Math.round(p.first_ms || 0), n: p.where.length, ok });
+    if (ok) final = R.where.length ? merge(R.where, p.where, q, ctx) : p.where;
+    else K.devlog('ask', `어긋남 ${tries + 1} · ${JSON.stringify(p.where)}`);
+  }
+  if (sig.aborted || askSeq !== seq) return;
+  rec.model_ms = Math.round(performance.now() - t0);
+  if (R.where.length) {
+    if (final && final.length > R.where.length) { show(final, R.focus || p?.focus || '', p?.run_id); rec.used = 'rule+model'; }
+    else if (S.query) S.query.run_id = p?.run_id;
+  } else {
+    if (!final) { delete cmdk.el.dataset.busy; ans.innerHTML = '<b>지금은 답할 수 없습니다</b>'; planEl.hidden = true; closeLater(2200); return; }
+    show(final, p?.focus || '', p?.run_id); rec.used = 'model'; rec.answer_ms = rec.model_ms;
+  }
+  K.devlog('ask', `답 ${rec.answer_ms} ms · 모델 ${rec.model_ms} ms · ${rec.used} · ${JSON.stringify(S.query?.where)}`);
+  if (!R.where.length) closeLater(S.query?.hits.length ? 1400 : 2600);
+}
+function applyQuery() {
+  const Q = S.query; const hit = new Set(Q.hits);
+  paint((i) => (hit.has(i) ? P.q : 0));
+  for (const b of smallEl.querySelectorAll('.gf-chip')) b.setAttribute('aria-pressed', 'false');
+  if (Q.big) setBig(Q.label, est(Q.hits.length)); else bigDefault();
+  if (!Q.hits.length) {
+    ansEl.innerHTML = ''; ansEl.hidden = false;
+    ansEl.append(h('p.gf-ans-h', { text: '조건에 맞는 필지가 없습니다' }), h('ul.gf-cond', { html: Q.lines.map((l) => `<li>${esc(l)}</li>`).join('') }));
+  } else {
+    ansHead(Q.label, Q.hits.length);
+    const g = new Map(); for (const i of Q.hits) { const k = S.fused[i]._ri || '—'; g.set(k, (g.get(k) || 0) + 1); }
+    const items = [...g.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([label, value]) => ({ label, value }));
+    Q.bars = items.length > 1;
+    if (Q.bars) { const be = h('div'); ansEl.append(be); K.bars(be, { items, ai: true, unit: '필지' }); }
+  }
+  const rows = rowsOf(Q.hits, Q.evKey); resTable?.set(rows); loadLedgerCells(rows);
+  let pool = Q.hits.map((i) => S.fused[i]).filter((o) => o._bb);
+  if (Q.focus) { const fp = pool.filter((o) => o._jb.includes(Q.focus) || o._ri === Q.focus); if (fp.length) pool = fp; }
+  if (pool.length) goReady(pool.reduce((a, o) => grow(a, o._bb), NONE), { ms: 1600, maxZoom: 16, budget: 1400 });
+  requestAnimationFrame(padStage);
 }
 
-/* ═════════════ 내려받기 ═════════════ */
-$('#btn-csv').addEventListener('click', () => {
-  const idx = S.query ? S.query.hits : (S.cats || []).find((c) => c.id === S.active)?.hits || [];
-  const heads = [...S.cols.filter((c) => c.role !== 'skip').map((c) => c.col), ...Object.keys(AI_FIELDS), ...Object.keys(VW_FIELDS), 'PNU'];
+/* ═════════════ 내려받기 · 다른 파일 ═════════════ */
+function download() {
+  const idx = S.query ? S.query.hits : S.index ? catIdx(S.cat) : S.fused.map((o, i) => (o ? i : -1)).filter((i) => i >= 0);
+  const ledgerCols = S.rec?.rows ? (S.cols || []).filter((c) => c.role !== 'skip').map((c) => c.col) : [];
   const q = (v) => { const s = String(v ?? ''); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const heads = ['지번', ...ledgerCols, '대장', 'AI 판독', '용도지역', '상태', 'PNU'];
   const lines = [heads.join(',')];
-  for (const i of idx) { const o = S.fused[i]; lines.push(heads.map((h) => q(h === 'PNU' ? o._pnu : typeof o[h] === 'number' ? Math.round(o[h] * 1000) / 1000 : o[h])).join(',')); }
-  const label = S.query ? S.query.label : S.cats.find((c) => c.id === S.active).short;
+  const evKey = S.query ? S.query.evKey : EVKEY[S.cat];
+  for (const i of idx) {
+    const o = S.fused[i]; if (!o) continue;
+    lines.push([o._jb, ...ledgerCols.map((c) => o[c]), o._state, S.index ? aiText(o, evKey) : '', YD(o['V-World 용도지역']), STATE_KO[stateOf(o._pnu)] || '—', o._pnu].map(q).join(','));
+  }
+  const label = S.query ? S.query.label : S.index ? { bld: '농지_건물', park: '농지_주차장', fal: '경작_흔적_없음' }[S.cat] : '결합';
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
-  a.download = `${S.ledger.name.replace(/\.[^.]+$/, '')}_${label.replace(/[\\/:*?"<>|\s·]+/g, '_')}.csv`;
-  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-});
+  a.download = `${String(fileName() || '대장').replace(/\.[^.]+$/, '')}_${String(label).replace(/[\\/:*?"<>|\s·()]+/g, '_')}.csv`;
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  K.toast('내려받았습니다');
+}
+function reset() {
+  const src = srcId();
+  if (src === 'sv') stage.map.removeFeatureState({ source: 'sv', sourceLayer: 'parcels' });
+  else if (src === 'gf-vw') stage.map.getSource('gf-vw').setData({ type: 'FeatureCollection', features: [] });
+  painted = new Map(); S.fused = []; S.byPnu.clear(); S.query = null; S.rec = null; S.places = null; S.ledgerBB = null; S.srv = null; S.F = null; S.capOk = null;
+  bigCard.hidden = true; if (S.index) ingestCard.hidden = true;
+  K.closeAll(); dz.reset(); paintDrop(); pane('drop');
+  goReady(S.region.bbox, { ms: 1600, maxZoom: S.index ? 12 : 11 });
+}
 
-/* ═════════════ ⌘K ═════════════ */
-addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); if (!$('#ask-in').disabled) $('#ask-in').focus(); }
-  if (e.key === 'Escape') { if (!$('#card').hidden) closeCard(); else if (S.query) { $('#plan').hidden = true; showCat(S.active || 2); } }
-});
-let asking = null;
-$('#ask-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const qtext = $('#ask-in').value.trim(); if (!qtext || !S.fused.length) return;
-  asking && asking.abort(); asking = new AbortController();
-  const pl = $('#plan'); pl.hidden = false; pl.innerHTML = ''; pl.dataset.min = '0';
-  const lis = [0, 1, 2].map(() => { const li = document.createElement('li'); li.dataset.s = 'wait'; li.innerHTML = '<i></i><span>&nbsp;</span><span></span>'; pl.appendChild(li); return li; });
-  lis[0].dataset.s = 'run';
-  $('#ask').dataset.busy = '1';
-  const ledgerCols = S.cols.filter((c) => c.role !== 'skip').map((c) => c.col);
-  const samples = {};
-  for (const c of S.cols) if (c.role !== 'skip' && c.role !== 'area') {
-    const seen = new Map(); for (const r of S.ledger.rows.slice(0, 3000)) { const v = String(r[c.col] ?? '').trim(); if (v) seen.set(v, (seen.get(v) || 0) + 1); }
-    if (seen.size <= 40) samples[c.col] = [...seen.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map((x) => x[0]).join(', ');
-    else if (c.role === 'addr') samples[c.col] = [...seen.keys()].slice(0, 3).join(', ');
+/* ═════════════ 관할 · 지도 층 ═════════════ */
+function resolveRegion(dep, fin, emd) {
+  const R = { id: who.me.tenant_id, full: '', name: '', sgg: null, bbox: null, ai: null };
+  const mine = ((dep && dep.items) || []).filter((d) => d.tenant_id === who.me.tenant_id);
+  R.full = mine.map((d) => d.region_name && d.region_name.ko).find(Boolean) || who.org || '';
+  let bb = null;
+  const g = (b) => { if (!b) return; bb = bb ? grow(bb, b) : [...b]; };
+  for (const d of mine) g(bboxOf(d.aoi));
+  for (const it of (emd && emd.items) || []) if (it.bbox && it.bbox.length === 4) { S.emd.set(it.cd, { name: it.key, bbox: it.bbox }); g(it.bbox); }
+  const f = fin && fin.items && fin.items[0];
+  if (f) R.sgg = [String(f.pnu).slice(0, 5)];
+  if (!R.full && f) R.full = String(f.addr || '').split(/\s+/).slice(0, 2).join(' ');
+  R.name = String(R.full).trim().split(/\s+/).pop() || '';
+  R.bbox = bb || KOREA;
+  R.hasFindings = !!f;
+  return R;
+}
+/* 관할 코드 — 배포 기록 · 실태조사 기록이 없으면 전국 지역 목록(in_scope)에서 */
+function scopeCodes() {
+  if (S.region.sgg) return S.region.sgg;
+  const c = new Set((S.regions || []).filter((r) => r.in_scope).map((r) => String(r.sgg_cd)));
+  const full = String(S.region.full || '');
+  for (const [k, cd] of SIDO_CD) if (full.includes(k)) c.add(cd);        // 경계 타일은 옛 시도 코드일 수 있다
+  return c.size ? [...c] : null;
+}
+async function mountLayers() {
+  await baseReady;
+  const map = stage.map; const R = S.region;
+  R.sgg = scopeCodes();
+  if (!R.hasFindings) { const bbs = (S.regions || []).filter((r) => r.in_scope && r.bbox).map((r) => r.bbox); if (bbs.length && R.bbox === KOREA) R.bbox = bbs.reduce((a, b) => grow(a, b), NONE); }
+  const mine = R.sgg ? ['any', ...R.sgg.map((c) => ['==', ['slice', ['to-string', ['get', 'code']], 0, c.length], c])] : ['==', ['get', 'code'], '__'];
+  // 관할 밖 딤 없음 · 관할 경계선만(사진 위 흰 선 + 옅은 그림자)
+  // 시군구 경계는 z11 해상도(해안에서 1–2km 마디) — 필지 줌에서는 바다 위로 선이 지나가지 않게 걷는다
+  const fade = ['interpolate', ['linear'], ['zoom'], 10.5, 1, 11.5, 0];
+  map.addLayer({ id: 'gf-sgg-shadow', type: 'line', source: 'gf-sgg', 'source-layer': 'sigungu', filter: mine, maxzoom: 11.5, paint: { 'line-color': 'rgba(28,31,37,.35)', 'line-width': 4, 'line-blur': 3, 'line-opacity': fade } }, 'slot-overlay');
+  map.addLayer({ id: 'gf-sgg-line', type: 'line', source: 'gf-sgg', 'source-layer': 'sigungu', filter: mine, maxzoom: 11.5, paint: { 'line-color': '#FFFFFF', 'line-width': ['interpolate', ['linear'], ['zoom'], 7, 1, 11, 1.6], 'line-opacity': fade } }, 'slot-overlay');
+  if (!R.ai) return;
+  const url = location.origin + R.ai;
+  S.index = new AiIndex(url, pmtilesOf('pmtiles://' + url));
+  map.addSource('sv', { type: 'vector', url: 'pmtiles://' + url, promoteId: { parcels: 'pnu' } });
+  const k = ['coalesce', ['feature-state', 'k'], 0];
+  const ai = css('--ai'), warn = css('--warn'), lock = css('--lock');
+  map.addLayer({ id: 'lg-fill', type: 'fill', source: 'sv', 'source-layer': 'parcels',
+    paint: { 'fill-color': ['match', k, P.base, ai, P.fal, lock, warn],
+      'fill-opacity': ['interpolate', ['linear'], ['zoom'], 11, ['match', k, 0, 0, P.base, 0.28, 0.9], 14, ['match', k, 0, 0, P.base, 0.16, 0.55], 16, ['match', k, 0, 0, P.base, 0.06, 0.2], 17, ['match', k, 0, 0, P.base, 0.03, 0.12]] } }, 'gf-sgg-shadow');
+  map.addLayer({ id: 'lg-line', type: 'line', source: 'sv', 'source-layer': 'parcels', minzoom: 12.5,
+    paint: { 'line-color': ['match', k, P.base, '#FFFFFF', P.fal, lock, warn], 'line-width': ['interpolate', ['linear'], ['zoom'], 12.5, ['match', k, P.base, 0.3, 0.8], 16, ['match', k, P.base, 1, 2.2]], 'line-opacity': ['match', k, 0, 0, P.base, 0.35, 0.95] } }, 'gf-sgg-shadow');
+  map.addLayer({ id: 'lg-hl', type: 'line', source: 'sv', 'source-layer': 'parcels', filter: ['==', ['get', 'pnu'], '__'], paint: { 'line-color': '#FFFFFF', 'line-width': 3 } }, 'slot-overlay');
+  map.on('click', 'lg-fill', (e) => { const f = e.features && e.features[0]; if (f && S.byPnu.has(f.properties.pnu)) openParcel(f.properties.pnu, false); });
+  map.on('mousemove', 'lg-fill', (e) => { const f = e.features && e.features[0]; map.getCanvas().style.cursor = f && S.byPnu.has(f.properties.pnu) ? 'pointer' : ''; });
+  map.on('mouseleave', 'lg-fill', () => { map.getCanvas().style.cursor = ''; });
+}
+/* 영상 없는 관할 — V-World 경계(흰 윤곽 · 옅은 청록 채움) · 결합 스윕도 같은 feature-state */
+function mountVw(features) {
+  const map = stage.map;
+  S.vw = new Map(); S.vwProps = new Map();
+  for (const f of features) { S.vw.set(f.properties.pnu, bboxOfFeature(f)); S.vwProps.set(f.properties.pnu, String(f.properties.addr || '').split(/\s+/).slice(-2).join(' ')); }
+  const fc = { type: 'FeatureCollection', features };
+  if (map.getSource('gf-vw')) { map.getSource('gf-vw').setData(fc); return; }
+  map.addSource('gf-vw', { type: 'geojson', data: fc, promoteId: 'pnu' });
+  const k = ['coalesce', ['feature-state', 'k'], 0];
+  const ai = css('--ai');
+  map.addLayer({ id: 'gv-fill', type: 'fill', source: 'gf-vw', paint: { 'fill-color': ai, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 11, ['match', k, 0, 0, P.q, 0.7, 0.4], 14, ['match', k, 0, 0, P.q, 0.45, 0.22], 16, ['match', k, 0, 0, P.q, 0.25, 0.1]] } }, 'gf-sgg-shadow');
+  map.addLayer({ id: 'gv-line', type: 'line', source: 'gf-vw', paint: { 'line-color': '#FFFFFF', 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 0.4, 15, 1.4], 'line-opacity': ['match', k, 0, 0, 0.9] } }, 'gf-sgg-shadow');
+  map.addLayer({ id: 'gv-hl', type: 'line', source: 'gf-vw', filter: ['==', ['get', 'pnu'], '__'], paint: { 'line-color': '#FFFFFF', 'line-width': 3 } }, 'slot-overlay');
+  map.on('click', 'gv-fill', (e) => { const f = e.features && e.features[0]; if (f && S.byPnu.has(f.properties.pnu)) openParcel(f.properties.pnu, false); });
+  map.on('mousemove', 'gv-fill', (e) => { const f = e.features && e.features[0]; map.getCanvas().style.cursor = f && S.byPnu.has(f.properties.pnu) ? 'pointer' : ''; });
+  map.on('mouseleave', 'gv-fill', () => { map.getCanvas().style.cursor = ''; });
+}
+
+/* ═════════════ 새 기기 · 새 프로필 — 서버 기록으로 결과를 다시 그린다 ═════════════ */
+async function serverOpen(d) {
+  joinPane({ resume: true });
+  S.rec = null;
+  await takeServer(d); tm('open-server');
+  if (S.index && S.F) {
+    // AI 판독 색인(같은 파일)을 결과 필지가 있는 읍면만 읽는다 — 표 · 필지 카드 · Ctrl K
+    const emds = [...new Set(S.F.items.map((f) => String(f.pnu).slice(0, 8)))];
+    const bbs = emds.map((cd) => (S.emd.get(cd) || {}).bbox).filter(Boolean);
+    if (bbs.length) await Promise.race([S.index.load(bbs, (a, n) => prog?.set({ progress: 0.2 + 0.7 * a / (n || 1) })), wait(6000)]);
+    tm('open-index'); fuseFromFindings();
+    const pts = S.fused.map((o) => o._bb).filter(Boolean);
+    if (pts.length) await goReady(pts.reduce((a, b) => grow(a, b), NONE), { ms: 1800, maxZoom: 15, budget: 1600 });
+    tm('open-cam');
+  } else if (!S.index) {
+    const feats = S.capFeats || [];
+    if (feats.length) mountVw(feats);
+    S.fused = feats.map((f) => { const a = parseAddr(String(f.properties.addr || ''), ''); return { _pnu: f.properties.pnu, _bb: bboxOfFeature(f), _ri: a.ri || a.emd || '', _jb: String(f.properties.addr || '').split(/\s+/).slice(-2).join(' '), _state: '' }; });
+    S.byPnu.clear(); S.fused.forEach((o, i) => S.byPnu.set(o._pnu, i));
+    for (const o of S.fused) setK(o._pnu, P.base);
   }
-  try {
-    const p = await plan(qtext, { ledgerCols, samples, region: S.region.name }, (i, s) => {
-      if (lis[i]) { lis[i].children[1].textContent = String(s).replace(/[.。]\s*$/, ''); lis[i].dataset.s = 'ok'; }
-      if (lis[i + 1]) lis[i + 1].dataset.s = 'run';
-    }, asking.signal);
-    for (const li of lis) li.dataset.s = 'ok';
-    const hits = run(p.where, S.fused);
-    S.query = { ...p, hits, text: qtext };
-    S.dev.llm_ms = Math.round(p.ms); S.dev.llm_first_ms = Math.round(p.first_ms); S.dev.where = p.where;
-    showQuery();
-    const res = document.createElement('li'); res.className = 'res';
-    res.innerHTML = `<span>${esc(p.label)}</span><b>${nf(hits.length)}필지</b>`;
-    pl.appendChild(res);
-  } catch (err) {
-    if (err.name === 'AbortError') return;
-    S.dev.err = String(err && err.message || err);
-    pl.innerHTML = '<li class="err">AI 비서가 응답하지 않습니다. 잠시 뒤 다시 물어봐 주세요.</li>';
-  } finally { $('#ask').dataset.busy = '0'; devOut(); }
-});
-
-function showQuery() {
-  const Q = S.query; const hit = new Set(Q.hits);
-  paintStates((i) => (hit.has(i) ? 9 : 1));
-  setHero(Q.label, Q.hits.length, { dot: C.q, est: Q.where.some((w) => w.field.startsWith('AI')) });
-  // 리별 집계(대장 소재지 기준)
-  const ac = (S.cols.find((c) => c.role === 'addr') || {}).col;
-  const g = new Map();
-  for (const i of Q.hits) { const k = ac ? String(S.fused[i][ac]).split(/\s+/).pop() : '—'; g.set(k, (g.get(k) || 0) + 1); }
-  const top = [...g.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4); const mx = top.length ? top[0][1] : 1;
-  const ul = $('#cats'); ul.innerHTML = top.map(([k, v]) => `<li class="bar"><span>${esc(k)}</span><em style="--w:0%"></em><b>${nf(v)}</b></li>`).join('');
-  requestAnimationFrame(() => ul.querySelectorAll('li.bar em').forEach((em, j) => em.style.setProperty('--w', (100 * top[j][1] / mx) + '%')));
-  const aiF = Q.where.find((w) => w.field.startsWith('AI'));
-  const f = aiF ? aiF.field : 'AI 건물(㎡)';
-  list(Q.hits, (o) => (f === 'AI 농경 비율' ? `농경 ${Math.round(o[f] * 100)}% · ${nf(o._area)}㎡` : `${f.replace(/^AI |\(㎡\)$/g, '')} ${nf(o[f])}㎡`), (o) => (f === 'AI 농경 비율' ? o[f] * 1e7 - (o._area || 0) : -o[f]));
-  // 카메라: 말한 지역 → 그 결과, 아니면 결과 전체
-  let pool = Q.hits.map((i) => S.fused[i]).filter((o) => o._bb);
-  if (Q.focus && ac) { const fp = pool.filter((o) => String(o[ac]).includes(Q.focus)); if (fp.length) pool = fp; }
-  if (pool.length) cam(pool.reduce((a, o) => [Math.min(a[0], o._bb[0]), Math.min(a[1], o._bb[1]), Math.max(a[2], o._bb[2]), Math.max(a[3], o._bb[3])], [180, 90, -180, -90]), {}, 1600);
+  prog?.set({ progress: 1 });
+  result();
 }
 
-/* ═════════════ 필지 카드 — 대장 · AI · V-World ═════════════ */
-async function openCard(pnu, fly) {
-  const i = S.byPnu.get(pnu); if (i === undefined) return;
-  const o = S.fused[i]; S.sel = pnu; $('#plan').dataset.min = '1';
-  map.setFilter('lg-hl', ['==', ['get', 'pnu'], pnu]);
-  if (fly && o._bb) map.fitBounds(o._bb, { padding: { left: 460, right: 380, top: 120, bottom: 160 }, maxZoom: 18, duration: 1600, easing: (t) => 1 - Math.pow(1 - t, 4) });
-  const ac = (S.cols.find((c) => c.role === 'addr') || {}).col, jb = (S.cols.find((c) => c.role === 'jibun') || {}).col;
-  const jc = (S.cols.find((c) => c.role === 'jimok') || {}).col;
-  $('#card-t').textContent = [ac && o[ac], jb && o[jb]].filter(Boolean).join(' ') || pnu;
-  const ai = [['건물', 'AI 건물(㎡)'], ['경작', 'AI 경작(㎡)'], ['주차장', 'AI 주차장(㎡)'], ['비닐하우스', 'AI 비닐하우스(㎡)']]
-    .filter(([, k]) => o[k] >= 1).map(([l, k]) => `<span class="${l === '건물' && o[k] >= 33 ? 'hot' : 'ai'}">${l} ${nf(o[k])}㎡</span>`).join(' · ') || '<span style="color:rgba(1,1,2,.45)">탐지 없음</span>';
-  const area = o._area ? ` · ${nf(o._area)}㎡` : '';
-  const vw = [o['V-World 용도지역'], o['V-World 농업진흥']].filter(Boolean).join(' · ') || '—';
-  $('#card-tri').innerHTML = `<dt>대장</dt><dd>${esc(jc ? o[jc] : '')}${area}</dd><dt>AI</dt><dd>${ai}</dd><dt>V-World</dt><dd>${esc(vw)}</dd>`;
-  const act = $('#card-act'); act.innerHTML = '';
-  $('#card').hidden = false;
-  try {
-    const j = await api('/survey/findings?pnu=' + pnu + '&limit=5');
-    if (S.sel !== pnu) return;
-    const f = (j.items || [])[0];
-    if (!f) { act.innerHTML = '<span>현장 확인 대상 아님</span>'; return; }
-    renderAct(f);
-  } catch { /* 실태조사 기록 없는 관할 */ }
+/* ═════════════ 할 일 수 · 기관 스트림 ═════════════ */
+async function refreshTodo() {
+  try { const j = await api('/survey/findings?limit=1'); S.counts = j.counts; paintTodo(); shell.fresh(new Date()); } catch { /* */ }
 }
-const STATE_KO = { open: '확인 전', assigned: '현장 배정됨', inspected: '판정 대기', closed: '종결', dismissed: '오탐 처리' };
-function renderAct(f) {
-  const act = $('#card-act');
-  act.innerHTML = `<span>${STATE_KO[f.state] || f.state}</span>`;
-  if (f.state === 'open') {
-    const b = document.createElement('button'); b.type = 'button'; b.className = 'gf-btn gf-btn--ink gf-btn--sm'; b.textContent = '현장 배정';
-    b.addEventListener('click', async () => {
-      b.disabled = true;
-      try {
-        const r = await api(`/survey/findings/${encodeURIComponent(f.id)}/state`, { method: 'POST', body: { state: 'assigned', client_id: 'gf-' + crypto.randomUUID(), assignee: S.me.user && S.me.user.name } });
-        renderAct(r); toast('현장 확인에 배정했습니다'); loadTodo();
-      } catch (e) { b.disabled = false; toast(e.message || '배정하지 못했습니다'); }
-    });
-    act.appendChild(b);
-  }
-}
-function closeCard() { $('#card').hidden = true; S.sel = null; map.getLayer('lg-hl') && map.setFilter('lg-hl', ['==', ['get', 'pnu'], '__']); }
-$('#card-x').addEventListener('click', closeCard);
-
-/* ═════════════ 기타 ═════════════ */
-let tt = 0;
-function toast(t) { const el = $('#toast'); el.textContent = t; el.hidden = false; clearTimeout(tt); tt = setTimeout(() => { el.hidden = true; }, 2600); }
-function devOut() {
-  if (!DEV) return;
-  const d = { ...S.dev, rows: S.ledger && S.ledger.rows.length, index: S.index && S.index.size, tile_ms: S.index && Math.round(S.index.ms), tile_kb: S.index && Math.round(S.index.bytes / 1024), counts: S.matched && S.matched.counts, reasons: S.matched && S.matched.reasons };
-  const el = $('#dev'); el.hidden = false; el.textContent = JSON.stringify(d, null, 1);
+if (await hasRoute('/events/tenant')) {
+  sse('/events/tenant', { events: ['finding.state'], on: (_, d) => { if (d && d.pnu && d.state) { S.states.set(d.pnu, d.state); const f = findingOf(d.pnu); if (f && (!d.id || d.id === f.id)) f.state = d.state; resTable && S.fused.length && resTable.set(currentRows()); } refreshTodo(); } });
 }
 
-/* ═════════════ 시작 ═════════════ */
+/* ═════════════ 시작 — 전국 → 관내 (최근 반입이 있으면 곧바로 이어 연다) ═════════════ */
 (async () => {
-  await probe();
-  if (API.mode !== 'on') { showGate('서버에 연결하지 못했습니다'); return; }
-  if (session.get()) await enter(); else showGate();
+  const R = S.region;
+  const lastP = S.store.resume().catch(() => null);
+  if (R.hasFindings && inVW(R.bbox)) {
+    const u = `/landxi/data/survey/${encodeURIComponent(who.me.tenant_id)}-parcel-survey.pmtiles`;
+    try { const r = await fetch(u, { method: 'HEAD', cache: 'no-store' }); if (r.ok) R.ai = u; } catch { /* 판독 전 관할 */ }
+  }
+  tm('head'); await mountLayers(); tm('layers');
+  const got = await lastP; tm('resume');
+  S.srv = got?.server || null; S.resumeFrom = got?.from || null;
+  if (S.srv && KIND_LABEL[S.srv.kind]) { S.kind = KIND_LABEL[S.srv.kind]; paintDrop(); }
+  const last = got?.rec;
+  if (!R.ai) showIngest();
+  if (last && last.match && last.rows?.length) {
+    S.rec = last; S.cols = (last.columns_guess || []).map((c) => ({ ...c, role: (last.mapping || {})[c.col] || c.role }));
+    join({ resume: last });
+    return;
+  }
+  if (S.srv) { serverOpen(S.srv); return; }
+  if (MARK) S.store.forget();
+  pane('drop');
+  requestAnimationFrame(padStage);
+  await goReady(R.bbox, { ms: 2400, maxZoom: R.ai ? 12 : 11, budget: 1800 });
 })();

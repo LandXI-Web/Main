@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>할 일 · 보고서 · Land-XI</title>
+<meta name="description" content="현장 확인에 배정한 필지를 표에서 판정하고, 조치를 기록하고, 읍면동 보고서 초안을 받는다.">
+<link rel="icon" href="/landxi/assets/images/favicon_landxi.png">
+<link rel="stylesheet" href="/landxi/proto/vendor/maplibre/maplibre-gl.css">
+<link rel="stylesheet" href="/landxi/v3/kit/kit.css">
+<link rel="stylesheet" href="gov-report.css">
+<script src="/landxi/proto/vendor/maplibre/maplibre-gl.js"></script>
+<script src="/landxi/xi/vendor/pmtiles/pmtiles.js"></script>
+<script type="module" src="app.js"></script>
+</head>
+<body class="t" data-tab="todo" data-state="boot">
+<template id="tpl">
+<div class="gr">
+  <!-- 왼쪽 판: 탭 · 할 일 표 / 보고서 -->
+  <section class="gr-board" aria-label="할 일과 보고서">
+    <header class="gr-head">
+      <a class="gr-back" id="back" href="/landxi/v3/gov-fusion/" aria-label="지도로 돌아가기"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12 4l-6 6 6 6"/></svg></a>
+      <div class="gr-tabs" role="tablist">
+        <button type="button" role="tab" id="tab-todo" aria-selected="true" data-tab="todo">할 일</button>
+        <button type="button" role="tab" id="tab-report" aria-selected="false" data-tab="report">보고서</button>
+      </div>
+    </header>
+
+    <!-- 할 일 -->
+    <div class="gr-pane" data-pane="todo" role="tabpanel" aria-labelledby="tab-todo">
+      <div class="gr-big" id="big" hidden></div>
+      <div class="gr-table" id="table" hidden></div>
+      <div class="gr-empty" id="empty" hidden></div>
+    </div>
+
+    <!-- 보고서 -->
+    <div class="gr-pane" data-pane="report" role="tabpanel" aria-labelledby="tab-report" hidden>
+      <form class="gr-form" id="rp-form" autocomplete="off">
+        <label class="gr-field"><span class="t-label">읍면동</span><select class="t-input" id="rp-emd"></select></label>
+        <label class="gr-field"><span class="t-label">규칙</span><select class="t-input" id="rp-rule"></select></label>
+        <button type="submit" class="t-btn" id="rp-go">초안 만들기</button>
+      </form>
+      <article class="gr-doc" id="doc" aria-live="polite">
+        <div class="gr-doc-empty" id="doc-empty"></div>
+        <section class="gr-sec" data-sec="개요" hidden><h3>개요</h3><div class="gr-p"></div></section>
+        <section class="gr-sec" data-sec="소견" hidden><h3>소견</h3><div class="gr-p"></div></section>
+        <section class="gr-sec" data-sec="조치 제안" hidden><h3>조치 제안</h3><div class="gr-p"></div></section>
+        <ol class="gr-notes" id="notes" hidden></ol>
+      </article>
+      <div class="gr-doc-act" id="doc-act" hidden>
+        <a class="t-btn" id="docx" href="#" download>.docx 내려받기</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 오른쪽: 미니 지도 + 판정 -->
+  <aside class="gr-side" id="side" aria-label="필지">
+    <div class="gr-map" id="map"></div>
+    <i class="gr-grip" aria-hidden="true"></i>
+    <button type="button" class="gr-side-x" id="side-x" aria-label="닫기"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
+    <div class="gr-det" id="det" hidden>
+      <div class="gr-det-top">
+        <h2 class="gr-det-t" id="det-t"></h2>
+        <span class="t-chip gr-st" id="det-st"></span>
+      </div>
+      <p class="gr-det-m" id="det-m"></p>
+      <div class="gr-verdict" id="verdict" role="radiogroup" aria-label="판정">
+        <button type="button" role="radio" data-v="violation">위반</button>
+        <button type="button" role="radio" data-v="match_fp">대장과 같음</button>
+        <button type="button" role="radio" data-v="unclear">불명확</button>
+      </div>
+      <p class="gr-act-line" id="act-line" hidden></p>
+      <p class="gr-lock" id="lock-line" hidden></p>
+      <div class="gr-det-act">
+        <button type="button" class="t-btn t-btn--2" id="b-assignee">담당 바꾸기</button>
+        <button type="button" class="t-btn t-btn--2" id="b-action">조치 기록</button>
+        <button type="button" class="gr-link" id="b-map">지도에서 보기<span aria-hidden="true">→</span></button>
+      </div>
+    </div>
+  </aside>
+</div>
+</template>
+</body>
+</html>

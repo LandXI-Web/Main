@@ -115,34 +115,29 @@ async function inflate(u8, e) {
 }
 
 /* ── 열 뜻 추정 ── */
-export const ROLES = [
-  ['pnu', '필지번호'], ['addr', '소재지'], ['jibun', '지번'], ['jimok', '지목'], ['area', '면적'], ['attr', '참고'], ['skip', '쓰지 않음'],
-];
+/* ── 열 뜻(명세 §2.9 · 5종) ──
+   pnu = 필지 번호(PNU) · jibun = 지번(소재지 열과 지번 열이 둘 다 '지번' 이면 앞뒤로 이어 읽는다) · state = 상태(대장상 지목·허가 구분)
+   date = 날짜 · skip = 사용 안 함 */
+export const ROLES = [['pnu', '필지 번호(PNU)'], ['jibun', '지번'], ['state', '상태'], ['date', '날짜'], ['skip', '사용 안 함']];
 export const JIMOK = ['전', '답', '과수원', '목장용지', '임야', '광천지', '염전', '대', '공장용지', '학교용지', '주차장', '주유소용지', '창고용지', '도로', '철도용지', '제방', '하천', '구거', '유지', '양어장', '수도용지', '공원', '체육용지', '유원지', '종교용지', '사적지', '묘지', '잡종지', '과'];
+export const FARM = ['전', '답', '과수원', '과'];
 
 export function guessColumns(headers, rows) {
   const sample = rows.slice(0, 400);
   const frac = (h, re) => { let n = 0, m = 0; for (const r of sample) { const v = String(r[h] ?? '').trim(); if (!v) continue; m++; if (re.test(v)) n++; } return m ? n / m : 0; };
-  const used = new Set();
-  const out = headers.map((h) => {
+  let state = false, pnu = false, date = false;
+  return headers.map((h) => {
     const vals = sample.map((r) => String(r[h] ?? '').trim()).filter(Boolean);
-    let role = 'attr';
-    if (/연번|순번|번호$/.test(h) && !/지번|필지|고유/.test(h) && frac(h, /^\d{1,6}$/) > 0.9) role = 'skip';
-    else if (frac(h, /^\d{19}$/) > 0.8 || /PNU|고유번호|필지번호/i.test(h)) role = 'pnu';
-    else if (/소재|주소|위치/.test(h) || frac(h, /[가-힣]+(읍|면|동|리|가)(\s|$)/) > 0.8) role = 'addr';
+    let role = 'skip';
+    if (/연번|순번|^번호$/.test(h) && frac(h, /^\d{1,6}$/) > 0.9) role = 'skip';
+    else if (!pnu && (frac(h, /^\d{19}$/) > 0.8 || /PNU|고유번호|필지번호/i.test(h))) { role = 'pnu'; pnu = true; }
+    else if (/소재|주소|위치/.test(h) || frac(h, /[가-힣]+(읍|면|동|리|가)(\s|$)/) > 0.8) role = 'jibun';
     else if (/지번/.test(h) || frac(h, /^(산\s*)?\d+(-\d+)?$/) > 0.9) role = 'jibun';
-    else if (/지목/.test(h) || (vals.length && vals.filter((v) => JIMOK.includes(v)).length / vals.length > 0.9)) role = 'jimok';
-    else if (/면적/.test(h) && frac(h, /^[\d.,]+$/) > 0.8) role = 'area';
-    if (['pnu', 'addr', 'jibun', 'jimok', 'area'].includes(role)) { if (used.has(role)) role = 'attr'; used.add(role); }
-    return { col: h, role, sample: vals.slice(0, 1)[0] ?? '' };
+    else if (!state && (/지목|상태|구분|허가\s*종류|용도/.test(h) && !/용도지역/.test(h) || (vals.length && vals.filter((v) => JIMOK.includes(v)).length / vals.length > 0.9))) { role = 'state'; state = true; }
+    else if (!date && (/일자|날짜|년월일|허가일|신고일/.test(h) || frac(h, /^(19|20)\d{2}[-./]\d{1,2}[-./]\d{1,2}$/) > 0.8)) { role = 'date'; date = true; }
+    return { col: h, role, sample: vals[0] ?? '' };
   });
-  return out;
 }
 
-/** 대장 종류(카드의 ledger_schema.kind) — 지목 값 분포로 */
-export function ledgerKind(cols, rows) {
-  const j = cols.find((c) => c.role === 'jimok'); if (!j) return 'generic';
-  const vs = rows.slice(0, 2000).map((r) => String(r[j.col] ?? '').trim()).filter(Boolean);
-  const farm = vs.filter((v) => ['전', '답', '과수원', '과'].includes(v)).length;
-  return vs.length && farm / vs.length > 0.8 ? 'farm_ledger' : 'generic';
-}
+/** 대장 상태 값이 농지(전·답·과수원)인가 */
+export const isFarm = (v) => FARM.includes(String(v ?? '').trim());

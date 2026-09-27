@@ -1,0 +1,29 @@
+/* K10 Ctrl K 에이전트 바 — 상단 중앙 흰 카드 16 · 모달 그림자 · 계획 3줄 · 확인 카드 · 답 */
+.k-ck-dim{position:fixed;inset:0;z-index:60;background:rgba(28,31,37,.18)}
+.k-ck{position:fixed;z-index:61;top:96px;left:50%;width:min(600px,calc(100vw - 32px));transform:translateX(-50%);background:var(--bg-1);border-radius:var(--r-16);box-shadow:var(--elev-3);overflow:hidden;animation:k-ck-in var(--d-380) var(--e-ui)}
+@keyframes k-ck-in{from{opacity:0;transform:translate(-50%,-12px)}to{opacity:1;transform:translate(-50%,0)}}
+.k-ck-f{display:flex;align-items:center;gap:12px;height:60px;padding:0 16px 0 20px}
+.k-ck-ico svg{width:20px;height:20px;fill:none;stroke:var(--ai);stroke-width:1.5;stroke-linejoin:round;display:block}
+.k-ck-i{flex:1;min-width:0;height:44px;border:0;outline:0;background:none;font:500 var(--fs-sub)/1 var(--font-body);color:var(--ink)}
+.k-ck-i::placeholder{color:var(--sub)}
+.k-ck-i:disabled{cursor:not-allowed}
+kbd.k-ck-k,.k-ck-btn kbd{display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:6px;background:var(--bg-0);color:var(--sub);font:500 12px/1 var(--font-num)}
+.k-ck-plan{list-style:none;margin:0;padding:12px 20px;border-top:1px solid var(--rule);display:grid;gap:8px;counter-reset:s}
+.k-ck-plan li{display:flex;align-items:center;gap:10px;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub);counter-increment:s}
+.k-ck-plan li::before{content:counter(s);width:20px;height:20px;border-radius:50%;border:1.5px solid var(--rule);display:inline-flex;align-items:center;justify-content:center;font:500 11px/1 var(--font-num);color:var(--mute)}
+.k-ck-plan li.is-done{color:var(--ink)}
+.k-ck-plan li.is-done::before{content:"✓";background:var(--ink);border-color:var(--ink);color:#fff}
+.k-ck-c{padding:16px 20px;border-top:1px solid var(--rule);display:flex;align-items:center;gap:16px}
+.k-ck-cq{flex:1;margin:0;font:500 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--ink)}
+.k-ck-cb{display:flex;gap:8px}
+.k-ck-a{padding:16px 20px 20px;border-top:1px solid var(--rule);font:400 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--ink-2);max-height:40vh;overflow:auto}
+.k-ck-a b{font-weight:500;color:var(--ink)}
+.k-ck-dots{display:inline-flex;gap:6px}
+.k-ck-dots i{width:6px;height:6px;border-radius:50%;background:var(--mute);animation:k-dot 1.2s var(--e-ui) infinite}
+.k-ck-dots i:nth-child(2){animation-delay:.12s}
+.k-ck-dots i:nth-child(3){animation-delay:.24s}
+@keyframes k-dot{0%,80%,100%{opacity:.3}40%{opacity:1;background:var(--ai)}}
+.k-ck-btn{display:inline-flex;align-items:center;gap:10px;height:36px;padding:0 8px 0 14px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);color:var(--sub);font:500 var(--fs-label)/1 var(--font-body);cursor:pointer;transition:border-color var(--d-180) var(--e-ui),color var(--d-180) var(--e-ui)}
+.k-ck-btn:hover{border-color:var(--ink);color:var(--ink)}
+@media (max-width:640px){.k-ck{top:72px}.k-ck-btn span{display:none}.k-ck-btn{padding:0 8px}}
+@media (prefers-reduced-motion:reduce){.k-ck{animation:none}.k-ck-dots i{animation:none}}

@@ -1,0 +1,102 @@
+/* lx-ingest — ① 반입. 토큰·부품은 kit.css 가 준다. 이 파일은 배치만. */
+.lxi-stage{position:absolute;inset:0}
+
+/* 지역 카드(좌상) */
+.lxi-pick{position:absolute;top:16px;left:16px;z-index:12;width:320px;padding:8px}
+.lxi-pick .k-region{position:relative}
+.lxi-pick .t-input{border-color:transparent;background:var(--bg-0)}
+
+/* 공정 카드(좌하) — 스텝퍼 가로 4 + 결합 실행 */
+.lxi-flow{position:absolute;left:16px;bottom:48px;z-index:12;width:min(520px,calc(100% - 32px - var(--sheet) - 16px));padding:16px 20px}
+.lxi-flow-in{display:flex;align-items:center;gap:20px}
+.lxi-steps{flex:1;min-width:0}
+.lxi-steps .t-step .n{margin-bottom:6px}
+.lxi-join{flex:none}
+.lxi-bar{margin-top:14px}
+.lxi-bar.is-indet i{width:32%;animation:lxi-indet 1.25s var(--e-ui) infinite}
+@keyframes lxi-indet{0%{transform:translateX(-100%)}100%{transform:translateX(320%)}}
+
+/* 시트 안으로 들어간 공정 카드(좁은 화면) */
+.lxi-flow.lxi-flow--in{position:static;width:auto;padding:0 0 4px;box-shadow:none;background:none}
+
+/* 서랍 본문 */
+.lxi-dr{display:flex;flex-direction:column;gap:28px;padding-top:4px}
+.lxi-big{min-height:112px}
+.lxi-big .t-big{font-size:64px;line-height:72px}
+.lxi-big .k-big[data-v=""] .t-big{color:var(--rule)}
+/* 결과 없음 — 한 줄(라벨 · — · 아직 결과가 없습니다) */
+.lxi-big.lxi-big--none{min-height:0}
+.lxi-big--none .k-big{flex-direction:row;align-items:baseline;flex-wrap:wrap;gap:8px}
+.lxi-big--none .k-big-row{gap:0}
+.lxi-big.lxi-big--none .t-big{font-size:var(--fs-body);line-height:var(--lh-body);font-weight:600}
+.lxi-big--none .k-big-none{margin:0;color:var(--sub)}
+.lxi-big.is-loading .k-big-row,.lxi-big.is-loading .k-big-none{visibility:hidden}
+.lxi-big.is-loading{position:relative}
+.lxi-big.is-loading::after{content:"";position:absolute;left:0;top:34px;width:56%;height:52px;border-radius:var(--r-8);background:linear-gradient(90deg,var(--bg-0) 0,#E9ECEF 40%,var(--bg-0) 80%);background-size:200% 100%;animation:lxi-shim 1.4s linear infinite}
+.lxi-sec{display:flex;flex-direction:column;gap:8px}
+.lxi-sec h3{margin:0}
+.lxi-list{list-style:none;margin:0;padding:0}
+.lxi-list li{display:flex;align-items:center;gap:6px;padding:10px 0;border-bottom:1px solid var(--rule);font:500 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--ink)}
+.lxi-list li:last-child{border-bottom:0}
+.lxi-list .t-sig{margin-left:auto}
+.lxi-led thead{display:none}
+.lxi-led .k-table td{padding:10px 0}
+.lxi-led .k-table td:last-child{text-align:right;white-space:nowrap}
+.lxi-led .k-table td:first-child{color:var(--ink);font-weight:500}
+.lxi-st{color:var(--ink-2)}
+.lxi-st[data-st="no"],.lxi-st[data-st="unknown"]{color:var(--sub)}
+.lxi-st[data-st="agency"]{color:var(--sub-2)}
+.lxi-led .t-sig{margin-left:6px}
+.lxi-acts{flex:none;display:flex;gap:8px;flex-wrap:wrap;padding:12px 24px 20px;border-top:1px solid var(--rule);border-radius:0 0 var(--r-16) var(--r-16);background:var(--bg-1)}
+.lxi-acts .t-btn{flex:1;min-width:128px}
+.lxi-img .k-empty{min-height:0;height:132px;padding:16px 20px;box-sizing:border-box}
+.lxi-img .k-empty img{width:46%;top:-18%;right:-6%}
+.lxi-img .k-empty-b{max-width:66%;gap:4px}
+.lxi-img .k-empty-b h6{font-size:17px;line-height:24px}
+.lxi-img .k-empty-b p{font-size:13px;line-height:19px}
+
+/* 시트가 열린 동안 지역 서랍은 숨는다(K5 '같은 자리 이전 서랍 닫힘') */
+.lxi .k-drawer.lxi-under{visibility:hidden;opacity:0;pointer-events:none}
+
+/* 로딩 자리(얇은 회색 막대 · 검은 막대 0) */
+.lxi-skel{display:flex;flex-direction:column;gap:14px;padding:10px 0}
+.lxi-skel i{display:block;height:10px;border-radius:5px;background:linear-gradient(90deg,var(--bg-0) 0,#E9ECEF 40%,var(--bg-0) 80%);background-size:200% 100%;animation:lxi-shim 1.4s linear infinite}
+.lxi-skel i:nth-child(2n){width:72%}
+@keyframes lxi-shim{0%{background-position:100% 0}100%{background-position:-100% 0}}
+
+/* 시트(영상 등록 · 대장 형식) */
+.lxi-form{display:flex;flex-direction:column;gap:18px;padding-top:4px}
+.lxi-f{display:flex;flex-direction:column;gap:6px}
+.lxi-row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.lxi-form .t-input{box-sizing:border-box;min-width:0}
+.lxi-form .t-input[aria-invalid="true"]{border-color:var(--warn)}
+.lxi-go{align-self:stretch;margin-top:4px}
+.lxi-drop.k-drop{min-height:152px}
+.lxi-map-w{display:flex;flex-direction:column;gap:8px}
+.lxi-map{display:flex;flex-direction:column;gap:8px}
+.lxi-m{display:grid;grid-template-columns:minmax(0,1fr) 20px 132px;align-items:center;gap:8px}
+.lxi-arrow{color:var(--sub);text-align:center}
+.lxi-mean{font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--ink)}
+
+@media (prefers-reduced-motion:reduce){.lxi-skel i,.lxi-big.is-loading::after,.lxi-bar.is-indet i{animation:none}}
+
+/* 좁은 화면 */
+@media (max-width:1100px){.lxi-flow{width:min(460px,calc(100% - 32px - 320px - 16px))}.lxi-pick{width:280px}}
+@media (max-width:960px){.lxi-flow{bottom:16px}}
+@media (max-width:640px){
+  .lxi-pick{top:12px;left:12px;right:12px;width:auto}
+  .lxi-flow{top:76px;bottom:auto;left:12px;right:12px;width:auto;padding:12px 14px}
+  .lxi-flow-in{gap:12px}
+  .lxi-steps .t-step .n{width:24px;height:24px;margin-bottom:4px}
+  .lxi-steps.t-steps::before{top:12px}
+  .lxi-steps .t-step .t{font-size:13px}
+  .lxi-join{height:40px;padding:0 14px}
+  .lxi .k-drawer{bottom:64px;max-height:48vh}
+  .lxi .k-drawer.lxi-sheet{max-height:calc(100vh - 140px)}
+  .lxi-big{min-height:96px}
+  .lxi-big.lxi-big--none{min-height:0}
+  .lxi-big .t-big{font-size:48px;line-height:54px}
+  .lxi-dr{gap:20px}
+  .lxi-acts{padding:10px 20px 12px;border-radius:0}
+  .lxi-m{grid-template-columns:minmax(0,1fr) 16px 112px}
+}

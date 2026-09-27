@@ -1,0 +1,17 @@
+# 전국 지역(F3 최종 명세 §3 S-3) — 시군구 뼈대 = server/seed/regions-sgg.json(행정경계 252 · build_regions.py)
+# 이름·경계 갱신 = V-World LT_C_ADSIGG_INFO(캐시 90일 · 키가 살아 있을 때만 · 실패하면 뼈대 그대로)
+# 지역은 변수다 — 남원 고정값 0. 기관 관할·영상·대장·배포는 전부 표·파일에서 온다.
+vworld:
+  layer: LT_C_ADSIGG_INFO
+  cache_days: 90
+  enabled: true
+# 기관 관할(시군구 코드 접두 · 기관 세션의 범위 판정 · 에이전트 범위 가드가 같이 쓴다)
+tenants:
+  namwon: {sgg: ["52190"]}
+  gwangju-jeonnam: {sgg: ["12", "29", "46"]}    # 전남광주통합특별시(V-World 2026 코드 12xxx) + 옛 광주(29xxx)·전남(46xxx) 코드(분석 시점 자료)
+  kgz-agri: {global: true, profile: kgz-ysykata}
+  kgz-land: {global: true, profile: kgz-sokuluk}
+  lx: {sgg: []}                                 # LX 는 관할이 아니라 전국 권한(realm lx)
+  lx-demo: {sgg: []}
+# 영상이 있는 시군구 — imagery.sgg_cd(등록 · S-5) 가 정본. 등록 전 기존 영상은 footprint ∩ 시군구 bbox 로 계산한다(regions.py).
+# 실태조사(대장 × AI) 정본이 있는 시군구 — survey_parcels.pnu 앞 5자리에서 계산(고정값 없음)

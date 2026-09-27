@@ -67,8 +67,9 @@ def _run_public(run_id: str, p, mode: str, state: str) -> dict:
 
 
 async def _unavailable(tried):
-    raise ApiError("llm_unavailable", "LLM 백엔드 사슬(vLLM :8000 → Ollama :11434) 전부 응답 없음 — 저장된 실제 run 녹음을 재생하세요",
-                   {"tried": tried, "replay": "/landxi/agent/data/replay/ag0-namwon.ndjson"}, 503)
+    # 화면 문구 = K10 '지금은 답할 수 없습니다'(개발 정보 0) — 사슬·포트는 detail(개발자 서랍 ?dev=1)에만
+    raise ApiError("llm_unavailable", "지금은 답할 수 없습니다",
+                   {"tried": tried, "chain": "vLLM → Ollama", "replay": "/landxi/agent/data/replay/ag0-namwon.ndjson"}, 503)
 
 
 @router.get("/agent/alive")

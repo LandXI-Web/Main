@@ -1,0 +1,63 @@
+/* K1 셸 — 마스트 64 · 레일 72 · 판. 모바일(≤ 960) = 하단 탭. 토큰은 shared/tokens-v2.2.css */
+body.k-shelled{margin:0;height:100vh;overflow:hidden}
+.k-app{position:fixed;inset:0;display:grid;grid-template-rows:var(--mast) minmax(0,1fr);grid-template-columns:minmax(0,1fr);background:var(--bg-0)}
+.k-app.has-rail{grid-template-columns:var(--rail) minmax(0,1fr)}
+.k-app .k-mast{grid-column:1/-1;position:relative;z-index:20}
+.k-app .k-rail{grid-row:2;grid-column:1;overflow:auto;z-index:15}
+.k-main{grid-row:2;grid-column:-2/-1;position:relative;min-width:0;min-height:0;overflow:hidden}
+
+.k-word{display:inline-flex;align-items:center;gap:10px;white-space:nowrap}
+.k-mast-slot{display:inline-flex;align-items:center;gap:12px;min-width:0}
+.k-mast-slot:empty{display:none}
+.k-mast-b{height:36px;min-width:36px;padding:0 12px;border:0;border-radius:var(--r-8);background:none;color:var(--sub);font:500 var(--fs-label)/1 var(--font-body);cursor:pointer;transition:background var(--d-180) var(--e-ui),color var(--d-180) var(--e-ui)}
+.k-mast-b:hover{background:var(--bg-0);color:var(--ink)}
+.k-help{padding:0;width:36px;border:1px solid var(--rule);color:var(--ink);font-family:var(--font-num)}
+.k-role b{font-weight:500;color:var(--sub)}
+.k-role b::after{content:"·";margin:0 6px;color:var(--mute)}
+.k-fresh{cursor:default}
+
+/* 레일 — 메뉴 */
+.k-rail{gap:4px}
+.k-rail-i{width:60px;padding:10px 0 8px;border:0;background:none;border-radius:var(--r-8);display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--sub);cursor:pointer;text-decoration:none;transition:background var(--d-180) var(--e-ui),color var(--d-180) var(--e-ui)}
+.k-rail-i svg{width:20px;height:20px;stroke:currentColor;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.k-rail-i > span:last-child{font:500 13px/1.2 var(--font-body);text-align:center;word-break:keep-all}
+.k-rail-i:hover{background:var(--bg-0);color:var(--ink)}
+.k-rail-i[aria-current="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent)}
+
+/* 레일 — 세로 스텝퍼(콘솔 6단) */
+.k-rail--steps{position:relative;padding-top:20px;gap:10px}
+.k-rail--steps::before{content:"";position:absolute;left:50%;top:48px;bottom:48px;width:2px;margin-left:-1px;background:var(--rule)}
+.k-rail--steps .k-rail-i{position:relative;box-shadow:none;background:none}
+.k-rail--steps .k-rail-i:hover{background:var(--bg-0)}
+.k-rail--steps .n{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--bg-1);border:2px solid var(--rule);color:var(--mute);font:500 13px/1 var(--font-num);transition:background var(--d-380) var(--e-ui),border-color var(--d-380) var(--e-ui)}
+.k-rail--steps .n svg{width:14px;height:14px;stroke:#fff;stroke-width:2;fill:none}
+.k-rail--steps .n[data-st="done"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.k-rail--steps .n[data-st="now"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.k-rail--steps .k-rail-i[data-st="wait"] > span:last-child{color:var(--sub)}
+.k-rail--steps .k-rail-i[data-st="now"] > span:last-child{color:var(--ink)}
+
+.k-help-f{width:100%;height:calc(100vh - 200px);border:0;border-radius:var(--r-8);background:var(--bg-0)}
+
+@media (max-width:960px){
+  .k-app.has-rail{grid-template-columns:minmax(0,1fr);grid-template-rows:56px minmax(0,1fr) 64px}
+  .k-app .k-mast{height:56px;padding:0 16px;gap:10px}
+  .k-app .k-mast .home,.k-app .k-fresh span{display:none}
+  .k-app .k-role{max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;line-height:32px}
+  .k-app .k-rail{grid-row:3;grid-column:1;flex-direction:row;justify-content:space-around;width:auto;height:64px;padding:0 4px env(safe-area-inset-bottom);border-right:0;border-top:1px solid var(--rule);overflow-x:auto}
+  .k-app .k-main{grid-row:2;grid-column:1}
+  .k-rail--steps::before{left:32px;right:32px;top:23px;bottom:auto;width:auto;height:2px;margin:0}
+  .k-rail--steps{padding-top:0;gap:0}
+  .k-rail-i{width:auto;min-width:52px;flex:1;padding:8px 2px 6px}
+  .k-rail-i[aria-current="true"]{box-shadow:inset 0 2px 0 var(--accent)}
+  .k-rail--steps .k-rail-i[aria-current="true"]{box-shadow:none}
+}
+@media (max-width:640px){.k-app .k-exit{padding:0 8px}.k-app .k-role b{display:none}}
+.k-app.k-app--in{position:absolute}
+.k-mast{min-width:0}
+.k-mast-slot .k-region{min-width:0;width:280px}
+@media (max-width:960px){
+  .k-mast-slot{flex:1;min-width:0}
+  .k-mast-slot .k-region{flex:1;width:auto}
+  .k-app .k-mast .sp{display:none}
+  .k-mast:has(.k-mast-slot:not(:empty)) .k-role,.k-mast:has(.k-mast-slot:not(:empty)) .k-fresh{display:none}
+}

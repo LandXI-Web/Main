@@ -19,6 +19,7 @@
 - `2026-08-25-bench-nodes-creative.md` — 노드 캔버스 51종: "노드 몸체는 픽셀"
 - `2026-08-26-bench-geo-admin-dashboards.md` — 실운영 대시보드 실측(ArcGIS/Earthdata/Vercel/Linear), 안 A/B/C
 - `2026-08-26-bench-analysis-maps.md` — (부분) 분석 지도 UI 실측
+- `2026-09-27-bench-toss.md` — 토스 웹(스크롤 스크럽 이미지 시퀀스·WebGL 점 지구·콘텐츠별 소개 문법)·앱 원칙 → 게스트 메인 7챕터 적용안
 
 ## 핵심 레퍼런스 영상 (QUI6Ug4cHnE = ORRERY)
 - `2026-08-26-yt-QUI6Ug4cHnE-KEY.md` — 종합 분석·이식 계획
