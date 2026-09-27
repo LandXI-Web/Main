@@ -75,6 +75,7 @@ python server/pipelines/j2b_vinyl.py ab ; python server/pipelines/j2b_vinyl.py g
 - 게이트웨이 내부 폴백 경로(쓰지 않았음 · 코드 유지): 폴러가 없으면 `/ops/gpus` 가 nvidia-smi 직접(note) · `/events/ops` 봉투 null.
 - VRAM: nvidia-smi 장별 값이 연결 어댑터 합계라 **외부 점유를 하한값(24,585 MiB · 9/26 20:39 정상 실측)**으로 둔다 — 예산은 보수적.
 - V-World Data: 키 권한 미반영 → 503 `vworld_key_pending`(필지는 P8 PMTiles 대체 소스).
+  - **정정(F2 통합 2026-09-27)**: 키 활성 — V-World Data·WMTS 프록시 200 실측(`X-LX-Cache miss→hit`). 503 `vworld_key_pending` 은 키가 비었거나 키 오류일 때만. 근거 → [F2-B-result §5](../f2/F2-B-result.md).
 - 영상 속 P/R 카드는 F1-A 화면에 GT 토글이 없어 **터미널(qa.json 봉투)** 로 보였다.
 
 ## 5. 남은 것

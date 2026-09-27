@@ -598,3 +598,72 @@ GPU 2장 동시 풀로드로 PC가 전력 부족 셧다운됨. **무거운 GPU �
 - 부처별 실태조사 카탈로그로 서비스를 편성: 농식품부(농지이용실태조사·농지전용)·국토부(개발행위 사후관리·토지이용·지목불부합)·행안부(공유재산 실태조사)·환경부(하천점용·방치폐기물)·산림청(산림훼손)·해수부(해양쓰레기)·지자체(무허가건축물·개발제한구역).
 - "유일함"의 근거: 지적(필지)·측량 공공기관 LX 의 공신력 + 연속지적 PNU 결합 + 실추론 GPU + 대장 대조 규칙 + 현장조사 연계. 민간 GeoAI(Esri·Google)가 못 하는 필지 단위 행정 실태조사.
 - 화면 언어: 첫 화면·로그인·글로벌판에서 "실태조사 특화"가 즉시 읽혀야 한다.
+
+
+---
+# v1.1 — 2차(F2) 개정 (2026-09-27 · Fable 5.1 · 1차 판정 must_fix 23건 + 결과 문서 '계약 변경 요청' 반영)
+
+v1.0 본문은 그대로 두고 **이 절이 이긴다**. 근거 = `f1/F1-{A,B,C,D}-result.md` §계약 변경 요청 · 저널 gate/regate must_fix · `SURVEY-SPEC.md §3` · `agent/AGENT-SPEC.md §3.4`. 브리프 `f2/F2-*.md`가 이 절의 번호를 인용한다.
+
+## v1.1-1 봉투 · 단위 · 표기
+1. §2 단위 목록에 `krw_m2`(공시지가 · basis `recorded` · as_of V-World 기준년월) · `power_w` · `chips_per_gpu_s` · `chips_per_wall_s` · `tokens` · `ms` 추가. (F1-A 요청 4)
+2. 결과 층 개수 봉투는 **`basis:'inferred'` + `note:'검수 전 · …'`로 통일**. 변화 지수(비지도)는 `note:'변화 지수(비지도) · 검수 전'`. `namwon-change-2504-2510`은 `role:'result'` · `ladder:null`. (F1-A 요청 1·2 · 시민 화면 봉투 불일치 must_fix)
+3. 자체 촬영 층(A01 4시점) `attribution/license 'LX 자체 촬영'` · `rights_holder 'LX'` · `gsd_m` 실측 2504 0.0108 / 2506 0.0169 / 2508 0.0154 / 2510 0.0168. job `counts` 클래스 키가 영문이면 카탈로그 `models[].classes[]`에 `{key, ko, en}` 라벨을 싣는다. (F1-A 요청 8)
+4. 게스트는 `/deploys`를 부르지 않는다(프론트 규칙) — 서버 401 유지. `snapshot.ready.url`은 클라이언트가 `pmtiles://`로 연다. (F1-A 요청 3·5)
+
+## v1.1-2 작업(jobs) · SSE — Hyper Performance 실측
+5. **`chips_per_s`(진행 중)**: 계량 창 ≥ 1 s **이고** 완료 shard ≥ 8일 때만 값, 그 전엔 `value:null · note:'창 짧음'`. 창 하한 0.5 s 인공값(n/0.5) 금지. (F1-A must_fix · gpu_worker progress())
+6. **`job.done`에 두 줄 실측 추가**: `chips_per_gpu_s = shards_total ÷ gpu_s`(usage_events · measured) · `chips_per_wall_s = shards_total ÷ elapsed_s` · `elapsed_s` · `gpu_s`. HUD 최종 줄은 `GPU 초당 n.n칩 · 벽시계 n.n칩/s · 이 작업 x.xx GPU·s · y.y s`.
+7. **`job.progress.gpu[]`**: `util_pct`는 **최근 5표본(≈2.5 s) 이동평균**(nvidia-smi 0.5 s 표본 · WDDM 순간값 0↔100 금지) · `power_w`(power.draw · measured) · `shared:true`(카드 전체 이용률임을 표기) · `gpu_s_so_far`(usage_events 누적 · 이 작업 몫). 프론트 표기 `GPU0 이용률(공유) n% · w W`. (F1-B must_fix 2 · F1-A 요청 12)
+8. **마지막 shard 뒤 `job.progress`는 반드시 1회**(`shards_done == shards_total`) — `progress_lock` 우회. (F1-B must_fix 3)
+9. **모든 kind(`infer` · `reinfer` · `index` · `join` · `survey`)가 `job.progress{shards_done, shards_total, elapsed_s, counts}`를 shard마다(≤ 1회/s 합치기 허용) 낸다.** cpu 작업도 예외 없음. (F1-D 요청 5)
+10. **`index.month`는 어댑터 metrics의 `hist[]`(bins 20) · `p10 p50 p90` · `valid_px` · `ms`를 그대로 싣는다.** 라이브가 리플레이보다 가난하면 안 된다. (F1-D must_fix 2)
+11. `quote.eta_s`(kind index · survey): `index_results`/`survey_runs` 최근 N건 shard ms 중앙값 × shards로 `estimate` 봉투. (F1-D 요청 3·6)
+12. `quote.area_km2`: AOI 중심이 한국 밖(EPSG:5186 유효 범위 밖)이면 **중심 UTM zone** 또는 측지 면적(`source:'geodesic'`). (F1-D 요청 7)
+13. `kind:'index'`는 `imagery_id` 생략 가능 · `options.source`에 원천. (F1-D 요청 1)
+14. **shard 고아 방지**: scheduler 감시 — `shard.started` 뒤 `max(120 s, 5×중앙값 ms)` 안에 done/failed 없으면 `shard.failed{error:'timeout', retry:1}` → 1회 재배정 → 재실패 시 job `failed`. (F1-D 요청 2 · 2026-09-26 21:28 고아 job)
+15. **재부팅 복구(신설 이벤트 `job.recovered`)**: 게이트웨이 기동(lifespan) + scheduler 기동 시 `state in (queued, running)` 작업을 전수 점검. `running`인데 `workers[]` 하트비트(`worker:{id}:hb` TTL 30 s) 0 → 미완료 shard만 재배정(`mode:'resumed'` · 완료분 유지) · 영상/모델/배포본이 사라졌으면 `failed(error:'recovery_failed')`. 작업 스트림에 `job.recovered{job_id, mode:'resumed'|'requeued'|'failed', shards_done, shards_total, reason, at}` · ops 스트림에 `job.state{…, reason:'recovered'}`. `/health`에 `recovered_at_boot:{resumed,failed}`. HUD/관제 칩 `복구 · 재개 a/b`.
+16. **기관 스트림 신설 `GET /api/v1/events/tenant?access_token=`**(realm tenant · lx staff는 자기 tenant): `job.state`(자기 작업) · `deploy.changed`(자기 배포본 · XI맵 계보 칩 실시간) · `finding.state`(실태조사 상태 변화) · `usage.delta`(자기 것). ops 스트림 §5.2는 그대로.
+17. **작은 작업 우선 레인**: finalize 큐에서 ≤ 16 shard 작업 선순위 · 동시 작업 3건일 때 새 작업의 첫 chunk 선점(`first_shard_done ≤ 8 s [실측 목표 · 동시 3건]` · 단독 ≤ 5 s). (F1-A 요청 6 · F1-B must_fix 5)
+18. 견적·스케줄러: `claim` 응답에 `power_budget` 보류 사유 · 동시 고부하 GPU ≤ 1. nvidia-smi 경로는 DriverStore 최신 자동(`LX_NVSMI` 우선) · `memory.used` 언더플로 시 PDH 대체 + `note`. (F1-C 요청 1·2·6)
+
+## v1.1-3 결과 · 필지 · 실태조사(`/api/v1/survey/*` · 소유 F2-S)
+19. **이름 붙은 게시 세트 별칭**: `results/{tenant}/{publish_as}`(예 `namwon-greenhouse-2023-vh`)를 `/results/{set}/features` · `/stats`가 job_id로 해석해 detections를 돌려준다(빈 [] 금지). (F1-B must_fix 1)
+20. `GET /api/v1/results/{set}/index?format=json|csv|geojson` — `index_results` 월별 값(봉투 · hist · p10/p50/p90). (F1-D 요청 8)
+21. `GET /api/v1/results/{set}/parcels?cls=&jimok=&emd_cd=&min_conf=&limit=2000` — PostGIS `ST_Intersects(detections, survey_parcels)` 필지 FeatureCollection + `lx.count`(inferred) + `by_emd[]`. (AGENT-SPEC §3.4 · 에이전트 도구 · 소유 F2-B)
+22. **실태조사 읽기 API(SURVEY-SPEC §3.2 최소 + 상태 쓰기 1개)** — 정본 데이터 = `02. 데이터/survey/`(V-World 연속지적 332,084 · 의심 20,872 · 규칙 R1–R6 · 이력 6,818):
+    - `GET /survey/findings?deploy_id=&rule=R1..R6&priority=A|B|C&emd_cd=&state=&bbox=&q=&sort=score|evid_m2|updated&limit=200&offset=` → `{items:[Finding], total: Envelope, counts:{open,assigned,inspected,closed,dismissed}, by_rule, as_of}` — Finding = suspects 행 + `state` + `geom`(대표점 · 폴리곤은 PMTiles 층)
+    - `GET /survey/findings/{id}` → Finding + `explain`(규칙 조건 · 근거면적 · 비율 · 신뢰도 · 보강근거 · 임계 `[추정 초기값]` · 대장 결손 `건축물대장 미대조`) + `history[]`(timeline 이벤트)
+    - `GET /survey/parcels/{pnu}?with=facts,findings,history` → 대장(지목 · 면적 · 용도지역 · 농업진흥 · 공시지가 as_of) vs 현황(a23_* · a25_* 면적·비율·객체수·신뢰도 · 시점별) · findings · history
+    - `GET /survey/stats?by=emd|rule|priority|state` → 봉투 배열(`namwon-parcel-emd-summary.json`과 동일 값)
+    - `GET /survey/rules` → R1–R6 정의 · 임계 · 건수 · `basis:'estimate'` 꼬리표
+    - **`POST /survey/findings/{id}/state`** `{state:'assigned'|'dismissed'|'inspected'|'closed', reason?, assignee?, planned_for?, client_id}` → Finding · `audit_log` · SSE `finding.state`(tenant 스트림 + ops 스트림) — realm tenant manager · lx staff(시연 표기). 1차 유일한 쓰기.
+    - `GET /survey/reports/draft?emd_cd=&rule=&top=20&format=json|docx` → 구조화 초안 데이터 또는 `.docx`(python-docx · 서식 `survey-emd` · 숫자마다 봉투 · `AI 추론 · 검수 전 · 현장 확인 전` 고정 문구) — LLM 없이도 닫힌다(F2-E는 이 함수를 import해 서술문만 더한다).
+    - `POST /jobs/quote|/jobs` `kind:'survey'` `{survey_id:'farmland', rules:[…], emd_cd?:[]}` → shards = 읍면동 39 · pool cpu · SSE `shard.done{shard_id:'emd-52190250', n, classes:{R1:n,…}}` + `survey.finding`(칸 안 상위 3) · adapter `survey/rules`(cpu)가 PostGIS에서 규칙을 재평가(임계 오버라이드 허용 · 결과는 `survey_runs`).
+    - 오류 `registry_unavailable` 404 · `rule_requires_missing` 400 · `finding_state_invalid` 409.
+    - 게스트(`public`) 라우트 0 · 소유자 성명 열 없음(연속지적에 없음 · OWNER_NM 미사용).
+
+## v1.1-4 에이전트(`/api/v1/agent/*` · 소유 F2-E · AGENT-SPEC §3.4 그대로 + 아래)
+23. 백엔드 우선순위: **vLLM `http://127.0.0.1:8000/v1` gemma-4-12b-it(tools · `tool_choice:'auto'`)** → 라우터 `:8001` hyperclovax-seed-1.5b(의도 분류 · `map|report|ops|smalltalk` 4클래스) → Ollama `:11434` 폴백 → 셋 다 죽으면 `llm_unavailable` 503 + 프론트 리플레이. `agent.done.model`에 실제 쓴 백엔드·모델·`tokens` 봉투(chat/completions usage · measured).
+24. 도구(1차): `catalog_layers` · `results_stats` · `results_features` · `parcel_at` · `results_parcels_join`(21) · **`survey_findings` · `survey_stats` · `survey_parcel`**(22) · `jobs_quote` · `jobs_submit`(**확인 카드 필수** · sales `demo:true`) · 클라이언트 `map_on map_arrive map_flyto map_frame drawer_open parcel_card`(F2-A `window.XI` 브리지). 쓰기 도구는 `jobs_submit` · `survey_state`(확인 카드) 둘뿐. `deploys.*` 0.
+25. **숫자 검증기**: `answer_md`의 자리표 밖 숫자는 도구 봉투와 대조 → 불일치 `unverified_numbers[]`(프론트 취소선 + `검증 안 된 숫자` 칩). 연도·좌표·PNU·조문 번호는 화이트리스트.
+26. `POST /agent/report/draft{template:'survey-emd', emd_cd, rule?, top?}` → v1.1-22의 draft 데이터 + LLM 서술 3단락(개요 · 소견 · 조치 제안 · 각 문장 끝 `[n]` 인용) → `.docx`(F2-S `server/survey/report.py` import) · `artifact.docx_url` · `citations[]`.
+27. 스키마 `migrations/0003_agent.sql`(AGENT-SPEC §3.4) · `usage_events(dim='llm_tokens')` · 쿼터 `llm_tokens_month` 시드 `[추정 기반 초기값]`.
+
+## v1.1-5 관제 · 계량
+28. `GpuSample.gpus[i]`에 `util_ma5`(이동평균) · `power_w` · `caution:bool`(VRAM ≥ 76% [목표] 또는 util ≥ 80%) · `fault:bool`. `external[]`에 `llm:{backend:'vllm', model, tps: Envelope|null, reqs_active, note:'WSL 프로세스 VRAM 미노출'}`(vLLM `/metrics` 대리 읽기 · 소유 F2-C 폴러).
+29. 관제 `?job=`(행 펼침 + 강조 + 스크롤) · `?deploy=` · `?tenant=` 딥링크는 계약(모든 화면이 같은 규칙). XI맵 `?job=&pnu=&mode=survey&rule=&priority=&finding=` · Global `?job=` · 생산(proto `ai-card.html?card=` · `produce.html?deploy=`)도 같은 규칙.
+
+## v1.1-6 소유 경계 v2(2차 · 겹침 0)
+
+| 소유 | 경로 |
+|---|---|
+| **Fable(동결)** | `design/system-v2.md` · `tokens-v2.css` · `landxi/shared/api-v1.js`(v1.1 함수 `survey*` `agent*` `tenantEvents`는 각 에픽이 **자기 파일 안에서** `api()`·`sse()` 래퍼로 쓴다 — api-v1.js 수정 금지 · 통합 때 Fable이 옮긴다) · 이 문서 · `f2/F2-*.md` |
+| **F2-A** | `landxi/xi/**`(survey 모드 · `bridge.js` 포함) · `tests/e2e/f1a-*` `f2a-*` `f2s-*.spec.mjs` · `shots/f2/A/**` · `f2/F2-A-result.md` |
+| **F2-B** | `server/**` **단** `server/ops/**` · `server/adapters/global/**` · `server/pipelines/global/**` · `server/survey/**` · `server/adapters/survey/**` · `server/agent/**` · `server/landxi_api/survey.py` · `server/landxi_api/agent.py` · `server/migrations/0002_survey.sql` · `0003_agent.sql` 제외 · `tests/e2e/f1b-*` `f2b-*` · `shots/f2/B/**` |
+| **F2-S** | `server/survey/**` · `server/adapters/survey/**` · `server/landxi_api/survey.py` · `server/migrations/0002_survey.sql` · `02. 데이터/survey/{replay/,findings-emd.json}` · `tests/e2e/f2sapi-*.spec.mjs` · `server/survey/tests/**` · `shots/f2/S/**` |
+| **F2-E** | `landxi/agent/**` · `server/agent/**` · `server/landxi_api/agent.py` · `server/migrations/0003_agent.sql` · `tests/e2e/f2e-*` · `shots/f2/E/**` |
+| **F2-C** | `landxi/ops/**` · `server/ops/**` · `landxi/assets/css/v2/ops-grid.css` · `tests/e2e/f1c-*` `f2c-*` · `shots/f2/C/**` |
+| **F2-D** | `landxi/global/**` · `server/adapters/global/**` · `server/pipelines/global/**` · `landxi/assets/css/v2/globe-stage.css` · `tests/e2e/f1d-*` `f2d-*` · `shots/f2/D/**` |
+| **F2-R** | `landxi/proto/shell.js` · `shell-gate.js` · `login.js` · `login.html` · `stats-standard.html` · `report-standard*.html` · `map-stats.js` · `map-report.js` · `ai-card.html`(+js) · `produce.html`(+js) · `landxi/assets/data/roles.js` · `landxi/login.html` · `tests/e2e/{proto-shell,proto-login,proto-session,shell,proto-map}.spec.mjs` · `f2r-*` · `shots/f2/R/**` |
+| **통합(F2-∑)** | `server/landxi_api/main.py`의 ext 라우터 등록은 **F2-B가 D0에** 넣는다(`try: from . import survey, agent`) · `.gitignore` · 커밋 · `shots/f2/F2-integrated.mp4` |

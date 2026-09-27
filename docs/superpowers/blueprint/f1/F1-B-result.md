@@ -135,6 +135,7 @@
 ## §9 V-World · PC 프록시
 
 - 키 권한 미반영 → **503 vworld_key_pending**(e2e 실호출). 키 투입 시 캐시 경로·만료 키 503 → 정상 키 200+캐시 적중은 단위 테스트(실키 없이 목 전송) · PC register/statistics 캐시 적중 단위 테스트.
+  - **정정(F2 통합 2026-09-27)**: 키 활성 — V-World Data·WMTS 프록시 200 실측(`X-LX-Cache miss→hit`). 503 `vworld_key_pending` 은 키가 비었거나 키 오류일 때만. 근거 → [F2-B-result §5](../f2/F2-B-result.md).
 
 ## §10 리플레이 · 목 · 어댑터 스캔 · 소유
 

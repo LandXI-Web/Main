@@ -1,0 +1,659 @@
+{
+ "duration_s": 112.32,
+ "size_mb": 31,
+ "offB": 0.096,
+ "pieces": [
+  {
+   "a": 5.590999999999999,
+   "b": 13.091,
+   "tag": "film"
+  },
+  {
+   "a": 16.502,
+   "b": 20.502,
+   "tag": "public"
+  },
+  {
+   "a": 21.231,
+   "b": 25.852,
+   "tag": "login"
+  },
+  {
+   "a": 27.592000000000002,
+   "b": 37.120000000000005,
+   "tag": "arrive"
+  },
+  {
+   "a": 37.132999999999996,
+   "b": 46.36,
+   "tag": "agent",
+   "max": 17
+  },
+  {
+   "a": 48.935,
+   "b": 57.059000000000005,
+   "tag": "sweep",
+   "max": 12,
+   "headTail": true
+  },
+  {
+   "a": 57.059000000000005,
+   "b": 66.293,
+   "tag": "queue-card"
+  },
+  {
+   "a": 66.293,
+   "b": 69.615,
+   "tag": "assign",
+   "split": "관제(:8702) · 기관별 실태조사 막대(배정 실시간)"
+  },
+  {
+   "a": 69.581,
+   "b": 72.081,
+   "tag": "draft"
+  },
+  {
+   "a": 74.968,
+   "b": 77.021,
+   "tag": "docx"
+  },
+  {
+   "a": 79.757,
+   "b": 83.736,
+   "tag": "frame"
+  },
+  {
+   "a": 83.736,
+   "b": 92.736,
+   "tag": "job-run",
+   "split": "관제(:8702) · 같은 job …TE7Q0HQ3 · GPU0 이동평균·W"
+  },
+  {
+   "a": 114.096,
+   "b": 123.596,
+   "tag": "job-done",
+   "split": "관제(:8702) · 같은 job …TE7Q0HQ3 · 21 s 건너뜀"
+  },
+  {
+   "a": 128.16299999999998,
+   "b": 131.48,
+   "tag": "rollback",
+   "split": "관제(:8702) · 배포 제어 롤백 dp-nw-farm-25"
+  },
+  {
+   "a": 132.705,
+   "b": 142.92,
+   "tag": "global"
+  },
+  {
+   "a": 143.2,
+   "b": 148.705,
+   "tag": "global"
+  },
+  {
+   "a": 175.922,
+   "b": 181.93,
+   "tag": "global-ndvi"
+  }
+ ],
+ "white": [
+  [
+   13,
+   15.52
+  ],
+  [
+   23.4,
+   23.56
+  ],
+  [
+   25.12,
+   27.52
+  ],
+  [
+   46.36,
+   47.92
+  ],
+  [
+   77.32,
+   78.72
+  ],
+  [
+   125.12,
+   126.64
+  ],
+  [
+   131.48,
+   132
+  ],
+  [
+   142.92,
+   143.2
+  ]
+ ],
+ "ids": {
+  "run_E": "run_2609271021202d21ba",
+  "job_S": "job_01M3G77XW1AHTPA7PVMQ2Q1902",
+  "finding": "f_R1_5219035030100940000",
+  "job_J": "job_01M3G78YJ32ZXWT50BTE7Q0HQ3",
+  "jobApi": {
+   "id": "job_01M3G78YJ32ZXWT50BTE7Q0HQ3",
+   "shards_total": 378,
+   "gpu_s": {
+    "value": 12.82,
+    "unit": "gpu_s",
+    "basis": "measured",
+    "as_of": "2026-09-27T10:22:45+09:00",
+    "source": "usage_events"
+   },
+   "elapsed_s": {
+    "value": 17.7,
+    "unit": "s",
+    "basis": "measured",
+    "as_of": "2026-09-27T10:22:23+09:00",
+    "source": "job.started → job.done(scheduler started_ts · 벽시계)"
+   },
+   "chips_per_gpu_s": {
+    "value": 29.5,
+    "unit": "chips_per_gpu_s",
+    "basis": "measured",
+    "as_of": "2026-09-27T10:22:23+09:00",
+    "source": "shards_total 378 ÷ gpu_s 12.82",
+    "note": "GPU 초당 칩(모델+창 읽기 · 워커 벽시계 합)"
+   },
+   "chips_per_wall_s": {
+    "value": 21.4,
+    "unit": "chips_per_wall_s",
+    "basis": "measured",
+    "as_of": "2026-09-27T10:22:23+09:00",
+    "source": "shards_total 378 ÷ elapsed_s 17.7",
+    "note": "벽시계(첫 배정 → job.done · 전역 NMS 포함 · 스냅샷 제외)"
+   }
+  },
+  "job_G": "job_01M3G7AY4B85VFSM74DVJV2GYK"
+ },
+ "stills": [
+  [
+   "01-public",
+   10.5
+  ],
+  [
+   "02-arrive-namwon",
+   25.448999999999998
+  ],
+  [
+   "03-agent",
+   34.663000000000004
+  ],
+  [
+   "04-sweep-result",
+   42.800000000000004
+  ],
+  [
+   "05-card-assign",
+   55.056
+  ],
+  [
+   "06-job-ops",
+   82.088
+  ],
+  [
+   "07-rollback-lineage",
+   85.429
+  ],
+  [
+   "08-global",
+   102.82499999999999
+  ]
+ ],
+ "marks": [
+  {
+   "k": "film.goto",
+   "t": 1.846,
+   "te": null
+  },
+  {
+   "k": "film.end",
+   "t": 13.091,
+   "te": 7.5
+  },
+  {
+   "k": "public.goto",
+   "t": 13.092,
+   "te": null
+  },
+  {
+   "k": "public.canvas",
+   "t": 15.838,
+   "te": null
+  },
+  {
+   "k": "public.end",
+   "t": 20.502,
+   "mast": "공개 · 위성 + AI 결과",
+   "surveyRequests": 0,
+   "switchHidden": true,
+   "te": 11.5
+  },
+  {
+   "k": "login.ready",
+   "t": 21.231,
+   "te": 11.5
+  },
+  {
+   "k": "login.submit",
+   "t": 23.49,
+   "te": 13.76
+  },
+  {
+   "k": "dash",
+   "t": 25.146,
+   "te": 15.41
+  },
+  {
+   "k": "rail.map",
+   "t": 25.452,
+   "te": 15.72
+  },
+  {
+   "k": "xi.ready",
+   "t": 27.792,
+   "mode": "on",
+   "te": 16.32
+  },
+  {
+   "k": "xi.arrived",
+   "t": 35.92,
+   "big": "129,420",
+   "te": 24.45
+  },
+  {
+   "k": "agent.start",
+   "t": 37.333,
+   "te": 25.85
+  },
+  {
+   "k": "agent.submit",
+   "t": 39.418,
+   "te": 27.93
+  },
+  {
+   "k": "agent.plan",
+   "t": 40.921,
+   "te": 29.44
+  },
+  {
+   "k": "agent.arrived",
+   "t": 44.032,
+   "ms": "2867",
+   "te": 32.55
+  },
+  {
+   "k": "agent.done",
+   "t": 44.038,
+   "run": "run_2609271021202d21ba",
+   "state": "done",
+   "te": 32.55
+  },
+  {
+   "k": "agent.end",
+   "t": 46.647,
+   "te": null
+  },
+  {
+   "k": "agency.goto",
+   "t": 46.649,
+   "te": null
+  },
+  {
+   "k": "agency.ready",
+   "t": 48.685,
+   "te": null
+  },
+  {
+   "k": "survey.enter",
+   "t": 48.73,
+   "te": null
+  },
+  {
+   "k": "survey.started",
+   "t": 50.546,
+   "job": "job_01M3G77XW1AHTPA7PVMQ2Q1902",
+   "te": 36.49
+  },
+  {
+   "k": "survey.result",
+   "t": 55.859,
+   "big": "20,852",
+   "job": "실측 · 대조읍면동 39/39의심 20,852필지20,872건대조 3.3 s · 벽시계 11.8칸/s · CPU(GPU 0)",
+   "te": 41.8
+  },
+  {
+   "k": "queue.open",
+   "t": 57.63,
+   "n": "20872",
+   "te": 43.57
+  },
+  {
+   "k": "queue.R1A",
+   "t": 59.634,
+   "n": "759",
+   "te": 45.58
+  },
+  {
+   "k": "card.click",
+   "t": 60.619,
+   "te": 46.56
+  },
+  {
+   "k": "card.ready",
+   "t": 62.743,
+   "pnu": "5219035030100940000",
+   "te": 48.68
+  },
+  {
+   "k": "split1.start",
+   "t": 66.293,
+   "opsN0": 12,
+   "te": 52.23
+  },
+  {
+   "k": "assign.click",
+   "t": 67.349,
+   "finding": "f_R1_5219035030100940000",
+   "te": 53.29
+  },
+  {
+   "k": "assign.chip",
+   "t": 67.376,
+   "ms": 236,
+   "te": 53.32
+  },
+  {
+   "k": "assign.ops",
+   "t": 67.809,
+   "ms_from_click": 669,
+   "te": 53.75
+  },
+  {
+   "k": "split1.end",
+   "t": 69.615,
+   "te": 55.56
+  },
+  {
+   "k": "draft.open",
+   "t": 69.881,
+   "by": "provider",
+   "te": 55.86
+  },
+  {
+   "k": "draft.ready",
+   "t": 75.768,
+   "run": "run_26092710215189f7f2",
+   "te": 58.86
+  },
+  {
+   "k": "draft.docx",
+   "t": 76.221,
+   "docx": "shots\\f2\\integrated\\logs\\실태조사_초안_금지면_20260927.docx",
+   "bytes": 41135,
+   "te": 59.31
+  },
+  {
+   "k": "staff.goto",
+   "t": 77.629,
+   "te": null
+  },
+  {
+   "k": "hw.ready",
+   "t": 79.507,
+   "te": null
+  },
+  {
+   "k": "quote",
+   "t": 81.728,
+   "text": "견적 · POST /jobs/quote × 면적 0.053 km² shard 378 건 예상 GPU·s 11.8 GPU·s 할당 잔여 무제한 허용 허용 모델 → 영상 LX 드론 1.36cm 2025 aerial25/best · 건물·주차장·경작지·비닐하우스 car_v2_obb · vehicle index/ndvi_pc · — 입력 불일치 index/worldcover_hist · — 입력 불일치 namwon/cultivate_",
+   "te": 62.08
+  },
+  {
+   "k": "run",
+   "t": 83.248,
+   "te": 63.6
+  },
+  {
+   "k": "job.id",
+   "t": 83.675,
+   "job": "job_01M3G78YJ32ZXWT50BTE7Q0HQ3",
+   "te": 64.03
+  },
+  {
+   "k": "split2.start",
+   "t": 83.736,
+   "te": 64.09
+  },
+  {
+   "k": "job.done",
+   "t": 120.98,
+   "job": "실측 · 지금\nshard 합 133 → 전역 NMS 후 112\nshard 378/378\n작업 중 GPU0 최대 56% · 164 W · 표본 13 · 마지막 10:22:41\nGPU 초당 29.5칩 · 벽시계 21.4칩/s\n이 작업 12.82 GPU·s · 17.7 s",
+   "api": {
+    "id": "job_01M3G78YJ32ZXWT50BTE7Q0HQ3",
+    "gpu_s": {
+     "value": 12.82,
+     "unit": "gpu_s",
+     "basis": "measured",
+     "as_of": "2026-09-27T10:22:41+09:00",
+     "source": "usage_events"
+    },
+    "elapsed_s": {
+     "value": 17.7,
+     "unit": "s",
+     "basis": "measured",
+     "as_of": "2026-09-27T10:22:23+09:00",
+     "source": "job.started → job.done(scheduler started_ts · 벽시계)"
+    },
+    "chips_per_gpu_s": {
+     "value": 29.5,
+     "unit": "chips_per_gpu_s",
+     "basis": "measured",
+     "as_of": "2026-09-27T10:22:23+09:00",
+     "source": "shards_total 378 ÷ gpu_s 12.82",
+     "note": "GPU 초당 칩(모델+창 읽기 · 워커 벽시계 합)"
+    },
+    "chips_per_wall_s": {
+     "value": 21.4,
+     "unit": "chips_per_wall_s",
+     "basis": "measured",
+     "as_of": "2026-09-27T10:22:23+09:00",
+     "source": "shards_total 378 ÷ elapsed_s 17.7",
+     "note": "벽시계(첫 배정 → job.done · 전역 NMS 포함 · 스냅샷 제외)"
+    },
+    "shards_total": 378,
+    "created_at": "2026-09-27T10:22:04+09:00",
+    "started_at": "2026-09-27T10:22:05+09:00",
+    "finished_at": "2026-09-27T10:22:23+09:00",
+    "sse": {
+     "gpu_s": {
+      "value": 12.82,
+      "unit": "gpu_s",
+      "basis": "measured",
+      "as_of": "2026-09-27T10:22:23+09:00",
+      "source": "usage_events(dim gpu_s · 이 작업 합)"
+     },
+     "elapsed_s": 17.7,
+     "chips_per_gpu_s": {
+      "value": 29.5,
+      "unit": "chips_per_gpu_s",
+      "basis": "measured",
+      "as_of": "2026-09-27T10:22:23+09:00",
+      "source": "shards_total 378 ÷ gpu_s 12.82",
+      "note": "GPU 초당 칩(모델+창 읽기 · 워커 벽시계 합)"
+     },
+     "chips_per_wall_s": {
+      "value": 21.4,
+      "unit": "chips_per_wall_s",
+      "basis": "measured",
+      "as_of": "2026-09-27T10:22:23+09:00",
+      "source": "shards_total 378 ÷ elapsed_s 17.7",
+      "note": "벽시계(첫 배정 → job.done · 전역 NMS 포함 · 스냅샷 제외)"
+     }
+    },
+    "hud": {
+     "per_gpu_s": {
+      "value": 29.5,
+      "source": "shards_total 378 ÷ gpu_s 12.82",
+      "basis": "measured"
+     },
+     "per_wall_s": {
+      "value": 21.4,
+      "source": "shards_total 378 ÷ elapsed_s 17.7",
+      "basis": "measured"
+     },
+     "gpu_s": {
+      "value": 12.82,
+      "source": "usage_events",
+      "basis": "measured"
+     },
+     "elapsed_s": {
+      "value": 17.7,
+      "source": "GET /jobs/{id}.elapsed_s",
+      "basis": "measured"
+     },
+     "shards": 378
+    }
+   },
+   "gpuLog": [
+    {
+     "t": 86.68,
+     "g": "GPU0 이용률(공유) 0% · 18 W"
+    },
+    {
+     "t": 89.19,
+     "g": "GPU0 이용률(공유) 48.4% · 142 W"
+    },
+    {
+     "t": 92.22,
+     "g": "GPU0 이용률(공유) 45.8% · 162 W"
+    },
+    {
+     "t": 95.23,
+     "g": "GPU0 이용률(공유) 48.8% · 164 W"
+    },
+    {
+     "t": 97.73,
+     "g": "GPU0 이용률(공유) 33.2% · 134 W"
+    },
+    {
+     "t": 100.75,
+     "g": "GPU0 이용률(공유) 34.6% · 148 W"
+    },
+    {
+     "t": 103.25,
+     "g": "GPU0 이용률(공유) 56% · 151 W"
+    },
+    {
+     "t": 106.27,
+     "g": "GPU0 이용률(공유) 45.4% · 164 W"
+    },
+    {
+     "t": 109.3,
+     "g": "GPU0 이용률(공유) 41.4% · 149 W"
+    },
+    {
+     "t": 111.83,
+     "g": "GPU0 이용률(공유) 41.2% · 140 W"
+    },
+    {
+     "t": 114.84,
+     "g": "GPU0 이용률(공유) 50.6% · 146 W"
+    },
+    {
+     "t": 117.38,
+     "g": "GPU0 이용률(공유) 30.2% · 146 W"
+    },
+    {
+     "t": 119.89,
+     "g": "GPU0 이용률(공유) 50.2% · 160 W"
+    },
+    {
+     "t": 120.39,
+     "g": "작업 중 GPU0 최대 56% · 164 W · 표본 13 · 마지막 10:22:41"
+    }
+   ],
+   "te": 79.97
+  },
+  {
+   "k": "ops.row",
+   "t": 123.595,
+   "focus": true,
+   "gpu": [
+    "24.5% 12,057 MiB / 49,140 GPU 0 · NVIDIA RTX A6000 · 워커 a6000-0 0% 이용률 · 10 s 추세 반응 2.5 s 0% 순간 0% 외부 점유 9,233 MiB · llama-server.exe ×1 8,9",
+    "90.0% 44,225 MiB / 49,140 주의 [목표] GPU 1 · NVIDIA RTX A6000 · 워커 a6000-1 0% 이용률 · 10 s 추세 반응 2.5 s 0% 순간 0% 외부 점유 44,225 MiB · llama-server.e"
+   ],
+   "te": 82.59
+  },
+  {
+   "k": "split2.end",
+   "t": 123.596,
+   "te": 82.59
+  },
+  {
+   "k": "split3.start",
+   "t": 128.463,
+   "lin": "v2.1",
+   "te": 82.89
+  },
+  {
+   "k": "rollback.click",
+   "t": 129.34,
+   "te": 83.77
+  },
+  {
+   "k": "rollback.lineage",
+   "t": 129.404,
+   "ms": 243,
+   "toast": "dp-nw-farm-25 v2.1 → v2.0 · 773 ms 반영 · 실시간 · deploy.changed",
+   "te": 83.83
+  },
+  {
+   "k": "split3.end",
+   "t": 131.804,
+   "te": null
+  },
+  {
+   "k": "global.goto",
+   "t": 131.806,
+   "te": null
+  },
+  {
+   "k": "global.ready",
+   "t": 132.705,
+   "te": 85.91
+  },
+  {
+   "k": "global.rolling",
+   "t": 137.065,
+   "marks": [
+    "ready",
+    "start"
+   ],
+   "te": 90.26
+  },
+  {
+   "k": "global.cell",
+   "t": 177.422,
+   "waited_s": 40.355,
+   "job": "job_01M3G7AY4B85VFSM74DVJV2GYK",
+   "te": 103.13
+  },
+  {
+   "k": "global.end",
+   "t": 181.93,
+   "te": 107.63
+  },
+  {
+   "k": "end",
+   "t": 182.131,
+   "te": null
+  }
+ ],
+ "errors": []
+}
