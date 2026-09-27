@@ -54,6 +54,7 @@ data = json.dumps(payload, ensure_ascii=False).replace('</', '<\\/')
 body = open(TPL, encoding='utf-8').read().replace('__DATA__', data)
 page = ('<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n'
+        '<link rel="icon" href="data:,">\n'  # Pages 에 favicon.ico 가 없어 나는 404 콘솔 오류를 막는다(head 안에 있어야 브라우저가 따른다)
         '</head>\n<body>\n' + body + '\n</body>\n</html>\n')
 open(os.path.join(OUT, 'index.html'), 'w', encoding='utf-8').write(page)
 print('status page:', len(screens), 'screens,', sum(1 for s in screens if s['thumb']), 'thumbs')
