@@ -1,0 +1,39 @@
+"""구현 현황판 생성기 — shots/overview/inventory.json → landxi/proto/review/status/.
+
+인벤토리(화면 전수·썸네일)는 전수 촬영 에이전트가 갱신한다. 이 스크립트는 그 결과를
+검토 허브 아래 정적 페이지로 굽는다. 템플릿은 status-tpl.html(같은 폴더).
+사용: python tools/review/build-status.py
+"""
+import json
+import os
+import shutil
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+INV = os.path.join(ROOT, 'shots', 'overview', 'inventory.json')
+THUMBS = os.path.join(ROOT, 'shots', 'overview', 'thumbs')
+TPL = os.path.join(os.path.dirname(__file__), 'status-tpl.html')
+OUT = os.path.join(ROOT, 'landxi', 'proto', 'review', 'status')
+KEEP = ['id', '경로', '제목', '사용자_축', '기능군', '세대', '상태', '실데이터', '문제', '콘솔_오류']
+
+inv = json.load(open(INV, encoding='utf-8'))
+os.makedirs(os.path.join(OUT, 'thumbs'), exist_ok=True)
+screens = []
+for s in inv['screens']:
+    x = {k: s.get(k) for k in KEEP}
+    t = s.get('썸네일')
+    src = os.path.join(ROOT, 'shots', 'overview', t) if t else None
+    if src and os.path.exists(src):
+        shutil.copy2(src, os.path.join(OUT, 'thumbs', os.path.basename(src)))
+        x['thumb'] = 'thumbs/' + os.path.basename(src)
+    else:
+        x['thumb'] = None
+    screens.append(x)
+payload = {'screens': screens, 'backend': inv.get('backend', []), 'data': inv.get('data', []),
+           'generated_at': inv.get('generated_at')}
+data = json.dumps(payload, ensure_ascii=False).replace('</', '<\\/')
+body = open(TPL, encoding='utf-8').read().replace('__DATA__', data)
+page = ('<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n'
+        '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n'
+        '</head>\n<body>\n' + body + '\n</body>\n</html>\n')
+open(os.path.join(OUT, 'index.html'), 'w', encoding='utf-8').write(page)
+print('status page:', len(screens), 'screens,', sum(1 for s in screens if s['thumb']), 'thumbs')
