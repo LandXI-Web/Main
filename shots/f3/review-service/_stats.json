@@ -1,0 +1,156 @@
+[
+ {
+  "name": "01-login-staff",
+  "nodes": 31,
+  "chars": 424,
+  "buttons": 9,
+  "devTerms": 0
+ },
+ {
+  "name": "04-ximap",
+  "nodes": 34,
+  "chars": 286,
+  "buttons": 14,
+  "devTerms": 4
+ },
+ {
+  "name": "05-ximap-agent",
+  "nodes": 100,
+  "chars": 1065,
+  "buttons": 21,
+  "devTerms": 16
+ },
+ {
+  "name": "06-ximap-survey",
+  "nodes": 118,
+  "chars": 1104,
+  "buttons": 18,
+  "devTerms": 6
+ },
+ {
+  "name": "07-portal-login",
+  "nodes": 9,
+  "chars": 137,
+  "buttons": 1,
+  "devTerms": 0
+ },
+ {
+  "name": "08-portal-home",
+  "nodes": 109,
+  "chars": 1092,
+  "buttons": 12,
+  "devTerms": 2
+ },
+ {
+  "name": "08b-portal-map",
+  "nodes": 60,
+  "chars": 572,
+  "buttons": 13,
+  "devTerms": 1
+ },
+ {
+  "name": "09-ops",
+  "nodes": 48,
+  "chars": 561,
+  "buttons": 1,
+  "devTerms": 3
+ },
+ {
+  "name": "10-global",
+  "nodes": 62,
+  "chars": 1227,
+  "buttons": 39,
+  "devTerms": 0
+ },
+ {
+  "name": "02-staff-landing",
+  "nodes": 113,
+  "chars": 872,
+  "buttons": 33,
+  "devTerms": 6
+ },
+ {
+  "name": "03-dashboard",
+  "nodes": 88,
+  "chars": 612,
+  "buttons": 31,
+  "devTerms": 3
+ },
+ {
+  "name": "11-dataset",
+  "nodes": 74,
+  "chars": 742,
+  "buttons": 19,
+  "devTerms": 1
+ },
+ {
+  "name": "12-analysis",
+  "nodes": 183,
+  "chars": 1086,
+  "buttons": 41,
+  "devTerms": 5
+ },
+ {
+  "name": "13-mypage",
+  "nodes": 108,
+  "chars": 802,
+  "buttons": 20,
+  "devTerms": 3
+ },
+ {
+  "name": "14-notice",
+  "nodes": 107,
+  "chars": 950,
+  "buttons": 32,
+  "devTerms": 1
+ },
+ {
+  "name": "15-ai-card",
+  "nodes": 114,
+  "chars": 920,
+  "buttons": 33,
+  "devTerms": 6
+ },
+ {
+  "name": "16-ai-project-create",
+  "nodes": 82,
+  "chars": 691,
+  "buttons": 20,
+  "devTerms": 0
+ },
+ {
+  "name": "17-charts",
+  "nodes": 89,
+  "chars": 1203,
+  "buttons": 5,
+  "devTerms": 5
+ },
+ {
+  "name": "18-portal-farm-status",
+  "nodes": 78,
+  "chars": 902,
+  "buttons": 14,
+  "devTerms": 3
+ },
+ {
+  "name": "19-portal-farm-results",
+  "nodes": 152,
+  "chars": 1020,
+  "buttons": 18,
+  "devTerms": 1
+ },
+ {
+  "name": "20-portal-farm-map",
+  "nodes": 33,
+  "chars": 274,
+  "buttons": 16,
+  "devTerms": 1
+ },
+ {
+  "name": "21-portal-farm-report",
+  "nodes": 51,
+  "chars": 671,
+  "buttons": 14,
+  "devTerms": 1
+ }
+]

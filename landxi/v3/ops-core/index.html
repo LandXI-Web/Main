@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LX/OPS 관제</title>
+<link rel="stylesheet" href="/landxi/assets/css/v2/tokens-v2.css">
+<link rel="stylesheet" href="/landxi/proto/vendor/maplibre/maplibre-gl.css">
+<link rel="stylesheet" href="./ops-core.css">
+</head>
+<body data-stage="ops" data-view="boot">
+  <div id="map" aria-hidden="true"></div>
+
+  <nav class="rail" aria-label="관제 메뉴">
+    <a class="mark" href="#/overview" aria-label="LX/OPS"><b>LX</b><span>OPS</span></a>
+    <a class="ri" data-go="overview" href="#/overview"><svg><use href="#i-map"/></svg><span>현황</span></a>
+    <a class="ri" data-go="infra" href="#/infra"><svg><use href="#i-chip"/></svg><span>인프라</span></a>
+    <a class="ri" data-go="tenants" href="#/tenants"><svg><use href="#i-org"/></svg><span>기관</span></a>
+    <a class="ri" data-go="deploys" href="#/deploys"><svg><use href="#i-grid"/></svg><span>배포</span></a>
+    <a class="ri" data-go="approvals" href="#/approvals"><svg><use href="#i-check"/></svg><span>결재</span><i class="badge" id="badge" hidden></i></a>
+    <button class="ri out" id="logout" type="button"><svg><use href="#i-out"/></svg><span>나가기</span></button>
+  </nav>
+
+  <header class="mast">
+    <h1 id="title">관제</h1>
+    <div class="mast-r">
+      <span class="fresh" id="fresh" title=""><i></i><em>연결 중</em></span>
+      <span class="clock" id="clock">--:--</span>
+      <span class="who" id="who"></span>
+    </div>
+  </header>
+
+  <main id="view" class="view" aria-live="polite"></main>
+  <aside id="sheet" class="sheet" aria-hidden="true"></aside>
+  <div id="toast" class="toast" role="status"></div>
+
+  <section id="door" class="door" hidden>
+    <form class="door-card" id="door-form" autocomplete="on">
+      <div class="door-mark"><b>LX</b><span>OPS</span></div>
+      <h2>관제실</h2>
+      <label><span>아이디</span><input name="login" id="d-login" autocomplete="username" required></label>
+      <label><span>비밀번호</span><input name="password" id="d-pw" type="password" autocomplete="current-password" required></label>
+      <p class="door-err" id="d-err" role="alert"></p>
+      <button class="btn-pri" type="submit">들어가기</button>
+    </form>
+  </section>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-map" viewBox="0 0 24 24"><path d="M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5-5.5 2.5z M9 4v13.5 M15 6.5V20"/></symbol>
+    <symbol id="i-chip" viewBox="0 0 24 24"><path d="M7 7h10v10H7z M10 10h4v4h-4z M9.5 3v4 M14.5 3v4 M9.5 17v4 M14.5 17v4 M3 9.5h4 M3 14.5h4 M17 9.5h4 M17 14.5h4"/></symbol>
+    <symbol id="i-org" viewBox="0 0 24 24"><path d="M4 20.5h16 M5.5 20.5V9l6.5-4.5L18.5 9v11.5 M9 20.5v-5h6v5 M9 11.5h.01 M15 11.5h.01"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><path d="M4 4h6.5v6.5H4z M13.5 4H20v6.5h-6.5z M4 13.5h6.5V20H4z M13.5 13.5H20V20h-6.5z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 4.5h14v15H5z M8.5 12l2.5 2.5 4.5-5"/></symbol>
+    <symbol id="i-out" viewBox="0 0 24 24"><path d="M14 4.5H5v15h9 M10 12h10 M17 8.5l3.5 3.5-3.5 3.5"/></symbol>
+  </svg>
+
+  <script src="/landxi/proto/vendor/maplibre/maplibre-gl.js"></script>
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

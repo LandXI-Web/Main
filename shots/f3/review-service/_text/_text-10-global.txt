@@ -1,0 +1,62 @@
+Land-XI
+Global
+tenant.namwon · build=tenant
+Live · gateway localhost:8700
+Globe
+Ysyk-Ata
+Sokuluk · Bishkek
+Meiktila
+XI map · KR ↗
+OPS
+EN
+KO
+NASA GIBS · VIIRS NOAA-20 true colour
+2026-09-26
+·
+yesterday (UTC)
+LX works in
+36
+countries.
+The same GeoAI engine that reads Namwon field by field now reads the Chuy valley month by month — from a live globe to a single district.
+history
+LX official project list + internal list 2023 (recounted)
+2026-09-24
+2026-09-24
+history
+· value 36 count
+source LX official project list + internal list 2023 (recounted)
+as of 2026-09-24
+36 listed · Sakhalin as a point
+LX project countries
+36 countries listed · Sakhalin as a point
+Russian UI not started — place names are shown in Cyrillic only
+in progress
+past
+not a country
+Jamaica
+Land administration capacity PMC
+2026–31
+Colombia
+Digital transformation of land information
+2025–28
+Indonesia
+3D cadastre pilot for digital smart city
+2025–27
+Uzbekistan
+National spatial information integration capacity
+2023–26
+Bangladesh
+Digital land management system consulting
+2021–26
+Ethiopia
+Land information system consulting
+2021–27
+Nepal
+Land management system modernisation capacity
+2025
+Pakistan
+Land information modernisation capacity · phase 2
+2024
+Paraguay
+Senior officials training · land administration
+2023

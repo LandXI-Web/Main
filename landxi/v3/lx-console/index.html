@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Land-XI 생산 콘솔</title>
+<meta name="description" content="LX 직원 생산 콘솔 — 오늘 할 일, 만들 수 있는 서비스, 깔린 기관을 한 지도에서">
+<link rel="icon" href="../../assets/images/favicon_landxi.png">
+<link rel="stylesheet" href="../../proto/fonts-system.css">
+<link rel="stylesheet" href="../../assets/css/v2/tokens-v2.css">
+<link rel="stylesheet" href="../../proto/vendor/maplibre/maplibre-gl.css">
+<link rel="stylesheet" href="console.css">
+<script src="../../proto/vendor/maplibre/maplibre-gl.js"></script>
+<script src="../../xi/vendor/pmtiles/pmtiles.js"></script>
+</head>
+<body data-stage="imagery" class="is-booting">
+
+<div id="map" class="map" aria-label="전국 XI맵"></div>
+
+<!-- 정문: 실제 인증(POST /auth/login) · 세션이 있으면 건너뛴다 -->
+<section class="gate" id="gate" hidden aria-labelledby="gateTitle">
+  <div class="gate__card">
+    <p class="gate__brand">LAND-XI</p>
+    <h1 class="gate__title" id="gateTitle">실태조사를 AI로</h1>
+    <p class="gate__axes"><span>Hyper Performance</span><span>Hyper Solution</span><span>Hyper GeoAI</span></p>
+    <form class="gate__form" id="gateForm" novalidate>
+      <label class="gate__field"><span>아이디</span><input name="login" autocomplete="username" required></label>
+      <label class="gate__field"><span>비밀번호</span><input name="password" type="password" autocomplete="current-password" required></label>
+      <p class="gate__err" id="gateErr" role="alert"></p>
+      <button class="btn btn--ink gate__go" type="submit">로그인</button>
+    </form>
+  </div>
+</section>
+
+<header class="mast" id="mast">
+  <div class="mast__id">
+    <span class="mast__word">LAND-XI</span>
+    <span class="mast__home">생산 콘솔</span>
+  </div>
+  <p class="mast__line">부처·지자체 실태조사를 AI로 대체하는 유일한 공공 GeoAI</p>
+  <div class="mast__tools">
+    <button class="ask" id="askOpen" type="button" aria-keyshortcuts="Control+K Meta+K"><span>물어보기</span><kbd>⌘K</kbd></button>
+    <span class="fresh" id="fresh" title="데이터 갱신 시각"><i></i><b id="freshT">—</b></span>
+    <span class="who" id="who">—</span>
+    <button class="out" id="logout" type="button">나가기</button>
+  </div>
+</header>
+
+<!-- 오늘: 네 종류 할 일 -->
+<section class="today glass" id="today" aria-label="오늘 할 일">
+  <p class="today__h"><b>오늘</b><span id="todayDate"></span></p>
+  <div class="today__cells" id="todayCells"></div>
+</section>
+
+<!-- 6단 레일 -->
+<nav class="rail glass" id="rail" aria-label="생산 6단"></nav>
+
+<!-- 단 서랍 -->
+<aside class="drawer glass" id="drawer" hidden aria-live="polite">
+  <header class="drawer__head">
+    <span class="drawer__no" id="drawerNo"></span>
+    <h2 class="drawer__title" id="drawerTitle"></h2>
+    <button class="drawer__x" id="drawerX" type="button" aria-label="닫기">×</button>
+  </header>
+  <div class="drawer__body" id="drawerBody"></div>
+</aside>
+
+<!-- 물어보기(vLLM 에이전트) -->
+<section class="cmdk glass" id="cmdk" hidden aria-label="물어보기">
+  <form class="cmdk__form" id="cmdkForm">
+    <input id="cmdkIn" autocomplete="off" placeholder="예) 답 위 건물 의심 상위 5필지 보여줘" maxlength="300">
+    <button class="btn btn--ink" type="submit">보내기</button>
+  </form>
+  <ol class="cmdk__plan" id="cmdkPlan"></ol>
+  <p class="cmdk__ans" id="cmdkAns"></p>
+</section>
+
+<!-- 지도 범례 -->
+<div class="legend" id="legend" aria-label="범례">
+  <span><i class="dot dot--ga"></i>운영</span>
+  <span><i class="dot dot--canary"></i>시범</span>
+  <span><i class="dot dot--draft"></i>이식 요청</span>
+</div>
+
+<!-- 개발자 서랍(?dev=1 · LX 직원만) -->
+<aside class="dev" id="dev" hidden></aside>
+
+<script type="module" src="boot.js"></script>
+</body>
+</html>

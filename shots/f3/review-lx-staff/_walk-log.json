@@ -1,0 +1,21 @@
+{
+  "log": {
+    "login": 454,
+    "afterLoginUrl": "http://localhost:4173/landxi/proto/ai-project.html",
+    "landing": 938,
+    "03-dashboard": 642,
+    "04-dataset": 764,
+    "05-project": 938,
+    "06-analysis": 1322,
+    "07-card-publish": 987,
+    "08-produce": 984,
+    "09-ximap-staff": 293,
+    "10-mypage": 858,
+    "ops": 605,
+    "portalUrl": "http://localhost:4173/landxi/proto/portal-login-namwon.html"
+  },
+  "errs": [
+    "[xi/] Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "[global/] Failed to load resource: the server responded with a status of 404 ()"
+  ]
+}
