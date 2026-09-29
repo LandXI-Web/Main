@@ -6,7 +6,7 @@
   metrics   네 지표 · 같은 key = 같은 label = 같은 계산식(아래 METRICS). 값이 없으면 value null + note(0 을 지어내지 않는다).
 
 계산식(정본):
-  detected       AI 탐지       = 이 항목 배포본 스냅샷 결과 세트(sets.yaml aliases 로 정규화)의 detections 행 수
+  detected       AI 탐지       = 이 항목 배포본 스냅샷 결과 세트(sets.yaml aliases · 작업 결과 세트 results/{기관}/{작업} → 작업)의 detections 행 수
   field_check    현장 확인 필요 = 실태조사 의심 중 우선순위 A · 상태 open|assigned 인 서로 다른 필지(PNU) 수(이 항목 지역)
   review_pending 결과 확인 대기 = 실태조사 의심 중 우선순위 A · 상태 open 인 건수(행 · 아직 배정·판정 전)
   reports        기관 신고     = 열린(open) 기관 신고(feedback · 종류 무관) 건수
@@ -19,6 +19,7 @@ LX = 전부. `build(conn, tenant, region, card)` 는 에이전트 도구(fix-age
 """
 from __future__ import annotations
 
+import re
 import time
 from typing import Any
 
@@ -51,10 +52,17 @@ _cache: dict[str, Any] = {"t": 0.0, "items": None, "at": None}
 
 
 # ── 작은 도구 ────────────────────────────────────────────────────────────────
+_JOB_SET = re.compile(r"^(?:results|demo)/[^/]+/(job_[0-9A-Z]{26})$")
+
+
 def canonical(set_id: str | None) -> str | None:
+    """결과 세트 → detections.job_id 키. ① sets.yaml aliases(옛 스냅샷 이름) ② 작업 결과 세트 results/{기관}/{작업} = 그 작업
+    (배포 적용 흐름이 만든 새 결과를 손 설정 없이 센다 — core-flow) ③ 그 밖은 그대로."""
     if not set_id:
         return None
-    return (config.load_yaml("sets").get("aliases") or {}).get(set_id, set_id)
+    s = (config.load_yaml("sets").get("aliases") or {}).get(set_id, set_id)
+    m = _JOB_SET.match(s)
+    return m.group(1) if m else s
 
 
 def _unit_of(set_id: str | None) -> str:

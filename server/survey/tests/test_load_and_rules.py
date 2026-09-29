@@ -9,14 +9,16 @@ from survey import rules as R
 def test_load_counts_equal_readme(pg):
     E = S.README_COUNTS
     q = lambda sql: pg.execute(sql).fetchone()[0]  # noqa: E731
-    assert q("SELECT count(*) FROM survey_parcels") == E["parcels"]
-    assert round(q("SELECT sum(area_m2) FROM survey_parcels") / 1e6, 2) == E["area_km2"]
-    assert q("SELECT count(*) FROM survey_findings") == E["suspects"]
-    assert q("SELECT count(DISTINCT pnu) FROM survey_findings") == E["suspect_parcels"]
+    C = "sgg_cd IN (SELECT DISTINCT sgg_cd FROM survey_parcels WHERE src = 'canon')"
+    F = f"rule LIKE 'R%' AND {C}"
+    assert q("SELECT count(*) FROM survey_parcels WHERE src = 'canon'") == E["parcels"]
+    assert round(q("SELECT sum(area_m2) FROM survey_parcels WHERE src = 'canon'") / 1e6, 2) == E["area_km2"]
+    assert q(f"SELECT count(*) FROM survey_findings WHERE {F}") == E["suspects"]
+    assert q(f"SELECT count(DISTINCT pnu) FROM survey_findings WHERE {F}") == E["suspect_parcels"]
     assert q("SELECT count(*) FROM survey_timeline") == E["timeline"]
-    assert q("SELECT count(*) FROM survey_emd") == E["emd"]
-    assert dict(pg.execute("SELECT rule, count(*) FROM survey_findings GROUP BY 1").fetchall()) == E["by_rule"]
-    assert dict(pg.execute("SELECT priority, count(*) FROM survey_findings GROUP BY 1").fetchall()) == E["by_priority"]
+    assert q(f"SELECT count(*) FROM survey_emd WHERE {C}") == E["emd"]
+    assert dict(pg.execute(f"SELECT rule, count(*) FROM survey_findings WHERE {F} GROUP BY 1").fetchall()) == E["by_rule"]
+    assert dict(pg.execute(f"SELECT priority, count(*) FROM survey_findings WHERE {F} GROUP BY 1").fetchall()) == E["by_priority"]
 
 
 def test_findings_emd_json_written_after_verify():
@@ -36,7 +38,8 @@ def test_no_owner_name_column(pg):
 def test_sql_reevaluation_equals_canon(pg):
     rows = pg.execute(R.eval_sql(R.default_thresholds(), emd_cd=False)).fetchall()
     got = {(r[0], r[1]): round(r[5], 1) for r in rows}
-    canon = {(r, p): s for r, p, s in pg.execute("SELECT rule, pnu, score FROM survey_findings").fetchall()}
+    canon = {(r, p): s for r, p, s in pg.execute("SELECT rule, pnu, score FROM survey_findings WHERE rule LIKE 'R%%' AND sgg_cd IN "
+                                                  "(SELECT DISTINCT sgg_cd FROM survey_parcels WHERE src = 'canon')").fetchall()}
     assert set(got) == set(canon)
     assert sum(got[k] == canon[k] for k in canon) == len(canon) == 20872
 
@@ -61,7 +64,7 @@ def test_adapter_plan_39_and_sum_equals_canon():
     spec = importlib.util.spec_from_file_location("t_adapter_rules", str(S.config.SERVER_ROOT / "adapters/survey/adapter_rules.py"))
     m = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(m)
-    job = {"id": "pytest-" + uuid.uuid4().hex[:8], "options": {}}
+    job = {"id": "pytest-" + uuid.uuid4().hex[:8], "options": {"sgg_cd": "52190"}}     # 판정 지역(정본) 인자
     shards = m.plan(job)
     assert len(shards) == 39 and all(s["shard_id"].startswith("emd-") for s in shards)
     ad = m.make_adapter()
@@ -111,4 +114,4 @@ def test_plan_rejects_unknown_rule_and_threshold():
     for o in ({"rules": ["R9"]}, {"rules": []}, {"thresholds": {"bogus": 1}}, {"thresholds": {"R1_bld_m2": -1}}):
         with pytest.raises(ValueError, match=r"^rule_requires_missing:"):
             m.plan({"options": o})
-    assert len(m.plan({"options": {"rules": ["R1", "R2"]}})) == 39
+    assert len(m.plan({"options": {"rules": ["R1", "R2"], "sgg_cd": "52190"}})) == 39

@@ -473,7 +473,7 @@ bindMap();
 K.devDrawer({ stage, who });
 T.stage = Math.round(performance.now()); T.z0 = +stage.map.getZoom().toFixed(2);
 /* 지역 집계 먼저(by_rule · limit 1) — 막대 · HUD 를 큐 전체(최대 2000건)보다 먼저 그린다 */
-const agg = await loadQueue({ bbox: region?.bbox || null, limit: 1 });
+const agg = await loadQueue({ bbox: region?.bbox || null, sgg: region?.sgg_cd || null, limit: 1 });
 byRule = agg?.by_rule || {};
 const count = (id) => byRule[id]?.value || 0;
 rule = Q.get('rule') && D.byId[Q.get('rule')] ? Q.get('rule') : [...D.rules].sort((a, b) => count(b.id) - count(a.id))[0]?.id;
@@ -488,7 +488,7 @@ title(); board(); T.board = Math.round(performance.now());
 S.fresh(new Date());
 
 /* 큐 전체(점 · 표본) */
-all = aggAny ? await loadQueue({ bbox: region?.bbox || null }) : { items: [], by_rule: byRule, total: null };
+all = aggAny ? await loadQueue({ bbox: region?.bbox || null, sgg: region?.sgg_cd || null }) : { items: [], by_rule: byRule, total: null };
 /* 배포 기록의 지역 상자는 넓다 — 상자 안이라도 다른 시군구 필지면 빼고, 서버에 읍면동으로 다시 묻는다(숫자 = 서버 집계 그대로) */
 if (all?.items?.some((f) => !inRegion(region, f))) {
   const cds = [...new Set(all.items.filter((f) => inRegion(region, f)).map((f) => f.emd_cd).filter(Boolean))];

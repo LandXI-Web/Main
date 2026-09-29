@@ -91,6 +91,9 @@ def test_values_match_source_tables(live, tok):
     items = get(tok["staff"])["items"]
     with adm() as c:
         det = dict(c.execute("SELECT job_id, count(*) FROM detections WHERE job_id LIKE 'results/%' GROUP BY 1").fetchall())
+        # core-flow: 배포 적용 흐름의 스냅샷 = 작업 결과 세트(results/{기관}/{작업}) → 그 작업의 detections 행 수
+        det.update(dict(c.execute("SELECT d.job_id, count(*) FROM detections d JOIN deploys p ON p.snapshot_current = 'results/' || p.tenant_id "
+                                  "|| '/' || d.job_id OR p.snapshot_current = 'results/lx/' || d.job_id GROUP BY 1").fetchall()))
         fc = dict(c.execute("SELECT tenant_id, count(DISTINCT pnu) FROM survey_findings WHERE priority='A' "
                             "AND state IN ('open','assigned') GROUP BY 1").fetchall())
         rp = dict(c.execute("SELECT tenant_id, count(*) FROM survey_findings WHERE priority='A' AND state='open' GROUP BY 1").fetchall())

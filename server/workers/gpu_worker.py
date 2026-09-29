@@ -229,13 +229,18 @@ _local = threading.local()
 
 # ── 창 읽기 ──────────────────────────────────────────────────────────────────
 def _ds(path: str):
+    """스레드별 데이터셋 캐시. path 가 'imagery:{id}' 면 core-imagery 의 imagery_src.open_imagery(VRT · 가상 영상 공통)로 연다."""
     import rasterio
     c = getattr(_local, "ds", None)
     if c is None:
         c = _local.ds = {}
     d = c.get(path)
     if d is None:
-        d = c[path] = rasterio.open(path)
+        if path.startswith("imagery:"):
+            from workers.imagery_src import open_imagery
+            d = c[path] = open_imagery(path.split(":", 1)[1])
+        else:
+            d = c[path] = rasterio.open(path)
     return d
 
 
@@ -258,10 +263,14 @@ def imagery_path(imagery_id: str) -> str:
     if c is None:
         c = _local.img = {}
     if imagery_id not in c:
-        with bus.pg() as conn:
-            row = conn.execute("SELECT path_internal FROM imagery WHERE id=%s", (imagery_id,)).fetchone()
-        p = row[0]
-        c[imagery_id] = p if (":" in p[:3] or os.path.isabs(p)) else str(config.DATA_ROOT / p)
+        try:
+            import workers.imagery_src  # noqa: F401  (core-imagery 계약 — 있으면 영상은 그것으로 연다)
+            c[imagery_id] = "imagery:" + imagery_id
+        except ImportError:
+            with bus.pg() as conn:
+                row = conn.execute("SELECT path_internal FROM imagery WHERE id=%s", (imagery_id,)).fetchone()
+            p = row[0]
+            c[imagery_id] = p if (":" in p[:3] or os.path.isabs(p)) else str(config.DATA_ROOT / p)
     return c[imagery_id]
 
 
@@ -540,12 +549,14 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
         bus.lane(WID, {"job_id": job_id, "from": now_iso(), "to": None, "state": "running", "tenant_id": tenant})
     shards = []
     attempts = {}
+    sgg = opts.get("scope") == "sgg"
     for eid, f in entries:
         w = json.loads(f.get("window") or "null")
         s = Shard(f["shard_id"], job_id, tuple(json.loads(f["bbox"])), w, json.loads(f.get("params") or "null"))
         shards.append(s)
         attempts[s.id] = bus.inflight_start(POOL, job_id, s.id, f, WID)      # 고아 감시(v1.1-14)
-        emit(job_id, "shard.started", {"job_id": job_id, "shard_id": s.id, "bbox": list(s.bbox4326), "worker": WID, "at": now_iso(ms=True)})
+        if not sgg:                                     # 시군구 전역(1만 칸 이상)은 shard.started 를 싣지 않는다 — 이벤트 스트림(1만 줄)을 결과(shard.done)에 쓴다
+            emit(job_id, "shard.started", {"job_id": job_id, "shard_id": s.id, "bbox": list(s.bbox4326), "worker": WID, "at": now_iso(ms=True)})
     t0 = time.perf_counter()
     futs = {s.id: pool_io.submit(read_window, path, s.window) for s in shards}
     cache = {}
@@ -576,6 +587,8 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
         results = run(part, reader, opts) if run else run_batch_default(ad, part, reader, opts)
         if opts.get("live"):
             results = clip_to_aoi(job_id, jh, results)      # 실시간 읍면동 분석 — 범위 밖 결과 제외
+        elif sgg:
+            results = clip_to_sgg(opts.get("sgg_cd"), results)   # 시군구 전역 — 시군구(읍면동 합집합) 밖 결과 제외
         t_part = time.perf_counter() - tp               # 전력 게이트 대기(held)는 GPU 시간이 아니다 — tp 는 대기 뒤부터
         _commit_part(job_id, tenant, demo, meta, sdir, part, results, attempts, t_part, held)
     r().xack(STREAM, GROUP, *ids)
@@ -612,6 +625,37 @@ def clip_to_aoi(job_id: str, jh: dict, results: list) -> list:
         _aoi_cache[job_id] = a
         while len(_aoi_cache) > 32:
             _aoi_cache.popitem(last=False)
+    if a is None:
+        return results
+    out = []
+    for res in results:
+        keep = [d for d in res.features if a.contains(d.geom4326.representative_point())]
+        if len(keep) != len(res.features):
+            res = type(res)(features=keep, metrics=res.metrics, n=len(keep), ms=res.ms)
+        out.append(res)
+    return out
+
+
+_sgg_cache: "OrderedDict[str, object]" = OrderedDict()
+
+
+def clip_to_sgg(sgg_cd: str | None, results: list) -> list:
+    """시군구 전역 분석 — 대표점이 그 시군구 읍면동 밖(이웃 시군구 · 바다)인 결과는 버린다(후처리와 같은 기준)."""
+    if not sgg_cd:
+        return results
+    a = _sgg_cache.get(sgg_cd, False)
+    if a is False:
+        a = None
+        try:
+            from shapely.prepared import prep
+            from landxi_api.regions import emd_index
+            ix = emd_index(sgg_cd)
+            a = prep(ix.union) if ix is not None and len(ix) else None
+        except Exception as e:
+            log(WHO, "sgg clip", sgg_cd, repr(e))
+        _sgg_cache[sgg_cd] = a
+        while len(_sgg_cache) > 8:
+            _sgg_cache.popitem(last=False)
     if a is None:
         return results
     out = []
@@ -671,10 +715,12 @@ def _commit_part(job_id: str, tenant: str, demo: bool, meta: dict, sdir, part: l
             for k, v in classes.items():
                 r().hincrby(f"job:{job_id}:counts", k, v)
             r().hsetnx(f"job:{job_id}", "first_done_ts", now)
-            emit(job_id, "shard.done", {"job_id": job_id, "shard_id": s.id, "bbox": list(s.bbox4326), "n": res.n, "classes": classes,
-                                        "polys_url": f"/api/v1/results/{job_id}/shards/{s.id}.geojson?{bus.sign('shards/' + job_id)}",
-                                        "ms": per_ms, "worker": WID,
-                                        "at": now_iso(ms=True)})
+            ev = {"job_id": job_id, "shard_id": s.id, "bbox": list(s.bbox4326), "n": res.n, "classes": classes,
+                  "polys_url": f"/api/v1/results/{job_id}/shards/{s.id}.geojson?{bus.sign('shards/' + job_id)}",
+                  "ms": per_ms, "worker": WID, "at": now_iso(ms=True)}
+            if isinstance(s.params, dict) and s.params.get("emd_cd"):
+                ev["emd_cd"] = s.params["emd_cd"]             # 시군구 전역 — 이 칸이 속한 읍면동(화면이 읍면동 순서로 채운다)
+            emit(job_id, "shard.done", ev)
             log(WHO, f"shard.done {s.id} n={res.n} {per_ms}ms {WID}")
     jh = bus.job(job_id)
     if jh:

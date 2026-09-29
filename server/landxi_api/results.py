@@ -3,7 +3,8 @@
 세트 해석: job_… | results/{tenant}/{job_…} → 그 작업의 detections · results/lx/<이름>(시드 정적 세트) → detections(job_id=세트 id).
 v1.1-19 별칭: results/{tenant}/{publish_as}(published_sets 표 · 없으면 manifest.json job_id) → 그 job 의 detections(빈 [] 금지).
 v1.1-20 GET /results/{set}/index?format=json|csv|geojson — index_results 월별(봉투 · hist · p10/p50/p90).
-v1.1-21 GET /results/{set}/parcels — PostGIS ST_Intersects(detections, survey_parcels) 필지 FeatureCollection + lx.count + by_emd.
+v1.1-21 GET /results/{set}/parcels — 필지 FeatureCollection + lx.count + by_emd. 정본 = 저장된 결합 survey_parcel_ai(core-survey ·
+contract-parcel-ai.md · 첫 응답 ≤ 3초). 저장이 없는 옛 세트 · min_conf · 기본값이 아닌 min_hit_m2 만 공간 결합(결과 캐시 10분).
 기관 세션은 자기 배포본 스냅샷 세트(별칭 포함)와 자기 작업만. 게스트는 export_policy=public·cleared 세트만.
 """
 from __future__ import annotations
@@ -158,8 +159,9 @@ async def shard_geojson(job_id: str, shard_file: str, request: Request, exp: str
 async def stats(set_path: str, request: Request, by: str = "emd"):
     p = principal(request)
     rs = await resolve(p, set_path)
-    if rs["set"] in ("results/lx/namwon-landcover-2023",) and by in ("emd", "cls"):
-        src = "results/namwon-landcover-2023-emd-stats.json"
+    pre = f"results/{rs['set'].split('/')[-1]}-emd-stats.json" if rs["kind"] == "static" else None     # 정적 세트의 미리 계산한 집계(있을 때만)
+    if pre and by in ("emd", "cls") and (config.DATA_ROOT / pre).exists():
+        src = pre
         d = json.loads((config.DATA_ROOT / src).read_text(encoding="utf-8"))
         items = []
         if by == "emd":
@@ -280,9 +282,14 @@ async def index_results(set_path: str, request: Request, format: str = "json"):
 
 
 # ── v1.1-21 · 결과 × 필지 결합(에이전트 도구 results_parcels_join) ─────────────────────
+_rp_cache: dict = {}
+RP_CACHE_S = 600
+
+
 @router.get("/results/{set_path:path}/parcels")
 async def result_parcels(set_path: str, request: Request, cls: str | None = None, jimok: str | None = None, emd_cd: str | None = None,
                          min_conf: float | None = None, limit: int = 2000, min_hit_m2: float = 1.0):
+    import time as _t
     p = principal(request)
     rs = await resolve(p, set_path)
     limit = max(1, min(limit, 2000))
@@ -290,57 +297,82 @@ async def result_parcels(set_path: str, request: Request, cls: str | None = None
     # 관문: resolve() 가 세트·작업 접근을 이미 확인했다. RLS 는 공간 조인의 GIST 사용을 막으므로(보안 장벽 · 비 leakproof ST_Intersects)
     # 시스템 역할로 읽되 기관 격리는 SQL 에 직접(p.tenant_id = 세션 기관) 넣는다.
     sp = await pool_sys()
+    t0 = _t.perf_counter()
     async with sp.acquire() as conn, conn.transaction():
         if not await conn.fetchval("SELECT to_regclass('public.survey_parcels') IS NOT NULL"):
             raise ApiError("parcels_unavailable", "survey_parcels 표 없음(F2-S 0002_survey 적재 전)")
-        dw, args = ["d.job_id=$1", "d.edit_state<>'deleted'"], [rs["job_id"]]
-        if cls:
-            args.append(cls.split(","))
-            dw.append(f"(d.cls = ANY(${len(args)}) OR d.cls_en = ANY(${len(args)}))")
-        if min_conf is not None:
-            args.append(min_conf)
-            dw.append(f"d.conf >= ${len(args)}")
-        pw = []
-        if p.realm == "tenant":
-            args.append(p.tenant_id)
-            pw.append(f"p.tenant_id = ${len(args)}")      # 탐지 쪽은 resolve() 가 허용한 세트(job_id)로 이미 한정
-        if jimok:
-            args.append(jimok.split(","))
-            pw.append(f"(p.jimok = ANY(${len(args)}) OR p.jimok_nm = ANY(${len(args)}))")
-        if emd_cd:
-            args.append(emd_cd.split(","))
-            pw.append(f"p.emd_cd = ANY(${len(args)})")
-        where_p = (" AND " + " AND ".join(pw)) if pw else ""
-        # 한 번만 결합(MATERIALIZED) · 면적은 EPSG:5186 평면(한국 · geography 보다 수십 배 빠름) · 완전히 안에 든 탐지는 교차 계산 생략
-        args.append(float(min_hit_m2))
-        mh = f"${len(args)}"
-        sql = (f"WITH pr AS MATERIALIZED (SELECT p.pnu, p.emd, p.emd_cd, p.jimok, p.jimok_nm, p.area_m2 AS parcel_m2, d.conf, d.cls, "
-               f"CASE WHEN ST_Within(d.geom, p.geom) THEN ST_Area(ST_Transform(d.geom, 5186)) "
-               f"ELSE ST_Area(ST_Transform(ST_Intersection(p.geom, d.geom), 5186)) END AS hit "
-               f"FROM detections d JOIN survey_parcels p ON ST_Intersects(p.geom, d.geom) WHERE {' AND '.join(dw)}{where_p}), "
-               f"j AS (SELECT pnu, emd, emd_cd, jimok, jimok_nm, parcel_m2, count(*) AS n, sum(hit) AS hit_m2, avg(conf) AS conf, "
-               f"array_agg(DISTINCT cls) AS classes FROM pr WHERE hit >= {mh} GROUP BY pnu, emd, emd_cd, jimok, jimok_nm, parcel_m2) "
-               f"SELECT j.*, row_number() OVER (ORDER BY j.hit_m2 DESC NULLS LAST, j.pnu) AS rk FROM j")
-        t0 = __import__("time").perf_counter()
-        await conn.execute("SET LOCAL jit = off")
-        allrows = await conn.fetch(sql, *args)
-        total = len(allrows)
-        top = [x for x in allrows if x["rk"] <= limit]
-        geoms = {}
-        if top:
-            gr = await conn.fetch("SELECT pnu, ST_AsGeoJSON(geom, 7)::json AS g FROM survey_parcels WHERE pnu = ANY($1)", [x["pnu"] for x in top])
-            geoms = {g["pnu"]: g["g"] for g in gr}
-        agg: dict = {}
-        for x in allrows:
-            k = (x["emd"], x["emd_cd"])
-            a_ = agg.setdefault(k, [0, 0])
-            a_[0] += 1
-            a_[1] += int(x["n"])
-        by_emd = [{"emd": k[0], "emd_cd": k[1], "parcels": v[0], "n": v[1]} for k, v in sorted(agg.items(), key=lambda kv: -kv[1][0])]
-        rows = sorted(top, key=lambda x: x["rk"])
-        ms = int((__import__("time").perf_counter() - t0) * 1000)
+        stored = min_conf is None and abs(float(min_hit_m2) - 1.0) < 1e-9 and await conn.fetchval(
+            "SELECT to_regclass('public.survey_parcel_ai') IS NOT NULL AND EXISTS(SELECT 1 FROM survey_parcel_ai WHERE job_id=$1)", rs["job_id"])
+        ck = (rs["job_id"], cls, jimok, emd_cd, min_conf, limit, float(min_hit_m2), p.tenant_id if p.realm == "tenant" else None)
+        hit = None if stored else _rp_cache.get(ck)
+        if hit and _t.time() - hit[0] < RP_CACHE_S:
+            total, by_emd, rows, geoms, how = hit[1]
+        else:
+            args: list = [rs["job_id"]]
+            pw = []
+            if p.realm == "tenant":
+                args.append(p.tenant_id)
+                pw.append(f"p.tenant_id = ${len(args)}")      # 탐지 쪽은 resolve() 가 허용한 세트(job_id)로 이미 한정
+            if jimok:
+                args.append(jimok.split(","))
+                pw.append(f"(p.jimok = ANY(${len(args)}) OR p.jimok_nm = ANY(${len(args)}))")
+            if emd_cd:
+                args.append(emd_cd.split(","))
+                pw.append(f"p.emd_cd = ANY(${len(args)})")
+            await conn.execute("SET LOCAL jit = off")
+            if stored:
+                how = "stored"
+                aw = ["a.job_id=$1"]
+                if cls:
+                    args.append(cls.split(","))
+                    aw.append(f"(a.cls_ko = ANY(${len(args)}) OR a.cls_en = ANY(${len(args)}) OR a.cls = ANY(${len(args)}))")
+                # 필지 속성은 결합 표의 사본(emd · jimok · parcel_m2) — 큰 필지 표와 조인하지 않는다(첫 응답 ≤ 3초)
+                pw2 = [x.replace("p.", "a.") for x in pw]          # 기관 · 지목 · 읍면동 조건을 결합 표 열로
+                await conn.execute("SET LOCAL work_mem = '64MB'")
+                await conn.execute(
+                    f"CREATE TEMP TABLE _rp ON COMMIT DROP AS "
+                    f"SELECT a.pnu, max(a.emd) emd, max(a.emd_cd) emd_cd, max(a.jimok) jimok, max(a.jimok_nm) jimok_nm, max(a.parcel_m2) parcel_m2, "
+                    f"sum(a.n1) n, sum(a.hit1_m2) hit_m2, sum(a.conf1_sum) / nullif(sum(a.n1), 0) conf, "
+                    f"array_agg(DISTINCT a.cls_ko) FILTER (WHERE a.n1 > 0) classes FROM survey_parcel_ai a "
+                    f"WHERE {' AND '.join(aw + pw2)} GROUP BY a.pnu HAVING sum(a.n1) > 0", *args)
+            else:
+                how = "spatial"
+                dw = ["d.job_id=$1", "d.edit_state<>'deleted'"]
+                if cls:
+                    args.append(cls.split(","))
+                    dw.append(f"(d.cls = ANY(${len(args)}) OR d.cls_en = ANY(${len(args)}))")
+                if min_conf is not None:
+                    args.append(min_conf)
+                    dw.append(f"d.conf >= ${len(args)}")
+                where_p = (" AND " + " AND ".join(pw)) if pw else ""
+                args.append(float(min_hit_m2))
+                mh = f"${len(args)}"
+                # 한 번만 결합(MATERIALIZED) · 면적은 EPSG:5186 평면 · 완전히 안에 든 탐지는 교차 계산 생략
+                await conn.execute(
+                    f"CREATE TEMP TABLE _rp ON COMMIT DROP AS "
+                    f"WITH pr AS MATERIALIZED (SELECT p.pnu, p.emd, p.emd_cd, p.jimok, p.jimok_nm, p.area_m2 AS parcel_m2, d.conf, d.cls, "
+                    f"CASE WHEN ST_Within(d.geom, p.geom) THEN ST_Area(ST_Transform(d.geom, 5186)) "
+                    f"ELSE ST_Area(ST_Transform(ST_Intersection(p.geom, d.geom), 5186)) END AS hit "
+                    f"FROM detections d JOIN survey_parcels p ON ST_Intersects(p.geom, d.geom) WHERE {' AND '.join(dw)}{where_p}) "
+                    f"SELECT pnu, emd, emd_cd, jimok, jimok_nm, parcel_m2, count(*) AS n, sum(hit) AS hit_m2, avg(conf) AS conf, "
+                    f"array_agg(DISTINCT cls) AS classes FROM pr WHERE hit >= {mh} GROUP BY pnu, emd, emd_cd, jimok, jimok_nm, parcel_m2", *args)
+            total = await conn.fetchval("SELECT count(*) FROM _rp")
+            by_emd = [dict(r) for r in await conn.fetch(
+                "SELECT emd, emd_cd, count(*) AS parcels, sum(n) AS n FROM _rp GROUP BY 1, 2 ORDER BY 3 DESC, 2")]
+            rows = [dict(r) for r in await conn.fetch(
+                f"SELECT * FROM _rp ORDER BY hit_m2 DESC NULLS LAST, pnu LIMIT {limit}")]
+            geoms = {}
+            if rows:
+                gr = await conn.fetch("SELECT pnu, ST_AsGeoJSON(geom, 7)::json AS g FROM survey_parcels WHERE pnu = ANY($1)", [x["pnu"] for x in rows])
+                geoms = {g["pnu"]: g["g"] for g in gr}
+            if not stored:
+                _rp_cache[ck] = (_t.time(), (total, by_emd, rows, geoms, "spatial·cache"))
+                while len(_rp_cache) > 32:
+                    _rp_cache.pop(next(iter(_rp_cache)))
+    ms = int((_t.perf_counter() - t0) * 1000)
     basis = "demo" if rs["demo"] else "inferred"
-    src = f"ST_Intersects(detections(job_id={rs['job_id']}), survey_parcels)"
+    src = (f"survey_parcel_ai(job_id={rs['job_id']}) × survey_parcels" if how == "stored"
+           else f"ST_Intersects(detections(job_id={rs['job_id']}), survey_parcels)")
     feats = [{"type": "Feature", "id": x["pnu"], "geometry": geoms.get(x["pnu"]),
               "properties": {"pnu": x["pnu"], "emd": x["emd"], "emd_cd": x["emd_cd"], "jimok": x["jimok"], "jimok_nm": x["jimok_nm"],
                              "parcel_m2": round(float(x["parcel_m2"] or 0), 1), "n": int(x["n"]), "hit_m2": round(float(x["hit_m2"] or 0), 1),
@@ -348,8 +380,8 @@ async def result_parcels(set_path: str, request: Request, cls: str | None = None
                              "conf_mean": round(float(x["conf"]), 3) if x["conf"] is not None else None, "classes": list(x["classes"] or [])}}
              for x in rows]
     return RawJSON({"type": "FeatureCollection", "features": feats,
-                    "lx": {"count": env(int(total), "필지", basis, src, f"검수 전 · 겹침 {min_hit_m2:g} m² 이상 · 필지 경계 V-World 연속지적(F2-S survey_parcels)"),
-                           "total": int(total), "limit": limit, "ms": ms,
+                    "lx": {"count": env(int(total), "필지", basis, src, f"검수 전 · 겹침 {min_hit_m2:g} m² 이상 · 필지 경계 연속지적(survey_parcels)"),
+                           "total": int(total), "limit": limit, "ms": ms, "how": how,
                            "by_emd": [{"emd": b["emd"], "emd_cd": b["emd_cd"],
                                        "parcels": env(int(b["parcels"]), "필지", basis, src),
                                        "n": env(int(b["n"]), "count", basis, src, "필지와 겹친 탐지 쌍(한 탐지가 여러 필지에 걸치면 중복)")} for b in by_emd],

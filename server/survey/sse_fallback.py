@@ -2,7 +2,7 @@
 
 F2-B 의 events.py 가 이 라우트를 올리기 전(또는 올린 뒤에도 같은 Redis 키를 읽으므로 호환) 개발 게이트웨이
 (server/survey/devapp.py)에서만 붙인다. 키 = `events:tenant:{tenant_id}`(F2-B 브리프 §D0 · MAXLEN 10,000 · 24h 재생).
-realm tenant = 자기 기관 · lx staff/admin = ?tenant_id= 로 지정(기본 namwon). 게스트 401.
+realm tenant = 자기 기관 · lx staff/admin = ?tenant_id= 로 지정(기본 lx). 게스트 401.
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ async def tenant_events(request: Request, tenant_id: str | None = None):
     if p.realm == "tenant":
         t = p.tenant_id
     elif p.role in ("staff", "admin"):
-        t = tenant_id or "namwon"
+        t = tenant_id or "lx"                     # 기관을 고르지 않은 LX 세션 = LX 스트림
     else:
         raise ApiError("forbidden", "기관 스트림은 기관 계정 · LX 직원/관리자")
     r = await redis()

@@ -1,89 +1,62 @@
-"""필지 조회(F1-CONTRACT §4.5) — P8 `parcels/namwon-parcels.pmtiles` 를 서버에서 pmtiles 파이썬으로 읽어 점-면 판정.
+"""필지 조회(F1-CONTRACT §4.5) — GET /parcels?lng&lat · 전국(core-survey).
 
-V-World 연속지적(Data API) 권한 반영 전의 대체 소스(국토정보기본도 2.0 · 2021-12). 카드에 기준 시점을 반드시 싣는다.
-z17 타일(MVT extent 4096)에서 판정 — 경계 근처 수 cm 오차 가능(MVT 양자화 · 4096/타일 ≈ 7.5cm@35°N).
+① 적재된 시군구 = PostGIS survey_parcels(점 ∈ 필지 · GIST) — 필지 원천(연속지적 전국 2022-02 · V-World · 적재 정본)과 기준 시점을 싣는다.
+② 적재 전 시군구 = V-World 연속지적 LP_PA_CBND_BUBUN 한 점 조회(서버 키 · 디스크 캐시 30일 · survey/nation._vw).
+지역 고정값 없음. 카드에 기준 시점을 반드시 싣는다.
 """
 from __future__ import annotations
 
-import gzip
-import math
-import threading
-from functools import lru_cache
-
 from fastapi import APIRouter, Request
-from shapely.geometry import Point, shape
 from starlette.concurrency import run_in_threadpool
 
-from . import config
-from .deps import ApiError
+from .deps import ApiError, db
 from .envelope import env
 
 router = APIRouter()
-PATH = config.DATA_ROOT / "parcels" / "namwon-parcels.pmtiles"
-Z = 17
-_lock = threading.Lock()
-_reader = None
+SRC_NM = {"canon": "연속지적(적재 정본)", "lsmd": "연속지적(전국)", "vworld": "V-World 연속지적"}
 
 
-def _get_reader():
-    global _reader
-    if _reader is None:
-        from pmtiles.reader import MmapSource, Reader
-        f = open(PATH, "rb")
-        _reader = Reader(MmapSource(f))
-    return _reader
-
-
-@lru_cache(maxsize=512)
-def _tile(z: int, x: int, y: int):
-    import mapbox_vector_tile
-    with _lock:
-        data = _get_reader().get(z, x, y)
-    if not data:
+def _vw_point(lng: float, lat: float) -> dict | None:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from survey import nation as N
+    resp = N._vw("LP_PA_CBND_BUBUN", point=(lng, lat), size=1, geometry=False, ttl_days=30)
+    if resp.get("status") != "OK":
         return None
-    if data[:2] == b"\x1f\x8b":
-        data = gzip.decompress(data)
-    return mapbox_vector_tile.decode(data, default_options={"y_coord_down": True})
-
-
-def _lookup(lng: float, lat: float):
-    n = 2 ** Z
-    xf = (lng + 180) / 360 * n
-    yf = (1 - math.log(math.tan(math.radians(lat)) + 1 / math.cos(math.radians(lat))) / math.pi) / 2 * n
-    x, y = int(xf), int(yf)
-    t = _tile(Z, x, y)
-    if not t or "parcels" not in t:
-        return None
-    lyr = t["parcels"]
-    ext = lyr.get("extent", 4096)
-    px, py = (xf - x) * ext, (yf - y) * ext
-    pt = Point(px, py)
-    for f in lyr["features"]:
-        g = f["geometry"]
-        if g["type"] not in ("Polygon", "MultiPolygon"):
-            continue
-        try:
-            if shape(g).buffer(0).contains(pt):
-                return f["properties"]
-        except Exception:
-            continue
-    return None
+    fs = resp["result"]["featureCollection"]["features"]
+    return (fs[0].get("properties") or {}) if fs else None
 
 
 @router.get("/parcels")
 async def parcels(lng: float, lat: float, request: Request):
-    if not PATH.exists():
-        raise ApiError("parcels_unavailable", "P8 필지 PMTiles 없음")
-    props = await run_in_threadpool(_lookup, lng, lat)
-    if not props:
-        raise ApiError("not_found", "이 지점에 필지 없음(남원시 밖이거나 도로·하천 경계)", {"lng": lng, "lat": lat})
-    src = "reference/parcels-namwon"
-    area = props.get("area_m2")
-    price = props.get("price_krw_m2")
-    return {"pnu": props.get("pnu"), "jibun": props.get("jibun"), "jimok": props.get("jimok"),
-            "area_m2": env(float(area) if area is not None else None, "m2", "measured", "국토정보기본도 2.0 PAREA", as_of="2021-12"),
-            "price_krw_m2": env(int(price) if price not in (None, "") else None, "krw_m2", "measured",
-                                f"국토정보기본도 2.0 JIGA_ILP(공시지가 {props.get('price_year') or '2021'})", as_of="2021-12"),
-            "owner_kind": props.get("owner_kind"), "emd": props.get("emd"), "emd_cd": props.get("emd_cd"), "ri": props.get("ri"),
-            "road": props.get("road"), "source": src, "as_of": "2021-12",
-            "note": "V-World 연속지적 권한 반영 전 대체 소스 · MVT z17 판정"}
+    if not (-180 <= lng <= 180 and -90 <= lat <= 90):
+        raise ApiError("bad_request", "lng · lat 범위 오류")
+    async with db(realm="lx") as conn:
+        r = await conn.fetchrow(
+            "SELECT pnu, jibun, jimok, jimok_nm, area_m2, jiga, jiga_ym, emd, emd_cd, ri, sgg_cd, src, src_as_of FROM survey_parcels "
+            "WHERE geom && ST_SetSRID(ST_MakePoint($1,$2),4326) AND ST_Contains(geom, ST_SetSRID(ST_MakePoint($1,$2),4326)) LIMIT 1", lng, lat)
+    if r:
+        src = r["src"] or "canon"
+        as_of = r["src_as_of"] or "2026-09-24"
+        return {"pnu": r["pnu"], "jibun": r["jibun"], "jimok": r["jimok_nm"] or r["jimok"],
+                "area_m2": env(round(float(r["area_m2"]), 1) if r["area_m2"] is not None else None, "m2", "measured",
+                               f"{SRC_NM.get(src, src)} 도형 · EPSG:5186 면적", as_of=as_of),
+                "price_krw_m2": env(int(r["jiga"]) if r["jiga"] is not None else None, "krw_m2", "recorded", "연속지적 공시지가",
+                                    None if r["jiga"] is not None else "원천에 공시지가 없음", as_of=r["jiga_ym"] or as_of),
+                "owner_kind": None, "emd": r["emd"], "emd_cd": r["emd_cd"], "ri": r["ri"], "road": None,
+                "source": f"survey_parcels · {SRC_NM.get(src, src)}", "as_of": as_of}
+    try:
+        p = await run_in_threadpool(_vw_point, lng, lat)
+    except Exception as e:
+        raise ApiError("parcels_unavailable", "필지 원천을 읽지 못했습니다", {"error": type(e).__name__}, 503) from None
+    if not p:
+        raise ApiError("not_found", "이 지점에 필지 없음(도로·하천 경계이거나 바다)", {"lng": lng, "lat": lat})
+    jb = str(p.get("jibun") or "")
+    jiga = p.get("jiga")
+    ym = f"{p.get('gosi_year')}-{p.get('gosi_month')}" if p.get("gosi_year") else None
+    return {"pnu": p.get("pnu"), "jibun": jb, "jimok": jb[-1:] if jb else None,
+            "area_m2": env(None, "m2", "measured", "V-World 연속지적", "면적은 필지를 적재한 뒤 계산"),
+            "price_krw_m2": env(int(float(jiga)) if jiga not in (None, "") else None, "krw_m2", "recorded", "V-World 연속지적 공시지가", as_of=ym),
+            "owner_kind": None, "emd": None,
+            "emd_cd": str(p.get("pnu") or "")[:8] or None, "ri": None, "road": None, "source": "V-World 연속지적(LP_PA_CBND_BUBUN)", "as_of": ym}

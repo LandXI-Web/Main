@@ -1,6 +1,6 @@
 """실제 run 녹음 → 리플레이 ndjson(off 모드 · llm_unavailable 재생용).
 
-    python -m agent.record run_… landxi/agent/data/replay/ag0-namwon.ndjson      (cwd = server/)
+    python -m agent.record run_… landxi/agent/data/replay/<이름>.ndjson      (cwd = server/)
 
 Redis 스트림 agent:runs:{id}(24h) 를 그대로 옮긴다. t = 첫 이벤트 뒤 ms(Redis entry id 의 ms 부분 = 서버 발행 시각 · 실측).
 첫 줄 replay.meta = {run_id, message(PII 마스킹 뒤), recorded_at, model, events}. 값은 바꾸지 않는다(합성 0).

@@ -16,7 +16,8 @@ FINDINGS_EMD_JSON = SURVEY_DIR / "findings-emd.json"
 RULES_DIR = Path(__file__).resolve().parent / "rules"
 MIGRATION = config.SERVER_ROOT / "migrations" / "0002_survey.sql"
 
-TENANT = "namwon"
+# ── 정본 적재 재현 전용(s5_load_pg · README 표 검증) — 런타임 경로는 지역을 데이터(survey_sgg · sgg_cd)에서 읽는다 ──
+TENANT = "namwon"                         # s5_load_pg 만 쓴다(정본 파일의 기관)
 AS_OF = "2026-09-24"                      # V-World 수집 · s3 결합 시각(README)
 SRC_PARCELS = "survey/namwon-parcels.gpkg"
 SRC_SURVEY = "survey/namwon-parcel-survey.gpkg"

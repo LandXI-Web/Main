@@ -103,13 +103,13 @@ def test_route_shape(live, tok, name, method, path, who, body):
 V12_OPTIONAL = {
     "registry_cards": ["n", "public"],                          # S-6 ?public=1
     "deploys_list": [],
-    "deploy": ["sgg_cd", "test", "ci"],                         # S-7 이식(시군구 · CI 9키 · 시험 표시)
+    "deploy": ["sgg_cd", "test", "ci", "flow"],                 # S-7 다른 지역에 적용(시군구 · CI 9키 · 시험 표시) · core-flow 한 흐름
     "ops_gpus": ["power_budget"],                               # S-9 전력 예산
     "catalog_imagery": ["sgg_cd", "tile_ready"],                # 영상 소유 시군구 · 타일 준비
 }
 V12_NESTED = {
     "registry_cards": {"items[]": ["crop_url", "deploys", "models", "ledger_schema", "intro", "status_label", "status3"]},   # S-6
-    "deploys_list": {"items[]": ["sgg_cd", "test", "ci"], "approvals[]": ["state", "action"]},                            # S-7 결재 행
+    "deploys_list": {"items[]": ["sgg_cd", "test", "ci", "flow"], "approvals[]": ["state", "action"]},                    # S-7 결재 행 · core-flow
     "deploy": {"approvals[]": ["state", "action"]},
     "catalog_layers": {"items[]": ["sgg_cd", "tile_ready"]},    # 영상 소유 시군구 · 타일 준비
 }

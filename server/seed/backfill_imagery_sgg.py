@@ -3,7 +3,7 @@
 
 판정 순서(지역 고정값 0 · 전부 /regions 뼈대와 영상 이름·범위에서):
   ① 영상 이름(ko) 낱말 → regions.find() 로 시군구 1곳이 정해지면 그 코드
-  ② 영상 id 낱말 → V-World 영문 이름(name_en 'Namwon-si' → 'namwon') 과 같으면 그 코드
+  ② 영상 id 낱말 → V-World 영문 이름(name_en '<이름>-si' → '<이름>') 과 같으면 그 코드
   ③ 범위(footprint)와 가장 많이 겹치는 시군구(겹침 비율 기록)
 이미 값이 있는 행은 건드리지 않는다(--force 로 다시 계산). 실행: python server/seed/backfill_imagery_sgg.py [--dry] [--force]
 """

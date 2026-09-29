@@ -1,10 +1,16 @@
-"""행정데이터(대장) 반입·융합(F3 최종 명세 §3 S-2 · F3-DIRECTION §3) — 업로드한 대장 × AI 판독 × V-World.
+"""행정데이터(대장) 반입·융합(F3 최종 명세 §3 S-2 · F3-DIRECTION §3) — 업로드한 대장 × AI 분석 × V-World.
 
 POST /t/{tenant}/survey/registry/import            multipart(file · kind) → 202 {import_id, rows, columns_guess, dropped}
 GET  /t/{tenant}/survey/registry/{import_id}        → {columns, mapping, matched, matched_pct, by_step, unmatched[], state}
 POST /t/{tenant}/survey/registry/{import_id}/confirm {mapping} → 매칭(PNU → 지번 → 좌표 → V-World) + 규칙 L-* → 202
 GET  /t/{tenant}/survey/registry?latest=1           → 반입 목록(종류별 최신)
 GET  /survey/rules/ledger                           → 규칙 L-* 정의(대장 피연산자 `ledger.<kind>.<col>`)
+
+GET  /t/{tenant}/survey/registry/{import_id}/parcels → 결합된 필지(연속지적 × AI 피연산자 · GeoJSON) — 정적 필지 층이 없는 관할의 지도·표
+GET  /t/{tenant}/survey/ledger-schema               → 이 기관 배포 카드의 대장 형식(S-6 · 기관 세션 읽기)
+
+전국(core-fusion): 필지 색인 · 규칙 L-* 는 대장이 가리키는 시군구의 survey_parcels + survey_parcel_ai(contract-parcel-ai)를 읽는다.
+그 시군구에 필지가 아직 없으면 POST /survey/build(core-survey)를 요청해 적재를 기다린 뒤 매칭한다. AI 결과가 없는 시군구는 규칙을 돌리지 않는다(ai.has=false · 정직).
 
 원칙: 대장은 LX 가 소유하지 않는다 — 행은 기관 tenant_id(RLS) · payload = allowlist 역할 열만 · 성명·연락처 열은 이름만 기록하고 값 저장 0.
 원본 파일은 확인(confirm) 전까지만 02. 데이터/_tmp/ledger/ 에 두고 매칭 뒤 지운다(24h 넘으면 청소).
@@ -163,6 +169,12 @@ def _operand(ref: str, ledger: dict[str, dict], parcel: dict, th: dict):
         if row is None:
             return None
         return True if col == "row" else row.get(col)
+    if ref.startswith("ai.") and ref.count(".") == 2:          # 일반 피연산자 ai.<cls>.<in_m2|hit_m2|n|conf> · ai.ratio.<cls|farm>
+        _, a, b = ref.split(".")
+        if a == "ratio":
+            return parcel.get(f"r23_{b}")
+        col = {"in_m2": f"a23_{a}_in_m2", "hit_m2": f"a23_{a}_m2", "n": f"a23_{a}_n", "conf": f"a23_{a}_conf"}.get(b)
+        return parcel.get(col) if col else None
     if ref.startswith("ai.") or ref.startswith("parcel."):
         return parcel.get(ref.split(".", 1)[1])
     return ref
@@ -223,7 +235,7 @@ JIBUN_RX = re.compile(r"(산)?\s*(\d{1,4})(?:\s*-\s*(\d{1,4}))?\s*(번지)?\s*$"
 
 
 def parse_jibun(s: str) -> dict | None:
-    """'전북 남원시 대강면 방동리 산 12-3' → {emd, ri, san, bon, bu}."""
+    """'○○도 ○○시 ○○면 ○○리 산 12-3' → {emd, ri, san, bon, bu}."""
     s = re.sub(r"\s+", " ", str(s or "")).strip()
     m = JIBUN_RX.search(s)
     if not m:
@@ -235,9 +247,27 @@ def parse_jibun(s: str) -> dict | None:
     return {"emd": emd, "ri": ri, "san": san, "bon": int(m.group(2)), "bu": int(m.group(3) or 0)}
 
 
+def cur_code(c5: str) -> str:
+    """시군구 코드(옛/새) → 지금 코드(contract-parcel-ai §1 · PNU 는 지금 코드로 저장)."""
+    try:
+        from .regions import region_of
+        r = region_of(c5)
+        return r["sgg_cd"] if r else c5
+    except Exception:
+        return c5
+
+
+def canon_pnu(pnu: str) -> str:
+    return cur_code(pnu[:5]) + pnu[5:] if len(pnu) == 19 else pnu
+
+
 class ParcelIndex:
-    """관할 안 연속지적 색인(PNU 집합 · (읍면동, 리) → PNU 앞 10자리) — 프로세스 캐시 10분."""
+    """관할 안 연속지적 색인(PNU 집합 · (읍면동, 리) → PNU 앞 10자리) — 프로세스 캐시 10분(적재 뒤 clear)."""
     _c: dict = {}
+
+    @classmethod
+    def clear(cls):
+        cls._c.clear()
 
     @classmethod
     async def get(cls, prefixes: list[str] | None) -> "ParcelIndex":
@@ -430,6 +460,14 @@ async def _live_findings(conn, ids: list[str]) -> dict[str, dict[str, int]]:
     return out
 
 
+def _sgg_name(cd: str) -> str | None:
+    try:
+        from .regions import region_of
+        return (region_of(cd) or {}).get("name")
+    except Exception:
+        return None
+
+
 def _import_view(r, unmatched: list | None = None, live: dict | None = None) -> dict:
     st = dict(r["stats"] or {})
     if st and live is not None:                    # 의심 수 = 지금 survey_findings 에 있는 것(다른 반입·재평가가 지운 뒤 낡은 숫자 0)
@@ -452,6 +490,14 @@ def _import_view(r, unmatched: list | None = None, live: dict | None = None) -> 
         out["findings"] = {k: env(v, "count", "inferred", "규칙 L-* · 검수 전", as_of=at) for k, v in (st.get("findings") or {}).items()}
         if st.get("skipped"):
             out["skipped"] = st["skipped"]
+        if st.get("sgg"):
+            out["sgg"] = [{"sgg_cd": c, "name": _sgg_name(c)} for c in st["sgg"]]
+        if isinstance(st.get("ai"), dict):
+            a = st["ai"]
+            out["ai"] = {"has": bool(a.get("has")),
+                         "parcels": env(int(a.get("parcels") or 0), "필지", "measured", "대장 필지 × AI 분석 결합", as_of=at),
+                         "sgg": [{"sgg_cd": c, "name": _sgg_name(c), "state": v.get("state"), "year": v.get("year"),
+                                            "outside": env(v.get("outside"), "필지", "measured", "영상 범위 밖 대장 필지(판정 안 함)")} for c, v in (a.get("sgg") or {}).items()]}
     if unmatched is not None:
         out["unmatched"] = unmatched
     return out
@@ -473,6 +519,66 @@ async def list_imports(tenant: str, request: Request, latest: int | None = None,
                                 "AND (NOT $3 OR latest) ORDER BY created_at DESC LIMIT 50", tenant, kind, bool(latest))
         live = await _live_findings(conn, [r["id"] for r in rows])
     return {"items": [_import_view(r, live=live) for r in rows], "kinds": KINDS, "as_of": now_iso()}
+
+
+@router.get("/t/{tenant}/survey/ledger-schema")
+async def ledger_schema(tenant: str, request: Request):
+    """이 기관 배포 카드의 대장 형식(S-6 `ledger_schema`) — 기관 세션이 읽는 경로(카드 목록은 LX 전용이라 여기서 기관 것만).
+    parcel_tiles = 이 관할의 정적 필지 층(PMTiles)이 있으면 그 주소(화면이 없는 파일을 두드리지 않게 · 콘솔 404 0)."""
+    p = _gate(principal(request), tenant)
+    async with db(realm="lx") as conn:
+        rows = await conn.fetch("SELECT DISTINCT c.id, c.ledger_schema FROM deploys d JOIN cards c ON c.id = d.card_id "
+                                "WHERE d.tenant_id=$1 AND c.ledger_schema IS NOT NULL AND NOT coalesce(d.test,false) ORDER BY c.id", tenant)
+    items = [{"card_id": r["id"], "ledger_schema": r["ledger_schema"]} for r in rows]
+    kinds = []
+    for it in items:
+        k = (it["ledger_schema"] or {}).get("kind") if isinstance(it["ledger_schema"], dict) else None
+        if k and k not in kinds:
+            kinds.append(k)
+    tiles = config.DATA_ROOT / "survey" / f"{tenant}-parcel-survey.pmtiles"      # 정적 필지 층(있는 관할만) — 없으면 서버 필지(…/parcels)
+    return {"items": items, "kinds": kinds, "labels": {k: KINDS.get(k) for k in kinds},
+            "parcel_tiles": f"/landxi/data/survey/{tenant}-parcel-survey.pmtiles" if tiles.exists() else None, "as_of": now_iso()}
+
+
+@router.get("/t/{tenant}/survey/registry/{import_id}/parcels")
+async def import_parcels(tenant: str, import_id: str, request: Request, geom: int = 1, limit: int = 20000):
+    """결합된 대장 필지(연속지적 × AI 피연산자) — 정적 필지 층(PMTiles)이 없는 관할의 지도 채색 · 표 · 필지 카드용.
+    properties = pnu · jimok · yongdo · nongup · area_m2 · bld_m2 · crop_m2 · park_m2 · gh_m2 · r23_farm · ai(분석 여부) · addr.
+    AI 값은 규칙과 같은 출처(ai_parcels) — 큰 숫자 · 지도 · 표 · 말 질의가 한 숫자."""
+    p = _gate(principal(request), tenant)
+    await _get_import(p, tenant, import_id)
+    limit = max(1, min(int(limit), 50000))
+    async with db(realm="lx") as conn:
+        pn = [r["pnu"] for r in await conn.fetch("SELECT DISTINCT pnu FROM registry_snapshots WHERE import_id=$1 AND tenant_id=$2 AND pnu IS NOT NULL LIMIT $3",
+                                                  import_id, tenant, limit)]
+        ai_rows, ai = await ai_parcels(conn, pn)
+        g = {}
+        if geom and pn:
+            g = {r["pnu"]: r["g"] for r in await conn.fetch(
+                "SELECT pnu, ST_AsGeoJSON(ST_SimplifyPreserveTopology(geom, 0.000004), 6) g FROM survey_parcels WHERE pnu = ANY($1::text[])", pn)}
+        base = {r["pnu"]: dict(r) for r in await conn.fetch(
+            "SELECT pnu, jimok, jimok_nm, yongdo, nongup, area_m2, addr, ST_XMin(geom) x0, ST_YMin(geom) y0, ST_XMax(geom) x1, ST_YMax(geom) y1 "
+            "FROM survey_parcels WHERE pnu = ANY($1::text[])", pn)}
+    feats = []
+    for k in pn:
+        b = base.get(k)
+        if not b:
+            continue
+        a = ai_rows.get(k)
+        props = {"pnu": k, "jimok": b["jimok"], "yongdo": b["yongdo"] or "", "nongup": b["nongup"] or "", "area_m2": round(float(b["area_m2"] or 0), 1),
+                 "addr": b["addr"], "bbox": [round(b["x0"], 7), round(b["y0"], 7), round(b["x1"], 7), round(b["y1"], 7)], "ai": 1 if a else 0}
+        if a:
+            props.update({"bld_m2": round(float(a.get("a23_bld_m2") or 0), 1), "crop_m2": round(float(a.get("a23_crop_m2") or 0), 1),
+                          "park_m2": round(float(a.get("a23_park_m2") or 0), 1), "gh_m2": round(float(a.get("a23_gh_m2") or 0), 1),
+                          "r23_farm": round(float(a.get("r23_farm") or 0), 3)})
+        f = {"type": "Feature", "id": k, "properties": props, "geometry": json.loads(g[k]) if g.get(k) else None}
+        feats.append(f)
+    return JSONResponse(content=_j({"type": "FeatureCollection", "features": feats, "import_id": import_id,
+                                    "ai": {"has": bool(ai.get("has")), "parcels": env(ai.get("parcels"), "필지", "measured", "대장 필지 × AI 분석 결합"),
+                                           "sgg": [{"sgg_cd": c, "name": _sgg_name(c), "state": v.get("state"), "year": v.get("year"),
+                                            "outside": env(v.get("outside"), "필지", "measured", "영상 범위 밖 대장 필지(판정 안 함)")}
+                                                   for c, v in (ai.get("sgg") or {}).items()]},
+                                    "count": env(len(feats), "필지", "measured", "대장 × 연속지적 결합"), "as_of": now_iso()}))
 
 
 @router.get("/t/{tenant}/survey/registry/{import_id}")
@@ -511,7 +617,9 @@ async def confirm_import(tenant: str, import_id: str, request: Request, body: di
         raise ApiError("conflict", "원본 파일이 만료되었습니다 — 다시 올려 주세요", status=409)
     async with db(p) as conn:
         await conn.execute("UPDATE ledger_imports SET mapping=$2, state='matching', error=NULL WHERE id=$1", import_id, mapping)
-    asyncio.get_running_loop().create_task(_run_match(p, tenant, import_id, r["kind"], mapping))
+    h = request.headers.get("authorization", "")
+    token = h[7:].strip() if h.lower().startswith("bearer ") else None
+    asyncio.get_running_loop().create_task(_run_match(p, tenant, import_id, r["kind"], mapping, token))
     return {"import_id": import_id, "state": "matching", "mapping": mapping, "poll": f"/api/v1/t/{tenant}/survey/registry/{import_id}", "as_of": now_iso()}
 
 
@@ -536,10 +644,10 @@ async def resume_stuck_imports() -> dict:
     return out
 
 
-async def _run_match(p: Principal, tenant: str, iid: str, kind: str, mapping: dict):
+async def _run_match(p: Principal, tenant: str, iid: str, kind: str, mapping: dict, token: str | None = None):
     t0 = time.perf_counter()
     try:
-        st = await match_and_evaluate(p, tenant, iid, kind, mapping)
+        st = await match_and_evaluate(p, tenant, iid, kind, mapping, token)
         st["ms"] = round((time.perf_counter() - t0) * 1000)
         async with db(realm="lx") as conn:
             await conn.execute("UPDATE ledger_imports SET latest=false WHERE tenant_id=$1 AND kind=$2 AND id<>$3", tenant, kind, iid)
@@ -560,13 +668,12 @@ async def _run_match(p: Principal, tenant: str, iid: str, kind: str, mapping: di
             pass
 
 
-async def match_and_evaluate(p: Principal, tenant: str, iid: str, kind: str, mapping: dict) -> dict:
+async def match_and_evaluate(p: Principal, tenant: str, iid: str, kind: str, mapping: dict, token: str | None = None) -> dict:
     blob = _tmp_path(iid).read_bytes()
     ext, raw = blob.split(b"\n", 1)
     cols, rows, pts = await run_in_threadpool(read_table, raw, ext.decode())
     from .regions import tenant_scope
     scope = tenant_scope(tenant)
-    ix = await ParcelIndex.get(scope if scope is not None else ["__none__"])     # [] = 전국(LX) · None = 국내 관할 없음(해외 기관)
     role_of = {v: k for k, v in mapping.items()}
     recs = []
     for i, row in enumerate(rows):
@@ -578,10 +685,14 @@ async def match_and_evaluate(p: Principal, tenant: str, iid: str, kind: str, map
         if pts is not None and "geom" in mapping and pts[i]:
             pay["lon"], pay["lat"] = round(pts[i][0], 7), round(pts[i][1], 7)
         recs.append({"row": i + 1, "payload": pay, "pnu": None, "step": "none", "reason": None})
+    # ⓪ 대장이 가리키는 시군구 → 필지가 없으면 적재(core-survey POST /survey/build) 뒤 매칭
+    targets = await _target_sggs(scope, recs)
+    build = await _ensure_parcels(targets, token) if targets else {}
+    ix = await ParcelIndex.get([c for t in targets for c in _codes(t)] if targets else (scope if scope is not None else ["__none__"]))
     # ① PNU 직접 · ② 지번 파싱
     for rc in recs:
         pay = rc["payload"]
-        pnu = re.sub(r"\D", "", pay.get("pnu", ""))
+        pnu = canon_pnu(re.sub(r"\D", "", pay.get("pnu", "")))
         if pnu:
             if len(pnu) == 19 and pnu in ix.pnus:
                 rc.update(pnu=pnu, step="pnu")
@@ -642,6 +753,7 @@ async def match_and_evaluate(p: Principal, tenant: str, iid: str, kind: str, map
                         if pt:
                             vw_calls += 1
                             got = await _vworld_point(c, key, dom, *pt)
+                            got = canon_pnu(got) if got else got
                             if got and (not scope or any(got.startswith(x) for x in scope)):
                                 rc.update(pnu=got, step="vworld", reason=None)
                             elif got:
@@ -658,13 +770,227 @@ async def match_and_evaluate(p: Principal, tenant: str, iid: str, kind: str, map
     by_step = {k: sum(1 for rc in recs if rc["step"] == k) for k in ("pnu", "jibun", "geom", "vworld")}
     matched = sum(by_step.values())
     st = {"rows": len(recs), "matched": matched, "matched_pct": round(100 * matched / max(len(recs), 1), 1), "by_step": by_step,
-          "unmatched": len(recs) - matched, "vworld_calls": vw_calls}
+          "unmatched": len(recs) - matched, "vworld_calls": vw_calls, "sgg": targets, "parcels_build": build}
     st.update(await evaluate_rules(tenant, iid, kind))
     return st
 
 
+def _codes(sgg: str) -> list[str]:
+    try:
+        from .regions import sgg_codes
+        return sgg_codes(sgg) or [sgg]
+    except Exception:
+        return [sgg]
+
+
+async def _target_sggs(scope: list[str] | None, recs: list[dict]) -> list[str]:
+    """대장이 가리키는 시군구(지금 코드) — PNU 앞 5자리 → 주소 속 시군구 이름(관할 안) → V-World 주소 검색 표본(최대 5행).
+    관할 밖 코드는 버린다. 행의 1% 미만만 가리키는 시군구는 버린다(오기 한두 줄로 다른 시군구 전체를 적재하지 않게)."""
+    from collections import Counter
+
+    from .regions import in_scope, regions_base
+    if scope is None:
+        return []
+    cnt: Counter = Counter()
+    for rc in recs:
+        d = re.sub(r"\D", "", rc["payload"].get("pnu", ""))
+        if len(d) == 19:
+            cnt[cur_code(d[:5])] += 1
+    if not cnt:
+        regs, _, _ = regions_base()
+        cand = [r for r in regs if any(in_scope(c, scope) for c in _codes(r["sgg_cd"]))]
+        keys = [(r["sgg_cd"], (r.get("name") or "").split(" ")[0]) for r in cand]
+        keys = [(cd, nm) for cd, nm in keys if len(nm) >= 2]
+        for rc in recs[:3000]:
+            txt = " ".join(str(rc["payload"].get(k) or "") for k in ("jibun", "emd", "ri"))
+            for cd, nm in keys:
+                if re.search(r"(^|\s)" + re.escape(nm) + r"(\s|$)", txt):
+                    cnt[cd] += 1
+        if not cnt and len(cand) == 1:
+            cnt[cand[0]["sgg_cd"]] = len(recs)
+    if not cnt:
+        from .proxy import vworld_key
+        key, dom = vworld_key()
+        sample = [rc["payload"]["jibun"] for rc in recs if rc["payload"].get("jibun")][:5]
+        if key and sample:
+            import httpx
+            async with httpx.AsyncClient(timeout=15, headers={"User-Agent": "LandXI-gateway/0.1"}) as c:
+                for q in sample:
+                    try:
+                        pt = await _vworld_search(c, key, dom, q)
+                        got = await _vworld_point(c, key, dom, *pt) if pt else None
+                    except Exception:
+                        got = None
+                    if got:
+                        cnt[cur_code(got[:5])] += 1
+    n = max(len(recs), 1)
+    return sorted(cd for cd, k in cnt.items() if any(in_scope(c, scope) for c in _codes(cd)) and (k >= 0.01 * n or len(cnt) == 1))
+
+
+BUILD_WAIT_S = 1200
+
+
+async def _ensure_parcels(targets: list[str], token: str | None) -> dict:
+    """시군구마다 필지가 적재돼 있는지 · 없으면(또는 AI 없이 적재됐는데 그 뒤 AI 작업이 끝났으면) POST /survey/build 를 요청하고
+    끝날 때까지 기다린다 → {sgg: state}(done · no_ai · failed · building · http_4xx · unavailable)."""
+    out: dict[str, str] = {}
+    need: dict[str, str | None] = {}
+    async with db(realm="lx") as conn:
+        if not await conn.fetchval("SELECT to_regclass('survey_sgg') IS NOT NULL"):
+            return {t: "unavailable" for t in targets}
+        have = {r["sgg_cd"]: dict(r) for r in await conn.fetch("SELECT sgg_cd, state, job_id FROM survey_sgg WHERE sgg_cd = ANY($1::text[])", targets)}
+        n = {r["s"]: r["n"] for r in await conn.fetch("SELECT sgg_cd s, count(*) n FROM survey_parcels WHERE sgg_cd = ANY($1::text[]) GROUP BY 1", targets)}
+        running = {r["s"] for r in await conn.fetch("SELECT options->>'sgg_cd' s FROM jobs WHERE kind='survey' AND state IN ('queued','running') "
+                                                     "AND options->>'build'='true' AND options->>'sgg_cd' = ANY($1::text[])", targets)}
+        for t in targets:
+            h = have.get(t)
+            if (h and h["state"] == "building") or t in running:
+                out[t] = "building"
+                need[t] = "__wait__"
+                continue
+            if not n.get(t) or not h:
+                need[t] = None
+                continue
+            out[t] = h["state"]
+            if h["state"] == "no_ai":                     # 적재 뒤 AI 전역 분석이 끝났으면 그 작업으로 다시 결합
+                j = await conn.fetchval("SELECT id FROM jobs WHERE kind='infer' AND state='done' AND NOT demo AND NOT coalesce(test,false) "
+                                        "AND options->>'sgg_cd' = ANY($1::text[]) ORDER BY finished_at DESC LIMIT 1", _codes(t))
+                if j:
+                    need[t] = j
+    if not need:
+        return out
+    ask = {t: j for t, j in need.items() if j != "__wait__"}
+    async with db(realm="lx") as conn:
+        t_req = await conn.fetchval("SELECT now()")
+    if ask and not token:
+        out.update({t: "unavailable" for t in ask})
+    elif ask:
+        import httpx
+        base = f"http://127.0.0.1:{config.API_PORT}/api/v1"
+        async with httpx.AsyncClient(timeout=30, headers={"authorization": f"Bearer {token}"}) as c:
+            for t, job in ask.items():
+                body = {"sgg_cd": t, **({"job_id": job} if job else {})}
+                try:
+                    r = await c.post(f"{base}/survey/build", json=body)
+                    out[t] = "building" if r.status_code in (200, 202, 409) else f"http_{r.status_code}"
+                except Exception as e:  # noqa: BLE001
+                    out[t] = f"error:{type(e).__name__}"
+    wait = [t for t in need if out.get(t) == "building"]
+    t_end = time.monotonic() + BUILD_WAIT_S
+    await asyncio.sleep(1.0)
+    while wait and time.monotonic() < t_end:
+        async with db(realm="lx") as conn:
+            rows = {r["sgg_cd"]: r for r in await conn.fetch("SELECT sgg_cd, state, finished_at FROM survey_sgg WHERE sgg_cd = ANY($1::text[])", wait)}
+        for t in list(wait):
+            r = rows.get(t)
+            fresh = r is not None and (need.get(t) == "__wait__" or (r["finished_at"] is not None and r["finished_at"] >= t_req))
+            if r is not None and r["state"] in ("done", "no_ai", "failed") and fresh:
+                out[t] = r["state"]
+                wait.remove(t)
+        if wait:
+            await asyncio.sleep(2.0)
+    ParcelIndex.clear()
+    return out
+
+
+async def ai_parcels(conn, pnus: list[str]) -> tuple[dict[str, dict], dict]:
+    """대장 필지 → 규칙이 읽는 필지 행(연속지적 + AI 피연산자) · AI 상태.
+    AI 피연산자 = 그 시군구의 현재 AI 작업(survey_sgg.job_id)으로 거른 survey_parcel_ai(contract-parcel-ai §2.2) — 옛 이름(a23_* · r23_*)으로 펼친다.
+    survey_parcel_ai 에 그 작업 행이 없는 시군구(정본 적재 시군구)는 survey_parcels 의 옛 열을 그대로 쓴다.
+    AI 가 없는 시군구(survey_sgg.state no_ai · 작업 없음)와 작업 범위(jobs.aoi) 밖 필지는 결과에 넣지 않는다(판정 안 함 · 정직).
+    → ({pnu: 행}, {has, parcels, sgg:{코드: {state, job_id, year}}})"""
+    if not pnus:
+        return {}, {"has": False, "parcels": 0, "sgg": {}}
+    rows = await conn.fetch("SELECT p.*, ST_X(ST_PointOnSurface(p.geom)) AS lon, ST_Y(ST_PointOnSurface(p.geom)) AS lat, NULL AS geom "
+                            "FROM survey_parcels p WHERE pnu = ANY($1::text[])", pnus)
+    pmap = {r["pnu"]: dict(r) for r in rows}
+    by_sgg: dict[str, list[str]] = {}
+    for pn, r in pmap.items():
+        by_sgg.setdefault(r.get("sgg_cd") or pn[:5], []).append(pn)
+    has_sgg_tbl = await conn.fetchval("SELECT to_regclass('survey_sgg') IS NOT NULL AND to_regclass('survey_parcel_ai') IS NOT NULL")
+    info: dict[str, dict] = {}
+    out: dict[str, dict] = {}
+    for sgg, pl in by_sgg.items():
+        sg = await conn.fetchrow("SELECT state, job_id FROM survey_sgg WHERE sgg_cd=$1", sgg) if has_sgg_tbl else None
+        job = sg["job_id"] if sg else None
+        state = sg["state"] if sg else None
+        year = None
+        if job:
+            jr = await conn.fetchrow("SELECT j.id, i.year, i.epoch, (j.aoi IS NOT NULL) has_aoi FROM jobs j LEFT JOIN imagery i ON i.id=j.imagery_id WHERE j.id=$1", job)
+            if jr:
+                year = jr["year"] or (str(jr["epoch"])[:4] if jr["epoch"] else None)
+            else:
+                m = re.search(r"(19|20)\d{2}", job)
+                year = m.group(0) if m else None
+        if state in ("no_ai", "failed", "building") or not job:
+            info[sgg] = {"state": state or "none", "job_id": None, "year": None, "parcels": 0}
+            continue
+        ops = await _ai_operands(conn, pl, sgg, job)
+        cover = set(pl)
+        if ops is not None and await conn.fetchval("SELECT EXISTS(SELECT 1 FROM jobs WHERE id=$1)", job):
+            # 분석한 곳만 — 작업 범위(aoi) ∩ 영상 범위(footprint) 안의 필지(대표점). 영상 밖 필지를 'AI 가 아무것도 못 봄'으로 판정하지 않는다
+            cover = {r["pnu"] for r in await conn.fetch(
+                "SELECT p.pnu FROM survey_parcels p JOIN jobs j ON j.id=$2 LEFT JOIN imagery i ON i.id=j.imagery_id "
+                "WHERE p.pnu = ANY($1::text[]) AND (j.aoi IS NULL OR ST_Intersects(j.aoi, ST_PointOnSurface(p.geom))) "
+                "AND (i.footprint IS NULL OR ST_Intersects(i.footprint, ST_PointOnSurface(p.geom)))", pl, job)}
+        for pn in pl:
+            if pn not in cover:
+                continue
+            r = pmap[pn]
+            if ops is not None:
+                r.update({"a23_bld_in_m2": 0.0, "a23_bld_m2": 0.0, "a23_crop_m2": 0.0, "a23_park_m2": 0.0, "a23_gh_m2": 0.0,
+                          "r23_bld": 0.0, "r23_crop": 0.0, "r23_park": 0.0, "r23_gh": 0.0, "r23_farm": 0.0})
+                r.update(ops.get(pn) or {})
+            r["_ai_year"] = year
+            out[pn] = r
+        info[sgg] = {"state": state, "job_id": job, "year": year, "parcels": sum(1 for pn in pl if pn in out), "outside": len(pl) - len(cover & set(pl)),
+                     "source": "survey_parcel_ai" if ops is not None else "survey_parcels"}
+    return out, {"has": bool(out), "parcels": len(out), "sgg": info}
+
+
+async def _ai_operands(conn, pnus: list[str], sgg: str, job: str) -> dict | None:
+    """survey_parcel_ai(그 작업) → {pnu: {a23_<c>_in_m2 · a23_<c>_m2 · a23_<c>_n · a23_<c>_conf · a23_<c>_ids · r23_<c> · r23_farm}}.
+    그 작업 행이 하나도 없으면 None(옛 열을 쓴다). core-survey 서버 함수(survey.nation.ai_operands)가 있으면 그것을 쓴다."""
+    try:
+        from survey import nation  # type: ignore
+        fn = getattr(nation, "ai_operands", None)
+    except Exception:
+        fn = None
+    n = await conn.fetchval("SELECT count(*) FROM (SELECT 1 FROM survey_parcel_ai WHERE sgg_cd=$1 AND job_id=$2 LIMIT 1) x", sgg, job)
+    if not n:
+        return None
+    if fn is not None:                                   # core-survey 규칙과 같은 식(psycopg · 스레드)
+        def _nation():
+            from survey.db import lx_tx, pg
+            with pg() as c:
+                lx_tx(c)
+                return fn(c, list(pnus), sgg)
+        try:
+            got = await run_in_threadpool(_nation)
+            return got or None                           # 정본(canon) 적재 필지는 돌려주지 않는다 → 옛 열(같은 규칙 · 회귀 0)
+        except Exception:
+            pass
+    rows = await conn.fetch("SELECT a.pnu, a.cls, a.hit_m2, a.in_m2, a.n, a.conf, a.ids, p.area_m2 FROM survey_parcel_ai a JOIN survey_parcels p ON p.pnu=a.pnu "
+                            "WHERE a.job_id=$1 AND a.pnu = ANY($2::text[]) AND p.src IS DISTINCT FROM 'canon'", job, pnus)
+    out: dict[str, dict] = {}
+    for r in rows:
+        c = r["cls"]
+        d = out.setdefault(r["pnu"], {})
+        area = float(r["area_m2"] or 0)
+        d[f"a23_{c}_m2"] = float(r["hit_m2"] or 0)
+        d[f"a23_{c}_in_m2"] = float(r["in_m2"] or 0)
+        d[f"a23_{c}_n"] = int(r["n"] or 0)
+        d[f"a23_{c}_conf"] = r["conf"]
+        d[f"a23_{c}_ids"] = r["ids"]
+        d[f"r23_{c}"] = round(min(1.0, float(r["hit_m2"] or 0) / area), 3) if area else 0.0
+    for d in out.values():
+        d["r23_farm"] = round(min(1.0, (d.get("r23_crop") or 0) + (d.get("r23_gh") or 0)), 3)
+    return out or None
+
+
 async def evaluate_rules(tenant: str, iid: str, kind: str, rules: list[str] | None = None, th_override: dict | None = None) -> dict:
-    """규칙 L-*(requires ⊂ 이 기관의 최신 대장) → survey_findings(rule L*, import_id). 대장 없으면 skipped(의심 0 · 정직)."""
+    """규칙 L-*(requires ⊂ 이 기관의 최신 대장) → survey_findings(rule L*, import_id). 대장 없으면 skipped(의심 0 · 정직).
+    필지 AI 값 = ai_parcels(대장이 가리키는 시군구의 survey_parcel_ai) — AI 가 없는 필지는 판정하지 않고 ai.has=false 로 알린다."""
     defs = ledger_rules()
     async with db(realm="lx") as conn:
         latest = {r["kind"]: r["id"] for r in await conn.fetch(
@@ -685,10 +1011,14 @@ async def evaluate_rules(tenant: str, iid: str, kind: str, rules: list[str] | No
             ledger_by.setdefault(x["pnu"], {})[x["kind"]] = dict(x["payload"] or {})
         pnus = [pn for pn, lk in ledger_by.items() if kind in lk]
         if not pnus:
-            return {"findings": {r: 0 for r in todo}, "skipped": skipped}
-        parcels = await conn.fetch("SELECT p.*, ST_X(ST_PointOnSurface(p.geom)) AS lon, ST_Y(ST_PointOnSurface(p.geom)) AS lat, NULL AS geom "
-                                   "FROM survey_parcels p WHERE pnu = ANY($1::text[])", pnus)
-        pmap = {r["pnu"]: dict(r) for r in parcels}
+            return {"findings": {}, "skipped": skipped, "ai": {"has": False, "parcels": 0, "sgg": {}}}
+        pmap, ai = await ai_parcels(conn, pnus)
+        if not ai.get("has"):                   # AI 결과가 없는 시군구 — 규칙을 돌리지 않는다(0 필지가 아니라 'AI 분석 전' · 낡은 의심은 걷는다)
+            for rid in todo:
+                await conn.execute("DELETE FROM survey_findings WHERE rule=$1 AND tenant_id=$2 AND state='open' AND NOT demo "
+                                   "AND import_id IN (SELECT id FROM ledger_imports WHERE tenant_id=$2 AND kind=$3) "
+                                   "AND id NOT IN (SELECT finding_id FROM survey_actions WHERE finding_id IS NOT NULL)", rid, tenant, kind)
+            return {"findings": {}, "skipped": skipped, "ai": ai}
         active_th = {r["id"]: (r["thresholds"] or {}) for r in await conn.fetch(
             "SELECT id, thresholds FROM survey_rules WHERE id = ANY($1::text[]) AND coalesce(state,'active')='active'", todo)}
         for rid in todo:
@@ -701,13 +1031,14 @@ async def evaluate_rules(tenant: str, iid: str, kind: str, rules: list[str] | No
             for pn in pnus:
                 par = pmap.get(pn)
                 if not par:
-                    continue                      # AI 판독·연속지적 결합이 없는 필지(관할 밖 · 적재 전) — 판정 안 함
+                    continue                      # AI 분석 · 연속지적 결합이 없는 필지(관할 밖 · 적재 전 · 영상 밖) — 판정 안 함
                 if not eval_cond(d["when_"], ledger_by[pn], par, th):
                     continue
                 s, evid, conf = score_of(d, par)
                 lrow = ledger_by[pn].get(d["kind"]) or {}
                 ev = {"ledger": {"kind": d["kind"], "col": led_col, "value": lrow.get(led_col)},
-                      "ai": {"cls": cls_nm, "ratio": round(float(par.get(r_col) or 0), 3), "m2": round(float(par.get(a_col) or 0), 1), "year": 2023},
+                      "ai": {"cls": cls_nm, "ratio": round(float(par.get(r_col) or 0), 3), "m2": round(float(par.get(a_col) or 0), 1),
+                             "year": int(par["_ai_year"]) if str(par.get("_ai_year") or "").isdigit() else par.get("_ai_year")},
                       "vworld": {"layer": "LP_PA_CBND_BUBUN", "col": "jimok", "value": par.get("jimok_nm") or par.get("jimok")}}
                 hits.append((finding_id(rid, tenant, pn), s, priority_of(s), rid, d["name"], pn, par, evid, conf, ev))
             hits.sort(key=lambda h: -h[1])
@@ -720,15 +1051,15 @@ async def evaluate_rules(tenant: str, iid: str, kind: str, rules: list[str] | No
                 fid, s, pr, rid_, nm, pn, par, evid, conf, ev = h
                 await conn.execute(
                     "INSERT INTO survey_findings(id, tenant_id, rank, priority, score, rule, rule_nm, pnu, addr, emd, emd_cd, jimok, parcel_m2, yongdo, "
-                    "nongup, evid_m2, conf, corroboration, img_date, evidence, ai_ids, lon, lat, state, import_id, geom) VALUES "
-                    "($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,'open',$24,ST_SetSRID(ST_MakePoint($22,$23),4326)) "
+                    "nongup, evid_m2, conf, corroboration, img_date, evidence, ai_ids, lon, lat, state, import_id, geom, sgg_cd) VALUES "
+                    "($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,'open',$24,ST_SetSRID(ST_MakePoint($22,$23),4326),$25) "
                     "ON CONFLICT (id) DO UPDATE SET rank=EXCLUDED.rank, priority=EXCLUDED.priority, score=EXCLUDED.score, evid_m2=EXCLUDED.evid_m2, "
                     "conf=EXCLUDED.conf, evidence=EXCLUDED.evidence, import_id=EXCLUDED.import_id",
                     fid, tenant, rank, pr, s, rid_, nm, pn, par.get("addr"), par.get("emd"), par.get("emd_cd"), par.get("jimok"), par.get("area_m2"),
-                    par.get("yongdo"), par.get("nongup"), evid, conf, "대장", "2023", json.dumps(ev, ensure_ascii=False),
-                    getattr_ids(par, cls), par.get("lon"), par.get("lat"), iid)
+                    par.get("yongdo"), par.get("nongup"), evid, conf, "대장", str(par.get("_ai_year") or ""), json.dumps(ev, ensure_ascii=False),
+                    getattr_ids(par, cls), par.get("lon"), par.get("lat"), iid, par.get("sgg_cd") or pn[:5])
             counts[rid] = len(hits)
-    return {"findings": counts, "skipped": skipped}
+    return {"findings": counts, "skipped": skipped, "ai": ai}
 
 
 def finding_id(rid: str, tenant: str, pnu: str) -> str:
@@ -750,7 +1081,7 @@ def explain_ledger(row: dict, parcel: dict | None = None) -> dict:
     th = d.get("thresholds") or {}
     ai = ev.get("ai") if isinstance(ev.get("ai"), dict) else None
     if ai:                                  # 저장된 AI 값(맨 숫자) → 봉투(봉투 없는 숫자 0)
-        src = "AI 판독 2023 · survey_parcels"
+        src = f"AI 분석 {ai.get('year') or ''} · 필지 결합".replace("  ", " ")
         for k, u in (("ratio", "ratio"), ("m2", "m2")):
             if isinstance(ai.get(k), (int, float)) and not isinstance(ai.get(k), bool):
                 ai[k] = env(ai[k], u, "inferred", src, "검수 전")

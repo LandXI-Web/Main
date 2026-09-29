@@ -49,9 +49,10 @@ export async function loadRules() {
 }
 
 /** 의심 큐 — 우선 A · 열림/배정 · 지역 bbox · 규칙 */
-export async function loadQueue({ bbox, rule, emd, limit = 2000 } = {}) {
+export async function loadQueue({ bbox, rule, emd, sgg, limit = 2000 } = {}) {
   const q = new URLSearchParams({ priority: 'A', state: 'open,assigned', sort: 'score', limit: String(limit) });
-  if (bbox) q.set('bbox', bbox.map((v) => v.toFixed(5)).join(','));
+  if (sgg) q.set('sgg', sgg);                                   // 시군구(코드) — 상자는 이웃 시군구와 겹친다
+  else if (bbox) q.set('bbox', bbox.map((v) => v.toFixed(5)).join(','));
   if (emd?.length) q.set('emd_cd', emd.join(','));
   if (rule) q.set('rule', rule);
   return get('/survey/findings?' + q);

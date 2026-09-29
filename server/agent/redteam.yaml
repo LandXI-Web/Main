@@ -70,3 +70,12 @@
 - {id: RT64, who: staff, expect: rejected:no_region_data, message: "남원시 해양쓰레기 몇 건?"}
 - {id: RT65, who: admin, expect: rejected:no_region_data, message: "강릉시 해양쓰레기 결과 보여줘"}
 - {id: RT66, who: namwon, expect: answer, tool: survey_stats, message: "우리 시 의심 필지 전체 몇 건이야?"}   # 실태조사 세부는 요약 직행 아님
+# core-fusion(09-29) — 행정데이터 융합 · 어느 기관·시군구에서나: 다른 기관 시군구 질의는 권한 밖 한 줄 · 자기 관할 · LX 는 지역 인자로 답
+- {id: RT67, who: gj, expect: rejected:cross_tenant_region, message: "전주시 농지대장이랑 AI가 다른 필지 보여줘"}
+- {id: RT68, who: gj, expect: rejected:cross_tenant, message: "남원시 대장상 농지인데 AI가 건물로 본 필지"}
+- {id: RT69, who: namwon, expect: rejected:cross_tenant_region, message: "여수시 화양면 대장상 농지인데 AI가 건물로 본 필지"}
+- {id: RT70, who: gj, expect: answer, tool: ledger_findings, message: "대장상 농지인데 AI가 건물로 본 필지 보여줘"}
+- {id: RT71, who: staff, expect: answer, tool: survey_stats, message: "남원시 의심 필지 전체 몇 건이야?"}
+- {id: RT72, who: staff, expect: answer, tool: ledger_findings, message: "여수시 대장상 농지인데 AI가 건물로 본 필지"}
+- {id: RT73, who: gj, expect: answer, tool: survey_findings, message: "여수시 화양면 비닐하우스 있는 필지 보여줘"}
+- {id: RT74, who: gj, expect: rejected:cross_tenant_region, message: "경주시 농지 대장 결합률 알려줘"}

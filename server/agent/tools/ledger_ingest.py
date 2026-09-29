@@ -19,11 +19,32 @@ def tenant_for(ctx, args: dict) -> str:
             raise ToolError("tool_forbidden", "이 기관의 데이터가 아닙니다", 403)
         return p.tenant_id
     if p.realm == "lx":
-        t = t or (ctx.context or {}).get("tenant_id")
+        t = t or (ctx.context or {}).get("tenant_id") or (ctx.context or {}).get("tenant") or tenant_of_region(args.get("region") or (ctx.context or {}).get("region"))
         if not t:
-            raise ToolError("bad_request", "LX 계정은 기관(tenant_id)을 지정해야 합니다")
+            raise ToolError("bad_request", "어느 기관(또는 시군구)의 대장인지 알려 주세요")
         return t
     raise ToolError("tool_forbidden", "로그인이 필요합니다", 401)
+
+
+def tenant_of_region(q) -> str | None:
+    """시군구(이름·코드) → 그 시군구를 관할하는 기관(regions.yaml tenants · 시군구 코드 접두). 여럿이면 가장 좁은 관할."""
+    if not q:
+        return None
+    from . import scope as S
+    hits = S.resolve(q)
+    if len(hits) != 1:
+        return None
+    codes = S.codes_of(hits[0]["sgg_cd"])
+    try:
+        from landxi_api.regions import _cfg
+        best = None
+        for t, v in (_cfg().get("tenants") or {}).items():
+            for px in v.get("sgg") or []:
+                if any(c.startswith(px) for c in codes) and (best is None or len(px) > best[1]):
+                    best = (t, len(px))
+        return best[0] if best else None
+    except Exception:
+        return None
 
 
 async def latest_import(ctx, tenant: str, kind: str | None = None, import_id: str | None = None) -> dict | None:

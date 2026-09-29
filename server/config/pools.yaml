@@ -26,12 +26,12 @@ pools:
     workers: [a6000-0, a6000-1]
     gpu_indices: [0, 1]
     # 시작 시 상주 — P0 시연 첫 shard ≤ 5s [목표]를 위해 car_v2_obb 는 미리 올린다
-    resident: [car_v2_obb]
+    resident: [car_v2_obb, aerial25/best]   # core-xi: 25cm 전국 기본 모델도 상주 — 워커 재기동 직후 첫 전역 분석도 첫 결과 ≤ 10 s
     lru_max: 3
     batch: 16
     fp16: true
-    low_watermark: 48       # shards:a6000 스트림 깊이 — 이보다 얕으면 스케줄러가 우선순위 순으로 채운다(선점 지연 ≤ 1–2s)
-    fill_chunk: 64
+    low_watermark: 24       # shards:a6000 스트림 깊이 — 이보다 얕으면 스케줄러가 우선순위 순으로 채운다(선점 지연 ≤ 1–2s) · core-xi: 48→24(시군구 전역 1만 칸이 돌 때도 새 작업 첫 결과 ≤ 10 s)
+    fill_chunk: 32          # core-xi: 64→32(같은 이유)
   cpu:
     device: cpu
     workers: [cpu-0, cpu-1]   # cpu-0 = shard + finalize · cpu-1 = shard 전용(2026-09-27: 원격 NDVI 8칸 321 s 가 실태조사 39칸을 200 s+ 굶긴 실측 → 추가)

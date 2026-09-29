@@ -196,7 +196,7 @@ export async function imageryIn(region, geo, { force = false } = {}) {
         const year = String(x.year || (/(19|20)\d{2}/.exec(String(x.epoch || x.name || '')) || [''])[0]);
         const raw = x.tier === 'raw' && !it?.bounds;   // 타일 작업이 끝나면 카탈로그에 범위가 생긴다
         const kind = kindOfRow(x);
-        return { id: x.id, year, res: resText(x.gsd_m), gsd: x.gsd_m, kind, bounds: it?.bounds || null, item: it || null, raw,
+        return { id: x.id, year, res: resText(x.gsd_m), gsd: x.gsd_m, kind, bounds: it?.bounds || null, item: it || null, raw, cov: it?.coverage || null,
           env: { ...env(1, 'count', 'recorded', `${year} ${kind} 영상`, raw ? '등록됨 · 타일 작업 중' : null), as_of: det.as_of } };
       });
   } else {
@@ -213,6 +213,13 @@ export async function imageryIn(region, geo, { force = false } = {}) {
   for (const r of rows) { const k = `${r.year} ${r.res} ${r.kind}`.replace(/\s+/g, ' ').trim(); if (!seen.has(k)) seen.set(k, { ...r, label: k, n: 1 }); else seen.get(k).n++; }
   const items = rows.map((r) => r.item).filter((i) => i && i.bounds);
   return { rows, labels: [...seen.values()], items, as_of: det?.as_of || cat.as_of };
+}
+
+/** 원본 동적 타일 서명(LX 세션 · 12시간) — { url: …/{z}/{x}/{y}.webp?exp&sig } */
+const SIG = new Map();
+export function signCog(id) {
+  if (!SIG.has(id)) SIG.set(id, api('/tiles/sign?' + new URLSearchParams({ set: 'cog/' + id })).catch((e) => { SIG.delete(id); devlog('sign', e.code || e.message); return null; }));
+  return SIG.get(id);
 }
 
 /** 서버 사유 → 사용자 말(토스트 한 줄) */

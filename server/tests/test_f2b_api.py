@@ -113,7 +113,7 @@ def test_plan_hook_quote_uses_adapter_plan(live, tok):
 def test_survey_kind_39_shards_via_f2s_adapter(live, tok):
     if not adapter_for_kind("survey"):
         pytest.skip("F2-S survey/rules 어댑터 없음")
-    q = httpx.post(B + "/jobs/quote", headers=H(tok["staff"]), timeout=60, json={"kind": "survey", "survey_id": "farmland"}).json()
+    q = httpx.post(B + "/jobs/quote", headers=H(tok["staff"]), timeout=60, json={"kind": "survey", "survey_id": "farmland", "options": {"sgg_cd": "52190"}}).json()     # 전국화 뒤: 시군구 인자(core-survey)
     assert q["shards"] == 39 and q["pool"] == "cpu" and q["eta_s"]["basis"] == "estimate"
 
 

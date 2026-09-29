@@ -48,7 +48,12 @@ const needHtml = (env) => `<span class="sd-nl">${esc(NEED_L)}</span>${numHtml(en
 let who = null, S = null, D = null, deploys = [], mine = [], own = [], cur = null, SUM = null;
 /* 상태 · 수 = 요약(summary) 한 출처 — 배포본에 딱 맞는 항목(같은 카드 · 시군구/기관/지역 이름)만 */
 /*   자기 결과가 없는 배포본(계획 · 초안)은 같은 지역 항목을 빌려 오지 않는다 → 첫 결과 전 */
-const itemOfDeploy = (d) => (SUM && d && isEnvelope(d.scale) ? itemFor(SUM, d.card_id, d, { strict: true }) : null);
+/*   시군구에 적용된 배포본(sgg_cd · 초안 아님)은 같은 카드 · 같은 시군구 항목과 바로 잇는다(손 설정 없이 새 지역 결과가 잡힌다) */
+const itemOfDeploy = (d) => {
+  if (!SUM || !d) return null;
+  if (d.sgg_cd && d.stage !== 'draft') { const it = (SUM.items || []).find((i) => i.card === d.card_id && String(i.sgg_cd || '') === String(d.sgg_cd)); if (it) return it; }
+  return isEnvelope(d.scale) ? itemFor(SUM, d.card_id, d, { strict: true }) : null;
+};
 /** 서비스 지역 표의 한 줄(배포본 하나) — 그 배포본에 딱 맞는 요약 항목만 · 없으면 첫 결과 전(요약이 없을 때만 배포 단계) */
 const rowState = (d) => (SUM ? stageKey(itemOfDeploy(d)?.stage) || 'none' : STAGE[d.stage] || 'none');
 /** 카드 상태(ga · pilot · none) — 요약 항목이 있으면 그 stage, 요약은 있는데 항목이 없으면 첫 결과 전, 요약이 없으면 기존 판정 */
@@ -186,7 +191,8 @@ function hero(state) {
   } else {
     /* 결과 전 — 밝은 캐릭터(드론)만 · 판 = --bg-1 카드(검정 잔재 0) */
     const e = h('div.sd-hero__empty'); fig.append(e); fig.classList.add('is-empty');
-    empty(e, { kind: 'first', char: 'drone', text: '첫 결과가 생기면 여기에 결과가 보입니다' });
+    const det = metric(itemOfDeploy(cur), 'detected');   // 영상 조각은 없어도 이 지역 결과 수는 있다(summary)
+    empty(e, { kind: 'first', char: 'drone', text: det ? `${where(cur)} · ${det.label} ${Number(det.value).toLocaleString("ko-KR")}${det.unit || ''}` : '첫 결과가 생기면 여기에 결과가 보입니다' });
     e.querySelector('h6')?.remove();   // 상태는 위 칩 한 곳(시범 칩 옆에 '첫 결과 전' 제목이 겹치지 않게)
   }
   /* 우하단 흰 카드 — 윗줄 `{지역} · {기준일} 기준` / 아랫줄 `현장 확인 필요 {n}필지 ✓`(그 배포본 지역 합계 · XI맵과 같은 출처).

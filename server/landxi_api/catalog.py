@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 
 from fastapi import APIRouter, Request
+from starlette.concurrency import run_in_threadpool
 
 from . import config
 from .deps import ApiError, Principal, db, principal
@@ -67,6 +68,8 @@ def resolve_set_path(set_id: str) -> str | None:
         return f"tiles/public/{parts[1]}.pmtiles"
     if len(parts) == 2 and parts[0] == "demo":
         return f"cache/demo/{parts[1]}.pmtiles"
+    if len(parts) == 2 and parts[0] == "imagery" and parts[1].startswith("img-"):   # 등록 영상에서 구운 LX 전용 세트(p16 · 서명 필수)
+        return f"tiles/imagery/{parts[1]}.pmtiles"
     return None
 
 
@@ -150,11 +153,13 @@ async def _imagery_items(stage: str | None) -> list[dict]:
         m = _mf(meta.get("manifest"))
         signed = False
         pm_raw = meta.get("pmtiles_set")
-        if r["tier"] == "raw" and pm_raw and s["sets"].get(pm_raw) and (config.DATA_ROOT / s["sets"][pm_raw]).exists():
+        pm_path = resolve_set_path(pm_raw) if pm_raw else None
+        if r["tier"] == "raw" and pm_path and (config.DATA_ROOT / pm_path).exists():
             # 원본에서 구운 LX 전용 PMTiles(서명 필수 · api-v1.js tileUrl 이 /tiles/sign 을 부른다)
-            source, set_id, path = "pmtiles", pm_raw, s["sets"][pm_raw]
+            source, set_id, path = "pmtiles", pm_raw, pm_path
             tiles, url, signed = None, pm_url(pm_raw), True
-            m = _mf(s["sets"][pm_raw].split("/")[-1]) or m
+            m = _mf(pm_path.split("/")[-1]) or ({"minzoom": meta["pmtiles_minzoom"], "maxzoom": meta.get("pmtiles_maxzoom")}
+                                                if meta.get("pmtiles_minzoom") is not None else m)
         elif r["tier"] == "raw":        # 원본 → COG 동적 타일(lx 만)
             source, set_id, path = "cog", f"cog/{r['id']}", meta.get("cog_path")
             tiles = f"{config.PUBLIC_BASE}/tiles/cog/{r['id']}/{{z}}/{{x}}/{{y}}.webp"
@@ -171,6 +176,8 @@ async def _imagery_items(stage: str | None) -> list[dict]:
             gsd_m=float(r["gsd_m"]) if r["gsd_m"] is not None else None, epoch=r["epoch"], crs="EPSG:3857", tier=r["tier"],
             license=r["license"], attribution=r["attribution"], export_policy=r["export_policy"], security_review=r["security_review"],
             rights_holder=r["rights_holder"], ladder=lad, count=_count_env(m, "count", meta.get("manifest", "")), signed=signed))
+        if meta.get("coverage") is not None:
+            out[-1]["coverage"] = env(meta["coverage"], "ratio", "measured", "도엽 외곽 ∩ 시군구 경계(등록 시 계산)")   # 덮는 비율
         out[-1]["sgg_cd"] = r["sgg_cd"]          # 소유 시군구(v1.2 · 등록 S-5 또는 seed/backfill_imagery_sgg.py)
         # 타일 준비(v1.2) — 원본(raw)은 등록 타일 작업(tile/cog finalize)이 끝나야 true · 미리 구운 PMTiles 는 파일이 있으면 true
         if r["tile_job_id"]:                     # 등록(S-5)한 영상 = 그 타일 작업이 끝났는가
@@ -249,16 +256,77 @@ async def layer_items(p: Principal, build: str | None, stage: str | None = None,
     return b, items
 
 
+async def region_imagery_ids(region: str) -> tuple[set[str], dict | None]:
+    """시군구(옛/새 코드 모두) → 그 시군구 영상 id(소유 sgg_cd 또는 footprint 겹침 · regions.derived 와 같은 판정)."""
+    from .regions import derived, regions_base
+    regions, _, _ = regions_base()
+    cd = str(region)
+    r = next((x for x in regions if x["sgg_cd"] == cd or x.get("prev_cd") == cd), None)
+    codes = {cd} | ({r["sgg_cd"], r.get("prev_cd")} - {None} if r else set())
+    dv = await derived()
+    ids = {i["id"] for c in codes for i in dv["img"].get(c, [])}
+    return ids, r
+
+
+def _dynamic_ladder(ladder: dict, items: list[dict]) -> dict:
+    """사다리 설정에 없는 등록 영상(전국 시군구 · p16 · S-5)은 order 순으로 domestic 뒤에 붙인다."""
+    listed = {x for v in ladder.values() for x in v}
+    extra = sorted((i for i in items if i["role"] == "imagery" and i["source"] in ("pmtiles", "cog") and i["id"] not in listed
+                    and (i.get("ladder") or {}).get("stage") in ("domestic", "both")),
+                   key=lambda i: ((i.get("ladder") or {}).get("order", 999), i["id"]))
+    if extra:
+        ladder = {**ladder, "domestic": list(ladder.get("domestic", [])) + [i["id"] for i in extra]}
+    return ladder
+
+
 @router.get("/catalog/layers")
 async def catalog_layers(request: Request, stage: str | None = None, build: str | None = None, bbox: str | None = None,
-                         z: float | None = None, locale: str = "ko"):
+                         z: float | None = None, locale: str = "ko", region: str | None = None):
     p = principal(request)
     bb = [float(v) for v in bbox.split(",")] if bbox else None
     b, items = await layer_items(p, build, stage, bb)
+    reg = None
+    if region:            # 그 시군구 영상만(외부 위성·참조·결과 층은 그대로) · 옛/새 시군구 코드 모두
+        ids, reg = await region_imagery_ids(region)
+        items = [i for i in items if not (i["role"] == "imagery" and i["source"] != "external") or i["id"] in ids]
     lad = config.load_yaml("ladder")["ladder"]
     ids = {i["id"] for i in items}
-    ladder = {k: [x for x in v if x in ids] for k, v in lad.items()}
-    return {"items": [public_view(i) for i in items], "ladder": ladder, "build": b, "total": len(items), "as_of": now_iso()}
+    ladder = _dynamic_ladder({k: [x for x in v if x in ids] for k, v in lad.items()}, items)
+    out = {"items": [public_view(i) for i in items], "ladder": ladder, "build": b, "total": len(items), "as_of": now_iso()}
+    if region:
+        out["region"] = {"sgg_cd": reg["sgg_cd"], "prev_cd": reg.get("prev_cd"), "name": reg["name"]} if reg else {"sgg_cd": region}
+    return out
+
+
+async def best_imagery(sgg_cd: str | None, geom_4326: dict | None = None) -> dict:
+    """추론 입력 고르기(core-imagery 계약) — 시군구·범위 → 가장 좋은 영상 한 건(대상의 절반 이상을 덮는가 → 해상도 → 연도 → 덮는 비율).
+    반환 {imagery_id, gsd_m, year, coverage 0..1, source 'local', name, sgg_cd, partial} | {imagery_id: None, reason, vworld, next}.
+    V-World 위성은 분석 입력으로 쓰지 않는다(config/ladder.yaml vworld_analysis · 약관 판정). 워커는 workers.imagery_src.best_imagery_sync."""
+    from workers import imagery_src as isrc
+    t = await run_in_threadpool(isrc.target_geom, sgg_cd, geom_4326)
+    if t is None or t.is_empty:
+        return isrc.result(None, False)
+    async with db(realm="lx") as conn:
+        recs = await conn.fetch(isrc.SQL_ROWS)
+    rows = await run_in_threadpool(isrc.rows_from, recs)
+    return isrc.result(await run_in_threadpool(isrc.choose, rows, t), True)
+
+
+@router.get("/catalog/best_imagery")
+async def best_imagery_route(request: Request, region: str | None = None, bbox: str | None = None):
+    """best_imagery 를 HTTP 로(LX 세션) — 화면은 '영상 있음/등록 필요' 판정에 쓴다."""
+    from .deps import require
+    require(principal(request), lx=True)
+    geom = None
+    if bbox:
+        x0, y0, x1, y1 = [float(v) for v in bbox.split(",")]
+        geom = {"type": "Polygon", "coordinates": [[[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]]]}
+    if not region and not geom:
+        raise ApiError("bad_request", "region 또는 bbox 가 필요합니다")
+    r = await best_imagery(region, geom)
+    if r.get("coverage") is not None:
+        r["coverage"] = env(r["coverage"], "ratio", "measured", "영상 footprint ∩ 대상 범위")
+    return {**r, "as_of": now_iso()}
 
 
 @router.get("/catalog/imagery/{iid}")

@@ -29,7 +29,20 @@ from gpu_poller import Store, KST  # noqa: E402  (같은 최소 RESP 클라이�
 gpu_poller.TAG = "storage_poller"
 
 DATA_ROOT = os.environ.get("LX_DATA_ROOT", r"E:/Land-XI 플랫폼/02. 데이터")
-TENANTS = ["lx", "namwon", "gwangju-jeonnam", "kgz-agri", "kgz-land", "lx-demo"]
+
+
+def tenants() -> list[str]:
+    """기관 목록 = tenants 표(고정 목록 0 · 새 기관도 자동) — DB 를 못 읽으면 결과 폴더 이름."""
+    try:
+        import psycopg
+        dsn = os.environ.get("PG_WORKER_DSN", "postgresql://landxi_worker:landxi-dev-worker@localhost:5433/landxi")
+        with psycopg.connect(dsn, connect_timeout=3) as c:
+            return [r[0] for r in c.execute("SELECT id FROM tenants ORDER BY id").fetchall()]
+    except Exception:
+        base = os.path.join(DATA_ROOT, "results")
+        return ["lx"] + sorted(d for d in (os.listdir(base) if os.path.isdir(base) else []) if os.path.isdir(os.path.join(base, d)) and d != "lx")
+
+
 GB = 1024 ** 3
 
 
@@ -92,7 +105,7 @@ def sample(root: str, mounts: list[str]) -> dict:
     res_b, res_n = du(j("results"))
     vec_b, vec_n = du(j("vector"))
     by_tenant = {}
-    for t in TENANTS:
+    for t in tenants():
         b1, n1 = du(j("results", t))
         b2, n2 = du(j("tenants", t))
         b, n, note = b1 + b2, n1 + n2, None

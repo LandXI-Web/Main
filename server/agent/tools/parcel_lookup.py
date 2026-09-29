@@ -7,6 +7,7 @@ from __future__ import annotations
 import re
 
 from . import Out, ToolError
+from . import scope as S
 
 
 async def parcel_lookup(args: dict, ctx) -> Out:
@@ -44,7 +45,7 @@ async def parcel_lookup(args: dict, ctx) -> Out:
         v = facts.get(key)
         if isinstance(v, dict) and "value" in v:
             out.env(key, {"area_m2": "필지 면적", "a23_bld_m2": "2023 AI 건물 면적(필지 안)", "a23_crop_m2": "2023 AI 경작지 면적(필지 안)"}[key], v)
-    addr = str(j.get("addr") or "").replace("전북특별자치도 ", "")
+    addr = S.short_addr(j.get("addr"))
     for m in re.findall(r"\d+(?:-\d+)?", addr + " " + pnu):
         out.whitelist.add(m)
     out.data = {"pnu": pnu, "주소": addr, "지목": facts.get("jimok_nm") or facts.get("jimok"),

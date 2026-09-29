@@ -10,7 +10,7 @@ import re
 from . import Out, ToolError
 
 _DROP = {"path_internal", "path", "tiles", "url", "owner_nm", "OWNER_NM", "owner_name"}
-_SET_RX = re.compile(r"^results/[a-z0-9_\-]+/[a-z0-9_\-\.]+$")
+_SET_RX = re.compile(r"^results/[a-z0-9_\-]+/[a-z0-9_\-\.]+$", re.I)
 
 
 def _is_env(o):
@@ -63,8 +63,21 @@ async def _get(ctx, path: str, params: dict | None = None):
     return res.json()
 
 
-def _set(args):
-    s = str(args.get("set") or "results/lx/namwon-landcover-2023")
+async def _set(args, ctx) -> str:
+    """결과 세트 — 인자 그대로, 없으면 지역(region 인자 · 화면 문맥 · 기관 관할)의 결과 층 중 토지피복 먼저(GET /regions/{sgg}/results)."""
+    s = args.get("set")
+    if not s:
+        from . import scope as S
+        reg = await S.region_of(ctx, args)
+        if not reg.get("sgg"):
+            raise ToolError("bad_request", "어느 지역 결과인지 region(시군구)을 알려 주세요")
+        j = await _get(ctx, f"/regions/{reg['sgg']}/results")
+        items = [it for it in j.get("items") or [] if it.get("set")]
+        items.sort(key=lambda it: (it.get("style") != "landcover", it.get("from") != "job"))
+        if not items:
+            raise ToolError("not_found", "해당 지역 데이터가 없습니다", 404)
+        s = items[0]["set"]
+    s = str(s)
     if not _SET_RX.match(s):
         raise ToolError("bad_request", f"set 형식 results/{{tenant}}/{{name}} ({s})")
     return s
@@ -84,7 +97,7 @@ async def catalog_layers(args: dict, ctx) -> Out:
 
 
 async def results_stats(args: dict, ctx) -> Out:
-    s = _set(args)
+    s = await _set(args, ctx)
     j = await _get(ctx, f"/results/{s}/stats", {"by": args.get("by") or "emd"})
     out = Out(source=f"GET /api/v1/results/{s}/stats")
     items = j.get("items") or []
@@ -102,7 +115,7 @@ async def results_stats(args: dict, ctx) -> Out:
 
 
 async def results_features(args: dict, ctx) -> Out:
-    s = _set(args)
+    s = await _set(args, ctx)
     v = ctx.context.get("view") or {}
     bbox = args.get("bbox") or v.get("bbox")
     if not bbox:
@@ -137,7 +150,7 @@ async def parcel_at(args: dict, ctx) -> Out:
 
 
 async def results_parcels_join(args: dict, ctx) -> Out:
-    s = _set(args)
+    s = await _set(args, ctx)
     params = {"cls": args.get("cls"), "jimok": args.get("jimok"), "emd_cd": args.get("emd_cd"), "min_conf": args.get("min_conf"), "limit": args.get("limit") or 2000}
     try:
         j = await _get(ctx, f"/results/{s}/parcels", params)

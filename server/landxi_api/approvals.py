@@ -1,9 +1,9 @@
-"""결재함(F3 최종 명세 §3 S-9) — 배포(심기 · ga 승격) · 규칙(임계 활성화) · 쿼터(한도 변경)를 한 줄로 읽고 결정한다.
+"""결재함(F3 최종 명세 §3 S-9) — 배포(다른 지역에 적용 · ga 승격) · 규칙(임계 활성화) · 쿼터(한도 변경)를 한 줄로 읽고 결정한다.
 
 GET  /approvals?state=pending|decided|all   → {items[{id, kind, subject, title, requested_by, at, payload}], counts}   lx admin(전체) · staff(자기 요청)
 POST /approvals                            {subject_type:'quota', subject_id: tenant, payload:{dim, soft?, hard?, policy?}, reason} → 대기 행
 POST /approvals/{id}/decide                {decision: approve|reject, reason?} → lx admin · 효과 적용(아래) · deploy.changed / approval.decided 이벤트
-효과: deploy(port) = 심기 확정(draft 그대로 · 시범 시작 가능) · rule = 임계 적용(survey_rules · 버전 +1) · quota = quotas 표 갱신.
+효과: deploy(port) = 적용 확정 → 한 흐름 시작(deploys.on_port_decided: 영상 → 시범 + AI 분석 → 실태조사 · 영상 없으면 영상 등록 필요) · rule = 임계 적용(survey_rules · 버전 +1) · quota = quotas 표 갱신.
 캔버스 ga 대기(카나리 · ga 승인 수 부족)도 '결재 대기'로 함께 보여 준다(행 없이 계산 · kind deploy_ga).
 """
 from __future__ import annotations
@@ -19,7 +19,7 @@ from .jobs import ops_event
 
 router = APIRouter()
 QUOTA_DIMS = ["storage_gb", "gpu_s_month", "area_km2_month", "concurrent_jobs", "egress_gb_month", "vworld_calls_day"]
-KIND_LABEL = {"deploy": "심기", "deploy_ga": "운영 전환", "rule": "규칙 적용", "quota": "한도 변경"}
+KIND_LABEL = {"deploy": "다른 지역에 적용", "deploy_ga": "운영 전환", "rule": "규칙 적용", "quota": "한도 변경"}
 
 
 def _iso(v):
@@ -109,7 +109,7 @@ async def request_approval(body: dict, request: Request):
     p = require(principal(request))
     st = body.get("subject_type")
     if st != "quota":
-        raise ApiError("bad_request", "여기서는 한도 변경(quota)만 요청합니다 — 심기 = POST /deploys · 규칙 = POST /survey/rules/{id}/activate")
+        raise ApiError("bad_request", "여기서는 한도 변경(quota)만 요청합니다 — 다른 지역에 적용 = POST /deploys · 규칙 = POST /survey/rules/{id}/activate")
     tid = body.get("subject_id") or p.tenant_id
     if p.realm == "tenant" and (p.role != "manager" or tid != p.tenant_id):
         raise ApiError("forbidden", "자기 기관의 한도만 요청할 수 있습니다")
@@ -193,6 +193,10 @@ async def decide(aid: str, body: dict, request: Request):
         await audit(conn, p, f"approval.{dec}", aid, {"subject_type": st, "subject_id": sid}, {"effect": effect, "reason": reason})
         tenant = r["tenant_id"] or (await conn.fetchval("SELECT tenant_id FROM deploys WHERE id=$1", sid) if st == "deploy" else None)
     await ops_event("approval.decided", {"approval_id": aid, "subject_type": st, "subject_id": sid, "decision": dec, "by": p.user_id, "at": now_iso()})
+    if st == "deploy" and pl.get("action") == "port":            # 한 흐름(core-flow): 결재 = 실행 시작
+        from .deploys import on_port_decided
+        await on_port_decided(sid, dec, p.user_id)
+        effect = {**(effect or {}), "flow": "starting" if dec == "approve" else "rejected"}
     if st == "deploy":
         await ops_event("deploy.changed", {"deploy_id": sid, "action": "approval", "decision": dec, "tenant_id": tenant, "by": p.user_id, "at": now_iso()})
     return {"id": aid, "decision": dec, "kind": st, "subject": {"type": st, "id": sid}, "effect": _pub(effect), "as_of": now_iso()}

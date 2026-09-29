@@ -95,7 +95,7 @@ TRAIN_EPOCHS_MAX = 50
 
 # 실시간 소범위 분석(fix-xi-live · XI맵 읍면동) — 범위 천장은 서버가 강제한다(클라이언트 max_km2 는 이보다 클 수 없다).
 # 시군 전역 같은 큰 범위는 실시간으로 받지 않는다(aoi_too_large) — 끝난 전역 작업은 '전체 범위 기록 보기'로 다시 본다.
-INFER_MAX_KM2 = 150.0          # 가장 넓은 읍면동급(남원 산내면 ≈ 104㎢) + 여유 [추정 초기값]
+INFER_MAX_KM2 = 150.0          # 가장 넓은 읍면동급(예시 지역 최대 읍면동 ≈ 104㎢) + 여유 [추정 초기값]
 # options.live=true: 칩 수가 LIVE_MAX_SHARDS 를 넘지 않도록 서버가 해상도(upsample)를 한 단계씩 낮춰 계획한다.
 # 2026-09-29 실측(A6000 1장 · aerial25/best · 25cm VRT · 대기 없음): 원 해상도 12–16칸/s · 0.75 ≈ 5.5칸/s(운봉읍 756칸 136 s) ·
 # 0.5 ≈ 4.9칸/s(산내면 599칸 ≈ 120 s) — 해상도를 낮출수록 창 읽기가 병목. 800칸 × 0.75 ≈ 145 s + 마무리 → 읍면동 ≤ 3분 목표.
@@ -234,6 +234,8 @@ async def build_quote(p: Principal, body: dict) -> dict:
     chip = int(opts.get("chip", 1024))
     reasons: list[str] = []
     tenant = "lx-demo" if demo else (p.tenant_id if p.realm == "tenant" else "lx")
+    if kind == "infer" and opts.get("scope") == "sgg":
+        return await _quote_sgg(p, body, opts, demo, tenant, reasons)      # 시군구 전역 분석(core-xi)
     async with db(realm="lx") as conn:
         model, img = await _load(conn, body.get("model_id"), body.get("imagery_id"))
     if body.get("model_id") and not model:
@@ -274,6 +276,9 @@ async def build_quote(p: Principal, body: dict) -> dict:
             area, area_src = aoi_area(aoi)
     elif img:
         path = resolve_internal(img["path_internal"])
+        if not path:        # 원본 경로가 없는 영상(보기 전용 타일만 있음) — 500 대신 정직한 거절
+            raise ApiError("imagery_unavailable", "이 영상은 AI 분석 입력(원본)이 없습니다 — 영상 등록 필요",
+                           {"imagery_id": img.get("id") if hasattr(img, "get") else None}, status=409)
         meta = await run_in_threadpool(raster_meta, path)
         fp_parts = _footprint_parts(img["fp"], meta["crs"])
         if aoi:
@@ -426,6 +431,191 @@ def _public_quote(q: dict) -> dict:
     return {k: v for k, v in q.items() if not k.startswith("_") and k not in ("kind", "demo") and not (k == "power_budget" and v is None)}
 
 
+# ═══ 시군구 전역 분석(scope sgg · core-xi · 코어 ①) ═══════════════════════════════════════════════════════
+# POST /jobs/quote|/jobs {kind:infer, options:{scope:"sgg", sgg_cd, center:[lng,lat]}} — 영상(catalog.best_imagery · 없으면 imagery 표),
+# 모델(영상 해상도에 가장 가까운 학습 해상도 · 실측 속도 있는 것)은 서버가 고른다. 범위 = 시군구 읍면동 합집합 ∩ 영상 footprint.
+# 칸은 화면 중심에서 가까운 읍면동부터(workers.scheduler.plan_sgg — 스케줄러와 같은 함수). 해상도는 칸 수가 SGG_MAX_SHARDS 이하인 가장 높은 값.
+# 2026-09-29 실측(A6000 1장 · aerial25/best · 25cm VRT · 오버뷰 없음): 원 해상도 12–16칸/s 가 낮춘 해상도(0.5 ≈ 4.9칸/s)보다 빠르다 —
+# 그래서 시군구 전역은 원 해상도를 기본으로, 칸이 SGG_MAX_SHARDS 를 넘을 때만 낮춘다(예시 지역 원 해상도 15,527칸 · 실측은 보고서).
+SGG_MAX_SHARDS = 20000
+_sgg_seen: dict[str, tuple[float, float]] = {}
+_sgg_plans: dict[str, tuple] = {}
+
+
+async def _best_imagery(sgg_cd: str, codes: list[str], land_geojson: dict | None, tenant_realm: bool) -> dict:
+    """core-imagery 계약(catalog.best_imagery)이 있으면 그것, 없으면 imagery 표에서 — 이 시군구(지금/옛 코드) 행 또는 footprint 가 겹치는 행 중
+    추론 가능한(원본 경로 있음) 정사영상. 순서: 덮는 비율 20% 이상 → 해상도(25cm 에 가까운 순) → 연도 최신 → 덮는 비율."""
+    try:
+        from .catalog import best_imagery  # core-imagery 계약
+        import inspect
+        res = best_imagery(sgg_cd, land_geojson)
+        if inspect.isawaitable(res):
+            res = await res
+        if isinstance(res, dict):
+            return res
+    except ImportError:
+        pass
+    except Exception as e:  # 계약 함수 오류 — 표에서 다시 고른다
+        import logging
+        logging.getLogger("landxi").warning("best_imagery error %r", e)
+    async with db(realm="lx") as conn:
+        rows = await conn.fetch(
+            "SELECT id, gsd_m, year, epoch, kind, tier, sgg_cd, export_policy, ST_AsGeoJSON(footprint)::json AS fp FROM imagery "
+            "WHERE path_internal IS NOT NULL AND kind='ortho' AND gsd_m < 1 AND footprint IS NOT NULL "
+            "AND (sgg_cd = ANY($1::text[]) OR ($2::text IS NOT NULL AND ST_Intersects(footprint, ST_SetSRID(ST_GeomFromGeoJSON($2),4326))))",
+            codes, json.dumps(land_geojson) if land_geojson else None)
+    land = shape(land_geojson) if land_geojson else None
+    best = None
+    for x in rows:
+        if tenant_realm and x["tier"] == "raw":
+            continue
+        try:
+            fp = shape(x["fp"])
+            cov = (fp.intersection(land).area / max(land.area, 1e-12)) if land is not None else 1.0
+        except Exception:
+            cov = 0.0
+        if cov < 0.005:
+            continue
+        g = float(x["gsd_m"] or 1)
+        import math
+        ep = str(x["epoch"] or "")[:4]
+        yr = int(x["year"] or (ep if ep.isdigit() else 0) or 0)
+        key = (0 if cov >= 0.2 else 1, round(abs(math.log(g / 0.25)), 2), -yr, -cov)
+        if best is None or key < best[0]:
+            best = (key, {"imagery_id": x["id"], "gsd_m": g, "year": yr or None, "coverage": round(min(1.0, cov), 4), "source": "local"})
+    return best[1] if best else {"imagery_id": None, "reason": "no_imagery"}
+
+
+async def _pick_model(conn, img_kind: str, gsd: float):
+    rows = await conn.fetch("SELECT * FROM models WHERE status='registered' AND gsd_trained_m IS NOT NULL AND input ? $1::text "
+                            "AND (perf->'chips_per_s'->>'value') IS NOT NULL", img_kind)
+    import math
+    rows = sorted(rows, key=lambda m: abs(math.log(float(m["gsd_trained_m"]) / max(gsd, 1e-6))))
+    return rows[0] if rows else None
+
+
+def _hull(aoi: dict | None) -> dict | None:
+    if not aoi:
+        return None
+    g = shape(aoi)
+    h = g.convex_hull.simplify(0.0005)
+    if h.geom_type != "Polygon":
+        h = g.envelope
+    return mapping(h)
+
+
+async def _quote_sgg(p: Principal, body: dict, opts: dict, demo: bool, tenant: str, reasons: list[str]) -> dict:
+    from . import regions as R
+    sgg_in = str(opts.get("sgg_cd") or body.get("sgg_cd") or "")
+    reg = R.region_of(sgg_in)
+    if not reg:
+        raise ApiError("not_found", "해당 지역이 없습니다", {"sgg_cd": sgg_in})
+    cd = reg["sgg_cd"]
+    codes = R.sgg_codes(cd)
+    ix = await run_in_threadpool(R.emd_index, cd)
+    if ix is None or not len(ix):
+        raise ApiError("upstream_unavailable", "읍면동 경계를 받을 수 없습니다", {"sgg_cd": cd}, status=503)
+    land = ix.union
+    land_simple = mapping(land.simplify(0.0002))
+    chip = int(opts.get("chip", 1024))
+    center = opts.get("center")
+    if not (isinstance(center, (list, tuple)) and len(center) == 2):
+        c = land.representative_point()
+        center = [round(c.x, 6), round(c.y, 6)]
+    base = {"scope": "sgg", "sgg_cd": cd, "region_name": reg["name"], "emd_total": env(len(ix), "count", "recorded", "V-World LT_C_ADEMD_INFO(읍면동 경계)"), "center": center}
+    if p.role == "sales" and not demo:
+        reasons.append("demo_required")
+    async with db(realm="lx") as conn:
+        if body.get("imagery_id"):
+            row = await conn.fetchrow("SELECT id, gsd_m, year FROM imagery WHERE id=$1", body["imagery_id"])
+            best = {"imagery_id": row["id"], "gsd_m": float(row["gsd_m"] or 0), "year": row["year"], "coverage": None, "source": "local"} if row else \
+                {"imagery_id": None, "reason": "no_imagery"}
+        else:
+            best = await _best_imagery(cd, codes, land_simple, p.realm == "tenant")
+        model = img = None
+        if best.get("imagery_id"):
+            model, img = await _load(conn, body.get("model_id"), best["imagery_id"])
+            if model is None and img is not None:
+                model = await _pick_model(conn, img["kind"], float(img["gsd_m"] or 0.25))
+    no_img = {"area_km2": env(None, "km2", "measured", "시군구 ∩ 영상", "영상 없음"), "shards": 0,
+              "shards_env": env(0, "count", "measured", "plan_sgg"), "gpu_s": env(None, "gpu_s", "estimate", "영상 없음"),
+              "eta_s": env(None, "s", "estimate", "영상 없음"), "quota": None, "allowed": False, "pool": config.POOL, "kind": "infer",
+              "demo": demo, "power_budget": None, "coverage": env(0.0, "ratio", "measured", "시군구 읍면동 ∩ 영상 footprint"),
+              "imagery": None, "_aoi": None, "_tenant": tenant, "_model": None, "_img": None, "_adapter": None, "_opts": None, **base}
+    if not img:
+        reasons.append(best.get("reason") or "no_imagery")
+        return {**no_img, "reasons": reasons}
+    if not model:
+        reasons.append("model_input_mismatch")
+        return {**no_img, "reasons": reasons}
+    if p.realm == "tenant" and img["tier"] == "raw":
+        reasons.append("imagery_forbidden")
+    fit = fit_upsample(model, img)
+    ladder = [fit] + [u for u in LIVE_LADDER if u < fit]
+    key = f"{cd}|{img['id']}|{model['id']}|{chip}|{opts.get('overlap')}"
+    hit = _sgg_seen.get(key)
+    if hit and time.time() - hit[1] < 600 and hit[0] in ladder:
+        ladder = ladder[ladder.index(hit[0]):]
+    from workers.scheduler import plan_sgg
+    grid = sh = info = None
+    up = ladder[0]
+    for up in ladder:
+        pk = f"{key}|{up}|{json.dumps(center)}"
+        hitp = _sgg_plans.get(pk)
+        if hitp and time.time() - hitp[0] < 600:
+            sh, info = hitp[1], hitp[2]                 # 견적 → 실행(10분 안) — 같은 계획을 다시 세우지 않는다(실행 → 첫 결과 단축)
+        else:
+            try:
+                grid, sh, info = await run_in_threadpool(plan_sgg, img["id"], cd, center=center, chip=chip, overlap=opts.get("overlap"), upsample=up)
+            except RuntimeError as e:
+                raise ApiError("upstream_unavailable", f"전역 계획을 세울 수 없습니다: {e}", {"sgg_cd": cd}, status=503) from None
+            _sgg_plans[pk] = (time.time(), sh, info)
+            while len(_sgg_plans) > 8:
+                _sgg_plans.pop(next(iter(_sgg_plans)))
+        if len(sh) <= SGG_MAX_SHARDS:
+            _sgg_seen[key] = (up, time.time())
+            break
+    shards_n = len(sh or [])
+    cov = float((info or {}).get("coverage") or 0.0)
+    if shards_n == 0 or cov < 0.005:
+        reasons.append("no_imagery")
+    elif shards_n > SGG_MAX_SHARDS:
+        reasons.append("too_large")
+    perf = model["perf"] or {}
+    cps = (perf.get("chips_per_s") or {}).get("value")
+    pool = pool_of(model)
+    if cps:
+        gpu_s = env(round(shards_n / cps, 1), "gpu_s", "estimate", f"models.perf({model['id']}) {cps} chips/s/GPU × {shards_n} shard")
+        wk = await active_workers(pool)
+        eta = env(round(shards_n / cps / max(1, len(wk)) + 3.0, 1), "s", "estimate", "gpu_s ÷ 워커 + 3 s")
+    else:
+        gpu_s = env(None, "gpu_s", "estimate", "bench 전")
+        eta = env(None, "s", "estimate", "bench 전")
+    q = await quota_mod.remaining(tenant, "gpu_s_month")
+    if q["hard"] is not None and q["used"] + (gpu_s["value"] or 0) > q["hard"] and q["policy"] == "reject":
+        reasons.append("quota_exceeded")
+    aoi_full = (info or {}).get("aoi4326")
+    by_cd = dict(zip(ix.codes, ix.names))
+    emds = [{"emd_cd": e["emd_cd"], "name": by_cd.get(e["emd_cd"]), "shards": e["shards"]} for e in (info or {}).get("emd", [])]
+    img_d = dict(img)
+    return {
+        "area_km2": env((info or {}).get("area_km2"), "km2", "measured", "시군구 읍면동 ∩ 영상 footprint(EPSG:5186)"),
+        "shards": shards_n, "shards_env": env(shards_n, "count", "measured", f"plan_sgg(chip {chip} · upsample {up:g})"),
+        "gpu_s": gpu_s, "eta_s": eta,
+        "quota": {"tenant_id": tenant, "dim": "gpu_s_month", "remaining": env(None if q["hard"] is None else round(q["hard"] - q["used"], 1), "gpu_s",
+                                                                             "measured", f"quotas({tenant})", "무제한" if q["hard"] is None else q.get("note")),
+                  "policy": q["policy"]},
+        "allowed": not reasons, "reasons": reasons, "pool": pool, "kind": "infer", "demo": demo,
+        "power_budget": await power_budget() if pool != "cpu" else None,
+        "coverage": env(round(cov, 4), "ratio", "measured", "시군구 읍면동 ∩ 영상 footprint", None if cov >= 0.995 else "영상이 있는 곳만 분석"),
+        "imagery": {"id": img_d["id"], "gsd_m": float(img_d["gsd_m"] or 0), "kind": img_d["kind"], "year": best.get("year"), "source": best.get("source", "local")},
+        "model_id": model["id"], "upsample": up, "emds": emds,
+        "_aoi": _hull(aoi_full), "_tenant": tenant, "_model": dict(model), "_img": img_d, "_adapter": None, "_plan": sh,
+        "_opts": {"scope": "sgg", "sgg_cd": cd, "center": center, "upsample": up, "area_km2": (info or {}).get("area_km2"), "coverage": round(cov, 4)},
+        **base,
+    }
+
+
 async def prewarm(model_id: str | None, pool: str) -> list[str]:
     """실시간 분석 견적(options.live) 때 GPU 워커에 모델 적재를 미리 부탁한다 — 실행 → 첫 결과 ≤ 10 s.
     이미 올라 있는 워커는 건너뛴다. 적재는 워커가 전력 규칙(다른 GPU 고부하면 미룸)을 확인한 뒤에 한다(gpu_worker.control)."""
@@ -449,7 +639,8 @@ async def prewarm(model_id: str | None, pool: str) -> list[str]:
 async def quote(body: dict, request: Request):
     p = require(principal(request))
     q = await build_quote(p, body)
-    if q.get("allowed") and (body.get("options") or {}).get("live") and q.get("_model"):
+    o = body.get("options") or {}
+    if q.get("allowed") and (o.get("live") or o.get("scope") == "sgg") and q.get("_model"):
         try:
             await prewarm(q["_model"].get("id"), q.get("pool") or "cpu")
         except Exception:
@@ -589,7 +780,9 @@ async def submit(body: dict, request: Request):
         msg = {"power_budget": "전력 예산 초과 — 동시 고부하 GPU 는 1장까지입니다", "too_large": "작업이 너무 큽니다 — 범위를 나눠 주세요"}.get(code)
         raise ApiError(code, msg or f"제출 불가: {', '.join(q['reasons'])}", {"reasons": q["reasons"]},
                        status=409 if code == "power_budget" else None)
-    prio = int(body.get("priority", 0 if body.get("demo") else (1 if body.get("kind") == "reinfer" else 0)))
+    # 시군구 전역(scope sgg · 긴 작업)은 기본 우선순위 1 — 읍면동 실시간 분석 · 소범위 작업이 먼저 칸을 받는다(첫 결과 ≤ 10 s 유지)
+    long_job = body.get("kind") == "reinfer" or (body.get("options") or {}).get("scope") == "sgg"
+    prio = int(body.get("priority", 0 if body.get("demo") else (1 if long_job else 0)))
     tenant = q["_tenant"]
     qpol = await quota_mod.remaining(tenant, "gpu_s_month")
     if qpol["hard"] is not None and qpol["used"] + (q["gpu_s"]["value"] or 0) > qpol["hard"] and qpol["policy"] == "queue_low":
@@ -610,25 +803,31 @@ async def submit(body: dict, request: Request):
     if q.get("_opts"):
         opts.update(q["_opts"])
     is_test = bool(body.get("test")) or str(body.get("label") or "").lower().startswith(("pytest", "test/"))
+    # 시군구 전역 분석은 서버가 영상 · 모델을 고른다(견적과 같은 값)
+    model_id = body.get("model_id") or (opts.get("base_model") if q["kind"] == "train" else None) or         ((q.get("_model") or {}).get("id") if opts.get("scope") == "sgg" else None)
+    imagery_id = body.get("imagery_id") or (opts.get("imagery_id") if q["kind"] == "tile" else None) or         ((q.get("_img") or {}).get("id") if opts.get("scope") == "sgg" else None)
     async with db(p) if p.realm == "tenant" else db(realm="lx") as conn:
         await conn.execute(
             "INSERT INTO jobs(id, tenant_id, submitted_by, kind, state, priority, demo, pool, model_id, imagery_id, deploy_id, card_id, aoi, "
             "options, shards_total, result_set, label, test) VALUES ($1,$2,$3,$4,'queued',$5,$6,$7,$8,$9,$10,$11,"
             "CASE WHEN $12::text IS NULL THEN NULL ELSE ST_SetSRID(ST_GeomFromGeoJSON($12),4326) END,$13,$14,$15,$16,$17)",
-            job_id, tenant, p.user_id, q["kind"], prio, demo, q["pool"], body.get("model_id") or (opts.get("base_model") if q["kind"] == "train" else None),
-            body.get("imagery_id") or (opts.get("imagery_id") if q["kind"] == "tile" else None),
+            job_id, tenant, p.user_id, q["kind"], prio, demo, q["pool"], model_id,
+            imagery_id,
             body.get("deploy_id"), body.get("card_id"), json.dumps(aoi) if aoi else None, opts, q["shards"], rs, body.get("label"), is_test)
-        await audit(conn, p, "job.submit", job_id, None, {"kind": q["kind"], "model_id": body.get("model_id"), "imagery_id": body.get("imagery_id"),
+        await audit(conn, p, "job.submit", job_id, None, {"kind": q["kind"], "model_id": model_id, "imagery_id": imagery_id,
                                                            "demo": demo, "priority": prio})
     r = await redis()
     now = now_iso()
     await r.hset(f"job:{job_id}", mapping={
         "id": job_id, "state": "queued", "tenant_id": tenant, "demo": "1" if demo else "0", "kind": q["kind"], "pool": q["pool"],
-        "priority": prio, "model_id": body.get("model_id") or "", "imagery_id": body.get("imagery_id") or "",
+        "priority": prio, "model_id": model_id or "", "imagery_id": imagery_id or "",
         "options": json.dumps(opts), "aoi": json.dumps(aoi) if aoi else "", "shards_total": q["shards"], "shards_done": 0,
         "shards_failed": 0, "counts": "{}", "gpu_s": 0, "result_set": rs, "created_at": now, "submitted_by": p.user_id or "",
         "centroid": json.dumps(_centroid(aoi, img)), "queued_at_ms": int(time.time() * 1000), "adapter": q.get("_adapter") or "",
         "deploy_id": body.get("deploy_id") or ""})
+    if q.get("_plan"):
+        # 시군구 전역: 견적에서 세운 계획(읍면동 순서)을 스케줄러에 넘긴다 — 스케줄러가 다시 세우지 않는다(scheduler.plan 이 먼저 본다)
+        await r.set(f"jobplan:{job_id}", json.dumps(q["_plan"], ensure_ascii=False, separators=(",", ":")), ex=3600)
     await r.xadd(f"jobs:{q['pool']}", {"job_id": job_id, "priority": prio}, maxlen=10000, approximate=True)
     # 대기 위치 = 같은 풀에서 이 작업보다 먼저 처리될 작업 수
     async with db(realm="lx") as conn:

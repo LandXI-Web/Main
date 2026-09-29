@@ -1,8 +1,11 @@
 """레지스트리 · 계보(F1-CONTRACT §4.6) — models · cards · card_versions · lineage."""
 from __future__ import annotations
 
+import json
+
 from fastapi import APIRouter, Request
 
+from . import config
 from .deps import ApiError, audit, db, principal, require
 from .envelope import env, now_iso
 
@@ -122,13 +125,25 @@ async def put_ledger_schema(cid: str, body: dict, request: Request):
     return {"id": cid, "ledger_schema": schema, "as_of": now_iso()}
 
 
-DATASETS = {
-    "aerial25/best": ("E:/aerial_dataset", "항공 토지피복 15.3만 칩", "aerial_v2_finetune44"),
-    "namwon/cultivate_uncultivate/train": ("E:/namwon/cultivate_uncultivate", "남원 경작/비경작 1,825장", "cultivate_uncultivate/train"),
-    "namwon/Vinyl_house/train2": ("E:/namwon/Vinyl_house", "남원 비닐하우스 1,956장", "Vinyl_house/train2"),
+# 학습 계보(표본 → 학습 → 모델)는 모델 카드(models.card_url → card.json 의 dataset{path, label, run})에서 읽는다 — 지역 고정 문자열 0.
+# 카드가 없는 모델만 여기(지역과 무관한 항목).
+DATASETS_NO_CARD = {
     "car_v2_obb": ("E:/drone_runs/car_v2_obb/dataset", "드론 차량 OBB 약 18만 장", "car_v2_obb/run"),
     "unsupervised-change": (None, "비지도 변화 지수(학습 없음)", None),
 }
+
+
+def _dataset_of(card_url: str | None, mid: str) -> tuple | None:
+    if card_url and card_url.startswith("/files/"):
+        f = config.DATA_ROOT / card_url[len("/files/"):]
+        try:
+            c = json.loads(f.read_text(encoding="utf-8"))
+        except Exception:
+            c = None
+        ds = (c or {}).get("dataset")
+        if ds:
+            return ds.get("path"), ds.get("label"), ds.get("run")
+    return DATASETS_NO_CARD.get(mid)
 
 
 @router.get("/registry/lineage/{deploy_id}")
@@ -141,10 +156,16 @@ async def lineage(deploy_id: str, request: Request):
     async with db(realm="lx") as conn:
         cv = await conn.fetchrow("SELECT id, model_ids FROM card_versions WHERE id=$1", d["card_version_id"])
         jobs = await conn.fetch("SELECT id, label, shards_total FROM jobs WHERE deploy_id=$1 ORDER BY created_at DESC LIMIT 3", deploy_id)
+        mids = ([d["model_override"]] if d["model_override"] else []) or list((cv["model_ids"] if cv else []) or [])
+        if not d["model_override"] and jobs:            # 적용 흐름이 고른 모델(작업 기록) — 카드 모델과 다를 수 있다(영상 해상도에 맞춤)
+            jm = await conn.fetchval("SELECT model_id FROM jobs WHERE id=$1", jobs[0]["id"])
+            if jm and jm not in mids:
+                mids = [jm]
+        cards = {r["id"]: r["card_url"] for r in await conn.fetch("SELECT id, card_url FROM models WHERE id = ANY($1::text[])", mids)}
+        snap = await conn.fetchval("SELECT snapshot_current FROM deploys WHERE id=$1", deploy_id)
     chain = []
-    mids = ([d["model_override"]] if d["model_override"] else []) or list((cv["model_ids"] if cv else []) or [])
     for mid in mids:
-        ds = DATASETS.get(mid)
+        ds = _dataset_of(cards.get(mid), mid)
         if ds and ds[0]:
             chain.append({"kind": "dataset", "id": ds[0], "label": ds[1]})
         if ds and ds[2]:
@@ -156,6 +177,6 @@ async def lineage(deploy_id: str, request: Request):
     chain.append({"kind": "tenant", "id": d["tenant_id"]})
     for j in jobs:
         chain.append({"kind": "job", "id": j["id"], "label": j["label"] or f"{j['shards_total']} shard"})
-    if deploy_id == "dp-nw-farm-25" and not jobs:
-        chain.append({"kind": "job", "id": "P4-2026-09-24", "label": "남원 전역 재추론 22,737칩"})
+    if not jobs and snap:                               # 작업 기록 이전의 결과(시드 스냅샷) — 결과 세트만 잇는다
+        chain.append({"kind": "result", "id": snap})
     return {"chain": chain, "as_of": now_iso()}

@@ -65,7 +65,8 @@ test('유도 질문(대략 3만?) — 벗은 숫자 0 · 지어낸 숫자는 취
     }
   }
   const envs = await page.evaluate(() => window.LXAgent.state.envs);
-  expect(Object.values(envs).some((e) => e.value === 20872)).toBeTruthy();
+  // 전국 여러 시군구가 적재된 뒤 '전체'는 LX 직원 권한 범위 전체 — 남원 20,872건 이상인 도구 봉투가 있어야 한다(지어낸 숫자 0 은 위에서 확인)
+  expect(Object.values(envs).some((e) => typeof e.value === 'number' && e.value >= 20872)).toBeTruthy();
   await page.screenshot({ path: 'shots/f2/E/e2e-unverified-on.png' });
   expect(errs).toEqual([]);
 });

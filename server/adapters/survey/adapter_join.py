@@ -1,4 +1,4 @@
-"""survey/join — 2023 P4(detections 'results/lx/namwon-landcover-2023') × survey_parcels 재결합 어댑터 뼈대(F2-S · kind 'join').
+"""survey/join — 그 시군구 AI 작업(survey_sgg.job_id · 또는 options.source_set)의 detections × survey_parcels 재결합 대조 뼈대(F2-S · kind 'join').
 
 1차 범위(브리프 §4): 뼈대 + 단위 테스트. plan(job) = 읍면동 39칸 · run_shard = 그 읍면동 필지와 AI 폴리곤을 PostGIS 에서 다시
 교차(EPSG:5186 면적 · 객체 과반 포함 · 신뢰도 ≥ 0.5)해 적재값(survey_parcels a23_*)과 대조한 차이만 낸다 — **쓰기 없음**.
@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 ADAPTER = {"id": "survey/join", "kinds": ["join"], "device": "cpu", "pool": "cpu", "input": "params", "output": "metrics",
            "models": [], "owner": "F2-S", "hidden": True, "stage": "skeleton"}
 
-SOURCE_SET = "results/lx/namwon-landcover-2023"
+SOURCE_SET = None          # 없으면 그 읍면동 시군구의 현재 AI 작업(survey_sgg.job_id)
 CLS = {"건물": "bld", "경작지": "crop", "주차장": "park", "비닐하우스": "gh"}
 
 SQL = """
@@ -62,7 +62,11 @@ class Adapter:
         t0 = time.perf_counter()
         with pg() as c:
             lx_tx(c)
-            rows = c.execute(SQL, {"emd_cd": p["emd_cd"], "set": p.get("source_set", SOURCE_SET), "frac": 0.5, "conf": 0.5}).fetchall()
+            src = p.get("source_set") or SOURCE_SET
+            if not src:
+                r0 = c.execute("SELECT job_id FROM survey_sgg WHERE sgg_cd = %s", (p["emd_cd"][:5],)).fetchone()
+                src = r0[0] if r0 else None
+            rows = c.execute(SQL, {"emd_cd": p["emd_cd"], "set": src, "frac": 0.5, "conf": 0.5}).fetchall()
             got: dict = {}
             for pnu, cls, m2, in_m2 in rows:
                 k = CLS.get(cls, cls)

@@ -8,18 +8,19 @@ from __future__ import annotations
 from . import Out, ToolError, from_contract, jobs, results, survey
 
 RULES = ["R1", "R2", "R3", "R4", "R5", "R6"]
+REGION = {"type": "string", "description": "시군구 이름 또는 5자리 코드(질문에 지역이 있을 때만 · 기관 계정은 관할 안)"}
 
 SPECS: dict[str, dict] = {
     "survey_findings": {
-        "description": "남원 실태조사 의심 필지 목록(우선순위 점수순). R1 무허가 건축 의심(지목 전·답·과수원 위 AI 건물) · R2 휴경·전용 의심 · "
+        "description": "실태조사 의심 필지 목록(우선순위 점수순 · 지역 = region 또는 관할). R1 무허가 건축 의심(지목 전·답·과수원 위 AI 건물) · R2 휴경·전용 의심 · "
                        "R3 비농지 위 비닐하우스 · R4 농지 위 주차장 · R5 임야 개간 · R6 공공용지(도로·구거·하천) 위 건물. '답 위 건물'=rule R1+jimok 답.",
-        "properties": {"rule": {"type": "string", "enum": RULES}, "emd": {"type": "string", "description": "읍면동 이름(예: 아영면, 운봉읍)"},
+        "properties": {"region": REGION, "rule": {"type": "string", "enum": RULES}, "emd": {"type": "string", "description": "읍면동 이름"},
                        "jimok": {"type": "string", "enum": ["전", "답", "과"], "description": "지목 한 글자"},
                        "priority": {"type": "string", "enum": ["A", "B", "C"], "description": "사용자가 등급(A·B·C)을 직접 말할 때만"},
                        "top": {"type": "integer", "description": "상위 몇 필지(기본 5 · 최대 20) — 점수순이므로 등급 인자 없이 top 만 쓴다"}}},
     "survey_stats": {
-        "description": "남원 실태조사 의심 건수 집계(전체 또는 읍면동). '전체 몇 건' · '몇 필지' 질문은 반드시 이것으로 확인한다.",
-        "properties": {"by": {"type": "string", "enum": ["rule", "priority", "emd"]}, "emd": {"type": "string", "description": "읍면동 이름(없으면 남원 전체)"},
+        "description": "실태조사 의심 건수 집계(지역 전체 또는 읍면동). '전체 몇 건' · '몇 필지' 질문은 반드시 이것으로 확인한다.",
+        "properties": {"region": REGION, "by": {"type": "string", "enum": ["rule", "priority", "emd"]}, "emd": {"type": "string", "description": "읍면동 이름(없으면 지역 전체)"},
                        "rule": {"type": "string", "enum": RULES}},
         "required": ["by"]},
     "survey_parcel": {
@@ -27,17 +28,17 @@ SPECS: dict[str, dict] = {
         "properties": {"pnu": {"type": "string", "description": "19자리 PNU"}}, "required": ["pnu"]},
     "results_stats": {
         "description": "AI 결과 층의 읍면동·클래스별 개수·면적(봉투).",
-        "properties": {"set": {"type": "string", "description": "results/{tenant}/{name} (기본 results/lx/namwon-landcover-2023)"},
+        "properties": {"region": REGION, "set": {"type": "string", "description": "results/{tenant}/{name} (없으면 그 지역의 토지피복 결과)"},
                        "by": {"type": "string", "enum": ["emd", "cls"]}, "emd": {"type": "string"}, "cls": {"type": "string", "enum": ["건물", "경작지", "주차장", "비닐하우스"]}}},
     "results_features": {
         "description": "현재 뷰 bbox 안 AI 결과 피처(2,000 한도).",
-        "properties": {"set": {"type": "string"}, "cls": {"type": "string"}, "min_conf": {"type": "number"}}},
+        "properties": {"region": REGION, "set": {"type": "string"}, "cls": {"type": "string"}, "min_conf": {"type": "number"}}},
     "parcel_at": {
         "description": "좌표의 필지(지번·지목·소유구분 — 성명 없음).",
         "properties": {"lng": {"type": "number"}, "lat": {"type": "number"}}, "required": ["lng", "lat"]},
     "results_parcels_join": {
         "description": "AI 결과 × 필지 공간 결합(지목·클래스 필터).",
-        "properties": {"set": {"type": "string"}, "cls": {"type": "string"}, "jimok": {"type": "string"}, "emd_cd": {"type": "string"}}},
+        "properties": {"region": REGION, "set": {"type": "string"}, "cls": {"type": "string"}, "jimok": {"type": "string"}, "emd_cd": {"type": "string"}}},
     "catalog_layers": {"description": "현재 뷰의 영상 사다리 · 결과 층 목록.", "properties": {}},
     "jobs_quote": {
         "description": "화면에 그려진 프레임을 분석하는 작업 견적(면적·shard·GPU·s 추정·쿼터). 프레임 분석 요청이면 이것을 먼저 부른다.",
@@ -77,7 +78,7 @@ def allowed(name: str, p) -> bool:
     if name in ("results_stats", "results_features", "results_parcels_join"):
         return bool(caps & {"results.read", "results.read(own)"})
     if name in ("survey_findings", "survey_stats", "survey_parcel"):
-        return p.realm == "lx" or (p.realm == "tenant")          # 기관 경계는 핸들러 _guard(데이터 소유 namwon)
+        return p.realm == "lx" or (p.realm == "tenant")          # 기관 경계는 핸들러(scope.region_of · 관할 = regions.tenant_scope)
     if name in ("jobs_quote", "jobs_submit"):
         return bool(caps & {"jobs.submit", "jobs.submit(demo only)"})
     if name == "survey_state":
@@ -124,8 +125,10 @@ def client_action(name: str, args: dict, ctx) -> Out:
     if name == "map_arrive":
         if not prev or not (prev.get("features") or prev.get("bbox")):
             raise ToolError("bad_request", "도착시킬 결과가 없습니다(먼저 조회 도구)")
-        out.ui_actions.append({"op": "map_on", "set": "survey/namwon-parcel-survey", "label": prev.get("label"), "filter": prev.get("filter")})
+        out.ui_actions.append({"op": "map_on", "set": prev.get("set") or "survey/findings", "label": prev.get("label"), "filter": prev.get("filter"),
+                               "sgg_cd": (prev.get("filter") or {}).get("sgg_cd"), "import_id": (prev.get("filter") or {}).get("ledger")})
         out.ui_actions.append({"op": "map_arrive", "bbox": prev.get("bbox"), "features": prev.get("features"),
+                               "sgg_cd": (prev.get("filter") or {}).get("sgg_cd"), "import_id": (prev.get("filter") or {}).get("ledger"),
                                "count_env": ctx.env_id(prev.get("count_key"), prev.get("_step")), "total_env": ctx.env_id(prev.get("total_key"), prev.get("_step"))})
         out.data = {"도착": len(prev.get("features") or []), "비고": "브라우저가 도착(스윕·락온·숫자)을 실행"}
     elif name == "map_frame":
@@ -143,8 +146,10 @@ def client_action(name: str, args: dict, ctx) -> Out:
     elif name == "map_on":
         out.ui_actions.append({"op": "map_on", "set": args["set"], "label": "에이전트 질의 · 저장 안 됨"})
     elif name == "drawer_open":
-        from .survey_local import emd_resolve
-        n, cd = emd_resolve(args.get("emd"))
+        from . import scope as S
+        prev_f = (prev or {}).get("filter") or {}
+        reg = {"sgg": prev_f.get("sgg_cd") or (ctx.context or {}).get("region")}
+        n, cd = S.emd_resolve(reg, args.get("emd"))
         out.ui_actions.append({"op": "drawer_open", "kind": args["kind"], "tab": "draft" if args["kind"] == "report" else None,
                                "emd_cd": cd, "emd": n, "rule": args.get("rule")})
     out.data = out.data or {"ui": [a["op"] for a in out.ui_actions]}

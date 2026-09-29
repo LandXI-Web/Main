@@ -1,7 +1,9 @@
 """후처리(P4 p4_merge.py 실측 규칙 = 정본) + 전역 NMS + J1 정답 대비 P/R.
 
 순서: (미터 CRS) simplify 0.3 m → 4 m² 미만 제거 → 동일 클래스 겹침(작은 쪽 면적 대비 50% 초과) → 낮은 conf 제거(= 전역 NMS)
-→ 남원이면 대표점이 법정동 안인 것만 + emd/emd_cd. OBB(차량)는 꼭짓점 4개라 simplify 를 건너뛴다.
+→ 작업 시군구의 법정 읍면동(regions.emd_index · V-World LT_C_ADEMD_INFO 캐시)으로 대표점이 읍면동 안인 것만 + emd/emd_cd.
+   시군구 = sgg_cd 인자 → 작업 옵션(sgg_cd) → 작업 영상의 sgg_cd → 결과 대표점이 속한 시군구 순. 경계를 못 받으면 읍면동 없이 그대로.
+OBB(차량)는 꼭짓점 4개라 simplify 를 건너뛴다. 지역 문자열 하드코딩 0.
 """
 from __future__ import annotations
 
@@ -16,9 +18,7 @@ from shapely.geometry import shape
 from shapely.ops import transform as sh_transform
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from landxi_api import config  # noqa: E402
-
-_EMD = None
+from landxi_api import config  # noqa: E402,F401
 
 
 def metric_epsg(lng: float, lat: float) -> int:
@@ -28,19 +28,59 @@ def metric_epsg(lng: float, lat: float) -> int:
     return (32600 if lat >= 0 else 32700) + zone
 
 
-def _emd():
-    global _EMD
-    if _EMD is None:
-        p = config.REPO_ROOT / "landxi/assets/data/geo/namwon-emd.geojson"
-        d = json.loads(p.read_text(encoding="utf-8"))
-        to = Transformer.from_crs(4326, 5186, always_xy=True).transform
-        geoms = [sh_transform(to, shape(f["geometry"])).buffer(0) for f in d["features"]]
-        _EMD = (STRtree(geoms), geoms, [(f["properties"]["nm"], f["properties"]["cd"]) for f in d["features"]])
-    return _EMD
+def job_sgg(job_id: str | None) -> str | None:
+    """작업 → 시군구 코드(옵션 sgg_cd → 영상의 sgg_cd). 모르면 None."""
+    if not job_id:
+        return None
+    try:
+        from workers import bus
+        jh = bus.job(job_id) or {}
+        opts = json.loads(jh.get("options") or "{}")
+        if opts.get("sgg_cd"):
+            return str(opts["sgg_cd"])
+        iid = jh.get("imagery_id")
+        if iid:
+            with bus.pg() as conn:
+                row = conn.execute("SELECT sgg_cd FROM imagery WHERE id=%s", (iid,)).fetchone()
+            if row and row[0]:
+                return str(row[0])
+    except Exception:
+        return None
+    return None
 
 
-def run(features: list[dict], *, task: str, region: str | None = None, overlap_thr: float = 0.5, min_area: float = 4.0,
-        simplify_m: float = 0.3) -> tuple[list[dict], dict]:
+def resolve_sgg(features: list[dict], sgg_cd: str | None = None, region: str | None = None) -> str | None:
+    """sgg_cd 인자 → region(숫자 5자리일 때만 · 예전 호출 호환) → 결과의 job_id 로 작업 시군구 → 결과 대표점의 시군구."""
+    if sgg_cd:
+        return str(sgg_cd)
+    if region and str(region)[:5].isdigit():
+        return str(region)[:5]
+    jid = next((f["props"].get("job_id") for f in features if f.get("props", {}).get("job_id")), None)
+    cd = job_sgg(jid)
+    if cd:
+        return cd
+    try:
+        from shapely.ops import unary_union
+        from landxi_api.regions import sgg_at
+        c = unary_union([f["geom"].envelope for f in features[:2000]]).centroid
+        return sgg_at(c.x, c.y)
+    except Exception:
+        return None
+
+
+def emd_index_for(sgg_cd: str | None):
+    if not sgg_cd:
+        return None
+    try:
+        from landxi_api.regions import emd_index
+        ix = emd_index(sgg_cd)
+        return ix if ix is not None and len(ix) else None
+    except Exception:
+        return None
+
+
+def run(features: list[dict], *, task: str, region: str | None = None, sgg_cd: str | None = None, overlap_thr: float = 0.5,
+        min_area: float = 4.0, simplify_m: float = 0.3) -> tuple[list[dict], dict]:
     """features: [{geom(shapely 4326), props{cls,cls_en,cid,conf,chip_edge,shard_id,fid}}] → (남은 것, 통계)."""
     if not features:
         return [], {"in": 0, "out": 0}
@@ -83,21 +123,22 @@ def run(features: list[dict], *, task: str, region: str | None = None, overlap_t
     kept = [(g, f) for k, (g, f) in enumerate(items) if k not in drop]
     out = []
     outside = 0
-    namwon = region == "namwon" or (epsg == 5186 and 127.1 < c.x < 127.7 and 35.2 < c.y < 35.6)
-    if namwon:
-        tr, eg, names = _emd()
+    sgg = resolve_sgg(features, sgg_cd, region)
+    ix = emd_index_for(sgg)
     for g, f in kept:
         p = dict(f["props"])
         p["area_m2"] = round(g.area, 1)
-        if namwon:
-            rp = g.representative_point()
-            hit = [int(k) for k in tr.query(rp, predicate="within")]
+        g4 = sh_transform(to_g, g)
+        if ix is not None:
+            hit = ix.find(g4.representative_point())
             if not hit:
                 outside += 1
                 continue
-            p["emd"], p["emd_cd"] = names[hit[0]]
-        out.append({"geom": sh_transform(to_g, g), "props": p})
+            p["emd"], p["emd_cd"] = hit
+        out.append({"geom": g4, "props": p})
     st["outside_emd"] = outside
+    st["sgg_cd"] = ix.sgg_cd if ix is not None else sgg
+    st["emd_n"] = len(ix) if ix is not None else 0
     st["out"] = len(out)
     st["epsg"] = epsg
     return out, st

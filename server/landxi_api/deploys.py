@@ -1,13 +1,24 @@
-"""배포(F1-CONTRACT §4.7 · §9) — 단계 배포 · 롤백 · 승인 · 고정 · 모듈 · 모델 · GPU 풀 · 이식(POST /deploys).
+"""배포(F1-CONTRACT §4.7 · §9) — 단계 배포 · 롤백 · 승인 · 고정 · 모듈 · 모델 · GPU 풀 · 다른 지역에 적용(POST /deploys).
 
 상태기계: draft → shadow → canary → ga(순방향 한 칸씩 · 건너뛰기 없음) · canary|ga → rolled_back · rolled_back → shadow|canary|ga.
-ga 는 approve ≥ APPROVALS_REQUIRED(기본 1) — 마지막 롤백·이식 이후의 승인만 센다. 모든 쓰기 = audit_log + deploy.changed.
+ga 는 approve ≥ APPROVALS_REQUIRED(기본 1) — 마지막 롤백·적용 이후의 승인만 센다. 모든 쓰기 = audit_log + deploy.changed.
+
+한 흐름(core-flow · 코어 ④ · 2026-09-29) — '적용 = 실행':
+  POST /deploys {card_id, region: sgg_cd, tenant_id?} → draft + 결재 요청(flow.state approval)
+  → 결재 승인(approvals.decide) → flow_start: 영상(catalog.best_imagery) 없으면 need_imagery(영상 등록 필요 · LX 직원 할 일 · draft 유지)
+    있으면 draft → shadow(시범) + POST /jobs {kind:infer, options:{scope:"sgg", sgg_cd}, deploy_id}(analyzing)
+  → 작업 끝(flow_loop 5 s) → snapshot_current = 그 결과 세트 → 카드에 필지 대조 모듈(*-parcel)이 켜져 있으면
+    POST /survey/build {sgg_cd, job_id}(surveying) → 끝나면 done. 영상 등록 필요 상태는 60 s 마다 영상을 다시 찾아 이어 간다.
+  모든 단계 = audit_log(action flow.*, subject = 배포본 id, after.job_id) — 같은 deploy_id · job_id 로 묶인다.
 """
 from __future__ import annotations
 
+import asyncio
 import datetime as dt
+import inspect
 import json
 import secrets
+import time
 
 from fastapi import APIRouter, Request
 
@@ -21,7 +32,7 @@ CORE = ["mod-auth", "mod-map", "mod-result", "mod-stats", "mod-report", "mod-fee
 FORWARD = {"draft": ["shadow"], "shadow": ["canary"], "canary": ["ga"], "ga": [], "rolled_back": ["shadow", "canary", "ga"]}
 COLS = ("id, name, tenant_id, card_id, card_version_id, prev_card_version_id, region_profile, region_name, "
         "ST_AsGeoJSON(aoi, 6)::json AS aoi, stage, pinned, gpu_pool, from_deploy_id, modules, model_override, snapshot_current, "
-        "snapshot_prev, year, status_history, scale, basis, created_at, updated_at, sgg_cd, ci, coalesce(test, false) AS test")
+        "snapshot_prev, year, status_history, scale, basis, created_at, updated_at, sgg_cd, ci, coalesce(test, false) AS test, flow")
 CI_KEYS = ["name", "short", "mark", "color", "tint", "unit_word", "crs", "contact", "seal"]     # 기관 명칭 · 약칭 · 마크 · 상징색 · 연한 바탕 · 행정단위 말 · 좌표계 · 문의처 · 직인
 # 운영 건강(F3 §3 S-7) — 넘으면 next_action. 값은 [추정 초기값](운영하며 보정 · 사용자 결정 전)
 THRESHOLDS = {"precision_min_pct": 70.0, "fp_reports_max": 10, "judged_min": 20, "train_max_days": 180}
@@ -43,7 +54,7 @@ async def deploy_dict(conn, r) -> dict:
             "year": r["year"], "status_history": r["status_history"], "scale": r["scale"], "basis": r["basis"],
             "approvals": [{"id": a["id"], "decision": a["decision"], "by": a["decided_by"], "at": _iso(a["at"]), "reason": a["reason"],
                            "state": a["state"], "action": (a["payload"] or {}).get("action")} for a in aps],
-            "sgg_cd": r["sgg_cd"], "ci": r["ci"], "test": r["test"],
+            "sgg_cd": r["sgg_cd"], "ci": r["ci"], "test": r["test"], "flow": flow_view(r["flow"]),
             "created_at": _iso(r["created_at"]), "updated_at": _iso(r["updated_at"])}
 
 
@@ -165,12 +176,12 @@ def _new_id(tenant: str, card_id: str, year: int) -> str:
 
 @router.post("/deploys", status_code=201)
 async def port(body: dict, request: Request):
-    """이식 = 카드(또는 기존 배포본)를 새 지역(sgg_cd)에 심는다 → 배포본 draft + 결재 요청(approvals pending · action port).
-    본문: {from_deploy_id | card_id | card_version_id, region: sgg_cd, tenant_id?, ci{9키}?, aoi?, region_profile?(구형), name?, year?}.
-    LX 직원(staff)이 요청하고 관리자가 결재한다. 결과 0 · 스냅샷 없음(첫 분석 대기)."""
+    """다른 지역에 적용 = 카드(또는 기존 배포본)를 새 지역(sgg_cd)에 → 배포본 draft + 결재 요청(approvals pending · action port).
+    본문: {from_deploy_id | card_id | card_version_id, region: sgg_cd, tenant_id?, ci{9키}?, aoi?, region_profile?(해외만), name?, year?}.
+    LX 직원(staff)이 요청하고 관리자가 결재한다. 국내는 sgg_cd 필수(AOI = 시군구 경계). 결재가 통과하면 flow_start 가 AI 분석까지 잇는다."""
     p = require(principal(request), lx=True)
     if p.role not in ("admin", "staff"):
-        raise ApiError("forbidden", "LX 직원·관리자만 심을 수 있습니다")
+        raise ApiError("forbidden", "LX 직원·관리자만 다른 지역에 적용할 수 있습니다")
     src_id = body.get("from_deploy_id")
     sgg = str(body.get("region") or body.get("sgg_cd") or "").strip() or None
     aoi = body.get("aoi")
@@ -178,18 +189,24 @@ async def port(body: dict, request: Request):
     from .regions import regions_base, tenant_scope
     if sgg:
         regs, geoms, _ = regions_base()
-        rg = next((x for x in regs if x["sgg_cd"] == sgg), None)
+        rg = next((x for x in regs if x["sgg_cd"] == sgg), None) or next((x for x in regs if x.get("prev_cd") == sgg), None)
         if not rg:
             raise ApiError("bad_request", "해당 지역이 없습니다", {"region": sgg})
+        sgg = rg["sgg_cd"]                           # 옛 코드로 와도 지금 코드로 저장(한 시군구 = 한 코드)
         region_name = {"ko": rg["full"], "en": rg.get("name_en") or rg["full"]}
-        if not aoi and sgg in geoms:
+        if sgg in geoms:
             from shapely.geometry import mapping
-            aoi = mapping(geoms[sgg])
+            aoi = mapping(geoms[sgg])                # 배포본 AOI = 시군구 경계(본문 aoi 는 무시 — 지역 판정이 한 출처)
     elif body.get("region_profile"):
         prof = (config.load_yaml("region_profiles")["profiles"]).get(body.get("region_profile") or "")
         if not prof:
             raise ApiError("bad_request", f"region_profile {body.get('region_profile')} 없음")
+        if _domestic_bbox(prof.get("bbox")):
+            raise ApiError("bad_request", "국내 지역은 시군구 코드(region)로 적용합니다", {"region_profile": body.get("region_profile")})
         region_name = prof["name"]
+        if not aoi and prof.get("bbox"):
+            from shapely.geometry import box, mapping
+            aoi = mapping(box(*prof["bbox"]))
     if not aoi:
         raise ApiError("bad_request", "지역(region = 시군구 코드)이 필요합니다")
     ci = body.get("ci") or None
@@ -231,23 +248,26 @@ async def port(body: dict, request: Request):
         while await conn.fetchval("SELECT 1 FROM deploys WHERE id=$1", did):
             n += 1
             did = f"{base}-{n}"
-        modules = (src["modules"] if src else None) or {"core": CORE, "ext": {}}
+        modules = (src["modules"] if src else None) or await _card_modules(conn, card_id, cv)
         test = bool(body.get("test")) and config.DEV
+        img = await best_imagery(sgg, aoi) if sgg else {"imagery_id": None, "reason": "no_region"}
+        flow = _flow_new("approval", imagery=img, todo=None if img.get("imagery_id") else "영상 등록")
         await conn.execute(
             "INSERT INTO deploys(id, name, tenant_id, card_id, card_version_id, prev_card_version_id, region_profile, region_name, aoi, stage, "
-            "pinned, gpu_pool, from_deploy_id, modules, year, status_history, scale, basis, sgg_cd, ci, test) VALUES ($1,$2,$3,$4,$5,NULL,$6,$7,"
-            "ST_Multi(ST_SetSRID(ST_GeomFromGeoJSON($8),4326)),'draft',false,$9,$10,$11,$12,NULL,NULL,'measured',$13,$14,$15)",
-            did, body.get("name") or ((region_name or {}).get("ko", "") + " · 이식").strip(" ·"), tenant, card_id, cv,
-            body.get("region_profile"), region_name, json.dumps(aoi), body.get("gpu_pool") or (src["gpu_pool"] if src else "a6000"), src_id,
-            modules, year, sgg, ci, test)
+            "pinned, gpu_pool, from_deploy_id, modules, year, status_history, scale, basis, sgg_cd, ci, test, flow) VALUES ($1,$2,$3,$4,$5,NULL,$6,$7,"
+            "ST_Multi(ST_SetSRID(ST_GeomFromGeoJSON($8),4326)),'draft',false,$9,$10,$11,$12,NULL,NULL,'measured',$13,$14,$15,$16)",
+            did, body.get("name") or ((region_name or {}).get("ko", "") + " · 적용").strip(" ·"), tenant, card_id, cv,
+            body.get("region_profile"), region_name, json.dumps(aoi), body.get("gpu_pool") or (src["gpu_pool"] if src else config.POOL), src_id,
+            modules, year, sgg, ci, test, flow)
         aid = "ap_" + secrets.token_hex(6)
         await conn.execute("INSERT INTO approvals(id, subject_type, subject_id, requested_by, state, payload, reason, tenant_id, at) "
                            "VALUES ($1,'deploy',$2,$3,'pending',$4,$5,$6,now())", aid, did, p.user_id,
                            {"action": "port", "card_id": card_id, "card_version_id": cv, "sgg_cd": sgg, "from_deploy_id": src_id},
-                           body.get("reason") or "새 지역에 심기", tenant)
+                           body.get("reason") or "다른 지역에 적용", tenant)
         row = await _get(conn, did)
         await audit(conn, p, "deploy.port", did, {"from": src_id}, {"tenant_id": tenant, "card_version_id": cv, "stage": "draft", "sgg_cd": sgg,
-                                                                   "approval_id": aid})
+                                                                   "approval_id": aid, "deploy_id": did,
+                                                                   "imagery_id": img.get("imagery_id"), "imagery_reason": img.get("reason")})
         out = await deploy_dict(conn, row)
     out["approval_id"] = aid
     out["results"] = env(0, "count", "measured", "detections(deploy)", "결과 0 · 첫 분석 대기")
@@ -290,7 +310,7 @@ async def rollout(did: str, body: dict, request: Request):
             pend = await conn.fetchval("SELECT id FROM approvals WHERE subject_type='deploy' AND subject_id=$1 AND state='pending' "
                                        "AND payload->>'action'='port'", did)
             if pend:
-                raise ApiError("approval_required", "심기 결재가 끝나야 시범을 시작할 수 있습니다", {"approval_id": pend})
+                raise ApiError("approval_required", "적용 결재가 끝나야 시범을 시작할 수 있습니다", {"approval_id": pend})
         if to == "ga":
             n = await _approvals_since_reset(conn, did)
             if n < config.APPROVALS_REQUIRED:
@@ -420,3 +440,541 @@ async def gpu(did: str, body: dict, request: Request):
         out = await deploy_dict(conn, row)
     await _changed(p, did, "gpu", row)
     return out
+
+
+# ══ 한 흐름(core-flow · 코어 ④) ═══════════════════════════════════════════════════════════════════════
+# 배포본 flow(jsonb) 한 곳이 상태다. 화면은 flow_view 로 읽고(작업 id·경로는 화면에 내지 않는다), LX 관리자 화면은 /ops/flows.
+FLOW_LABEL = {"approval": "결재 대기", "need_imagery": "영상 등록 필요", "starting": "AI 분석 준비", "analyzing": "AI 분석 중",
+              "surveying": "실태조사 중", "done": "결과 반영", "failed": "다시 실행 필요", "rejected": "반려"}
+FLOW_TICK_S = 5
+IMAGERY_RECHECK_S = 60
+_flow_tasks: set = set()
+_flow_last_img: dict[str, float] = {}
+
+
+def _domestic_bbox(b) -> bool:
+    return bool(b) and 124 <= b[0] and b[2] <= 132.5 and 32.5 <= b[1] and b[3] <= 39.5
+
+
+async def _card_modules(conn, card_id: str, cv: str | None) -> dict:
+    m = await conn.fetchval("SELECT modules FROM card_versions WHERE id=$1", cv) if cv else None
+    ext = (m or {}).get("ext") if isinstance(m, dict) else None
+    return {"core": CORE, "ext": dict(ext or {})}
+
+
+def _has_parcel(mods) -> bool:
+    ext = (mods or {}).get("ext") or {}
+    return any(bool(v) and str(k).endswith("-parcel") for k, v in ext.items())
+
+
+def _flow_new(state: str, **kw) -> dict:
+    f = {"state": state, "updated_at": now_iso(), "steps": [{"state": state, "at": now_iso()}]}
+    f.update({k: v for k, v in kw.items() if v is not None})
+    return f
+
+
+def _flow_next(flow: dict | None, state: str, **kw) -> dict:
+    f = dict(flow or {})
+    f["state"] = state
+    f["updated_at"] = now_iso()
+    step = {"state": state, "at": now_iso()}
+    if kw.get("reason"):
+        step["reason"] = kw["reason"]
+    f["steps"] = (list(f.get("steps") or []) + [step])[-40:]
+    for k, v in kw.items():
+        if v is None:
+            f.pop(k, None)
+        else:
+            f[k] = v
+    return f
+
+
+def flow_view(flow) -> dict | None:
+    """화면용 — 상태 · 사용자 말 · 할 일 · 단계 시각. job_id 는 서버·보고서·개발자 서랍용(화면 본문은 쓰지 않는다)."""
+    if not flow:
+        return None
+    if isinstance(flow, str):
+        flow = json.loads(flow)
+    st = flow.get("state")
+    img = flow.get("imagery") or {}
+    return {"state": st, "label": FLOW_LABEL.get(st, st), "todo": flow.get("todo"), "reason": flow.get("reason"),
+            "has_imagery": bool(img.get("imagery_id")),
+            "imagery": {"year": img.get("year"), "gsd_m": img.get("gsd_m"), "partial": bool(img.get("partial")),
+                        "coverage": env(img.get("coverage"), "ratio", "measured", "영상 범위 ∩ 시군구 면적",
+                                        None if img.get("coverage") is not None else "영상 없음")},
+            "job_id": flow.get("job_id"), "survey_job_id": flow.get("survey_job_id"),
+            "steps": flow.get("steps") or [], "updated_at": flow.get("updated_at")}
+
+
+# ── 영상: catalog.best_imagery(core-imagery 계약) · 아직 없으면 같은 계약 모양으로 imagery 표에서 고른다 ──
+async def best_imagery(sgg: str | None, geom: dict | None = None) -> dict:
+    try:
+        from . import catalog
+        fn = getattr(catalog, "best_imagery", None)
+    except Exception:
+        fn = None
+    if fn is not None:
+        try:
+            if inspect.iscoroutinefunction(fn):
+                r = await fn(sgg, geom)
+            else:
+                from starlette.concurrency import run_in_threadpool
+                r = await run_in_threadpool(fn, sgg, geom)
+                if inspect.isawaitable(r):
+                    r = await r
+            if isinstance(r, dict):
+                r.setdefault("via", "catalog.best_imagery")
+                return r
+        except Exception as e:  # noqa: BLE001 — 영상 선택 실패는 흐름을 멈추지 않고 사유로 남긴다
+            return {"imagery_id": None, "reason": f"catalog_error {type(e).__name__}", "via": "catalog.best_imagery"}
+    return await _best_imagery_table(sgg, geom)
+
+
+async def _best_imagery_table(sgg: str | None, geom: dict | None) -> dict:
+    """계약과 같은 모양 — 추론 입력이 되는 자체 영상(원본 경로 있음 · 정사) ∩ 시군구. 0.5 m 이하 → 덮는 비율 → 연도 순."""
+    from .regions import regions_base
+    from shapely.geometry import mapping, shape
+    regs, geoms, _ = regions_base()
+    g = shape(geom) if geom else (geoms.get(sgg) if sgg else None)
+    if g is None:
+        return {"imagery_id": None, "reason": "no_region", "via": "imagery 표"}
+    rg = next((x for x in regs if x["sgg_cd"] == sgg), None) or {}
+    codes = [c for c in (sgg, rg.get("prev_cd")) if c]
+    async with db(realm="lx") as conn:
+        rows = await conn.fetch(
+            "WITH a AS (SELECT ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON($1),4326)) g) "
+            "SELECT i.id, i.gsd_m, coalesce(i.year::text, i.epoch) AS yr, "
+            "ST_Area(ST_Intersection(ST_MakeValid(i.footprint), a.g)::geography) / nullif(ST_Area(a.g::geography), 0) AS cov "
+            "FROM imagery i, a WHERE i.path_internal IS NOT NULL AND coalesce(i.kind,'ortho')='ortho' AND i.footprint IS NOT NULL "
+            "AND (i.sgg_cd = ANY($2::text[]) OR ST_Intersects(i.footprint, a.g))",
+            json.dumps(mapping(g)), codes)
+    rows = [r for r in rows if (r["cov"] or 0) >= 0.02]
+    if not rows:
+        return {"imagery_id": None, "reason": "no_imagery", "via": "imagery 표"}
+
+    def yr(r):
+        s = str(r["yr"] or "")
+        return int(s[:4]) if s[:4].isdigit() else 0
+    best = max(rows, key=lambda r: (float(r["gsd_m"] or 99) <= 0.5, round(float(r["cov"] or 0), 1), yr(r), -float(r["gsd_m"] or 99)))
+    return {"imagery_id": best["id"], "gsd_m": float(best["gsd_m"]) if best["gsd_m"] is not None else None, "year": yr(best) or None,
+            "coverage": round(float(best["cov"] or 0), 3), "source": "local", "via": "imagery 표"}
+
+
+# ── 모델: 배포본 교체 모델 → 카드 버전 모델 → 카드의 다른 버전 모델 → 영상 해상도에 맞는 기본 분할 모델 ──
+async def _pick_model(conn, d, img: dict) -> str | None:
+    import math
+    gsd = img.get("gsd_m")
+    cands: list[str] = []
+    if d["model_override"]:
+        cands.append(d["model_override"])
+    for r in await conn.fetch("SELECT model_ids FROM card_versions WHERE card_id=$1 ORDER BY (id=$2) DESC, approved_at DESC NULLS LAST, id DESC",
+                              d["card_id"], d["card_version_id"]):
+        cands += [m for m in (r["model_ids"] or []) if m not in cands]
+    rows = {r["id"]: r for r in await conn.fetch("SELECT id, task, gsd_trained_m, input, weights_uri, status FROM models")}
+
+    def fits(m) -> bool:
+        if not m or not m["weights_uri"] or m["task"] not in ("seg", "det", "obb") or (m["status"] or "") == "retired":
+            return False
+        if gsd and m["gsd_trained_m"]:
+            return abs(math.log(float(gsd) / float(m["gsd_trained_m"]))) <= math.log(2.5)
+        return True
+    for mid in cands:
+        if fits(rows.get(mid)):
+            return mid
+    base = [m for m in rows.values() if fits(m) and m["task"] == "seg"]
+    base.sort(key=lambda m: (abs(float(m["gsd_trained_m"] or 0) - float(gsd or 0)), m["id"]))
+    return base[0]["id"] if base else None
+
+
+# ── 계약 경로를 같은 프로세스에서 부른다(POST /jobs · POST /survey/build) — 결재한 사람의 권한으로 ──
+def _as_request(p: Principal):
+    from starlette.requests import Request as SReq
+    return SReq({"type": "http", "method": "POST", "path": "/", "headers": [], "query_string": b"", "state": {"principal": p}})
+
+
+async def _call_route(method: str, path: str, body: dict, p: Principal):
+    """게이트웨이 라우트 함수를 직접 호출(HTTP 왕복·토큰 0). 경로가 아직 없으면 ApiError(not_found) — 흐름은 사유로 멈춘다."""
+    from fastapi.routing import APIRoute
+    from .main import app
+    full = "/api/v1" + path
+    for rt in app.routes:
+        if isinstance(rt, APIRoute) and rt.path == full and method.upper() in rt.methods:
+            fn = rt.endpoint
+            kw = {}
+            for name in inspect.signature(fn).parameters:
+                if name == "request":
+                    kw[name] = _as_request(p)
+                elif name == "body":
+                    kw[name] = body
+            return await fn(**kw)
+    raise ApiError("not_found", f"{method} {path} 경로 없음", {"path": path})
+
+
+def _route_exists(method: str, path: str) -> bool:
+    from fastapi.routing import APIRoute
+    from .main import app
+    return any(isinstance(rt, APIRoute) and rt.path == "/api/v1" + path and method.upper() in rt.methods for rt in app.routes)
+
+
+def _flow_actor(user_id: str | None) -> Principal:
+    return Principal(realm="lx", role="admin", user_id=user_id or "system", name="flow")
+
+
+async def _set_flow(conn, did: str, flow: dict, *, stage: str | None = None, snapshot: str | None = None):
+    if snapshot:
+        await conn.execute("UPDATE deploys SET flow=$2, snapshot_prev=CASE WHEN snapshot_current IS DISTINCT FROM $3 THEN snapshot_current "
+                           "ELSE snapshot_prev END, snapshot_current=$3, updated_at=now() WHERE id=$1", did, flow, snapshot)
+    elif stage:
+        await conn.execute("UPDATE deploys SET flow=$2, stage=$3, updated_at=now() WHERE id=$1", did, flow, stage)
+    else:
+        await conn.execute("UPDATE deploys SET flow=$2, updated_at=now() WHERE id=$1", did, flow)
+
+
+async def _flow_event(p: Principal, did: str, action: str):
+    async with db(realm="lx") as conn:
+        row = await _get(conn, did)
+    await _changed(p, did, action, row)
+    try:
+        from . import summary as sm
+        sm.invalidate()
+    except Exception:
+        pass
+
+
+async def flow_start(did: str, user_id: str | None = None, *, why: str = "approval") -> dict:
+    """결재 통과(또는 영상 등록 뒤 재확인 · 다시 실행) → 영상 → (있으면) 시범 + AI 분석 작업. 반환 = 새 flow."""
+    p = _flow_actor(user_id)
+    async with db(realm="lx") as conn:
+        d = await _get(conn, did)
+        flow = d["flow"] or {}
+        if flow.get("state") in ("analyzing", "surveying"):
+            return flow
+        if not d["sgg_cd"]:
+            f = _flow_next(flow, "failed", reason="no_region", todo=None)
+            await _set_flow(conn, did, f)
+            await audit(conn, p, "flow.failed", did, None, {"deploy_id": did, "reason": "no_region"})
+            return f
+        geom = d["aoi"]
+    img = await best_imagery(d["sgg_cd"], geom)
+    async with db(realm="lx") as conn:
+        d = await _get(conn, did)
+        flow = d["flow"] or {}
+        if not img.get("imagery_id"):
+            if flow.get("state") != "need_imagery":
+                f = _flow_next(flow, "need_imagery", imagery=img, reason=img.get("reason") or "no_imagery", todo="영상 등록")
+                await _set_flow(conn, did, f)
+                await audit(conn, p, "flow.need_imagery", did, None, {"deploy_id": did, "sgg_cd": d["sgg_cd"], "reason": f.get("reason"), "why": why})
+            else:
+                f = {**flow, "imagery": img, "checked_at": now_iso()}
+                await _set_flow(conn, did, f)
+            return f
+        model_id = await _pick_model(conn, d, img)
+        if not model_id:
+            f = _flow_next(flow, "failed", imagery=img, reason="no_model", todo="모델 연결")
+            await _set_flow(conn, did, f)
+            await audit(conn, p, "flow.failed", did, None, {"deploy_id": did, "reason": "no_model"})
+            return f
+        f = _flow_next(flow, "starting", imagery=img, model_id=model_id, todo=None, reason=None)
+        stage = "shadow" if d["stage"] == "draft" else None
+        await _set_flow(conn, did, f, stage=stage)
+        if stage:
+            await audit(conn, p, "deploy.rollout", did, {"stage": "draft"}, {"stage": "shadow", "via": "flow", "deploy_id": did})
+    body = {"kind": "infer", "model_id": model_id, "imagery_id": img["imagery_id"], "deploy_id": did, "card_id": d["card_id"],
+            "options": {"scope": "sgg", "sgg_cd": d["sgg_cd"], "chip": 1024, "conf": 0.25, "overlap": 0.125},
+            "label": "배포 적용 분석", **({"test": True} if d["test"] else {})}
+    try:
+        res = await _call_route("POST", "/jobs", body, p)
+        job = (res or {}).get("job") or {}
+        jid = job.get("id")
+        if not jid:
+            raise ApiError("upstream_error", "작업 id 없음")
+    except ApiError as e:
+        async with db(realm="lx") as conn:
+            d = await _get(conn, did)
+            f = _flow_next(d["flow"], "failed", reason=e.code, detail=str(e.message)[:200], todo="다시 실행")
+            await _set_flow(conn, did, f)
+            await audit(conn, p, "flow.failed", did, None, {"deploy_id": did, "step": "jobs", "reason": e.code, "message": str(e.message)[:200]})
+        await _flow_event(p, did, "flow")
+        return f
+    async with db(realm="lx") as conn:
+        d = await _get(conn, did)
+        f = _flow_next(d["flow"], "analyzing", job_id=jid, result_set=job.get("result_set"), detail=None)
+        await _set_flow(conn, did, f)
+        await audit(conn, p, "flow.analyze", did, None, {"deploy_id": did, "job_id": jid, "imagery_id": img["imagery_id"], "model_id": model_id,
+                                                        "sgg_cd": d["sgg_cd"], "scope": "sgg"})
+    await _flow_event(p, did, "flow")
+    return f
+
+
+def spawn_flow(did: str, user_id: str | None, why: str = "approval"):
+    """결재 응답을 막지 않게 배경에서(영상 선택 · 전역 견적은 수 초)."""
+    async def run():
+        try:
+            await flow_start(did, user_id, why=why)
+        except Exception as e:  # pragma: no cover — 흐름 오류는 flow.failed 로 남긴다
+            try:
+                async with db(realm="lx") as conn:
+                    d = await _get(conn, did)
+                    await _set_flow(conn, did, _flow_next(d["flow"], "failed", reason=f"error {type(e).__name__}", todo="다시 실행"))
+                    await audit(conn, _flow_actor(user_id), "flow.failed", did, None, {"deploy_id": did, "error": repr(e)[:300]})
+            except Exception:
+                pass
+    t = asyncio.create_task(run())
+    _flow_tasks.add(t)
+    t.add_done_callback(_flow_tasks.discard)
+    return t
+
+
+async def on_port_decided(did: str, decision: str, user_id: str | None):
+    """approvals.decide 가 적용(port) 결재를 끝낸 뒤 부른다 — 승인 = 흐름 시작 · 반려 = rejected."""
+    async with db(realm="lx") as conn:
+        d = await _get(conn, did)
+        if decision == "approve":
+            await _set_flow(conn, did, _flow_next(d["flow"], "starting", todo=None))
+        else:
+            await _set_flow(conn, did, _flow_next(d["flow"], "rejected", todo=None))
+            await audit(conn, _flow_actor(user_id), "flow.rejected", did, None, {"deploy_id": did})
+    if decision == "approve":
+        spawn_flow(did, user_id)
+
+
+async def _job_row(conn, jid: str | None):
+    return await conn.fetchrow("SELECT id, state, result_set, error, finished_at, counts FROM jobs WHERE id=$1", jid) if jid else None
+
+
+async def _survey_state(sgg: str | None, build_job: str | None) -> dict | None:
+    """실태조사 적재 결과(core-survey 계약 표 survey_sgg · 읽기만). 표가 없거나 다른 적재 작업의 행이면 None."""
+    if not sgg:
+        return None
+    try:
+        async with db(realm="lx") as conn:
+            r = await conn.fetchrow("SELECT state, parcels, findings, error, build_job_id FROM survey_sgg WHERE sgg_cd=$1", sgg)
+    except Exception:
+        return None
+    if not r or (build_job and r["build_job_id"] and r["build_job_id"] != build_job):
+        return None
+    return dict(r)
+
+
+def _small(res: dict) -> dict:
+    return {k: v for k, v in (res or {}).items() if k in ("counts", "state", "n_parcels", "n_findings", "sgg_cd", "tenant_id")}
+
+
+async def _approver(did: str) -> str | None:
+    async with db(realm="lx") as conn:
+        return await conn.fetchval("SELECT decided_by FROM approvals WHERE subject_type='deploy' AND subject_id=$1 AND decision='approve' "
+                                   "ORDER BY coalesce(decided_at, at) DESC LIMIT 1", did)
+
+
+async def _after_infer(did: str, d, job) -> None:
+    """AI 분석 끝 → 배포본 스냅샷 = 그 결과 세트 → (필지 대조 모듈) POST /survey/build."""
+    p = _flow_actor(await _approver(did))
+    rs = job["result_set"]
+    parcel = _has_parcel(d["modules"])
+    async with db(realm="lx") as conn:
+        f = _flow_next(d["flow"], "surveying" if parcel else "done", result_set=rs)
+        await _set_flow(conn, did, f, snapshot=rs)
+        await audit(conn, p, "flow.result", did, {"snapshot_current": d["snapshot_current"]},
+                    {"deploy_id": did, "job_id": job["id"], "snapshot_current": rs, "counts": job["counts"]})
+        if not parcel:
+            await audit(conn, p, "flow.done", did, None, {"deploy_id": did, "job_id": job["id"]})
+    await _flow_event(p, did, "snapshot")
+    if not parcel:
+        return
+    try:
+        res = await _call_route("POST", "/survey/build", {"sgg_cd": d["sgg_cd"], "job_id": job["id"], "deploy_id": did,
+                                                          "tenant_id": d["tenant_id"]}, p)
+    except ApiError as e:
+        async with db(realm="lx") as conn:
+            d2 = await _get(conn, did)
+            await _set_flow(conn, did, _flow_next(d2["flow"], "failed", reason=f"survey {e.code}", detail=str(e.message)[:200], todo="다시 실행"))
+            await audit(conn, p, "flow.failed", did, None, {"deploy_id": did, "job_id": job["id"], "step": "survey.build", "reason": e.code})
+        await _flow_event(p, did, "flow")
+        return
+    res = res if isinstance(res, dict) else {}
+    sj = (res.get("job") or {}).get("id") if isinstance(res.get("job"), dict) else None
+    sj = sj or res.get("job_id")
+    async with db(realm="lx") as conn:
+        d2 = await _get(conn, did)
+        if sj:
+            await _set_flow(conn, did, _flow_next(d2["flow"], "surveying", survey_job_id=sj))
+            await audit(conn, p, "flow.survey", did, None, {"deploy_id": did, "job_id": job["id"], "survey_job_id": sj, "sgg_cd": d["sgg_cd"]})
+        else:                                     # 동기 응답(바로 끝남)
+            await _set_flow(conn, did, _flow_next(d2["flow"], "done", survey=_small(res)))
+            await audit(conn, p, "flow.done", did, None, {"deploy_id": did, "job_id": job["id"], "survey": _small(res)})
+    await _flow_event(p, did, "flow")
+
+
+async def _fail(did: str, f: dict, reason: str, extra: dict):
+    async with db(realm="lx") as conn:
+        await _set_flow(conn, did, _flow_next(f, "failed", reason=reason, todo="다시 실행"))
+        await audit(conn, _flow_actor(None), "flow.failed", did, None, {"deploy_id": did, "reason": reason, **extra})
+    await _flow_event(_flow_actor(None), did, "flow")
+
+
+async def flow_tick(only: set | None = None) -> int:
+    """진행 중 흐름을 한 번 훑는다(작업 표 = 정본 · 게이트웨이 재기동 뒤에도 이어진다). 반환 = 바뀐 배포본 수. only = 이 배포본들만(시험)."""
+    n = 0
+    async with db(realm="lx") as conn:
+        rows = await conn.fetch(f"SELECT {COLS} FROM deploys WHERE (flow->>'state' IN ('analyzing','surveying','need_imagery','starting') "
+                                "OR (flow->>'state' = 'failed' AND flow->>'reason' IN ('survey not_found', 'survey failed') "
+                                "    AND coalesce((flow->>'retries')::int, 0) < 5)) "
+                                "AND ($1::text[] IS NULL OR id = ANY($1::text[]))", sorted(only) if only else None)
+    for d in rows:
+        f = d["flow"] or {}
+        st = f.get("state")
+        did = d["id"]
+        try:
+            if st == "analyzing":
+                async with db(realm="lx") as conn:
+                    j = await _job_row(conn, f.get("job_id"))
+                if j and j["state"] == "done":
+                    await _after_infer(did, d, j)
+                    n += 1
+                elif j is None or j["state"] in ("failed", "cancelled"):
+                    await _fail(did, f, f"job {j['state'] if j else 'missing'}", {"job_id": f.get("job_id")})
+                    n += 1
+            elif st == "surveying" and f.get("survey_job_id"):
+                async with db(realm="lx") as conn:
+                    j = await _job_row(conn, f.get("survey_job_id"))
+                sv = await _survey_state(d["sgg_cd"], j["id"]) if j and j["state"] == "done" else None
+                if j and j["state"] == "done" and sv and sv.get("state") == "failed":
+                    # 작업은 끝났다고 했지만 실태조사 적재 표가 실패(계약 survey_sgg.state) — 정직하게 멈춤 + 자동 재시도(최대 5회)
+                    await _fail(did, f, "survey failed", {"job_id": f.get("job_id"), "survey_job_id": j["id"], "error": str(sv.get("error"))[:200]})
+                    n += 1
+                elif j and j["state"] == "done":
+                    async with db(realm="lx") as conn:
+                        await _set_flow(conn, did, _flow_next(f, "done", survey={"counts": j["counts"], **({"findings": sv.get("findings"),
+                                                                                                          "parcels": sv.get("parcels")} if sv else {})}))
+                        await audit(conn, _flow_actor(None), "flow.done", did, None,
+                                    {"deploy_id": did, "job_id": f.get("job_id"), "survey_job_id": j["id"], "counts": j["counts"]})
+                    await _flow_event(_flow_actor(None), did, "flow")
+                    n += 1
+                elif j is None or j["state"] in ("failed", "cancelled"):
+                    await _fail(did, f, f"survey {j['state'] if j else 'missing'}", {"job_id": f.get("job_id"), "survey_job_id": f.get("survey_job_id")})
+                    n += 1
+            elif st == "failed":
+                # 실태조사 경로(POST /survey/build · core-survey)가 나중에 생기면 AI 분석 결과로 실태조사만 이어 간다(1분마다 확인)
+                if time.time() - _flow_last_img.get("sv:" + did, 0) >= IMAGERY_RECHECK_S:
+                    _flow_last_img["sv:" + did] = time.time()
+                    if _route_exists("POST", "/survey/build"):
+                        async with db(realm="lx") as conn:
+                            j = await _job_row(conn, f.get("job_id"))
+                        if j and j["state"] == "done":
+                            async with db(realm="lx") as conn:
+                                await conn.execute("UPDATE deploys SET flow = jsonb_set(flow, '{retries}', to_jsonb(coalesce((flow->>'retries')::int, 0) + 1)) "
+                                                   "WHERE id=$1", did)
+                                d = await _get(conn, did)
+                            await _after_infer(did, d, j)
+                            n += 1
+            elif st == "need_imagery":
+                if time.time() - _flow_last_img.get(did, 0) >= IMAGERY_RECHECK_S:
+                    _flow_last_img[did] = time.time()
+                    img = await best_imagery(d["sgg_cd"], d["aoi"])
+                    if img.get("imagery_id"):
+                        await flow_start(did, await _approver(did), why="imagery_registered")
+                        n += 1
+            elif st == "starting":
+                # 배경 작업 없이 남은 '준비'(게이트웨이 재기동) — 2분 넘으면 다시 시작
+                at = f.get("updated_at")
+                if at and not _flow_tasks and (dt.datetime.now(KST) - dt.datetime.fromisoformat(at)).total_seconds() > 120:
+                    spawn_flow(did, await _approver(did), why="resume")
+        except Exception as e:  # pragma: no cover
+            print(f"[flow] {did} {st} 오류 {e!r}", flush=True)
+    return n
+
+
+async def flow_loop():
+    """게이트웨이 수명 동안 5 s 마다(ops.alert_loop 가 띄운다 — main.py 무수정)."""
+    await asyncio.sleep(3)
+    while True:
+        try:
+            await flow_tick()
+        except Exception as e:  # pragma: no cover
+            print("[flow] loop error", repr(e), flush=True)
+        await asyncio.sleep(FLOW_TICK_S)
+
+
+@router.post("/deploys/{did}/flow")
+async def flow_retry(did: str, request: Request, body: dict | None = None):
+    """다시 실행(영상 등록 뒤 · 실패 뒤) — LX 직원·관리자. 적용 결재가 끝난 배포본만."""
+    p = require(principal(request), lx=True)
+    if p.role not in ("admin", "staff"):
+        raise ApiError("forbidden", "LX 직원·관리자만")
+    async with db(realm="lx") as conn:
+        d = await _get(conn, did)
+        pend = await conn.fetchval("SELECT 1 FROM approvals WHERE subject_type='deploy' AND subject_id=$1 AND state='pending' "
+                                   "AND payload->>'action'='port'", did)
+        if pend:
+            raise ApiError("approval_required", "적용 결재가 끝나야 실행할 수 있습니다")
+        if (d["flow"] or {}).get("state") in ("analyzing", "surveying", "starting"):
+            raise ApiError("conflict", "이미 진행 중입니다", status=409)
+        await audit(conn, p, "flow.retry", did, {"flow": (d["flow"] or {}).get("state")}, {"deploy_id": did, "job_id": (d["flow"] or {}).get("job_id")})
+        fl = d["flow"] or {}
+        j = await _job_row(conn, fl.get("job_id"))
+    if j is not None and j["state"] == "done" and not _has_parcel(d["modules"]):
+        raise ApiError("conflict", "이미 결과가 반영됐습니다", status=409)
+    if j is not None and j["state"] == "done":          # AI 분석은 끝났다 — 실태조사만 다시(GPU 재사용 0)
+        await _after_infer(did, d, j)
+        async with db(realm="lx") as conn:
+            f = (await _get(conn, did))["flow"]
+        return {"deploy_id": did, "flow": flow_view(f), "as_of": now_iso()}
+    f = await flow_start(did, p.user_id, why="retry")
+    return {"deploy_id": did, "flow": flow_view(f), "as_of": now_iso()}
+
+
+@router.get("/deploys/{did}/flow")
+async def flow_get(did: str, request: Request):
+    """한 배포본의 흐름 한 줄(LX) — 결재 · 영상 · AI 분석(작업 상태 · GPU 사용) · 실태조사 · 사용량(기관 계량) · 감사 기록."""
+    require(principal(request), lx=True)
+    return await flow_detail(did)
+
+
+async def flow_detail(did: str) -> dict:
+    async with db(realm="lx") as conn:
+        d = await _get(conn, did)
+        f = d["flow"] or {}
+        jids = [x for x in (f.get("job_id"), f.get("survey_job_id")) if x]
+        jobs = {r["id"]: r for r in await conn.fetch(
+            "SELECT id, kind, state, pool, shards_total, shards_done, gpu_s, workers, created_at, started_at, finished_at, "
+            "extract(epoch FROM (coalesce(finished_at, now()) - coalesce(started_at, created_at))) AS el FROM jobs WHERE id = ANY($1::text[])", jids)}
+        use = await conn.fetch("SELECT u.tenant_id, u.dim, sum(u.amount) v, count(*) n FROM usage_events u WHERE u.job_id = ANY($1::text[]) GROUP BY 1,2",
+                               jids)
+        aud = await conn.fetch("SELECT action, actor, at, after FROM audit_log WHERE subject=$1 AND (action LIKE 'flow.%' OR action LIKE 'deploy.%') "
+                               "ORDER BY at", did)
+        ap = await conn.fetchrow("SELECT id, decision, decided_by, decided_at, at FROM approvals WHERE subject_type='deploy' AND subject_id=$1 "
+                                 "AND payload->>'action'='port' ORDER BY at DESC LIMIT 1", did)
+        ap_aud = await conn.fetch("SELECT action, actor, at FROM audit_log WHERE subject=$1 AND action LIKE 'approval.%' ORDER BY at", ap["id"]) if ap else []
+
+    from .deps import redis
+    r = await redis()
+    live = {}
+    for x in jids:                                   # 끝 시각·걸린 시간은 작업 해시(워커가 쓴다)가 표보다 먼저 — 표에 비어 있을 때 보탠다
+        try:
+            live[x] = await r.hmget(f"job:{x}", "state", "finished_at", "elapsed_s", "shards_done")
+        except Exception:
+            live[x] = [None] * 4
+
+    def jv(j):
+        if not j:
+            return None
+        lv = live.get(j["id"]) or [None] * 4
+        done = j["state"] in ("done", "failed", "cancelled")
+        el = float(lv[2]) if (done and lv[2]) else (float(j["el"] or 0) if (j["finished_at"] or not done) else None)
+        return {"id": j["id"], "kind": j["kind"], "state": j["state"], "pool": j["pool"], "shards_total": j["shards_total"],
+                "shards_done": int(lv[3]) if lv[3] else j["shards_done"], "workers": list(j["workers"] or []),
+                "gpu_s": env(round(float(j["gpu_s"] or 0), 1), "gpu_s", "measured", "jobs.gpu_s(작업 계량)"),
+                "elapsed_s": env(round(el, 1) if (el is not None and j["started_at"]) else None, "s", "measured", "작업 시작 → 끝(또는 지금)",
+                                 None if j["started_at"] else "대기 중"),
+                "created_at": _iso(j["created_at"]), "started_at": _iso(j["started_at"]), "finished_at": _iso(j["finished_at"]) or lv[1]}
+    usage: dict = {}
+    for u in use:
+        usage.setdefault(u["tenant_id"], {})[u["dim"]] = env(round(float(u["v"] or 0), 3), u["dim"], "measured", "usage_events(작업 귀속 기관)")
+    return {"deploy_id": did, "card_id": d["card_id"], "tenant_id": d["tenant_id"], "sgg_cd": d["sgg_cd"], "region_name": d["region_name"],
+            "stage": d["stage"], "snapshot_current": d["snapshot_current"], "flow": flow_view(f),
+            "approval": {"id": ap["id"], "decision": ap["decision"], "by": ap["decided_by"], "at": _iso(ap["decided_at"] or ap["at"])} if ap else None,
+            "analysis": jv(jobs.get(f.get("job_id"))), "survey": jv(jobs.get(f.get("survey_job_id"))), "usage": usage,
+            "audit": [{"action": a["action"], "actor": a["actor"], "at": _iso(a["at"]),
+                       "job_id": (a["after"] or {}).get("job_id") if isinstance(a["after"], dict) else None} for a in aud]
+                     + [{"action": a["action"], "actor": a["actor"], "at": _iso(a["at"]), "job_id": None} for a in ap_aud],
+            "as_of": now_iso()}

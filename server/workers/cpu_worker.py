@@ -74,7 +74,7 @@ def finalize(job_id: str):
     task = mrow[0] if mrow else "seg"
     sdir = bus.shard_dir(tenant, job_id, demo)
     raw = _feats_from_shards(sdir) if sdir.exists() else []
-    region = "namwon" if (jh.get("imagery_id") or "").startswith(("ap25-namwon", "namwon")) else None
+    region = None      # 영상 id 로 지역을 추정하지 않는다(읍면동 붙이기는 postprocess 가 결과 좌표로 판단 · core-imagery)
     feats, st = postprocess.run(raw, task=task, region=region)
     for i, f in enumerate(feats):
         f["props"]["fid"] = f["props"].get("id")

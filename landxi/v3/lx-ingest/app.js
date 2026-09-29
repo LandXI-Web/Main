@@ -71,11 +71,20 @@ if (cat) {
 
 /* ── 영상 사다리(그 지역 자체 영상을 실제 타일로) ──────────────── */
 const mounted = new Set();
+/* 원본 동적 타일(source cog · LX 전용)은 서명 주소를 받아 타일 템플릿으로 바꿔 쌓는다 — 구운 PMTiles 가 있으면 그쪽이 먼저 */
+async function cogAsTiles(i) {
+  if (i.source !== 'cog') return i;
+  const j = await D.signCog(i.id);
+  return j?.url ? { ...i, source: 'external', tiles: j.url, params: null } : null;
+}
 async function mountImagery(items) {
   const add = items.filter((i) => !mounted.has(i.id) && i.ladder);
   if (!add.length) return;
   add.forEach((i) => mounted.add(i.id));
-  try { await st.ladder(add, add.map((i) => i.id)); } catch (e) { K.devlog('ladder', e.message); }
+  try {
+    const ready = (await Promise.all(add.map((i) => cogAsTiles(i).catch(() => null)))).filter(Boolean);
+    if (ready.length) await st.ladder(ready, ready.map((i) => i.id));
+  } catch (e) { K.devlog('ladder', e.message); }
 }
 
 /* ── 읍면동 결합률 채색 · 서→동 차오름 ─────────────────────────── */
@@ -172,7 +181,11 @@ function renderImagery(el, im) {
     return;
   }
   const ul = K.h('ul.lxi-list');
-  for (const r of im.labels.slice(0, 5)) ul.append(K.h('li', { html: `<span>${K.esc(r.label)}</span>${K.sig(r.env)}` }));
+  for (const r of im.labels.slice(0, 5)) {
+    const cov = r.cov?.value;
+    const part = cov != null && cov < 0.95 ? ` <span class="t-label">지역의 ${Math.max(1, Math.round(cov * 100))}%</span>` : '';
+    ul.append(K.h('li', { html: `<span>${K.esc(r.label)}${part}</span>${K.sig(r.cov && cov < 0.95 ? r.cov : r.env)}` }));
+  }
   el.append(ul);
 }
 const STATE = { yes: '있음', no: '없음', agency: '기관 제공 대기', unknown: '—' };

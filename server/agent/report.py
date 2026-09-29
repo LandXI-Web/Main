@@ -17,7 +17,6 @@ import time
 from . import audit, backends, config, lint
 from .runner import KST, Ctx, emit, finish, persist_start, persist_state, persist_tool, register, run_tool, WHY
 from .tools import Out
-from .tools import survey_local as L
 
 FIXED = "AI 추론 · 검수 전 · 현장 확인 전 · 위법 판정 아님"
 BASIS_KO = {"measured": "실측", "estimate": "추정", "demo": "시연", "history": "이력", "inferred": "AI 추론 · 검수 전", "recorded": "기록"}
@@ -149,7 +148,7 @@ def fmt_env(e: dict, dec: bool = True) -> str:
 
 
 def label_of(eid: str, e: dict, meta: dict, dec: bool = True) -> str:
-    """'31,211필지(실측 · 운봉읍 연속지적 필지 수)' — 값 옆에 꼬리표와 뜻(오용이 종이에서도 드러나게)."""
+    """'31,211필지(실측 · ○○읍 연속지적 필지 수)' — 값 옆에 꼬리표와 뜻(오용이 종이에서도 드러나게)."""
     m = re.sub(r"^\[\d+\]\s*", "", meta.get(eid, "") or "")
     m = re.sub(r"\s*\([^)]*\)", "", m).strip()
     tag = BASIS_KO.get(e.get("basis"), "")
@@ -157,7 +156,7 @@ def label_of(eid: str, e: dict, meta: dict, dec: bool = True) -> str:
 
 
 def render_plain(md: str, envs: dict, unverified: list[dict], meta: dict | None = None, flags: list[dict] | None = None, dec: bool = True) -> str:
-    """자리표 → '387필지(AI 추론 · 검수 전 · 아영면 의심 필지 수)' · 검증 안 된 숫자 → '[검증 안 된 숫자 삭제]' · 뜻 어긋난 문장 → '[봉투 뜻 확인 필요]'."""
+    """자리표 → '387필지(AI 추론 · 검수 전 · ○○면 의심 필지 수)' · 검증 안 된 숫자 → '[검증 안 된 숫자 삭제]' · 뜻 어긋난 문장 → '[봉투 뜻 확인 필요]'."""
     unv = {u["id"]: u for u in unverified}
     meta = meta or {}
     for f in flags or []:
@@ -245,11 +244,12 @@ def build_docx_local(emd: str, emd_cd: str, rule: str | None, narrative_plain: s
             r.font.color.rgb = RGBColor(0x01, 0x01, 0x02)
         return p
 
-    rn = L.summary()["rules"].get(rule or "", {}).get("name") if rule else None
+    from .tools.survey import RULE_NM
+    rn = RULE_NM.get(rule or "") if rule else None
     h(f"{emd} 농지 실태조사 초안" + (f" — {rule} {rn}" if rn else ""), 0)
     meta = doc.add_paragraph()
     meta.add_run(f"초안 · 검토 필요 · {FIXED}\n").bold = True
-    meta.add_run(f"대상 {emd}({emd_cd}) · 대장 V-World 연속지적(수집 2026-09-24) · 영상 2023 항공정사 25cm · 2025 드론(A02) · "
+    meta.add_run(f"대상 {emd}({emd_cd}) · 연속지적 × AI 영상 분석 · "
                  f"규칙 임계 [추정 초기값] · 작성 {model} · 온프레미스 · run {run_id} · {dt.datetime.now(KST):%Y-%m-%d %H:%M}")
     h("① 개요 · ② 소견 · ⑥ 조치 제안 (에이전트 서술 · 인용 [n])", 1)
     for para in narrative_plain.split("\n"):
@@ -502,7 +502,12 @@ async def _repair_cites(ctx: Ctx, md: str, uncited: list[str]) -> tuple[str, lis
 
 async def draft(ctx: Ctx, body: dict):
     started = time.perf_counter()
-    emd_n, emd_cd = L.emd_resolve(body.get("emd_cd") or body.get("emd"))
+    from .tools import scope as SC
+    q = body.get("emd_cd") or body.get("emd")
+    sgg = str(body.get("emd_cd") or "")[:5] if re.fullmatch(r"\d{8,10}", str(body.get("emd_cd") or "")) else (body.get("region") or (ctx.context or {}).get("region"))
+    reg = {"sgg": (SC.resolve(sgg) or [{}])[0].get("sgg_cd") if sgg else None}
+    emd_n, emd_cd = SC.emd_resolve(reg, q)
+    place = SC.name_of(emd_cd[:5]) if emd_cd else None
     rule = (body.get("rule") or "R1").upper()
     top = max(3, min(int(body.get("top") or 10), 20))
     await persist_start(ctx, f"보고서 초안 · {emd_n or body.get('emd_cd')} · {rule} · 상위 {top}", intent="report")
@@ -512,22 +517,24 @@ async def draft(ctx: Ctx, body: dict):
         await emit(ctx, "agent.failed", {"error": "bad_request", "message": f"읍면동 {body.get('emd_cd')} 을 찾지 못함"})
         await persist_state(ctx, state="failed", error="bad_request")
         return
-    steps = [{"i": 1, "tool": "survey_stats", "args": {"by": "rule", "emd": emd_n}, "why": WHY["survey_stats"], "by": "template"},
-             {"i": 2, "tool": "survey_findings", "args": {"rule": rule, "emd": emd_n, "top": top}, "why": WHY["survey_findings"], "by": "template"},
+    rg0 = {"region": emd_cd[:5]} if emd_cd else {}
+    steps = [{"i": 1, "tool": "survey_stats", "args": {"by": "rule", "emd": emd_n, **rg0}, "why": WHY["survey_stats"], "by": "template"},
+             {"i": 2, "tool": "survey_findings", "args": {"rule": rule, "emd": emd_n, "top": top, **rg0}, "why": WHY["survey_findings"], "by": "template"},
              {"i": 3, "tool": "llm_write", "args": {"paragraphs": 3}, "why": WHY["llm_write"], "by": "template"},
              {"i": 4, "tool": "llm_review", "args": {"lint": "strict", "meaning": "rules+llm"}, "why": WHY.get("llm_review", "검토: 숫자 검증기 · 봉투 뜻 검사"), "by": "template"},
              {"i": 5, "tool": "survey_reports_draft", "args": {"template": "survey-emd", "emd_cd": emd_cd, "rule": rule, "format": "docx"},
               "why": WHY["survey_reports_draft"], "by": "template"}]
     await emit(ctx, "agent.plan", {"steps": steps, "round": 1, "route": route, "template": "survey-emd", "emd": emd_n, "emd_cd": emd_cd, "rule": rule})
-    r1 = await run_tool(ctx, 1, "survey_stats", {"by": "rule", "emd": emd_n}, by="template")
-    r2 = await run_tool(ctx, 2, "survey_findings", {"rule": rule, "emd": emd_n, "top": top}, by="template")
+    rg = {"region": emd_cd[:5]} if emd_cd else {}          # 읍면동 이름은 전국에서 겹친다 — 초안 대상 시군구로 묶는다
+    r1 = await run_tool(ctx, 1, "survey_stats", {"by": "rule", "emd": emd_n, **rg}, by="template")
+    r2 = await run_tool(ctx, 2, "survey_findings", {"rule": rule, "emd": emd_n, "top": top, **rg}, by="template")
     if not (r1["ok"] and r2["ok"]):
         await emit(ctx, "agent.failed", {"error": "tool_failed", "message": "집계·목록 도구 실패"})
         await persist_state(ctx, state="failed", error="tool_failed")
         return
     await emit(ctx, "agent.tool.call", {"i": 3, "tool": "llm_write", "args": {"paragraphs": 3}, "by": "template"})
     messages = [{"role": "system", "content": WRITER},
-                {"role": "user", "content": f"대상: 남원시 {emd_n}({emd_cd}) · 규칙 {rule}.\n인용 번호 표(이 번호만 쓴다 · 봉투 eN 번호와 다르다):\n"
+                {"role": "user", "content": f"대상: {place or ''} {emd_n}({emd_cd}) · 규칙 {rule}.\n인용 번호 표(이 번호만 쓴다 · 봉투 eN 번호와 다르다):\n"
                                              + "\n".join(f"[{c['n']}] {c.get('addr') or c.get('label')}" for c in ctx.citations) + "\n\n"
                                              + writer_tables(ctx, rule) + "\n\n" + r1["block"] + "\n\n" + r2["block"]
                                              + "\n\n위 표의 자리표와 인용 번호만으로 세 단락을 써라."}]

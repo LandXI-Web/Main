@@ -37,9 +37,26 @@ async def job_events(job_id: str, request: Request):
         raise ApiError("not_found", f"job {job_id} 없음")
     if not (p.is_lx or p.tenant_id == row["tenant_id"]):
         raise ApiError("forbidden")
+    # 완료 이벤트(job.done)에 시군구 · 결과 세트를 싣는다(core-xi 계약 job.done{sgg_cd, set}) — 작업 옵션 sgg_cd → 영상의 sgg_cd
+    async with db(realm="lx") as conn:
+        extra = await conn.fetchrow("SELECT j.result_set, coalesce(j.options->>'sgg_cd', i.sgg_cd) AS sgg_cd, j.options->>'scope' AS scope "
+                                    "FROM jobs j LEFT JOIN imagery i ON i.id=j.imagery_id WHERE j.id=$1", job_id)
     r = await redis()
     key = f"events:{job_id}"
     start = _last_id(request)
+
+    def _data(ev: str, raw: str) -> str:
+        if ev != "job.done" or not extra:
+            return raw
+        try:
+            d = json.loads(raw)
+        except Exception:
+            return raw
+        d.setdefault("sgg_cd", extra["sgg_cd"])
+        d.setdefault("set", extra["result_set"])
+        if extra["scope"]:
+            d.setdefault("scope", extra["scope"])
+        return json.dumps(d, ensure_ascii=False)
 
     async def gen():
         cursor = start or "0-0"
@@ -61,7 +78,7 @@ async def job_events(job_id: str, request: Request):
             ended = False
             for eid, f in batch:
                 cursor = eid
-                yield ServerSentEvent(data=f.get("data", "{}"), event=f.get("event", "message"), id=eid)
+                yield ServerSentEvent(data=_data(f.get("event", ""), f.get("data", "{}")), event=f.get("event", "message"), id=eid)
                 if f.get("event") in TERMINAL:
                     ended = True
             if ended:

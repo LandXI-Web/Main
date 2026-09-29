@@ -37,16 +37,19 @@ from_contract.CONTRACT.update(LEDGER_CONTRACT)
 KINDS_ENUM = ["farm_ledger", "dev_permit", "public_asset", "river_permit", "greenhouse"]
 registry.SPECS.update({
     "ledger_ingest": {"description": "기관이 올린 대장(농지대장 등)의 반입 상태 — 행 수 · 열 자동 인식 · 더 필요한 열. 대장 질문의 첫 단계.",
-                      "properties": {"kind": {"type": "string", "enum": KINDS_ENUM}, "import_id": {"type": "string"}, "tenant_id": {"type": "string"}}},
+                      "properties": {"kind": {"type": "string", "enum": KINDS_ENUM}, "import_id": {"type": "string"}, "tenant_id": {"type": "string"},
+                                     "region": registry.REGION}},
     "ledger_match": {"description": "대장 × 연속지적 매칭 결과(결합률 · 미매칭 사유). 결합률이 낮으면 열 확인 표를 연다.",
-                     "properties": {"kind": {"type": "string", "enum": KINDS_ENUM}, "import_id": {"type": "string"}, "tenant_id": {"type": "string"}}},
+                     "properties": {"kind": {"type": "string", "enum": KINDS_ENUM}, "import_id": {"type": "string"}, "tenant_id": {"type": "string"},
+                                     "region": registry.REGION}},
     "ledger_rule": {"description": "자연어 조건('대장상 농지인데 AI가 건물로 본 필지' · '경작 신고인데 경작 흔적 없음' · '허가 필지인데 건물 없음')을 "
                                    "규칙 L1–L3 과 임계로 바꿔 이 기관 결과를 다시 계산. 사람이 확인 카드를 승인해야 실행.",
                     "properties": {"text": {"type": "string"}, "tenant_id": {"type": "string"}}, "required": ["text"]},
-    "ledger_findings": {"description": "대장과 AI 판독이 어긋난 필지(규칙 L1 대장 농지 위 건물 · L2 경작 흔적 없음 · L3 허가 필지 건물 없음) 목록 · 건수 · 읍면동별. "
+    "ledger_findings": {"description": "대장과 AI 분석이 어긋난 필지(규칙 L1 대장 농지 위 건물 · L2 경작 흔적 없음 · L3 허가 필지 건물 없음) 목록 · 건수 · 읍면동별. "
                                        "결과는 map_arrive 로 지도에 도착시킨다.",
-                        "properties": {"rule_id": {"type": "string", "enum": ["L1", "L2", "L3"]}, "top": {"type": "integer"}, "tenant_id": {"type": "string"}}},
-    "parcel_lookup": {"description": "지번(예: '대강면 방동리 123-4') 또는 PNU 로 필지 1곳 — 대장 · AI · 의심 · 이력.",
+                        "properties": {"rule_id": {"type": "string", "enum": ["L1", "L2", "L3"]}, "top": {"type": "integer"}, "tenant_id": {"type": "string"},
+                                       "region": registry.REGION}},
+    "parcel_lookup": {"description": "지번(읍면동 · 리 · 번지) 또는 PNU 로 필지 1곳 — 대장 · AI · 의심 · 이력.",
                       "properties": {"jibun": {"type": "string"}, "pnu": {"type": "string"}}},
 })
 registry.HANDLERS.update({"ledger_ingest": ledger_ingest.ledger_ingest, "ledger_match": ledger_match.ledger_match,
@@ -59,7 +62,7 @@ from_contract.CONTRACT.update(SUMMARY_CONTRACT)
 registry.SPECS["summary_lookup"] = {
     "description": "실제 보유 데이터 요약 — 어느 지역에 어떤 서비스 결과가 있는지 · 서비스 상태(운영 · 시범 · 첫 결과 전) · 대표 수치(AI 탐지 등). "
                    "'어느 지역에 어떤 결과가 있나' · '○○시 해양쓰레기 몇 건' · '○○ 결과 보여줘' 는 이것으로 답한다. 지역이 하나면 지도를 그 지역으로 옮긴다.",
-    "properties": {"region": {"type": "string", "description": "시군구 이름(예: 여수시) 또는 5자리 코드"},
+    "properties": {"region": {"type": "string", "description": "시군구 이름 또는 5자리 코드"},
                    "card": {"type": "string", "description": "서비스 이름 낱말(예: 해양쓰레기) 또는 카드 id"}}}
 registry.HANDLERS["summary_lookup"] = summary_lookup.summary_lookup
 _allowed_base = registry.allowed
@@ -302,7 +305,9 @@ SYSTEM = """너는 Land-XI XI맵의 GeoAI 에이전트다(LX 한국국토정보�
 7) 프레임 분석 요청: jobs_quote 다음 jobs_submit 을 부른다. 실행은 사람이 확인 카드로 승인해야 된다.
 8) 답은 한국어 2~3문장, 보고체(~습니다). 필지 목록을 줄마다 다시 나열하지 않는다(지도와 인용 칩이 보여 준다).
    목록 답의 모양: "조건에 맞는 의심 필지 {{env:eA}} 중 점수 상위 {{env:eB}}를 지도에 표시했습니다. 1위는 ○○리 지번으로 AI 건물 근거 면적 {{env:eC}}입니다 [n]. 현장조사 대상 후보이며 건축물대장 대조 전입니다."
-9) 어느 지역에 어떤 서비스 결과가 있는지 · 서비스 상태 · '○○ 몇 건' 은 summary_lookup 으로 확인한다. 결과가 없으면 '해당 지역 데이터가 없습니다'라고만 답한다."""
+9) 어느 지역에 어떤 서비스 결과가 있는지 · 서비스 상태 · '○○ 몇 건' 은 summary_lookup 으로 확인한다. 결과가 없으면 '해당 지역 데이터가 없습니다'라고만 답한다.
+10) 대장 × AI 질문('대장상 ~인데 AI가 ~')은 ledger_findings, 실태조사 의심은 survey_findings · survey_stats. 질문에 시군구가 있으면 region 인자로 넘긴다.
+11) 용어: '판독' 대신 'AI 분석', '반입' 대신 '데이터 올리기', '검수' 대신 '결과 확인'. 지역·기관 이름은 데이터에 있는 그대로 쓴다."""
 
 
 def context_line(c: dict, intent: str) -> str:
@@ -471,6 +476,10 @@ async def execute(ctx: Ctx, message: str):
     if sr:
         await answer_summary(ctx, msg, sr, started, scr)
         return
+    lg = ledger_route(ctx, msg)
+    if lg:
+        await answer_ledger(ctx, msg, lg, started, scr)
+        return
     route = await backends.classify(msg, ctx.r)
     await emit(ctx, "agent.route", {"intent": route["intent"], "ms": route["ms"], "backend": route["backend"], "model": route["model"],
                                     "pii": scr["pii"]})
@@ -576,7 +585,7 @@ async def scope_guard(ctx: Ctx, msg: str) -> dict | None:
         city = nm.split(" ")[0]            # '전주시 완산구' → '전주시'(구가 있는 시는 시 이름으로도 부른다)
         for key in {nm, city}:
             stem = key[:-1] if len(key) >= 3 and key[-1] in "시군" else None
-            # '남원' '남원시' '여수에서' — 이름 또는 어간이 단어 앞머리에 오는 경우만(부분 문자열 오탐 방지: '서구' 같은 구 이름은 어간 없음)
+            # '○○' '○○시' '○○에서' — 이름 또는 어간이 단어 앞머리에 오는 경우만(부분 문자열 오탐 방지: '서구' 같은 구 이름은 어간 없음)
             if re.search(r"(^|[\s·,(])" + re.escape(key), text) or (stem and re.search(r"(^|[\s·,(])" + re.escape(stem) + r"(?![가-힣]{2,}[시군구])", text)):
                 hits.append({**r, "_key": key})
                 break
@@ -657,6 +666,62 @@ async def needs_llm(ctx: Ctx, msg: str) -> bool:
     if await scope_guard(ctx, scr["message"]):
         return False
     return not await summary_route(ctx, scr["message"])
+
+
+# ── 대장 × AI 질문 → ledger_findings 직행(core-fusion · 한 문장 → 지도 채색 + 표 + 집계) ──────────────────────
+# '대장상 농지인데 AI가 건물로 본 필지' 처럼 대장 규칙(L-*) 어휘가 있으면 도구 선택을 모델에 맡기지 않는다(요약 도구로 새지 않게).
+# 조회 도구 → 지도 도착은 런타임이 부르고, 답 문장은 LLM(vLLM → Ollama)이 도구 봉투로 쓴다. 임계를 바꾸는 말(숫자)은 ledger_rule(확인 카드) 경로.
+LEDGER_ASK = re.compile(r"대장|신고|허가")
+
+
+def ledger_route(ctx: Ctx, msg: str) -> dict | None:
+    p = ctx.principal
+    if p.realm not in ("tenant", "lx") or not LEDGER_ASK.search(msg or "") or (ctx.context or {}).get("mode") == "ledger":
+        return None                                   # gov-fusion 결합표 필터(JSON 계획)는 모델 경로 그대로
+    got = ledger_rule.parse(msg)
+    if not got or got.get("thresholds") or re.search(r"다시\s*(뽑|계산|적용)|기준\s*을?\s*바꿔|임계", msg):
+        return None
+    args = {"rule_id": got["rule"], "top": 10}
+    hits = summary_lookup.match_regions(msg)
+    if len({h["sgg_cd"] for h in hits}) == 1:
+        args["region"] = hits[0]["sgg_cd"]
+    return args
+
+
+async def answer_ledger(ctx: Ctx, msg: str, args: dict, started: float, scr: dict):
+    route = {"intent": "map", "ms": 0, "backend": "runtime", "model": "대장 규칙 직행"}
+    await emit(ctx, "agent.route", {**route, "pii": scr["pii"]})
+    await persist_state(ctx, intent="ledger")
+    plan = [{"i": 1, "tool": "ledger_findings", "args": args, "why": WHY["ledger_findings"], "by": "runtime"},
+            {"i": 2, "tool": "map_arrive", "args": {}, "why": WHY["map_arrive"], "by": "runtime"}]
+    ctx.state["plan"] = plan
+    await emit(ctx, "agent.plan", {"steps": plan, "round": 1, "route": route, "model": {"id": "런타임", "backend": "runtime"}})
+    r1 = await run_tool(ctx, 1, "ledger_findings", args, by="runtime")
+    blocks = [r1["block"]]
+    if r1["ok"] and (r1.get("raw") or {}).get("features"):
+        r2 = await run_tool(ctx, 2, "map_arrive", {}, by="runtime")
+        blocks.append(r2["block"])
+    messages = [{"role": "system", "content": SYSTEM},
+                {"role": "user", "content": context_line(ctx.context, "map") + "\n\n" + msg},
+                {"role": "user", "content": "[런타임] 대장 × AI 대조 도구 결과:\n" + "\n".join(blocks)
+                 + "\n이 결과만으로 2문장 답한다(도구 더 부르지 말 것). 지역·대장 이름은 데이터 그대로, 숫자는 봉투 자리표로만."}]
+
+    async def on_delta(piece):
+        await emit(ctx, "agent.token", {"delta": piece})
+    await persist_state(ctx, state="writing")
+    try:
+        res = await backends.chat_stream(messages, tools=None, max_tokens=config.MAX_TOKENS_ANSWER, on_delta=on_delta, r=ctx.r)
+    except backends.LLMUnavailable:
+        res = None
+    if res is None:
+        tot = ctx.env_id("total", 1)
+        text = (f"대장과 AI 분석이 어긋난 필지는 {{{{env:{tot}}}}}입니다." if tot else "지금은 답할 수 없습니다")
+        await finish(ctx, text, None, started, route, {}, lint_on=False)
+        return
+    ctx.tokens_in += int(res.usage.get("prompt_tokens") or 0)
+    ctx.tokens_out += int(res.usage.get("completion_tokens") or 0)
+    ctx.state["rounds"] = 1
+    await finish(ctx, res.content or "", res, started, route, {"first_token_ms": res.first_token_ms})
 
 
 async def answer_summary(ctx: Ctx, msg: str, sr: dict, started: float, scr: dict):
@@ -791,6 +856,9 @@ async def redteam_case(c: dict, p) -> str:
         return "answer" if (o.raw or {}).get("items") else "rejected:no_region_data"
     if tool == "summary_lookup":
         return "not_routed"
+    lg = ledger_route(ctx, scr["message"])
+    if lg and tool and tool != "ledger_findings":
+        return "routed:ledger_findings"
     return "answer" if (not tool or tool in registry.SPECS and registry.allowed(tool, p)) else f"tool_denied:{tool}"
 
 

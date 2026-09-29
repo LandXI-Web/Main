@@ -44,7 +44,11 @@ export function tenantName(id) {
   const t = D.tenants.find((x) => x.id === id);
   return (t?.name?.ko || '').replace(PROV, '').replace(/\s*\(.*\)$/, '') || '기관';
 }
-export const regionName = (d) => (d.region_name?.ko || '').replace(PROV, '');
+export const regionName = (d) => {
+  const ko = String(d.region_name?.ko || '').replace(PROV, '');
+  const p = ko.trim().split(/\s+/);          // 시도 이름이 규칙 밖(통합특별시 등)이어도 시군구만 — '여수시'
+  return d.sgg_cd && p.length > 1 ? p.slice(1).join(' ') : ko;
+};
 export const cardName = (id) => (D.cards.find((c) => c.id === id)?.name || '').replace(/\s*\(해외\)$/, '').replace(/ 행정서비스$| 서비스$/, '').replace(/판독/g, 'AI 분석') || '서비스';
 /** 배포 주체: 기관 배포 = 기관 이름 · LX 자체 배포 = 지역 이름 */
 export const whoOf = (d) => (d.tenant_id === 'lx' ? regionName(d) : tenantName(d.tenant_id));
@@ -100,7 +104,7 @@ function fromServer(r) {
   const d = kind === 'deploy' || kind === 'port' ? D.deploys.find((x) => x.id === sid) : null;
   if (d && (d.tenant_id === 'lx-demo' || /-test(-\d+)?$/.test(d.id))) return null;
   let target, changes = [];
-  if (d) target = `${whoOf(d)} ${cardName(d.card_id)}`;
+  if (d) target = kind === 'port' && d.sgg_cd && d.tenant_id !== 'lx' ? `${tenantName(d.tenant_id)} ${regionName(d)} ${cardName(d.card_id)}` : `${whoOf(d)} ${cardName(d.card_id)}`;
   else if (kind === 'quota') target = tenantName(sid);
   else target = String(r.title || '').replace(PROV, '').replace(/\s*\(해외\)$/, '') || '—';
   if (kind === 'port') {
@@ -182,8 +186,8 @@ export function pendingEnv(list = pending()) {
 /* ── 결정(쓰기) — 서버 계약 그대로 ─────────── */
 export async function decide(item, decision, reason) {
   const r = reason || (decision === 'approve' ? '승인' : '');
-  const step = async () => {        // 승인 뒤 단계: 이식 = 검증 · 배포 승인 = 운영(서버가 승인 수 부족으로 거절하면 개발 서랍에만 남긴다)
-    if (decision !== 'approve' || !(item.kind === 'deploy' || item.kind === 'port')) return;
+  const step = async () => {        // 승인 뒤 단계: 배포 승인 = 운영. 다른 지역 적용(port)은 서버 한 흐름이 영상 확인 뒤 검증 단계로 올린다(화면은 올리지 않는다)
+    if (decision !== 'approve' || item.kind !== 'deploy') return;
     const to = item.kind === 'deploy' ? 'ga' : 'shadow';
     try { await api(`/deploys/${item.ref}/rollout`, { method: 'POST', body: { stage: to } }); } catch (e) { devlog('rollout', `${item.ref} → ${to} · ${e.code}`); }
   };

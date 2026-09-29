@@ -150,3 +150,16 @@ body[data-view="none"] .gf-sheet{opacity:0;pointer-events:none}   /* 서버 기�
 .gf-svc-m small{font:500 var(--fs-label)/1 var(--font-body);color:var(--sub)}
 @media (max-width:1100px){.gf-ingest.gf-status{max-width:calc(100% - 320px - 64px)}}
 @media (max-width:640px){.gf-ingest.gf-status{max-width:none;padding:14px 16px;gap:10px}.gf-svc-m{margin-top:2px}.gf-svc-m b{font-size:20px}}
+/* 관할 서비스 줄 — 시군구마다 한 줄(summary) */
+.gf-svcbar{position:absolute;z-index:9;left:16px;top:16px;display:flex;flex-direction:column;gap:6px;width:min(400px,calc(100% - var(--sheet) - 64px))}
+.gf-svcbar[hidden]{display:none}
+.gf-svcbar-i{display:flex;align-items:baseline;gap:8px;padding:8px 14px;border-radius:12px;background:var(--bg-1);box-shadow:0 2px 12px rgba(28,31,37,.12);color:var(--fg-1,inherit);text-decoration:none;font-size:13px;white-space:nowrap}
+.gf-svcbar-i b{font-weight:700}
+.gf-svcbar-i span{color:var(--fg-2,#6b7280);overflow:hidden;text-overflow:ellipsis;min-width:0}
+.gf-svcbar-i .num{margin-left:auto;flex:none;color:var(--fg-1,inherit);font-weight:600}
+.gf-svcbar-i[aria-current=true]{outline:2px solid var(--ai,#3182f6)}
+@media (max-width:640px){
+  .gf-svcbar{left:12px;right:12px;top:12px;width:auto;max-width:none;flex-direction:row;overflow-x:auto;scrollbar-width:none}
+  .gf-svcbar-i{flex:0 0 auto}
+  body.gf-has-svc .gf-ingest,body.gf-has-svc .gf-big{top:60px}
+}

@@ -120,6 +120,8 @@ export async function tileUrl(item, params = {}) {
   }
   if (API.mode === 'on') {
     if (item.source === 'xyz') return { tiles: [`${API.base}/tiles/xyz/${item.set.split('/').pop()}/{z}/{x}/{y}.webp`] };
+    // 등록 원본 영상(COG 동적 타일 · LX 전용) — PMTiles 가 아직 없으므로 서버가 준 타일 주소를 그대로 쓴다
+    if (item.source === 'cog') return { tiles: [await signSet(item.set)] };
     const u = item.signed ? await signSet(item.set) : `${API.base}/tiles/pmtiles/${item.set}.pmtiles`;
     return { url: 'pmtiles://' + u };
   }

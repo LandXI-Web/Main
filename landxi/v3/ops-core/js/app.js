@@ -4,7 +4,7 @@
 import { gate, shell, bignum, table, drawer, closeAll, toast, devDrawer, devlog, empty, t } from '../../kit/index.js';
 import { h, esc, ymd } from '../../kit/util.js';
 import { sse } from '../../../shared/api-v1.js';
-import { D, loadAll, loadFast, pending, pendingEnv, openAlerts, power, nearLimits, decide, hasS9 } from './data.js';
+import { D, loadAll, loadFast, pending, pendingEnv, openAlerts, power, nearLimits, decide, hasS9, canon } from './data.js';
 import { mountMap } from './map.js';
 
 const who = await gate('ops-core');
@@ -64,6 +64,9 @@ function drawOverview() {
   rows.push({ t: al.length ? `경보 ${al.length}` : '경보 없음', lv: al.length ? 'warn' : '', href: INFRA });
   const p = power();
   rows.push({ t: `전력 예산 ${p.hot}/${p.max} GPU 고부하`, lv: p.ok ? '' : 'warn', dot: p.hot ? 'lock' : '', href: INFRA });
+  /* 한 흐름: 결재 뒤 이어지는 AI 분석·실태조사(같은 작업의 GPU·사용량·배포 단계는 배포 화면 시트) */
+  const flowing = canon().filter((d) => ['starting', 'analyzing', 'surveying'].includes(d.flow?.state));
+  if (flowing.length) rows.push({ t: `AI 분석 진행 ${flowing.length}`, lv: '', href: INFRA + '?view=deploys' + (flowing.length === 1 ? '&deploy=' + encodeURIComponent(flowing[0].id) : '') });
   for (const q of nearLimits().slice(0, 3)) rows.push({ t: `한도 임박 ${q.name} ${q.dim}`, lv: q.over ? 'warn' : '', dot: 'lock', href: INFRA + '?view=tenants' });
   todoEl.innerHTML = rows.map((r) => `<li><a href="${esc(r.href)}" data-lv="${r.lv}"><i data-dot="${r.dot || ''}"></i><span>${esc(r.t)}</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5l4.5 4.5L6 12.5"/></svg></a></li>`).join('');
   M.sync();

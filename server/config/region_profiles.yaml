@@ -1,7 +1,8 @@
 # 지역 프로필(F1-CONTRACT §6) — 배포본 region_profile 이 가리키는 곳. bbox 는 4326.
+# core-flow(2026-09-29): 국내 배포본의 지역 = deploys.sgg_cd(시군구 코드 · 경계는 regions_base) 가 정본. 여기 국내 항목은 옛 배포본 이름표로만 남고,
+# 새 적용은 region(sgg_cd)으로만 받는다(POST /deploys). 파일 경로 의존(aoi_from) 없음 — 해외 항목만 bbox 가 지역을 정한다.
 profiles:
-  namwon: {name: {ko: 전북특별자치도 남원시, en: "Namwon-si, Jeonbuk"}, crs: EPSG:5186, locale: ko, bbox: [127.1667, 35.2905, 127.6831, 35.5769],
-           aoi_from: landxi/assets/data/geo/namwon-emd.geojson}
+  namwon: {name: {ko: 전북특별자치도 남원시, en: "Namwon-si, Jeonbuk"}, crs: EPSG:5186, locale: ko, bbox: [127.1667, 35.2905, 127.6831, 35.5769]}
   gwangju-jeonnam: {name: {ko: 광주전남특별시, en: "Gwangju-Jeonnam"}, crs: EPSG:5186, locale: ko, bbox: [126.0, 34.2, 127.9, 35.5]}
   iksan-hwangdeung: {name: {ko: 전북특별자치도 익산시 황등면, en: "Hwangdeung-myeon, Iksan"}, crs: EPSG:5186, locale: ko,
                      bbox: [126.94188, 35.99146, 126.95118, 36.00481]}

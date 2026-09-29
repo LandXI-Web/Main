@@ -14,7 +14,7 @@ import io
 import re
 
 from . import rules as R
-from .db import AS_OF, FIXED_PHRASE, IMG23, IMG25, LEDGER, RULE_IDS, SRC_SUSPECTS, STATES, TENANT
+from .db import AS_OF, FIXED_PHRASE, IMG23, IMG25, LEDGER, RULE_IDS, SRC_SUSPECTS, STATES
 from .explain import env
 
 KST = dt.timezone(dt.timedelta(hours=9))
@@ -41,9 +41,13 @@ def _conn(realm: str, tenant: str):
 def collect(emd_cd: str, rule: str | None = None, top: int = 20, realm: str = "lx", tenant: str = "") -> dict:
     """초안 데이터(봉투 전 원값) — RLS 는 호출자 realm/tenant 그대로."""
     with _conn(realm, tenant) as c:
-        e = c.execute("SELECT emd_cd, name, names, parcels, area_ha, farm_parcels, jimok_top FROM survey_emd WHERE emd_cd=%s", (emd_cd,)).fetchone()
+        e = c.execute("SELECT emd_cd, name, names, parcels, area_ha, farm_parcels, jimok_top, coalesce(sgg_cd, left(emd_cd, 5)) sgg_cd, tenant_id "
+                      "FROM survey_emd WHERE emd_cd=%s", (emd_cd,)).fetchone()
         if not e:
-            raise NotFound(f"읍면동 {emd_cd} 없음(남원 39 법정동 밖이거나 다른 기관)")
+            raise NotFound(f"읍면동 {emd_cd} 없음(실태조사를 만들지 않은 곳이거나 다른 기관)")
+        sg = c.execute("SELECT sgg_cd, tenant_id, name, sido, imagery, parcels_as_of, priority_cut, parcels_src ? 'canon' AS canon "
+                       "FROM survey_sgg WHERE sgg_cd=%s", (e["sgg_cd"],)).fetchone()
+        org = c.execute("SELECT name->>'ko' AS ko FROM tenants WHERE id=%s", ((sg or {}).get("tenant_id") or e["tenant_id"],)).fetchone()
         w = "emd_cd=%s" + (" AND rule=%s" if rule else "")
         a = (emd_cd, rule) if rule else (emd_cd,)
         agg = c.execute(f"SELECT rule, priority, state, count(*) n FROM survey_findings WHERE {w} GROUP BY 1,2,3", a).fetchall()
@@ -53,8 +57,25 @@ def collect(emd_cd: str, rule: str | None = None, top: int = 20, realm: str = "l
                          f"ORDER BY f.score DESC, f.rank LIMIT %s", a + (top,)).fetchall()
         sp = c.execute(f"SELECT count(DISTINCT pnu) FROM survey_findings WHERE {w}", a).fetchone()["count"]
         cut = c.execute("SELECT value FROM survey_meta WHERE key='priority_cut'").fetchone()
+    region = _region(e["sgg_cd"], sg)
+    region["org"] = (org or {}).get("ko")
     return {"emd": dict(e), "rule": rule, "top": top, "agg": [dict(x) for x in agg], "rows": [dict(x) for x in rows],
-            "suspect_parcels": sp, "cut": (cut or {}).get("value"), "at": dt.datetime.now(KST)}
+            "suspect_parcels": sp, "cut": (cut or {}).get("value") if region["canon"] else ((sg or {}).get("priority_cut") or (cut or {}).get("value")),
+            "region": region, "at": dt.datetime.now(KST)}
+
+
+def _region(sgg_cd: str, sg: dict | None) -> dict:
+    """시군구 이름 · 시도 · 영상 표기 — 데이터(regions · survey_sgg)에서. 정본(canon)이면 옛 두 시점 표기."""
+    from . import nation as N
+    try:
+        rg = N.region(sgg_cd)
+    except Exception:
+        rg = {"sgg_cd": sgg_cd, "name": (sg or {}).get("name") or sgg_cd, "sido": (sg or {}).get("sido"), "full": (sg or {}).get("name") or sgg_cd}
+    canon = bool((sg or {}).get("canon")) if sg else True
+    img = [IMG23, IMG25] if canon else [x for x in [(sg or {}).get("imagery")] if x]
+    asof = (sg or {}).get("parcels_as_of") or ""
+    return {"sgg_cd": rg["sgg_cd"], "name": rg.get("name"), "sido": rg.get("sido"), "full": rg.get("full"), "canon": canon, "imagery": img,
+            "ledger": LEDGER if canon else (f"연속지적(전국 · {asof})" if asof else "연속지적(전국)")}
 
 
 def _table(d: dict) -> dict:
@@ -79,7 +100,7 @@ def citations(d: dict) -> list[dict]:
     c = [
         {"n": 1, "label": f"{e['name']} 연속지적 필지 수", "value": env(e["parcels"], "필지", "measured", LEDGER)},
         {"n": 2, "label": "실태조사 대상 후보(의심) 건수" + (f" · {d['rule']}" if d["rule"] else ""), "value": env(tot, "count", "inferred", src, "검수 전")},
-        {"n": 3, "label": "그중 A등급(전체 점수 상위 5%)", "value": env(a_n, "count", "inferred", src, "검수 전")},
+        {"n": 3, "label": f"그중 A등급({d['region']['name']} 전체 점수 상위 5%)", "value": env(a_n, "count", "inferred", src, "검수 전")},
         {"n": 4, "label": "후보 필지 수", "value": env(d["suspect_parcels"], "필지", "inferred", src, "검수 전")},
         {"n": 5, "label": "미조치(open) 건수", "value": env(sum(v["open"] for v in t.values()), "count", "recorded", "survey_findings.state")},
     ]
@@ -96,7 +117,8 @@ def _default_narrative(d: dict, cites: list[dict]) -> dict:
     v = {c["n"]: c["value"]["value"] for c in cites}
     rules_txt = ", ".join(f"{c['label'].split(' 건수')[0]} {c['value']['value']:,}건 [{c['n']}]" for c in cites[5:]) or "해당 규칙 후보 없음"
     return {
-        "overview": [f"{e['name']}의 연속지적 {v[1]:,}필지를 2023년 25cm 항공정사 AI 결과와 대조했다 [1].",
+        "overview": [f"{d['region']['name']} {e['name']}의 연속지적 {v[1]:,}필지를 "
+                     f"{(d['region']['imagery'] or ['영상'])[0]} AI 결과와 대조했다 [1].",
                      f"규칙에 걸린 실태조사 대상 후보는 {v[2]:,}건이며 후보 필지는 {v[4]:,}필지다 [2][4]."],
         "findings": [f"규칙별로는 {rules_txt}이다.",
                      f"점수 상위 5%인 A등급은 {v[3]:,}건으로 현장 확인 우선 대상이다 [3]."],
@@ -142,12 +164,14 @@ def as_json(d: dict, narrative=None) -> dict:
     src = f"PostGIS survey_findings (emd_cd {e['emd_cd']})"
     th = R.default_thresholds()
     rules = [d["rule"]] if d["rule"] else RULE_IDS
+    rg = d["region"]
     return {
         "template": "survey-emd", "emd_cd": e["emd_cd"], "emd": e["name"], "rule": d["rule"], "limit": d["top"],
-        "title": f"{e['name']} 실태조사 대상 후보 보고서(초안)", "fixed": FIXED_PHRASE,
-        "overview": {"emd": e["name"], "parcels": env(e["parcels"], "필지", "measured", LEDGER),
-                     "area_ha": env(e["area_ha"], "ha", "measured", "survey/namwon-parcel-emd-summary.json"),
-                     "imagery": [f"{IMG23}", f"{IMG25}"], "ledger": LEDGER,
+        "org": rg.get("org"), "sgg_cd": rg["sgg_cd"], "sgg": rg["name"], "sido": rg.get("sido"), "region_full": rg.get("full"),
+        "title": f"{rg['name']} {e['name']} 실태조사 대상 후보 보고서(초안)", "fixed": FIXED_PHRASE,
+        "overview": {"org": rg.get("org"), "sgg": rg["name"], "emd": e["name"], "parcels": env(e["parcels"], "필지", "measured", rg["ledger"]),
+                     "area_ha": env(e["area_ha"], "ha", "measured", "survey_emd"),
+                     "imagery": rg["imagery"], "ledger": rg["ledger"],
                      "rules": [{"id": r, "name": R.definitions()[r]["name"], "condition": R.condition_text(r, th)} for r in rules],
                      "thresholds_note": "임계는 전부 [추정 초기값] — 법령 기준 아님 · 현장조사로 보정"},
         "table": [{"rule": r, "name": R.definitions()[r]["name"],
@@ -163,7 +187,9 @@ def as_json(d: dict, narrative=None) -> dict:
                        "img_date": x["img_date"]} for i, x in enumerate(d["rows"])],
         "imagery_note": {"aoi_in": env(sum(1 for x in d["rows"] if x["n_change"]), "count", "recorded", "survey_timeline change 이벤트"),
                          "aoi_out": env(sum(1 for x in d["rows"] if not x["n_change"]), "count", "recorded", "survey_timeline"),
-                         "note": "드론 4시점은 0.8×0.9km AOI(A01)만 덮는다 — 그 밖은 2023 ↔ 2025 두 시점(README §5)"},
+                         "canon": rg["canon"], "imagery": rg["imagery"],
+                         "note": ("드론 4시점은 0.8×0.9km AOI(A01)만 덮는다 — 그 밖은 2023 ↔ 2025 두 시점(README §5)" if rg["canon"]
+                                  else "AI 분석 영상 한 시점 — 시점 비교(변화)는 두 번째 영상 등록 후")},
         "law": [{"rule": r, "candidates": LAW_CANDIDATES[r], "status": "[법령 확인 · 2차 RAG]"} for r in rules],
         "actions": {"field_targets": env(sum(v["A"] for v in t.values()), "count", "inferred", src, "A등급 우선 · 검수 전"),
                     "checklist": ["건축물대장 대조(건축HUB API 키 대기)", "농지·산지전용 허가 대장 대조(기관 대장 표본 대기)",
@@ -174,7 +200,7 @@ def as_json(d: dict, narrative=None) -> dict:
         "narrative_source": "llm(인용 검사 통과)" if narr else "정형 문장(LLM 미사용)",
         "narrative_rejected": why if (narrative is not None and not narr) else [],
         "as_of": AS_OF, "generated": d["at"].isoformat(timespec="seconds"), "source": src,
-        "filename": filename(e["name"], d["at"]),
+        "filename": filename(f"{rg['name']}_{e['name']}", d["at"]),
     }
 
 
@@ -274,9 +300,9 @@ def render_docx(d: dict, narrative=None) -> tuple[bytes, str]:
     st.element.rPr.rFonts.set(qn("w:eastAsia"), "맑은 고딕")
     # 머리
     hdr = sec.header.paragraphs[0]
-    _font(hdr.add_run(f"Land-XI 실태조사 · 서식 survey-emd · {j['emd']}({j['emd_cd']}) · 초안"), 8, False, "6B7780")
+    _font(hdr.add_run(" · ".join(x for x in ["Land-XI 실태조사", j.get("org"), f"{j['sgg']} {j['emd']}", "초안"] if x)), 8, False, "6B7780")
     _p(doc, j["title"], 17, True, "14202A", space_after=2)
-    _p(doc, f"작성 {j['generated'][:16].replace('T', ' ')} · 자료 기준 {AS_OF} · 대상 {j['emd']}"
+    _p(doc, f"작성 {j['generated'][:16].replace('T', ' ')} · 기관 {j.get('org') or '—'} · 대상 {j.get('region_full') or j['sgg']} {j['emd']}"
             + (f" · 규칙 {j['rule']}" if j["rule"] else " · 규칙 R1–R6") + f" · 상위 {j['limit']}건", 9, False, "56626B")
     box = doc.add_table(rows=1, cols=1)
     box.style = "Table Grid"
@@ -292,7 +318,8 @@ def render_docx(d: dict, narrative=None) -> tuple[bytes, str]:
     _p(doc, "① 개요", 12.5, True, "14202A")
     o = j["overview"]
     _tbl(doc, ["항목", "내용", "꼬리표"], [
-        ["대상 읍면동", f"{o['emd']} (법정동 {j['emd_cd']})", ""],
+        ["기관", o.get("org") or "—", ""],
+        ["대상", f"{j.get('region_full') or o['sgg']} {o['emd']} (법정동 {j['emd_cd']})", ""],
         ["필지 수", f"{o['parcels']['value']:,}필지 · {o['area_ha']['value']:,.1f} ha", TAG["measured"]],
         ["영상", " / ".join(o["imagery"]), "기록"],
         ["대장", o["ledger"] + " (연속지적 표기 지목 · 토지대장 원본과 다를 수 있음)", "기록"],
@@ -311,14 +338,15 @@ def render_docx(d: dict, narrative=None) -> tuple[bytes, str]:
     tot = ["계"] + [sum(x[i] for x in rows) for i in range(1, 10)]
     _tbl(doc, ["규칙", "A", "B", "C", "계", *[STATE_KO[s] for s in STATES]], rows + [tot],
          widths=[4.6, 1.2, 1.2, 1.4, 1.4, 1.5, 1.2, 1.5, 1.2, 1.2])
-    _p(doc, "꼬리표: 등급·건수 = AI 추론 · 검수 전 / 상태 = 기록(survey_finding_events). 등급 A = 남원 전체 점수 상위 5%, B = 다음 20%.",
+    _p(doc, f"꼬리표: 등급·건수 = AI 추론 · 검수 전 / 상태 = 기록. 등급 A = {j['sgg']} 전체 점수 상위 5%, B = 다음 20%.",
        8, False, "56626B")
     for s in j["narrative"].get("findings", []):
         _p(doc, s, 9.5, space_after=2)
     # ③ 의심 상위 N
     _p(doc, "", space_after=2)
     _p(doc, f"③ 의심 상위 {j['limit']}건 (점수순)", 12.5, True, "14202A")
-    trs = [[x["order"], x["pnu"], (x["addr"] or "").replace("전북특별자치도 남원시 ", ""), x["jimok"], x["rule"], x["priority"],
+    strip = (j.get("region_full") or "") + " "
+    trs = [[x["order"], x["pnu"], (x["addr"] or "").replace(strip, ""), x["jimok"], x["rule"], x["priority"],
             x["evid_m2"]["value"], f"{x['evid_pct']['value']:.0f}%", "-" if x["conf"]["value"] is None else f"{x['conf']['value']:.2f}",
             STATE_KO.get(x["state"], x["state"])] for x in j["top_items"]]
     _tbl(doc, ["No", "PNU", "소재지", "지목", "규칙", "등급", "근거면적㎡", "필지 대비", "신뢰도", "상태"], trs,
@@ -328,10 +356,15 @@ def render_docx(d: dict, narrative=None) -> tuple[bytes, str]:
     _p(doc, "", space_after=2)
     _p(doc, "④ 근거 영상 표기", 12.5, True, "14202A")
     im = j["imagery_note"]
-    _tbl(doc, ["구분", "건수(상위 N 안)", "영상"], [
-        ["드론 AOI 안(4시점)", im["aoi_in"]["value"], "2023 25cm 항공 · 2025-04/06/08/10 드론(A01 · 변화지수 비지도)"],
-        ["AOI 밖(2시점)", im["aoi_out"]["value"], "2023 25cm 항공 · 2025 드론(A02 · 촬영월 미상)"],
-    ], widths=[4.0, 3.0, 10.4])
+    if im.get("canon"):
+        _tbl(doc, ["구분", "건수(상위 N 안)", "영상"], [
+            ["드론 AOI 안(4시점)", im["aoi_in"]["value"], "2023 25cm 항공 · 2025-04/06/08/10 드론(A01 · 변화지수 비지도)"],
+            ["AOI 밖(2시점)", im["aoi_out"]["value"], "2023 25cm 항공 · 2025 드론(A02 · 촬영월 미상)"],
+        ], widths=[4.0, 3.0, 10.4])
+    else:
+        _tbl(doc, ["구분", "건수(상위 N 안)", "영상"], [
+            ["AI 분석 영상", im["aoi_in"]["value"] + im["aoi_out"]["value"], " / ".join(im.get("imagery") or []) or "—"],
+        ], widths=[4.0, 3.0, 10.4])
     _p(doc, im["note"], 8, False, "56626B")
     # ⑤ 법적 근거(결손)
     _p(doc, "", space_after=2)
@@ -369,11 +402,11 @@ def build_draft(emd_cd: str, rule: str | None = None, top: int = 20, narrative=N
     return as_json(d, narrative)
 
 
-if __name__ == "__main__":   # python -m survey.report 52190450 R1 20 out.docx
+if __name__ == "__main__":   # python -m survey.report <법정동 8자리> R1 20 out.docx
     import sys
     emd, rl, n, out = sys.argv[1], (sys.argv[2] if len(sys.argv) > 2 and sys.argv[2] != "-" else None), \
         int(sys.argv[3]) if len(sys.argv) > 3 else 20, sys.argv[4] if len(sys.argv) > 4 else None
     blob, name = render_docx(collect(emd, rl, n))
     p = out or name
     open(p, "wb").write(blob)
-    print(p, len(blob), "bytes", "tenant", TENANT)
+    print(p, len(blob), "bytes")

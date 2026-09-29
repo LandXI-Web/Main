@@ -25,12 +25,15 @@ test('게스트 — 실태조사 라우트 전부 401', async ({ request }) => {
 
 test('다른 기관(광주·전남) — 남원 실태조사 0건 · 단건 404', async ({ request }) => {
   const h = await tok(request, { realm: 'tenant', tenant_id: 'gwangju-jeonnam', login: 'gj-manager', password: PW });
-  const j = await (await request.get(API + '/survey/findings?limit=50', { headers: h })).json();
+  // 광주전남은 제 시군구(여수·목포 등) 실태조사를 가진다 — 남원 것은 0건이어야 한다
+  const j = await (await request.get(API + '/survey/findings?limit=50&sgg=52190', { headers: h })).json();
   expect(j.total.value).toBe(0);
   expect(j.items).toEqual([]);
+  const mine = await (await request.get(API + '/survey/findings?limit=200', { headers: h })).json();
+  expect(mine.items.filter((it) => String(it.pnu || '').startsWith('52190'))).toEqual([]);
   expect((await request.get(API + '/survey/findings/f_R1_5219045021110530012', { headers: h })).status()).toBe(404);
   expect((await request.get(API + '/survey/parcels/5219045021110530012', { headers: h })).status()).toBe(404);
-  const s = await (await request.get(API + '/survey/stats?by=rule', { headers: h })).json();
+  const s = await (await request.get(API + '/survey/stats?by=rule&sgg=52190', { headers: h })).json();
   expect(s.total.value).toBe(0);
   const w = await request.post(API + '/survey/findings/f_R1_5219045021110530012/state', { headers: h, data: { state: 'assigned', client_id: 'gj-' + Date.now() } });
   expect(w.status()).toBe(404);

@@ -28,7 +28,8 @@ test('읽기 5 — 봉투 규약(value·unit·basis·as_of·source) · 목록 {i
   expect(list.total.value).toBe(759);
   expect(list.total.basis).toBe('inferred');
   expect(Object.keys(list.counts).sort()).toEqual(['assigned', 'closed', 'dismissed', 'inspected', 'open']);
-  expect(Object.keys(list.by_rule)).toEqual(['R1', 'R2', 'R3', 'R4', 'R5', 'R6']);
+  // 필지 규칙 R1–R6 + 기관 대장 규칙(L*)이 붙을 수 있다
+  expect(Object.keys(list.by_rule).filter((k) => k.startsWith('R'))).toEqual(['R1', 'R2', 'R3', 'R4', 'R5', 'R6']);
   expect(list.as_of).toBe('2026-09-24');
   const f = list.items[0];
   expect(f.id).toBe('f_R1_5219045021110530012');

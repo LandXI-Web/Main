@@ -1,7 +1,8 @@
-"""실태조사 API(F2-S · F1-CONTRACT v1.1-22) — `/api/v1/survey/*` 읽기 5 + 상태 쓰기 1 + 보고서 초안 1.
+"""실태조사 API(F2-S · F1-CONTRACT v1.1-22) — `/api/v1/survey/*` 읽기 5 + 상태 쓰기 1 + 보고서 초안 1
++ 전국화(core-survey · contract-parcel-ai.md): POST /survey/build · GET /survey/build/{sgg} · GET /survey/regions · ?sgg= 필터.
 
 정본 = PostGIS survey_* 표(server/survey/pipelines/s5_load_pg.py 가 02. 데이터/survey/ 에서 적재 · README 표와 count 검증).
-관문: 게스트 401 · realm tenant 는 RLS 로 자기 기관 행만(1차 정본은 tenant 'namwon' — 다른 기관 0건) · lx staff/admin/sales 읽기.
+관문: 게스트 401 · realm tenant 는 RLS 로 자기 기관 행만 · lx staff/admin/sales 읽기. 지역은 데이터(survey_sgg · sgg_cd)에서 — 고정값 없음.
 쓰기(POST …/state): tenant manager(자기 기관) · lx staff/admin(시연 쓰기 · basis 'demo' · 24h 뒤 자동 원복). 성명 열 없음.
 main.py 확장 훅(F2-B · `importlib.import_module("landxi_api.survey")`)이 이 router 를 /api/v1 에 붙인다.
 """
@@ -29,6 +30,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from survey import explain as X  # noqa: E402
 from survey import rules as RL  # noqa: E402
+from survey import nation as NT  # noqa: E402
 from survey.db import AS_OF, FIXED_PHRASE, RULE_IDS, SRC_SUMMARY, SRC_SUSPECTS, STATES  # noqa: E402
 
 router = APIRouter()
@@ -104,6 +106,8 @@ def _filters(q: dict, *, skip: str | None = None) -> tuple[list[str], list]:
         add("priority = ANY(?::text[])", q["priority"])
     if q["emd_cd"]:
         add("emd_cd = ANY(?::text[])", q["emd_cd"])
+    if q.get("sgg"):
+        add("sgg_cd = ANY(?::text[])", q["sgg"])
     if q["state"] and skip != "state":
         add("state = ANY(?::text[])", q["state"])
     if q["bbox"]:
@@ -117,6 +121,16 @@ def _filters(q: dict, *, skip: str | None = None) -> tuple[list[str], list]:
     return w, a
 
 
+def sgg_codes(v: str | None) -> list[str]:
+    """?sgg= / ?region= (쉼표 여러 개 · 지금/옛 코드) → 시군구 코드 목록(지금 코드 · 옛 코드 둘 다 — 표의 sgg_cd 는 지금 코드)."""
+    out: list[str] = []
+    for x in _list_param(v, None):
+        if not re.match(r"^\d{5}$", x):
+            raise ApiError("bad_request", "sgg 는 시군구 코드 5자리")
+        out += NT.codes(x)
+    return sorted(set(out))
+
+
 def _where(w):
     return ("WHERE " + " AND ".join(w)) if w else ""
 
@@ -128,7 +142,8 @@ def _row(r) -> dict:
 @router.get("/survey/findings")
 async def findings(request: Request, rule: str | None = None, priority: str | None = None, emd_cd: str | None = None,
                    state: str | None = None, bbox: str | None = None, q: str | None = None, pnu: str | None = None,
-                   deploy_id: str | None = None, sort: str = "score", limit: int = 200, offset: int = 0, ledger: str | None = None):
+                   deploy_id: str | None = None, sort: str = "score", limit: int = 200, offset: int = 0, ledger: str | None = None,
+                   sgg: str | None = None, region: str | None = None):
     p = _read(principal(request))
     t0 = time.perf_counter()
     if sort not in SORTS:
@@ -145,7 +160,7 @@ async def findings(request: Request, rule: str | None = None, priority: str | No
     rids = all_rule_ids()
     qq = {"rule": _list_param(rule, set(rids), "rule"), "priority": _list_param(priority, {"A", "B", "C"}, "priority"),
           "emd_cd": _list_param(emd_cd, None), "state": _list_param(state, set(STATES), "state"), "bbox": bb,
-          "q": (q or "").strip()[:60] or None, "pnu": _list_param(pnu, None)}
+          "q": (q or "").strip()[:60] or None, "pnu": _list_param(pnu, None), "sgg": sgg_codes(sgg or region)}
     if ledger:
         qq["ledger"] = await LG.resolve_ledger_param(p, ledger)
     try:
@@ -181,7 +196,7 @@ async def findings(request: Request, rule: str | None = None, priority: str | No
     return {"items": [X.finding_item(_row(r)) | {"verdict": r["verdict"], "verdict_code": r["verdict_code"]} for r in rows],
             "total": X.env(int(total), "count", "inferred", "PostGIS survey_findings", "의심 후보 · 검수 전 · 위법 판정 아님"),
             "counts": counts, "by_rule": by_rule, "limit": limit, "offset": offset, "sort": sort,
-            "filters": {k: v for k, v in qq.items() if v and k not in ("pnu", "ledger")} | ({"deploy_id": deploy_id} if deploy_id else {})
+            "filters": {k: v for k, v in qq.items() if v and k not in ("pnu", "ledger", "sgg")} | ({"sgg": sgg or region} if (sgg or region) else {}) | ({"deploy_id": deploy_id} if deploy_id else {})
             | ({"ledger": ledger} if ledger else {}),
             "as_of": AS_OF, "source": SRC_SUSPECTS, "fixed": FIXED_PHRASE,
             "db_ms": X.env(round((time.perf_counter() - t0) * 1000, 1), "ms", "measured", "gateway survey.findings · SQL 구간만(조회·집계 · 직렬화 제외 — 서버 전체 처리는 응답 헤더 X-LX-Time-ms)")}
@@ -189,10 +204,45 @@ async def findings(request: Request, rule: str | None = None, priority: str | No
 
 async def _parcel(conn, pnu: str) -> dict | None:
     r = await conn.fetchrow("SELECT p.*, NULL AS geom FROM survey_parcels p WHERE pnu=$1", pnu)
-    return dict(r) if r else None
+    if not r:
+        return None
+    d = dict(r)
+    if d.get("src") not in (None, "canon"):
+        d.update(await _ai_view(conn, d))
+    return d
 
 
-async def _cut(conn) -> dict | None:
+def _pg_params(sql: str, names: list[str]) -> str:
+    for i, n in enumerate(names, 1):
+        sql = sql.replace(f"%({n})s", f"${i}")
+    return sql
+
+
+async def _ai_view(conn, d: dict) -> dict:
+    """전국 경로 필지 — survey_parcel_ai(그 시군구 현재 AI 작업)를 옛 피연산자 이름(a23_* · r23_* · a25_* · chg)으로 펼친다."""
+    s = await conn.fetchrow("SELECT job_id, imagery FROM survey_sgg WHERE sgg_cd=$1", d.get("sgg_cd"))
+    if not s or not s["job_id"]:
+        return {"_img": None}
+    sql = _pg_params(f"SELECT * FROM ({RL.ai_src('WHERE sp.sgg_cd = %(sgg)s AND sp.pnu = %(pnu)s')}) q", ["job", "sgg", "pnu"])
+    r = await conn.fetchrow(sql, s["job_id"], d["sgg_cd"], d["pnu"])
+    out = {"_img": s["imagery"], "_job_id": s["job_id"]}
+    if r:
+        r = dict(r)
+        out.update({NT.LEGACY_OF[k]: (r[k] if r[k] is not None or k.endswith("_conf") else 0) for k in NT.LEGACY_OF if k in r})
+        area = max(float(d.get("area_m2") or 1), 1.0)
+        for c in ("bld", "crop", "park", "gh"):
+            out[f"r23_{c}"] = round(min(float(r.get(f"{c}_hit") or 0) / area, 1.0), 3)
+    for pnu_, c, i in await conn.fetch("SELECT pnu, cls, ids FROM survey_parcel_ai WHERE job_id=$1 AND pnu=$2", s["job_id"], d["pnu"]):
+        out[f"a23_{c}_ids"] = i
+    return out
+
+
+async def _cut(conn, sgg: str | None = None) -> dict | None:
+    """등급 절단 — 전국 경로 시군구는 그 시군구 안(survey_sgg.priority_cut) · 정본은 survey_meta."""
+    if sgg:
+        v = await conn.fetchval("SELECT priority_cut FROM survey_sgg WHERE sgg_cd=$1 AND NOT (parcels_src ? 'canon')", sgg)
+        if v:
+            return v
     v = await conn.fetchval("SELECT value FROM survey_meta WHERE key='priority_cut'")
     return v
 
@@ -214,7 +264,7 @@ async def finding(fid: str, request: Request):
                 raise ApiError("not_found", f"finding {fid} 없음")
             row = _row(r)
             parcel = await _parcel(conn, row["pnu"])
-            cut = await _cut(conn)
+            cut = await _cut(conn, row.get("sgg_cd") or row["pnu"][:5])
             hist, summ, hnote = await _history(conn, row["pnu"])
             ev = await conn.fetch("SELECT from_state, to_state, by, realm, reason, assignee, planned_for, demo, at, verdict, verdict_code, note FROM survey_finding_events "
                                   "WHERE finding_id=$1 ORDER BY at", fid)
@@ -254,12 +304,14 @@ async def parcel(pnu: str, request: Request, with_: str | None = None):
             if not pr:
                 raise ApiError("not_found", f"필지 {pnu} 없음(적재된 연속지적 밖이거나 다른 기관)")
             out = {"pnu": pnu, "addr": pr["addr"], "emd": pr["emd"], "emd_cd": pr["emd_cd"], "ri": pr["ri"], "jibun": pr["jibun"],
-                   "as_of": AS_OF, "source": "PostGIS survey_parcels ← survey/namwon-parcel-survey.gpkg", "fixed": FIXED_PHRASE}
+                   "sgg_cd": pr.get("sgg_cd"), "as_of": pr.get("src_as_of") or AS_OF,
+                   "parcel_source": {"canon": "연속지적(적재 정본)", "lsmd": "연속지적(전국)", "vworld": "V-World 연속지적"}.get(pr.get("src") or "canon"),
+                   "source": f"PostGIS survey_parcels(src {pr.get('src') or 'canon'})", "fixed": FIXED_PHRASE}
             if "facts" in want:
-                out["facts"] = X.parcel_facts(pr)
+                out["facts"] = X.parcel_facts(pr, img=pr.get("_img"))
             if "findings" in want:
                 rows = await conn.fetch(f"SELECT {FCOLS} FROM survey_findings WHERE pnu=$1 ORDER BY score DESC", pnu)
-                cut = await _cut(conn)
+                cut = await _cut(conn, pr.get("sgg_cd"))
                 out["findings"] = [X.finding_item(_row(r)) | {"explain": LG.explain_ledger(_row(r), pr) if r["rule"] not in RULE_IDS
                                                               else X.explain(_row(r), pr, cut)} for r in rows]
                 if not rows:
@@ -282,8 +334,11 @@ async def parcel(pnu: str, request: Request, with_: str | None = None):
 
 
 @router.get("/survey/stats")
-async def stats(request: Request, by: str = "emd", ledger: str | None = None):
+async def stats(request: Request, by: str = "emd", ledger: str | None = None, sgg: str | None = None, region: str | None = None):
     p = _read(principal(request))
+    sg = sgg_codes(sgg or region)
+    fw = " WHERE sgg_cd = ANY($1::text[])" if sg else ""        # survey_findings · survey_emd 공통
+    fa = [sg] if sg else []
     led_ids = await LG.resolve_ledger_param(p, ledger) if ledger else None
     if by not in ("emd", "rule", "priority", "state"):
         raise ApiError("bad_request", "by 는 emd|rule|priority|state")
@@ -292,8 +347,8 @@ async def stats(request: Request, by: str = "emd", ledger: str | None = None):
     try:
         async with db(p) as conn:
             if by == "emd":
-                emd = await conn.fetch("SELECT emd_cd, name, names, parcels, area_ha, top5, bbox, suspect_parcels FROM survey_emd ORDER BY emd_cd")
-                cnt = await conn.fetch("SELECT emd_cd, rule, priority, state, count(*) n FROM survey_findings GROUP BY 1,2,3,4")
+                emd = await conn.fetch(f"SELECT emd_cd, name, names, parcels, area_ha, top5, bbox, suspect_parcels FROM survey_emd{fw} ORDER BY emd_cd", *fa)
+                cnt = await conn.fetch(f"SELECT emd_cd, rule, priority, state, count(*) n FROM survey_findings{fw} GROUP BY 1,2,3,4", *fa)
                 agg: dict = {}
                 for r in cnt:
                     a = agg.setdefault(r["emd_cd"], {"rule": {}, "prio": {}, "state": {}, "n": 0})
@@ -305,7 +360,7 @@ async def stats(request: Request, by: str = "emd", ledger: str | None = None):
                 for e in emd:
                     a = agg.get(e["emd_cd"], {"rule": {}, "prio": {}, "state": {}, "n": 0})
                     items.append({"key": e["name"], "cd": e["emd_cd"], "names": list(e["names"]),
-                                  "parcels": X.env(e["parcels"], "필지", "measured", "survey/namwon-parcels.gpkg"),
+                                  "parcels": X.env(e["parcels"], "필지", "measured", "survey_emd(연속지적 필지 수)"),
                                   "area_ha": X.env(e["area_ha"], "ha", "measured", SRC_SUMMARY),
                                   "n": E(a["n"]), "suspect_parcels": X.env(int(e["suspect_parcels"] or 0), "필지", "inferred", "survey_emd(적재 검증 = 요약 json)", "검수 전"),
                                   "by_rule": {r: E(a["rule"].get(r, 0)) for r in RULE_IDS},
@@ -327,7 +382,7 @@ async def stats(request: Request, by: str = "emd", ledger: str | None = None):
                         it["ledger_findings"] = {rid: X.env(int(lf.get((it["cd"], rid), 0)), "count", "inferred", "규칙 L-* · 검수 전", "검수 전")
                                                  for rid in LG.rule_ids()}
             elif by == "rule":
-                rows = await conn.fetch("SELECT rule, priority, count(*) n FROM survey_findings GROUP BY 1,2")
+                rows = await conn.fetch(f"SELECT rule, priority, count(*) n FROM survey_findings{fw} GROUP BY 1,2", *fa)
                 defs = RL.definitions()
                 a: dict = {}
                 for r in rows:
@@ -335,7 +390,7 @@ async def stats(request: Request, by: str = "emd", ledger: str | None = None):
                 items = [{"key": rid, "name": defs[rid]["name"], "condition": RL.condition_text(rid),
                           "n": E(sum(a.get(rid, {}).values())), "by_priority": {k: E(a.get(rid, {}).get(k, 0)) for k in "ABC"},
                           "note": defs[rid].get("note")} for rid in RULE_IDS]
-                lrows = await conn.fetch("SELECT rule, priority, count(*) n FROM survey_findings WHERE rule LIKE 'L%' GROUP BY 1,2")
+                lrows = await conn.fetch(f"SELECT rule, priority, count(*) n FROM survey_findings WHERE rule LIKE 'L%'{' AND sgg_cd = ANY($1::text[])' if sg else ''} GROUP BY 1,2", *fa)
                 la: dict = {}
                 for r in lrows:
                     la.setdefault(r["rule"], {})[r["priority"]] = r["n"]
@@ -344,22 +399,23 @@ async def stats(request: Request, by: str = "emd", ledger: str | None = None):
                                   "n": E(sum(la.get(rid, {}).values())), "by_priority": {k: E(la.get(rid, {}).get(k, 0)) for k in "ABC"},
                                   "note": d.get("note")})
             elif by == "priority":
-                rows = {r["priority"]: r["n"] for r in await conn.fetch("SELECT priority, count(*) n FROM survey_findings GROUP BY 1")}
-                cut = await _cut(conn)
-                rc = (cut or {}).get("readme", {})
-                items = [{"key": "A", "n": E(rows.get("A", 0)), "score_ge": X.env(rc.get("A_score_ge"), "score", "estimate", SRC_SUMMARY, "전체 점수 상위 5%")},
+                rows = {r["priority"]: r["n"] for r in await conn.fetch(f"SELECT priority, count(*) n FROM survey_findings{fw} GROUP BY 1", *fa)}
+                cut = await _cut(conn, sg[0] if len(sg) else None)
+                rc = (cut or {}).get("readme") or {"A_score_ge": (cut or {}).get("A"), "B_score_ge": (cut or {}).get("B")}
+                items = [{"key": "A", "n": E(rows.get("A", 0)), "score_ge": X.env(rc.get("A_score_ge"), "score", "estimate", SRC_SUMMARY, "시군구 전체 점수 상위 5%")},
                          {"key": "B", "n": E(rows.get("B", 0)), "score_ge": X.env(rc.get("B_score_ge"), "score", "estimate", SRC_SUMMARY, "다음 20%")},
                          {"key": "C", "n": E(rows.get("C", 0)), "score_ge": None}]
             else:
-                rows = {r["state"]: r["n"] for r in await conn.fetch("SELECT state, count(*) n FROM survey_findings GROUP BY 1")}
+                rows = {r["state"]: r["n"] for r in await conn.fetch(f"SELECT state, count(*) n FROM survey_findings{fw} GROUP BY 1", *fa)}
                 items = [{"key": s, "n": X.env(int(rows.get(s, 0)), "count", "recorded", "survey_findings.state · survey_finding_events")} for s in STATES]
-            total = await conn.fetchval("SELECT count(*) FROM survey_findings")
-            parcels_n = await conn.fetchval("SELECT coalesce(sum(parcels),0) FROM survey_emd")
+            total = await conn.fetchval(f"SELECT count(*) FROM survey_findings{fw}", *fa)
+            parcels_n = await conn.fetchval(f"SELECT coalesce(sum(parcels),0) FROM survey_emd{fw}", *fa)
     except asyncpg.UndefinedTableError as e:
         _err_missing(e)
     out_ledger = {"ledger": ledger, "imports": led_ids} if ledger else {}
     return {**out_ledger, "by": by, "items": items, "total": E(total, "의심 후보 · 검수 전 · 위법 판정 아님"),
-            "parcels": X.env(int(parcels_n), "필지", "measured", "survey/namwon-parcels.gpkg"), "as_of": AS_OF, "source": src}
+            "parcels": X.env(int(parcels_n), "필지", "measured", "survey_emd(연속지적 필지 수)"), "as_of": AS_OF, "source": src,
+            **({"sgg": sgg or region} if sg else {})}
 
 
 @router.get("/survey/rules")
@@ -388,6 +444,119 @@ async def rules_(request: Request):
                       "reviewed_at": r["reviewed_at"].astimezone(KST).isoformat(timespec="seconds") if r["reviewed_at"] else None})
     return {"items": items, "total": X.env(len(items), "count", "recorded", "server/survey/rules/*.yaml"), "as_of": AS_OF,
             "note": "임계는 전부 [추정 초기값] — 현장조사 결과로 보정. 공통: 객체 과반 포함 0.5 · 신뢰도 하한 0.5"}
+
+
+# ─────────────────────────── 전국화: 시군구 적재(core-survey · contract-parcel-ai.md) ───────────────────────────
+def _sgg_row(r) -> dict:
+    """survey_sgg 한 행 → 응답(숫자는 봉투 · 집계 dict 는 counts 아래)."""
+    d = dict(r)
+    for k in ("at", "finished_at"):
+        if d.get(k):
+            d[k] = d[k].astimezone(KST).isoformat(timespec="seconds")
+    asof = d.get("parcels_as_of")
+    d["parcels"] = X.env(int(d.get("parcels") or 0), "필지", "measured", "survey_parcels(연속지적)", None, as_of=asof or AS_OF)
+    d["joined_parcels"] = X.env(int(d.get("joined_parcels") or 0), "필지", "inferred", "survey_parcel_ai", "AI 결과가 겹친 필지 · 검수 전")
+    d["findings"] = X.env(int(d.get("findings") or 0), "count", "inferred", "survey_findings(R1–R6)", "의심 후보 · 검수 전")
+    d["counts"] = {"by_rule": d.pop("by_rule", None) or {}, "by_priority": d.pop("by_priority", None) or {},
+                   "parcels_src": d.pop("parcels_src", None) or {}, "priority_cut": d.pop("priority_cut", None)}
+    return d
+
+
+SGG_COLS = ("sgg_cd, tenant_id, name, sido, state, parcels, parcels_src, parcels_as_of, joined_parcels, findings, by_rule, by_priority, "
+            "priority_cut, imagery, bbox, error, at, finished_at")
+
+
+@router.post("/survey/build", status_code=202)
+async def survey_build(body: dict, request: Request):
+    """시군구 실태조사 만들기 — 필지 적재 · AI 결합 · 규칙 · 의심(CPU 작업 · 게이트웨이 대기열). LX staff/admin(전국) · 기관 manager(관할)."""
+    p = require(principal(request))
+    if p.realm == "lx" and p.role not in ("staff", "admin"):
+        raise ApiError("forbidden", "LX 영업 계정은 읽기 전용")
+    if p.realm == "tenant" and p.role != "manager":
+        raise ApiError("forbidden", "기관 담당자(manager)만 실행할 수 있습니다")
+    raw = str((body or {}).get("sgg_cd") or (body or {}).get("region") or "").strip()
+    if not re.match(r"^\d{5}$", raw):
+        raise ApiError("bad_request", "sgg_cd = 시군구 코드 5자리")
+    try:
+        rg = NT.region(raw)
+    except NT.BuildError:
+        raise ApiError("not_found", "해당 지역이 없습니다", {"sgg_cd": raw})
+    sgg = rg["sgg_cd"]
+    tenant = NT.tenant_for(sgg)
+    if p.realm == "tenant" and p.tenant_id != tenant:
+        raise ApiError("forbidden", "관할 밖 시군구", {"sgg_cd": sgg})
+    ai_job = (body or {}).get("job_id") or None
+    async with db(realm="lx") as conn:
+        run = await conn.fetchval("SELECT id FROM jobs WHERE kind='survey' AND state IN ('queued','running') AND options->>'build'='true' "
+                                  "AND options->>'sgg_cd'=$1 LIMIT 1", sgg)
+        if run:
+            raise ApiError("survey_build_running", "이 시군구 실태조사를 만드는 중입니다", {"job_id": run, "sgg_cd": sgg}, 409)
+        if ai_job:
+            ok = await conn.fetchval("SELECT EXISTS(SELECT 1 FROM detections WHERE job_id=$1)", ai_job)
+            if not ok:
+                raise ApiError("not_found", "AI 결과가 없는 작업", {"job_id": ai_job})
+        else:
+            ai_job = await run_in_threadpool(_pick_job, sgg)
+    from . import jobs as JB
+    body2 = {"kind": "survey", "label": f"survey/build {sgg}", "options": {"build": True, "sgg_cd": sgg, "ai_job_id": ai_job,
+                                                                            "force": bool((body or {}).get("force"))}}
+    if (body or {}).get("test"):
+        body2["test"] = True
+    out = await JB.submit(body2, request)
+    await audit_lx(p, "survey.build", sgg, {"ai_job_id": ai_job, "job_id": out["job"]["id"], "tenant_id": tenant})
+    return {**out, "sgg_cd": sgg, "tenant_id": tenant, "ai_job_id": ai_job,
+            "note": None if ai_job else "AI 분석 결과가 없어 필지만 적재합니다(AI 분석 전)"}
+
+
+def _pick_job(sgg: str) -> str | None:
+    from survey.db import lx_tx, pg
+    with pg() as c:
+        lx_tx(c)
+        return NT.pick_job(c, sgg)
+
+
+async def audit_lx(p, action: str, subject: str, after: dict):
+    try:
+        async with db(realm="lx") as conn:
+            await audit(conn, p, action, subject, None, after)
+    except Exception:
+        pass
+
+
+@router.get("/survey/build/{sgg_cd}")
+async def survey_build_state(sgg_cd: str, request: Request):
+    p = _read(principal(request))
+    cs = sgg_codes(sgg_cd)
+    async with db(p) as conn:
+        r = await conn.fetchrow(f"SELECT {SGG_COLS}, build_job_id, job_id FROM survey_sgg WHERE sgg_cd = ANY($1::text[])", cs)
+    if not r:
+        raise ApiError("not_found", "이 시군구는 아직 실태조사를 만들지 않았습니다", {"sgg_cd": sgg_cd})
+    d = _sgg_row(r)
+    if not p.is_lx:
+        d.pop("build_job_id", None)
+        d.pop("job_id", None)
+    return d
+
+
+@router.get("/survey/regions")
+async def survey_regions(request: Request):
+    """실태조사가 만들어진 시군구(세션이 볼 수 있는 것만 · RLS)."""
+    p = _read(principal(request))
+    async with db(p) as conn:
+        rows = await conn.fetch(f"SELECT {SGG_COLS} FROM survey_sgg ORDER BY findings DESC NULLS LAST, sgg_cd")
+    items = []
+    for r in rows:
+        d = _sgg_row(r)
+        try:
+            rg = NT.region(d["sgg_cd"])
+            d["name"] = d.get("name") or rg["name"]
+            d["sido"] = d.get("sido") or rg["sido"]
+            d["full"] = rg["full"]
+            d["bbox"] = d.get("bbox") or rg.get("bbox")
+        except NT.BuildError:
+            pass
+        items.append(d)
+    return {"items": items, "total": len(items), "as_of": now_iso()}
 
 
 # ─────────────────────────── 상태 쓰기(1차 유일한 쓰기) ───────────────────────────
@@ -751,7 +920,7 @@ async def _lx_stats(rid: str) -> dict:
 async def report_draft(request: Request, emd_cd: str, rule: str | None = None, top: int = 20, format: str = "json"):
     p = _read(principal(request))
     if not EMD_RE.match(emd_cd):
-        raise ApiError("bad_request", "emd_cd = 법정동 8자리(예 52190450)")
+        raise ApiError("bad_request", "emd_cd = 법정동 8자리")
     if rule and rule not in RULE_IDS:
         raise ApiError("bad_request", "rule 은 R1..R6")
     if format not in ("json", "docx"):

@@ -1,4 +1,5 @@
-/* gov-report — 할 일 · 현장 배정 · 판정 · 보고서(기관 · 현장 모바일 앱 없음).
+/* gov-report — 의심 필지 · 할 일 · 현장 배정 · 판정 · 보고서(기관 · 현장 모바일 앱 없음).
+   [의심 필지] 관할 시군구(GET /survey/regions · ?region=)의 의심 필지(GET /survey/findings?sgg=&state=open) → 현장 확인 배정(상태 assigned).
    정문 로그인 → 관문(K2) → 셸(K1) → [할 일] 판정 대기 큰 숫자(K6) · 표(K12) · 행 → 미니 지도(K3) + 판정 3택
    → 상태 쓰기(POST /survey/findings/{fid}/state) → 표 갱신 · 큰 숫자 감소 · SSE /events/tenant 로 다른 창의 변경도 반영.
    [보고서] 읍면동 · 규칙 → POST /agent/report/draft → SSE 토큰 스트리밍(개요 · 소견 · 조치 제안) → .docx 내려받기.
@@ -12,7 +13,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const MOBILE = () => matchMedia('(max-width: 760px)').matches;
 const V = { violation: '위반', match_fp: '대장과 같음', unclear: '불명확' };
 const VCODE = Object.fromEntries(Object.entries(V).map(([k, v]) => [v, k]));
-const ST = { assigned: '배정', inspected: '확인됨', hold: '보류', closed: '종결' };
+const ST = { open: '미배정', assigned: '배정', inspected: '확인됨', hold: '보류', closed: '종결' };
 const KINDS = ['안내', '시정명령', '이행강제금', '원상복구', '없음'];
 const JIMOK = { 전: '전(밭)', 답: '답(논)', 과: '과수원', 목: '목장용지', 임: '임야', 대: '대지', 잡: '잡종지' };
 /* 각주 · 문장에서 개발 정보(경로 · 요청 · 규칙 코드)를 걷어 낸다 — 사용자 말만 */
@@ -45,7 +46,8 @@ function staleCard() {
 }
 let retry = 0;
 
-const S = { who: null, key: '', rows: [], pend: null, sel: null, stage: null, s2: false, emd: [], rules: [], tab: 'todo', seen: new Set(), run: null };
+const S = { who: null, key: '', rows: [], pend: null, sel: null, stage: null, s2: false, emd: [], rules: [], tab: 'todo', seen: new Set(), run: null,
+  regions: [], region: null, sus: [] };
 
 /* ═════════ 관문 · 셸 ═════════ */
 const who = await gate('gov-report');
@@ -83,7 +85,7 @@ const verdictOf = (f) => {
   if (f.state === 'dismissed') return 'match_fp';   // 오탐 처리 = 대장과 같음
   return '';
 };
-const stateOf = (f, v) => (f.state === 'closed' || f.state === 'dismissed' ? 'closed' : f.state === 'inspected' ? (v === 'unclear' ? 'hold' : 'inspected') : 'assigned');
+const stateOf = (f, v) => (f.state === 'closed' || f.state === 'dismissed' ? 'closed' : f.state === 'inspected' ? (v === 'unclear' ? 'hold' : 'inspected') : f.state === 'open' ? 'open' : 'assigned');
 
 function rowOf(f) {
   const v = verdictOf(f), st = stateOf(f, v);
@@ -153,7 +155,7 @@ function render(prev = new Set()) {
   big.set(S.pend);
   const has = S.rows.length > 0;
   $('#table').hidden = !has; $('#empty').hidden = has;
-  if (!has) empty($('#empty'), { kind: 'first', text: '배정한 필지가 아직 없습니다', action: { label: '내 대장 × AI', href: '/landxi/v3/gov-fusion/' } });
+  if (!has) empty($('#empty'), { kind: 'first', text: '배정한 필지가 아직 없습니다', action: S.regions.length ? { label: '의심 필지 보기', onClick: () => tab('sus') } : { label: '내 대장 × AI', href: '/landxi/v3/gov-fusion/' } });
   tbl.set(S.rows);
   const trs = $('#table').querySelectorAll('tbody tr');
   (tbl.el._vis || []).forEach((r, i) => {
@@ -195,6 +197,7 @@ async function showDetail(r, { fly }) {
   const f = r.f;
   $('#det-m').innerHTML = [f.jimok && `<span>지목 ${esc(JIMOK[f.jimok] || f.jimok)}</span>`, f.evid_m2 && `<span>AI 분석 ${numHtml(f.evid_m2, { digits: 0 })}</span>`].filter(Boolean).join('<i>·</i>');
   const allow = f.state === 'assigned' ? ['violation', 'match_fp', 'unclear'] : f.state === 'inspected' ? ['violation', 'match_fp'] : [];
+  $('#b-assign').hidden = f.state !== 'open';
   for (const b of $('#verdict').querySelectorAll('button')) {
     b.setAttribute('aria-checked', r.v === b.dataset.v ? 'true' : 'false');
     b.disabled = !allow.includes(b.dataset.v);
@@ -236,7 +239,7 @@ async function showDetail(r, { fly }) {
 function paintLock(r) {
   const f = r.f;
   $('#b-assignee').hidden = !(S.reassign && ['assigned', 'inspected'].includes(f.state));
-  $('#b-action').hidden = !S.s2;
+  $('#b-action').hidden = !S.s2 || f.state === 'open';
   const line = $('#lock-line');
   line.textContent = S.s2 ? '' : '조치 기록은 아직 기관 전체에 공유되지 않습니다';
   line.hidden = !line.textContent;
@@ -369,7 +372,13 @@ function tab(k) {
   for (const p of document.querySelectorAll('.gr-pane')) p.hidden = p.dataset.pane !== k;
   if (document.body.dataset.big === '1') bigMap(false);
   if (k === 'report') { document.body.dataset.sheet = '0'; initReport(); }
-  history.replaceState(null, '', k === 'report' ? '?tab=report' + (isDev() ? '&dev=1' : '') : location.pathname + (isDev() ? '?dev=1' : ''));
+  if (k === 'sus') loadSus();
+  if (k === 'todo') mapPoints();
+  const q = new URLSearchParams();
+  if (k !== 'todo') q.set('tab', k);
+  if (S.region && S.regions.length > 1) q.set('region', S.region);
+  if (isDev()) q.set('dev', '1');
+  history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : ''));
 }
 for (const b of document.querySelectorAll('.gr-tabs button')) b.addEventListener('click', () => tab(b.dataset.tab));
 
@@ -379,7 +388,7 @@ function initReport() {
   if (rpReady) { focusEmd(); return rpReady; }
   rpReady = (async () => {
     let st, ru;
-    try { [st, ru] = await Promise.all([api('/survey/stats?by=emd'), api('/survey/rules')]); }
+    try { [st, ru] = await Promise.all([api('/survey/stats?by=emd' + (S.region ? `&sgg=${S.region}` : '')), api('/survey/rules')]); }
     catch (e) {
       /* 못 읽음 ≠ 결과 없음 — 빈 상태 카드를 그리지 않고 한 줄만, 탭을 다시 열면 다시 읽는다 */
       devlog('report', e.message); rpReady = null;
@@ -397,7 +406,7 @@ function initReport() {
     const top = (m) => [...m.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
     const sel = $('#rp-emd'), rs = $('#rp-rule');
     sel.innerHTML = S.emd.map((e) => `<option value="${esc(e.cd)}">${esc(e.key)}</option>`).join('');
-    rs.innerHTML = S.rules.map((r) => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('');
+    rs.innerHTML = S.rules.filter((r) => /^R\d$/.test(r.id)).map((r) => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('');
     const e0 = top(byEmd), r0 = top(byRule);
     if (e0 && S.emd.some((e) => e.cd === e0)) sel.value = e0;
     if (r0 && S.rules.some((r) => r.id === r0)) rs.value = r0;
@@ -420,7 +429,7 @@ function docEmpty(text) {
 }
 
 /* 문장 다듬기(서버 초안 글이 고쳐지기 전 화면 쪽 보정 · 서버가 고쳐지면 걸러질 것이 없다)
-   ① 질의 결과 수 복창 · 봉투 꼬리표 문장은 뺀다 ② 기관 이름 고정(남원시)은 로그인 기관으로
+   ① 질의 결과 수 복창 · 봉투 꼬리표 문장은 뺀다 ② (지역 이름은 서버 자료에서 온다 — 화면에서 바꾸지 않는다)
    ③ 숫자 칩 뒤 조사 · 문장부호 앞 공백을 붙인다('31,211필지 임' → '31,211필지임') — 인용 [n] 앞 공백은 둔다 */
 const PART = '(?:임|이|가|은|는|을|를|의|에|에서|에는|로|으로|와|과|도|만|이며|이고|이다|입니다|임을|이므로|으로서|로서|까지|부터|이나|씩)';
 const RE_PART = new RegExp(`(\\}\\})\\s+(?=${PART}(?![가-힣]))`, 'g');
@@ -428,7 +437,6 @@ const RE_CHIP_GAP = new RegExp(`<!--k-->\\s+(?=[,.;:!?)]|${PART}(?![가-힣]))`,
 const TAG = /반환한|유의하며|검수\s*전\s*·\s*현장\s*확인\s*전|위법\s*판정\s*아님/;
 function tidy(line) {
   let s = String(line).split(/(?<=[.!?])\s+/).filter((x) => !TAG.test(x)).join(' ');
-  if (org && !/남원/.test(org)) s = s.replace(/남원시\s*/g, `${org} `);
   return s.replace(RE_PART, '$1').replace(/\s+([,.;:!?)])/g, '$1').trim();
 }
 /* 문단 글 = 화면 DOM 그대로(칩은 숫자 · 단위만, 인용은 [n]) — 브라우저 innerText 의 줄 · 칸 삽입 없이 */
@@ -605,6 +613,105 @@ function armDocx({ emd_cd, rule }) {
   $('#doc-act').hidden = false;
 }
 
+/* 문서 내려받기 — 서버 보고서(기관 · 시군구 · 읍면동 이름은 자료에서 · LLM 없이) */
+$('#rp-docx').addEventListener('click', async () => {
+  const emd_cd = $('#rp-emd').value, rule = $('#rp-rule').value;
+  if (!emd_cd) return;
+  const b = $('#rp-docx'); b.disabled = true;
+  try {
+    const r = await api(`/survey/reports/draft?emd_cd=${encodeURIComponent(emd_cd)}${rule ? `&rule=${encodeURIComponent(rule)}` : ''}&format=docx`, { raw: true });
+    if (!r.ok) { const e = new Error('http ' + r.status); e.status = r.status; throw e; }
+    const blob = await r.blob();
+    const emdNm = (S.emd.find((e) => e.cd === emd_cd) || {}).key || emd_cd, sggNm = (regionOf(S.region) || {}).name || '';
+    const name = decodeURIComponent(r.headers.get('x-lx-report-name') || '') || `실태조사_초안_${[sggNm, emdNm].filter(Boolean).join('_')}_${ymd(new Date()).replace(/\./g, '')}.docx`;
+    const u = URL.createObjectURL(blob);
+    const t = document.createElement('a'); t.href = u; t.download = name; document.body.append(t); t.click(); t.remove();
+    setTimeout(() => URL.revokeObjectURL(u), 4000);
+    toast('내려받았습니다');
+  } catch (e) { devlog('report docx', e.message); if (isAuth(e)) return toFront(); toast('내려받지 못했습니다'); }
+  finally { b.disabled = false; }
+});
+
+/* ═════════ 의심 필지(관할 시군구) ═════════ */
+const regionOf = (cd) => S.regions.find((r) => r.sgg_cd === cd) || null;
+async function loadRegions() {
+  try { const j = await api('/survey/regions'); S.regions = (j.items || []).filter((r) => r.state === 'done' || r.state === 'no_ai'); }
+  catch (e) { devlog('regions', e.message); if (isAuth(e)) return toFront(); S.regions = []; }
+  const want = new URLSearchParams(location.search).get('region');
+  const pick = S.regions.find((r) => r.sgg_cd === want) || S.regions.find((r) => (r.findings?.value || 0) > 0) || S.regions[0];
+  S.region = pick ? pick.sgg_cd : null;
+  for (const [fid, sid] of [['#sus-rgn-f', '#sus-rgn'], ['#rp-sgg-f', '#rp-sgg']]) {
+    $(fid).hidden = S.regions.length < 2;
+    $(sid).innerHTML = S.regions.map((r) => `<option value="${esc(r.sgg_cd)}">${esc(r.name || r.sgg_cd)}</option>`).join('');
+    if (S.region) $(sid).value = S.region;
+  }
+}
+function setRegion(cd) {
+  S.region = cd; $('#sus-rgn').value = cd; $('#rp-sgg').value = cd;
+  rpReady = null; S.susLoaded = null;
+  if (S.tab === 'sus') loadSus(); if (S.tab === 'report') initReport();
+  tab(S.tab);
+}
+$('#sus-rgn').addEventListener('change', (e) => setRegion(e.target.value));
+$('#rp-sgg').addEventListener('change', (e) => setRegion(e.target.value));
+
+const susBig = bignum($('#sus-big'), null, { label: '의심 후보', unit: '건' });
+const PRI = { A: '우선', B: '보통', C: '참고' };
+const susTbl = table($('#sus-table'), {
+  cols: [
+    { key: 'where', label: '지번', fmt: (v) => `<span class="gr-j">${esc(v)}</span>` },
+    { key: 'rule', label: '규칙' },
+    { key: 'pri', label: '등급', fmt: (v) => esc(PRI[v] || v || '—') },
+    { key: 'area', label: 'AI 분석', fmt: (v, r) => (r.f.evid_m2 ? numHtml(r.f.evid_m2, { digits: 0 }) : '—') },
+  ],
+  rows: [], limit: 20, onRow: (r) => pick(r),
+});
+async function loadSus() {
+  const box = $('#sus-empty');
+  if (!S.region) {
+    $('#sus-big').hidden = true; $('#sus-table').hidden = true; box.hidden = false;
+    empty(box, { kind: 'first', text: '실태조사 결과가 아직 없습니다' });
+    return;
+  }
+  if (S.susLoaded === S.region) { susPoints(); return; }
+  let j;
+  try { j = await api(`/survey/findings?sgg=${S.region}&state=open&rule=R1,R2,R3,R4,R5,R6&sort=score&limit=200`); }
+  catch (e) { devlog('sus', e.message); if (failLine(e)) return; return; }
+  S.susLoaded = S.region;
+  S.sus = (j.items || []).map((f) => ({ ...rowOf(f), pri: f.priority }));
+  $('#sus-big').hidden = false;
+  susBig.set(j.total ? { ...j.total } : null);
+  const has = S.sus.length > 0;
+  $('#sus-table').hidden = !has; box.hidden = has;
+  if (!has) {
+    const rg = regionOf(S.region);
+    empty(box, { kind: 'first', text: rg && rg.state === 'no_ai' ? 'AI 분석 전입니다' : '현장 확인이 필요한 필지가 없습니다' });
+  }
+  susTbl.set(S.sus);
+  susPoints();
+  const rg = regionOf(S.region);
+  if (rg && rg.bbox && rg.bbox.length === 4 && S.stage) S.stage.go(rg.bbox, { ms: 1600, maxZoom: 12.5 });
+}
+async function susPoints() {
+  if (!S.stage) return;
+  const fc = { type: 'FeatureCollection', features: S.sus.filter((r) => r.f.lnglat && r.f.lnglat[0] != null).map((r) => ({ type: 'Feature', properties: { id: r.id }, geometry: { type: 'Point', coordinates: r.f.lnglat } })) };
+  await S.stage.geo('todo', fc, 'point');
+}
+/* 현장 확인 배정 — 미배정(open) 필지를 나에게 배정(상태 assigned) → 할 일 */
+$('#b-assign').addEventListener('click', async () => {
+  const r = S.sel; if (!r || r.f.state !== 'open') return;
+  const b = $('#b-assign'); b.disabled = true;
+  try {
+    await api(`/survey/findings/${encodeURIComponent(r.id)}/state`, { method: 'POST', body: { client_id: 'gr-' + crypto.randomUUID(), state: 'assigned', assignee: who.name || org } });
+    toast('배정했습니다');
+    S.susLoaded = null;
+    await load({ keep: false });
+    tab('todo');
+    const nr = S.rows.find((x) => x.id === r.id); if (nr) pick(nr);
+  } catch (e) { devlog('assign', `${e.status || ''} ${e.message}`); if (isAuth(e)) return toFront(); toast('배정하지 못했습니다'); }
+  finally { b.disabled = false; }
+});
+
 /* ═════════ 실시간: 다른 창(내 대장 × AI 등)의 배정 · 판정 ═════════ */
 let tmr = 0;
 let probeAt = 0;
@@ -616,22 +723,26 @@ sse('/events/tenant', {
 });
 
 /* ═════════ 착지 ═════════ */
+await loadRegions();
 await load({ keep: false });
 const want = new URLSearchParams(location.search).get('tab');
 if (want === 'report') tab('report');   // 지도 비행을 기다리지 않는다
+else if (want === 'sus' || (!S.rows.length && S.regions.length)) tab('sus');
 await probeReassign();
 document.body.dataset.state = 'land';
 await S.stage.ready;
 S.stage.map.resize();   // 눌린 띠로 한 번 그려지는 것을 막는다 — 보이기 직전에 크기를 맞춤
 $('#map').classList.add('is-on');
-let box = want === 'report' ? null : regionBox();
+let box = want === 'report' || S.tab === 'sus' ? null : regionBox();
 if (!box && want !== 'report' && S.loaded) {   // 배정 전 관할 — 그 기관 배포본 범위로 내려간다(지역 고정값 없음)
   try { const j = await api('/deploys'); const own = (j.items || []).filter((d) => d.tenant_id === who.me.tenant_id && d.aoi);
     if (own.length) box = bboxOf({ type: 'MultiPolygon', coordinates: own.flatMap((d) => d.aoi.type === 'MultiPolygon' ? d.aoi.coordinates : [d.aoi.coordinates]) });
   } catch (e) { devlog('deploys', e.message); if (isAuth(e)) toFront(); }
 }
+if (!box && S.tab !== 'report') { const rg = regionOf(S.region); if (rg && rg.bbox && rg.bbox.length === 4) box = rg.bbox; }
 if (box) await S.stage.go(box, { ms: 2400, maxZoom: 12.5 });
-if (want === 'report') { /* 위에서 열었다 */ }
+if (S.tab === 'sus') susPoints();
+if (want === 'report' || S.tab === 'sus') { /* 위에서 열었다 */ }
 else if (!MOBILE() && S.rows.length) {
   const first = S.rows.find((r) => r.st === 'assigned' || r.st === 'inspected' || r.st === 'hold') || S.rows[0];
   pick(first);

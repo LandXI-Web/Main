@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import threading
 import time
 from urllib.parse import quote as urlquote
 
@@ -38,12 +37,9 @@ def _agent():
 
 
 def _bg():
-    """첫 호출 때 한 번: 필지 색인 데우기(스레드) + 백엔드 헬스 30s 루프(agent:models)."""
+    """첫 호출 때 한 번: 백엔드 헬스 30s 루프(agent:models). 실태조사는 PostGIS 가 정본이라 파일 색인은 데우지 않는다(대체 경로는 필요할 때만)."""
     global _health_task, _warm_started
-    if not _warm_started:
-        _warm_started = True
-        from agent.tools import survey_local
-        threading.Thread(target=lambda: (survey_local.warm(), survey_local.suspects(), survey_local.summary()), daemon=True).start()
+    _warm_started = True
     if _health_task is None or _health_task.done():
         backends, config, _, _ = _agent()
 
@@ -69,7 +65,7 @@ def _run_public(run_id: str, p, mode: str, state: str) -> dict:
 async def _unavailable(tried):
     # 화면 문구 = K10 '지금은 답할 수 없습니다'(개발 정보 0) — 사슬·포트는 detail(개발자 서랍 ?dev=1)에만
     raise ApiError("llm_unavailable", "지금은 답할 수 없습니다",
-                   {"tried": tried, "chain": "vLLM → Ollama", "replay": "/landxi/agent/data/replay/ag0-namwon.ndjson"}, 503)
+                   {"tried": tried, "chain": "vLLM → Ollama"}, 503)
 
 
 @router.get("/agent/alive")

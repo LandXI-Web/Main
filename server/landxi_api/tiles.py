@@ -48,7 +48,8 @@ def verify(set_id: str, exp: str | None, sig: str | None) -> bool:
 
 
 def lx_only_set(set_id: str) -> bool:
-    return set_id in (config.load_yaml("sets").get("signed_sets") or [])
+    # 등록 영상에서 구운 세트(imagery/img-* · p16)는 원본급 자체 영상 → LX 세션 전용 서명 세트
+    return set_id in (config.load_yaml("sets").get("signed_sets") or []) or set_id.startswith("imagery/img-")
 
 
 def needs_signature(set_id: str) -> bool:
@@ -199,6 +200,7 @@ def _render(src_path: str, z: int, x: int, y: int, size: int = 256) -> bytes | N
         data = ds.read(indexes=[1, 2, 3], window=win, out_shape=(3, size, size), boundless=True, fill_value=0,
                        resampling=Resampling.bilinear)
         mask = ds.read_masks(1, window=win, out_shape=(size, size), boundless=True)
+        mask = np.where(mask, 255, 0).astype(np.uint8)
     else:
         sb = transform_bounds("EPSG:3857", ds.crs, *b3857, densify_pts=5)
         l, bt, r, tp = ds.bounds
@@ -210,6 +212,7 @@ def _render(src_path: str, z: int, x: int, y: int, size: int = 256) -> bytes | N
         ow = oh = int(size * 1.2)
         src = ds.read(indexes=[1, 2, 3], window=win, out_shape=(3, oh, ow), boundless=True, fill_value=0, resampling=Resampling.bilinear)
         smask = ds.read_masks(1, window=win, out_shape=(oh, ow), boundless=True)
+        smask = np.where(smask, 255, 0).astype(np.uint8)   # rasterio 1.4 boundless 마스크는 bool — reproject 는 bool 을 못 받는다
         src_tr = tfb(*sb, ow, oh)
         data = np.zeros((3, size, size), np.uint8)
         mask = np.zeros((size, size), np.uint8)

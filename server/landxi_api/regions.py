@@ -3,13 +3,14 @@
 뼈대 = server/seed/regions-sgg.json(행정경계 시군구 252 · build_regions.py). 이름·코드 갱신 = V-World LT_C_ADSIGG_INFO
 (캐시 90일 · 게이트웨이가 백그라운드로 받는다 · 키 오류면 뼈대 그대로). 뼈대에 없는 새 코드(개편 시군구)는 V-World 경계로 bbox 를 채운다.
 has_imagery = 자체 영상(imagery.footprint) ∩ 시군구 경계 · deploys = 배포본 AOI(또는 sgg_cd) ∩ 시군구 · n_findings = 실태조사 의심(RLS).
-남원 고정값 0 — 모든 값은 표·파일에서 계산한다.
+지역 고정값 0 — 모든 값은 표·파일에서 계산한다. 읍면동 경계(GET /regions/{sgg}/emd · emd_index) = V-World LT_C_ADEMD_INFO 캐시.
 """
 from __future__ import annotations
 
 import asyncio
 import datetime as dt
 import json
+import os
 import time
 from pathlib import Path
 
@@ -296,7 +297,7 @@ async def _n_findings(p) -> dict[str, int]:
 
 
 def _alias(d: dict) -> dict:
-    """PNU 앞 5자리가 옛 코드(46130 등)인 자료를 새 코드(12130)에도 붙인다 — 코드가 바뀐 시군구의 결과 0 오판 방지."""
+    """PNU 앞 5자리가 옛 코드(46xxx 등)인 자료를 새 코드(12xxx)에도 붙인다 — 코드가 바뀐 시군구의 결과 0 오판 방지."""
     regions, _, _ = regions_base()
     for r in regions:
         pc = r.get("prev_cd")
@@ -310,7 +311,7 @@ def _public_deploy(d: dict) -> bool:
 
 
 def find(q: str) -> list[dict]:
-    """이름 검색(에이전트 범위 가드 · K4 검색) — '남원' · '남원시' · '전북 남원시' · 코드."""
+    """이름 검색(에이전트 범위 가드 · K4 검색) — '○○' · '○○시' · '시도 ○○시' · 코드."""
     regions, _, _ = regions_base()
     q = (q or "").strip()
     if not q:
@@ -418,3 +419,306 @@ async def refresh(request: Request):
     require(principal(request), admin=True)
     st = await refresh_vworld(force=True)
     return {"status": st.get("status"), "source": _cache["src"], "vworld_at": _cache.get("vw_at"), "as_of": now_iso()}
+
+
+# ═══ 전국 읍면동 경계(core-xi · 코어 ①) ═══════════════════════════════════════════════════════════════
+# 원천 = V-World LT_C_ADEMD_INFO(법정 읍면동 · 키는 서버에만) → 02. 데이터/cache/regions/emd-{sgg}.geojson(90일 디스크 캐시).
+# 옛/새 시군구 코드(예: 46xxx ↔ 12xxx)는 regions_base() 의 prev_cd 로 같은 곳을 가리킨다. 지역 문자열 하드코딩 0.
+EMD_LAYER = "LT_C_ADEMD_INFO"
+EMD_CACHE_DAYS = 90
+_emd_mem: dict[str, dict] = {}
+_emd_idx: dict[str, "EmdIndex"] = {}
+
+
+class EmdUnavailable(RuntimeError):
+    pass
+
+
+def region_of(sgg_cd: str | None) -> dict | None:
+    """시군구 코드(지금 코드 또는 옛 코드) → regions_base 한 행."""
+    if not sgg_cd:
+        return None
+    sgg_cd = str(sgg_cd)[:5]
+    regions, _, _ = regions_base()
+    r = next((x for x in regions if x["sgg_cd"] == sgg_cd), None)
+    return r or next((x for x in regions if x.get("prev_cd") == sgg_cd), None)
+
+
+def sgg_codes(sgg_cd: str | None) -> list[str]:
+    """그 시군구를 가리키는 코드 전부(지금 · 옛)."""
+    r = region_of(sgg_cd)
+    if not r:
+        return [str(sgg_cd)] if sgg_cd else []
+    return [c for c in (r["sgg_cd"], r.get("prev_cd")) if c]
+
+
+def sgg_at(lng: float, lat: float) -> str | None:
+    """점 → 시군구 코드(regions_base 경계 · 뼈대가 단순화돼 있어 경계 근처는 가까운 쪽)."""
+    from shapely.geometry import Point
+    _, geoms, _ = regions_base()
+    pt = Point(lng, lat)
+    best = None
+    for cd, g in geoms.items():
+        try:
+            if g.contains(pt):
+                return cd
+            d = g.distance(pt)
+            if best is None or d < best[0]:
+                best = (d, cd)
+        except Exception:
+            continue
+    return best[1] if best and best[0] < 0.02 else None
+
+
+def _emd_path(cd: str) -> Path:
+    return config.DATA_ROOT / "cache" / "regions" / f"emd-{cd}.geojson"
+
+
+def _emd_fetch(cd: str, prev: str | None) -> dict:
+    """V-World 에서 한 시군구의 법정 읍면동(경계 포함) → FeatureCollection. 페이지 1000 · 코드 앞 5자리(LIKE)."""
+    from .proxy import vworld_key
+    key, dom = vworld_key()
+    if not key:
+        raise EmdUnavailable("key_missing")
+    feats: list[dict] = []
+    with httpx.Client(timeout=60, headers={"User-Agent": "LandXI-gateway/0.1"}) as c:
+        for code in [x for x in (cd, prev) if x]:
+            for page in range(1, 6):
+                q = {"service": "data", "request": "GetFeature", "data": EMD_LAYER, "key": key, "domain": dom, "attrFilter": f"emd_cd:LIKE:{code}",
+                     "size": 1000, "page": page, "geometry": "true", "attribute": "true", "format": "json", "crs": "EPSG:4326"}
+                j = c.get("https://api.vworld.kr/req/data", params=q).json().get("response", {})
+                if j.get("status") != "OK":
+                    break
+                for f in j["result"]["featureCollection"]["features"]:
+                    p = f.get("properties") or {}
+                    if not str(p.get("emd_cd", "")).startswith(code):
+                        continue
+                    feats.append({"type": "Feature", "properties": {"emd_cd": str(p["emd_cd"]), "name": p.get("emd_kor_nm"), "full": p.get("full_nm"),
+                                                                    "sgg_cd": cd}, "geometry": f.get("geometry")})
+                if page >= int((j.get("page") or {}).get("total") or 1):
+                    break
+            if feats:
+                break
+    if not feats:
+        raise EmdUnavailable("empty")
+    feats.sort(key=lambda f: f["properties"]["emd_cd"])
+    return {"type": "FeatureCollection", "sgg_cd": cd, "source": f"V-World {EMD_LAYER}", "fetched_at": now_iso(), "features": feats}
+
+
+def emd_fc(sgg_cd: str, force: bool = False) -> dict:
+    """그 시군구 읍면동 경계(원 해상도 · 4326). 메모리 → 디스크(90일) → V-World. 받지 못하면 오래된 캐시라도 · 그것도 없으면 EmdUnavailable."""
+    r = region_of(sgg_cd)
+    if not r:
+        raise EmdUnavailable("unknown_region")
+    cd = r["sgg_cd"]
+    m = _emd_mem.get(cd)
+    if m and not force:
+        return m["fc"]
+    p = _emd_path(cd)
+    fresh = p.exists() and time.time() - p.stat().st_mtime < EMD_CACHE_DAYS * 86400
+    if fresh and not force:
+        fc = json.loads(p.read_text(encoding="utf-8"))
+    else:
+        try:
+            fc = _emd_fetch(cd, r.get("prev_cd"))
+            p.parent.mkdir(parents=True, exist_ok=True)
+            tmp = p.with_name(p.name + f".{os.getpid()}.tmp")
+            tmp.write_text(json.dumps(fc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+            os.replace(tmp, p)
+        except Exception as e:
+            if p.exists():
+                fc = json.loads(p.read_text(encoding="utf-8"))
+            else:
+                raise EmdUnavailable(str(e)) from None
+    _emd_mem[cd] = {"fc": fc, "t": time.time()}
+    _emd_idx.pop(cd, None)
+    while len(_emd_mem) > 48:
+        _emd_mem.pop(next(iter(_emd_mem)))
+    return fc
+
+
+class EmdIndex:
+    """한 시군구의 읍면동 색인(STRtree · 4326) — find(점) → (이름, 코드). postprocess · 전역 분석 계획 · core-survey 가 쓴다."""
+
+    def __init__(self, sgg_cd: str, fc: dict):
+        from shapely import STRtree
+        self.sgg_cd = sgg_cd
+        self.codes: list[str] = []
+        self.names: list[str] = []
+        self.geoms: list = []
+        for f in fc.get("features") or []:
+            try:
+                g = _valid(shape(f["geometry"]))
+            except Exception:
+                continue
+            if g.is_empty:
+                continue
+            self.geoms.append(g)
+            self.codes.append(f["properties"]["emd_cd"])
+            self.names.append(f["properties"].get("name"))
+        self.tree = STRtree(self.geoms)
+        self._union = None
+
+    def find(self, pt) -> tuple[str, str] | None:
+        hit = [int(k) for k in self.tree.query(pt, predicate="within")]
+        if not hit:
+            return None
+        return self.names[hit[0]], self.codes[hit[0]]
+
+    def find_lnglat(self, lng: float, lat: float) -> tuple[str, str] | None:
+        from shapely.geometry import Point
+        return self.find(Point(lng, lat))
+
+    @property
+    def union(self):
+        if self._union is None:
+            from shapely.ops import unary_union
+            self._union = _valid(unary_union(self.geoms))
+        return self._union
+
+    def __len__(self):
+        return len(self.codes)
+
+
+def emd_index(sgg_cd: str | None) -> "EmdIndex | None":
+    """공개 계약 — 시군구(지금/옛 코드) → EmdIndex | None(경계를 받을 수 없음)."""
+    r = region_of(sgg_cd)
+    if not r:
+        return None
+    cd = r["sgg_cd"]
+    ix = _emd_idx.get(cd)
+    if ix is not None:
+        return ix
+    try:
+        ix = EmdIndex(cd, emd_fc(cd))
+    except EmdUnavailable:
+        return None
+    _emd_idx[cd] = ix
+    return ix
+
+
+def _rnd(c):
+    return [round(c[0], 6), round(c[1], 6)] if isinstance(c[0], (int, float)) else [_rnd(x) for x in c]
+
+
+def _emd_public(fc: dict, full: bool) -> dict:
+    """화면용 — 단순화(≈5 m) · 좌표 6자리 · bbox · 대표점(가까운 순서 · 라벨)."""
+    from shapely.geometry import mapping
+    out = []
+    for f in fc.get("features") or []:
+        try:
+            g = _valid(shape(f["geometry"]))
+        except Exception:
+            continue
+        s = g if full else g.simplify(0.00005, preserve_topology=True)
+        m = json.loads(json.dumps(mapping(s)))
+        m["coordinates"] = _rnd(m["coordinates"])
+        pt = g.representative_point()
+        out.append({"type": "Feature", "id": f["properties"]["emd_cd"],
+                    "properties": {"emd_cd": f["properties"]["emd_cd"], "name": f["properties"].get("name"),
+                                   "bbox": [round(v, 6) for v in g.bounds], "center": [round(pt.x, 6), round(pt.y, 6)]},
+                    "geometry": m})
+    return {"type": "FeatureCollection", "features": out}
+
+
+_emd_pub: dict[tuple, dict] = {}
+
+
+@router.get("/regions/{sgg_cd}/emd")
+async def region_emd(sgg_cd: str, request: Request, full: int | None = None):
+    """그 시군구 읍면동 경계 FeatureCollection(emd_cd · name · bbox · center). 옛/새 코드 모두 받는다."""
+    principal(request)
+    r = region_of(sgg_cd)
+    if not r:
+        raise ApiError("not_found", "해당 지역이 없습니다", {"sgg_cd": sgg_cd})
+    try:
+        fc = await run_in_threadpool(emd_fc, r["sgg_cd"])
+    except EmdUnavailable as e:
+        raise ApiError("upstream_unavailable", "읍면동 경계를 받을 수 없습니다", {"sgg_cd": r["sgg_cd"], "reason": str(e)}, status=503) from None
+    k = (r["sgg_cd"], bool(full), fc.get("fetched_at"))
+    body = _emd_pub.get(k)
+    if body is None:
+        body = await run_in_threadpool(_emd_public, fc, bool(full))
+        body.update({"sgg_cd": r["sgg_cd"], "prev_cd": r.get("prev_cd"), "name": r["name"], "n": len(body["features"]),
+                     "source": fc.get("source"), "as_of": fc.get("fetched_at")})
+        _emd_pub[k] = body
+        while len(_emd_pub) > 32:
+            _emd_pub.pop(next(iter(_emd_pub)))
+    from fastapi.responses import JSONResponse
+    return JSONResponse(body, headers={"Cache-Control": "private, max-age=3600"})
+
+
+def _box_hit(g_region, bounds) -> bool:
+    try:
+        b = box(*bounds)
+        if not g_region.intersects(b):
+            return False
+        a = g_region.intersection(b).area
+        return a > 0.2 * max(b.area, 1e-12) or a > 0.2 * max(g_region.area, 1e-12)
+    except Exception:
+        return False
+
+
+LANDCOVER_CLASSES = {"건물", "주차장", "경작지", "비닐하우스"}
+
+
+@router.get("/regions/{sgg_cd}/results")
+async def region_results(sgg_cd: str, request: Request):
+    """그 시군구에 결과가 있는 모든 결과 층 — ① 카탈로그 결과 층(범위가 이 시군구와 겹치는 것 · 권한 관문 그대로)
+    ② 이 시군구 전역 분석(scope sgg)으로 끝난 작업 결과(기관 = 자기 작업 + 관할 안의 LX 작업). 작업 id 는 화면에 쓰지 않는다(층 주소에만)."""
+    p = require(principal(request))
+    r = region_of(sgg_cd)
+    if not r:
+        raise ApiError("not_found", "해당 지역이 없습니다", {"sgg_cd": sgg_cd})
+    _, geoms, _ = regions_base()
+    g = geoms.get(r["sgg_cd"]) or (geoms.get(r.get("prev_cd")) if r.get("prev_cd") else None)
+    ix = await run_in_threadpool(emd_index, r["sgg_cd"])
+    if ix is not None and len(ix):
+        g = ix.union
+    from . import catalog as cat_mod
+    build = cat_mod.allowed_build(p, None)
+    _, items = await cat_mod.layer_items(p, build, "domestic")
+    out = []
+    for it in items:
+        if it.get("role") != "result" or it.get("kind") != "vector" or not it.get("bounds") or not it.get("url"):
+            continue
+        if g is not None and not _box_hit(g, it["bounds"]):
+            continue
+        out.append({**{k: it.get(k) for k in ("id", "name", "kind", "role", "source", "set", "path", "layer", "promote_id", "minzoom", "maxzoom", "bounds",
+                                               "signed", "attribution", "count", "basis")}, "from": "catalog",
+                    "style": "landcover" if "landcover" in it["id"] else "result"})
+    codes = sgg_codes(r["sgg_cd"])
+    scope = tenant_scope(p.tenant_id) if p.realm == "tenant" else None
+    lx_ok = p.is_lx or any(in_scope(c, scope) for c in codes)
+    async with db(realm="lx") as conn:
+        rows = await conn.fetch(
+            "SELECT j.id, j.tenant_id, j.result_set, j.model_id, j.imagery_id, j.finished_at, j.counts, "
+            "ST_AsGeoJSON(ST_Envelope(j.aoi))::json AS env, m.classes, i.year, i.epoch "
+            "FROM jobs j LEFT JOIN models m ON m.id=j.model_id LEFT JOIN imagery i ON i.id=j.imagery_id "
+            "WHERE j.kind='infer' AND j.state='done' AND NOT j.demo AND NOT coalesce(j.test,false) AND j.snapshot_ready "
+            "AND j.options->>'scope'='sgg' AND j.options->>'sgg_cd' = ANY($1::text[]) ORDER BY j.finished_at DESC LIMIT 20", codes)
+    seen = set()
+    for x in rows:
+        if not (p.is_lx or x["tenant_id"] == p.tenant_id or (x["tenant_id"] == "lx" and lx_ok)):
+            continue
+        k = (x["model_id"], x["imagery_id"])
+        if k in seen:
+            continue
+        seen.add(k)
+        yr = x["year"] or (str(x["epoch"])[:4] if x["epoch"] else "")
+        lc = bool(x["classes"]) and set(x["classes"]) <= LANDCOVER_CLASSES
+        nm = f"{r['name']} 토지피복 {yr}(AI 분석)" if lc else f"{r['name']} AI 분석 {yr}".strip()
+        counts = x["counts"] or {}
+        if isinstance(counts, str):
+            counts = json.loads(counts)
+        try:
+            b = [round(v, 6) for v in shape(x["env"]).bounds] if x["env"] else None
+        except Exception:
+            b = None
+        fin = x["finished_at"].isoformat(timespec="seconds") if x["finished_at"] else None
+        out.append({"id": x["result_set"].replace("/", "-"), "name": {"ko": nm, "en": nm}, "kind": "vector", "role": "result", "source": "pmtiles",
+                    "set": x["result_set"], "path": x["result_set"] + ".pmtiles", "layer": "results", "promote_id": "id", "minzoom": 10, "maxzoom": 17, "bounds": b,
+                    "signed": x["tenant_id"] != "lx", "attribution": "Land-XI AI 분석 · 검수 전", "basis": "inferred",
+                    "count": env(sum(counts.values()) if counts else None, "count", "inferred", "전역 분석 결과(겹침 정리 후)", as_of=fin),
+                    "from": "job", "style": "landcover" if lc else "result", "finished_at": fin})
+    return {"sgg_cd": r["sgg_cd"], "name": r["name"], "items": out, "as_of": now_iso()}

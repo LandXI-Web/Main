@@ -3,6 +3,8 @@
    · 견적  = POST /jobs/quote{options.live} — 서버가 범위 상한 · 해상도(칩 수 상한) · 전력 예산을 정하고 GPU 워커에 모델을 미리 올린다
    · 실행  = POST /jobs{kind:infer} → 게이트웨이 작업 대기열 → SSE /events/jobs/{id} : shard.done 마다 그 칸이 밝아지고 결과 도형이 들어온다(1250)
    · 전체 범위 기록 보기 = 이미 끝난 시군 전역 작업의 기록을 다시 흘려 보는 보조 동작(실시간 아님 · 속도 문구 없음)
+   · 전역 분석(core-xi) = 고른 시군구 전체 — POST /jobs/quote{options.scope:'sgg', sgg_cd, center}. 영상 · 모델은 서버가 고르고, 칸은 화면 중심에서
+     가까운 읍면동부터 차오른다. 다른 지역으로 가도 작업은 계속되고(화면만 떼어 낸다), 돌아오면 이어서 보인다. 영상이 없으면 '영상 등록 필요'.
    · 영업  = demo:true(서버 강제) → 꼬리표 '예시' · 결과는 남지 않음
    숫자·문구는 사용자 말만. 칩 수 · 작업 id · 모델 id · 걸린 시간은 개발자 서랍(devlog)으로. */
 import { api, API } from '../kit/util.js';
@@ -75,7 +77,7 @@ function pickModel(models, img) {
 }
 
 /* ── 분석 도구 ── */
-export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick }) {
+export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick, regionInfo }) {
   const map = stage.map;
   let models = null, S = null, draw = null;
   const tenant = who?.me?.realm === 'tenant';
@@ -85,7 +87,7 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
   const set = (id, fc) => src(id)?.setData(fc || EMPTY);
   function layers() {
     if (map.getSource('xa-mask')) return;
-    for (const id of ['xa-mask', 'xa-frame', 'xa-cells', 'xa-new']) map.addSource(id, { type: 'geojson', data: EMPTY });
+    for (const id of ['xa-mask', 'xa-frame', 'xa-cells', 'xa-new', 'xa-emd']) map.addSource(id, { type: 'geojson', data: EMPTY });
     map.addLayer({ id: 'xa-mask', type: 'fill', source: 'xa-mask', paint: { 'fill-color': '#F2F4F6', 'fill-opacity': 0.24, 'fill-opacity-transition': { duration: 750 } } }, 'slot-overlay');
     map.addLayer({ id: 'xa-cells', type: 'fill', source: 'xa-cells', paint: { 'fill-color': TEAL, 'fill-opacity': 0.1 } }, 'slot-overlay');
     map.addLayer({ id: 'xa-cells-l', type: 'line', source: 'xa-cells', paint: { 'line-color': TEAL, 'line-width': 0.5, 'line-opacity': 0.45 } }, 'slot-overlay');
@@ -93,6 +95,8 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     map.addLayer({ id: 'xa-new-l', type: 'line', source: 'xa-new', paint: { 'line-color': '#FFFFFF', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 1, 15, 2] } }, 'slot-overlay');
     map.addLayer({ id: 'xa-frame-h', type: 'line', source: 'xa-frame', paint: { 'line-color': 'rgba(242,244,246,.55)', 'line-width': 5, 'line-blur': 2 } }, 'slot-overlay');
     map.addLayer({ id: 'xa-frame', type: 'line', source: 'xa-frame', paint: { 'line-color': '#FFFFFF', 'line-width': 1.6 } }, 'slot-overlay');
+    // 전역 분석: 지금 차오르는 읍면동(흰 선 · 칸이 다음 읍면동으로 넘어가면 따라간다)
+    map.addLayer({ id: 'xa-emd', type: 'line', source: 'xa-emd', layout: { 'line-join': 'round' }, paint: { 'line-color': '#FFFFFF', 'line-width': 2.4, 'line-opacity': 0.95 } }, 'slot-overlay');
   }
   const WORLD = [[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]];
   function showFrame(g) {
@@ -103,7 +107,7 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     const cw = (r) => { let a = 0; for (let i = 0; i < r.length - 1; i++) a += r[i][0] * r[i + 1][1] - r[i + 1][0] * r[i][1]; return a < 0 ? r : [...r].reverse(); };
     set('xa-mask', { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [WORLD, ...polys.map((p) => cw(p[0]))] } });
   }
-  function clearMap() { for (const id of ['xa-mask', 'xa-frame']) set(id, EMPTY); clearResults(); host.querySelectorAll('.xa-bk').forEach((e) => e.remove()); }
+  function clearMap() { for (const id of ['xa-mask', 'xa-frame', 'xa-emd']) set(id, EMPTY); clearResults(); host.querySelectorAll('.xa-bk').forEach((e) => e.remove()); }
 
   /* 카드 */
   const card = h('section.xa-card.t-card.t-card--map', { hidden: true, 'aria-live': 'polite' });
@@ -182,9 +186,10 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     } catch { /* 기록 없음 */ }
     return q.eta_s;
   }
-  function cardMsg(text, { record = true } = {}) {
+  function cardMsg(text, { record = true, sgg = false } = {}) {
     card.innerHTML = '';
     card.append(h('header.xa-h', {}, h('h3', { text: '이 범위 분석' }), xBtn()), h('p.xa-msg', { text }));
+    if (sgg && region && !demo) card.append(h('div.xa-act', {}, h('button.t-btn.xa-sgg', { type: 'button', text: '전역 분석', onclick: () => { if (!S?.running) frameSgg(); } })));
     if (record) recordBtn();
     card.hidden = false;
   }
@@ -193,7 +198,10 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     card.innerHTML = '';
     const box = h('div.xa-empty');
     card.append(h('header.xa-h', {}, h('h3', { text: '이 범위 분석' }), xBtn()), box);
-    empty(box, { kind: 'ingest', compact: true });
+    // 다음 행동 = 영상 등록(LX 직원 화면) — 그 지역을 들고 간다
+    const code = regionInfo?.()?.meta?.sgg_cd || region?.code || '';
+    const act = !tenant && !demo ? { label: '영상 등록', href: '../lx-ingest/' + (code ? '?' + new URLSearchParams({ region: code }) : '') } : null;
+    empty(box, { kind: 'ingest', compact: true, ...(act ? { action: act } : {}) });
     card.hidden = false;
   }
   /* 전체 범위 기록 보기 — 이 지역 시군 전역을 이미 끝낸 분석 기록이 있으면 보조 동작 하나(없으면 버튼 없음) */
@@ -233,10 +241,11 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     const eta = S.eta?.value;
     const km2 = q.area_km2?.value ?? areaKm2(S.geom);
     const scope = label || `그린 범위 · ${km2 < 1 ? `${nf(Math.round(km2 * 1000) / 10)}ha` : `${nf(Math.round(km2 * 10) / 10)}㎢`}`;
+    const part = S.sgg && q.coverage?.value != null && q.coverage.value < 0.995;     // 영상이 시군구 일부만 덮는다 — 덮는 곳만 분석
     const why = !q.allowed ? reasonText(q.reasons) : '';
     card.append(...[
       h('header.xa-h', {}, h('h3', { text: '이 범위 분석' }), demo ? h('span.t-sig.xa-ex', { 'data-sig': 'ex', 'aria-label': '예시' }) : null, xBtn()),
-      h('dl.xa-dl', {}, h('div', {}, h('dt', { text: '범위' }), h('dd', { text: scope })), h('div', {}, h('dt', { text: '영상' }), h('dd', { text: imageryLabel(img) }))),
+      h('dl.xa-dl', {}, h('div', {}, h('dt', { text: '범위' }), h('dd', { text: part ? `${scope} · 영상 있는 곳` : scope })), h('div', {}, h('dt', { text: '영상' }), h('dd', { text: imageryLabel(img) }))),
       h('p.xa-eta', { html: `결과까지 약 ${etaHtml(eta)}${sig(S.eta)}` }),
       why ? h('p.xa-msg', { text: why }) : null,
       h('div.xa-act', {},
@@ -245,7 +254,7 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     if (!q.allowed) recordBtn();
     card.hidden = false;
   }
-  const reasonText = (rs = []) => rs.includes('aoi_too_large') || rs.includes('too_large') ? '범위가 너무 넓습니다. 읍면동 하나를 골라 주세요'
+  const reasonText = (rs = []) => rs.includes('aoi_too_large') || rs.includes('too_large') ? (S?.sgg ? '범위가 너무 넓습니다' : '범위가 너무 넓습니다. 읍면동 하나를 골라 주세요')
     : rs.includes('power_budget') ? '잠시 뒤 시작합니다'
     : rs.includes('aoi_outside_footprint') ? '이 범위에는 분석할 영상이 없습니다'
     : rs.includes('demo_required') || rs.includes('imagery_forbidden') ? '이 계정으로는 이 영상을 분석할 수 없습니다'
@@ -268,8 +277,10 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
       replay ? null : h('div.xa-act', {}, h('button.t-btn.t-btn--2', { type: 'button', text: '취소', onclick: cancel }))].filter(Boolean));
     card.hidden = false;
     let prep = !replay;
+    const where = h('span.xa-where');
     return { pct, bar, got: card.querySelector('.xa-got'),
-      live() { if (!prep) return; prep = false; prog.classList.remove('is-prep'); line.textContent = '분석 중 '; line.append(pct, '%'); } };
+      live() { if (!prep) return; prep = false; prog.classList.remove('is-prep'); line.textContent = '분석 중 '; line.append(pct, '%', where); },
+      emd(nm) { where.textContent = nm ? ` · ${nm}` : ''; } };
   }
   function cardDone(n, envN, { replay = false } = {}) {
     card.innerHTML = '';
@@ -289,11 +300,11 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     S.t0 = performance.now(); S.tFirst = 0; S.scopeText = S.label || null;
     const ui = cardRun();
     clearResults();
-    // 전역 프레임이 화면에 다 들어오게(차오름이 한눈에)
-    stage.go(bboxOf(S.geom), { ms: 1250, maxZoom: 16 });
+    // 전역 프레임이 화면에 다 들어오게(차오름이 한눈에) — 시군구 전역은 지금 보는 곳(화면 중심)부터 차오르므로 카메라를 옮기지 않는다
+    if (!S.sgg) stage.go(bboxOf(S.geom), { ms: 1250, maxZoom: 16 });
     let r;
     const me = S;
-    try { r = await api('/jobs', { method: 'POST', body: { ...S.body, priority: 0 } }); }
+    try { r = await api('/jobs', { method: 'POST', body: { ...S.body, priority: S.sgg ? 1 : 0 } }); }   // 전역(긴 작업)은 한 단계 뒤 — 읍면동 실시간 분석이 먼저
     catch (e) { devlog('submit', `${e.code || ''} ${e.message || ''}`); if (me.stopped) return; S.running = false; onBusy?.(false); cardMsg(e.code === 'worker_unavailable' ? '분석 장비가 잠시 쉬고 있습니다' : '분석을 시작하지 못했습니다'); return; }
     // 제출 응답 전에 취소를 눌렀으면 — 화면은 이미 멈췄다. 서버 작업만 거둔다
     if (me.stopped) { api(`/jobs/${r.job.id}/cancel`, { method: 'POST' }).catch(() => {}); devlog('job', `${r.job.id} · 제출 직후 취소`); return; }
@@ -325,7 +336,7 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
   }
 
   /** SSE 한 줄기를 지도에 — 실행(live)과 딥링크 다시 보기(replay)가 같은 길 */
-  function consume(eventsUrl, job, ui, { replay = false, pace = null } = {}) {
+  function consume(eventsUrl, job, ui, { replay = false, pace = null, since = 0 } = {}) {
     const total = () => S.total || job.shards_total || S.q?.shards || 1;
     const cells = [], newF = [];
     let done = 0, n = 0, dirty = false, errs = 0, finished = false;
@@ -397,8 +408,20 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
       d.__polys = new Promise((res) => waiting.set(key, res));
       worker.postMessage({ items: [{ key, url: API.base + d.polys_url }] });
     };
+    let curEmd = null;
+    const emdGeo = (cd) => (regionInfo?.()?.emds || []).find((e) => e.cd === cd);
     const onShard = (d) => {
       done++;
+      if (d?.emd_cd && d.emd_cd !== curEmd && me.sgg) {          // 시군구 전역 — 지금 차오르는 읍면동
+        curEmd = d.emd_cd; const e = emdGeo(curEmd);
+        set('xa-emd', e?.geometry ? { type: 'Feature', properties: {}, geometry: e.geometry } : EMPTY);
+        ui?.emd?.(e?.nm || ''); me.curEmd = e?.nm || null;
+      }
+      // 이어 보기(since): 떼어 낸 동안 끝난 칸의 도형은 이미 받은 결과(detections)로 그렸다 — 칸만
+      if (since && Date.parse(d?.at || '') < since) {
+        if (d?.bbox) { cells.push({ type: 'Feature', properties: {}, geometry: rectPoly(d.bbox) }); dirty = true; }
+        n += d?.n || 0; show(); return;
+      }
       if (!replay && !me.tFirst) { me.tFirst = performance.now(); if (window.__xc) window.__xc.liveFirst = +((me.tFirst - me.t0) / 1000).toFixed(1); }
       const b = d?.bbox;
       if (b) { cells.push({ type: 'Feature', properties: {}, geometry: rectPoly(b) }); if (!replay || pace) bracket(b); dirty = true; }
@@ -411,6 +434,7 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     };
     const onEvent = (name, d) => {
       if (finished) return;
+      if (name === 'job.done' && me.sgg) set('xa-emd', EMPTY);
       if (name === 'job.started') { S.total = d?.shards_total || S.total; errs = 0; }
       else if (name === 'shard.done') onShard(d);
       else if (name === 'job.done') { done = total(); show(); const wait = async () => { while (pend.length || pumping || inflight > 0) await new Promise((r) => setTimeout(r, 120)); setTimeout(() => end('done', d), 300); }; wait(); }
@@ -443,6 +467,8 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     });
     me.stream = stream;
     me.endLocal = end;
+    // 떼어 내기(다른 지역으로 이동) — 서버 작업은 그대로, 화면 구독만 멈춘다
+    me.detach = () => { if (finished) return; finished = true; clearInterval(tick); clearInterval(clock); if (worker) { worker.terminate(); worker = null; } stream?.close(); };
   }
 
   /* 칸 도착 브래킷(사진 위 흰 모서리 · 1250) — 화면에서 너무 작은 칸은 건너뛴다 */
@@ -456,6 +482,82 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     el.style.cssText = `transform:translate(${a.x.toFixed(1)}px,${a.y.toFixed(1)}px);width:${w.toFixed(1)}px;height:${hh.toFixed(1)}px`;
     host.append(el); live++;
     el.animate([{ opacity: 0 }, { opacity: 1, offset: 0.12 }, { opacity: 1, offset: 0.5 }, { opacity: 0 }], { duration: 1250, easing: 'linear' }).finished.then(() => { el.remove(); live--; }, () => { el.remove(); live--; });
+  }
+
+  /* ═══ 전역 분석(scope sgg) ═══ */
+  const regionGeom = () => {
+    const polys = [];
+    for (const e of regionInfo?.()?.emds || []) { const g = e.geometry; if (g?.type === 'Polygon') polys.push(g.coordinates); else if (g?.type === 'MultiPolygon') polys.push(...g.coordinates); }
+    return polys.length ? { type: 'MultiPolygon', coordinates: polys } : (region?.geometry || null);
+  };
+  async function frameSgg() {
+    if (S?.running || !region) return;
+    const geom = regionGeom();
+    const label = `${region.name} 전역`;
+    S = { geom, label, img: null, q: null, running: false, sgg: true };
+    const me = S;
+    if (geom) showFrame(geom);
+    cardBusy();
+    const c = map.getCenter();
+    const body = { kind: 'infer', options: { scope: 'sgg', sgg_cd: regionInfo?.()?.meta?.sgg_cd || region.code, center: [+c.lng.toFixed(6), +c.lat.toFixed(6)], chip: 1024, overlap: 0.125, conf: 0.25 }, demo };
+    let q;
+    try { q = await api('/jobs/quote', { method: 'POST', body }); }
+    catch (e) { devlog('quote sgg', `${e.code || ''} ${e.message || ''}`); if (S === me) cardMsg('지금은 견적을 낼 수 없습니다', { sgg: true }); return; }
+    if (S !== me) return;
+    devlog('quote sgg', { imagery: q.imagery?.id, model: q.model_id, shards: q.shards, upsample: q.upsample, coverage: q.coverage?.value, reasons: q.reasons });
+    if (!q.imagery || (q.reasons || []).includes('no_imagery')) { cardNoImagery(); return; }
+    S.body = body; S.q = q;
+    S.img = { id: q.imagery.id, gsd_m: q.imagery.gsd_m, epoch: q.imagery.year, name: {} };
+    S.eta = await measuredEta(q.imagery.id, q.upsample || 1, q);
+    if (S !== me) return;
+    cardQuote();
+  }
+  /** 다른 지역으로 이동 — 진행 중 작업은 서버에서 계속, 화면만 떼어 낸다(돌아오면 resume) */
+  function detach() {
+    if (!S?.running) return false;
+    const me = S;
+    me.detach?.();
+    draw?.(); card.hidden = true; clearMap(); S = null; onBusy?.(false);
+    devlog('detach', me.job?.id || '');
+    return true;
+  }
+  /** 이 지역에 진행 중인 전역 분석이 있으면 이어 보기 — 지금까지 결과(detections) + 남은 칸(SSE) */
+  async function resume(r) {
+    if (demo || tenant || !r || S?.running) return false;
+    const meta = regionInfo?.()?.meta || {};
+    const codes = [meta.sgg_cd, meta.prev_cd, r.code].filter(Boolean).map(String);
+    let job = null;
+    try {
+      for (const st of ['running', 'queued']) {
+        const j = await api('/jobs?' + new URLSearchParams({ state: st, kind: 'infer', limit: '50' }));
+        job = (j.items || []).find((x) => x.options?.scope === 'sgg' && codes.includes(String(x.options?.sgg_cd || '')));
+        if (job) break;
+      }
+    } catch { return false; }
+    if (!job || S?.running) return false;
+    region = r;
+    const since = Date.now();
+    layers(); clearResults();
+    const geom = regionGeom();
+    S = { geom, label: `${r.name} 전역`, img: (catalog.items || []).find((x) => x.id === job.imagery_id) || null, q: { allowed: true, shards: job.shards_total },
+      running: true, sgg: true, job, total: job.shards_total, scopeText: `${r.name} 전역`, t0: 0 };
+    const me = S;
+    if (geom) showFrame(geom);
+    onBusy?.(true);
+    const ui = cardRun();
+    // 지금까지 결과 — 칸마다 기록된 도형(10,000개씩)
+    try {
+      for (let off = 0; off < 300000; off += 10000) {
+        const fc = await api(`/results/${job.result_set}/features?` + new URLSearchParams({ limit: '10000', offset: String(off) }));
+        if (S !== me) return true;
+        pushAll(fc.features || []); flushAll();
+        if ((fc.features || []).length < 10000) break;
+      }
+    } catch (e) { devlog('resume features', String(e?.message || e)); }
+    if (S !== me) return true;
+    devlog('resume', job.id);
+    consume(`/events/jobs/${encodeURIComponent(job.id)}`, job, ui, { since });
+    return true;
   }
 
   /** 취소 — 누르는 즉시 카드가 '분석을 멈췄습니다'(낙관적). 서버 취소는 뒤에서 보내고, 결과가 오면 개발자 서랍에만 남긴다 */
@@ -484,7 +586,7 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
       if (id && !S?.running && !card.hidden && !card.querySelector('.xa-rec') && card.querySelector('.xa-msg')) recordBtn();
     });
     if (frameGeo?.geometry) frame(frameGeo.geometry, { label: frameGeo.label });
-    else { S = null; cardMsg(region ? '분석할 읍면동을 지도에서 누르거나 범위를 그리세요' : '지도 위에 분석할 범위를 끌어서 그리세요'); }
+    else { S = null; cardMsg(region ? '분석할 읍면동을 지도에서 누르거나 범위를 그리세요' : '지도 위에 분석할 범위를 끌어서 그리세요', { sgg: !!region }); }
   }
   /** 전체 범위 기록 보기(?job= 딥링크 포함) — 끝난 작업의 기록된 이벤트를 다시 받아 같은 결과를 지도에(칸 · 도형 · 탐지 수).
       오래 걸린 작업은 기록 시각을 짧게 줄여 흘린다(화면엔 속도·배속 문구를 쓰지 않는다 · 실제 걸린 시간은 개발자 서랍) */
@@ -520,5 +622,5 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
       return true;
     } catch (e) { devlog('replay', String(e?.message || e)); return false; }
   }
-  return { start, stop, get running() { return !!S?.running; }, get active() { return !!(draw || S); }, replayJob };
+  return { start, stop, detach, resume, frameSgg, get running() { return !!S?.running; }, get active() { return !!(draw || S); }, replayJob };
 }

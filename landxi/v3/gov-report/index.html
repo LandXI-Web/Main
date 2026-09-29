@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>할 일 · 보고서 · Land-XI</title>
-<meta name="description" content="현장 확인에 배정한 필지를 표에서 판정하고, 조치를 기록하고, 읍면동 보고서 초안을 받는다.">
+<meta name="description" content="관할 시군구의 의심 필지를 현장 확인에 배정하고, 판정하고, 조치를 기록하고, 읍면동 보고서를 받는다.">
 <link rel="icon" href="../../assets/images/favicon_landxi.png">
 <link rel="stylesheet" href="../../proto/vendor/maplibre/maplibre-gl.css">
 <link rel="stylesheet" href="../kit/kit.css">
@@ -21,10 +21,19 @@
     <header class="gr-head">
       <a class="gr-back" id="back" href="../gov-fusion/" aria-label="지도로 돌아가기"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12 4l-6 6 6 6"/></svg></a>
       <div class="gr-tabs" role="tablist">
+        <button type="button" role="tab" id="tab-sus" aria-selected="false" data-tab="sus">의심 필지</button>
         <button type="button" role="tab" id="tab-todo" aria-selected="true" data-tab="todo">할 일</button>
         <button type="button" role="tab" id="tab-report" aria-selected="false" data-tab="report">보고서</button>
       </div>
     </header>
+
+    <!-- 의심 필지(관할 시군구 · 실태조사 결과) -->
+    <div class="gr-pane" data-pane="sus" role="tabpanel" aria-labelledby="tab-sus" hidden>
+      <label class="gr-field gr-rgn" id="sus-rgn-f" hidden><span class="t-label">시군구</span><select class="t-input" id="sus-rgn"></select></label>
+      <div class="gr-big" id="sus-big" hidden></div>
+      <div class="gr-table" id="sus-table" hidden></div>
+      <div class="gr-empty" id="sus-empty" hidden></div>
+    </div>
 
     <!-- 할 일 -->
     <div class="gr-pane" data-pane="todo" role="tabpanel" aria-labelledby="tab-todo">
@@ -36,9 +45,11 @@
     <!-- 보고서 -->
     <div class="gr-pane" data-pane="report" role="tabpanel" aria-labelledby="tab-report" hidden>
       <form class="gr-form" id="rp-form" autocomplete="off">
+        <label class="gr-field" id="rp-sgg-f" hidden><span class="t-label">시군구</span><select class="t-input" id="rp-sgg"></select></label>
         <label class="gr-field"><span class="t-label">읍면동</span><select class="t-input" id="rp-emd"></select></label>
         <label class="gr-field"><span class="t-label">규칙</span><select class="t-input" id="rp-rule"></select></label>
         <button type="submit" class="t-btn" id="rp-go">초안 만들기</button>
+        <button type="button" class="t-btn t-btn--2" id="rp-docx">문서 내려받기</button>
       </form>
       <article class="gr-doc" id="doc" aria-live="polite">
         <div class="gr-doc-empty" id="doc-empty"></div>
@@ -72,6 +83,7 @@
       <p class="gr-act-line" id="act-line" hidden></p>
       <p class="gr-lock" id="lock-line" hidden></p>
       <div class="gr-det-act">
+        <button type="button" class="t-btn" id="b-assign" hidden>현장 확인 배정</button>
         <button type="button" class="t-btn t-btn--2" id="b-assignee">담당 바꾸기</button>
         <button type="button" class="t-btn t-btn--2" id="b-action">조치 기록</button>
         <button type="button" class="gr-link" id="b-map">지도에서 보기<span aria-hidden="true">→</span></button>

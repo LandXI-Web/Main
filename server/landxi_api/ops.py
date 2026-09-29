@@ -423,7 +423,14 @@ async def evaluate_alerts_once():
     await r.set("ops:alerts:last_check", now_iso())
 
 
+_side: dict = {}
+
+
 async def alert_loop():
+    # 한 흐름(core-flow) 감시도 여기서 함께 띄운다 — 게이트웨이 수명(lifespan) 동안 5 s 마다 배포본 흐름을 잇는다(main.py 무수정)
+    if "flow" not in _side:
+        from .deploys import flow_loop
+        _side["flow"] = asyncio.create_task(flow_loop())
     while True:
         try:
             await evaluate_alerts_once()
@@ -494,3 +501,28 @@ async def ops_uptime(request: Request):
     lock = config.SERVER_ROOT / ".workers.lock"
     return {"items": sorted(items, key=lambda x: x["name"] or ""), "lock": lock.read_text(encoding="utf-8").strip() if lock.exists() else None,
             "as_of": at}
+
+
+# ── 한 흐름(core-flow · 코어 ④) — 배포본 → 결재 → AI 분석(GPU) → 실태조사 → 기관 사용량 한 줄 ─────────────────
+@router.get("/ops/flows")
+async def ops_flows(request: Request, limit: int = 20):
+    """LX 관리자 대시보드 '배포 흐름' — 흐름이 있는 배포본(최근 순) 마다 같은 작업의 GPU 사용 · 기관 계량 · 배포 단계.
+    화면은 이름·상태·시간만 그린다(작업 id·GPU 이름·경로 노출 0 — id 는 개발자 서랍·보고서용)."""
+    require(principal(request), admin=True)
+    from .deploys import flow_detail
+    async with db(realm="lx") as conn:
+        ids = [r["id"] for r in await conn.fetch("SELECT id FROM deploys WHERE flow IS NOT NULL AND NOT coalesce(test,false) "
+                                                  "ORDER BY coalesce((flow->>'updated_at')::timestamptz, updated_at) DESC LIMIT $1", max(1, min(limit, 100)))]
+        names = {r["id"]: (r["name"] or {}).get("ko") if isinstance(r["name"], dict) else r["name"]
+                 for r in await conn.fetch("SELECT id, name FROM tenants")}
+        cards = {r["id"]: (r["name"] or {}).get("ko") if isinstance(r["name"], dict) else r["name"] for r in await conn.fetch("SELECT id, name FROM cards")}
+    items = []
+    for did in ids:
+        x = await flow_detail(did)
+        x["tenant_name"] = names.get(x["tenant_id"])
+        x["card_name"] = cards.get(x["card_id"])
+        gs = sum(((u.get("gpu_s") or {}).get("value") or 0) for u in x["usage"].values())
+        x["gpu_s"] = env(round(gs, 1), "gpu_s", "measured", "usage_events(gpu_s · 이 배포본 작업)")
+        x["metered_to"] = sorted(x["usage"].keys())
+        items.append(x)
+    return {"items": items, "total": len(items), "as_of": now_iso()}

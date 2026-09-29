@@ -11,8 +11,23 @@ from . import Out, ToolError
 
 SERVICE_CLS = {"greenhouse": "비닐하우스", "비닐하우스": "비닐하우스", "building": "건물", "건물": "건물", "farmland": "경작지", "경작지": "경작지",
                "parking": "주차장", "주차장": "주차장"}
-PREFER = {"비닐하우스": ["namwon/Vinyl_house/train2", "namwon/Vinyl_house/train", "aerial25/best"],
-          "건물": ["aerial25/best"], "경작지": ["namwon/cultivate_uncultivate/train", "aerial25/best"], "주차장": ["aerial25/best"]}
+
+
+def prefer(models: list[dict], cls: str) -> list[dict]:
+    """그 클래스를 탐지하는 등록 모델 — 전용 모델(클래스가 적은 것) 먼저 · 같은 폭이면 최신 학습(id 역순). 지역·모델 이름 고정값 0."""
+    def hits(m):
+        cs = m.get("classes") or []
+        if isinstance(cs, str):
+            import json
+            try:
+                cs = json.loads(cs)
+            except Exception:
+                cs = []
+        return cs if any(c == cls or str(c).startswith(cls + "_") for c in cs) else None
+    got = [m for m in models if hits(m)]
+    got.sort(key=lambda m: m["id"], reverse=True)
+    got.sort(key=lambda m: len(hits(m)))
+    return got
 
 
 def _bbox(geom: dict) -> list[float]:
@@ -56,7 +71,7 @@ async def plan_body(args: dict, ctx) -> dict:
     else:
         if not cls:
             raise ToolError("bad_request", "service 는 greenhouse|building|farmland|parking 중 하나")
-        cands = [by_id[i] for i in PREFER.get(cls, []) if i in by_id]
+        cands = prefer(models, cls)
     if not cands:
         raise ToolError("not_found", f"'{cls}' 을 탐지하는 등록 모델 없음", 404)
     layers = (await _j(ctx, "GET", "/catalog/layers", params={"z": 16})).get("items") or []

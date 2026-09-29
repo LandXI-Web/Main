@@ -69,7 +69,10 @@ export function tenantName(id) {
   const t = S.tenants.find((x) => x.id === id);
   return trimRegion(t?.name?.ko || t?.name?.en || '기관').replace(/\s*\(.*\)$/, '');
 }
-export const whoOf = (d) => (d.tenant_id === 'lx' ? trimRegion(d.region_name?.ko || d.region_name?.en || 'LX') : tenantName(d.tenant_id));
+const sggWord = (d) => { const p = String(d.region_name?.ko || '').trim().split(/\s+/); return p.length > 1 ? p.slice(1).join(' ') : ''; };
+/** 배포 주체 — LX 자체 = 지역 · 기관 = 기관(시군구에 적용한 배포본이 기관 관할 여러 곳 중 하나면 시군구를 붙인다: '광주전남특별시 여수시') */
+export const whoOf = (d) => (d.tenant_id === 'lx' ? trimRegion(d.region_name?.ko || d.region_name?.en || 'LX')
+  : d.sgg_cd && d.region_profile == null && sggWord(d) && !tenantName(d.tenant_id).endsWith(sggWord(d)) ? `${tenantName(d.tenant_id)} ${sggWord(d)}` : tenantName(d.tenant_id));
 export const cardName = (id) => (S.cards.find((c) => c.id === id)?.name || '서비스').replace(/\s*(행정)?서비스$/, '').replace(/판독/g, 'AI 분석');   // 용어표: 판독 → AI 분석(서버 카드명 정비 전 화면 쪽 표기)
 export const verOf = (d) => d.version || (d.card_version_id ? 'v' + d.card_version_id.split('@')[1] : '');
 export const verOfId = (cv) => (cv ? 'v' + String(cv).split('@')[1] : '');

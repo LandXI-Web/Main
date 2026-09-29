@@ -154,6 +154,12 @@ export async function findings(q = {}) {
   if (routeOn()) {
     try {
       const p = new URLSearchParams();
+      // 이 화면의 표(읍면동·규칙)와 같은 범위로만 센다 — 시군구는 표의 읍면동 코드에서, 규칙은 표의 규칙 목록에서(지역 고정 없음)
+      const [emdT, rulesT] = await Promise.all([loadEmd(), loadRules()]);
+      const sgg = String(emdT?.rows?.[0]?.emd_cd || '').slice(0, 5);
+      if (sgg && !q.emd_cd) p.set('sgg', sgg);
+      const ruleIds = (rulesT?.items || []).map((r) => r.id || r.rule_id).filter(Boolean);
+      if (!q.rule?.length && ruleIds.length) p.set('rule', ruleIds.join(','));
       if (q.rule?.length) p.set('rule', q.rule.join(','));
       if (q.priority?.length) p.set('priority', q.priority.join(','));
       if (q.emd_cd) p.set('emd_cd', q.emd_cd);

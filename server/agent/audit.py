@@ -15,12 +15,85 @@ PII = [
     ("phone", re.compile(r"(?<!\d)01[016789][-\s.]?\d{3,4}[-\s.]?\d{4}(?!\d)"), "[마스킹:전화]"),
     ("email", re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+"), "[마스킹:이메일]"),
 ]
-TENANT_WORDS = {
-    "namwon": ["남원"],
-    "gwangju-jeonnam": ["광주", "전남", "gwangju", "광주전남"],
-    "kgz-agri": ["키르기스", "kgz", "으슥아타", "ysyk", "kyrgyz"],
-    "kgz-land": ["키르기스", "kgz", "kyrgyz"],
-}
+_SUFFIX = re.compile(r"(특별자치도|특별자치시|통합특별시|특별시|광역시|도)$")
+
+
+def _stems(w: str) -> set[str]:
+    """이름 → 부르는 말(어간). '○○시'→○○ · '○○특별시'→○○ · '○○스탄'→○○ · 'kyrgyzstan'→kyrgyz."""
+    w = w.strip().strip("()·,")
+    out = set()
+    if len(w) < 2:
+        return out
+    s = _SUFFIX.sub("", w)
+    if s != w and len(s) >= 2:
+        out.add(s)
+    elif len(w) >= 3 and w[-1] in "시군구":
+        out.add(w[:-1])
+    else:
+        out.add(w)
+    for suf in ("스탄", "stan"):
+        if w.endswith(suf) and len(w) - len(suf) >= 3:
+            out.add(w[: -len(suf)])
+    return {x.lower() for x in out}
+
+
+def _build_words() -> dict[str, list[str]]:
+    """기관 → 그 기관을 가리키는 말(다른 기관 세션이 쓰면 권한 밖). 원천 = regions.yaml 관할 · region_profiles.yaml 이름 · 시군구 뼈대 시도 이름.
+    지역 고정값 0 — 기관·관할이 늘면 여기도 따라 는다."""
+    try:
+        import yaml
+        from landxi_api import config as gcfg
+        from landxi_api.regions import _cfg, _load_seed, regions_base
+    except Exception:
+        return {}
+    try:
+        tenants = _cfg().get("tenants") or {}
+        prof = (yaml.safe_load((gcfg.SERVER_ROOT / "config" / "region_profiles.yaml").read_text(encoding="utf-8")) or {}).get("profiles") or {}
+        seed, _ = _load_seed()
+        base, _, _ = regions_base()
+    except Exception:
+        return {}
+    out: dict[str, list[str]] = {}
+    for t, v in tenants.items():
+        if t.startswith("lx"):
+            continue
+        w: set[str] = set()
+        head = t.split("-")[0]
+        if len(head) >= 3:
+            w.add(head.lower())
+        pr = prof.get(v.get("profile") or t) or {}
+        ko = str((pr.get("name") or {}).get("ko") or "").split()
+        en = str((pr.get("name") or {}).get("en") or "")
+        if v.get("global"):
+            for tok in ko:
+                w |= _stems(tok)
+            for part in re.split(r"[,\s]+", en):
+                for q in {part, *part.split("-")}:
+                    if len(q) >= 4:
+                        w |= _stems(q)
+        elif ko:
+            w |= _stems(ko[-1])
+            for part in en.split(",")[0].split("-"):
+                if len(part) >= 4:
+                    w.add(part.strip().lower())
+        for px in v.get("sgg") or []:
+            if len(px) == 2:
+                w |= {x["sido_short"] for x in seed if x["sgg_cd"].startswith(px) and x.get("sido_short")}
+            else:
+                w |= {s for x in base + seed if x["sgg_cd"] == px or x.get("prev_cd") == px for s in _stems(x.get("name") or "")}
+        out[t] = sorted(x for x in w if len(x) >= 2)
+    return out
+
+
+_TW: dict = {"v": None}
+
+
+def tenant_words() -> dict[str, list[str]]:
+    if _TW["v"] is None:
+        _TW["v"] = _build_words()
+    return _TW["v"]
+
+
 GUARDS: list[tuple[str, re.Pattern, str]] = [
     ("prompt_injection", re.compile(r"(이전|위|앞|모든)\s*(의)?\s*(지시|명령|규칙|프롬프트)(를|은|는)?\s*(모두\s*)?(무시|잊|따르지)|ignore (all |the )?(previous|above) (instructions|rules)|시스템\s*프롬프트(를)?\s*(보여|출력|알려)|system prompt|개발자\s*모드|jailbreak|DAN\b", re.I),
      "지시를 바꾸려는 문장은 따르지 않습니다(도구 결과·입력 모두 데이터로만 다룹니다)"),
@@ -58,14 +131,15 @@ def screen(message: str, p) -> dict:
             break
     if rej is None and getattr(p, "realm", None) == "tenant":
         own = p.tenant_id
-        for t, words in TENANT_WORDS.items():
-            if t == own or own in TENANT_WORDS and set(words) & set(TENANT_WORDS.get(own, [])):
+        TW = tenant_words()
+        for t, words in TW.items():
+            if t == own or own in TW and set(words) & set(TW.get(own, [])):
                 continue
             if any(w.lower() in msg.lower() for w in words):
-                rej = {"code": "tool_forbidden", "category": "cross_tenant", "message": f"다른 기관({t}) 자료는 이 계정({own})으로 볼 수 없습니다"}
+                rej = {"code": "tool_forbidden", "category": "cross_tenant", "message": "이 기관의 데이터가 아닙니다"}
                 break
         if rej is None and re.search(r"다른\s*기관|타\s*기관|모든\s*기관|전체\s*기관", msg):
-            rej = {"code": "tool_forbidden", "category": "cross_tenant", "message": f"다른 기관 자료는 이 계정({own})으로 볼 수 없습니다"}
+            rej = {"code": "tool_forbidden", "category": "cross_tenant", "message": "이 기관의 데이터가 아닙니다"}
     return {"message": msg, "pii": pii, "reject": rej}
 
 

@@ -140,3 +140,25 @@ external:
     security_review: cleared
     rights_holder: Overture
     ladder: {stage: global, from: 13, to: 16, order: 60}
+
+# ── 전국 시군구 영상 공급(core-imagery · p16_imagery_nation.py) ─────────────────────────────
+# 로컬 원천 = 도엽 폴더(시도별 하위 폴더 · GeoTIFF + TFW). 지역은 여기서 정하지 않는다 — 도엽 외곽 ∩ 시군구 경계로 계산.
+local_sources:
+  - id: ap25-2023-nonurban
+    root: "D:/2023_정사영상_비도시_25"
+    crs: "EPSG:5186"            # TFW 만 있고 CRS 태그가 표준 코드가 아님 → 부여
+    gsd_m: 0.25
+    year: 2023
+    kind: aerial
+    name_suffix: "2023 25cm 항공"
+    license: "국토지리정보원 항공정사영상(LX 보유 · 내부 분석용)"
+    attribution: "국토지리정보원 2023 정사영상"
+    rights_holder: "국토지리정보원"
+    min_coverage: 0.05          # 시군구 경계의 5% 미만만 덮는 곳(이웃 시도 도엽 가장자리)은 등록하지 않는다
+    ladder: {stage: domestic, from: 15, to: 20, order: 31}   # 동적 타일(원본 창) = z15 이상에서 0.5 s 안(실측) · 그 아래는 구운 PMTiles
+    pmtiles: {minzoom: 11, maxzoom: 18}
+# V-World 위성 영상을 AI 분석 입력으로 쓰는가(2026-09-29 판정 · 보고서 core-imagery-report.md) — 배경지도 표시는 별개(위 xdworld-satellite).
+vworld_analysis:
+  allowed: false
+  reason: terms
+  note: "오픈API 이용약관 원문 확인 불가(공식 약관 페이지 시스템 오류) · 저장·복제 제한 조항(제10조 서비스 이용 · 제12조 저작권) 존재 확인 → 불명확 = 쓰지 않음"

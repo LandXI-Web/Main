@@ -100,10 +100,17 @@ def ext_modules(dump, key):
     return out
 
 
-def namwon_aoi():
-    g = json.loads((REPO / "landxi/assets/data/geo/namwon-emd.geojson").read_text(encoding="utf-8"))
-    u = unary_union([shape(f["geometry"]).buffer(0) for f in g["features"]])
-    return MultiPolygon([u]) if u.geom_type == "Polygon" else u
+def tenant_aoi(tenant: str):
+    """기관 관할이 시군구 하나면 그 시군구 경계(regions_base · 파일 경로 의존 0 · core-flow) — 아니면 None(광역 = 프로필 bbox)."""
+    from landxi_api.regions import regions_base, tenant_scope
+    sc = tenant_scope(tenant) or []
+    if len(sc) != 1 or len(sc[0]) != 5:
+        return None, None
+    _, geoms, _ = regions_base()
+    g = geoms.get(sc[0])
+    if g is None:
+        return None, None
+    return (MultiPolygon([g]) if g.geom_type == "Polygon" else g), sc[0]
 
 
 def bbox_mp(b):
@@ -133,13 +140,12 @@ def seed_core(conn, dump):
         cur.execute("INSERT INTO card_versions(id, card_id, version, model_ids, modules, changelog, approved_by, approved_at) VALUES "
                     "(%s,%s,%s,%s,%s,%s,'u_lx_admin',now()) ON CONFLICT (id) DO UPDATE SET model_ids=EXCLUDED.model_ids, modules=EXCLUDED.modules, "
                     "changelog=EXCLUDED.changelog", (vid, card, ver, mids, json.dumps(mods, ensure_ascii=False), log_))
-    nw = namwon_aoi()
     deploys = []
     for d in dump["DEPLOYS"]:
         tenant = DEPLOY_TENANT[d["id"][:5]]
         cv, prev = DEPLOY_CV[d["id"]]
-        prof = "namwon" if tenant == "namwon" else "gwangju-jeonnam"
-        aoi = nw if tenant == "namwon" else bbox_mp(profiles[prof]["bbox"])
+        prof = tenant                              # 시드 기관 id = 지역 프로필 id(region_profiles.yaml)
+        aoi = tenant_aoi(tenant)[0] or bbox_mp(profiles[prof]["bbox"])
         cur_s, prev_s = SNAP.get(d["id"], (None, None))
         deploys.append((d["id"], d.get("note") and f"{d['region'].split(' · ')[0]} {d['cardId'].removeprefix('card-')} {d['year']}" or d["id"],
                         tenant, d["cardId"], cv, prev, prof, profiles[prof]["name"], aoi, STAGE[d["status"]], ext_of.get(d["cardId"]), cur_s, prev_s,
@@ -169,9 +175,15 @@ def seed_core(conn, dump):
         if stage == "ga":
             cur.execute("INSERT INTO approvals(id, subject_type, subject_id, requested_by, decided_by, decision, reason, at) VALUES "
                         "(%s,'deploy',%s,'u_lx_admin','u_lx_admin','approve','시드',now()) ON CONFLICT (id) DO NOTHING", (f"ap_seed_{did}", did))
-    # 이식 시연으로 생긴 배포본은 시드가 지운다(재현 가능하게) — 시드 목록 밖 deploys
+    # 다른 지역에 적용으로 생긴 배포본은 시드가 지운다(재현 가능하게) — 시드 목록 밖 deploys
     seed_ids = [d[0] for d in deploys]
     cur.execute("DELETE FROM deploys WHERE id <> ALL(%s)", (seed_ids,))
+    conn.commit()
+    try:                                           # 배포본 sgg_cd(core-flow) — 비어 있는 것만 경계·결과로 채운다
+        from seed.backfill_deploy_sgg import run as backfill_sgg
+        log("deploys sgg_cd", sum(1 for x in backfill_sgg() if x["sgg_cd"]))
+    except Exception as e:  # noqa: BLE001
+        log("deploys sgg_cd 백필 실패", repr(e))
     log("tenants", len(TENANTS), "cards", len(dump["CARDS"]), "card_versions", len(CV), "deploys", len(deploys))
     conn.commit()
 

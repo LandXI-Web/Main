@@ -1,9 +1,9 @@
-"""실태조사 읽기 — **임시 구현**(F2-S `GET /survey/*` 미도착 시 · 브리프 F2-E §0). 정본 파일 `02. 데이터/survey/`만 읽는다.
+"""실태조사 읽기 — **대체 경로**(PostGIS · `GET /survey/*` 가 없을 때만). 정본 파일 `02. 데이터/survey/{기관}-parcel-*` 만 읽는다.
 
-- findings: namwon-parcel-suspects.csv(20,872행 · UTF-8 BOM) · 필지 폴리곤: namwon-parcel-survey.gpkg `parcels`(332,084 · pnu → fid 색인 1회)
-- stats: namwon-parcel-emd-summary.json(totals · by_emd 39 + 합계 행)
-- parcel: gpkg parcels 행 + suspects + namwon-parcel-timeline.json(6,818)
-F2-S API 가 뜨면 tools/survey.py 가 HTTP 를 먼저 부르고 이 모듈은 404 때만 쓴다(결과 봉투 source 에 표기).
+파일 이름의 앞머리 = 기관 id(지역 고정값 0). 그 기관 파일이 없으면 available() = False → 도구는 '해당 지역 데이터가 없습니다'.
+- findings: {기관}-parcel-suspects.csv(UTF-8 BOM) · 필지 폴리곤: {기관}-parcel-survey.gpkg `parcels`(pnu → fid 색인 1회)
+- stats: {기관}-parcel-emd-summary.json(totals · by_emd)
+- parcel: gpkg parcels 행 + suspects + {기관}-parcel-timeline.json
 소유자 성명 열은 없다(연속지적에 없음 · OWNER_NM 미사용).
 """
 from __future__ import annotations
@@ -19,9 +19,33 @@ from pathlib import Path
 from .. import config
 
 AS_OF = "2026-09-24"
-SRC_CSV = "survey/namwon-parcel-suspects.csv"
-SRC_SUM = "survey/namwon-parcel-emd-summary.json"
-SRC_GPKG = "survey/namwon-parcel-survey.gpkg"
+_T = {"id": None}                  # 지금 읽는 기관(use()) — 파일 앞머리
+
+
+def _f(kind: str) -> str:
+    return f"{_T['id']}-parcel-{kind}"
+
+
+def available(tenant: str | None) -> bool:
+    return bool(tenant) and (config.SURVEY_DIR / f"{tenant}-parcel-suspects.csv").exists()
+
+
+def use(tenant: str) -> None:
+    """읽을 기관을 바꾼다(바뀌면 캐시를 비운다)."""
+    global _fid
+    if _T["id"] != tenant:
+        _T["id"] = tenant
+        suspects.cache_clear()
+        summary.cache_clear()
+        timeline.cache_clear()
+        _fid = None
+
+
+def src(kind: str) -> str:
+    return "survey/" + _f(kind)
+
+
+SRC_CSV, SRC_SUM, SRC_GPKG = "suspects.csv", "emd-summary.json", "survey.gpkg"     # 봉투 출처 = src(SRC_*)
 NOTE_INF = "의심 후보 · AI 추론 · 검수 전 · 위법 판정 아님"
 _lock = threading.Lock()
 
@@ -36,7 +60,7 @@ def env(value, unit, source, basis="inferred", note=NOTE_INF, as_of=AS_OF):
 @lru_cache(maxsize=1)
 def suspects() -> list[dict]:
     rows = []
-    with open(config.SURVEY_DIR / "namwon-parcel-suspects.csv", encoding="utf-8-sig", newline="") as f:
+    with open(config.SURVEY_DIR / _f("suspects.csv"), encoding="utf-8-sig", newline="") as f:
         for r in csv.DictReader(f):
             for k in ("rank",):
                 r[k] = int(r[k])
@@ -52,7 +76,7 @@ def suspects() -> list[dict]:
 
 @lru_cache(maxsize=1)
 def summary() -> dict:
-    return json.loads((config.SURVEY_DIR / "namwon-parcel-emd-summary.json").read_text(encoding="utf-8"))
+    return json.loads((config.SURVEY_DIR / _f("emd-summary.json")).read_text(encoding="utf-8"))
 
 
 def emd_names() -> dict[str, str]:
@@ -78,7 +102,7 @@ _fid: dict[str, int] | None = None
 
 
 def _conn():
-    return sqlite3.connect(f"file:{config.SURVEY_DIR / 'namwon-parcel-survey.gpkg'}?mode=ro", uri=True, check_same_thread=False)
+    return sqlite3.connect(f"file:{config.SURVEY_DIR / _f('survey.gpkg')}?mode=ro", uri=True, check_same_thread=False)
 
 
 def warm():
@@ -127,7 +151,7 @@ def parcels(pnus: list[str], geom: bool = True) -> dict[str, dict]:
 
 @lru_cache(maxsize=1)
 def timeline() -> dict[str, dict]:
-    j = json.loads((config.SURVEY_DIR / "namwon-parcel-timeline.json").read_text(encoding="utf-8"))
+    j = json.loads((config.SURVEY_DIR / _f("timeline.json")).read_text(encoding="utf-8"))
     items = j.get("parcels") if isinstance(j, dict) else j
     return {p["pnu"]: p for p in items or [] if isinstance(p, dict) and p.get("pnu")}
 
@@ -151,19 +175,19 @@ def findings(rule=None, emd=None, priority=None, jimok=None, top=5, sort="score"
     cond = " · ".join(x for x in [rule, emd_n, f"지목 {jm}" if jm else None, f"등급 {priority}" if priority else None] if x) or "전체"
     by_pri = {k: sum(1 for r in sel if r["priority"] == k) for k in "ABC"}
     return {"items": picked, "total": len(sel), "cond": cond, "emd": emd_n, "emd_cd": emd_cd, "jimok": jm,
-            "by_priority": by_pri, "source": f"{SRC_CSV}({cond})"}
+            "by_priority": by_pri, "source": f"{src(SRC_CSV)}({cond})"}
 
 
-def stats(by="rule", emd=None, rule=None) -> dict:
+def stats(by="rule", emd=None, rule=None, scope_name: str | None = None) -> dict:
     s = summary()
     emd_n, emd_cd = emd_resolve(emd)
     t = s["totals"]
     if emd_n:
         e = s["by_emd"][emd_n]
         return {"scope": emd_n, "emd_cd": emd_cd, "suspects": e["suspects_total"], "suspect_parcels": e["suspect_parcels"],
-                "parcels": e["parcels"], "by_rule": e["suspects"], "by_priority": e["priority"], "source": f"{SRC_SUM}#by_emd.{emd_n}"}
-    out = {"scope": "남원시 전체", "suspects": t["suspects"], "suspect_parcels": t["suspect_parcels"], "parcels": t["parcels"],
-           "by_rule": t["by_rule"], "by_priority": t["by_priority"], "source": f"{SRC_SUM}#totals"}
+                "parcels": e["parcels"], "by_rule": e["suspects"], "by_priority": e["priority"], "source": f"{src(SRC_SUM)}#by_emd.{emd_n}"}
+    out = {"scope": f"{scope_name or '관할'} 전체", "suspects": t["suspects"], "suspect_parcels": t["suspect_parcels"], "parcels": t["parcels"],
+           "by_rule": t["by_rule"], "by_priority": t["by_priority"], "source": f"{src(SRC_SUM)}#totals"}
     if by == "emd":
         out["by_emd"] = [{"emd": k, "emd_cd": v.get("emd_cd"), "n": v["suspects_total"]} for k, v in s["by_emd"].items() if v.get("emd_cd")]
     if rule:

@@ -1,6 +1,6 @@
-/* 배포 뷰 — 매트릭스(카드 × 기관 · 버전 · 단계) + 행 시트([단계 올리기] [롤백] [모듈] [모델 교체] [GPU 배치]). */
+/* 배포 뷰 — 매트릭스(카드 × 기관 · 버전 · 단계) + 행 시트([단계 올리기] [롤백] [모듈] [모델 교체] [GPU 배치]) + 한 흐름(적용 → 결재 → AI 분석 → 실태조사 → 기관 결과). */
 import { drawer, toast, table, stepper, empty, esc, api, h } from './kit.js';
-import { S, STAGE, STAGES, FORWARD, deploys, whoOf, cardName, verOf, verOfId, modName, swapModels, currentModels, loadLineage, poolName, POOL, loadDeploys } from './data.js';
+import { S, STAGE, STAGES, FORWARD, deploys, whoOf, cardName, verOf, verOfId, modName, swapModels, currentModels, loadLineage, poolName, POOL, loadDeploys, tenantName } from './data.js';
 
 const chip = (st) => `<span class="stg" data-st="${esc(st)}"><i></i>${esc(STAGE[st] || st)}</span>`;
 /** 단계 궤적 — 초안 → 검증 → 시범 → 운영 네 칸(지난 칸 잉크 · 현재 칸 굵게) + 단계 이름 */
@@ -12,8 +12,44 @@ const COLS = [
   { key: 'card', label: '카드', fmt: (v) => `<b class="dcard">${esc(v)}</b>` },
   { key: 'org', label: '기관' },
   { key: 'ver', label: '버전', fmt: (v, r) => `<span class="num dver">${esc(v || '—')}</span>${r.prev ? `<small class="dprev num">${esc(r.prev)}</small>` : ''}` },
-  { key: 'stage', label: '단계', fmt: (v) => track(v) },
+  { key: 'stage', label: '단계', fmt: (v, r) => track(v) + (r.flow ? `<small class="dflow" data-s="${esc(r.flowState)}">${esc(r.flow)}</small>` : '') },
 ];
+
+/* ── 한 흐름(서버 GET /deploys/{id}/flow) — 같은 작업의 배포 단계 · AI 분석(GPU) · 실태조사 · 기관 사용량. 작업 번호·GPU 이름은 그리지 않는다 ── */
+const FLOW_STEPS = [['approval', '적용 요청'], ['decided', '결재'], ['analyzing', 'AI 분석'], ['surveying', '실태조사'], ['done', '기관 결과']];
+const JOB_KO = { queued: '대기', running: '진행 중', done: '끝', failed: '멈춤', cancelled: '취소' };
+const mins = (s) => (s == null ? '—' : s < 60 ? `${Math.max(1, Math.round(s))}초` : s < 3600 ? `${Math.round(s / 60)}분` : `${(s / 3600).toFixed(1)}시간`);
+function flowAt(f) {
+  const st = f.flow?.state;
+  if (!st) return -1;
+  if (st === 'done') return 5;
+  if (st === 'surveying') return 3;
+  if (st === 'analyzing' || st === 'starting') return 2;
+  if (st === 'approval') return 0;
+  return f.approval?.decision === 'approve' ? (f.analysis ? 2 : 1) : 0;
+}
+async function drawFlow(el, d) {
+  let f;
+  try { f = await api(`/deploys/${encodeURIComponent(d.id)}/flow`); } catch { el.hidden = true; return; }
+  if (!f.flow) { el.hidden = true; return; }
+  el.hidden = false;
+  const at = flowAt(f);
+  const a = f.analysis, sv = f.survey;
+  const use = Object.entries(f.usage || {}).map(([t, u]) => {
+    const g = u.gpu_s?.value;          // 분석 면적 계량은 작업 범위 정정 뒤에 싣는다(보고서 '요청')
+    return [tenantName(t), g ? `GPU ${mins(g)}` : ''];
+  }).filter(([, v]) => v);
+  const rows = [
+    ['진행', f.flow.label],
+    a ? ['AI 분석', `${poolName(a.pool)} · ${JOB_KO[a.state] || a.state}${a.elapsed_s?.value != null ? ' · ' + mins(a.elapsed_s.value) : ''}`] : null,
+    a && a.gpu_s?.value ? ['GPU 사용', mins(a.gpu_s.value)] : null,
+    sv ? ['실태조사', `${poolName(sv.pool)} · ${JOB_KO[sv.state] || sv.state}`] : null,
+    ...use.map(([t, v]) => ['사용량', `${t} · ${v}`]),
+    ['배포 단계', STAGE[f.stage] || f.stage],
+  ].filter(Boolean);
+  el.innerHTML = `<p class="t-label">한 흐름</p><div class="ds-fsteps"></div><dl class="ds-flow">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`;
+  stepper(el.querySelector('.ds-fsteps'), FLOW_STEPS.map(([, t]) => ({ t })), { current: Math.min(at, 4), done: [...Array(Math.max(0, Math.min(at, 5))).keys()] });
+}
 
 function sheet(d0, repaint) {
   let d = d0, open = null, lin = [];
@@ -41,6 +77,7 @@ function sheet(d0, repaint) {
     body.innerHTML = `
       <div class="ds-top"><span class="num ds-v">${esc(verOf(d) || '—')}</span>${chip(d.stage)}</div>
       <div class="ds-steps"></div>
+      <section class="ds-fl" hidden></section>
       ${d.prev_card_version_id ? `<p class="ds-lin">이전 버전 <b class="num">${esc(verOfId(d.prev_card_version_id))}</b></p>` : ''}
       <div class="ds-b">
         <button class="t-btn" type="button" data-a="up"${next ? '' : ' disabled'}>단계 올리기</button>
@@ -56,6 +93,7 @@ function sheet(d0, repaint) {
       <div class="ds-p" data-p="gpu"${open === 'gpu' ? '' : ' hidden'}>${pools.map((p) => `<label class="rd"><input type="radio" name="pool" value="${esc(p)}"${(d.gpu_pool || '') === p ? ' checked' : ''}><span>${esc(poolName(p))}</span></label>`).join('')}</div>`;
     stepper(body.querySelector('.ds-steps'), STAGES.map((s) => ({ t: STAGE[s] })), { current: ci < 0 ? 0 : ci, done: d.stage === 'ga' ? [0, 1, 2, 3] : undefined });
     body.querySelectorAll('.ds-empty').forEach((em) => empty(em, { kind: 'first' }));
+    if (d.flow) drawFlow(body.querySelector('.ds-fl'), d);
   }
   body.addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b || b.disabled) return;
@@ -80,7 +118,8 @@ export function mountDeploys(root) {
   function paint() {
     const list = deploys();
     if (!list.length) { root.querySelector('.v-dep').innerHTML = '<div class="dep-0"></div>'; empty(root.querySelector('.dep-0'), { kind: 'first', text: '배포본이 없습니다' }); return; }
-    T.set(list.map((d) => ({ id: d.id, card: cardName(d.card_id), org: whoOf(d), ver: verOf(d), prev: d.prev_card_version_id ? verOfId(d.prev_card_version_id) : '', stage: d.stage })));
+    T.set(list.map((d) => ({ id: d.id, card: cardName(d.card_id), org: whoOf(d), ver: verOf(d), prev: d.prev_card_version_id ? verOfId(d.prev_card_version_id) : '', stage: d.stage,
+      flow: d.flow && d.flow.state !== 'done' ? d.flow.label : '', flowState: d.flow?.state || '' })));
   }
   return { paint, open };
 }

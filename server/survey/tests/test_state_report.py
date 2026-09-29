@@ -10,7 +10,8 @@ import pytest
 from survey import db as S
 
 # 테스트는 C 등급 R2 뒤쪽(점수 최하위권) 3건만 건드리고 끝나면 원복한다
-PICK_SQL = "SELECT id FROM survey_findings WHERE rule='R2' AND priority='C' AND state='open' AND NOT demo ORDER BY rank DESC LIMIT 3"
+PICK_SQL = ("SELECT id FROM survey_findings WHERE rule='R2' AND priority='C' AND state='open' AND NOT demo AND tenant_id='namwon' "
+            "ORDER BY rank DESC LIMIT 3")
 
 
 @pytest.fixture()
@@ -43,7 +44,7 @@ def test_state_machine_six_transitions(api, h_nw, picks):
     rr = _post(api, h_nw, a, state="assigned")
     assert rr.status_code == 409 and rr.json()["error"]["code"] == "finding_state_invalid"
     assert rr.json()["error"]["detail"]["allowed"] == ["closed"]
-    assert _post(api, h_nw, a, state="closed").json()["state"] == "closed"
+    assert _post(api, h_nw, a, state="closed", verdict="violation").json()["state"] == "closed"
     # 5 open→dismissed(사유 필수)
     assert _post(api, h_nw, b, state="dismissed").status_code == 400
     assert _post(api, h_nw, b, state="dismissed", reason="농업용 창고(현장 사진)").json()["state"] == "dismissed"

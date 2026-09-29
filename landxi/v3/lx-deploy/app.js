@@ -110,23 +110,32 @@ async function checks(d) {
   const canApprove = false;   // POST /approvals 는 한도 변경 전용 — 심기 결재 행은 POST /deploys(S-7)가 만든다
   const reg = encodeURIComponent(regionKey(d));
   const q = `?region=${reg}&deploy=${encodeURIComponent(d.id)}`;
+  /* 한 흐름(서버 flow): 결재 → 영상 → AI 분석 → 실태조사 → 결과. 서버 판정이 있으면 그것이 정본(영상 유무·진행 상태) */
+  const F = d.flow || null;
+  const run = F && ['starting', 'analyzing', 'surveying'].includes(F.state);
+  const imgOk = F ? F.has_imagery || fine.length > 0 : fine.length > 0;
 
   return [
-    { t: '데이터 올리기', href: V3 + 'lx-ingest/' + q, s: fine.length ? 'ok' : 'todo',
-      line: fine.length ? `영상 ${fine.length}벌 · 최고 ${gsd(fine[0].gsd_m)}` : imgs.length ? `${gsd(imgs[0].gsd_m)} 영상만 있음` : '고해상도 영상 없음',
-      act: fine.length ? null : { label: '영상 등록 요청', href: V3 + 'lx-ingest/' + q } },
+    { t: '데이터 올리기', href: V3 + 'lx-ingest/' + q, s: imgOk ? 'ok' : 'todo',
+      line: F && F.has_imagery ? `${F.imagery?.year ? F.imagery.year + '년 ' : ''}${F.imagery?.gsd_m ? gsd(F.imagery.gsd_m) + ' ' : ''}영상${F.imagery?.partial ? ' · 일부 지역' : ''}`
+        : fine.length ? `영상 ${fine.length}벌 · 최고 ${gsd(fine[0].gsd_m)}` : F ? '영상 등록 필요' : imgs.length ? `${gsd(imgs[0].gsd_m)} 영상만 있음` : '고해상도 영상 없음',
+      act: imgOk ? null : { label: '영상 등록', href: V3 + 'lx-ingest/' + q } },
     { t: '학습', href: V3 + 'lx-train/' + q, s: model ? 'ok' : 'todo',
       line: model ? (model.classes || []).slice(0, 3).join(' · ') : '연결된 모델 없음',
       act: model ? null : pair && isAdmin && canModel ? { label: '모델 연결', run: () => connectModel(d, pair.model) }
         : { note: pair ? '모델 연결은 관리자 결재로 합니다' : '영상이 들어오면 연결합니다' } },
     { t: '서비스 만들기', href: V3 + 'lx-console/' + q, s: d.card_version_id ? 'ok' : 'todo',
       line: d.card_version_id ? `서비스 카드 ${d.version || ''} · 기능 ${mods}개` : '카드 버전 없음', act: null },
-    { t: '결과 확인', href: V3 + 'lx-review/' + q, s: found || jobsDone || hasRes ? 'ok' : 'todo',
+    F && F.state !== 'approval' && F.state !== 'rejected' && !(F.state === 'done' && (found || jobsDone))
+      ? { t: '결과 확인', href: V3 + 'lx-review/' + q, s: F.state === 'done' ? 'ok' : run ? 'wait' : 'todo',
+          line: F.label, act: F.state === 'failed' ? { label: '다시 실행', run: (btn) => retryFlow(d, btn), primary: true }
+            : F.state === 'need_imagery' ? { note: '영상이 등록되면 AI 분석이 이어집니다' } : null }
+      : { t: '결과 확인', href: V3 + 'lx-review/' + q, s: found || jobsDone || hasRes ? 'ok' : 'todo',
       line: jobsDone ? `분석 ${jobsDone}회 완료` : found ? `의심 ${numHtml(total, { unit: '건' })}` : hasRes ? '결과 반영' : '첫 분석 전', html: !jobsDone && !!found,
-      act: found || jobsDone || hasRes ? null : pair ? { label: '첫 분석 실행', run: (btn, row) => firstRun(d, pair, btn, row), primary: true } : { note: '영상과 모델이 갖춰지면 분석합니다' } },
+      act: found || jobsDone || hasRes ? null : F ? { note: '결재가 끝나면 AI 분석이 이어집니다' } : pair ? { label: '첫 분석 실행', run: (btn, row) => firstRun(d, pair, btn, row), primary: true } : { note: '영상과 모델이 갖춰지면 분석합니다' } },
     { t: '배포', href: null, s: draft ? 'wait' : 'ok',
-      line: draft ? (pending ? '결재 대기' : '관리자 결재 전') : STAGE_CHIP[d.stage],
-      act: draft && !pending ? canApprove ? { label: '결재 요청', run: () => askApproval(d) } : { note: 'LX 관리자 화면 결재함에서 결재합니다' } : null },
+      line: draft ? (pending ? '결재 대기' : F?.state === 'need_imagery' ? '결재 완료 · 영상 등록 필요' : '관리자 결재 전') : STAGE_CHIP[d.stage],
+      act: draft && !pending && !(F && F.state !== 'approval') ? canApprove ? { label: '결재 요청', run: () => askApproval(d) } : { note: 'LX 관리자 화면 결재함에서 결재합니다' } : null },
     { t: '서비스 관리', href: null, tab: 'ops', s: draft ? 'wait' : due ? 'todo' : 'ok',
       line: draft ? '배포 뒤 시작' : rpt !== undefined ? (rpt?.value ? `기관 신고 ${rpt.value}건${due ? ' · 재학습' : ''}` : due ? '재학습' : '신고 없음')
         : reps.length ? `오탐 신고 ${reps.length}건${due ? ' · 재학습' : ''}` : '신고 없음', act: null },
@@ -166,6 +175,19 @@ async function renderChecks(d, body, { fromPlant } = {}) {
 }
 
 /* ── 다음 행동(쓰기) ──────────────────────────────── */
+/** 다시 실행 — 서버 한 흐름(영상 → AI 분석 → 실태조사)을 다시 잇는다 */
+async function retryFlow(d, btn) {
+  btn.disabled = true;
+  try { await api(`/deploys/${encodeURIComponent(d.id)}/flow`, { method: 'POST', body: {} }); toast('요청을 보냈습니다'); await reloadDeploys(); select(d.id); }
+  catch (e) { devlog('flow', `${e.code || ''} ${e.message}`); toast('요청을 보내지 못했습니다'); btn.disabled = false; }
+}
+/* 진행 중인 흐름이 보이는 동안 10초마다 다시 읽는다(상태 줄만 바뀐다) */
+setInterval(async () => {
+  if (!selected || !selected.flow || !['approval', 'starting', 'analyzing', 'surveying', 'need_imagery'].includes(selected.flow.state) || cur !== 'deploy') return;
+  if (!drw || !drw.el.isConnected || drw.kind !== 'deploy') return; /* 적용 시트 등 다른 시트가 열려 있으면 건드리지 않는다 */
+  const key = (f) => (f ? JSON.stringify([f.state, f.job_id, f.survey_job_id, (f.steps || []).map((s) => s && (s.state || s.s || s.k))]) : '');
+  try { const prev = key(selected.flow); await reloadDeploys(); const d = deployOf(selected.id); if (d && key(d.flow) !== prev && drw?.kind === 'deploy') select(d.id); } catch { /* 다음 주기 */ }
+}, 10000);
 async function connectModel(d, model) {
   try { await api(`/deploys/${encodeURIComponent(d.id)}/model`, { method: 'POST', body: { model_id: model.id } }); toast('요청을 보냈습니다'); await reloadDeploys(); select(d.id); }
   catch (e) { devlog('model', `${e.code || ''} ${e.message}`); toast('요청을 보내지 못했습니다'); }
@@ -263,8 +285,8 @@ async function openPlant() {
     bring.innerHTML = '';
     for (const t of [`서비스 카드 ${ver}`, `기능 ${on}개`, s?.model_override ? '탐지 모델' : null, c?.ledger_schema ? '대장 양식' : null, '판정 규칙'].filter(Boolean)) bring.append(h('li', { text: t }));
     need.innerHTML = '';
-    const imgOk = region && region.bbox && D.catalog.some((i) => i.role === 'imagery' && i.source === 'pmtiles' && i.gsd_m != null && i.gsd_m <= 0.5 && i.bounds && i.bounds[0] <= region.bbox[2] && i.bounds[2] >= region.bbox[0] && i.bounds[1] <= region.bbox[3] && i.bounds[3] >= region.bbox[1]);
-    need.append(h('li', { text: '고해상도 영상', ...(imgOk ? { 'data-ok': '' } : { 'data-need': '' }) }), h('li', { 'data-need': '', text: '행정 대장' }), h('li', { 'data-need': '', text: '기관 표지' }));
+    const imgOk = region && region.has_imagery != null ? region.has_imagery : region && region.bbox && D.catalog.some((i) => i.role === 'imagery' && i.source === 'pmtiles' && i.gsd_m != null && i.gsd_m <= 0.5 && i.bounds && i.bounds[0] <= region.bbox[2] && i.bounds[2] >= region.bbox[0] && i.bounds[1] <= region.bbox[3] && i.bounds[3] >= region.bbox[1]);
+    need.append(h('li', { text: region && !imgOk ? '영상 등록 필요' : '고해상도 영상', ...(imgOk ? { 'data-ok': '' } : { 'data-need': '' }) }), h('li', { 'data-need': '', text: '행정 대장' }), h('li', { 'data-need': '', text: '기관 표지' }));
     go.disabled = !region || !c || (s && regionKey(s) === region.sgg_cd && s.card_id === c.id);
   };
   cardSel.addEventListener('change', draw);

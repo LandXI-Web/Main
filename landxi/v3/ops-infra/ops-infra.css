@@ -242,3 +242,13 @@
 .rd span{flex:1;min-width:0}
 .rd .pm{flex:none;font:600 13px/1 var(--font-num);font-style:normal;color:var(--ink)}
 .rd .pm[data-m="mid"]{color:var(--sub)}
+
+/* 한 흐름(core-flow) — 배포본 시트 안 한 덩어리 · 표 단계 칸 아래 작은 진행 글자 */
+.dflow{display:block;margin-top:6px;font:500 var(--fs-caption,12px)/1.2 var(--font-body);color:var(--sub)}
+.dflow[data-s="need_imagery"],.dflow[data-s="failed"]{color:var(--ink)}
+.ds-fl{display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:var(--r-8);background:var(--bg-0)}
+.ds-fl[hidden]{display:none}
+.ds-fl .t-label{margin:0}
+.ds-flow{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;margin:0;font:500 var(--fs-label)/1.3 var(--font-body)}
+.ds-flow dt{color:var(--sub)}
+.ds-flow dd{margin:0;color:var(--ink);text-align:right}

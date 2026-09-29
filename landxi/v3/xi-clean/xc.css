@@ -189,3 +189,7 @@
 @keyframes xc-wait{to{background-position:-200% 0}}
 @media (max-width:640px){.xc-big[data-st="wait"] .k-big-row::before{margin:26px 0 20px;width:96px}}
 @media (prefers-reduced-motion:reduce){.xc-big[data-st="wait"] .k-big-row::before{animation:none}}
+/* core-xi: 결과 층 목록(AI 분석 아래 한 단 들여) · 전역 분석 진행 줄의 읍면동 이름 · 안내 카드의 전역 분석 버튼 */
+.xc-row--sub{padding-left:28px;font-weight:400;font-size:13px}
+.xa-where{color:var(--sub)}
+.xa-card .xa-msg + .xa-act{margin-top:12px}

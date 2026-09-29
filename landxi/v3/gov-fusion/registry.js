@@ -48,15 +48,24 @@ async function has(method, path) {
   return Object.entries(P).some(([p, v]) => v && v[method] && new RegExp('^' + p.replace(/^\/api\/v1/, '').replace(/\{[^}]+\}/g, '[^/]+') + '$').test(want));
 }
 
-/** 대장 종류 — 카드 ledger_schema.kind(S-6) → 없으면 이 기관 배포 카드 순서 */
-export async function ledgerKind(cardIds) {
+/** 대장 종류 — 이 기관 배포 카드의 ledger_schema.kind(S-6 · GET /t/{tenant}/survey/ledger-schema) → 없으면 이 기관 배포 카드 순서 */
+export async function ledgerKind(cardIds, tenant) {
   const cards = [...new Set(cardIds)];
+  let tiles;                                   // 정적 필지 층 주소(서버가 알려 줌 · undefined = 모름 → 예전처럼 확인)
+  if (tenant && (await has('get', `/t/${tenant}/survey/ledger-schema`))) {
+    try {
+      const j = await api(`/t/${encodeURIComponent(tenant)}/survey/ledger-schema`);
+      const k = (j?.kinds || []).filter((x) => KIND_LABEL[x]).sort((a, b) => KIND_ORDER.indexOf(a) - KIND_ORDER.indexOf(b))[0];
+      tiles = 'parcel_tiles' in (j || {}) ? j.parcel_tiles : undefined;
+      if (k) return { label: KIND_LABEL[k], from: 'ledger_schema', tiles };
+    } catch { /* 카드 순서로 */ }
+  }
   for (const cid of cards) {
     if (!(await has('get', `/registry/cards/${cid}/ledger_schema`))) break;
     try { const j = await api(`/registry/cards/${encodeURIComponent(cid)}/ledger_schema`); const k = j?.ledger_schema?.kind || j?.kind; if (KIND_LABEL[k]) return { label: KIND_LABEL[k], from: 'ledger_schema' }; } catch { /* 다음 카드 */ }
   }
   const code = cards.map((c) => KIND_BY_CARD[c]).filter(Boolean).sort((a, b) => KIND_ORDER.indexOf(a) - KIND_ORDER.indexOf(b))[0] || 'public_asset';
-  return { label: KIND_LABEL[code], from: 'deploy_card' };
+  return { label: KIND_LABEL[code], from: 'deploy_card', tiles };
 }
 
 /** 첫 페인트용 표시(동기) — 이 창에 최근 반입 캐시가 있는가(본문은 서버 · IndexedDB) */
@@ -103,13 +112,16 @@ export async function ledgerStore(who) {
       if (r.server_id) return r.server_id;
       const kind = KIND_CODE[r.kind] || 'farm_ledger';
       const q = (v) => { const s = String(v ?? ''); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-      const pick = { jibun: cols.find((c) => c.role === 'jibun')?.col, status: cols.find((c) => c.role === 'state')?.col, date: cols.find((c) => c.role === 'date')?.col };
+      // 지번 뜻 열이 여럿(소재지 + 지번)이면 이어 붙여 한 칸으로 — 서버가 '○○면 ○○리 123' 을 그대로 해석한다
+      const jcols = cols.filter((c) => c.role === 'jibun').map((c) => c.col);
+      const pick = { jibun: jcols.length ? jcols : null, status: cols.find((c) => c.role === 'state')?.col, date: cols.find((c) => c.role === 'date')?.col };
       const heads = ['PNU', ...(pick.jibun ? ['지번'] : []), ...(pick.status ? ['상태'] : []), ...(pick.date ? ['날짜'] : [])];
       const lines = [heads.join(',')];
-      r.rows.forEach((row, i) => { lines.push([r.match[i] || '', ...(pick.jibun ? [row[pick.jibun]] : []), ...(pick.status ? [row[pick.status]] : []), ...(pick.date ? [row[pick.date]] : [])].map(q).join(',')); });
+      const jb = (row) => pick.jibun.map((c) => String(row[c] ?? '').trim()).filter(Boolean).join(' ');
+      r.rows.forEach((row, i) => { lines.push([r.match[i] || '', ...(pick.jibun ? [jb(row)] : []), ...(pick.status ? [row[pick.status]] : []), ...(pick.date ? [row[pick.date]] : [])].map(q).join(',')); });
       const fd = new FormData();
       fd.append('kind', kind);
-      fd.append('file', new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv' }), String(r.name || '대장.csv').replace(/\.csv$/i, '') + '.csv');   // 원래 이름을 남긴다(운봉읍_농지목록.xlsx.csv → 화면은 .xlsx)
+      fd.append('file', new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv' }), String(r.name || '대장.csv').replace(/\.csv$/i, '') + '.csv');   // 원래 이름을 남긴다(○○_농지목록.xlsx.csv → 화면은 .xlsx)
       const s = session.get();
       const res = await fetch(API.prefix + base + '/import', { method: 'POST', body: fd, headers: s ? { authorization: 'Bearer ' + s.token } : {} });
       if (!res.ok) throw new Error('import ' + res.status);

@@ -1,0 +1,36 @@
+# 규칙 피연산자 대응(contract-parcel-ai.md §4) — 모델 클래스 → 피연산자 키, 피연산자 → 옛 남원 열.
+# 규칙 SQL(server/survey/rules.py)은 아래 '피연산자 열' 이름만 읽는다. 원천은 두 가지:
+#   ai     = survey_parcel_ai(작업 × 필지 × 클래스) — 어느 시군구든(전국 경로)
+#   legacy = survey_parcels 의 옛 a23_*/a25_*/chg 열 — 남원 정본 적재(재현·회귀용)
+classes:                    # detections.cls / cls_en → 피연산자 키
+  bld: [건물, building]
+  crop: [경작지, cropland, farmland]
+  park: [주차장, parking]
+  gh: [비닐하우스, greenhouse]
+operands:                   # 피연산자 열: {ai: survey_parcel_ai 식(키.필드), legacy: survey_parcels 옛 열}
+  bld_in:   {ai: bld.in_m2,  legacy: a23_bld_in_m2}
+  bld_hit:  {ai: bld.hit_m2, legacy: a23_bld_m2}
+  bld_n:    {ai: bld.n,      legacy: a23_bld_n}
+  bld_conf: {ai: bld.conf,   legacy: a23_bld_conf}
+  park_in:  {ai: park.in_m2, legacy: a23_park_in_m2}
+  park_hit: {ai: park.hit_m2, legacy: a23_park_m2}
+  park_n:   {ai: park.n,     legacy: a23_park_n}
+  park_conf: {ai: park.conf, legacy: a23_park_conf}
+  crop_in:  {ai: crop.in_m2, legacy: a23_crop_in_m2}
+  crop_hit: {ai: crop.hit_m2, legacy: a23_crop_m2}
+  crop_n:   {ai: crop.n,     legacy: a23_crop_n}
+  crop_conf: {ai: crop.conf, legacy: a23_crop_conf}
+  gh_in:    {ai: gh.in_m2,   legacy: a23_gh_in_m2}
+  gh_hit:   {ai: gh.hit_m2,  legacy: a23_gh_m2}
+  gh_n:     {ai: gh.n,       legacy: a23_gh_n}
+  gh_conf:  {ai: gh.conf,    legacy: a23_gh_conf}
+  r_bld:    {ai: ratio.bld,  legacy: r23_bld}      # bld.hit_m2 ÷ 필지면적(≤ 1 · 소수 셋째 자리)
+  r_farm:   {ai: ratio.farm, legacy: r23_farm}     # (crop.hit_m2 + gh.hit_m2) ÷ 필지면적
+  # 두 번째 시점(있을 때만 — 전국 경로에서 두 번째 작업이 없으면 0)
+  e2_gh_in:  {ai: null, legacy: a25_gh_in_m2}
+  e2_gh_hit: {ai: null, legacy: a25_gh_m2}
+  e2_gh_n:   {ai: null, legacy: a25_gh_n}
+  e2_gh_conf: {ai: null, legacy: a25_gh_conf}
+  e2_crop_hit: {ai: null, legacy: a25_crop_m2}
+  e2_uncrop_hit: {ai: null, legacy: a25_uncrop_m2}
+  chg_new:   {ai: null, legacy: chg_built_new_m2}

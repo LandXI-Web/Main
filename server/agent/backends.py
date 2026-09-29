@@ -271,7 +271,7 @@ ROUTER_PROMPT = (
     "report: 보고서·초안·공문·문서 작성\n"
     "ops: GPU·서버·큐·장애·관제·쿼터·배포\n"
     "smalltalk: 인사·잡담·기능 질문\n"
-    "예) '운봉읍 비닐하우스 보여줘' → map\n예) '아영면 실태조사 보고서 초안 써줘' → report\n"
+    "예) '우리 읍 비닐하우스 보여줘' → map\n예) '이 면 실태조사 보고서 초안 써줘' → report\n"
     "예) 'GPU1 왜 느려?' → ops\n예) '안녕' → smalltalk\n문장: "
 )
 _RULES = [

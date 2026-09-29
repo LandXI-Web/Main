@@ -33,11 +33,11 @@ def test_guest_401(api):
 
 
 def test_other_tenant_zero(api, h_gj):
-    j = _get(api, "/survey/findings?limit=5", h_gj).json()
+    j = _get(api, "/survey/findings?limit=5&sgg=52190", h_gj).json()          # 다른 기관 관할 = 0(자기 관할 행은 있을 수 있다)
     assert j["total"]["value"] == 0 and j["items"] == []
     assert _get(api, "/survey/findings/f_R1_5219045021110530012", h_gj).status_code == 404
     assert _get(api, "/survey/parcels/5219045021110530012", h_gj).status_code == 404
-    assert _get(api, "/survey/stats?by=rule", h_gj).json()["total"]["value"] == 0
+    assert _get(api, "/survey/stats?by=rule&sgg=52190", h_gj).json()["total"]["value"] == 0
 
 
 def test_findings_filter_sort_pager(api, h_nw):
@@ -57,9 +57,9 @@ def test_findings_filter_sort_pager(api, h_nw):
     assert all(127.57 <= i["lnglat"][0] <= 127.59 and 35.47 <= i["lnglat"][1] <= 35.48 for i in b["items"])
     assert _get(api, "/survey/findings?rule=R9", h_nw).status_code == 400
     assert _get(api, "/survey/findings?sort=bogus", h_nw).status_code == 400
-    all_ = _get(api, "/survey/findings?limit=1", h_nw).json()
+    all_ = _get(api, "/survey/findings?limit=1&rule=R1,R2,R3,R4,R5,R6", h_nw).json()     # 대장 규칙(L-*) 행 제외
     assert all_["total"]["value"] == 20872
-    assert {k: v["value"] for k, v in all_["by_rule"].items()} == S.README_COUNTS["by_rule"]
+    assert {k: v["value"] for k, v in all_["by_rule"].items() if k.startswith("R")} == S.README_COUNTS["by_rule"]
 
 
 def test_envelopes_everywhere(api, h_nw):
@@ -130,15 +130,16 @@ def test_stats_equal_summary(api, h_nw):
     assert len(j["items"]) == 39
     for it in j["items"]:
         a = by_cd[it["cd"]]
-        assert it["parcels"]["value"] == a["parcels"] and it["n"]["value"] == a["n"]
+        assert it["parcels"]["value"] == a["parcels"] and sum(v["value"] for v in it["by_rule"].values()) == a["n"]
         assert {k: v["value"] for k, v in it["by_rule"].items()} == a["rule"]
-        assert {k: v["value"] for k, v in it["by_priority"].items()} == a["prio"]
+        assert all(it["by_priority"][k]["value"] >= n for k, n in a["prio"].items())       # 대장 규칙(L-*) 행이 더해질 수 있다
     r = _get(api, "/survey/stats?by=rule", h_nw).json()
-    assert {i["key"]: i["n"]["value"] for i in r["items"]} == S.README_COUNTS["by_rule"]
+    assert {i["key"]: i["n"]["value"] for i in r["items"] if i["key"].startswith("R")} == S.README_COUNTS["by_rule"]
     p = _get(api, "/survey/stats?by=priority", h_nw).json()
-    assert {i["key"]: i["n"]["value"] for i in p["items"]} == S.README_COUNTS["by_priority"]
+    # 대장 규칙(L-*) 행이 같은 표에 더해진다 — 정본 R 등급은 하한, 합계는 서로 같아야 한다(숫자 한 출처)
+    assert all(i["n"]["value"] >= S.README_COUNTS["by_priority"][i["key"]] for i in p["items"])
     s = _get(api, "/survey/stats?by=state", h_nw).json()
-    assert sum(i["n"]["value"] for i in s["items"]) == 20872
+    assert sum(i["n"]["value"] for i in s["items"]) == sum(i["n"]["value"] for i in p["items"]) == r["total"]["value"]
 
 
 def test_rules_endpoint(api, h_sales):

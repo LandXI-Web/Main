@@ -69,7 +69,7 @@ def finding_item(row: dict) -> dict:
     ev = row.get("evid_m2")
     out = {
         "id": row["id"], "rule": row["rule"], "rule_nm": row["rule_nm"], "priority": row["priority"],
-        "rank": env(row.get("rank"), "count", "estimate", SRC_SUSPECTS, "전체 20,872건 점수 순위"),
+        "rank": env(row.get("rank"), "count", "estimate", SRC_SUSPECTS, "점수 순위(시군구 안)"),
         "score": env(row.get("score"), "score", "estimate", SRC_SUSPECTS, "규칙 기본점 + 근거면적 + 신뢰도 + 보강근거 [추정 초기값]"),
         "pnu": row["pnu"], "addr": row.get("addr"), "emd": row.get("emd"), "emd_cd": row.get("emd_cd"), "jimok": row.get("jimok"),
         "yongdo": row.get("yongdo") or None, "nongup": row.get("nongup") or None,
@@ -149,9 +149,9 @@ def explain(row: dict, parcel: dict, cut: dict | None = None) -> dict:
                                       "[추정 초기값] · 법령 기준 아님 · 현장조사로 보정")})
     gaps = [{"key": k, "label": lab, "note": n} for k, lab, n in LEDGER_GAPS[rid]]
     if not parcel.get("yongdo"):
-        gaps.append({"key": "yongdo", "label": "용도지역 미결합", "note": "대표점이 용도지역 폴리곤 밖(남원 19필지)"})
+        gaps.append(_yongdo_gap(parcel))
     gaps.append({"key": "owner_kind", "label": "소유구분 연속지적 미제공", "note": "V-World 연속지적에 소유 정보 없음 · 성명 열 없음"})
-    img = row.get("img_date") or IMG23
+    img = row.get("img_date") or parcel.get("_img") or IMG23
     th_txt = " · ".join(f"{t['label']} {t['value']['value']}" for t in th_items[:len(d['thresholds'])])
     lines = [
         f"규칙 {rid} {d['name']}: {cond}",
@@ -164,7 +164,8 @@ def explain(row: dict, parcel: dict, cut: dict | None = None) -> dict:
     ]
     prio_note = None
     if cut:
-        prio_note = f"등급 절단: A ≥ {cut['readme']['A_score_ge']} · B ≥ {cut['readme']['B_score_ge']}(전체 점수 상위 5% · 다음 20%)"
+        rc = cut.get("readme") or {"A_score_ge": cut.get("A"), "B_score_ge": cut.get("B")}
+        prio_note = f"등급 절단: A ≥ {rc['A_score_ge']} · B ≥ {rc['B_score_ge']}(시군구 전체 점수 상위 5% · 다음 20%)"
     return {
         "rule": rid, "rule_nm": d["name"], "condition": cond, "evidence": row.get("evidence"), "lines": lines,
         "evid_m2": env(_r(ev), "m2", "inferred", f"{SRC_SURVEY} suspects", AI_NOTE),
@@ -184,8 +185,16 @@ def explain(row: dict, parcel: dict, cut: dict | None = None) -> dict:
 
 
 # ─────────────────────────── 필지 대장 vs 현황 ───────────────────────────
-def parcel_facts(p: dict) -> dict:
-    src23 = f"{SRC_SURVEY} parcels · {IMG23}"
+def _yongdo_gap(p: dict) -> dict:
+    if p.get("src") in (None, "canon"):
+        return {"key": "yongdo", "label": "용도지역 미결합", "note": "대표점이 용도지역 폴리곤 밖"}
+    return {"key": "yongdo", "label": "용도지역 미결합", "note": "용도지역·농업진흥지역 층 대조 전(연속지적만 적재)"}
+
+
+def parcel_facts(p: dict, img: str | None = None) -> dict:
+    canon = p.get("src") in (None, "canon")
+    img23 = img or IMG23
+    src23 = f"{SRC_SURVEY} parcels · {img23}" if canon else f"survey_parcel_ai · {img23}"
     src25 = f"{SRC_SURVEY} parcels · {IMG25}"
     area = p.get("area_m2") or 0
 
@@ -201,19 +210,21 @@ def parcel_facts(p: dict) -> dict:
     jiga = p.get("jiga")
     ledger = {
         "jimok": p.get("jimok"), "jimok_nm": p.get("jimok_nm"),
-        "area_m2": env(_r(area), "m2", "measured", f"{SRC_PARCELS} (V-World 연속지적 도형 · EPSG:5186)"),
+        "area_m2": env(_r(area), "m2", "measured", f"{SRC_PARCELS} (V-World 연속지적 도형 · EPSG:5186)" if canon else "연속지적 도형 · EPSG:5186",
+                       as_of=p.get("src_as_of") or AS_OF),
         "jiga": env(int(jiga) if jiga is not None and not (isinstance(jiga, float) and math.isnan(jiga)) else None, "krw_m2", "recorded",
                     "V-World 연속지적 공시지가", None if jiga else "공란(도로·구거 등 비과세 필지 다수)", as_of=p.get("jiga_ym") or AS_OF),
         "yongdo": p.get("yongdo") or None, "nongup": p.get("nongup") or None,
-        "owner_kind": None, "source": LEDGER, "as_of": AS_OF,
+        "owner_kind": None, "source": LEDGER if canon else ("연속지적(전국) " + str(p.get("src_as_of") or "")).strip(),
+        "as_of": p.get("src_as_of") or AS_OF,
     }
     gaps = []
     if not p.get("yongdo"):
-        gaps.append({"key": "yongdo", "label": "용도지역 미결합", "note": "대표점이 용도지역 폴리곤 밖(남원 19필지)"})
+        gaps.append(_yongdo_gap(p))
     gaps.append({"key": "owner_kind", "label": "소유구분 연속지적 미제공", "note": "V-World 연속지적에 소유 정보 없음 · 성명 열 없음"})
     gaps.append({"key": "building_ledger", "label": "건축물대장 미대조", "note": "건축HUB API 키 대기"})
     current = {
-        "2023": {"src": IMG23, "basis": "inferred", "classes": {c: cls23(c) for c in ("bld", "crop", "park", "gh")},
+        "2023": {"src": img23, "basis": "inferred", "classes": {c: cls23(c) for c in ("bld", "crop", "park", "gh")},
                  "farm_ratio": env(_r(p.get("r23_farm"), 3), "ratio", "inferred", "(경작지+비닐하우스) ÷ 필지면적", AI_NOTE)},
         "2025": {"src": IMG25, "basis": "inferred", "classes": {
             "crop": {"m2": env(_r(p.get("a25_crop_m2")), "m2", "inferred", src25, AI_NOTE)},
@@ -221,7 +232,7 @@ def parcel_facts(p: dict) -> dict:
             "gh": {"m2": env(_r(p.get("a25_gh_m2")), "m2", "inferred", src25, AI_NOTE),
                    "in_m2": env(_r(p.get("a25_gh_in_m2")), "m2", "inferred", src25, "과반 포함 · 신뢰도 ≥ 0.5"),
                    "n": env(int(p.get("a25_gh_n") or 0), "count", "inferred", src25), "ai_ids": _split(p.get("a25_gh_ids"))}},
-            "note": "A02 는 남원 전역에 흩어진 2025 단일 시점 추론(촬영월 미상)"},
+            "note": "A02 는 2025 단일 시점 추론(촬영월 미상)" if canon else "두 번째 시점 AI 결과 없음"},
         "change": {"chg": p.get("chg") or None,
                    "built_new_m2": env(_r(p.get("chg_built_new_m2")), "m2", "inferred", "A04 비지도 변화지수(드론 4시점 AOI)",
                                        "변화 지수(비지도) · 검수 전")},

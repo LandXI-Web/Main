@@ -72,6 +72,9 @@ def plan_job(jh: dict) -> list[dict]:
                             "cloud_max": params.get("cloud_max", 15)}} for m in months]
     if kind in ("survey", "join"):
         raise RuntimeError(f"kind {kind}: plan() 훅을 가진 어댑터 없음(F2-S server/adapters/survey 미도착)")
+    if opts.get("scope") == "sgg":
+        return plan_sgg(jh.get("imagery_id"), opts.get("sgg_cd"), center=opts.get("center"), chip=int(opts.get("chip", 1024)),
+                        overlap=opts.get("overlap"), upsample=float(opts.get("upsample", 1) or 1))[1]
     with bus.pg() as conn:
         row = conn.execute("SELECT path_internal, ST_AsGeoJSON(footprint)::text FROM imagery WHERE id=%s", (jh["imagery_id"],)).fetchone()
     path = row[0] if (":" in row[0][:3]) else str(config.DATA_ROOT / row[0])
@@ -89,7 +92,55 @@ def plan_job(jh: dict) -> list[dict]:
     return sh
 
 
+def imagery_meta(imagery_id: str) -> tuple[dict, dict | None]:
+    """영상 → (래스터 메타, footprint GeoJSON). core-imagery 의 imagery_src.open_imagery 가 있으면 그것으로 연다(VRT · 가상 영상 공통)."""
+    with bus.pg() as conn:
+        row = conn.execute("SELECT path_internal, ST_AsGeoJSON(footprint)::text FROM imagery WHERE id=%s", (imagery_id,)).fetchone()
+    if not row:
+        raise RuntimeError(f"imagery {imagery_id} 없음")
+    fp = json.loads(row[1]) if row[1] else None
+    try:
+        from workers.imagery_src import open_imagery  # core-imagery 계약
+        ds = open_imagery(imagery_id)
+        try:
+            meta = {"width": ds.width, "height": ds.height, "transform": ds.transform, "crs": (ds.crs.to_epsg() if ds.crs else None) or 5186,
+                    "res": ds.res[0]}
+        finally:
+            ds.close()
+        return meta, fp
+    except ImportError:
+        pass
+    path = row[0] if (":" in row[0][:3]) else str(config.DATA_ROOT / row[0])
+    return _meta(path), fp
+
+
+def plan_sgg(imagery_id: str, sgg_cd: str, *, center=None, chip: int = 1024, overlap=None, upsample: float = 1.0):
+    """시군구 전역 분석 계획(scope sgg) — 읍면동 합집합 ∩ 영상 footprint 를 칸으로, 화면 중심에서 가까운 읍면동부터.
+    게이트웨이 견적(jobs.build_quote)과 스케줄러가 같은 함수를 쓴다 → (grid, shards, info)."""
+    from pyproj import Transformer
+    from shapely.geometry import shape
+    from shapely.ops import transform as sh_transform
+    from landxi_api.regions import emd_index
+    from workers.tiling import sgg_shards
+    ix = emd_index(sgg_cd)
+    if ix is None or not len(ix):
+        raise RuntimeError(f"emd_unavailable {sgg_cd}")
+    meta, fp = imagery_meta(imagery_id)
+    fp_parts = None
+    if fp:
+        g = sh_transform(Transformer.from_crs(4326, meta["crs"], always_xy=True).transform, shape(fp))
+        fp_parts = list(getattr(g, "geoms", [g]))
+    return sgg_shards(meta, ix.geoms, ix.codes, center=center, chip=chip, overlap=overlap, upsample=upsample, footprint_src=fp_parts)
+
+
 def plan(job_id: str) -> list[dict]:
+    pre = r().get(f"jobplan:{job_id}")                  # 게이트웨이가 제출 때 넘긴 계획(시군구 전역 · 견적과 같은 계획)
+    if pre:
+        r().delete(f"jobplan:{job_id}")
+        try:
+            return json.loads(pre)
+        except Exception:
+            pass
     return plan_job(bus.job(job_id))
 
 
@@ -277,6 +328,12 @@ def fill(pool: str, cfg: dict):
         _dispatch(pool, jid, min(FIRST_CHUNK, chunk))
     try:
         depth = r().xlen(stream)
+        if depth >= lw and depth <= 256:
+            # 끝난 작업의 남은 칸(취소·시험 중단)이 스트림 깊이를 채워 새 칸 배정이 멈추지 않게 걷어 낸다
+            for eid, f in r().xrange(stream, count=256):
+                if (bus.job(f.get("job_id", "")) or {}).get("state") in (None, "done", "cancelled", "failed"):
+                    r().xdel(stream, eid)
+                    depth -= 1
     except Exception:
         depth = 0
     guard = 0
