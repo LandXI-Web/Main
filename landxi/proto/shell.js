@@ -41,7 +41,7 @@ export const allowed = (cap) => can(ROLE, cap);
    관제는 origin 이 달라 세션이 없다 → 관제 로그인 문의 ?next= 로 간다(자동 인계는 2차 · 정직 표기 `관제 로그인`). */
 /* F3 통합(2026-09-27) — 레일은 v3 16집으로만 간다. 구 proto 화면 파일은 그대로 두고 레일에서만 뺐다(명세 §0 · 죽은 링크 0).
    v3 집은 정문 세션(api-v1)으로 관문을 거친다 — 구 proto 세션만 있으면 정문(/landxi/v3/login/)으로 간다. */
-const V3 = '/landxi/v3/';
+const V3 = new URL('../v3/', import.meta.url).href;   // 파일 기준 주소 — GitHub Pages(/Main/ 아래)에서도 맞다
 export const NAV = [
   /* 운영 현황(결재 대기) — **관리자만**(roles.js 'home'). 이 origin 의 관리자 첫 화면 admin-home.html(결재 대기 · 관리 네 축).
      F2-R 판정 1차(2026-09-27): 'ops' 를 관제로 돌린 뒤 이 화면이 레일에서 고립됐다 → 제 이름으로 되살린다(원본 기능 삭제 0).

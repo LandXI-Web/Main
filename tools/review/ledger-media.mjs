@@ -1,8 +1,13 @@
 // 자산 대장 매체 준비기 — Pages 에서 실제로 열리는 캡처·영상을 landxi/proto/review/assets-thumbs/ 에 만든다.
-// 이유: shots/ 는 _config.yml 로 발행에서 빠져 있어 Pages 에서 404 다. 백엔드(:8700·:8702)가 필요한 화면과
-//       v3 시안은 Pages 에서 살아 있는 화면으로 열 수 없으므로, 로컬에서 찍은 캡처·영상을 대장이 대신 연다.
-// 실행: node tools/review/ledger-media.mjs [--only=stills,video,kakao,login]   (저장소 루트 · ffmpeg 필요 · 카카오 절·정문은 :4173 필요)
-// 정문(v3 로그인)은 다른 워크플로가 shots/f3b/login 을 계속 갈아엎으므로 여기서 직접 찍는다(게스트 화면 · 세션 0).
+// 이유: shots/ 는 _config.yml 로 발행에서 빠져 있어 Pages 에서 404 다. 서버(:8700)가 있어야 도는 화면은
+//       Pages 에서 살아 있는 화면으로 열 수 없으므로, 로컬에서 찍은 캡처·영상을 대장이 대신 연다.
+// 대장은 Land-XI 자기 화면만 싣는다 — 다른 회사 사이트 캡처는 만들지 않는다(2026-09-29 사용자).
+// 실행: node tools/review/ledger-media.mjs [--only=capture,stills,video,legacy,legacy-login]   (저장소 루트 · ffmpeg 필요)
+//   capture = 새 화면 17종을 로그인 폼으로 들어가 1440×900 첫 화면을 찍는다(:4173 + 서버 :8700 · server/.env DEV_PASSWORD · 세션 주입 0)
+//             → shots/final/ledger/<화면>-1440.png
+//   stills  = 그 캡처 → 카드 썸네일 480 폭 WebP(≤ 60 KB) v3-<화면>.webp + 크게 보기용 1440 폭 WebP v3-<화면>-L.webp
+//             역할별 통합 영상의 스틸(shots/final/walk-*.png) → walk-*.webp
+//   video  = 역할별 통합 영상(로그인부터) · 예전 v2 화면 영상 → 1280 폭 mp4
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -10,36 +15,66 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const OUT = path.join(ROOT, 'landxi/proto/review/assets-thumbs');
-fs.mkdirSync(OUT, { recursive: true });
-const args = process.argv.slice(2);
-const only = (args.find((a) => a.startsWith('--only=')) || '--only=stills,video,kakao,login').slice(7).split(',');
+const CAP = path.join(ROOT, 'shots/final/ledger');
+fs.mkdirSync(OUT, { recursive: true }); fs.mkdirSync(CAP, { recursive: true });
+const only = (process.argv.slice(2).find((a) => a.startsWith('--only=')) || '--only=stills,video').slice(7).split(',');
 const want = (k) => only.includes(k);
 const kb = (f) => Math.round(fs.statSync(f).size / 1024);
+const ff = (a) => execFileSync('ffmpeg', ['-y', '-loglevel', 'error', ...a], { stdio: 'inherit' });
 
-// 스틸 — 원본(shots/) → 1440 폭 jpg
-const STILLS = [
-  ['shots/f3b/lx-console/01-first-1440.png', 'v3-lx-console'], ['shots/f3b/lx-console/03-assemble-1440.png', 'v3-lx-console-2'], ['shots/f3b/lx-console/06-sweep-1440.png', 'v3-lx-console-3'],
-  ['shots/f3/xi-clean/01-arrive-sweep.png', 'v3-xi-clean'], ['shots/f3/xi-clean/02-ask-list.png', 'v3-xi-clean-2'], ['shots/f3/xi-clean/03-parcel-card.png', 'v3-xi-clean-3'],
-  ['shots/f3/ops-core/01-overview.png', 'v3-ops-core'], ['shots/f3/ops-core/02-approvals.png', 'v3-ops-core-2'], ['shots/f3/ops-core/03-infra.png', 'v3-ops-core-3'],
-  ['shots/f3b/gov-fusion/d-04-fused.png', 'v3-gov-fusion'], ['shots/f3b/gov-fusion/d-01-land.png', 'v3-gov-fusion-2'], ['shots/f3b/gov-fusion/d-05-ask.png', 'v3-gov-fusion-3'], ['shots/f3b/gov-fusion/d-06-parcel.png', 'v3-gov-fusion-4'],
-  // 토스 벤치(toss.im 실측 2026-09-27) — 제안이 빌리는 문법의 장면
-  ['shots/bench-toss/home-d-000.png', 'toss-hero'], ['shots/bench-toss/home-d-004.png', 'toss-seq'], ['shots/bench-toss/home-d-016.png', 'toss-shop'],
-  ['shots/bench-toss/home-d-030.png', 'toss-ad'], ['shots/bench-toss/home-d-040.png', 'toss-invert'], ['shots/bench-toss/home-d-054.png', 'toss-globe'],
-  ['shots/bench-toss/home-d-056.png', 'toss-end'], ['shots/bench-toss/home-d-012.png', 'toss-webgl'], ['shots/bench-toss/asset-d-003.png', 'toss-asset'],
-  ['shots/bench-toss/_sheet-home-d.jpg', 'toss-sheet-home'], ['shots/bench-toss/_sheet-sec-d.jpg', 'toss-sheet-sec'], ['shots/bench-toss/_sheet-pos-d.jpg', 'toss-sheet-pos'],
-  ['shots/bench-toss/_strip-video-0-12s.jpg', 'toss-strip-video'], ['shots/bench-toss/_sheet-career-d.jpg', 'toss-sheet-career'],
+// 역할 → 새 화면(로그인 폼으로 들어간 뒤 차례로 연다). null = 로그인 없이(게스트)
+const ROLES = [
+  [null, [['main', 'main/'], ['service-detail', 'service-detail/?card=card-farm'], ['login', 'login/']]],
+  [{ id: 'lx-staff' }, [['lx-console', 'lx-console/'], ['lx-ingest', 'lx-ingest/'], ['lx-train', 'lx-train/'], ['lx-review', 'lx-review/'], ['lx-deploy', 'lx-deploy/'], ['xi-clean', 'xi-clean/'], ['help-my', 'help-my/'], ['kit', 'kit/']]],
+  [{ tab: 'admin', id: 'lx-admin' }, [['ops-core', 'ops-core/'], ['ops-infra', 'ops-infra/']]],
+  [{ id: 'lx-sales' }, [['sales', 'sales/']]],
+  [{ tab: 'tenant', id: 'namwon-manager', org: 'namwon' }, [['gov-fusion', 'gov-fusion/'], ['gov-report', 'gov-report/']]],
+  [{ tab: 'tenant', id: 'kgz-agri-manager', org: 'kgz-agri' }, [['global', 'global/']]],
 ];
-// 영상 — 1280 폭 · 무음 · h264 (Pages 용량을 위해 crf 29 · 최대 75 s)
+const WALK = ['walk-guest-01-main', 'walk-guest-02-services', 'walk-guest-03-service-detail', 'walk-guest-04-login', 'walk-staff-01-console', 'walk-staff-02-deploy-check',
+  'walk-staff-03-review', 'walk-staff-04-ximap-run', 'walk-gov-01-namwon', 'walk-gov-02-ask', 'walk-gov-03-gwangju', 'walk-admin-01-ops', 'walk-admin-02-approvals', 'walk-admin-03-infra',
+  'walk-global-01-ysyk-ata', 'walk-global-02-sprawl'];
 const VIDEOS = [
-  ['shots/f3/lx-console/lx-console.mp4', 'v3-lx-console'], ['shots/f3/xi-clean/xi-clean-flow.mp4', 'v3-xi-clean'],
-  ['shots/f3/ops-core/ops-core.mp4', 'v3-ops-core'], ['shots/f3b/gov-fusion/gov-fusion.mp4', 'v3-gov-fusion'],
+  ['shots/final/walk-guest.mp4', 'walk-guest'], ['shots/final/walk-staff.mp4', 'walk-staff'], ['shots/final/walk-gov.mp4', 'walk-gov'],
+  ['shots/final/walk-admin.mp4', 'walk-admin'], ['shots/final/walk-global.mp4', 'walk-global'],
   ['shots/f1/B/f1b.mp4', 'xi-map', 75], ['shots/f2/A/f2a.mp4', 'xi-survey', 75], ['shots/f2/E/f2e.mp4', 'xi-agent', 75], ['shots/f2/C/f2c.mp4', 'ops', 75], ['shots/f2/D/f2d.mp4', 'global', 75],
 ];
-const ff = (a) => execFileSync('ffmpeg', ['-y', '-loglevel', 'error', ...a], { stdio: 'inherit' });
-if (want('stills')) for (const [src, name] of STILLS) {
-  const s = path.join(ROOT, src), o = path.join(OUT, name + '.jpg');
-  if (!fs.existsSync(s)) { console.warn('! 원본 없음(건너뜀): ' + src); continue; }
-  ff(['-i', s, '-vf', "scale='min(1440,iw)':-2", '-q:v', '4', o]); console.log(`${String(kb(o)).padStart(6)} KB  ${name}.jpg`);
+
+if (want('capture')) {
+  const { chromium } = await import('@playwright/test');
+  const PW = (/DEV_PASSWORD=(.+)/.exec(fs.readFileSync(path.join(ROOT, 'server/.env'), 'utf8')) || [])[1]?.trim();
+  if (!PW) throw new Error('server/.env DEV_PASSWORD 없음');
+  const B = 'http://localhost:4173/landxi/v3/';
+  const b = await chromium.launch({ channel: 'chrome' });
+  for (const [who, list] of ROLES) {
+    const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
+    const p = await ctx.newPage();
+    if (who) {
+      await p.goto(B + 'login/', { waitUntil: 'domcontentloaded' });
+      await p.waitForFunction(() => window.__login?.ready, null, { timeout: 20000 });
+      await p.locator(`.seg__c:has(input[value="${who.tab || 'staff'}"])`).click();
+      if (who.org) await p.selectOption('#org', who.org);
+      await p.fill('#id', who.id); await p.fill('#pw', PW); await p.click('#go');
+      await p.waitForURL((u) => !/\/login\//.test(u.pathname), { timeout: 30000 });
+      await p.waitForTimeout(2000);
+    }
+    for (const [id, u] of list) {
+      await p.goto(B + u, { waitUntil: 'load' });
+      await p.waitForTimeout(['main', 'global', 'xi-clean'].includes(id) ? 12000 : 8000);
+      const o = path.join(CAP, `${id}-1440.png`); await p.screenshot({ path: o }); console.log(`capture ${id} → ${p.url().replace(B, '')}`);
+    }
+    await ctx.close();
+  }
+  await b.close();
+}
+const webp = (s, o, w, cap) => { for (const q of [80, 70, 60, 50, 40, 30]) { ff(['-i', s, '-vf', `scale=${w}:-2`, '-c:v', 'libwebp', '-quality', String(q), o]); if (!cap || kb(o) <= cap) break; } console.log(`${String(kb(o)).padStart(6)} KB  ${path.basename(o)}`); };
+if (want('stills')) {
+  for (const f of fs.readdirSync(CAP).filter((f) => f.endsWith('-1440.png'))) {
+    const id = f.replace('-1440.png', ''), s = path.join(CAP, f);
+    webp(s, path.join(OUT, `v3-${id}.webp`), 480, 60);
+    webp(s, path.join(OUT, `v3-${id}-L.webp`), 1440, 200);
+  }
+  for (const n of WALK) { const s = path.join(ROOT, 'shots/final', n + '.png'); if (fs.existsSync(s)) webp(s, path.join(OUT, n + '.webp'), 1440, 200); else console.warn('! 원본 없음: ' + n); }
 }
 if (want('video')) for (const [src, name, t] of VIDEOS) {
   const s = path.join(ROOT, src), o = path.join(OUT, name + '.mp4');
@@ -47,21 +82,23 @@ if (want('video')) for (const [src, name, t] of VIDEOS) {
   ff(['-i', s, ...(t ? ['-t', String(t)] : []), '-vf', 'scale=1280:-2', '-c:v', 'libx264', '-preset', 'medium', '-crf', '29', '-pix_fmt', 'yuv420p', '-an', '-movflags', '+faststart', o]);
   console.log(`${String(kb(o)).padStart(6)} KB  ${name}.mp4`);
 }
-// 카카오 벤치 결정 절 — 로컬 :4173 에서 절 머리를 찍는다(결정 카드 4장의 그림)
-if (want('kakao')) {
-  const { chromium } = await import('@playwright/test');
-  const b = await chromium.launch({ channel: 'chrome' });
-  const p = await (await b.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
-  for (const [anchor, name] of [['spec', 'kakao-sec-spec'], ['specJ', 'kakao-sec-J'], ['specG', 'kakao-sec-G']]) {
-    await p.goto(`http://localhost:4173/landxi/proto/review/bench-kakao.html#${anchor}`, { waitUntil: 'load' });
-    await p.evaluate((a) => document.getElementById(a)?.scrollIntoView({ block: 'start' }), anchor);
-    await p.waitForTimeout(1200);
-    const o = path.join(OUT, name + '.jpg'); await p.screenshot({ path: o, type: 'jpeg', quality: 82 }); console.log(`${String(kb(o)).padStart(6)} KB  ${name}.jpg`);
-  }
-  await b.close();
+// 9월 27일 새 화면 캡처·영상(그때 이름 '시안') — Land-XI 자산이라 그대로 둔다. --only=legacy 로 다시 만든다
+const LEGACY_STILLS = [
+  ['shots/f3b/lx-console/01-first-1440.png', 'v3-lx-console'], ['shots/f3b/lx-console/03-assemble-1440.png', 'v3-lx-console-2'], ['shots/f3b/lx-console/06-sweep-1440.png', 'v3-lx-console-3'],
+  ['shots/f3/xi-clean/01-arrive-sweep.png', 'v3-xi-clean'], ['shots/f3/xi-clean/02-ask-list.png', 'v3-xi-clean-2'], ['shots/f3/xi-clean/03-parcel-card.png', 'v3-xi-clean-3'],
+  ['shots/f3/ops-core/01-overview.png', 'v3-ops-core'], ['shots/f3/ops-core/02-approvals.png', 'v3-ops-core-2'], ['shots/f3/ops-core/03-infra.png', 'v3-ops-core-3'],
+  ['shots/f3b/gov-fusion/d-04-fused.png', 'v3-gov-fusion'], ['shots/f3b/gov-fusion/d-01-land.png', 'v3-gov-fusion-2'], ['shots/f3b/gov-fusion/d-05-ask.png', 'v3-gov-fusion-3'], ['shots/f3b/gov-fusion/d-06-parcel.png', 'v3-gov-fusion-4'],
+];
+const LEGACY_VIDEOS = [
+  ['shots/f3/lx-console/lx-console.mp4', 'v3-lx-console'], ['shots/f3/xi-clean/xi-clean-flow.mp4', 'v3-xi-clean'],
+  ['shots/f3/ops-core/ops-core.mp4', 'v3-ops-core'], ['shots/f3b/gov-fusion/gov-fusion.mp4', 'v3-gov-fusion'],
+];
+if (want('legacy')) {
+  for (const [src, name] of LEGACY_STILLS) { const s = path.join(ROOT, src), o = path.join(OUT, name + '.jpg'); if (!fs.existsSync(s)) { console.warn('! 원본 없음(건너뜀): ' + src); continue; } ff(['-i', s, '-vf', "scale='min(1440,iw)':-2", '-q:v', '4', o]); console.log(`${String(kb(o)).padStart(6)} KB  ${name}.jpg`); }
+  for (const [src, name] of LEGACY_VIDEOS) { const s = path.join(ROOT, src), o = path.join(OUT, name + '.mp4'); if (!fs.existsSync(s)) { console.warn('! 원본 없음(건너뜀): ' + src); continue; } ff(['-i', s, '-vf', 'scale=1280:-2', '-c:v', 'libx264', '-preset', 'medium', '-crf', '29', '-pix_fmt', 'yuv420p', '-an', '-movflags', '+faststart', o]); console.log(`${String(kb(o)).padStart(6)} KB  ${name}.mp4`); }
 }
-// 정문(v3 로그인) — 3장면(비슈케크 · 남원 · 여수)이 도는 것을 스틸 3 + 스트립 1 + 영상(≈22 s)으로
-if (want('login')) {
+// 9월 27일 새 로그인 캡처 — 3장면(비슈케크 · 남원 · 여수)이 도는 것을 스틸 3 + 스트립 1 + 영상(≈22 s)으로
+if (want('legacy-login')) {
   const { chromium } = await import('@playwright/test');
   const U = 'http://localhost:4173/landxi/v3/login/';
   const b = await chromium.launch({ channel: 'chrome' });

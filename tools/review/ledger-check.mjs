@@ -10,7 +10,7 @@ const BASE = (process.argv[2] || 'http://localhost:4173').replace(/\/$/, '');
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const OUT = path.join(ROOT, 'shots/overview/ledger-audit');
 fs.mkdirSync(OUT, { recursive: true });
-const PAGES = [['masters', '/landxi/proto/review/masters.html'], ['status', '/landxi/proto/review/status/index.html']];
+const PAGES = [['masters', '/landxi/proto/review/masters.html'], ['status', '/landxi/proto/review/status/index.html'], ['hub', '/landxi/proto/review/index.html'], ['history', '/landxi/proto/review/history.html']];
 const b = await chromium.launch({ channel: 'chrome' });
 const report = { base: BASE, checked_at: new Date().toISOString(), pages: {} };
 let bad = 0;
@@ -26,13 +26,21 @@ for (const [name, p] of PAGES) {
     await page.goto(BASE + p, { waitUntil: 'load', timeout: 120000 });
     await page.waitForTimeout(800);
     const r = { errors, failed: [], scrollWidth: 0, images: 0, imagesBroken: [], links: {} };
-    if (name === 'masters') {
+    if (name === 'masters' || name === 'hub') {
       // 모든 그림을 지금 불러온다(lazy 해제) — 깨진 그림 0 이어야 한다
       await page.evaluate(() => document.querySelectorAll('img[loading=lazy]').forEach((i) => { i.loading = 'eager'; }));
       await page.evaluate(async () => { await Promise.all(Array.from(document.images).map((i) => i.complete ? null : new Promise((res) => { i.onload = i.onerror = res; }))); });
       const imgs = await page.evaluate(() => Array.from(document.images).filter((i) => i.getAttribute('src')).map((i) => ({ src: i.currentSrc || i.src, ok: i.complete && i.naturalWidth > 0 })));
       r.images = imgs.length; r.imagesBroken = imgs.filter((i) => !i.ok).map((i) => i.src);
-      if (w === 1440) {
+      if (w === 1440 && name === 'hub') {
+        // 허브의 링크 · 영상 · 포스터가 실제로 열리는지(GitHub 저장소 링크는 제외)
+        const hl = await page.evaluate(() => Array.from(document.querySelectorAll('a[href], video')).flatMap((e) => (e.tagName === 'VIDEO' ? [e.src, e.poster] : [e.href])).filter(Boolean));
+        const uq = [...new Set(hl.map((u) => new URL(u, BASE + p).href))].filter((u) => !/^https:\/\/github\.com\//.test(u));
+        const res = {};
+        for (const u of uq) { try { res[u] = (await page.request.head(u, { timeout: 30000 })).status(); } catch (e) { res[u] = 'ERR ' + String(e.message).slice(0, 60); } }
+        r.links = { total: uq.length, bad: Object.entries(res).filter(([, st]) => st !== 200 && st !== 206).map(([u, st]) => `${st} ${u}`) };
+      }
+      if (w === 1440 && name === 'masters') {
         // 카드가 든 매체(영상 포함)·열기 링크를 HTTP 로 확인한다
         const media = await page.evaluate(() => Array.from(document.querySelectorAll('.card')).flatMap((c) => JSON.parse(c.dataset.media || '[]').map((m) => m.s).concat(Array.from(c.querySelectorAll('.meta a')).map((a) => a.href))));
         const uniq = [...new Set(media.map((u) => new URL(u, BASE + p).href))].filter((u) => !/^https:\/\/github\.com\//.test(u));

@@ -37,7 +37,7 @@ for s in inv['screens']:
     x['label'] = m.get('label') or s.get('제목') or s['id']
     x['anchor'] = m.get('anchor')
     x['access'] = m.get('access')
-    x['media'] = [{'k': md['kind'], 's': rel(md['src']), 'l': md['label'], 'p': rel(md['poster']) if md.get('poster') else None} for md in m.get('media', [])]
+    x['media'] = [{'k': md['kind'], 's': rel(md['src']), 't': rel(md['thumb']) if md.get('thumb') else None, 'l': md['label'], 'p': rel(md['poster']) if md.get('poster') else None} for md in m.get('media', [])]
     o = m.get('open') or {}
     x['open'] = {'kind': o.get('kind'), 'href': rel(o['href']) if o.get('href') and not o['href'].startswith('http') else o.get('href'), 'live': o.get('live'), 'note': o.get('note')} if o else None
     t = s.get('썸네일')
@@ -46,9 +46,44 @@ for s in inv['screens']:
         shutil.copy2(src, os.path.join(OUT, 'thumbs', os.path.basename(src)))
         x['thumb'] = 'thumbs/' + os.path.basename(src)
     else:
-        x['thumb'] = next((md['s'] for md in x['media'] if md['k'] == 'image'), None)
+        x['thumb'] = next((md['t'] or md['s'] for md in x['media'] if md['k'] == 'image'), None)
     screens.append(x)
-payload = {'screens': screens, 'order': smap.get('기능_순서', []), 'rows': smap.get('화면', []), 'backend': inv.get('backend', []), 'data': inv.get('data', []),
+# 새 화면(landxi/v3) — 인벤토리(전수 촬영)에 없는 것까지 자산 대장(screen-map)에서 가져온다. 세대·상태는 대장 기준으로 덮는다
+seen = {x['id'] for x in screens}
+for sid, m in smap['screens'].items():
+    if m.get('slot') != '새 구현':
+        continue
+    if sid in seen:
+        x = next(x for x in screens if x['id'] == sid)
+    else:
+        x = {k: None for k in KEEP}
+        x['id'] = sid
+        x.update({'function': m.get('function', '미분류'), 'screen': m.get('screen', '미분류'), 'verdict': m.get('verdict'), 'label': m.get('label'), 'anchor': m.get('anchor'), 'access': m.get('access')})
+        x['media'] = [{'k': md['kind'], 's': rel(md['src']), 't': rel(md['thumb']) if md.get('thumb') else None, 'l': md['label'], 'p': rel(md['poster']) if md.get('poster') else None} for md in m.get('media', [])]
+        o = m.get('open') or {}
+        x['open'] = {'kind': o.get('kind'), 'href': rel(o['href']) if o.get('href') else None, 'live': o.get('live'), 'note': o.get('note')} if o else None
+        x['thumb'] = next((md['t'] or md['s'] for md in x['media'] if md['k'] == 'image'), None)
+        screens.append(x)
+    for k in ('경로', '세대', '상태', '사용자_축', '실데이터'):
+        if m.get(k):
+            x[k] = m[k]
+    x['문제'] = None
+# 화면 용어표(CLAUDE.md §2) — 인벤토리 제목·문제 글에 남은 옛 말을 현황판에 싣기 전에 바꾼다
+TERM = [('관제실', 'LX 관리자 화면'), ('관제 핵심판', 'LX 관리자 대시보드'), ('관제', 'LX 관리자 화면'), ('LX/OPS', 'LX 관리자'), ('생산 콘솔', 'LX 직원 대시보드'), ('정문', '로그인'),
+        ("'시연'", '옛 표기'), ('시연', '예시'), ('준비 중', '첫 결과 전'), ('반입', '데이터 올리기'), ('조립', '서비스 만들기'), ('검수', '결과 확인'), ('착지', '첫 화면')]
+def term(v):
+    if not isinstance(v, str):
+        return v
+    for a, b in TERM:
+        v = v.replace(a, b)
+    return v
+for x in screens:
+    for k in ('제목', '문제', '실데이터', '기능군', 'label'):
+        x[k] = term(x.get(k))
+    if x.get('open'):
+        x['open'] = {k: term(v) for k, v in x['open'].items()}
+payload = {'screens': screens, 'order': smap.get('기능_순서', []), 'rows': smap.get('화면', []),
+           'backend': [{k: term(v) for k, v in b.items()} for b in inv.get('backend', [])], 'data': [{k: term(v) for k, v in b.items()} for b in inv.get('data', [])],
            'generated_at': inv.get('generated_at')}
 data = json.dumps(payload, ensure_ascii=False).replace('</', '<\\/')
 body = open(TPL, encoding='utf-8').read().replace('__DATA__', data)
