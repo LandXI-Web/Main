@@ -13,7 +13,7 @@ import { sig } from './sig.js';
 import { t, nf } from './i18n.js';
 
 /** 법전 §4-7 허용 라벨 — 밖이면 개발 모드에서 경고(사용자 결정 항목) */
-export const ALLOWED = ['현장 확인 필요', '대장과 다른 필지', '판정 대기', '재학습 필요', '결재 대기', '만들 수 있는 업무', '하천구역 안 건물 점유', '동시 고부하 GPU', 'Changed area'];
+export const ALLOWED = ['현장 확인 필요', '의심 필지', '대장과 다른 필지', '판정 대기', '재학습 필요', '결재 대기', '만들 수 있는 업무', '하천구역 안 건물 점유', '동시 고부하 GPU', 'Changed area'];
 /** 도착 전 표시를 빈 값으로 넘기는 한도(ms) */
 export const PENDING_MS = 20000;
 const UNIT = { count: '건', parcels: '필지', m2: '㎡', ha: 'ha', km2: '㎢', ratio: '%' };

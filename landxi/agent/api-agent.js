@@ -1,7 +1,7 @@
 /* api-agent.js — 에이전트 API 래퍼(F1-CONTRACT v1.1-23~27 · api-v1.js 는 수정하지 않고 import 만).
    base = localStorage.lx_agent_base(개발 :8703) || API.base(:8700 · F2-B 확장 훅이 /api/v1/agent/* 를 붙인다).
    off 모드(API.mode==='off')에서는 네트워크 0 — 호출부가 replay.js 로 간다. */
-import { API, probe, session } from '../shared/api-v1.js';
+import { API, probe, session, streamBase } from '../shared/api-v1.js';
 
 const LS = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
 export const base = () => LS('lx_agent_base') || API.base;
@@ -41,7 +41,7 @@ export function events(runId, on) {
   let es = null, closed = false, last = null, tries = 0;
   const open = () => {
     if (closed) return;
-    const u = new URL(prefix() + '/events/agent/' + runId);
+    const u = new URL((LS('lx_agent_base') ? prefix() : streamBase()) + '/events/agent/' + runId);   // 스트림 전용 호스트(API 호스트 연결 자리 차지 0)
     const s = session.get(); if (s) u.searchParams.set('access_token', s.token);
     if (last) u.searchParams.set('last_event_id', last);
     es = new EventSource(u.toString());

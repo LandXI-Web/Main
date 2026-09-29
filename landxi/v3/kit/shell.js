@@ -10,7 +10,7 @@
    S.fresh(date|null) · S.go(i) · S.steps({ done }) · S.mast(우측에 끼울 노드) */
 import { h, esc, hhmm } from './util.js';
 import { t } from './i18n.js';
-import { logout, homeFromPath } from './auth-gate.js';
+import { logout, homeFromPath, allowed } from './auth-gate.js';
 import { drawer } from './panel.js';
 
 const HOME = {
@@ -36,7 +36,7 @@ function roleText(who) {
   return t('shell.role.tenant', { org: who.org || who.name });
 }
 
-export function shell({ who = null, home = homeFromPath(), title, rail = null, onHelp, mount = document.body, contained = false } = {}) {
+export function shell({ who = null, home = homeFromPath(), title, rail = null, onHelp, mount = document.body, contained = false, xiRegion } = {}) {
   document.body.classList.add('t');
   if (!contained) document.body.classList.add('k-shelled');
   const name = title || (home && home.startsWith('gov') || home === 'global' ? (who?.org || '') : HOME[home] || '');
@@ -48,11 +48,18 @@ export function shell({ who = null, home = homeFromPath(), title, rail = null, o
   const help = h('button.k-mast-b.k-help', { type: 'button', 'aria-label': t('shell.help'), text: '?' });
   const exit = h('button.k-mast-b.k-exit', { type: 'button', text: t('shell.exit') });
   const slot = h('span.k-mast-slot');
+  /* XI맵 — 들어갈 수 있는 모든 화면의 마스트에 한 칸(원스톱 · 주소 입력 없이 C1 에 닿는다). 이 화면의 시군구(?region 또는 화면이 준 xiRegion)를 이어 준다 */
+  const xi = who && home !== 'xi-clean' && allowed('xi-clean', who.key) ? h('a.k-mast-b.k-xi', { href: '/landxi/v3/xi-clean/', text: 'XI맵' }) : null;
+  const xiHref = () => {
+    let r = null; try { r = (xiRegion && xiRegion()) || new URLSearchParams(location.search).get('region'); } catch { /* */ }
+    return '/landxi/v3/xi-clean/' + (r ? '?' + new URLSearchParams({ region: String(r) }) : '');
+  };
+  if (xi) for (const ev of ['pointerdown', 'focus', 'mouseenter']) xi.addEventListener(ev, () => { xi.href = xiHref(); });
   const mast = h('header.t-mast.k-mast', {},
     h('a.k-word', { href: who?.landing || '/landxi/v3/main/' }, h('span.word', { text: 'LAND-XI' }), name ? h('span.home', { text: name }) : null),
     h('span.sp'), slot, fresh,
     role ? h('span.t-role.k-role', { html: rn ? `<b>${esc(rk)}</b>${esc(rn)}` : esc(rk) }) : null,
-    help, who ? exit : null);
+    xi, help, who ? exit : null);
 
   const railEl = h('nav.t-rail.k-rail', { 'aria-label': t('shell.menu') });
   const main = h('main.k-main', { id: 'main' });

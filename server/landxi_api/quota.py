@@ -1,5 +1,5 @@
 """테넌트 · 쿼터 · 사용량(F1-CONTRACT §4.8). 한도는 config/quotas.yaml → quotas 표([추정 기반 초기값]).
-사용량은 실측: usage_events 합(gpu_s · area_km2 · egress_gb — 작업 귀속 기관 기준) · 기관 저장 공간(결과 파일 + DB 행 · 60s 캐시) · jobs(동시) · Redis(vworld 일일 호출).
+사용량은 실측: usage_events 합(gpu_s · area_km2 · egress_gb — 작업 귀속 기관 기준 · llm_tokens = AI 도우미 사용량(토큰) — 에이전트 run 을 부른 기관) · 기관 저장 공간(결과 파일 + DB 행 · 60s 캐시) · jobs(동시) · Redis(vworld 일일 호출).
 """
 from __future__ import annotations
 
@@ -17,7 +17,9 @@ from .deps import ApiError, audit, db, principal, redis, require
 from .envelope import KST, env, now_iso
 
 router = APIRouter()
-DIMS = ["storage_gb", "gpu_s_month", "area_km2_month", "concurrent_jobs", "egress_gb_month", "vworld_calls_day"]
+DIMS = ["storage_gb", "gpu_s_month", "area_km2_month", "concurrent_jobs", "egress_gb_month", "vworld_calls_day", "llm_tokens_month"]
+# AI 도우미 사용량(토큰 · 이번 달) — usage_events dim='llm_tokens' 합 한 출처(runner.meter 가 run 마다 쓴다). 한도는 quotas 표(llm_tokens_month · [추정 기반 초기값])
+MONTH_DIM = {"gpu_s_month": "gpu_s", "area_km2_month": "area_km2", "egress_gb_month": "egress_gb", "llm_tokens_month": "llm_tokens"}
 _du_cache: dict[str, tuple[float, float]] = {}
 
 
@@ -117,8 +119,7 @@ async def used(tenant: str, dim: str) -> float:
     if dim == "vworld_calls_day":
         r = await redis()
         return float(await r.get(f"vworld:calls:{tenant}:{dt.datetime.now(KST).date().isoformat()}") or 0)
-    base = {"gpu_s_month": "gpu_s", "area_km2_month": "area_km2", "egress_gb_month": "egress_gb"}[dim]
-    return (await _month_sums()).get((tenant, base), 0.0)
+    return (await _month_sums()).get((tenant, MONTH_DIM[dim]), 0.0)
 
 
 _ms_cache: tuple[float, str, dict] | None = None
@@ -137,7 +138,7 @@ async def _month_sums() -> dict:
         rows = await conn.fetch(
             "SELECT coalesce(CASE WHEN u.tenant_id = 'lx-demo' THEN 'lx-demo' ELSE o.owner END, u.tenant_id) AS t, u.dim, sum(u.amount) AS v "
             f"FROM usage_events u LEFT JOIN (SELECT j.id, {OWNER_EXPR} AS owner FROM jobs j) o ON o.id = u.job_id "
-            "WHERE u.at >= $1 AND u.dim IN ('gpu_s', 'area_km2', 'egress_gb') GROUP BY 1, 2", ms)
+            "WHERE u.at >= $1 AND u.dim = ANY($2::text[]) GROUP BY 1, 2", ms, list(MONTH_DIM.values()))
     out = {(r["t"], r["dim"]): float(r["v"] or 0) for r in rows}
     _ms_cache = (time.time(), ms.isoformat(), out)
     return out
@@ -154,9 +155,10 @@ async def remaining(tenant: str, dim: str) -> dict:
 
 
 UNIT = {"storage_gb": "GB", "gpu_s_month": "gpu_s", "area_km2_month": "km2", "concurrent_jobs": "count", "egress_gb_month": "GB",
-        "vworld_calls_day": "count"}
+        "vworld_calls_day": "count", "llm_tokens_month": "tokens"}
 SRC = {"storage_gb": "결과 폴더·파일(기관 몫 작업 · 배포본 결과 세트) + 기관 DB 행(대장 · 실태조사 · 탐지) · 60s 캐시", "gpu_s_month": "usage_events(gpu_s · 이번 달 · 작업 귀속 기관)", "area_km2_month": "usage_events(area_km2 · 이번 달 · 작업 귀속 기관)",
-       "concurrent_jobs": "jobs(state queued|running · 지금)", "egress_gb_month": "usage_events(egress_gb)", "vworld_calls_day": "Redis vworld:calls(오늘)"}
+       "concurrent_jobs": "jobs(state queued|running · 지금)", "egress_gb_month": "usage_events(egress_gb)", "vworld_calls_day": "Redis vworld:calls(오늘)",
+       "llm_tokens_month": "usage_events(llm_tokens · 이번 달 · AI 도우미를 부른 기관)"}
 
 
 async def usage_of(tenant: str) -> dict:
@@ -166,7 +168,8 @@ async def usage_of(tenant: str) -> dict:
         note = None
         if d == "egress_gb_month":
             note = "타일 전송량 계량은 2차(nginx 로그) — 지금은 0 이 아니라 '미계량'"
-        e = env(round(q["used"], 3) if d != "egress_gb_month" else None, UNIT[d], "measured", SRC[d].replace("{t}", tenant), note)
+        v = None if d == "egress_gb_month" else int(round(q["used"])) if d == "llm_tokens_month" else round(q["used"], 3)
+        e = env(v, UNIT[d], "measured", SRC[d].replace("{t}", tenant), note)
         dims[d] = {"used": e, "soft": q["soft"], "hard": q["hard"], "policy": q["policy"], "note": q["note"] or "[추정 기반 초기값]",
                    "limit_set": q["hard"] is not None}   # 한도 미설정이면 화면은 % 대신 실사용량만(0% 를 지어내지 않는다)
         if d == "storage_gb" and tenant != "lx":

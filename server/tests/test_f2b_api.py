@@ -186,7 +186,7 @@ print(json.dumps({"ext": m.EXT_ROUTERS, "paths": [r.path for r in m.app.routes i
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120)
     last = [ln for ln in out.stdout.splitlines() if ln.startswith("{")][-1]
     d = json.loads(last)
-    assert d["ext"] == {"survey": "absent", "agent": "mounted"} and d["paths"] == ["/api/v1/agent/_pytest_ping"]
+    assert {k: d["ext"][k] for k in ("survey", "agent")} == {"survey": "absent", "agent": "mounted"} and d["paths"] == ["/api/v1/agent/_pytest_ping"]
     bad = code.replace('sys.modules["landxi_api.survey"] = None', 'b = types.ModuleType("landxi_api.survey")\nsys.modules["landxi_api.survey"] = b')
     out = subprocess.run([sys.executable, "-c", bad], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120)
     assert out.returncode != 0 and "router" in out.stderr            # 있는데 깨졌으면 기동 실패로 드러난다

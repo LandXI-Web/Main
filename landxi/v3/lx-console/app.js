@@ -26,7 +26,7 @@ const SPLIT = 8;            // 이 줌부터 시도 묶음을 시군구로 분�
 let level = null, sel = null;
 let going = false;          // 오늘 칸 이동 중
 const S = K.shell({
-  who, home: 'lx-console',
+  who, home: 'lx-console', xiRegion: () => region?.sgg_cd || null,
   rail: { kind: 'steps', items: STEPS.map((s) => ({ ...s, href: s.href ? s.href + (s.query ? '?' + s.query : '') + (s.hash || '') : undefined })), current: -1, done: [], onPick: (i) => { if (STEPS[i].id === 'assemble') assemble(); } },
 });
 S.rail.setAttribute('aria-label', '작업 단계');

@@ -336,10 +336,12 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
   }
 
   /** SSE 한 줄기를 지도에 — 실행(live)과 딥링크 다시 보기(replay)가 같은 길 */
-  function consume(eventsUrl, job, ui, { replay = false, pace = null, since = 0 } = {}) {
+  function consume(eventsUrl, job, ui, { replay = false, pace = null, since = 0, base = null } = {}) {
     const total = () => S.total || job.shards_total || S.q?.shards || 1;
     const cells = [], newF = [];
-    let done = 0, n = 0, dirty = false, errs = 0, finished = false;
+    // 이어 보기(base = 이미 그린 결과 수): 첫 화면부터 지금까지의 탐지 수 · 진행률 — 기록을 다시 받는 동안 적게 보였다가 따라잡지 않게
+    const preDone = since && base != null ? (job.shards_done || 0) : 0;
+    let done = preDone, n = base != null ? base : 0, dirty = false, errs = 0, finished = false, old = 0;
     const me = S;
     const tick = setInterval(() => {
       const now = performance.now(), old = [];
@@ -366,7 +368,7 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
       S.running = false; onBusy?.(false);
       devlog('job end', `${job.id} · ${state}`);
       if (state === 'done') {
-        const envN = d?.counts_env && typeof d.counts_env === 'object' && 'value' in d.counts_env ? d.counts_env : null;
+        const envN = !me.cls && d?.counts_env && typeof d.counts_env === 'object' && 'value' in d.counts_env ? d.counts_env : null;   // 대상(cls)을 고른 분석은 칸별 대상 수 합
         const tot = envN?.value ?? n;
         cardDone(tot, envN, { replay });
         if (!replay && me.t0) {
@@ -388,7 +390,7 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
           try {
             const j = await fetch(API.base + d.polys_url, { cache: 'no-store' }).then((x) => (x.ok ? x.json() : null));
             const t = performance.now();
-            for (const f of j?.features || []) { f.__t = replay ? t - 1000 : t; newF.push(f); }
+            for (const f of keep(j?.features || [])) { f.__t = replay ? t - 1000 : t; newF.push(f); }
             dirty = true;
           } catch { /* 도형 없이 수만 */ }
         }));
@@ -420,14 +422,16 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
       // 이어 보기(since): 떼어 낸 동안 끝난 칸의 도형은 이미 받은 결과(detections)로 그렸다 — 칸만
       if (since && Date.parse(d?.at || '') < since) {
         if (d?.bbox) { cells.push({ type: 'Feature', properties: {}, geometry: rectPoly(d.bbox) }); dirty = true; }
-        n += d?.n || 0; show(); return;
+        if (base == null) n += me.cls ? clsN(d) : (d?.n || 0);
+        else if (++old <= preDone) done--;              // 미리 센 칸(preDone)은 다시 세지 않는다
+        show(); return;
       }
       if (!replay && !me.tFirst) { me.tFirst = performance.now(); if (window.__xc) window.__xc.liveFirst = +((me.tFirst - me.t0) / 1000).toFixed(1); }
       const b = d?.bbox;
       if (b) { cells.push({ type: 'Feature', properties: {}, geometry: rectPoly(b) }); if (!replay || pace) bracket(b); dirty = true; }
       if (d?.n > 0 && d.polys_url) {
-        n += d.n;
-        if (d.__polys) d.__polys.then((fs) => { const t = performance.now(); for (const f of fs) { f.__t = t; newF.push(f); } dirty = true; inflight--; });
+        n += me.cls ? clsN(d) : d.n;
+        if (d.__polys) d.__polys.then((fs) => { const t = performance.now(); for (const f of keep(fs)) { f.__t = t; newF.push(f); } dirty = true; inflight--; });
         else { pend.push(d); pump(); }
       }
       show();
@@ -467,6 +471,7 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     });
     me.stream = stream;
     me.endLocal = end;
+    if (base != null && (preDone > 0 || base > 0)) show();
     // 떼어 내기(다른 지역으로 이동) — 서버 작업은 그대로, 화면 구독만 멈춘다
     me.detach = () => { if (finished) return; finished = true; clearInterval(tick); clearInterval(clock); if (worker) { worker.terminate(); worker = null; } stream?.close(); };
   }
@@ -512,14 +517,25 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     if (S !== me) return;
     cardQuote();
   }
+  /** 떼어 낸 전역 분석(지역 코드 → 작업 id) — 돌아오면 목록을 뒤지지 않고 그 작업에 바로 붙는다 */
+  const parked = new Map();
   /** 다른 지역으로 이동 — 진행 중 작업은 서버에서 계속, 화면만 떼어 낸다(돌아오면 resume) */
   function detach() {
     if (!S?.running) return false;
     const me = S;
+    if (me.sgg && me.job?.id) { const m = regionInfo?.()?.meta || {}; for (const c of [region?.code, m.sgg_cd, m.prev_cd, me.job.options?.sgg_cd]) if (c) parked.set(String(c), me.job.id); }
     me.detach?.();
     draw?.(); card.hidden = true; clearMap(); S = null; onBusy?.(false);
     devlog('detach', me.job?.id || '');
     return true;
+  }
+  /** 이어 보기 — 결과를 불러오는 동안에도 '분석 중 n%'(작업의 끝난 칸 수)를 바로 보인다('잠시 뒤 시작합니다'로 되돌아 보이지 않게) */
+  function progressNow(ui, job) {
+    const d = job?.shards_done || 0, t = job?.shards_total || 0;
+    if (!ui || !d || !t) return;
+    ui.live(); const p = Math.min(100, Math.floor((d / t) * 100));
+    ui.pct.textContent = String(p); ui.bar.style.width = p + '%'; ui.bar.parentElement.setAttribute('aria-valuenow', p);
+    ui.got.hidden = false; ui.got.textContent = '탐지 불러오는 중';
   }
   /** 이 지역에 진행 중인 전역 분석이 있으면 이어 보기 — 지금까지 결과(detections) + 남은 칸(SSE) */
   async function resume(r) {
@@ -527,16 +543,25 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     const meta = regionInfo?.()?.meta || {};
     const codes = [meta.sgg_cd, meta.prev_cd, r.code].filter(Boolean).map(String);
     let job = null;
-    try {
-      for (const st of ['running', 'queued']) {
-        const j = await api('/jobs?' + new URLSearchParams({ state: st, kind: 'infer', limit: '50' }));
-        job = (j.items || []).find((x) => x.options?.scope === 'sgg' && codes.includes(String(x.options?.sgg_cd || '')));
-        if (job) break;
-      }
-    } catch { return false; }
+    const pid = codes.map((c) => parked.get(c)).find(Boolean);
+    if (pid) {
+      try { const j = await api('/jobs/' + encodeURIComponent(pid)); if (['queued', 'running'].includes(j?.state)) job = j; } catch { /* 목록으로 */ }
+      if (!job) for (const c of codes) parked.delete(c);
+    }
+    for (let t = 0; !job && t < 2; t++) {                // 목록 조회가 잠깐 실패하면 한 번 더
+      try {
+        for (const st of ['running', 'queued']) {
+          const j = await api('/jobs?' + new URLSearchParams({ state: st, kind: 'infer', limit: '100' }));
+          job = (j.items || []).find((x) => x.options?.scope === 'sgg' && codes.includes(String(x.options?.sgg_cd || '')));
+          if (job) break;
+        }
+        break;
+      } catch (e) { devlog('resume list', `${e.code || ''} ${e.status ?? 0}`); await new Promise((res) => setTimeout(res, 1200)); }
+    }
     if (!job || S?.running) return false;
+    if (job.shards_done == null || !job.result_set) { try { job = { ...job, ...(await api('/jobs/' + encodeURIComponent(job.id))) }; } catch { /* 목록 값으로 */ } }
     region = r;
-    const since = Date.now();
+    let since = Date.now();
     layers(); clearResults();
     const geom = regionGeom();
     S = { geom, label: `${r.name} 전역`, img: (catalog.items || []).find((x) => x.id === job.imagery_id) || null, q: { allowed: true, shards: job.shards_total },
@@ -545,20 +570,66 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     if (geom) showFrame(geom);
     onBusy?.(true);
     const ui = cardRun();
+    progressNow(ui, job);
     // 지금까지 결과 — 칸마다 기록된 도형(10,000개씩)
+    let base = 0;
     try {
       for (let off = 0; off < 300000; off += 10000) {
         const fc = await api(`/results/${job.result_set}/features?` + new URLSearchParams({ limit: '10000', offset: String(off) }));
         if (S !== me) return true;
-        pushAll(fc.features || []); flushAll();
+        pushAll(fc.features || []); flushAll(); base += (fc.features || []).length;
         if ((fc.features || []).length < 10000) break;
       }
-    } catch (e) { devlog('resume features', String(e?.message || e)); }
+    } catch (e) { devlog('resume features', String(e?.message || e)); base = null; }
+    if (base != null) since = Date.now();              // 불러오는 동안 끝난 칸은 이미 받은 결과에 들어 있다 — 그 뒤 칸만 더한다
     if (S !== me) return true;
-    devlog('resume', job.id);
-    consume(`/events/jobs/${encodeURIComponent(job.id)}`, job, ui, { since });
+    devlog('resume', { job: job.id, base, done: job.shards_done });
+    consume(`/events/jobs/${encodeURIComponent(job.id)}`, job, ui, { since, base });
     return true;
   }
+
+  /** 말로 분석(에이전트 analysis_run → analysis_watch{job_id, sgg_cd}) — 제출된 그 작업에 붙어 결과가 읍면동 순으로 차오른다.
+      이미 끝난 칸이 있으면(같은 지역 진행 중 작업에 연결) 지금까지 결과를 먼저 그리고 남은 칸을 잇는다. cls = 볼 대상(비닐하우스 등 · 없으면 전체) */
+  async function watch(jobId, r, { cls = null } = {}) {
+    if (!jobId || !r) return false;
+    let job;
+    try { job = await api('/jobs/' + encodeURIComponent(jobId)); } catch (e) { devlog('watch', `${e.code || ''} ${e.status ?? 0}`); return false; }
+    if (S?.running) { if (S.job?.id === jobId) return true; detach(); }
+    draw?.();
+    region = r;
+    layers(); clearResults();
+    const geom = regionGeom();
+    const label = `${r.name} 전역`;
+    S = { geom, label, img: (catalog.items || []).find((x) => x.id === job.imagery_id) || null, q: { allowed: true, shards: job.shards_total },
+      running: true, sgg: true, job, total: job.shards_total, scopeText: cls ? `${label} · ${cls}` : label, t0: performance.now(), cls };
+    const me = S;
+    if (geom) showFrame(geom);
+    onBusy?.(true);
+    const ui = cardRun();
+    let since = 0, base = null;
+    if (!['done', 'failed', 'cancelled'].includes(job.state)) progressNow(ui, job);
+    const ended = ['done', 'failed', 'cancelled'].includes(job.state);
+    if (!ended && (job.shards_done || 0) > 0 && job.result_set) {
+      since = Date.now(); base = 0;
+      try {
+        for (let off = 0; off < 300000; off += 10000) {
+          const fc = await api(`/results/${job.result_set}/features?` + new URLSearchParams({ limit: '10000', offset: String(off) }));
+          if (S !== me) return true;
+          const fs = keep(fc.features || []);
+          pushAll(fs); flushAll(); base += fs.length;
+          if ((fc.features || []).length < 10000) break;
+        }
+      } catch (e) { devlog('watch features', String(e?.message || e)); base = null; }
+      if (base != null) since = Date.now();
+    }
+    if (S !== me) return true;
+    devlog('watch', { job: job.id, state: job.state, done: job.shards_done, total: job.shards_total, cls, base });
+    consume(`/events/jobs/${encodeURIComponent(job.id)}`, job, ui, { since, base });   // 끝난 작업은 기록을 처음부터 다시 받는다(같은 결과)
+    return true;
+  }
+  /** 칸의 대상 수(classes{'비닐하우스_단동': n …} 중 cls 로 시작하는 것) — 없으면 칸 전체 */
+  const clsN = (d) => { const c = d?.classes; if (!c || typeof c !== 'object') return d?.n || 0; return Object.entries(c).filter(([k]) => k.startsWith(S?.cls || '')).reduce((a, [, v]) => a + (+v || 0), 0); };
+  const keep = (fs) => (S?.cls ? fs.filter((f) => String(f.properties?.cls || '').startsWith(S.cls)) : fs);
 
   /** 취소 — 누르는 즉시 카드가 '분석을 멈췄습니다'(낙관적). 서버 취소는 뒤에서 보내고, 결과가 오면 개발자 서랍에만 남긴다 */
   function cancel() {
@@ -622,5 +693,5 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
       return true;
     } catch (e) { devlog('replay', String(e?.message || e)); return false; }
   }
-  return { start, stop, detach, resume, frameSgg, get running() { return !!S?.running; }, get active() { return !!(draw || S); }, replayJob };
+  return { start, stop, detach, resume, frameSgg, watch, get running() { return !!S?.running; }, get active() { return !!(draw || S); }, get jobId() { return S?.job?.id || null; }, replayJob };
 }

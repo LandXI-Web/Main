@@ -52,6 +52,8 @@ def endpoint(tool: str) -> dict:
     if tool not in CONTRACT:
         raise ValueError(f"계약에 없는 도구: {tool}")
     fx, m, p = CONTRACT[tool]
+    if m == "EXT":                               # 확장 도구(tools/ext · plan 3.1) — 계약 경로 없이 서버 핸들러
+        return {"method": "EXT", "path": p, "query": [], "params": [], "source": p}
     if fx:
         f = fixtures().get(fx)
         if not f:
@@ -71,8 +73,9 @@ def build(specs: dict[str, dict]) -> list[dict]:
     for name, s in specs.items():
         ep = endpoint(name)                      # 계약 밖이면 ValueError
         props = dict(s.get("properties") or {})
+        desc = s["description"] if ep["method"] == "EXT" else f"{s['description']} [{ep['method']} {ep['path']}]"
         tools.append({"type": "function", "function": {
             "name": name,
-            "description": f"{s['description']} [{ep['method']} {ep['path']}]",
+            "description": desc,
             "parameters": {"type": "object", "properties": props, "required": list(s.get("required") or [])}}})
     return tools

@@ -1,6 +1,8 @@
 """summary_lookup — 실제 보유 데이터(서비스 · 지역 · 상태 · 대표 수치)를 요약 API 와 같은 값으로 (fix-agent-scope).
 
 정본은 `landxi_api.summary.build(conn, tenant, region=None, card=None)`(계약: docs/superpowers/final/fix/fix-server-summary.md).
+실태조사 수치(의심 필지 suspect · 현장 확인 필요 field_check · 결과 확인 대기)는 요약이 landxi_api.survey.survey_counts 에서 읽는다
+— survey_stats 도구 · /survey/stats · 화면과 같은 값(c2-numbers).
 그 모듈이 아직 없으면 같은 시그니처 · 같은 응답 모양의 얇은 어댑터(`build_fallback`)가 대신한다 — 요약 모듈이 생기면 코드 변경 없이 그쪽을 쓴다.
 어댑터가 쓰는 값: 배포(stage) · config/sets.yaml aliases(배포 → 결과 세트) · detections 실측 개수 · 결과 위치의 시군구 · 영상 카탈로그.
 숫자를 지어내지 않는다: 값이 없으면 value=None + note.
@@ -142,6 +144,7 @@ async def build_fallback(conn, tenant: str | None, region: str | None = None, ca
             "imagery": {"has": bool(imgs), "label": (imgs[0].get("name") if imgs else None)},
             "metrics": {
                 "detected": {**_env(n if set_id else None, "count", "inferred", src, None if set_id else "결과 없음", at), "label": "AI 탐지"},
+                "suspect": {**_env(None, "count", "inferred", "실태조사 결과", "요약 모듈 연결 전 — 집계하지 않음", at), "label": "의심 필지"},
                 "field_check": {**_env(None, "필지", "inferred", "실태조사 결과", "요약 모듈 연결 전 — 집계하지 않음", at), "label": "현장 확인 필요"},
                 "review_pending": {**_env(None, "count", "inferred", "결과 확인 대기", "요약 모듈 연결 전 — 집계하지 않음", at), "label": "결과 확인 대기"},
                 "reports": {**_env(None, "count", "recorded", "기관 신고", "요약 모듈 연결 전 — 집계하지 않음", at), "label": "기관 신고"},

@@ -1,5 +1,7 @@
 """도구 ledger_findings(F3 §3 S-10) — 대장 × AI × V-World 가 어긋난 필지(규칙 L-*) · 개수 봉투 · 읍면동별 · 지도 도착.
 
+읍면동 집계(by=emd · 기본 상위 8, by=emd 면 상위 20)는 봉투로만 내고, 두 곳 이상이면 명령 바 막대 차트 블록(plan 3.3 · 값 = 봉투 key)을 붙인다.
+
 대장이 없으면 '이 기관에 농지대장이 없습니다 → 올리기' 한 줄(의심 0 · 지어내지 않음). 타 기관 403.
 """
 from __future__ import annotations
@@ -20,11 +22,40 @@ def _rule_name(rid: str) -> str:
         return "대장과 다른 필지"
 
 
+def chart_block(title: str, by_emd: list[dict]) -> dict | None:
+    """막대 차트 블록 — 값은 봉투 key 로만(숫자 직접 금지). 읍면동이 두 곳 이상일 때만."""
+    if len(by_emd) < 2:
+        return None
+    return {"kind": "bar", "title": title, "rows": [{"label": r["읍면동"], "env": r["건수"]} for r in by_emd]}
+
+
+async def emd_rows(ctx, out: Out, import_id: str, rid: str, rn: str, top: int) -> list[dict]:
+    """읍면동별 어긋난 필지 수(GET /survey/stats?by=emd&ledger=) → 봉투 emd_n + 차트 블록."""
+    st = await ctx.http.get("/survey/stats", params={"by": "emd", "ledger": import_id})
+    by_emd: list[dict] = []
+    if st.status_code != 200:
+        return by_emd
+    rows = [x for x in st.json().get("items") or [] if ((x.get("ledger_findings") or {}).get(rid) or {}).get("value")]
+    rows.sort(key=lambda x: -x["ledger_findings"][rid]["value"])
+    for i, x in enumerate(rows[:top], 1):
+        out.env(f"emd_{i}", f"{x['key']} {rn}", x["ledger_findings"][rid])
+        by_emd.append({"읍면동": x["key"], "건수": f"emd_{i}"})
+    ch = chart_block(f"읍면동별 {rn}", by_emd)
+    if ch is not None and hasattr(out, "blocks"):
+        out.blocks.append({"type": "chart", **ch})
+    return by_emd
+
+
 async def ledger_findings(args: dict, ctx) -> Out:
     tenant = tenant_for(ctx, args)
     rid = (args.get("rule_id") or args.get("rule") or "L1").upper()
     kind = RULE_KIND.get(rid, "farm_ledger")
-    imp = await latest_import(ctx, tenant, kind)
+    imp = None
+    if args.get("import_id"):                             # 화면의 대장(context.ledger) — 규칙 종류가 같을 때만
+        imp = await latest_import(ctx, tenant, None, str(args["import_id"]))
+        if imp and imp.get("kind") and imp.get("kind") != kind:
+            imp = None
+    imp = imp or await latest_import(ctx, tenant, kind)
     out = Out(source="GET /api/v1/survey/findings?ledger=latest")
     if not imp or imp.get("state") != "matched":
         out.data = {"안내": f"이 기관에 {KIND_KO.get(kind, '대장')}이 없습니다 → 올리기" if not imp else "대장을 필지에 이어 붙이는 중입니다"}
@@ -46,17 +77,10 @@ async def ledger_findings(args: dict, ctx) -> Out:
     j = res.json()
     items = j.get("items") or []
     rn = _rule_name(rid)
-    out.env("total", f"{rn} · 대장과 다른 필지", j["total"])
-    out.env("shown", "지도에 표시한 상위 필지 수(근거 면적순)", {"value": min(top, len(items)), "unit": "필지", "basis": "measured",
+    out.env("total", f"{rn} 필지(올린 대장 × AI 대조 · 조건에 맞는 전체)", {**(j["total"] or {}), "unit": "필지"})   # 규칙 결과 = 필지당 1건
+    out.env("shown", "그중 지도에 표시한 필지(근거 면적 상위 · 표시 상한)", {"value": min(top, len(items)), "unit": "필지", "basis": "measured",
                                                          "as_of": (j["total"] or {}).get("as_of"), "source": "GET /api/v1/survey/findings · 상위", "note": "반환 행 수"})
-    st = await ctx.http.get("/survey/stats", params={"by": "emd", "ledger": imp["import_id"]})
-    by_emd = []
-    if st.status_code == 200:
-        rows = [x for x in st.json().get("items") or [] if ((x.get("ledger_findings") or {}).get(rid) or {}).get("value")]
-        rows.sort(key=lambda x: -x["ledger_findings"][rid]["value"])
-        for i, x in enumerate(rows[:8], 1):
-            out.env(f"emd_{i}", f"{x['key']} {rn}", x["ledger_findings"][rid])
-            by_emd.append({"읍면동": x["key"], "건수": f"emd_{i}"})
+    by_emd = await emd_rows(ctx, out, imp["import_id"], rid, rn, 20 if str(args.get("by") or "").lower() == "emd" else 8)
     feats, xs, ys, rows_out = [], [], [], []
     from .survey import _geoms
     geo = await _geoms(ctx, [it["pnu"] for it in items[:top]])          # 필지 폴리곤(사용자 RLS) — 없으면 대표점

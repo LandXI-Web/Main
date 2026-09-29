@@ -101,7 +101,10 @@ def test_no_deploy_or_quota_tools_for_anyone():
 
 def test_write_tools_need_confirm():
     from agent import runner  # noqa: F401 — 대장 규칙(ledger_rule) · 요약(summary_lookup) 등록
-    assert registry.WRITE == registry.CONFIRM == {"jobs_submit", "survey_state", "ledger_rule"}
+    from agent.tools import ext
+    base = {"jobs_submit", "survey_state", "ledger_rule"}
+    ext_w = {n for n in registry.WRITE if n in ext.OWNER}          # 확장 쓰기 도구(plan 3.1)도 확인 카드 뒤에만
+    assert registry.WRITE == base | ext_w and base | ext_w <= registry.CONFIRM
     assert "summary_lookup" not in registry.WRITE
 
 

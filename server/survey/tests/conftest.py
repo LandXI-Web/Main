@@ -24,7 +24,8 @@ def _alive(base: str) -> bool:
 
 @pytest.fixture(scope="session")
 def api():
-    cands = [os.environ["LX_SURVEY_API"]] if os.environ.get("LX_SURVEY_API") else ["http://127.0.0.1:8705", "http://127.0.0.1:8700"]
+    # 운영 게이트웨이(:8700 · 지금 코드) 먼저 — 오래 떠 있는 개발 앱(:8705)이 옛 코드로 답해 검사가 어긋나지 않게
+    cands = [os.environ["LX_SURVEY_API"]] if os.environ.get("LX_SURVEY_API") else ["http://127.0.0.1:8700", "http://127.0.0.1:8705"]
     for b in cands:
         if _alive(b):
             return b + "/api/v1"

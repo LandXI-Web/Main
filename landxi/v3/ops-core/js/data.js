@@ -82,7 +82,7 @@ const byAt = (a, b) => String(b.at || '').localeCompare(String(a.at || ''));
 
 /* 서버 approvals 행(S-9 · GET /approvals) → 같은 항목. 모양: {id, kind: deploy|deploy_ga|rule|quota, subject{type,id}, title, requested_by, at, payload}
    deploy + payload.action 'port' = 이식 · deploy_ga(카나리 ga 대기) · deploy(그 밖) = 배포 승인 · rule = 규칙 임계 · quota = 쿼터 변경 */
-const QDIM = { storage_gb: '저장', gpu_s_month: 'GPU 시간', area_km2_month: '분석 면적', concurrent_jobs: '동시 작업', egress_gb_month: '내보내기', vworld_calls_day: '지도 호출' };
+const QDIM = { storage_gb: '저장', gpu_s_month: 'GPU 시간', area_km2_month: '분석 면적', concurrent_jobs: '동시 작업', egress_gb_month: '내보내기', vworld_calls_day: '지도 호출', llm_tokens_month: 'AI 도우미 사용량' };
 const val = (v) => (v && typeof v === 'object' && 'value' in v ? v.value : v);
 const fmtN = (v) => (v == null || v === '' ? '' : typeof val(v) === 'number' ? Number(val(v)).toLocaleString('ko-KR') : String(val(v)));
 /** 요청자 = 사람 말로(사용자 id 는 화면에 내지 않는다) */
@@ -126,7 +126,7 @@ function fromServer(r) {
 }
 
 /* ── 할 일(카드) ─────────────────────────── */
-const DIM = { storage_gb: '저장', gpu_s_month: 'GPU 시간', area_km2_month: '분석 면적' };
+const DIM = { storage_gb: '저장', gpu_s_month: 'GPU 시간', area_km2_month: '분석 면적', llm_tokens_month: 'AI 도우미 사용량' };
 /** 조치할 경보만(닫힌 것 · 언어 모델 상주로 차는 VRAM 경보 제외) */
 export const openAlerts = () => (D.alerts?.items || []).filter((a) => !a.closed_at && !/^vram_/.test(a.rule));
 export function power() {

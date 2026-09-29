@@ -25,6 +25,10 @@ class Out:
     source: str = ""
     note: str = ""
     raw: Any = None                   # 서버에만(프론트 도착 도형 등 — ui_actions 로 나감)
+    # 명령 바 블록(plan 3.3) — chart {kind:'bar', title, rows:[{label, env:key}]} · file {label, href} · image {src, caption, tag}
+    # chart 값은 봉투 key 로만(runner 가 eN 으로 바꾼다 · 숫자 직접 금지). href·src 는 게이트웨이 경로(/agent/runs/{run}/files/{name}).
+    blocks: list[dict] = field(default_factory=list)
+    answer: str = ""                  # 런타임 답(ext ROUTE 직행 때만 · 봉투 key 자리표 {{key}} 허용 → runner 가 {{env:eN}} 으로)
 
     def env(self, key: str, meaning: str, e: dict):
         self.envelopes.append((key, meaning, e))

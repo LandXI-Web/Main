@@ -24,7 +24,7 @@ from fastapi.responses import Response
 from starlette.concurrency import run_in_threadpool
 
 from . import config
-from .catalog import canonical_set, layer_items, pm_url, resolve_set_path, set_tenant
+from .catalog import base_of, canonical_set, layer_items, pm_url, rebase, resolve_set_path, set_tenant
 from .deps import ApiError, db, principal, require
 from .envelope import KST
 
@@ -136,13 +136,31 @@ async def files_public(name: str):
     return Response(content=p.read_bytes(), media_type=mt, headers={"Cache-Control": "public, max-age=86400"})
 
 
+async def require_cog_scope(p, iid: str):
+    """동적 타일 서명 — 기관 manager·viewer 는 관할 시군구(regions.tenant_scope)에 소유 시군구가 있는 영상만. 그 밖은 403."""
+    require(p)
+    if p.realm != "tenant" or not p.tenant_id:
+        raise ApiError("forbidden", "원본 동적 타일은 LX 세션 또는 관할 기관만", {"imagery_id": iid})
+    from .regions import in_scope, region_of, tenant_scope
+    async with db(realm="lx") as conn:
+        sgg = await conn.fetchval("SELECT sgg_cd FROM imagery WHERE id=$1 AND tier='raw'", iid)
+    sc = tenant_scope(p.tenant_id)
+    r = region_of(sgg) if sgg else None
+    codes = [c for c in ((r or {}).get("sgg_cd"), (r or {}).get("prev_cd"), sgg) if c]
+    if not codes or not any(in_scope(str(c), sc) for c in codes):
+        raise ApiError("forbidden", "관할 밖 영상", {"imagery_id": iid})
+
+
 @router.get("/tiles/sign")
 async def tiles_sign(set: str, request: Request):
     p = require(principal(request))
     set_id = set
     canon = canonical_set(set_id)
     t = set_tenant(set_id)
-    if set_id.startswith("cog/") or lx_only_set(set_id):
+    from .catalog import TENANT_RAW_IMAGERY
+    if set_id.startswith("cog/") and not p.is_lx and TENANT_RAW_IMAGERY:
+        await require_cog_scope(p, set_id[4:])      # 기관 = 관할 시군구의 등록 영상만(설정으로 켰을 때만 · 기본 LX 전용)
+    elif set_id.startswith("cog/") or lx_only_set(set_id):
         require(p, lx=True)
     elif t and t != "lx" and not p.is_lx and p.tenant_id != t:
         raise ApiError("forbidden", "다른 기관의 결과 세트")
@@ -154,6 +172,7 @@ async def tiles_sign(set: str, request: Request):
         url = f"{config.PUBLIC_BASE}/tiles/cog/{set_id[4:]}/{{z}}/{{x}}/{{y}}.webp?exp={exp}&sig={s}"
     else:
         url = f"{pm_url(set_id)}?exp={exp}&sig={s}"
+    url = rebase(url, base_of(request))          # 서명 주소 = 이 화면의 API 기준 주소(고정 localhost:8700 이 아니라 · c2-xi 3차)
     import datetime as dt
     return {"url": url, "set": set_id, "canonical": canon,
             "expires_at": dt.datetime.fromtimestamp(exp, KST).isoformat(timespec="seconds")}
@@ -184,6 +203,28 @@ def _open(path: str):
     return ds
 
 
+DECIMATE_AT = 2.0      # 원본 화소 / 출력 화소 가 이보다 크면(낮은 줌) 가장 가까운 화소로 2배 읽고 면적 평균으로 줄인다
+
+
+def _read_rgb(ds, win, ow: int, oh: int):
+    """창 → (3,oh,ow) uint8 · 마스크(0/255). 낮은 줌: 오버뷰 없는 25cm 원본(줄 단위 스트립 · 수십 장 VRT)을 bilinear 로 읽으면
+    원 해상도 전부를 풀어 z12 한 장에 20초+ 걸린다(2026-09-30 실측 23.2 s). 가장 가까운 화소 읽기는 필요한 줄만 읽어 0.1 s 안팎 —
+    2배로 읽은 뒤 면적 평균으로 줄여 계단 무늬를 누른다. 높은 줌(배율 ≤ 2)은 기존 bilinear 그대로."""
+    import cv2
+    from rasterio.enums import Resampling
+    factor = max(win.width / max(ow, 1), win.height / max(oh, 1))
+    if factor > DECIMATE_AT:
+        k = 2
+        src = ds.read(indexes=[1, 2, 3], window=win, out_shape=(3, oh * k, ow * k), boundless=True, fill_value=0, resampling=Resampling.nearest)
+        m = ds.read_masks(1, window=win, out_shape=(oh * k, ow * k), boundless=True, resampling=Resampling.nearest)
+        src = np.stack([cv2.resize(np.ascontiguousarray(b), (ow, oh), interpolation=cv2.INTER_AREA) for b in src])
+        m = cv2.resize(np.where(m, 255, 0).astype(np.uint8), (ow, oh), interpolation=cv2.INTER_NEAREST)
+        return src, m
+    src = ds.read(indexes=[1, 2, 3], window=win, out_shape=(3, oh, ow), boundless=True, fill_value=0, resampling=Resampling.bilinear)
+    m = ds.read_masks(1, window=win, out_shape=(oh, ow), boundless=True)
+    return src, np.where(m, 255, 0).astype(np.uint8)   # rasterio 1.4 boundless 마스크는 bool — reproject 는 bool 을 못 받는다
+
+
 def _render(src_path: str, z: int, x: int, y: int, size: int = 256) -> bytes | None:
     import cv2
     import rasterio
@@ -210,9 +251,7 @@ def _render(src_path: str, z: int, x: int, y: int, size: int = 256) -> bytes | N
         sb = (sb[0] - pad, sb[1] - pad, sb[2] + pad, sb[3] + pad)
         win = from_bounds(*sb, transform=ds.transform)
         ow = oh = int(size * 1.2)
-        src = ds.read(indexes=[1, 2, 3], window=win, out_shape=(3, oh, ow), boundless=True, fill_value=0, resampling=Resampling.bilinear)
-        smask = ds.read_masks(1, window=win, out_shape=(oh, ow), boundless=True)
-        smask = np.where(smask, 255, 0).astype(np.uint8)   # rasterio 1.4 boundless 마스크는 bool — reproject 는 bool 을 못 받는다
+        src, smask = _read_rgb(ds, win, ow, oh)
         src_tr = tfb(*sb, ow, oh)
         data = np.zeros((3, size, size), np.uint8)
         mask = np.zeros((size, size), np.uint8)

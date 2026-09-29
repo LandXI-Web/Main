@@ -73,6 +73,12 @@ def allowed(name: str, p) -> bool:
     caps = set(p.caps or [])
     if p.realm is None:
         return False
+    from . import ext
+    if name in ext.ALLOWED:                                    # 확장 도구(plan 3.1) — 모듈의 allowed(없으면 기관·LX)
+        try:
+            return bool(ext.ALLOWED[name](name, p))
+        except Exception:  # noqa: BLE001
+            return False
     if name in CLIENT or name in ("catalog_layers", "parcel_at"):
         return True
     if name in ("results_stats", "results_features", "results_parcels_join"):
@@ -87,7 +93,9 @@ def allowed(name: str, p) -> bool:
 
 
 def tools_for(p) -> list[dict]:
-    return from_contract.build({k: v for k, v in SPECS.items() if allowed(k, p)})
+    # route_only 명세(확장 ROUTE 직행 전용 · plan 3.1)는 모델에게 내놓지 않는다
+    return from_contract.build({k: {kk: vv for kk, vv in v.items() if kk != "route_only"} for k, v in SPECS.items()
+                                if allowed(k, p) and not v.get("route_only")})
 
 
 HANDLERS = {
@@ -117,8 +125,16 @@ def validate(name: str, args: dict) -> dict:
     return clean
 
 
+def ensure_ext() -> dict:
+    """tools/ext/*.py 확장을 한 번 합친다(runner 가 불러올 때 · 테스트는 직접)."""
+    import sys
+    from . import ext
+    return ext.load(sys.modules[__name__], from_contract)
+
+
 def client_action(name: str, args: dict, ctx) -> Out:
-    """클라이언트 도구 → ui_actions (서버는 실행하지 않음 · 브라우저가 window.XI 로)."""
+    """클라이언트 도구 → ui_actions (서버는 실행하지 않음 · 브라우저가 window.XI 로).
+    확장 CLIENT 도구(map_region·map_zoom·map_view·map_layer·analysis_watch …)는 핸들러가 없으면 {op: 이름, **인자} 그대로 나간다."""
     out = Out(source="window.XI (F2-A 브리지)")
     step = args.get("step")
     prev = ctx.last_raw(step)
@@ -152,5 +168,7 @@ def client_action(name: str, args: dict, ctx) -> Out:
         n, cd = S.emd_resolve(reg, args.get("emd"))
         out.ui_actions.append({"op": "drawer_open", "kind": args["kind"], "tab": "draft" if args["kind"] == "report" else None,
                                "emd_cd": cd, "emd": n, "rule": args.get("rule")})
+    elif name not in ("map_arrive", "map_frame"):
+        out.ui_actions.append({"op": name, **args})
     out.data = out.data or {"ui": [a["op"] for a in out.ui_actions]}
     return out

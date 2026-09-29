@@ -21,7 +21,11 @@ SUMMARY_TOOLS = {"summary_lookup"}                                              
 
 def test_tool_names_are_contract_names():
     from agent import runner  # noqa: F401
-    assert set(registry.SPECS) == CONTRACT_TOOLS | CLIENT | LEDGER_TOOLS | SUMMARY_TOOLS
+    from agent.tools import ext
+    base = set(registry.SPECS) - set(ext.OWNER)                   # 확장 도구(tools/ext · plan 3.1)는 모듈 소유로 따로
+    assert base == CONTRACT_TOOLS | CLIENT | LEDGER_TOOLS | SUMMARY_TOOLS
+    for n in ext.OWNER:                                            # 확장 도구도 스키마가 만들어진다(EXT 또는 CLIENT)
+        assert from_contract.endpoint(n)["method"] in ("EXT", "CLIENT", "GET", "POST"), n
     assert from_contract.endpoint("summary_lookup")["path"] == "/api/v1/summary"
     for n in CONTRACT_TOOLS:
         ep = from_contract.endpoint(n)
@@ -62,7 +66,10 @@ def test_validate_enum_and_required():
 
 def test_onprem_only():
     assert config.LLM_EXTERNAL is False
-    for b in config.BACKENDS.values():
+    for name, b in config.BACKENDS.items():
+        if name == "dokpamo" and not config.backend_on("dokpamo"):
+            assert "dokpamo" not in config.CHAIN                 # 승격 자리 — 연결 전이면 사슬 밖 · 탐침 0
+            continue
         assert config.host_allowed(b["base"]), b
     assert not config.host_allowed("https://api.openai.com/v1")
     assert not backends._allowed({"base": "https://generativelanguage.googleapis.com/v1", "name": "x"})

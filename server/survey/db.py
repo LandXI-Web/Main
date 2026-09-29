@@ -24,10 +24,31 @@ SRC_SURVEY = "survey/namwon-parcel-survey.gpkg"
 SRC_SUSPECTS = "survey/namwon-parcel-suspects.csv"
 SRC_SUMMARY = "survey/namwon-parcel-emd-summary.json"
 SRC_TIMELINE = "survey/namwon-parcel-timeline.json"
-IMG23 = "2023 항공정사 25cm(전북 비도시 도엽)"
-IMG25 = "2025 드론 정사(A02, 촬영월 미상)"
-LEDGER = "V-World 연속지적 2026-09-24"
+IMG23 = "2023년 항공 정사영상(25cm)"
+IMG25 = "2025년 드론 정사영상(촬영월 확인 전)"
+LEDGER = "연속지적도(2026-09-24 기준)"
 FIXED_PHRASE = "AI 추론 · 검수 전 · 현장 확인 전 · 위법 판정 아님"
+AI_DRAFT = "AI 가 작성한 초안 · 사람 확인 필요"          # 보고서 서술 꼬리표(사용자 말)
+AUTO_DRAFT = "자동 작성 문장 · 사람 확인 필요"
+REPORT_SRC = "실태조사 결과(AI 분석 × 연속지적도)"         # 보고서 인용 출처(사용자 말 · 표 이름·코드 없음)
+STATE_SRC = "현장조사 기록"
+
+
+def imagery_label(s: str | None) -> str | None:
+    """영상 표기(적재 때 문자열 그대로) → 사용자 말 '2023년 항공 정사영상(25cm)'. 연도·해상도·종류만 쓴다(도엽·AOI·코드 없음)."""
+    import re
+    if not s:
+        return None
+    t = str(s)
+    y = re.search(r"(19|20)\d\d", t)
+    r = re.search(r"(\d+(?:\.\d+)?)\s*(cm|m)(?![A-Za-z])", t)
+    kind = "드론" if "드론" in t else "위성" if ("위성" in t or "satellite" in t.lower()) else "항공"
+    out = (f"{y.group(0)}년 " if y else "") + f"{kind} 정사영상"
+    if r:
+        out += f"({r.group(1)}{r.group(2)})"
+    elif "촬영월" in t:
+        out += "(촬영월 확인 전)"
+    return out
 
 # README 표 — 적재 검증의 정답(하나라도 다르면 findings-emd.json 을 쓰지 않는다)
 README_COUNTS = {

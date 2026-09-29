@@ -529,7 +529,7 @@ async function main() {
       else {
         const ln = h('div.gl-line'); body.replaceChildren(ln); K.line(ln, { points: pts, ai: true });
         const lv = ln.querySelector('.k-line-v'); if (lv?.firstChild?.nodeType === 3) lv.firstChild.textContent = K.nf(V(pts[pts.length - 1].value), 2);
-        lay.ndvi = MONTHS.filter((m) => nd[m]).pop();
+        lay.ndvi = (S.ndviPick && nd[S.ndviPick]) ? S.ndviPick : MONTHS.filter((m) => nd[m]).pop();
       }
     } else {
       const s = D0.sprawl;
@@ -707,6 +707,39 @@ async function main() {
     onAction: (a) => { if (inArea(actBox(a))) ckRun.hit = true; },
   });
   SH.mast(h('button.k-mast-b.gl-ask', { type: 'button', onclick: () => ck.open() }, h('span', { text: STR.ask }), h('kbd', { text: T('cmdk.key') })));
+
+  /* 에이전트 지도 동작(plan 3.2) — map_region · map_zoom · map_view · map_on 을 이 화면이 처리하고 kit:agent-action-done 을 낸다.
+     map_region: 내 지역이면 그 지역으로 들어가고(결과·시트), 밖이면 위치만 보인다(값 0 · 가드 한 줄). map_on: ndvi(달) · sprawl · change 탭. */
+  const agentDone = (op, ok) => document.dispatchEvent(new CustomEvent('kit:agent-action-done', { detail: { op, ok: !!ok, by: 'global' } }));
+  if (q.get('dev') === '1') window.__glAgent = [];
+  async function onAgentAction(a) {
+    if (q.get('dev') === '1') window.__glAgent.push({ op: a.op, at: Date.now() });
+    if (a.op === 'map_region') {
+      if (!S.country) return agentDone(a.op, false);
+      const A = await districtsOf(S.country);
+      const D0 = A.feats.find((d) => d.id === a.district_id) || A.feats.find((d) => d.name && a.name && d.name.toLowerCase() === String(a.name).toLowerCase());
+      if (D0 && (D0.mine || isLX)) { ckRun.hit = true; if (D0 !== S.district) await toDistrict(D0); else await st.go(D0.bbox, { maxZoom: 11.2 }); return agentDone(a.op, true); }
+      const b = D0?.bbox || a.bbox; if (!b) return agentDone(a.op, false);
+      ckRun.hit = true; flashGuard(); await st.go(b, { maxZoom: 10 }); return agentDone(a.op, true);
+    }
+    if (a.op === 'map_zoom') {
+      const z = Number.isFinite(+a.zoom) ? +a.zoom : map.getZoom() + (Number.isFinite(+a.delta) ? +a.delta : 1);
+      map.easeTo({ zoom: Math.max(1, Math.min(18, z)), duration: RM() ? 0 : D[750] }); return agentDone(a.op, true);
+    }
+    if (a.op === 'map_view') {
+      map.easeTo({ pitch: Number.isFinite(+a.pitch) ? +a.pitch : map.getPitch(), bearing: Number.isFinite(+a.bearing) ? +a.bearing : map.getBearing(), duration: RM() ? 0 : D[750] });
+      return agentDone(a.op, true);
+    }
+    if (a.op === 'map_on') {
+      const set = String(a.set || '');
+      const tab = set === 'ndvi' ? 1 : set === 'sprawl' ? 2 : set === 'change' || set === 'season' ? 0 : -1;
+      if (tab < 0 || !S.district) return agentDone(a.op, false);
+      if (tab === 1 && a.month) S.ndviPick = a.month;
+      S.tab = tab; url(); hud(S.district); await renderSheet(); return agentDone(a.op, true);
+    }
+  }
+  // 이 화면이 처리하는 동작은 키트 기본 처리를 막는다(e.preventDefault · 끝나면 이 화면이 done 을 낸다)
+  document.addEventListener('kit:agent-action', (e) => { const a = e.detail; if (a && /^map_(region|zoom|view|on)$/.test(a.op || '')) { e.preventDefault(); onAgentAction(a).catch(() => agentDone(a.op, false)); } });
   ckEnglish(ck.el, { run: ckRun, where: () => [S.district?.name || S.country?.name, S.season?.key].filter(Boolean) });
 
   /* ── 시작 ── */
@@ -792,7 +825,7 @@ function ckEnglish(box, { run, where } = {}) {
     if (HANGUL.test(v)) return;
     const w = where?.() || [];
     inp.value = `${v}
-(${w.length ? `Area: ${w.join(', ')}. ` : ''}Answer in English only, about this area only.)`;
+(${w.length ? `Current area: ${w.join(', ')}. ` : ''}Answer in English.)`;
     setTimeout(() => { inp.value = v; }, 0);
   }, true);
   const fix = (n) => {
@@ -810,7 +843,7 @@ function ckEnglish(box, { run, where } = {}) {
     if (box.dataset.busy) { if (txt && !ans.querySelector('.k-ck-dots')) ans.innerHTML = DOTS; return; }
     live = false;
     if (KEEP.has(txt)) return;
-    if (run?.hit && txt && !KR_PLACE.test(txt) && !HANGUL.test(txt)) return;
+    if (txt && !KR_PLACE.test(txt) && !HANGUL.test(txt)) return;
     const w = where?.() || [];
     ans.innerHTML = '';
     ans.append(h('span', { text: CK_EN['해당 지역 데이터가 없습니다'] }), w.length ? h('span.gl-ck-where', { text: ' · ' + w.join(' · ') }) : '');

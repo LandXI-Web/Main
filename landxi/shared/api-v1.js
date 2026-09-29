@@ -90,9 +90,74 @@ export const OPS_EVENTS = ['gpu.sample', 'queue.sample', 'usage.delta', 'deploy.
  * sse('/events/jobs/' + id, { on: (name, data, id) => {}, events: JOB_EVENTS })  → { close() }
  * 헤더를 못 넣으므로 access_token 쿼리(F1-CONTRACT §3). 25s 동안 아무 이벤트(하트비트 포함)도 없으면 재접속.
  */
-export function sse(path, { on, events = JOB_EVENTS, lastEventId = null, onState } = {}) {
+export function sse(path, opts = {}) {
+  return SHARED_SSE.test(path) && !opts.lastEventId && canShare() ? sharedSse(path, opts) : directSse(path, opts);
+}
+
+/* 탭끼리 한 스트림(c2-numbers · 2026-09-30) — 게이트웨이는 HTTP/1.1 이라 브라우저는 한 호스트에 연결 6개까지만 연다.
+   기관 첫 화면·보고서가 탭마다 /events/tenant 를 상시로 열면 탭 6개에서 이후 모든 요청(로그인 기관 목록·XI맵)이 멈췄다.
+   상시 방송 스트림(/events/tenant · /events/ops)은 같은 출처·같은 세션의 탭 가운데 한 탭(Web Locks 로 뽑힌 대표)만 연결을 열고,
+   받은 사건을 BroadcastChannel 로 다른 탭에 나눈다. 대표 탭이 닫히면 기다리던 탭이 이어받는다(마지막 사건 id 부터).
+   작업·물어보기 스트림(/events/jobs/… · 에이전트 실행)은 짧게 끝나므로 지금처럼 탭마다 연다. */
+/* 스트림은 스트림 전용 호스트 이름으로 — 브라우저 연결 한도(호스트당 6)는 호스트 이름별이다.
+   (09-30 실증 2차) 반대쪽 이름(localhost ↔ 127.0.0.1)으로 뒤집는 방식은, 기준 주소가 127.0.0.1 인 화면(LX 관리자 화면 등)의 스트림이
+   localhost 로 열려 기본 화면의 API 호스트(localhost)를 차지했다 — 게이트웨이 재기동 뒤 탭 15개의 스트림이 한꺼번에 다시 붙자
+   새 탭의 로그인·조회·영상 타일이 모두 멈췄다. 그래서 로컬 게이트웨이면 스트림은 API 가 절대 쓰지 않는 이름
+   s1–s4.localhost(루프백 · 브라우저가 스스로 127.0.0.1 로 푼다 · RFC 6761)로만 연다. 네 이름에 나눠 24칸. 운영 주소는 그대로.
+   streamBase() 는 에이전트 스트림(agent/api-agent.js)도 같이 쓴다. */
+const LOOPBACK_HOST = /^(?:localhost\.?|127\.0\.0\.1|\[::1\]|[a-z0-9-]+\.localhost\.?)$/i;
+const STREAM_HOSTS = ['s1.localhost', 's2.localhost', 's3.localhost', 's4.localhost'];
+let streamN = Math.floor(Math.random() * STREAM_HOSTS.length);
+export function streamBase() {
+  try {
+    const u = new URL(API.base);
+    if (!LOOPBACK_HOST.test(u.hostname) || STREAM_HOSTS.includes(u.hostname.toLowerCase())) return API.prefix;
+    if (typeof location !== 'undefined' && u.origin === location.origin) return API.prefix;   // 같은 출처 프록시(옛 LX 관리자 화면 :8702)는 CORS 가 없다 — 이름을 바꾸지 않는다
+    u.hostname = STREAM_HOSTS[streamN++ % STREAM_HOSTS.length];
+    return u.origin + '/api/v1';
+  } catch { return API.prefix; }
+}
+const sseBase = streamBase;
+const SHARED_SSE = /^\/events\/(?:tenant|ops)(?:[/?]|$)/;
+const canShare = () => { try { return typeof BroadcastChannel === 'function' && !!(navigator.locks && navigator.locks.request); } catch { return false; } };
+function sharedSse(path, { on, events = JOB_EVENTS, onState } = {}) {
+  const s = session.get();
+  const key = 'lx-sse|' + path + '|' + [...events].sort().join(',') + '|' + (s ? String(s.token).slice(-16) : '-');
+  const bc = new BroadcastChannel(key), ac = new AbortController();
+  let closed = false, last = null, inner = null, release = null, state = 'connecting';
+  const post = (m) => { try { bc.postMessage(m); } catch { /* 채널 닫힘 */ } };
+  const setState = (st) => { state = st; onState && onState(st); };
+  bc.onmessage = (m) => {
+    const d = m.data; if (!d || closed) return;
+    if (d.t === 'ev') { last = d.id || last; on && on(d.name, d.data, last); }
+    else if (d.t === 'st') { if (!inner) setState(d.state); }
+    else if (d.t === 'hello' && inner) post({ t: 'st', state });
+  };
+  setState('connecting');
+  navigator.locks.request(key, { signal: ac.signal }, () => new Promise((res) => {
+    if (closed) { res(); return; }
+    release = res;
+    inner = directSse(path, {
+      events, lastEventId: last,
+      on: (name, data, id) => { last = id || last; on && on(name, data, id); post({ t: 'ev', name, data, id }); },
+      onState: (st) => { if (st === 'closed') return; setState(st); post({ t: 'st', state: st }); },
+    });
+  })).catch(() => { /* 닫힘으로 기다림 취소 */ });
+  post({ t: 'hello' });
+  return {
+    close() {
+      if (closed) return; closed = true;
+      ac.abort(); inner && inner.close(); release && release(); bc.close();
+      onState && onState('closed');
+    },
+    get lastEventId() { return last; },
+    get leader() { return !!inner; },
+  };
+}
+
+function directSse(path, { on, events = JOB_EVENTS, lastEventId = null, onState } = {}) {
   let es = null, closed = false, last = lastEventId, timer = null, backoff = 1000;
-  const url = () => { const u = new URL(API.prefix + path); const s = session.get(); if (s) u.searchParams.set('access_token', s.token); if (last) u.searchParams.set('last_event_id', last); return u.toString(); };
+  const url = () => { const u = new URL(sseBase() + path); const s = session.get(); if (s) u.searchParams.set('access_token', s.token); if (last) u.searchParams.set('last_event_id', last); return u.toString(); };
   const arm = () => { clearTimeout(timer); timer = setTimeout(() => { if (!closed) { es && es.close(); open(); } }, 25000); };
   const open = () => {
     if (closed) return; es = new EventSource(url()); onState && onState('connecting');

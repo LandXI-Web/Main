@@ -424,7 +424,8 @@ def test_s9_ops_unified(live, tok):
     g = httpx.get(B + "/ops/gpus", headers=ad, timeout=30).json()
     pb = g["power_budget"]
     assert set(pb) >= {"max_hot", "hot_now", "ok"} and pb["max_hot"] == 1 and isinstance(pb["ok"], bool)
-    with httpx.stream("GET", B + "/events/ops", headers={**ad, "origin": "http://localhost:4173"}, timeout=10) as r:
+    # 브라우저 스트림은 스트림 전용 호스트 이름으로(c2-xi 3차 · API 호스트 이름이면 204)
+    with httpx.stream("GET", B + "/events/ops", headers={**ad, "origin": "http://localhost:4173", "host": "s1.localhost:8700"}, timeout=10) as r:
         assert r.status_code == 200
     assert httpx.get(B + "/events/ops", headers={**ad, "origin": "http://evil.example"}, timeout=10).status_code == 403
     assert httpx.get(B + "/events/ops", headers={**H(tok["staff"]), "origin": "http://localhost:4173"}, timeout=10).status_code == 403

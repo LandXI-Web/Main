@@ -359,6 +359,7 @@ def load_parcels(conn, rg: dict, tenant: str, progress=None) -> dict:
     m["rows"] = len(rows)
     m["emd_named"] = len(emd)
     m["ri_named"] = len(ri)
+    m["offsets"] = fix_parcel_offsets(conn, cur)          # 원점 100 km 밀린 필지(여수 93필지 사례) — 제자리로 · 못 옮기면 뺀다
     conn.execute("ANALYZE survey_parcels")
     return m
 
@@ -723,4 +724,148 @@ def ai_operands(conn, pnus: list[str], sgg_cd: str | None = None) -> dict[str, d
                 o[f"r23_{c}"] = round(min((d.get(f"{c}_hit") or 0) / max(d.get("area_m2") or 1, 1), 1), 3)
             o["_job_id"] = job
             out[d["pnu"]] = o
+    return out
+
+
+# ─────────────────────────── 숫자 한 출처(c2-numbers) ───────────────────────────
+# 정의(모든 화면·에이전트·보고서가 이 두 줄만 쓴다):
+#   의심 필지      = survey_sgg.findings — 그 시군구 AI × 연속지적 규칙(R1–R6) 의심 건(필지 × 규칙 1행). 적재(build) 때 확정되고
+#                    상태(배정·오탐·종결)로 줄지 않는다. 대장 규칙(L-*)은 넣지 않는다(대장 대조 결과로 따로 센다).
+#   현장 확인 필요 = 같은 시군구 R1–R6 의심 중 우선순위 A · 상태 open|assigned 인 서로 다른 필지(PNU) 수 — 배정·판정·오탐 처리로 줄어든다.
+#   적재 중(survey_sgg.state = 'building')에는 두 값 모두 None + '집계 중'(숫자를 섞어 내지 않는다).
+# 옛 값이 갈린 원인: 남원 20,852 = 의심 필지 중복 제거(한 필지가 두 규칙에 걸린 20필지) · 20,872 = survey_sgg.findings(R1–R6 행)
+#   · 21,303 = survey_findings 전체(대장 규칙 L-* 431행 포함). 여수 10,499 = 중복 제거 · 10,504 = R1–R6 행.
+COUNT_RULES = list(RULE_IDS)
+COUNTING = "집계 중"
+COUNTS_SQL = ("SELECT s.sgg_cd, s.tenant_id, s.state, s.findings, coalesce(s.finished_at, s.at) AS at, "
+              "(SELECT count(DISTINCT f.pnu) FROM survey_findings f WHERE f.sgg_cd = s.sgg_cd AND f.rule = ANY({rules}) "
+              "AND f.priority = 'A' AND f.state IN ('open','assigned')) AS field_check, "
+              "(SELECT count(*) FROM survey_findings f WHERE f.sgg_cd = s.sgg_cd AND f.rule = ANY({rules}) "
+              "AND f.priority = 'A' AND f.state = 'open') AS review_pending "
+              "FROM survey_sgg s WHERE ({codes}::text[] IS NULL OR s.sgg_cd = ANY({codes}::text[])) ORDER BY s.sgg_cd")
+SUSPECT_SRC = "실태조사 의심(AI × 연속지적 규칙 R1–R6)"
+FIELD_SRC = "실태조사 의심 중 우선순위 A · 미조치·배정"
+
+
+def counts_sql(style: str) -> str:
+    """style 'pg'(asyncpg $n) | 'psycopg'(%(n)s)."""
+    if style == "pg":
+        return COUNTS_SQL.format(rules="$1::text[]", codes="$2")
+    return COUNTS_SQL.format(rules="%(rules)s", codes="%(codes)s")
+
+
+def _iso(v) -> str | None:
+    if v is None:
+        return None
+    try:
+        return v.astimezone(KST).isoformat(timespec="seconds")
+    except Exception:
+        return str(v)
+
+
+def counts_from_rows(rows: list[dict], sgg: str | None = None) -> dict:
+    """COUNTS_SQL 행들 → {sgg_cd, state, suspect, field_check, review_pending, as_of, by_sgg}. 값은 정수 또는 None(집계 중·결과 없음)."""
+    by = {}
+    for r in rows:
+        st = r["state"]
+        busy = st == "building"
+        by[r["sgg_cd"]] = {"state": st, "tenant_id": r.get("tenant_id"),
+                           "suspect": None if busy else int(r["findings"] or 0),
+                           "field_check": None if busy else int(r["field_check"] or 0),
+                           "review_pending": None if busy else int(r["review_pending"] or 0), "as_of": _iso(r["at"])}
+    if not by:
+        return {"sgg_cd": sgg, "state": "none", "suspect": None, "field_check": None, "review_pending": None, "as_of": None, "by_sgg": {}}
+    states = {v["state"] for v in by.values()}
+    busy = "building" in states
+
+    def tot(k):
+        return None if busy else sum(v[k] or 0 for v in by.values())
+    state = "building" if busy else ("done" if "done" in states else sorted(states)[0])
+    return {"sgg_cd": sgg if sgg else (next(iter(by)) if len(by) == 1 else None), "state": state, "suspect": tot("suspect"),
+            "field_check": tot("field_check"), "review_pending": tot("review_pending"),
+            "as_of": max((v["as_of"] for v in by.values() if v["as_of"]), default=None), "by_sgg": by}
+
+
+def counts_sync(conn, sgg: str | None = None) -> dict:
+    """동기(psycopg · 보고서·파이프라인) — landxi_api.survey.survey_counts 와 같은 식. conn 의 RLS 그대로."""
+    cs = codes(sgg) if sgg else None
+    cur = conn.execute(counts_sql("psycopg"), {"rules": COUNT_RULES, "codes": cs})
+    cols = [d.name for d in cur.description]
+    return counts_from_rows([dict(zip(cols, r)) for r in cur.fetchall()], (region(sgg)["sgg_cd"] if sgg else None))
+
+
+# ─────────────────────────── 필지 위치 검사(여수 93필지 · c2-numbers) ───────────────────────────
+# 원인(2026-09-30 실측): 로컬 연속지적(LSMD 2022-02 · EPSG:5174 로 읽음) 가운데 일부 필지가 북거 가산값이 다른 원점(600,000 · 5186 계열)
+# 좌표로 들어 있어, 5174 로 풀면 정확히 북쪽 100 km(= 100,000 m) 밀린 자리에 놓인다. 여수 5개 리·동 93필지(돌산읍 신복·율림리 · 소라면
+# 대포리 · 주삼동 · 호명동). 규칙: 대표점이 시군구 경계(+3 km) 밖이면 ① 5186 에서 남쪽으로 100 km 옮겼을 때 경계 안이면 옮기고
+# ② 아니면 적재에서 뺀다(의심·기록이 달린 필지는 남긴다).
+OFFSET_M = 100000.0
+EDGE_BUF_DEG = 0.03          # ≈ 3 km
+
+
+def _sgg_shape(sgg: str):
+    from landxi_api import regions as RG
+    ix = RG.emd_index(sgg)
+    if ix is not None and len(ix):
+        return ix.union
+    r = RG.region_of(sgg)
+    _, geoms, _ = RG.regions_base()
+    return geoms.get(r["sgg_cd"]) if r else None
+
+
+def fix_parcel_offsets(conn, sgg: str, *, dry: bool = False) -> dict:
+    """그 시군구 필지 중 경계(+3 km) 밖 → 100 km 원점 밀림이면 제자리로, 아니면 뺀다."""
+    from shapely.geometry import Point
+    from shapely.prepared import prep
+    g = _sgg_shape(sgg)
+    if g is None:
+        return {"sgg_cd": sgg, "skipped": "no_boundary"}
+    inside = prep(g.buffer(EDGE_BUF_DEG))
+    rows = conn.execute("SELECT pnu, ST_X(p) x, ST_Y(p) y, ST_X(q) qx, ST_Y(q) qy FROM (SELECT pnu, ST_PointOnSurface(geom) p, "
+                        "ST_Transform(ST_Translate(ST_Transform(ST_PointOnSurface(geom), 5186), 0, -%s), 4326) q "
+                        "FROM survey_parcels WHERE sgg_cd = %s AND src IS DISTINCT FROM 'canon') t", (OFFSET_M, sgg)).fetchall()
+    out_pnus = [(pnu, qx, qy) for pnu, x, y, qx, qy in rows if not inside.contains(Point(x, y))]
+    shift = [p for p, qx, qy in out_pnus if inside.contains(Point(qx, qy))]
+    sset = set(shift)
+    drop = [p for p, _, _ in out_pnus if p not in sset]
+    kept: list[str] = []
+    if drop:
+        kept = [r[0] for r in conn.execute("SELECT DISTINCT pnu FROM survey_findings WHERE pnu = ANY(%s)", (drop,)).fetchall()]
+        kset = set(kept)
+        drop = [p for p in drop if p not in kset]
+    res = {"sgg_cd": sgg, "checked": len(rows), "outside": len(out_pnus), "shifted": len(shift), "dropped": len(drop), "kept_with_findings": len(kept)}
+    if dry or not (shift or drop):
+        return res
+    if shift:
+        conn.execute("UPDATE survey_parcels SET geom = ST_Multi(ST_Transform(ST_Translate(ST_Transform(geom, 5186), 0, -%s), 4326)) "
+                     "WHERE pnu = ANY(%s)", (OFFSET_M, shift))
+        conn.execute("DELETE FROM survey_parcel_ai WHERE pnu = ANY(%s)", (shift,))          # 틀린 자리에서 겹친 AI(있으면) — 다음 결합 때 다시
+    if drop:
+        conn.execute("DELETE FROM survey_parcel_ai WHERE pnu = ANY(%s)", (drop,))
+        conn.execute("DELETE FROM survey_parcels WHERE pnu = ANY(%s)", (drop,))
+    # 읍면동·시군구 범위(bbox)를 다시(밀린 필지가 범위를 100 km 늘려 놓았다)
+    conn.execute("UPDATE survey_emd e SET bbox = ARRAY[ST_XMin(q.b), ST_YMin(q.b), ST_XMax(q.b), ST_YMax(q.b)] "
+                 "FROM (SELECT emd_cd, ST_Extent(geom) b FROM survey_parcels WHERE sgg_cd = %s GROUP BY 1) q WHERE e.emd_cd = q.emd_cd", (sgg,))
+    conn.execute("UPDATE survey_sgg SET bbox = (SELECT ARRAY[ST_XMin(e), ST_YMin(e), ST_XMax(e), ST_YMax(e)] FROM "
+                 "(SELECT ST_Extent(geom) e FROM survey_parcels WHERE sgg_cd = %s) q), parcels = (SELECT count(*) FROM survey_parcels "
+                 "WHERE sgg_cd = %s) WHERE sgg_cd = %s", (sgg, sgg, sgg))
+    return res
+
+
+# ─────────────────────────── 시도 이름 한 가지(적재된 주소 · c2-numbers) ───────────────────────────
+def relabel_sido(conn) -> dict:
+    """적재된 주소·시도 칸의 원천 시도 이름(regions.SIDO_LABEL 의 왼쪽)을 표기 이름으로. 새 적재는 region() 이 이미 표기 이름을 쓴다."""
+    from landxi_api import regions as RG
+    out = {}
+    for src, lab in RG.SIDO_LABEL.items():
+        pre, new = src + " ", lab + " "
+        out[src] = {
+            "survey_parcels": conn.execute("UPDATE survey_parcels SET addr = %s || substr(addr, %s) WHERE addr LIKE %s",
+                                           (new, len(pre) + 1, pre + "%")).rowcount,
+            "survey_findings": conn.execute("UPDATE survey_findings SET addr = %s || substr(addr, %s) WHERE addr LIKE %s",
+                                            (new, len(pre) + 1, pre + "%")).rowcount,
+            "survey_emd": conn.execute("UPDATE survey_emd SET top5 = replace(top5::text, %s, %s)::jsonb WHERE top5::text LIKE %s",
+                                       (pre, new, "%" + pre + "%")).rowcount,
+            "survey_sgg": conn.execute("UPDATE survey_sgg SET sido = %s WHERE sido = %s", (lab, src)).rowcount,
+        }
     return out

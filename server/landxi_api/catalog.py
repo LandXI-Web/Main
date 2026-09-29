@@ -73,6 +73,38 @@ def resolve_set_path(set_id: str) -> str | None:
     return None
 
 
+# ── 타일 주소의 기준 주소 = 이 요청을 받은 주소(c2-xi 3차) ─────────────────────────────────────────────
+# 화면은 API 기준 주소(localStorage.lx_api_base · 기본 localhost:8700 · LX 관리자 화면은 127.0.0.1:8700 등)로 카탈로그·서명을 부른다.
+# 타일 주소를 고정 PUBLIC_BASE(localhost:8700)로 주면, 그 호스트 이름의 브라우저 연결 6칸이 막혔을 때 API 는 다른 이름으로 살아 있어도
+# 영상 타일만 멈춘다(실증 2차). 그래서 요청이 들어온 호스트 이름(믿을 수 있는 이름만)으로 주소를 만든다. 그 밖은 PUBLIC_BASE 그대로.
+def _trusted_host(host: str) -> bool:
+    h = (host or "").lower().rsplit(":", 1)[0] if not (host or "").startswith("[") else (host or "").lower().split("]")[0] + "]"
+    pub = config.PUBLIC_BASE.split("://", 1)[-1].split("/", 1)[0].lower().rsplit(":", 1)[0]
+    return h in ("localhost", "localhost.", "127.0.0.1", "[::1]", pub) or h.endswith(".localhost") or h.endswith(".localhost.")
+
+
+def base_of(request: Request | None) -> str:
+    """요청이 들어온 기준 주소(scheme://host[:port]) — 믿을 수 있는 호스트 이름일 때만. 아니면 config.PUBLIC_BASE."""
+    if request is None:
+        return config.PUBLIC_BASE
+    try:
+        host = request.headers.get("host") or ""
+        if host and _trusted_host(host) and all(c.isalnum() or c in ".-:[]" for c in host):
+            return f"{request.url.scheme}://{host}"
+    except Exception:                                   # noqa: BLE001
+        pass
+    return config.PUBLIC_BASE
+
+
+def rebase(url, base: str):
+    """PUBLIC_BASE 로 만든 주소를 이 요청의 기준 주소로(그 밖의 주소 · None 은 그대로)."""
+    if isinstance(url, str) and base != config.PUBLIC_BASE and url.startswith(config.PUBLIC_BASE):
+        return base + url[len(config.PUBLIC_BASE):]
+    if isinstance(url, list):
+        return [rebase(u, base) for u in url]
+    return url
+
+
 def canonical_set(set_id: str) -> str:
     return config.load_yaml("sets").get("aliases", {}).get(set_id, set_id)
 
@@ -238,6 +270,29 @@ def guard(items: list[dict], build: str, tenant_sets: set[str] | None = None) ->
     return keep
 
 
+# 기관 계정에 관할 원본 영상(동적 타일 · 서명)을 줄 것인가 — 기본 꺼짐. 2026-09-24 사용자 결정(관문 R6: build=tenant 에 원본·동적 타일 0)을
+# 따른다. c2-xi 기획은 '기관은 서명'을 적었지만 사용자 결정이 우선이므로 켜는 것은 사용자 결정으로만(켜면 /tiles/sign 이 관할 영상만 서명).
+TENANT_RAW_IMAGERY = False
+
+
+def tenant_cog_items(items: list[dict], tenant_id: str, have: set[str]) -> list[dict]:
+    """기관 계정의 영상 층(c2-xi) — 관할 시군구의 등록 원본 영상(PMTiles 없음)을 동적 래스터 타일로. 주소는 서명(exp·sig · /tiles/sign 이
+    관할 영상만 서명한다). 관할 밖 · 해외 · 외부 영상은 넣지 않는다. 원본 파일 경로(path)는 내보내지 않는다."""
+    from .regions import in_scope, tenant_scope
+    sc = tenant_scope(tenant_id)
+    if sc is None:
+        return []
+    out = []
+    for it in items:
+        if it["id"] in have or it.get("role") != "imagery" or it.get("tier") != "raw" or it.get("source") not in ("cog", "pmtiles")                 or not it.get("sgg_cd"):
+            continue
+        if not in_scope(str(it["sgg_cd"]), sc):
+            continue
+        # LX 전용으로 구운 PMTiles 세트는 기관에 주지 않는다 — 같은 영상을 동적 타일(cog/{id} · 관할 서명)로
+        out.append({**it, "source": "cog", "set": f"cog/{it['id']}", "url": None, "tiles": None, "signed": True, "path": None})
+    return out
+
+
 def public_view(it: dict) -> dict:
     return {k: v for k, v in it.items() if not k.startswith("_")}
 
@@ -246,7 +301,10 @@ async def layer_items(p: Principal, build: str | None, stage: str | None = None,
     b = allowed_build(p, build)
     items = _external_items(stage) + await _imagery_items(stage) + _layer_items(stage)
     tsets = await tenant_result_sets(p.tenant_id) if b == "tenant" and p.tenant_id else set()
-    items = [i for i in guard(items, b, tsets) if _bbox_hit(i, bbox)]
+    kept = guard(items, b, tsets)
+    if TENANT_RAW_IMAGERY and b == "tenant" and p.realm == "tenant" and p.tenant_id:
+        kept += tenant_cog_items(items, p.tenant_id, {i["id"] for i in kept})
+    items = [i for i in kept if _bbox_hit(i, bbox)]
     # 기관 결과 세트는 서명 필요 표시(on 모드 url 은 /tiles/sign 으로)
     for i in items:
         t = set_tenant(i["set"] or "")
@@ -292,7 +350,9 @@ async def catalog_layers(request: Request, stage: str | None = None, build: str 
     lad = config.load_yaml("ladder")["ladder"]
     ids = {i["id"] for i in items}
     ladder = _dynamic_ladder({k: [x for x in v if x in ids] for k, v in lad.items()}, items)
-    out = {"items": [public_view(i) for i in items], "ladder": ladder, "build": b, "total": len(items), "as_of": now_iso()}
+    base = base_of(request)
+    out = {"items": [{**v, "url": rebase(v.get("url"), base), "tiles": rebase(v.get("tiles"), base)} for v in map(public_view, items)],
+           "ladder": ladder, "build": b, "total": len(items), "as_of": now_iso()}
     if region:
         out["region"] = {"sgg_cd": reg["sgg_cd"], "prev_cd": reg.get("prev_cd"), "name": reg["name"]} if reg else {"sgg_cd": region}
     return out

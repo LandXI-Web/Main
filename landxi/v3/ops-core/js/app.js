@@ -1,7 +1,7 @@
 /* ops-core — 관리자 집: 현황(밝은 배포 지도 + 결재 대기 큰 숫자 + 할 일) + 결재함.
    관문(K2) → 셸(K1 · 메뉴 5) → 무대(K3 ops) · 카드(K5) · 큰 숫자(K6) · 표(K12) · 토스트(K13) · 개발자 서랍(K14).
    '지금 내가 승인·조치할 것이 있는가?' 한 질문에만 답한다. */
-import { gate, shell, bignum, table, drawer, closeAll, toast, devDrawer, devlog, empty, t } from '../../kit/index.js';
+import { gate, shell, bignum, table, drawer, closeAll, toast, devDrawer, devlog, empty, t, mountCmdk } from '../../kit/index.js';
 import { h, esc, ymd } from '../../kit/util.js';
 import { sse } from '../../../shared/api-v1.js';
 import { D, loadAll, loadFast, pending, pendingEnv, openAlerts, power, nearLimits, decide, hasS9, canon } from './data.js';
@@ -21,6 +21,11 @@ const S = shell({ who, home: 'ops-core', title: 'LX 관리자 대시보드', rai
 { const r = document.querySelector('.k-role'), b = r?.querySelector('b');
   if (b && r.textContent.slice(b.textContent.length).trim() === b.textContent.trim()) b.remove(); }
 document.body.classList.remove('oc-boot');
+/* Ctrl K — LX 관리자 운영 질문(GPU · 대기열 · 경보 · 기관 사용량 · 언어 모델) · 관리자 계정만(관문이 관리자만 들인다) */
+const ck = who.key === 'lx/admin'
+  ? mountCmdk({ context: () => ({ screen: 'ops', screen_name: document.body.dataset.view === 'approvals' ? 'LX 관리자 대시보드 · 결재' : 'LX 관리자 대시보드 · 현황' }) }) : null;
+if (ck) { const b = ck.button(); b.querySelector('span').textContent = '물어보기'; S.mast(b);
+  const i = ck.el.querySelector('.k-ck-i'); if (i) i.placeholder = 'GPU 상태 · 대기열 요약 · 경보 있어?'; }
 
 /* ── 판 두 장: 현황 · 결재 ─────────────────── */
 const over = h('section.oc-over', { 'aria-label': '현황' });

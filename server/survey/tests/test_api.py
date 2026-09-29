@@ -37,7 +37,8 @@ def test_other_tenant_zero(api, h_gj):
     assert j["total"]["value"] == 0 and j["items"] == []
     assert _get(api, "/survey/findings/f_R1_5219045021110530012", h_gj).status_code == 404
     assert _get(api, "/survey/parcels/5219045021110530012", h_gj).status_code == 404
-    assert _get(api, "/survey/stats?by=rule&sgg=52190", h_gj).json()["total"]["value"] == 0
+    # 다른 기관 시군구 = 볼 수 있는 실태조사 없음 → 값 없음(None · '실태조사 결과 없음') 또는 0 — 어느 쪽이든 남의 수가 새지 않는다
+    assert _get(api, "/survey/stats?by=rule&sgg=52190", h_gj).json()["total"]["value"] in (0, None)
 
 
 def test_findings_filter_sort_pager(api, h_nw):

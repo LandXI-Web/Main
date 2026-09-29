@@ -526,3 +526,78 @@ async def ops_flows(request: Request, limit: int = 20):
         x["metered_to"] = sorted(x["usage"].keys())
         items.append(x)
     return {"items": items, "total": len(items), "as_of": now_iso()}
+
+
+# ── 언어 모델 상태 · 켜기(c2-ops · C2 ⑨ · C9 원스톱) ─────────────────────────────────────────
+# 화면(LX 관리자 화면 · 인프라)과 운영 도구 ops_models 가 같은 한 출처를 읽는다. 사용자 말만 싣는다: 모델 이름(Gemma 4 · HyperCLOVA X SEED) ·
+# 역할(두뇌 · 라우터 · 예비) · 켜짐/꺼짐 · GPU 순번. 포트 · 주소 · 경로 · GPU 제품명은 싣지 않는다.
+LLM_SLOTS = [  # (줄 id, 백엔드 이름, 역할, 이름)
+    ("brain", "vllm", "두뇌", "Gemma 4"),
+    ("router", "router", "라우터", "HyperCLOVA X SEED"),
+    ("fallback", "ollama", "예비", "Qwen3"),
+]
+
+
+def _gpu_words(label) -> str | None:
+    """'GPU1' → 'GPU 1' · 'GPU0/1 상주' → 'GPU 0·1' (순번만)."""
+    import re as _re
+    m = _re.search(r"GPU\s*([\d/·,]+)", str(label or ""))
+    if not m:
+        return None
+    nums = [x for x in _re.split(r"[/·,]", m.group(1)) if x.isdigit()]
+    return "GPU " + "·".join(nums) if nums else None
+
+
+async def llm_rows(fresh: bool = False) -> dict:
+    """→ {items:[{slot, role, name, on, gpu, can_start}], promo:{name, state, connected}, on_n, as_of} · 켜짐 = 헬스 탐침(GET /v1/models) 성공."""
+    from agent import backends as _b, config as _c
+    r = await redis()
+    raw = {} if fresh else await r.hgetall("agent:models")
+    h = {k: json.loads(v) for k, v in raw.items()} if raw else await _b.health(r)
+    at = now_iso()
+    items = []
+    for slot, name, role, label in LLM_SLOTS:
+        v = h.get(name) or {}
+        on = bool(v.get("ok"))
+        items.append({"slot": slot, "role": role, "name": label, "on": on, "gpu": _gpu_words(v.get("gpu") or (_c.BACKENDS.get(name) or {}).get("gpu")),
+                      "can_start": slot in ("brain", "router") and not on, "checked_at": v.get("as_of")})
+    # 국산 모델 연결 자리(독파모 · config.BACKENDS['dokpamo'] · c2-core) — 설정이 없거나 꺼져 있으면 '연결 전'
+    dk = getattr(_c, "BACKENDS", {}).get("dokpamo") or {}
+    connected = bool(dk.get("enabled")) and bool((h.get("dokpamo") or {}).get("ok"))
+    promo = {"slot": "dokpamo", "role": "국산 모델 연결", "name": "국산 모델", "connected": connected,
+             "state": "연결됨" if connected else "연결 전", "configured": bool(dk)}
+    n_on = sum(1 for x in items if x["on"])
+    return {"items": items, "promo": promo, "on_n": env(n_on, "count", "measured", "언어 모델 헬스 탐침(30s)", as_of=at),
+            "total_n": env(len(items), "count", "recorded", "언어 모델 자리(두뇌 · 라우터 · 예비)", as_of=at), "as_of": at}
+
+
+@router.get("/ops/llm/models")
+async def ops_llm_models(request: Request):
+    require(principal(request), admin=True)
+    return await llm_rows()
+
+
+@router.post("/ops/llm/start")
+async def ops_llm_start(body: dict, request: Request):
+    """꺼져 있을 때만 켠다(끄기 · 재시작 없음). 켜진 줄이면 409 already_on · 전력 규칙 위반이면 409 power."""
+    p = require(principal(request), admin=True)
+    from agent import config as _c
+    from ops import llm_start as L
+    slot = str((body or {}).get("slot") or "")
+    rows = await llm_rows(fresh=True)
+    on = {x["slot"]: x["on"] for x in rows["items"]}
+    g = await gpus(request)
+    gl = [{"index": x.get("index"), "util": ((x.get("util_ma5") or {}).get("value") if isinstance(x.get("util_ma5"), dict) else x.get("util_ma5"))}
+          for x in g.get("gpus") or [] if isinstance(x, dict)]
+    target = L.gpu_index(_c.BACKENDS.get("vllm", {}).get("gpu")) or 1
+    r = await redis()
+    starting = bool(await r.get(f"ops:llm:starting:{slot}"))
+    d = L.decide(slot, on, g.get("power_budget") or {}, gl, target_gpu=target, starting=starting, script_exists=L.SCRIPT.exists())
+    async with db(realm="lx") as conn:
+        await audit(conn, p, "ops.llm.start", slot, None, {"ok": d["ok"], "code": d["code"]})
+    if not d["ok"]:
+        raise ApiError("conflict", d["message"])
+    pid = await run_in_threadpool(L.spawn, d["cmd"])
+    await r.set(f"ops:llm:starting:{slot}", str(pid), ex=900)
+    from fastapi.responses import JSONResponse
+    return JSONResponse({"accepted": True, "slot": slot, "message": d["message"]}, status_code=202)

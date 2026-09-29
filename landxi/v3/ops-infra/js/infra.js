@@ -1,12 +1,11 @@
-/* 인프라 뷰 — 큰 숫자 `동시 고부하 GPU {n} / {m}` + 장비 표 + 큐 + 저장 공간 + 언어 모델 한 줄.
-   성능 수치(장비 이름 · 부하 · 메모리 · 전력)는 플랫폼에서 이 표 한 곳에만. 갱신은 숫자만 바뀐다(튐 없음). */
-import { bignum, table, esc, nf } from './kit.js';
-import { S, budget, HOT, HOT_W, llmState, gpuWork } from './data.js';
+/* 인프라 뷰 — 큰 숫자 `동시 고부하 GPU {n} / {m}` + 장비 표 + 큐 + 저장 공간 + 언어 모델(모델별 줄 · 국산 모델 연결 자리 · 꺼졌을 때만 켜기) + 법령 색인 칸.
+   성능 수치(부하 · 메모리 · 전력)는 플랫폼에서 이 표 한 곳에만. GPU 는 순번으로만(제품명 · 포트 · 경로 0). 갱신은 숫자만 바뀐다(튐 없음). */
+import { bignum, table, esc, nf, toast, devlog } from './kit.js';
+import { S, budget, HOT, HOT_W, gpuWork, llmRows, startLlm } from './data.js';
 
 const val = (e) => (e && typeof e === 'object' ? e.value : e);
 const pct = (a, b) => (a != null && b ? Math.max(0, Math.min(100, (a / b) * 100)) : 0);
 const gb = (mib) => (mib == null ? null : mib / 1024);
-const devName = (g) => String(g.name || '').replace(/^NVIDIA\s+/i, '');
 
 /** 끝점 라벨이 겹치지 않게(가까우면 위아래로 벌린다) */
 function tagTops(ts) {
@@ -64,11 +63,11 @@ function rows() {
     const load = val(g.util_ma5) ?? val(g.util_pct) ?? 0;
     const mu = gb(val(g.mem_used_mib)), mt = gb(val(g.mem_total_mib));
     const w = val(g.power_w), wl = val(g.power_limit_w);
-    return { g, load, mu, mt, w, wl, dev: devName(g), idx: g.index, work: gpuWork(g), caution: !!g.caution, fault: !!g.fault };
+    return { g, load, mu, mt, w, wl, idx: g.index, work: gpuWork(g), caution: !!g.caution, fault: !!g.fault };
   });
 }
 const COLS = [
-  { key: 'idx', label: '장비', fmt: (v, r) => `<span class="dev"><i class="dot${r.fault ? ' dot--f' : r.caution ? ' dot--c' : ''}"></i><b>GPU ${esc(v)}</b><small data-lint-skip>${esc(r.dev)}</small>${r.fault ? '<em class="warn">장애</em>' : ''}</span>` },
+  { key: 'idx', label: '장비', fmt: (v, r) => `<span class="dev"><i class="dot${r.fault ? ' dot--f' : r.caution ? ' dot--c' : ''}"></i><b>GPU ${esc(v)}</b>${r.fault ? '<em class="warn">장애</em>' : ''}</span>` },
   { key: 'load', label: '부하', num: true, fmt: (v, r) => `<span class="cell cell--load"><span class="n" data-k="load">${nf(v, 0)}</span><small>%</small>${spark(S.hist.get(r.idx))}</span>` },
   { key: 'mu', label: '메모리', num: true, fmt: (v, r) => `<span class="cell"><span class="n">${nf(v, 1)}</span><small>/ ${nf(r.mt, 0)} GB</small>${bar(pct(v, r.mt), r.caution ? 'mbar--tick' : '')}</span>` },
   { key: 'w', label: '전력', num: true, fmt: (v, r) => `<span class="cell"><span class="n">${nf(v, 0)}</span><small>/ ${nf(r.wl, 0)} W</small>${bar(pct(v, r.wl))}</span>` },
@@ -94,10 +93,13 @@ export function mountInfra(root) {
         <p class="row"><span>저장 공간</span><b class="num" id="disk-n">—</b></p>
         <div class="tanks" id="vols"></div>
       </section>
-      <section class="t-card llm">
-        <p class="row"><span><i class="dot" id="llm-dot"></i>언어 모델</span><b id="llm">—</b></p>
+      <section class="t-card llm" aria-label="언어 모델">
+        <p class="row"><span>언어 모델</span><b class="num" id="llm-n">—</b></p>
+        <ul class="llm-l" id="llm-l"></ul>
+        <p class="row sub llm-pr"><span>국산 모델 연결</span><b id="llm-pr" data-metric="국산 모델 연결">—</b></p>
         <p class="row sub"><span>마지막 재기동</span><b class="num" id="boot">—</b></p>
       </section>
+      <section class="t-card law" id="law" aria-label="법령 색인" hidden></section>
     </aside>
   </div>`;
   const $ = (s) => root.querySelector(s);
@@ -131,11 +133,40 @@ export function mountInfra(root) {
       $('#disk-n').innerHTML = `${nf(used / 1024, 1)}<small> / ${nf(tot / 1024, 1)} TB</small>`;
       $('#vols').innerHTML = V.map((v) => { const u = val(v.used_gb), t = val(v.total_gb), p = pct(u, t); return `<div class="tank"><span class="tb"><i style="height:${p.toFixed(1)}%"></i>${p >= 90 ? '<em class="tick"></em>' : ''}</span><b class="num">${nf(u / 1024, 1)}</b><small class="num">/ ${nf(t / 1024, 1)} TB</small></div>`; }).join('');
     }
-    const st = llmState();
-    $('#llm').textContent = st;
-    $('#llm-dot').className = 'dot' + (st === '응답 중' ? ' dot--on' : st === '연결 없음' ? ' dot--f' : '');
+    paintLlm();
     const boot = S.health?.boot_at;
     if (boot) { const d = new Date(boot); $('#boot').textContent = `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; }
   }
+  /* 언어 모델 — 모델별 줄(역할 · 이름 · 켜짐/꺼짐 · GPU 순번). '켜기'는 꺼진 두뇌·라우터에만 열리고 켜진 동안 잠긴다(끄기·재시작 없음). */
+  const starting = new Set();
+  function paintLlm() {
+    const L = llmRows();
+    const ul = $('#llm-l');
+    if (!L) { $('#llm-n').textContent = '—'; ul.innerHTML = '<li class="llm-x">연결 없음</li>'; $('#llm-pr').textContent = '연결 전'; return; }
+    $('#llm-n').innerHTML = `${nf(L.on)}<small> / ${nf(L.items.length)} 켜짐</small>`;
+    ul.innerHTML = L.items.map((x) => {
+      const busy = starting.has(x.slot) && !x.on;
+      const btn = x.startable ? `<button class="t-btn t-btn--2 llm-go" type="button" data-slot="${esc(x.slot)}"${x.on || busy ? ' disabled aria-disabled="true"' : ''} title="${x.on ? '켜져 있는 동안은 잠겨 있습니다' : busy ? '켜는 중' : '꺼져 있을 때만 켤 수 있습니다'}">${busy ? '켜는 중' : '켜기'}</button>` : '';
+      return `<li data-slot="${esc(x.slot)}" data-on="${x.on ? 1 : 0}"><i class="dot${x.on ? ' dot--on' : ' dot--f'}"></i><span class="llm-t"><b>${esc(x.role)}</b><small>${esc(x.name)}</small></span><em>${x.on ? '켜짐' : '꺼짐'}${x.gpu ? ` · ${esc(x.gpu)}` : ''}</em>${btn}</li>`;
+    }).join('');
+    $('#llm-pr').textContent = L.promo;
+  }
+  root.addEventListener('click', async (e) => {
+    const b = e.target.closest('.llm-go'); if (!b || b.disabled) return;
+    const slot = b.dataset.slot;
+    b.disabled = true;
+    try {
+      const r = await startLlm(slot);
+      starting.add(slot); toast(r?.message || '켜기를 시작했습니다');
+    } catch (err) {
+      devlog('llm start', `${slot} · ${err.code || err.message}`);
+      toast(err.message && !/^[a-z_]+$/.test(err.message) ? err.message : '지금은 켤 수 없습니다');
+    }
+    paintLlm();
+  });
+  /* 법령 색인 칸 — c2-report-law 의 mountLaw(host). 모듈이 아직 없으면 칸을 숨긴 채 둔다 */
+  import('./law.js').then((m) => { const host = $('#law'); if (typeof m.mountLaw === 'function') { host.hidden = false; m.mountLaw(host); } })
+    .catch((e) => devlog('법령 칸', `불러오기 전 · ${e.message || e}`));
+
   return { paintGpus, paintRest };
 }

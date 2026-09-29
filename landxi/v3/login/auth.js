@@ -56,7 +56,12 @@ async function loadOrgs() {
   return (j?.items || []).filter((t) => t.kind === 'user' && t.status === 'active')
     .map((t) => ({ id: t.id, name: t.name, scope: t.scope }));
 }
-const orgsReady = loadOrgs().then((items) => {
+/* 늦음 안내 — 응답이 오지 않아 기관 목록이 비어 있으면 말없이 멈추지 않는다(탭이 많아 연결이 막힌 때 등 · c2-numbers) */
+const SLOW_MS = 6000;
+const SLOW_TXT = '서버 응답이 늦습니다 · 열린 Land-XI 창을 몇 개 닫고 다시 시도하세요';
+let orgsDone = false;
+setTimeout(() => { if (!orgsDone) { org.options[0].textContent = '기관 목록을 불러오는 중'; if (who() === 'tenant') say(SLOW_TXT); } }, SLOW_MS);
+const orgsReady = loadOrgs().finally(() => { orgsDone = true; if (org.options[0]) org.options[0].textContent = '기관 선택'; if (msg.textContent === SLOW_TXT) clearErr(); }).then((items) => {
   ORGS = items.filter((t) => t.id !== 'lx-demo')
     .map((t) => ({ id: t.id, name: orgName(t.name?.ko || t.name?.en || t.id), scope: t.scope === 'global' ? 'global' : 'local' }));
   org.append(...ORGS.map((t) => new Option(t.name, t.id)));
@@ -189,8 +194,10 @@ form.addEventListener('submit', async (e) => {
     }
     const body = w === 'tenant' ? { realm: 'tenant', tenant_id: tenantId, login, password } : { realm: 'lx', login, password };
     let s;
-    try { s = await signIn(body); }
+    const slow = setTimeout(() => say(SLOW_TXT), SLOW_MS);
+    try { s = await signIn(body); clearTimeout(slow); if (msg.textContent === SLOW_TXT) clearErr(); }
     catch (err) {
+      clearTimeout(slow);
       if (!err.status) { say('서버에 연결할 수 없습니다'); return; }         // 두 번 모두 네트워크 오류일 때만
       if (err.status === 401 || err.code === 'unauthorized') {
         // 서버 401 문구 그대로(명세 §2.2). 기관 문은 기관 칸도 함께 짚는다(무엇이 틀렸는지 서버는 말하지 않는다)

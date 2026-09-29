@@ -68,10 +68,11 @@ def _valid(g):
 
 
 def regions_base() -> tuple[list[dict], dict, str]:
-    """(지역 목록, {sgg_cd: shapely}, 출처) — V-World 캐시(90일)가 있으면 그 목록이 정본, 경계는 뼈대(없으면 V-World bbox)."""
+    """(지역 목록, {sgg_cd: shapely}, 출처) — V-World 캐시(90일)가 있으면 그 목록이 정본, 경계는 뼈대(없으면 V-World bbox).
+    시도 이름은 sido_label() 한 가지로(화면·문서·에이전트가 같은 표기 · c2-numbers)."""
     if _cache["regions"] is None:
         items, geoms = _load_seed()
-        _cache.update(regions=items, geoms=geoms, src=SRC_SEED)
+        _cache.update(regions=[_label_rec(r) for r in items], geoms=geoms, src=SRC_SEED)
         vp = _vw_cache_path()
         if vp.exists():
             try:
@@ -79,6 +80,47 @@ def regions_base() -> tuple[list[dict], dict, str]:
             except Exception as e:  # pragma: no cover
                 _cache["vw_status"] = f"cache read error {type(e).__name__}"
     return _cache["regions"], _cache["geoms"], _cache["src"]
+
+
+# ── 시도 이름 한 가지(c2-numbers · 기본값 결정 plan 4절) ─────────────────────────────────────────────
+# V-World 행정구역 이름(전남광주통합특별시)과 기관 표기(tenants.name.ko 광주전남특별시)가 섞여 한 문서에 두 이름이 나왔다.
+# 표기는 기관 표기 하나로 맞춘다 — 원천 이름 → 표기. 사용자가 바꾸면 이 표 한 줄만 고친다.
+SIDO_LABEL = {"전남광주통합특별시": "광주전남특별시"}
+SIDO_ALIASES = {v: k for k, v in SIDO_LABEL.items()}        # 표기 → 원천 이름(검색·옛 자료 읽기)
+
+
+def sido_label(x: str | None) -> str | None:
+    """시도 표기 하나 — 인자: 시도 이름(원천·표기 어느 쪽이든) · 시군구 코드 5자리(지금/옛) · 시도 코드 2자리.
+    같은 시도는 어느 화면·문서·에이전트에서든 같은 글자로 나간다."""
+    if not x:
+        return None
+    s = str(x).strip()
+    if s.isdigit():
+        if len(s) >= 5:
+            r = region_of(s[:5])
+            return sido_label(r.get("sido")) if r else None
+        regions, _, _ = regions_base()
+        r = next((r for r in regions if r["sgg_cd"].startswith(s[:2])), None)
+        return sido_label(r.get("sido")) if r else None
+    return SIDO_LABEL.get(s, s)
+
+
+def full_label(full: str | None) -> str | None:
+    """'시도 시군구 …' 문자열의 머리 시도 이름을 표기 하나로(주소·지역 이름 공통)."""
+    if not full:
+        return full
+    head, _, rest = str(full).partition(" ")
+    lab = SIDO_LABEL.get(head)
+    return f"{lab} {rest}".strip() if lab else full
+
+
+def _label_rec(r: dict) -> dict:
+    out = dict(r)
+    if out.get("sido"):
+        out["sido"] = sido_label(out["sido"])
+    if out.get("full"):
+        out["full"] = full_label(out["full"])
+    return out
 
 
 def _apply_vw(vw: dict, seed: tuple[list[dict], dict] | None = None):
@@ -104,9 +146,9 @@ def _apply_vw(vw: dict, seed: tuple[list[dict], dict] | None = None):
                 base = {**cand[0], "sgg_cd": cd, "prev_cd": cand[0]["sgg_cd"]}
                 if cand[0]["sgg_cd"] in geoms:
                     geoms[cd] = geoms[cand[0]["sgg_cd"]]
-        full = f.get("full_nm") or (base or {}).get("full")
-        sido = full.split(" ", 1)[0] if full else (base or {}).get("sido")
-        rec = {"sgg_cd": cd, "sido": sido, "sido_short": (base or {}).get("sido_short") or _short(sido), "name": f.get("sig_kor_nm") or (base or {}).get("name"),
+        full = full_label(f.get("full_nm") or (base or {}).get("full"))
+        sido = sido_label(full.split(" ", 1)[0] if full else (base or {}).get("sido"))
+        rec = {"sgg_cd": cd, "sido": sido, "sido_short": _short(sido) if (sido and (not base or base.get("prev_cd") or sido != base.get("sido"))) else ((base or {}).get("sido_short") or _short(sido)), "name": f.get("sig_kor_nm") or (base or {}).get("name"),
                "full": full, "name_en": f.get("sig_eng_nm"), "parent_cd": (base or {}).get("parent_cd"),
                "bbox": (base or {}).get("bbox") or f.get("bbox"), "center": (base or {}).get("center") or f.get("center")}
         if (base or {}).get("prev_cd"):
@@ -125,7 +167,7 @@ def _apply_vw(vw: dict, seed: tuple[list[dict], dict] | None = None):
 
 
 # 전남광주통합특별시 = 기관(tenants.name.ko '광주전남특별시')과 같은 표기 — 콘솔 점·비행 라벨과 배포 화면이 한 이름을 쓴다
-SHORT = {"강원특별자치도": "강원", "경기도": "경기", "경상남도": "경남", "경상북도": "경북", "광주광역시": "광주", "대구광역시": "대구",
+SHORT = {"광주전남특별시": "광주전남특별시", "강원특별자치도": "강원", "경기도": "경기", "경상남도": "경남", "경상북도": "경북", "광주광역시": "광주", "대구광역시": "대구",
          "대전광역시": "대전", "부산광역시": "부산", "서울특별시": "서울", "세종특별자치시": "세종", "울산광역시": "울산", "인천광역시": "인천",
          "전라남도": "전남", "전남광주통합특별시": "광주전남특별시", "전북특별자치도": "전북", "제주특별자치도": "제주", "충청남도": "충남", "충청북도": "충북"}
 
@@ -290,10 +332,10 @@ async def _n_findings(p) -> dict[str, int]:
         return {}
     try:
         async with db(p) as conn:
-            rows = await conn.fetch("SELECT substr(pnu,1,5) sgg, count(*) n FROM survey_findings WHERE state<>'dismissed' GROUP BY 1")
+            rows = await conn.fetch("SELECT sgg_cd sgg, findings n FROM survey_sgg WHERE state = 'done'")
     except Exception:
         return {}
-    return _alias({r["sgg"]: int(r["n"]) for r in rows})
+    return _alias({r["sgg"]: int(r["n"] or 0) for r in rows})
 
 
 def _alias(d: dict) -> dict:
@@ -318,7 +360,7 @@ def find(q: str) -> list[dict]:
         return []
     if q.isdigit():
         return [r for r in regions if r["sgg_cd"].startswith(q)]
-    qs = q.replace(" ", "")
+    qs = (full_label(q) or q).replace(" ", "")          # 원천 시도 이름(전남광주통합특별시 …)으로 물어도 표기 이름으로 찾는다
     out = []
     for r in regions:
         nm = (r["name"] or "").replace(" ", "")
@@ -342,7 +384,7 @@ async def list_regions(request: Request, public: int | None = None, q: str | Non
     pool = find(q) if q else regions
     items = []
     for r in pool:
-        if sido and sido not in (r["sido"], r["sido_short"]):
+        if sido and sido_label(sido) not in (r["sido"], r["sido_short"]) and sido not in (r["sido"], r["sido_short"]):
             continue
         cd = r["sgg_cd"]
         imgs = dv["img"].get(cd, [])
@@ -356,8 +398,10 @@ async def list_regions(request: Request, public: int | None = None, q: str | Non
             continue
         it = {"sgg_cd": cd, "name": r["name"], "sido": r["sido_short"], "full": r["full"], "bbox": r["bbox"], "center": r["center"],
               "has_imagery": hi, "deploys": [{"id": d["id"], "card": d["card"], "stage": d["stage"]} for d in dps]}
+        if r.get("prev_cd"):
+            it["prev_cd"] = r["prev_cd"]      # 옛 코드(46xxx) — XI맵 시군구 경계(옛 코드)와 새 코드(12xxx)를 잇는다
         if not pub:
-            it["n_findings"] = env(nf.get(cd, 0), "count", "inferred", "실태조사 의심 필지(검수 전)",
+            it["n_findings"] = env(nf.get(cd, 0), "count", "inferred", "실태조사 의심 필지(검수 전 · survey_counts 와 같은 값)",
                                    None if nf.get(cd) else ("실태조사 결과 없음" if cd not in dv["parcels"] else None), as_of=dv["at"])
             it["in_scope"] = in_scope(cd, scope)
         items.append(it)
@@ -648,6 +692,15 @@ async def region_emd(sgg_cd: str, request: Request, full: int | None = None):
     return JSONResponse(body, headers={"Cache-Control": "private, max-age=3600"})
 
 
+def _kick_emd_fill():
+    """결과 읍면동 빈칸 채우기 주기 작업(landxi_api.survey) — XI맵이 지역을 고를 때도 켜 둔다(분석 중 결과의 읍면동 이름)."""
+    try:
+        from . import survey as _sv
+        _sv._kick_emd_sweep()
+    except Exception:
+        pass
+
+
 def _box_hit(g_region, bounds) -> bool:
     try:
         b = box(*bounds)
@@ -667,6 +720,7 @@ async def region_results(sgg_cd: str, request: Request):
     """그 시군구에 결과가 있는 모든 결과 층 — ① 카탈로그 결과 층(범위가 이 시군구와 겹치는 것 · 권한 관문 그대로)
     ② 이 시군구 전역 분석(scope sgg)으로 끝난 작업 결과(기관 = 자기 작업 + 관할 안의 LX 작업). 작업 id 는 화면에 쓰지 않는다(층 주소에만)."""
     p = require(principal(request))
+    _kick_emd_fill()
     r = region_of(sgg_cd)
     if not r:
         raise ApiError("not_found", "해당 지역이 없습니다", {"sgg_cd": sgg_cd})

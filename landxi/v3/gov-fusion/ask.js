@@ -88,6 +88,64 @@ export function keysOf(q) {
     ng: /농업\s*진흥/.test(s),
   };
 }
+/* ── 경로 나누기(c2-fusion) — 대장 열 조건이 있는 질문만 대장 필터로, 나머지는 서버 에이전트로 ──
+   서버 몫이 먼저다: 보고서·공문 · 법령·조문 · 차트 · 영상 · '의심 필지'(실태조사 한 출처) · 분석 실행 · 지도 조작.
+   그 밖에 대장 열 조건(keysOf · 대장 열 이름 · 대장 속 리/읍면 이름 · 대장 상태 값)이 있을 때만 대장 필터. */
+const SERVER_INTENT = [
+  ['report', /보고서|초안|공문|문서|docx/i],
+  ['law', /(?<=[가-힣])(?<![방어문해기수])법(?:상|령|률|에서|에|의|은|이|\s|$)|법령|조문|조항|시행령|시행규칙|지침|요령|규정/],
+  ['chart', /차트|그래프|막대|도표|추이/],
+  ['image', /영상|사진|이미지|위성|항공/],
+  ['suspect', /의심/],
+  ['mismatch', /어긋|불일치|대조|대장과\s*(?:AI|ai)?\s*(?:가|이|의|랑|와)?\s*(?:다른|안\s*맞)/],
+  ['run', /분석\s*(?:해|실행|돌려|시작)|실행해|돌려\s*줘|추론/],
+  ['map', /확대|축소|줌\s*(?:인|아웃)|3D|3차원|기울|회전|(?:으로|로)\s*이동|이동해|켜\s*줘|꺼\s*줘|켜|꺼/],
+  ['ops', /GPU|대기열|경보|사용량/i],
+];
+/** 질문 → { to: 'server'|'ledger', why } */
+export function routeOf(question, ctx = {}) {
+  const q = String(question || '').trim();
+  if (!q) return { to: 'server', why: 'empty' };
+  for (const [why, rx] of SERVER_INTENT) {
+    if (rx.test(q)) return { to: 'server', why };
+  }
+  const k = keysOf(q);
+  if (Object.values(k).some(Boolean)) return { to: 'ledger', why: 'keys' };
+  if (ctx.stateCol && /대장(?:상|에서|이|은|의)?\s*(?:답|전|과수원)/.test(q)) return { to: 'ledger', why: 'state' };
+  if ((ctx.ledgerCols || []).some((c) => c && String(c).length >= 2 && q.includes(String(c)))) return { to: 'ledger', why: 'column' };
+  if (/지목|용도\s*지역|농업\s*진흥/.test(q)) return { to: 'ledger', why: 'vworld' };
+  const pl = placeOf(q, ctx.places || []);
+  if (pl && (!ctx.ledgerPlaces || ctx.ledgerPlaces.includes(pl))) return { to: 'ledger', why: 'place' };   // 대장에 있는 리/읍면만 대장 필터
+  if (pl) return { to: 'server', why: 'map' };                                                               // 대장 밖 관할 읍면동 이름 = 지도 이동(서버)
+  return { to: 'server', why: 'default' };
+}
+/** 화면에 올린 대장의 시군구 — 서버 결합 기록(sgg) 하나 · 없으면 이 창이 이은 필지 코드(앞 5자리)의 다수 · 여럿이면 null */
+export function ledgerSggOf(srv, match) {
+  const s = [...new Set((srv?.sgg || []).map((x) => String(x?.sgg_cd || '')).filter(Boolean))];
+  if (s.length === 1) return s[0];
+  if (s.length > 1) return null;
+  const m = (match || []).filter(Boolean); if (!m.length) return null;
+  const c = new Map(); for (const p of m) { const k = String(p).slice(0, 5); c.set(k, (c.get(k) || 0) + 1); }
+  return [...c.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
+/** 질문 속 관할 시군구 · 읍면동 이름 → 시군구 코드(하나로 정해질 때만). regions = [{sgg_cd, name, in_scope}] · emd = Map(cd → {name}) */
+export function regionOf(q, regions = [], emd = new Map()) {
+  if (!q) return null;
+  const hit = new Set();
+  for (const r of regions || []) if (r.in_scope && r.name && String(r.name).length >= 2 && q.includes(r.name)) hit.add(String(r.sgg_cd));
+  if (hit.size === 1) return [...hit][0];
+  if (hit.size > 1) return null;
+  let best = 0; const em = new Set();
+  for (const [cd, e] of emd || []) {
+    const n = String(e?.name || ''); if (n.length < 2 || !q.includes(n) || q.includes(n + '리')) continue;
+    if (n.length > best) { best = n.length; em.clear(); }
+    if (n.length === best) em.add(String(cd).slice(0, 5));
+  }
+  return em.size === 1 ? [...em][0] : null;
+}
+/** '의심 필지 몇 건?' 같은 건수 질문 — 서버 답(실태조사 한 출처) 뒤에 대장 대조 한 줄 + 지도 채색 */
+export const SUSPECT_COUNT = /의심.{0,14}(?:몇|건수|얼마|개수|총|수는|수\s*알려|수를)/;
+
 /** 질문 → where(규칙) · focus(리/읍면) */
 export function rulePlan(question, ctx) {
   const q = String(question || '');
@@ -143,7 +201,9 @@ export function labelOf(where, ctx, focus) {
   if (st && ai) parts.push(`대장은 ${lg} · AI는 ${cls}`);
   else { if (st && !fal) parts.push(`대장은 ${lg}`); if (ai) parts.push(`AI는 ${cls}`); }
   if (fal) parts.push('경작 흔적 없음(확인 필요)');
-  return { label: parts.join(' · ') || '찾은 필지', big: !!ai && !fal };
+  const base = (ctx && ctx.baseLabel) || '올린 대장 필지';          // 무엇을 센 숫자인지 — 조건 이름이 없으면 센 대상 이름
+  if (!(st || ai || fal || ng)) parts.push(where.some((w) => w.op !== 'contains') ? `${base} 중 조건에 맞는 필지` : base);
+  return { label: parts.join(' · '), big: !!ai && !fal };
 }
 /** 모델 where 가 질문 핵심어와 맞는가 */
 export function agrees(where, question, ctx) {

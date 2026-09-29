@@ -11,7 +11,7 @@ from conftest import B, H
 from landxi_api import config
 from landxi_api.envelope import is_env, scan
 
-KEYS = {"detected": "AI 탐지", "field_check": "현장 확인 필요", "review_pending": "결과 확인 대기", "reports": "기관 신고"}
+KEYS = {"detected": "AI 탐지", "suspect": "의심 필지", "field_check": "현장 확인 필요", "review_pending": "결과 확인 대기", "reports": "기관 신고"}
 STAGES = {"운영", "시범", "첫 결과 전"}
 ITEM_KEYS = {"card", "card_name", "sgg_cd", "region_name", "tenant", "stage", "imagery", "metrics"}
 
@@ -95,8 +95,8 @@ def test_values_match_source_tables(live, tok):
         det.update(dict(c.execute("SELECT d.job_id, count(*) FROM detections d JOIN deploys p ON p.snapshot_current = 'results/' || p.tenant_id "
                                   "|| '/' || d.job_id OR p.snapshot_current = 'results/lx/' || d.job_id GROUP BY 1").fetchall()))
         fc = dict(c.execute("SELECT tenant_id, count(DISTINCT pnu) FROM survey_findings WHERE priority='A' "
-                            "AND state IN ('open','assigned') GROUP BY 1").fetchall())
-        rp = dict(c.execute("SELECT tenant_id, count(*) FROM survey_findings WHERE priority='A' AND state='open' GROUP BY 1").fetchall())
+                            "AND rule LIKE 'R%%' AND state IN ('open','assigned') GROUP BY 1").fetchall())   # 대장 규칙(L*) 제외 — summary.py 정본
+        rp = dict(c.execute("SELECT tenant_id, count(*) FROM survey_findings WHERE priority='A' AND rule LIKE 'R%%' AND state='open' GROUP BY 1").fetchall())
         rep = dict(c.execute("SELECT tenant_id, count(*) FROM feedback WHERE state='open' GROUP BY 1").fetchall())
     # 기관 신고 — 한 신고는 한 항목에만 → 기관 합 = 표의 열린 신고 수
     by_t = {}
@@ -106,6 +106,8 @@ def test_values_match_source_tables(live, tok):
         assert by_t.get(t) == n, (t, by_t.get(t), n)
     # 실태조사 — 기관의 실태조사 항목 합 = 표(현재 정본은 한 시군구씩)
     for t in fc:
+        if t == "lx":                     # LX 직원이 XI맵에서 돌린 실태조사(배포본 카드 없음)는 요약 항목이 아니다 — XI맵·에이전트가 survey_counts 로 직접 읽는다
+            continue
         s_fc = sum(i["metrics"]["field_check"]["value"] or 0 for i in items if i["tenant"] == t)
         s_rp = sum(i["metrics"]["review_pending"]["value"] or 0 for i in items if i["tenant"] == t)
         assert s_fc == fc[t] and s_rp == rp[t], (t, s_fc, fc[t], s_rp, rp[t])

@@ -25,7 +25,8 @@ NUM = re.compile(
     r"(?P<pct>\s?%|\s?퍼센트)?"
 )
 UNIT_AFTER = {
-    "m2": r"\s?(?:㎡|m²|m2|제곱미터)", "필지": r"\s?(?:필지|개\s?필지)", "count": r"\s?(?:건(?!물)|개(?![발간선]))", "polygons": r"\s?(?:개(?![발간선])|동(?![네안])|건(?!물))",
+    "m2": r"\s?(?:㎡|m²|m2|제곱미터|square meters)", "필지": r"\s?(?:필지|개\s?필지|parcels?\b)", "count": r"\s?(?:건(?!물)|개(?![발간선])|cases?\b|items?\b|records?\b)",
+    "polygons": r"\s?(?:개(?![발간선])|동(?![네안])|건(?!물)|polygons?\b|objects?\b)",
     "ha": r"\s?(?:ha|헥타르)", "km2": r"\s?(?:㎢|km²|km2)", "%": r"\s?%", "ratio": r"", "gpu_s": r"\s?(?:GPU·s|GPU 초|gpu_s)", "s": r"\s?초",
     "ms": r"\s?ms", "tokens": r"\s?토큰", "features": r"\s?(?:개|건)", "krw_m2": r"\s?(?:원/㎡|원)", "score": r"\s?점",
 }
@@ -75,6 +76,10 @@ def _structural(text: str, m: re.Match, wl: set[str]) -> str | None:
         return "code"                                   # AG-6 · F2-E 같은 구조 코드
     if before.endswith(":") and re.fullmatch(r"\d{2,5}", digits):
         return "port"                                   # :8702
+    if digits in ("2", "3") and re.match(r"[Dd](?![A-Za-z])", after):
+        return "dim"                                    # 3D · 2D
+    if re.search(r"(?:GPU|노드|node)\s?#?$", text[max(0, s - 5):s], re.I) and re.fullmatch(r"\d{1,2}", raw):
+        return "device"                                 # GPU 0 · GPU 1(장비 순번)
     if not m.group("mul") and re.match(r"차(?![이량선액])", after) and float(digits) < 20:
         return "ordinal"                                # 2차 · 3차
     if re.search(r"제\s?$", before) and re.match(r"\s?(조|항|호|장|절)", after):
@@ -94,6 +99,8 @@ def _structural(text: str, m: re.Match, wl: set[str]) -> str | None:
             return "list"
     if re.match(r"\s?(단계|번째|차례|등(?![급록])|위(?![치험반원성]))", after):
         return "ordinal"
+    if re.match(r"\s?자리(?![에])", after) and float(digits) <= 20:
+        return "digits"                                 # 5자리 코드 · 19자리 필지 번호(자릿수 = 데이터 아님)
     return None
 
 
@@ -295,7 +302,8 @@ def lint(answer: str, envelopes: dict[str, dict], whitelist: set[str] | None = N
         eid = mm.group(1)
         u = (envelopes.get(eid) or {}).get("unit")
         return "{{env:%s}}" % eid if u else mm.group(0)
-    md = re.sub(r"\{\{env:([A-Za-z0-9_]+)\}\}(?:\s?(?:개\s?필지|필지|㎡|m²|ha|%)|\s?건(?!물)|\s?개(?![발간선])|점(?=\s?이상|\s?이하|[,.\s]))", _strip_unit, md)
+    md = re.sub(r"\{\{env:([A-Za-z0-9_]+)\}\}(?:\s?(?:개\s?필지|필지|㎡|m²|ha|%)|\s?건(?!물)|\s?개(?![발간선])|점(?=\s?이상|\s?이하|[,.\s])"
+                r"|\s(?:parcels?|cases?|items?|records?)\b)", _strip_unit, md)
     res.answer_md = md
     return res
 
@@ -390,7 +398,7 @@ def fix_cites(md: str, valid: set[int]) -> tuple[str, list[int]]:
         bad.extend(n for n in ns if n not in valid)
         return ("[" + ", ".join(map(str, ok)) + "]") if ok else ""
     out = CITE.sub(sub, md)
-    out = re.sub(r"[ 	]+([.!?。])", r"", out)
+    out = re.sub(r"[ \t]+([.!?。])(?![A-Za-z0-9가-힣])", r"\1", out)       # '습니다 .' → '습니다.' ('.docx' 앞 공백은 그대로)
     return out, sorted(set(bad))
 
 
@@ -420,3 +428,113 @@ def compare_check(md: str, envs: dict, unverified: list[dict]) -> list[dict]:
             if (said_more and v <= x) or (said_less and v >= x):
                 flags.append({"sentence": s.strip(), "envs": envs_in[:1], "reason": f"비교 방향이 실제 값과 반대(봉투 {v:,} · 말씀하신 {x:,.0f})", "by": "rule"})
     return flags
+
+
+# ── 지어낸 동작 차단(C2 plan 3.4) — 동작 문장 ↔ 같은 run 의 ui_actions·도구 대조 ─────────────────────
+# (이름, 이 문장을 참으로 만드는 op·도구, 한국어, 영어). 부정·불가 문장은 검사하지 않는다.
+_END = r"(?:했|하였|합니다|하겠|해\s?드|해\s?두|해\s?놓|했습|시켰|되었|됐|드립|드렸|드리겠)"
+ACTIONS: list[tuple[str, set, re.Pattern, re.Pattern]] = [
+    ("zoom", {"map_zoom"},
+     re.compile(r"(확대|축소|줌\s?(?:인|아웃))\s?(?:하여|해서|해|하고|" + _END[3:]),
+     re.compile(r"\bzoom(?:ed|ing)?\s+(?:in|out)\b|\bzoomed\b", re.I)),
+    ("layer", {"map_layer", "map_on"},
+     re.compile(r"(?:층|레이어|영상|결과|지적선)[을를이가은는]?\s?(?:켰|켜\s?(?:드|두|놓|었|졌)|켜졌|껐|꺼\s?(?:드|두|졌))"),
+     re.compile(r"\b(?:turned|switched)\s+(?:on|off)\b|\b(?:enabled|disabled|toggled)\b.{0,30}\b(?:layer|imagery)\b", re.I)),
+    ("view", {"map_view"},
+     re.compile(r"(?:3D|3차원|입체)[^.!?\n]{0,12}?(?:시점|보기|화면)?[으로로]?\s?(?:바꿨|바꾸었|바꿔\s?드|전환(?:했|하였|해\s?드|합니다)|기울|보여\s?드)|기울(?:였|여\s?(?:드|두|놓))|회전(?:했|시켰|해\s?드)"),
+     re.compile(r"\b(?:tilted|rotated|switched to (?:a )?3D|(?:in|to) 3D view)\b", re.I)),
+    ("move", {"map_region", "map_flyto", "map_arrive"},
+     re.compile(r"이동\s?(?:했|하였|합니다|하겠|해\s?드|시켰|시켜\s?드)|옮겼|옮겨\s?(?:드|두|놓)|날아가"),
+     re.compile(r"\b(?:moved|flew|navigated|panned|centered|zoomed to|took you)\b", re.I)),
+    ("paint", {"map_on", "map_arrive", "map_layer"},
+     re.compile(r"칠했|칠해\s?(?:드|두|놓)|채색(?:했|하였|해\s?드|합니다)|색으로\s?(?:표시|칠)(?:했|해\s?드|합니다)"),
+     re.compile(r"\b(?:colou?red|highlighted|shaded|painted)\b", re.I)),
+    ("show", {"map_on", "map_arrive", "map_region", "map_flyto", "map_layer", "map_frame"},
+     re.compile(r"지도에\s?(?:표시|띄웠|띄워\s?드|나타냈|올렸|올려\s?드)(?:했|하였|합니다|해\s?드|했습)?"),
+     re.compile(r"\b(?:shown|displayed|plotted|marked)\b[^.!?\n]{0,20}\bon the map\b", re.I)),
+    ("open", {"drawer_open", "parcel_card"},
+     re.compile(r"(?:서랍|카드|목록|창|패널)[을를이가]?\s?(?:열었|열어\s?(?:드|두|놓)|엽니다|열렸)"),
+     re.compile(r"\bopened\b", re.I)),
+    ("run", {"analysis_watch", "jobs_submit", "analysis_run", "survey_build"},
+     re.compile(r"분석[을를이가]?\s?(?:시작|실행|제출)(?:했|하였|합니다|하겠|해\s?드|했습|됐|되었)|분석을\s?돌렸"),
+     re.compile(r"\b(?:started|launched|submitted|kicked off)\b[^.!?\n]{0,24}\banalys", re.I)),
+]
+NEG = re.compile(r"없습니다|없어|못\s?(?:했|합|하|해)|않았|않습니다|않고|할\s?수\s?없|불가|아직|려면|면\s|cannot|can't|can not|unable|not able|isn't|is not|not available|didn't|did not|won't|if you", re.I)
+ACTION_NA = {"ko": "그 지도 동작은 아직 할 수 없습니다.", "en": "That map action isn't available yet."}
+
+
+def claims(sentence: str, lang: str | None = None) -> list[tuple[str, set]]:
+    """문장 안 동작 주장 → [(이름, 필요한 op 집합)]. 부정 문장은 []."""
+    if NEG.search(sentence):
+        return []
+    out = []
+    for name, need, ko, en in ACTIONS:
+        if ko.search(sentence) or en.search(sentence):
+            out.append((name, need))
+    return out
+
+
+def action_check(md: str, did, lang: str = "ko") -> tuple[str, list[dict]]:
+    """동작 문장인데 같은 run 에 그 동작(ui_action op · 성공 도구)이 없으면 그 문장을 ACTION_NA 로 바꾼다. 반환 (답, 바꾼 목록)."""
+    did = set(did or ())
+    rep = ACTION_NA.get(lang, ACTION_NA["ko"])
+    flags, paras = [], []
+    for para in (md or "").split("\n"):
+        segs, last = [], None
+        for a, b, _ns in _sentence_spans(para):
+            s = para[a:b]
+            miss = [n for n, need in claims(s) if not (need & did)]
+            if miss:
+                flags.append({"sentence": s.strip(), "claims": miss})
+                if last == rep:
+                    continue
+                segs.append((" " if a and not s[:1].isspace() else s[:len(s) - len(s.lstrip())]) + rep + (" " if s.rstrip() != s and b < len(para) else ""))
+                last = rep
+            else:
+                segs.append(s)
+                if s.strip():
+                    last = s.strip()
+        paras.append("".join(segs).rstrip() if segs else para)
+    return "\n".join(paras), flags
+
+
+# ── 자리표 · 꼬리 · 금지어(C2 plan K2) ─────────────────────────────────────────
+UNV = re.compile(r"\{\{\s*unv\s*:\s*[A-Za-z0-9_]+\s*\}\}(?:\s?(?:cm|km|m|D|%|퍼센트|건|필지|개|곳|㎡|ha|명|초|분|시간|배)(?![A-Za-z가-힣]))?")
+UNV_WORD = {"ko": "확인되지 않음", "en": "unverified"}
+
+
+def render_unverified(md: str, lang: str = "ko") -> str:
+    """{{unv:uN}}(+ 뒤 단위) → '확인되지 않음' — 자리표가 화면에 그대로 새지 않게. 연달아 두 번이면 한 번."""
+    w = UNV_WORD.get(lang, UNV_WORD["ko"])
+    md = UNV.sub(w, md or "")
+    md = re.sub(r"\{\{\s*(?!env:)[^{}]{0,40}\}\}", w, md)          # 그 밖의 모르는 자리표도
+    md = re.sub(re.escape(w) + r"(\s*[,·]?\s*" + re.escape(w) + r")+", w, md)
+    return re.sub(r"(\{\{env:e\d+\}\})\s*~", r"\1", md)            # 숫자 칩 뒤 '~' 꼬리
+
+
+# 화면·보고서 서술 금지어(CLAUDE.md 용어표 · 개발 정보) → 바꿀 말. 순서 = 우선순위.
+BANNED: list[tuple[str, re.Pattern, dict]] = [
+    ("AG-", re.compile(r"\s?\(?\s?\bAG-\d+\b\s?\)?"), {"ko": "", "en": ""}),
+    ("관제", re.compile(r"관제\s?(?:운영\s?)?(?:화면|실|대시보드|핵심판|운영\s?에이전트)"), {"ko": "LX 관리자 화면", "en": "LX admin screens"}),
+    ("관제", re.compile(r"관제"), {"ko": "LX 관리자", "en": "LX admin"}),
+    ("/api", re.compile(r"(?:\b(?:GET|POST|PUT|PATCH|DELETE)\s)?/api(?:/v\d+)?[\w/{}\-.?=&:]*"), {"ko": "", "en": ""}),
+    (".py", re.compile(r"[\w./\-]+\.py\b"), {"ko": "", "en": ""}),
+    ("PostGIS", re.compile(r"PostGIS\s?(?:[a-z_]+)?", re.I), {"ko": "플랫폼 데이터", "en": "platform data"}),
+    ("V-World", re.compile(r"V-?World|브이월드", re.I), {"ko": "국가 공간정보", "en": "national spatial data"}),
+    ("API 키", re.compile(r"API\s?키"), {"ko": "연계", "en": "link"}),
+    ("llm", re.compile(r"(?<![A-Za-z])[Ll][Ll][Mm](?![A-Za-z])"), {"ko": "AI", "en": "AI"}),
+]
+
+
+def banned_hits(text: str) -> list[str]:
+    """금지어가 남아 있으면 그 이름들(테스트·보고서 검사)."""
+    return sorted({name for name, rx, _ in BANNED if rx.search(text or "")})
+
+
+def scrub_terms(text: str, lang: str = "ko") -> str:
+    s = text or ""
+    for _name, rx, rep in BANNED:
+        s = rx.sub(rep.get(lang, rep["ko"]), s)
+    s = re.sub(r"\(\s*\)", "", s)
+    s = re.sub(r"[ \t]{2,}", " ", s)
+    return re.sub(r"[ \t]+([.,!?。])(?![A-Za-z0-9가-힣])", r"\1", s)

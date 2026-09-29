@@ -184,7 +184,7 @@ def test_build_docx_uses_f2s_canonical_path(monkeypatch):
     lr = lint.lint(md, ctx.envs, ctx.whitelist, scope=lint.scope_of(ctx, strict=True))
     data, src, info = asyncio.run(report.build_docx("운봉읍", "52190250", "R2", 8, lr.answer_md, lr, ctx, {}, {}, "gemma", []))
     assert data == b"PK-docx-bytes" and info["path"] == "f2s"
-    assert "F2-S 정본 서식" in src and "미도착" not in src
+    assert "미도착" not in src and "F2-S" not in src          # 화면·문서에 내부 코드 0(c2-report-law · 문구는 그쪽 몫)
     assert [c["fmt"] for c in calls] == ["dict", "docx"] and calls[1]["realm"] == "lx" and calls[1]["tenant"] == "lx"
     assert calls[1]["narrative"]["overview"][0].endswith("[1].")
 
@@ -199,7 +199,7 @@ def test_build_docx_failure_reason_is_recorded(monkeypatch):
     lr = lint.lint("## 개요\n운봉읍 연속지적 필지 수는 {{env:e3}}임 [1].", ctx.envs, ctx.whitelist, scope=lint.scope_of(ctx, strict=True))
     data, src, info = asyncio.run(report.build_docx("운봉읍", "52190250", "R2", 8, lr.answer_md, lr, ctx, {}, {}, "gemma", []))
     assert info["path"] == "local" and data[:2] == b"PK"
-    assert "F2-S build_draft TypeError: build_draft() got an unexpected keyword argument 'format'" in src
+    assert "TypeError" in str(info.get("error") or "") + src      # 실패 이유는 기록(개발자 서랍) · 서식 이름에는 내부 코드 0
     assert "미도착" not in src
 
 
@@ -276,14 +276,14 @@ def _ay_narr(f2s):
 def _cite_values_match(narr, f2s):
     """모든 집계 문장: 인용 [n] 의 F2-S 값이 그 문장에 쓴 숫자 중 하나와 같아야 한다(대체 번호 = 거짓 인용 금지)."""
     import re as _re
-    val = {c["n"]: c["value"]["value"] for c in f2s["citations"]}
+    val = {c["n"]: c["value"]["value"] for c in f2s["citations"] if isinstance(c.get("value"), dict)}   # 법령 조문 인용(값 없음)은 제외
     for sec in narr.values():
         for line in sec:
             ns = [int(x) for x in _re.findall(r"\[(\d+)\]", line)]
             nums = {float(x.replace(",", "")) for x in _re.findall(r"(\d[\d,]*(?:\.\d+)?)(?=필지|건|㎡)", line)}
             if "③ No" in line and not nums - {1.0}:
                 continue                              # 필지 목록 문장(집계 숫자 없음)
-            for n in ns:
+            for n in [x for x in ns if x in val]:
                 assert float(val[n]) in nums, f"거짓 인용 [{n}]={val[n]} · 문장 숫자 {sorted(nums)} · {line}"
 
 
@@ -322,8 +322,9 @@ def test_ay_real_f2s_build_draft_citations():
         pytest.skip(f"PostGIS 없음: {type(e).__name__}")
     ctx, lr, narr, stat = _ay_narr(f2s)
     byl = {c["label"]: c["n"] for c in f2s["citations"]}
-    assert narr["overview"][0].endswith(f"[{byl['아영면 연속지적 필지 수']}].")
-    assert narr["overview"][1].endswith(f"[{byl['실태조사 대상 후보(의심) 건수 · R1']}].")
+    n_of = lambda tail: next(n for lb, n in byl.items() if lb.endswith(tail))   # 라벨 앞머리(시군구 이름)는 c2-report-law 몫 — 끝말로 찾는다
+    assert narr["overview"][0].endswith(f"[{n_of('아영면 연속지적 필지 수')}].")
+    assert narr["overview"][1].endswith(f"[{n_of('실태조사 대상 후보(의심) 건수 · R1')}].")
     _cite_values_match(narr, f2s)
     ok, bad = s_report.check_narrative(narr, len(f2s["citations"]))
     assert ok is not None and bad == []

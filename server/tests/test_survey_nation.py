@@ -64,6 +64,13 @@ def test_region_codes_and_tenant():
 
 
 # ── 규칙 일반화 회귀 ──
+def canon_job(pg):
+    """정본 대조에 쓰는 AI 결과 — 정본 결과 세트(results/…)가 결합돼 있으면 그것. 새 전역 분석으로 survey_sgg.job_id 가
+    최신 작업으로 바뀌어도(정본 의심은 그대로 · nation.build) 정본 열(a23_*)과 같은 결과로 대조한다."""
+    row = pg.execute("SELECT job_id FROM survey_parcel_ai WHERE job_id LIKE 'results/%%' AND pnu LIKE %s LIMIT 1", (BASE + "%",)).fetchone()
+    return row[0] if row else pg.execute("SELECT job_id FROM survey_sgg WHERE sgg_cd=%s", (BASE,)).fetchone()[0]
+
+
 def test_generic_rules_on_canon_equal_canon(pg):
     rows = pg.execute(R.eval_sql(R.default_thresholds(), emd_cd=False)).fetchall()
     got = {(r[0], r[1]): round(r[5], 1) for r in rows}
@@ -74,7 +81,7 @@ def test_generic_rules_on_canon_equal_canon(pg):
 
 def test_join_equals_canon_columns_smallest_emd(pg):
     emd = pg.execute("SELECT emd_cd FROM survey_emd WHERE sgg_cd=%s ORDER BY parcels LIMIT 1", (BASE,)).fetchone()[0]
-    job = pg.execute("SELECT job_id FROM survey_sgg WHERE sgg_cd=%s", (BASE,)).fetchone()[0]
+    job = canon_job(pg)
     agg = N._agg_pairs(pg.execute(N.PAIR_SQL, {"sgg": BASE, "emd": emd, "job": job}).fetchall())
     ref = pg.execute("SELECT pnu, a23_bld_m2, a23_bld_in_m2, a23_crop_m2, a23_park_in_m2 FROM survey_parcels WHERE emd_cd=%s", (emd,)).fetchall()
     g = lambda p, k, f: (agg.get((p, k)) or {}).get(f, 0)  # noqa: E731
@@ -85,7 +92,7 @@ def test_join_equals_canon_columns_smallest_emd(pg):
 
 def test_stored_join_generic_regression_table(pg):
     """남원: 저장 결합(survey_parcel_ai) × 일반 규칙 vs 정본 — 두 번째 시점(2025 드론)을 쓰는 R3·R5 만 차이 허용."""
-    job = pg.execute("SELECT job_id FROM survey_sgg WHERE sgg_cd=%s", (BASE,)).fetchone()[0]
+    job = canon_job(pg)
     if not pg.execute("SELECT EXISTS(SELECT 1 FROM survey_parcel_ai WHERE job_id=%s)", (job,)).fetchone()[0]:
         pytest.skip("남원 결합 저장 전(POST /survey/build 52190)")
     gen = {}

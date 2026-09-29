@@ -3,6 +3,9 @@
 지역 = scope.region_of(): 기관 세션은 관할(regions.tenant_scope) 안 시군구만 · LX 는 region 인자(없으면 전체). 지역 고정값 0.
 읽기 순서: 시군구를 정한 질문 → PostGIS survey_findings(사용자 RLS · 그 시군구 PNU) · 기관 전체 질문 → `GET /api/v1/survey/*`(사용자 토큰).
 둘 다 없을 때만 survey_local(그 기관 파일이 있을 때). 게스트 0(에이전트 자체가 401).
+숫자 한 출처(c2-numbers): survey_stats 의 '의심 필지'(suspects) · '현장 확인 필요'(field_check)는 landxi_api.survey.survey_counts 그대로
+(= /survey/stats total · /summary suspect·field_check · XI맵 · 첫 화면 · 보고서). 읍면동 칸은 R1–R6 행만 세어 칸 합 = 합계.
+by=emd 결과에는 명령 바 막대 차트 블록(값 = 봉투 key)을 붙인다. 적재 중이면 숫자 대신 '집계 중'.
 """
 from __future__ import annotations
 
@@ -17,6 +20,12 @@ RULE_NM = {"R1": "무허가 건축 의심", "R2": "휴경·전용 의심", "R3":
 _NUM_IN_TEXT = re.compile(r"\d+(?:-\d+)?")
 SRC_DB = "PostGIS survey_findings"
 SET = "survey/findings"               # 지도 층(결과 = 실태조사 의심 · 필터로 지역·대장을 싣는다)
+EMD_CHART_MAX = 20                    # 읍면동 막대 수 상한(의심 많은 순)
+
+
+def chart_block(title: str, rows: list[dict]) -> dict:
+    """명령 바 막대 차트(plan 3.3) — 값은 봉투 key 로만(runner 가 eN 으로 바꾼다)."""
+    return {"type": "chart", "kind": "bar", "title": title, "rows": rows}
 
 
 def rule_nm(k: str) -> str:
@@ -91,7 +100,8 @@ async def _db_findings(ctx, reg, rule, priority, emd_cds, limit=2000) -> dict | 
     except Exception:
         return None
     w, a = ["substr(pnu,1,5) = ANY($1::text[])"], [reg["codes"]]
-    for col, val in (("rule", [rule] if rule else None), ("priority", [priority] if priority else None), ("emd_cd", emd_cds)):
+    # 규칙을 말하지 않으면 R1–R6(의심 필지 한 출처와 같은 범위 · 대장 규칙 L-* 는 ledger_findings)
+    for col, val in (("rule", [rule] if rule else list(RULE_NM)), ("priority", [priority] if priority else None), ("emd_cd", emd_cds)):
         if val:
             a.append(val)
             w.append(f"{col} = ANY(${len(a)}::text[])")
@@ -105,27 +115,40 @@ async def _db_findings(ctx, reg, rule, priority, emd_cds, limit=2000) -> dict | 
 
 
 async def _db_stats(ctx, reg, emd_cds) -> dict | None:
+    """PostGIS(사용자 RLS) — 합계는 survey_counts(한 출처) · 규칙·등급·읍면동 칸은 R1–R6 행(칸 합 = 합계)."""
     try:
         from landxi_api.deps import db
+        from landxi_api.survey import survey_counts
     except Exception:
         return None
-    w, a = ["substr(pnu,1,5) = ANY($1::text[])"], [reg["codes"]]
+    rules = list(RULE_NM)
+    w, a = ["substr(pnu,1,5) = ANY($1::text[])", "rule = ANY($2::text[])"], [reg["codes"], rules]
     if emd_cds:
         a.append(emd_cds)
-        w.append("emd_cd = ANY($2::text[])")
+        w.append("emd_cd = ANY($3::text[])")
     W = " AND ".join(w)
     try:
         async with db(ctx.principal) as conn:
+            cnt = await survey_counts(conn, reg["codes"])
             by_rule = {r["rule"]: int(r["n"]) for r in await conn.fetch(f"SELECT rule, count(*) n FROM survey_findings WHERE {W} GROUP BY 1", *a)}
             by_pri = {r["priority"]: int(r["n"]) for r in await conn.fetch(f"SELECT priority, count(*) n FROM survey_findings WHERE {W} GROUP BY 1", *a)}
-            sp = int(await conn.fetchval(f"SELECT count(DISTINCT pnu) FROM survey_findings WHERE {W}", *a) or 0)
             by_emd = [(r["emd"], r["emd_cd"], int(r["n"])) for r in await conn.fetch(
-                f"SELECT emd, emd_cd, count(*) n FROM survey_findings WHERE {W} GROUP BY 1,2 ORDER BY 3 DESC LIMIT 8", *a)]
+                f"SELECT emd, emd_cd, count(*) n FROM survey_findings WHERE {W} GROUP BY 1,2 ORDER BY 3 DESC, 2", *a)]
+            fc_emd = None
+            if emd_cds:
+                fc_emd = int(await conn.fetchval(f"SELECT count(DISTINCT pnu) FROM survey_findings WHERE {W} AND priority = 'A' "
+                                                 "AND state IN ('open','assigned')", *a) or 0)
             pw = ["substr(pnu,1,5) = ANY($1::text[])"] + (["emd_cd = ANY($2::text[])"] if emd_cds else [])
-            parcels = int(await conn.fetchval(f"SELECT count(*) FROM survey_parcels WHERE {' AND '.join(pw)}", *a) or 0)
+            parcels = int(await conn.fetchval(f"SELECT count(*) FROM survey_parcels WHERE {' AND '.join(pw)}", *([a[0]] + ([emd_cds] if emd_cds else []))) or 0)
     except Exception:
         return None
-    return {"by_rule": by_rule, "by_priority": by_pri, "suspects": sum(by_rule.values()), "suspect_parcels": sp, "by_emd": by_emd, "parcels": parcels}
+    busy = cnt["state"] == "building"
+    if emd_cds:                                   # 읍면동 범위 — 그 읍면동 R1–R6 행(시군구 합계와 같은 식)
+        suspects, field = (None if busy else sum(by_rule.values())), (None if busy else fc_emd)
+    else:
+        suspects, field = cnt["suspect"], cnt["field_check"]
+    return {"by_rule": by_rule, "by_priority": by_pri, "suspects": suspects, "field_check": field, "by_emd": by_emd, "parcels": parcels,
+            "state": cnt["state"], "as_of": cnt.get("as_of")}
 
 
 async def _geoms(ctx, pnus: list[str]) -> dict:
@@ -147,7 +170,7 @@ async def _geoms(ctx, pnus: list[str]) -> dict:
 # ── 읽기: 계약 API(기관 전체) ────────────────────────────────────────────
 async def _api_findings(ctx, rule, priority, emd_cds):
     """GET /survey/findings(점수순 · 200행 페이지)."""
-    base = {"rule": rule, "priority": priority, "emd_cd": ",".join(emd_cds) if emd_cds else None, "sort": "score", "limit": 200}
+    base = {"rule": rule or ",".join(RULE_NM), "priority": priority, "emd_cd": ",".join(emd_cds) if emd_cds else None, "sort": "score", "limit": 200}
     first = await _http(ctx, "/survey/findings", {**base, "offset": 0})
     if first is None:
         return None
@@ -196,7 +219,8 @@ async def survey_findings(args: dict, ctx) -> Out:
     jimok = args.get("jimok")
     jm = L.JIMOK.get(str(jimok).strip(), str(jimok).strip()) if jimok else None
     place = reg.get("name") if reg.get("asked") else None
-    cond = " · ".join(x for x in [place, rule, emd_n, f"지목 {jm}" if jm else None, f"등급 {args.get('priority')}" if args.get("priority") else None] if x) or "전체"
+    # 조건 문구에 규칙 이름을 붙인다(코드 'R1' 만 두면 화면·문서에서 지워져 '전체'처럼 읽힌다 · 코드는 뜻 검사용) — 규칙이 없을 때만 '의심 필지 전체'(= survey_stats 칸 합)
+    cond = " · ".join(x for x in [place, f"{rule} {RULE_NM[rule]}" if rule else None, emd_n, f"지목 {jm}" if jm else None, f"등급 {args.get('priority')}" if args.get("priority") else None] if x) or "전체"
     note = L.NOTE_INF
     src, total_env, pr, picked = SRC_DB, None, {}, []
     got = await _db_findings(ctx, reg, rule, args.get("priority"), emd_cds) if reg.get("codes") else None
@@ -227,7 +251,8 @@ async def survey_findings(args: dict, ctx) -> Out:
         picked = [{**r, "_env": {}} for r in f["items"]]
         pr = f["by_priority"]
     out = Out(source=src, note=note)
-    out.env("total", f"조건({cond}) 일치 의심 필지 전체", total_env)
+    narrow = rule or jm or args.get("priority")
+    out.env("total", f"조건({cond}) 일치 의심 건" if narrow else f"{cond} 의심 필지 전체", total_env)
     out.env("shown", "점수 상위로 반환한 필지 수", L.env(len(picked), "필지", src + " · 점수 내림차순 상위", basis="measured", note="반환 행 수"))
     for k in "ABC":
         if k in pr:
@@ -306,19 +331,27 @@ async def survey_stats(args: dict, ctx) -> Out:
     d = await _db_stats(ctx, reg, emd_cds) if reg.get("codes") else None
     if d is not None:
         src = f"{SRC_DB}(시군구 {reg.get('name') or reg.get('sgg')})"
-        if d["suspects"] == 0 and d["parcels"] == 0:
+        if d["state"] == "none" and d["parcels"] == 0:
             raise ToolError("not_found", "해당 지역 데이터가 없습니다", 404)
-        out = Out(source=src, note=note)
-        out.env("suspects", f"{scope} 의심 건수(규칙별 1행 · 전체)", L.env(d["suspects"], "count", src, note=note, as_of=ctx.now()))
-        out.env("suspect_parcels", f"{scope} 의심 필지 수(중복 제거)", L.env(d["suspect_parcels"], "필지", src, note=note, as_of=ctx.now()))
+        busy = d["state"] == "building"
+        bnote = "집계 중" if busy else note
+        out = Out(source=src, note=bnote)
+        out.env("suspects", f"{scope} 의심 필지(전체 규칙)", L.env(d["suspects"], "count", src, note=bnote, as_of=d.get("as_of") or ctx.now()))
+        out.env("field_check", f"{scope} 현장 확인 필요(우선순위 A · 미조치·배정 필지)",
+                L.env(d["field_check"], "필지", src, note="집계 중" if busy else "현장 확인 전", as_of=ctx.now()))
         out.env("parcels", f"{scope} 연속지적 필지 수", L.env(d["parcels"], "필지", "PostGIS survey_parcels", basis="recorded", note="연속지적", as_of=ctx.now()))
-        for k, v in sorted(d["by_rule"].items()):
-            out.env(f"rule_{k}", f"{scope} {k} {rule_nm(k)} 건수", L.env(v, "count", src, note=note, as_of=ctx.now()))
-        for k, v in sorted(d["by_priority"].items()):
-            out.env(f"pri_{k}", f"{scope} 등급 {k} 건수", L.env(v, "count", src, note=note, as_of=ctx.now()))
-        if by == "emd" and not emd_n:
-            for i, (nm, _cd, n) in enumerate(d["by_emd"], 1):
-                out.env(f"emd_{i}", f"{nm} 의심 건수", L.env(n, "count", src, note=note, as_of=ctx.now()))
+        if not busy:
+            for k, v in sorted(d["by_rule"].items()):
+                out.env(f"rule_{k}", f"{scope} {k} {rule_nm(k)} 건수", L.env(v, "count", src, note=note, as_of=ctx.now()))
+            for k, v in sorted(d["by_priority"].items()):
+                out.env(f"pri_{k}", f"{scope} 등급 {k} 건수", L.env(v, "count", src, note=note, as_of=ctx.now()))
+            if by == "emd" and not emd_n:
+                rows = []
+                for i, (nm, _cd, n) in enumerate(d["by_emd"][:EMD_CHART_MAX], 1):
+                    out.env(f"emd_{i}", f"{nm} 의심 필지(건)", L.env(n, "count", src, note=note, as_of=ctx.now()))
+                    rows.append({"label": nm, "env": f"emd_{i}"})
+                if rows:
+                    out.blocks.append(chart_block(f"{reg.get('name') or '관할'} 읍면동별 의심 필지", rows))
     else:
         a_emd, a_rule, a_pri = await asyncio.gather(_http(ctx, "/survey/stats", {"by": "emd"}), _http(ctx, "/survey/stats", {"by": "rule"}),
                                                     _http(ctx, "/survey/stats", {"by": "priority"}))
@@ -329,29 +362,30 @@ async def survey_stats(args: dict, ctx) -> Out:
                 row = next((x for x in a_emd.get("items") or [] if x.get("cd") in (emd_cds or [])), None)
                 if row is None:
                     raise ToolError("not_found", f"{emd_n} 집계 없음", 404)
-                out.env("suspects", f"{scope} 의심 건수(규칙별 1행 · 전체)", row["n"])
-                out.env("suspect_parcels", f"{scope} 의심 필지 수(중복 제거)", row["suspect_parcels"])
+                out.env("suspects", f"{scope} 의심 필지(전체 규칙)", row["n"])
                 out.env("parcels", f"{scope} 연속지적 필지 수", row["parcels"])
                 for k, v in sorted((row.get("by_rule") or {}).items()):
                     out.env(f"rule_{k}", f"{scope} {k} {rule_nm(k)} 건수", v)
                 for k, v in sorted((row.get("by_priority") or {}).items()):
                     out.env(f"pri_{k}", f"{scope} 등급 {k} 건수", v)
             else:
-                out.env("suspects", f"{scope} 의심 건수(규칙별 1행 · 전체)", a_emd["total"])
+                out.env("suspects", f"{scope} 의심 필지(전체 규칙)", a_emd["total"])
+                if a_emd.get("field_check"):
+                    out.env("field_check", f"{scope} 현장 확인 필요(우선순위 A · 미조치·배정 필지)", a_emd["field_check"])
                 items = a_emd.get("items") or []
-                sp = sum(_v(x.get("suspect_parcels")) or 0 for x in items)
-                base = dict(items[0]["suspect_parcels"]) if items else L.env(None, "필지", src)
-                out.env("suspect_parcels", f"{scope} 의심 필지 수(중복 제거 · 읍면동 합)",
-                        {**base, "value": sp, "source": "GET /api/v1/survey/stats?by=emd Σ suspect_parcels"})
                 out.env("parcels", f"{scope} 연속지적 필지 수", a_emd["parcels"])
                 for x in (a_rule or {}).get("items") or []:
                     out.env(f"rule_{x['key']}", f"{scope} {x['key']} {rule_nm(x['key'])} 건수", x["n"])
                 for x in (a_pri or {}).get("items") or []:
                     out.env(f"pri_{x['key']}", f"{scope} 등급 {x['key']} 건수", x["n"])
                 if by == "emd":
-                    top = sorted(items, key=lambda x: -(_v(x.get("n")) or 0))[:8]
+                    top = [x for x in sorted(items, key=lambda x: -(_v(x.get("n")) or 0)) if _v(x.get("n"))][:EMD_CHART_MAX]
+                    rows = []
                     for i, e in enumerate(top, 1):
-                        out.env(f"emd_{i}", f"{e['key']} 의심 건수", e["n"])
+                        out.env(f"emd_{i}", f"{e['key']} 의심 필지(건)", e["n"])
+                        rows.append({"label": e["key"], "env": f"emd_{i}"})
+                    if rows:
+                        out.blocks.append(chart_block(f"{reg.get('name') or '관할'} 읍면동별 의심 필지", rows))
         else:
             t = _local_tenant(ctx, reg)
             if not t:
@@ -360,15 +394,15 @@ async def survey_stats(args: dict, ctx) -> Out:
             s = L.stats(by=by, emd=emd_n, rule=args.get("rule"), scope_name=reg.get("name"))
             src, note = s["source"], L.NOTE_INF + " · 대체 경로(정본 파일)"
             out = Out(source=src, note=note)
-            out.env("suspects", f"{scope} 의심 건수(규칙별 1행 · 전체)", L.env(s["suspects"], "count", src, note=note))
-            out.env("suspect_parcels", f"{scope} 의심 필지 수(중복 제거)", L.env(s["suspect_parcels"], "필지", src, note=note))
+            out.env("suspects", f"{scope} 의심 필지(전체 규칙)", L.env(s["suspects"], "count", src, note=note))
             out.env("parcels", f"{scope} 연속지적 필지 수", L.env(s["parcels"], "필지", src, basis="recorded", note="연속지적"))
             for k, v in sorted(s["by_rule"].items()):
                 out.env(f"rule_{k}", f"{scope} {k} {rule_nm(k)} 건수", L.env(v, "count", src, note=note))
             for k, v in sorted(s["by_priority"].items()):
                 out.env(f"pri_{k}", f"{scope} 등급 {k} 건수", L.env(v, "count", src, note=note))
     out.data = {"범위": scope, "읍면동코드": emd_cd, "시군구": reg.get("sgg"), "규칙": dict(RULE_NM),
-                "비고": "건수 = 의심 후보(규칙별 1행) · 필지 수는 중복 제거 · 임계 [추정 초기값]"}
+                "비고": "'의심 필지' 는 suspects 봉투 하나로만 말한다(규칙 R1–R6 의심 건 · 다른 화면과 같은 값) · "
+                        "'현장 확인 필요' 는 field_check · 임계 [추정 초기값]" + (" · 지금 집계 중" if "집계 중" in (out.note or "") else "")}
     out.citations.append({"kind": "stats", "emd": emd_n, "emd_cd": emd_cd, "sgg_cd": reg.get("sgg"), "label": f"{scope} 집계"})
     return out
 

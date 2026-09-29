@@ -64,6 +64,14 @@ async def lifespan(app: FastAPI):
             print(f"[gateway] ledger resume: {BOOT['ledger_resume']}", flush=True)
     except Exception as e:  # noqa: BLE001
         print(f"[gateway] ledger resume 실패: {e!r}", flush=True)
+    try:                                   # AI 도우미 도구 확장(tools/ext · C2 plan 3.1)을 기동 때 불러 둔다 — 모듈 실패는 경고만
+        from agent import runner as _runner  # noqa: F401
+        from agent.tools import ext as _ext
+        BOOT["agent_ext"] = {k: {"ok": v["ok"], "tools": len(v["tools"]), **({"error": v["error"]} if v["error"] else {})} for k, v in _ext.LOADED.items()}
+        line = ", ".join("%s(%d)%s" % (k, v["tools"], "" if v["ok"] else " 실패") for k, v in BOOT["agent_ext"].items()) or "없음"
+        print(f"[gateway] agent ext: {line}", flush=True)
+    except Exception as e:  # noqa: BLE001
+        print(f"[gateway] agent ext 불러오기 실패: {e!r}", flush=True)
     task = asyncio.create_task(ops.alert_loop())
     yield
     task.cancel()
@@ -133,6 +141,17 @@ for _name in ("survey", "agent"):
     app.include_router(_m.router, prefix=API)
     EXT_ROUTERS[_name] = "mounted"
     print(f"[gateway] ext router landxi_api.{_name}: 등록({len(_m.router.routes)} routes)", flush=True)
+
+# C2 확장 라우터(c2-report-law 법령 원문·색인 등) — 있으면 붙이고, 없거나 불러오기에 실패하면 건너뛴다(게이트웨이는 뜬다 · 로그 1줄).
+for _name in ("law",):
+    try:
+        _m = importlib.import_module(f"landxi_api.{_name}")
+        app.include_router(_m.router, prefix=API)
+        EXT_ROUTERS[_name] = "mounted"
+        print(f"[gateway] ext router landxi_api.{_name}: 등록({len(_m.router.routes)} routes)", flush=True)
+    except Exception as _e:  # noqa: BLE001
+        EXT_ROUTERS[_name] = "absent" if isinstance(_e, ModuleNotFoundError) and _e.name == f"landxi_api.{_name}" else f"skipped: {type(_e).__name__}"
+        print(f"[gateway] ext router landxi_api.{_name}: 건너뜀({type(_e).__name__}: {str(_e)[:120]})", flush=True)
 
 
 @app.get(API + "/health")

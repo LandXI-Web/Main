@@ -3,7 +3,7 @@
 - chat_stream(): OpenAI 호환 /chat/completions · tools · tool_choice:'auto' · stream · usage(include_usage) → 이벤트 제너레이터.
   첫 토큰 ms · 토큰/초 · usage 는 전부 이 호출에서 잰다(measured). 상수 없음.
 - classify(): 라우터 4클래스(map|report|ops|smalltalk) · ms 실측 · 라우터가 죽으면 규칙 분류(표기 'rules').
-- health(): /v1/models 2s · Redis hash agent:models(30s) — 관제(F2-C)·모델 칩이 읽는다.
+- health(): /v1/models 2s · Redis hash agent:models(30s) — LX 관리자 화면·모델 칩이 읽는다. 독파모 자리는 연결 전이면 탐침 0.
 - 외부 클라우드 호출 0: config.host_allowed() 가 루프백·*.landxi.internal 만 허용.
 """
 from __future__ import annotations
@@ -78,13 +78,21 @@ async def health(r=None, write: bool = True) -> dict:
     out = {}
     names = list(config.BACKENDS)
     bs = [await resolved(n, r) for n in names]
-    res = await asyncio.gather(*(probe(b) for b in bs))
     now = time.strftime("%Y-%m-%dT%H:%M:%S+09:00")
+
+    async def _probe(b):
+        if b["name"] == "dokpamo" and not config.backend_on("dokpamo"):
+            return {"ok": False, "ms": None, "error": "not_connected"}      # 승격 자리 — 연결 전이면 탐침하지 않는다(외부 호출 0)
+        return await probe(b)
+    res = await asyncio.gather(*(_probe(b) for b in bs))
     for b, h in zip(bs, res):
-        role = ["router"] if b["name"] == "router" else (["planner", "writer"] if b["name"] == "vllm" else ["fallback"])
-        out[b["name"]] = {"id": b["model"], "backend": "vllm" if b["name"] in ("vllm", "router") else "ollama", "base": b["base"],
-                          "role": role, "ok": h["ok"], "probe_ms": h["ms"], "error": h.get("error"), "license": b["license"],
-                          "family": b["family"], "gpu": b["gpu"], "as_of": now}
+        nm = b["name"]
+        role = ["router"] if nm == "router" else (["planner", "writer"] if nm in ("vllm", "dokpamo") else ["fallback"])
+        state = "연결 전" if h.get("error") == "not_connected" else ("연결됨" if h["ok"] else "응답 없음")
+        out[nm] = {"id": b["model"], "backend": {"vllm": "vllm", "router": "vllm", "dokpamo": "dokpamo"}.get(nm, "ollama"), "base": b["base"],
+                   "role": role, "ok": h["ok"], "probe_ms": h["ms"], "error": h.get("error"), "license": b["license"],
+                   "family": b["family"], "gpu": b["gpu"], "as_of": now, "state": state, "label": b.get("label"),
+                   "in_chain": nm in config.CHAIN}
     if write and r is not None:
         try:
             await r.hset("agent:models", mapping={k: json.dumps(v, ensure_ascii=False) for k, v in out.items()})
@@ -276,7 +284,7 @@ ROUTER_PROMPT = (
 )
 _RULES = [
     ("report", re.compile(r"보고서|초안|공문|문서|작성해")),
-    ("ops", re.compile(r"GPU|gpu|서버|큐|관제|장애|쿼터|배포|롤백|워커")),
+    ("ops", re.compile(r"GPU|gpu|서버|큐|대기열|경보|관제|장애|쿼터|배포|롤백|워커")),
     ("map", re.compile(r"필지|의심|보여|찾아|몇\s*건|건수|지도|분석|프레임|비닐|건물|경작|읍|면|동|R[1-6]")),
 ]
 

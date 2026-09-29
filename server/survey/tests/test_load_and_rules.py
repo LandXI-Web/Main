@@ -97,7 +97,9 @@ def test_adapter_join_skeleton_smallest_emd():
     m = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(m)
     assert m.ADAPTER["hidden"] is True and m.ADAPTER["kinds"] == ["join"]
-    sh = [s for s in m.plan({"options": {"emd_cd": ["52190105"]}})]
+    # 적재값(a23_*)은 남원 기준 세트(namwon-landcover-2023)에서 왔다. survey_sgg.job_id 는 새 전역 분석으로 바뀔 수 있어(09-30 01:41 재적재)
+    # 대조 원천을 명시한다 — 원천을 비우면 '현재 AI 작업'과 대조하므로 차이가 나는 것이 정상.
+    sh = [s for s in m.plan({"options": {"emd_cd": ["52190105"], "source_set": "results/lx/namwon-landcover-2023"}})]
     assert len(sh) == 1
     res = m.Adapter().run_shard(Shard(sh[0]["shard_id"], "pytest", tuple(sh[0]["bbox"]), None, sh[0]["params"]), None, {})
     assert res.metrics["parcels"] == 333 and res.metrics["write"] is False

@@ -8,6 +8,7 @@ GET  /agent/runs · /agent/runs/{id}  → 감사(본인 · 기관 · LX 전체 �
 GET  /agent/models                   → 실제 백엔드 헬스(agent:models 30s)
 POST /agent/report/draft             → 202 {run, events_url} · 완료 시 agent.done.artifact.docx_url
 GET  /agent/runs/{id}/draft.docx     → 초안 파일(Bearer)
+GET  /agent/runs/{id}/files/{name}   → run 산출 파일(.docx·.png·.jpg·.webp·.csv·.pdf·.xlsx · 권한 = run 소유 기관 · 명령 바 file·image 블록)
 게스트 0(401). 외부 클라우드 호출 0.
 """
 from __future__ import annotations
@@ -279,11 +280,54 @@ async def models(request: Request):
     for name, v in h.items():
         items.append({"id": v["id"], "name": name, "backend": v["backend"], "role": v["role"], "resident": bool(v["ok"]), "license": v["license"],
                       "family": v["family"], "gpu": v["gpu"], "onprem": True, "base": v["base"], "error": v.get("error"),
-                      "probe": {"value": v.get("probe_ms"), "unit": "ms", "basis": "measured", "as_of": v["as_of"], "source": "GET /v1/models"}})
-    order = {"vllm": 0, "router": 1, "ollama": 2}
+                      "probe": {"value": v.get("probe_ms"), "unit": "ms", "basis": "measured", "as_of": v["as_of"], "source": "GET /v1/models"}
+                      if v.get("probe_ms") is not None else None})
+    if "dokpamo" in config.BACKENDS and not any(x["name"] == "dokpamo" for x in items):     # 승격 자리 — 헬스 해시가 아직 옛것이어도 보인다
+        d = config.BACKENDS["dokpamo"]
+        items.append({"id": d.get("model") or "", "name": "dokpamo", "backend": "dokpamo", "role": ["planner", "writer"], "resident": False,
+                      "license": d.get("license"), "family": d.get("family"), "gpu": d.get("gpu"), "onprem": True, "base": d.get("base"),
+                      "error": "not_connected", "probe": None})
+    for x in items:
+        v = h.get(x["name"]) or {}
+        x["label"] = v.get("label") or config.BACKENDS.get(x["name"], {}).get("label")
+        if x["name"] == "dokpamo":
+            on = config.backend_on("dokpamo")
+            x["state"] = ("연결됨" if x["resident"] else "응답 없음") if on else "연결 전"
+            x["enabled"] = on
+            x["in_chain"] = "dokpamo" in config.CHAIN
+            if not on:
+                x["probe"] = None
+        else:
+            x["state"] = "연결됨" if x["resident"] else "응답 없음"
+    order = {"vllm": 0, "router": 1, "ollama": 2, "dokpamo": 3}
     items.sort(key=lambda x: order.get(x["name"], 9))
-    active = next((x for x in items if x["name"] in ("vllm", "ollama") and x["resident"]), None)
+    active = next((x for x in items if x["name"] in config.CHAIN and x["resident"]), None)
     return {"items": items, "active": active["name"] if active else None, "external": False, "chain": config.CHAIN, "as_of": now_iso()}
+
+
+FILE_TYPES = {"docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "png": "image/png", "jpg": "image/jpeg",
+              "jpeg": "image/jpeg", "webp": "image/webp", "csv": "text/csv; charset=utf-8", "pdf": "application/pdf",
+              "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
+
+
+@router.get("/agent/runs/{run_id}/files/{name}")
+async def run_file(run_id: str, name: str, request: Request):
+    """run 산출 파일(명령 바 file·image 블록 · plan 3.3). 권한 = run 소유(본인 · 같은 기관 · LX 관리자). 이름은 run 폴더 안 파일 하나만."""
+    p = require(principal(request))
+    row = await _own_run(p, run_id)
+    _, config, _, _ = _agent()
+    if not config.RUN_FILE.match(name or "") or "/" in name or "\\" in name or ".." in name:
+        raise ApiError("bad_request", "파일 이름 형식")
+    base = (config.ARTIFACT_DIR / run_id).resolve()
+    f = (base / name).resolve()
+    if f.parent != base or not f.is_file():
+        raise ApiError("not_found", "파일 없음(작성 중이거나 실패)")
+    ext = f.suffix.lower().lstrip(".")
+    art = row["artifact"] or {}
+    shown = art.get("filename") if (ext == "docx" and name == "draft.docx") else name
+    return FileResponse(str(f), media_type=FILE_TYPES.get(ext, "application/octet-stream"),
+                        headers={"Content-Disposition": f"{'inline' if ext in ('png', 'jpg', 'jpeg', 'webp') else 'attachment'}; filename=\"file.{ext}\"; filename*=UTF-8''{urlquote(shown or name)}",
+                                 "Cache-Control": "private, max-age=600", "Access-Control-Expose-Headers": "Content-Disposition"})
 
 
 @router.get("/agent/runs/{run_id}/draft.docx")

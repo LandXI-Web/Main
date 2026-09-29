@@ -23,7 +23,7 @@ const RAIL = [
   { id: 'assemble', label: '서비스 만들기', href: '../lx-console/?open=assemble' }, { id: 'review', label: '결과 확인' },
   { id: 'deploy', label: '배포', href: '../lx-deploy/' }, { id: 'ops', label: '서비스 관리', href: '../lx-deploy/#ops' },
 ];
-const S = K.shell({ who, home: 'lx-review', rail: { kind: 'steps', items: RAIL, current: 3, done: [0, 1, 2] } });
+const S = K.shell({ who, home: 'lx-review', xiRegion: () => region?.sgg_cd || null, rail: { kind: 'steps', items: RAIL, current: 3, done: [0, 1, 2] } });
 /* 역할 칩 — 이름이 역할과 같으면(시드 계정 'LX 직원') 한 번만 쓴다(키트 K1 요청 전 화면 쪽 보정) */
 for (const c of document.querySelectorAll('.k-role')) { const b = c.querySelector('b'); const rest = (c.textContent || '').slice((b?.textContent || '').length).trim(); if (b && rest === b.textContent.trim()) c.textContent = rest; }
 const stageEl = h('div.rv-stage'); S.main.append(stageEl);
@@ -471,6 +471,8 @@ if (region?.bbox && stage.map.getZoom() < MIN_Z) stage.map.jumpTo({ zoom: MIN_Z 
 stageEl.append(hudEl, loadEl, reopen);   // 지도 위 층 순서
 bindMap();
 K.devDrawer({ stage, who });
+/* Ctrl K — 결과 확인 화면에서도 말로 묻기(다른 LX 직원 화면과 같은 명령 바 · 지금 시군구를 문맥으로) */
+{ const ck = K.mountCmdk({ stage, context: () => ({ region: region?.sgg_cd || null }) }); S.mast(ck.button()); }
 T.stage = Math.round(performance.now()); T.z0 = +stage.map.getZoom().toFixed(2);
 /* 지역 집계 먼저(by_rule · limit 1) — 막대 · HUD 를 큐 전체(최대 2000건)보다 먼저 그린다 */
 const agg = await loadQueue({ bbox: region?.bbox || null, sgg: region?.sgg_cd || null, limit: 1 });

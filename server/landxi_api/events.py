@@ -24,6 +24,29 @@ HEADERS = {"Cache-Control": "no-store", "X-Accel-Buffering": "no"}
 TERMINAL = {"snapshot.ready", "job.failed", "job.cancelled"}
 
 
+# ── 스트림 전용 호스트(c2-xi 3차 · 09-30 실증 2차 must_fix 1) ────────────────────────────────────────────
+# 브라우저 연결 한도는 호스트 이름당 6칸이다. 화면(api-v1.js streamBase)은 로컬 게이트웨이의 스트림을 s1–s4.localhost 로만 연다.
+# 옛 코드로 열린 탭이 API 호스트 이름(localhost · 127.0.0.1)으로 스트림을 붙잡으면 새 탭의 로그인·조회·영상 타일이 모두 멈춘다.
+# 그래서 브라우저(Origin 있음)가 API 호스트 이름으로 스트림을 열면 204 로 돌려보낸다 — EventSource 는 204 에서 연결을 닫고
+# 칸을 곧바로 돌려준다(옛 탭은 새로 고치면 스트림 전용 이름으로 다시 붙는다). 서버 간 중계(관제 브리지 · Origin 없음)와 운영 주소는 그대로.
+from fastapi.responses import Response as _Resp  # noqa: E402
+import os as _os  # noqa: E402
+
+API_HOST_NAMES = {"localhost", "localhost.", "127.0.0.1", "[::1]"}
+
+
+def stream_on_api_host(request: Request) -> bool:
+    if _os.environ.get("LX_STREAM_HOST_GUARD", "1") == "0" or request.headers.get("origin") not in config.CORS_ORIGINS:
+        return False                                     # 서버 간(Origin 없음) · 허용 밖 오리진(기존 403 판정 그대로)
+    host = (request.headers.get("host") or "").lower()
+    name = host.split("]")[0] + "]" if host.startswith("[") else host.rsplit(":", 1)[0]
+    return name in API_HOST_NAMES
+
+
+def moved_stream() -> _Resp:
+    return _Resp(status_code=204, headers={**HEADERS, "X-LX-Stream": "use-stream-host"})
+
+
 def _last_id(request: Request) -> str | None:
     return request.headers.get("last-event-id") or request.query_params.get("last_event_id") or None
 
@@ -37,6 +60,8 @@ async def job_events(job_id: str, request: Request):
         raise ApiError("not_found", f"job {job_id} 없음")
     if not (p.is_lx or p.tenant_id == row["tenant_id"]):
         raise ApiError("forbidden")
+    if stream_on_api_host(request):
+        return moved_stream()
     # 완료 이벤트(job.done)에 시군구 · 결과 세트를 싣는다(core-xi 계약 job.done{sgg_cd, set}) — 작업 옵션 sgg_cd → 영상의 sgg_cd
     async with db(realm="lx") as conn:
         extra = await conn.fetchrow("SELECT j.result_set, coalesce(j.options->>'sgg_cd', i.sgg_cd) AS sgg_cd, j.options->>'scope' AS scope "
@@ -115,6 +140,8 @@ async def ops_events(request: Request):
     origin = request.headers.get("origin")
     if origin and origin not in config.CORS_ORIGINS:
         raise ApiError("forbidden", "허용되지 않은 오리진")
+    if stream_on_api_host(request):
+        return moved_stream()
     r = await redis()
     cur = _parse_ops_id(_last_id(request))
     streams = {"g": "ops:gpu", "e": "ops:events", "a": "ops:alerts"}
@@ -193,6 +220,8 @@ async def tenant_events(request: Request, tenant: str | None = None, replay: str
     origin = request.headers.get("origin")
     if origin and origin not in config.CORS_ORIGINS:
         raise ApiError("forbidden", "허용되지 않은 오리진")
+    if stream_on_api_host(request):
+        return moved_stream()
     if p.realm == "tenant":
         if tenant and tenant != p.tenant_id:
             raise ApiError("forbidden", "다른 기관의 스트림")

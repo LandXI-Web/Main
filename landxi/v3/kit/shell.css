@@ -61,3 +61,4 @@ body.k-shelled{margin:0;height:100vh;overflow:hidden}
   .k-app .k-mast .sp{display:none}
   .k-mast:has(.k-mast-slot:not(:empty)) .k-role,.k-mast:has(.k-mast-slot:not(:empty)) .k-fresh{display:none}
 }
+a.k-mast-b,a.k-xi{display:inline-flex;align-items:center;text-decoration:none}

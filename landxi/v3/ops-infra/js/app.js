@@ -1,6 +1,6 @@
 /* ops-infra — 인프라 · 기관 · 배포(관제 메뉴 5 중 3). 셸은 ops-core 와 같은 메뉴 5.
    정문 로그인(관리자)만 들어온다(K2). GPU 표는 관제 스트림(S-9 · Origin 4173)이 열리면 그것으로, 아니면 2.5초 조회로 갱신. */
-import { gate, shell, devDrawer, devlog, closeAll, empty, sse } from './kit.js';
+import { gate, shell, devDrawer, devlog, closeAll, empty, sse, mountCmdk } from './kit.js';
 import { S, loadGpus, loadInfra, loadOrg } from './data.js';
 import { mountInfra } from './infra.js';
 import { mountTenants } from './tenants.js';
@@ -27,6 +27,11 @@ const Sh = shell({ who, home: 'ops-infra', title: 'LX 관리자 대시보드', r
 // 역할 칩 중복 방지(ops-core 와 같은 처리): 이름이 역할 문구와 같으면 한 번만 → 'LX 관리자'
 { const r = document.querySelector('.k-role'), b = r?.querySelector('b');
   if (b && r.textContent.slice(b.textContent.length).trim() === b.textContent.trim()) b.remove(); }
+/* Ctrl K — LX 관리자 운영 질문(GPU · 대기열 · 경보 · 기관 사용량 · 언어 모델). 답의 숫자는 운영 도구 봉투(= 이 화면과 같은 값) */
+const VIEW_KO = { infra: '인프라', tenants: '기관', deploys: '배포' };
+const ck = who.key !== 'lx/admin' ? null : mountCmdk({ context: () => ({ screen: 'ops', screen_name: `LX 관리자 대시보드 · ${VIEW_KO[document.body.dataset.view] || '인프라'}` }) });
+if (ck) { const b = ck.button(); b.querySelector('span').textContent = '물어보기'; Sh.mast(b);
+  const i = ck.el.querySelector('.k-ck-i'); if (i) i.placeholder = 'GPU 상태 · 대기열 요약 · 경보 있어?'; }
 /* 레일 '결재' 배지 — ops-core 와 같은 대기 건수 */
 let pendN = 0;
 const putBadge = () => { const el = Sh.rail?.querySelector('[data-i="4"]'); if (el) el.dataset.n = pendN ? String(pendN) : ''; };

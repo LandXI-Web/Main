@@ -54,7 +54,7 @@ const who = await gate('gov-report');
 S.who = who;
 S.key = `gr:${who.me.tenant_id}`;
 const org = (who.org || who.name || '').replace(/\s*담당자$/, '').split(/\s+/).pop();
-const app = shell({ who: { ...who, org }, home: 'gov-report', title: org });
+const app = shell({ who: { ...who, org }, home: 'gov-report', title: org, xiRegion: () => S.region });   // XI맵 링크에 지금 시군구
 app.main.append($('#tpl').content.cloneNode(true));
 document.title = `${org} · 할 일 · Land-XI`;
 devDrawer({ who });
@@ -119,7 +119,7 @@ async function load({ keep = true, quiet = false } = {}) {
   S.pend = pend && pend.total ? { ...pend.total, value: pend.counts ? (pend.counts.assigned || 0) + (pend.counts.inspected || 0) : pend.total.value, basis: 'recorded', note: '기관이 남긴 배정 · 확인 기록' } : null;
   const prev = new Set(S.rows.map((r) => r.id + r.st));
   S.rows = [...p, ...d.slice(0, Math.max(room, 5))].map(rowOf);
-  S.fresh = S.rows.map((r) => r.at).sort().pop();
+  S.fresh = new Date();   // 마지막 갱신 = 이 화면이 방금 읽은 시각(첫 화면과 같은 뜻 · 마지막 조치 시각이 아님)
   render(prev);
   /* 선택 필지는 늘 새 행 객체로 바꿔 끼운다 — 옛 행(판정 전 상태)을 들고 있으면 종결 필지가 '배정'으로 보이고 판정이 409 로 막힌다 */
   if (keep && S.sel) {
@@ -402,14 +402,16 @@ function initReport() {
     S.rules = (ru && ru.items) || [];
     const count = (arr, key) => arr.reduce((m, r) => m.set(r[key], (m.get(r[key]) || 0) + 1), new Map());
     const byEmd = count(S.rows.map((r) => ({ e: r.f.emd_cd })), 'e');
-    const byRule = count(S.rows.map((r) => ({ k: r.f.rule })), 'k');
     const top = (m) => [...m.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
     const sel = $('#rp-emd'), rs = $('#rp-rule');
     sel.innerHTML = S.emd.map((e) => `<option value="${esc(e.cd)}">${esc(e.key)}</option>`).join('');
-    rs.innerHTML = S.rules.filter((r) => /^R\d$/.test(r.id)).map((r) => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('');
-    const e0 = top(byEmd), r0 = top(byRule);
+    /* 규칙 기본 = 전체(의심 필지 전체 = 읍면동 칸 합 · 숫자 한 출처). 규칙을 고르면 그 규칙 건수만 쓴다 */
+    rs.innerHTML = '<option value="">전체 규칙</option>' + S.rules.filter((r) => /^R\d$/.test(r.id)).map((r) => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('');
+    /* 읍면동 기본 = 의심 필지가 가장 많은 곳(서버 칸 n) → 없으면 할 일이 많은 곳. 의심 0건 읍면동도 초안은 쓴다(0필지) */
+    const nOf = (e) => +(e.n && e.n.value) || 0;
+    const eMax = [...S.emd].sort((a, b) => nOf(b) - nOf(a))[0];
+    const e0 = eMax && nOf(eMax) > 0 ? eMax.cd : top(byEmd);
     if (e0 && S.emd.some((e) => e.cd === e0)) sel.value = e0;
-    if (r0 && S.rules.some((r) => r.id === r0)) rs.value = r0;
     const off = !S.emd.length;
     $('#rp-form').hidden = off;
     docEmpty(off ? '보고할 결과가 아직 없습니다' : null);
@@ -558,9 +560,9 @@ const n0 = (v) => (v === null || v === undefined || v === '' ? '—' : Number(v)
 const ymd = (d) => `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 function armDocx({ emd_cd, rule }) {
   const emd = (S.emd.find((e) => e.cd === emd_cd) || {}).key || '';
-  const ruleNm = (S.rules.find((r) => r.id === rule) || {}).name || '';
-  /* 부속 표 자료 — 초안이 끝나는 즉시 모아 둔다(내려받기 누를 때 기다리지 않게) */
-  const q = (x) => api(`/survey/findings?emd_cd=${emd_cd}&rule=${encodeURIComponent(rule)}${x}`).catch(() => null);
+  const ruleNm = rule ? (S.rules.find((r) => r.id === rule) || {}).name || '' : '전체';
+  /* 부속 표 자료 — 초안이 끝나는 즉시 모아 둔다(내려받기 누를 때 기다리지 않게) · 규칙 '전체' = R1–R6(의심 필지와 같은 범위) */
+  const q = (x) => api(`/survey/findings?emd_cd=${emd_cd}&rule=${encodeURIComponent(rule || 'R1,R2,R3,R4,R5,R6')}${x}`).catch(() => null);
   const data = Promise.all([q('&sort=score&limit=10'), q('&priority=A&limit=1'), q('&priority=B&limit=1'), q('&priority=C&limit=1'),
     q('&state=assigned,inspected,closed,dismissed&sort=updated&limit=200'), S.s2 ? api('/survey/actions?limit=500').catch(() => null) : null]);
   const a = $('#docx');
@@ -655,7 +657,8 @@ function setRegion(cd) {
 $('#sus-rgn').addEventListener('change', (e) => setRegion(e.target.value));
 $('#rp-sgg').addEventListener('change', (e) => setRegion(e.target.value));
 
-const susBig = bignum($('#sus-big'), null, { label: '의심 후보', unit: '건' });
+/* 큰 숫자 = 의심 필지(숫자 한 출처 GET /survey/stats total = survey_sgg · 첫 화면 · XI맵 · 에이전트와 같은 값). 아래 표는 확인 전(미배정) 목록 */
+const susBig = bignum($('#sus-big'), null, { label: '의심 필지', unit: '건' });
 const PRI = { A: '우선', B: '보통', C: '참고' };
 const susTbl = table($('#sus-table'), {
   cols: [
@@ -674,13 +677,14 @@ async function loadSus() {
     return;
   }
   if (S.susLoaded === S.region) { susPoints(); return; }
-  let j;
-  try { j = await api(`/survey/findings?sgg=${S.region}&state=open&rule=R1,R2,R3,R4,R5,R6&sort=score&limit=200`); }
+  let j, st;
+  try { [j, st] = await Promise.all([api(`/survey/findings?sgg=${S.region}&state=open&rule=R1,R2,R3,R4,R5,R6&sort=score&limit=200`), api(`/survey/stats?by=rule&sgg=${S.region}`).catch(() => null)]); }
   catch (e) { devlog('sus', e.message); if (failLine(e)) return; return; }
   S.susLoaded = S.region;
   S.sus = (j.items || []).map((f) => ({ ...rowOf(f), pri: f.priority }));
   $('#sus-big').hidden = false;
-  susBig.set(j.total ? { ...j.total } : null);
+  if (st && st.state === 'building') { susBig.empty(); const n = $('#sus-big .k-big-none'); if (n) n.textContent = '집계 중'; }
+  else susBig.set(st && st.total ? { ...st.total } : null);
   const has = S.sus.length > 0;
   $('#sus-table').hidden = !has; box.hidden = has;
   if (!has) {

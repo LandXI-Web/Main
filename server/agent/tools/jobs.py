@@ -6,11 +6,37 @@
 from __future__ import annotations
 
 import math
+import re
 
 from . import Out, ToolError
 
 SERVICE_CLS = {"greenhouse": "비닐하우스", "비닐하우스": "비닐하우스", "building": "건물", "건물": "건물", "farmland": "경작지", "경작지": "경작지",
                "parking": "주차장", "주차장": "주차장"}
+
+
+def eta_words(sec, lang: str = "ko") -> str | None:
+    """예상 소요(초) → 업무 말('약 1분' · '약 25분' · '약 1시간 10분'). 초 단위 개발 표기('47.9s')를 화면에 내지 않는다(규칙 2 · c2-xi 3차).
+    1분 미만도 '약 1분' · 20분 이상은 5분 단위 · 1시간 이상은 시간+분(10분 단위)."""
+    try:
+        v = float(sec)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(v) or v < 0:
+        return None
+    m = max(1, round(v / 60))
+    if m >= 20:
+        m = int(round(m / 5) * 5)
+    if m >= 60:
+        h, mm = divmod(int(round(m / 10) * 10), 60)
+        if lang == "en":
+            return f"about {h} h" + (f" {mm} min" if mm else "")
+        return f"약 {h}시간" + (f" {mm}분" if mm else "")
+    return f"about {m} min" if lang == "en" else f"약 {m}분"
+
+
+def eta_value(q: dict):
+    e = (q or {}).get("eta_s")
+    return e.get("value") if isinstance(e, dict) else e
 
 
 def prefer(models: list[dict], cls: str) -> list[dict]:
@@ -62,7 +88,7 @@ async def plan_body(args: dict, ctx) -> dict:
     if isinstance(frame, dict) and frame.get("type") == "Feature":
         frame = frame.get("geometry")
     if not frame or frame.get("type") not in ("Polygon", "MultiPolygon"):
-        raise ToolError("frame_required", "지도에서 프레임(사각·다각)을 먼저 그려 주세요 — 에이전트는 분석 범위를 만들지 않습니다", 400)
+        raise ToolError("frame_required", "지도에 그린 프레임이 없습니다 — 시군구 전역 분석(말로 실행)은 analysis_run(region, service) 을 부른다", 400)
     cls = SERVICE_CLS.get(str(args.get("service") or args.get("cls") or "").strip(), None)
     models = (await _j(ctx, "GET", "/registry/models")).get("items") or []
     by_id = {m["id"]: m for m in models}
@@ -119,14 +145,18 @@ async def jobs_quote(args: dict, ctx) -> Out:
         meta["skipped"] = tried
     ctx.state["pending_submit"] = {"body": body, "quote": q, "meta": meta}
     out = Out(source="POST /api/v1/jobs/quote")
-    for k, lab in (("area_km2", "프레임 면적"), ("shards_env", "shard 수"), ("gpu_s", "예상 GPU·s"), ("eta_s", "예상 소요")):
-        if isinstance(q.get(k), dict):
-            out.env(k, lab, q[k])
+    # 화면에 낼 숫자는 업무 결과만(규칙 2) — shard 수·GPU·s 는 봉투로 내지 않는다. 예상 소요는 '약 N분' 말로(초 봉투 0).
+    if isinstance(q.get("area_km2"), dict):
+        out.env("area_km2", "프레임 면적", q["area_km2"])
+    eta = eta_words(eta_value(q), getattr(ctx, "lang", "ko"))
     rem = ((q.get("quota") or {}).get("remaining"))
     if isinstance(rem, dict):
         out.env("quota_remaining", f"기관 쿼터 잔여({(q.get('quota') or {}).get('dim')})", rem)
     out.data = {"모델": meta["model"], "영상": meta["imagery"], "대상": meta["cls"], "허용": q.get("allowed"), "사유": q.get("reasons"),
                 "풀": q.get("pool"), "시연": body["demo"], "비고": "제출은 jobs_submit — 사람이 확인 카드를 승인해야 실행"}
+    if eta:
+        out.data["예상 소요"] = eta                     # 문장 그대로 쓴다(숫자 자리표 아님)
+        out.whitelist |= set(re.findall(r"\d+", eta))
     out.raw = {"quote": q, "meta": meta}
     return out
 
@@ -142,8 +172,6 @@ async def jobs_submit_exec(ctx) -> Out:
     j = await _j(ctx, "POST", "/jobs", json=body)
     job = j.get("job") if isinstance(j.get("job"), dict) else j
     out = Out(source="POST /api/v1/jobs")
-    if isinstance(job.get("shards_env"), dict):
-        out.env("shards", "제출 shard 수", job["shards_env"])
     out.data = {"job_id": job.get("id"), "상태": job.get("state"), "풀": job.get("pool"), "모델": body["model_id"], "시연": body.get("demo")}
     out.ui_actions.append({"op": "job_theater", "job_id": job.get("id"), "frame": body["aoi"], "model_id": body["model_id"],
                            "imagery_id": body["imagery_id"], "demo": body.get("demo"), "shards_total": job.get("shards_total") or job.get("shards")})
@@ -185,7 +213,7 @@ def job_done_out(out: Out, d: dict | None, job_id: str) -> Out:
     if d.get("_event") != "job.done":
         out.note = f"{d.get('_event')} · {d.get('error') or ''}"
         return out
-    for k, lab in (("counts_env", "탐지 수(전역 NMS 뒤)"), ("gpu_s", "이 작업 GPU·s"), ("chips_per_gpu_s", "GPU 초당 칩"), ("chips_per_wall_s", "벽시계 칩/s")):
+    for k, lab in (("counts_env", "탐지 수"),):          # GPU·s · 칩/s 같은 내부 지표는 답에 내지 않는다(규칙 2)
         if isinstance(d.get(k), dict):
             out.env(k, lab, d[k])
     out.data = {**(out.data or {}), "완료": True, "클래스별": d.get("counts"), "결과세트": d.get("result_set")}

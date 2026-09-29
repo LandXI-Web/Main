@@ -7,8 +7,11 @@
 
 계산식(정본):
   detected       AI 탐지       = 이 항목 배포본 스냅샷 결과 세트(sets.yaml aliases · 작업 결과 세트 results/{기관}/{작업} → 작업)의 detections 행 수
-  field_check    현장 확인 필요 = 실태조사 의심 중 우선순위 A · 상태 open|assigned 인 서로 다른 필지(PNU) 수(이 항목 지역)
-  review_pending 결과 확인 대기 = 실태조사 의심 중 우선순위 A · 상태 open 인 건수(행 · 아직 배정·판정 전)
+  suspect        의심 필지     = survey_counts(sgg).suspect — survey_sgg.findings(AI × 연속지적 규칙 R1–R6 · 적재 때 확정 · 대장 규칙 제외)
+  field_check    현장 확인 필요 = survey_counts(sgg).field_check — R1–R6 의심 중 우선순위 A · 상태 open|assigned 인 서로 다른 필지 수
+  review_pending 결과 확인 대기 = survey_counts(sgg).review_pending — R1–R6 의심 중 우선순위 A · 상태 open 인 건수(아직 배정·판정 전)
+  실태조사 세 값은 /survey/stats · 에이전트(survey_stats · summary_lookup) · 보고서와 같은 함수(landxi_api.survey.survey_counts)에서 온다.
+  적재 중(building)이면 값 None + note '집계 중' + survey_state 'building'.
   reports        기관 신고     = 열린(open) 기관 신고(feedback · 종류 무관) 건수
 실태조사 두 지표는 그 지역에서 '필지 대조' 모듈(`*-parcel`)이 켜진 배포본 항목에만 붙는다(서비스 상세·영업 화면과 같은 조건).
 기관 신고는 신고의 결과 세트가 이 항목 결과 세트와 같으면 이 항목, 실태조사 신고(survey/·review:)는 실태조사 항목,
@@ -41,11 +44,12 @@ STAGE_RANK = {"ga": 0, "canary": 1, "shadow": 2, "rolled_back": 3, "draft": 9}
 # key → (label, unit 기본값, basis) — label 은 화면이 그대로 쓰는 이름. 같은 key = 같은 계산식.
 METRICS: dict[str, tuple[str, str, str]] = {
     "detected": ("AI 탐지", "건", "measured"),
+    "suspect": ("의심 필지", "count", "inferred"),
     "field_check": ("현장 확인 필요", "필지", "inferred"),
     "review_pending": ("결과 확인 대기", "건", "recorded"),
     "reports": ("기관 신고", "건", "recorded"),
 }
-SRC = {"detected": "AI 분석 결과", "field_check": "실태조사(필지 대조) 결과 · 현장 확인 전",
+SRC = {"detected": "AI 분석 결과", "suspect": "실태조사(필지 대조) 의심 후보 · 검수 전", "field_check": "실태조사(필지 대조) 결과 · 현장 확인 전",
        "review_pending": "실태조사 결과 중 아직 확인하지 않은 것", "reports": "기관이 보낸 신고"}
 
 _cache: dict[str, Any] = {"t": 0.0, "items": None, "at": None}
@@ -200,16 +204,14 @@ async def _items(conn, tenant: str | None) -> list[dict]:
                 groups[home[0]] += groups.pop(key)
 
     # 3) 실태조사 · 신고(기관 자료 — 넘겨받은 연결 · RLS)
-    sv = await conn.fetch("SELECT tenant_id, substr(pnu,1,5) sgg, count(*) n_all, "
-                          "count(DISTINCT pnu) FILTER (WHERE priority='A' AND state IN ('open','assigned')) fc, "
-                          "count(*) FILTER (WHERE priority='A' AND state='open') rp FROM survey_findings GROUP BY 1,2")
+    from .survey import survey_counts                 # 숫자 한 출처(c2-numbers) — /survey/stats · 에이전트와 같은 함수
+    sc = await survey_counts(conn, None)
     fb = await conn.fetch("SELECT tenant_id, set_id, count(*) n FROM feedback WHERE state='open' GROUP BY 1,2")
     survey: dict[tuple, dict] = {}
-    for s in sv:
-        k = (s["tenant_id"], _cur_code(s["sgg"]))
-        a = survey.setdefault(k, {"n_all": 0, "fc": 0, "rp": 0})
-        for f in ("n_all", "fc", "rp"):
-            a[f] += int(s[f])
+    for cd, v in (sc.get("by_sgg") or {}).items():
+        if v["state"] not in ("done", "building"):
+            continue
+        survey[(v["tenant_id"], _cur_code(cd))] = v
     now = now_iso()
 
     items = []
@@ -220,7 +222,8 @@ async def _items(conn, tenant: str | None) -> list[dict]:
         res_sets = sorted({x["set"] for x in rs if x["set"] and x["n"]})
         parcel = any(_has_parcel(x["d"]["modules"]) for x in rs if x["d"]["stage"] != "draft")
         sv_here = survey.get((t, sgg)) if (parcel and sgg) else None
-        real = bool(n_det) or bool(sv_here and sv_here["n_all"])
+        busy = bool(sv_here) and sv_here["state"] == "building"
+        real = bool(n_det) or bool(sv_here and (busy or sv_here["suspect"]))
         live = [x["d"]["stage"] for x in rs if x["d"]["stage"] != "draft"]
         if real and "ga" in live:
             stage = STAGE_RUN
@@ -232,16 +235,19 @@ async def _items(conn, tenant: str | None) -> list[dict]:
         det_asof = scale.get("as_of") if isinstance(scale, dict) else None
         unit = _unit_of(res_sets[0]) if res_sets else "건"
         reg = by.get(sgg) if sgg else None
+        none_note = "이 서비스·지역의 실태조사 결과 없음"
+        sv_note = "집계 중" if busy else (None if sv_here else none_note)
         m = {
             "detected": _metric("detected", n_det if n_det else None, unit=unit, as_of=det_asof,
                                 note=None if n_det else "첫 결과 전"),
-            "field_check": _metric("field_check", sv_here["fc"] if sv_here else None, as_of=now,
-                                   note=None if sv_here else "이 서비스·지역의 실태조사 결과 없음"),
-            "review_pending": _metric("review_pending", sv_here["rp"] if sv_here else None, as_of=now,
-                                      note=None if sv_here else "이 서비스·지역의 실태조사 결과 없음"),
+            "suspect": _metric("suspect", sv_here["suspect"] if sv_here else None, as_of=(sv_here or {}).get("as_of") or now,
+                               note=sv_note or "의심 후보 · 검수 전 · 위법 판정 아님"),
+            "field_check": _metric("field_check", sv_here["field_check"] if sv_here else None, as_of=now, note=sv_note),
+            "review_pending": _metric("review_pending", sv_here["review_pending"] if sv_here else None, as_of=now, note=sv_note),
         }
         items.append({"card": cid, "card_name": facts["cards"].get(cid), "sgg_cd": sgg,
                       "region_name": (reg or {}).get("full") or _name(lead["region_name"]), "tenant": t, "stage": stage,
+                      **({"survey_state": sv_here["state"]} if sv_here else {}),
                       "imagery": _imagery_of(facts["img"], sgg), "metrics": m,
                       "deploy_ids": [x["d"]["id"] for x in rs],
                       "_sets": set(res_sets), "_survey": bool(sv_here), "_rank": min(STAGE_RANK.get(s, 5) for s in live) if live else 9,
@@ -285,7 +291,7 @@ def _filter(items: list[dict], tenant: str | None, region: str | None, card: str
                 continue
         o = {k: v for k, v in it.items() if not k.startswith("_")}
         if tenant is None:                     # 게스트: 기관 자료(실태조사·신고)는 값 없이
-            o["metrics"] = {**o["metrics"], **{k: _metric(k, None, note="로그인 후 확인") for k in ("field_check", "review_pending", "reports")}}
+            o["metrics"] = {**o["metrics"], **{k: _metric(k, None, note="로그인 후 확인") for k in ("suspect", "field_check", "review_pending", "reports")}}
         out.append(o)
     return out
 

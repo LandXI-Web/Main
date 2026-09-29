@@ -39,9 +39,9 @@ export async function loadGpus() {
 }
 export async function loadInfra() {
   const [q, st, n, m, lm, hl, j] = await Promise.all([
-    safe('/ops/queues'), safe('/ops/storage'), safe('/ops/nodes'), safe('/ops/models'), safe('/agent/models'), safe('/health'), safe('/jobs?limit=500'),
+    safe('/ops/queues'), safe('/ops/storage'), safe('/ops/nodes'), safe('/ops/models'), safe('/ops/llm/models'), safe('/health'), safe('/jobs?limit=500'),
   ]);
-  if (q) S.queues = q; if (st) S.storage = st; if (n) S.nodes = n; if (m) S.models = m.items || []; S.llm = lm; if (hl) S.health = hl;
+  if (q) S.queues = q; if (st) S.storage = st; if (n) S.nodes = n; if (m) S.models = m.items || []; if (lm) S.llm = lm; if (hl) S.health = hl;
   if (j) {
     const since = Date.now() - 24 * 3600 * 1000;
     const items = j.items || [];
@@ -173,7 +173,20 @@ export const DIM = {
   storage_gb: { ko: '저장', unit: 'GB', k: 1, d: 0 },
   gpu_s_month: { ko: 'GPU 시간', unit: 'h', k: 1 / 3600, d: 1 },
   area_km2_month: { ko: '분석 면적', unit: '㎢', k: 1, d: 0 },
+  // AI 도우미 사용량(토큰 · 이번 달) — usage_events llm_tokens 합(서버 /ops/tenants 한 출처) · 고리 대신 기관 사용량 표 한 줄(ring:false)
+  llm_tokens_month: { ko: 'AI 도우미 사용량', unit: '토큰', k: 1, d: 0, ring: false },
 };
+export const RING_DIMS = Object.keys(DIM).filter((k) => DIM[k].ring !== false);
+/** AI 도우미 사용량 표 — 기관 화면과 같은 기관(서비스 사용자) + LX. 값 = /ops/tenants dims.llm_tokens_month */
+export function llmUsage() {
+  const users = S.tenants.filter((t) => t.kind === 'user').map((t) => t.id);
+  const rows = S.usage.filter((u) => users.includes(u.tenant_id) || u.tenant_id === 'lx').map((u) => {
+    const v = u.dims?.llm_tokens_month || {};
+    return { id: u.tenant_id, name: tenantName(u.tenant_id), used: v.used || null, hard: v.hard ?? null, soft: v.soft ?? null, state: dimState(v),
+      scope: S.tenants.find((t) => t.id === u.tenant_id)?.scope };
+  });
+  return rows.sort((a, b) => (a.id === 'lx') - (b.id === 'lx') || (a.scope === b.scope ? a.name.localeCompare(b.name, 'ko') : a.scope === 'local' ? -1 : 1));
+}
 export const POLICY = { notify: '알림', queue_low: '우선순위 낮춤', reject: '거절' };
 export function dimState(v) {
   const used = v?.used?.value;
@@ -192,13 +205,21 @@ export function orgs() {
   }).sort((a, b) => (a.scope === b.scope ? a.name.localeCompare(b.name, 'ko') : a.scope === 'local' ? -1 : 1));
 }
 
-/* ── 언어 모델 한 줄 ─────────────────── */
-export function llmState() {
+/* ── 언어 모델 — 모델별 줄(서버 GET /ops/llm/models 한 출처 · 운영 도구 ops_models 와 같은 값) ── */
+export function llmRows() {
   const L = S.llm;
-  if (!L || !L.items) return '연결 없음';
-  const act = L.items.find((x) => x.name === L.active) || L.items[0];
-  if (!act || act.error) return L.items.some((x) => !x.error && x.resident) ? '대기' : '연결 없음';
-  return act.probe?.value != null ? '응답 중' : '대기';
+  if (!L || !L.items) return null;
+  return {
+    items: L.items.map((x) => ({ slot: x.slot, role: x.role, name: x.name, on: !!x.on, gpu: x.gpu, startable: x.slot === 'brain' || x.slot === 'router' })),
+    on: L.on_n?.value ?? L.items.filter((x) => x.on).length,
+    promo: L.promo?.state || '연결 전',
+  };
+}
+/** 꺼져 있을 때만 켠다(서버가 전력 · GPU 점유를 다시 검사) — 끄기 · 재시작은 없다 */
+export async function startLlm(slot) {
+  const r = await api('/ops/llm/start', { method: 'POST', body: { slot } });
+  const lm = await safe('/ops/llm/models'); if (lm) S.llm = lm;
+  return r;
 }
 
 /* ── 작업 이름 ─────────────────────── */

@@ -1,6 +1,6 @@
 /* 기관 뷰 — 카드 밀도 그리드(기관 · 저장 · GPU 시간 · 분석 면적 · 3링) + 시트(한도 조정 → 결재 요청). */
 import { drawer, toast, esc, nf, api, h } from './kit.js';
-import { S, DIM, POLICY, STATE_KO, dimState, orgs, loadUsage } from './data.js';
+import { S, DIM, RING_DIMS, POLICY, STATE_KO, dimState, orgs, loadUsage, llmUsage } from './data.js';
 
 const R = 44, C = 2 * Math.PI * R;
 /** 사용량 글자 — 저장은 1 GB 아래면 MB 로(0.007 GB → 7 MB) · 나머지는 항목 단위 */
@@ -55,7 +55,9 @@ function sheet(o, onDone) {
     const dims = {};
     for (const r of body.querySelectorAll('.qs-r')) {
       const k = r.dataset.k, D = DIM[k];
-      const s = parseFloat(r.querySelector('[name=soft]').value), hd = parseFloat(r.querySelector('[name=hard]').value);
+      const sv = r.querySelector('[name=soft]').value.trim(), hv = r.querySelector('[name=hard]').value.trim();
+      if (!sv && !hv && DIM[k].ring === false) continue;            // 한도 미설정 항목(AI 도우미 사용량)은 비워 두면 그대로
+      const s = parseFloat(sv), hd = parseFloat(hv);
       if (!(s >= 0) || !(hd > 0) || s > hd) { err.textContent = `${D.ko}: 소프트는 하드보다 클 수 없습니다`; r.querySelector('[name=soft]').focus(); return; }
       dims[k] = { soft: +(s / D.k).toFixed(4), hard: +(hd / D.k).toFixed(4), policy: r.querySelector('[name=policy]').value };
     }
@@ -71,18 +73,32 @@ function sheet(o, onDone) {
 }
 
 export function mountTenants(root) {
-  root.innerHTML = `<div class="v v-org" id="org"></div>`;
+  root.innerHTML = `<div class="v v-org" id="org"></div>
+    <section class="t-card llmu" aria-label="AI 도우미 사용량">
+      <header class="llmu-h"><h2>AI 도우미 사용량</h2><span class="t-chip">이번 달</span></header>
+      <table class="llmu-t"><thead><tr><th>기관</th><th class="num">사용량</th><th class="num">한도</th></tr></thead><tbody id="llmu"></tbody></table>
+    </section>`;
   const grid = root.querySelector('#org');
+  const llmu = root.querySelector('#llmu');
+  function paintLlm() {
+    llmu.innerHTML = llmUsage().map((r) => {
+      const u = r.used?.value;
+      return `<tr data-id="${esc(r.id)}" data-st="${r.state}"><th scope="row">${esc(r.name)}</th>
+        <td class="num"><b data-metric="AI 도우미 사용량" data-tenant="${esc(r.id)}" data-v="${u ?? ''}">${u == null ? '—' : nf(u, 0)}</b><small> 토큰</small></td>
+        <td class="num">${r.hard == null ? '<small>한도 미설정</small>' : `${nf(r.hard, 0)}<small> 토큰</small>`}</td></tr>`;
+    }).join('');
+  }
   function paint() {
     const list = orgs();
     grid.style.setProperty('--n', list.length);
     grid.innerHTML = list.map((o) => `
       <section class="t-card org" data-id="${esc(o.id)}">
         <header><h2>${esc(o.name)}</h2><span class="t-chip" data-lv="${o.state === 'over' ? 'warn' : o.state === 'ok' ? 'wait' : ''}" data-st="${o.state}">${STATE_KO[o.state]}</span></header>
-        <div class="rings">${Object.keys(DIM).map((k) => ring(k, o.dims[k])).join('')}</div>
+        <div class="rings">${RING_DIMS.map((k) => ring(k, o.dims[k])).join('')}</div>
         <button class="t-btn t-btn--2 adj" type="button">한도 조정</button>
       </section>`).join('');
     requestAnimationFrame(() => requestAnimationFrame(() => grid.querySelectorAll('.fg').forEach((c) => c.setAttribute('stroke-dashoffset', c.dataset.off))));
+    paintLlm();
   }
   grid.addEventListener('click', (e) => {
     const card = e.target.closest('.org'); if (!card) return;

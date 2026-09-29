@@ -1,17 +1,17 @@
 /* K12 chart.js — 차트(데이터 잉크). 막대 · 선. 축 라벨 14 · 격자 0 · 범례 없음(라벨 직접) ·
    색 = 잉크, AI 결과 계열만 --ai(ai:true). 값은 숫자 또는 봉투.
-   bars(el, { items: [{ label, value }], ai, unit, max }) · line(el, { points: [{ label, value }], ai, unit }) */
+   bars(el, { items: [{ label, value }], ai, unit, max, lang })  · lang = 숫자 로캘(명령 바: 질문 언어) · line(el, { points: [{ label, value }], ai, unit }) */
 import { esc, isEnvelope, RM } from './util.js';
 import { nf } from './i18n.js';
 
 const v = (x) => (isEnvelope(x) ? x.value : x) ?? 0;
 
 /** 가로 막대(라벨 왼쪽 · 값 오른쪽 끝에 직접) — 반응형 HTML(SVG 없이 폭 따라감) */
-export function bars(el, { items = [], ai = false, unit = '', max, limit = 12 } = {}) {
+export function bars(el, { items = [], ai = false, unit = '', max, limit = 12, lang } = {}) {
   el.classList.add('k-bars'); el.classList.toggle('k-ai', ai);
   const list = items.slice(0, limit);
   const m = max ?? Math.max(1, ...list.map((i) => v(i.value)));
-  el.innerHTML = list.map((i) => `<div class="k-bar"><span class="k-bar-l">${esc(i.label)}</span><span class="k-bar-t"><i style="--w:${(v(i.value) / m) * 100}%"></i></span><span class="k-bar-v num">${esc(nf(v(i.value)))}${unit ? `<small>${esc(unit)}</small>` : ''}</span></div>`).join('');
+  el.innerHTML = list.map((i) => `<div class="k-bar"><span class="k-bar-l">${esc(i.label)}</span><span class="k-bar-t"><i style="--w:${(v(i.value) / m) * 100}%"></i></span><span class="k-bar-v num">${esc(nf(v(i.value), undefined, lang))}${unit ? `<small>${esc(unit)}</small>` : ''}</span></div>`).join('');
   if (!RM()) requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('is-in'))); else el.classList.add('is-in');
   return { el };
 }
