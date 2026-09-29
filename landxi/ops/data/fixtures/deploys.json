@@ -734,7 +734,7 @@
    "snapshot_current": null,
    "snapshot_prev": null,
    "year": 2025,
-   "status_history": "시연 한정",
+   "status_history": "예시 한정",
    "scale": {
     "value": 38,
     "unit": "count",
@@ -814,7 +814,7 @@
    "snapshot_current": null,
    "snapshot_prev": null,
    "year": 2026,
-   "status_history": "이식",
+   "status_history": "다른 지역에 적용",
    "scale": {
     "value": 0,
     "unit": "count",

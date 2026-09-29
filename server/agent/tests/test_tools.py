@@ -15,8 +15,14 @@ CONTRACT_TOOLS = {"catalog_layers", "results_stats", "results_features", "parcel
 CLIENT = {"map_on", "map_arrive", "map_flyto", "map_frame", "drawer_open", "parcel_card"}
 
 
+LEDGER_TOOLS = {"ledger_ingest", "ledger_match", "ledger_rule", "ledger_findings", "parcel_lookup"}     # S-10(runner 가 등록)
+SUMMARY_TOOLS = {"summary_lookup"}                                                                      # fix-agent-scope(runner 가 등록)
+
+
 def test_tool_names_are_contract_names():
-    assert set(registry.SPECS) == CONTRACT_TOOLS | CLIENT
+    from agent import runner  # noqa: F401
+    assert set(registry.SPECS) == CONTRACT_TOOLS | CLIENT | LEDGER_TOOLS | SUMMARY_TOOLS
+    assert from_contract.endpoint("summary_lookup")["path"] == "/api/v1/summary"
     for n in CONTRACT_TOOLS:
         ep = from_contract.endpoint(n)
         assert ep["path"].startswith("/api/v1/"), (n, ep)

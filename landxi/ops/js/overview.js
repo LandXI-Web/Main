@@ -61,7 +61,7 @@ async function surveyCounts() {
   try {
     const d = await (await fetch('/landxi/data/survey/namwon-parcel-emd-summary.json', { cache: 'no-store' })).json();
     const n = d?.totals?.suspects;
-    if (n) return { counts: { open: n, assigned: 0, inspected: 0, closed: 0, dismissed: 0 }, total: { value: n, unit: 'count', basis: 'inferred', as_of: '2026-09-24', source: 'survey/namwon-parcel-emd-summary.json', note: '상태 저장 전 — 파일 합계 = 전부 미조치 · AI 추론 · 검수 전' }, basis: 'inferred', source: 'survey/namwon-parcel-emd-summary.json', live: false };
+    if (n) return { counts: { open: n, assigned: 0, inspected: 0, closed: 0, dismissed: 0 }, total: { value: n, unit: 'count', basis: 'inferred', as_of: '2026-09-24', source: 'survey/namwon-parcel-emd-summary.json', note: '상태 저장 전 — 파일 합계 = 전부 미조치 · AI 추론 · 결과 확인 전' }, basis: 'inferred', source: 'survey/namwon-parcel-emd-summary.json', live: false };
   } catch { /* */ }
   return null;
 }
@@ -107,7 +107,7 @@ export async function mountOverview(frame, { map = null, fly = null, mapEl = nul
   for (const index of [0, 1]) {
     const host = h('div', { class: 'ov-gpu', 'data-gpu': index });
     const r = ring(host, { size: 64, stroke: 6, label: `GPU${index} VRAM` }); r.center.append(h('b', { 'data-k': 'vpct' }, '—'));
-    host.append(h('div', {}, h('div', { class: 'og-lbl' }, `GPU ${index} · A6000`), h('div', {}, h('span', { class: 'og-num', 'data-k': 'util' }, '—'), h('span', { class: 'og-lbl', title: 'nvidia-smi -lms 100 · 최근 10 s 추세(util_ma10) — 인프라 관제 GPU 행 큰 숫자와 같은 필드' }, ' 이용률(10 s 추세) · '), h('span', { class: 'og-num', 'data-k': 'pw' }, '—')),
+    host.append(h('div', {}, h('div', { class: 'og-lbl' }, `GPU ${index} · A6000`), h('div', {}, h('span', { class: 'og-num', 'data-k': 'util' }, '—'), h('span', { class: 'og-lbl', title: 'nvidia-smi -lms 100 · 최근 10 s 추세(util_ma10) — 인프라 GPU 행 큰 숫자와 같은 값' }, ' 이용률(10 s 추세) · '), h('span', { class: 'og-num', 'data-k': 'pw' }, '—')),
       h('div', { class: 'og-num-s', 'data-k': 'why' })));
     nodeBox.append(host); gpuRings.set(index, { r, host });
   }

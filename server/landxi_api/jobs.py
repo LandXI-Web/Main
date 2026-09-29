@@ -93,6 +93,82 @@ async def active_workers(pool: str) -> list[str]:
 SHARD_CAP = {"infer": 20000, "reinfer": 120000, "index": 120, "survey": 5000, "join": 5000, "tile": 2, "train": 1}
 TRAIN_EPOCHS_MAX = 50
 
+# 실시간 소범위 분석(fix-xi-live · XI맵 읍면동) — 범위 천장은 서버가 강제한다(클라이언트 max_km2 는 이보다 클 수 없다).
+# 시군 전역 같은 큰 범위는 실시간으로 받지 않는다(aoi_too_large) — 끝난 전역 작업은 '전체 범위 기록 보기'로 다시 본다.
+INFER_MAX_KM2 = 150.0          # 가장 넓은 읍면동급(남원 산내면 ≈ 104㎢) + 여유 [추정 초기값]
+# options.live=true: 칩 수가 LIVE_MAX_SHARDS 를 넘지 않도록 서버가 해상도(upsample)를 한 단계씩 낮춰 계획한다.
+# 2026-09-29 실측(A6000 1장 · aerial25/best · 25cm VRT · 대기 없음): 원 해상도 12–16칸/s · 0.75 ≈ 5.5칸/s(운봉읍 756칸 136 s) ·
+# 0.5 ≈ 4.9칸/s(산내면 599칸 ≈ 120 s) — 해상도를 낮출수록 창 읽기가 병목. 800칸 × 0.75 ≈ 145 s + 마무리 → 읍면동 ≤ 3분 목표.
+LIVE_MAX_SHARDS = 800
+LIVE_LADDER = (1.0, 0.75, 0.5, 0.35, 0.25)
+
+
+def normalize_aoi(aoi: dict | None) -> dict | None:
+    """AOI(GeoJSON Polygon | MultiPolygon | Feature | FeatureCollection) → 한 Polygon(4326).
+    화면은 벡터 타일 조각(읍면동 경계가 타일마다 잘려 온다)을 MultiPolygon 으로 보낸다 — 조각을 녹여 합치고,
+    섬처럼 떨어진 부분이 남으면 가장 큰 면(jobs.aoi 열 = POLYGON)을 쓴다."""
+    if not aoi:
+        return aoi
+    from shapely.geometry import Polygon
+    from shapely.ops import unary_union
+    t = aoi.get("type")
+    if t == "Feature":
+        return normalize_aoi(aoi.get("geometry"))
+    if t == "FeatureCollection":
+        return normalize_aoi({"type": "GeometryCollection", "geometries": [f.get("geometry") for f in aoi.get("features") or [] if f.get("geometry")]})
+    if t == "Polygon":
+        g = shape(aoi)
+        if g.is_valid:
+            return aoi
+        g = g.buffer(0)
+    else:
+        try:
+            g = shape(aoi)
+        except Exception as e:
+            raise ApiError("bad_request", f"aoi 형식: {e}") from None
+        eps = 1e-6                                      # ≈ 0.1 m — 타일 경계 이음새만 녹인다
+        parts = [p for p in getattr(g, "geoms", [g]) if p.geom_type in ("Polygon", "MultiPolygon")]
+        g = unary_union([p.buffer(eps, join_style=2) for p in parts]).buffer(-eps, join_style=2)
+    polys = [p for p in getattr(g, "geoms", [g]) if isinstance(p, Polygon) and not p.is_empty]
+    if not polys:
+        raise ApiError("bad_request", "aoi 가 비어 있습니다")
+    p = max(polys, key=lambda x: x.area)
+    return mapping(Polygon(p.exterior.coords, [i.coords for i in p.interiors]))
+
+
+def fit_upsample(model, img) -> float:
+    """모델이 배운 해상도에 영상을 맞춘다(드론 1.4cm → 차량 모델 2cm = 0.68) — 영상이 더 거칠면 1(키우지 않음)."""
+    try:
+        g_img, g_m = float(img["gsd_m"] or 0), float(model["gsd_trained_m"] or 0)
+    except (KeyError, TypeError, ValueError):
+        return 1.0
+    if not g_img or not g_m:
+        return 1.0
+    f = g_img / g_m
+    return max(0.25, round(f, 2)) if f < 0.9 else 1.0
+
+
+_live_seen: dict[str, tuple[float, float]] = {}      # 견적에서 고른 해상도(10분) — 제출 때 사다리를 다시 오르내리지 않는다(실행 → 첫 결과 단축)
+
+
+def live_plan(meta: dict, aoi, fp_parts, chip: int, overlap, fit: float, key: str = ""):
+    """options.live — 칩 수 ≤ LIVE_MAX_SHARDS 가 되는 가장 높은 해상도. → (upsample, grid, shards)"""
+    from workers.tiling import shards as mk_shards
+    ladder = [fit] + [u for u in LIVE_LADDER if u < fit]
+    hit = _live_seen.get(key)
+    if hit and time.time() - hit[1] < 600 and hit[0] in ladder:
+        ladder = ladder[ladder.index(hit[0]):]
+    grid = sh = None
+    for u in ladder:
+        grid, sh = mk_shards(meta, aoi, chip=chip, overlap=overlap, upsample=u, footprint_src=fp_parts)
+        if len(sh) <= LIVE_MAX_SHARDS:
+            if key:
+                _live_seen[key] = (u, time.time())
+                if len(_live_seen) > 256:
+                    _live_seen.pop(next(iter(_live_seen)))
+            return u, grid, sh
+    return ladder[-1], grid, sh
+
 
 async def _quote_train_tile(p: Principal, body: dict, kind: str) -> dict:
     """kind train(학습 · GPU 임대) · tile(영상 등록 타일 · CPU) 견적 — 모델 추론 견적과 같은 모양."""
@@ -170,7 +246,9 @@ async def build_quote(p: Principal, body: dict) -> dict:
         reasons.append("imagery_forbidden")
     if model and img and model["input"] and img["kind"] not in (model["input"] or []):
         reasons.append("model_input_mismatch")
-    aoi = body.get("aoi")
+    aoi = normalize_aoi(body.get("aoi"))
+    live = bool(opts.get("live")) and kind == "infer"
+    plan_opts: dict = {}
     if kind == "reinfer" and not aoi and img and img["fp"]:
         aoi = None      # footprint 전체
     area = None
@@ -203,14 +281,27 @@ async def build_quote(p: Principal, body: dict) -> dict:
             area, area_src = aoi_area(aoi)
             if img["fp"] and not shape(img["fp"]).intersects(g):
                 reasons.append("aoi_outside_footprint")
-            if kind == "infer" and area > float(opts.get("max_km2", 5)):
+            # 범위 천장: 클라이언트가 보낸 max_km2 와 서버 천장(INFER_MAX_KM2) 중 작은 값 — 클라이언트가 늘릴 수 없다
+            if kind == "infer" and area > min(float(opts.get("max_km2", 5)), INFER_MAX_KM2):
                 reasons.append("aoi_too_large")
         elif img["fp"]:
             area, area_src = aoi_area(img["fp"])
+            if kind == "infer" and area > INFER_MAX_KM2:
+                reasons.append("aoi_too_large")         # 범위 없이 영상 전체 — 같은 천장
         from workers.tiling import shards as mk_shards
         if "aoi_outside_footprint" not in reasons and "aoi_too_large" not in reasons:
-            grid, sh = await run_in_threadpool(mk_shards, meta, aoi, chip=chip, overlap=opts.get("overlap"),
-                                               upsample=float(opts.get("upsample", 1) or 1), footprint_src=fp_parts)
+            if live and aoi:
+                import hashlib
+                lkey = hashlib.sha1(json.dumps([img["id"], aoi, chip, opts.get("overlap"), model["id"] if model else None],
+                                               sort_keys=True).encode()).hexdigest()
+                up, grid, sh = await run_in_threadpool(live_plan, meta, aoi, fp_parts, chip, opts.get("overlap"),
+                                                       fit_upsample(model, img) if model else 1.0, lkey)
+                plan_opts = {"upsample": up}            # 제출 때 서버가 고른 해상도를 작업 옵션에 남긴다(스케줄러가 같은 계획을 만든다)
+                if len(sh) > LIVE_MAX_SHARDS:
+                    reasons.append("too_large")
+            else:
+                grid, sh = await run_in_threadpool(mk_shards, meta, aoi, chip=chip, overlap=opts.get("overlap"),
+                                                   upsample=float(opts.get("upsample", 1) or 1), footprint_src=fp_parts)
             shards_n = len(sh)
             tile_src = f"workers.tiling(chip {chip} · overlap {grid.overlap}px(원본) · upsample {grid.upsample:g} · gsd {meta['res']:.4f})"
     pool = pool_of(model) if model else "cpu"
@@ -254,7 +345,9 @@ async def build_quote(p: Principal, body: dict) -> dict:
         "allowed": not reasons, "reasons": reasons, "pool": pool, "kind": kind, "demo": demo,
         "power_budget": await power_budget() if pool != "cpu" else None,
         "_aoi": aoi, "_tenant": tenant, "_model": dict(model) if model else None, "_img": dict(img) if img else None,
-        "_adapter": adapter_id,
+        "_adapter": adapter_id, "_opts": plan_opts or None,
+        **({"upsample": plan_opts["upsample"]} if plan_opts else {}),     # live: 서버가 고른 해상도(화면은 예상 시간 기록 대조에만 쓴다)
+        **({"aoi": aoi} if (live and aoi) else {}),                        # live: 서버가 녹여 합친 범위(화면 프레임 · 타일 이음새 없는 한 면)
     }
 
 
@@ -333,10 +426,34 @@ def _public_quote(q: dict) -> dict:
     return {k: v for k, v in q.items() if not k.startswith("_") and k not in ("kind", "demo") and not (k == "power_budget" and v is None)}
 
 
+async def prewarm(model_id: str | None, pool: str) -> list[str]:
+    """실시간 분석 견적(options.live) 때 GPU 워커에 모델 적재를 미리 부탁한다 — 실행 → 첫 결과 ≤ 10 s.
+    이미 올라 있는 워커는 건너뛴다. 적재는 워커가 전력 규칙(다른 GPU 고부하면 미룸)을 확인한 뒤에 한다(gpu_worker.control)."""
+    if not model_id or pool == "cpu":
+        return []
+    r = await redis()
+    sent = []
+    for w in await active_workers(pool):
+        try:
+            have = json.loads(await r.hget(f"worker:{w}:vram", "models") or "[]")
+        except Exception:
+            have = []
+        if model_id in have:
+            continue
+        await r.xadd(f"control:{w}", {"action": "load", "model_id": model_id, "by": "quote.live", "at": now_iso()}, maxlen=1000)
+        sent.append(w)
+    return sent
+
+
 @router.post("/jobs/quote")
 async def quote(body: dict, request: Request):
     p = require(principal(request))
     q = await build_quote(p, body)
+    if q.get("allowed") and (body.get("options") or {}).get("live") and q.get("_model"):
+        try:
+            await prewarm(q["_model"].get("id"), q.get("pool") or "cpu")
+        except Exception:
+            pass                                        # 미리 적재는 보조 — 실패해도 견적은 그대로
     return _public_quote(q)
 
 

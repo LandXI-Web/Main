@@ -4,6 +4,7 @@ import * as K from '../kit/index.js';
 import { nf } from '../kit/i18n.js';
 import { h, esc, isDev, session, bboxOf } from '../kit/util.js';
 import { sourceSpec } from '../../xi/engine/sources.js';
+import { summary, total, labelOf, pick } from '../lx-console/summary.js';
 import { D, SAMPLE, CLS, probeS2, loadRules, loadQueue, parcel, aiLayersAt, loadFeedback, loadRuleStats, verdictMap, ruleStat, judge, unTag, suggest, requestThreshold, drawSample, forgetSample, regionFor, bboxOfPoints, inRegion } from './data.js';
 
 const Q = new URLSearchParams(location.search);
@@ -68,10 +69,13 @@ function skeleton() {
   T.skeleton = T.skeleton || Math.round(performance.now());
 }
 
-/** HUD — 규칙 막대와 같은 봉투(by_rule[규칙] · basis inferred → '~')를 첫 그림부터 넘긴다 */
-let hudAt = 0;
+/** HUD — 현장 확인 필요(이 지역) = 대표 수치 한 출처(summary field_check · XI맵 · 서비스 상세와 같은 값).
+    규칙별 수는 서랍 막대에만(다른 이름). summary 를 못 받으면 '—' + 불러오지 못함(규칙 하나의 수를 이 이름으로 쓰지 않는다) */
+let hudAt = 0, hudEnv;
 function setHud() {
-  hud.set(any() ? byRule[rule] || null : null);
+  if (hudEnv === undefined) hud.loading();
+  else if (hudEnv === null) { hud.empty(); const n = hudEl.querySelector('.k-big-none'); if (n) n.textContent = '불러오지 못했습니다'; }
+  else hud.set(hudEnv);
   if (hudAt) return;
   hudAt = performance.now();
   /* 사진이 깔린 뒤에만 연다(상한 없음): 바탕 사진 타일 ≥ 4장 + 카메라가 지역에 도착(비행 끝 · 멈춤 · 줌 ≥ 11) + 보이는 타일 다 옴. 그 전에는 진행 막대 1개 */
@@ -475,8 +479,10 @@ const count = (id) => byRule[id]?.value || 0;
 rule = Q.get('rule') && D.byId[Q.get('rule')] ? Q.get('rule') : [...D.rules].sort((a, b) => count(b.id) - count(a.id))[0]?.id;
 const aggAny = Object.values(byRule).some((e) => (e?.value || 0) > 0);
 /* 이 규칙의 정밀도 봉투(stats · lx) 한 건만 먼저 — 나머지 5건은 첫 보드 뒤(지연) */
-if (rule) await loadRuleStats([rule]);
-hudLabel.textContent = `현장 확인 필요 · ${region?.name || ''}`.replace(/ · $/, '');
+const [sum] = await Promise.all([summary({ region: region?.sgg_cd || null }), rule ? loadRuleStats([rule]) : null]);
+hudEnv = sum ? total(sum, 'field_check', region?.sgg_cd ? pick({ sgg: region.sgg_cd }) : null) ?? null : null;
+K.devlog('현장 확인 필요', sum ? `summary ${hudEnv?.value ?? '—'}` : 'summary 없음');
+hudLabel.textContent = `${labelOf(sum, 'field_check')} · ${region?.name || ''}`.replace(/ · $/, '');
 setHud();
 title(); board(); T.board = Math.round(performance.now());
 S.fresh(new Date());

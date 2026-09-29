@@ -60,7 +60,7 @@ test('P-1 이식: card-change × kgz-land → POST /deploys → draft 셀 S1 도
   await expect(cell).toHaveAttribute('data-stage', 'draft');
   await expect(page.locator('.pn-head h2')).toContainText('소쿨룩', { timeout: 8000 });
   await expect(page.locator('.mini-cap')).toContainText('결과 0 · 첫 분석 대기');
-  await expect(page.locator('.pn-head')).toContainText('이식 · dp-nw-change');
+  await expect(page.locator('.pn-head')).toContainText('다른 지역에 적용');
 });
 
 test('approval_required: canary → ga 는 승인 1건 뒤에만(409 → 승인 → ga)', async ({ page }) => {

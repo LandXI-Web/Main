@@ -14,8 +14,8 @@ import { logout, homeFromPath } from './auth-gate.js';
 import { drawer } from './panel.js';
 
 const HOME = {
-  'lx-console': '생산 콘솔', 'lx-ingest': '생산 콘솔', 'lx-train': '생산 콘솔', 'lx-review': '생산 콘솔', 'lx-deploy': '생산 콘솔',
-  'ops-core': '관제', 'ops-infra': '관제', sales: '서비스 카탈로그', 'xi-clean': 'XI맵', 'help-my': '지원',
+  'lx-console': 'LX 직원 대시보드', 'lx-ingest': 'LX 직원 대시보드', 'lx-train': 'LX 직원 대시보드', 'lx-review': 'LX 직원 대시보드', 'lx-deploy': 'LX 직원 대시보드',
+  'ops-core': 'LX 관리자 대시보드', 'ops-infra': 'LX 관리자 대시보드', sales: '서비스 카탈로그', 'xi-clean': 'XI맵', 'help-my': '지원',
 };
 const ICON = {
   home: '<path d="M3 9.5L10 4l7 5.5V16H3z"/>', map: '<path d="M3 5l4.5-1.5 5 2L17 4v11l-4.5 1.5-5-2L3 16z M7.5 3.5v11 M12.5 5.5v11"/>',

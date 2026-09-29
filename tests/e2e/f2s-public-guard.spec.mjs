@@ -73,7 +73,7 @@ for (const [name, url, opt] of [
     expect(r.drawer).toBe(true); expect(r.card).toBe(true);
     expect(r.setMode === 'read' || r.setMode === 'throw').toBe(true);
     expect(r.drawerBridge).toBe('throw'); expect(r.cardBridge).toBe('throw');
-    expect(r.env).toContain('AI 추론 · 검수 전');          // 시민 화면 봉투 통일(v1.1-2)
+    expect(r.env).toContain('AI 추론 · 결과 확인 전');          // 시민 화면 봉투 통일(v1.1-2)
     expect(reqs).toEqual([]);
     expect(errs).toEqual([]);
   });

@@ -11,7 +11,7 @@ const short = (n) => {
   return id;
 };
 export function lineageBand(host) {
-  const band = h('div', { class: 'lin', role: 'list', 'aria-label': '계보' }); host.append(band);
+  const band = h('div', { class: 'lin', role: 'list', 'aria-label': '버전 이력' }); host.append(band);
   let sig = '';
   const fill = (chain, stagger) => {
     band.replaceChildren(...chain.map((n, i) => {

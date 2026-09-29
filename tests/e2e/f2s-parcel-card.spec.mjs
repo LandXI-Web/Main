@@ -64,7 +64,7 @@ test('R1 A 1위(아영면 아곡리 1053-12) — 같은 행 높이 · 왜 의심
   const s1 = await page.evaluate(() => ({ ep: document.getElementById('pcard2').dataset.ep, e: window.__xi.scrub.S.e, mode: document.getElementById('scrub').dataset.mode, eps: window.__xi.scrub.S.epochs.map((e) => e.id), chip: document.getElementById('hud-chip').dataset.src, rows: document.querySelector('#pcard2 .sv-pair').dataset.rows }));
   console.log('2025', JSON.stringify({ grow, s1, scrub0 }));
   expect(grow.every((d) => d === 500)).toBe(true);
-  expect(await page.evaluate(() => document.querySelector('#pcard2 .sv-rcol').textContent)).toContain('2025 A02 판독 없음');   // 이 필지는 2025 판독 없음 — 결손 정직
+  expect(await page.evaluate(() => document.querySelector('#pcard2 .sv-rcol').textContent)).toContain('2025 A02 AI 분석 없음');   // 이 필지는 2025 판독 없음 — 결손 정직
   await page.click('#pcard2 .sv-ep input[value="2023"]');
   const grow23 = await page.evaluate(() => document.getAnimations().filter((a) => a.effect?.target?.closest?.('#pcard2 .sv-bar')).map((a) => a.effect.getTiming().duration));
   expect(grow23.length).toBeGreaterThan(0); expect(grow23.every((d) => d === 500)).toBe(true);   // 막대 500 재성장

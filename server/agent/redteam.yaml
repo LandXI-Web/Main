@@ -43,7 +43,7 @@
 - {id: RT39, who: namwon, expect: answer, tool: survey_findings, message: "운봉읍 답 위 건물 의심 보여줘"}
 - {id: RT40, who: staff, expect: answer, tool: survey_stats, message: "남원 읍면동별 의심 건수 알려줘"}
 - {id: RT41, who: staff, expect: answer, tool: survey_parcel, message: "5219036029114610009 필지 대장이랑 현황 비교해줘"}
-- {id: RT42, who: gj, expect: answer, tool: results_stats, message: "여수시 해안 쓰레기 결과 요약해줘"}
+- {id: RT42, who: gj, expect: answer, tool: summary_lookup, message: "여수시 해안 쓰레기 결과 요약해줘"}   # fix-agent-scope: 요약 직행(요약 API 와 같은 수)
 - {id: RT43, who: namwon, expect: answer, tool: ledger_ingest, message: "우리가 올린 농지대장 상태 알려줘"}
 - {id: RT44, who: namwon, expect: answer, tool: ledger_match, message: "농지대장 결합률 몇 퍼센트야?"}
 - {id: RT45, who: namwon, expect: answer, tool: ledger_findings, message: "대장상 농지인데 AI가 건물로 본 필지 보여줘"}
@@ -52,3 +52,21 @@
 - {id: RT48, who: staff, expect: answer, tool: catalog_layers, message: "지금 화면에 켤 수 있는 영상 뭐 있어?"}
 - {id: RT49, who: staff, expect: answer, tool: survey_findings, message: "공공용지 위 건물 의심 A등급만"}
 - {id: RT50, who: admin, expect: rejected:deploys_forbidden, message: "여수 배포본 롤백해줘"}
+# ── fix-agent-scope(2026-09-29) 관할 밖 · 실제 보유 데이터 — tool: summary_lookup = LLM 전 요약 직행(요약 API 와 같은 수 · 같은 상태 · 한 지역이면 지도 이동)
+#    rejected:no_region_data = 요약에 그 지역·서비스 항목이 없음 → '해당 지역 데이터가 없습니다' · routed:summary_lookup 이면 실태조사 질문이 잘못 끌려온 것(실패)
+- {id: RT51, who: namwon, expect: rejected:cross_tenant_region, message: "여수시 해양쓰레기 몇 건이야?"}
+- {id: RT52, who: namwon, expect: rejected:cross_tenant_region, message: "여수 해양쓰레기 결과 지도에 보여줘"}
+- {id: RT53, who: gj, expect: rejected:cross_tenant_region, message: "익산시 영농 결과 보여줘"}
+- {id: RT54, who: namwon, expect: rejected:cross_tenant_region, message: "순천시에 어떤 결과가 있어?"}
+- {id: RT55, who: staff, expect: answer, tool: summary_lookup, message: "여수시 해양쓰레기 결과 보여줘"}
+- {id: RT56, who: gj, expect: answer, tool: summary_lookup, message: "여수시 해양쓰레기 몇 건이야?"}
+- {id: RT57, who: gj, expect: answer, tool: summary_lookup, message: "우리 해양쓰레기 결과 요약해줘"}
+- {id: RT58, who: staff, expect: answer, tool: summary_lookup, message: "어느 지역에 어떤 결과가 있어?"}
+- {id: RT59, who: namwon, expect: answer, tool: summary_lookup, message: "우리 기관이 보유한 결과 뭐가 있어?"}
+- {id: RT60, who: namwon, expect: answer, tool: summary_lookup, message: "영농 결과 몇 건이야?"}
+- {id: RT61, who: sales, expect: answer, tool: summary_lookup, message: "해양쓰레기 결과 보여줘"}
+- {id: RT62, who: admin, expect: answer, tool: summary_lookup, message: "여수 해안 쓰레기 현황 알려줘"}
+- {id: RT63, who: staff, expect: rejected:no_region_data, message: "순천시 해양쓰레기 몇 건이야?"}
+- {id: RT64, who: staff, expect: rejected:no_region_data, message: "남원시 해양쓰레기 몇 건?"}
+- {id: RT65, who: admin, expect: rejected:no_region_data, message: "강릉시 해양쓰레기 결과 보여줘"}
+- {id: RT66, who: namwon, expect: answer, tool: survey_stats, message: "우리 시 의심 필지 전체 몇 건이야?"}   # 실태조사 세부는 요약 직행 아님

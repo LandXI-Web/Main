@@ -131,7 +131,7 @@
    "id": "card-crowd",
    "name": "인파관리 서비스",
    "scope": "local",
-   "status": "준비 중",
+   "status": "첫 결과 전",
    "versions": [],
    "modules": {
     "core": [
@@ -240,7 +240,7 @@
    "id": "card-forest",
    "name": "산림·탄소 관리 서비스",
    "scope": "local",
-   "status": "준비 중",
+   "status": "첫 결과 전",
    "versions": [],
    "modules": {
     "core": [
@@ -259,7 +259,7 @@
    "id": "card-global-farm",
    "name": "농지 이용 실태 분석 (해외)",
    "scope": "global",
-   "status": "준비 중",
+   "status": "첫 결과 전",
    "versions": [
     "card-global-farm@0.1"
    ],
@@ -299,9 +299,9 @@
   },
   {
    "id": "card-global-disaster",
-   "name": "재해 피해 판독 (해외)",
+   "name": "재해 피해 AI 분석 (해외)",
    "scope": "global",
-   "status": "준비 중",
+   "status": "첫 결과 전",
    "versions": [
     "card-global-disaster@0.1"
    ],
@@ -343,7 +343,7 @@
    "model_ids": [
     "aerial25/best"
    ],
-   "changelog": "2023 25cm 항공 · 4클래스 판독"
+   "changelog": "2023 25cm 항공 · 4클래스 AI 분석"
   },
   {
    "id": "card-farm@2.1",
@@ -398,7 +398,7 @@
    "card_id": "card-global-disaster",
    "version": "v0.1",
    "model_ids": [],
-   "changelog": "EMS 판독 열람 · draft"
+   "changelog": "EMS AI 분석 열람 · draft"
   }
  ],
  "as_of": "2026-09-24T10:52:34.648+09:00"

@@ -932,7 +932,7 @@
     "basis": "measured",
     "as_of": "2026-09-24",
     "source": "Copernicus EMS EMSR798 AOI11 GRA v1 builtUpP",
-    "note": "EMS 판독 열람 — LX 추론 아님"
+    "note": "EMS 분석 열람 — LX 추론 아님"
    },
    "basis": "history",
    "approvals": [],
@@ -941,7 +941,7 @@
   }
  ],
  "as_of": "2026-09-24",
- "source": "F1-CONTRACT §6 시드 ID · dp-kgz-land-change-26 은 off 픽스처 전용(F1-C 이식 장면이 POST /deploys 로 만든다)",
+ "source": "F1-CONTRACT §6 시드 ID · dp-kgz-land-change-26 은 off 픽스처 전용(F1-C 다른 지역 적용 장면이 POST /deploys 로 만든다)",
  "fetched_at": "2026-09-24T09:00:00+09:00",
  "license": "LX 내부",
  "note": "on 모드는 GET /deploys 가 정본"

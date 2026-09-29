@@ -137,8 +137,28 @@ function openDrawer(region) {
   const bn = K.bignum(K.h('div'), null, { label: '필지 결합률', unit: '%', digits: 1 });
   big.append(bn.el);
   UI = { big, bn, img: img.querySelector('.lxi-img'), led: led.querySelector('.lxi-led') };
+  /* 결합률은 서버가 지역 필지 전체를 AI 결과와 겹쳐 세는 무거운 계산(수십 초)이다 — 스켈레톤을 CALC_MS 넘게 두지 않는다:
+     그때까지 값이 없으면 '—' + 계산 중 한 줄 + 진행 막대(값이 오면 그 자리에서 숫자로 · 실패면 사유 한 줄) */
+  const ui = UI;
+  clearTimeout(calcTimer);
+  calcTimer = setTimeout(() => { if (UI === ui && ui.big.classList.contains('is-loading')) bigNote(ui, '계산 중', { busy: true }); }, CALC_MS);
   homeFlow();
   return UI;
+}
+
+/* 큰 숫자 자리 — 값 대신 한 줄(계산 중 · 사유). bignum 의 '불러오는 중' 타이머는 empty() 로 끈다 */
+const CALC_MS = 1500;
+let calcTimer = 0;
+function bigNote(ui, text, { busy = false } = {}) {
+  ui.big.classList.remove('is-loading');
+  ui.big.classList.toggle('is-calc', busy);
+  ui.big.classList.toggle('lxi-big--none', !busy);
+  ui.bn.empty();
+  const n = ui.bn.el.querySelector('.k-big-none'); if (n) n.textContent = text;
+  ui.bn.el.setAttribute('aria-busy', busy ? 'true' : 'false');
+  const bar = ui.big.querySelector('.lxi-calc');
+  if (busy && !bar) ui.big.append(K.h('div.t-progress.k-empty-p.is-indet.lxi-calc', { role: 'progressbar', 'aria-label': text }, K.h('i')));
+  if (!busy) bar?.remove();
 }
 
 const done = { img: false, cad: false, led: false, join: false };
@@ -184,7 +204,7 @@ async function pick(region, { fly = true } = {}) {
 
   const geo = await D.regionGeom(region);
   if (my !== token) return;
-  if (!geo.bbox) { ui.img.replaceChildren(); K.empty(ui.img.appendChild(K.h('div')), { kind: 'outside', compact: true }); return; }
+  if (!geo.bbox) { noResult(ui); ui.img.replaceChildren(); K.empty(ui.img.appendChild(K.h('div')), { kind: 'outside', compact: true }); return; }
   st.geo('region', geo.fc, 'focus');
   if (fly) st.go(geo.bbox, { maxZoom: 12.5 });
 
@@ -218,16 +238,18 @@ async function pick(region, { fly = true } = {}) {
   D.joinRate(b).then((r) => {
     if (my !== token) return;
     rateSave(b, r);
-    if (running) { held = { r, my }; ui.big.classList.remove('is-loading'); if (!cached) ui.bn.set(r.env); return; }   // 결합 중 — 필지·채색은 end() 에서 한 번에
+    if (running) { held = { r, my }; clearTimeout(calcTimer); ui.big.classList.remove('is-loading', 'is-calc'); ui.big.querySelector('.lxi-calc')?.remove(); if (!cached) ui.bn.set(r.env); return; }   // 결합 중 — 필지·채색은 end() 에서 한 번에
     showRate(ui, r, { reveal: !cached }); st.geo('parcels', r.fc, 'ai');
   })
-    .catch((e) => { K.devlog('join rate', e.code || e.message); if (my === token && !cached) noResult(ui); });
+    .catch((e) => { K.devlog('join rate', e.code || e.message); if (my === token && !cached) { clearTimeout(calcTimer); bigNote(ui, '결합률을 불러오지 못했습니다'); } });
 }
 /* 결과 없는 지역 — 큰 숫자 자리를 한 줄로 접는다(좁은 화면에서 영상 카드가 행동 줄 위로 올라오게) */
-function noResult(ui) { ui.big.classList.remove('is-loading'); ui.big.classList.add('lxi-big--none'); ui.bn.set(null); }
+function noResult(ui) { clearTimeout(calcTimer); ui.big.classList.remove('is-loading', 'is-calc'); ui.big.querySelector('.lxi-calc')?.remove(); ui.big.classList.add('lxi-big--none'); ui.bn.set(null); }
 function showRate(ui, r, { reveal = true } = {}) {
   rate = r;
-  ui.big.classList.remove('is-loading', 'lxi-big--none');
+  if (ui === UI) clearTimeout(calcTimer);
+  ui.big.classList.remove('is-loading', 'lxi-big--none', 'is-calc');
+  ui.big.querySelector('.lxi-calc')?.remove();
   ui.bn.set(r.env);
   done.join = !running && (r.env?.value || 0) > 0; syncSteps();
   paintEmd(r.per, { reveal: reveal && !running });

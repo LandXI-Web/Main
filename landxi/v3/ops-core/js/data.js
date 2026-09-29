@@ -4,7 +4,7 @@
 import { api, hasRoute, bboxOf, isEnvelope } from '../../kit/util.js';
 import { devlog } from '../../kit/dev-drawer.js';
 
-export const D = { deploys: [], tenants: [], usage: [], alerts: null, gpus: null, cards: [], srvApprovals: null, at: 0, mode: 'adapter' };
+export const D = { deploys: [], tenants: [], usage: [], alerts: null, gpus: null, cards: [], srvApprovals: null, at: 0, mode: 'adapter', ok: false };
 const safe = (p) => api(p).catch((e) => { devlog('api fail', `${p} · ${e.code || e.status || e.message}`); return null; });
 
 let S9 = null;
@@ -25,6 +25,7 @@ export async function loadAll() {
   if (c) D.cards = c.items || [];
   D.srvApprovals = ap ? (ap.items || []) : null;
   D.mode = ap ? 'server' : 'adapter';
+  if (d || ap) D.ok = true;          // 결재 대기의 출처(배포 기록 또는 결재 표)가 한 번이라도 왔는가
   D.at = Date.now();
   devlog('결재 출처', D.mode === 'server' ? 'GET /approvals?state=pending' : '어댑터: /deploys 파생(S-9 전)');
   return D;
@@ -44,7 +45,7 @@ export function tenantName(id) {
   return (t?.name?.ko || '').replace(PROV, '').replace(/\s*\(.*\)$/, '') || '기관';
 }
 export const regionName = (d) => (d.region_name?.ko || '').replace(PROV, '');
-export const cardName = (id) => (D.cards.find((c) => c.id === id)?.name || '').replace(/\s*\(해외\)$/, '').replace(/ 행정서비스$| 서비스$/, '') || '서비스';
+export const cardName = (id) => (D.cards.find((c) => c.id === id)?.name || '').replace(/\s*\(해외\)$/, '').replace(/ 행정서비스$| 서비스$/, '').replace(/판독/g, 'AI 분석') || '서비스';
 /** 배포 주체: 기관 배포 = 기관 이름 · LX 자체 배포 = 지역 이름 */
 export const whoOf = (d) => (d.tenant_id === 'lx' ? regionName(d) : tenantName(d.tenant_id));
 

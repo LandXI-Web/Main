@@ -96,10 +96,17 @@ async def create_run(body: dict, request: Request):
         raise ApiError("bad_request", "mode 는 map|report|ops")
     r = await redis()
     alive, tried = await backends.first_alive(r)
-    if alive is None:
-        await _unavailable(tried)
     run_id = runner.ulid("run_")
     ctx = runner.make_ctx(run_id, p, _token(request), body.get("context") or {}, mode, r)
+    if alive is None:
+        # 거절(관할 밖 · 자료 없음)·요약 직행은 LLM 이 없어도 서버가 한 줄로 답한다(fix-agent-scope) — 그 밖만 503
+        try:
+            need = await runner.needs_llm(ctx, msg)
+        except Exception:  # noqa: BLE001
+            need = True
+        if need:
+            await ctx.http.aclose()
+            await _unavailable(tried)
     if tried:
         ctx.state["prefallback"] = tried
     runner.start(ctx, runner.execute(ctx, msg))

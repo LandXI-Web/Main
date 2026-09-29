@@ -75,7 +75,7 @@
     "sk.tg.bld": "Overture 3D",
     "sk.tg.swipe": "Swipe 2017 ↔ 2025",
     "sk.nodeploy": "Not yet ported",
-    "sk.nodeploy.why": "create a deployment from the LX/OPS console (port dp-nw-change → kgz-land)",
+    "sk.nodeploy.why": "create a deployment from the LX admin dashboard",
     "sk.draft": "Draft · results 0 · awaiting first analysis",
     "pilot.h": "Continuous cadastre pilot",
     "pilot.void": "boundary not acquired",
@@ -142,7 +142,7 @@
     "ys.eta.src.db": "median of last {n} stored shard times · {ms} ms × {k} shards",
     "ys.eta.src.other": "median of recent shard times × {k} shards",
     "sk.pre.dep": "Deployment",
-    "sk.pre.dep.no": "dp-kgz-land-change-26 not in the gateway · port it in LX/OPS",
+    "sk.pre.dep.no": "no deployment yet · apply it from the LX admin dashboard",
     "sk.pre.perm": "Permission",
     "sk.pre.model": "Model",
     "sk.pre.model.hidden": "checked by the gateway at submit",
@@ -172,7 +172,7 @@
     "mk.lic.s2": "Maxar is demo-only and excluded from this build — pre/post shown with Sentinel-2 L2A · damage grading © EU Copernicus EMS",
     "go.xi": "XI map · KR ↗",
     "go.xi.title": "XI map — domestic stage (Namwon 25 cm · live inference)",
-    "go.ops.title": "LX/OPS console (:8702 · admin)",
+    "go.ops.title": "LX admin dashboard (admin only)",
     "ru.note": "Russian UI not started — place names are shown in Cyrillic only"
   }
 }

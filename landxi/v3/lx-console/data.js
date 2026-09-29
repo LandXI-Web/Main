@@ -7,6 +7,8 @@
 import { api, isEnvelope, bboxOf } from '../kit/util.js';
 import { loadRegions } from '../kit/region.js';
 import { devlog } from '../kit/dev-drawer.js';
+import { summary, total } from './summary.js';
+import { say } from './words.js';
 
 export const D = { regions: [], deploys: [], abroad: [], cards: [], models: [], rules: [], layers: [], today: null, failed: [] };
 
@@ -20,14 +22,16 @@ const counted = (n, asOf, source) => ({ value: n, unit: 'count', basis: 'recorde
 
 export async function load({ force = false } = {}) {
   D.failed = [];
-  const [fA, fb30, drafts, reports, deploys, cards] = await Promise.all([
+  const [fA, fb30, drafts, reports, deploys, cards, sum] = await Promise.all([
     settle('findings', api('/survey/findings?priority=A&state=open&limit=1')),
     settle('feedback30', api('/feedback?since=30d')),
     settle('drafts', api('/deploys?stage=draft')),
     settle('reports', api('/feedback?kind=report')),
     settle('deploys', api('/deploys')),
     settle('cards', api('/registry/cards')),
+    summary({ force }),   // 대표 수치(결과 확인 대기 · 기관 신고) 한 출처
   ]);
+  D.summary = sum;
   D.asOf = deploys?.as_of || fA?.as_of || new Date().toISOString();
   D.cards = cards?.items || []; D.cardsAsOf = cards?.as_of || D.asOf;
   D.deploys = (deploys?.items || []).filter((d) => !isTest(d.id) && !d.test);
@@ -37,7 +41,7 @@ export async function load({ force = false } = {}) {
   const far = new Map();
   for (const d of D.deploys) { const b = bboxOf(d.aoi); if (b && !inKR(b)) far.set(d.region_profile || d.tenant_id, d); }
   D.abroad = [...far.values()];
-  D.today = today({ fA, fb30, drafts, reports });
+  D.today = today({ fA, fb30, drafts, reports, sum });
   return D;
 }
 
@@ -101,13 +105,15 @@ export const REPORT_MIN = 5;   // 한 결과 층에 열린 오탐 신고 5건 �
 const V3 = '/landxi/v3/';
 const q = (o) => '?' + Object.entries(o).filter(([, v]) => v !== null && v !== undefined && v !== '').map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
 
-function today({ fA, fb30, drafts, reports }) {
-  if (!fA && !fb30 && !drafts && !reports) return { error: true, cells: [] };
+function today({ fA, fb30, drafts, reports, sum }) {
+  if (!fA && !fb30 && !drafts && !reports && !sum) return { error: true, cells: [] };
   const since = Date.now() - 30 * 864e5;
   /* 검수 대기 — A등급 열린 의심 필지(서버 봉투 그대로) */
   const top = fA?.items?.[0];
   const rTop = regionAt(lnglatOf(top));
-  const review = { k: 'review', label: '확인 대기', env: isEnvelope(fA?.total) ? fA.total : null, region: rTop,
+  /* 결과 확인 대기 — 수는 대표 수치 한 출처(summary review_pending · 전국 합) · 이동할 곳만 첫 순위 의심 필지 */
+  const rv = total(sum, 'review_pending');
+  const review = { k: 'review', label: rv?.label || '결과 확인 대기', env: isEnvelope(rv) ? rv : null, region: rTop,
     href: V3 + 'lx-review/' + q({ region: rTop?.sgg_cd, finding: top?.id }) };
   /* 재학습 — 지난 30일 열린 오탐 신고가 한 결과 층에 5건 이상 */
   const bySet = new Map();
@@ -128,9 +134,11 @@ function today({ fA, fb30, drafts, reports }) {
   /* 기관 신고 — 열린 기관 신고(최근 먼저) */
   const open = (reports?.items || []).filter((f) => f.state === 'open').sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
   const rRep = open[0] && (regionAt(lnglatOf(open[0])) || regionByKey(open[0].tenant_id));
-  const report = { k: 'report', label: '기관 신고', env: reports ? counted(open.length, reports.as_of, '기관 확인 기록') : null, region: rRep,
+  /* 기관 신고 — 수는 summary reports(전국 합 · lx-deploy 서비스 관리 표 합계와 같은 계산) · 이동할 곳만 최근 열린 신고 */
+  const rp = total(sum, 'reports');
+  const report = { k: 'report', label: rp?.label || '기관 신고', env: isEnvelope(rp) ? rp : null, region: rRep,
     href: V3 + 'lx-deploy/' + q({ region: rRep?.sgg_cd, tab: 'ops' }) + '#ops' };
-  devlog('today', `A ${review.env?.value ?? '—'} · 재학습 ${due.map((l) => l[0].set_id + ' ' + l.length).join(', ') || 0} · 이식 ${dl.map((d) => d.id).join(', ') || 0} · 신고 ${open.length}`);
+  devlog('today', `summary ${sum ? 'ok' : '없음'} · 결과 확인 대기 ${review.env?.value ?? '—'} · 재학습 ${due.map((l) => l[0].set_id + ' ' + l.length).join(', ') || 0} · 적용 요청 ${dl.map((d) => d.id).join(', ') || 0} · 기관 신고 ${report.env?.value ?? '—'}`);
   return { error: false, cells: [review, retrain, port, report] };
 }
 
@@ -162,5 +170,5 @@ export const legend = () => ({ abroad: D.abroad.length });
 export const cardName = (id) => {
   const c = D.cards.find((x) => x.id === id);
   const d = D.deploys.find((x) => x.card_id === id);
-  return String(c?.name || d?.name || '').replace(/\s*\((해외|global)\)/i, '').replace(/\s*(행정서비스|실태조사 서비스|관리 서비스|탐지 서비스|서비스)$/, '').replace(/\s*·\s*이식$/, '') || '서비스';
+  return say(c?.name || d?.name || '').replace(/\s*\((해외|global)\)/i, '').replace(/\s*(행정서비스|실태조사 서비스|관리 서비스|탐지 서비스|서비스)$/, '').replace(/\s*·\s*이식$/, '') || '서비스';
 };

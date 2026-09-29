@@ -7,6 +7,7 @@ import { createStage, bignum, numHtml, serviceGrid, joinCards, empty, mountCmdk,
 import { E_CAM, RM, h, esc } from '../kit/util.js';
 import { devlog } from '../kit/dev-drawer.js';
 import * as D from './data.js';
+import { loadSummary, itemFor, stageKey, scaleOf, userWords } from '../service-detail/summary.js';
 
 const $ = (s) => document.querySelector(s);
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
@@ -378,22 +379,28 @@ function tilesAt(cam, win, zmin, zmax, parent) {
   }
   return out;
 }
-function prefetchTiles() {
-  if (S.pre || !S.data.parcel) return; S.pre = 1;
+/* 경로 타일 미리 받기 — 첫 화면(히어로 지구)에는 필요 없다. 두 구간으로 나눠 그 구간이 다가올 때만 받는다(첫 화면 네트워크 정지 ≤ 8s).
+   'A' = ch1→ch2 필지로 파고드는 길(첫 스크롤 때) · 'B' = ch5→ch6 · 마감(서비스 카드 구간이 보일 때) */
+function prefetchTiles(part) {
+  S.pre ||= {};
+  if (S.pre[part] || !S.data.parcel) return; S.pre[part] = 1;
   const C = S.cams || cams(), set = new Set(), urls = [];
   const add = (u) => { if (!set.has(u)) { set.add(u); urls.push(u); } };
   const eox = ([z, x, y]) => add(EOX_T.replace('{z}', z).replace('{y}', y).replace('{x}', x));
   const vw = ([z, x, y]) => add(VW_T.replace('{z}', z).replace('{x}', x).replace('{y}', y));
-  // ① ch1→ch2 필지로 파고드는 길(먼저 온다)
-  const pr = { ...C.parcel, p: 0, b: 0 };
-  for (let i = 0; i <= 14; i++) {
-    const t = i / 14, cam = zoomCam(C.nat1, pr, t), win = lerpRect(LY.full, LY.right, clamp(t * 1.4));
-    tilesAt(cam, win, 1, 13, false).forEach(eox); if (cam.z > 6.2) tilesAt(cam, win, 7, 19, false).forEach(vw);
+  if (part === 'A') {
+    // ① ch1→ch2 필지로 파고드는 길
+    const pr = { ...C.parcel, p: 0, b: 0 };
+    for (let i = 0; i <= 14; i++) {
+      const t = i / 14, cam = zoomCam(C.nat1, pr, t), win = lerpRect(LY.full, LY.right, clamp(t * 1.4));
+      tilesAt(cam, win, 1, 13, false).forEach(eox); if (cam.z > 6.2) tilesAt(cam, win, 7, 19, false).forEach(vw);
+    }
+  } else {
+    // ② ch5→ch6 · 마감(지구 곡면)
+    for (const { cam, win } of pathSteps()) tilesAt(cam, win, 1, 13, cam.z < 4.5).forEach(eox);
   }
-  // ② ch5→ch6 · 마감(지구 곡면)
-  for (const { cam, win } of pathSteps()) tilesAt(cam, win, 1, 13, cam.z < 4.5).forEach(eox);
-  S.preSet = new Set(urls.filter((u) => u.includes('eox')).map((u) => u.split('GoogleMapsCompatible/')[1].replace('.jpg', '')));
-  const list = urls.slice(0, 1200); S.preN = 'run ' + list.length;
+  S.preSet = new Set([...(S.preSet || []), ...urls.filter((u) => u.includes('eox')).map((u) => u.split('GoogleMapsCompatible/')[1].replace('.jpg', ''))]);
+  const list = urls.slice(0, 1200); S.preN = part + ' run ' + list.length;
   try {
     const src = `onmessage=async(e)=>{const u=e.data;let i=0;const go=async()=>{while(i<u.length){const x=u[i++];try{const r=await fetch(x,{mode:'cors'});await r.arrayBuffer();}catch(_){}}};await Promise.all(Array.from({length:8},go));postMessage(u.length);}`;
     const w = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
@@ -565,14 +572,18 @@ function fillAgent(a) {
   host.querySelector('.k-ck-t').firstChild.nodeValue = '';
   S.typed = -1;
 }
-function fillDeploys(dd) {
-  // ch4 — 실결과 있는 배포본의 카드 3
-  const rows = joinCards(dd.cards, dd.deploys).filter((r) => r.deploy && r.deploy.scale)
+function fillDeploys(dd, sum) {
+  // ch4 — 실결과 있는 배포본의 카드 3 · 상태·수 = 요약(summary) 한 출처. 요약이 없으면 숫자 없이(배포 기록·사본의 수를 싣지 않는다)
+  const rows = joinCards(dd.cards, dd.deploys).filter((r) => r.deploy && r.deploy.scale).map((r) => {
+    const it = sum ? itemFor(sum, r.card.id, r.deploy) : null;
+    const state = it ? stageKey(it.stage) || 'none' : sum ? 'none' : r.state;
+    return { ...r, card: { ...r.card, name: userWords(r.card.name) }, deploy: { ...r.deploy, scale: it ? scaleOf(it) : null }, state, item: it };
+  }).filter((r) => !sum || r.state !== 'none')
     .sort((a, b) => (a.state === 'ga' ? 0 : 1) - (b.state === 'ga' ? 0 : 1)).slice(0, 3);
   const cards = $('#cards');
   if (!rows.length) { empty(cards, { kind: 'first' }); }
   else {
-    serviceGrid(cards, rows, { map: (r) => ({ crop: new URL(`./data/crop-${r.card.id}.webp`, import.meta.url).href, where: short(r.deploy.region_name?.ko), href: `/landxi/v3/service-detail/?card=${encodeURIComponent(r.card.id)}` }) });
+    serviceGrid(cards, rows, { map: (r) => ({ crop: new URL(`./data/crop-${r.card.id}.webp`, import.meta.url).href, where: short(r.item?.region_name || r.deploy.region_name?.ko), href: `/landxi/v3/service-detail/?card=${encodeURIComponent(r.card.id)}` }) });
     cards.querySelectorAll('.k-svc').forEach((c, i) => { c.classList.add('t-enter'); c.style.transitionDelay = i * 120 + 'ms'; c.append(h('span.m-more', { text: '자세히' })); });
     enter(cards);
   }
@@ -582,7 +593,9 @@ function fillDeploys(dd) {
     if (!d.center || d.center[0] < 124 || d.center[0] > 132 || d.center[1] < 33 || d.center[1] > 39) continue;
     const k = d.region_name?.ko || d.tenant_id;
     const cur = by.get(k) || { name: short(k), at: d.center, ga: false };
-    if (d.stage === 'ga') cur.ga = true;
+    // 운영 여부 = 요약 stage(있으면) · 요약이 없으면 배포 기록 단계
+    const it = sum ? itemFor(sum, d.card_id, d, { strict: true }) : null;
+    if (sum ? stageKey(it?.stage) === 'ga' : d.stage === 'ga') cur.ga = true;
     by.set(k, cur);
   }
   const regions = [...by.values()];
@@ -594,16 +607,24 @@ const short = (s = '') => { const p = String(s).trim().split(/\s+/); return p.le
 
 /* ── 부팅 ─────────────────────────────────────────────── */
 async function load() {
-  const [stats, parcel, agent, dd, kgz] = await Promise.allSettled([D.riverStats(), D.sampleParcel(), D.agentScene(), D.deploys(), D.kgz()]);
+  const [stats, parcel, agent, dd, kgz, sum] = await Promise.allSettled([D.riverStats(), D.sampleParcel(), D.agentScene(), D.deploys(), D.kgz(), loadSummary()]);
   if (stats.status === 'fulfilled') { S.data.stats = stats.value; fillStats(stats.value); }
   else { empty($('#ch1-big'), { kind: 'first', compact: true }); }
   if (parcel.status === 'fulfilled') { S.data.parcel = parcel.value; fillParcel(parcel.value); }
   if (agent.status === 'fulfilled') { S.data.agent = agent.value; fillAgent(agent.value); }
-  if (dd.status === 'fulfilled') fillDeploys(dd.value); else empty($('#cards'), { kind: 'first' });
+  if (dd.status === 'fulfilled') fillDeploys(dd.value, sum.status === 'fulfilled' ? sum.value : null); else empty($('#cards'), { kind: 'first' });
   if (kgz.status === 'fulfilled') { S.data.kgz = kgz.value; $('#ch6-tag').textContent = `키르기스스탄 · ${kgz.value.features.length}개 지역`; }
   cams(); addLayers();
-  setTimeout(prefetchTiles, NARROW ? 2500 : 1000);
+  deferPrefetch();
   devlog('sources', JSON.stringify(D.SRC));
+}
+/* 지연 받기 — 첫 뷰에 필요한 것(히어로 지구 타일 · 문구 · 공개 사본)만 먼저. 경로 타일은 스크롤 의도가 보일 때 */
+function deferPrefetch() {
+  const goA = () => { removeEventListener('scroll', goA); removeEventListener('wheel', goA); removeEventListener('touchstart', goA); removeEventListener('keydown', goA); prefetchTiles('A'); };
+  if (scrollY > 0) goA();
+  else for (const ev of ['scroll', 'wheel', 'touchstart', 'keydown']) addEventListener(ev, goA, { passive: true });
+  const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); prefetchTiles('A'); prefetchTiles('B'); } }, { rootMargin: '100% 0px' });
+  io.observe($('#ch4'));
 }
 
 function anchors() {

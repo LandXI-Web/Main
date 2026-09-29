@@ -21,7 +21,7 @@ export const DUTIES = [
 
 /** 모드 스위치(판독 · 실태조사) */
 export function modeSwitch(el, { mode, onChange }) {
-  el.innerHTML = `<button type="button" data-m="read" aria-pressed="${mode === 'read'}"><i></i>판독</button><button type="button" data-m="survey" aria-pressed="${mode === 'survey'}"><i></i>실태조사 <small>남원 · 농지</small></button>`;
+  el.innerHTML = `<button type="button" data-m="read" aria-pressed="${mode === 'read'}"><i></i>AI 분석</button><button type="button" data-m="survey" aria-pressed="${mode === 'survey'}"><i></i>실태조사 <small>남원 · 농지</small></button>`;
   el.hidden = false; document.documentElement.dataset.modesw = '1';
   el.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { if (b.getAttribute('aria-pressed') !== 'true') onChange(b.dataset.m); }));
   return { set(m) { el.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.m === m))); } };
@@ -39,7 +39,7 @@ export function renderSurveyTab(body, ctx) {
         : `<li data-duty="${d.id}" data-live="0" data-on="0" role="radio" aria-checked="false" aria-disabled="true"><i class="sv-radio"></i><span>${esc(d.name)}</span><span class="cw-void xi-void">배포본 없음</span><small>${esc(d.who)} · ${esc(d.cycle)}</small></li>`).join('')}</ul></section>
     <section class="sv-sec"><h3>대장 대조 규칙 <small>R1–R6 · v1.0</small></h3>
       <ul class="sv-rules">${rules.map((r) => `<li data-rule="${r.id}" data-on="${ctx.filters.rules.has(r.id) ? 1 : 0}"><button type="button" class="xi-check" aria-pressed="${ctx.filters.rules.has(r.id)}" aria-label="${esc(r.id)} ${esc(r.name)}"></button>
-        <b class="sv-rid">${esc(r.id)}</b><span>${esc(r.name)}</span>${numHtml(E(r.count, 'count', 'inferred', src, `${r.id} 의심 건 · 검수 전`), { unit: false })}
+        <b class="sv-rid">${esc(r.id)}</b><span>${esc(r.name)}</span>${numHtml(E(r.count, 'count', 'inferred', src, `${r.id} 의심 건 · 결과 확인 전`), { unit: false })}
         <small>${esc(r.condition)} <b class="sv-th" title="임계는 [추정 초기값] — 현장 확인 결과로 재교정">추정 초기값</b></small></li>`).join('')}</ul>
       <div class="sv-prio" role="group" aria-label="등급">${['A', 'B', 'C'].map((p) => `<button type="button" class="sv-chip" data-prio="${p}" aria-pressed="${ctx.filters.prio.has(p)}">${p} ${numHtml(E(totals.by_priority[p], 'count', 'inferred', src, `등급 ${p} · 점수 상위 ${p === 'A' ? '5%' : p === 'B' ? '다음 20%' : '나머지'}`), { unit: false })}</button>`).join('')}</div>
       <p class="xi-hint">의심 ${numHtml(E(totals.findings, 'count', 'inferred', src), { unit: false })}건 / ${numHtml(E(totals.suspect_parcels, '필지', 'inferred', src), { unit: false })}필지 · 연속지적 ${numHtml(E(totals.parcels, '필지', 'recorded', 'V-World 연속지적 2026-09-24'), { unit: false })}필지 × AI 2023 · 위법 판정 아님 · <b data-basis="estimate">추정</b> 임계</p>

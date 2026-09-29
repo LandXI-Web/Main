@@ -8,10 +8,10 @@ const EXT = ['publish', 'data', 'service', 'my'];
 const icon = (id) => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('aria-hidden', 'true'); const u = document.createElementNS('http://www.w3.org/2000/svg', 'use'); u.setAttribute('href', '/landxi/assets/icons.svg#' + id); s.append(u); return s; };
 
 export function railNav(page) {
-  const nav = h('nav', { class: 'og-nav', 'aria-label': 'LX/OPS 메뉴' });
+  const nav = h('nav', { class: 'og-nav', 'aria-label': 'LX 관리자 메뉴' });
   for (const p of PAGES) nav.append(h('a', { href: `/landxi/ops/${p}.html`, 'data-page': p, ...(p === page ? { 'aria-current': 'page' } : {}) }, icon(ICON[p]), t('rail.' + p)));
   nav.append(h('hr'));
-  for (const p of EXT) nav.append(h('a', { href: t('orig_links.' + p), target: '_blank', rel: 'noopener', 'data-ext': '', 'data-page': p, title: '원본 관리자 화면(:4173) · 새 탭 · 2차 이식' }, icon(ICON[p]), t('rail.' + p)));
+  for (const p of EXT) nav.append(h('a', { href: t('orig_links.' + p), target: '_blank', rel: 'noopener', 'data-ext': '', 'data-page': p, title: '관리자 화면 · 새 탭' }, icon(ICON[p]), t('rail.' + p)));
   /* 일원화(v1.1-29) — 같은 작업을 생산·서비스 무대(XI맵 · Global)로 본다. ?job= 이 있으면 그대로 넘긴다(계보 딥링크 왕복). */
   const job = new URLSearchParams(location.search).get('job');
   nav.append(h('hr'));
@@ -28,11 +28,11 @@ export function mountFrame({ page, title, crumb = '', user, assemble = false }) 
   const clock = h('span', { class: 'og-clock', 'aria-label': '현재 시각' });
   const meta = h('span', { class: 'og-meta', 'data-meta': '' }, '노드 ', h('b', { 'data-k': 'nodes' }, '—'), ' · GPU ', h('b', { 'data-k': 'gpus' }, '—'), ' · 대기 ', h('b', { 'data-k': 'queued' }, '—'));
   const kbd = h('button', { class: 'og-kbd', type: 'button', 'data-palette': '', title: '명령 팔레트(노드 · 기관 · 배포본)' }, '검색', h('kbd', {}, navigator.platform.includes('Mac') ? '⌘K' : 'Ctrl K'));
-  const out = h('button', { class: 'og-kbd', type: 'button', onclick: logout, title: '관제 세션 종료' }, (user?.user?.name || 'LX 관리자'), ' · 나가기');
+  const out = h('button', { class: 'og-kbd', type: 'button', onclick: logout, title: '나가기' }, (user?.user?.name || 'LX 관리자'), ' · 나가기');
   const mast = h('header', { class: 'og-mast' }, h('h1', {}, title), crumb ? h('span', { class: 'og-crumb' }, crumb) : null, h('span', { class: 'og-spacer' }), src, meta, clock, kbd, out);
   const main = h('main', { class: 'og-main', id: 'main' });
   const shell = h('div', { class: 'og-shell' },
-    h('aside', { class: 'og-rail' }, h('a', { class: 'og-mark', href: '/landxi/ops/index.html', 'aria-label': 'LX/OPS 운영 현황' }, 'LX', h('b', {}, '/'), 'OPS'), railNav(page)), mast, main);
+    h('aside', { class: 'og-rail' }, h('a', { class: 'og-mark', href: '/landxi/ops/index.html', 'aria-label': 'LX 관리자 대시보드 운영 현황' }, 'LX', h('b', {}, '/'), '관리자'), railNav(page)), mast, main);
   if (assemble) { shell.classList.add('is-assemble'); document.body.append(shell); }   // 반전 중: 종이 무대 위에 셸이 카메라 이동과 함께 선다(검정 공백 0)
   else { const sk = document.getElementById('ogSkel'); document.body.replaceChildren(...[shell, sk].filter(Boolean)); }   // 첫 페인트 골격(#ogSkel)은 위에 남겨 두고 밑에 셸을 세운다 — boot.js unveil() 이 걷는다
   const sm = SRC.health?.summary;   // 브리지 공개 요약으로 먼저 채우고, 화면이 실데이터로 덮는다
@@ -58,7 +58,7 @@ export function mountFrame({ page, title, crumb = '', user, assemble = false }) 
   };
 }
 function srcTitle() {
-  if (SRC.kind === 'bridge') return (SRC.gw?.up ? `게이트웨이(:8700) 가동 · 관제 경로 일부 미완(${(SRC.gw.bad || []).join(', ') || '없음'}) → 읽기 중계(job.state · queue.sample · usage.delta · alert). ` : '게이트웨이(:8700) 없음. ') + 'serve-ops 로컬 브리지: GPU·스토리지 = server/ops 폴러 실측(nvidia-smi · statfs · du). 배포·쿼터 쓰기 = 계약 §4.7–4.8 상태기계 · 브리지 메모리(게이트웨이 DB 비오염 · 재기동 시 시드로).';
+  if (SRC.kind === 'bridge') return (SRC.gw?.up ? `게이트웨이(:8700) 가동 · 일부 경로 미완(${(SRC.gw.bad || []).join(', ') || '없음'}) → 읽기 중계(job.state · queue.sample · usage.delta · alert). ` : '게이트웨이(:8700) 없음. ') + 'serve-ops 로컬 브리지: GPU·스토리지 = server/ops 폴러 실측(nvidia-smi · statfs · du). 배포·쿼터 쓰기 = 계약 §4.7–4.8 상태기계 · 브리지 메모리(게이트웨이 DB 비오염 · 재기동 시 시드로).';
   if (SRC.kind === 'gateway') return 'F1-B 게이트웨이 :8700 · 계약 정본';
   return '서버 없음 — data/fixtures · data/replay/ops-sample.ndjson(util 0 고정 · 실측 스냅샷 재생). 쓰기 버튼은 비활성.';
 }

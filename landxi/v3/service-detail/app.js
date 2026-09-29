@@ -11,16 +11,18 @@ import {
   h, enter, t, df,
 } from '../kit/index.js';
 import { isEnvelope, isDev, RM, session, esc } from '../kit/util.js';
-import { loadCards, loadDetail, loadDeploys, cropUrl, deployOfSet, buildBlocks, liveLayer, landingOf, focusOf, regionOfSet, surveyOf } from './adapter.js';
+import { loadCards, loadDetail, loadDeploys, cropUrl, deployOfSet, buildBlocks, liveLayer, landingOf, focusOf, regionOfSet } from './adapter.js';
+import { loadSummary, itemFor, stageKey, metric, scaleOf, userWords } from './summary.js';
 
 const Q = new URLSearchParams(location.search);
 const V3 = '/landxi/v3/';
 const FRONT = V3 + 'login/';
-const STAGE = { ga: 'card.state.ga', canary: 'card.state.pilot', shadow: 'card.state.pilot', draft: 'card.state.none' };
-const LV = { ga: '', canary: 'wait', shadow: 'wait', draft: 'gap' };
+const STAGE = { ga: 'ga', canary: 'pilot', shadow: 'pilot' };   // 요약이 없을 때만 쓰는 배포 단계 → 상태
+const LV = { ga: '', pilot: 'wait', none: 'gap' };
 const RANK = { ga: 0, canary: 1, shadow: 2, draft: 3 };
 const mobile = () => matchMedia('(max-width: 640px)').matches;
-const where = (d) => d?.region_name?.ko || d?.region_name?.en || '';
+/* 지역 이름 = 요약 항목의 지역(메인 · 영업과 같은 이름) · 없으면 배포 기록의 지역 이름 */
+const where = (d) => (SUM && d ? itemFor(SUM, d.card_id, d, { strict: true })?.region_name : '') || d?.region_name?.ko || d?.region_name?.en || '';
 const asof = (d) => (d?.scale?.as_of ? t('card.asof', { date: df(d.scale.as_of) }) : '');
 
 /* 결과 세트가 지금 지역 밖인가 — 기관 = 자기 관할 배포본 · LX = 고른 배포본과 지역이 다르면 '예시'.
@@ -43,7 +45,18 @@ const needAsof = (env) => (env?.as_of ? t('card.asof', { date: df(env.as_of) }) 
 /** 라벨 + 숫자(K6) 한 줄 — `현장 확인 필요 1,079필지 ✓` */
 const needHtml = (env) => `<span class="sd-nl">${esc(NEED_L)}</span>${numHtml(env)}`;
 
-let who = null, S = null, D = null, deploys = [], mine = [], own = [], cur = null;
+let who = null, S = null, D = null, deploys = [], mine = [], own = [], cur = null, SUM = null;
+/* 상태 · 수 = 요약(summary) 한 출처 — 배포본에 딱 맞는 항목(같은 카드 · 시군구/기관/지역 이름)만 */
+/*   자기 결과가 없는 배포본(계획 · 초안)은 같은 지역 항목을 빌려 오지 않는다 → 첫 결과 전 */
+const itemOfDeploy = (d) => (SUM && d && isEnvelope(d.scale) ? itemFor(SUM, d.card_id, d, { strict: true }) : null);
+/** 서비스 지역 표의 한 줄(배포본 하나) — 그 배포본에 딱 맞는 요약 항목만 · 없으면 첫 결과 전(요약이 없을 때만 배포 단계) */
+const rowState = (d) => (SUM ? stageKey(itemOfDeploy(d)?.stage) || 'none' : STAGE[d.stage] || 'none');
+/** 카드 상태(ga · pilot · none) — 요약 항목이 있으면 그 stage, 요약은 있는데 항목이 없으면 첫 결과 전, 요약이 없으면 기존 판정 */
+const stateFor = (cardId, d, fallback) => {
+  if (!SUM) return fallback;
+  const it = (d && itemOfDeploy(d)) || itemFor(SUM, cardId);
+  return it ? stageKey(it.stage) || 'none' : 'none';
+};
 const LAND = new Map();   // 배포본 id → 착지 href(지역 코드 · 해외 나라/지역)
 
 boot().catch((e) => {
@@ -63,8 +76,9 @@ async function boot() {
   if (!who) S.mast(h('a.k-mast-b.sd-in', { href: FRONT + '?next=' + encodeURIComponent(location.pathname + location.search), text: '로그인' }));
   if (who && isDev()) devDrawer({ who });
 
-  const [{ items: cards }, deps] = await Promise.all([loadCards(who), loadDeploys(who)]);
-  deploys = deps;
+  const [{ items: cards0 }, deps, sum] = await Promise.all([loadCards(who), loadDeploys(who), loadSummary()]);
+  const cards = cards0.map((c) => ({ ...c, name: userWords(c.name) }));
+  deploys = deps; SUM = sum;
   const rows = joinCards(cards, deploys);
 
   let id = Q.get('card');
@@ -75,6 +89,8 @@ async function boot() {
   }
   D = id ? await loadDetail(id, cards, who) : null;
   if (!D) return notFound();
+  D.card = { ...D.card, name: userWords(D.card.name) };
+  for (const k of ['real', 'pending', 'core']) D[k] = (D[k] || []).map((b) => ({ ...b, name: userWords(b.name), desc: userWords(b.desc) }));
 
   mine = deploys.filter((d) => d.card_id === id).sort((a, b) => (isEnvelope(b.scale) - isEnvelope(a.scale)) || (RANK[a.stage] ?? 9) - (RANK[b.stage] ?? 9));
   own = isTenant() ? mine.filter((d) => d.tenant_id === who.me.tenant_id) : mine;
@@ -86,11 +102,12 @@ async function boot() {
   const [live] = await Promise.all([
     who ? liveLayer(cur && isEnvelope(cur.scale) ? [cur, ...own] : own, who, D.card.scope) : null,
     Promise.all(own.map(async (d) => { try { const L = await landingOf(d, D.vis); LAND.set(d.id, `${V3}${homeFor(L.home)}/?${L.qs}`); } catch { /* 기본 주소 */ } })),
-    who ? Promise.all(deploys.map(async (d) => { const e = await surveyOf(d).catch(() => null); if (e) NEED.set(d.id, e); })) : null,
   ]);
+  /* 현장 확인 필요(큰 숫자) = 요약의 field_check — 배포본마다 · 값이 없으면 숫자 없이 */
+  for (const d of deploys) { const e = metric(itemOfDeploy(d), 'field_check'); if (e) NEED.set(d.id, e); }
 
   const row = rows.find((r) => r.card.id === id);
-  const state = who ? (row?.state || stateOf(D.card, cur)) : guestState(D.card);
+  const state = stateFor(id, cur, who ? (row?.state || stateOf(D.card, cur)) : guestState(D.card));
 
   S.main.append(
     hero(state),
@@ -252,7 +269,7 @@ function liveMap(fig, b) {
   const num = env ? h('div.sd-live__n.t-card', { html: needHtml(env) }) : null;
   /* 타일이 오기 전 = --bg-1 판 + K9 진행 막대(숫자 카드·캡션은 지도가 그려진 뒤에만) */
   const ld = h('div.sd-live__ld');
-  fig.append(host, ld, cap, num);
+  fig.append(...[host, ld, cap, num].filter(Boolean));   // 숫자가 없으면 싣지 않는다(append(null) → 'null' 글자)
   empty(ld, { kind: 'loading', compact: true }); ld.querySelector('img')?.remove();
   let started = false;
   const start = async () => {
@@ -307,7 +324,8 @@ function detail(b, shots) {
 function related(rows, id) {
   const vis = D.vis;
   const visOf = (r) => { const hv = vis.hero[r.card.id] || {}; return hv.img || (hv.set && vis.sets[hv.set]) ? 1 : 0; };
-  const rank = (r) => ({ ga: 0, pilot: 1, none: 2 }[who ? r.state : guestState(r.card)]);
+  const stOf = (r) => stateFor(r.card.id, r.deploy, who ? r.state : guestState(r.card));
+  const rank = (r) => ({ ga: 0, pilot: 1, none: 2 }[stOf(r)]);
   const pick = rows.filter((r) => r.card.id !== id)
     .sort((a, b) => (visOf(b) - visOf(a)) || ((b.card.scope === D.card.scope) - (a.card.scope === D.card.scope)) || rank(a) - rank(b))
     .slice(0, 3);
@@ -323,7 +341,7 @@ function related(rows, id) {
       return {
         crop, href: `?card=${encodeURIComponent(r.card.id)}`,
         where: r.deploy ? where(r.deploy) : '',
-        ...(who ? {} : { state: guestState(r.card), deploy: null }),
+        state: stOf(r), ...(who ? {} : { deploy: null }),
       };
     },
   });
@@ -333,9 +351,9 @@ function related(rows, id) {
     const hv = vis.hero[r.card.id] || {}; const set = hv.set && vis.sets[hv.set] ? hv.set : null;
     const lab = el.querySelector('.k-svc-meta .t-label');
     if (lab && set && exOf(set, r.deploys || []) && !dropSet(set, r.deploys || [])) markEx(lab, regionOfSet(vis, set).name);
-    /* 숫자 = 그 카드 배포본의 현장 확인 필요(있을 때만) · 탐지 총수는 싣지 않는다 */
+    /* 카드 숫자 = 메인 · 영업 카드와 같은 값(요약의 AI 탐지 · 그 카드 대표 항목) · 요약에 값이 없으면 숫자 없이 */
     const n = el.querySelector('.k-svc-n');
-    if (n) { const env = who && !(set && exOf(set, r.deploys || [])) ? needOf(r.deploy) : null; n.innerHTML = env ? needHtml(env) : ''; n.hidden = !env; }
+    if (n) { const env = SUM && !(set && exOf(set, r.deploys || [])) ? scaleOf((r.deploy && itemOfDeploy(r.deploy)) || itemFor(SUM, r.card.id)) : null; n.innerHTML = env ? numHtml(env) : ''; n.hidden = !env; }
   });
   /* 크롭 없는 카드 = 밝은 캐릭터(드론) — 키트 기본(위성 · 어두운 우주)을 쓰지 않는다 */
   grid.querySelectorAll('.k-svc-crop.is-char img').forEach((im) => { im.src = CHARS.drone; });
@@ -361,8 +379,8 @@ function closing() {
   const rowsT = own.map((d) => ({
     _d: d, id: d.id,
     region: [where(d), own.filter((x) => x.region_profile === d.region_profile).length > 1 && d.year ? String(d.year) : ''].filter(Boolean).join(' · '),
-    stage: t(STAGE[d.stage] || 'card.state.none'),
-    lv: LV[d.stage] ?? 'gap',
+    stage: t(`card.state.${rowState(d)}`),
+    lv: LV[rowState(d)],
     asof: needOf(d)?.as_of ? df(needOf(d).as_of) : d.scale?.as_of ? df(d.scale.as_of) : '—',   // 숫자가 있으면 그 숫자의 기준일
     n: needOf(d),
   }));

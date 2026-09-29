@@ -53,7 +53,7 @@ test('배정 → 칩 · ■ 마커 · 큐 행 · 다른 탭 1 s 안 · 역방향
   const sheet = await a.evaluate(() => ({ assignee: document.querySelector('#pcard2 .sv-card-sheet [name=assignee]')?.value, date: document.querySelector('#pcard2 .sv-card-sheet [name=planned_for]')?.value, note: document.querySelector('#pcard2 .sv-card-sheet small').textContent }));
   console.log('sheet', JSON.stringify(sheet));
   expect(sheet.assignee.length).toBeGreaterThan(0); expect(sheet.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-  if (!API) expect(sheet.note).toContain('시연 · 저장 안 됨');
+  if (!API) expect(sheet.note).toContain('예시 · 저장 안 됨');
   await b.evaluate(() => { const el = document.getElementById('fdrawer'); new MutationObserver(() => { if (!window.__flip && el.querySelector('.sv-item .sv-st')?.dataset.st === 'assigned') window.__flip = performance.timeOrigin + performance.now(); }).observe(el, { subtree: true, childList: true, attributes: true }); });
   const tb0 = await b.evaluate(() => performance.timeOrigin + performance.now());
   await a.evaluate(() => document.querySelector('#pcard2 .sv-card-sheet .sv-go').addEventListener('click', () => { window.__go = performance.timeOrigin + performance.now(); }, { capture: true, once: true }));

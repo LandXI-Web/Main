@@ -7,7 +7,7 @@
 (function () { var h = function (e) { var vt = e.viewTransition; if (!vt) return; ['ready', 'finished', 'updateCallbackDone'].forEach(function (k) { if (vt[k] && vt[k].catch) vt[k].catch(function () {}); }); };
   addEventListener('pagereveal', h); addEventListener('pageswap', h); })();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LX/OPS — 관제실 로그인</title>
+<title>LX 관리자 대시보드 — 로그인</title>
 <link rel="stylesheet" href="../proto/fonts-system.css">
 <link rel="stylesheet" href="../assets/css/v2/tokens-v2.css">
 <link rel="stylesheet" href="../assets/css/v2/ops-grid.css">
@@ -17,8 +17,8 @@
 <body data-stage="paper">
 <div class="lg" id="lg">
   <header class="lg-top">
-    <span class="lg-word">LAND<b>-</b>XI</span><span class="lg-sep"></span><span class="lg-where">LX/OPS 관제실 · 관리자 전용 · :8702</span>
-    <span class="lg-sum" id="sum" aria-live="polite"><span class="og-lbl">관제 요약</span><span id="sumText">—</span></span>
+    <span class="lg-word">LAND<b>-</b>XI</span><span class="lg-sep"></span><span class="lg-where">LX 관리자 대시보드 · 관리자 전용</span>
+    <span class="lg-sum" id="sum" aria-live="polite"><span class="og-lbl">현황 요약</span><span id="sumText">—</span></span>
   </header>
   <section class="lg-left">
     <p class="lg-eyebrow">LX 한국국토정보공사 · Land-XI 하이퍼 GeoAI 플랫폼</p>
@@ -27,23 +27,23 @@
     <div class="lg-axes">
       <div><span>01</span><b>노코드 AI</b><p>코드 없이 학습·추론 — 모델은 LX가 만들고 품질을 책임진다</p></div>
       <div><span>02</span><b>워크플로우 개발</b><p>수집 → 정사화 → 학습 → 배포가 한 흐름으로 이어진다</p></div>
-      <div><span>03</span><b>전국단위 실태조사</b><p>검증된 카드를 지자체·해외로 이식해 같은 체계로 조사한다</p></div>
+      <div><span>03</span><b>전국단위 실태조사</b><p>검증된 카드를 지자체·해외에 적용해 같은 체계로 조사한다</p></div>
     </div>
     <p class="lg-vision"><span>비전</span>범부처 AI 기반 국토정보 통합조사</p>
     <form class="lg-form" id="form" autocomplete="on" novalidate>
       <div class="lg-field"><label for="id">관리자 계정</label><input id="id" name="login" autocomplete="username" spellcheck="false" placeholder="lx-admin" required></div>
       <div class="lg-field"><label for="pw">비밀번호</label><input id="pw" name="password" type="password" autocomplete="current-password" placeholder="비밀번호"></div>
-      <button class="lg-go" id="go" type="submit">관제실 입장</button>
+      <button class="lg-go" id="go" type="submit">로그인</button>
       <div class="lg-msg" id="msg" role="alert"></div>
     </form>
   </section>
   <section class="lg-right">
     <div class="lg-plate" id="plate"><div class="lg-map" id="faceMap" aria-label="남원 경작지 결과 얼굴판 · V-World 위성"></div></div>
-    <div class="lg-cap" id="cap"><span>남원 경작지 판독</span><b id="capN">—</b><span>필지</span></div>
+    <div class="lg-cap" id="cap"><span>남원 경작지 AI 분석</span><b id="capN">—</b><span>필지</span></div>
   </section>
   <footer class="lg-foot"><span>V-World 위성(xdworld) + AI 결과만 · 자체 원본 영상은 로그인 뒤</span><span>문의 063-713-1218 · Copyright© LX. ALL RIGHTS RESERVED.</span></footer>
 </div>
-<div class="lg-opsmark" aria-hidden="true">LX<b>/</b>OPS</div>
+<div class="lg-opsmark" aria-hidden="true">LX<b>/</b>관리자</div>
 <script type="module">
 import { portGate, detect, login, who, SRC, prov, ready, hhmmss, h, fmt, setText, errText } from './js/boot.js';
 import { createMap, inkMix, tween, eCam } from './js/deploy-map.js';
@@ -60,7 +60,7 @@ if (portGate()) {
   // F2-R 인계: ?next=infra.html 등(화이트리스트 · 같은 origin 관제 화면만) — 쿼리(?job= ?deploy= ?tenant=)는 그대로 넘긴다
   const NEXT = (() => { const n = q.get('next') || ''; const m = /^(index|infra|tenants|deploys)\.html(\?[\w=&%.:-]*)?$/.exec(n); return m ? '/landxi/ops/' + m[0] : null; })();
   if (w && w.realm === 'lx' && w.role === 'admin' && !q.has('stay')) location.replace(NEXT || '/landxi/ops/index.html');
-  if (q.get('denied')) msg('관제실은 관리자 전용입니다');
+  if (q.get('denied')) msg('LX 관리자 전용입니다');
 
   // 관제 요약 한 줄 — 로그인 전 공개 최소치(브리지 health) · off 면 시연
   const summary = async () => {
@@ -70,7 +70,7 @@ if (portGate()) {
       box.replaceChildren(h('span', {}, '노드 ', h('b', {}, String(s.nodes_up)), ' · GPU ', h('b', {}, String(s.gpus)), ' · 큐 ', h('b', {}, String(s.queued + s.running)), ' · 경보 ', h('b', {}, String(s.alerts_open)), ' · 마지막 점검 ', h('b', { 'data-k': 'lc' }, hhmmss(s.last_check))), ' ', h('span', { class: 'og-tag', 'data-basis': 'measured', title: s.source }, '실측'));
     } else {
       const g = await fixture('/landxi/ops/data/fixtures/ops-gpus.json');
-      box.replaceChildren(h('span', {}, '노드 ', h('b', {}, '1'), ' · GPU ', h('b', {}, String(g?.gpus?.length ?? 2)), ' · 큐 ', h('b', {}, '0'), ' · 마지막 점검 ', h('b', {}, hhmmss(g?.at))), ' ', h('span', { class: 'og-tag', 'data-basis': 'demo' }, '시연'));
+      box.replaceChildren(h('span', {}, '노드 ', h('b', {}, '1'), ' · GPU ', h('b', {}, String(g?.gpus?.length ?? 2)), ' · 큐 ', h('b', {}, '0'), ' · 마지막 점검 ', h('b', {}, hhmmss(g?.at))), ' ', h('span', { class: 'og-tag', 'data-basis': 'demo' }, '예시'));
     }
   };
   summary(); const sumT = setInterval(summary, 2000);
@@ -91,7 +91,7 @@ if (portGate()) {
     $('go').disabled = true;
     try {
       const s = await login(id, pw);
-      if (s.denied) { msg('관제실은 관리자 전용입니다'); $('go').disabled = false; return; }
+      if (s.denied) { msg('LX 관리자 전용입니다'); $('go').disabled = false; return; }
       clearInterval(sumT);
       if (NEXT && !/^\/landxi\/ops\/index\.html/.test(NEXT)) { location.replace(NEXT); return; }
       await flip(s);
@@ -111,7 +111,7 @@ if (portGate()) {
     const fly = h('div', { class: 'lg-fly', style: { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' } });
     fly.append(faceEl); document.body.append(fly);
     history.replaceState(null, '', '/landxi/ops/index.html');
-    document.title = 'LX/OPS — 운영 현황';
+    document.title = 'LX 관리자 대시보드 — 운영 현황';
     const frame = mountFrame({ page: 'index', title: '운영 현황', crumb: '배포 · 노드 · 결재 · 실태조사', user: s.offline ? who() : s, assemble: true });
     const ink = tween(1600, (x) => x, (x) => inkMix(map, eCam(x), x));
     const ov = mountOverview(frame, { map, fly, mapEl: faceEl });

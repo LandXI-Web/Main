@@ -1,4 +1,4 @@
-"""레드티밍 20문(redteam.yaml) — 전부 차단. LLM·서버 없이 결정적(RT20 게스트 401 은 게이트웨이가 떠 있으면 실제 HTTP 로도 확인)."""
+"""회귀셋(redteam.yaml) — 레드티밍 차단 · 범위 가드 · 요약 직행. LLM 없이 결정적(가드·요약 문항은 PostGIS 필요 · RT20 게스트 401 은 게이트웨이가 떠 있으면 HTTP 로도)."""
 import asyncio
 import sys
 from pathlib import Path
@@ -23,37 +23,73 @@ WHO = {
 ENVS = {"e1": {"value": 20872, "unit": "count", "basis": "inferred", "as_of": "2026-09-24", "source": "GET /api/v1/survey/stats"}}
 
 
-def test_twenty_cases():
-    assert len(CASES) == 20 and len({c["id"] for c in CASES}) == 20
+def _fresh():
+    """앞선 asyncio.run 이 남긴(닫힌 루프의) 연결 풀을 버린다 — 테스트마다 새 루프 · 새 풀."""
+    from landxi_api import deps
+    deps._pool = deps._pool_sys = deps._redis = None
+
+
+def test_case_count():
+    # 50문(F2-E 20 + S-10 30) + fix-agent-scope 관할 밖·보유 데이터 16문
+    ids = [c["id"] for c in CASES]
+    assert len(ids) == len(set(ids)) >= 66
+    scope = [c for c in CASES if int(c["id"][2:]) >= 51]
+    assert len(scope) >= 10
+
+
+def _db_up() -> bool:
+    try:
+        from landxi_api.regions import regions_base
+        regions_base()
+        async def ping():
+            from landxi_api.deps import close, db
+            async with db(realm="lx") as c:
+                await c.fetchval("SELECT 1")
+            await close()
+        _fresh()
+        asyncio.run(ping())
+        return True
+    except Exception:
+        return False
 
 
 @pytest.mark.parametrize("case", CASES, ids=[c["id"] for c in CASES])
-def test_blocked(case):
-    p = WHO[case["who"]]
-    exp = case["expect"]
-    if exp.startswith("rejected:"):
-        scr = audit.screen(case["message"], p)
-        assert scr["reject"] is not None, case
-        assert scr["reject"]["category"] == exp.split(":", 1)[1], (case, scr["reject"])
-        assert scr["reject"]["code"] == "tool_forbidden"
-    elif exp == "lint":
-        r = lint.lint(case["answer"], ENVS)
-        assert r.unverified_numbers == case["unverified"], r.unverified
-    elif exp == "tool_forbidden":
-        # 1) 목록에 없음(caps 교집합) 2) 실행 경로(run_tool)도 403 tool_forbidden
-        names = {t["function"]["name"] for t in registry.tools_for(p)}
-        assert case["tool"] not in names
-        from agent import runner
+def test_case(case):
+    """runner.redteam_case = 관제 LLM 줄의 회귀와 같은 판정(LLM 0). 가드·요약 문항은 DB 가 있어야 한다."""
+    from agent import runner
+    needs_db = case["expect"] not in ("lint", "tool_forbidden", "unauthorized") and audit.screen(case["message"], WHO[case["who"]])["reject"] is None
+    if needs_db and not _db_up():
+        pytest.skip("PostGIS 미기동")
+
+    _fresh()
+
+    async def go():
+        from landxi_api.deps import close
+        try:
+            return await runner.redteam_case(case, WHO[case["who"]])
+        finally:
+            await close()
+    got = asyncio.run(go())
+    assert got == case["expect"], (case["id"], case["message"] if "message" in case else "", got)
+
+
+def test_tool_forbidden_path():
+    # 목록에 없음(caps 교집합) + 실행 경로(run_tool)도 403 tool_forbidden
+    from agent import runner
+    for case in [c for c in CASES if c["expect"] == "tool_forbidden"]:
+        p = WHO[case["who"]]
         ctx = runner.Ctx(run_id="run_test_rt", principal=p, token=None, context={})
+        _fresh()
         out = asyncio.run(runner.run_tool(ctx, 1, case["tool"], {}))
-        assert out["ok"] is False
-        assert '"tool_forbidden"' in out["block"]
+        _fresh()
+        assert out["ok"] is False and '"tool_forbidden"' in out["block"]
         assert ctx.steps[0]["error"] == "tool_forbidden"
-    elif exp == "unauthorized":
-        assert registry.tools_for(p) == []
-        assert not any(registry.allowed(n, p) for n in registry.SPECS)
-    else:
-        pytest.fail(exp)
+
+
+def test_audit_categories():
+    for c in [c for c in CASES if c["expect"].startswith("rejected:") and int(c["id"][2:]) <= 20]:
+        r = audit.screen(c["message"], WHO[c["who"]])["reject"]
+        assert r and r["category"] == c["expect"].split(":", 1)[1] and r["code"] == "tool_forbidden", c
 
 
 def test_no_deploy_or_quota_tools_for_anyone():
@@ -64,7 +100,9 @@ def test_no_deploy_or_quota_tools_for_anyone():
 
 
 def test_write_tools_need_confirm():
-    assert registry.WRITE == registry.CONFIRM == {"jobs_submit", "survey_state"}
+    from agent import runner  # noqa: F401 — 대장 규칙(ledger_rule) · 요약(summary_lookup) 등록
+    assert registry.WRITE == registry.CONFIRM == {"jobs_submit", "survey_state", "ledger_rule"}
+    assert "summary_lookup" not in registry.WRITE
 
 
 def test_pii_masked():

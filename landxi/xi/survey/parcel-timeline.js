@@ -7,7 +7,7 @@ import { E, STATE_KO } from './api-survey.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const MK = { ledger: '◆', img: '▣', ai: '●', sus: '▲', field: '■', act: '▶' };
-const KO = { ledger: '대장', img: '영상', ai: '판독', sus: '의심', field: '현장', act: '조치' };
+const KO = { ledger: '대장', img: '영상', ai: 'AI 분석', sus: '의심', field: '현장', act: '조치' };
 const T0 = Date.UTC(2023, 0, 1), T1 = Date.UTC(2026, 11, 31);
 const tOf = (s) => { const m = /^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?/.exec(String(s)); if (!m) return null; return Date.UTC(+m[1], m[2] ? +m[2] - 1 : 6, m[3] ? +m[3] : 1); };
 export const xOf = (t) => Math.max(0, Math.min(1, (t - T0) / (T1 - T0)));
@@ -24,17 +24,17 @@ export function buildEvents({ pnu, facts, finds = [], row = null, tl = null, epo
   for (const e of epochs) ev.push({ k: 'img', t: e.date, title: `${e.label} · ${e.gsd}`, body: e.name || '', src: e.id, epoch: e.i });
   const a23 = facts?.a23 || {};
   const a23txt = ['bld', 'crop', 'park', 'gh'].filter((k) => (a23[k + '_m2'] || 0) > 0).map((k) => `${CLS_KO[k]} ${Math.round(a23[k + '_m2']).toLocaleString('ko-KR')}㎡`).join(' · ') || '탐지 없음';
-  ev.push({ k: 'ai', t: '2023', title: '2023 판독 · aerial25/best(검수 전 · 촬영월 미상)', body: a23txt, src: src23 });
+  ev.push({ k: 'ai', t: '2023', title: '2023 AI 분석 · aerial25/best(결과 확인 전 · 촬영월 미상)', body: a23txt, src: src23 });
   // 원천 이력(timeline json · 2025 A02 · 변화지수)
   if (tl?.events) for (const e of tl.events) {
-    if (e.kind === 'ai' && String(e.t).startsWith('2025')) ev.push({ k: 'ai', t: String(e.t).slice(0, 7), title: '2025 A02 판독 · 경작/비경작·비닐하우스(촬영월 미상)', body: Object.entries(e.area_m2 || {}).map(([k, v]) => `${CLS_KO[k] || k} ${Math.round(v).toLocaleString('ko-KR')}㎡`).join(' · '), src: e.src });
+    if (e.kind === 'ai' && String(e.t).startsWith('2025')) ev.push({ k: 'ai', t: String(e.t).slice(0, 7), title: '2025 A02 AI 분석 · 경작/비경작·비닐하우스(촬영월 미상)', body: Object.entries(e.area_m2 || {}).map(([k, v]) => `${CLS_KO[k] || k} ${Math.round(v).toLocaleString('ko-KR')}㎡`).join(' · '), src: e.src });
     if (e.kind === 'change') ev.push({ k: 'ai', t: e.t, title: `변화 지수(비지도) ${e.from} → ${e.t}`, body: `${e.cls} ${Math.round(e.m2)}㎡ · ${e.n}건`, src: e.src, lane: 1 });
   }
   // ▲ 의심(대조 2026-09-24 · 규칙마다)
   for (const f of finds) ev.push({ k: 'sus', t: '2026-09-24', title: `${f.rule} ${f.priority} ${f.score} · 대장 대조`, body: `${esc(f.rule_nm || '')} · 근거 ${Math.round(f.evid_m2).toLocaleString('ko-KR')}㎡`, src: 'survey 규칙 R1–R6 v1.0 [추정 초기 임계]', lane: finds.length > 1 ? 1 : 0 });
   // ■ 현장(배정 · 오탐 · 현장 확인 — 실제 상태 기록만 · 날짜 = 서버 updated_at 또는 이 세션에서 쓴 시각)
   const when = (row?.updated_at || row?.at || '').slice(0, 10) || null;
-  if (row && row.state && row.state !== 'open' && when) ev.push({ k: 'field', t: when, title: `${STATE_KO[row.state] || row.state}${row.basis === 'demo' ? ' · 시연' : ''}`, body: [row.assignee, row.planned_for ? `예정 ${row.planned_for}` : '', row.reason].filter(Boolean).map(esc).join(' · '), src: row.saved ? 'POST /survey/findings/{id}/state · audit_log' : '시연 · 저장 안 됨', lane: 1 });
+  if (row && row.state && row.state !== 'open' && when) ev.push({ k: 'field', t: when, title: `${STATE_KO[row.state] || row.state}${row.basis === 'demo' ? ' · 예시' : ''}`, body: [row.assignee, row.planned_for ? `예정 ${row.planned_for}` : '', row.reason].filter(Boolean).map(esc).join(' · '), src: row.saved ? 'POST /survey/findings/{id}/state · audit_log' : '예시 · 저장 안 됨', lane: 1 });
   // ▶ 조치 — 실제 종결(closed) 전이가 있을 때만 레일에 그린다(원천에 없는 날짜 0 · 2차 판정). 없으면 목록 끝 결손 줄(날짜 없음)
   if (row?.state === 'closed' && when) ev.push({ k: 'act', t: when, title: '조치 · 종결', body: esc(row.reason || ''), src: 'POST /survey/findings/{id}/state · audit_log' });
   return ev.filter((e) => tOf(e.t) != null).sort((a, b) => tOf(a.t) - tOf(b.t));
@@ -52,7 +52,7 @@ export function timeline(host, { events, summary = [], epochs = [], onPick }) {
     <div class="sv-rail"><i class="ax"></i>${years.map((y) => `<span class="yr" style="left:${(xOf(Date.UTC(y, 0, 1)) * 100).toFixed(2)}%">${y}</span>`).join('')}
       ${events.map((e, i) => `<button type="button" class="sv-mk" data-k="${e.k}" data-t="${esc(e.t)}" data-i="${i}" ${e.lane ? 'data-lane="1"' : ''} ${e.epoch != null ? `data-ep="${e.epoch}"` : ''} style="left:${(xOf(tOf(e.t)) * 100).toFixed(2)}%" aria-label="${esc(KO[e.k])} ${esc(e.t)} ${esc(e.title)}">${MK[e.k]}</button>`).join('')}
       <i class="sv-cursor" hidden></i><div class="sv-tip" hidden></div></div>
-    <ul class="sv-tlsum">${summary.length ? summary.map((s) => `<li><span class="sv-k">●</span>${esc(s)}</li>`).join('') : '<li><span class="cw-void xi-void">이력 · 2023 단일 시점(2025 판독·변화 없음)</span></li>'}
+    <ul class="sv-tlsum">${summary.length ? summary.map((s) => `<li><span class="sv-k">●</span>${esc(s)}</li>`).join('') : '<li><span class="cw-void xi-void">이력 · 2023 단일 시점(2025 AI 분석·변화 없음)</span></li>'}
       ${events.filter((e) => e.k !== 'img').map((e) => `<li data-k="${e.k}" data-t="${esc(String(e.t).slice(0, 7))}"><span class="sv-k">${MK[e.k]}</span><b>${esc(String(e.t).slice(0, 7))}</b><span>${esc(e.title)}${e.body ? ' — ' + e.body : ''}</span></li>`).join('')}
       ${events.some((e) => e.k === 'act') ? '' : '<li data-k="act" data-void="1"><span class="sv-k">▶</span><span class="cw-void xi-void">조치 · 현장 확인(inspected) 뒤 기록 · 2차</span></li>'}</ul>`;
   const rail = host.querySelector('.sv-rail'), cur = host.querySelector('.sv-cursor'), tip = host.querySelector('.sv-tip');

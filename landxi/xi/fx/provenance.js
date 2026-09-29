@@ -4,7 +4,9 @@
    void_(el, why) → 결손 칩(점선 무채 + 이유 한 줄) */
 import { assertEnvelope, BASIS_KO, fmt } from '../../shared/api-v1.js';
 
-export const tag = (basis) => BASIS_KO[basis] || basis;
+/* 화면 말(용어표 2026-09-29) — 공용 BASIS_KO 의 '시연'·'검수 전'을 화면에서만 바꿔 부른다(키·판정은 그대로) */
+const LABEL = { ...BASIS_KO, demo: '예시', inferred: 'AI 추론 · 결과 확인 전' };
+export const tag = (basis) => LABEL[basis] || basis;
 export function num(e, digits, where = '') { assertEnvelope(e, where); return fmt(e, digits); }
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const day = (s) => (s || '').slice(0, 10);

@@ -5,6 +5,7 @@
    지역은 변수 — 지역 이름·좌표 하드코딩 0(결과 크롭의 예시 데이터 파일 이름만 예외). */
 import { api, isEnvelope, bboxOf } from '../kit/util.js';
 import { joinCards, loadRegions } from '../kit/index.js';
+import { loadSummary, itemFor, stageKey, scaleOf, metric, userWords } from '../service-detail/summary.js';
 
 const KR = [124.0, 32.5, 132.5, 39.5];
 const inKR = (b) => b && b[0] >= KR[0] && b[2] <= KR[2] && b[1] >= KR[1] && b[3] <= KR[3];
@@ -103,7 +104,7 @@ async function surveyBand() {
   return {
     cover,
     stats: [
-      { label: '현장 확인 필요 필지', env: { value: need, unit: '필지', basis: exact ? 'inferred' : 'estimate', as_of: fd.as_of || asOf, source: 'AI 실태조사 결과', note: '현장 확인 전' } },
+      { key: 'field_check', label: '현장 확인 필요 필지', env: { value: need, unit: '필지', basis: exact ? 'inferred' : 'estimate', as_of: fd.as_of || asOf, source: 'AI 실태조사 결과', note: '현장 확인 전' } },
       { label: '대장과 다른 필지', env: sus ? { ...sus, value: sumSus } : null },
       { label: '판정 완료', env: judgedEnv ? { ...judgedEnv, value: judged, unit: '필지' } : null },
     ],
@@ -173,13 +174,19 @@ export async function load({ onLate } = {}) {
   const bandP = retryLate('band', surveyBand, { tries: 1, timeout: 60000 });
   sggIndex().catch(() => {});
   regionsP.catch(() => {}); bandP.catch(() => {});
-  const [cardsR, dep] = await Promise.all([retry('cards', () => api('/registry/cards')), deploysWithResults()]);
-  const cards = (cardsR.items || []).filter((c) => c.scope !== 'global');
+  // 카탈로그 진열 = 명세 S-6 `?public=1`(실결과가 있는 배포본의 카드만) · 상태·수 = 요약(summary) 한 출처
+  const [cardsR, dep, sum] = await Promise.all([retry('cards', () => api('/registry/cards?public=1')), deploysWithResults(), loadSummary()]);
+  const cards = (cardsR.items || []).filter((c) => c.scope !== 'global').map((c) => ({ ...c, name: userWords(c.name) }));
   const live = dep.items.filter(hasResult);
 
-  // ① 서비스 — 실배포·실결과가 있는 카드만(K7) · 나머지는 K9 한 장
+  // ① 서비스 — 실배포·실결과가 있는 카드만(K7). 결과 없는 카드는 진열하지 않는다(빈 카드 0) · 하나도 없을 때만 K9 한 장
+  //   숫자·상태 칩은 요약에서(요약이 없으면 숫자 없이 배포 단계만 — 배포 기록의 수를 숫자 자리에 쓰지 않는다)
   const RANK = { ga: 0, pilot: 1, none: 2 };
-  const rows = joinCards(cards, live).filter((r) => hasResult(r.deploy)).sort((a, b) => (RANK[a.state] - RANK[b.state]) || (+b.deploy.scale.value - +a.deploy.scale.value));
+  const rows = joinCards(cards, live).filter((r) => hasResult(r.deploy)).map((r) => {
+    const it = sum ? itemFor(sum, r.card.id, r.deploy) : null;
+    return { ...r, item: it, state: it ? stageKey(it.stage) || 'none' : sum ? 'none' : r.state, deploy: { ...r.deploy, scale: it ? scaleOf(it) : null }, src: r.deploy.scale };
+  }).filter((r) => r.state !== 'none')
+    .sort((a, b) => (RANK[a.state] - RANK[b.state]) || ((+b.deploy.scale?.value || 0) - (+a.deploy.scale?.value || 0)));
   const pending = cards.filter((c) => !rows.some((r) => r.card.id === c.id));
 
   // ② 활용 사례 — 실결과 배포본 하나 = 사례 하나 · 고정 먼저 · 앞 사례와 다른 지역이 이어지게(순서는 한 번 정하면 늦은 채움에도 그대로)
@@ -188,7 +195,7 @@ export async function load({ onLate } = {}) {
     const card = cards.find((c) => c.id === d.card_id);
     const short = shortOf(d.region_name?.ko);
     return {
-      id: d.id, deploy: d, card, cardName: card?.name || d.name, region: short, short, profile: d.region_profile, year: d.year, pinned: !!d.pinned,
+      id: d.id, deploy: d, card, cardName: userWords(card?.name || d.name), item: sum ? itemFor(sum, d.card_id, d, { strict: true }) : null, region: short, short, profile: d.region_profile, year: d.year, pinned: !!d.pinned,
       bbox: bb, center: [(bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2], src: d.scale.source, stats: [], xi: null, parcel: parcelMod(d),
     };
   }).sort((a, b) => (b.pinned - a.pinned) || (b.parcel - a.parcel) || (+b.deploy.scale.value - +a.deploy.scale.value));
@@ -204,9 +211,14 @@ export async function load({ onLate } = {}) {
   const apply = () => {
     for (const c of cases) {
       const rg = pickRegion(D.regions, c.deploy);
-      if (rg?.name) { c.region = rg.name; c.short = rg.name; }
+      const sumName = shortOf(c.item?.region_name);   // 요약 항목의 지역(메인 · 서비스 상세와 같은 이름) 먼저
+      if (sumName) { c.region = sumName; c.short = sumName; }
+      else if (rg?.name) { c.region = rg.name; c.short = rg.name; }
       const covered = D.band && inBox(c.center, D.band.cover) && c.parcel;
-      c.stats = covered ? D.band.stats : [];   // 업무 결과(실태조사 기록)가 없는 사례는 띠 없이 — AI 결과 수는 카드(K7)에만
+      // 업무 결과(실태조사 기록)가 없는 사례는 띠 없이 — AI 결과 수는 카드(K7)에만.
+      // '현장 확인 필요'는 요약(summary)의 그 사례 항목 값(모든 화면 같은 값) · 요약에 값이 없으면 그 칸을 뺀다
+      const need = metric(c.item, 'field_check');
+      c.stats = covered ? D.band.stats.map((x) => (x.key === 'field_check' ? (sum ? (need ? { ...x, env: need } : null) : x) : x)).filter((x) => x && x.env) : [];
     }
     D.pins = [];
     for (const c of cases) if (!D.pins.some((p) => p.profile === c.profile)) D.pins.push({ profile: c.profile, short: c.short });

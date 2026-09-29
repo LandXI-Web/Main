@@ -40,7 +40,7 @@ export async function quoteJob(body, { imagery, model, role, today = new Date().
     shards_env: env(g.cols * g.rows, 'count', 'measured', `격자(1024 · 겹침 128px · gsd ${imagery.gsd_m} m) · 프론트 계산`, `${g.cols}×${g.rows}`),
     gpu_s: env(null, 'gpu_s', 'estimate', `models.perf(${body.model_id}) 없음 — bench 전`, 'bench 후 채워짐'),
     eta_s: env(null, 's', 'estimate', `models.perf(${body.model_id}) 없음 — bench 전`),
-    quota: { tenant_id: role === 'sales' ? 'lx-demo' : 'lx', dim: 'gpu_s_month', remaining: env(null, 'gpu_s', 'measured', role === 'sales' ? 'quotas(lx-demo) · 서버 연결 없음' : 'quotas(lx hard=null)', role === 'sales' ? '시연 계량 · 서버 연결 없음' : '무제한'), policy: 'queue_low' },
+    quota: { tenant_id: role === 'sales' ? 'lx-demo' : 'lx', dim: 'gpu_s_month', remaining: env(null, 'gpu_s', 'measured', role === 'sales' ? 'quotas(lx-demo) · 서버 연결 없음' : 'quotas(lx hard=null)', role === 'sales' ? '예시 계량 · 서버 연결 없음' : '무제한'), policy: 'queue_low' },
     allowed: reasons.length === 0, reasons, pool: 'a6000', _grid: g, _via: 'fixture', _at: today,
   };
 }
@@ -204,7 +204,7 @@ export function theater(ctx, { frame, hud, onDone, clsLabel = (k) => k }) {
         clearLocks(3);   // 꼬리표 최대 4개(칸 1/4 … 4/4 가 모두 보이게 · 2차 판정) — 더 큰 작업은 최근 4칸
         // 꼬리표는 사람이 읽는 말(칸 a/b · 도착 n건 · 클래스 한글) — 내부 shard id 는 title 툴팁으로만(1차 판정 must_fix 6)
         const cls = Object.entries(d.classes || {}).filter(([, v]) => v > 0).sort((x, y) => y[1] - x[1]).map(([k, v]) => `${clsLabel(k)} ${v}`).join(' · ');
-        const L = lock(stageEl, A, { lngLat: [(c.bb[0] + c.bb[2]) / 2, (c.bb[1] + c.bb[3]) / 2], bbox: c.bb, html: `<b>칸 ${S.done}/${S.total || S.cells.size}</b>도착 ${d.n}건${cls ? ' · ' + cls : ''}` });
+        const L = lock(stageEl, A, { lngLat: [(c.bb[0] + c.bb[2]) / 2, (c.bb[1] + c.bb[3]) / 2], bbox: c.bb, html: `<b>칸 ${S.done}/${S.total || S.cells.size}</b>탐지 ${d.n}건${cls ? ' · ' + cls : ''}` });
         const fl = L.box.querySelector('.xi-lock-flag'); if (fl) { fl.title = `shard ${d.shard_id}`; fl.dataset.shard = d.shard_id; }
       }
     } else if (name === 'job.progress') {
@@ -218,7 +218,7 @@ export function theater(ctx, { frame, hud, onDone, clsLabel = (k) => k }) {
       S.finished = true; S.final = d.counts_env?.value ?? null; clearTimeout(S.stall); hud.jobNote('');
       for (const r of S.running.values()) r.el.remove(); S.running.clear();
       setPhase('job-done');
-      await hud.count(d.counts_env, { scene: '프레임 분석', title: live ? '실행 결과 · 실측' : '시연 · 저장 결과 재생', unit: '건', done: `완료 · ${d.elapsed_s}s` },
+      await hud.count(d.counts_env, { scene: '프레임 분석', title: live ? '실행 결과 · 실측' : '예시 · 저장 결과 재생', unit: '건', done: `완료 · ${d.elapsed_s}s` },
         Object.entries(d.counts || {}).map(([k, v]) => `${clsLabel(k)} <span class="n">${v.toLocaleString('ko-KR')}</span>`));
       hud.jobFinal && hud.jobFinal(d.counts_env, { shardSum: S.nSum || 0, shardsDone: S.done, shardsTotal: S.total || S.done, live, gpuS: d.gpu_s, elapsedS: d.elapsed_s, perGpu: d.chips_per_gpu_s, perWall: d.chips_per_wall_s, jobId: d.job_id });
       onDone && onDone(d);

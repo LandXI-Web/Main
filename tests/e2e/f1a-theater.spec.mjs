@@ -72,7 +72,7 @@ test('프레임 → 견적 → 실행 → 칸 도착 → job.done → 스냅샷 
   // HUD 작업 줄은 job.progress 가 올 때만 바뀐다(대기·시작 두 줄 + progress 수 이하)
   expect(r.mut.length).toBeLessThanOrEqual(r.prog.length * 3 + 6);
   expect(r.job).toMatch(/shard/);
-  if (API && r.live) expect(r.job).toContain('실측 · 지금'); else expect(r.job).toContain('시연');
+  if (API && r.live) expect(r.job).toContain('실측 · 지금'); else expect(r.job).toContain('예시');
   expect(r.snap).toBeTruthy();
   expect(r.snapOp).toBeGreaterThan(0); expect(r.resOp).toBe(0);
   expect(Number(r.big.replace(/,/g, ''))).toBeGreaterThan(0);

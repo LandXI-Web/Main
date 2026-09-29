@@ -18,7 +18,7 @@ const login = async (login) => (await fetch(B + '/api/v1/auth/login', { method: 
 test('4173 에서 관제 index 를 열면 boot.js 가 안내 화면으로 바꾼다(서버는 200 이어도)', async ({ page }) => {
   await page.goto('http://localhost:4173/landxi/ops/index.html');
   await page.waitForFunction(() => document.documentElement.dataset.gate === 'port');
-  await expect(page.locator('h1')).toHaveText('LX/OPS 관제실은 :8702 에서만 열립니다');
+  await expect(page.locator('h1')).toHaveText('LX 관리자 대시보드는 관리자 주소에서 열립니다');
   expect(await page.evaluate(() => document.querySelector('.og-shell'))).toBeNull();
 });
 
@@ -44,7 +44,7 @@ test('staff 로그인은 관제 진입 불가 — 문구 한 줄 · 세션 저�
   await page.goto(OPS + '/landxi/ops/login.html');
   await page.waitForFunction(() => document.documentElement.dataset.lx === 'ready');
   await page.fill('#id', 'lx-staff'); await page.fill('#pw', PW); await page.click('#go');
-  await expect(page.locator('#msg')).toHaveText('관제실은 관리자 전용입니다');
+  await expect(page.locator('#msg')).toHaveText('LX 관리자 전용입니다');
   expect(await page.evaluate(() => localStorage.getItem('lx_api_session'))).toBeNull();
   await page.goto(OPS + '/landxi/ops/infra.html');
   await page.waitForURL(/login\.html/);

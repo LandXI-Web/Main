@@ -190,7 +190,7 @@ test('③⑥ 프레임 실행 — 진행 중 칩/s 결손 표기 · 락온 꼬�
   const r = await page.evaluate(() => ({ lines: window.__jobLines, own1: document.querySelector('#hud-job .xi-own1')?.textContent, own2: document.querySelector('#hud-job .xi-own2')?.textContent, gpu: document.querySelector('#hud-job .xi-gpuu')?.textContent || '', api: window.__xi.jobApi || null, perf: window.__xi.hud.perf && Object.fromEntries(Object.entries(window.__xi.hud.perf).map(([k, v]) => [k, v?.value ?? v])) }));
   console.log('flags', JSON.stringify(flags.slice(0, 3)));
   console.log('job', JSON.stringify({ own1: r.own1, own2: r.own2, api: r.api, perf: r.perf, gpu: r.gpu, mid: r.lines.filter((l) => /칩\/s/.test(l)).slice(0, 2) }));
-  for (const f of flags) { expect(f.t).toMatch(/^칸 \d+\/\d+도착 \d+건/); expect(f.t).not.toMatch(/r\d{3}c\d{3}/); expect(f.title).toMatch(/^shard r\d{3}c\d{3}$/); }
+  for (const f of flags) { expect(f.t).toMatch(/^칸 \d+\/\d+탐지 \d+건/); expect(f.t).not.toMatch(/r\d{3}c\d{3}/); expect(f.title).toMatch(/^shard r\d{3}c\d{3}$/); }
   expect(r.lines.some((l) => l.includes('칩/s — · 창 짧음') || /\d칩\/s/.test(l))).toBe(true);
   expect(r.lines.some((l) => /0\.5\s*칩|12\.0칩\/s/.test(l))).toBe(false);   // 창 하한 인공값(n/0.5) 표기 0
   expect(r.own1).toMatch(/^GPU 초당 .*칩 · 벽시계 .*칩\/s$/);

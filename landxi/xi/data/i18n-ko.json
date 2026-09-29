@@ -3,7 +3,7 @@
   "role": {
     "guest": "게스트",
     "staff": "LX 직원",
-    "sales": "영업 · 시연",
+    "sales": "영업 · 예시",
     "agency": "남원시 · 기관"
   },
   "mast": {
@@ -13,8 +13,8 @@
   "void": {
     "parcels": "필지 · P8 대기",
     "vworld_search": "장소 검색 · V-World 키 대기",
-    "road": "준비 중 · 도로 결과 없음",
-    "deploy_nomap": "시연 · 지도 미연결",
+    "road": "도로 결과 없음",
+    "deploy_nomap": "예시 · 지도 미연결",
     "scrub_login": "시점 원본 · 로그인 후 열람",
     "scrub_aoi": "시점 · 드론 AOI 로 내려가면 4시점",
     "crop_aoi_only": "A03 남원 전역 2시점(2 m) · 4시점은 드론 AOI 안만",
@@ -23,16 +23,16 @@
   "scene": {
     "globe": "글로브",
     "korea": "국내 무대",
-    "city": "도착 · 남원 전역",
-    "aoi": "도착 · 드론 AOI",
+    "city": "남원 전역",
+    "aoi": "드론 AOI",
     "frame": "프레임 분석"
   },
   "basis": {
     "measured": "실측",
     "estimate": "추정",
-    "demo": "시연",
+    "demo": "예시",
     "history": "이력",
-    "inferred": "AI 추론 · 검수 전",
+    "inferred": "AI 추론 · 결과 확인 전",
     "recorded": "기록"
   },
   "cls": {

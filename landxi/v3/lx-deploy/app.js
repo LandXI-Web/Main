@@ -4,7 +4,7 @@
 import { ALLOW, shell, gate, createStage, regionPicker, drawer, bignum, numHtml, stepper, empty, table, toast, devDrawer, devlog, h, esc } from '../kit/index.js';
 import { api, sse } from '../../shared/api-v1.js';
 import { D, load, reloadDeploys, regions, deployOf, regionKey, regionShort, workName, cardOf, STAGE_CHIP, stageKind, aoiBox, isDomestic,
-  imageryIn, linkedModel, modelFor, sampleBox, boxPoly, health, reportsOf, retrainEnv, retrainMap, loadHealth, hasOp } from './data.js';
+  imageryIn, linkedModel, modelFor, sampleBox, boxPoly, health, reportsOf, reportsEnv, retrainEnv, retrainMap, loadHealth, hasOp } from './data.js';
 
 const V3 = '/landxi/v3/';
 const Q = new URLSearchParams(location.search);
@@ -22,7 +22,7 @@ const S = shell({ who, home: 'lx-deploy', rail: { kind: 'steps', items: RAIL, do
 /* ── 판: 지도 무대 + 윗줄(탭 · 심기) + 범례 + 운영 판 ─────────── */
 const root = h('div.dp');
 const stageEl = h('div.dp-stage');
-const tabs = h('div.dp-tabs', { role: 'tablist', 'aria-label': '배포·운영' },
+const tabs = h('div.dp-tabs', { role: 'tablist', 'aria-label': '배포·서비스 관리' },
   h('button.dp-tab', { type: 'button', role: 'tab', id: 'tab-deploy', 'aria-selected': 'true', text: '배포' }),
   h('button.dp-tab', { type: 'button', role: 'tab', id: 'tab-ops', 'aria-selected': 'false', text: '서비스 관리' }));
 const plantBtn = h('button.t-btn.dp-plant', { type: 'button', 'aria-label': '다른 지역에 적용', html: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg><span>다른 지역에 적용</span>' });
@@ -102,6 +102,7 @@ async function checks(d) {
   const hasRes = !draft0 && !!d.snapshot_current;
   const mods = (d.modules?.core?.length || 0) + Object.values(d.modules?.ext || {}).filter(Boolean).length;
   const reps = reportsOf(d);
+  const rpt = reportsEnv(d);   // 기관 신고(summary · 서비스 관리 표와 같은 값)
   const due = !draft0 && retrainMap().has(d.id);
   const draft = d.stage === 'draft';
   const pending = (d.approvals || []).some((a) => !a.decision || a.decision === 'pending');
@@ -125,9 +126,10 @@ async function checks(d) {
       act: found || jobsDone || hasRes ? null : pair ? { label: '첫 분석 실행', run: (btn, row) => firstRun(d, pair, btn, row), primary: true } : { note: '영상과 모델이 갖춰지면 분석합니다' } },
     { t: '배포', href: null, s: draft ? 'wait' : 'ok',
       line: draft ? (pending ? '결재 대기' : '관리자 결재 전') : STAGE_CHIP[d.stage],
-      act: draft && !pending ? canApprove ? { label: '결재 요청', run: () => askApproval(d) } : { note: '관제 결재함에서 결재합니다' } : null },
+      act: draft && !pending ? canApprove ? { label: '결재 요청', run: () => askApproval(d) } : { note: 'LX 관리자 화면 결재함에서 결재합니다' } : null },
     { t: '서비스 관리', href: null, tab: 'ops', s: draft ? 'wait' : due ? 'todo' : 'ok',
-      line: draft ? '배포 뒤 시작' : reps.length ? `오탐 신고 ${reps.length}건${due ? ' · 재학습' : ''}` : '신고 없음', act: null },
+      line: draft ? '배포 뒤 시작' : rpt !== undefined ? (rpt?.value ? `기관 신고 ${rpt.value}건${due ? ' · 재학습' : ''}` : due ? '재학습' : '신고 없음')
+        : reps.length ? `오탐 신고 ${reps.length}건${due ? ' · 재학습' : ''}` : '신고 없음', act: null },
   ];
 }
 
@@ -242,7 +244,7 @@ async function openPlant() {
   const canPlant = isAdmin || D.health === 'server';
   if (!canPlant) go.hidden = true;
   const form = h('form.dp-form', {},
-    canPlant ? null : h('p.dp-note', { text: '관리자 결재 권한으로 심을 수 있습니다' }),
+    canPlant ? null : h('p.dp-note', { text: '관리자 결재 권한으로 다른 지역에 적용할 수 있습니다' }),
     h('div.dp-f', {}, h('span.t-label', { text: '카드' }), cardSel),
     h('div.dp-f', {}, h('span.t-label', { text: '지역' }), regEl),
     h('div.dp-f', {}, h('span.t-label', { text: '가져갈 것' }), bring),
@@ -337,11 +339,11 @@ async function renderOps() {
     cols: [
       { key: 'name', label: '배포본', fmt: (_, r) => `<span class="dp-wk">${esc(workName(r.d.card_id))}<small>${esc(regionShort(r.d))}</small></span>` },
       { key: 'precision', label: '정밀도', num: true, fmt: precCell },   // lx-review 와 같은 표기(0.00 · 표본 < 100 이면 ~ · 기록 전이면 표본 수)
-      { key: 'reports', label: '오탐 신고', num: true, fmt: (v) => numHtml(v, { unit: '건' }) },
+      { key: 'reports', label: '기관 신고', num: true, fmt: (v) => numHtml(v, { unit: '건' }) },   // summary reports — 합 = LX 직원 대시보드 '기관 신고'
       { key: 'last', label: '마지막 학습', fmt: (v) => esc(v ? ymd(v) : '—') },
       { key: 'next', label: '다음 행동', fmt: (v) => `<span class="dp-next" data-n="${esc(v)}">${esc(v)}</span>` },
     ],
-    rows: rows.map((r) => ({ ...r, name: workName(r.d.card_id), precision: r.h.precision, reports: r.h.reports, last: r.h.lastTrain, next: r.h.next, rank: rank[r.h.next] ?? 9 }))
+    rows: rows.map((r) => ({ ...r, name: workName(r.d.card_id), precision: r.h.precision, reports: reportsEnv(r.d) || null, last: r.h.lastTrain, next: r.h.next, rank: rank[r.h.next] ?? 9 }))
       .sort((a, b) => a.rank - b.rank || (b.reports?.value || 0) - (a.reports?.value || 0)),
     onRow: (r) => { tab('deploy'); select(r.d.id); },
   });

@@ -88,7 +88,7 @@ export function mountCases({ list, el, cap, cases, openHref, detailHref }) {
       : det ? `<a class="t-btn t-btn--2" href="${esc(det)}">자세히</a>` : '';
     return band + act;
   };
-  const whoText = (c) => `${c.region} · ${c.year}`;
+  const whoText = (c) => [c.region, c.year].filter((x) => x !== null && x !== undefined && x !== '').join(' · ');
   list.innerHTML = cases.map((c, i) => `<li class="sl-item" data-i="${i}" data-case="${esc(c.id)}">
       <button type="button" class="sl-item-h" aria-expanded="false"><span class="who">${esc(whoText(c))}</span><span class="what">${esc(c.cardName)}</span></button>
       <div class="more">${moreHtml(c)}</div></li>`).join('');
@@ -104,7 +104,7 @@ export function mountCases({ list, el, cap, cases, openHref, detailHref }) {
     const c = cases[i];
     window.__sales.caseNow = c.id;
     const s = await ready; if (cur !== i) return;
-    cap.textContent = `${c.xi?.name || c.short} · ${c.year} 영상`; cap.hidden = false;
+    cap.textContent = [c.xi?.name || c.short, c.year ? `${c.year} 영상` : ''].filter(Boolean).join(' · '); cap.hidden = false;
     s.geo('res', EMPTY); s.geo('pt', EMPTY);
     const r = await loadResult(c); if (cur !== i) return;
     await s.go(r?.bbox || c.bbox, { maxZoom: 15.5 });
@@ -124,7 +124,7 @@ export function mountCases({ list, el, cap, cases, openHref, detailHref }) {
       items[i].querySelector('.who').textContent = whoText(c);
       items[i].querySelector('.more').innerHTML = moreHtml(c);
     });
-    const c = cases[cur]; if (c && !cap.hidden) cap.textContent = `${c.xi?.name || c.short} · ${c.year} 영상`;
+    const c = cases[cur]; if (c && !cap.hidden) cap.textContent = [c.xi?.name || c.short, c.year ? `${c.year} 영상` : ''].filter(Boolean).join(' · ');
   }
   return { select: (i) => select(i, { user: true }), update };
 }

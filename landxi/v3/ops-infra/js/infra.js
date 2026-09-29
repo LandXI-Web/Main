@@ -106,7 +106,7 @@ export function mountInfra(root) {
 
   function paintGpus() {
     const b = budget();
-    const env = { value: b.n, unit: 'count', basis: 'measured', as_of: S.gpus?.at || new Date().toISOString(), source: '관제 기록' };
+    const env = { value: b.n, unit: 'count', basis: 'measured', as_of: S.gpus?.at || new Date().toISOString(), source: 'GPU 장비 기록' };
     big.set(env, { unit: `/ ${b.m}` });
     const tail = $('#tail');
     tail.textContent = b.ok ? '전력 예산 안' : '전력 예산 초과';

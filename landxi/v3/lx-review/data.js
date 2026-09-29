@@ -122,7 +122,7 @@ export function ruleStat(rule) {
   let tp = 0, fp = 0, unk = 0, last = null;
   for (const x of m.values()) { if (x.v === 'tp') tp++; else if (x.v === 'fp') fp++; else unk++; if (!last || x.at > last) last = x.at; }
   const k = tp + fp + unk, n = tp + fp;       // 표본 = 판정한 필지 전부 · 정밀도 = 맞음 ÷ (맞음 + 오탐)
-  const precision = n ? { ...env(Math.round((tp / n) * 100) / 100, 'ratio', k >= goal ? 'measured' : 'estimate', 'LX 표본 검수', `맞음 ${tp} · 오탐 ${fp} · 모름 ${unk}`), as_of: last || new Date().toISOString() } : null;
+  const precision = n ? { ...env(Math.round((tp / n) * 100) / 100, 'ratio', k >= goal ? 'measured' : 'estimate', 'LX 표본 확인', `맞음 ${tp} · 오탐 ${fp} · 모름 ${unk}`), as_of: last || new Date().toISOString() } : null;
   const reviewed = D.fb.some((f) => f.set_id === SET + rule && /^검수:떼기/.test(f.note || ''));
   const pending = !!D.pending[rule] || (STAGE && D.fb.some((f) => f.set_id === SET + rule && /^검수:임계요청/.test(f.note || '')));
   return { k, goal, tp, fp, unk, precision, gate: D.byId[rule]?.gate ?? GATE, reviewed, pending };
@@ -148,11 +148,11 @@ export async function judge(f, verdict) {
 export async function unTag(rule, st) {
   if (D.s2) {
     /* S-2: 서버가 조건(표본 ≥ 100 · 정밀도 ≥ 임계)을 다시 판정 → approvals 행. 관리자 승인 시 규칙 reviewed:true → 꼬리표 '✓ 검수됨' */
-    await api(`/survey/rules/${rule}/activate`, { method: 'POST', body: { review: true, note: `검수 전 떼기 · 표본 ${st.k} · 정밀도 ${st.precision?.value}` } });
+    await api(`/survey/rules/${rule}/activate`, { method: 'POST', body: { review: true, note: `확인 전 표시 떼기 · 표본 ${st.k} · 정밀도 ${st.precision?.value}` } });
     D.pending[rule] = true; if (D.ruleStats[rule]) D.ruleStats[rule].pending_activation = true;
     return;
   }
-  if (!STAGE) await api(`/survey/rules/${rule}/activate`, { method: 'POST', body: { note: `검수 전 떼기 · 표본 ${st.k} · 정밀도 ${st.precision?.value}` } });
+  if (!STAGE) await api(`/survey/rules/${rule}/activate`, { method: 'POST', body: { note: `확인 전 표시 떼기 · 표본 ${st.k} · 정밀도 ${st.precision?.value}` } });
   await api('/feedback', { method: 'POST', body: { kind: 'other', set: SET + rule, note: `검수:떼기 표본 ${st.k} 정밀도 ${st.precision?.value}` } });
   D.fb.push({ tenant_id: 'lx', set_id: SET + rule, note: '검수:떼기', at: new Date().toISOString() });
   if (!STAGE) D.pending[rule] = true;
@@ -179,11 +179,11 @@ export async function suggest(rule, queue) {
   const cands = [cur, ...fps.map((a) => Math.ceil(a + 1))].filter((c) => c >= cur && c <= keep);
   let best = cur, bestCut = 0;
   for (const c of cands) { const cut = fps.filter((a) => a < c).length; if (cut > bestCut) { best = c; bestCut = cut; } }
-  return { th, next: best > cur ? { ...th.value, value: best, basis: 'estimate', source: '검수 표본', note: `오탐 ${bestCut}건을 거르는 값` } : null };
+  return { th, next: best > cur ? { ...th.value, value: best, basis: 'estimate', source: '확인 표본', note: `오탐 ${bestCut}건을 거르는 값` } : null };
 }
 
 export async function requestThreshold(rule, th, next) {
-  if (!STAGE) await api(`/survey/rules/${rule}/activate`, { method: 'POST', body: { thresholds: { [th.key]: next.value }, note: `검수 표본 기준 ${th.label} ${th.value.value}→${next.value}` } });
+  if (!STAGE) await api(`/survey/rules/${rule}/activate`, { method: 'POST', body: { thresholds: { [th.key]: next.value }, note: `확인 표본 기준 ${th.label} ${th.value.value}→${next.value}` } });
   else await api('/feedback', { method: 'POST', body: { kind: 'other', set: SET + rule, note: `검수:임계요청 ${th.label} ${th.value.value}→${next.value}` } });
   D.fb.push({ tenant_id: 'lx', set_id: SET + rule, note: '검수:임계요청', at: new Date().toISOString() });
   if (!STAGE) { D.pending[rule] = true; if (D.ruleStats[rule]) D.ruleStats[rule].pending_activation = true; }

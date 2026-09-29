@@ -73,7 +73,7 @@
   {
    "id": "lx-demo",
    "name": {
-    "ko": "영업 시연 계량",
+    "ko": "영업 계량",
     "en": "Sales demo metering"
    },
    "kind": "user",

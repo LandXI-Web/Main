@@ -146,7 +146,7 @@ test('서비스 워커 막음(첫 방문·시크릿·SW 차단) — 에이전트
   if (present) expect(r.modules.agent.present).toBe(true);
   expect(r.a[0]).toBe(false); expect(r.b[0]).toBe(false);
   expect(r.miss).toBeGreaterThanOrEqual(2);
-  expect(r.gauge).toMatch(/외부 타일 결손 \d+ · 투명 대체/);
+  expect(r.gauge).toMatch(/외부 타일 누락 \d+ · 투명 대체/);
   expect(errs).toEqual([]);                                          // 404 · 5xx 가 콘솔로 새지 않는다
   await ctx.close();
 });

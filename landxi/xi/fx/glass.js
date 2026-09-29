@@ -83,7 +83,7 @@ export function toast(msg, { basis = null, ms = 3000 } = {}) {
   if (!host) { host = document.createElement('div'); host.id = 'xi-toasts'; host.setAttribute('aria-live', 'polite'); document.body.appendChild(host); }
   const t = document.createElement('p');
   t.className = 'cw-glass xi-toast';
-  t.innerHTML = `${basis ? `<b data-basis="${basis}">${basis === 'demo' ? '시연' : basis}</b>` : ''}<span></span>`;
+  t.innerHTML = `${basis ? `<b data-basis="${basis}">${basis === 'demo' ? '예시' : basis}</b>` : ''}<span></span>`;
   t.lastChild.textContent = msg;
   host.appendChild(t);
   panelIn(t);

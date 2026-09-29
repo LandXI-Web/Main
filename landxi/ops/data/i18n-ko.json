@@ -1,12 +1,12 @@
 {
- "product": "LX/OPS",
+ "product": "LX 관리자 대시보드",
  "motto": "보이는 모든 땅을, 읽히는 행정으로.",
  "rail": {
   "index": "운영 현황",
-  "infra": "인프라 관제",
+  "infra": "인프라",
   "tenants": "기관·할당",
   "deploys": "배포 제어",
-  "publish": "카드 발행",
+  "publish": "서비스 공개",
   "data": "데이터 관리",
   "service": "서비스 관리",
   "my": "MY"
@@ -21,9 +21,9 @@
  "basis": {
   "measured": "실측",
   "estimate": "추정",
-  "demo": "시연",
+  "demo": "예시",
   "history": "이력",
-  "inferred": "AI 추론 · 검수 전",
+  "inferred": "AI 추론 · 결과 확인 전",
   "recorded": "기록"
  },
  "job_state": {
@@ -55,19 +55,19 @@
   "gwangju-jeonnam": "광주전남",
   "kgz-agri": "KGZ 농업",
   "kgz-land": "KGZ 토지",
-  "lx-demo": "시연 계량"
+  "lx-demo": "영업 계량"
  },
  "src": {
   "gateway": "실측 · 게이트웨이 :8700",
   "bridge": "실측 · 브리지 · 메모리 · 게이트웨이 없음",
-  "off": "시연 · 서버 연결 없음"
+  "off": "예시 · 서버 연결 없음"
  },
- "why_off": "준비 중 · 서버 없음",
+ "why_off": "서버 연결 없음",
  "no_alerts": "경보 없음",
  "last_check": "마지막 점검",
  "no_recv": "수신 없음",
- "admin_only": "관제실은 관리자 전용입니다",
- "port_only": "LX/OPS 관제실은 :8702 에서만 열립니다",
+ "admin_only": "LX 관리자 전용입니다",
+ "port_only": "LX 관리자 대시보드는 관리자 주소에서 열립니다",
  "orig_links": {
   "publish": "http://localhost:4173/landxi/proto/admin-publish.html",
   "data": "http://localhost:4173/landxi/proto/dataset.html",

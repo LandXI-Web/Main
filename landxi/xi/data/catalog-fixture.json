@@ -492,7 +492,7 @@
      "basis": "inferred",
      "as_of": "2026-09-24",
      "source": "manifest.json#namwon_change_2504_2510.pmtiles",
-     "note": "변화 지수(비지도) · 검수 전 · 학습 결과 아님"
+     "note": "변화 지수(비지도) · 결과 확인 전 · 학습 결과 아님"
     },
     "signed": false,
     "basis": "inferred"
@@ -1062,7 +1062,7 @@
     "crs": "EPSG:3857",
     "tier": "result",
     "license": "확인 중",
-    "attribution": "C01 2023 25cm × aerial25/best · 검수 전",
+    "attribution": "C01 2023 25cm × aerial25/best · 결과 확인 전",
     "export_policy": "tenant",
     "security_review": "pending",
     "rights_holder": "확인 중",
@@ -1073,7 +1073,7 @@
      "basis": "inferred",
      "as_of": "2026-09-24",
      "source": "manifest.json#namwon-landcover-2023.pmtiles",
-     "note": "검수 전 · C01 2023 25cm × aerial25/best"
+     "note": "결과 확인 전 · C01 2023 25cm × aerial25/best"
     },
     "signed": false,
     "basis": "inferred"
@@ -1118,7 +1118,7 @@
      "basis": "inferred",
      "as_of": "2026-09-24",
      "source": "manifest.json#namwon-farmland-2025.pmtiles",
-     "note": "검수 전 · LX 드론 2025 × namwon/cultivate_uncultivate · 공개 판정은 F1-A 브리프 §5 픽스처 값(정본 F1-B 카탈로그)"
+     "note": "결과 확인 전 · LX 드론 2025 × namwon/cultivate_uncultivate · 공개 판정은 F1-A 브리프 §5 픽스처 값(정본 F1-B 카탈로그)"
     },
     "signed": false,
     "basis": "inferred"
@@ -1163,7 +1163,7 @@
      "basis": "inferred",
      "as_of": "2026-09-24",
      "source": "manifest.json#namwon-greenhouse-2025.pmtiles",
-     "note": "검수 전 · LX 드론 2025 × namwon/Vinyl_house"
+     "note": "결과 확인 전 · LX 드론 2025 × namwon/Vinyl_house"
     },
     "signed": false,
     "basis": "inferred"
@@ -1208,7 +1208,7 @@
      "basis": "inferred",
      "as_of": "2026-09-24",
      "source": "manifest.json#namwon-change.pmtiles",
-     "note": "변화 지수(비지도) · 검수 전 · 학습 결과 아님"
+     "note": "변화 지수(비지도) · 결과 확인 전 · 학습 결과 아님"
     },
     "signed": false,
     "basis": "inferred"
@@ -1253,7 +1253,7 @@
      "basis": "inferred",
      "as_of": "2026-09-24",
      "source": "manifest.json#namwon-change-grid.pmtiles",
-     "note": "변화 지수(비지도) · 검수 전 · 학습 결과 아님"
+     "note": "변화 지수(비지도) · 결과 확인 전 · 학습 결과 아님"
     },
     "signed": false,
     "basis": "inferred"
@@ -1298,7 +1298,7 @@
      "basis": "inferred",
      "as_of": "2026-09-24",
      "source": "manifest.json#yeosu-marine-2025-aerial.pmtiles",
-     "note": "검수 전 · A06"
+     "note": "결과 확인 전 · A06"
     },
     "signed": false,
     "basis": "inferred"
@@ -1343,7 +1343,7 @@
      "basis": "inferred",
      "as_of": "2026-09-24",
      "source": "manifest.json#yeosu-marine-2026-drone.pmtiles",
-     "note": "검수 전 · A06"
+     "note": "결과 확인 전 · A06"
     },
     "signed": false,
     "basis": "inferred"
@@ -1388,7 +1388,7 @@
      "basis": "inferred",
      "as_of": "2026-09-24",
      "source": "manifest.json#marine-debris.pmtiles",
-     "note": "검수 전 · A07"
+     "note": "결과 확인 전 · A07"
     },
     "signed": false,
     "basis": "inferred"
@@ -1433,7 +1433,7 @@
      "basis": "inferred",
      "as_of": "2026-09-24",
      "source": "manifest.json#jeju-illegal.pmtiles",
-     "note": "검수 전 · A10"
+     "note": "결과 확인 전 · A10"
     },
     "signed": false,
     "basis": "inferred"
@@ -1993,7 +1993,7 @@
      "basis": "inferred",
      "as_of": "2026-09-24",
      "source": "manifest.json#namwon_change_2504_2510.pmtiles",
-     "note": "변화 지수(비지도) · 검수 전 · 학습 결과 아님"
+     "note": "변화 지수(비지도) · 결과 확인 전 · 학습 결과 아님"
     },
     "signed": false,
     "basis": "inferred"
@@ -2371,7 +2371,7 @@
     "crs": "EPSG:3857",
     "tier": "result",
     "license": "확인 중",
-    "attribution": "C01 2023 25cm × aerial25/best · 검수 전",
+    "attribution": "C01 2023 25cm × aerial25/best · 결과 확인 전",
     "export_policy": "tenant",
     "security_review": "pending",
     "rights_holder": "확인 중",
@@ -2382,7 +2382,7 @@
      "basis": "inferred",
      "as_of": "2026-09-24",
      "source": "manifest.json#namwon-landcover-2023.pmtiles",
-     "note": "검수 전 · C01 2023 25cm × aerial25/best"
+     "note": "결과 확인 전 · C01 2023 25cm × aerial25/best"
     },
     "signed": false,
     "basis": "inferred"
@@ -2427,7 +2427,7 @@
      "basis": "inferred",
      "as_of": "2026-09-24",
      "source": "manifest.json#namwon-farmland-2025.pmtiles",
-     "note": "검수 전 · LX 드론 2025 × namwon/cultivate_uncultivate · 공개 판정은 F1-A 브리프 §5 픽스처 값(정본 F1-B 카탈로그)"
+     "note": "결과 확인 전 · LX 드론 2025 × namwon/cultivate_uncultivate · 공개 판정은 F1-A 브리프 §5 픽스처 값(정본 F1-B 카탈로그)"
     },
     "signed": false,
     "basis": "inferred"
@@ -2472,7 +2472,7 @@
      "basis": "inferred",
      "as_of": "2026-09-24",
      "source": "manifest.json#namwon-greenhouse-2025.pmtiles",
-     "note": "검수 전 · LX 드론 2025 × namwon/Vinyl_house"
+     "note": "결과 확인 전 · LX 드론 2025 × namwon/Vinyl_house"
     },
     "signed": false,
     "basis": "inferred"
@@ -2517,7 +2517,7 @@
      "basis": "inferred",
      "as_of": "2026-09-24",
      "source": "manifest.json#namwon-change.pmtiles",
-     "note": "변화 지수(비지도) · 검수 전 · 학습 결과 아님"
+     "note": "변화 지수(비지도) · 결과 확인 전 · 학습 결과 아님"
     },
     "signed": false,
     "basis": "inferred"
@@ -2562,7 +2562,7 @@
      "basis": "inferred",
      "as_of": "2026-09-24",
      "source": "manifest.json#namwon-change-grid.pmtiles",
-     "note": "변화 지수(비지도) · 검수 전 · 학습 결과 아님"
+     "note": "변화 지수(비지도) · 결과 확인 전 · 학습 결과 아님"
     },
     "signed": false,
     "basis": "inferred"
@@ -2978,7 +2978,7 @@
      "basis": "inferred",
      "as_of": "2026-09-24",
      "source": "manifest.json#namwon-farmland-2025.pmtiles",
-     "note": "검수 전 · LX 드론 2025 × namwon/cultivate_uncultivate · 공개 판정은 F1-A 브리프 §5 픽스처 값(정본 F1-B 카탈로그)"
+     "note": "결과 확인 전 · LX 드론 2025 × namwon/cultivate_uncultivate · 공개 판정은 F1-A 브리프 §5 픽스처 값(정본 F1-B 카탈로그)"
     },
     "signed": false,
     "basis": "inferred"

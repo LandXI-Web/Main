@@ -27,7 +27,7 @@ function hatchImage(px = 8) {
 export function surveyLayers(A, { url, emd, before = 'slot-overlay' }) {
   const S = { on: false, done: new Set(), rules: new Set(['R1', 'R2', 'R3', 'R4', 'R5', 'R6']), prio: new Set(['A', 'B', 'C']), hl: null, emdHl: null };
   if (!A.hasImage('sv-hatch')) A.addImage('sv-hatch', hatchImage(), { pixelRatio: 2 });
-  if (!A.getSource('src-survey')) A.addSource('src-survey', { type: 'vector', url, attribution: 'V-World 연속지적 2026-09-24 × LX AI(검수 전)' });
+  if (!A.getSource('src-survey')) A.addSource('src-survey', { type: 'vector', url, attribution: 'V-World 연속지적 2026-09-24 × LX AI(결과 확인 전)' });
   const fc = { type: 'FeatureCollection', features: emd.map((f, i) => ({ type: 'Feature', id: i + 1, properties: { cd: f.cd, nm: f.nm }, geometry: f.geometry })) };
   S.idOf = new Map(emd.map((f, i) => [f.cd, i + 1]));
   if (!A.getSource('sv-emd')) A.addSource('sv-emd', { type: 'geojson', data: fc });

@@ -33,7 +33,7 @@ for (const e of ext) Object.assign(e, { set: null, path: null, url: null, layer:
 
 /* ── 자체 자산(manifest) ─────────────────────────────────────────── */
 const own = [];
-const resultNote = (o) => /change/.test(o.id) ? '변화 지수(비지도) · 검수 전 · 학습 결과 아님' : `검수 전 · ${String(o.attribution || '').replace(/ · 검수 전$/, '')}${o.id === 'namwon-farmland-2025' ? ' · 공개 판정은 F1-A 브리프 §5 픽스처 값(정본 F1-B 카탈로그)' : ''}`;
+const resultNote = (o) => /change/.test(o.id) ? '변화 지수(비지도) · 결과 확인 전 · 학습 결과 아님' : `결과 확인 전 · ${String(o.attribution || '').replace(/ · 결과 확인 전$/, '')}${o.id === 'namwon-farmland-2025' ? ' · 공개 판정은 F1-A 브리프 §5 픽스처 값(정본 F1-B 카탈로그)' : ''}`;
 const addOwn = (mid, o) => {
   const m = M[mid]; if (!m) return;
   own.push({
@@ -69,7 +69,7 @@ addOwn('namwon-buildings.pmtiles', { id: 'namwon-buildings', name: { ko: '남원
 addOwn('namwon-lc-gt-2020.pmtiles', { id: 'namwon-lc-gt-2020', name: { ko: 'AI Hub 토지피복 GT 2020', en: 'Land cover GT 2020' }, kind: 'vector', role: 'reference', set: 'vector/namwon-lc-gt-2020', layer: 'lc_gt', attribution: 'AI Hub 125', export_policy: 'tenant', unit: 'count' });
 // 결과(계약 §4.2 sets.yaml)
 addOwn('namwon-landcover-2023.pmtiles', { id: 'namwon-landcover-2023', name: { ko: '남원 토지피복 AI 2023 · 25cm 재추론', en: 'Namwon land cover AI 2023' }, kind: 'vector', role: 'result', set: 'results/lx/namwon-landcover-2023',
-  layer: 'landcover', promote_id: 'id', attribution: 'C01 2023 25cm × aerial25/best · 검수 전', export_policy: 'tenant', unit: 'polygons', basis: 'inferred', countNote: '검수 전 · C01 2023 25cm × aerial25/best' });
+  layer: 'landcover', promote_id: 'id', attribution: 'C01 2023 25cm × aerial25/best · 결과 확인 전', export_policy: 'tenant', unit: 'polygons', basis: 'inferred', countNote: '결과 확인 전 · C01 2023 25cm × aerial25/best' });
 addOwn('namwon-farmland-2025.pmtiles', { id: 'namwon-farmland-2025', name: { ko: '남원 농지이용 2025 · 드론', en: 'Namwon farmland 2025' }, kind: 'vector', role: 'result', set: 'results/lx/namwon-farmland-2025',
   layer: 'namwon_farmland_2025', promote_id: 'id', attribution: 'LX 드론 2025 × namwon/cultivate_uncultivate', export_policy: 'public', security_review: 'cleared', unit: '필지', basis: 'measured',
   countNote: '공개 판정은 F1-A 브리프 §5 지시에 따른 픽스처 값 — 정본은 F1-B 카탈로그' });
@@ -131,12 +131,12 @@ const ITEMS2 = [
   dp({ id: 'dp-kgz-agri-farm-26', name: 'Ysyk-Ata farmland 2026', tenant_id: 'kgz-agri', card_id: 'card-global-farm', card_version_id: 'card-global-farm@0.1', version: 'v0.1', stage: 'canary', year: 2026, status_history: '구축',
     region_profile: 'kgz-ysykata', region_name: { ko: '키르기스스탄 으슥아타', en: 'Ysyk-Ata, Kyrgyzstan' }, gpu_pool: 'cpu',
     aoi: { type: 'MultiPolygon', coordinates: [[[[74.7, 42.75], [75.2, 42.75], [75.2, 43.0], [74.7, 43.0], [74.7, 42.75]]]] } }),
-  dp({ id: 'dp-mm-meiktila-25', name: 'Meiktila disaster 2025', tenant_id: 'lx', card_id: 'card-global-disaster', card_version_id: 'card-global-disaster@0.1', version: 'v0.1', stage: 'shadow', year: 2025, status_history: '시연',
+  dp({ id: 'dp-mm-meiktila-25', name: 'Meiktila disaster 2025', tenant_id: 'lx', card_id: 'card-global-disaster', card_version_id: 'card-global-disaster@0.1', version: 'v0.1', stage: 'shadow', year: 2025, status_history: '예시',
     region_profile: 'mm-meiktila', region_name: { ko: '미얀마 메이크틸라', en: 'Meiktila, Myanmar' } }),
   dp({ id: 'dp-kgz-land-change-26', name: '소쿨룩 시가지 변화 · 2026', tenant_id: 'kgz-land', card_id: 'card-change', card_version_id: 'card-change@1.0', version: 'v1.0', stage: 'draft', year: 2026, status_history: '예정',
     region_profile: 'kgz-sokuluk', region_name: { ko: '키르기스스탄 소쿨룩', en: 'Sokuluk, Kyrgyzstan' }, from_deploy_id: 'dp-nw-change', gpu_pool: 'cpu' }),
 ];
-const deploys = { _note: 'F1-A off 모드 배포본 픽스처 · 계약 §6 시드 + dp-kgz-land-change-26(off 전용) · cards.js DEPLOYS 이관(basis history) · 계보는 GET /registry/lineage 형식(chain)', as_of: TODAY,
+const deploys = { _note: 'F1-A off 모드 배포본 픽스처 · 계약 §6 시드 + dp-kgz-land-change-26(off 전용) · cards.js DEPLOYS 이관(basis history) · 버전 이력는 GET /registry/lineage 형식(chain)', as_of: TODAY,
   items: [...ITEMS1, ...ITEMS2], total: ITEMS1.length + ITEMS2.length, off_only: ['dp-kgz-land-change-26'], lineage: Object.fromEntries(Object.entries(LINEAGE).map(([k, chain]) => [k, { chain }])) };
 fs.writeFileSync(path.join(OUT, 'deploys-fixture.json'), JSON.stringify(deploys, null, 1));
 

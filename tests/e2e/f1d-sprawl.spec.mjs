@@ -79,7 +79,7 @@ test.describe('F1-D Sokuluk · Bishkek', () => {
     await bootApi(page, PAGE);
     await page.evaluate(() => window.__f1d.go('sokuluk'));
     await expect(page.locator('#card .gs-void').first()).toContainText('Not yet ported');
-    await expect(page.locator('#card .gs-void').first()).toContainText('LX/OPS');
+    await expect(page.locator('#card .gs-void').first()).toContainText('LX admin dashboard');
     expect(errs).toEqual([]);
   });
 

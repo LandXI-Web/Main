@@ -19,7 +19,7 @@ test('종이 무대: 플랫폼 소개 · 관제 요약 한 줄(실측 시각) ·
   await expect(page.locator('.lg-h1')).toContainText('Geo-AI');
   await expect(page.locator('.lg-axes > div')).toHaveCount(3);
   await expect(page.locator('#sumText')).toContainText('마지막 점검');
-  await expect(page.locator('#sumText .og-tag')).toHaveText(/실측|시연/);
+  await expect(page.locator('#sumText .og-tag')).toHaveText(/실측|예시/);
   await expect(page.locator('#capN')).toHaveText('2,098');
   await expect(page.locator('#cap .cw-prov')).toContainText('실측');
   expect(await page.locator('#faceMap canvas').count()).toBe(1);
@@ -51,7 +51,7 @@ test('로그인 → 반전 1600±60 · 전환 프레임 12장 상이 쌍 ≥ 8 �
   expect(await page.evaluate(() => window.__sameDoc)).toBe('L-1');                                         // 새로고침 0
   expect(await page.evaluate(() => window.__faceCanvas === document.querySelector('.ov-slot canvas.maplibregl-canvas'))).toBe(true);   // 같은 지도(점프 0)
   expect(await page.getAttribute('body', 'data-stage')).toBe('ops');
-  await expect(page.locator('.og-mark')).toHaveText('LX/OPS');
+  await expect(page.locator('.og-mark')).toHaveText('LX/관리자');
   expect(await page.locator('.dm-pt').count()).toBeGreaterThanOrEqual(7);   // 국내 배포 점(남원 무리 + 광주전남) + 글로브 인셋(해외)
   expect(await page.evaluate(() => document.documentElement.dataset.cam)).toBe('dense');   // F2-C: 전국 → 배포 밀집(호남) 초점
   await expect(page.locator('[data-k="inset"]')).toBeVisible();   // 전국 인셋

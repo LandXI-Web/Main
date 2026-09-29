@@ -91,8 +91,9 @@ function draw() {
   body.innerHTML = '';
   const big = h('div.lc-mx-big');
   body.append(big);
-  bignum(big, D.assemblyOk ? { value: n, unit: 'count', basis: 'recorded', as_of: D.cardsAsOf || D.asOf, source: '서비스 카드 기록' } : null,
-    { label: '지금 카드로 만들 수 있는 업무', unit: `/ ${TASKS.length}` });
+  const bn = bignum(big, D.assemblyOk ? { value: n, unit: 'count', basis: 'recorded', as_of: D.cardsAsOf || D.asOf, source: '서비스 카드 기록' } : null,
+    { label: '만들 수 있는 업무', unit: `/ ${TASKS.length}` });
+  if (!D.assemblyOk) bn.empty();   // 자료는 이미 받았다 — 첫 인자 null 은 키트에서 '불러오는 중'이므로 빈 상태로 바로 둔다
   const table = h('table.lc-mx-t', { 'aria-label': '업무별 준비' });
   table.innerHTML = `<thead><tr><th scope="col"><span class="sr">업무</span></th>${COLS.map(([, l]) => `<th scope="col">${l}</th>`).join('')}</tr></thead>`;
   const tb = h('tbody');
@@ -117,7 +118,7 @@ function draw() {
 
 function detail(r) {
   if (!r.ready) return h('p.lc-mx-miss', { text: `채울 것 ${r.miss.length}: ${r.miss.join(' · ')}` });
-  const b = h('button.t-btn.lc-mx-go', { type: 'button', text: '카드 만들기' });
+  const b = h('button.t-btn.lc-mx-go', { type: 'button', text: '서비스 만들기' });
   b.addEventListener('click', (e) => { e.stopPropagation(); make(r, b); });
   return h('div.lc-mx-act', {}, b);
 }
@@ -137,7 +138,7 @@ async function make(r, b) {
   try {
     const out = await api('/deploys', { method: 'POST', body });
     devlog('카드 만들기', out?.id || 'ok');
-    toast('카드를 만들었습니다');
+    toast('서비스를 만들었습니다');
     cur.onMade?.(out);
   } catch (e) {
     devlog('카드 만들기 실패', `${e.status || ''} ${e.code || ''} ${e.message || ''}`);

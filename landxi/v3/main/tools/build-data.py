@@ -107,7 +107,7 @@ def build_parcel():
         'pnu_masked': row.pnu[:10] + '-****-****',
         'ledger': {'jimok': row.jimok, 'area': {'value': round(float(row.parcel_m2)), 'unit': '㎡', 'basis': 'recorded', 'source': 'V-World 연속지적도', 'as_of': '2026-09-24'},
                    'yongdo': row.yongdo or None},
-        'ai': {'cls': '건물', 'area': {'value': evid, 'unit': '㎡', 'basis': 'inferred', 'source': '2023년 25cm 항공영상 AI 판독', 'as_of': '2026-09-24'},
+        'ai': {'cls': '건물', 'area': {'value': evid, 'unit': '㎡', 'basis': 'inferred', 'source': '2023년 25cm 항공영상 AI 분석', 'as_of': '2026-09-24'},
                'n': int(len(A_in)), 'year': 2023},
         'verdict': '현장 확인 필요',
         'bbox': [round(x, 6) for x in (minx, miny, maxx, maxy)],
@@ -134,7 +134,7 @@ def build_agent():
     vals = sorted(f['properties']['v'] for f in feats)
     total = s['totals']['by_rule']['R1']
     out = {'region': f"{SHORT.get(p0['sido'], p0['sido'])} {p0['sgg']}", 'ask': '대장상 농지인데 AI가 건물로 본 필지',
-           'answer': {'value': total, 'unit': 'parcels', 'basis': 'inferred', 'source': '기관 행정 대장 × AI 판독', 'as_of': s['generated'][:10]},
+           'answer': {'value': total, 'unit': 'parcels', 'basis': 'inferred', 'source': '기관 행정 대장 × AI 분석', 'as_of': s['generated'][:10]},
            'max': vals[-1], 'geojson': {'type': 'FeatureCollection', 'features': feats}}
     print('agent', out['region'], total)
     json.dump(out, open(OUT / 'agent-scene.json', 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))

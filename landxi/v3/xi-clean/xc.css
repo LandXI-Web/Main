@@ -118,11 +118,12 @@
 .xa-done{margin:4px 0 2px;font:500 var(--fs-sub)/1 var(--font-body);color:var(--ink)}
 .xa-done b{font-size:44px;color:var(--ai)}
 .xa-indet{margin:8px 0 6px;position:relative}
-/* 영상 준비 중(첫 칸 전) — 막대가 흐른다 */
+/* 첫 칸 전(대기열 · 영상 여는 중) — 막대가 흐른다 */
 .xa-bar{position:relative;overflow:hidden}
 .xa-bar.is-prep i{width:30%!important;animation:xa-indet 1.1s var(--e-ui) infinite}
-/* 압축 재생 한 줄 */
-.xa-pace{margin:-4px 0 0;font:500 var(--fs-label)/1.3 var(--font-body);color:var(--sub)}
+/* 전체 범위 기록 보기(보조 동작) · 영상 등록 필요(K9) */
+.xa-rec{display:block;margin:12px 0 0;padding:0}
+.xa-empty{margin:4px 0 0}
 .xa-indet i{width:30%;animation:xa-indet 1.1s var(--e-ui) infinite}
 @keyframes xa-indet{from{transform:translateX(-100%)}to{transform:translateX(340%)}}
 /* 칸 도착 브래킷 — 흰 모서리 + 청록 칸 */

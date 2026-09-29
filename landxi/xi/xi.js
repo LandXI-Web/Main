@@ -2,7 +2,7 @@
    LX_API on(게이트웨이 :8700) / off(픽스처 · 실데이터 파일 · 리플레이) 두 모드에서 같은 화면 — 폴백은 마스트에 정직하게.
    장면: 글로브(VIIRS 어제) → 한국 2400 → 남원 1600(HLS → V-World → 2023 25cm · pitch 0→35) → 129,420 도착
          → 읍면동 집계 → 드론 AOI 1250(25cm → 2m → 1.08cm) → AOI 안 A02 · A04 456 도착 → 필지 카드 → 프레임 → 견적 → 실행 → 열람. */
-import { API, probe, session, catalog as apiCatalog, deploys as apiDeploys, api, fixture, mastLabel, env, tileUrl, yesterdayUTC, sse, assertEnvelope } from '../shared/api-v1.js';
+import { API, probe, session, catalog as apiCatalog, deploys as apiDeploys, api, fixture, mastLabel as mastLabel0, env, tileUrl, yesterdayUTC, sse, assertEnvelope } from '../shared/api-v1.js';
 import { createMap, loaded, idle } from './engine/lx-map.js';
 import { mountLadder, watchStage, opacityAt } from './engine/ladder.js';
 import { sourceSpec, pickHls, TILE_LOG, chipText, prewarm, PREWARM_LOG, EXT_LOG, hlsCoverage, hlsViewCoverage, skyStats, setExtMode, EXT_MISS } from './engine/sources.js';
@@ -30,6 +30,8 @@ import { openReport } from './ui/drawer-report.js';
 import { search } from './ui/search.js';
 import { IMAGERY } from '../assets/data/imagery.js';
 import { CHANGE } from '../assets/data/change.js';
+/* 화면 말(용어표) — 공용 mastLabel 의 '시연'을 화면에서만 '예시'로(값·판정은 그대로) */
+const mastLabel = (l) => String(mastLabel0(l) || '').replace(/^시연/, '예시');
 
 const $ = (id) => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
@@ -65,7 +67,7 @@ const GATES = {
   sales: { frame: true, run: true, demo: true, extrude: true, parcel: true, feedback: false, drawer: true, export: false, ownImagery: true, verbs: ['V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8'] },
   agency: { frame: false, run: false, extrude: true, parcel: true, feedback: true, drawer: true, export: true, ownImagery: true, verbs: ['V1', 'V4', 'V5', 'V6', 'V8'] },
 };
-const ROLE_KO = { guest: '게스트', staff: 'LX 직원', sales: '영업 · 시연', agency: '남원시 · 기관' };
+const ROLE_KO = { guest: '게스트', staff: 'LX 직원', sales: '영업 · 예시', agency: '남원시 · 기관' };
 let G = GATES.guest;
 
 /* ═══ 2. URL 상태(새로고침 복원) ═══ */
@@ -179,7 +181,7 @@ async function buildMaps(data) {
   else {
     $('map').style.opacity = '0';
     const pub = state.public || !G.ownImagery;
-    hud.pending(pub ? { scene: '공개 보기', title: 'V-World 위성 + AI 결과', pending: '공개 결과 도착 중 · 위성 수신' } : { scene: '복원', title: '같은 카메라 · 영상 수신', pending: '영상 수신 중' });
+    hud.pending(pub ? { scene: '공개 보기', title: 'V-World 위성 + AI 결과', pending: '공개 결과 불러오는 중 · 위성 수신' } : { scene: '복원', title: '같은 카메라 · 영상 수신', pending: '영상 수신 중' });
   }
   M.A = createMap({ container: $('map'), mode: 'globe', center: cam0?.center || [112, 26], zoom: cam0?.zoom ?? 1.7, pitch: cam0?.pitch || 0, bearing: cam0?.bearing || 0, maxPitch: 60 });
   M.B = createMap({ container: $('map-b'), mode: 'globe', center: cam0?.center || [112, 26], zoom: cam0?.zoom ?? 1.7, interactive: false, transparent: true, maxPitch: 60 });
@@ -357,22 +359,22 @@ function prepCity() {
 }
 function cityHead() {
   const it = M.items['namwon-landcover-2023'];
-  if (it && G.ownImagery) return { id: it.id, item: it, head: { scene: '도착 · 남원 전역', title: '남원 토지피복 AI · 2023 25cm 재추론', unit: '폴리곤', provLabel: '결과', pending: '스캔 중 · 22,737칩 추론 결과' } };
+  if (it && G.ownImagery) return { id: it.id, item: it, head: { scene: '남원 전역', title: '남원 토지피복 AI · 2023 25cm 재추론', unit: '폴리곤', provLabel: '결과', pending: '스캔 중 · 22,737칩 추론 결과' } };
   const fa = M.items['namwon-farmland-2025'];
-  return fa ? { id: fa.id, item: fa, head: { scene: '도착 · 공개 결과', title: '남원 농지이용 2025 · V-World 위성 위', unit: '필지', provLabel: '공개 결과', pending: '스캔 중' } } : null;
+  return fa ? { id: fa.id, item: fa, head: { scene: '공개 결과', title: '남원 농지이용 2025 · V-World 위성 위', unit: '필지', provLabel: '공개 결과', pending: '스캔 중' } } : null;
 }
 /* 결과 층의 개수 봉투: 폴리곤 수를 센 것은 실측이지만 폴리곤 자체는 AI 추론·검수 전이다(계약 §2 예시 basis:'inferred').
    게이트웨이 카탈로그가 count.basis='measured' + item.basis='inferred' 로 내면 item.basis 를 따른다(결과 문서 계약 변경 요청 1). */
 function resEnv(it) {
   const c = it?.count; if (!c) return c;
-  if (it.role === 'result' && it.basis === 'inferred' && c.basis !== 'inferred') return { ...c, basis: 'inferred', note: c.note || ('검수 전 · ' + (it.attribution || '').replace(/ · 검수 전$/, '')) };
+  if (it.role === 'result' && it.basis === 'inferred' && c.basis !== 'inferred') return { ...c, basis: 'inferred', note: c.note || ('결과 확인 전 · ' + (it.attribution || '').replace(/ · (?:검수|결과 확인) 전$/, '')) };
   return c;
 }
 async function arriveCity({ animate = true } = {}) {
   const ch = cityHead(); if (!ch) { hud.voidNote('이 계정에 열 수 있는 결과 없음'); return; }
   state.scene = 'city';
   const st = ch.id === 'namwon-landcover-2023' ? await emdStats() : null;
-  const note = st ? [...['건물', '경작지', '주차장', '비닐하우스'].map((k) => `${k} ${numHtml(env(st.total[k].n, 'polygons', 'inferred', st.source), { unit: false })}`), '<b class="xi-ai">AI 추론 · 검수 전</b>', '2023 25cm']
+  const note = st ? [...['건물', '경작지', '주차장', '비닐하우스'].map((k) => `${k} ${numHtml(env(st.total[k].n, 'polygons', 'inferred', st.source), { unit: false })}`), '<b class="xi-ai">AI 추론 · 결과 확인 전</b>', '2023 25cm']
     : [`경작지 · 비경작지`, '<b>공개 결과</b>', 'LX 드론 2025'];
   const prep = await prepCity();
   const o = {
@@ -421,13 +423,13 @@ async function arriveAoi({ animate = true } = {}) {
   state.aoiParcels = inAoi.map((f) => f.properties.id);
   const nCh = CHANGE.reduce((a, c) => a + c.stats.n, 0);
   // 봉투: 개수는 센 값이지만 대상(변화 윤곽 · 농지 판독)은 AI/비지도 결과 · 검수 전 — on/off 두 모드 같은 배지(결과 문서 계약 변경 요청 1)
-  const chEnv = resEnv(M.items['namwon-change']) || env(nCh, 'count', 'inferred', 'landxi/assets/data/change.js', '변화 지수(비지도) · 검수 전');
-  const faEnv = env(inAoi.length, '필지', 'inferred', 'namwon-farmland-2025.geojson × A01 bounds', `A01 촬영 범위에 걸친 필지 · 온전히 든 것 ${whole}(프론트 계산) · AI 판독 검수 전`);
+  const chEnv = resEnv(M.items['namwon-change']) || env(nCh, 'count', 'inferred', 'landxi/assets/data/change.js', '변화 지수(비지도) · 결과 확인 전');
+  const faEnv = env(inAoi.length, '필지', 'inferred', 'namwon-farmland-2025.geojson × A01 bounds', `A01 촬영 범위에 걸친 필지 · 온전히 든 것 ${whole}(프론트 계산) · AI 분석 결과 확인 전`);
   const aoiIt = M.items['namwon-aoi-2504'];
   const note = [`A02 농경지 ${numHtml(faEnv, { unit: true })} <small>AOI 걸침 · 온전히 ${whole}</small>`, '변화 지수(비지도) · 학습 결과 아님', '2025.04 → 10 · 4시점'];
   const keys = [];
   const o = {
-    scene: 'aoi', bbox: A01, head: { scene: '도착 · 드론 AOI', title: `${AOI_EMD} · LX 드론 ${gsdText(aoiIt)} · ${aoiIt?.epoch || '2025'}`, unit: '변화 윤곽', provLabel: '변화', provTag: '변화 지수 · 검수 전', pending: 'AOI 안 결과 스캔' },
+    scene: 'aoi', bbox: A01, head: { scene: '드론 AOI', title: `${AOI_EMD} · LX 드론 ${gsdText(aoiIt)} · ${aoiIt?.epoch || '2025'}`, unit: '변화 윤곽', provLabel: '변화', provTag: '변화 지수 · 결과 확인 전', pending: 'AOI 안 결과 스캔' },
     count: chEnv, note,
     prepB: async (B) => {
       for (const id of ['namwon-farmland-2025', 'namwon-change']) if (M.items[id]) { const l = await addResultSource(B, M.items[id]); setVis(B, l, true); keys.push(...l); }
@@ -502,7 +504,7 @@ async function buildScrub0(mode) {
 function hlsScrubOff(g) {
   for (const m of [M.A, M.B]) for (const l of m?.getStyle?.()?.layers || []) if (/^img-hls-/.test(l.id)) { m.setLayoutProperty(l.id, 'visibility', 'none'); m.setPaintProperty(l.id, 'raster-opacity', 0); }
   const pct = Math.round(((g?.day && !g.day.ok && g.day.min != null ? g.day.min : g?.cov) || 0) * 100);   // 칩과 같은 수(하강 경로 판정이 미달이면 그 값)
-  scrub.disable(g?.error ? '시점 · 공개 위성 판정 실패 · 층 끔' : `시점 · 궤도 밖 · 화면 ${pct}%${g?.cloud >= 0.2 ? ` · 구름 ${Math.round(g.cloud * 100)}%` : ''}${g?.center ? '' : ' · 중심 결손'} · 70% 미만이라 끔`);
+  scrub.disable(g?.error ? '시점 · 공개 위성 판정 실패 · 층 끔' : `시점 · 궤도 밖 · 화면 ${pct}%${g?.cloud >= 0.2 ? ` · 구름 ${Math.round(g.cloud * 100)}%` : ''}${g?.center ? '' : ' · 중심 없음'} · 70% 미만이라 끔`);
   $('scrub').dataset.mode = 'hls-off';
   const v = $('scrub').querySelector('.xi-scrub-void');
   if (v && !g?.error) {
@@ -543,7 +545,7 @@ function onEpoch(e, L, a, b) {
      큰 숫자까지 그 시점 pair 봉투로 통째 교체(hud.set) — 작업 결과(프레임 분석)·실태조사 숫자가 떠 있으면 HUD 는 건드리지 않는다. */
   if (state.scene === 'aoi' && state.hudCtx === 'aoi' && state.aoiHud) {
     const H0 = state.aoiHud;
-    if (pair) hud.set(env(pair.stats.n, 'count', 'inferred', 'landxi/assets/data/change.js', `변화 지수(비지도) · ${pair.label} · 검수 전`), { ...H0.head, unit: '변화 윤곽', provTag: '변화 지수 · 검수 전' }, [`${pair.label} 사이 변화`, '변화 지수(비지도) · 학습 결과 아님']);
+    if (pair) hud.set(env(pair.stats.n, 'count', 'inferred', 'landxi/assets/data/change.js', `변화 지수(비지도) · ${pair.label} · 결과 확인 전`), { ...H0.head, unit: '변화 윤곽', provTag: '변화 지수 · 결과 확인 전' }, [`${pair.label} 사이 변화`, '변화 지수(비지도) · 학습 결과 아님']);
     else if (L.b == null && k === 0) hud.set(H0.env, H0.head, H0.note);
   }
 }
@@ -663,11 +665,11 @@ async function runFrame(geom, model, imagery, q) {
   const b = bboxOf(geom), RB = [127.52, 35.425, 127.545, 35.443];
   const replayUrl = !useP4 && Math.abs(b[0] - RB[0]) + Math.abs(b[1] - RB[1]) + Math.abs(b[2] - RB[2]) + Math.abs(b[3] - RB[3]) < 0.004 ? 'data/replay/j1-hwangdeung.ndjson' : null;
   setPhase('job-submit');
-  hud.pending({ scene: '프레임 분석', title: `${model.id} × ${chipText(imagery)}`, unit: '건', pending: API.mode === 'on' ? '제출 · SSE 연결' : '시연 · 저장 결과 재생' });
+  hud.pending({ scene: '프레임 분석', title: `${model.id} × ${chipText(imagery)}`, unit: '건', pending: API.mode === 'on' ? '제출 · SSE 연결' : '예시 · 저장 결과 재생' });
   xiEmit('job', { phase: 'submit', kind: 'infer', model: model.id, imagery: imagery.id });
   JOBH = await runJob(body, { onEvent: (name, d, o) => { if (['job.started', 'job.done', 'job.failed', 'snapshot.ready'].includes(name)) xiEmit('job', { phase: name, job_id: d?.job_id, live: o?.live }); return TH.on(name, d, o); },
     onSubmitted: (j) => { if (!j) return; const opsA = $('mast-ops'); if (opsA && j.id) opsA.href = 'http://localhost:8702/landxi/ops/infra.html?job=' + encodeURIComponent(j.id); hud.jobState(`접수 · ${String(j.id || '').slice(-6)} · ${j.state === 'running' ? '실행 중' : '큐 대기'} · ${j.pool || ''}${j.shards_total ? ' · shard ' + j.shards_total : ''}`, { live: true }); hud.status('접수됨 · 큐 순번·워커 배정 대기', 'pending'); },
-    onState: (s) => { if (s === 'worker_unavailable') { $('mast-mode').textContent = mastLabel(state.locale) || '시연 · 저장 결과 재생'; toast('워커 없음 → 저장 결과 재생으로 전환', { basis: 'demo' }); } }, synth, replayUrl });
+    onState: (s) => { if (s === 'worker_unavailable') { $('mast-mode').textContent = mastLabel(state.locale) || '예시 · 저장 결과 재생'; toast('워커 없음 → 저장 결과 재생으로 전환', { basis: 'demo' }); } }, synth, replayUrl });
   if (useP4) setResult('namwon-landcover-2023', false);   // 칸마다 다시 도착하는 것이 보이도록(합성 뒤 · 스냅샷이 같은 층으로 돌아온다)
   state.job = JOBH.job?.id || null;
   $('mast-mode').textContent = mastLabel(state.locale);
@@ -697,7 +699,7 @@ async function shield() {
   X.tileMiss = 0;
   if (!('serviceWorker' in navigator)) return 'none';
   try {
-    navigator.serviceWorker.addEventListener('message', (e) => { if (e.data?.type === 'lx-tile-miss') { X.tileMiss = e.data.failed; const g = $('gauge-miss'); if (g) { g.hidden = false; g.textContent = `외부 타일 결손 ${e.data.failed} · 투명 대체`; } } });
+    navigator.serviceWorker.addEventListener('message', (e) => { if (e.data?.type === 'lx-tile-miss') { X.tileMiss = e.data.failed; const g = $('gauge-miss'); if (g) { g.hidden = false; g.textContent = `외부 타일 누락 ${e.data.failed} · 투명 대체`; } } });
     await navigator.serviceWorker.register('sw.js', { scope: './' });
     if (!navigator.serviceWorker.controller) await Promise.race([new Promise((r) => navigator.serviceWorker.addEventListener('controllerchange', r, { once: true })), new Promise((r) => setTimeout(r, 1500))]);
     return navigator.serviceWorker.controller ? 'on' : 'pending';
@@ -711,7 +713,7 @@ async function boot() {
   X.shield = sh;
   // 서비스 워커가 이 창을 아직(또는 아예) 제어하지 않으면 외부 타일은 Worker fetch 방패로(콘솔 오류 0 · 결손은 계기에 정직하게)
   X.extMode = setExtMode(sh === 'on' ? 'sw' : 'worker'); X.extMiss = EXT_MISS;
-  EXT_MISS.onMiss = (m) => { X.tileMiss = m.n; const g = $('gauge-miss'); if (g) { g.hidden = false; g.textContent = `외부 타일 결손 ${m.n} · 투명 대체`; g.title = `${m.last?.host || ''} ${m.last?.status || ''} · Worker 방패(서비스 워커 없음)`; } };
+  EXT_MISS.onMiss = (m) => { X.tileMiss = m.n; const g = $('gauge-miss'); if (g) { g.hidden = false; g.textContent = `외부 타일 누락 ${m.n} · 투명 대체`; g.title = `${m.last?.host || ''} ${m.last?.status || ''} · Worker 방패(서비스 워커 없음)`; } };
   state.mode = API.mode;
   const data = await loadData();
   X.data = data;
@@ -732,7 +734,7 @@ async function boot() {
   // 층 · UI
   scrub = timescrub($('scrub'), { map: M.A, onChange: onEpoch, onUrl: () => writeUrl(), onStop: (k) => setPhase('stop', { k }) });
   X.scrub = scrub;
-  scrub.disable('시점 · 도착 뒤 열림');
+  scrub.disable('시점 · 이동 뒤 열림');
   sw = swipeFx({ A: M.A, B: M.B, wrap: $('map-b'), handle: $('grip'), chipL: $('sw-l'), chipR: $('sw-r'), onUrl: (v) => { state.swipe = v; writeUrl(); } });
   X.swipe = sw;
   const emdGeo = await fixture('/landxi/assets/data/geo/namwon-emd.geojson');
@@ -839,7 +841,7 @@ async function boot() {
   // 관문(shell-gate)이 막힌 화면에서 돌려보냈다면(?denied=<file>) 안내 한 줄 — F2-R 레일 규약
   if (Q.get('denied')) {
     const f = Q.get('denied').split('?')[0];
-    const NAME = { 'dashboard.html': '대시보드', 'admin-home.html': '운영 현황', 'dataset.html': '데이터 관리', 'publish.html': '카드 발행 관리', 'produce.html': '생산 관리', 'ai-project.html': '프로젝트', 'analysis-ai.html': '분석' };
+    const NAME = { 'dashboard.html': '대시보드', 'admin-home.html': '운영 현황', 'dataset.html': '데이터 관리', 'publish.html': '서비스 공개 관리', 'produce.html': '생산 관리', 'ai-project.html': '프로젝트', 'analysis-ai.html': '분석' };
     const who = { sales: '영업 계정', guest: '게스트', agency: '기관 계정', staff: 'LX 직원 계정', admin: '관리자 계정' }[state.role] || '이 계정';
     const nm = NAME[f] || f, jc = nm.charCodeAt(nm.length - 1), bat = jc >= 0xAC00 && jc <= 0xD7A3 && (jc - 0xAC00) % 28 > 0;
     toast(`${who}은 ${nm}${bat ? '을' : '를'} 볼 수 없어 XI맵으로 왔습니다`, { ms: D.d2400 * 3 });
@@ -972,7 +974,7 @@ async function watchDeploy() {
     if (d) show({ deploy_id: d.id, version: d.version, model: d.model_override || null, source: 'data/deploys-fixture.json', basis: 'demo' });
     return;
   }
-  try { LIN.via = '연결 중'; show(await lineageOf(id)); } catch { LIN.via = '결손 · GET /deploys 실패'; hud.lineage({ deploy_id: id, version: '—', model: '', via: LIN.via }); }
+  try { LIN.via = '연결 중'; show(await lineageOf(id)); } catch { LIN.via = '불러오지 못함'; hud.lineage({ deploy_id: id, version: '—', model: '', via: LIN.via }); }
   const refresh = async (why, at = null) => {
     try {
       const o = await lineageOf(id); const changed = o.version !== LIN.cur?.version;
@@ -1023,7 +1025,7 @@ function bridgeImpl() {
     },
     async arrive(o) {
       assertEnvelope(o.count, 'XI.arrive count');
-      const head = { scene: o.head?.scene || '도착 · 질의', title: o.head?.title || o.label || '', unit: o.head?.unit || o.count.unit, pending: '스캔 중' };
+      const head = { scene: o.head?.scene || '질의', title: o.head?.title || o.label || '', unit: o.head?.unit || o.count.unit, pending: '스캔 중' };
       let bbox = o.bbox;
       const keysA = [], keysB = [];
       if (o.features) {
@@ -1082,7 +1084,7 @@ async function restoreOrIntro() {
     // 공개·게스트: 같은 카메라에서 공개 결과 벡터가 도착한다(드론 AOI 장면·원본 시점 없음 — 영상은 V-World 위성만)
     state.scene = 'city';
     for (const id of on) setResult(id, true);
-    const ch = cityHead(); if (ch) hud.pending({ ...ch.head, pending: '공개 결과 도착 중' });
+    const ch = cityHead(); if (ch) hud.pending({ ...ch.head, pending: '공개 결과 불러오는 중' });
     await arriveCity();
     buildScrub('hls');
   } else if (cam) {

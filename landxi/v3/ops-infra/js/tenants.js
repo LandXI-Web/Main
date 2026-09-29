@@ -3,22 +3,33 @@ import { drawer, toast, esc, nf, api, h } from './kit.js';
 import { S, DIM, POLICY, STATE_KO, dimState, orgs, loadUsage } from './data.js';
 
 const R = 44, C = 2 * Math.PI * R;
+/** 사용량 글자 — 저장은 1 GB 아래면 MB 로(0.007 GB → 7 MB) · 나머지는 항목 단위 */
+function amount(D, used) {
+  if (used == null) return { n: '—', unit: D.unit };
+  const x = used * D.k;
+  if (D.unit === 'GB' && x > 0 && x < 1) return { n: nf(x * 1000, x * 1000 < 1 ? 1 : 0), unit: 'MB' };
+  return { n: nf(x, x && x < 10 ? D.d || 1 : 0), unit: D.unit };
+}
 function ring(dim, v) {
   const D = DIM[dim];
   const used = v?.used?.value, hard = v?.hard, soft = v?.soft;
-  const st = dimState(v);
-  const f = used != null && hard ? Math.min(1, used / hard) : 0;
-  const tick = soft && hard ? soft / hard : null;
+  const unset = hard == null || v?.limit_set === false;      // 한도 미설정 = % 를 만들지 않고 실사용량만
+  const st = unset ? 'unset' : dimState(v);
+  const f = !unset && used != null && hard ? Math.min(1, used / hard) : 0;
+  const pct = unset ? '' : used > 0 && f < 0.01 ? '&lt;1' : String(Math.round(f * 100));
+  const tick = !unset && soft && hard ? soft / hard : null;
   const ta = tick != null ? tick * 2 * Math.PI - Math.PI / 2 : 0;
-  const u = used == null ? '—' : nf(used * D.k, used * D.k < 10 && used ? D.d || 1 : 0);
+  const u = amount(D, used);
+  const cap = unset ? `<small class="unset">한도 미설정</small>`
+    : `<b class="num">${u.n}${u.unit !== D.unit ? `<small> ${esc(u.unit)}</small>` : ''}/${nf(hard * D.k, 0)}<small> ${esc(D.unit)}</small></b>`;
   return `<figure class="ring" data-st="${st}" data-metric="${esc(D.ko)}" data-v="${used ?? ''}">
     <svg viewBox="0 0 120 120" aria-hidden="true">
       <circle class="bg" cx="60" cy="60" r="${R}"/>
       <circle class="fg" cx="60" cy="60" r="${R}" stroke-dasharray="${C}" stroke-dashoffset="${C}" data-off="${(C * (1 - f)).toFixed(2)}" transform="rotate(-90 60 60)"/>
       ${tick != null ? `<line class="tk" x1="${60 + (R - 7) * Math.cos(ta)}" y1="${60 + (R - 7) * Math.sin(ta)}" x2="${60 + (R + 7) * Math.cos(ta)}" y2="${60 + (R + 7) * Math.sin(ta)}"/>` : ''}
     </svg>
-    <span class="rc num">${Math.round(f * 100)}<small>%</small></span>
-    <figcaption><span>${esc(D.ko)}</span><b class="num">${u}/${hard == null ? '—' : nf(hard * D.k, 0)}<small> ${esc(D.unit)}</small></b></figcaption>
+    <span class="rc num">${unset ? `${u.n}<small>${esc(u.unit)}</small>` : `${pct}<small>%</small>`}</span>
+    <figcaption><span>${esc(D.ko)}</span>${cap}</figcaption>
   </figure>`;
 }
 

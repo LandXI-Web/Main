@@ -70,7 +70,7 @@ export function tenantName(id) {
   return trimRegion(t?.name?.ko || t?.name?.en || '기관').replace(/\s*\(.*\)$/, '');
 }
 export const whoOf = (d) => (d.tenant_id === 'lx' ? trimRegion(d.region_name?.ko || d.region_name?.en || 'LX') : tenantName(d.tenant_id));
-export const cardName = (id) => (S.cards.find((c) => c.id === id)?.name || '서비스').replace(/\s*(행정)?서비스$/, '');
+export const cardName = (id) => (S.cards.find((c) => c.id === id)?.name || '서비스').replace(/\s*(행정)?서비스$/, '').replace(/판독/g, 'AI 분석');   // 용어표: 판독 → AI 분석(서버 카드명 정비 전 화면 쪽 표기)
 export const verOf = (d) => d.version || (d.card_version_id ? 'v' + d.card_version_id.split('@')[1] : '');
 export const verOfId = (cv) => (cv ? 'v' + String(cv).split('@')[1] : '');
 export function modName(k) {

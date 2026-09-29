@@ -2,7 +2,7 @@
  "as_of": "2026-09-24",
  "source": "02. 데이터/survey/namwon-parcel-emd-summary.json#rules · README §3",
  "basis": "inferred",
- "note": "V-World 연속지적 2026-09-24 × AI 2023 25cm·2025 A02(검수 전) · 의심 후보이며 위법 판정 아님 · 임계 [추정 초기값]",
+ "note": "V-World 연속지적 2026-09-24 × AI 2023 25cm·2025 A02(결과 확인 전) · 의심 후보이며 위법 판정 아님 · 임계 [추정 초기값]",
  "priority_cut": {
   "A_score_ge": 76.4,
   "B_score_ge": 65.5
@@ -96,7 +96,7 @@
     "obj_in_frac": 0.5,
     "conf_min": 0.5
    },
-   "limits": "주차장 판독 · 농업용 작업장과 구분 어려움"
+   "limits": "주차장 AI 분석 · 농업용 작업장과 구분 어려움"
   },
   {
    "id": "R5",

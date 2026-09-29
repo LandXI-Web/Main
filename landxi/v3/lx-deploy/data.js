@@ -6,6 +6,8 @@ import { API, api, isEnvelope, bboxOf } from '../kit/util.js';
 import { devlog } from '../kit/dev-drawer.js';
 import * as RV from '../lx-review/data.js';
 import { REPORT_MIN, SAMPLE_GOAL, dueSets, reportsFor, retrainTargets, precisionFor } from './retrain.js';
+import { summary, total } from '../lx-console/summary.js';
+import { say } from '../lx-console/words.js';
 
 export const D = { deploys: [], cards: [], models: [], catalog: [], feedback: [], jobs: [], tenants: [], rules: [], byRule: {}, asOf: null, health: 'none' };
 export { REPORT_MIN };
@@ -15,9 +17,10 @@ const ok = (r) => (r.status === 'fulfilled' ? r.value : null);
 export async function load() {
   const r = await Promise.allSettled([
     api('/deploys?with=health'), api('/registry/cards'), api('/registry/models'), api('/catalog/layers'),
-    api('/feedback?since=30d'), api('/jobs?limit=500'), api('/tenants'),
+    api('/feedback?since=30d'), api('/jobs?limit=500'), api('/tenants'), summary(),
   ]);
-  const [dp, cards, models, cat, fb, jobs, ten] = r.map(ok);
+  const [dp, cards, models, cat, fb, jobs, ten, sum] = r.map(ok);
+  D.sum = sum || null;
   D.deploys = (dp?.items || []).filter((d) => !isTest(d.id));
   D.cards = cards?.items || [];
   D.models = models?.items || [];
@@ -27,6 +30,7 @@ export async function load() {
   D.tenants = ten?.items || [];
   D.asOf = dp?.as_of || new Date().toISOString();
   D.health = D.deploys.some((d) => d.health) ? 'server' : 'adapter';
+  D.sumOf = assignSummary();
   devlog('health', D.health === 'server' ? '서버 계산(S-7)' : '어댑터 계산(S-7 전)');
   devlog('deploys', `${D.deploys.length} (시험 ${(dp?.items || []).length - D.deploys.length} 제외)`);
   return D;
@@ -37,6 +41,33 @@ export async function reloadDeploys() {
   D.deploys = (dp.items || []).filter((d) => !isTest(d.id));
   D.asOf = dp.as_of || D.asOf;
   return D.deploys;
+}
+
+/* ── 대표 수치(summary) → 배포본 ─────────────────────
+   summary 항목(카드 × 지역) 하나는 배포본 하나에만 붙는다(같은 카드 · 같은 시군구 → 없으면 같은 기관 · 운영 먼저 · 적용 요청 제외).
+   그래서 서비스 관리 표 '기관 신고' 칸의 합 = LX 직원 대시보드 '기관 신고'(summary 전체 합). 못 붙인 항목은 개발자 서랍에 남긴다. */
+function assignSummary() {
+  const m = new Map();
+  if (!D.sum) return m;
+  const rank = { ga: 0, canary: 1, shadow: 2, rolled_back: 3 };
+  const live = D.deploys.filter((d) => d.stage !== 'draft');
+  const lost = [];
+  for (const it of D.sum.items) {
+    const same = live.filter((d) => d.card_id === it.card);
+    const bySgg = it.sgg_cd ? same.filter((d) => d.sgg_cd === it.sgg_cd) : [];
+    const cands = (bySgg.length ? bySgg : same.filter((d) => it.tenant && (d.tenant_id === it.tenant || d.region_profile === it.tenant)))
+      .sort((a, b) => (rank[a.stage] ?? 5) - (rank[b.stage] ?? 5));
+    if (cands[0]) m.set(cands[0].id, [...(m.get(cands[0].id) || []), it]);
+    else lost.push(`${it.card}@${it.sgg_cd || it.tenant || '—'}`);
+  }
+  devlog('summary', `항목 ${D.sum.items.length} · 배포본 ${m.size}${lost.length ? ' · 못 붙임 ' + lost.join(', ') : ''}`);
+  return m;
+}
+/** 이 배포본의 기관 신고(summary) — summary 없음 = undefined · 붙은 항목 없음 = null */
+export function reportsEnv(d) {
+  if (!D.sum) return undefined;
+  const its = D.sumOf?.get(d.id);
+  return its ? total({ items: its, as_of: D.sum.as_of }, 'reports') : null;
 }
 
 /* ── 이름(사용자 말) ─────────────────────────── */
@@ -50,7 +81,7 @@ export function regionShort(d) {
   return [...p].reverse().find((w) => /(시|군|구)$/.test(w) && p.length > 1) || p[p.length - 1] || ko;
 }
 export const cardOf = (id) => D.cards.find((c) => c.id === id);
-export const workName = (cardId) => (cardOf(cardId)?.name || '')
+export const workName = (cardId) => say(cardOf(cardId)?.name || '')
   .replace(/\s*\(해외\)/, '')
   .replace(/\s*(행정서비스|서비스)$/, '')
   .trim();

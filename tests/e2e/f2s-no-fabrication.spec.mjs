@@ -66,7 +66,7 @@ test('화면 — HUD 20,852(봉투 inferred) · 규칙 6행 건수 · 등급 3 �
   console.log(JSON.stringify(r));
   expect(r.big).toBe(README.suspect_parcels.toLocaleString('ko-KR'));
   expect(r.basis).toBe('inferred');
-  expect(r.prov).toContain('AI 추론 · 검수 전');
+  expect(r.prov).toContain('AI 추론 · 결과 확인 전');
   expect(r.rules).toEqual(README.by_rule);
   expect(Object.values(r.rules).reduce((a, b) => a + b, 0)).toBe(README.findings);
   expect(r.prio).toEqual(README.by_priority);

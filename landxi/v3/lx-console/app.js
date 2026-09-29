@@ -29,7 +29,7 @@ const S = K.shell({
   who, home: 'lx-console',
   rail: { kind: 'steps', items: STEPS.map((s) => ({ ...s, href: s.href ? s.href + (s.query ? '?' + s.query : '') + (s.hash || '') : undefined })), current: -1, done: [], onPick: (i) => { if (STEPS[i].id === 'assemble') assemble(); } },
 });
-S.rail.setAttribute('aria-label', '생산 6단');
+S.rail.setAttribute('aria-label', '작업 단계');
 const railHref = () => S.rail.querySelectorAll('a.k-rail-i').forEach((a) => {
   const s = STEPS[+a.dataset.i];
   const qs = [region && 'region=' + encodeURIComponent(region.sgg_cd), s.query].filter(Boolean).join('&');
@@ -55,7 +55,7 @@ K.devDrawer({ stage, who });
 /* 오늘(흰 카드) */
 const todayEl = h('section.t-card.t-card--map.lc-today', { 'aria-label': '오늘' },
   h('div.lc-today-h', {}, h('h2', { text: '오늘' }), h('button.t-btn.t-btn--text.lc-first', { type: 'button', text: '첫 항목 열기', hidden: true })),
-  h('div.lc-cells', { 'data-budget-skip': '' }, ...['확인 대기', '재학습', '적용 요청', '기관 신고'].map((l) => h('span.lc-cell.is-wait', {}, h('b.lc-n', { text: '' }), h('span', { text: l })))));
+  h('div.lc-cells', { 'data-budget-skip': '' }, ...['결과 확인 대기', '재학습', '적용 요청', '기관 신고'].map((l) => h('span.lc-cell.is-wait', {}, h('b.lc-n', { text: '' }), h('span', { text: l })))));
 /* 범례(사진 위 흰 글자) */
 const legendEl = h('div.lc-legend', { 'aria-label': '범례' });
 const tip = h('div.lc-tip', { role: 'tooltip', hidden: true });

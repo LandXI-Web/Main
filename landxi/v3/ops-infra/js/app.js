@@ -23,7 +23,7 @@ const qs = new URLSearchParams(location.search);
 const deepDeploy = qs.get('deploy');
 const want = () => { const v = (location.hash.match(/^#\/(\w+)/) || [])[1] || qs.get('view'); return VIEWS.includes(v) ? v : deepDeploy ? 'deploys' : 'infra'; };
 
-const Sh = shell({ who, home: 'ops-infra', rail: { kind: 'menu', items: RAIL, current: RAIL.findIndex((r) => r.id === want()) } });
+const Sh = shell({ who, home: 'ops-infra', title: 'LX 관리자 대시보드', rail: { kind: 'menu', items: RAIL, current: RAIL.findIndex((r) => r.id === want()) } });
 // 역할 칩 중복 방지(ops-core 와 같은 처리): 이름이 역할 문구와 같으면 한 번만 → 'LX 관리자'
 { const r = document.querySelector('.k-role'), b = r?.querySelector('b');
   if (b && r.textContent.slice(b.textContent.length).trim() === b.textContent.trim()) b.remove(); }
@@ -55,7 +55,7 @@ function show() {
   for (const k of VIEWS) panes[k].hidden = k !== v;
   Sh.go(RAIL.findIndex((r) => r.id === v)); putBadge();
   document.body.dataset.view = v;
-  document.title = { infra: 'Land-XI 관제 · 인프라', tenants: 'Land-XI 관제 · 기관', deploys: 'Land-XI 관제 · 배포' }[v];
+  document.title = { infra: 'Land-XI · LX 관리자 화면 · 인프라', tenants: 'Land-XI · LX 관리자 화면 · 기관', deploys: 'Land-XI · LX 관리자 화면 · 배포' }[v];
   paint(v);
 }
 function paint(v = cur) {
@@ -92,7 +92,7 @@ if (S.gpus?.power_budget) {
         else if (ev === 'deploy.changed') { await loadOrg(); if (cur === 'deploys') V.deploys.paint(); }
         else if (ev === 'usage.delta') { await loadOrg(); if (cur === 'tenants') V.tenants.paint(); }
       },
-      onState: (s) => { devlog('관제 스트림', s); if (s !== 'open') live = false; },
+      onState: (s) => { devlog('실시간 스트림', s); if (s !== 'open') live = false; },
     });
   } catch { live = false; }
-} else devlog('관제 스트림', '서버 S-9 전 · 2.5초 조회');
+} else devlog('실시간 스트림', '서버 S-9 전 · 2.5초 조회');

@@ -182,7 +182,7 @@ export async function findings(q = {}) {
   const off = q.offset || 0, lim = q.limit || 50;
   const src = 'findings-lite.json(off 정본 · 02. 데이터 gpkg)';
   return {
-    items: rows.slice(off, off + lim).map(rowOf), total: E(rows.length, 'count', 'inferred', src, '의심 건(규칙별 1행) · 검수 전'),
+    items: rows.slice(off, off + lim).map(rowOf), total: E(rows.length, 'count', 'inferred', src, '의심 건(규칙별 1행) · 결과 확인 전'),
     counts: Object.fromEntries(Object.entries(counts).map(([k, v]) => [k, E(v, 'count', [...overlay.values()].some((o) => !o.saved) && k !== 'open' ? 'demo' : 'inferred', src)])),
     by_rule, as_of: AS_OF, via: 'file',
   };

@@ -18,6 +18,8 @@ kbd.k-ck-k,.k-ck-btn kbd{display:inline-flex;align-items:center;height:24px;padd
 .k-ck-cb{display:flex;gap:8px}
 .k-ck-a{padding:16px 20px 20px;border-top:1px solid var(--rule);font:400 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--ink-2);max-height:40vh;overflow:auto}
 .k-ck-a b{font-weight:500;color:var(--ink)}
+/* 끝 상태 — 거절·오류는 한 줄(서버 문구 그대로) · 로딩은 점 */
+.k-ck[data-state=rejected] .k-ck-a,.k-ck[data-state=failed] .k-ck-a{font-weight:500;color:var(--ink)}
 .k-ck-dots{display:inline-flex;gap:6px}
 .k-ck-dots i{width:6px;height:6px;border-radius:50%;background:var(--mute);animation:k-dot 1.2s var(--e-ui) infinite}
 .k-ck-dots i:nth-child(2){animation-delay:.12s}

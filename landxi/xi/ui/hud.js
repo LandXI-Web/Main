@@ -28,9 +28,9 @@ export function createHud() {
     zoom(z, c) { el.z.textContent = `z${z.toFixed(1)} · ${c[1].toFixed(4)}N ${c[0].toFixed(4)}E`; },
     status(text, state = '') { el.status.textContent = text; el.status.dataset.state = state; el.live.dataset.on = state === 'live' ? '1' : '0'; },
     pending(head = {}) {
-      el.scene.textContent = head.scene || '도착';
+      el.scene.textContent = head.scene || '불러오는 중';
       el.title.textContent = head.title || '';
-      H.status(head.pending || '결과 도착 중', 'pending');
+      H.status(head.pending || '결과 불러오는 중', 'pending');
       el.big.textContent = ''; el.big.removeAttribute('data-basis'); el.unit.textContent = '';
       el.note.innerHTML = ''; el.prov.innerHTML = ''; el.bot.hidden = true;
     },
@@ -42,7 +42,7 @@ export function createHud() {
       el.title.textContent = head.title || el.title.textContent;
       el.unit.textContent = head.unit || e.unit;
       el.big.dataset.basis = e.basis;
-      H.status(head.done || '도착', 'live');
+      H.status(head.done || '분석 완료', 'live');
       el.bot.hidden = false;
       el.note.innerHTML = note.map((s) => `<span class="seg">${s}</span>`).join('');
       el.prov.innerHTML = ''; const p = document.createElement('span'); el.prov.appendChild(p); prov(p, e, { label: head.provLabel || '', tagText: head.provTag || '' }); lastHead = head;
@@ -79,7 +79,7 @@ export function createHud() {
       if (g0 && util != null) { const u = typeof util === 'object' ? util.value : util, w = pw ? (typeof pw === 'object' ? pw.value : pw) : null; if (u != null) gwin.push({ t: Date.now(), u: +u, w: w != null ? +w : null, i: g0.index ?? 0 }); }
       const pg = d.power_gate && d.power_gate.waiting ? `<span class="xi-gate" title="job.progress.power_gate · 전력 규칙(두 장 동시 고부하 금지)">${esc(d.power_gate.reason || '전력 규칙 · 대기')} · ${d.power_gate.waited_s ?? 0}s</span>` : '';
       lastDet = det;
-      el.job.innerHTML = `<b>${live ? '실측 · 지금' : '시연 · 저장 결과 재생'}</b><span class="xi-det">탐지 ${numHtml(det, { unit: false })}</span><span>shard ${numHtml(shards, { unit: false })}/${d.shards_total}</span><span class="xi-gpul">${gpu}</span><span class="xi-cpsl">${cps}</span>${pg}`;
+      el.job.innerHTML = `<b>${live ? '실측 · 지금' : '예시 · 저장 결과 재생'}</b><span class="xi-det">탐지 ${numHtml(det, { unit: false })}</span><span>shard ${numHtml(shards, { unit: false })}/${d.shards_total}</span><span class="xi-gpul">${gpu}</span><span class="xi-cpsl">${cps}</span>${pg}`;
       el.job.dataset.live = live ? '1' : '0';
       H.lastProgress = d;
     },
@@ -144,12 +144,12 @@ export function createHud() {
       el.job.innerHTML = `<b>${head}</b><span>읍면동 ${numHtml(env(done, 'count', basis, src, `${done}/${total}`), { unit: false })}/${total}</span><span>의심 ${numHtml(env(parcels, '필지', basis === 'measured' ? 'inferred' : basis, src), { unit: false })}필지</span>${findings != null ? `<span>${numHtml(env(findings, 'count', basis === 'measured' ? 'inferred' : basis, src, '규칙별 1행'), { unit: false })}건</span>` : ''}${tail}`;
       el.job.dataset.live = basis === 'measured' ? '1' : '0';
     },
-    /** 계보 칩(배포본 · 버전 · 모델) — GET /deploys + tenant 스트림 deploy.changed(실시간) · 없으면 폴링 */
+    /** 버전 이력 칩(배포본 · 버전 · 모델) — GET /deploys + tenant 스트림 deploy.changed(실시간) · 없으면 폴링 */
     lineage(o) {
       const L = $('hud-lin'); if (!L) return;
       if (!o) { L.hidden = true; return; }
       L.hidden = false;
-      L.innerHTML = `<b>계보</b><span class="d">${esc(o.deploy_id)}</span><span class="v" data-basis="${esc(o.basis || 'measured')}">${esc(o.version)}</span><span class="m" title="${esc(o.model || '')}">${esc(o.model || '모델 —')}</span><i>${esc(o.via)}</i>${o.card_id ? `<a class="c" href="../proto/ai-card.html?card=${encodeURIComponent(o.card_id)}&version=${encodeURIComponent(o.version || '')}" title="AI 카드 · 이 배포본의 모델 계보(같은 버전 강조)">카드 ↗</a>` : ''}`;
+      L.innerHTML = `<b>배포본</b><span class="d">${esc(o.deploy_id)}</span><span class="v" data-basis="${esc(o.basis || 'measured')}">${esc(o.version)}</span><span class="m" title="${esc(o.model || '')}">${esc(o.model || '모델 —')}</span><i>${esc(o.via)}</i>${o.card_id ? `<a class="c" href="../proto/ai-card.html?card=${encodeURIComponent(o.card_id)}&version=${encodeURIComponent(o.version || '')}" title="AI 카드 · 이 배포본의 모델 버전 이력(같은 버전 강조)">카드 ↗</a>` : ''}`;
       L.title = `${o.source || ''}${o.changed_at ? ' · 갱신 ' + o.changed_at : ''}`;
       L.dataset.version = o.version; L.dataset.via = o.via;
       if (o.flash && !matchMedia('(prefers-reduced-motion: reduce)').matches) L.querySelector('.v').animate([{ backgroundSize: '0% 1px' }, { backgroundSize: '100% 1px' }], { duration: D.d380, easing: EASE.ui });

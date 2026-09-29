@@ -22,6 +22,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import approvals, auth, catalog, config, deploys, events, feedback, jobs, ledger, ops, parcels, proxy, public, quota, regions, registry, results, tiles
+from . import summary          # fix-server-summary · 대표 수치 단일 요약(숫자 한 출처)
 from .deps import ApiError, close, pool, redis
 from .envelope import LXJSON, dumps, now_iso
 
@@ -113,7 +114,7 @@ async def validation_error(request: Request, exc: RequestValidationError):
 
 API = "/api/v1"
 for m in (auth, catalog, jobs, events, results, parcels, feedback, registry, deploys, quota, ops, proxy,
-          regions, public, ledger, approvals):          # F3 최종 명세 §3 S-1…S-9
+          regions, public, ledger, approvals, summary):   # F3 최종 명세 §3 S-1…S-9 · summary(fix-server-summary)
     app.include_router(m.router, prefix=API)
 app.include_router(tiles.router)
 

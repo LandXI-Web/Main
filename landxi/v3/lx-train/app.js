@@ -16,6 +16,7 @@ import { devDrawer, devlog } from '../kit/dev-drawer.js';
 import { nf, df } from '../kit/i18n.js';
 import { h, esc, api, API, session, isEnvelope, hasRoute } from '../kit/util.js';
 import { sse } from '../../shared/api-v1.js';
+import { summary, stageOf } from '../lx-console/summary.js';
 
 const who = await gate('lx-train');
 const CFG = await fetch(new URL('./tasks.json', import.meta.url)).then((r) => r.json());
@@ -68,7 +69,7 @@ async function file(url, as = 'json') {
 /* 모델 목록·오탐 신고 — 실패(401/403/5xx/네트워크)를 '첫 학습 전'으로 그리지 않는다.
    401/403 → 정문(?next=) · 그 밖 실패 → 카드 목록 대신 결손 카드 한 장(K9 · 행동 1 '다시 시도') */
 const getS = (p) => api(p).then((j) => ({ j, s: 200 }), (e) => ({ j: null, s: e?.status || 0 }));
-const [mR, fR] = await Promise.all([getS('/registry/models'), getS('/feedback')]);
+const [mR, fR, SUM, cardsJ] = await Promise.all([getS('/registry/models'), getS('/feedback'), summary(), get('/registry/cards')]);
 if ([mR.s, fR.s].some((s) => s === 401 || s === 403)) {
   session.clear();
   location.replace(FRONT + '?next=' + encodeURIComponent(location.pathname + location.search));
@@ -137,8 +138,11 @@ function bestOf(m) {
   if (v === undefined || v === null) return null;
   return { value: +v, epoch: Number.isFinite(+best.epoch) && best.epoch != null ? +best.epoch : null };
 }
-/** 정밀도(학습 검증 영상 기준 · 현장 확인 전 = 추정치 ~) */
-function precEnv(m) {
+/** 이 업무 전용 모델인가 — 모델 클래스가 모두 이 업무 클래스(여러 업무를 함께 보는 모델의 전체 정밀도는 업무 값이 아니다) */
+const dedicated = (m, t) => (m?.classes || []).length > 0 && m.classes.every((c) => t.cls.includes(c));
+/** 정밀도(학습 검증 영상 기준 · 현장 확인 전 = 추정치 ~) — 이 업무 전용 모델의 기록만. 없으면 null('—') */
+function precEnv(m, t) {
+  if (!dedicated(m, t)) return null;
   const b = bestOf(m);
   if (!b) return null;
   const c = CARD.get(m.id);
@@ -151,17 +155,24 @@ const gsdWord = (g) => (g == null ? '' : g < 0.1 ? `${+(g * 100).toFixed(g < 0.1
 /** 오탐 신고(열린 것) — 이 업무 결과층 */
 const reportsFor = (t) => FB.filter((f) => f.kind === 'fp' && f.state === 'open' && f.set_id && new RegExp(t.sets, 'i').test(f.set_id));
 
+/* 업무 전용 서비스 카드의 결과 보유 — 대표 수치 한 출처(summary stage) · summary 가 없을 때만 카드 기록의 단계 */
+const CARDS = new Map((cardsJ?.items || []).map((c) => [c.id, c]));
+const stageFor = (t) => (t.card ? stageOf(SUM, t.card) || (SUM ? null : CARDS.get(t.card)?.status_label || null) : null);
+const hasResults = (t) => ['운영', '시범'].includes(stageFor(t));
+
 const ROWS = new Map();
 for (const t of TASKS) {
   const ms = modelsFor(t);
   const m = ms[0] || null;
   const reports = reportsFor(t);
-  const state = !m ? 'first' : reports.length >= CFG.reportMin ? 'retrain' : 'ok';
-  ROWS.set(t.id, { t, m, ms, reports, state, prec: m ? precEnv(m) : null });
+  /* 모델 기록이 없어도 이 업무 결과가 있으면(summary 운영·시범) '첫 학습 전'이라 하지 않는다 — '학습 기록 없음' */
+  const state = !m ? (hasResults(t) ? 'nomodel' : 'first') : reports.length >= CFG.reportMin ? 'retrain' : 'ok';
+  ROWS.set(t.id, { t, m, ms, reports, state, prec: m ? precEnv(m, t) : null });
 }
+devlog('summary', SUM ? TASKS.filter((t) => t.card).map((t) => `${t.card} ${stageOf(SUM, t.card) || '—'}`).join(' · ') || '업무 전용 카드 없음' : '없음 · 카드 기록 단계로 대체');
 
 /* ── 카드 채우기 ────────────────────────────────────────────── */
-const CHIP = { ok: ['쓸 수 있음', ''], retrain: ['재학습 필요', 'warn'], first: ['첫 학습 전', 'gap'] };
+const CHIP = { ok: ['쓸 수 있음', ''], retrain: ['재학습 필요', 'warn'], first: ['첫 학습 전', 'gap'], nomodel: ['학습 기록 없음', 'gap'] };
 for (const [id, r] of ROWS) {
   const el = cardEls.get(id);
   el.dataset.state = r.state;
@@ -169,7 +180,9 @@ for (const [id, r] of ROWS) {
      K9 위성 캐릭터는 서랍 빈 상태(첫 학습 전)에만 — 목록에 같은 그림을 되풀이하지 않는다 */
   const img = el.querySelector('img');
   const box = el.querySelector('.k-svc-crop');
-  if (r.t.crop && r.state !== 'first') {
+  const cardCrop = r.t.card ? CARDS.get(r.t.card)?.crop_url : null;   // 업무 전용 카드의 실제 결과 크롭
+  if (!r.t.crop && cardCrop && r.state !== 'first') img.src = cardCrop;
+  else if (r.t.crop && r.state !== 'first') {
     img.src = CROP + r.t.crop;
     if (r.t.cropPos) { img.style.objectPosition = r.t.cropPos; img.style.setProperty('--tr-zoom', r.t.cropZoom || 1); img.style.setProperty('--tr-origin', r.t.cropPos); box.classList.add('is-zoom'); }
   } else {
@@ -179,7 +192,9 @@ for (const [id, r] of ROWS) {
   el.querySelector('.tr-year').textContent = r.m && yearOf(r.m) ? `${yearOf(r.m)} 학습` : '';
   const [txt, lv] = CHIP[r.state];
   const chip = el.querySelector('.tr-chip'); chip.textContent = txt; if (lv) chip.dataset.lv = lv;
-  el.querySelector('.tr-n').innerHTML = r.prec ? `<span class="t-label">정밀도</span><span class="k-num tr-p" data-v="${r.prec.value}">${nf(r.prec.value, 2)}</span>${sig(r.prec)}` : '';
+  /* 정밀도 — 이 업무의 실제 기록값 · 모델은 있는데 업무 기록이 없으면 '—'(다른 업무 값을 옮겨 쓰지 않는다) · 모델이 없으면 칸 없음 */
+  el.querySelector('.tr-n').innerHTML = r.prec ? `<span class="t-label">정밀도</span><span class="k-num tr-p" data-v="${r.prec.value}">${nf(r.prec.value, 2)}</span>${sig(r.prec)}`
+    : r.m ? '<span class="t-label">정밀도</span><span class="k-num tr-p" data-v="">—</span>' : '';
 }
 document.documentElement.dataset.trainReady = '1';
 S.fresh(modelsJ?.as_of || fbJ?.as_of || new Date().toISOString());
@@ -208,6 +223,12 @@ function openDrawer(r) {
     title: r.m ? [r.t.name, gsdWord(r.m.gsd_trained_m)].filter(Boolean).join(' · ') : r.t.name, body, host: S.main, slot: 'right', label: r.t.name,
     onClose: () => { current = null; for (const el of cardEls.values()) el.removeAttribute('aria-current'); history.replaceState({}, '', withQuery({ task: null })); },
   });
+  if (!r.m && r.state === 'nomodel') {
+    const e = h('div'); body.append(e);
+    empty(e, { kind: 'first', title: '학습 기록 없음', text: '이 업무의 AI 결과는 있지만 모델 학습 기록이 아직 등록되지 않았습니다' });
+    labelSlot(e.querySelector('.k-empty-b'), 'k-empty-a');
+    return;
+  }
   if (!r.m) {
     const e = h('div'); body.append(e);
     empty(e, { kind: 'first', title: '첫 학습 전', text: '라벨을 만들면 이 업무의 첫 모델을 학습할 수 있습니다' });
@@ -240,7 +261,7 @@ function openDrawer(r) {
   /* 학습 곡선 — 학습 로그가 없으면 섹션째 접는다(제목 아래 줄표만 남기지 않는다). 표시점 = 서랍 정밀도와 같은 회차·같은 값 */
   const chartBox = h('section.tr-curve', { hidden: true }, h('p.t-label', { text: '학습 곡선' }));
   const chart = h('div'); chartBox.append(chart); body.append(chartBox);
-  curve(r.m, c).then(({ pts, mark }) => { if (pts.length > 1) { chartBox.hidden = false; drawCurve(chart, pts, mark, r.prec?.value); } });
+  if (r.prec) curve(r.m, c).then(({ pts, mark }) => { if (pts.length > 1) { chartBox.hidden = false; drawCurve(chart, pts, mark, r.prec?.value); } });
 
   const run = h('div.tr-run', { hidden: true }, h('div.t-progress', {}, h('i')), h('p.t-label.tr-q', { role: 'status', 'aria-live': 'polite' }));
   const copy = h('button.t-btn', { type: 'button', text: '사본 만들기' });

@@ -54,7 +54,7 @@ export function createSurvey(ctx) {
     let hov = null;
     A.on('mousemove', 'sv-sus-fill', (e) => { if (S.mode !== 'survey') return; const p = e.features?.[0]?.properties?.pnu; if (p && p !== hov) { hov = p; layers.highlight(p); drawer.markPnu(p); } });
     A.on('mouseleave', 'sv-sus-fill', () => { if (!hov) return; hov = null; layers.highlight(S.pinned); drawer.markPnu(null); });
-    onFindingState((ev) => { if (S.mode === 'survey') { hud.jobNote?.(`${ev.pnu.slice(-8)} · ${STATE_KO[ev.to]}${ev.row?.saved ? '' : ' · 시연'} · ${ev.via === 'tab' ? '다른 탭' : ev.via === 'stream' ? '실시간' : '방금'}`); } });
+    onFindingState((ev) => { if (S.mode === 'survey') { hud.jobNote?.(`${ev.pnu.slice(-8)} · ${STATE_KO[ev.to]}${ev.row?.saved ? '' : ' · 예시'} · ${ev.via === 'tab' ? '다른 탭' : ev.via === 'stream' ? '실시간' : '방금'}`); } });
     S.ready = true;
     return S;
   }
@@ -90,11 +90,11 @@ export function createSurvey(ctx) {
     // ① 필지 층 도착 — 베일(대조 전) + 카메라 1250 · pitch 0→25
     clearLocks(); ctx.cancelArrive?.();
     layers.reset();
-    hud.pending({ scene: '실태조사 · 필지 층', title: '농지이용 실태조사 · dp-nw-farm-25', pending: '연속지적 332,084필지 도착 · 대조 대기' });
+    hud.pending({ scene: '실태조사 · 필지 층', title: '농지이용 실태조사 · dp-nw-farm-25', pending: '연속지적 332,084필지 · 대조 대기' });
     setPhase('survey-enter');
     await ctx.flyTo(SURVEY_CAM, D.d1250);   // 필지 층 도착 1250 · 기울기 25(대조 판)
     const P = S.totals ? E(S.totals.parcels, '필지', 'recorded', 'V-World 연속지적 LP_PA_CBND_BUBUN(수집 2026-09-24)', `${S.rows.length} 읍면동 · 749.25 km²`) : null;
-    if (P) hud.count(P, { scene: '실태조사 · 필지 층 도착', title: '연속지적 × AI 판독 · 대조 전', unit: '필지', provLabel: '대장', done: '대조 대기' }, ['읍면동 39 · 베일 = 대조 전', '규칙 R1–R6 · <b data-basis="estimate">추정</b> 임계'], { waitNote: false });
+    if (P) hud.count(P, { scene: '실태조사 · 필지 층', title: '연속지적 × AI 분석 · 대조 전', unit: '필지', provLabel: '대장', done: '대조 대기' }, ['읍면동 39 · 베일 = 대조 전', '규칙 R1–R6 · <b data-basis="estimate">추정</b> 임계'], { waitNote: false });
     setPhase('survey-arrived-parcels');
     await runSweep();
   }
@@ -110,15 +110,15 @@ export function createSurvey(ctx) {
       onSubmitted: (j) => { if (j?.id) { S.jobId = j.id; ctx.onSurveyJob(j); hud.jobState(`대조 작업 접수 · ${String(j.id).slice(-6)} · ${j.pool || 'cpu'} · 읍면동 ${j.shards_total || 39}칸`, { live: true }); } },
       onEvent: (name, d, meta) => { S.sweep.on(name, d, meta); if (name === 'job.done') ctx.emit('job', { kind: 'survey', phase: 'done', job_id: d.job_id }); },
     });
-    ctx.masthead(S.job.live ? '' : S.job.recorded ? '기록 · 대조 녹음 재생' : `시연 · 저장 결과 재생(${routeNote() || '서버 없음'})`);
+    ctx.masthead(S.job.live ? '' : S.job.recorded ? '기록 · 대조 녹음 재생' : `예시 · 저장 결과 재생(${routeNote() || '서버 없음'})`);
   }
-  const API_TEXT = () => (routeOn() ? '대조 작업 제출 · SSE 연결' : `시연 · 저장 결과 재생 · ${routeNote()}`);
+  const API_TEXT = () => (routeOn() ? '대조 작업 제출 · SSE 연결' : `예시 · 저장 결과 재생 · ${routeNote()}`);
   /** 결과: 락온 3 + HUD '의심 필지 n'(정본 합) + 부제 */
   async function showResult({ animate = true, sweep = null } = {}) {
     S.swept = true; S.doneAt = Date.now(); drawer.setDoneAt(S.doneAt);
     const T = S.totals; if (!T) { hud.voidNote('정본 합 없음 · findings-emd.json'); return; }
     const src = S.emdVia?.startsWith('F2-S') ? '02. 데이터/survey/findings-emd.json(F2-S 정본)' : 'findings-emd.json 39행 합(02. 데이터 사본)';
-    const env = E(T.suspect_parcels, '필지', 'inferred', src, `의심 ${T.findings.toLocaleString('ko-KR')}건 · 규칙 R1–R6 · 검수 전 · 현장 확인 전`);
+    const env = E(T.suspect_parcels, '필지', 'inferred', src, `의심 ${T.findings.toLocaleString('ko-KR')}건 · 규칙 R1–R6 · 결과 확인 전 · 현장 확인 전`);
     const L = await loadLite();
     const picks = PICKS.map((id) => L?.byId.get(id)).filter(Boolean).map((f) => {
       const g = layers.parcelGeom(f.pnu, 'suspects');

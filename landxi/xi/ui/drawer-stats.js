@@ -38,7 +38,7 @@ export function emdCard(el, ctx) {
     const st = await emdStats();
     const row = st?.by?.[name];
     const src = st?.source || 'stats';
-    const E = (v, u) => env(v, u, 'inferred', src, '검수 전 · C01 2023 25cm × aerial25/best');
+    const E = (v, u) => env(v, u, 'inferred', src, '결과 확인 전 · C01 2023 25cm × aerial25/best');
     el.innerHTML = `<header><span class="xi-eyebrow">읍면동 집계 · P4 2023 25cm 재추론</span><button class="xi-x" type="button" aria-label="닫기">×</button></header>
       <h2 class="xi-emd">${esc(name)}<small>${esc(cd || '')}${row ? ` · 면적 ${numHtml(env(row.emd_area_ha, 'ha', 'measured', src), { digits: 1 })}` : ''}</small></h2>
       ${row ? `<table class="xi-table xi-table--emd"><thead><tr><th>클래스</th><th class="r">개수</th><th class="r">면적</th><th>비중</th></tr></thead><tbody>

@@ -1,5 +1,5 @@
 {
- "_note": "F1-A off 모드 배포본 픽스처 · 계약 §6 시드 + dp-kgz-land-change-26(off 전용) · cards.js DEPLOYS 이관(basis history) · 계보는 GET /registry/lineage 형식(chain)",
+ "_note": "F1-A off 모드 배포본 픽스처 · 계약 §6 시드 + dp-kgz-land-change-26(off 전용) · cards.js DEPLOYS 이관(basis history) · 버전 이력는 GET /registry/lineage 형식(chain)",
  "as_of": "2026-09-24",
  "items": [
   {
@@ -646,7 +646,7 @@
    "card_id": "card-global-disaster",
    "stage": "shadow",
    "year": 2025,
-   "status_history": "시연"
+   "status_history": "예시"
   },
   {
    "name": "소쿨룩 시가지 변화 · 2026",

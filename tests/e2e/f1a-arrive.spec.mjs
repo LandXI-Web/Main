@@ -88,7 +88,7 @@ test('남원 전역 도착 — 스윕 뒤에만 현상 · 락온 380 · 124px 40
   for (const l of r.locks) expect(Math.abs(l.dt - 380)).toBeLessThanOrEqual(40);
   expect(r.lockAnim).toContain('0.18s, 0.08s, 0.12s');
   expect(r.locks[1].at - r.locks[0].at).toBeGreaterThanOrEqual(100);
-  expect(r.prov).toContain('AI 추론 · 검수 전');
+  expect(r.prov).toContain('AI 추론 · 결과 확인 전');
   expect(r.note).toContain('건물 49,800');
   expect(r.note).toContain('비닐하우스 728');
   expect(r.chip).toBe('ap25-namwon-2023');

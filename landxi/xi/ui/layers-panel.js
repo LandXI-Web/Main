@@ -28,7 +28,7 @@ export function layersPanel(root, ctx) {
     return rows.map(({ d, it, prev }) => {
       const on = it && state.results.has(it.id);
       const name = d ? d.name : it.name.ko;
-      if (!it) return `<li class="xi-row xi-row--void" data-deploy="${esc(d.id)}"><span class="xi-row-n">${esc(name)}</span><span class="cw-void xi-void">시연 · 지도 미연결</span><small>${esc(d.stage)} · ${esc(tag(d.basis))}</small></li>`;
+      if (!it) return `<li class="xi-row xi-row--void" data-deploy="${esc(d.id)}"><span class="xi-row-n">${esc(name)}</span><span class="cw-void xi-void">예시 · 지도 미연결</span><small>${esc(d.stage)} · ${esc(tag(d.basis))}</small></li>`;
       return `<li class="xi-row" data-layer="${esc(it.id)}" data-on="${on ? 1 : 0}">
         <button type="button" class="xi-check" aria-pressed="${on}" aria-label="${esc(name)} 켜기"></button>
         <span class="xi-row-n">${esc(name)}${d ? `<small>${esc(d.version || '')} · ${esc(d.stage)}</small>` : ''}</span>
@@ -65,12 +65,12 @@ export function layersPanel(root, ctx) {
   async function renderTable() {
     const t = S.table;
     const head = `<nav class="xi-tabs2" role="tablist">${[['cat', '지목별'], ['parcel', '필지별'], ['road', '도로지점별']].map(([k, n]) => `<button role="tab" type="button" data-t="${k}" aria-selected="${t === k}">${n}</button>`).join('')}</nav>`;
-    if (t === 'road') { el.body.innerHTML = head + '<p class="cw-void xi-void">준비 중 · 도로 결과 없음</p>'; return bindTabs(); }
+    if (t === 'road') { el.body.innerHTML = head + '<p class="cw-void xi-void">도로 결과 없음</p>'; return bindTabs(); }
     if (t === 'cat') {
       const st = await ctx.emdStats();
       const tot = st ? Object.entries(st.total) : [];
       const max = Math.max(1, ...tot.map(([, v]) => v.area_ha));
-      el.body.innerHTML = head + `<p class="cw-void xi-void">${ctx.parcels ? '지목별 집계 · 서버 집계 대기(P8 필지 타일 연결됨)' : '지목 · P8 대기'} — 아래는 AI 클래스별(P4 · 검수 전)</p>
+      el.body.innerHTML = head + `<p class="cw-void xi-void">${ctx.parcels ? '지목별 집계 · 서버 집계 대기(P8 필지 타일 연결됨)' : '지목 · P8 대기'} — 아래는 AI 클래스별(P4 · 결과 확인 전)</p>
         <table class="xi-table"><thead><tr><th>클래스</th><th class="r">개수</th><th class="r">면적</th><th>막대</th></tr></thead><tbody>
         ${tot.map(([k, v], i) => `<tr data-i="${i}" data-cls="${esc(k)}"><td>${esc(k)}</td><td class="r">${numHtml(env(v.n, 'polygons', 'inferred', 'results/namwon-landcover-2023-emd-stats.json'), { unit: false })}</td><td class="r">${numHtml(env(v.area_ha, 'ha', 'inferred', 'results/namwon-landcover-2023-emd-stats.json'), { digits: 1 })}</td><td><i class="xi-hbar" style="--w:${((v.area_ha / max) * 100).toFixed(1)}%"></i></td></tr>`).join('')}</tbody></table>`;
       bindTabs(); bindExport('cat', tot.map(([k, v]) => ({ 클래스: k, 개수: v.n, 면적_ha: v.area_ha, 평균신뢰도: v.conf_mean })));

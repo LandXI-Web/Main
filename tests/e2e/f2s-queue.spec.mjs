@@ -105,7 +105,7 @@ test('CSV — UTF-8 BOM · 고정 문구 · 성명·소유자 열 없음 · 행 
   const lines = text.replace(/^﻿/, '').split(/\r\n/);
   console.log(dl.suggestedFilename(), buf.slice(0, 3), lines[1]);
   expect([...buf.slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
-  expect(lines[0]).toContain('AI 추론 · 검수 전'); expect(lines[0]).toContain('위법 판정 아님');
+  expect(lines[0]).toContain('AI 추론 · 결과 확인 전'); expect(lines[0]).toContain('위법 판정 아님');
   expect(lines[1]).toContain('PNU'); expect(lines[1]).not.toMatch(/성명|소유자|OWNER/);
   expect(lines.length - 2).toBe(33);
   expect(errs).toEqual([]);

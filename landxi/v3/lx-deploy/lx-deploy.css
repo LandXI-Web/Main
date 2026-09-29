@@ -106,7 +106,7 @@
   .dp-tab{height:36px;padding:0 12px;font-size:14px}
   .dp-plant{height:44px;padding:0 14px}
   .dp-plant span{display:none}
-  .dp-plant::after{content:"심기";font:500 14px/1 var(--font-body)}
+  .dp-plant::after{content:"적용";font:500 14px/1 var(--font-body)}
   .dp-legend{gap:10px;font-size:12px;bottom:36px}
   .dp-ops .k-table{font-size:14px}
   .dp-ops .k-table th,.dp-ops .k-table td{padding:10px 6px}

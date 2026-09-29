@@ -17,10 +17,10 @@
 | K3 | 지도 무대 | `createStage(el, { mode:'app'\|'ops', interactive, scale })` → `{map, ready, go(region\|bbox), home(), geo(id, fc, 'ai'\|'focus'\|'point'), clear, show, ladder(items, order), mode(), pad()}` | 전국 bounds 시작 · go = 2400 `--e-cam` |
 | K4 | 지역 선택 | `await regionPicker(el, { onPick, public })` · `loadRegions()` | `/regions`(S-3) 없으면 배포 지역으로 대신 |
 | K5 | 카드·서랍·시트 | `drawer({ title, body, host, slot, onClose })` → `{set, close}` · `card({ title, body, map })` | ≤3장 · 같은 slot 교체 · Esc |
-| K6 | 큰 숫자·기호 | `bignum(el, env, { label, unit, hud })` → `{set}` · `numHtml(env)` · `sig(env)` · `humanize(source)` | 봉투만 · `?dev=1` 에서 봉투 아님 = throw |
+| K6 | 큰 숫자·기호 | `bignum(el, env, { label, unit, hud })` → `{set, loading, empty}` · `numHtml(env)` · `sig(env)` · `humanize(source)` | 봉투만 · `?dev=1` 에서 봉투 아님 = throw · 만든 직후 null/undefined·`set(undefined)` = `불러오는 중` · `set(null)`·봉투 value null = `아직 결과가 없습니다`(20초 안에 set 이 없으면 빈 값으로) |
 | K7 | 서비스 카드 | `serviceGrid(el, joinCards(cards, deploys), { map: r => ({ crop, where, href }) })` · `serviceCard({...})` | 상태 운영/시범/첫 결과 전 |
 | K8 | 스텝퍼 | `stepper(el, [{t, d}], { current, vertical, done, onPick })` → `{go, set}` | |
-| K9 | 빈 상태 | `empty(el, { kind:'first'\|'ingest'\|'outside'\|'loading'\|'404', text, action, progress })` → `{set({progress})}` | 캐릭터 = 위성·드론·항공기 |
+| K9 | 빈 상태 | `empty(el, { kind:'first'\|'ingest'\|'outside'\|'loading'\|'404', text, action, progress, data })` → `{set({progress}), resolve(data)}` · `isBlank(v)` | 캐릭터 = 위성·드론·항공기 · `data: undefined` 를 넘기면 도착 전 `불러오는 중`, `resolve(빈 값)` = 원래 kind, `resolve(값)` = 빈 상태 지움 |
 | K10 | Ctrl K 에이전트 | `mountCmdk({ stage, guest, context, onAction })` → `{open, close, button()}` | `/agent/runs` 경유만 · 이벤트 `kit:agent-action` |
 | K11 | 업로드 | `dropzone(el, { upload:{path, fields} \| onFile, onDone, onError })` | xlsx csv shp zip gpkg geojson · 20MB |
 | K12 | 표·차트 | `table(el, { cols, rows, sort, limit, onRow })` · `bars(el, { items, ai })` · `line(el, { points, ai })` | 봉투 값은 기호와 함께 |

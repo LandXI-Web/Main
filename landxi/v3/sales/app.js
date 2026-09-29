@@ -21,7 +21,9 @@ const STEPS = [
    `이 서비스 열기` 는 XI맵이 풀 수 있는 시군구 코드가 있을 때만 단다(없으면 `자세히` 하나 · 죽은 버튼 0). 늦게 온 지역·코드는 patchGrid 가 채운다 */
 const whereOf = (D, r) => {
   const more = r.deploys.filter((d) => d.id !== r.deploy.id && D.cases.some((c) => c.id === d.id)).length;
-  return (D.where(r.deploy)?.name || '') + (more ? ` 외 ${more}곳` : '');
+  // 지역 이름 = 요약 항목의 지역(메인 · 서비스 상세와 같은 이름) · 없으면 지역 목록에서
+  const sumName = String(r.item?.region_name || '').trim().split(/\s+/).pop();
+  return (sumName || D.where(r.deploy)?.name || '') + (more ? ` 외 ${more}곳` : '');
 };
 function goRow(D, r, box) {
   const xi = D.xiOf(r.deploy);
@@ -31,7 +33,8 @@ function goRow(D, r, box) {
 }
 function renderGrid(D) {
   const grid = $('grid');
-  K.serviceGrid(grid, D.rows, { map: (r) => ({ crop: cropOf(r.card, r.deploy), where: whereOf(D, r) }) });
+  // 크롭은 결과 세트(배포 기록의 출처)로 찾는다 — 숫자 자리는 요약 값(r.deploy.scale)
+  K.serviceGrid(grid, D.rows, { map: (r) => ({ crop: cropOf(r.card, { ...r.deploy, scale: r.src || r.deploy.scale }), where: whereOf(D, r) }) });
   [...grid.children].forEach((el, i) => {
     const r = D.rows[i], w = whereOf(D, r);
     const lab = el.querySelector('.k-svc-meta .t-label');
@@ -43,7 +46,8 @@ function renderGrid(D) {
     goRow(D, r, go);
     el.append(go);
   });
-  if (D.pending.length || !D.rows.length) {
+  // 결과 없는 카드는 진열하지 않는다(카탈로그 한가운데 빈 카드 0) — 진열할 카드가 하나도 없을 때만 K9 한 장
+  if (!D.rows.length) {
     const box = h('div.sl-empty.t-enter');
     grid.append(box);
     K.empty(box, { kind: 'first', text: '첫 결과가 생기면 여기에 카드가 생깁니다', compact: true });

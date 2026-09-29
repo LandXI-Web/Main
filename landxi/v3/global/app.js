@@ -16,6 +16,7 @@ const DATA = '/landxi/global/data/';
 const T = (k, v) => K.t(k, v);
 const STR = {   // 명세 §2.15 문구 전부(en) — 이 밖의 글자는 데이터(나라·지역·달 이름)뿐
   ask: 'Ask', exit: 'Sign out', hud: 'Crop condition drop · {district}', km2: 'km²',
+  hudSprawl: 'Built area change · {district}',   // 명세 §4-7 허용 라벨 밖 — 내려받기 표의 'Built area' 말 그대로(보고서 '사용자 결정 필요')
   tabs: ['Season', 'NDVI', 'Sprawl'], run: 'Run this season', dl: 'Download',
   computing: 'Computing · about {n}s', none: 'No imagery for this season yet', req: 'Request imagery',
   noresult: 'No result yet', checking: 'Checking…',
@@ -413,10 +414,21 @@ async function main() {
     if (!big) big = K.bignum(h('div'), null, { label: '', unit: STR.km2, hud: true, digits: 1 });
     if (!big.el.isConnected) hudEl.append(big.el);
     const name = (D0 || S.district)?.name || '';
-    big.label(fill(STR.hud, { district: name }));
-    big.el.dataset.metric = 'Crop condition drop';
+    const sprawlTab = S.tab === 2;   // 탭마다 그 탭의 지표 — Sprawl = 건물 면적 변화 · Season·NDVI = 작황 하락(NDVI 기준)
+    big.label(fill(sprawlTab ? STR.hudSprawl : STR.hud, { district: name }));
+    big.el.dataset.metric = sprawlTab ? 'Built area change' : 'Crop condition drop';
     big.el.classList.toggle('is-wait', wait);
     if (wait) { big.set(null); big.el.querySelector('.k-big-none').hidden = true; return; }
+    if (sprawlTab) {
+      big.el.classList.remove('is-wait');
+      const s = D0 && D0.sprawl;
+      const e = s ? envOf(r1(V(s.b25) - V(s.b17)), 'km2', 'estimate', s.b25.source, s.b25.as_of) : null;
+      big.set(e, { unit: STR.km2, digits: 1 });
+      big.el.classList.toggle('is-none', !e);
+      if (!e) big.el.querySelector('.k-big-none').textContent = STR.noresult;
+      enSig(big.el, e);
+      return;
+    }
     const c = changeOf(D0, S.season);
     if (c.state === 'calc') { big.el.classList.add('is-wait'); big.set(null); big.el.querySelector('.k-big-none').hidden = true; return; }
     const e = c.state === 'ok' ? c.env : null;
@@ -467,7 +479,7 @@ async function main() {
   const body = h('div.gl-body');
   const act = h('div.gl-act');
   sheet.append(h('div.gl-grip', { 'aria-hidden': 'true' }), tabs, body, act);
-  STR.tabs.forEach((lab, i) => tabs.append(h('button.gl-tab', { type: 'button', role: 'tab', text: lab, 'aria-selected': String(i === S.tab), onclick: () => { S.tab = i; url(); renderSheet(); } })));
+  STR.tabs.forEach((lab, i) => tabs.append(h('button.gl-tab', { type: 'button', role: 'tab', text: lab, 'aria-selected': String(i === S.tab), onclick: () => { S.tab = i; url(); if (S.level === 'district' && S.district) hud(S.district); renderSheet(); } })));
   const runBtn = h('button.t-btn.gl-run', { type: 'button', text: STR.run, onclick: () => run() });
   const dlBtn = h('button.t-btn.t-btn--2.gl-dl', { type: 'button', text: STR.dl, onclick: () => download() });
   const why = h('p.gl-why', { role: 'status', hidden: true });
@@ -523,7 +535,8 @@ async function main() {
       const s = D0.sprawl;
       body.replaceChildren();
       // 건물 면적은 계절 실행이 만들지 않는다 — 결과가 없으면 'No result yet' 한 줄만(행동 0 · 아래 Run 도 숨김)
-      if (!s) { noResult('plain'); body.dataset.norun = '1'; }
+      body.dataset.norun = '1';   // 계절 실행은 건물 면적을 만들지 않는다 — Sprawl 탭 행동 0(명세 §2.15 개정표)
+      if (!s) noResult('plain');
       else {
         const bx = h('div.gl-sprawl'); body.append(bx);
         K.bars(bx, { items: [{ label: '2017', value: s.b17 }, { label: '2025', value: s.b25 }], unit: STR.km2 });

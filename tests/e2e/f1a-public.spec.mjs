@@ -61,7 +61,7 @@ test('?public=1 (직원 로그인 상태여도) — 자체 영상 요청 0 · xd
   expect(s.chip).toBe('xdworld-satellite');
   expect(s.results).toEqual(['namwon-farmland-2025']);
   expect(Number(s.big.replace(/,/g, ''))).toBeGreaterThan(0);
-  expect(s.bigBasis).toBe('inferred'); expect(s.prov).toContain('AI 추론 · 검수 전');   // 시민 화면도 AI 판독 결과를 '실측'이라 하지 않는다(on/off 같은 배지)
+  expect(s.bigBasis).toBe('inferred'); expect(s.prov).toContain('AI 추론 · 결과 확인 전');   // 시민 화면도 AI 판독 결과를 '실측'이라 하지 않는다(on/off 같은 배지)
   for (const it of s.items) { const [, role, src, pol] = it.split(':'); if (role === 'imagery') expect(src, it).toBe('external'); if (role === 'result') expect(pol, it).toBe('public'); }
   expect(s.hidden.length).toBe(6);
   // 내보내기 비활성(표 탭)

@@ -9,8 +9,8 @@ const UNIT = { storage_gb: 'GB', gpu_s_month: 'gpu_s', area_km2_month: 'km²', c
 export function llmDims(u, row, asOf, source) {
   const d = u.dims || (u.dims = {});
   const mk = (key, v, unit, note) => { if (d[key]) return; d[key] = { used: { value: v, unit, basis: 'measured', as_of: asOf, source, note }, soft: null, hard: null, policy: 'notify', note: null, _synthetic: true }; };
-  mk('llm_tokens_month', row ? row.tokens_month : null, 'tokens', row ? `이번 달 · 이벤트 ${row.events} · 쿼터 시드 없음(한도 미정)` : 'F2-E 계량 전 — 결손');
-  mk('llm_runs_day', row ? row.runs_day : null, 'count', row ? '오늘 에이전트 실행(run) 수 · 쿼터 시드 없음' : 'F2-E 계량 전 — 결손');
+  mk('llm_tokens_month', row ? row.tokens_month : null, 'tokens', row ? `이번 달 · 이벤트 ${row.events} · 쿼터 시드 없음(한도 미정)` : '계량 전');
+  mk('llm_runs_day', row ? row.runs_day : null, 'count', row ? '오늘 에이전트 실행(run) 수 · 쿼터 시드 없음' : '계량 전');
 }
 
 /** 선형 예측(quota.estimator 와 같은 식) — 월 누계 ÷ 경과일 × 월 일수. 월 단위 차원만. [추정] */
@@ -44,7 +44,7 @@ export function quotaRing(host, dim, { size = 116, onPick } = {}) {
       const S = scale; const f = (v) => (v == null ? null : Math.min(1, v / S));
       if (used == null) {
         r.set({ segs: [], ticks: [hard != null ? { kind: 'hard', at: f(hard) } : null, soft != null ? { kind: 'soft', at: f(soft) } : null].filter(Boolean) }).state({ void: true });
-        setText(big, '—'); setText(sub, q.used?.note ? '계량 전' : '없음'); btn.title = `${t('dims.' + dim)} · ${q.used?.note || '결손'}`;
+        setText(big, '—'); setText(sub, q.used?.note ? '계량 전' : '없음'); btn.title = `${t('dims.' + dim)} · ${q.used?.note || '없음'}`;
       } else {
         const pj = project(dim, used); const over = hard != null && pj != null && pj > hard;
         r.set({ segs: [

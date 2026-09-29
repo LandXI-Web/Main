@@ -75,7 +75,7 @@ test.describe('F1-A 계약', () => {
     const s = await page.evaluate(() => ({ mode: document.documentElement.dataset.mode, mast: document.getElementById('mast-mode').textContent, via: window.__xi.state.via, big: document.getElementById('hud-big').textContent }));
     console.log('boot', JSON.stringify(s));
     if (API) { expect(s.mode).toBe('on'); expect(s.via.catalog).toBe('api'); expect(s.mast).toBe(''); }
-    else { expect(s.mode).toBe('off'); expect(s.mast).toContain('시연'); }
+    else { expect(s.mode).toBe('off'); expect(s.mast).toContain('예시'); }
     expect(s.big).toBe('129,420');
     expect(errs).toEqual([]);
   });

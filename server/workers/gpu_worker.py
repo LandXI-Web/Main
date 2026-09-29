@@ -555,22 +555,83 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
             cache[s.id] = futs[s.id].result()
         return cache[s.id]
 
-    for s in shards:           # 창 읽기를 먼저 끝낸다(모델 시간과 분리 계량)
-        reader(s)
-    t_read = time.perf_counter() - t0
     run = getattr(ad, "run_batch", None)
-    results, held = [], 0.0
-    for c0 in range(0, len(shards), GATE_CHUNK):       # 칸 묶음 사이마다 다른 GPU 확인 — 고부하면 멈춤(전력 규칙 · 폴백 없음)
-        part = shards[c0:c0 + GATE_CHUNK]
-        held += hold_while_other_hot(job_id, [x.id for x in shards[c0:]])
-        results += run(part, reader, opts) if run else run_batch_default(ad, part, reader, opts)
-    t_all = time.perf_counter() - t0 - held             # 전력 게이트 대기는 GPU 시간이 아니다
-    per_ms = int(t_all * 1000 / max(1, len(shards)))
     sdir = bus.shard_dir(tenant, job_id, demo)
     sdir.mkdir(parents=True, exist_ok=True)
+    t_read = 0.0
+    # 칸 묶음(GATE_CHUNK)마다: 다른 GPU 확인(전력 규칙 · 폴백 없음) → 그 묶음의 창만 기다림 → 추론 → 바로 기록 · shard.done.
+    # (예전: 16칸 창을 다 읽고 16칸을 다 돌린 뒤에야 첫 shard.done — 실시간 분석의 첫 결과가 한 묶음만큼 늦었다)
+    for c0 in range(0, len(shards), GATE_CHUNK):
+        part = shards[c0:c0 + GATE_CHUNK]
+        if c0 and (bus.job(job_id) or {}).get("state") in ("cancelled", "failed"):
+            for s in shards[c0:]:
+                bus.inflight_end(POOL, job_id, s.id)    # 멈춘 작업 — 남은 칸은 돌리지 않는다(GPU 를 바로 놓는다)
+            log(WHO, f"job {job_id} 멈춤 — 묶음의 남은 {len(shards) - c0}칸 건너뜀")
+            break
+        held = hold_while_other_hot(job_id, [x.id for x in shards[c0:]])
+        tp = time.perf_counter()
+        for s in part:
+            reader(s)
+        t_read += time.perf_counter() - tp
+        results = run(part, reader, opts) if run else run_batch_default(ad, part, reader, opts)
+        if opts.get("live"):
+            results = clip_to_aoi(job_id, jh, results)      # 실시간 읍면동 분석 — 범위 밖 결과 제외
+        t_part = time.perf_counter() - tp               # 전력 게이트 대기(held)는 GPU 시간이 아니다 — tp 는 대기 뒤부터
+        _commit_part(job_id, tenant, demo, meta, sdir, part, results, attempts, t_part, held)
+    r().xack(STREAM, GROUP, *ids)
+    r().xdel(STREAM, *ids)
+    jh = bus.job(job_id)
+    progress(job_id, jh)
+    done = int(jh.get("shards_done") or 0)
+    failed = int(jh.get("shards_failed") or 0)
+    total = int(jh.get("shards_total") or 0)
+    if total and done + failed >= total and r().set(f"job:{job_id}:finalize", WID, nx=True):
+        lane = "finalize:cpu:small" if total <= 16 else "finalize:cpu"          # 작은 작업 우선 레인(v1.1-17)
+        r().xadd(lane, {"job_id": job_id, "by": WID, "at": now_iso()})
+        bus.lane(WID, {"job_id": job_id, "to": now_iso(), "state": "done"})
+        log(WHO, f"job {job_id} 전 shard 완료 → {lane} (read {t_read*1000:.0f}ms/batch)")
+    state["job_id"] = None
+
+
+_aoi_cache: "OrderedDict[str, object]" = OrderedDict()
+
+
+def clip_to_aoi(job_id: str, jh: dict, results: list) -> list:
+    """작업 범위(읍면동 경계 등) 밖 결과는 버린다 — 경계에 걸친 칩은 칩 전체를 돌리므로 대표점이 범위 밖인 도형이 섞인다.
+    범위 없는 작업(영상 전체)은 그대로. options.live 작업에만 쓴다(기존 작업의 수는 바꾸지 않는다)."""
+    a = _aoi_cache.get(job_id, False)
+    if a is False:
+        a = None
+        try:
+            if jh.get("aoi"):
+                from shapely.geometry import shape
+                from shapely.prepared import prep
+                a = prep(shape(json.loads(jh["aoi"])))
+        except Exception as e:
+            log(WHO, "aoi parse", job_id, repr(e))
+        _aoi_cache[job_id] = a
+        while len(_aoi_cache) > 32:
+            _aoi_cache.popitem(last=False)
+    if a is None:
+        return results
+    out = []
+    for res in results:
+        keep = [d for d in res.features if a.contains(d.geom4326.representative_point())]
+        if len(keep) != len(res.features):
+            res = type(res)(features=keep, metrics=res.metrics, n=len(keep), ms=res.ms)
+        out.append(res)
+    return out
+
+
+def _commit_part(job_id: str, tenant: str, demo: bool, meta: dict, sdir, part: list, results: list, attempts: dict,
+                 t_part: float, held: float):
+    """한 칸 묶음의 결과 기록 — shard GeoJSON · detections(demo 제외) · 계량 → shard.done(칸마다 · 화면이 받는 즉시 지도에 채운다)."""
+    global conn_db
+    from shapely import set_srid, to_wkb
+    from shapely.geometry import MultiPolygon
+    per_ms = int(t_part * 1000 / max(1, len(part)))
     rows = []
-    done_now = []
-    for s, res in zip(shards, results):
+    for s, res in zip(part, results):
         fc = fc_of(res.features, job_id, s.id)
         for ft, d in zip(fc["features"], res.features):
             a = round(area_m2(d.geom4326), 2)
@@ -580,15 +641,14 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
                 rows.append((s.id, ft["id"], d.cls, d.cls_en, d.cid, d.conf, a, bool(d.attrs.get("chip_edge")),
                              to_wkb(set_srid(mp, 4326), hex=True, include_srid=True)))
         (sdir / f"{s.id}.geojson").write_text(json.dumps(fc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-        done_now.append((s, res))
     if conn_db is None or conn_db.closed:
         conn_db = bus.pg()
     try:
         if rows:
             write_db(conn_db, job_id, tenant, rows)
-        meter(conn_db, tenant=tenant, demo=demo, job_id=job_id, dim="gpu_s", amount=round(t_all, 3))
+        meter(conn_db, tenant=tenant, demo=demo, job_id=job_id, dim="gpu_s", amount=round(t_part, 3))
         conn_db.commit()
-        r().hincrbyfloat(f"job:{job_id}", "gpu_s:" + WID, round(t_all, 3))     # 이 작업 · 이 GPU 몫(gpu[].gpu_s_so_far)
+        r().hincrbyfloat(f"job:{job_id}", "gpu_s:" + WID, round(t_part, 3))     # 이 작업 · 이 GPU 몫(gpu[].gpu_s_so_far)
         bus.shard_ms_record(meta.get("id") or "gpu", per_ms)
     except Exception as e:
         conn_db.rollback()
@@ -596,7 +656,7 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
         raise
     now = time.time()
     live = bus.job(job_id).get("state")
-    for s, res in done_now:
+    for s, res in zip(part, results):
         if live in ("cancelled", "failed") or not bus.inflight_owned(POOL, job_id, s.id, attempts.get(s.id, 0)):
             log(WHO, f"shard {s.id} 결과 버림(감시자가 재배정했거나 작업 종료: {live})")
             continue
@@ -616,19 +676,9 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
                                         "ms": per_ms, "worker": WID,
                                         "at": now_iso(ms=True)})
             log(WHO, f"shard.done {s.id} n={res.n} {per_ms}ms {WID}")
-    r().xack(STREAM, GROUP, *ids)
-    r().xdel(STREAM, *ids)
     jh = bus.job(job_id)
-    progress(job_id, jh)
-    done = int(jh.get("shards_done") or 0)
-    failed = int(jh.get("shards_failed") or 0)
-    total = int(jh.get("shards_total") or 0)
-    if total and done + failed >= total and r().set(f"job:{job_id}:finalize", WID, nx=True):
-        lane = "finalize:cpu:small" if total <= 16 else "finalize:cpu"          # 작은 작업 우선 레인(v1.1-17)
-        r().xadd(lane, {"job_id": job_id, "by": WID, "at": now_iso()})
-        bus.lane(WID, {"job_id": job_id, "to": now_iso(), "state": "done"})
-        log(WHO, f"job {job_id} 전 shard 완료 → {lane} (read {t_read*1000:.0f}ms/batch)")
-    state["job_id"] = None
+    if jh:
+        progress(job_id, jh)                           # ≤ 1회/s(잠금) — 묶음마다 진행률
 
 
 def process_train(job_id: str, entries: list[tuple[str, dict]]):
@@ -732,16 +782,44 @@ def fail(job_id: str, entries, err: str):
     r().xdel(STREAM, *ids)
 
 
+def control_init():
+    """시작 때 control:{WID} 커서를 지금 끝으로 — 예전 'last' 가 없으면 '$'(블록 1 ms)로 읽어 첫 요청(실시간 분석 미리 적재)을 놓쳤다."""
+    try:
+        if not r().hget(f"worker:{WID}:ctl", "last"):
+            top = r().xrevrange(f"control:{WID}", count=1)
+            r().hset(f"worker:{WID}:ctl", "last", top[0][0] if top else "0-0")
+    except Exception:
+        pass
+
+
+def warm_pending():
+    """미뤄 둔 미리 적재(다른 GPU 가 고부하였을 때) — 다른 GPU 가 조용해지면 적재한다(전력 규칙 · 두 장 동시 고부하 0)."""
+    mid = state.get("warm")
+    if not mid or gate_block():
+        return
+    state["warm"] = None
+    try:
+        ensure_model(mid)
+        log(WHO, f"미리 적재 {mid}(실시간 분석 견적)")
+    except Exception as e:
+        log(WHO, "warm error", mid, repr(e))
+
+
 def control():
     try:
-        res = r().xread({f"control:{WID}": r().hget(f"worker:{WID}:ctl", "last") or "$"}, count=10, block=1)
+        res = r().xread({f"control:{WID}": r().hget(f"worker:{WID}:ctl", "last") or "0-0"}, count=10, block=1)
     except Exception:
         return
     for _, entries in res or []:
         for eid, f in entries:
             r().hset(f"worker:{WID}:ctl", "last", eid)
             try:
-                if f["action"] == "load":
+                if f["action"] == "load" and f.get("model_id") in models:
+                    models.move_to_end(f["model_id"])
+                elif f["action"] == "load" and gate_block():
+                    state["warm"] = f["model_id"]         # 다른 GPU 고부하 — 적재(더미 추론 포함)를 미룬다
+                    log(WHO, f"미리 적재 {f['model_id']} 미룸(다른 GPU 고부하 · 전력 규칙)")
+                elif f["action"] == "load":
                     ensure_model(f["model_id"])
                 elif f["action"] == "unload" and f["model_id"] in models:
                     ad, _, _ = models.pop(f["model_id"])
@@ -772,6 +850,7 @@ def main():
         except Exception as e:
             log(WHO, "resident load fail", mid, e)
     bus.ensure_group(STREAM, GROUP)
+    control_init()
     log(WHO, f"ready · {STREAM} · batch {BATCH}")
     last_claim = 0.0
     while True:
@@ -785,6 +864,7 @@ def loop_once(last_claim: float) -> float:
     import torch
     if True:
         control()
+        warm_pending()
         if lease["slot"] is None and r().xlen(STREAM) == 0:
             time.sleep(0.3)          # 일이 없으면 임대를 잡지 않는다(유휴 GPU 는 전력 슬롯을 비워 둔다)
             return last_claim

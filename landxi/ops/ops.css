@@ -52,7 +52,7 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 .lg-foot { grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; border-top: 1px solid var(--cw-rule); font: 400 14px/16px var(--font-body); color: var(--cw-sub); }
 .lg-foot span:last-child { margin-left: auto; }
 .lg-opsmark { position: fixed; left: 0; top: 0; width: var(--rail); height: var(--mast); display: flex; align-items: center; justify-content: center; z-index: 9;
-              font: 800 16px/16px var(--font-display); color: #fff; opacity: 0; pointer-events: none; }
+              font: 800 14px/16px var(--font-display); letter-spacing: -.07em; white-space: nowrap; color: #fff; opacity: 0; pointer-events: none; }
 .lg-opsmark b { color: #4E9BFF; }
 
 /* 반전 — 바탕·글자·선이 한 번에 1600 --e-cam 으로 뒤집힌다(집이 바뀌는 순간 · 법전 §0) */
@@ -485,7 +485,7 @@ button.pn-mod:disabled { border-style: dashed; cursor: not-allowed; }
 
 .q-power { display: inline-block; line-height: 20px; }   /* inline-flex 면 setText 의 글자 span 사이 공백이 사라진다 */
 .og-rail { overflow: hidden; }
-.og-mark { flex: none; }
+.og-mark { flex: none; font-size: 14px; letter-spacing: -.07em; white-space: nowrap; }   /* 'LX/관리자' — 레일 폭 안에 · 14px 바닥 유지(2026-09-29 용어 교체) */
 .og-nav a { min-height: 56px; padding: 9px 4px; }
 .gpu-row .g-llm span { white-space: normal; overflow: visible; }
 .qd-done .og-num-s { white-space: normal; }
@@ -534,7 +534,7 @@ body.is-flip .lg-plate { background: transparent; border-color: transparent; }
   .gpu-row .g-react .g-smp { order: 3; }
   .gpu-row .g-stat .og-lbl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .gpu-row .g-stat [data-k="pw-now"] { white-space: nowrap; }
-  .og-mark { font-size: 14px; letter-spacing: -.04em; }
+  .og-mark { font-size: 14px; letter-spacing: -.1em; }
 }
 
 /* 첫 페인트 골격 · 직전 화면 스냅샷(#ogSkel) — 실데이터 셸 위에 고정으로 덮였다가 unveil() 에 걷힌다 */

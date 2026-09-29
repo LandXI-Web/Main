@@ -62,7 +62,7 @@ export function parcelCard(el, ctx) {
       <header><span class="xi-eyebrow">필지 · ${esc(source === 'A02' ? 'A02 농지이용 2025 · 드론' : source)}</span><button class="xi-x" type="button" aria-label="닫기">×</button></header>
       <p class="xi-pnu"><small>PNU${parcel?.pnu ? ' · P8 필지 2021-12' : ''}</small><b class="mono">${esc(parcel?.pnu || p.pnu || '—')}</b>${parcel?.jibun ? `<span class="xi-jibun">${esc(parcel.jibun)}</span>` : ''}</p>
       <dl class="xi-kv">
-        <div><dt>판독</dt><dd><b class="xi-cls">${esc(p.cls || '—')}</b> <span data-basis="inferred" class="xi-tagb">AI 추론 · 검수 전</span></dd></div>
+        <div><dt>AI 분석</dt><dd><b class="xi-cls">${esc(p.cls || '—')}</b> <span data-basis="inferred" class="xi-tagb">AI 추론 · 결과 확인 전</span></dd></div>
         <div><dt>면적(AI 경계)</dt><dd>${p.area != null || p.area_m2 != null ? numHtml(env(Math.round(p.area ?? p.area_m2), 'm2', 'inferred', src)) : '—'}</dd></div>
         <div><dt>신뢰도</dt><dd>${p.conf != null ? numHtml(env(+(+p.conf).toFixed(2), 'ratio', 'inferred', src), { digits: 2, unit: false }) : '—'}</dd></div>
         <div><dt>지목</dt><dd class="xi-jimok"></dd></div>

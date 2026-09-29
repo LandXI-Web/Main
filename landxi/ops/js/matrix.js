@@ -18,7 +18,7 @@ export function matrix(host, { cards, tenants, onPick, onPort }) {
       if (!ds.length) {
         const src = D.filter((d) => d.card_id === cid && d.card_version_id);
         const card = cards.find((c) => c.id === cid);
-        cell.replaceChildren(src.length && card?.versions?.length ? h('button', { class: 'mx-port', type: 'button', 'data-port': k, title: `${cid} → ${tid} 이식(같은 카드 버전으로 배포본 하나 더)`, onclick: () => onPort && onPort(cid, tid, src), 'aria-label': `${cid} → ${tid} 이식` }, h('span', { class: 'pl' }, '+'), h('span', { class: 'tx' }, '이식')) : '');
+        cell.replaceChildren(src.length && card?.versions?.length ? h('button', { class: 'mx-port', type: 'button', 'data-port': k, title: `${cid} → ${tid} 다른 지역에 적용(같은 카드 버전으로 배포본 하나 더)`, onclick: () => onPort && onPort(cid, tid, src), 'aria-label': `${cid} → ${tid} 다른 지역에 적용` }, h('span', { class: 'pl' }, '+'), h('span', { class: 'tx' }, '적용')) : '');
         continue;
       }
       const row = h('div', { class: 'mx-stack', style: { display: 'flex', flexDirection: ds.length > 1 ? 'column' : 'row', gap: ds.length > 1 ? '2px' : '4px' } });

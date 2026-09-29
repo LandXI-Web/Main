@@ -100,7 +100,7 @@ test.describe('역할 관문', () => {
     const sh = await page.evaluate(() => ({ open: !document.querySelector('#pcard2 .sv-card-sheet').hidden, reasons: document.querySelectorAll('#pcard2 .sv-card-sheet select option').length, go: document.querySelector('#pcard2 .sv-card-sheet .sv-go')?.textContent, note: document.querySelector('#pcard2 .sv-card-sheet small')?.textContent }));
     console.log('dismiss sheet', JSON.stringify(sh));
     expect(sh.open).toBe(true); expect(sh.reasons).toBeGreaterThanOrEqual(5); expect(sh.go).toContain('오탐 처리');
-    if (!API) expect(sh.note).toContain('시연 · 저장 안 됨');
+    if (!API) expect(sh.note).toContain('예시 · 저장 안 됨');
     await page.click('#pcard2 .sv-card-sheet .sv-cancel');
     expect(errs).toEqual([]);
   });

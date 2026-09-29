@@ -138,3 +138,15 @@ html,body.t{background:#D4E3EB}   /* 첫 페인트(셸이 그려지기 전)부�
 body[data-view="none"] .gf-sheet{opacity:0;pointer-events:none}   /* 서버 기록을 확인하기 전 — 빈 스텝 판을 비추지 않는다 */
 .gf-ans .k-bars{gap:4px}
 .gf-ans .k-bar-l,.gf-ans .k-bar-v{font-size:13px;line-height:18px}
+
+/* 서비스 상태(영상은 있고 AI 결과 색인이 없는 관할) — summary 한 출처 · 같은 자리(좌하단 · 390 상단) */
+.gf-ingest.gf-status{padding:20px 24px;display:flex;flex-direction:column;gap:16px;width:auto;max-width:min(420px,calc(100% - var(--sheet) - 64px))}
+.gf-svc{display:flex;flex-direction:column;gap:4px}
+.gf-svc + .gf-svc{padding-top:14px;border-top:1px solid var(--rule)}
+.gf-svc-t{margin:0;font:600 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--ink)}
+.gf-svc-s{margin:0;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub)}
+.gf-svc-m{margin:6px 0 0;display:flex;align-items:baseline;gap:6px;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub-2)}
+.gf-svc-m b{font:700 24px/1 var(--font-display);color:var(--ink)}
+.gf-svc-m small{font:500 var(--fs-label)/1 var(--font-body);color:var(--sub)}
+@media (max-width:1100px){.gf-ingest.gf-status{max-width:calc(100% - 320px - 64px)}}
+@media (max-width:640px){.gf-ingest.gf-status{max-width:none;padding:14px 16px;gap:10px}.gf-svc-m{margin-top:2px}.gf-svc-m b{font-size:20px}}

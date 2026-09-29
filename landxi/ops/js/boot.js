@@ -27,10 +27,10 @@ export function portGate() {
   if (location.port === OPS_PORT) return true;
   document.documentElement.dataset.lx = 'ready';
   document.documentElement.dataset.gate = 'port';
-  document.title = 'LX/OPS — :8702 전용';
+  document.title = 'LX 관리자 대시보드';
   document.body.setAttribute('data-stage', 'ops');
-  document.body.innerHTML = `<main class="og-gate" role="main"><span class="og-lbl">LX/OPS · 관제실</span><h1>LX/OPS 관제실은 :8702 에서만 열립니다</h1>
-    <p>관제 세션은 별도 origin(<b>http://localhost:8702</b>)에만 있다. 이 origin(${location.host})의 LX 직원 세션으로는 들어갈 수 없다. 관리자는 관제 전용 주소로 접속한다.</p>
+  document.body.innerHTML = `<main class="og-gate" role="main"><span class="og-lbl">LX 관리자 화면</span><h1>LX 관리자 대시보드는 관리자 주소에서 열립니다</h1>
+    <p>관리자 계정으로 <b>http://localhost:8702</b> 에서 로그인해 주세요.</p>
     <a href="http://localhost:8702/landxi/ops/login.html">http://localhost:8702/landxi/ops/login.html</a></main>`;
   return false;
 }
@@ -62,10 +62,10 @@ export async function detect() {
   }
   if (API.mode !== 'on' && SRC.kind !== 'off') SRC.kind = 'off';
   SRC.writable = SRC.kind !== 'off';
-  SRC.why = SRC.writable ? '' : t('why_off', '준비 중 · 서버 없음');
+  SRC.why = SRC.writable ? '' : t('why_off', '서버 연결 없음');
   SRC.label = SRC.kind === 'gateway' ? t('src.gateway').replace(':8700', ':' + (new URL(SRC.base, location.href).port || '80'))
     : SRC.kind === 'bridge' ? (want === 'bridge' && SRC.gw?.up ? '실측 · 브리지 · 메모리(강제) · 게이트웨이 중계' : SRC.gw?.up ? '실측 · 브리지 · 메모리 · 게이트웨이 경로 일부 없음' : t('src.bridge'))
-    : mastLabel('ko');
+    : String(mastLabel('ko') || '').replace(/^시연/, '예시');
   SRC.recovered = h?.gateway?.recovered_at_boot || null;
   document.documentElement.dataset.src = SRC.kind;
   return SRC;
@@ -99,7 +99,7 @@ export async function gate() {
 export async function login(loginId, password) {
   if (SRC.kind === 'off') {
     const m = /^lx-(admin|staff|sales)$/.exec(loginId || '');
-    if (!m) throw new ApiError('unauthorized', '계정을 확인하세요(시연: lx-admin)');
+    if (!m) throw new ApiError('unauthorized', '계정을 확인하세요');
     if (m[1] !== 'admin') return { role: m[1], denied: true };
     try { localStorage.setItem('lx_logged_in', '1'); localStorage.setItem('lx_role', 'admin'); localStorage.removeItem('lx_tenant_session'); } catch { /* */ }
     return { role: 'admin', realm: 'lx', offline: true };
@@ -173,21 +173,28 @@ export function guardWrite(btn) {
 }
 
 /* ── 표기 ───────────────────────────────────────────────────────── */
+/* 화면 말(용어표 2026-09-29) — 서버·픽스처가 주는 옛 말(카드 이름 '… 판독', 상태 '준비 중', 기관 '시연 계량' 등)을
+   화면에 그릴 때만 바꾼다. 데이터 값·키·판정은 그대로(글자 노드 · title · aria-label · placeholder 만). */
+const SAY = [[/시연\s?계량/g, '영업 계량'], [/시연/g, '예시'], [/준비\s?중/g, '첫 결과 전'], [/검수\s?전/g, '결과 확인 전'], [/판독/g, 'AI 분석'], [/이식/g, '다른 지역에 적용'], [/관제/g, 'LX 관리자 대시보드']];
+export const say = (s) => SAY.reduce((a, [re, w]) => a.replace(re, w), String(s));
+const SAY_ATTR = new Set(['title', 'aria-label', 'placeholder', 'alt']);
 export const h = (tag, attrs = {}, ...kids) => {
   const el = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs || {})) {
     if (v == null || v === false) continue;
-    if (k === 'class') el.className = v; else if (k === 'html') el.innerHTML = v; else if (k === 'text') el.textContent = v;
+    if (k === 'class') el.className = v; else if (k === 'html') el.innerHTML = v; else if (k === 'text') el.textContent = say(v);
     else if (k.startsWith('on')) el.addEventListener(k.slice(2), v); else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
-    else el.setAttribute(k, v === true ? '' : v);
+    else el.setAttribute(k, v === true ? '' : SAY_ATTR.has(k) ? say(v) : v);
   }
-  for (const c of kids.flat()) if (c != null && c !== false) el.append(c.nodeType ? c : document.createTextNode(String(c)));
+  for (const c of kids.flat()) if (c != null && c !== false) el.append(c.nodeType ? c : document.createTextNode(say(c)));
   return el;
 };
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const hhmmss = (iso) => { if (!iso) return '—'; const d = new Date(iso); return isNaN(d) ? '—' : d.toLocaleTimeString('ko-KR', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Seoul' }); };
 export const ymd = (iso) => (iso ? String(iso).slice(0, 10) : '—');
-export const basisKo = (b) => BASIS_KO[b] || b;
+/* 화면 말(용어표) — 공용 BASIS_KO 의 '시연'·'검수 전'을 화면에서만 바꿔 부른다(키·판정은 그대로) */
+const BASIS_LABEL = { ...BASIS_KO, demo: '예시', inferred: 'AI 추론 · 결과 확인 전' };
+export const basisKo = (b) => BASIS_LABEL[b] || b;
 /** 봉투 → 프로비넌스 칩(봉투 없으면 throw — 법전 §5) */
 export function prov(env, { short = false } = {}) {
   assertEnvelope(env, 'prov');

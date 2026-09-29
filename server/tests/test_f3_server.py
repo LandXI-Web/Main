@@ -449,10 +449,13 @@ def test_s9_ops_unified(live, tok):
 # ── S-10 에이전트 범위 가드·도구 ──────────────────────────────────────────
 def test_s10_redteam_50_and_guard(live, tok):
     from agent import runner
+    import yaml
+    n_cases = len(yaml.safe_load((Path(runner.__file__).parent / "redteam.yaml").read_text(encoding="utf-8")))
+    assert n_cases >= 50                                   # 50문(F2-E·F3) + 이후 추가 문항(관할 밖 안내 등)
     res = asyncio.run(runner.redteam_eval(store=True))
-    assert res["n"] == 50 and res["accuracy"]["value"] == 100.0, res["failed"]
+    assert res["n"] == n_cases and res["accuracy"]["value"] == 100.0, res["failed"]
     o = httpx.get(B + "/ops/llm", headers=H(tok["admin"]), timeout=30).json()
-    assert o["redteam"]["accuracy"]["value"] == 100.0 and o["redteam"]["cases"]["value"] == 50
+    assert o["redteam"]["accuracy"]["value"] == 100.0 and o["redteam"]["cases"]["value"] == n_cases
     assert runner.dedupe_units("의심은 {{env:e2}}필지이고 {{env:e3}} 건, {{env:e4}}건물") == "의심은 {{env:e2}}이고 {{env:e3}}, {{env:e4}}건물"
     names = {t["function"]["name"] for t in runner.registry.tools_for(_P("tenant", "manager", "namwon"))}
     assert {"ledger_ingest", "ledger_match", "ledger_rule", "ledger_findings", "parcel_lookup"} <= names

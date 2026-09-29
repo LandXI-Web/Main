@@ -119,6 +119,7 @@ test('GPU 카드: cpu 풀 job.state running 주입 → GPU 0 · 1 카드 모두 
   test.skip(/job_/.test(hb), 'GPU0 워커가 실제 작업 중');
   await gwAdmin(page); await page.goto(OPS + '/landxi/ops/infra.html'); await ready(page);
   const fake = 'job_F2CCPU' + Date.now().toString(36).toUpperCase();
+  await page.waitForTimeout(2000);   // /events/ops 가 붙기 전(커서 '$')에 넣은 이벤트는 받지 못한다 — 스트림 연결을 기다린 뒤 주입
   await opsEvent('job.state', { job_id: fake, tenant_id: 'lx', state: 'running', pool: 'cpu', at: kst() });
   await expect(page.locator(`.q-row[data-job="${fake}"]`)).toHaveCount(1, { timeout: 3000 });
   await page.waitForTimeout(1500);

@@ -63,9 +63,9 @@ export function parcelCardV2(el, ctx) {
   function rightRows(facts, ep) {
     const A = facts.area_m2;
     const bar = (cls, label, m2, src, extra = '') => {
-      if (m2 == null) return `<div class="sv-cell is-r"><span>${label}</span><span>${voidHtml('판독 없음')}</span><span></span></div>`;
+      if (m2 == null) return `<div class="sv-cell is-r"><span>${label}</span><span>${voidHtml('AI 분석 없음')}</span><span></span></div>`;
       const r = ratio(m2, A) ?? 0;
-      return `<div class="sv-cell is-r" data-cls="${cls}"><span>${label}</span><span class="sv-bar"><i class="${cls}" style="--w:${Math.min(100, r)}%"></i></span><span class="sv-v">${numHtml(E(Math.round(m2), 'm2', 'inferred', src, '검수 전'), { unit: false })}<small>${r}%</small>${extra}</span></div>`;
+      return `<div class="sv-cell is-r" data-cls="${cls}"><span>${label}</span><span class="sv-bar"><i class="${cls}" style="--w:${Math.min(100, r)}%"></i></span><span class="sv-v">${numHtml(E(Math.round(m2), 'm2', 'inferred', src, '결과 확인 전'), { unit: false })}<small>${r}%</small>${extra}</span></div>`;
     };
     if (ep === 2023) {
       const a = facts.a23 || {}, src = facts.detailVia === 'api' ? 'GET /survey/parcels/{pnu} · current.2023' : facts.detailVia === 'detail' ? `detail/${facts.emd_cd}.json(a23_*)` : SRC_T;
@@ -81,7 +81,7 @@ export function parcelCardV2(el, ctx) {
       return [bar('crop', '경작(A02)', null), bar('uncrop', '비경작', null), bar('gh', '비닐하우스', null),
         `<div class="sv-cell"><span>건물·주차</span><span>${voidHtml('2025 A02 는 경작/비경작·비닐하우스만')}</span></div>`,
         `<div class="sv-cell"><span>신뢰도</span><span>—</span></div>`, `<div class="sv-cell"><span>변화 A04</span><span>${voidHtml('드론 AOI 밖')}</span></div>`,
-        `<div class="sv-cell"><span>영상</span><span>${voidHtml('이 필지 2025 A02 판독 없음 · 2023 단일 시점')}</span></div>`].join('');
+        `<div class="sv-cell"><span>영상</span><span>${voidHtml('이 필지 2025 A02 AI 분석 없음 · 2023 단일 시점')}</span></div>`].join('');
     }
     return [bar('crop', '경작(A02)', a.crop_m2, src), bar('uncrop', '비경작', a.uncrop_m2, src), bar('gh', '비닐하우스', a.gh_m2, src, a.gh_n ? ` <small>${a.gh_n}동</small>` : ''),
       `<div class="sv-cell"><span>건물·주차</span><span>${voidHtml('2025 A02 는 경작/비경작·비닐하우스만')}</span></div>`,
@@ -106,7 +106,7 @@ export function parcelCardV2(el, ctx) {
   async function whyLines(data) {
     const R = await loadRules(); const rule = (id) => R?.items.find((r) => r.id === id);
     const f = data.facts;
-    if (!data.finds.length) return `<li class="sv-none">의심 없음 · 규칙 R1–R6 모두 해당 없음(대장과 현황 일치 또는 판독 없음)</li>`;
+    if (!data.finds.length) return `<li class="sv-none">의심 없음 · 규칙 R1–R6 모두 해당 없음(대장과 현황 일치 또는 AI 분석 없음)</li>`;
     const lines = data.finds.map((x) => {
       const r = rule(x.rule), th = r?.thresholds || {}, d = x.detail || {};
       const pct = f.area_m2 ? Math.round((x.evid_m2 / f.area_m2) * 100) : null;
@@ -115,7 +115,7 @@ export function parcelCardV2(el, ctx) {
       const src = 'findings-lite.json · ' + (d.evidence ? `detail/${f.emd_cd}.json` : 'rules');
       return `<li data-rule="${x.rule}" data-id="${esc(x.id)}"><b>${esc(x.rule)} v1.0<small>${esc(x.priority)} ${numHtml(E(x.score, 'score', 'inferred', src), { unit: false, digits: 1 })}</small></b>
         <span class="sv-seg"><span>지목 ${esc(f.jimok)} ${f.area_m2 ? numHtml(E(Math.round(f.area_m2), 'm2', 'recorded', SRC_L)) : ''}${f.yongdo && f.yongdo !== '(미결합)' ? ' · ' + esc(f.yongdo) : ''}${f.nongup && f.nongup !== '(해당없음)' ? ' · ' + esc(f.nongup) : ''}</span>
-          <span>AI ${RULE_CLS[x.rule]}${nObj} ${numHtml(E(Math.round(x.evid_m2), 'm2', 'inferred', src, '근거면적 · 검수 전'))}${pct != null ? `(${pct}%)` : ''} · 신뢰도 ${numHtml(E(x.conf, 'ratio', 'inferred', src), { unit: false, digits: 2 })} · ${esc((d.img_date || f.img_date || '').replace(/\(.*\)/, '').trim() || '2023 25cm')}</span>
+          <span>AI ${RULE_CLS[x.rule]}${nObj} ${numHtml(E(Math.round(x.evid_m2), 'm2', 'inferred', src, '근거면적 · 결과 확인 전'))}${pct != null ? `(${pct}%)` : ''} · 신뢰도 ${numHtml(E(x.conf, 'ratio', 'inferred', src), { unit: false, digits: 2 })} · ${esc((d.img_date || f.img_date || '').replace(/\(.*\)/, '').trim() || '2023 25cm')}</span>
           <span>임계 ${esc(thTxt || '')} <b class="sv-th">추정 초기값</b> · 건축물대장 미대조${d.corroboration ? ' · 보강 ' + esc(d.corroboration) : ''}</span></span>
         <span class="sv-lim">${esc(r?.limits || '')}</span></li>`;
     });
@@ -233,7 +233,7 @@ export function parcelCardV2(el, ctx) {
         <p class="sv-headprov"></p></header>
       <section class="sv-pair" aria-label="대장 vs 현황">
         <h4><span>대장 · 등록</span><span class="sv-ep" style="visibility:hidden"><label><input type="radio">x</label></span></h4>
-        <h4><span>현황 · AI 판독</span><span class="sv-ep" role="radiogroup" aria-label="판독 시점"><label><input type="radio" name="sv-ep-${my}" value="2023" checked>2023</label><label><input type="radio" name="sv-ep-${my}" value="2025">2025</label></span></h4>
+        <h4><span>현황 · AI 분석</span><span class="sv-ep" role="radiogroup" aria-label="AI 분석 시점"><label><input type="radio" name="sv-ep-${my}" value="2023" checked>2023</label><label><input type="radio" name="sv-ep-${my}" value="2025">2025</label></span></h4>
         <div class="sv-lcol">${leftRows(f)}</div><div class="sv-rcol"></div>
       </section>
       <figure class="sv-crops" aria-label="시점 크롭 · ${inAoi ? 'LX 드론 4시점' : '2023 25cm + A03 2시점'}"></figure>

@@ -81,6 +81,8 @@ function mountBase(map) {
 /* 저줌 받침(z6–8 · 대한민국 전역 · 바다 타일은 받지 않는다) — 카메라를 움직이기 전에 */
 const loReady = Promise.all([pre, baseReady]).then(() => warmTiles([6, 7, 8].flatMap((z) => tilesIn(KOREA, z)), { n: 12, budget: 4000 }));
 
+/* 서비스 상태 · 대표 수치 = GET /summary 한 출처(기관 세션 = 자기 관할만). 못 읽으면 null — 상태를 지어내지 않는다 */
+const sumP = api('/summary').then((j) => (j && Array.isArray(j.items) ? j : null)).catch(() => null);
 const [dep, fin, emd, regs] = await Promise.all([
   api('/deploys').catch(() => null),
   api('/survey/findings?limit=1').catch(() => null),
@@ -151,7 +153,15 @@ const ingestCard = K.card({ map: true, cls: 'gf-ingest' }); ingestCard.hidden = 
 stageEl.append(ingestCard);
 const sweep = h('div.gf-sweep', { hidden: true, 'aria-hidden': 'true' }); stageEl.append(sweep);
 
-if (MARK) joinPane({ resume: true }); else pane('none', { step: 0 });   // 캐시 없는 창 — 서버 기록을 확인할 때까지 빈 상태도 그리지 않는다
+/* 이어 열기(이미 결합한 반입)는 결합 진행을 다시 틀지 않는다 — '불러오는 중' 뒤 곧바로 결과. 진행 표시는 새 대장을 올릴 때만 */
+function loadingPane() {
+  panes.result.innerHTML = '';
+  const e = h('div'); panes.result.append(e);
+  K.empty(e, { kind: 'loading', compact: true });
+  eager(e);
+  pane('result');
+}
+if (MARK) loadingPane(); else pane('none', { step: 0 });   // 캐시 없는 창 — 서버 기록을 확인할 때까지 빈 상태도 그리지 않는다
 
 const small = () => matchMedia('(max-width: 640px)').matches;
 function padStage() {
@@ -186,6 +196,25 @@ async function goReady(b, { ms = 1600, maxZoom = 15, budget = 2200 } = {}) {
   await warm(b, maxZoom, budget);
   return stage.go(b, { ms, maxZoom });
 }
+/* 결과 필지로 — AI 분석 필지 층(sv · 타일 z11 부터)이 그려지는 배율 아래로는 내려가지 않는다.
+   결과가 관할 전역에 퍼져 좁은 화면(390)에서 전체 범위가 z11 밑이면 결과가 몰린 가운데(사분위 범위)로, 그래도 멀면 그 가운데를 SV_MINZ 로. */
+const SV_MINZ = 11.5;
+function camZoom(b, maxZoom) { const c = stage.map.cameraForBounds(b, { padding: stage.padding, maxZoom }); return c ? Math.min(c.zoom, maxZoom) : 0; }
+async function goResult(bbs, { ms = 1600, maxZoom = 15, budget = 1600 } = {}) {
+  bbs = bbs.filter(Boolean);
+  if (!bbs.length) return false;
+  await baseReady;
+  const all = bbs.reduce((a, b) => grow(a, b), NONE);
+  if (!S.index || camZoom(all, maxZoom) >= SV_MINZ) return goReady(all, { ms, maxZoom, budget });
+  const xs = bbs.map((b) => (b[0] + b[2]) / 2).sort((a, b) => a - b), ys = bbs.map((b) => (b[1] + b[3]) / 2).sort((a, b) => a - b);
+  const q = (v, p) => v[Math.round(p * (v.length - 1))];
+  for (const p of [0.1, 0.25]) {
+    const core = [q(xs, p), q(ys, p), q(xs, 1 - p), q(ys, 1 - p)];
+    if (camZoom(core, maxZoom) >= SV_MINZ) return goReady(core, { ms, maxZoom, budget });
+  }
+  const cx = q(xs, 0.5), cy = q(ys, 0.5);
+  return goReady([cx - 1e-4, cy - 1e-4, cx + 1e-4, cy + 1e-4], { ms, maxZoom: SV_MINZ, budget });
+}
 
 /* ═════════════ 1 · 올리기 ═════════════ */
 S.store = await ledgerStore(who); tm('store');
@@ -204,7 +233,41 @@ function paintDrop() {
 }
 paintDrop();
 
+/* 영상 있음/없음 — summary imagery.has 로만(관할 코드가 겹치는 항목 · 없으면 기관 전체). 'none' 일 때만 '영상 등록 필요' */
+function sumItems() {
+  const items = S.sum?.items || []; if (!items.length) return [];
+  const sgg = (S.region.sgg || []).map(String);
+  const mine = items.filter((it) => { const c = String(it.sgg_cd || ''); return c && sgg.some((x) => c.startsWith(x) || x.startsWith(c)); });
+  return mine.length ? mine : items;
+}
+function imageryOf() {
+  const it = sumItems(); if (!it.length) return null;
+  // AI 결과가 이미 있는 서비스(단계가 '첫 결과 전'이 아니거나 탐지 수가 있음)는 영상이 있었던 것 — '영상 등록 필요'를 띄우지 않는다
+  const ran = (x) => (x.stage && x.stage !== '첫 결과 전') || +(x.metrics?.detected?.value || 0) > 0;
+  if (it.some((x) => x.imagery?.has === true || ran(x))) return 'has';
+  return it.every((x) => x.imagery && x.imagery.has === false) ? 'none' : null;
+}
+const noImagery = () => imageryOf() === 'none';
+/* AI 결과 색인이 없는 관할의 좌하단 카드 — 영상이 정말 없으면 '영상 등록 필요', 영상이 있으면 summary 의 서비스 상태 · 수 */
+function showStatus() {
+  if (noImagery()) return showIngest();
+  const items = sumItems();
+  ingestCard.innerHTML = '';
+  if (!items.length) { ingestCard.hidden = true; requestAnimationFrame(padStage); return; }
+  const KEYS = ['detected', 'field_check', 'review_pending', 'reports'];
+  for (const it of items.slice(0, 2)) {
+    const m = KEYS.map((k) => it.metrics?.[k]).find((x) => x && x.value !== null && x.value !== undefined);
+    const row = h('div.gf-svc');
+    row.append(h('p.gf-svc-t', { text: it.card_name || '' }), h('p.gf-svc-s', { text: [it.stage, it.region_name].filter(Boolean).join(' · ') }));
+    if (m) row.append(h('p.gf-svc-m', {}, h('span', { text: m.label }), h('b.num', { text: nf(m.value), dataset: { metric: m.label, v: String(m.value) } }), h('small', { text: m.unit || '' }), K.sigEl(m)));
+    ingestCard.append(row);
+  }
+  ingestCard.classList.add('gf-status');
+  ingestCard.hidden = false;
+  requestAnimationFrame(padStage);
+}
 function showIngest() {
+  ingestCard.classList.remove('gf-status');
   ingestCard.hidden = false;
   const e = h('div');
   K.empty(e, { kind: 'ingest', char: 'drone', title: '영상 등록 필요', text: '이 지역 영상이 등록되면 AI 분석이 시작됩니다', compact: true, action: { label: '영상 등록 요청', onClick: requestImagery } });
@@ -258,7 +321,8 @@ function toCols(out) {
 const mapping = () => Object.fromEntries(S.cols.map((c) => [c.col, c.role]));
 const colOf = (role) => (S.cols || []).find((c) => c.role === role)?.col;
 async function join({ resume = null } = {}) {
-  if (!resume || !prog || panes.join.hidden) joinPane({ resume: !!resume });
+  if (resume) return reopen(resume);
+  joinPane();
   const t0 = performance.now();
   let rec;
   const matcher = (r) => matchLedger({
@@ -322,7 +386,7 @@ async function takeServer(d) {
   S.srv = d;
   if (KIND_LABEL[d.kind]) S.kind = KIND_LABEL[d.kind];
   if (S.index) { S.F = await loadFindings(d.import_id).catch(() => null); addServerRows(); applySets(); }
-  await verifyCapped();
+  S.capP = verifyCapped().catch(() => null).then(() => { if (S.srv === d) paintRate(); });   // V-World 확인은 결과를 막지 않는다
 }
 /* 대장 필지의 실태조사 결과 — 규칙별 집계(by_rule)와 필지 목록 */
 async function loadFindings(id) {
@@ -417,8 +481,8 @@ async function sweepIn(resume) {
   const bb = items.reduce((a, o) => grow(a, o._bb), NONE);
   S.ledgerBB = bb;
   const mz = S.index ? 15.5 : 15;
-  if (resume || RM()) { for (const o of items) setK(o._pnu, P.base); await goReady(bb, { ms: 1600, maxZoom: mz, budget: 1600 }); return; }
-  await goReady(bb, { ms: 1600, maxZoom: mz });
+  if (resume || RM()) { for (const o of items) setK(o._pnu, P.base); await goResult(items.map((o) => o._bb), { ms: 1600, maxZoom: mz, budget: 1600 }); return; }
+  await goResult(items.map((o) => o._bb), { ms: 1600, maxZoom: mz, budget: 2200 });
   sweep.hidden = false;
   const T = 1400, t0 = performance.now(); let k = 0; const map = stage.map;
   await new Promise((done) => {
@@ -460,7 +524,7 @@ function findingOf(pnu) {
   return null;
 }
 const stateOf = (pnu) => findingOf(pnu)?.state || S.states.get(pnu);
-function bigDefault() { const n = catN('bld'); setBig(BIG0, n === null ? null : est(n)); }
+function bigDefault() { const n = catN('bld'); setBig(BIG0, n === null ? (S.fLoading ? undefined : null) : est(n)); }   // 받는 중 = '불러오는 중'
 
 /* 결합률 — 한 숫자. 이 창에 행이 있으면 브라우저 ∪ 서버, 새 기기면 서버 + 상한으로 못 본 행의 브라우저 V-World 확인 */
 function rateNow() {
@@ -519,7 +583,7 @@ function result() {
 
   if (!S.index) {
     // 영상 없는 관할: 결합된 필지를 V-World 경계로 칠하고 대장 필지 수 · 리별 막대 — 대조 숫자는 영상이 들어온 뒤(지어내지 않는다)
-    tblEl.hidden = true; bigCard.hidden = true; showIngest();
+    tblEl.hidden = true; bigCard.hidden = true; showStatus();
     const r = rateNow();
     const known = S.fused.filter(Boolean);
     const n = r.final ? r.n : known.length;
@@ -618,7 +682,7 @@ async function openParcel(pnu, fly) {
   if (fly && o._bb) goReady(o._bb, { ms: 1400, maxZoom: 17, budget: 1500 });
   const body = h('div.gf-parcel');
   const vw = S.index ? [o['V-World 지목'], o['V-World 용도지역'], o['V-World 농업진흥']].filter(Boolean).join(' · ') || '—' : ((S.vwProps && S.vwProps.get(pnu)) || '—');
-  const ai = S.index ? aiText(o) : '영상 등록 필요';
+  const ai = S.index ? aiText(o) : noImagery() ? '영상 등록 필요' : 'AI 분석 전';
   body.append(h('dl.gf-tri', { html: `<dt>대장</dt><dd>${esc(o._state || '—')}${o._date ? ` · ${esc(o._date)}` : ''}</dd><dt>AI 분석</dt><dd>${esc(ai)}</dd><dt>V-World</dt><dd>${esc(vw)}${o['V-World 면적(㎡)'] ? ` · ${nf(Math.round(o['V-World 면적(㎡)']))}㎡` : ''}</dd>` }));
   const act = h('div.gf-act'); body.append(act);
   const d = K.drawer({ title: o._jb, body, host: stageEl, slot: 'parcel', onClose: () => stage.map.getLayer(hl) && stage.map.setFilter(hl, ['==', ['get', 'pnu'], '__']) });
@@ -645,15 +709,18 @@ async function openParcel(pnu, fly) {
 }
 
 /* ═════════════ Ctrl K — 한 문장 → 필터 · 채색 · 리별 막대 · 목록 · 카메라 ═════════════
-   ⓪ 관할 가드: 질문 속 시도 · 시군구 · 읍면동이 관할 밖이면 규칙도 모델도 걸지 않고 한 줄로 답한다(지도 무반응)
+   ⓪ 관할 가드: 질문 속 시도 · 시군구 · 읍면동이 관할 밖이면 규칙도 모델도 걸지 않고 서버 범위 가드로 넘긴다(명세 거절 문구 · 지도 무반응)
+      대장과 무관한 질문(다른 서비스 · 보유 결과)도 서버(/agent/runs)로 — 대장 질의가 가로채지 않는다
    ① 규칙 매핑(명세 어휘)을 모델 호출 전에 건다 → 지도가 바로 바뀐다
    ② 모델(vLLM · 게이트웨이)은 규칙이 없거나 조건을 더할 때만
    ③ 영상 없는 관할은 대장 × V-World 조건만으로(리별 n필지) — AI 조건이면 '영상 반입 필요 · 판독 전' 한 줄 */
 cmdk.el.addEventListener('submit', (e) => {
   const q = ckInput.value.trim();
+  // 관할 밖(로컬 판정)이면 키트 기본으로 넘긴다 — 서버 범위 가드(S-10)의 거절 문구가 그대로 한 줄로 남는다(자동 닫힘 없음)
   const out = outsideOf(q);
-  if (out) { e.preventDefault(); e.stopPropagation(); sayOnly(`관할 밖 지역입니다 · ${S.region.name || orgName} 안에서 물어 주세요`, 2600); S.log.push({ q, guard: out }); return; }
+  if (out) { ++askSeq; asking?.abort(); S.log.push({ q, guard: out, to: 'server' }); return; }
   if (!S.fused.filter(Boolean).length) return;              // 대장 결합 전 → 키트 기본(일반 질문)
+  if (!ledgerAsk(q)) { ++askSeq; asking?.abort(); S.log.push({ q, to: 'server' }); return; }   // 대장과 무관한 질문(다른 서비스 · 보유 결과) → 키트 기본(/agent/runs)
   e.preventDefault(); e.stopPropagation();
   if (!S.index) askNoImagery(q); else ask(q);
 }, true);
@@ -663,6 +730,16 @@ function sayOnly(text, ms = 1800) {
   ans.hidden = false; ans.innerHTML = `<b>${esc(text)}</b>`;
   delete cmdk.el.dataset.busy;
   const seq = ++askSeq; setTimeout(() => { if (askSeq === seq) cmdk.close(); }, ms);
+}
+/* 대장 질의인가 — 대장 · 필지 · AI 조건 낱말, 규칙 매핑, 대장 열 이름, 대장에 있는 리 · 읍면 이름 중 하나라도 있으면 */
+const LEDGER_W = /필지|대장|지번|지목|용도\s*지역|농업\s*진흥|현장\s*(?:확인|배정)|리별/;
+function ledgerAsk(q) {
+  if (!q) return false;
+  const k = keysOf(q);
+  if (LEDGER_W.test(q) || Object.values(k).some(Boolean)) return true;
+  const ctx = askCtx();
+  if (rulePlan(q, ctx).where.length) return true;
+  return (ctx.ledgerCols || []).some((c) => c && String(c).length >= 2 && q.includes(String(c)));
 }
 /* 관할 가드 — 관할 안 이름을 지운 뒤 남는 시도 · 시군구(전국 목록) · 읍면동(관할 목록이 온전할 때) */
 function outsideOf(q) {
@@ -714,7 +791,7 @@ let askSeq = 0;
 /* 영상 없는 관할 — 모델을 부르지 않는다(판독 전 · 지어내지 않는다) */
 function askNoImagery(q) {
   const ctx = askCtx(); const k = keysOf(q);
-  if (k.bld || k.park || k.gh || k.fal) { sayOnly('영상 등록 필요 · AI 분석 전', 2200); S.log.push({ q, used: 'no-imagery' }); return; }
+  if (k.bld || k.park || k.gh || k.fal) { sayOnly(noImagery() ? '영상 등록 필요 · AI 분석 전' : 'AI 분석 전', 2200); S.log.push({ q, used: 'no-imagery' }); return; }
   const R = rulePlan(q, ctx);
   const where = R.where.filter((w) => !/^AI |^V-World /.test(w.field));
   const hits = run(where, S.fused);
@@ -909,27 +986,60 @@ function mountVw(features) {
 
 /* ═════════════ 새 기기 · 새 프로필 — 서버 기록으로 결과를 다시 그린다 ═════════════ */
 async function serverOpen(d) {
-  joinPane({ resume: true });
-  S.rec = null;
-  await takeServer(d); tm('open-server');
+  loadingPane();
+  S.rec = null; S.fLoading = true;
+  await takeServer(d).catch(() => null); S.fLoading = false; tm('open-server');
   if (S.index && S.F) {
-    // AI 판독 색인(같은 파일)을 결과 필지가 있는 읍면만 읽는다 — 표 · 필지 카드 · Ctrl K
+    // 결과 필지 · 규칙 결과 · 용도지역은 서버 기록에서 곧바로 — AI 분석 색인(Ctrl K · 필지 카드)은 뒤에서 채운다
+    fuseFromFindings();
+    result(); tm('result');
+    const pts = S.fused.map((o) => o._bb).filter(Boolean);
+    if (pts.length) goResult(pts, { ms: 900, maxZoom: 15, budget: 500 }).then(() => tm('open-cam'));
     const emds = [...new Set(S.F.items.map((f) => String(f.pnu).slice(0, 8)))];
     const bbs = emds.map((cd) => (S.emd.get(cd) || {}).bbox).filter(Boolean);
-    if (bbs.length) await Promise.race([S.index.load(bbs, (a, n) => prog?.set({ progress: 0.2 + 0.7 * a / (n || 1) })), wait(6000)]);
-    tm('open-index'); fuseFromFindings();
-    const pts = S.fused.map((o) => o._bb).filter(Boolean);
-    if (pts.length) await goReady(pts.reduce((a, b) => grow(a, b), NONE), { ms: 1800, maxZoom: 15, budget: 1600 });
-    tm('open-cam');
-  } else if (!S.index) {
+    if (bbs.length) S.index.load(bbs).then(() => { tm('open-index'); if (S.rec || S.srv !== d) return; fuseFromFindings(); if (!S.query) showCat(S.cat); }).catch(() => null);
+    return;
+  }
+  if (!S.index) {
+    await S.capP;
     const feats = S.capFeats || [];
     if (feats.length) mountVw(feats);
     S.fused = feats.map((f) => { const a = parseAddr(String(f.properties.addr || ''), ''); return { _pnu: f.properties.pnu, _bb: bboxOfFeature(f), _ri: a.ri || a.emd || '', _jb: String(f.properties.addr || '').split(/\s+/).slice(-2).join(' '), _state: '' }; });
     S.byPnu.clear(); S.fused.forEach((o, i) => S.byPnu.set(o._pnu, i));
     for (const o of S.fused) setK(o._pnu, P.base);
   }
-  prog?.set({ progress: 1 });
-  result();
+  result(); tm('result');
+}
+
+/* 이어 열기 — 이 창에 행 캐시가 있는 반입(같은 대장 · 같은 결과로 이미 결합됨). 결합 진행 · 서→동 스윕을 다시 틀지 않고 곧바로 결과.
+   서버 기록(registry?latest=1 → 결합 결과)이 이미 있으면 그대로 쓰고, 결합 중이면 끝나는 대로 그 자리에서 바꾼다. */
+async function reopen(rec) {
+  if (panes.result.hidden) loadingPane();
+  S.rec = rec;
+  const d = S.srv && S.srv.state === 'matched' && (!rec.server_id || S.srv.import_id === rec.server_id) ? S.srv : null;
+  if (S.index && rec.aiCache?.length) S.index.seed(rec.aiCache);
+  if (!S.index && rec.vwCache) mountVw(rec.vwCache);
+  fuse(rec); tm('matched');
+  S.fLoading = !!d;
+  if (d) await takeServer(d).catch(() => null);
+  S.fLoading = false;
+  result(); tm('result');
+  const cam = () => { const it = S.fused.filter((o) => o && o._bb); if (!it.length) return; S.ledgerBB = it.reduce((a, o) => grow(a, o._bb), NONE); goResult(it.map((o) => o._bb), { ms: 1000, maxZoom: S.index ? 15.5 : 15, budget: 1000 }); };
+  cam();
+  // 뒤에서 채우기 — AI 분석 색인 · V-World 경계 · 아직 결합 중인 서버 기록
+  if (S.index && !rec.aiCache?.length) {
+    const emds = [...new Set(rec.match.filter(Boolean).map((p) => p.slice(0, 8)))];
+    const bbs = emds.map((cd) => (S.emd.get(cd) || {}).bbox).filter(Boolean);
+    S.index.load(bbs.length ? bbs : [S.region.bbox]).then(() => {
+      if (S.rec !== rec) return;
+      rec.aiCache = S.index.dump(rec.match.filter(Boolean)); S.store.save(rec);
+      fuse(rec); addServerRows(); applySets(); if (!S.query) showCat(S.cat); if (!S.ledgerBB) cam();
+    }).catch(() => null);
+  }
+  if (!S.index && !rec.vwCache) {
+    vwParcels(rec.match.filter(Boolean)).then((f) => { if (S.rec !== rec) return; rec.vwCache = f; mountVw(f); S.store.save(rec); fuse(rec); for (const o of S.fused) if (o) setK(o._pnu, P.base); result(); cam(); }).catch(() => null);
+  }
+  if (!d && rec.server_id) serverDone(rec.server_id).then((dd) => dd && S.rec === rec && takeServer(dd).then(() => { if (S.rec !== rec) return; if (S.index && !S.query) result(); else paintRate(); }));
 }
 
 /* ═════════════ 할 일 수 · 기관 스트림 ═════════════ */
@@ -953,7 +1063,8 @@ if (await hasRoute('/events/tenant')) {
   S.srv = got?.server || null; S.resumeFrom = got?.from || null;
   if (S.srv && KIND_LABEL[S.srv.kind]) { S.kind = KIND_LABEL[S.srv.kind]; paintDrop(); }
   const last = got?.rec;
-  if (!R.ai) showIngest();
+  S.sum = await sumP; tm('summary');
+  if (!R.ai) showStatus();
   if (last && last.match && last.rows?.length) {
     S.rec = last; S.cols = (last.columns_guess || []).map((c) => ({ ...c, role: (last.mapping || {})[c.col] || c.role }));
     join({ resume: last });

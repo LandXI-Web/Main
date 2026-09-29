@@ -68,7 +68,7 @@ function dataPath(p) {                       // /landxi/data/… → junction �
   return f.startsWith(path.resolve(base)) ? f : null;
 }
 function serveStatic(req, res, p) {
-  if (!ALLOW.some((a) => p === a || p.startsWith(a))) return send(res, 404, 'text/plain; charset=utf-8', '404 — :8702 는 관제 경로만 연다');
+  if (!ALLOW.some((a) => p === a || p.startsWith(a))) return send(res, 404, 'text/plain; charset=utf-8', '404 — 이 주소에는 화면이 없습니다');
   if (p.endsWith('/')) p += 'index.html';
   const f = p.startsWith('/landxi/data/') ? dataPath(p) : path.resolve(ROOT, '.' + p);
   if (!f || (!p.startsWith('/landxi/data/') && !f.startsWith(ROOT + path.sep))) return send(res, 404, 'text/plain', '404');
@@ -342,7 +342,7 @@ async function api(req, res, url, p) {
   // SSE — Origin 검사(계약 §3: 8702 또는 Origin 없음) + admin
   if (p === '/events/ops') {
     const o = req.headers.origin;
-    if (o && !ORIGINS.has(o)) return fail(res, 'forbidden', 403, '관제 이벤트는 :8702 origin 에서만');
+    if (o && !ORIGINS.has(o)) return fail(res, 'forbidden', 403, 'LX 관리자 대시보드 주소에서만 열립니다');
     if (!s || s.realm !== 'lx' || s.role !== 'admin') return fail(res, 'forbidden', 403, '관리자 전용');
     res.writeHead(200, { 'content-type': 'text/event-stream; charset=utf-8', 'cache-control': 'no-store', 'x-accel-buffering': 'no', connection: 'keep-alive' });
     res.write(': lx-ops bridge\n\n');
@@ -380,7 +380,7 @@ async function api(req, res, url, p) {
       return json(res, 202, { accepted: true, model_id: id, action: mm[2], worker: om.pin_worker, note: om.pin_note });
     }
     if (p === '/ops/audit') return json(res, 200, { items: S.audit.filter((a) => !url.searchParams.get('subject') || a.subject === url.searchParams.get('subject')).slice(-100), total: S.audit.length });
-    return fail(res, 'not_found', 404, '없는 관제 경로');
+    return fail(res, 'not_found', 404, '이 주소에는 화면이 없습니다');
   }
 
   // 결재(비계약 — 결과 문서 '계약 변경 요청' §4.10 제안)
@@ -396,7 +396,7 @@ async function api(req, res, url, p) {
     if (!chain) {
       const cv = S.cards.card_versions.find((v) => v.id === d.card_version_id);
       chain = [...(cv?.model_ids || []).map((mid) => ({ kind: 'model', id: mid })), ...(d.card_version_id ? [{ kind: 'card_version', id: d.card_version_id }] : []),
-        ...(d.from_deploy_id ? [{ kind: 'deploy', id: d.from_deploy_id, label: '이식 원본' }] : []), { kind: 'deploy', id: d.id }, { kind: 'tenant', id: d.tenant_id },
+        ...(d.from_deploy_id ? [{ kind: 'deploy', id: d.from_deploy_id, label: '적용 원본' }] : []), { kind: 'deploy', id: d.id }, { kind: 'tenant', id: d.tenant_id },
         { kind: 'job', id: null, label: d.from_deploy_id ? '결과 0 · 첫 분석 대기' : '결과 없음' }];
     }
     return json(res, 200, { deploy_id: d.id, card_version_id: d.card_version_id, chain });
@@ -418,9 +418,9 @@ async function api(req, res, url, p) {
     let id = `dp-${b.tenant_id}-${from.card_id.replace(/^card-/, '')}-${String(year).slice(2)}`; let k = 2; while (S.deploys.some((d) => d.id === id)) id = id.replace(/(-\d+)?$/, '') + '-' + k++;
     const r = region(b.region_profile);
     const aoi = b.aoi || r?.aoi; if (!aoi) return fail(res, 'aoi_outside_footprint', 400, 'AOI 없음');
-    const d = { ...clone(from), id, name: b.name || `${from.name} 이식`, tenant_id: b.tenant_id, region_profile: b.region_profile, region_name: r?.name || { ko: b.region_profile, en: b.region_profile },
+    const d = { ...clone(from), id, name: b.name || `${from.name} 다른 지역에 적용`, tenant_id: b.tenant_id, region_profile: b.region_profile, region_name: r?.name || { ko: b.region_profile, en: b.region_profile },
       aoi: aoi.type === 'Polygon' ? { type: 'MultiPolygon', coordinates: [aoi.coordinates] } : aoi, stage: 'draft', pinned: false, gpu_pool: b.gpu_pool || 'cpu', from_deploy_id: from.id,
-      prev_card_version_id: null, model_override: null, snapshot_current: null, snapshot_prev: null, year, status_history: '이식',
+      prev_card_version_id: null, model_override: null, snapshot_current: null, snapshot_prev: null, year, status_history: '다른 지역에 적용',
       scale: E(0, 'count', 'measured', `results/${b.tenant_id}/`, '결과 0 · 첫 분석 대기'), basis: 'measured', approvals: [], created_at: kst(), updated_at: kst(), _stage_at: kst(),
       aoi_source: r ? `${r.boundary} · ${r.source}` : 'body.aoi' };
     S.deploys.push(d); audit(s, 'deploy.port', id, { from: from.id }, { tenant_id: d.tenant_id, region_profile: d.region_profile, stage: 'draft' }, b.reason);
@@ -445,7 +445,7 @@ async function api(req, res, url, p) {
         [d.snapshot_current, d.snapshot_prev] = [d.snapshot_prev, d.snapshot_current];
         d.version = versionOf(d.card_version_id); d.stage = 'rolled_back'; d._stage_at = kst();
         if (d.id === 'dp-nw-farm-25') d.scale = d.card_version_id === 'card-farm@2.0'
-          ? E(76215, 'polygons', 'inferred', 'results/namwon-landcover-2023.pmtiles (cls=경작지)', 'P4 2023 25cm × aerial25/best · 검수 전')
+          ? E(76215, 'polygons', 'inferred', 'results/namwon-landcover-2023.pmtiles (cls=경작지)', 'P4 2023 25cm × aerial25/best · 결과 확인 전')
           : E(2098, '필지', 'measured', 'results/namwon-farmland-2025.geojson', '2025 드론 · A02');
         break;
       }

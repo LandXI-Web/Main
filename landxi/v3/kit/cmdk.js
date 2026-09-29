@@ -15,6 +15,7 @@ const SAY = {
   jobs_quote: '분석 범위 계산', jobs_submit: '분석 실행', survey_state: '상태 변경', map_arrive: '지도에 표시', map_flyto: '필지로 이동',
   map_on: '층 켜기', map_frame: '범위 표시', drawer_open: '목록 열기', parcel_card: '필지 카드',
   ledger_ingest: '대장 읽기', ledger_match: '대장과 AI 결과 맞추기', ledger_rule: '대조 규칙 적용', ledger_findings: '어긋난 필지 찾기',
+  summary_lookup: '보유 결과 확인',
 };
 const EVENTS = ['agent.route', 'agent.plan', 'agent.tool.call', 'agent.tool.result', 'agent.confirm', 'agent.confirm.decided', 'agent.token', 'agent.done', 'agent.failed', 'agent.rejected'];
 
@@ -44,23 +45,56 @@ export function mountCmdk({ stage = null, guest = false, context = () => ({}), o
     else if (e.key === 'Escape' && !box.hidden) { e.stopPropagation(); close(); }
   }, true);
 
-  const say = (text) => { ans.hidden = false; ans.textContent = text; };
+  /* 끝 상태를 분명히: data-state = busy(로딩 점 · aria-busy) → done | rejected(서버 거절 문구 그대로 한 줄) | failed('지금은 답할 수 없습니다').
+     무응답 0 — SSE 연결 실패 3회 · 끝 이벤트 없이 45초 · 빈 답이면 failed 로 닫는다. */
+  const SERVER_LINE = new Set(['forbidden', 'out_of_scope', 'unauthorized']);   // 서버 문구를 그대로 보일 오류(개발 정보 없는 한 줄)
+  const TIMEOUT_MS = 45000;
+  let seq = 0, guard = 0;
+  const settle = (state, text) => {
+    clearTimeout(guard); delete box.dataset.busy; box.dataset.state = state; box.removeAttribute('aria-busy');
+    if (text != null) { ans.hidden = false; ans.textContent = text; }
+    stream?.close();
+  };
+  const say = (text) => settle('rejected', text);
+  const fail = (why) => { devlog('agent', why); settle('failed', t('cmdk.error')); };
   box.querySelector('form').addEventListener('submit', async (e) => {
     e.preventDefault();
     if (guest) return;
     const msg = input.value.trim(); if (!msg) return;
-    stream?.close(); plan.innerHTML = ''; plan.hidden = true; conf.hidden = true; ans.hidden = false; ans.innerHTML = '<span class="k-ck-dots" aria-hidden="true"><i></i><i></i><i></i></span>';
-    box.dataset.busy = '1';
+    const my = ++seq;
+    stream?.close(); clearTimeout(guard); plan.innerHTML = ''; plan.hidden = true; conf.hidden = true; ans.hidden = false; ans.innerHTML = '<span class="k-ck-dots" aria-hidden="true"><i></i><i></i><i></i></span>';
+    box.dataset.busy = '1'; box.dataset.state = 'busy'; box.setAttribute('aria-busy', 'true');
+    guard = setTimeout(() => { if (my === seq && box.dataset.state === 'busy') fail('끝 이벤트 없이 시간 초과'); }, TIMEOUT_MS);
     const ctx = { ...context() };
     if (stage?.map) { const b = stage.map.getBounds(); ctx.bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]; ctx.zoom = stage.map.getZoom(); }
     let r;
     try { r = await api('/agent/runs', { method: 'POST', body: { message: msg, mode: 'map', context: ctx } }); }
-    catch (err) { delete box.dataset.busy; devlog('agent', `POST 실패 · ${err.code || ''} ${err.message || ''}`); say(err.code === 'forbidden' && err.message ? err.message : t('cmdk.error')); return; }
+    catch (err) {
+      if (my !== seq) return;
+      devlog('agent', `POST 실패 · ${err.code || ''} ${err.message || ''}`);
+      if (SERVER_LINE.has(err.code) && err.message) say(err.message); else fail(`POST ${err.code || ''}`);
+      return;
+    }
+    if (my !== seq) return;
+    if (!r?.events_url) { fail('events_url 없음'); return; }
     runId = r.run?.id; devlog('agent run', runId);
-    let buf = '';
+    let buf = '', errs = 0, got = false;
     stream = sse(r.events_url.replace(/^\/api\/v1/, ''), {
-      events: EVENTS,
+      events: [...EVENTS, 'agent.fallback', 'agent.tool.progress'],
+      onState: (s) => {
+        if (my !== seq || box.dataset.state !== 'busy') return;
+        if (s === 'open') errs = 0;
+        if (s === 'error' && ++errs >= 3 && !got) fail('SSE 연결 실패');
+      },
       on: (name, d) => {
+        if (my !== seq) return;
+        got = true;
+        // 이벤트가 오는 동안은 기다린다 · 확인 카드(사람 승인) · 분석 작업 진행 중엔 길게
+        if (box.dataset.state === 'busy') {
+          clearTimeout(guard);
+          const wait = name === 'agent.confirm' || name === 'agent.tool.progress' ? 10 * 60000 : TIMEOUT_MS;
+          guard = setTimeout(() => { if (my === seq && box.dataset.state === 'busy') fail('끝 이벤트 없이 시간 초과'); }, wait);
+        }
         if (name === 'agent.plan') {
           const steps = (d?.steps || []).slice(0, 3);
           plan.hidden = !steps.length;
@@ -74,12 +108,13 @@ export function mountCmdk({ stage = null, guest = false, context = () => ({}), o
         if (name === 'agent.confirm.decided') conf.hidden = true;
         if (name === 'agent.token') { buf += d?.delta || ''; ans.hidden = false; ans.textContent = clean(buf); }
         if (name === 'agent.done') {
-          delete box.dataset.busy; ans.hidden = false; ans.innerHTML = fill(d?.answer_md || buf, d?.envelopes);
-          devlog('vllm', `${d?.model?.id || ''} · ${d?.perf?.total_ms ?? '—'} ms · ${String(d?.answer_md || '').slice(0, 200)}`);
-          stream.close();
+          const md = String(d?.answer_md || buf || '').trim();
+          devlog('vllm', `${d?.model?.id || ''} · ${d?.perf?.total_ms ?? '—'} ms · ${md.slice(0, 200)}`);
+          if (!md) { fail('빈 답'); return; }
+          settle('done'); ans.hidden = false; ans.innerHTML = fill(md, d?.envelopes);
         }
-        if (name === 'agent.rejected') { delete box.dataset.busy; say(d?.message || t('cmdk.error')); stream.close(); }
-        if (name === 'agent.failed') { delete box.dataset.busy; devlog('agent failed', d); say(t('cmdk.error')); stream.close(); }
+        if (name === 'agent.rejected') say(d?.message || t('cmdk.error'));
+        if (name === 'agent.failed') fail(`failed · ${d?.error || ''}`);
       },
     });
   });
@@ -96,7 +131,7 @@ export function mountCmdk({ stage = null, guest = false, context = () => ({}), o
   async function decide(cid, decision) {
     conf.querySelectorAll('button').forEach((b) => { b.disabled = true; });
     try { await api(`/agent/runs/${runId}/confirm`, { method: 'POST', body: { confirm_id: cid, decision } }); }
-    catch { say(t('cmdk.error')); }
+    catch { fail('확인 카드 전송 실패'); }
     conf.hidden = true;
   }
 

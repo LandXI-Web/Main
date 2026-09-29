@@ -7,7 +7,7 @@
 (function () { var h = function (e) { var vt = e.viewTransition; if (!vt) return; ['ready', 'finished', 'updateCallbackDone'].forEach(function (k) { if (vt[k] && vt[k].catch) vt[k].catch(function () {}); }); };
   addEventListener('pagereveal', h); addEventListener('pageswap', h); })();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LX/OPS — 배포 제어</title>
+<title>LX 관리자 대시보드 — 배포 제어</title>
 <link rel="stylesheet" href="../proto/fonts-system.css">
 <link rel="stylesheet" href="../assets/css/v2/tokens-v2.css">
 <link rel="stylesheet" href="../assets/css/v2/ops-grid.css">
@@ -16,7 +16,7 @@
 <body data-stage="ops" data-page="deploys">
 <!-- 첫 페인트 골격(F2-C 3차): 모듈이 데이터를 받기 전에도 레일·마스트·판 머리가 선다(화면 이동 시 검정 판 0).
      직전 방문 스냅샷이 있으면 그 화면으로 덮고('직전 화면 hh:mm:ss · 수신 중' 꼬리표), 실데이터가 서면 boot.js unveil() 이 걷는다. -->
-<div class="og-shell og-skel" id="ogSkel" aria-hidden="true" inert><aside class="og-rail"><a class="og-mark" href="./index.html">LX<b>/</b>OPS</a><nav class="og-nav"><a href="./index.html" data-page="index"><svg aria-hidden="true"><use href="../assets/icons.svg#i-map"/></svg>운영 현황</a><a href="./infra.html" data-page="infra"><svg aria-hidden="true"><use href="../assets/icons.svg#i-run"/></svg>인프라 관제</a><a href="./tenants.html" data-page="tenants"><svg aria-hidden="true"><use href="../assets/icons.svg#i-user"/></svg>기관·할당</a><a href="./deploys.html" data-page="deploys" aria-current="page"><svg aria-hidden="true"><use href="../assets/icons.svg#i-upload"/></svg>배포 제어</a><hr><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="../assets/icons.svg#i-card"/></svg>카드 발행</a><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="../assets/icons.svg#i-data"/></svg>데이터 관리</a><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="../assets/icons.svg#i-settings"/></svg>서비스 관리</a><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="../assets/icons.svg#i-user"/></svg>MY</a><hr><a data-ext="" data-page="xi"><svg aria-hidden="true"><use href="../assets/icons.svg#i-map"/></svg>XI맵</a><a data-ext="" data-page="global"><svg aria-hidden="true"><use href="../assets/icons.svg#i-map"/></svg>Global</a></nav></aside><header class="og-mast"><h1>배포 제어</h1><span class="og-crumb">단계 배포 · 롤백 · 이식 · 모듈 · 모델</span><span class="og-spacer"></span><span class="og-src" data-kind="gateway"><i></i><span class="og-src-t">연결 중 · 게이트웨이</span></span><span class="og-clock" id="skClock"></span></header><main class="og-main"><div class="sk-grid" data-page="deploys"><section class="og-panel sk-panel" style="--i:0"><header><h2>배포본</h2><span class="og-sub">기관 × 카드 버전</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section><section class="og-panel sk-panel" style="--i:1"><header><h2>배포 지도</h2><span class="og-sub">배포 AOI · 스냅샷</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section><section class="og-panel sk-panel" style="--i:2"><header><h2>계보</h2><span class="og-sub">카드 → 모델 → 배포 → 작업</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section><section class="og-panel sk-panel" style="--i:3"><header><h2>감사 이력</h2><span class="og-sub">정본 audit</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section></div></main></div>
+<div class="og-shell og-skel" id="ogSkel" aria-hidden="true" inert><aside class="og-rail"><a class="og-mark" href="./index.html">LX<b>/</b>관리자</a><nav class="og-nav"><a href="./index.html" data-page="index"><svg aria-hidden="true"><use href="../assets/icons.svg#i-map"/></svg>운영 현황</a><a href="./infra.html" data-page="infra"><svg aria-hidden="true"><use href="../assets/icons.svg#i-run"/></svg>인프라</a><a href="./tenants.html" data-page="tenants"><svg aria-hidden="true"><use href="../assets/icons.svg#i-user"/></svg>기관·할당</a><a href="./deploys.html" data-page="deploys" aria-current="page"><svg aria-hidden="true"><use href="../assets/icons.svg#i-upload"/></svg>배포 제어</a><hr><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="../assets/icons.svg#i-card"/></svg>서비스 공개</a><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="../assets/icons.svg#i-data"/></svg>데이터 관리</a><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="../assets/icons.svg#i-settings"/></svg>서비스 관리</a><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="../assets/icons.svg#i-user"/></svg>MY</a><hr><a data-ext="" data-page="xi"><svg aria-hidden="true"><use href="../assets/icons.svg#i-map"/></svg>XI맵</a><a data-ext="" data-page="global"><svg aria-hidden="true"><use href="../assets/icons.svg#i-map"/></svg>Global</a></nav></aside><header class="og-mast"><h1>배포 제어</h1><span class="og-crumb">단계 배포 · 롤백 · 다른 지역에 적용 · 모듈 · 모델</span><span class="og-spacer"></span><span class="og-src" data-kind="gateway"><i></i><span class="og-src-t">연결 중 · 게이트웨이</span></span><span class="og-clock" id="skClock"></span></header><main class="og-main"><div class="sk-grid" data-page="deploys"><section class="og-panel sk-panel" style="--i:0"><header><h2>배포본</h2><span class="og-sub">기관 × 카드 버전</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section><section class="og-panel sk-panel" style="--i:1"><header><h2>배포 지도</h2><span class="og-sub">배포 AOI · 스냅샷</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section><section class="og-panel sk-panel" style="--i:2"><header><h2>계보</h2><span class="og-sub">카드 → 모델 → 배포 → 작업</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section><section class="og-panel sk-panel" style="--i:3"><header><h2>감사 이력</h2><span class="og-sub">정본 audit</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section></div></main></div>
 <script>/* 스냅샷 복원 · 시계 · 안전 타이머(모듈 오류 시에도 8 s 뒤 걷힘) */(function(){try{var d=document,b=d.body,sk=d.getElementById("ogSkel"),pg=b.dataset.page;b.classList.add("has-skel");var c=d.getElementById("skClock");if(c)c.textContent=new Date().toLocaleTimeString("ko-KR",{hour12:false,hour:"2-digit",minute:"2-digit",second:"2-digit",timeZone:"Asia/Seoul"});var v=null;try{v=JSON.parse(localStorage.getItem("lxops:snap:"+pg)||"null")}catch(e){}if(v&&v.h&&Date.now()-v.t<1800000&&Math.abs(v.w-innerWidth)<2){sk.innerHTML=v.h;sk.dataset.snap="1";var m=sk.querySelector(".og-main");if(m)m.scrollTop=v.st||0;var tg=d.createElement("span");tg.className="og-snap-tag";tg.textContent="직전 화면 "+v.at+" · 수신 중";var ms=sk.querySelector(".og-mast .og-spacer");if(ms)ms.after(tg);}setTimeout(function(){var s=d.getElementById("ogSkel");if(s){s.remove();b.classList.remove("has-skel");}},8000);}catch(e){}})();</script>
 <script type="module">
 import { gate, ready, get, h, prov, setText, fmt, tag, hhmmss, ymd, SRC, t, write, guardWrite, confirmBox, toast, errText, lineage, regionAoi, STAGE_ORDER, api, auditOf } from './js/boot.js';
@@ -28,9 +28,9 @@ import { connect } from './js/telemetry.js';
 import { createMap, loadLibs, DeployLayer, Globe, globePoints, centroid, inKorea, fitCamera, KOREA, legend, STAGE_COLOR, sized, fitOnResize } from './js/deploy-map.js';
 
 const SNAP = {   // 계약 §4.2 스냅샷 별칭 → 파일(LX_DATA_ROOT 상대) · MVT 레이어
-  'results/namwon/dp-nw-farm-25@2.1': { path: 'vector/pmtiles/namwon-farmland-2025.pmtiles', layer: 'namwon_farmland_2025', label: '2025 드론 · 경작지 판독' },
+  'results/namwon/dp-nw-farm-25@2.1': { path: 'vector/pmtiles/namwon-farmland-2025.pmtiles', layer: 'namwon_farmland_2025', label: '2025 드론 · 경작지 AI 분석' },
   'results/namwon/dp-nw-farm-25@2.0': { path: 'results/namwon-landcover-2023.pmtiles', layer: 'landcover', filter: ['==', ['get', 'cls'], '경작지'], label: '2023 25cm · 경작지(cls 필터)',
-    count: { value: 76215, unit: 'polygons', basis: 'inferred', as_of: '2026-09-24', source: 'results/namwon-landcover-2023.pmtiles (cls=경작지 · P4 manifest)', note: 'P4 2023 25cm × aerial25/best · 검수 전' } },
+    count: { value: 76215, unit: 'polygons', basis: 'inferred', as_of: '2026-09-24', source: 'results/namwon-landcover-2023.pmtiles (cls=경작지 · P4 manifest)', note: 'P4 2023 25cm × aerial25/best · 결과 확인 전' } },
   'results/namwon/dp-nw-change@1.0': { path: 'vector/pmtiles/namwon-change.pmtiles', layer: 'namwon_change', label: 'A04 국산리 변화' },
   'results/gwangju-jeonnam/dp-gj-marine-25@1.2': { path: 'vector/pmtiles/yeosu-marine-2025-aerial.pmtiles', layer: 'yeosu_marine_2025_aerial', label: '여수 2025 항공 · 해양쓰레기' },
 };
@@ -39,7 +39,7 @@ const bboxOf = (g) => { const p = []; const w = (c) => (typeof c[0] === 'number'
 
 const w = await gate();
 if (w) {
-  const frame = mountFrame({ page: 'deploys', title: '배포 제어', crumb: '단계 배포 · 롤백 · 이식 · 모듈 · 모델', user: w });
+  const frame = mountFrame({ page: 'deploys', title: '배포 제어', crumb: '단계 배포 · 롤백 · 다른 지역에 적용 · 모듈 · 모델', user: w });
   const [deploys, cardsJ, tenantsJ, modelsJ] = await Promise.all([get('deploys'), get('registryCards'), get('tenants'), get('registryModels')]);
   let D = deploys?.items || [];
   const cards = cardsJ?.items || []; const tenants = tenantsJ?.items || []; const models = modelsJ?.items || [];
@@ -52,7 +52,7 @@ if (w) {
   // ── 매트릭스
   const mxBody = h('div', {});
   const mxMeta = h('span', { class: 'og-num-s' });
-  G.append(h('section', { class: 'og-panel dp-mx' }, h('header', {}, h('h2', {}, '카드 × 기관'), h('span', { class: 'og-sub' }, '셀 = 단계 색 + 버전 · 빈 셀 = 이식'), h('span', { class: 'og-right' }, mxMeta)), mxBody));
+  G.append(h('section', { class: 'og-panel dp-mx' }, h('header', {}, h('h2', {}, '카드 × 기관'), h('span', { class: 'og-sub' }, '셀 = 단계 색 + 버전 · 빈 셀 = 다른 지역에 적용'), h('span', { class: 'og-right' }, mxMeta)), mxBody));
   const mx = matrix(mxBody, { cards, tenants, onPick: (id) => pick(id), onPort: (cid, tid, src) => portForm(cid, tid, src) });
   const setMxMeta = () => setText(mxMeta, `배포본 ${D.length} · 정식 ${D.filter((d) => d.stage === 'ga').length} · 롤백됨 ${D.filter((d) => d.stage === 'rolled_back').length}`);
   mx.set(D); setMxMeta();
@@ -122,12 +122,12 @@ if (w) {
     const approves = (d.approvals || []).filter((a) => a.decision === 'approve');
     const needApprove = nexts.includes('ga') && approves.length < 1;
     // 머리
-    const head = h('div', { class: 'pn-head' }, h('div', { class: 'pn-meta' }, h('span', { class: 'og-num-s' }, d.id), d.basis === 'history' ? tag('history') : null, d.from_deploy_id ? h('span', { class: 'og-tag' }, '이식 · ' + d.from_deploy_id) : null, d.pinned ? h('span', { class: 'og-tag' }, '버전 고정') : null),
+    const head = h('div', { class: 'pn-head' }, h('div', { class: 'pn-meta' }, h('span', { class: 'og-num-s' }, d.id), d.basis === 'history' ? tag('history') : null, d.from_deploy_id ? h('span', { class: 'og-tag' }, '다른 지역에 적용') : null, d.pinned ? h('span', { class: 'og-tag' }, '버전 고정') : null),
       h('h2', {}, d.name), h('div', { class: 'pn-meta' }, h('span', { class: 'og-lbl' }, (ten?.name?.ko || d.tenant_id) === (d.region_name?.ko || d.region_profile) ? (ten?.name?.ko || d.tenant_id) : `${ten?.name?.ko || d.tenant_id} · ${d.region_name?.ko || d.region_profile}`),
         h('span', { class: 'og-tag', style: { borderColor: STAGE_COLOR[d.stage], color: STAGE_COLOR[d.stage] } }, t('stage.' + d.stage, d.stage)), h('span', { class: 'og-num', 'data-k': 'ver' }, d.version || '버전 없음'),
         d.prev_card_version_id ? h('span', { class: 'og-num-s' }, `직전 ${d.prev_card_version_id.split('@')[1]}`) : null),
       h('div', { class: 'pn-links' }, h('a', { href: CARD(d), target: '_blank', rel: 'noopener', 'data-k': 'to-card', title: '생산 — 카드 버전(ai-card.html · F2-R)' }, '카드 ↗'),
-        h('a', { href: XIURL(d), target: '_blank', rel: 'noopener', 'data-k': 'to-xi', title: '서비스 — XI맵 계보 칩(같은 배포본 · ?deploy=)' }, 'XI맵 ↗'),
+        h('a', { href: XIURL(d), target: '_blank', rel: 'noopener', 'data-k': 'to-xi', title: 'XI맵에서 같은 배포본 보기' }, 'XI맵 ↗'),
         h('a', { href: '/landxi/ops/tenants.html?tenant=' + encodeURIComponent(d.tenant_id), 'data-k': 'to-tenant' }, '기관·할당 ↗')));
     // 단계
     const stages = h('div', { class: 'pn-stages' }, ...STAGE_ORDER.map((s, i) => {
@@ -152,7 +152,7 @@ if (w) {
     const secSnap = h('div', { class: 'pn-sec' }, h('h3', {}, '결과 스냅샷', h('span', { class: 'og-num-s' }, d.snapshot_current || '없음')), snapBox, snapProv);
     // 계보
     const linHost = h('div', {}); curLin = lineageBand(linHost);
-    const secLin = h('div', { class: 'pn-sec' }, h('h3', {}, '계보', h('span', { class: 'og-lbl' }, '/registry/lineage')), linHost);
+    const secLin = h('div', { class: 'pn-sec' }, h('h3', {}, '버전 이력'), linHost);
     // 모듈
     // 카드 modules.ext 는 계약 §4.6 예시가 목록([{id,name,build}])인데 게이트웨이는 {id: bool} 맵으로 준다 → 둘 다 받는다(계약 변경 요청 C-3)
     const rawExt = card?.modules?.ext || [];
@@ -237,10 +237,10 @@ if (w) {
     const name = h('input', { class: 'og-input', name: 'name', value: tid === 'kgz-land' && cid === 'card-change' ? '소쿨룩 시가지 변화 · 2026' : `${ten?.name?.ko || tid} ${card?.name || cid}` });
     const selPool = h('select', { class: 'og-select', name: 'pool' }, h('option', { value: 'cpu' }, 'cpu'), h('option', { value: 'a6000' }, 'a6000'));
     const aoiNote = h('div', { class: 'og-note' }, 'AOI 확인 중…');
-    const go = h('button', { class: 'og-btn is-primary', type: 'button', 'data-k': 'port-go' }, '이식 · POST /deploys'); guardWrite(go);
+    const go = h('button', { class: 'og-btn is-primary', type: 'button', 'data-k': 'port-go' }, '다른 지역에 적용'); guardWrite(go);
     const reason = h('input', { class: 'og-input', name: 'reason', placeholder: '사유(감사 기록)' });
-    pn.replaceChildren(h('div', { class: 'pn-head' }, h('div', { class: 'pn-meta' }, h('span', { class: 'og-tag', 'data-dashed': '' }, '이식'), h('span', { class: 'og-num-s' }, `${cid} × ${tid}`)),
-      h('h2', {}, `${card?.name || cid} → ${ten?.name?.ko || tid}`), h('div', { class: 'og-note' }, '이식 = 같은 카드 버전으로 배포본 하나 더. draft 로 시작하고 결과는 0 — 첫 job 이 돌아야 스냅샷이 생긴다.')),
+    pn.replaceChildren(h('div', { class: 'pn-head' }, h('div', { class: 'pn-meta' }, h('span', { class: 'og-tag', 'data-dashed': '' }, '다른 지역에 적용'), h('span', { class: 'og-num-s' }, `${cid} × ${tid}`)),
+      h('h2', {}, `${card?.name || cid} → ${ten?.name?.ko || tid}`), h('div', { class: 'og-note' }, '같은 카드 버전으로 이 지역에 배포본을 하나 더 만듭니다. 첫 분석이 끝나면 결과가 생깁니다.')),
       h('div', { class: 'pn-sec' }, h('div', { class: 'port-form' }, h('label', {}, '원본 배포본', selFrom), h('label', {}, '지역 프로파일', selReg), h('label', { class: 'full' }, '이름', name), h('label', {}, 'GPU 풀', selPool), h('label', {}, '사유', reason)), aoiNote,
         h('div', { class: 'pn-row' }, go, SRC.writable ? null : h('span', { class: 'og-why' }, SRC.why))));
     let reg = null;
@@ -255,8 +255,8 @@ if (w) {
         const arrive = mx.arrive(r.id);
         if (c && !inKorea(c)) { globe.setPoints(gpts()); globe.focus(c, 1600).then(() => globe.lockPoint(r.id)); } else layer.set(D);
         await arrive; await pick(r.id); loadAudit(r.id, true);
-        toast(`<b>이식</b> · ${r.id} · draft · 결과 0 · 첫 분석 대기`);
-      } catch (e) { toast(`<b>이식 실패</b> · ${errText(e)}`, 'err'); go.disabled = !SRC.writable; }
+        toast(`<b>다른 지역에 적용</b> · 첫 분석 대기`);
+      } catch (e) { toast(`<b>적용 실패</b> · ${errText(e)}`, 'err'); go.disabled = !SRC.writable; }
     });
   }
 

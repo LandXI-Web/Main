@@ -21,7 +21,7 @@ const fieldCheck = prio?.items?.find((i) => i.key === 'A')?.n || null;          
 const lastAt = [emd?.as_of, cards?.as_of, deploys?.as_of].filter(Boolean).sort().at(-1);
 
 /* ── 셸 + 무대 + 지역 + 서랍 + 에이전트 바 ───────────────────── */
-const RAIL = ['반입', '학습', '조립', '검수', '배포', '운영'].map((label, i) => ({ id: 's' + i, label }));
+const RAIL = ['데이터 올리기', '학습', '서비스 만들기', '결과 확인', '배포', '서비스 관리'].map((label, i) => ({ id: 's' + i, label }));
 const S = K.shell({ who, home: 'lx-console', mount: $('frame'), contained: true, rail: { kind: 'steps', items: RAIL, current: 3, done: [0, 1, 2], onPick: (i) => S.go(i) } });
 S.fresh(lastAt);
 const stageEl = document.createElement('div'); S.main.append(stageEl);
@@ -32,7 +32,7 @@ const slot = document.createElement('span'); slot.style.display = 'contents'; sl
 S.mast(slot);
 
 const hud = document.createElement('div'); hud.className = 'g-hud'; stageEl.append(hud);
-K.bignum(hud, fieldCheck, { label: '현장 확인 필요', hud: true });
+K.bignum(hud, null, { label: '현장 확인 필요', hud: true }).set(fieldCheck);   // 이미 불러온 뒤 — 없으면 빈 값
 const onCard = K.card({ map: true, cls: 'g-card-on', body: '<div class="t-label">선택 지역</div><div class="t-sub" id="rgName">전국</div><div class="g-acts"><button class="t-btn" type="button" id="openList">읍면동 목록</button></div>' });
 stageEl.append(onCard);
 
@@ -73,14 +73,14 @@ st2.ready.then(() => {
 /* ── 큰 숫자 · 신뢰 기호 ─────────────────────────────────── */
 const joined = K.joinCards((cards?.items || []).filter((c) => c.scope === 'local'), deploys?.items || []);
 const canMake = joined.filter((j) => j.state !== 'none').length;
-K.bignum($('big'), cards ? env(canMake, '개', 'recorded', 'registry/cards · deploys', '실배포 · 실결과가 있는 카드') : null, { label: '만들 수 있는 업무', unit: '개' });
+K.bignum($('big'), null, { label: '만들 수 있는 업무', unit: '개' }).set(cards ? env(canMake, '개', 'recorded', 'registry/cards · deploys', '실배포 · 실결과가 있는 카드') : null);
 const sigRow = [[emd?.parcels, '필지'], [fieldCheck, '현장 확인 필요']];
 const demoEnv = (jobs?.items || []).map((j) => j.counts_env).find((e) => isEnvelope(e) && (e.basis === 'demo' || e.basis === 'history'));
 if (demoEnv) sigRow.push([demoEnv, '분석 결과']);
 $('sigs').innerHTML = sigRow.filter(([e]) => isEnvelope(e)).map(([e, l]) => `<span><span class="g-n">${K.numHtml(e)}</span><i class="t-label">${K.esc(l)}</i></span>`).join('');
 
 /* ── 스텝퍼 ─────────────────────────────────────────────── */
-K.stepper($('steps'), [{ t: '대장 반입' }, { t: '카드 배포본' }, { t: '검수' }, { t: '기관 포털' }], { current: 2 });
+K.stepper($('steps'), [{ t: '데이터 올리기' }, { t: '배포' }, { t: '결과 확인' }, { t: '기관 포털' }], { current: 2 });
 const sv = K.stepper($('stepsV'), RAIL.map((r) => ({ t: r.label })), { current: 3, vertical: true, onPick: (i) => sv.go(i) });
 
 /* ── 서비스 카드(크롭은 결과 크롭 폴더 — 예시 데이터 파일) ─────── */

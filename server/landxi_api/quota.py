@@ -1,5 +1,5 @@
 """테넌트 · 쿼터 · 사용량(F1-CONTRACT §4.8). 한도는 config/quotas.yaml → quotas 표([추정 기반 초기값]).
-사용량은 실측: usage_events 합(gpu_s · area_km2 · egress_gb) · du(60s 캐시) · jobs(동시) · Redis(vworld 일일 호출).
+사용량은 실측: usage_events 합(gpu_s · area_km2 · egress_gb — 작업 귀속 기관 기준) · 기관 저장 공간(결과 파일 + DB 행 · 60s 캐시) · jobs(동시) · Redis(vworld 일일 호출).
 """
 from __future__ import annotations
 
@@ -48,6 +48,59 @@ async def du_gb(rel: str) -> float:
     return gb
 
 
+# ── 기관 저장 공간(fix-admin-usage) ────────────────────────────────────────────
+# 기관에 속한 것 = ① results/{기관} 폴더 ② 그 기관 몫 작업(workers.metering.OWNER_EXPR — LX 가 대신 돌린 작업 포함)의 결과 폴더·파일
+# ③ 그 기관 배포본 스냅샷이 가리키는 결과 세트 파일(config/sets.yaml aliases → sets) ④ DB 에 담긴 그 기관 행(올린 대장 · 실태조사 결과 · 탐지 결과 · 위성 지수 결과).
+_st_cache: dict[str, tuple[float, dict]] = {}
+
+
+def _set_file(set_id: str) -> str | None:
+    s = config.load_yaml("sets") or {}
+    sid = (s.get("aliases") or {}).get(set_id, set_id)
+    return (s.get("sets") or {}).get(sid)
+
+
+async def storage_of(tenant: str) -> dict:
+    """→ {gb, files_gb, db_gb, paths} · 60s 캐시(du 캐시와 같은 주기)."""
+    c = _st_cache.get(tenant)
+    if c and time.time() - c[0] < 60:
+        return c[1]
+    from workers.metering import OWNER_EXPR
+    rels: set[str] = {f"results/{tenant}"}
+    async with db(realm="lx") as conn:
+        jobs = await conn.fetch(f"SELECT j.id, j.tenant_id, j.result_set FROM jobs j WHERE NOT j.demo AND ({OWNER_EXPR}) = $1", tenant)
+        snaps = await conn.fetch("SELECT snapshot_current, snapshot_prev FROM deploys WHERE tenant_id=$1 AND NOT coalesce(test, false)", tenant)
+        pub = await conn.fetch("SELECT path FROM published_sets WHERE job_id = ANY($1::text[])", [j["id"] for j in jobs])
+        db_b = await conn.fetchval(
+            "SELECT (SELECT coalesce(sum(pg_column_size(r.*)),0) FROM registry_snapshots r WHERE r.tenant_id=$1)"
+            " + (SELECT coalesce(sum(pg_column_size(f.*)),0) FROM survey_findings f WHERE f.tenant_id=$1)"
+            " + (SELECT coalesce(sum(pg_column_size(d.*)),0) FROM detections d WHERE d.job_id = ANY($2::text[]))"
+            " + (SELECT coalesce(sum(pg_column_size(x.*)),0) FROM index_results x WHERE x.job_id = ANY($2::text[]))",
+            tenant, [j["id"] for j in jobs])
+    for j in jobs:
+        base = (j["result_set"] or f"results/{j['tenant_id']}/{j['id']}").rstrip("/")
+        rels |= {base, base + ".geojson", base + ".pmtiles"}
+    for r in pub:
+        if r["path"]:
+            rels.add(r["path"])
+    for r in snaps:
+        for sid in (r["snapshot_current"], r["snapshot_prev"]):
+            f = _set_file(sid) if sid else None
+            if f:
+                rels.add(f)
+    files_gb = 0.0
+    for rel in sorted(rels):
+        p = config.DATA_ROOT / rel
+        if p.is_file():
+            files_gb += round(p.stat().st_size / 1e9, 6)
+        elif p.is_dir():
+            files_gb += await du_gb(rel)
+    out = {"gb": round(files_gb + float(db_b or 0) / 1e9, 3), "files_gb": round(files_gb, 3), "db_gb": round(float(db_b or 0) / 1e9, 3),
+           "n_paths": len(rels), "n_jobs": len(jobs)}
+    _st_cache[tenant] = (time.time(), out)
+    return out
+
+
 def _month_start() -> dt.datetime:
     n = dt.datetime.now(KST)
     return n.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -58,15 +111,36 @@ async def used(tenant: str, dim: str) -> float:
         async with db(realm="lx") as conn:
             return float(await conn.fetchval("SELECT count(*) FROM jobs WHERE tenant_id=$1 AND state IN ('queued','running')", tenant))
     if dim == "storage_gb":
-        return await du_gb("results" if tenant == "lx" else f"results/{tenant}")
+        if tenant == "lx":
+            return await du_gb("results")
+        return (await storage_of(tenant))["gb"]
     if dim == "vworld_calls_day":
         r = await redis()
         return float(await r.get(f"vworld:calls:{tenant}:{dt.datetime.now(KST).date().isoformat()}") or 0)
     base = {"gpu_s_month": "gpu_s", "area_km2_month": "area_km2", "egress_gb_month": "egress_gb"}[dim]
+    return (await _month_sums()).get((tenant, base), 0.0)
+
+
+_ms_cache: tuple[float, str, dict] | None = None
+
+
+async def _month_sums() -> dict:
+    """이번 달 usage_events 합(기관 × dim) — 작업 귀속(workers.metering.OWNER_EXPR)으로 센다(10s 캐시).
+    metering 은 새 행을 이미 기관 id 로 쓰고 과거 행은 백필로 옮겼지만, 옛 워커 프로세스가 아직 'lx' 로 쓴 행도 같은 규칙으로 읽어
+    화면 값이 워커 재기동 시점에 흔들리지 않게 한다. 작업 없는 행(job_id 없음)은 기록된 기관 그대로. lx-demo 는 영업 계량이라 그대로."""
+    global _ms_cache
+    ms = _month_start()
+    if _ms_cache and time.time() - _ms_cache[0] < 10 and _ms_cache[1] == ms.isoformat():
+        return _ms_cache[2]
+    from workers.metering import OWNER_EXPR
     async with db(realm="lx") as conn:
-        v = await conn.fetchval("SELECT coalesce(sum(amount),0) FROM usage_events WHERE tenant_id=$1 AND dim=$2 AND at >= $3",
-                                tenant, base, _month_start())
-    return float(v)
+        rows = await conn.fetch(
+            "SELECT coalesce(CASE WHEN u.tenant_id = 'lx-demo' THEN 'lx-demo' ELSE o.owner END, u.tenant_id) AS t, u.dim, sum(u.amount) AS v "
+            f"FROM usage_events u LEFT JOIN (SELECT j.id, {OWNER_EXPR} AS owner FROM jobs j) o ON o.id = u.job_id "
+            "WHERE u.at >= $1 AND u.dim IN ('gpu_s', 'area_km2', 'egress_gb') GROUP BY 1, 2", ms)
+    out = {(r["t"], r["dim"]): float(r["v"] or 0) for r in rows}
+    _ms_cache = (time.time(), ms.isoformat(), out)
+    return out
 
 
 async def remaining(tenant: str, dim: str) -> dict:
@@ -81,7 +155,7 @@ async def remaining(tenant: str, dim: str) -> dict:
 
 UNIT = {"storage_gb": "GB", "gpu_s_month": "gpu_s", "area_km2_month": "km2", "concurrent_jobs": "count", "egress_gb_month": "GB",
         "vworld_calls_day": "count"}
-SRC = {"storage_gb": "du results/{t} (60s 캐시)", "gpu_s_month": "usage_events(gpu_s · 이번 달)", "area_km2_month": "usage_events(area_km2 · 이번 달)",
+SRC = {"storage_gb": "결과 폴더·파일(기관 몫 작업 · 배포본 결과 세트) + 기관 DB 행(대장 · 실태조사 · 탐지) · 60s 캐시", "gpu_s_month": "usage_events(gpu_s · 이번 달 · 작업 귀속 기관)", "area_km2_month": "usage_events(area_km2 · 이번 달 · 작업 귀속 기관)",
        "concurrent_jobs": "jobs(state queued|running · 지금)", "egress_gb_month": "usage_events(egress_gb)", "vworld_calls_day": "Redis vworld:calls(오늘)"}
 
 
@@ -93,7 +167,12 @@ async def usage_of(tenant: str) -> dict:
         if d == "egress_gb_month":
             note = "타일 전송량 계량은 2차(nginx 로그) — 지금은 0 이 아니라 '미계량'"
         e = env(round(q["used"], 3) if d != "egress_gb_month" else None, UNIT[d], "measured", SRC[d].replace("{t}", tenant), note)
-        dims[d] = {"used": e, "soft": q["soft"], "hard": q["hard"], "policy": q["policy"], "note": q["note"] or "[추정 기반 초기값]"}
+        dims[d] = {"used": e, "soft": q["soft"], "hard": q["hard"], "policy": q["policy"], "note": q["note"] or "[추정 기반 초기값]",
+                   "limit_set": q["hard"] is not None}   # 한도 미설정이면 화면은 % 대신 실사용량만(0% 를 지어내지 않는다)
+        if d == "storage_gb" and tenant != "lx":
+            st = await storage_of(tenant)
+            dims[d]["breakdown"] = {"files_gb": env(st["files_gb"], "GB", "measured", "결과 폴더·파일 크기(기관 몫 작업 · 배포본 결과 세트)"),
+                                    "db_gb": env(st["db_gb"], "GB", "measured", "기관 DB 행 크기(대장 · 실태조사 · 탐지 · 위성 지수)")}
     # 선형 예측(gpu_s) — [추정]
     g = dims["gpu_s_month"]
     now = dt.datetime.now(KST)

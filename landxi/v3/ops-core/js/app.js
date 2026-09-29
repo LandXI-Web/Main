@@ -1,7 +1,7 @@
 /* ops-core — 관리자 집: 현황(밝은 배포 지도 + 결재 대기 큰 숫자 + 할 일) + 결재함.
    관문(K2) → 셸(K1 · 메뉴 5) → 무대(K3 ops) · 카드(K5) · 큰 숫자(K6) · 표(K12) · 토스트(K13) · 개발자 서랍(K14).
    '지금 내가 승인·조치할 것이 있는가?' 한 질문에만 답한다. */
-import { gate, shell, bignum, table, drawer, closeAll, toast, devDrawer, devlog, empty } from '../../kit/index.js';
+import { gate, shell, bignum, table, drawer, closeAll, toast, devDrawer, devlog, empty, t } from '../../kit/index.js';
 import { h, esc, ymd } from '../../kit/util.js';
 import { sse } from '../../../shared/api-v1.js';
 import { D, loadAll, loadFast, pending, pendingEnv, openAlerts, power, nearLimits, decide, hasS9 } from './data.js';
@@ -16,7 +16,7 @@ const RAIL = [
   { id: 'deploys', label: '배포', icon: 'deploy', href: INFRA + '?view=deploys' },
   { id: 'approvals', label: '결재', icon: 'inbox' },
 ];
-const S = shell({ who, home: 'ops-core', rail: { kind: 'menu', items: RAIL, current: 0, onPick: (i, it) => { if (!it.href) location.hash = it.id === 'approvals' ? '#/approvals' : '#/'; } } });
+const S = shell({ who, home: 'ops-core', title: 'LX 관리자 대시보드', rail: { kind: 'menu', items: RAIL, current: 0, onPick: (i, it) => { if (!it.href) location.hash = it.id === 'approvals' ? '#/approvals' : '#/'; } } });
 // 역할 칩 중복 방지(키트 요청 대기 중 로컬 폴백): 이름이 역할 문구와 같으면 역할 문구 한 번만 → 'LX 관리자'
 { const r = document.querySelector('.k-role'), b = r?.querySelector('b');
   if (b && r.textContent.slice(b.textContent.length).trim() === b.textContent.trim()) b.remove(); }
@@ -41,6 +41,11 @@ over.append(stageEl, seg, legend, card);
 
 const M = mountMap(stageEl);
 const B = bignum(big, null, { label: '결재 대기', unit: '건' });
+/* 로딩 중에는 '불러오는 중'(K9 기본 문구) — 응답이 오기 전 빈 상태('아직 결과가 없습니다')가 비치지 않게.
+   결재 대기는 응답이 실제로 오면 0 이어도 숫자로 보인다(빈 상태 문구는 결재함 표 쪽 '결재할 것이 없습니다'). */
+const bigNone = big.querySelector('.k-big-none');
+if (bigNone) bigNone.textContent = t('empty.loading');
+card.dataset.loading = '1';
 seg.addEventListener('click', (e) => {
   const b = e.target.closest('button'); if (!b) return;
   seg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
@@ -50,6 +55,8 @@ seg.addEventListener('click', (e) => {
 
 function drawOverview() {
   const list = pending();
+  if (!D.ok) { B.set(null); return; }            // 아직 응답 없음(또는 실패 뒤 재시도 대기) = 불러오는 중 그대로
+  delete card.dataset.loading;
   B.set(pendingEnv(list));
   card.dataset.zero = list.length ? '' : '1';
   const rows = [];
@@ -72,6 +79,8 @@ let T = null, openKey = null, sheet = null;
 
 function drawInbox() {
   const list = pending();
+  if (!D.ok) { none.hidden = false; tbl.hidden = true; if (none.dataset.kind !== 'loading') empty(none, { kind: 'loading' }); return; }
+  if (none.dataset.kind === 'loading') none.innerHTML = '';
   const rows = list.map((x) => ({ ...x, kindKo: x.kindKo, target: x.target, requester: x.requester, day: ymd(x.at) || '—' }));
   none.hidden = !!rows.length; tbl.hidden = !rows.length;
   if (!rows.length) { if (!none.firstChild) empty(none, { kind: 'first', title: '결재할 것이 없습니다', char: 'satellite' }); }
@@ -122,7 +131,7 @@ function openSheet(item) {
 function route() {
   const v = /^#\/approvals/.test(location.hash) ? 'approvals' : 'overview';
   document.body.dataset.view = v;
-  document.title = v === 'approvals' ? 'Land-XI 관제 · 결재' : 'Land-XI 관제';
+  document.title = v === 'approvals' ? 'Land-XI · LX 관리자 대시보드 · 결재' : 'Land-XI · LX 관리자 대시보드';
   S.go(v === 'approvals' ? 4 : 0); badge();
   if (v === 'approvals') drawInbox();
   else { closeAll(); openKey = null; drawOverview(); M.map.resize(); }

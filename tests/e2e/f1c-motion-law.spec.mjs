@@ -85,19 +85,19 @@ for (const pg of PAGES) {
   });
 }
 
-test('off 모드: 다섯 화면 콘솔 오류 0 · 시연 표기 · 쓰기 버튼 disabled + 이유', async ({ page }) => {
+test('off 모드: 다섯 화면 콘솔 오류 0 · 예시 표기 · 쓰기 버튼 disabled + 이유', async ({ page }) => {
   const errs = []; page.on('console', (m) => m.type() === 'error' && errs.push(m.text())); page.on('pageerror', (e) => errs.push(e.message));
   await offMode(page);
   await page.goto(OPS + '/landxi/ops/login.html?stay');
   await page.waitForFunction(() => document.documentElement.dataset.lx === 'ready');
-  await expect(page.locator('#sumText .og-tag')).toHaveText('시연');
+  await expect(page.locator('#sumText .og-tag')).toHaveText('예시');
   for (const pg of PAGES) {
     await page.goto(`${OPS}/landxi/ops/${pg}.html`);
     await page.waitForFunction(() => document.documentElement.dataset.lx === 'ready');
     await expect(page.locator('.og-src')).toHaveAttribute('data-kind', 'off');
-    await expect(page.locator('.og-src')).toContainText('시연');
+    await expect(page.locator('.og-src')).toContainText('예시');
     const writes = await page.evaluate(() => [...document.querySelectorAll('button[data-why], button[aria-disabled="true"]')].map((b) => [b.disabled, b.title]));
-    if (pg !== 'index') { expect(writes.length).toBeGreaterThan(0); for (const [dis, why] of writes) { expect(dis).toBe(true); expect(why).toContain('서버 없음'); } }
+    if (pg !== 'index') { expect(writes.length).toBeGreaterThan(0); for (const [dis, why] of writes) { expect(dis).toBe(true); expect(why).toContain('서버 연결 없음'); } }
   }
   await page.goto(OPS + '/landxi/ops/infra.html'); await page.waitForFunction(() => document.documentElement.dataset.lx === 'ready');
   await page.waitForTimeout(4500);

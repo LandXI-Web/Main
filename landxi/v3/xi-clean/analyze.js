@@ -1,12 +1,13 @@
-/* analyze.js — XI맵 분석(직원 · 영업): 프레임 → 견적 카드 → 실행 → 칩 단위로 판독이 지도에 차오름.
-   · 프레임 = 지역 전역(시군구 경계 ∩ 영상 범위) 또는 지도 위에 끌어서 그린 사각형
-   · 견적  = POST /jobs/quote(서버가 칩 수 · 예상 시간 · 전력 예산을 계산) — 넓은 범위는 해상도를 낮춰 다시 견적(S-8 서버 계획 전 어댑터)
-   · 실행  = POST /jobs{kind:infer} → SSE /events/jobs/{id} : shard.done 마다 그 칸이 밝아지고 판독 도형이 도착(1250)
+/* analyze.js — XI맵 분석(직원 · 영업): 읍면동(또는 그린 범위) → 견적 카드 → 실행 → 칩 단위로 AI 분석 결과가 지도에 차오름.
+   · 프레임 = 지도에서 누른 읍면동(경계 ∩ 영상 범위) 또는 지도 위에 끌어서 그린 사각형 — 시군 전역은 실시간으로 받지 않는다(서버 범위 천장)
+   · 견적  = POST /jobs/quote{options.live} — 서버가 범위 상한 · 해상도(칩 수 상한) · 전력 예산을 정하고 GPU 워커에 모델을 미리 올린다
+   · 실행  = POST /jobs{kind:infer} → 게이트웨이 작업 대기열 → SSE /events/jobs/{id} : shard.done 마다 그 칸이 밝아지고 결과 도형이 들어온다(1250)
+   · 전체 범위 기록 보기 = 이미 끝난 시군 전역 작업의 기록을 다시 흘려 보는 보조 동작(실시간 아님 · 속도 문구 없음)
    · 영업  = demo:true(서버 강제) → 꼬리표 '예시' · 결과는 남지 않음
-   숫자·문구는 사용자 말만. 칩 수 · 작업 id · 모델 id 는 개발자 서랍(devlog)으로. */
+   숫자·문구는 사용자 말만. 칩 수 · 작업 id · 모델 id · 걸린 시간은 개발자 서랍(devlog)으로. */
 import { api, API } from '../kit/util.js';
 import { sse } from '../../shared/api-v1.js';
-import { h, esc, sig, devlog, toast, bboxOf } from '../kit/index.js';
+import { h, esc, sig, devlog, toast, bboxOf, empty } from '../kit/index.js';
 
 const EMPTY = { type: 'FeatureCollection', features: [] };
 const TEAL = '#0FA9A0';
@@ -74,7 +75,7 @@ function pickModel(models, img) {
 }
 
 /* ── 분석 도구 ── */
-export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone }) {
+export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick }) {
   const map = stage.map;
   let models = null, S = null, draw = null;
   const tenant = who?.me?.realm === 'tenant';
@@ -121,7 +122,13 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone }) {
       const a = map.project(start), z = map.project(e.lngLat);
       const b = [Math.min(start.lng, e.lngLat.lng), Math.min(start.lat, e.lngLat.lat), Math.max(start.lng, e.lngLat.lng), Math.max(start.lat, e.lngLat.lat)];
       start = null;
-      if (Math.abs(a.x - z.x) < 14 || Math.abs(a.y - z.y) < 14) { if (S?.geom) showFrame(S.geom); return; }
+      if (Math.abs(a.x - z.x) < 14 || Math.abs(a.y - z.y) < 14) {
+        // 누르기 = 그 자리의 읍면동을 고른다(경계 층이 있는 지역) — 없으면 이전 프레임 그대로
+        const p = pick ? pick(e.lngLat, e.point) : null;
+        if (p && typeof p.then === 'function') p.then((r) => { if (r?.geometry && !S?.running) frame(r.geometry, { label: r.label }); else if (S?.geom) showFrame(S.geom); });
+        else if (S?.geom) showFrame(S.geom);
+        return;
+      }
       frame(rectPoly(b), { label: null });
     };
     map.on('mousedown', md); map.on('mousemove', mm); map.on('mouseup', mu);
@@ -136,7 +143,7 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone }) {
     const img = pickImagery(catalog.items || [], fb, { tenant });
     S = { geom, label, img, q: null, running: false };
     showFrame(geom);
-    if (!img) { cardMsg('이 범위에는 분석할 영상이 없습니다'); return; }
+    if (!img) { cardNoImagery(); return; }
     // 영상 범위 밖은 자른다(서버도 자르지만 면적 · 화면 프레임을 맞춘다)
     const g = clipToBox(geom, img.bounds) || geom;
     S.geom = g; showFrame(g);
@@ -146,28 +153,17 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone }) {
     S.model = model;
     cardBusy();
     const area = areaKm2(g);
-    // 영상 해상도를 모델이 배운 해상도에 맞춘다(드론 1.4cm → 차량 모델 2cm 등) · 넓은 범위는 한 단계씩 더 낮춰 칩 수를 누른다
-    const fit = img.gsd_m / (model.gsd_trained_m || img.gsd_m);
-    const up0 = fit < 0.9 ? Math.max(0.25, Math.round(fit * 100) / 100) : 1;
-    // 칩 수를 먼저 가늠해(격자 1024 · 겹침 128) 견적 한 번으로 — 넓으면 한 단계씩 낮춘 해상도에서 시작
-    const est = (u) => (area * 1e6) / ((896 * img.gsd_m / u) ** 2);
-    const up1 = [up0, 0.5, 0.25].filter((u) => u <= up0).find((u) => est(u) <= 1600) ?? 0.25;
-    const opts = { chip: 1024, overlap: 0.125, conf: 0.25, max_km2: Math.ceil(area * 1.05 + 1), ...(up1 < 1 ? { upsample: up1 } : {}) };
+    // 실시간 분석(live): 범위 천장 · 해상도(칩 수 상한)는 서버가 정한다 — 화면은 범위만 보낸다
+    const opts = { chip: 1024, overlap: 0.125, conf: 0.25, live: true, max_km2: Math.ceil(area * 1.05 + 1) };
     const body = { kind: 'infer', model_id: model.id, imagery_id: img.id, aoi: g, options: opts, demo };
     let q;
-    try {
-      q = await api('/jobs/quote', { method: 'POST', body });
-      // 넓은 범위: 칩이 많으면 해상도를 한 단계씩 낮춰 다시 견적 — S-8 서버 계획(shard 상한 · too_large)이 오면 서버가 정한다
-      for (const up of [0.5, 0.25]) {
-        if (q.shards <= 1600) break;
-        if (up >= (body.options.upsample || 1)) continue;
-        body.options = { ...opts, upsample: up };
-        q = await api('/jobs/quote', { method: 'POST', body });
-      }
-    } catch (e) { devlog('quote', `${e.code || ''} ${e.message || ''}`); cardMsg('지금은 견적을 낼 수 없습니다'); return; }
+    try { q = await api('/jobs/quote', { method: 'POST', body }); }
+    catch (e) { devlog('quote', `${e.code || ''} ${e.message || ''}`); cardMsg('지금은 견적을 낼 수 없습니다'); return; }
+    if (S?.geom !== g) return;                        // 그 사이 다른 읍면동을 골랐다
     S.body = body; S.q = q;
-    S.eta = await measuredEta(img.id, body.options.upsample || 1, q);
-    devlog('quote', { model: model.id, imagery: img.id, shards: q.shards, upsample: body.options.upsample || 1, eta: q.eta_s?.value, reasons: q.reasons, power: q.power_budget?.note });
+    if (q.aoi) { S.geom = q.aoi; showFrame(q.aoi); }  // 서버가 녹여 합친 한 면(벡터 타일 조각의 이음새 없이)
+    S.eta = await measuredEta(img.id, q.upsample || 1, q);
+    devlog('quote', { model: model.id, imagery: img.id, shards: q.shards, upsample: q.upsample || 1, eta: q.eta_s?.value, reasons: q.reasons, power: q.power_budget?.note });
     cardQuote();
   }
 
@@ -186,10 +182,38 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone }) {
     } catch { /* 기록 없음 */ }
     return q.eta_s;
   }
-  function cardMsg(text) {
+  function cardMsg(text, { record = true } = {}) {
     card.innerHTML = '';
     card.append(h('header.xa-h', {}, h('h3', { text: '이 범위 분석' }), xBtn()), h('p.xa-msg', { text }));
+    if (record) recordBtn();
     card.hidden = false;
+  }
+  /** 영상이 없는 범위 — 실행 없이 K9 '영상 등록 필요'(재생으로 대신하지 않는다) */
+  function cardNoImagery() {
+    card.innerHTML = '';
+    const box = h('div.xa-empty');
+    card.append(h('header.xa-h', {}, h('h3', { text: '이 범위 분석' }), xBtn()), box);
+    empty(box, { kind: 'ingest', compact: true });
+    card.hidden = false;
+  }
+  /* 전체 범위 기록 보기 — 이 지역 시군 전역을 이미 끝낸 분석 기록이 있으면 보조 동작 하나(없으면 버튼 없음) */
+  let region = null, record = null;
+  async function findRecord(r) {
+    if (!r?.bbox) return null;
+    try {
+      const j = await api('/jobs?' + new URLSearchParams({ state: 'done', kind: 'infer', limit: '200' }));
+      const rb = r.bbox, rA = boxArea(rb) || 1;
+      const hit = (j.items || []).filter((x) => x.aoi && !x.demo).find((x) => {
+        const b = bboxOf(x.aoi), cx = (b[0] + b[2]) / 2, cy = (b[1] + b[3]) / 2;
+        return cx >= rb[0] && cx <= rb[2] && cy >= rb[1] && cy <= rb[3] && boxArea(inter(b, rb)) / rA >= 0.5;
+      });
+      return hit ? hit.id : null;
+    } catch { return null; }
+  }
+  function recordBtn() {
+    if (!record || demo) return;
+    const id = record;
+    card.append(h('button.t-btn.t-btn--text.xa-rec', { type: 'button', text: '전체 범위 기록 보기', onclick: () => { if (!S?.running) replayJob(id, { label: region?.name, bbox: region?.bbox }); } }));
   }
   function cardBusy() {
     card.innerHTML = '';
@@ -208,7 +232,7 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone }) {
     card.innerHTML = '';
     const eta = S.eta?.value;
     const km2 = q.area_km2?.value ?? areaKm2(S.geom);
-    const scope = label ? `${label} 전역` : `그린 범위 · ${km2 < 1 ? `${nf(Math.round(km2 * 1000) / 10)}ha` : `${nf(Math.round(km2 * 10) / 10)}㎢`}`;
+    const scope = label || `그린 범위 · ${km2 < 1 ? `${nf(Math.round(km2 * 1000) / 10)}ha` : `${nf(Math.round(km2 * 10) / 10)}㎢`}`;
     const why = !q.allowed ? reasonText(q.reasons) : '';
     card.append(...[
       h('header.xa-h', {}, h('h3', { text: '이 범위 분석' }), demo ? h('span.t-sig.xa-ex', { 'data-sig': 'ex', 'aria-label': '예시' }) : null, xBtn()),
@@ -218,42 +242,42 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone }) {
       h('div.xa-act', {},
         h('button.t-btn', { type: 'button', text: '실행', disabled: !q.allowed || undefined, onclick: run }),
         h('button.t-btn.t-btn--2', { type: 'button', text: '취소', onclick: cancel }))].filter(Boolean));
+    if (!q.allowed) recordBtn();
     card.hidden = false;
   }
-  const reasonText = (rs = []) => rs.includes('aoi_too_large') || rs.includes('too_large') ? '범위가 너무 넓습니다. 조금 좁혀 그려 주세요'
-    : rs.includes('power_budget') ? '다른 분석이 끝나면 바로 시작할 수 있습니다'
+  const reasonText = (rs = []) => rs.includes('aoi_too_large') || rs.includes('too_large') ? '범위가 너무 넓습니다. 읍면동 하나를 골라 주세요'
+    : rs.includes('power_budget') ? '잠시 뒤 시작합니다'
     : rs.includes('aoi_outside_footprint') ? '이 범위에는 분석할 영상이 없습니다'
     : rs.includes('demo_required') || rs.includes('imagery_forbidden') ? '이 계정으로는 이 영상을 분석할 수 없습니다'
     : rs.includes('quota_exceeded') ? '이번 달 분석 한도를 넘었습니다'
     : rs.includes('model_input_mismatch') ? '이 영상에 맞는 모델이 아직 없습니다' : '지금은 실행할 수 없습니다';
 
-  /** 진행 카드 — 첫 칸이 끝나기 전(워커가 영상을 여는 동안)은 '영상 준비 중' + 움직이는 막대, 첫 칸부터 '분석 중 {p}%'.
-      replay = 끝난 작업 다시 보기: 범위 · 영상 두 줄과 압축 한 줄('실제 18분 · 12초로 압축'), 취소 없음 */
+  /** 진행 카드 — 첫 칸이 끝나기 전(대기열 · 워커가 영상을 여는 동안)은 '잠시 뒤 시작합니다' + 움직이는 막대, 첫 칸부터 '분석 중 {p}%'.
+      replay = 전체 범위 기록 보기: 범위 · 영상 두 줄 + 진행 {p}%, 취소 없음(속도·배속 문구 없음) */
   function cardRun({ replay = null } = {}) {
     card.innerHTML = '';
     const pct = h('b.num', { text: '0' }), bar = h('i', { style: { width: '0%' } });
-    const line = h('p.xa-run', { text: replay ? '분석 중 ' : '영상 준비 중' });
+    const line = h('p.xa-run', { text: replay ? '' : '잠시 뒤 시작합니다' });
     if (replay) line.append(pct, '%');
     const prog = h('div.t-progress.xa-bar', { role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': 100, class: replay ? '' : 'is-prep' }, bar);
     card.append(...[
-      h('header.xa-h', {}, h('h3', { text: '이 범위 분석' }), demo ? h('span.t-sig.xa-ex', { 'data-sig': 'ex', 'aria-label': '예시' }) : null, xBtn()),
+      h('header.xa-h', {}, h('h3', { text: replay ? '전체 범위 기록 보기' : '이 범위 분석' }), demo ? h('span.t-sig.xa-ex', { 'data-sig': 'ex', 'aria-label': '예시' }) : null, xBtn()),
       replay?.scope ? h('dl.xa-dl', {}, h('div', {}, h('dt', { text: '범위' }), h('dd', { text: replay.scope })), replay.img ? h('div', {}, h('dt', { text: '영상' }), h('dd', { text: replay.img })) : null) : null,
       line, prog,
       h('p.xa-got', { hidden: true }),
-      replay?.pace ? h('p.xa-pace', { text: replay.pace }) : null,
       replay ? null : h('div.xa-act', {}, h('button.t-btn.t-btn--2', { type: 'button', text: '취소', onclick: cancel }))].filter(Boolean));
     card.hidden = false;
     let prep = !replay;
     return { pct, bar, got: card.querySelector('.xa-got'),
       live() { if (!prep) return; prep = false; prog.classList.remove('is-prep'); line.textContent = '분석 중 '; line.append(pct, '%'); } };
   }
-  function cardDone(n, envN) {
+  function cardDone(n, envN, { replay = false } = {}) {
     card.innerHTML = '';
+    const scope = S?.scopeText || S?.label || null;
     card.append(...[
-      h('header.xa-h', {}, h('h3', { text: '이 범위 분석' }), demo ? h('span.t-sig.xa-ex', { 'data-sig': 'ex', 'aria-label': '예시' }) : null, xBtn()),
-      S?.scopeText ? h('dl.xa-dl', {}, h('div', {}, h('dt', { text: '범위' }), h('dd', { text: S.scopeText }))) : null,
-      h('p.xa-done', { html: `탐지 <b class="num">${nf(n)}</b>건${envN ? sig(envN) : ''}` }),
-      S?.paceText ? h('p.xa-pace', { text: S.paceText }) : null].filter(Boolean));
+      h('header.xa-h', {}, h('h3', { text: replay && S?.record ? '전체 범위 기록 보기' : '이 범위 분석' }), demo ? h('span.t-sig.xa-ex', { 'data-sig': 'ex', 'aria-label': '예시' }) : null, xBtn()),
+      scope ? h('dl.xa-dl', {}, h('div', {}, h('dt', { text: '범위' }), h('dd', { text: scope }))) : null,
+      h('p.xa-done', { html: `탐지 <b class="num">${nf(n)}</b>건${envN ? sig(envN) : ''}` })].filter(Boolean));
     card.hidden = false;
   }
 
@@ -262,6 +286,7 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone }) {
     if (!S?.q?.allowed || S.running) return;
     draw?.();
     S.running = true; onBusy?.(true);
+    S.t0 = performance.now(); S.tFirst = 0; S.scopeText = S.label || null;
     const ui = cardRun();
     clearResults();
     // 전역 프레임이 화면에 다 들어오게(차오름이 한눈에)
@@ -332,7 +357,11 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone }) {
       if (state === 'done') {
         const envN = d?.counts_env && typeof d.counts_env === 'object' && 'value' in d.counts_env ? d.counts_env : null;
         const tot = envN?.value ?? n;
-        cardDone(tot, envN);
+        cardDone(tot, envN, { replay });
+        if (!replay && me.t0) {
+          const m = { first_s: me.tFirst ? +((me.tFirst - me.t0) / 1000).toFixed(1) : null, total_s: +((performance.now() - me.t0) / 1000).toFixed(1), shards: done, n: tot };
+          devlog('live', m); if (window.__xc) window.__xc.live = m;       // 실측(보고서 · e2e 용 · 화면엔 없음)
+        }
         if (map.getLayer('xa-mask')) map.setPaintProperty('xa-mask', 'fill-opacity', 0.12);
         if (map.getLayer('xa-cells-l')) { map.setPaintProperty('xa-cells-l', 'line-opacity', 0.12); map.setPaintProperty('xa-cells', 'fill-opacity', 0.04); }
         onDone?.({ n: tot, job, replay });
@@ -370,6 +399,7 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone }) {
     };
     const onShard = (d) => {
       done++;
+      if (!replay && !me.tFirst) { me.tFirst = performance.now(); if (window.__xc) window.__xc.liveFirst = +((me.tFirst - me.t0) / 1000).toFixed(1); }
       const b = d?.bbox;
       if (b) { cells.push({ type: 'Feature', properties: {}, geometry: rectPoly(b) }); if (!replay || pace) bracket(b); dirty = true; }
       if (d?.n > 0 && d.polys_url) {
@@ -441,17 +471,24 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone }) {
   }
   /** 분석 도구 끄기(카드 · 프레임 · 그리기) — 결과 도형은 지운다 */
   function stop() { if (S?.running) return false; draw?.(); close(); clearMap(); S = null; onDone?.(null); return true; }
-  /** 분석 도구 켜기 — 지역이 있으면 그 전역을 프레임으로, 없으면 그리기만 */
-  function start(region) {
+  /** 분석 도구 켜기 — 고른 읍면동(frameGeo)이 있으면 그 경계를 프레임으로, 없으면 '읍면동을 누르거나 범위를 그리세요'.
+      시군 전역은 실시간으로 받지 않는다 — 그 지역 전역 기록이 있으면 '전체 범위 기록 보기' 보조 동작 */
+  function start(r, frameGeo = null) {
     drawOn();
-    if (region?.geometry) frame(region.geometry, { label: region.name });
-    else if (region?.bbox) frame(rectPoly(region.bbox), { label: region.name });
-    else { card.innerHTML = ''; card.append(h('header.xa-h', {}, h('h3', { text: '이 범위 분석' }), xBtn()), h('p.xa-msg', { text: '지도 위에 분석할 범위를 끌어서 그리세요' })); card.hidden = false; }
+    region = r || null; record = null;
+    const my = region;
+    findRecord(region).then((id) => {
+      if (region !== my) return;
+      record = id;
+      // 이미 떠 있는 안내 카드(누르기 · 그리기)에 늦게 붙인다
+      if (id && !S?.running && !card.hidden && !card.querySelector('.xa-rec') && card.querySelector('.xa-msg')) recordBtn();
+    });
+    if (frameGeo?.geometry) frame(frameGeo.geometry, { label: frameGeo.label });
+    else { S = null; cardMsg(region ? '분석할 읍면동을 지도에서 누르거나 범위를 그리세요' : '지도 위에 분석할 범위를 끌어서 그리세요'); }
   }
-  /** ?job= 딥링크 — 끝난 작업의 기록된 이벤트를 다시 받아 같은 결과를 지도에(칸 · 도형 · 탐지 수) */
-  /** 끝난 작업이 오래 걸렸으면(목표의 1.5배 초과) 실제 기록 시각을 목표 초로 압축해 다시 흘린다. 카드에 한 줄: '실제 18분 · 12초로 압축' */
+  /** 전체 범위 기록 보기(?job= 딥링크 포함) — 끝난 작업의 기록된 이벤트를 다시 받아 같은 결과를 지도에(칸 · 도형 · 탐지 수).
+      오래 걸린 작업은 기록 시각을 짧게 줄여 흘린다(화면엔 속도·배속 문구를 쓰지 않는다 · 실제 걸린 시간은 개발자 서랍) */
   const PACE_S = 12;
-  const humanDur = (s) => (s >= 90 ? `${nf(Math.round(s / 60))}분` : `${nf(Math.round(s))}초`);
   async function replayJob(id, { label = null, bbox = null } = {}) {
     try {
       const j = await api('/jobs/' + encodeURIComponent(id));
@@ -460,6 +497,7 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone }) {
       const ab = bboxOf(j.aoi), cx = (ab[0] + ab[2]) / 2, cy = (ab[1] + ab[3]) / 2;
       if (!(bbox && cx >= bbox[0] && cx <= bbox[2] && cy >= bbox[1] && cy <= bbox[3])) label = null;
       layers();
+      clearResults();
       const real = (Date.parse(j.finished_at) - Date.parse(j.started_at)) / 1000;
       const it = (catalog.items || []).find((x) => x.id === j.imagery_id);
       const scope = label ? `${label} 전역` : null;
@@ -467,12 +505,13 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone }) {
       const pace = j.state === 'done' && real > PACE_S * 1.5
         ? { t0: Date.parse(j.started_at), k: PACE_S / real, start: Promise.resolve(fly).then(() => new Promise((r) => setTimeout(r, 250))) }
         : null;
+      devlog('record', { job: j.id, real_s: Math.round(real), shown_s: pace ? PACE_S : Math.round(real) });
       S = { geom: j.aoi, label, img: it || null, q: { allowed: false, shards: j.shards_total }, body: null, running: true, job: j, total: j.shards_total,
-        scopeText: scope, paceText: pace ? `실제 ${humanDur(real)} · ${PACE_S}초로 압축` : null };
+        scopeText: scope, record: true };
       showFrame(j.aoi);
       if (pace) {
         onBusy?.(true);
-        const ui = cardRun({ replay: { scope, img: it ? imageryLabel(it) : null, pace: S.paceText } });
+        const ui = cardRun({ replay: { scope, img: it ? imageryLabel(it) : null } });
         consume(`/events/jobs/${encodeURIComponent(id)}`, j, ui, { replay: true, pace });
       } else {
         cardBusy();

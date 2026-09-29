@@ -94,7 +94,7 @@ export function findingsDrawer(el, ctx) {
       <span class="sv-bars" title="등급 ${f.priority} · 점수 ${f.score}"><span>${[0, 1, 2].map((i) => `<i class="${i < BARS[f.priority] ? '' : 'o'}"></i>`).join('')}</span><b>${esc(f.priority)} ${numHtml(E(f.score, 'score', 'inferred', src, '우선순위 점수 · 규칙 기본점 + 근거면적 + 신뢰도 + 보강'), { unit: false, digits: 1 })}</b></span>
       <span class="sv-a">${esc(f.emd)} ${esc(f.ri)} ${esc(f.jibun)}</span><span class="sv-j" title="${esc(f.emd)} ${esc(f.ri)} ${esc(f.jibun)}">${esc(f.ri || f.emd)} ${esc(f.jibun)}</span>
       <span class="sv-r">${esc(f.rule)}</span>
-      <span class="sv-b"><b>${esc(f.jimok)}</b> → AI ${RULE_CLS[f.rule]} ${numHtml(E(Math.round(f.evid_m2), 'm2', 'inferred', src, '근거면적 · 검수 전'))}${ratio != null ? `(${ratio}%)` : ''} · 신뢰도 ${numHtml(E(f.conf, 'ratio', 'inferred', src), { unit: false, digits: 2 })}</span>
+      <span class="sv-b"><b>${esc(f.jimok)}</b> → AI ${RULE_CLS[f.rule]} ${numHtml(E(Math.round(f.evid_m2), 'm2', 'inferred', src, '근거면적 · 결과 확인 전'))}${ratio != null ? `(${ratio}%)` : ''} · 신뢰도 ${numHtml(E(f.conf, 'ratio', 'inferred', src), { unit: false, digits: 2 })}</span>
       <span class="sv-s">${stateChip({ ...f, _row: f })}</span></li>`;
   };
   function actbar() {
@@ -102,7 +102,7 @@ export function findingsDrawer(el, ctx) {
     const pub = ctx.canExport ? '' : 'disabled';
     bar.innerHTML = n
       ? `<button type="button" class="xi-btn xi-btn--ink sv-as" ${ctx.canWrite ? '' : 'disabled'}>${n}건 현장조사 배정 ›</button><button type="button" class="xi-btn xi-btn--br sv-ds" ${ctx.canWrite ? '' : 'disabled'}>오탐(사유)</button><button type="button" class="xi-btn xi-btn--br sv-rp">보고서 초안 ›</button><small>${n}건 선택 · <button type="button" class="xi-btn xi-btn--br sv-clr" style="height:26px;padding:0 6px">해제</button></small>`
-      : `<button type="button" class="xi-btn xi-btn--br sv-rp">보고서 초안 ›</button><button type="button" class="xi-btn xi-btn--br sv-csv" ${pub}>CSV</button><small title="${ctx.canWrite ? '행을 체크해 배정·오탐' : '열람 전용'}">${routeOn() ? '저장' : '시연'}</small>`;
+      : `<button type="button" class="xi-btn xi-btn--br sv-rp">보고서 초안 ›</button><button type="button" class="xi-btn xi-btn--br sv-csv" ${pub}>CSV</button><small title="${ctx.canWrite ? '행을 체크해 배정·오탐' : '열람 전용'}">${routeOn() ? '저장' : '예시'}</small>`;
     bar.querySelector('.sv-as')?.addEventListener('click', () => sheet('assign'));
     bar.querySelector('.sv-ds')?.addEventListener('click', () => sheet('dismiss'));
     bar.querySelector('.sv-clr')?.addEventListener('click', () => { S.sel.clear(); el.querySelectorAll('.sv-item .xi-check').forEach((c) => c.setAttribute('aria-pressed', 'false')); actbar(); });
@@ -162,7 +162,7 @@ export function findingsDrawer(el, ctx) {
     for (let off = 0; off < 25000; off += 1000) { const r = await findings({ ...S.q, offset: off, limit: 1000 }); all.push(...r.items); if (r.items.length < 1000) break; }
     const cols = [['rank', '순위'], ['priority', '등급'], ['score', '점수'], ['rule', '규칙'], ['pnu', 'PNU'], ['emd', '읍면동'], ['ri', '리'], ['jibun', '지번'], ['jimok', '지목'], ['parcel_m2', '필지면적_m2'], ['evid_m2', '근거면적_m2'], ['conf', '신뢰도'], ['yongdo', '용도지역'], ['nongup', '농업진흥'], ['state', '상태'], ['lng', '경도'], ['lat', '위도']];
     const rows = all.map((f) => cols.map(([k]) => (k === 'state' ? STATE_KO[stateOf(f)] : f[k])));
-    const note = ['# AI 추론 · 검수 전 · 현장 확인 전 · 위법 판정 아님 · 임계 [추정 초기값] · 연속지적 2026-09-24 · 소유자 성명 없음'];
+    const note = ['# AI 추론 · 결과 확인 전 · 현장 확인 전 · 위법 판정 아님 · 임계 [추정 초기값] · 연속지적 2026-09-24 · 소유자 성명 없음'];
     const text = '﻿' + [...note, cols.map((c) => c[1]).join(','), ...rows.map((r) => r.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','))].join('\r\n');
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
     a.download = `남원_의심큐_${S.q.rule.join('') || '전체'}${S.q.priority.join('')}_${all.length}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);

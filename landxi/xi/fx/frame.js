@@ -70,7 +70,7 @@ export function frameTool(ctx, { onFrame, emdGeometry }) {
 export function quoteCard(el, { q, models, selected, layerKind, imagery, demoForced, canRun, onRun, onModel, onClose }) {
   const ok = (m) => (m.input || ['ortho']).some((k) => (layerKind === 'raster' ? ['ortho', 'aerial', 'drone'].includes(k) : k === layerKind));
   const first = models.find((m) => ok(m) && m.id === (selected || 'aerial25/best')) || models.find(ok);
-  const reasonKo = { quota_exceeded: '할당 초과', demo_required: '영업 계정은 시연 실행만', imagery_forbidden: '원본 영상 권한 없음', model_input_mismatch: '모델 입력과 영상 종류 불일치', aoi_outside_footprint: '영상 범위 밖', aoi_too_large: '프레임이 너무 큼(> 5 km²)' };
+  const reasonKo = { quota_exceeded: '할당 초과', demo_required: '영업 계정은 예시 실행만', imagery_forbidden: '원본 영상 권한 없음', model_input_mismatch: '모델 입력과 영상 종류 불일치', aoi_outside_footprint: '영상 범위 밖', aoi_too_large: '프레임이 너무 큼(> 5 km²)' };
   el.innerHTML = `
     <header><span class="xi-eyebrow">견적 · ${q._via === 'api' ? 'POST /jobs/quote' : '프론트 계산 · 서버 연결 없음'}</span><button class="xi-x" type="button" aria-label="닫기">×</button></header>
     <dl class="xi-q">
@@ -82,7 +82,7 @@ export function quoteCard(el, { q, models, selected, layerKind, imagery, demoFor
     </dl>
     <label class="xi-field"><span>모델 → 영상 ${esc(imagery ? chipText(imagery) : '')}</span>
       <select class="xi-model">${models.map((m) => `<option value="${esc(m.id)}" ${ok(m) ? '' : 'disabled'} ${m === first ? 'selected' : ''}>${esc(m.id)} · ${esc((m.classes || []).join('·').slice(0, 28))}${ok(m) ? '' : ' — 입력 불일치'}</option>`).join('')}</select></label>
-    ${demoForced ? '<p class="xi-demo-note"><b>시연</b> 영업 계정 · demo:true 강제(계약 §3)</p>' : ''}
+    ${demoForced ? '<p class="xi-demo-note"><b>예시</b> 영업 계정 · demo:true 강제(계약 §3)</p>' : ''}
     <p class="xi-qprov"></p>
     <footer><button class="xi-btn xi-btn--ink xi-run" type="button" ${q.allowed && canRun ? '' : 'disabled'}>이 프레임 분석 ›</button><button class="xi-btn xi-btn--br xi-cancel" type="button">프레임 지우기</button></footer>`;
   prov(el.querySelector('.xi-qprov'), q.area_km2, { label: '면적' });

@@ -52,7 +52,7 @@ test('읍면동 클릭 → 집계 카드(봉투) → AOI 하강 3단 → 도착 
   console.log('집계', emd.text.replace(/\s+/g, ' ').slice(0, 200));
   expect(emd.rows).toBe(4);
   expect(emd.basis).toContain('inferred');
-  expect(emd.prov).toContain('AI 추론 · 검수 전');
+  expect(emd.prov).toContain('AI 추론 · 결과 확인 전');
   // 드론 AOI 버튼은 목적지를 이름으로 — AOI 를 품은 읍면동(덕과면)만 '하강', 운봉읍 카드는 '덕과면 드론 AOI로 이동'
   const aoiBtn = await page.evaluate(() => ({ emd: window.__xi.aoiEmd, text: document.querySelector('#emd-card .xi-aoi')?.textContent, here: document.querySelector('#emd-card .xi-aoi')?.dataset.here }));
   expect(aoiBtn.emd).toBe('덕과면');
@@ -69,7 +69,7 @@ test('읍면동 클릭 → 집계 카드(봉투) → AOI 하강 3단 → 도착 
   expect(i25).toBeGreaterThan(-1); expect(i2).toBeGreaterThan(i25); expect(i1).toBeGreaterThan(i2);
   expect(aoi.big).toBe('456');
   expect(aoi.title).toContain('덕과면');
-  expect(aoi.bigBasis).toBe('inferred'); expect(aoi.prov).toContain('변화 지수 · 검수 전');   // on/off 같은 배지(비지도 변화 지수)
+  expect(aoi.bigBasis).toBe('inferred'); expect(aoi.prov).toContain('변화 지수 · 결과 확인 전');   // on/off 같은 배지(비지도 변화 지수)
   expect(aoi.note).toContain('A02 농경지');
   expect(aoi.parcels).toBeGreaterThan(0);
   expect(aoi.on).toEqual(expect.arrayContaining(['namwon-farmland-2025', 'namwon-change']));

@@ -22,7 +22,7 @@ const WORDS = [
   [/feedback|신고/i, '기관 확인 기록'],
   [/deploy|배포/i, '배포 기록'],
   [/jobs?\b|작업/i, '분석 작업 기록'],
-  [/ops|gpu|관제/i, '관제 기록'],
+  [/ops|gpu|관제/i, 'LX 관리자 대시보드 기록'],
   [/chat\/completions|vllm|llm|agent/i, 'AI 답변'],
 ];
 /** 출처 문자열에서 경로·API·id·확장자·계산식을 지우고 사용자 말 한 마디로 */

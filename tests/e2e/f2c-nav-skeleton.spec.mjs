@@ -4,7 +4,7 @@
 import { test, expect } from '@playwright/test';
 import { OPS, gwUp, gwAdmin, ready } from '../../shots/f2/C/tools/e2e-util.mjs';
 test.setTimeout(90000);
-const PAGES = [['index', '운영 현황'], ['infra', '인프라 관제'], ['tenants', '기관·할당'], ['deploys', '배포 제어']];
+const PAGES = [['index', '운영 현황'], ['infra', '인프라'], ['tenants', '기관·할당'], ['deploys', '배포 제어']];
 
 for (const [pg, title] of PAGES) {
   test(`첫 페인트 골격 — ${pg}: 모듈 전(boot.js 1.5 s 지연)에도 레일 · 마스트 제목 · 판 머리가 보인다 → ready 에 걷힘 · 셸 하나`, async ({ page }) => {
