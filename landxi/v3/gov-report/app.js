@@ -3,9 +3,9 @@
    → 상태 쓰기(POST /survey/findings/{fid}/state) → 표 갱신 · 큰 숫자 감소 · SSE /events/tenant 로 다른 창의 변경도 반영.
    [보고서] 읍면동 · 규칙 → POST /agent/report/draft → SSE 토큰 스트리밍(개요 · 소견 · 조치 제안) → .docx 내려받기.
    관할 = 로그인 기관(세션). 지역 고정값 없음. */
-import { shell, gate, createStage, drawer, bignum, numHtml, table, toast, empty, devDrawer, devlog, FRONT } from '/landxi/v3/kit/index.js';
-import { api, esc, h, hasRoute, bboxOf, isDev, session } from '/landxi/v3/kit/util.js';
-import { sse } from '/landxi/shared/api-v1.js';
+import { shell, gate, createStage, drawer, bignum, numHtml, table, toast, empty, devDrawer, devlog, FRONT } from '../kit/index.js';
+import { api, esc, h, hasRoute, bboxOf, isDev, session } from '../kit/util.js';
+import { sse } from '../../shared/api-v1.js';
 import { buildDocx } from './docx.js';
 
 const $ = (s, r = document) => r.querySelector(s);

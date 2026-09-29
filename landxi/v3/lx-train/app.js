@@ -3,19 +3,19 @@
    숫자 출처: /registry/models · /registry/models/{mid} 카드(학습 기록) · /survey/rules/{id}/stats(현장 확인 기준 · S-2) · /feedback(오탐 신고)
    학습: POST /jobs/quote → POST /jobs {kind:'train', base_model, region, samples}(S-8 · 게이트웨이 작업 큐 · 전력 예산은 서버가 판정).
    지역은 변수(지역 문자열 하드코딩 0 · 크롭 경로는 tasks.json 예시 데이터 파일). 개발 정보는 ?dev=1 서랍만. */
-import { shell } from '/landxi/v3/kit/shell.js';
-import { gate, FRONT } from '/landxi/v3/kit/auth-gate.js';
-import { drawer } from '/landxi/v3/kit/panel.js';
-import { bignum } from '/landxi/v3/kit/bignum.js';
-import { sig } from '/landxi/v3/kit/sig.js';
-import { line } from '/landxi/v3/kit/chart.js';
-import { empty } from '/landxi/v3/kit/empty.js';
-import { regionPicker, loadRegions } from '/landxi/v3/kit/region.js';
-import { toast } from '/landxi/v3/kit/toast.js';
-import { devDrawer, devlog } from '/landxi/v3/kit/dev-drawer.js';
-import { nf, df } from '/landxi/v3/kit/i18n.js';
-import { h, esc, api, API, session, isEnvelope, hasRoute } from '/landxi/v3/kit/util.js';
-import { sse } from '/landxi/shared/api-v1.js';
+import { shell } from '../kit/shell.js';
+import { gate, FRONT } from '../kit/auth-gate.js';
+import { drawer } from '../kit/panel.js';
+import { bignum } from '../kit/bignum.js';
+import { sig } from '../kit/sig.js';
+import { line } from '../kit/chart.js';
+import { empty } from '../kit/empty.js';
+import { regionPicker, loadRegions } from '../kit/region.js';
+import { toast } from '../kit/toast.js';
+import { devDrawer, devlog } from '../kit/dev-drawer.js';
+import { nf, df } from '../kit/i18n.js';
+import { h, esc, api, API, session, isEnvelope, hasRoute } from '../kit/util.js';
+import { sse } from '../../shared/api-v1.js';
 
 const who = await gate('lx-train');
 const CFG = await fetch(new URL('./tasks.json', import.meta.url)).then((r) => r.json());

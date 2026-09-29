@@ -9,13 +9,13 @@
    6차: 블록 = 실결과·결과 지도만, 3개가 안 되면 K9 1개.
    5차: 큰 숫자 = 실태조사 '현장 확인 필요'(XI맵과 같은 출처 · surveyOf) — 탐지 총수(봉투 scale)는 숫자 자리에 싣지 않는다 · 모듈 문장은 사용자 말로(plain).
    지역 착지: 배포본 sgg_cd → 지역 이름(시군구 경계 파일에서) → 결과 위치(크롭 좌표) → 배포 범위 중심 순. 해외 = 나라 · 지역 id. */
-import { API, api, hasRoute, isEnvelope, bboxOf } from '/landxi/v3/kit/util.js';
+import { API, api, hasRoute, isEnvelope, bboxOf } from '../kit/util.js';
 
 const here = (p) => new URL(p, import.meta.url).href;
 const json = (p) => fetch(here(p)).then((r) => r.json());
 const once = (f) => { let p = null; return () => (p ||= f()); };
 
-const seed = once(() => import('/landxi/assets/data/cards.js'));
+const seed = once(() => import('../../assets/data/cards.js'));
 export const intros = once(() => json('./data/intro.json'));
 export const visuals = once(() => json('./data/visuals.json'));
 
@@ -161,7 +161,7 @@ const norm = (s) => String(s || '').replace(/\s+/g, '');
 const sgg = once(() => fetch('/landxi/assets/data/geo/sigungu.geojson').then((r) => r.json())
   .then((j) => (j.features || []).map((f) => ({ code: String(f.properties.code), name: f.properties.name, full: `${f.properties.sido} ${f.properties.name}`, geom: f.geometry, bbox: bboxOf(f) })))
   .catch(() => []));
-const cropPts = once(() => import('/landxi/assets/data/crops.js').then((m) => m.CROPS || {}).catch(() => ({})));
+const cropPts = once(() => import('../../assets/data/crops.js').then((m) => m.CROPS || {}).catch(() => ({})));
 const world = once(() => fetch('/landxi/global/data/lx-countries.json').then((r) => r.json()).then((j) => j.world?.features || []).catch(() => []));
 const admCache = {};
 

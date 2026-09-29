@@ -1,5 +1,5 @@
 /* K15 i18n.js — 다국어. global 집만 en, 나머지는 ko 고정. 숫자·날짜 로캘.
-   import { t, locale, nf, df } from '/landxi/v3/kit/i18n.js'
+   import { t, locale, nf, df } from './i18n.js'
    t('cmdk.placeholder') · t('shell.fresh', { time: '09:30' }) · nf(12345) · df('2026-09-24') */
 
 const pick = () => {

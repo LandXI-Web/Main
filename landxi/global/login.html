@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Land-XI Global — institution sign-in</title>
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="/landxi/assets/css/v2/tokens-v2.css">
+<link rel="stylesheet" href="../assets/css/v2/tokens-v2.css">
 <link rel="stylesheet" href="css/fonts-v2.css">
 <link rel="stylesheet" href="global.css">
 <style>
@@ -67,7 +67,7 @@
   </section>
 </main>
 <script type="module">
-import { API, probe, api, session, mastLabel } from '/landxi/shared/api-v1.js';
+import { API, probe, api, session, mastLabel } from '../shared/api-v1.js';
 const $ = (id) => document.getElementById(id);
 const svc = { 'kgz-agri': 'dp-kgz-agri-farm-26', 'kgz-land': 'dp-kgz-land-change-26' };
 $('tenant').addEventListener('change', () => { $('login').value = $('tenant').value + '-manager'; });

@@ -1,7 +1,7 @@
 /* K6 sig.js — 신뢰 기호 3종 + 호버 근거 한 줄.
    봉투 basis 6종 → 기호 3종: measured·recorded → ✓ 확인됨 · inferred·estimate → ~ 추정치 · demo·history → 예시
    호버 = `{출처를 사용자 말로} · {기준일} 기준` — API 경로·파일·id·계산식은 humanize() 가 지운다(개발 정보는 ?dev=1 서랍).
-   import { sig, sigOf, humanize } from '/landxi/v3/kit/sig.js' */
+   import { sig, sigOf, humanize } from './sig.js' */
 import { esc, isEnvelope } from './util.js';
 import { t, df } from './i18n.js';
 

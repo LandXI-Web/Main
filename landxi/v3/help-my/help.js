@@ -4,7 +4,7 @@
    쓰는 법
    · 모든 집의 `?`(K1 기본) → K5 서랍 안에 /landxi/v3/help-my/?embed=1 (iframe) — 아무것도 안 해도 된다.
    · iframe 없이 서랍을 직접 열고 싶은 화면:
-       import { openHelp } from '/landxi/v3/help-my/help.js';
+       import { openHelp } from './help.js';
        shell({ who, onHelp: () => openHelp({ who }) });
    · 판에 붙이기: mountHelp(el, { who, tab: 'faq' })
 

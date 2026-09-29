@@ -1,9 +1,9 @@
 /* ops-core — 관리자 집: 현황(밝은 배포 지도 + 결재 대기 큰 숫자 + 할 일) + 결재함.
    관문(K2) → 셸(K1 · 메뉴 5) → 무대(K3 ops) · 카드(K5) · 큰 숫자(K6) · 표(K12) · 토스트(K13) · 개발자 서랍(K14).
    '지금 내가 승인·조치할 것이 있는가?' 한 질문에만 답한다. */
-import { gate, shell, bignum, table, drawer, closeAll, toast, devDrawer, devlog, empty } from '/landxi/v3/kit/index.js';
-import { h, esc, ymd } from '/landxi/v3/kit/util.js';
-import { sse } from '/landxi/shared/api-v1.js';
+import { gate, shell, bignum, table, drawer, closeAll, toast, devDrawer, devlog, empty } from '../../kit/index.js';
+import { h, esc, ymd } from '../../kit/util.js';
+import { sse } from '../../../shared/api-v1.js';
 import { D, loadAll, loadFast, pending, pendingEnv, openAlerts, power, nearLimits, decide, hasS9 } from './data.js';
 import { mountMap } from './map.js';
 

@@ -2,13 +2,13 @@
    질문 하나: "Where did my district change this season?"
    글로브(흰) → 대상국 → 지역 · HUD Crop condition drop · 시트 392(Season · NDVI · Sprawl) · Run this season(kind index · CPU 작업 큐).
    부품 K1 K2 K3 K5 K6 K9 K10 K12 K15 · 데이터 landxi/global/data/* · 지역은 변수(URL ?country=&district= 또는 기관 배포 범위). */
-import * as K from '/landxi/v3/kit/index.js';
-import { api, API, isEnvelope, bboxOf, h, esc, LS, RM } from '/landxi/v3/kit/util.js';
-import { probe, sse } from '/landxi/shared/api-v1.js';
-import { loadCatalog, MONTHS } from '/landxi/global/js/ladder-global.js';
-import { loadYsData } from '/landxi/global/js/ndvi-theater.js';
-import { loadSprawl } from '/landxi/global/js/sprawl.js';
-import { D } from '/landxi/global/js/globe-stage.js';
+import * as K from '../kit/index.js';
+import { api, API, isEnvelope, bboxOf, h, esc, LS, RM } from '../kit/util.js';
+import { probe, sse } from '../../shared/api-v1.js';
+import { loadCatalog, MONTHS } from '../../global/js/ladder-global.js';
+import { loadYsData } from '../../global/js/ndvi-theater.js';
+import { loadSprawl } from '../../global/js/sprawl.js';
+import { D } from '../../global/js/globe-stage.js';
 import * as NT from './ndvi-tiles.js';
 
 const q = new URLSearchParams(location.search);

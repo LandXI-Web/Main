@@ -9,8 +9,8 @@
 import {
   shell, whoami, empty, serviceGrid, joinCards, stateOf, numHtml, drawer, table, devDrawer, createStage, CHARS,
   h, enter, t, df,
-} from '/landxi/v3/kit/index.js';
-import { isEnvelope, isDev, RM, session, esc } from '/landxi/v3/kit/util.js';
+} from '../kit/index.js';
+import { isEnvelope, isDev, RM, session, esc } from '../kit/util.js';
 import { loadCards, loadDetail, loadDeploys, cropUrl, deployOfSet, buildBlocks, liveLayer, landingOf, focusOf, regionOfSet, surveyOf } from './adapter.js';
 
 const Q = new URLSearchParams(location.search);

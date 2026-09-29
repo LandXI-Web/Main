@@ -6,7 +6,7 @@
    F2-D 2차(판정 불합격 8건): 게이트 = 후퇴 첫 1 s 에 보이는 타일(V-World z ≥ 7 · EOX z ≤ 8 짝수 줌 · GIBS) · 상한 3.5 s ·
    대표 하강(글로브→으슥아타) EOX 경로는 준비 즉시 prio 1 로 HTTP 캐시에(착지 직후 눌러도 부족 ≥ 2 > 500 ms 0 · 데우기 대기 0) ·
    히어로는 글로브 원판이 히어로·목록 열과 겹치지 않을 때 · 재방문 표식 = 착지 화면 타일 수신 · XI맵 링크에 ?job= 을 붙이지 않는다. */
-import { API, probe, session, mastLabel, fixture } from '/landxi/shared/api-v1.js';
+import { API, probe, session, mastLabel, fixture } from '../../shared/api-v1.js';
 import { initI18n, t, applyStatic } from './i18n.js';
 import { D, createStage, styleReady, idle, fly, ease, wait, addGibs, dateScrubber, addCountries, countryList, prov, pin, clearPins, clearLocks, perfOf, ensureMapB, prefetchFlight, flySamples, tilesFor, pull, warmInMap, warmCams, tileDeficit, arriveCross, prepCross, reduced, dcTrim, dcHold } from './globe-stage.js';
 import { loadCatalog, addLadder, ladderChip, show, opacity, rawTiles } from './ladder-global.js';

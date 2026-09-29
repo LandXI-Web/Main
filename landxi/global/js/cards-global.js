@@ -1,8 +1,8 @@
 /* 카드 · 배포본(계약 §4.7) — on = GET /deploys · off = data/deploys-fixture.json.
    카드 틀은 landxi/assets/data/cards.js(읽기 import) — card-global-farm · card-global-disaster · card-change. */
-import { API, deploys as apiDeploys, fixture, session } from '/landxi/shared/api-v1.js';
+import { API, deploys as apiDeploys, fixture, session } from '../../shared/api-v1.js';
 import { t } from './i18n.js';
-import { textIn } from '/landxi/xi/fx/glass.js';
+import { textIn } from '../../xi/fx/glass.js';
 
 const DATA = new URL('../data/', import.meta.url);
 

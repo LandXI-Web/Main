@@ -3,9 +3,9 @@
    ch4 서비스 카드(흐름 구간 · 지도 없음)
    트랙 B(sticky 판 하나): ch5 전국 배포 점 → ch6 키르기스스탄 → 마감(지구 귀환)
    규칙: 한 화면에 움직이는 것 1개 · 헤드라인 750 --e-cam 스태거 120 · 숫자는 봉투만 · 지역 이름은 데이터에서(하드코딩 0). */
-import { createStage, bignum, numHtml, serviceGrid, joinCards, empty, mountCmdk, enter } from '/landxi/v3/kit/index.js';
-import { E_CAM, RM, h, esc } from '/landxi/v3/kit/util.js';
-import { devlog } from '/landxi/v3/kit/dev-drawer.js';
+import { createStage, bignum, numHtml, serviceGrid, joinCards, empty, mountCmdk, enter } from '../kit/index.js';
+import { E_CAM, RM, h, esc } from '../kit/util.js';
+import { devlog } from '../kit/dev-drawer.js';
 import * as D from './data.js';
 
 const $ = (s) => document.querySelector(s);

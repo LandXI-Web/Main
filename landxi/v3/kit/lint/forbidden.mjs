@@ -1,5 +1,5 @@
 /* K16 forbidden.mjs — 금지어 · 첫 뷰 글자 수 · 버튼 수 검사(e2e 보조).
-   브라우저: import { scan } from '/landxi/v3/kit/lint/forbidden.mjs'; scan(document) → { hits[], chars, buttons }
+   브라우저: import { scan } from './forbidden.mjs'; scan(document) → { hits[], chars, buttons }
    CLI:     node landxi/v3/kit/lint/forbidden.mjs [--login lx-staff | --login namwon-manager@namwon] [--state state.json] [--mobile] <url>…
             정문(/landxi/v3/login/) 폼 입력으로 로그인한 뒤 각 url 을 1440×900(또는 390×844)에서 잰다. 세션 주입 없음.
    검사 대상: 본문 글자 · title · aria-label · placeholder · alt. 제외: 개발자 서랍(.k-dev) · [data-lint-skip]. */

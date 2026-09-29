@@ -1,8 +1,8 @@
 /* ops-core 데이터 한 곳 — 게이트웨이(:8700) 실응답만. 결재·할 일·지도 점의 파생 규칙은 여기서만 정한다(같은 지표 = 같은 값).
    서버 S-9(`GET /approvals?state=pending` · `power_budget` · Origin 4173 SSE)가 있으면 그것을 쓰고,
    아직 없으면 같은 모양으로 접는 어댑터(배포 기록 → 결재 대기)로 대신한다. 어느 쪽인지는 ?dev=1 서랍에만 남긴다. */
-import { api, hasRoute, bboxOf, isEnvelope } from '/landxi/v3/kit/util.js';
-import { devlog } from '/landxi/v3/kit/dev-drawer.js';
+import { api, hasRoute, bboxOf, isEnvelope } from '../../kit/util.js';
+import { devlog } from '../../kit/dev-drawer.js';
 
 export const D = { deploys: [], tenants: [], usage: [], alerts: null, gpus: null, cards: [], srvApprovals: null, at: 0, mode: 'adapter' };
 const safe = (p) => api(p).catch((e) => { devlog('api fail', `${p} · ${e.code || e.status || e.message}`); return null; });

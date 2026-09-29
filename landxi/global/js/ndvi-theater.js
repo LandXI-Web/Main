@@ -4,15 +4,15 @@
    F2-D(1차 판정 must_fix 2 · 라이브 = 판정 영상): index.month 에 hist/p10/p50/p90 가 있으면 슬롯 분포 막대 · 없으면 'distribution pending (gateway)'
    결손 표기 → job.done 뒤 GET /results/{set}/index(계약 v1.1-20)로 채움 · CSV = 서버 값. HUD 는 job.progress · index.month 에서만 읽는다.
    지수 계산 · 모델 추론 아님. */
-import { API, api, quote as apiQuote, submit as apiSubmit, sse, replay, fixture, env, job as apiJob, session } from '/landxi/shared/api-v1.js';
+import { API, api, quote as apiQuote, submit as apiSubmit, sse, replay, fixture, env, job as apiJob, session } from '../../shared/api-v1.js';
 /** 인증 라우트(견적 · 제출 · 작업)는 세션이 있을 때만 — 게스트 · 세션 없음이면 부르지 않는다(401 콘솔 오류 0 · 판정 3차) */
 const authed = () => API.mode === 'on' && !!session.get();
 import { t, num, area, basisLabel } from './i18n.js';
 import { D, lockOn, sweep, prov, pin, wait, tween, idle } from './globe-stage.js';
 import { MONTHS, show, opacity } from './ladder-global.js';
 import { cardHead, gap, reveal } from './cards-global.js';
-import { timescrub } from '/landxi/xi/fx/timescrub.js';
-import { lineage } from '/landxi/xi/fx/lineage.js';
+import { timescrub } from '../../xi/fx/timescrub.js';
+import { lineage } from '../../xi/fx/lineage.js';
 
 const DATA = new URL('../data/', import.meta.url);
 /** 관제(:8702) — 같은 job id 로 작업 행을 펼친다(계약 v1.1-29 · infra.html?job=). 관제 세션은 다른 origin 이라 여기서 알 수 없다 →

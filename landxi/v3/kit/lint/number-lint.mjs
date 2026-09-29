@@ -1,6 +1,6 @@
 /* K16 number-lint.mjs — 숫자 정합 검사: 같은 지표(라벨) 다른 값 0.
    큰 숫자 부품(K6 bignum)은 data-metric(라벨) · data-v(값)을 남긴다. 표·카드 숫자는 [data-metric] 를 화면이 달면 함께 잰다.
-   브라우저: import { collect, compare } from '/landxi/v3/kit/lint/number-lint.mjs'; collect(document) → [{ metric, v, scope }]
+   브라우저: import { collect, compare } from './number-lint.mjs'; collect(document) → [{ metric, v, scope }]
    CLI:     node landxi/v3/kit/lint/number-lint.mjs [--login lx-staff] [--state state.json] <url>…   (여러 화면을 돌며 모은 뒤 비교)
    scope = 가장 가까운 [data-scope](예: 지역 코드) — 지역이 다르면 다른 지표로 본다. */
 import { openPages } from './forbidden.mjs';

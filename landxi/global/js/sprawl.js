@@ -1,7 +1,7 @@
 /* K-3 소쿨룩 · 비슈케크 — kgz-land · dp-kgz-land-change-26(있으면 카드 · 없으면 '이식 전' 결손)
    Esri/IO LULC 2017→2025 built Δ 500 m 격자(액센트 램프 · 앰버 금지) · 필라멘트(z9–11 · 격자 built 밀도) · Overture 건물 압출(기본 OFF · pitch 45)
    · 스와이프 EOX 2017 ↔ 2025 · 연속지적 시범지 3곳 라벨 + 경계 미확보 · Сокулук · Бишкек 병기. */
-import { API, fixture, env, api, session, catalog, quote, submit, sse } from '/landxi/shared/api-v1.js';
+import { API, fixture, env, api, session, catalog, quote, submit, sse } from '../../shared/api-v1.js';
 import { t, num, area } from './i18n.js';
 import { D, prov, pinBox, tween, ensureMapB, swipe, idle, eoxB, dcache } from './globe-stage.js';
 import { cardHead, gap, reveal } from './cards-global.js';

@@ -1,6 +1,6 @@
 /* 텔레메트리 — on: sse('/events/ops') · off: replay(data/replay/ops-sample.ndjson).
  * 값이 바뀐 필드만 알린다(diff). 2s 창 · 샘플이 3s 넘게 없으면 stale(링 테두리 슬레이트 + '수신 없음 n s'). */
-import { sse, replay, OPS_EVENTS } from '/landxi/shared/api-v1.js';
+import { sse, replay, OPS_EVENTS } from '../../shared/api-v1.js';
 import { SRC } from './boot.js';
 
 const GPU_KEYS = ['util_pct', 'util_ma5', 'util_ma10', 'mem_used_mib', 'mem_total_mib', 'temp_c', 'power_w', 'external_used_mib', 'unattributed_mib'];

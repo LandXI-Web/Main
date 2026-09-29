@@ -2,7 +2,7 @@
    Maxar 전(2025-03-06) ↔ 후(2025-04-03) 스와이프(G5 XYZ · build=export|public 이거나 타일 없으면 S2 전후로 대체 표기)
    · EMS 38점 → Overture 건물 등급 채색(Destroyed 잉크 · Damaged 액센트 · Possibly 슬레이트 — 빨강은 조치 글자만)
    · 등급별 차트(봉투 measured · EMS) · 출처 칩 '© EU Copernicus EMS · Maxar Open Data CC BY-NC 4.0 · 시연 한정'. */
-import { fixture } from '/landxi/shared/api-v1.js';
+import { fixture } from '../../shared/api-v1.js';
 import { t, num } from './i18n.js';
 import { D, prov, lockOn, wait, ensureMapB, swipe, idle, eoxB, dcache } from './globe-stage.js';
 import { cardHead, reveal } from './cards-global.js';

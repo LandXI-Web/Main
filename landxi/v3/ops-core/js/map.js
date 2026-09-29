@@ -1,7 +1,7 @@
 /* 배포 지도 — K3 무대(ops 모드 · 저채도) 위에 밝은 베일 한 겹 + 잉크 점(기관) · 농도 = 단계.
    국내 = 대한민국 전역 · 해외 = 글로브(밝은 바탕). 점 클릭 → ops-infra ?deploy=. 단계가 바뀌면 점이 제자리에서 차오른다. */
-import { createStage, KOREA } from '/landxi/v3/kit/stage.js';
-import { h, esc, RM } from '/landxi/v3/kit/util.js';
+import { createStage, KOREA } from '../../kit/stage.js';
+import { h, esc, RM } from '../../kit/util.js';
 import { points } from './data.js';
 
 const INFRA = '/landxi/v3/ops-infra/';

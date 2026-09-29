@@ -8,27 +8,27 @@
   addEventListener('pagereveal', h); addEventListener('pageswap', h); })();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LX/OPS — 인프라 관제</title>
-<link rel="stylesheet" href="/landxi/proto/fonts-system.css">
-<link rel="stylesheet" href="/landxi/assets/css/v2/tokens-v2.css">
-<link rel="stylesheet" href="/landxi/assets/css/v2/ops-grid.css">
-<link rel="stylesheet" href="/landxi/ops/ops.css">
+<link rel="stylesheet" href="../proto/fonts-system.css">
+<link rel="stylesheet" href="../assets/css/v2/tokens-v2.css">
+<link rel="stylesheet" href="../assets/css/v2/ops-grid.css">
+<link rel="stylesheet" href="./ops.css">
 </head>
 <body data-stage="ops" data-page="infra">
 <!-- 첫 페인트 골격(F2-C 3차): 모듈이 데이터를 받기 전에도 레일·마스트·판 머리가 선다(화면 이동 시 검정 판 0).
      직전 방문 스냅샷이 있으면 그 화면으로 덮고('직전 화면 hh:mm:ss · 수신 중' 꼬리표), 실데이터가 서면 boot.js unveil() 이 걷는다. -->
-<div class="og-shell og-skel" id="ogSkel" aria-hidden="true" inert><aside class="og-rail"><a class="og-mark" href="/landxi/ops/index.html">LX<b>/</b>OPS</a><nav class="og-nav"><a href="/landxi/ops/index.html" data-page="index"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-map"/></svg>운영 현황</a><a href="/landxi/ops/infra.html" data-page="infra" aria-current="page"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-run"/></svg>인프라 관제</a><a href="/landxi/ops/tenants.html" data-page="tenants"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-user"/></svg>기관·할당</a><a href="/landxi/ops/deploys.html" data-page="deploys"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-upload"/></svg>배포 제어</a><hr><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-card"/></svg>카드 발행</a><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-data"/></svg>데이터 관리</a><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-settings"/></svg>서비스 관리</a><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-user"/></svg>MY</a><hr><a data-ext="" data-page="xi"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-map"/></svg>XI맵</a><a data-ext="" data-page="global"><svg aria-hidden="true"><use href="/landxi/assets/icons.svg#i-map"/></svg>Global</a></nav></aside><header class="og-mast"><h1>인프라 관제</h1><span class="og-crumb">GPU · LLM · 대기열 · 모델 배치 · 스토리지</span><span class="og-spacer"></span><span class="og-src" data-kind="gateway"><i></i><span class="og-src-t">연결 중 · 게이트웨이</span></span><span class="og-clock" id="skClock"></span></header><main class="og-main"><div class="sk-grid" data-page="infra"><section class="og-panel sk-panel" style="--i:0"><header><h2>GPU 노드</h2><span class="og-sub">nvidia-smi -lms 100 · 이용률 = 10 s 추세</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section><section class="og-panel sk-panel" style="--i:1"><header><h2>작업 대기열</h2><span class="og-sub">행 = 워커 · 가로 30분</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section><section class="og-panel sk-panel" style="--i:2"><header><h2>모델 배치</h2><span class="og-sub">영상 모델 × GPU · LLM</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section><section class="og-panel sk-panel" style="--i:3"><header><h2>스토리지</h2><span class="og-sub">statfs · du 60s</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section></div></main></div>
+<div class="og-shell og-skel" id="ogSkel" aria-hidden="true" inert><aside class="og-rail"><a class="og-mark" href="./index.html">LX<b>/</b>OPS</a><nav class="og-nav"><a href="./index.html" data-page="index"><svg aria-hidden="true"><use href="../assets/icons.svg#i-map"/></svg>운영 현황</a><a href="./infra.html" data-page="infra" aria-current="page"><svg aria-hidden="true"><use href="../assets/icons.svg#i-run"/></svg>인프라 관제</a><a href="./tenants.html" data-page="tenants"><svg aria-hidden="true"><use href="../assets/icons.svg#i-user"/></svg>기관·할당</a><a href="./deploys.html" data-page="deploys"><svg aria-hidden="true"><use href="../assets/icons.svg#i-upload"/></svg>배포 제어</a><hr><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="../assets/icons.svg#i-card"/></svg>카드 발행</a><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="../assets/icons.svg#i-data"/></svg>데이터 관리</a><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="../assets/icons.svg#i-settings"/></svg>서비스 관리</a><a data-ext="" data-page="x"><svg aria-hidden="true"><use href="../assets/icons.svg#i-user"/></svg>MY</a><hr><a data-ext="" data-page="xi"><svg aria-hidden="true"><use href="../assets/icons.svg#i-map"/></svg>XI맵</a><a data-ext="" data-page="global"><svg aria-hidden="true"><use href="../assets/icons.svg#i-map"/></svg>Global</a></nav></aside><header class="og-mast"><h1>인프라 관제</h1><span class="og-crumb">GPU · LLM · 대기열 · 모델 배치 · 스토리지</span><span class="og-spacer"></span><span class="og-src" data-kind="gateway"><i></i><span class="og-src-t">연결 중 · 게이트웨이</span></span><span class="og-clock" id="skClock"></span></header><main class="og-main"><div class="sk-grid" data-page="infra"><section class="og-panel sk-panel" style="--i:0"><header><h2>GPU 노드</h2><span class="og-sub">nvidia-smi -lms 100 · 이용률 = 10 s 추세</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section><section class="og-panel sk-panel" style="--i:1"><header><h2>작업 대기열</h2><span class="og-sub">행 = 워커 · 가로 30분</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section><section class="og-panel sk-panel" style="--i:2"><header><h2>모델 배치</h2><span class="og-sub">영상 모델 × GPU · LLM</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section><section class="og-panel sk-panel" style="--i:3"><header><h2>스토리지</h2><span class="og-sub">statfs · du 60s</span><span class="og-right sk-wait">수신 중</span></header><div class="sk-scan"><i></i></div></section></div></main></div>
 <script>/* 스냅샷 복원 · 시계 · 안전 타이머(모듈 오류 시에도 8 s 뒤 걷힘) */(function(){try{var d=document,b=d.body,sk=d.getElementById("ogSkel"),pg=b.dataset.page;b.classList.add("has-skel");var c=d.getElementById("skClock");if(c)c.textContent=new Date().toLocaleTimeString("ko-KR",{hour12:false,hour:"2-digit",minute:"2-digit",second:"2-digit",timeZone:"Asia/Seoul"});var v=null;try{v=JSON.parse(localStorage.getItem("lxops:snap:"+pg)||"null")}catch(e){}if(v&&v.h&&Date.now()-v.t<1800000&&Math.abs(v.w-innerWidth)<2){sk.innerHTML=v.h;sk.dataset.snap="1";var m=sk.querySelector(".og-main");if(m)m.scrollTop=v.st||0;var tg=d.createElement("span");tg.className="og-snap-tag";tg.textContent="직전 화면 "+v.at+" · 수신 중";var ms=sk.querySelector(".og-mast .og-spacer");if(ms)ms.after(tg);}setTimeout(function(){var s=d.getElementById("ogSkel");if(s){s.remove();b.classList.remove("has-skel");}},8000);}catch(e){}})();</script>
 <script type="module">
-import { gate, ready, get, h, prov, setText, fmt, tag, goal, hhmmss, SRC, write, guardWrite, toast, errText, api, t } from '/landxi/ops/js/boot.js';
-import { mountFrame } from '/landxi/ops/js/rail.js';
-import { mountPalette } from '/landxi/ops/js/palette.js';
-import { ring } from '/landxi/ops/js/rings.js';
-import { spark } from '/landxi/ops/js/sparkline.js';
-import { swimlanes, queueRows, leader } from '/landxi/ops/js/lanes.js';
-import { alertStrip } from '/landxi/ops/js/alerts.js';
-import { connect, utilOf, reactOf } from '/landxi/ops/js/telemetry.js';
-import { panel } from '/landxi/ops/js/deploy-map.js';
-import { sse, JOB_EVENTS } from '/landxi/shared/api-v1.js';
+import { gate, ready, get, h, prov, setText, fmt, tag, goal, hhmmss, SRC, write, guardWrite, toast, errText, api, t } from './js/boot.js';
+import { mountFrame } from './js/rail.js';
+import { mountPalette } from './js/palette.js';
+import { ring } from './js/rings.js';
+import { spark } from './js/sparkline.js';
+import { swimlanes, queueRows, leader } from './js/lanes.js';
+import { alertStrip } from './js/alerts.js';
+import { connect, utilOf, reactOf } from './js/telemetry.js';
+import { panel } from './js/deploy-map.js';
+import { sse, JOB_EVENTS } from '../shared/api-v1.js';
 
 // 임계 — 전부 [목표](Ops 80% 규칙: 온도 85°C×.8 · VRAM 95%×.8 · 이용률 100×.8). 폴러가 caution/fault 를 주면 그것을 쓴다(v1.1-28).
 const CAUTION = { temp: 68, vram: 0.76, util: 80 };
@@ -390,7 +390,7 @@ if (w) {
   const capBody = h('div', { class: 'og-body' });
   G.append(h('section', { class: 'og-panel og-dash inf-cap' }, h('header', {}, h('h2', {}, '용량 계획'), h('span', { class: 'og-sub' }, 'infra.js capacityPlan()'), h('span', { class: 'og-right' }, tag('estimate', '추정'))), capBody));
   try {
-    const inf = await import('/landxi/assets/data/infra.js');
+    const inf = await import('../assets/data/infra.js');
     const plan = inf.capacityPlan(); const gpuN = (gpus?.gpus || []).length || 2;
     const capGpu = gpuN * 24 * 300;
     const rows = plan.rows.map((r) => r.id === 'gpu' ? { ...r, cap: capGpu, pct: Math.round(r.use / capGpu * 100), afterPct: Math.round(r.after / capGpu * 100), note: `GPU ${gpuN}장(nodes 합계 · infra.js gpuCards ${inf.CAPACITY.gpuCards} 아님) × 24h × 300일` } : r);

@@ -2,12 +2,12 @@
    작성 Fable 5.1 · 2026-09-27. 화면 에이전트는 import 만 한다. 변경 요청은 보고서 '요청' 절로.
    무대 하나: 회백 바탕 + 흰 면 · 짙은 잉크 · 색은 지도·사진·AI 결과 위에서만. 라운드 24/16/8 · 유리 0 · 바탕 위 그림자 0. */
 
-@font-face{font-family:'Pretendard';font-weight:400;font-display:swap;src:url('/landxi/assets/fonts/Pretendard-Regular.woff2') format('woff2')}
-@font-face{font-family:'Pretendard';font-weight:500;font-display:swap;src:url('/landxi/assets/fonts/Pretendard-Medium.woff2') format('woff2')}
-@font-face{font-family:'Paperlogy';font-weight:700;font-display:swap;src:url('/landxi/assets/fonts/Paperlogy-7Bold.woff2') format('woff2')}
-@font-face{font-family:'Paperlogy';font-weight:800;font-display:swap;src:url('/landxi/assets/fonts/Paperlogy-8ExtraBold.woff2') format('woff2')}
-@font-face{font-family:'Inter';font-weight:400;font-display:swap;src:url('/landxi/assets/fonts/Inter-400.woff2') format('woff2')}
-@font-face{font-family:'Inter';font-weight:500;font-display:swap;src:url('/landxi/assets/fonts/Inter-500.woff2') format('woff2')}
+@font-face{font-family:'Pretendard';font-weight:400;font-display:swap;src:url('../../assets/fonts/Pretendard-Regular.woff2') format('woff2')}
+@font-face{font-family:'Pretendard';font-weight:500;font-display:swap;src:url('../../assets/fonts/Pretendard-Medium.woff2') format('woff2')}
+@font-face{font-family:'Paperlogy';font-weight:700;font-display:swap;src:url('../../assets/fonts/Paperlogy-7Bold.woff2') format('woff2')}
+@font-face{font-family:'Paperlogy';font-weight:800;font-display:swap;src:url('../../assets/fonts/Paperlogy-8ExtraBold.woff2') format('woff2')}
+@font-face{font-family:'Inter';font-weight:400;font-display:swap;src:url('../../assets/fonts/Inter-400.woff2') format('woff2')}
+@font-face{font-family:'Inter';font-weight:500;font-display:swap;src:url('../../assets/fonts/Inter-500.woff2') format('woff2')}
 
 :root{
   /* 서체 */

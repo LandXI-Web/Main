@@ -8,10 +8,10 @@
   addEventListener('pagereveal', h); addEventListener('pageswap', h); })();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LX/OPS — 관제실 로그인</title>
-<link rel="stylesheet" href="/landxi/proto/fonts-system.css">
-<link rel="stylesheet" href="/landxi/assets/css/v2/tokens-v2.css">
-<link rel="stylesheet" href="/landxi/assets/css/v2/ops-grid.css">
-<link rel="stylesheet" href="/landxi/ops/ops.css">
+<link rel="stylesheet" href="../proto/fonts-system.css">
+<link rel="stylesheet" href="../assets/css/v2/tokens-v2.css">
+<link rel="stylesheet" href="../assets/css/v2/ops-grid.css">
+<link rel="stylesheet" href="./ops.css">
 </head>
 <!-- 종이 무대(v1 법): 흰 바탕 · 잉크 · 헤어라인 · 그림자 0. 관리자 로그인 뒤 1600ms 명도 반전 → 같은 얼굴판 지도가 운영 현황 배포 지도로 자란다. -->
 <body data-stage="paper">
@@ -45,12 +45,12 @@
 </div>
 <div class="lg-opsmark" aria-hidden="true">LX<b>/</b>OPS</div>
 <script type="module">
-import { portGate, detect, login, who, SRC, prov, ready, hhmmss, h, fmt, setText, errText } from '/landxi/ops/js/boot.js';
-import { createMap, inkMix, tween, eCam } from '/landxi/ops/js/deploy-map.js';
-import { mountOverview } from '/landxi/ops/js/overview.js';
-import { mountFrame } from '/landxi/ops/js/rail.js';
-import { mountPalette } from '/landxi/ops/js/palette.js';
-import { fixture } from '/landxi/shared/api-v1.js';
+import { portGate, detect, login, who, SRC, prov, ready, hhmmss, h, fmt, setText, errText } from './js/boot.js';
+import { createMap, inkMix, tween, eCam } from './js/deploy-map.js';
+import { mountOverview } from './js/overview.js';
+import { mountFrame } from './js/rail.js';
+import { mountPalette } from './js/palette.js';
+import { fixture } from '../shared/api-v1.js';
 
 const $ = (id) => document.getElementById(id);
 if (portGate()) {

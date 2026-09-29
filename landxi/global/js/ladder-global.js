@@ -2,7 +2,7 @@
    GIBS VIIRS 어제(0–5) → EOX S2 cloudless 2025(5–9 · build=export 면 2017) → PC 월별 S2 모자이크(9–14) → WorldCover → NDVI(지수)
    → Overture 건물(13+) → Maxar 0.5 m(미얀마 · 시연 한정 · export/public 제외 → S2 전후 대체).
    카탈로그: on = GET /catalog/layers · off = data/catalog-fixture-global.json + 같은 라이선스 가드(서버 build_ok 와 같은 규칙). */
-import { API, api, catalog, fixture, tileUrl } from '/landxi/shared/api-v1.js';
+import { API, api, catalog, fixture, tileUrl } from '../../shared/api-v1.js';
 import { t } from './i18n.js';
 import { D, mem, dcache } from './globe-stage.js';
 

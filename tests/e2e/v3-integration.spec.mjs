@@ -28,8 +28,10 @@ test.describe('v3 통합 — 정문 · 착지 · 이동', () => {
     await page.goto('index.html');
     await page.waitForURL(/\/landxi\/v3\/main\/$/);
     const login = page.locator('a[data-login]').first();
-    await expect(login).toHaveAttribute('href', '/landxi/v3/login/');
-    await page.goto(await login.getAttribute('href'));
+    // 상대경로(GitHub Pages /Main/ 아래에서도 동작) — 해석된 주소로 확인한다
+    const href = await login.evaluate((a) => a.href);
+    expect(new URL(href).pathname).toMatch(/\/landxi\/v3\/login\/$/);
+    await page.goto(href);
     await expect(page.locator('#form')).toBeVisible();
   });
 

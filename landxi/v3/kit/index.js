@@ -1,5 +1,5 @@
 /* Land-XI 공용 부품 키트 — 한 줄 import.
-   import * as K from '/landxi/v3/kit/index.js'   또는 부품 파일을 직접: import { bignum } from '/landxi/v3/kit/bignum.js' */
+   import * as K from './index.js'   또는 부품 파일을 직접: import { bignum } from './bignum.js' */
 export { shell, icon } from './shell.js';                                        // K1
 export { gate, whoami, logout, landingFor, homeFromPath, ALLOW, FRONT } from './auth-gate.js';   // K2
 export { createStage, KOREA } from './stage.js';                                  // K3

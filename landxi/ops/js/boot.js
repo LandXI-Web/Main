@@ -5,7 +5,7 @@
  *   /landxi/ops/bridge/health .ok                  → bridge (게이트웨이가 죽었을 때만 자동 전환 · 마스트 '브리지 · 메모리' · 쓰기 = 브리지 메모리)
  *   localStorage.lx_ops_src === 'bridge'           → bridge 강제(e2e 로컬 워커 프로토콜 · 시연 재현)
  * api-v1.js 는 동결 파일이라 고치지 않는다 — base 는 이 origin 의 localStorage.lx_api_base 로만 바꾼다(:4173 과 분리). */
-import { API, session, probe, api, fixture, assertEnvelope, isEnvelope, BASIS_KO, fmt, mastLabel, ApiError } from '/landxi/shared/api-v1.js';
+import { API, session, probe, api, fixture, assertEnvelope, isEnvelope, BASIS_KO, fmt, mastLabel, ApiError } from '../../shared/api-v1.js';
 
 export { API, api, fmt, isEnvelope, BASIS_KO, ApiError };
 export const OPS_PORT = '8702';

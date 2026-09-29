@@ -2,8 +2,8 @@
    서버 공개 API(§3 S-3 · S-4 · S-6 · S-7)가 열려 있으면 그것을 읽고, 아직 없으면 같은 모양의 공개 사본(./data/*.json)을 읽는다.
    사본은 tools/build-data.py 가 실데이터(전국 하천구역 건물 점유 분석 · 연속지적 × AI 판독 · 배포 기록)로 만든다 — 지어낸 숫자 0.
    hasRoute() 로 먼저 확인해 없는 경로를 부르지 않는다(404 콘솔 오류 0). */
-import { api, hasRoute, isEnvelope, session, API } from '/landxi/v3/kit/util.js';
-import { devlog } from '/landxi/v3/kit/dev-drawer.js';
+import { api, hasRoute, isEnvelope, session, API } from '../kit/util.js';
+import { devlog } from '../kit/dev-drawer.js';
 
 const LOCAL = new URL('./data/', import.meta.url).href;
 const local = (f) => fetch(LOCAL + f).then((r) => (r.ok ? r.json() : Promise.reject(new Error(f))));

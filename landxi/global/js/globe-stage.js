@@ -2,12 +2,12 @@
    F2-D: 락온 · 스와이프 · 프로비넌스 · 핀 앵커 · 카드 등장은 F1-A fx(landxi/xi/fx/*) import — 로컬 부품 삭제.
    남은 로컬: 스윕(fx 는 arrive() 안에만 있고 단독 export 가 없다 · 결과 문서 인터페이스 요청) · GIBS 날짜 띠(에포크 층이 아니라 setTiles 교체).
    카메라: 장거리(≥ 6 줌) = --e-fly cubic-bezier(.45,0,.25,1) 2400(법전 §3 추가 · Fable 채택) · 단거리 = --e-cam. */
-import { yesterdayUTC } from '/landxi/shared/api-v1.js';
+import { yesterdayUTC } from '../../shared/api-v1.js';
 import { t, num, basisLabel, locale } from './i18n.js';
-import { lock as fxLock, clearLocks as fxClearLocks } from '/landxi/xi/fx/arrive.js';
-import { swipe as fxSwipe } from '/landxi/xi/fx/swipe.js';
-import { prov as fxProv } from '/landxi/xi/fx/provenance.js';
-import { anchor as fxAnchor } from '/landxi/xi/fx/glass.js';
+import { lock as fxLock, clearLocks as fxClearLocks } from '../../xi/fx/arrive.js';
+import { swipe as fxSwipe } from '../../xi/fx/swipe.js';
+import { prov as fxProv } from '../../xi/fx/provenance.js';
+import { anchor as fxAnchor } from '../../xi/fx/glass.js';
 
 /* ── 모션 사다리(system-v2 §3) ─────────────────────────────────────── */
 export const D = { 40: 40, 60: 60, 80: 80, 120: 120, 180: 180, 380: 380, 500: 500, 750: 750, 1000: 1000, 1250: 1250, 1600: 1600, 2400: 2400, 3200: 3200 };   // 3200 = --e-fly 초장거리(Δz ≥ 10 · 판정 3차 제안 값 · §3 기입 요청)
