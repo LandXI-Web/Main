@@ -82,7 +82,8 @@ export function placeOf(d) {
   const sido = [...w].sort((a, b) => b[1] - a[1])[0][0];
   const members = regs.filter((r) => r.sido === sido);
   const bbox = union(members.map((r) => r.bbox));
-  return { kind: 'sido', key: 'sido:' + sido, sgg_cd: null, name: sido, bbox, center: mid(bbox), regs: members };
+  return { kind: 'sido', key: 'sido:' + sido, sgg_cd: null, name: d.region_name?.ko || sido,   // 기관 이름과 한 표기(lx-deploy 와 같은 출처)
+    bbox, center: mid(bbox), regs: members };
 }
 /** 배포본 → 지역(비행·URL 용) — 걸친 지역 전부의 상자 */
 export const regionOfDeploy = (d) => placeOf(d);
@@ -106,7 +107,7 @@ function today({ fA, fb30, drafts, reports }) {
   /* 검수 대기 — A등급 열린 의심 필지(서버 봉투 그대로) */
   const top = fA?.items?.[0];
   const rTop = regionAt(lnglatOf(top));
-  const review = { k: 'review', label: '검수 대기', env: isEnvelope(fA?.total) ? fA.total : null, region: rTop,
+  const review = { k: 'review', label: '확인 대기', env: isEnvelope(fA?.total) ? fA.total : null, region: rTop,
     href: V3 + 'lx-review/' + q({ region: rTop?.sgg_cd, finding: top?.id }) };
   /* 재학습 — 지난 30일 열린 오탐 신고가 한 결과 층에 5건 이상 */
   const bySet = new Map();
@@ -122,7 +123,7 @@ function today({ fA, fb30, drafts, reports }) {
   const dl = (drafts?.items || []).filter((d) => d.stage === 'draft' && !isTest(d.id))
     .map((d, i) => [d, i]).sort((a, b) => String(b[0].updated_at || '').localeCompare(String(a[0].updated_at || '')) || String(a[0].id || '').localeCompare(String(b[0].id || '')) || a[1] - b[1]).map(([d]) => d);
   const rPort = placeOf(dl[0]);
-  const port = { k: 'port', label: '이식 요청', env: drafts ? counted(dl.length, drafts.as_of, '배포 기록') : null, region: rPort, maxZoom: 8.5,
+  const port = { k: 'port', label: '적용 요청', env: drafts ? counted(dl.length, drafts.as_of, '배포 기록') : null, region: rPort, maxZoom: 8.5,
     href: V3 + 'lx-deploy/' + q({ deploy: dl[0]?.id, region: dl[0]?.sgg_cd || rPort?.sgg_cd }), first: dl[0] };
   /* 기관 신고 — 열린 기관 신고(최근 먼저) */
   const open = (reports?.items || []).filter((f) => f.state === 'open').sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
@@ -135,7 +136,7 @@ function today({ fA, fb30, drafts, reports }) {
 
 /* ── 지도 점 ──────────────────────────────────────────
    전국(level 'nat') = 배포본 자리마다 하나(여러 시군구에 걸친 배포본은 시도 1점) · 확대(level 'sgg') = 시군구로 분해. */
-export const STAGE_KO = { ga: '운영', canary: '시범', shadow: '시범', draft: '이식 요청' };
+export const STAGE_KO = { ga: '운영', canary: '시범', shadow: '시범', draft: '적용 요청' };
 const RANK = { ga: 0, canary: 1, shadow: 2, draft: 3 };
 export function pins(level = 'nat') {
   const by = new Map();

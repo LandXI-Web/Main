@@ -207,7 +207,7 @@ paintDrop();
 function showIngest() {
   ingestCard.hidden = false;
   const e = h('div');
-  K.empty(e, { kind: 'ingest', char: 'drone', title: '영상 반입 필요', text: '이 지역 영상이 등록되면 판독이 시작됩니다', compact: true, action: { label: '영상 반입 요청', onClick: requestImagery } });
+  K.empty(e, { kind: 'ingest', char: 'drone', title: '영상 등록 필요', text: '이 지역 영상이 등록되면 AI 분석이 시작됩니다', compact: true, action: { label: '영상 등록 요청', onClick: requestImagery } });
   eager(e);
   ingestCard.innerHTML = ''; ingestCard.append(e);
   requestAnimationFrame(padStage);
@@ -217,8 +217,8 @@ async function requestImagery(ev) {
   const bb = S.region.bbox;
   try {
     // 계약 kind 'imagery_request' — 서버 feedback 이 아직 fp|fn|other 만 받아서 other + 메모 머리말로 보낸다(보고서 '서버 요청')
-    await api('/feedback', { method: 'POST', body: { kind: 'other', lnglat: [(bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2], note: `영상 반입 요청 · ${S.region.full}${S.rec ? ` · ${S.rec.name}` : ''}` } });
-    K.toast('영상 반입을 요청했습니다');
+    await api('/feedback', { method: 'POST', body: { kind: 'other', lnglat: [(bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2], note: `영상 등록 요청 · ${S.region.full}${S.rec ? ` · ${S.rec.name}` : ''}` } });
+    K.toast('영상 등록을 요청했습니다');
   } catch { K.toast('요청하지 못했습니다'); if (b) b.disabled = false; }
 }
 
@@ -449,7 +449,7 @@ function paint(fn) {
 /* ═════════════ 4 · 결과 ═════════════ */
 const SMALL = [['park', '주차장'], ['fal', '경작 흔적 없음(확인 필요)']];
 let resTable = null, ansEl = null, rateEl = null;
-const est = (n) => { const e = env(n, '필지', 'estimate', '대장 × 2023 25cm 항공영상 AI 판독 · 규칙 L-*', '검수 전'); e.as_of = S.srv?.confirmed_at || S.F?.as_of || e.as_of; return e; };
+const est = (n) => { const e = env(n, '필지', 'estimate', '대장 × 2023 25cm 항공영상 AI 분석', '확인 전'); e.as_of = S.srv?.confirmed_at || S.F?.as_of || e.as_of; return e; };
 function setBig(label, e) { big.set(e); big.label(label); }
 function catIdx(id) { const m = S.F?.[id]; if (!m) return []; const out = []; for (const pn of m.keys()) { const i = S.byPnu.get(pn); if (i !== undefined) out.push(i); } return out; }
 const catN = (id) => (S.F?.[id] ? S.F[id].size : null);
@@ -501,7 +501,7 @@ function paintRate() {
     rateEl.append(h('span.gf-dot', { text: '·' }), b);
   }
 }
-const fileName = () => S.rec?.name || S.srv?.filename || '';
+const fileName = () => S.rec?.name || String(S.srv?.filename || '').replace(/(\.(?:xlsx|xls|shp|zip|gpkg|geojson|json))\.csv$/i, '$1');
 
 function result() {
   pane('result');
@@ -539,7 +539,7 @@ function result() {
   }
   resTable = K.table(tblEl, {
     cols: [
-      { key: 'jb', label: '지번' }, { key: 'lg', label: '대장' }, { key: 'ai', label: 'AI 판독' }, { key: 'yd', label: '용도지역' },
+      { key: 'jb', label: '지번' }, { key: 'lg', label: '대장' }, { key: 'ai', label: 'AI 분석' }, { key: 'yd', label: '용도지역' },
       { key: 'st', label: '상태', fmt: (v, r) => esc(STATE_KO[stateOf(r.pnu)] || '—') },
     ],
     rows: [], limit: TOP(), onRow: (r) => openParcel(r.pnu, true),
@@ -618,8 +618,8 @@ async function openParcel(pnu, fly) {
   if (fly && o._bb) goReady(o._bb, { ms: 1400, maxZoom: 17, budget: 1500 });
   const body = h('div.gf-parcel');
   const vw = S.index ? [o['V-World 지목'], o['V-World 용도지역'], o['V-World 농업진흥']].filter(Boolean).join(' · ') || '—' : ((S.vwProps && S.vwProps.get(pnu)) || '—');
-  const ai = S.index ? aiText(o) : '영상 반입 필요';
-  body.append(h('dl.gf-tri', { html: `<dt>대장</dt><dd>${esc(o._state || '—')}${o._date ? ` · ${esc(o._date)}` : ''}</dd><dt>AI 판독</dt><dd>${esc(ai)}</dd><dt>V-World</dt><dd>${esc(vw)}${o['V-World 면적(㎡)'] ? ` · ${nf(Math.round(o['V-World 면적(㎡)']))}㎡` : ''}</dd>` }));
+  const ai = S.index ? aiText(o) : '영상 등록 필요';
+  body.append(h('dl.gf-tri', { html: `<dt>대장</dt><dd>${esc(o._state || '—')}${o._date ? ` · ${esc(o._date)}` : ''}</dd><dt>AI 분석</dt><dd>${esc(ai)}</dd><dt>V-World</dt><dd>${esc(vw)}${o['V-World 면적(㎡)'] ? ` · ${nf(Math.round(o['V-World 면적(㎡)']))}㎡` : ''}</dd>` }));
   const act = h('div.gf-act'); body.append(act);
   const d = K.drawer({ title: o._jb, body, host: stageEl, slot: 'parcel', onClose: () => stage.map.getLayer(hl) && stage.map.setFilter(hl, ['==', ['get', 'pnu'], '__']) });
   if (!S.index) return;
@@ -714,7 +714,7 @@ let askSeq = 0;
 /* 영상 없는 관할 — 모델을 부르지 않는다(판독 전 · 지어내지 않는다) */
 function askNoImagery(q) {
   const ctx = askCtx(); const k = keysOf(q);
-  if (k.bld || k.park || k.gh || k.fal) { sayOnly('영상 반입 필요 · 판독 전', 2200); S.log.push({ q, used: 'no-imagery' }); return; }
+  if (k.bld || k.park || k.gh || k.fal) { sayOnly('영상 등록 필요 · AI 분석 전', 2200); S.log.push({ q, used: 'no-imagery' }); return; }
   const R = rulePlan(q, ctx);
   const where = R.where.filter((w) => !/^AI |^V-World /.test(w.field));
   const hits = run(where, S.fused);
@@ -813,7 +813,7 @@ function download() {
   const idx = S.query ? S.query.hits : S.index ? catIdx(S.cat) : S.fused.map((o, i) => (o ? i : -1)).filter((i) => i >= 0);
   const ledgerCols = S.rec?.rows ? (S.cols || []).filter((c) => c.role !== 'skip').map((c) => c.col) : [];
   const q = (v) => { const s = String(v ?? ''); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-  const heads = ['지번', ...ledgerCols, '대장', 'AI 판독', '용도지역', '상태', 'PNU'];
+  const heads = ['지번', ...ledgerCols, '대장', 'AI 분석', '용도지역', '상태', 'PNU'];
   const lines = [heads.join(',')];
   const evKey = S.query ? S.query.evKey : EVKEY[S.cat];
   for (const i of idx) {

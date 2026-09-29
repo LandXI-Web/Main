@@ -32,7 +32,7 @@ const stageEl = h('div.oc-map');
 const seg = h('div.oc-seg', { role: 'tablist', 'aria-label': '지도 범위' },
   h('button', { type: 'button', role: 'tab', 'aria-selected': 'true', dataset: { s: 'kr' }, text: '국내' }),
   h('button', { type: 'button', role: 'tab', 'aria-selected': 'false', dataset: { s: 'abroad' }, text: '해외' }));
-const legend = h('div.oc-legend', { 'aria-hidden': 'true', html: '<span data-stage="ga"><i></i>운영</span><span data-stage="pilot"><i></i>시범</span><span data-stage="verify"><i></i>검증</span><span data-stage="port"><i></i>이식 요청</span>' });
+const legend = h('div.oc-legend', { 'aria-hidden': 'true', html: '<span data-stage="ga"><i></i>운영</span><span data-stage="pilot"><i></i>시범</span><span data-stage="verify"><i></i>검증</span><span data-stage="port"><i></i>적용 요청</span>' });
 const big = h('div.oc-big');
 const openBtn = h('a.t-btn.oc-open', { href: '#/approvals', text: '결재함 열기' });
 const todoEl = h('ul.oc-todo');

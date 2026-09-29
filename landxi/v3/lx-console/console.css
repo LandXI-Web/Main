@@ -119,3 +119,9 @@
   .lc-mx-big .t-big{font-size:48px;line-height:54px}
 }
 @media (prefers-reduced-motion:reduce){.lc-cell,.lc-mx-r{animation:none}.lc-pin.is-on .lc-dot i::before{animation:none}}
+
+/* 부팅 진행 막대(글자 없음) */
+.lc-boot{position:absolute;z-index:5;left:50%;top:50%;width:160px;margin-left:-80px}
+.lc-boot i{width:40%;animation:lc-boot 1.2s var(--e-ui) infinite alternate}
+@keyframes lc-boot{from{margin-left:0}to{margin-left:60%}}
+@media (prefers-reduced-motion:reduce){.lc-boot i{animation:none;width:100%}}

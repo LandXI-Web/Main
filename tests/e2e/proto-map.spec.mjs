@@ -57,6 +57,7 @@ test.describe('셸 · 뼈대', () => {
   /* F2-R: 구 XI맵(ximap.html)은 직접 URL 로만 열린다 — 이 네 페이지의 레일 '지도 서비스'는 새 XI맵(../xi/index.html)을 가리킨다.
      통계 · 보고서는 ?embed=1 이 아니면 예전 셸 그대로(embed 는 f2r-embed.spec). */
   test('네 페이지 모두 같은 셸 — 레일 9 · 지도 서비스 활성 · 푸터 정본', async ({ page }) => {
+    test.skip(true, 'F3 통합(2026-09-29) — 구 proto 레일은 v3 집으로 옮겼다 · 대체: v3-integration.spec');
     for (const url of [MAP, STATS, RLIST, RISSUE]) {
       await boot(page, url);
       await expect(page.locator('#rail .rail-i[aria-current="page"]')).toHaveCount(1);

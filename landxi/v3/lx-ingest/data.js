@@ -266,7 +266,7 @@ export const LEDGER = [
   { k: 'zoning', label: '용도지역·농업진흥', layers: ['LT_C_UQ111', 'LT_C_UQ112', 'LT_C_UQ113', 'LT_C_AGRIXUE101'], by: 'name' },
   { k: 'gb', label: '개발제한구역', layers: ['LT_C_UD801'], by: 'name' },
   { k: 'bldg', label: '건축물대장', layers: ['LT_C_BLDGINFO'], by: 'point' },
-  { k: 'farm', label: '농지대장(기관 반입)', agency: true },
+  { k: 'farm', label: '농지대장(기관 제공)', agency: true },
 ];
 
 /** 대장 한 줄 상태 — 'yes' | 'no' | 'agency' | 'unknown'
@@ -369,7 +369,7 @@ export async function joinRate(basis, { force = false } = {}) {
     const joined = [...by.values()].reduce((s, v) => s + v, 0);
     const per = new Map(basis.emds.map((e) => [e.cd, e.parcels?.value ? (by.get(e.cd) || 0) / e.parcels.value : 0]));
     const value = basis.parcels ? Math.round((joined / basis.parcels) * 1000) / 10 : null;
-    const e = { ...env(value, '%', 'inferred', basis.set, '검수 전 · AI 결과와 겹친 필지 ÷ 지역 필지'), as_of: j.lx?.count?.as_of || new Date().toISOString() };
+    const e = { ...env(value, '%', 'inferred', basis.set, '확인 전 · AI 결과와 겹친 필지 ÷ 지역 필지'), as_of: j.lx?.count?.as_of || new Date().toISOString() };
     devlog('join rate', `${joined} / ${basis.parcels} = ${value}% · ${j.lx?.ms} ms`);
     return { env: e, per, joined, fc: { type: 'FeatureCollection', features: (j.features || []).filter((f) => f.geometry) } };
   })();

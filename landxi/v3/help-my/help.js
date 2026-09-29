@@ -50,7 +50,7 @@ async function notice(el) {
   let open = null;
   const T = table(w, {
     cols: [
-      { key: 'title', label: '제목', fmt: (v, r) => `${r.pin ? '<i class="hm-pin" aria-hidden="true"></i>' : ''}<span class="hm-tt">${esc(v)}</span>` },
+      { key: 'title', label: '제목', fmt: (v, r) => `<span class="hm-tt">${esc(v)}</span>` },
       { key: 'date', label: '날짜', width: '92px', num: true, fmt: (v) => `<span class="hm-d">${esc(dot(v))}</span>` },
     ],
     rows, limit: MAX,

@@ -109,7 +109,7 @@ export async function ledgerStore(who) {
       r.rows.forEach((row, i) => { lines.push([r.match[i] || '', ...(pick.jibun ? [row[pick.jibun]] : []), ...(pick.status ? [row[pick.status]] : []), ...(pick.date ? [row[pick.date]] : [])].map(q).join(',')); });
       const fd = new FormData();
       fd.append('kind', kind);
-      fd.append('file', new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv' }), String(r.name || '대장').replace(/\.[^.]+$/, '') + '.csv');
+      fd.append('file', new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv' }), String(r.name || '대장.csv').replace(/\.csv$/i, '') + '.csv');   // 원래 이름을 남긴다(운봉읍_농지목록.xlsx.csv → 화면은 .xlsx)
       const s = session.get();
       const res = await fetch(API.prefix + base + '/import', { method: 'POST', body: fd, headers: s ? { authorization: 'Bearer ' + s.token } : {} });
       if (!res.ok) throw new Error('import ' + res.status);

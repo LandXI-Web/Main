@@ -5,7 +5,8 @@
      · 게스트  = 카드 원천(landxi/assets/data/cards.js — 서버 시드가 읽는 그 파일)에서 이름·상태·모듈만. 숫자 0.
    모듈 이름(사용자 말)은 카드 원천의 EXT_MODULES 에서, 결과 크롭은 data/visuals.json 에서.
    3차: 정적 화면 캡처(숫자가 박힌 XI맵·할 일·보고서 사진) 0 — '결과 지도' 블록은 그 배포본의 결과 층을 실시간으로 그린다.
-   4차: 블록은 항상 3 이상(크롭 없는 모듈 = K9 compact) · 결과 세트마다 지역(visuals.sets[].region/where) — 지금 지역 밖이면 화면이 '예시'를 붙인다.
+   4차: 결과 세트마다 지역(visuals.sets[].region/where) — LX 는 지금 지역 밖이면 예시, 기관은 관할 밖 세트를 뺀다(6차).
+   6차: 블록 = 실결과·결과 지도만, 3개가 안 되면 K9 1개.
    5차: 큰 숫자 = 실태조사 '현장 확인 필요'(XI맵과 같은 출처 · surveyOf) — 탐지 총수(봉투 scale)는 숫자 자리에 싣지 않는다 · 모듈 문장은 사용자 말로(plain).
    지역 착지: 배포본 sgg_cd → 지역 이름(시군구 경계 파일에서) → 결과 위치(크롭 좌표) → 배포 범위 중심 순. 해외 = 나라 · 지역 id. */
 import { API, api, hasRoute, isEnvelope, bboxOf } from '/landxi/v3/kit/util.js';
@@ -80,16 +81,20 @@ export async function loadDetail(id, list, who) {
   return { card, intro: it, real, pending, core, hero, vis, key };
 }
 
-/** 교차 블록 3–5(항상 3 이상) — ① 실결과 모듈(크롭) → ② 결과 지도(그 배포본 결과 층 · 실시간)
-    → ③ 3개가 될 때까지 크롭 없는 전용 모듈(만든 것 → 만드는 중 → 설계만 · K9 compact)
-    → ④ 그래도 모자라면 공통 모듈(K9 compact · 결과 지도가 이미 있으면 지도 열람은 뺀다).
-    정적 화면 캡처·다른 카드 화면으로 채우지 않는다. */
-export function buildBlocks(D, live) {
+/** 교차 블록 — ① 실결과 모듈(크롭 · 그 카드 실결과가 있는 지역 화면만) → ② 결과 지도(그 배포본 결과 층 · 실시간)
+    → ③ 둘을 합쳐 3개가 안 되면 K9 **1개**(만든 정도가 가장 높은 남은 모듈 · 없으면 공통 모듈 첫째). 최대 5.
+    다른 카드·다른 지역 화면이나 정적 캡처로 채우지 않는다. `drop(set)` = 이 사용자에게 보이면 안 되는 결과 세트(기관 관할 밖). */
+export function buildBlocks(D, live, drop = () => false) {
   const MIN = 3, MAX = 5;
-  const out = D.real.slice(0, MAX);
-  if (live && out.length < MAX) out.push({ kind: 'live', id: 'core-map', name: '결과 지도', desc: '판독 결과를 그 지역 지도에 바로 올림', ...live });
-  for (const b of D.pending) { if (out.length >= MIN) break; out.push(b); }
-  for (const b of D.core || []) { if (out.length >= MIN) break; if (live && b.core === 'mapview') continue; out.push(b); }
+  const real = [], rest = [];
+  for (const b of D.real) { const sets = b.sets.filter((s) => !drop(s)); (sets.length ? real : rest).push(sets.length ? { ...b, sets } : { ...b, sets: [], kind: 'empty' }); }
+  const out = real.slice(0, MAX);
+  if (live && out.length < MAX) out.push({ kind: 'live', id: 'core-map', name: '결과 지도', desc: 'AI 분석 결과를 그 지역 지도에 바로 올림', ...live });
+  if (out.length < MIN) {
+    const k9 = [...rest, ...D.pending].sort((a, b) => b.grade - a.grade)[0]
+      || (D.core || []).find((b) => !(live && b.core === 'mapview'));
+    if (k9) out.push(k9);
+  }
   return out;
 }
 

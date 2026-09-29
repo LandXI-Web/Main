@@ -88,11 +88,11 @@ export function precisionFor(d, { rules = [], statOf, byRule = null } = {}) {
     /* 규칙은 걸려 있는데 표본 검수 기록이 아직 없음 — 값 대신 표본 수(lx-review 의 '— · 0/100' 과 같은 뜻) */
     if (!mine.length) return null;
     const k0 = mine.reduce((a, r) => a + (statOf(r.id)?.k || 0), 0);
-    return { value: null, unit: 'ratio', basis: 'estimate', k: k0, source: `표본 검수 ${k0}건`, note: `표본 ${k0}/${SAMPLE_GOAL}` };
+    return { value: null, unit: 'ratio', basis: 'estimate', k: k0, source: `표본 확인 ${k0}건`, note: `표본 ${k0}/${SAMPLE_GOAL}` };
   }
   const k = got.reduce((a, s) => a + (s.k || 0), 0);
   const value = got.length === 1 ? got[0].precision.value : Math.round((got.reduce((a, s) => a + s.precision.value * (s.k || 0), 0) / Math.max(1, k)) * 100) / 100;
   const base = got[0].precision;
   return { ...base, value, basis: k >= SAMPLE_GOAL ? base.basis : 'estimate', as_of: got.map((s) => s.precision.as_of).filter(Boolean).sort().pop() || base.as_of,
-    source: `표본 검수 ${k}건`, note: `표본 ${k}/${SAMPLE_GOAL}`, k };
+    source: `표본 확인 ${k}건`, note: `표본 ${k}/${SAMPLE_GOAL}`, k };
 }

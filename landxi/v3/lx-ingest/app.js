@@ -13,12 +13,12 @@ const V3 = '/landxi/v3/';
 
 /* ── 셸 + 레일(① 현재) ─────────────────────────────────────── */
 const RAIL = [
-  { id: 'ingest', label: '반입' },
+  { id: 'ingest', label: '데이터 올리기' },
   { id: 'train', label: '학습', base: V3 + 'lx-train/' },
-  { id: 'assemble', label: '조립', base: V3 + 'lx-console/', hash: '#assemble' },
-  { id: 'review', label: '검수', base: V3 + 'lx-review/' },
+  { id: 'assemble', label: '서비스 만들기', base: V3 + 'lx-console/', hash: '#assemble' },
+  { id: 'review', label: '결과 확인', base: V3 + 'lx-review/' },
   { id: 'deploy', label: '배포', base: V3 + 'lx-deploy/' },
-  { id: 'ops', label: '운영', base: V3 + 'lx-deploy/', hash: '#ops' },
+  { id: 'ops', label: '서비스 관리', base: V3 + 'lx-deploy/', hash: '#ops' },
 ];
 const railHref = (r, sgg) => (r.base ? r.base + (sgg ? '?region=' + encodeURIComponent(sgg) : '') + (r.hash || '') : undefined);
 RAIL.forEach((r) => { r.href = railHref(r, qs.get('region')); });
@@ -148,14 +148,14 @@ function renderImagery(el, im) {
   el.replaceChildren();
   if (!im.labels.length) {
     const e = K.h('div'); el.append(e);
-    K.empty(e, { kind: 'ingest', char: 'drone', text: '이 지역 영상을 등록하면 판독을 시작할 수 있습니다', compact: true });
+    K.empty(e, { kind: 'ingest', char: 'drone', text: '이 지역 영상을 등록하면 AI 분석을 시작할 수 있습니다', compact: true });
     return;
   }
   const ul = K.h('ul.lxi-list');
   for (const r of im.labels.slice(0, 5)) ul.append(K.h('li', { html: `<span>${K.esc(r.label)}</span>${K.sig(r.env)}` }));
   el.append(ul);
 }
-const STATE = { yes: '있음', no: '없음', agency: '기관 반입 대기', unknown: '—' };
+const STATE = { yes: '있음', no: '없음', agency: '기관 제공 대기', unknown: '—' };
 function renderLedger(el, rows) {
   el.replaceChildren();
   const box = K.h('div'); el.append(box);
@@ -245,7 +245,7 @@ function jobRate(j, b) {
   const c = j?.counts || {};
   const joined = +c.joined_parcels, all = +(c.parcels || b.parcels);
   if (!(joined >= 0) || !all) return null;
-  return { ...env(Math.round((joined / all) * 1000) / 10, '%', 'inferred', j.id, '검수 전 · 결합 작업 결과'), as_of: j.finished_at || new Date().toISOString() };
+  return { ...env(Math.round((joined / all) * 1000) / 10, '%', 'inferred', j.id, '확인 전 · 결합 작업 결과'), as_of: j.finished_at || new Date().toISOString() };
 }
 function joinHandlers(b, region, my) {
   const rp = D.joinRate(b);   // 결합률은 같은 결과·필지에서 나온다(작업이 끝나면 같은 봉투로 다시 칠한다)

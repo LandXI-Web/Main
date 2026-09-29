@@ -18,9 +18,9 @@ E = E || kick();
 
 /* ── 셸 · 레일(공정 6단 · ④ 현재) ─────────────────────── */
 const RAIL = [
-  { id: 'ingest', label: '반입', href: '../lx-ingest/' }, { id: 'train', label: '학습', href: '../lx-train/' },
-  { id: 'assemble', label: '조립', href: '../lx-console/?open=assemble' }, { id: 'review', label: '검수' },
-  { id: 'deploy', label: '배포', href: '../lx-deploy/' }, { id: 'ops', label: '운영', href: '../lx-deploy/#ops' },
+  { id: 'ingest', label: '데이터 올리기', href: '../lx-ingest/' }, { id: 'train', label: '학습', href: '../lx-train/' },
+  { id: 'assemble', label: '서비스 만들기', href: '../lx-console/?open=assemble' }, { id: 'review', label: '결과 확인' },
+  { id: 'deploy', label: '배포', href: '../lx-deploy/' }, { id: 'ops', label: '서비스 관리', href: '../lx-deploy/#ops' },
 ];
 const S = K.shell({ who, home: 'lx-review', rail: { kind: 'steps', items: RAIL, current: 3, done: [0, 1, 2] } });
 /* 역할 칩 — 이름이 역할과 같으면(시드 계정 'LX 직원') 한 번만 쓴다(키트 K1 요청 전 화면 쪽 보정) */
@@ -49,13 +49,13 @@ let dr = null, sample = null, cardEl = null, cur = null;
 let byRule = null, queue = [], rule = null, region = null, all = null;
 const body = h('div.rv-board');
 function openDrawer() {
-  dr = K.drawer({ title: '', body, host: stageEl, slot: 'right', label: '검수', onClose: () => { dr = null; reopen.hidden = false; } });
+  dr = K.drawer({ title: '', body, host: stageEl, slot: 'right', label: '결과 확인', onClose: () => { dr = null; reopen.hidden = false; } });
   reopen.hidden = true;
   title();
 }
-const reopen = h('button.t-btn.t-btn--2.rv-reopen', { type: 'button', text: '검수', hidden: true, onclick: () => openDrawer() });
+const reopen = h('button.t-btn.t-btn--2.rv-reopen', { type: 'button', text: '결과 확인', hidden: true, onclick: () => openDrawer() });
 stageEl.append(reopen);
-const title = () => dr?.title(rule ? `④ 검수 · ${D.byId[rule]?.name || ''}` : '④ 검수');
+const title = () => dr?.title(rule ? `④ 결과 확인 · ${D.byId[rule]?.name || ''}` : '④ 결과 확인');
 let resolveQ; const queueReady = new Promise((r) => { resolveQ = r; });
 const any = () => Object.values(byRule || {}).some((e) => (e?.value || 0) > 0);
 
@@ -138,9 +138,9 @@ function board() {
   if (D.stage) body.prepend(h('span.t-chip.rv-stagechip', { text: '연습 판정 · 실제 정밀도에 들어가지 않음' }));
   const G = st.goal;              // 조건(표본) = 서버 gate_samples
   const ready = st.k >= G && (st.precision?.value ?? 0) >= st.gate;
-  const prog = h('div.t-progress.rv-prog', { role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': G, 'aria-valuenow': Math.min(st.k, G), 'aria-label': '표본 검수' }, h('i', { style: { width: Math.min(100, (st.k / G) * 100) + '%' } }));
+  const prog = h('div.t-progress.rv-prog', { role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': G, 'aria-valuenow': Math.min(st.k, G), 'aria-label': '표본 확인' }, h('i', { style: { width: Math.min(100, (st.k / G) * 100) + '%' } }));
   const samp = h('section.rv-sec', {},
-    h('div.rv-row', {}, h('span.t-label', { text: '표본 검수' }), h('span.rv-k.num', { html: `<b>${nf(st.k)}</b>/${nf(G)}` })),
+    h('div.rv-row', {}, h('span.t-label', { text: '표본 확인' }), h('span.rv-k.num', { html: `<b>${nf(st.k)}</b>/${nf(G)}` })),
     prog,
     sampling() || cardEl ? null : h('button.t-btn.t-btn--2.rv-wide', { type: 'button', text: `표본 ${SAMPLE} 보기`, onclick: () => startSample() }));
   body.append(samp);
@@ -152,9 +152,9 @@ function board() {
   body.append(prec);
 
   const acts = h('div.rv-acts');
-  if (st.reviewed) acts.append(h('span.t-chip.rv-done', { text: '✓ 검수됨' }));
+  if (st.reviewed) acts.append(h('span.t-chip.rv-done', { text: '✓ 확인됨' }));
   else {
-    const b = h('button.t-btn', { type: 'button', text: '검수 전 떼기', onclick: () => doUnTag() });
+    const b = h('button.t-btn', { type: 'button', text: '확인 완료', onclick: () => doUnTag() });
     if (!ready) { b.disabled = true; b.dataset.why = `표본 ${nf(st.k)}/${nf(G)}`; }
     const wrap = h('span.rv-tipw', { 'data-why': ready ? '' : `표본 ${nf(st.k)}/${nf(G)}` }, b);
     acts.append(wrap);
@@ -258,13 +258,13 @@ async function openCard(f, { from } = {}) {
   el.setAttribute('aria-label', '필지');
   el.innerHTML = `
     <div class="rv-card-h">
-      <span class="t-chip rv-tag${st.reviewed ? ' is-ok' : ''}">${st.reviewed ? '✓ 검수됨' : 'AI 판독 · 검수 전'}</span>
+      <span class="t-chip rv-tag${st.reviewed ? ' is-ok' : ''}">${st.reviewed ? '✓ 확인됨' : 'AI 분석 · 확인 전'}</span>
       ${idx >= 0 ? `<span class="rv-seq num">${idx + 1} / ${sample.length}</span>` : ''}
     </div>
     <p class="rv-addr">${esc(short(f))}</p>
     <div class="rv-pair">
       <div><span class="t-label">대장</span><b>${esc(f.jimok || '')} ${pm?.value != null ? nf(Math.round(pm.value)) + UNIT : '—'}${K.sig(pm)}</b></div>
-      <div class="is-ai"><span class="t-label">AI 판독</span><b>${aiLine}</b></div>
+      <div class="is-ai"><span class="t-label">AI 분석</span><b>${aiLine}</b></div>
     </div>
     <div class="rv-photo" role="status"><span>사진 불러오는 중</span><div class="t-progress k-empty-p is-indet"><i></i></div></div>
     <div class="rv-verdict" role="group" aria-label="판정">
@@ -304,7 +304,7 @@ async function openCard(f, { from } = {}) {
   const jn = p?.facts?.ledger?.jimok_nm; if (jn && jn !== f.jimok) { const b = el.querySelector('.rv-pair b'); if (b) b.firstChild.textContent = `${jn} `; }
   const fi = (p?.findings || []).find((z) => z.id === f.id);
   const ids = (fi?.ai_ids || []).map(String);
-  selP.then(() => aiShow(ids.length ? { ids, at: f.lnglat } : null));
+  selP.catch(() => {}).then(() => aiShow(ids.length ? { ids, at: f.lnglat } : null));
   /* 사진 타일이 필지 위에 깔린 뒤에만 판정 버튼을 연다 */
   await arrive;
   photoReady(f, el);
@@ -325,7 +325,8 @@ function photoReady(f, el) {
   const tick = () => {
     if (cur !== f || !el.isConnected) return;
     const m = stage.map;
-    if (!flying && !m.isMoving() && m.areTilesLoaded() && paintedHi >= 4) {
+    const aiOk = aiDoneFor === f || performance.now() - t0 > 8000;   // AI 층이 끝내 안 오면 8초 뒤 연다(사진 기준은 그대로)
+    if (!flying && !m.isMoving() && aiOk && m.areTilesLoaded() && paintedHi >= 4) {
       el.querySelector('.rv-photo')?.classList.add('is-out');
       el.querySelectorAll('.rv-verdict button').forEach((b) => { b.disabled = false; });
       T.photo = Math.round(performance.now() - t0); T.cardZ = +m.getZoom().toFixed(2);
@@ -340,27 +341,38 @@ function photoReady(f, el) {
 const aiSrc = new Set();
 const aiColor = () => getComputedStyle(document.documentElement).getPropertyValue('--ai').trim() || '#0FA9A0';
 const aiFilter = (ids) => ['in', ['to-string', ['coalesce', ['get', 'id'], ['id']]], ['literal', ids]];
-async function aiShow(want) {
-  if (!stage) return;
+/* 층은 큐가 온 직후 한 번 미리 붙여 둔다(필터 빈 값) — 카드를 열면 필터만 바꾸고, 판정 버튼은 AI 층이 붙은 뒤에 연다 */
+let aiDoneFor;   // aiShow 가 끝난 카드(cur) — photoReady 가 기다린다
+const aiAdding = new Map();
+async function aiPrepare(at) {
+  if (!stage) return [];
   const m = stage.map;
-  if (!want) { for (const sid of aiSrc) for (const l of [sid + '-f', sid + '-l']) if (m.getLayer(l)) m.setFilter(l, aiFilter([])); return; }
-  const f = cur;
   await stage.ready;
-  const layers = await aiLayersAt(want.at);
-  for (const it of layers) {
-    if (cur !== f) return;
+  const layers = await aiLayersAt(at).catch(() => []);
+  await Promise.all(layers.map((it) => {
     const sid = 'rv-ai-' + it.id;
-    if (!aiSrc.has(sid)) {
-      aiSrc.add(sid);
+    if (!aiAdding.has(sid)) aiAdding.set(sid, (async () => {
       try {
-        m.addSource(sid, await sourceSpec(it));
+        const spec = await sourceSpec(it);
+        if (!m.getSource(sid)) m.addSource(sid, spec);
         const c = aiColor(), before = m.getLayer('k-sel-l') ? 'k-sel-l' : undefined;
         m.addLayer({ id: sid + '-f', type: 'fill', source: sid, 'source-layer': it.layer, filter: aiFilter([]), paint: { 'fill-color': c, 'fill-opacity': 0.12 } }, before);
         m.addLayer({ id: sid + '-l', type: 'line', source: sid, 'source-layer': it.layer, filter: aiFilter([]), paint: { 'line-color': c, 'line-width': 2 } }, before);
-      } catch (e) { K.devlog('AI 층', e.message); continue; }
-    }
-    for (const l of [sid + '-f', sid + '-l']) if (m.getLayer(l)) m.setFilter(l, aiFilter(want.ids));
-  }
+        aiSrc.add(sid);
+      } catch (e) { K.devlog('AI 층', e.message); }
+    })());
+    return aiAdding.get(sid);
+  }));
+  return layers;
+}
+async function aiShow(want) {
+  if (!stage) return;
+  const m = stage.map, f = cur;
+  if (!want) { for (const sid of aiSrc) for (const l of [sid + '-f', sid + '-l']) if (m.getLayer(l)) m.setFilter(l, aiFilter([])); aiDoneFor = f; return; }
+  const layers = await aiPrepare(want.at);
+  if (cur !== f) return;
+  for (const it of layers) { const sid = 'rv-ai-' + it.id; for (const l of [sid + '-f', sid + '-l']) if (m.getLayer(l)) m.setFilter(l, aiFilter(want.ids)); }
+  aiDoneFor = f;
 }
 
 let busy = false;
@@ -481,6 +493,8 @@ if (all?.items?.some((f) => !inRegion(region, f))) {
 queue = all?.items || [];
 resolveQ();
 drawQueue();
+/* AI 판독 층을 미리 붙여 둔다(카드가 열릴 때 필터만) — 지역 가운데 기준 */
+{ const bb = region?.bbox, at = bb ? [(bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2] : queue[0]?.lnglat; if (at) setTimeout(() => aiPrepare(at), 400); }
 /* 지역 안에서 규칙 점 무리로 한 번 맞춘다(전국 뷰 없음 · 지역 상자 → 점 무리 · 서랍 밑으로 잘리지 않게) */
 if (!Q.get('finding')) toRule(region?.bbox ? 1200 : 1600);
 if (region?.sgg_cd) for (const a of S.rail.querySelectorAll('a.k-rail-i')) { const u = new URL(a.href); u.searchParams.set('region', region.sgg_cd); a.href = u.pathname + u.search + u.hash; }

@@ -22,7 +22,7 @@
   "card.state.none": "첫 결과 전",
   "card.asof": "{date} 기준",
   "empty.first": "첫 결과 전",
-  "empty.ingest": "영상 반입 필요",
+  "empty.ingest": "영상 등록 필요",
   "empty.outside": "관할 밖",
   "empty.loading": "불러오는 중",
   "empty.404": "이 주소에는 화면이 없습니다",

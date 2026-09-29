@@ -118,6 +118,7 @@ test.describe('관문 · 이원화 경계', () => {
 
   /* 기관 레일은 LX 레일을 걸러 만든 것이 아니다(C-10) — TENANTS 한 줄로 세운다: 내 서비스 · 로그아웃(MY 없음). */
   test('기관 레일에는 LX 전용 메뉴가 없다 — 내 서비스 · 로그아웃', async ({ page }) => {
+    test.skip(true, 'F3 통합(2026-09-29) — 구 proto 레일은 v3 집으로 옮겼다 · 대체: v3-integration.spec');
     const errs = watch(page);
     await boot(page);
     const allow = await data(page, async () => (await import('../assets/data/portal.js')).tenantById('namwon').menus);

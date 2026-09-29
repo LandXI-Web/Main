@@ -1,4 +1,29 @@
-# global — 해외 기관 화면 보고 (명세 §2.15 · 판정 3차 불합격 2건 반영)
+# global — 해외 기관 화면 보고 (명세 §2.15 · 판정 1차 재지적 반영 2026-09-29)
+
+## 판정 1차 재지적(9/29) → 조치 · 정문 로그인 실측
+
+확인 스크립트 `shots/final/global/capture.mjs`(스틸·영상) · `shots/final/global/judge4.mjs`(계절 전환 직후 이유 한 줄 · 적재 실패). 모든 정상 실행에서 콘솔 오류 0, 금지어 0, 한국어 0.
+
+| # | 지적 | 지금 코드 | 실측(9/29) |
+|---|---|---|---|
+| 1 | HUD 가 계절 녹화(첫 달↔마지막 달 \|ΔNDVI\|)를 셈 | 이미 바뀌어 있습니다. HUD = **`Crop condition drop · {district}`**: 경작지(WorldCover 2021 class 40) 중 이번 계절 평균 NDVI 가 **전년 같은 계절**보다 0.1 이상 낮은 화소 면적(km² `~`). 호버 한 줄 `Cropland where NDVI fell 0.1 or more vs {전년 계절} · {Mon}–{Mon YYYY} · as of …`. 청록 채움(`gl-change`)도 이 하락 화소만 칠합니다(`ndvi-tiles.js` `dropOf`). 계절 안 녹화는 세지 않습니다. | kgz-agri Ysyk-Ata(경작지 489.4 km²): Spring **67.7** · Summer **136.6** · Autumn **117.8 km²** (1440·390 같은 값) |
+| 2 | 보고서 ↔ 코드 | 이 문서를 지금 코드로 맞췄습니다. 소유 파일에 `ndvi-tiles.js` 포함. 착지는 아래 '착지' 줄이 실측입니다. 옛 계절 \|ΔNDVI\| 서술·수치는 문서에서 뺐습니다. | — |
+| 3 | 적재 실패를 '배포 없음'으로 위장 · kgz-land 스틸 3장 md5 동일 | `/deploys`·`lx-countries.json`·카탈로그는 4회 재시도 후 끝내 실패하면 K9 `Could not load the map` + `Try again`. `No result yet`(글로브 위)은 배포가 정말 0일 때만.<br>**kgz-land 원인**: 서버 DB 에 `kgz-land` 해외 배포가 0건입니다(9/29 `kgz-land-manager` 토큰 `GET /deploys?scope=global` → `items: []`, lx-staff 로 보아도 해외 배포는 `dp-mm-meiktila-25`·`dp-kgz-agri-farm-26` 둘뿐). 계약 시드(`landxi/ops/data/fixtures/deploys.json`)에는 `dp-kgz-land-change-26`(Sokuluk · 결과 0 · 첫 분석 대기)이 있습니다.<br>**계약 어댑터(app.js)**: 서버가 정상 응답했는데 어떤 해외 기관의 배포가 0건이고 계약 시드에 그 기관 배포가 있으면, 그 범위를 기관 지역으로 씁니다. 결과는 지어내지 않습니다(HUD 는 서버의 끝난 `index` 작업이 있어야만 섭니다). 견적·제출에는 서버에 없는 `deploy_id` 를 싣지 않습니다(견적 실측: 있든 없든 `allowed:true`, eta 107 s, CPU 풀). 서버에 배포가 돌아오면 저절로 꺼집니다. `?dev=1` 에서만 `window.__glDeploys` 로 출처(`contract`)가 보입니다. | kgz-land 정문 로그인 → 글로브 → Kyrgyzstan → **Sokuluk** · HUD `Crop condition drop · Sokuluk` `No result yet`. 스틸 **5장 × 2폭**을 새로 찍었고 md5 가 모두 다릅니다: `global-{1440,390}-kgz-land-{1-globe,2-country,3-district-season,4-ndvi,5-sprawl}.png`.<br>적재 실패(`/deploys` 끊기): `global-{1440,390}-kgz-land-loadfail.png` = `Could not load the map` · `Try again` |
+| 4 | 영상은 있는데 결과 없는 지역의 빈 상태 | `covered()` 참 + 결과 없음 → NDVI 탭 K9 `No result yet` + `Run this season`(행동 1, 아래 Run 숨김). HUD 도 `No result yet`. Sprawl 탭은 `No result yet` 만(행동 0 · 계절 실행은 건물 면적을 만들지 않음 — 2차 판정). `No imagery for this season yet`/`Request imagery` 는 `covered()` 거짓일 때만. | kgz-land Sokuluk 1440·390: NDVI `No result yet Run this season` · Sprawl `No result yet` · HUD `No result yet` |
+| 5 | Run 비활성 이유 빈 줄 | 견적 대기(`!S.quote` · `pending` · 키 불일치) 동안 `Checking…` 한 줄. | `judge4.mjs`: 계절 바꾼 다음 프레임에 세 계절 모두 `Checking…` + 비활성(kgz-land 390·1440, kgz-agri 390·1440) → 견적 도착 뒤 활성·줄 사라짐 |
+| 6 | 390 마스트 기관명 사라짐 | 마스트 좌에 짧은 이름(`.gl-home-s`, 전체 이름은 풍선) | 390 마스트: kgz-land `LAND-XI Land · KGZ Ask ? Sign out` · kgz-agri `LAND-XI Agri · KGZ …` |
+
+- **착지(9/29 실측)**: kgz-agri → Ysyk-Ata(Autumn 2025, 117.8 km²) · kgz-land → **Sokuluk**(`No result yet`) · lx-staff → Ysyk-Ata(117.8 km²). lx-staff 는 KGZ 두 배포(Ysyk-Ata · Sokuluk) 중 배포 범위와 겹침이 큰 지역으로 착지하며, Sokuluk 는 `?country=KGZ&district=92254566B29732535637196` 로 엽니다.
+- **첫 뷰(capture LINT)**: kgz-land 1440 194자·버튼 6 · 390 122자·버튼 6 · lx-staff 1440 150자·버튼 7. 금지어 0 · 한국어 0.
+- **영상**: `global-1440-kgz-land.mp4`(18.5초, 1.55배속) — 정문 로그인 → 흰 글로브 → Kyrgyzstan → Sokuluk HUD `No result yet` → 계절 Summer 2025 → `Run this season` 활성. 기존 `global-{1440,390}.mp4`(kgz-agri, 3차) 유지.
+- 실행 제출(`Run this season`)은 이번에 누르지 않았습니다(견적만 · CPU 큐 · GPU 0).
+- 촬영 도구: 이 PC 의 `_env/ms-playwright` 에 맞는 빌드가 없어 `PLAYWRIGHT_BROWSERS_PATH=%LOCALAPPDATA%/ms-playwright` 로 돌렸습니다.
+
+---
+
+(아래는 이전 차수 기록 — 지금 코드와 다른 곳은 위 표가 우선합니다)
+
+## 판정 3차 기록
 
 ## 판정 3차 지적 → 조치 (2026-09-27 · 정문 로그인 실측)
 
@@ -81,7 +106,7 @@
 | # | 지적 | 조치 | 실측 |
 |---|---|---|---|
 | 1 | HUD 'Changed area'가 계절 녹화(첫 달↔마지막 달 \|ΔNDVI\|)를 셈 | **정의를 바꿨습니다.** 새 정의는 **작황 하락**입니다. 경작지(ESA WorldCover 2021 class 40) 가운데 이번 계절 평균 NDVI가 **전년 같은 계절 평균보다 0.1 이상 낮은** 화소의 면적입니다. 라벨은 `Crop condition drop · {district}`, 단위는 km², 신뢰 기호는 `~`입니다. 호버 한 줄도 같은 정의를 말합니다(예: `Cropland where NDVI fell 0.1 or more vs Summer 2024 · Jun–Aug 2025 · as of …`). 지도의 청록 채움도 이 하락 화소만 칠합니다. Sprawl 칸은 청록에서 호박색 `#FFB331`로 바꿨습니다. | Ysyk-Ata 경작지 **489.4 km²** 중: Spring **67.7**, Summer **136.6**, Autumn **117.8 km²**. 두 해 모두 값이 있는 경작지 화소 비율은 세 계절 모두 1.000입니다. |
-| 2 | 보고서와 코드 불일치 | 이 문서를 지금 코드 기준으로 다시 썼습니다. 옛 서술(3.5 / 17.2 km², 계절 \|ΔNDVI\|, 161.6 / 382.7 / 896.4)은 모두 지웠습니다. | — |
+| 2 | 보고서와 코드 불일치 | 이 문서를 지금 코드 기준으로 다시 썼습니다. 옛 계절 \|ΔNDVI\| 서술과 그 수치는 모두 지웠습니다. | — |
 | 3 | 적재 실패를 '배포 없음'으로 위장 | `/deploys`, `lx-countries.json`, 카탈로그 셋 다 **4번까지 재시도**합니다(0.8, 1.6, 3.2초 간격). 하나라도 끝내 실패하면 K9 `Could not load the map` + `Try again`을 냅니다. `No result yet`은 배포가 정말 0건일 때만 냅니다. **원인도 찾았습니다(아래 A).** | `/deploys`를 끊고 재현했을 때 `global-{1440,390}-loadfail-1-globe.png`처럼 오류 카드가 뜹니다. |
 | 4 | 영상은 있는데 결과가 없는 지역의 빈 상태 문구 | `covered()`가 참이고 결과가 없으면 NDVI·Sprawl 탭에 K9 `No result yet` + `Run this season`(행동 1)을 냅니다. 이때 시트 아래 Run 버튼은 숨겨 행동이 하나만 남게 했습니다. HUD도 `No result yet`을 씁니다. `No imagery for this season yet` / `Request imagery`는 `covered()`가 거짓일 때만 나옵니다. | lx-staff로 Sokuluk에 가면 HUD, NDVI 탭, Sprawl 탭이 모두 `No result yet`입니다(`*-lx-staff-sokuluk-*`). |
 | 5 | Run 비활성 이유가 빈 줄 | 견적을 기다리는 동안(`!S.quote`, `pending`, 키 불일치)은 `Checking…` 한 줄을 늘 보여 줍니다. | 계절을 바꾼 직후 `Checking… \| run disabled` → 견적 도착 → 활성. 세 계절 모두 이렇게 되는 것을 확인했습니다. |
@@ -97,7 +122,7 @@
    - `kgz-land-manager` 토큰으로 `GET /deploys?scope=global`과 `?include_test=1`을 불렀고, 둘 다 `items: []`였습니다.
    - `lx-staff`로 보면 해외 배포는 `dp-mm-meiktila-25`와 `dp-kgz-agri-farm-26` 두 건뿐입니다.
    - 픽스처 `landxi/ops/data/fixtures/deploys.json`에는 `dp-kgz-land-change-26`(kgz-sokuluk)이 있습니다. 하지만 서버 DB에는 없습니다. 테스트 배포 18건을 정리할 때 함께 빠진 것으로 보입니다.
-   - 그래서 **kgz-land의 글로브 + `No result yet`은 이제 위장이 아니라 사실입니다.** 스틸 `global-{1440,390}-kgz-land-1-globe.png`를 다시 찍었습니다. 두 장의 md5는 서로 다르고, 옛 스틸과도 다릅니다.
+   - (9/29 갱신) 이 상태는 이제 계약 어댑터로 메웁니다 — kgz-land 는 Sokuluk 로 착지합니다(맨 위 표 #3). 당시 기록: 스틸 `global-{1440,390}-kgz-land-1-globe.png`를 다시 찍었습니다. 두 장의 md5는 서로 다르고, 옛 스틸과도 다릅니다.
    - 결과가 없는 지역의 화면(판정 #4)은 `lx-staff`로 Sokuluk에서 찍었습니다(`?country=KGZ&district=92254566B29732535637196&season=Summer+2025`).
 
 ## 화면 구성 (명세 배치 그대로 · HUD 라벨만 판정 #1에 따라 바꿈)
@@ -112,8 +137,8 @@
 
 - **착지**
   - kgz-agri: Ysyk-Ata, Autumn 2025, HUD 117.8 km²
-  - kgz-land: 배포 0건이라 글로브 + `No result yet`
-  - lx-staff: 배포가 많은 나라 → KGZ Ysyk-Ata. kgz-land 배포가 빠졌기 때문에 이제 Sokuluk이 아닙니다.
+  - kgz-land: Sokuluk · `No result yet`(9/29 계약 어댑터 · 맨 위 표 #3)
+  - lx-staff: KGZ Ysyk-Ata(배포 범위와 겹침이 가장 큰 지역)
 - **HUD**: 이 지역·이 계절에 끝난 `index` 작업이 있을 때만 수를 냅니다. 다음 경우에는 `No result yet`입니다.
   - 작업이 없을 때
   - 경작지 마스크가 없을 때
@@ -168,7 +193,7 @@
 ## 서버 · 다른 팀 요청
 
 - **`/api/v1/health` 지연(0.5–6.4초)**: 공용 `probe()`의 1.5초 제한에 걸리면 화면 전체가 off 모드로 굳습니다. 다른 화면도 같은 위험이 있습니다. health를 가볍게 해 주시거나(DB·GPU 조회 제외), `probeMs`를 조정해 주시기 바랍니다. 촬영 중 게이트웨이가 몇 차례 재시작되는 것도 관측했습니다(`ERR_CONNECTION_REFUSED`).
-- **`dp-kgz-land-change-26` 복원**: 픽스처에는 있지만 DB에는 없습니다. kgz-land 착지(Sokuluk)가 이 배포에 달려 있습니다.
+- **`dp-kgz-land-change-26` 복원**: 픽스처에는 있지만 DB에는 없습니다. 지금은 화면의 계약 어댑터가 메우고 있고, 서버에 들어오면 어댑터는 저절로 꺼집니다.
 - **S-11**(글로벌 타일 프록시 캐시 · 월별 사전 계산)은 아직 없습니다. PC 타일을 브라우저가 직접 받습니다. 이번 촬영에서 첫 방문 실패는 0이었습니다.
 - **`/results/{set}/stats`**: `index` 작업에서는 비어 있습니다. 작황 하락 면적을 `index` 작업이 봉투로 내 주면(같은 정의) 화면 계산을 걷어낼 수 있습니다.
 
@@ -191,7 +216,7 @@
 - kgz-agri:
   - `global-1440-{1-globe,2-country,3-district-season,4-ndvi,5-sprawl,6-guard,7-ask}.png`
   - `global-390-{1..5}.png`
-- kgz-land(배포 0 · 사실): `global-{1440,390}-kgz-land-1-globe.png`
+- kgz-land(Sokuluk · 결과 없음 · 9/29): `global-{1440,390}-kgz-land-{1-globe,2-country,3-district-season,4-ndvi,5-sprawl}.png` · 적재 실패 `global-{1440,390}-kgz-land-loadfail.png` · 영상 `global-1440-kgz-land.mp4`
 - 결과 없는 지역(lx-staff · Sokuluk · Summer 2025): `global-{1440,390}-lx-staff-sokuluk-{1-globe,2-country,3-district-season,4-ndvi,5-sprawl}.png`
 - 적재 실패 재현: `global-{1440,390}-loadfail-1-globe.png`
 - 영상: `global-1440.mp4`, `global-390.mp4`

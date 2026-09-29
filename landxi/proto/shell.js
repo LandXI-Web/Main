@@ -39,29 +39,32 @@ export const allowed = (cap) => can(ROLE, cap);
    관리자 관제 넷(운영 현황 · 인프라 관제 · 기관·할당 · 배포 제어) = **LX/OPS :8702**(다른 origin · ext).
    ext 항목은 base 를 붙이지 않는 절대 주소 · target 없이 같은 탭(_self) · rel 없음 · 새 아이콘 발명 0(기존 세트).
    관제는 origin 이 달라 세션이 없다 → 관제 로그인 문의 ?next= 로 간다(자동 인계는 2차 · 정직 표기 `관제 로그인`). */
+/* F3 통합(2026-09-27) — 레일은 v3 16집으로만 간다. 구 proto 화면 파일은 그대로 두고 레일에서만 뺐다(명세 §0 · 죽은 링크 0).
+   v3 집은 정문 세션(api-v1)으로 관문을 거친다 — 구 proto 세션만 있으면 정문(/landxi/v3/login/)으로 간다. */
+const V3 = '/landxi/v3/';
 export const NAV = [
   /* 운영 현황(결재 대기) — **관리자만**(roles.js 'home'). 이 origin 의 관리자 첫 화면 admin-home.html(결재 대기 · 관리 네 축).
      F2-R 판정 1차(2026-09-27): 'ops' 를 관제로 돌린 뒤 이 화면이 레일에서 고립됐다 → 제 이름으로 되살린다(원본 기능 삭제 0).
      관제 :8702 의 운영 현황은 '관제 현황'(title · 칩 = LX/OPS :8702)으로 이름을 갈라 둘이 헷갈리지 않게 한다 —
      'LX/OPS 운영 현황' 은 레일 폭(72px)에서 두 줄로 넘쳐 아래 항목 아이콘을 덮었다(1440 실측). */
-  { key: 'home', name: '운영 현황', href: 'admin-home.html', icon: 'dash', group: 'top' },
-  { key: 'ops', name: '관제 현황', href: opsUrl('index.html'), ext: true, icon: 'gear', group: 'top' },
-  { key: 'infra', name: '인프라 관제', href: opsUrl('infra.html'), ext: true, icon: 'run', group: 'top' },
-  { key: 'tenants', name: '기관·할당', href: opsUrl('tenants.html'), ext: true, icon: 'proj', group: 'top' },
-  { key: 'deploys', name: '배포 제어', href: opsUrl('deploys.html'), ext: true, icon: 'stack', group: 'top' },
-  { key: 'dashboard', name: '대시보드', href: 'dashboard.html', icon: 'dash', group: 'top' },
-  { key: 'media', name: '데이터 관리', href: 'dataset.html', icon: 'data', group: 'top' },
-  { key: 'project', name: '프로젝트', href: 'ai-project.html', icon: 'proj', group: 'top' },
-  { key: 'analysis', name: '분석 서비스', href: 'analysis-ai.html', icon: 'run', group: 'top' },
-  { key: 'map', name: '지도 서비스', href: XI_MAP, icon: 'map', group: 'top' },
+  { key: 'home', name: '운영 현황', href: V3 + 'ops-core/', ext: true, icon: 'dash', group: 'top' },
+  { key: 'ops', name: '관제 현황', href: V3 + 'ops-core/', ext: true, icon: 'gear', group: 'top' },
+  { key: 'infra', name: '인프라 관제', href: V3 + 'ops-infra/', ext: true, icon: 'run', group: 'top' },
+  { key: 'tenants', name: '기관·할당', href: V3 + 'ops-infra/', ext: true, icon: 'proj', group: 'top' },
+  { key: 'deploys', name: '배포 제어', href: V3 + 'ops-infra/', ext: true, icon: 'stack', group: 'top' },
+  { key: 'dashboard', name: '대시보드', href: V3 + 'lx-console/', ext: true, icon: 'dash', group: 'top' },
+  { key: 'media', name: '데이터 관리', href: V3 + 'lx-ingest/', ext: true, icon: 'data', group: 'top' },
+  { key: 'project', name: '프로젝트', href: V3 + 'lx-train/', ext: true, icon: 'proj', group: 'top' },
+  { key: 'analysis', name: '분석 서비스', href: V3 + 'lx-review/', ext: true, icon: 'run', group: 'top' },
+  { key: 'map', name: '지도 서비스', href: V3 + 'xi-clean/', ext: true, icon: 'map', group: 'top' },
   /* 활용 사례(BP) — 영업용 레일에서는 **제 이름으로** 선다. 다른 단에서는 서비스 지원 안의 탭이다.
      발주자: "영업용은 분석서비스 카드만 표출되고 bp 사례만" (2026-09-21) */
-  { key: 'usecase', name: '활용 사례', href: 'usecase.html', icon: 'stack', group: 'top' },
-  { key: 'support', name: '서비스 지원', href: 'notice.html', icon: 'help', group: 'foot' },
-  { key: 'publish', name: '카드 발행 관리', href: 'admin-publish.html', icon: 'stack', group: 'foot' },
-  { key: 'produce', name: '생산 관리', href: 'produce.html', icon: 'run', group: 'foot' },
-  { key: 'admin', name: '서비스 관리', href: 'admin-notice.html', icon: 'gear', group: 'foot' },
-  { key: 'my', name: 'MY', href: 'mypage.html', icon: 'my', group: 'foot' },
+  { key: 'usecase', name: '활용 사례', href: V3 + 'sales/', ext: true, icon: 'stack', group: 'top' },
+  { key: 'support', name: '서비스 지원', href: V3 + 'help-my/', ext: true, icon: 'help', group: 'foot' },
+  { key: 'publish', name: '카드 발행 관리', href: V3 + 'lx-deploy/', ext: true, icon: 'stack', group: 'foot' },
+  { key: 'produce', name: '생산 관리', href: V3 + 'lx-deploy/', ext: true, icon: 'run', group: 'foot' },
+  { key: 'admin', name: '서비스 관리', href: V3 + 'ops-core/', ext: true, icon: 'gear', group: 'foot' },
+  { key: 'my', name: 'MY', href: V3 + 'help-my/', ext: true, icon: 'my', group: 'foot' },
 ];
 /* 화면군 탭 — 서비스 지원 · 서비스 관리 원판의 H1 행 오른쪽 탭. mountShell({ tabs: TABS.support, tab: 'faq' }) */
 export const TABS = {
@@ -88,7 +91,7 @@ export const FOOT_LINKS = ['개인정보처리방침', '이용약관', '이메�
    기관 목록은 portal.js 의 TENANTS 와 같은 것이다. 여기서 import 하지 않는 이유는
    셸이 모든 화면에 실리는데 cards·registry 까지 딸려 오기 때문이다 — 늘어나면 옮긴다. */
 export const FAMILY = [
-  { name: 'Land-XI 소개', href: 'scrub/index.html' },
+  { name: 'Land-XI 소개', href: '../v3/main/' },
   /* 기관 항목은 **그 기관의 로그인 문**만 가리킨다(R-S4) — 작업공간 직접 링크 금지.
      전에는 광주전남 작업공간(portal-dp-gj-marine-25.html)을 곧장 걸어, LX 세션이 남의 작업공간으로 샜다. */
   { name: '전북특별자치도 남원시', href: 'portal-login-namwon.html', kind: '지자체 · 로그인' },
@@ -290,15 +293,15 @@ export function mountShell(o = {}) {
      MY 없음(기관 MY 는 E1-2 포털판). 마크는 portal-ui.js 가 그 기관 CI 로 바꾼다. */
   const tenantRail = () => `
 <aside id="rail" aria-label="주 메뉴" data-tenant="${esc(tn.id)}">
-  <a id="rail-mark" href="${base}${esc(tn.home)}" aria-label="${esc(tn.name)} 홈"><span>LAND</span><span>XI</span></a>
-  <nav id="rail-top" class="rail-group" aria-label="업무"><a class="rail-i" data-menu="portal" href="${base}${esc(tn.home)}" aria-current="page">${railSvg('stack')}<span class="rl">내 서비스</span></a>${tn.scope === 'global' || /^kgz-/.test(tn.id) ? `<a class="rail-i" data-menu="global" href="${base}../global/index.html?locale=en" title="Land-XI Global — 같은 지도의 해외 무대">${railSvg('map')}<span class="rl">Global ↗</span></a>` : ''}</nav>
+  <a id="rail-mark" href="${V3}gov-fusion/" aria-label="${esc(tn.name)} 홈"><span>LAND</span><span>XI</span></a>
+  <nav id="rail-top" class="rail-group" aria-label="업무"><a class="rail-i" data-menu="portal" href="${V3}gov-fusion/" aria-current="page">${railSvg('stack')}<span class="rl">내 서비스</span></a>${tn.scope === 'global' || /^kgz-/.test(tn.id) ? `<a class="rail-i" data-menu="global" href="${V3}global/" title="Land-XI Global — 같은 지도의 해외 무대">${railSvg('map')}<span class="rl">Global ↗</span></a>` : ''}</nav>
   <nav id="rail-foot" class="rail-group" aria-label="계정">
     <button type="button" class="rail-i" data-action="logout">${railSvg('out')}<span class="rl">로그아웃</span></button>
   </nav>
 </aside>`;
   const rail = !withRail ? '' : tn ? tenantRail() : `
 <aside id="rail" aria-label="주 메뉴">
-  <a id="rail-mark" href="${base}scrub/index.html" aria-label="Land-XI 홈"><span>LAND</span><span>XI</span></a>
+  <a id="rail-mark" href="${V3}main/" aria-label="Land-XI 홈"><span>LAND</span><span>XI</span></a>
   <nav id="rail-top" class="rail-group" aria-label="업무">${NAV.filter((n) => n.group === 'top' && onRail(ROLE, n.key)).map(item).join('')}</nav>
   <nav id="rail-foot" class="rail-group" aria-label="지원 · 관리">${NAV.filter((n) => n.group === 'foot' && onRail(ROLE, n.key)).map(item).join('')}
     <div id="rail-my" class="rail-fly" role="group" aria-label="MY" hidden>

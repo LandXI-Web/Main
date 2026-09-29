@@ -27,12 +27,12 @@ const withRegion = (p) => (REGION ? `${p}${p.includes('?') ? '&' : '?'}region=${
 
 /* ── 셸(K1) · 레일 6단(② 현재) ──────────────────────────────── */
 const RAIL = [
-  { id: 'ingest', label: '반입', href: withRegion('/landxi/v3/lx-ingest/') },
+  { id: 'ingest', label: '데이터 올리기', href: withRegion('/landxi/v3/lx-ingest/') },
   { id: 'train', label: '학습' },
-  { id: 'assemble', label: '조립', href: withRegion('/landxi/v3/lx-console/?step=assemble') },
-  { id: 'review', label: '검수', href: withRegion('/landxi/v3/lx-review/') },
+  { id: 'assemble', label: '서비스 만들기', href: withRegion('/landxi/v3/lx-console/?step=assemble') },
+  { id: 'review', label: '결과 확인', href: withRegion('/landxi/v3/lx-review/') },
   { id: 'deploy', label: '배포', href: withRegion('/landxi/v3/lx-deploy/') },
-  { id: 'ops', label: '운영', href: withRegion('/landxi/v3/lx-deploy/') + '#ops' },
+  { id: 'ops', label: '서비스 관리', href: withRegion('/landxi/v3/lx-deploy/') + '#ops' },
 ];
 const S = shell({ who, home: 'lx-train', rail: { kind: 'steps', items: RAIL, current: 1 } });
 devDrawer({ who });

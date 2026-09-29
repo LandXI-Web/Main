@@ -549,7 +549,7 @@ function fillParcel(p) {
     <div class="m-pc-top"><span class="t-label">${place} · 예시</span><span class="t-chip" data-lv="warn">${esc(p.verdict)}</span></div>
     <div class="m-pc-cols">
       <div class="m-pc-col"><span class="t-label">대장</span><b class="t-h4">${esc(p.ledger.jimok)}</b><span>${numHtml(p.ledger.area)}</span><span class="t-label">${esc(p.ledger.yongdo || '')}</span></div>
-      <div class="m-pc-col is-ai"><span class="t-label">AI 판독</span><b class="t-h4">${esc(p.ai.cls)}</b><span>${numHtml(p.ai.area)}</span><span class="t-label">${p.ai.year}년 항공영상</span></div>
+      <div class="m-pc-col is-ai"><span class="t-label">AI 분석</span><b class="t-h4">${esc(p.ai.cls)}</b><span>${numHtml(p.ai.area)}</span><span class="t-label">${p.ai.year}년 항공영상</span></div>
     </div>
     <div class="m-pc-foot"><span class="m-ok" aria-hidden="true">✓</span><span class="t-label">현장 확인 목록에 올렸습니다</span></div>
   </div>`;

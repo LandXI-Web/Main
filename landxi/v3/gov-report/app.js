@@ -193,7 +193,7 @@ async function showDetail(r, { fly }) {
   $('#det-t').textContent = r.where;
   const st = $('#det-st'); st.textContent = ST[r.st]; st.dataset.lv = r.st;
   const f = r.f;
-  $('#det-m').innerHTML = [f.jimok && `<span>지목 ${esc(JIMOK[f.jimok] || f.jimok)}</span>`, f.evid_m2 && `<span>AI 판독 ${numHtml(f.evid_m2, { digits: 0 })}</span>`].filter(Boolean).join('<i>·</i>');
+  $('#det-m').innerHTML = [f.jimok && `<span>지목 ${esc(JIMOK[f.jimok] || f.jimok)}</span>`, f.evid_m2 && `<span>AI 분석 ${numHtml(f.evid_m2, { digits: 0 })}</span>`].filter(Boolean).join('<i>·</i>');
   const allow = f.state === 'assigned' ? ['violation', 'match_fp', 'unclear'] : f.state === 'inspected' ? ['violation', 'match_fp'] : [];
   for (const b of $('#verdict').querySelectorAll('button')) {
     b.setAttribute('aria-checked', r.v === b.dataset.v ? 'true' : 'false');
@@ -481,10 +481,8 @@ function paint(md, envs, cites, live) {
 }
 function notes(cites, md) {
   const ol = $('#notes');
-  /* 본문이 실제로 인용한 번호만 — 인용되지 않은 근거는 목록에 두지 않는다 */
-  const used = new Set();
-  for (const m of String(md || '').matchAll(/\[(\d{1,2}(?:\s*[,·]\s*\d{1,2})*)\]/g)) for (const n of m[1].split(/\s*[,·]\s*/)) used.add(n);
-  const list = (cites || []).filter((c) => c && c.n && used.has(String(c.n)));
+  /* 화면 본문이 실제로 인용한 번호만 — 다듬기(tidy)로 빠진 문장의 인용 · 인용되지 않은 근거는 목록에 두지 않는다 */
+  const used = new Set([...document.querySelectorAll('.gr-sec:not([hidden]) sup.gr-cite')].map((s) => s.textContent.replace(/\D/g, '')));  const list = (cites || []).filter((c) => c && c.n && used.has(String(c.n)));
   ol.hidden = !list.length;
   ol.innerHTML = list.map((c) => `<li><b>[${esc(c.n)}]</b>${esc(uncode(shortAddr(c.addr) || plain(c.label) || ''))}</li>`).join('');
 }
@@ -570,11 +568,11 @@ function armDocx({ emd_cd, rule }) {
       const g = [pa, pb, pc].map((x) => (x && x.total ? x.total.value : null));
       const sum = g.every((v) => v !== null) ? g.reduce((x, y) => x + y, 0) : null;
       const tables = [
-        { h: '부속 표 1 · 등급 × 상태', note: '등급 = AI 판독 점수 순 · 상태 = 기관이 남긴 기록',
+        { h: '부속 표 1 · 등급 × 상태', note: '등급 = AI 분석 점수 순 · 상태 = 기관이 남긴 기록',
           head: ['규칙', 'A', 'B', 'C', '계', '미배정', '배정', '확인됨', '종결'],
           rows: [[ruleNm, ...g.map(n0), n0(sum), n0(c.open), n0(c.assigned), n0(c.inspected), n0((c.closed || 0) + (c.dismissed || 0))]] },
-        { h: '부속 표 2 · 의심 상위 10건(점수 순)', note: 'AI 판독 면적 · 비율 = 추정치(현장 확인 전)',
-          head: ['순위', '소재지', '지목', '등급', 'AI 판독 면적(㎡)', '필지 대비', '상태', '판정'],
+        { h: '부속 표 2 · 의심 상위 10건(점수 순)', note: 'AI 분석 면적 · 비율 = 추정치(현장 확인 전)',
+          head: ['순위', '소재지', '지목', '등급', 'AI 분석 면적(㎡)', '필지 대비', '상태', '판정'],
           rows: ((top && top.items) || []).map((f, i) => {
             const v = verdictOf(f);
             return [String(i + 1), shortAddr(f.addr) || '—', JIMOK[f.jimok] || f.jimok || '—', f.priority || '—',
@@ -595,7 +593,7 @@ function armDocx({ emd_cd, rule }) {
       const blob = buildDocx({
         title, author: org,
         meta: [org, `작성 ${ymd(now)}`, ruleNm && `규칙 ${ruleNm}`].filter(Boolean).join(' · '),
-        sections, tables, notes: notesTxt, foot: 'AI 판독 결과는 참고자료이며, 위법 여부는 현장 확인으로 정합니다.',
+        sections, tables, notes: notesTxt, foot: 'AI 분석 결과는 참고자료이며, 위법 여부는 현장 확인으로 정합니다.',
       });
       const u = URL.createObjectURL(blob);
       const t = document.createElement('a'); t.href = u; t.download = `실태조사_초안_${emd}_${ymd(now).replace(/\./g, '')}.docx`;

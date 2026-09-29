@@ -116,6 +116,7 @@ test('레일 · 마스트헤드(공용 셸) — LX 직원 레일 = roles.js 7항
   expect(errs).toEqual([]);
 });
 test('LX 관리자 레일 = roles.js 10항목(운영 현황 · 관제 4화면 · 데이터 관리 · 카드 발행 관리 · 생산 관리 · 서비스 관리 · MY) · 만드는 화면(대시보드 · 프로젝트 · 분석 · 지도)은 없다', async ({ page }) => {
+  test.skip(true, 'F3 통합(2026-09-29) — 구 proto 레일은 v3 집으로 옮겼다 · 대체: v3-integration.spec');
   const errs = watch(page);
   await boot(page, 'archive', 'admin');
   const admin = ['운영 현황', '관제 현황', '인프라 관제', '기관·할당', '배포 제어', '데이터 관리', '카드 발행 관리', '생산 관리', '서비스 관리', 'MY'];   // F2-R 레일 정본(관제 :8702 4화면)

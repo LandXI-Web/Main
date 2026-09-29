@@ -67,7 +67,7 @@ let cur = null;
 /** ③ 서랍 열기 — host = 지도 무대 · region = 지도 검색에서 고른 지역(없으면 전국) */
 export async function openMatrix({ host, region, onClose, onMade }) {
   const body = h('div.lc-mx');
-  const d = drawer({ title: '③ 조립 · 만들 수 있는 업무', host, slot: 'right', body, onClose, label: '③ 조립' });
+  const d = drawer({ title: '③ 서비스 만들기', host, slot: 'right', body, onClose, label: '③ 서비스 만들기' });
   d.el.classList.add('lc-drawer');
   body.append(h('div.lc-mx-wait', { 'aria-hidden': 'true' }));
   await loadAssembly(region);

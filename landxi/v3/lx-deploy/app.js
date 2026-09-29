@@ -14,8 +14,8 @@ const ymd = (s) => { const m = /^(\d{4})-(\d{2})(?:-(\d{2}))?/.exec(String(s || 
 
 const who = await gate('lx-deploy');
 const RAIL = [
-  { label: '반입', href: V3 + 'lx-ingest/' }, { label: '학습', href: V3 + 'lx-train/' }, { label: '조립', href: V3 + 'lx-console/' },
-  { label: '검수', href: V3 + 'lx-review/' }, { label: '배포' }, { label: '운영' },
+  { label: '데이터 올리기', href: V3 + 'lx-ingest/' }, { label: '학습', href: V3 + 'lx-train/' }, { label: '서비스 만들기', href: V3 + 'lx-console/' },
+  { label: '결과 확인', href: V3 + 'lx-review/' }, { label: '배포' }, { label: '서비스 관리' },
 ];
 const S = shell({ who, home: 'lx-deploy', rail: { kind: 'steps', items: RAIL, done: [], current: Q.get('tab') === 'ops' ? 5 : 4, onPick: (i) => { if (i === 4) tab('deploy'); if (i === 5) tab('ops'); } } });
 
@@ -23,11 +23,11 @@ const S = shell({ who, home: 'lx-deploy', rail: { kind: 'steps', items: RAIL, do
 const root = h('div.dp');
 const stageEl = h('div.dp-stage');
 const tabs = h('div.dp-tabs', { role: 'tablist', 'aria-label': '배포·운영' },
-  h('button.dp-tab', { type: 'button', role: 'tab', id: 'tab-deploy', 'aria-selected': 'true', text: '배포·이식' }),
-  h('button.dp-tab', { type: 'button', role: 'tab', id: 'tab-ops', 'aria-selected': 'false', text: '운영·신고' }));
-const plantBtn = h('button.t-btn.dp-plant', { type: 'button', 'aria-label': '새 지역에 심기', html: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg><span>새 지역에 심기</span>' });
+  h('button.dp-tab', { type: 'button', role: 'tab', id: 'tab-deploy', 'aria-selected': 'true', text: '배포' }),
+  h('button.dp-tab', { type: 'button', role: 'tab', id: 'tab-ops', 'aria-selected': 'false', text: '서비스 관리' }));
+const plantBtn = h('button.t-btn.dp-plant', { type: 'button', 'aria-label': '다른 지역에 적용', html: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg><span>다른 지역에 적용</span>' });
 const top = h('div.dp-top', {}, tabs, h('span.sp'), plantBtn);
-const legend = h('div.dp-legend', { 'aria-hidden': 'true' }, h('span', {}, h('i'), '운영'), h('span', {}, h('i', { dataset: { s: 'pilot' } }), '시범'), h('span', {}, h('i', { dataset: { s: 'draft' } }), '이식 요청'));
+const legend = h('div.dp-legend', { 'aria-hidden': 'true' }, h('span', {}, h('i'), '운영'), h('span', {}, h('i', { dataset: { s: 'pilot' } }), '시범'), h('span', {}, h('i', { dataset: { s: 'draft' } }), '적용 요청'));
 const opsEl = h('section.dp-ops', { hidden: true, role: 'tabpanel', 'aria-labelledby': 'tab-ops' });
 root.append(stageEl, top, legend, opsEl);
 S.main.append(root);
@@ -111,22 +111,22 @@ async function checks(d) {
   const q = `?region=${reg}&deploy=${encodeURIComponent(d.id)}`;
 
   return [
-    { t: '반입', href: V3 + 'lx-ingest/' + q, s: fine.length ? 'ok' : 'todo',
+    { t: '데이터 올리기', href: V3 + 'lx-ingest/' + q, s: fine.length ? 'ok' : 'todo',
       line: fine.length ? `영상 ${fine.length}벌 · 최고 ${gsd(fine[0].gsd_m)}` : imgs.length ? `${gsd(imgs[0].gsd_m)} 영상만 있음` : '고해상도 영상 없음',
       act: fine.length ? null : { label: '영상 등록 요청', href: V3 + 'lx-ingest/' + q } },
     { t: '학습', href: V3 + 'lx-train/' + q, s: model ? 'ok' : 'todo',
       line: model ? (model.classes || []).slice(0, 3).join(' · ') : '연결된 모델 없음',
       act: model ? null : pair && isAdmin && canModel ? { label: '모델 연결', run: () => connectModel(d, pair.model) }
         : { note: pair ? '모델 연결은 관리자 결재로 합니다' : '영상이 들어오면 연결합니다' } },
-    { t: '조립', href: V3 + 'lx-console/' + q, s: d.card_version_id ? 'ok' : 'todo',
+    { t: '서비스 만들기', href: V3 + 'lx-console/' + q, s: d.card_version_id ? 'ok' : 'todo',
       line: d.card_version_id ? `서비스 카드 ${d.version || ''} · 기능 ${mods}개` : '카드 버전 없음', act: null },
-    { t: '검수', href: V3 + 'lx-review/' + q, s: found || jobsDone || hasRes ? 'ok' : 'todo',
+    { t: '결과 확인', href: V3 + 'lx-review/' + q, s: found || jobsDone || hasRes ? 'ok' : 'todo',
       line: jobsDone ? `분석 ${jobsDone}회 완료` : found ? `의심 ${numHtml(total, { unit: '건' })}` : hasRes ? '결과 반영' : '첫 분석 전', html: !jobsDone && !!found,
       act: found || jobsDone || hasRes ? null : pair ? { label: '첫 분석 실행', run: (btn, row) => firstRun(d, pair, btn, row), primary: true } : { note: '영상과 모델이 갖춰지면 분석합니다' } },
     { t: '배포', href: null, s: draft ? 'wait' : 'ok',
       line: draft ? (pending ? '결재 대기' : '관리자 결재 전') : STAGE_CHIP[d.stage],
       act: draft && !pending ? canApprove ? { label: '결재 요청', run: () => askApproval(d) } : { note: '관제 결재함에서 결재합니다' } : null },
-    { t: '운영', href: null, tab: 'ops', s: draft ? 'wait' : due ? 'todo' : 'ok',
+    { t: '서비스 관리', href: null, tab: 'ops', s: draft ? 'wait' : due ? 'todo' : 'ok',
       line: draft ? '배포 뒤 시작' : reps.length ? `오탐 신고 ${reps.length}건${due ? ' · 재학습' : ''}` : '신고 없음', act: null },
   ];
 }
@@ -228,7 +228,7 @@ function colorField(k) {
 async function openPlant() {
   const src = selected && isDomestic(selected) && selected.stage !== 'draft' ? selected : D.deploys.find((d) => d.stage === 'ga' && isDomestic(d));
   const cards = D.cards.filter((c) => c.scope !== 'global' && (c.versions || []).length);
-  const pd = drawer({ title: '새 지역에 심기', slot: 'right', onClose: () => { if (selected) select(selected.id); } }); pd.kind = 'plant';
+  const pd = drawer({ title: '다른 지역에 적용', slot: 'right', onClose: () => { if (selected) select(selected.id); } }); pd.kind = 'plant';
   drw = pd;
   const cardSel = h('select.t-input', { 'aria-label': '카드' }, ...cards.map((c) => h('option', { value: c.id, text: workName(c.id), selected: c.id === src?.card_id })));
   const regEl = h('div');
@@ -237,7 +237,7 @@ async function openPlant() {
     type === 'select' ? h('select.t-input', { name: k }, ...opt.map((o) => h('option', { value: o, text: o })))
       : type === 'file' ? fileField(k) : type === 'color' ? colorField(k)
         : h('input.t-input', { name: k, type, autocomplete: 'off' }))));
-  const go = h('button.t-btn.dp-go', { type: 'submit', text: '심기(결재 요청)', disabled: true });
+  const go = h('button.t-btn.dp-go', { type: 'submit', text: '적용(결재 요청)', disabled: true });
   /* 이전 계약(S-7 전)은 이식 생성이 관리자 전용 — 직원 세션이면 거절될 요청을 보내지 않고 한 줄로 안내(죽은 버튼 0) */
   const canPlant = isAdmin || D.health === 'server';
   if (!canPlant) go.hidden = true;
@@ -332,7 +332,7 @@ async function renderOps() {
   bignum(big, retrainEnv(), { label: '재학습 필요', unit: '건' });
   opsEl.append(tcard);
   if (!rows.length) { empty(tcard.appendChild(h('div.dp-empty')), { kind: 'first', char: 'aircraft', text: '이 카드가 깔린 기관이 아직 없습니다' }); return; }
-  const rank = { 재학습: 0, '갱신 배포': 1, '표본 검수': 2, 없음: 3 };
+  const rank = { 재학습: 0, '갱신 배포': 1, '표본 확인': 2, 없음: 3 };
   table(tcard.appendChild(h('div')), {
     cols: [
       { key: 'name', label: '배포본', fmt: (_, r) => `<span class="dp-wk">${esc(workName(r.d.card_id))}<small>${esc(regionShort(r.d))}</small></span>` },
@@ -386,8 +386,8 @@ const urgent = () => {
 const card = Q.get('card');
 if (Q.get('tab') === 'ops') tab('ops');
 else if (card && !D.deploys.some((d) => d.card_id === card)) {
-  const e = drawer({ title: workName(card) || '배포·이식', slot: 'right' });
-  const box = h('div'); e.set(box); empty(box, { kind: 'first', char: 'aircraft', text: '이 카드가 깔린 기관이 아직 없습니다', action: { label: '새 지역에 심기', onClick: openPlant } });
+  const e = drawer({ title: workName(card) || '배포', slot: 'right' });
+  const box = h('div'); e.set(box); empty(box, { kind: 'first', char: 'aircraft', text: '이 카드가 깔린 기관이 아직 없습니다', action: { label: '다른 지역에 적용', onClick: openPlant } });
 } else {
   const want = Q.get('deploy') && deployOf(Q.get('deploy'))
     || (Q.get('region') && regions().find((r) => r.key === Q.get('region'))?.list[0])

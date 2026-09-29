@@ -89,6 +89,7 @@ test('로그인 관문 — 세션이 없으면 화면이 한 프레임도 새지
 /* ── 셸 — 레일 · MY · 로그아웃은 공용 셸의 것 ─────────────────────────────── */
 
 test('직원 레일 = roles.js staff.menus 7 + 로그아웃 — 관리 메뉴 0', async ({ page }) => {
+  test.skip(true, 'F3 통합(2026-09-29) — 구 proto 레일은 v3 집으로 옮겼다 · 대체: v3-integration.spec');
   const errs = watch(page);
   await boot(page);
   const names = await page.locator('#rail .rail-i .rl').allInnerTexts();
@@ -118,6 +119,7 @@ test('자체 레일 · 관문 · 로그아웃 코드 0 — 셸 것만 쓴다', a
 });
 
 test('레일 — 직원 메뉴가 실제 화면으로 가고 되돌려 보내지(denied) 않는다', async ({ page }) => {
+  test.skip(true, 'F3 통합(2026-09-29) — 구 proto 레일은 v3 집으로 옮겼다 · 대체: v3-integration.spec');
   for (const [menu, file] of [['media', 'dataset.html'], ['project', 'ai-project.html'], ['analysis', 'analysis-ai.html'], ['map', 'xi/index.html'], ['support', 'notice.html']]) {
     await boot(page);
     await page.locator(`#rail [data-menu="${menu}"]`).click();

@@ -11,12 +11,12 @@ const who = await K.gate('lx-console');
 
 /* ── 셸: 마스트 + 6단 레일(①②④⑤⑥ = 페이지 · ③ = 서랍) ───────────── */
 const STEPS = [
-  { id: 'ingest', label: '반입', href: V3 + 'lx-ingest/' },
+  { id: 'ingest', label: '데이터 올리기', href: V3 + 'lx-ingest/' },
   { id: 'train', label: '학습', href: V3 + 'lx-train/' },
-  { id: 'assemble', label: '조립' },
-  { id: 'review', label: '검수', href: V3 + 'lx-review/' },
+  { id: 'assemble', label: '서비스 만들기' },
+  { id: 'review', label: '결과 확인', href: V3 + 'lx-review/' },
   { id: 'deploy', label: '배포', href: V3 + 'lx-deploy/' },
-  { id: 'ops', label: '운영', href: V3 + 'lx-deploy/', query: 'tab=ops', hash: '#ops' },
+  { id: 'ops', label: '서비스 관리', href: V3 + 'lx-deploy/', query: 'tab=ops', hash: '#ops' },
 ];
 document.body.classList.add('is-booting');
 let region = null;          // 지도 검색으로 고른 지역(변수 · 없으면 전국)
@@ -55,11 +55,14 @@ K.devDrawer({ stage, who });
 /* 오늘(흰 카드) */
 const todayEl = h('section.t-card.t-card--map.lc-today', { 'aria-label': '오늘' },
   h('div.lc-today-h', {}, h('h2', { text: '오늘' }), h('button.t-btn.t-btn--text.lc-first', { type: 'button', text: '첫 항목 열기', hidden: true })),
-  h('div.lc-cells', { 'data-budget-skip': '' }, ...['검수 대기', '재학습', '이식 요청', '기관 신고'].map((l) => h('span.lc-cell.is-wait', {}, h('b.lc-n', { text: '' }), h('span', { text: l })))));
+  h('div.lc-cells', { 'data-budget-skip': '' }, ...['확인 대기', '재학습', '적용 요청', '기관 신고'].map((l) => h('span.lc-cell.is-wait', {}, h('b.lc-n', { text: '' }), h('span', { text: l })))));
 /* 범례(사진 위 흰 글자) */
 const legendEl = h('div.lc-legend', { 'aria-label': '범례' });
 const tip = h('div.lc-tip', { role: 'tooltip', hidden: true });
 stageEl.append(todayEl, legendEl, tip);
+/* 부팅 진행 막대 1개(글자 0 · 스펙시먼 G) — 오늘 칸이 서기 전 빈 바탕만 보이는 몇 초를 채운다 */
+const bootBar = h('div.t-progress.lc-boot', { role: 'progressbar', 'aria-label': '불러오는 중' }, h('i'));
+stageEl.append(bootBar);
 
 /* ── 부팅: 데이터가 오면 띠·레일·점(지도 로드는 기다리지 않는다 · 바탕 --bg-0) ── */
 await load();
@@ -70,6 +73,7 @@ drawLegend();
 stage.map.on('zoomend', () => drawPins());
 stage.map.on('moveend', () => placeLabels());
 document.body.classList.remove('is-booting');
+bootBar.remove();
 K.regionPicker(pickEl, { onPick: pick }).then((p) => {
   const k = new URLSearchParams(location.search).get('region');
   if (k) p.pick(k);
@@ -198,7 +202,7 @@ function hideTip() { tip.hidden = true; }
 function drawLegend() {
   const L = legend();
   const item = (k, label) => `<span data-stage="${k}"><i></i><span>${label}</span></span>`;
-  legendEl.innerHTML = item('ga', '운영') + item('canary', '시범') + item('draft', '이식 요청')
+  legendEl.innerHTML = item('ga', '운영') + item('canary', '시범') + item('draft', '적용 요청')
     + (L.abroad ? `<span class="lc-far"><span>해외 <b>${L.abroad}</b>곳</span></span>` : '');
 }
 

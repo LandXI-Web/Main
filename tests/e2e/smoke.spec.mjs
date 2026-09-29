@@ -5,7 +5,7 @@ import { test, expect } from '@playwright/test';
 // 도착 페이지의 동작은 proto-scrub / proto-login / proto-dashboard 스펙이 맡는다.
 // dashboard 는 로그인 게이트가 있어(미로그인 → proto/login.html?next=…) 세션을 심고 들어간다.
 const REDIRECTS = [
-  ['home.html', /\/landxi\/proto\/scrub\/index\.html$/, false],
+  ['home.html', /\/landxi\/v3\/main\/$/, false],   // F3 통합: 첫 주소 = v3 게스트 메인
   ['login.html', /\/landxi\/proto\/login\.html$/, false],
   ['dashboard.html', /\/landxi\/proto\/dashboard\.html$/, true],
 ];

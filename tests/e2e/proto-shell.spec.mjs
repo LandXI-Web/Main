@@ -112,6 +112,7 @@ test.describe('관문', () => {
 
 test.describe('레일', () => {
   test('직원 레일 7메뉴 · 원본 순서 · 전부 진짜 링크 + 로그아웃 — 지도 서비스 = 새 XI맵(F2-R)', async ({ page }) => {
+    test.skip(true, 'F3 통합(2026-09-29) — 구 proto 레일은 v3 집으로 옮겼다 · 대체: v3-integration.spec');
     const errs = watch(page);
     await boot(page);
     const items = await page.locator('#rail a.rail-i').evaluateAll((a) => a.map((e) => [e.innerText.replace(/\s+/g, ' ').trim(), e.getAttribute('href')]));
@@ -136,6 +137,7 @@ test.describe('레일', () => {
   });
   /* F2-R — '지도 서비스' 클릭 = 새 XI맵(landxi/xi) 도착 · 세션 인계(같은 origin localStorage → XI맵 session.shadow()) */
   test('레일 링크는 실제로 이동한다 — 지도 서비스 → /landxi/xi/ · data-lx=ready · 직원 관문', async ({ page }) => {
+    test.skip(true, 'F3 통합(2026-09-29) — 구 proto 레일은 v3 집으로 옮겼다 · 대체: v3-integration.spec');
     await boot(page);
     await page.locator('#rail a[data-menu="map"]').click();
     await page.waitForURL(/\/landxi\/xi\/index\.html/);
@@ -144,6 +146,7 @@ test.describe('레일', () => {
     expect(await page.evaluate(() => window.__xi.state.role)).toBe('staff');
   });
   test('구 XI맵(ximap.html)은 직접 URL 로 그대로 열린다 — 그 화면의 레일도 새 XI맵을 가리킨다(원본 기능 삭제 0)', async ({ page }) => {
+    test.skip(true, 'F3 통합(2026-09-29) — 구 proto 레일은 v3 집으로 옮겼다 · 대체: v3-integration.spec');
     await boot(page, 'proto/ximap.html');
     await expect(page.locator('#rail a.rail-i')).toHaveCount(7);
     await expect(page.locator('#rail .rail-i[aria-current="page"]')).toHaveAttribute('data-menu', 'map');
@@ -171,6 +174,7 @@ test.describe('레일', () => {
   /* F2-R — 관제 넷은 다른 origin(:8702). href 는 관제 로그인 문 + ?next=(자동 인계는 2차) · 같은 탭(target 없음) · rel 없음.
      실제 이동은 :8702 를 route 로 막아 ?next= 만 확인한다(관제 서버가 꺼져 있어도 이 단언은 선다). */
   test('관리자 관제 넷 — :8702 login.html?next= · 같은 탭 · 클릭하면 그 주소로 간다', async ({ page }) => {
+    test.skip(true, 'F3 통합(2026-09-29) — 구 proto 레일은 v3 집으로 옮겼다 · 대체: v3-integration.spec');
     await boot(page, 'proto/admin-home.html', 'admin');
     const ext = await page.$$eval('#rail a.rail-i[data-ext]', (a) => a.map((e) => [e.dataset.menu, e.innerText.trim(), e.getAttribute('href'), e.getAttribute('target'), e.getAttribute('rel')]));
     expect(ext).toEqual([
@@ -182,6 +186,7 @@ test.describe('레일', () => {
     await page.waitForURL(/localhost:8702\/landxi\/ops\/login\.html\?next=infra\.html$/);
   });
   test('관리자 · 직원 · 영업 — 관제 넷은 관리자 레일에만(외부 origin 키를 sees() 가 거른다)', async ({ page }) => {
+    test.skip(true, 'F3 통합(2026-09-29) — 구 proto 레일은 v3 집으로 옮겼다 · 대체: v3-integration.spec');
     await boot(page, 'proto/ai-project.html', 'staff');
     await expect(page.locator('#rail [data-ext]')).toHaveCount(0);
     await switchTo(page, 'sales');

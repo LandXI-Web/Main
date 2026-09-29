@@ -2,6 +2,18 @@
 
 소유 `landxi/v3/login/**` · 명세 LANDXI-FINAL-SPEC §2.2 · 커밋 없음. 모든 실측은 정문 폼 입력(POST /auth/login) · playwright · :4173 정적 + :8700 실서버 · 세션 주입 0.
 
+## 재검증 (2026-09-29 · 판정 1차 지적 3건 — 코드는 이미 반영, 실서버 재실측)
+auth.js · login.css 는 9/27 수정 그대로(추가 변경 없음). 새 브라우저 컨텍스트 · 정문 폼 입력(lx-staff) · :8700 실서버.
+
+| # | 지적 | 조치 | 실측 (9/29) |
+|---|---|---|---|
+| 1 | `?logout` 뒤 `/me` 200 | probe() 게이트 없음 · `authed('/auth/logout','POST',token)` 바로 호출(네트워크 오류만 700ms 뒤 1회) → `session.clear()` | 로그아웃 전 토큰 `GET /me` **200** → `?logout` → 같은 토큰 **401** ✓ · `POST /auth/logout` 1회 · `/health` 0 · 로컬 세션 0 · pageerror 0 |
+| 2 | 재방문 '계속' 미표시 | `GET /me` 바로(네트워크 오류만 1회 재시도) · 401 이면 `session.clear()` | 재방문 **'LX 직원으로 계속 →'** 표시: performance.now **171ms** · 이동 시작부터 **314ms**(3초 기준 안). 캡처 `fix2/1440-resume.png` |
+| 3 | 390 첫 뷰 로그인 버튼 잘림 | 모바일 히어로 280 · door/lead 간격 축소 | 로그인 버튼 **top 755 · bottom 799 (< 844)** · scrollWidth 390(가로 스크롤 0) · 콘솔 오류 0. 캡처 `fix2/390.png` |
+| 4 | (선택) 390 Ctrl K ↔ 결과 카드 7px | `.ask` bottom 96 | 18px(9/27 실측 · 변경 없음) |
+
+산출물: `shots/final/login/fix2/1440.png` · `fix2/390.png` · `fix2/1440-resume.png` · 영상 `login-1440-e2e.mp4`(16.6초).
+
 ## 판정 3차 불합격 → 해소 (최신)
 | # | 지적 | 조치 (파일) | 실측 (정문 폼 입력 · :8700 실서버) |
 |---|---|---|---|

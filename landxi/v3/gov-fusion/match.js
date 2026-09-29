@@ -106,7 +106,7 @@ export async function matchLedger({ rows, cols, region, index, onStep }) {
     try { items = await vwSearch(where(r.a)); } catch { /* */ }
     const exact = items.find((it) => /^\d{19}$/.test(it.id) && String(it.address && it.address.parcel || '').replace(/\s+/g, ' ').endsWith(`${r.a.key} ${r.a.jb}`.replace(/\s+/g, ' ')));
     if (exact && (!index || index.get(exact.id))) { r.pnu = exact.id; r.how = 'vworld'; C.vworld++; }
-    else r.why = exact ? 'AI 판독 범위 밖' : '연속지적에 없음';
+    else r.why = exact ? 'AI 분석 범위 밖' : '연속지적에 없음';
     step('vworld');
   });
   for (const r of retry.slice(400)) r.why = '연속지적에 없음';

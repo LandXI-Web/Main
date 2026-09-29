@@ -59,6 +59,7 @@ for (const [role, label, landRe, railAt] of [
   ['sales', '영업용 계정', /\/landxi\/xi\/index\.html$/, 'proto/usecase.html'],
 ]) {
   test(`${role} — 로그인 → 첫 화면 · 레일 ${WANT[role].length} · href 정본 · 죽은 링크 0 · 14px 미만 0 · 콘솔 0 · 1440 캡처`, async ({ page }) => {
+    test.skip(true, 'F3 통합(2026-09-29) — 구 proto 레일은 v3 집으로 옮겼다 · 대체: v3-integration.spec');
     test.setTimeout(120000);
     const errs = watch(page);
     await signIn(page, label);
@@ -91,6 +92,7 @@ for (const [role, label, landRe, railAt] of [
 }
 
 test('직원 레일 → 지도 서비스 클릭 → 새 XI맵 부팅(data-lx=ready) · 마스트 역할 표기 · 세션 키 그대로', async ({ page }) => {
+  test.skip(true, 'F3 통합(2026-09-29) — 구 proto 레일은 v3 집으로 옮겼다 · 대체: v3-integration.spec');
   test.setTimeout(90000);
   const errs = watch(page);
   await signIn(page, 'LX 직원');
@@ -107,6 +109,7 @@ test('직원 레일 → 지도 서비스 클릭 → 새 XI맵 부팅(data-lx=rea
 });
 
 test('관리자 레일 → 인프라 관제 → :8702 관제 로그인 문(?next=infra.html) — 관제 서버 실측', async ({ page }) => {
+  test.skip(true, 'F3 통합(2026-09-29) — 구 proto 레일은 v3 집으로 옮겼다 · 대체: v3-integration.spec');
   test.setTimeout(90000);
   await signIn(page, 'LX 관리자');
   await page.waitForURL(/admin-home\.html$/);
@@ -135,6 +138,7 @@ test('딥링크 · Global 진입 주소 전수 — 200(같은 origin) · 관제�
    레일 '운영 현황' = 이 origin admin-home.html · 관제 운영 현황은 '관제 현황'(title LX/OPS 운영 현황)으로 갈린다.
    admin-home 에서 그 항목이 aria-current=page(전에는 admin-home.js active:'admin' 탓에 '서비스 관리'가 현재였다). */
 test('관리자 홈 고립 0 — 모든 관리자 화면 레일에 admin-home 링크 · admin-home 에서 운영 현황 = 현재', async ({ page }) => {
+  test.skip(true, 'F3 통합(2026-09-29) — 구 proto 레일은 v3 집으로 옮겼다 · 대체: v3-integration.spec');
   test.setTimeout(90000);
   const errs = watch(page);
   await signIn(page, 'LX 관리자');

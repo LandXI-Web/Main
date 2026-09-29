@@ -1,9 +1,9 @@
 {
   "_note": "개발 계정(F1-CONTRACT §3) — 비밀번호는 server/.env 의 DEV_PASSWORD 한 값. 실운영 전 교체.",
   "lx_users": [
-    {"id": "u_lx_admin", "login": "lx-admin", "role": "admin", "name": "LX 관리자"},
-    {"id": "u_lx_staff", "login": "lx-staff", "role": "staff", "name": "LX 직원"},
-    {"id": "u_lx_sales", "login": "lx-sales", "role": "sales", "name": "LX 영업"}
+    {"id": "u_lx_admin", "login": "lx-admin", "role": "admin", "name": "박서연"},
+    {"id": "u_lx_staff", "login": "lx-staff", "role": "staff", "name": "김도윤"},
+    {"id": "u_lx_sales", "login": "lx-sales", "role": "sales", "name": "이준호"}
   ],
   "tenant_users": [
     {"id": "u_namwon_manager", "tenant_id": "namwon", "login": "namwon-manager", "role": "manager", "name": "남원시 담당자"},

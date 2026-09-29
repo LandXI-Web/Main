@@ -32,6 +32,8 @@ const exOf = (set, deps = cur ? [cur] : []) => {
 };
 /* '예시' 신뢰 기호(K6 기호와 같은 모양) — 호버 한 줄 = 어느 지역 결과인지 */
 const exSig = (name) => `<span class="t-sig k-sig" data-sig="ex" tabindex="0" role="note" aria-label="${esc(t('sig.ex'))}" data-why="${esc(['다른 지역 결과', name].filter(Boolean).join(' · '))}"></span>`;
+/* 기관 세션 = 자기 관할 밖 결과는 싣지 않는다(지역 이름 0 · 예시 표기도 없이 뺀다). LX·게스트는 그 카드 실결과 지역을 그대로 보인다 */
+const dropSet = (set, deps) => isTenant() && exOf(set, deps);
 const markEx = (el, name) => { el.insertAdjacentHTML('beforeend', exSig(name)); el.dataset.ex = '1'; return el; };
 /* 큰 숫자 = 실태조사 '현장 확인 필요'(허용 라벨 · XI맵과 같은 출처) — 배포본 id → 봉투(없으면 null) */
 const NEED = new Map();
@@ -156,8 +158,9 @@ function hero(state) {
   );
   const fig = h('figure.sd-hero__vis.t-card--hero');
   const vis = D.vis, hv = D.hero;
-  const set = hv.set && vis.sets[hv.set] ? hv.set : null;
-  if (hv.img) {
+  const off = hv.set && dropSet(hv.set);   // 관할 밖 결과 = 히어로 이미지도 싣지 않는다
+  const set = hv.set && vis.sets[hv.set] && !off ? hv.set : null;
+  if (hv.img && !off) {
     fig.append(h('img.sd-crop', { src: hv.img, alt: '', decoding: 'async', fetchpriority: 'high' }));
     /* 가르기(전 · 후) — 좌 = 이전 시점 원영상, 우 = 이후 시점 + 실판독 변화 윤곽 */
     if (hv.swipe) fig.append(h('span.sd-sw.sd-sw--l', { text: hv.swipe[0] }), h('span.sd-sw.sd-sw--r', { text: hv.swipe[1] }));
@@ -167,6 +170,7 @@ function hero(state) {
     /* 결과 전 — 밝은 캐릭터(드론)만 · 판 = --bg-1 카드(검정 잔재 0) */
     const e = h('div.sd-hero__empty'); fig.append(e); fig.classList.add('is-empty');
     empty(e, { kind: 'first', char: 'drone', text: '첫 결과가 생기면 여기에 결과가 보입니다' });
+    e.querySelector('h6')?.remove();   // 상태는 위 칩 한 곳(시범 칩 옆에 '첫 결과 전' 제목이 겹치지 않게)
   }
   /* 우하단 흰 카드 — 윗줄 `{지역} · {기준일} 기준` / 아랫줄 `현장 확인 필요 {n}필지 ✓`(그 배포본 지역 합계 · XI맵과 같은 출처).
      그 숫자가 없으면 윗줄만. 지금 지역 밖 결과 = `{지역} · {연도 영상}` + 예시(숫자 없음) */
@@ -186,7 +190,7 @@ function hero(state) {
 /* ── 교차 블록 3–5 ─────────────────────────────────── */
 function blocks(live) {
   const wrap = h('section.sd-blocks');
-  buildBlocks(D, live).forEach((b, i) => {
+  buildBlocks(D, live, (s) => dropSet(s)).forEach((b, i) => {
     const shots = shotsOf(b);
     const go = b.kind === 'live' ? () => { location.href = openHref(b.deploy); } : shots.length ? () => detail(b, shots) : null;
     const link = go ? h('button.t-btn.t-btn--text.sd-more', { type: 'button', text: '자세히 보기', onclick: go }) : null;
@@ -243,8 +247,8 @@ const libs = () => (LIBS ||= (async () => {
 function liveMap(fig, b) {
   const host = h('div.sd-live');
   const d = b.deploy, it = b.layer;
-  const cap = h('figcaption.sd-cap', { text: [where(d), asof(d)].filter(Boolean).join(' · ') });
   const env = needOf(d);
+  const cap = h('figcaption.sd-cap', { text: [where(d), env ? needAsof(env) : asof(d)].filter(Boolean).join(' · ') });   // 숫자와 같은 기준일
   const num = env ? h('div.sd-live__n.t-card', { html: needHtml(env) }) : null;
   /* 타일이 오기 전 = --bg-1 판 + K9 진행 막대(숫자 카드·캡션은 지도가 그려진 뒤에만) */
   const ld = h('div.sd-live__ld');
@@ -314,6 +318,7 @@ function related(rows, id) {
       const set = hv.set && vis.sets[hv.set] ? hv.set : null;
       const crop = hv.img ? (/^\/|^https?:/.test(hv.img) ? hv.img : vis.own + hv.img) : set ? cropUrl(vis, set, vis.sets[set].frames[0]) : null;
       /* 크롭이 이 사용자에게 보이는 그 카드 배포본의 지역 밖 = 크롭 지역 이름 + 예시(숫자 없음) */
+      if (crop && set && dropSet(set, r.deploys || [])) return { crop: null, card: { ...r.card, crop_url: null }, href: `?card=${encodeURIComponent(r.card.id)}`, where: r.deploy ? where(r.deploy) : '', deploy: r.deploy || null, state: r.state };
       if (crop && exOf(set, r.deploys || [])) return { crop, href: `?card=${encodeURIComponent(r.card.id)}`, where: regionOfSet(vis, set).name, deploy: null, state: r.state };
       return {
         crop, href: `?card=${encodeURIComponent(r.card.id)}`,
@@ -327,7 +332,7 @@ function related(rows, id) {
     const el = grid.children[i]; if (!el) return;
     const hv = vis.hero[r.card.id] || {}; const set = hv.set && vis.sets[hv.set] ? hv.set : null;
     const lab = el.querySelector('.k-svc-meta .t-label');
-    if (lab && set && exOf(set, r.deploys || [])) markEx(lab, regionOfSet(vis, set).name);
+    if (lab && set && exOf(set, r.deploys || []) && !dropSet(set, r.deploys || [])) markEx(lab, regionOfSet(vis, set).name);
     /* 숫자 = 그 카드 배포본의 현장 확인 필요(있을 때만) · 탐지 총수는 싣지 않는다 */
     const n = el.querySelector('.k-svc-n');
     if (n) { const env = who && !(set && exOf(set, r.deploys || [])) ? needOf(r.deploy) : null; n.innerHTML = env ? needHtml(env) : ''; n.hidden = !env; }

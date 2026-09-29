@@ -120,6 +120,20 @@ async function main() {
     if (!isLX && d.tenant_id !== tenantId) return false;
     const k = d.region_profile || d.id; if (seen.has(k)) return false; seen.add(k); return true;
   }).map((d) => ({ ...d, bbox: bboxOf(d.aoi) }));
+  /* 계약 어댑터 — 서버가 정상 응답했는데 어떤 해외 기관의 배포가 0건이고, 계약 시드(F1 픽스처)에는 그 기관의 배포가 있으면
+     그 범위를 기관 지역으로 쓴다(DB 정리 때 빠진 dp-kgz-land-change-26 · 결과 0). 결과는 지어내지 않는다 — HUD 는 서버 작업이 있어야만 선다.
+     실행 견적·제출에는 deploy_id 를 싣지 않는다(서버에 없는 id). 서버에 배포가 돌아오면 이 분기는 저절로 꺼진다. */
+  try {
+    const fxd = await fetch('/landxi/ops/data/fixtures/deploys.json').then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    const has = new Set((depJ.items || []).map((d) => d.tenant_id));
+    for (const d of fxd?.items || []) {
+      const b = bboxOf(d.aoi); if (!b || kr(b) || has.has(d.tenant_id)) continue;
+      if (!isLX && d.tenant_id !== tenantId) continue;
+      const k = d.region_profile || d.id; if (seen.has(k)) continue; seen.add(k);
+      deploys.push({ ...d, bbox: b, contract: true });
+    }
+  } catch { /* 계약 시드 없음 — 서버 값 그대로 */ }
+  if (q.get('dev') === '1') window.__glDeploys = deploys.map((d) => ({ id: d.id, tenant: d.tenant_id, contract: !!d.contract }));
   SH.fresh(depJ.as_of || null);
 
   /* 나라 = 배포 범위 중심이 든 나라(세계 경계) */
@@ -525,7 +539,7 @@ async function main() {
   let quoteT = 0;
   function quoteSoon() { clearTimeout(quoteT); quoteT = setTimeout(quote, 400); }
   const runAoi = (D0) => { const b = D0.deploy ? inter(D0.bbox, D0.deploy.bbox) || D0.bbox : D0.bbox; const mb = mos?.bounds; return { type: 'Polygon', coordinates: [ring(mb ? inter(b, mb) || b : b)] }; };
-  const runBody = (D0) => ({ kind: 'index', model_id: 'index/ndvi_pc', deploy_id: D0.deploy?.id, card_id: D0.deploy?.card_id, aoi: runAoi(D0),
+  const runBody = (D0) => ({ kind: 'index', model_id: 'index/ndvi_pc', ...(D0.deploy && !D0.deploy.contract ? { deploy_id: D0.deploy.id, card_id: D0.deploy.card_id } : {}), aoi: runAoi(D0),
     options: { months: S.season.months, cloud_max: 15, mask: 'worldcover-40', source: 'pc-s2-mosaic' }, priority: 0 });
   async function quote() {
     const D0 = S.district; if (!D0) return;

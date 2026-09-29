@@ -21,7 +21,8 @@ const PATH = [['A', 0.2, 0, 300], ['A', 2.5 + 4 * 0.66, 1500, 400], ['A', 6.5 + 
 async function run(record) {
   const ctx = await chromium.launchPersistentContext(dir, { channel: 'chrome', args, viewport: vp, ...(record ? { recordVideo: { dir: vdir, size: vp } } : {}) });
   const page = ctx.pages()[0] || await ctx.newPage();
-  const errors = [];
+  const errors = [], marks = {};
+  const mark = (k) => { marks[k] = Date.now() - t0; };
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
   const t0 = Date.now();
@@ -42,12 +43,15 @@ async function run(record) {
     }), [y, ms]);
     await page.waitForTimeout(record ? hold : 2500);
   }
+  mark('scrolled');
   // 마감 '로그인' → 정문 폼 입력
   await page.locator('#fin a.t-btn').click();
   await page.waitForURL(/\/landxi\/v3\/login\//);
+  mark('login_page');
   await page.waitForTimeout(record ? 500 : 1500);
   await page.locator('input[name=login], input[autocomplete=username], input[type=text]').first().pressSequentially('lx-staff', { delay: record ? 25 : 0 });
   await page.locator('input[type=password]').first().fill(process.env.LX_PW || 'landxi-dev-2026');
+  mark('typed');
   await Promise.all([page.waitForURL((u) => !/\/login\/?$/.test(u.pathname), { timeout: 15000 }), page.locator('input[type=password]').first().press('Enter')]);
   const tLand = Date.now() - t0;
   await page.waitForTimeout(record ? 3500 : 500);
@@ -56,7 +60,7 @@ async function run(record) {
   if (!record) { await page.evaluate(() => { try { localStorage.removeItem('lx_api_session'); } catch {} }); }
   const video = record ? page.video() : null;
   await ctx.close();
-  return { tStart, tLand, landedShot, errors, landed, video: video ? await video.path() : null, total: Date.now() - t0 };
+  return { marks, tStart, tLand, landedShot, errors, landed, video: video ? await video.path() : null, total: Date.now() - t0 };
 }
 
 await run(false);
@@ -65,4 +69,4 @@ const mp4 = path.join(out, 'main-1440.mp4');
 const { execFileSync } = await import('node:child_process');
 const ss = Math.max(0, r.tStart / 1000 - 0.3).toFixed(2);
 execFileSync('ffmpeg', ['-y', '-ss', ss, '-i', r.video, '-t', '20', '-c:v', 'libx264', '-preset', 'slow', '-crf', '24', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', mp4], { stdio: 'ignore' });
-console.log(JSON.stringify({ mp4, landed: r.landed, land_at_s: +(r.tLand / 1000 - ss).toFixed(2), end_at_s: +(r.total / 1000 - ss).toFixed(2), errors: r.errors, start_s: ss, total_ms: r.total }));
+console.log(JSON.stringify({ mp4, landed: r.landed, land_at_s: +(r.tLand / 1000 - ss).toFixed(2), end_at_s: +(r.total / 1000 - ss).toFixed(2), errors: r.errors, marks: r.marks, start_s: ss, total_ms: r.total }));

@@ -605,10 +605,10 @@ async function openParcel(pnu, { fly = false } = {}) {
   const m2 = (e) => (e && e.value != null ? `${nf(Math.round(e.value))}㎡${K.sig(e)}` : '—');
   const pct = f?.evid_pct?.value;
   const body = h('div.xc-parcel', {},
-    h('p.xc-tags', {}, h('span.t-chip', { text: reviewed ? '✓ 검수됨' : 'AI 판독 · 검수 전', 'data-lv': reviewed ? undefined : 'wait' }), f ? h('span.t-chip', { text: S.ruleDefs[f.rule]?.name || f.rule_nm || '' }) : null),
+    h('p.xc-tags', {}, h('span.t-chip', { text: reviewed ? '✓ 확인됨' : 'AI 분석 · 확인 전', 'data-lv': reviewed ? undefined : 'wait' }), f ? h('span.t-chip', { text: S.ruleDefs[f.rule]?.name || f.rule_nm || '' }) : null),
     h('dl.xc-pair', {},
       h('div', {}, h('dt', { text: '대장' }), h('dd', { html: `<b>${esc(L.jimok_nm || L.jimok || '—')}</b> ${m2(L.area_m2)}` })),
-      h('div.ai', {}, h('dt', { text: 'AI 판독' }), h('dd', { html: f ? `<b>${esc(seen)}</b> ${m2(f.evid_m2)}${pct != null ? ` · ${Math.round(pct)}%` : ''}` : '—' }))),
+      h('div.ai', {}, h('dt', { text: 'AI 분석' }), h('dd', { html: f ? `<b>${esc(seen)}</b> ${m2(f.evid_m2)}${pct != null ? ` · ${Math.round(pct)}%` : ''}` : '—' }))),
   );
   const act = h('div.xc-act');
   if (f && S.tenant && S.who.me.role === 'manager' && f.state === 'open') act.append(h('button.t-btn', { type: 'button', text: '현장 배정', onclick: (e) => setState(f, 'assigned', e.currentTarget) }));
@@ -654,7 +654,7 @@ function showPop(title, ...kids) {
   else pop.style.top = '';
 }
 function renderLayers() {
-  const L = [['sus', '현장 확인 필요'], ['ai', 'AI 판독'], ['parcel', '지적선'], ['emd', '읍면동 경계']];
+  const L = [['sus', '현장 확인 필요'], ['ai', 'AI 분석'], ['parcel', '지적선'], ['emd', '읍면동 경계']];
   const rows = L.map(([k, t]) => h('button.xc-row', { type: 'button', 'aria-pressed': String(S.layers[k]), onclick: (e) => { S.layers[k] = !S.layers[k]; e.currentTarget.setAttribute('aria-pressed', String(S.layers[k])); applyLayers(); } }, h('i.xc-sw'), h('span', { text: t }), h('i.xc-key', { dataset: { k } })));
   showPop('층', h('div.xc-rows-p', {}, ...rows));
 }

@@ -40,10 +40,10 @@ export async function reloadDeploys() {
 }
 
 /* ── 이름(사용자 말) ─────────────────────────── */
-export const STAGE_CHIP = { draft: '이식 요청', shadow: '시범', canary: '시범', rolled_back: '시범', ga: '운영' };
+export const STAGE_CHIP = { draft: '적용 요청', shadow: '시범', canary: '시범', rolled_back: '시범', ga: '운영' };
 export const stageKind = (s) => (s === 'ga' ? 'ga' : s === 'draft' ? 'draft' : 'pilot');
 export const tenantName = (id) => D.tenants.find((t) => t.id === id)?.name?.ko || '';
-export const regionKey = (d) => d.region_profile || d.tenant_id;
+export const regionKey = (d) => d.sgg_cd || d.region_profile || d.tenant_id;   // 시군구에 적용한 배포본은 제 점을 갖는다
 export function regionShort(d) {
   const ko = d?.region_name?.ko || tenantName(d?.tenant_id) || '';
   const p = String(ko).trim().split(/\s+/);
@@ -132,7 +132,7 @@ export const boxPoly = (b) => ({ type: 'Polygon', coordinates: [[[b[0], b[1]], [
 
 /* ── 운영 건강(명세: GET /deploys?with=health). 재학습 · 정밀도 · 오탐 신고는 retrain.js 한 규칙(콘솔 '오늘' · lx-review 와 같은 원천).
    서버 health 는 기관 단위(한 기관의 모든 배포본에 같은 신고·정밀도)라 업무별로 갈라지지 않는다 → 마지막 학습만 서버 값을 쓴다. ─ */
-const NEXT = { retrain: '재학습', sample: '표본 검수', sample_review: '표본 검수', verify: '표본 검수', redeploy: '갱신 배포', update: '갱신 배포', update_deploy: '갱신 배포', none: '없음', watch: '없음' };
+const NEXT = { retrain: '재학습', sample: '표본 확인', sample_review: '표본 확인', verify: '표본 확인', redeploy: '갱신 배포', update: '갱신 배포', update_deploy: '갱신 배포', none: '없음', watch: '없음' };
 const envOf = (value, unit, basis, source) => ({ value, unit, basis, as_of: D.asOf, source });
 
 /** 규칙 · 규칙별 정밀도(lx-review) · 배포본별 규칙 의심 수 — 한 번(서랍 · 운영 탭 공용) */
@@ -172,7 +172,7 @@ export function health(d, model = null, due = retrainMap()) {
   let next = '없음';
   if (due.has(d.id)) next = '재학습';
   else if (newer) next = '갱신 배포';
-  else if (!precision || precision.k < SAMPLE_GOAL) next = '표본 검수';
+  else if (!precision || precision.k < SAMPLE_GOAL) next = '표본 확인';
   else if (h && NEXT[h.next_action] && NEXT[h.next_action] !== '재학습') next = NEXT[h.next_action];
   return { precision, reports: envOf(reps, 'count', 'recorded', '기관 확인 기록'), lastTrain, next, due: due.get(d.id) || [] };
 }

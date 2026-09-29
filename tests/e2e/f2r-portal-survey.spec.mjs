@@ -124,6 +124,7 @@ test('기관 문 ?next=../xi/…(실태조사) — 기관 로그인 뒤 그리�
 });
 
 test('기관 레일 Global ↗ — 해외 기관(scope global · kgz-*)만 · 남원 레일에는 없다', async ({ page }) => {
+  test.skip(true, 'F3 통합(2026-09-29) — 구 proto 레일은 v3 집으로 옮겼다 · 대체: v3-integration.spec');
   await asTenant(page);
   await boot(page, 'proto/portal.html');
   await expect(page.locator('#rail a[data-menu="global"]')).toHaveCount(0);

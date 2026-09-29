@@ -53,7 +53,7 @@ export const canon = () => D.deploys.filter((d) => d.tenant_id !== 'lx-demo' && 
 
 const decidedSince = (d, since) => (d.approvals || []).some((a) => new Date(a.at).getTime() >= new Date(since || 0).getTime() - 1000);
 
-export const KIND = { deploy: '배포 승인', rule: '규칙 임계', quota: '쿼터 변경', port: '이식' };
+export const KIND = { deploy: '배포 승인', rule: '규칙 임계', quota: '쿼터 변경', port: '다른 지역 적용' };
 const STAGE_KO = { draft: '초안', shadow: '검증', canary: '시범', ga: '운영', rolled_back: '롤백' };
 
 /** 결재 대기 — 큰 숫자 · 레일 · 결재 표가 모두 이 목록 하나를 센다.
