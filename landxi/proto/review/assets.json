@@ -1,22 +1,138 @@
 {
  "title": "Land-XI 자산 대장 — 화면마다 한 줄",
- "generated_at": "2026-09-29 18:37 KST",
+ "generated_at": "2026-09-30 04:21 KST",
  "생성기": "node tools/review/masters.mjs (매체: node tools/review/ledger-media.mjs)",
  "판정_기준": {
   "초기_분류": "판정은 사용자가 대장의 결정 버튼으로 정한다(2026-09-29). 여기 판정은 생성기가 붙인 초기 분류이고, user_decision 이 있으면 그것이 우선",
   "적용": "화면에 반영됨(applied_to)",
-  "검토": "결정 대기(next) — 새 화면 17종은 모두 초기 분류 검토",
+  "검토": "결정 대기(next) — 새 화면 17종 · 코어 차수 자산(영상 2 · 증거 장면 15)은 모두 초기 분류 검토",
   "폐기": "다른 안·결정이 대체함(replaced_by)"
  },
  "계층": "기능(function) → 화면(screen) → 칸(slot: 원판 → 예전 구현(v1 · v2) → 새 구현(v3))",
+ "코어": [
+  {
+   "core": "C1",
+   "name": "XI맵 — 전역 AI 추론",
+   "now": "시군구를 고르면 '전역 분석'으로 영상 · 모델을 서버가 골라 읍면동 순으로 결과가 차오릅니다. 등록 영상 층이 등록된 모든 시군구에서 그려지고(여주 · 보령 · 문경 · 함양 · 보은 확인), 말로 전역 분석을 실행합니다(산청 · 함양).",
+   "blocked": "등록 영상 지역에서 읍면동 · 그린 범위 분석이 '영상 등록 필요'로 막힘 · '전역' 답이 영상이 덮는 곳만 분석한다는 말을 안 함 · XI맵 전국 머리에 규칙 기호가 보임",
+   "assets": [
+    "core-walk",
+    "core-c1-ingest",
+    "core-c1-xi",
+    "core-c2-chart",
+    "v3-xi-clean",
+    "v3-lx-ingest"
+   ]
+  },
+  {
+   "core": "C2",
+   "name": "vLLM 기반 GeoAI 서비스(AI 도우미)",
+   "now": "말로 지도 제어(지역 · 확대 · 층 · 3D) · 말로 분석 실행과 바로 차트 · 올린 대장 × AI 질의 · 보고서 초안 · 법령 조문 원문 인용(7개 법령) · 영상 설명과 오탐 가능성 · 영어 답 · LX 관리자 운영 요약이 화면에서 동작합니다. 숫자는 분석 결과에서만 나오고, AI 도우미 사용량은 기관 사용량으로 합산됩니다. 국산 모델은 설정만('연결 전').",
+   "blocked": "실증에서 고칠 것 16건 — 영어 확대 · 전역 분석 요청이 운영 안내로 닫힘 · 대장 올린 계정에서 법령 질문을 대장 답이 가로챔 · 곁가지 조문을 먼저 인용 · 지도 동작 실패인데 '확대했습니다'라고 답함 · 해외 화면 확대 안 됨 · '공문' 요청에 보고서",
+   "assets": [
+    "c2-walk",
+    "core-c2-move",
+    "core-c2-chart",
+    "core-c2-law",
+    "core-c2-vlm",
+    "core-c2-report",
+    "core-c2-ops",
+    "core-c2-en",
+    "v3-gov-fusion"
+   ]
+  },
+  {
+   "core": "C3",
+   "name": "필지 실태조사",
+   "now": "어느 시군구든 필지 적재 → AI 결합 → 의심 필지 → 보고서. 의심 필지 · 현장 확인 필요가 첫 화면 · AI 도우미 · 보고서 · XI맵에서 같은 값입니다(강진 12,625 · 633, 여수 10,506). XI맵 전역 분석이 끝나면 실태조사가 자동으로 만들어집니다(산청).",
+   "blocked": "보고서 문서에 규칙 기호가 보임 · 보고서 화면 머리가 시군구 대신 시도 · 건축물대장 연결 없음",
+   "assets": [
+    "core-walk",
+    "core-c3-yeosu",
+    "core-c1-xi",
+    "core-c2-report",
+    "v3-gov-report"
+   ]
+  },
+  {
+   "core": "C4",
+   "name": "행정데이터 융합",
+   "now": "어느 기관 · 시군구든 대장 올리기 → 필지 결합 → 말로 질문 → 지도 칠하기. '의심 필지 몇 건?'에 의심 필지와 대장과 어긋난 필지를 나눠 답합니다(구례 11,081 · 245, 목포 819 · 113). 동 단위 순위 · 차트.",
+   "blocked": "같은 브라우저에서 다시 열면 '올린 대장 필지' 값이 바뀜 · 새로 고침 뒤 올린 대장 결과가 사라지고 다른 사람이 올린 대장이 열림",
+   "assets": [
+    "core-walk",
+    "core-c4-cols",
+    "core-c4-joined",
+    "v3-gov-fusion"
+   ]
+  },
+  {
+   "core": "C5",
+   "name": "LX 생산(서비스 만들기)",
+   "now": "데이터 올리기 · 학습 · 결과 확인 · 배포 화면이 있습니다.",
+   "blocked": "화면에서 실제 학습 실행 · 모델 등록까지 한 번에 되는지 아직 확인 안 함(이번 차수에서 손대지 않음)",
+   "assets": [
+    "core-c7-apply",
+    "core-c1-ingest",
+    "v3-lx-ingest",
+    "v3-lx-train",
+    "v3-lx-review",
+    "v3-lx-deploy"
+   ]
+  },
+  {
+   "core": "C6",
+   "name": "LX 관리자 — 인프라 · 기관 · 배포",
+   "now": "장비 실측 · 기관 사용량 실집계 · 배포 되돌리기가 동작합니다. AI 도우미 사용량이 기관별로 합산돼 기관 화면과 관리자 답에 같은 값으로 나오고, 인프라 화면에 언어 모델 상태 · 국산 모델 연결 전 · 법령 색인 칸이 있습니다.",
+   "blocked": "새 서버 등록 실흐름 · 영어로 고부하 장비를 물으면 부하 0%인데 '2대 사용 중'이라고 답함",
+   "assets": [
+    "core-c6-infra",
+    "core-c2-ops",
+    "core-c7-flow",
+    "v3-ops-core",
+    "v3-ops-infra"
+   ]
+  },
+  {
+   "core": "C7",
+   "name": "관리-생산-서비스 한 흐름",
+   "now": "LX 직원 적용 → LX 관리자 승인 → 전역 AI 분석 → 실태조사 → 기관 결과 → 관리자 사용량이 같은 작업으로 이어집니다(코어 영상 1). 시도 이름은 시도마다 한 가지('광주전남특별시').",
+   "blocked": "이번 차수에 새로 넓힌 것 없음",
+   "assets": [
+    "core-walk",
+    "core-c7-apply",
+    "core-c7-flow",
+    "v3-lx-console",
+    "v3-lx-deploy"
+   ]
+  },
+  {
+   "core": "C8",
+   "name": "글로벌",
+   "now": "키르기스 식생 · 시가지 변화 · 메이크틸라 전후. 해외 기관이 영어로 묻고 영어로 답을 받습니다(평균 식생 지수 · 저활력 농지 면적). 영상 설명도 영어.",
+   "blocked": "해외 화면에서 말로 확대가 안 됨 · 필지 · 대장(실태조사 · 융합)의 해외 적용",
+   "assets": [
+    "core-c2-en",
+    "v3-global"
+   ]
+  },
+  {
+   "core": "C9",
+   "name": "원스톱 운영 · 서비스 공정",
+   "now": "공정 5단계(평가 → 기획 → 개발 → 실증 → 서비스)를 정했고, AI 도우미 7개 작업이 실증 3차(구례 · 산청 · 목포 · 강진)를 거쳐 이번 배포까지 증거를 남겼습니다. 여러 탭이 열려도 실시간 연결을 하나로 나눠 씁니다.",
+   "blocked": "옛 화면이 열린 탭이 남으면 로그인 기관 목록이 멈춤(새로 고치면 풀림) · 늦게 '기관'을 누르면 늦음 안내가 안 뜸",
+   "assets": []
+  }
+ ],
+ "코어_기준": "docs/CORE.md 상태 추적(2026-09-30 · AI 도우미 차수 끝) — 대장 상단 코어 묶음 보기와 같은 내용",
  "범위": "Land-XI 자기 화면만(원판 · 예전 구현 · 새 구현). 다른 회사 사이트 참고 자료는 싣지 않는다(2026-09-29 사용자)",
  "옮김": "moved_to = 예전 화면의 기능을 넘겨받은 새 화면 id(판정과 무관한 연결 정보)",
  "사용자_결정": "대장(masters.html)에서 항목 또는 화면 행의 적용·검토·폐기 → [결정 발행] 글 → node tools/review/apply-decisions.mjs <글 파일> 로 반영. user_decision 이 있으면 판정표보다 우선(table_verdict = 표의 원래 판정, reason_before = 원래 근거)",
  "매체": "모든 항목은 Pages 에서 실제로 열리는 그림(media)을 가진다. 서버가 필요한 화면은 캡처·영상(assets-thumbs/)으로 연다(open.kind = capture). 원문·경로 등 내부 정보는 reason·later·files 에 남긴다",
  "집계": {
-  "전체": 273,
+  "전체": 290,
   "적용": 195,
-  "검토": 34,
+  "검토": 51,
   "폐기": 44,
   "원판": {
    "적용": 135,
@@ -30,7 +146,7 @@
   },
   "새_구현": {
    "적용": 0,
-   "검토": 17,
+   "검토": 34,
    "폐기": 0
   }
  },
@@ -437,15 +553,16 @@
    "key": "데이터 관리/데이터 올리기",
    "anchor": "sc-데이터-관리-데이터-올리기",
    "state": "새 화면 연결됨",
-   "now": "지역을 고르면 영상 · 대장이 갖춰졌는지 한눈에 보고, 모자란 것을 바로 올립니다(LX 직원 대시보드에서 들어감).",
+   "now": "지역을 고르면 영상 · 대장이 갖춰졌는지 한눈에 보고, 모자란 것을 바로 올립니다(LX 직원 대시보드에서 들어감). 9월 29일부터 어느 시군구든 등록 영상 · 대장 갖춤이 같은 틀로 나옵니다(남원 · 여수 · 청양 · 가평 확인).",
    "next": "",
    "ids": [
     "B5-DataMgmt-Upload",
     "B2-DataMgmt-Upload",
-    "v3-lx-ingest"
+    "v3-lx-ingest",
+    "core-c1-ingest"
    ],
    "적용": 1,
-   "검토": 1,
+   "검토": 2,
    "폐기": 1
   },
   {
@@ -746,13 +863,15 @@
    "key": "서비스 공개/배포·다른 지역에 적용",
    "anchor": "sc-서비스-공개-배포-다른-지역에-적용",
    "state": "새 화면 연결됨",
-   "now": "어느 기관에 어떤 서비스가 깔렸는지, 잘 돌고 있는지 보고, 같은 서비스를 다른 지역에 적용합니다(LX 직원 대시보드에서 들어감).",
+   "now": "어느 기관에 어떤 서비스가 깔렸는지, 잘 돌고 있는지 보고, 같은 서비스를 다른 지역에 적용합니다(LX 직원 대시보드에서 들어감). 9월 29일: 다른 지역에 적용하면 LX 관리자 승인 뒤 그 지역 전역 AI 분석이 자동으로 시작됩니다(코어 영상 1).",
    "next": "",
    "ids": [
-    "v3-lx-deploy"
+    "v3-lx-deploy",
+    "core-walk",
+    "core-c7-apply"
    ],
    "적용": 0,
-   "검토": 1,
+   "검토": 3,
    "폐기": 0
   },
   {
@@ -841,7 +960,7 @@
    "key": "XI맵/기본 지도",
    "anchor": "sc-XI맵-기본-지도",
    "state": "새 화면 연결됨 · 예전 화면 보관",
-   "now": "새 XI맵이 직원 · 영업 · 기관 공용 지도입니다(9월 29일 연결). 지역을 고르면 현장 확인이 필요한 필지가 지도에 차오릅니다. 예전 XI맵(두 세대)은 파일만 보관합니다.",
+   "now": "새 XI맵이 직원 · 영업 · 기관 공용 지도입니다(9월 29일 연결). 지역을 고르면 현장 확인이 필요한 필지가 지도에 차오릅니다. 예전 XI맵(두 세대)은 파일만 보관합니다. 9월 30일: 등록 영상 층이 등록된 모든 시군구에서 그려지고, 말로 전역 AI 분석을 실행하면 확인 카드 → 대기열 → 결과가 차오릅니다(산청 · 함양).",
    "next": "",
    "ids": [
     "B5-Map",
@@ -854,10 +973,11 @@
     "xi-public",
     "xi-sales",
     "proto-ximap",
-    "v3-xi-clean"
+    "v3-xi-clean",
+    "core-c1-xi"
    ],
    "적용": 3,
-   "검토": 3,
+   "검토": 4,
    "폐기": 5
   },
   {
@@ -978,13 +1098,15 @@
    "key": "실태조사/대장 융합(기관 첫 화면)",
    "anchor": "sc-실태조사-대장-융합-기관-첫-화면",
    "state": "새 화면 연결됨",
-   "now": "지자체 공무원이 로그인하면 뜨는 첫 화면입니다(9월 29일 연결). 올린 대장과 AI 결과를 겹쳐 대장과 다른 필지를 찾고, 물어보기(Ctrl K)로 묻습니다. 지역은 기관 계정에 따라 바뀝니다(남원 · 광주전남은 예시).",
+   "now": "지자체 공무원이 로그인하면 뜨는 첫 화면입니다(9월 29일 연결). 올린 대장과 AI 결과를 겹쳐 대장과 다른 필지를 찾고, 물어보기(Ctrl K)로 묻습니다. 지역은 기관 계정에 따라 바뀝니다(남원 · 광주전남은 예시). 9월 30일: 대장을 올린 뒤 '의심 필지 몇 건?'에 의심 필지와 대장과 어긋난 필지를 나눠 답합니다(구례 · 목포).",
    "next": "",
    "ids": [
-    "v3-gov-fusion"
+    "v3-gov-fusion",
+    "core-c4-cols",
+    "core-c4-joined"
    ],
    "적용": 0,
-   "검토": 1,
+   "검토": 3,
    "폐기": 0
   },
   {
@@ -1009,13 +1131,18 @@
    "key": "에이전트/융합 분석 질문",
    "anchor": "sc-에이전트-융합-분석-질문",
    "state": "새 화면으로 옮김 · 예전 화면 보관",
-   "now": "물어보기(Ctrl K)는 새 화면들의 공통 입력줄로 옮겼습니다 — 올린 행정 자료와 AI 결과를 두고 말로 묻고 지도를 움직입니다. 예전 XI맵의 물어보기는 파일만 보관합니다.",
+   "now": "물어보기(Ctrl K)는 새 화면들의 공통 입력줄로 옮겼습니다 — 올린 행정 자료와 AI 결과를 두고 말로 묻고 지도를 움직입니다. 예전 XI맵의 물어보기는 파일만 보관합니다. 9월 30일: AI 도우미가 말로 지도 제어 · 분석 실행과 바로 차트 · 대장 질의 · 보고서 초안 · 법령 조문 인용 · 영상 설명 · 영어 답까지 합니다(코어 영상 2).",
    "next": "",
    "ids": [
-    "xi-agent"
+    "xi-agent",
+    "c2-walk",
+    "core-c2-move",
+    "core-c2-chart",
+    "core-c2-law",
+    "core-c2-vlm"
    ],
    "적용": 1,
-   "검토": 0,
+   "검토": 5,
    "폐기": 0
   },
   {
@@ -1024,7 +1151,7 @@
    "key": "통계/보고서/보고서",
    "anchor": "sc-통계-보고서-보고서",
    "state": "새 화면 연결됨 · 예전 화면 보관",
-   "now": "기관이 오늘 누가 어디를 확인할지 배정하고, 판정을 모아 보고서로 냅니다(기관 첫 화면에서 들어감). 예전 보고서 화면은 파일만 보관합니다.",
+   "now": "기관이 오늘 누가 어디를 확인할지 배정하고, 판정을 모아 보고서로 냅니다(기관 첫 화면에서 들어감). 예전 보고서 화면은 파일만 보관합니다. 9월 30일: 의심 필지 · 현장 확인 필요가 첫 화면 · AI 도우미 · 보고서 · XI맵에서 같은 값이고, 말로 보고서 초안을 내려받습니다.",
    "next": "",
    "ids": [
     "B7-Report-List",
@@ -1034,10 +1161,12 @@
     "B7-Report-Issue-Error",
     "proto-report-standard",
     "proto-report-standard-issue",
-    "v3-gov-report"
+    "v3-gov-report",
+    "core-c2-report",
+    "core-c3-yeosu"
    ],
    "적용": 7,
-   "검토": 1,
+   "검토": 3,
    "폐기": 0
   },
   {
@@ -1067,15 +1196,17 @@
    "key": "LX 관리자/LX 관리자 대시보드",
    "anchor": "sc-LX-관리자-LX-관리자-대시보드",
    "state": "새 화면 연결됨 · 예전 화면 보관",
-   "now": "LX 관리자가 로그인하면 뜨는 첫 화면입니다(9월 29일 연결). 승인 · 조치할 것(결재함)과 지역별 배포 현황을 밝은 톤 한 화면에서 봅니다. 예전 검정 톤 화면과 관리자 운영 현황은 파일만 보관합니다.",
+   "now": "LX 관리자가 로그인하면 뜨는 첫 화면입니다(9월 29일 연결). 승인 · 조치할 것(결재함)과 지역별 배포 현황을 밝은 톤 한 화면에서 봅니다. 예전 검정 톤 화면과 관리자 운영 현황은 파일만 보관합니다. 9월 29–30일: 적용 요청 → 승인 → 전역 AI 분석 → 기관 결과가 한 줄로 이어지고(코어 영상 1), 말로 운영 요약 · 기관별 AI 도우미 사용량을 묻습니다.",
    "next": "",
    "ids": [
     "ops-index",
     "proto-admin-home",
-    "v3-ops-core"
+    "v3-ops-core",
+    "core-c2-ops",
+    "core-c7-flow"
    ],
    "적용": 2,
-   "검토": 1,
+   "검토": 3,
    "폐기": 0
   },
   {
@@ -1084,16 +1215,17 @@
    "key": "LX 관리자/인프라·기관·배포",
    "anchor": "sc-LX-관리자-인프라-기관-배포",
    "state": "새 화면 연결됨 · 예전 화면 보관",
-   "now": "장비 · 기관별 할당 · 배포본이 한도 안에 있는지 한 화면에서 봅니다(LX 관리자 대시보드에서 들어감). 예전 세 화면은 파일만 보관합니다.",
+   "now": "장비 · 기관별 할당 · 배포본이 한도 안에 있는지 한 화면에서 봅니다(LX 관리자 대시보드에서 들어감). 예전 세 화면은 파일만 보관합니다. 9월 30일: 언어 모델 상태 · 국산 모델(연결 전) · 법령 색인 칸이 더해졌습니다.",
    "next": "",
    "ids": [
     "ops-infra",
     "ops-tenants",
     "ops-deploys",
-    "v3-ops-infra"
+    "v3-ops-infra",
+    "core-c6-infra"
    ],
    "적용": 3,
-   "검토": 1,
+   "검토": 2,
    "폐기": 0
   },
   {
@@ -1493,15 +1625,16 @@
    "key": "글로벌/해외 서비스",
    "anchor": "sc-글로벌-해외-서비스",
    "state": "새 화면 연결됨 · 예전 화면 보관",
-   "now": "해외 기관이 로그인하면 뜨는 첫 화면입니다(9월 29일 연결). 이번 계절 우리 지역이 어디서 바뀌었는지 지구본 → 나라 → 지역 순으로 봅니다(키르기스 두 기관은 예시).",
+   "now": "해외 기관이 로그인하면 뜨는 첫 화면입니다(9월 29일 연결). 이번 계절 우리 지역이 어디서 바뀌었는지 지구본 → 나라 → 지역 순으로 봅니다(키르기스 두 기관은 예시). 9월 30일: 해외 기관이 영어로 묻고 영어로 답을 받습니다.",
    "next": "",
    "ids": [
     "global-index",
     "global-index-land",
-    "v3-global"
+    "v3-global",
+    "core-c2-en"
    ],
    "적용": 2,
-   "검토": 1,
+   "검토": 2,
    "폐기": 0
   },
   {
@@ -9760,7 +9893,7 @@
      "kind": "image",
      "src": "landxi/proto/review/assets-thumbs/v3-main-L.webp",
      "thumb": "landxi/proto/review/assets-thumbs/v3-main.webp",
-     "label": "첫 화면 · 9월 29일"
+     "label": "첫 화면 · 9월 30일"
     },
     {
      "kind": "image",
@@ -9804,12 +9937,13 @@
    "next": "사용자 판정 대기 — 9/29 로그인 → 역할별 첫 화면으로 연결됨",
    "impl_state": "연결됨",
    "access": "guest",
+   "upd": "9월 29–30일 코어 차수에서 바뀜",
    "media": [
     {
      "kind": "image",
      "src": "landxi/proto/review/assets-thumbs/v3-service-detail-L.webp",
      "thumb": "landxi/proto/review/assets-thumbs/v3-service-detail.webp",
-     "label": "첫 화면 · 9월 29일"
+     "label": "첫 화면 · 9월 30일"
     },
     {
      "kind": "image",
@@ -9848,12 +9982,13 @@
    "next": "사용자 판정 대기 — 9/29 로그인 → 역할별 첫 화면으로 연결됨",
    "impl_state": "연결됨",
    "access": "guest",
+   "upd": "9월 29–30일 코어 차수에서 바뀜",
    "media": [
     {
      "kind": "image",
      "src": "landxi/proto/review/assets-thumbs/v3-login-L.webp",
      "thumb": "landxi/proto/review/assets-thumbs/v3-login.webp",
-     "label": "첫 화면 · 9월 29일"
+     "label": "첫 화면 · 9월 30일"
     },
     {
      "kind": "image",
@@ -9923,12 +10058,16 @@
    "next": "사용자 판정 대기 — 9/29 로그인 → 역할별 첫 화면으로 연결됨",
    "impl_state": "연결됨",
    "access": "server",
+   "cores": [
+    "C7"
+   ],
+   "upd": "9월 29–30일 코어 차수에서 바뀜",
    "media": [
     {
      "kind": "image",
      "src": "landxi/proto/review/assets-thumbs/v3-lx-console-L.webp",
      "thumb": "landxi/proto/review/assets-thumbs/v3-lx-console.webp",
-     "label": "첫 화면 · 9월 29일"
+     "label": "첫 화면 · 9월 30일"
     },
     {
      "kind": "image",
@@ -9993,7 +10132,7 @@
      "kind": "image",
      "src": "landxi/proto/review/assets-thumbs/v3-sales-L.webp",
      "thumb": "landxi/proto/review/assets-thumbs/v3-sales.webp",
-     "label": "첫 화면 · 9월 29일"
+     "label": "첫 화면 · 9월 30일"
     }
    ],
    "open": {
@@ -10021,12 +10160,17 @@
    "next": "사용자 판정 대기 — 9/29 로그인 → 역할별 첫 화면으로 연결됨",
    "impl_state": "연결됨",
    "access": "server",
+   "cores": [
+    "C1",
+    "C5"
+   ],
+   "upd": "9월 29–30일 코어 차수에서 바뀜",
    "media": [
     {
      "kind": "image",
      "src": "landxi/proto/review/assets-thumbs/v3-lx-ingest-L.webp",
      "thumb": "landxi/proto/review/assets-thumbs/v3-lx-ingest.webp",
-     "label": "첫 화면 · 9월 29일"
+     "label": "첫 화면 · 9월 30일"
     },
     {
      "kind": "video",
@@ -10060,12 +10204,15 @@
    "next": "사용자 판정 대기 — 9/29 로그인 → 역할별 첫 화면으로 연결됨",
    "impl_state": "연결됨",
    "access": "server",
+   "cores": [
+    "C5"
+   ],
    "media": [
     {
      "kind": "image",
      "src": "landxi/proto/review/assets-thumbs/v3-lx-train-L.webp",
      "thumb": "landxi/proto/review/assets-thumbs/v3-lx-train.webp",
-     "label": "첫 화면 · 9월 29일"
+     "label": "첫 화면 · 9월 30일"
     },
     {
      "kind": "video",
@@ -10099,12 +10246,16 @@
    "next": "사용자 판정 대기 — 9/29 로그인 → 역할별 첫 화면으로 연결됨",
    "impl_state": "연결됨",
    "access": "server",
+   "cores": [
+    "C5"
+   ],
+   "upd": "9월 29–30일 코어 차수에서 바뀜",
    "media": [
     {
      "kind": "image",
      "src": "landxi/proto/review/assets-thumbs/v3-lx-review-L.webp",
      "thumb": "landxi/proto/review/assets-thumbs/v3-lx-review.webp",
-     "label": "첫 화면 · 9월 29일"
+     "label": "첫 화면 · 9월 30일"
     },
     {
      "kind": "image",
@@ -10143,12 +10294,17 @@
    "next": "사용자 판정 대기 — 9/29 로그인 → 역할별 첫 화면으로 연결됨",
    "impl_state": "연결됨",
    "access": "server",
+   "cores": [
+    "C5",
+    "C7"
+   ],
+   "upd": "9월 29–30일 코어 차수에서 바뀜",
    "media": [
     {
      "kind": "image",
      "src": "landxi/proto/review/assets-thumbs/v3-lx-deploy-L.webp",
      "thumb": "landxi/proto/review/assets-thumbs/v3-lx-deploy.webp",
-     "label": "첫 화면 · 9월 29일"
+     "label": "첫 화면 · 9월 30일"
     },
     {
      "kind": "image",
@@ -10187,12 +10343,16 @@
    "next": "사용자 판정 대기 — 9/29 로그인 → 역할별 첫 화면으로 연결됨",
    "impl_state": "연결됨",
    "access": "server",
+   "cores": [
+    "C1"
+   ],
+   "upd": "9월 29–30일 코어 차수에서 바뀜",
    "media": [
     {
      "kind": "image",
      "src": "landxi/proto/review/assets-thumbs/v3-xi-clean-L.webp",
      "thumb": "landxi/proto/review/assets-thumbs/v3-xi-clean.webp",
-     "label": "첫 화면 · 9월 29일"
+     "label": "첫 화면 · 9월 30일"
     },
     {
      "kind": "image",
@@ -10252,12 +10412,17 @@
    "next": "사용자 판정 대기 — 9/29 로그인 → 역할별 첫 화면으로 연결됨",
    "impl_state": "연결됨",
    "access": "server",
+   "cores": [
+    "C2",
+    "C4"
+   ],
+   "upd": "9월 29–30일 코어 차수에서 바뀜",
    "media": [
     {
      "kind": "image",
      "src": "landxi/proto/review/assets-thumbs/v3-gov-fusion-L.webp",
      "thumb": "landxi/proto/review/assets-thumbs/v3-gov-fusion.webp",
-     "label": "첫 화면 · 9월 29일"
+     "label": "첫 화면 · 9월 30일"
     },
     {
      "kind": "image",
@@ -10332,12 +10497,16 @@
    "next": "사용자 판정 대기 — 9/29 로그인 → 역할별 첫 화면으로 연결됨",
    "impl_state": "연결됨",
    "access": "server",
+   "cores": [
+    "C3"
+   ],
+   "upd": "9월 29–30일 코어 차수에서 바뀜",
    "media": [
     {
      "kind": "image",
      "src": "landxi/proto/review/assets-thumbs/v3-gov-report-L.webp",
      "thumb": "landxi/proto/review/assets-thumbs/v3-gov-report.webp",
-     "label": "첫 화면 · 9월 29일"
+     "label": "첫 화면 · 9월 30일"
     },
     {
      "kind": "video",
@@ -10371,12 +10540,16 @@
    "next": "사용자 판정 대기 — 9/29 로그인 → 역할별 첫 화면으로 연결됨",
    "impl_state": "연결됨",
    "access": "server",
+   "cores": [
+    "C6"
+   ],
+   "upd": "9월 29–30일 코어 차수에서 바뀜",
    "media": [
     {
      "kind": "image",
      "src": "landxi/proto/review/assets-thumbs/v3-ops-core-L.webp",
      "thumb": "landxi/proto/review/assets-thumbs/v3-ops-core.webp",
-     "label": "첫 화면 · 9월 29일"
+     "label": "첫 화면 · 9월 30일"
     },
     {
      "kind": "image",
@@ -10441,12 +10614,16 @@
    "next": "사용자 판정 대기 — 9/29 로그인 → 역할별 첫 화면으로 연결됨",
    "impl_state": "연결됨",
    "access": "server",
+   "cores": [
+    "C6"
+   ],
+   "upd": "9월 29–30일 코어 차수에서 바뀜",
    "media": [
     {
      "kind": "image",
      "src": "landxi/proto/review/assets-thumbs/v3-ops-infra-L.webp",
      "thumb": "landxi/proto/review/assets-thumbs/v3-ops-infra.webp",
-     "label": "첫 화면 · 9월 29일"
+     "label": "첫 화면 · 9월 30일"
     },
     {
      "kind": "image",
@@ -10485,12 +10662,16 @@
    "next": "사용자 판정 대기 — 9/29 로그인 → 역할별 첫 화면으로 연결됨",
    "impl_state": "연결됨",
    "access": "server",
+   "cores": [
+    "C8"
+   ],
+   "upd": "9월 29–30일 코어 차수에서 바뀜",
    "media": [
     {
      "kind": "image",
      "src": "landxi/proto/review/assets-thumbs/v3-global-L.webp",
      "thumb": "landxi/proto/review/assets-thumbs/v3-global.webp",
-     "label": "첫 화면 · 9월 29일"
+     "label": "첫 화면 · 9월 30일"
     },
     {
      "kind": "image",
@@ -10539,7 +10720,7 @@
      "kind": "image",
      "src": "landxi/proto/review/assets-thumbs/v3-help-my-L.webp",
      "thumb": "landxi/proto/review/assets-thumbs/v3-help-my.webp",
-     "label": "첫 화면 · 9월 29일"
+     "label": "첫 화면 · 9월 30일"
     }
    ],
    "open": {
@@ -10567,12 +10748,13 @@
    "next": "사용자 판정 대기 — 9/29 로그인 → 역할별 첫 화면으로 연결됨",
    "impl_state": "연결됨",
    "access": "server",
+   "upd": "9월 29–30일 코어 차수에서 바뀜",
    "media": [
     {
      "kind": "image",
      "src": "landxi/proto/review/assets-thumbs/v3-kit-L.webp",
      "thumb": "landxi/proto/review/assets-thumbs/v3-kit.webp",
-     "label": "첫 화면 · 9월 29일"
+     "label": "첫 화면 · 9월 30일"
     }
    ],
    "open": {
@@ -10580,6 +10762,654 @@
     "href": "landxi/v3/login/index.html",
     "live": "로그인에서 들어가기(서버가 켜진 곳에서만 동작)",
     "note": "서버가 켜진 곳에서만 동작 — 여기서는 캡처 · 영상으로 봅니다"
+   }
+  },
+  {
+   "id": "core-walk",
+   "kind": "구현",
+   "slot": "새 구현",
+   "function": "서비스 공개",
+   "screen": "배포·다른 지역에 적용",
+   "variant": "구현 v3",
+   "name": "코어 영상 1 — 한 흐름: LX 직원 적용(구례군) → LX 관리자 승인 → 전역 AI 분석 → 대장 올리기 · 질문(목포) → 보고서 초안 → 관리자 사용량",
+   "label": "코어 영상 1 — 한 흐름: LX 직원 적용(구례군) → LX 관리자 승인 → 전역 AI 분석 → 대장 올리기 · 질문(목포) → 보고서 초안 → 관리자 사용량",
+   "made": "2026-09-29",
+   "files": {
+    "구현": "landxi/proto/review/assets-thumbs/core-walk.mp4"
+   },
+   "verdict": "검토",
+   "reason": "코어 차수 증거(C1·C3·C4·C6·C7) — 로그인 폼으로 들어가 찍은 실제 화면",
+   "next": "사용자 판정 대기 — 코어 차수(9/29 코어 · 9/30 AI 도우미) 증거",
+   "impl_state": "코어 증거",
+   "access": "server",
+   "cores": [
+    "C1",
+    "C3",
+    "C4",
+    "C6",
+    "C7"
+   ],
+   "evidence": true,
+   "media": [
+    {
+     "kind": "video",
+     "src": "landxi/proto/review/assets-thumbs/core-walk.mp4",
+     "label": "코어 영상(로그인부터 실제 화면)",
+     "poster": "landxi/proto/review/assets-thumbs/core-c7-apply.webp",
+     "thumb": "landxi/proto/review/assets-thumbs/core-c7-apply.webp"
+    }
+   ],
+   "open": {
+    "kind": "capture",
+    "href": null,
+    "live": null,
+    "note": ""
+   }
+  },
+  {
+   "id": "c2-walk",
+   "kind": "구현",
+   "slot": "새 구현",
+   "function": "에이전트",
+   "screen": "융합 분석 질문",
+   "variant": "구현 v3",
+   "name": "코어 영상 2 — AI 도우미: 말로 XI맵 열기 · 전역 AI 분석 · 읍면동 차트(함양) → 대장 × AI(구례) → 법령 조문 · 영상 설명 · 보고서 초안(남원) → LX 관리자 운영 요약",
+   "label": "코어 영상 2 — AI 도우미: 말로 XI맵 열기 · 전역 AI 분석 · 읍면동 차트(함양) → 대장 × AI(구례) → 법령 조문 · 영상 설명 · 보고서 초안(남원) → LX 관리자 운영 요약",
+   "made": "2026-09-30",
+   "files": {
+    "구현": "landxi/proto/review/assets-thumbs/c2-walk.mp4"
+   },
+   "verdict": "검토",
+   "reason": "코어 차수 증거(C2·C1·C4·C6) — 로그인 폼으로 들어가 찍은 실제 화면",
+   "next": "사용자 판정 대기 — 코어 차수(9/29 코어 · 9/30 AI 도우미) 증거",
+   "impl_state": "코어 증거",
+   "access": "server",
+   "cores": [
+    "C2",
+    "C1",
+    "C4",
+    "C6"
+   ],
+   "evidence": true,
+   "media": [
+    {
+     "kind": "video",
+     "src": "landxi/proto/review/assets-thumbs/c2-walk.mp4",
+     "label": "코어 영상(로그인부터 실제 화면)",
+     "poster": "landxi/proto/review/assets-thumbs/core-c2-chart.webp",
+     "thumb": "landxi/proto/review/assets-thumbs/core-c2-chart.webp"
+    }
+   ],
+   "open": {
+    "kind": "capture",
+    "href": null,
+    "live": null,
+    "note": ""
+   }
+  },
+  {
+   "id": "core-c1-ingest",
+   "kind": "구현",
+   "slot": "새 구현",
+   "function": "데이터 관리",
+   "screen": "데이터 올리기",
+   "variant": "구현 v3",
+   "name": "데이터 올리기 — 남원시 영상 4시점 · 대장 갖춤을 한눈에",
+   "label": "데이터 올리기 — 남원시 영상 4시점 · 대장 갖춤을 한눈에",
+   "made": "2026-09-29",
+   "files": {
+    "구현": "landxi/proto/review/assets-thumbs/core-c1-ingest-L.webp"
+   },
+   "verdict": "검토",
+   "reason": "코어 차수 증거(C1·C5) — 로그인 폼으로 들어가 찍은 실제 화면",
+   "next": "사용자 판정 대기 — 코어 차수(9/29 코어 · 9/30 AI 도우미) 증거",
+   "impl_state": "코어 증거",
+   "access": "server",
+   "cores": [
+    "C1",
+    "C5"
+   ],
+   "evidence": true,
+   "media": [
+    {
+     "kind": "image",
+     "src": "landxi/proto/review/assets-thumbs/core-c1-ingest-L.webp",
+     "thumb": "landxi/proto/review/assets-thumbs/core-c1-ingest.webp",
+     "label": "코어 증거 · 9월 29일"
+    }
+   ],
+   "open": {
+    "kind": "capture",
+    "href": null,
+    "live": null,
+    "note": ""
+   }
+  },
+  {
+   "id": "core-c1-xi",
+   "kind": "구현",
+   "slot": "새 구현",
+   "function": "XI맵",
+   "screen": "기본 지도",
+   "variant": "구현 v3",
+   "name": "XI맵 — 강진군 현장 확인 필요 633필지가 지도에 차오름",
+   "label": "XI맵 — 강진군 현장 확인 필요 633필지가 지도에 차오름",
+   "made": "2026-09-30",
+   "files": {
+    "구현": "landxi/proto/review/assets-thumbs/core-c1-xi-L.webp"
+   },
+   "verdict": "검토",
+   "reason": "코어 차수 증거(C1·C3) — 로그인 폼으로 들어가 찍은 실제 화면",
+   "next": "사용자 판정 대기 — 코어 차수(9/29 코어 · 9/30 AI 도우미) 증거",
+   "impl_state": "코어 증거",
+   "access": "server",
+   "cores": [
+    "C1",
+    "C3"
+   ],
+   "evidence": true,
+   "media": [
+    {
+     "kind": "image",
+     "src": "landxi/proto/review/assets-thumbs/core-c1-xi-L.webp",
+     "thumb": "landxi/proto/review/assets-thumbs/core-c1-xi.webp",
+     "label": "코어 증거 · 9월 30일"
+    }
+   ],
+   "open": {
+    "kind": "capture",
+    "href": null,
+    "live": null,
+    "note": ""
+   }
+  },
+  {
+   "id": "core-c2-move",
+   "kind": "구현",
+   "slot": "새 구현",
+   "function": "에이전트",
+   "screen": "융합 분석 질문",
+   "variant": "구현 v3",
+   "name": "말로 지도 제어 — '구례군 산동면으로 이동해 줘'",
+   "label": "말로 지도 제어 — '구례군 산동면으로 이동해 줘'",
+   "made": "2026-09-30",
+   "files": {
+    "구현": "landxi/proto/review/assets-thumbs/core-c2-move-L.webp"
+   },
+   "verdict": "검토",
+   "reason": "코어 차수 증거(C2) — 로그인 폼으로 들어가 찍은 실제 화면",
+   "next": "사용자 판정 대기 — 코어 차수(9/29 코어 · 9/30 AI 도우미) 증거",
+   "impl_state": "코어 증거",
+   "access": "server",
+   "cores": [
+    "C2"
+   ],
+   "evidence": true,
+   "media": [
+    {
+     "kind": "image",
+     "src": "landxi/proto/review/assets-thumbs/core-c2-move-L.webp",
+     "thumb": "landxi/proto/review/assets-thumbs/core-c2-move.webp",
+     "label": "코어 증거 · 9월 30일"
+    }
+   ],
+   "open": {
+    "kind": "capture",
+    "href": null,
+    "live": null,
+    "note": ""
+   }
+  },
+  {
+   "id": "core-c2-chart",
+   "kind": "구현",
+   "slot": "새 구현",
+   "function": "에이전트",
+   "screen": "융합 분석 질문",
+   "variant": "구현 v3",
+   "name": "말로 분석 + 바로 차트 — 남원시 읍면동별 의심 필지",
+   "label": "말로 분석 + 바로 차트 — 남원시 읍면동별 의심 필지",
+   "made": "2026-09-30",
+   "files": {
+    "구현": "landxi/proto/review/assets-thumbs/core-c2-chart-L.webp"
+   },
+   "verdict": "검토",
+   "reason": "코어 차수 증거(C2·C1) — 로그인 폼으로 들어가 찍은 실제 화면",
+   "next": "사용자 판정 대기 — 코어 차수(9/29 코어 · 9/30 AI 도우미) 증거",
+   "impl_state": "코어 증거",
+   "access": "server",
+   "cores": [
+    "C2",
+    "C1"
+   ],
+   "evidence": true,
+   "media": [
+    {
+     "kind": "image",
+     "src": "landxi/proto/review/assets-thumbs/core-c2-chart-L.webp",
+     "thumb": "landxi/proto/review/assets-thumbs/core-c2-chart.webp",
+     "label": "코어 증거 · 9월 30일"
+    }
+   ],
+   "open": {
+    "kind": "capture",
+    "href": null,
+    "live": null,
+    "note": ""
+   }
+  },
+  {
+   "id": "core-c2-law",
+   "kind": "구현",
+   "slot": "새 구현",
+   "function": "에이전트",
+   "screen": "융합 분석 질문",
+   "variant": "구현 v3",
+   "name": "법령 근거 — 농지 임대 조문 원문 인용(농지법)",
+   "label": "법령 근거 — 농지 임대 조문 원문 인용(농지법)",
+   "made": "2026-09-30",
+   "files": {
+    "구현": "landxi/proto/review/assets-thumbs/core-c2-law-L.webp"
+   },
+   "verdict": "검토",
+   "reason": "코어 차수 증거(C2) — 로그인 폼으로 들어가 찍은 실제 화면",
+   "next": "사용자 판정 대기 — 코어 차수(9/29 코어 · 9/30 AI 도우미) 증거",
+   "impl_state": "코어 증거",
+   "access": "server",
+   "cores": [
+    "C2"
+   ],
+   "evidence": true,
+   "media": [
+    {
+     "kind": "image",
+     "src": "landxi/proto/review/assets-thumbs/core-c2-law-L.webp",
+     "thumb": "landxi/proto/review/assets-thumbs/core-c2-law.webp",
+     "label": "코어 증거 · 9월 30일"
+    }
+   ],
+   "open": {
+    "kind": "capture",
+    "href": null,
+    "live": null,
+    "note": ""
+   }
+  },
+  {
+   "id": "core-c2-vlm",
+   "kind": "구현",
+   "slot": "새 구현",
+   "function": "에이전트",
+   "screen": "융합 분석 질문",
+   "variant": "구현 v3",
+   "name": "영상 설명 — 필지 영상 조각 + 설명 + 오탐 가능성",
+   "label": "영상 설명 — 필지 영상 조각 + 설명 + 오탐 가능성",
+   "made": "2026-09-30",
+   "files": {
+    "구현": "landxi/proto/review/assets-thumbs/core-c2-vlm-L.webp"
+   },
+   "verdict": "검토",
+   "reason": "코어 차수 증거(C2) — 로그인 폼으로 들어가 찍은 실제 화면",
+   "next": "사용자 판정 대기 — 코어 차수(9/29 코어 · 9/30 AI 도우미) 증거",
+   "impl_state": "코어 증거",
+   "access": "server",
+   "cores": [
+    "C2"
+   ],
+   "evidence": true,
+   "media": [
+    {
+     "kind": "image",
+     "src": "landxi/proto/review/assets-thumbs/core-c2-vlm-L.webp",
+     "thumb": "landxi/proto/review/assets-thumbs/core-c2-vlm.webp",
+     "label": "코어 증거 · 9월 30일"
+    }
+   ],
+   "open": {
+    "kind": "capture",
+    "href": null,
+    "live": null,
+    "note": ""
+   }
+  },
+  {
+   "id": "core-c2-report",
+   "kind": "구현",
+   "slot": "새 구현",
+   "function": "통계/보고서",
+   "screen": "보고서",
+   "variant": "구현 v3",
+   "name": "말로 보고서 초안 — 구례군 실태조사 초안 내려받기",
+   "label": "말로 보고서 초안 — 구례군 실태조사 초안 내려받기",
+   "made": "2026-09-30",
+   "files": {
+    "구현": "landxi/proto/review/assets-thumbs/core-c2-report-L.webp"
+   },
+   "verdict": "검토",
+   "reason": "코어 차수 증거(C2·C3) — 로그인 폼으로 들어가 찍은 실제 화면",
+   "next": "사용자 판정 대기 — 코어 차수(9/29 코어 · 9/30 AI 도우미) 증거",
+   "impl_state": "코어 증거",
+   "access": "server",
+   "cores": [
+    "C2",
+    "C3"
+   ],
+   "evidence": true,
+   "media": [
+    {
+     "kind": "image",
+     "src": "landxi/proto/review/assets-thumbs/core-c2-report-L.webp",
+     "thumb": "landxi/proto/review/assets-thumbs/core-c2-report.webp",
+     "label": "코어 증거 · 9월 30일"
+    }
+   ],
+   "open": {
+    "kind": "capture",
+    "href": null,
+    "live": null,
+    "note": ""
+   }
+  },
+  {
+   "id": "core-c2-ops",
+   "kind": "구현",
+   "slot": "새 구현",
+   "function": "LX 관리자",
+   "screen": "LX 관리자 대시보드",
+   "variant": "구현 v3",
+   "name": "LX 관리자 운영 요약 — 기관별 AI 도우미 사용량(영어로 물음)",
+   "label": "LX 관리자 운영 요약 — 기관별 AI 도우미 사용량(영어로 물음)",
+   "made": "2026-09-30",
+   "files": {
+    "구현": "landxi/proto/review/assets-thumbs/core-c2-ops-L.webp"
+   },
+   "verdict": "검토",
+   "reason": "코어 차수 증거(C2·C6) — 로그인 폼으로 들어가 찍은 실제 화면",
+   "next": "사용자 판정 대기 — 코어 차수(9/29 코어 · 9/30 AI 도우미) 증거",
+   "impl_state": "코어 증거",
+   "access": "server",
+   "cores": [
+    "C2",
+    "C6"
+   ],
+   "evidence": true,
+   "media": [
+    {
+     "kind": "image",
+     "src": "landxi/proto/review/assets-thumbs/core-c2-ops-L.webp",
+     "thumb": "landxi/proto/review/assets-thumbs/core-c2-ops.webp",
+     "label": "코어 증거 · 9월 30일"
+    }
+   ],
+   "open": {
+    "kind": "capture",
+    "href": null,
+    "live": null,
+    "note": ""
+   }
+  },
+  {
+   "id": "core-c2-en",
+   "kind": "구현",
+   "slot": "새 구현",
+   "function": "글로벌",
+   "screen": "해외 서비스",
+   "variant": "구현 v3",
+   "name": "해외 기관 — 영어로 묻고 영어로 답(키르기스 농업부)",
+   "label": "해외 기관 — 영어로 묻고 영어로 답(키르기스 농업부)",
+   "made": "2026-09-30",
+   "files": {
+    "구현": "landxi/proto/review/assets-thumbs/core-c2-en-L.webp"
+   },
+   "verdict": "검토",
+   "reason": "코어 차수 증거(C2·C8) — 로그인 폼으로 들어가 찍은 실제 화면",
+   "next": "사용자 판정 대기 — 코어 차수(9/29 코어 · 9/30 AI 도우미) 증거",
+   "impl_state": "코어 증거",
+   "access": "server",
+   "cores": [
+    "C2",
+    "C8"
+   ],
+   "evidence": true,
+   "media": [
+    {
+     "kind": "image",
+     "src": "landxi/proto/review/assets-thumbs/core-c2-en-L.webp",
+     "thumb": "landxi/proto/review/assets-thumbs/core-c2-en.webp",
+     "label": "코어 증거 · 9월 30일"
+    }
+   ],
+   "open": {
+    "kind": "capture",
+    "href": null,
+    "live": null,
+    "note": ""
+   }
+  },
+  {
+   "id": "core-c3-yeosu",
+   "kind": "구현",
+   "slot": "새 구현",
+   "function": "통계/보고서",
+   "screen": "보고서",
+   "variant": "구현 v3",
+   "name": "실태조사 — 여수시 의심 필지 10,506건(모든 화면 같은 값)",
+   "label": "실태조사 — 여수시 의심 필지 10,506건(모든 화면 같은 값)",
+   "made": "2026-09-30",
+   "files": {
+    "구현": "landxi/proto/review/assets-thumbs/core-c3-yeosu-L.webp"
+   },
+   "verdict": "검토",
+   "reason": "코어 차수 증거(C3) — 로그인 폼으로 들어가 찍은 실제 화면",
+   "next": "사용자 판정 대기 — 코어 차수(9/29 코어 · 9/30 AI 도우미) 증거",
+   "impl_state": "코어 증거",
+   "access": "server",
+   "cores": [
+    "C3"
+   ],
+   "evidence": true,
+   "media": [
+    {
+     "kind": "image",
+     "src": "landxi/proto/review/assets-thumbs/core-c3-yeosu-L.webp",
+     "thumb": "landxi/proto/review/assets-thumbs/core-c3-yeosu.webp",
+     "label": "코어 증거 · 9월 30일"
+    }
+   ],
+   "open": {
+    "kind": "capture",
+    "href": null,
+    "live": null,
+    "note": ""
+   }
+  },
+  {
+   "id": "core-c4-cols",
+   "kind": "구현",
+   "slot": "새 구현",
+   "function": "실태조사",
+   "screen": "대장 융합(기관 첫 화면)",
+   "variant": "구현 v3",
+   "name": "대장 올리기 — 열 자동 인식(구례군)",
+   "label": "대장 올리기 — 열 자동 인식(구례군)",
+   "made": "2026-09-30",
+   "files": {
+    "구현": "landxi/proto/review/assets-thumbs/core-c4-cols-L.webp"
+   },
+   "verdict": "검토",
+   "reason": "코어 차수 증거(C4) — 로그인 폼으로 들어가 찍은 실제 화면",
+   "next": "사용자 판정 대기 — 코어 차수(9/29 코어 · 9/30 AI 도우미) 증거",
+   "impl_state": "코어 증거",
+   "access": "server",
+   "cores": [
+    "C4"
+   ],
+   "evidence": true,
+   "media": [
+    {
+     "kind": "image",
+     "src": "landxi/proto/review/assets-thumbs/core-c4-cols-L.webp",
+     "thumb": "landxi/proto/review/assets-thumbs/core-c4-cols.webp",
+     "label": "코어 증거 · 9월 30일"
+    }
+   ],
+   "open": {
+    "kind": "capture",
+    "href": null,
+    "live": null,
+    "note": ""
+   }
+  },
+  {
+   "id": "core-c4-joined",
+   "kind": "구현",
+   "slot": "새 구현",
+   "function": "실태조사",
+   "screen": "대장 융합(기관 첫 화면)",
+   "variant": "구현 v3",
+   "name": "대장 × AI — 구례군 대장은 농지 · AI는 건물 245필지",
+   "label": "대장 × AI — 구례군 대장은 농지 · AI는 건물 245필지",
+   "made": "2026-09-30",
+   "files": {
+    "구현": "landxi/proto/review/assets-thumbs/core-c4-joined-L.webp"
+   },
+   "verdict": "검토",
+   "reason": "코어 차수 증거(C4·C3) — 로그인 폼으로 들어가 찍은 실제 화면",
+   "next": "사용자 판정 대기 — 코어 차수(9/29 코어 · 9/30 AI 도우미) 증거",
+   "impl_state": "코어 증거",
+   "access": "server",
+   "cores": [
+    "C4",
+    "C3"
+   ],
+   "evidence": true,
+   "media": [
+    {
+     "kind": "image",
+     "src": "landxi/proto/review/assets-thumbs/core-c4-joined-L.webp",
+     "thumb": "landxi/proto/review/assets-thumbs/core-c4-joined.webp",
+     "label": "코어 증거 · 9월 30일"
+    }
+   ],
+   "open": {
+    "kind": "capture",
+    "href": null,
+    "live": null,
+    "note": ""
+   }
+  },
+  {
+   "id": "core-c6-infra",
+   "kind": "구현",
+   "slot": "새 구현",
+   "function": "LX 관리자",
+   "screen": "인프라·기관·배포",
+   "variant": "구현 v3",
+   "name": "인프라 — 장비 · 언어 모델 · 법령 색인을 한 화면에",
+   "label": "인프라 — 장비 · 언어 모델 · 법령 색인을 한 화면에",
+   "made": "2026-09-30",
+   "files": {
+    "구현": "landxi/proto/review/assets-thumbs/core-c6-infra-L.webp"
+   },
+   "verdict": "검토",
+   "reason": "코어 차수 증거(C6·C2) — 로그인 폼으로 들어가 찍은 실제 화면",
+   "next": "사용자 판정 대기 — 코어 차수(9/29 코어 · 9/30 AI 도우미) 증거",
+   "impl_state": "코어 증거",
+   "access": "server",
+   "cores": [
+    "C6",
+    "C2"
+   ],
+   "evidence": true,
+   "media": [
+    {
+     "kind": "image",
+     "src": "landxi/proto/review/assets-thumbs/core-c6-infra-L.webp",
+     "thumb": "landxi/proto/review/assets-thumbs/core-c6-infra.webp",
+     "label": "코어 증거 · 9월 30일"
+    }
+   ],
+   "open": {
+    "kind": "capture",
+    "href": null,
+    "live": null,
+    "note": ""
+   }
+  },
+  {
+   "id": "core-c7-apply",
+   "kind": "구현",
+   "slot": "새 구현",
+   "function": "서비스 공개",
+   "screen": "배포·다른 지역에 적용",
+   "variant": "구현 v3",
+   "name": "다른 지역에 적용 — LX 직원이 여수시에 서비스 적용 요청",
+   "label": "다른 지역에 적용 — LX 직원이 여수시에 서비스 적용 요청",
+   "made": "2026-09-29",
+   "files": {
+    "구현": "landxi/proto/review/assets-thumbs/core-c7-apply-L.webp"
+   },
+   "verdict": "검토",
+   "reason": "코어 차수 증거(C5·C7) — 로그인 폼으로 들어가 찍은 실제 화면",
+   "next": "사용자 판정 대기 — 코어 차수(9/29 코어 · 9/30 AI 도우미) 증거",
+   "impl_state": "코어 증거",
+   "access": "server",
+   "cores": [
+    "C5",
+    "C7"
+   ],
+   "evidence": true,
+   "media": [
+    {
+     "kind": "image",
+     "src": "landxi/proto/review/assets-thumbs/core-c7-apply-L.webp",
+     "thumb": "landxi/proto/review/assets-thumbs/core-c7-apply.webp",
+     "label": "코어 증거 · 9월 29일"
+    }
+   ],
+   "open": {
+    "kind": "capture",
+    "href": null,
+    "live": null,
+    "note": ""
+   }
+  },
+  {
+   "id": "core-c7-flow",
+   "kind": "구현",
+   "slot": "새 구현",
+   "function": "LX 관리자",
+   "screen": "LX 관리자 대시보드",
+   "variant": "구현 v3",
+   "name": "한 흐름 — 적용 요청부터 기관 결과까지 한 줄로(여수시)",
+   "label": "한 흐름 — 적용 요청부터 기관 결과까지 한 줄로(여수시)",
+   "made": "2026-09-29",
+   "files": {
+    "구현": "landxi/proto/review/assets-thumbs/core-c7-flow-L.webp"
+   },
+   "verdict": "검토",
+   "reason": "코어 차수 증거(C7·C6) — 로그인 폼으로 들어가 찍은 실제 화면",
+   "next": "사용자 판정 대기 — 코어 차수(9/29 코어 · 9/30 AI 도우미) 증거",
+   "impl_state": "코어 증거",
+   "access": "server",
+   "cores": [
+    "C7",
+    "C6"
+   ],
+   "evidence": true,
+   "media": [
+    {
+     "kind": "image",
+     "src": "landxi/proto/review/assets-thumbs/core-c7-flow-L.webp",
+     "thumb": "landxi/proto/review/assets-thumbs/core-c7-flow.webp",
+     "label": "코어 증거 · 9월 29일"
+    }
+   ],
+   "open": {
+    "kind": "capture",
+    "href": null,
+    "live": null,
+    "note": ""
    }
   }
  ]

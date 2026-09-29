@@ -2,7 +2,7 @@
 // 이유: shots/ 는 _config.yml 로 발행에서 빠져 있어 Pages 에서 404 다. 서버(:8700)가 있어야 도는 화면은
 //       Pages 에서 살아 있는 화면으로 열 수 없으므로, 로컬에서 찍은 캡처·영상을 대장이 대신 연다.
 // 대장은 Land-XI 자기 화면만 싣는다 — 다른 회사 사이트 캡처는 만들지 않는다(2026-09-29 사용자).
-// 실행: node tools/review/ledger-media.mjs [--only=capture,stills,video,legacy,legacy-login]   (저장소 루트 · ffmpeg 필요)
+// 실행: node tools/review/ledger-media.mjs [--only=capture,stills,video,core,legacy,legacy-login]   (저장소 루트 · ffmpeg 필요)
 //   capture = 새 화면 17종을 로그인 폼으로 들어가 1440×900 첫 화면을 찍는다(:4173 + 서버 :8700 · server/.env DEV_PASSWORD · 세션 주입 0)
 //             → shots/final/ledger/<화면>-1440.png
 //   stills  = 그 캡처 → 카드 썸네일 480 폭 WebP(≤ 60 KB) v3-<화면>.webp + 크게 보기용 1440 폭 WebP v3-<화면>-L.webp
@@ -81,6 +81,20 @@ if (want('video')) for (const [src, name, t] of VIDEOS) {
   if (!fs.existsSync(s)) { console.warn('! 원본 없음(건너뜀): ' + src); continue; }
   ff(['-i', s, ...(t ? ['-t', String(t)] : []), '-vf', 'scale=1280:-2', '-c:v', 'libx264', '-preset', 'medium', '-crf', '29', '-pix_fmt', 'yuv420p', '-an', '-movflags', '+faststart', o]);
   console.log(`${String(kb(o)).padStart(6)} KB  ${name}.mp4`);
+}
+// 코어 차수(9월 29–30일) 증거 스틸 — 코어마다 대표 장면을 카드 480 폭 WebP(≤ 60 KB) core-<이름>.webp + 크게 보기 1440 폭 core-<이름>-L.webp(≤ 200 KB)로.
+// 대장 항목 정보(화면 · 이름 · 코어)는 masters.mjs 의 CORE_ITEMS. 코어 영상 2편(core-walk.mp4 · c2-walk.mp4)은 이미 assets-thumbs 에 있다.
+const CORE_STILLS = [
+  ['shots/core/core-imagery/namwon-ingest-1440.png', 'core-c1-ingest'], ['shots/c2/c2-numbers/prove3/10-xi-head.png', 'core-c1-xi'],
+  ['shots/c2/c2-core/p3-gj-q-1.png', 'core-c2-move'], ['shots/c2/c2-vlm-global/prove3/p3-nw-xi-1.png', 'core-c2-chart'], ['shots/c2/c2-report-law/prove2/q6-gj-lease-ok.jpg', 'core-c2-law'],
+  ['shots/c2/c2-core/p3-gj-q-11-block-image.png', 'core-c2-vlm'], ['shots/c2/c2-core/p3-gj-q-17-block-file.png', 'core-c2-report'], ['shots/c2/c2-core/p3-ad-3-block-chart.png', 'core-c2-ops'],
+  ['shots/c2/c2-vlm-global/k12-kgz-2.png', 'core-c2-en'], ['shots/c2/c2-numbers/prove3/15-yeosu-report-sus.png', 'core-c3-yeosu'],
+  ['shots/c2/c2-core/p3-gj-2-cols.png', 'core-c4-cols'], ['shots/c2/c2-core/p3-gj-3-joined.png', 'core-c4-joined'], ['shots/c2/c2-report-law/prove3/adm-1-infra.png', 'core-c6-infra'],
+  ['shots/core/core-flow/yeosu-01-staff-plant-1440.png', 'core-c7-apply'], ['shots/core/core-flow/yeosu-admin-flow-1440.png', 'core-c7-flow'],
+];
+if (want('core')) for (const [src, name] of CORE_STILLS) {
+  const s = path.join(ROOT, src); if (!fs.existsSync(s)) { console.warn('! 원본 없음(건너뜀): ' + src); continue; }
+  webp(s, path.join(OUT, name + '.webp'), 480, 60); webp(s, path.join(OUT, name + '-L.webp'), 1440, 200);
 }
 // 9월 27일 새 화면 캡처·영상(그때 이름 '시안') — Land-XI 자산이라 그대로 둔다. --only=legacy 로 다시 만든다
 const LEGACY_STILLS = [
