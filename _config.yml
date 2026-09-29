@@ -35,6 +35,8 @@ exclude:
   - tests/
   - tools/
   - design-review/
+  # 공정 증거 문서 — 본문에 '{{' 같은 검사 글자가 있어 Jekyll(Liquid)이 빌드를 멈춘다(2026-09-30). 저장소(GitHub)에서 읽는다.
+  - docs/superpowers/final/process/
 
   # 개발 부속
   - node_modules/
