@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>대장 맞추기 표</title>
+<style>
+@font-face{font-family:Pretendard;font-weight:400;src:url("../../../../../landxi/assets/fonts/Pretendard-Regular.woff2") format("woff2");}
+@font-face{font-family:Pretendard;font-weight:500;src:url("../../../../../landxi/assets/fonts/Pretendard-Medium.woff2") format("woff2");}
+@font-face{font-family:Paperlogy;font-weight:700;src:url("../../../../../landxi/assets/fonts/Paperlogy-7Bold.woff2") format("woff2");}
+:root{--bg-0:#F2F4F6;--bg-1:#FFFFFF;--ink:#1C1F25;--ink-2:#333840;--sub:#727780;--sub-2:#4E535C;--rule:#E5E8EB;--mute:#B0B8C1;--ai:#0FA9A0;--warn:#F04452;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg-0);font-family:Pretendard,system-ui,sans-serif;color:var(--ink-2);word-break:keep-all;overflow-wrap:break-word;}
+.page{width:1440px;padding:48px 56px 44px;}
+.card{background:var(--bg-1);border-radius:16px;padding:36px 40px 28px;}
+.eyebrow{font-size:14px;line-height:20px;font-weight:500;color:var(--sub);margin:0 0 8px;}
+h1{font-family:Paperlogy,Pretendard,sans-serif;font-weight:700;font-size:30px;line-height:40px;color:var(--ink);margin:0 0 6px;}
+.lead{font-size:16px;line-height:26px;color:var(--sub-2);margin:0 0 24px;}
+table{width:100%;border-collapse:collapse;table-layout:fixed;}
+th{font-size:14px;line-height:20px;font-weight:500;color:var(--sub);text-align:left;padding:0 14px 10px 0;border-bottom:1px solid var(--ink);}
+td{font-size:15px;line-height:22px;color:var(--ink-2);padding:13px 14px 13px 0;border-bottom:1px solid var(--rule);vertical-align:top;}
+td.t{font-weight:500;color:var(--ink);font-size:16px;}
+td.t small{display:block;font-weight:400;font-size:13px;line-height:18px;color:var(--sub);margin-top:2px;}
+tr.sep td{padding:18px 0 8px;border-bottom:1px solid var(--rule);font-size:14px;font-weight:500;color:var(--sub);}
+.chip{display:inline-block;margin-right:6px;font-size:14px;line-height:20px;font-weight:500;padding:3px 10px;border-radius:999px;white-space:nowrap;margin-bottom:4px;}
+.ok{background:var(--ink);color:#fff;}
+.if{background:#fff;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink);}
+.no{background:var(--bg-0);color:var(--sub-2);}
+.why{display:block;font-size:13px;line-height:18px;color:var(--sub);}
+.none{color:var(--sub);}
+.nw{white-space:nowrap;}
+.foot{display:flex;gap:28px;margin-top:22px;font-size:14px;line-height:20px;color:var(--sub);}
+.foot b{font-weight:500;color:var(--ink-2);}
+col.c1{width:150px} col.c2{width:250px} col.c3{width:240px} col.c4{width:230px} col.c5{width:170px}
+</style>
+</head>
+<body>
+<div class="page"><div class="card">
+<p class="eyebrow">어느 플랫폼: 둘 다 — 기관 분기 플랫폼(대장 올리기) · Land-XI(대장 안내·검증)</p>
+<h1>대장과 AI 결과, 테마마다 맞출 수 있는 만큼</h1>
+<p class="lead">AI 결과의 단위(필지·지점·칸·섬·구역과 시간)와 대장의 열쇠(지번·구역 이름·좌표·날짜)가 만나야 맞춰집니다.</p>
+<table>
+<colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"><col class="c5"><col></colgroup>
+<thead><tr><th>테마</th><th>AI가 내놓는 것</th><th>기관이 가진 대장</th><th>맞추는 방법</th><th>판정</th><th>맞추면 보이는 것</th></tr></thead>
+<tbody>
+<tr class="sep"><td colspan="6">남원·전남이 받는 서비스</td></tr>
+<tr><td class="t">영농관리<small>남원 2025</small></td><td><span class="nw">필지마다 경작·비경작</span> · <span class="nw">비닐하우스</span> · <span class="nw">사료작물</span> · <span class="nw">곤포 사일리지</span></td><td><span class="nw">농지대장</span> · <span class="nw">직불금 신청 필지</span></td><td>필지 번호·지번으로 한 필지씩 + 날짜</td><td><span class="chip ok">가능</span></td><td>신청은 사료작물인데 경작 흔적 없음 · <span class="nw">대장은 경작인데 건물</span></td></tr>
+<tr><td class="t">생활환경 관리<small>남원 2023</small></td><td><span class="nw">방치쓰레기</span> · <span class="nw">불법소각장</span> · <span class="nw">방치 폐가</span></td><td><span class="nw">빈집 실태조사 목록</span> · <span class="nw">쓰레기·소각 민원</span></td><td>폐가는 지번으로 한 필지씩<br>쓰레기·소각은 가까운 점</td><td><span class="chip ok">폐가 가능</span><span class="chip if">민원 조건부</span><span class="why">민원 주소가 지번이어야</span></td><td><span class="nw">목록에 없는 새 폐가</span> · 민원 없이 새로 찾은 곳</td></tr>
+<tr><td class="t">도로안전 관리<small>남원 2026</small></td><td><span class="nw">포트홀</span> · 차선·볼라드·시선유도봉·중앙분리대·표지판 파손 (지점·발견일)</td><td><span class="nw">도로 보수 기록</span> · <span class="nw">파손 민원</span></td><td>가까운 점 + 보수일</td><td><span class="chip if">조건부</span><span class="why">보수 기록 위치가 지번·좌표여야</span></td><td>보수한 곳에 다시 생긴 파손</td></tr>
+<tr><td class="t">관광인파 관리<small>남원 2027</small></td><td><span class="none">사람: 아직 없음</span> · 차량: 있음</td><td>다중운집 실태조사(순간 최대 인원) · 축제·주차장·CCTV 목록</td><td>행사 구역 안 합계 + 시간대<br>주차장은 가까운 점</td><td><span class="chip no">인파는 지금 불가능</span><span class="chip if">주차 혼잡 조건부</span></td><td>순간 최대 인원 대비 밀집 · <span class="nw">주차장이 찬 정도</span></td></tr>
+<tr><td class="t">해양쓰레기<small>해안 · 전남 확대 중</small></td><td><span class="nw">쓰레기 조각(8종)</span> · <span class="nw">100m 칸 개수</span> · <span class="nw">촬영일</span></td><td><span class="nw">해안별 수거 기록</span> · <span class="nw">모니터링 정점 조사</span></td><td>해안 구역 안 합계 + 날짜<br>정점은 가까운 칸</td><td><span class="chip if">조건부</span><span class="why">해안 구역 경계가 있어야</span></td><td>수거한 곳과 AI가 본 곳 · 정점에서 사람 셈과 AI 셈</td></tr>
+<tr class="sep"><td colspan="6">그 밖에 짚은 테마</td></tr>
+<tr><td class="t">개발제한구역</td><td>건물·주차장·경작지·비닐하우스 · <span class="nw">두 시점 새 건물</span></td><td><span class="nw">불법행위 관리대장</span> · <span class="nw">건축물관리대장</span><span class="why">경계는 공개 자료</span></td><td>경계 안 합계 + 지번 + 날짜</td><td><span class="chip ok">가능</span><span class="why">허가일 뒤 영상이 있어야</span></td><td><span class="nw">허가 없이 생긴 건물</span> · <span class="nw">단속 완결인데 그대로</span></td></tr>
+<tr><td class="t">무인도서 관리</td><td><span class="nw">섬 안 건물·경작지</span> · <span class="nw">쓰레기</span> · <span class="nw">변화</span></td><td>무인도서 목록(관리 유형·좌표·지번)</td><td>섬 안 합계</td><td><span class="chip if">조건부</span><span class="why">섬을 찍은 영상이 있어야</span></td><td>절대보전 섬의 시설·경작 · <span class="nw">섬별 쓰레기</span></td></tr>
+<tr><td class="t">해양침적쓰레기</td><td><span class="none">아직 없음 — 항공·드론은 바닷속을 못 봄</span></td><td><span class="nw">정화사업 해역</span> · <span class="nw">수거량</span></td><td>해역 안 합계</td><td><span class="chip no">불가능</span><span class="why">음파·수중 영상과 모델이 있어야</span></td><td>(나중) 예측한 곳과 실제 건진 곳</td></tr>
+<tr class="sep"><td colspan="6">자료에서 찾은 테마</td></tr>
+<tr><td class="t">농지 전용·개발행위 허가</td><td>농지 위 건물·주차장</td><td><span class="nw">농지전용 대장</span> · <span class="nw">개발행위허가</span><span class="why">개발행위허가는 전국 공개 자료</span></td><td>필지 번호 + 허가일</td><td><span class="chip ok">가능</span></td><td>허가된 곳을 빼고 남은 의심 필지</td></tr>
+<tr><td class="t">하천구역 점용</td><td>하천구역 안 건물</td><td>하천점용허가 관리대장</td><td>점용 장소 지번 + 기간</td><td><span class="chip if">조건부</span><span class="why">장소가 지번 글자뿐</span></td><td><span class="nw">허가 없는 점용</span> · <span class="nw">기간 지난 점용</span></td></tr>
+<tr><td class="t">공유재산</td><td>공유지 위 시설·경작</td><td>공유재산 대장 · 대부 계약</td><td>지번 + 계약 기간</td><td><span class="chip ok">가능</span></td><td>대부 계약 없는 사용</td></tr>
+</tbody>
+</table>
+<div class="foot"><span><b>가능</b> AI 결과의 단위와 대장의 열쇠가 바로 만남</span><span><b>조건부</b> 경계·영상·좌표·날짜 가운데 하나가 더 있어야</span><span><b>불가능</b> 맞출 AI 결과가 아직 없음</span></div>
+</div></div>
+</body>
+</html>
