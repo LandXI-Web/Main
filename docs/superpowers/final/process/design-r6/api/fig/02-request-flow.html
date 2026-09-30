@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>분석 맡기기 — 요청에서 결과까지</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+.flow{display:grid;grid-template-columns:repeat(6,1fr);gap:14px 26px;position:relative}
+.s{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 15px;display:flex;flex-direction:column;gap:7px;position:relative;min-height:190px}
+.s:not(.last)::after{content:"→";position:absolute;right:-21px;top:50%;transform:translateY(-50%);color:var(--ink-3);font-size:20px}
+.s h3{margin:0;font-size:17px;font-weight:700;line-height:1.3}
+.s p{margin:0;font-size:13.5px;color:var(--ink-2);line-height:1.5}
+.s .st{margin-top:auto;font-size:12.5px;color:var(--ink-3)}
+.s .st b{color:var(--ink);font-weight:600}
+.s.key{box-shadow:inset 0 0 0 2px var(--violet);border-color:transparent}
+.br{border-radius:14px;padding:12px 14px;font-size:13.5px;line-height:1.5;position:relative}
+.br::before{content:"↓";position:absolute;left:18px;top:-19px;color:var(--ink-3);font-size:16px}
+.br b{display:block;font-size:14.5px;margin-bottom:2px}
+.br.red{background:var(--red-tint);color:#8F2430}
+.br.red b{color:var(--red)}
+.br.gray{background:#F1F3F5;color:var(--ink-2)}
+.br.gray::before{content:""}
+.back{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.back span{background:#fff;border-radius:6px;padding:3px 8px;font-size:12.5px;color:#8F2430;font-weight:600}
+.states{margin-top:22px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.states b{font-size:14px;margin-right:6px}
+.states .sep{color:var(--ink-3)}
+.four{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.ev{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.ev h4{margin:0;font-size:16px;font-weight:700}
+.ev .v{font-size:22px;font-weight:700;letter-spacing:-.01em}
+.ev .v small{font-size:13px;font-weight:500;color:var(--ink-3);margin-left:6px}
+.ev p{margin:0;font-size:13px;color:var(--ink-3)}
+.ev .bar{height:6px;border-radius:3px;background:#EEF0F3;overflow:hidden;margin-top:4px}
+.ev .bar i{display:block;height:100%;background:var(--teal)}
+.ev .bar i.after{background:#9ADBD6}
+.rule{margin-top:12px;font-size:14px;color:var(--ink-2)}
+.rule b{color:var(--red)}
+</style>
+</head>
+<body>
+<div class="page">
+  <span class="tag both">둘 다</span><span class="tag doc">문서</span>
+  <h1>분석 맡기기 — 요청하면 LX 관리자가 승인&nbsp;· 반려합니다</h1>
+  <p class="sub">외부 시스템이 요청해도 곧바로 돌지 않습니다. 서버가 거를 수 있는 것은 그 자리에서 거르고, 나머지는 결재함에서 사람이 정합니다.</p>
+
+  <div class="flow">
+    <div class="s">
+      <span><span class="pill sys">기관 시스템</span></span>
+      <h3>① 요청</h3>
+      <p>범위(읍면동 또는 도형) + 영상 보내는 방법 + 메모 한 줄</p>
+      <span class="st">요청 번호를 바로 받음</span>
+    </div>
+    <div class="s">
+      <span><span class="pill auto">서버&nbsp;· 자동</span></span>
+      <h3>② 자동 검사 일곱</h3>
+      <p>관할 안&nbsp;· 서비스 적용 지역&nbsp;· 한 번 넓이&nbsp;· 이번 달 한도&nbsp;· 영상&nbsp;· 같은 요청&nbsp;· 쌓인 대기</p>
+      <span class="st">AI 서버 사용 <b>0</b></span>
+    </div>
+    <div class="s key">
+      <span><span class="pill adm">LX 관리자</span></span>
+      <h3>③ 결재함에서 판단</h3>
+      <p>지금 결재함에 'API 분석 요청' 한 줄. 범위 지도와 근거 넷을 보고 승인 / 반려</p>
+      <span class="st">상태 <b>승인 대기</b></span>
+    </div>
+    <div class="s">
+      <span><span class="pill auto">서버</span></span>
+      <h3>④ 영상 받기</h3>
+      <p>영상을 보내는 요청만 — <b>승인 뒤에</b> 받음. 받은 뒤 위치&nbsp;· 관할&nbsp;· 요청과 대조</p>
+      <span class="st">상태 <b>영상 받는 중</b></span>
+    </div>
+    <div class="s">
+      <span><span class="pill lx">Land-XI 대기열</span></span>
+      <h3>⑤ 분석</h3>
+      <p>화면에서 기다리는 사람 뒤 순서&nbsp;· API 분석은 한 번에 한 건&nbsp;· 전력 규칙 그대로</p>
+      <span class="st">상태 <b>분석 대기 → 분석 중</b></span>
+    </div>
+    <div class="s last">
+      <span><span class="pill sys">기관 시스템</span></span>
+      <h3>⑥ 알림 → 결과 가져오기</h3>
+      <p>'결과 확인 전' 표시로 바로. LX 결과 확인이 끝나면 '확인됨'으로 바뀌고 다시 알림</p>
+      <span class="st">상태 <b>분석 끝</b></span>
+    </div>
+
+    <div></div>
+    <div class="br red"><b>하나라도 걸리면 바로 반려</b>사람을 거치지 않고 사유 한 줄 + 무엇을 고치면 되는지</div>
+    <div class="br red"><b>반려 — 사유를 적어야 보냄</b>같은 글이 세 곳으로
+      <div class="back"><span>API 상태 조회</span><span>알림</span><span>기관 관리자 화면</span></div>
+    </div>
+    <div class="br gray"><b>반려된 요청의 영상</b>받지 않음 — 저장 0</div>
+    <div class="br gray"><b>취소&nbsp;· 실패</b>대기 중엔 취소 가능&nbsp;· 영상 검사 실패는 사유와 함께, 받은 영상은 바로 지움</div>
+    <div></div>
+    <div></div>
+    <div></div>
+    <div class="br gray" style="margin-top:0"><b>기한 5 업무일</b>결정이 없으면 '기한 지남'으로 닫고 알림<br>저절로 승인은 없음</div>
+  </div>
+
+  <div class="states"><b>상태 말(기관 화면과 API 가 같은 말)</b>
+    <span class="pill auto">승인 대기</span><span class="sep">→</span><span class="pill auto">영상 받는 중</span><span class="sep">→</span><span class="pill auto">분석 대기</span><span class="sep">→</span><span class="pill lx">분석 중</span><span class="sep">→</span><span class="pill ok">분석 끝</span>
+    <span class="sep" style="margin:0 6px">|</span><span class="pill warn">반려&nbsp;· 사유</span><span class="pill auto">취소</span><span class="pill warn">실패&nbsp;· 사유</span><span class="pill auto">기한 지남</span>
+  </div>
+
+  <h2 class="sec">③ 결재 한 건의 근거 넷(예: 남원시&nbsp;· 영농관리&nbsp;· 덕과면 일부&nbsp;· 우리 시 드론영상)</h2>
+  <div class="four">
+    <div class="ev"><h4>① 범위</h4><div class="v">관할 안 ✓<small>적용 지역 안</small></div><p>지도에서 요청 범위&nbsp;· 관할 경계&nbsp;· 영상 범위를 겹쳐 봄</p></div>
+    <div class="ev"><h4>② 넓이</h4><div class="v">4.2㎢<small>한 번 한도 5㎢(드론)</small></div><p>범위 도형에서 서버가 계산</p></div>
+    <div class="ev"><h4>③ 예상 분석 시간</h4><div class="v">약 4–5분<small>추정</small></div><p>해상도 × 넓이 × 이 서비스 모델의 지난 처리 속도</p></div>
+    <div class="ev"><h4>④ 한도 남은 양</h4><div class="v">9시간 12분<small>→ 승인 뒤 9시간 7분</small></div><div class="bar"><i style="width:92%"></i></div><p>이번 달 분석 시간&nbsp;· 영상을 보내면 저장도 같이</p></div>
+  </div>
+  <p class="rule">기준을 넘는 값은 <b>빨간 글자로 표시만</b> — 판단은 관리자. 결과가 아직 없는 요청이라, 관리자는 결과 대신 <strong>범위와 영상을 지도에서</strong> 직접 봅니다.</p>
+  <p class="foot">시안 그림&nbsp;· 근거 넷의 값은 예시입니다(남원시 월 분석 시간 한도 10시간 기준).</p>
+</div>
+</body>
+</html>

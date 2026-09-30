@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>상대 영상을 받는 방법 넷 — 비교와 추천</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+table.cmp{table-layout:fixed}
+table.cmp thead th{background:var(--card);color:var(--ink);font-size:16px;font-weight:700;vertical-align:top;padding:16px 14px 12px}
+table.cmp thead th small{display:block;font-size:13px;font-weight:500;color:var(--ink-2);margin-top:4px;line-height:1.45}
+table.cmp thead th:first-child{width:130px;background:#F4F6F8}
+table.cmp thead th.rec{box-shadow:inset 0 3px 0 var(--ink)}
+table.cmp tbody th{background:#F9FAFB;color:var(--ink-2);font-size:13.5px;font-weight:600}
+table.cmp td{font-size:13.5px;color:var(--ink-2)}
+table.cmp td .good,table.cmp td .mid,table.cmp td .bad{display:block;margin-bottom:2px}
+.pick{margin-top:22px;display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.pick div{padding:14px 16px;border-right:1px solid var(--line);font-size:14px;color:var(--ink-2);position:relative}
+.pick div:last-child{border-right:0}
+.pick b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}
+.pick .q{font-size:12.5px;color:var(--ink-3);display:block;margin-bottom:6px}
+.pick .lim{display:inline-block;margin-top:6px;font-size:12.5px;background:#F4F6F8;border-radius:6px;padding:2px 8px;color:var(--ink)}
+.rules{margin-top:14px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.rules .card{font-size:13.5px;color:var(--ink-2)}
+.rules .card b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}
+.size{margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13.5px;color:var(--ink-2)}
+.size span{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.size span b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="page">
+  <span class="tag both">둘 다</span><span class="tag doc">문서</span>
+  <h1>상대방 영상은 어떻게 받나 — 방법 넷</h1>
+  <p class="sub">크기와 영상이 있는 곳으로 고릅니다. 어느 방법이든 승인 먼저, 받기 나중&nbsp;· 분석 끝 30일 뒤 지움&nbsp;· 결과는 남음.</p>
+
+  <div class="size"><b>실제 크기</b><span>남원 전역 드론 한 시점 <b>1.1–2.1TB</b></span><span>밀양 정사영상 <b>457GB</b></span><span>영상 보관 디스크 남은 공간 <b>약 1.9TB</b></span><span>기관 저장 한도 남원 <b>500GB</b>&nbsp;· 광주전남 <b>300GB</b></span><span>바깥 주소 앞단 한 번 <b>100MB&nbsp;· 100초</b></span></div>
+
+  <table class="t cmp" style="margin-top:16px">
+    <thead><tr>
+      <th></th>
+      <th>④ LX 가 가진 영상 범위만<span class="star">먼저</span><small>영상 없이 범위&nbsp;· 시점만. LX 가 그 기관에 열어 준 영상 안에서</small></th>
+      <th class="rec">① 주소 알려 주기<span class="star">기본</span><small>기한 있는 서명 주소&nbsp;· 공공 클라우드 주소를 적으면 승인 뒤 LX 서버가 가져감</small></th>
+      <th>② 조각 올리기<small>승인 뒤 8–64MB 조각으로 이어 올리기(학습 표본 올리기와 같은 방식)</small></th>
+      <th>③ 디스크로 직접 전달<small>디스크를 LX 에 전달 → LX 직원이 영상 등록에서 그 요청에 붙임</small></th>
+    </tr></thead>
+    <tbody>
+      <tr><th>큰 영상<br>(수백 GB–TB)</th><td><span class="good">보낼 것 없음</span></td><td><span class="good">좋음</span>앞단 한도와 무관 — 받는 회선만큼, 끊기면 이어 받기</td><td><span class="bad">어려움</span>100GB 는 100Mbps 에서 약 2시간 13분(이론값), 조각 수만 개</td><td><span class="good">가장 확실</span>TB 도 하루 안&nbsp;· 복사 없이 연결한 채 분석도</td></tr>
+      <tr><th>보안</th><td><span class="good">새로 오가는 영상 0</span></td><td><span class="mid">관리 필요</span>저장소 비밀번호는 받지 않고 기한 있는 주소만&nbsp;· 등록한 저장소만&nbsp;· 내부망 주소 금지</td><td><span class="good">좋음</span>키로만 받음&nbsp;· 조각 크기 확인&nbsp;· 끝나면 파일 지문 대조</td><td><span class="mid">사람 손</span>인수인계 기록(받은 날&nbsp;· 받은 사람&nbsp;· 파일 지문&nbsp;· 돌려준 날)</td></tr>
+      <tr><th>저장 공간</th><td><span class="good">0</span></td><td><span class="good">반려분 0</span>원본은 상대 저장소에 그대로</td><td><span class="mid">끊긴 조각이 남음</span>7일 뒤 지움</td><td><span class="mid">복사하면 큼</span>연결한 채 분석하면 0</td></tr>
+      <tr><th>상대가 할 일</th><td>범위만</td><td>주소 한 줄(승인 알림 뒤 보내도 됨)</td><td>올리기 프로그램(안내 예제 그대로)</td><td>디스크 보내기</td></tr>
+      <tr><th>LX 가 할 일</th><td>없음</td><td>없음(자동)</td><td>없음(자동)</td><td><span class="mid">받기&nbsp;· 등록&nbsp;· 돌려주기</span></td></tr>
+      <tr><th>지금 서버</th><td><b>있음</b> — 영상 범위&nbsp;· 기관 공유&nbsp;· 견적</td><td><b>새로</b></td><td><b>반쯤</b> — 학습 표본용(8MB&nbsp;· 400MB)을 넓힘</td><td><b>반쯤</b> — 영상 등록&nbsp;· 파일에서 자동으로 읽기 있음, '요청에 붙이기' 새로</td></tr>
+    </tbody>
+  </table>
+
+  <div class="pick">
+    <div><span class="q">LX 가 이미 가진 범위면</span><b>④ 범위만</b>보낼 것&nbsp;· 저장할 것 0<span class="lim">한 번 넓이 한도 안</span></div>
+    <div><span class="q">상대 저장소에 있으면</span><b>① 주소 알려 주기</b>기본 방법<span class="lim">한 건 100GB</span></div>
+    <div><span class="q">저장소가 없고 작으면</span><b>② 조각 올리기</b>자체 저장소 없는 기관<span class="lim">한 건 20GB</span></div>
+    <div><span class="q">100GB 를 넘거나 밖으로 못 내보내면</span><b>③ 디스크로 직접 전달</b>사람이 조율<span class="lim">연결한 채 분석 가능</span></div>
+  </div>
+
+  <div class="rules">
+    <div class="card"><b>승인 먼저, 받기 나중</b>반려된 요청의 영상은 받지 않습니다 — 저장 0.</div>
+    <div class="card"><b>분석 끝 30일 뒤 지움</b>반려&nbsp;· 실패는 24시간&nbsp;· 끊긴 올리기는 7일. 결과&nbsp;· 요청 기록&nbsp;· 영상 정보는 남음.</div>
+    <div class="card"><b>맡긴 영상 칸</b>전체 400GB&nbsp;· 기관당 200GB(기관 저장 한도 안) — 모든 값은 LX 관리자 설정 한 곳.</div>
+    <div class="card"><b>영상의 권리는 기관</b>그 요청의 분석에만 씁니다. 다른 용도는 기관 동의 + 관리자 결재.</div>
+  </div>
+  <p class="foot">보내는 시간은 이론값(이 PC 회선 속도는 재지 않음)&nbsp;· 한도 값은 초기값 제안 — A100&nbsp;· 새 저장 장치가 붙으면 설정만 바꿉니다.</p>
+</div>
+</body>
+</html>

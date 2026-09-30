@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · Land-XI LX 관리자 결재함 — API 분석 요청 · API 키 신청 한 건(지금 결재함과 같은 틀)</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.mapbox{position:relative;flex:1;border-radius:12px;overflow:hidden;background:#3b4a3a url('../../../../../../../landxi/assets/images/landing/lp-map.png') -640px -180px / 2300px auto no-repeat}
+.mapbox svg{position:absolute;inset:0;width:100%;height:100%}
+.mapbox .lg{position:absolute;left:14px;top:14px;display:flex;gap:8px}
+.mapbox .lg span{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:8px;background:rgba(255,255,255,.95);font:500 13px/1 var(--font-body);color:var(--ink);box-shadow:var(--elev-map)}
+.mapbox .lg i{width:14px;height:10px;border-radius:2px}
+.mapbox .lg i.req{background:rgba(15,169,160,.35);border:2px solid #0FA9A0}
+.mapbox .lg i.jur{border:2px dashed #1C1F25;background:transparent}
+.mapbox .lg i.img{border:2px dashed #fff;background:rgba(255,255,255,.15);outline:1px solid rgba(0,0,0,.25)}
+.mapbox .prev{position:absolute;right:14px;top:14px;width:200px;background:var(--bg-1);border-radius:12px;box-shadow:var(--elev-map);padding:10px;display:flex;flex-direction:column;gap:6px}
+.mapbox .prev .im{height:110px;border-radius:8px;background:#3b4a3a url('../../../../../../../landxi/assets/images/landing/lp-map.png') -1120px -520px / 2600px auto no-repeat}
+.mapbox .prev b{font:500 13px/18px var(--font-body);color:var(--ink)}
+.mapbox .prev span{font:400 12px/16px var(--font-body);color:var(--sub)}
+.mapbox .emd{position:absolute;font:600 13px/1 var(--font-body);color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+.mapbox .scale{position:absolute;left:14px;bottom:14px;padding:2px 8px;font:500 12px/16px var(--font-num);color:var(--ink);background:rgba(255,255,255,.88);border-left:2px solid var(--ink);border-bottom:2px solid var(--ink)}
+.jur{fill:none;stroke:#1C1F25;stroke-width:2.5;stroke-dasharray:10 6}
+.req{fill:rgba(15,169,160,.30);stroke:#0FA9A0;stroke-width:2.5}
+.img{fill:rgba(255,255,255,.10);stroke:#fff;stroke-width:2;stroke-dasharray:6 5}
+.reject{display:none;flex-direction:column;gap:8px}
+.reject textarea{width:100%;height:96px;padding:10px 12px;border:1px solid var(--ink);border-radius:8px;background:var(--bg-1);color:var(--ink);font:400 14.5px/21px var(--font-body);resize:none}
+.reject .kinds{display:flex;gap:6px;flex-wrap:wrap}
+.reject .kinds .t-chip{height:26px;font-size:13px}
+.reject .kinds .t-chip.on{background:var(--ink);color:#fff}
+.reject .goes{padding:10px 12px;border-radius:8px;background:#FDECEE;font:400 13.5px/19px var(--font-body);color:#8F2430}
+.reject .goes b{font-weight:600;color:#D9434E}
+body.is-reject .reject{display:flex}
+.btns-rej{display:none}
+body.is-reject .btns-rej{display:flex}
+body.is-reject .keep-open{display:none}
+body.is-reject .memo-in{display:none}
+body.is-reject .v-req .box{display:none}
+.v-key{display:none}
+body.is-key .v-key{display:flex}
+body.is-key .v-req{display:none}
+.keys{display:flex;flex-direction:column}
+.keys .r{display:grid;grid-template-columns:220px 1fr 120px 110px;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--rule);font:400 15px/22px var(--font-body);color:var(--ink)}
+.keys .r:last-child{border-bottom:0}
+.keys .r .s{color:var(--sub);font-size:14px}
+.keys .r .t-chip{justify-self:start}
+</style>
+</head>
+<body class="m t ci-lx">
+<div class="m-app">
+  <header class="m-mast">
+    <span class="m-word">LAND-XI</span>
+    <span class="m-home">LX 관리자 대시보드</span>
+    <span class="m-sp"></span>
+    <span class="m-ask">물어보기 <kbd>Ctrl K</kbd></span>
+    <span class="m-role">LX 관리자</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail">
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2V6z"/><path d="M9 4v14M15 6v14"/></svg>현황</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>인프라</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9H3z"/><path d="M9 20v-6h6v6"/></svg>기관</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>배포</span>
+    <span class="m-rail-i" aria-current="true"><span class="badge">5</span><svg viewBox="0 0 24 24"><path d="M3 13h5l2 3h4l2-3h5"/><path d="M5 5h14v14H5z"/></svg>결재</span>
+  </nav>
+  <main class="m-main">
+    <section class="ib-list">
+      <table class="m-table">
+        <thead><tr><th style="width:150px">종류</th><th>대상</th><th style="width:230px">요청자</th><th style="width:120px">요청일 ↓</th></tr></thead>
+        <tbody>
+          <tr class="row-req is-on"><td><span class="t-chip new">API 분석 요청</span></td><td>남원시&nbsp;· 영농관리 — 덕과면 일부</td><td>남원 영농관리 시스템</td><td class="r">2026.10.01</td></tr>
+          <tr class="row-key"><td><span class="t-chip new">API 키 신청</span></td><td>남원시&nbsp;· 생활환경 위험요소 탐지</td><td>최민정&nbsp;· 남원시 기관 관리자</td><td class="r">2026.10.01</td></tr>
+          <tr><td><span class="t-chip">서비스 공개</span></td><td>비닐하우스 실태조사 2026</td><td>김도윤&nbsp;· LX 직원</td><td class="r">2026.09.30</td></tr>
+          <tr><td><span class="t-chip">배포 승인</span></td><td>키르기스스탄 농업부 농지 이용 실태 분석</td><td class="sub">—</td><td class="r">2026.09.26</td></tr>
+          <tr><td><span class="t-chip">배포 승인</span></td><td>남원시 도로 안전관리</td><td class="sub">—</td><td class="r">2026.09.26</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 표 아래: 고른 요청의 범위(분석 요청) · 이 기관의 키(키 신청) -->
+    <section class="ib-map v-req">
+      <div class="h"><h3>요청 범위</h3><span>덕과면 일부&nbsp;· 4.2㎢&nbsp;· 우리 시 드론영상(2026-09&nbsp;· 주소로 보냄)</span></div>
+      <div class="mapbox">
+        <svg viewBox="0 0 840 440" preserveAspectRatio="none" aria-hidden="true">
+          <path class="jur" d="M40 60 L300 20 L560 40 L800 120 L820 300 L700 420 L420 430 L160 400 L30 260 Z"/>
+          <path class="img" d="M330 150 L560 150 L560 330 L330 330 Z"/>
+          <path class="req" d="M350 170 L520 165 L540 250 L500 312 L370 318 L345 250 Z"/>
+        </svg>
+        <div class="lg"><span><i class="req"></i>요청 범위</span><span><i class="jur"></i>남원시 관할 경계</span><span><i class="img"></i>보낸 영상 범위</span></div>
+        <span class="emd" style="left:400px;top:236px">덕과면</span>
+        <div class="prev"><div class="im"></div><b>보낸 영상 미리 보기</b><span>작은 그림 한 장만 읽음&nbsp;· 영상은 승인 뒤에 받음</span></div>
+        <span class="scale">1 km</span>
+      </div>
+    </section>
+    <section class="ib-map v-key">
+      <div class="h"><h3>남원시의 API 키</h3><span>서비스마다 하나&nbsp;· 관리자는 키를 보지 않음</span></div>
+      <div class="keys">
+        <div class="r"><span>영농관리 행정서비스</span><span class="s">남원 영농관리 시스템&nbsp;· 끝 9f2c&nbsp;· 오늘 09:12 사용</span><span class="t-chip">쓰는 중</span><span class="s">2027.09.28 끝</span></div>
+        <div class="r"><span>생활환경 위험요소 탐지</span><span class="s">남원 생활환경 관리 시스템</span><span class="t-chip" data-lv="wait">신청&nbsp;· 결재 대기</span><span class="s">—</span></div>
+        <div class="r"><span>도로 안전관리</span><span class="s">서비스 공개 전 — 신청할 수 없음</span><span class="t-chip" data-lv="gap">—</span><span class="s">—</span></div>
+      </div>
+    </section>
+
+    <aside class="ib-drawer v-req">
+      <span class="x">✕</span>
+      <h2>API 분석 요청<br>남원시&nbsp;· 영농관리</h2>
+      <dl class="kv">
+        <dt>요청한 곳</dt><dd>남원 영농관리 시스템</dd>
+        <dt>요청 메모</dt><dd>벼 수확 전 비경작 필지 확인</dd>
+        <dt>요청일</dt><dd class="m-num">2026.10.01 09:12</dd>
+        <dt>담당</dt><dd>김도윤&nbsp;· 프로젝트장(결과 확인)</dd>
+      </dl>
+      <div class="box">
+        <div class="cap">판단 근거<span>값&nbsp;· 기준</span></div>
+        <dl class="crit">
+          <dt>① 범위<small>남원시 경계&nbsp;· 적용 지역과 비교</small></dt><dd class="ok">관할 안</dd>
+          <dt>② 넓이<small>기준 한 번 5㎢(드론)</small></dt><dd class="ok">4.2㎢</dd>
+          <dt>③ 예상 분석 시간<small>추정&nbsp;· 해상도 × 넓이 × 지난 처리 속도</small></dt><dd class="ok">약 4–5분</dd>
+          <dt>④ 한도 남은 양<small>이번 달 분석 시간 → 승인 뒤</small></dt><dd class="ok">9시간 12분 → 9시간 7분</dd>
+          <dt>저장(맡긴 영상)<small>기관 몫 200GB</small></dt><dd class="ok">11.2GB 받을 예정</dd>
+        </dl>
+      </div>
+      <p class="m-small keep-open">참고&nbsp;· 대기열 앞 1건&nbsp;· 이 시스템의 첫 요청</p>
+      <div class="reject">
+        <textarea>촬영 시기(9월 하순)가 벼 수확 뒤라 비경작 판단이 어렵습니다. 8월 영상으로 다시 요청해 주세요.</textarea>
+        <div class="kinds"><span class="t-chip">범위</span><span class="t-chip">영상 품질</span><span class="t-chip on">촬영 시기</span><span class="t-chip">한도</span><span class="t-chip">중복</span><span class="t-chip">그 밖</span></div>
+        <div class="goes"><b>이 사유가 가는 곳</b> — API 상태 조회&nbsp;· 알림&nbsp;· 남원시 기관 관리자 화면(같은 글)</div>
+      </div>
+      <input class="t-input memo-in" placeholder="사유(반려할 때는 꼭 적습니다)">
+      <div class="btns keep-open"><button class="t-btn t-btn--2">반려</button><button class="t-btn">승인</button></div>
+      <div class="btns btns-rej"><button class="t-btn t-btn--2" style="flex:0 0 110px">취소</button><button class="t-btn">반려 보내기</button></div>
+    </aside>
+
+    <aside class="ib-drawer v-key">
+      <span class="x">✕</span>
+      <h2>API 키 신청<br>남원시&nbsp;· 생활환경 위험요소 탐지</h2>
+      <dl class="kv">
+        <dt>신청한 사람</dt><dd>최민정&nbsp;· 남원시 기관 관리자</dd>
+        <dt>쓰는 시스템</dt><dd>남원 생활환경 관리 시스템</dd>
+        <dt>신청일</dt><dd class="m-num">2026.10.01 10:40</dd>
+      </dl>
+      <div class="box">
+        <div class="cap">키에 묶이는 것<span>승인 때 바꿀 수 있음</span></div>
+        <dl class="crit">
+          <dt>서비스</dt><dd>생활환경 위험요소 탐지</dd>
+          <dt>관할</dt><dd>남원시 전체</dd>
+          <dt>끝나는 날</dt><dd>2027.10.01(1년)</dd>
+          <dt>허용 주소</dt><dd>없음(선택)</dd>
+        </dl>
+      </div>
+      <div class="box">
+        <div class="cap">확인<span>자동</span></div>
+        <dl class="crit">
+          <dt>이용 약속 동의<small>개인정보&nbsp;· 재배포&nbsp;· 기록</small></dt><dd class="ok">동의함</dd>
+          <dt>서비스 공개&nbsp;· 남원시 적용</dt><dd class="ok">예</dd>
+          <dt>이 서비스의 기존 키</dt><dd class="ok">없음</dd>
+        </dl>
+      </div>
+      <input class="t-input" placeholder="사유(반려할 때는 꼭 적습니다)">
+      <div class="btns"><button class="t-btn t-btn--2">반려</button><button class="t-btn">승인</button></div>
+    </aside>
+
+    <span class="m-note n1" style="left:470px;top:6px"><i>1</i>요청은 곧바로 돌지 않고 결재함에 한 줄 — 지금 결재함 그대로</span>
+    <span class="m-note n2 v-req-n" style="left:90px;top:500px"><i>2</i>관리자는 결과 대신 범위와 영상을 지도에서 직접 봄</span>
+    <span class="m-note n3 v-req-n" style="left:976px;top:666px;max-width:380px"><i>3</i>근거 넷 — 넘으면 빨간 글자 표시만, 판단은 관리자</span>
+    <span class="m-note n4" style="left:976px;top:436px;max-width:380px;display:none"><i>4</i>사유를 적어야 보냄 — 같은 글이 세 곳으로</span>
+    <span class="m-note n5" style="left:976px;top:680px;max-width:380px;display:none"><i>2</i>승인하면 키는 기관 관리자 화면에 한 번만 — 관리자는 키를 못 봄</span>
+  </main>
+</div>
+<span class="m-stamp m-stamp--l"><b>시안</b> Land-XI 화면&nbsp;· LX 관리자 결재 — <span class="st-t">API 분석 요청 한 건</span></span>
+<script>
+const q = location.search;
+if (q.includes('reject')) {
+  document.body.classList.add('is-reject');
+  document.querySelector('.n3').style.display = 'none';
+  document.querySelector('.n4').style.display = 'inline-flex';
+  document.querySelector('.st-t').textContent = 'API 분석 요청 반려(사유 필수)';
+}
+if (q.includes('key')) {
+  document.body.classList.add('is-key');
+  document.querySelector('.row-req').classList.remove('is-on');
+  document.querySelector('.row-key').classList.add('is-on');
+  document.querySelectorAll('.v-req-n').forEach(e => e.style.display = 'none');
+  document.querySelector('.n1').innerHTML = '<i>1</i>키 신청도 같은 결재함에 한 줄 — 종류만 다름';
+  document.querySelector('.n5').style.display = 'inline-flex';
+  document.querySelector('.st-t').textContent = 'API 키 신청 한 건';
+}
+</script>
+</body>
+</html>

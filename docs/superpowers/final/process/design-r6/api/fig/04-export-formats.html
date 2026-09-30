@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>내보내기 형식 — 결과를 어떤 모양으로 주나</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+.top{display:grid;grid-template-columns:1.25fr 1fr;gap:14px;margin-bottom:16px}
+.top .card b{display:block;font-size:15px;margin-bottom:8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips span{border-radius:8px;padding:5px 10px;font-size:13.5px;font-weight:600}
+.chips.in span{background:var(--teal-tint);color:#0B7E77}
+.chips.out span{background:var(--red-tint);color:var(--red)}
+table.fmt{table-layout:fixed}
+table.fmt col.c1{width:160px} table.fmt col.c2{width:200px} table.fmt col.c4{width:175px} table.fmt col.c5{width:195px} table.fmt col.c6{width:235px}
+table.fmt tbody th{font-size:15px}
+table.fmt tbody th small{display:block;font-size:12px;font-weight:500;color:var(--ink-3);margin-top:3px}
+table.fmt td{font-size:13.5px;color:var(--ink-2)}
+.now{display:inline-block;border-radius:6px;padding:3px 9px;font-size:12.5px;font-weight:700}
+.now.y{background:var(--teal-tint);color:#0B7E77}
+.now.h{background:var(--amber-tint);color:var(--amber)}
+.now.n{background:var(--blue-tint);color:var(--blue)}
+td .why{display:block;font-size:12.5px;color:var(--ink-3);margin-top:4px}
+tr.first th{box-shadow:inset 4px 0 0 var(--ink)}
+.bot{margin-top:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.bot .card{font-size:13.5px;color:var(--ink-2)}
+.bot .card b{display:block;font-size:15px;color:var(--ink);margin-bottom:6px}
+.rv{display:flex;flex-direction:column;gap:6px}
+.rv span{display:flex;gap:8px;align-items:baseline}
+.rv i{font-style:normal;font-weight:700;color:var(--ink);white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="page">
+  <span class="tag both">둘 다</span><span class="tag doc">문서</span>
+  <h1>결과를 어떤 형식으로 주나 — 여섯 가지와 엑셀</h1>
+  <p class="sub">모든 형식에 모양과 '결과 확인 전 / 확인됨' 표시가 붙습니다. 영상은 주지 않습니다.</p>
+
+  <div class="top">
+    <div class="card"><b>모든 형식에 붙는 것</b><div class="chips in"><span>모양</span><span>결과 종류</span><span>신뢰(0–1)</span><span>결과 확인 표시</span><span>시점(촬영&nbsp;· 분석)</span><span>서비스 이름&nbsp;· 버전</span><span>참고자료 표시</span></div></div>
+    <div class="card"><b>빠지는 것</b><div class="chips out"><span>영상</span><span>개인정보</span><span>내부 값</span><span>다른 기관&nbsp;· 관할 밖</span><span>학습 자료</span></div></div>
+  </div>
+
+  <table class="t fmt">
+    <colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"><col class="c5"><col class="c6"></colgroup>
+    <thead><tr><th>형식</th><th>누가&nbsp;· 어디에</th><th>들어가는 것</th><th>좌표계</th><th>크기&nbsp;· 나눠 받기</th><th>지금 서버</th></tr></thead>
+    <tbody>
+      <tr class="first"><th>GeoJSON<small>먼저</small></th><td>웹 지도&nbsp;· 기관 개발 시스템</td><td>결과 조각(폴리곤) + 결과 번호&nbsp;· 종류&nbsp;· 신뢰&nbsp;· 면적&nbsp;· 읍면동&nbsp;· 필지 번호&nbsp;· 시점&nbsp;· 서비스 버전&nbsp;· 결과 확인</td><td>경위도(기본)&nbsp;· 국내 평면 넷&nbsp;· UTM-K 고름</td><td>바로 받기 한 쪽 1,000개&nbsp;· 시군구 전역은 파일로</td><td><span class="now h">반쯤</span><span class="why">경위도 조회 있음<br>좌표계&nbsp;· 표시&nbsp;· 버전은 새로</span></td></tr>
+      <tr class="first"><th>CSV&nbsp;· 엑셀(필지)<small>먼저</small></th><td>실태조사 담당 — 엑셀로 결재&nbsp;· 현장</td><td>필지 한 줄씩: 필지 번호&nbsp;· 지번&nbsp;· 지목&nbsp;· AI 가 본 것&nbsp;· 겹친 면적&nbsp;· 까닭 한 줄&nbsp;· 기관 판정&nbsp;· 시점&nbsp;· 버전</td><td>(선택) 필지 가운데 점</td><td>파일로&nbsp;· 필지 번호 칸은 글자로 고정</td><td><span class="now n">새로</span><span class="why">필지 결과는 모양으로만 있음</span></td></tr>
+      <tr class="first"><th>요약 숫자(JSON)<small>먼저</small></th><td>행정 포털&nbsp;· 대시보드&nbsp;· 2차 서비스</td><td>종류별 개수&nbsp;· 면적&nbsp;· 읍면동별&nbsp;· 확인이 필요한 필지 수&nbsp;· 확인 전/확인됨 나눔 — 화면과 같은 값</td><td>—</td><td>작음&nbsp;· 바로</td><td><span class="now y">있음</span><span class="why">바깥 모양으로 옮기기만</span></td></tr>
+      <tr><th>SHP(zip)<small>다음</small></th><td>시군구 GIS 담당(QGIS&nbsp;· ArcGIS)</td><td>조각 층 + 필지 층&nbsp;· 좌표계 파일&nbsp;· 열 설명 표</td><td>국내 평면(기본)&nbsp;· 경위도</td><td>파일로만&nbsp;· 한 파일 2GB&nbsp;· 열 이름 10자</td><td><span class="now n">새로</span><span class="why">읽기만 있음<br>쓰는 도구는 서버에 있음</span></td></tr>
+      <tr><th>GeoPackage<small>다음</small></th><td>GIS 담당 — SHP 한계 없이 한 파일</td><td>조각 층&nbsp;· 필지 층&nbsp;· 요약 표&nbsp;· 열 설명 표</td><td>국내 평면(기본)&nbsp;· 경위도</td><td>파일로만</td><td><span class="now n">새로</span><span class="why">읽기만 있음</span></td></tr>
+      <tr><th>벡터 지도 조각(MVT)<small>다음</small></th><td>도청 GIS&nbsp;· 웹 지도에 결과 층 띄우기</td><td>조각 모양 + 결과 번호&nbsp;· 종류&nbsp;· 신뢰&nbsp;· 결과 확인&nbsp;· 줌 10–17</td><td>웹 지도 좌표계 고정</td><td>조각 단위&nbsp;· 1분 1,200장&nbsp;· 주소 12시간</td><td><span class="now h">반쯤</span><span class="why">결과마다 지도 파일&nbsp;· 서명 있음<br>한 장씩 꺼내기는 새로</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="bot">
+    <div class="card"><b>결과 확인 표시</b>
+      <div class="rv"><span><i>확인 전</i>AI 가 찾은 그대로 — 분석 끝나면 바로</span><span><i>확인됨</i>LX 결과 확인을 마친 묶음</span><span><i>고침</i>사람이 모양&nbsp;· 종류를 고친 조각</span><span><i>지움</i>결과에서 빠지고 '지운 목록'으로만</span></div>
+    </div>
+    <div class="card"><b>실제로 잰 크기(시군구 전역 한 번)</b>결과 조각 약 13만 개 → GeoJSON <b style="display:inline">160–225MB</b>(한 개 약 1.2–2.6KB)&nbsp;· 지도 파일 약 73MB. 그래서 전역은 '파일로 받기'(준비되면 알림&nbsp;· 1GB 넘으면 읍면동별로 나눔).</div>
+    <div class="card"><b>내려받기 정책</b>키 신청 때 이용 약속 동의&nbsp;· 그 서비스&nbsp;· 그 관할만&nbsp;· 모든 내보내기를 누가&nbsp;· 무엇을&nbsp;· 몇 건으로 기록&nbsp;· 한 달 내보낸 양은 기관 한도 안(지금은 재지 않음 → API 부터 잼).</div>
+  </div>
+  <p class="foot">'반쯤' = 서버에 바탕은 있고 바깥 모양&nbsp;· 옵션만 새로&nbsp;· '새로' = 쓰는 길을 새로 만듦(도구는 서버에 있음). 크기는 2026-10-01 LX 결과 파일로 잰 값.</p>
+</div>
+</body>
+</html>

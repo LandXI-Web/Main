@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · 남원시 GeoVision(기관 관리자) — 기관 관리의 API 연동 칸: 서비스마다 키 신청 · 한 번 보기 · 폐기 · 요청 목록</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.grid{display:grid;grid-template-columns:1.35fr 1fr;gap:24px;align-items:start}
+.col{display:flex;flex-direction:column;gap:24px}
+.m-table td{padding:12px}
+.m-table .t-btn{height:34px;padding:0 12px;font-size:13px}
+.m-table tr.hl td{background:var(--ci-t1)}
+.st-ok{color:var(--ink)}
+.st-none{color:var(--sub)}
+.rq{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:12px 0;border-bottom:1px solid var(--rule);font:400 15px/22px var(--font-body);color:var(--ink)}
+.rq:last-child{border-bottom:0}
+.rq small{grid-column:1/-1;font:400 13.5px/19px var(--font-body);color:var(--sub)}
+.rq small.why{color:#8F2430}
+.rw{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--rule);font:400 15px/22px var(--font-body)}
+.rw:last-child{border-bottom:0}
+.rw .s{color:var(--sub);font-size:14px}
+.rw .go{margin-left:auto;font:500 14px/20px var(--font-body);color:var(--ink)}
+.rw .go::after{content:" →"}
+.once{display:none}
+body.is-once .once{display:flex}
+body.is-once .apply{display:none}
+.m-modal{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:660px;background:var(--bg-1);border-radius:24px;padding:32px;box-shadow:var(--elev-3);z-index:55;flex-direction:column;gap:14px}
+.m-modal h2{margin:0;font:700 26px/34px var(--font-display);letter-spacing:-.02em}
+.m-modal .warn{padding:12px 14px;border-radius:8px;background:#FFF4DE;font:500 14px/20px var(--font-body);color:#8A5A12}
+.m-modal .btns .t-btn{height:48px}
+</style>
+</head>
+<body class="m t g ci-namwon">
+<div class="m-app">
+  <header class="m-mast">
+    <span class="m-word">남원시 GeoVision 플랫폼</span>
+    <span class="m-home">기관 관리</span>
+    <span class="m-sp"></span>
+    <span class="m-ask">물어보기 <kbd>Ctrl K</kbd></span>
+    <span class="m-role"><b>남원시</b>기관 관리자</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail">
+    <p class="b-mark"><span>남원</span><span>GV</span></p>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>내 서비스</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l2 2H4l2-2z"/><path d="M10 20a2 2 0 004 0"/></svg>알림</span>
+    <span class="m-rail-i" aria-current="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0112 0M14 20a4.5 4.5 0 018 0"/></svg>기관 관리</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>활용 현황</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>계정</span>
+    <span class="m-rail-i out"><svg viewBox="0 0 24 24"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9"/></svg>로그아웃</span>
+  </nav>
+  <main class="m-main">
+    <div class="m-page">
+      <div class="m-head"><h1>기관 관리</h1><span class="sub">부서와 서비스&nbsp;· 가입 승인&nbsp;· API 연동</span></div>
+      <div class="wrap" style="margin-right:440px;display:flex;flex-direction:column;gap:20px">
+          <div class="card">
+            <h3>API 연동<span>서비스마다 키 하나&nbsp;· 우리 시 다른 시스템이 결과를 가져가고 분석을 요청하는 열쇠</span></h3>
+            <table class="m-table">
+              <thead><tr><th style="width:200px">서비스</th><th>쓰는 시스템</th><th style="width:96px">상태</th><th style="width:110px"></th></tr></thead>
+              <tbody>
+                <tr><td>영농관리 행정서비스</td><td>남원 영농관리 시스템<br><span class="m-small">끝 9f2c&nbsp;· 오늘 09:12 사용</span></td><td class="st-ok">쓰는 중</td><td><button class="t-btn t-btn--2">폐기</button></td></tr>
+                <tr class="hl"><td>생활환경 위험요소 탐지</td><td class="st-none">—</td><td class="st-none">키 없음</td><td><button class="t-btn">키 신청</button></td></tr>
+                <tr><td>도로 안전관리</td><td class="st-none">서비스 공개 전</td><td class="st-none">—</td><td><button class="t-btn" disabled>키 신청</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div class="card">
+              <h3>API 로 들어온 분석 요청</h3>
+              <div class="rq"><span>영농관리&nbsp;· 덕과면 일부 4.2㎢</span><span class="t-chip" data-lv="wait">승인 대기</span><small>남원 영농관리 시스템&nbsp;· 오늘 09:12</small></div>
+              <div class="rq"><span>영농관리&nbsp;· 산내면 일부 3.1㎢</span><span class="t-chip" data-lv="warn">반려</span><small class="why">사유: 수확 뒤 영상이라 판단이 어렵습니다 — 8월 영상으로 다시</small></div>
+            </div>
+            <div class="card">
+              <h3>기록<span>LX 관리자와 같은 기록</span></h3>
+              <div class="rw">요청 기록 <span class="s">누가&nbsp;· 언제&nbsp;· 몇 건</span><span class="go">보기</span></div>
+              <div class="rw">내려받기 기록 <span class="s">형식&nbsp;· 범위</span><span class="go">보기</span></div>
+              <div class="rw">맡긴 영상 <span class="s">11.2GB&nbsp;· 30일 뒤 지움</span><span class="go">보기</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    <!-- 신청 시트 -->
+    <aside class="m-sheet apply">
+      <h2>API 키 신청</h2>
+      <div class="m-f"><label>서비스</label><div class="sel">생활환경 위험요소 탐지</div></div>
+      <div class="m-f"><label>쓰는 시스템 이름<small>요청 기록&nbsp;· 결재함에 이 이름으로</small></label><input class="t-input" value="남원 생활환경 관리 시스템"></div>
+      <div class="m-f"><label>이용 약속</label>
+        <div class="agree"><i>✓</i><span>결과에 개인정보를 붙이지 않습니다&nbsp;· 기관 밖으로 다시 내보내면 우리 기관 책임입니다&nbsp;· 모든 요청과 내려받기는 기록됩니다</span></div>
+      </div>
+      <span class="more">더 보기 — 허용 주소&nbsp;· 알림 받을 주소(선택)</span>
+      <p class="m-small">LX 관리자가 승인하면 이 화면에서 키를 한 번만 보여 드립니다. 끝나는 날은 1년입니다.</p>
+      <div class="btns" style="margin-top:auto"><button class="t-btn t-btn--2" style="flex:0 0 110px">취소</button><button class="t-btn">신청</button></div>
+    </aside>
+
+    <span class="m-note apply" style="left:540px;top:52px"><i>1</i>기관 관리자가 서비스를 골라 신청 — 입력 세 칸</span>
+    <span class="m-note apply" style="left:150px;top:716px"><i>2</i>분석 요청의 승인&nbsp;· 반려 사유도 여기서 봄</span>
+  </main>
+</div>
+<div class="m-dim once"></div>
+<div class="m-modal once">
+  <h2>키를 한 번만 보여 드립니다</h2>
+  <p class="m-small">생활환경 위험요소 탐지&nbsp;· 남원 생활환경 관리 시스템&nbsp;· LX 관리자 승인 2026.10.01 11:02</p>
+  <div class="keybox">lxk_3Fh8Qw2Lm7Vt5Xr9Kd1Nc6Pz4Sy0Ba8Je5b71e</div>
+  <div class="warn">이 창을 닫으면 다시 볼 수 없습니다. 잃어버리면 '새 키로 바꾸기'를 누르세요 — 옛 키는 7일 뒤 저절로 폐기됩니다.</div>
+  <div class="btns"><button class="t-btn t-btn--2">닫기</button><button class="t-btn">복사</button></div>
+</div>
+<span class="m-stamp m-stamp--l"><b>시안</b> 기관 분기 화면&nbsp;· 남원시 GeoVision(기관 관리자) — <span class="st-t">API 키 신청</span></span>
+<script>
+if (location.search.includes('once')) {
+  document.body.classList.add('is-once');
+  document.querySelector('.st-t').textContent = '키 한 번 보기';
+}
+</script>
+</body>
+</html>

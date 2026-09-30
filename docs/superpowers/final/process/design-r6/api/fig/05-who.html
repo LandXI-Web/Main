@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>API 는 누구에게 여나 — 선택지 셋</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.op{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px;display:flex;flex-direction:column;gap:12px}
+.op.rec{box-shadow:inset 0 0 0 2px var(--ink);border-color:transparent}
+.op h3{margin:0;font-size:20px;font-weight:700;line-height:1.35}
+.op .who{font-size:14px;color:var(--ink-2)}
+.op .who b{color:var(--ink)}
+.op .ex{background:#F4F6F8;border-radius:10px;padding:10px 12px;font-size:13.5px;color:var(--ink-2)}
+.op .ex b{color:var(--ink)}
+.op h4{margin:4px 0 0;font-size:14px}
+.op ul{margin:0;padding-left:18px;font-size:14px;line-height:1.55;color:var(--ink-2)}
+.op h4.p{color:#0B7E77}
+.op h4.c{color:var(--red)}
+.op .verdict{margin-top:auto;padding-top:12px;border-top:1px dashed var(--line);font-size:14px}
+.closed{margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px;color:var(--ink-2)}
+.closed b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="page">
+  <span class="tag lx">Land-XI</span><span class="tag doc">문서</span>
+  <h1>API 는 누구에게 여나 — 선택지 셋</h1>
+  <p class="sub">키를 받을 수 있는 쪽을 정합니다. 어느 쪽이든 키는 LX 관리자가 결재로 내주고, 그 기관&nbsp;· 그 서비스&nbsp;· 그 관할 밖은 없습니다.</p>
+
+  <div class="opts">
+    <div class="op rec">
+      <span><span class="pill gov">추천</span></span>
+      <h3>ⓐ 서비스를 받는 기관만 — 서비스별로</h3>
+      <p class="who"><b>누가</b> 계약&nbsp;· 협약으로 서비스를 받는 기관(지자체&nbsp;· 해외 기관). 그 기관이 일을 맡긴 사업자&nbsp;· 개발사도 <b>그 기관 키</b>로(쓰는 시스템 이름에 업체 표시&nbsp;· 책임은 기관)</p>
+      <div class="ex"><b>예</b> 남원시 영농관리 시스템&nbsp;· 광주전남이 맡긴 해양쓰레기 수거 사업자 시스템</div>
+      <h4 class="p">좋은 점</h4>
+      <ul><li>계정 범위 밖 0 이 그대로 지켜짐</li><li>책임이 분명(기관)&nbsp;· 한도 장부 하나</li><li>지금 구조(기관&nbsp;· 서비스&nbsp;· 관할)에 바로 얹힘 — 가장 빠름</li></ul>
+      <h4 class="c">아쉬운 점</h4>
+      <ul><li>계약 없는 중앙부처&nbsp;· 연구기관은 못 씀 → 필요하면 기관으로 등록</li></ul>
+      <p class="verdict"><b>추천</b> — 개발사는 따로 키 대신 그 기관 키 + 시험 키(읽기만&nbsp;· 30일)</p>
+    </div>
+    <div class="op">
+      <span><span class="pill auto">나중 후보</span></span>
+      <h3>ⓑ ⓐ + 다른 공공기관에 요약만</h3>
+      <p class="who"><b>누가</b> 중앙부처&nbsp;· 광역&nbsp;· 공공 연구기관이 신청 → 관리자 승인으로 <b>시군구 단위 요약 숫자만</b>(모양&nbsp;· 필지 없음)</p>
+      <div class="ex"><b>예</b> 부처가 전국 해양쓰레기 탐지 현황을 정책 통계로</div>
+      <h4 class="p">좋은 점</h4>
+      <ul><li>LX 공공 역할&nbsp;· 전국 현황에 쓰임</li></ul>
+      <h4 class="c">아쉬운 점</h4>
+      <ul><li>결과 확인 전 숫자가 공식 통계처럼 쓰일 위험</li><li>지자체 결과를 다른 기관이 보는 것 — 원래 기관 동의 필요</li><li>관할 원칙에 예외가 생김</li></ul>
+      <p class="verdict">결과 확인 체계('확인됨')가 선 뒤, 원래 기관 동의 + 확인된 숫자만으로</p>
+    </div>
+    <div class="op">
+      <span><span class="pill warn">열지 않음</span></span>
+      <h3>ⓒ ⓐ + 개발사에 직접 키</h3>
+      <p class="who"><b>누가</b> GIS&nbsp;· 시스템 개발사가 <b>자기 이름으로</b> 키를 받아 여러 기관 시스템을 붙임</p>
+      <div class="ex"><b>예</b> 한 업체가 여러 시군구 영농 시스템을 한 키로</div>
+      <h4 class="p">좋은 점</h4>
+      <ul><li>연동 개발이 빨라짐&nbsp;· 여러 기관을 한 번에</li></ul>
+      <h4 class="c">아쉬운 점</h4>
+      <ul><li>한 키가 여러 기관을 넘나듦 — 계정 범위 밖 0 이 깨짐</li><li>책임이 흐려짐(기관&nbsp;· 업체)</li><li>개인정보&nbsp;· 재배포 통제가 어려움</li></ul>
+      <p class="verdict">ⓐ 의 '기관 키&nbsp;· 쓰는 시스템 이름'으로 같은 효과</p>
+    </div>
+  </div>
+  <div class="closed"><b>누구나 쓰는 공개 API</b><span class="pill warn">열지 않음</span>계정 범위 밖 0&nbsp;· 개인정보&nbsp;· 결과 확인 전 결과 — 공개 소개 화면의 숫자로 충분합니다.</div>
+  <p class="foot">시안 그림&nbsp;· 예는 지금 등록된 기관과 서비스입니다.</p>
+</div>
+</body>
+</html>
