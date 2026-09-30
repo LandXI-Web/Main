@@ -19,7 +19,7 @@ if (-not (Gate)) {
     -RedirectStandardOutput "$logs\public-gate.log" -RedirectStandardError "$logs\public-gate.err"
 }
 if (-not (Tunnel)) {
-  Start-Process -WindowStyle Hidden -FilePath $cf -ArgumentList @("--no-autoupdate", "--config", "`"$cfg`"", "tunnel", "run") `
+  Start-Process -WindowStyle Hidden -FilePath $cf -ArgumentList @("--no-autoupdate", "--protocol", "http2", "--config", "`"$cfg`"", "tunnel", "run") `
     -RedirectStandardOutput "$logs\tunnel.log" -RedirectStandardError "$logs\tunnel.err"
 }
 Start-Sleep -Seconds 3

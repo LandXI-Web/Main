@@ -78,6 +78,30 @@ function proxy(req, res) {
   req.pipe(up);
 }
 
+
+/* ── 미리 받기(modulepreload) — 바깥 주소는 요청 하나가 먼 길(Cloudflare 무료 요금제는 한국 접속도 해외 지점을 거친다, 09-30 실측 약 0.5–0.7초)을 돈다.
+   화면 코드는 파일이 파일을 차례로 불러 그 시간이 층마다 쌓이므로, HTML 을 내줄 때 필요한 모듈·스타일 목록을 머리에 적어 한꺼번에 받게 한다.
+   화면 코드는 바꾸지 않는다(관문이 읽기만). 동적 import() 는 미리 받지 않는다. */
+const IMP = /(?:import|export)\s[^'"`;]*?from\s*['"]([^'"]+)['"]|import\s*['"]([^'"]+)['"]/g;
+const CSSIMP = /@import\s+(?:url\()?\s*['"]?([^'")\s]+)['"]?\s*\)?/g;
+const PRE = new Map();
+function urlToFile(u) { const f = path.join(ROOT, decodeURIComponent(u)); return f.startsWith(path.join(ROOT, 'landxi') + path.sep) ? f : null; }
+function resolveUrl(spec, base, html = false) { if (/^(https?:|data:)?\/\//.test(spec) || /^[a-z]+:/i.test(spec) || (!html && !/^(\.|\/)/.test(spec))) return null; try { return new URL(spec, 'http://x' + base).pathname; } catch { return null; } }
+function graph(htmlUrl, html) {
+  const mods = new Set(), css = new Set(), qm = [], qc = [];
+  for (const m of html.matchAll(/<script[^>]*type=["']module["'][^>]*src=["']([^"']+)["']/g)) { const u = resolveUrl(m[1], htmlUrl, true); if (u) qm.push(u); }
+  for (const m of html.matchAll(/<script[^>]*type=["']module["'][^>]*>([\s\S]*?)<\/script>/g)) for (const x of m[1].matchAll(IMP)) { const u = resolveUrl(x[1] || x[2], htmlUrl); if (u) qm.push(u); }
+  for (const m of html.matchAll(/<link[^>]*rel=["']stylesheet["'][^>]*href=["']([^"']+)["']/g)) { const u = resolveUrl(m[1], htmlUrl, true); if (u) qc.push(u); }
+  while (qm.length && mods.size < 250) { const u = qm.shift(); if (mods.has(u) || !/\.m?js$/.test(u)) continue; const f = urlToFile(u); if (!f) continue; let t; try { t = fs.readFileSync(f, 'utf8'); } catch { continue; } mods.add(u); for (const x of t.matchAll(IMP)) { const v = resolveUrl(x[1] || x[2], u); if (v && !mods.has(v)) qm.push(v); } }
+  while (qc.length && css.size < 60) { const u = qc.shift(); if (css.has(u) || !/\.css$/.test(u)) continue; const f = urlToFile(u); if (!f) continue; let t; try { t = fs.readFileSync(f, 'utf8'); } catch { continue; } css.add(u); for (const x of t.matchAll(CSSIMP)) { const v = resolveUrl(x[1], u); if (v && !css.has(v)) qc.push(v); } }
+  return [...mods].map((u) => `<link rel="modulepreload" href="${u}">`).concat([...css].map((u) => `<link rel="preload" as="style" href="${u}">`)).join('');
+}
+function htmlWithPreload(p, f) {
+  const html = fs.readFileSync(f, 'utf8'); const c = PRE.get(p);
+  let links; if (c && c.html === html && Date.now() - c.at < 30000) links = c.links; else { links = graph(p, html); PRE.set(p, { html, links, at: Date.now() }); }
+  return links && html.includes('</head>') ? html.replace('</head>', links + '</head>') : html;
+}
+
 function serveFile(req, res, p) {
   if (p.endsWith('/')) p += 'index.html';
   if (!ALLOW.test(p) || DENY.test(p)) return send(res, 404, '404');
@@ -91,6 +115,10 @@ function serveFile(req, res, p) {
   const type = TYPES[path.extname(f).toLowerCase()] || 'application/octet-stream';
   /* 화면 코드는 매번 확인(ETag 로 바뀐 것만 받는다). 'private' = Cloudflare 가 가장자리에 보관하거나 브라우저 보관 시간(4시간)으로 덮지 않게
      (2026-09-30 r3-train: 'no-cache' 만 보내면 .js 가 max-age=14400 으로 바뀌어 고친 화면이 바깥 주소에서 4시간 늦게 반영됐다) */
+  if (/\.html$/.test(f) && req.method === 'GET') {   // HTML 은 미리 받기 목록을 붙여 내준다(매번 새로)
+    let body; try { body = Buffer.from(htmlWithPreload(p, f)); } catch { body = null; }
+    if (body) { res.writeHead(200, { ...SEC, 'content-type': type, 'content-length': body.length, 'cache-control': 'private, no-cache' }); return res.end(body); }
+  }
   const code = /\.(html|js|mjs|css|json)$/.test(f);
   const cache = code ? 'private, no-cache' : 'public, max-age=86400';
   const etag = `W/"${st.size.toString(36)}-${Math.floor(st.mtimeMs).toString(36)}"`;
