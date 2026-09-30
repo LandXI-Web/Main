@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · 남원시 GeoVision(기관 관리자) — 부서·서비스 켜기 · 가입 신청 승인 · 활용 현황 · 기관 정보</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+.box{background:var(--bg-1);border-radius:16px;padding:20px 24px;display:flex;flex-direction:column;gap:6px}
+.box h3{margin:0 0 6px;font:700 20px/28px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.box h3 .m-num{margin-left:6px}
+.m-table td{padding:12px}
+.sw{display:inline-flex;align-items:center;gap:8px;font:500 14px/1 var(--font-body);color:var(--ink)}
+.sw i{width:34px;height:20px;border-radius:10px;background:var(--ink);position:relative}
+.sw i::after{content:"";position:absolute;right:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff}
+.sw.off i{background:var(--mute)}
+.sw.off i::after{right:auto;left:2px}
+.req{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--rule);font:400 15px/22px var(--font-body);color:var(--ink)}
+.req .s{color:var(--sub);font-size:14px}
+.req .t-btn{height:36px;padding:0 14px;font-size:13px;margin-left:auto}
+.req .t-btn + .t-btn{margin-left:0}
+.use .m-rowl .go{margin-left:auto;font:500 14px/20px var(--font-body);color:var(--ink)}
+.use .m-rowl .go::after{content:" →"}
+.ci{display:grid;grid-template-columns:auto 1fr auto;gap:10px 14px;align-items:center;font:400 15px/22px var(--font-body)}
+.ci dt{color:var(--sub);font-size:14px}
+.ci dd{margin:0;color:var(--ink)}
+.ci .sw{justify-self:end}
+.ci .chipc{display:inline-flex;align-items:center;gap:8px}
+.ci .chipc i{width:18px;height:18px;border-radius:4px;background:var(--ci)}
+.ci .chipc i.t{background:var(--ci-t1);border:1px solid var(--ci-line)}
+</style>
+</head>
+<body class="m t g ci-namwon">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">남원시 GeoVision 플랫폼</span>
+    <span class="m-home">기관 관리</span>
+    <span class="m-sp"></span>
+    <span class="m-ask">물어보기 <kbd>Ctrl K</kbd></span>
+    <span class="m-role"><b>남원시</b>기관 관리자</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail">
+    <p class="b-mark"><span>남원</span><span>GV</span></p>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>내 서비스</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l2 2H4l2-2z"/><path d="M10 20a2 2 0 004 0"/></svg>알림</span>
+    <span class="m-rail-i" aria-current="true"><i class="dot"></i><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0112 0M14 20a4.5 4.5 0 018 0"/></svg>기관 관리</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>활용 현황</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>계정</span>
+    <span class="m-rail-i out"><svg viewBox="0 0 24 24"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9"/></svg>로그아웃</span>
+  </nav>
+  <main class="m-main">
+    <div class="m-page">
+      <div class="m-head">
+        <h1>기관 관리</h1>
+        <span class="sub">부서와 서비스를 짝 짓고, 직원 가입을 승인합니다 · 기관 만들기와 한도는 LX 관리자가</span>
+      </div>
+      <div class="grid">
+        <div style="display:flex;flex-direction:column;gap:24px">
+          <div class="box">
+            <h3>부서와 서비스</h3>
+            <table class="m-table">
+              <thead><tr><th>부서</th><th>서비스</th><th>사용자</th><th>켜기</th></tr></thead>
+              <tbody>
+                <tr><td class="ink">환경과</td><td>생활환경 위험요소 탐지</td><td class="r">2</td><td><span class="sw"><i></i>켜짐</span></td></tr>
+                <tr><td class="ink">농정과</td><td>영농관리 행정서비스</td><td class="r">3</td><td><span class="sw"><i></i>켜짐</span></td></tr>
+                <tr><td class="ink">건설과</td><td>도로 안전관리 <span class="t-chip" data-lv="wait" style="margin-left:6px">만드는 중</span></td><td class="r">1</td><td><span class="sw off"><i></i>첫 결과 뒤</span></td></tr>
+                <tr><td class="ink">관광과</td><td>인파관리 <span class="t-chip" data-lv="gap" style="margin-left:6px">내년</span></td><td class="r">0</td><td><span class="sw off"><i></i>—</span></td></tr>
+              </tbody>
+            </table>
+            <p class="m-small" style="margin-top:8px">부서 추가 · 한 부서에 서비스 여러 개도 가능 · 서비스 자체는 LX 가 발행합니다</p>
+          </div>
+          <div class="box use">
+            <h3>활용 현황</h3>
+            <div class="m-rows">
+              <div class="m-rowl">결과 열람 기록 <span class="s">누가 · 언제 · 어느 서비스</span><span class="go">보기</span></div>
+              <div class="m-rowl">내려받기 기록 <span class="s">동의 · 범위 · 용도</span><span class="go">보기</span></div>
+              <div class="m-rowl">분석 의뢰 내역 <span class="s">상태 · 수수료 · 기간</span><span class="go">보기</span></div>
+              <div class="m-rowl">AI 서버 이용 <span class="s">우리 시 한도 대비</span><span class="go">보기</span></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:24px">
+          <div class="box">
+            <h3>가입 신청<span class="m-num">2</span></h3>
+            <div class="req">박서연 <span class="s">농정과 · 업무 메일 확인됨</span><button class="t-btn">승인</button><button class="t-btn t-btn--2">반려</button></div>
+            <div class="req">이준호 <span class="s">건설과 · 업무 메일 확인됨</span><button class="t-btn">승인</button><button class="t-btn t-btn--2">반려</button></div>
+            <p class="m-small" style="margin-top:8px">승인하면 그 부서 서비스만 보이는 계정이 됩니다 · 반려는 사유 한 줄</p>
+          </div>
+          <div class="box">
+            <h3>기관 정보</h3>
+            <dl class="ci">
+              <dt>마크</dt><dd><span class="m-mark"><span>남원</span><span>GV</span></span></dd><dd class="m-small">바꾸기</dd>
+              <dt>플랫폼 이름</dt><dd>남원시 GeoVision 플랫폼</dd><dd class="m-small">바꾸기</dd>
+              <dt>기관색</dt><dd><span class="chipc"><i></i><i class="t"></i>초록 · 흰 바탕 대비 통과</span></dd><dd class="m-small">바꾸기</dd>
+              <dt>메인 소개 글</dt><dd>드론·항공 영상을 AI로 분석해 남원시 행정 업무를 돕습니다</dd><dd class="m-small">바꾸기</dd>
+              <dt>문의처</dt><dd>063-620-6114</dd><dd class="m-small">바꾸기</dd>
+            </dl>
+            <p class="m-small" style="margin-top:8px">배치 · 메뉴 · 부품은 바꿀 수 없습니다. '바꾸기'를 누가 하나(기관 관리자 직접 / LX 에 요청)는 확인 항목입니다.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="m-foot"><b>전북특별자치도 남원시</b><span>대표전화 063-620-6114</span><span>AI 분석 · 모델 개발과 갱신 — LX 한국국토정보공사</span></div>
+
+    <span class="m-note" style="left:940px;top:12px;max-width:440px"><i>1</i>기관 관리자가 하는 일 넷 — 부서·서비스 짝 짓기 · 가입 승인 · 활용 현황 · 기관 정보</span>
+    <span class="m-note" style="left:940px;top:60px;max-width:440px"><i>2</i>기관 관리자가 하지 않는 일 — 기관 만들기 · 한도 · 모델 · 분석(LX 관리자 · LX 직원)</span>
+  </main>
+</div>
+<span class="m-stamp m-stamp--r"><b>시안</b> 기관 분기 화면 · 남원시 GeoVision(기관 관리자) — 기관 관리</span>
+</body>
+</html>

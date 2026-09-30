@@ -1,0 +1,63 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>기관 영상 → AI 분석 의뢰 — 기관은 의뢰하고 결과를 받는다, 모델·분석은 LX</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+.lane .cell.blank{border:1px dashed var(--line);border-radius:12px;background:transparent}
+.status{display:flex;align-items:center;gap:8px;margin-top:18px;flex-wrap:wrap;font-size:13px;color:var(--ink-2)}
+.status .pill{font-size:12.5px}
+.status .ar{color:var(--ink-3)}
+.src{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+.src .card h3{margin:0 0 4px;font-size:15px}
+.src .card p{margin:0;font-size:13px;color:var(--ink-2)}
+.note{font-size:12.5px;color:var(--ink-3);margin-top:6px}
+</style></head><body><div class="page">
+<h1>우리 시 영상으로 AI 분석 의뢰 — 기관은 의뢰하고 결과를 받는다 <span class="tag both">기관 분기 ↔ Land-XI</span></h1>
+<p class="sub">기관의 기본 범위는 "우리가 찍은 영상을 올려 AI 분석을 받고 싶다"입니다. 영상 올리기는 이 흐름의 첫 칸일 뿐이고, 어느 서비스로 · 얼마에 · 언제까지 · 누가 받는지가 이어져야 올린 영상이 결과로 돌아옵니다. 모델·학습·분석 실행은 LX 가 합니다.</p>
+
+<div class="lanes">
+  <div class="lane-h gov">기관<span>남원시 농정과 담당자</span></div>
+  <div class="lane">
+    <div class="cell"><div class="box gov"><b class="h">1 영상 고르기</b><div class="tx">ⓐ LX 가 우리 시에 공유한 영상에서 <b>불러오기</b> — 올릴 것 없음<br>ⓑ 우리 시가 찍은 영상 파일 놓기 — 촬영일·범위는 파일에서 자동</div><div class="st"><span class="pill gov">서비스 안 '분석 의뢰'</span></div></div></div>
+    <div class="cell"><div class="box gov"><b class="h">2 어느 서비스로</b><div class="tx">내 부서 서비스만 보인다(농정과 = 영농관리). 범위는 파일 범위 그대로 또는 읍·면 고르기</div><div class="st"><span class="pill gov">고르기 한 번</span></div></div></div>
+    <div class="cell"><div class="box gov"><b class="h">3 비용·기간 안내</b><div class="tx">수수료: <b>LX 수수료 체계에 따름</b>(접수 때 견적) · 기간: 영상 크기·대기 순서에 따라 접수 때 확정 · 우리 시 AI 서버 이용량에 포함</div><div class="st"><span class="pill wait">숫자를 지어내지 않음</span></div></div></div>
+    <div class="cell"><div class="box gov"><b class="h">4 의뢰</b><div class="tx">'이 조건으로 의뢰' 한 번. 메모 한 줄은 선택</div><div class="st"><span class="pill wait">접수 대기</span></div></div></div>
+    <div class="cell blank"></div>
+    <div class="cell blank"></div>
+    <div class="cell blank"></div>
+    <div class="cell"><div class="box gov"><b class="h">8 결과 도착</b><div class="tx">서비스 대시보드에 <b>새 시점</b>으로 쌓인다. 알림 한 줄. 작년 영상과 비교 · 필지 대조 · 보고서 그대로</div><div class="st"><span class="pill gov">결과 도착</span></div></div></div>
+  </div>
+
+  <div class="lane-h lx">LX<span>그 서비스의 프로젝트장<br>(없으면 LX 관리자)</span></div>
+  <div class="lane">
+    <div class="cell blank"></div>
+    <div class="cell blank"></div>
+    <div class="cell blank"></div>
+    <div class="cell blank"></div>
+    <div class="cell"><div class="box lx"><b class="h">5 접수</b><div class="tx">영상 읽은 값 · 범위 · 서비스 확인 → 수수료·기간을 적어 <b>접수</b>, 또는 반려(사유 한 줄)</div><div class="st"><span class="pill lx">Land-XI · 받은 것</span></div></div></div>
+    <div class="cell"><div class="box lx"><b class="h">6 분석</b><div class="tx">LX AI 서버 대기열에서 돈다. 기관은 '분석 중'만 본다</div><div class="st"><span class="pill lx">GPU 는 LX 가 관리</span></div></div></div>
+    <div class="cell"><div class="box lx"><b class="h">7 결과 확인</b><div class="tx">표본을 보고 결과를 기관에 연다. 모델이 이상하면 재학습은 LX 안에서</div><div class="st"><span class="pill lx">사람이 확인</span></div></div></div>
+    <div class="cell blank"></div>
+  </div>
+</div>
+
+<div class="status"><b>기관이 보는 상태</b>
+  <span class="pill wait">접수 대기</span><span class="ar">→</span><span class="pill lx">접수됨 · 수수료·기간 확정</span><span class="ar">→</span><span class="pill lx">분석 중</span><span class="ar">→</span><span class="pill gov">결과 도착</span>
+  <span class="muted">또는</span><span class="pill warn">반려 · 사유 한 줄</span>
+</div>
+
+<h2 class="sec">위계 — 누가 무엇을 하나</h2>
+<div class="hier">
+  <div class="card"><h3><span class="pill gov">기관</span> 의뢰하고, 결과를 업무에 쓴다</h3>
+    <ul><li>영상을 올리거나 LX 공유 영상을 불러온다</li><li>어느 서비스로 분석할지 고른다(내 부서 서비스만)</li><li>비용·기간을 보고 의뢰한다 — 무상이 아니다</li><li>결과를 보고 판정 · 보고서 · 내려받기(동의)</li><li>이상하면 'AI가 잘못 봤어요'로 알린다</li></ul>
+    <p class="note">기관 화면에 없는 것: 분석 실행 · 모델 고르기 · 학습 · 다른 기관 자료</p></div>
+  <div class="card"><h3><span class="pill lx">LX</span> 접수하고, 만들고, 분석하고, 확인한다</h3>
+    <ul><li>의뢰를 받는 사람 = 그 서비스 카드를 발행한 프로젝트장(없으면 LX 관리자)</li><li>수수료·기간을 정해 접수하거나 사유를 적어 반려</li><li>모델 · 분석 실행 · 결과 확인 · 재학습 · 갱신</li><li>LX 가 찍은 영상을 기관에 공유(누가 정하나는 5차 확인 항목)</li><li>기관 AI 서버 이용량을 한도 장부에 적는다</li></ul>
+    <p class="note">같은 서버 · 같은 작업 흐름 — 기관 의뢰도 LX 직원이 올린 영상과 같은 길로 분석된다</p></div>
+</div>
+
+<h2 class="sec">LX 가 공유한 영상은 어디에 붙나</h2>
+<div class="src">
+  <div class="card"><h3>1 영상 고르기의 첫 칸</h3><p>LX 가 이미 보관·등록한 영상이라 올릴 것이 없다. '불러오기'만 누르면 2 서비스 고르기로 넘어간다. 이미 그 서비스로 분석된 시점이면 "결과 있음"으로 표시해 다시 의뢰하지 않게 한다.</p></div>
+  <div class="card"><h3>공유 목록에 없는 영상</h3><p>기관 화면에는 아예 보이지 않는다(계정 범위 밖 0). 새 촬영이 필요하면 '촬영 + 분석 의뢰'로 — 이것도 수수료 체계 위에서(제안 결정 09-30).</p></div>
+</div>
+<p class="foot">숫자·금액·기간은 이 그림에서 정하지 않습니다. 수수료 체계와 대기열은 LX 가 접수 때 정해 기관에 알립니다. 의뢰·접수·결과 도착은 모두 화면 안에서 끝나고, 기록(누가·언제·무엇을)이 남습니다.</p>
+</div></body></html>

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · 남원시 GeoVision 플랫폼 — 기관별 메인(로그인 전 · 스크롤로 서비스 소개)</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+body.m.tall{background:var(--bg-0)}
+.top{height:64px;display:flex;align-items:center;gap:16px;padding:0 48px;background:var(--bg-1);border-bottom:1px solid var(--rule);position:sticky;top:0;z-index:20}
+.top .menu{display:flex;gap:24px;margin-left:32px;font:500 15px/1 var(--font-body);color:var(--sub)}
+.top .menu span:first-child{color:var(--ink)}
+.top .t-btn{height:40px}
+.hero{background:var(--bg-1);padding:72px 48px 64px;display:grid;grid-template-columns:1fr 560px;gap:48px;align-items:center}
+.hero .lbl{margin:0 0 14px;font:500 15px/20px var(--font-body);color:var(--sub)}
+.hero h1{margin:0 0 20px;font:700 56px/68px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.hero h1 b{color:var(--ci);font-weight:700}
+.hero p{margin:0 0 32px;font:400 20px/32px var(--font-body);color:var(--sub-2)}
+.hero .acts{display:flex;gap:10px}
+.hero .acts .t-btn{height:48px;padding:0 24px;font-size:15px}
+.face{background:var(--ci-t1);border-radius:24px;overflow:hidden;position:relative}
+.face svg{display:block;width:100%;aspect-ratio:3/2;height:auto}
+.face .cap{position:absolute;left:24px;bottom:20px;display:flex;align-items:center;gap:10px;font:500 14px/20px var(--font-body);color:var(--ink)}
+.face .cap .t-chip{background:var(--bg-1)}
+.sec{padding:64px 48px 0}
+.sec h2{margin:0 0 6px;font:700 32px/42px var(--font-display);letter-spacing:-.01em;color:var(--ink)}
+.sec .lead{margin:0 0 28px;font:400 16px/26px var(--font-body);color:var(--sub)}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px}
+.how{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.how .m-card{display:flex;flex-direction:column;gap:8px;min-height:168px}
+.how .n{width:32px;height:32px;border-radius:50%;background:var(--ci);color:#fff;display:inline-flex;align-items:center;justify-content:center;font:500 14px/1 var(--font-num)}
+.how h3{margin:6px 0 0;font:700 22px/30px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.how p{margin:0;font:400 15px/24px var(--font-body);color:var(--sub-2)}
+.lx{margin:24px 0 0;padding:20px 24px;background:var(--bg-1);border-radius:16px;display:flex;align-items:center;gap:16px;font:400 15px/24px var(--font-body);color:var(--sub-2)}
+.lx b{font-weight:500;color:var(--ink)}
+.foot{margin-top:64px;padding:20px 48px;height:64px;display:flex;align-items:center;gap:24px;border-top:1px solid var(--rule);font:400 13px/18px var(--font-body);color:var(--sub);background:var(--bg-1)}
+.foot b{font-weight:500;color:var(--ink-2)}
+.foot .sp{flex:1}
+</style>
+</head>
+<body class="m tall t g ci-namwon">
+<header class="top">
+  <span class="m-mark m-mark--lg"><span>남원</span><span>GV</span></span>
+  <span class="m-word">남원시 GeoVision 플랫폼</span>
+  <nav class="menu"><span>서비스 소개</span><span>이용 방법</span><span>문의</span></nav>
+  <span class="m-sp"></span>
+  <button class="t-btn t-btn--2">가입 신청</button>
+  <button class="t-btn">로그인</button>
+</header>
+
+<section class="hero">
+  <div>
+    <p class="lbl">전북특별자치도 남원시</p>
+    <h1>드론·항공 영상을 AI로 분석해<br><b>남원시</b> 행정 업무를 돕습니다</h1>
+    <p>우리 시가 받는 AI 분석 서비스를 한곳에서.<br>부서 담당자는 자기 업무 서비스만 보고 바로 씁니다.</p>
+    <div class="acts"><button class="t-btn">로그인</button><button class="t-btn t-btn--2">가입 신청</button></div>
+  </div>
+  <div class="face">
+    <svg viewBox="0 0 160 100" aria-hidden="true"><rect width="160" height="100" fill="var(--ci-t1)"/><g stroke="var(--ci-line)" stroke-width="1" fill="none"><path d="M-10 100 L18 0"/><path d="M18 100 L46 0"/><path d="M46 100 L74 0"/><path d="M74 100 L102 0"/><path d="M102 100 L130 0"/><path d="M130 100 L158 0"/><path d="M0 34 L160 20"/><path d="M0 66 L160 52"/></g><path d="M32 36 L60 33 L64 63 L36 66 Z" fill="var(--ci)"/><path d="M96 22 L124 19 L127 42 L99 45 Z" fill="var(--ci)" opacity=".45"/><g fill="none" stroke="var(--ci)" stroke-width="1.6"><path d="M104 86 L110 74 L116 86"/><path d="M117 86 L123 74 L129 86"/><path d="M130 86 L136 74 L142 86"/><path d="M143 86 L149 74 L155 86"/></g></svg>
+    <div class="cap"><span class="t-chip">운영</span>2025 영농관리 행정서비스 · 농지이용 · 비닐하우스 · 사료작물</div>
+  </div>
+</section>
+
+<section class="sec">
+  <h2>우리 시의 AI 분석 서비스</h2>
+  <p class="lead">해마다 업무가 하나씩 더해집니다. 담당 부서 직원이 가입하면 그 서비스를 바로 씁니다.</p>
+  <div class="grid">
+    <article class="svc">
+      <svg class="face" viewBox="0 0 160 100" aria-hidden="true"><rect width="160" height="100" fill="var(--ci-t1)"/><path d="M0 78 L160 70 L160 100 L0 100 Z" fill="var(--ci-line)" opacity=".7"/><path d="M28 78 L44 54 L62 62 L74 46 L92 78 Z" fill="var(--ci)"/><path d="M96 78 L108 62 L122 70 L130 78 Z" fill="var(--ci)" opacity=".45"/><g stroke="var(--ci)" stroke-width="1.6" fill="none" stroke-linecap="square"><path d="M62 40 L70 26 L62 14"/><path d="M78 34 L86 22 L80 12"/></g></svg>
+      <div class="meta"><span>2023 · 환경과</span><span class="t-chip">운영</span></div>
+      <h3>생활환경 위험요소<br>탐지 서비스</h3>
+      <p class="d">방치쓰레기 · 불법소각장 · 방치폐가</p>
+    </article>
+    <article class="svc">
+      <svg class="face" viewBox="0 0 160 100" aria-hidden="true"><rect width="160" height="100" fill="var(--ci-t1)"/><g stroke="var(--ci-line)" stroke-width="1" fill="none"><path d="M-10 100 L18 0"/><path d="M18 100 L46 0"/><path d="M46 100 L74 0"/><path d="M74 100 L102 0"/><path d="M102 100 L130 0"/><path d="M130 100 L158 0"/><path d="M0 34 L160 20"/><path d="M0 66 L160 52"/></g><path d="M32 36 L60 33 L64 63 L36 66 Z" fill="var(--ci)"/><path d="M96 22 L124 19 L127 42 L99 45 Z" fill="var(--ci)" opacity=".45"/><g fill="none" stroke="var(--ci)" stroke-width="1.6"><path d="M104 86 L110 74 L116 86"/><path d="M117 86 L123 74 L129 86"/><path d="M130 86 L136 74 L142 86"/><path d="M143 86 L149 74 L155 86"/></g></svg>
+      <div class="meta"><span>2025 · 농정과</span><span class="t-chip">운영</span></div>
+      <h3>영농관리<br>행정서비스</h3>
+      <p class="d">농지이용 경작·비경작 · 비닐하우스 · 사료작물</p>
+    </article>
+    <article class="svc">
+      <svg class="face" viewBox="0 0 160 100" aria-hidden="true"><rect width="160" height="100" fill="var(--ci-t1)"/><path d="M-6 88 L166 26" stroke="var(--ci-line)" stroke-width="16" fill="none"/><path d="M-6 88 L166 26" stroke="var(--ci-t1)" stroke-width="1.4" stroke-dasharray="9 9" fill="none"/><g fill="var(--ci)"><rect x="38" y="66" width="9" height="9"/><rect x="82" y="50" width="12" height="12"/><rect x="120" y="38" width="7" height="7"/></g><g fill="var(--ci)"><rect x="12" y="86" width="11" height="6"/><rect x="32" y="80" width="11" height="12" opacity=".4"/><rect x="52" y="88" width="11" height="4"/><rect x="72" y="77" width="11" height="15" opacity=".4"/><rect x="92" y="83" width="11" height="9"/><rect x="112" y="89" width="11" height="3" opacity=".4"/><rect x="132" y="81" width="11" height="11"/></g></svg>
+      <div class="meta"><span>2026 · 건설과</span><span class="t-chip" data-lv="wait">만드는 중</span></div>
+      <h3>도로 안전관리<br>서비스</h3>
+      <p class="d">포트홀 · 도로시설 파손</p>
+    </article>
+    <article class="svc">
+      <svg class="face" viewBox="0 0 160 100" aria-hidden="true"><rect width="160" height="100" fill="var(--ci-t1)"/><g stroke="var(--ci-line)" stroke-width="1"><path d="M10 0V100M30 0V100M50 0V100M70 0V100M90 0V100M110 0V100M130 0V100"/><path d="M0 10H160M0 30H160M0 50H160M0 70H160M0 90H160"/></g><rect x="50" y="30" width="60" height="40" fill="var(--ci)" opacity=".18"/><rect x="70" y="40" width="20" height="20" fill="var(--ci)" opacity=".3"/><g fill="var(--ci)"><circle cx="80" cy="50" r="4"/><circle cx="66" cy="44" r="3.2"/><circle cx="94" cy="58" r="3.4"/><circle cx="58" cy="62" r="2.6" opacity=".7"/><circle cx="104" cy="38" r="2.4" opacity=".6"/><circle cx="40" cy="30" r="1.8" opacity=".45"/><circle cx="124" cy="72" r="1.8" opacity=".45"/></g></svg>
+      <div class="meta"><span>2027 · 관광과</span><span class="t-chip" data-lv="gap">내년</span></div>
+      <h3>인파관리<br>서비스</h3>
+      <p class="d">교통혼잡 · 인파혼잡</p>
+    </article>
+  </div>
+</section>
+
+<section class="sec">
+  <h2>이용 방법</h2>
+  <p class="lead">남원시 직원이면 세 단계로 시작합니다.</p>
+  <div class="how">
+    <div class="m-card"><span class="n">1</span><h3>가입 신청</h3><p>이름 · 부서 · 업무 메일만 적습니다.</p></div>
+    <div class="m-card"><span class="n">2</span><h3>기관 관리자 승인</h3><p>우리 시 관리자가 확인하면 메일로 알려 드립니다.</p></div>
+    <div class="m-card"><span class="n">3</span><h3>내 부서 서비스 사용</h3><p>로그인하면 내 부서 서비스가 바로 열립니다. 결과 보기 · 보고서 · 내려받기까지.</p></div>
+  </div>
+  <div class="lx"><b>AI 분석 · 모델 개발과 갱신은 LX 한국국토정보공사가 합니다.</b> 우리 시가 찍은 영상으로 분석을 의뢰할 수도 있습니다(LX 수수료 체계에 따름).</div>
+</section>
+
+<footer class="foot"><b>전북특별자치도 남원시</b><span>대표전화 063-620-6114</span><span>개인정보처리방침</span><span>이용약관</span><span class="sp"></span><span>AI 분석 · 모델 개발과 갱신 — LX 한국국토정보공사</span></footer>
+
+<span class="m-note" style="left:48px;top:76px"><i>1</i>마크 · 플랫폼 이름 · 기관색(초록) · 소개 글만 남원시 것</span>
+<span class="m-note" style="left:auto;right:48px;top:648px;max-width:520px"><i>2</i>남원시가 실제로 받는 서비스 4개(2023 → 2027) — 서비스 목록도 기관별로 다름</span>
+<span class="m-note" style="left:auto;right:48px;top:1212px;max-width:520px"><i>3</i>배치 · 메뉴 순서 · 카드 · 버튼은 지자체끼리 똑같음 — 광주전남 시안과 비교</span>
+<span class="m-stamp m-stamp--r" style="top:76px;bottom:auto;right:48px"><b>시안</b> 기관 분기 화면 · 남원시 GeoVision — 로그인 전 메인(스크롤로 소개가 이어짐)</span>
+</body>
+</html>

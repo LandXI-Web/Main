@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · 남원시 GeoVision(농정과) — 영농관리 행정서비스 대시보드 · 필지 대조 결과(?parcels) · 내려받기 동의(?download)</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.m-page{gap:16px}
+.two{display:grid;grid-template-columns:1fr 392px;gap:24px;align-items:start}
+.big{background:var(--bg-1);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:12px}
+.big .row{display:flex;align-items:flex-end;gap:24px}
+.big .sel{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border:1px solid var(--rule);border-radius:8px;font:500 14px/1 var(--font-body);color:var(--ink)}
+.big .sel span{color:var(--sub)}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.acts .t-btn{height:44px}
+.side{display:flex;flex-direction:column;gap:16px}
+.box{background:var(--bg-1);border-radius:16px;padding:20px 24px;display:flex;flex-direction:column;gap:2px}
+.box h3{margin:0 0 6px;font:700 20px/28px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.box h3 .m-num{margin-left:6px}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.cmp .m-card{display:flex;flex-direction:column;gap:6px;min-height:150px}
+.cmp .m-card h4{margin:0;font:700 20px/28px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.cmp .m-card p{margin:0;font:400 15px/22px var(--font-body);color:var(--sub-2)}
+.cmp .m-card .go{margin-top:auto;font:500 14px/20px var(--font-body);color:var(--ink)}
+.cmp .m-card .go::after{content:" →"}
+#parcels{display:none}
+body.parcels #main-view{display:none}
+body.parcels #parcels{display:block}
+.pop{position:absolute;left:560px;top:250px;width:372px;background:var(--bg-1);border-radius:16px;box-shadow:var(--elev-3);padding:20px 24px;display:flex;flex-direction:column;gap:12px;z-index:30}
+.pop .h{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.pop h2{margin:0;font:700 24px/32px var(--font-display);letter-spacing:-.02em}
+.pop .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0;font:400 15px/22px var(--font-body)}
+.pop .kv dt{color:var(--sub)}
+.pop .kv dd{margin:0;color:var(--ink)}
+.pop .kv dd b{font-weight:500;color:var(--ai)}
+.pop .acts2{display:flex;gap:8px}
+.pop .acts2 .t-btn{flex:1;height:40px}
+.pop .acts2 .t-btn.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.flag{display:flex;flex-direction:column;gap:8px;padding-top:12px;border-top:1px solid var(--rule)}
+.flag .m-btn-row .t-btn{flex:1}
+.flag .cancel{flex:none;font:500 14px/1 var(--font-body);color:var(--sub);padding:0 8px}
+#dl{display:none}
+body.download #dl{display:block}
+.m-modal h2{margin:0;font:700 28px/36px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.m-modal .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font:400 15px/22px var(--font-body)}
+.m-modal .kv dt{color:var(--sub)}
+.m-modal .kv dd{margin:0;color:var(--ink)}
+.m-modal .chk{display:flex;gap:10px;align-items:flex-start;font:400 15px/22px var(--font-body);color:var(--ink-2)}
+.m-modal .chk i{flex:none;width:20px;height:20px;border-radius:4px;background:var(--ink);color:#fff;display:inline-flex;align-items:center;justify-content:center;font:700 12px/1 var(--font-num);font-style:normal;margin-top:1px}
+.m-modal .m-btn-row .t-btn{flex:1;height:48px}
+</style>
+</head>
+<body class="m t g ci-namwon">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">남원시 GeoVision 플랫폼</span>
+    <span class="m-home">농정과 · 영농관리 행정서비스</span>
+    <span class="m-sp"></span>
+    <span class="m-ask">물어보기 <kbd>Ctrl K</kbd></span>
+    <span class="m-role"><b>농정과</b>박서연</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail">
+    <p class="b-mark"><span>남원</span><span>GV</span></p>
+    <span class="m-rail-i" aria-current="true"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>내 서비스</span>
+    <span class="m-rail-i"><i class="dot"></i><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l2 2H4l2-2z"/><path d="M10 20a2 2 0 004 0"/></svg>알림</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M4 21V4h11l1 3h4v10h-9l-1-3H4"/></svg>내가 알린<br>필지</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>분석 의뢰</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>계정</span>
+    <span class="m-rail-i out"><svg viewBox="0 0 24 24"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9"/></svg>로그아웃</span>
+  </nav>
+  <main class="m-main">
+    <div class="m-page">
+      <div class="m-head" style="border:0;padding-bottom:0">
+        <h1>영농관리 행정서비스</h1>
+        <span class="sub">농지이용 경작·비경작 · 비닐하우스 · 사료작물</span>
+        <span class="date">기준일 2026.06.08</span>
+      </div>
+      <nav class="g-tabs">
+        <span class="g-tab" id="tab-main" aria-current="true">현황</span>
+        <span class="g-tab">결과 보기</span>
+        <span class="g-tab" id="tab-parcels">필지 대조 결과</span>
+        <span class="g-tab">보고서</span>
+      </nav>
+
+      <div id="main-view" class="two">
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="big">
+            <p class="m-label">이번 영상에서 AI 가 찾은 것</p>
+            <div class="row">
+              <span class="m-big"><span class="m-num">2,098</span><small>AI 탐지 · 필지</small></span>
+              <span class="sel">기준 영상 <b>2025년 드론영상</b> <span>▾</span></span>
+              <span class="sel">비교 <b>2023년 항공영상</b> <span>▾</span></span>
+            </div>
+            <div class="acts">
+              <button class="t-btn">결과 보기</button>
+              <button class="t-btn t-btn--2">필지 대조 결과</button>
+              <button class="t-btn t-btn--2">보고서 만들기</button>
+              <button class="t-btn t-btn--2">내려받기</button>
+              <button class="t-btn t-btn--2">우리 영상으로 분석 의뢰</button>
+            </div>
+          </div>
+          <div class="cmp">
+            <div class="m-card"><p class="m-label">작년과 비교</p><h4>2023 항공 ↔ 2025 드론</h4><p>같은 필지를 두 시점으로 나란히 · 스와이프로 겹쳐 보기 · AI 결과 차이만 모아 보기</p><span class="go">비교 열기</span></div>
+            <div class="m-card"><p class="m-label">읍·면별 집계</p><h4>읍·면을 골라 보기</h4><p>읍·면을 누르면 그 지역 결과와 필지 대조 결과로 이동합니다.</p><span class="go">집계 보기</span></div>
+          </div>
+        </div>
+        <aside class="side">
+          <div class="box">
+            <h3>할 일<span class="m-num">3</span></h3>
+            <div class="m-rows">
+              <div class="m-rowl">산동면 대기리 615 <span class="s">무허가 건축 의심</span><span class="t-chip">판정 대기</span></div>
+              <div class="m-rowl">덕과면 사율리 501-3 <span class="s">무허가 건축 의심</span><span class="t-chip">판정 대기</span></div>
+              <div class="m-rowl">운봉읍 신기리 525-1 <span class="s">대장 농지 위 건물</span><span class="t-chip">판정 대기</span></div>
+            </div>
+          </div>
+          <div class="box">
+            <h3>최근 도착</h3>
+            <div class="m-rows">
+              <div class="m-rowl">2025년 드론영상 결과 <span class="s">2026.06.08</span><span class="t-chip">새 시점</span></div>
+              <div class="m-rowl">2023년 항공영상 결과 <span class="s">비교용</span><span class="t-chip" data-lv="wait">있음</span></div>
+            </div>
+          </div>
+          <div class="box">
+            <h3>내 의뢰 · 알린 필지</h3>
+            <div class="m-rows">
+              <div class="m-rowl">덕과면 드론영상 → 영농관리 <span class="t-chip" data-lv="wait">접수 대기</span></div>
+              <div class="m-rowl">산동면 대기리 615 <span class="s">AI가 잘못 봤어요</span><span class="t-chip">답 도착</span></div>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <div id="parcels">
+        <div class="m-card" style="padding:8px 24px 16px">
+          <table class="m-table">
+            <thead><tr><th>필지</th><th>대장 지목</th><th>AI 분석 · 2025년 드론영상</th><th>어긋남</th><th>판정</th><th></th></tr></thead>
+            <tbody>
+              <tr class="is-on"><td class="ink">산동면 대기리 615</td><td>전(밭)</td><td><span style="color:var(--ai);font-weight:500">건물</span> 65m²</td><td class="m-warn">대장 농지 위 건물</td><td><span class="t-chip">판정 대기</span></td><td><span class="m-small" style="color:var(--ink);text-decoration:underline;text-underline-offset:3px">지도에서 보기</span></td></tr>
+              <tr><td class="ink">덕과면 사율리 501-3</td><td>답(논)</td><td><span style="color:var(--ai);font-weight:500">건물</span></td><td class="m-warn">대장 농지 위 건물</td><td><span class="t-chip">판정 대기</span></td><td><span class="m-small" style="color:var(--ink);text-decoration:underline;text-underline-offset:3px">지도에서 보기</span></td></tr>
+              <tr><td class="ink">운봉읍 신기리 525-1</td><td>전(밭)</td><td><span style="color:var(--ai);font-weight:500">건물</span></td><td class="m-warn">대장 농지 위 건물</td><td><span class="t-chip">판정 대기</span></td><td><span class="m-small" style="color:var(--ink);text-decoration:underline;text-underline-offset:3px">지도에서 보기</span></td></tr>
+            </tbody>
+          </table>
+          <p class="m-small" style="margin-top:12px">필지 번호 순 · 대장은 지적(지목)과 맞춰 봅니다. 우리 과 대장(농지대장 등)과 맞추는 것은 요구사항을 듣고 따로 만듭니다.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="pop" id="pop" style="display:none">
+      <div class="h"><h2>산동면 대기리 615</h2><span class="t-chip">판정 대기</span></div>
+      <dl class="kv"><dt>대장</dt><dd>전(밭)</dd><dt>AI 분석</dt><dd><b>건물</b> 65m² · 2025년 드론영상</dd></dl>
+      <div class="acts2"><button class="t-btn t-btn--2 on">AI가 잘못 봤어요</button><button class="t-btn t-btn--2">맞습니다</button></div>
+      <div class="flag">
+        <p class="m-label">메모 한 줄 <span style="color:var(--sub);font-weight:400">(안 써도 됩니다)</span></p>
+        <input class="t-input" value="지난달 창고를 철거했습니다">
+        <div class="m-btn-row"><button class="t-btn">LX 담당자에게 보내기</button><span class="cancel">취소</span></div>
+        <p class="m-small">받는 사람: 이 서비스 담당 LX 프로젝트장 김도윤 · 답은 '내가 알린 필지'에</p>
+      </div>
+    </div>
+
+    <div id="dl">
+      <div class="m-dim"></div>
+      <div class="m-modal">
+        <h2>내려받기 전에 확인합니다</h2>
+        <dl class="kv">
+          <dt>무엇을</dt><dd>영농관리 행정서비스 · 필지 대조 결과 · 엑셀 + 지도 파일</dd>
+          <dt>범위</dt><dd>남원시 전역 · 2025년 드론영상</dd>
+          <dt>기록</dt><dd>누가 · 언제 · 무엇을 내려받았는지 남습니다</dd>
+        </dl>
+        <div class="chk"><i>✓</i>개인정보가 들어 있을 수 있습니다. 업무 목적으로만 쓰고 밖으로 내보내지 않겠습니다.</div>
+        <div class="chk"><i>✓</i>대장의 이름·연락처는 서버가 이미 가렸습니다.</div>
+        <label class="m-label">용도 한 줄 (선택)</label>
+        <input class="t-input" value="">
+        <div class="m-btn-row"><button class="t-btn">동의하고 내려받기</button><button class="t-btn t-btn--2">취소</button></div>
+      </div>
+    </div>
+
+    <span class="m-note" id="n1" style="left:120px;top:664px;max-width:440px"><i>1</i>큰 숫자 하나 + 기준 영상 · 비교 영상 고르기 — 시점이 쌓일수록 선택지가 늘어남</span>
+    <span class="m-note" id="n2" style="left:120px;top:712px;max-width:440px"><i>2</i>서비스별 기능 다섯: 결과 보기 · 필지 대조 결과 · 보고서 · 내려받기 · 우리 영상으로 분석 의뢰</span>
+    <span class="m-note" id="n3" style="left:120px;top:760px;max-width:440px"><i>3</i>오른쪽에 할 일 · 최근 도착 · 내 의뢰·알린 필지 — 여기서 답을 확인</span>
+  </main>
+</div>
+<span class="m-stamp m-stamp--r"><b>시안</b> 기관 분기 화면 · 남원시 GeoVision(농정과) — <span id="st">서비스 대시보드(현황)</span></span>
+<script>
+const q=location.search;
+if(q.includes('parcels')){document.body.classList.add('parcels');document.getElementById('tab-main').removeAttribute('aria-current');document.getElementById('tab-parcels').setAttribute('aria-current','true');document.getElementById('pop').style.display='flex';document.getElementById('st').textContent='필지 대조 결과 + AI가 잘못 봤어요';
+ document.getElementById('n1').innerHTML='<i>1</i>필지 번호 · 대장 지목 · AI 분석 · 어긋남 — 실태조사에 쓰는 대조 결과 출력';
+ document.getElementById('n2').innerHTML='<i>2</i>필지 행을 누르면 카드 — \'AI가 잘못 봤어요\' 한 번 + 메모 한 줄';
+ document.getElementById('n3').innerHTML='<i>3</i>받는 사람이 카드에 적혀 있다 — 이 서비스 담당 LX 프로젝트장(없으면 LX 관리자)';
+ }
+if(q.includes('download')){document.body.classList.add('download');document.getElementById('st').textContent='내려받기 동의';
+ document.getElementById('n1').innerHTML='<i>1</i>내려받기는 동의와 함께 — 무엇을 · 범위 · 기록이 먼저 보임';
+ document.getElementById('n2').innerHTML='<i>2</i>개인정보는 서버가 이미 가렸다는 것을 알려 준다';
+ document.getElementById('n3').innerHTML='<i>3</i>용도 한 줄은 선택 — 짐을 넘기지 않는다';}
+</script>
+</body>
+</html>

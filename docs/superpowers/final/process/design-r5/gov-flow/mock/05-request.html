@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · 남원시 GeoVision(농정과) — 우리 영상으로 분석 의뢰(영상 → 서비스 → 비용·기간 → 의뢰) · 보낸 뒤(?sent)</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.m-sheet{width:440px;gap:12px;padding:20px 24px}
+.stp{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-bottom:1px solid var(--rule)}
+.stp:last-of-type{border-bottom:0}
+.stp .h{display:flex;align-items:center;gap:10px}
+.stp .h .n{width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;display:inline-flex;align-items:center;justify-content:center;font:500 12px/1 var(--font-num)}
+.stp .h b{font:500 16px/22px var(--font-body);color:var(--ink)}
+.shared{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--bg-0);border-radius:8px}
+.shared .t{flex:1;min-width:0}
+.shared .t b{display:block;font:500 14px/20px var(--font-body);color:var(--ink)}
+.shared .t span{font:400 13px/18px var(--font-body);color:var(--sub)}
+.shared .t-btn{height:34px;padding:0 12px;font-size:13px}
+.m-drop{padding:10px}
+.m-drop svg{width:22px;height:22px}
+.m-drop h6{font-size:14px;line-height:20px;margin:0}
+.or{text-align:center;font:500 12px/1 var(--font-body);color:var(--sub)}
+.read{display:flex;gap:14px;flex-wrap:wrap;font:400 13px/18px var(--font-body);color:var(--sub-2)}
+.read b{font-weight:500;color:var(--ink)}
+.read .ok{color:var(--ai)}
+.fee{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font:400 14px/20px var(--font-body)}
+.fee dt{color:var(--sub)}
+.fee dd{margin:0;color:var(--ink)}
+.m-sheet .t-btn.go{height:48px}
+#sent{display:none}
+body.sent #ask{display:none}
+body.sent #sent{display:flex}
+.hist .m-rowl{font-size:14px}
+.stat{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font:400 13px/18px var(--font-body);color:var(--sub)}
+.stat .t-chip{height:24px;font-size:12px}
+.m-toast{display:none}
+body.sent .m-toast{display:block}
+</style>
+</head>
+<body class="m t g ci-namwon">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">남원시 GeoVision 플랫폼</span>
+    <span class="m-home">농정과 · 영농관리 행정서비스</span>
+    <span class="m-sp"></span>
+    <span class="m-ask">물어보기 <kbd>Ctrl K</kbd></span>
+    <span class="m-role"><b>농정과</b>박서연</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail">
+    <p class="b-mark"><span>남원</span><span>GV</span></p>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>내 서비스</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l2 2H4l2-2z"/><path d="M10 20a2 2 0 004 0"/></svg>알림</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M4 21V4h11l1 3h4v10h-9l-1-3H4"/></svg>내가 알린<br>필지</span>
+    <span class="m-rail-i" aria-current="true"><svg viewBox="0 0 24 24"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>분석 의뢰</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>계정</span>
+    <span class="m-rail-i out"><svg viewBox="0 0 24 24"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9"/></svg>로그아웃</span>
+  </nav>
+  <main class="m-main">
+    <div class="m-map m-map--ortho"></div>
+    <div class="m-card m-card--map" style="position:absolute;left:24px;top:24px;width:360px;padding:16px 20px;display:flex;flex-direction:column;gap:4px">
+      <p class="m-label">영농관리 행정서비스 · 2025년 드론영상</p>
+      <span class="m-big" style="font-size:36px"><span class="m-num">2,098</span><small>AI 탐지 · 필지</small></span>
+    </div>
+
+    <aside class="m-sheet" id="ask">
+      <div class="m-sheet-h"><h2>우리 영상으로 분석 의뢰</h2><span class="m-x">×</span></div>
+      <div class="stp">
+        <div class="h"><span class="n">1</span><b>영상</b></div>
+        <div class="shared"><div class="t"><b>LX가 남원시에 공유한 영상</b><span>2025년 드론영상 · 남원시 전역 · 결과 있음</span></div><button class="t-btn t-btn--2">불러오기</button></div>
+        <p class="or">또는 우리 시가 찍은 영상</p>
+        <div class="m-file"><span class="ic"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/></svg></span><span class="nm">덕과면_드론영상.tif</span><span class="st ok">올라옴</span></div>
+        <div class="read"><span>촬영 <b>2026년 · 드론</b></span><span>범위 <b>남원시 덕과면</b></span><span class="ok">✓ 분석할 수 있는 영상</span></div>
+      </div>
+      <div class="stp">
+        <div class="h"><span class="n">2</span><b>어느 서비스로</b></div>
+        <div class="m-chips"><span class="t-chip" aria-pressed="true">영농관리 행정서비스</span></div>
+        <p class="m-small">농정과가 쓰는 서비스만 보입니다 · 범위: 파일 범위 그대로(덕과면)</p>
+      </div>
+      <div class="stp">
+        <div class="h"><span class="n">3</span><b>비용 · 기간</b></div>
+        <dl class="fee">
+          <dt>수수료</dt><dd>LX 수수료 체계에 따름 · 접수 때 견적을 알려 드립니다</dd>
+          <dt>기간</dt><dd>영상 크기와 대기 순서에 따라 접수 때 확정</dd>
+          <dt>이용량</dt><dd>우리 시 AI 서버 이용량에 포함</dd>
+        </dl>
+      </div>
+      <div class="stp">
+        <div class="h"><span class="n">4</span><b>메모 한 줄 (선택)</b></div>
+        <input class="t-input" value="">
+      </div>
+      <button class="t-btn go">이 조건으로 의뢰</button>
+      <p class="m-small">받는 사람: 영농관리 담당 LX 프로젝트장 김도윤 · 접수되면 알림</p>
+    </aside>
+
+    <aside class="m-sheet hist" id="sent">
+      <div class="m-sheet-h"><h2>내 의뢰</h2><span class="m-x">×</span></div>
+      <div class="m-rows">
+        <div class="m-rowl on">덕과면 드론영상 → 영농관리 <span class="s">오늘</span><span class="t-chip" data-lv="wait">접수 대기</span></div>
+        <div class="m-rowl">2025년 드론영상(LX 공유) → 영농관리 <span class="s">2026.06.08</span><span class="t-chip">결과 도착</span></div>
+      </div>
+      <p class="m-label" style="margin-top:8px">상태는 이렇게 바뀝니다</p>
+      <div class="stat"><span class="t-chip" data-lv="wait">접수 대기</span>→<span class="t-chip">접수됨 · 수수료·기간 확정</span>→<span class="t-chip">분석 중</span>→<span class="t-chip">결과 도착</span></div>
+      <div class="stat"><span>또는</span><span class="t-chip" data-lv="warn">반려 · 사유 한 줄</span></div>
+      <p class="m-body" style="font-size:14px;line-height:22px;margin-top:6px">결과가 도착하면 영농관리 대시보드에 <b style="font-weight:500;color:var(--ink)">새 시점(2026년 드론영상 · 덕과면)</b>으로 쌓이고, 작년 영상과 비교할 수 있습니다.</p>
+      <button class="t-btn t-btn--2" style="margin-top:auto">새 의뢰</button>
+    </aside>
+    <div class="m-toast">의뢰를 보냈습니다 · 담당 프로젝트장이 접수하면 알려 드립니다</div>
+    <span class="m-scale">3 km</span>
+
+    <span class="m-note" id="n1" style="left:420px;top:110px;max-width:440px"><i>1</i>영상은 두 갈래 — LX 공유 영상은 '불러오기'만, 우리 영상은 파일 놓기(읽은 값은 자동)</span>
+    <span class="m-note" id="n2" style="left:420px;top:158px;max-width:440px"><i>2</i>어느 서비스로 분석할지는 내 부서 서비스만 · 비용·기간은 수수료 체계에 따라 접수 때</span>
+    <span class="m-note" id="n3" style="left:420px;top:206px;max-width:440px"><i>3</i>기관 화면에 '분석 실행' 버튼은 없다 — 의뢰하면 LX 담당자가 접수하고 분석은 LX 가</span>
+  </main>
+</div>
+<span class="m-stamp"><b>시안</b> 기관 분기 화면 · 남원시 GeoVision(농정과) — <span id="st">우리 영상으로 분석 의뢰</span></span>
+<script>
+if(location.search.includes('sent')){document.body.classList.add('sent');document.getElementById('st').textContent='의뢰를 보낸 뒤 · 내 의뢰';
+ document.getElementById('n1').innerHTML='<i>1</i>보낸 의뢰는 상태로만 본다 — 접수 대기 → 접수됨 → 분석 중 → 결과 도착';
+ document.getElementById('n2').innerHTML='<i>2</i>접수될 때 수수료·기간이 확정되어 여기와 알림에 뜬다';
+ document.getElementById('n3').innerHTML='<i>3</i>결과는 이 서비스 대시보드에 새 시점으로 쌓인다 — 따로 찾지 않아도 됨';}
+</script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · Land-XI(LX 직원 · 프로젝트장) — 기관에서 온 것: 분석 의뢰 접수 · 'AI가 잘못 봤어요' 판정</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.two{display:grid;grid-template-columns:440px 1fr;gap:24px;align-items:start}
+.list{background:var(--bg-1);border-radius:16px;padding:16px 24px 24px;display:flex;flex-direction:column;gap:8px}
+.list .tabs{display:flex;gap:20px;border-bottom:1px solid var(--rule);margin-bottom:4px}
+.list .tabs span{font:500 15px/1 var(--font-body);color:var(--sub);padding:12px 2px}
+.list .tabs span[aria-current="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent)}
+.item{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border-radius:8px}
+.item.on{background:var(--bg-0);box-shadow:inset 3px 0 0 var(--accent)}
+.item .l1{display:flex;align-items:center;gap:8px;font:500 15px/22px var(--font-body);color:var(--ink)}
+.item .l1 .t-chip{margin-left:auto}
+.item .l2{font:400 14px/20px var(--font-body);color:var(--sub)}
+.det{background:var(--bg-1);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:16px}
+.det h2{margin:0;font:700 28px/36px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.det .from{font:400 15px/22px var(--font-body);color:var(--sub-2)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.blk{background:var(--bg-0);border-radius:16px;padding:16px 20px;display:flex;flex-direction:column;gap:8px}
+.blk h3{margin:0;font:500 16px/24px var(--font-body);color:var(--ink)}
+.blk .m-kv{grid-template-columns:72px 1fr}
+.blk .m-kv dd{font-size:14px;line-height:20px}
+.blk .thumb{height:120px;border-radius:8px;background:url('../../../../../../../landxi/assets/images/landing/lp-map.png') center/cover;position:relative}
+.blk .thumb i{position:absolute;left:38%;top:30%;width:22%;height:32%;border:2px dashed #fff;border-radius:2px}
+.in{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.in label{display:block;font:500 14px/20px var(--font-body);color:var(--sub);margin-bottom:6px}
+.in .t-input{height:44px}
+.acts{display:flex;gap:8px;align-items:center}
+.acts .t-btn{height:48px;padding:0 24px}
+.acts .m-small{margin-left:auto}
+</style>
+</head>
+<body class="m t">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">LAND-XI</span>
+    <span class="m-home">내 프로젝트 · 남원시 영농관리 2025</span>
+    <span class="m-sp"></span>
+    <span class="m-ask">물어보기 <kbd>Ctrl K</kbd></span>
+    <span class="m-role"><b>LX 직원</b>김도윤 · 프로젝트장</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail">
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>내 프로젝트</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>데이터<br>올리기</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M4 12h16M12 4v16"/></svg>학습데이터<br>구축</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M8 12l3 3 5-6"/></svg>학습 · 결과<br>확인</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M3 7h18v13H3z"/><path d="M8 7V4h8v3"/></svg>서비스<br>만들기</span>
+    <span class="m-rail-i" aria-current="true"><i class="dot"></i><svg viewBox="0 0 24 24"><path d="M4 4h16v12H4z"/><path d="M4 8l8 5 8-5"/></svg>기관에서<br>온 것</span>
+    <span class="m-rail-i out"><svg viewBox="0 0 24 24"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9"/></svg>로그아웃</span>
+  </nav>
+  <main class="m-main">
+    <div class="m-page">
+      <div class="m-head">
+        <h1>기관에서 온 것</h1>
+        <span class="sub">내가 발행한 서비스 카드로 들어온 의뢰와 알림 · 담당이 없는 카드는 LX 관리자에게 갑니다</span>
+      </div>
+      <div class="two">
+        <div class="list">
+          <div class="tabs"><span aria-current="true">분석 의뢰 <span class="m-num">1</span></span><span>AI가 잘못 봤어요 <span class="m-num">1</span></span><span>답한 것</span></div>
+          <div class="item on">
+            <div class="l1">남원시 농정과 · 박서연 <span class="t-chip" data-lv="wait">접수 대기</span></div>
+            <div class="l2">덕과면 드론영상 → 영농관리 행정서비스 · 오늘</div>
+          </div>
+          <div class="item">
+            <div class="l1">남원시 농정과 · 박서연 <span class="t-chip">판정 대기</span></div>
+            <div class="l2">산동면 대기리 615 · "지난달 창고를 철거했습니다"</div>
+          </div>
+        </div>
+        <div class="det">
+          <div>
+            <h2>분석 의뢰 · 덕과면 드론영상 → 영농관리</h2>
+            <p class="from">남원시 농정과 박서연 · 오늘 · 메모 없음</p>
+          </div>
+          <div class="grid2">
+            <div class="blk">
+              <h3>영상 · 파일에서 읽은 값</h3>
+              <div class="thumb"><i></i></div>
+              <dl class="m-kv"><dt>파일</dt><dd>덕과면_드론영상.tif</dd><dt>촬영</dt><dd>2026년 · 드론</dd><dt>범위</dt><dd>남원시 덕과면</dd><dt>좌표계</dt><dd>확인됨 · 등록된 영상과 겹침 없음</dd></dl>
+            </div>
+            <div class="blk">
+              <h3>어느 서비스 · 어느 모델로</h3>
+              <dl class="m-kv"><dt>서비스</dt><dd>영농관리 행정서비스(남원시 · 2025 발행)</dd><dt>모델</dt><dd>경작·비경작 · 비닐하우스 · 사료작물 · 곤포 — 카드에 묶인 그대로</dd><dt>기관 한도</dt><dd>남원시 AI 서버 이용량에 포함 · 여유 있음</dd></dl>
+            </div>
+          </div>
+          <div class="in">
+            <div><label>수수료 · LX 수수료 체계 기준(담당자가 적음)</label><input class="t-input" value=""></div>
+            <div><label>예상 기간 · 대기열 보고 적음</label><input class="t-input" value=""></div>
+          </div>
+          <div class="acts">
+            <button class="t-btn">접수 · 분석 대기열에 넣기</button>
+            <button class="t-btn t-btn--2">반려 · 사유 한 줄</button>
+            <span class="m-small">접수하면 기관 화면 상태가 '접수됨 · 수수료·기간 확정'으로 바뀝니다</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <span class="m-note" style="left:120px;top:470px;max-width:380px"><i>1</i>받는 사람 = 그 서비스 카드를 발행한 프로젝트장 · 없으면 LX 관리자 — 기관은 누구에게 가는지 몰라도 된다</span>
+    <span class="m-note" style="left:120px;top:518px;max-width:380px"><i>2</i>의뢰 하나에 영상 읽은 값 · 서비스 · 모델 · 기관 한도가 저절로 붙는다 — 담당자는 수수료·기간만 적고 접수</span>
+    <span class="m-note" style="left:120px;top:566px;max-width:380px"><i>3</i>같은 곳에서 'AI가 잘못 봤어요'도 받는다 — 판정(맞음 · AI 오류 · 모름)이 곧 기관에 가는 답</span>
+  </main>
+</div>
+<span class="m-stamp m-stamp--r"><b>시안</b> Land-XI 화면 · LX 직원(프로젝트장) — 기관에서 온 것(의뢰 접수)</span>
+</body>
+</html>

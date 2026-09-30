@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · 남원시 GeoVision 플랫폼 — 로그인 · 가입 신청(?join)</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg-0)}
+.card{width:1040px;height:600px;background:var(--bg-1);border-radius:24px;display:grid;grid-template-columns:1fr 1fr;overflow:hidden;box-shadow:var(--elev-map)}
+.face{background:var(--ci-t1);position:relative;display:flex;align-items:center;justify-content:center;padding:48px}
+.face svg{width:100%;height:auto;display:block}
+.face .cap{position:absolute;left:32px;bottom:28px;font:500 14px/20px var(--font-body);color:var(--ink)}
+.face .cap b{display:block;font:700 20px/28px var(--font-display);letter-spacing:-.02em;margin-bottom:4px}
+.form{padding:48px 56px;display:flex;flex-direction:column;gap:14px}
+.form .m-mark{margin-bottom:4px}
+.form h1{margin:0 0 4px;font:700 32px/42px var(--font-display);letter-spacing:-.01em;color:var(--ink)}
+.form .intro{margin:0 0 10px;font:400 15px/24px var(--font-body);color:var(--sub-2)}
+.form label{font:500 14px/20px var(--font-body);color:var(--sub)}
+.form .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form .t-input{height:44px}
+.form .t-btn{height:48px;margin-top:6px}
+.form .links{display:flex;gap:16px;font:500 14px/20px var(--font-body);color:var(--sub)}
+.form .links b{color:var(--ink);font-weight:500;text-decoration:underline;text-underline-offset:3px}
+.form .note{margin:auto 0 0;font:400 13px/18px var(--font-body);color:var(--sub)}
+.sel{height:44px;padding:0 14px;border:1px solid var(--rule);border-radius:8px;background:var(--bg-1);display:flex;align-items:center;justify-content:space-between;font:400 15px/1 var(--font-body);color:var(--ink)}
+.sel span{color:var(--sub);font-size:12px}
+#join{display:none}
+body.join #login{display:none}
+body.join #join{display:flex}
+.done{display:none;position:absolute;left:50%;bottom:56px;transform:translateX(-50%);padding:14px 20px;border-radius:8px;background:var(--ink);color:#fff;font:500 15px/1.4 var(--font-body);box-shadow:var(--elev-3);white-space:nowrap}
+body.join .done{display:block}
+</style>
+</head>
+<body class="m t g ci-namwon">
+<div class="wrap">
+  <div class="card">
+    <div class="face">
+      <svg viewBox="0 0 160 100" aria-hidden="true"><g stroke="var(--ci-line)" stroke-width="1" fill="none"><path d="M-10 100 L18 0"/><path d="M18 100 L46 0"/><path d="M46 100 L74 0"/><path d="M74 100 L102 0"/><path d="M102 100 L130 0"/><path d="M130 100 L158 0"/><path d="M0 34 L160 20"/><path d="M0 66 L160 52"/></g><path d="M32 36 L60 33 L64 63 L36 66 Z" fill="var(--ci)"/><path d="M96 22 L124 19 L127 42 L99 45 Z" fill="var(--ci)" opacity=".45"/><g fill="none" stroke="var(--ci)" stroke-width="1.6"><path d="M104 86 L110 74 L116 86"/><path d="M117 86 L123 74 L129 86"/><path d="M130 86 L136 74 L142 86"/><path d="M143 86 L149 74 L155 86"/></g></svg>
+      <div class="cap"><b>남원시 GeoVision 플랫폼</b>운영 중인 서비스 2개 · 만드는 중 1개 · 내년 1개</div>
+    </div>
+
+    <form class="form" id="login">
+      <span class="m-mark"><span>남원</span><span>GV</span></span>
+      <h1>로그인</h1>
+      <p class="intro">남원시 직원 계정으로 들어갑니다.<br>부서에 맞는 서비스만 보입니다.</p>
+      <label>아이디</label><input class="t-input" value="">
+      <label>비밀번호</label><input class="t-input" type="password" value="">
+      <button class="t-btn" type="button">로그인</button>
+      <div class="links"><span>아직 계정이 없나요? <b>가입 신청</b></span><span>아이디 · 비밀번호 찾기</span></div>
+      <p class="note">AI 분석 · 모델 개발과 갱신 — LX 한국국토정보공사</p>
+    </form>
+
+    <form class="form" id="join">
+      <span class="m-mark"><span>남원</span><span>GV</span></span>
+      <h1>가입 신청</h1>
+      <p class="intro">남원시 직원만 신청할 수 있습니다.<br>기관 관리자가 승인하면 메일로 알려 드립니다.</p>
+      <div class="row2">
+        <div><label>이름</label><input class="t-input" value="박서연"></div>
+        <div><label>부서</label><div class="sel">농정과 <span>▾</span></div></div>
+      </div>
+      <label>업무 메일</label><input class="t-input" value="">
+      <div class="row2">
+        <div><label>아이디</label><input class="t-input" value=""></div>
+        <div><label>비밀번호</label><input class="t-input" type="password" value=""></div>
+      </div>
+      <button class="t-btn" type="button">신청</button>
+      <div class="links"><span>이미 계정이 있나요? <b>로그인</b></span></div>
+      <p class="note">부서를 고르면 그 부서 서비스만 보입니다 · 농정과 → 영농관리 행정서비스</p>
+    </form>
+  </div>
+</div>
+<div class="done">신청을 보냈습니다 · 기관 관리자가 승인하면 메일로 알려 드립니다</div>
+
+<span class="m-note" id="n1" style="left:180px;top:120px"><i>1</i>기관 마크 · 이름 · 색 — 옛 포털처럼 그 기관의 문으로 보인다</span>
+<span class="m-note" id="n2" style="left:180px;top:168px"><i>2</i>역할 탭 없음 · 아이디로 관리자/부서 사용자가 갈린다</span>
+<span class="m-note" id="n3" style="left:180px;top:216px"><i>3</i>가입 신청 → 기관 관리자 승인(반려는 사유 한 줄) → 내 부서 서비스만</span>
+<span class="m-stamp"><b>시안</b> 기관 분기 화면 · 남원시 GeoVision — <span id="st">로그인</span></span>
+<script>
+if(location.search.includes('join')){document.body.classList.add('join');document.getElementById('st').textContent='가입 신청(부서 고르기)';
+  document.getElementById('n1').textContent='';document.getElementById('n1').innerHTML='<i>1</i>넣는 것은 다섯 칸 — 이름 · 부서 · 업무 메일 · 아이디 · 비밀번호';
+  document.getElementById('n2').innerHTML='<i>2</i>부서를 고르는 순간 볼 수 있는 서비스가 정해진다';
+  document.getElementById('n3').innerHTML='<i>3</i>승인은 기관 관리자 · LX 는 관여하지 않는다';}
+</script>
+</body>
+</html>

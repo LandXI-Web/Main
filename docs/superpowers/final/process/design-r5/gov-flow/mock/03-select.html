@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · 남원시 GeoVision(농정과 담당자) — 서비스 선택: 내 부서 서비스만 + 부서 공통 기능</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.two{display:grid;grid-template-columns:1fr 392px;gap:24px;align-items:start}
+.mine{display:grid;grid-template-columns:320px 1fr;gap:24px}
+.mine .svc h3{min-height:0}
+.open{background:var(--bg-1);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:12px}
+.open h3{margin:0;font:700 24px/32px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.open .m-body{color:var(--sub-2)}
+.open .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:6px 0 0;font:400 15px/22px var(--font-body)}
+.open .kv dt{color:var(--sub)}
+.open .kv dd{margin:0;color:var(--ink)}
+.open .t-btn{align-self:flex-start;margin-top:8px;height:48px;padding:0 24px}
+.common{background:var(--bg-1);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:4px}
+.common h3{margin:0 0 8px;font:700 20px/28px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.none{margin-top:24px;padding:20px 24px;border:1.5px dashed var(--mute);border-radius:16px;font:400 15px/22px var(--font-body);color:var(--sub)}
+</style>
+</head>
+<body class="m t g ci-namwon">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">남원시 GeoVision 플랫폼</span>
+    <span class="m-sp"></span>
+    <span class="m-ask">물어보기 <kbd>Ctrl K</kbd></span>
+    <span class="m-role"><b>농정과</b>박서연</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail">
+    <p class="b-mark"><span>남원</span><span>GV</span></p>
+    <span class="m-rail-i" aria-current="true"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>내 서비스</span>
+    <span class="m-rail-i"><i class="dot"></i><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l2 2H4l2-2z"/><path d="M10 20a2 2 0 004 0"/></svg>알림</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M4 21V4h11l1 3h4v10h-9l-1-3H4"/></svg>내가 알린<br>필지</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>분석 의뢰</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>계정</span>
+    <span class="m-rail-i out"><svg viewBox="0 0 24 24"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9"/></svg>로그아웃</span>
+  </nav>
+  <main class="m-main">
+    <div class="m-page">
+      <div class="m-head">
+        <h1>내 서비스</h1>
+        <span class="sub">농정과가 쓰는 서비스 · 다른 부서 서비스는 보이지 않습니다</span>
+        <span class="date">기준일 2026.06.08</span>
+      </div>
+      <div class="two">
+        <div>
+          <div class="mine">
+            <article class="svc">
+              <svg class="face" viewBox="0 0 160 100" aria-hidden="true"><rect width="160" height="100" fill="var(--ci-t1)"/><g stroke="var(--ci-line)" stroke-width="1" fill="none"><path d="M-10 100 L18 0"/><path d="M18 100 L46 0"/><path d="M46 100 L74 0"/><path d="M74 100 L102 0"/><path d="M102 100 L130 0"/><path d="M130 100 L158 0"/><path d="M0 34 L160 20"/><path d="M0 66 L160 52"/></g><path d="M32 36 L60 33 L64 63 L36 66 Z" fill="var(--ci)"/><path d="M96 22 L124 19 L127 42 L99 45 Z" fill="var(--ci)" opacity=".45"/><g fill="none" stroke="var(--ci)" stroke-width="1.6"><path d="M104 86 L110 74 L116 86"/><path d="M117 86 L123 74 L129 86"/><path d="M130 86 L136 74 L142 86"/><path d="M143 86 L149 74 L155 86"/></g></svg>
+              <div class="meta"><span>2025 · 농정과</span><span class="t-chip">운영</span></div>
+              <h3>영농관리 행정서비스</h3>
+              <p class="d">농지이용 경작·비경작 · 비닐하우스 · 사료작물</p>
+            </article>
+            <div class="open">
+              <h3>영농관리 행정서비스</h3>
+              <p class="m-body">2025년 드론영상으로 분석한 결과가 들어와 있습니다. 결과 보기 · 필지 대조 결과 · 보고서 · 내려받기를 여기서 합니다.</p>
+              <dl class="kv">
+                <dt>AI 탐지</dt><dd><span class="m-num">2,098</span> 필지 · 2025년 드론영상</dd>
+                <dt>할 일</dt><dd>판정 대기 <span class="m-num">3</span>건</dd>
+                <dt>최근 도착</dt><dd>2026.06.08 · 2025년 드론영상 결과</dd>
+                <dt>담당</dt><dd>LX 프로젝트장 김도윤 · 알림과 의뢰는 이 담당자에게 갑니다</dd>
+              </dl>
+              <button class="t-btn">이 서비스 열기</button>
+            </div>
+          </div>
+          <div class="none">서비스가 하나뿐인 부서는 로그인하면 이 화면을 건너 대시보드로 바로 갑니다. 새 사업이 붙으면 카드가 여기에 하나 더 생깁니다.</div>
+        </div>
+        <aside class="common">
+          <h3>공통</h3>
+          <div class="m-rows">
+            <div class="m-rowl">알림 <span class="s">새 결과 도착 · 답 도착</span><span class="t-chip">2</span></div>
+            <div class="m-rowl">내가 알린 필지 <span class="s">산동면 대기리 615</span><span class="t-chip">답 도착</span></div>
+            <div class="m-rowl">분석 의뢰 <span class="s">덕과면 드론영상 → 영농관리</span><span class="t-chip" data-lv="wait">접수 대기</span></div>
+            <div class="m-rowl">계정 <span class="s">비밀번호 변경 · 내 부서</span><span class="t-chip" data-lv="wait">—</span></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+    <div class="m-foot"><b>전북특별자치도 남원시</b><span>대표전화 063-620-6114</span><span>AI 분석 · 모델 개발과 갱신 — LX 한국국토정보공사</span></div>
+
+    <span class="m-note" style="left:120px;top:664px;max-width:560px"><i>1</i>농정과 담당자에게는 영농관리 카드 하나만 — 다른 부서 서비스는 서버가 내주지 않음</span>
+    <span class="m-note" style="left:120px;top:712px;max-width:560px"><i>2</i>오른쪽 '공통'은 모든 부서가 같이 쓰는 기능 넷만(알림 · 내가 알린 필지 · 분석 의뢰 · 계정)</span>
+    <span class="m-note" style="left:120px;top:760px;max-width:560px"><i>3</i>담당 LX 프로젝트장이 카드에 적혀 있다 — 알림·의뢰가 누구에게 가는지 보인다</span>
+  </main>
+</div>
+<span class="m-stamp m-stamp--r"><b>시안</b> 기관 분기 화면 · 남원시 GeoVision(농정과 담당자) — 서비스 선택</span>
+</body>
+</html>
