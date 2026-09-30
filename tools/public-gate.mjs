@@ -16,6 +16,20 @@ const ENTRY = { admin: HOME + '?next=' + encodeURIComponent('/landxi/v3/ops-core
 const siteOf = (req) => String(req.headers.host || '').toLowerCase().split('.')[0];
 
 const API_PREFIX = /^\/(api|tiles|files)\//;
+/* 바깥에 열지 않는 것 — 서버 내부 안내 문서(경로 목록)는 이 PC 안에서만 */
+const HIDDEN = /^\/api\/v1\/(docs|redoc)(\/|$)|^\/(docs|redoc|openapi\.json)(\/|$)/;
+/* 화면은 경로 목록으로 '있는 기능만 버튼을 켠다'(kit/util.js 등) — 바깥에는 경로·메서드 이름만(설명·형식 없음) */
+let OA = null, OA_AT = 0;
+function slimOpenapi(res) {
+  if (OA && Date.now() - OA_AT < 60000) return send(res, 200, OA, { 'content-type': 'application/json', 'cache-control': 'no-cache' });
+  http.get({ ...GW, path: '/api/v1/openapi.json' }, (r) => { let b = ''; r.setEncoding('utf8'); r.on('data', (c) => (b += c)); r.on('end', () => {
+    try { const j = JSON.parse(b); const paths = {}; for (const [k, v] of Object.entries(j.paths || {})) { paths[k] = {}; for (const m of Object.keys(v)) paths[k][m] = {}; }
+      OA = JSON.stringify({ openapi: j.openapi, paths }); OA_AT = Date.now(); send(res, 200, OA, { 'content-type': 'application/json', 'cache-control': 'no-cache' });
+    } catch { send(res, 502, '{}', { 'content-type': 'application/json' }); } }); }).on('error', () => send(res, 502, '{}', { 'content-type': 'application/json' }));
+}
+/* 로그인한 사람만 — 필지 조회·지도 원천 중계(서버 열쇠로 부르는 길)를 누구나 쓰지 못하게(원칙 39 · 설계 4차 API 평가에서 발견) */
+const NEED_LOGIN = /^\/api\/v1\/(parcels|proxy\/(vworld|pc))(\/|\?|$)/;
+const hasLogin = (req) => !!req.headers.authorization || /[?&]access_token=/.test(req.url);
 /* 화면이 읽는 곳만. landxi/data(원본 데이터 연결)는 화면이 직접 읽는 지도 조각만 연다 */
 const ALLOW = /^\/landxi\/(v3|shared|assets|agent|xi|global|ops|proto)\/|^\/landxi\/data\/(tiles|vector|global)\/|^\/landxi\/data\/survey\/[\w.-]+\.pmtiles$|^\/landxi\/data\/manifest\.json$/;
 const DENY = /(^|\/)\.|(^|\/)(node_modules|server|tools|docs|tests|shots|_[a-z]+)(\/|$)|\.(py|ps1|md|env|log|pid|yml|yaml|sqlite|db)$/i;
@@ -70,7 +84,12 @@ function serveFile(req, res, p) {
     return send(res, 404, '404');
   }
   const type = TYPES[path.extname(f).toLowerCase()] || 'application/octet-stream';
-  const cache = /\.(html|js|mjs|css|json)$/.test(f) ? 'no-cache' : 'public, max-age=86400';
+  /* 화면 코드는 매번 확인(ETag 로 바뀐 것만 받는다). 'private' = Cloudflare 가 가장자리에 보관하거나 브라우저 보관 시간(4시간)으로 덮지 않게
+     (2026-09-30 r3-train: 'no-cache' 만 보내면 .js 가 max-age=14400 으로 바뀌어 고친 화면이 바깥 주소에서 4시간 늦게 반영됐다) */
+  const code = /\.(html|js|mjs|css|json)$/.test(f);
+  const cache = code ? 'private, no-cache' : 'public, max-age=86400';
+  const etag = `W/"${st.size.toString(36)}-${Math.floor(st.mtimeMs).toString(36)}"`;
+  if (code && req.headers['if-none-match'] === etag) { res.writeHead(304, { ...SEC, etag, 'cache-control': cache }); return res.end(); }
   const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
   if (range && st.size) {
     let start = range[1] === '' ? null : Number(range[1]), end = range[2] === '' ? null : Number(range[2]);
@@ -80,7 +99,7 @@ function serveFile(req, res, p) {
     res.writeHead(206, { ...SEC, 'content-type': type, 'accept-ranges': 'bytes', 'content-range': `bytes ${start}-${end}/${st.size}`, 'content-length': end - start + 1, 'cache-control': cache });
     return fs.createReadStream(f, { start, end }).pipe(res);
   }
-  res.writeHead(200, { ...SEC, 'content-type': type, 'accept-ranges': 'bytes', 'content-length': st.size, 'cache-control': cache });
+  res.writeHead(200, { ...SEC, 'content-type': type, 'accept-ranges': 'bytes', 'content-length': st.size, 'cache-control': cache, ...(code ? { etag } : {}) });
   if (req.method === 'HEAD') return res.end();
   fs.createReadStream(f).pipe(res);
 }
@@ -89,6 +108,9 @@ http.createServer((req, res) => {
   let p;
   try { p = decodeURIComponent(new URL(req.url, 'http://x').pathname); } catch { return send(res, 400, '400'); }
   if (p.includes('\0') || p.includes('..')) return send(res, 400, '400');
+  if (HIDDEN.test(p)) return send(res, 404, '404');
+  if (p === '/api/v1/openapi.json') return slimOpenapi(res);
+  if (NEED_LOGIN.test(p) && !hasLogin(req)) return send(res, 401, JSON.stringify({ error: { code: 'unauthorized', message: '로그인이 필요합니다.' } }), { 'content-type': 'application/json' });
   if (API_PREFIX.test(p)) return proxy(req, res);
   if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, '405');
   if (p === '/' || p === '/landxi' || p === '/landxi/' || p === '/landxi/v3' || p === '/landxi/v3/') return send(res, 302, '', { location: ENTRY[siteOf(req)] || HOME });
