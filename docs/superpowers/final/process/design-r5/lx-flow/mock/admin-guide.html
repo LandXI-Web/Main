@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · Land-XI LX 관리자 — 공개 기준(가이드): 기준값은 여기서만 정하고, 결재 화면은 이 값을 보여 줄 뿐</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.page{position:absolute;inset:0;padding:24px 32px;display:grid;grid-template-columns:minmax(0,1fr) 392px;grid-template-rows:auto auto minmax(0,1fr);gap:16px 24px}
+.head{grid-column:1/-1;display:flex;align-items:baseline;gap:14px}
+.head h1{margin:0;font:700 28px/36px var(--font-display);letter-spacing:-.01em}
+.head span{font:500 14px/20px var(--font-body);color:var(--sub)}
+.tabs{grid-column:1/-1;display:flex;gap:20px;border-bottom:1px solid var(--rule)}
+.tabs span{font:500 15px/1 var(--font-body);color:var(--sub);padding:12px 2px}
+.tabs span[aria-current="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent)}
+.sheet{background:var(--bg-1);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:12px;align-self:start}
+.sheet h2{margin:0;font:700 24px/32px var(--font-display);letter-spacing:-.02em}
+.sheet .lead{margin:0 0 4px;font:400 15px/22px var(--font-body);color:var(--sub-2)}
+.g{display:grid;grid-template-columns:minmax(0,1.2fr) 150px 150px minmax(0,1fr);gap:0 16px;align-items:center}
+.g.hd span{font:500 14px/20px var(--font-body);color:var(--sub);padding:0 0 8px;border-bottom:1px solid var(--rule)}
+.g.r{padding:12px 0;border-bottom:1px solid var(--rule)}
+.g.r .n{font:500 16px/24px var(--font-body);color:var(--ink)}
+.g.r .n small{display:block;font:400 13px/18px var(--font-body);color:var(--sub)}
+.g.r .src{font:400 14px/20px var(--font-body);color:var(--sub-2)}
+.val{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 12px;border:1px solid var(--rule);border-radius:8px;background:var(--bg-1);font:500 15px/1 var(--font-num);color:var(--ink);width:140px;justify-content:space-between}
+.val small{font:400 13px/1 var(--font-body);color:var(--sub)}
+.val.dis{border-style:dashed;color:var(--sub)}
+.per{display:flex;flex-direction:column;gap:4px;font:400 14px/20px var(--font-body);color:var(--ink-2)}
+.per b{font-weight:500;color:var(--ink)}
+.per .t-chip{height:24px;font-size:13px;width:max-content}
+.foot{display:flex;align-items:center;gap:16px;padding-top:8px}
+.foot p{margin:0;font:400 14px/20px var(--font-body);color:var(--sub)}
+.foot .t-btn{padding:0 28px}
+.hist{background:var(--bg-1);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:12px;align-self:start}
+.hist h3{margin:0;font:700 20px/28px var(--font-display);letter-spacing:-.01em}
+.hist .l{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:10px 0;border-top:1px solid var(--rule)}
+.hist .l b{font:500 15px/22px var(--font-body);color:var(--ink)}
+.hist .l span{font:400 13px/18px var(--font-body);color:var(--sub)}
+.hist .l .m-num{text-align:right;color:var(--ink)}
+.hist p{margin:0;font:400 14px/20px var(--font-body);color:var(--sub-2)}
+</style>
+</head>
+<body class="m t ci-lx">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">LAND-XI</span>
+    <span class="m-home">LX 관리자 대시보드</span>
+    <span class="m-sp"></span>
+    <span class="m-ask">물어보기 <kbd>Ctrl K</kbd></span>
+    <span class="m-role">LX 관리자</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail">
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2V6z"/><path d="M9 4v14M15 6v14"/></svg>현황</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>인프라</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9H3z"/><path d="M9 20v-6h6v6"/></svg>기관</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>배포</span>
+    <span class="m-rail-i" aria-current="true"><svg viewBox="0 0 24 24"><path d="M3 13h5l2 3h4l2-3h5"/><path d="M5 5h14v14H5z"/></svg>결재</span>
+  </nav>
+  <main class="m-main">
+    <div class="page">
+      <div class="head"><h1>결재</h1><span>대기 <span class="m-num">3</span>건</span></div>
+      <div class="tabs"><span>대기</span><span>끝난 것</span><span aria-current="true">공개 기준</span></div>
+
+      <section class="sheet">
+        <h2>서비스 공개 기준</h2>
+        <p class="lead">발행 요청마다 이 네 가지를 재서 결재 화면에 보여 줍니다. 미달은 표시만 하고, 판단은 관리자가 합니다.</p>
+        <div class="g hd"><span>기준</span><span>기준값</span><span>다르게 두는 서비스</span><span>값은 어디서 오나</span></div>
+        <div class="g r">
+          <div class="n">표본 확인 정밀도<small>사람이 확인한 표본 중 AI가 맞은 비율</small></div>
+          <span class="val">0.85 <small>이상</small></span>
+          <div class="per"><span class="t-chip">해양쓰레기 0.80</span></div>
+          <div class="src">결과 확인 단계의 표본 확인 기록 — 구성원이 판정하면 서버가 계산</div>
+        </div>
+        <div class="g r">
+          <div class="n">확인한 표본<small>사람이 직접 본 필지·조각 수</small></div>
+          <span class="val">20 <small>건 이상</small></span>
+          <div class="per"><b>모두 같음</b></div>
+          <div class="src">같은 기록 — 20건 미만이면 정밀도는 '—'로 표시</div>
+        </div>
+        <div class="g r">
+          <div class="n">실증 지역<small>표본을 확인한 시군구 수</small></div>
+          <span class="val">1 <small>곳 이상</small></span>
+          <div class="per"><b>모두 같음</b><span>다른 지역 적용은 따로 결재</span></div>
+          <div class="src">표본 확인 기록의 지역</div>
+        </div>
+        <div class="g r">
+          <div class="n">겹치는 서비스<small>같은 대상 · 같은 지역에 이미 공개된 카드</small></div>
+          <span class="val dis">표시만</span>
+          <div class="per"><b>모두 같음</b></div>
+          <div class="src">공개된 서비스 카드 목록 — 자동</div>
+        </div>
+        <div class="foot"><button class="t-btn">저장</button><p>바꾼 값은 다음 발행 요청부터 적용되고, 오른쪽 기록에 남습니다.</p></div>
+      </section>
+
+      <aside class="hist">
+        <h3>바꾼 기록</h3>
+        <div class="l"><b>해양쓰레기 정밀도 0.85 → 0.80</b><span class="m-num">2026.09.24</span><span>LX 관리자 · 해안 조각은 작아서 사람도 헷갈리는 비율이 높아 낮춤</span></div>
+        <div class="l"><b>확인한 표본 10 → 20건</b><span class="m-num">2026.09.12</span><span>LX 관리자 · 10건은 우연이 크게 작용함</span></div>
+        <div class="l"><b>처음 값 정함</b><span class="m-num">2026.09.01</span><span>LX 관리자</span></div>
+        <p>기준값을 정하는 사람은 LX 관리자입니다. 프로젝트장은 결재 화면에서 이 값을 보고, 못 미치면 기준값 조정을 요청할 수 있습니다.</p>
+      </aside>
+    </div>
+
+    <span class="m-note" style="left:112px;top:700px"><i>1</i>기준값은 이 한 장에서만 정한다 — 결재 화면은 이 값을 보여 줄 뿐</span>
+    <span class="m-note" style="left:112px;top:746px"><i>2</i>서비스 종류에 따라 다르게 둘 수 있다(예: 해양쓰레기 조각은 낮게)</span>
+    <span class="m-note" style="left:112px;top:792px"><i>3</i>바꾼 값은 누가 · 언제 · 왜와 함께 남고 다음 요청부터 적용</span>
+  </main>
+</div>
+<span class="m-stamp m-stamp--r"><b>시안</b> Land-XI 화면 · LX 관리자 결재 — 공개 기준(가이드)</span>
+</body>
+</html>

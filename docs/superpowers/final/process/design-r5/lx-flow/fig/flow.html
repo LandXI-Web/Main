@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>그림 · LX 직원 원스톱 흐름 — 사업에서 시작해 기관 알림으로 돌아오고, 다시 학습으로 이어지는 13단계</title>
+<link rel="stylesheet" href="../mock/mock.css">
+<style>
+body.m{width:1600px;height:1260px}
+.wrap{position:absolute;inset:0;padding:40px 48px}
+h1{margin:0 0 6px;font:700 32px/42px var(--font-display);letter-spacing:-.01em;color:var(--ink)}
+.lead{margin:0 0 24px;font:400 16px/26px var(--font-body);color:var(--sub-2)}
+.stage{position:relative;height:1080px}
+.lane{position:absolute;border-radius:16px;background:var(--bg-1);padding:18px 20px 20px}
+.lane h2{margin:0 0 12px;display:flex;align-items:baseline;gap:10px;font:700 18px/26px var(--font-display);letter-spacing:-.01em;color:var(--ink)}
+.lane h2 span{font:400 14px/20px var(--font-body);color:var(--sub)}
+.lane h2 .own{margin-left:auto;font:500 13px/1 var(--font-body);color:var(--ink);background:var(--bg-0);padding:6px 10px;border-radius:8px}
+.cards{display:grid;gap:14px}
+.card{background:var(--bg-0);border-radius:12px;padding:12px 14px 12px;display:flex;flex-direction:column;gap:4px;position:relative}
+.card .no{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.card .no i{width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;display:inline-flex;align-items:center;justify-content:center;font:500 13px/1 var(--font-num);font-style:normal;flex:none}
+.card .no b{font:700 15px/20px var(--font-body);color:var(--ink)}
+.card.adm .no i{background:#333840}
+.card.gov .no i{background:var(--bg-1);color:var(--ink);border:2px solid var(--ink)}
+.card.hot .no i{background:var(--accent)}
+.card dl{margin:0;display:grid;grid-template-columns:44px 1fr;gap:2px 6px}
+.card dt{font:500 12px/17px var(--font-body);color:var(--sub)}
+.card dd{margin:0;font:400 12.5px/17px var(--font-body);color:var(--ink-2)}
+.card dd b{font-weight:500;color:var(--ink)}
+.card dd.why{color:var(--ink);font-weight:500}
+.card dd.bas{color:var(--ink)}
+.card dt.bas{color:var(--accent)}
+.card .tag{align-self:flex-start;margin:-2px 0 4px;font:500 11px/1 var(--font-body);color:#fff;background:var(--accent);padding:4px 7px;border-radius:6px}
+/* 1줄: LX 직원 · 프로젝트 7단 */
+.l1{left:0;top:0;width:1504px}
+.l1 .cards{grid-template-columns:repeat(7,1fr)}
+/* 2줄: 오른쪽 관리자 · 가운데 기관 · 왼콁 직원(다시) */
+.l2{left:1032px;top:560px;width:472px}
+.l3{left:520px;top:560px;width:472px}
+.l4{left:0;top:560px;width:480px}
+.l2 .cards,.l3 .cards,.l4 .cards{grid-template-columns:1fr 1fr}
+.arr{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.arr path{fill:none;stroke:var(--ink);stroke-width:2}
+.arr text{font:500 13px var(--font-body);fill:var(--ink)}
+.arr .back path{stroke:var(--warn);stroke-dasharray:6 5}
+.arr .back text{fill:var(--warn)}
+.arr .loop path{stroke:var(--accent);stroke-dasharray:6 5}
+.arr .loop text{fill:var(--accent)}
+.arr .side path{stroke:var(--sub);stroke-dasharray:3 4}
+.arr .side text{fill:var(--sub)}
+.legend{position:absolute;left:0;top:1044px;display:flex;gap:22px;font:400 13px/20px var(--font-body);color:var(--sub)}
+.legend i{display:inline-block;width:18px;height:0;border-top:2px solid var(--ink);margin-right:6px;vertical-align:middle}
+.legend i.w{border-color:var(--warn);border-top-style:dashed}
+.legend i.a{border-color:var(--accent);border-top-style:dashed}
+.legend i.s{border-color:var(--sub);border-top-style:dotted}
+.legend em{font-style:normal;color:var(--accent);font-weight:500}
+</style>
+</head>
+<body class="m t">
+<div class="wrap">
+  <h1>LX 직원의 일은 사업에서 시작해 기관 알림으로 돌아오고, 다시 학습으로 이어집니다</h1>
+  <p class="lead">단계마다 왜 하나 · 누가 · 넣는 것 · 나오는 것 · 다음 · 판단 근거(있으면). 영상은 이유가 있어 올리고, 올린 뒤 다음 단계로 바로 이어집니다. 파란 글자가 '판단 근거'가 만들어지는 자리입니다.</p>
+  <div class="stage">
+
+    <section class="lane l1">
+      <h2>Land-XI · LX 직원 <span>프로젝트 안에서 — 프로젝트장이 1차 소유(재학습 판단 포함)</span><span class="own">발행 전 · 프로젝트장</span></h2>
+      <div class="cards">
+        <div class="card">
+          <div class="no"><i>1</i><b>사업 · 목적</b></div>
+          <dl><dt>왜</dt><dd class="why">기관 업무 하나를 AI 분석으로 돕기 위해</dd>
+          <dt>누가</dt><dd>영업 · 기관 · LX 관리자 → 맡을 직원</dd>
+          <dt>넣는 것</dt><dd>업무 이름 · 찾을 대상 · 지역 · 결과를 어떻게 쓸지</dd>
+          <dt>나오는 것</dt><dd>무엇을 · 어디 · 필지 기준 출력 모양</dd>
+          <dt>다음</dt><dd>프로젝트 만들기</dd></dl>
+        </div>
+        <div class="card">
+          <div class="no"><i>2</i><b>프로젝트 만들기</b></div>
+          <dl><dt>왜</dt><dd class="why">일의 주인과 단위를 정하기 위해</dd>
+          <dt>누가</dt><dd>LX 직원(만든 사람 = 프로젝트장) · 승인 없음</dd>
+          <dt>넣는 것</dt><dd>이름 · 무엇을 · 어디 + 무엇과 대조하나(지목 기본)</dd>
+          <dt>나오는 것</dt><dd>프로젝트 1 · 단계 6 · 클래스 기본값</dd>
+          <dt>다음</dt><dd>데이터 올리기</dd></dl>
+        </div>
+        <div class="card">
+          <div class="no"><i>3</i><b>데이터 올리기</b></div>
+          <dl><dt>왜</dt><dd class="why">세 가지 쓸모 — 학습용 영상 · 분석 대상 영상 · 라벨 원천</dd>
+          <dt>누가</dt><dd>구성원</dd>
+          <dt>넣는 것</dt><dd>파일만(해상도·촬영일·범위는 파일에서) + 쓸모 하나 고르기</dd>
+          <dt>나오는 것</dt><dd>영상 목록에 쓸모 표시 · 다음 단계 버튼</dd>
+          <dt>다음</dt><dd>학습용 → 4 · 분석 대상 → 6 · 라벨 원천 → 4의 씨앗</dd></dl>
+        </div>
+        <div class="card">
+          <div class="no"><i>4</i><b>학습데이터 구축</b></div>
+          <dl><dt>왜</dt><dd class="why">AI가 배울 정답(라벨)을 사람이 만들기 위해</dd>
+          <dt>누가</dt><dd>구성원</dd>
+          <dt>넣는 것</dt><dd>학습용 영상 조각 · 클래스 · (라벨 원천)</dd>
+          <dt>나오는 것</dt><dd>확인한 라벨 · 클래스별 수 · 진행률</dd>
+          <dt>다음</dt><dd>학습</dd>
+          <dt class="bas">근거</dt><dd class="bas">클래스별 라벨 수 ≥ 목표(가이드)</dd></dl>
+        </div>
+        <div class="card">
+          <div class="no"><i>5</i><b>학습</b></div>
+          <dl><dt>왜</dt><dd class="why">라벨로 모델을 만들기 위해</dd>
+          <dt>누가</dt><dd>프로젝트장이 시작 · 작업 대기열</dd>
+          <dt>넣는 것</dt><dd>확인한 라벨(학습에 안 쓴 일부는 재는 데)</dd>
+          <dt>나오는 것</dt><dd>모델 판 · 학습 정확도(참고)</dd>
+          <dt>다음</dt><dd>결과 확인</dd>
+          <dt class="bas">근거</dt><dd class="bas">학습 정확도 — 참고 표시만</dd></dl>
+        </div>
+        <div class="card hot">
+          <div class="no"><i>6</i><b>결과 확인</b></div><span class="tag">판단 근거가 만들어지는 자리</span>
+          <dl><dt>왜</dt><dd class="why">사람이 표본을 보고 믿을 만한지 재기 위해</dd>
+          <dt>누가</dt><dd>구성원이 판정 · 프로젝트장이 '확인 완료'</dd>
+          <dt>넣는 것</dt><dd>분석 대상 영상에 돌린 결과 → 필지 표 → 표본 뽑기</dd>
+          <dt>나오는 것</dt><dd><b>표본 확인 기록</b>(몇 건 · 맞음/틀림 · 정밀도) · 필지 기준 표</dd>
+          <dt>다음</dt><dd>발행 요청 · 못 미치면 4로</dd>
+          <dt class="bas">근거</dt><dd class="bas">표본 ≥ 20건 · 정밀도 ≥ 기준값</dd></dl>
+        </div>
+        <div class="card">
+          <div class="no"><i>7</i><b>서비스 카드 발행 요청</b></div>
+          <dl><dt>왜</dt><dd class="why">기관에 서비스로 내놓기 위해</dd>
+          <dt>누가</dt><dd>프로젝트장</dd>
+          <dt>넣는 것</dt><dd>서비스 이름 · 한 줄 설명(나머지는 저절로)</dd>
+          <dt>나오는 것</dt><dd>결재 1건 + 기준 표(자동) · 미달은 표시만</dd>
+          <dt>다음</dt><dd>LX 관리자 판단</dd></dl>
+        </div>
+      </div>
+    </section>
+
+    <section class="lane l2">
+      <h2>Land-XI · LX 관리자 <span>결재</span><span class="own">발행 후 · 관리자</span></h2>
+      <div class="cards">
+        <div class="card adm">
+          <div class="no"><i>8</i><b>판단</b></div>
+          <dl><dt>왜</dt><dd class="why">기관에 내놓아도 되는지 책임지고 정하기 위해</dd>
+          <dt>누가</dt><dd>LX 관리자</dd>
+          <dt>넣는 것</dt><dd>결재 1건 — 지도 위 결과 · 표본 기록 · 기준 표 · 카드 미리 보기</dd>
+          <dt>나오는 것</dt><dd>승인 → 9 · 반려(사유 필수) → 7로</dd>
+          <dt class="bas">근거</dt><dd class="bas">기준 넷(정밀도 · 표본 수 · 실증 지역 · 겹침) + 직접 본 결과</dd></dl>
+        </div>
+        <div class="card adm">
+          <div class="no"><i>9</i><b>공개</b></div>
+          <dl><dt>왜</dt><dd class="why">카드가 서비스가 되는 순간</dd>
+          <dt>누가</dt><dd>승인과 함께 저절로</dd>
+          <dt>나오는 것</dt><dd>서비스 카드 1판 · 담당 프로젝트장 기록 · 갱신·재학습 관리는 관리자로</dd>
+          <dt>다음</dt><dd>기관 제공</dd></dl>
+        </div>
+      </div>
+    </section>
+
+    <section class="lane l3">
+      <h2>기관 분기 플랫폼 <span>예: 남원시 GeoVision</span></h2>
+      <div class="cards">
+        <div class="card gov">
+          <div class="no"><i>10</i><b>기관 제공</b></div>
+          <dl><dt>왜</dt><dd class="why">부서가 결과로 행정 업무를 하기 위해</dd>
+          <dt>누가</dt><dd>LX 관리자가 기관에 · 기관 관리자가 부서에</dd>
+          <dt>나오는 것</dt><dd>기관 홈에 카드 · 필지 기준 표 + '기관 판정' 열 · 보고서</dd>
+          <dt>다음</dt><dd>부서가 쓰다가 알림</dd></dl>
+        </div>
+        <div class="card gov">
+          <div class="no"><i>11</i><b>'AI가 잘못 봤어요'</b></div>
+          <dl><dt>왜</dt><dd class="why">현장을 아는 사람이 틀린 곳을 알리기 위해</dd>
+          <dt>누가</dt><dd>부서 사용자</dd>
+          <dt>넣는 것</dt><dd>지도에서 필지 누르고 메모 한 줄(안 써도 됨)</dd>
+          <dt>나오는 것</dt><dd>알림 1건 → <b>담당 프로젝트장</b>에게</dd>
+          <dt>다음</dt><dd>12</dd></dl>
+        </div>
+      </div>
+    </section>
+
+    <section class="lane l4">
+      <h2>Land-XI · LX 직원 <span>다시 프로젝트로</span></h2>
+      <div class="cards">
+        <div class="card">
+          <div class="no"><i>12</i><b>담당 프로젝트장이 받음</b></div>
+          <dl><dt>왜</dt><dd class="why">알림은 만든 사람이 가장 잘 판단하기 때문</dd>
+          <dt>누가</dt><dd>카드에 적힌 프로젝트장 · <b>없으면 LX 관리자</b>가 받아 담당 지정</dd>
+          <dt>넣는 것</dt><dd>메모 + 저절로 붙는 영상 조각 · 대장 · AI 결과</dd>
+          <dt>나오는 것</dt><dd>맞음 / AI 오류 / 모름 → 기관에 답 · 'AI 오류'는 재학습 표본</dd>
+          <dt>다음</dt><dd>쌓이면 13</dd></dl>
+        </div>
+        <div class="card">
+          <div class="no"><i>13</i><b>보완 · 재학습</b></div>
+          <dl><dt>왜</dt><dd class="why">틀린 유형을 배워 다음 판을 내기 위해</dd>
+          <dt>누가</dt><dd>공개 뒤엔 LX 관리자가 지시 → 프로젝트장이 실행</dd>
+          <dt>넣는 것</dt><dd>재학습 표본(AI 오류 · 표본 틀림) · 새 영상</dd>
+          <dt>나오는 것</dt><dd>같은 프로젝트의 다음 회차 → 4 · 5 · 6 다시 → 7 새 판 발행 요청</dd>
+          <dt class="bas">근거</dt><dd class="bas">AI 오류 건수 · 정밀도 하락 · 마지막 학습 뒤 지난 날</dd></dl>
+        </div>
+      </div>
+    </section>
+
+    <svg class="arr" viewBox="0 0 1504 1080" aria-hidden="true">
+      <defs>
+        <marker id="k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5 0 10z" fill="#1C1F25"/></marker>
+        <marker id="w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5 0 10z" fill="#F04452"/></marker>
+        <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5 0 10z" fill="#006DF7"/></marker>
+        <marker id="s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5 0 10z" fill="#727780"/></marker>
+      </defs>
+      <!-- 7 → 8 요청 -->
+      <path d="M1400 402 V556" marker-end="url(#k)"/><text x="1412" y="484">발행 요청</text>
+      <!-- 8 → 7 반려 -->
+      <g class="back"><path d="M1262 558 V406" marker-end="url(#w)"/><text x="1250" y="484" text-anchor="end">반려 + 사유 · 틀린 표본</text></g>
+      <!-- 9 → 10 -->
+      <path d="M1030 760 H998" marker-end="url(#k)"/><text x="994" y="748" text-anchor="middle">승인 → 공개</text>
+      <!-- 11 → 12 담당 -->
+      <path d="M518 760 H486" marker-end="url(#k)"/><text x="500" y="748" text-anchor="middle">담당 프로젝트장</text>
+      <text x="500" y="790" text-anchor="middle" style="font-size:12px;fill:#727780">없으면 LX 관리자</text>
+      <!-- 13 → 4 재학습(공개 뒤엔 관리자 지시) -->
+      <g class="loop"><path d="M353 558 V500 H752 V406" marker-end="url(#a)"/><text x="552" y="490" text-anchor="middle">재학습 → 같은 프로젝트의 4 · 5 · 6 다시 → 7 새 판</text></g>
+      <!-- 3 → 6 분석 대상 영상(모델이 이미 있을 때) -->
+      <g class="side"><path d="M590 56 V38 H1210 V52" marker-end="url(#s)"/><text x="900" y="30" text-anchor="middle">분석 대상 영상은 모델이 이미 있으면 바로 결과 확인으로</text></g>
+    </svg>
+
+    <div class="legend"><span><i></i>앞으로</span><span><i class="w"></i>반려(사유와 함께 프로젝트장에게)</span><span><i class="a"></i>재학습(공개 뒤엔 관리자가 지시)</span><span><i class="s"></i>모델이 이미 있을 때의 지름길</span><span><em>근거</em> = 판단 근거가 만들어지는 자리</span></div>
+  </div>
+</div>
+<span class="m-stamp"><b>그림</b> Land-XI(LX 직원 · LX 관리자) → 기관 분기 플랫폼 → 다시 Land-XI · 13단계</span>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · Land-XI LX 관리자 — 결재 한 건: 분석 결과를 지도에서 직접 보고, 기준마다 값·기준값·출처를 보고, 승인 / 반려(사유 필수)</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.page{position:absolute;inset:0;padding:24px 32px 24px 32px;display:grid;grid-template-columns:minmax(0,1fr) 392px;grid-template-rows:auto minmax(0,1fr);gap:16px 24px}
+.head{grid-column:1/-1;display:flex;align-items:baseline;gap:14px}
+.head h1{margin:0;font:700 28px/36px var(--font-display);letter-spacing:-.01em}
+.head .bc{font:500 14px/20px var(--font-body);color:var(--sub)}
+.head .bc b{font-weight:500;color:var(--ink)}
+.left{display:grid;grid-template-rows:minmax(0,1fr) 232px;gap:16px;min-height:0}
+.map{position:relative;border-radius:16px;overflow:hidden;background:#3b4a3a url('../../../../../../../landxi/assets/images/landing/lp-map.png') -520px -120px / 2400px auto no-repeat}
+.map svg{position:absolute;inset:0;width:100%;height:100%}
+.map .lg{position:absolute;left:16px;top:16px;display:flex;gap:8px}
+.map .lg span{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:8px;background:rgba(255,255,255,.94);font:500 13px/1 var(--font-body);color:var(--ink);box-shadow:var(--elev-map)}
+.map .lg i{width:10px;height:10px;border-radius:2px;background:var(--ai);opacity:.85}
+.map .lg i.ok{border-radius:50%;background:var(--ink)}
+.map .lg i.bad{border-radius:50%;background:var(--warn)}
+.map .pop{position:absolute;left:600px;top:118px;width:300px;background:var(--bg-1);border-radius:16px;box-shadow:var(--elev-map);padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.map .pop .m-crop{height:120px;background:#3b4a3a url('../../../../../../../landxi/assets/images/landing/lp-map.png') -1240px -420px / 3200px auto no-repeat}
+.map .pop b{font:500 15px/22px var(--font-body);color:var(--ink)}
+.map .pop p{margin:0;font:400 14px/20px var(--font-body);color:var(--sub-2)}
+.map .pop p em{font-style:normal;color:var(--warn);font-weight:500}
+.rec{background:var(--bg-1);border-radius:16px;padding:16px 20px;display:flex;flex-direction:column;gap:10px;min-height:0}
+.rec .h{display:flex;align-items:baseline;gap:12px}
+.rec .h h3{margin:0;font:700 20px/28px var(--font-display);letter-spacing:-.01em}
+.rec .h span{font:500 14px/20px var(--font-body);color:var(--sub)}
+.rec .h span b{font-weight:500;color:var(--ink)}
+.rec .h .bad{color:var(--warn)}
+.rows{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.row{display:grid;grid-template-columns:72px 1fr;gap:10px;align-items:center;padding:8px;border-radius:8px;background:var(--bg-0)}
+.row.on{box-shadow:inset 0 0 0 2px var(--ink)}
+.row .th{width:72px;height:56px;border-radius:6px;background:#3b4a3a url('../../../../../../../landxi/assets/images/landing/lp-map.png') -900px -300px / 2400px auto no-repeat;position:relative;overflow:hidden}
+.row .th::after{content:"";position:absolute;left:14px;top:12px;width:44px;height:30px;border:2px solid var(--ai);background:rgba(15,169,160,.22);border-radius:2px}
+.row .th.bad::after{border-color:#fff;background:rgba(255,255,255,.18)}
+.row b{display:block;font:500 14px/20px var(--font-body);color:var(--ink)}
+.row small{display:block;font:400 13px/18px var(--font-body);color:var(--sub)}
+.row small .v{color:var(--warn);font-weight:500}
+.row small .o{color:var(--ink);font-weight:500}
+.drawer{background:var(--bg-1);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:14px;min-height:0;overflow:hidden}
+.drawer h2{margin:0;font:700 24px/32px var(--font-display);letter-spacing:-.02em}
+.who{margin:0;font:400 14px/20px var(--font-body);color:var(--sub)}
+.who b{font-weight:500;color:var(--ink)}
+.prev{display:flex;gap:12px;align-items:center;padding:10px 12px;background:var(--bg-0);border-radius:8px}
+.prev svg{width:84px;height:54px;border-radius:4px;flex:none}
+.prev b{display:block;font:500 15px/22px var(--font-body);color:var(--ink)}
+.prev span{font:400 13px/18px var(--font-body);color:var(--sub)}
+.crit{margin:0;display:grid;grid-template-columns:1fr auto;gap:2px 12px}
+.crit .cap{grid-column:1/-1;display:flex;justify-content:space-between;font:500 14px/20px var(--font-body);color:var(--ink);margin-bottom:4px}
+.crit .cap span{color:var(--sub);font-weight:400}
+.crit dt{font:400 15px/22px var(--font-body);color:var(--ink-2);padding:6px 0;border-top:1px solid var(--rule)}
+.crit dd{margin:0;font:500 14px/22px var(--font-num);color:var(--ink);text-align:right;padding:6px 0;border-top:1px solid var(--rule)}
+.crit dt small{display:block;font:400 13px/18px var(--font-body);color:var(--sub)}
+.crit .ok::after{content:" ✓";color:var(--ai)}
+.crit .bad{color:var(--warn)}
+.crit dd small{display:block;font:400 12px/16px var(--font-body);color:var(--sub)}
+.memo{padding:10px 12px;background:var(--bg-0);border-radius:8px;font:400 14px/20px var(--font-body);color:var(--ink-2)}
+.memo b{font-weight:500;color:var(--sub);margin-right:6px}
+.reject{display:none;flex-direction:column;gap:6px;padding-top:10px;border-top:1px solid var(--rule)}
+body.is-reject .reject{display:flex}
+body.is-reject .btns .t-btn--2{border-color:var(--ink)}
+body.is-reject .memo,body.is-reject .prev{display:none}
+.reject textarea{width:100%;height:76px;padding:10px 14px;border:1px solid var(--rule);border-radius:8px;background:var(--bg-1);color:var(--ink);font:400 15px/22px var(--font-body);resize:none}
+.reject .with{display:flex;align-items:center;gap:8px;font:400 13px/18px var(--font-body);color:var(--sub)}
+.reject .with .t-chip{height:24px;font-size:13px}
+.m-btn-row .cancel{flex:none;font:500 14px/1 var(--font-body);color:var(--sub);padding:0 8px}
+.fill{fill:rgba(15,169,160,.28);stroke:#0FA9A0;stroke-width:1.6}
+.mk{stroke:#fff;stroke-width:2}
+.mk.ok{fill:#1C1F25}
+.mk.bad{fill:#F04452}
+</style>
+</head>
+<body class="m t ci-lx">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">LAND-XI</span>
+    <span class="m-home">LX 관리자 대시보드</span>
+    <span class="m-sp"></span>
+    <span class="m-ask">물어보기 <kbd>Ctrl K</kbd></span>
+    <span class="m-role">LX 관리자</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail">
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2V6z"/><path d="M9 4v14M15 6v14"/></svg>현황</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>인프라</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9H3z"/><path d="M9 20v-6h6v6"/></svg>기관</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>배포</span>
+    <span class="m-rail-i" aria-current="true"><svg viewBox="0 0 24 24"><path d="M3 13h5l2 3h4l2-3h5"/><path d="M5 5h14v14H5z"/></svg>결재</span>
+  </nav>
+  <main class="m-main">
+    <div class="page">
+      <div class="head"><span class="bc">결재 › 서비스 발행 ›</span><h1>비닐하우스 서비스 발행 요청</h1><span class="bc">프로젝트장 <b>김도윤</b> · 프로젝트 '남원시 비닐하우스 2026' · 오늘</span></div>
+
+      <section class="left">
+        <div class="map" aria-label="분석 결과 지도">
+          <svg viewBox="0 0 1000 560" preserveAspectRatio="none" aria-hidden="true">
+            <g class="fill">
+              <path d="M120 140 Q150 100 180 140 L184 210 L124 212 Z"/>
+              <path d="M200 132 Q232 92 264 132 L268 208 L204 210 Z"/>
+              <path d="M290 150 Q318 112 346 150 L349 226 L293 228 Z"/>
+              <path d="M410 300 Q450 258 490 300 L494 380 L414 382 Z"/>
+              <path d="M520 296 Q556 256 592 296 L596 376 L524 378 Z"/>
+              <path d="M700 180 Q740 140 780 180 L784 262 L704 264 Z"/>
+              <path d="M800 176 Q836 136 872 176 L876 258 L804 260 Z"/>
+              <path d="M150 400 Q186 362 222 400 L226 480 L154 482 Z"/>
+              <path d="M250 396 Q286 358 322 396 L326 478 L254 480 Z"/>
+              <path d="M660 420 Q696 382 732 420 L736 500 L664 502 Z"/>
+              <path d="M760 416 Q796 378 832 416 L836 498 L764 500 Z"/>
+            </g>
+            <g class="mk ok"><circle cx="152" cy="176" r="9"/><circle cx="234" cy="170" r="9"/><circle cx="452" cy="340" r="9"/><circle cx="742" cy="222" r="9"/><circle cx="190" cy="440" r="9"/><circle cx="290" cy="438" r="9"/><circle cx="698" cy="460" r="9"/><circle cx="838" cy="216" r="9"/></g>
+            <g class="mk bad"><circle cx="320" cy="188" r="10"/><circle cx="560" cy="336" r="10"/><circle cx="798" cy="456" r="10"/><circle cx="596" cy="470" r="10"/></g>
+          </svg>
+          <div class="lg"><span><i></i>AI가 찾은 비닐하우스</span><span><i class="ok"></i>표본 맞음 20</span><span><i class="bad"></i>표본 틀림 4</span></div>
+          <div class="pop">
+            <div class="m-crop"><svg viewBox="0 0 268 120" aria-hidden="true"><path d="M92 74 Q120 38 148 74 L152 104 L96 106 Z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="2"/></svg><span class="cap">2025년 드론영상</span></div>
+            <b>이백면 남계리 312 · 표본 틀림</b>
+            <p>AI 분석 <em>비닐하우스</em> · 사람 확인 <b>차광막</b><br>구성원 이하늘 · 2026.09.29</p>
+          </div>
+          <span class="m-scale">100 m</span>
+        </div>
+        <div class="rec">
+          <div class="h"><h3>표본 확인 기록</h3><span>확인 <b>24</b>건 · 맞음 <b>20</b> · <span class="bad">틀림 4</span> · 구성원 이하늘 · 2026.09.28–29</span><span class="m-sp"></span><span>틀린 것부터 · 전체 보기 →</span></div>
+          <div class="rows">
+            <div class="row on"><span class="th bad"></span><span><b>이백면 남계리 312</b><small>AI 비닐하우스 → <span class="v">차광막</span></small></span></div>
+            <div class="row"><span class="th bad"></span><span><b>주생면 지당리 88-2</b><small>AI 비닐하우스 → <span class="v">차광막</span></small></span></div>
+            <div class="row"><span class="th bad"></span><span><b>금지면 옹정리 140</b><small>AI 비닐하우스 → <span class="v">차광막</span></small></span></div>
+            <div class="row"><span class="th bad"></span><span><b>덕과면 사율리 501-3</b><small>AI 비닐하우스 → <span class="v">축사 지붕</span></small></span></div>
+            <div class="row"><span class="th"></span><span><b>산동면 대기리 615</b><small>AI 비닐하우스 → <span class="o">맞음</span></small></span></div>
+            <div class="row"><span class="th"></span><span><b>운봉읍 신기리 525-1</b><small>AI 비닐하우스 → <span class="o">맞음</span></small></span></div>
+            <div class="row"><span class="th"></span><span><b>산내면 대정리 77</b><small>AI 비닐하우스 → <span class="o">맞음</span></small></span></div>
+            <div class="row"><span class="th"></span><span><b>보절면 신파리 203-1</b><small>AI 비닐하우스 → <span class="o">맞음</span></small></span></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="drawer">
+        <div class="m-sheet-h"><h2>판단</h2><span class="m-x">×</span></div>
+        <div class="prev">
+          <svg viewBox="0 0 160 100" aria-hidden="true"><rect width="160" height="100" fill="var(--ci-t1)"/><g stroke="var(--ci-line)" stroke-width="1" fill="none"><path d="M0 34 L160 20"/><path d="M0 66 L160 52"/><path d="M0 98 L160 84"/></g><g fill="none" stroke="var(--ci)" stroke-width="2"><path d="M24 64 Q40 40 56 64"/><path d="M60 60 Q76 36 92 60"/><path d="M96 56 Q112 32 128 56"/></g><g fill="var(--ci)" opacity=".45"><path d="M24 64 Q40 40 56 64 Z"/><path d="M60 60 Q76 36 92 60 Z"/></g></svg>
+          <div><b>비닐하우스 서비스</b><span>남원시 · 2025년 드론영상 · AI 탐지 132,310건 · 대조: 지목</span></div>
+        </div>
+        <dl class="crit">
+          <span class="cap">공개 기준 <span>값 · 기준값(가이드)</span></span>
+          <dt>표본 확인 정밀도<small>표본 확인 기록에서 계산 · 20 ÷ 24</small></dt><dd class="bad">0.83<small>기준 0.85 · 미달</small></dd>
+          <dt>확인한 표본<small>구성원이 직접 본 필지 수</small></dt><dd class="ok">24건<small>기준 20건</small></dd>
+          <dt>실증 지역<small>표본을 확인한 시군구</small></dt><dd class="ok">남원시 1곳<small>기준 1곳</small></dd>
+          <dt>겹치는 서비스<small>같은 대상 · 같은 지역의 공개 카드</small></dt><dd class="ok">없음<small>—</small></dd>
+        </dl>
+        <p class="m-small">미달은 표시만 합니다 — 판단은 관리자가. 기준값은 '공개 기준' 탭에서 정합니다.</p>
+        <div class="memo"><b>요청 메모</b>틀린 4건은 모두 차광막·축사 지붕입니다. 승인해 주시면 다음 회차 학습에 더하겠습니다.</div>
+        <div class="m-btn-row btns">
+          <button class="t-btn">승인</button>
+          <button class="t-btn t-btn--2">반려</button>
+        </div>
+        <div class="reject">
+          <p class="m-label" style="color:var(--ink)">반려 사유<small style="color:var(--sub);font-weight:400"> · 꼭 적어야 보낼 수 있습니다</small></p>
+          <textarea>틀린 4건이 모두 차광막·축사 지붕입니다. 이 두 유형을 학습에 더해 표본을 다시 확인한 뒤 요청해 주세요.</textarea>
+          <p class="with">함께 돌아가는 것 <span class="t-chip">틀린 표본 4건</span><span class="t-chip">기준 표</span></p>
+          <div class="m-btn-row"><button class="t-btn">반려 보내기</button><span class="cancel">취소</span></div>
+        </div>
+      </aside>
+    </div>
+
+    <span class="m-note" style="left:48px;top:400px"><i>1</i>관리자가 지도에서 결과를 직접 본다 — 표본 24건이 점으로, 틀린 4건은 조각으로</span>
+    <span class="m-note" style="left:48px;top:446px"><i>2</i>기준마다 값 · 기준값 · 어디서 온 값인지 한 줄 — 미달은 빨간 글자로 표시만</span>
+    <span class="m-note" style="left:48px;top:492px"><i>3</i>반려 사유는 꼭 적는다 — 틀린 표본과 함께 프로젝트장에게 그대로 돌아감</span>
+  </main>
+</div>
+<span class="m-stamp m-stamp--r"><b>시안</b> Land-XI 화면 · LX 관리자 결재 — 분석 결과를 직접 보고 판단</span>
+<script>if(location.search.includes('reject'))document.body.classList.add('is-reject');</script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · Land-XI LX 직원 — 프로젝트 만들기: 이름 · 무엇을 · 어디 + '무엇과 대조하나'(공개 기준만 기본, 기관 대장은 커스텀)</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.mine{position:absolute;left:24px;top:24px;width:520px;background:var(--bg-1);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:12px}
+.mine .h{display:flex;align-items:baseline;justify-content:space-between}
+.mine h2{margin:0;font:700 24px/32px var(--font-display);letter-spacing:-.02em}
+.mine .new{font:500 14px/20px var(--font-body);color:var(--ink)}
+.mine .new::before{content:"+ "}
+.pr{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:12px 0;border-top:1px solid var(--rule)}
+.pr b{font:500 16px/24px var(--font-body);color:var(--ink)}
+.pr .st{font:500 14px/24px var(--font-body);color:var(--sub);text-align:right}
+.pr .nx{grid-column:1/-1;font:400 14px/20px var(--font-body);color:var(--sub-2)}
+.pr .nx::before{content:"→ ";color:var(--sub)}
+.reg{display:flex;align-items:center;gap:8px;height:44px;padding:0 10px 0 14px;border:1px solid var(--rule);border-radius:8px}
+.reg .t-chip{background:var(--ink);color:#fff}
+.reg .t-chip::after{content:" ×";color:rgba(255,255,255,.7)}
+.reg span.ph{font:400 15px/1 var(--font-body);color:var(--mute)}
+.m-btn-row .t-btn{flex:none;padding:0 28px}
+.m-btn-row .cancel{font:500 14px/1 var(--font-body);color:var(--sub);padding:0 8px}
+.cmp{display:flex;flex-direction:column;gap:8px}
+.cmp .m-chips .t-chip[aria-pressed="true"]::before{content:"✓ ";font-size:12px}
+.cmp p{margin:0;font:400 13px/18px var(--font-body);color:var(--sub)}
+.cmp p b{font-weight:500;color:var(--ink-2)}
+.m-modal{width:580px;gap:16px}
+</style>
+</head>
+<body class="m t">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">LAND-XI</span>
+    <span class="m-home">LX 직원 대시보드</span>
+    <span class="m-sp"></span>
+    <span class="m-fresh"><i></i>17:29</span>
+    <span class="m-role"><b>LX 직원</b>김도윤</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail m-rail--steps">
+    <span class="m-rail-i"><span class="n">1</span>데이터<br>올리기</span>
+    <span class="m-rail-i"><span class="n">2</span>학습데이터<br>구축</span>
+    <span class="m-rail-i"><span class="n">3</span>학습</span>
+    <span class="m-rail-i"><span class="n">4</span>결과 확인</span>
+    <span class="m-rail-i"><span class="n">5</span>발행 요청</span>
+    <span class="m-rail-i"><span class="n">6</span>서비스<br>관리</span>
+  </nav>
+  <main class="m-main">
+    <div class="mine">
+      <div class="h"><h2>내 프로젝트</h2><span class="new">새 프로젝트</span></div>
+      <div class="pr"><b>남원시 농지이용 2026</b><span class="st">4 결과 확인</span><span class="nx">표본 확인 18/20</span></div>
+      <div class="pr"><b>여수시 해양쓰레기 2026</b><span class="st">6 서비스 관리</span><span class="nx">기관이 알린 필지 2건</span></div>
+    </div>
+    <div class="m-dim"></div>
+    <div class="m-modal">
+      <h2>새 프로젝트</h2>
+      <div class="m-f"><p class="m-label">이름</p><input class="t-input" value="남원시 비닐하우스 2026"></div>
+      <div class="m-f"><p class="m-label">무엇을<small>하나 고르기</small></p>
+        <div class="m-chips">
+          <span class="t-chip">농지이용</span><span class="t-chip" aria-pressed="true">비닐하우스</span><span class="t-chip">무허가 건축물</span><span class="t-chip">지목 불부합</span><span class="t-chip">국토 변화</span><span class="t-chip">해양쓰레기</span><span class="t-chip">직접 입력</span>
+        </div>
+      </div>
+      <div class="m-f"><p class="m-label">어디<small>여러 곳 가능</small></p>
+        <div class="reg"><span class="t-chip">남원시</span><span class="ph">시군구 이름을 검색</span></div>
+      </div>
+      <div class="m-f cmp"><p class="m-label">무엇과 대조하나<small>공개 기준 · 나중에 바꿀 수 있음</small></p>
+        <div class="m-chips">
+          <span class="t-chip" aria-pressed="true">지목</span><span class="t-chip">용도지역</span><span class="t-chip">개발제한구역 경계</span><span class="t-chip">건축물 정보</span><span class="t-chip">개발행위허가</span><span class="t-chip">대조 없음(현황만)</span>
+        </div>
+        <p><b>기관 대장</b>(농지대장 · 단속 기록 등)과의 대조는 사업 협의 뒤 커스텀으로 더합니다.</p>
+      </div>
+      <div class="m-btn-row"><button class="t-btn">만들기</button><span class="cancel">취소</span></div>
+      <p class="m-small">기간 · 사업 · 구성원은 만든 뒤 언제든 더할 수 있습니다.</p>
+    </div>
+
+    <span class="m-note" style="left:1000px;top:250px;z-index:50;max-width:340px"><i>1</i>입력은 세 칸 + 대조 한 칸 — 대조는 '지목'이 기본으로 켜져 있어 그냥 넘어가도 됨</span>
+    <span class="m-note" style="left:1000px;top:322px;z-index:50;max-width:340px"><i>2</i>고른 대조 기준이 결과 확인 표의 '대조' 열과 서비스 카드의 대조 규칙이 됨</span>
+    <span class="m-note" style="left:1000px;top:394px;z-index:50;max-width:340px"><i>3</i>기관 대장은 여기서 고르지 않는다 — 요구사항을 들어 커스텀</span>
+  </main>
+</div>
+<span class="m-stamp"><b>시안</b> Land-XI 화면 · LX 직원 프로젝트 만들기 — '무엇과 대조하나' 칸</span>
+</body>
+</html>

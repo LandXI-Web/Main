@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · Land-XI LX 직원 — 결과 확인: 필지 번호 기준 출력 표(지번 · 지목 · AI 결과 · 대조 · 까닭 · 영상 조각)</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.page{position:absolute;inset:0;padding:24px 32px;display:grid;grid-template-columns:minmax(0,1fr) 392px;grid-template-rows:auto auto minmax(0,1fr);gap:14px 24px}
+.crumb{grid-column:1/-1}
+.sum{grid-column:1/-1;display:flex;align-items:center;gap:20px}
+.sum .big{display:flex;align-items:baseline;gap:8px}
+.sum .big b{font:800 40px/1 var(--font-display);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums}
+.sum .big span{font:500 15px/1 var(--font-body);color:var(--sub)}
+.sum .chips{display:flex;gap:8px;margin-left:8px}
+.sum .chips .t-chip b{font-weight:500;margin-left:6px;font-family:var(--font-num)}
+.sum .acts{margin-left:auto;display:flex;align-items:center;gap:12px}
+.sum .acts small{font:400 13px/18px var(--font-body);color:var(--sub)}
+.tbl{background:var(--bg-1);border-radius:16px;padding:6px 12px 0;min-height:0;overflow:hidden}
+.m-table{font-size:14px;line-height:20px}
+.m-table th{padding:10px 10px}
+.m-table td{padding:9px 10px}
+.m-table .pnu{font:400 13px/18px var(--font-num);color:var(--sub);letter-spacing:.01em}
+.m-table .th{width:64px;height:40px;border-radius:4px;background:#3b4a3a url('../../../../../../../landxi/assets/images/landing/lp-map.png') -900px -300px / 2400px auto no-repeat;display:block;position:relative;overflow:hidden}
+.m-table .th::after{content:"";position:absolute;left:12px;top:8px;width:40px;height:24px;border:1.5px solid var(--ai);background:rgba(15,169,160,.22);border-radius:2px}
+.m-table tr:nth-child(2) .th{background-position:-600px -160px}.m-table tr:nth-child(3) .th{background-position:-1300px -500px}.m-table tr:nth-child(4) .th{background-position:-800px -420px}
+.m-table tr:nth-child(5) .th{background-position:-700px -500px}.m-table tr:nth-child(6) .th{background-position:-1100px -250px}.m-table tr:nth-child(7) .th{background-position:-1400px -160px}.m-table tr:nth-child(8) .th{background-position:-1000px -540px}
+.m-table tr.no .th::after{border-style:dashed;border-color:#fff;background:transparent}
+.d{font-weight:500}
+.d.bad{color:var(--warn)}
+.d.same{color:var(--ink)}
+.d.none{color:var(--mute)}
+.why{color:var(--sub-2)}
+.stt{font:500 13px/18px var(--font-body);color:var(--sub)}
+.stt.ok{color:var(--ink)}
+.drawer{background:var(--bg-1);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:14px;min-height:0;overflow:hidden}
+.drawer h2{margin:0;font:700 24px/32px var(--font-display);letter-spacing:-.02em}
+.drawer .pnu{margin:-8px 0 0;font:400 13px/18px var(--font-num);color:var(--sub)}
+.crop{height:190px;background:#3b4a3a url('../../../../../../../landxi/assets/images/landing/lp-map.png') -1080px -330px / 2600px auto no-repeat}
+.kv{display:grid;grid-template-columns:84px 1fr;gap:6px 12px;margin:0}
+.kv dt{font:500 14px/22px var(--font-body);color:var(--sub)}
+.kv dd{margin:0;font:400 15px/22px var(--font-body);color:var(--ink)}
+.kv dd b{font-weight:500;color:var(--ai)}
+.kv dd .bad{font-weight:500;color:var(--warn)}
+.rule{padding:10px 12px;background:var(--bg-0);border-radius:8px;font:400 14px/20px var(--font-body);color:var(--ink-2)}
+.rule b{display:block;font-weight:500;color:var(--sub);font-size:13px;margin-bottom:2px}
+.drawer .m-seg span{padding:11px 0}
+.drawer p.m-small{margin-top:auto}
+</style>
+</head>
+<body class="m t">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">LAND-XI</span>
+    <span class="m-home">LX 직원 대시보드</span>
+    <span class="m-sp"></span>
+    <span class="m-fresh"><i></i>17:29</span>
+    <span class="m-role"><b>LX 직원</b>김도윤</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail m-rail--steps">
+    <span class="m-rail-i"><span class="n" data-st="done">✓</span>데이터<br>올리기</span>
+    <span class="m-rail-i"><span class="n" data-st="done">✓</span>학습데이터<br>구축</span>
+    <span class="m-rail-i"><span class="n" data-st="done">✓</span>학습</span>
+    <span class="m-rail-i" data-st="now"><span class="n" data-st="now">4</span>결과 확인</span>
+    <span class="m-rail-i"><span class="n">5</span>발행 요청</span>
+    <span class="m-rail-i"><span class="n">6</span>서비스<br>관리</span>
+  </nav>
+  <main class="m-main">
+    <div class="page">
+      <div class="m-crumb crumb"><h1>결과 확인</h1><span class="k">남원시 비닐하우스 2026</span><span>· 남원시 · 2025년 드론영상 · 대조 기준: 지목(공개)</span></div>
+      <div class="sum">
+        <div class="big"><b>462</b><span>필지 · 지목과 다름</span></div>
+        <div class="chips"><span class="t-chip">비닐하우스 있는 필지<b>4,318</b></span><span class="t-chip" data-lv="wait">같음<b>3,756</b></span><span class="t-chip" data-lv="gap">대조 못 함<b>100</b></span></div>
+        <div class="acts"><small>표본 확인 24건 · 정밀도 0.83</small><button class="t-btn t-btn--2">표에서 표본 뽑기</button><button class="t-btn t-btn--2">내려받기</button></div>
+      </div>
+
+      <section class="tbl">
+        <table class="m-table">
+          <thead><tr><th>지번</th><th>필지 번호</th><th>지목(공개)</th><th>AI 결과</th><th>대조</th><th>까닭</th><th>영상 조각</th><th>확인</th></tr></thead>
+          <tbody>
+            <tr class="is-on"><td class="ink">이백면 남계리 312</td><td class="pnu">4519032025 1 0312 0000</td><td>임야</td><td>비닐하우스 2동 · 1,240㎡</td><td class="d bad">다름</td><td class="why">임야 위 시설</td><td><span class="th"></span></td><td class="stt">확인 전</td></tr>
+            <tr><td class="ink">주생면 지당리 88-2</td><td class="pnu">4519035022 1 0088 0002</td><td>대</td><td>비닐하우스 1동 · 380㎡</td><td class="d bad">다름</td><td class="why">대지 위 시설 · 참고</td><td><span class="th"></span></td><td class="stt">확인 전</td></tr>
+            <tr><td class="ink">금지면 옹정리 140</td><td class="pnu">4519037024 1 0140 0000</td><td>잡종지</td><td>비닐하우스 3동 · 2,110㎡</td><td class="d bad">다름</td><td class="why">잡종지 위 시설</td><td><span class="th"></span></td><td class="stt ok">확인됨 · 맞음</td></tr>
+            <tr><td class="ink">산동면 대기리 615</td><td class="pnu">4519034024 1 0615 0000</td><td>전</td><td>비닐하우스 1동 · 640㎡</td><td class="d same">같음</td><td class="why">농지 위 농업 시설</td><td><span class="th"></span></td><td class="stt ok">확인됨 · 맞음</td></tr>
+            <tr><td class="ink">운봉읍 신기리 525-1</td><td class="pnu">4519025027 1 0525 0001</td><td>답</td><td>비닐하우스 4동 · 3,020㎡</td><td class="d same">같음</td><td class="why">농지 위 농업 시설</td><td><span class="th"></span></td><td class="stt ok">확인됨 · 맞음</td></tr>
+            <tr><td class="ink">덕과면 사율리 501-3</td><td class="pnu">4519038021 1 0501 0003</td><td>전</td><td>비닐하우스 1동 · 520㎡</td><td class="d same">같음</td><td class="why">농지 위 농업 시설</td><td><span class="th"></span></td><td class="stt ok">확인됨 · 틀림(축사 지붕)</td></tr>
+            <tr class="no"><td class="ink">산내면 대정리 산 12</td><td class="pnu">4519036025 2 0012 0000</td><td>임야</td><td>비닐하우스 1동 · 410㎡</td><td class="d none">대조 못 함</td><td class="why">영상이 필지 절반만 덮음</td><td><span class="th"></span></td><td class="stt">확인 전</td></tr>
+            <tr class="no"><td class="ink">보절면 신파리 203-1</td><td class="pnu">—</td><td>—</td><td>비닐하우스 2동 · 900㎡</td><td class="d none">대조 못 함</td><td class="why">지적에 없는 자리(합병·분할)</td><td><span class="th"></span></td><td class="stt">확인 전</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <aside class="drawer">
+        <div class="m-sheet-h"><h2>이백면 남계리 312</h2><span class="m-x">×</span></div>
+        <p class="pnu">필지 번호 4519032025 1 0312 0000</p>
+        <div class="m-crop crop"><svg viewBox="0 0 344 190" aria-hidden="true"><path d="M110 118 Q150 62 190 118 L196 160 L116 164 Z" fill="rgba(15,169,160,.28)" stroke="#0FA9A0" stroke-width="2.5"/><path d="M198 112 Q234 60 270 112 L276 156 L204 160 Z" fill="rgba(15,169,160,.28)" stroke="#0FA9A0" stroke-width="2.5"/></svg><span class="cap">2025년 드론영상 · 2025.06.08</span></div>
+        <dl class="kv">
+          <dt>AI 결과</dt><dd><b>비닐하우스 2동</b> · 1,240㎡</dd>
+          <dt>지목(공개)</dt><dd>임야</dd>
+          <dt>대조</dt><dd><span class="bad">다름</span> — 임야 위 시설</dd>
+        </dl>
+        <div class="rule"><b>이 서비스의 대조 규칙</b>전·답·과수원 위 비닐하우스 = 같음 · 임야·대·잡종지 위 = 다름 · 지적에 없거나 영상이 덜 덮으면 = 대조 못 함</div>
+        <p class="m-label" style="color:var(--ink)">표본 확인</p>
+        <div class="m-seg"><span>맞음</span><span>틀림</span><span>모름</span></div>
+        <p class="m-small">확인한 표본이 발행 요청의 판단 근거가 됩니다.<br>기관 화면에는 같은 표에 '기관 판정' 열이 더 붙습니다.</p>
+      </aside>
+    </div>
+
+    <span class="m-note" style="left:112px;top:680px;max-width:600px"><i>1</i>한 줄 = 한 필지 — 지번 · 필지 번호 · 지목 · AI 결과 · 대조(같음 / 다름 / 대조 못 함) · 까닭 · 영상 조각</span>
+    <span class="m-note" style="left:112px;top:726px;max-width:600px"><i>2</i>대조 기준은 프로젝트 만들기에서 고른 '지목(공개)' — 기관 대장은 사업 협의 뒤 커스텀</span>
+    <span class="m-note" style="left:112px;top:772px;max-width:600px"><i>3</i>'대조 못 함'은 조용히 버리지 않고 까닭과 함께 남긴다</span>
+  </main>
+</div>
+<span class="m-stamp m-stamp--r"><b>시안</b> Land-XI 화면 · LX 직원 결과 확인 — 필지 기준 출력 표(기관 화면도 같은 표)</span>
+</body>
+</html>

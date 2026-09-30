@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · Land-XI LX 직원 — 프로젝트 2단계 '학습데이터 구축': 영상 조각 · 그리기 · 클래스 · AI 제안 · 사람이 확인 · 진행률 · 학습으로 보내기</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.page{position:absolute;inset:0;padding:20px 24px 20px 24px;display:grid;grid-template-columns:184px minmax(0,1fr) 300px;grid-template-rows:auto minmax(0,1fr);gap:14px 16px}
+.crumb{grid-column:1/-1}
+.strip{background:var(--bg-1);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:0}
+.strip h3{margin:0;font:500 14px/20px var(--font-body);color:var(--ink)}
+.strip h3 small{display:block;font:400 13px/18px var(--font-body);color:var(--sub)}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:6px;overflow:hidden}
+.tile{position:relative;aspect-ratio:1/1;border-radius:6px;background:#3b4a3a url('../../../../../../../landxi/assets/images/landing/lp-map.png') -600px -200px / 2400px auto no-repeat;overflow:hidden}
+.tile::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--mute)}
+.tile[data-st="done"]::after{background:var(--ink)}
+.tile[data-st="ai"]::after{background:var(--ai)}
+.tile[data-st="now"]{box-shadow:inset 0 0 0 2px var(--accent)}
+.tile:nth-child(2){background-position:-800px -160px}.tile:nth-child(3){background-position:-1100px -200px}.tile:nth-child(4){background-position:-1400px -140px}
+.tile:nth-child(5){background-position:-600px -380px}.tile:nth-child(6){background-position:-900px -420px}.tile:nth-child(7){background-position:-1200px -350px}.tile:nth-child(8){background-position:-1450px -400px}
+.tile:nth-child(9){background-position:-700px -300px}.tile:nth-child(10){background-position:-1000px -150px}.tile:nth-child(11){background-position:-1300px -500px}.tile:nth-child(12){background-position:-800px -520px}
+.strip .lgd{display:flex;flex-direction:column;gap:4px;font:400 13px/18px var(--font-body);color:var(--sub);margin-top:auto}
+.strip .lgd i{display:inline-block;width:10px;height:4px;margin-right:6px;vertical-align:middle;background:var(--mute)}
+.strip .lgd i.d{background:var(--ink)}.strip .lgd i.a{background:var(--ai)}
+.stage{background:var(--bg-1);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.bar{display:flex;align-items:center;gap:6px;height:52px;padding:0 14px;border-bottom:1px solid var(--rule)}
+.tb{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:8px;font:500 14px/1 var(--font-body);color:var(--ink)}
+.tb svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.tb[aria-pressed="true"]{background:var(--ink);color:#fff}
+.tb.dim{color:var(--sub)}
+.sep{width:1px;height:20px;background:var(--rule);margin:0 6px}
+.bar .pg{margin-left:auto;display:inline-flex;align-items:center;gap:10px;font:500 14px/1 var(--font-num);color:var(--ink)}
+.bar .pg span{color:var(--sub);font-family:var(--font-body)}
+.bar .pg b{font-weight:500;color:var(--sub);padding:0 4px}
+.canvas{position:relative;flex:1;min-height:0;background:#3b4a3a url('../../../../../../../landxi/assets/images/landing/lp-map.png') -640px -260px / 2800px auto no-repeat}
+.canvas svg{position:absolute;inset:0;width:100%;height:100%}
+.ok{fill:rgba(15,169,160,.24);stroke:#0FA9A0;stroke-width:2}
+.ai{fill:rgba(255,255,255,.12);stroke:#fff;stroke-width:2;stroke-dasharray:7 5}
+.canvas .yn{position:absolute;display:flex;gap:4px}
+.canvas .yn span{height:26px;padding:0 9px;border-radius:6px;background:rgba(255,255,255,.96);font:500 13px/26px var(--font-body);color:var(--ink);box-shadow:var(--elev-map)}
+.canvas .yn span.n{color:var(--warn)}
+.canvas .tag{position:absolute;padding:2px 6px;border-radius:4px;background:#0FA9A0;color:#fff;font:500 12px/16px var(--font-body)}
+.canvas .tag.ai{background:rgba(28,31,37,.85);stroke:none;fill:none}
+.canvas .hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);padding:8px 14px;border-radius:8px;background:rgba(255,255,255,.94);font:500 13px/18px var(--font-body);color:var(--ink);box-shadow:var(--elev-map);white-space:nowrap}
+.canvas .hint kbd{font:500 12px/1 var(--font-num);background:var(--bg-0);padding:3px 6px;border-radius:4px;margin:0 2px}
+.side{display:grid;grid-template-rows:auto auto minmax(0,1fr);gap:14px;min-height:0}
+.card{background:var(--bg-1);border-radius:16px;padding:14px 20px;display:flex;flex-direction:column;gap:8px;min-height:0}
+.card .go{margin-top:auto}
+.card h3{margin:0;display:flex;justify-content:space-between;align-items:baseline;font:700 18px/26px var(--font-display);letter-spacing:-.01em}
+.card h3 span{font:400 13px/18px var(--font-body);color:var(--sub)}
+.cls{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--rule);font:500 15px/22px var(--font-body);color:var(--ink)}
+.cls i{width:14px;height:14px;border-radius:3px;background:#0FA9A0}
+.cls i.b{background:#0FA9A0;opacity:.45;border:1.5px dashed #0FA9A0}
+.cls .m-num{margin-left:auto;font-weight:500;color:var(--ink)}
+.cls.add{color:var(--sub);border-top:1px solid var(--rule)}
+.cls[aria-pressed="true"]{box-shadow:inset 3px 0 0 var(--accent);padding-left:8px}
+.sug{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center;padding:6px 0;border-top:1px solid var(--rule)}
+.sug b{font:500 14px/20px var(--font-body);color:var(--ink)}
+.sug small{grid-column:1;font:400 13px/18px var(--font-body);color:var(--sub)}
+.sug .m-seg{grid-row:1/3;grid-column:2;height:34px;align-self:center}
+.sug .m-seg span{padding:0 9px;line-height:32px;font-size:13px}
+.prog{display:flex;flex-direction:column;gap:5px;padding:6px 0;border-top:1px solid var(--rule)}
+.prog .l{display:flex;justify-content:space-between;font:400 14px/20px var(--font-body);color:var(--ink-2)}
+.prog .l .m-num{color:var(--ink);font-weight:500}
+.prog .l .m-num small{color:var(--sub);font-weight:400}
+.prog .m-bar i{background:var(--ink)}
+.card .go{display:flex;flex-direction:column;gap:6px}
+.card .go .t-btn:disabled{background:var(--mute)}
+.card .go p{margin:0;font:400 13px/18px var(--font-body);color:var(--sub)}
+/* 확인 모드(?review) */
+.review{display:none;position:absolute;inset:0;background:var(--bg-1);flex-direction:column}
+body.is-review .review{display:flex}
+.review .rh{display:flex;align-items:baseline;gap:12px;padding:14px 20px;border-bottom:1px solid var(--rule)}
+.review .rh h3{margin:0;font:700 20px/28px var(--font-display);letter-spacing:-.01em}
+.review .rh span{font:500 14px/20px var(--font-body);color:var(--sub)}
+.review .rh .t-btn--2{margin-left:auto;height:36px}
+.grid{flex:1;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(2,1fr);gap:12px;padding:16px 20px;min-height:0}
+.rv{position:relative;border-radius:8px;overflow:hidden;background:#3b4a3a url('../../../../../../../landxi/assets/images/landing/lp-map.png') -520px -140px / 2400px auto no-repeat}
+.rv:nth-child(2){background-position:-900px -160px}.rv:nth-child(3){background-position:-1300px -200px}.rv:nth-child(4){background-position:-1500px -420px}
+.rv:nth-child(5){background-position:-700px -420px}.rv:nth-child(6){background-position:-1100px -250px}.rv:nth-child(7){background-position:-1200px -460px}.rv:nth-child(8){background-position:-900px -500px}
+.m-note.rv-note{display:none}
+body.is-review .m-note{display:none}
+body.is-review .m-note.rv-note{display:inline-flex}
+.page{padding-bottom:32px}
+.rv svg{position:absolute;inset:0;width:100%;height:100%}
+.rv .who{position:absolute;left:10px;top:10px;padding:3px 8px;border-radius:6px;background:rgba(28,31,37,.85);color:#fff;font:500 12px/16px var(--font-body)}
+.rv .yn{position:absolute;left:10px;right:10px;bottom:10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px}
+.rv .yn span{height:30px;border-radius:6px;background:rgba(255,255,255,.96);font:500 13px/30px var(--font-body);color:var(--ink);text-align:center}
+.rv .yn span.y{background:var(--ink);color:#fff}
+.rv .yn span.n{color:var(--warn)}
+.rv.first{box-shadow:inset 0 0 0 3px var(--accent)}
+</style>
+</head>
+<body class="m t">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">LAND-XI</span>
+    <span class="m-home">LX 직원 대시보드</span>
+    <span class="m-sp"></span>
+    <span class="m-fresh"><i></i>17:29</span>
+    <span class="m-role"><b>LX 직원</b>김도윤</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail m-rail--steps">
+    <span class="m-rail-i"><span class="n" data-st="done">✓</span>데이터<br>올리기</span>
+    <span class="m-rail-i" data-st="now"><span class="n" data-st="now">2</span>학습데이터<br>구축</span>
+    <span class="m-rail-i"><span class="n">3</span>학습</span>
+    <span class="m-rail-i"><span class="n">4</span>결과 확인</span>
+    <span class="m-rail-i"><span class="n">5</span>발행 요청</span>
+    <span class="m-rail-i"><span class="n">6</span>서비스<br>관리</span>
+  </nav>
+  <main class="m-main">
+    <div class="page">
+      <div class="m-crumb crumb"><h1>학습데이터 구축</h1><span class="k">남원시 비닐하우스 2026</span><span>· 남원시 · 2025년 드론영상(학습용) · 조각 620</span></div>
+
+      <aside class="strip">
+        <h3>영상 조각<small>본 것 236 / 620</small></h3>
+        <div class="tiles">
+          <span class="tile" data-st="done"></span><span class="tile" data-st="done"></span>
+          <span class="tile" data-st="done"></span><span class="tile" data-st="ai"></span>
+          <span class="tile" data-st="now"></span><span class="tile" data-st="ai"></span>
+          <span class="tile" data-st="ai"></span><span class="tile"></span>
+          <span class="tile"></span><span class="tile"></span>
+          <span class="tile"></span><span class="tile"></span>
+        </div>
+        <div class="lgd"><span><i class="d"></i>확인 끝</span><span><i class="a"></i>AI 제안 있음</span><span><i></i>아직 안 봄</span></div>
+      </aside>
+
+      <section class="stage">
+        <div class="bar">
+          <span class="tb" aria-pressed="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="1"/></svg>사각형</span>
+          <span class="tb"><svg viewBox="0 0 24 24"><path d="M5 9l7-5 7 5-2 9H7z"/></svg>다각형</span>
+          <span class="tb dim"><svg viewBox="0 0 24 24"><path d="M4 20h16M7 16l9-9 3 3-9 9H7z"/></svg>지우기</span>
+          <span class="tb dim"><svg viewBox="0 0 24 24"><path d="M4 10h10a5 5 0 010 10H9"/><path d="M8 6l-4 4 4 4"/></svg>실행 취소</span>
+          <span class="sep"></span>
+          <button class="t-btn t-btn--2" style="height:36px">AI 제안 받기</button>
+          <span class="pg"><span>조각</span> 237 <b>/</b> 620 <span style="color:var(--ink);font-family:var(--font-num)">‹ ›</span></span>
+        </div>
+        <div class="canvas" aria-label="조각 237 — 라벨 그리기·확인">
+          <svg viewBox="0 0 900 560" preserveAspectRatio="none" aria-hidden="true">
+            <path class="ok" d="M110 150 Q150 96 190 150 L196 262 L116 266 Z"/>
+            <path class="ok" d="M212 144 Q252 90 292 144 L298 258 L218 262 Z"/>
+            <path class="ai" d="M330 168 Q372 112 414 168 L420 280 L336 284 Z"/>
+            <path class="ai" d="M520 300 Q566 240 612 300 L618 420 L526 424 Z"/>
+            <path class="ai" d="M640 296 Q686 236 732 296 L738 416 L646 420 Z"/>
+          </svg>
+          <span class="tag" style="left:116px;top:126px">단동 · 확인</span>
+          <span class="tag" style="left:218px;top:120px">단동 · 확인</span>
+          <span class="tag ai" style="left:336px;top:142px">단동 · AI 제안</span>
+          <span class="tag ai" style="left:526px;top:272px">다동 · AI 제안</span>
+          <div class="yn" style="left:430px;top:172px"><span>맞음 <kbd style="font:500 11px/1 var(--font-num)">Y</kbd></span><span class="n">아님 <kbd style="font:500 11px/1 var(--font-num)">N</kbd></span></div>
+          <div class="hint">제안은 점선 — <kbd>Y</kbd>맞음 · <kbd>N</kbd>아님 · 꼭짓점을 끌면 고치기 · 확인한 것만 학습 표본이 됩니다</div>
+          <span class="m-scale">20 m</span>
+        </div>
+        <div class="review">
+          <div class="rh"><h3>확인 대기</h3><span>AI 제안 <span class="m-num">47</span>건 · AI가 덜 확신하는 것부터</span><button class="t-btn t-btn--2">조각 보기로</button></div>
+          <div class="grid">
+            <div class="rv first"><svg viewBox="0 0 300 200" aria-hidden="true"><path class="ai" d="M90 70 Q140 20 190 70 L196 160 L96 164 Z"/></svg><span class="who">단동 · AI 제안</span><div class="yn"><span class="y">맞음 Y</span><span class="n">아님 N</span><span>고치기</span></div></div>
+            <div class="rv"><svg viewBox="0 0 300 200" aria-hidden="true"><path class="ai" d="M80 80 Q140 30 200 80 L204 160 L84 164 Z"/></svg><span class="who">다동 · AI 제안</span><div class="yn"><span>맞음</span><span class="n">아님</span><span>고치기</span></div></div>
+            <div class="rv"><svg viewBox="0 0 300 200" aria-hidden="true"><path class="ai" d="M110 60 Q150 24 190 60 L194 150 L114 152 Z"/></svg><span class="who">단동 · AI 제안</span><div class="yn"><span>맞음</span><span class="n">아님</span><span>고치기</span></div></div>
+            <div class="rv"><svg viewBox="0 0 300 200" aria-hidden="true"><path class="ai" d="M70 90 Q130 40 190 90 L196 166 L76 170 Z"/></svg><span class="who">단동 · AI 제안</span><div class="yn"><span>맞음</span><span class="n">아님</span><span>고치기</span></div></div>
+            <div class="rv"><svg viewBox="0 0 300 200" aria-hidden="true"><path class="ai" d="M100 76 Q150 30 200 76 L204 158 L104 162 Z"/></svg><span class="who">다동 · AI 제안</span><div class="yn"><span>맞음</span><span class="n">아님</span><span>고치기</span></div></div>
+            <div class="rv"><svg viewBox="0 0 300 200" aria-hidden="true"><path class="ai" d="M120 70 Q160 30 200 70 L204 150 L124 152 Z"/></svg><span class="who">단동 · AI 제안</span><div class="yn"><span>맞음</span><span class="n">아님</span><span>고치기</span></div></div>
+            <div class="rv"><svg viewBox="0 0 300 200" aria-hidden="true"><path class="ai" d="M84 84 Q140 34 196 84 L200 160 L88 164 Z"/></svg><span class="who">단동 · AI 제안</span><div class="yn"><span>맞음</span><span class="n">아님</span><span>고치기</span></div></div>
+            <div class="rv"><svg viewBox="0 0 300 200" aria-hidden="true"><path class="ai" d="M96 66 Q150 20 204 66 L208 156 L100 160 Z"/></svg><span class="who">다동 · AI 제안</span><div class="yn"><span>맞음</span><span class="n">아님</span><span>고치기</span></div></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="side">
+        <div class="card">
+          <h3>클래스<span>프로젝트 '비닐하우스'에서 채워짐</span></h3>
+          <div class="cls" aria-pressed="true"><i></i>단동<span class="m-num">212</span></div>
+          <div class="cls"><i class="b"></i>다동<span class="m-num">96</span></div>
+          <div class="cls add">+ 클래스 추가</div>
+        </div>
+        <div class="card">
+          <h3>이 조각의 제안<span>3건</span></h3>
+          <div class="sug"><b>단동 · 왼쪽</b><small>AI 확신 낮음</small><div class="m-seg"><span class="on">맞음</span><span>아님</span><span>고치기</span></div></div>
+          <div class="sug"><b>다동 · 가운데</b><small>AI 확신 높음</small><div class="m-seg"><span>맞음</span><span>아님</span><span>고치기</span></div></div>
+          <div class="sug"><b>다동 · 오른쪽</b><small>AI 확신 높음</small><div class="m-seg"><span>맞음</span><span>아님</span><span>고치기</span></div></div>
+        </div>
+        <div class="card">
+          <h3>진행률<span>목표는 공개 기준 가이드</span></h3>
+          <div class="prog"><div class="l"><span>단동</span><span class="m-num">212 <small>/ 300</small></span></div><div class="m-bar"><i style="width:71%"></i></div></div>
+          <div class="prog"><div class="l"><span>다동</span><span class="m-num">96 <small>/ 300</small></span></div><div class="m-bar"><i style="width:32%"></i></div></div>
+          <div class="prog"><div class="l"><span>본 조각</span><span class="m-num">38<small>%</small></span></div><div class="m-bar"><i style="width:38%"></i></div></div>
+          <div class="go"><p>클래스마다 목표에 닿으면 열립니다 · 확인한 라벨만 갑니다</p><button class="t-btn" disabled>학습으로 보내기</button></div>
+        </div>
+      </aside>
+    </div>
+
+    <span class="m-note" style="left:236px;top:610px;max-width:560px"><i>1</i>왼쪽은 올린 학습용 영상의 조각 — 어디까지 봤는지 색 띠 하나로</span>
+    <span class="m-note" style="left:236px;top:656px;max-width:560px"><i>2</i>사람이 몇 개 그리면 'AI 제안 받기' — 제안은 점선, 사람은 맞음 / 아님 / 고치기만</span>
+    <span class="m-note" style="left:236px;top:702px;max-width:560px"><i>3</i>클래스는 프로젝트의 '무엇을'에서 미리 채워짐 · 진행률이 목표에 닿으면 '학습으로 보내기'</span>
+    <span class="m-note rv-note" style="left:236px;top:700px;max-width:640px"><i>4</i>확인만 몰아서 할 때 — AI가 덜 확신하는 제안부터 한 장씩, 키보드 Y / N 으로 빠르게. 확인한 것만 학습 표본</span>
+  </main>
+</div>
+<span class="m-stamp"><b>시안</b> Land-XI 화면 · LX 직원 프로젝트 2단계 '학습데이터 구축' — 새로 만드는 도구</span>
+<script>if(location.search.includes('review'))document.body.classList.add('is-review');</script>
+</body>
+</html>
