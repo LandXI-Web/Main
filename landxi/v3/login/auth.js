@@ -219,6 +219,9 @@ form.addEventListener('submit', async (e) => {
     busy = false; go.removeAttribute('aria-busy');
   }
 });
+/* 화면 코드가 올라오기 전에 누른 로그인(index.html onsubmit 이 막아 둠) — 이제 이어서 보낸다 */
+if (window.__lxSubmit) { window.__lxSubmit = 0; setTimeout(() => form.requestSubmit(), 0); }   // 모듈 끝까지 읽힌 뒤
+
 
 /* ── 이미 들어와 있으면 '계속' 한 줄 · ?logout 이면 서버 세션까지 끝낸다 ──
    헬스 프로브로 먼저 막지 않는다(signIn 과 같은 규칙) — 바로 부르고, 응답이 아예 없을 때(네트워크 오류)만 700ms 뒤 한 번 더.
