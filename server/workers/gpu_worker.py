@@ -100,6 +100,11 @@ def nvml_loop():
             v = nvml_power.read()
             if v:
                 smi["pfast"], smi["pfast_at"], smi["pfast_mode"] = v, time.time(), nvml_power.mode()
+                # 쉬는 동안에도 다른 GPU 고부하를 기억한다(히스테리시스 QUIET_S) — 예전에는 게이트를 부를 때만 기억해,
+                # vLLM 생성 중 한 순간 100 W 아래로 내려간 틈에 새 작업 첫 묶음이 시작돼 두 장이 함께 100 W 를 넘었다(r3-xi 2차 · 16:05:06)
+                for i, w in v.items():
+                    if i != A.gpu and w and float(w) > OTHER_HOT_W:
+                        state["other_last_hot"], state["other_last"] = time.time(), (i, round(float(w), 1))
         except Exception as e:
             log(WHO, "nvml error", repr(e))
             time.sleep(2)
@@ -738,6 +743,22 @@ def process_train(job_id: str, entries: list[tuple[str, dict]]):
         return
     from workers.registry_scan import adapter_module
     mod = adapter_module("train/yolo")
+    # 학습은 이 워커의 VRAM 예산 안에서 돈다 — 상주·캐시 추론 모델을 먼저 내려 자리를 비운다(다음 추론 때 다시 적재)
+    freed = []
+    for mid in list(models.keys()):
+        try:
+            a, _, _ = models.pop(mid)
+            a.unload()
+            freed.append(mid)
+        except Exception:
+            pass
+    try:
+        import torch
+        torch.cuda.empty_cache()
+    except Exception:
+        pass
+    if freed:
+        log(WHO, f"train {job_id}: 추론 모델 {len(freed)}개 내림(학습 VRAM)")
     ad = mod.Adapter()
     ad.load(None, "cuda:0", state.get("budget") or 0)
     stop = threading.Event()
@@ -890,7 +911,16 @@ def main():
     log(WHO, "adapters:", ", ".join(f"{k}({v['_scope']}·{v.get('device')})" for k, v in ads.items()))
     for t in (heartbeat, vram_reporter, smi_sampler, nvml_loop):
         threading.Thread(target=t, daemon=True).start()
-    for mid in PCFG.get("resident", []):
+    # 기동 때 상주 모델 적재(더미 추론 포함)도 전력 규칙을 따른다 — 다른 GPU 가 고부하(vLLM 생성 중)면 조용해질 때까지 최대 60초 기다리고,
+    # 그래도 고부하면 미리 적재를 건너뛴다(첫 작업 때 적재). 예전에는 기동 직후 적재가 게이트 밖이라 두 장이 함께 100 W 를 넘었다(r3-xi 2차 · 16:06:49)
+    time.sleep(0.5)                                                  # NVML 첫 표본
+    t_gate = time.time()
+    while gate_block() and time.time() - t_gate < 60:
+        time.sleep(0.5)
+    residents = [] if gate_block() else PCFG.get("resident", [])
+    if not residents and PCFG.get("resident"):
+        log(WHO, "상주 모델 미리 적재 건너뜀 — 다른 GPU 고부하(전력 규칙) · 첫 작업 때 적재")
+    for mid in residents:
         try:
             ensure_model(mid)
         except Exception as e:

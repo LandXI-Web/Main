@@ -12,6 +12,7 @@
 .lxi-steps{flex:1;min-width:0}
 .lxi-steps .t-step .n{margin-bottom:6px}
 .lxi-join{flex:none}
+.lxi-sample{flex:none}
 .lxi-bar{margin-top:14px}
 .lxi-bar.is-indet i{width:32%;animation:lxi-indet 1.25s var(--e-ui) infinite}
 @keyframes lxi-indet{0%{transform:translateX(-100%)}100%{transform:translateX(320%)}}

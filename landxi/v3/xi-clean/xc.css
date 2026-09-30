@@ -116,6 +116,10 @@
 .xa-bar i{background:var(--ai);transition:width var(--d-380) var(--e-ui)}
 .xa-got{margin:0 0 14px;font:500 var(--fs-body)/1 var(--font-body);color:var(--sub)}
 .xa-got[hidden]{display:none}
+/* 영상 범위 문장(r3-xi) · 영상이 없는 나머지 한 줄 + '영상 등록'(LX 직원) */
+.xa-scope{margin:0 0 12px;font:500 var(--fs-body)/1.45 var(--font-body);color:var(--ink)}
+.xa-rest{margin:0 0 12px;font:400 var(--fs-body)/1.45 var(--font-body);color:var(--sub-2)}
+.xa-rest .xa-reg{padding:0;min-height:0;vertical-align:baseline}
 .xa-done{margin:4px 0 2px;font:500 var(--fs-sub)/1 var(--font-body);color:var(--ink)}
 .xa-done b{font-size:44px;color:var(--ai)}
 .xa-indet{margin:8px 0 6px;position:relative}

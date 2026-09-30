@@ -4,6 +4,7 @@ POST /agent/runs                     → 202 {run, events_url} · 사슬 전부 
 GET  /events/agent/{run_id}          → SSE(agent.route/plan/tool.call/tool.result/confirm/token/done/failed/rejected · 24h 재생)
 POST /agent/runs/{id}/confirm        → {confirm_id, decision: approve|reject} · 만료 409 confirm_expired
 POST /agent/runs/{id}/client         → 클라이언트 도구 ms(브라우저 실측) 기록
+POST /agent/runs/{id}/acts           → 화면 지도 동작 결과(ok·reason) 기록 → agent_runs.perf.acts_*(R3 M5 · acts_ok=0 = 동작 모두 실패)
 GET  /agent/runs · /agent/runs/{id}  → 감사(본인 · 기관 · LX 전체 — RLS)
 GET  /agent/models                   → 실제 백엔드 헬스(agent:models 30s)
 POST /agent/report/draft             → 202 {run, events_url} · 완료 시 agent.done.artifact.docx_url
@@ -226,6 +227,31 @@ async def client_ms(run_id: str, body: dict, request: Request):
     await r.xadd(f"agent:runs:{run_id}", {"event": "agent.tool.client", "data": json.dumps({"run_id": run_id, "i": i, "ms": round(ms, 1), "ms_source": "browser", "at": now_iso()})},
                  maxlen=2000, approximate=True)
     return {"ok": n.endswith("1"), "run_id": run_id}
+
+
+@router.post("/agent/runs/{run_id}/acts")
+async def client_acts(run_id: str, body: dict, request: Request):
+    """R3 M5 — 화면이 처리한 지도 동작 결과(kit:agent-action-done 모음) → agent_runs.perf.acts_*(acts_ok=0 이면 동작이 모두 실패).
+    body = {sent, done, ok, items: [{op, ok, reason?}], verdict: ok|failed|unconfirmed}. 값은 브라우저 실측(basis browser)."""
+    p = require(principal(request))
+    await _own_run(p, run_id)
+    try:
+        sent, done, ok = (max(0, min(int(body.get(k) or 0), 50)) for k in ("sent", "done", "ok"))
+    except (TypeError, ValueError):
+        raise ApiError("bad_request", "sent · done · ok 는 정수")
+    verdict = body.get("verdict") if body.get("verdict") in ("ok", "failed", "unconfirmed", "partial") else None
+    items = []
+    for it in (body.get("items") or [])[:20]:
+        if isinstance(it, dict) and it.get("op"):
+            items.append({"op": str(it["op"])[:40], "ok": bool(it.get("ok")), "done": bool(it.get("done", True)),
+                          **({"reason": str(it["reason"])[:120]} if it.get("reason") else {})})
+    acts = {"acts_sent": sent, "acts_done": done, "acts_ok": ok, "acts_verdict": verdict, "acts": items, "acts_source": "browser", "acts_at": now_iso()}
+    async with db(p) as conn:
+        n = await conn.execute("UPDATE agent_runs SET perf = coalesce(perf, '{}'::jsonb) || $2::jsonb WHERE id=$1", run_id, acts)
+    r = await redis()
+    await r.xadd(f"agent:runs:{run_id}", {"event": "agent.acts", "data": json.dumps({"run_id": run_id, **acts}, ensure_ascii=False)},
+                 maxlen=2000, approximate=True)
+    return {"ok": n.endswith("1"), "run_id": run_id, "verdict": verdict}          # 응답에 맨 숫자 0(봉투 규칙) — 값은 run 기록에
 
 
 @router.get("/agent/runs")

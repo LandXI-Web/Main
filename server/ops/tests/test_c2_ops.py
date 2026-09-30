@@ -188,8 +188,9 @@ def test_usage_one_tenant_and_dim():
     assert list(out.data["기관"]) == ["남원시"] and "합계" not in out.data
     out = run(T.ops_usage({"dim": "gpu_s_month", "tenant": "LX"}, Ctx(ADMIN)))
     assert envs(out)["lx_u"]["value"] == 2.0 and envs(out)["lx_u"]["unit"] == "시간"
-    with pytest.raises(ToolError):
-        run(T.ops_usage({"tenant": "없는기관"}, Ctx(ADMIN)))
+    # r3-ops: 없는 이름은 오류(→ 모델 경로 · LLM 호출) 대신 한 줄로 닫는다(숫자 0 · LLM 0)
+    out = run(T.ops_usage({"tenant": "없는기관"}, Ctx(ADMIN)))
+    assert out.answer == "그 이름의 기관이 없습니다." and not out.envelopes
 
 
 def test_models_rows_and_promo_no_shutdown_suggestion():

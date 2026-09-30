@@ -57,6 +57,10 @@ if (/\.github\.io$/i.test(location.hostname)) location.replace('https://app.land
         </div>
 
         <p class="msg" id="msg" role="alert" hidden></p>
+        <div class="slow" id="slow" role="status" hidden>
+          <p class="slow__t">서버 응답이 늦습니다 — 다른 Land-XI 탭을 닫거나 새로 고친 뒤 다시 시도하세요</p>
+          <button class="t-btn t-btn--text slow__b" id="reload" type="button">다시 불러오기</button>
+        </div>
 
         <button class="t-btn go" id="go" type="submit"><span>로그인</span><i class="go__line" aria-hidden="true"></i></button>
       </form>

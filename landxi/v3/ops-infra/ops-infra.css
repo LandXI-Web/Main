@@ -58,6 +58,7 @@
 .mbar--tick::after{content:"";position:absolute;right:-1px;top:-3px;width:2px;height:10px;border-radius:1px;background:var(--lock)}
 .work{font:500 15px/1 var(--font-body);color:var(--ink)}
 .work.idle{color:var(--sub)}
+.hotn{display:block;margin-top:4px;font:500 13px/1.2 var(--font-body);color:var(--sub);font-style:normal;white-space:nowrap}
 
 .side{grid-column:2;grid-row:1/3;display:flex;flex-direction:column;gap:16px;min-height:0}
 .side .t-card{padding:24px}
@@ -278,3 +279,11 @@
 .llmu-t small{font:400 13px/1 var(--font-num);color:var(--sub)}
 .llmu-t tr[data-st="over"] td b{color:var(--warn)}
 @media (max-width:960px){.llmu{margin:0 16px 16px;padding:20px}}
+
+/* r3-ops — 명령 바 막대 차트: 숫자와 단위 사이 띄움(2,059,673 tokens) */
+.k-ck-chart .k-bar-v small { margin-left: .3em; }
+/* 서버 다시 시작(C9 원스톱 · r3-ops) — 마지막 재기동 줄 끝의 작은 버튼(두 번 눌러 시작) */
+.srv-go{height:28px;min-height:28px;padding:0 10px;font-size:12px;margin-left:10px;flex:none}
+.srv-go[disabled]{opacity:.45;cursor:progress}
+.srv-go[data-arm]{color:var(--warn,#c2410c)}
+.row.sub #boot{margin-left:auto}

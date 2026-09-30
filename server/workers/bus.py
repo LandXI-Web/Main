@@ -140,15 +140,25 @@ def inflight_start(pool: str, job_id: str, shard_id: str, entry: dict, worker: s
 
 
 LLM_REQ = "power:llm_request"
+LLM_CALLS = "power:llm_calls"          # 지금 도는 LLM 호출(ZSET 이름 → 만료 시각 · r3-ops) — 한 호출이 먼저 끝나도 다른 호출이 도는 동안 예고가 지워지지 않게
+LLM_OVERLAP = "power:llm_overlap"      # 기다려도 다른 GPU 가 내려가지 않은 채 시작한 호출 기록(최근 200)
 
 
-def llm_power_request(holder: str = "llm", llm_gpu: int = 1, ttl_s: int = 30, wait_max_s: float = 6.0, limit_w: float = 100.0) -> dict:
+def llm_power_request(holder: str = "llm", llm_gpu: int = 1, ttl_s: int = 30, wait_max_s: float = 12.0, limit_w: float = 100.0) -> dict:
     """GPU1 LLM(vLLM · Ollama) 호출 **전에** 부르는 협조 헬퍼(전력 규칙 · 두 장 동시 고부하 금지).
-    ① power:llm_request 를 건다 → gpu_worker 가 칸 묶음 사이에서 즉시 멈춤(묶음 안 게이트)
+    ① power:llm_request 를 건다(+ 도는 호출 목록에 holder) → gpu_worker 가 칸 묶음 사이에서 즉시 멈춤(묶음 안 게이트)
     ② 다른 GPU 의 드라이버 평균 전력(nvidia-smi power.draw 와 같은 값)이 limit_w 아래로 내려갈 때까지 최대 wait_max_s 기다린다.
+       (r3-ops: 6 s → 12 s — 작업기가 칸 묶음을 끝내고 멈추는 데 실측 2–4 s · 넘기면 LLM_OVERLAP 에 남긴다)
     → {waited_s, other_w, ok}. 호출이 끝나면 llm_power_done(). 긴 세션은 ttl_s 안에 다시 부르면 갱신된다.
     GPU0 가 놀고 있으면 기다림 0 s(추가 지연 없음)."""
-    r().set(LLM_REQ, holder, ex=ttl_s)
+    now = time.time()
+    p = r().pipeline()
+    p.zadd(LLM_CALLS, {holder: now + ttl_s})               # 같은 holder 로 다시 부르면(재시도 · 긴 세션 갱신) 한 줄로 갱신된다
+    p.expire(LLM_CALLS, 600)                               # 줄마다 만료 시각(점수)이 있다 — 집합 자체는 넉넉히
+    p.zrange(LLM_CALLS, -1, -1, withscores=True)
+    last = p.execute()[2]
+    until = max([ttl_s + now] + [sc for _h, sc in last])
+    r().set(LLM_REQ, holder, ex=max(1, int(until - now)))  # 예고는 도는 호출 중 가장 늦은 만료까지
     t0 = time.time()
     other = {}
     try:
@@ -162,12 +172,33 @@ def llm_power_request(holder: str = "llm", llm_gpu: int = 1, ttl_s: int = 30, wa
     except Exception:
         pass
     ok = not other or max(other.values()) < limit_w
+    if not ok:
+        try:
+            r().lpush(LLM_OVERLAP, json.dumps({"at": now_iso(), "holder": holder, "other_w": other,
+                                               "waited_s": round(time.time() - t0, 2)}, ensure_ascii=False))
+            r().ltrim(LLM_OVERLAP, 0, 199)
+        except Exception:
+            pass
     return {"waited_s": round(time.time() - t0, 2), "other_w": other, "ok": ok}
 
 
 def llm_power_done(holder: str = "llm"):
-    if r().get(LLM_REQ) == holder:
-        r().delete(LLM_REQ)
+    """이 호출을 목록에서 빼고, 도는 호출이 하나도 없으면 예고를 지운다. 남아 있으면 예고를 그 호출 이름·남은 시간으로 이어 둔다.
+    (옛 방식: 같은 이름이면 지움 — 두 세션이 같은 'agent:vllm' 으로 겹치면 먼저 끝난 쪽이 다른 쪽 생성 중에 예고를 지웠다)"""
+    now = time.time()
+    try:
+        p = r().pipeline()
+        p.zrem(LLM_CALLS, holder)
+        p.zremrangebyscore(LLM_CALLS, "-inf", now)
+        p.zrange(LLM_CALLS, -1, -1, withscores=True)
+        rest = p.execute()[2]
+    except Exception:
+        rest = []
+    if not rest:
+        r().delete(LLM_REQ, LLM_CALLS)
+        return
+    h, until = rest[0]
+    r().set(LLM_REQ, h, ex=max(1, int(until - now)))
 
 
 def inflight_touch(pool: str, job_id: str, shard_id: str):

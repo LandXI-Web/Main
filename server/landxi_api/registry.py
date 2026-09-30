@@ -2,40 +2,178 @@
 from __future__ import annotations
 
 import json
+import secrets
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Query, Request
 
 from . import config
 from .deps import ApiError, audit, db, principal, require
 from .envelope import env, now_iso
 
 router = APIRouter()
-MODEL_COLS = "id, family, version, weights_uri, task, classes, input, gsd_trained_m, metrics, perf, status, image, tile_size, infer_shape, card_url, adapter"
+MODEL_COLS = ("id, family, version, weights_uri, task, classes, input, gsd_trained_m, metrics, perf, status, image, tile_size, infer_shape, card_url, adapter, "
+              "name, sample_id, train_job, train_log, created_at")
 
 
-def model_dict(r) -> dict:
-    return {"id": r["id"], "family": r["family"], "task": r["task"], "classes": r["classes"] or [], "weights_uri": r["weights_uri"],
+def model_dict(r, train: bool = True, base_of: dict | None = None) -> dict:
+    """모델 한 행. train=False 면 계약(F1 §4.6) 모양 그대로 — 목록은 ?with=train 일 때만 학습 칸(이름·상태 말·회차 기록·기반 모델)을 붙인다.
+    base_model = 그 모델을 만든 학습 작업이 고른 기반 모델(작업 기록 한 출처 · 화면 선택 상자 값이 아님)."""
+    d = {"id": r["id"], "family": r["family"], "task": r["task"], "classes": r["classes"] or [], "weights_uri": r["weights_uri"],
             "input": r["input"] or [], "gsd_trained_m": float(r["gsd_trained_m"]) if r["gsd_trained_m"] is not None else None,
             "tile_size": r["tile_size"], "infer_shape": list(r["infer_shape"]) if r["infer_shape"] else None, "image": r["image"],
             "metrics": r["metrics"] or {}, "perf": r["perf"], "status": r["status"], "card_url": r["card_url"]}
+    if not train:
+        return d
+    return {**d,
+            "name": (r["name"] or {}).get("ko") if isinstance(r["name"], dict) else r["name"], "sample_id": r["sample_id"],
+            "train_job": r["train_job"], "train_log": _log(r["train_log"]),
+            "base_model": (base_of or {}).get(r["train_job"]) if r["train_job"] else None,
+            "created_at": r["created_at"].isoformat(timespec="seconds") if r["created_at"] else None,
+            "status_label": STATUS_MODEL.get(r["status"] or "", r["status"])}
+
+
+async def train_bases(conn) -> dict:
+    """학습 작업 id → 그 작업의 기반 모델(jobs.model_id · 학습 작업은 기반 모델로 제출된다)."""
+    return {x["id"]: x["model_id"] for x in await conn.fetch("SELECT id, model_id FROM jobs WHERE kind='train'")}
+
+
+# ── 규칙 × 모델 클래스(서비스 만들기) — 규칙의 근거 대상(evidence_cls)을 모델이 찾을 때만 그 규칙이 뜻을 가진다 ──
+def class_keys(classes) -> set[str]:
+    """모델 클래스 → 규칙 피연산자 키(bld·crop·park·gh). '비닐하우스_단동' 같은 세부 이름은 앞말로 본다."""
+    from survey import rules as RL
+    names = (RL.operand_map().get("classes") or {})
+    out = set()
+    for c in classes or []:
+        s = str(c).strip()
+        for cand in {s, s.split("_")[0], s.lower()}:
+            for k, vs in names.items():
+                if cand in vs:
+                    out.add(k)
+    return out
+
+
+def rules_fit(classes) -> dict[str, bool]:
+    """규칙 id → 이 클래스들로 평가할 수 있는가(근거 대상 evidence_cls 가 모델 클래스에 있음)."""
+    from survey import rules as RL
+    keys = class_keys(classes)
+    return {rid: (d.get("evidence_cls") in keys) for rid, d in RL.definitions().items()}
+
+
+def _log(rows) -> list | None:
+    """회차 기록 → 봉투(측정 · 학습 검증). index = 회차."""
+    if not rows:
+        return None
+    return [{"index": x.get("epoch"), "label": f"{x.get('epoch')}/{x.get('epochs')}",
+             **{k: env(x.get(k), "ratio", "measured", "학습 검증") for k in ("map50", "precision", "recall")}} for x in rows]
+
+
+STATUS_MODEL = {"candidate": "결과 확인 전", "pending": "승인 대기", "registered": "등록", "retired": "내림", "recorded": "기록"}
+
+
+async def sync_model_approvals(conn) -> int:
+    """모델 등록 결재(approvals subject_type 'model')가 결재함에서 결정됐으면 모델 상태에 반영(승인 = registered · 반려 = candidate)."""
+    a = await conn.execute("UPDATE models m SET status='registered' FROM approvals a WHERE a.subject_type='model' AND a.subject_id=m.id "
+                           "AND a.decision='approve' AND m.status='pending'")
+    b = await conn.execute("UPDATE models m SET status='candidate' FROM approvals a WHERE a.subject_type='model' AND a.subject_id=m.id "
+                           "AND a.decision='reject' AND m.status='pending' AND NOT EXISTS (SELECT 1 FROM approvals x WHERE x.subject_type='model' "
+                           "AND x.subject_id=m.id AND coalesce(x.state,'')='pending')")
+    return int(a.split()[-1]) + int(b.split()[-1])
 
 
 @router.get("/registry/models")
-async def models(request: Request):
+async def models(request: Request, with_: str | None = Query(None, alias="with")):
     require(principal(request), lx=True)
     async with db(realm="lx") as conn:
+        await sync_model_approvals(conn)
         rows = await conn.fetch(f"SELECT {MODEL_COLS} FROM models ORDER BY id")
-    return {"items": [model_dict(r) for r in rows], "total": len(rows), "as_of": now_iso()}
+        bases = await train_bases(conn) if with_ == "train" else None
+    return {"items": [model_dict(r, with_ == "train", bases) for r in rows], "total": len(rows), "as_of": now_iso()}
+
+
+@router.get("/registry/model-rules")
+async def model_rules(request: Request, model_id: str):
+    """서비스 만들기 — 규칙마다 이 모델로 평가할 수 있는지(fits). 맞지 않는 규칙은 고를 수 없다(서버도 거절)."""
+    require(principal(request), lx=True)
+    async with db(realm="lx") as conn:
+        m = await conn.fetchrow("SELECT classes FROM models WHERE id=$1", model_id)
+        rows = await conn.fetch("SELECT id, name FROM survey_rules ORDER BY id")
+    if not m:
+        raise ApiError("not_found", "모델이 없습니다")
+    fit = rules_fit(m["classes"] or [])
+    return {"items": [{"id": r["id"], "name": r["name"], "fits": bool(fit.get(r["id"]))} for r in rows if r["id"] in fit],
+            "as_of": now_iso()}
 
 
 @router.get("/registry/models/{mid:path}")
 async def model(mid: str, request: Request):
     require(principal(request), lx=True)
     async with db(realm="lx") as conn:
+        await sync_model_approvals(conn)
         r = await conn.fetchrow(f"SELECT {MODEL_COLS} FROM models WHERE id=$1", mid)
+        bases = await train_bases(conn) if r and r["train_job"] else None
     if not r:
         raise ApiError("not_found", f"model {mid} 없음")
-    return model_dict(r)
+    return model_dict(r, True, bases)
+
+
+def _staff(p):
+    if p.role not in ("staff", "admin"):
+        raise ApiError("forbidden", "LX 직원·관리자만")
+    return p
+
+
+@router.post("/registry/model-register", status_code=202)
+async def register_model(body: dict, request: Request):
+    """모델 등록 요청(r3-train) — 학습 끝 모델(결과 확인 전 · candidate) → 승인 대기(pending) + 관리자 결재 한 줄(approvals subject_type 'model').
+    본문 {model_id, reason?}. (모델 id 에 '/' 가 있어 경로 대신 본문으로 받는다)"""
+    p = _staff(require(principal(request), lx=True))
+    mid = body.get("model_id")
+    async with db(realm="lx") as conn:
+        r = await conn.fetchrow("SELECT id, status, name, metrics FROM models WHERE id=$1", mid)
+        if not r:
+            raise ApiError("not_found", "모델이 없습니다")
+        if r["status"] == "pending":
+            aid = await conn.fetchval("SELECT id FROM approvals WHERE subject_type='model' AND subject_id=$1 AND state='pending' ORDER BY at DESC LIMIT 1", mid)
+            return {"id": mid, "status": "pending", "approval_id": aid, "as_of": now_iso()}
+        if r["status"] != "candidate":
+            raise ApiError("conflict", "결과 확인 전 모델만 등록을 요청합니다", {"status": r["status"]}, 409)
+        name = (r["name"] or {}).get("ko") if isinstance(r["name"], dict) else r["name"]
+        met = r["metrics"] or {}
+        mk = next((k for k in ("metrics/mAP50(M)", "metrics/mAP50(B)", "mask_mAP50", "box_mAP50", "mAP50") if k in met), None)
+        mv = met[mk].get("value") if mk and isinstance(met[mk], dict) else (met[mk] if mk else None)
+        aid = "ap_" + secrets.token_hex(6)
+        await conn.execute("INSERT INTO approvals(id, subject_type, subject_id, requested_by, state, payload, reason, tenant_id, at) "
+                           "VALUES ($1,'model',$2,$3,'pending',$4,$5,'lx',now())", aid, mid, p.user_id,
+                           {"action": "register", "name": name, "metric": mv}, body.get("reason") or "모델 등록")
+        await conn.execute("UPDATE models SET status='pending' WHERE id=$1", mid)
+        await audit(conn, p, "model.register_request", mid, {"status": "candidate"}, {"status": "pending", "approval_id": aid})
+    from .jobs import ops_event
+    await ops_event("approval.requested", {"approval_id": aid, "subject_type": "model", "subject_id": mid, "by": p.user_id, "at": now_iso()})
+    return {"id": mid, "status": "pending", "approval_id": aid, "as_of": now_iso()}
+
+
+@router.post("/registry/model-decide")
+async def decide_model(body: dict, request: Request):
+    """관리자 결정(r3-train) — 모델 등록 결재 승인 = registered · 반려 = candidate. 본문 {model_id, decision, reason?}.
+    결재함(/approvals/{id}/decide)으로 결정해도 같은 결과(모델 목록을 읽을 때 반영)."""
+    p = require(principal(request), admin=True)
+    mid = body.get("model_id")
+    dec = body.get("decision")
+    if dec not in ("approve", "reject"):
+        raise ApiError("bad_request", "decision approve|reject")
+    async with db(realm="lx") as conn:
+        aid = await conn.fetchval("SELECT id FROM approvals WHERE subject_type='model' AND subject_id=$1 AND state='pending' ORDER BY at DESC LIMIT 1", mid)
+        if not aid:
+            raise ApiError("not_found", "승인 대기 중인 등록 요청이 없습니다")
+        await conn.execute("UPDATE approvals SET state='decided', decision=$2, decided_by=$3, decided_at=now(), reason=coalesce($4, reason) WHERE id=$1",
+                           aid, dec, p.user_id, body.get("reason"))
+        await conn.execute("UPDATE models SET status=$2 WHERE id=$1", mid, "registered" if dec == "approve" else "candidate")
+        await audit(conn, p, f"approval.{dec}", aid, {"subject_type": "model", "subject_id": mid}, {"effect": {"model": mid}})
+        r = await conn.fetchrow(f"SELECT {MODEL_COLS} FROM models WHERE id=$1", mid)
+    from .jobs import ops_event
+    await ops_event("approval.decided", {"approval_id": aid, "subject_type": "model", "subject_id": mid, "decision": dec, "by": p.user_id,
+                                         "at": now_iso()})
+    return {**model_dict(r), "approval_id": aid, "decision": dec, "as_of": now_iso()}
 
 
 STATUS_LABEL = {"ops": "운영", "pilot": "시범", "first": "첫 결과 전"}
@@ -88,34 +226,111 @@ async def cards(request: Request, public: int | None = None):
 ROLES_OK = {"pnu", "jibun", "emd", "ri", "bon", "bu", "san", "status", "use", "date", "area", "permit_no", "owner_type", "lon", "lat"}
 
 
+def clean_schema(body: dict) -> dict:
+    """대장 스키마 검사 — {kind, columns:[{key, label, role}]} · 성명·연락처 열 금지 · 잘못된 항목은 400."""
+    from .ledger import KINDS, is_pii
+    kind = body.get("kind")
+    cols = body.get("columns") or []
+    if kind not in KINDS:
+        raise ApiError("bad_request", "대장 종류", {"allowed": list(KINDS)})
+    if not isinstance(cols, list) or not cols:
+        raise ApiError("bad_request", "columns 가 비었습니다")
+    clean = []
+    for i, c in enumerate(cols):
+        if not isinstance(c, dict):              # 문자열·숫자·null 항목 = 400(계약 v1.2-16 · 500 금지)
+            raise ApiError("bad_request", "columns 항목은 {key, label, role} 객체여야 합니다", {"index": i, "got": type(c).__name__})
+        role = c.get("role")
+        if role not in ROLES_OK:
+            raise ApiError("bad_request", "알 수 없는 역할", {"role": role, "allowed": sorted(ROLES_OK)})
+        label = str(c.get("label") or c.get("key") or "")[:40]
+        if is_pii(label):
+            raise ApiError("bad_request", "성명·연락처 열은 스키마에 둘 수 없습니다", {"label": label})
+        clean.append({"key": str(c.get("key") or role)[:40], "label": label, "role": role})
+    return {"kind": kind, "columns": clean}
+
+
+CORE_MODULES = ["mod-auth", "mod-map", "mod-result", "mod-stats", "mod-report", "mod-feedback", "mod-usage"]
+
+
+@router.get("/registry/ledger_kinds")
+async def ledger_kinds(request: Request):
+    """서비스 만들기용 대장 형식 목록 — 대장 종류(이름) + 그 종류의 스키마를 가진 카드(복사해 쓸 수 있는 형식)."""
+    require(principal(request), lx=True)
+    from .ledger import KINDS
+    async with db(realm="lx") as conn:
+        rows = await conn.fetch("SELECT id, ledger_schema FROM cards WHERE ledger_schema IS NOT NULL ORDER BY id")
+    have = {}
+    for r in rows:
+        k = (r["ledger_schema"] or {}).get("kind")
+        if k and k not in have:
+            have[k] = r["id"]
+    return {"items": [{"kind": k, "label": v, "ready": k in have} for k, v in KINDS.items()], "as_of": now_iso()}
+
+
+@router.post("/registry/cards", status_code=201)
+async def create_card(body: dict, request: Request):
+    """서비스 만들기(r3-train · C5) — 등록된 모델 + 규칙(기존 규칙 중 선택) + 대장 형식 → 새 서비스 카드 + 첫 버전(1.0).
+    본문 {name, model_id, rules:[id..], ledger_kind | ledger_schema{kind, columns}, domain?}. LX 직원·관리자."""
+    p = require(principal(request), lx=True)
+    if p.role not in ("staff", "admin"):
+        raise ApiError("forbidden", "LX 직원·관리자만 서비스를 만듭니다")
+    name = str(body.get("name") or "").strip()[:60]
+    mid = body.get("model_id")
+    rules = body.get("rules") or []
+    if not name:
+        raise ApiError("bad_request", "서비스 이름을 적어 주세요")
+    if not isinstance(rules, list) or not all(isinstance(x, str) for x in rules):
+        raise ApiError("bad_request", "rules 는 규칙 id 목록")
+    async with db(realm="lx") as conn:
+        await sync_model_approvals(conn)
+        m = await conn.fetchrow("SELECT id, status, name, task, classes FROM models WHERE id=$1", mid) if mid else None
+        if not m:
+            raise ApiError("not_found", "모델이 없습니다")
+        if m["status"] != "registered":
+            raise ApiError("conflict", "등록된 모델로만 서비스를 만듭니다", {"status": m["status"]}, 409)
+        if rules:
+            ok = {r["id"]: r["name"] for r in await conn.fetch("SELECT id, name FROM survey_rules WHERE id = ANY($1::text[])", rules)}
+            bad = [x for x in rules if x not in ok]
+            if bad:
+                raise ApiError("bad_request", "없는 규칙", {"rules": bad})
+            fit = rules_fit(m["classes"] or [])
+            off = [x for x in rules if not fit.get(x)]
+            if off:        # 모델이 찾지 않는 대상의 규칙(예: 곤포사일리지 모델 + 휴경·전용) — 모든 필지가 '부재'로 걸리는 뜻 없는 의심을 막는다
+                raise ApiError("bad_request", "이 모델이 찾지 않는 대상의 규칙입니다: " + ", ".join(ok[x] for x in off), {"rules": off})
+        if body.get("ledger_schema"):
+            schema = clean_schema(body["ledger_schema"])
+        else:
+            kind = body.get("ledger_kind")
+            src = await conn.fetchval("SELECT ledger_schema FROM cards WHERE ledger_schema->>'kind'=$1 ORDER BY id LIMIT 1", kind) if kind else None
+            if not src:
+                from .ledger import KINDS
+                raise ApiError("bad_request", "대장 형식을 골라 주세요", {"allowed": list(KINDS)})
+            schema = src
+        cid = "card-" + secrets.token_hex(3)
+        while await conn.fetchval("SELECT 1 FROM cards WHERE id=$1", cid):
+            cid = "card-" + secrets.token_hex(3)
+        domain = str(body.get("domain") or name)[:80]
+        await conn.execute("INSERT INTO cards(id, name, scope, domain, kind, status_history, portable, ledger_schema) "
+                           "VALUES ($1,$2,'local',$3,$4,'검토',true,$5)", cid, {"ko": name, "en": name}, domain,
+                           json.dumps({"input": ["ortho"], "output": ["polygon"], "viz": ["layer", "chart"]}), schema)
+        cv = f"{cid}@1.0"
+        await conn.execute("INSERT INTO card_versions(id, card_id, version, model_ids, modules, changelog, approved_by, approved_at) "
+                           "VALUES ($1,$2,'1.0',$3,$4,$5,$6,now())", cv, cid, [mid],
+                           {"core": CORE_MODULES, "ext": {"mod-parcel": bool(rules)}, "rules": rules}, "서비스 만들기", p.user_id)
+        # 규칙을 고른 서비스 = 필지 대조(실태조사까지 · 고른 규칙만). 규칙이 없으면 AI 분석까지만(탐지 서비스)
+        await audit(conn, p, "card.create", cid, None, {"card_version_id": cv, "model_id": mid, "rules": rules, "ledger_kind": schema.get("kind")})
+    from .jobs import ops_event
+    await ops_event("deploy.changed", {"card_id": cid, "action": "card.create", "by": p.user_id, "at": now_iso()})
+    return {"id": cid, "name": name, "card_version_id": cv, "models": [mid], "rules": rules, "ledger_schema": schema, "as_of": now_iso()}
+
+
 @router.put("/registry/cards/{cid}/ledger_schema")
 async def put_ledger_schema(cid: str, body: dict, request: Request):
     """대장 스키마(반입 자동 인식 템플릿) — {kind, columns:[{key, label, role}]} · LX staff/admin. 성명 열 역할 없음."""
     p = require(principal(request), lx=True)
     if p.role not in ("staff", "admin"):
         raise ApiError("forbidden", "LX 영업 계정은 읽기 전용")
-    from .ledger import KINDS, is_pii
-    kind = body.get("kind")
-    cols = body.get("columns") or []
-    if body.get("clear"):
-        schema = None
-    else:
-        if kind not in KINDS:
-            raise ApiError("bad_request", "대장 종류", {"allowed": list(KINDS)})
-        if not isinstance(cols, list) or not cols:
-            raise ApiError("bad_request", "columns 가 비었습니다")
-        clean = []
-        for i, c in enumerate(cols):
-            if not isinstance(c, dict):              # 문자열·숫자·null 항목 = 400(계약 v1.2-16 · 500 금지)
-                raise ApiError("bad_request", "columns 항목은 {key, label, role} 객체여야 합니다", {"index": i, "got": type(c).__name__})
-            role = c.get("role")
-            if role not in ROLES_OK:
-                raise ApiError("bad_request", "알 수 없는 역할", {"role": role, "allowed": sorted(ROLES_OK)})
-            label = str(c.get("label") or c.get("key") or "")[:40]
-            if is_pii(label):
-                raise ApiError("bad_request", "성명·연락처 열은 스키마에 둘 수 없습니다", {"label": label})
-            clean.append({"key": str(c.get("key") or role)[:40], "label": label, "role": role})
-        schema = {"kind": kind, "columns": clean}
+    schema = None if body.get("clear") else clean_schema(body)
     async with db(realm="lx") as conn:
         before = await conn.fetchval("SELECT ledger_schema FROM cards WHERE id=$1", cid)
         if before is None and not await conn.fetchval("SELECT 1 FROM cards WHERE id=$1", cid):

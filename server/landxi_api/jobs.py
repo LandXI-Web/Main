@@ -236,8 +236,25 @@ async def build_quote(p: Principal, body: dict) -> dict:
     tenant = "lx-demo" if demo else (p.tenant_id if p.realm == "tenant" else "lx")
     if kind == "infer" and opts.get("scope") == "sgg":
         return await _quote_sgg(p, body, opts, demo, tenant, reasons)      # 시군구 전역 분석(core-xi)
+    auto = None
+    if kind == "infer" and body.get("aoi") and not body.get("imagery_id"):
+        # 읍면동 · 그린 범위(r3-xi · M11) — 영상 · 모델은 서버가 고른다(등록 영상 COG 포함 · 전역 분석과 같은 규칙).
+        # 범위는 영상 footprint 로 자른다(영상 밖은 분석하지 않는다). 겹치는 영상이 없을 때만 no_imagery('영상 등록 필요').
+        auto = await _auto_imagery(p, normalize_aoi(body.get("aoi")))
+        if not auto.get("imagery_id"):
+            reasons.append(auto.get("reason") or "no_imagery")
+            return {"area_km2": env(None, "km2", "measured", "범위 ∩ 영상", "영상 없음"), "shards": 0,
+                    "shards_env": env(0, "count", "measured", "tiling"), "gpu_s": env(None, "gpu_s", "estimate", "영상 없음"),
+                    "eta_s": env(None, "s", "estimate", "영상 없음"), "quota": None, "allowed": False, "reasons": reasons, "pool": config.POOL,
+                    "kind": kind, "demo": demo, "power_budget": None, "imagery": None, "coverage": env(0.0, "ratio", "measured", "범위 ∩ 영상 footprint"),
+                    "_aoi": None, "_tenant": tenant, "_model": None, "_img": None, "_adapter": None, "_opts": None}
+        body = {**body, "imagery_id": auto["imagery_id"], "aoi": auto["aoi"]}
     async with db(realm="lx") as conn:
         model, img = await _load(conn, body.get("model_id"), body.get("imagery_id"))
+        if auto and img is not None and model is None:
+            model = await _pick_model(conn, img["kind"] or "ortho", float(img["gsd_m"] or 0.25))
+            if model is None:
+                reasons.append("model_input_mismatch")
     if body.get("model_id") and not model:
         raise ApiError("not_found", f"model {body.get('model_id')} 없음")
     if body.get("imagery_id") and not img:
@@ -350,10 +367,50 @@ async def build_quote(p: Principal, body: dict) -> dict:
         "allowed": not reasons, "reasons": reasons, "pool": pool, "kind": kind, "demo": demo,
         "power_budget": await power_budget() if pool != "cpu" else None,
         "_aoi": aoi, "_tenant": tenant, "_model": dict(model) if model else None, "_img": dict(img) if img else None,
-        "_adapter": adapter_id, "_opts": plan_opts or None,
+        "_adapter": adapter_id, "_opts": plan_opts or None, "_auto": bool(auto),
         **({"upsample": plan_opts["upsample"]} if plan_opts else {}),     # live: 서버가 고른 해상도(화면은 예상 시간 기록 대조에만 쓴다)
         **({"aoi": aoi} if (live and aoi) else {}),                        # live: 서버가 녹여 합친 범위(화면 프레임 · 타일 이음새 없는 한 면)
+        **({"imagery": {"id": img["id"], "gsd_m": float(img["gsd_m"] or 0), "kind": img["kind"], "year": auto.get("year"),
+                        "coverage": env(auto.get("coverage"), "ratio", "measured", "그린 범위 ∩ 영상 footprint")},
+            "model_id": model["id"] if model else None} if auto and img else {}),
     }
+
+
+async def _auto_imagery(p: Principal, aoi: dict | None) -> dict:
+    """범위(4326) → {imagery_id, year, coverage, aoi(영상 footprint 로 자른 한 면)} | {imagery_id: None, reason}.
+    catalog.best_imagery 와 같은 순위(imagery_src.choose) · 기관 계정은 원본(tier raw) 제외 · 원본 파일이 있는 영상만."""
+    if not aoi:
+        return {"imagery_id": None, "reason": "no_imagery"}
+    from workers import imagery_src as isrc
+    g = shape(aoi).buffer(0)
+    async with db(realm="lx") as conn:
+        recs = await conn.fetch(isrc.SQL_ROWS + " AND ST_Intersects(footprint, ST_SetSRID(ST_GeomFromGeoJSON($1),4326))", json.dumps(mapping(g)))
+        raw = {x["id"] for x in await conn.fetch("SELECT id FROM imagery WHERE tier='raw'")} if p.realm == "tenant" else set()
+    rows = [r for r in await run_in_threadpool(isrc.rows_from, recs) if r["id"] not in raw and (r.get("gsd_m") is None or float(r["gsd_m"]) < 1)]
+    best = await run_in_threadpool(isrc.choose, rows, g)
+    if not best:
+        # 범위의 2% 미만만 덮는 영상(choose 의 하한)이라도 1 ha 이상 겹치면 그 겹친 곳을 분석한다 — 전역 분석이 센 '영상과 겹치는 읍면동'
+        # (sgg_scope · 1 ha)을 눌렀을 때 '영상 등록 필요'가 뜨지 않게(같은 기준)
+        from workers.tiling import area_km2
+        cand = []
+        for r in rows:
+            if not r.get("readable") or r.get("fp") is None or not r["fp"].intersects(g):
+                continue
+            try:
+                a = area_km2(mapping(r["fp"].intersection(g)))
+            except Exception:                           # noqa: BLE001
+                continue
+            if a >= 0.01:
+                cand.append((a, r))
+        if cand:
+            a, r = max(cand, key=lambda t: t[0])
+            best = {**r, "coverage": round(r["fp"].intersection(g).area / max(g.area, 1e-12), 4)}
+    if not best:
+        return {"imagery_id": None, "reason": "no_imagery"}
+    cut = g.intersection(best["fp"])
+    if cut.is_empty or cut.area <= 0:
+        return {"imagery_id": None, "reason": "no_imagery"}
+    return {"imagery_id": best["id"], "year": isrc._year(best) or None, "coverage": best["coverage"], "aoi": normalize_aoi(mapping(cut))}
 
 
 def aoi_area(g: dict) -> tuple[float, str]:
@@ -504,6 +561,77 @@ def _hull(aoi: dict | None) -> dict | None:
     return mapping(h)
 
 
+# ── 영상 범위 문장(r3-xi · M12 · plan 3.3 · 4절 기본값) — 답 · 확인 카드 · 진행판이 이 한 함수의 글자를 그대로 쓴다 ──────────
+FULL_COVER = 0.95          # 영상이 시군구를 95% 이상 덮을 때만 '전역'
+
+
+def _pct_words(cov: float, lang: str) -> str:
+    p = float(cov or 0) * 100
+    if lang == "en":
+        return "less than 1%" if p < 1 else f"about {round(p)}%"
+    return "1% 미만" if p < 1 else f"약 {round(p)}%"
+
+
+def scope_words(cov: float | None, n: int | None, m: int | None, lang: str = "ko") -> str | None:
+    """영상 범위 → 사용자 말 한 줄. 덮는 비율이 95% 이상이면 '전역', 아니면 '영상이 있는 곳만'. 값이 없으면 None(지어내지 않는다)."""
+    if cov is None or m is None:
+        return None
+    if cov >= FULL_COVER:
+        return f"Analyzing the whole area — all {m} districts" if lang == "en" else f"시군구 전역을 분석합니다 — 읍면동 {m}곳"
+    if lang == "en":
+        return f"Analyzing only where imagery exists — {n} of {m} districts, {_pct_words(cov, 'en')} of the area"
+    return f"영상이 있는 곳만 분석합니다 — 읍면동 {n}곳, 시군구 면적의 {_pct_words(cov, 'ko')}"
+
+
+REST_WORDS = {"ko": "나머지는 영상 등록 후 분석", "en": "The rest can be analyzed after imagery is registered"}
+
+
+def scope_block(sc: dict | None) -> dict | None:
+    """sgg_scope 결과 → 견적 · 작업 옵션에 넣는 범위 봉투 묶음(coverage · emd_covered · emd_total) + 문장."""
+    if not sc:
+        return None
+    cov, n, m = float(sc["coverage"]), int(sc["emd_covered"]), int(sc["emd_total"])
+    src = "시군구 읍면동 ∩ 영상 footprint(EPSG:5186)"
+    return {"coverage": env(round(cov, 4), "ratio", "measured", src, None if cov >= FULL_COVER else "영상이 있는 곳만 분석"),
+            "emd_covered": env(n, "count", "measured", f"{src} · 1 ha 이상 겹치는 읍면동"),
+            "emd_total": env(m, "count", "recorded", "V-World LT_C_ADEMD_INFO(읍면동 경계)"),
+            "full": cov >= FULL_COVER, "text": scope_words(cov, n, m, "ko"), "text_en": scope_words(cov, n, m, "en"),
+            "rest": None if cov >= FULL_COVER else REST_WORDS["ko"], "rest_en": None if cov >= FULL_COVER else REST_WORDS["en"],
+            "emds": [{"emd_cd": e["emd_cd"], "name": e["name"]} for e in sc.get("emds") or []]}
+
+
+async def _sgg_scope(img_id: str, cd: str) -> dict | None:
+    from workers.scheduler import sgg_scope
+    try:
+        return await run_in_threadpool(sgg_scope, img_id, cd)
+    except Exception as e:                              # noqa: BLE001 — 범위를 못 세면 문장을 내지 않는다(지어내지 않음)
+        import logging
+        logging.getLogger("landxi").warning("sgg_scope %s %s: %r", img_id, cd, e)
+        return None
+
+
+@router.get("/jobs/scope/{sgg_cd}")
+async def job_scope(sgg_cd: str, request: Request):
+    """시군구 AI 분석이 덮을 범위(확인 카드용 · GPU·모델 적재 0 · 계획 0) — 영상은 전역 분석 견적과 같은 규칙으로 고른다."""
+    from . import regions as R
+    p = require(principal(request))
+    reg = R.region_of(sgg_cd)
+    if not reg:
+        raise ApiError("not_found", "해당 지역이 없습니다", {"sgg_cd": sgg_cd})
+    cd = reg["sgg_cd"]
+    ix = await run_in_threadpool(R.emd_index, cd)
+    if ix is None or not len(ix):
+        raise ApiError("upstream_unavailable", "읍면동 경계를 받을 수 없습니다", {"sgg_cd": cd}, status=503)
+    best = await _best_imagery(cd, R.sgg_codes(cd), mapping(ix.union.simplify(0.0002)), p.realm == "tenant")
+    base = {"sgg_cd": cd, "region_name": reg["name"], "as_of": now_iso()}
+    if not best.get("imagery_id"):
+        return {**base, "imagery": None, "reason": best.get("reason") or "no_imagery", "coverage": env(0.0, "ratio", "measured", "시군구 ∩ 영상", "영상 없음"),
+                "emd_covered": env(0, "count", "measured", "시군구 ∩ 영상"), "emd_total": env(len(ix), "count", "recorded", "V-World LT_C_ADEMD_INFO(읍면동 경계)"),
+                "text": None, "text_en": None}
+    blk = scope_block(await _sgg_scope(best["imagery_id"], cd))
+    return {**base, "imagery": {"id": best["imagery_id"], "year": best.get("year")}, **(blk or {})}
+
+
 async def _quote_sgg(p: Principal, body: dict, opts: dict, demo: bool, tenant: str, reasons: list[str]) -> dict:
     from . import regions as R
     sgg_in = str(opts.get("sgg_cd") or body.get("sgg_cd") or "")
@@ -537,11 +665,12 @@ async def _quote_sgg(p: Principal, body: dict, opts: dict, demo: bool, tenant: s
             model, img = await _load(conn, body.get("model_id"), best["imagery_id"])
             if model is None and img is not None:
                 model = await _pick_model(conn, img["kind"], float(img["gsd_m"] or 0.25))
-    no_img = {"area_km2": env(None, "km2", "measured", "시군구 ∩ 영상", "영상 없음"), "shards": 0,
+    no_img = {**base, "area_km2": env(None, "km2", "measured", "시군구 ∩ 영상", "영상 없음"), "shards": 0,
               "shards_env": env(0, "count", "measured", "plan_sgg"), "gpu_s": env(None, "gpu_s", "estimate", "영상 없음"),
               "eta_s": env(None, "s", "estimate", "영상 없음"), "quota": None, "allowed": False, "pool": config.POOL, "kind": "infer",
               "demo": demo, "power_budget": None, "coverage": env(0.0, "ratio", "measured", "시군구 읍면동 ∩ 영상 footprint"),
-              "imagery": None, "_aoi": None, "_tenant": tenant, "_model": None, "_img": None, "_adapter": None, "_opts": None, **base}
+              "emd_covered": env(0, "count", "measured", "시군구 읍면동 ∩ 영상 footprint"),
+              "imagery": None, "_aoi": None, "_tenant": tenant, "_model": None, "_img": None, "_adapter": None, "_opts": None}
     if not img:
         reasons.append(best.get("reason") or "no_imagery")
         return {**no_img, "reasons": reasons}
@@ -598,7 +727,16 @@ async def _quote_sgg(p: Principal, body: dict, opts: dict, demo: bool, tenant: s
     by_cd = dict(zip(ix.codes, ix.names))
     emds = [{"emd_cd": e["emd_cd"], "name": by_cd.get(e["emd_cd"]), "shards": e["shards"]} for e in (info or {}).get("emd", [])]
     img_d = dict(img)
+    # 영상 범위(r3-xi · M12) — coverage · emd_covered · emd_total 은 sgg_scope 한 곳에서(확인 카드 GET /jobs/scope 와 같은 값)
+    sc = scope_block(await _sgg_scope(img_d["id"], cd))
+    scope_env = {"coverage": sc["coverage"], "emd_covered": sc["emd_covered"], "emd_total": sc["emd_total"]} if sc else \
+        {"coverage": env(round(cov, 4), "ratio", "measured", "시군구 읍면동 ∩ 영상 footprint", None if cov >= FULL_COVER else "영상이 있는 곳만 분석")}
+    scope_txt = {"text": sc["text"], "text_en": sc["text_en"], "rest": sc["rest"], "rest_en": sc["rest_en"], "full": sc["full"]} if sc else None
+    opt_scope = {"coverage": sc["coverage"]["value"], "emd_covered": sc["emd_covered"]["value"], "emd_total": sc["emd_total"]["value"],
+                 "scope_text": sc["text"], "scope_text_en": sc["text_en"], "scope_rest": sc["rest"], "scope_full": sc["full"]} if sc else \
+        {"coverage": round(cov, 4)}
     return {
+        **base,
         "area_km2": env((info or {}).get("area_km2"), "km2", "measured", "시군구 읍면동 ∩ 영상 footprint(EPSG:5186)"),
         "shards": shards_n, "shards_env": env(shards_n, "count", "measured", f"plan_sgg(chip {chip} · upsample {up:g})"),
         "gpu_s": gpu_s, "eta_s": eta,
@@ -607,12 +745,11 @@ async def _quote_sgg(p: Principal, body: dict, opts: dict, demo: bool, tenant: s
                   "policy": q["policy"]},
         "allowed": not reasons, "reasons": reasons, "pool": pool, "kind": "infer", "demo": demo,
         "power_budget": await power_budget() if pool != "cpu" else None,
-        "coverage": env(round(cov, 4), "ratio", "measured", "시군구 읍면동 ∩ 영상 footprint", None if cov >= 0.995 else "영상이 있는 곳만 분석"),
+        **scope_env, **({"scope": scope_txt} if scope_txt else {}),
         "imagery": {"id": img_d["id"], "gsd_m": float(img_d["gsd_m"] or 0), "kind": img_d["kind"], "year": best.get("year"), "source": best.get("source", "local")},
         "model_id": model["id"], "upsample": up, "emds": emds,
         "_aoi": _hull(aoi_full), "_tenant": tenant, "_model": dict(model), "_img": img_d, "_adapter": None, "_plan": sh,
-        "_opts": {"scope": "sgg", "sgg_cd": cd, "center": center, "upsample": up, "area_km2": (info or {}).get("area_km2"), "coverage": round(cov, 4)},
-        **base,
+        "_opts": {"scope": "sgg", "sgg_cd": cd, "center": center, "upsample": up, "area_km2": (info or {}).get("area_km2"), **opt_scope},
     }
 
 
@@ -659,8 +796,13 @@ def _iso(v):
 async def job_dict(row, live: dict | None = None) -> dict:
     live = live or {}
     counts = json.loads(live["counts"]) if live.get("counts") else (row["counts"] or {})
-    total_n = sum(counts.values()) if counts else 0
     state = live.get("state") or row["state"]
+    if state in ("queued", "running") and live.get("counts_clean"):      # 진행 중 = 칸 겹침을 걸러 낸 수(스케줄러 · 진행판과 한 출처)
+        try:
+            counts = (json.loads(live["counts_clean"]) or {}).get("by") or counts
+        except Exception:
+            pass
+    total_n = sum(counts.values()) if counts else 0
     cps = float(live["chips_per_s"]) if live.get("chips_per_s") else None
     gpu_s = float(live["gpu_s"]) if live.get("gpu_s") else float(row["gpu_s"] or 0)
     aoi = row["aoi"] if not isinstance(row["aoi"], str) else json.loads(row["aoi"])
@@ -804,8 +946,9 @@ async def submit(body: dict, request: Request):
         opts.update(q["_opts"])
     is_test = bool(body.get("test")) or str(body.get("label") or "").lower().startswith(("pytest", "test/"))
     # 시군구 전역 분석은 서버가 영상 · 모델을 고른다(견적과 같은 값)
-    model_id = body.get("model_id") or (opts.get("base_model") if q["kind"] == "train" else None) or         ((q.get("_model") or {}).get("id") if opts.get("scope") == "sgg" else None)
-    imagery_id = body.get("imagery_id") or (opts.get("imagery_id") if q["kind"] == "tile" else None) or         ((q.get("_img") or {}).get("id") if opts.get("scope") == "sgg" else None)
+    server_pick = opts.get("scope") == "sgg" or bool(q.get("_auto"))          # 전역 분석 · 읍면동/그린 범위(영상 id 없이 온 것)
+    model_id = body.get("model_id") or (opts.get("base_model") if q["kind"] == "train" else None) or         ((q.get("_model") or {}).get("id") if server_pick else None)
+    imagery_id = body.get("imagery_id") or (opts.get("imagery_id") if q["kind"] == "tile" else None) or         ((q.get("_img") or {}).get("id") if server_pick else None)
     async with db(p) if p.realm == "tenant" else db(realm="lx") as conn:
         await conn.execute(
             "INSERT INTO jobs(id, tenant_id, submitted_by, kind, state, priority, demo, pool, model_id, imagery_id, deploy_id, card_id, aoi, "

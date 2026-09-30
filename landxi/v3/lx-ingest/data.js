@@ -262,7 +262,7 @@ export async function registerImagery({ region, path, file, year, gsd }) {
 
 let OPENAPI = null;
 async function routeMethods(path) {
-  if (!OPENAPI) OPENAPI = fetch(API.prefix + '/openapi.json', { cache: 'force-cache' }).then((r) => r.json()).catch(() => ({}));
+  if (!OPENAPI) OPENAPI = fetch(API.prefix + '/openapi.json', { cache: 'no-cache' }).then((r) => r.json()).catch(() => ({}));
   const j = await OPENAPI;
   return Object.keys(j.paths?.['/api/v1' + path] || j.paths?.[path] || {});
 }

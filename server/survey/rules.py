@@ -156,7 +156,9 @@ def rule_selects(th: dict, rules: list[str] | None = None, src: str = "p") -> st
     parts["R6"] = (f"SELECT 'R6', pnu, emd_cd, bld_in, bld_conf, "
                    f"{sc(d['R6']['base_score'], 'bld_in', 'bld_conf', f'{built} + {many}')} "
                    f"FROM {src} WHERE jimok = ANY({J['R6']}) AND bld_in >= {_f(th['R6_bld_m2'])}")
-    return "\nUNION ALL\n".join(parts[r] for r in RULE_IDS if r in rules)
+    # 열 이름은 첫 SELECT(R1)에만 있다 — R1 을 뺀 규칙 묶음(서비스에서 고른 규칙만 · r3-train)도 같은 열 이름이 되게 감싼다
+    body = "\nUNION ALL\n".join(parts[r] for r in RULE_IDS if r in rules)
+    return f"SELECT * FROM ({body}) u(rule, pnu, emd_cd, a, c, score)"
 
 
 def eval_sql(th: dict, rules: list[str] | None = None, emd_cd: bool = True) -> str:

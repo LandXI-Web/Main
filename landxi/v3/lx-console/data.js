@@ -167,8 +167,9 @@ export function pins(level = 'nat') {
 export const legend = () => ({ abroad: D.abroad.length });
 
 /* ── 이름(사용자 말) ─────────────────────────────── */
+/* 서비스 이름 — 배포 화면(lx-deploy workName)·LX 관리자 화면과 같은 규칙(이름 한 출처) */
 export const cardName = (id) => {
   const c = D.cards.find((x) => x.id === id);
   const d = D.deploys.find((x) => x.card_id === id);
-  return say(c?.name || d?.name || '').replace(/\s*\((해외|global)\)/i, '').replace(/\s*(행정서비스|실태조사 서비스|관리 서비스|탐지 서비스|서비스)$/, '').replace(/\s*·\s*이식$/, '') || '서비스';
+  return say(c?.name || d?.name || '').replace(/\s*\((해외|global)\)/i, '').replace(/\s*(행정서비스|서비스)$/, '').replace(/\s*·\s*이식$/, '') || '서비스';
 };

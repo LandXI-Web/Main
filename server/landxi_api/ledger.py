@@ -4,9 +4,11 @@ POST /t/{tenant}/survey/registry/import            multipart(file · kind) → 2
 GET  /t/{tenant}/survey/registry/{import_id}        → {columns, mapping, matched, matched_pct, by_step, unmatched[], state}
 POST /t/{tenant}/survey/registry/{import_id}/confirm {mapping} → 매칭(PNU → 지번 → 좌표 → V-World) + 규칙 L-* → 202
 GET  /t/{tenant}/survey/registry?latest=1           → 반입 목록(종류별 최신)
+GET  /t/{tenant}/survey/registry/recent?sgg=        → 이 사람이 마지막으로 올린 대장(사람별 · 시군구별 · 올리기·결합 때 적음) · 없으면 기관 최근 대장(올린 사람 역할·날짜만)
 GET  /survey/rules/ledger                           → 규칙 L-* 정의(대장 피연산자 `ledger.<kind>.<col>`)
 
 GET  /t/{tenant}/survey/registry/{import_id}/parcels → 결합된 필지(연속지적 × AI 피연산자 · GeoJSON) — 정적 필지 층이 없는 관할의 지도·표
+                                                      ?ledger=1 이면 필지마다 대장 값(상태 · 지번 · 날짜)도 — 이어 연 창이 대장 행 전체로 결합표를 만든다
 GET  /t/{tenant}/survey/ledger-schema               → 이 기관 배포 카드의 대장 형식(S-6 · 기관 세션 읽기)
 
 전국(core-fusion): 필지 색인 · 규칙 L-* 는 대장이 가리키는 시군구의 survey_parcels + survey_parcel_ai(contract-parcel-ai)를 읽는다.
@@ -481,13 +483,13 @@ def _import_view(r, unmatched: list | None = None, live: dict | None = None) -> 
            "confirmed_at": r["confirmed_at"].astimezone(KST).isoformat(timespec="seconds") if r["confirmed_at"] else None,
            "error": r["error"]}
     at = out["confirmed_at"] or out["created_at"]
-    src = "대장 × 연속지적 매칭(PNU → 지번 → 좌표 → V-World)"
+    src = "대장 × 연속지적 매칭"
     if st:
         out["matched"] = env(st.get("matched"), "count", "measured", src, as_of=at)
         out["matched_pct"] = env(st.get("matched_pct"), "%", "measured", src, as_of=at)
         out["by_step"] = {k: env(v, "count", "measured", src, as_of=at) for k, v in (st.get("by_step") or {}).items()}
         out["unmatched_n"] = env(st.get("unmatched"), "count", "measured", src, as_of=at)
-        out["findings"] = {k: env(v, "count", "inferred", "규칙 L-* · 검수 전", as_of=at) for k, v in (st.get("findings") or {}).items()}
+        out["findings"] = {k: env(v, "count", "inferred", "대장 대조 · 검수 전", as_of=at) for k, v in (st.get("findings") or {}).items()}
         if st.get("skipped"):
             out["skipped"] = st["skipped"]
         if st.get("sgg"):
@@ -521,6 +523,91 @@ async def list_imports(tenant: str, request: Request, latest: int | None = None,
     return {"items": [_import_view(r, live=live) for r in rows], "kinds": KINDS, "as_of": now_iso()}
 
 
+# ── 사람별 · 기관별 최근 대장(r3-fusion M6) ─────────────────────────────────
+RECENT_STATES = ("matched", "matching")
+ROLE_KO = {("tenant", "manager"): "기관 담당자", ("tenant", "viewer"): "기관 열람자", ("lx", "staff"): "LX 직원", ("lx", "admin"): "LX 관리자"}
+
+
+async def remember(conn, tenant: str, user_id: str | None, import_id: str, kind: str, sggs: list[str] | None = None) -> None:
+    """(기관, 사람, 시군구, 종류) → 최근 반입. sgg '*' = 시군구와 무관한 그 사람의 가장 최근 대장. 표가 없으면(마이그레이션 전) 건너뛴다."""
+    if not user_id or not import_id:
+        return
+    if not await conn.fetchval("SELECT to_regclass('ledger_recent') IS NOT NULL"):
+        return
+    for sg in dict.fromkeys(["*", *[cur_code(str(x)) for x in (sggs or []) if x]]):
+        await conn.execute("INSERT INTO ledger_recent(tenant_id, user_id, sgg_cd, kind, import_id, at) VALUES ($1,$2,$3,$4,$5,now()) "
+                           "ON CONFLICT (tenant_id, user_id, sgg_cd, kind) DO UPDATE SET import_id=EXCLUDED.import_id, at=now()",
+                           tenant, user_id, sg, kind, import_id)
+
+
+def pick_recent(mine: list[dict], org: list[dict], sgg: str | None = None, own: list[dict] | None = None) -> tuple[dict | None, str | None]:
+    """이어 열 대장 고르기(순수 함수 · 시험 대상).
+    mine = 이 사람의 기억 행 [{import_id, sgg_cd, at, state}] · org = 기관의 결합된 반입 [{import_id, latest, sgg:[코드], created_at, state}]
+    · own = 이 사람이 직접 올린 결합된 반입(org 와 같은 모양).
+    ① 이 사람의 그 시군구 기억 → ② (시군구를 말하지 않았으면) 이 사람의 '*' 기억 → ③ 기억이 비었으면(지운 대장 · 옛 기억 없음)
+    이 사람이 직접 올린 가장 최근 결합 대장 → ④ 그래도 없을 때만 기관 최근 대장(그 시군구를 덮는 것 · latest 먼저).
+    이 사람 기억이 가리키는 반입이 지워졌거나 실패했으면 건너뛴다. → (행, 'mine'|'org'|None)"""
+    ok = [m for m in mine if m.get("state") in RECENT_STATES]
+    key = lambda m: str(m.get("at") or "")  # noqa: E731
+    if sgg:
+        hit = sorted([m for m in ok if m.get("sgg_cd") == sgg], key=key, reverse=True)
+    else:
+        hit = sorted([m for m in ok if m.get("sgg_cd") == "*"], key=key, reverse=True) or sorted(ok, key=key, reverse=True)
+    if hit:
+        return hit[0], "mine"
+    cover = lambda o: o.get("state") == "matched" and (not sgg or sgg in (o.get("sgg") or []))  # noqa: E731
+    mine_up = sorted([o for o in (own or []) if cover(o)], key=lambda o: str(o.get("created_at") or ""), reverse=True)
+    if mine_up:
+        return mine_up[0], "mine"                          # 내 기억이 비어도 내가 올린 대장이 남아 있으면 남의 대장보다 먼저
+    cand = [o for o in org if o.get("state") == "matched" and (not sgg or sgg in (o.get("sgg") or []))]
+    cand.sort(key=lambda o: (bool(o.get("latest")), str(o.get("created_at") or "")), reverse=True)
+    return (cand[0], "org") if cand else (None, None)
+
+
+async def _uploader(conn, r) -> dict:
+    """올린 사람 표기 — 역할 · 날짜만(이름 없이)."""
+    uid = r["created_by"]
+    role = None
+    if uid:
+        t = await conn.fetchval("SELECT role FROM tenant_users WHERE id=$1", uid)
+        role = ROLE_KO.get(("tenant", t)) if t else ROLE_KO.get(("lx", await conn.fetchval("SELECT role FROM lx_users WHERE id=$1", uid) or ""))
+    at = r["confirmed_at"] or r["created_at"]
+    return {"role": role or "기관 담당자", "date": at.astimezone(KST).date().isoformat() if at else None}
+
+
+@router.get("/t/{tenant}/survey/registry/recent")
+async def recent_import(tenant: str, request: Request, sgg: str | None = None, kind: str | None = None):
+    """이어 열 대장 — 이 사람이 마지막으로 연(올린) 대장이 먼저. 없을 때만 기관 최근 대장(올린 사람 역할·날짜만).
+    → {import(상세 · 미결합 포함) | null, whose: mine|org|null, uploader{role, date} | null}"""
+    p = _gate(principal(request), tenant)
+    sg = cur_code(str(sgg)) if sgg else None
+    async with db(realm="lx") as conn:
+        mine = []
+        if await conn.fetchval("SELECT to_regclass('ledger_recent') IS NOT NULL"):
+            mine = [dict(x) for x in await conn.fetch(
+                "SELECT r.import_id, r.sgg_cd, r.at, i.state FROM ledger_recent r JOIN ledger_imports i ON i.id=r.import_id AND i.tenant_id=r.tenant_id "
+                "WHERE r.tenant_id=$1 AND r.user_id=$2 AND ($3::text IS NULL OR r.kind=$3)", tenant, p.user_id, kind)]
+        def _row(x):
+            st = x["stats"] or {}
+            return {"import_id": x["id"], "latest": x["latest"], "sgg": [cur_code(str(c)) for c in (st.get("sgg") or [])],
+                    "created_at": x["created_at"].isoformat() if x["created_at"] else "", "state": x["state"]}
+        org = [_row(x) for x in await conn.fetch("SELECT id, latest, stats, created_at, state FROM ledger_imports WHERE tenant_id=$1 AND state='matched' "
+                                                 "AND ($2::text IS NULL OR kind=$2) ORDER BY created_at DESC LIMIT 50", tenant, kind)]
+        own = [_row(x) for x in await conn.fetch("SELECT id, latest, stats, created_at, state FROM ledger_imports WHERE tenant_id=$1 AND state='matched' "
+                                                 "AND created_by=$3 AND ($2::text IS NULL OR kind=$2) ORDER BY created_at DESC LIMIT 50",
+                                                 tenant, kind, p.user_id)] if p.user_id else []
+        got, whose = pick_recent(mine, org, sg, own)
+        r = await conn.fetchrow("SELECT * FROM ledger_imports WHERE id=$1 AND tenant_id=$2", got["import_id"], tenant) if got else None
+        if not r:
+            return {"import": None, "whose": None, "uploader": None, "as_of": now_iso()}
+        um = await conn.fetch("SELECT row_no, reason, payload FROM registry_snapshots WHERE import_id=$1 AND match_step='none' ORDER BY row_no LIMIT 1000",
+                              r["id"])
+        live = await _live_findings(conn, [r["id"]])
+        up = await _uploader(conn, r) if r["created_by"] != p.user_id else None          # 남이 올린 대장이면 역할 · 날짜(이름 없이)
+    unmatched = [{"seq": x["row_no"], "reason": x["reason"], "jibun": (x["payload"] or {}).get("jibun"), "pnu": (x["payload"] or {}).get("pnu")} for x in um]
+    return {"import": _import_view(r, unmatched, live), "whose": whose, "uploader": up, "as_of": now_iso()}
+
+
 @router.get("/t/{tenant}/survey/ledger-schema")
 async def ledger_schema(tenant: str, request: Request):
     """이 기관 배포 카드의 대장 형식(S-6 `ledger_schema`) — 기관 세션이 읽는 경로(카드 목록은 LX 전용이라 여기서 기관 것만).
@@ -541,7 +628,7 @@ async def ledger_schema(tenant: str, request: Request):
 
 
 @router.get("/t/{tenant}/survey/registry/{import_id}/parcels")
-async def import_parcels(tenant: str, import_id: str, request: Request, geom: int = 1, limit: int = 20000):
+async def import_parcels(tenant: str, import_id: str, request: Request, geom: int = 1, limit: int = 20000, ledger: int = 0):
     """결합된 대장 필지(연속지적 × AI 피연산자) — 정적 필지 층(PMTiles)이 없는 관할의 지도 채색 · 표 · 필지 카드용.
     properties = pnu · jimok · yongdo · nongup · area_m2 · bld_m2 · crop_m2 · park_m2 · gh_m2 · r23_farm · ai(분석 여부) · addr.
     AI 값은 규칙과 같은 출처(ai_parcels) — 큰 숫자 · 지도 · 표 · 말 질의가 한 숫자."""
@@ -559,6 +646,12 @@ async def import_parcels(tenant: str, import_id: str, request: Request, geom: in
         base = {r["pnu"]: dict(r) for r in await conn.fetch(
             "SELECT pnu, jimok, jimok_nm, yongdo, nongup, area_m2, addr, ST_XMin(geom) x0, ST_YMin(geom) y0, ST_XMax(geom) x1, ST_YMax(geom) y1 "
             "FROM survey_parcels WHERE pnu = ANY($1::text[])", pn)}
+        led = {}
+        if ledger and pn:                                  # 대장 값(allowlist 역할 열만 · 성명 0) — 같은 필지가 여러 행이면 첫 행
+            for x in await conn.fetch("SELECT DISTINCT ON (pnu) pnu, payload FROM registry_snapshots WHERE import_id=$1 AND tenant_id=$2 "
+                                      "AND pnu = ANY($3::text[]) ORDER BY pnu, row_no", import_id, tenant, pn):
+                pay = x["payload"] or {}
+                led[x["pnu"]] = {k: pay.get(k) for k in ("status", "jibun", "date", "use") if pay.get(k) not in (None, "")}
     feats = []
     for k in pn:
         b = base.get(k)
@@ -567,6 +660,8 @@ async def import_parcels(tenant: str, import_id: str, request: Request, geom: in
         a = ai_rows.get(k)
         props = {"pnu": k, "jimok": b["jimok"], "yongdo": b["yongdo"] or "", "nongup": b["nongup"] or "", "area_m2": round(float(b["area_m2"] or 0), 1),
                  "addr": b["addr"], "bbox": [round(b["x0"], 7), round(b["y0"], 7), round(b["x1"], 7), round(b["y1"], 7)], "ai": 1 if a else 0}
+        if ledger:
+            props["ledger"] = led.get(k) or {}
         if a:
             props.update({"bld_m2": round(float(a.get("a23_bld_m2") or 0), 1), "crop_m2": round(float(a.get("a23_crop_m2") or 0), 1),
                           "park_m2": round(float(a.get("a23_park_m2") or 0), 1), "gh_m2": round(float(a.get("a23_gh_m2") or 0), 1),
@@ -617,6 +712,8 @@ async def confirm_import(tenant: str, import_id: str, request: Request, body: di
         raise ApiError("conflict", "원본 파일이 만료되었습니다 — 다시 올려 주세요", status=409)
     async with db(p) as conn:
         await conn.execute("UPDATE ledger_imports SET mapping=$2, state='matching', error=NULL WHERE id=$1", import_id, mapping)
+    async with db(realm="lx") as conn:
+        await remember(conn, tenant, p.user_id, import_id, r["kind"])          # 결합 중에 새로 고쳐도 이 사람의 대장이 열린다
     h = request.headers.get("authorization", "")
     token = h[7:].strip() if h.lower().startswith("bearer ") else None
     asyncio.get_running_loop().create_task(_run_match(p, tenant, import_id, r["kind"], mapping, token))
@@ -653,6 +750,7 @@ async def _run_match(p: Principal, tenant: str, iid: str, kind: str, mapping: di
             await conn.execute("UPDATE ledger_imports SET latest=false WHERE tenant_id=$1 AND kind=$2 AND id<>$3", tenant, kind, iid)
             await conn.execute("UPDATE ledger_imports SET state='matched', stats=$2, latest=true, confirmed_at=now() WHERE id=$1", iid, st)
             await audit(conn, p, "ledger.confirm", iid, None, {k: v for k, v in st.items() if k != "skipped"})
+            await remember(conn, tenant, p.user_id, iid, kind, list(st.get("sgg") or []))
         r = await redis()
         ev = {"import_id": iid, "tenant_id": tenant, "kind": kind, "state": "matched", "at": now_iso()}
         await r.xadd(f"events:tenant:{tenant}", {"event": "ledger.matched", "data": json.dumps(ev, ensure_ascii=False)}, maxlen=10000, approximate=True)
@@ -735,7 +833,7 @@ async def match_and_evaluate(p: Principal, tenant: str, iid: str, kind: str, map
             async with httpx.AsyncClient(timeout=15, headers={"User-Agent": "LandXI-gateway/0.1"}) as c:
                 for rc in pend:
                     if vw_calls >= VW_CAP:
-                        rc["reason"] = (rc["reason"] or "") + " · V-World 조회 상한"
+                        rc["reason"] = (rc["reason"] or "") + " · 공개 자료 조회 상한"
                         continue
                     pay = rc["payload"]
                     try:
@@ -759,7 +857,7 @@ async def match_and_evaluate(p: Principal, tenant: str, iid: str, kind: str, map
                             elif got:
                                 rc["reason"] = "관할 밖 필지"
                     except Exception:
-                        rc["reason"] = rc["reason"] or "V-World 조회 실패"
+                        rc["reason"] = rc["reason"] or "공개 자료 조회 실패"
     # 저장(allowlist payload · 성명 0)
     async with db(realm="lx") as conn:
         await conn.execute("DELETE FROM registry_snapshots WHERE import_id=$1", iid)
@@ -1015,9 +1113,7 @@ async def evaluate_rules(tenant: str, iid: str, kind: str, rules: list[str] | No
         pmap, ai = await ai_parcels(conn, pnus)
         if not ai.get("has"):                   # AI 결과가 없는 시군구 — 규칙을 돌리지 않는다(0 필지가 아니라 'AI 분석 전' · 낡은 의심은 걷는다)
             for rid in todo:
-                await conn.execute("DELETE FROM survey_findings WHERE rule=$1 AND tenant_id=$2 AND state='open' AND NOT demo "
-                                   "AND import_id IN (SELECT id FROM ledger_imports WHERE tenant_id=$2 AND kind=$3) "
-                                   "AND id NOT IN (SELECT finding_id FROM survey_actions WHERE finding_id IS NOT NULL)", rid, tenant, kind)
+                await conn.execute(DEL_SCOPED, rid, tenant, kind, iid, pnus)
             return {"findings": {}, "skipped": skipped, "ai": ai}
         active_th = {r["id"]: (r["thresholds"] or {}) for r in await conn.fetch(
             "SELECT id, thresholds FROM survey_rules WHERE id = ANY($1::text[]) AND coalesce(state,'active')='active'", todo)}
@@ -1042,11 +1138,9 @@ async def evaluate_rules(tenant: str, iid: str, kind: str, rules: list[str] | No
                       "vworld": {"layer": "LP_PA_CBND_BUBUN", "col": "jimok", "value": par.get("jimok_nm") or par.get("jimok")}}
                 hits.append((finding_id(rid, tenant, pn), s, priority_of(s), rid, d["name"], pn, par, evid, conf, ev))
             hits.sort(key=lambda h: -h[1])
-            # 같은 기관 · 같은 종류 대장의 반입(이전 반입 + 이번 반입)이 만든 의심 중 사람이 손대지 않은 것(open · demo 아님)만 갈아 끼운다.
-            # 다른 기관 · 다른 종류 반입 · 판정·조치가 붙은 의심은 건드리지 않는다.
-            await conn.execute("DELETE FROM survey_findings WHERE rule=$1 AND tenant_id=$2 AND state='open' AND NOT demo "
-                               "AND import_id IN (SELECT id FROM ledger_imports WHERE tenant_id=$2 AND kind=$3) "
-                               "AND id NOT IN (SELECT finding_id FROM survey_actions WHERE finding_id IS NOT NULL)", rid, tenant, kind)
+            # 이번 반입이 만든 의심 + 이번 대장과 같은 필지의 의심(같은 기관 · 같은 종류 반입) 중 사람이 손대지 않은 것만 갈아 끼운다.
+            # 다른 담당자 · 다른 지역 대장이 만든 다른 필지의 결과는 그대로 둔다(그 사람이 다시 열 때 같은 숫자 · r3-fusion M6).
+            await conn.execute(DEL_SCOPED, rid, tenant, kind, iid, pnus)
             for rank, h in enumerate(hits, 1):
                 fid, s, pr, rid_, nm, pn, par, evid, conf, ev = h
                 await conn.execute(
@@ -1060,6 +1154,12 @@ async def evaluate_rules(tenant: str, iid: str, kind: str, rules: list[str] | No
                     getattr_ids(par, cls), par.get("lon"), par.get("lat"), iid, par.get("sgg_cd") or pn[:5])
             counts[rid] = len(hits)
     return {"findings": counts, "skipped": skipped, "ai": ai}
+
+
+DEL_SCOPED = ("DELETE FROM survey_findings WHERE rule=$1 AND tenant_id=$2 AND state='open' AND NOT demo "
+              "AND import_id IN (SELECT id FROM ledger_imports WHERE tenant_id=$2 AND kind=$3) "
+              "AND (import_id=$4 OR pnu = ANY($5::text[])) "
+              "AND id NOT IN (SELECT finding_id FROM survey_actions WHERE finding_id IS NOT NULL)")
 
 
 def finding_id(rid: str, tenant: str, pnu: str) -> str:
@@ -1087,7 +1187,7 @@ def explain_ledger(row: dict, parcel: dict | None = None) -> dict:
                 ai[k] = env(ai[k], u, "inferred", src, "검수 전")
     return {"rule": row["rule"], "name": d.get("name"), "condition": condition_text(d),
             "three": ev,
-            "thresholds": [{"key": k, "value": env(v, "ratio" if v < 1 else "m2", "estimate", f"server/survey/rules/{row['rule']}.yaml",
+            "thresholds": [{"key": k, "value": env(v, "ratio" if v < 1 else "m2", "estimate", "대장 대조 기준 초기값",
                                                   "[추정 초기값] · 법령 기준 아님")} for k, v in th.items()],
             "note": d.get("note"), "fixed": "AI 추론 · 검수 전 · 현장 확인 전 · 위법 판정 아님"}
 
@@ -1120,7 +1220,7 @@ async def rules_ledger(request: Request):
     for rid, d in ledger_rules().items():
         items.append({"id": rid, "name": d["name"], "kind": d.get("kind"), "requires": d.get("requires") or [],
                       "condition": condition_text(d), "when_": d.get("when_"),
-                      "thresholds": [{"key": k, "value": env(v, "ratio" if v < 1 else "m2", "estimate", f"server/survey/rules/{rid}.yaml",
+                      "thresholds": [{"key": k, "value": env(v, "ratio" if v < 1 else "m2", "estimate", "대장 대조 기준 초기값",
                                                             "[추정 초기값] · 법령 기준 아님")} for k, v in (d.get("thresholds") or {}).items()],
                       "note": d.get("note")})
     return {"items": items, "kinds": KINDS, "as_of": now_iso()}
@@ -1136,6 +1236,17 @@ async def delete_import(tenant: str, import_id: str, request: Request):
                                  "AND id NOT IN (SELECT finding_id FROM survey_actions WHERE finding_id IS NOT NULL) RETURNING 1) SELECT count(*) FROM d", import_id)
         ns = await conn.fetchval("WITH d AS (DELETE FROM registry_snapshots WHERE import_id=$1 RETURNING 1) SELECT count(*) FROM d", import_id)
         await conn.execute("DELETE FROM ledger_imports WHERE id=$1", import_id)
+        if await conn.fetchval("SELECT to_regclass('ledger_recent') IS NOT NULL"):     # 지운 대장을 가리키는 기억은 그 사람의 이전 대장으로 되돌린다
+            gone = await conn.fetch("DELETE FROM ledger_recent WHERE import_id=$1 RETURNING tenant_id, user_id, sgg_cd, kind", import_id)
+            for g in gone:                       # 같은 사람이 올린 가장 최근 결합 대장(그 시군구를 덮는 것) · 없으면 기억 없음(→ 이어 열기가 기관 최근 대장)
+                prev = await conn.fetchrow(
+                    "SELECT id, coalesce(confirmed_at, created_at) AS at FROM ledger_imports WHERE tenant_id=$1 AND created_by=$2 AND kind=$3 "
+                    "AND state='matched' AND id<>$5 AND ($4='*' OR (jsonb_typeof(stats->'sgg')='array' AND stats->'sgg' ? $4)) "
+                    "ORDER BY created_at DESC LIMIT 1", g["tenant_id"], g["user_id"], g["kind"], g["sgg_cd"], import_id)
+                if prev:
+                    await conn.execute("INSERT INTO ledger_recent(tenant_id, user_id, sgg_cd, kind, import_id, at) VALUES ($1,$2,$3,$4,$5,$6) "
+                                       "ON CONFLICT (tenant_id, user_id, sgg_cd, kind) DO NOTHING",
+                                       g["tenant_id"], g["user_id"], g["sgg_cd"], g["kind"], prev["id"], prev["at"])
         back = None
         if r["latest"]:
             back = await conn.fetchval("UPDATE ledger_imports SET latest=true WHERE id = (SELECT id FROM ledger_imports WHERE tenant_id=$1 AND kind=$2 "
@@ -1179,5 +1290,5 @@ async def evaluate_tenant_rule(tenant: str, body: dict, request: Request):
     async with db(realm="lx") as conn:
         await audit(conn, p, "rule.evaluate.tenant", rid, None, {"tenant": tenant, "thresholds": th, "findings": st.get("findings")})
     return {"rule": rid, "tenant_id": tenant, "import_id": imp["id"], "condition": condition_text(d, th),
-            "findings": {k: env(v, "count", "inferred", f"규칙 {k} · 기관 임계 · 검수 전") for k, v in (st.get("findings") or {}).items()},
+            "findings": {k: env(v, "count", "inferred", "대장 대조 · 기관 임계 · 검수 전") for k, v in (st.get("findings") or {}).items()},
             "skipped": st.get("skipped"), "as_of": now_iso()}

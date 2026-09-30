@@ -132,18 +132,21 @@ def test_analysis_run_submits_and_watches():
 def test_analysis_run_attaches_to_running_job_same_region():
     http = Http({})
     out = run(A.analysis_run({"region": "12730"}, Ctx(http=http, checks=_checks(same={"id": "job_RUN", "sgg": "12730"}))))
-    assert out.ui_actions[1]["job_id"] == "job_RUN" and http.calls == []      # 새로 내지 않는다
+    assert out.ui_actions[1]["job_id"] == "job_RUN" and all(c[0] != "POST" for c in http.calls)   # 새로 내지 않는다(범위 문장 조회 GET 만)
 
 
-def test_analysis_run_refuses_power_and_queue():
-    http = Http({})
+def test_analysis_run_queues_like_button_when_others_run():
+    """r3-xi 2차: 말로 분석도 화면 '전역 분석' 버튼과 같은 규칙 — 다른 지역 분석이 돌고 있어도 대기열에 넣는다(GPU 한 장은 대기열 · 작업기 게이트).
+    답은 GPU 를 나눠 쓴다는 사실을 알리고, 혼자 쓸 때의 예상 소요는 말하지 않는다. 서버 거절(견적 power_budget)은 그대로 사용자 말로."""
+    http = Http({("POST", "/jobs/quote"): (200, QUOTE_OK), ("POST", "/jobs"): (202, {"job": {"id": "job_Q", "state": "queued"}})})
+    out = run(A.analysis_run({"region": "12730"}, Ctx(http=http, checks=_checks(others=[{"id": "job_X", "sgg": "52190"}]))))
+    assert out.ui_actions[1]["job_id"] == "job_Q" and "대기열에 넣었습니다" in out.answer
+    assert "다른 지역 AI 분석 1건과 GPU 한 장을 나눠" in out.answer and "약 15분" not in out.answer
+    http2 = Http({("POST", "/jobs/quote"): (200, {"allowed": False, "reasons": ["power_budget"]})})
     with pytest.raises(ToolError) as e:
-        run(A.analysis_run({"region": "12730"}, Ctx(http=http, checks=_checks(ok=False))))
+        run(A.analysis_run({"region": "12730"}, Ctx(http=http2, checks=_checks())))
     assert e.value.code == "power_budget" and "전력" in e.value.message
-    with pytest.raises(ToolError) as e2:
-        run(A.analysis_run({"region": "12730"}, Ctx(http=http, checks=_checks(others=[{"id": "job_X", "sgg": "52190"}]))))
-    assert e2.value.code == "queue_busy"
-    assert http.calls == []                                                   # 거절이면 견적·제출 0
+    assert all(c[1] != "/jobs" for c in http2.calls)                          # 거절이면 제출 0
 
 
 def test_analysis_run_no_imagery_reason():

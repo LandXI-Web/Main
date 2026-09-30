@@ -169,7 +169,7 @@ F = {
 }
 
 SSE = {"jobs": ["job.queued", "job.started", "shard.started", "shard.done", "shard.failed", "job.progress", "job.done", "snapshot.ready", "job.failed",
-                "job.cancelled", "index.month", "job.recovered", "survey.finding"],
+                "job.cancelled", "index.month", "job.recovered", "survey.finding", "counts.clean"],   # counts.clean = 진행 중 칸 겹침 걸러 낸 수(r3-xi 스케줄러)
        "ops": ["gpu.sample", "queue.sample", "usage.delta", "deploy.changed", "alert", "job.state", "finding.state"],
        "tenant": ["job.state", "deploy.changed", "finding.state", "usage.delta"],
        "errors": ["unauthorized", "forbidden", "demo_required", "not_found", "parcels_unavailable", "vworld_key_pending", "cog_unavailable", "quota_exceeded",

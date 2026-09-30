@@ -295,7 +295,10 @@ def test_run_files_names():
 
 def test_main_mounts_law_router_optionally():
     src = (Path(__file__).resolve().parents[2] / "landxi_api" / "main.py").read_text(encoding="utf-8")
-    assert 'for _name in ("law",)' in src and "건너뜀" in src
+    # 확장 라우터 목록은 차수마다 늘어난다(R3 plan 3.6: training · global_data) — 'law' 가 목록에 있고 없으면 건너뛰는지만 본다
+    import re
+    lists = re.findall(r"for _name in \(([^)]*)\):", src)
+    assert any('"law"' in x for x in lists) and "건너뜀" in src
 
 
 def test_device_ordinals_and_file_names_are_not_numbers():

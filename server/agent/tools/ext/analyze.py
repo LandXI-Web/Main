@@ -2,9 +2,10 @@
 
   analysis_run(region, service?)   시군구 전역 AI 분석. 화면 '분석 → 전역 분석' 버튼과 같은 길(POST /jobs/quote → POST /jobs ·
                                    options.scope='sgg' · 영상·모델은 서버가 고른다). 승인 뒤 · 제출 전에 전력·대기열 검사:
-                                     - 같은 지역 전역 분석이 이미 대기열에 있으면 새로 내지 않고 그 작업에 붙는다(analysis_watch)
-                                     - 다른 지역 전역 분석이 대기·진행 중이면 거절(GPU 한 장씩 · 긴 작업 하나씩)
-                                     - 동시 고부하 GPU 가 한도(pools.yaml power.max_hot_gpus)를 넘으면 거절
+                                     - 같은 지역 전역 분석이 이미 대기열에 있으면 새로 내지 않고 그 작업에 붙는다(analysis_watch · 답에 그 작업의 범위 문장)
+                                     - 다른 지역 분석이 대기·진행 중이어도 화면 '전역 분석' 버튼과 같은 규칙으로 대기열에 넣는다(r3-xi 2차 · 한 규칙).
+                                       GPU 한 장 규칙은 대기열(스케줄러 공정 분배)과 작업기 전력 게이트가 지킨다. 답은 '다른 지역 분석 n건과 GPU 를 나눠 씀'을 알린다
+                                     - 서버가 거절하면(견적 allowed=false · 제출 409) 그 이유를 사용자 말로
                                    제출되면 map_region + analysis_watch{job_id, sgg_cd} → XI맵이 진행 보기에 붙어 결과가 읍면동 순으로 차오른다.
   survey_build(region)             실태조사 결과 만들기(POST /survey/build · CPU 작업 · 필지 적재 → AI 결합 → 규칙 → 의심).
 
@@ -23,11 +24,10 @@ from .map import _regions_in, guard_region, region_action, resolve_region
 SERVICES = {"비닐하우스": "비닐하우스", "greenhouse": "비닐하우스", "건물": "건물", "building": "건물", "경작지": "경작지", "farmland": "경작지",
             "주차장": "주차장", "parking": "주차장"}
 REGION = {"type": "string", "description": "시군구 이름 또는 5자리 코드(없으면 지금 지도의 지역)"}
-LONG_JOBS_MAX = 1          # GPU 풀에서 동시에 대기·진행하는 시군구 전역 분석 수(긴 작업 하나씩 · 전력 규칙)
 
 SPECS: dict[str, dict] = {
     "analysis_run": {
-        "description": "시군구 전역 AI 분석을 새로 실행한다(항공·드론 영상 → AI 탐지 · 결과가 지도에 읍면동 순으로 차오름). "
+        "description": "시군구 AI 분석을 새로 실행한다(등록된 항공·드론 영상이 있는 곳 → AI 탐지 · 결과가 지도에 읍면동 순으로 차오름). "
                        "'○○ 전역 분석 실행해 줘' · '○○ 비닐하우스 분석해 줘' · '이 지역 분석 돌려 줘'. 사람이 확인 카드를 승인해야 실행된다.",
         "properties": {"region": REGION,
                        "service": {"type": "string", "enum": ["비닐하우스", "건물", "경작지", "주차장"],
@@ -36,7 +36,7 @@ SPECS: dict[str, dict] = {
         "description": "시군구 실태조사 결과 만들기(필지 × AI 분석 결과 대조 → 의심 필지). '실태조사 결과 만들어 줘'. 사람이 확인 카드를 승인해야 실행된다.",
         "properties": {"region": REGION}},
     "survey_wait": {
-        "description": "전역 AI 분석이 진행 중인 지역의 실태조사 요청에 답한다(분석이 끝나면 자동으로 이어 만든다).",
+        "description": "AI 분석이 진행 중인 지역의 실태조사 요청에 답한다(분석이 끝나면 자동으로 이어 만든다).",
         "properties": {"region": REGION, "why": {"type": "string", "enum": ["running", "partial"]}}, "route_only": True},
     "emd_chart": {
         "description": "지금 지도 지역(또는 말한 시군구)의 읍면동별 막대 차트. 실태조사가 있으면 의심 필지, 없으면 AI 분석 탐지 수.",
@@ -46,9 +46,9 @@ HANDLERS: dict = {}
 WRITE = {"analysis_run", "survey_build"}
 CONFIRM = {"analysis_run", "survey_build"}
 CLIENT: set[str] = set()
-WHY = {"analysis_run": "전역 AI 분석 실행 — 사람 승인 필요", "survey_build": "실태조사 결과 만들기 — 사람 승인 필요",
+WHY = {"analysis_run": "AI 분석 실행 — 사람 승인 필요", "survey_build": "실태조사 결과 만들기 — 사람 승인 필요",
        "survey_wait": "분석 진행 중 — 끝나면 실태조사 이어 만들기", "emd_chart": "읍면동별 막대 차트"}
-SAY = {"analysis_run": "전역 AI 분석 실행", "survey_build": "실태조사 결과 만들기", "survey_wait": "분석 진행 확인", "emd_chart": "읍면동별 차트"}
+SAY = {"analysis_run": "AI 분석 실행", "survey_build": "실태조사 결과 만들기", "survey_wait": "분석 진행 확인", "emd_chart": "읍면동별 차트"}
 HINT = ("'○○ 분석해 줘 · 분석 실행 · 분석 돌려 줘'(비닐하우스·건물·경작지·주차장 포함)는 새 분석 실행이다 — analysis_run 을 부르고 "
         "survey_findings 로 바꾸지 않는다. '실태조사 결과 만들어 줘'는 survey_build. 둘 다 확인 카드 승인 뒤에 실행된다.")
 
@@ -85,7 +85,7 @@ REASON = {
     "quota_exceeded": "이번 달 분석 한도를 넘었습니다.",
     "demo_required": "이 계정으로는 예시 분석만 실행할 수 있습니다.",
     "imagery_forbidden": "이 계정으로는 이 영상을 분석할 수 없습니다.",
-    "queue_busy": "다른 지역 전역 분석이 GPU 를 쓰고 있어 새 분석을 시작하지 않았습니다. GPU 는 전력 한도 때문에 한 장씩만 씁니다. 끝난 뒤 다시 요청해 주세요.",
+    "queue_busy": "다른 지역 AI 분석이 GPU 를 쓰고 있어 새 분석을 시작하지 않았습니다. GPU 는 전력 한도 때문에 한 장씩만 씁니다. 끝난 뒤 다시 요청해 주세요.",
 }
 
 
@@ -122,28 +122,27 @@ async def power_state() -> dict:
 
 
 async def long_jobs(codes: list[str]) -> tuple[dict | None, list[dict]]:
-    """GPU 풀의 대기·진행 중 시군구 전역 분석 → (같은 지역 작업 | None, 다른 지역 작업들)."""
+    """GPU 풀의 대기·진행 중 분석 → (같은 지역 시군구 전역 분석 | None, 다른 분석들).
+    같은 지역 작업에는 범위 문장(options.scope_text · scope_rest)을 싣는다 — 붙는 답도 확인 카드 · 진행판과 같은 문장(r3-xi 2차)."""
     from landxi_api.deps import db
     async with db(realm="lx") as conn:
-        rows = await conn.fetch("SELECT id, state, options->>'sgg_cd' AS sgg, demo FROM jobs WHERE kind='infer' AND state IN ('queued','running') "
-                                "AND pool <> 'cpu' AND options->>'scope'='sgg' ORDER BY created_at")
+        rows = await conn.fetch("SELECT id, state, options->>'sgg_cd' AS sgg, options->>'scope' AS scope, demo, options->>'scope_text' AS scope_text, "
+                                "options->>'scope_text_en' AS scope_text_en, options->>'scope_rest' AS scope_rest FROM jobs "
+                                "WHERE kind IN ('infer','reinfer') AND state IN ('queued','running') AND pool <> 'cpu' AND NOT coalesce(test, false) "
+                                "ORDER BY created_at")
     rows = [dict(x) for x in rows]
-    same = next((x for x in rows if x["sgg"] in codes), None)
-    return same, [x for x in rows if x["sgg"] not in codes]
+    same = next((x for x in rows if x["scope"] == "sgg" and x["sgg"] in codes), None)
+    return same, [x for x in rows if x is not same]
 
 
 async def preflight(codes: list[str], checks=None) -> dict:
-    """제출 전 검사 → {'attach': job} | {'refuse': (code, text)} | {}. checks 는 테스트용 주입(power_state · long_jobs)."""
-    ps_fn, lj_fn = (checks or {}).get("power", power_state), (checks or {}).get("jobs", long_jobs)
+    """제출 전 검사 → {'attach': job} | {'others': n}. 거절은 서버(견적 · 제출)만 한다 — 화면 '전역 분석' 버튼과 같은 규칙(r3-xi 2차).
+    checks 는 테스트용 주입(long_jobs)."""
+    lj_fn = (checks or {}).get("jobs", long_jobs)
     same, others = await lj_fn(codes)
     if same:
         return {"attach": same}
-    if len(others) >= LONG_JOBS_MAX:
-        return {"refuse": ("queue_busy", REASON["queue_busy"])}
-    ps = await ps_fn()
-    if not ps.get("ok", True):
-        return {"refuse": ("power_budget", REASON["power_budget"])}
-    return {}
+    return {"others": len(others)}
 
 
 def _center(ctx, r: dict):
@@ -161,25 +160,17 @@ async def analysis_run(args: dict, ctx) -> Out:
     guard_region(r, ctx)
     cls = SERVICES.get(str(args.get("service") or "").strip()) if args.get("service") else None
     codes = [c for c in (r["sgg_cd"], r.get("prev_cd")) if c]
-    out = Out(source="전역 AI 분석(작업 대기열)")
+    out = Out(source="AI 분석(작업 대기열)")
     out.whitelist |= set(codes)
     pf = await preflight(codes, (ctx.state or {}).get("_c2xi_checks"))
-    if "refuse" in pf:
-        code, text = pf["refuse"]
-        raise ToolError(code, text, 409)
     watch = {"op": "analysis_watch", "sgg_cd": r["sgg_cd"], "name": r["name"], "bbox": r.get("bbox"), "cls": cls}
     en = getattr(ctx, "lang", "ko") == "en"
     if "attach" in pf:
-        job = pf["attach"]
-        out.ui_actions += [region_action(r), {**watch, "job_id": job["id"]}]
-        out.data = {"지역": r.get("full") or r["name"], "상태": "이미 진행 중인 전역 분석에 연결", "대상": cls or "전체"}
-        out.answer = (f"A region-wide AI analysis of {r['name']} is already running. Results fill in on the map by town." if en else
-                      f"{r['name']} 전역 AI 분석이 이미 진행 중입니다. 진행 화면을 붙였고, 결과가 지도에 읍면동 순으로 차오릅니다.")
-        out.raw = {"job": job}
-        return out
+        return await _attach(out, r, pf["attach"], watch, cls, en, ctx)
+    others = int(pf.get("others") or 0)
     body = {"kind": "infer", "demo": getattr(ctx.principal, "role", None) == "sales",
             "options": {"scope": "sgg", "sgg_cd": r["sgg_cd"], "chip": 1024, "overlap": 0.125, "conf": 0.25},
-            "label": f"말로 분석 · {r['name']} 전역" + (f" · {cls}" if cls else "")}
+            "label": f"말로 분석 · {r['name']} AI 분석" + (f" · {cls}" if cls else "")}
     c = _center(ctx, r)
     if c:
         body["options"]["center"] = c
@@ -187,10 +178,6 @@ async def analysis_run(args: dict, ctx) -> Out:
     if not q.get("allowed"):
         code, text = reason_text(q.get("reasons"))
         raise ToolError(code, text, 409)
-    if (q.get("power_budget") or {}).get("hold_reason") == "power_budget":
-        ps = await power_state()                           # 임대는 잡혀 있어도 GPU 한 장이면 대기열이 이어받는다 — 두 장이 뜨거울 때만 거절
-        if not ps.get("ok", True):
-            raise ToolError("power_budget", REASON["power_budget"], 409)
     try:
         j = await _j(ctx, "POST", "/jobs", json=body)
     except ToolError as e:
@@ -198,27 +185,83 @@ async def analysis_run(args: dict, ctx) -> Out:
         raise ToolError(e.code, text if code != "not_allowed" else e.message, e.status) from None
     job = j.get("job") or {}
     n_emd = q["emd_total"].get("value") if isinstance(q.get("emd_total"), dict) else None
-    if n_emd is not None:
+    sc = scope_of(q, en)                                   # 영상 범위(견적 봉투 그대로 · 확인 카드 · 진행판과 같은 문장)
+    for k, meaning in (("coverage", "영상이 덮는 시군구 면적 비율"), ("emd_covered", "영상과 겹치는 읍면동 수"), ("emd_total", "시군구 읍면동 수")):
+        if sc and isinstance(q.get(k), dict) and q[k].get("value") is not None:
+            out.env(k, meaning, q[k])
+    if not sc and n_emd is not None:
         out.env("emd_total", "분석할 읍면동 수", q["emd_total"])
     # 예상 소요는 업무 말로만('약 1분') — 초 봉투를 내면 명령 바에 '47.9s' 칩이 뜬다(규칙 2 · 실증 2차 must_fix 2)
-    eta = eta_words(eta_value(q), "en" if en else "ko")
-    out.ui_actions += [region_action(r), {**watch, "job_id": job.get("id")}]
+    # 다른 분석과 GPU 를 나눠 쓰면 견적의 예상 소요(혼자 쓸 때)는 맞지 않는다 — 말하지 않고 나눠 쓴다는 사실만(지어내지 않음)
+    eta = None if others else eta_words(eta_value(q), "en" if en else "ko")
+    out.ui_actions += [region_action(r), {**watch, "job_id": job.get("id"), **({"scope_text": sc["text"], "scope_rest": sc.get("rest")} if sc else {})}]
     out.data = {"지역": r.get("full") or r["name"], "상태": "대기열에 넣음 · 결과가 지도에 읍면동 순으로 차오른다", "대상": cls or "전체",
-                "영상": f"{(q.get('imagery') or {}).get('year') or ''} 항공영상".strip(), "읍면동 수": "emd_total" if n_emd is not None else None,
+                "영상": f"{(q.get('imagery') or {}).get('year') or ''} 항공영상".strip(),
+                "범위": sc["text"] if sc else None, "나머지": sc.get("rest") if sc else None,
+                "읍면동 수": ("emd_covered" if sc else "emd_total") if (sc or n_emd is not None) else None,
                 "예상 소요": eta}
     out.data = {k: v for k, v in out.data.items() if v is not None}
     if eta:
         out.whitelist |= set(re.findall(r"\d+", eta))   # 모델 경로 답이 '약 45분'을 그대로 옮겨도 검증기 통과
-    what =f" {cls}" if cls else ""
+    if sc:
+        out.whitelist |= set(re.findall(r"\d+", sc["text"]))
+    what = f" {cls}" if cls else ""
+    share_ko = f" 다른 지역 AI 분석 {others}건과 GPU 한 장을 나눠 쓰므로 조금 더 걸립니다." if others else ""
+    share_en = f" It shares one GPU with {others} other analys{'is' if others == 1 else 'es'}, so it takes a little longer." if others else ""
+    if others:
+        out.data["함께 도는 분석"] = f"{others}건"
+        out.whitelist.add(str(others))
     if en:
-        out.answer = (f"Queued a region-wide AI{(' ' + cls) if cls else ''} analysis of {r['name']}"
-                      + (f" ({int(n_emd)} towns)" if n_emd else "") + (f", {eta} to results" if eta else "") + ". Results fill in on the map by town.")
+        out.answer = (f"Queued an AI{(' ' + cls) if cls else ''} analysis of {r['name']}. "
+                      + (f"{sc['text']}. " if sc else (f"{int(n_emd)} towns. " if n_emd else ""))
+                      + (f"About {eta.replace('about ', '')} to results. " if eta else "") + "Results fill in on the map by town."
+                      + (f" {sc['rest']}." if sc and sc.get("rest") else "") + share_en)
+    elif sc:
+        out.answer = (f"{r['name']} AI{what} 분석을 대기열에 넣었습니다. {sc['text']}. "
+                      + (f"결과까지 {eta} 걸리고, " if eta else "") + "결과는 지도에 읍면동 순으로 차오릅니다."
+                      + (f" {sc['rest']}합니다." if sc.get("rest") else "") + share_ko)
     else:
-        out.answer = (f"{r['name']} 전역 AI{what} 분석을 대기열에 넣었습니다. "
+        out.answer = (f"{r['name']} AI{what} 분석을 대기열에 넣었습니다. "
                       + (f"읍면동 {int(n_emd)}곳을 차례로 분석하고" if n_emd else "읍면동 순으로 분석하고")
-                      + (f", 결과까지 {eta} 걸립니다. " if eta else " ") + "결과는 지도에 바로 차오릅니다.")
+                      + (f", 결과까지 {eta} 걸립니다. " if eta else " ") + "결과는 지도에 바로 차오릅니다." + share_ko)
     out.raw = {"job": job, "quote_reasons": q.get("reasons")}
     return out
+
+
+async def _attach(out: Out, r: dict, job: dict, watch: dict, cls, en: bool, ctx) -> Out:
+    """같은 지역 분석이 이미 대기·진행 중 — 새로 내지 않고 붙는다. 답에도 그 작업의 범위 문장(작업 옵션 scope_text · 없으면
+    GET /jobs/scope)을 넣는다 → 답 · 확인 카드 · 진행판 세 곳이 같은 문장(r3-xi 2차 must_fix 1)."""
+    sc = None
+    if not en and job.get("scope_text"):
+        sc = {"text": job["scope_text"], "rest": job.get("scope_rest"), "full": False}
+    if sc is None and getattr(ctx, "http", None) is not None:
+        try:
+            sc = scope_of(await _j(ctx, "GET", f"/jobs/scope/{job.get('sgg') or r['sgg_cd']}"), en)
+        except Exception:                                  # noqa: BLE001 — 범위를 못 세면 문장을 넣지 않는다(지어내지 않음)
+            sc = None
+    out.ui_actions += [region_action(r), {**watch, "job_id": job["id"],
+                                          **({"scope_text": sc["text"], "scope_rest": sc.get("rest")} if sc and not en else {})}]
+    out.data = {"지역": r.get("full") or r["name"], "상태": "이미 진행 중인 AI 분석에 연결", "대상": cls or "전체",
+                **({"범위": sc["text"]} if sc else {}), **({"나머지": sc["rest"]} if sc and sc.get("rest") else {})}
+    if sc:
+        out.whitelist |= set(re.findall(r"\d+", sc["text"]))
+    if en:
+        out.answer = (f"An AI analysis of {r['name']} is already running. " + (f"{sc['text']}. " if sc else "")
+                      + "Results fill in on the map by town." + (f" {sc['rest']}." if sc and sc.get("rest") else ""))
+    else:
+        out.answer = (f"{r['name']} AI 분석이 이미 진행 중입니다. " + (f"{sc['text']}. " if sc else "")
+                      + "진행 화면을 붙였고, 결과가 지도에 읍면동 순으로 차오릅니다." + (f" {sc['rest']}합니다." if sc and sc.get("rest") else ""))
+    out.raw = {"job": {k: job.get(k) for k in ("id", "state", "sgg")}}
+    return out
+
+
+def scope_of(q: dict, en: bool = False) -> dict | None:
+    """견적(또는 GET /jobs/scope) 응답 → {text, rest, full} — 서버가 만든 범위 문장을 그대로(지어내지 않는다). 값이 없으면 None."""
+    sc = (q or {}).get("scope") if isinstance((q or {}).get("scope"), dict) else q
+    text = (sc or {}).get("text_en" if en else "text")
+    if not text:
+        return None
+    return {"text": text, "rest": (sc or {}).get("rest_en" if en else "rest"), "full": bool((sc or {}).get("full"))}
 
 
 async def region_jobs(codes: list[str], checks=None) -> dict:
@@ -238,9 +281,9 @@ async def region_jobs(codes: list[str], checks=None) -> dict:
     return {"running": pick(("queued", "running")), "done": pick(("done",)), "partial": pick(("cancelled", "failed"))}
 
 
-WAIT_TEXT = "{name} 전역 AI 분석이 진행 중입니다. 분석이 끝나면 실태조사 결과를 이어서 만듭니다."
-PARTIAL_TEXT = ("{name} 전역 AI 분석이 중간에 멈춰 분석하지 않은 곳이 남아 있습니다. 분석하지 않은 필지가 의심으로 잘못 잡히지 않게 "
-                "이 결과로는 실태조사를 만들지 않았습니다. 전역 분석을 끝까지 실행하면 이어서 만듭니다.")
+WAIT_TEXT = "{name} AI 분석이 진행 중입니다. 분석이 끝나면 실태조사 결과를 이어서 만듭니다."
+PARTIAL_TEXT = ("{name} AI 분석이 중간에 멈춰 분석하지 않은 곳이 남아 있습니다. 분석하지 않은 필지가 의심으로 잘못 잡히지 않게 "
+                "이 결과로는 실태조사를 만들지 않았습니다. AI 분석을 끝까지 실행하면 이어서 만듭니다.")
 
 
 async def survey_build(args: dict, ctx) -> Out:
@@ -260,12 +303,12 @@ async def survey_build(args: dict, ctx) -> Out:
         rj = {}
     out.ui_actions.append(region_action(r))
     if rj.get("running"):
-        out.data = {"지역": name, "상태": "전역 AI 분석 진행 중 — 분석이 끝나면 실태조사 결과를 이어서 만든다(지금은 만들지 않음)"}
+        out.data = {"지역": name, "상태": "AI 분석 진행 중 — 분석이 끝나면 실태조사 결과를 이어서 만든다(지금은 만들지 않음)"}
         out.answer = WAIT_TEXT.format(name=r["name"])
         return out
     job = (rj.get("done") or {}).get("id")
     if not job and rj.get("partial"):
-        out.data = {"지역": name, "상태": "전역 AI 분석이 중간에 멈춤 — 분석 안 한 곳이 의심으로 잡히지 않게 실태조사를 만들지 않음"}
+        out.data = {"지역": name, "상태": "AI 분석이 중간에 멈춤 — 분석 안 한 곳이 의심으로 잡히지 않게 실태조사를 만들지 않음"}
         out.answer = PARTIAL_TEXT.format(name=r["name"])
         return out
     body = {"sgg_cd": r["sgg_cd"], **({"job_id": job} if job else {})}
@@ -278,7 +321,7 @@ async def survey_build(args: dict, ctx) -> Out:
         state, note = "이미 이 지역 실태조사 결과를 만드는 중", None
     out.data = {"지역": name, "상태": state, **({"비고": note} if note else {})}
     out.answer = f"{r['name']} 실태조사 결과를 만들고 있습니다. 끝나면 지도와 숫자에 바로 반영됩니다." if not note else \
-        f"{r['name']}에는 아직 AI 분석 결과가 없어 필지만 먼저 올립니다. 전역 분석을 실행하면 끝난 뒤 실태조사 결과를 이어서 만듭니다."
+        f"{r['name']}에는 아직 AI 분석 결과가 없어 필지만 먼저 올립니다. AI 분석을 실행하면 끝난 뒤 실태조사 결과를 이어서 만듭니다."
     return out
 
 
@@ -286,13 +329,13 @@ async def survey_build(args: dict, ctx) -> Out:
 async def survey_wait(args: dict, ctx) -> Out:
     r = resolve_region(args, ctx)
     ensure_chain_loop()
-    out = Out(source="전역 AI 분석(작업 대기열)")
+    out = Out(source="AI 분석(작업 대기열)")
     out.whitelist |= {r["sgg_cd"]}
     if args.get("why") == "partial":
-        out.data = {"지역": r.get("full") or r["name"], "상태": "전역 AI 분석이 중간에 멈춤 — 실태조사를 만들지 않음"}
+        out.data = {"지역": r.get("full") or r["name"], "상태": "AI 분석이 중간에 멈춤 — 실태조사를 만들지 않음"}
         out.answer = PARTIAL_TEXT.format(name=r["name"])
         return out
-    out.data = {"지역": r.get("full") or r["name"], "상태": "전역 AI 분석 진행 중 — 끝나면 실태조사 결과를 자동으로 이어서 만든다"}
+    out.data = {"지역": r.get("full") or r["name"], "상태": "AI 분석 진행 중 — 끝나면 실태조사 결과를 자동으로 이어서 만든다"}
     out.answer = WAIT_TEXT.format(name=r["name"])
     return out
 
@@ -466,15 +509,39 @@ def ensure_chain_loop() -> bool:
 
 # ── 확인 카드 전 인자 해석(PREPARE) · 모델 앞 직행(ROUTE) ─────────────────────────────────────────────
 async def prepare(args: dict, ctx) -> dict:
-    """지역 이름 → 코드 · 관할 가드(확인 카드에 '어느 지역'이 보이게). GPU·견적은 승인 뒤에만(승인 전 모델 적재 0)."""
+    """지역 이름 → 코드 · 관할 가드(확인 카드에 '어느 지역'이 보이게). GPU·견적·모델 적재는 승인 뒤에만(승인 전 모델 적재 0).
+    analysis_run 은 확인 카드 제목(title · plan 3.4)에 지역 이름과 영상 범위 문장을 담는다 — GET /jobs/scope(DB·도형 계산만)의 글자 그대로."""
     r = resolve_region(args, ctx)
-    out = {"region": r["sgg_cd"], "region_name": r.get("full") or r["name"]}
+    name = r.get("full") or r["name"]
+    out = {"region": r["sgg_cd"], "region_name": name}
     if args.get("service"):
         out["service"] = SERVICES.get(str(args["service"]).strip(), args["service"])
+    en = getattr(ctx, "lang", "ko") == "en"
+    sc = None
+    if getattr(ctx, "http", None) is not None:
+        try:
+            j = await _j(ctx, "GET", f"/jobs/scope/{r['sgg_cd']}")
+            sc = scope_of(j, en)
+            if sc is None and j.get("reason") == "no_imagery":
+                out["scope_text"] = "Imagery registration needed" if en else "영상 등록 필요"
+        except Exception:                                  # noqa: BLE001 — 범위를 못 세면 지역 이름만(지어내지 않음)
+            sc = None
+    what = f" {out['service']}" if out.get("service") else ""
+    if sc:
+        out["scope_text"] = sc["text"]
+        out["title"] = (f"AI{what} analysis of {r['name']} · {sc['text']}" if en else f"{r['name']} AI{what} 분석 실행 · {sc['text']}")
+    else:
+        out["title"] = f"AI{what} analysis of {r['name']}" if en else f"{r['name']} AI{what} 분석 실행"
     return out
 
 
-PREPARE = {"analysis_run": prepare, "survey_build": prepare}
+async def prepare_build(args: dict, ctx) -> dict:
+    r = resolve_region(args, ctx)
+    name = r.get("full") or r["name"]
+    return {"region": r["sgg_cd"], "region_name": name, "title": f"{r['name']} 실태조사 결과 만들기"}
+
+
+PREPARE = {"analysis_run": prepare, "survey_build": prepare_build}
 
 RUN_RX = re.compile(r"분석.{0,8}(실행|돌려|시작|해\s*줘|해줘|해\s*주세요|진행)|(돌려|실행해)\s*(줘|주세요)")
 BUILD_RX = re.compile(r"실태조사.{0,12}(만들|생성|돌려|실행|시작)")

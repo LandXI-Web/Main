@@ -95,9 +95,11 @@ function rowOf(f) {
 async function load({ keep = true, quiet = false } = {}) {
   let pend = null, done = null;
   try {
+    /* 할 일 = 고른 시군구의 필지만(다른 시군구 필지 0) — 시군구를 아직 모르면(결과 없는 기관) 기관 전체 */
+    const sq = S.region ? `&sgg=${encodeURIComponent(S.region)}` : '';
     [pend, done] = await Promise.all([
-      api('/survey/findings?state=assigned,inspected&sort=updated&limit=200'),
-      api('/survey/findings?state=closed,dismissed&sort=updated&limit=20'),
+      api(`/survey/findings?state=assigned,inspected&sort=updated&limit=200${sq}`),
+      api(`/survey/findings?state=closed,dismissed&sort=updated&limit=20${sq}`),
     ]);
   } catch (e) {
     devlog('findings', `${e.status || ''} ${e.message}`);
@@ -439,6 +441,7 @@ const RE_CHIP_GAP = new RegExp(`<!--k-->\\s+(?=[,.;:!?)]|${PART}(?![가-힣]))`,
 const TAG = /반환한|유의하며|검수\s*전\s*·\s*현장\s*확인\s*전|위법\s*판정\s*아님/;
 function tidy(line) {
   let s = String(line).split(/(?<=[.!?])\s+/).filter((x) => !TAG.test(x)).join(' ');
+  s = s.replace(/([가-힣]{2,}(?:시|군|구|읍|면|동|리))(?:의|에서의)?\s+\1(?![가-힣])/g, '$1');   // '도암면의 도암면' → '도암면'(스트리밍 중에도)
   return s.replace(RE_PART, '$1').replace(/\s+([,.;:!?)])/g, '$1').trim();
 }
 /* 문단 글 = 화면 DOM 그대로(칩은 숫자 · 단위만, 인용은 [n]) — 브라우저 innerText 의 줄 · 칸 삽입 없이 */
@@ -648,9 +651,20 @@ async function loadRegions() {
     if (S.region) $(sid).value = S.region;
   }
 }
+/* 머리 = 고른 시군구 이름(시도·기관 이름이 아님) · 창 제목도 같게 */
+function paintHead() {
+  const rg = regionOf(S.region);
+  const nm = (rg && rg.name) || org;
+  const el = app.app.querySelector('.k-word .home');
+  if (el) el.textContent = nm;
+  document.title = `${nm} · 할 일 · Land-XI`;
+}
 function setRegion(cd) {
   S.region = cd; $('#sus-rgn').value = cd; $('#rp-sgg').value = cd;
   rpReady = null; S.susLoaded = null;
+  paintHead();
+  S.sel = null; $('#det').hidden = true;             // 오른쪽 상세도 새 시군구 기준(옛 시군구 필지를 남기지 않는다)
+  load({ keep: false });                              // 할 일 표 = 고른 시군구 필지만
   if (S.tab === 'sus') loadSus(); if (S.tab === 'report') initReport();
   tab(S.tab);
 }
@@ -728,6 +742,7 @@ sse('/events/tenant', {
 
 /* ═════════ 착지 ═════════ */
 await loadRegions();
+paintHead();
 await load({ keep: false });
 const want = new URLSearchParams(location.search).get('tab');
 if (want === 'report') tab('report');   // 지도 비행을 기다리지 않는다

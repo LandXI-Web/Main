@@ -71,8 +71,9 @@ export function bboxOf(g) {
 
 /* 서버에 경로가 있는가(신설 API 가 아직 없을 때 404 로 콘솔을 더럽히지 않게 · 게이트웨이 openapi 한 번 읽기) */
 let ROUTES = null;
+/* openapi 는 매번 재검증(no-cache) — force-cache 면 브라우저에 남은 옛 경로 목록 때문에 새 서버 경로(/regions 등)를 '없음'으로 판정했다 */
 export async function hasRoute(path) {
-  if (!ROUTES) ROUTES = fetch(API.prefix + '/openapi.json', { cache: 'force-cache' }).then((r) => (r.ok ? r.json() : null)).then((j) => (j ? Object.keys(j.paths || {}).map((p) => p.replace(/^\/api\/v1/, '')) : null)).catch(() => null);
+  if (!ROUTES) ROUTES = fetch(API.prefix + '/openapi.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).then((j) => (j ? Object.keys(j.paths || {}).map((p) => p.replace(/^\/api\/v1/, '')) : null)).catch(() => null);
   const list = await ROUTES;
   if (!list) return false;
   const want = path.split('?')[0];

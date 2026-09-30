@@ -435,7 +435,7 @@ async def run_tool(ctx: Ctx, i: int, name: str, args: dict, by: str = "model") -
             await audit.log(ctx.principal, "agent.tool_forbidden", ctx.run_id, {"tool": name, "args": _args_public(args), "message": err.message})
         await emit(ctx, "agent.tool.result", {"i": i, "tool": name, "ok": False, "ms": ms, "error": {"code": err.code, "message": err.message}})
         await persist_tool(ctx, step)
-        return {"ok": False, "block": audit.data_block(name, i, {"오류": err.code, "설명": err.message})}
+        return {"ok": False, "block": audit.data_block(name, i, {"오류": err.code, "설명": err.message}), "err": err, "tool": name}
     reg = register(ctx, i, out)
     ui = list(out.ui_actions)
     ctx.tools_ok.append(name)
@@ -446,7 +446,8 @@ async def run_tool(ctx: Ctx, i: int, name: str, args: dict, by: str = "model") -
                                           "citations": [c for c in ctx.citations if c.get("step") == i], "ui_actions": ui,
                                           "client": name in registry.CLIENT, "blocks": [b for b in ctx.blocks if b.get("step") == i]})
     await persist_tool(ctx, step)
-    return {"ok": True, "block": audit.data_block(name, i, block_payload(ctx, i, reg["ids"], reg["data"])), "raw": out.raw, "out": out, "ids": reg["ids"]}
+    return {"ok": True, "block": audit.data_block(name, i, block_payload(ctx, i, reg["ids"], reg["data"])), "raw": out.raw, "out": out, "ids": reg["ids"],
+            "tool": name}
 
 
 def _args_public(a: dict) -> dict:
@@ -481,7 +482,8 @@ async def confirm_then(ctx: Ctx, i: int, name: str, args: dict) -> Out:
         await ctx.r.set(f"agent:confirm:{cid}", json.dumps({"run_id": ctx.run_id, "state": "pending", "tenant": tenant_of(p), "user": p.user_id}),
                         ex=config.CONFIRM_TTL_S + 30)
     await persist_state(ctx, state="waiting_confirm")
-    await emit(ctx, "agent.confirm", {"i": i, "confirm_id": cid, "tool": name, "say": ext.SAY.get(name), "args": _args_public(args), "quote": quote, "meta": meta,
+    title = next((str(x.get("title")) for x in (args, quote, meta) if isinstance(x, dict) and x.get("title")), None)   # plan 3.4 — 도구가 준 제목
+    await emit(ctx, "agent.confirm", {"i": i, "confirm_id": cid, "tool": name, "say": ext.SAY.get(name), "title": title, "args": _args_public(args), "quote": quote, "meta": meta,
                                       "demo": bool((ps.get("body") or {}).get("demo")), "expires_at": exp.isoformat(timespec="seconds"),
                                       "ttl_s": config.CONFIRM_TTL_S, "metering": "이 작업은 기관 GPU 사용량에 합산됩니다" if name == "jobs_submit" else None})
     decision, by = await wait_confirm(ctx, cid)
@@ -564,11 +566,223 @@ def lookup_not_run(msg: str) -> bool:
     return bool(LOOKUP_RX.search(t)) and not EXPLICIT_RUN_RX.search(t)
 
 
+# ── R3 r3-route M2(plan 3.5): 법령 질문 판정 — 맞으면 대장·요약 직행을 건너뛰고 법령 도구로 간다 ─────────────
+# 강한 말(조문·조항·법령·시행령·몇 조·제n조 · 원상회복·처벌 …)은 그것만으로, 약한 말(위반·근거·어떤 법·○○법)은 자료 질문 말(몇 건·목록·차트)이 없을 때만.
+LAW_STRONG = re.compile(r"조문|조항|법령|법률|시행령|시행규칙|몇\s*조|제\s*\d+\s*조|원상\s*회복|처벌|벌칙|과태료|이행\s*강제금|법적\s*근거|"
+                        r"근거\s*(?:법|조|규정)|(?:어떤|무슨|어느)\s*법|\bstatutes?\b|\barticles?\s+of\b|\blegal\s+basis\b|\bwhich\s+law\b", re.I)
+LAW_WEAK = re.compile(r"위반|근거|[가-힣]{2,}법(?=\s|$|[상에의을은이률,.?!])|\blaws?\b|\bviolat", re.I)
+LAW_NOT_ACT = re.compile(r"(?:방법|사용법|작성법|계산법|분석법|기법|문법|해법|용법)")
+LAW_DATA = re.compile(r"몇\s*(?:건|필지|곳|개)|건수|목록|차트|그래프|지도|상위|보고서|공문|초안|how\s+many|\blist\b|\bchart\b", re.I)
+LAW_TOOLS_SKIP = {"fusion_ledger", "fusion_suspects", "fusion_mismatch", "fusion_chart", "ledger_findings", "summary_lookup", "emd_chart"}
+
+
+def law_ask(msg: str) -> bool:
+    """법령 질문인가(plan 3.5 · r3-route 소유). '허가 없이 건물 … 어떤 법 조문?' · '원상회복 조문은?' · '개발행위허가 대상 조문은?'."""
+    t = re.sub(r"\s+", " ", msg or "")
+    if LAW_STRONG.search(t):
+        return True
+    w = LAW_WEAK.search(t)
+    if not w or LAW_DATA.search(t):
+        return False
+    return not LAW_NOT_ACT.fullmatch(w.group(0)) and not LAW_NOT_ACT.search(t[max(0, w.start() - 3):w.end()])
+
+
+# ── R3 M1: 운영 안내로 닫는 것은 운영 말(OPS_ASK)이 글자로 맞을 때만 — 지도·분석 실행 말이 있으면 도구 경로 ─────────
+_OPS_FALLBACK = re.compile(r"GPU|그래픽\s*카드|대기열|작업\s*대기|경보|전력|토큰|사용량|서버|\bqueues?\b|\balerts?\b|\btokens?\b|\busage\b|\bserver\b", re.I)
+MAPWORD = re.compile(r"zoom|layer|imagery|image|aerial|satellite|tilt|\b3d\b|\bpan\b|move\s+(?:the\s+)?map|go\s+to|확대|축소|줌|층|레이어|영상|입체|3\s*[dD]|기울|이동|옮겨", re.I)
+RUNWORD = re.compile(r"분석.{0,8}(?:실행|돌려|시작|해\s*줘)|돌려\s*(?:줘|주세요)|실행해\s*(?:줘|주세요)|\brun\b.{0,20}\banaly|\bstart\b.{0,20}\banaly|\banaly[sz]e\b", re.I)
+
+
+def ops_ask(msg: str) -> bool:
+    """진짜 운영 질문(GPU·대기열·경보·토큰·사용량·전력·서버) — ext.ops.OPS_ASK 를 먼저 쓰고, 없으면 같은 뜻의 규칙."""
+    try:
+        from .tools.ext import ops as _ops
+        q = _ops.question_only(msg)
+        return bool(_ops.OPS_ASK.search(q)) or bool(re.search(r"전력|서버|사용량", q))
+    except Exception:  # noqa: BLE001
+        return bool(_OPS_FALLBACK.search(msg or ""))
+
+
+def ops_close(msg: str) -> bool:
+    """라우터가 ops 라고 할 때 비관리자 답을 운영 안내 한 줄로 닫을까 — 운영 말이 있고 지도·분석 실행 말이 없을 때만."""
+    return ops_ask(msg) and not MAPWORD.search(msg or "") and not RUNWORD.search(msg or "")
+
+
+# ── R3 M1: 영어 지도 동작 직행(런타임) — 'Zoom in' · 'Turn off the imagery layer' · 'Tilt to 3D'(한 가지 동작만) ─────────
+EN_ZOOM_IN = re.compile(r"\bzoom(?:\s*-?\s*in|\s+closer)\b|\benlarge\b|\bcloser\s+look\b", re.I)
+EN_ZOOM_OUT = re.compile(r"\bzoom\s*-?\s*out\b|\bwider\s+view\b", re.I)
+EN_3D = re.compile(r"\btilt\b|\b3\s*-?d\b|\bperspective\b", re.I)
+EN_TOP = re.compile(r"\btop\s*-?\s*down\b|\b2\s*-?d\b|\bflat\s+view\b|\bstraight\s+down\b|\breset\s+(?:the\s+)?(?:tilt|view)\b", re.I)
+EN_ON = re.compile(r"\bturn\s+on\b|\bswitch\s+on\b|\bshow\b|\benable\b|\bdisplay\b", re.I)
+EN_OFF = re.compile(r"\bturn\s+(?:it\s+)?off\b|\bswitch\s+off\b|\bhide\b|\bdisable\b|\bremove\b", re.I)
+EN_LAYER = {"imagery": re.compile(r"\b(?:imagery|images?|aerial|satellite|drone|ortho\w*|photos?)\b", re.I),
+            "results": re.compile(r"\b(?:ai\s+)?(?:analysis\s+)?results?\s+layer\b|\bdetections?\s+layer\b", re.I),
+            "findings": re.compile(r"\bfindings?\b|\bfield[-\s]check\b", re.I),
+            "parcels": re.compile(r"\bparcel\s+(?:lines?|boundar\w*|layer)\b|\bcadastr\w*", re.I)}
+EN_DATA = re.compile(r"how\s+many|\bcount\b|summar|report|describe|explain|\blist\b|\bwhat\b|\bwhy\b|ndvi|\bstatus\b|\bgpu", re.I)
+MAP_SAY = {
+    "ko": {"in": "지도를 확대했습니다.", "out": "지도를 축소했습니다.", "3d": "지도를 3D 시점으로 기울였습니다.", "top": "지도를 위에서 보는 시점으로 바꿨습니다.",
+           "on": "{layer} 층을 켰습니다.", "off": "{layer} 층을 껐습니다."},
+    "en": {"in": "Zoomed in on the map.", "out": "Zoomed out on the map.", "3d": "Tilted the map to a 3D view.", "top": "Switched the map to a top-down view.",
+           "on": "Turned on the {layer} layer.", "off": "Turned off the {layer} layer."},
+}
+LAYER_NAME = {"ko": {"imagery": "영상", "results": "AI 분석 결과", "findings": "현장 확인 필요", "parcels": "지적선"},
+              "en": {"imagery": "imagery", "results": "AI results", "findings": "field-check", "parcels": "parcel line"}}
+
+
+MAP_TOOLS = {"map_zoom", "map_view", "map_layer", "map_region"}
+MAP_SAY["ko"].update({"zoom": "지도 배율을 바꿨습니다.", "move": "{place}{ro} 지도를 옮겼습니다."})
+MAP_SAY["en"].update({"zoom": "Changed the map zoom.", "move": "Moved the map to {place}."})
+
+
+def map_answer(ctx: Ctx, name: str, args: dict, out) -> str | None:
+    """지도 동작 한 가지뿐인 직행의 답 — 모델 없이 정해진 한 문장(숫자·자리표 0 · 동작이 실패하면 명령 바가 실패 문장으로 바꾼다)."""
+    if name not in MAP_TOOLS:
+        return None
+    lg = "en" if ctx.lang == "en" else "ko"
+    a = args or {}
+    if name == "map_zoom":
+        key = "zoom" if a.get("zoom") is not None else ("out" if float(a.get("delta") or 1) < 0 else "in")
+    elif name == "map_view":
+        key = "top" if a.get("preset") == "top" or (a.get("preset") is None and not a.get("pitch")) else "3d"
+    elif name == "map_layer":
+        key = "off" if a.get("on") is False or str(a.get("on")).lower() in ("false", "0", "off") else "on"
+    else:
+        d = getattr(out, "data", None) or {}
+        place = str(d.get("이동") or a.get("name") or "").strip()
+        if not place:
+            return None
+        return MAP_SAY[lg]["move"].format(place=place, ro=_josa_for(place[-1], ("으로", "로")))
+    return MAP_SAY[lg][key].format(layer=LAYER_NAME[lg].get(a.get("layer"), LAYER_NAME[lg]["imagery"]))
+
+
+def en_map_route(ctx: Ctx, msg: str) -> dict | None:
+    """영어 지도 동작 한 가지만 있는 짧은 문장 → {tool, args, answer}. 한국어는 map 확장(map.py ROUTE) 몫."""
+    t = re.sub(r"\s+", " ", msg or "").strip()
+    try:
+        from .tools.ext import ops as _ops
+        t = _ops.question_only(t)
+    except Exception:  # noqa: BLE001
+        pass
+    if not t or len(t) > 60 or lang_of(t) != "en" or EN_DATA.search(t):
+        return None
+    cand = []
+    if EN_ZOOM_IN.search(t):
+        cand.append(({"tool": "map_zoom", "args": {"delta": 2 if re.search(r"\bmore\b|\ba lot\b", t, re.I) else 1}}, "in"))
+    elif EN_ZOOM_OUT.search(t):
+        cand.append(({"tool": "map_zoom", "args": {"delta": -2 if re.search(r"\bmore\b|\ba lot\b", t, re.I) else -1}}, "out"))
+    if EN_3D.search(t):
+        cand.append(({"tool": "map_view", "args": {"preset": "3d"}}, "3d"))
+    elif EN_TOP.search(t):
+        cand.append(({"tool": "map_view", "args": {"preset": "top"}}, "top"))
+    on, off = EN_ON.search(t), EN_OFF.search(t)
+    if on or off:
+        for layer, rx in EN_LAYER.items():
+            if rx.search(t):
+                cand.append(({"tool": "map_layer", "args": {"layer": layer, "on": not off}}, "off" if off else "on"))
+                break
+    if len(cand) != 1:
+        return None
+    hit, key = cand[0]
+    if hit["tool"] not in registry.SPECS or not registry.allowed(hit["tool"], ctx.principal):
+        return None
+    lg = "en"
+    layer = LAYER_NAME[lg].get(hit["args"].get("layer"), "")
+    return {**hit, "module": "runner.map_en", "answer": MAP_SAY[lg][key].format(layer=layer)}
+
+
+# ── R3 M1: 기관의 '○○ 전역 분석 실행해 줘 · AI 분석 돌려 줘' — 기관이 할 수 있는 실행(실태조사 결과 만들기 · 확인 카드)으로 ─────────
+async def tenant_run_route(ctx: Ctx, msg: str) -> dict | None:
+    """analysis_run 은 LX 만 — 기관 담당자의 실행 요청은 라우터 분류(ops 오분류 등)에 맡기지 않고 survey_build 확인 카드로 보낸다.
+    지역에서 분석이 진행 중이면 survey_wait(확인 카드 없이 한 줄)."""
+    p = ctx.principal
+    if getattr(p, "realm", None) != "tenant":
+        return None
+    try:
+        from .tools.ext import analyze as A
+    except Exception:  # noqa: BLE001
+        return None
+    t = re.sub(r"\s+", " ", msg or "").strip()
+    run_rx, not_run = getattr(A, "RUN_RX", RUNWORD), getattr(A, "NOT_RUN", None)
+    if not t or len(t) > 80 or not run_rx.search(t) or (not_run is not None and not_run.search(t)) or lookup_not_run(t) or law_ask(t):
+        return None
+    if "survey_build" not in registry.SPECS or not registry.allowed("survey_build", p):
+        return None
+    regs = summary_lookup.match_regions(t)
+    if len({h["_key"] for h in regs}) > 1:
+        return None
+    args: dict = {}
+    if regs:
+        args["region"] = regs[0]["sgg_cd"]
+    elif not (ctx.context or {}).get("region"):
+        return None
+    try:
+        r = A.resolve_region(args, ctx)
+        codes = [c for c in (r["sgg_cd"], r.get("prev_cd")) if c]
+        checks = (ctx.state or {}).get("_c2xi_checks") or {}
+        rj = await A.region_jobs(codes, checks or None)
+        if rj.get("running") and "survey_wait" in registry.SPECS:
+            return {"tool": "survey_wait", "args": {"region": r["sgg_cd"]}, "module": "runner.run"}
+        if not rj.get("done") and in_tenant(ctx, r["sgg_cd"]):
+            sv = await (checks["survey_state"](codes) if "survey_state" in checks else A.survey_state(codes))
+            if sv != "done":
+                # 1차 실증 must_fix 1: AI 결과가 없는 곳(분석 없음 · 중간에 멈춘 분석만 있음)에 '실태조사 결과 만들기' 카드를 띄우지 않는다
+                #   — 카드를 눌러도 만들 수 없다(survey_build 가 멈춘 분석으로는 만들지 않음). AI 분석은 LX 가 실행한다.
+                #   기관이 화면에서 실제로 할 수 있는 일(도움말 '문의'로 LX 에 분석 요청)을 안내한다.
+                return {"tool": None, "args": {"region": r["sgg_cd"]}, "module": "runner.run",
+                        "reply": tenant_no_result(ctx, r["name"], partial=bool(rj.get("partial")))}
+    except Exception:  # noqa: BLE001 — 판정 못 하면 확인 카드 길 그대로(관할 밖은 PREPARE·도구가 막는다)
+        pass
+    return {"tool": "survey_build", "args": args, "module": "runner.run"}
+
+
+def in_tenant(ctx: Ctx, sgg_cd: str) -> bool:
+    """관할 안인지 — 관할 밖은 확인 카드 길로 두어 도구 가드가 '이 기관의 데이터가 아닙니다'로 막는다. 판정 못 하면 관할 안."""
+    chk = ((ctx.state or {}).get("_c2xi_checks") or {}).get("in_scope")
+    if chk:
+        return bool(chk(sgg_cd))
+    try:
+        from landxi_api.regions import in_scope, tenant_scope
+        return bool(in_scope(str(sgg_cd), tenant_scope(ctx.principal.tenant_id)))
+    except Exception:  # noqa: BLE001
+        return True
+
+
+# 기관이 화면에서 실제로 할 수 있는 다음 할 일(AI 분석 실행은 LX 전용 · 기관 화면엔 실행 버튼이 없다) — 도움말(?) → '문의'
+TENANT_NEXT = {"ko": "다음 할 일: 화면 위 도움말(?)의 '문의'로 LX에 {name} AI 분석을 요청해 주세요.",
+               "en": "Next: ask LX to run AI analysis for {name} via Help (?) → Contact."}
+TENANT_NO_RESULT = {"ko": "{name}에는 아직 AI 분석 결과가 없습니다. AI 분석은 LX가 실행합니다.",
+                    "en": "{name} has no AI analysis results yet. AI analysis is run by LX."}
+TENANT_PARTIAL = {"ko": "{name} AI 분석이 중간에 멈춰 아직 결과가 없습니다. AI 분석은 LX가 실행합니다.",
+                  "en": "AI analysis of {name} stopped partway, so there are no results yet. AI analysis is run by LX."}
+
+
+def tenant_next(ctx: Ctx, name: str | None) -> str:
+    lg = "en" if ctx.lang == "en" else "ko"
+    nm = (name or "").strip()
+    if not nm or (lg == "en" and _HANGUL.search(nm)):
+        nm = "this area" if lg == "en" else "이 지역"
+    return TENANT_NEXT[lg].format(name=nm)
+
+
+def tenant_no_result(ctx: Ctx, name: str, partial: bool = False) -> str:
+    lg = "en" if ctx.lang == "en" else "ko"
+    nm = (name or "").strip()
+    if not nm or (lg == "en" and _HANGUL.search(nm)):
+        nm = ("this area" if partial else "This area") if lg == "en" else "이 지역"
+    return (TENANT_PARTIAL if partial else TENANT_NO_RESULT)[lg].format(name=nm) + "\n\n" + tenant_next(ctx, name)
+
+
 async def ext_route(ctx: Ctx, msg: str) -> dict | None:
     """확장 모듈 ROUTE(모델 앞 결정적 직행) — 첫 적중 {tool, args, module}. 권한 밖 도구·오류는 건너뛴다.
-    결과 조회 질문이 확인 카드 도구(분석 실행 등)로 잡히면 건너뛴다(요약 직행 · 모델 경로로)."""
+    결과 조회 질문이 확인 카드 도구(분석 실행 등)로 잡히면 건너뛴다(요약 직행 · 모델 경로로).
+    R3: 법령 질문이면 법령 모듈을 먼저 묻고 대장·요약 도구는 건너뛴다 · 확장이 못 잡은 영어 지도 동작·기관 실행 요청·법령 질문은 런타임 직행."""
     lookup = lookup_not_run(msg)
-    for mod, fn in ext.ROUTES:
+    law = law_ask(msg)
+    routes = list(ext.ROUTES)
+    if law:
+        routes.sort(key=lambda mf: 0 if mf[0] == "law" else 1)
+    for mod, fn in routes:
         try:
             hit = await ext.maybe(fn(msg, ctx))
         except Exception as e:  # noqa: BLE001
@@ -578,8 +792,16 @@ async def ext_route(ctx: Ctx, msg: str) -> dict | None:
             if lookup and hit["tool"] in registry.CONFIRM:
                 ctx.state.setdefault("route_skipped", []).append(f"{mod}:{hit['tool']}")
                 continue
+            if law and hit["tool"] in LAW_TOOLS_SKIP:
+                ctx.state.setdefault("route_skipped", []).append(f"{mod}:{hit['tool']}:law")
+                continue
             return {**hit, "module": mod, "args": dict(hit.get("args") or {})}
-    return None
+    if law and "law_search" in registry.SPECS and registry.allowed("law_search", ctx.principal) and not LAW_DATA.search(msg or ""):
+        return {"tool": "law_search", "args": {"query": re.sub(r"\s+", " ", msg or "").strip()}, "module": "runner.law"}
+    hit = en_map_route(ctx, msg)
+    if hit:
+        return hit
+    return await tenant_run_route(ctx, msg)
 
 
 async def reject(ctx: Ctx, category: str, message: str, scr: dict, region=None, event_error: str = "out_of_scope"):
@@ -613,7 +835,11 @@ async def execute(ctx: Ctx, message: str):
     if xr:
         await answer_direct(ctx, msg, xr, started, scr)
         return
-    if ctx.lang == "ko":                              # 요약·대장 직행의 고정 문장은 한국어 — 영어 질문은 모델 경로(같은 도구)로
+    if ctx.lang == "ko" and not law_ask(msg):         # 요약·대장 직행의 고정 문장은 한국어 — 영어 질문은 모델 경로(같은 도구) · 법령 질문은 건너뛴다(M2)
+        la = list_route(ctx, msg)
+        if la:
+            await answer_list(ctx, msg, la, started, scr)
+            return
         sr = await summary_route(ctx, msg)
         if sr:
             await answer_summary(ctx, msg, sr, started, scr)
@@ -626,6 +852,10 @@ async def execute(ctx: Ctx, message: str):
     await emit(ctx, "agent.route", {"intent": route["intent"], "ms": route["ms"], "backend": route["backend"], "model": route["model"],
                                     "pii": scr["pii"], "lang": ctx.lang})
     await persist_state(ctx, intent=route["intent"])
+    if route["intent"] == "ops" and not is_admin(p) and not ops_close(msg):
+        # M1: 라우터가 ops 라고 해도 운영 말(OPS_ASK)이 글자로 없거나 지도·분석 실행 말이 있으면 도구 경로(모델)로 간다
+        ctx.state["route_override"] = "ops→map"
+        route = {**route, "intent": "map"}
     if route["intent"] == "ops" and not is_admin(p):
         # 운영 질문은 LX 관리자만(ops 도구 = c2-ops · 관리자에게만 허용). 그 밖엔 한 줄 — 런타임 문장(LLM 호출 0)
         await emit(ctx, "agent.plan", {"steps": [], "route": route})
@@ -671,6 +901,11 @@ async def execute(ctx: Ctx, message: str):
             for n, a, cid in calls:
                 i += 1
                 r1 = await run_tool(ctx, i, n, a)
+                g = guard_text(ctx, r1)
+                if g:                                     # M10(plan 3.2): 가드 결과는 모델이 바꿔 말하지 못하게 그대로 답한다
+                    ctx.state["guard"] = {"tool": n, "text": g}
+                    await finish(ctx, g, None, started, route, {"first_token_ms": first_ms}, lint_on=False)
+                    return
                 messages.append({"role": "tool", "tool_call_id": cid, "content": r1["block"]})
             if planned and planned[-1]["by"] == "runtime":
                 i += 1
@@ -704,6 +939,83 @@ async def execute(ctx: Ctx, message: str):
 # 단위 뒤에 조사(이고·이며·입니다·이·가·은·는·을·를·에·으로·의·과·와·도·만…)가 오면 단위로 본다 · '건물' 처럼 낱말이 이어지면 건드리지 않는다
 _JOSA = r"(?:이고|이며|이다|입니다|이에요|이야|이나|으로|에서|에게|까지|부터|정도|씩|쯤|이|가|은|는|을|를|에|로|의|과|와|도|만|나)"
 UNIT_AFTER = re.compile(r"(\{\{env:e\d+\}\})\s?(필지|건|동|개|곳|㎡|m²|m2|ha|km²|km2|%|퍼센트|명|회|초|원)(?=" + _JOSA + r"(?![가-힣])|[^가-힣A-Za-z]|$)")
+
+
+# ── R3 조사 — 숫자 칩(값 + 단위) 뒤 조사를 받침에 맞춘다. 칩 단위는 화면과 같은 말(ko.json unit.*) ─────────────────
+UNIT_KO = {"count": "건", "parcels": "필지", "필지": "필지", "m2": "제곱미터", "ha": "헥타르", "km2": "제곱킬로미터", "ratio": "퍼센트", "%": "퍼센트",
+           "tokens": "토큰", "polygons": "개", "features": "개", "score": "점", "건": "건", "동": "동", "개": "개", "곳": "곳", "명": "명", "회": "회",
+           "초": "초", "장": "장", "대": "대", "시간": "시간", "행": "행", "토큰": "토큰", "㎡": "제곱미터", "㎢": "제곱킬로미터", "gpu_s": "초", "s": "초",
+           "°C": "도", "℃": "도", "W": "와트", "kW": "킬로와트", "GB": "기가바이트", "MB": "메가바이트", "TB": "테라바이트", "GiB": "기가바이트", "MiB": "메가바이트"}
+_DIGIT_READ = "영일이삼사오육칠팔구"
+JOSA_PAIRS = [("으로", "로"), ("이며", "며"), ("이고", "고"), ("이나", "나"), ("을", "를"), ("은", "는"), ("이", "가"), ("과", "와")]
+
+
+def _batchim(ch: str) -> int:
+    """한글 한 글자의 받침 번호(0 = 없음 · 8 = ㄹ) · 한글이 아니면 -1."""
+    if not ch or not ("가" <= ch <= "힣"):
+        return -1
+    return (ord(ch) - 0xAC00) % 28
+
+
+def _num_tail(v) -> str:
+    """숫자를 읽을 때 끝 글자(12 → 이 · 10 → 십 · 100 → 백 · 3.5 → 오)."""
+    try:
+        x = float(v)
+    except (TypeError, ValueError):
+        return ""
+    s = f"{x:.4f}".rstrip("0").rstrip(".") if not float(x).is_integer() else str(int(abs(x)))
+    if "." in s:
+        return _DIGIT_READ[int(s[-1])]
+    if s == "0":
+        return "영"
+    z = len(s) - len(s.rstrip("0"))
+    if z == 0:
+        return _DIGIT_READ[int(s[-1])]
+    return {1: "십", 2: "백", 3: "천"}.get(z, "억" if z >= 8 else "만")
+
+
+def _josa_for(tail: str, pair: tuple[str, str]) -> str:
+    b = _batchim(tail[-1:] if tail else "")
+    if b < 0:
+        return pair[0] if pair[0] != "으로" else "로"
+    if pair[0] == "으로":
+        return "로" if b in (0, 8) else "으로"
+    return pair[0] if b > 0 else pair[1]
+
+
+_JOSA_ALT = "|".join(re.escape(x) for pr in JOSA_PAIRS for x in pr)
+# 괄호 풀이가 붙으면 조사는 괄호 앞 말에 맞춘다('1장(한도 1장)으로') — 괄호 안 말이 아니라 앞 칩·숫자의 단위로
+_PAREN = r"(?:\([^()\n]{0,48}\))?"
+_JOSA_ENV = re.compile(r"(\{\{env:(e\d+)\}\}" + _PAREN + r")(" + _JOSA_ALT + r")(?![가-힣])")
+_LIT_UNITS = "필지|건|곳|개|명|회|점|동|토큰|장|대|°C|℃|kW|W|GB|MB|TB|%"
+_JOSA_LIT = re.compile(r"(\d[\d,]*(?:\.\d+)?\s?(" + _LIT_UNITS + r")" + _PAREN + r")(" + _JOSA_ALT + r")(?![가-힣])")
+
+
+def fix_josa(md: str, envs: dict) -> str:
+    """'{{env:e3}}을'(칩 = 10필지) → '를' · 글자 '10필지을' → '10필지를'. 칩 단위가 없으면 숫자 읽기 끝 글자로."""
+    def pair_of(j):
+        return next(pr for pr in JOSA_PAIRS if j in pr)
+
+    def env_sub(m):
+        e = envs.get(m.group(2)) or {}
+        u = e.get("unit")
+        tail = UNIT_KO.get(u) if u and u != "ndvi" else None
+        tail = tail or _num_tail(e.get("value"))
+        return m.group(1) + _josa_for(tail, pair_of(m.group(3)))
+
+    md = _JOSA_ENV.sub(env_sub, md or "")
+    return _JOSA_LIT.sub(lambda m: m.group(1) + _josa_for(UNIT_KO.get(m.group(2), m.group(2)), pair_of(m.group(3))), md)
+
+
+def action_sentences(md: str, lang: str = "ko") -> list[str]:
+    """답에서 지도 동작을 말한 문장들(명령 바가 동작 실패를 받으면 이 문장을 실패 문장으로 바꾼다 · M5)."""
+    out = []
+    for para in (md or "").split("\n"):
+        for a, b, _ns in lint._sentence_spans(para):
+            s = para[a:b].strip()
+            if s and lint.claims(s, lang):
+                out.append(s)
+    return out
 
 
 def dedupe_units(answer: str) -> str:
@@ -839,6 +1151,10 @@ async def answer_ledger(ctx: Ctx, msg: str, args: dict, started: float, scr: dic
     ctx.state["plan"] = plan
     await emit(ctx, "agent.plan", {"steps": plan, "round": 1, "route": route, "model": {"id": "런타임", "backend": "runtime"}})
     r1 = await run_tool(ctx, 1, "ledger_findings", args, by="runtime")
+    g = guard_text(ctx, r1)
+    if g:
+        await finish(ctx, g, None, started, route, {}, lint_on=False)
+        return
     blocks = [r1["block"]]
     if r1["ok"] and (r1.get("raw") or {}).get("features"):
         r2 = await run_tool(ctx, 2, "map_arrive", {}, by="runtime")
@@ -866,24 +1182,181 @@ async def answer_ledger(ctx: Ctx, msg: str, args: dict, started: float, scr: dic
     await finish(ctx, res.content or "", res, started, route, {"first_token_ms": res.first_token_ms})
 
 
+# ── R3 M10(plan 3.2): 가드 결과 그대로 — 도구가 {status: no_data|outside|not_found, text, next?} 를 주거나 가드 문구로 실패하면
+#    모델이 바꿔 말하지 못하게 그 문장을 답으로 쓴다. 관할 안인데 결과가 없으면 다음 할 일 한 줄을 붙인다.
+GUARD_STATUS = {"no_data", "outside", "not_found"}
+GUARD_NEXT = {"ko": "다음 할 일: 이 지역 AI 분석을 먼저 실행해 주세요('전역 분석 실행해 줘').",
+              "en": "Next: run AI analysis for this area first (\"Run the analysis for this area\")."}
+
+
+def guard_text(ctx: Ctx, r1: dict) -> str | None:
+    st = text = nxt = None
+    if r1.get("ok"):
+        out = r1.get("out")
+        for d in (getattr(out, "data", None), getattr(out, "raw", None)):
+            if isinstance(d, dict) and d.get("status") in GUARD_STATUS and d.get("text"):
+                st, text, nxt = d["status"], str(d["text"]), d.get("next")
+                break
+    else:
+        err = r1.get("err")
+        if err is None:
+            return None
+        m = str(getattr(err, "message", "") or "")
+        if "해당 지역 데이터가 없습니다" in m or err.code == "no_data":
+            st, text = "no_data", m
+        elif "이 기관의 데이터가 아닙니다" in m or err.code == "outside":
+            st, text = "outside", m
+        else:
+            return None
+        nxt = getattr(err, "next", None)
+    if st is None or not text:
+        return None
+    if ctx.lang == "en" and _HANGUL.search(text) and st in ("no_data", "outside"):
+        text = say(ctx, "no_data" if st == "no_data" else "not_tenant")
+    if st == "no_data" and getattr(ctx.principal, "realm", None) == "tenant":
+        # 기관은 AI 분석을 실행할 수 없다(LX 전용) — 도구가 준 'XI맵에서 … 실행하세요' 대신 기관이 화면에서 할 수 있는 일
+        nxt = tenant_next(ctx, _next_region(nxt))
+    if st == "no_data" and not nxt:
+        nxt = GUARD_NEXT.get(ctx.lang, GUARD_NEXT["ko"])
+    if ctx.lang == "en" and nxt and _HANGUL.search(str(nxt)):
+        nxt = GUARD_NEXT["en"] if st == "no_data" else None
+    text = _end_dot(text)
+    return text + ("\n\n" + _end_dot(str(nxt)) if nxt and str(nxt).strip() else "")
+
+
+def _end_dot(x: str) -> str:
+    """문장 끝 마침표(가드 문구·다음 할 일 — 1차 실증 '마침표 없음')."""
+    x = (x or "").strip()
+    return x if not x or re.search(r"[.!?。]$", x) else x + "."
+
+
+_NEXT_REGION = re.compile(r"XI맵에서\s*(.+?)\s*AI\s*분석|analysis for (.+?) on the XI map", re.I)
+
+
+def _next_region(nxt) -> str | None:
+    """도구가 준 다음 할 일에서 지역 이름('XI맵에서 곡성군 AI 분석을…' → 곡성군)."""
+    m = _NEXT_REGION.search(str(nxt or ""))
+    nm = (m.group(1) or m.group(2)) if m else None
+    return None if not nm or nm in ("이 지역", "this area") else nm
+
+
+# ── R3 목록 답(한국어) — '○○ 의심 필지 5곳 지번 보여 줘' → 모수 = 그 지역 의심 필지 수(survey_stats), 상위 n = shown, 지번 n개 모두 ─────────
+LIST_N = re.compile(r"(?:상위|top)\s*(\d{1,2})|(\d{1,2})\s*(?:곳|개|건|필지)(?!\s*(?:이상|이하|넘))", re.I)
+LIST_ASK = re.compile(r"지번|목록|리스트|보여|알려|뽑아|나열|찾아")
+LIST_NOT = re.compile(r"영상|설명|보고서|공문|차트|그래프|대장|어긋|몇\s*(?:건|필지|곳)|건수|요약|정리|비교|분석\s*(?:실행|해|돌려)|배정|오탐")
+LIST_RULE = {"R1": r"무허가|불법\s*건축", "R2": r"휴경", "R3": r"비닐하우스", "R4": r"주차장", "R5": r"임야|개간|산지", "R6": r"공공용지|도로|구거|하천"}
+
+
+def list_route(ctx: Ctx, msg: str) -> dict | None:
+    p = ctx.principal
+    t = re.sub(r"\s+", " ", msg or "").strip()
+    if p.realm not in ("tenant", "lx") or not t or len(t) > 60 or "의심" not in t or not LIST_ASK.search(t) or LIST_NOT.search(t):
+        return None
+    m = LIST_N.search(t)
+    if not m:
+        return None
+    n = int(m.group(1) or m.group(2))
+    if not 1 <= n <= 20:
+        return None
+    for tool in ("survey_stats", "survey_findings"):
+        if tool not in registry.SPECS or not registry.allowed(tool, p):
+            return None
+    regs = summary_lookup.match_regions(t)
+    if len({h["sgg_cd"] for h in regs}) > 1:
+        return None
+    region = regs[0]["sgg_cd"] if regs else (ctx.context or {}).get("region")
+    rules = [r for r, rx in LIST_RULE.items() if re.search(rx, t)]
+    out = {"top": n}
+    if region:
+        out["region"] = str(region)
+    if len(rules) == 1:
+        out["rule"] = rules[0]
+    return out
+
+
+async def answer_list(ctx: Ctx, msg: str, la: dict, started: float, scr: dict):
+    route = {"intent": "map", "ms": 0, "backend": "runtime", "model": "목록 직행"}
+    await emit(ctx, "agent.route", {**route, "pii": scr["pii"], "lang": ctx.lang})
+    await persist_state(ctx, intent="list")
+    base = {k: la[k] for k in ("region",) if la.get(k)}
+    a1 = {**base, "by": "rule"}
+    a2 = {**base, "top": la["top"], **({"rule": la["rule"]} if la.get("rule") else {})}
+    plan = [{"i": 1, "tool": "survey_stats", "args": a1, "why": WHY["survey_stats"], "by": "runtime"},
+            {"i": 2, "tool": "survey_findings", "args": a2, "why": WHY["survey_findings"], "by": "runtime"},
+            {"i": 3, "tool": "map_arrive", "args": {}, "why": WHY["map_arrive"], "by": "runtime"}]
+    ctx.state["plan"] = plan
+    await emit(ctx, "agent.plan", {"steps": plan, "round": 1, "route": route, "model": {"id": "런타임", "backend": "runtime"}})
+    r1 = await run_tool(ctx, 1, "survey_stats", a1, by="runtime")
+    g = guard_text(ctx, r1)
+    if g:
+        await finish(ctx, g, None, started, route, {}, lint_on=False)
+        return
+    r2 = await run_tool(ctx, 2, "survey_findings", a2, by="runtime")
+    g = guard_text(ctx, r2)
+    if g or not r2["ok"]:
+        await finish(ctx, g or say(ctx, "cannot"), None, started, route, {}, lint_on=False)
+        return
+    if (r2.get("raw") or {}).get("features"):
+        await run_tool(ctx, 3, "map_arrive", {}, by="runtime")
+    total = (ctx.env_id(f"rule_{la['rule']}", 1) if la.get("rule") else ctx.env_id("suspects", 1)) if r1["ok"] else None
+    total = total or ctx.env_id("total", 2)
+    shown = ctx.env_id("shown", 2)
+    parcels = [c for c in ctx.citations if c.get("step") == 2 and c.get("kind") == "parcel"]
+    place = ((r2.get("out").data or {}).get("지역") if r2.get("out") is not None and isinstance(r2["out"].data, dict) else None) or ""
+    place = "" if place == "관할 전체" else place
+    if not parcels or not shown:
+        text = f"{place + ' ' if place else ''}조건에 맞는 의심 필지가 없습니다."
+    else:
+        head = f"{place + ' ' if place else ''}의심 필지 " + ("{{env:%s}} 중 " % total if total else "") + "점수 상위 {{env:%s}}를 지도에 표시했습니다." % shown
+        items = " · ".join(f"{k}위 {c.get('addr') or c.get('label')} [{c['n']}]" for k, c in enumerate(parcels, 1))
+        text = f"{head} {items}. 현장조사 대상 후보이며 건축물대장 대조 전입니다."
+    ctx.state["rounds"] = 0
+    await finish(ctx, text, None, started, route, {}, lint_on=False)
+
+
+CANCEL_SAY = {"ko": "확인 카드에서 취소해 실행하지 않았습니다.", "en": "Cancelled on the confirmation card — nothing was run."}
+
+
 async def answer_direct(ctx: Ctx, msg: str, hit: dict, started: float, scr: dict):
-    """확장 ROUTE 직행(plan 3.1) — 도구 1개(+ 결과 도형이면 map_arrive) → Out.answer 가 있으면 그 문장, 없으면 모델이 봉투로 2문장."""
+    """확장 ROUTE 직행(plan 3.1) — 도구 1개(+ 결과 도형이면 map_arrive) → Out.answer 가 있으면 그 문장, 없으면 모델이 봉투로 2문장.
+    R3: 가드 결과는 그대로(M10) · 런타임 직행(영어 지도 동작)은 정해진 한 문장."""
     name, args = hit["tool"], hit.get("args") or {}
     route = {"intent": "map", "ms": 0, "backend": "runtime", "model": f"직행 · {hit.get('module')}"}
     await emit(ctx, "agent.route", {**route, "pii": scr["pii"], "lang": ctx.lang})
     await persist_state(ctx, intent=hit.get("intent") or "direct")
+    if hit.get("reply"):                                  # 도구 없이 정해진 답(기관 · AI 결과 없는 곳 실행 요청 — 확인 카드 0)
+        ctx.state["rounds"] = 0
+        ctx.state["guard"] = {"tool": None, "text": hit["reply"]}
+        await emit(ctx, "agent.plan", {"steps": [], "round": 1, "route": route, "model": {"id": "런타임", "backend": "runtime"}})
+        await finish(ctx, hit["reply"], None, started, route, {}, lint_on=False)
+        return
     plan = [{"i": 1, "tool": name, "args": _args_public(args), "why": WHY.get(name, ""), "say": ext.SAY.get(name), "by": "runtime"}]
     ctx.state["plan"] = plan
     await emit(ctx, "agent.plan", {"steps": plan, "round": 1, "route": route, "model": {"id": "런타임", "backend": "runtime"}})
     r1 = await run_tool(ctx, 1, name, args, by="runtime")
+    g = guard_text(ctx, r1)
+    if g:
+        ctx.state["rounds"] = 0
+        ctx.state["guard"] = {"tool": name, "text": g}
+        await finish(ctx, g, None, started, route, {}, lint_on=False)
+        return
+    if not r1["ok"] and getattr(r1.get("err"), "code", None) == "rejected_by_user":
+        # 확인 카드 '취소' → 한 문장(모델이 같은 말을 두 번 쓰던 일 0 · LLM 호출 0)
+        ctx.state["rounds"] = 0
+        await finish(ctx, CANCEL_SAY["en" if ctx.lang == "en" else "ko"], None, started, route, {}, lint_on=False)
+        return
     blocks = [r1["block"]]
     if r1["ok"] and (r1.get("raw") or {}).get("features") and "map_arrive" not in ctx.ui_ops:
         r2 = await run_tool(ctx, 2, "map_arrive", {}, by="runtime")
         blocks.append(r2["block"])
     out = r1.get("out")
-    if r1["ok"] and out is not None and out.answer:
+    runtime = hit.get("answer") or (map_answer(ctx, name, args, out) if r1["ok"] else None)
+    if r1["ok"] and out is not None and (out.answer or runtime):
         ids = r1.get("ids") or {}
-        text = re.sub(r"\{\{\s*([A-Za-z0-9_]+)\s*\}\}", lambda m: "{{env:%s}}" % ids[m.group(1)] if m.group(1) in ids else m.group(0), out.answer)
+        text = re.sub(r"\{\{\s*([A-Za-z0-9_]+)\s*\}\}", lambda m: "{{env:%s}}" % ids[m.group(1)] if m.group(1) in ids else m.group(0),
+                      out.answer or runtime)
+        if not out.answer and name in MAP_TOOLS:
+            ctx.state["act_claims"] = [text]               # M5 — 이 한 문장이 동작 문장(실패면 명령 바가 바꾼다)
         ctx.state["rounds"] = 0
         await finish(ctx, text, None, started, route, {}, lint_on=False)
         return
@@ -979,7 +1452,9 @@ async def finish(ctx: Ctx, answer: str, res, started: float, route: dict, perf: 
     if lint_result is not None:
         lr = lint_result
     elif lint_on:
-        lr = lint.lint(answer, ctx.envs, ctx.whitelist, scope=scope if scope is not None else lint.scope_of(ctx))
+        lr = lint.lint(answer, ctx.envs, ctx.whitelist, scope=scope if scope is not None else lint.scope_of(ctx),
+                       asked=lint.asked_numbers(ctx.state.get("msg") or ""),
+                       verbatim=[str(c.get("text")) for c in ctx.citations if c.get("kind") == "law" and c.get("text")])
     else:
         lr = lint.LintResult(answer_md=answer)          # 런타임·서식 문장(LLM 출력 아님) — 검증기 생략
     cmp_flags = lint.compare_check(lr.answer_md, ctx.envs, lr.unverified) if lint_on else []
@@ -994,7 +1469,10 @@ async def finish(ctx: Ctx, answer: str, res, started: float, route: dict, perf: 
         if act_flags:
             extra = {**(extra or {}), "action_flags": act_flags}
     md = lint.scrub_terms(lint.render_unverified(md, ctx.lang), ctx.lang)
+    if ctx.lang == "ko":
+        md = fix_josa(md, ctx.envs)                    # R3: 숫자·단위 뒤 조사를 받침에 맞춘다('10필지를' · '3건을')
     lr.answer_md = md
+    act_claims = [c for c in (ctx.state.get("act_claims") or []) if c in md] or action_sentences(md, ctx.lang)   # R3 M5: 동작 문장
     blocks = [*ctx.blocks, *auto_blocks(ctx, artifact)]
     backend = res.backend if res else "runtime"
     b = config.BACKENDS.get(backend, {})
@@ -1015,7 +1493,7 @@ async def finish(ctx: Ctx, answer: str, res, started: float, route: dict, perf: 
             "unverified_numbers": lr.unverified_numbers, "unverified": lr.unverified, "promoted": lr.promoted,
             "citations": ctx.citations, "model": model, "tokens": tokens, "perf": perf_out, "steps": ctx.steps,
             "bad_cites": bad_cites, "verdict": "unverified_answer" if lr.unverified else "ok",
-            "lang": ctx.lang, "blocks": blocks, "ui_ops": list(dict.fromkeys(ctx.ui_ops))}
+            "lang": ctx.lang, "blocks": blocks, "ui_ops": list(dict.fromkeys(ctx.ui_ops)), "act_claims": act_claims}
     if artifact:
         data["artifact"] = artifact
     if extra:

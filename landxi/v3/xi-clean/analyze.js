@@ -5,10 +5,12 @@
    · 전체 범위 기록 보기 = 이미 끝난 시군 전역 작업의 기록을 다시 흘려 보는 보조 동작(실시간 아님 · 속도 문구 없음)
    · 전역 분석(core-xi) = 고른 시군구 전체 — POST /jobs/quote{options.scope:'sgg', sgg_cd, center}. 영상 · 모델은 서버가 고르고, 칸은 화면 중심에서
      가까운 읍면동부터 차오른다. 다른 지역으로 가도 작업은 계속되고(화면만 떼어 낸다), 돌아오면 이어서 보인다. 영상이 없으면 '영상 등록 필요'.
+     영상이 시군구 일부만 덮으면 서버가 만든 범위 문장('영상이 있는 곳만 분석합니다 — 읍면동 n곳, 시군구 면적의 약 p%')을 그대로 보인다(r3-xi).
+   · 읍면동 · 그린 범위도 영상 · 모델을 서버가 고른다(등록 영상 COG 포함 · r3-xi M11) — 화면은 범위만 보낸다.
    · 영업  = demo:true(서버 강제) → 꼬리표 '예시' · 결과는 남지 않음
    숫자·문구는 사용자 말만. 칩 수 · 작업 id · 모델 id · 걸린 시간은 개발자 서랍(devlog)으로. */
 import { api, API } from '../kit/util.js';
-import { sse } from '../../shared/api-v1.js';
+import { sse, JOB_EVENTS } from '../../shared/api-v1.js';
 import { h, esc, sig, devlog, toast, bboxOf, empty } from '../kit/index.js';
 
 const EMPTY = { type: 'FeatureCollection', features: [] };
@@ -63,24 +65,14 @@ export function imageryLabel(it) {
   const yr = /^\d{4}$/.test(String(it.epoch || '')) ? `${it.epoch}년 ` : '';
   return `${yr}${cm} ${drone ? '드론영상' : '항공영상'}`;
 }
-function pickImagery(items, fb, { tenant }) {
-  const c = items.filter((i) => i.role === 'imagery' && i.source === 'pmtiles' && i.bounds && i.gsd_m && i.gsd_m < 1 && !(tenant && i.tier === 'raw'))
-    .map((i) => ({ i, ov: boxArea(inter(fb, i.bounds)) }))
-    .filter((x) => x.ov > 0)
-    .sort((a, b) => b.ov - a.ov || Math.abs(Math.log(a.i.gsd_m / 0.25)) - Math.abs(Math.log(b.i.gsd_m / 0.25)));
-  return c[0]?.i || null;
-}
-function pickModel(models, img) {
-  const c = models.filter((m) => (m.input || []).includes('ortho') && m.gsd_trained_m && m.perf?.chips_per_s?.value);
-  c.sort((a, b) => Math.abs(Math.log(a.gsd_trained_m / img.gsd_m)) - Math.abs(Math.log(b.gsd_trained_m / img.gsd_m)));
-  return c[0] || null;
-}
+/* 영상 · 모델 고르기는 서버가 한다(POST /jobs/quote — 읍면동 · 그린 범위 · 전역 분석 모두 · 등록 영상 COG 포함 · r3-xi M11) */
 
 /* ── 분석 도구 ── */
 export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick, regionInfo }) {
   const map = stage.map;
-  let models = null, S = null, draw = null;
+  let S = null, draw = null;
   const tenant = who?.me?.realm === 'tenant';
+  const staff = who?.me?.realm === 'lx' && ['staff', 'admin'].includes(who?.me?.role);     // '영상 등록'은 LX 직원 · 관리자만
 
   /* 층: 마스크(프레임 밖 디밍) · 프레임 선 · 끝난 칸 · 도착 중 도형 · 판독 도형 */
   const src = (id) => map.getSource(id);
@@ -143,31 +135,29 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
   /** 프레임 확정 → 견적 카드 */
   async function frame(geom, { label }) {
     if (S?.running) return;
-    const fb = bboxOf(geom);
-    const img = pickImagery(catalog.items || [], fb, { tenant });
-    S = { geom, label, img, q: null, running: false };
+    S = { geom, label, img: null, q: null, running: false };
+    const me = S;
     showFrame(geom);
-    if (!img) { cardNoImagery(); return; }
-    // 영상 범위 밖은 자른다(서버도 자르지만 면적 · 화면 프레임을 맞춘다)
-    const g = clipToBox(geom, img.bounds) || geom;
-    S.geom = g; showFrame(g);
-    models ||= (await api('/registry/models').catch(() => ({ items: [] }))).items || [];
-    const model = pickModel(models, img);
-    if (!model) { cardMsg('이 영상에 맞는 모델이 아직 없습니다'); return; }
-    S.model = model;
     cardBusy();
-    const area = areaKm2(g);
-    // 실시간 분석(live): 범위 천장 · 해상도(칩 수 상한)는 서버가 정한다 — 화면은 범위만 보낸다
+    const area = areaKm2(geom);
+    // 실시간 분석(live): 영상 · 모델 · 범위 천장 · 해상도(칩 수 상한)는 서버가 정한다 — 화면은 범위만 보낸다(등록 영상 COG 포함 · r3-xi M11)
     const opts = { chip: 1024, overlap: 0.125, conf: 0.25, live: true, max_km2: Math.ceil(area * 1.05 + 1) };
-    const body = { kind: 'infer', model_id: model.id, imagery_id: img.id, aoi: g, options: opts, demo };
     let q;
-    try { q = await api('/jobs/quote', { method: 'POST', body }); }
-    catch (e) { devlog('quote', `${e.code || ''} ${e.message || ''}`); cardMsg('지금은 견적을 낼 수 없습니다'); return; }
-    if (S?.geom !== g) return;                        // 그 사이 다른 읍면동을 골랐다
-    S.body = body; S.q = q;
-    if (q.aoi) { S.geom = q.aoi; showFrame(q.aoi); }  // 서버가 녹여 합친 한 면(벡터 타일 조각의 이음새 없이)
-    S.eta = await measuredEta(img.id, q.upsample || 1, q);
-    devlog('quote', { model: model.id, imagery: img.id, shards: q.shards, upsample: q.upsample || 1, eta: q.eta_s?.value, reasons: q.reasons, power: q.power_budget?.note });
+    try { q = await api('/jobs/quote', { method: 'POST', body: { kind: 'infer', aoi: geom, options: opts, demo } }); }
+    catch (e) { devlog('quote', `${e.code || ''} ${e.message || ''}`); if (S === me) cardMsg('지금은 견적을 낼 수 없습니다'); return; }
+    if (S !== me) return;                             // 그 사이 다른 읍면동을 골랐다
+    // 영상이 이 범위와 겹치지 않을 때만 '영상 등록 필요'
+    if (!q.imagery || (q.reasons || []).some((r) => r === 'no_imagery' || r === 'aoi_outside_footprint')) { cardNoImagery(); return; }
+    const g = q.aoi || geom;                          // 서버가 영상 범위로 자르고 녹여 합친 한 면
+    S.geom = g; showFrame(g);
+    S.img = { id: q.imagery.id, gsd_m: q.imagery.gsd_m, epoch: q.imagery.year, name: {} };
+    S.model = { id: q.model_id };
+    // 실행은 견적과 같은 영상 · 모델 · 범위로(서버가 다시 고르지 않게)
+    S.body = { kind: 'infer', model_id: q.model_id, imagery_id: q.imagery.id, aoi: g, options: opts, demo }; S.q = q;
+    if (!q.model_id && q.allowed === false) { cardMsg('이 영상에 맞는 모델이 아직 없습니다'); return; }
+    S.eta = await measuredEta(q.imagery.id, q.upsample || 1, q);
+    if (S !== me) return;
+    devlog('quote', { model: q.model_id, imagery: q.imagery.id, shards: q.shards, upsample: q.upsample || 1, eta: q.eta_s?.value, reasons: q.reasons, power: q.power_budget?.note });
     cardQuote();
   }
 
@@ -241,11 +231,12 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     const eta = S.eta?.value;
     const km2 = q.area_km2?.value ?? areaKm2(S.geom);
     const scope = label || `그린 범위 · ${km2 < 1 ? `${nf(Math.round(km2 * 1000) / 10)}ha` : `${nf(Math.round(km2 * 10) / 10)}㎢`}`;
-    const part = S.sgg && q.coverage?.value != null && q.coverage.value < 0.995;     // 영상이 시군구 일부만 덮는다 — 덮는 곳만 분석
+    const sc = S.sgg ? q.scope || null : null;          // 시군구 분석 — 서버가 만든 범위 문장(답 · 확인 카드와 같은 글자)
     const why = !q.allowed ? reasonText(q.reasons) : '';
     card.append(...[
       h('header.xa-h', {}, h('h3', { text: '이 범위 분석' }), demo ? h('span.t-sig.xa-ex', { 'data-sig': 'ex', 'aria-label': '예시' }) : null, xBtn()),
-      h('dl.xa-dl', {}, h('div', {}, h('dt', { text: '범위' }), h('dd', { text: part ? `${scope} · 영상 있는 곳` : scope })), h('div', {}, h('dt', { text: '영상' }), h('dd', { text: imageryLabel(img) }))),
+      h('dl.xa-dl', {}, h('div', {}, h('dt', { text: '범위' }), h('dd', { text: scope })), h('div', {}, h('dt', { text: '영상' }), h('dd', { text: imageryLabel(img) }))),
+      sc?.text ? h('p.xa-scope', { text: sc.text }) : null,
       h('p.xa-eta', { html: `결과까지 약 ${etaHtml(eta)}${sig(S.eta)}` }),
       why ? h('p.xa-msg', { text: why }) : null,
       h('div.xa-act', {},
@@ -263,7 +254,7 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
 
   /** 진행 카드 — 첫 칸이 끝나기 전(대기열 · 워커가 영상을 여는 동안)은 '잠시 뒤 시작합니다' + 움직이는 막대, 첫 칸부터 '분석 중 {p}%'.
       replay = 전체 범위 기록 보기: 범위 · 영상 두 줄 + 진행 {p}%, 취소 없음(속도·배속 문구 없음) */
-  function cardRun({ replay = null } = {}) {
+  function cardRun({ replay = null, scope = null, rest = null } = {}) {
     card.innerHTML = '';
     const pct = h('b.num', { text: '0' }), bar = h('i', { style: { width: '0%' } });
     const line = h('p.xa-run', { text: replay ? '' : '잠시 뒤 시작합니다' });
@@ -272,8 +263,10 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     card.append(...[
       h('header.xa-h', {}, h('h3', { text: replay ? '전체 범위 기록 보기' : '이 범위 분석' }), demo ? h('span.t-sig.xa-ex', { 'data-sig': 'ex', 'aria-label': '예시' }) : null, xBtn()),
       replay?.scope ? h('dl.xa-dl', {}, h('div', {}, h('dt', { text: '범위' }), h('dd', { text: replay.scope })), replay.img ? h('div', {}, h('dt', { text: '영상' }), h('dd', { text: replay.img })) : null) : null,
+      !replay && scope ? h('p.xa-scope', { text: scope }) : null,
       line, prog,
       h('p.xa-got', { hidden: true }),
+      !replay && rest ? restLine(rest) : null,
       replay ? null : h('div.xa-act', {}, h('button.t-btn.t-btn--2', { type: 'button', text: '취소', onclick: cancel }))].filter(Boolean));
     card.hidden = false;
     let prep = !replay;
@@ -282,13 +275,22 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
       live() { if (!prep) return; prep = false; prog.classList.remove('is-prep'); line.textContent = '분석 중 '; line.append(pct, '%', where); },
       emd(nm) { where.textContent = nm ? ` · ${nm}` : ''; } };
   }
+  /** 영상이 없는 나머지 — 한 줄 + '영상 등록'(LX 직원 · 관리자만 · 그 지역을 들고 간다) */
+  function restLine(rest) {
+    const code = regionInfo?.()?.meta?.sgg_cd || region?.code || '';
+    const p = h('p.xa-rest', { text: rest });
+    if (staff && !demo) p.append(' ', h('a.t-btn.t-btn--text.xa-reg', { href: '../lx-ingest/' + (code ? '?' + new URLSearchParams({ region: code }) : ''), text: '영상 등록' }));
+    return p;
+  }
   function cardDone(n, envN, { replay = false } = {}) {
     card.innerHTML = '';
     const scope = S?.scopeText || S?.label || null;
     card.append(...[
       h('header.xa-h', {}, h('h3', { text: replay && S?.record ? '전체 범위 기록 보기' : '이 범위 분석' }), demo ? h('span.t-sig.xa-ex', { 'data-sig': 'ex', 'aria-label': '예시' }) : null, xBtn()),
       scope ? h('dl.xa-dl', {}, h('div', {}, h('dt', { text: '범위' }), h('dd', { text: scope }))) : null,
-      h('p.xa-done', { html: `탐지 <b class="num">${nf(n)}</b>건${envN ? sig(envN) : ''}` })].filter(Boolean));
+      S?.scopeLine ? h('p.xa-scope', { text: S.scopeLine }) : null,
+      h('p.xa-done', { html: `탐지 <b class="num">${nf(n)}</b>건${envN ? sig(envN) : ''}` }),
+      S?.scopeRest && !replay ? restLine(S.scopeRest) : null].filter(Boolean));
     card.hidden = false;
   }
 
@@ -298,7 +300,8 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     draw?.();
     S.running = true; onBusy?.(true);
     S.t0 = performance.now(); S.tFirst = 0; S.scopeText = S.label || null;
-    const ui = cardRun();
+    if (S.sgg && S.q?.scope?.text) { S.scopeLine = S.q.scope.text; S.scopeRest = S.q.scope.rest || null; }
+    const ui = cardRun({ scope: S.scopeLine || null, rest: S.scopeRest || null });
     clearResults();
     // 전역 프레임이 화면에 다 들어오게(차오름이 한눈에) — 시군구 전역은 지금 보는 곳(화면 중심)부터 차오르므로 카메라를 옮기지 않는다
     if (!S.sgg) stage.go(bboxOf(S.geom), { ms: 1250, maxZoom: 16 });
@@ -342,6 +345,9 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     // 이어 보기(base = 이미 그린 결과 수): 첫 화면부터 지금까지의 탐지 수 · 진행률 — 기록을 다시 받는 동안 적게 보였다가 따라잡지 않게
     const preDone = since && base != null ? (job.shards_done || 0) : 0;
     let done = preDone, n = base != null ? base : 0, dirty = false, errs = 0, finished = false, old = 0;
+    // 진행 중 탐지 수 = 칸 겹침을 걸러 낸 수(스케줄러 counts.clean · 마감과 같은 규칙) — 칸별 합(n)은 끝에서 줄어든다(r3-xi 2차 must_fix 3).
+    // 걸러 낸 수가 한 번도 안 오면(옛 기록 · 정리기 멈춤) 첫 칸 30초 뒤부터 칸별 합으로(다시 보기는 pace.ratio 로 최종에 맞춘다)
+    let clean = null, t1 = 0;
     const me = S;
     const tick = setInterval(() => {
       const now = performance.now(), old = [];
@@ -355,7 +361,8 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
       const p = Math.min(100, Math.floor((done / total()) * 100));
       ui.pct.textContent = String(p); ui.bar.style.width = p + '%';
       ui.bar.parentElement.setAttribute('aria-valuenow', p);
-      if (n > 0) { ui.got.hidden = false; ui.got.innerHTML = `탐지 <b class="num">${nf(Math.round(n * (pace?.ratio || 1)))}</b>건`; }
+      const shown = clean != null ? clean : (pace || (t1 && performance.now() - t1 > 30000)) ? Math.round(n * (pace?.ratio || 1)) : null;
+      if (shown > 0) { ui.got.hidden = false; ui.got.innerHTML = `탐지 <b class="num">${nf(shown)}</b>건`; }
     };
     let stream = null, clock = 0;
     const end = (state, d) => {
@@ -369,7 +376,7 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
       devlog('job end', `${job.id} · ${state}`);
       if (state === 'done') {
         const envN = !me.cls && d?.counts_env && typeof d.counts_env === 'object' && 'value' in d.counts_env ? d.counts_env : null;   // 대상(cls)을 고른 분석은 칸별 대상 수 합
-        const tot = envN?.value ?? n;
+        const tot = envN?.value ?? clean ?? n;
         cardDone(tot, envN, { replay });
         if (!replay && me.t0) {
           const m = { first_s: me.tFirst ? +((me.tFirst - me.t0) / 1000).toFixed(1) : null, total_s: +((performance.now() - me.t0) / 1000).toFixed(1), shards: done, n: tot };
@@ -426,6 +433,7 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
         else if (++old <= preDone) done--;              // 미리 센 칸(preDone)은 다시 세지 않는다
         show(); return;
       }
+      if (!t1) t1 = performance.now();
       if (!replay && !me.tFirst) { me.tFirst = performance.now(); if (window.__xc) window.__xc.liveFirst = +((me.tFirst - me.t0) / 1000).toFixed(1); }
       const b = d?.bbox;
       if (b) { cells.push({ type: 'Feature', properties: {}, geometry: rectPoly(b) }); if (!replay || pace) bracket(b); dirty = true; }
@@ -441,6 +449,7 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
       if (name === 'job.done' && me.sgg) set('xa-emd', EMPTY);
       if (name === 'job.started') { S.total = d?.shards_total || S.total; errs = 0; }
       else if (name === 'shard.done') onShard(d);
+      else if (name === 'counts.clean') { clean = me.cls ? Object.entries(d?.cls || {}).filter(([k]) => k.startsWith(me.cls)).reduce((a, [, v]) => a + (+v || 0), 0) : (d?.n ?? clean); show(); }
       else if (name === 'job.done') { done = total(); show(); const wait = async () => { while (pend.length || pumping || inflight > 0) await new Promise((r) => setTimeout(r, 120)); setTimeout(() => end('done', d), 300); }; wait(); }
       else if (name === 'job.failed') end('failed', d);
       else if (name === 'job.cancelled') end('cancelled', d);
@@ -458,6 +467,7 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
       }, 40);
     }
     stream = sse(eventsUrl.replace(/^.*\/api\/v1/, ''), {
+      events: [...JOB_EVENTS, 'counts.clean'],
       on: (name, d, id) => {
         if (finished) return;
         if (!pace) return onEvent(name, d);
@@ -498,7 +508,7 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
   async function frameSgg() {
     if (S?.running || !region) return;
     const geom = regionGeom();
-    const label = `${region.name} 전역`;
+    const label = region.name;
     S = { geom, label, img: null, q: null, running: false, sgg: true };
     const me = S;
     if (geom) showFrame(geom);
@@ -564,12 +574,13 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     let since = Date.now();
     layers(); clearResults();
     const geom = regionGeom();
-    S = { geom, label: `${r.name} 전역`, img: (catalog.items || []).find((x) => x.id === job.imagery_id) || null, q: { allowed: true, shards: job.shards_total },
-      running: true, sgg: true, job, total: job.shards_total, scopeText: `${r.name} 전역`, t0: 0 };
+    const o = job.options || {};
+    S = { geom, label: r.name, img: (catalog.items || []).find((x) => x.id === job.imagery_id) || null, q: { allowed: true, shards: job.shards_total },
+      running: true, sgg: true, job, total: job.shards_total, scopeText: r.name, t0: 0, scopeLine: o.scope_text || null, scopeRest: o.scope_rest || null };
     const me = S;
     if (geom) showFrame(geom);
     onBusy?.(true);
-    const ui = cardRun();
+    const ui = cardRun({ scope: S.scopeLine, rest: S.scopeRest });
     progressNow(ui, job);
     // 지금까지 결과 — 칸마다 기록된 도형(10,000개씩)
     let base = 0;
@@ -590,7 +601,7 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
 
   /** 말로 분석(에이전트 analysis_run → analysis_watch{job_id, sgg_cd}) — 제출된 그 작업에 붙어 결과가 읍면동 순으로 차오른다.
       이미 끝난 칸이 있으면(같은 지역 진행 중 작업에 연결) 지금까지 결과를 먼저 그리고 남은 칸을 잇는다. cls = 볼 대상(비닐하우스 등 · 없으면 전체) */
-  async function watch(jobId, r, { cls = null } = {}) {
+  async function watch(jobId, r, { cls = null, scope = null, rest = null } = {}) {
     if (!jobId || !r) return false;
     let job;
     try { job = await api('/jobs/' + encodeURIComponent(jobId)); } catch (e) { devlog('watch', `${e.code || ''} ${e.status ?? 0}`); return false; }
@@ -599,13 +610,15 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     region = r;
     layers(); clearResults();
     const geom = regionGeom();
-    const label = `${r.name} 전역`;
+    const label = r.name;
+    const o = job.options || {};
     S = { geom, label, img: (catalog.items || []).find((x) => x.id === job.imagery_id) || null, q: { allowed: true, shards: job.shards_total },
-      running: true, sgg: true, job, total: job.shards_total, scopeText: cls ? `${label} · ${cls}` : label, t0: performance.now(), cls };
+      running: true, sgg: true, job, total: job.shards_total, scopeText: cls ? `${label} · ${cls}` : label, t0: performance.now(), cls,
+      scopeLine: scope || o.scope_text || null, scopeRest: rest || o.scope_rest || null };
     const me = S;
     if (geom) showFrame(geom);
     onBusy?.(true);
-    const ui = cardRun();
+    const ui = cardRun({ scope: S.scopeLine, rest: S.scopeRest });
     let since = 0, base = null;
     if (!['done', 'failed', 'cancelled'].includes(job.state)) progressNow(ui, job);
     const ended = ['done', 'failed', 'cancelled'].includes(job.state);
@@ -673,7 +686,8 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
       clearResults();
       const real = (Date.parse(j.finished_at) - Date.parse(j.started_at)) / 1000;
       const it = (catalog.items || []).find((x) => x.id === j.imagery_id);
-      const scope = label ? `${label} 전역` : null;
+      const o = j.options || {};
+      const scope = label ? (o.scope_full === true || (o.scope === 'sgg' && o.coverage != null && o.coverage >= 0.95) ? `${label} 전역` : label) : null;   // 영상이 다 덮은 작업만 '전역'
       const fly = stage.go(bboxOf(j.aoi), { ms: 1250, maxZoom: 16 });
       const pace = j.state === 'done' && real > PACE_S * 1.5
         ? { t0: Date.parse(j.started_at), k: PACE_S / real, start: Promise.resolve(fly).then(() => new Promise((r) => setTimeout(r, 250))) }

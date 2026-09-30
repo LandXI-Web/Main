@@ -13,6 +13,7 @@ import { sig } from '../kit/sig.js';
 import { nf } from '../kit/i18n.js';
 import { hasRoute, api, isEnvelope } from '../kit/util.js';
 import { KOREA } from '../kit/stage.js';
+import { API } from '../../shared/api-v1.js';
 
 const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ROOT = {
@@ -54,6 +55,16 @@ function sceneOf(row) {
   const s = { ...row, ...AX[row.axis], layers: LAYERS[row.kind] || [] };
   const url = href(row.data);
   if (row.kind === 'view') s.load = async () => ({ env: null });
+  else if (row.kind === 'findings' && row.query) s.load = async () => {
+    /* 숫자 한 출처(r3-ops) — 로그인 뒤 '의심 필지'와 같은 정본(서버 공개 합계 한 개). 못 받으면 숫자 없이 문장만(정적 옛 값으로 대신하지 않는다) */
+    const ac = new AbortController(), t = setTimeout(() => ac.abort(), 4000);
+    try {
+      const j = await fetch(API.prefix + row.query, { cache: 'no-store', signal: ac.signal }).then((r) => (r.ok ? r.json() : null));
+      const e = j && pick(j, row.value);
+      if (e && typeof e === 'object' && typeof e.value === 'number') return { env: envOf(e.value, UNIT.findings, row.basis, e.as_of, row.source), digits: row.digits };
+    } catch { /* 연결 늦음 · 막힘 */ } finally { clearTimeout(t); }
+    return { env: null, textOnly: true };
+  };
   else if (row.kind === 'findings') s.load = async () => {
     const j = await fetch(url, { cache: 'no-store' }).then((r) => { if (!r.ok) throw new Error(row.id); return r.json(); });
     return { env: envOf(pick(j, row.value), UNIT.findings, row.basis, j.as_of, row.source), digits: row.digits };
@@ -278,6 +289,7 @@ export function mountPlate({ el, ui, sweep, credit, pad = () => ({ top: 0, botto
     const natP = SCENES[0].axis === 'Performance' ? nationalScene(meta.national, SCENES[0]) : Promise.resolve(null);
 
     const setRes = (s, d) => {
+      if (!d.env && d.textOnly && s.where) { ui.where.textContent = s.where; ui.num.textContent = ''; ui.unit.textContent = ''; ui.sig.textContent = ''; return true; }   // 정본을 못 받음 — 문장만(숫자 0)
       if (!d.env) { ui.where.textContent = ''; ui.num.textContent = ''; ui.unit.textContent = ''; ui.sig.textContent = ''; return false; }   // 지도만 — 캡션·숫자 없음
       ui.where.textContent = s.where || '';
       ui.num.textContent = nf(d.env.value, d.digits); ui.unit.textContent = s.unit || '';

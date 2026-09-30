@@ -8,7 +8,7 @@ export class ServerIndex {
 
   /** 서버에서 한 번 받는다 → { ai, n } */
   async fetch() {
-    const j = await api(`/t/${encodeURIComponent(this.tenant)}/survey/registry/${encodeURIComponent(this.id)}/parcels`);
+    const j = await api(`/t/${encodeURIComponent(this.tenant)}/survey/registry/${encodeURIComponent(this.id)}/parcels?ledger=1`);
     this.ai = j?.ai || null;
     this.features = (j?.features || []).filter((f) => f && f.geometry);
     for (const f of j?.features || []) {

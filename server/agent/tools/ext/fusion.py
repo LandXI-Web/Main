@@ -48,8 +48,9 @@ SPECS = {
         "route_only": True,
     },
     "fusion_ledger": {
-        "description": "대장 규칙 질문('대장상 농지인데 AI가 건물') — 대장 × AI 대조 필지 수 + 지도.",
-        "properties": {"rule_id": {"type": "string", "enum": ["L1", "L2", "L3"]}},
+        "description": "대장 규칙 질문('대장상 농지인데 AI가 건물' · '논인데 AI가 건물') — 대장 × AI 대조 필지 수 + 지도. 지목을 물으면 그 지목만.",
+        "properties": {"rule_id": {"type": "string", "enum": ["L1", "L2", "L3"]},
+                       "jimok": {"type": "string", "description": "물어본 대장 지목(답 · 전 · 과수원, 쉼표) — 논 = 답 · 밭 = 전"}},
         "required": ["rule_id"],
         "route_only": True,
     },
@@ -93,7 +94,9 @@ def _suspect_env(o: Out) -> tuple[str, dict] | None:
 
 def _clean_meaning(m: str) -> str:
     """봉투 뜻에서 내부 규칙 코드 · 겹친 단위를 뗀다('의심 필지(건 · 규칙 R1–R6)' → '의심 필지')."""
-    return re.sub(r"\s*\((?:[^()]*규칙[^()]*|중복 제거)\)", "", str(m or "")).strip()
+    s = re.sub(r"\s*\((?:[^()]*규칙[^()]*|중복 제거)\)", "", str(m or ""))
+    s = re.sub(r"\s*(?:규칙\s*)?\b[RL]\d(?:\s*[–~-]\s*[RL]?\d)?\b", "", s)       # 남은 규칙 코드(R1–R6 · L1)도 뗀다
+    return re.sub(r"\s{2,}", " ", s).strip(" ·")
 
 
 async def _get(ctx, params: dict) -> dict:
@@ -523,6 +526,8 @@ async def fusion_ledger(args: dict, ctx) -> Out:
     """대장 규칙 질문 → ledger_findings 그대로 + 정해진 문장. '그중 지도에 표시한 필지'(표시 상한)와 조건 필지 수의 이름을 나눈다."""
     from .. import ledger_findings as LF
     a = {"rule_id": args.get("rule_id") or "L1", "top": 10}
+    if args.get("jimok"):
+        a["jimok"] = args["jimok"]                       # 물어본 대장 지목(논 = 답 · 밭 = 전 · 과수원) — 빼고 세지 않는다
     lid = _ctx_ledger(ctx)
     if lid:
         a["import_id"] = lid
@@ -531,7 +536,9 @@ async def fusion_ledger(args: dict, ctx) -> Out:
     if "total" in keys:
         rn = (out.data or {}).get("조건") if isinstance(out.data, dict) else None
         feats = bool((out.raw or {}).get("features")) if isinstance(out.raw, dict) else False
-        out.answer = (f"올린 대장에서 '{rn or '대장과 다른 필지'}' 조건에 맞는 필지는 {{{{total}}}}입니다."
+        miss = (out.data or {}).get("지목") if isinstance(out.data, dict) else None
+        out.answer = ((f"{miss.split(' — ')[0]}. 지목 조건 없이 " if miss else "")
+                      + f"올린 대장에서 '{rn or '대장과 다른 필지'}' 조건에 맞는 필지는 {{{{total}}}}입니다."
                       + (" 그중 근거 면적이 큰 {{shown}}을 지도에 표시했습니다." if feats else ""))
     else:
         d = out.data if isinstance(out.data, dict) else {}
@@ -584,7 +591,9 @@ def ROUTE(msg: str, ctx):
         from .. import ledger_rule
         got = ledger_rule.parse(q)
         if got and not got.get("thresholds") and not re.search(r"다시\s*(뽑|계산|적용)|기준\s*을?\s*바꿔|임계", q):
-            return {"tool": "fusion_ledger", "args": {"rule_id": got["rule"]}}
+            from ..ledger_findings import asked_jimok
+            jm = asked_jimok(q) if got["rule"] in ("L1", "L2") else []
+            return {"tool": "fusion_ledger", "args": {"rule_id": got["rule"], **({"jimok": ",".join(jm)} if jm else {})}}
     if SUSPECT_COUNT.search(q) and not re.search(r"대장|신고|허가", q):
         return {"tool": "fusion_suspects", "args": _regions_in(q)}
     if GOTO.search(q) and EMD_WORD.search(GOTO.sub(" ", q)) and not re.search(GOTO_DATA, q):

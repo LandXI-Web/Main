@@ -98,7 +98,11 @@ def test_stored_join_generic_regression_table(pg):
     gen = {}
     for r in N.evaluate(pg, BASE, job):
         gen[r[0]] = gen.get(r[0], 0) + 1
-    can = dict(pg.execute("SELECT rule, count(*) FROM survey_findings WHERE sgg_cd=%s AND rule LIKE 'R%%' GROUP BY 1", (BASE,)).fetchall())
+    # 일반 경로는 분석 범위(survey_sgg.coverage) 안 필지만 평가한다 — 정본도 같은 범위 안 필지만 센다(범위 밖 가장자리 필지 몇 개 차이 제외)
+    can = dict(pg.execute("SELECT f.rule, count(*) FROM survey_findings f JOIN survey_parcels sp ON sp.pnu = f.pnu "
+                          "WHERE f.sgg_cd=%s AND f.rule LIKE 'R%%' AND ((SELECT coverage FROM survey_sgg WHERE sgg_cd=%s) IS NULL "
+                          "OR ST_Intersects((SELECT coverage FROM survey_sgg WHERE sgg_cd=%s), ST_PointOnSurface(sp.geom))) GROUP BY 1",
+                          (BASE, BASE, BASE)).fetchall())
     for rule in ("R1", "R2", "R4", "R6"):
         assert gen.get(rule, 0) == can.get(rule, 0), (rule, gen, can)
     for rule in ("R3", "R5"):

@@ -113,3 +113,6 @@ body:has(.k-drawer[data-slot="approval"]) .oc-inbox-w{padding-right:calc(var(--s
   .oc-tbl th:nth-child(3),.oc-tbl td:nth-child(3){display:none}
   .oc-pt-n{font-size:12px;padding:3px 8px}
 }
+
+/* r3-ops — 명령 바 막대 차트: 숫자와 단위 사이 띄움(2,059,673 tokens) */
+.k-ck-chart .k-bar-v small { margin-left: .3em; }

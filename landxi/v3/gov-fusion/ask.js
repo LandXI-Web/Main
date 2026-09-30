@@ -71,6 +71,23 @@ function normField(f, known) {
 /* ── 결정적 규칙 매핑(모델 호출 전) — 명세 어휘: 농지 · 건물 · 주차장 · 비닐하우스 · 경작 흔적 없음 · 농업진흥 · 리/읍면 ──
    모델 답(where)이 질문 핵심어와 어긋나면 1회 다시 묻고, 그래도 어긋나면 이 매핑을 쓴다. */
 const FARM_V = ['전', '답', '과수원', '과'];
+/* 물어본 대장 지목(공부 지목) — 논 = 답 · 밭 = 전 · 과수원. 세 가지 모두면 '농지'(거르지 않음) */
+const JM_CANON = { 논: '답', 답: '답', 밭: '전', 전: '전', 과: '과수원', 과원: '과수원', 과수원: '과수원' };
+const JM_SAY = { 답: '답(논)', 전: '전(밭)', 과수원: '과수원' };
+const canonJ = (v) => { const s = String(v ?? '').trim(); return JM_CANON[s] || (/^과수/.test(s) ? '과수원' : s); };
+/* 논 · 밭은 낱말로(논산 · 논의 · 밭작물 제외) · 답 · 전은 '대장 · 지목' 뒤나 '~인데 · ~이고 · 전·답'처럼 지목으로 쓰일 때만(전체 · 답변 제외) */
+const J_RX = {
+  답: [/(?<![가-힣])논(?=인|이|은|에|과|와|을|도|만|중|으|\s|[·,/]|$)/, /(?<![가-힣])답(?=인데|이고|이며|이면|인\s|인$|으로|\s*[·,/]|\s*(?:과|와|이나|또는)\s)/,
+    /(?:대장|지목)(?:상|에서|이|은|의|이\s)?\s*답(?=인|이|으|\s|$|[·,/])/, /(?<=(?:^|[^가-힣])(?:전|논|밭)\s*[·,/]\s*)답(?![가-힣])|(?<=(?:^|[^가-힣])(?:전|논|밭)\s*[·,/]\s*)답(?=인|이|으|중)/],
+  전: [/(?<![가-힣])밭(?=인|이|은|에|과|와|을|도|만|중|으|\s|[·,/]|$)/, /(?<![가-힣])전(?=인데|이고|이며|이면|인\s|인$|으로|\s*[·,/]|\s*(?:과|와|이나|또는)\s)/,
+    /(?:대장|지목)(?:상|에서|이|은|의|이\s)?\s*전(?=인|이|으|\s|$|[·,/])/, /(?<=(?:^|[^가-힣])(?:답|논|밭)\s*[·,/]\s*)전(?![가-힣])|(?<=(?:^|[^가-힣])(?:답|논|밭)\s*[·,/]\s*)전(?=인|이|으|중)/],
+  과수원: [/과수원|과원/],
+};
+export function jimokOf(q) {
+  const s = String(q || '');
+  return Object.keys(J_RX).filter((k) => J_RX[k].some((rx) => rx.test(s)));
+}
+export const jimokSay = (v) => JM_SAY[canonJ(v)] || String(v);
 const NUM = (s) => parseFloat(String(s).replace(/,/g, ''));
 function areaNear(q, word) {
   // '건물이 500㎡ 넘게' · '건물 500제곱미터 이상'
@@ -80,7 +97,7 @@ function areaNear(q, word) {
 export function keysOf(q) {
   const s = String(q || '');
   return {
-    farm: /농지|농경지|전답|전·답|대장상\s*(답|전|과수원)/.test(s),
+    farm: /농지|농경지|전답|전·답|대장상\s*(답|전|과수원)/.test(s) || jimokOf(s).length > 0,
     bld: /건물|건축물|주택|창고/.test(s),
     park: /주차장/.test(s),
     gh: /비닐하우스|하우스|온실/.test(s),
@@ -152,11 +169,12 @@ export function rulePlan(question, ctx) {
   const k = keysOf(q);
   const where = [];
   const st = ctx.stateCol;
+  const jm = jimokOf(q);                                    // 물어본 지목(논 = 답 · 밭 = 전 · 과수원) — 빼고 세지 않는다
+  let unmet = '';
   if (st) {
-    const one = /대장(?:상|에서|이|은|의)?\s*(답|과수원)/.exec(q) || /대장(?:상|에서|이|은|의)?\s*(전)(?:인데|이고|인|이며|으로)/.exec(q);
-    if (one) where.push({ field: st, op: 'in', value: one[1] === '과수원' ? '과수원,과' : one[1] });
+    if (jm.length && jm.length < 3) where.push({ field: st, op: 'in', value: jm.join(',') });
     else if (k.farm || k.fal) where.push({ field: st, op: 'in', value: FARM_V.join(',') });
-  }
+  } else if (jm.length && jm.length < 3) unmet = jm.map(jimokSay).join('·');   // 대장에 지목 열이 없다 — 조건을 뺐다고 밝힌다
   if (k.bld) where.push({ field: 'AI 건물(㎡)', op: '>=', value: areaNear(q, '(?:건물|건축물|주택|창고)') ?? 33 });
   if (k.park) where.push({ field: 'AI 주차장(㎡)', op: '>=', value: areaNear(q, '주차장') ?? 100 });
   if (k.gh) where.push({ field: 'AI 비닐하우스(㎡)', op: '>=', value: areaNear(q, '(?:비닐하우스|하우스|온실)') ?? 100 });
@@ -164,7 +182,7 @@ export function rulePlan(question, ctx) {
   if (k.ng) where.push({ field: 'V-World 농업진흥', op: 'contains', value: '농업진흥' });
   const focus = placeOf(q, ctx.places || []);
   if (focus && ctx.addrCol) where.push({ field: ctx.addrCol, op: 'contains', value: focus });
-  return { where, focus: focus || '' };
+  return { where, focus: focus || '', unmet };
 }
 /** 질문 속 리·읍면 이름(대장에 실제로 있는 이름만) */
 export function placeOf(q, places) {
@@ -193,7 +211,7 @@ export function labelOf(where, ctx, focus) {
   const ai = where.find((w) => /^AI (건물|주차장|비닐하우스)\(/.test(w.field));
   const fal = f('AI 경작 흔적 없음'), ng = f('V-World 농업진흥');
   let lg = '';
-  if (st) { const vals = String(Array.isArray(st.value) ? st.value.join(',') : st.value).split(',').map((x) => x.trim()).filter(Boolean); lg = vals.every((v) => FARM_V.includes(v)) && vals.length >= 3 ? '농지' : vals.filter((x) => x !== '과').join('·'); }
+  if (st) { const vals = String(Array.isArray(st.value) ? st.value.join(',') : st.value).split(',').map((x) => x.trim()).filter(Boolean); lg = vals.every((v) => FARM_V.includes(v)) && vals.length >= 3 ? '농지' : [...new Set(vals.filter((x) => x !== '과').map(jimokSay))].join('·'); }
   const cls = ai ? ai.field.replace(/^AI |\(㎡\)$/g, '') : '';
   const parts = [];
   if (focus) parts.push(focus);
@@ -223,7 +241,7 @@ export function conditionLines(where, ctx) {
   for (const w of where) {
     const v = Array.isArray(w.value) ? w.value.join(',') : String(w.value);
     if (w.field === 'V-World 면적(㎡)' || w.field === 'AI 건물 비율') continue;
-    if (w.field === ctx.stateCol) led.push(`대장 ${ctx.stateCol} ${v.split(',').filter((x) => x !== '과').join('·')}`);
+    if (w.field === ctx.stateCol) { const vs = v.split(',').map((x) => x.trim()).filter((x) => x && x !== '과'); led.push(`대장 ${ctx.stateCol} ${vs.every((x) => FARM_V.includes(x)) && vs.length >= 3 ? vs.join('·') : [...new Set(vs.map(jimokSay))].join('·')}`); }
     else if (/^AI (건물|주차장|비닐하우스)\(/.test(w.field)) ai.push(`AI ${w.field.replace(/^AI |\(㎡\)$/g, '')} ${nf(NUM(v))}㎡ ${w.op === '>' ? '초과' : w.op === '<' || w.op === '<=' ? '이하' : '이상'}`);
     else if (w.field === 'AI 경작 흔적 없음' || w.field === 'AI 농경 비율') ai.push('AI 경작 흔적 없음');
     else if (w.field === 'V-World 농업진흥') where1.push(v.includes('농업진흥') ? '농업진흥구역' : v);
@@ -290,7 +308,7 @@ export function run(where, rows) {
     const vals = String(w.value).split(',').map((s) => s.trim()).filter(Boolean);
     const num = parseFloat(String(w.value).replace(/,/g, ''));
     const norm = (v) => String(v ?? '').trim();
-    const eqv = (a, b) => a === b || (a === '과' && b === '과수원') || (a === '과수원' && b === '과');
+    const eqv = (a, b) => a === b || (a !== '' && canonJ(a) === canonJ(b));   // 과 = 과수원 · 논 = 답 · 밭 = 전
     return (r) => {
       const v = r[w.field];
       switch (w.op) {

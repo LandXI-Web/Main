@@ -91,10 +91,12 @@ export async function loadLineage(did) {
 const learned = (m) => !!m && !!m.weights_uri && m.status !== 'retired' && !/^(index|survey|change)/.test(m.family || '');
 const famBase = (f) => String(f || '').replace(/^(yolo\d+)[nslmx]?/, '$1');
 const root = (id) => String(id).split('/')[0];
-/** 지금 쓰는 모델 id — 교체값 · 계보 · 카드 순 */
+/** 지금 쓰는 모델 id — 교체값 · 계보(분석에 실제로 쓴 모델 · 서버 흐름 기록) 순. 계보가 없을 때만 카드 모델
+    (r3-train 3차: 계보는 기본 모델인데 카드 모델까지 '쓰는 중'으로 표시해 직원 화면과 다른 모델을 말했다 — 한 출처) */
 export function currentModels(d, lin = []) {
   const card = S.cards.find((c) => c.id === d.card_id);
-  return [...new Set([d.model_override, ...lin, ...(card?.models || [])].filter(Boolean))];
+  const ran = d.flow?.model?.id ? [d.flow.model.id] : [];
+  return [...new Set([d.model_override, ...ran, ...(lin.length || ran.length ? lin : card?.models || [])].filter(Boolean))];
 }
 /** 교체 후보: 학습 모델만(규칙·변화 지수 같은 비교체 항목 제외) · 지금 모델과 작업·계열·데이터 뿌리가 같은 것 */
 export function swapModels(d, lin = []) {
@@ -222,12 +224,46 @@ export async function startLlm(slot) {
   return r;
 }
 
+/* ── 서버 다시 시작(C9 원스톱) — 게이트웨이만 · 작업기 · 언어 모델은 그대로. 새 기동 시각이 보일 때까지 기다린다 ── */
+export async function restartServer() {
+  return api('/ops/gateway/restart', { method: 'POST', body: {} });
+}
+export async function waitBoot(prev, maxMs = 120000) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < maxMs) {
+    await new Promise((r) => setTimeout(r, 2000));
+    const h = await api('/health').catch(() => null);
+    if (h?.boot_at && h.boot_at !== prev) { S.health = h; return h; }
+  }
+  return null;
+}
+
+/* ── 판정 표기(M14) — 큰 숫자와 행이 같은 판정(서버 judge_power · 표본 하나에 한 번)을 같은 숫자로 ── */
+/** 판정 시각 'hh:mm:ss' — AI 도우미 답의 '… 기준' 과 같은 표본 시각 */
+export function judgedAt() {
+  const at = S.gpus?.power_budget?.at;
+  if (!at) return null;
+  const d = new Date(at);
+  if (Number.isNaN(d.getTime())) return null;
+  return [d.getHours(), d.getMinutes(), d.getSeconds()].map((x) => String(x).padStart(2, '0')).join(':');
+}
+/** 행 작업 칸 뒤에 붙는 고부하 표시 — 전력으로 셌으면 판정에 쓴 최근 평균 W, 분석 작업 임대로 셌으면 '고부하'만 */
+export function hotNote(g) {
+  const p = (S.gpus?.power_budget?.per || []).find((x) => x.gpu === g.index);
+  if (!p || !p.hot) return '';
+  if (p.why === 'power' && p.power_w != null) return `고부하 · 최근 평균 ${Math.round(p.power_w)} W`;
+  return p.why === 'lease' ? '고부하 · 작업 중' : '고부하';
+}
+
 /* ── 작업 이름 ─────────────────────── */
 export const KIND = { infer: 'AI 분석', survey: '실태조사', train: '학습', tile: '영상 준비', index: '위성 지수', export: '내보내기' };
 export function gpuWork(g) {
-  if (g.job_id) { const j = (S.jobs || []).find((x) => x.id === g.job_id); return KIND[j?.kind] || 'AI 분석'; }
+  // 분석 작업기가 전력 규칙으로 멈춘 GPU(서버 판정 why='yield') — 언어 모델이 다른 GPU 를 쓰는 동안 양보
+  const why = (S.gpus?.power_budget?.per || []).find((p) => p.gpu === g.index)?.why;
+  if (why === 'yield') return '분석 잠시 멈춤';
+  if (g.job_id || why === 'lease') { const j = (S.jobs || []).find((x) => x.id === g.job_id); return KIND[j?.kind] || 'AI 분석'; }
   const llm = (g.external || []).some((e) => /llama|vllm|python|ollama/i.test(e.name || ''));
   if (llm && (!g.worker || (g.util_ma5?.value ?? 0) >= 10)) return '언어 모델';
-  if (g.worker) return '대기';
-  return '—';
+  if (g.worker) return why === 'power' ? '사용 중' : '대기';   // 전력으로 고부하인데 '대기'라고 쓰지 않는다(답의 'in use' 와 같게)
+  return why === 'power' ? '사용 중' : '—';
 }

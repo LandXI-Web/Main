@@ -12,7 +12,8 @@
   "job.cancelled",
   "index.month",
   "job.recovered",
-  "survey.finding"
+  "survey.finding",
+  "counts.clean"
  ],
  "ops": [
   "gpu.sample",

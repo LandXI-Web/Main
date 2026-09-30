@@ -54,8 +54,34 @@ async def deploy_dict(conn, r) -> dict:
             "year": r["year"], "status_history": r["status_history"], "scale": r["scale"], "basis": r["basis"],
             "approvals": [{"id": a["id"], "decision": a["decision"], "by": a["decided_by"], "at": _iso(a["at"]), "reason": a["reason"],
                            "state": a["state"], "action": (a["payload"] or {}).get("action")} for a in aps],
-            "sgg_cd": r["sgg_cd"], "ci": r["ci"], "test": r["test"], "flow": flow_view(r["flow"]),
+            "sgg_cd": r["sgg_cd"], "ci": r["ci"], "test": r["test"], "flow": await _flow_view_parcel(conn, r),
             "created_at": _iso(r["created_at"]), "updated_at": _iso(r["updated_at"])}
+
+
+async def _flow_view_parcel(conn, r) -> dict | None:
+    """flow_view + survey_next — AI 분석은 끝났는데 실태조사를 아직 잇지 않은 필지 대조 서비스(화면 '실태조사 이어 하기' 버튼)."""
+    fv = flow_view(r["flow"])
+    if fv and fv.get("model") and fv["model"].get("id"):
+        await _model_truth(conn, r, fv)
+    if fv and fv["state"] == "done" and not fv.get("survey_job_id") and not (r["flow"] if isinstance(r["flow"], dict) else {}).get("survey"):
+        m = await conn.fetchval("SELECT modules FROM card_versions WHERE id=$1", r["card_version_id"]) if r["card_version_id"] else None
+        fv["survey_next"] = _has_parcel(r["modules"]) or (isinstance(m, dict) and (_has_parcel(m) or bool(m.get("rules"))))
+    return fv
+
+
+async def _model_truth(conn, r, fv: dict) -> None:
+    """분석에 실제로 쓴 모델(흐름 기록 한 출처) — 이름·대상 · 서비스 모델과 다르면 substitute · 서비스 대상을 못 찾는 모델이었으면 model_ok False.
+    (r3-train 3차: 같은 배포본을 직원 화면은 기본 모델로, 관리자 화면은 서비스 모델로 말했다)"""
+    m = fv["model"]
+    if not m.get("name") and not m.get("classes"):
+        m.update(await model_block(conn, m["id"]) or {})
+    own_ids = await _card_model_ids(conn, r["card_id"], r["card_version_id"])
+    own = [x for x in await conn.fetch("SELECT id, task, classes, weights_uri, status FROM models WHERE id = ANY($1::text[])", own_ids) if _learned(x)]
+    if own and m["id"] not in own_ids:
+        m["substitute"] = True
+        if not covers(m.get("classes"), [c for x in own for c in (x["classes"] or [])]):
+            fv["model_ok"] = False
+            fv["note"] = fv.get("note") or "서비스 모델로 분석하지 않았습니다 — 이 결과는 서비스 결과로 보지 않습니다"
 
 
 async def _get(conn, did: str):
@@ -251,6 +277,12 @@ async def port(body: dict, request: Request):
         modules = (src["modules"] if src else None) or await _card_modules(conn, card_id, cv)
         test = bool(body.get("test")) and config.DEV
         img = await best_imagery(sgg, aoi) if sgg else {"imagery_id": None, "reason": "no_region"}
+        if sgg:
+            # 적용 전 점검(적용 화면 GET /deploy-fit 과 같은 판정) — 서비스 모델과 영상 해상도가 맞지 않으면 결재 요청을 만들지 않는다
+            pl = await plan_analysis(conn, src["model_override"] if src else None, card_id, cv, sgg, aoi, img)
+            if pl["fits"] is False:
+                raise ApiError("model_input_mismatch", pl["note"], {"region": sgg}, 409)
+            img = pl["img"]
         flow = _flow_new("approval", imagery=img, todo=None if img.get("imagery_id") else "영상 등록")
         await conn.execute(
             "INSERT INTO deploys(id, name, tenant_id, card_id, card_version_id, prev_card_version_id, region_profile, region_name, aoi, stage, "
@@ -415,8 +447,14 @@ async def model(did: str, body: dict, request: Request):
     mid = body.get("model_id")
     async with db(realm="lx") as conn:
         r = await _get(conn, did)
-        if mid and not await conn.fetchval("SELECT 1 FROM models WHERE id=$1", mid):
+        m = await conn.fetchrow("SELECT id, gsd_trained_m FROM models WHERE id=$1", mid) if mid else None
+        if mid and not m:
             raise ApiError("not_found", f"model {mid} 없음")
+        img_gsd = ((r["flow"] or {}).get("imagery") or {}).get("gsd_m") if isinstance(r["flow"], dict) else None
+        if m and img_gsd and not gsd_fits(img_gsd, m["gsd_trained_m"]):
+            # 교체한 모델이 이 지역 영상 해상도와 맞지 않으면 흐름이 그 모델을 쓰지 못한다 — 말없이 무시되지 않게 교체를 막는다
+            raise ApiError("model_input_mismatch", f"이 모델({gsd_word(m['gsd_trained_m'])})은 이 지역 영상({gsd_word(img_gsd)})과 해상도가 맞지 않습니다",
+                           {"deploy_id": did}, 409)
         await conn.execute("UPDATE deploys SET model_override=$2, updated_at=now() WHERE id=$1", did, mid)
         row = await _get(conn, did)
         await audit(conn, p, "deploy.model", did, {"model_override": r["model_override"]}, {"model_override": mid})
@@ -467,6 +505,30 @@ def _has_parcel(mods) -> bool:
     return any(bool(v) and str(k).endswith("-parcel") for k, v in ext.items())
 
 
+async def _parcel_on(d) -> bool:
+    """필지 대조(실태조사)까지 잇는가 — 배포본 전용 모듈(-parcel) 또는 서비스 만들기로 만든 카드 버전(규칙·대장 형식을 고른 서비스 = 필지 대조).
+    (r3-train 2차: 화면에서 만든 서비스는 전용 모듈 표가 비어 있어 AI 분석 뒤 실태조사로 이어지지 않던 것)"""
+    if _has_parcel(d["modules"]):
+        return True
+    cv = d["card_version_id"] if "card_version_id" in d.keys() else None
+    if not cv:
+        return False
+    async with db(realm="lx") as conn:
+        m = await conn.fetchval("SELECT modules FROM card_versions WHERE id=$1", cv)
+    return isinstance(m, dict) and (_has_parcel(m) or bool(m.get("rules")))
+
+
+async def card_rules(d) -> list[str] | None:
+    """서비스(카드 버전)에서 고른 규칙 — 실태조사는 이 규칙만 계산한다(r3-train 3차 must_fix 3). 규칙 칸이 없는 옛 카드 = None(전체 규칙)."""
+    cv = d["card_version_id"] if "card_version_id" in d.keys() else None
+    if not cv:
+        return None
+    async with db(realm="lx") as conn:
+        m = await conn.fetchval("SELECT modules FROM card_versions WHERE id=$1", cv)
+    rules = (m or {}).get("rules") if isinstance(m, dict) else None
+    return [str(x) for x in rules] if isinstance(rules, list) and rules else None
+
+
 def _flow_new(state: str, **kw) -> dict:
     f = {"state": state, "updated_at": now_iso(), "steps": [{"state": state, "at": now_iso()}]}
     f.update({k: v for k, v in kw.items() if v is not None})
@@ -497,8 +559,11 @@ def flow_view(flow) -> dict | None:
         flow = json.loads(flow)
     st = flow.get("state")
     img = flow.get("imagery") or {}
-    return {"state": st, "label": FLOW_LABEL.get(st, st), "todo": flow.get("todo"), "reason": flow.get("reason"),
-            "has_imagery": bool(img.get("imagery_id")),
+    mm = flow.get("reason") == "model_mismatch"
+    return {"state": st, "label": "맞는 영상 등록 필요" if mm and st == "need_imagery" else FLOW_LABEL.get(st, st), "todo": flow.get("todo"),
+            "reason": flow.get("reason"), "note": flow.get("note"),
+            "model": flow.get("model") or ({"id": flow["model_id"]} if flow.get("model_id") else None),
+            "has_imagery": bool(img.get("imagery_id")) and not mm,
             "imagery": {"year": img.get("year"), "gsd_m": img.get("gsd_m"), "partial": bool(img.get("partial")),
                         "coverage": env(img.get("coverage"), "ratio", "measured", "영상 범위 ∩ 시군구 면적",
                                         None if img.get("coverage") is not None else "영상 없음")},
@@ -560,30 +625,190 @@ async def _best_imagery_table(sgg: str | None, geom: dict | None) -> dict:
             "coverage": round(float(best["cov"] or 0), 3), "source": "local", "via": "imagery 표"}
 
 
-# ── 모델: 배포본 교체 모델 → 카드 버전 모델 → 카드의 다른 버전 모델 → 영상 해상도에 맞는 기본 분할 모델 ──
-async def _pick_model(conn, d, img: dict) -> str | None:
-    import math
-    gsd = img.get("gsd_m")
-    cands: list[str] = []
-    if d["model_override"]:
-        cands.append(d["model_override"])
-    for r in await conn.fetch("SELECT model_ids FROM card_versions WHERE card_id=$1 ORDER BY (id=$2) DESC, approved_at DESC NULLS LAST, id DESC",
-                              d["card_id"], d["card_version_id"]):
-        cands += [m for m in (r["model_ids"] or []) if m not in cands]
-    rows = {r["id"]: r for r in await conn.fetch("SELECT id, task, gsd_trained_m, input, weights_uri, status FROM models")}
+# ── 모델: 배포본 교체 모델 → 카드 버전 모델 → 카드의 다른 버전 모델 → (카드에 제 모델이 없거나, 대신할 모델이 서비스 대상을 모두 찾을 때만)
+#    영상 해상도에 맞는 기본 분할 모델. 서비스 모델이 맞지 않는데 대상을 못 찾는 모델로 말없이 바꾸지 않는다(r3-train 3차 must_fix 2:
+#    2 cm 드론 곤포사일리지 서비스가 25 cm 항공 영상에서 기본 모델(건물·주차장·경작지·비닐하우스)로 돌아 곤포사일리지 0건이 실렸다).
+GSD_GAP = 2.5          # 학습 해상도와 영상 해상도가 이 배수 안이면 맞는다
 
-    def fits(m) -> bool:
-        if not m or not m["weights_uri"] or m["task"] not in ("seg", "det", "obb") or (m["status"] or "") == "retired":
-            return False
-        if gsd and m["gsd_trained_m"]:
-            return abs(math.log(float(gsd) / float(m["gsd_trained_m"]))) <= math.log(2.5)
+
+def gsd_fits(img_gsd, model_gsd) -> bool:
+    import math
+    if not img_gsd or not model_gsd:
         return True
+    return abs(math.log(float(img_gsd) / float(model_gsd))) <= math.log(GSD_GAP)
+
+
+def gsd_word(g) -> str:
+    """해상도 → 사용자 말('2cm 드론' · '25cm 항공' · '10m 위성')."""
+    if g is None:
+        return ""
+    g = float(g)
+    if g >= 1:
+        return f"{g:g}m 위성"
+    cm = f"{g * 100:.1f}".rstrip("0").rstrip(".")
+    return f"{cm}cm {'드론' if g < 0.1 else '항공'}"
+
+
+def _norm_cls(c) -> str:
+    return str(c or "").strip().split("_")[0].lower()
+
+
+def covers(sub_classes, own_classes) -> bool:
+    """대신할 모델이 서비스 모델의 탐지 대상을 모두 찾는가('비닐하우스_단동' = '비닐하우스')."""
+    own = {_norm_cls(c) for c in (own_classes or []) if c}
+    sub = {_norm_cls(c) for c in (sub_classes or []) if c}
+    return bool(own) and own <= sub
+
+
+def _learned(m) -> bool:
+    return bool(m) and bool(m["weights_uri"]) and m["task"] in ("seg", "det", "obb") and (m["status"] or "") != "retired"
+
+
+async def _card_model_ids(conn, card_id: str, cv: str | None) -> list[str]:
+    ids: list[str] = []
+    for r in await conn.fetch("SELECT model_ids FROM card_versions WHERE card_id=$1 ORDER BY (id=$2) DESC, approved_at DESC NULLS LAST, id DESC",
+                              card_id, cv):
+        ids += [m for m in (r["model_ids"] or []) if m not in ids]
+    return ids
+
+
+async def choose_model(conn, override: str | None, card_id: str, cv: str | None, gsd) -> dict:
+    """{model_id, substitute, reason, own:{id, gsd, classes, name}} — reason 'model_mismatch' 이면 model_id 없음(분석하지 않는다)."""
+    rows = {r["id"]: r for r in await conn.fetch("SELECT id, task, gsd_trained_m, classes, weights_uri, status, name, train_job FROM models")}
+    own_ids = await _card_model_ids(conn, card_id, cv)
+    cands = ([override] if override else []) + [m for m in own_ids if m != override]
+    own = [rows[m] for m in own_ids if _learned(rows.get(m))]
+
+    def info(m):
+        return {"id": m["id"], "gsd_m": float(m["gsd_trained_m"]) if m["gsd_trained_m"] is not None else None, "classes": list(m["classes"] or []),
+                "name": (m["name"] or {}).get("ko") if isinstance(m["name"], dict) else m["name"]}
     for mid in cands:
-        if fits(rows.get(mid)):
-            return mid
-    base = [m for m in rows.values() if fits(m) and m["task"] == "seg"]
-    base.sort(key=lambda m: (abs(float(m["gsd_trained_m"] or 0) - float(gsd or 0)), m["id"]))
-    return base[0]["id"] if base else None
+        m = rows.get(mid)
+        if _learned(m) and gsd_fits(gsd, m["gsd_trained_m"]):
+            return {"model_id": mid, "substitute": False, "reason": None, "own": info(m)}
+    base = [m for m in rows.values() if _learned(m) and m["task"] == "seg" and gsd_fits(gsd, m["gsd_trained_m"])]
+    base.sort(key=lambda m: (abs(float(m["gsd_trained_m"] or 0) - float(gsd or 0)), m["train_job"] is not None, m["id"]))   # 원 모델 먼저(재학습본 뒤)
+    if own:
+        want = [c for m in own for c in (m["classes"] or [])]
+        ok = [m for m in base if covers(m["classes"], want)]
+        if ok:            # 같은 대상을 찾는 다른 해상도 모델(예: 비닐하우스 2 cm → 25 cm 항공 모델) — 대신 쓰고 화면에 그 모델을 보인다
+            return {"model_id": ok[0]["id"], "substitute": True, "reason": None, "own": info(own[0])}
+        return {"model_id": None, "substitute": False, "reason": "model_mismatch", "own": info(own[0])}
+    if base:              # 제 모델이 없는 카드(기본 분석) — 영상 해상도에 맞는 기본 분할 모델
+        return {"model_id": base[0]["id"], "substitute": False, "reason": None, "own": None}
+    return {"model_id": None, "substitute": False, "reason": "no_model", "own": None}
+
+
+async def _pick_model(conn, d, img: dict) -> str | None:
+    """(옛 호출 모양) — 고른 모델 id 만."""
+    return (await choose_model(conn, d["model_override"], d["card_id"], d["card_version_id"], img.get("gsd_m")))["model_id"]
+
+
+async def imagery_for_model(sgg: str | None, geom: dict | None, model_gsd) -> dict | None:
+    """모델 해상도에 맞는 등록 영상(자체 · 정사) 가운데 시군구를 가장 많이 덮는 것 — 없으면 None."""
+    if not sgg or not model_gsd:
+        return None
+    from .regions import regions_base
+    from shapely.geometry import mapping, shape
+    regs, geoms, _ = regions_base()
+    g = shape(geom) if geom else geoms.get(sgg)
+    if g is None:
+        return None
+    rg = next((x for x in regs if x["sgg_cd"] == sgg), None) or {}
+    codes = [c for c in (sgg, rg.get("prev_cd")) if c]
+    async with db(realm="lx") as conn:
+        rows = await conn.fetch(
+            "WITH a AS (SELECT ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON($1),4326)) g) "
+            "SELECT i.id, i.gsd_m, coalesce(i.year::text, i.epoch) AS yr, "
+            "ST_Area(ST_Intersection(ST_MakeValid(i.footprint), a.g)::geography) / nullif(ST_Area(a.g::geography), 0) AS cov "
+            "FROM imagery i, a WHERE i.path_internal IS NOT NULL AND coalesce(i.kind,'ortho')='ortho' AND i.footprint IS NOT NULL "
+            "AND (i.sgg_cd = ANY($2::text[]) OR ST_Intersects(i.footprint, a.g))",
+            json.dumps(mapping(g)), codes)
+    rows = [r for r in rows if (r["cov"] or 0) >= 0.001 and r["gsd_m"] is not None and gsd_fits(r["gsd_m"], model_gsd)]
+    if not rows:
+        return None
+
+    def yr(r):
+        s = str(r["yr"] or "")
+        return int(s[:4]) if s[:4].isdigit() else 0
+    best = max(rows, key=lambda r: (round(float(r["cov"] or 0), 2), yr(r)))
+    return {"imagery_id": best["id"], "gsd_m": float(best["gsd_m"]), "year": yr(best) or None, "coverage": round(float(best["cov"] or 0), 3),
+            "partial": float(best["cov"] or 0) < 0.98, "source": "local", "via": "imagery 표(모델 해상도)"}
+
+
+def mismatch_text(own: dict | None, img: dict | None) -> str:
+    mg = gsd_word((own or {}).get("gsd_m"))
+    ig = gsd_word((img or {}).get("gsd_m"))
+    return (f"서비스 모델({mg})과 이 지역 영상({ig})의 해상도가 맞지 않습니다 — 모델 해상도에 맞는 영상을 등록하거나 다른 지역을 고르세요"
+            if mg and ig else "서비스 모델과 이 지역 영상의 해상도가 맞지 않습니다")
+
+
+async def plan_analysis(conn, override, card_id, cv, sgg, aoi, img: dict | None = None) -> dict:
+    """적용 전 점검 · 흐름 시작이 같은 판정을 쓴다(한 출처) — {img, pick, fits, note}.
+    fits: True(분석 가능) · False(모델·영상 해상도 불일치 · 대신할 모델 없음) · None(영상 없음 — 등록되면 이어짐)."""
+    img = img if img is not None else await best_imagery(sgg, aoi)
+    if not img.get("imagery_id"):
+        return {"img": img, "pick": None, "fits": None, "note": "이 지역에 등록된 영상이 없습니다 — 영상이 등록되면 AI 분석이 이어집니다"}
+    pick = await choose_model(conn, override, card_id, cv, img.get("gsd_m"))
+    if pick["reason"] == "model_mismatch":
+        alt = await imagery_for_model(sgg, aoi, (pick["own"] or {}).get("gsd_m"))
+        if alt:
+            pick2 = await choose_model(conn, override, card_id, cv, alt["gsd_m"])
+            if pick2["model_id"]:
+                pct = round(100 * float(alt["coverage"] or 0))
+                return {"img": alt, "pick": pick2, "fits": True,
+                        "note": f"모델 해상도에 맞는 {gsd_word(alt['gsd_m'])} 영상으로 분석합니다 — 시군구 면적의 약 {max(pct, 1)}%"}
+        return {"img": img, "pick": pick, "fits": False, "note": mismatch_text(pick["own"], img)}
+    if not pick["model_id"]:
+        return {"img": img, "pick": pick, "fits": False, "note": "이 영상에 맞는 분석 모델이 없습니다"}
+    return {"img": img, "pick": pick, "fits": True, "note": None}
+
+
+async def model_block(conn, mid: str | None, substitute: bool = False) -> dict | None:
+    """화면·관리자 공용 — 실제로 분석에 쓴(쓸) 모델 한 줄."""
+    if not mid:
+        return None
+    m = await conn.fetchrow("SELECT id, name, classes, gsd_trained_m FROM models WHERE id=$1", mid)
+    if not m:
+        return {"id": mid, "name": None, "classes": [], "gsd_m": None, "substitute": substitute}
+    return {"id": m["id"], "name": (m["name"] or {}).get("ko") if isinstance(m["name"], dict) else m["name"], "classes": list(m["classes"] or []),
+            "gsd_m": float(m["gsd_trained_m"]) if m["gsd_trained_m"] is not None else None, "gsd_word": gsd_word(m["gsd_trained_m"]),
+            "substitute": substitute}
+
+
+@router.get("/deploy-fit")
+async def deploy_fit(request: Request, region: str, card_id: str | None = None, from_deploy_id: str | None = None):
+    """다른 지역에 적용 — 결재 요청 전에 이 서비스 모델이 그 지역 영상으로 분석할 수 있는지(적용 화면이 먼저 보인다 · POST /deploys 도 같은 판정)."""
+    p = require(principal(request), lx=True)
+    if p.role not in ("admin", "staff"):
+        raise ApiError("forbidden", "LX 직원·관리자만")
+    from .regions import regions_base
+    regs, geoms, _ = regions_base()
+    rg = next((x for x in regs if x["sgg_cd"] == region or x.get("prev_cd") == region), None)
+    if not rg:
+        raise ApiError("bad_request", "해당 지역이 없습니다", {"region": region})
+    sgg = rg["sgg_cd"]
+    from shapely.geometry import mapping
+    aoi = mapping(geoms[sgg]) if sgg in geoms else None
+    async with db(realm="lx") as conn:
+        override = None
+        if from_deploy_id:
+            src = await _get(conn, from_deploy_id)
+            card_id, cv, override = src["card_id"], src["card_version_id"], src["model_override"]
+        else:
+            cv = await conn.fetchval("SELECT id FROM card_versions WHERE card_id=$1 ORDER BY approved_at DESC NULLS LAST, id DESC LIMIT 1", card_id)
+        if not card_id or not cv:
+            raise ApiError("bad_request", "서비스(card_id)가 필요합니다")
+        pl = await plan_analysis(conn, override, card_id, cv, sgg, aoi)
+        pk = pl["pick"] or {}
+        mb = await model_block(conn, pk.get("model_id"), bool(pk.get("substitute")))
+        own = pk.get("own")
+    img = pl["img"] or {}
+    return {"region": sgg, "fits": pl["fits"], "note": pl["note"],
+            "imagery": {"has": bool(img.get("imagery_id")), "gsd_m": img.get("gsd_m"), "gsd_word": gsd_word(img.get("gsd_m")), "year": img.get("year"),
+                        "coverage": env(img.get("coverage"), "ratio", "measured", "영상 범위 ∩ 시군구 면적",
+                                        None if img.get("coverage") is not None else "영상 없음")},
+            "model": mb, "service_model": ({**own, "gsd_word": gsd_word(own.get("gsd_m"))} if own else None), "as_of": now_iso()}
 
 
 # ── 계약 경로를 같은 프로세스에서 부른다(POST /jobs · POST /survey/build) — 결재한 사람의 권한으로 ──
@@ -668,13 +893,28 @@ async def flow_start(did: str, user_id: str | None = None, *, why: str = "approv
                 f = {**flow, "imagery": img, "checked_at": now_iso()}
                 await _set_flow(conn, did, f)
             return f
-        model_id = await _pick_model(conn, d, img)
+        pl = await plan_analysis(conn, d["model_override"], d["card_id"], d["card_version_id"], d["sgg_cd"], geom, img)
+        pk = pl["pick"] or {}
+        if pl["fits"] is False and pk.get("reason") == "model_mismatch":
+            # 서비스 모델과 영상 해상도가 맞지 않다 — 다른 모델로 말없이 바꾸지 않고, 맞는 영상이 등록되면 이어 간다(60 s 마다 다시 확인)
+            if flow.get("state") == "need_imagery" and flow.get("reason") == "model_mismatch":
+                f = {**flow, "imagery": img, "checked_at": now_iso()}
+                await _set_flow(conn, did, f)
+                return f
+            f = _flow_next(flow, "need_imagery", imagery=img, reason="model_mismatch", todo="맞는 영상 등록", note=pl["note"])
+            await _set_flow(conn, did, f)
+            await audit(conn, p, "flow.need_imagery", did, None, {"deploy_id": did, "sgg_cd": d["sgg_cd"], "reason": "model_mismatch",
+                                                                "model_id": (pk.get("own") or {}).get("id"), "imagery_id": img.get("imagery_id"), "why": why})
+            return f
+        model_id = pk.get("model_id")
         if not model_id:
             f = _flow_next(flow, "failed", imagery=img, reason="no_model", todo="모델 연결")
             await _set_flow(conn, did, f)
             await audit(conn, p, "flow.failed", did, None, {"deploy_id": did, "reason": "no_model"})
             return f
-        f = _flow_next(flow, "starting", imagery=img, model_id=model_id, todo=None, reason=None)
+        img = pl["img"]
+        mb = await model_block(conn, model_id, bool(pk.get("substitute")))
+        f = _flow_next(flow, "starting", imagery=img, model_id=model_id, model=mb, todo=None, reason=None, note=pl["note"])
         stage = "shadow" if d["stage"] == "draft" else None
         await _set_flow(conn, did, f, stage=stage)
         if stage:
@@ -770,9 +1010,9 @@ async def _after_infer(did: str, d, job) -> None:
     """AI 분석 끝 → 배포본 스냅샷 = 그 결과 세트 → (필지 대조 모듈) POST /survey/build."""
     p = _flow_actor(await _approver(did))
     rs = job["result_set"]
-    parcel = _has_parcel(d["modules"])
+    parcel = await _parcel_on(d)
     async with db(realm="lx") as conn:
-        f = _flow_next(d["flow"], "surveying" if parcel else "done", result_set=rs)
+        f = _flow_next(d["flow"], "surveying" if parcel else "done", result_set=rs, reason=None, detail=None)
         await _set_flow(conn, did, f, snapshot=rs)
         await audit(conn, p, "flow.result", did, {"snapshot_current": d["snapshot_current"]},
                     {"deploy_id": did, "job_id": job["id"], "snapshot_current": rs, "counts": job["counts"]})
@@ -781,9 +1021,10 @@ async def _after_infer(did: str, d, job) -> None:
     await _flow_event(p, did, "snapshot")
     if not parcel:
         return
+    rules = await card_rules(d)
     try:
         res = await _call_route("POST", "/survey/build", {"sgg_cd": d["sgg_cd"], "job_id": job["id"], "deploy_id": did,
-                                                          "tenant_id": d["tenant_id"]}, p)
+                                                          "tenant_id": d["tenant_id"], **({"rules": rules} if rules else {})}, p)
     except ApiError as e:
         async with db(realm="lx") as conn:
             d2 = await _get(conn, did)
@@ -800,7 +1041,7 @@ async def _after_infer(did: str, d, job) -> None:
             await _set_flow(conn, did, _flow_next(d2["flow"], "surveying", survey_job_id=sj))
             await audit(conn, p, "flow.survey", did, None, {"deploy_id": did, "job_id": job["id"], "survey_job_id": sj, "sgg_cd": d["sgg_cd"]})
         else:                                     # 동기 응답(바로 끝남)
-            await _set_flow(conn, did, _flow_next(d2["flow"], "done", survey=_small(res)))
+            await _set_flow(conn, did, _flow_next(d2["flow"], "done", survey=_small(res), reason=None, detail=None))
             await audit(conn, p, "flow.done", did, None, {"deploy_id": did, "job_id": job["id"], "survey": _small(res)})
     await _flow_event(p, did, "flow")
 
@@ -844,7 +1085,7 @@ async def flow_tick(only: set | None = None) -> int:
                     n += 1
                 elif j and j["state"] == "done":
                     async with db(realm="lx") as conn:
-                        await _set_flow(conn, did, _flow_next(f, "done", survey={"counts": j["counts"], **({"findings": sv.get("findings"),
+                        await _set_flow(conn, did, _flow_next(f, "done", reason=None, detail=None, survey={"counts": j["counts"], **({"findings": sv.get("findings"),
                                                                                                           "parcels": sv.get("parcels")} if sv else {})}))
                         await audit(conn, _flow_actor(None), "flow.done", did, None,
                                     {"deploy_id": did, "job_id": f.get("job_id"), "survey_job_id": j["id"], "counts": j["counts"]})
@@ -912,7 +1153,7 @@ async def flow_retry(did: str, request: Request, body: dict | None = None):
         await audit(conn, p, "flow.retry", did, {"flow": (d["flow"] or {}).get("state")}, {"deploy_id": did, "job_id": (d["flow"] or {}).get("job_id")})
         fl = d["flow"] or {}
         j = await _job_row(conn, fl.get("job_id"))
-    if j is not None and j["state"] == "done" and not _has_parcel(d["modules"]):
+    if j is not None and j["state"] == "done" and not await _parcel_on(d):
         raise ApiError("conflict", "이미 결과가 반영됐습니다", status=409)
     if j is not None and j["state"] == "done":          # AI 분석은 끝났다 — 실태조사만 다시(GPU 재사용 0)
         await _after_infer(did, d, j)

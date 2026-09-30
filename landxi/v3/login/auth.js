@@ -12,7 +12,7 @@
 import { API, session, api } from '../../shared/api-v1.js';
 import { keyOf, landingFor, ALLOW, FRONT } from '../kit/auth-gate.js';
 import { drawer } from '../kit/panel.js';
-import { hasRoute, h } from '../kit/util.js';
+import { h } from '../kit/util.js';
 import { mountPlate } from './plate.js';
 import { handoffFragment } from './handoff.js';
 
@@ -37,7 +37,13 @@ function bootPlate() {
 }
 let plate = null;
 if (window.maplibregl) plate = bootPlate(); else addEventListener('load', () => { plate = bootPlate(); });
-requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.add('is-ready')));
+/* 등장 — 두 프레임 뒤 스태거. 프레임이 300ms 안에 오지 않으면(뒤에서 열린 탭 · 그리기 멈춘 탭) 등장 없이 바로 보인다.
+   (c2-xi 실증: 폼이 처음에 비어 보이고 휠 한 번에 나타났다 — 프레임이 오지 않아 is-ready 가 붙지 않았던 것) */
+let entered = false;
+const enterNow = (instant) => { if (entered) return; entered = true; if (instant) document.body.classList.add('no-enter'); document.body.classList.add('is-ready'); };
+requestAnimationFrame(() => requestAnimationFrame(() => enterNow(false)));
+setTimeout(() => enterNow(true), 300);
+if (document.visibilityState === 'hidden') enterNow(true);
 
 /* ── 기관 목록 — 공개 기관 디렉터리(로그인 전이라 /tenants 는 못 부른다) ── */
 let ORGS = [];          // [{id, name(표시), scope}]
@@ -46,27 +52,77 @@ let ORG_SRC = 'server';
    국가명은 '키르기스스탄' 표준 표기의 '키르기스'로 맞춘다(형식 '기관명(관할)'은 그대로). */
 const orgName = (n) => n.replace(/키르기즈/g, '키르기스').replace(/\s+\(/g, '(');
 const DIR = new URL('../../ops/data/fixtures/tenants.json', import.meta.url).href;
-async function loadOrgs() {
-  if (await hasRoute('/auth/tenants')) {
-    try { const j = await api('/auth/tenants'); ORG_SRC = 'server'; return j?.items || []; } catch { /* 아래 어댑터 */ }
-  }
+/* 늦음 안내(M8 · r3-ops) — 옛 탭이 서버 연결을 쥐고 있으면 기관 목록 요청이 끝나지 않는다.
+   ① 요청마다 제한 시간(8초) · 넘으면 한 번 더 ② 6초가 지나도 목록이 없으면, '기관'을 늦게 눌러도 안내 + '다시 불러오기'
+   ③ '다시 불러오기' = 목록을 처음부터 다시 부른다(다른 탭을 닫은 뒤 누르면 이어진다). */
+const SLOW_MS = 6000, ORG_TIMEOUT_MS = 8000;
+const SLOW_TXT = '서버 응답이 늦습니다 — 다른 Land-XI 탭을 닫거나 새로 고친 뒤 다시 시도하세요';
+/* 서버가 멈춰 있을 때(연결 거절 · 관문 502–504) — 서버 다시 시작 중이거나 꺼진 때. 할 일 = 잠시 뒤 다시 불러오기 */
+const DOWN_TXT = '서버에 연결할 수 없습니다 — 잠시 뒤 다시 불러오기를 누르세요';
+async function getJson(url, ms) {
+  const ac = new AbortController(); const t = setTimeout(() => ac.abort(), ms);
+  try {
+    const r = await fetch(url, { cache: 'no-store', signal: ac.signal, headers: { accept: 'application/json' } });
+    if (!r.ok) { const e = new Error('http_' + r.status); e.status = r.status; throw e; }
+    return await r.json();
+  } finally { clearTimeout(t); }
+}
+async function loadOrgsOnce() {
+  try { const j = await getJson(API.prefix + '/auth/tenants', ORG_TIMEOUT_MS); ORG_SRC = 'server'; return j?.items || []; }
+  catch (e) { if (!e.status || e.status >= 502) throw e; }   // 응답 없음(시간 초과 · 연결 막힘 · 관문이 서버를 못 찾음) = 다시 시도 · 서버가 답한 오류(경로 없음 등) = 아래 어댑터
   // 어댑터(S-1 전) — 같은 모양으로 접는다: active · 기관(user) · lx-demo 제외 → {id, name, scope}
   ORG_SRC = 'adapter';
-  const j = await fetch(DIR).then((r) => (r.ok ? r.json() : null));
+  const j = await getJson(DIR, ORG_TIMEOUT_MS).catch(() => null);
   return (j?.items || []).filter((t) => t.kind === 'user' && t.status === 'active')
     .map((t) => ({ id: t.id, name: t.name, scope: t.scope }));
 }
-/* 늦음 안내 — 응답이 오지 않아 기관 목록이 비어 있으면 말없이 멈추지 않는다(탭이 많아 연결이 막힌 때 등 · c2-numbers) */
-const SLOW_MS = 6000;
-const SLOW_TXT = '서버 응답이 늦습니다 · 열린 Land-XI 창을 몇 개 닫고 다시 시도하세요';
-let orgsDone = false;
-setTimeout(() => { if (!orgsDone) { org.options[0].textContent = '기관 목록을 불러오는 중'; if (who() === 'tenant') say(SLOW_TXT); } }, SLOW_MS);
-const orgsReady = loadOrgs().finally(() => { orgsDone = true; if (org.options[0]) org.options[0].textContent = '기관 선택'; if (msg.textContent === SLOW_TXT) clearErr(); }).then((items) => {
+let orgsWhy = 'slow';        // 마지막 실패 이유: 'slow'(제한 시간) | 'down'(연결 거절 · 502–504)
+const whyOf = (e) => (e?.name === 'AbortError' ? 'slow' : 'down');
+async function loadOrgs() {
+  try { return await loadOrgsOnce(); }
+  catch (e) {                                                   // 제한 시간 뒤 한 번 더 · 연결 거절이면 2초 쉬고 한 번 더(짧은 다시 시작은 여기서 넘긴다)
+    orgsWhy = whyOf(e);
+    if (orgsWhy === 'down') await wait(2000);
+    try { return await loadOrgsOnce(); } catch (e2) { orgsWhy = whyOf(e2); throw e2; }
+  }
+}
+const slowEl = $('slow'), reloadBtn = $('reload');
+let orgsDone = false, orgsAt = Date.now(), slowTimer = 0;
+const orgsLate = () => !orgsDone && Date.now() - orgsAt >= SLOW_MS;
+const slowT = slowEl.querySelector('.slow__t');
+function showSlow(on) {
+  if (on && slowT) slowT.textContent = orgsWhy === 'down' ? DOWN_TXT : SLOW_TXT;
+  slowEl.hidden = !on;
+  if (on) { slowEl.classList.remove('t-in'); void slowEl.offsetWidth; slowEl.classList.add('t-in'); }
+}
+function fillOrgs(items) {
   ORGS = items.filter((t) => t.id !== 'lx-demo')
     .map((t) => ({ id: t.id, name: orgName(t.name?.ko || t.name?.en || t.id), scope: t.scope === 'global' ? 'global' : 'local' }));
+  while (org.options.length > 1) org.remove(1);
   org.append(...ORGS.map((t) => new Option(t.name, t.id)));
   const last = LS('lx_login_org'); if (last && ORGS.some((t) => t.id === last)) org.value = last;
-}).catch(() => { ORGS = []; });
+}
+function startOrgs() {
+  orgsDone = false; orgsAt = Date.now(); orgsWhy = 'slow';
+  if (org.options[0]) org.options[0].textContent = '기관 목록을 불러오는 중';
+  clearTimeout(slowTimer);
+  slowTimer = setTimeout(() => { if (!orgsDone && who() === 'tenant') showSlow(true); }, SLOW_MS);
+  return loadOrgs().then((items) => {
+    orgsDone = true; clearTimeout(slowTimer);
+    if (org.options[0]) org.options[0].textContent = '기관 선택';
+    fillOrgs(items); showSlow(false);
+  }).catch(() => {
+    // 두 번 모두 응답 없음 — 목록은 비운 채 안내를 남긴다(기관 문이면 바로 · 아니면 '기관'을 누를 때)
+    if (org.options[0]) org.options[0].textContent = '기관 목록을 불러오지 못했습니다';
+    orgsAt = 0;
+    if (who() === 'tenant') showSlow(true);
+  });
+}
+let orgsReady = startOrgs();
+reloadBtn.addEventListener('click', () => {
+  reloadBtn.disabled = true; reloadBtn.setAttribute('aria-busy', 'true');
+  orgsReady = startOrgs().finally(() => { reloadBtn.disabled = false; reloadBtn.removeAttribute('aria-busy'); });
+});
 
 /* 아이디가 '<기관 id>-…' 로 시작하면 기관 칸을 미리 맞춘다(가장 긴 일치). 못 맞추면 사용자가 고른다 — 추측으로 보내지 않는다. */
 function orgFromLogin(login) {
@@ -86,6 +142,7 @@ function pick(v) {
   orgRow.hidden = !t;
   if (t && !org.value) { const g = orgFromLogin(idIn.value.trim()); if (g) org.value = g; }
   clearErr();
+  showSlow(t && orgsLate());                 // 탭을 늦게 바꿔도(6초 뒤) 목록이 없으면 안내
 }
 for (const r of form.who) r.addEventListener('change', (e) => pick(e.target.value));
 pick(who());
@@ -129,7 +186,9 @@ const NEXT_OK = /^\/landxi\/(?:v3\/([a-z-]+)\/(?:index\.html)?|(xi)\/(?:index\.h
 function nextParam(key) {
   const v = new URLSearchParams(location.search).get('next') || '';
   const m = NEXT_OK.exec(v);
-  if (!m || /\.\.|\/\/|%2e|%2f|%5c/i.test(v)) return null;
+  /* 경로 부분만 검사 — 화면 상태(?model=…)의 값에 인코딩된 '/'(%2F)가 들어 있어도 되돌아갈 수 있게(경로 탈출은 여전히 0) */
+  const path = v.split(/[?#]/)[0];
+  if (!m || /\.\.|\/\/|%2e|%2f|%5c/i.test(path)) return null;
   if (m[2] === 'xi') return key && ALLOW['xi-clean'].includes(key) ? v : null;
   const home = m[1];
   if (!Object.prototype.hasOwnProperty.call(ALLOW, home) || home === 'login') return null;
@@ -137,17 +196,19 @@ function nextParam(key) {
   return ok === null || (key && ok.includes(key)) ? v : null;
 }
 
-async function homeOf(s) {
+async function homeOf(s, door) {
   const key = houseOf(s);
   const n = nextParam(key); if (n) return n;
-  for (const u of [landingFor({ key }), ...(FALLBACK[key] || [])]) if (await exists(/\.html$/.test(u) ? u : u + 'index.html')) return u;
+  /* 관리자 계정이 'LX 직원' 문으로 들어오면 LX 직원 대시보드(09-30 사용자: lxadmin 하나로 세 입구 — 메인 = LX 직원 · r3-train 3차 실증) */
+  const land = door === 'staff' && key === 'lx/admin' ? 'lx/staff' : key;
+  for (const u of [landingFor({ key: land }), ...(FALLBACK[land] || [])]) if (await exists(/\.html$/.test(u) ? u : u + 'index.html')) return u;
   if (key === 'lx/admin') return `${location.protocol}//${location.hostname}:${OPS_PORT}/landxi/ops/index.html#${handoffFragment(s)}`;   // 현행 관제(:8702) — 조각 인계
   return FRONT;
 }
 
 /* ── 들어가기 — 문 카드가 비켜서고 히어로 카드가 화면 전체로 ──────── */
-async function enter(s) {
-  const url = await homeOf(s);
+async function enter(s, door) {
+  const url = await homeOf(s, door);
   document.documentElement.dataset.dest = url.replace(/#.*$/, '');
   if (!REDUCE) {
     if (innerWidth > 960) {
@@ -188,7 +249,9 @@ form.addEventListener('submit', async (e) => {
   try {
     let tenantId = null;
     if (w === 'tenant') {
+      if (!orgsDone && orgsLate()) { showSlow(true); return; }
       await orgsReady;
+      if (!orgsDone) { showSlow(true); return; }
       tenantId = org.value || orgFromLogin(login);
       if (!tenantId) { say('기관을 선택하세요', ['org']); org.focus(); return; }
     }
@@ -214,7 +277,7 @@ form.addEventListener('submit', async (e) => {
     session.set({ token: s.token, realm: s.realm, role: s.role, tenant_id: s.tenant_id, expires_at: s.expires_at, user: s.user });
     await orgsReady;
     window.__login.last = { realm: s.realm, role: s.role, tenant_id: s.tenant_id, house: houseOf(s) };
-    await enter(s);
+    await enter(s, w);
   } finally {
     busy = false; go.removeAttribute('aria-busy');
   }
@@ -255,11 +318,16 @@ async function authed(path, method, token) {
   catch (err) { if (err.status === 401) session.clear(); return; }   // 401 = 끝난 세션 · 연결 실패는 세션을 건드리지 않는다
   try {
     const r = $('resume');
-    r.textContent = `${me.user?.name || '내 계정'}으로 계속`;          // 화살표는 키트 .t-btn--text::after 가 붙인다
+    const nm = me.user?.name || '내 계정';
+    const last = nm.charCodeAt(nm.length - 1);                            // 받침 없는 말·ㄹ 받침 = '로'('LX 관리자로') · 그 밖 = '으로'
+    const jong = last >= 0xac00 && last <= 0xd7a3 ? (last - 0xac00) % 28 : 0;
+    r.textContent = `${nm}${jong === 0 || jong === 8 ? '로' : '으로'} 계속`;   // 화살표는 키트 .t-btn--text::after 가 붙인다
     r.hidden = false;
     window.__login.resumeAt = Math.round(performance.now());
-    r.addEventListener('click', async (ev) => { ev.preventDefault(); await orgsReady; await enter({ ...s, realm: me.realm, role: me.role, tenant_id: me.tenant_id }); });
-    const want = me.realm === 'tenant' ? 'tenant' : me.role === 'admin' ? 'admin' : 'staff';
+    r.addEventListener('click', async (ev) => { ev.preventDefault(); await orgsReady; await enter({ ...s, realm: me.realm, role: me.role, tenant_id: me.tenant_id }, who()); });
+    /* 메인 입구(app.)에서는 관리자 계정도 LX 직원 문이 먼저(메인 = LX 직원) — 관리자 입구(admin.)는 ?next 로 관리자 대시보드 */
+    const main = /^app\./i.test(location.hostname);
+    const want = me.realm === 'tenant' ? 'tenant' : me.role === 'admin' && !main ? 'admin' : 'staff';
     const radio = [...form.who].find((x) => x.value === want); if (radio) { radio.checked = true; pick(want); }
     if (me.realm === 'tenant' && me.tenant_id) { await orgsReady; if (ORGS.some((t) => t.id === me.tenant_id)) org.value = me.tenant_id; }
   } catch { /* 표시 실패는 세션과 무관 */ }

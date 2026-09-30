@@ -53,8 +53,10 @@ def db_counts() -> dict:
         for cls, n in c.execute("SELECT cls, count(*) FROM detections WHERE job_id='results/lx/namwon-landcover-2023' GROUP BY cls").fetchall():
             out[f"landcover:{cls}"] = n
         out["tenants"] = c.execute("SELECT count(*) FROM tenants").fetchone()[0]
-        out["cards"] = c.execute("SELECT count(*) FROM cards").fetchone()[0]
-        out["card_versions"] = c.execute("SELECT count(*) FROM card_versions").fetchone()[0]
+        # seed 카드만 센다 — LX 직원이 화면에서 만든 서비스(card_versions.changelog '서비스 만들기')는 기능의 정상 결과라 빼고 센다
+        made = "SELECT card_id FROM card_versions WHERE changelog='서비스 만들기'"
+        out["cards"] = c.execute(f"SELECT count(*) FROM cards WHERE id NOT IN ({made})").fetchone()[0]
+        out["card_versions"] = c.execute(f"SELECT count(*) FROM card_versions WHERE card_id NOT IN ({made})").fetchone()[0]
     return out
 
 

@@ -453,9 +453,13 @@ def quantile(xs: list[float], q: float) -> float:
     return s[lo] + (s[hi] - s[lo]) * (pos - lo)
 
 
-def evaluate(conn, sgg: str, job_id: str, th: dict | None = None) -> list[tuple]:
+def evaluate(conn, sgg: str, job_id: str, th: dict | None = None, rules: list[str] | None = None) -> list[tuple]:
+    """rules = 서비스(카드 버전)에서 고른 규칙만(r3-train) · None = 전체 규칙."""
     th = th or R.default_thresholds()
-    return conn.execute(R.eval_sql_ai(th), {"sgg": sgg, "job": job_id}).fetchall()
+    rs = [r for r in RULE_IDS if r in rules] if rules else None
+    if rules and not rs:
+        return []
+    return conn.execute(R.eval_sql_ai(th, rs), {"sgg": sgg, "job": job_id}).fetchall()
 
 
 def imagery_label(conn, job_id: str) -> str:
@@ -612,8 +616,9 @@ def is_canon(conn, sgg: str) -> bool:
 
 
 # ─────────────────────────── 전체 ───────────────────────────
-def build(sgg_cd: str, ai_job_id: str | None = None, *, build_job_id: str | None = None, progress=None, force: bool = False) -> dict:
-    """한 시군구 전체 — ① 필지 ② 결합 ③ 규칙·의심. 반환: survey.done counts + 단계 실측."""
+def build(sgg_cd: str, ai_job_id: str | None = None, *, build_job_id: str | None = None, progress=None, force: bool = False,
+          rules: list[str] | None = None) -> dict:
+    """한 시군구 전체 — ① 필지 ② 결합 ③ 규칙·의심. 반환: survey.done counts + 단계 실측. rules = 서비스에서 고른 규칙만(없으면 전체)."""
     rg = region(sgg_cd)
     sgg = rg["sgg_cd"]
     tenant = tenant_for(sgg)
@@ -658,8 +663,8 @@ def build(sgg_cd: str, ai_job_id: str | None = None, *, build_job_id: str | None
             lx_tx(conn)
             # ③ 규칙
             t = time.time()
-            rows = evaluate(conn, sgg, job)
-            ms["rules"] = {"rows": len(rows), "rules_s": round(time.time() - t, 1)}
+            rows = evaluate(conn, sgg, job, rules=rules)
+            ms["rules"] = {"rows": len(rows), "rules_s": round(time.time() - t, 1), **({"only": list(rules)} if rules else {})}
             if progress:
                 progress("rules", len(rows), len(rows), None)
             img = IMG23 if canon else imagery_label(conn, job)       # 정본 = 적재 때 영상 표기 그대로

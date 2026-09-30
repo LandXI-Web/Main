@@ -281,7 +281,7 @@ async def cog_tile(iid: str, z: int, x: int, y: int, request: Request, exp: str 
     if not src or not os.path.exists(src):
         raise ApiError("cog_unavailable", "원본/COG 파일 없음")
     cp = config.DATA_ROOT / "cache" / "tiles" / "cog" / iid / ("cog" if src == meta["cog"] else "raw") / str(z) / str(x) / f"{y}.webp"
-    hdr = {"Cache-Control": "private, max-age=3600", "X-LX-Render": "rasterio(COG)" if src == meta["cog"] else "rasterio(원본 창+재투영)"}
+    hdr = {"Cache-Control": "private, max-age=3600", "X-LX-Render": "rasterio(COG)" if src == meta["cog"] else "rasterio(source window+reproject)"}  # 머리 값은 ASCII 만(한글이면 500)
     if cp.exists():
         return Response(content=cp.read_bytes(), media_type="image/webp", headers=hdr)
     if cp.with_suffix(".empty").exists():

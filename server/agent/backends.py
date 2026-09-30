@@ -143,8 +143,10 @@ def _body(b: dict, messages: list[dict], tools: list[dict] | None, max_tokens: i
 @contextlib.asynccontextmanager
 async def _power(holder: str):
     """전력 규칙(F2 통합 · F2-E must_fix): GPU1 LLM 호출 직전 workers.bus.llm_power_request() → GPU0 추론 워커가 칸 묶음 사이에서 멈추고
-    다른 GPU 전력이 100 W 아래로 내려갈 때까지(최대 6 s) 기다린다 · 호출 뒤 llm_power_done(). Redis 가 없으면 협조 없이 진행(개발)."""
+    다른 GPU 전력이 100 W 아래로 내려갈 때까지(최대 12 s) 기다린다 · 호출 뒤 llm_power_done(). Redis 가 없으면 협조 없이 진행(개발)."""
     got = None
+    import secrets as _s
+    holder = f"{holder}#{_s.token_hex(3)}"          # 호출마다 다른 이름(r3-ops) — 겹친 호출 중 먼저 끝난 쪽이 예고를 지우지 않게(bus.LLM_CALLS)
     try:
         from workers import bus
         got = await asyncio.to_thread(bus.llm_power_request, holder)

@@ -122,6 +122,18 @@ export const ROLES = [['pnu', '필지 번호(PNU)'], ['jibun', '지번'], ['stat
 export const JIMOK = ['전', '답', '과수원', '목장용지', '임야', '광천지', '염전', '대', '공장용지', '학교용지', '주차장', '주유소용지', '창고용지', '도로', '철도용지', '제방', '하천', '구거', '유지', '양어장', '수도용지', '공원', '체육용지', '유원지', '종교용지', '사적지', '묘지', '잡종지', '과'];
 export const FARM = ['전', '답', '과수원', '과'];
 
+/** 번호 열인가 — 이름(일련번호 · 연번 · 순번 · 번호 · No)이거나, 값이 모두 정수이고 앞 행보다 1씩 커지는 열(90% 이상). '지번 · 번지' 이름은 제외 */
+export function isSerial(h, vals) {
+  const name = String(h || '');
+  if (/지번|번지|본번|부번|PNU|고유/i.test(name)) return false;
+  const ints = vals.filter((v) => /^\d{1,7}$/.test(v));
+  if (vals.length && ints.length / vals.length < 0.9) return false;
+  if (/일련\s*번호|연번|순번|^\s*번호\s*$|^\s*no\.?\s*$|^\s*seq/i.test(name)) return true;
+  if (ints.length < 5) return false;
+  let step = 0; for (let i = 1; i < ints.length; i++) if (+ints[i] - +ints[i - 1] === 1) step++;
+  return step / (ints.length - 1) >= 0.9;
+}
+
 export function guessColumns(headers, rows) {
   const sample = rows.slice(0, 400);
   const frac = (h, re) => { let n = 0, m = 0; for (const r of sample) { const v = String(r[h] ?? '').trim(); if (!v) continue; m++; if (re.test(v)) n++; } return m ? n / m : 0; };
@@ -129,7 +141,7 @@ export function guessColumns(headers, rows) {
   return headers.map((h) => {
     const vals = sample.map((r) => String(r[h] ?? '').trim()).filter(Boolean);
     let role = 'skip';
-    if (/연번|순번|^번호$/.test(h) && frac(h, /^\d{1,6}$/) > 0.9) role = 'skip';
+    if (isSerial(h, vals)) role = 'skip';                 // 일련번호 · 연번 — 값이 1, 2, 3 … 처럼 이어지는 번호 열은 지번이 아니다
     else if (!pnu && (frac(h, /^\d{19}$/) > 0.8 || /PNU|고유번호|필지번호/i.test(h))) { role = 'pnu'; pnu = true; }
     else if (/소재|주소|위치/.test(h) || frac(h, /[가-힣]+(읍|면|동|리|가)(\s|$)/) > 0.8) role = 'jibun';
     else if (/지번/.test(h) || frac(h, /^(산\s*)?\d+(-\d+)?$/) > 0.9) role = 'jibun';

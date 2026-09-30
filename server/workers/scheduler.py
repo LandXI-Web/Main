@@ -133,6 +133,51 @@ def plan_sgg(imagery_id: str, sgg_cd: str, *, center=None, chip: int = 1024, ove
     return sgg_shards(meta, ix.geoms, ix.codes, center=center, chip=chip, overlap=overlap, upsample=upsample, footprint_src=fp_parts)
 
 
+# ── 영상 범위(r3-xi · M12) — '전역' 분석이 실제로 덮는 곳. 견적 · 확인 카드 · 작업 옵션이 모두 이 한 함수의 값을 쓴다(숫자 한 출처) ──
+# 읍면동 수 = 영상 footprint 와 1 ha(0.01 ㎢) 이상 겹치는 법정 읍면동 수 — 경계선 오차로 몇 ㎡ 스치는 곳은 세지 않는다
+# (DB 대조: ST_Area(ST_Intersection(읍면동, imagery.footprint)) ≥ 10,000 ㎡ · EPSG:5186).
+# 비율(coverage) = (시군구 읍면동 합집합 ∩ 영상 footprint) ÷ 시군구 읍면동 합집합 — plan_sgg(info.coverage)와 같은 식.
+SCOPE_EMD_MIN_M2 = 10_000.0
+_scope_cache: dict[tuple, tuple[float, dict]] = {}
+
+
+def sgg_scope(imagery_id: str, sgg_cd: str) -> dict:
+    """→ {coverage 0..1, emd_covered, emd_total, emds:[{emd_cd, name, km2}], area_km2, land_km2} (10분 캐시)."""
+    key = (imagery_id, str(sgg_cd))
+    hit = _scope_cache.get(key)
+    if hit and time.time() - hit[0] < 600:
+        return hit[1]
+    from pyproj import Transformer
+    from shapely.geometry import shape
+    from shapely.ops import transform as sh_transform, unary_union
+    from landxi_api.regions import emd_index
+    ix = emd_index(sgg_cd)
+    if ix is None or not len(ix):
+        raise RuntimeError(f"emd_unavailable {sgg_cd}")
+    meta, fp = imagery_meta(imagery_id)
+    crs = meta["crs"] if meta.get("crs") and meta["crs"] != 4326 else 6933          # 경위도 영상은 등적 좌표(EASE)로 면적
+    to = Transformer.from_crs(4326, crs, always_xy=True).transform
+    es = [sh_transform(to, g).buffer(0) for g in ix.geoms]
+    land = unary_union(es)
+    out = {"coverage": 0.0, "emd_covered": 0, "emd_total": len(ix), "emds": [], "area_km2": 0.0,
+           "land_km2": round(land.area / 1e6, 3), "emd_min_m2": SCOPE_EMD_MIN_M2}
+    if fp:
+        f = sh_transform(to, shape(fp)).buffer(0)
+        inter = land.intersection(f)
+        out["coverage"] = round(inter.area / max(land.area, 1e-9), 4)
+        out["area_km2"] = round(inter.area / 1e6, 3)
+        for cd, nm, e in zip(ix.codes, ix.names, es):
+            a = e.intersection(f).area if e.intersects(f) else 0.0
+            if a >= SCOPE_EMD_MIN_M2:
+                out["emds"].append({"emd_cd": cd, "name": nm, "km2": round(a / 1e6, 3)})
+        out["emds"].sort(key=lambda x: -x["km2"])
+        out["emd_covered"] = len(out["emds"])
+    _scope_cache[key] = (time.time(), out)
+    while len(_scope_cache) > 64:
+        _scope_cache.pop(next(iter(_scope_cache)))
+    return out
+
+
 def plan(job_id: str) -> list[dict]:
     pre = r().get(f"jobplan:{job_id}")                  # 게이트웨이가 제출 때 넘긴 계획(시군구 전역 · 견적과 같은 계획)
     if pre:
@@ -411,6 +456,197 @@ def orphan_watch():
             log(WHO, f"orphan {job_id}/{shard_id} {age:.0f}s > {limit:.0f}s (워커 {rec.get('worker')}) → shard.failed timeout · 재배정 1회")
 
 
+def job_counts(jid: str, h: dict) -> dict:
+    """jobs.counts 에 쓸 값 — 한 출처(r3-xi 2차 must_fix 3).
+    - 끝난 작업(done): 마감(전역 NMS)이 해시 counts 에 쓴 최종 수. 예전에는 칸별 합(job:{id}:counts · 겹침 포함)을 먼저 읽어,
+      마감이 DB 를 고치기 전에 동기화가 돌면 끝난 작업의 counts 가 칸별 합(부여 그린 범위 11,999 ↔ 최종 9,670)으로 남을 수 있었다.
+    - 진행 중: 칸 경계 겹침을 걸러 낸 수(counts_clean · 아래 CleanCount) — 없으면 칸별 합."""
+    if h.get("state") == "done" and h.get("counts"):
+        try:
+            return json.loads(h["counts"])
+        except Exception:
+            pass
+    if h.get("state") in ("queued", "running") and h.get("counts_clean"):
+        try:
+            return (json.loads(h["counts_clean"]) or {}).get("by") or {}
+        except Exception:
+            pass
+    return {k: int(v) for k, v in r().hgetall(f"job:{jid}:counts").items()} or json.loads(h.get("counts") or "{}")
+
+
+# ── 진행 중 탐지 수 정리(r3-xi 2차 · 숫자 한 출처) ────────────────────────────────────────────────────────────────
+# 칸(칩)은 12.5% 겹쳐 돈다. 두 칸이 같은 건물 · 논밭을 함께 잡으면 칸별 합은 최종(마감 전역 NMS) 수보다 크다(부여 그린 범위 11,999 → 9,670).
+# 진행판이 끝에서 숫자를 줄이지 않도록, 칸 결과가 들어오는 대로 마감과 같은 규칙(미터 좌표 · 0.3 m 단순화 · 4 ㎡ 미만 제외 ·
+# 같은 종류끼리 작은 쪽 면적의 50% 넘게 겹치면 하나)으로 걸러 센다. 도착 순서로 세므로 마감(신뢰도 순)과 몇 건(0.4% 안팎) 다를 수 있고,
+# 끝나면 마감 수가 이긴다. 결과: 해시 job:{id}.counts_clean + 이벤트 counts.clean{n, by, cls, shards}.
+CLEAN_S = 3.0
+CLEAN_CELL_M = 64.0
+CLEAN_BUDGET_S = 0.6
+CLEAN_TICK_S = 2.5                 # 한 차례에 세는 시간(작업 전체) — 뒤에 0.5초 이상 쉰다
+_clean: dict = {}
+
+
+class CleanCount:
+    def __init__(self, jid: str, h: dict):
+        self.jid, self.demo = jid, h.get("demo") == "1"
+        self.sdir = bus.shard_dir(h.get("tenant_id") or "lx", jid, self.demo)
+        self.seen: set = set()
+        self.grid: dict = {}
+        self.to_m = None
+        self.by: dict = {}
+        self.cls: dict = {}
+        self.n = 0
+        self.sent = -1
+
+    def _metric(self, arr):
+        """도형 배열 → 미터 좌표(한 번에 · shapely.transform + pyproj 벡터 변환)."""
+        import numpy as np
+        import shapely
+        if self.to_m is None:
+            from pyproj import Transformer
+            from workers.postprocess import metric_epsg
+            c = arr[0].centroid
+            self.to_m = Transformer.from_crs(4326, metric_epsg(c.x, c.y), always_xy=True)
+        tr = self.to_m
+        return shapely.transform(arr, lambda xy: np.column_stack(tr.transform(xy[:, 0], xy[:, 1])))
+
+    def feed(self, sid: str) -> bool:
+        import numpy as np
+        import shapely
+        from shapely.geometry import shape
+        f = self.sdir / f"{sid}.geojson"
+        try:
+            fs = json.loads(f.read_text(encoding="utf-8")).get("features") or []
+        except FileNotFoundError:
+            return False                                   # 아직 파일이 없다(다음 차례에 다시)
+        except Exception:
+            return True
+        if not fs:
+            return True
+        fs.sort(key=lambda ft: -float((ft.get("properties") or {}).get("conf") or 0))
+        gs, props = [], []
+        for ft in fs:
+            try:
+                gs.append(shape(ft["geometry"]))
+                props.append(ft.get("properties") or {})
+            except Exception:
+                continue
+        if not gs:
+            return True
+        try:
+            arr = shapely.simplify(self._metric(np.array(gs, dtype=object)), 0.3, preserve_topology=True)
+            bad = ~shapely.is_valid(arr)
+            if bad.any():
+                arr[bad] = shapely.buffer(arr[bad], 0)
+            areas = shapely.area(arr)
+            bnds = shapely.bounds(arr)
+        except Exception:
+            return True
+        C = CLEAN_CELL_M
+        for g, pr, a, (x0, y0, x1, y1) in zip(arr, props, areas, bnds):
+            if g is None or not a or a < 4.0 or not np.isfinite(x0):
+                continue
+            c = pr.get("cls") or pr.get("cls_en") or ""
+            keys = [(c, i, j) for i in range(int(x0 // C), int(x1 // C) + 1) for j in range(int(y0 // C), int(y1 // C) + 1)]
+            dup, looked = False, set()
+            for k in keys:
+                for o in self.grid.get(k, ()):
+                    oid = id(o)
+                    if oid in looked:
+                        continue
+                    looked.add(oid)
+                    og, oa, ob = o
+                    if ob[0] > x1 or ob[2] < x0 or ob[1] > y1 or ob[3] < y0:
+                        continue
+                    try:
+                        inter = g.intersection(og).area
+                    except Exception:
+                        continue
+                    if inter / max(min(a, oa), 1e-9) > 0.5:
+                        dup = True
+                        break
+                if dup:
+                    break
+            if dup:
+                continue
+            rec = (g, float(a), (x0, y0, x1, y1))
+            for k in keys:
+                self.grid.setdefault(k, []).append(rec)
+            self.n += 1
+            en = pr.get("cls_en") or c
+            self.by[en] = self.by.get(en, 0) + 1
+            self.cls[c] = self.cls.get(c, 0) + 1
+        return True
+
+    def step(self, budget_s: float = CLEAN_BUDGET_S) -> None:
+        """이번 차례 몫(budget_s)만 센다 — 큰 작업의 따라잡기가 새 작업을 막지 않게(작업마다 돌아가며).
+        다 따라잡았을 때만 내보낸다(따라잡는 중의 적은 수를 진행판에 보이지 않는다)."""
+        t0 = time.time()
+        new = [sid for sid in r().smembers(f"job:{self.jid}:done") if sid not in self.seen]     # 끝난 칸(작업기가 파일을 쓴 뒤 넣는다)
+
+        def mtime(sid):
+            try:
+                return (self.sdir / f"{sid}.geojson").stat().st_mtime
+            except OSError:
+                return float("inf")
+        new.sort(key=mtime)                                # 도착 순서(파일 시각)
+        behind = False
+        for sid in new:
+            if time.time() - t0 > budget_s:
+                behind = True
+                break
+            if self.feed(sid):
+                self.seen.add(sid)
+        if not behind and self.n != self.sent and self.seen:
+            self.sent = self.n
+            body = {"n": self.n, "by": self.by, "cls": self.cls, "shards": len(self.seen)}
+            r().hset(f"job:{self.jid}", "counts_clean", json.dumps(body, ensure_ascii=False))
+            emit(self.jid, "counts.clean", {"job_id": self.jid, **body, "at": now_iso(ms=True)})
+
+
+def clean_tick() -> None:
+    """진행 중 분석마다 걸러 센다 — 밀린 칸이 적은 작업(막 시작한 · 화면에서 보고 있는 작업)부터, 차례 몫(CLEAN_TICK_S) 안에서.
+    오래 밀린 큰 작업(재기동 뒤 따라잡기)은 남는 몫으로 따라잡는다."""
+    live = []
+    for k in r().scan_iter(match="job:job_*", count=2000):
+        if k.count(":") != 1:
+            continue
+        jid = k.split(":")[1]
+        h = bus.job(jid)
+        if not h or h.get("state") != "running" or h.get("kind") not in ("infer", "reinfer") or h.get("pool") == "cpu":
+            continue
+        c = _clean.get(jid)
+        if c is None:
+            c = _clean[jid] = CleanCount(jid, h)
+        live.append((int(h.get("shards_done") or 0) - len(c.seen), jid, c))
+    t0 = time.time()
+    for _, jid, c in sorted(live, key=lambda x: x[0]):
+        left = CLEAN_TICK_S - (time.time() - t0)
+        if left <= 0.05:
+            break
+        try:
+            c.step(left)
+        except bus.REDIS_ERRORS:
+            raise
+        except Exception as e:
+            log(WHO, "clean count", jid, repr(e))
+    alive = {j for _, j, _ in live}
+    for jid in [j for j in _clean if j not in alive]:
+        _clean.pop(jid, None)
+
+
+def clean_loop() -> None:
+    while True:
+        t0 = time.time()
+        try:
+            clean_tick()
+        except bus.REDIS_ERRORS as e:
+            bus.redis_hiccup(WHO, e)
+        except Exception as e:
+            log(WHO, "clean loop error", repr(e))
+        time.sleep(max(0.5, CLEAN_S - (time.time() - t0)))
+
+
 def sync_db():
     """Redis 미러 → jobs 표(2s)."""
     ids = [k.split(":")[1] for k in r().scan_iter(match="job:job_*", count=2000) if k.count(":") == 1]
@@ -422,7 +658,7 @@ def sync_db():
             h = bus.job(jid)
             if not h or h.get("synced_state") == h.get("state") == "done" or h.get("synced_state") == "final":
                 continue
-            counts = {k: int(v) for k, v in r().hgetall(f"job:{jid}:counts").items()} or json.loads(h.get("counts") or "{}")
+            counts = job_counts(jid, h)
             conn.execute("UPDATE jobs SET state=%s, shards_total=%s, shards_done=%s, shards_failed=%s, counts=%s, gpu_s=%s, workers=%s, "
                          "started_at=COALESCE(started_at, %s::timestamptz), error=COALESCE(%s::text, error), "
                          "finished_at=CASE WHEN %s::text IN ('failed','cancelled') THEN COALESCE(finished_at, now()) ELSE finished_at END "
@@ -463,6 +699,8 @@ def restore():
 def main():
     log(WHO, "start · pools", list(POOLS), f"· 첫 묶음 {FIRST_CHUNK} · 고아 감시 {ORPHAN_SCAN_S:.0f}s(하한 {ORPHAN_FLOOR_S:.0f}s)")
     restore()
+    import threading
+    threading.Thread(target=clean_loop, name="clean-count", daemon=True).start()    # 진행 중 탐지 수 정리(칸 겹침 제외 · 숫자 한 출처)
     last_sync = last_orphan = 0.0
     while True:
         for pool, cfg in POOLS.items():

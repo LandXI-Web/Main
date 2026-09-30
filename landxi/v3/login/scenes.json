@@ -16,10 +16,11 @@
     },
     {
       "id": "ledger", "axis": "Solution", "kind": "findings",
-      "where": "남원시 · 농지 실태조사", "unit": "대장과 다른 필지", "credit": "© V-World",
+      "where": "남원시 · 농지 실태조사", "unit": "의심 필지", "credit": "© V-World",
       "cam": { "center": [127.6245, 35.5150], "zoom": 15.0, "pitch": 42, "bearing": -14 },
-      "data": "data:survey/findings-emd.json", "tiles": "data:survey/namwon-parcel-survey.pmtiles",
-      "value": "totals.suspect_parcels", "basis": "inferred", "source": "AI 실태조사 결과"
+      "_query": "숫자 = 로그인 뒤 화면과 같은 정본(시군구 의심 필지 · survey_sgg.findings). 받지 못하면 숫자를 빼고 문장만 둔다(옛 정적 값 0).",
+      "query": "/ops/public/findings?sgg=52190", "tiles": "data:survey/namwon-parcel-survey.pmtiles",
+      "value": "findings", "basis": "inferred", "source": "AI 실태조사 결과"
     },
     {
       "id": "marine", "axis": "GeoAI", "kind": "points",

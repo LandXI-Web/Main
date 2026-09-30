@@ -48,11 +48,22 @@ def tenant_of_region(q) -> str | None:
 
 
 async def latest_import(ctx, tenant: str, kind: str | None = None, import_id: str | None = None) -> dict | None:
+    """대장 한 건 — import_id 가 있으면 그 반입. 없으면 이 사람의 최근 대장(사람별 기억 · r3-fusion) → 없으면 기관 최근 반입."""
     if import_id:
         res = await ctx.http.get(f"/t/{tenant}/survey/registry/{import_id}")
         if res.status_code == 403:
             raise ToolError("tool_forbidden", "이 기관의 데이터가 아닙니다", 403)
         return res.json() if res.status_code == 200 else None
+    try:                                                   # 사람별 최근 대장(다른 담당자가 나중에 올린 대장이 먼저 잡히지 않게)
+        rr = await ctx.http.get(f"/t/{tenant}/survey/registry/recent", params={k: v for k, v in {"kind": kind}.items() if v})
+        if rr.status_code == 403:
+            raise ToolError("tool_forbidden", "이 기관의 데이터가 아닙니다", 403)
+        if rr.status_code == 200 and (rr.json() or {}).get("import"):
+            return rr.json()["import"]
+    except ToolError:
+        raise
+    except Exception:
+        pass
     res = await ctx.http.get(f"/t/{tenant}/survey/registry", params={k: v for k, v in {"kind": kind}.items() if v})
     if res.status_code == 403:
         raise ToolError("tool_forbidden", "이 기관의 데이터가 아닙니다", 403)
@@ -74,7 +85,7 @@ async def ledger_ingest(args: dict, ctx) -> Out:
         return out
     out.env("rows", "올린 대장 행 수", imp["rows"])
     if imp.get("matched_pct"):
-        out.env("matched_pct", "필지 결합률(PNU → 지번 → V-World)", imp["matched_pct"])
+        out.env("matched_pct", "필지 결합률", imp["matched_pct"])
     out.data = {"import_id": imp["import_id"], "대장": KIND_KO.get(imp["kind"], imp["kind"]), "상태": imp["state"],
                 "열 인식": imp.get("columns_guess"), "쓰지 않는 열(성명·연락처)": imp.get("dropped"), "더 필요한 열": imp.get("needs"),
                 "비고": "숫자는 봉투 key 로만 · 성명·연락처 열은 저장하지 않음"}

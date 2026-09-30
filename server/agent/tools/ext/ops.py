@@ -72,10 +72,11 @@ _RX = [
     ("ops_alerts", re.compile(r"(경보|알림|장애|문제\s*있|\balerts?\b|\balarms?\b|\bincidents?\b)", re.I)),
     ("ops_queues", re.compile(r"(대기열|대기\s*중|밀린|큐|작업\s*(현황|요약|몇)|\bqueues?\b|\bbacklog\b|\bpending\s+jobs?\b)", re.I)),
     ("ops_models", re.compile(r"(언어\s*모델|두뇌|라우터|국산\s*모델|독파모|\blanguage\s+models?\b|\bdomestic\s+model\b)", re.I)),
-    ("ops_gpus", re.compile(r"(GPU|그래픽|전력|온도|장비)", re.I)),
+    ("ops_gpus", re.compile(r"(GPU|그래픽|전력|온도|장비|고부하|\bpower\b|\bhigh\s+load\b|\bbusy\b|\btemperature\b)", re.I)),
 ]
-OPS_ASK = re.compile(r"(GPU|그래픽\s*카드|대기열|작업\s*대기|경보|전력\s*예산|토큰|AI\s*도우미\s*사용량|기관별\s*사용량|언어\s*모델\s*(상태|켜|꺼)|서버\s*상태|"
-                     r"queue|alert|token|AI\s+assistant\s+usage|usage\s+(by|per|of\s+each)\s+agenc|each\s+agency|language\s+models?\s+status)", re.I)
+OPS_ASK = re.compile(r"(GPU|그래픽\s*카드|대기열|작업\s*대기|경보|전력\s*예산|고부하|토큰|AI\s*도우미\s*사용량|기관별\s*사용량|언어\s*모델\s*(상태|켜|꺼)|서버\s*상태|"
+                     r"queue|alert|token|AI\s+assistant\s+usage|usage\s+(by|per|of\s+each)\s+agenc|each\s+agency|language\s+models?\s+status|"
+                     r"power\s+budget|high\s+load)", re.I)
 # 운영 질문이라도 '분석을 돌려 달라'는 말이면 운영 안내가 아니다(분석 도구에 맡긴다)
 _NOT_OPS = re.compile(r"분석\s*(을|를)?\s*(돌려|실행|시작|해\s*줘)|돌려\s*줘|\brun\s+(the\s+)?analy|\banaly[sz]e\b", re.I)
 _TAIL = re.compile(r"\n?\((?:Current area:[^)]*?)?\s*Answer in English\.\)\s*$", re.I)       # 해외 화면이 붙이는 문맥 꼬리
@@ -169,9 +170,8 @@ def _names(meta: dict, tid: str) -> set[str]:
     return {x for x in out if len(x) >= 2}
 
 
-def match_tenants(want: str, metas: dict[str, dict]) -> list[str]:
-    """묻는 말 → 기관 id 목록. ① 기관 이름이 통째로 들어 있으면 가장 긴 이름의 기관만 ② 아니면 낱말이 가장 많이 들어맞는 기관.
-    '키르기스 토지자원청' → 토지자원청 하나(농업부 섞임 0). '키르기스' 만이면 두 기관(합계 없이)."""
+def match_exact(want: str, metas: dict[str, dict]) -> list[str]:
+    """기관 이름이 질문에 통째로 들어 있으면 가장 긴 이름의 기관만(없으면 [])."""
     q = re.sub(r"\s+", " ", str(want or "").lower()).strip()
     if not q:
         return []
@@ -182,12 +182,76 @@ def match_tenants(want: str, metas: dict[str, dict]) -> list[str]:
             best, hit = ln, [tid]
         elif ln and ln == best:
             hit.append(tid)
+    return hit
+
+
+def match_tenants(want: str, metas: dict[str, dict]) -> list[str]:
+    """묻는 말 → 기관 id 목록. ① 기관 이름이 통째로 들어 있으면 가장 긴 이름의 기관만 ② 아니면 낱말이 가장 많이 들어맞는 기관.
+    '키르기스 토지자원청' → 토지자원청 하나(농업부 섞임 0). '키르기스' 만이면 두 기관(합계 없이)."""
+    q = re.sub(r"\s+", " ", str(want or "").lower()).strip()
+    if not q:
+        return []
+    hit = match_exact(q, metas)
     if hit:
         return hit
     words = [w for w in q.split(" ") if len(w) >= 2]
     score = {tid: sum(1 for w in words if any(w in n for n in _names(meta, tid))) for tid, meta in metas.items()}
     top = max(score.values(), default=0)
     return [tid for tid, s in score.items() if s and s == top]
+
+
+def _eun(w: str | None) -> str:
+    """'목포시' → '목포시는' · '산청군' → '산청군은'(받침으로 조사)."""
+    w = str(w or "")
+    if not w:
+        return w
+    c = ord(w[-1]) - 0xAC00
+    return w + ("은" if 0 <= c <= 11171 and c % 28 else "는")
+
+
+# ── 시군구 이름 → 소속 기관(r3-ops) — '목포시 AI 도우미 사용량'은 목포시를 관할하는 기관 값으로 답한다(LLM 0) ─────────
+def _regions_find(q: str) -> list[dict]:
+    try:
+        from landxi_api.regions import find
+        return find(q)
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def _tenant_prefixes() -> dict[str, list[str]]:
+    """기관 id → 관할 시군구 코드 접두(국내 기관만 · LX·영업·해외 제외) — regions 설정(관할 가드와 같은 표)."""
+    try:
+        from landxi_api.regions import _cfg
+        ts = (_cfg().get("tenants") or {})
+    except Exception:  # noqa: BLE001
+        return {}
+    return {tid: [str(x) for x in (t or {}).get("sgg") or []] for tid, t in ts.items()
+            if tid not in ("lx", "lx-demo") and not (t or {}).get("global") and (t or {}).get("sgg")}
+
+
+def sgg_owner(phrase: str, metas: dict[str, dict], find=_regions_find, prefixes: dict | None = None) -> dict | None:
+    """질문 낱말 → 시군구 한 곳 + 그곳을 관할하는 기관 id(가장 긴 접두 · 없으면 None).
+    → {'region': 행, 'tenant': id | None} · 시군구를 하나로 못 정하면 None(여러 곳 '중구' 등)."""
+    prefixes = _tenant_prefixes() if prefixes is None else prefixes
+    cands = [str(phrase or "").strip()] + [w for w in re.split(r"\s+", str(phrase or "")) if len(w) >= 2]
+    for q in cands:
+        if not q:
+            continue
+        rs = find(q)
+        uniq = {r["sgg_cd"]: r for r in rs}
+        if len(uniq) != 1:
+            continue
+        r = next(iter(uniq.values()))
+        codes = [c for c in (r.get("sgg_cd"), r.get("prev_cd")) if c]
+        best, owner = 0, None
+        for tid, pxs in prefixes.items():
+            if tid not in metas:
+                continue
+            for px in pxs:
+                if any(c.startswith(px) for c in codes) and len(px) > best:
+                    best, owner = len(px), tid
+        return {"region": r, "tenant": owner}
+    return None
 
 
 # ── 공통 ─────────────────────────────────────────────────────────────────
@@ -315,28 +379,110 @@ async def ops_gpus(args: dict, ctx) -> Out:
         rows[nm] = row
     pb = g.get("power_budget") or {}
     data = {"GPU": rows}
+    busy: list[str] = []
     if pb.get("max_hot") is not None:
+        # 판정은 게이트웨이 judge_power 한 곳(인프라 화면 큰 숫자 '동시 고부하 GPU n / m' 과 같은 봉투) — 여기서 다시 세지 않는다
+        hot_idx = [int(i) for i in (pb.get("hot") or []) if str(i).lstrip("-").isdigit()]
+        why = {p.get("gpu"): p.get("why") for p in pb.get("per") or [] if isinstance(p, dict)}
+        judged = {p.get("gpu"): p for p in pb.get("per") or [] if isinstance(p, dict)}
+        jat = pb.get("at") or at
+        for i in hot_idx:
+            nm = gpu_name(i)
+            busy.append(nm)
+            if nm in rows:
+                rows[nm]["고부하"] = "예"
+                if why.get(i) == "lease":
+                    rows[nm]["하는 일"] = "분석 작업"          # 분석 작업 임대를 쥔 GPU — 화면 작업 칸 'AI 분석'과 같게(작업기 프로세스를 언어 모델로 읽지 않는다)
+                    rows[nm]["고부하 까닭"] = "분석 작업"
+                if why.get(i) == "power":
+                    # 판정에 쓴 전력(최근 평균) — 지금 전력이 기준 아래여도 왜 고부하인지 같은 숫자로 말한다(실증 2차 must_fix 1)
+                    jw = _v(judged[i].get("power_w")) if i in judged else None
+                    if jw is not None:
+                        rows[nm]["판정 전력"] = out.env(f"g{i}_avg", f"{nm} 최근 평균 전력(판정)",
+                                                     _e(round(jw, 0), "W", "GPU 장비 기록 · 최근 평균 전력(판정)", jat))
+                    if rows[nm]["하는 일"] == "대기":
+                        rows[nm]["하는 일"] = "사용 중"        # 'idle' 과 'high load' 를 한 문장에 쓰지 않는다
+        for i, w in why.items():                         # 분석 작업기가 전력 규칙으로 멈춘 GPU(judge_power why='yield') — 고부하로 세지 않는다
+            nm = gpu_name(i)
+            if w == "yield" and nm in rows:
+                rows[nm]["하는 일"] = "분석 멈춤"
+        for nm, row in rows.items():
+            row.setdefault("고부하", "아니오")
         data["동시 고부하 GPU"] = out.env("hot", "동시 고부하 GPU", _e(int(pb.get("hot_now") or 0), _u(ctx, "장"), "전력 예산(인프라 화면 큰 숫자)", pb.get("at") or at))
         data["동시 고부하 한도"] = out.env("hot_max", "동시 고부하 GPU 한도", _e(int(pb["max_hot"]), _u(ctx, "장"), "전력 규칙", pb.get("at") or at, basis="recorded"))
+        data["고부하 GPU"] = busy
         data["전력 예산"] = "안" if pb.get("ok", True) else "초과"
+        data["판정 시각"] = hms(jat)                   # 인프라 화면 큰 숫자 아래 'hh:mm:ss 기준' 과 같은 표본 시각
+        ov = _v((pb.get("overlap") or {}).get("n"))
+        if isinstance(ov, (int, float)):                 # 전력 실측으로 본 '두 장 동시 고부하' 표본 수(최근 2시간 · 인프라 화면 같은 값)
+            data["두 장 동시 고부하(최근 2시간)"] = out.env("overlap", "두 장 동시 고부하(최근 2시간)",
+                                                    _e(int(ov), _u(ctx, "회", "times"), "GPU 전력 실측(2초 표본)", pb.get("at") or at))
         if pb.get("ok") is False:
             sugg.append("동시 고부하 GPU 가 한도를 넘었습니다. 새 분석 작업은 대기열에서 기다리게 두는 것을 검토하세요.")
     data["제안"] = sugg or ["지금 조치할 것은 없습니다."]
     out.data = data
+    out.answer = _gpu_answer_en(rows, data) if _en(ctx) else _gpu_answer_ko(rows, data)
+    return out
+
+
+def hms(iso: str | None) -> str | None:
+    """판정 시각 hh:mm:ss(KST) — 인프라 화면 'hh:mm:ss 기준' 과 같은 표기."""
+    if not iso:
+        return None
+    try:
+        return dt.datetime.fromisoformat(iso).astimezone(KST).strftime("%H:%M:%S")
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _why_ko(k: str, row: dict) -> str:
+    if row.get("고부하") != "예":
+        return ""
+    if "판정 전력" in row:
+        return f", 최근 평균 전력 {{{{g{k}_avg}}}}로 고부하"
+    return ", 작업이 이 GPU를 쓰고 있어 고부하" if row.get("고부하 까닭") == "분석 작업" else ", 고부하"
+
+
+def _gpu_answer_ko(rows: dict, data: dict) -> str:
     parts = []
+    if "동시 고부하 GPU" in data:
+        who = (", ".join(data["고부하 GPU"]) + "이 고부하") if data["고부하 GPU"] else "고부하인 GPU 없음"
+        head = f"{data['판정 시각']} 기준 " if data.get("판정 시각") else ""
+        parts.append(f"{head}동시 고부하 GPU는 {{{{hot}}}}(한도 {{{{hot_max}}}})로 {who} · 전력 예산 {data['전력 예산']}입니다.")
+        if "두 장 동시 고부하(최근 2시간)" in data:
+            parts.append("최근 2시간 두 장이 함께 고부하였던 적은 {{overlap}}입니다.")
     for nm, row in rows.items():
         k = nm.split(" ")[1]
-        bits = [f"부하 {{{{g{k}_load}}}}"] + ([f"메모리 {{{{g{k}_mem}}}}"] if "메모리 사용" in row else []) + ([f"온도 {{{{g{k}_t}}}}"] if "온도" in row else [])
-        doing = {"분석 작업": "분석 작업 중", "언어 모델": "언어 모델 사용 중"}.get(row["하는 일"], "대기 중")
-        parts.append(f"{nm}은 {', '.join(bits)}로 {doing}입니다.")
+        bits = ([f"부하 {{{{g{k}_load}}}}"] + ([f"지금 전력 {{{{g{k}_w}}}}"] if "전력" in row else []) + ([f"메모리 {{{{g{k}_mem}}}}"] if "메모리 사용" in row else [])
+                + ([f"온도 {{{{g{k}_t}}}}"] if "온도" in row else []))
+        doing = {"분석 작업": "분석 작업 중", "언어 모델": "언어 모델 사용 중", "사용 중": "사용 중",
+                 "분석 멈춤": "분석 작업이 전력 규칙으로 잠시 멈춘 상태"}.get(row["하는 일"], "대기 중")
+        parts.append(f"{nm}은 {', '.join(bits)}로 {doing}{_why_ko(k, row)}입니다.")
+    return " ".join(parts) + _first_sugg(data)
+
+
+def _gpu_answer_en(rows: dict, data: dict) -> str:
+    """영어 답 — 한국어와 같은 봉투·같은 판정(고부하 수 · 어느 GPU · 전력 예산). 'How many GPUs are under high load' ·
+    'Is the power budget exceeded?' · 'Which GPU is busy?' 세 질문에 한 문장이 모두 답한다(첫 문장 = 화면 큰 숫자 · 같은 판정 시각)."""
+    parts = []
     if "동시 고부하 GPU" in data:
-        parts.append(f"동시 고부하 GPU는 {{{{hot}}}}(한도 {{{{hot_max}}}})이며 전력 예산 {data['전력 예산']}입니다.")
-    out.answer = " ".join(parts) + _first_sugg(data)
-    if _en(ctx):
-        doing_en = {"분석 작업": "running an analysis job", "언어 모델": "serving the language model"}
-        out.answer = " ".join(f"{nm}: load {{{{g{nm.split(' ')[1]}_load}}}}" + (f", memory {{{{g{nm.split(' ')[1]}_mem}}}}" if "메모리 사용" in row else "")
-                              + f", {doing_en.get(row['하는 일'], 'idle')}." for nm, row in rows.items())             + (f" Busy GPUs at once: {{{{hot}}}} (limit {{{{hot_max}}}}), power budget {'OK' if data['전력 예산'] == '안' else 'exceeded'}." if "동시 고부하 GPU" in data else "")
-    return out
+        who = ", ".join(data["고부하 GPU"]) or "none"
+        head = f"As of {data['판정 시각']}: " if data.get("판정 시각") else ""
+        parts.append(f"{head}GPUs under high load: {{{{hot}}}} (limit {{{{hot_max}}}}) — {who}. "
+                     f"Power budget: {'within the limit' if data['전력 예산'] == '안' else 'exceeded'}.")
+        if "두 장 동시 고부하(최근 2시간)" in data:
+            parts.append("Both GPUs under high load at once in the last 2 hours: {{overlap}}.")
+    doing_en = {"분석 작업": "running an analysis job", "언어 모델": "serving the language model", "사용 중": "in use",
+                "분석 멈춤": "analysis job paused by the power rule"}
+    for nm, row in rows.items():
+        k = nm.split(" ")[1]
+        hot = ""
+        if row.get("고부하") == "예":
+            hot = (f", high load (recent average {{{{g{k}_avg}}}})" if "판정 전력" in row
+                   else ", high load (a job holds this GPU)" if row.get("고부하 까닭") == "분석 작업" else ", high load")
+        parts.append(f"{nm}: load {{{{g{k}_load}}}}" + (f", power now {{{{g{k}_w}}}}" if "전력" in row else "")
+                     + f", {doing_en.get(row['하는 일'], 'idle')}" + hot + ".")
+    return " ".join(parts)
 
 
 # ── ops_queues ───────────────────────────────────────────────────────────
@@ -439,12 +585,32 @@ async def ops_usage(args: dict, ctx) -> Out:
     # 영업 계량(lx-demo) 등 제외 — 기관 화면과 같은 기관 목록 + LX
     want = str(args.get("tenant") or "").strip()
     picked = None
-    if want:
-        picked = set(match_tenants(tenant_phrase(want) or want, {it["tenant_id"]: tmeta.get(it["tenant_id"]) or {} for it in items}))
-        if not picked:
-            raise ToolError("not_found", "그 이름의 기관이 없습니다")
-    rows, total, n = {}, 0.0, 0
+    via = None          # 시군구 이름으로 물었을 때 {'region', 'tenant'}
     out = Out(source=f"기관 사용량(기관 화면과 같은 값) · {ko}")
+    if want:
+        phrase = tenant_phrase(want) or want
+        metas = {it["tenant_id"]: tmeta.get(it["tenant_id"]) or {} for it in items}
+        hit = match_exact(phrase, metas)
+        if not hit:
+            via = sgg_owner(phrase, metas)
+            if via and via["tenant"]:
+                hit = [via["tenant"]]
+            elif via:
+                # 시군구는 찾았지만 그곳을 맡은 기관 계정이 없다 — 숫자 없이 한 줄(LLM 0)
+                r = via["region"]
+                out.data = {"시군구": r.get("name"), "안내": "이 시군구 기관 계정 없음"}
+                out.answer = (f"{r.get('name_en') or r.get('name')} has no agency account." if en
+                              else f"{_eun(r.get('name'))} 기관 계정이 없습니다.")
+                return out
+            else:
+                hit = match_tenants(phrase, metas)
+        picked = set(hit)
+        if not picked:
+            out.data = {"안내": "그 이름의 기관이 없습니다"}
+            out.answer = "No agency has that name." if en else "그 이름의 기관이 없습니다."
+            return out
+    rows, total, n = {}, 0.0, 0
+    rows_ids: set = set()
     for it in items:
         tid = it.get("tenant_id")
         if picked is not None and tid not in picked:
@@ -463,6 +629,7 @@ async def ops_usage(args: dict, ctx) -> Out:
         else:
             row["한도"] = "not set" if en else "미설정"
         rows[nm] = row
+        rows_ids.add(tid)
         if val is not None:
             total += val
             n += 1
@@ -479,6 +646,12 @@ async def ops_usage(args: dict, ctx) -> Out:
         out.answer = f"{label[0].upper() + label[1:]} this month: " + ", ".join(lines) + "." + (" Total: {{sum}}." if "합계" in data else "")
     else:
         out.answer = f"이번 달 {ko}은 " + ", ".join(lines) + "입니다." + (" 합계는 {{sum}}입니다." if "합계" in data else "")
+    if via and via.get("tenant") in rows_ids:
+        r = via["region"]
+        tn = _tname_en(tmeta.get(via["tenant"]), via["tenant"]) if en else _tname(tmeta.get(via["tenant"]), via["tenant"])
+        data["포함"] = f"{r.get('name')} → {tn}"
+        out.answer += (f" {r.get('name_en') or r.get('name')} is included in {tn}'s agency usage." if en
+                       else f" {_eun(r.get('name'))} {tn} 기관 사용량에 포함됩니다.")
     if len(rows) > 1:
         out.blocks.append({"type": "chart", "kind": "bar", "title": (f"{label[0].upper() + label[1:]} this month" if en else f"이번 달 {ko}"),
                            "rows": [{"label": nm, "env": row[ko]} for nm, row in order]})

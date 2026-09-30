@@ -557,6 +557,12 @@ async def survey_build(body: dict, request: Request):
     from . import jobs as JB
     body2 = {"kind": "survey", "label": f"survey/build {sgg}", "options": {"build": True, "sgg_cd": sgg, "ai_job_id": ai_job,
                                                                             "force": bool((body or {}).get("force"))}}
+    rules = (body or {}).get("rules")        # 서비스(카드 버전)에서 고른 규칙만(r3-train · 없으면 전체 규칙)
+    if isinstance(rules, list) and rules:
+        bad = [x for x in rules if x not in RL.definitions()]
+        if bad:
+            raise ApiError("bad_request", "없는 규칙", {"rules": bad})
+        body2["options"]["rules"] = [str(x) for x in rules]
     if (body or {}).get("test"):
         body2["test"] = True
     out = await JB.submit(body2, request)

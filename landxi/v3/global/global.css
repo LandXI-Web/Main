@@ -109,3 +109,23 @@ html[lang="en"] .t-sig[data-sig="ex"]::before{content:"Example"}
 @media (prefers-reduced-motion:reduce){.k-ck{animation:none}}
 @media (prefers-reduced-motion:reduce){.gl-sheet,.gl-hud .k-big{transition:none;animation:none}}
 .gl-ck-where{color:var(--t-3, #8B95A1)}
+
+/* 구역 대장 탭(r3-global · 최소 UI — 화면 판단은 Fable) */
+.gl-reg{display:flex;flex-direction:column;gap:12px}
+.gl-reg p{margin:0}
+.gl-reg-lv{color:var(--sub);font:500 var(--fs-label)/var(--lh-label) var(--font-body)}
+.gl-reg-hint{color:var(--ink-2);font:400 var(--fs-body)/var(--lh-body) var(--font-body)}
+.gl-reg-file{color:var(--sub);font:400 var(--fs-label)/var(--lh-label) var(--font-body);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gl-reg-m{color:var(--ink);font:500 var(--fs-body)/var(--lh-body) var(--font-body)}
+.gl-reg-t{width:100%;border-collapse:collapse;font:400 var(--fs-label)/20px var(--font-body);font-variant-numeric:tabular-nums}
+.gl-reg-t th{padding:6px 4px;text-align:left;color:var(--sub);font-weight:500;border-bottom:1px solid var(--rule)}
+.gl-reg-t th:not(:first-child),.gl-reg-t .gl-num{text-align:right;white-space:nowrap}
+.gl-reg-t td{padding:8px 4px;border-bottom:1px solid var(--rule);color:var(--ink)}
+.gl-reg-t tbody tr{cursor:pointer}
+.gl-reg-t tbody tr:hover{background:var(--bg-0)}
+.gl-reg-dot{display:inline-block;width:8px;height:8px;margin-right:8px;border-radius:50%;background:#0FA9A0;vertical-align:1px}
+.gl-reg-t tr[data-status="mismatch"] .gl-reg-dot{background:#F04452}
+.gl-reg-t tr[data-status="mismatch"] td:last-child{color:#F04452;font-weight:500}
+.gl-reg-note{color:var(--sub);font:400 var(--fs-label)/var(--lh-label) var(--font-body)}
+.gl-reg-err{color:#F04452;font:500 var(--fs-label)/var(--lh-label) var(--font-body)}
+.gl-reg-up{align-self:flex-start}

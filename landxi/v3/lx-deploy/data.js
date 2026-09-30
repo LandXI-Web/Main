@@ -89,14 +89,24 @@ export const deployOf = (id) => D.deploys.find((d) => d.id === id);
 export const aoiBox = (d) => bboxOf(d?.aoi);
 export const isDomestic = (d) => { const b = aoiBox(d); return !!b && b[0] >= 124 && b[2] <= 132.5 && b[1] >= 32.5 && b[3] <= 39.5; };
 
-/** 지역별 묶음(지도 점) — 지역은 배포 기록에서만 나온다(문자열 고정값 0) */
+/** 지역별 묶음(지도 점) — 지역은 배포 기록에서만 나온다(문자열 고정값 0). 점 = 지역(시군구)마다 하나, 자리 = 그 지역의 가장 좁은 범위의 가운데
+    (같은 시군구에 도 단위 옛 범위가 섞여도 점이 시군구 밖으로 끌려가지 않게 · r3-train 3차 must_fix 7) */
+const boxArea = (b) => Math.max(0, b[2] - b[0]) * Math.max(0, b[3] - b[1]);
+/** 점 자리 — 여러 조각(섬)으로 된 시군구는 가장 큰 조각의 범위(본토). 섬까지 합친 범위의 가운데는 바다에 떨어진다(보령시) */
+function mainBox(g) {
+  if (g?.type !== 'MultiPolygon' || g.coordinates.length < 2) return bboxOf(g);
+  let best = null;
+  for (const poly of g.coordinates) { const b = bboxOf({ type: 'Polygon', coordinates: poly }); if (b && (!best || boxArea(b) > boxArea(best))) best = b; }
+  return best || bboxOf(g);
+}
 export function regions() {
   const m = new Map();
   for (const d of D.deploys) {
-    const k = regionKey(d), b = aoiBox(d);
+    const k = regionKey(d), b = mainBox(d.aoi);
     if (!b) continue;
-    const r = m.get(k) || { key: k, name: regionShort(d), bbox: b, list: [] };
+    const r = m.get(k) || { key: k, name: regionShort(d), bbox: b, tight: b, list: [] };
     r.bbox = [Math.min(r.bbox[0], b[0]), Math.min(r.bbox[1], b[1]), Math.max(r.bbox[2], b[2]), Math.max(r.bbox[3], b[3])];
+    if (boxArea(b) < boxArea(r.tight)) { r.tight = b; r.name = regionShort(d); }
     r.list.push(d);
     m.set(k, r);
   }
@@ -104,7 +114,7 @@ export function regions() {
   for (const r of m.values()) {
     r.list.sort((a, b) => rank[stageKind(a.stage)] - rank[stageKind(b.stage)] || workName(a.card_id).localeCompare(workName(b.card_id), 'ko'));
     r.stage = stageKind(r.list[0].stage);
-    r.center = [(r.bbox[0] + r.bbox[2]) / 2, (r.bbox[1] + r.bbox[3]) / 2];
+    r.center = [(r.tight[0] + r.tight[2]) / 2, (r.tight[1] + r.tight[3]) / 2];
   }
   return [...m.values()];
 }
@@ -218,7 +228,7 @@ export function retrainEnv() {
 /* ── 쓰기 가능 여부: 게이트웨이 openapi 의 (메서드, 경로) — 죽은 버튼 0 ─────── */
 let OPS = null;
 export async function hasOp(method, path) {
-  if (!OPS) OPS = fetch(API.prefix + '/openapi.json', { cache: 'force-cache' }).then((r) => (r.ok ? r.json() : null)).then((j) => j?.paths || {}).catch(() => ({}));
+  if (!OPS) OPS = fetch(API.prefix + '/openapi.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).then((j) => j?.paths || {}).catch(() => ({}));
   const paths = await OPS;
   return Object.entries(paths).some(([p, ops]) => {
     const q = p.replace(/^\/api\/v1/, '');

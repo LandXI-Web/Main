@@ -1,7 +1,7 @@
 /* 인프라 뷰 — 큰 숫자 `동시 고부하 GPU {n} / {m}` + 장비 표 + 큐 + 저장 공간 + 언어 모델(모델별 줄 · 국산 모델 연결 자리 · 꺼졌을 때만 켜기) + 법령 색인 칸.
    성능 수치(부하 · 메모리 · 전력)는 플랫폼에서 이 표 한 곳에만. GPU 는 순번으로만(제품명 · 포트 · 경로 0). 갱신은 숫자만 바뀐다(튐 없음). */
 import { bignum, table, esc, nf, toast, devlog } from './kit.js';
-import { S, budget, HOT, HOT_W, gpuWork, llmRows, startLlm } from './data.js';
+import { S, budget, HOT, HOT_W, gpuWork, hotNote, judgedAt, llmRows, startLlm, restartServer, waitBoot } from './data.js';
 
 const val = (e) => (e && typeof e === 'object' ? e.value : e);
 const pct = (a, b) => (a != null && b ? Math.max(0, Math.min(100, (a / b) * 100)) : 0);
@@ -63,7 +63,7 @@ function rows() {
     const load = val(g.util_ma5) ?? val(g.util_pct) ?? 0;
     const mu = gb(val(g.mem_used_mib)), mt = gb(val(g.mem_total_mib));
     const w = val(g.power_w), wl = val(g.power_limit_w);
-    return { g, load, mu, mt, w, wl, idx: g.index, work: gpuWork(g), caution: !!g.caution, fault: !!g.fault };
+    return { g, load, mu, mt, w, wl, idx: g.index, work: gpuWork(g), hot: hotNote(g), caution: !!g.caution, fault: !!g.fault };
   });
 }
 const COLS = [
@@ -71,7 +71,7 @@ const COLS = [
   { key: 'load', label: '부하', num: true, fmt: (v, r) => `<span class="cell cell--load"><span class="n" data-k="load">${nf(v, 0)}</span><small>%</small>${spark(S.hist.get(r.idx))}</span>` },
   { key: 'mu', label: '메모리', num: true, fmt: (v, r) => `<span class="cell"><span class="n">${nf(v, 1)}</span><small>/ ${nf(r.mt, 0)} GB</small>${bar(pct(v, r.mt), r.caution ? 'mbar--tick' : '')}</span>` },
   { key: 'w', label: '전력', num: true, fmt: (v, r) => `<span class="cell"><span class="n">${nf(v, 0)}</span><small>/ ${nf(r.wl, 0)} W</small>${bar(pct(v, r.wl))}</span>` },
-  { key: 'work', label: '작업', fmt: (v) => `<span class="work${v === '대기' || v === '—' ? ' idle' : ''}">${esc(v)}</span>` },
+  { key: 'work', label: '작업', fmt: (v, r) => `<span class="work${(v === '대기' || v === '—') && !r.hot ? ' idle' : ''}">${esc(v)}</span>${r.hot ? `<em class="hotn" data-hot="1">${esc(r.hot)}</em>` : ''}` },
 ];
 
 export function mountInfra(root) {
@@ -97,7 +97,7 @@ export function mountInfra(root) {
         <p class="row"><span>언어 모델</span><b class="num" id="llm-n">—</b></p>
         <ul class="llm-l" id="llm-l"></ul>
         <p class="row sub llm-pr"><span>국산 모델 연결</span><b id="llm-pr" data-metric="국산 모델 연결">—</b></p>
-        <p class="row sub"><span>마지막 재기동</span><b class="num" id="boot">—</b></p>
+        <p class="row sub"><span>마지막 재기동</span><b class="num" id="boot">—</b><button class="t-btn t-btn--2 srv-go" type="button" id="srv-go">다시 시작</button></p>
       </section>
       <section class="t-card law" id="law" aria-label="법령 색인" hidden></section>
     </aside>
@@ -108,10 +108,14 @@ export function mountInfra(root) {
 
   function paintGpus() {
     const b = budget();
-    const env = { value: b.n, unit: 'count', basis: 'measured', as_of: S.gpus?.at || new Date().toISOString(), source: 'GPU 장비 기록' };
+    const env = { value: b.n, unit: 'count', basis: 'measured', as_of: S.gpus?.power_budget?.at || S.gpus?.at || new Date().toISOString(), source: 'GPU 장비 기록' };
     big.set(env, { unit: `/ ${b.m}` });
     const tail = $('#tail');
-    tail.textContent = b.ok ? '전력 예산 안' : '전력 예산 초과';
+    const ov = S.gpus?.power_budget?.overlap?.n?.value;
+    const jt = judgedAt();
+    tail.textContent = (jt ? `${jt} 기준 · ` : '') + (b.ok ? '전력 예산 안' : '전력 예산 초과') + (ov != null ? ` · 최근 2시간 두 장 동시 고부하 ${nf(ov)}회` : '');
+    tail.dataset.at = jt || ''; tail.dataset.hot = b.n;
+    tail.dataset.overlap = ov ?? '';
     tail.classList.toggle('warn', !b.ok);
     const rs = rows();
     const tb = $('#gpu-t tbody');
@@ -163,6 +167,31 @@ export function mountInfra(root) {
       toast(err.message && !/^[a-z_]+$/.test(err.message) ? err.message : '지금은 켤 수 없습니다');
     }
     paintLlm();
+  });
+  /* 서버 다시 시작 — 두 번 눌러야 시작(4초 안). 게이트웨이만 다시 뜨고 작업기 · 언어 모델은 그대로. 새 기동 시각이 보이면 끝 */
+  let armT = 0;
+  const srv = $('#srv-go');
+  srv.addEventListener('click', async () => {
+    if (srv.disabled) return;
+    if (!srv.dataset.arm) {
+      srv.dataset.arm = '1'; srv.textContent = '한 번 더 누르면 시작';
+      clearTimeout(armT); armT = setTimeout(() => { delete srv.dataset.arm; srv.textContent = '다시 시작'; }, 4000);
+      return;
+    }
+    clearTimeout(armT); delete srv.dataset.arm;
+    srv.disabled = true; srv.textContent = '다시 시작하는 중';
+    const prev = S.health?.boot_at;
+    try {
+      const r = await restartServer();
+      toast(r?.message || '서버를 다시 시작합니다');
+      const h = await waitBoot(r?.boot_at || prev);
+      toast(h ? '서버가 다시 시작됐습니다' : '서버 응답을 기다리는 중입니다. 잠시 뒤 새로 고치세요');
+      paintRest();
+    } catch (err) {
+      devlog('server restart', err.code || err.message);
+      toast(err.message && !/^[a-z_]+$/.test(err.message) ? err.message : '지금은 다시 시작할 수 없습니다');
+    }
+    srv.disabled = false; srv.textContent = '다시 시작';
   });
   /* 법령 색인 칸 — c2-report-law 의 mountLaw(host). 모듈이 아직 없으면 칸을 숨긴 채 둔다 */
   import('./law.js').then((m) => { const host = $('#law'); if (typeof m.mountLaw === 'function') { host.hidden = false; m.mountLaw(host); } })

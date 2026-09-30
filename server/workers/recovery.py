@@ -212,7 +212,13 @@ def recover_one(job_id: str, db: dict | None, stats: dict, who: str):
         return
     jh = bus.job(job_id)
     if jh and jh.get("kind") == "train" and jh.get("state") == "running":
-        # 학습은 shard 중간 재개가 없다(에포크 체크포인트 ≠ 작업 커서) — 정직하게 실패 · 다시 제출 안내
+        # 학습은 shard 중간 재개가 없다(에포크 체크포인트 ≠ 작업 커서) — 워커가 정말 죽었을 때만 정직하게 실패 · 다시 제출 안내.
+        # (r3-train 2차: 게이트웨이만 재기동돼도 대기열에서 차례를 기다리던 학습이 '재부팅'으로 실패하던 것 — 살아 있는 워커가 있으면 둔다)
+        tpool = jh.get("pool") or (db or {}).get("pool") or config.POOL
+        tw = json.loads(jh.get("workers") or "[]") or [k.split(":")[1] for k in r().scan_iter(match="worker:*:hb", count=2000)
+                                                      if r().hget(k, "pool") == tpool]
+        if any(bus.worker_alive(w) for w in tw):
+            return
         _fail(job_id, jh, "학습 중 재부팅 — 다시 제출해 주세요", stats)
         return
     if not jh:

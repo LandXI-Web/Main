@@ -3,7 +3,7 @@
    글로브(흰) → 대상국 → 지역 · HUD Crop condition drop · 시트 392(Season · NDVI · Sprawl) · Run this season(kind index · CPU 작업 큐).
    부품 K1 K2 K3 K5 K6 K9 K10 K12 K15 · 데이터 landxi/global/data/* · 지역은 변수(URL ?country=&district= 또는 기관 배포 범위). */
 import * as K from '../kit/index.js';
-import { api, API, isEnvelope, bboxOf, h, esc, LS, RM } from '../kit/util.js';
+import { api, API, isEnvelope, bboxOf, h, esc, LS, RM, session } from '../kit/util.js';
 import { probe, sse } from '../../shared/api-v1.js';
 import { loadCatalog, MONTHS } from '../../global/js/ladder-global.js';
 import { loadYsData } from '../../global/js/ndvi-theater.js';
@@ -17,7 +17,14 @@ const T = (k, v) => K.t(k, v);
 const STR = {   // 명세 §2.15 문구 전부(en) — 이 밖의 글자는 데이터(나라·지역·달 이름)뿐
   ask: 'Ask', exit: 'Sign out', hud: 'Crop condition drop · {district}', km2: 'km²',
   hudSprawl: 'Built area change · {district}',   // 명세 §4-7 허용 라벨 밖 — 내려받기 표의 'Built area' 말 그대로(보고서 '사용자 결정 필요')
-  tabs: ['Season', 'NDVI', 'Sprawl'], run: 'Run this season', dl: 'Download',
+  tabs: ['Season', 'NDVI', 'Sprawl', 'Register'], run: 'Run this season', dl: 'Download',
+  // 구역 대장 × AI(r3-global · C4·C3 최소) — 필지가 아닌 구역 단위
+  hudReg: "Districts that don't match · {district}", regLevel: 'District level — not parcels.',
+  regHint: 'Upload a CSV or XLSX with district names (or codes) and declared cropland (ha). Each district is compared with the AI cropland map.',
+  regUp: 'Upload register', regAgain: 'Upload another', regBusy: 'Comparing…', regFail: 'Could not read this file',
+  regMatched: 'Matched {m} of {n} rows to local districts', regCols: ['District', 'Declared', 'AI', 'Diff'],
+  regMis: "Don't match", regOk: 'Match', regOutside: '{n} outside your districts · not compared', regUnmatched: '{n} with no matching district name',
+  regNone: 'No register yet', regNoAi: 'no AI value',
   computing: 'Computing · about {n}s', none: 'No imagery for this season yet', req: 'Request imagery',
   noresult: 'No result yet', checking: 'Checking…',
   guard: 'Outside your districts', maperr: 'Could not load the map', retry: 'Try again',
@@ -55,6 +62,7 @@ const envOf = (value, unit, basis, source, as_of) => ({ value, unit, basis, as_o
 const V = (x) => (isEnvelope(x) ? x.value : x);
 
 /* ── 상태 ── */
+const REG = { v: null, busy: false, err: '', show: true, ok: false };   // 이 사람의 최근 구역 대장 대조(서버가 기억 · 새로 고침 뒤에도 같은 결과)
 const S = { tab: Math.max(0, STR.tabs.map((x) => x.toLowerCase()).indexOf((q.get('tab') || '').toLowerCase())), level: 'globe', country: null, district: null, season: null, run: null };
 
 async function main() {
@@ -63,6 +71,7 @@ async function main() {
   // /health 가 0.5–6 s 걸릴 때가 있다(실측) — 기본 1.5 s 에 끊기면 off 로 굳어 배포 0 처럼 보인다 → 이 화면은 8 s 까지 기다린다
   if (!(await probe()).ok) { API.probeMs = Math.max(API.probeMs || 0, 8000); await probe(true); }
   const isLX = who.me.realm === 'lx';
+  const isLXsales = isLX && who.me.role === 'sales';   // 영업 계정은 읽기만(대장 올리기 0)
 
   /* 기관 이름(영문) — 공개 디렉터리(S-1) → 기관 디렉터리 → 배포 지역 이름. 국문은 쓰지 않는다. */
   const tenantId = who.me.tenant_id;
@@ -303,6 +312,10 @@ async function main() {
   map.addLayer({ id: 'gl-adm1', type: 'line', source: 'gl-adm1', paint: { 'line-color': '#FFFFFF', 'line-width': 1.2, 'line-opacity': 0.75 } }, 'slot-reference');
   map.addLayer({ id: 'gl-adm2-f', type: 'fill', source: 'gl-adm2', paint: { 'fill-color': '#FFFFFF', 'fill-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 0.18, ['==', ['get', 'mine'], 1], 0.08, 0] } }, 'slot-reference');
   map.addLayer({ id: 'gl-adm2-l', type: 'line', source: 'gl-adm2', paint: { 'line-color': '#FFFFFF', 'line-width': ['case', ['==', ['get', 'cur'], 1], 2.4, ['==', ['get', 'mine'], 1], 1.4, 0.6], 'line-opacity': ['case', ['==', ['get', 'cur'], 1], 1, ['==', ['get', 'mine'], 1], 0.9, 0.45] } }, 'slot-overlay');
+  // 구역 대장 대조 — 어긋난 구역(빨강) · 맞는 구역(청록) · 비교한 구역만(관할 밖·못 맞춘 행은 칠하지 않는다)
+  map.addSource('gl-reg', { type: 'geojson', data: EMPTY });
+  map.addLayer({ id: 'gl-reg-f', type: 'fill', source: 'gl-reg', paint: { 'fill-color': ['case', ['==', ['get', 'status'], 'mismatch'], '#F04452', '#0FA9A0'], 'fill-opacity': ['case', ['==', ['get', 'status'], 'mismatch'], 0.38, 0.16] } }, 'slot-reference');
+  map.addLayer({ id: 'gl-reg-l', type: 'line', source: 'gl-reg', paint: { 'line-color': ['case', ['==', ['get', 'status'], 'mismatch'], '#F04452', '#0FA9A0'], 'line-width': 2 } }, 'slot-reference');
   map.addLayer({ id: 'gl-cells', type: 'fill', source: 'gl-cells', paint: { 'fill-color': '#FFB331', 'fill-opacity': ['*', ['min', 1, ['/', ['abs', ['get', 'd']], 30]], ['case', ['==', ['get', 'on'], 1], 0.85, 0]], 'fill-opacity-transition': { duration: D[500] } } }, 'slot-result');
   /* 지역 한 장(image 소스) — NDVI 는 지역 폴리곤 안만 칠해 사각형이 보이지 않는다 · 변화 화소도 같은 방식 */
   const imgLayer = (id, before, opacity) => {
@@ -414,11 +427,21 @@ async function main() {
     if (!big) big = K.bignum(h('div'), null, { label: '', unit: STR.km2, hud: true, digits: 1 });
     if (!big.el.isConnected) hudEl.append(big.el);
     const name = (D0 || S.district)?.name || '';
-    const sprawlTab = S.tab === 2;   // 탭마다 그 탭의 지표 — Sprawl = 건물 면적 변화 · Season·NDVI = 작황 하락(NDVI 기준)
-    big.label(fill(sprawlTab ? STR.hudSprawl : STR.hud, { district: name }));
-    big.el.dataset.metric = sprawlTab ? 'Built area change' : 'Crop condition drop';
+    const sprawlTab = S.tab === 2;   // 탭마다 그 탭의 지표 — Sprawl = 건물 면적 변화 · Season·NDVI = 작황 하락(NDVI 기준) · Register = 어긋난 구역 수
+    const regTab = S.tab === 3;
+    big.label(fill(regTab ? STR.hudReg : sprawlTab ? STR.hudSprawl : STR.hud, { district: name }).replace(/ · $/, ''));
+    big.el.dataset.metric = regTab ? "Districts that don't match" : sprawlTab ? 'Built area change' : 'Crop condition drop';
     big.el.classList.toggle('is-wait', wait);
     if (wait) { big.set(null); big.el.querySelector('.k-big-none').hidden = true; return; }
+    if (regTab) {
+      big.el.classList.remove('is-wait');
+      const e = REG.v?.summary?.mismatched || null;
+      big.set(e, { unit: '', digits: 0 });
+      big.el.classList.toggle('is-none', !e);
+      if (!e) big.el.querySelector('.k-big-none').textContent = STR.regNone;
+      enSig(big.el, e);
+      return;
+    }
     if (sprawlTab) {
       big.el.classList.remove('is-wait');
       const s = D0 && D0.sprawl;
@@ -531,6 +554,9 @@ async function main() {
         const lv = ln.querySelector('.k-line-v'); if (lv?.firstChild?.nodeType === 3) lv.firstChild.textContent = K.nf(V(pts[pts.length - 1].value), 2);
         lay.ndvi = (S.ndviPick && nd[S.ndviPick]) ? S.ndviPick : MONTHS.filter((m) => nd[m]).pop();
       }
+    } else if (S.tab === 3) {
+      body.dataset.norun = '1';   // 대장 탭 — 행동은 '대장 올리기' 하나(계절 실행·내려받기 숨김)
+      body.replaceChildren(regBody());
     } else {
       const s = D0.sprawl;
       body.replaceChildren();
@@ -582,7 +608,7 @@ async function main() {
     runBtn.hidden = !!kRun || noRun;
     if (kRun) kRun.disabled = runBtn.disabled;
     // 내릴 값이 하나도 없으면 Download 를 숨긴다(헤더만 있는 파일 0)
-    dlBtn.hidden = !D0 || !S.dl;
+    dlBtn.hidden = !D0 || !S.dl || S.tab === 3;
     // 비활성 이유 한 줄 — 늘 보인다(견적 대기 중 = Checking…)
     let r = '';
     if (noRun) r = '';
@@ -708,38 +734,155 @@ async function main() {
   });
   SH.mast(h('button.k-mast-b.gl-ask', { type: 'button', onclick: () => ck.open() }, h('span', { text: STR.ask }), h('kbd', { text: T('cmdk.key') })));
 
-  /* 에이전트 지도 동작(plan 3.2) — map_region · map_zoom · map_view · map_on 을 이 화면이 처리하고 kit:agent-action-done 을 낸다.
-     map_region: 내 지역이면 그 지역으로 들어가고(결과·시트), 밖이면 위치만 보인다(값 0 · 가드 한 줄). map_on: ndvi(달) · sprawl · change 탭. */
-  const agentDone = (op, ok) => document.dispatchEvent(new CustomEvent('kit:agent-action-done', { detail: { op, ok: !!ok, by: 'global' } }));
-  if (q.get('dev') === '1') window.__glAgent = [];
+  /* ── 구역 대장 × AI(r3-global) — 올리기 → 맞춘 비율 → 어긋난 구역 목록 · 지도 칠하기. 결과는 서버가 사람별로 기억한다(F5 뒤 같은 결과). ── */
+  const REG_API = '/global/registers';
+  function regPaint() {
+    const fc = REG.v?.geojson || EMPTY;
+    map.getSource('gl-reg')?.setData(fc);
+    for (const id of ['gl-reg-f', 'gl-reg-l']) if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', REG.show && REG.v ? 'visible' : 'none');
+  }
+  async function regLoad() {
+    REG.ok = await K.hasRoute(REG_API + '/latest');
+    if (!REG.ok) return;
+    try { const j = await api(REG_API + '/latest'); REG.v = j?.register ? j : null; REG.err = ''; }
+    catch { REG.v = null; }
+    regPaint();
+    if (S.level === 'district' && S.tab === 3) { hud(S.district); renderSheet(); }
+  }
+  async function regUpload(file) {
+    REG.busy = true; REG.err = ''; if (S.tab === 3) renderSheet();
+    try {
+      const fd = new FormData(); fd.append('file', file, file.name);
+      const s = session.get();
+      const r = await fetch(API.prefix + REG_API, { method: 'POST', body: fd, headers: s ? { authorization: 'Bearer ' + s.token } : {} });
+      const j = await r.json().catch(() => null);
+      if (!r.ok) throw new Error(j?.error?.message || STR.regFail);
+      REG.v = j; REG.show = true;
+    } catch (e) { REG.err = String(e?.message || STR.regFail); }
+    finally { REG.busy = false; }
+    regPaint();
+    if (S.district) hud(S.district);
+    if (S.tab === 3) renderSheet();
+  }
+  /** 대장 탭 본문 — 한 줄(구역 단위) · 맞춘 비율 · 표(어긋남 먼저) · 관할 밖·못 맞춘 행 수 · 올리기 버튼 */
+  function regBody() {
+    const box = h('div.gl-reg');
+    const file = h('input', { type: 'file', accept: '.csv,.xlsx', hidden: true, 'aria-label': STR.regUp, onchange: (e) => { const f = e.target.files?.[0]; if (f) regUpload(f); e.target.value = ''; } });
+    const up = h('button.t-btn.t-btn--2.gl-reg-up', { type: 'button', text: REG.busy ? STR.regBusy : REG.v ? STR.regAgain : STR.regUp, onclick: () => file.click() });
+    up.disabled = REG.busy || !REG.ok || isLXsales;
+    box.append(h('p.gl-reg-lv', { text: STR.regLevel }));
+    if (!REG.v) {
+      box.append(h('p.gl-reg-hint', { text: STR.regHint }));
+      if (REG.err) box.append(h('p.gl-reg-err', { role: 'alert', text: REG.err }));
+      box.append(up, file);
+      return box;
+    }
+    const s = REG.v.summary;
+    const n = (e, d = 0) => K.nf(V(e), d);
+    const head = h('p.gl-reg-m');
+    head.innerHTML = `${esc(fill(STR.regMatched, { m: n(s.matched), n: n(s.rows) }))} · <b>${esc(n(s.match_pct, 1))}%</b>${K.sig(s.match_pct)}`;
+    box.append(h('p.gl-reg-file', { text: REG.v.register.filename }), head);
+    const rows = (REG.v.items || []).filter((it) => it.status === 'mismatch' || it.status === 'match');
+    if (rows.length) {
+      const tb = h('table.gl-reg-t');
+      tb.append(h('thead', {}, h('tr', {}, ...STR.regCols.map((c) => h('th', { text: c })))));
+      const tbody = h('tbody');
+      for (const it of rows) {
+        const tr = h('tr', { 'data-status': it.status, title: it.status === 'mismatch' ? STR.regMis : STR.regOk });
+        const td = (e, d, u) => { const c = h('td.gl-num'); c.innerHTML = e ? `${esc(K.nf(V(e), d))}${u}${K.sig(e)}` : '—'; return c; };
+        const sign = it.diff && V(it.diff) > 0 ? '+' : '';
+        const dcell = h('td.gl-num'); dcell.innerHTML = it.diff ? `${sign}${esc(K.nf(V(it.diff), 0))}%${K.sig(it.diff)}` : '—';
+        tr.append(h('td', {}, h('span.gl-reg-dot', { 'aria-hidden': 'true' }), h('span', { text: it.district || it.name })), td(it.declared, 0, ' ha'), td(it.ai, 0, ' ha'), dcell);
+        tr.addEventListener('click', () => { const A = S.country && admCache[S.country.iso]; const D1 = A?.feats.find((d) => d.id === it.district_id); if (D1 && D1 !== S.district && (D1.mine || isLX)) toDistrict(D1); });
+        tbody.append(tr);
+      }
+      tb.append(tbody); box.append(tb);
+    }
+    if (V(s.outside)) box.append(h('p.gl-reg-note', { text: fill(STR.regOutside, { n: `${n(s.outside)} ${V(s.outside) === 1 ? 'row' : 'rows'}` }) }));
+    if (V(s.unmatched)) box.append(h('p.gl-reg-note', { text: fill(STR.regUnmatched, { n: `${n(s.unmatched)} ${V(s.unmatched) === 1 ? 'row' : 'rows'}` }) }));
+    if (REG.err) box.append(h('p.gl-reg-err', { role: 'alert', text: REG.err }));
+    box.append(up, file);
+    return box;
+  }
+
+  /* 에이전트 지도 동작(plan 3.1·3.2) — map_region · map_zoom · map_view · map_layer · map_on 을 이 화면이 처리하고
+     kit:agent-action-done {op, ok, reason} 을 정직하게 낸다(바뀐 지도 상태를 재어 판정 · 바뀌지 않으면 ok:false + 사용자 말 한 줄).
+     map_region: 내 지역이면 그 지역으로 들어가고(결과·시트), 밖이면 위치만 보인다(값 0 · 가드 한 줄). map_on: ndvi(달) · sprawl · change · mismatch.
+     map_layer: imagery(위성 영상) · results(NDVI·변화 칸) · districts(구역 경계) · mismatch(대장 대조 칠하기). */
+  const agentDone = (op, ok, reason) => document.dispatchEvent(new CustomEvent('kit:agent-action-done', { detail: { op, ok: !!ok, ...(reason ? { reason } : {}), by: 'global' } }));
+  window.__glAgent = [];                        // 동작 기록(줌 · 기울기 · 중심 · 영상 층) — 화면에는 보이지 않는다(실증 기록용)
+  const camNow = () => { const c = map.getCenter(); return { zoom: +map.getZoom().toFixed(2), pitch: +map.getPitch().toFixed(1), center: [+c.lng.toFixed(4), +c.lat.toFixed(4)],
+    imagery: map.getLayer('k-eox') ? (map.getLayoutProperty('k-eox', 'visibility') || 'visible') : 'none', district: S.district?.name || null, tab: STR.tabs[S.tab] }; };
+  const settled = () => new Promise((r) => { if (!map.isMoving()) { requestAnimationFrame(() => (map.isMoving() ? map.once('moveend', () => r()) : r())); } else map.once('moveend', () => r()); setTimeout(r, 3000); });
+  const LAYER_IDS = { imagery: () => ['k-eox'], results: () => ['gl-ndvi', 'gl-change', 'gl-cells'], districts: () => ['gl-adm1', 'gl-adm2-f', 'gl-adm2-l'], mismatch: () => ['gl-reg-f', 'gl-reg-l'] };
+  const LAYER_EN = { imagery: 'the imagery layer', results: 'the results layer', districts: 'the district boundaries', mismatch: 'the mismatched districts' };
   async function onAgentAction(a) {
-    if (q.get('dev') === '1') window.__glAgent.push({ op: a.op, at: Date.now() });
+    const before = camNow();
+    const fin = (ok, reason) => { window.__glAgent.push({ op: a.op, args: { ...a, bbox: undefined }, ok: !!ok, reason: reason || null, before, after: camNow(), at: Date.now() }); agentDone(a.op, ok, reason); };
     if (a.op === 'map_region') {
-      if (!S.country) return agentDone(a.op, false);
+      if (!S.country) return fin(false, 'The map is still loading');
       const A = await districtsOf(S.country);
       const D0 = A.feats.find((d) => d.id === a.district_id) || A.feats.find((d) => d.name && a.name && d.name.toLowerCase() === String(a.name).toLowerCase());
-      if (D0 && (D0.mine || isLX)) { ckRun.hit = true; if (D0 !== S.district) await toDistrict(D0); else await st.go(D0.bbox, { maxZoom: 11.2 }); return agentDone(a.op, true); }
-      const b = D0?.bbox || a.bbox; if (!b) return agentDone(a.op, false);
-      ckRun.hit = true; flashGuard(); await st.go(b, { maxZoom: 10 }); return agentDone(a.op, true);
+      if (D0 && (D0.mine || isLX)) {
+        ckRun.hit = true; if (D0 !== S.district) await toDistrict(D0); else await st.go(D0.bbox, { maxZoom: 11.2 }); await settled();
+        const dz = +a.zoom_delta;                   // 'Zoom in on {구역}' — 그 구역으로 옮긴 뒤 확대(동작 하나 · 끝 신호 하나)
+        if (Number.isFinite(dz) && dz) {
+          const z0 = map.getZoom(), z = Math.max(Math.max(1, map.getMinZoom()), Math.min(Math.min(18, map.getMaxZoom()), z0 + dz));
+          if (Math.abs(z - z0) < 0.01) return fin(false, dz > 0 ? "Can't zoom in any further" : "Can't zoom out any further");
+          map.easeTo({ zoom: z, duration: RM() ? 0 : D[750] }); await settled();
+          if (Math.abs(map.getZoom() - z0) <= 0.01) return fin(false, 'The map did not zoom');
+        }
+        return fin(true);
+      }
+      const b = D0?.bbox || a.bbox; if (!b) return fin(false, 'Could not find that district on the map');
+      ckRun.hit = true; flashGuard(); await st.go(b, { maxZoom: 10 }); await settled(); return fin(true);
     }
     if (a.op === 'map_zoom') {
-      const z = Number.isFinite(+a.zoom) ? +a.zoom : map.getZoom() + (Number.isFinite(+a.delta) ? +a.delta : 1);
-      map.easeTo({ zoom: Math.max(1, Math.min(18, z)), duration: RM() ? 0 : D[750] }); return agentDone(a.op, true);
+      const z0 = map.getZoom(), lo = Math.max(1, map.getMinZoom()), hi = Math.min(18, map.getMaxZoom());
+      const want = Number.isFinite(+a.zoom) ? +a.zoom : z0 + (Number.isFinite(+a.delta) ? +a.delta : 1);
+      const z = Math.max(lo, Math.min(hi, want));
+      if (Math.abs(z - z0) < 0.01) return fin(false, want > z0 ? "Can't zoom in any further" : "Can't zoom out any further");
+      map.easeTo({ zoom: z, duration: RM() ? 0 : D[750] }); await settled();
+      return Math.abs(map.getZoom() - z0) > 0.01 ? fin(true) : fin(false, 'The map did not zoom');
     }
     if (a.op === 'map_view') {
-      map.easeTo({ pitch: Number.isFinite(+a.pitch) ? +a.pitch : map.getPitch(), bearing: Number.isFinite(+a.bearing) ? +a.bearing : map.getBearing(), duration: RM() ? 0 : D[750] });
-      return agentDone(a.op, true);
+      const top = a.preset === 'top' || (Number.isFinite(+a.pitch) && +a.pitch === 0);
+      const pitch = top ? 0 : Math.min(map.getMaxPitch(), Number.isFinite(+a.pitch) && +a.pitch > 0 ? +a.pitch : 55);
+      const bearing = top ? 0 : (Number.isFinite(+a.bearing) ? +a.bearing : map.getBearing());
+      if (!top && map.getZoom() < 5.4) return fin(false, 'Pick a district first — 3D works on the district map');   // 글로브 투영에서는 기울일 수 없다
+      map.easeTo({ pitch, bearing, duration: RM() ? 0 : D[750] }); await settled();
+      return Math.abs(map.getPitch() - pitch) < 1.5 ? fin(true) : fin(false, top ? 'The map did not return to the top view' : 'The map did not tilt');
+    }
+    if (a.op === 'map_layer') {
+      const key = LAYER_IDS[a.layer] ? a.layer : 'imagery';
+      const on = a.on !== false;
+      if (key === 'mismatch' && !REG.v) return fin(false, 'No district register has been uploaded yet');
+      if (key === 'mismatch') { REG.show = on; regPaint(); }
+      const ids = LAYER_IDS[key]().filter((id) => map.getLayer(id));
+      if (!ids.length) return fin(false, `${LAYER_EN[key][0].toUpperCase()}${LAYER_EN[key].slice(1)} is not on the map right now`);
+      for (const id of ids) map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none');
+      if (key === 'results' && on) { renderSheet(); }                          // 켤 때는 지금 탭의 결과 층을 다시 그린다
+      await new Promise((r) => requestAnimationFrame(() => r()));
+      const got = ids.every((id) => (map.getLayoutProperty(id, 'visibility') || 'visible') === (on ? 'visible' : 'none'));
+      return got ? fin(true) : fin(false, `Could not turn ${on ? 'on' : 'off'} ${LAYER_EN[key]}`);
     }
     if (a.op === 'map_on') {
       const set = String(a.set || '');
+      if (set === 'mismatch') {
+        if (!REG.v) await regLoad();
+        if (!REG.v) return fin(false, 'No district register has been uploaded yet');
+        REG.show = true; regPaint();
+        if (S.district) { S.tab = 3; url(); hud(S.district); await renderSheet(); }
+        return fin(true);
+      }
       const tab = set === 'ndvi' ? 1 : set === 'sprawl' ? 2 : set === 'change' || set === 'season' ? 0 : -1;
-      if (tab < 0 || !S.district) return agentDone(a.op, false);
+      if (tab < 0 || !S.district) return fin(false, 'Pick a district first');
       if (tab === 1 && a.month) S.ndviPick = a.month;
-      S.tab = tab; url(); hud(S.district); await renderSheet(); return agentDone(a.op, true);
+      S.tab = tab; url(); hud(S.district); await renderSheet(); return fin(true);
     }
   }
   // 이 화면이 처리하는 동작은 키트 기본 처리를 막는다(e.preventDefault · 끝나면 이 화면이 done 을 낸다)
-  document.addEventListener('kit:agent-action', (e) => { const a = e.detail; if (a && /^map_(region|zoom|view|on)$/.test(a.op || '')) { e.preventDefault(); onAgentAction(a).catch(() => agentDone(a.op, false)); } });
+  document.addEventListener('kit:agent-action', (e) => { const a = e.detail; if (a && /^map_(region|zoom|view|on|layer)$/.test(a.op || '')) { e.preventDefault(); onAgentAction(a).catch((err) => agentDone(a.op, false, String(err?.message || 'Map action failed'))); } });
   ckEnglish(ck.el, { run: ckRun, where: () => [S.district?.name || S.country?.name, S.season?.key].filter(Boolean) });
 
   /* ── 시작 ── */
@@ -771,6 +914,7 @@ async function main() {
   }
   await wait(RM() ? 0 : 900);
   await toCountry(want, { fly: true });
+  regLoad();   // 이 사람의 최근 대장 대조(있으면 지도에 칠하고 대장 탭에 목록) — 착지를 막지 않는다
   const A = admCache[want.iso];
   const pick = A.feats.find((d) => d.id === q.get('district')) || A.feats.filter((d) => d.mine).sort((a, b) => (b.share || 0) - (a.share || 0))[0] || null;
   if (pick) changeOf(pick, S.season);

@@ -107,31 +107,174 @@ async def gpus(request: Request):
     return s
 
 
+POWER_WINDOW = 3          # 전력 판정 창 — 폴러 표본(2 s 간격) 최근 3개 평균(≈6 s). 순간 튐 하나로 화면·답이 엇갈리지 않게(r3-ops M14)
+POWER_WINDOW_S = 10.0     # 이보다 오래된 표본은 평균에 넣지 않는다(폴러가 멈춘 뒤 옛 값 0)
+
+
+def _num(v):
+    v = v.get("value") if isinstance(v, dict) else v
+    return float(v) if isinstance(v, (int, float)) else None
+
+
+def judge_power(gl: list[dict], th: float, mx: int, lease_gpu: list[int], recent_w: dict | None = None,
+                yield_gpu: list[int] | None = None) -> dict:
+    """전력 예산 판정 — 인프라 화면 큰 숫자 '동시 고부하 GPU n / m' · 전력 예산 안/초과 · AI 도우미 운영 답(한국어 · 영어)이 모두 이 함수 한 곳을 쓴다.
+    GPU 한 장이 고부하 = ① 최근 전력 평균(없으면 지금 전력) > th W 이거나 ② 분석 작업 임대(power:hot)를 쥔 작업기의 GPU.
+    단 ② 는 그 작업기가 전력 규칙으로 **멈춰 있을 때**(yield_gpu · 언어 모델이 다른 GPU 를 쓰는 동안 칸 사이에서 양보 · 하트비트 power_gate)
+    전력도 th 아래면 고부하로 세지 않는다(why='yield'). r3-ops 실증 14:38 — GPU 0 은 20 W 로 멈춰 있었는데 임대만 보고 '2 / 1 초과'로 셌다.
+    → {hot: [순번], hot_now, ok, per: [{gpu, power_w, hot, why}]} (why = 'power' | 'lease' | 'yield' | None)."""
+    recent_w = recent_w or {}
+    yield_gpu = set(yield_gpu or [])
+    per, hot = [], []
+    for g in sorted([g for g in gl if isinstance(g, dict)], key=lambda g: g.get("index") or 0):
+        i = g.get("index")
+        w = recent_w.get(i)
+        if w is None:
+            w = _num(g.get("power_w"))
+        if w is not None and w > th:
+            why = "power"
+        elif i in lease_gpu:
+            why = "yield" if i in yield_gpu else "lease"
+        else:
+            why = None
+        is_hot = why in ("power", "lease")
+        per.append({"gpu": i, "power_w": None if w is None else round(w, 1), "hot": is_hot, "why": why})
+        if is_hot:
+            hot.append(i)
+    seen = {p["gpu"] for p in per}
+    for i in lease_gpu:                     # 표본에 없는 GPU 의 임대(폴러가 그 장을 못 읽은 때)도 센다 — 전력을 모르니 멈춤이어도 보수적으로
+        if i not in seen:
+            hot.append(i)
+            per.append({"gpu": i, "power_w": None, "hot": True, "why": "lease"})
+    hot = sorted(hot)
+    return {"hot": hot, "hot_now": len(hot), "ok": len(hot) <= mx, "per": per}
+
+
+OVERLAP_CACHE: dict = {"at": 0.0, "v": None}
+
+
+def count_overlap(samples: list[dict], th: float) -> dict:
+    """폴러 표본(2 s 간격 · 장별 전력 평균)에서 두 장 이상이 동시에 th W 를 넘은 표본 수 → {n, last_at, samples}.
+    '두 장 동시 고부하 금지'(2026-09-26 셧다운) 규칙이 실제로 지켜졌는지의 측정값 — 임대·예고가 아니라 전력 실측으로 본다."""
+    n, last = 0, None
+    for j in samples:
+        ws = [w for w in (_num((g or {}).get("power_w")) for g in j.get("gpus") or []) if w is not None]
+        if sum(1 for w in ws if w > th) >= 2:
+            n += 1
+            last = j.get("at") or last
+    return {"n": n, "last_at": last, "samples": len(samples)}
+
+
+async def _overlap_recent(r, th: float) -> dict:
+    """최근 2시간(폴러 스트림 전체 · MAXLEN ~3600 × 2 s) 동시 고부하 표본 수 · 30 s 캐시."""
+    if OVERLAP_CACHE["v"] is not None and time.time() - OVERLAP_CACHE["at"] < 30:
+        return OVERLAP_CACHE["v"]
+    out = {"n": None, "last_at": None, "samples": 0}
+    try:
+        xs = await r.xrange("ops:gpu")
+        js = []
+        for _id, f in xs or []:
+            try:
+                js.append(json.loads(f.get("json") or "{}"))
+            except Exception:  # noqa: BLE001
+                continue
+        out = count_overlap(js, th)
+        out["since"] = js[0].get("at") if js else None
+    except Exception:  # noqa: BLE001
+        pass
+    OVERLAP_CACHE.update(at=time.time(), v=out)
+    return out
+
+
+async def _recent_power(r) -> dict:
+    """폴러 스트림(ops:gpu) 최근 POWER_WINDOW 표본의 GPU 별 전력 평균 {순번: W}. 스트림이 없으면 {}(지금 값으로 판정)."""
+    return (await _recent_sample(r))["avg"]
+
+
+async def _recent_sample(r) -> dict:
+    """→ {avg: {순번: W 평균}, sid: 최신 표본 id | None, at: 최신 표본 시각 | None}.
+    sid · at = '판정 시각' — 같은 표본이면 인프라 화면과 AI 도우미 답이 같은 판정을 받는다(r3-ops M14 · 실증 2차 must_fix 2)."""
+    try:
+        xs = await r.xrevrange("ops:gpu", count=POWER_WINDOW)
+    except Exception:  # noqa: BLE001
+        return {"avg": {}, "sid": None, "at": None, "gpus": []}
+    now = dt.datetime.now(KST)
+    acc: dict = {}
+    sid = at_s = None
+    latest: list = []
+    for _id, f in xs or []:
+        try:
+            j = json.loads(f.get("json") or "{}")
+            at_raw = j.get("at") or f.get("at")
+            at = dt.datetime.fromisoformat(at_raw)
+            if (now - at).total_seconds() > POWER_WINDOW_S:
+                continue
+        except Exception:  # noqa: BLE001
+            continue
+        if sid is None:
+            sid, at_s, latest = _id, at_raw, [g for g in j.get("gpus") or [] if isinstance(g, dict)]
+        for g in j.get("gpus") or []:
+            w = _num((g or {}).get("power_w"))
+            if w is not None:
+                acc.setdefault(g.get("index"), []).append(w)
+    return {"avg": {i: sum(v) / len(v) for i, v in acc.items() if v}, "sid": sid, "at": at_s, "gpus": latest}
+
+
+JUDGE_KEY = "ops:power:judge:"   # + 표본 id · 표본 하나에 판정 하나(먼저 부른 쪽이 정하고 나머지는 같은 값을 읽는다)
+JUDGE_TTL_S = 30
+
+
 async def power_budget_now(gl: list[dict]) -> dict:
-    """전력 예산(S-9) — 동시 고부하 GPU 수(실측: power.draw > other_gpu_hot_w 인 장 + 워커 임대) ≤ max_hot_gpus 인가.
-    {max_hot, hot_now, ok, hot[], leases} · 관제 큰 숫자 '동시 고부하 GPU' 의 한 출처."""
+    """전력 예산(S-9) — 동시 고부하 GPU 수 ≤ max_hot_gpus 인가(판정 = judge_power 한 곳).
+    {max_hot, hot_now, ok, hot[], per[], leases, at(판정 시각)} · LX 관리자 대시보드 큰 숫자 '동시 고부하 GPU' 와 AI 도우미 답의 한 출처.
+    판정은 폴러 표본 하나에 한 번 — 같은 표본 시각(at)이면 화면 · 답 · 분석 제출 검사가 모두 같은 판정을 쓴다(Redis 30 s)."""
+    r = await redis()
+    rs = await _recent_sample(r)
+    if rs["sid"]:
+        try:
+            hit = await r.get(JUDGE_KEY + rs["sid"])
+            if hit:
+                return json.loads(hit)
+        except Exception:  # noqa: BLE001
+            pass
     from .jobs import power_budget
     pb = await power_budget()
     pw = config.load_yaml("pools").get("power", {}) or {}
     th = float(pw.get("other_gpu_hot_w", 100))
-    hot = []
-    for g in gl:
-        v = (g.get("power_w") or {}).get("value") if isinstance(g.get("power_w"), dict) else g.get("power_w")
-        if isinstance(v, (int, float)) and v > th:
-            hot.append(g.get("index"))
-    lease_gpu = []
-    r = await redis()
+    lease_gpu, yield_gpu = [], []
     for ls in pb["leases"]:
         if ls.get("holder"):
             h = await r.hgetall(f"worker:{ls['holder']}:hb")
             gi = h.get("gpu") or h.get("gpu_index")
-            if gi not in (None, "") and str(gi).isdigit() and int(gi) not in hot:
+            if gi not in (None, "") and str(gi).isdigit() and int(gi) not in lease_gpu:
                 lease_gpu.append(int(gi))
-    hot_now = len(hot) + len(lease_gpu)
+                if h.get("power_gate"):           # 작업기가 전력 규칙으로 멈춰 있다(gpu_worker _gate_note · 해제 때 지운다)
+                    yield_gpu.append(int(gi))
     mx = int(pb["max_hot_gpus"])
-    return {"max_hot": mx, "hot_now": hot_now, "ok": hot_now <= mx, "hot": sorted(hot + lease_gpu), "threshold_w": th,
-            "power_limit_w": pb.get("power_limit_w"), "leases": pb["leases"], "at": now_iso(),
-            "source": "nvidia-smi power.draw(장별) + power:hot 임대", "unit": "GPU"}
+    if rs["sid"] and rs["gpus"]:
+        gl = rs["gpus"]                       # 판정은 그 표본의 GPU 목록으로 — 부른 쪽이 준 목록과 무관하게 표본 하나 = 판정 하나
+    j = judge_power(gl, th, mx, lease_gpu, rs["avg"], yield_gpu)
+    now_w = {g.get("index"): _num(g.get("power_w")) for g in gl if isinstance(g, dict)}
+    for p in j["per"]:                         # 판정에 쓴 값(최근 평균)과 지금 값을 함께 — 행 · 답이 '왜 고부하인지'를 같은 숫자로 말한다
+        p["basis"] = "avg" if p["gpu"] in rs["avg"] else "now"
+        nw = now_w.get(p["gpu"])
+        p["power_now_w"] = None if nw is None else round(nw, 1)
+    ov = await _overlap_recent(r, th)
+    at = rs["at"] or now_iso()
+    out = {"max_hot": mx, **j, "threshold_w": th, "window_s": POWER_WINDOW * 2,
+           "overlap": {"n": env(ov.get("n"), "count", "measured", "GPU 전력 표본(2 s) 중 두 장이 함께 기준을 넘은 수", as_of=at),
+                       "last_at": ov.get("last_at"), "since": ov.get("since")},
+           "power_limit_w": pb.get("power_limit_w"), "leases": pb["leases"], "at": at, "sample": rs["sid"],
+           "source": "nvidia-smi power.draw(장별 · 최근 평균) + power:hot 임대", "unit": "GPU"}
+    if rs["sid"]:
+        try:
+            await r.set(JUDGE_KEY + rs["sid"], json.dumps(out, ensure_ascii=False, default=str), ex=JUDGE_TTL_S, nx=True)
+            hit = await r.get(JUDGE_KEY + rs["sid"])      # 동시에 두 곳이 정했으면 먼저 쓴 쪽을 따른다
+            if hit:
+                return json.loads(hit)
+        except Exception:  # noqa: BLE001
+            pass
+    return out
 
 
 _NUM_FIELDS = {"util_pct": "%", "util_ma5": "%", "mem_used_mib": "MiB", "mem_total_mib": "MiB", "temp_c": "°C", "power_w": "W",
@@ -314,6 +457,38 @@ async def ops_tenants(request: Request):
     async with db(realm="lx") as conn:
         ts = [x["id"] for x in await conn.fetch("SELECT id FROM tenants ORDER BY id")]
     return {"items": [await usage_of(t) for t in ts], "total": len(ts), "as_of": now_iso()}
+
+
+_pub_cache: dict = {}
+
+
+@router.get("/ops/public/findings")
+async def public_findings(sgg: str):
+    """로그인 장면 숫자(r3-ops) — 시군구 의심 필지 수 한 개(정본 = survey_sgg.findings · 로그인 뒤 화면과 같은 값).
+    인증 없음 · 합계 숫자 하나만(필지 · 주소 · 좌표 0). 결과가 없으면 value=null(화면은 숫자를 빼고 문장만). 60 s 캐시."""
+    cd = "".join(ch for ch in str(sgg or "") if ch.isdigit())[:5]
+    if len(cd) != 5:
+        raise ApiError("bad_request", "시군구 코드가 필요합니다")
+    c = _pub_cache.get(cd)
+    if c and time.time() - c[0] < 60:
+        return c[1]
+    try:
+        from .regions import sgg_codes
+        codes = sgg_codes(cd) or [cd]
+    except Exception:  # noqa: BLE001
+        codes = [cd]
+    row = None
+    try:
+        async with db(realm="lx") as conn:
+            row = await conn.fetchrow("SELECT findings, finished_at FROM survey_sgg WHERE sgg_cd = ANY($1::text[]) AND state = 'done' "
+                                      "ORDER BY finished_at DESC NULLS LAST LIMIT 1", codes)
+    except Exception:  # noqa: BLE001
+        row = None
+    at = row["finished_at"].astimezone(KST).isoformat(timespec="seconds") if row and row["finished_at"] else now_iso()
+    out = {"sgg_cd": cd, "findings": env(int(row["findings"]) if row and row["findings"] is not None else None, "필지", "inferred",
+                                         "AI 실태조사 결과(의심 필지)", as_of=at)}
+    _pub_cache[cd] = (time.time(), out)
+    return out
 
 
 @router.get("/ops/bench")
@@ -601,3 +776,25 @@ async def ops_llm_start(body: dict, request: Request):
     await r.set(f"ops:llm:starting:{slot}", str(pid), ex=900)
     from fastapi.responses import JSONResponse
     return JSONResponse({"accepted": True, "slot": slot, "message": d["message"]}, status_code=202)
+
+
+# ── 서버 다시 시작(C9 원스톱 · r3-ops) — 명령줄 start-landxi.ps1 -Restart gateway 를 화면에서 ─────────────────────
+@router.post("/ops/gateway/restart")
+async def ops_gateway_restart(request: Request):
+    """LX 관리자만. 게이트웨이만 다시 띄운다(작업기 · 언어 모델 · 정적 서버 그대로). 이 게이트웨이가 요청을 받은 뒤 아직 살아 있으면 409.
+    연속 누름 막기 = Redis 표시(값 = 요청받은 게이트웨이의 기동 시각) — 새 게이트웨이는 기동 시각이 달라 다시 누를 수 있다."""
+    p = require(principal(request), admin=True)
+    from ops import gateway_restart as G
+    from .main import BOOT
+    boot = str(BOOT.get("boot_at") or "")
+    r = await redis()
+    flag = await r.get(G.FLAG)
+    d = G.decide(restarting=bool(flag) and flag == boot, script_exists=G.SCRIPT.exists())
+    async with db(realm="lx") as conn:
+        await audit(conn, p, "ops.gateway.restart", "gateway", None, {"ok": d["ok"], "code": d["code"]})
+    if not d["ok"]:
+        raise ApiError("conflict", d["message"])
+    await r.set(G.FLAG, boot, ex=G.FLAG_TTL_S)
+    await run_in_threadpool(G.spawn, d["cmd"])
+    from fastapi.responses import JSONResponse
+    return JSONResponse({"accepted": True, "message": d["message"], "boot_at": boot}, status_code=202)

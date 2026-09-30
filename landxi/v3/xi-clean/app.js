@@ -29,8 +29,9 @@ const SWR_MS = 10 * 60e3;
 function swr(path) {
   const k = 'xc:' + (SESS?.realm || '') + ':' + (SESS?.tenant_id || SESS?.role || '') + ':' + path;
   let c = null; try { c = JSON.parse(sessionStorage.getItem(k) || 'null'); } catch { /* */ }
-  const fresh = api(path).then((j) => { try { sessionStorage.setItem(k, JSON.stringify({ t: Date.now(), j })); } catch { /* 저장 불가 */ } return j; });
-  if (c && Date.now() - c.t < SWR_MS) { fresh.catch(() => {}); return Promise.resolve(c.j); }
+  // 실태조사 적재 중(state 'building')인 집계는 칸이 비어 있다 — 캐시에 두지 않는다(끝난 뒤 새로 열어도 빈 칸을 읽지 않게)
+  const fresh = api(path).then((j) => { if (j?.state !== 'building') { try { sessionStorage.setItem(k, JSON.stringify({ t: Date.now(), j })); } catch { /* 저장 불가 */ } } return j; });
+  if (c && Date.now() - c.t < SWR_MS && c.j?.state !== 'building') { fresh.catch(() => {}); return Promise.resolve(c.j); }
   return fresh;
 }
 const PRE = SESS ? {
@@ -46,18 +47,60 @@ function findings(qs) {
   return c && performance.now() - c.t < 20e3 ? c.p : api('/survey/findings?' + qs);
 }
 
-/** 읍면동 · 규칙 집계를 상태에 싣는다. 조회 실패는 '결과 없음'과 다르다(S.statsFailed → HUD 는 실패로) */
+/** 읍면동 · 규칙 집계를 상태에 싣는다. 조회 실패는 '결과 없음'과 다르다(S.statsFailed → HUD 는 실패로).
+    어느 시군구든 실태조사를 만드는 중이면(state 'building') 서버는 칸을 비워 준다 — 빈 목록을 '결과 없음'으로 읽지 않는다:
+    가진 목록은 그대로 두고(S.statsBuilding), 끝날 때까지 다시 묻는다(watchStats). 지금 시군구 칸은 refresh 가 그 시군구만 따로 받는다 */
+const emdItems = (st) => (st.items || []).filter((i) => i.cd && i.bbox?.length === 4).map((i) => ({ cd: String(i.cd), nm: i.key, bbox: i.bbox }));
 function useStats(emdSt, ruleSt) {
   if (emdSt) {
     S.statsFailed = !!emdSt.failed;
-    if (!emdSt.failed) {
+    S.statsBuilding = !emdSt.failed && emdSt.state === 'building';
+    if (!emdSt.failed && !S.statsBuilding) {
       S.asOf = emdSt.as_of || null;
-      S.emds = (emdSt.items || []).filter((i) => i.cd && i.bbox?.length === 4).map((i) => ({ cd: String(i.cd), nm: i.key, bbox: i.bbox }));
+      S.emds = emdItems(emdSt);
+      S.emdsBySgg = {};
     }
+    if (S.statsBuilding) watchStats();
   }
-  if (ruleSt && !ruleSt.failed) S.ruleDefs = Object.fromEntries((ruleSt.items || []).map((i) => [i.key, { name: i.name }]));
+  if (ruleSt && !ruleSt.failed && ruleSt.state !== 'building') S.ruleDefs = Object.fromEntries((ruleSt.items || []).map((i) => [i.key, { name: i.name || S.ruleNames?.[i.key] || null }]));
   if (ruleSt) S.rulesFailed = !!ruleSt.failed;
 }
+/** 적재가 끝날 때까지 15초마다 집계를 다시 받는다(최대 40분) — 끝나면 캐시를 비우고 숫자 · 막대를 새로 그린다 */
+let statsT = 0, statsT0 = 0;
+function watchStats() {
+  if (statsT) return;
+  statsT0 ||= Date.now();
+  X.statsWatch = { state: 'building', since: new Date(statsT0).toISOString() };
+  statsT = setTimeout(async () => {
+    statsT = 0;
+    if (Date.now() - statsT0 > 40 * 60e3) { statsT0 = 0; return; }
+    const e = await api('/survey/stats?by=emd').catch(() => null);
+    if (!e || e.state === 'building') { watchStats(); return; }
+    statsT0 = 0;
+    try { for (const k of Object.keys(sessionStorage)) if (k.startsWith('xc:')) sessionStorage.removeItem(k); } catch { /* */ }
+    useStats(e, await api('/survey/stats?by=rule').catch(() => null));
+    X.statsWatch = { state: 'done', at: new Date().toISOString() };
+    if (typeof refresh === 'function') { patchRail(); refresh(); }
+  }, 15000);
+}
+/** 적재 중 — 지금 시군구의 읍면동 칸만 따로 받는다(그 시군구가 적재 중이 아니면 칸이 온다). → 'ok' · 'building' · 'none' */
+async function regionStats(r) {
+  S.emdsBySgg ||= {};
+  const k = r.code;
+  if (S.emdsBySgg[k]) return S.emdsBySgg[k].st;
+  const j = await api('/survey/stats?' + new URLSearchParams({ by: 'emd', sgg: r.code }));
+  if (j?.state === 'building') return 'building';                  // 이 시군구가 지금 만드는 중 — 캐시하지 않고 다음에 다시
+  const items = emdItems(j || {});
+  const have = new Set(S.emds.map((e) => e.cd));
+  S.emds = [...S.emds, ...items.filter((e) => !have.has(e.cd))];
+  const st = items.length ? 'ok' : 'none';
+  S.emdsBySgg[k] = { st };
+  return st;
+}
+/** 규칙 이름(사용자 말) — 집계의 이름 → 규칙 목록(GET /survey/rules)의 이름. 없으면 null(규칙 코드를 화면에 내지 않는다 · M13) */
+const ruleName = (k) => (k && (S.ruleDefs[k]?.name || S.ruleNames?.[k])) || null;
+/** 규칙 이름표 — 첫 화면(전국)에서 집계에 이름이 비어 있어도 코드가 보이지 않게 먼저 받는다 */
+const RULE_NAMES = SESS ? api('/survey/rules').then((j) => Object.fromEntries((j.items || []).filter((i) => i.id && i.name).map((i) => [i.id, i.name])), () => ({})) : Promise.resolve({});
 
 /* 도구 아이콘(헤어라인 20) */
 const ICO = {
@@ -129,11 +172,13 @@ async function boot() {
   const same = SESS && (SESS.realm === 'lx') === S.lx;
   const catP = same ? PRE.cat : api('/catalog/layers?' + new URLSearchParams({ stage: 'domestic', build, locale: 'ko' })).catch(() => ({ items: [], ladder: {} }));
   const aliasP = api('/regions?limit=400').then((j) => j.items || [], () => []);
-  const [emdSt, ruleSt, sgg] = await Promise.all([
+  const [emdSt, ruleSt, sgg, names] = await Promise.all([
     PRE.emd || api('/survey/stats?by=emd').catch(() => ({ items: [], failed: true })),
     PRE.rule || api('/survey/stats?by=rule').catch(() => ({ items: [], failed: true })),
     PRE.sgg,
+    RULE_NAMES,
   ]);
+  S.ruleNames = names || {};
   useStats(emdSt, ruleSt);
   S.regions = (sgg.features || []).map((f) => ({ code: String(f.properties.code), name: f.properties.name, sido: f.properties.sido, full: `${f.properties.sido} ${f.properties.name}`, bbox: K.bboxOf(f), geometry: f.geometry }));
   X.regions = S.regions.length;
@@ -429,7 +474,7 @@ async function addResultList(items, my) {
   if (S.tool === 'layers') renderLayers();
 }
 
-async function setRegion(r, { first = false } = {}) {
+async function setRegion(r, { first = false, to = null } = {}) {
   S.region = r; S.cond.emd = null; S.sel = null; closeDrawer(); closePop();
   renderChips();                        // 이전 지역의 읍면동 칩을 바로 지운다(관할 밖 포함)
   if (AN?.running) { AN.detach(); S.tool = null; }      // 진행 중 전역 분석 — 서버 작업은 계속, 화면만 떼어 낸다(돌아오면 이어 보기)
@@ -448,7 +493,8 @@ async function setRegion(r, { first = false } = {}) {
   S.els.hud.hidden = S.outside;
   patchRail();
   searchInput.value = r ? r.name : '';
-  const fly = r ? stage.go(r.bbox, { ms: RM() ? 0 : 2400, maxZoom: 12.5 }) : stage.home({ ms: first ? 0 : 1600 });
+  // to = 말로 한 읍면동 이동 — 시군구를 거치지 않고 한 번에 그 읍면동으로(동작 끝 신호가 늦지 않게)
+  const fly = r ? goKeep(to?.bbox || r.bbox, { ms: RM() ? 0 : (to?.ms ?? 2400), maxZoom: to?.maxZoom ?? 12.5 }) : stage.home({ ms: first ? 0 : 1600 });
   if (S.outside) {
     setPoints([]); regionData(null);
     const d = K.drawer({ title: r.name, host: mainEl, slot: 'right', onClose: () => { S.list = null; patchRail(); } });
@@ -458,6 +504,7 @@ async function setRegion(r, { first = false } = {}) {
     return;
   }
   const rd = S.outside ? Promise.resolve() : regionData(r);
+  S.rdP = rd;                                           // 읍면동 경계가 도착하는 때(말로 한 읍면동 이동이 기다린다)
   const resumeAfter = () => rd.then(() => (S.region === r && AN && !AN.running ? AN.resume(r) : false)).then((ok) => { if (ok) { S.tool = 'analyze'; patchRail(); } });
   if (first) { X.fly = fly; await refresh(); resumeAfter(); return; }   // 첫 도착: 비행은 뒤에서 계속
   await Promise.all([fly, refresh()]);
@@ -504,13 +551,14 @@ const RETRY = 2, RETRY_MS = 1500;
 /** 잠깐 끊긴 것(네트워크 · status 0 · 5xx)만 다시 부른다. 4xx 는 다시 불러도 같다 */
 const transient = (e) => !e?.status || e.status >= 500;
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
-/** HUD 큰 숫자 상태: wait(조회 중 · 빈 자리) · fail(— · 문장 없음) · empty(서버가 0/결과 없음) · ok */
+/** HUD 큰 숫자 상태: wait(조회 중 · 빈 자리) · fail(— · 문장 없음) · empty(서버가 0/결과 없음) · counting(실태조사를 만드는 중 · '집계 중') · ok */
 function hudState(big, st, env, unit) {
   hudBig.dataset.st = st;
   if (st === 'ok') { big.set(env, unit ? { unit } : {}); return; }
   big.set(null);
   const none = hudBig.querySelector('.k-big-none'), num = hudBig.querySelector('.k-big-row > span');
-  if (none) none.hidden = st !== 'empty';
+  if (none && st === 'counting') none.textContent = '집계 중';
+  if (none) none.hidden = st !== 'empty' && st !== 'counting';
   if (num && st === 'wait') num.textContent = '';
 }
 let failToast = null;
@@ -551,6 +599,12 @@ async function refresh() {
         useStats(e, r);
         if (my !== seq) return;
       }
+      // 어느 시군구가 실태조사를 만드는 중이면 전국 집계 칸이 비어 온다 — 지금 시군구 칸만 따로 받는다(그 시군구가 만드는 중이면 '집계 중')
+      S.regionBuilding = false;
+      if (S.statsBuilding && S.region && !regionEmds().length) {
+        S.regionBuilding = (await regionStats(S.region)) === 'building';
+        if (my !== seq) return;
+      }
       q = hudQuery(S.region, S.cond);
       if (!q.p) break;                                  // 서버가 이 지역 읍면동을 돌려주지 않음 = 결과 없음
       j = await findings(q.p.toString());
@@ -587,6 +641,11 @@ async function refresh() {
     setLab(pickBig.label);
     hudState(big, 'ok', pickBig.env, pickBig.unit);
     X.hud = { label: `${pickBig.label} · ${where}`, n: pickBig.env.value, total: j?.total?.value ?? 0, query: q?.p?.toString() || null, from: sb ? 'summary' : 'findings' };
+  } else if (S.regionBuilding || (S.statsBuilding && !S.region)) {   // 실태조사를 만드는 중 — '결과 없음'이 아니라 '집계 중'(끝나면 watchStats 가 다시 그린다)
+    setLab('현장 확인 필요');
+    hudState(big, 'counting');
+    X.hud = { label, n: null, total: 0, state: 'counting', query: q?.p?.toString() || null, from: 'stats' };
+    watchStats();
   } else {                                            // 서버가 0/결과 없음을 돌려줌 → 이때만 '아직 결과가 없습니다'
     setLab('현장 확인 필요');
     hudState(big, 'empty');
@@ -639,12 +698,12 @@ function paintSus(sb) {
   hudSus.dataset.metric = sp.label; hudSus.dataset.v = String(sp.env.value);
 }
 function drawBars(rows) {
-  const top = rows.filter((r) => r.n > 0).sort((a, b) => b.n - a.n).slice(0, 3), max = Math.max(1, ...top.map((r) => r.n));
+  const top = rows.filter((r) => r.n > 0 && ruleName(r.k)).sort((a, b) => b.n - a.n).slice(0, 3), max = Math.max(1, ...top.map((r) => r.n));
   bars.innerHTML = '';
   for (const r of top) {
     // 막대는 읽기 전용(버튼 예산 ≤ 10 · 도구 포함) — 규칙으로 거르기는 '규칙' 도구에서
     const b = h('div.xc-bar', { dataset: { rule: r.k }, 'data-on': S.cond.rule === r.k ? '1' : undefined },
-      h('span.xc-bar-l', { text: S.ruleDefs[r.k]?.name || r.k }), h('span.xc-bar-t', {}, h('i', { style: { width: (r.n / max) * 100 + '%' } })), h('span.xc-bar-v.num', { text: nf(r.n) }));
+      h('span.xc-bar-l', { text: ruleName(r.k) }), h('span.xc-bar-t', {}, h('i', { style: { width: (r.n / max) * 100 + '%' } })), h('span.xc-bar-v.num', { text: nf(r.n) }));
     bars.append(h('li', {}, b));
   }
 }
@@ -670,7 +729,7 @@ function renderChips() {
   const { emd, rule } = S.cond;
   if (!emd && !rule) { chips.hidden = true; return; }
   if (emd) chips.append(h('span.t-chip.xc-chip', { text: emd.nm }));
-  if (rule) chips.append(h('span.t-chip.xc-chip', { text: S.ruleDefs[rule]?.name || rule }));
+  if (rule && ruleName(rule)) chips.append(h('span.t-chip.xc-chip', { text: ruleName(rule) }));
   chips.append(h('button.xc-clear', { type: 'button', text: '조건 지우기', onclick: () => { const e = S.cond.emd; setCond({ emd: null, rule: null }); if (e && S.region) stage.go(S.region.bbox, { ms: 1600, maxZoom: 12.5 }); } }));
   chips.hidden = false;
   alignChips();
@@ -738,7 +797,7 @@ async function drawSugg() {
       const j = await api('/survey/findings?' + new URLSearchParams({ q, limit: '5', sort: 'score' }));
       if (my !== qSeq) return;
       const seen = new Set();
-      for (const f of j.items || []) { if (seen.has(f.pnu)) continue; seen.add(f.pnu); opts.push({ t: jibun(f.addr), s: S.ruleDefs[f.rule]?.name || '', go: () => { done(); openParcel(f.pnu, { fly: true }); } }); }
+      for (const f of j.items || []) { if (seen.has(f.pnu)) continue; seen.add(f.pnu); opts.push({ t: jibun(f.addr), s: ruleName(f.rule) || '', go: () => { done(); openParcel(f.pnu, { fly: true }); } }); }
     } catch { /* */ }
   }
   if (q.length >= 4 && /\s/.test(q)) opts.push({ t: q, s: '물어보기', ask: true, go: () => { done(); ask(q); } });
@@ -756,9 +815,9 @@ function goEmd(e, here = null) {
   const go = () => {
     setCond({ emd: e }); searchInput.value = e.nm;
     if (AN?.active && !AN.running) emdFrame(e).then((f) => AN.active && !AN.running && AN.start(S.region, f));   // 분석 중 검색 = 그 읍면동으로 프레임
-    else stage.go(e.bbox, { ms: 1600, maxZoom: 14 });
+    else return goKeep(e.bbox, { ms: 1600, maxZoom: 14 });
   };
-  if (r && S.region?.code !== r.code) setRegion(r).then(go); else go();
+  if (r && S.region?.code !== r.code) return setRegion(r).then(go); return go();
 }
 /* ═══ 분석 프레임 = 읍면동 경계(GET /regions/{sgg}/emd · 한 면 그대로) ═══ */
 function emdParts(cd) {
@@ -769,7 +828,7 @@ function emdParts(cd) {
 }
 /** 읍면동 → 분석 프레임 {geometry, label}. 카메라를 그 읍면동으로 옮긴다. 경계가 없으면 상자 */
 async function emdFrame(e) {
-  await stage.go(e.bbox, { ms: RM() ? 0 : 1250, maxZoom: 14 });
+  await goKeep(e.bbox, { ms: RM() ? 0 : 1250, maxZoom: 14 });
   const parts = emdParts(e.cd);
   const b = e.bbox;
   const geometry = parts.length ? { type: 'MultiPolygon', coordinates: parts }
@@ -798,18 +857,28 @@ function ask(q) {
 let closeT = 0;
 const camNow = () => ({ center: [+map.getCenter().lng.toFixed(5), +map.getCenter().lat.toFixed(5)], zoom: +map.getZoom().toFixed(2), pitch: Math.round(map.getPitch()), bearing: Math.round(map.getBearing()),
   region: S.region?.code || null, img: !!S.layers.img, ai: !!S.layers.ai, sus: !!S.layers.sus, parcel: !!S.layers.parcel });
+/** 카메라 이동(지역 · 읍면동) — 입체(S.tilt)면 지금 기울기를 유지한다(전역 분석을 시작해도 평면으로 풀리지 않게 · r3-xi) */
+/* 비행은 화면 프레임(requestAnimationFrame)으로 돈다 — 탭이 뒤로 가면 프레임이 멈춰 끝나지 않는다. 동작 끝 신호가 영영 안 나가지 않게
+   비행 시간 + 1.5초에서 기다림을 끊는다(카메라는 탭이 다시 보이면 이어서 도착한다). */
+const goKeep = (b, o = {}) => Promise.race([stage.go(b, { ...o, pitch: S.tilt ? (Math.round(map.getPitch()) || 55) : 0 }),
+  new Promise((res) => setTimeout(() => res(true), (o.ms ?? 2400) + 1500))]);
 const settled = () => new Promise((res) => { if (!map.isMoving()) return setTimeout(res, 60); map.once('moveend', () => setTimeout(res, 60)); setTimeout(res, 4000); });
 let agentQ = Promise.resolve();
 /** 한 답의 동작들(이동 → 확대 → 시점 …)은 차례로 — 앞 동작의 카메라 이동이 끝난 뒤 다음 */
 function onAgent(a) { if (a?.op) agentQ = agentQ.then(() => runAgent(a), () => runAgent(a)); return agentQ; }
 async function runAgent(a) {
   const before = camNow();
-  let ok = true;
-  try { ok = (await agentOp(a)) !== false; } catch (e) { ok = false; K.devlog('agent op', `${a.op} ${e?.message || e}`); }
+  let ok = true, reason = null;
+  try {
+    const res = await agentOp(a);
+    if (res && typeof res === 'object') { ok = res.ok !== false; reason = res.reason || null; } else ok = res !== false;
+  } catch (e) { ok = false; reason = '지도 동작을 하지 못했습니다'; K.devlog('agent op', `${a.op} ${e?.message || e}`); }
   if (['map_region', 'map_zoom', 'map_view'].includes(a.op)) await settled();
   const after = camNow();
-  (X.agent ||= []).push({ op: a.op, ok, before, after, at: new Date().toISOString() });
-  document.dispatchEvent(new CustomEvent('kit:agent-action-done', { detail: { op: a.op, ok } }));
+  if (ok && a.op === 'map_zoom' && Math.abs(after.zoom - before.zoom) < 0.05) { ok = false; reason ||= (after.zoom >= before.zoom ? '더 확대할 수 없습니다' : '더 축소할 수 없습니다'); }
+  if (!ok && !reason) reason = '지도 동작을 하지 못했습니다';
+  (X.agent ||= []).push({ op: a.op, ok, reason, before, after, at: new Date().toISOString() });
+  document.dispatchEvent(new CustomEvent('kit:agent-action-done', { detail: { op: a.op, ok, ...(reason ? { reason } : {}) } }));
   // 지도 동작 뒤 바를 접되, 답(한 줄 · 숫자)이 있으면 읽을 수 있게 그대로 둔다(닫기는 사용자가 Esc · 바깥 누르기)
   if (['map_on', 'map_arrive', 'map_flyto', 'parcel_card', 'map_region', 'map_zoom', 'map_view', 'map_layer', 'analysis_watch'].includes(a.op)) { clearTimeout(closeT); closeT = setTimeout(() => { if (!hasAnswer()) cmdk.close(); }, 1600); }
 }
@@ -835,34 +904,55 @@ async function agentOp(a) {
     if (r && S.region?.code !== r.code) setRegion(r);
     return true;
   }
-  if (a.op === 'map_region') {                         // 결과가 없어도 그 시군구 경계로 간다
-    const r = await regionFromAgent(a);
-    if (r) { if (S.region?.code !== r.code) await setRegion(r); else await stage.go(r.bbox, { ms: RM() ? 0 : 1600, maxZoom: 12.5 }); return true; }
-    if (a.bbox) { await stage.go(a.bbox, { ms: RM() ? 0 : 1600, maxZoom: 12.5 }); return true; }
-    return false;
+  if (a.op === 'map_region') {                         // 결과가 없어도 그 시군구 경계로 간다 · 읍면동(emd_cd)이면 그 읍면동 경계로
+    const r = await regionFromAgent({ ...a, bbox: a.sgg_bbox || a.bbox });
+    if (!r) {
+      const b = a.emd_bbox || a.bbox;
+      if (b) { await goKeep(b, { ms: RM() ? 0 : 1600, maxZoom: a.emd_cd ? 14 : 12.5 }); return true; }
+      return { ok: false, reason: '그 지역을 지도에서 찾지 못했습니다' };
+    }
+    const eb = a.emd_cd ? (a.emd_bbox || a.bbox) : null;              // 읍면동 범위(없으면 시군구 범위로만)
+    const moved = S.region?.code !== r.code;
+    if (moved) await setRegion(r, eb ? { to: { bbox: eb, ms: 1600, maxZoom: 14 } } : {});
+    else await goKeep(eb || r.bbox, { ms: RM() ? 0 : 1600, maxZoom: eb ? 14 : 12.5 });
+    if (!a.emd_cd) return true;
+    await S.rdP?.catch?.(() => {});
+    const nm = a.emd_name || a.emd || '';
+    const e = S.remd.find((x) => x.cd === String(a.emd_cd) || String(a.emd_cd).startsWith(x.cd) || x.cd.startsWith(String(a.emd_cd)))
+      || (nm && S.remd.find((x) => norm(x.nm) === norm(nm)));
+    if (e) { setCond({ emd: e }); searchInput.value = e.nm; if (!eb) await goKeep(e.bbox, { ms: RM() ? 0 : 1600, maxZoom: 14 }); return true; }
+    return eb ? true : { ok: false, reason: '그 읍면동 경계를 불러오지 못했습니다' };
   }
   if (a.op === 'map_zoom') {
-    const z = a.zoom != null ? +a.zoom : map.getZoom() + (+a.delta || 1);
-    map.easeTo({ zoom: Math.max(5, Math.min(19, z)), duration: RM() ? 0 : 900 });
+    const z0 = map.getZoom(), z = a.zoom != null ? +a.zoom : z0 + (+a.delta || 1), to = Math.max(5, Math.min(19, z));
+    if (Math.abs(to - z0) < 0.05) return { ok: false, reason: z >= z0 ? '더 확대할 수 없습니다' : '더 축소할 수 없습니다' };
+    map.easeTo({ zoom: to, duration: RM() ? 0 : 900 });
     return true;
   }
-  if (a.op === 'map_view') { await setView(+a.pitch || 0, +a.bearing || 0); return true; }
+  if (a.op === 'map_view') {
+    const p0 = map.getPitch(), p = Math.max(0, Math.min(70, +a.pitch || 0));
+    if (Math.abs(p - p0) < 0.5 && Math.abs((+a.bearing || 0) - map.getBearing()) < 0.5) return { ok: false, reason: p > 0 ? '이미 입체로 보고 있습니다' : '이미 위에서 보고 있습니다' };
+    await setView(p, +a.bearing || 0); return true;
+  }
   if (a.op === 'map_layer') {
     const k = { imagery: 'img', results: 'ai', findings: 'sus', parcels: 'parcel' }[a.layer];
-    if (!k) return false;
+    if (!k) return { ok: false, reason: '그 층은 이 지도에 없습니다' };
+    const have = { img: (S.imgLayers || []).length, ai: (S.res || []).length, sus: (S.susLayers || []).length, parcel: (S.parcelLayers || []).length }[k];
+    if (!have) return { ok: false, reason: k === 'img' ? '이 지도에는 영상 층이 없습니다' : k === 'ai' ? '이 지역에는 AI 분석 결과 층이 없습니다' : '이 지역에는 그 층이 없습니다' };
     S.layers[k] = a.on !== false;
     if (k === 'ai') { S.aiByRegion = false; if (S.layers.ai) for (const it of S.res || []) S.resOn[it.id] = true; }
     applyLayers();
     if (S.tool === 'layers') renderLayers();
-    return k !== 'img' || (S.imgLayers || []).length > 0;
+    return true;
   }
-  if (a.op === 'analysis_watch') {                     // 말로 실행한 전역 분석 — 진행 보기에 붙는다(결과가 읍면동 순으로 차오름)
-    if (!AN || !a.job_id) return false;
+  if (a.op === 'analysis_watch') {                     // 말로 실행한 분석 — 진행 보기에 붙는다(결과가 읍면동 순으로 차오름 · 범위 문장은 작업 값 그대로)
+    if (!AN || !a.job_id) return { ok: false, reason: '진행 화면을 열 수 없습니다' };
     const r = await regionFromAgent(a);
     if (r && S.region?.code !== r.code) await setRegion(r);
     closePop(); closeDrawer();
     S.tool = 'analyze'; patchRail();
-    return AN.watch(a.job_id, S.region || r, { cls: a.cls || null });
+    const ok = await AN.watch(a.job_id, S.region || r, { cls: a.cls || null, scope: a.scope_text || null, rest: a.scope_rest || null });
+    return ok ? true : { ok: false, reason: '진행 화면을 열 수 없습니다' };
   }
   if (a.op === 'screen_open') {                         // 이미 XI맵 — 지역을 넘겼으면 그곳으로
     const rc = new URLSearchParams(String(a.href || '').split('?')[1] || '').get('region');
@@ -879,15 +969,60 @@ async function agentOp(a) {
 document.addEventListener('click', (e) => {
   const b = e.target.closest?.('.k-ck .k-bar'); if (!b) return;
   const label = b.querySelector('.k-bar-l')?.textContent?.trim(); if (!label) return;
-  document.dispatchEvent(new CustomEvent('kit:chart-pick', { detail: { label, key: b.dataset.key || null } }));
+  // 어느 시군구의 막대인지 — 차트 제목 · 답 글 · 물은 말(막대에 코드가 없을 때 경계 조회에 쓴다)
+  const ck = b.closest('.k-ck') || document;
+  const hint = [b.closest('.k-ck-blk')?.querySelector('.k-ck-bt')?.textContent, ck.querySelector('.k-ck-a')?.textContent, ck.querySelector('.k-ck-i')?.value].filter(Boolean).join(' ');
+  document.dispatchEvent(new CustomEvent('kit:chart-pick', { detail: { label, key: b.dataset.key || null, hint } }));
 });
-document.addEventListener('kit:chart-pick', (e) => {
-  const d = e.detail || {}, key = String(d.key || d.emd_cd || ''), nm = String(d.label || '').trim();
+/** 읍면동 이름 · 코드로 목록에서 찾기(같은 이름 → 끝말 같은 이름) */
+const emdMatch = (pool, key, nm) => (key && pool.find((x) => x.cd === key)) || pool.find((x) => norm(x.nm) === norm(nm))
+  || pool.find((x) => nm && norm(x.nm).endsWith(norm(nm.split(/\s+/).pop())));
+/** 시군구 읍면동 경계(GET /regions/{sgg}/emd) — 막대 누르기 보조 조회(탭 안 기억) */
+const EMD_OF = new Map();
+function emdOf(r) {
+  if (r.code === S.region?.code && S.remd.length) return Promise.resolve(S.remd);
+  if (!EMD_OF.has(r.code)) EMD_OF.set(r.code, api('/regions/' + encodeURIComponent(r.code) + '/emd')
+    .then((j) => (j.features || []).map((f) => ({ cd: String(f.properties.emd_cd), nm: f.properties.name, bbox: f.properties.bbox, geometry: f.geometry })))
+    .catch((err) => { EMD_OF.delete(r.code); throw err; }));
+  return EMD_OF.get(r.code);
+}
+/** 막대가 가리키는 읍면동 — 집계 목록(S.emds)이 비어 있어도(실태조사 적재 중) 찾는다:
+    ① 지금 시군구 경계 · 집계 목록 ② 차트 제목 · 답에 이름이 나온 시군구의 경계 ③ 지금 시군구 경계(서버). → { e, r } · null */
+async function chartEmd(key, nm, hint) {
   const pool = [...S.remd, ...regionEmds(), ...S.emds];
-  const hit = (key && pool.find((x) => x.cd === key)) || pool.find((x) => norm(x.nm) === norm(nm)) || pool.find((x) => nm && norm(x.nm).endsWith(norm(nm.split(/\s+/).pop())));
-  if (!hit) { K.devlog('chart pick', `${key} ${nm} 없음`); return; }
-  goEmd(hit, S.remd.some((x) => x.cd === hit.cd) ? S.region : null);
-  (X.agent ||= []).push({ op: 'chart_pick', ok: true, emd: hit.nm, at: new Date().toISOString() });
+  const hit = emdMatch(pool, key, nm);
+  if (hit) return { e: hit, r: S.remd.some((x) => x.cd === hit.cd) ? S.region : byCode(hit.cd) };
+  const regs = [];
+  if (key.length >= 5) { const r = byCode(key); if (r) regs.push(r); }
+  const named = S.regions.filter((r) => hint && hint.includes(r.name) && r.name.length >= 2)
+    .sort((x, y) => (y.sido === S.region?.sido) - (x.sido === S.region?.sido) || y.name.length - x.name.length);
+  regs.push(...named.slice(0, 3));
+  if (S.region) regs.push(S.region);
+  const seen = new Set();
+  for (const r of regs) {
+    if (seen.has(r.code)) continue; seen.add(r.code);
+    let list = [];
+    try { list = await emdOf(r); } catch (err) { K.devlog('chart pick emd', `${r.code} ${err?.status ?? 0}`); continue; }
+    const e = emdMatch(list, key, nm);
+    if (e) return { e, r };
+  }
+  return null;
+}
+document.addEventListener('kit:chart-pick', async (e) => {
+  const d = e.detail || {}, key = String(d.key || d.emd_cd || ''), nm = String(d.label || '').trim();
+  const at = new Date().toISOString();
+  const got = await chartEmd(key, nm, String(d.hint || ''));
+  if (!got) {
+    K.devlog('chart pick', `${key} ${nm} 없음`);
+    const w = nm || '그 읍면동', c = w.charCodeAt(w.length - 1), jong = c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 > 0;
+    K.toast(`${w}${jong ? '을' : '를'} 지도에서 찾지 못했습니다`);
+    (X.agent ||= []).push({ op: 'chart_pick', ok: false, emd: nm, at });
+    return;
+  }
+  const { e: hit, r } = got;
+  const here = r && S.region?.code === r.code ? S.region : r;
+  await goEmd(hit, here);
+  (X.agent ||= []).push({ op: 'chart_pick', ok: true, emd: hit.nm, region: r?.name || null, at });
 });
 function hasAnswer() {
   const el = cmdk?.el; if (!el) return false;
@@ -922,7 +1057,7 @@ function openList() {
   const draw = () => {
     ul.innerHTML = '';
     for (const f of rows.slice(0, shown)) ul.append(h('li', {}, h('button', { type: 'button', 'aria-current': S.sel === f.pnu ? 'true' : undefined, onclick: () => openParcel(f.pnu, { fly: true, back: true }) },
-      h('b', { text: jibun(f.addr) }), h('span', { text: '· ' + (S.ruleDefs[f.rule]?.name || f.rule) }))));
+      h('b', { text: jibun(f.addr) }), ruleName(f.rule) ? h('span', { text: '· ' + ruleName(f.rule) }) : null)));
     more.hidden = rows.length <= shown;
   };
   const more = h('button.t-btn.t-btn--text.xc-more', { type: 'button', text: '더 보기', onclick: () => { shown += 40; draw(); } });
@@ -943,11 +1078,11 @@ async function openParcel(pnu, { fly = false } = {}) {
   if (d.geometry) { stage.geo('sel', { type: 'Feature', properties: {}, geometry: d.geometry }, 'focus'); if (fly) stage.go(K.bboxOf(d.geometry), { ms: 1250, maxZoom: 17.5 }); }
   // 규칙 → AI 가 본 것(/survey/stats?by=rule 의 모든 키). 모르는 키는 규칙 이름을 그대로
   const cls = { R1: '건물', R2: '경작 흔적 없음', R3: '비닐하우스', R4: '주차장', R5: '개간지', R6: '건물', L1: '건물', L2: '경작 흔적 없음', L3: '건물 없음' };
-  const seen = f ? (cls[f.rule] || S.ruleDefs[f.rule]?.name || f.rule_nm || f.rule || '—') : '—';
+  const seen = f ? (cls[f.rule] || ruleName(f.rule) || f.rule_nm || '—') : '—';
   const m2 = (e) => (e && e.value != null ? `${nf(Math.round(e.value))}㎡${K.sig(e)}` : '—');
   const pct = f?.evid_pct?.value;
   const body = h('div.xc-parcel', {},
-    h('p.xc-tags', {}, h('span.t-chip', { text: reviewed ? '✓ 확인됨' : 'AI 분석 · 확인 전', 'data-lv': reviewed ? undefined : 'wait' }), f ? h('span.t-chip', { text: S.ruleDefs[f.rule]?.name || f.rule_nm || '' }) : null),
+    h('p.xc-tags', {}, h('span.t-chip', { text: reviewed ? '✓ 확인됨' : 'AI 분석 · 확인 전', 'data-lv': reviewed ? undefined : 'wait' }), f && (ruleName(f.rule) || f.rule_nm) ? h('span.t-chip', { text: ruleName(f.rule) || f.rule_nm }) : null),
     h('dl.xc-pair', {},
       h('div', {}, h('dt', { text: '대장' }), h('dd', { html: `<b>${esc(L.jimok_nm || L.jimok || '—')}</b> ${m2(L.area_m2)}` })),
       h('div.ai', {}, h('dt', { text: 'AI 분석' }), h('dd', { html: f ? `<b>${esc(seen)}</b> ${m2(f.evid_m2)}${pct != null ? ` · ${Math.round(pct)}%` : ''}` : '—' }))),
@@ -1025,8 +1160,8 @@ function applyLayers() {
 }
 function renderRules() {
   const by = S.last?.by_rule || {};
-  const rows = ALL_RULES.filter((k) => S.ruleDefs[k]).map((k) => h('button.xc-row', { type: 'button', 'aria-pressed': String(S.cond.rule === k), onclick: () => setCond({ rule: S.cond.rule === k ? null : k }) },
-    h('i.xc-rd'), h('span', { text: S.ruleDefs[k].name }), h('em.num', { text: by[k]?.value != null ? nf(by[k].value) : '' })));
+  const rows = ALL_RULES.filter((k) => S.ruleDefs[k] && ruleName(k)).map((k) => h('button.xc-row', { type: 'button', 'aria-pressed': String(S.cond.rule === k), onclick: () => setCond({ rule: S.cond.rule === k ? null : k }) },
+    h('i.xc-rd'), h('span', { text: ruleName(k) }), h('em.num', { text: by[k]?.value != null ? nf(by[k].value) : '' })));
   showPop('규칙', h('div.xc-rows-p', {}, ...rows));
 }
 function renderSweep() {

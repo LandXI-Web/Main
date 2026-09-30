@@ -15,7 +15,9 @@
 .dp-plant svg{width:16px;height:16px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round}
 
 /* 지도 위 점(지역) — 사진 위 흰 글자 · 운영 = 잉크 채움 · 시범 = 흰 채움 · 이식 요청 = 액센트 고리 맥박 */
-.dp-pin{position:relative;display:flex;align-items:center;gap:8px;cursor:pointer;transform:translate(-9px,0)}
+/* 표식 = MapLibre 마커(.maplibregl-marker 가 position:absolute 로 지도 좌표에 놓는다) — 여기서 position·transform 을 덮으면
+   표식이 문서 흐름에 쌓여 아래로 밀렸다(r3-train 3차: 증평이 남원 남쪽에). 점 가운데 맞춤은 마커 offset(-9px) 으로 한다 */
+.dp-pin{display:flex;align-items:center;gap:8px;cursor:pointer}
 .dp-pin i{position:relative;width:18px;height:18px;border-radius:50%;box-sizing:border-box;background:#fff;border:0;box-shadow:0 1px 4px rgba(0,0,0,.35);transition:transform var(--d-380) var(--e-ui)}
 .dp-pin[data-stage="pilot"] i{background:none;border:2.5px solid #fff}  /* 명세·콘솔 기호 한 벌: ● 운영 ○ 시범 ◌ 이식 요청 */
 .dp-pin[data-stage="draft"] i{background:none;border:2.5px dashed #fff}
@@ -162,3 +164,7 @@ body.t .k-drawer.is-closing{opacity:1;transform:translateX(calc(100% + 24px))}
   body.t .k-drawer.is-open{transform:none}
   body.t .k-drawer.is-closing{transform:translateY(100%)}
 }
+
+/* r3-train 3차 — 적용 전 점검 한 줄(서비스 모델 × 지역 영상 해상도) */
+.dp-fit{margin:8px 0 0;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub);word-break:keep-all}
+.dp-fit[data-lv="warn"]{color:var(--warn)}

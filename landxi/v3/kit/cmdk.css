@@ -13,6 +13,8 @@ kbd.k-ck-k,.k-ck-btn kbd{display:inline-flex;align-items:center;height:24px;padd
 .k-ck-plan li::before{content:counter(s);width:20px;height:20px;border-radius:50%;border:1.5px solid var(--rule);display:inline-flex;align-items:center;justify-content:center;font:500 11px/1 var(--font-num);color:var(--mute)}
 .k-ck-plan li.is-done{color:var(--ink)}
 .k-ck-plan li.is-done::before{content:"✓";background:var(--ink);border-color:var(--ink);color:#fff}
+.k-ck-plan li.is-fail{color:var(--ink)}
+.k-ck-plan li.is-fail::before{content:"!";background:transparent;border-color:var(--warn);color:var(--warn);font-weight:700}
 .k-ck-c{padding:16px 20px;border-top:1px solid var(--rule);display:flex;align-items:center;gap:16px}
 .k-ck-cq{flex:1;margin:0;font:500 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--ink)}
 .k-ck-cb{display:flex;gap:8px}

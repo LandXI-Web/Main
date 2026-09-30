@@ -16,6 +16,8 @@ body.t { overflow: hidden; }
 /* ══ 등장 — 750 · e-cam · 40px · 스태거 120 (§4) ════════════════════ */
 .e { opacity: 0; transform: translateY(var(--enter-y)); transition: opacity var(--d-750) var(--e-cam), transform var(--d-750) var(--e-cam); }
 .is-ready .e { opacity: 1; transform: none; }
+/* 첫 프레임이 늦게 그려지는 탭(뒤에서 열린 탭 등)은 등장 없이 바로 보인다 — 폼이 빈 화면으로 남지 않게(r3-ops) */
+.no-enter .e, .no-enter .hero { transition: none !important; opacity: 1; transform: none; }
 .is-ready .door__top.e { transition-delay: 0ms; }
 .is-ready .door__h.e { transition-delay: 120ms; }
 .is-ready .door__lead.e { transition-delay: 240ms; }
@@ -61,6 +63,11 @@ body.t { overflow: hidden; }
 
 .msg { margin: 4px 0 0; font: 500 var(--fs-label)/var(--lh-label) var(--font-body); color: var(--warn); }
 .msg.t-in { animation: tin var(--d-380) var(--e-ui) both; }
+/* 늦음 안내(r3-ops M8) — 할 일 한 줄 + '다시 불러오기' */
+.slow { margin: 4px 0 0; }
+.slow__t { margin: 0; font: 500 var(--fs-label)/var(--lh-label) var(--font-body); color: var(--warn); }
+.slow__b { margin-top: 4px; font-size: var(--fs-label); }
+.slow.t-in { animation: tin var(--d-380) var(--e-ui) both; }
 @keyframes tin { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 /* 1차 행동 — 잉크 채움 44 · 폭 가득. 진행 막대(액센트)는 기다리는 동안만 */
@@ -239,5 +246,5 @@ body.t { overflow: hidden; }
   .seg__bar, .aux { transition: none; }
   .axis__ix li.on i { animation: none; width: 100%; }
   .hero__cover { transition: none; animation: none; }
-  .axis .t-in, .msg.t-in, .ask__c, .form.nudge, .fld--org:not([hidden]) { animation: none; }
+  .axis .t-in, .msg.t-in, .slow.t-in, .ask__c, .form.nudge, .fld--org:not([hidden]) { animation: none; }
 }

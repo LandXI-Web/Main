@@ -17,6 +17,7 @@ import { nf, df } from '../kit/i18n.js';
 import { h, esc, api, API, session, isEnvelope, hasRoute } from '../kit/util.js';
 import { sse } from '../../shared/api-v1.js';
 import { summary, stageOf } from '../lx-console/summary.js';
+import { openFlow } from './flow.js';
 
 const who = await gate('lx-train');
 const CFG = await fetch(new URL('./tasks.json', import.meta.url)).then((r) => r.json());
@@ -39,8 +40,12 @@ const S = shell({ who, home: 'lx-train', rail: { kind: 'steps', items: RAIL, cur
 devDrawer({ who });
 
 const grid = h('div.tr-grid', { role: 'list' });
-const pane = h('div.tr-pane', {}, h('header.tr-h', {}, h('h1.t-h3.tr-title', { text: '② 학습 · 업무별 모델' })), grid);
+const newBtn = h('button.t-btn.tr-new', { type: 'button', text: '새 모델 만들기' });
+const pane = h('div.tr-pane', {}, h('header.tr-h', {}, h('h1.t-h3.tr-title', { text: '② 학습 · 업무별 모델' }), newBtn), grid);
 S.main.append(pane);
+/* 원스톱(r3-train): 데이터 올리기 → 라벨 확인 → 학습 → 결과 확인·등록 → 서비스 만들기 → 다른 지역에 적용 */
+newBtn.addEventListener('click', () => openFlow({ host: S.main, who }));
+if (q0.get('flow')) setTimeout(() => openFlow({ host: S.main, who }), 0);
 
 /* 로드 전: 카드 자리(이름만 · 검은 막대 0) */
 const cardEls = new Map();

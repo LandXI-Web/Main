@@ -463,7 +463,7 @@ async def vlm_describe(args: dict, ctx) -> Out:
     out.ui_actions.append({"op": "map_flyto", "bbox": b, "center": center, "pnu": t.get("pnu")})
     out.raw = {**(out.raw or {}), "vlm": {"lines": pr["lines"], "risk": pr["risk_level"], "match": pr["match_level"], "tokens": vr.tokens,
                                           "power_ok": vr.power.get("ok"), "gpu_jobs_at_start": vr.gpu_jobs_at_start}}
-    out.answer = PARA.join([("대상: " if lang == "ko" else "Parcel: ") + addr] + pr["lines"] + [f"({TAG[lang]})"])      # 직행(ROUTE)일 때 런타임 답 = 세 줄 그대로 + 꼬리표(LLM 한 번 더 부르지 않음)
+    out.answer = PARA.join([("대상: " if lang == "ko" else "Target: ") + addr] + pr["lines"] + [f"({TAG[lang]})"])      # 직행(ROUTE)일 때 런타임 답 = 세 줄 그대로 + 꼬리표(LLM 한 번 더 부르지 않음)
     out.data = {("대상" if lang == "ko" else "target"): addr, ("영상" if lang == "ko" else "images"): labels,
                 ("의견 세 줄" if lang == "ko" else "three lines"): pr["lines"],
                 ("꼬리표" if lang == "ko" else "tag"): TAG[lang],
@@ -503,7 +503,9 @@ def jibun_in(text: str) -> str | None:
 _KNUM = {"첫": 1, "두": 2, "세": 3, "네": 4, "다섯": 5, "여섯": 6, "일곱": 7, "여덟": 8, "아홉": 9, "열": 10}
 _ENUM = {"first": 1, "second": 2, "third": 3, "fourth": 4, "fifth": 5, "top": 1}
 REF_RANK = re.compile(r"(?<![\d-])(\d{1,2})\s*(?:위|번째|등)(?![가-힣])|(?<![\d-])(\d{1,2})\s*번\s*(?:필지|의심)|(첫|두|세|네|다섯|여섯|일곱|여덟|아홉|열)\s*번째|"
-                      r"\b(first|second|third|fourth|fifth|top)\b(?:[\s-]*(?:ranked|flagged|suspect))*\s+parcel|\b(?:no\.?|#)\s*(\d{1,2})\b", re.I)
+                      r"\b(first|second|third|fourth|fifth|top)\b(?:[\s-]*(?:ranked|flagged|suspect))*\s+(?:parcel|lot|district|one)|\b(?:no\.?|#)\s*(\d{1,2})\b|"
+                      r"(?<![\d-])(\d{1,2})(?:st|nd|rd|th)\b(?:[\s-]*(?:ranked|flagged|suspect))*\s+(?:parcel|lot|district|one)|"
+                      r"\b(?:parcel|rank|number)\s+(?:no\.?\s*|#\s*)?(\d{1,2})\b(?!\s*-)", re.I)
 REF_THIS = re.compile(r"(?:(?<![가-힣])(?:그|이|저)|해당|방금|앞의?|위의?|선택한|고른|말한|찾은)\s*(?:의심\s*)?필지|\b(?:that|this|the same|selected)\s+parcel", re.I)
 
 
@@ -517,8 +519,8 @@ def ref_rank(q: str) -> tuple[int, bool]:
             return _KNUM[m.group(3)], True
         if m.group(4):
             return _ENUM[m.group(4).lower()], True
-        if m.group(5):
-            return int(m.group(5)), True
+        if m.group(5) or m.group(6) or m.group(7):
+            return int(m.group(5) or m.group(6) or m.group(7)), True
     return (1, False) if REF_THIS.search(q or "") else (0, False)
 
 

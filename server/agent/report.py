@@ -39,7 +39,17 @@ WRITER = """너는 지자체 실태조사 보고서 초안 작성자다(Land-XI 
 - 필지는 주소 글자와 인용 [n] 으로 가리킨다. 리 이름·지번 바로 뒤에 집계 자리표를 붙이지 않는다. 필지 봉투는 그 필지 [n] 을 인용한 문장에서만 쓴다.
 - '위법'이라 단정하지 않는다. '현장조사 대상 후보'로 쓴다. 조치 제안에 'AI 추론 · 검수 전 · 현장 확인 전 · 위법 판정 아님'을 한 번 넣는다.
 - 법령 조문은 쓰지 않는다(⑤ 법적 근거 칸이 조문 원문을 따로 싣는다).
+- 규칙은 코드(R1 등) 대신 규칙 이름으로 쓴다. 지역 이름은 한 번만 쓴다('○○면의 ○○면' 금지).
 - 보고체(~함 · ~임 또는 ~습니다) 한 가지로."""
+
+
+def _rule_words(s: str) -> str:
+    """글 속 규칙 코드 → 규칙 이름(사용자 말) — survey.report.plain_rules 와 같은 규칙."""
+    try:
+        from survey.report import plain_rules
+        return plain_rules(s)
+    except Exception:  # noqa: BLE001
+        return s
 
 
 def _meaning(eid: str, ctx: Ctx) -> str:
@@ -248,12 +258,12 @@ def build_docx_local(emd: str, emd_cd: str, rule: str | None, narrative_plain: s
 
     from .tools.survey import RULE_NM
     rn = RULE_NM.get(rule or "") if rule else None
-    h(f"{emd} 실태조사 초안" + (f" — {rule} {rn}" if rn else ""), 0)
+    h(f"{emd} 실태조사 초안" + (f" — {rn}" if rn else ""), 0)
     meta = doc.add_paragraph()
     meta.add_run(f"초안 · 검토 필요 · {FIXED}\n").bold = True
     meta.add_run(f"대상 {emd} · 연속지적도 × AI 영상 분석 · 판단 기준값 [추정 초기값] · AI 가 작성한 초안(사람 확인 필요) · {dt.datetime.now(KST):%Y-%m-%d %H:%M}")
     h("① 개요 · ② 소견 · ⑥ 조치 제안", 1)
-    for para in narrative_plain.split("\n"):
+    for para in _rule_words(narrative_plain).split("\n"):
         t = para.strip()
         if not t:
             continue
@@ -286,7 +296,7 @@ def build_docx_local(emd: str, emd_cd: str, rule: str | None, narrative_plain: s
         row[0].text = f"[{c['n']}]"
         row[1].text = c.get("addr") or ""
         row[2].text = c.get("pnu") or ""
-        row[3].text = f"{c.get('rule') or ''} {c.get('priority') or ''}"
+        row[3].text = _rule_words(f"{c.get('rule') or ''} {c.get('priority') or ''}")
         row[4].text = fmt_env(ev[0]) if len(ev) > 0 and ev[0] else "—"
         row[5].text = fmt_env(ev[2]) if len(ev) > 2 and ev[2] else "—"
     h("④ 근거 영상", 1)
@@ -300,7 +310,7 @@ def build_docx_local(emd: str, emd_cd: str, rule: str | None, narrative_plain: s
         doc.add_paragraph("법령 데이터에 없습니다")
     h("근거 목록", 1)
     for c in ctx.citations:
-        doc.add_paragraph(f"[{c['n']}] {c.get('label') or c.get('addr') or ''}" + (f" · PNU {c['pnu']}" if c.get("pnu") else ""))
+        doc.add_paragraph(_rule_words(f"[{c['n']}] {c.get('label') or c.get('addr') or ''}") + (f" · PNU {c['pnu']}" if c.get("pnu") else ""))
     foot = doc.add_paragraph()
     foot.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     foot.add_run(f"{FIXED} · 소유자 성명 없음(연속지적도에 없음)").italic = True
@@ -342,8 +352,16 @@ def _same_meaning(meaning: str, label: str, m_rules: set[str]) -> bool:
     for q, need in quals:
         if (q in label) != any(n in meaning for n in need):
             return False
-    l_rules = set(re.findall(r"R[1-6]", label))
+    l_rules = set(re.findall(r"R[1-6]", label)) | {r for r, nm in _rule_names().items() if nm and nm in label}
     return not (l_rules and m_rules and not (l_rules & m_rules))
+
+
+def _rule_names() -> dict:
+    try:
+        from survey.report import rule_name
+        return {r: rule_name(r) for r in ("R1", "R2", "R3", "R4", "R5", "R6")}
+    except Exception:  # noqa: BLE001
+        return {}
 
 
 def _f2s_table_ptr(eid: str, ctx: Ctx, f2s: dict) -> str | None:
@@ -356,7 +374,7 @@ def _f2s_table_ptr(eid: str, ctx: Ctx, f2s: dict) -> str | None:
             continue
         for col in ([gm.group(1)] if gm else ["total"]):
             if (row.get(col) or {}).get("value") == v:
-                return f"② 집계표 {row.get('rule')} {col if col != 'total' else '계'}"
+                return f"② 집계표 {row.get('name') or row.get('rule') or ''} {col if col != 'total' else '계'}".replace("  ", " ")   # 규칙 이름(서식 표) · 이름이 없는 표만 코드(문서에 넣을 때 plain_rules 가 이름으로)
     return None
 
 
@@ -537,6 +555,31 @@ def _codes(c) -> set:
     return set(SC.codes_of(str(c))) | {str(c)}
 
 
+NO_DATA = "해당 지역 데이터가 없습니다"
+NOT_TENANT = "이 기관의 데이터가 아닙니다"
+
+
+def in_jurisdiction(ctx: Ctx, sgg_cd: str) -> bool:
+    """기관 관할 시군구인가(regions.tenant_scope · 실태조사 결과 유무와 무관). LX 계정은 전국."""
+    p = ctx.principal
+    if getattr(p, "realm", None) != "tenant":
+        return True
+    from landxi_api import regions as RG
+    from .tools import scope as SC
+    sc = RG.tenant_scope(getattr(p, "tenant_id", None))
+    return any(RG.in_scope(c, sc) for c in (SC.codes_of(sgg_cd) or [sgg_cd]))
+
+
+def guard_of(ctx: Ctx, hits: list[dict]) -> dict:
+    """말한 시군구에 실태조사 결과가 없을 때 — 관할 안이면 no_data + 다음 할 일, 관할 밖이면 forbidden(plan 3.2 문구 그대로)."""
+    inside = [h for h in hits if in_jurisdiction(ctx, h["sgg_cd"])]
+    if inside:
+        nm = inside[0].get("name") or inside[0]["sgg_cd"]
+        return {"error": "no_data", "message": NO_DATA, "region": nm, "sgg_cd": inside[0]["sgg_cd"],
+                "next": f"XI맵에서 {nm} AI 분석을 먼저 실행하세요"}
+    return {"error": "forbidden", "message": NOT_TENANT}
+
+
 async def resolve_target(ctx: Ctx, region=None, emd=None, text: str | None = None) -> dict:
     """보고서 대상 = 질문(인자·문장) → 화면 현재 지역 → 기관 관할이 한 곳이면 그곳 → 없으면 '지역을 알려 주세요'.
     반환 {level: sgg|emd, code, name, sgg, sgg_name, place} 또는 {error, message}. 지역 고정값 없음."""
@@ -559,7 +602,7 @@ async def resolve_target(ctx: Ctx, region=None, emd=None, text: str | None = Non
             return out_emd(e) if e else {"error": "no_data", "message": "해당 지역 데이터가 없습니다"}
         if re.fullmatch(r"\d{5}", c):
             s = next((x for x in sg if _codes(x["sgg_cd"]) & _codes(c)), None)
-            return out_sgg(s) if s else {"error": "no_data", "message": "해당 지역 데이터가 없습니다"}
+            return out_sgg(s) if s else guard_of(ctx, SC.resolve(c) or [{"sgg_cd": c, "name": SC.name_of(c) or c}])
     # ② 이름(질문 문장 · 인자)
     named = [x for x in sg if x["name"] and (x["name"] in blob or (_stem(x["name"]) and re.search(re.escape(_stem(x["name"])) + r"(?![가-힣]{2,}[시군구])", blob)))]
     if not named:
@@ -569,9 +612,7 @@ async def resolve_target(ctx: Ctx, region=None, emd=None, text: str | None = Non
                 continue
             inside = [x for x in sg if any(_codes(h["sgg_cd"]) & _codes(x["sgg_cd"]) for h in hits)]
             if not inside:
-                if ctx.principal.realm == "tenant":
-                    return {"error": "forbidden", "message": "이 기관의 데이터가 아닙니다"}
-                return {"error": "no_data", "message": "해당 지역 데이터가 없습니다"}
+                return guard_of(ctx, hits)
             named = inside
             break
     ctx_reg = str((ctx.context or {}).get("region") or (ctx.context or {}).get("sgg_cd") or "")
@@ -614,6 +655,35 @@ async def compose_docx(ctx: Ctx, tgt: dict, rule: str | None = None, top: int = 
     (d / "draft.docx").write_bytes(blob)
     return {"json": j, "bytes": len(blob), "filename": fname, "href": file_href(ctx.run_id, fname),
             "docx_url": f"/api/v1/agent/runs/{ctx.run_id}/draft.docx", "place": j["place"]}
+
+
+async def compose_letter(ctx: Ctx, tgt: dict) -> dict:
+    """말로 요청한 공문 초안 — survey.report.render_letter(대상 필지 수 = '현장 확인 필요' 한 출처) → run 폴더."""
+    import asyncio
+    from survey import report as s_report
+    p = ctx.principal
+    realm, tenant = p.realm, _tenant(p)
+
+    def build():
+        d = s_report.collect_letter(tgt["code"], realm, tenant)
+        blob, fname, j = s_report.render_letter(d)
+        return j, blob, fname
+    j, blob, fname = await asyncio.to_thread(build)
+    d = config.ARTIFACT_DIR / ctx.run_id
+    d.mkdir(parents=True, exist_ok=True)
+    (d / fname).write_bytes(blob)
+    return {"json": j, "bytes": len(blob), "filename": fname, "href": file_href(ctx.run_id, fname), "place": j["place"]}
+
+
+_DUP_PLACE = re.compile(r"([가-힣]{2,}(?:시|군|구|읍|면|동|리))(?:의|에서의)?\s+\1(?![가-힣])")
+
+
+def dedupe_place(md: str) -> str:
+    """'도암면의 도암면 의심 필지' 처럼 같은 지역 이름이 겹친 곳을 한 번으로(모델 서술 · 봉투 뜻 복창)."""
+    prev = None
+    while prev != md:
+        prev, md = md, _DUP_PLACE.sub(r"\1", md)
+    return md
 
 
 async def draft(ctx: Ctx, body: dict):
@@ -672,7 +742,7 @@ async def draft(ctx: Ctx, body: dict):
     await persist_tool(ctx, step3)
     await emit(ctx, "agent.tool.result", {"i": 3, "tool": "llm_write", "ok": True, "ms": ms, "source": f"{res.model} · {res.backend}",
                                           "summary": {}, "ui_actions": [], "first_token_ms": res.first_token_ms, "tps": res.tps})
-    md, uncited = _auto_cite(res.content, ctx)
+    md, uncited = _auto_cite(dedupe_place(_rule_words(res.content)), ctx)
     if uncited:
         md, uncited = await _repair_cites(ctx, md, uncited)
     # ④ 검토: 숫자 검증기(strict — 그 문장의 인용 봉투로만 승격 · % 는 인용 필지 ratio 만) + 봉투 뜻 검사(규칙 + 교정자 표)

@@ -10,6 +10,18 @@ from . import Out, ToolError
 from . import scope as S
 
 
+def _rule_nm(f: dict) -> str:
+    """규칙 이름(코드 R1 · L1 대신) — 결과 행의 이름 → 대장 규칙 파일 이름 → 일반 이름."""
+    nm = f.get("rule_nm") or f.get("rule_name") or (f.get("explain") or {}).get("name")
+    if nm:
+        return str(nm)
+    rid = str(f.get("rule") or "")
+    if rid.startswith("L"):
+        from .ledger_findings import _rule_name
+        return _rule_name(rid)
+    return "실태조사 의심 규칙"
+
+
 async def parcel_lookup(args: dict, ctx) -> Out:
     p = ctx.principal
     pnu = re.sub(r"\D", "", str(args.get("pnu") or ""))
@@ -49,7 +61,7 @@ async def parcel_lookup(args: dict, ctx) -> Out:
     for m in re.findall(r"\d+(?:-\d+)?", addr + " " + pnu):
         out.whitelist.add(m)
     out.data = {"pnu": pnu, "주소": addr, "지목": facts.get("jimok_nm") or facts.get("jimok"),
-                "의심": [{"규칙": f.get("rule"), "등급": f.get("priority"), "상태": f.get("state")} for f in j.get("findings") or []],
+                "의심": [{"규칙": _rule_nm(f), "등급": f.get("priority"), "상태": f.get("state")} for f in j.get("findings") or []],
                 "대장": [{"종류": x.get("kind_label"), "값": x.get("values")} for x in j.get("ledger") or []] or "올린 대장에 없음",
                 "이력": j.get("history_summary") or j.get("history_note"), "소유자": "제공하지 않음(성명 없음)"}
     ll = None

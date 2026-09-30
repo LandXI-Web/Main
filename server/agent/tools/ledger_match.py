@@ -7,6 +7,7 @@ from __future__ import annotations
 from collections import Counter
 
 from . import Out, ToolError
+from .ledger_findings import _rule_name
 from .ledger_ingest import KIND_KO, latest_import, tenant_for
 
 LOW = 50.0
@@ -34,12 +35,12 @@ async def ledger_match(args: dict, ctx) -> Out:
     out.env("matched", "필지에 붙은 행", full["matched"])
     out.env("matched_pct", "결합률", full["matched_pct"])
     for k, v in (full.get("by_step") or {}).items():
-        out.env(f"step_{k}", f"{ {'pnu': 'PNU 직접', 'jibun': '지번 해석', 'geom': '좌표', 'vworld': 'V-World 조회'}.get(k, k)}로 붙은 행", v)
+        out.env(f"step_{k}", f"{ {'pnu': 'PNU 직접', 'jibun': '지번 해석', 'geom': '좌표', 'vworld': '공개 자료 조회'}.get(k, k)}로 붙은 행", v)
     reasons = Counter((u.get("reason") or "사유 없음") for u in (full.get("unmatched") or []))
     out.data = {"import_id": full["import_id"], "대장": KIND_KO.get(full["kind"], full["kind"]), "미매칭 사유(상위)": reasons.most_common(3),
-                "의심(규칙 L-*)": {k: f"key:finding_{k}" for k in (full.get("findings") or {})}}
+                "대장 대조": {_rule_name(k): f"key:finding_{k}" for k in (full.get("findings") or {})}}
     for k, v in (full.get("findings") or {}).items():
-        out.env(f"finding_{k}", f"규칙 {k} 의심 필지", v)
+        out.env(f"finding_{k}", f"{_rule_name(k)} 필지(올린 대장 × AI 대조)", v)
     if pct is not None and pct < LOW:
         out.note = "결합률이 낮습니다 — 열 확인 표에서 지번·읍면동 열을 다시 고르세요"
         out.ui_actions.append({"op": "drawer_open", "kind": "ledger", "tab": "mapping", "import_id": full["import_id"]})

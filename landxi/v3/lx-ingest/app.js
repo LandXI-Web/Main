@@ -35,7 +35,9 @@ const pickCard = K.card({ map: true, cls: 'lxi-pick', body: pickEl });
 const stepsEl = K.h('div.lxi-steps');
 const joinBtn = K.h('button.t-btn.lxi-join', { type: 'button', text: '결합 실행', disabled: true });
 const bar = K.h('div.t-progress.lxi-bar', { role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': 100, hidden: true }, K.h('i'));
-const flowCard = K.card({ map: true, cls: 'lxi-flow', body: K.h('div.lxi-flow-in', {}, stepsEl, joinBtn) });
+/* 학습 표본(라벨 묶음) 올리기 — 원스톱 학습 서랍으로(r3-train) */
+const sampleBtn = K.h('a.t-btn.t-btn--2.lxi-sample', { href: V3 + 'lx-train/?flow=1', text: '학습 표본 올리기' });
+const flowCard = K.card({ map: true, cls: 'lxi-flow', body: K.h('div.lxi-flow-in', {}, stepsEl, joinBtn, sampleBtn) });
 flowCard.append(bar);
 stageEl.append(pickCard, flowCard);
 

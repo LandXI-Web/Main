@@ -134,11 +134,26 @@ export async function ledgerStore(who) {
     },
     /** 서버 기록 한 건 */
     detail: (id) => api(`${base}/${encodeURIComponent(id)}?limit=1000`),
-    /** 이어 열기 — 서버 최근 반입(정본) + 이 창의 캐시.
-        → { rec, server, from } · rec = 행이 있는 캐시(없으면 null) · server = GET …/{import_id} 기록 · from = 'server+cache' | 'server' | 'cache' */
+    /** 결합된 대장 필지 전체(서버 · 필지마다 대장 값) — 이어 연 창이 대장 행 전체로 결합표를 만든다(이름표 = 값) */
+    parcels: (id) => api(`${base}/${encodeURIComponent(id)}/parcels?geom=0&ledger=1`),
+    /** 이어 열기 — 서버가 기억하는 이 사람의 최근 대장(사람별 · 없으면 기관 최근 대장) + 이 창의 캐시(빨리 열기용).
+        → { rec, server, from, whose, uploader } | null(열 대장 없음) · 서버 조회가 실패하면 throw(화면이 '다시 여는 중 · 다시 시도')
+        rec = 이 창의 행 캐시(서버가 고른 반입과 같을 때만) · whose = 'mine' | 'org' · uploader = {role, date}(남이 올린 대장일 때) */
     async resume() {
       const local = await this.latest();
       if (!server) return local ? { rec: local, server: null, from: 'cache' } : null;
+      let j = null;
+      try { j = await api(base + '/recent'); }                         // 실패는 그대로 던진다(빈 '대장 올리기'로 떨어지지 않게)
+      catch (e) { if (e?.status !== 404) throw e; }                    // 옛 게이트웨이(경로 없음 → 반입 404)만 아래 옛 길로
+      if (j) {
+        const d = j.import || null;
+        if (d) {
+          const same = local?.server_id && local.server_id === d.import_id;
+          return { rec: same ? local : null, server: d, from: same ? 'server+cache' : 'server', whose: j.whose, uploader: j.uploader || null };
+        }
+        if (local && !local.server_id) return { rec: local, server: null, from: 'cache' };   // 서버 반입이 실패했던 창 — 이 창의 캐시만
+        return null;
+      }
       let items = [];
       try { items = ((await api(base + '?latest=1')) || {}).items || []; } catch { return local ? { rec: local, server: null, from: 'cache' } : null; }
       const srv = items.filter((x) => x.state === 'matched').sort((a, b) => String(b.confirmed_at || b.created_at).localeCompare(String(a.confirmed_at || a.created_at)))[0] || null;

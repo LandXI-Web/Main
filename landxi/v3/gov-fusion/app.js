@@ -166,7 +166,7 @@ const smallEl = h('div.gf-small');
 bigCard.append(bigEl, smallEl);
 stageEl.append(bigCard);
 const BIG0 = '대장은 농지 · AI는 건물';
-const big = K.bignum(bigEl, null, { label: BIG0, unit: '필지' });
+const big = K.bignum(bigEl, null, { label: BIG0, unit: '필지', animate: false });   // 숫자 한 출처 — 이전 대장 값에서 굴러가는 중간 숫자(177→73→67)를 보이지 않는다
 
 /* 관할 서비스 줄 — summary 한 출처 · 시군구마다 한 줄(누르면 ?region=시군구) */
 const svcBar = h('nav.gf-svcbar', { 'aria-label': '내 서비스' }); svcBar.hidden = true;
@@ -338,7 +338,7 @@ function toCols(out) {
   const ok = h('button.t-btn.gf-join', { type: 'button', text: '결합' });
   panes.cols.append(h('h3.gf-h', { text: '열 확인' }), tbl, h('p.gf-note', { text: '성명·연락처 열은 읽지 않습니다' }), h('div.gf-acts', {}, ok));
   const opt = (v) => ROLES.map(([k, l]) => `<option value="${k}"${k === v ? ' selected' : ''}>${esc(l)}</option>`).join('');
-  const sub = (r) => (r.role === 'skip' && VW_TWIN.test(r.col) ? 'V-World 값으로 대조' : r.sample);
+  const sub = (r) => (r.role === 'skip' && VW_TWIN.test(r.col) ? '공간정보 공개 자료와 대조' : r.sample);
   K.table(tbl, {
     cols: [
       { key: 'col', label: '파일의 열', fmt: (v, r) => `<b>${esc(v)}</b><small data-i="${r.i}">${esc(sub(S.cols[r.i]))}</small>` },
@@ -365,7 +365,8 @@ const mapping = () => Object.fromEntries(S.cols.map((c) => [c.col, c.role]));
 const colOf = (role) => (S.cols || []).find((c) => c.role === role)?.col;
 async function join({ resume = null } = {}) {
   if (resume) return reopen(resume);
-  S.srv = null; S.F = null; S.pendingId = null; S.srvWait = false;   // 새 대장 — 이전 반입 기록(다른 시군구일 수 있음)을 명령 바 문맥에 남기지 않는다
+  S.srv = null; S.F = null; S.pendingId = null; S.srvWait = false; S.srvRows = null; S.fullRows = false; S.uploader = null;   // 새 대장 — 이전 반입 기록(다른 시군구일 수 있음)을 명령 바 문맥에 남기지 않는다
+  big.loading();                                   // 이전 대장의 큰 숫자를 남기지 않는다(서버 값이 올 때까지 '—')
   joinPane();
   const t0 = performance.now();
   let rec;
@@ -410,6 +411,15 @@ async function join({ resume = null } = {}) {
   if (d) await takeServer(d);
   prog?.set({ progress: 1 });
   result(); tm('result');
+  // 스윕이 필지를 못 잡았으면(브라우저 결합에 경계가 없고 서버 필지로 결과가 선 경우) 서버 필지로 카메라를 옮기고 바탕을 칠한다 — 다시 연 창과 같은 화면
+  if (!S.ledgerBB && !S.query) {
+    const it = S.fused.filter((o) => o && o._bb);
+    if (it.length) {
+      for (const o of it) if (!painted.get(o._pnu)) setK(o._pnu, P.base);
+      S.ledgerBB = it.reduce((a, o) => grow(a, o._bb), NONE);
+      goResult(it.map((o) => o._bb), { ms: 1400, maxZoom: S.index ? 15.5 : 15, budget: 1200 });
+    }
+  }
   if (!resume) K.toast('결합을 마쳤습니다');
   if (!d) { S.srvWait = true; paintWait(); srvP.then((dd) => { S.srvWait = false; if (!dd || S.rec !== rec) { paintWait(); return; } return takeServer(dd).then(() => lateResult(rec)); }); }   // 서버가 늦으면 끝나는 대로 그 자리에서 바꾼다
 }
@@ -450,7 +460,7 @@ async function takeServer(d) {
   S.srv = d;
   if (KIND_LABEL[d.kind]) S.kind = KIND_LABEL[d.kind];
   if ((!S.index || S.index.server) && d.ai && d.ai.has) await useServerIndex(d).catch((e) => K.devlog('srv-index', String(e && e.message || e)));
-  if (S.index) { S.F = await loadFindings(d.import_id).catch(() => null); addServerRows(); applySets(); }
+  if (S.index) { S.F = await loadFindings(d.import_id).catch(() => null); await fillFromServer(d).catch(() => false); addServerRows(); applySets(); }
   S.capP = verifyCapped().catch(() => null).then(() => { if (S.srv === d) paintRate(); });   // V-World 확인은 결과를 막지 않는다
 }
 /* 대장 필지의 실태조사 결과 — 규칙별 집계(by_rule)와 필지 목록 */
@@ -484,8 +494,10 @@ async function verifyCapped() {
 function fuse(rec) {
   const st = colOf('state'), dt = colOf('date');
   const jc = (S.cols || []).filter((c) => c.role === 'jibun').map((c) => c.col);
+  const seen = new Set();                                                    // 같은 필지가 대장에 두 번 있어도 필지는 하나(서버 결합 필지와 같은 셈)
   S.fused = rec.rows.map((r, i) => {
-    const pnu = rec.match[i]; if (!pnu) return null;
+    const pnu = rec.match[i]; if (!pnu || seen.has(pnu)) return null;
+    seen.add(pnu);
     const ix = S.index && S.index.get(pnu);
     const txt = jc.map((c) => String(r[c] ?? '').trim()).filter(Boolean).join(' ');
     const a = parseAddr(txt, '');
@@ -514,7 +526,56 @@ function rowFromFinding(f, stCol, adCol) {
   else { o['V-World 지목'] = f.jimok || ''; o['V-World 용도지역'] = f.yongdo || ''; o['V-World 농업진흥'] = f.nongup || ''; o['V-World 면적(㎡)'] = +f.parcel_m2?.value || 0; }
   return o;
 }
-/* 새 기기 — 행이 없으면 서버 결과의 필지로 결합표를 만든다 */
+/* 서버가 대장에 이은 필지 한 줄(필지마다 대장 값 · 연속지적 · AI 값) — 이어 연 창도 대장 행 전체로 결합표를 만든다(이름표 = 값 · M7) */
+function rowFromParcel(p, stCol, adCol) {
+  const ix = S.index && S.index.get(p.pnu);
+  const lg = p.ledger || {};
+  const addr = String(p.addr || lg.jibun || '');
+  const a = parseAddr(addr, '');
+  const st = String(lg.status ?? '').trim() || VW_FIELDS['V-World 지목'](p) || '';
+  const o = { _pnu: p.pnu, _bb: ix ? ix.bb : p.bbox || null, _ri: a.ri || a.emd || '', _jb: [a.ri || a.emd, a.jb].filter(Boolean).join(' ') || addr || p.pnu, _state: st, _srv: 1 };
+  if (lg.date) o._date = lg.date;
+  if (stCol) o[stCol] = st;
+  if (adCol) o[adCol] = addr;
+  o[ADDR_ALL] = addr;
+  const src = ix ? ix.p : p;
+  if (ix || p.ai) for (const [k, fn] of Object.entries(AI_FIELDS)) o[k] = fn(src);
+  for (const [k, fn] of Object.entries(VW_FIELDS)) o[k] = fn(src);
+  return o;
+}
+/* 서버 결합 필지 목록(한 번 받아 둔다 · 서버 필지 색인이 이미 받았으면 그것) */
+async function serverParcels(d) {
+  if (!d?.import_id || d.state !== 'matched') return null;
+  if (S.srvRows?.id === d.import_id) return S.srvRows.items;
+  let items = null;
+  if (S.index?.server && S.index.id === d.import_id && S.index.size && [...S.index.map.values()][0]?.p?.ledger) items = [...S.index.map.values()].map((x) => x.p);
+  else { const j = await S.store.parcels(d.import_id).catch(() => null); items = j ? (j.features || []).map((f) => f.properties || {}).filter((x) => x.pnu) : null; }
+  if (items) S.srvRows = { id: d.import_id, items };
+  return items;
+}
+/* 결합표 = 서버가 대장에 이은 필지 집합(올린 창 · 이어 연 창 · 새 기기 모두 같은 필지를 센다).
+   이 창에 행이 있으면 서버가 더 이은 필지를 덧붙이고 서버가 잇지 못한 필지는 세지 않는다. 행이 없으면 서버 목록으로 만든다. */
+function applyServerRows(items) {
+  if (!items || !items.length) return false;
+  const set = new Set(items.map((x) => x.pnu));
+  if (S.rec?.rows) {
+    const st = colOf('state'), ad = (S.cols || []).find((c) => c.role === 'jibun')?.col;
+    S.fused = S.fused.map((o) => (o && set.has(o._pnu) ? o : null));
+    S.byPnu.clear(); S.fused.forEach((o, i) => { if (o) S.byPnu.set(o._pnu, i); });
+    for (const x of items) if (!S.byPnu.has(x.pnu)) { S.fused.push(rowFromParcel(x, st, ad)); S.byPnu.set(x.pnu, S.fused.length - 1); }
+  } else {
+    S.cols = [{ col: '상태', role: 'state' }, { col: '소재지', role: 'jibun' }];
+    S.fused = items.map((x) => rowFromParcel(x, '상태', '소재지'));
+    S.byPnu.clear(); S.fused.forEach((o, i) => S.byPnu.set(o._pnu, i));
+    S.fullRows = S.srv?.import_id || true;
+    if (S.F) for (const f of S.F.items) if (!S.byPnu.has(f.pnu)) { S.fused.push(rowFromFinding(f, '상태', '소재지')); S.byPnu.set(f.pnu, S.fused.length - 1); }
+  }
+  S.places = null;
+  applySets();
+  return true;
+}
+async function fillFromServer(d) { return applyServerRows(await serverParcels(d)); }
+/* 새 기기 — 서버 필지 목록을 못 받으면 서버 결과의 필지로 결합표를 만든다(대체) */
 function fuseFromFindings() {
   const F = S.F; if (!F) return;
   S.cols = [{ col: '상태', role: 'state' }, { col: '소재지', role: 'jibun' }];
@@ -573,7 +634,7 @@ function setK(pnu, k) {
 /* 채색 — 이 창에 행이 있으면 대장 필지 전체를 옅게(바탕), 아니면 결과 필지만 */
 function paint(fn) {
   if (!srcId()) return;
-  const base = S.rec?.rows ? P.base : 0;
+  const base = S.rec?.rows || S.fullRows ? P.base : 0;
   S.fused.forEach((o, i) => { if (!o) return; const k = fn(i) || base; if ((painted.get(o._pnu) || 0) !== k) setK(o._pnu, k); });
 }
 
@@ -620,7 +681,7 @@ function paintRate() {
   const r = rateNow();
   if (!r.final) { rateEl.append(h('span.t-label', { text: '대장 필지 결합 확인 중' })); return; }
   const pct = r.N ? Math.floor((1000 * r.n) / r.N) / 10 : 0;
-  const e = env(pct, '%', 'measured', '대장 × 연속지적 매칭(PNU → 지번 → V-World)', `대장 ${r.N}행`); e.as_of = r.as_of || e.as_of;
+  const e = env(pct, '%', 'measured', '대장 × 연속지적 매칭', `대장 ${r.N}행`); e.as_of = r.as_of || e.as_of;
   rateEl.append(h('span.t-label', { text: '대장 필지 결합' }), h('b.num', { text: `${nf(pct, 1)}%`, dataset: { metric: '대장 필지 결합', v: String(pct) } }), K.sigEl(e));
   const miss = r.N - r.n;
   if (miss > 0) {
@@ -633,12 +694,14 @@ function paintRate() {
     rateEl.append(h('span.gf-dot', { text: '·' }), b);
   }
 }
+const mdOf = (d) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(d || '')); return m ? `${+m[2]}월 ${+m[3]}일` : ''; };
 const fileName = () => S.rec?.name || String(S.srv?.filename || '').replace(/(\.(?:xlsx|xls|shp|zip|gpkg|geojson|json))\.csv$/i, '$1');
 
 function result() {
   pane('result');
   panes.result.innerHTML = '';
   panes.result.append(h('p.gf-file', { text: fileName() }));
+  if (S.uploader) panes.result.append(h('p.gf-note.gf-owner', { text: `기관 최근 대장 · ${S.uploader.role || '기관 담당자'}${S.uploader.date ? ' · ' + mdOf(S.uploader.date) : ''}` }));
   ansEl = h('div.gf-ans'); panes.result.append(ansEl);
   const tblEl = h('div.gf-table'); panes.result.append(tblEl);
   rateEl = h('div.gf-rh'); panes.result.append(rateEl); paintRate();
@@ -660,7 +723,7 @@ function result() {
     const known = S.fused.filter(Boolean);
     const n = r.final ? r.n : known.length;
     if (!r.final && !n && S.srvWait) ansEl.append(h('p.gf-ans-h', {}, h('span', { text: '대장 필지' }), h('span.gf-ans-n', { html: '<b class="num">—</b>' })));   // 서버가 잇는 중 — 0 으로 보이지 않게
-    else ansEl.append(h('p.gf-ans-h', {}, h('span', { text: '대장 필지' }), h('span.gf-ans-n', { html: `<b class="num" data-metric="대장 필지" data-v="${n}">${nf(n)}<small>필지</small></b>` }, K.sigEl(env(n, '필지', 'measured', '대장 × V-World 연속지적', '')))));
+    else ansEl.append(h('p.gf-ans-h', {}, h('span', { text: '대장 필지' }), h('span.gf-ans-n', { html: `<b class="num" data-metric="대장 필지" data-v="${n}">${nf(n)}<small>필지</small></b>` }, K.sigEl(env(n, '필지', 'measured', '대장 × 연속지적', '')))));
     if (S.rec?.rows) {
       const g = new Map(); for (const o of known) g.set(o._ri || '—', (g.get(o._ri || '—') || 0) + 1);
       const items = [...g.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([label, value]) => ({ label, value }));
@@ -756,7 +819,7 @@ async function openParcel(pnu, fly) {
   const body = h('div.gf-parcel');
   const vw = S.index ? [o['V-World 지목'], o['V-World 용도지역'], o['V-World 농업진흥']].filter(Boolean).join(' · ') || '—' : ((S.vwProps && S.vwProps.get(pnu)) || '—');
   const ai = S.index ? aiText(o) : noImagery() ? '영상 등록 필요' : 'AI 분석 전';
-  body.append(h('dl.gf-tri', { html: `<dt>대장</dt><dd>${esc(o._state || '—')}${o._date ? ` · ${esc(o._date)}` : ''}</dd><dt>AI 분석</dt><dd>${esc(ai)}</dd><dt>V-World</dt><dd>${esc(vw)}${o['V-World 면적(㎡)'] ? ` · ${nf(Math.round(o['V-World 면적(㎡)']))}㎡` : ''}</dd>` }));
+  body.append(h('dl.gf-tri', { html: `<dt>대장</dt><dd>${esc(o._state || '—')}${o._date ? ` · ${esc(o._date)}` : ''}</dd><dt>AI 분석</dt><dd>${esc(ai)}</dd><dt>공개 자료</dt><dd>${esc(vw)}${o['V-World 면적(㎡)'] ? ` · ${nf(Math.round(o['V-World 면적(㎡)']))}㎡` : ''}</dd>` }));
   const act = h('div.gf-act'); body.append(act);
   S.selPnu = pnu;
   const d = K.drawer({ title: o._jb, body, host: stageEl, slot: 'parcel', onClose: () => { if (S.selPnu === pnu) S.selPnu = null; stage.map.getLayer(hl) && stage.map.setFilter(hl, ['==', ['get', 'pnu'], '__']); } });
@@ -839,8 +902,10 @@ new MutationObserver(() => {
 }).observe(cmdk.el, { attributes: true, attributeFilter: ['data-state'] });
 /* ═════════════ 에이전트 지도 동작(plan 3.2) — 첫 화면 지도가 처리하고 kit:agent-action-done 을 낸다 ═════════════ */
 const LAYERS = { imagery: ['gf-hi', 'gf-lo'], parcels: ['lg-fill', 'lg-line', 'gv-fill', 'gv-line'], results: ['lg-fill', 'lg-line', 'gv-fill', 'gv-line'], findings: ['lg-fill', 'lg-line', 'gv-fill', 'gv-line', 'k-agent-f', 'k-agent-h', 'k-agent-l', 'k-agent-p'] };
-const done = (op, ok) => document.dispatchEvent(new CustomEvent('kit:agent-action-done', { detail: { op, ok: !!ok, by: 'gov-fusion' } }));
-async function onAgentAction(a) {
+/* 동작 끝 신호(plan 3.1) — 동작마다 한 번. 실패면 ok:false + 사용자 말 한 줄(reason) */
+const done = (op, ok, reason) => { document.dispatchEvent(new CustomEvent('kit:agent-action-done', { detail: { op, ok: !!ok, by: 'gov-fusion', ...(!ok && reason ? { reason } : {}) } })); return !!ok; };
+async function onAgentAction(a, once) {
+  const done = (op, ok, reason) => { once(ok, reason); return !!ok; };     // 이 동작의 끝 신호(한 번)
   await baseReady;
   const map = stage.map;
   switch (a.op) {
@@ -848,24 +913,27 @@ async function onAgentAction(a) {
       const r = a.bbox ? null : (S.regions || []).find((x) => String(x.sgg_cd) === String(a.sgg_cd || '') || x.name === a.name);
       const b = a.bbox || r?.bbox || null;
       if (b) goReady(b, { ms: 1800, maxZoom: a.emd ? 15 : 13 });                     // 읍면동 이동(fusion_goto)은 한 단계 더 가까이
-      return done(a.op, b);
+      return done(a.op, b, '그 지역을 지도에서 찾지 못했습니다');
     }
     case 'map_zoom': {
-      const z = Number.isFinite(+a.zoom) && a.zoom !== null && a.zoom !== undefined ? +a.zoom : map.getZoom() + (Number.isFinite(+a.delta) ? +a.delta : 1);
-      map.easeTo({ zoom: Math.max(5, Math.min(19, z)), duration: RM() ? 0 : 800 });
+      const z0 = map.getZoom();
+      const z = Number.isFinite(+a.zoom) && a.zoom !== null && a.zoom !== undefined ? +a.zoom : z0 + (Number.isFinite(+a.delta) ? +a.delta : 1);
+      const zz = Math.max(5, Math.min(19, z));
+      if (Math.abs(zz - z0) < 0.05) return done(a.op, false, zz >= z0 && z > z0 ? '더 확대할 수 없습니다' : z < z0 ? '더 축소할 수 없습니다' : '지도가 이미 그 배율입니다');
+      map.easeTo({ zoom: zz, duration: RM() ? 0 : 800 });
       return done(a.op, true);
     }
     case 'map_layer': {
       const ids = (LAYERS[a.layer] || []).filter((id) => map.getLayer(id));
       for (const id of ids) map.setLayoutProperty(id, 'visibility', a.on === false ? 'none' : 'visible');
-      return done(a.op, ids.length);
+      return done(a.op, ids.length, '이 화면에는 그 층이 없습니다');
     }
     case 'map_on': {
       const f = a.filter || {};
-      if (a.set && a.set !== 'survey/findings') return done(a.op, false);
+      if (a.set && a.set !== 'survey/findings') return done(a.op, false, '이 화면에서는 그 결과를 칠할 수 없습니다');
       if (f.ledger && !S.F && S.srvWait) { S.pendingOn = a; return done(a.op, true); }   // 서버 대조가 끝나는 대로 같은 필지를 칠한다(lateResult)
       if (f.ledger && paintLedgerOn(a)) return done(a.op, true);
-      return done(a.op, await paintTopSuspects(f.sgg_cd || S.askRegion || ledgerSgg()));   // 대장 대조가 없으면 그 지역 의심 필지(근거 면적순 상위)
+      return done(a.op, await paintTopSuspects(f.sgg_cd || S.askRegion || ledgerSgg()), '칠할 필지가 없습니다');   // 대장 대조가 없으면 그 지역 의심 필지(근거 면적순 상위)
     }
     case 'map_arrive': {
       const fs = a.features || [];
@@ -876,20 +944,20 @@ async function onAgentAction(a) {
         if (idx.length < fs.length) await stage.geo('agent', fc, 'ai');
         goReady(a.bbox || bboxOf(fc), { ms: 1600, maxZoom: 16, budget: 1200 });
       }
-      return done(a.op, fs.length);
+      return done(a.op, fs.length, '표시할 필지가 없습니다');
     }
     case 'map_flyto': {
       const pn = a.pnu ? String(a.pnu) : null;
       if (pn && S.byPnu.has(pn)) openParcel(pn, true);
       else if (a.bbox || a.center) goReady(a.bbox || [a.center[0] - 0.003, a.center[1] - 0.003, a.center[0] + 0.003, a.center[1] + 0.003], { ms: 1400, maxZoom: 17, budget: 1200 });
-      return done(a.op, a.bbox || a.center || (pn && S.byPnu.has(pn)));
+      return done(a.op, a.bbox || a.center || (pn && S.byPnu.has(pn)), '그 필지를 지도에서 찾지 못했습니다');
     }
     case 'parcel_card': {
       const pn = a.pnu ? String(a.pnu) : null;
       if (pn && S.byPnu.has(pn)) openParcel(pn, false);
-      return done(a.op, pn && S.byPnu.has(pn));
+      return done(a.op, pn && S.byPnu.has(pn), '그 필지는 올린 대장에 없습니다');
     }
-    case 'drawer_open': return done(a.op, await openDrawer(a));
+    case 'drawer_open': return done(a.op, await openDrawer(a), '열 내용이 없습니다');
     default: return null;
   }
 }
@@ -897,7 +965,9 @@ const HANDLED = new Set(['map_region', 'map_zoom', 'map_layer', 'map_on', 'map_a
 document.addEventListener('kit:agent-action', (e) => {
   const a = e.detail; if (!a || !a.op || !HANDLED.has(a.op)) return;
   e.preventDefault();                               // 첫 화면이 직접 처리하고 done 을 낸다(키트 기본과 두 번 움직이지 않게)
-  onAgentAction(a).catch(() => done(a.op, false));
+  let sent = false;                                   // 동작마다 끝 신호 한 번(예외가 나도 두 번 내지 않는다)
+  const once = (ok, reason) => { if (!sent) { sent = true; done(a.op, ok, reason); } };
+  onAgentAction(a, once).catch(() => once(false, '지도 동작을 마치지 못했습니다'));
 });
 /* 에이전트가 연 서랍 — 통계·의심 목록 = 읍면동별 의심 필지 막대(실태조사 집계 한 출처) · 보고서 = 보고서 화면으로 · 대장 = 올리기 */
 async function openDrawer(a) {
@@ -1023,7 +1093,7 @@ function ledgerSgg() {                                                          
 function regionOfText(q) { return regionOf(q, S.regions, S.emd); }          // 질문 속 관할 시군구 · 읍면동
 let asking = null;
 /* 대장 필터가 세는 대상의 이름 — 이 창에 대장 행이 있으면 올린 대장 필지, 새 기기(서버 결과로 만든 결합표)면 AI 결과가 있는 대장 필지 */
-function baseLabel() { return S.rec?.rows ? '올린 대장 필지' : 'AI 결과가 있는 대장 필지'; }
+function baseLabel() { return S.rec?.rows || S.fullRows ? '올린 대장 필지' : 'AI 결과가 있는 대장 필지'; }   // 결합표가 대장 필지 전체일 때만 '올린 대장 필지'
 function askCtx() {
   const jibs = (S.cols || []).filter((c) => c.role === 'jibun');
   const stCol = colOf('state'), adCol = jibs.length > 1 ? ADDR_ALL : jibs[0]?.col;
@@ -1061,7 +1131,7 @@ function askNoImagery(q) {
   S.query = { where, hits, label, focus: R.focus, lines };
   const hit = new Set(hits);
   paint((i) => (hit.has(i) ? P.q : P.base));
-  ansHead(label, hits.length, env(hits.length, '필지', 'measured', '대장 × V-World 연속지적', ''));
+  ansHead(label, hits.length, env(hits.length, '필지', 'measured', '대장 × 연속지적', ''));
   const g = new Map(); for (const i of hits) { const kk = S.fused[i]._ri || '—'; g.set(kk, (g.get(kk) || 0) + 1); }
   const items = [...g.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([l, value]) => ({ label: l, value }));
   if (items.length > 1) { const be = h('div'); ansEl.append(be); K.bars(be, { items, ai: true, unit: '필지' }); }
@@ -1094,11 +1164,12 @@ async function ask(q) {
     ans.innerHTML = hits.length
       ? `<b>${esc(lb.label)}</b> <span class="k-num" data-metric="${esc(lb.label)}" data-v="${hits.length}">${nf(hits.length)}<small>필지</small></span>`
       : '<b>조건에 맞는 필지가 없습니다</b>';
+    if (R.unmet) ans.insertAdjacentHTML('beforeend', `<p class="gf-ck-more">대장에 지목 열이 없어 '${esc(R.unmet)}' 조건은 빼고 셌습니다</p>`);   // 물어본 조건을 뺐으면 밝힌다
     applyQuery();
     return hits.length;
   };
   if (R.where.length) { show(R.where, R.focus, null); rec.answer_ms = Math.round(performance.now() - t0); rec.used = 'rule'; closeLater(1400); }
-  const onStep = R.where.length ? null : (i, s) => { const li = planEl.children[i]; if (li) { li.textContent = String(s).replace(/[.。]\s*$/, ''); li.classList.add('is-done'); } };
+  const onStep = R.where.length ? null : (i, s) => { const li = planEl.children[i]; if (li) { li.textContent = String(s).replace(/V-World\s*|브이월드\s*/gi, '').replace(/[.。]\s*$/, ''); li.classList.add('is-done'); } };
   let final = null, p = null, tries = 0;
   for (; tries < (R.where.length ? 1 : 2) && !final; tries++) {
     try { p = await plan(tries ? `${q} (질문에 있는 조건만)` : q, ctx, onStep, sig); }
@@ -1167,6 +1238,7 @@ function reset() {
   else if (src === 'gf-vw') stage.map.getSource('gf-vw').setData({ type: 'FeatureCollection', features: [] });
   if (S.index?.server) { S.index = null; vwPaint(false); }
   painted = new Map(); S.fused = []; S.byPnu.clear(); S.query = null; S.rec = null; S.places = null; S.ledgerBB = null; S.srv = null; S.F = null; S.capOk = null; S.pendingId = null; S.srvWait = false;
+  S.srvRows = null; S.fullRows = false; S.uploader = null;
   bigCard.hidden = true; if (S.index) ingestCard.hidden = true;
   K.closeAll(); dz.reset(); paintDrop(); pane('drop');
   goReady(S.region.bbox, { ms: 1600, maxZoom: S.index ? 12 : 11 });
@@ -1250,9 +1322,9 @@ function vwPaint(on) {
     map.setPaintProperty('gv-line', 'line-color', ['match', k, P.base, '#FFFFFF', P.fal, lock, warn]);
     map.setPaintProperty('gv-line', 'line-opacity', ['match', k, 0, 0, P.base, 0.35, 0.95]);
   } else {
-    map.setPaintProperty('gv-fill', 'fill-color', ai);
+    map.setPaintProperty('gv-fill', 'fill-color', ['match', k, -1, ai, ai]);         // 끈 때도 feature-state 식(상수 ↔ 식 전환 = maplibre 타일 칠 오류)
     map.setPaintProperty('gv-fill', 'fill-opacity', ['interpolate', ['linear'], ['zoom'], 11, ['match', k, 0, 0, P.q, 0.7, 0.4], 14, ['match', k, 0, 0, P.q, 0.45, 0.22], 16, ['match', k, 0, 0, P.q, 0.25, 0.1]]);
-    map.setPaintProperty('gv-line', 'line-color', '#FFFFFF');
+    map.setPaintProperty('gv-line', 'line-color', ['match', k, -1, '#FFFFFF', '#FFFFFF']);
     map.setPaintProperty('gv-line', 'line-opacity', ['match', k, 0, 0, 0.9]);
   }
 }
@@ -1266,8 +1338,9 @@ function mountVw(features) {
   map.addSource('gf-vw', { type: 'geojson', data: fc, promoteId: 'pnu' });
   const k = ['coalesce', ['feature-state', 'k'], 0];
   const ai = css('--ai');
-  map.addLayer({ id: 'gv-fill', type: 'fill', source: 'gf-vw', paint: { 'fill-color': ai, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 11, ['match', k, 0, 0, P.q, 0.7, 0.4], 14, ['match', k, 0, 0, P.q, 0.45, 0.22], 16, ['match', k, 0, 0, P.q, 0.25, 0.1]] } }, 'gf-sgg-shadow');
-  map.addLayer({ id: 'gv-line', type: 'line', source: 'gf-vw', paint: { 'line-color': '#FFFFFF', 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 0.4, 15, 1.4], 'line-opacity': ['match', k, 0, 0, 0.9] } }, 'gf-sgg-shadow');
+  // 칠 속성은 처음부터 feature-state 식 — vwPaint 가 켜고 끌 때 상수 ↔ 식으로 바뀌면 불러오는 타일에서 'expression.evaluate' 오류가 나고 지도 이동이 멈춘다
+  map.addLayer({ id: 'gv-fill', type: 'fill', source: 'gf-vw', paint: { 'fill-color': ['match', k, -1, ai, ai], 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 11, ['match', k, 0, 0, P.q, 0.7, 0.4], 14, ['match', k, 0, 0, P.q, 0.45, 0.22], 16, ['match', k, 0, 0, P.q, 0.25, 0.1]] } }, 'gf-sgg-shadow');
+  map.addLayer({ id: 'gv-line', type: 'line', source: 'gf-vw', paint: { 'line-color': ['match', k, -1, '#FFFFFF', '#FFFFFF'], 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 0.4, 15, 1.4], 'line-opacity': ['match', k, 0, 0, 0.9] } }, 'gf-sgg-shadow');
   map.addLayer({ id: 'gv-hl', type: 'line', source: 'gf-vw', filter: ['==', ['get', 'pnu'], '__'], paint: { 'line-color': '#FFFFFF', 'line-width': 3 } }, 'slot-overlay');
   map.on('click', 'gv-fill', (e) => { const f = e.features && e.features[0]; if (f && S.byPnu.has(f.properties.pnu)) openParcel(f.properties.pnu, false); });
   map.on('mousemove', 'gv-fill', (e) => { const f = e.features && e.features[0]; map.getCanvas().style.cursor = f && S.byPnu.has(f.properties.pnu) ? 'pointer' : ''; });
@@ -1280,14 +1353,14 @@ async function serverOpen(d) {
   S.rec = null; S.fLoading = true;
   await takeServer(d).catch(() => null); S.fLoading = false; tm('open-server');
   if (S.index && S.F) {
-    // 결과 필지 · 규칙 결과 · 용도지역은 서버 기록에서 곧바로 — AI 분석 색인(Ctrl K · 필지 카드)은 뒤에서 채운다
-    fuseFromFindings();
+    // 결합표 = 서버가 대장에 이은 필지 전체(대장 값 · 규칙 결과 · 용도지역) — AI 분석 색인(Ctrl K · 필지 카드)은 뒤에서 채운다
+    if (!S.fullRows) fuseFromFindings();
     result(); tm('result');
     const pts = S.fused.map((o) => o._bb).filter(Boolean);
     if (pts.length) goResult(pts, { ms: 900, maxZoom: 15, budget: 500 }).then(() => tm('open-cam'));
-    const emds = [...new Set(S.F.items.map((f) => String(f.pnu).slice(0, 8)))];
+    const emds = [...new Set(S.fused.map((o) => String(o._pnu).slice(0, 8)))];
     const bbs = emds.map((cd) => (S.emd.get(cd) || {}).bbox).filter(Boolean);
-    if (bbs.length) S.index.load(bbs).then(() => { tm('open-index'); if (S.rec || S.srv !== d) return; fuseFromFindings(); if (!S.query) showCat(S.cat); }).catch(() => null);
+    if (bbs.length) S.index.load(bbs).then(() => { tm('open-index'); if (S.rec || S.srv !== d) return; if (!(S.srvRows?.id === d.import_id && applyServerRows(S.srvRows.items))) fuseFromFindings(); if (!S.query) showCat(S.cat); }).catch(() => null);
     return;
   }
   if (!S.index) {
@@ -1323,7 +1396,7 @@ async function reopen(rec) {
     S.index.load(bbs.length ? bbs : [S.region.bbox]).then(() => {
       if (S.rec !== rec) return;
       rec.aiCache = S.index.dump(rec.match.filter(Boolean)); S.store.save(rec);
-      fuse(rec); addServerRows(); applySets(); if (!S.query) showCat(S.cat); if (!S.ledgerBB) cam();
+      fuse(rec); if (S.srvRows && S.srvRows.id === S.srv?.import_id) applyServerRows(S.srvRows.items); addServerRows(); applySets(); if (!S.query) showCat(S.cat); if (!S.ledgerBB) cam();
     }).catch(() => null);
   }
   if (!S.index && !rec.vwCache) {
@@ -1341,30 +1414,53 @@ if (await hasRoute('/events/tenant')) {
 }
 
 /* ═════════════ 시작 — 전국 → 관내 (최근 반입이 있으면 곧바로 이어 연다) ═════════════ */
-(async () => {
+async function resumeSafe() { try { return { ok: true, v: await S.store.resume() }; } catch (e) { K.devlog('resume', String(e && e.message || e)); return { ok: false }; } }
+/* 이어 열기 조회가 실패했을 때 — 빈 '대장 올리기' 대신 '다시 여는 중' + 다시 시도 한 번 */
+function reopenFail() {
+  panes.result.innerHTML = '';
+  const e = h('div'); panes.result.append(e);
+  K.empty(e, { kind: 'loading', title: '대장을 다시 여는 중', compact: true, action: { label: '다시 시도', onClick: (ev) => { if (ev?.currentTarget) ev.currentTarget.disabled = true; loadingPane(); openLast(resumeSafe()); } } });
+  eager(e);
+  pane('result');
+}
+/* 이 사람의 최근 대장(서버 기억)을 연다 — 캐시가 같은 반입이면 빨리, 아니면 서버 결합 필지로. 결합 중이면 끝나는 대로 */
+async function openLast(p) {
   const R = S.region;
-  const lastP = S.store.resume().catch(() => null);
-  if (R.hasFindings && inVW(R.bbox) && S.tiles !== null) {   // 서버가 '정적 필지 층 없음'(null)이라 하면 두드리지 않는다 — 새 시군구는 서버 필지 색인
-    const u = S.tiles || `/landxi/data/survey/${encodeURIComponent(who.me.tenant_id)}-parcel-survey.pmtiles`;
-    try { const r = await fetch(u, { method: 'HEAD', cache: 'no-store' }); if (r.ok) R.ai = u; } catch { /* AI 분석 전 관할 */ }
-  }
-  tm('head'); await mountLayers(); tm('layers');
-  const got = await lastP; tm('resume');
-  S.srv = got?.server || null; S.resumeFrom = got?.from || null;
+  let got = await p;
+  if (!got.ok) { await wait(1500); got = await resumeSafe(); }          // 한 번은 조용히 다시
+  if (!got.ok) { reopenFail(); return; }
+  const g = got.v; tm('resume');
+  S.srv = g?.server || null; S.resumeFrom = g?.from || null; S.whose = g?.whose || null; S.uploader = g?.uploader || null;
   if (S.srv && KIND_LABEL[S.srv.kind]) { S.kind = KIND_LABEL[S.srv.kind]; paintDrop(); }
-  const last = got?.rec;
-  S.sum = await sumP; tm('summary');
-  paintSvcBar();
-  if (!R.ai) showStatus();
-  if (R.focus) { pane('drop'); requestAnimationFrame(padStage); await goReady(R.bbox, { ms: 2400, maxZoom: 11, budget: 1800 }); return; }
+  const last = g?.rec;
   if (last && last.match && last.rows?.length) {
     S.rec = last; S.cols = (last.columns_guess || []).map((c) => ({ ...c, role: (last.mapping || {})[c.col] || c.role }));
     join({ resume: last });
     return;
+  }
+  if (S.srv && S.srv.state === 'matching') {                            // 올린 직후 새로 고친 창 — 결합이 끝나는 대로 연다
+    joinPane({ resume: true });
+    const d = await serverDone(S.srv.import_id);
+    if (d) { S.srv = d; serverOpen(d); return; }
+    S.srv = null;
   }
   if (S.srv) { serverOpen(S.srv); return; }
   if (MARK) S.store.forget();
   pane('drop');
   requestAnimationFrame(padStage);
   await goReady(R.bbox, { ms: 2400, maxZoom: R.ai ? 12 : 11, budget: 1800 });
+}
+(async () => {
+  const R = S.region;
+  const lastP = resumeSafe();
+  if (R.hasFindings && inVW(R.bbox) && S.tiles !== null) {   // 서버가 '정적 필지 층 없음'(null)이라 하면 두드리지 않는다 — 새 시군구는 서버 필지 색인
+    const u = S.tiles || `/landxi/data/survey/${encodeURIComponent(who.me.tenant_id)}-parcel-survey.pmtiles`;
+    try { const r = await fetch(u, { method: 'HEAD', cache: 'no-store' }); if (r.ok) R.ai = u; } catch { /* AI 분석 전 관할 */ }
+  }
+  tm('head'); await mountLayers(); tm('layers');
+  S.sum = await sumP; tm('summary');
+  paintSvcBar();
+  if (!R.ai) showStatus();
+  if (R.focus) { pane('drop'); requestAnimationFrame(padStage); await goReady(R.bbox, { ms: 2400, maxZoom: 11, budget: 1800 }); return; }
+  await openLast(lastP);
 })();

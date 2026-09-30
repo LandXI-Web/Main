@@ -49,7 +49,10 @@ export const regionName = (d) => {
   const p = ko.trim().split(/\s+/);          // 시도 이름이 규칙 밖(통합특별시 등)이어도 시군구만 — '여수시'
   return d.sgg_cd && p.length > 1 ? p.slice(1).join(' ') : ko;
 };
-export const cardName = (id) => (D.cards.find((c) => c.id === id)?.name || '').replace(/\s*\(해외\)$/, '').replace(/ 행정서비스$| 서비스$/, '').replace(/판독/g, 'AI 분석') || '서비스';
+/* 서비스 이름 — 직원 화면(lx-deploy workName)과 같은 규칙: 끝의 '서비스'·'행정서비스'·'(해외)'를 뗀 업무 이름 */
+export const cardName = (id) => (D.cards.find((c) => c.id === id)?.name || '').replace(/\s*\(해외\)$/, '').replace(/\s*(행정서비스|서비스)$/, '').replace(/판독/g, 'AI 분석') || '서비스';
+/** 기관 이름과 지역 이름이 같으면(남원시 기관 · 남원시) 한 번만 */
+const whoWhere = (d) => { const t = tenantName(d.tenant_id), g = regionName(d); return !g || t === g || t.includes(g) ? t : g.includes(t) ? g : `${t} ${g}`; };
 /** 배포 주체: 기관 배포 = 기관 이름 · LX 자체 배포 = 지역 이름 */
 export const whoOf = (d) => (d.tenant_id === 'lx' ? regionName(d) : tenantName(d.tenant_id));
 
@@ -58,7 +61,7 @@ export const canon = () => D.deploys.filter((d) => d.tenant_id !== 'lx-demo' && 
 
 const decidedSince = (d, since) => (d.approvals || []).some((a) => new Date(a.at).getTime() >= new Date(since || 0).getTime() - 1000);
 
-export const KIND = { deploy: '배포 승인', rule: '규칙 임계', quota: '쿼터 변경', port: '다른 지역 적용' };
+export const KIND = { deploy: '배포 승인', rule: '규칙 임계', quota: '쿼터 변경', port: '다른 지역 적용', model: '모델 등록' };
 const STAGE_KO = { draft: '초안', shadow: '검증', canary: '시범', ga: '운영', rolled_back: '롤백' };
 
 /** 결재 대기 — 큰 숫자 · 레일 · 결재 표가 모두 이 목록 하나를 센다.
@@ -98,14 +101,15 @@ function requesterOf(r, kind, sid) {
 function fromServer(r) {
   if ((r.state || 'pending') !== 'pending') return null;
   const act = r.payload?.action;
-  const kind = r.kind === 'deploy' ? (act === 'port' ? 'port' : 'deploy') : r.kind === 'deploy_ga' ? 'deploy' : r.kind === 'rule' ? 'rule' : r.kind === 'quota' ? 'quota' : null;
+  const kind = r.kind === 'deploy' ? (act === 'port' ? 'port' : 'deploy') : r.kind === 'deploy_ga' ? 'deploy' : r.kind === 'rule' ? 'rule' : r.kind === 'quota' ? 'quota' : r.kind === 'model' ? 'model' : null;
   if (!kind) return null;
   const sid = r.subject?.id || r.subject_id;
   const d = kind === 'deploy' || kind === 'port' ? D.deploys.find((x) => x.id === sid) : null;
   if (d && (d.tenant_id === 'lx-demo' || /-test(-\d+)?$/.test(d.id))) return null;
   let target, changes = [];
-  if (d) target = kind === 'port' && d.sgg_cd && d.tenant_id !== 'lx' ? `${tenantName(d.tenant_id)} ${regionName(d)} ${cardName(d.card_id)}` : `${whoOf(d)} ${cardName(d.card_id)}`;
+  if (d) target = kind === 'port' && d.sgg_cd && d.tenant_id !== 'lx' ? `${whoWhere(d)} ${cardName(d.card_id)}` : `${whoOf(d)} ${cardName(d.card_id)}`;
   else if (kind === 'quota') target = tenantName(sid);
+  else if (kind === 'model') target = String(r.payload?.name || '새 모델');     // 모델 id 는 화면에 내지 않는다
   else target = String(r.title || '').replace(PROV, '').replace(/\s*\(해외\)$/, '') || '—';
   if (kind === 'port') {
     const src = D.deploys.find((x) => x.id === (r.payload?.from_deploy_id || d?.from_deploy_id));
@@ -115,6 +119,10 @@ function fromServer(r) {
   } else if (kind === 'rule') {
     target = String(r.payload?.name || target);
     changes = Object.entries(r.payload?.thresholds || {}).slice(0, 4).map(([k, v]) => ['임계', '', `${k} ${fmtN(v)}`]);
+  } else if (kind === 'model') {
+    const m = r.payload?.metric;
+    changes = [['상태', '결과 확인 전', '등록']];
+    if (m != null) changes.push(['성능(학습 끝 검증)', '', Number(val(m)).toFixed(3)]);
   } else if (kind === 'quota') {
     const pl = r.payload || {}, cur = D.usage.find((u) => u.tenant_id === sid)?.dims?.[pl.dim] || {};
     changes = [['항목', '', QDIM[pl.dim] || '한도']];

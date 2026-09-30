@@ -116,5 +116,22 @@
   "unit.calls": "calls",
   "unit.tiles": "tiles",
   "unit.krw": "KRW",
-  "unit.krw_m2": "KRW/m²"
+  "unit.krw_m2": "KRW/m²",
+  "cmdk.act.in": "Couldn't zoom in",
+  "cmdk.act.out": "Couldn't zoom out",
+  "cmdk.act.zoom": "Couldn't change the zoom",
+  "cmdk.act.on": "Couldn't turn on the {layer} layer",
+  "cmdk.act.off": "Couldn't turn off the {layer} layer",
+  "cmdk.act.move": "Couldn't move the map",
+  "cmdk.act.view": "Couldn't change the map view",
+  "cmdk.act.fail": "Couldn't do that map action",
+  "cmdk.act.unconfirmed": "The map action could not be confirmed",
+  "cmdk.why.max": "already at the closest zoom",
+  "cmdk.why.min": "already at the widest zoom",
+  "cmdk.why.nomap": "this screen has no map",
+  "cmdk.why.nolayer": "this screen has no such layer",
+  "cmdk.layer.imagery": "imagery",
+  "cmdk.layer.results": "AI results",
+  "cmdk.layer.findings": "field-check",
+  "cmdk.layer.parcels": "parcel line"
 }

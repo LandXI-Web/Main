@@ -62,7 +62,8 @@ def plan(job: dict) -> list[dict]:
         from survey import nation as N
         rg = N.region(o.get("sgg_cd") or "")
         return [{"shard_id": f"sgg-{rg['sgg_cd']}", "bbox": [round(x, 6) for x in (rg.get("bbox") or [0, 0, 0, 0])],
-                 "params": {"stage": "build", "sgg_cd": rg["sgg_cd"], "ai_job_id": o.get("ai_job_id"), "force": bool(o.get("force"))}}]
+                 "params": {"stage": "build", "sgg_cd": rg["sgg_cd"], "ai_job_id": o.get("ai_job_id"), "force": bool(o.get("force")),
+                            "rules": o.get("rules") or None}}]          # 서비스에서 고른 규칙만(r3-train · 없으면 전체)
     # 견적 단계에서 거절(F2-S must_fix): 모르는 규칙 id · 임계 키/값 오류를 조용히 전 규칙으로 바꾸지 않는다 → 계약 v1.1-22 rule_requires_missing 400
     rs = o.get("rules")
     if rs is not None:
@@ -204,7 +205,8 @@ class Adapter:
         th.start()
         t0 = time.perf_counter()
         try:
-            out = N.build(p["sgg_cd"], p.get("ai_job_id"), build_job_id=job_id, progress=progress, force=bool(p.get("force")))
+            out = N.build(p["sgg_cd"], p.get("ai_job_id"), build_job_id=job_id, progress=progress, force=bool(p.get("force")),
+                          rules=p.get("rules") or None)
         finally:
             stop.set()
         ms = int((time.perf_counter() - t0) * 1000)

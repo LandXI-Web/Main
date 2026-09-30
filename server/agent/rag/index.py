@@ -81,6 +81,14 @@ def _strip(w: str) -> str:
     return re.sub(r"(으로|에서|에게|이란|이라|은요|는요|란|은|는|이|가|을|를|의|에|과|와|도|상)$", "", w) or w
 
 
+_NOUN_GA = re.compile(r"(허가|평가|단가|시가|지가|농가|대가|주가|휴가|추가)$")
+
+
+def _strip_noun(w: str) -> str:
+    """조사 떼기 — '점용허가'·'개발행위허가'의 '가'는 조사가 아니다."""
+    return w if _NOUN_GA.search(w) else _strip(w)
+
+
 def _core(q: str) -> set[str]:
     """덮임 검사용 질문 핵심 조각(낱말 두 글자 조각 · 법령 이름 · 불용어 제외)."""
     q2 = q
@@ -224,6 +232,8 @@ def _phrases(q: str) -> list[str]:
         q2 = q2.replace(a, " ")
     ws = []
     for w in re.findall(r"[가-힣]+", q2):
+        if _not_topic(w):                                 # 받는 · 다른 · 쓰려고 — 서술어를 건너 붙인다('전용 받는 허가' → '전용허가')
+            continue
         w = _strip(w)
         if len(w) >= 2 and w not in STOP:
             ws.append(w)
@@ -314,6 +324,70 @@ _ITEM = re.compile(r"^\s*(\d+(의\d+)?\.|[가-하]\.|\d+\)|[가-하]\))")       
 _OTHER_CITE = re.compile(r"「([^」]{1,80})」(?:\s*(?:제\s*\d+\s*조(?:의\s*\d+)?|제\s*\d+\s*항|제\s*\d+\s*호|[·ㆍ,및또는]|\s)+)*")
 
 
+# 동사 관형형(내줄 · 보는 · 받을 · 따른) — 대상 말이 아니다. 줄기 + 는/은/을/던, 또는 받침 없는 줄기에 ㄴ·ㄹ 받침.
+_VSTEM = ("내어주", "내주", "살펴보", "알아보", "적용되", "적용하", "검토하", "확인하", "판단하", "정하", "따르", "고르", "가리", "내리",
+          "빌려주", "빌리", "세우", "만들", "바꾸", "옮기", "걸리", "쓰이", "주", "보", "쓰", "하", "되", "두", "받", "있", "없", "않", "묻",
+          "찾", "살피", "들", "짓", "팔", "놓", "쌓", "깎", "허물", "부수", "메우", "캐", "파")
+
+# 풀어 쓴 말 → 조문 말(로컬 표 · 긴 꼴부터). 공무원이 흔히 풀어 묻는 꼴만 — 뜻이 하나로 정해지는 것만 넣는다.
+PLAIN = [
+    (re.compile(r"(?:다른|딴)\s*(?:용도|목적)\s*(?:으로|로)\s*(?:쓰|사용하|이용하|바꾸|바꿔|전환하)[가-힣]*"), "전용"),   # 농지를 다른 용도로 쓰려고 → 농지 전용
+    (re.compile(r"용도\s*(?:를|을)?\s*(?:바꾸|바꿔|바뀌|변경하)[가-힣]*"), "용도변경"),
+    (re.compile(r"농사\s*(?:를|도)?\s*(?:짓|지으|지을|지은|안\s*짓|않)[가-힣]*"), "경작"),                     # '짓 → 건축'보다 먼저
+    (re.compile(r"(?<![가-힣])(?:짓[가-힣]*|지으[가-힣]*|지을|지은)(?=\s|$)"), "건축"),                          # 건축물을 짓기 전에 → 건축물 건축
+    (re.compile(r"(?<![가-힣])(?:빌려\s*주[가-힣]*|빌려\s*줄|빌[려리린릴][가-힣]*)(?=\s|$)"), "임대차"),    # 농지를 빌려주는 · 빌려서 → 농지 임대차
+    (re.compile(r"(?<![가-힣])임대(?=[을를은는이가의도]?(?:\s|$))"), "임대차"),                                  # '농지 임대 조문' = 임대차
+    (re.compile(r"(?<![가-힣])(?:사려고|사려면|사기|살\s*때|사서|구입하[가-힣]*|매입하[가-힣]*)(?=\s|$)"), "취득"),   # 농지를 사기 전에 → 농지 취득
+    (re.compile(r"(?<![가-힣])(?:건물|집)(?=[을를은는이가의에도]?(?:\s|$))"), "건축물"),
+    (re.compile(r"(?<![가-힣])(?:산|임야)(?=[을를은는이가의에도]?(?:\s|$))"), "산지"),
+    (re.compile(r"(?<![가-힣])땅(?=[을를은는이가의에도과와]?(?:\s|$))"), "토지"),
+    (re.compile(r"(?<![가-힣])(?:나누|쪼개|쪼갤|나눌)[가-힣]*"), "분할"),
+]
+# 대상 말이 아닌 관형사·때를 나타내는 말(다른 · 전에 · 먼저 …) — 주제 명사가 아니다.
+FUNC = {"다른", "모든", "같은", "여러", "각종", "새로운", "이런", "그런", "저런", "이러한", "그러한", "전에", "후에", "뒤에", "다음에",
+        "이전에", "이후에", "때에", "동안", "먼저", "미리", "이미", "다시", "함께", "직접", "새로", "처음", "우선", "전", "후", "뒤", "남",
+        "남의", "남에게", "제가", "우리", "저희", "사람", "경우는", "때는"}
+_VERBAL = re.compile(r"(으려고|려고|고자|으러|도록|면서|거나|지만|(?:려|아|어|여|워|와|해)주[는은을던]?|(?:려|아|어|여|워|와|해)줄)$")
+
+
+def plain_query(q: str) -> str:
+    """풀어 쓴 질문을 조문 말로 — '농지를 다른 용도로 쓰려고' → '농지를 전용', '빌려주는 임대차' → '임대차 임대차'."""
+    for rx, rep in PLAIN:
+        q = rx.sub(rep, q)
+    return q
+
+
+def _not_topic(w: str) -> bool:
+    """주제 말이 아닌 낱말 — 동사 관형형(받는) · 관형사·때 말(다른 · 전에) · 명사형(짓기) · 연결형(쓰려고 · 빌려주는) · 서술어(되나요)."""
+    return (w in FUNC or is_adnominal(w) or _nominal_ki(w) or bool(_PRED.search(w))
+            or (len(w) >= 3 and bool(_VERBAL.search(w))))
+
+
+def _nominal_ki(w: str) -> bool:
+    """동사 명사형 '-기'(짓기 · 쓰기 · 받기)와 연결형(깎아 · 받아서 · 짓고) — 명사 '시기'·'전기'·'용기'는 False(줄기가 동사 목록에 있을 때만)."""
+    if w.endswith("기") and w[:-1] in _VSTEM:
+        return True
+    if len(w) >= 2 and w[-1] in "아어서고게지" and w[:-1] in _VSTEM:
+        return True
+    return len(w) >= 3 and w[-2:] in ("아서", "어서", "고서") and w[:-2] in _VSTEM
+
+
+def _jong(ch: str, j: int) -> str:
+    """받침 없는 글자 ch 에 받침 j(4=ㄴ · 8=ㄹ)를 붙인 글자."""
+    o = ord(ch) - 0xAC00
+    return chr(ord(ch) + j) if 0 <= o < 11172 and o % 28 == 0 else ""
+
+
+def is_adnominal(w: str) -> bool:
+    """'내줄'·'보는'·'받을'·'따른' 같은 동사 관형형이면 True(명사 '기준'·'처분'은 False — 낱말 전체가 줄기 + 어미일 때만)."""
+    for st in _VSTEM:
+        if w in (st + "는", st + "은", st + "을", st + "던"):
+            return True
+        if len(w) == len(st) and w[:-1] == st[:-1] and w[-1] in (_jong(st[-1], 4), _jong(st[-1], 8)):
+            return True
+    return False
+
+
 def key_nouns(q: str) -> list[str]:
     """질문의 대상 말(핵심 명사) — 법령 이름·조문 번호·불용어·흔한 절차 말·서술어를 뺀 낱말(조사 뗌)."""
     q2 = re.sub(r"「[^」]*」", " ", q or "")
@@ -323,11 +397,17 @@ def key_nouns(q: str) -> list[str]:
     q2 = re.sub(r"제\s*\d+\s*조(의\s*\d+)?|제\s*\d+\s*항|[①-⑳]", " ", q2)
     out = []
     for w in re.findall(r"[가-힣]+", q2):
-        if w in STOP or w in GENERIC:
-            continue
+        if w in STOP or w in GENERIC or w in FUNC or is_adnominal(w) or _nominal_ki(w) or (len(w) >= 3 and _VERBAL.search(w)):
+            continue                                      # 다른 · 전에 · 짓기 · 쓰려고 · 빌려주는 — 대상 말 아님
         if not re.search(r"(허가|평가|단가|시가|지가|농가|대가|주가|휴가|추가)$", w):
             w = _strip(w)                                 # '점용허가'의 '가'는 조사가 아니다
+            if len(w) >= 3 and w.endswith("로") and not w.endswith("으로"):
+                w = w[:-1]                                # 용도로 → 용도(진입로 → 진입: 더 짧은 말이라 조문 찾기가 좁아지지 않는다)
+        if w in FUNC or _nominal_ki(w):
+            continue
         if len(w) == 2 and w[1] in "할한":                  # 명할 · 정한 같은 한 글자 서술어
+            continue
+        if is_adnominal(w):                               # 내줄 · 보는 · 받을 — 서술어(대상 말 아님)
             continue
         m = _HADA.match(w)
         if m:                                             # 임대할 → 임대 · 전용하면 → 전용 · 점용하려면 → 점용
@@ -340,8 +420,231 @@ def key_nouns(q: str) -> list[str]:
     return list(dict.fromkeys(out))
 
 
+_PART_SP = re.compile(r"(?<=[가-힣])(?:에서의|에\s*관한|에\s*대한|의)(?=\s)")
+
+
+def norm_ko(s: str) -> str:
+    """띄어쓰기·조사('의'·'에 관한')·가운뎃점을 없앤 비교용 글 — '개발행위의 허가' = '개발행위허가', '농지전용 신고' = '농지전용신고'."""
+    s = (s or "").replace("ㆍ", " ").replace("·", " ")
+    s = _PART_SP.sub("", s + " ")
+    return re.sub(r"[\s,()「」『』\"'“”]", "", s)
+
+
+def _title_n(c: dict) -> str:
+    """조문 제목(비교용) — 끝의 '등'은 뺀다('산지전용허가기준 등' = '산지전용허가기준')."""
+    return re.sub(r"등$", "", norm_ko(c.get("article_title") or ""))
+
+
+def _bigrams(s: str) -> set[str]:
+    return {s[i:i + 2] for i in range(len(s) - 1)} if len(s) >= 2 else ({s} if s else set())
+
+
+def _q_norm(q: str) -> str:
+    """질문(비교용) — 법령 이름·조문 번호·불용어를 빼고 낱말마다 조사를 뗀 뒤 붙인 글('개발행위허가 대상 조문은?' → '개발행위허가대상')."""
+    q2 = q
+    for a in sorted(set(ALIASES) | set(_acts()), key=len, reverse=True):
+        q2 = q2.replace(a, " ")
+    q2 = re.sub(r"제\s*\d+\s*조(의\s*\d+)?|제\s*\d+\s*항|[①-⑳]", " ", q2)
+    ws = []
+    for w in re.findall(r"[가-힣]+", q2):
+        if is_adnominal(w) or _PRED.search(w) or w in FUNC or _nominal_ki(w) or (len(w) >= 3 and _VERBAL.search(w)):
+            continue                                      # 내줄 · 보는 · 되나요 · 다른 · 짓기 — 제목 비교에서 뺀다
+        w = _strip_noun(w)
+        if len(w) >= 2 and w not in STOP and not is_adnominal(w):
+            ws.append(w)
+    return "".join(ws)
+
+
+def title_fit(c: dict, qn: str) -> float:
+    """조문 제목과 질문 말이 얼마나 같은가 — (제목 조각 중 질문에 있는 비율 + 질문 조각 중 제목에 있는 비율) / 2.
+    제목 전체가 질문 말이면(‘개발행위의 허가’ ↔ ‘개발행위허가 대상’) 1.2 배(본 조문)."""
+    tb, qb = _bigrams(_title_n(c)), _bigrams(qn)
+    if not tb or not qb:
+        return 0.0
+    both = tb & qb
+    f = 0.5 * len(both) / len(tb) + 0.5 * len(both) / len(qb)
+    return f * 1.2 if both == tb else f
+
+
+_COORD = re.compile(r"(?<=[가-힣])(?:과|와)\s+|\s+(?:및|또는)\s+")        # 가운뎃점은 나누지 않는다('임대차ㆍ사용대차 계약 방법'은 한 주제)
+
+
+_PLAIN_NOT = re.compile(r"(의|에|에서|에게|으로|로|을|를|은|는|한|된|치는|하는|되는|대한|관한|따른)$")
+
+
+def title_heads(c: dict) -> set[str]:
+    """조문 제목의 나란한 주제(비교용) — '처분명령과 매수 청구' → {처분명령, 매수청구} · '처분명령의 유예' → set()(주제는 '유예').
+    맨 앞 한 낱말 꾸밈('농지의 임대차 또는 사용대차')은 모든 주제에 걸리므로 떼고 본다 → {임대차, 사용대차, 농지임대차, 농지사용대차}."""
+    t = c.get("article_title") or ""
+    lead = ""
+    m = re.match(r"^([가-힣]{2,})의\s+(.+)$", t)
+    if m and len(_COORD.split(m.group(2))) >= 2:
+        lead, t = m.group(1), m.group(2)
+    if len(_COORD.split(t)) < 2 or any(_PLAIN_NOT.search(w) for w in re.findall(r"[가-힣]+", _COORD.sub(" ", t))):
+        return set()                                       # 나란한 주제가 아니다('용도지역 및 용도지구에서의 건축 제한' · '처분명령의 유예')
+    out = set()
+    for part in _COORD.split(t):
+        n = re.sub(r"등$", "", norm_ko(part))
+        if len(n) >= 2:
+            out.add(n)
+            if lead:
+                out.add(lead + n)
+    return out
+
+
+def head_match(c: dict, objs: list[str], qn: str) -> bool:
+    """질문 말(대상 말 하나 또는 질문 전체)이 조문 제목의 나란한 주제 하나와 같다 = 그 말을 다루는 본 조문."""
+    heads = title_heads(c)
+    return bool(heads & ({norm_ko(o) for o in objs} | ({qn} if qn else set())))
+
+
+def level(act: str) -> int:
+    """법령 위계 — 1 법률 · 2 시행령 · 3 시행규칙 · 4 지침·요령·고시 등(같은 점수면 낮은 수가 먼저)."""
+    a = (act or "").strip()
+    if a.endswith("시행령"):
+        return 2
+    if a.endswith("시행규칙"):
+        return 3
+    if re.search(r"(법|법률)$", a):
+        return 1
+    return 4
+
+
+LEVEL_W = {1: 1.0, 2: 0.85, 3: 0.75, 4: 0.7}
+# 모법 이름이 법령 이름에서 드러나지 않는 행정규칙 → 그 규칙이 '법 제n조'로 부르는 법률(색인에 있을 때만 쓴다)
+PARENT_ACTS = {"농업경영에 이용하지 않는 농지 등의 처분관련 업무처리요령": "농지법"}
+_CITE_UP = re.compile(r"(?<![가-힣」])(법|영)\s*제\s*(\d+)\s*조(?:\s*의\s*(\d+))?(?:\s*제\s*(\d+)\s*항)?")
+
+
+def parents_of(act: str) -> dict[str, str]:
+    """하위 법령이 '법 제n조'·'영 제n조' 로 부르는 법령 → {'법': 법률 이름, '영': 시행령 이름}(색인에 있는 것만)."""
+    acts = set(_acts())
+    base = re.sub(r"\s*(시행령|시행규칙)$", "", act or "")
+    if level(act) == 4:
+        base = PARENT_ACTS.get(act) or ""
+        if not base:                                       # 모르면: 그 규칙 본문이 가장 많이 부르는 색인 법률
+            cnt: dict[str, int] = {}
+            for c in _load().get("chunks") or []:
+                if c["act"] == act:
+                    for m in re.findall(r"「([^」]+)」", c["text"]):
+                        if m in acts and level(m) == 1:
+                            cnt[m] = cnt.get(m, 0) + 1
+            base = max(cnt, key=cnt.get) if cnt else ""
+    out = {}
+    if base in acts:
+        out["법"] = base
+    if f"{base} 시행령" in acts:
+        out["영"] = f"{base} 시행령"
+    return out
+
+
+def _chunk(act: str, art: str, para: str | None) -> dict | None:
+    rows = [c for c in _load().get("chunks") or [] if c["act"] == act and c["article"] == art]
+    if not rows:
+        return None
+    return next((c for c in rows if c.get("para") == para), None) if para else rows[0]
+
+
+def cited_parents(c: dict, depth: int = 2) -> list[dict]:
+    """하위 법령 조문이 부르는 모법 조문(법 제n조 · 영 제n조 → 그 영이 부르는 법 제n조)을 위계 높은 순으로. 없으면 []."""
+    if depth <= 0 or level(c["act"]) == 1:
+        return []
+    ups = parents_of(c["act"])
+    out, seen = [], set()
+    for m in _CITE_UP.finditer(f"{c.get('article_title') or ''} {c.get('text') or ''}"):
+        act = ups.get(m.group(1))
+        if not act:
+            continue
+        art = f"제{m.group(2)}조" + (f"의{m.group(3)}" if m.group(3) else "")
+        para = P.CIRCLED[int(m.group(4)) - 1] if m.group(4) and 0 < int(m.group(4)) <= 20 else None
+        hit = _chunk(act, art, para) or _chunk(act, art, None)
+        if not hit or hit["id"] in seen:
+            continue
+        seen.add(hit["id"])
+        if level(hit["act"]) == 1:
+            out.append(hit)
+        else:                                              # 영 제n조 → 그 조문이 부르는 법 제n조
+            up = cited_parents(hit, depth - 1)
+            out.extend(x for x in up if x["id"] not in seen)
+            seen.update(x["id"] for x in up)
+            if not up:
+                out.append(hit)
+    return sorted(out, key=lambda x: level(x["act"]))
+
+
+# ── 영어 질문 → 한국어 검색어(로컬 용어 표 · 번역 모델 없음) ─────────────────────────
+# (영어 정규식, 한국어) — 긴 말부터. 표에 없는 영어 질문은 한국어 검색어가 없어 '법령 데이터에 없습니다'(지어내기 0).
+EN_ACTS = [
+    (r"enforcement\s+decree\s+of\s+the\s+farm\s*land\s+act|farm\s*land\s+act\s+enforcement\s+decree", "농지법 시행령"),
+    (r"enforcement\s+(?:rules?|regulations?)\s+of\s+the\s+farm\s*land\s+act", "농지법 시행규칙"),
+    (r"farm\s*land\s+(?:act|law)|agricultural\s+land\s+act", "농지법"),
+    (r"building\s+(?:act|law)|architecture\s+act", "건축법"),
+    (r"(?:national\s+)?land\s+planning(?:\s+and\s+utili[sz]ation)?\s+act|planning\s+act", "국토계획법"),
+    (r"mountainous\s+districts?\s+management\s+act|mountain(?:ous)?\s+(?:districts?|lands?|areas?)\s+(?:management\s+)?act|forest\s*land\s+act", "산지관리법"),
+    (r"(?:farmland\s+)?(?:use\s+)?survey\s+(?:guideline|manual|rules?)", "실태조사 요령"),
+]
+EN_TERMS = [
+    (r"farm\s*land\s+(?:lease|leasing|rental|renting)|(?:lease|leasing|rental|renting)\s+(?:of\s+)?farm\s*land", "농지 임대차"),
+    (r"development\s+(?:activity\s+)?permits?|permits?\s+for\s+development", "개발행위허가"),
+    (r"(?:farm\s*land|agricultural\s+land)\s+conversion|conver(?:sion|ting)\s+(?:of\s+)?(?:farm\s*land|agricultural\s+land)", "농지 전용"),
+    (r"(?:mountain(?:ous)?\s+(?:district|land|area)|forest\s*land)\s+conversion|conver(?:sion|ting)\s+(?:of\s+)?(?:mountain(?:ous)?\s+(?:districts?|lands?|areas?)|forest\s*land)", "산지전용"),
+    (r"temporary\s+use\s+of\s+(?:mountain(?:ous)?\s+(?:districts?|lands?)|forest\s*land)", "산지일시사용"),
+    (r"building\s+permits?|construction\s+permits?", "건축허가"),
+    (r"change\s+(?:of|in)\s+(?:the\s+)?use|use\s+change", "용도변경"),
+    (r"agricultural\s+promotion\s+(?:areas?|zones?|districts?)", "농업진흥구역"),
+    (r"(?:farm\s*land\s+)?acquisition\s+(?:qualification\s+)?certificates?", "농지취득자격증명"),
+    (r"zoning|use\s+(?:districts?|zones?|areas?)", "용도지역"),
+    (r"(?:obligation|duty)\s+to\s+dispose|disposal\s+(?:obligation|duty|order)", "처분의무"),
+    (r"restor(?:e|ation|ing)|reinstat(?:e|ement)", "원상회복"),
+    (r"survey\s+methods?|how\s+to\s+survey", "조사 방법"),
+    (r"lease|leasing|rent(?:al|ing)?", "임대차"),
+    (r"dispos(?:e|al|ing)", "처분"),
+    (r"conver(?:sion|t|ting)", "전용"),
+    (r"reports?|reporting|notif(?:y|ication)", "신고"),
+    (r"criteria|standards?|requirements?", "기준"),
+    (r"permits?|permission|licen[cs]es?|approval", "허가"),
+    (r"unauthori[sz]ed|illegal|without\s+(?:a\s+)?permit", "무허가"),
+    (r"buildings?|structures?", "건축물"),
+    (r"farm\s*land|agricultural\s+land", "농지"),
+]
+
+
+EN_STOP = set("""which what whats where when who whom whose how why does did do is are was were be been the a an of for to in on at by from with
+about under into this that these those article articles section sections clause clauses provision provisions law laws act acts statute statutes
+legal basis cover covers covered covering govern governs governed governing regulate regulates regulated regulation apply applies
+applicable relevant related relating relate tell show find give please can could would should may might must need needed
+korean korea korean's rule there any case cases required require requires requirement its it their them they you your our we me my
+and or not no yes also other such than then""".split())
+
+
+def ko_query(q: str) -> str | None:
+    """영어 법령 질문 → 한국어 검색어(법령 이름 + 용어 · 질문 순서). 한글이 있으면 그대로, 용어가 하나도 없으면 None."""
+    t = (q or "").strip()
+    if re.search(r"[가-힣]", t):
+        return t
+    low = " " + t.lower() + " "
+    acts, terms = [], []
+    for rx, ko in EN_ACTS:
+        m = re.search(rx, low)
+        if m:
+            acts.append(ko)
+            low = low[:m.start()] + " " * (m.end() - m.start()) + low[m.end():]
+    found = []
+    for rx, ko in EN_TERMS:
+        for m in re.finditer(r"\b(?:" + rx + r")\b", low):
+            found.append((m.start(), ko))
+            low = low[:m.start()] + " " * (m.end() - m.start()) + low[m.end():]
+    for _, ko in sorted(found):
+        if ko not in terms:
+            terms.append(ko)
+    left = [w for w in re.findall(r"[a-z]+", low) if w not in EN_STOP and len(w) > 2]
+    if not terms or left:                                  # 표에 없는 영어 말이 남았다(river · occupancy …) → 모르는 주제 = '없음'(흔한 말 '허가'만으로 엉뚱한 조문 금지)
+        return None
+    return " ".join(list(dict.fromkeys(acts)) + terms + ["조문"])
+
+
 def own_text(c: dict) -> str:
-    """조문 제목 + 본문에서 다른 법 인용을 뺀 글(공백 제거) — 대상 말 검사용.
+    """조문 제목 + 본문에서 다른 법 인용을 뺀 글(비교용 · 띄어쓰기·조사 '의' 없음) — 대상 말 검사용.
     다른 법을 인용한 호·목 줄(「주차장법」 제19조에 따른 부설주차장의 설치)은 그 법의 주제이므로 줄째 빼고,
     본문 문장 속 인용(「…법」 제n조)은 인용 부분만 뺀다."""
     act = c.get("act")
@@ -351,7 +654,7 @@ def own_text(c: dict) -> str:
         if other and _ITEM.match(ln):
             continue
         keep.append(_OTHER_CITE.sub(lambda m: " " if m.group(1).strip() != act else m.group(0), ln))
-    return f"{c.get('article_title') or ''} {' '.join(keep)}".replace(" ", "")
+    return norm_ko(f"{c.get('article_title') or ''} {' '.join(keep)}")
 
 
 def _has(noun: str, text: str) -> bool:
@@ -409,7 +712,7 @@ def article(act: str, art: str, para: str | int | None = None) -> dict | None:
 
 def search(query: str, acts: list[str] | None = None, k: int = 3) -> dict:
     mem = _load()
-    q = (query or "").strip()
+    q = plain_query((query or "").strip())               # 풀어 쓴 말 → 조문 말(다른 용도로 쓰려고 → 전용)
     if not mem.get("chunks"):
         return {"found": False, "hits": [], "reason": "empty_index"}
     have, miss = mentioned_acts(q)
@@ -445,6 +748,8 @@ def search(query: str, acts: list[str] | None = None, k: int = 3) -> dict:
     order = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)
     core = _core(q)
     phrases = _phrases(q)
+    qn = _q_norm(q)
+    explicit = bool([a for a in want if a] or have)        # 법령 이름을 직접 불렀다 → 그 법령 안에서만(모법 올림 없음)
     hits = []
     for i in order:
         c = mem["chunks"][i]
@@ -463,16 +768,64 @@ def search(query: str, acts: list[str] | None = None, k: int = 3) -> dict:
             rank *= 1.5 + 1.5 * share
         elif any(ph in body for ph in phrases):
             rank *= 1.3
+        head = head_match(c, objs, qn)
         side = SIDE.search(title)
-        if side and side.group(0) not in q:               # 본 조문(허가·제한)을 특례·취소·벌칙 조문보다 먼저
+        if side and side.group(0) not in q and not head:  # 본 조문(허가·제한)을 특례·취소·벌칙 조문보다 먼저(제목 주제가 질문 말이면 곁가지 아님)
             rank *= 0.6
-        hits.append({**c, "ref": ref_of(c), "score": round(float(scores[i]), 3), "cover": round(cover, 2), "rank": round(rank, 3)})
-        if len(hits) >= max(k * 10, 40):
+        tf = max(title_fit(c, qn), 1.0 if head else 0.0)  # 제목이 질문 말로 다 채워지는 조문 = 본 조문('개발행위의 허가' ↔ '개발행위허가 대상')
+        rank *= (1 + 4 * tf * tf) * LEVEL_W[level(c["act"])]   # 같은 점수면 법 > 시행령 > 시행규칙 > 지침·요령
+        if head:                                          # '처분명령과 매수 청구'(주제 = 처분명령)를 '처분명령의 유예'(주제 = 유예)보다 먼저
+            rank *= 1.6
+        hits.append({**c, "ref": ref_of(c), "score": round(float(scores[i]), 3), "cover": round(cover, 2), "tfit": round(tf, 2),
+                     "rank": round(rank, 3), "head": head})
+        if len(hits) >= max(k * 10, 120):
             break
     hits = [h for h in hits if h["cover"] >= MIN_COVER]
     if objs:                                              # 질문의 대상 말이 조문(다른 법 인용 뺀 글)에 모두 있고, 하나 이상은 조문 제목(주제)에 있어야 관련 조문
-        hits = [h for h in hits if all(_has(o, own_text(h)) for o in objs) and any(_has(o, _title(h).replace(" ", "")) for o in objs)]
-    hits.sort(key=lambda h: h["rank"], reverse=True)
+        hits = [h for h in hits if all(_has(o, own_text(h)) for o in objs) and any(_has(o, norm_ko(_title(h))) for o in objs)]
+    hits.sort(key=lambda h: (h["rank"], -level(h["act"])), reverse=True)
     if not hits:
         return {"found": False, "hits": [], "reason": "off_topic" if objs else "low_match"}
+    hits = _parent_first(hits, core, explicit)
+    hits = _first_para(hits)
     return {"found": True, "hits": hits[:k], "reason": "bm25"}
+
+
+def _first_para(hits: list[dict]) -> list[dict]:
+    """1순위 조문은 제1항(본문)부터 — 맞은 항이 ②·⑤ 여도 그 조의 ① 을 앞에 둔다(맞은 항은 바로 뒤)."""
+    top = hits[0]
+    if top.get("para") in (None, "①"):
+        return hits
+    one = _chunk(top["act"], top["article"], "①")
+    if not one:
+        return hits
+    rest = [h for h in hits if h.get("id") != one["id"]]
+    return [{**one, "ref": ref_of(one), "score": None, "cover": None, "rank": None, "match": "first_para"}] + rest
+
+
+def _parent_first(hits: list[dict], core: set[str], explicit: bool) -> list[dict]:
+    """1순위가 하위 법령(시행령·시행규칙·요령)이면 모법 본 조문을 찾는다.
+    ① 1순위 조문이 부르는 모법 조문(법 제n조 · 영 제n조 → 법 제n조) 가운데 제목이 질문 말과 가장 많이 겹치는 것
+    ② 없으면 후보 가운데 모법(법률) 조문으로 제목이 질문 말과 겹치고 제목 맞음이 1순위의 0.8 배 이상인 것
+    → 모법 조문을 1순위로 올리고 하위 조문은 '함께 볼 조문'으로. 모법 조문은 있지만 질문 말과 겹치지 않으면 '함께 볼 조문' 2순위에 넣는다.
+    법령 이름을 직접 부른 질문('실태조사 요령에서 ~')은 그 법령 답을 그대로 둔다."""
+    top = hits[0]
+    if explicit or level(top["act"]) == 1:
+        return hits
+    same = lambda a, b: a["act"] == b["act"] and a["article"] == b["article"]      # noqa: E731
+    mk = lambda c, why: {**c, "ref": ref_of(c), "score": None, "cover": None, "rank": None, "match": why}   # noqa: E731
+    over = lambda c: len(_bigrams(_title_n(c)) & core)                              # noqa: E731
+    ups = cited_parents(top)
+    up = max(ups, key=over) if ups else None
+    if up is not None and over(up):
+        return [mk(up, "parent")] + [h for h in hits if not same(h, up)]
+    law = parents_of(top["act"]).get("법")
+    tf0 = top.get("tfit") or 0.0
+    alt = next((h for h in hits[1:] if h["act"] == law and h.get("head")), None)          # 제목 주제가 질문 말인 모법 조문(처분명령과 매수 청구)
+    if alt is None:
+        alt = next((h for h in hits[1:] if h["act"] == law and over(h) and (h.get("tfit") or 0.0) >= 0.8 * tf0), None)
+    if alt is not None:
+        return [alt] + [h for h in hits if h is not alt]
+    if up is not None:
+        return [top, mk(up, "parent_see_also")] + [h for h in hits[1:] if not same(h, up)]
+    return hits

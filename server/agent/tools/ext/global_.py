@@ -313,14 +313,35 @@ def sprawl(d: dict) -> dict | None:
 
 
 # ── 지역 고르기 · 가드 ────────────────────────────────────────────────────────
+class Elsewhere(Exception):
+    """말한 곳이 해외 구역 목록에 없다(국내 지명 · 모르는 이름) — 값·지도 동작 없이 한 줄로 답한다."""
+    def __init__(self, text: str):
+        super().__init__(text)
+        self.text = text
+
+
+KR_PLACE = re.compile(r"[가-힣]|\b(namwon|jeonbuk|jeonnam|jeolla\w*|jeonju|korea\w*|seoul|busan|jeju|gyeong\w*|chungcheong\w*|gangwon\w*|incheon|daegu|"
+                      r"daejeon|gwangju|ulsan|sejong|yeosu|mokpo|suncheon|gurye|gangjin|sancheong|hamyang)\b|\b[a-z]+-(si|gun|gu|myeon|eup|dong)\b", re.I)
+
+
+def elsewhere_text(place: str, my: list[dict], ctx) -> str:
+    yours = ", ".join(m["name"] for m in my[:3])
+    if KR_PLACE.search(place or ""):
+        return "이 기관의 데이터가 아닙니다." if getattr(ctx, "lang", "en") == "ko" else "This is not your organization's data."
+    if getattr(ctx, "lang", "en") == "ko":
+        return f"'{place}' 은(는) 해외 구역 목록에 없습니다" + (f"(이 기관 지역: {yours})." if yours else ".")
+    return f"No district named '{place}' was found" + (f" (your districts: {yours})." if yours else ".")
+
+
 async def pick(args: dict, ctx) -> tuple[dict, bool, list[dict]]:
-    """(지역, 값을 볼 수 있는가, 내 지역들). 이름이 없으면 화면 문맥 지역 → 내 지역 첫째."""
+    """(지역, 값을 볼 수 있는가, 내 지역들). 이름이 없으면 화면 문맥 지역 → 내 지역 첫째.
+    말한 이름이 해외 구역에 없으면(국내 지명 포함) Elsewhere — 다른 지역 값으로 대신 답하지 않는다."""
     p = ctx.principal
     my = await mine(p)
     q = args.get("region") or (ctx.context or {}).get("district") or (ctx.context or {}).get("region")
     d = find_district(q) if q else None
     if q and not d and args.get("region"):
-        raise ToolError("not_found", f"No district named '{args.get('region')}'", 404)
+        raise Elsewhere(elsewhere_text(str(args.get("region")), my, ctx))
     if d is None:
         if not my:
             raise ToolError("not_found", "No overseas results for this account yet", 404)
@@ -342,8 +363,13 @@ def region_action(d: dict) -> dict:
 
 # ── 도구 ───────────────────────────────────────────────────────────────────
 async def global_summary(args: dict, ctx) -> Out:
-    d, ok, my = await pick(args, ctx)
     out = Out(source="Land-XI global results (Sentinel-2 NDVI · land cover)")
+    try:
+        d, ok, my = await pick(args, ctx)
+    except Elsewhere as e:
+        out.data = {"status": "outside", "text": e.text}
+        out.answer = e.text
+        return out
     out.whitelist |= set(re.findall(r"\d+", d["name"]))
     out.ui_actions.append(region_action(d))
     if not ok:
@@ -394,8 +420,13 @@ async def global_summary(args: dict, ctx) -> Out:
 
 
 async def global_parcels(args: dict, ctx) -> Out:
-    d, ok, my = await pick(args, ctx)
     out = Out(source="Land-XI global results (Sentinel-2 NDVI)")
+    try:
+        d, ok, my = await pick(args, ctx)
+    except Elsewhere as e:
+        out.data = {"status": "outside", "text": e.text}
+        out.answer = e.text
+        return out
     out.ui_actions.append(region_action(d))
     if not ok:
         out.data = {"district": d["name"], "outside_your_districts": True, "your_districts": [m["name"] for m in my]}
@@ -462,6 +493,389 @@ def district_in(q: str) -> dict | None:
     return None
 
 
+def _fmt(tpl: str, **k) -> str:
+    """'{{key}}' 자리표 글 — k 의 봉투 key 를 {{key}} 로 넣는다(러너가 {{env:eN}} 으로 바꾼다)."""
+    return tpl.format(**{n: "{{" + v + "}}" for n, v in k.items()})
+
+
+# ── 말로 지도 제어(M4 · r3-global) — 해외 화면 전용 도구 global_map ────────────────────────────────
+# 지도 동작만 있는 짧은 문장은 모델 앞에서 이 도구로 간다(NDVI 요약으로 새지 않음 · 토큰 0). 답은 동작 한 줄뿐이고 숫자는 없다.
+# 동작 성공 여부는 화면이 kit:agent-action-done {op, ok, reason} 으로 알린다(plan 3.1). 실패 문장 교체는 명령 바(r3-route) 몫.
+LAYERS = {"imagery": "imagery layer", "results": "results layer", "districts": "district boundaries", "mismatch": "mismatched districts"}
+LAYERS_KO = {"imagery": "영상 층", "results": "결과 층", "districts": "구역 경계", "mismatch": "어긋난 구역"}
+SPECS["global_map"] = {
+    "description": "해외 지도 동작 — Zoom in/out · turn the imagery (satellite) layer off/on · tilt to 3D / top view · go to a district. "
+                   "Overseas map control only: no numbers.",
+    "properties": {"op": {"type": "string", "enum": ["zoom", "layer", "view", "goto"]},
+                   "delta": {"type": "number", "description": "zoom steps (+ in, - out)"},
+                   "zoom": {"type": "number", "description": "absolute zoom level"},
+                   "layer": {"type": "string", "enum": [*LAYERS, "last"], "description": "last = the layer changed in the previous answer"},
+                   "on": {"type": "boolean"},
+                   "preset": {"type": "string", "enum": ["3d", "top"]},
+                   "region": {"type": "string", "description": "district name for op goto (or zoom in/out on a district)"}},
+    "required": ["op"]}
+WHY["global_map"] = "해외 지도 동작(확대·층·시점·이동)"
+SAY = {"global_map": "Map control", "global_mismatch": "Compare register and AI", "global_findings": "Summarize findings"}
+
+D_IN = re.compile(r"\bzoom(?:\s+the\s+map)?\s+in\b|\bzoom\s*-?in\b|\bcloser\b|\bmagnify\b|확대|줌\s*인", re.I)
+D_OUT = re.compile(r"\bzoom(?:\s+the\s+map)?\s+out\b|\bzoom\s*-?out\b|\bfurther\s+out\b|\bwider\s+view\b|축소|줌\s*아웃", re.I)
+Z_ABS = re.compile(r"\bzoom(?:\s+level)?(?:\s+to)?\s+(\d{1,2}(?:\.\d)?)\b|줌\s*(\d{1,2})", re.I)
+MORE = re.compile(r"\bmore\b|\ba lot\b|\bfurther\b|많이", re.I)
+V_3D = re.compile(r"\btilt|\b3\s*-?d\b|three[- ]d|perspective|\boblique|입체|기울", re.I)
+V_TOP = re.compile(r"top[- ]?down|\btop\s+view|\bflat\b|\b2\s*-?d\b|straight\s+down|reset\s+(the\s+)?(tilt|view|pitch)|\buntilt|평면|위에서", re.I)
+L_OFF = re.compile(r"\b(turn|switch|shut)\s+(\w+\s+){0,3}?off\b|\bhide\b|\bremove\b|\bdisable\b|\bwithout\b|꺼|끄|숨겨", re.I)
+L_ON = re.compile(r"\b(turn|switch)\s+(\w+\s+){0,3}?(back\s+)?on\b|\bbring\s+(\w+\s+)?back\b|\benable\b|\brestore\b|\bshow\b|\bdisplay\b|켜|보이게|다시", re.I)
+L_NAME = [("mismatch", re.compile(r"mismatch|어긋", re.I)),
+          ("imagery", re.compile(r"imager|satellite|\bimage\b|base\s*map|\bphoto|영상|위성", re.I)),
+          ("results", re.compile(r"\bresults?\s+layer|\bndvi\s+layer|\boverlay|결과\s*층", re.I)),
+          ("districts", re.compile(r"boundar|border|district\s+lines|경계", re.I))]
+L_PRON = re.compile(r"\bit\b|\bthat\b|\bthe\s+layer\b|\bback\s+on\b|다시\s*켜", re.I)
+BACK_ON = re.compile(r"back\s+on|다시\s*켜", re.I)
+GOTO = re.compile(r"\b(go|move|fly|pan|jump|navigate|head|return)\s+(back\s+)?(over\s+)?to\b|\btake\s+me\s+(back\s+)?to\b|"
+                  r"\bcenter\s+(the\s+map\s+)?on\b|\bshow\s+me\s+where\b|로\s*이동|으로\s*이동|로\s*가\s*줘|으로\s*가\s*줘", re.I)
+DATA_ASK = re.compile(r"ndvi|vegetation|crop|season|sprawl|built|urban|construction|how\s+many|how\s+much|summar|report|average|mean|chang|"
+                      r"mismatch|match|register|declared|finding|list\b|describe|compare|value|result(?!s?\s+layer)|area\b|식생|작황|요약|보고서|몇|어긋|대장", re.I)
+DATA_STRONG = re.compile(r"ndvi|vegetation|crop|sprawl|built|how\s+many|summar|mismatch|register", re.I)
+
+
+# 'Zoom in on Ak-Suu' · 'zoom out to Sokuluk' · 'zoom into Ak-Suu' — 지명이 붙은 확대(실증 must_fix 1). 'Zoom to {구역}'(in/out 없음)은 기존 계약(값 요약).
+ZOOM_AT = re.compile(r"\bzoom(?:\s+the\s+map)?\s+(?:(?P<dir>in|out)\s+(?:on|to|at|onto|over|around|towards?|into)|(?P<into>into))\s+(?P<place>.+)$", re.I)
+PLACE_TAIL = re.compile(r"\s+(please|a\s+little|a\s+bit|slightly|more|a\s+lot|now|for\s+me)\s*$", re.I)
+NOT_PLACE = re.compile(r"^(the\s+|this\s+|that\s+|my\s+|our\s+|current\s+)*(map|it|this|that|here|there|area|view|screen|cent(er|re)|middle|image|imagery|"
+                       r"satellite(\s+imagery)?|district|region|rayon|place|location|spot|field|fields|a\s+little|a\s+bit|more|further|slightly|closer)$", re.I)
+
+
+def zoom_place(t: str) -> tuple[int, str] | None:
+    """'zoom in/out on|to|at {이름}' → (방향 ±1, 이름). 이름이 지도·이것 같은 말이면 None(그냥 확대)."""
+    m = ZOOM_AT.search(t)
+    if not m:
+        return None
+    place = re.split(r"[.?!,;]| and | then ", m.group("place"))[0].strip()
+    for _ in range(3):
+        place = PLACE_TAIL.sub("", place).strip()
+    place = re.sub(r"^the\s+", "", place, flags=re.I).strip()
+    if not place or NOT_PLACE.match(place):
+        return None
+    return (-1 if (m.group("dir") or "").lower() == "out" else 1), place
+
+
+def _place_after_goto(q: str) -> str:
+    m = GOTO.search(q)
+    if not m:
+        return ""
+    rest = q[m.end():].strip()
+    rest = re.split(r"[.?!,;]| and | then ", rest)[0]
+    return re.sub(r"^(the\s+)|(\s+(district|rayon|raion|region))$", "", rest.strip(), flags=re.I).strip()
+
+
+async def last_layer(ctx) -> str | None:
+    """'Turn it back on' — 같은 사람의 앞 답(화면이 준 prev_run 까지)이 끈·켠 층."""
+    p = ctx.principal
+    uid = getattr(p, "user_id", None)
+    if not uid:
+        return None
+    prev = str((ctx.context or {}).get("prev_run") or "").strip()
+    try:
+        from landxi_api.deps import db
+        async with db(realm="lx") as conn:
+            rows = await conn.fetch(
+                "SELECT t.args FROM agent_tool_calls t JOIN agent_runs r ON r.id=t.run_id WHERE t.tool='global_map' AND r.user_id=$1 "
+                "AND r.id<>$2 AND ($3='' OR r.created_at <= (SELECT created_at FROM agent_runs WHERE id=$3)) "
+                "AND r.created_at > now() - interval '2 hours' ORDER BY r.created_at DESC, t.i DESC LIMIT 6", uid, ctx.run_id or "", prev)
+    except Exception:
+        return None
+    for r in rows:
+        a = r["args"] if isinstance(r["args"], dict) else (json.loads(r["args"]) if r["args"] else {})
+        if a.get("op") == "layer" and a.get("layer") in LAYERS:
+            return a["layer"]
+    return None
+
+
+def map_command(q: str, ctx) -> dict | None:
+    """지도 동작 한 가지만 있는 문장 → global_map 인자. 자료 질문 낱말이 섞이면 None(해외 결과 도구 · 모델)."""
+    t = re.sub(r"\s+", " ", q or "").strip()
+    if not t or len(t) > 90:
+        return None
+    goto = GOTO.search(t)
+    if DATA_ASK.search(t) and not (goto and not DATA_STRONG.search(t)):
+        return None
+    cand: list[dict] = []
+    if goto:
+        cand.append({"op": "goto", "region": (district_in(t) or {}).get("name") or _place_after_goto(t)})
+    elif zoom_place(t) and not Z_ABS.search(t):
+        sign, place = zoom_place(t)
+        if re.fullmatch(r"\d{1,2}(?:\.\d)?", place):
+            cand.append({"op": "zoom", "zoom": float(place)})
+        else:
+            cand.append({"op": "zoom", "delta": sign * (2 if MORE.search(t) else 1), "region": (district_in(t) or {}).get("name") or place})
+    else:
+        m = Z_ABS.search(t)
+        if m:
+            cand.append({"op": "zoom", "zoom": float(m.group(1) or m.group(2))})
+        elif D_IN.search(t):
+            cand.append({"op": "zoom", "delta": 2 if MORE.search(t) else 1})
+        elif D_OUT.search(t):
+            cand.append({"op": "zoom", "delta": -2 if MORE.search(t) else -1})
+    if V_3D.search(t):
+        cand.append({"op": "view", "preset": "3d"})
+    elif V_TOP.search(t):
+        cand.append({"op": "view", "preset": "top"})
+    off, on = L_OFF.search(t), L_ON.search(t)
+    if off or on:
+        layer = next((k for k, rx in L_NAME if rx.search(t)), None)
+        if layer is None and L_PRON.search(t):
+            layer = "last"                           # 'Turn it back on' — 도구가 앞 답이 바꾼 층으로 푼다(없으면 영상 층)
+        if layer:
+            cand.append({"op": "layer", "layer": layer, "on": (not off) or bool(BACK_ON.search(t))})
+    if len(cand) != 1:
+        return None
+    return cand[0]
+
+
+def _say(ctx, en: str, ko: str) -> str:
+    return ko if getattr(ctx, "lang", "en") == "ko" else en
+
+
+async def global_map(args: dict, ctx) -> Out:
+    op = args.get("op")
+    out = Out(source="Map action (browser)")
+    if op == "zoom" and str(args.get("region") or "").strip():
+        # 지명이 붙은 확대 — 지명부터 푼다. 관할이면 그 구역으로 옮긴 뒤 확대(동작 하나 · 끝 신호 하나), 관할 밖 해외 구역이면 위치만 + 가드 한 줄,
+        # 국내 지명·모르는 이름이면 지도를 움직이지 않고 거절한다(지금 구역을 확대하고 성공이라 말하지 않는다).
+        p = ctx.principal
+        my = await mine(p)
+        place = str(args["region"]).strip()
+        d = find_district(place) or district_in(place)
+        if not d:
+            out.data = {"status": "outside" if KR_PLACE.search(place) else "not_found", "text": elsewhere_text(place, my, ctx)}
+            out.answer = out.data["text"]
+            return out
+        out.whitelist |= set(re.findall(r"\d+", d["name"]))
+        delta = max(-4.0, min(4.0, float(args.get("delta") or 1)))
+        if p.realm == "lx" or any(m["id"] == d["id"] for m in my):
+            out.ui_actions.append({**region_action(d), "zoom_delta": delta})
+            out.answer = _say(ctx, f"Moved the map to {d['name']} and zoomed {'in' if delta > 0 else 'out'}.",
+                              f"지도를 {d['name']}(으)로 옮겨 {'확대' if delta > 0 else '축소'}했습니다.")
+        else:
+            out.ui_actions.append(region_action(d))
+            out.data = {"status": "outside", "text": outside_text(d, my, ctx)}
+            out.answer = out.data["text"]
+        out.data = out.data or {"op": op, "district": d["name"], "done": "sent to the map"}
+        return out
+    if op == "zoom":
+        a = {"op": "map_zoom"}
+        if args.get("zoom") is not None:
+            a["zoom"] = max(1.0, min(18.0, float(args["zoom"])))
+            out.answer = _say(ctx, "Zoomed the map to the requested level.", "요청한 줌 단계로 지도를 맞췄습니다.")
+        else:
+            a["delta"] = max(-4.0, min(4.0, float(args.get("delta") or 1)))
+            out.answer = _say(ctx, "Zoomed in." if a["delta"] > 0 else "Zoomed out.", "지도를 확대했습니다." if a["delta"] > 0 else "지도를 축소했습니다.")
+        out.ui_actions.append(a)
+    elif op == "view":
+        pre = args.get("preset") if args.get("preset") in ("3d", "top") else "3d"
+        out.ui_actions.append({"op": "map_view", "preset": pre, "pitch": 55.0 if pre == "3d" else 0.0, "bearing": -14.0 if pre == "3d" else 0.0})
+        out.answer = _say(ctx, "Tilted the map to 3D." if pre == "3d" else "Back to the top view.",
+                          "지도를 입체(3D)로 기울였습니다." if pre == "3d" else "위에서 보는 시점으로 돌렸습니다.")
+    elif op == "layer":
+        layer = args.get("layer")
+        if layer not in LAYERS:
+            layer = (await last_layer(ctx) if layer == "last" else None) or "imagery"
+        args["layer"] = layer
+        on = args.get("on")
+        on = True if on is None else (on if isinstance(on, bool) else str(on).lower() not in ("false", "0", "off"))
+        out.ui_actions.append({"op": "map_layer", "layer": layer, "on": on})
+        out.answer = _say(ctx, f"Turned the {LAYERS[layer]} {'on' if on else 'off'}.", f"{LAYERS_KO[layer]}을 {'켰' if on else '껐'}습니다.")
+    elif op == "goto":
+        p = ctx.principal
+        my = await mine(p)
+        place = str(args.get("region") or "").strip()
+        d = find_district(place) if place else None
+        if not d:
+            out.data = {"status": "outside" if KR_PLACE.search(place) else "not_found", "text": elsewhere_text(place or "?", my, ctx)}
+            out.answer = out.data["text"]
+            return out
+        out.ui_actions.append(region_action(d))
+        out.whitelist |= set(re.findall(r"\d+", d["name"]))
+        if p.realm == "lx" or any(m["id"] == d["id"] for m in my):
+            out.answer = _say(ctx, f"Moved the map to {d['name']}.", f"지도를 {d['name']}(으)로 옮겼습니다.")
+        else:
+            out.data = {"status": "outside", "text": outside_text(d, my, ctx)}
+            out.answer = out.data["text"]
+    else:
+        raise ToolError("bad_request", "op is zoom|layer|view|goto")
+    out.data = out.data or {"op": op, "done": "sent to the map"}
+    return out
+
+
+# ── 구역 대장 × AI 대조(C4 최소) · 어긋난 구역·요약(C3 최소) — 값은 landxi_api.global_data 한 곳에서 ────────
+SPECS["global_mismatch"] = {
+    "description": "Uploaded district register vs AI cropland — how many districts don't match, which ones (declared vs AI, difference). "
+                   "구역 대장과 AI 경작지 면적 대조 — 어긋난 구역 수·목록.",
+    "properties": {"list": {"type": "boolean", "description": "list the mismatched districts"},
+                   "region": {"type": "string", "description": "only this district"}}}
+SPECS["global_findings"] = {
+    "description": "One-paragraph English summary of this organization's overseas findings: register comparison + NDVI + built-area change. "
+                   "해외 결과 요약 한 단락.",
+    "properties": {}}
+WHY["global_mismatch"] = "구역 대장 × AI 대조"
+WHY["global_findings"] = "해외 결과 요약(한 단락)"
+
+
+async def _register(ctx):
+    from landxi_api import global_data as GD
+    reg, rows = await GD.load(ctx.principal)
+    return GD.view(reg, rows, with_geom=False) if reg else None
+
+
+def _no_register(ctx) -> str:
+    return _say(ctx, "No district register has been uploaded from this account yet. Open the Register tab on the map and upload a CSV or XLSX "
+                     "with district names and declared cropland (ha).",
+                "이 계정에서 올린 구역 대장이 아직 없습니다. 지도의 Register 탭에서 구역 이름과 신고 농지 면적(ha)이 든 CSV·XLSX 를 올려 주세요.")
+
+
+ROW_KEYS = {"rows", "matched", "outside", "unmatched"}
+DIST_KEYS = {"compared", "mismatched"}
+
+
+def _pl(n, one: str, many: str) -> str:
+    return one if n == 1 else many
+
+
+def _reg_envs(out: Out, v: dict, ctx=None) -> dict:
+    """대장 요약 봉투 — 단위는 명령 바 칩이 읽는 말로(행 · 구역). 값은 global_data 한 곳."""
+    s = v["summary"]
+    ko = getattr(ctx, "lang", "en") == "ko"
+
+    def u(k):
+        e = dict(s[k])
+        if k in ROW_KEYS:
+            e["unit"] = "행"
+        elif k in DIST_KEYS:
+            e["unit"] = "곳" if ko else "districts"
+        return e
+    return {k: out.env("reg_" + k, m, u(k)) for k, m in (
+        ("rows", "Rows in the uploaded register"), ("matched", "Rows matched to a local district"), ("match_pct", "Share of rows matched"),
+        ("compared", "Districts compared (in your area, both values)"), ("mismatched", "Districts that don't match"),
+        ("outside", "Rows outside your districts (not compared)"), ("unmatched", "Rows with no matching district"),
+        ("threshold", "Mismatch threshold"))}
+
+
+def _mis_items(out: Out, v: dict, only: dict | None = None) -> list[dict]:
+    got = []
+    for it in v["items"]:
+        if it["status"] != "mismatch" or (only and it.get("district_id") != only["id"]):
+            continue
+        k = len(got)
+        got.append({"name": it["district"], "declared": out.env(f"mis{k}_declared", f"Declared cropland · {it['district']}", it["declared"]),
+                    "ai": out.env(f"mis{k}_ai", f"AI cropland · {it['district']}", it["ai"]),
+                    "diff": out.env(f"mis{k}_diff", f"AI - declared · {it['district']}", it["diff"])})
+        out.whitelist |= set(re.findall(r"\d+", it["district"] or ""))
+    return got
+
+
+async def global_mismatch(args: dict, ctx) -> Out:
+    out = Out(source="District register × AI land cover")
+    v = await _register(ctx)
+    if not v:
+        out.data = {"status": "no_data", "text": _no_register(ctx)}
+        out.answer = out.data["text"]
+        return out
+    only = None
+    if args.get("region"):
+        my = await mine(ctx.principal)
+        only = find_district(args["region"])
+        if not only:
+            out.answer = elsewhere_text(str(args["region"]), my, ctx)
+            out.data = {"status": "outside" if KR_PLACE.search(str(args["region"])) else "not_found", "text": out.answer}
+            return out
+        if ctx.principal.realm != "lx" and not any(m["id"] == only["id"] for m in my):
+            out.ui_actions.append(region_action(only))          # 답이 말하는 '위치만 보였다'를 실제로 한다(실증 must_fix 2)
+            out.answer = outside_text(only, my, ctx)
+            out.data = {"status": "outside", "text": out.answer}
+            return out
+    k = _reg_envs(out, v, ctx)
+    s = {x: (v["summary"][x] or {}).get("value") for x in v["summary"]}
+    mis = _mis_items(out, v, only)
+    if s["compared"] == 0:
+        en = ("None of the rows are in your districts, so nothing was compared" if s["outside"] else "No district in the register could be compared")
+        en += _fmt(" ({o} outside your districts).", o=k["outside"]) if s["outside"] else "."
+        ko = "관할 구역 안의 행이 없어 비교하지 못했습니다" + (_fmt("(관할 밖 {o}행).", o=k["outside"]) if s["outside"] else ".")
+    else:
+        en = _fmt("{m} " + _pl(s["mismatched"], "district doesn't", "districts don't") + " match out of {c} " + _pl(s["compared"], "district", "districts")
+                  + " compared — the AI cropland area differs from the declared area by more than {t}.", m=k["mismatched"], c=k["compared"], t=k["threshold"])
+        ko = _fmt("비교한 {c}개 구역 중 {m}개가 어긋납니다(AI 경작지 면적이 신고 면적과 {t} 넘게 차이).", m=k["mismatched"], c=k["compared"], t=k["threshold"])
+        if mis:
+            en += " " + "; ".join(m["name"] + _fmt(": declared {d}, AI {a} ({p})", d=m["declared"], a=m["ai"], p=m["diff"]) for m in mis[:5]) + "."
+            ko += " " + "; ".join(m["name"] + _fmt(": 신고 {d}, AI {a}({p})", d=m["declared"], a=m["ai"], p=m["diff"]) for m in mis[:5]) + "."
+        if s["outside"]:
+            en += _fmt(" {o} " + _pl(s["outside"], "row", "rows") + " outside your districts " + _pl(s["outside"], "was", "were") + " not compared.", o=k["outside"])
+            ko += _fmt(" 관할 밖 {o}행은 비교하지 않았습니다.", o=k["outside"])
+    en += " District level, not parcels."
+    ko += " 필지가 아닌 구역 단위입니다."
+    out.answer = _say(ctx, en, ko)
+    out.data = {"register": v["register"]["filename"], "summary": k, "mismatched": [m["name"] for m in mis], "level": "district"}
+    out.ui_actions.append({"op": "map_on", "set": "mismatch", "label": "Mismatched districts", "register_id": v["register"]["id"]})
+    return out
+
+
+async def global_findings(args: dict, ctx) -> Out:
+    """한 단락 — 대장 대조(있으면) + 내 구역 NDVI 최근 달 + 시가지 변화. 숫자는 전부 이 도구의 봉투."""
+    out = Out(source="Land-XI global results")
+    p = ctx.principal
+    my = await mine(p)
+    en, ko = [], []
+    v = await _register(ctx)
+    if v:
+        k = _reg_envs(out, v, ctx)
+        mis = _mis_items(out, v)
+        sv = {x: (v["summary"][x] or {}).get("value") for x in v["summary"]}
+        en.append(_fmt("The uploaded district register has {r} " + _pl(sv["rows"], "row", "rows") + "; {m} matched local district names ({p}).",
+                       r=k["rows"], m=k["matched"], p=k["match_pct"]))
+        ko.append(_fmt("올린 구역 대장 {r}행 중 {m}행이 현지 구역 이름과 맞았습니다({p}).", r=k["rows"], m=k["matched"], p=k["match_pct"]))
+        lst_en = "; ".join(m["name"] + _fmt(" (declared {d}, AI {a}, {p})", d=m["declared"], a=m["ai"], p=m["diff"]) for m in mis[:3])
+        lst_ko = "; ".join(m["name"] + _fmt(" 신고 {d}, AI {a}, {p}", d=m["declared"], a=m["ai"], p=m["diff"]) for m in mis[:3])
+        en.append(_fmt("Of {c} " + _pl(sv["compared"], "district", "districts") + " compared with the AI cropland map, {m} " + _pl(sv["mismatched"], "district differs", "districts differ")
+                       + " from the declared area by more than {t}", c=k["compared"], m=k["mismatched"], t=k["threshold"]) + (": " + lst_en if mis else "") + ".")
+        ko.append(_fmt("AI 경작지 지도와 비교한 {c}개 구역 중 {m}개가 신고 면적과 {t} 넘게 다릅니다", c=k["compared"], m=k["mismatched"], t=k["threshold"])
+                  + ("(" + lst_ko + ")" if mis else "") + ".")
+        if (v["summary"]["outside"] or {}).get("value"):
+            en.append(_fmt("{o} " + _pl(sv["outside"], "row", "rows") + " outside your districts " + _pl(sv["outside"], "was", "were") + " not compared.", o=k["outside"]))
+            ko.append(_fmt("관할 밖 {o}행은 비교하지 않았습니다.", o=k["outside"]))
+        out.ui_actions.append({"op": "map_on", "set": "mismatch", "label": "Mismatched districts", "register_id": v["register"]["id"]})
+    for d in my[:2]:
+        nd = await ndvi_months(d, p)
+        if nd:
+            m = list(nd)[-1]
+            e = out.env("ndvi_last_" + re.sub(r"\W", "", d["id"])[-6:], f"NDVI mean · {d['name']} · {m}", nd[m]["env"])
+            mon = dt.date(int(m[:4]), int(m[5:7]), 1).strftime("%b %Y")
+            out.whitelist |= {m[:4]}
+            en.append(f"In {d['name']}, the latest NDVI mean was " + _fmt("{e}", e=e) + f" ({mon}).")
+            ko.append(f"{d['name']}의 최근 NDVI 평균은 " + _fmt("{e}", e=e) + f"입니다({m}).")
+        sp = sprawl(d)
+        if sp:
+            e = out.env("built_change_" + re.sub(r"\W", "", d["id"])[-6:], f"Built area change 2017→2025 · {d['name']}", sp["delta"])
+            out.whitelist |= {"2017", "2025"}
+            en.append("Built area changed by " + _fmt("{e}", e=e) + " from 2017 to 2025.")
+            ko.append("건물 면적은 2017→2025 사이 " + _fmt("{e}", e=e) + " 변했습니다.")
+    if not en:
+        out.data = {"status": "no_data", "text": _no_register(ctx)}
+        out.answer = out.data["text"]
+        return out
+    names = ", ".join(m["name"] for m in my[:3])
+    lead_en = f"Findings for {names or 'your districts'} (district level, not parcels): "
+    lead_ko = f"{names or '관할 구역'} 결과 요약(필지가 아닌 구역 단위): "
+    out.answer = _say(ctx, lead_en + " ".join(en), lead_ko + " ".join(ko))
+    out.data = {"districts": [m["name"] for m in my[:3]], "has_register": bool(v)}
+    return out
+
+
+HANDLERS.update({"global_map": global_map, "global_mismatch": global_mismatch, "global_findings": global_findings})
+
+REG_ASK = re.compile(r"(don'?t|do\s+not|doesn'?t|not)\s+match|mismatch|discrepan|register|ledger|declared|reported\s+(area|cropland)|어긋|대장|불일치", re.I)
+REG_LIST = re.compile(r"\bshow\b|\blist\b|\bwhich\b|\bwhat\s+are\b|\bname\b|보여|목록|어느|어떤", re.I)
+FIND_ASK = re.compile(r"summar\w*\s+(the\s+|my\s+|our\s+)?(findings|results?|register|comparison)|\bfindings\b|overall\s+summary|결과\s*요약", re.I)
+
+
 def ROUTE(msg: str, ctx):
     p = ctx.principal
     c = ctx.context or {}
@@ -469,16 +883,28 @@ def ROUTE(msg: str, ctx):
     if not (p.realm == "tenant" and tenant_is_global(p.tenant_id)) and not on_global:
         return None
     q = question_only(msg)
+    mc = map_command(q, ctx)                # 지도 동작만 있는 문장 — NDVI 요약으로 새지 않는다(M4)
+    if mc:
+        return {"tool": "global_map", "args": mc, "intent": "map"}
     args: dict = {}
     d = district_in(q)
     if d:
         args["region"] = d["name"]
+    else:
+        kr = KR_PLACE.search(q)                     # 국내 지명(한글 · 로마자) — 해외 도구가 '이 기관의 데이터가 아닙니다'로 막는다
+        if kr:
+            args["region"] = q[:40] if re.search(r"[가-힣]", q) else kr.group(0)
+    if FIND_ASK.search(q) and "region" not in args:
+        return {"tool": "global_findings", "args": {}, "intent": "global"}
+    if REG_ASK.search(q):
+        return {"tool": "global_mismatch", "args": {**({"region": args["region"]} if args.get("region") else {}),
+                                                     "list": bool(REG_LIST.search(q))}, "intent": "global"}
     m = MONTH_RX.search(q)
     if m:
         args["month"] = m.group(1)
     if LOW_VEG.search(q):
         return {"tool": "global_parcels", "args": args, "intent": "global"}
-    if not (GLOBAL_ASK.search(q) or d):
+    if not (GLOBAL_ASK.search(q) or d or args.get("region")):
         return None
     if SPRAWL_ASK.search(q):
         args["metric"] = "sprawl"

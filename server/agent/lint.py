@@ -82,8 +82,12 @@ def _structural(text: str, m: re.Match, wl: set[str]) -> str | None:
         return "device"                                 # GPU 0 · GPU 1(장비 순번)
     if not m.group("mul") and re.match(r"차(?![이량선액])", after) and float(digits) < 20:
         return "ordinal"                                # 2차 · 3차
+    if re.match(r"(?:st|nd|rd|th)\b", after) and not m.group("mul") and "," not in raw:
+        return "ordinal"                                # 1st · 2nd · 3rd parcel(R3 — 'unverifiedrd' 0)
     if re.search(r"제\s?$", before) and re.match(r"\s?(조|항|호|장|절)", after):
         return "law"
+    if re.search(r"조의\s?$", before) or (re.match(r"\s?(항|호|목)(?![가-힣])", after) and not m.group("mul") and "," not in raw and float(digits) < 100):
+        return "law"                                    # 제18조의4 · 1항 · 2호(조·항·호 번호)
     if re.match(r"\s?(조|항|호)(?![가-힣])", after) and "제" in before:
         return "law"
     if "." in raw and len(raw.split(".")[1]) >= 3 and (30 <= float(digits) <= 45 or 120 <= float(digits) <= 135):
@@ -218,8 +222,35 @@ def _allowed(scope: "Scope | None", cites: set, envs: dict, pct: bool) -> dict:
     return {k: v for k, v in envs.items() if k in ids}
 
 
-def lint(answer: str, envelopes: dict[str, dict], whitelist: set[str] | None = None, scope: "Scope | None" = None) -> LintResult:
+# R3 M3: 법령 원문의 개정·시행 연월일('<개정 2014.5.28, 2019.4.23>' · '2023. 8. 30.')은 데이터 숫자가 아니다
+DATE_RX = re.compile(r"(?<![\d.])(?:19|20)\d\d\s?[.\-/]\s?\d{1,2}\s?[.\-/]\s?\d{1,2}(?![\d])\.?")   # 연.월.일 세 자리만(면적 2019.45 는 데이터)
+AMEND_RX = re.compile(r"[<〈\[]\s?(?:개정|신설|전문개정|본조신설|제목개정|시행일|삭제|종전)[^>〉\]\n]{0,160}[>〉\]]")
+ASK_NUM = re.compile(r"\d+")
+
+
+def asked_numbers(msg: str) -> set[str]:
+    """질문에 나온 숫자(서수 · '상위 5' · '5곳') — 답에서 순위·개수 자리일 때만 허용한다(사용자 추측 숫자는 여전히 가드)."""
+    return set(ASK_NUM.findall(msg or ""))
+
+
+def _norm(s: str) -> str:
+    return re.sub(r"[\s“”\"'「」『』]", "", s or "")
+
+
+def _in_verbatim(text: str, s: int, e: int, vnorm: list[str]) -> bool:
+    """숫자 둘레(앞뒤 몇 글자)가 법령 원문 인용에 그대로 있으면 원문 숫자다."""
+    for a, b in ((8, 8), (5, 3), (3, 5)):
+        w = _norm(text[max(0, s - a):e + b])
+        if len(w) >= 5 and any(w in v for v in vnorm):
+            return True
+    return False
+
+
+def lint(answer: str, envelopes: dict[str, dict], whitelist: set[str] | None = None, scope: "Scope | None" = None,
+         asked: set[str] | None = None, verbatim: list[str] | None = None) -> LintResult:
     wl = set(whitelist or set())
+    asked = set(asked or ())
+    vnorm = [_norm(v) for v in (verbatim or []) if v]
     res = LintResult(answer_md="")
     out = []
     pos = 0
@@ -254,11 +285,20 @@ def lint(answer: str, envelopes: dict[str, dict], whitelist: set[str] | None = N
         text = v
         # 인용 [n] 은 가린 채 검사
         masked = CITE.sub(lambda mm: "\u0000" * len(mm.group(0)), text)
+        dspans = [(dm.start(), dm.end()) for rx in (DATE_RX, AMEND_RX) for dm in rx.finditer(masked)]
         buf, last = [], 0
         for nm in NUM.finditer(masked):
             if "\u0000" in masked[nm.start():nm.end()]:
                 continue
             why = _structural(masked, nm, wl)
+            if not why and any(a <= nm.start() and nm.end() <= b for a, b in dspans):
+                why = "law_date"
+            if not why and vnorm and _in_verbatim(masked, nm.start(), nm.end(), vnorm):
+                why = "law_text"
+            if not why and nm.group("num") in asked and not nm.group("pct") and (
+                    re.search(r"(?:상위|하위|top|bottom|first|last|줌|zoom|레벨|level)\s?(?:을|를|은|는)?\s?$", masked[max(0, nm.start() - 8):nm.start()], re.I)
+                    or re.match(r"\s?(?:곳|위|번째|번|등(?![급록]))", masked[nm.end():nm.end() + 4])):
+                why = "asked"
             if why:
                 res.whitelisted.append(f"{nm.group(0).strip()}:{why}")
                 continue
