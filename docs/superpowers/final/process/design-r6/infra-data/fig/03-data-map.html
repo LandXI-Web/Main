@@ -1,0 +1,70 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>데이터는 어디에 두고 누구에게 여나</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+.zones{display:grid;grid-template-columns:1fr 104px 1fr 104px 1fr;align-items:stretch}
+.zone{display:flex;flex-direction:column;gap:10px}
+.zone>h2{margin:0;font-size:18px;display:flex;align-items:center;gap:8px}
+.zone>.lead{margin:0 0 4px;color:var(--sub);font-size:13.5px}
+.it{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:11px 14px;display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center}
+.it b{font-size:14.5px}
+.it small{grid-column:1/-1;color:var(--sub);font-size:12.5px;line-height:1.4}
+.it .sz{font-size:13.5px;color:var(--ink-2);font-weight:600;white-space:nowrap}
+.z1 .it{border-left:4px solid var(--amber)}
+.z2 .it{border-left:4px solid var(--lx)}
+.z3 .it{border-left:4px solid var(--gov)}
+.link{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--sub);font-size:12px;text-align:center;line-height:1.35}
+.link .a{font-size:28px;color:var(--mute);line-height:1}
+.no{margin-top:auto;background:var(--warn-tint);color:var(--warn);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600}
+.ok{margin-top:auto;background:var(--ai-tint);color:#0B7C76;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600}
+.disks{margin-top:22px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.disk{background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:14px 16px}
+.disk .t{display:flex;justify-content:space-between;align-items:baseline}
+.disk .t b{font-size:16px}
+.disk .t span{font-size:13px;color:var(--sub)}
+.bar{height:12px;border-radius:6px;background:#E9ECEF;overflow:hidden;margin:10px 0 6px;display:flex}
+.bar i{display:block;height:100%}
+.bar .u{background:#9AA3AE} .bar .l{background:var(--lx)} .bar .r{background:var(--amber)} .bar .w{background:var(--warn)}
+.disk p{margin:0;font-size:12.5px;color:var(--sub-2);line-height:1.45}
+.disk p b{color:var(--ink)}
+</style></head><body><div class="page">
+<h1>데이터는 어디에 두고 누구에게 여나 — 원본은 한 곳, 공유는 권한 한 줄<span class="tag doc">문서</span><span class="tag both">둘 다</span></h1>
+<p class="sub">원본 영상은 LX 보관소에만 둡니다. 서비스 저장소에는 원본에서 만든 지도 이미지 · 결과 · 라벨 · 대장만 둡니다. 기관 · 외부에는 복사해 주지 않고 권한으로 엽니다.</p>
+<div class="zones">
+  <section class="zone z1">
+    <h2>LX 보관소 <span class="pill warn">원본 · 한 곳</span></h2>
+    <p class="lead">위성 · 항공 · 드론 원본 파일. 분석 · 학습만 읽는다</p>
+    <div class="it"><b>25cm 항공 원본</b><span class="sz num">1,794GB</span><small>64개 시군구 AI 분석의 원천 · 지금 D:</small></div>
+    <div class="it"><b>학습 원천(드론 · 항공 표본)</b><span class="sz num">약 720GB</span><small>지금 E:</small></div>
+    <div class="it"><b>기관이 올린 영상</b><span class="sz">기관 몫</span><small>분석 의뢰로 들어옴 · 기관 저장 한도에서 셈</small></div>
+    <div class="it"><b>드론 원본(시점당 1–2TB)</b><span class="sz">갈림길 2</span><small>남원 드론 원본은 이 PC 에 없음</small></div>
+    <div class="no">원본 파일은 밖으로 나가지 않음</div>
+  </section>
+  <div class="link"><span class="a">→</span>지도 이미지<br>결과를 만든다<br>원본 복사 0</div>
+  <section class="zone z2">
+    <h2>서비스 저장소 <span class="pill lx">지금 E:</span></h2>
+    <p class="lead">화면 · AI 도우미 · API 가 읽는 곳 — 지금 24GB + DB 7.6GB</p>
+    <div class="it"><b>지도 이미지</b><span class="sz">원본 주인 몫</span><small>원본과 같이 둠</small></div>
+    <div class="it"><b>분석 결과 · 필지 대조</b><span class="sz">맡긴 기관 몫</span><small>서비스 결과는 지금 + 바로 전 한 벌 · 시험 7일 · 확인용 90일</small></div>
+    <div class="it"><b>학습 라벨 · 표본 목록 · 모델</b><span class="sz">프로젝트 몫</span><small>학습용 조각은 프로젝트마다 한 벌 — 학습 실행이 복사하지 않음</small></div>
+    <div class="it"><b>기관 대장</b><span class="sz">기관 몫</span><small>개인정보는 받자마자 가림 · 기관이 지울 때까지</small></div>
+  </section>
+  <div class="link"><span class="a">→</span>권한 한 줄로<br>연다<br>복사 0</div>
+  <section class="zone z3">
+    <h2>보는 사람</h2>
+    <p class="lead">관할 · 부서 서비스 · 프로젝트 · 키 범위 안만</p>
+    <div class="it"><b>LX 직원</b><span class="sz">프로젝트 안</span><small>다른 프로젝트 라벨은 복사 없이 가져다 쓰기</small></div>
+    <div class="it"><b>기관(관리자 · 부서)</b><span class="sz">관할 안</span><small>자기 영상 + LX 관리자가 기관마다 고른 LX 영상 · 자기 결과 · 자기 대장</small></div>
+    <div class="it"><b>외부 시스템</b><span class="sz">서비스별 키</span><small>AI 분석 결과(도형 · 표)만 — 영상 · 학습데이터 · 대장 원본 0</small></div>
+    <div class="ok">내려받기는 동의 · 범위 · 기록과 함께</div>
+  </section>
+</div>
+<div class="disks">
+  <div class="disk"><div class="t"><b>C:</b><span class="num">남은 69GB / 1,023GB</span></div>
+    <div class="bar"><i class="u" style="width:93.3%"></i></div><p>시스템 · 프로그램. 서비스 자료를 두지 않는다</p></div>
+  <div class="disk"><div class="t"><b>D:</b><span class="num">남은 390GB / 8,002GB</span></div>
+    <div class="bar"><i class="r" style="width:22.4%"></i><i class="u" style="width:72.7%"></i></div><p><b>25cm 항공 원본 1,794GB</b>(주황) · 그 밖 연구 자료</p></div>
+  <div class="disk"><div class="t"><b>E:</b><span class="num">남은 1,996GB / 8,002GB</span></div>
+    <div class="bar"><i class="l" style="width:0.4%"></i><i class="r" style="width:9%"></i><i class="w" style="width:26.8%"></i><i class="u" style="width:38.8%"></i></div><p>서비스 저장 24GB(파랑) · 학습 원천 약 720GB(주황) · <b>학습 실행 폴더 2,147GB(빨강) — 학습마다 만든 표본 사본</b></p></div>
+</div>
+<p class="foot">공간 숫자: 10월 1일 오전 이 PC 실측. 보관 기간은 제안 기본값이며 관리자 화면 한 곳에서 바꿉니다.</p>
+</div></body></html>

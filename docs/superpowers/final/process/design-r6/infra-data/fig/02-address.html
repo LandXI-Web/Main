@@ -1,0 +1,60 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>기관 주소 세 가지</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.opt{display:flex;flex-direction:column;gap:12px}
+.opt .k{display:flex;align-items:center;gap:10px}
+.opt .k b{font-size:26px;color:var(--lx);font-weight:700;line-height:1}
+.opt .k h2{margin:0;font-size:17px}
+.url{font-family:Consolas,"Malgun Gothic",monospace;font-size:17px;font-weight:600;background:#F7F8FA;border:1px solid var(--rule);border-radius:10px;padding:10px 12px;color:var(--ink)}
+.url span{color:var(--sub);font-weight:400}
+dl{margin:0;display:grid;grid-template-columns:96px 1fr;gap:8px 12px;font-size:13.5px;line-height:1.45}
+dt{color:var(--sub);font-weight:600}
+dd{margin:0;color:var(--ink-2)}
+.each{border-top:1px dashed var(--rule);padding-top:12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.each b{font-size:14px}
+.zero{font-size:22px;font-weight:700;color:#0B7C76}
+.hand{font-size:15px;font-weight:700;color:var(--warn)}
+.pipe{margin-top:20px;display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:14px 18px;font-size:14px;color:var(--ink-2)}
+.pipe .n{background:#F7F8FA;border:1px solid var(--rule);border-radius:9px;padding:6px 10px;color:var(--ink);font-weight:600}
+.pipe .ar{color:var(--mute);font-size:20px}
+</style></head><body><div class="page">
+<h1>기관 주소 — 세 가지 방식, 새 기관마다 누가 무엇을 하나<span class="tag scr">화면</span><span class="tag lx">Land-XI</span></h1>
+<p class="sub">어느 방식이든 뒤에는 같은 서버 · 같은 데이터 · 같은 작업 흐름입니다. 다른 것은 '새 기관이 생길 때 사람이 할 일'과 '인증서 · 이름 설정'입니다.</p>
+<div class="three">
+  <section class="card opt">
+    <div class="k"><b>ⓐ</b><h2>지금처럼 한 주소 + 기관 고르기</h2></div>
+    <div class="url">gov.land-xi.dev<span>/namwon</span></div>
+    <dl>
+      <dt>기관이 보는 것</dt><dd>기관 공용 주소에서 기관을 고르고 로그인. 기관별 메인은 주소 뒤 기관 이름으로</dd>
+      <dt>한 번만</dt><dd>주소 뒤 기관 이름을 알아듣게 하는 구현 한 번</dd>
+      <dt>인증서</dt><dd>지금 것 그대로</dd>
+      <dt>맞는 때</dt><dd>지금 — 기관 4곳</dd>
+    </dl>
+    <div class="each"><b>새 기관마다 할 일</b><span class="zero">0</span></div>
+  </section>
+  <section class="card opt">
+    <div class="k"><b>ⓑ</b><h2>기관별 주소 — 한 번 설정 뒤 자동</h2></div>
+    <div class="url">namwon<span>.land-xi.dev</span></div>
+    <dl>
+      <dt>기관이 보는 것</dt><dd>처음부터 그 기관 메인. 기관 고르기 없음</dd>
+      <dt>한 번만</dt><dd>사람 손 한 번: 이름 설정 '모든 하위 주소' 한 줄 · 터널 규칙 한 줄(Cloudflare 계정) · 관문 · 서버가 '주소 → 기관'을 기관 표에서 읽게</dd>
+      <dt>인증서</dt><dd>한 단계 아래 주소까지 무료 자동. 두 단계(namwon.gov…)는 유료라 쓰지 않음</dd>
+      <dt>맞는 때</dt><dd>기관이 늘고 기관별 메인을 주소로 알리고 싶을 때</dd>
+    </dl>
+    <div class="each"><b>새 기관마다 할 일</b><span class="zero">0</span></div>
+  </section>
+  <section class="card opt">
+    <div class="k"><b>ⓒ</b><h2>기관 자체 주소 — 요청 기관만</h2></div>
+    <div class="url">ai<span>.○○.go.kr</span></div>
+    <dl>
+      <dt>기관이 보는 것</dt><dd>기관 누리집 아래 주소 → 그 기관 메인</dd>
+      <dt>한 번만</dt><dd>ⓑ + 사용자 지정 주소 기능 켜기(무료 100개, 그 뒤 주소마다 소액)</dd>
+      <dt>인증서</dt><dd>기관 쪽 이름 설정이 확인되면 자동 발급</dd>
+      <dt>맞는 때</dt><dd>기관이 요청할 때만. 공공기관 보안 검토가 걸릴 수 있음(확인 못 함)</dd>
+    </dl>
+    <div class="each"><b>새 기관마다 할 일</b><span class="hand">기관 전산 담당이 한 줄 추가</span></div>
+  </section>
+</div>
+<div class="pipe"><span class="n">주소</span><span class="ar">→</span><span class="n">터널</span><span class="ar">→</span><span class="n">공개 관문(주소 → 입구 · 기관)</span><span class="ar">→</span><span class="n">같은 Land-XI 서버</span><span class="ar">→</span><span>무엇이 보이는지는 <b>기관 한 줄</b>이 정함</span></div>
+</div></body></html>

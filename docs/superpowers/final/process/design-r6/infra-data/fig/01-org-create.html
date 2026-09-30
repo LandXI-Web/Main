@@ -1,0 +1,76 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>기관 만들기 — 여덟 칸</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+.wrap{display:grid;grid-template-columns:560px 1fr 1fr;gap:18px;align-items:start}
+.sheet{padding:0;overflow:hidden}
+.sheet .hd{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--rule)}
+.sheet .hd b{font-size:17px}
+.sheet .hd span{font-size:12.5px;color:var(--sub)}
+.f{display:grid;grid-template-columns:30px 1fr;gap:4px 12px;padding:12px 20px;border-bottom:1px solid var(--rule)}
+.f .no{width:26px;height:26px;border-radius:50%;background:var(--lx);color:#fff;font-size:13px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;grid-row:span 2}
+.f .lb{font-size:14.5px;font-weight:700;display:flex;gap:8px;align-items:center}
+.f .v{font-size:13.5px;color:var(--sub-2);line-height:1.45}
+.f .v em{font-style:normal;color:var(--ink);font-weight:600}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.chip{border:1px solid var(--rule);border-radius:8px;padding:3px 8px;font-size:12.5px;color:var(--ink-2);background:#FAFBFC}
+.chip.on{border-color:var(--lx);color:var(--lx);background:var(--lx-tint)}
+.go{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;background:#FAFBFC}
+.go .btn{background:var(--ink);color:#fff;border-radius:10px;padding:10px 22px;font-weight:700;font-size:14.5px}
+.go small{color:var(--sub);font-size:12.5px;max-width:300px}
+.side h2{display:flex;align-items:center;gap:8px}
+.bigline{margin-top:18px;background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:14px 18px;font-size:15px;display:flex;gap:10px;align-items:center}
+.bigline b{font-weight:700}
+</style></head><body><div class="page">
+<h1>기관 만들기 — LX 관리자가 여덟 칸을 정하면<span class="tag scr">화면</span><span class="tag lx">Land-XI</span></h1>
+<p class="sub">LX 관리자 대시보드 → 기관 → 새 기관. 시트 한 장을 채우고 '만들기'를 한 번 누르면 가운데 칸은 저절로 붙습니다. 오른쪽 칸은 저절로 붙지 않습니다. 기관 이름은 예시입니다.</p>
+<div class="wrap">
+  <section class="card sheet">
+    <div class="hd"><b>새 기관</b><span>기본값이 먼저 채워져 있고, 확인만 합니다</span></div>
+    <div class="f"><span class="no">1</span><span class="lb">기관 정보</span>
+      <span class="v"><em>○○군</em> · 시군구 · 관할 ○○군 · 한국어<br><span class="pill auto">자동</span> 행정단위 말 · 좌표계 · 언어</span></div>
+    <div class="f"><span class="no">2</span><span class="lb">입구(주소)</span>
+      <span class="v">기관 공용 주소 + 기관 고르기 <span class="pill auto">할 일 0</span><br>기관별 주소는 갈림길 1</span></div>
+    <div class="f"><span class="no">3</span><span class="lb">기관 모습</span>
+      <span class="v">마크 · 플랫폼 이름 · 기관색 · 소개 두 줄 · 문의처<br>틀은 잠김 · 첫 값만 넣고 그 뒤엔 기관 관리자가 직접</span></div>
+    <div class="f"><span class="no">4</span><span class="lb">켜는 서비스</span>
+      <span class="v">공개된 카드에서 고르면 <em>적용 요청이 저절로</em> 만들어짐
+      <span class="chips"><span class="chip on">영농관리 · 영상 있음 → 분석 대기</span><span class="chip on">생활환경 · 영상 필요</span></span></span></div>
+    <div class="f"><span class="no">5</span><span class="lb">첫 기관 관리자</span>
+      <span class="v">업무 메일 = 아이디 → 임시 비밀번호(한 번만 보임) · 첫 로그인 때 바꾸기</span></div>
+    <div class="f"><span class="no">6</span><span class="lb">한도 <span class="pill appr">올리면 결재</span></span>
+      <span class="v">시군구 기본 틀 — 저장 · GPU 시간 · 분석 면적 · AI 도우미 · 동시 작업<br><em>한도 없이는 만들 수 없음</em></span></div>
+    <div class="f"><span class="no">7</span><span class="lb">LX 영상 공유</span>
+      <span class="v">관할과 겹치는 LX 영상이 목록으로 뜸 → 관리자가 고름<br>복사 없음 · 원본 파일은 나가지 않음</span></div>
+    <div class="f"><span class="no">8</span><span class="lb">끄기 · 보관</span>
+      <span class="v">사용 중지 = 로그인만 막힘 · 해지 = 내려받기 기간 뒤 정리</span></div>
+    <div class="go"><small>기관 한 줄 · 관할 · 한도 · 모습 · 첫 계정 · 공유 · 적용 요청이 한꺼번에 만들어지고 기록이 남습니다</small><span class="btn">만들기</span></div>
+  </section>
+  <section class="card side">
+    <h2>저절로 붙는 것 <span class="pill auto">기관 한 줄이 생기는 순간</span></h2>
+    <p class="lead">화면·서버가 기관 한 줄을 읽어서 바로 동작</p>
+    <ul class="ck yes">
+      <li><i>✓</i><span>기관 로그인 목록에 뜸</span></li>
+      <li><i>✓</i><span>관할 밖 0<small>검색 · 지도 · 영상 · 필지 · AI 도우미</small></span></li>
+      <li><i>✓</i><span>광역이면 전체 + 시군구 고르기</span></li>
+      <li><i>✓</i><span>사용량 계산 · 한도 판정<small>넘으면 새 작업을 받지 않음</small></span></li>
+      <li><i>✓</i><span>기관 사이 데이터 분리</span></li>
+      <li><i>✓</i><span>기관 모습이 모든 기관 화면에</span></li>
+      <li><i>✓</i><span>검토 요청 · 의뢰를 받는 사람<small>담당 프로젝트장 + LX 관리자도 함께</small></span></li>
+      <li><i>✓</i><span>기관 관리자의 가입 승인 · 사용자 관리</span></li>
+    </ul>
+  </section>
+  <section class="card side">
+    <h2>저절로 붙지 않는 것 <span class="pill hand">사람 손 · GPU · 협의</span></h2>
+    <p class="lead">기관을 만들어도 이것은 따로 해야 합니다</p>
+    <ul class="ck no">
+      <li><i>·</i><span>서비스 첫 결과<small>영상 × AI 분석 시간 — 등록 항공 영상 64개 시군구는 분석 한 번, 그 밖은 영상부터</small></span></li>
+      <li><i>·</i><span>결과 확인 표본<small>그 지역 표본을 사람이 봄</small></span></li>
+      <li><i>·</i><span>기관 대장 맞추기<small>요구사항을 들어 만드는 커스텀</small></span></li>
+      <li><i>·</i><span>드론 촬영 의뢰<small>LX 수수료 체계 · 분석 의뢰는 무상(관리자 승인)</small></span></li>
+      <li><i>·</i><span>기관 자체 주소<small>기관 전산 담당이 이름 설정을 바꿔야 함</small></span></li>
+      <li><i>·</i><span>새 언어 · 해외 행정구역 자료 · 기존 시스템 연결</span></li>
+    </ul>
+  </section>
+</div>
+<div class="bigline"><b>주소는 문일 뿐입니다.</b><span class="muted">무엇이 붙는지는 주소가 아니라 기관 한 줄(관할 · 한도 · 모습 · 서비스 · 공유)이 정합니다.</span></div>
+</div></body></html>

@@ -1,0 +1,70 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>LX 영상 공유 — 관리자가 기관마다</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+.wrap{display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start}
+.drawer{background:#fff;border:1px solid var(--rule);border-radius:18px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.06)}
+.drawer .hd{padding:18px 22px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center}
+.drawer .hd b{font-size:18px}
+.drawer .hd span{font-size:12.5px;color:var(--sub)}
+.tabs{display:flex;gap:18px;padding:12px 22px 0;font-size:14px;color:var(--sub);border-bottom:1px solid var(--rule)}
+.tabs span{padding-bottom:10px}
+.tabs span.on{color:var(--ink);font-weight:700;border-bottom:2px solid var(--accent)}
+.bd{padding:16px 22px}
+.bd .lead{margin:0 0 12px;color:var(--sub-2);font-size:13.5px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:left;padding:11px 8px;border-bottom:1px solid var(--rule);vertical-align:middle}
+th{color:var(--sub);font-weight:600;font-size:12.5px}
+td b{font-weight:700}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:9px;overflow:hidden;font-size:12.5px}
+.seg span{padding:5px 10px;color:var(--sub)}
+.seg span.on{background:var(--lx-tint);color:var(--lx);font-weight:700}
+.tg{width:40px;height:22px;border-radius:11px;background:#D5DAE0;position:relative;display:inline-block}
+.tg:after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff}
+.tg.on{background:var(--lx)} .tg.on:after{left:21px}
+tr.off td{color:var(--sub)}
+.ft{display:flex;justify-content:space-between;align-items:center;padding:14px 22px;background:#FAFBFC;border-top:1px solid var(--rule)}
+.ft small{color:var(--sub);font-size:12.5px}
+.btn{background:var(--ink);color:#fff;border-radius:10px;padding:9px 20px;font-weight:700;font-size:14px}
+.side .card+.card{margin-top:14px}
+.side ul{margin:8px 0 0;padding-left:18px;font-size:13.5px;color:var(--ink-2);line-height:1.5}
+.side li{margin:4px 0}
+</style></head><body><div class="page">
+<h1>LX 영상 공유 — LX 관리자가 기관마다 고른다<span class="tag scr">화면</span><span class="tag lx">Land-XI</span></h1>
+<p class="sub">LX 관리자 대시보드 → 기관 → 기관을 누르면 열리는 서랍의 '영상 공유' 칸(시안). 기관 만들기 7칸과 같은 칸입니다. 관할과 겹치는 LX 영상만 목록에 뜨고, 기본은 모두 꺼져 있습니다. 그림은 관리자가 두 개를 켠 모습이고, 남원시는 예시입니다.</p>
+<div class="wrap">
+  <section class="drawer">
+    <div class="hd"><b>전북특별자치도 남원시</b><span>기관 서랍</span></div>
+    <div class="tabs"><span>사용량 · 한도</span><span>서비스</span><span class="on">영상 공유</span><span>계정</span><span>기관 모습</span></div>
+    <div class="bd">
+      <p class="lead">관할과 겹치는 LX 영상 — 켠 것만 남원시 화면과 분석 의뢰 '불러오기'에 보입니다.</p>
+      <table>
+        <tr><th>영상</th><th>종류</th><th>촬영</th><th>관할과 겹침</th><th>열어 줄 범위</th><th>켬</th></tr>
+        <tr><td><b>남원시 항공영상</b></td><td>항공</td><td>2023</td><td>관할 전체</td><td><span class="seg"><span class="on">지도 이미지만</span><span>분석 의뢰에도</span></span></td><td><span class="tg on"></span></td></tr>
+        <tr><td><b>남원 드론영상</b></td><td>드론</td><td>2025년 10월</td><td>관할 일부</td><td><span class="seg"><span>지도 이미지만</span><span class="on">분석 의뢰에도</span></span></td><td><span class="tg on"></span></td></tr>
+        <tr class="off"><td><b>남원 드론영상</b></td><td>드론</td><td>2025년 4월</td><td>관할 일부</td><td><span class="seg"><span class="on">지도 이미지만</span><span>분석 의뢰에도</span></span></td><td><span class="tg"></span></td></tr>
+        <tr class="off"><td><b>남원시 항공영상</b></td><td>항공</td><td>2020</td><td>관할 전체</td><td><span class="seg"><span class="on">지도 이미지만</span><span>분석 의뢰에도</span></span></td><td><span class="tg"></span></td></tr>
+      </table>
+    </div>
+    <div class="ft"><small>켜고 끈 날 · 누가 · 범위가 기록됩니다</small><span class="btn">저장</span></div>
+  </section>
+  <aside class="side">
+    <section class="card">
+      <h2>공유는 권한 한 줄</h2>
+      <ul>
+        <li>복사하지 않습니다 — 저장 공간이 늘지 않습니다</li>
+        <li>원본 파일은 나가지 않습니다 — 지도 이미지와 분석 결과만</li>
+        <li>관할 밖 부분은 서버가 잘라서 보여 줍니다</li>
+        <li>끄면 그날부터 안 보입니다(이미 받은 분석 결과는 그대로)</li>
+      </ul>
+    </section>
+    <section class="card">
+      <h2>누가</h2>
+      <ul>
+        <li>고르는 사람: <b>LX 관리자</b>(확정 — 역할-4)</li>
+        <li>프로젝트장은 '이 기관에 공유하면 좋겠다' 추천만(제안)</li>
+        <li>기관은 켠 목록 안에서 불러오기만</li>
+      </ul>
+    </section>
+  </aside>
+</div>
+</div></body></html>

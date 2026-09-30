@@ -1,0 +1,94 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>장비 · 저장 설정 — 한 곳</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+.wrap{display:grid;grid-template-columns:1fr 330px;gap:20px;align-items:start}
+.app{background:var(--bg);border:1px solid var(--rule);border-radius:18px;overflow:hidden;display:grid;grid-template-columns:72px 1fr;min-height:720px}
+.rail{background:#fff;border-right:1px solid var(--rule);display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 0}
+.rail .lg{font-weight:800;font-size:13px;margin-bottom:10px}
+.rail span{font-size:11.5px;color:var(--sub);padding:8px 0;width:56px;text-align:center;border-radius:10px}
+.rail span.on{background:var(--lx-tint);color:var(--lx);font-weight:700}
+.main{display:flex;flex-direction:column}
+.mast{background:#fff;border-bottom:1px solid var(--rule);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.mast b{font-size:15px}
+.mast span{font-size:12.5px;color:var(--sub)}
+.tabs{display:flex;gap:18px;padding:12px 20px 0;font-size:14px;color:var(--sub)}
+.tabs span{padding-bottom:10px}
+.tabs span.on{color:var(--ink);font-weight:700;border-bottom:2px solid var(--accent)}
+.body{padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+.sec{background:#fff;border:1px solid var(--rule);border-radius:14px;padding:14px 16px}
+.sec .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.sec .top h2{margin:0;font-size:16px}
+.btn{border:1px solid var(--rule);border-radius:9px;padding:6px 12px;font-size:13px;font-weight:600;background:#fff}
+.btn.pri{background:var(--ink);color:#fff;border-color:var(--ink)}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--rule);vertical-align:middle}
+th{color:var(--sub);font-weight:600;font-size:12.5px}
+td b{font-weight:700}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:12.5px}
+.st i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.st.up i{background:var(--ai)} .st.wait i{background:var(--mute)}
+.hot{font-weight:700}
+.hot small{color:var(--sub);font-weight:400}
+tr.pend td{color:var(--sub)}
+.bar{height:8px;border-radius:4px;background:#E9ECEF;overflow:hidden;width:120px;display:inline-block;vertical-align:middle;margin-right:8px}
+.bar i{display:block;height:100%;background:var(--lx)}
+.note{font-size:12.5px;color:var(--sub);margin-top:8px}
+.side .card+.card{margin-top:14px}
+.cnt{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.cnt div{display:grid;grid-template-columns:70px 1fr 30px;gap:8px;align-items:center;font-size:13.5px}
+.cnt span.b{height:12px;border-radius:4px;background:var(--warn);opacity:.8}
+.cnt em{font-style:normal;font-weight:700;text-align:right}
+.to{margin-top:12px;font-size:14px;font-weight:700;color:#0B7C76}
+</style></head><body><div class="page">
+<h1>장비 · 저장 설정 — 값은 한 곳, 바꾸면 다른 관리자 결재<span class="tag scr">화면</span><span class="tag lx">Land-XI</span></h1>
+<p class="sub">LX 관리자 대시보드 → 인프라 → 장비 · 저장 설정(시안). 지금 A6000 기준 값을 그대로 담고, A100 서버가 오면 줄만 더합니다. 화면에는 장비 이름 · 고부하 · 여유만 씁니다.</p>
+<div class="wrap">
+  <div class="app">
+    <nav class="rail"><span class="lg">LX</span><span>현황</span><span class="on">인프라</span><span>기관</span><span>배포</span><span>결재</span></nav>
+    <div class="main">
+      <div class="mast"><b>LX 관리자 대시보드</b><span>LX 관리자</span></div>
+      <div class="tabs"><span>GPU · 대기열</span><span>언어 모델</span><span class="on">장비 · 저장 설정</span></div>
+      <div class="body">
+        <section class="sec">
+          <div class="top"><h2>장비</h2><span class="btn">장비 추가</span></div>
+          <table>
+            <tr><th>장비</th><th>있는 곳</th><th>GPU</th><th>동시 고부하</th><th>장당 전력 상한</th><th>멈춤 선</th><th>맡는 일</th><th>상태</th></tr>
+            <tr><td><b>작업용 PC</b></td><td>지금 PC</td><td>2장</td><td class="hot">1<small> / 2</small></td><td>200W</td><td>다른 장 100W</td><td>AI 분석 · 학습 · AI 도우미</td><td><span class="st up"><i></i>연결</span></td></tr>
+            <tr class="pend"><td><b>증설 GPU 서버 1</b></td><td>IDC</td><td>4장</td><td>IDC 전원 확인 뒤</td><td>—</td><td>—</td><td>학습 전용(예정)</td><td><span class="st wait"><i></i>등록 대기</span></td></tr>
+            <tr class="pend"><td><b>증설 GPU 서버 2</b></td><td>IDC</td><td>4장</td><td>IDC 전원 확인 뒤</td><td>—</td><td>—</td><td>AI 분석(예정)</td><td><span class="st wait"><i></i>등록 대기</span></td></tr>
+          </table>
+          <p class="note">동시 고부하 · 전력 상한은 장비마다 따로 판정합니다. 값을 바꾸려면 '결재 요청' — 요청한 관리자가 아닌 다른 관리자가 승인합니다.</p>
+        </section>
+        <section class="sec">
+          <div class="top"><h2>저장</h2><span class="btn">보관소 추가</span></div>
+          <table>
+            <tr><th>자리</th><th>무엇을 두나</th><th>여유</th><th>경보선</th></tr>
+            <tr><td><b>서비스 저장소</b></td><td>지도 이미지 · 결과 · 라벨 · 대장</td><td><span class="bar"><i style="width:75%"></i></span>남은 1,996GB</td><td>200GB 아래</td></tr>
+            <tr><td><b>원본 보관소 1</b></td><td>25cm 항공 원본</td><td><span class="bar"><i style="width:95%"></i></span>남은 390GB</td><td>200GB 아래</td></tr>
+            <tr><td><b>원본 보관소 2</b></td><td>학습 원천 · 새 원본(갈림길 2)</td><td><span class="bar"><i style="width:75%"></i></span>남은 1,996GB<br><small class="muted">서비스 저장소와 같은 디스크</small></td><td>200GB 아래</td></tr>
+          </table>
+          <p class="note">올리기 한 번 크기 · 학습 기본값 · 작업 크기 상한은 장비 등급(지금 등급 / 증설 등급)을 따릅니다.</p>
+        </section>
+      </div>
+    </div>
+  </div>
+  <aside class="side">
+    <section class="card">
+      <h2>지금은 31곳에 흩어져 있음</h2>
+      <p class="lead">장비 · 전력 · 저장 값이 코드 · 스크립트 · 화면 · 저장소 밖 설정에</p>
+      <div class="cnt">
+        <div>장비 · GPU<span class="b" style="width:100%"></span><em>12</em></div>
+        <div>전력 예산<span class="b" style="width:67%"></span><em>8</em></div>
+        <div>저장 위치<span class="b" style="width:92%"></span><em>11</em></div>
+      </div>
+      <p class="to">→ 장비 대장 · 저장 위치 한 곳</p>
+      <p class="note">기관 만들기에 걸리는 7곳은 기관 한 줄로 모읍니다.</p>
+    </section>
+    <section class="card">
+      <h2>전력은 장비마다</h2>
+      <p class="lead">지금은 전력 자리가 장비 구분 없이 하나 — 증설 서버도 작업용 PC 의 '동시 1장'에 묶입니다.</p>
+      <p class="note">바뀐 뒤: 작업용 PC 1자리 · 증설 서버는 그 서버 전원 기준. 설정이 비거나 잘못 읽히면 가장 보수적인 값(동시 1장).</p>
+    </section>
+  </aside>
+</div>
+</div></body></html>

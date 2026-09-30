@@ -1,0 +1,73 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>역할 9 — 화면 권한과 문서</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+.wrap{display:grid;grid-template-columns:1.25fr 1fr;gap:18px;align-items:start}
+.grp{display:grid;grid-template-columns:150px 1fr;gap:12px;padding:14px 0;border-bottom:1px solid var(--rule)}
+.grp:last-child{border-bottom:0}
+.grp .h b{display:block;font-size:15px}
+.grp .h small{color:var(--sub);font-size:12.5px;line-height:1.4;display:block;margin-top:2px}
+.roles{display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start}
+.r{border:1px solid var(--rule);border-radius:10px;padding:8px 12px;background:#FAFBFC;font-size:14px;font-weight:600;display:flex;flex-direction:column;gap:2px}
+.r small{font-weight:400;color:var(--sub);font-size:12px}
+.r.lx{border-left:4px solid var(--lx)} .r.gov{border-left:4px solid var(--gov)} .r.key{border-left:4px solid var(--both)} .r.doc{border-left:4px solid var(--mute);background:#fff;color:var(--sub-2)}
+.r .new{color:var(--warn);font-size:11.5px;font-weight:700}
+.resp{display:flex;flex-direction:column;gap:12px}
+.rp{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start}
+.rp .n{width:30px;height:30px;border-radius:50%;background:var(--ink);color:#fff;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.rp b{font-size:15px;display:block}
+.rp span{font-size:13px;color:var(--sub-2);line-height:1.45}
+.rp.out .n{background:#fff;color:var(--sub);border:2px dashed var(--mute)}
+.sv{margin-top:16px}
+.sv table{width:100%;border-collapse:collapse;font-size:13.5px}
+.sv th,.sv td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+.sv th{color:var(--sub);font-weight:600;font-size:12.5px}
+.big{font-size:22px;font-weight:700}
+</style></head><body><div class="page">
+<h1>역할 9 — 무엇을 화면 권한으로 만들고, 무엇을 문서로 정하나<span class="tag doc">문서</span><span class="tag both">둘 다</span></h1>
+<p class="sub">사람 역할은 9개로 충분합니다. 빠진 것은 새 사람이 아니라 "보관소 · 장비 · 기관 데이터를 누가 책임지나"였고, 기존 역할의 일로 붙입니다.</p>
+<div class="wrap">
+  <section class="card">
+    <div class="grp"><div class="h"><b>계정 역할</b><small>로그인 계정 = 서버가 아는 권한 묶음</small></div>
+      <div class="roles">
+        <span class="r lx">LX 관리자<small>결재 · 기관 · 자원 · 보관소</small></span>
+        <span class="r lx">LX 직원<small>프로젝트 · 생산</small></span>
+        <span class="r lx">LX 영업<small>읽기 전용</small></span>
+        <span class="r gov"><span>기관 관리자 <span class="new">새로</span></span><small>부서 · 사용자 · 기관 데이터</small></span>
+        <span class="r gov"><span>부서 사용자 <span class="new">새로</span></span><small>자기 부서 서비스만</small></span>
+        <span class="r gov">열람자<small>선택 · 보기만</small></span>
+      </div></div>
+    <div class="grp"><div class="h"><b>프로젝트 안 역할</b><small>계정이 아니라 프로젝트마다 붙는 표시</small></div>
+      <div class="roles">
+        <span class="r lx">프로젝트장<small>소유 · 공개 요청 · 재학습 시작 · 몫 요청</small></span>
+        <span class="r lx">구성원<small>올리기 · 라벨 · 학습 · 결과 확인</small></span>
+      </div></div>
+    <div class="grp"><div class="h"><b>키</b><small>사람이 아님</small></div>
+      <div class="roles"><span class="r key">외부 시스템<small>서비스별 API 키 한 개 = 권한 묶음</small></span></div></div>
+    <div class="grp"><div class="h"><b>문서로만</b><small>따로 권한을 만들지 않음</small></div>
+      <div class="roles">
+        <span class="r doc">해외 기관<small>기관 관리자 · 부서 사용자와 같은 권한 — 언어 · 관할 종류만 다름</small></span>
+        <span class="r doc">게스트<small>계정 없음 — 로그인 전 공개 화면 규칙</small></span>
+      </div></div>
+  </section>
+  <div>
+    <section class="card">
+      <h2>새로 붙일 책임 셋 — 새 사람 역할은 0</h2>
+      <p class="lead">기관 만들기 · 데이터 · 인프라를 하려면 주인이 필요했던 일</p>
+      <div class="resp">
+        <div class="rp"><span class="n">1</span><div><b>보관소 · 장비 → LX 관리자</b><span>보관소 여유 · 큰 원본 승인 · 두는 기간 정리 · 영상 공유 고르기 · 장비 · 전력 · 저장 설정. 바꾸기 · 지우기는 다른 관리자 결재</span></div></div>
+        <div class="rp"><span class="n">2</span><div><b>기관 데이터 → 기관 관리자</b><span>기관 영상 · 대장 지우기 · 기관 영상의 LX 학습 동의 · 해지 때 내려받기 · 부서 관리</span></div></div>
+        <div class="rp"><span class="n">3</span><div><b>프로젝트 몫 → 프로젝트장</b><span>몫 안에서 쓰기 · 넘으면 요청 · 프로젝트 보관 때 학습용 조각 정리</span></div></div>
+        <div class="rp out"><span class="n">+</span><div><b>화면 밖 장비 담당(사람)</b><span>디스크 · 전원 · 드라이버 · IDC 설치 · 보관 장치 연결 — 플랫폼 계정이 아니라 문서로 정함</span></div></div>
+      </div>
+    </section>
+    <section class="card sv">
+      <h2>서버가 지금 아는 기관 역할과 맞지 않음</h2>
+      <table><tr><th>지금 서버</th><th>바뀐 뒤</th></tr>
+        <tr><td>기관: 담당자 · 열람자<br><span class="muted">기관 계정 9개가 모두 '담당자'</span></td><td>기관 관리자 · 부서 사용자(+ 부서) · 열람자</td></tr>
+        <tr><td>프로젝트 역할 없음</td><td>프로젝트장 · 구성원</td></tr>
+        <tr><td>키 없음</td><td>서비스별 API 키</td></tr>
+      </table>
+    </section>
+  </div>
+</div>
+</div></body></html>

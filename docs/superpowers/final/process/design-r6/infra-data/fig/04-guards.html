@@ -1,0 +1,69 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>무분별한 사용을 막는 장치 다섯</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+.wrap{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch}
+.case h2{font-size:16px}
+
+.copies{display:flex;flex-direction:column;gap:7px;margin:12px 0 8px}
+.copies div{display:grid;grid-template-columns:118px 1fr 64px;gap:10px;align-items:center;font-size:13px;color:var(--ink-2)}
+.copies span.b{height:14px;border-radius:5px;background:var(--warn);opacity:.85}
+.copies span.b.src{background:var(--amber);opacity:.9}
+.copies em{font-style:normal;font-weight:600;text-align:right;color:var(--ink)}
+.case p{margin:0;font-size:13px;color:var(--sub-2);line-height:1.5}
+.dots{display:flex;flex-wrap:wrap;gap:3px;margin:12px 0 8px;width:360px}
+.dots i{width:7px;height:7px;border-radius:2px;background:#D5DAE0}
+.dots i.k{background:var(--ai)}
+.legend{display:flex;gap:14px;font-size:12.5px;color:var(--sub);margin-bottom:6px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.guards{margin-top:18px;background:var(--card);border:1px solid var(--rule);border-radius:16px;padding:6px 20px}
+.gh{display:grid;grid-template-columns:230px 1fr 330px 330px;gap:18px;padding:10px 0 8px;border-bottom:1px solid var(--rule);font-size:12.5px;color:var(--sub);font-weight:600}
+.g{display:grid;grid-template-columns:230px 1fr 330px 330px;gap:18px;align-items:center;padding:12px 0;border-bottom:1px solid var(--rule)}
+.g:last-child{border-bottom:0}
+.g .nm{display:flex;align-items:center;gap:10px}
+.g .n{width:28px;height:28px;border-radius:50%;background:var(--ink);color:#fff;font-weight:700;display:inline-flex;align-items:center;justify-content:center;font-size:14px}
+.g h3{margin:0;font-size:16px}
+.g p{margin:0;font-size:13px;color:var(--sub-2);line-height:1.45}
+.g .now{font-size:13px;color:var(--warn);font-weight:600}
+.g .next{font-size:13px;color:#0B7C76;font-weight:600}
+.keep{margin-top:16px}
+.keep h2{font-size:16px;margin:0 0 12px}
+.tl{display:grid;grid-template-columns:repeat(5,1fr);gap:0;position:relative}
+.tl:before{content:"";position:absolute;left:0;right:0;top:13px;height:3px;background:linear-gradient(90deg,var(--warn),var(--amber),var(--lx),var(--ai))}
+.tl div{position:relative;padding:30px 22px 0 0;font-size:13px;color:var(--ink-2);line-height:1.45}
+.tl div:before{content:"";position:absolute;top:6px;left:0;width:17px;height:17px;border-radius:50%;background:#fff;border:3px solid var(--ink)}
+.tl b{display:block;font-size:15px;color:var(--ink)}
+</style></head><body><div class="page">
+<h1>무분별한 사용을 막는 장치 다섯 — 실제로 쌓인 것에서 출발<span class="tag doc">문서</span><span class="tag both">둘 다</span></h1>
+<p class="sub">위 두 칸은 이 PC 에 규칙 없이 쌓인 실제 모습입니다(10월 1일 실측). 아래 다섯 장치가 있으면 같은 일이 되풀이되지 않습니다. 이미 쌓인 것은 지우지 않고 정리 목록에 올려 판단받습니다.</p>
+<div class="wrap"><section class="card case">
+      <h2>학습 한 번마다 표본 사본 한 벌</h2>
+      <div class="copies">
+        <div>드론 표본 폴더<span class="b src" style="width:79%"></span><em class="num">566GB</em></div>
+        <div>차량 학습 1차<span class="b" style="width:100%"></span><em class="num">713GB</em></div>
+        <div>차량 학습 2차<span class="b" style="width:100%"></span><em class="num">713GB</em></div>
+        <div>기울어진 상자<span class="b" style="width:100%"></span><em class="num">717GB</em></div>
+      </div>
+      <p>학습 실행 폴더마다 표본을 통째로 따로 가짐 — 합 약 2.1TB, E: 남은 공간과 맞먹음</p>
+    </section>
+    <section class="card case">
+      <h2>지우는 규칙이 없는 분석 결과</h2>
+      <div class="legend"><span><i style="background:var(--ai)"></i>기관 서비스가 지금 쓰는 결과 세트 15</span><span><i style="background:#D5DAE0"></i>그 밖</span><span>한 칸 = 결과 5개</span></div>
+      <div class="dots" id="dots"></div>
+      <p>결과 폴더 1,133개 · 시험으로 돌린 작업 308건 · 두는 기간 규칙 0(학습 올리기 조각만 하루)</p>
+    </section></div>
+<div class="guards"><div class="gh"><span>장치</span><span>무엇</span><span>지금</span><span>바뀐 뒤</span></div><div class="g"><div class="nm"><span class="n">1</span><h3>할당</h3></div><p>기관 · 프로젝트마다 저장 · GPU 몫. 넘으면 새 작업 멈춤</p><span class="now">한도 없는 기관 = 무제한 · LX 프로젝트 몫 없음</span><span class="next">모든 기관 필수 · 프로젝트 기본 몫</span></div><div class="g"><div class="nm"><span class="n">2</span><h3>승인 — 큰 것만</h3></div><p>한도 올리기 · 1TB 넘는 원본 · 드론 전역 분석 예약 · 원본과 기관 데이터 지우기</p><span class="now">한도 올리기만</span><span class="next">넷 모두 결재함 한 곳 · 작은 일은 승인 없음</span></div><div class="g"><div class="nm"><span class="n">3</span><h3>두는 기간</h3></div><p>종류마다 기본값. 기간이 된 것은 정리 목록에</p><span class="now">규칙 없음</span><span class="next">시험 · 중간물은 저절로 · 원본과 기관 데이터는 두 사람 결재로</span></div><div class="g"><div class="nm"><span class="n">4</span><h3>중복 방지</h3></div><p>올릴 때 파일 지문 비교 · 학습은 표본을 복사하지 않음 · 공유는 권한 한 줄 · 같은 분석은 결과 다시 쓰기</p><span class="now">없음</span><span class="next">"이미 보관 중인 영상입니다 — 불러오기"</span></div><div class="g"><div class="nm"><span class="n">5</span><h3>원본은 한 곳</h3></div><p>원본 영상은 LX 보관소에만. 서비스 저장소 · 프로젝트 · 기관 쪽 사본 0</p><span class="now">올린 원본이 서비스 저장소 안으로 · 여러 디스크와 다른 PC 에 흩어짐</span><span class="next">보관소 목록 한 곳</span></div></div>
+<section class="card keep">
+      <h2>얼마나 두나 — 제안 기본값(관리자 화면 한 곳에서 바꿈)</h2>
+      <div class="tl">
+        <div><b>7일</b>시험 작업 결과</div>
+        <div><b>30일</b>취소 · 실패 · 학습 중간 저장</div>
+        <div><b>90일</b>서비스에 안 올라간 확인용 분석 · 바꿔 올린 옛 대장 · 해지 뒤 내려받기 기간</div>
+        <div><b>서비스 동안</b>서비스 결과 지금 + 바로 전 한 벌 · 지난 해 결과(연차 비교)</div>
+        <div><b>계속</b>원본 영상 · 라벨 · 표본 목록 · 등록된 모델</div>
+      </div>
+    </section>
+<script>
+// 1,133 개를 1칸 = 5개로(227칸) — 서비스가 쓰는 15 세트는 3칸
+const d=document.getElementById('dots');for(let i=0;i<227;i++){const e=document.createElement('i');if(i<3)e.className='k';d.append(e)}
+</script>
+</div></body></html>
