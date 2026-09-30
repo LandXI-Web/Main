@@ -367,6 +367,11 @@ export function openFlow({ host, who }) {
     s4.innerHTML = '';
     s4.append(h('p.t-label.tf-msg', { dataset: { lv: 'warn' }, text: '학습 결과를 불러오지 못했습니다' }), retryBtn(() => showModelOfJob(jobId)));
   }
+  /* 결재 결과(요청한 사람의 화면 — 반려 사유가 돌아오는 곳 · impl-1 D2-ⓐ). 직원은 자기 요청만 읽는다(GET /approvals) */
+  async function myDecision(kind, match) {
+    const j = await api('/approvals?state=all').catch(() => null);
+    return (j?.items || []).filter((a) => a.kind === kind && match(a)).sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')))[0] || null;
+  }
   async function showModel(mid) {
     setQ({ model: mid });
     lock(s4, false);
@@ -394,7 +399,9 @@ export function openFlow({ host, who }) {
     const act = h('div.tf-act');
     s4.append(act, h('p.t-label.tf-msg', { role: 'status' }));
     if (model.status === 'candidate') {
-      const reg = h('button.t-btn', { type: 'button', text: '등록 요청' });
+      const last = await myDecision('model', (a) => a.subject?.id === mid);
+      if (last?.decision === 'reject') act.append(h('p.t-label.tf-msg', { dataset: { lv: 'warn' }, text: `등록 반려 · 사유: ${last.reason || '—'}` }));
+      const reg = h('button.t-btn', { type: 'button', text: last?.decision === 'reject' ? '다시 등록 요청' : '등록 요청' });
       reg.addEventListener('click', async () => {
         reg.disabled = true;
         try { await api('/registry/model-register', { method: 'POST', body: { model_id: mid } }); toast('관리자 승인을 요청했습니다'); await showModel(mid); }
@@ -402,16 +409,8 @@ export function openFlow({ host, who }) {
       });
       act.append(reg);
     } else if (model.status === 'pending') {
-      if (isAdmin) {
-        const ok = h('button.t-btn', { type: 'button', text: '승인' });
-        const no = h('button.t-btn.t-btn--2', { type: 'button', text: '반려' });
-        const run = async (dec) => {
-          ok.disabled = no.disabled = true;
-          try { await api('/registry/model-decide', { method: 'POST', body: { model_id: mid, decision: dec } }); toast(dec === 'approve' ? '승인했습니다' : '반려했습니다'); showModel(mid); }
-          catch (e) { devlog('decide', e.code || e.message); toast('지금은 처리할 수 없습니다'); ok.disabled = no.disabled = false; }
-        };
-        ok.addEventListener('click', () => run('approve')); no.addEventListener('click', () => run('reject'));
-        act.append(no, ok);
+      if (isAdmin) {        // 결정은 결재함 한 곳에서(반려 사유 · 요청한 사람 ≠ 결재하는 사람 — impl-1)
+        act.append(h('a.t-btn', { href: `${V3}ops-core/#/approvals`, text: '결재함에서 결재' }));
       } else {
         act.append(h('p.t-label', { text: 'LX 관리자 승인을 기다립니다' }));
         const again = h('button.t-btn.t-btn--text', { type: 'button', text: '다시 보기' });
@@ -453,7 +452,7 @@ export function openFlow({ host, who }) {
       try {
         card = await api('/registry/cards', { method: 'POST', body: { name: name.value.trim(), model_id: model.id, rules, ledger_kind: ledger.value, domain: sample?.task_name } });
         setQ({ card: card.id });
-        toast('서비스를 만들었습니다');
+        toast('서비스를 만들고 공개 결재를 요청했습니다');
         showCard(out);
       } catch (e) { devlog('card', e.code || e.message); toast(e.message || '서비스를 만들지 못했습니다'); mk.disabled = false; }
     });
@@ -464,8 +463,21 @@ export function openFlow({ host, who }) {
     const c = cards.find((x) => x.id === card.id);
     out.innerHTML = '';
     if (!c) return;
+    const nm = esc(String(c.name || '').replace(/\s*(행정서비스|서비스)$/, ''));
+    /* 서비스 공개 = LX 관리자 승인 뒤(D2-ⓐ) — 대기면 기다림 · 반려면 사유 · 승인(또는 결재 행 없는 옛 서비스)이면 다른 지역에 적용 */
+    const ap = await myDecision('card', (a) => a.payload?.card_id === c.id);
+    if (ap && ap.state === 'pending') {
+      const again = h('button.t-btn.t-btn--text', { type: 'button', text: '다시 보기' });
+      again.addEventListener('click', () => showCard(out));
+      out.append(h('p.tf-sum', { html: `공개 결재 대기 · <b>${nm}</b>` }), h('p.t-label', { text: 'LX 관리자가 승인하면 다른 지역에 적용할 수 있습니다' }), again);
+      return;
+    }
+    if (ap && ap.decision === 'reject') {
+      out.append(h('p.tf-sum', { html: `공개 반려 · <b>${nm}</b>` }), h('p.t-label.tf-msg', { dataset: { lv: 'warn' }, text: `사유: ${ap.reason || '—'}` }));
+      return;
+    }
     s5.closest('.tf-s').classList.add('is-done');
-    out.append(h('p.tf-sum', { html: `서비스 목록에 추가됨 · <b>${esc(String(c.name || '').replace(/\s*(행정서비스|서비스)$/, ''))}</b>` }),
+    out.append(h('p.tf-sum', { html: `서비스 목록에 추가됨 · <b>${nm}</b>` }),
       h('a.t-btn', { href: `${V3}lx-deploy/?card=${encodeURIComponent(c.id)}`, text: '다른 지역에 적용' }));
   }
 

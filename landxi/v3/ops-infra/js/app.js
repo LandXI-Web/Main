@@ -6,7 +6,7 @@ import { mountInfra } from './infra.js';
 import { mountTenants } from './tenants.js';
 import { mountDeploys } from './deploys.js';
 // 결재 대기 수 — ops-core 와 같은 규칙 하나(pending())를 그대로 센다(셸 = ops-core 와 동일)
-import { loadAll as loadApprovals, pending } from '../../ops-core/js/data.js';
+import { loadPending as loadApprovals, pending } from '../../ops-core/js/data.js';     // 배지만 — 사용량 집계를 다시 부르지 않는다
 
 const OPS = '/landxi/v3/ops-core/';
 const VIEWS = ['infra', 'tenants', 'deploys'];

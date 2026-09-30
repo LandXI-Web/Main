@@ -257,6 +257,13 @@ async def port(body: dict, request: Request):
             if not card_id or not await conn.fetchval("SELECT 1 FROM cards WHERE id=$1", card_id):
                 raise ApiError("bad_request", "from_deploy_id 또는 card_id 필요")
             src = None
+        # 서비스 공개 = LX 관리자 승인 뒤(확인 D2-ⓐ · impl-1) — 공개 결재가 대기 · 반려인 서비스는 다른 지역에 적용하지 않는다(결재 행이 없는 옛 서비스는 그대로)
+        pub = await conn.fetchrow("SELECT state, decision, reason FROM approvals WHERE subject_type='card' AND subject_id=$1 ORDER BY at DESC LIMIT 1",
+                                  cv) if cv else None
+        if pub and pub["state"] == "pending":
+            raise ApiError("approval_required", "서비스 공개 결재가 끝나야 다른 지역에 적용할 수 있습니다", {"card_version_id": cv})
+        if pub and pub["decision"] == "reject":
+            raise ApiError("approval_required", "서비스 공개가 반려됐습니다" + (f" — 사유: {pub['reason']}" if pub["reason"] else ""), {"card_version_id": cv})
         tenant = body.get("tenant_id")
         if not tenant and sgg:
             for t in [x["id"] for x in await conn.fetch("SELECT id FROM tenants WHERE status='active' AND kind='user' ORDER BY id")]:
@@ -381,11 +388,14 @@ async def approve(did: str, body: dict, request: Request):
     dec = body.get("decision")
     if dec not in ("approve", "reject"):
         raise ApiError("bad_request", "decision approve|reject")
+    from .approvals import check_decider
+    check_decider(p, None, dec, body.get("reason"))          # 반려 = 사유 필수(결재함과 같은 규칙)
     aid = "ap_" + secrets.token_hex(6)
     async with db(realm="lx") as conn:
         await _get(conn, did)
+        # 요청 없이 관리자가 바로 결정한 승인 — 요청자를 비워 둔다(스스로 요청 · 스스로 승인으로 적지 않는다 · impl-1 R&R)
         await conn.execute("INSERT INTO approvals(id, subject_type, subject_id, requested_by, decided_by, decision, reason, state, decided_at) "
-                           "VALUES ($1,'deploy',$2,$3,$3,$4,$5,'decided',now())", aid, did, p.user_id, dec, body.get("reason"))
+                           "VALUES ($1,'deploy',$2,NULL,$3,$4,$5,'decided',now())", aid, did, p.user_id, dec, body.get("reason"))
         a = await conn.fetchrow("SELECT id, decision, decided_by, reason, at FROM approvals WHERE id=$1", aid)
         row = await _get(conn, did)
         await audit(conn, p, "deploy.approve", did, None, {"decision": dec, "reason": body.get("reason")})

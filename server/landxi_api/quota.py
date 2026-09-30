@@ -210,21 +210,73 @@ async def tenant_usage(tenant: str, request: Request):
 
 @router.put("/tenants/{tid}/quota")
 async def put_quota(tid: str, body: dict, request: Request):
+    """한도 변경 = 결재 요청(impl-1 · R&R 점검 '요청자 = 승인자' 막기). 예전에는 요청한 관리자가 곧바로 바꾸고 스스로 승인자로 적혔다.
+    이제는 결재함에 대기 행 하나(여러 항목을 한 건으로 · payload.dims)를 만들고, 요청하지 않은 다른 관리자가 결재해야 바뀐다."""
     p = require(principal(request), admin=True)
     dims = body.get("dims") or {}
-    import secrets
+    if not isinstance(dims, dict) or not dims:
+        raise ApiError("bad_request", "바꿀 항목(dims)이 없습니다")
+    from .approvals import request_quota
+    aid = await request_quota(p, tid, {"dims": dims}, body.get("reason"))
     async with db(realm="lx") as conn:
         t = await conn.fetchrow("SELECT id, name, kind, scope, crs, locale, profile_id, status FROM tenants WHERE id=$1", tid)
-        if not t:
-            raise ApiError("not_found", f"tenant {tid} 없음")
-        before = [dict(r) for r in await conn.fetch("SELECT dim, soft, hard, policy FROM quotas WHERE tenant_id=$1", tid)]
-        for d, v in dims.items():
-            if d not in DIMS:
-                raise ApiError("bad_request", f"dim {d}")
-            await conn.execute("INSERT INTO quotas(tenant_id, dim, soft, hard, policy, note) VALUES ($1,$2,$3,$4,$5,$6) "
-                               "ON CONFLICT (tenant_id, dim) DO UPDATE SET soft=EXCLUDED.soft, hard=EXCLUDED.hard, policy=EXCLUDED.policy, note=EXCLUDED.note",
-                               tid, d, v.get("soft"), v.get("hard"), v.get("policy", "notify"), body.get("reason"))
-        await conn.execute("INSERT INTO approvals(id, subject_type, subject_id, requested_by, decided_by, decision, reason) VALUES ($1,'quota',$2,$3,$3,'approve',$4)",
-                           "ap_" + secrets.token_hex(6), tid, p.user_id, body.get("reason") or "한도 변경")
-        await audit(conn, p, "quota.put", tid, {"quotas": [{k: (float(v) if hasattr(v, 'is_finite') else v) for k, v in b.items()} for b in before]}, {"dims": dims})
-    return {**dict(t), "home": "portal"}
+    return {**dict(t), "home": "portal", "approval_id": aid, "state": "pending"}
+
+
+# ── 한도를 넘으면 새 작업 거절(impl-1 · C6 — r3-ops 실증 3차 '광주전남 AI 도우미 사용량이 한도를 넘어도 계속 처리') ──────────
+# 하드 한도 = 넘으면 그 기관의 새 작업을 받지 않는다(정책 칸과 무관 · 정책은 한도를 넘기는 그 한 건의 처리 — 우선순위 낮춤 등).
+# LX(무제한)는 막지 않는다. 판정 값은 기관 화면 표 · 관리자 화면 고리와 같은 한 출처(remaining = quotas 표 + 실사용).
+WORK_DIMS = {"analysis": ["gpu_s_month", "area_km2_month", "storage_gb"], "assistant": ["llm_tokens_month"]}
+_OVER_LINE = {
+    "gpu_s_month": ("이번 달 GPU 사용 한도를 넘어 새 분석을 시작할 수 없습니다", "This month's GPU limit is used up, so new analyses can't start"),
+    "area_km2_month": ("이번 달 분석 면적 한도를 넘어 새 분석을 시작할 수 없습니다", "This month's analysis area limit is used up, so new analyses can't start"),
+    "storage_gb": ("저장 공간 한도를 넘어 새 분석을 시작할 수 없습니다", "The storage limit is used up, so new analyses can't start"),
+    "llm_tokens_month": ("이번 달 AI 도우미 사용 한도를 넘어 새 질문을 받을 수 없습니다", "This month's AI assistant limit is used up, so new questions can't be taken"),
+}
+_OVER_TAIL = (". 한도 변경은 LX 관리자에게 요청하세요.", ". Ask LX to raise the limit.")
+
+
+def over_line(dim: str, lang: str = "ko") -> str:
+    ko, en = _OVER_LINE.get(dim, ("한도를 넘어 새 작업을 받을 수 없습니다", "The limit is used up, so new work can't be taken"))
+    return (en + _OVER_TAIL[1]) if lang == "en" else (ko + _OVER_TAIL[0])
+
+
+async def over_hard(tenant: str | None, kind: str) -> dict | None:
+    """기관의 하드 한도를 이미 넘었나(kind = analysis | assistant) → {dim, line, line_en} | None. LX · 한도 미설정 = None."""
+    if not tenant or tenant == "lx":
+        return None
+    for d in WORK_DIMS.get(kind, []):
+        try:
+            q = await remaining(tenant, d)
+        except Exception:  # noqa: BLE001 — 판정 실패로 일을 막지 않는다(계량 오류 = 통과 · 기록은 화면 표에)
+            continue
+        if q["hard"] is not None and q["used"] is not None and q["used"] >= q["hard"]:     # 한도 0 = 쓸 수 없음
+            return {"dim": d, "tenant": tenant, "line": over_line(d, "ko"), "line_en": over_line(d, "en")}
+    return None
+
+
+async def hold_quote(q: dict) -> dict:
+    """분석 견적(jobs.build_quote 결과)에 한도 판정을 더한다 — GPU 분석(infer · reinfer)만. 넘었으면 allowed False ·
+    reasons 맨 앞 quota_exceeded · reason_line(화면 한 줄). 견적(POST /jobs/quote)과 제출(POST /jobs)이 같은 판정을 쓴다."""
+    if q.get("kind") not in ("infer", "reinfer") or q.get("pool") == "cpu":
+        return q
+    ov = await over_hard(q.get("_tenant"), "analysis")
+    if ov:
+        q["reasons"] = ["quota_exceeded"] + [r for r in (q.get("reasons") or []) if r != "quota_exceeded"]
+        q["allowed"] = False
+        q["reason_line"] = ov["line"]
+        q["quota_over"] = ov["dim"]
+    return q
+
+
+async def refuse_run(ctx, message: str, ov: dict):
+    """AI 도우미 한 건을 한도 초과로 닫는다 — 모델 호출 0 · 토큰 0. 명령 바는 agent.rejected 의 문구를 그대로 보인다(질문 언어)."""
+    import datetime as _dt
+    from agent import audit as _audit, runner as _runner
+    ctx.lang = _runner.lang_of(message)
+    await _runner.persist_start(ctx, message)
+    text = ov["line_en"] if ctx.lang == "en" else ov["line"]
+    await _runner.emit(ctx, "agent.rejected", {"error": "quota_exceeded", "category": "quota", "message": text, "pii": [], "region": None,
+                                               "lang": ctx.lang})
+    await _runner.persist_state(ctx, state="rejected", error="quota_exceeded", finished_at=_dt.datetime.now(KST))
+    await _audit.log(ctx.principal, "agent.quota_exceeded", ctx.run_id, {"tenant": ov.get("tenant"), "dim": ov.get("dim")})

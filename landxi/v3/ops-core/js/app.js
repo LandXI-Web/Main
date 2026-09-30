@@ -2,7 +2,7 @@
    관문(K2) → 셸(K1 · 메뉴 5) → 무대(K3 ops) · 카드(K5) · 큰 숫자(K6) · 표(K12) · 토스트(K13) · 개발자 서랍(K14).
    '지금 내가 승인·조치할 것이 있는가?' 한 질문에만 답한다. */
 import { gate, shell, bignum, table, drawer, closeAll, toast, devDrawer, devlog, empty, t, mountCmdk } from '../../kit/index.js';
-import { h, esc, ymd } from '../../kit/util.js';
+import { h, esc, ymd, api } from '../../kit/util.js';
 import { sse } from '../../../shared/api-v1.js';
 import { D, loadAll, loadFast, pending, pendingEnv, openAlerts, power, nearLimits, decide, hasS9, canon } from './data.js';
 import { mountMap } from './map.js';
@@ -65,10 +65,12 @@ function drawOverview() {
   B.set(pendingEnv(list));
   card.dataset.zero = list.length ? '' : '1';
   const rows = [];
-  const al = openAlerts();
-  rows.push({ t: al.length ? `경보 ${al.length}` : '경보 없음', lv: al.length ? 'warn' : '', href: INFRA });
-  const p = power();
-  rows.push({ t: `전력 예산 ${p.hot}/${p.max} GPU 고부하`, lv: p.ok ? '' : 'warn', dot: p.hot ? 'lock' : '', href: INFRA });
+  if (D.restAt) {                                  // 경보 · GPU 는 뒤에서 오는 값 — 오기 전에는 줄을 만들지 않는다(값을 지어내지 않게)
+    const al = openAlerts();
+    rows.push({ t: al.length ? `경보 ${al.length}` : '경보 없음', lv: al.length ? 'warn' : '', href: INFRA });
+    const p = power();
+    rows.push({ t: `전력 예산 ${p.hot}/${p.max} GPU 고부하`, lv: p.ok ? '' : 'warn', dot: p.hot ? 'lock' : '', href: INFRA });
+  }
   /* 한 흐름: 결재 뒤 이어지는 AI 분석·실태조사(같은 작업의 GPU·사용량·배포 단계는 배포 화면 시트) */
   const flowing = canon().filter((d) => ['starting', 'analyzing', 'surveying'].includes(d.flow?.state));
   if (flowing.length) rows.push({ t: `AI 분석 진행 ${flowing.length}`, lv: '', href: INFRA + '?view=deploys' + (flowing.length === 1 ? '&deploy=' + encodeURIComponent(flowing[0].id) : '') });
@@ -104,21 +106,46 @@ function drawInbox() {
   if (openKey && !list.find((x) => x.key === openKey)) sheet?.close(true);
 }
 
-function openSheet(item) {
+async function openSheet(item) {
   openKey = item.key;
   drawInbox();
-  const body = h('div.oc-sheet');
-  const ch = h('dl.oc-ch');
-  for (const [k, a, b] of item.changes || []) {
-    ch.append(h('dt', { text: k }), h('dd', { html: a ? `<s>${esc(a)}</s><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9.5 4.5 13 8l-3.5 3.5"/></svg><b>${esc(b)}</b>` : `<b>${esc(b)}</b>` }));
+  /* 한도 변경 — 지금 값(바뀌기 전)은 기관 사용량에서. 뒤에서 오는 전체 집계를 기다리지 않고 그 기관 한 곳만 읽는다 */
+  const sid = item.raw?.subject?.id;
+  if (item.kind === 'quota' && sid && !D.usage.some((u) => u.tenant_id === sid)) {
+    const u = await api(`/t/${encodeURIComponent(sid)}/usage`).catch(() => null);
+    if (u) D.usage = [...D.usage.filter((x) => x.tenant_id !== sid), u];
+    item = pending().find((x) => x.key === item.key) || item;
+    if (openKey !== item.key) return;
   }
-  const reason = h('input.t-input.oc-reason', { type: 'text', placeholder: '사유', 'aria-label': '사유', maxlength: '120' });
+  const body = h('div.oc-sheet');
+  const arrow = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9.5 4.5 13 8l-3.5 3.5"/></svg>';
+  // 누가 · 왜(요청) — 서버 결재 행에 있는 값만(요청 사유가 없으면 줄을 만들지 않는다)
+  const req = h('dl.oc-ch.oc-req');
+  const put = (dl, k, html) => dl.append(h('dt', { text: k }), h('dd', { html }));
+  if (item.requester && item.requester !== '—') put(req, '요청한 사람', esc(item.requester));
+  if (item.why) put(req, '요청 사유', esc(item.why));
+  const when = item.at ? new Date(item.at) : null;
+  if (when && !Number.isNaN(when.getTime())) put(req, '요청일', `<span class="num">${esc(ymd(item.at))} ${String(when.getHours()).padStart(2, '0')}:${String(when.getMinutes()).padStart(2, '0')}</span>`);
+  // 무엇을 — 바뀌는 것
+  const ch = h('dl.oc-ch');
+  for (const [k, a, b] of item.changes || []) put(ch, k, a ? `<s>${esc(a)}</s>${arrow}<b>${esc(b)}</b>` : `<b>${esc(b)}</b>`);
+  if (req.childElementCount) body.append(req);
+  if (ch.childElementCount) body.append(h('p.t-label', { text: '바뀌는 것' }), ch);
+  sheet = drawer({ title: `${item.kindKo} · ${item.target}`, body, host: S.main, slot: 'approval', onClose: () => { openKey = null; drawInbox(); } });
+  if (item.mine) {                                   // 요청한 사람은 스스로 결재하지 않는다(서버도 막는다) — 다른 관리자가 결재
+    body.append(h('p.oc-mine', { text: '내가 요청한 결재입니다. 다른 관리자가 결재합니다.' }));
+    return;
+  }
+  const reason = h('input.t-input.oc-reason', { type: 'text', placeholder: '사유(반려할 때는 꼭 적습니다)', 'aria-label': '사유', maxlength: '120' });
   const ok = h('button.t-btn', { type: 'button', text: '승인' });
   const no = h('button.t-btn.t-btn--2', { type: 'button', text: '반려' });
-  body.append(h('p.t-label', { text: '바뀌는 것' }), ch, reason, h('div.oc-acts', {}, no, ok));
-  sheet = drawer({ title: `${item.kindKo} · ${item.target}`, body, host: S.main, slot: 'approval', onClose: () => { openKey = null; drawInbox(); } });
+  const note = h('p.oc-need', { role: 'status' });
+  body.append(reason, note, h('div.oc-acts', {}, no, ok));
+  const need = (text) => { note.textContent = text; reason.focus(); reason.classList.remove('is-need'); void reason.offsetWidth; reason.classList.add('is-need'); };
+  reason.addEventListener('input', () => { if (reason.value.trim()) { note.textContent = ''; reason.classList.remove('is-need'); } });
   const run = async (dec) => {
-    if (dec === 'reject' && !reason.value.trim()) { reason.focus(); reason.classList.remove('is-need'); void reason.offsetWidth; reason.classList.add('is-need'); return; }
+    if (dec === 'reject' && !reason.value.trim()) { need('반려 사유를 적어 주세요. 요청한 사람에게 이 사유가 보입니다.'); return; }
+    note.textContent = '';
     ok.disabled = no.disabled = true;
     try {
       await decide(item, dec, reason.value.trim());
@@ -127,7 +154,8 @@ function openSheet(item) {
       await refresh();
     } catch (e) {
       devlog('decide', `${item.key} · ${e.code || e.message}`);
-      toast('지금은 처리할 수 없습니다');
+      if (e.code === 'reason_required') need('반려 사유를 적어 주세요. 요청한 사람에게 이 사유가 보입니다.');
+      else toast(e.code === 'self_approval' || e.code === 'conflict' ? e.message : '지금은 처리할 수 없습니다');
       ok.disabled = no.disabled = false;
     }
   };
@@ -153,7 +181,8 @@ function badge() {
 
 /* ── 데이터 · 실시간 ───────────────────────── */
 async function refresh(fast = false) {
-  if (fast) await loadFast(); else await loadAll();
+  // 결재 대기(큰 숫자 · 결재함)는 결재 표가 오자마자 — 기관 사용량 · GPU · 경보는 뒤에 와서 할 일 칸만 다시 그린다(impl-1 · FR-3)
+  if (fast) await loadFast(); else await loadAll(() => { if (document.body.dataset.view !== 'approvals') drawOverview(); });
   S.fresh(D.at);
   badge();
   if (document.body.dataset.view === 'approvals') drawInbox(); else drawOverview();
@@ -164,7 +193,7 @@ devDrawer({ stage: M.st, who });
 
 if (await hasS9()) {
   // S-9: 한 로그인이 관제 스트림까지(Origin 4173 허용) — deploy.changed 가 오면 점과 결재 수를 다시 읽는다
-  sse('/events/ops', { events: ['deploy.changed', 'approval.requested', 'approval.decided', 'alert', 'usage.delta'], on: (name) => { if (name !== 'usage.delta') refresh(name !== 'approval.requested'); } });
+  sse('/events/ops', { events: ['deploy.changed', 'approval.requested', 'approval.decided', 'alert', 'usage.delta'], on: (name) => { if (name !== 'usage.delta') refresh(!/^approval\./.test(name)); } });
   setInterval(() => refresh(), 30000);
 } else {
   // S-9 전: 같은 모양으로 폴링(배포 · 전력 6s · 나머지 30s)

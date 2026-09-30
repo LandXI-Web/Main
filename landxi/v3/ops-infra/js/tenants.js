@@ -1,6 +1,14 @@
-/* 기관 뷰 — 카드 밀도 그리드(기관 · 저장 · GPU 시간 · 분석 면적 · 3링) + 시트(한도 조정 → 결재 요청). */
+/* 기관 뷰 — 카드 밀도 그리드(기관 · 저장 · GPU 시간 · 분석 면적 · 3링) + 시트(한도 조정 → 결재 요청).
+   한도 변경은 결재 요청 한 건(impl-1 · R&R '요청자 = 승인자' 막기) — 요청한 관리자가 아닌 다른 관리자가 결재함에서 승인해야 바뀐다.
+   한도를 넘은 기관은 새 작업(분석 · AI 도우미 질문)을 받지 않는다(서버 quota.over_hard) — 카드에 한 줄로 알린다. */
 import { drawer, toast, esc, nf, api, h } from './kit.js';
 import { S, DIM, RING_DIMS, POLICY, STATE_KO, dimState, orgs, loadUsage, llmUsage } from './data.js';
+import { D as AP, loadPending } from '../../ops-core/js/data.js';
+/** 이 기관의 한도 변경 결재가 대기 중인가(결재 표 한 출처 — 레일 배지와 같은 목록) */
+const quotaPending = (id) => (AP.srvApprovals || []).some((a) => a.kind === 'quota' && (a.subject?.id || a.subject_id) === id && (a.state || 'pending') === 'pending');
+/** 새 작업을 받지 않는 항목(하드 한도를 넘음) — 서버 판정과 같은 항목(분석: GPU 시간 · 분석 면적 · 저장 / AI 도우미) */
+const BLOCK_DIMS = ['gpu_s_month', 'area_km2_month', 'storage_gb', 'llm_tokens_month'];
+const blocked = (o) => BLOCK_DIMS.filter((k) => dimState(o.dims?.[k]) === 'over').map((k) => DIM[k]?.ko).filter(Boolean);
 
 const R = 44, C = 2 * Math.PI * R;
 /** 사용량 글자 — 저장은 1 GB 아래면 MB 로(0.007 GB → 7 MB) · 나머지는 항목 단위 */
@@ -54,19 +62,22 @@ function sheet(o, onDone) {
     const err = body.querySelector('.qs-err'); err.textContent = '';
     const dims = {};
     for (const r of body.querySelectorAll('.qs-r')) {
-      const k = r.dataset.k, D = DIM[k];
+      const k = r.dataset.k, D = DIM[k], v = o.dims[k] || {};
       const sv = r.querySelector('[name=soft]').value.trim(), hv = r.querySelector('[name=hard]').value.trim();
       if (!sv && !hv && DIM[k].ring === false) continue;            // 한도 미설정 항목(AI 도우미 사용량)은 비워 두면 그대로
       const s = parseFloat(sv), hd = parseFloat(hv);
       if (!(s >= 0) || !(hd > 0) || s > hd) { err.textContent = `${D.ko}: 소프트는 하드보다 클 수 없습니다`; r.querySelector('[name=soft]').focus(); return; }
-      dims[k] = { soft: +(s / D.k).toFixed(4), hard: +(hd / D.k).toFixed(4), policy: r.querySelector('[name=policy]').value };
+      const next = { soft: +(s / D.k).toFixed(4), hard: +(hd / D.k).toFixed(4), policy: r.querySelector('[name=policy]').value };
+      const same = v.soft != null && v.hard != null && Math.abs(next.soft - v.soft) < 1e-6 && Math.abs(next.hard - v.hard) < 1e-6 && next.policy === (v.policy || 'notify');
+      if (!same) dims[k] = next;                                     // 바뀐 항목만 결재에 올린다
     }
+    if (!Object.keys(dims).length) { err.textContent = '바뀐 값이 없습니다'; return; }
     const reason = body.querySelector('[name=reason]').value.trim();
     if (!reason) { body.querySelector('[name=reason]').focus(); return; }
     const btn = body.querySelector('.qs-go'); btn.disabled = true;
     try {
       await api(`/tenants/${encodeURIComponent(o.id)}/quota`, { method: 'PUT', body: { dims, reason } });
-      d.close(); toast('요청했습니다'); await loadUsage(); onDone?.();
+      d.close(); toast('결재를 요청했습니다. 다른 관리자가 승인하면 바뀝니다'); await Promise.all([loadUsage(), loadPending().catch(() => null)]); onDone?.();
     } catch { err.textContent = '지금은 요청할 수 없습니다'; btn.disabled = false; }
   });
   return d;
@@ -91,12 +102,16 @@ export function mountTenants(root) {
   function paint() {
     const list = orgs();
     grid.style.setProperty('--n', list.length);
-    grid.innerHTML = list.map((o) => `
+    grid.innerHTML = list.map((o) => {
+      const bl = blocked(o), pend = quotaPending(o.id);
+      return `
       <section class="t-card org" data-id="${esc(o.id)}">
         <header><h2>${esc(o.name)}</h2><span class="t-chip" data-lv="${o.state === 'over' ? 'warn' : o.state === 'ok' ? 'wait' : ''}" data-st="${o.state}">${STATE_KO[o.state]}</span></header>
         <div class="rings">${RING_DIMS.map((k) => ring(k, o.dims[k])).join('')}</div>
-        <button class="t-btn t-btn--2 adj" type="button">한도 조정</button>
-      </section>`).join('');
+        ${bl.length ? `<p class="org-stop" data-stop="1">${esc(bl.join(' · '))} 한도를 넘어 새 작업을 받지 않습니다</p>` : ''}
+        <button class="t-btn t-btn--2 adj" type="button"${pend ? ' data-pend="1"' : ''}>${pend ? '한도 변경 결재 대기' : '한도 조정'}</button>
+      </section>`;
+    }).join('');
     requestAnimationFrame(() => requestAnimationFrame(() => grid.querySelectorAll('.fg').forEach((c) => c.setAttribute('stroke-dashoffset', c.dataset.off))));
     paintLlm();
   }

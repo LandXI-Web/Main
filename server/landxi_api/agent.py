@@ -96,6 +96,11 @@ async def create_run(body: dict, request: Request):
     alive, tried = await backends.first_alive(r)
     run_id = runner.ulid("run_")
     ctx = runner.make_ctx(run_id, p, _token(request), body.get("context") or {}, mode, r)
+    from . import quota as quota_mod                    # 기관 AI 도우미 한도를 넘었으면 새 질문을 받지 않는다(이유 한 줄 · 모델 0 · impl-1 C6)
+    ov = await quota_mod.over_hard(runner.tenant_of(p), "assistant")
+    if ov:
+        runner.start(ctx, quota_mod.refuse_run(ctx, msg, ov))
+        return {"run": _run_public(run_id, p, mode, "rejected"), "events_url": f"/api/v1/events/agent/{run_id}", "backend": {"first": None, "skipped": []}}
     if alive is None:
         # 거절(관할 밖 · 자료 없음)·요약 직행은 LLM 이 없어도 서버가 한 줄로 답한다(fix-agent-scope) — 그 밖만 503
         try:
@@ -123,10 +128,16 @@ async def report_draft(body: dict, request: Request):
         raise ApiError("bad_request", "emd_cd 가 필요합니다")
     r = await redis()
     alive, tried = await backends.first_alive(r)
-    if alive is None:
-        await _unavailable(tried)
     run_id = runner.ulid("run_")
     ctx = runner.make_ctx(run_id, p, _token(request), body.get("context") or {}, "report", r)
+    from . import quota as quota_mod                    # 기관 AI 도우미 한도(impl-1 C6) — 넘었으면 초안도 새로 만들지 않는다
+    ov = await quota_mod.over_hard(runner.tenant_of(p), "assistant")
+    if ov:
+        runner.start(ctx, quota_mod.refuse_run(ctx, "보고서 초안", ov))
+        return {"run": _run_public(run_id, p, "report", "rejected"), "events_url": f"/api/v1/events/agent/{run_id}"}
+    if alive is None:
+        await ctx.http.aclose()
+        await _unavailable(tried)
     runner.start(ctx, report.draft(ctx, body))
     return {"run": _run_public(run_id, p, "report", "planning"), "events_url": f"/api/v1/events/agent/{run_id}"}
 
@@ -186,6 +197,29 @@ async def run_events(run_id: str, request: Request):
                 return
 
     return EventSourceResponse(gen(), headers=HEADERS, ping=10, send_timeout=30)
+
+
+@router.get("/agent/runs/{run_id}/events")
+async def run_events_poll(run_id: str, request: Request, after: str | None = None):
+    """답 받기 연결이 막혔을 때의 조회 경로(impl-1 · C6·C9 — r3-ops 실증 3차: 탭이 많은 브라우저에서 스트림 연결 칸이 모자라 서버가 끝낸 답이 화면에 안 옴).
+    스트림과 같은 사건을 짧은 요청 한 번으로: ?after=마지막 사건 id → {items:[{id, event, data}], done}. 명령 바는 같은 처리기로 넘긴다."""
+    p = require(principal(request))
+    await _own_run(p, run_id)
+    r = await redis()
+    lo = "-"
+    if after and all(part.isdigit() for part in str(after).split("-", 1)):
+        lo = f"({after}"
+    rows = await r.xrange(f"agent:runs:{run_id}", min=lo, max="+", count=500)
+    items, done = [], False
+    for eid, f in rows:
+        try:
+            d = json.loads(f.get("data") or "{}")
+        except Exception:  # noqa: BLE001
+            d = {}
+        items.append({"id": eid, "event": f.get("event", "message"), "data": d})
+        done = done or f.get("event") in TERMINAL
+    from .envelope import RawJSON
+    return RawJSON({"run_id": run_id, "items": items, "done": done, "as_of": now_iso()})
 
 
 @router.post("/agent/runs/{run_id}/confirm")

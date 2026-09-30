@@ -190,6 +190,7 @@ def test_card_create_permissions(live, tok):
         assert mods["ext"].get("mod-parcel") is True and mods["rules"] == ["R3"]
     finally:
         c = _pg()
+        c.execute("DELETE FROM approvals WHERE subject_type='card' AND subject_id LIKE %s", (cid + "@%",))  # 서비스 공개 결재(impl-1)
         c.execute("DELETE FROM card_versions WHERE card_id=%s", (cid,))
         c.execute("DELETE FROM cards WHERE id=%s", (cid,))
 
@@ -257,7 +258,7 @@ def test_screen_name_rules_one_source():
     con = (v3 / "lx-console/data.js").read_text(encoding="utf-8")
     rule = "(행정서비스|서비스)$/"
     assert rule in ops and rule in dep and rule in con
-    assert "model: '모델 등록'" in ops and "r.kind === 'model' ? 'model'" in ops
+    assert "model: '모델 등록'" in ops and "['rule', 'quota', 'model', 'card'].includes(r.kind)" in ops      # impl-1: 서비스 공개(card)도 결재함에
     assert "whoWhere(d)" in ops                                           # '남원시 남원시' 두 번 금지
     login = (v3 / "login/auth.js").read_text(encoding="utf-8")
     assert "const path = v.split(/[?#]/)[0];" in login
@@ -302,6 +303,7 @@ def _rm_card(c, cid: str):
     for (did,) in c.execute("SELECT id FROM deploys WHERE card_id=%s", (cid,)).fetchall():
         c.execute("DELETE FROM approvals WHERE subject_type='deploy' AND subject_id=%s", (did,))
         c.execute("DELETE FROM deploys WHERE id=%s", (did,))
+    c.execute("DELETE FROM approvals WHERE subject_type='card' AND subject_id LIKE %s", (cid + "@%",))     # 서비스 공개 결재(impl-1)
     c.execute("DELETE FROM card_versions WHERE card_id=%s", (cid,))
     c.execute("DELETE FROM cards WHERE id=%s", (cid,))
 

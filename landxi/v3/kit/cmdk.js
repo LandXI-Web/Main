@@ -194,6 +194,7 @@ export function mountCmdk({ stage = null, guest = false, context = () => ({}), o
      무응답 0 — SSE 연결 실패 3회 · 끝 이벤트 없이 45초 · 빈 답이면 failed 로 닫는다. */
   const SERVER_LINE = new Set(['forbidden', 'out_of_scope', 'unauthorized']);   // 서버 문구를 그대로 보일 오류(개발 정보 없는 한 줄)
   const TIMEOUT_MS = 45000;
+  const POLL_AFTER_MS = 4000, POLL_EVERY_MS = 1500;          // 스트림 무응답 → 짧은 조회(impl-1)
   let seq = 0, guard = 0;
   const settle = (state, text) => {
     clearTimeout(guard); delete box.dataset.busy; box.dataset.state = state; box.removeAttribute('aria-busy');
@@ -228,16 +229,38 @@ export function mountCmdk({ stage = null, guest = false, context = () => ({}), o
     if (my !== seq) return;
     if (!r?.events_url) { fail('events_url 없음'); return; }
     runId = r.run?.id; box.dataset.run = runId || ''; devlog('agent run', runId);
-    let buf = '', errs = 0, got = false;
+    let buf = '', errs = 0, got = false, polling = false;
+    const seen = new Set();
+    /* 답 받기 연결이 막혀도 서버가 끝낸 답은 받는다(impl-1 · r3-ops 실증 3차 — 탭이 많은 브라우저에서 스트림 연결 칸이 모자라 45초 뒤 '답할 수 없습니다'):
+       POLL_AFTER_MS 안에 사건이 하나도 안 오거나 스트림이 세 번 끊기면 짧은 조회(GET /agent/runs/{id}/events)로 같은 사건을 받아 같은 처리기로 넘긴다. */
+    const startPoll = () => {
+      if (polling || my !== seq || box.dataset.state !== 'busy') return;
+      polling = true; devlog('agent', '답 받기 연결 없음 · 조회로 받음');
+      let last = null;
+      const tick = async () => {
+        if (my !== seq || box.dataset.state !== 'busy') return;
+        try {
+          const j = await api(`/agent/runs/${encodeURIComponent(runId)}/events${last ? '?after=' + encodeURIComponent(last) : ''}`);
+          for (const it of j?.items || []) { last = it.id; handle(it.event, it.data, it.id); }
+          if (j?.done) return;
+        } catch (err) { devlog('agent poll', err.code || err.message); }
+        setTimeout(tick, POLL_EVERY_MS);
+      };
+      tick();
+    };
+    setTimeout(() => { if (!got) startPoll(); }, POLL_AFTER_MS);
     stream = sse(r.events_url.replace(/^\/api\/v1/, ''), {
       events: [...EVENTS, 'agent.fallback', 'agent.tool.progress'],
       onState: (s) => {
         if (my !== seq || box.dataset.state !== 'busy') return;
         if (s === 'open') errs = 0;
-        if (s === 'error' && ++errs >= 3 && !got) fail('SSE 연결 실패');
+        if (s === 'error' && ++errs >= 3 && !got) startPoll();
       },
-      on: (name, d) => {
+      on: (name, d, id) => handle(name, d, id),
+    });
+    function handle(name, d, id) {
         if (my !== seq) return;
+        if (id) { if (seen.has(id)) return; seen.add(id); }       // 스트림과 조회가 같은 사건을 두 번 넘기지 않게
         got = true;
         // 이벤트가 오는 동안은 기다린다 · 확인 카드(사람 승인) · 분석 작업 진행 중엔 길게
         if (box.dataset.state === 'busy') {
@@ -273,8 +296,7 @@ export function mountCmdk({ stage = null, guest = false, context = () => ({}), o
         }
         if (name === 'agent.rejected') say(d?.message || tl(lang, 'cmdk.error'));
         if (name === 'agent.failed') fail(`failed · ${d?.error || ''}`);
-      },
-    });
+    }
   });
 
   function confirmCard(d) {

@@ -39,10 +39,11 @@ def test_judge_spike_is_smoothed_by_recent_mean():
     assert j["hot"] == [1] and j["ok"] is True and [p["why"] for p in j["per"]] == [None, "power"]
 
 
-def test_judge_lease_plus_other_hot_exceeds():
+def test_judge_held_lease_is_not_hot():
+    # impl-1: 분석 작업이 GPU 0 을 쥐고 있기만 하고(20 W) GPU 1 이 150 W — 실측으로는 한 장만 고부하(예전: 임대만 보고 '2 / 1 초과')
     j = judge_power([gpu(0, 20.0), gpu(1, 150.0)], 100.0, 1, [0], {1: 150.0})
-    assert j["hot"] == [0, 1] and j["hot_now"] == 2 and j["ok"] is False
-    assert {p["gpu"]: p["why"] for p in j["per"]} == {0: "lease", 1: "power"}
+    assert j["hot"] == [1] and j["hot_now"] == 1 and j["ok"] is True
+    assert {p["gpu"]: p["why"] for p in j["per"]} == {0: "held", 1: "power"}
 
 
 def test_judge_lease_and_power_same_gpu_counts_once():
@@ -105,10 +106,11 @@ def test_en_answer_names_busy_gpu_and_matches_screen_budget():
     pb = {"max_hot": 1, **judge_power([gpu(0, 20.0), gpu(1, 150.0)], 100.0, 1, [0], {1: 150.0}), "at": C.AT}
     out = run(T.ops_gpus({}, gpus_ctx(pb, "en", IDLE)))
     e = envs(out)
-    assert e["hot"]["value"] == 2 and out.data["전력 예산"] == "초과"
-    assert "— GPU 0, GPU 1. Power budget: exceeded." in out.answer
-    assert out.data["GPU"]["GPU 0"]["하는 일"] == "분석 작업"            # 임대 GPU 는 '대기'가 아니라 분석 작업
-    assert "GPU 0: load {{g0_load}}, power now {{g0_w}}, running an analysis job, high load (a job holds this GPU)." in out.answer
+    assert e["hot"]["value"] == 1 and out.data["전력 예산"] == "안"
+    assert "— GPU 1. Power budget: within the limit." in out.answer
+    assert out.data["GPU"]["GPU 0"]["하는 일"] == "분석 작업"            # 임대 GPU 는 '대기'가 아니라 분석 작업 — 실측이 낮으면 고부하 아님(impl-1)
+    assert out.data["GPU"]["GPU 0"]["고부하"] == "아니오"
+    assert "GPU 0: load {{g0_load}}, power now {{g0_w}}, running an analysis job." in out.answer
     assert "GPU 1: load {{g1_load}}, power now {{g1_w}}, serving the language model, high load (recent average {{g1_avg}})." in out.answer
 
 
@@ -221,9 +223,12 @@ def test_judge_unsampled_lease_stays_conservative():
     assert j["hot"] == [0]
 
 
-def test_judge_lease_not_yielded_still_counts():
+def test_judge_lease_not_yielded_counts_only_by_measure():
+    # impl-1: 멈춤 표시가 없어도 임대만으로는 세지 않는다 — 실측(전력)이 기준 아래면 'held'
     j = judge_power([gpu(0, 20.0), gpu(1, 150.0)], 100.0, 1, [0], {1: 150.0}, yield_gpu=[])
-    assert j["hot_now"] == 2 and j["ok"] is False
+    assert j["hot_now"] == 1 and j["ok"] is True and j["per"][0]["why"] == "held"
+    j = judge_power([gpu(0, 130.0), gpu(1, 150.0)], 100.0, 1, [0], {0: 125.0, 1: 150.0}, yield_gpu=[])
+    assert j["hot_now"] == 2 and j["ok"] is False                        # 두 장이 실제로 기준을 넘으면 초과
 
 
 def test_count_overlap_measured():
@@ -422,7 +427,8 @@ def test_same_sample_same_judgment(monkeypatch):
     # 새 표본이 오면 다시 판정 — 판정 시각이 바뀐다
     fr.stream.append(_sample(4, _dt.datetime.now(O.KST).isoformat(timespec="seconds"), 20, 200))
     c = run(O.power_budget_now(gl))
-    assert c["sample"] == "4-0" and c["hot_now"] == 2 and c["ok"] is False
+    assert c["sample"] == "4-0" and c["hot_now"] == 1 and c["ok"] is True          # GPU 0 임대 · 20 W = 쥐고만 있음(impl-1)
+    assert {p["gpu"]: p["why"] for p in c["per"]} == {0: "held", 1: "power"}
     # 부른 쪽이 GPU 목록을 비워 보내도(분석 제출 검사 등) 판정은 표본의 GPU 목록으로 — 캐시가 잘못된 판정으로 채워지지 않는다
     fr.stream.append(_sample(5, _dt.datetime.now(O.KST).isoformat(timespec="seconds"), 20, 200))
     d = run(O.power_budget_now([]))
@@ -457,14 +463,15 @@ def test_gateway_restart_spawn_not_detached():
 
 
 def test_lease_hot_gpu_is_analysis_not_language_model():
-    """15:29:31 실측 — 임대를 쥔 GPU 0 을 작업기 프로세스(python) 때문에 'serving the language model, high load' 로 쓰던 일."""
+    """15:29:31 실측 — 임대를 쥔 GPU 0 을 작업기 프로세스(python) 때문에 'serving the language model, high load' 로 쓰던 일.
+    impl-1: 44 W(기준 아래)면 쥐고 있기만 한 것 — 분석 작업이지만 고부하는 아니다."""
     pb = {"max_hot": 1, **judge_power([gpu(0, 44.0), gpu(1, 29.0)], 100.0, 1, [0], {0: 44.0, 1: 29.0}), "at": C.AT}
     g = copy.deepcopy(IDLE)
     g[0]["external"] = [{"name": "python.exe"}]
     g[0]["util_ma5"] = C.E(20.0, "%")
     en = run(T.ops_gpus({}, gpus_ctx(pb, "en", g)))
-    assert "GPU 0: load {{g0_load}}, power now {{g0_w}}, running an analysis job, high load (a job holds this GPU)." in en.answer
+    assert "GPU 0: load {{g0_load}}, power now {{g0_w}}, running an analysis job." in en.answer and "high load (a job" not in en.answer
     ko = run(T.ops_gpus({}, gpus_ctx(pb, "ko", g)))
-    assert "분석 작업 중, 작업이 이 GPU를 쓰고 있어 고부하입니다." in ko.answer
+    assert "로 분석 작업 중입니다." in ko.answer and "고부하입니다" not in ko.answer.split("GPU 0은")[1].split("GPU 1은")[0]
     js = (SERVER.parent / "landxi" / "v3" / "ops-infra" / "js" / "data.js").read_text(encoding="utf-8")
-    assert "g.job_id || why === 'lease'" in js and "고부하 · 작업 중" in js
+    assert "why === 'held'" in js and "고부하 · 작업 중" in js

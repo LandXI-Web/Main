@@ -162,9 +162,12 @@ async def decide_model(body: dict, request: Request):
     if dec not in ("approve", "reject"):
         raise ApiError("bad_request", "decision approve|reject")
     async with db(realm="lx") as conn:
-        aid = await conn.fetchval("SELECT id FROM approvals WHERE subject_type='model' AND subject_id=$1 AND state='pending' ORDER BY at DESC LIMIT 1", mid)
-        if not aid:
+        ar = await conn.fetchrow("SELECT id, requested_by FROM approvals WHERE subject_type='model' AND subject_id=$1 AND state='pending' ORDER BY at DESC LIMIT 1", mid)
+        if not ar:
             raise ApiError("not_found", "승인 대기 중인 등록 요청이 없습니다")
+        from .approvals import check_decider      # 결재함과 같은 규칙: 반려 = 사유 필수 · 요청한 사람 ≠ 결정하는 사람(impl-1)
+        check_decider(p, ar["requested_by"], dec, body.get("reason"))
+        aid = ar["id"]
         await conn.execute("UPDATE approvals SET state='decided', decision=$2, decided_by=$3, decided_at=now(), reason=coalesce($4, reason) WHERE id=$1",
                            aid, dec, p.user_id, body.get("reason"))
         await conn.execute("UPDATE models SET status=$2 WHERE id=$1", mid, "registered" if dec == "approve" else "candidate")
@@ -316,14 +319,25 @@ async def create_card(body: dict, request: Request):
                            "VALUES ($1,$2,'local',$3,$4,'검토',true,$5)", cid, {"ko": name, "en": name}, domain,
                            json.dumps({"input": ["ortho"], "output": ["polygon"], "viz": ["layer", "chart"]}), schema)
         cv = f"{cid}@1.0"
+        # 서비스 공개 = LX 관리자 승인 뒤(확인 D2-ⓐ · impl-1) — 만든 직원을 승인자로 적지 않는다. 승인자는 결재함에서 승인한 관리자(approvals.decide)
         await conn.execute("INSERT INTO card_versions(id, card_id, version, model_ids, modules, changelog, approved_by, approved_at) "
-                           "VALUES ($1,$2,'1.0',$3,$4,$5,$6,now())", cv, cid, [mid],
-                           {"core": CORE_MODULES, "ext": {"mod-parcel": bool(rules)}, "rules": rules}, "서비스 만들기", p.user_id)
+                           "VALUES ($1,$2,'1.0',$3,$4,$5,NULL,NULL)", cv, cid, [mid],
+                           {"core": CORE_MODULES, "ext": {"mod-parcel": bool(rules)}, "rules": rules}, "서비스 만들기")
+        aid = "ap_" + secrets.token_hex(6)
+        mname = await conn.fetchval("SELECT name->>'ko' FROM models WHERE id=$1", mid)
+        rnames = [r["name"] for r in await conn.fetch("SELECT name FROM survey_rules WHERE id = ANY($1::text[]) ORDER BY id", rules)] if rules else []
+        await conn.execute("INSERT INTO approvals(id, subject_type, subject_id, requested_by, state, payload, reason, tenant_id, at) "
+                           "VALUES ($1,'card',$2,$3,'pending',$4,$5,'lx',now())", aid, cv, p.user_id,
+                           {"action": "publish", "card_id": cid, "name": name, "model_name": mname, "rules": rnames,
+                            "ledger_kind": schema.get("kind")}, str(body.get("reason") or "").strip()[:200] or "서비스 공개")
         # 규칙을 고른 서비스 = 필지 대조(실태조사까지 · 고른 규칙만). 규칙이 없으면 AI 분석까지만(탐지 서비스)
-        await audit(conn, p, "card.create", cid, None, {"card_version_id": cv, "model_id": mid, "rules": rules, "ledger_kind": schema.get("kind")})
+        await audit(conn, p, "card.create", cid, None, {"card_version_id": cv, "model_id": mid, "rules": rules, "ledger_kind": schema.get("kind"),
+                                                        "approval_id": aid})
     from .jobs import ops_event
     await ops_event("deploy.changed", {"card_id": cid, "action": "card.create", "by": p.user_id, "at": now_iso()})
-    return {"id": cid, "name": name, "card_version_id": cv, "models": [mid], "rules": rules, "ledger_schema": schema, "as_of": now_iso()}
+    await ops_event("approval.requested", {"approval_id": aid, "subject_type": "card", "subject_id": cv, "by": p.user_id, "at": now_iso()})
+    return {"id": cid, "name": name, "card_version_id": cv, "models": [mid], "rules": rules, "ledger_schema": schema,
+            "approval_id": aid, "publish": "pending", "as_of": now_iso()}
 
 
 @router.put("/registry/cards/{cid}/ledger_schema")

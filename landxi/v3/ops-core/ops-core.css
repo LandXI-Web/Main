@@ -81,13 +81,18 @@ body:has(.k-drawer[data-slot="approval"]) .oc-inbox-w{padding-right:calc(var(--s
 /* 시트(불투명 흰 카드 · 뒤 비침 0) */
 .k-drawer[data-slot="approval"]{background:var(--bg-1)}
 .oc-sheet{display:flex;flex-direction:column;gap:12px}
-.oc-ch{display:grid;grid-template-columns:72px 1fr;gap:12px 16px;margin:0 0 12px;padding:16px;border-radius:12px;background:var(--bg-0)}
+.oc-ch{display:grid;grid-template-columns:minmax(72px,max-content) 1fr;gap:12px 16px;margin:0 0 12px;padding:16px;border-radius:12px;background:var(--bg-0)}
 .oc-ch dt{font:500 var(--fs-label)/24px var(--font-body);color:var(--sub)}
 .oc-ch dd{margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font:400 var(--fs-body)/24px var(--font-body);color:var(--ink)}
 .oc-ch s{color:var(--sub);text-decoration:none}
 .oc-ch b{font-weight:600}
 .oc-ch svg{width:16px;height:16px;stroke:var(--sub);stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .oc-reason{width:100%;box-sizing:border-box}
+/* 결재 한 건 — 요청(누가 · 왜)은 바탕 없이, 반려 사유 안내 · 내가 요청한 결재 안내는 한 줄(impl-1) */
+.oc-req{background:none;padding:0 4px;margin:0}
+.oc-need{margin:-4px 0 0;min-height:0;font:400 var(--fs-label)/20px var(--font-body);color:var(--warn)}
+.oc-need:empty{display:none}
+.oc-mine{margin:4px 0 0;padding:14px 16px;border-radius:12px;background:var(--bg-0);font:500 var(--fs-body)/24px var(--font-body);color:var(--sub)}
 .oc-reason.is-need{animation:oc-need 380ms var(--e-ui);border-color:var(--warn)}
 @keyframes oc-need{20%{transform:translateX(-6px)}50%{transform:translateX(5px)}80%{transform:translateX(-2px)}}
 .oc-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}

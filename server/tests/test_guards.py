@@ -97,7 +97,11 @@ def test_deploy_state_machine(live, tok):
         assert r.status_code == 409 and r.json()["error"]["code"] == "invalid_stage_transition"
         r = httpx.post(B + f"/deploys/{did}/rollout", headers=a, json={"stage": "shadow"}, timeout=30)
         assert r.status_code == 409 and r.json()["error"]["code"] == "approval_required"          # 심기 결재 전
-        assert httpx.post(B + f"/approvals/{d['approval_id']}/decide", headers=a, json={"decision": "approve"}, timeout=30).status_code == 200
+        # 요청한 관리자는 스스로 결재할 수 없다(impl-1 R&R) — 다른 관리자(lxadmin)가 결재
+        assert httpx.post(B + f"/approvals/{d['approval_id']}/decide", headers=a, json={"decision": "approve"}, timeout=30).status_code == 409
+        from conftest import _login
+        a2 = H(_login({"realm": "lx", "login": "lxadmin", "password": config.DEV_PASSWORD}))
+        assert httpx.post(B + f"/approvals/{d['approval_id']}/decide", headers=a2, json={"decision": "approve"}, timeout=30).status_code == 200
         for st in ("shadow", "canary"):
             assert httpx.post(B + f"/deploys/{did}/rollout", headers=a, json={"stage": st}, timeout=30).status_code == 200
         r = httpx.post(B + f"/deploys/{did}/rollout", headers=a, json={"stage": "ga"}, timeout=30)

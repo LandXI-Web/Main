@@ -106,6 +106,9 @@ async function checks(d) {
   const due = !draft0 && retrainMap().has(d.id);
   const draft = d.stage === 'draft';
   const pending = (d.approvals || []).some((a) => !a.decision || a.decision === 'pending');
+  /* 적용 요청이 반려됐으면 사유를 보인다(요청한 사람의 화면 — impl-1 · 결재함 반려 사유 필수) */
+  const rej = !pending ? [...(d.approvals || [])].filter((a) => a.action === 'port').pop() : null;
+  const rejected = rej?.decision === 'reject';
   const canModel = await hasOp('post', `/deploys/${d.id}/model`);
   const canApprove = false;   // POST /approvals 는 한도 변경 전용 — 심기 결재 행은 POST /deploys(S-7)가 만든다
   const reg = encodeURIComponent(regionKey(d));
@@ -147,8 +150,8 @@ async function checks(d) {
       line: jobsDone ? `분석 ${jobsDone}회 완료` : found ? `의심 ${numHtml(total, { unit: '건' })}` : hasRes ? '결과 반영' : '첫 분석 전', html: !jobsDone && !!found,
       act: surveyAct || (found || jobsDone || hasRes ? null : F ? { note: '결재가 끝나면 AI 분석이 이어집니다' } : pair ? { label: '첫 분석 실행', run: (btn, row) => firstRun(d, pair, btn, row), primary: true } : { note: '영상과 모델이 갖춰지면 분석합니다' }) },
     { t: '배포', href: null, s: draft ? 'wait' : 'ok',
-      line: draft ? (pending ? '결재 대기' : F?.state === 'need_imagery' ? '결재 완료 · 영상 등록 필요' : '관리자 결재 전') : STAGE_CHIP[d.stage],
-      act: draft && !pending && !(F && F.state !== 'approval') ? canApprove ? { label: '결재 요청', run: () => askApproval(d) } : { note: 'LX 관리자 화면 결재함에서 결재합니다' } : null },
+      line: draft ? (pending ? '결재 대기' : rejected ? `반려 · 사유: ${rej.reason || '—'}` : F?.state === 'need_imagery' ? '결재 완료 · 영상 등록 필요' : '관리자 결재 전') : STAGE_CHIP[d.stage],
+      act: draft && !pending && !rejected && !(F && F.state !== 'approval') ? canApprove ? { label: '결재 요청', run: () => askApproval(d) } : { note: 'LX 관리자 화면 결재함에서 결재합니다' } : null },
     { t: '서비스 관리', href: null, tab: 'ops', s: draft ? 'wait' : due ? 'todo' : 'ok',
       line: draft ? '배포 뒤 시작' : rpt !== undefined ? (rpt?.value ? `기관 신고 ${rpt.value}건${due ? ' · 재학습' : ''}` : due ? '재학습' : '신고 없음')
         : reps.length ? `오탐 신고 ${reps.length}건${due ? ' · 재학습' : ''}` : '신고 없음', act: null },
@@ -379,6 +382,7 @@ async function openPlant() {
     } catch (err) {
       devlog('plant', `${err.status || ''} ${err.code || ''} ${err.message}`);
       if (err.code === 'model_input_mismatch') { fitEl.hidden = false; fitEl.dataset.lv = 'warn'; fitEl.textContent = err.message; toast('모델과 영상 해상도가 맞지 않아 요청하지 않았습니다'); }
+      else if (err.code === 'approval_required') { fitEl.hidden = false; fitEl.dataset.lv = 'warn'; fitEl.textContent = err.message; toast('서비스 공개 결재 뒤에 적용할 수 있습니다'); }
       else toast('요청을 보내지 못했습니다');
       go.disabled = false;
     }

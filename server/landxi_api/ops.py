@@ -116,13 +116,18 @@ def _num(v):
     return float(v) if isinstance(v, (int, float)) else None
 
 
+UTIL_HOT_PCT = 50.0       # 전력 값이 없는 GPU 만 — 사용률(이동평균) 이 값 이상이면 고부하(인프라 화면 옛 규칙과 같은 선)
+
+
 def judge_power(gl: list[dict], th: float, mx: int, lease_gpu: list[int], recent_w: dict | None = None,
                 yield_gpu: list[int] | None = None) -> dict:
     """전력 예산 판정 — 인프라 화면 큰 숫자 '동시 고부하 GPU n / m' · 전력 예산 안/초과 · AI 도우미 운영 답(한국어 · 영어)이 모두 이 함수 한 곳을 쓴다.
-    GPU 한 장이 고부하 = ① 최근 전력 평균(없으면 지금 전력) > th W 이거나 ② 분석 작업 임대(power:hot)를 쥔 작업기의 GPU.
-    단 ② 는 그 작업기가 전력 규칙으로 **멈춰 있을 때**(yield_gpu · 언어 모델이 다른 GPU 를 쓰는 동안 칸 사이에서 양보 · 하트비트 power_gate)
-    전력도 th 아래면 고부하로 세지 않는다(why='yield'). r3-ops 실증 14:38 — GPU 0 은 20 W 로 멈춰 있었는데 임대만 보고 '2 / 1 초과'로 셌다.
-    → {hot: [순번], hot_now, ok, per: [{gpu, power_w, hot, why}]} (why = 'power' | 'lease' | 'yield' | None)."""
+    GPU 한 장이 고부하 = **실측**으로만: ① 최근 전력 평균(없으면 지금 전력) > th W · ② 전력 값이 없으면 사용률(이동평균) ≥ UTIL_HOT_PCT.
+    분석 작업 임대(power:hot)를 쥐고 있기만 한 GPU(모델 올리는 중 · 칸 사이 · 전력 규칙으로 멈춤)는 세지 않는다(why='held' · 'yield').
+    (impl-1 · r3-ops 실증 3차 must_fix 2 — GPU 0 이 부하 0% · 20 W 인데 임대만 보고 고부하로 세어 '2 / 1 전력 예산 초과' 빨간 경고가 떴다.
+     실측: 분석 중 GPU 는 사용률 5–38% 에서도 110–128 W 라 전력이 판정의 기준이다.)
+    전력도 사용률도 모르는 GPU(폴러가 그 장을 못 읽은 때)의 임대만 보수적으로 센다(why='lease').
+    → {hot: [순번], hot_now, ok, per: [{gpu, power_w, util_pct, hot, why}]} (why = 'power' | 'util' | 'lease' | 'held' | 'yield' | None)."""
     recent_w = recent_w or {}
     yield_gpu = set(yield_gpu or [])
     per, hot = [], []
@@ -131,21 +136,27 @@ def judge_power(gl: list[dict], th: float, mx: int, lease_gpu: list[int], recent
         w = recent_w.get(i)
         if w is None:
             w = _num(g.get("power_w"))
-        if w is not None and w > th:
-            why = "power"
-        elif i in lease_gpu:
-            why = "yield" if i in yield_gpu else "lease"
+        u = _num(g.get("util_ma5"))
+        if u is None:
+            u = _num(g.get("util_pct"))
+        if w is not None:
+            why = "power" if w > th else None
+        elif u is not None:
+            why = "util" if u >= UTIL_HOT_PCT else None
         else:
-            why = None
-        is_hot = why in ("power", "lease")
-        per.append({"gpu": i, "power_w": None if w is None else round(w, 1), "hot": is_hot, "why": why})
+            why = "lease" if i in lease_gpu else None          # 측정값 0 — 임대만이 단서(보수적)
+        if why is None and i in lease_gpu:
+            why = "yield" if i in yield_gpu else "held"          # 분석 작업이 쥐고 있지만 실측은 기준 아래 — 고부하 아님
+        is_hot = why in ("power", "util", "lease")
+        per.append({"gpu": i, "power_w": None if w is None else round(w, 1), "util_pct": None if u is None else round(u, 1),
+                    "hot": is_hot, "why": why})
         if is_hot:
             hot.append(i)
     seen = {p["gpu"] for p in per}
-    for i in lease_gpu:                     # 표본에 없는 GPU 의 임대(폴러가 그 장을 못 읽은 때)도 센다 — 전력을 모르니 멈춤이어도 보수적으로
+    for i in lease_gpu:                     # 표본에 없는 GPU 의 임대(폴러가 그 장을 못 읽은 때) — 전력을 모르니 보수적으로 센다
         if i not in seen:
             hot.append(i)
-            per.append({"gpu": i, "power_w": None, "hot": True, "why": "lease"})
+            per.append({"gpu": i, "power_w": None, "util_pct": None, "hot": True, "why": "lease"})
     hot = sorted(hot)
     return {"hot": hot, "hot_now": len(hot), "ok": len(hot) <= mx, "per": per}
 

@@ -842,7 +842,7 @@ async def prewarm(model_id: str | None, pool: str) -> list[str]:
 @router.post("/jobs/quote")
 async def quote(body: dict, request: Request):
     p = require(principal(request))
-    q = await build_quote(p, body)
+    q = await quota_mod.hold_quote(await build_quote(p, body))          # 기관 한도를 넘었으면 새 분석 거절 + 이유 한 줄(impl-1 · C6)
     o = body.get("options") or {}
     if q.get("allowed") and (o.get("live") or o.get("scope") == "sgg") and q.get("_model"):
         try:
@@ -983,10 +983,11 @@ async def submit(body: dict, request: Request):
         raise ApiError("forbidden", "제출 권한 없음")
     if p.role == "sales" and not body.get("demo"):
         raise ApiError("demo_required", "영업 계정은 시연(demo:true)만 실행할 수 있습니다")
-    q = await build_quote(p, body)
+    q = await quota_mod.hold_quote(await build_quote(p, body))          # 기관 한도를 넘었으면 새 분석 거절 + 이유 한 줄(impl-1 · C6)
     if not q["allowed"]:
         code = q["reasons"][0]
-        msg = {"power_budget": "전력 예산 초과 — 동시 고부하 GPU 는 1장까지입니다", "too_large": "작업이 너무 큽니다 — 범위를 나눠 주세요"}.get(code)
+        msg = q.get("reason_line") if code == "quota_exceeded" else None
+        msg = msg or {"power_budget": "전력 예산 초과 — 동시 고부하 GPU 는 1장까지입니다", "too_large": "작업이 너무 큽니다 — 범위를 나눠 주세요"}.get(code)
         raise ApiError(code, msg or f"제출 불가: {', '.join(q['reasons'])}", {"reasons": q["reasons"]},
                        status=409 if code == "power_budget" else None)
     # 시군구 전역(scope sgg · 긴 작업)은 기본 우선순위 1 — 읍면동 실시간 분석 · 소범위 작업이 먼저 칸을 받는다(첫 결과 ≤ 10 s 유지)

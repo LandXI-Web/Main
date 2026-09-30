@@ -406,6 +406,8 @@ async def ops_gpus(args: dict, ctx) -> Out:
             nm = gpu_name(i)
             if w == "yield" and nm in rows:
                 rows[nm]["하는 일"] = "분석 멈춤"
+            elif w == "held" and nm in rows:            # 분석 작업이 쥐고 있지만 실측(전력)은 기준 아래 — 고부하 아님(impl-1 · 화면 작업 칸 'AI 분석')
+                rows[nm]["하는 일"] = "분석 작업"
         for nm, row in rows.items():
             row.setdefault("고부하", "아니오")
         data["동시 고부하 GPU"] = out.env("hot", "동시 고부하 GPU", _e(int(pb.get("hot_now") or 0), _u(ctx, "장"), "전력 예산(인프라 화면 큰 숫자)", pb.get("at") or at))

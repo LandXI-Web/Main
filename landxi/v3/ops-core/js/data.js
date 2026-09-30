@@ -11,23 +11,42 @@ let S9 = null;
 /** 서버 S-9 가 들어왔는가(approvals 읽기 경로 유무로 판정 · 404 로 콘솔을 더럽히지 않게 openapi 로 확인) */
 export async function hasS9() { if (S9 === null) S9 = await hasRoute('/approvals'); return S9; }
 
-export async function loadAll() {
+/** 두 단계로 읽는다(impl-1 · 확인 FR-3 '결재함이 불러오는 중에서 멈춤'):
+    ① 결재 대기에 필요한 것(결재 표 · 배포 기록 · 기관 · 서비스 이름 — 각 0.1–0.3초)만 먼저 → 큰 숫자 · 결재함이 바로 뜬다.
+    ② 무거운 것(기관 사용량 집계 약 8초 · GPU · 경보)은 뒤에서 — 오면 onRest() 로 할 일 칸만 다시 그린다.
+    예전에는 일곱 개를 한꺼번에 기다려 기관 사용량 집계가 끝날 때까지 결재함이 '불러오는 중'이었다. */
+export async function loadAll(onRest) {
   const s9 = await hasS9();
-  const [d, t, u, a, g, c, ap] = await Promise.all([
-    safe('/deploys'), safe('/tenants'), safe('/ops/tenants'), safe('/ops/alerts'), safe('/ops/gpus'), safe('/registry/cards'),
+  const rest = Promise.all([safe('/ops/tenants'), safe('/ops/alerts'), safe('/ops/gpus')]).then(([u, a, g]) => {
+    if (u) D.usage = u.items || [];
+    if (a) D.alerts = a;
+    if (g) D.gpus = g;
+    D.restAt = Date.now();
+    onRest?.();
+  });
+  const [d, t, c, ap] = await Promise.all([
+    safe('/deploys'), safe('/tenants'), safe('/registry/cards'),
     s9 ? safe('/approvals?state=pending') : Promise.resolve(null),
   ]);
   if (d) D.deploys = d.items || [];
   if (t) D.tenants = t.items || [];
-  if (u) D.usage = u.items || [];
-  if (a) D.alerts = a;
-  if (g) D.gpus = g;
   if (c) D.cards = c.items || [];
   D.srvApprovals = ap ? (ap.items || []) : null;
   D.mode = ap ? 'server' : 'adapter';
   if (d || ap) D.ok = true;          // 결재 대기의 출처(배포 기록 또는 결재 표)가 한 번이라도 왔는가
   D.at = Date.now();
   devlog('결재 출처', D.mode === 'server' ? 'GET /approvals?state=pending' : '어댑터: /deploys 파생(S-9 전)');
+  D.rest = rest;
+  return D;
+}
+/** 레일 '결재' 배지만(다른 LX 관리자 화면) — 결재 표 · 배포 기록만 읽는다(사용량 집계를 부르지 않는다) */
+export async function loadPending() {
+  const s9 = await hasS9();
+  const [d, ap] = await Promise.all([safe('/deploys'), s9 ? safe('/approvals?state=pending') : Promise.resolve(null)]);
+  if (d) D.deploys = d.items || [];
+  D.srvApprovals = ap ? (ap.items || []) : null;
+  D.mode = ap ? 'server' : 'adapter';
+  if (d || ap) D.ok = true;
   return D;
 }
 export async function loadFast() {
@@ -61,7 +80,7 @@ export const canon = () => D.deploys.filter((d) => d.tenant_id !== 'lx-demo' && 
 
 const decidedSince = (d, since) => (d.approvals || []).some((a) => new Date(a.at).getTime() >= new Date(since || 0).getTime() - 1000);
 
-export const KIND = { deploy: '배포 승인', rule: '규칙 임계', quota: '쿼터 변경', port: '다른 지역 적용', model: '모델 등록' };
+export const KIND = { deploy: '배포 승인', rule: '규칙 임계', quota: '한도 변경', port: '다른 지역 적용', model: '모델 등록', card: '서비스 공개' };
 const STAGE_KO = { draft: '초안', shadow: '검증', canary: '시범', ga: '운영', rolled_back: '롤백' };
 
 /** 결재 대기 — 큰 숫자 · 레일 · 결재 표가 모두 이 목록 하나를 센다.
@@ -83,13 +102,19 @@ export function pending() {
 }
 const byAt = (a, b) => String(b.at || '').localeCompare(String(a.at || ''));
 
-/* 서버 approvals 행(S-9 · GET /approvals) → 같은 항목. 모양: {id, kind: deploy|deploy_ga|rule|quota, subject{type,id}, title, requested_by, at, payload}
-   deploy + payload.action 'port' = 이식 · deploy_ga(카나리 ga 대기) · deploy(그 밖) = 배포 승인 · rule = 규칙 임계 · quota = 쿼터 변경 */
+/* 서버 approvals 행(S-9 · GET /approvals) → 같은 항목. 모양: {id, kind: deploy|deploy_ga|rule|quota|model|card, subject{type,id}, title, requested_by,
+   requested_by_name, request_reason, mine, at, payload}
+   deploy + payload.action 'port' = 다른 지역 적용 · deploy_ga(카나리 ga 대기) · deploy(그 밖) = 배포 승인 · rule = 규칙 임계 · quota = 한도 변경 ·
+   model = 모델 등록 · card = 서비스 공개 */
 const QDIM = { storage_gb: '저장', gpu_s_month: 'GPU 시간', area_km2_month: '분석 면적', concurrent_jobs: '동시 작업', egress_gb_month: '내보내기', vworld_calls_day: '지도 호출', llm_tokens_month: 'AI 도우미 사용량' };
+/* 한도 값 표기 — 기관 화면(ops-infra DIM)과 같은 단위: GPU 시간은 초 → 시간 */
+const QUNIT = { storage_gb: ['GB', 1], gpu_s_month: ['시간', 1 / 3600], area_km2_month: ['㎢', 1], llm_tokens_month: ['토큰', 1], concurrent_jobs: ['건', 1], egress_gb_month: ['GB', 1], vworld_calls_day: ['회', 1] };
 const val = (v) => (v && typeof v === 'object' && 'value' in v ? v.value : v);
 const fmtN = (v) => (v == null || v === '' ? '' : typeof val(v) === 'number' ? Number(val(v)).toLocaleString('ko-KR') : String(val(v)));
-/** 요청자 = 사람 말로(사용자 id 는 화면에 내지 않는다) */
+const fmtQ = (dim, v) => { if (v == null || v === '') return ''; const [u, k] = QUNIT[dim] || ['', 1]; const x = Number(val(v)) * k; return `${x.toLocaleString('ko-KR', { maximumFractionDigits: k < 1 ? 1 : 0 })} ${u}`.trim(); };
+/** 요청자 = 사람 말로(사용자 id 는 화면에 내지 않는다) — 서버가 준 이름('김도윤 · LX 직원') 먼저 */
 function requesterOf(r, kind, sid) {
+  if (r.requested_by_name) return r.requested_by_name;
   const u = String(r.requested_by || '');
   if (!u) return '—';
   if (/^u_lx_admin/.test(u)) return 'LX 관리자';
@@ -101,7 +126,7 @@ function requesterOf(r, kind, sid) {
 function fromServer(r) {
   if ((r.state || 'pending') !== 'pending') return null;
   const act = r.payload?.action;
-  const kind = r.kind === 'deploy' ? (act === 'port' ? 'port' : 'deploy') : r.kind === 'deploy_ga' ? 'deploy' : r.kind === 'rule' ? 'rule' : r.kind === 'quota' ? 'quota' : r.kind === 'model' ? 'model' : null;
+  const kind = r.kind === 'deploy' ? (act === 'port' ? 'port' : 'deploy') : r.kind === 'deploy_ga' ? 'deploy' : ['rule', 'quota', 'model', 'card'].includes(r.kind) ? r.kind : null;
   if (!kind) return null;
   const sid = r.subject?.id || r.subject_id;
   const d = kind === 'deploy' || kind === 'port' ? D.deploys.find((x) => x.id === sid) : null;
@@ -110,6 +135,7 @@ function fromServer(r) {
   if (d) target = kind === 'port' && d.sgg_cd && d.tenant_id !== 'lx' ? `${whoWhere(d)} ${cardName(d.card_id)}` : `${whoOf(d)} ${cardName(d.card_id)}`;
   else if (kind === 'quota') target = tenantName(sid);
   else if (kind === 'model') target = String(r.payload?.name || '새 모델');     // 모델 id 는 화면에 내지 않는다
+  else if (kind === 'card') target = String(r.payload?.name || r.title || '새 서비스');
   else target = String(r.title || '').replace(PROV, '').replace(/\s*\(해외\)$/, '') || '—';
   if (kind === 'port') {
     const src = D.deploys.find((x) => x.id === (r.payload?.from_deploy_id || d?.from_deploy_id));
@@ -123,14 +149,23 @@ function fromServer(r) {
     const m = r.payload?.metric;
     changes = [['상태', '결과 확인 전', '등록']];
     if (m != null) changes.push(['성능(학습 끝 검증)', '', Number(val(m)).toFixed(3)]);
+  } else if (kind === 'card') {
+    const pl = r.payload || {};
+    changes = [['서비스', '', String(pl.name || '')], ['모델', '', String(pl.model_name || '')], ['규칙', '', (pl.rules || []).join(' · ') || '없음(AI 분석까지)'],
+      ['상태', '공개 전', '공개']];
   } else if (kind === 'quota') {
-    const pl = r.payload || {}, cur = D.usage.find((u) => u.tenant_id === sid)?.dims?.[pl.dim] || {};
-    changes = [['항목', '', QDIM[pl.dim] || '한도']];
-    if (pl.soft != null) changes.push(['소프트', fmtN(cur.soft), fmtN(pl.soft)]);
-    if (pl.hard != null) changes.push(['하드', fmtN(cur.hard), fmtN(pl.hard)]);
+    const pl = r.payload || {}, dims = pl.dims && typeof pl.dims === 'object' ? pl.dims : { [pl.dim]: pl };
+    const now = D.usage.find((u) => u.tenant_id === sid)?.dims || {};
+    for (const [dim, v] of Object.entries(dims)) {
+      const cur = now[dim] || {};
+      if (v?.hard != null) changes.push([`${QDIM[dim] || '한도'} 한도`, fmtQ(dim, cur.hard), fmtQ(dim, v.hard)]);
+      if (v?.soft != null) changes.push([`${QDIM[dim] || '한도'} 임박 기준`, fmtQ(dim, cur.soft), fmtQ(dim, v.soft)]);
+    }
+    changes = changes.filter(([, a, b]) => a !== b);             // 그대로인 값은 빼고 바뀌는 것만
   }
   changes = changes.filter(([, , b]) => b);
-  return { key: kind + ':' + (r.id || sid), id: r.id, kind, kindKo: KIND[kind], target, requester: requesterOf(r, kind, sid), at: r.at, deploy: d, ref: sid, raw: r, changes };
+  return { key: kind + ':' + (r.id || sid), id: r.id, kind, kindKo: KIND[kind], target, requester: requesterOf(r, kind, sid), at: r.at, deploy: d, ref: sid, raw: r, changes,
+    why: r.request_reason || '', mine: !!r.mine };
 }
 
 /* ── 할 일(카드) ─────────────────────────── */

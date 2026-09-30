@@ -247,11 +247,13 @@ export function judgedAt() {
   if (Number.isNaN(d.getTime())) return null;
   return [d.getHours(), d.getMinutes(), d.getSeconds()].map((x) => String(x).padStart(2, '0')).join(':');
 }
-/** 행 작업 칸 뒤에 붙는 고부하 표시 — 전력으로 셌으면 판정에 쓴 최근 평균 W, 분석 작업 임대로 셌으면 '고부하'만 */
+/** 행 작업 칸 뒤에 붙는 고부하 표시 — 판정은 실측(서버 judge_power · impl-1): 전력으로 셌으면 판정에 쓴 최근 평균 W,
+    전력 값이 없어 사용률로 셌으면 부하 %, 측정값이 하나도 없는 장만 임대로 '고부하 · 작업 중'. 분석 작업이 쥐고만 있으면(held) 표시 없음 */
 export function hotNote(g) {
   const p = (S.gpus?.power_budget?.per || []).find((x) => x.gpu === g.index);
   if (!p || !p.hot) return '';
   if (p.why === 'power' && p.power_w != null) return `고부하 · 최근 평균 ${Math.round(p.power_w)} W`;
+  if (p.why === 'util' && p.util_pct != null) return `고부하 · 부하 ${Math.round(p.util_pct)}%`;
   return p.why === 'lease' ? '고부하 · 작업 중' : '고부하';
 }
 
@@ -261,7 +263,7 @@ export function gpuWork(g) {
   // 분석 작업기가 전력 규칙으로 멈춘 GPU(서버 판정 why='yield') — 언어 모델이 다른 GPU 를 쓰는 동안 양보
   const why = (S.gpus?.power_budget?.per || []).find((p) => p.gpu === g.index)?.why;
   if (why === 'yield') return '분석 잠시 멈춤';
-  if (g.job_id || why === 'lease') { const j = (S.jobs || []).find((x) => x.id === g.job_id); return KIND[j?.kind] || 'AI 분석'; }
+  if (g.job_id || why === 'lease' || why === 'held') { const j = (S.jobs || []).find((x) => x.id === g.job_id); return KIND[j?.kind] || 'AI 분석'; }
   const llm = (g.external || []).some((e) => /llama|vllm|python|ollama/i.test(e.name || ''));
   if (llm && (!g.worker || (g.util_ma5?.value ?? 0) >= 10)) return '언어 모델';
   if (g.worker) return why === 'power' ? '사용 중' : '대기';   // 전력으로 고부하인데 '대기'라고 쓰지 않는다(답의 'in use' 와 같게)
