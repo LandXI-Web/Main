@@ -52,7 +52,7 @@ POOL = get("LX_POOL", "a6000")
 VRAM_RESERVE_MIB = int(get("LX_VRAM_RESERVE_MIB", "2048"))
 APPROVALS_REQUIRED = int(get("APPROVALS_REQUIRED", "1"))
 # 바깥 주소(Cloudflare 터널 → tools/public-gate.mjs) — 이 이름으로 들어온 요청은 https 기준 주소로 서명한다
-PUBLIC_HOSTS = [h.strip().lower() for h in (get("LX_PUBLIC_HOSTS", "app.land-xi.dev") or "").split(",") if h.strip()]
+PUBLIC_HOSTS = [h.strip().lower() for h in (get("LX_PUBLIC_HOSTS", "app.land-xi.dev,admin.land-xi.dev,gov.land-xi.dev") or "").split(",") if h.strip()]
 CORS_ORIGINS = ["http://localhost:4173", "http://localhost:8702", "http://127.0.0.1:4173", "http://127.0.0.1:8702",
                 "https://landxi-web.github.io"] + [f"https://{h}" for h in PUBLIC_HOSTS]
 OPS_ORIGIN = "http://localhost:8702"

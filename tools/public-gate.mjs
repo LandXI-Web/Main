@@ -10,6 +10,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = Number(process.env.LX_GATE_PORT) || 4180;
 const GW = { host: '127.0.0.1', port: Number(process.env.LX_API_PORT) || 8700 };
 const HOME = '/landxi/v3/login/';
+/* 입구 셋(원칙 27 · 확인 대장 6) — 한 플랫폼의 분기. 입구 화면 정리 전까지는 같은 로그인에 그 입구의 첫 화면을 미리 고른다.
+   주소는 나중에 도메인에 따라 바뀔 수 있다 — 이름은 여기와 server/.env LX_PUBLIC_HOSTS 두 곳만. */
+const ENTRY = { admin: HOME + '?next=' + encodeURIComponent('/landxi/v3/ops-core/'), gov: HOME + '?next=' + encodeURIComponent('/landxi/v3/gov-fusion/') };
+const siteOf = (req) => String(req.headers.host || '').toLowerCase().split('.')[0];
 
 const API_PREFIX = /^\/(api|tiles|files)\//;
 /* 화면이 읽는 곳만. landxi/data(원본 데이터 연결)는 화면이 직접 읽는 지도 조각만 연다 */
@@ -87,7 +91,7 @@ http.createServer((req, res) => {
   if (p.includes('\0') || p.includes('..')) return send(res, 400, '400');
   if (API_PREFIX.test(p)) return proxy(req, res);
   if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, '405');
-  if (p === '/' || p === '/landxi' || p === '/landxi/' || p === '/landxi/v3' || p === '/landxi/v3/') return send(res, 302, '', { location: HOME });
+  if (p === '/' || p === '/landxi' || p === '/landxi/' || p === '/landxi/v3' || p === '/landxi/v3/') return send(res, 302, '', { location: ENTRY[siteOf(req)] || HOME });
   if (p === '/favicon.ico') return send(res, 204);
   if (p === '/landxi/proto/env.js') return send(res, 200, envJs(), { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-store' });
   serveFile(req, res, p);
