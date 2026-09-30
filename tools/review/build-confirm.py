@@ -220,7 +220,7 @@ def build():
     for it in DONE:
         used.update(it['shots'])
     for f in used:
-        for d in (SHOTS, EXTRA):
+        for d in (SHOTS, *[x for x in EXTRA.split(';') if x]):  # LX_CONFIRM_EXTRA = 폴더 여러 개(; 로 구분)
             if d and os.path.exists(os.path.join(d, f)):
                 shutil.copy2(os.path.join(d, f), os.path.join(OUT, 'img', f))
                 break
@@ -238,7 +238,7 @@ def build():
     secs = ''.join(f'<section><h2>{esc(h)}</h2><p class="sub">{esc(d)}</p>{"".join(card(i) for i in items)}</section>' for h, d, items in SECTIONS)
     done = '' if not DONE else '<section><h2>이미 만든 것 — 구현 확인</h2><p class="sub">열어 보시고 완료 또는 다시를 골라 주세요.</p>' + ''.join(card(i, True) for i in DONE) + '</section>'
     n = sum(len(i) for _, _, i in SECTIONS) + len(DONE)
-    page = TPL.replace('__BODY__', secs + done).replace('__N__', str(n)).replace('__LEAD__', LEAD).replace('__R__', ROUND).replace('__FONTS__', '../../fonts-system.css' if ROUND == '1' else '../../../fonts-system.css').replace('__TITLE__', '확인 요청' if ROUND == '1' else f'확인 요청 {ROUND}차')
+    page = TPL.replace('__BODY__', secs + done).replace('__N__', str(n)).replace('__LEAD__', LEAD).replace('__R__', ROUND).replace('__FONTS__', '../../fonts-system.css' if ROUND == '1' else '../../../fonts-system.css').replace('__TITLE__', os.environ.get('LX_CONFIRM_TITLE') or ('확인 요청' if ROUND == '1' else f'확인 요청 {ROUND}차'))
     open(os.path.join(OUT, 'index.html'), 'w', encoding='utf-8').write(page)
     print('confirm page:', n, 'items,', len(os.listdir(os.path.join(OUT, 'img'))), 'images')
 
@@ -265,7 +265,7 @@ section{margin-top:40px}
 h2{font:700 24px/1.3 Paperlogy,Pretendard,sans-serif;margin:0 0 4px;text-wrap:balance}
 .sub{margin:0 0 16px;color:var(--mute);font-size:15px;text-wrap:pretty}
 .c{background:#fff;border-radius:20px;padding:20px 24px;margin:0 0 14px;border:2px solid transparent}
-.c[data-s="확인"],.c[data-s="완료"],.c[data-s^="ⓐ"],.c[data-s^="ⓑ"],.c[data-s^="ⓒ"],.c[data-s="제안대로"],.c[data-s^="영상대로"]{border-color:var(--ok)}
+.c[data-s="확인"],.c[data-s="채택"],.c[data-s="완료"],.c[data-s^="ⓐ"],.c[data-s^="ⓑ"],.c[data-s^="ⓒ"],.c[data-s="제안대로"],.c[data-s^="영상대로"]{border-color:var(--ok)}
 .c[data-s="보류"]{border-color:var(--warn)}.c[data-s="반려"],.c[data-s="다시"]{border-color:var(--no)}
 .c header{display:flex;gap:10px;align-items:baseline;margin-bottom:10px}
 .n{font:600 13px/1 Inter,Pretendard,sans-serif;color:var(--accent);background:var(--tint);padding:5px 8px;border-radius:8px;flex:none}
