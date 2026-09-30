@@ -2,7 +2,7 @@
 // 이유: shots/ 는 _config.yml 로 발행에서 빠져 있어 Pages 에서 404 다. 서버(:8700)가 있어야 도는 화면은
 //       Pages 에서 살아 있는 화면으로 열 수 없으므로, 로컬에서 찍은 캡처·영상을 대장이 대신 연다.
 // 대장은 Land-XI 자기 화면만 싣는다 — 다른 회사 사이트 캡처는 만들지 않는다(2026-09-29 사용자).
-// 실행: node tools/review/ledger-media.mjs [--only=capture,stills,video,core,legacy,legacy-login]   (저장소 루트 · ffmpeg 필요)
+// 실행: node tools/review/ledger-media.mjs [--only=capture,stills,video,core,r3,legacy,legacy-login]   (저장소 루트 · ffmpeg 필요)
 //   capture = 새 화면 17종을 로그인 폼으로 들어가 1440×900 첫 화면을 찍는다(:4173 + 서버 :8700 · server/.env DEV_PASSWORD · 세션 주입 0)
 //             → shots/final/ledger/<화면>-1440.png
 //   stills  = 그 캡처 → 카드 썸네일 480 폭 WebP(≤ 60 KB) v3-<화면>.webp + 크게 보기용 1440 폭 WebP v3-<화면>-L.webp
@@ -93,6 +93,24 @@ const CORE_STILLS = [
   ['shots/core/core-flow/yeosu-01-staff-plant-1440.png', 'core-c7-apply'], ['shots/core/core-flow/yeosu-admin-flow-1440.png', 'core-c7-flow'],
 ];
 if (want('core')) for (const [src, name] of CORE_STILLS) {
+  const s = path.join(ROOT, src); if (!fs.existsSync(s)) { console.warn('! 원본 없음(건너뜀): ' + src); continue; }
+  webp(s, path.join(OUT, name + '.webp'), 480, 60); webp(s, path.join(OUT, name + '-L.webp'), 1440, 200);
+}
+// 백본 3차(9월 30일 저녁) 실증 장면 — 구현에 참여하지 않은 확인자가 로그인 폼으로 들어가 찍은 실제 화면. --only=r3
+// 대장 항목 정보는 masters.mjs CORE_ITEMS 의 core-r3-*. 코어 영상 3(r3-walk.mp4)은 assets-thumbs 에 바로 둔다.
+const R3_STILLS = [
+  ['shots/r3/r3-train/prove4/p1-label-check.jpg', 'core-r3-c5-label'], ['shots/r3/r3-train/prove4/p3-train-epochs.jpg', 'core-r3-c5-train'],
+  ['shots/r3/r3-train/prove4/p6-service-made.jpg', 'core-r3-c5-service'], ['shots/r3/r3-train/prove4/p7-apply-wonju-fit.jpg', 'core-r3-c5-apply'],
+  ['shots/r3/r3-train/prove4/p12-xi-wonju-survey.jpg', 'core-r3-c5-wonju'], ['shots/r3/r3-train/prove4/p13-admin-flow-done.jpg', 'core-r3-c7-flow'],
+  ['shots/r3/r3-xi/prove3/a1-muju-running-6.png', 'core-r3-c1-scope'], ['shots/r3/r3-xi/prove3/c1-muju-emd-done.png', 'core-r3-c1-emd'], ['shots/r3/r3-xi/prove3/d1-drawn-done.png', 'core-r3-c1-draw'],
+  ['shots/r3/r3-route/prove2/p2-gj-run1-confirm.png', 'core-r3-c2-confirm'], ['shots/r3/r3-route/prove2/p2-st-in-at-max.png', 'core-r3-c2-honest'], ['shots/r3/r3-route/prove2/p2-gj-m10-보성군.png', 'core-r3-c2-nodata'],
+  ['shots/r3/r3-law-report/prove3/02-admin-바깥주소-건축허가-제11조.jpg', 'core-r3-c2-law'], ['shots/r3/r3-law-report/prove3/07-gj-보고서화면-구례군-의심11081.jpg', 'core-r3-c3-report'],
+  ['shots/r3/r3-law-report/prove3/05-admin-구례군-공문555.jpg', 'core-r3-c3-letter'],
+  ['shots/r3/r3-fusion/prove4/js-3-f5.png', 'core-r3-c4-f5'], ['shots/r3/r3-fusion/prove4/js-L1-논.png', 'core-r3-c4-cond'],
+  ['shots/r3/r3-global/prove2/agri-r3-show.png', 'core-r3-c8-register'], ['shots/r3/r3-global/prove2/agri-r4-summary.png', 'core-r3-c8-summary'],
+  ['shots/r3/r3-ops/prove3/05-ko-160639-same-as-screen.jpg', 'core-r3-c6-gpu'], ['shots/r3/r3-ops/prove3/06-tenant-table-1923340.jpg', 'core-r3-c6-usage'],
+];
+if (want('r3')) for (const [src, name] of R3_STILLS) {
   const s = path.join(ROOT, src); if (!fs.existsSync(s)) { console.warn('! 원본 없음(건너뜀): ' + src); continue; }
   webp(s, path.join(OUT, name + '.webp'), 480, 60); webp(s, path.join(OUT, name + '-L.webp'), 1440, 200);
 }

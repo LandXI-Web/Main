@@ -1,0 +1,63 @@
+{
+ "staff": {
+  "login": 0.25,
+  "console": 3.72,
+  "train": 12.28,
+  "flow": 17.35,
+  "sample": 17.81,
+  "trainGo": 23.47,
+  "trainRun": 25.3,
+  "ep1": 39.2,
+  "ep2": 50.25,
+  "ep3": 62.03,
+  "trainDone": 64.36,
+  "trainMsg": "학습 끝",
+  "model": 64.72,
+  "modelText": "4\n결과 확인 · 등록\n새 모델\n건축물 학습 2026.09.30 · 2회\n성능(학습 끝 검증)\n0.563\n기반 모델\n25cm 항공 · 건물·주차장·경작지·비닐하우스\n기반 모델 성능\n0.886\n클래스\n건물\n상태\n결과 확인 전\n등록 요청",
+  "epochs": [
+   "1/3 회차 · 검증 성능 0.478",
+   "2/3 회차 · 검증 성능 0.395",
+   "3/3 회차 · 검증 성능 0.563"
+  ],
+  "restore": 68.47,
+  "applyClick": 73.99,
+  "deploy": 76.29,
+  "xi": 81.36,
+  "wonju": 89.43,
+  "wonjuMap": 95.95,
+  "mujuMap": 101.61,
+  "mujuCard": 103.14,
+  "card": "Ctrl K\nAI 분석 실행\n\n무주군 AI 분석 실행 · 영상이 있는 곳만 분석합니다 — 읍면동 5곳, 시군구 면적의 약 63%\n\n실행\n취소",
+  "cancel": 107.2,
+  "law": "Ctrl K\n법령 조문 찾기\n관련 조문 원문입니다.\n「건축법」 제11조(건축허가) 제1항 · 시행 2026-02-27 “① 건축물을 건축하거나 대수선하려는 자는 특별자치시장ㆍ특별자치도지사 또는 시장ㆍ군수ㆍ구청장의 허가를 받아야 한다. 다만, 21층 이상의 건축물 등 대통령령으로 정하는 용도 및 규모의 건축물을 특별시나 광역시에 건축하려면 특별시장이나 광역시장의 허가를 받아야 한다. <개정 2014.1.14>”\n「건축법」 제11조(건축허가) 제11항 · 시행 2026-02-27 “⑪ 제1항에 따라 건축허가를 받으려는 자는 해당 대지의 소유권을 확보하여야 한다. 다만, 다음 각 호의 어느 하나에 해당하는 경우에는 그러하지 아니하다. <신설 2016.1.19, 2017.1.17, 2021.8.10> 1. 건축주가 대지의 소유권을 확보하지 못하였으나 그 대지를 사용할 수 있는 권원을 확보한 경우. 다만, 분양을 목적으로 하는 공동주택은 제외한다. 2. 건축주가 건축물의 노후화 또는 구조안전",
+  "end": 116.4,
+  "file": "vid/staff/page@45481bba7365b3c4f568a27607e92cf4.webm"
+ },
+ "gov": {
+  "login": 0.29,
+  "home": 3.36,
+  "ledger": 10.07,
+  "f5": 13.18,
+  "ledger2": 17.2,
+  "q": "Ctrl K\n대장과 AI 결과 대조\n여수시 전체 의심 필지는 10,506건입니다. 올린 대장과 AI가 어긋난 필지는 175필지며 지도에 표시했습니다.",
+  "end": 27.34,
+  "file": "vid/gov/page@fbc524209a3e3b55bad7cb986a4bd657.webm"
+ },
+ "kgz": {
+  "login": 0.16,
+  "home": 3.44,
+  "zoom": "Ctrl K\nMap control\nZoomed in.",
+  "mismatch": "Ctrl K\nCompare register and AI\n1 district doesn't match out of 1 district compared — the AI cropland area differs from the declared area by more than 30%. Ysyk-Ata: declared 40,000 ha, AI 68,726 ha (71.8%). 2 rows outside your districts were not compared. District level, not parcels.",
+  "end": 25.5,
+  "file": "vid/kgz/page@6cb18e952258af864f802e9ccdf3eae5.webm"
+ },
+ "admin": {
+  "login": 0.17,
+  "home": 3.01,
+  "deploys": 7.14,
+  "flow": 13.59,
+  "gpu": "Ctrl K\nGPU 확인\n21:00:12 기준 동시 고부하 GPU는 0장(한도 1장)으로 고부하인 GPU 없음 · 전력 예산 안입니다. 최근 2시간 두 장이 함께 고부하였던 적은 0회입니다. GPU 0은 부하 0%, 지금 전력 18W, 메모리 10GB, 온도 57°C로 대기 중입니다. GPU 1은 부하 0%, 지금 전력 29W, 메모리 43.2GB, 온도 63°C로 대기 중입니다.",
+  "end": 25.36,
+  "file": "vid/admin/page@72a35635e72275c16864a91e761f93b1.webm"
+ }
+}
