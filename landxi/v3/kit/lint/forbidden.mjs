@@ -65,10 +65,16 @@ export async function openPages(urls, { login, state, mobile = false, base = 'ht
   if (login) await frontDoor(page, base, login);
   return { browser, page, errors };
 }
-/** 정문 폼 입력 로그인 — login = 'lx-staff' | 'namwon-manager@namwon'. 비밀번호 = env LX_PW(개발 기본값 서버 .env). */
+/** 개발 계정 비밀번호 — env LX_PW · DEV_PASSWORD, 없으면 server/.env(저장소에 올리지 않는 파일)에서 읽는다 */
+async function devPw() {
+  if (process.env.LX_PW || process.env.DEV_PASSWORD) return process.env.LX_PW || process.env.DEV_PASSWORD;
+  const fs = await import('node:fs');
+  try { return fs.readFileSync(new URL('../../../../server/.env', import.meta.url), 'utf8').match(/^DEV_PASSWORD=(.*?)\s*$/m)?.[1] || ''; } catch { return ''; }
+}
+/** 로그인 폼 입력 — login = 'lx-staff' | 'namwon-manager@namwon'. 비밀번호 = devPw(). */
 export async function frontDoor(page, base, login) {
   const [id, tenant] = login.split('@');
-  const pw = process.env.LX_PW || 'landxi-dev-2026';
+  const pw = await devPw();
   await page.goto(base + '/landxi/v3/login/', { waitUntil: 'domcontentloaded' });
   const pickTab = async (re) => { const t = page.getByRole('tab', { name: re }).or(page.getByRole('button', { name: re })).or(page.getByRole('radio', { name: re })); if (await t.count()) await t.first().click(); };
   if (tenant) await pickTab(/기관/); else if (/admin/.test(id)) await pickTab(/관리자/); else await pickTab(/직원|LX/);

@@ -4,6 +4,12 @@ import { chromium } from 'playwright';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+/** 개발 계정 비밀번호 — env LX_PW · DEV_PASSWORD, 없으면 server/.env(저장소에 올리지 않는 파일)에서 읽는다 */
+async function devPw() {
+  if (process.env.LX_PW || process.env.DEV_PASSWORD) return process.env.LX_PW || process.env.DEV_PASSWORD;
+  const fs = await import('node:fs');
+  try { return fs.readFileSync(new URL('../../../../server/.env', import.meta.url), 'utf8').match(/^DEV_PASSWORD=(.*?)\s*$/m)?.[1] || ''; } catch { return ''; }
+}
 
 const out = process.argv[2] || 'shots/final/main';
 fs.mkdirSync(out, { recursive: true });
@@ -50,7 +56,7 @@ async function run(record) {
   mark('login_page');
   await page.waitForTimeout(record ? 500 : 1500);
   await page.locator('input[name=login], input[autocomplete=username], input[type=text]').first().pressSequentially('lx-staff', { delay: record ? 25 : 0 });
-  await page.locator('input[type=password]').first().fill(process.env.LX_PW || 'landxi-dev-2026');
+  await page.locator('input[type=password]').first().fill(await devPw());
   mark('typed');
   await Promise.all([page.waitForURL((u) => !/\/login\/?$/.test(u.pathname), { timeout: 15000 }), page.locator('input[type=password]').first().press('Enter')]);
   const tLand = Date.now() - t0;

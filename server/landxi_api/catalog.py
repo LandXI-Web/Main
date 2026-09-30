@@ -80,7 +80,7 @@ def resolve_set_path(set_id: str) -> str | None:
 def _trusted_host(host: str) -> bool:
     h = (host or "").lower().rsplit(":", 1)[0] if not (host or "").startswith("[") else (host or "").lower().split("]")[0] + "]"
     pub = config.PUBLIC_BASE.split("://", 1)[-1].split("/", 1)[0].lower().rsplit(":", 1)[0]
-    return h in ("localhost", "localhost.", "127.0.0.1", "[::1]", pub) or h.endswith(".localhost") or h.endswith(".localhost.")
+    return h in ("localhost", "localhost.", "127.0.0.1", "[::1]", pub) or h in config.PUBLIC_HOSTS or h.endswith(".localhost") or h.endswith(".localhost.")
 
 
 def base_of(request: Request | None) -> str:
@@ -90,6 +90,8 @@ def base_of(request: Request | None) -> str:
     try:
         host = request.headers.get("host") or ""
         if host and _trusted_host(host) and all(c.isalnum() or c in ".-:[]" for c in host):
+            if host.lower() in config.PUBLIC_HOSTS:          # 바깥 주소(터널) — 브라우저는 https 로 들어온다
+                return f"https://{host}"
             return f"{request.url.scheme}://{host}"
     except Exception:                                   # noqa: BLE001
         pass

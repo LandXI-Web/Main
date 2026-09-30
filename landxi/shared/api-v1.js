@@ -7,7 +7,14 @@
 const LS = (k, v) => { try { return v === undefined ? localStorage.getItem(k) : localStorage.setItem(k, v); } catch { return null; } };
 
 export const API = {
-  get base() { return LS('lx_api_base') || 'http://localhost:8700'; },
+  /* 기준 주소 — 이 PC(localhost)면 게이트웨이 :8700, 바깥 주소(app.land-xi.dev)면 같은 출처(관문이 /api 를 넘긴다),
+     GitHub Pages 에서 열면 운영 주소로. 개발 중 덮어쓰기는 localStorage lx_api_base. */
+  get base() {
+    const o = LS('lx_api_base'); if (o) return o;
+    if (typeof location === 'undefined' || location.protocol === 'file:' || /^(localhost|127\.0\.0\.1|\[::1\])$/i.test(location.hostname)) return 'http://localhost:8700';
+    if (/\.github\.io$/i.test(location.hostname)) return 'https://app.land-xi.dev';
+    return location.origin;
+  },
   get prefix() { return this.base + '/api/v1'; },
   mode: 'auto',            // 'auto' | 'on' | 'off'  (probe 뒤 'on'|'off')
   probeMs: 1500,

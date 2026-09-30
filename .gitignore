@@ -20,3 +20,4 @@ server/.*.pids
 server/.*.pid
 server/ops/.pollers.pids
 server/.setup-smoke.json
+server/logs/
