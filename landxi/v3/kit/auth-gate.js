@@ -77,6 +77,11 @@ export async function whoami() {
 }
 
 export async function gate(home = homeFromPath()) {
+  /* GitHub Pages(보기 전용 사본)에서 로그인이 필요한 화면을 열면 운영 주소의 같은 화면으로 */
+  if (/\.github\.io$/i.test(location.hostname)) {
+    location.replace('https://app.land-xi.dev' + location.pathname.replace(/^\/[^/]+(?=\/landxi\/)/, '') + location.search);
+    return new Promise(() => {});
+  }
   const who = await whoami();
   const here = location.pathname + location.search;
   if (!who) {
