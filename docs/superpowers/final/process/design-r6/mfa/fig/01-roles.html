@@ -1,0 +1,33 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>2차 인증 — 역할별 한 장</title>
+<link rel="stylesheet" href="fig.css"></head><body><div class="page">
+<h1>2차 인증 — 누가 무엇을, 언제 켜나 <span class="tag both">문서 · 둘 다</span></h1>
+<p class="sub">비밀번호 다음에 <b>휴대폰에 뜬 6자리</b>를 한 번 더 넣습니다. 입구가 아니라 <b>계정</b>에 겁니다 — 같은 계정이 세 입구 어디로든 들어올 수 있고, 관리자 계정은 어느 입구로 들어와도 관리자 권한을 받기 때문입니다.</p>
+
+<table class="f">
+  <tr><th style="width:150px">누가</th><th style="width:120px">입구</th><th style="width:170px">지금(시범 — 사용자 혼자)</th><th style="width:150px">정식 오픈</th><th>무엇으로</th><th style="width:210px">휴대폰을 잃으면 누가 풀어 주나</th><th style="width:170px">쓰는 사람 부담</th></tr>
+  <tr><td class="k">LX 관리자<small>관리자 권한 계정 전부</small></td><td>관리자 입구<br><span class="muted small">(메인 입구로 와도 같음)</span></td><td class="on"><span class="yes">켬</span>lxadmin 등 관리자 권한 계정만</td><td><span class="yes">필수</span>로그인마다</td><td><b>OTP 앱</b>(구글 OTP 등)으로 시작 → 회사 OTP 가 연결되면 <b>회사 OTP</b></td><td>다른 LX 관리자 · 내 복구 코드<br><span class="muted small">관리자는 두 명 이상 두기</span></td><td>로그인 때 6자리</td></tr>
+  <tr><td class="k">LX 직원 · 영업</td><td>메인 입구</td><td><span class="no">끔</span>원하면 등록</td><td><span class="yes">필수</span></td><td><b>회사 OTP</b>(연결되면) 또는 <b>OTP 앱</b></td><td>LX 관리자</td><td>하루 한 번꼴 6자리<br><span class="muted small">로그인이 하루 유지됨</span></td></tr>
+  <tr><td class="k">기관 관리자</td><td>기관 입구</td><td><span class="no">끔</span></td><td><span class="yes">필수</span></td><td><b>OTP 앱</b> · 공무원이 이미 가진 정부 OTP·모바일 공무원증은 <span class="chk">가능한지 확인</span></td><td>LX 관리자</td><td>하루 한 번꼴 6자리</td></tr>
+  <tr><td class="k">기관 부서 사용자</td><td>기관 입구</td><td><span class="no">끔</span></td><td><span class="yes">필수</span></td><td><b>OTP 앱</b>(위와 같음)</td><td>기관 관리자<br><span class="muted small">LX 관리자도 도울 수 있음</span></td><td>처음 한 번 2분 등록<br>+ 하루 한 번꼴 6자리</td></tr>
+  <tr><td class="k">해외 기관</td><td>기관 입구(영문)</td><td><span class="no">끔</span></td><td><span class="yes">필수</span></td><td><b>OTP 앱</b> — 나라와 상관없이 같음, 영문 안내</td><td>그 기관 관리자 → LX 관리자</td><td>같음</td></tr>
+  <tr><td class="k">외부 시스템<small>API 키로 부르는 쪽</small></td><td>—</td><td colspan="2"><span class="no">해당 없음</span>사람이 로그인하는 것이 아님</td><td>서비스별 키 · 보낼 수 있는 주소 제한 · 사용 기록 · 키 만들기와 보기는 <b>관리자 2차 인증 뒤에만</b></td><td>키 폐기 → 다시 발급</td><td>없음</td></tr>
+</table>
+
+<div class="tri">
+  <div class="card"><h3>지금(시범 단계) 할 것</h3>
+    <ul><li><b>관리자 권한 계정에만</b> OTP 앱 2차 인증을 켭니다(세 입구 모두)</li>
+      <li>틀린 비밀번호 <b>5번</b>이면 그 계정 10분 잠금 · 실패도 기록</li>
+      <li>LX 정보보안 부서에 회사 OTP 연결 방법을 여쭙니다(여쭐 것 7)</li>
+      <li>공무원 인증(정부 OTP·모바일 공무원증)을 LX 가 붙일 수 있는지 행정안전부에 여쭙니다</li></ul></div>
+  <div class="card"><h3>정식 오픈 때 할 것</h3>
+    <ul><li><b>모든 사람 계정</b>에 2차 인증 필수</li>
+      <li>LX 직원은 회사 OTP(연결되면), 기관은 OTP 앱</li>
+      <li>임시 공통 비밀번호를 계정별 비밀번호로 바꾸고 처음 로그인 때 등록</li>
+      <li>새 기기 로그인 · 초기화 · 잠금은 <b>본인 메일로 알림</b></li></ul></div>
+  <div class="card"><h3>쓰는 사람이 하는 일은 셋뿐</h3>
+    <ul><li><b>처음 한 번</b> — 휴대폰에 OTP 앱 설치 → QR 비추기 → 6자리 확인 → 복구 코드 보관(약 2분)</li>
+      <li><b>로그인 때</b> — 6자리 한 번(하루 한 번꼴, 관리자는 로그인마다)</li>
+      <li><b>휴대폰을 바꾸거나 잃으면</b> — 복구 코드로 들어가 다시 등록, 없으면 관리자에게 초기화 요청</li></ul></div>
+</div>
+<p class="foot">메일·문자는 2차 인증으로 쓰지 않고 알림·비밀번호 재설정에만 씁니다. 근거와 비교는 공공 기준 · 메일 인증 문서에.</p>
+</div></body></html>

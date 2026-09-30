@@ -1,0 +1,25 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>2차 인증 수단 비교 — 메일·문자는 어디에</title>
+<link rel="stylesheet" href="fig.css"></head><body><div class="page">
+<h1>2차 인증 수단 비교 — 메일·문자는 어디에 쓰나 <span class="tag both">문서 · 둘 다</span></h1>
+<p class="sub">두 번째 문은 <b>비밀번호와 따로 떨어진 물건</b>(내 휴대폰·토큰)이어야 의미가 있습니다. 메일은 비밀번호 하나로 열리는 경우가 많아 두 번째 문이 되기 어렵고, 문자는 유심 복제·번호 가로채기에 약합니다.</p>
+
+<table class="f">
+  <tr><th style="width:170px">수단</th><th>안전</th><th>쓰는 사람 편함</th><th>비용 · 준비</th><th style="width:130px">해외 기관</th><th style="width:230px">Land-XI 에서 쓰는 자리</th></tr>
+  <tr><td class="k">OTP 앱<small>구글 OTP · 마이크로소프트 인증 앱 등</small></td><td><span class="yes">좋음</span>휴대폰 안에서 번호가 만들어져 가로챌 길이 적음 · 가짜 사이트에 번호를 넣으면 뚫림</td><td>처음 2분 등록<br>로그인 때 6자리</td><td>무료 · Land-XI 안에서 끝남(업체 계약 없음)</td><td><span class="yes">됨</span></td><td class="on"><b>기관 · LX 직원의 기본 2차 인증</b></td></tr>
+  <tr><td class="k">회사 OTP<small>LX 가 직원에게 준 것</small></td><td><span class="yes">좋음</span>회사가 관리 · 퇴사하면 같이 막힘(연결될 때)</td><td>이미 쓰는 것<br>새로 배울 것 없음</td><td>LX 정보보안 부서 연동 · 승인 필요</td><td>—</td><td class="on"><b>LX 직원 · 관리자</b>(연결되면)</td></tr>
+  <tr><td class="k">정부 OTP · 모바일 공무원증<small>공무원이 이미 가진 것</small></td><td><span class="yes">좋음</span>행정안전부가 발급·관리</td><td>이미 쓰는 것</td><td>행정안전부 연계 신청 · 연결망 허용 <span class="chk">LX 가 신청할 수 있는지 확인</span></td><td><span class="no">안 됨</span></td><td><b>기관(국내 공무원)</b><br>확인 뒤 OTP 앱과 함께</td></tr>
+  <tr><td class="k">문자(SMS)</td><td><span class="bad">약함</span>유심 복제·번호 가로채기에 번호가 넘어감 · 국제 기준에서 '제한' 수단</td><td>편함 — 문자만 보면 됨</td><td>건당 비용 · 발송 업체 계약 · 보내는 번호 사전 등록 · 휴대폰 번호(개인정보) 보관</td><td><span class="bad">어려움</span></td><td><b>쓰지 않음</b></td></tr>
+  <tr><td class="k">메일</td><td><span class="bad">약함</span>메일 비밀번호만 알면 코드도 받음 · 국제 기준에서 2차 인증 수단으로 '쓰지 말 것'</td><td>늦게 오거나 스팸함<br>공무원 메일은 밖에서 열 때 또 인증</td><td>보내는 메일 서버 · 발신 도메인 인증</td><td>됨</td><td><b>2차 인증으로 쓰지 않음</b><br>아래 보조 자리에만</td></tr>
+  <tr><td class="k">(참고) 휴대폰 지문·얼굴<small>패스키</small></td><td><span class="yes">가장 좋음</span>가짜 사이트에서는 아예 작동하지 않음</td><td>가장 편함 — 번호를 안 넣음</td><td>휴대폰·브라우저 지원 확인 · 분실 대책 따로</td><td>됨</td><td>정식 오픈 뒤<br><b>관리자부터 선택 수단</b>으로 검토</td></tr>
+</table>
+
+<h2 class="sec">메일이 쓸 만한 자리 — 보조로만</h2>
+<div class="line">
+  <div class="chip"><b>비밀번호 재설정</b><span>한 번만 쓰는 링크 · 15분 · 다음에 2차 인증도 거침</span></div>
+  <div class="chip"><b>새 기기 · 새 나라 로그인 알림</b><span>"내가 아니면 비밀번호를 바꾸세요"</span></div>
+  <div class="chip"><b>2차 인증 초기화 · 복구 코드 사용 알림</b><span>본인이 모르게 풀리는 것을 막음</span></div>
+  <div class="chip"><b>계정 잠김 알림</b><span>틀린 비밀번호 5번</span></div>
+  <div class="chip"><b>가입 신청 승인 · 반려</b><span>기관 가입 흐름에서 이미 쓰는 알림</span></div>
+</div>
+<p class="foot">'국제 기준' = 미국 국립표준기술연구소 디지털 신원 지침(2025년 8월판). 국내 기준은 외부 접속 때 '인증서 · 보안토큰 · 일회용 비밀번호 등 안전한 인증수단'을 요구합니다 — 공공 기준 문서에 출처.</p>
+</div></body></html>

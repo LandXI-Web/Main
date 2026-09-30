@@ -1,0 +1,115 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>OTP 앱 2차 인증 — 등록 · 로그인 · 분실</title>
+<link rel="stylesheet" href="fig.css"></head><body><div class="page">
+<h1>OTP 앱 2차 인증 — 처음 등록 · 로그인 · 휴대폰 분실 <span class="tag gov">화면 · 기관 분기</span><span class="tag">LX 직원도 같은 모양</span></h1>
+<p class="sub">구글 OTP · 마이크로소프트 인증 앱처럼 <b>표준 방식 OTP 앱</b>이면 무엇이든 됩니다. 앱은 30초마다 6자리를 만들고, 인터넷·문자·전화번호가 필요 없습니다. 해외 기관도 똑같습니다.</p>
+
+<div class="lane2">
+  <div class="lh gov">처음 한 번<span>다음 로그인 때<br>저절로 나옴 · 약 2분</span></div>
+  <div class="scrs">
+    <div><div class="scr"><div class="sc">
+      <div class="top">남원시 <span>1 / 4</span></div>
+      <h5>2차 인증을 등록합니다</h5>
+      <p>로그인할 때 휴대폰 번호 6자리를 한 번 더 넣게 됩니다.</p>
+      <div class="fl">휴대폰에 OTP 앱 설치(무료)</div>
+      <div class="apps"><div><i></i>구글 OTP</div><div><i></i>마이크로소프트 인증 앱</div><div><i></i>그 밖의 표준 OTP 앱</div></div>
+      <div class="btn">설치했어요</div>
+    </div></div><p class="cap"><b>① 앱 설치</b></p></div>
+    <span class="sarr">→</span>
+    <div><div class="scr"><div class="sc">
+      <div class="top">남원시 <span>2 / 4</span></div>
+      <h5>앱에서 QR 을 비추세요</h5>
+      <svg class="qr" id="qr" width="132" height="132" viewBox="0 0 33 33" aria-hidden="true"></svg>
+      <p class="lnk">QR 이 안 되면 글자로 넣기</p>
+      <div class="btn">다음</div>
+    </div></div><p class="cap"><b>② QR 비추기</b></p></div>
+    <span class="sarr">→</span>
+    <div><div class="scr"><div class="sc">
+      <div class="top">남원시 <span>3 / 4</span></div>
+      <h5>앱에 뜬 6자리를 넣으세요</h5>
+      <p>앱에 'Land-XI 남원시' 줄이 생겼습니다.</p>
+      <div class="six"><i>4</i><i>1</i><i>7</i><i class="cur"></i><i></i><i></i></div>
+      <p class="note">번호는 30초마다 바뀝니다</p>
+      <div class="btn">확인</div>
+    </div></div><p class="cap"><b>③ 번호 확인</b> — 맞아야 등록</p></div>
+    <span class="sarr">→</span>
+    <div><div class="scr"><div class="sc">
+      <div class="top">남원시 <span>4 / 4</span></div>
+      <h5>복구 코드 10개</h5>
+      <p>휴대폰을 잃어버렸을 때 하나씩 한 번만 쓸 수 있습니다. 안전한 곳에 두세요.</p>
+      <div class="codes"><span>7F3K-92QD</span><span>M4TA-1ZXP</span><span>Q8WN-5HCE</span><span>R2LB-7YUV</span><span>…</span><span>…</span></div>
+      <div class="row2"><div class="btn two">내려받기</div><div class="btn two">인쇄</div></div>
+      <div class="btn">보관했어요</div>
+    </div></div><p class="cap"><b>④ 복구 코드 보관</b> — 다시는 안 보여 줌</p></div>
+  </div>
+</div>
+
+<div class="lane2">
+  <div class="lh gov">로그인 때<span>하루 한 번꼴<br>관리자는 로그인마다</span></div>
+  <div class="scrs">
+    <div><div class="scr"><div class="sc">
+      <div class="top">남원시</div>
+      <h5>로그인</h5>
+      <div class="fl">아이디</div><div class="in fill">nw-farm01</div>
+      <div class="fl">비밀번호</div><div class="in fill">••••••••••</div>
+      <div class="btn">로그인</div>
+      <p class="note">지금과 같음</p>
+    </div></div><p class="cap"><b>① 아이디 · 비밀번호</b></p></div>
+    <span class="sarr">→</span>
+    <div><div class="scr"><div class="sc">
+      <div class="top">남원시</div>
+      <h5>휴대폰 인증 한 번 더</h5>
+      <p>OTP 앱의 'Land-XI 남원시' 6자리를 넣으세요.</p>
+      <div class="six"><i>2</i><i>9</i><i>0</i><i>5</i><i>8</i><i class="cur">3</i></div>
+      <div class="btn">확인</div>
+      <p class="lnk">휴대폰을 잃어버렸어요</p>
+      <p class="lnk">복구 코드로 들어가기</p>
+    </div></div><p class="cap"><b>② 6자리</b> — 틀리면 다시, 5번이면 10분 잠금</p></div>
+    <span class="sarr">→</span>
+    <div style="align-self:center;max-width:430px">
+      <div class="card" style="font-size:13.5px;color:var(--ink-2)">
+        <b style="display:block;font-size:15px;color:var(--ink);margin-bottom:6px">서버가 지키는 것</b>
+        <ul style="margin:0;padding-left:17px"><li>앞뒤 30초까지 맞으면 통과(휴대폰 시계가 조금 어긋나도)</li><li>한 번 쓴 번호는 다시 안 받음</li><li>틀린 횟수는 계정마다 셈 · 성공·실패 모두 기록</li><li>등록 정보는 암호화해 서버에만(화면·기록에 안 남음)</li></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="lane2">
+  <div class="lh adm">휴대폰을<br>잃거나 바꿀 때<span>가까운 관리자가<br>풀어 줌</span></div>
+  <div>
+    <div class="line" style="margin-bottom:10px">
+      <div class="chip"><b>복구 코드가 있다</b><span>'복구 코드로 들어가기'</span></div>
+      <span class="ar">→</span>
+      <div class="chip"><b>코드 하나로 입장</b><span>그 코드는 다시 못 씀</span></div>
+      <span class="ar">→</span>
+      <div class="chip"><b>새 휴대폰으로 다시 등록</b><span>혼자 끝 · 본인 메일로 알림</span></div>
+    </div>
+    <div class="line" style="margin-bottom:12px">
+      <div class="chip"><b>복구 코드도 없다</b><span>'휴대폰을 잃어버렸어요'</span></div>
+      <span class="ar">→</span>
+      <div class="chip"><b>관리자에게 초기화 요청</b><span>받은함에 한 줄</span></div>
+      <span class="ar">→</span>
+      <div class="chip"><b>본인 확인 뒤 '2차 인증 초기화'</b><span>전화 등으로 확인 · 사유 한 줄 · 기록</span></div>
+      <span class="ar">→</span>
+      <div class="chip"><b>본인 메일로 알림</b><span>"2차 인증이 초기화되었습니다"</span></div>
+      <span class="ar">→</span>
+      <div class="chip"><b>다음 로그인 때 다시 등록</b><span>처음 한 번과 같은 네 칸</span></div>
+    </div>
+    <div class="who">
+      <div class="card"><b>기관 부서 사용자</b>→ 그 기관 관리자<br><span class="muted small">LX 관리자도 가능 · 기관 관리자에게 알림</span></div>
+      <div class="card"><b>기관 관리자</b>→ LX 관리자</div>
+      <div class="card"><b>LX 직원 · 영업</b>→ LX 관리자</div>
+      <div class="card"><b>LX 관리자</b>→ 다른 LX 관리자<br><span class="muted small">관리자가 한 명뿐이면 복구 코드가 유일한 길 — 두 명 이상 두기</span></div>
+    </div>
+  </div>
+</div>
+<p class="foot">화면의 아이디·기관 이름·번호는 모양을 보이기 위한 자리 글입니다. 기관 분기 화면의 마크·색은 기관 것으로 바뀝니다.</p>
+</div>
+<script>
+/* 모양만 보이는 가짜 QR(아무것도 담지 않음) */
+(function(){const s=document.getElementById('qr');let x=987654321;const r=()=>((x=(x*1103515245+12345)&0x7fffffff)/0x7fffffff);let h='<rect width="33" height="33" fill="#fff"/>';
+const fin=(a,b)=>{h+=`<rect x="${a}" y="${b}" width="7" height="7" fill="#1C1F25"/><rect x="${a+1}" y="${b+1}" width="5" height="5" fill="#fff"/><rect x="${a+2}" y="${b+2}" width="3" height="3" fill="#1C1F25"/>`};
+for(let i=0;i<33;i++)for(let j=0;j<33;j++){const inF=(i<8&&j<8)||(i<8&&j>24)||(i>24&&j<8);if(!inF&&r()<0.46)h+=`<rect x="${j}" y="${i}" width="1" height="1" fill="#1C1F25"/>`}
+fin(0,0);fin(26,0);fin(0,26);s.innerHTML=h})();
+</script>
+</body></html>

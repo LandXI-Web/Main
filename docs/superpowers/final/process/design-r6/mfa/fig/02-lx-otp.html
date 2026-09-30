@@ -1,0 +1,76 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>LX 직원 — 회사 OTP 를 붙이는 네 길</title>
+<link rel="stylesheet" href="fig.css"></head><body><div class="page">
+<h1>LX 직원 — 회사 OTP 를 Land-XI 에 붙이는 네 길 <span class="tag">문서 · Land-XI</span></h1>
+<p class="sub">회사 OTP 가 무엇인지(앱·실물 토큰·통합 로그인)와 <b>그 인증 서버가 회사 밖에서 닿는지</b>에 따라 길이 갈립니다. 어느 길이든 직원이 하는 일은 같습니다 — 로그인 때 회사 OTP 번호 한 번.</p>
+
+<div class="ways">
+  <div class="way">
+    <div class="hd"><span class="ab">A</span><div><h3>회사 통합 로그인으로 들어가기</h3><span class="en">통합 로그인(SSO) · SAML / OIDC</span></div></div>
+    <div class="flow">
+      <div class="c">Land-XI 로그인에 <b>'LX 통합 로그인'</b> 버튼</div><div class="d">↓</div>
+      <div class="c">회사 로그인 화면 — <b>회사 비밀번호 + 회사 OTP</b></div><div class="d">↓</div>
+      <div class="c">Land-XI 로 돌아와 <b>사번·이름·부서</b>를 받아 입장</div>
+    </div>
+    <h4>받아야 할 것</h4>
+    <ul><li>통합 로그인 연결 정보(주소·서명 인증서)</li><li>Land-XI 돌아올 주소 등록(메인·관리자 입구 두 곳)</li><li>넘겨받을 항목: 사번·이름·부서·메일</li><li>시험 계정 2개 · 정보보안 부서 승인</li></ul>
+    <h4>안 되는 경우</h4>
+    <ul><li>회사 통합 로그인이 사내망 PC 에서만 열림 → 직원 브라우저가 두 곳을 다 열 수 있어야 함</li></ul>
+    <div class="when"><b>가장 편함</b> — 비밀번호도 회사 것 하나. 회사에 통합 로그인이 있을 때</div>
+  </div>
+
+  <div class="way">
+    <div class="hd"><span class="ab">B</span><div><h3>인증 서버에 번호만 물어보기</h3><span class="en">RADIUS 또는 업체 확인 API</span></div></div>
+    <div class="flow">
+      <div class="c">Land-XI 로그인 — 아이디·비밀번호 다음 <b>회사 OTP 6자리</b></div><div class="d">↓</div>
+      <div class="c">Land-XI 서버가 회사 OTP 서버에 <b>"이 사람, 이 번호 맞나요?"</b></div><div class="d">↓</div>
+      <div class="c">맞다 → 입장 · 아니다 → 다시</div>
+    </div>
+    <h4>받아야 할 것</h4>
+    <ul><li>인증 서버 주소·포트 · 방식</li><li>공유 비밀값 또는 확인용 키 · 연동 규격 문서</li><li>Land-XI 아이디 ↔ 회사 아이디 맞추는 규칙</li><li><b>방화벽 허용</b>(Land-XI 서버 → 인증 서버) · 시험 계정 2개</li></ul>
+    <h4>안 되는 경우</h4>
+    <ul><li>인증 서버가 <b>사내망 전용</b> → 지금 Land-XI 서버에서 닿지 않음 → 운영 서버를 LX 전산센터로 옮길 때 연결</li></ul>
+    <div class="when"><b>흔한 방식</b> — 재택근무 VPN 이 회사 OTP 를 쓰는 방식과 같음</div>
+  </div>
+
+  <div class="way">
+    <div class="hd"><span class="ab">C</span><div><h3>회사 OTP 앱에 <span class="nw">Land-XI</span> 추가하기</h3><span class="en">회사 앱이 표준 방식일 때</span></div></div>
+    <div class="flow">
+      <div class="c">처음 한 번 — 회사 OTP 앱으로 <b>Land-XI QR 비추기</b></div><div class="d">↓</div>
+      <div class="c">앱에 'Land-XI' 줄이 생김</div><div class="d">↓</div>
+      <div class="c">로그인 때 그 줄의 6자리</div>
+    </div>
+    <h4>받아야 할 것</h4>
+    <ul><li>회사 앱이 'QR 로 다른 서비스 추가'를 허용하는지</li><li>정보보안 부서가 업무 외 등록을 허용하는지</li></ul>
+    <h4>안 되는 경우</h4>
+    <ul><li>회사 전용 방식 앱이면 불가</li><li>회사 서버와 연결되는 것은 아님(퇴사해도 자동으로 안 막힘)</li></ul>
+    <div class="when"><b>서버 연결 없음</b> — 앱만 회사 것. D 와 사실상 같음</div>
+  </div>
+
+  <div class="way alt">
+    <div class="hd"><span class="ab">D</span><div><h3>연결 전까지 — <span class="nw">Land-XI</span> OTP 앱</h3><span class="en">표준 OTP 앱(구글 OTP 등)</span></div></div>
+    <div class="flow">
+      <div class="c">처음 한 번 — OTP 앱 설치 → <b>QR</b> → 6자리 확인 → <b>복구 코드</b></div><div class="d">↓</div>
+      <div class="c">로그인 때 6자리</div><div class="d">↓</div>
+      <div class="c">회사 OTP 가 연결되면 A·B 로 바꿈</div>
+    </div>
+    <h4>받아야 할 것</h4>
+    <ul><li>없음 — Land-XI 안에서 끝남</li><li>기관 입구와 같은 모양 · 같은 말</li></ul>
+    <h4>안 되는 경우</h4>
+    <ul><li>회사 규정이 '사외 시스템은 회사 OTP 만'이면 A·B 가 나올 때까지 임시로</li></ul>
+    <div class="when"><b>지금 바로 가능</b> — 관리자 계정부터</div>
+  </div>
+</div>
+
+<h2 class="sec">먼저 여쭐 것 <span class="tag both">사용자께</span></h2>
+<div class="qs">
+  <div class="q"><span class="n">1</span><div><b>OTP 이름</b>과 모습 — 휴대폰 앱인가요, 들고 다니는 실물 토큰인가요? 앱 화면 사진 한 장이면 충분합니다</div></div>
+  <div class="q"><span class="n">2</span><div><b>어디에 쓰나요</b> — 재택근무 VPN · 그룹웨어 · 메일 · 업무 포털 중 어디서 번호를 넣나요?</div></div>
+  <div class="q"><span class="n">3</span><div>한 번 로그인하면 여러 사내 시스템이 열리는 <b>통합 로그인</b>이 있나요?</div></div>
+  <div class="q"><span class="n">4</span><div><b>집·출장지에서도</b> 그 OTP 로 로그인되는 시스템이 있나요? (회사 밖에서 닿는지)</div></div>
+  <div class="q"><span class="n">5</span><div><b>관리 부서</b>와 담당자 — 정보보안 또는 정보화 담당 부서 이름</div></div>
+  <div class="q"><span class="n">6</span><div>다른 사내·외부 시스템이 이 OTP 를 <b>붙인 사례</b>가 있나요? 그때 받은 연동 문서가 있나요?</div></div>
+  <div class="q"><span class="n">7</span><div>직원 <b>아이디 체계</b> — 사번인가요, 메일 아이디인가요? Land-XI 아이디를 그것에 맞춰도 되나요?</div></div>
+  <div class="q"><span class="n">+</span><div>정보보안 부서에서 받을 것: 서버 주소·방식 · 연동 문서 · 키 · 시험 계정 2개 · 방화벽 · 승인 절차 · 장애 때 비상 로그인 규칙</div></div>
+</div>
+<p class="foot">LX 가 직원에게 쓰게 하는 OTP 의 이름·방식은 공개 자료로 확인하지 못했습니다. 공공기관에서 흔한 형태는 모바일 OTP 앱 · 조달 등록 2차 인증 제품 · 통합 로그인 · 재택근무 VPN 연계입니다.</p>
+</div></body></html>
