@@ -185,7 +185,7 @@ SECTIONS = [
 DONE = [
     dict(id='2', t='바깥 주소', what='이 PC 밖(휴대폰 포함)에서 로그인·사용', shots=['done-login-pc.png'],
          where=[(APP + '/', GUEST, '로그인 화면이 뜨면 정상')], opts=['완료', '다시']),
-    dict(id='3·7', t='임시 계정 lxadmin / admin1234', what='세 주소 모두 같은 아이디·비밀번호', shots=[],
+    dict(id='3·7', t='임시 계정 lxadmin · 임시 비밀번호', what='세 주소 모두 같은 아이디·비밀번호', shots=[],
          where=[(ADMIN + '/', ADM, '관리자 대시보드'), (GOV + '/', GOVA, '기관 첫 화면')], opts=['완료', '다시']),
     dict(id='4', t='로그인 문구 · 줄바꿈', what='"AI 기반 국토정보 / 통합조사" + 설명 3줄(의미 단위 줄바꿈)', shots=['done-login-pc.png', 'done-login-m.png'],
          where=[(APP + '/landxi/v3/login/', GUEST, '왼쪽 제목·설명')], opts=['완료', '다시']),
