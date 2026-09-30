@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Land-XI 도우미 — 필지 (기본)">
+  <!-- ⓑ 필지: 둥근 네모 땅 조각 + 필지 경계선 하나 + 모서리 표지. 원본 SVG(Fable 5.1 · 2026-10-01) -->
+  <rect x="9" y="11" width="46" height="46" rx="14" fill="#1FBF8F"/>
+  <path d="M9 40c10-4 18 4 26-2s12-8 20-6" fill="none" stroke="#FFFFFF" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/>
+  <path d="M28 57V44" stroke="#FFFFFF" stroke-opacity=".4" stroke-width="2" stroke-linecap="round"/>
+  <rect x="42" y="4" width="12" height="12" rx="4" fill="#0F2A4A"/>
+  <circle cx="48" cy="10" r="2.2" fill="#FFFFFF"/>
+  <circle cx="24" cy="29" r="2.8" fill="#0F2A4A"/>
+  <circle cx="40" cy="29" r="2.8" fill="#0F2A4A"/>
+  <path d="M27 36c2.5 2.6 7.5 2.6 10 0" fill="none" stroke="#0F2A4A" stroke-width="2.4" stroke-linecap="round"/>
+</svg>

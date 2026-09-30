@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Land-XI 도우미 — 필지 (생각 중)">
+  <!-- ⓑ 필지 · 생각 중: 한쪽 눈썹 + 점 셋 -->
+  <rect x="9" y="13" width="46" height="46" rx="14" fill="#1FBF8F"/>
+  <path d="M9 42c10-4 18 4 26-2s12-8 20-6" fill="none" stroke="#FFFFFF" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/>
+  <path d="M28 59V46" stroke="#FFFFFF" stroke-opacity=".4" stroke-width="2" stroke-linecap="round"/>
+  <rect x="42" y="6" width="12" height="12" rx="4" fill="#0F2A4A"/>
+  <circle cx="48" cy="12" r="2.2" fill="#FFFFFF"/>
+  <circle cx="25" cy="31" r="2.8" fill="#0F2A4A"/>
+  <circle cx="40" cy="30" r="2.8" fill="#0F2A4A"/>
+  <path d="M36.5 24.5l6-1.5" fill="none" stroke="#0F2A4A" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M29 39c2-1.4 5.5-1.4 7.5 0" fill="none" stroke="#0F2A4A" stroke-width="2.4" stroke-linecap="round"/>
+  <circle cx="8" cy="10" r="2.2" fill="#0FA9A0"/>
+  <circle cx="14" cy="7" r="2.2" fill="#0FA9A0"/>
+  <circle cx="20" cy="4.5" r="2.2" fill="#0FA9A0"/>
+</svg>

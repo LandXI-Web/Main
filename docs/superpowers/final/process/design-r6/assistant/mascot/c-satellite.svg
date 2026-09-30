@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Land-XI 도우미 — 위성 (기본)">
+  <!-- ⓒ 위성: 민트 몸통 + 짙은 날개판 둘 + 안테나. 원본 SVG(Fable 5.1 · 2026-10-01) -->
+  <rect x="2" y="26" width="13" height="18" rx="3" fill="#0F2A4A"/>
+  <rect x="49" y="26" width="13" height="18" rx="3" fill="#0F2A4A"/>
+  <path d="M8.5 29v12M55.5 29v12" stroke="#FFFFFF" stroke-opacity=".35" stroke-width="1.5"/>
+  <path d="M15 35h4M45 35h4" stroke="#0F2A4A" stroke-width="3" stroke-linecap="round"/>
+  <path d="M32 21v-6" stroke="#0F2A4A" stroke-width="2.4" stroke-linecap="round"/>
+  <circle cx="32" cy="12" r="3.2" fill="#0FA9A0"/>
+  <rect x="18" y="21" width="28" height="28" rx="9" fill="#1FBF8F"/>
+  <circle cx="26.5" cy="32" r="2.8" fill="#0F2A4A"/>
+  <circle cx="37.5" cy="32" r="2.8" fill="#0F2A4A"/>
+  <path d="M28 39.5c2 2.2 6 2.2 8 0" fill="none" stroke="#0F2A4A" stroke-width="2.4" stroke-linecap="round"/>
+</svg>
