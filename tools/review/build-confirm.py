@@ -196,6 +196,17 @@ DONE = [
 ]
 
 
+LEAD = '페블의 레퍼런스 가이드와 전 기능 재검수에서 나온 제안, 그리고 이미 만든 것의 구현 확인입니다. 확인하신 것만 만듭니다.'
+# 2차 이후: LX_CONFIRM_ITEMS=<json> LX_CONFIRM_ROUND=2 → confirm/2/ (JSON 형식은 design-r2/confirm-items.json)
+ROUND = os.environ.get('LX_CONFIRM_ROUND', '1')
+if os.environ.get('LX_CONFIRM_ITEMS'):
+    _d = json.load(open(os.environ['LX_CONFIRM_ITEMS'], encoding='utf-8'))
+    SECTIONS = [(x['section'], x['desc'], [dict(i, where=[tuple(w) for w in i['where']]) for i in x['items']]) for x in _d]
+    DONE = []
+    OUT = os.path.join(OUT, ROUND)
+    LEAD = os.environ.get('LX_CONFIRM_LEAD', LEAD)
+
+
 def esc(s):
     return html.escape(str(s), quote=True)
 
@@ -225,9 +236,9 @@ def build():
                 f'<footer><div class="op">{opts}</div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article>')
 
     secs = ''.join(f'<section><h2>{esc(h)}</h2><p class="sub">{esc(d)}</p>{"".join(card(i) for i in items)}</section>' for h, d, items in SECTIONS)
-    done = '<section><h2>이미 만든 것 — 구현 확인</h2><p class="sub">열어 보시고 완료 또는 다시를 골라 주세요.</p>' + ''.join(card(i, True) for i in DONE) + '</section>'
+    done = '' if not DONE else '<section><h2>이미 만든 것 — 구현 확인</h2><p class="sub">열어 보시고 완료 또는 다시를 골라 주세요.</p>' + ''.join(card(i, True) for i in DONE) + '</section>'
     n = sum(len(i) for _, _, i in SECTIONS) + len(DONE)
-    page = TPL.replace('__BODY__', secs + done).replace('__N__', str(n))
+    page = TPL.replace('__BODY__', secs + done).replace('__N__', str(n)).replace('__LEAD__', LEAD).replace('__R__', ROUND).replace('__FONTS__', '../../fonts-system.css' if ROUND == '1' else '../../../fonts-system.css').replace('__TITLE__', '확인 요청' if ROUND == '1' else f'확인 요청 {ROUND}차')
     open(os.path.join(OUT, 'index.html'), 'w', encoding='utf-8').write(page)
     print('confirm page:', n, 'items,', len(os.listdir(os.path.join(OUT, 'img'))), 'images')
 
@@ -237,9 +248,9 @@ TPL = '''<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Land-XI 확인 요청</title>
+<title>Land-XI __TITLE__</title>
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="../../fonts-system.css">
+<link rel="stylesheet" href="__FONTS__">
 <style>
 :root{--ink:#191F28;--ink2:#4E5968;--mute:#8B95A1;--line:#E5E8EB;--bg:#F2F4F6;--accent:#3182F6;--tint:#E8F3FF;--ok:#0FA9A0;--warn:#F59E0B;--no:#F04452}
 *{box-sizing:border-box}
@@ -254,7 +265,7 @@ section{margin-top:40px}
 h2{font:700 24px/1.3 Paperlogy,Pretendard,sans-serif;margin:0 0 4px;text-wrap:balance}
 .sub{margin:0 0 16px;color:var(--mute);font-size:15px}
 .c{background:#fff;border-radius:20px;padding:20px 24px;margin:0 0 14px;border:2px solid transparent}
-.c[data-s="확인"],.c[data-s="완료"],.c[data-s^="ⓐ"],.c[data-s^="ⓑ"],.c[data-s="제안대로"],.c[data-s^="영상대로"]{border-color:var(--ok)}
+.c[data-s="확인"],.c[data-s="완료"],.c[data-s^="ⓐ"],.c[data-s^="ⓑ"],.c[data-s^="ⓒ"],.c[data-s="제안대로"],.c[data-s^="영상대로"]{border-color:var(--ok)}
 .c[data-s="보류"]{border-color:var(--warn)}.c[data-s="반려"],.c[data-s="다시"]{border-color:var(--no)}
 .c header{display:flex;gap:10px;align-items:baseline;margin-bottom:10px}
 .n{font:600 13px/1 Inter,Pretendard,sans-serif;color:var(--accent);background:var(--tint);padding:5px 8px;border-radius:8px;flex:none}
@@ -281,15 +292,15 @@ footer input{flex:1;min-width:200px;font:15px Pretendard,sans-serif;padding:10px
 </head>
 <body>
 <main class="w">
-<h1>확인 요청</h1>
-<p class="lead">페블의 레퍼런스 가이드와 전 기능 재검수에서 나온 제안, 그리고 이미 만든 것의 구현 확인입니다. 확인하신 것만 만듭니다.</p>
+<h1>__TITLE__</h1>
+<p class="lead">__LEAD__</p>
 <div class="how"><b>보는 법</b> — 항목마다 <b>지금</b>(무엇이 문제인지) · <b>제안</b>(바뀐 뒤) · <b>보는 곳</b>(캡처, 그리고 직접 열어 볼 주소·계정·누를 곳)이 있습니다. 캡처를 누르면 크게 열립니다.<br>
 <b>고르는 법</b> — 버튼을 누르고, 고칠 점이 있으면 한 줄 적어 주세요. 고른 것은 이 브라우저에 저장됩니다. 다 고르시면 아래 <b>결정 복사</b>를 눌러 대화창에 붙여 넣어 주세요. 안 고른 항목은 그대로 두셔도 됩니다.</div>
 __BODY__
 </main>
 <div class="bar"><b id="cnt">0 / __N__ 고름</b><button type="button" id="copy">결정 복사</button><small id="msg"></small></div>
 <script>
-const KEY='lx-confirm-0930';
+const KEY='lx-confirm-0930-r__R__';
 let S={};try{S=JSON.parse(localStorage.getItem(KEY)||'{}')}catch{}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch{}};
 const cards=[...document.querySelectorAll('.c')];
@@ -302,7 +313,7 @@ for(const c of cards){const id=c.dataset.id,st=S[id]||{};const inp=c.querySelect
 count();
 document.getElementById('copy').onclick=async()=>{
   const lines=cards.filter(c=>(S[c.dataset.id]||{}).v||(S[c.dataset.id]||{}).m).map(c=>{const s=S[c.dataset.id];return '- '+c.dataset.id+' '+c.dataset.t+': '+(s.v||'(선택 없음)')+(s.m?' — '+s.m:'')});
-  const t='[확인 요청 결정 · '+new Date().toLocaleString('ko-KR')+']\\n'+(lines.join('\\n')||'(고른 항목 없음)');
+  const t='[__TITLE__ 결정 · '+new Date().toLocaleString('ko-KR')+']\\n'+(lines.join('\\n')||'(고른 항목 없음)');
   try{await navigator.clipboard.writeText(t);document.getElementById('msg').textContent='복사했습니다 — 대화창에 붙여 넣어 주세요'}catch{prompt('아래 글을 복사해 주세요',t)}};
 </script>
 </body>
