@@ -1,0 +1,64 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>서비스 생애 — 남원 누적</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+.steps{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:28px}
+.step{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 14px 12px;position:relative;min-height:150px}
+.step .n{position:absolute;top:-11px;left:14px;background:var(--blue);color:#fff;font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px}
+.step.gov .n{background:var(--green)}
+.step.adm .n{background:var(--violet)}
+.step h3{margin:6px 0 4px;font-size:15px}
+.step p{font-size:12.5px;color:var(--ink-2);margin:0}
+.step .who{margin-top:8px;font-size:12px;color:var(--ink-3)}
+.loop{grid-column:1 / -1;text-align:center;color:var(--ink-3);font-size:13px;margin-top:-6px}
+.years{display:grid;grid-template-columns:120px repeat(5,1fr);gap:8px;align-items:stretch}
+.years .hd{color:var(--ink-3);font-size:12.5px;font-weight:600;padding:6px 4px;border-bottom:1px solid var(--line)}
+.years .yr{font-weight:700;font-size:16px;padding:12px 6px}
+.cell{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;min-height:74px}
+.cell b{display:block;font-size:13.5px;margin-bottom:2px}
+.cell.keep{background:#F3F4F6;color:var(--ink-3)}
+.cell.new{border-color:#BFD9FF;background:var(--blue-tint)}
+.cell.ext{border-style:dashed}
+.cell.none{background:transparent;border-color:transparent}
+.legend{margin-top:14px;font-size:12.5px;color:var(--ink-3)}
+</style></head><body><div class="page">
+<h1>서비스 생애 — 연차 사업이 쌓여 기관 플랫폼이 된다</h1>
+<p class="sub">한 서비스가 태어나서 유지되는 일곱 단계. 아래는 남원시 예 — 해마다 사업이 하나씩 붙고, 앉은 서비스는 계속 갱신된다.</p>
+
+<div class="steps">
+  <div class="step"><span class="n">1</span><h3>연차 사업 수주</h3><p>기관이 원하는 업무 하나(예: 도로안전)</p><div class="who">영업 · 기관</div></div>
+  <div class="step"><span class="n">2</span><h3>프로젝트</h3><p>영상 올리기 → 라벨링 → 학습 → 결과 확인. 프로젝트장이 1차 소유</p><div class="who">LX 직원</div></div>
+  <div class="step"><span class="n">3</span><h3>모델 + 규칙</h3><p>무엇을 세고 나누나, 어떤 기준과 비교하나(기본 · 표준 양식 · 맞춤)</p><div class="who">LX 직원</div></div>
+  <div class="step adm"><span class="n">4</span><h3>서비스 카드 발행</h3><p>관리자 승인(반려 사유 남김). 버전이 붙는다</p><div class="who">LX 관리자</div></div>
+  <div class="step gov"><span class="n">5</span><h3>기관 분기 제공</h3><p>기관 플랫폼 홈에 카드가 놓인다. 부서는 자기 카드만</p><div class="who">기관 관리자 · 부서</div></div>
+  <div class="step adm"><span class="n">6</span><h3>유지 · 갱신</h3><p>새 영상마다 다시 분석, 정확도 지켜보기, '실제와 다릅니다' 받기, 재학습 지시</p><div class="who">LX 관리자 (→ 프로젝트장)</div></div>
+  <div class="step"><span class="n">7</span><h3>다음 해 사업</h3><p>새 업무가 붙거나(누적) 같은 서비스가 범위를 넓힌다(확대)</p><div class="who">영업 · 기관 · LX</div></div>
+  <div class="loop">2 ↔ 6 은 고리 — 재학습이면 새 프로젝트가 아니라 같은 프로젝트의 다음 회차로 돌아간다</div>
+</div>
+
+<h2 style="font-size:18px;margin:0 0 10px">남원시 누적 — 실제 사업 연차</h2>
+<div class="years">
+  <div class="hd"></div><div class="hd">2023</div><div class="hd">2025</div><div class="hd">2026</div><div class="hd">2027 (예정)</div><div class="hd">그 뒤</div>
+  <div class="yr">생활환경</div>
+  <div class="cell new"><b>새로</b>방치쓰레기 · 불법소각장 · 방치폐가</div>
+  <div class="cell ext"><b>이어짐</b>'방치 쓰레기 정보 분석'으로 영농관리 시스템 안에 함께 제공</div>
+  <div class="cell keep">유지 · 새 영상마다 갱신</div>
+  <div class="cell keep">유지</div>
+  <div class="cell keep">유지</div>
+  <div class="yr">영농관리</div>
+  <div class="cell none"></div>
+  <div class="cell new"><b>새로</b>경작·비경작 · 비닐하우스 · 사료작물 · 곤포 — 지금은 외부 운영 시스템(ⓑ)</div>
+  <div class="cell keep">유지 · 영농기·수확기 영상 갱신</div>
+  <div class="cell keep">유지</div>
+  <div class="cell keep">유지</div>
+  <div class="yr">도로안전</div>
+  <div class="cell none"></div><div class="cell none"></div>
+  <div class="cell new"><b>새로</b>포트홀 · 차선 · 시설물(볼라드·표지판·중앙분리대·시선유도봉) — 정사영상 + 블랙박스</div>
+  <div class="cell keep">유지 · 회차별 점검</div>
+  <div class="cell keep">유지</div>
+  <div class="yr">관광인파</div>
+  <div class="cell none"></div><div class="cell none"></div><div class="cell none"></div>
+  <div class="cell new"><b>새로</b>교통혼잡 · 인파혼잡 — 모델 개발 전(ⓒ 로 시작)</div>
+  <div class="cell keep">완성되면 ⓐ 카드로</div>
+</div>
+<p class="legend">파란 칸 = 그 해 새로 만드는 것(프로젝트) · 회색 칸 = 앉은 서비스 유지(관리자) · 점선 = 외부 시스템 안에서 이어진 것. 전남 해양쓰레기도 같은 모양: 2025 여수 → 2027 대상 해안 확대.</p>
+</div></body></html>

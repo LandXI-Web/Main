@@ -1,0 +1,35 @@
+/* 서비스 제공 체계 그림 공용 — 밝은 톤, 글 최소. 화면이 아니라 기획 그림이다. */
+:root{
+  --ink:#191F28; --ink-2:#4E5968; --ink-3:#8B95A1; --line:#E5E8EB; --bg:#F9FAFB; --card:#FFFFFF;
+  --blue:#3182F6; --blue-tint:#E8F3FF; --green:#1F8A5B; --green-tint:#E6F4EC; --amber:#B7791F; --amber-tint:#FFF4DE;
+  --violet:#6B5BD2; --violet-tint:#EFEDFB; --red:#D9434E; --red-tint:#FDECEE;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font-family:Pretendard,"Pretendard Variable","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+  font-size:15px;line-height:1.45;word-break:keep-all;overflow-wrap:break-word;text-wrap:balance}
+.page{width:1440px;min-height:900px;padding:44px 56px;background:var(--bg)}
+h1{font-size:28px;font-weight:700;margin:0 0 6px;letter-spacing:-0.01em}
+.sub{color:var(--ink-2);font-size:15px;margin:0 0 28px}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:6px;background:var(--blue-tint);color:var(--blue);margin-right:6px;vertical-align:middle}
+.tag.gov{background:var(--green-tint);color:var(--green)}
+.tag.both{background:var(--violet-tint);color:var(--violet)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.card h3{margin:0 0 6px;font-size:17px;font-weight:700}
+.card p{margin:0;color:var(--ink-2);font-size:14px}
+.muted{color:var(--ink-3)}
+.small{font-size:13px}
+.row{display:flex;gap:16px;align-items:stretch}
+.col{display:flex;flex-direction:column;gap:12px}
+.pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600}
+.pill.a{background:var(--blue-tint);color:var(--blue)}
+.pill.b{background:var(--green-tint);color:var(--green)}
+.pill.c{background:var(--amber-tint);color:var(--amber)}
+.pill.d{background:var(--violet-tint);color:var(--violet)}
+.pill.x{background:var(--red-tint);color:var(--red)}
+.arrow{color:var(--ink-3);font-size:22px;align-self:center;flex:0 0 auto}
+.foot{margin-top:22px;color:var(--ink-3);font-size:12.5px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13.5px}
+.kv b{color:var(--ink-2);font-weight:600}
+ul.clean{margin:6px 0 0;padding-left:18px;color:var(--ink-2);font-size:13.5px}
+ul.clean li{margin:2px 0}

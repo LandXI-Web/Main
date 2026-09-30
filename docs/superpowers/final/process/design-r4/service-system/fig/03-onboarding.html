@@ -1,0 +1,50 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>새 지자체 온보딩 — 재사용과 새로 하는 것</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px}
+.col2 h2{font-size:18px;margin:0 0 10px}
+.item{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin-bottom:8px}
+.item .ic{flex:0 0 28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
+.reuse .ic{background:var(--blue-tint);color:var(--blue)}
+.fresh .ic{background:var(--amber-tint);color:var(--amber)}
+.item b{display:block;font-size:14.5px}
+.item span{font-size:13px;color:var(--ink-2)}
+.flow{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.f{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 13px;min-height:126px;position:relative}
+.f .n{font-size:12px;font-weight:700;color:var(--blue)}
+.f.auto{border-color:#BFD9FF}
+.f h4{margin:4px 0 4px;font-size:14.5px}
+.f p{margin:0;font-size:12.5px;color:var(--ink-2)}
+.f .k{margin-top:8px;font-size:11.5px;color:var(--ink-3)}
+</style></head><body><div class="page">
+<h1>다른 시군이 "영농관리"를 원하면 — 무엇을 다시 쓰고 무엇만 새로 하나</h1>
+<p class="sub">카드는 복사하지 않는다. 모델·규칙·화면은 그대로, 그 지역의 영상·필지·기관 CI 만 갈아 끼운다.</p>
+
+<div class="grid">
+  <div class="col2"><h2>그대로 다시 쓰는 것 <span class="pill a">Land-XI 안에 이미 있음</span></h2>
+    <div class="item reuse"><div class="ic">모</div><div><b>모델</b><span>경작·비경작 · 비닐하우스 · 사료작물 · 곤포 · 항공 4종 — 새 지역 영상으로 표본 확인 뒤 필요하면 미세조정</span></div></div>
+    <div class="item reuse"><div class="ic">규</div><div><b>결과 규칙 · 비교 기준</b><span>의심 필지 규칙, 기본 비교(공개 지목·용도지역), 표준 양식(위치·상태·날짜 세 칸)</span></div></div>
+    <div class="item reuse"><div class="ic">화</div><div><b>기관 플랫폼 골격</b><span>홈 카드 · 현황 · 결과 · 지도 · 통계 · 보고서 · 서비스 지원 — 지자체끼리 같은 틀</span></div></div>
+    <div class="item reuse"><div class="ic">필</div><div><b>전국 필지 · 행정경계</b><span>어느 시군구든 서버가 이미 가진 공개 자료</span></div></div>
+    <div class="item reuse"><div class="ic">항</div><div><b>25cm 항공 영상(등록된 곳)</b><span>기관 영상이 없어도 첫 결과를 낼 수 있는 바탕</span></div></div>
+  </div>
+  <div class="col2"><h2>그 지역만 새로 하는 것 <span class="pill c">사업마다</span></h2>
+    <div class="item fresh"><div class="ic">영</div><div><b>고해상 영상(드론·항공)</b><span>기관이 찍거나 LX 가 찍어 공유. 원본은 LX 보관, 기관엔 지도 이미지로</span></div></div>
+    <div class="item fresh"><div class="ic">대</div><div><b>부서 대장(선택)</b><span>농지대장·신청 필지 등 — 표준 양식 세 칸으로 올리면 비교, 틀 밖은 맞춤(ⓒ)</span></div></div>
+    <div class="item fresh"><div class="ic">C</div><div><b>기관 CI · 계정</b><span>이름·마크·상징색·문의처 · 기관 관리자 1명 → 부서 사용자 가입 승인</span></div></div>
+    <div class="item fresh"><div class="ic">표</div><div><b>결과 확인 표본</b><span>그 지역 표본 20건 이상을 사람이 확인해야 정확도를 말할 수 있다</span></div></div>
+    <div class="item fresh"><div class="ic">연</div><div><b>기존 시스템 연결(있으면)</b><span>이미 쓰는 시스템이 있으면 ⓑ 로 연결하고 결과만 받는다</span></div></div>
+  </div>
+</div>
+
+<h2 style="font-size:18px;margin:0 0 10px">절차 여섯 단 — 파란 테두리는 화면 안에서 자동으로 끝나는 단계</h2>
+<div class="flow">
+  <div class="f"><div class="n">1 · 영업 · 기관</div><h4>업무 정하기</h4><p>어느 서비스(카드)를 어느 범위에. 기존 시스템 유무 확인</p><div class="k">사람</div></div>
+  <div class="f auto"><div class="n">2 · LX 관리자</div><h4>기관 만들기</h4><p>기관 · CI · 관할 · 한도 · 기관 관리자 계정</p><div class="k">화면 안 · 자동</div></div>
+  <div class="f auto"><div class="n">3 · LX 직원</div><h4>영상 올리기</h4><p>파일에서 위치·촬영일·해상도 자동 판독. 없으면 등록된 항공 영상으로 시작</p><div class="k">화면 안 · 자동</div></div>
+  <div class="f auto"><div class="n">4 · LX 직원</div><h4>지역에 적용</h4><p>카드 그대로, 지역 한 줄 추가 → 전역 분석 → 결과</p><div class="k">화면 안 · 자동(승인 1회)</div></div>
+  <div class="f"><div class="n">5 · LX 직원</div><h4>결과 확인</h4><p>표본 20건 이상 사람이 확인 → 정확도 표시 → 공개 요청</p><div class="k">사람 — 여기가 시간</div></div>
+  <div class="f auto"><div class="n">6 · 관리자 · 기관</div><h4>공개 · 가입</h4><p>관리자 승인 → 기관 홈에 카드 → 부서 사용자 가입 승인</p><div class="k">화면 안 · 자동(승인 1회)</div></div>
+</div>
+<p class="foot">비슷한 신규 사업(예: 전남 해양쓰레기 확대)도 같은 여섯 단 — 다른 것은 3단의 영상(해안 드론·항공)과 5단의 표본(해안 구역)뿐이다. 카드가 아직 없는 업무(관광인파 등)는 1단 뒤에 '프로젝트' 가 먼저 선다.</p>
+</div></body></html>

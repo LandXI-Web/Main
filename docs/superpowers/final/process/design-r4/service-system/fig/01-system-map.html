@@ -1,0 +1,70 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>서비스 제공 체계 — 한 장</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+.lanes{display:grid;grid-template-columns:1fr 64px 1fr;gap:0 0;align-items:stretch}
+.lane{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px}
+.lane h2{margin:0 0 4px;font-size:20px;font-weight:700}
+.lane .who{color:var(--ink-3);font-size:13px;margin-bottom:16px}
+.box{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:#fff}
+.box b{display:block;font-size:14.5px;margin-bottom:2px}
+.box span{color:var(--ink-2);font-size:13px}
+.mid{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:28px;padding:0}
+.mid .lbl{writing-mode:vertical-rl;color:var(--ink-3);font-size:12px;letter-spacing:.08em}
+.ways{margin-top:22px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.way{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;border-top:4px solid var(--blue)}
+.way.b{border-top-color:var(--green)} .way.c{border-top-color:var(--amber)} .way.d{border-top-color:var(--violet)}
+.way h3{margin:0 0 4px;font-size:16px}
+.way .ex{color:var(--ink-3);font-size:12.5px;margin-top:8px}
+.way .own{font-size:12.5px;color:var(--ink-2);margin-top:6px}
+.core{background:var(--blue-tint);border-color:#CFE3FF}
+.gov{background:var(--green-tint);border-color:#CDE9DA}
+.ext{background:#F3F4F6;border-style:dashed}
+</style></head><body><div class="page">
+<h1>기관 AI 서비스, 어떻게 제공하나 — 네 갈래</h1>
+<p class="sub">LX 는 AI 분석까지 만들고, 기관은 결과로 행정 업무를 끝낸다. 모든 갈래는 같은 Land-XI 서버·같은 작업 흐름의 분기다.</p>
+
+<div class="lanes">
+  <div class="lane">
+    <h2>Land-XI <span class="tag">LX 직원 · LX 관리자</span></h2>
+    <div class="who">모델을 만들고, 서비스 카드를 발행하고, 갱신·재학습을 책임진다</div>
+    <div class="box core"><b>연차 사업 → 프로젝트</b><span>예: 남원시 26년 도로안전 — 영상 올리기 → 라벨링 → 학습 → 결과 확인</span></div>
+    <div class="box core"><b>모델</b><span>경작·비경작 · 비닐하우스 · 사료작물 · 곤포 · 항공 4종(건물·주차장·경작지·비닐하우스) · 차량</span></div>
+    <div class="box core"><b>서비스 카드 발행 (관리자 승인)</b><span>모델 + 결과 규칙 + 비교 기준 + 영상 조건 + 화면 부품 = 카드 한 장</span></div>
+    <div class="box core"><b>유지 · 갱신 · 재학습</b><span>정확도 지켜보기 → 재학습 → 새 버전 → 배포본 갱신. 발행 뒤에는 관리자가 관리</span></div>
+    <div class="box ext"><b>외부 시스템 등록 (연결)</b><span>기존 기관 시스템의 주소·결과 자료·계정 연결을 관리자가 등록한다</span></div>
+  </div>
+  <div class="mid">
+    <div class="lbl">서비스 카드 · 결과 · 연결</div>
+    <div class="arrow">→</div>
+    <div class="lbl">실제와 다릅니다 · 새 영상 · 새 사업</div>
+  </div>
+  <div class="lane">
+    <h2>기관 분기 플랫폼 <span class="tag gov">기관 관리자 · 부서 사용자</span></h2>
+    <div class="who">예: 남원 GeoVision · 전남광주 AI 플랫폼 — 기관 CI 로, 부서는 자기 업무 서비스만</div>
+    <div class="box gov"><b>ⓐ 서비스 카드</b><span>Land-XI 가 만들어 뿌린 서비스. 결과 지도·표·통계·보고서, 대장 비교(기본·표준 양식)</span></div>
+    <div class="box gov"><b>ⓑ 연결된 서비스</b><span>기존·외부 시스템 카드 — 누르면 그 시스템으로 가거나(링크), 결과 자료만 받아 우리 지도에 얹는다</span></div>
+    <div class="box gov"><b>ⓒ 맞춤 결과</b><span>연차 사업으로 따로 만든 분석·보고서·특수 대장 비교 — 완성되면 ⓐ 카드로 승격될 수 있다</span></div>
+    <div class="box ext"><b>ⓓ 기관·외부 시스템이 API 로</b><span>기관 자체 시스템(도로 관리 · 농정 시스템 등)이 결과를 가져가거나 분석을 맡긴다 — 화면 없이</span></div>
+  </div>
+</div>
+
+<div class="ways">
+  <div class="way"><span class="pill a">ⓐ 분기 카드</span><h3>Land-XI 가 만들어 뿌린다</h3>
+    <p class="small">모델·결과 규칙이 LX 안에 있고, 다른 지자체에 그대로 심을 수 있는 서비스</p>
+    <div class="own">운영·유지: LX (모델·화면·갱신) · 기관은 쓴다</div>
+    <div class="ex">영농관리 · 해양쓰레기 · 국토 변화 · (도로안전 정사영상 분석)</div></div>
+  <div class="way b"><span class="pill b">ⓑ 연결</span><h3>기존·외부 시스템을 잇는다</h3>
+    <p class="small">이미 돌고 있는 기관 시스템. 링크 · 임베드 · 결과 자료 받기 셋 중 하나로</p>
+    <div class="own">운영·유지: 그 시스템 주체 · LX 는 연결과 모델 공급만</div>
+    <div class="ex">남원 영농관리 시스템(외부 운영) · 도로안전 대시보드(설계 중)</div></div>
+  <div class="way c"><span class="pill c">ⓒ 맞춤</span><h3>그 밖의 AI·분석</h3>
+    <p class="small">모델·데이터·대장이 틀에 안 맞는 일 — 연차 사업으로 맞춤 개발, 일회성 분석 보고서, 파트너 협업</p>
+    <div class="own">운영·유지: 사업 기간은 LX 프로젝트 · 끝나면 결과만 남기거나 ⓐ 로 승격</div>
+    <div class="ex">관광인파(모델 개발 전) · 해양침적쓰레기 · 특수 대장 비교</div></div>
+  <div class="way d"><span class="pill d">ⓓ API</span><h3>외부 시스템이 불러 쓴다</h3>
+    <p class="small">기관·외부 시스템이 Land-XI 결과를 가져가거나, 분석을 맡기고 결과를 받는다. 계정 범위·한도는 그대로</p>
+    <div class="own">운영·유지: LX (표준 안내·키·한도) · 호출 쪽은 기관</div>
+    <div class="ex">기관 도로 관리 시스템이 포트홀 결과 받기 · 광역 통계 시스템</div></div>
+</div>
+<p class="foot">판별 순서: 모델이 LX 안에 있고 다른 지역에도 심을 수 있나 → ⓐ · 이미 돌고 있는 시스템이 있나 → ⓑ · 둘 다 아니면 사업으로 → ⓒ · 화면 대신 자료·분석만 필요하면 → ⓓ (ⓐⓑⓒ 어디에나 겹칠 수 있음)</p>
+</div></body></html>
