@@ -171,7 +171,7 @@ async def list_deploys(request: Request, tenant_id: str | None = None, card_id: 
     """?with=health → 운영 건강 · ?public=1(또는 게스트) → 실결과 있는 운영·시범 배포본만(요약 필드). 시험 배포본은 기본 제외."""
     p = principal(request)
     want = set((request.query_params.get("with") or "").split(",")) - {""}
-    if public or p.guest:
+    if (public and p.realm != "tenant") or p.guest:      # 기관 계정은 공개 목록(전국 배포본)으로 돌아가지 못한다(원칙 39) — 자기 기관 것만
         async with db(realm="lx") as conn:
             rows = await conn.fetch(f"SELECT {COLS} FROM deploys WHERE ($1::text IS NULL OR card_id=$1) ORDER BY year NULLS LAST, id", card_id)
         items = [_public_view(r) for r in rows if public_deploy(r)]

@@ -337,7 +337,7 @@ async def survey_stats(args: dict, ctx) -> Out:
         bnote = "집계 중" if busy else note
         out = Out(source=src, note=bnote)
         out.env("suspects", f"{scope} 의심 필지(전체 규칙)", L.env(d["suspects"], "count", src, note=bnote, as_of=d.get("as_of") or ctx.now()))
-        out.env("field_check", f"{scope} 현장 확인 필요(우선순위 A · 미조치·배정 필지)",
+        out.env("field_check", f"{scope} 현장 확인 필요(우선순위 A · 판정 전 필지)",
                 L.env(d["field_check"], "필지", src, note="집계 중" if busy else "현장 확인 전", as_of=ctx.now()))
         out.env("parcels", f"{scope} 연속지적 필지 수", L.env(d["parcels"], "필지", "PostGIS survey_parcels", basis="recorded", note="연속지적", as_of=ctx.now()))
         if not busy:
@@ -371,7 +371,7 @@ async def survey_stats(args: dict, ctx) -> Out:
             else:
                 out.env("suspects", f"{scope} 의심 필지(전체 규칙)", a_emd["total"])
                 if a_emd.get("field_check"):
-                    out.env("field_check", f"{scope} 현장 확인 필요(우선순위 A · 미조치·배정 필지)", a_emd["field_check"])
+                    out.env("field_check", f"{scope} 현장 확인 필요(우선순위 A · 판정 전 필지)", a_emd["field_check"])
                 items = a_emd.get("items") or []
                 out.env("parcels", f"{scope} 연속지적 필지 수", a_emd["parcels"])
                 for x in (a_rule or {}).get("items") or []:
@@ -445,9 +445,9 @@ async def survey_state(args: dict, ctx) -> Out:
     """쓰기(확인 카드 뒤에만 runner 가 부른다) — POST /survey/findings/{id}/state."""
     fid = str(args.get("finding_id") or "")
     state = args.get("state")
-    if state not in ("assigned", "dismissed", "inspected", "closed"):
-        raise ToolError("bad_request", "state 는 assigned|dismissed|inspected|closed")
-    res = await ctx.http.post(f"/survey/findings/{fid}/state", json={k: args.get(k) for k in ("state", "reason", "assignee", "planned_for")} | {"client_id": ctx.run_id})
+    if state not in ("dismissed", "inspected", "closed"):         # 현장 확인 배정 없음(원칙 40)
+        raise ToolError("bad_request", "state 는 dismissed|inspected|closed")
+    res = await ctx.http.post(f"/survey/findings/{fid}/state", json={k: args.get(k) for k in ("state", "reason", "verdict")} | {"client_id": ctx.run_id})
     if res.status_code == 404:
         raise ToolError("registry_unavailable", "실태조사 상태 쓰기 API 없음 — 저장 안 됨", 404)
     if res.status_code >= 400:

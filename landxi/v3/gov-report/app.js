@@ -1,8 +1,10 @@
-/* gov-report — 의심 필지 · 할 일 · 현장 배정 · 판정 · 보고서(기관 · 현장 모바일 앱 없음).
-   [의심 필지] 관할 시군구(GET /survey/regions · ?region=)의 의심 필지(GET /survey/findings?sgg=&state=open) → 현장 확인 배정(상태 assigned).
-   정문 로그인 → 관문(K2) → 셸(K1) → [할 일] 판정 대기 큰 숫자(K6) · 표(K12) · 행 → 미니 지도(K3) + 판정 3택
+/* gov-report — 의심 필지 · 할 일 · 판정 · 보고서(기관 · 현장 모바일 앱 없음).
+   [의심 필지] 관할 시군구(GET /survey/regions · ?region=)의 의심 필지(GET /survey/findings?sgg=&state=open) → 행 → 판정 3택(위반 · 대장과 같음 · 불명확).
+   현장 확인 배정 · 담당 · 시정명령 · 이행강제금 · 공문은 없다(원칙 40 — Land-XI 의 문서 기능은 보고서까지).
+   광역 기관(관할 시군구 여럿) = '전체'(관할 합계 · 시군구별 표)로 도착하고 시군구는 사용자가 고른다 — 화면이 대신 고르지 않는다(최근 고른 곳은 기억만).
+   [할 일] 판정 대기(보류 · 옛 기록) 큰 숫자(K6) · 표(K12) · 행 → 미니 지도(K3) + 판정 3택
    → 상태 쓰기(POST /survey/findings/{fid}/state) → 표 갱신 · 큰 숫자 감소 · SSE /events/tenant 로 다른 창의 변경도 반영.
-   [보고서] 읍면동 · 규칙 → POST /agent/report/draft → SSE 토큰 스트리밍(개요 · 소견 · 조치 제안) → .docx 내려받기.
+   [보고서] 시군구 · 읍면동 · 규칙 → POST /agent/report/draft → SSE 토큰 스트리밍(개요 · 소견 · 조치 제안) → .docx 내려받기.
    관할 = 로그인 기관(세션). 지역 고정값 없음. */
 import { shell, gate, createStage, drawer, bignum, numHtml, table, toast, empty, devDrawer, devlog, FRONT } from '../kit/index.js';
 import { api, esc, h, hasRoute, bboxOf, isDev, session } from '../kit/util.js';
@@ -13,8 +15,10 @@ const $ = (s, r = document) => r.querySelector(s);
 const MOBILE = () => matchMedia('(max-width: 760px)').matches;
 const V = { violation: '위반', match_fp: '대장과 같음', unclear: '불명확' };
 const VCODE = Object.fromEntries(Object.entries(V).map(([k, v]) => [v, k]));
-const ST = { open: '미배정', assigned: '배정', inspected: '확인됨', hold: '보류', closed: '종결' };
-const KINDS = ['안내', '시정명령', '이행강제금', '원상복구', '없음'];
+/* 상태 — 배정이 없으므로 판정 전(open · 옛 기록 assigned) → 확인됨 · 보류 → 종결 */
+const ST = { open: '판정 전', assigned: '판정 전', inspected: '확인됨', hold: '보류', closed: '종결' };
+/* 조치 기록 = 기관이 한 일의 기록(보고서 부속 표) — 행정 처분(시정명령 · 이행강제금 · 원상복구) 종류는 없다(원칙 40) */
+const KINDS = ['안내', '재방문', '이관', '없음'];
 const JIMOK = { 전: '전(밭)', 답: '답(논)', 과: '과수원', 목: '목장용지', 임: '임야', 대: '대지', 잡: '잡종지' };
 /* 각주 · 문장에서 개발 정보(경로 · 요청 · 규칙 코드)를 걷어 낸다 — 사용자 말만 */
 const plain = (s) => String(s || '').split(/\s+·\s+/).filter((x) => !/\/|\b(GET|POST)\b|\bapi\b/i.test(x)).join(' · ');
@@ -59,13 +63,13 @@ app.main.append($('#tpl').content.cloneNode(true));
 document.title = `${org} · 할 일 · Land-XI`;
 devDrawer({ who });
 
-/* S-2(판정 · 조치 · 담당 확장)가 서버에 들어왔는가.
-   들어오기 전: 판정은 상태 전이 + 사유(서버 기록)로 쓰고, 담당 · 조치는 서버에 둘 곳이 없으므로 **잠근다**
+/* S-2(판정 · 조치 확장)가 서버에 들어왔는가.
+   들어오기 전: 판정은 상태 전이 + 사유(서버 기록)로 쓰고, 조치는 서버에 둘 곳이 없으므로 **잠근다**
    (이 브라우저에만 남는 저장은 다른 사람 · 다른 기기에 안 보이므로 저장 버튼을 두지 않는다). */
 S.s2 = await hasRoute('/survey/actions');
 devlog('S-2', S.s2 ? 'server' : 'locked (no shared store)');
-/* 조치 종류 5 ↔ 서버 kind 5 — 서버 kind 가 더 거칠어 종류 · 근거 조문은 note 에 사용자 말 그대로 남긴다 */
-const KIND_CODE = { 안내: 'notice', 시정명령: 'correction', 이행강제금: 'referral', 원상복구: 'revisit', 없음: 'other' };
+/* 조치 종류 4 ↔ 서버 kind 4 — 종류 · 근거 조문은 note 에도 사용자 말 그대로 남긴다 */
+const KIND_CODE = { 안내: 'notice', 재방문: 'revisit', 이관: 'referral', 없음: 'none' };
 const actOf = (a) => {
   if (!a) return null;
   const parts = String(a.note || '').split(' · ');
@@ -89,7 +93,7 @@ const stateOf = (f, v) => (f.state === 'closed' || f.state === 'dismissed' ? 'cl
 
 function rowOf(f) {
   const v = verdictOf(f), st = stateOf(f, v);
-  return { id: f.id, f, pnu: f.pnu, where: shortAddr(f.addr) || f.pnu, emd: f.emd, rule: f.rule_nm || f.rule, assignee: f.assignee || '', st, v, at: f.updated_at || '' };
+  return { id: f.id, f, pnu: f.pnu, where: shortAddr(f.addr) || f.pnu, emd: f.emd, rule: f.rule_nm || f.rule, st, v, at: f.updated_at || '' };
 }
 
 async function load({ keep = true, quiet = false } = {}) {
@@ -117,13 +121,13 @@ async function load({ keep = true, quiet = false } = {}) {
   S.loaded = true;
   const p = (pend && pend.items) || [], d = (done && done.items) || [];
   const room = Math.max(0, 20 - p.length);
-  /* 판정 대기 = 배정 · 확인됨 상태의 행 수 — 기관이 남긴 상태 기록을 센 값이므로 추정치(~)가 아니라 확인됨(✓) */
-  S.pend = pend && pend.total ? { ...pend.total, value: pend.counts ? (pend.counts.assigned || 0) + (pend.counts.inspected || 0) : pend.total.value, basis: 'recorded', note: '기관이 남긴 배정 · 확인 기록' } : null;
+  /* 판정 대기 = 확인됨(보류 포함) · 옛 기록 상태의 행 수 — 기관이 남긴 상태 기록을 센 값이므로 추정치(~)가 아니라 확인됨(✓) */
+  S.pend = pend && pend.total ? { ...pend.total, value: pend.counts ? (pend.counts.assigned || 0) + (pend.counts.inspected || 0) : pend.total.value, basis: 'recorded', note: '기관이 남긴 확인 기록' } : null;
   const prev = new Set(S.rows.map((r) => r.id + r.st));
   S.rows = [...p, ...d.slice(0, Math.max(room, 5))].map(rowOf);
   S.fresh = new Date();   // 마지막 갱신 = 이 화면이 방금 읽은 시각(첫 화면과 같은 뜻 · 마지막 조치 시각이 아님)
   render(prev);
-  /* 선택 필지는 늘 새 행 객체로 바꿔 끼운다 — 옛 행(판정 전 상태)을 들고 있으면 종결 필지가 '배정'으로 보이고 판정이 409 로 막힌다 */
+  /* 선택 필지는 늘 새 행 객체로 바꿔 끼운다 — 옛 행(판정 전 상태)을 들고 있으면 종결 필지가 '판정 전'으로 보이고 판정이 409 로 막힌다 */
   if (keep && S.sel) {
     const id = S.sel.id;
     let r = S.rows.find((x) => x.id === id);
@@ -145,7 +149,6 @@ const tbl = table($('#table'), {
   cols: [
     { key: 'where', label: '지번', fmt: (v, r) => `<span class="gr-j">${esc(v)}</span>` },
     { key: 'rule', label: '규칙' },
-    { key: 'assignee', label: '담당', fmt: (v) => esc(v || '—') },
     { key: 'st', label: '상태', fmt: (v) => `<span class="t-chip gr-st" data-lv="${v}">${ST[v]}</span>` },
     { key: 'v', label: '판정', fmt: (v) => `<span class="gr-v" data-v="${v || 'none'}">${v ? V[v] : '—'}</span>` },
   ],
@@ -157,7 +160,7 @@ function render(prev = new Set()) {
   big.set(S.pend);
   const has = S.rows.length > 0;
   $('#table').hidden = !has; $('#empty').hidden = has;
-  if (!has) empty($('#empty'), { kind: 'first', text: '배정한 필지가 아직 없습니다', action: S.regions.length ? { label: '의심 필지 보기', onClick: () => tab('sus') } : { label: '내 대장 × AI', href: '/landxi/v3/gov-fusion/' } });
+  if (!has) empty($('#empty'), { kind: 'first', text: '판정 대기 필지가 없습니다', action: S.regions.length ? { label: '의심 필지 보기', onClick: () => tab('sus') } : { label: '내 대장 × AI', href: '/landxi/v3/gov-fusion/' } });
   tbl.set(S.rows);
   const trs = $('#table').querySelectorAll('tbody tr');
   (tbl.el._vis || []).forEach((r, i) => {
@@ -198,8 +201,8 @@ async function showDetail(r, { fly }) {
   const st = $('#det-st'); st.textContent = ST[r.st]; st.dataset.lv = r.st;
   const f = r.f;
   $('#det-m').innerHTML = [f.jimok && `<span>지목 ${esc(JIMOK[f.jimok] || f.jimok)}</span>`, f.evid_m2 && `<span>AI 분석 ${numHtml(f.evid_m2, { digits: 0 })}</span>`].filter(Boolean).join('<i>·</i>');
-  const allow = f.state === 'assigned' ? ['violation', 'match_fp', 'unclear'] : f.state === 'inspected' ? ['violation', 'match_fp'] : [];
-  $('#b-assign').hidden = f.state !== 'open';
+  /* 판정 전(open · 옛 기록 assigned) = 3택 · 보류(inspected) = 위반 · 대장과 같음 · 종결 = 잠김 */
+  const allow = ['open', 'assigned'].includes(f.state) ? ['violation', 'match_fp', 'unclear'] : f.state === 'inspected' ? ['violation', 'match_fp'] : [];
   for (const b of $('#verdict').querySelectorAll('button')) {
     b.setAttribute('aria-checked', r.v === b.dataset.v ? 'true' : 'false');
     b.disabled = !allow.includes(b.dataset.v);
@@ -235,28 +238,14 @@ async function showDetail(r, { fly }) {
   } catch (e) { devlog('parcel', e.message); if (isAuth(e)) return toFront(); if (f.lnglat) S.stage.go([f.lnglat[0] - 0.003, f.lnglat[1] - 0.003, f.lnglat[0] + 0.003, f.lnglat[1] + 0.003], { ms: 1600, maxZoom: 17 }); }
 }
 
-/* 담당 · 조치 — 서버에 남아 다른 사람 · 기기에 보이는 쓰기만 보인다. 죽은(잠긴) 버튼은 두지 않는다.
-   담당 바꾸기 = 서버가 같은 상태 안의 담당 변경을 허용할 때(S.reassign — 착지 때 한 번 확인)만 보인다.
+/* 조치 — 서버에 남아 다른 사람 · 기기에 보이는 쓰기만 보인다. 죽은(잠긴) 버튼은 두지 않는다.
    필지마다 상세(allowed_next)를 기다리지 않으므로 상세가 오기 전후로 버튼 · 문장이 바뀌지 않는다. */
 function paintLock(r) {
   const f = r.f;
-  $('#b-assignee').hidden = !(S.reassign && ['assigned', 'inspected'].includes(f.state));
-  $('#b-action').hidden = !S.s2 || f.state === 'open';
+  $('#b-action').hidden = !S.s2 || ['open', 'assigned'].includes(f.state);   // 판정한 뒤에 조치를 적는다
   const line = $('#lock-line');
   line.textContent = S.s2 ? '' : '조치 기록은 아직 기관 전체에 공유되지 않습니다';
   line.hidden = !line.textContent;
-}
-/* 서버가 같은 상태 안에서 담당만 바꾸기를 허용하는가 — 판정 대기 필지 하나의 allowed_next 에 지금 상태가 들어 있으면 허용 */
-async function probeReassign() {
-  S.reassign = false;
-  const r = S.s2 && S.rows.find((x) => ['assigned', 'inspected'].includes(x.f.state));
-  if (!r) return;
-  try {
-    const d = await api(`/survey/findings/${encodeURIComponent(r.id)}`);
-    r.next = d.allowed_next || [];
-    S.reassign = r.next.includes(d.state || r.f.state);
-  } catch (e) { devlog('reassign', e.message); }
-  devlog('reassign', S.reassign ? 'server' : 'hidden (same-state assignee not allowed)');
 }
 function paintAct(r) {
   const a = r.act, line = $('#act-line');
@@ -264,8 +253,8 @@ function paintAct(r) {
   if (a) line.innerHTML = `<span>조치</span>${esc([a.kind, a.law, a.due && a.due.replace(/-/g, '.')].filter(Boolean).join(' · '))}`;
 }
 
-/* 판정 저장 — 서버 전이표(assigned → inspected → closed · assigned → dismissed)를 따라 쓰고, 판정은 사유로 남긴다.
-   S-2 가 들어오면 같은 요청의 verdict · verdict_code 가 그대로 읽힌다(closed(match_fp) → 오탐 기록 자동). */
+/* 판정 저장 — 서버 전이표(판정 전 → inspected → closed · 판정 전 → dismissed)를 따라 쓰고, 판정은 사유로 남긴다.
+   배정 단계는 없다 — 판정 전(open · 옛 기록 assigned) 필지를 바로 판정한다. closed(match_fp) → 오탐 기록 자동. */
 async function decide(code) {
   const r = S.sel; if (!r) return;
   const f = r.f, word = V[code];
@@ -274,11 +263,12 @@ async function decide(code) {
   });
   const box = $('#verdict'); box.dataset.busy = '1';
   try {
+    const fresh = ['open', 'assigned'].includes(f.state);
     if (S.s2) {
       /* S-2: 위반 · 대장과 같음 = 확인 → 종결(판정 실음 · closed(match_fp) 는 서버가 오탐 기록을 자동으로 남긴다) · 불명확 = 확인 + 보류 */
-      if (f.state === 'assigned') await post('inspected');
+      if (fresh) await post('inspected');
       if (code !== 'unclear') await post('closed');
-    } else if (f.state === 'assigned') {
+    } else if (fresh) {
       if (code === 'match_fp') await post('dismissed');
       else { await post('inspected'); if (code === 'violation') await post('closed'); }
     } else if (f.state === 'inspected') await post('closed');
@@ -299,30 +289,6 @@ async function decide(code) {
   } finally { delete box.dataset.busy; }
 }
 $('#verdict').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && !b.disabled && b.getAttribute('aria-checked') !== 'true') decide(b.dataset.v); });
-
-/* 담당 바꾸기 */
-$('#b-assignee').addEventListener('click', () => {
-  const r = S.sel; if (!r || !S.reassign) return;
-  const known = [...new Set([who.name, ...S.rows.map((x) => x.assignee)].filter(Boolean))];
-  const input = h('input.t-input', { value: r.assignee || '', autocomplete: 'off', 'aria-label': '담당' });
-  const chips = h('div.gr-who', {}, ...known.map((n) => h('button', { type: 'button', text: n, onclick: () => { input.value = n; input.focus(); } })));
-  const save = h('button.t-btn', { type: 'submit', text: '저장' });
-  const form = h('form.gr-form2', {}, h('label.gr-field', {}, h('span.t-label', { text: '담당' }), input), chips, save);
-  const d = drawer({ title: '담당 바꾸기', body: form });
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const name = input.value.trim(); if (!name) return input.focus();
-    save.disabled = true;
-    try {
-      await api(`/survey/findings/${encodeURIComponent(r.id)}/state`, { method: 'POST', body: { client_id: 'gr-' + crypto.randomUUID(), state: r.f.state, assignee: name } });
-      d.close(); toast('저장했습니다'); await load();
-    } catch (err) {
-      devlog('assignee', `${err.code} ${err.message}`); if (isAuth(err)) return toFront(); d.close();
-      toast(err.status === 409 || err.code === 'finding_state_invalid' ? '담당을 바꾸지 못했습니다' : '저장하지 못했습니다');
-    }
-  });
-  setTimeout(() => input.focus(), 380);
-});
 
 /* 조치 기록 */
 $('#b-action').addEventListener('click', () => {
@@ -388,6 +354,20 @@ for (const b of document.querySelectorAll('.gr-tabs button')) b.addEventListener
 let rpReady = null;
 function initReport() {
   if (rpReady) { focusEmd(); return rpReady; }
+  const lock = (on) => { for (const id of ['#rp-emd', '#rp-rule', '#rp-go', '#rp-docx']) $(id).disabled = on; };
+  if (wide() && !S.region) {           // 광역 '전체' — 읍면동 보고서는 시군구를 고른 뒤에(시군구를 대신 고르지 않는다)
+    S.emd = [];
+    $('#rp-emd').innerHTML = '';
+    lock(true);
+    $('#rp-form').hidden = false; $('#rp-form').dataset.all = '1';      // 시군구 고르기 한 줄만
+    for (const x of document.querySelectorAll('.gr-sec')) x.hidden = true;
+    $('#doc-act').hidden = true; $('#notes').hidden = true;
+    docEmpty('시군구를 고르면 읍면동 보고서 초안을 씁니다');
+    rpReady = Promise.resolve();
+    return rpReady;
+  }
+  lock(false);
+  delete $('#rp-form').dataset.all;
   rpReady = (async () => {
     let st, ru;
     try { [st, ru] = await Promise.all([api('/survey/stats?by=emd' + (S.region ? `&sgg=${S.region}` : '')), api('/survey/rules')]); }
@@ -558,7 +538,7 @@ $('#rp-form').addEventListener('submit', async (e) => {
 
 /* .docx = 화면에서 본 세 문단 그대로(같은 제목 아래) + 부속 표(집계 · 상위 10건 · 조치 기록) + 본문이 인용한 각주.
    파일 안 글은 모두 사용자 말 — 기관 이름은 로그인 기관, 규칙은 규칙 이름, 개발 정보(표 이름 · 요청 · 코드)는 넣지 않는다. */
-const W_ST = { open: '미배정', assigned: '배정', inspected: '확인됨', closed: '종결', dismissed: '종결' };
+const W_ST = { open: '판정 전', assigned: '판정 전', inspected: '확인됨', closed: '종결', dismissed: '종결' };
 const n0 = (v) => (v === null || v === undefined || v === '' ? '—' : Number(v).toLocaleString('ko-KR'));
 const ymd = (d) => `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 function armDocx({ emd_cd, rule }) {
@@ -582,8 +562,8 @@ function armDocx({ emd_cd, rule }) {
       const sum = g.every((v) => v !== null) ? g.reduce((x, y) => x + y, 0) : null;
       const tables = [
         { h: '부속 표 1 · 등급 × 상태', note: '등급 = AI 분석 점수 순 · 상태 = 기관이 남긴 기록',
-          head: ['규칙', 'A', 'B', 'C', '계', '미배정', '배정', '확인됨', '종결'],
-          rows: [[ruleNm, ...g.map(n0), n0(sum), n0(c.open), n0(c.assigned), n0(c.inspected), n0((c.closed || 0) + (c.dismissed || 0))]] },
+          head: ['규칙', 'A', 'B', 'C', '계', '판정 전', '확인됨', '종결'],
+          rows: [[ruleNm, ...g.map(n0), n0(sum), n0((c.open || 0) + (c.assigned || 0)), n0(c.inspected), n0((c.closed || 0) + (c.dismissed || 0))]] },
         { h: '부속 표 2 · 의심 상위 10건(점수 순)', note: 'AI 분석 면적 · 비율 = 추정치(현장 확인 전)',
           head: ['순위', '소재지', '지목', '등급', 'AI 분석 면적(㎡)', '필지 대비', '상태', '판정'],
           rows: ((top && top.items) || []).map((f, i) => {
@@ -597,9 +577,9 @@ function armDocx({ emd_cd, rule }) {
       const seen = new Set();   // 필지마다 가장 최근 조치 한 줄
       const acRows = ((acts && acts.items) || []).filter((x) => x.state !== 'cancelled' && where.has(x.finding_id) && !seen.has(x.finding_id) && seen.add(x.finding_id)).map((x) => {
         const f = where.get(x.finding_id), ac = actOf(x) || {};
-        return [shortAddr(f.addr) || '—', ac.kind || '—', ac.law || '—', ac.due ? ac.due.replace(/-/g, '.') : '—', f.assignee || '—'];
+        return [shortAddr(f.addr) || '—', ac.kind || '—', ac.law || '—', ac.due ? ac.due.replace(/-/g, '.') : '—'];
       });
-      tables.push({ h: '부속 표 3 · 조치 기록', note: '할 일 표에서 기관이 기록한 조치', head: ['소재지', '종류', '근거 조문', '기한', '담당'], rows: acRows });
+      tables.push({ h: '부속 표 3 · 조치 기록', note: '할 일 표에서 기관이 기록한 조치', head: ['소재지', '종류', '근거 조문', '기한'], rows: acRows });
       const notesTxt = [...document.querySelectorAll('#notes li')].map((li) => li.innerText.replace(/\s+/g, ' ').replace(/^\[(\d+)\]\s*/, '[$1] ').trim());
       const now = new Date();
       const title = `${emd} 실태조사 보고서(초안)`;
@@ -637,21 +617,44 @@ $('#rp-docx').addEventListener('click', async () => {
   finally { b.disabled = false; }
 });
 
-/* ═════════ 의심 필지(관할 시군구) ═════════ */
+/* ═════════ 의심 필지(관할 시군구) ═════════
+   광역 기관(관할 시군구 여럿) = '전체'(관할 합계 · 시군구별 표)로 도착 — 시군구는 사용자가 고른다(주소 ?region= 로만 좁혀 연다).
+   화면이 시군구를 대신 고르지 않는다. 최근 고른 곳은 기억만 해서 고르기 목록 머리에 보여 준다(자동 선택 0). */
 const regionOf = (cd) => S.regions.find((r) => r.sgg_cd === cd) || null;
+const wide = () => S.regions.length > 1;
+const RECENT_K = `gr:recent:${who.me.tenant_id}`;
+function recent() {
+  let a = [];
+  try { a = JSON.parse(localStorage.getItem(RECENT_K) || '[]'); } catch { /* 저장소 없음 */ }
+  return (Array.isArray(a) ? a : []).filter((c) => regionOf(c));
+}
+function remember(cd) {
+  try { localStorage.setItem(RECENT_K, JSON.stringify([cd, ...recent().filter((x) => x !== cd)].slice(0, 3))); } catch { /* 저장 불가 — 기억만 못 함 */ }
+}
+const unionBox = (rs) => rs.filter((r) => r.bbox && r.bbox.length === 4).reduce((a, r) => (a ? [Math.min(a[0], r.bbox[0]), Math.min(a[1], r.bbox[1]), Math.max(a[2], r.bbox[2]), Math.max(a[3], r.bbox[3])] : [...r.bbox]), null);
 async function loadRegions() {
   try { const j = await api('/survey/regions'); S.regions = (j.items || []).filter((r) => r.state === 'done' || r.state === 'no_ai'); }
   catch (e) { devlog('regions', e.message); if (isAuth(e)) return toFront(); S.regions = []; }
   const want = new URLSearchParams(location.search).get('region');
-  const pick = S.regions.find((r) => r.sgg_cd === want) || S.regions.find((r) => (r.findings?.value || 0) > 0) || S.regions[0];
-  S.region = pick ? pick.sgg_cd : null;
+  /* 기초 기관(관할 하나) = 그 시군구 · 광역 = 주소로 고른 시군구가 있을 때만 그곳, 없으면 전체(null) */
+  S.region = regionOf(want)?.sgg_cd || (S.regions.length === 1 ? S.regions[0].sgg_cd : null);
+  paintRegionPick();
+}
+/* 시군구 고르기 = 전체 · 최근 고른 곳 · 시군구(가나다) — 광역만 보인다 */
+function paintRegionPick() {
+  const rec = recent();
+  const opt = (r) => `<option value="${esc(r.sgg_cd)}">${esc(r.name || r.sgg_cd)}</option>`;
+  const byName = [...S.regions].sort((a, b) => String(a.name).localeCompare(String(b.name), 'ko'));
+  const html = '<option value="">전체</option>'
+    + (rec.length ? `<optgroup label="최근 고른 곳">${rec.map((c) => opt(regionOf(c))).join('')}</optgroup>` : '')
+    + `<optgroup label="시군구">${byName.map(opt).join('')}</optgroup>`;
   for (const [fid, sid] of [['#sus-rgn-f', '#sus-rgn'], ['#rp-sgg-f', '#rp-sgg']]) {
-    $(fid).hidden = S.regions.length < 2;
-    $(sid).innerHTML = S.regions.map((r) => `<option value="${esc(r.sgg_cd)}">${esc(r.name || r.sgg_cd)}</option>`).join('');
-    if (S.region) $(sid).value = S.region;
+    $(fid).hidden = !wide();
+    $(sid).innerHTML = html;
+    $(sid).value = S.region || '';
   }
 }
-/* 머리 = 고른 시군구 이름(시도·기관 이름이 아님) · 창 제목도 같게 */
+/* 머리 = 고른 시군구 이름 · 광역 전체면 기관 이름 · 창 제목도 같게 */
 function paintHead() {
   const rg = regionOf(S.region);
   const nm = (rg && rg.name) || org;
@@ -660,8 +663,10 @@ function paintHead() {
   document.title = `${nm} · 할 일 · Land-XI`;
 }
 function setRegion(cd) {
-  S.region = cd; $('#sus-rgn').value = cd; $('#rp-sgg').value = cd;
-  rpReady = null; S.susLoaded = null;
+  S.region = cd || null;
+  if (S.region) remember(S.region);
+  paintRegionPick();
+  rpReady = null; S.susLoaded = undefined;
   paintHead();
   S.sel = null; $('#det').hidden = true;             // 오른쪽 상세도 새 시군구 기준(옛 시군구 필지를 남기지 않는다)
   load({ keep: false });                              // 할 일 표 = 고른 시군구 필지만
@@ -671,7 +676,7 @@ function setRegion(cd) {
 $('#sus-rgn').addEventListener('change', (e) => setRegion(e.target.value));
 $('#rp-sgg').addEventListener('change', (e) => setRegion(e.target.value));
 
-/* 큰 숫자 = 의심 필지(숫자 한 출처 GET /survey/stats total = survey_sgg · 첫 화면 · XI맵 · 에이전트와 같은 값). 아래 표는 확인 전(미배정) 목록 */
+/* 큰 숫자 = 의심 필지(숫자 한 출처 GET /survey/stats total = survey_sgg · 첫 화면 · XI맵 · 에이전트와 같은 값). 아래 표는 판정 전 목록 */
 const susBig = bignum($('#sus-big'), null, { label: '의심 필지', unit: '건' });
 const PRI = { A: '우선', B: '보통', C: '참고' };
 const susTbl = table($('#sus-table'), {
@@ -683,8 +688,38 @@ const susTbl = table($('#sus-table'), {
   ],
   rows: [], limit: 20, onRow: (r) => pick(r),
 });
+const sggTbl = table($('#sus-sgg'), {
+  cols: [
+    { key: 'where', label: '시군구', fmt: (v) => `<span class="gr-j">${esc(v)}</span>` },
+    { key: 'n', label: '의심 필지', fmt: (v, r) => (r.state === 'no_ai' ? 'AI 분석 전' : v ? numHtml(v, { digits: 0 }) : '—') },
+  ],
+  rows: [], limit: 40, onRow: (r) => setRegion(r.id),
+});
+/* 광역 전체 — 큰 숫자 = 관할 합계(GET /survey/stats · 시군구 없이 = 볼 수 있는 전체 · 숫자 한 출처), 표 = 시군구별(누르면 그 시군구로) */
+async function loadSusAll() {
+  const box = $('#sus-empty');
+  $('#sus-table').hidden = true;
+  if (S.susLoaded === '*') return;
+  let st = null;
+  try { st = await api('/survey/stats?by=rule'); } catch (e) { devlog('sus all', e.message); if (failLine(e)) return; }
+  S.susLoaded = '*';
+  S.sus = [];
+  susPoints();
+  $('#sus-big').hidden = false;
+  if (st && st.state === 'building') { susBig.empty(); const n = $('#sus-big .k-big-none'); if (n) n.textContent = '집계 중'; }
+  else susBig.set(st && st.total ? { ...st.total } : null);
+  const rows = S.regions.map((r) => ({ id: r.sgg_cd, where: r.name || r.sgg_cd, n: r.findings, state: r.state }))
+    .sort((a, b) => (+(b.n && b.n.value) || 0) - (+(a.n && a.n.value) || 0));
+  $('#sus-sgg').hidden = !rows.length; box.hidden = !!rows.length;
+  if (!rows.length) empty(box, { kind: 'first', text: '실태조사 결과가 아직 없습니다' });
+  sggTbl.set(rows);
+  const bb = unionBox(S.regions);
+  if (bb && S.stage) S.stage.go(bb, { ms: 1600, maxZoom: 11 });
+}
 async function loadSus() {
   const box = $('#sus-empty');
+  if (!S.region && wide()) return loadSusAll();
+  $('#sus-sgg').hidden = true;
   if (!S.region) {
     $('#sus-big').hidden = true; $('#sus-table').hidden = true; box.hidden = false;
     empty(box, { kind: 'first', text: '실태조사 결과가 아직 없습니다' });
@@ -715,22 +750,7 @@ async function susPoints() {
   const fc = { type: 'FeatureCollection', features: S.sus.filter((r) => r.f.lnglat && r.f.lnglat[0] != null).map((r) => ({ type: 'Feature', properties: { id: r.id }, geometry: { type: 'Point', coordinates: r.f.lnglat } })) };
   await S.stage.geo('todo', fc, 'point');
 }
-/* 현장 확인 배정 — 미배정(open) 필지를 나에게 배정(상태 assigned) → 할 일 */
-$('#b-assign').addEventListener('click', async () => {
-  const r = S.sel; if (!r || r.f.state !== 'open') return;
-  const b = $('#b-assign'); b.disabled = true;
-  try {
-    await api(`/survey/findings/${encodeURIComponent(r.id)}/state`, { method: 'POST', body: { client_id: 'gr-' + crypto.randomUUID(), state: 'assigned', assignee: who.name || org } });
-    toast('배정했습니다');
-    S.susLoaded = null;
-    await load({ keep: false });
-    tab('todo');
-    const nr = S.rows.find((x) => x.id === r.id); if (nr) pick(nr);
-  } catch (e) { devlog('assign', `${e.status || ''} ${e.message}`); if (isAuth(e)) return toFront(); toast('배정하지 못했습니다'); }
-  finally { b.disabled = false; }
-});
-
-/* ═════════ 실시간: 다른 창(내 대장 × AI 등)의 배정 · 판정 ═════════ */
+/* ═════════ 실시간: 다른 창(내 대장 × AI 등)의 판정 ═════════ */
 let tmr = 0;
 let probeAt = 0;
 sse('/events/tenant', {
@@ -747,18 +767,17 @@ await load({ keep: false });
 const want = new URLSearchParams(location.search).get('tab');
 if (want === 'report') tab('report');   // 지도 비행을 기다리지 않는다
 else if (want === 'sus' || (!S.rows.length && S.regions.length)) tab('sus');
-await probeReassign();
 document.body.dataset.state = 'land';
 await S.stage.ready;
 S.stage.map.resize();   // 눌린 띠로 한 번 그려지는 것을 막는다 — 보이기 직전에 크기를 맞춤
 $('#map').classList.add('is-on');
-let box = want === 'report' || S.tab === 'sus' ? null : regionBox();
-if (!box && want !== 'report' && S.loaded) {   // 배정 전 관할 — 그 기관 배포본 범위로 내려간다(지역 고정값 없음)
+let box = want === 'report' || S.tab === 'sus' ? null : (wide() && !S.region ? unionBox(S.regions) : regionBox());
+if (!box && want !== 'report' && S.loaded) {   // 판정 기록이 없는 관할 — 그 기관 배포본 범위로 내려간다(지역 고정값 없음)
   try { const j = await api('/deploys'); const own = (j.items || []).filter((d) => d.tenant_id === who.me.tenant_id && d.aoi);
     if (own.length) box = bboxOf({ type: 'MultiPolygon', coordinates: own.flatMap((d) => d.aoi.type === 'MultiPolygon' ? d.aoi.coordinates : [d.aoi.coordinates]) });
   } catch (e) { devlog('deploys', e.message); if (isAuth(e)) toFront(); }
 }
-if (!box && S.tab !== 'report') { const rg = regionOf(S.region); if (rg && rg.bbox && rg.bbox.length === 4) box = rg.bbox; }
+if (!box && S.tab !== 'report') { const rg = regionOf(S.region); box = rg && rg.bbox && rg.bbox.length === 4 ? rg.bbox : (!S.region ? unionBox(S.regions) : null); }
 if (box) await S.stage.go(box, { ms: 2400, maxZoom: 12.5 });
 if (S.tab === 'sus') susPoints();
 if (want === 'report' || S.tab === 'sus') { /* 위에서 열었다 */ }

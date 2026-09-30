@@ -210,6 +210,8 @@ async def cards(request: Request, public: int | None = None):
             live = [d for d in dps if not d["test"] and d["stage"] in ("ga", "canary") and (d["snapshot_current"] or d["scale"])]
             if not live:
                 continue
+            if p.realm == "tenant":                       # 기관 계정: 다른 기관 배포본 id 는 내주지 않는다(원칙 39)
+                live = [d for d in live if d["tenant_id"] == p.tenant_id]
             items.append({"id": c["id"], "name": name, "scope": c["scope"], "status": st, "status_label": STATUS_LABEL[st],
                           "intro": c["intro"], "crop_url": c["crop_url"], "deploys": [d["id"] for d in live]})
             continue

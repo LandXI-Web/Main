@@ -48,10 +48,10 @@ test('상태 쓰기 → tenant 스트림 finding.state ≤ 1s · 같은 client_i
   await new Promise((r) => setTimeout(r, 400));   // 스트림 커서가 잡힐 때까지
   const cid = 'e2e-sse-' + Date.now();
   const t0 = Date.now();
-  const w = await request.post(`${API}/survey/findings/${FID}/state`, { headers: h, data: { state: 'assigned', assignee: '토지정보과 현장조사 1팀', planned_for: '2026-10-05', client_id: cid } });
+  const w = await request.post(`${API}/survey/findings/${FID}/state`, { headers: h, data: { state: 'inspected', client_id: cid } });   // 배정 없음(원칙 40) — 판정 전 → 확인
   expect(w.status()).toBe(200);
   const wj = await w.json();
-  expect(wj.state).toBe('assigned');
+  expect(wj.state).toBe('inspected');
   expect(wj.event.from).toBe('open');
   const arr = await Promise.race([got, new Promise((r) => setTimeout(() => r(null), 3000))]);
   ctl.abort();
@@ -61,12 +61,12 @@ test('상태 쓰기 → tenant 스트림 finding.state ≤ 1s · 같은 client_i
   console.log(`finding.state 도착 ${lag} ms (POST 시작 → SSE 수신)`);
   expect(lag).toBeLessThanOrEqual(1000);
   expect(arr.d.from).toBe('open');
-  expect(arr.d.to).toBe('assigned');
+  expect(arr.d.to).toBe('inspected');
   expect(arr.d.pnu).toBe(FID.split('_')[2]);
-  const w2 = await request.post(`${API}/survey/findings/${FID}/state`, { headers: h, data: { state: 'assigned', client_id: cid } });
+  const w2 = await request.post(`${API}/survey/findings/${FID}/state`, { headers: h, data: { state: 'inspected', client_id: cid } });
   expect(w2.status()).toBe(200);
   expect((await w2.json()).idempotent).toBe(true);
-  const w3 = await request.post(`${API}/survey/findings/${FID}/state`, { headers: h, data: { state: 'assigned', client_id: cid + '-b' } });
+  const w3 = await request.post(`${API}/survey/findings/${FID}/state`, { headers: h, data: { state: 'inspected', client_id: cid + '-b' } });
   expect(w3.status()).toBe(409);
   expect((await w3.json()).error.code).toBe('finding_state_invalid');
 });

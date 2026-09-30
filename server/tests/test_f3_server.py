@@ -52,8 +52,9 @@ def test_s3_regions_public_and_scoped(live, tok):
     q = httpx.get(B + "/regions?q=남원", headers=H(tok["staff"]), timeout=30).json()
     assert [x["sgg_cd"] for x in q["items"]] == ["52190"]
     gj = httpx.get(B + "/regions", headers=H(tok["gj"]), timeout=60).json()
-    nwg = next(x for x in gj["items"] if x["sgg_cd"] == "52190")
-    assert nwg["in_scope"] is False and nwg["n_findings"]["value"] == 0          # RLS — 타 기관 의심 0
+    assert gj["items"] and all(x["in_scope"] for x in gj["items"])              # 원칙 39 — 기관 목록 = 관할 시군구만
+    assert not [x for x in gj["items"] if x["sgg_cd"] == "52190"]               # 관할 밖(남원)은 목록에 한 줄도 없다
+    assert httpx.get(B + "/regions/52190", headers=H(tok["gj"]), timeout=30).status_code == 404
     d = httpx.get(B + "/regions/52190", headers=H(tok["staff"]), timeout=30).json()
     envok(d)
     assert d["parcels"]["value"] > 300000 and isinstance(d["imagery"], list)
@@ -201,8 +202,8 @@ def _ledger_flow(tok, ttok):
         d = envok(httpx.get(B + f"/survey/findings/{fid}", headers=nw, timeout=30).json())
         assert set(d["explain"]["three"]) == {"ledger", "ai", "vworld"}                    # 대장 · AI · V-World 세 값 나란히
         assert httpx.get(B + f"/survey/findings?rule=L1&ledger={iid}", headers=gj, timeout=30).json()["total"]["value"] == 0
-        # 상태 확장: assigned → inspected → closed(match_fp) → 피드백 자동 · 조치 1줄
-        for body in ({"state": "assigned", "assignee": "현장 1팀"}, {"state": "inspected", "note": "현장 확인"}):
+        # 상태 확장: (배정 없음 · 원칙 40) open → inspected → closed(match_fp) → 피드백 자동 · 조치 1줄
+        for body in ({"state": "inspected", "note": "현장 확인"},):
             assert httpx.post(B + f"/survey/findings/{fid}/state", headers=nw, json=body, timeout=30).status_code == 200
         assert httpx.post(B + f"/survey/findings/{fid}/state", headers=nw, json={"state": "closed"}, timeout=30).json()["error"]["code"] == "verdict_required"
         cl = envok(httpx.post(B + f"/survey/findings/{fid}/state", headers=nw, json={"state": "closed", "verdict": "match_fp", "verdict_code": "FP-01",
@@ -604,7 +605,8 @@ def _snap(fid):
     return dict(zip(("state", "assignee", "reason", "verdict", "verdict_code", "note", "updated_at", "updated_by", "demo", "t0"), r))
 
 
-def test_reassign_actions_law_and_list_verdict(live, tok):
+def test_no_assign_actions_law_and_list_verdict(live, tok):
+    """현장 확인 배정 · 시정명령 · 이행강제금 · 원상복구 없음(원칙 40 · 확인 대장 FR-14·FR-15 반려) — 판정과 기록(안내 · 재방문 · 이관)만."""
     row = _one_open_finding()
     if not row:
         pytest.skip("열린 의심 없음")
@@ -612,14 +614,16 @@ def test_reassign_actions_law_and_list_verdict(live, tok):
     nw = H(tok["namwon"])
     snap = _snap(fid)
     try:
-        assert httpx.post(B + f"/survey/findings/{fid}/state", headers=nw, json={"state": "assigned", "assignee": "현장 1팀"}, timeout=30).status_code == 200
-        r = httpx.post(B + f"/survey/findings/{fid}/state", headers=nw, json={"state": "assigned", "assignee": "현장 2팀"}, timeout=30)
-        assert r.status_code == 200 and r.json()["assignee"] == "현장 2팀" and "assigned" in r.json()["allowed_next"]
-        assert httpx.post(B + f"/survey/findings/{fid}/state", headers=nw, json={"state": "assigned"}, timeout=30).status_code == 400
-        a = httpx.post(B + "/survey/actions", headers=nw, json={"finding_id": fid, "kind": "시정명령", "law": "농지법 제42조", "due": "2026-10-31"}, timeout=30)
-        assert a.status_code == 201 and a.json()["kind"] == "correction" and a.json()["law"] == "농지법 제42조"
-        assert httpx.post(B + "/survey/actions", headers=nw, json={"finding_id": fid, "kind": "이행강제금"}, timeout=30).json()["kind"] == "penalty"
-        it = httpx.get(B + f"/survey/findings?pnu=&state=assigned&limit=2000", headers=nw, timeout=30).json()["items"]
+        r = httpx.post(B + f"/survey/findings/{fid}/state", headers=nw, json={"state": "assigned", "assignee": "현장 1팀"}, timeout=30)
+        assert r.status_code == 400 and "배정" in r.json()["error"]["message"]
+        r = httpx.post(B + f"/survey/findings/{fid}/state", headers=nw, json={"state": "inspected", "assignee": "현장 2팀"}, timeout=30)
+        assert r.status_code == 200 and not r.json().get("assignee") and r.json()["allowed_next"] == ["closed"]     # 담당은 쓰지 않는다
+        for k in ("시정명령", "이행강제금", "원상복구", "correction", "penalty", "restore"):
+            assert httpx.post(B + "/survey/actions", headers=nw, json={"finding_id": fid, "kind": k}, timeout=30).status_code == 400, k
+        a = httpx.post(B + "/survey/actions", headers=nw, json={"finding_id": fid, "kind": "안내", "law": "농지법 제42조", "due": "2026-10-31"}, timeout=30)
+        assert a.status_code == 201 and a.json()["kind"] == "notice" and a.json()["law"] == "농지법 제42조"
+        assert httpx.post(B + "/survey/actions", headers=nw, json={"finding_id": fid, "kind": "재방문"}, timeout=30).json()["kind"] == "revisit"
+        it = httpx.get(B + f"/survey/findings?pnu=&state=inspected&limit=2000", headers=nw, timeout=30).json()["items"]
         assert all("verdict" in x and "verdict_code" in x for x in it)
     finally:
         _restore_finding(fid, snap)

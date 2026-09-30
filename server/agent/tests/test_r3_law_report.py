@@ -1,4 +1,4 @@
-"""R3 r3-law-report — 법령 본 조문 먼저(M9) · 영어 법령 질문 · 보고서 가드(M10) · 공문 초안(M15) · docx 규칙 코드·중복(M16).
+"""R3 r3-law-report — 법령 본 조문 먼저(M9) · 영어 법령 질문 · 보고서 가드(M10) · 공문은 보고서로 안내(M15 → 원칙 40) · docx 규칙 코드·중복(M16).
 
     cd server && python -m pytest agent/tests/test_r3_law_report.py -q
 
@@ -287,12 +287,20 @@ def test_m10_english_guard(visible):
     assert out.data["status"] == "no_data" and out.answer.startswith("No data for this area yet.")
 
 
-# ── M15 공문 ROUTE ───────────────────────────────────────────────────────
-@pytest.mark.parametrize("msg,kind", [("강진군 현장 조사 공문 초안 써 줘", "letter"), ("남원시 현장조사 협조 요청 공문 작성해 줘", "letter"),
-                                      ("구례군 시행문 초안 만들어 줘", "letter"), ("강진군 보고서 초안 써 줘", "report")])
-def test_m15_route_kind(msg, kind):
+# ── M15 공문 → 보고서로 안내(원칙 40 · 확인 대장 FR-15 반려 — 공문 서식 · 공문 경로 없음) ─────────────
+@pytest.mark.parametrize("msg,letter", [("강진군 현장 조사 공문 초안 써 줘", True), ("남원시 현장조사 협조 요청 공문 작성해 줘", True),
+                                        ("구례군 시행문 초안 만들어 줘", True), ("강진군 보고서 초안 써 줘", False)])
+def test_m15_route_letter_goes_to_report(msg, letter):
     r = RT.ROUTE(msg, None)
-    assert r and r["tool"] == "report_draft" and r["args"]["kind"] == kind
+    assert r and r["tool"] == "report_draft" and "kind" not in r["args"]          # 보고서 도구 하나 · 공문 종류 인자 없음
+    assert RT.asked_letter(msg) is letter
+    assert "kind" not in RT.SPECS["report_draft"]["properties"]
+
+
+def test_m15_no_letter_format():
+    from survey import report as S
+    assert not any(hasattr(S, x) for x in ("render_letter", "collect_letter", "letter_json", "letter_filename"))
+    assert not hasattr(AR, "compose_letter")
 
 
 def test_m15_law_route_skips_letter():
@@ -345,18 +353,20 @@ def test_m16_report_docx_no_codes_no_dupes(code, tenant, place):
 
 @needs_db
 @pytest.mark.parametrize("code,tenant,place", [(KANGJIN, "gwangju-jeonnam", "강진군"), (NAMWON, "namwon", "남원시")])
-def test_m15_letter_docx_targets_equal_screen_value(code, tenant, place):
-    from psycopg.rows import tuple_row
-    from survey import nation as N
+def test_m15_letter_request_gets_report_docx(code, tenant, place):
+    """공문을 청하면 공문은 만들지 않는다는 한 줄 + 같은 지역 실태조사 보고서 초안(.docx) — 보고서 서식에 배정 · 시정명령 · 공문 0."""
     from survey import report as S
-    d = S.collect_letter(code, "tenant", tenant)
-    with S._conn("tenant", tenant) as c:
-        screen = N.counts_sync(c.cursor(row_factory=tuple_row), code)["field_check"]      # 첫 화면 '현장 확인 필요'와 같은 식
-    assert d["targets"] == screen == len(d["rows"])
-    blob, name, j = S.render_letter(d)
+    d = S.collect(code, None, 10, "tenant", tenant)
+    blob, name = S.render_docx(d)
     text = S.docx_text(blob)
-    assert re.fullmatch(rf"현장조사_협조공문_초안_{place}_\d{{8}}\.docx", name)
-    for part in ("수신", "참조", "제목", "목적", "대상", "기간", "협조 사항", "붙임"):
-        assert part in text, part
-    assert f"현장 확인 필요 {screen:,}필지" in text
-    assert not CODE.findall(text)
+    assert name.startswith(f"실태조사_초안_{place}_")
+    for w in ("배정", "시정명령", "이행강제금", "원상복구", "공문", "협조 요청"):
+        assert w not in text, w
+
+
+@needs_db
+def test_m15_letter_answer_points_to_report(visible):
+    """말로 공문을 청하면 — '공문은 만들지 않습니다' 한 줄 + 같은 지역 보고서 초안 파일(원칙 40)."""
+    out = asyncio.run(RT.report_draft({"request": "강진군 현장 조사 공문 초안 써 줘"}, _ctx(GJ)))
+    assert out.answer.startswith("공문은 만들지 않습니다") and "실태조사 보고서 초안" in out.answer
+    assert out.blocks and out.blocks[0]["label"].startswith("실태조사_초안_강진군_")

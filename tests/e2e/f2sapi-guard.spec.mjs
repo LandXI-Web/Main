@@ -19,7 +19,7 @@ test('게스트 — 실태조사 라우트 전부 401', async ({ request }) => {
     const r = await request.get(API + p);
     expect(r.status(), p).toBe(401);
   }
-  const w = await request.post(API + '/survey/findings/f_R1_5219045021110530012/state', { data: { state: 'assigned', client_id: 'g' } });
+  const w = await request.post(API + '/survey/findings/f_R1_5219045021110530012/state', { data: { state: 'inspected', client_id: 'g' } });
   expect(w.status()).toBe(401);
 });
 
@@ -35,7 +35,7 @@ test('다른 기관(광주·전남) — 남원 실태조사 0건 · 단건 404',
   expect((await request.get(API + '/survey/parcels/5219045021110530012', { headers: h })).status()).toBe(404);
   const s = await (await request.get(API + '/survey/stats?by=rule&sgg=52190', { headers: h })).json();
   expect(s.total.value).toBe(0);
-  const w = await request.post(API + '/survey/findings/f_R1_5219045021110530012/state', { headers: h, data: { state: 'assigned', client_id: 'gj-' + Date.now() } });
+  const w = await request.post(API + '/survey/findings/f_R1_5219045021110530012/state', { headers: h, data: { state: 'inspected', client_id: 'gj-' + Date.now() } });
   expect(w.status()).toBe(404);
 });
 
@@ -57,6 +57,6 @@ test('성명 열 0 — 응답 키에 소유자 성명 없음(연속지적 미제
 test('LX 영업 — 읽기 OK · 상태 쓰기 403', async ({ request }) => {
   const h = await tok(request, { realm: 'lx', login: 'lx-sales', password: PW });
   expect((await request.get(API + '/survey/findings?limit=1', { headers: h })).status()).toBe(200);
-  const w = await request.post(API + '/survey/findings/f_R1_5219045021110530012/state', { headers: h, data: { state: 'assigned', client_id: 's-' + Date.now() } });
+  const w = await request.post(API + '/survey/findings/f_R1_5219045021110530012/state', { headers: h, data: { state: 'inspected', client_id: 's-' + Date.now() } });
   expect(w.status()).toBe(403);
 });

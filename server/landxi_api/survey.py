@@ -8,7 +8,7 @@ main.py 확장 훅(F2-B · `importlib.import_module("landxi_api.survey")`)이 �
 
 숫자 한 출처(c2-numbers) — survey_counts(conn, sgg) 하나를 /survey/stats · /summary · 에이전트(survey_stats · summary_lookup) · 보고서가 쓴다.
   의심 필지      = survey_sgg.findings(그 시군구 AI × 연속지적 규칙 R1–R6 의심 건 · 적재 때 확정 · 상태로 줄지 않음 · 대장 규칙 L-* 제외)
-  현장 확인 필요 = 같은 시군구 R1–R6 의심 중 우선순위 A · 상태 open|assigned 인 서로 다른 필지 수(배정·판정·오탐 처리로 준다)
+  현장 확인 필요 = 같은 시군구 R1–R6 의심 중 우선순위 A · 판정 전(open · 옛 기록 assigned) 서로 다른 필지 수(판정·오탐 처리로 준다)
   적재 중(building)이면 두 값 모두 None + note '집계 중'. 정의·원인 기록 = survey/nation.py '숫자 한 출처' 절.
 """
 from __future__ import annotations
@@ -46,8 +46,11 @@ FCOLS = ("id, rank, priority, score, rule, rule_nm, pnu, addr, emd, emd_cd, jimo
          "corroboration, img_date, evidence, ai_ids, lon, lat, state, assignee, planned_for, reason, updated_at, updated_by, demo, tenant_id, "
          "verdict, verdict_code, note, import_id")
 PCOLS_ALL = "*"
-TRANSITIONS = {"open": {"assigned", "dismissed"}, "assigned": {"assigned", "inspected", "dismissed"}, "inspected": {"closed"},
+# 현장 확인 배정은 만들지 않는다(원칙 40 · 확인 FR-14 반려) — 판정 전(open) 필지를 바로 확인(inspected) → 종결(closed) 또는 오탐(dismissed).
+# 'assigned' 는 옛 기록(배정 기능이 있던 때)의 상태로만 남는다 — 그 필지도 같은 길로 판정한다. 새로 'assigned' 로 바꾸는 길은 없다.
+TRANSITIONS = {"open": {"inspected", "dismissed"}, "assigned": {"inspected", "dismissed"}, "inspected": {"closed"},
                "closed": set(), "dismissed": set()}
+WRITE_STATES = ("dismissed", "inspected", "closed")
 SORTS = {"score": "score DESC, rank ASC", "evid_m2": "evid_m2 DESC NULLS LAST, rank ASC", "updated": "updated_at DESC NULLS LAST, rank ASC",
          "rank": "rank ASC"}
 PNU_RE = re.compile(r"^\d{19}$")
@@ -336,6 +339,8 @@ async def parcel(pnu: str, request: Request, with_: str | None = None):
     p = _read(principal(request))
     if not PNU_RE.match(pnu):
         raise ApiError("bad_request", "pnu 는 19자리 숫자")
+    if p.realm == "tenant" and not RG.region_allowed(p, pnu[:5]):
+        raise ApiError("not_found", f"필지 {pnu} 없음(적재된 연속지적 밖이거나 다른 기관)")     # 관할 밖 필지 = 없는 필지(원칙 39)
     want = set(_list_param(request.query_params.get("with") or with_ or "facts,findings,history",
                            {"facts", "findings", "history", "geom", "ledger", "all"}, "with"))
     if "all" in want:
@@ -590,6 +595,8 @@ async def audit_lx(p, action: str, subject: str, after: dict):
 async def survey_build_state(sgg_cd: str, request: Request):
     p = _read(principal(request))
     cs = sgg_codes(sgg_cd)
+    if p.realm == "tenant":
+        RG.ensure_region(p, sgg_cd)                      # 관할 밖 = 없는 지역(원칙 39)
     async with db(p) as conn:
         r = await conn.fetchrow(f"SELECT {SGG_COLS}, build_job_id, job_id FROM survey_sgg WHERE sgg_cd = ANY($1::text[])", cs)
     if not r:
@@ -633,14 +640,16 @@ async def _publish(tenant: str, data: dict):
 
 
 VERDICTS = {"match", "violation", "match_fp", "unclear"}      # 현장 일치(의심 맞음) · 위반 확인 · 오탐(AI 틀림) · 판단 보류
-ACTION_KINDS = {"notice", "correction", "penalty", "restore", "revisit", "referral", "none", "other"}
-# 화면 말 -> kind(gov-report 5종: 안내 · 시정명령 · 이행강제금 · 원상복구 · 없음)
-ACTION_KO = {"안내": "notice", "시정명령": "correction", "이행강제금": "penalty", "원상복구": "restore", "없음": "none", "재방문": "revisit", "이관": "referral"}
+# 조치 기록 = 기관이 한 일의 기록(보고서 부속 표). 시정명령 · 이행강제금 · 원상복구처럼 행정 처분을 몰아붙이는 종류는 만들지 않는다(원칙 40 · FR-15 반려).
+ACTION_KINDS = {"notice", "revisit", "referral", "none", "other"}
+# 화면 말 -> kind(gov-report 4종: 안내 · 재방문 · 이관 · 없음)
+ACTION_KO = {"안내": "notice", "재방문": "revisit", "이관": "referral", "없음": "none", "기타": "other"}
+REJECTED_KINDS = {"correction", "penalty", "restore", "시정명령", "이행강제금", "원상복구"}
 
 
 @router.post("/survey/findings/{fid}/state")
 async def set_state(fid: str, body: dict, request: Request):
-    """상태 확장(F3 §3 S-2): {state, verdict, verdict_code, note, assignee, planned_for, reason, client_id?}.
+    """상태 쓰기(F3 §3 S-2): {state(inspected|closed|dismissed), verdict, verdict_code, note, planned_for, reason, client_id?}. 배정(assigned) 없음.
     closed + verdict match_fp(또는 dismissed) → 오탐 피드백 자동(feedback kind 'fp' · 재학습 표본). client_id 없으면 서버가 만든다."""
     p = require(principal(request))
     if p.realm == "tenant" and p.role != "manager":
@@ -650,13 +659,14 @@ async def set_state(fid: str, body: dict, request: Request):
     to = body.get("state")
     if p.realm == "lx" and body.get("verdict") and to in (None, "", "sample"):
         return await _lx_verdict(p, fid, body)       # LX 표본 검수 = 판정만 영구 기록(기관 필지 상태는 그대로)
-    if to not in ("assigned", "dismissed", "inspected", "closed"):
-        raise ApiError("bad_request", "state 는 assigned|dismissed|inspected|closed")
+    if to == "assigned":
+        raise ApiError("bad_request", "현장 확인 배정은 제공하지 않습니다 — 판정(확인 · 오탐)만 기록합니다", {"allowed": list(WRITE_STATES)})
+    if to not in WRITE_STATES:
+        raise ApiError("bad_request", "state 는 dismissed|inspected|closed")
     cid = str(body.get("client_id") or "").strip() or ("srv_" + secrets.token_hex(8))
     if len(cid) > 80:
         raise ApiError("bad_request", "client_id(멱등 키 · 80자 이하)")
     reason = (body.get("reason") or None)
-    assignee = (body.get("assignee") or None)
     verdict = body.get("verdict") or None
     vcode = (str(body.get("verdict_code")).strip()[:40] if body.get("verdict_code") else None)
     note = (str(body.get("note")).strip()[:500] if body.get("note") else None)
@@ -696,12 +706,8 @@ async def set_state(fid: str, body: dict, request: Request):
             if to not in allowed:
                 raise ApiError("finding_state_invalid", f"{cur} → {to} 전이 불가(역방향·종결 뒤 변경 금지)",
                                {"from": cur, "to": to, "allowed": sorted(allowed)}, 409)
-            if to == cur and not assignee:
-                raise ApiError("bad_request", "같은 상태에서는 담당(assignee)만 바꿀 수 있습니다")
             now = dt.datetime.now(KST)
-            new_assignee = assignee if to == "assigned" else (assignee or r["assignee"])
-            if to == cur:                              # 담당 재지정 - 판정·사유는 그대로
-                reason = r["reason"]
+            new_assignee = r["assignee"]                 # 담당(배정)은 새로 쓰지 않는다 — 옛 기록의 값만 그대로
             await conn.execute("UPDATE survey_findings SET state=$2, assignee=$3, planned_for=COALESCE($4, planned_for), reason=$5, "
                                "updated_at=$6, updated_by=$7, demo=$8, verdict=COALESCE($9, verdict), verdict_code=COALESCE($10, verdict_code), "
                                "note=COALESCE($11, note) WHERE id=$1",
@@ -747,14 +753,18 @@ async def set_state(fid: str, body: dict, request: Request):
 # ─────────────────────────── 조치(F3 §3 S-2) ───────────────────────────
 @router.post("/survey/actions", status_code=201)
 async def create_action(body: dict, request: Request):
-    """조치 한 줄(시정 안내 · 원상복구 · 재방문 · 이관) — 행정 문서가 아니라 할 일 기록. 기관 manager · LX staff/admin."""
+    """조치 한 줄(안내 · 재방문 · 이관 · 없음) — 행정 문서가 아니라 기관이 한 일의 기록. 기관 manager · LX staff/admin.
+    시정명령 · 이행강제금 · 원상복구 종류는 받지 않는다(원칙 40)."""
     p = require(principal(request))
     if p.realm == "tenant" and p.role != "manager":
         raise ApiError("forbidden", "기관 담당자(manager)만 조치를 기록할 수 있습니다")
     if p.realm == "lx" and p.role not in ("staff", "admin"):
         raise ApiError("forbidden", "LX 영업 계정은 읽기 전용")
     fid = body.get("finding_id")
-    kind = ACTION_KO.get(body.get("kind") or "", body.get("kind") or "other")
+    raw_kind = str(body.get("kind") or "")
+    if raw_kind in REJECTED_KINDS:
+        raise ApiError("bad_request", "시정명령 · 이행강제금 · 원상복구는 기록하지 않습니다(보고서까지)", {"allowed": sorted(ACTION_KINDS)})
+    kind = ACTION_KO.get(raw_kind, raw_kind or "other")
     if kind not in ACTION_KINDS:
         raise ApiError("bad_request", "kind 는 " + "|".join(sorted(ACTION_KINDS)), {"allowed": sorted(ACTION_KINDS)})
     law = (str(body.get("law")).strip()[:120] if body.get("law") else None)

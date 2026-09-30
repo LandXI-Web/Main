@@ -735,8 +735,8 @@ def ai_operands(conn, pnus: list[str], sgg_cd: str | None = None) -> dict[str, d
 # ─────────────────────────── 숫자 한 출처(c2-numbers) ───────────────────────────
 # 정의(모든 화면·에이전트·보고서가 이 두 줄만 쓴다):
 #   의심 필지      = survey_sgg.findings — 그 시군구 AI × 연속지적 규칙(R1–R6) 의심 건(필지 × 규칙 1행). 적재(build) 때 확정되고
-#                    상태(배정·오탐·종결)로 줄지 않는다. 대장 규칙(L-*)은 넣지 않는다(대장 대조 결과로 따로 센다).
-#   현장 확인 필요 = 같은 시군구 R1–R6 의심 중 우선순위 A · 상태 open|assigned 인 서로 다른 필지(PNU) 수 — 배정·판정·오탐 처리로 줄어든다.
+#                    상태(판정·오탐·종결)로 줄지 않는다. 대장 규칙(L-*)은 넣지 않는다(대장 대조 결과로 따로 센다).
+#   현장 확인 필요 = 같은 시군구 R1–R6 의심 중 우선순위 A · 상태 open|assigned(판정 전 · assigned 는 옛 기록) 인 서로 다른 필지(PNU) 수 — 판정·오탐 처리로 줄어든다.
 #   적재 중(survey_sgg.state = 'building')에는 두 값 모두 None + '집계 중'(숫자를 섞어 내지 않는다).
 # 옛 값이 갈린 원인: 남원 20,852 = 의심 필지 중복 제거(한 필지가 두 규칙에 걸린 20필지) · 20,872 = survey_sgg.findings(R1–R6 행)
 #   · 21,303 = survey_findings 전체(대장 규칙 L-* 431행 포함). 여수 10,499 = 중복 제거 · 10,504 = R1–R6 행.
@@ -749,7 +749,7 @@ COUNTS_SQL = ("SELECT s.sgg_cd, s.tenant_id, s.state, s.findings, coalesce(s.fin
               "AND f.priority = 'A' AND f.state = 'open') AS review_pending "
               "FROM survey_sgg s WHERE ({codes}::text[] IS NULL OR s.sgg_cd = ANY({codes}::text[])) ORDER BY s.sgg_cd")
 SUSPECT_SRC = "실태조사 의심(AI × 연속지적 규칙 R1–R6)"
-FIELD_SRC = "실태조사 의심 중 우선순위 A · 미조치·배정"
+FIELD_SRC = "실태조사 의심 중 우선순위 A · 판정 전"
 
 
 def counts_sql(style: str) -> str:

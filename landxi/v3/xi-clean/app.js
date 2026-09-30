@@ -1,7 +1,9 @@
 /* xi-clean app.js — XI맵(직원 · 영업 · 기관 공용). 명세 LANDXI-FINAL-SPEC §2.8.
    같은 엔진(xi/engine · xi/fx)과 공용 키트(K1 셸 · K2 관문 · K3 무대 · K4 지역 · K5 서랍 · K6 큰 숫자 · K9 빈 상태 · K10 에이전트 · K12 · K13 · K14)를
    조합만 한다. 지역은 변수(URL ?region= · 기관 세션 · 검색 · 전국 지도에서 고르기) — 지역 문자열 하드코딩 0.
-   큰 숫자 = 현장 확인 필요 n필지(/survey/findings · 우선순위 A · 미조치/배정 · 서로 다른 필지) — 영업 성과 띠와 같은 조회.
+   큰 숫자 = 현장 확인 필요 n필지(/survey/findings · 우선순위 A · 판정 전 · 서로 다른 필지) — 영업 성과 띠와 같은 조회.
+   기관 계정 = 관할 시군구만(원칙 39): 지역 목록 · 검색 제안 · 경계는 서버가 준 관할 목록(GET /regions?geom=1)에서만 — 전국 시군구 파일을 받지 않는다.
+   광역 기관은 관할 전체로 도착하고 시군구는 사용자가 고른다(화면이 대신 고르지 않는다).
    읍면동 경계 = GET /regions/{sgg}/emd(전국 · 그 시군구 것만) · 결과 층 = GET /regions/{sgg}/results(그 시군구에 결과가 있는 모든 세트 + 전역 분석 결과). */
 import * as K from '../kit/index.js';
 import { api, session } from '../kit/util.js';
@@ -39,7 +41,12 @@ const PRE = SESS ? {
   emd: swr('/survey/stats?by=emd').catch(() => ({ items: [], failed: true })),
   rule: swr('/survey/stats?by=rule').catch(() => ({ items: [], failed: true })),
 } : {};
-PRE.sgg = fetch('/landxi/assets/data/geo/sigungu.geojson').then((r) => r.json()).catch(() => ({ features: [] }));
+/* 시군구 경계 — LX · 게스트 = 전국 파일, 기관 = 관할 시군구만(서버가 거른 목록 · 경계 포함). 기관 화면은 전국 목록을 부르지 않는다 */
+const scopeFC = (j) => ({ features: (j?.items || []).filter((it) => it.geometry).map((it) => ({ type: 'Feature', geometry: it.geometry,
+  properties: { code: String(it.sgg_cd), prev: it.prev_cd ? String(it.prev_cd) : null, name: it.name, sido: String(it.full || '').split(/\s+/)[0] || it.sido } })) });
+PRE.sgg = SESS?.realm === 'tenant'
+  ? api('/regions?geom=1').then(scopeFC).catch(() => ({ features: [] }))
+  : fetch('/landxi/assets/data/geo/sigungu.geojson').then((r) => r.json()).catch(() => ({ features: [] }));
 const FQ = new Map();
 function prefetchFindings(qs) { if (!FQ.has(qs)) { const p = api('/survey/findings?' + qs); p.catch(() => {}); FQ.set(qs, { t: performance.now(), p }); } }
 function findings(qs) {
@@ -180,9 +187,11 @@ async function boot() {
   ]);
   S.ruleNames = names || {};
   useStats(emdSt, ruleSt);
-  S.regions = (sgg.features || []).map((f) => ({ code: String(f.properties.code), name: f.properties.name, sido: f.properties.sido, full: `${f.properties.sido} ${f.properties.name}`, bbox: K.bboxOf(f), geometry: f.geometry }));
+  const sggFC = S.tenant && SESS?.realm !== 'tenant' ? await api('/regions?geom=1').then(scopeFC).catch(() => ({ features: [] })) : sgg;   // 관문 세션이 기관인데 미리 받은 것이 전국이면 관할로 다시
+  S.regions = (sggFC.features || []).map((f) => ({ code: String(f.properties.code), name: f.properties.name, sido: f.properties.sido, full: `${f.properties.sido} ${f.properties.name}`, bbox: K.bboxOf(f), geometry: f.geometry }));
   X.regions = S.regions.length;
   loadAlias(await aliasP);
+  if (S.tenant) S.scopeBox = S.regions.reduce((a, r) => (r.bbox ? (a ? [Math.min(a[0], r.bbox[0]), Math.min(a[1], r.bbox[1]), Math.max(a[2], r.bbox[2]), Math.max(a[3], r.bbox[3])] : [...r.bbox]) : a), null);
 
   // 지역: URL → 기관 관할 → 없으면 전국 — 정해지는 즉시 HUD 조회를 미리 부른다(층 쌓기와 동시에)
   if (S.tenant) S.home = await homeRegion();
@@ -262,7 +271,7 @@ async function buildLayers(cat) {
   await cogLayers(items, own);
 
   // 시군구 경계(전국 · 지역 고르기)
-  const sggIt = items.find((i) => i.role === 'reference' && i.id === 'sigungu');
+  const sggIt = S.tenant ? null : items.find((i) => i.role === 'reference' && i.id === 'sigungu');   // 기관 = 전국 경계 층 없음(관할만)
   if (sggIt) {
     map.addSource('xc-sgg', await spec(sggIt));
     const L = sggIt.layer;
@@ -388,6 +397,8 @@ async function homeRegion() {
   S.scope = scoped.length ? scoped : null;
   const r = findRegion(nm) || S.regions.find((x) => nm && norm(nm).endsWith(norm(x.name)) && norm(nm).includes(norm(x.sido).slice(0, 2)));
   if (r) return r;
+  if (S.regions.length > 1 || scoped.length > 1) return null;   // 광역 기관 = 관할 전체로 도착(시군구는 사용자가 고른다 · 화면이 고르지 않는다)
+  if (S.regions.length === 1) return S.regions[0];
   try {
     const sm = await api('/summary');
     const it = (sm.items || []).find((x) => Object.values(x.metrics || {}).some((m) => m && m.value !== null && m.value !== undefined));
@@ -485,7 +496,8 @@ async function setRegion(r, { first = false, to = null } = {}) {
   history.replaceState(null, '', u);
   // 초점 층
   const W = [[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]];
-  const g = r?.geometry;
+  const all = !r && S.tenant && S.regions.length ? { type: 'MultiPolygon', coordinates: S.regions.flatMap((x) => (!x.geometry ? [] : x.geometry.type === 'Polygon' ? [x.geometry.coordinates] : x.geometry.coordinates)) } : null;
+  const g = r?.geometry || all;                      // 기관 '전체' = 관할 시군구 전부의 경계
   const polys = g ? (g.type === 'Polygon' ? [g.coordinates] : g.coordinates) : [];
   const cw = (ring) => { let a = 0; for (let i = 0; i < ring.length - 1; i++) a += ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1]; return a < 0 ? ring : [...ring].reverse(); };
   map.getSource('xc-rmask')?.setData(g ? { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [W, ...polys.map((p) => cw(p[0]))] } } : { type: 'FeatureCollection', features: [] });
@@ -494,11 +506,13 @@ async function setRegion(r, { first = false, to = null } = {}) {
   patchRail();
   searchInput.value = r ? r.name : '';
   // to = 말로 한 읍면동 이동 — 시군구를 거치지 않고 한 번에 그 읍면동으로(동작 끝 신호가 늦지 않게)
-  const fly = r ? goKeep(to?.bbox || r.bbox, { ms: RM() ? 0 : (to?.ms ?? 2400), maxZoom: to?.maxZoom ?? 12.5 }) : stage.home({ ms: first ? 0 : 1600 });
+  const fly = r ? goKeep(to?.bbox || r.bbox, { ms: RM() ? 0 : (to?.ms ?? 2400), maxZoom: to?.maxZoom ?? 12.5 })
+    : S.tenant && S.scopeBox ? goKeep(S.scopeBox, { ms: RM() ? 0 : 2400, maxZoom: 11 })      // 기관 '전체' = 관할 전체 범위
+    : stage.home({ ms: first ? 0 : 1600 });
   if (S.outside) {
     setPoints([]); regionData(null);
     const d = K.drawer({ title: r.name, host: mainEl, slot: 'right', onClose: () => { S.list = null; patchRail(); } });
-    const box = h('div'); K.empty(box, { kind: 'outside', text: '이 기관의 관할 밖입니다', ...(S.home ? { action: { label: S.home.name, onClick: () => setRegion(S.home) } } : {}) });
+    const box = h('div'); K.empty(box, { kind: 'outside', text: '이 기관의 관할 밖입니다', ...(S.home ? { action: { label: S.home.name, onClick: () => setRegion(S.home) } } : S.tenant ? { action: { label: '관할 전체', onClick: () => setRegion(null) } } : {}) });
     d.set(box); S.drawer = d;
     if (!first) await fly;
     return;
@@ -574,7 +588,7 @@ async function refresh() {
   if (S.outside) return;
   const my = ++seq;
   failToast?.close(); failToast = null;
-  const where = S.cond.emd ? S.cond.emd.nm : S.region ? S.region.name : '전국';
+  const where = S.cond.emd ? S.cond.emd.nm : S.region ? S.region.name : S.tenant ? String(S.who.tenant?.name?.ko || S.who.org || '').trim().split(/\s+/).pop() || '관할 전체' : '전국';
   const label = `현장 확인 필요 · ${where}`;
   const scope = (S.cond.emd?.cd || S.region?.code || 'KR') + (S.cond.rule ? ':' + S.cond.rule : '');
   S.els.hud.dataset.scope = scope;
@@ -1088,7 +1102,6 @@ async function openParcel(pnu, { fly = false } = {}) {
       h('div.ai', {}, h('dt', { text: 'AI 분석' }), h('dd', { html: f ? `<b>${esc(seen)}</b> ${m2(f.evid_m2)}${pct != null ? ` · ${Math.round(pct)}%` : ''}` : '—' }))),
   );
   const act = h('div.xc-act');
-  if (f && S.tenant && S.who.me.role === 'manager' && f.state === 'open') act.append(h('button.t-btn', { type: 'button', text: '현장 배정', onclick: (e) => setState(f, 'assigned', e.currentTarget) }));
   if (f && S.lx && S.key !== 'lx/sales' && ['open', 'assigned'].includes(f.state)) act.append(h('button.t-btn.t-btn--2', { type: 'button', text: '오탐', onclick: (e) => setState(f, 'dismissed', e.currentTarget) }));
   // 영상 설명(AI 의견) — 명령 바에 '{읍면동 리 지번} 영상 설명해 줘'를 보낸다(설명 도구는 에이전트 · 근거 아님 꼬리표)
   const where = String(d.addr || '').trim().split(/\s+/).slice(-3).join(' ');
@@ -1101,7 +1114,7 @@ async function setState(f, to, btn) {
   try {
     const id = (crypto.randomUUID?.() || String(Date.now()) + Math.random()).slice(0, 60);
     await api(`/survey/findings/${encodeURIComponent(f.id)}/state`, { method: 'POST', body: { state: to, client_id: 'xc-' + id, ...(to === 'dismissed' ? { reason: '오탐' } : {}) } });
-    K.toast(to === 'assigned' ? '배정했습니다' : '오탐으로 표시했습니다');
+    K.toast('오탐으로 표시했습니다');
     closeDrawer(); refresh();
   } catch (e) { btn.disabled = false; K.devlog('state', `${e.code} ${e.message}`); K.toast('지금은 바꿀 수 없습니다'); }
 }

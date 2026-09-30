@@ -327,6 +327,175 @@ def in_scope(sgg_cd: str, prefixes: list[str] | None) -> bool:
     return any(sgg_cd.startswith(px) for px in prefixes)
 
 
+# ═══ 관할 가드(원칙 39 · 계정 범위 밖 0) — 지역 목록 · 지역 상세 · 분석 견적·등록 · 필지 조회가 같이 쓰는 한 판정 ═══════════════
+# LX 계정 = 전국. 기관 계정 = 관할 시군구(config/regions.yaml tenants) 안만 — 밖은 호출·표시·열람 모두 0(서버가 내주지 않는다).
+# 해외 기관 = 국내 관할 없음(국내 0) · 해외 사업 구역(프로필 범위 + 그 나라 구역) 안만. 게스트 = 관할 없음.
+SCOPE_TOL = 0.0001          # 경계선 그리기 오차(약 10m) — 화면이 보낸 읍면동 경계(단순화 ≈5m)가 거절되지 않을 만큼만. 이보다 밖이면 관할 밖
+
+
+def scope_of(p) -> list[str] | None:
+    """계정의 국내 관할 — None = 전국(LX · 전국 권한 기관) · [접두…] = 기관 관할 시군구 · [] = 국내 관할 없음(해외 기관 · 게스트)."""
+    realm = getattr(p, "realm", None)
+    if realm == "lx":
+        return None
+    if realm == "tenant":
+        sc = tenant_scope(getattr(p, "tenant_id", None))
+        if sc is None:
+            return []
+        return None if sc == [] else sc
+    return []
+
+
+def region_allowed(p, sgg_cd: str | None) -> bool:
+    """그 시군구(지금 코드 · 옛 코드 어느 쪽이든)가 계정 관할 안인가."""
+    sc = scope_of(p)
+    if sc is None:
+        return True
+    if not sc or not sgg_cd:
+        return False
+    return any(in_scope(c, sc) for c in (sgg_codes(str(sgg_cd)[:5]) or [str(sgg_cd)[:5]]))
+
+
+def ensure_region(p, sgg_cd: str | None):
+    """관할 밖 시군구 = '없는 지역'과 같은 답(있다는 사실도 알리지 않는다 · 404)."""
+    if not region_allowed(p, sgg_cd):
+        raise ApiError("not_found", "해당 지역이 없습니다", {"sgg_cd": sgg_cd})
+
+
+def scope_regions(p) -> list[dict]:
+    """계정이 볼 수 있는 시군구 목록(regions_base 행) — LX 는 전국."""
+    regions, _, _ = regions_base()
+    sc = scope_of(p)
+    if sc is None:
+        return list(regions)
+    if not sc:
+        return []
+    return [r for r in regions if any(in_scope(c, sc) for c in (r["sgg_cd"], r.get("prev_cd")) if c)]
+
+
+def _scope_union(p, bounds) -> object | None:
+    """관할 시군구 가운데 bounds 근처(0.05°) 것들의 경계 합 — 읍면동 경계(V-World 캐시)의 합이 정밀 경계, 못 받으면 뼈대 경계."""
+    from shapely.ops import unary_union
+    _, geoms, _ = regions_base()
+    x0, y0, x1, y1 = bounds
+    m = 0.05
+    parts = []
+    for r in scope_regions(p):
+        b = r.get("bbox")
+        if b and (b[2] < x0 - m or b[0] > x1 + m or b[3] < y0 - m or b[1] > y1 + m):
+            continue
+        ix = emd_index(r["sgg_cd"])
+        g = ix.union if ix is not None and len(ix) else (geoms.get(r["sgg_cd"]) or (geoms.get(r.get("prev_cd")) if r.get("prev_cd") else None))
+        if g is not None and not g.is_empty:
+            parts.append(g)
+    return _valid(unary_union(parts)) if parts else None
+
+
+def _overseas_area(p):
+    """해외 기관의 사업 구역 — 프로필 범위 + 그 나라 구역(해외 분석 화면이 고르는 구역 범위) · 없으면 None."""
+    from shapely.geometry import box as _box
+    from shapely.ops import unary_union
+    t = (_cfg().get("tenants") or {}).get(getattr(p, "tenant_id", None) or "") or {}
+    if not t.get("global"):
+        return None
+    parts = []
+    prof_id = str(t.get("profile") or "")
+    try:
+        prof = ((config.load_yaml("region_profiles") or {}).get("profiles") or {}).get(prof_id) or {}
+        if prof.get("bbox"):
+            parts.append(_box(*prof["bbox"]))
+    except Exception:
+        pass
+    iso = prof_id.split("-")[0].upper() if prof_id else ""
+    try:
+        from agent.tools.ext.global_ import districts
+        parts += [_box(*d["bbox"]) for d in districts() if iso and str(d.get("iso") or "")[:len(iso)] == iso[:3] and d.get("bbox")]
+    except Exception:
+        pass
+    return unary_union(parts) if parts else None
+
+
+SEA_REACH = 0.05            # 관할 연안 바다(약 5km) — 읍면동 경계는 땅만 덮으므로, 관할 땅에서 이 안이고 다른 시군구 땅에 닿지 않는 바다는 관할로 본다
+
+
+def _land(cd: str, prev: str | None = None):
+    """한 시군구 땅(읍면동 경계 합 · 못 받으면 뼈대 경계)."""
+    _, geoms, _ = regions_base()
+    ix = emd_index(cd)
+    if ix is not None and len(ix):
+        return ix.union
+    return geoms.get(cd) or (geoms.get(prev) if prev else None)
+
+
+def _other_land(p, bounds, own):
+    """bounds 근처(0.02°)의 관할 밖 시군구 땅 합 − 관할 땅(경계선 오차만큼 넓혀 뺀다 · 뼈대 경계의 거친 선이 관할 땅을 덮지 않게)."""
+    from shapely.ops import unary_union
+    regions, _, _ = regions_base()
+    mine = {r["sgg_cd"] for r in scope_regions(p)}
+    x0, y0, x1, y1 = bounds
+    m = 0.02
+    parts = []
+    for r in regions:
+        if r["sgg_cd"] in mine:
+            continue
+        b = r.get("bbox")
+        if not b or b[2] < x0 - m or b[0] > x1 + m or b[3] < y0 - m or b[1] > y1 + m:
+            continue
+        g = _land(r["sgg_cd"], r.get("prev_cd"))
+        if g is not None and not g.is_empty:
+            parts.append(g)
+    if not parts:
+        return None
+    return _valid(unary_union(parts)).difference(own.buffer(SCOPE_TOL))
+
+
+def geom_in_scope(p, g) -> bool:
+    """범위(shapely · 4326)가 계정 관할 안인가 — 조금이라도(경계선 오차 SCOPE_TOL 밖) 벗어나면 False. 동기(읍면동 경계 캐시를 읽는다).
+    관할 땅 밖으로 나간 부분은 ① 다른 시군구 땅에 닿으면 거절 ② 바다라도 관할 땅에서 SEA_REACH 를 넘으면 거절(연안 바다만 관할)."""
+    sc = scope_of(p)
+    if sc is None:
+        return True
+    if g is None or g.is_empty:
+        return False
+    if not sc:
+        area = _overseas_area(p)
+        if area is None:
+            return False
+        out = g.difference(area.buffer(0.001))
+        return out.is_empty or out.area < 1e-10
+    u = _scope_union(p, g.bounds)
+    if u is None:
+        return False
+    out = g.difference(u.buffer(SCOPE_TOL))
+    if out.is_empty or out.area < 1e-10:
+        return True
+    if not out.within(u.buffer(SEA_REACH)):
+        return False
+    other = _other_land(p, out.bounds, u)
+    if other is None:
+        return True
+    hit = out.intersection(other)
+    return hit.is_empty or (out.area > 0 and hit.area < 1e-10)      # 점(필지 조회)은 닿기만 해도 밖
+
+
+def aoi_in_scope(p, aoi: dict | None) -> bool:
+    """GeoJSON 범위(Polygon · MultiPolygon · Feature) → geom_in_scope."""
+    if not aoi:
+        return scope_of(p) is None
+    if aoi.get("type") == "Feature":
+        aoi = aoi.get("geometry") or {}
+    try:
+        g = shape(aoi)
+    except Exception:
+        return False
+    return geom_in_scope(p, g if g.is_valid else g.buffer(0))
+
+
+def point_in_scope(p, lng: float, lat: float) -> bool:
+    from shapely.geometry import Point
+    return geom_in_scope(p, Point(lng, lat))
+
+
 async def _n_findings(p) -> dict[str, int]:
     if p.guest:
         return {}
@@ -371,17 +540,52 @@ def find(q: str) -> list[dict]:
     return out
 
 
+_geo_static: dict = {}
+
+
+def _static_geom(r: dict) -> dict | None:
+    """시군구 경계(화면 지도와 같은 그림 · landxi/assets/data/geo/sigungu.geojson) — 코드(지금 · 옛) → 이름 + 위치 순으로 잇는다.
+    기관 계정은 전국 경계 파일을 받지 않고 관할 시군구 경계만 이 목록(?geom=1)으로 받는다."""
+    if "by" not in _geo_static:
+        by, byname = {}, {}
+        try:
+            fc = json.loads((config.SERVER_ROOT.parent / "landxi" / "assets" / "data" / "geo" / "sigungu.geojson").read_text(encoding="utf-8"))
+            for f in fc.get("features") or []:
+                pr = f.get("properties") or {}
+                by[str(pr.get("code"))] = f.get("geometry")
+                byname.setdefault(str(pr.get("name") or ""), []).append(f.get("geometry"))
+        except Exception:  # noqa: BLE001 — 없으면 뼈대 경계
+            pass
+        _geo_static.update(by=by, byname=byname)
+    for c in (r.get("sgg_cd"), r.get("prev_cd")):
+        if c and str(c) in _geo_static["by"]:
+            return _geo_static["by"][str(c)]
+    c0 = r.get("center")
+    for g in _geo_static["byname"].get(str(r.get("name") or ""), []):
+        try:
+            if c0 and shape(g).buffer(0.02).contains(shape({"type": "Point", "coordinates": c0})):
+                return g
+        except Exception:  # noqa: BLE001
+            continue
+    _, geoms, _ = regions_base()
+    g = geoms.get(r.get("sgg_cd")) or (geoms.get(r.get("prev_cd")) if r.get("prev_cd") else None)
+    return _geom_small(g) if g is not None else None
+
+
 @router.get("/regions")
 async def list_regions(request: Request, public: int | None = None, q: str | None = None, sido: str | None = None,
-                       has_imagery: int | None = None):
+                       has_imagery: int | None = None, geom: int | None = None):
     p = principal(request)
-    pub = bool(public) or p.guest
+    tenant = p.realm == "tenant"
+    pub = (bool(public) and not tenant) or p.guest       # 기관 계정은 공개 목록(전국)으로 돌아가지 못한다(원칙 39)
     _kick_refresh()
     regions, _, src = regions_base()
     dv = await derived()
     nf = {} if pub else await _n_findings(p)
-    scope = tenant_scope(p.tenant_id) if p.realm == "tenant" else ([] if p.is_lx else None)
+    scope = tenant_scope(p.tenant_id) if tenant else ([] if p.is_lx else None)
     pool = find(q) if q else regions
+    if tenant:                                            # 관할 밖 시군구는 목록 · 검색 제안에 한 줄도 내지 않는다
+        pool = [r for r in pool if region_allowed(p, r["sgg_cd"])]
     items = []
     for r in pool:
         if sido and sido_label(sido) not in (r["sido"], r["sido_short"]) and sido not in (r["sido"], r["sido_short"]):
@@ -403,7 +607,9 @@ async def list_regions(request: Request, public: int | None = None, q: str | Non
         if not pub:
             it["n_findings"] = env(nf.get(cd, 0), "count", "inferred", "실태조사 의심 필지(검수 전 · survey_counts 와 같은 값)",
                                    None if nf.get(cd) else ("실태조사 결과 없음" if cd not in dv["parcels"] else None), as_of=dv["at"])
-            it["in_scope"] = in_scope(cd, scope)
+            it["in_scope"] = True if tenant else in_scope(cd, scope)     # 기관 목록은 관할만 남았다
+            if geom:
+                it["geometry"] = _static_geom(r)
         items.append(it)
     return {"items": items, "total": env(len(items), "count", "recorded", src, as_of=_cache.get("vw_at") or dv["at"]),
             "source": src, "public": pub, "as_of": dv["at"]}
@@ -416,6 +622,8 @@ async def get_region(sgg_cd: str, request: Request, geom: int | None = None):
     r = next((x for x in regions if x["sgg_cd"] == sgg_cd), None)
     if not r:
         raise ApiError("not_found", "해당 지역이 없습니다", {"sgg_cd": sgg_cd})
+    if not p.guest:
+        ensure_region(p, sgg_cd)                          # 기관 계정: 관할 밖 = 없는 지역
     dv = await derived()
     pub = p.guest
     imgs = dv["img"].get(sgg_cd, [])
@@ -671,10 +879,12 @@ _emd_pub: dict[tuple, dict] = {}
 @router.get("/regions/{sgg_cd}/emd")
 async def region_emd(sgg_cd: str, request: Request, full: int | None = None):
     """그 시군구 읍면동 경계 FeatureCollection(emd_cd · name · bbox · center). 옛/새 코드 모두 받는다."""
-    principal(request)
+    p = principal(request)
     r = region_of(sgg_cd)
     if not r:
         raise ApiError("not_found", "해당 지역이 없습니다", {"sgg_cd": sgg_cd})
+    if p.realm == "tenant":
+        ensure_region(p, r["sgg_cd"])                     # 기관 계정: 관할 밖 읍면동 경계 0
     try:
         fc = await run_in_threadpool(emd_fc, r["sgg_cd"])
     except EmdUnavailable as e:
@@ -724,6 +934,7 @@ async def region_results(sgg_cd: str, request: Request):
     r = region_of(sgg_cd)
     if not r:
         raise ApiError("not_found", "해당 지역이 없습니다", {"sgg_cd": sgg_cd})
+    ensure_region(p, r["sgg_cd"])                         # 기관 계정: 관할 밖 결과 층 0
     _, geoms, _ = regions_base()
     g = geoms.get(r["sgg_cd"]) or (geoms.get(r.get("prev_cd")) if r.get("prev_cd") else None)
     ix = await run_in_threadpool(emd_index, r["sgg_cd"])

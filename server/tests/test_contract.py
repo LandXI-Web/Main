@@ -64,7 +64,7 @@ CASES = [
     ("jobs_list", "GET", "/api/v1/jobs?limit=3", "staff", None),
     ("results_features", "GET", "/api/v1/results/results/lx/namwon-landcover-2023/features?limit=2", "staff", None),
     ("results_stats", "GET", "/api/v1/results/results/lx/namwon-landcover-2023/stats?by=emd", "staff", None),
-    ("parcels", "GET", "/api/v1/parcels?lng=127.39&lat=35.416", None, None),
+    ("parcels", "GET", "/api/v1/parcels?lng=127.39&lat=35.416", "staff", None),          # 로그인 필수(원칙 39 · 게스트 401)
     ("registry_models", "GET", "/api/v1/registry/models", "staff", None),
     ("registry_cards", "GET", "/api/v1/registry/cards", "staff", None),
     ("registry_lineage", "GET", "/api/v1/registry/lineage/dp-nw-farm-25", "staff", None),

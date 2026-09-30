@@ -188,4 +188,6 @@ body[data-big="1"] .gr-det{left:auto;right:24px}
 .gr-rgn{margin:12px 0 0}
 .gr-rgn[hidden]{display:none}
 #rp-sgg-f[hidden]{display:none}
-body[data-tab="sus"] .gr-verdict{display:none}
+/* 배정 단계가 없으므로(원칙 40) 의심 필지 탭에서 바로 판정한다 — 판정 3택을 이 탭에서도 보인다 */
+/* 광역 '전체' 보고서 — 시군구를 고르기 전에는 시군구 고르기 한 줄만 */
+#rp-form[data-all] .gr-field:not(#rp-sgg-f),#rp-form[data-all] #rp-go,#rp-form[data-all] #rp-docx{display:none}

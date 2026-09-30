@@ -1,6 +1,7 @@
 /* gov-fusion — 서비스 사용자 집 · 지자체(내 대장 × AI). 명세 LANDXI-FINAL-SPEC §2.9 그대로.
    정문(K2 관문) → 전국 → 관내 카메라(K3) → 시트(K5 카드 · K8 스텝 4) : 올리기(K11 × K9) → 열 확인(K12) → 결합(K9 진행) → 결과(K6 · K12)
-   → Ctrl K(K10 · 게이트웨이 /agent/runs) 한 문장 → 채색 · 리별 막대 · 목록 · 카메라 → 필지 카드(K5 서랍) → 현장 배정(K13 토스트).
+   → Ctrl K(K10 · 게이트웨이 /agent/runs) 한 문장 → 채색 · 리별 막대 · 목록 · 카메라 → 필지 카드(K5 서랍 · 상태 · 영상 설명).
+   현장 배정은 없다(원칙 40). 광역 기관은 관할 전체로 도착하고 시군구는 사용자가 고른다(화면이 대신 고르지 않음 · 최근 고른 곳은 표시만).
    관할 = 로그인한 기관(세션). 지역 문자열 고정값 0.
    숫자 한 출처 = 서버: 큰 숫자 · 작은 2 · 표 · 채색은 GET /survey/findings?ledger={import_id}(규칙 L-* · 대장 필지의 실태조사 규칙)에서,
    결합률은 서버 반입 기록(+ 서버가 조회 상한으로 못 본 행은 브라우저 V-World 확인으로 합쳐 하나)에서. 새 기기·새로고침도 같은 경로.
@@ -33,7 +34,7 @@ const inVW = (b) => b[0] < VW_BOUNDS[2] && b[2] > VW_BOUNDS[0] && b[1] < VW_BOUN
 const grow = (a, b) => (b ? [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[2], b[2]), Math.max(a[3], b[3])] : a);
 const NONE = [180, 90, -180, -90];
 const P = { base: 1, bld: 2, fal: 3, park: 4, q: 9 };
-const STATE_KO = { open: '—', assigned: '배정', inspected: '확인됨', closed: '종결', dismissed: '종결' };
+const STATE_KO = { open: '—', assigned: '—', inspected: '확인됨', closed: '종결', dismissed: '종결' };   // 판정 전 = '—'(배정 없음)
 const YD = (s) => String(s || '').replace(/^제(\d)종일반주거지역$/, '$1종주거').replace(/^제(\d)종전용주거지역$/, '$1종전용').replace(/지역$/, '').replace(/미세분류$/, '') || '—';
 const SIDO = ['서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종', '경기', '강원', '충북', '충청북', '충남', '충청남', '전북', '전라북', '전남', '전라남', '경북', '경상북', '경남', '경상남', '제주'];
 /* 시도 이름 → 법정동 코드 앞자리(전국 공통 기준표 · 관할 경계선 필터용 · 통합 시도 12 는 옛 코드와 함께) */
@@ -57,7 +58,13 @@ const isDevMode = new URLSearchParams(location.search).get('dev') === '1';
 const QREG = new URLSearchParams(location.search).get('region');   // ?region=시군구 — 그 시군구 결과로 연다
 if (isDevMode) window.__gf = S;   // 개발 모드 점검용
 
-const curSgg = () => S.askRegion || QREG || ledgerSgg() || S.region?.sgg?.[0] || null;   // 이 화면의 지금 시군구 — XI맵 · 할 일로 이어 준다
+/* 광역 기관(관할 시군구 여럿) — 시군구를 화면이 고르지 않는다. 주소(?region)로 고른 곳 · 질문 속 지역 · 올린 대장의 지역만 쓴다 */
+const homeSgg = () => (S.wide ? null : S.region?.sgg?.[0] || null);
+const curSgg = () => S.askRegion || QREG || ledgerSgg() || homeSgg();   // 이 화면의 지금 시군구 — XI맵 · 할 일로 이어 준다
+/* 최근 고른 시군구(기억만 · 표시로 알림) — 할 일 · 보고서 화면과 같은 저장 칸 */
+const RECENT_K = `gr:recent:${who.me.tenant_id}`;
+const recentSgg = () => { try { const a = JSON.parse(localStorage.getItem(RECENT_K) || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
+const rememberSgg = (cd) => { try { localStorage.setItem(RECENT_K, JSON.stringify([cd, ...recentSgg().filter((x) => x !== cd)].slice(0, 3))); } catch { /* 저장 불가 */ } };
 const shell = K.shell({ who, home: 'gov-fusion', title: String(who.org || '').trim().split(/\s+/).pop(), xiRegion: curSgg });   // 관할 이름(끝 낱말) — 배포 기록을 읽은 뒤 같은 값으로 확정
 const mastEl = shell.app.querySelector('.k-mast');
 const stageEl = h('div.gf-stage'); shell.main.append(stageEl);
@@ -91,8 +98,10 @@ const [dep, fin, emd, regs] = await Promise.all([
   api('/deploys').catch(() => null),
   api('/survey/findings?limit=1').catch(() => null),
   api('/survey/stats?by=emd').catch(() => null),
-  api('/regions').catch(() => null),
+  api('/regions').catch(() => null),        // 기관 계정 = 관할 시군구만(서버가 거른다)
 ]);
+S.regions = (regs && regs.items) || [];
+S.wide = S.regions.length > 1;              // 광역 기관 — 도착 = 관할 전체(시군구는 사용자가 고른다)
 S.region = resolveRegion(dep, fin, emd); tm('apis');
 if (QREG) {   // ?region=시군구 — 그 시군구 배포본만(대장 이어 열기·정적 필지 층 없이 summary 결과로)
   const ds = ((dep && dep.items) || []).filter((d) => d.tenant_id === who.me.tenant_id && String(d.sgg_cd || '') === QREG);
@@ -102,9 +111,9 @@ if (QREG) {   // ?region=시군구 — 그 시군구 배포본만(대장 이어 
     R.sgg = [QREG]; R.focus = true; R.hasFindings = false; R.bbox = bb || R.bbox;
     R.full = ds.map((d) => d.region_name && d.region_name.ko).find(Boolean) || R.full;
     R.name = String(R.full).trim().split(/\s+/).pop() || R.name;
+    rememberSgg(QREG);                      // 사용자가 고른 시군구 — 기억만(다음 도착 때 표시로 알림)
   }
 }
-S.regions = (regs && regs.items) || [];
 S.counts = fin?.counts || null;
 const own = ((dep && dep.items) || []).filter((d) => d.tenant_id === who.me.tenant_id);
 { const k = await ledgerKind(own.map((d) => d.card_id), who.me.tenant_id); S.kind = k.label; S.kindFrom = k.from; S.tiles = k.tiles; }   // 대장 종류 = 카드 ledger_schema(S-6) · 반입이 있으면 그 반입의 종류
@@ -117,7 +126,7 @@ document.title = `${orgName} · 내 대장 × AI · Land-XI`;
    (시군구가 여럿인 기관에서 다른 시군구 대장을 올린 직후에도 답·보고서가 그 대장 지역으로 간다 — 새로 열 필요 없음) */
 /* ?region 으로 고른 시군구가 올린 대장의 시군구와 다르면 대장을 문맥에 싣지 않는다(목포·여수를 골랐는데 강진 대장으로 답하지 않게) */
 const ledgerCtx = () => { const id = S.srv?.import_id || S.pendingId || null; if (!id || !QREG) return id; const lg = ledgerSgg(); return !lg || String(lg) === String(QREG) ? id : null; };
-const cmdk = K.mountCmdk({ stage, context: () => ({ tenant: who.me.tenant_id, region: S.askRegion || QREG || ledgerSgg() || S.region.sgg?.[0] || null, ledger: ledgerCtx(), pnu: S.selPnu || null }) });
+const cmdk = K.mountCmdk({ stage, context: () => ({ tenant: who.me.tenant_id, region: curSgg(), ledger: ledgerCtx(), pnu: S.selPnu || null }) });
 const ckBtn = cmdk.button(); ckBtn.querySelector('span').textContent = '물어보기';
 shell.mast(ckBtn);
 const ckInput = $('.k-ck-i', cmdk.el);
@@ -267,11 +276,19 @@ function paintSvcBar() {
   svcBar.innerHTML = '';
   if (!items.length) { svcBar.hidden = true; document.body.classList.remove('gf-has-svc'); return; }
   const key = (it) => +(it.metrics?.detected?.value || 0);
+  const rec = new Set(recentSgg().slice(0, 1));
+  if (S.wide) {       // 관할 전체 — 의심 필지 합계(숫자 한 출처 GET /survey/stats · 시군구 없이 = 관할 전체)
+    const t = S.allSus;
+    const v = t && t.value !== null && t.value !== undefined ? t.value : null;
+    svcBar.append(h('a.gf-svcbar-i.gf-svcbar-all', { href: location.pathname, 'aria-current': QREG ? null : 'true' },
+      h('b', { text: '전체' }), h('span', { text: S.region.full || '' }),
+      v !== null ? h('span.num', { text: `의심 필지 ${nf(v)}건`, dataset: { metric: '의심 필지', v: String(v) } }) : null));
+  }
   for (const it of [...items].sort((x, y) => String(x.sgg_cd).localeCompare(String(y.sgg_cd)) || key(y) - key(x)).slice(0, 6)) {
     const cd = String(it.sgg_cd);
     const nm = String(it.region_name || '').trim().split(/\s+/).pop();
     const det = it.metrics?.detected;
-    const a = h('a.gf-svcbar-i', { href: `?region=${encodeURIComponent(cd)}`, 'aria-current': QREG === cd ? 'true' : null },
+    const a = h('a.gf-svcbar-i', { href: `?region=${encodeURIComponent(cd)}`, 'aria-current': QREG === cd ? 'true' : null, dataset: S.wide && !QREG && rec.has(cd) ? { recent: '1' } : {}, title: S.wide && !QREG && rec.has(cd) ? '최근 고른 곳' : null },
       h('b', { text: nm }), h('span', { text: it.card_name || '' }),
       det && det.value !== null && det.value !== undefined ? h('span.num', { text: `${det.label} ${nf(det.value)}${det.unit || ''}`, dataset: { metric: det.label, v: String(det.value) } }) : null);
     svcBar.append(a);
@@ -646,7 +663,7 @@ const est = (n) => { const e = env(n, '필지', 'estimate', `대장 × 영상 AI
 function setBig(label, e) { big.set(e); big.label(label); }
 function catIdx(id) { const m = S.F?.[id]; if (!m) return []; const out = []; for (const pn of m.keys()) { const i = S.byPnu.get(pn); if (i !== undefined) out.push(i); } return out; }
 const catN = (id) => (S.F?.[id] ? S.F[id].size : null);
-/* 필지의 실태조사 결과 한 건 — 지금 보는 분류의 규칙 결과를 먼저(표의 '상태' = 필지 카드의 상태 = 배정 대상) */
+/* 필지의 실태조사 결과 한 건 — 지금 보는 분류의 규칙 결과를 먼저(표의 '상태' = 필지 카드의 상태) */
 function findingOf(pnu) {
   const F = S.F; if (!F) return null;
   for (const id of [S.cat, 'bld', 'park', 'fal']) { const e = F[id]?.get(pnu); if (e) return e.f; }
@@ -836,19 +853,7 @@ async function openParcel(pnu, fly) {
     if (!f) { const j = await api(`/survey/findings?pnu=${pnu}&limit=5`); f = (j.items || []).find((x) => x.state === 'open') || (j.items || [])[0]; }
     if (!f) return;
     S.states.set(pnu, f.state);
-    act.append(h('p.gf-st', {}, h('span.t-label', { text: '상태' }), h('b', { text: STATE_KO[f.state] === '—' ? '확인 전' : STATE_KO[f.state] })));
-    if (f.state === 'open') {
-      const b = h('button.t-btn', { type: 'button', text: '현장 배정' });
-      b.addEventListener('click', async () => {
-        b.disabled = true;
-        try {
-          const r = await api(`/survey/findings/${encodeURIComponent(f.id)}/state`, { method: 'POST', body: { client_id: 'gf-' + crypto.randomUUID(), state: 'assigned', assignee: who.name } });
-          f.state = r.state || 'assigned'; S.states.set(pnu, f.state); d.close(); K.toast('배정했습니다', { action: { label: '할 일', href: REPORT } });
-          refreshTodo(); resTable?.set(currentRows());
-        } catch { b.disabled = false; K.toast('배정하지 못했습니다'); }
-      });
-      act.append(b);
-    }
+    act.append(h('p.gf-st', {}, h('span.t-label', { text: '상태' }), h('b', { text: STATE_KO[f.state] === '—' ? '판정 전' : STATE_KO[f.state] })));
   } catch { /* 실태조사 기록이 없는 필지 */ }
 }
 
@@ -980,13 +985,13 @@ async function openDrawer(a) {
     K.drawer({ title: '보고서', body, host: stageEl, slot: 'agent' });
     return true;
   }
-  const sgg = S.askRegion || QREG || ledgerSgg() || S.region.sgg?.[0] || null;
+  const sgg = curSgg();
   const j = await api(`/survey/stats?by=emd${sgg ? `&sgg=${encodeURIComponent(sgg)}` : ''}`).catch(() => null);
   let items = (j?.items || []).map((x) => ({ label: x.key, value: +(x.n?.value ?? x.n ?? 0) || 0, cd: String(x.cd || '') }));
   if (a.emd_cd) items = items.filter((x) => x.cd.startsWith(String(a.emd_cd)) || String(a.emd_cd).startsWith(x.cd));
   items = items.filter((x) => x.value > 0).sort((x, y) => y.value - x.value);
   if (!items.length) return false;
-  const name = (S.regions || []).find((r) => String(r.sgg_cd) === String(sgg))?.name || S.region.name || '';
+  const name = (S.regions || []).find((r) => String(r.sgg_cd) === String(sgg) || String(r.prev_cd || '') === String(sgg))?.name || S.region.name || '';
   const body = h('div.gf-dr-stats');
   const be = h('div'); body.append(h('p.gf-ans-h', { text: '읍면동별 의심 필지' }), be);
   K.bars(be, { items: items.slice(0, 12), ai: true, unit: '건' });
@@ -1067,6 +1072,10 @@ function outsideOf(q) {
       if (nm.length >= 2 && s.includes(nm)) return nm;
       if (short.length >= 2 && new RegExp(short + '(?:시|군|구|에서|의|\\s|$)').test(s)) return nm;
     }
+  }
+  /* 서버는 기관 계정에 관할 밖 시군구 목록을 주지 않는다(원칙 39) — 관할 안 이름을 지우고도 남는 '○○시 · ○○군 · ○○구'는 관할 밖으로 보고 서버 범위 가드에 맡긴다 */
+  for (const m of s.matchAll(/(?:^|\s)([가-힣]{2,5}(?:시|군|구))(?=$|[\s,?·]|에서|에|의|은|는|이|가)/g)) {
+    if (!inside.has(m[1])) return m[1];
   }
   if (S.emd.size) {   // 읍면동 목록이 온전한 관할만 — 낱말 앞이 띄어 쓴 이름이고, '…하면 · 없으면 · 이동' 같은 말은 빼고
     const m = [...s.matchAll(/(?:^|\s)([가-힣]{1,5}(?:읍|면|동))(?=$|[\s,?·]|에서|에|의|은|는|이|가)/g)].map((x) => x[1]);
@@ -1248,13 +1257,14 @@ function reset() {
 function resolveRegion(dep, fin, emd) {
   const R = { id: who.me.tenant_id, full: '', name: '', sgg: null, bbox: null, ai: null };
   const mine = ((dep && dep.items) || []).filter((d) => d.tenant_id === who.me.tenant_id);
-  R.full = mine.map((d) => d.region_name && d.region_name.ko).find(Boolean) || who.org || '';
+  const orgFull = who.tenant?.name?.ko || who.org || '';
+  R.full = S.wide ? orgFull : mine.map((d) => d.region_name && d.region_name.ko).find(Boolean) || orgFull;
   let bb = null;
   const g = (b) => { if (!b) return; bb = bb ? grow(bb, b) : [...b]; };
   for (const d of mine) g(bboxOf(d.aoi));
   for (const it of (emd && emd.items) || []) if (it.bbox && it.bbox.length === 4) { S.emd.set(it.cd, { name: it.key, bbox: it.bbox }); g(it.bbox); }
   const f = fin && fin.items && fin.items[0];
-  if (f) R.sgg = [String(f.pnu).slice(0, 5)];
+  if (f && !S.wide) R.sgg = [String(f.pnu).slice(0, 5)];   // 광역은 첫 필지의 시군구로 좁히지 않는다(관할 전체 · 시군구는 사용자가 고름)
   if (!R.full && f) R.full = String(f.addr || '').split(/\s+/).slice(0, 2).join(' ');
   R.name = String(R.full).trim().split(/\s+/).pop() || '';
   R.bbox = bb || KOREA;
@@ -1459,6 +1469,7 @@ async function openLast(p) {
   }
   tm('head'); await mountLayers(); tm('layers');
   S.sum = await sumP; tm('summary');
+  if (S.wide) S.allSus = (await api('/survey/stats?by=rule').catch(() => null))?.total || null;   // 관할 전체 의심 필지(한 출처)
   paintSvcBar();
   if (!R.ai) showStatus();
   if (R.focus) { pane('drop'); requestAnimationFrame(padStage); await goReady(R.bbox, { ms: 2400, maxZoom: 11, budget: 1800 }); return; }

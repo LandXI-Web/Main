@@ -8,6 +8,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import os
+import re
 import secrets
 import time
 
@@ -223,10 +224,75 @@ async def _quote_train_tile(p: Principal, body: dict, kind: str) -> dict:
             "_aoi": None, "_tenant": tenant, "_model": dict(model) if model else None, "_img": None, "_adapter": adapter, "_opts": opts}
 
 
+OUT_OF_SCOPE = "관할 밖 지역은 분석할 수 없습니다"
+
+
+def _aoi_shape(aoi: dict | None):
+    """범위 원본 전체(조각 · 여러 면 · Feature · FeatureCollection) → shapely 하나. 가장 큰 면만 남기기 전의 모양으로 관할을 본다."""
+    if not aoi:
+        return None
+    t = aoi.get("type")
+    if t == "Feature":
+        return _aoi_shape(aoi.get("geometry"))
+    if t == "FeatureCollection":
+        from shapely.ops import unary_union
+        parts = [_aoi_shape(f.get("geometry") if f.get("type") == "Feature" else f) for f in aoi.get("features") or []]
+        parts = [g for g in parts if g is not None and not g.is_empty]
+        return unary_union(parts) if parts else None
+    try:
+        g = shape(aoi)
+    except Exception as e:
+        raise ApiError("bad_request", f"aoi 형식: {e}") from None
+    return g if g.is_valid else g.buffer(0)
+
+
+async def scope_guard(p: Principal, body: dict) -> None:
+    """기관 계정의 분석 견적·등록 = 관할 안만(원칙 39 · 확인 FR-11). 시군구 코드 · 읍면동 코드 · 범위 · 영상 · 배포본 가운데
+    하나라도 관할 밖이면(범위는 경계선 오차 약 10m 를 넘어 조금이라도 벗어나면) 거절 — 분석 기계 사용 0 · 계획 0(모델 미리 올리기 전).
+    LX 계정은 그대로 전국. 위치를 하나도 주지 않은 기관 요청도 거절(무엇을 분석하는지 모르는 요청을 받지 않는다)."""
+    from . import regions as R
+    if R.scope_of(p) is None:
+        return
+    out = ApiError("out_of_scope", OUT_OF_SCOPE, None, 403)
+    opts = body.get("options") or {}
+    located = False
+    sgg = opts.get("sgg_cd") or body.get("sgg_cd")
+    if sgg:
+        located = True
+        if not R.region_allowed(p, str(sgg)):
+            raise out
+    emds = opts.get("emd_cd") or body.get("emd_cd")
+    for e in ([emds] if isinstance(emds, str) else list(emds or [])):
+        located = True
+        if not re.fullmatch(r"\d{8,10}", str(e)) or not R.region_allowed(p, str(e)[:5]):
+            raise out
+    g = _aoi_shape(body.get("aoi"))
+    if body.get("aoi") is not None:
+        located = True
+        if g is None or not await run_in_threadpool(R.geom_in_scope, p, g):
+            raise out
+    if body.get("imagery_id"):
+        located = True
+        if g is None:                                   # 범위 없이 영상 전체 — 영상 범위가 관할 안이어야
+            async with db(realm="lx") as conn:
+                fp = await conn.fetchval("SELECT ST_AsGeoJSON(footprint)::json FROM imagery WHERE id=$1", body["imagery_id"])
+            if not fp or not await run_in_threadpool(R.geom_in_scope, p, shape(fp)):
+                raise out
+    if body.get("deploy_id"):
+        located = True
+        async with db(p) as conn:                        # RLS — 다른 기관 배포본은 보이지 않는다
+            t = await conn.fetchval("SELECT tenant_id FROM deploys WHERE id=$1", body["deploy_id"])
+        if t != p.tenant_id:
+            raise out
+    if not located:
+        raise out
+
+
 async def build_quote(p: Principal, body: dict) -> dict:
     kind = body.get("kind", "infer")
     if kind not in ("infer", "reinfer", "index", "survey", "join", "train", "tile"):
         raise ApiError("bad_request", f"kind {kind} — infer|reinfer|index|survey|join|train|tile")
+    await scope_guard(p, body)                          # 관할 밖 = 계획·견적 전에 거절
     if kind in ("train", "tile"):
         return await _quote_train_tile(p, body, kind)
     demo = bool(body.get("demo"))
@@ -618,6 +684,7 @@ async def job_scope(sgg_cd: str, request: Request):
     reg = R.region_of(sgg_cd)
     if not reg:
         raise ApiError("not_found", "해당 지역이 없습니다", {"sgg_cd": sgg_cd})
+    R.ensure_region(p, reg["sgg_cd"])                   # 기관 계정: 관할 밖 = 없는 지역
     cd = reg["sgg_cd"]
     ix = await run_in_threadpool(R.emd_index, cd)
     if ix is None or not len(ix):

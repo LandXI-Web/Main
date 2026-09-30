@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>할 일 · 보고서 · Land-XI</title>
-<meta name="description" content="관할 시군구의 의심 필지를 현장 확인에 배정하고, 판정하고, 조치를 기록하고, 읍면동 보고서를 받는다.">
+<meta name="description" content="관할 시군구의 의심 필지를 판정하고, 조치를 기록하고, 읍면동 보고서를 받는다.">
 <link rel="icon" href="../../assets/images/favicon_landxi.png">
 <link rel="stylesheet" href="../../proto/vendor/maplibre/maplibre-gl.css">
 <link rel="stylesheet" href="../kit/kit.css">
@@ -32,6 +32,7 @@
       <label class="gr-field gr-rgn" id="sus-rgn-f" hidden><span class="t-label">시군구</span><select class="t-input" id="sus-rgn"></select></label>
       <div class="gr-big" id="sus-big" hidden></div>
       <div class="gr-table" id="sus-table" hidden></div>
+      <div class="gr-table" id="sus-sgg" hidden></div>
       <div class="gr-empty" id="sus-empty" hidden></div>
     </div>
 
@@ -83,8 +84,6 @@
       <p class="gr-act-line" id="act-line" hidden></p>
       <p class="gr-lock" id="lock-line" hidden></p>
       <div class="gr-det-act">
-        <button type="button" class="t-btn" id="b-assign" hidden>현장 확인 배정</button>
-        <button type="button" class="t-btn t-btn--2" id="b-assignee">담당 바꾸기</button>
         <button type="button" class="t-btn t-btn--2" id="b-action">조치 기록</button>
         <button type="button" class="gr-link" id="b-map">지도에서 보기<span aria-hidden="true">→</span></button>
       </div>

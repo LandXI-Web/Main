@@ -102,7 +102,7 @@ K.dropzone($('drop'), {
 });
 
 /* ── 알림 · 개발자 · 다국어 ─────────────────────────────── */
-$('toastBtn').addEventListener('click', () => K.toast('배정했습니다', { action: { label: '되돌리기', onClick: () => K.toast('되돌렸습니다') } }));
+$('toastBtn').addEventListener('click', () => K.toast('저장했습니다', { action: { label: '되돌리기', onClick: () => K.toast('되돌렸습니다') } }));
 $('devBtn').addEventListener('click', () => K.toast(new URLSearchParams(location.search).get('dev') === '1' ? '` 키로 여닫습니다' : '개발 모드에서만 열립니다'));
 const en = await fetch('./i18n/en.json').then((r) => r.json()).catch(() => ({}));
 const keys = ['cmdk.placeholder', 'region.placeholder', 'empty.first', 'card.state.pilot'];

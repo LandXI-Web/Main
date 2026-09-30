@@ -48,8 +48,9 @@ SPECS: dict[str, dict] = {
         "description": "직전 견적대로 GPU 분석 작업 제출. 사람이 확인 카드를 승인해야 실행된다(승인 전 실행 없음). 사용자가 분석 실행을 원하면 jobs_quote 다음에 부른다.",
         "properties": {}},
     "survey_state": {
-        "description": "의심 건 상태 변경(현장조사 배정·오탐 등). 사람이 확인 카드를 승인해야 실행.",
-        "properties": {"finding_id": {"type": "string"}, "state": {"type": "string", "enum": ["assigned", "dismissed", "inspected", "closed"]},
+        "description": "의심 건 판정 기록(확인 · 종결 · 오탐). 현장 확인 배정은 없다. 사람이 확인 카드를 승인해야 실행.",
+        "properties": {"finding_id": {"type": "string"}, "state": {"type": "string", "enum": ["dismissed", "inspected", "closed"]},
+                       "verdict": {"type": "string", "enum": ["match", "violation", "match_fp", "unclear"]},
                        "reason": {"type": "string"}}, "required": ["finding_id", "state"]},
     # 클라이언트 도구(F2-A window.XI) — 서버는 ui_actions 로만 내려준다
     "map_arrive": {"description": "직전 도구 결과(필지·피처)를 지도에 도착(스윕·락온·숫자)시킨다.",

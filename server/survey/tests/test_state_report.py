@@ -1,4 +1,4 @@
-"""상태기계(6 전이 · 역방향 409 · client_id 멱등) → audit_log · events 표 · SSE 발행 · 보고서 docx."""
+"""상태기계(배정 없음 · 판정 전 → 확인 → 종결/오탐 · 역방향 409 · client_id 멱등) → audit_log · events 표 · SSE 발행 · 보고서 docx."""
 import asyncio
 import io
 import json
@@ -34,22 +34,28 @@ def _post(api, h, fid, **body):
     return httpx.post(f"{api}/survey/findings/{fid}/state", json=body, headers=h, timeout=30)
 
 
-def test_state_machine_six_transitions(api, h_nw, picks):
+def test_state_machine_no_assignment(api, h_nw, picks):
+    """현장 확인 배정 없음(원칙 40) — 판정 전(open) → 확인(inspected) → 종결(closed) · 판정 전 → 오탐(dismissed). 옛 기록(assigned)도 같은 길."""
     a, b, c = picks
-    # 1 open→assigned  2 assigned→inspected  3 inspected→closed
+    # 배정은 400(기록 0) · 담당(assignee)은 쓰지 않는다
     r = _post(api, h_nw, a, state="assigned", assignee="토지정보과 1팀", planned_for="2026-10-05")
-    assert r.status_code == 200 and r.json()["state"] == "assigned" and r.json()["assignee"] == "토지정보과 1팀"
-    assert _post(api, h_nw, a, state="inspected").json()["state"] == "inspected"
-    # 4 역방향 inspected→assigned 409
-    rr = _post(api, h_nw, a, state="assigned")
+    assert r.status_code == 400 and "배정" in r.json()["error"]["message"]
+    # 1 open→inspected  2 inspected→closed
+    r = _post(api, h_nw, a, state="inspected", assignee="토지정보과 1팀")
+    assert r.status_code == 200 and r.json()["state"] == "inspected" and not r.json().get("assignee")
+    # 역방향 · 건너뛰기 409
+    rr = _post(api, h_nw, a, state="dismissed", reason="x")
     assert rr.status_code == 409 and rr.json()["error"]["code"] == "finding_state_invalid"
     assert rr.json()["error"]["detail"]["allowed"] == ["closed"]
     assert _post(api, h_nw, a, state="closed", verdict="violation").json()["state"] == "closed"
-    # 5 open→dismissed(사유 필수)
+    # 3 open→dismissed(사유 필수)
     assert _post(api, h_nw, b, state="dismissed").status_code == 400
     assert _post(api, h_nw, b, state="dismissed", reason="농업용 창고(현장 사진)").json()["state"] == "dismissed"
-    # 6 assigned→dismissed
-    assert _post(api, h_nw, c, state="assigned").status_code == 200
+    # 4 옛 기록(assigned — 배정 기능이 있던 때) → dismissed
+    with S.pg() as cn:
+        S.lx_tx(cn)
+        cn.execute("UPDATE survey_findings SET state='assigned' WHERE id=%s", (c,))
+        cn.commit()
     assert _post(api, h_nw, c, state="dismissed", reason="건축물대장 확인 — 적법").json()["state"] == "dismissed"
     # 종결 뒤 변경 금지
     assert _post(api, h_nw, a, state="dismissed", reason="x").status_code == 409
@@ -57,16 +63,16 @@ def test_state_machine_six_transitions(api, h_nw, picks):
         S.lx_tx(cn)
         n_ev = cn.execute("SELECT count(*) FROM survey_finding_events WHERE finding_id = ANY(%s)", (picks,)).fetchone()[0]
         n_au = cn.execute("SELECT count(*) FROM audit_log WHERE action='finding.state' AND subject = ANY(%s)", (picks,)).fetchone()[0]
-    assert n_ev == 6 and n_au == 6
+    assert n_ev == 4 and n_au == 4
 
 
 def test_idempotent_client_id(api, h_nw, picks):
     fid = picks[0]
     cid = "pytest-idem-" + uuid.uuid4().hex
-    r1 = _post(api, h_nw, fid, state="assigned", client_id=cid)
-    r2 = _post(api, h_nw, fid, state="assigned", client_id=cid)
+    r1 = _post(api, h_nw, fid, state="inspected", client_id=cid)
+    r2 = _post(api, h_nw, fid, state="inspected", client_id=cid)
     assert r1.status_code == 200 and r2.status_code == 200 and r2.json().get("idempotent") is True
-    r3 = _post(api, h_nw, picks[1], state="assigned", client_id=cid)
+    r3 = _post(api, h_nw, picks[1], state="inspected", client_id=cid)
     assert r3.status_code == 409
     with S.pg() as cn:
         S.lx_tx(cn)
@@ -74,10 +80,10 @@ def test_idempotent_client_id(api, h_nw, picks):
 
 
 def test_write_guards(api, h_sales, h_gj, h_staff, picks):
-    assert _post(api, h_sales, picks[0], state="assigned").status_code == 403
-    assert _post(api, h_gj, picks[0], state="assigned").status_code == 404          # 타 기관: 행이 없다(RLS)
-    assert httpx.post(f"{api}/survey/findings/{picks[0]}/state", json={"state": "assigned", "client_id": "x"}).status_code == 401
-    r = _post(api, h_staff, picks[0], state="assigned")                               # LX 직원 = 시연 쓰기
+    assert _post(api, h_sales, picks[0], state="inspected").status_code == 403
+    assert _post(api, h_gj, picks[0], state="inspected").status_code == 404          # 타 기관: 행이 없다(RLS)
+    assert httpx.post(f"{api}/survey/findings/{picks[0]}/state", json={"state": "inspected", "client_id": "x"}).status_code == 401
+    r = _post(api, h_staff, picks[0], state="inspected")                              # LX 직원 = 시연 쓰기
     assert r.status_code == 200 and r.json()["basis"] == "demo" and "자동 원복" in r.json()["demo_note"]
 
 
@@ -87,10 +93,10 @@ def test_sse_published_to_tenant_and_ops(api, h_nw, picks):
     rc = _redis.Redis.from_url(config.REDIS_URL, decode_responses=True)
     last_t = (rc.xrevrange("events:tenant:namwon", count=1) or [["0-0"]])[0][0]
     last_o = (rc.xrevrange("ops:events", count=1) or [["0-0"]])[0][0]
-    assert _post(api, h_nw, picks[0], state="assigned").status_code == 200
+    assert _post(api, h_nw, picks[0], state="inspected").status_code == 200
     t = [json.loads(f["data"]) for _, f in rc.xrange("events:tenant:namwon", min=f"({last_t}") if f.get("event") == "finding.state"]
     o = [json.loads(f["data"]) for _, f in rc.xrange("ops:events", min=f"({last_o}") if f.get("event") == "finding.state"]
-    assert any(d["id"] == picks[0] and d["from"] == "open" and d["to"] == "assigned" for d in t)
+    assert any(d["id"] == picks[0] and d["from"] == "open" and d["to"] == "inspected" for d in t)
     assert any(d["id"] == picks[0] for d in o)
 
 
@@ -109,7 +115,7 @@ def test_publish_fake_bus(monkeypatch):
         return Fake()
 
     monkeypatch.setattr(SV, "redis", fake_redis)
-    asyncio.run(SV._publish("namwon", {"id": "f_R1_x", "from": "open", "to": "assigned"}))
+    asyncio.run(SV._publish("namwon", {"id": "f_R1_x", "from": "open", "to": "inspected"}))
     assert [s[0] for s in sent] == ["events:tenant:namwon", "ops:events"] and all(s[1] == "finding.state" for s in sent)
 
 
@@ -133,8 +139,13 @@ def test_report_docx_rows_and_phrase():
 
 def test_report_narrative_citation_check():
     from survey import report
-    ok = report.build_draft("52190450", "R1", 5, narrative={"overview": ["아영면 후보는 387건이다 [2]."], "actions": ["A등급부터 배정한다 [3]."]})
-    assert ok["narrative_by"] == "llm" and ok["narrative_source"].startswith("AI 가 작성한 초안")
+    ok = report.build_draft("52190450", "R1", 5, narrative={"overview": ["아영면 후보는 387건이다 [2]."], "actions": ["A등급부터 현장 확인 대상으로 검토한다 [3]."]})
+    assert ok["narrative_by"] == "llm" and ok["narrative_source"].startswith("AI 가 작성한 초안") and ok["narrative"]["actions"]
+    # 보고서까지(원칙 40) — 배정 · 시정명령 · 공문 문장은 서술에서 뺀다(나머지 서술은 산다)
+    cut = report.build_draft("52190450", "R1", 5, narrative={"overview": ["아영면 후보는 387건이다 [2]."],
+                                                            "actions": ["A등급부터 현장조사 담당을 배정한다 [3].", "위반 필지는 시정명령을 내린다 [3].",
+                                                                        "관계 부서에 협조 공문을 보낸다 [2]."]})
+    assert cut["narrative_by"] == "llm" and cut["narrative"]["actions"] == [] and len([x for x in cut["narrative_dropped"] if "처분" in x]) == 3
     bad = report.build_draft("52190450", "R1", 5, narrative={"overview": ["아영면 후보는 많다. 인용이 없다."]})
     assert bad["narrative_by"] == "rule" and bad["narrative_rejected"]
     rng = report.build_draft("52190450", "R1", 5, narrative="숫자는 [99] 이다.")

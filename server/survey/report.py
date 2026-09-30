@@ -21,7 +21,11 @@ from .db import (AI_DRAFT, AS_OF, AUTO_DRAFT, FIXED_PHRASE, IMG23, IMG25, LEDGER
 from .explain import env
 
 KST = dt.timezone(dt.timedelta(hours=9))
-STATE_KO = {"open": "배정 전", "assigned": "현장조사 배정", "inspected": "현장조사 완료", "closed": "종결", "dismissed": "오탐"}
+# 상태 이름(사용자 말) — 현장 확인 배정은 없다(원칙 40). 'assigned' 는 옛 기록의 상태로 '확인 전'에 함께 센다.
+STATE_KO = {"open": "확인 전", "assigned": "확인 전", "inspected": "확인됨", "closed": "종결", "dismissed": "오탐"}
+REPORT_STATES = [("확인 전", ("open", "assigned")), ("확인됨", ("inspected",)), ("종결", ("closed",)), ("오탐", ("dismissed",))]
+# 보고서까지(원칙 40 · FR-15 반려) — 행정 처분을 몰아붙이는 말(시정명령 · 이행강제금 · 원상복구 · 고발 · 공문 · 현장 배정)은 서술에 남기지 않는다.
+COERCIVE = re.compile(r"시정\s*명령|이행\s*강제금|원상\s*복구|원상\s*회복|고발|과태료|행정\s*처분|처분\s*(?:을|를)?\s*(?:내|하|검토)|공문|협조\s*요청|시행문|배정")
 NOT_FOUND = "법령 데이터에 없습니다"
 # 규칙별 근거 조문(법령 · 조 · 항) — 원문은 법령 색인에서 그대로 가져온다(색인에 없으면 '법령 데이터에 없습니다').
 LAW_REFS = {
@@ -254,7 +258,7 @@ def citations(d: dict) -> list[dict]:
          "value": env(tot, "count", "inferred", src, "검수 전")},
         {"n": 3, "kind": "grade_a", "label": f"그중 A등급({d['region']['name']} 전체 점수 상위 5%)", "value": env(a_n, "count", "inferred", src, "검수 전")},
         {"n": 4, "kind": "suspect_parcels", "label": f"{place} 후보 필지 수", "value": env(d["suspect_parcels"], "필지", "inferred", src, "검수 전")},
-        {"n": 5, "kind": "open", "label": f"{place} 현장조사 배정 전 건수", "value": env(sum(v["open"] for v in t.values()), "count", "recorded", STATE_SRC)},
+        {"n": 5, "kind": "open", "label": f"{place} 확인 전 건수", "value": env(sum(v["open"] + v["assigned"] for v in t.values()), "count", "recorded", STATE_SRC)},
     ]
     k = 6
     for r in t:
@@ -321,6 +325,9 @@ def check_narrative(narrative, n_cites: int, cites: list[dict] | None = None) ->
                 if not s:
                     continue
                 refs = [int(x) for x in CITE_RE.findall(s)]
+                if COERCIVE.search(CITE_RE.sub("", s)):
+                    dropped.append(f"뺌: 보고서 범위 밖(처분·공문·배정): {s[:40]}")
+                    continue
                 if not refs:
                     bad.append(f"인용 없음: {s[:40]}")
                 elif any(r < 1 or r > n_cites for r in refs):
@@ -351,7 +358,7 @@ def _default_narrative(d: dict, cites: list[dict]) -> dict:
         "findings": ([f"규칙별로는 {rules_txt}입니다."] if rules else [])
                     + [f"점수 상위 5%인 A등급은 {v[3]:,}건으로 현장 확인 우선 대상입니다 [3].",
                        f"필지별 근거면적과 신뢰도는 ③ 의심 상위 목록에 실었습니다 [{by_kind['list']}]."],
-        "actions": [f"현장조사 배정 전 {v[5]:,}건 가운데 A등급부터 현장조사 담당을 배정합니다 [5][3].",
+        "actions": [f"확인 전 {v[5]:,}건 가운데 A등급부터 현장 확인 대상으로 검토합니다 [5][3].",
                     "현장 확인 전에 건축물대장과 허가 대장을 먼저 대조해 오탐을 줄입니다 [2]."],
     }
     if law_n:
@@ -403,7 +410,7 @@ def as_json(d: dict, narrative=None) -> dict:
                 for x in d["_law"]],
         "actions": {"field_targets": env(sum(v["A"] for v in t.values()), "count", "inferred", REPORT_SRC, "A등급 우선 · 검수 전"),
                     "checklist": ["건축물대장 대조(대조 전)", "농지·산지전용 허가 대장 대조(기관 대장 올리기 후)",
-                                  "현장 사진·측량 확인", "결과 입력: 현장조사 완료 → 종결 또는 오탐(사유 기록)"],
+                                  "현장 사진·측량 확인", "결과 입력: 판정(위반 · 대장과 같음 · 불명확) 또는 오탐(사유 기록)"],
                     "fixed": FIXED_PHRASE},
         "citations": cites,
         "narrative": narr or _default_narrative(d, cites),
@@ -549,10 +556,10 @@ def render_docx(d: dict, narrative=None) -> tuple[bytes, str]:
     rows = []
     for r in j["table"]:
         rows.append([r["name"], r["A"]["value"], r["B"]["value"], r["C"]["value"], r["total"]["value"],
-                     *[r["by_state"][s]["value"] for s in STATES]])
-    tot = ["계"] + [sum(x[i] for x in rows) for i in range(1, 10)]
-    _tbl(doc, ["규칙", "A", "B", "C", "계", *[STATE_KO[s] for s in STATES]], rows + [tot],
-         widths=[4.6, 1.2, 1.2, 1.4, 1.4, 1.5, 1.4, 1.5, 1.2, 1.2])
+                     *[sum(r["by_state"][s]["value"] for s in ss if s in r["by_state"]) for _, ss in REPORT_STATES]])
+    tot = ["계"] + [sum(x[i] for x in rows) for i in range(1, 5 + len(REPORT_STATES))]
+    _tbl(doc, ["규칙", "A", "B", "C", "계", *[k for k, _ in REPORT_STATES]], rows + [tot],
+         widths=[4.6, 1.2, 1.2, 1.4, 1.4, 1.9, 1.9, 1.9, 1.9])
     _p(doc, f"꼬리표: 등급·건수 = AI 추론 · 검수 전 / 상태 = 기록. 등급 A = {j['sgg']} 전체 점수 상위 5%, B = 다음 20%.",
        8, False, "56626B")
     for s in j["narrative"].get("findings", []):
@@ -622,130 +629,6 @@ def build_draft(emd_cd: str, rule: str | None = None, top: int = 20, narrative=N
     if fmt == "docx":
         return render_docx(d, narrative)[0]
     return as_json(d, narrative)
-
-
-# ─────────────────────────── 공문 초안(현장 조사 협조 요청) ───────────────────────────
-LETTER_DAYS = 30            # 기간 기본값(초안 · 담당자가 정함)
-
-
-def letter_filename(place: str, at: dt.datetime | None = None) -> str:
-    at = at or dt.datetime.now(KST)
-    return f"현장조사_협조공문_초안_{place.replace(' ', '_')}_{at:%Y%m%d}.docx"
-
-
-def collect_letter(code: str, realm: str = "lx", tenant: str = "") -> dict:
-    """공문 초안 자료 — 대상 필지 = '현장 확인 필요'(전체 규칙 · 우선순위 A · 배정 전·배정 · 필지 단위) = 첫 화면 같은 이름의 값과 같은 식.
-    시군구는 한 출처(counts_sync field_check), 읍면동은 같은 조건을 그 읍면동에서 센 값."""
-    code = str(code or "").strip()
-    level = "sgg" if re.fullmatch(r"\d{5}", code) else "emd"
-    with _conn(realm, tenant) as c:
-        if level == "sgg":
-            sg = c.execute("SELECT sgg_cd, tenant_id, name, sido, imagery, parcels_as_of, priority_cut, parcels_src ? 'canon' AS canon "
-                           "FROM survey_sgg WHERE sgg_cd=%s", (code,)).fetchone()
-            if not sg:
-                raise NotFound(f"{code} 실태조사 결과가 없습니다")
-            e = {"emd_cd": code, "name": sg["name"], "sgg_cd": code, "tenant_id": sg["tenant_id"]}
-            col = "f.sgg_cd"
-        else:
-            e = c.execute("SELECT emd_cd, name, coalesce(sgg_cd, left(emd_cd, 5)) sgg_cd, tenant_id FROM survey_emd WHERE emd_cd=%s", (code,)).fetchone()
-            if not e:
-                raise NotFound(f"읍면동 {code} 없음")
-            sg = c.execute("SELECT sgg_cd, tenant_id, name, sido, imagery, parcels_as_of, priority_cut, parcels_src ? 'canon' AS canon "
-                           "FROM survey_sgg WHERE sgg_cd=%s", (e["sgg_cd"],)).fetchone()
-            col = "f.emd_cd"
-        org = c.execute("SELECT name->>'ko' AS ko FROM tenants WHERE id=%s", ((sg or {}).get("tenant_id") or e["tenant_id"],)).fetchone()
-        rows = c.execute(f"SELECT * FROM (SELECT DISTINCT ON (f.pnu) f.pnu, f.addr, f.jimok, f.score, f.rank, f.state, p.jibun, "
-                         f"(SELECT array_agg(DISTINCT g.rule ORDER BY g.rule) FROM survey_findings g WHERE g.pnu = f.pnu AND g.rule = ANY(%s) "
-                         f"AND g.priority = 'A' AND g.state IN ('open','assigned')) AS rules_all "
-                         f"FROM survey_findings f LEFT JOIN survey_parcels p USING (pnu) "
-                         f"WHERE {col} = %s AND f.rule = ANY(%s) AND f.priority = 'A' AND f.state IN ('open','assigned') "
-                         f"ORDER BY f.pnu, f.score DESC) x ORDER BY x.score DESC, x.rank",
-                         (list(RULE_IDS), code, list(RULE_IDS))).fetchall()
-        counts = _counts(c, e["sgg_cd"]) if level == "sgg" else None
-    region = _region(e["sgg_cd"], sg)
-    region["org"] = (org or {}).get("ko")
-    n = counts["field_check"] if counts and counts.get("field_check") is not None else len(rows)
-    return {"level": level, "emd": dict(e), "region": region, "rows": [dict(x) for x in rows], "targets": int(n),
-            "suspect": counts["suspect"] if counts else None, "at": dt.datetime.now(KST)}
-
-
-def letter_json(d: dict) -> dict:
-    rg = d["region"]
-    place = rg["name"] if d["level"] == "sgg" else f"{rg['name']} {d['emd']['name']}"
-    at = d["at"]
-    end = at + dt.timedelta(days=LETTER_DAYS)
-    return {"template": "field-letter", "place": place, "org": rg.get("org"), "sido": rg.get("sido"),
-            "title": f"{place} 농지 등 실태조사 현장 확인 협조 요청(초안)",
-            "to": f"{place} 관계 부서장(농지·건축·산지 담당)",
-            "targets": env(d["targets"], "필지", "inferred", REPORT_SRC, "현장 확인 필요 · 검수 전"),
-            "suspect": env(d["suspect"], "count", "inferred", REPORT_SRC, "검수 전") if d.get("suspect") is not None else None,
-            "period": {"from": f"{at:%Y. %m. %d.}", "to": f"{end:%Y. %m. %d.}", "days": LETTER_DAYS},
-            "items": [{"no": i + 1, "pnu": x["pnu"], "addr": x["addr"], "jimok": x.get("jimok"),
-                       "rules": [rule_name(r) for r in (x.get("rules_all") or []) if rule_name(r)]} for i, x in enumerate(d["rows"])],
-            "fixed": FIXED_PHRASE, "generated": at.isoformat(timespec="seconds"), "filename": letter_filename(place, at)}
-
-
-def render_letter(d: dict) -> tuple[bytes, str, dict]:
-    """한 장 공문 초안(제목·수신·참조·본문(목적·대상 필지 수·기간·협조 사항)·붙임(대상 필지 목록)) + 붙임 목록 쪽."""
-    from docx import Document
-    from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK
-    from docx.oxml.ns import qn
-    from docx.shared import Cm, Pt
-    j = letter_json(d)
-    doc = Document()
-    sec = doc.sections[0]
-    sec.page_width, sec.page_height = Cm(21.0), Cm(29.7)
-    sec.left_margin = sec.right_margin = Cm(2.0)
-    sec.top_margin = sec.bottom_margin = Cm(2.0)
-    st = doc.styles["Normal"]
-    st.font.name = "맑은 고딕"
-    st.font.size = Pt(11)
-    st.element.rPr.rFonts.set(qn("w:eastAsia"), "맑은 고딕")
-    doc.core_properties.title = j["title"]
-    doc.core_properties.author = j.get("org") or "Land-XI"
-    doc.core_properties.comments = ""
-    org = j.get("org") or ""
-    n = j["targets"]["value"]
-    _p(doc, org or " ", 18, True, "14202A", WD_ALIGN_PARAGRAPH.CENTER, space_after=10)
-    _p(doc, f"수신  {j['to']}", 11, space_after=2)
-    _p(doc, "참조  현장 확인 담당", 11, space_after=2)
-    _p(doc, "(경유)", 11, space_after=6)
-    _p(doc, f"제목  {j['title']}", 12, True, "14202A", space_after=10)
-    _p(doc, "1. 관련: 농지 등 실태조사(AI 영상 분석 결과와 연속지적도 대조 · 검수 전).", 11, space_after=4)
-    _p(doc, f"2. 위 관련으로 {j['place']}의 실태조사 대상 후보 가운데 현장 확인이 필요한 필지에 대하여 다음과 같이 현장 조사 협조를 요청합니다.",
-       11, space_after=4)
-    _p(doc, "  가. 목적: AI 분석 결과의 현장 확인과 조치 여부 판단", 11, space_after=2)
-    tail = f" — 의심 필지 {j['suspect']['value']:,}건 가운데 우선 확인 대상" if j.get("suspect") else ""
-    _p(doc, f"  나. 대상: 현장 확인 필요 {n:,}필지(붙임 목록){tail}", 11, space_after=2)
-    _p(doc, f"  다. 기간: {j['period']['from']} ~ {j['period']['to']}({j['period']['days']}일 · 담당자가 조정)", 11, space_after=2)
-    _p(doc, "  라. 협조 사항", 11, space_after=2)
-    for k, t in enumerate(["대상 필지 현장 확인과 사진 기록", "건축물대장 · 농지전용 · 산지전용 허가 대장 대조",
-                           "결과 입력: Land-XI '할 일'에서 위반 / 대장과 같음 / 불명확 중 하나로 판정"], 1):
-        _p(doc, f"     {k}) {t}", 11, space_after=1)
-    _p(doc, f"3. {j['fixed']}. AI 분석 결과는 참고자료이며 위법 여부는 현장 확인 후 담당자가 판단합니다.", 11, space_after=8)
-    _p(doc, "붙임  현장 확인 대상 필지 목록 1부.  끝.", 11, space_after=24)
-    sign = (org + "장") if org and not org.endswith("장") else org
-    _p(doc, f"{sign}  (직인 생략 · 초안)", 14, True, "14202A", WD_ALIGN_PARAGRAPH.CENTER, space_after=18)
-    _p(doc, "기안자            검토자            결재권자", 10, False, "56626B", space_after=2)
-    _p(doc, f"시행  (문서번호 부여 전)  ({j['period']['from']})", 10, False, "56626B", space_after=2)
-    _p(doc, AI_DRAFT, 9, False, "9A3412", space_after=0)
-    # 붙임 — 새 쪽
-    doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
-    _p(doc, f"붙임  현장 확인 대상 필지 목록 — {j['place']} {n:,}필지", 12.5, True, "14202A", space_after=4)
-    _p(doc, "같은 필지가 여러 규칙에 걸리면 한 줄로 적고 '해당 규칙' 칸에 모두 적었습니다. AI 추론 · 검수 전.", 8.5, False, "56626B", space_after=4)
-    strip = [x for x in ((j.get("sido") or "") + " ", (d["region"].get("name") or "") + " ") if x.strip()]
-
-    def short(a):
-        a = a or ""
-        for s_ in strip:
-            a = a.replace(s_, "")
-        return re.sub(r"^\S+(특별시|광역시|특별자치도|특별자치시|도)\s", "", a)
-    _tbl(doc, ["No", "소재지", "지목", "해당 규칙", "PNU"],
-         [[x["no"], short(x["addr"]), x["jimok"] or "—", " · ".join(x["rules"]) or "—", x["pnu"]] for x in j["items"]],
-         widths=[1.0, 5.6, 1.2, 5.2, 4.0], size=8)
-    buf = io.BytesIO()
-    doc.save(buf)
-    return buf.getvalue(), j["filename"], j
 
 
 def docx_text(blob: bytes) -> str:

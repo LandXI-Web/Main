@@ -1,5 +1,5 @@
 /* K13 toast.js — 하단 중앙 흰 카드 8 · 3.5s · 동시에 1개 · 행동 링크 ≤ 1. 문구는 화면이 준다(형식 `{동작}했습니다`).
-   toast('배정했습니다') · toast('반입했습니다', { action: { label: '열기', href } | { label, onClick } }) */
+   toast('저장했습니다') · toast('반입했습니다', { action: { label: '열기', href } | { label, onClick } }) */
 import { h } from './util.js';
 
 let cur = null, timer = 0;

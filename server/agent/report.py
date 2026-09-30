@@ -39,6 +39,7 @@ WRITER = """너는 지자체 실태조사 보고서 초안 작성자다(Land-XI 
 - 필지는 주소 글자와 인용 [n] 으로 가리킨다. 리 이름·지번 바로 뒤에 집계 자리표를 붙이지 않는다. 필지 봉투는 그 필지 [n] 을 인용한 문장에서만 쓴다.
 - '위법'이라 단정하지 않는다. '현장조사 대상 후보'로 쓴다. 조치 제안에 'AI 추론 · 검수 전 · 현장 확인 전 · 위법 판정 아님'을 한 번 넣는다.
 - 법령 조문은 쓰지 않는다(⑤ 법적 근거 칸이 조문 원문을 따로 싣는다).
+- 이 문서는 보고서까지다. 시정명령 · 이행강제금 · 원상복구 · 고발 같은 행정 처분, 공문, 현장 조사 배정은 쓰지 않는다. 조치 제안은 확인 · 대조 · 검토 순서만 쓴다.
 - 규칙은 코드(R1 등) 대신 규칙 이름으로 쓴다. 지역 이름은 한 번만 쓴다('○○면의 ○○면' 금지).
 - 보고체(~함 · ~임 또는 ~습니다) 한 가지로."""
 
@@ -657,25 +658,23 @@ async def compose_docx(ctx: Ctx, tgt: dict, rule: str | None = None, top: int = 
             "docx_url": f"/api/v1/agent/runs/{ctx.run_id}/draft.docx", "place": j["place"]}
 
 
-async def compose_letter(ctx: Ctx, tgt: dict) -> dict:
-    """말로 요청한 공문 초안 — survey.report.render_letter(대상 필지 수 = '현장 확인 필요' 한 출처) → run 폴더."""
-    import asyncio
-    from survey import report as s_report
-    p = ctx.principal
-    realm, tenant = p.realm, _tenant(p)
-
-    def build():
-        d = s_report.collect_letter(tgt["code"], realm, tenant)
-        blob, fname, j = s_report.render_letter(d)
-        return j, blob, fname
-    j, blob, fname = await asyncio.to_thread(build)
-    d = config.ARTIFACT_DIR / ctx.run_id
-    d.mkdir(parents=True, exist_ok=True)
-    (d / fname).write_bytes(blob)
-    return {"json": j, "bytes": len(blob), "filename": fname, "href": file_href(ctx.run_id, fname), "place": j["place"]}
-
-
 _DUP_PLACE = re.compile(r"([가-힣]{2,}(?:시|군|구|읍|면|동|리))(?:의|에서의)?\s+\1(?![가-힣])")
+
+
+def drop_coercive(md: str) -> str:
+    """보고서까지(원칙 40) — 모델 서술에서 처분·공문·배정 문장(survey.report.COERCIVE)을 뺀다. 절 제목은 그대로."""
+    try:
+        from survey.report import COERCIVE
+    except Exception:  # noqa: BLE001
+        return md
+    out = []
+    for line in md.split("\n"):
+        if not line.strip() or line.strip().startswith("#"):
+            out.append(line)
+            continue
+        keep = [s for s in lint.SENT.findall(line) if not COERCIVE.search(lint.CITE.sub("", s))]
+        out.append("".join(keep).rstrip() if keep else "")
+    return "\n".join(out)
 
 
 def dedupe_place(md: str) -> str:
@@ -742,7 +741,7 @@ async def draft(ctx: Ctx, body: dict):
     await persist_tool(ctx, step3)
     await emit(ctx, "agent.tool.result", {"i": 3, "tool": "llm_write", "ok": True, "ms": ms, "source": f"{res.model} · {res.backend}",
                                           "summary": {}, "ui_actions": [], "first_token_ms": res.first_token_ms, "tps": res.tps})
-    md, uncited = _auto_cite(dedupe_place(_rule_words(res.content)), ctx)
+    md, uncited = _auto_cite(drop_coercive(dedupe_place(_rule_words(res.content))), ctx)
     if uncited:
         md, uncited = await _repair_cites(ctx, md, uncited)
     # ④ 검토: 숫자 검증기(strict — 그 문장의 인용 봉투로만 승격 · % 는 인용 필지 ratio 만) + 봉투 뜻 검사(규칙 + 교정자 표)

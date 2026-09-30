@@ -32,8 +32,9 @@ def test_emd_endpoint_old_new_codes(tok):
     assert a["sgg_cd"] == b["sgg_cd"] == NEW_NEW and a["prev_cd"] == NEW_OLD
     assert a["n"] == b["n"] >= 20
     assert all(f["properties"]["emd_cd"].startswith(NEW_NEW) and f["properties"]["name"] for f in a["features"])
-    c = httpx.get(B + f"/regions/{BASE_SGG}/emd", headers=H(tok["gj"]), timeout=90).json()
+    c = httpx.get(B + f"/regions/{BASE_SGG}/emd", headers=H(tok["namwon"]), timeout=90).json()
     assert c["n"] >= 20 and all(f["properties"]["emd_cd"].startswith(BASE_SGG) for f in c["features"])
+    assert httpx.get(B + f"/regions/{BASE_SGG}/emd", headers=H(tok["gj"]), timeout=90).status_code == 404   # 관할 밖 읍면동 경계 0(원칙 39)
     assert httpx.get(B + "/regions/99999/emd", headers=H(tok["staff"]), timeout=30).status_code == 404
 
 
@@ -192,8 +193,8 @@ def test_region_results_lists_catalog_and_scope(tok):
         j = httpx.get(B + f"/regions/{NEW_OLD}/results", headers=H(tok[who]), timeout=60).json()
         assert j["sgg_cd"] == NEW_NEW
         assert any(i["from"] == "catalog" for i in j["items"]), who     # 해양쓰레기 등 카탈로그 결과 층
-    nw = httpx.get(B + f"/regions/{NEW_OLD}/results", headers=H(tok["namwon"]), timeout=60).json()
-    assert not any(i["from"] == "job" and not i["signed"] for i in nw["items"])   # 관할 밖 기관은 LX 전역 결과 없음
+    nw = httpx.get(B + f"/regions/{NEW_OLD}/results", headers=H(tok["namwon"]), timeout=60)
+    assert nw.status_code == 404                                                  # 관할 밖 기관 = 없는 지역(결과 층 0 · 원칙 39)
 
 
 def test_job_done_event_carries_sgg(tok):

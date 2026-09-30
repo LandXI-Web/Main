@@ -9,11 +9,12 @@ from __future__ import annotations
 from fastapi import APIRouter, Request
 from starlette.concurrency import run_in_threadpool
 
-from .deps import ApiError, db
+from .deps import ApiError, db, principal, require
 from .envelope import env
 
 router = APIRouter()
 SRC_NM = {"canon": "연속지적(적재 정본)", "lsmd": "연속지적(전국)", "vworld": "V-World 연속지적"}
+NO_PARCEL = "이 지점에 필지 없음(도로·하천 경계이거나 바다)"
 
 
 def _vw_point(lng: float, lat: float) -> dict | None:
@@ -30,12 +31,20 @@ def _vw_point(lng: float, lat: float) -> dict | None:
 
 @router.get("/parcels")
 async def parcels(lng: float, lat: float, request: Request):
+    """로그인 필수(게스트 401) · 기관 계정은 관할 안 지점만(밖 = '필지 없음'과 같은 404 · V-World 호출 0) · LX 는 전국."""
+    from . import regions as R
+    who = require(principal(request))
     if not (-180 <= lng <= 180 and -90 <= lat <= 90):
         raise ApiError("bad_request", "lng · lat 범위 오류")
+    if R.scope_of(who) is not None:
+        if not await run_in_threadpool(R.point_in_scope, who, lng, lat):
+            raise ApiError("not_found", NO_PARCEL, {"lng": lng, "lat": lat})
     async with db(realm="lx") as conn:
         r = await conn.fetchrow(
             "SELECT pnu, jibun, jimok, jimok_nm, area_m2, jiga, jiga_ym, emd, emd_cd, ri, sgg_cd, src, src_as_of FROM survey_parcels "
             "WHERE geom && ST_SetSRID(ST_MakePoint($1,$2),4326) AND ST_Contains(geom, ST_SetSRID(ST_MakePoint($1,$2),4326)) LIMIT 1", lng, lat)
+    if r and not R.region_allowed(who, r["sgg_cd"] or str(r["pnu"])[:5]):
+        raise ApiError("not_found", NO_PARCEL, {"lng": lng, "lat": lat})     # 경계선 오차 안 이웃 시군구 필지도 내주지 않는다
     if r:
         src = r["src"] or "canon"
         as_of = r["src_as_of"] or "2026-09-24"
@@ -50,8 +59,8 @@ async def parcels(lng: float, lat: float, request: Request):
         p = await run_in_threadpool(_vw_point, lng, lat)
     except Exception as e:
         raise ApiError("parcels_unavailable", "필지 원천을 읽지 못했습니다", {"error": type(e).__name__}, 503) from None
-    if not p:
-        raise ApiError("not_found", "이 지점에 필지 없음(도로·하천 경계이거나 바다)", {"lng": lng, "lat": lat})
+    if not p or not R.region_allowed(who, str(p.get("pnu") or "")[:5]):
+        raise ApiError("not_found", NO_PARCEL, {"lng": lng, "lat": lat})
     jb = str(p.get("jibun") or "")
     jiga = p.get("jiga")
     ym = f"{p.get('gosi_year')}-{p.get('gosi_month')}" if p.get("gosi_year") else None
