@@ -173,9 +173,8 @@ body.t{margin:0;background:var(--bg-0);color:var(--ink);font:400 var(--fs-body)/
 .t-steps--v .t-step{text-align:left;display:flex;align-items:center;gap:12px}
 .t-steps--v .t-step .n{margin:0}
 
-/* ── 빈 상태 §9-G ─────────────────────────── */
+/* ── 빈 상태 §9-G — 그림 없음(4차 S1 ⓐ · 원칙 42). 모양은 kit.css K9 ─────────────────────────── */
 .t-empty{position:relative;background:var(--bg-0);border-radius:var(--r-16);min-height:220px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:var(--pad)}
-.t-empty img{position:absolute;right:-8%;top:-6%;width:60%;aspect-ratio:4/3;object-fit:cover;border-radius:var(--r-16);opacity:.95}
 .t-empty .t-label{margin-bottom:6px}
 .t-empty h6{margin:0 0 6px;font:500 var(--fs-sub)/var(--lh-sub) var(--font-body);color:var(--ink)}
 .t-empty p{margin:0;font:400 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--sub-2)}

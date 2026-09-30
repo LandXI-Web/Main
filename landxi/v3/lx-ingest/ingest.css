@@ -52,9 +52,8 @@
 .lxi-led .t-sig{margin-left:6px}
 .lxi-acts{flex:none;display:flex;gap:8px;flex-wrap:wrap;padding:12px 24px 20px;border-top:1px solid var(--rule);border-radius:0 0 var(--r-16) var(--r-16);background:var(--bg-1)}
 .lxi-acts .t-btn{flex:1;min-width:128px}
-.lxi-img .k-empty{min-height:0;height:132px;padding:16px 20px;box-sizing:border-box}
-.lxi-img .k-empty img{width:46%;top:-18%;right:-6%}
-.lxi-img .k-empty-b{max-width:66%;gap:4px}
+.lxi-img .k-empty{min-height:0;padding:16px 20px;box-sizing:border-box}
+.lxi-img .k-empty-b{max-width:none;gap:4px}
 .lxi-img .k-empty-b h6{font-size:17px;line-height:24px}
 .lxi-img .k-empty-b p{font-size:13px;line-height:19px}
 

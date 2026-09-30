@@ -94,26 +94,22 @@ body.sd[data-state="boot"] .k-main{background:var(--bg-0)}
   .sd-foot{flex-direction:column}
 }
 .sd-meta .t-chip{background:var(--bg-1)}
-/* 히어로 빈 상태(K9) — 판 전체를 캐릭터 카드로 */
-.sd-hero__vis.is-empty .k-empty{box-sizing:border-box;height:auto;padding:48px;background:var(--bg-1);display:flex;flex-direction:column;justify-content:flex-end}
-.sd-hero__vis.is-empty .k-empty img{top:6%;right:4%;width:68%}
-.sd-hero__vis.is-empty .k-empty-b h6{font:700 var(--fs-h3)/var(--lh-h3) var(--font-display)}
-@media (max-width:640px){.sd-hero__vis.is-empty .k-empty{padding:24px}.sd-hero__vis.is-empty .k-empty-b h6{font-size:22px;line-height:30px}}
+/* 히어로 빈 상태(K9) — 큰 판 없이 회백 카드 + 문장 하나(그림 없음) */
+.sd-hero__vis.is-empty{height:auto;min-height:0;background:none;overflow:visible}
+.sd-hero__vis.is-empty > .sd-hero__empty{position:static;padding:32px;border-radius:var(--r-16)}
+.sd-hero__vis.is-empty .k-empty,.sd-404 .k-empty{box-sizing:border-box;background:var(--bg-1)}   /* 이 화면 바탕이 회백이라 카드는 흰색 */
 
 /* ── 2차: 가르기 히어로 · 밝은 빈 상태 · 390 행 카드 · K9 한 줄 마감 ── */
 .sd-sw{position:absolute;top:20px;padding:6px 10px;border-radius:var(--r-8);background:var(--bg-1);color:var(--ink);font:600 var(--fs-label)/1 var(--font-num);font-variant-numeric:tabular-nums;box-shadow:var(--elev-map)}
 .sd-sw--l{left:20px}
 .sd-sw--r{left:calc(50% + 12px)}
 .sd-inset.is-text{width:auto;min-width:220px}
-.sd-hero__vis.is-empty .k-empty img{top:8%;right:6%;width:56%;aspect-ratio:4/3;-webkit-mask-image:none;mask-image:none;border-radius:var(--r-16)}
-.sd-block__vis.is-empty .k-empty img{width:52%;right:6%;top:8%;-webkit-mask-image:none;mask-image:none}
 .sd-block__vis.is-screen{background:var(--bg-0);box-shadow:inset 0 0 0 1px var(--rule)}
 .sd-dr-img.is-screen{object-fit:contain;background:var(--bg-0)}
 .k-role.sd-role1{color:var(--ink)}
 /* 마감: 배포본 없음 = K9 한 줄 */
 .sd-end.is-none{padding:0;overflow:hidden}
 .sd-none.k-empty{min-height:0;flex-direction:row;align-items:center;gap:20px;padding:20px 28px;background:var(--bg-1)}
-.sd-none.k-empty img{position:static;width:96px;height:64px;aspect-ratio:auto;flex:none;-webkit-mask-image:none;mask-image:none;border-radius:var(--r-8);opacity:1}
 .sd-none .k-empty-b{max-width:none}
 .sd-none .k-empty-b h6{font:600 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--ink)}
 /* ≤ 640 서비스 지역 = 행 카드 */
@@ -131,13 +127,10 @@ body.sd[data-state="boot"] .k-main{background:var(--bg-0)}
 @media (max-width:640px){
   .sd-sw{top:12px;padding:5px 8px}
   .sd-sw--l{left:12px}
-  .sd-hero__vis.is-empty .k-empty img{width:64%;opacity:1}
-  .sd-block__vis.is-empty .k-empty img{opacity:1}
   .sd-none.k-empty{padding:16px 20px;gap:14px}
-  .sd-none.k-empty img{width:72px;height:48px;opacity:1}
   .sd-inset.is-text{left:12px;right:auto;display:flex}
 }
-@media (max-width:640px){.sd-hero__vis.is-empty{aspect-ratio:1/1}.sd-hero__vis.is-empty .k-empty img{top:6%;width:70%}}
+@media (max-width:640px){.sd-hero__vis.is-empty{aspect-ratio:auto}.sd-hero__vis.is-empty > .sd-hero__empty{padding:24px}}
 
 /* ── 3차: 네 시점 히어로 · 결과 지도(실시간) · 세션 확인 실패 ── */
 .sd-q{top:auto}
@@ -169,23 +162,17 @@ body.sd[data-state="boot"] .k-main{background:var(--bg-0)}
 /* ── 4차: 예시 표기 · 블록 K9 compact(제목 없음) · 결과 지도 로드 전 판 ── */
 .sd-cap .t-sig,.sd-inset .t-label .t-sig,.sd-dr-cap .t-sig,.k-svc-meta .t-label .t-sig{margin-left:6px;padding:2px 6px;border-radius:var(--r-8);background:var(--bg-0);color:var(--ink);font-weight:600}
 .sd-block__vis.is-empty > .k-empty--sm{display:flex;flex-direction:column;justify-content:flex-end}
-.sd-block__vis.is-empty .k-empty--sm img{width:46%;top:10%;right:8%}
 .sd-block__vis.is-empty .k-empty--sm .k-empty-b p{font:500 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--ink);max-width:22em;word-break:keep-all}
 .sd-block__vis.is-live{background:var(--bg-1)}
 .sd-block__vis.is-live .sd-cap,.sd-block__vis.is-live .sd-live__n{opacity:0;transition:opacity var(--d-420,.42s) var(--e-ui)}
 .sd-block__vis.is-live.is-on .sd-cap,.sd-block__vis.is-live.is-on .sd-live__n{opacity:1}
 .sd-live__ld{position:absolute;inset:0;box-sizing:border-box;border-radius:0;min-height:0;padding:40px;background:var(--bg-1);display:flex;flex-direction:column;justify-content:flex-end}
-.sd-live__ld.k-empty img{display:none}
-@media (max-width:640px){.sd-live__ld{padding:24px}.sd-block__vis.is-empty .k-empty--sm img{width:58%}}
-/* 블록 K9 compact — 3:2 전체 판 대신 낮은 카드(크롭 블록보다 가볍게) · 캐릭터는 제 비율 */
+@media (max-width:640px){.sd-live__ld{padding:24px}}
+/* 블록 K9 compact — 3:2 전체 판 대신 낮은 카드(크롭 블록보다 가볍게) · 그림 없음 */
 .sd-block__vis.is-empty{aspect-ratio:auto;height:300px}
-.sd-block__vis.is-empty .k-empty img{height:auto;aspect-ratio:4/3;object-fit:cover}
-.sd-block__vis.is-empty .k-empty--sm img{width:44%;top:32px;right:32px;border-radius:var(--r-16)}
-.sd-block__vis.is-empty .k-empty--sm .k-empty-b{max-width:46%}
 @media (max-width:640px){
   .sd-block__vis.is-empty{height:auto;min-height:0}
   .sd-block__vis.is-empty > .k-empty--sm{position:relative;inset:auto;padding:20px;flex-direction:row;align-items:center;gap:16px}
-  .sd-block__vis.is-empty .k-empty--sm img{position:static;width:112px;flex:none;order:2}
   .sd-block__vis.is-empty .k-empty--sm .k-empty-b{max-width:none;flex:1}
 }
 .sd-block[data-kind="empty"] + .sd-block[data-kind="empty"]{margin-top:calc(var(--section) * -0.5)}

@@ -20,7 +20,7 @@
 | K6 | 큰 숫자·기호 | `bignum(el, env, { label, unit, hud })` → `{set, loading, empty}` · `numHtml(env)` · `sig(env)` · `humanize(source)` | 봉투만 · `?dev=1` 에서 봉투 아님 = throw · 만든 직후 null/undefined·`set(undefined)` = `불러오는 중` · `set(null)`·봉투 value null = `아직 결과가 없습니다`(20초 안에 set 이 없으면 빈 값으로) |
 | K7 | 서비스 카드 | `serviceGrid(el, joinCards(cards, deploys), { map: r => ({ crop, where, href }) })` · `serviceCard({...})` | 상태 운영/시범/첫 결과 전 |
 | K8 | 스텝퍼 | `stepper(el, [{t, d}], { current, vertical, done, onPick })` → `{go, set}` | |
-| K9 | 빈 상태 | `empty(el, { kind:'first'\|'ingest'\|'outside'\|'loading'\|'404', text, action, progress, data })` → `{set({progress}), resolve(data)}` · `isBlank(v)` | 캐릭터 = 위성·드론·항공기 · `data: undefined` 를 넘기면 도착 전 `불러오는 중`, `resolve(빈 값)` = 원래 kind, `resolve(값)` = 빈 상태 지움 |
+| K9 | 기다림 · 빈 화면 · 문제 | `empty(el, { kind:'first'|'ingest'|'outside'|'loading'|'error'|'404', title, text, action, onRetry, progress, data })` → `{set({progress}), resolve(data)}` · `isBlank(v)` | 그림 없음(4차 S1 ⓐ) — 세 모양: 기다림 = 가는 막대 + `불러오는 중` 한 줄(6초 넘으면 `서버 응답이 늦습니다` + `다시 시도`) · 빈 화면 = 회백 카드 + 문장 1 + 행동 1 · 문제(`error`) = 그 자리 한 줄 + `다시 시도`. `data: undefined` 를 넘기면 도착 전 `불러오는 중`, `resolve(빈 값)` = 원래 kind, `resolve(값)` = 지움 |
 | K10 | Ctrl K 에이전트 | `mountCmdk({ stage, guest, context, onAction })` → `{open, close, button()}` | `/agent/runs` 경유만 · 이벤트 `kit:agent-action` |
 | K11 | 업로드 | `dropzone(el, { upload:{path, fields} \| onFile, onDone, onError })` | xlsx csv shp zip gpkg geojson · 20MB |
 | K12 | 표·차트 | `table(el, { cols, rows, sort, limit, onRow })` · `bars(el, { items, ai })` · `line(el, { points, ai })` | 봉투 값은 기호와 함께 |

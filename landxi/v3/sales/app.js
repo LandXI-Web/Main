@@ -40,8 +40,8 @@ function renderGrid(D) {
     const lab = el.querySelector('.k-svc-meta .t-label');
     if (lab) lab.dataset.asof = w ? lab.textContent.slice(w.length + 3) : lab.textContent;
     el.classList.add('t-enter');
-    const img = el.querySelector('.k-svc-crop img');
-    img.addEventListener('error', () => { img.src = K.CHARS.satellite; img.parentElement.classList.add('is-char'); }, { once: true });
+    const img = el.querySelector('.k-svc-crop img');   // 크롭이 안 열리면 그림 없이 회백 판
+    img?.addEventListener('error', () => { const box = img.parentElement; img.remove(); box.classList.add('is-blank'); box.setAttribute('aria-hidden', 'true'); }, { once: true });
     const go = h('div.sl-card-go');
     goRow(D, r, go);
     el.append(go);

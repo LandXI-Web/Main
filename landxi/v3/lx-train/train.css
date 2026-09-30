@@ -92,7 +92,7 @@
 .tr-ph{padding:6px 14px;border-radius:999px;background:var(--bg-1, #fff);font:500 15px/1.3 var(--font-ui, inherit);color:var(--ink-2, var(--sub));letter-spacing:-.01em;box-shadow:0 1px 2px rgba(0,0,0,.06)}
 .tr-card .k-svc-crop.is-zoom img{transform:scale(var(--tr-zoom,1));transform-origin:var(--tr-origin,center)}
 .tr-card:hover .k-svc-crop.is-zoom img{transform:scale(calc(var(--tr-zoom,1) * 1.03))}
-.tr-fail{max-width:560px;margin:8px auto 0}
+.tr-fail{margin:8px 0 0}
 
 /* 판정 3차 반영 — 곡선 표시점(서랍 정밀도와 같은 회차·같은 값) · 첫 학습 전 타일 */
 .tr-curve .k-line{padding-top:12px}

@@ -62,7 +62,7 @@ button.gl-crumb:hover{background:var(--bg-0);color:var(--ink)}
 .gl-sheet .k-empty{margin:0}
 
 .gl-err{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px}
-.gl-err .k-empty{max-width:400px;width:100%;margin:0;background:var(--bg-1);border-radius:var(--r-16,16px);box-shadow:var(--elev-map)}
+.gl-err .k-empty{max-width:400px;width:100%;margin:0;padding:20px 24px;box-sizing:border-box;background:var(--bg-1);border-radius:var(--r-16,16px);box-shadow:var(--elev-map)}
 
 /* 영문판 — 신뢰 기호 '예시' 를 영문으로(키트 요청: t-sig ex 문구 로캘화) */
 html[lang="en"] .t-sig[data-sig="ex"]::before{content:"Example"}

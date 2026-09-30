@@ -924,7 +924,7 @@ async function main() {
   function mapError() {
     main.innerHTML = '';
     const e = h('div'); main.append(h('div.gl-err', {}, e));
-    K.empty(e, { kind: 'first', compact: true, title: STR.maperr, action: { label: STR.retry, onClick: () => location.reload() } });
+    K.empty(e, { kind: 'error', title: STR.maperr, action: { label: STR.retry, onClick: () => location.reload() } });
     document.body.dataset.state = 'error';
   }
   function loadError() { stageEl.classList.add('gl-on'); return mapError(); }

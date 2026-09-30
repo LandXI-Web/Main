@@ -179,7 +179,7 @@ function renderImagery(el, im) {
   el.replaceChildren();
   if (!im.labels.length) {
     const e = K.h('div'); el.append(e);
-    K.empty(e, { kind: 'ingest', char: 'drone', text: '이 지역 영상을 등록하면 AI 분석을 시작할 수 있습니다', compact: true });
+    K.empty(e, { kind: 'ingest', text: '이 지역 영상을 등록하면 AI 분석을 시작할 수 있습니다', compact: true });
     return;
   }
   const ul = K.h('ul.lxi-list');

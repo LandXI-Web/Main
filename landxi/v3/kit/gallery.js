@@ -87,12 +87,13 @@ const sv = K.stepper($('stepsV'), RAIL.map((r) => ({ t: r.label })), { current: 
 const CROP = { 'card-farm': 'namwon-farmland-2025/1.jpg', 'card-marine': 'yeosu-marine-2026-drone/1.jpg', 'card-change': 'kuksan-change/1.jpg', 'card-living': 'jeju-illegal/1.jpg' };
 K.serviceGrid($('cards'), joined.slice(0, 6), { map: (r) => ({ crop: CROP[r.card.id] ? `../../assets/proto/crops/${CROP[r.card.id]}` : null, where: r.deploy?.region_name?.ko?.split(' ').pop() || '' }) });
 
-/* ── 빈 상태 ────────────────────────────────────────────── */
+/* ── 기다림 · 빈 화면 · 문제(그림 없음) ────────────────────────────────────────────── */
 K.empty($('e1'), { kind: 'first', text: '첫 분석이 끝나면 카드가 생깁니다', action: { label: '분석 계획 보기', onClick: () => K.toast('계획을 열었습니다') } });
 K.empty($('e2'), { kind: 'ingest', text: '이 지역 영상을 먼저 올려 주세요' });
 const ld = K.empty($('e3'), { kind: 'loading', text: '결과를 지도에 올리고 있습니다', progress: 0 });
 let p = 0; setInterval(() => { p = p >= 1 ? 0 : p + 0.1; ld.set({ progress: p }); }, 600);
 K.empty($('e4'), { kind: '404' });
+K.empty($('e5'), { kind: 'error', title: '결재함을 불러오지 못했습니다', onRetry: () => K.toast('다시 불러옵니다') });
 
 /* ── 업로드(브라우저 안에서 행 수만 센다 · 서버 반입은 대장 API 가 맡는다) ── */
 K.dropzone($('drop'), {

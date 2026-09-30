@@ -7,7 +7,7 @@
    5차: 큰 숫자 = `현장 확인 필요 {n}필지`(XI맵과 같은 출처 · adapter.surveyOf) · 그 숫자가 없으면 `{지역} · {기준일} 기준`만(탐지 총수는 숫자 자리에 0)
         · 블록 K9 = 스틸 없는 문장 카드(스틸은 히어로 한 장만). */
 import {
-  shell, whoami, empty, serviceGrid, joinCards, stateOf, numHtml, drawer, table, devDrawer, createStage, CHARS,
+  shell, whoami, empty, serviceGrid, joinCards, stateOf, numHtml, drawer, table, devDrawer, createStage,
   h, enter, t, df,
 } from '../kit/index.js';
 import { isEnvelope, isDev, RM, session, esc } from '../kit/util.js';
@@ -165,7 +165,7 @@ function offline() {
   S.app.querySelector('.k-help')?.remove();
   const box = h('section.sd-off');
   S.main.append(box);
-  empty(box, { kind: 'first', char: 'drone', title: '지금은 불러올 수 없습니다', action: { label: '다시 시도', onClick: () => location.reload() } });
+  empty(box, { kind: 'error', title: '지금은 불러올 수 없습니다', onRetry: () => location.reload() });
   document.body.dataset.state = 'offline';
 }
 
@@ -189,10 +189,10 @@ function hero(state) {
     /* 네 시점(2×2) — 같은 필지가 한 해 동안 바뀌는 모습 */
     if (hv.quad) hv.quad.forEach((q, i) => fig.append(h(`span.sd-sw.sd-q.sd-q--${i}`, { text: q })));
   } else {
-    /* 결과 전 — 밝은 캐릭터(드론)만 · 판 = --bg-1 카드(검정 잔재 0) */
+    /* 결과 전 — 그림 없이 회백 카드 + 문장 하나(검정 잔재 0) */
     const e = h('div.sd-hero__empty'); fig.append(e); fig.classList.add('is-empty');
     const det = metric(itemOfDeploy(cur), 'detected');   // 영상 조각은 없어도 이 지역 결과 수는 있다(summary)
-    empty(e, { kind: 'first', char: 'drone', text: det ? `${where(cur)} · ${det.label} ${Number(det.value).toLocaleString("ko-KR")}${det.unit || ''}` : '첫 결과가 생기면 여기에 결과가 보입니다' });
+    empty(e, { kind: 'first', text: det ? `${where(cur)} · ${det.label} ${Number(det.value).toLocaleString("ko-KR")}${det.unit || ''}` : '첫 결과가 생기면 여기에 결과가 보입니다' });
     e.querySelector('h6')?.remove();   // 상태는 위 칩 한 곳(시범 칩 옆에 '첫 결과 전' 제목이 겹치지 않게)
   }
   /* 우하단 흰 카드 — 윗줄 `{지역} · {기준일} 기준` / 아랫줄 `현장 확인 필요 {n}필지 ✓`(그 배포본 지역 합계 · XI맵과 같은 출처).
@@ -235,7 +235,7 @@ function blocks(live) {
       /* K9 compact · 제목 없음 · 문장 1 = 모듈 설명 */
       const e = h('div'); fig.append(e); fig.classList.add('is-empty');
       empty(e, { kind: 'first', text: b.desc || undefined, compact: true });
-      e.querySelector('h6')?.remove(); e.querySelector('img')?.remove();   // 스틸 없는 문장 카드(스틸은 히어로 한 장만)
+      e.querySelector('h6')?.remove();   // 그림 없는 문장 카드
       e.classList.add('sd-k9t');
     }
     wrap.append(h('article.sd-block', { class: i % 2 ? 'is-rev' : '', dataset: { kind: b.kind } }, tx, fig));
@@ -276,7 +276,7 @@ function liveMap(fig, b) {
   /* 타일이 오기 전 = --bg-1 판 + K9 진행 막대(숫자 카드·캡션은 지도가 그려진 뒤에만) */
   const ld = h('div.sd-live__ld');
   fig.append(...[host, ld, cap, num].filter(Boolean));   // 숫자가 없으면 싣지 않는다(append(null) → 'null' 글자)
-  empty(ld, { kind: 'loading', compact: true }); ld.querySelector('img')?.remove();
+  empty(ld, { kind: 'loading', compact: true });
   let started = false;
   const start = async () => {
     if (started) return; started = true;
@@ -303,7 +303,7 @@ function liveMap(fig, b) {
       host.remove(); num?.remove(); cap.remove(); ld.remove();
       fig.classList.add('is-empty');
       const e2 = h('div'); fig.append(e2);
-      empty(e2, { kind: 'first', char: 'drone', title: '지도를 불러오지 못했습니다' });
+      empty(e2, { kind: 'error', title: '지도를 불러오지 못했습니다' });
     }
   };
   const io = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) { io.disconnect(); start(); } }, { rootMargin: '120px' });
@@ -361,8 +361,6 @@ function related(rows, id) {
     const n = el.querySelector('.k-svc-n');
     if (n) { const env = SUM && !(set && exOf(set, r.deploys || [])) ? scaleOf((r.deploy && itemOfDeploy(r.deploy)) || itemFor(SUM, r.card.id)) : null; n.innerHTML = env ? numHtml(env) : ''; n.hidden = !env; }
   });
-  /* 크롭 없는 카드 = 밝은 캐릭터(드론) — 키트 기본(위성 · 어두운 우주)을 쓰지 않는다 */
-  grid.querySelectorAll('.k-svc-crop.is-char img').forEach((im) => { im.src = CHARS.drone; });
   grid.querySelectorAll('.k-svc').forEach((c) => c.classList.add('t-enter'));
   return h('section.sd-rel', {}, h('p.t-label.sd-sec-l', { text: '관련 서비스' }), grid);
 }
@@ -378,7 +376,7 @@ function closing() {
   if (!own.length) {
     box.classList.add('is-none');
     const e = h('div.sd-none'); box.append(e);
-    empty(e, { kind: 'first', title: '이 지역에는 아직 없습니다', char: 'aircraft', compact: true });
+    empty(e, { kind: 'first', title: '이 지역에는 아직 없습니다', compact: true });
     return box;
   }
   const cta = h('a.t-btn.sd-cta', { href: openHref(), text: '이 지역에서 열기' });
@@ -439,6 +437,6 @@ function sources() {
 function notFound() {
   const box = h('section.sd-404');
   S.main.append(box);
-  empty(box, { kind: '404', char: 'drone' });
+  empty(box, { kind: '404' });
   document.body.dataset.state = 'ready';
 }

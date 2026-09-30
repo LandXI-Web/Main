@@ -72,7 +72,7 @@ async function file(url, as = 'json') {
 }
 
 /* 모델 목록·오탐 신고 — 실패(401/403/5xx/네트워크)를 '첫 학습 전'으로 그리지 않는다.
-   401/403 → 정문(?next=) · 그 밖 실패 → 카드 목록 대신 결손 카드 한 장(K9 · 행동 1 '다시 시도') */
+   401/403 → 정문(?next=) · 그 밖 실패 → 카드 목록 대신 그 자리 한 줄(K9 문제 · '다시 시도') */
 const getS = (p) => api(p).then((j) => ({ j, s: 200 }), (e) => ({ j: null, s: e?.status || 0 }));
 const [mR, fR, SUM, cardsJ] = await Promise.all([getS('/registry/models'), getS('/feedback'), summary(), get('/registry/cards')]);
 if ([mR.s, fR.s].some((s) => s === 401 || s === 403)) {
@@ -86,7 +86,7 @@ if (modelsJ === null || fbJ === null) {
   grid.replaceChildren();
   const box = h('div.tr-fail', { role: 'alert' });
   grid.replaceWith(box);
-  empty(box, { kind: '404', title: '모델 목록을 불러오지 못했습니다', action: { label: '다시 시도', onClick: () => location.reload() } });
+  empty(box, { kind: 'error', title: '모델 목록을 불러오지 못했습니다', onRetry: () => location.reload() });
   document.documentElement.dataset.trainReady = '1';
   await new Promise(() => {});
 }
@@ -182,7 +182,7 @@ for (const [id, r] of ROWS) {
   const el = cardEls.get(id);
   el.dataset.state = r.state;
   /* 크롭 자리: 쓸 수 있음/재학습 = 이 업무 클래스의 실제 결과 크롭 · 첫 학습 전·크롭 없음 = 밝은 타일(--bg-0 격자) + 업무 명사 알약.
-     K9 위성 캐릭터는 서랍 빈 상태(첫 학습 전)에만 — 목록에 같은 그림을 되풀이하지 않는다 */
+     서랍 빈 상태(첫 학습 전)도 그림 없이 글만 — 목록에 같은 그림을 되풀이하지 않는다 */
   const img = el.querySelector('img');
   const box = el.querySelector('.k-svc-crop');
   const cardCrop = r.t.card ? CARDS.get(r.t.card)?.crop_url : null;   // 업무 전용 카드의 실제 결과 크롭

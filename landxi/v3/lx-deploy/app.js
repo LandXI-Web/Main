@@ -157,7 +157,12 @@ async function checks(d) {
 
 async function renderChecks(d, body, { fromPlant } = {}) {
   let steps;
-  try { steps = await checks(d); } catch (e) { devlog('checks', e.message); body.innerHTML = ''; empty(body.appendChild(h('div')), { kind: 'first', text: '점검 기록을 불러오지 못했습니다' }); return; }
+  try { steps = await checks(d); } catch (e) {
+    devlog('checks', e.message); body.innerHTML = '';
+    const again = () => { body.innerHTML = ''; empty(body.appendChild(h('div')), { kind: 'loading', compact: true }); renderChecks(d, body, { fromPlant }); };
+    empty(body.appendChild(h('div')), { kind: 'error', text: '점검 기록을 불러오지 못했습니다', onRetry: again });
+    return;
+  }
   if (selected?.id !== d.id) return;
   body.innerHTML = '';
   const same = regions().find((r) => r.key === regionKey(d))?.list.filter((x) => x.id !== d.id) || [];
@@ -401,7 +406,7 @@ async function renderOps() {
   tcard.append(big);
   bignum(big, retrainEnv(), { label: '재학습 필요', unit: '건' });
   opsEl.append(tcard);
-  if (!rows.length) { empty(tcard.appendChild(h('div.dp-empty')), { kind: 'first', char: 'aircraft', text: '이 카드가 깔린 기관이 아직 없습니다' }); return; }
+  if (!rows.length) { empty(tcard.appendChild(h('div.dp-empty')), { kind: 'first', text: '이 카드가 깔린 기관이 아직 없습니다' }); return; }
   const rank = { 재학습: 0, '갱신 배포': 1, '표본 확인': 2, 없음: 3 };
   table(tcard.appendChild(h('div')), {
     cols: [
@@ -457,7 +462,7 @@ const card = Q.get('card');
 if (Q.get('tab') === 'ops') tab('ops');
 else if (card && !D.deploys.some((d) => d.card_id === card)) {
   const e = drawer({ title: workName(card) || '배포', slot: 'right' });
-  const box = h('div'); e.set(box); empty(box, { kind: 'first', char: 'aircraft', text: '이 카드가 깔린 기관이 아직 없습니다', action: { label: '다른 지역에 적용', onClick: openPlant } });
+  const box = h('div'); e.set(box); empty(box, { kind: 'first', text: '이 카드가 깔린 기관이 아직 없습니다', action: { label: '다른 지역에 적용', onClick: openPlant } });
 } else {
   const want = Q.get('deploy') && deployOf(Q.get('deploy'))
     || (Q.get('region') && regions().find((r) => r.key === Q.get('region'))?.list[0])

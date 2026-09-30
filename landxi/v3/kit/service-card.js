@@ -1,11 +1,10 @@
 /* K7 service-card.js — 서비스 카드(스펙시먼 B · 토스 톤).
    크롭 3:2 상단 풀폭 · 기준일 라벨 · 상태 칩(잉크 농도 3단: 운영 · 시범 · 첫 결과 전) · 제목 H4 2줄 · 결과 수 32 잉크 + 기호.
-   크롭이 없으면 빈 상태 캐릭터(K9 스틸). 3열 그리드 거터 24 = serviceGrid().
+   크롭이 없으면 그림 없이 회백 판(is-blank). 3열 그리드 거터 24 = serviceGrid().
    serviceCard({ card, deploy, crop, href, where }) → <article>
    joinCards(cards, deploys) → [{ card, deploy, state }] (실배포 우선 · 시험 배포 제외) */
 import { h, esc, isEnvelope } from './util.js';
 import { numHtml } from './bignum.js';
-import { CHARS } from './empty.js';
 import { t, df } from './i18n.js';
 
 const RANK = { ga: 0, canary: 1, shadow: 2, draft: 3 };
@@ -39,7 +38,7 @@ export function serviceCard({ card, deploy, crop, href, where, state, onClick } 
   const src = crop || card?.crop_url || null;
   const tag = href ? 'a' : onClick ? 'button' : 'article';
   const el = h(`${tag}.t-card.k-svc`, { ...(href ? { href } : {}), ...(onClick ? { type: 'button', onclick: onClick } : {}), dataset: { state: st, card: card?.id || '' } });
-  const fig = h('div.k-svc-crop', { class: src ? '' : 'is-char' }, h('img', { src: src || CHARS.satellite, alt: '', loading: 'lazy', decoding: 'async' }));
+  const fig = h('div.k-svc-crop', { class: src ? '' : 'is-blank', 'aria-hidden': src ? undefined : 'true' }, src ? h('img', { src, alt: '', loading: 'lazy', decoding: 'async' }) : null);
   const meta = h('div.k-svc-meta', {},
     h('span.t-label', { text: [where, asOf ? t('card.asof', { date: df(asOf) }) : ''].filter(Boolean).join(' · ') }),
     h('span.t-chip', { dataset: lv ? { lv } : {}, text: t(chipKey) }));
