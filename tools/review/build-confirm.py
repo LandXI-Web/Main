@@ -239,7 +239,8 @@ def build():
             return ''
         shots = ''.join(f'<figure><a href="img/{esc(s)}" target="_blank"><img src="img/{esc(s)}" alt="" loading="lazy"></a>' + (f'<figcaption>{cap(s)}</figcaption>' if cap(s) else '') + '</figure>' for s in it['shots'] if os.path.exists(os.path.join(OUT, 'img', s)))
         where = ''.join(f'<li><a href="{esc(u)}" target="_blank" rel="noopener">{esc("설계 문서 열기" if "github.com" in u else u.replace("https://", ""))}</a><span>{esc(acc)}</span><em>{esc(tap)}</em></li>' for u, acc, tap in it['where'])
-        opts = ''.join(f'<button type="button" data-v="{esc(o)}">{esc(o)}</button>' for o in it['opts'])
+        ops = list(it['opts']) + ([] if any(x in it['opts'] for x in ('검토 필요', '보류')) or done else ['검토 필요'])   # 원칙 80 — 고르기만이 아니라 '검토 필요'도
+        opts = ''.join(f'<button type="button" data-v="{esc(o)}">{esc(o)}</button>' for o in ops)
         body = (f'<p class="k">지금</p><p>{esc(it["now"])}</p><p class="k">제안</p><p>{esc(it["prop"])}</p>' if not done else f'<p class="k">만든 것</p><p>{esc(it["what"])}</p>')
         return (f'<article class="c" data-id="{esc(it["id"])}" data-t="{esc(it["t"])}"><header><span class="n">{esc(it["id"])}</span><h3>{esc(it["t"])}</h3></header>'
                 f'<div class="g"><div class="tx">{body}<p class="k">보는 곳</p><ul class="wh">{where}</ul></div>'
@@ -277,7 +278,7 @@ h2{font:700 24px/1.3 Paperlogy,Pretendard,sans-serif;margin:0 0 4px;text-wrap:ba
 .sub{margin:0 0 16px;color:var(--mute);font-size:15px;text-wrap:pretty}
 .c{background:#fff;border-radius:20px;padding:20px 24px;margin:0 0 14px;border:2px solid transparent}
 .c[data-s="확인"],.c[data-s="채택"],.c[data-s="완료"],.c[data-s^="ⓐ"],.c[data-s^="ⓑ"],.c[data-s^="ⓒ"],.c[data-s="제안대로"],.c[data-s^="영상대로"]{border-color:var(--ok)}
-.c[data-s="보류"]{border-color:var(--warn)}.c[data-s="반려"],.c[data-s="다시"]{border-color:var(--no)}
+.c[data-s="보류"],.c[data-s="검토 필요"]{border-color:var(--warn)}.c[data-s="반려"],.c[data-s="다시"]{border-color:var(--no)}
 .c header{display:flex;gap:10px;align-items:baseline;margin-bottom:10px}
 .n{font:600 13px/1 Inter,Pretendard,sans-serif;color:var(--accent);background:var(--tint);padding:5px 8px;border-radius:8px;flex:none}
 h3{margin:0;font:700 19px/1.4 Pretendard,sans-serif;text-wrap:balance}
