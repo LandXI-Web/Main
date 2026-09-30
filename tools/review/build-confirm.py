@@ -7,6 +7,7 @@
 import html
 import json
 import os
+import re
 import shutil
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -226,7 +227,17 @@ def build():
                 break
 
     def card(it, done=False):
-        shots = ''.join(f'<a href="img/{esc(s)}" target="_blank"><img src="img/{esc(s)}" alt="" loading="lazy"></a>' for s in it['shots'] if os.path.exists(os.path.join(OUT, 'img', s)))
+        done = done or ('what' in it)   # 구현 확인 항목(만든 것 + 전/후 캡처)
+        def cap(fn):  # 파일 이름으로 그림 이름표(지금 / 바뀐 뒤 / 시안 / 도착 화면)
+            f = fn.lower()
+            if re.search(r'(^|[-_])(before|now)([-_.]|$)', f) or f.startswith(('now-', 'before-')): return '지금'
+            if re.search(r'(^|[-_])after([-_.]|$)', f) or f.startswith('after-'): return '바뀐 뒤'
+            if f.startswith('land-'): return '로그인 뒤 도착'
+            if f.startswith('outside-'): return '바깥 주소에서'
+            if f.startswith(('new-', 'mock-')): return '시안'
+            if f.startswith('old-'): return '옛 화면'
+            return ''
+        shots = ''.join(f'<figure><a href="img/{esc(s)}" target="_blank"><img src="img/{esc(s)}" alt="" loading="lazy"></a>' + (f'<figcaption>{cap(s)}</figcaption>' if cap(s) else '') + '</figure>' for s in it['shots'] if os.path.exists(os.path.join(OUT, 'img', s)))
         where = ''.join(f'<li><a href="{esc(u)}" target="_blank" rel="noopener">{esc("설계 문서 열기" if "github.com" in u else u.replace("https://", ""))}</a><span>{esc(acc)}</span><em>{esc(tap)}</em></li>' for u, acc, tap in it['where'])
         opts = ''.join(f'<button type="button" data-v="{esc(o)}">{esc(o)}</button>' for o in it['opts'])
         body = (f'<p class="k">지금</p><p>{esc(it["now"])}</p><p class="k">제안</p><p>{esc(it["prop"])}</p>' if not done else f'<p class="k">만든 것</p><p>{esc(it["what"])}</p>')
@@ -276,7 +287,7 @@ h3{margin:0;font:700 19px/1.4 Pretendard,sans-serif;text-wrap:balance}
 .wh li{display:flex;flex-direction:column;background:var(--bg);border-radius:10px;padding:8px 12px;font-size:14px}
 .wh li a{overflow-wrap:anywhere}.wh li span,.wh li em{text-wrap:pretty}.wh li span{color:var(--ink2)}.wh li em{font-style:normal;color:var(--mute);font-size:13px}
 .im{display:grid;gap:8px;align-content:start}
-.im img{width:100%;border-radius:12px;border:1px solid var(--line);display:block}
+.im figure{margin:0;position:relative}.im img{width:100%;border-radius:12px;border:1px solid var(--line);display:block}.im figcaption{position:absolute;left:10px;top:10px;font:600 12px/1 Pretendard,sans-serif;padding:6px 8px;border-radius:8px;background:rgba(25,31,40,.82);color:#fff}
 .na{color:var(--mute);font-size:14px;margin:0;padding:24px;background:var(--bg);border-radius:12px;text-align:center}
 footer{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
 .op{display:flex;gap:6px;flex-wrap:wrap}
