@@ -6,6 +6,13 @@
 @import url('./panel.css');
 @import url('./cmdk.css');
 
+/* ── 줄바꿈·줄맞춤(모든 화면 · 2026-09-30 사용자 기본 가이드) ─────────────
+   한국어는 어절 단위로만 끊는다(글자 중간 끊김 0). 제목은 줄 길이를 고르게, 문단은 마지막 줄에 한 단어만 남지 않게.
+   의미 단위 줄바꿈이 필요한 곳은 <br> 로 직접 끊는다(문장·구 경계에서만). */
+.t :where(h1,h2,h3,h4,h5,p,li,dt,dd,label,figcaption,blockquote,td,th,button,a,span,div){word-break:keep-all;overflow-wrap:break-word}
+.t :where(h1,h2,h3,h4){text-wrap:balance}
+.t :where(p,li,dd,figcaption,blockquote){text-wrap:pretty}
+
 /* ── K6 신뢰 기호 · 호버 풍선 ─────────────── */
 .k-sig{cursor:help;border-radius:4px}
 .k-sig:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
