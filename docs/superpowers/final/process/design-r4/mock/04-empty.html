@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · 비었을 때(남원시 GeoVision 할 일) — 회백 카드 + 한 문장 + 버튼 하나</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.page{position:absolute;inset:0;padding:16px 16px 16px 48px;display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:16px}
+.card{background:var(--bg-1);border-radius:16px;padding:24px 32px;display:flex;flex-direction:column;gap:24px}
+.tabs{display:flex;gap:28px;border-bottom:1px solid var(--rule)}
+.tabs span{font:500 18px/1 var(--font-body);color:var(--sub);padding:12px 2px}
+.tabs span[aria-current="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--ci)}
+.empty{background:var(--bg-0);border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:8px;max-width:560px}
+.empty h3{margin:0;font:500 20px/30px var(--font-body);color:var(--ink)}
+.empty p{margin:0;font:400 16px/26px var(--font-body);color:var(--sub-2)}
+.empty .t-btn{align-self:flex-start;margin-top:12px}
+.mapc{border-radius:16px;overflow:hidden;position:relative;background:#3b4a3a}
+.mapc .m-map{position:absolute;inset:0}
+</style>
+</head>
+<body class="m t ci-namwon ci-a">
+<div class="m-app">
+  <header class="m-mast">
+    <span class="m-mark"><span>남원</span><span>GV</span></span>
+    <span class="m-word m-word--ci">남원시 GeoVision 플랫폼</span>
+    <span class="m-home">농정과</span>
+    <span class="m-sp"></span>
+    <span class="m-fresh"><i></i>17:31</span>
+    <span class="m-role"><b>농정과</b>담당자</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <main class="m-main">
+    <div class="page">
+      <section class="card">
+        <div class="tabs"><span>‹</span><span>의심 필지</span><span aria-current="true">할 일</span><span>보고서</span></div>
+        <div class="empty">
+          <h3>아직 할 일이 없습니다</h3>
+          <p>의심 필지에서 현장 확인할 필지를 고르면<br>여기에 쌓입니다.</p>
+          <button class="t-btn">의심 필지 보기</button>
+        </div>
+      </section>
+      <aside class="mapc"><div class="m-map m-map--ortho" style="background-position:-760px -65px"></div></aside>
+    </div>
+
+    <span class="m-note" style="left:660px;top:140px"><i>1</i>빈 화면 = 회백 카드 + 한 문장 + 버튼 하나(그림 없음)</span>
+    <span class="m-note" style="left:660px;top:188px"><i>2</i>'다음에 뭘 하면 되는지'가 문장에 들어감</span>
+  </main>
+</div>
+<span class="m-stamp"><b>시안</b> 둘 다 같은 모양 · 예: 남원시 GeoVision 할 일(기관 분기)</span>
+</body>
+</html>

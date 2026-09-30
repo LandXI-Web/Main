@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · 문제가 생겼을 때(Land-XI LX 관리자 결재) — 그 자리에 빨간 한 줄 + 다시 시도</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.page{position:absolute;inset:0;padding:32px 48px;display:grid;grid-template-columns:minmax(0,1fr) 392px;gap:24px;align-content:start}
+.head{display:flex;align-items:baseline;gap:16px;margin-bottom:16px}
+.head h1{margin:0;font:700 32px/42px var(--font-display);letter-spacing:-.01em}
+.tbl{background:var(--bg-1);border-radius:16px;padding:8px 12px}
+.m-table th{color:var(--sub)}
+.errrow td{padding:28px 12px}
+.side{background:var(--bg-1);border-radius:16px;padding:24px;min-height:300px;display:flex;flex-direction:column;gap:12px}
+.side h2{margin:0;font:700 24px/32px var(--font-display);letter-spacing:-.02em}
+.side p{margin:0}
+</style>
+</head>
+<body class="m t">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">LAND-XI</span>
+    <span class="m-home">LX 관리자 대시보드</span>
+    <span class="m-sp"></span>
+    <span class="m-ask">물어보기 <kbd>Ctrl K</kbd></span>
+    <span class="m-role">LX 관리자</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail">
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2V6z"/><path d="M9 4v14M15 6v14"/></svg>현황</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>인프라</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9H3z"/><path d="M9 20v-6h6v6"/></svg>기관</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>배포</span>
+    <span class="m-rail-i" aria-current="true"><svg viewBox="0 0 24 24"><path d="M3 13h5l2 3h4l2-3h5"/><path d="M5 5h14v14H5z"/></svg>결재</span>
+  </nav>
+  <main class="m-main">
+    <div class="page">
+      <section>
+        <div class="head"><h1>결재</h1></div>
+        <div class="tbl">
+          <table class="m-table">
+            <thead><tr><th>종류</th><th>무엇을</th><th>어디</th><th>누가</th><th>언제</th><th>기준</th></tr></thead>
+            <tbody>
+              <tr class="errrow"><td colspan="6"><div class="m-err">결재함을 불러오지 못했습니다 <a>다시 시도</a></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <aside class="side">
+        <h2>최근 결재</h2>
+        <p class="m-small">한 건을 고르면 여기에 내용이 보입니다.</p>
+      </aside>
+    </div>
+
+    <span class="m-note" style="left:48px;top:250px"><i>1</i>문제가 생기면 그 자리에 빨간 한 줄 + '다시 시도' — 멈춰 있거나 빈 화면으로 두지 않음</span>
+    <span class="m-note" style="left:48px;top:298px"><i>2</i>저장·요청이 실패하면 아래 작은 알림 + '다시 시도'(같은 모양)</span>
+  </main>
+</div>
+<span class="m-stamp"><b>시안</b> 둘 다 같은 모양 · 예: Land-XI LX 관리자 결재함</span>
+</body>
+</html>

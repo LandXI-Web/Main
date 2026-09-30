@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · 남원시 GeoVision(기관 분기) — 지도에서 필지를 누르고 'AI가 잘못 봤어요' + 메모 한 줄</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.parcel{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}
+.pop{position:absolute;left:600px;top:250px;width:372px;background:var(--bg-1);border-radius:16px;box-shadow:var(--elev-map);padding:20px 24px;display:flex;flex-direction:column;gap:12px}
+.pop .h{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.pop h2{margin:0;font:700 24px/32px var(--font-display);letter-spacing:-.02em}
+.pop .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0;font:400 15px/22px var(--font-body)}
+.pop .kv dt{color:var(--sub)}
+.pop .kv dd{margin:0;color:var(--ink)}
+.pop .kv dd b{font-weight:500;color:var(--ai)}
+.pop .acts{display:flex;gap:8px}
+.pop .acts .t-btn{flex:1;height:40px}
+.pop .acts .t-btn.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.flag{display:flex;flex-direction:column;gap:8px;padding-top:12px;border-top:1px solid var(--rule)}
+.flag .m-label{color:var(--ink)}
+.flag .m-btn-row .t-btn{flex:1}
+.flag .cancel{flex:none;font:500 14px/1 var(--font-body);color:var(--sub);padding:0 8px}
+.sheet-rows{display:flex;flex-direction:column}
+.sheet-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--rule);font:400 15px/22px var(--font-body);color:var(--ink)}
+.sheet-row .s{color:var(--sub);font-size:14px}
+.sheet-row .t-chip{margin-left:auto}
+.sheet-row.on{color:var(--ink);font-weight:500}
+</style>
+</head>
+<body class="m t ci-namwon ci-a">
+<div class="m-app">
+  <header class="m-mast">
+    <span class="m-mark"><span>남원</span><span>GV</span></span>
+    <span class="m-word m-word--ci">남원시 GeoVision 플랫폼</span>
+    <span class="m-home">농정과 · 영농관리 행정서비스</span>
+    <span class="m-sp"></span>
+    <span class="m-ask">물어보기 <kbd>Ctrl K</kbd></span>
+    <span class="m-fresh"><i></i>17:35</span>
+    <span class="m-role"><b>농정과</b>담당자</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-mast-b" style="color:var(--ink)">할 일 <span class="m-num">3</span></span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <main class="m-main">
+    <div class="m-map m-map--ortho"></div>
+    <svg class="parcel" viewBox="0 0 1440 836" aria-hidden="true">
+      <polygon points="520,300 596,290 606,352 528,362" fill="rgba(15,169,160,.28)" stroke="#0FA9A0" stroke-width="2.5"/>
+      <polygon points="440,372 514,364 522,420 448,428" fill="none" stroke="#0FA9A0" stroke-width="1.5" stroke-dasharray="4 4" opacity=".7"/>
+      <polygon points="620,380 690,372 698,428 628,436" fill="none" stroke="#0FA9A0" stroke-width="1.5" stroke-dasharray="4 4" opacity=".7"/>
+      <line x1="606" y1="322" x2="640" y2="322" stroke="#fff" stroke-width="2"/>
+    </svg>
+    <div class="pop">
+      <div class="h"><h2>산동면 대기리 615</h2><span class="t-chip">배정</span></div>
+      <dl class="kv">
+        <dt>대장</dt><dd>전(밭)</dd>
+        <dt>AI 분석</dt><dd><b>건물</b> 65m² · 2025년 드론영상</dd>
+      </dl>
+      <div class="acts">
+        <button class="t-btn t-btn--2 on">AI가 잘못 봤어요</button>
+        <button class="t-btn t-btn--2">현장 확인으로</button>
+      </div>
+      <div class="flag">
+        <p class="m-label">메모 한 줄 <span style="color:var(--sub);font-weight:400">(안 써도 됩니다)</span></p>
+        <input class="t-input" value="지난달 창고를 철거했습니다">
+        <div class="m-btn-row"><button class="t-btn">LX에 보내기</button><span class="cancel">취소</span></div>
+      </div>
+    </div>
+    <aside class="m-sheet">
+      <div class="m-sheet-h"><h2>할 일</h2><span class="m-x">×</span></div>
+      <p class="m-label">판정 대기 <span class="m-num" style="color:var(--ink);font-weight:500">3</span>건</p>
+      <div class="sheet-rows">
+        <div class="sheet-row on">산동면 대기리 615 <span class="s">무허가 건축 의심</span><span class="t-chip">배정</span></div>
+        <div class="sheet-row">덕과면 사율리 501-3 <span class="s">무허가 건축 의심</span><span class="t-chip">배정</span></div>
+        <div class="sheet-row">운봉읍 신기리 525-1 <span class="s">대장 농지 위 건물</span><span class="t-chip">배정</span></div>
+      </div>
+    </aside>
+    <span class="m-scale">100 m</span>
+
+    <span class="m-note" style="left:130px;top:250px"><i>1</i>지도(영상)에서 필지를 누르면 카드가 뜸</span>
+    <span class="m-note" style="left:130px;top:298px"><i>2</i>'AI가 잘못 봤어요' 한 번 — 이유 고르기 · 사진 없음</span>
+    <span class="m-note" style="left:130px;top:346px"><i>3</i>메모 한 줄은 써도 안 써도 됨 → 'LX에 보내기'. 정리는 LX가 함</span>
+  </main>
+</div>
+<span class="m-stamp"><b>시안</b> 기관 분기 화면 · 남원시 GeoVision(농정과 담당자) — 오탐 알리기</span>
+</body>
+</html>

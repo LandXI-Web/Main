@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · Land-XI LX 직원 — 영상 올리기: 파일만 끌어 놓으면 나머지는 파일에서 읽는다</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.search{position:absolute;left:16px;top:16px;width:340px;height:52px;display:flex;align-items:center;gap:12px;padding:0 18px;background:var(--bg-1);border-radius:16px;box-shadow:var(--elev-map);font:500 16px/1 var(--font-body);color:var(--ink)}
+.search svg{width:18px;height:18px;stroke:var(--sub);stroke-width:1.5;fill:none;stroke-linecap:round}
+.read{background:var(--bg-0);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.read h3{margin:0;font:500 18px/26px var(--font-body);color:var(--ink)}
+.read h3 small{font:400 14px/20px var(--font-body);color:var(--sub);margin-left:8px}
+.m-kv{grid-template-columns:72px 1fr auto}
+</style>
+</head>
+<body class="m t">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">LAND-XI</span>
+    <span class="m-home">LX 직원 대시보드</span>
+    <span class="m-sp"></span>
+    <span class="m-fresh"><i></i>17:29</span>
+    <span class="m-role"><b>LX 직원</b>김도윤</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail m-rail--steps">
+    <span class="m-rail-i" data-st="now"><span class="n" data-st="now">1</span>데이터<br>올리기</span>
+    <span class="m-rail-i" data-st="wait"><span class="n">2</span>학습</span>
+    <span class="m-rail-i" data-st="wait"><span class="n">3</span>서비스<br>만들기</span>
+    <span class="m-rail-i" data-st="wait"><span class="n">4</span>결과 확인</span>
+    <span class="m-rail-i" data-st="wait"><span class="n">5</span>배포</span>
+    <span class="m-rail-i" data-st="wait"><span class="n">6</span>서비스 관리</span>
+  </nav>
+  <main class="m-main">
+    <div class="m-map m-map--ortho-rail"></div>
+    <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>남원시</div>
+    <aside class="m-sheet">
+      <div class="m-sheet-h"><h2>영상 올리기</h2><span class="m-x">×</span></div>
+      <div class="m-drop">
+        <svg viewBox="0 0 24 24"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>
+        <h6>여기에 파일을 놓거나 눌러서 선택</h6>
+        <p>GeoTIFF · JP2 · ECW · 여러 개 가능</p>
+      </div>
+      <div class="m-file">
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/></svg></span>
+        <span class="nm">남원시_드론정사영상.tif</span>
+        <span class="st ok">올라옴</span>
+      </div>
+      <div class="read">
+        <h3>이렇게 읽었습니다<small>파일에서 자동으로</small></h3>
+        <dl class="m-kv">
+          <dt>해상도</dt><dd>25cm</dd><dd><span class="fix">고치기</span></dd>
+          <dt>촬영</dt><dd>2025년 · 드론</dd><dd><span class="fix">고치기</span></dd>
+          <dt>범위</dt><dd>남원시 산동면 · 덕과면 외</dd><dd><span class="fix">고치기</span></dd>
+          <dt>좌표계</dt><dd>중부원점 · 확인됨</dd><dd><span class="fix">고치기</span></dd>
+        </dl>
+      </div>
+      <button class="t-btn">이대로 등록</button>
+      <p class="m-small">등록하면 남원시가 '영상 있음'으로 바뀝니다.</p>
+    </aside>
+    <span class="m-scale">3 km</span>
+
+    <span class="m-note" style="left:420px;top:100px"><i>1</i>파일만 끌어 놓으면 끝 — 입력 칸 없음</span>
+    <span class="m-note" style="left:420px;top:330px"><i>2</i>해상도 · 촬영 · 범위 · 좌표계는 파일에서 읽어 보여 주고, 확인만</span>
+    <span class="m-note" style="left:420px;top:380px"><i>3</i>틀린 것만 '고치기' — 맞으면 '이대로 등록' 한 번</span>
+  </main>
+</div>
+<span class="m-stamp"><b>시안</b> Land-XI 화면 · LX 직원 데이터 올리기</span>
+</body>
+</html>

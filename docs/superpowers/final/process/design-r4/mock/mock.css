@@ -1,0 +1,125 @@
+/* 설계 4차 시안 공통 — 실제 키트(kit.css · 토큰 · 서체)를 그대로 불러 실제 화면처럼 보이게 한다.
+   시안 전용 클래스는 m- 접두. 지도 바탕은 기존 캡처·자산 이미지를 배경으로 깐다. */
+@import url('../../../../../../landxi/v3/kit/kit.css');
+
+html,body{margin:0;background:var(--bg-0)}
+body.m{width:1440px;height:900px;overflow:hidden;position:relative;font:400 16px/26px var(--font-body);color:var(--ink);-webkit-font-smoothing:antialiased;word-break:keep-all}
+body.m *{box-sizing:border-box}
+
+/* ── 앱 틀: 마스트 64 + (레일 72) + 판 ── */
+.m-app{position:absolute;inset:0;display:grid;grid-template-rows:64px minmax(0,1fr);grid-template-columns:minmax(0,1fr);background:var(--bg-0)}
+.m-app.has-rail{grid-template-columns:72px minmax(0,1fr)}
+.m-mast{grid-column:1/-1;height:64px;display:flex;align-items:center;gap:16px;padding:0 24px;background:var(--bg-1);border-bottom:1px solid var(--rule);position:relative;z-index:20}
+.m-word{font:700 16px/1 var(--font-display);letter-spacing:-.01em;color:var(--ink);white-space:nowrap}
+.m-home{font:500 14px/1 var(--font-body);color:var(--sub);white-space:nowrap}
+.m-home::before{content:"·";margin-right:10px;color:var(--mute)}
+.m-sp{flex:1}
+.m-role{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:8px;background:var(--bg-0);font:500 14px/1 var(--font-body);color:var(--ink);white-space:nowrap}
+.m-role b{font-weight:500;color:var(--sub)}
+.m-role b::after{content:"·";margin-left:6px;color:var(--mute)}
+.m-mast-b{height:36px;padding:0 12px;border-radius:8px;color:var(--sub);font:500 14px/36px var(--font-body);white-space:nowrap}
+.m-help{width:36px;padding:0;text-align:center;border:1px solid var(--rule);color:var(--ink);font-family:var(--font-num)}
+.m-fresh{display:inline-flex;align-items:center;gap:8px;font:500 14px/1 var(--font-num);color:var(--sub)}
+.m-fresh i{width:8px;height:8px;border-radius:50%;background:var(--ai)}
+.m-ask{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border:1px solid var(--rule);border-radius:8px;font:500 14px/1 var(--font-body);color:var(--sub)}
+.m-ask kbd{font:500 12px/1 var(--font-num);color:var(--sub);background:var(--bg-0);padding:4px 6px;border-radius:4px}
+
+/* 기관 마크(옛 포털 CI 한 벌: 두 줄 마크 + 플랫폼 이름) */
+.m-mark{display:inline-flex;flex-direction:column;line-height:1;font:800 11px/1.05 var(--font-display);letter-spacing:.02em;color:var(--ci)}
+.m-mark span{display:block}
+.m-word--ci{color:var(--ink)}
+
+/* 레일 */
+.m-rail{grid-row:2;grid-column:1;background:var(--bg-1);border-right:1px solid var(--rule);display:flex;flex-direction:column;align-items:center;padding:20px 0;gap:10px;position:relative;z-index:15}
+.m-rail-i{width:60px;padding:6px 0;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--sub);font:500 13px/1.2 var(--font-body);text-align:center;border-radius:8px;position:relative}
+.m-rail-i svg{width:20px;height:20px;stroke:currentColor;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.m-rail-i[aria-current="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent)}
+.m-rail--steps::before{content:"";position:absolute;left:50%;top:48px;bottom:48px;width:2px;margin-left:-1px;background:var(--rule)}
+.m-rail--steps .m-rail-i{box-shadow:none}
+.m-rail--steps .n{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--bg-1);border:2px solid var(--rule);color:var(--mute);font:500 13px/1 var(--font-num)}
+.m-rail--steps .n[data-st="done"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.m-rail--steps .n[data-st="now"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.m-rail--steps .m-rail-i[data-st="now"]{color:var(--ink)}
+
+/* 판 */
+.m-main{grid-row:2;grid-column:-2/-1;position:relative;min-width:0;min-height:0;overflow:hidden;background:var(--bg-0)}
+.m-map{position:absolute;inset:0;background-repeat:no-repeat;background-color:#3b4a3a}
+/* 지도 바탕(기존 자산·캡처를 그대로 깐다) */
+.m-map--ortho{background-image:url('../../../../../../landxi/assets/images/landing/lp-map.png');background-size:1964px auto;background-position:-436px -65px}
+.m-map--ortho-rail{background-image:url('../../../../../../landxi/assets/images/landing/lp-map.png');background-size:1964px auto;background-position:-500px -65px}
+.m-map--korea{background-image:url('../../design-r3/shots/gov-gj-home.jpg');background-size:1440px auto;background-position:0 -64px}
+.m-map--korea-dark{background-image:url('../../design-r3/shots/staff-console.jpg');background-size:1440px auto;background-position:-72px -64px}
+.m-scale{position:absolute;left:16px;bottom:16px;padding:2px 8px;font:500 12px/16px var(--font-num);color:var(--ink);background:rgba(255,255,255,.85);border-left:2px solid var(--ink);border-bottom:2px solid var(--ink)}
+
+/* 지도 위 카드·시트(법전 §6: 흰 카드 · 라운드 16 · elev-map) */
+.m-card{background:var(--bg-1);border-radius:16px;padding:24px;box-shadow:var(--elev-map)}
+.m-sheet{position:absolute;top:24px;right:24px;bottom:24px;width:392px;background:var(--bg-1);border-radius:16px;box-shadow:var(--elev-map);padding:24px;overflow:hidden;display:flex;flex-direction:column;gap:16px}
+.m-sheet-h{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.m-sheet-h h2{margin:0;font:700 24px/32px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.m-x{width:32px;height:32px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--sub);font:400 20px/1 var(--font-num)}
+.m-list{position:absolute;left:16px;top:16px;width:400px;display:flex;flex-direction:column;gap:8px}
+.m-row{display:flex;align-items:center;gap:10px;height:44px;padding:0 14px;background:var(--bg-1);border-radius:8px;box-shadow:var(--elev-map);font:500 14px/1 var(--font-body);color:var(--ink)}
+.m-row b{font-weight:700;color:var(--ink)}
+.m-row .s{color:var(--sub)}
+.m-row .v{margin-left:auto;font:700 14px/1 var(--font-body);color:var(--ink)}
+.m-row .v small{font:500 13px/1 var(--font-body);color:var(--sub);margin-right:4px}
+
+/* 글 */
+.m-h4{margin:0;font:700 24px/32px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.m-h3{margin:0;font:700 32px/42px var(--font-display);letter-spacing:-.01em;color:var(--ink)}
+.m-sub{margin:0;font:500 20px/30px var(--font-body);color:var(--ink-2)}
+.m-label{margin:0;font:500 14px/20px var(--font-body);color:var(--sub)}
+.m-body{margin:0;font:400 16px/26px var(--font-body);color:var(--sub-2)}
+.m-small{margin:0;font:400 14px/20px var(--font-body);color:var(--sub)}
+.m-warn{color:var(--warn)}
+.m-num{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+
+/* 부품 조합 */
+.m-btn-row{display:flex;gap:8px;align-items:center}
+.m-btn-row .t-btn{flex:1}
+.m-kv{display:grid;grid-template-columns:96px 1fr auto;gap:8px 12px;align-items:center;margin:0}
+.m-kv dt{font:500 14px/20px var(--font-body);color:var(--sub)}
+.m-kv dd{margin:0;font:400 15px/22px var(--font-body);color:var(--ink)}
+.m-kv .fix{font:500 13px/1 var(--font-body);color:var(--sub);text-decoration:underline;text-underline-offset:3px}
+.m-file{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg-0);border-radius:8px}
+.m-file .ic{width:32px;height:32px;border-radius:8px;background:var(--bg-1);display:inline-flex;align-items:center;justify-content:center}
+.m-file .ic svg{width:18px;height:18px;stroke:var(--ink);stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.m-file .nm{font:500 14px/20px var(--font-body);color:var(--ink);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-file .st{font:500 13px/1 var(--font-body);color:var(--ink)}
+.m-file .st.ok::before{content:"✓";color:var(--ai);margin-right:4px}
+.m-drop{background:var(--bg-0);border:1.5px dashed var(--mute);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:20px}
+.m-drop svg{width:32px;height:32px;fill:none;stroke:var(--ink);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.m-drop h6{margin:6px 0 0;font:500 18px/26px var(--font-body);color:var(--ink)}
+.m-drop p{margin:0;font:500 13px/18px var(--font-num);color:var(--sub)}
+.m-toast{position:absolute;left:50%;bottom:32px;transform:translateX(-50%);padding:14px 20px;border-radius:8px;background:var(--bg-1);color:var(--ink);font:500 16px/1.4 var(--font-body);box-shadow:var(--elev-3);white-space:nowrap;z-index:60}
+.m-chips{display:flex;flex-wrap:wrap;gap:8px}
+.m-chips .t-chip[aria-pressed="true"]{background:var(--ink);color:#fff}
+.m-err{display:flex;align-items:center;gap:12px;font:500 15px/22px var(--font-body);color:var(--warn)}
+.m-err a{color:var(--ink);font-weight:500;text-decoration:underline;text-underline-offset:3px}
+.m-bar{height:4px;background:var(--rule);border-radius:2px;overflow:hidden;width:100%}
+.m-bar i{display:block;height:100%;width:38%;background:var(--accent)}
+.m-ph{height:14px;border-radius:4px;background:var(--rule)}
+.m-table{width:100%;border-collapse:collapse;font:400 15px/22px var(--font-body);color:var(--ink-2)}
+.m-table th{padding:10px 12px;border-bottom:1px solid var(--rule);text-align:left;font:500 14px/20px var(--font-body);color:var(--sub);white-space:nowrap}
+.m-table td{padding:14px 12px;border-bottom:1px solid var(--rule);vertical-align:middle}
+.m-table tr.is-on td{background:var(--bg-0)}
+.m-table tr.is-on td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+.m-table .ink{color:var(--ink);font-weight:500}
+
+/* 시안 표시 — 어느 플랫폼 화면인지 + 설명 번호 */
+.m-stamp{position:absolute;left:16px;bottom:16px;z-index:70;display:inline-flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;background:rgba(28,31,37,.92);color:#fff;font:500 13px/1 var(--font-body);box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.m-stamp b{font-weight:700;color:#FFD166}
+.m-stamp--r{left:auto;right:16px}
+.m-note{position:absolute;z-index:65;display:inline-flex;align-items:center;gap:8px;max-width:360px;padding:6px 12px 6px 6px;border-radius:8px;background:#FFD166;color:var(--ink);font:500 13px/18px var(--font-body);box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.m-note i{flex:none;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#FFD166;display:inline-flex;align-items:center;justify-content:center;font:700 12px/1 var(--font-num);font-style:normal}
+
+/* 기관 CI 예시 — 옛 포털 자산(brand.js) 값 그대로 */
+.ci-namwon{--ci:#1F6F4A;--ci-t1:#E9F3ED;--ci-line:#D1E3D9}
+.ci-gj{--ci:#0B5FA5;--ci-t1:#E6EFF7;--ci-line:#CFDCEA}
+.ci-lx{--ci:#006DF7;--ci-t1:#E8F1FF;--ci-line:#D2E2F8}
+/* ⓐ 안: 기관 마크·이름·기관색만 바뀌고 틀은 Land-XI 그대로 — 기관색은 현재 위치 표시에만 */
+.ci-a .m-rail-i[aria-current="true"],.ci-a .t-step[data-st="now"] .n{--accent:var(--ci)}
+.ci-a .m-bar i,.ci-a .t-progress i{background:var(--ci)}
+.ci-a .m-tab[aria-current="true"]{box-shadow:inset 0 -2px 0 var(--ci);color:var(--ink)}
+.m-tab{font:500 15px/1 var(--font-body);color:var(--sub);padding:12px 2px}
+.m-tabs{display:flex;gap:20px;border-bottom:1px solid var(--rule)}

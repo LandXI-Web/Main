@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 ⓐ · Land-XI LX 직원 — 프로젝트 단계 '학습데이터 구축(라벨링·검수)' 안에서 라벨 도구가 열림</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.m-rail--steps .m-rail-i{padding:4px 0}
+.page{position:absolute;inset:0;padding:24px 32px;display:grid;grid-template-columns:minmax(0,1fr) 300px;grid-template-rows:auto minmax(0,1fr);gap:16px 20px}
+.crumb{grid-column:1/-1;display:flex;align-items:baseline;gap:12px}
+.crumb h1{margin:0;font:700 28px/36px var(--font-display);letter-spacing:-.01em}
+.crumb span{font:500 14px/20px var(--font-body);color:var(--sub)}
+.tool{background:var(--bg-1);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.tool .bar{display:flex;align-items:center;gap:12px;height:48px;padding:0 20px;border-bottom:1px solid var(--rule);font:500 14px/1 var(--font-body);color:var(--ink)}
+.tool .bar span{color:var(--sub)}
+.tool .bar .t-chip{margin-left:auto}
+.tool .body{flex:1;min-height:0;background:#EEF3F5 url('../shots/now-L1-axis-label.png') center center / cover no-repeat;position:relative}
+.tool .body::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 0 1px var(--rule)}
+.side{display:flex;flex-direction:column;gap:16px}
+.card{background:var(--bg-1);border-radius:16px;padding:20px 24px;display:flex;flex-direction:column;gap:10px}
+.card h3{margin:0;font:700 20px/28px var(--font-display);letter-spacing:-.01em}
+.card .r{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--rule);font:400 15px/22px var(--font-body);color:var(--ink)}
+.card .r span{color:var(--sub);font-size:14px}
+.card p{margin:0}
+</style>
+</head>
+<body class="m t">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">LAND-XI</span>
+    <span class="m-home">LX 직원 대시보드</span>
+    <span class="m-sp"></span>
+    <span class="m-fresh"><i></i>17:29</span>
+    <span class="m-role"><b>LX 직원</b>김도윤</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail m-rail--steps">
+    <span class="m-rail-i"><span class="n" data-st="done">✓</span>데이터<br>올리기</span>
+    <span class="m-rail-i" data-st="now"><span class="n" data-st="now">2</span>학습데이터<br>구축</span>
+    <span class="m-rail-i" data-st="wait"><span class="n">3</span>학습</span>
+    <span class="m-rail-i" data-st="wait"><span class="n">4</span>서비스<br>만들기</span>
+    <span class="m-rail-i" data-st="wait"><span class="n">5</span>결과 확인</span>
+    <span class="m-rail-i" data-st="wait"><span class="n">6</span>배포</span>
+    <span class="m-rail-i" data-st="wait"><span class="n">7</span>서비스 관리</span>
+  </nav>
+  <main class="m-main">
+    <div class="page">
+      <div class="crumb"><h1>학습데이터 구축</h1><span>남원시 비닐하우스 2026 · 남원시 · 2025년 드론영상</span></div>
+      <section class="tool">
+        <div class="bar">라벨 도구<span>자동 라벨 → 검수 → 학습 표본</span><span class="t-chip">이 화면 안에서 열림</span></div>
+        <div class="body"></div>
+      </section>
+      <aside class="side">
+        <div class="card">
+          <h3>이 단계에서 하는 일</h3>
+          <div class="r">자동 라벨 <span>AI가 먼저 그림</span></div>
+          <div class="r">검수 <span>직원이 맞는지 확인</span></div>
+          <div class="r">학습 표본으로 <span>검수 끝난 것만</span></div>
+          <p class="m-small">검수가 끝나면 다음 단계 '학습'으로 넘어갑니다.</p>
+        </div>
+        <div class="card">
+          <h3>다음 할 일</h3>
+          <p class="m-body">검수 대기 표본을 확인하세요.</p>
+          <button class="t-btn">검수 시작</button>
+        </div>
+      </aside>
+    </div>
+
+    <span class="m-note" style="left:120px;top:140px"><i>1</i>'학습데이터 구축'이 프로젝트 단계로 들어옴(데이터 올리기와 학습 사이)</span>
+    <span class="m-note" style="left:120px;top:188px"><i>2</i>라벨 도구(AXIS-Label)가 새 창이 아니라 이 틀 안에서 열림 — 위 마스트 · 왼쪽 단계는 그대로</span>
+    <span class="m-note" style="left:120px;top:236px"><i>3</i>지금은 도구 로그인 화면까지만 보임(연결 전) — 연결되면 자동 라벨 · 검수 대기열이 여기에</span>
+  </main>
+</div>
+<span class="m-stamp"><b>시안 ⓐ</b> Land-XI 화면 · LX 직원 프로젝트 2단계 '학습데이터 구축'</span>
+</body>
+</html>

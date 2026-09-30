@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · Land-XI LX 직원 — 기관이 알린 필지를 받는 쪽: 메모 그대로 보고 판정 3택</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.page{position:absolute;inset:0;padding:32px 48px;display:grid;grid-template-columns:minmax(0,1fr) 392px;gap:24px;align-content:start}
+.head{display:flex;align-items:baseline;gap:16px;margin-bottom:16px}
+.head h1{margin:0;font:700 32px/42px var(--font-display);letter-spacing:-.01em}
+.head .m-label{font-size:15px}
+.tbl{background:var(--bg-1);border-radius:16px;padding:8px 12px}
+.m-table td{padding:16px 12px}
+.m-table .memo{color:var(--ink-2)}
+.m-table .memo.none{color:var(--mute)}
+.drawer{background:var(--bg-1);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:14px;min-height:700px}
+.drawer h2{margin:0;font:700 24px/32px var(--font-display);letter-spacing:-.02em}
+.crop{position:relative;height:190px;border-radius:8px;overflow:hidden;background:url('../../../../../../landxi/assets/images/landing/lp-map.png') -1080px -330px / 2600px auto no-repeat}
+.crop svg{position:absolute;inset:0;width:100%;height:100%}
+.crop span{position:absolute;left:10px;bottom:8px;font:500 12px/1 var(--font-body);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.kv{display:grid;grid-template-columns:76px 1fr;gap:6px 12px;margin:0}
+.kv dt{font:500 14px/22px var(--font-body);color:var(--sub)}
+.kv dd{margin:0;font:400 15px/22px var(--font-body);color:var(--ink)}
+.kv dd b{font-weight:500;color:var(--ai)}
+.memoq{padding:12px 14px;background:var(--bg-0);border-radius:8px;font:400 15px/22px var(--font-body);color:var(--ink)}
+.memoq small{display:block;font:400 13px/18px var(--font-body);color:var(--sub);margin-top:4px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.seg span{padding:12px 0;text-align:center;font:500 14px/1 var(--font-body);color:var(--ink);border-right:1px solid var(--rule)}
+.seg span:last-child{border-right:0}
+.seg span.on{background:var(--ink);color:#fff}
+</style>
+</head>
+<body class="m t">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">LAND-XI</span>
+    <span class="m-home">LX 직원 대시보드</span>
+    <span class="m-sp"></span>
+    <span class="m-fresh"><i></i>17:29</span>
+    <span class="m-role"><b>LX 직원</b>김도윤</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail m-rail--steps">
+    <span class="m-rail-i"><span class="n" data-st="done">✓</span>데이터<br>올리기</span>
+    <span class="m-rail-i"><span class="n" data-st="done">✓</span>학습</span>
+    <span class="m-rail-i"><span class="n" data-st="done">✓</span>서비스<br>만들기</span>
+    <span class="m-rail-i"><span class="n" data-st="done">✓</span>결과 확인</span>
+    <span class="m-rail-i"><span class="n" data-st="done">✓</span>배포</span>
+    <span class="m-rail-i" data-st="now"><span class="n" data-st="now">6</span>서비스 관리</span>
+  </nav>
+  <main class="m-main">
+    <div class="page">
+      <section>
+        <div class="head"><h1>기관이 알린 필지</h1><span class="m-label">영농관리 행정서비스 · 남원시 · 새로 온 것 <span class="m-num">2</span>건</span></div>
+        <div class="tbl">
+          <table class="m-table">
+            <thead><tr><th>기관</th><th>지번</th><th>기관 메모</th><th>보낸 날</th><th>상태</th></tr></thead>
+            <tbody>
+              <tr class="is-on"><td>남원시 농정과</td><td class="ink">산동면 대기리 615</td><td class="memo">지난달 창고를 철거했습니다</td><td class="m-num">2026.09.30</td><td><span class="t-chip">새로 옴</span></td></tr>
+              <tr><td>남원시 농정과</td><td class="ink">덕과면 사율리 501-3</td><td class="memo none">메모 없음</td><td class="m-num">2026.09.30</td><td><span class="t-chip">새로 옴</span></td></tr>
+              <tr><td>남원시 농정과</td><td class="ink">운봉읍 신기리 525-1</td><td class="memo">대장이 오래된 것 같습니다</td><td class="m-num">2026.09.29</td><td><span class="t-chip" data-lv="wait">확인 중</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <aside class="drawer">
+        <div class="m-sheet-h"><h2>산동면 대기리 615</h2><span class="m-x">×</span></div>
+        <div class="crop">
+          <svg viewBox="0 0 344 190" aria-hidden="true"><polygon points="120,60 210,52 222,124 132,132" fill="rgba(15,169,160,.28)" stroke="#0FA9A0" stroke-width="2.5"/></svg>
+          <span>2025년 드론영상</span>
+        </div>
+        <dl class="kv">
+          <dt>AI 분석</dt><dd><b>건물</b> 65m²</dd>
+          <dt>대장</dt><dd>전(밭)</dd>
+          <dt>보낸 사람</dt><dd>남원시 농정과 · 2026.09.30</dd>
+        </dl>
+        <div class="memoq">“지난달 창고를 철거했습니다”<small>기관 메모 그대로 — 정리는 LX가 합니다</small></div>
+        <p class="m-label" style="color:var(--ink)">판정</p>
+        <div class="seg"><span>맞음</span><span class="on">AI 오류</span><span>모름</span></div>
+        <p class="m-small">판정하면 기관 화면에 답이 저절로 갑니다.<br>'AI 오류'는 다음 학습 표본에 들어갑니다.</p>
+        <button class="t-btn">판정 저장</button>
+      </aside>
+    </div>
+
+    <span class="m-note" style="left:48px;top:330px"><i>1</i>기관이 보낸 건 필지 + 메모 한 줄 — 나머지(영상 조각·대장·AI 결과)는 저절로 붙음</span>
+    <span class="m-note" style="left:48px;top:378px"><i>2</i>LX 직원은 맞음 / AI 오류 / 모름 셋 중 하나 — 그 판정이 곧 기관 답변</span>
+  </main>
+</div>
+<span class="m-stamp"><b>시안</b> Land-XI 화면 · LX 직원 서비스 관리 — 기관이 알린 필지</span>
+</body>
+</html>

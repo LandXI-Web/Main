@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · Land-XI LX 직원 — 서비스 카드 발행 요청: 직원이 적는 건 이름과 한 줄 설명, 기준은 표시만</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.page{position:absolute;inset:0;padding:28px 48px;display:flex;flex-direction:column;gap:20px;align-items:flex-start}
+.crumb{display:flex;align-items:center;gap:10px;font:500 14px/20px var(--font-body);color:var(--sub)}
+.crumb b{font-weight:500;color:var(--ink)}
+.sheet{width:100%;max-width:1000px;background:var(--bg-1);border-radius:16px;padding:28px 32px;display:grid;grid-template-columns:360px minmax(0,1fr);gap:20px 32px;align-self:center}
+.sheet h1{grid-column:1/-1;margin:0;font:700 28px/36px var(--font-display);letter-spacing:-.02em}
+.card{background:var(--bg-0);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;gap:6px;padding:0 0 18px;align-self:start}
+.card svg{display:block;width:100%;aspect-ratio:3/2;height:auto}
+.card > *:not(svg){margin:0 20px}
+.card .meta{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.card .meta span{font:500 14px/20px var(--font-body);color:var(--sub)}
+.card h3{margin:0 20px;font:700 22px/30px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.card .d{font:400 14px/20px var(--font-body);color:var(--sub-2)}
+.card .n{font:800 28px/1 var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.card .n small{font:500 13px/1 var(--font-body);color:var(--sub);margin-left:4px;letter-spacing:0}
+.card .cap{font:400 13px/18px var(--font-body);color:var(--sub);margin-top:6px}
+.right{display:flex;flex-direction:column;gap:16px}
+.auto{display:grid;grid-template-columns:1fr auto;gap:8px 12px;margin:0;padding:16px 20px;background:var(--bg-0);border-radius:16px}
+.auto .cap{grid-column:1/-1;font:500 14px/20px var(--font-body);color:var(--ink);margin-bottom:2px}
+.auto dt{font:400 15px/22px var(--font-body);color:var(--ink-2)}
+.auto dd{margin:0;font:500 14px/22px var(--font-num);color:var(--ink);text-align:right}
+.auto .ok::after{content:" ✓";color:var(--ai)}
+.auto .bad{color:var(--warn);font-family:var(--font-body)}
+.f{display:flex;flex-direction:column;gap:6px}
+.f .m-label{color:var(--ink)}
+.acts{display:flex;align-items:center;gap:16px}
+.acts .t-btn{padding:0 28px}
+.acts p{margin:0;font:400 14px/20px var(--font-body);color:var(--sub)}
+.ci-lx{--ci:#006DF7;--ci-t1:#E8F1FF;--ci-line:#D2E2F8}
+</style>
+</head>
+<body class="m t ci-lx">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">LAND-XI</span>
+    <span class="m-home">LX 직원 대시보드</span>
+    <span class="m-sp"></span>
+    <span class="m-fresh"><i></i>17:29</span>
+    <span class="m-role"><b>LX 직원</b>김도윤</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail m-rail--steps">
+    <span class="m-rail-i"><span class="n" data-st="done">✓</span>데이터<br>올리기</span>
+    <span class="m-rail-i"><span class="n" data-st="done">✓</span>학습</span>
+    <span class="m-rail-i" data-st="now"><span class="n" data-st="now">3</span>서비스<br>만들기</span>
+    <span class="m-rail-i" data-st="wait"><span class="n">4</span>결과 확인</span>
+    <span class="m-rail-i" data-st="wait"><span class="n">5</span>배포</span>
+    <span class="m-rail-i" data-st="wait"><span class="n">6</span>서비스 관리</span>
+  </nav>
+  <main class="m-main">
+    <div class="page">
+      <div class="crumb"><b>남원시 비닐하우스 2026</b><span>·</span><span>프로젝트장 김도윤</span><span>·</span><span>남원시</span></div>
+      <section class="sheet">
+        <h1>서비스 카드 발행 요청</h1>
+        <article class="card">
+          <svg viewBox="0 0 160 100" aria-hidden="true"><rect width="160" height="100" fill="var(--ci-t1)"/><g stroke="var(--ci-line)" stroke-width="1" fill="none"><path d="M0 34 L160 20"/><path d="M0 66 L160 52"/><path d="M0 98 L160 84"/></g><g fill="none" stroke="var(--ci)" stroke-width="2"><path d="M24 64 Q40 40 56 64"/><path d="M60 60 Q76 36 92 60"/><path d="M96 56 Q112 32 128 56"/></g><g fill="var(--ci)" opacity=".45"><path d="M24 64 Q40 40 56 64 Z"/><path d="M60 60 Q76 36 92 60 Z"/></g></svg>
+          <div class="meta"><span>남원시 · 2025년 드론영상</span><span class="t-chip" data-lv="wait">발행 전</span></div>
+          <h3>비닐하우스 서비스</h3>
+          <p class="d">드론영상에서 비닐하우스를 찾아 현황을 집계합니다.</p>
+          <div class="n"><span class="m-num">132,310</span><small>AI 탐지 · 건</small></div>
+          <p class="cap">기관 화면에 이렇게 보입니다(미리 보기 · 저절로 만들어짐)</p>
+        </article>
+        <div class="right">
+          <dl class="auto">
+            <span class="cap">저절로 채워진 것</span>
+            <dt>모델</dt><dd class="ok">비닐하우스 · 2026 학습 · 쓸 수 있음</dd>
+            <dt>정밀도</dt><dd class="ok">0.92</dd>
+            <dt>표본 확인</dt><dd class="bad">2건 · 20건 미만 — 표시만, 관리자가 판단</dd>
+            <dt>실증 지역</dt><dd class="ok">남원시</dd>
+            <dt>제공 대상</dt><dd>국내 기관</dd>
+          </dl>
+          <div class="f"><p class="m-label">서비스 이름</p><input class="t-input" value="비닐하우스 서비스"></div>
+          <div class="f"><p class="m-label">한 줄 설명</p><input class="t-input" value="드론영상에서 비닐하우스를 찾아 현황을 집계합니다."></div>
+          <div class="acts"><button class="t-btn">발행 요청</button><p>LX 관리자가 승인하면 기관에 카드가 생깁니다.<br>반려는 사유 한 줄과 함께 돌아옵니다.</p></div>
+        </div>
+      </section>
+    </div>
+
+    <span class="m-note" style="left:200px;top:700px"><i>1</i>직원이 적는 건 이름과 한 줄 설명뿐 — 모델 · 정밀도 · 지역은 프로젝트에서 저절로</span>
+    <span class="m-note" style="left:200px;top:748px"><i>2</i>기준 미달은 막지 않고 빨간 글자로 표시만 — 판단은 관리자</span>
+  </main>
+</div>
+<span class="m-stamp"><b>시안</b> Land-XI 화면 · LX 직원 서비스 카드 발행 요청</span>
+</body>
+</html>

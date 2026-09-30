@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 ⓑ · 전남광주 AI 플랫폼(광역 기관 분기) — 첫 화면부터 다르게: 왼쪽 메뉴 + '내 서비스' 카드 홈</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.b-rail{padding-top:16px}
+.b-mark{margin:0 0 18px;display:flex;flex-direction:column;align-items:center;font:800 12px/1.05 var(--font-display);color:var(--ci);letter-spacing:.02em}
+.b-rail .m-rail-i[aria-current="true"]{box-shadow:inset 0 -2px 0 var(--ci)}
+.b-rail .out{margin-top:auto}
+.page{position:absolute;inset:0;overflow:hidden;padding:40px 48px 0;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;align-content:start}
+.head{grid-column:1/-1;display:flex;align-items:flex-end;gap:16px;padding-bottom:0;border-bottom:1px solid var(--rule)}
+.head h1{margin:0 0 14px;font:700 48px/60px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.head .tabs{display:flex;gap:20px;margin-left:24px}
+.head .tabs span{font:500 15px/1 var(--font-body);color:var(--sub);padding:14px 2px}
+.head .tabs span[aria-current="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--ci)}
+.head .date{margin-left:auto;font:500 14px/20px var(--font-num);color:var(--sub);padding-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;align-content:start}
+.svc{background:var(--bg-1);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;gap:8px;padding:0 0 20px}
+.svc svg{display:block;width:100%;aspect-ratio:3/2;height:auto}
+.svc > *:not(svg){margin:0 20px}
+.svc .meta{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.svc .meta span{font:500 14px/20px var(--font-body);color:var(--sub)}
+.svc h3{font:700 24px/32px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.svc .n{font:800 32px/1 var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.svc .n small{font:500 14px/1 var(--font-body);color:var(--sub);margin-left:4px;letter-spacing:0}
+.svc .go{margin-top:8px;font:500 14px/20px var(--font-body);color:var(--ink)}
+.svc .go::after{content:" →"}
+.empty{background:var(--bg-0);border:1.5px dashed var(--mute);border-radius:16px;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;font:400 15px/22px var(--font-body);color:var(--sub)}
+.side{display:flex;flex-direction:column;gap:16px}
+.todo{background:var(--bg-1);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:10px}
+.todo h3{margin:0;font:700 24px/32px var(--font-display);letter-spacing:-.02em}
+.todo .row{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--rule);font:400 15px/22px var(--font-body);color:var(--ink)}
+.todo .row .v{margin-left:auto;font:500 14px/1 var(--font-num);color:var(--ink)}
+.foot{position:absolute;left:48px;right:48px;bottom:0;height:56px;display:flex;align-items:center;gap:24px;border-top:1px solid var(--rule);font:400 13px/18px var(--font-body);color:var(--sub)}
+.foot b{font-weight:500;color:var(--ink-2)}
+</style>
+</head>
+<body class="m t ci-gj">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word m-word--ci">전남광주 AI 플랫폼</span>
+    <span class="m-home">해양수산과</span>
+    <span class="m-sp"></span>
+    <span class="m-ask">물어보기 <kbd>Ctrl K</kbd></span>
+    <span class="m-role"><b>해양수산과</b>담당자</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail b-rail">
+    <p class="b-mark"><span>光全</span><span>AI</span></p>
+    <span class="m-rail-i" aria-current="true"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>내 서비스</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2V6z"/><path d="M9 4v14M15 6v14"/></svg>지도</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h7"/></svg>보고서</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l2 2H4l2-2z"/><path d="M10 20a2 2 0 004 0"/></svg>알림</span>
+    <span class="m-rail-i out"><svg viewBox="0 0 24 24"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9"/></svg>로그아웃</span>
+  </nav>
+  <main class="m-main">
+    <div class="page">
+      <div class="head">
+        <h1>내 서비스</h1>
+        <div class="tabs"><span aria-current="true">광역 전체</span><span>여수시</span><span>시군구 고르기</span></div>
+        <span class="date">기준일 2026.06.08</span>
+      </div>
+      <section class="grid">
+        <article class="svc">
+          <svg viewBox="0 0 160 100" aria-hidden="true"><rect width="160" height="100" fill="var(--ci-t1)"/><path d="M0 0 L160 0 L160 30 C120 34 96 48 72 62 C48 76 24 84 0 86 Z" fill="var(--ci-line)" opacity=".6"/><g stroke="var(--ci-line)" stroke-width="1.2" fill="none"><path d="M0 96 C30 88 54 102 82 94 C110 86 134 98 160 90"/><path d="M0 80 C30 72 54 86 82 78 C110 70 134 82 160 74"/><path d="M0 64 C30 56 54 70 82 62 C110 54 134 66 160 58"/></g><g fill="var(--ci)"><rect x="30" y="62" width="9" height="7"/><rect x="52" y="76" width="7" height="6"/><rect x="74" y="66" width="11" height="8"/><rect x="96" y="80" width="6" height="6"/><rect x="112" y="60" width="8" height="7" opacity=".5"/><rect x="136" y="72" width="6" height="6" opacity=".5"/></g></svg>
+          <div class="meta"><span>2023년 항공영상 · 여수시</span><span class="t-chip">운영</span></div>
+          <h3>해양쓰레기 실태조사 서비스</h3>
+          <div class="n"><span class="m-num">1,857</span><small>AI 탐지 · 건</small></div>
+          <span class="go">이 서비스 열기</span>
+        </article>
+        <div class="empty">다른 시군구에 적용된 서비스가 생기면<br>여기에 카드로 나타납니다</div>
+      </section>
+      <aside class="side">
+        <div class="todo">
+          <h3>시군구별</h3>
+          <p class="m-label">AI 탐지</p>
+          <div class="row">여수시<span class="v">1,857건</span></div>
+          <button class="t-btn t-btn--2">여수시로 보기</button>
+        </div>
+      </aside>
+    </div>
+    <div class="foot"><b>광주전남특별시</b><span>대표전화 062-613-2114</span><span>AI 분석 · 모델 개발과 갱신 — LX 한국국토정보공사</span></div>
+
+    <span class="m-note" style="left:560px;top:120px"><i>1</i>남원시와 같은 틀 · 마크와 색만 광주전남</span>
+    <span class="m-note" style="left:48px;top:640px"><i>2</i>광역은 '광역 전체'와 '시군구' 탭 — 담당자가 고름</span>
+  </main>
+</div>
+<span class="m-stamp m-stamp--r"><b>시안 ⓑ</b> 기관 분기 화면 · 전남광주 AI 플랫폼(광역 · 해양수산과)</span>
+</body>
+</html>

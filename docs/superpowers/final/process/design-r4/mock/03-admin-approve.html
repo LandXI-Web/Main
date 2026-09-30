@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · Land-XI LX 관리자 — 결재 한 건: 누가 · 무엇을 · 기준 표시, 누를 것은 승인/반려(+사유 한 줄)</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.page{position:absolute;inset:0;padding:32px 48px;display:grid;grid-template-columns:minmax(0,1fr) 392px;gap:24px;align-content:start}
+.head{display:flex;align-items:baseline;gap:16px;margin-bottom:16px}
+.head h1{margin:0;font:700 32px/42px var(--font-display);letter-spacing:-.01em}
+.head .m-label{font-size:15px}
+.tbl{background:var(--bg-1);border-radius:16px;padding:8px 12px}
+.m-table td{padding:16px 12px}
+.drawer{background:var(--bg-1);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:16px;min-height:700px}
+.drawer h2{margin:0;font:700 24px/32px var(--font-display);letter-spacing:-.02em}
+.who{font:400 14px/20px var(--font-body);color:var(--sub)}
+.prev{display:flex;gap:12px;align-items:center;padding:12px;background:var(--bg-0);border-radius:8px}
+.prev svg{width:96px;height:60px;border-radius:4px;flex:none}
+.prev b{display:block;font:500 15px/22px var(--font-body);color:var(--ink)}
+.prev span{font:400 13px/18px var(--font-body);color:var(--sub)}
+.crit{margin:0;display:grid;grid-template-columns:1fr auto;gap:8px 12px}
+.crit dt{font:400 15px/22px var(--font-body);color:var(--ink-2)}
+.crit dd{margin:0;font:500 14px/22px var(--font-num);color:var(--ink);text-align:right}
+.crit .ok::after{content:" ✓";color:var(--ai)}
+.crit .bad{color:var(--warn);font-family:var(--font-body)}
+.memo{padding:12px 14px;background:var(--bg-0);border-radius:8px;font:400 14px/20px var(--font-body);color:var(--ink-2)}
+.memo b{font-weight:500;color:var(--sub);margin-right:6px}
+.reject{display:none;flex-direction:column;gap:8px;padding-top:12px;border-top:1px solid var(--rule)}
+body.is-reject .reject{display:flex}
+body.is-reject .btns .t-btn--2{border-color:var(--ink)}
+.m-btn-row .cancel{flex:none;font:500 14px/1 var(--font-body);color:var(--sub);padding:0 8px}
+.ci-lx{--ci:#006DF7;--ci-t1:#E8F1FF;--ci-line:#D2E2F8}
+</style>
+</head>
+<body class="m t ci-lx">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">LAND-XI</span>
+    <span class="m-home">LX 관리자 대시보드</span>
+    <span class="m-sp"></span>
+    <span class="m-ask">물어보기 <kbd>Ctrl K</kbd></span>
+    <span class="m-role">LX 관리자</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail">
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2V6z"/><path d="M9 4v14M15 6v14"/></svg>현황</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>인프라</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9H3z"/><path d="M9 20v-6h6v6"/></svg>기관</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>배포</span>
+    <span class="m-rail-i" aria-current="true"><svg viewBox="0 0 24 24"><path d="M3 13h5l2 3h4l2-3h5"/><path d="M5 5h14v14H5z"/></svg>결재</span>
+  </nav>
+  <main class="m-main">
+    <div class="page">
+      <section>
+        <div class="head"><h1>결재</h1><span class="m-label">대기 <span class="m-num">3</span>건</span></div>
+        <div class="tbl">
+          <table class="m-table">
+            <thead><tr><th>종류</th><th>무엇을</th><th>어디</th><th>누가</th><th>언제</th><th>기준</th></tr></thead>
+            <tbody>
+              <tr class="is-on"><td class="ink">서비스 발행</td><td>비닐하우스 서비스</td><td>남원시</td><td>김도윤</td><td>오늘</td><td><span class="m-warn">미달 표시 1</span></td></tr>
+              <tr><td class="ink">다른 지역에 적용</td><td>영농관리 행정서비스</td><td>구례군</td><td>김도윤</td><td>오늘</td><td>—</td></tr>
+              <tr><td class="ink">재학습 실행</td><td>농지이용 모델</td><td>남원시</td><td>김도윤</td><td>어제</td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <aside class="drawer">
+        <div class="m-sheet-h"><h2>비닐하우스 서비스<br>발행 요청</h2><span class="m-x">×</span></div>
+        <p class="who">김도윤 · 프로젝트 '남원시 비닐하우스 2026' · 오늘</p>
+        <div class="prev">
+          <svg viewBox="0 0 160 100" aria-hidden="true"><rect width="160" height="100" fill="var(--ci-t1)"/><g stroke="var(--ci-line)" stroke-width="1" fill="none"><path d="M0 34 L160 20"/><path d="M0 66 L160 52"/><path d="M0 98 L160 84"/></g><g fill="none" stroke="var(--ci)" stroke-width="2"><path d="M24 64 Q40 40 56 64"/><path d="M60 60 Q76 36 92 60"/><path d="M96 56 Q112 32 128 56"/></g><g fill="var(--ci)" opacity=".45"><path d="M24 64 Q40 40 56 64 Z"/><path d="M60 60 Q76 36 92 60 Z"/></g></svg>
+          <div><b>비닐하우스 서비스</b><span>남원시 · 2025년 드론영상 · AI 탐지 132,310건</span></div>
+        </div>
+        <dl class="crit">
+          <dt>정밀도</dt><dd class="ok">0.92</dd>
+          <dt>표본 확인</dt><dd class="bad">2건 · 20건 미만</dd>
+          <dt>실증 지역</dt><dd class="ok">남원시</dd>
+          <dt>겹치는 서비스</dt><dd class="ok">없음</dd>
+        </dl>
+        <p class="m-small">미달은 표시만 합니다 — 판단은 관리자가.</p>
+        <div class="memo"><b>요청 메모</b>표본은 다음 주까지 20건을 채우겠습니다.</div>
+        <div class="m-btn-row btns">
+          <button class="t-btn">승인</button>
+          <button class="t-btn t-btn--2">반려</button>
+        </div>
+        <div class="reject">
+          <p class="m-label">반려 사유 한 줄</p>
+          <input class="t-input" value="표본 20건을 확인한 뒤 다시 요청해 주세요">
+          <div class="m-btn-row"><button class="t-btn">반려 보내기</button><span class="cancel">취소</span></div>
+        </div>
+      </aside>
+    </div>
+
+    <span class="m-note" style="left:48px;top:300px"><i>1</i>한 건 = 누가 · 무엇을 · 기준 표시(미달은 빨간 글자)</span>
+    <span class="m-note" style="left:48px;top:348px"><i>2</i>누를 것은 승인 / 반려 둘뿐</span>
+    <span class="m-note" style="left:48px;top:396px"><i>3</i>반려를 누르면 사유 한 줄 칸이 열림 — 그게 전부</span>
+  </main>
+</div>
+<span class="m-stamp"><b>시안</b> Land-XI 화면 · LX 관리자 결재</span>
+<script>if(location.search.includes('reject'))document.body.classList.add('is-reject');</script>
+</body>
+</html>

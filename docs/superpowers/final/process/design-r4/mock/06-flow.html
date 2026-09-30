@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>그림 · 프로젝트와 서비스 카드 발행의 관계 — 프로젝트 안에서 만들고, 발행은 관리자가 승인</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.wrap{position:absolute;inset:0;padding:40px 48px}
+h1{margin:0 0 6px;font:700 32px/42px var(--font-display);letter-spacing:-.01em;color:var(--ink)}
+.lead{margin:0 0 28px;font:400 16px/26px var(--font-body);color:var(--sub-2)}
+.stage{position:relative;height:560px}
+.box{position:absolute;background:var(--bg-1);border-radius:16px;padding:24px}
+.proj{left:0;top:0;width:880px;height:300px}
+.proj .ttl{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
+.proj .ttl b{font:700 24px/32px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.proj .ttl span{font:400 14px/20px var(--font-body);color:var(--sub)}
+.proj .who{margin:0 0 28px;font:400 15px/22px var(--font-body);color:var(--ink-2)}
+.steps{display:grid;grid-template-columns:repeat(6,1fr);position:relative}
+.steps::before{content:"";position:absolute;left:8.3%;right:8.3%;top:18px;height:2px;background:var(--rule)}
+.st.new .c{background:var(--bg-1);color:var(--ink);border:2px solid var(--ink)}
+.st.new .t{color:var(--ink)}
+.st .tag{order:9;margin-top:2px;font:500 12px/1 var(--font-body);color:#fff;background:var(--ink);padding:5px 8px;border-radius:6px;white-space:nowrap}
+.st{text-align:center;position:relative;display:flex;flex-direction:column;align-items:center;gap:10px}
+.st .c{width:36px;height:36px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font:500 14px/1 var(--font-num)}
+.st.now .c{background:var(--accent)}
+.st .t{font:500 15px/22px var(--font-body);color:var(--ink)}
+.st .d{font:400 13px/18px var(--font-body);color:var(--sub)}
+.st.now .t{font-weight:700}
+.adm{left:960px;top:0;width:384px;height:140px}
+.gov{left:960px;top:160px;width:384px;height:140px}
+.box h3{margin:0 0 6px;font:700 20px/28px var(--font-display);letter-spacing:-.01em;color:var(--ink)}
+.box p{margin:0;font:400 14px/21px var(--font-body);color:var(--sub-2)}
+.box p b{font-weight:500;color:var(--ink)}
+.band{position:absolute;top:340px;height:110px;border-radius:16px;padding:20px 24px;background:var(--bg-0);border:1.5px dashed var(--mute)}
+.band.b1{left:0;width:880px}
+.band.b2{left:960px;width:384px}
+.band h4{margin:0 0 6px;font:500 18px/26px var(--font-body);color:var(--ink)}
+.band p{margin:0;font:400 14px/21px var(--font-body);color:var(--sub-2)}
+.arrows{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.arrows path{fill:none;stroke:var(--ink);stroke-width:2}
+.arrows text{font:500 13px var(--font-body);fill:var(--ink)}
+.arrows .back path{stroke:var(--warn);stroke-dasharray:6 5}
+.arrows .back text{fill:var(--warn)}
+.legend{position:absolute;left:0;top:480px;display:flex;gap:24px;font:400 14px/20px var(--font-body);color:var(--sub)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--accent);margin-right:6px;vertical-align:middle}
+.legend i.w{background:var(--warn)}
+</style>
+</head>
+<body class="m t">
+<div class="wrap">
+  <h1>프로젝트 안에서 만들고, 발행은 관리자가 승인합니다</h1>
+  <p class="lead">LX 직원의 일은 프로젝트 단위로 시작하고 끝납니다. 서비스 카드는 프로젝트의 결과물이고, 발행 뒤에는 관리자가 맡습니다.</p>
+  <div class="stage">
+    <div class="box proj">
+      <div class="ttl"><b>프로젝트</b><span>예: 남원시 비닐하우스 2026 · 프로젝트장 김도윤</span></div>
+      <p class="who">직원이 바로 만듭니다(승인 없음) · 입력은 이름 · 무엇을 · 어디 세 가지 · 학습데이터(라벨링 · 검수)도 이 안에서</p>
+      <div class="steps">
+        <div class="st"><span class="c">1</span><span class="t">데이터 올리기</span><span class="d">영상 · 행정 자산</span></div>
+        <div class="st new"><span class="tag">새로 넣는 단계</span><span class="c">2</span><span class="t">학습데이터 구축</span><span class="d">라벨링 · 검수</span></div>
+        <div class="st"><span class="c">3</span><span class="t">학습</span><span class="d">표본 → 모델</span></div>
+        <div class="st"><span class="c">4</span><span class="t">모델</span><span class="d">정밀도 확인</span></div>
+        <div class="st"><span class="c">5</span><span class="t">결과 확인</span><span class="d">실증 지역 표본</span></div>
+        <div class="st now"><span class="c">6</span><span class="t">서비스 카드<br>발행 요청</span><span class="d">이름 · 한 줄 설명만</span></div>
+      </div>
+    </div>
+    <div class="box adm">
+      <h3>LX 관리자 승인</h3>
+      <p>기준 미달은 <b>표시만</b> · 판단은 관리자<br>반려는 <b>사유 한 줄</b>과 함께 프로젝트로 돌아감</p>
+    </div>
+    <div class="box gov">
+      <h3>기관에 제공</h3>
+      <p>남원시 GeoVision 에 <b>서비스 카드</b>가 생김<br>다른 지역에도 같은 카드를 적용</p>
+    </div>
+    <div class="band b1">
+      <h4>발행 전 — 프로젝트장이 맡습니다</h4>
+      <p>데이터 · 학습 · 모델 · 재학습을 할지 말지까지 프로젝트장이 판단합니다.</p>
+    </div>
+    <div class="band b2">
+      <h4>발행 후 — LX 관리자가 맡습니다</h4>
+      <p>갱신을 관리하고, 필요하면 재학습을 지시합니다.</p>
+    </div>
+    <svg class="arrows" viewBox="0 0 1344 560" aria-hidden="true">
+      <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5 0 10z" fill="var(--ink)"/></marker>
+      <marker id="w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5 0 10z" fill="#F04452"/></marker></defs>
+      <path d="M880 70 H958" marker-end="url(#a)"/>
+      <text x="892" y="60">요청</text>
+      <path d="M1152 140 V158" marker-end="url(#a)"/>
+      <text x="1162" y="154">승인</text>
+      <g class="back">
+        <path d="M960 460 C 800 460, 560 470, 420 470 C 340 470, 320 400, 320 320" marker-end="url(#w)"/>
+        <text x="560" y="452">재학습 지시 → 같은 프로젝트의 학습데이터 구축·학습 단계로(2차)</text>
+      </g>
+    </svg>
+    <div class="legend"><span><i></i>지금 물어보는 단계(발행 요청)</span><span><i class="w"></i>발행 뒤 관리자가 시키는 재학습</span></div>
+  </div>
+</div>
+<span class="m-stamp"><b>그림</b> Land-XI 화면 · 프로젝트(LX 직원) → 발행(LX 관리자) → 기관 분기(남원시 GeoVision)</span>
+</body>
+</html>

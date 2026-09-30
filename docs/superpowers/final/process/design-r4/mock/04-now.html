@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>지금 · 기다릴 때·비었을 때·문제일 때 모습이 화면마다 다르다(기존 캡처 모음)</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.wrap{position:absolute;inset:0;padding:28px 40px;display:grid;grid-template-columns:minmax(0,1fr) 300px;grid-template-rows:auto minmax(0,1fr);gap:16px 24px}
+h1{grid-column:1/-1;margin:0;font:700 28px/36px var(--font-display);letter-spacing:-.01em;color:var(--ink)}
+h1 small{font:400 16px/24px var(--font-body);color:var(--sub);margin-left:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:16px}
+.shot{display:flex;flex-direction:column;gap:8px;min-height:0}
+.shot img{width:100%;height:auto;aspect-ratio:1440/900;object-fit:cover;object-position:top;border-radius:8px;border:1px solid var(--rule);background:var(--bg-1)}
+.shot p{margin:0;font:500 14px/20px var(--font-body);color:var(--ink)}
+.shot p b{font-weight:500;color:var(--warn)}
+.chars{display:flex;flex-direction:column;gap:12px}
+.chars h2{margin:0;font:500 16px/24px var(--font-body);color:var(--ink)}
+.chars .c{display:flex;gap:12px;align-items:center;background:var(--bg-1);border-radius:8px;padding:8px}
+.chars img{width:120px;height:80px;object-fit:cover;border-radius:4px}
+.chars .c span{font:400 14px/20px var(--font-body);color:var(--ink-2)}
+.chars p{margin:0;font:400 13px/18px var(--font-body);color:var(--sub)}
+</style>
+</head>
+<body class="m t">
+<div class="wrap">
+  <h1>지금은 화면마다 다르게 보입니다<small>같은 '기다리는 중'인데 드론 사진 · 회색 격자 · 빈 회백으로 제각각</small></h1>
+  <div class="grid">
+    <div class="shot"><img src="../../design-r3/shots/staff-ximap-1-목록.jpg" alt=""><p>XI맵 목록 — <b>드론 사진</b>이 뜨고 아래 막대</p></div>
+    <div class="shot"><img src="../../uiux-ref/shots/S2-02-approvals.jpg" alt=""><p>LX 관리자 결재함 — 같은 드론 사진, '불러오는 중'에서 <b>멈춰 있음</b></p></div>
+    <div class="shot"><img src="../../design-r3/shots/staff-train.jpg" alt=""><p>학습 화면 — 회색 격자 자리가 그대로 남음</p></div>
+    <div class="shot"><img src="../../design-r3/shots/gov-ximap.jpg" alt=""><p>기관 XI맵 — 아무 안내 없이 빈 회백 화면</p></div>
+  </div>
+  <aside class="chars">
+    <h2>이때 뜨는 그림 3장</h2>
+    <div class="c"><img src="../../../../../../landxi/v3/kit/img/satellite.webp" alt=""><span>국토위성 사진<br>(첫 결과 전 · 관할 밖)</span></div>
+    <div class="c"><img src="../../../../../../landxi/v3/kit/img/drone.webp" alt=""><span>LX 드론 사진<br>(불러오는 중)</span></div>
+    <div class="c"><img src="../../../../../../landxi/v3/kit/img/aircraft.webp" alt=""><span>항공기 사진<br>(영상 등록 필요 · 없는 화면)</span></div>
+    <p>이 사진들은 상황과 상관없이 자리를 채우는 장식입니다. 질문: 계속 쓸까요?</p>
+  </aside>
+</div>
+</body>
+</html>
