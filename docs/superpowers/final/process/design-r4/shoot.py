@@ -31,7 +31,7 @@ NEW = [
     ('04-error.html', 'new-4-error.png', (1440, 900)),
     ('05-gov-flag.html', 'new-5-gov-flag.png', (1440, 900)),
     ('05-staff-inbox.html', 'new-5-staff-inbox.png', (1440, 900)),
-    ('06-flow.html', 'new-6-flow.png', (1440, 900)),
+    ('06-flow.html', 'new-6-flow.png', (1440, 710)),  # 내용에 맞춘 높이(아래 빈 칸 없음)
     ('06-project-new.html', 'new-6-project-new.png', (1440, 900)),
     ('06-publish-request.html', 'new-6-publish-request.png', (1440, 900)),
     ('L1-step.html', 'new-L1-step.png', (1440, 900)),
