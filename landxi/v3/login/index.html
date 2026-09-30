@@ -4,11 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Land-XI</title>
-<script>/* GitHub Pages 는 보기 전용 사본 — 로그인·운영은 바깥 주소(app.land-xi.dev)에서 */
-if (/\.github\.io$/i.test(location.hostname)) location.replace('https://app.land-xi.dev' + location.pathname.replace(/^\/[^/]+(?=\/landxi\/)/, '') + location.search);</script>
+<!-- GitHub Pages 는 보기 전용 사본 — 로그인·운영은 바깥 주소(메인 입구 — 주소 이름은 kit/sites.js 한 곳)에서. 화면을 막지 않게 async -->
+<script src="../kit/sites.js" async onload="if (/\.github\.io$/i.test(location.hostname)) location.replace('https://' + LX_SITES.app.host + location.pathname.replace(/^\/[^/]+(?=\/landxi\/)/, '') + location.search)"></script>
 <link rel="icon" href="../../assets/images/favicon_landxi.png">
-<!-- 정문 — 법전 v2.2 '토스 톤'. 회백 바탕 위 흰 문 카드(좌 440) + 둥근 24 히어로 카드(우 · 실결과 지도 3장면 = 모토 3축).
-     글 예산 ≤ 200자(공백 제외) · 버튼 3(로그인 · 계정 찾기 · 이어서) · 역할은 색이 아니라 탭 밑줄로. -->
+<!-- 로그인 — 법전 v2.2 '토스 톤'. 회백 바탕 위 흰 문 카드(좌 440) + 둥근 24 히어로 카드(우 · 실결과 지도 3장면 = 모토 3축).
+     글 예산 ≤ 200자(공백 제외) · 버튼 3(로그인 · 계정 찾기 · 이어서).
+     역할 탭 없음(확인 대장 6 · 원칙 27) — 주소(입구)가 모습을 정한다: app·admin = 아이디·비밀번호 · gov = 기관 고르기 + 아이디·비밀번호.
+     입구 표기는 머리 오른쪽 작은 글(관리자 · 기관 입구만) — 역할은 색이 아니라 표기로. -->
 <link rel="stylesheet" href="../kit/kit.css"><!-- 토큰 포함 키트 CSS 한 벌 -->
 <link rel="stylesheet" href="../../proto/vendor/maplibre/maplibre-gl.css">
 <link rel="stylesheet" href="login.css">
@@ -20,10 +22,11 @@ if (/\.github\.io$/i.test(location.hostname)) location.replace('https://app.land
 
 <main class="gate" id="gate">
 
-  <!-- 문 — 흰 카드 하나. 헤드라인 1 · 문장 1 · 계정 3택 · 폼 -->
+  <!-- 문 — 흰 카드 하나. 헤드라인 1 · 문장 1 · 폼(기관 입구만 기관 칸) -->
   <section class="door t-card t-card--hero" id="door">
     <header class="door__top e">
       <img class="door__mark" src="../../assets/brand/vector/landxi-wordmark-dark.svg" alt="LAND-XI PLATFORM" width="152" height="16">
+      <span class="door__site" id="site" hidden></span>
     </header>
 
     <div class="door__body">
@@ -31,14 +34,6 @@ if (/\.github\.io$/i.test(location.hostname)) location.replace('https://app.land
       <p class="door__lead e">국토 위성·항공·드론 영상과 AI 기술로<br>현장조사 업무를 효율적으로 지원하고,<br>수요 맞춤형 행정서비스를 제공합니다.</p>
 
       <form class="form e" id="form" method="post" action="#" novalidate autocomplete="on" onsubmit="event.preventDefault();window.__lxSubmit=1"><!-- 화면 코드가 늦게 올라와도 브라우저가 폼을 그대로 보내지 않게(바깥 주소 405) — 준비되면 auth.js 가 이어서 보낸다 -->
-        <fieldset class="seg" id="seg">
-          <legend class="vh">계정</legend>
-          <label class="seg__c"><input type="radio" name="who" value="staff" checked><span>LX 직원</span></label>
-          <label class="seg__c"><input type="radio" name="who" value="admin"><span>LX 관리자</span></label>
-          <label class="seg__c"><input type="radio" name="who" value="tenant"><span>기관</span></label>
-          <i class="seg__bar" aria-hidden="true"></i>
-        </fieldset>
-
         <div class="fld fld--org" data-f="org" id="orgRow" hidden>
           <label class="fld__l" for="org">기관</label>
           <div class="sel">

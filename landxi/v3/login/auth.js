@@ -1,16 +1,22 @@
-/* v3 정문 — 실제 인증(POST /api/v1/auth/login · 게이트웨이 :8700) → 역할별 착지(같은 출처 · lx_api_session).
-   착지는 키트 K2 허용표(kit/auth-gate.js LANDING · 명세 §0) 한 곳에서 읽는다:
-     LX 직원   → 생산 콘솔       /landxi/v3/lx-console/
-     LX 관리자 → 관제            /landxi/v3/ops-core/   (없으면 현행 :8702 관제로 조각 인계 · handoff.js)
-     LX 영업   → 서비스 카탈로그 /landxi/v3/sales/      (서버 role 'sales' 또는 tenant 'lx-demo' — 탭은 늘리지 않는다)
-     국내 기관 → 서비스          /landxi/v3/gov-fusion/ (scope=local)
-     해외 기관 → 글로벌          /landxi/v3/global/     (scope=global · 아직 없으면 현행 /landxi/global/)
-   계정 3택은 문(realm)과 기대 역할만 정한다. 착지는 서버가 돌려준 role · 기관 scope 로 정한다(화면이 권한을 지어내지 않는다).
-   기관 목록 = GET /auth/tenants(S-1 · 공개). 서버에 아직 없으면 같은 모양({id, name, scope})으로 공개 디렉터리 파일을 읽는 어댑터로 폴백.
-   틀린 비밀번호 = 서버 401 문구 그대로. 관리자 문에 관리자 아닌 계정 = 발급된 토큰을 즉시 폐기하고 거절. */
+/* v3 로그인 — 실제 인증(POST /api/v1/auth/login · 게이트웨이 :8700) → 역할별 첫 화면(같은 출처 · lx_api_session).
+   역할 탭 없음(확인 대장 6·7 · 원칙 27). 입구(주소)가 로그인 문(realm)과 화면 모습을 정한다 — 주소 이름은 kit/sites.js 한 곳:
+     app   = LX 직원 · 영업(아이디로 구분) → 아이디 · 비밀번호 · 문 lx
+     admin = LX 관리자                     → 아이디 · 비밀번호 · 문 lx · 관리자 계정만(서버가 확인 — 아니면 토큰을 내주지 않는다)
+     gov   = 기관(국내 · 해외)              → 기관 고르기 + 아이디 · 비밀번호 · 문 tenant
+   바깥 주소는 주소 이름으로, 이 PC(localhost)에서는 ?site=app|admin|gov 로(없으면 ?next 화면으로 짐작 → 없으면 app).
+   서버가 정본 — 바깥 주소는 공개 관문이 입구를 서버에 알리고(x-lx-site), 이 PC 에서는 본문 site 로 알린다.
+   첫 화면은 키트 K2 표(kit/auth-gate.js LANDING · LANDING_AT) 한 곳에서 읽는다:
+     LX 직원   → LX 직원 대시보드      /landxi/v3/lx-console/
+     LX 관리자 → LX 관리자 대시보드    /landxi/v3/ops-core/   (app 입구에서는 LX 직원 대시보드 — lxadmin 한 계정으로 세 입구)
+     LX 영업   → 서비스 카탈로그       /landxi/v3/sales/      (서버 role 'sales' 또는 tenant 'lx-demo')
+     국내 기관 → 기관 화면             /landxi/v3/gov-fusion/ (scope=local)
+     해외 기관 → 글로벌                /landxi/v3/global/     (scope=global)
+   착지는 서버가 돌려준 role · 기관 scope 로 정한다(화면이 권한을 지어내지 않는다).
+   기관 목록 = GET /auth/tenants(S-1 · 공개 · 기관 입구에서만 부른다). 서버에 없으면 같은 모양({id, name, scope})으로 공개 디렉터리 파일을 읽는 어댑터로 폴백.
+   틀린 비밀번호 = 서버 401 문구 그대로. 관리자 입구에 관리자 아닌 계정 = 서버 403(토큰 없음) · 옛 서버가 토큰을 내주면 즉시 폐기하고 거절. */
 
 import { API, session, api } from '../../shared/api-v1.js';
-import { keyOf, landingFor, ALLOW, FRONT } from '../kit/auth-gate.js';
+import { keyOf, landingFor, ALLOW, FRONT, SITES, siteHere } from '../kit/auth-gate.js';
 import { drawer } from '../kit/panel.js';
 import { h } from '../kit/util.js';
 import { mountPlate } from './plate.js';
@@ -19,10 +25,22 @@ import { handoffFragment } from './handoff.js';
 const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const OPS_PORT = 8702;
 const $ = (id) => document.getElementById(id);
-const gate = $('gate'), hero = $('hero'), form = $('form'), go = $('go'), msg = $('msg'), seg = $('seg');
+const gate = $('gate'), hero = $('hero'), form = $('form'), go = $('go'), msg = $('msg');
 const idIn = $('id'), pwIn = $('pw'), org = $('org'), orgRow = $('orgRow');
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const LS = (k, v) => { try { return v === undefined ? localStorage.getItem(k) : localStorage.setItem(k, v); } catch { return null; } };
+
+/* ── 입구 — 주소가 정한다(이 PC 에서는 ?site=) ─────────────────────── */
+function siteFromNext() {   // 이 PC 에서 ?site 없이 화면이 로그인으로 돌려보낸 경우(?next) — 그 화면의 입구
+  const n = new URLSearchParams(location.search).get('next') || '';
+  return /\/ops/.test(n) ? 'admin' : /\/(?:gov-|global\/)/.test(n) ? 'gov' : null;
+}
+const SITE = siteHere() || siteFromNext() || 'app';
+const GOV = SITES[SITE].realm === 'tenant';
+document.documentElement.dataset.site = SITE;
+{ const lb = SITES[SITE].label, el = $('site');
+  if (lb) { el.textContent = lb; el.hidden = false; document.title = 'Land-XI · ' + lb; }
+  orgRow.hidden = !GOV; }
 
 /* ── 히어로 카드 ─────────────────────────────────────────────────── */
 function bootPlate() {
@@ -106,19 +124,21 @@ function startOrgs() {
   orgsDone = false; orgsAt = Date.now(); orgsWhy = 'slow';
   if (org.options[0]) org.options[0].textContent = '기관 목록을 불러오는 중';
   clearTimeout(slowTimer);
-  slowTimer = setTimeout(() => { if (!orgsDone && who() === 'tenant') showSlow(true); }, SLOW_MS);
+  slowTimer = setTimeout(() => { if (!orgsDone && GOV) showSlow(true); }, SLOW_MS);
   return loadOrgs().then((items) => {
     orgsDone = true; clearTimeout(slowTimer);
     if (org.options[0]) org.options[0].textContent = '기관 선택';
     fillOrgs(items); showSlow(false);
   }).catch(() => {
-    // 두 번 모두 응답 없음 — 목록은 비운 채 안내를 남긴다(기관 문이면 바로 · 아니면 '기관'을 누를 때)
+    // 두 번 모두 응답 없음 — 목록은 비운 채 안내를 남긴다
     if (org.options[0]) org.options[0].textContent = '기관 목록을 불러오지 못했습니다';
     orgsAt = 0;
-    if (who() === 'tenant') showSlow(true);
+    showSlow(true);
   });
 }
-let orgsReady = startOrgs();
+/* 기관 목록은 기관 입구에서만 부른다(LX 입구에는 기관 칸이 없다) */
+let orgsReady = GOV ? startOrgs() : Promise.resolve();
+if (!GOV) orgsDone = true;
 reloadBtn.addEventListener('click', () => {
   reloadBtn.disabled = true; reloadBtn.setAttribute('aria-busy', 'true');
   orgsReady = startOrgs().finally(() => { reloadBtn.disabled = false; reloadBtn.removeAttribute('aria-busy'); });
@@ -130,26 +150,10 @@ function orgFromLogin(login) {
   for (const t of ORGS) if ((login === t.id || login.startsWith(t.id + '-')) && (!best || t.id.length > best.id.length)) best = t;
   return best?.id || null;
 }
-idIn.addEventListener('input', () => { if (who() !== 'tenant') return; const g = orgFromLogin(idIn.value.trim()); if (g) org.value = g; });
+idIn.addEventListener('input', () => { if (!GOV) return; const g = orgFromLogin(idIn.value.trim()); if (g) org.value = g; });
 org.addEventListener('change', () => { clearErr(); if (org.value) LS('lx_login_org', org.value); });
-
-/* ── 계정 3택 — 잉크 밑줄만 움직인다(관리자도 같은 색 · §8) ───────── */
-const WHO = ['staff', 'admin', 'tenant'];
-const who = () => form.who.value;
-function pick(v) {
-  seg.querySelector('.seg__bar').style.setProperty('--i', String(WHO.indexOf(v)));
-  const t = v === 'tenant';
-  orgRow.hidden = !t;
-  if (t && !org.value) { const g = orgFromLogin(idIn.value.trim()); if (g) org.value = g; }
-  clearErr();
-  showSlow(t && orgsLate());                 // 탭을 늦게 바꿔도(6초 뒤) 목록이 없으면 안내
-}
-for (const r of form.who) r.addEventListener('change', (e) => pick(e.target.value));
-pick(who());
-/* 집이 정문으로 돌려보낸 경우(?next) — 그 집의 문을 미리 골라 둔다 */
-{ const n = new URLSearchParams(location.search).get('next') || '';
-  const want = /\/ops/.test(n) ? 'admin' : /\/(?:gov-|global\/)/.test(n) ? 'tenant' : null;
-  if (want) { const r = [...form.who].find((x) => x.value === want); if (r) { r.checked = true; pick(want); } } }
+/* 옛 호출 호환(테스트 훅 who) — 입구를 옛 문 이름으로 */
+const who = () => (GOV ? 'tenant' : SITE === 'admin' ? 'admin' : 'staff');
 
 /* ── 오류 표시 ──────────────────────────────────────────────────── */
 function say(text, fields = []) {
@@ -165,7 +169,7 @@ idIn.addEventListener('input', clearErr); pwIn.addEventListener('input', clearEr
 async function exists(url) {
   try { const r = await fetch(new URL(url, location.href), { method: 'HEAD', cache: 'no-store' }); return r.ok; } catch { return false; }
 }
-/* 집 — 키트 K2 착지표(명세 §0)가 첫 후보. 그 집이 아직 없으면 가까운 v3 집 → 현행 화면 순서(같은 저장소라 HEAD 로 있는지만 본다). */
+/* 첫 화면 — 키트 K2 표(입구별 표 → 역할 표)가 첫 후보. 아직 없으면 가까운 v3 화면 → 현행 화면 순서(같은 저장소라 HEAD 로 있는지만 본다). */
 const FALLBACK = {
   'lx/staff': ['/landxi/xi/index.html'],
   'lx/admin': [],
@@ -196,19 +200,19 @@ function nextParam(key) {
   return ok === null || (key && ok.includes(key)) ? v : null;
 }
 
-async function homeOf(s, door) {
+async function homeOf(s) {
   const key = houseOf(s);
   const n = nextParam(key); if (n) return n;
-  /* 관리자 계정이 'LX 직원' 문으로 들어오면 LX 직원 대시보드(09-30 사용자: lxadmin 하나로 세 입구 — 메인 = LX 직원 · r3-train 3차 실증) */
-  const land = door === 'staff' && key === 'lx/admin' ? 'lx/staff' : key;
-  for (const u of [landingFor({ key: land }), ...(FALLBACK[land] || [])]) if (await exists(/\.html$/.test(u) ? u : u + 'index.html')) return u;
-  if (key === 'lx/admin') return `${location.protocol}//${location.hostname}:${OPS_PORT}/landxi/ops/index.html#${handoffFragment(s)}`;   // 현행 관제(:8702) — 조각 인계
+  /* 입구별 첫 화면(확인 대장 7 — lxadmin 하나로 세 입구: app → LX 직원 · admin → LX 관리자 · gov → 고른 기관) */
+  const land = landingFor({ key }, SITE);
+  for (const u of [land, ...(FALLBACK[key] || [])]) if (await exists(/\.html$/.test(u) ? u : u + 'index.html')) return u;
+  if (key === 'lx/admin' && SITE !== 'app') return `${location.protocol}//${location.hostname}:${OPS_PORT}/landxi/ops/index.html#${handoffFragment(s)}`;   // 현행 관리자 화면(:8702) — 조각 인계
   return FRONT;
 }
 
 /* ── 들어가기 — 문 카드가 비켜서고 히어로 카드가 화면 전체로 ──────── */
-async function enter(s, door) {
-  const url = await homeOf(s, door);
+async function enter(s) {
+  const url = await homeOf(s);
   document.documentElement.dataset.dest = url.replace(/#.*$/, '');
   if (!REDUCE) {
     if (innerWidth > 960) {
@@ -242,20 +246,20 @@ form.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (busy) return;
   const login = idIn.value.trim(), password = pwIn.value;
-  const w = who();
   if (!login || !password) { say('아이디와 비밀번호를 입력하세요', [!login && 'id', !password && 'pw'].filter(Boolean)); (login ? pwIn : idIn).focus(); return; }
 
   busy = true; go.setAttribute('aria-busy', 'true'); clearErr();
   try {
     let tenantId = null;
-    if (w === 'tenant') {
+    if (GOV) {
       if (!orgsDone && orgsLate()) { showSlow(true); return; }
       await orgsReady;
       if (!orgsDone) { showSlow(true); return; }
       tenantId = org.value || orgFromLogin(login);
       if (!tenantId) { say('기관을 선택하세요', ['org']); org.focus(); return; }
     }
-    const body = w === 'tenant' ? { realm: 'tenant', tenant_id: tenantId, login, password } : { realm: 'lx', login, password };
+    /* 입구를 함께 보낸다 — 서버가 입구별 문(realm)과 관리자 여부를 확인한다(바깥 주소는 관문이 알린 입구가 이긴다) */
+    const body = GOV ? { site: SITE, realm: 'tenant', tenant_id: tenantId, login, password } : { site: SITE, realm: 'lx', login, password };
     let s;
     const slow = setTimeout(() => say(SLOW_TXT), SLOW_MS);
     try { s = await signIn(body); clearTimeout(slow); if (msg.textContent === SLOW_TXT) clearErr(); }
@@ -263,21 +267,24 @@ form.addEventListener('submit', async (e) => {
       clearTimeout(slow);
       if (!err.status) { say('서버에 연결할 수 없습니다'); return; }         // 두 번 모두 네트워크 오류일 때만
       if (err.status === 401 || err.code === 'unauthorized') {
-        // 서버 401 문구 그대로(명세 §2.2). 기관 문은 기관 칸도 함께 짚는다(무엇이 틀렸는지 서버는 말하지 않는다)
-        say(err.message || '아이디 또는 비밀번호가 맞지 않습니다', w === 'tenant' ? ['org', 'pw'] : ['pw']);
+        // 서버 401 문구 그대로(명세 §2.2). 기관 입구는 기관 칸도 함께 짚는다(무엇이 틀렸는지 서버는 말하지 않는다)
+        say(err.message || '아이디 또는 비밀번호가 맞지 않습니다', GOV ? ['org', 'pw'] : ['pw']);
         pwIn.value = ''; pwIn.focus();
+      } else if (err.status === 403) {
+        say(err.message || '관리자 계정이 아닙니다', ['id']);           // 관리자 입구에 관리자 아닌 계정 — 서버가 토큰을 내주지 않았다
+        pwIn.value = '';
       } else say('잠시 후 다시 시도하세요');
       return;
     }
-    if (w === 'admin' && s.role !== 'admin') {
+    if (SITE === 'admin' && s.role !== 'admin') {
       try { await fetch(API.prefix + '/auth/logout', { method: 'POST', headers: { authorization: 'Bearer ' + s.token } }); } catch { /* */ }
       say('관리자 계정이 아닙니다', ['id']); return;
     }
-    if (w === 'tenant') LS('lx_login_org', tenantId);
-    session.set({ token: s.token, realm: s.realm, role: s.role, tenant_id: s.tenant_id, expires_at: s.expires_at, user: s.user });
+    if (GOV) LS('lx_login_org', tenantId);
+    session.set({ token: s.token, realm: s.realm, role: s.role, tenant_id: s.tenant_id, expires_at: s.expires_at, user: s.user, site: SITE });
     await orgsReady;
-    window.__login.last = { realm: s.realm, role: s.role, tenant_id: s.tenant_id, house: houseOf(s) };
-    await enter(s, w);
+    window.__login.last = { realm: s.realm, role: s.role, tenant_id: s.tenant_id, house: houseOf(s), site: SITE };
+    await enter(s);
   } finally {
     busy = false; go.removeAttribute('aria-busy');
   }
@@ -316,6 +323,8 @@ async function authed(path, method, token) {
   let me;
   try { me = await authed('/me', 'GET', s.token); }
   catch (err) { if (err.status === 401) session.clear(); return; }   // 401 = 끝난 세션 · 연결 실패는 세션을 건드리지 않는다
+  /* 이 입구에 맞는 세션일 때만 '계속' — app = LX 계정 · admin = LX 관리자 · gov = 기관 계정(이 PC 에서 입구를 바꿔 열 때 다른 입구의 세션으로 넘어가지 않게) */
+  if (me.realm !== SITES[SITE].realm || (SITE === 'admin' && me.role !== 'admin')) return;
   try {
     const r = $('resume');
     const nm = me.user?.name || '내 계정';
@@ -324,19 +333,15 @@ async function authed(path, method, token) {
     r.textContent = `${nm}${jong === 0 || jong === 8 ? '로' : '으로'} 계속`;   // 화살표는 키트 .t-btn--text::after 가 붙인다
     r.hidden = false;
     window.__login.resumeAt = Math.round(performance.now());
-    r.addEventListener('click', async (ev) => { ev.preventDefault(); await orgsReady; await enter({ ...s, realm: me.realm, role: me.role, tenant_id: me.tenant_id }, who()); });
-    /* 메인 입구(app.)에서는 관리자 계정도 LX 직원 문이 먼저(메인 = LX 직원) — 관리자 입구(admin.)는 ?next 로 관리자 대시보드 */
-    const main = /^app\./i.test(location.hostname);
-    const want = me.realm === 'tenant' ? 'tenant' : me.role === 'admin' && !main ? 'admin' : 'staff';
-    const radio = [...form.who].find((x) => x.value === want); if (radio) { radio.checked = true; pick(want); }
-    if (me.realm === 'tenant' && me.tenant_id) { await orgsReady; if (ORGS.some((t) => t.id === me.tenant_id)) org.value = me.tenant_id; }
+    r.addEventListener('click', async (ev) => { ev.preventDefault(); await orgsReady; await enter({ ...s, realm: me.realm, role: me.role, tenant_id: me.tenant_id }); });
+    if (GOV && me.tenant_id) { await orgsReady; if (ORGS.some((t) => t.id === me.tenant_id)) org.value = me.tenant_id; }
   } catch { /* 표시 실패는 세션과 무관 */ }
 })();
 
-/* ── 계정 찾기 · 신청 — K5 서랍(제목 · 3행 · Esc 닫기 · 같은 자리 재열기 = 교체) ── */
+/* ── 계정 찾기 · 신청 — K5 서랍(제목 · 행 · Esc 닫기 · 같은 자리 재열기 = 교체) · 이 입구의 계정 한 줄 + 문의 ── */
 const helpBody = () => h('dl.help__dl', {},
-  h('div', {}, h('dt', { text: 'LX 직원 · 관리자' }), h('dd', { text: '관리자 승인 후 발급' })),
-  h('div', {}, h('dt', { text: '기관' }), h('dd', { text: '서비스 계약 시 LX가 발급' })),
+  GOV ? h('div', {}, h('dt', { text: '기관' }), h('dd', { text: '서비스 계약 시 LX가 발급' }))
+    : h('div', {}, h('dt', { text: 'LX 직원 · 관리자' }), h('dd', { text: '관리자 승인 후 발급' })),
   h('div', {}, h('dt', { text: '문의' }), h('dd.n', {}, h('a', { href: 'tel:063-713-1218', text: '063-713-1218' }))));
 let helpD = null;
 $('helpBtn').addEventListener('click', () => {
@@ -349,6 +354,6 @@ $('helpBtn').addEventListener('click', () => {
 /* ── 테스트 훅 ─────────────────────────────────────────────────── */
 window.__login = {
   ready: true, last: null,
-  who, homeOf, houseOf, orgFromLogin, nextParam, orgs: () => ORGS.slice(), orgSource: () => ORG_SRC,
+  site: () => SITE, who, homeOf, houseOf, orgFromLogin, nextParam, orgs: () => ORGS.slice(), orgSource: () => ORG_SRC,
   plate: () => (plate ? { region: plate.region, axis: plate.axis, arrived: plate.arrived, error: plate.error, visits: plate.visits } : null),
 };

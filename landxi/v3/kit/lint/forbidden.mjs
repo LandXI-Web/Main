@@ -1,7 +1,8 @@
 /* K16 forbidden.mjs — 금지어 · 첫 뷰 글자 수 · 버튼 수 검사(e2e 보조).
    브라우저: import { scan } from './forbidden.mjs'; scan(document) → { hits[], chars, buttons }
-   CLI:     node landxi/v3/kit/lint/forbidden.mjs [--login lx-staff | --login namwon-manager@namwon] [--state state.json] [--mobile] <url>…
-            정문(/landxi/v3/login/) 폼 입력으로 로그인한 뒤 각 url 을 1440×900(또는 390×844)에서 잰다. 세션 주입 없음.
+   CLI:     node landxi/v3/kit/lint/forbidden.mjs [--login lx-staff | --login namwon-manager@namwon] [--site app|admin|gov] [--base URL] [--state state.json] [--mobile] <url>…
+            로그인(/landxi/v3/login/) 폼 입력으로 로그인한 뒤 각 url 을 1440×900(또는 390×844)에서 잰다. 세션 주입 없음.
+            입구(--site)를 안 주면 계정으로 고른다: 기관(@) → gov · 아이디에 admin → admin · 그 밖 → app.
    검사 대상: 본문 글자 · title · aria-label · placeholder · alt. 제외: 개발자 서랍(.k-dev) · [data-lint-skip]. */
 
 export const RULES = [
@@ -54,7 +55,7 @@ export function scan(doc = document, { skip = '.k-dev,[data-lint-skip]' } = {}) 
 }
 
 /* ── CLI(playwright) ─────────────────────────────────────────────────────────── */
-export async function openPages(urls, { login, state, mobile = false, base = 'http://localhost:4173' } = {}) {
+export async function openPages(urls, { login, state, mobile = false, base = 'http://localhost:4173', site } = {}) {
   const { chromium } = await import('playwright');
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ viewport: mobile ? { width: 390, height: 844 } : { width: 1440, height: 900 }, ...(state ? { storageState: state } : {}) });
@@ -62,7 +63,7 @@ export async function openPages(urls, { login, state, mobile = false, base = 'ht
   const errors = [];
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
-  if (login) await frontDoor(page, base, login);
+  if (login) await frontDoor(page, base, login, site);
   return { browser, page, errors };
 }
 /** 개발 계정 비밀번호 — env LX_PW · DEV_PASSWORD, 없으면 server/.env(저장소에 올리지 않는 파일)에서 읽는다 */
@@ -71,13 +72,16 @@ async function devPw() {
   const fs = await import('node:fs');
   try { return fs.readFileSync(new URL('../../../../server/.env', import.meta.url), 'utf8').match(/^DEV_PASSWORD=(.*?)\s*$/m)?.[1] || ''; } catch { return ''; }
 }
-/** 로그인 폼 입력 — login = 'lx-staff' | 'namwon-manager@namwon'. 비밀번호 = devPw(). */
-export async function frontDoor(page, base, login) {
+/** 입구 — 'app' | 'admin' | 'gov'. 안 주면 계정으로 고른다(기관 → gov · 아이디에 admin → admin · 그 밖 → app — 옛 호출 그대로 같은 첫 화면) */
+export const siteFor = (login, site) => site || (login.includes('@') ? 'gov' : /admin/.test(login) ? 'admin' : 'app');
+/** 로그인 폼 입력 — login = 'lx-staff' | 'lxadmin' | 'namwon-manager@namwon' · site = 입구(생략 가능). 비밀번호 = devPw().
+    역할 탭 없음(확인 대장 6) — 입구가 로그인 문을 정한다. 이 PC(localhost · 127.0.0.1)는 ?site= 로 입구를 열고,
+    바깥 주소(https://app|admin|gov.land-xi.dev)는 주소가 입구다(site 는 쓰지 않는다 — base 를 그 입구 주소로 줄 것). */
+export async function frontDoor(page, base, login, site) {
   const [id, tenant] = login.split('@');
   const pw = await devPw();
-  await page.goto(base + '/landxi/v3/login/', { waitUntil: 'domcontentloaded' });
-  const pickTab = async (re) => { const t = page.getByRole('tab', { name: re }).or(page.getByRole('button', { name: re })).or(page.getByRole('radio', { name: re })); if (await t.count()) await t.first().click(); };
-  if (tenant) await pickTab(/기관/); else if (/admin/.test(id)) await pickTab(/관리자/); else await pickTab(/직원|LX/);
+  const local = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(base);
+  await page.goto(base + '/landxi/v3/login/' + (local ? '?site=' + siteFor(login, site) : ''), { waitUntil: 'domcontentloaded' });
   if (tenant) { const tf = page.locator('select[name=tenant], input[name=tenant], select[name=tenant_id], input[name=tenant_id]'); if (await tf.count()) { const el = tf.first(); if ((await el.evaluate((e) => e.tagName)) === 'SELECT') await el.selectOption(tenant); else await el.fill(tenant); } }
   await page.locator('input[name=login], input[autocomplete=username], input[type=text]').first().fill(id);
   await page.locator('input[type=password]').first().fill(pw);
@@ -90,6 +94,8 @@ async function main() {
   const urls = [];
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--login') opt.login = args[++i];
+    else if (args[i] === '--site') opt.site = args[++i];
+    else if (args[i] === '--base') opt.base = args[++i];
     else if (args[i] === '--state') opt.state = args[++i];
     else if (args[i] === '--mobile') opt.mobile = true;
     else urls.push(args[i]);

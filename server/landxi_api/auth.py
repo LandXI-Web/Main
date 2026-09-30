@@ -23,6 +23,12 @@ router = APIRouter()
 ph = PasswordHasher()
 TTL = dt.timedelta(hours=24)
 
+# 입구 셋(원칙 27 · 확인 대장 6·7) — 입구가 로그인 문(realm)을 정한다. 서버가 정본:
+#   app = LX 계정(직원 · 영업 · 관리자도 — 화면이 LX 직원 첫 화면으로) · admin = LX 관리자 계정만 · gov = 기관 계정
+# 입구는 바깥 주소면 공개 관문이 x-lx-site 로 알리고(주소 이름으로만 정함 — 바깥에서 보낸 값은 관문이 버린다),
+# 이 PC 안(개발 · ?site=)이면 화면이 본문 site 로 알린다. 입구가 없으면(옛 도구) 본문 realm 그대로.
+SITE_REALM = {"app": "lx", "admin": "lx", "gov": "tenant"}
+
 
 def hash_password(pw: str) -> str:
     return ph.hash(pw)
@@ -56,8 +62,17 @@ async def resolve(request: Request) -> Principal:
 
 
 @router.post("/auth/login")
-async def login(body: dict):
+async def login(body: dict, request: Request):
     realm = body.get("realm")
+    site = request.headers.get("x-lx-site") or body.get("site")
+    if site is not None:
+        if site not in SITE_REALM:
+            raise ApiError("bad_request", "site 는 app | admin | gov")
+        want = SITE_REALM[site]
+        if realm is None:
+            realm = want
+        elif realm != want:                          # 이 입구의 문이 아니다 — 계정을 찾지도 않는다
+            raise ApiError("bad_request", "이 주소에서는 기관 계정으로 로그인합니다" if want == "tenant" else "이 주소에서는 LX 계정으로 로그인합니다")
     login_ = (body.get("login") or "").strip()
     pw = body.get("password") or ""
     pl = await pool()
@@ -77,6 +92,8 @@ async def login(body: dict):
             ok = False
     if not ok:
         raise ApiError("unauthorized", "아이디 또는 비밀번호가 맞지 않습니다")
+    if site == "admin" and u["role"] != "admin":     # 관리자 입구 — 관리자 아닌 계정에는 토큰을 내주지 않는다
+        raise ApiError("forbidden", "관리자 계정이 아닙니다")
     tok = ("lxs_" if realm == "lx" else "lxt_") + secrets.token_urlsafe(32)
     exp = dt.datetime.now(KST) + TTL
     await pl.execute("INSERT INTO sessions(token_hash, realm, user_id, tenant_id, role, expires_at) VALUES ($1,$2,$3,$4,$5,$6)",
@@ -84,7 +101,7 @@ async def login(body: dict):
     await pl.execute("DELETE FROM sessions WHERE expires_at < now()")
     async with db(realm="lx") as conn:
         await conn.execute("INSERT INTO audit_log(actor, realm, action, subject) VALUES ($1,$2,'login',$3)", u["id"], realm, login_)
-    return {"token": tok, "realm": realm, "role": u["role"], "tenant_id": tenant_id,
+    return {"token": tok, "realm": realm, "role": u["role"], "tenant_id": tenant_id, "site": site,
             "user": {"id": u["id"], "name": u["name"]}, "expires_at": exp.isoformat(timespec="seconds")}
 
 

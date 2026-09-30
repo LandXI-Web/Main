@@ -1,8 +1,9 @@
-/* Land-XI 공개 관문 — 바깥 주소(app.land-xi.dev · Cloudflare 터널)가 닿는 유일한 문. 127.0.0.1:4180
+/* Land-XI 공개 관문 — 바깥 주소(입구 셋 app · admin · gov — Cloudflare 터널)가 닿는 유일한 문. 127.0.0.1:4180
    - 화면 파일은 허용 목록(landxi/ 아래)에서만 내준다. 점(.)으로 시작하는 이름·서버·도구·문서·원본 데이터는 내주지 않는다
      (개발용 tools/serve.mjs 는 저장소 전체를 내주므로 바깥에 열지 않는다).
    - /api · /tiles · /files 는 게이트웨이(127.0.0.1:8700)로 그대로 넘긴다(실시간 스트림 포함). 원래 Host 를 넘겨 서명 주소가 바깥 주소로 나온다.
    - 로그인 시도는 접속 주소마다 10분에 20번까지(비밀번호 대입 막기).
+   - 입구(주소 이름 → app · admin · gov)를 서버에 x-lx-site 로 알린다. 바깥에서 보낸 같은 이름의 값은 버린다(입구는 주소로만 정해진다).
    사용: node tools/public-gate.mjs   (server/start-public.ps1 이 숨김으로 띄운다) */
 import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
 
@@ -10,10 +11,12 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = Number(process.env.LX_GATE_PORT) || 4180;
 const GW = { host: '127.0.0.1', port: Number(process.env.LX_API_PORT) || 8700 };
 const HOME = '/landxi/v3/login/';
-/* 입구 셋(원칙 27 · 확인 대장 6) — 한 플랫폼의 분기. 입구 화면 정리 전까지는 같은 로그인에 그 입구의 첫 화면을 미리 고른다.
-   주소는 나중에 도메인에 따라 바뀔 수 있다 — 이름은 여기와 server/.env LX_PUBLIC_HOSTS 두 곳만. */
-const ENTRY = { admin: HOME + '?next=' + encodeURIComponent('/landxi/v3/ops-core/'), gov: HOME + '?next=' + encodeURIComponent('/landxi/v3/gov-fusion/') };
-const siteOf = (req) => String(req.headers.host || '').toLowerCase().split('.')[0];
+/* 입구 셋(원칙 27 · 확인 대장 6·7) — 한 플랫폼의 분기. 세 주소 모두 같은 로그인 화면으로 가고, 로그인 화면이 주소를 보고 알맞은 모습이 된다
+   (app·admin = 아이디·비밀번호 · gov = 기관 고르기 + 아이디·비밀번호). 첫 화면은 입구별 표(kit/auth-gate.js LANDING_AT)가 정한다.
+   주소 이름은 화면과 같은 표 한 곳(landxi/v3/kit/sites.js)에서 읽는다 — 바꾸면 터널 설정 · server/.env LX_PUBLIC_HOSTS 도 같은 이름으로. */
+await import(new URL('../landxi/v3/kit/sites.js', import.meta.url).href);
+const ENTRY = Object.freeze(Object.fromEntries(Object.entries(globalThis.LX_SITES).map(([site, v]) => [v.host.toLowerCase(), site])));   // 주소 이름 → 입구
+const siteOf = (req) => ENTRY[String(req.headers.host || '').toLowerCase().replace(/:\d+$/, '')] || null;
 
 const API_PREFIX = /^\/(api|tiles|files)\//;
 /* 바깥에 열지 않는 것 — 서버 내부 안내 문서(경로 목록)는 이 PC 안에서만 */
@@ -63,6 +66,8 @@ function proxy(req, res) {
   if (req.method === 'POST' && /^\/api\/v1\/auth\/login\/?$/.test(req.url.split('?')[0]) && !loginAllowed(ip))
     return send(res, 429, JSON.stringify({ error: { code: 'too_many_attempts', message: '로그인 시도가 너무 많습니다. 10분 뒤 다시 해 주세요.' } }), { 'content-type': 'application/json' });
   const headers = { ...req.headers, 'x-forwarded-for': ip, 'x-forwarded-proto': 'https', 'x-forwarded-host': req.headers.host || '' };
+  delete headers['x-lx-site'];                                   // 입구는 주소로만 — 바깥에서 보낸 값은 버린다
+  const site = siteOf(req); if (site) headers['x-lx-site'] = site;
   const up = http.request({ ...GW, method: req.method, path: req.url, headers }, (r) => {
     res.writeHead(r.statusCode || 502, { ...r.headers, 'x-content-type-options': 'nosniff' });
     if (/text\/event-stream/.test(r.headers['content-type'] || '')) res.flushHeaders?.();
@@ -113,8 +118,8 @@ http.createServer((req, res) => {
   if (NEED_LOGIN.test(p) && !hasLogin(req)) return send(res, 401, JSON.stringify({ error: { code: 'unauthorized', message: '로그인이 필요합니다.' } }), { 'content-type': 'application/json' });
   if (API_PREFIX.test(p)) return proxy(req, res);
   if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, '405');
-  if (p === '/' || p === '/landxi' || p === '/landxi/' || p === '/landxi/v3' || p === '/landxi/v3/') return send(res, 302, '', { location: ENTRY[siteOf(req)] || HOME });
+  if (p === '/' || p === '/landxi' || p === '/landxi/' || p === '/landxi/v3' || p === '/landxi/v3/') return send(res, 302, '', { location: HOME });   // 입구 셋 모두 로그인 — 모습은 로그인 화면이 주소로 정한다
   if (p === '/favicon.ico') return send(res, 204);
   if (p === '/landxi/proto/env.js') return send(res, 200, envJs(), { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-store' });
   serveFile(req, res, p);
-}).listen(PORT, '127.0.0.1', () => console.log('public gate http://127.0.0.1:' + PORT + HOME));
+}).listen(PORT, '127.0.0.1', () => console.log('public gate http://127.0.0.1:' + PORT + HOME + ' · 입구 ' + Object.entries(ENTRY).map(([h, s]) => s + '=' + h).join(' ')));

@@ -50,9 +50,9 @@ if (want('capture')) {
     const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
     const p = await ctx.newPage();
     if (who) {
-      await p.goto(B + 'login/', { waitUntil: 'domcontentloaded' });
+      // 역할 탭 없음(확인 대장 6) — 입구(?site=)가 로그인 문을 정한다
+      await p.goto(B + 'login/?site=' + ({ admin: 'admin', tenant: 'gov' }[who.tab] || 'app'), { waitUntil: 'domcontentloaded' });
       await p.waitForFunction(() => window.__login?.ready, null, { timeout: 20000 });
-      await p.locator(`.seg__c:has(input[value="${who.tab || 'staff'}"])`).click();
       if (who.org) await p.selectOption('#org', who.org);
       await p.fill('#id', who.id); await p.fill('#pw', PW); await p.click('#go');
       await p.waitForURL((u) => !/\/login\//.test(u.pathname), { timeout: 30000 });
