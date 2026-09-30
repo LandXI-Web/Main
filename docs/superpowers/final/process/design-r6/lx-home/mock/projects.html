@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · Land-XI LX 직원 — 프로젝트 목록: 이름 · 무엇을 · 어디 · 단계 · 다음 할 일 · 프로젝트장</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.pj{position:absolute;inset:0;padding:24px;display:flex;flex-direction:column;gap:16px}
+.pj-h{display:flex;align-items:center;gap:16px}
+.pj-h .m-chips{margin-left:8px}
+.pj-h .t-btn{margin-left:auto;padding:0 24px}
+.pj .m-card{padding:8px 24px 16px}
+.pj .m-table td{padding:16px 12px}
+.pj .st{white-space:nowrap}
+.pj .nx{color:var(--sub-2)}
+.pj .nx.w{color:var(--warn)}
+.pj .m-small{padding:0 12px}
+</style>
+</head>
+<body class="m t">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">LAND-XI</span>
+    <span class="m-home">LX 직원 대시보드</span>
+    <span class="m-sp"></span>
+    <span class="m-ask" data-ic="ask">물어보기 <kbd>Ctrl K</kbd></span>
+    <span class="m-fresh"><i></i>08:29</span>
+    <span class="m-role"><b>LX 직원</b>김도윤</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail" aria-label="메뉴">
+    <span class="m-rail-i" data-ic="home"><span>홈</span></span>
+    <span class="m-rail-i" data-ic="proj" aria-current="true"><span>프로젝트</span></span>
+    <span class="m-rail-i" data-ic="analyze"><span>분석하기</span></span>
+    <span class="m-rail-i" data-ic="card"><span>서비스<br>카드</span></span>
+    <span class="m-rail-i" data-ic="data"><span>데이터</span></span>
+    <span class="m-rail-i" data-ic="inbox"><span class="bd">4</span><span>요청함</span></span>
+  </nav>
+  <main class="m-main">
+    <div class="pj">
+      <div class="pj-h">
+        <h1 class="m-h1">프로젝트</h1>
+        <div class="m-chips"><span class="t-chip" aria-pressed="true">진행 중 3</span><span class="t-chip">내가 장 2</span><span class="t-chip">LX 전체 7</span><span class="t-chip">보관 1</span></div>
+        <button class="t-btn">새 프로젝트</button>
+      </div>
+      <section class="m-card">
+        <table class="m-table">
+          <thead><tr><th>이름</th><th>무엇을</th><th>어디</th><th>단계</th><th>다음 할 일</th><th>프로젝트장</th><th>목표</th></tr></thead>
+          <tbody>
+            <tr class="is-on"><td class="ink">남원시 농지이용 2026</td><td>농지이용</td><td>남원시</td><td class="st"><span class="m-mini"><i class="d"></i><i class="d"></i><i class="d"></i><i class="n"></i><i></i><i></i></span>4 결과 확인</td><td class="nx">표본 확인 18/20</td><td>김도윤</td><td class="num">2026-12</td></tr>
+            <tr><td class="ink">여수시 해양쓰레기 2026</td><td>해양쓰레기</td><td>여수시</td><td class="st"><span class="m-mini"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="n"></i></span>6 서비스 관리</td><td class="nx">기관이 알린 필지 2건</td><td>김도윤</td><td class="num">—</td></tr>
+            <tr><td class="ink">남원시 도로안전 2026</td><td>도로안전</td><td>남원시</td><td class="st"><span class="m-mini"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="n"></i><i></i></span>5 발행 요청</td><td class="nx">관리자 검토 중</td><td>이서연</td><td class="num">2026-11</td></tr>
+            <tr><td class="ink">광주전남 해양쓰레기 2027</td><td>해양쓰레기</td><td>광주전남 외 3</td><td class="st"><span class="m-mini"><i class="n"></i><i></i><i></i><i></i><i></i><i></i></span>1 데이터 올리기</td><td class="nx w">영상 없음 — 올리기</td><td>이서연</td><td class="num">2027-03</td></tr>
+          </tbody>
+        </table>
+        <p class="m-small">줄을 누르면 그 프로젝트 안으로 — 6단계는 거기서 위에 보입니다</p>
+      </section>
+    </div>
+    <span class="m-note" style="left:900px;top:30px;max-width:400px"><i>1</i>내 것 · 내가 장 · LX 전체 · 보관 — 한 표에서 걸러 본다</span>
+    <span class="m-note" style="left:560px;top:480px;max-width:440px"><i>2</i>단계 여섯 점 + 다음 할 일 한 줄 — 첫 화면 '내 프로젝트'와 같은 값</span>
+  </main>
+</div>
+<span class="m-stamp"><b>시안</b> Land-XI 화면 · LX 직원 프로젝트 목록 — 이름·숫자는 예시</span>
+<script src="icons.js"></script>
+</body>
+</html>

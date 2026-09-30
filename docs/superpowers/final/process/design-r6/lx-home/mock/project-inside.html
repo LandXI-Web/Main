@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · Land-XI LX 직원 — 프로젝트 안: 6단계는 여기 위에(레일은 메뉴 그대로)</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.pi{position:absolute;inset:0;padding:24px;display:flex;flex-direction:column;gap:16px}
+.pi-h{display:flex;align-items:baseline;gap:12px}
+.pi-h .m-h1{font-size:26px}
+.pi-h .t-chip{margin-left:4px}
+.pi-h .who{margin-left:auto;font:500 14px/20px var(--font-body);color:var(--sub)}
+.pi .stepcard{padding:20px 24px;flex-direction:row;align-items:center;justify-content:space-between;gap:24px}
+.pi .body{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;flex:1;min-height:0}
+.pi .body .m-card{gap:16px}
+.next{display:flex;align-items:center;gap:12px}
+.next b{font:500 16px/24px var(--font-body);color:var(--ink)}
+.next .m-bar{width:200px}
+.next .m-bar i{width:90%}
+.smp{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.smp .m-map{position:relative;aspect-ratio:4/3;border-radius:8px;overflow:hidden;background-size:900px auto}
+.smp .m-map .cap{position:absolute;left:10px;bottom:8px;font:500 12px/1 var(--font-body);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.smp .m-map .ans{position:absolute;right:8px;top:8px;display:flex;gap:4px}
+.smp .m-map .ans span{padding:4px 8px;border-radius:6px;background:rgba(255,255,255,.92);font:500 12px/1 var(--font-body);color:var(--ink)}
+.mem{display:flex;flex-direction:column;gap:8px}
+.mem div{display:flex;justify-content:space-between;font:400 15px/22px var(--font-body);color:var(--ink-2)}
+.mem div b{font-weight:500;color:var(--ink)}
+.mem div span{color:var(--sub)}
+.hist{display:flex;flex-direction:column;gap:6px;font:400 14px/20px var(--font-body);color:var(--sub-2)}
+.hist span{color:var(--sub);margin-right:8px;font-family:var(--font-num)}
+</style>
+</head>
+<body class="m t">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">LAND-XI</span>
+    <span class="m-home">LX 직원 대시보드</span>
+    <span class="m-sp"></span>
+    <span class="m-ask" data-ic="ask">물어보기 <kbd>Ctrl K</kbd></span>
+    <span class="m-fresh"><i></i>08:30</span>
+    <span class="m-role"><b>LX 직원</b>김도윤</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail" aria-label="메뉴">
+    <span class="m-rail-i" data-ic="home"><span>홈</span></span>
+    <span class="m-rail-i" data-ic="proj" aria-current="true"><span>프로젝트</span></span>
+    <span class="m-rail-i" data-ic="analyze"><span>분석하기</span></span>
+    <span class="m-rail-i" data-ic="card"><span>서비스<br>카드</span></span>
+    <span class="m-rail-i" data-ic="data"><span>데이터</span></span>
+    <span class="m-rail-i" data-ic="inbox"><span class="bd">4</span><span>요청함</span></span>
+  </nav>
+  <main class="m-main">
+    <div class="pi">
+      <div class="pi-h"><span class="m-crumb"><span>프로젝트 ›</span></span><h1 class="m-h1">남원시 농지이용 2026</h1><span class="t-chip">남원시</span><span class="t-chip">농지이용</span><span class="who">프로젝트장 김도윤 · 구성원 2</span></div>
+      <section class="m-card stepcard">
+        <ol class="m-steps">
+          <li data-st="done"><span class="n">1</span>데이터 올리기</li>
+          <li data-st="done"><span class="n">2</span>학습데이터 구축</li>
+          <li data-st="done"><span class="n">3</span>학습</li>
+          <li data-st="now"><span class="n">4</span>결과 확인</li>
+          <li data-st="wait"><span class="n">5</span>발행 요청</li>
+          <li data-st="wait"><span class="n">6</span>서비스 관리</li>
+        </ol>
+        <div class="next"><b>다음 할 일 · 표본 확인 18/20</b><div class="m-bar"><i></i></div></div>
+      </section>
+      <div class="body">
+        <section class="m-card">
+          <div class="m-card-h"><h2>결과 확인 · 표본</h2><span class="m-small">맞음 15 · 틀림 3 · 남은 2</span></div>
+          <div class="smp">
+            <div class="m-map m-map--ortho" style="background-position:-300px -120px"><span class="ans"><span>맞음</span><span>틀림</span></span><span class="cap">표본 19 · 경작</span></div>
+            <div class="m-map m-map--ortho" style="background-position:-560px -160px"><span class="ans"><span>맞음</span><span>틀림</span></span><span class="cap">표본 20 · 휴경</span></div>
+            <div class="m-map m-map--ortho" style="background-position:-250px -200px;opacity:.45"><span class="cap">다음</span></div>
+          </div>
+          <div class="m-btn-row"><button class="t-btn">확인 완료</button><span class="m-small">20건을 다 보면 프로젝트장이 확인 완료를 누릅니다</span></div>
+        </section>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <section class="m-card">
+            <div class="m-card-h"><h2>구성원</h2><span class="m-more">초대</span></div>
+            <div class="mem"><div><b>김도윤</b><span>프로젝트장</span></div><div><b>이서연</b><span>구성원</span></div></div>
+          </section>
+          <section class="m-card">
+            <div class="m-card-h"><h2>이력</h2></div>
+            <div class="hist"><div><span>09-30</span>학습 1차 끝남</div><div><span>09-28</span>라벨 300건 확인</div><div><span>09-25</span>남원시 영상 2건 올림</div><div><span>09-24</span>프로젝트 만듦</div></div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <span class="m-note" style="left:120px;top:640px;max-width:460px"><i>1</i>6단계는 프로젝트 안 위에 — 레일은 '하는 일' 메뉴 그대로(프로젝트에 불이 켜짐)</span>
+  </main>
+</div>
+<span class="m-stamp"><b>시안</b> Land-XI 화면 · LX 직원 프로젝트 안 — 표본 그림은 기존 자산 예시</span>
+<script src="icons.js"></script>
+</body>
+</html>

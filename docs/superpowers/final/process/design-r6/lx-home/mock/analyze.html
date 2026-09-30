@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · Land-XI LX 직원 — 분석하기 한 장: 카드 → 어디 → 시작, 결과는 XI맵</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.an{position:absolute;inset:0;padding:24px;display:grid;grid-template-columns:600px minmax(0,1fr);gap:16px;align-content:start}
+.an .m-card{gap:20px}
+.cardlist{display:flex;flex-direction:column;gap:0;border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.cardlist .c{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 14px;border-top:1px solid var(--rule);font:400 15px/22px var(--font-body);color:var(--ink-2)}
+.cardlist .c:first-child{border-top:0}
+.cardlist .c b{font-weight:500;color:var(--ink)}
+.cardlist .c .r{width:18px;height:18px;border-radius:50%;border:2px solid var(--rule)}
+.cardlist .c.on{background:var(--bg-0)}
+.cardlist .c.on .r{border-color:var(--ink);background:radial-gradient(circle,var(--ink) 40%,transparent 45%)}
+.cardlist .c small{color:var(--sub);font-size:14px}
+.cardlist .c .t-chip{font-size:13px;height:26px;line-height:26px;padding:0 10px}
+.region{display:flex;flex-direction:column;gap:8px}
+.region .ok{font:400 14px/20px var(--font-body);color:var(--sub-2)}
+.region .ok b{font-weight:500;color:var(--ink)}
+.recent .m-table td{padding:12px}
+.recent .m-more{font-size:14px}
+.an .m-btn-row{justify-content:space-between}
+.an .m-btn-row .m-small{max-width:340px}
+</style>
+</head>
+<body class="m t">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">LAND-XI</span>
+    <span class="m-home">LX 직원 대시보드</span>
+    <span class="m-sp"></span>
+    <span class="m-ask" data-ic="ask">물어보기 <kbd>Ctrl K</kbd></span>
+    <span class="m-fresh"><i></i>08:31</span>
+    <span class="m-role"><b>LX 직원</b>김도윤</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail" aria-label="메뉴">
+    <span class="m-rail-i" data-ic="home"><span>홈</span></span>
+    <span class="m-rail-i" data-ic="proj"><span>프로젝트</span></span>
+    <span class="m-rail-i" data-ic="analyze" aria-current="true"><span>분석하기</span></span>
+    <span class="m-rail-i" data-ic="card"><span>서비스<br>카드</span></span>
+    <span class="m-rail-i" data-ic="data"><span>데이터</span></span>
+    <span class="m-rail-i" data-ic="inbox"><span class="bd">4</span><span>요청함</span></span>
+  </nav>
+  <main class="m-main">
+    <div class="an">
+      <section class="m-card">
+        <div class="m-card-h"><h2>분석하기</h2><span class="m-small">기존 서비스 카드로 어느 지역이든</span></div>
+        <div class="m-f"><p class="m-label"><i>1</i>어느 카드로<small>운영 4 · 시범 1</small></p>
+          <div class="cardlist">
+            <div class="c on"><span class="r"></span><span><b>농지이용</b> <small>경작 · 휴경 · 시설 · 전용</small></span><span class="t-chip">운영</span></div>
+            <div class="c"><span class="r"></span><span><b>비닐하우스</b> <small>영농시설</small></span><span class="t-chip">운영</span></div>
+            <div class="c"><span class="r"></span><span><b>생활환경</b> <small>방치 쓰레기 · 불법 소각 · 방치 폐가</small></span><span class="t-chip">운영</span></div>
+            <div class="c"><span class="r"></span><span><b>해양쓰레기</b> <small>해안 쓰레기 더미</small></span><span class="t-chip">운영</span></div>
+            <div class="c"><span class="r"></span><span><b>도로안전</b> <small>포트홀 · 도로시설 파손</small></span><span class="t-chip">시범</span></div>
+          </div>
+        </div>
+        <div class="m-f region"><p class="m-label"><i>2</i>어디<small>여러 곳 가능</small></p>
+          <div class="m-field"><span class="t-chip">구례군</span><span class="ph">시군구 이름을 검색</span></div>
+          <p class="ok"><b>구례군</b> 항공영상 2025년 4월 · 카드 조건에 맞음 ✓</p>
+        </div>
+        <div class="m-btn-row"><button class="t-btn">분석 시작</button><p class="m-small">작업 대기열에 들어가고, 결과는 XI맵에서 읍면동 순으로 차오릅니다.</p></div>
+      </section>
+      <section class="m-card recent">
+        <div class="m-card-h"><h2>최근 분석</h2><span class="m-more">XI맵에서 보기</span></div>
+        <table class="m-table">
+          <thead><tr><th>어디</th><th>카드</th><th>상태</th><th>언제</th><th></th></tr></thead>
+          <tbody>
+            <tr><td class="ink">여수시</td><td>해양쓰레기</td><td><span class="m-status run">분석 중 42%</span></td><td class="num">지금</td><td><span class="m-more">진행 보기</span></td></tr>
+            <tr><td class="ink">구례군</td><td>비닐하우스</td><td><span class="m-status wait">대기 2번째</span></td><td class="num">오늘</td><td></td></tr>
+            <tr><td class="ink">남원시</td><td>농지이용</td><td><span class="m-status ok">끝남</span></td><td class="num">어제</td><td><span class="m-more">결과 보기</span></td></tr>
+            <tr><td class="ink">남원시</td><td>생활환경</td><td><span class="m-status ok">끝남</span></td><td class="num">9월 26일</td><td><span class="m-more">결과 보기</span></td></tr>
+          </tbody>
+        </table>
+        <p class="m-small">끝나면 요청함에 알림이 오고, 결과는 그 지역 서비스 카드에도 쌓입니다</p>
+      </section>
+    </div>
+    <span class="m-note" style="left:720px;top:480px;max-width:420px"><i>1</i>카드 = 우리가 공개한 서비스(운영 · 시범)만 — 영상은 서버가 고른다</span>
+    <span class="m-note" style="left:720px;top:540px;max-width:440px"><i>2</i>'분석 시작' = 지금 XI맵의 '전역 분석'과 같은 작업 — 결과 보기는 XI맵으로</span>
+  </main>
+</div>
+<span class="m-stamp"><b>시안</b> Land-XI 화면 · LX 직원 분석하기 — 숫자·지역은 예시</span>
+<script src="icons.js"></script>
+</body>
+</html>

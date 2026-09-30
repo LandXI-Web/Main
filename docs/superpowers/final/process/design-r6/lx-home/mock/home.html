@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · Land-XI LX 직원 첫 화면 — 내 프로젝트 · 기관에서 온 요청 · 우리 서비스 · 바로 분석하기 (1안 메뉴)</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.home{position:absolute;inset:0;padding:24px;display:grid;grid-template-columns:minmax(0,1fr) 440px;grid-template-rows:auto auto;align-content:start;gap:16px}
+.home .mine{grid-row:1}
+.home .right{display:flex;flex-direction:column;gap:16px}
+.home .go{grid-column:1/-1}
+.go-row{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:center}
+.go .m-btn-row .t-btn{padding:0 32px}
+.mine .pr:first-of-type{border-top:0}
+.mine .pr{padding:14px 0}
+.mine .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--rule);padding-top:14px}
+.mine .new{font:500 14px/20px var(--font-body);color:var(--ink)}
+.mine .new::before{content:"+ "}
+</style>
+</head>
+<body class="m t">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">LAND-XI</span>
+    <span class="m-home">LX 직원 대시보드</span>
+    <span class="m-line">AI 기반 국토정보 통합조사 플랫폼</span>
+    <span class="m-sp"></span>
+    <span class="m-ask" data-ic="ask">물어보기 <kbd>Ctrl K</kbd></span>
+    <span class="m-fresh"><i></i>08:28</span>
+    <span class="m-role"><b>LX 직원</b>김도윤</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail" aria-label="메뉴">
+    <span class="m-rail-i" data-ic="home" aria-current="true"><span>홈</span></span>
+    <span class="m-rail-i" data-ic="proj"><span>프로젝트</span></span>
+    <span class="m-rail-i" data-ic="analyze"><span>분석하기</span></span>
+    <span class="m-rail-i" data-ic="card"><span>서비스<br>카드</span></span>
+    <span class="m-rail-i" data-ic="data"><span>데이터</span></span>
+    <span class="m-rail-i" data-ic="inbox"><span class="bd">4</span><span>요청함</span></span>
+  </nav>
+  <main class="m-main">
+    <div class="home">
+      <section class="m-card mine">
+        <div class="m-card-h"><h2>내 프로젝트</h2><span class="m-more">전체 보기</span></div>
+        <div class="pr"><b>남원시 농지이용 2026</b><span class="st"><i>4</i>결과 확인</span><span class="nx">표본 확인 18/20</span></div>
+        <div class="pr"><b>여수시 해양쓰레기 2026</b><span class="st"><i class="done">6</i>서비스 관리</span><span class="nx">기관이 알린 필지 2건</span></div>
+        <div class="pr"><b>남원시 도로안전 2026</b><span class="st"><i>5</i>발행 요청</span><span class="nx">관리자 검토 중</span></div>
+        <div class="foot"><span class="new">새 프로젝트</span><span class="m-small">진행 중 3 · 보관 1</span></div>
+      </section>
+      <div class="right">
+        <section class="m-card">
+          <div class="m-card-h"><h2>기관에서 온 요청</h2><span class="m-more">요청함</span></div>
+          <div class="cells">
+            <div class="cell"><b>2</b><span>검토 요청</span></div>
+            <div class="cell"><b>1</b><span>분석 의뢰</span></div>
+            <div class="cell"><b>1</b><span>내 결재</span></div>
+          </div>
+          <p class="m-small">여수시 해양쓰레기 · 남원시 농지이용</p>
+        </section>
+        <section class="m-card">
+          <div class="m-card-h"><h2>우리 서비스</h2><span class="m-more">서비스 카드</span></div>
+          <div class="cells">
+            <div class="cell"><b>4</b><span>운영</span></div>
+            <div class="cell"><b>1</b><span>시범</span></div>
+            <div class="cell"><b>2</b><span>만드는 중</span></div>
+            <div class="cell"><b>9<small>곳</small></b><span>적용 지역</span></div>
+          </div>
+        </section>
+      </div>
+      <section class="m-card go">
+        <div class="m-card-h"><h2>바로 분석하기</h2><span class="m-small">기존 서비스 카드로 어느 지역이든</span></div>
+        <div class="go-row">
+          <div class="m-field"><span class="m-label" style="margin-right:4px">카드</span>농지이용<span class="car">▾</span></div>
+          <div class="m-field"><span class="m-label" style="margin-right:4px">어디</span><span class="ph">시군구 이름을 검색</span></div>
+          <div class="m-btn-row"><button class="t-btn">분석하기</button></div>
+        </div>
+      </section>
+    </div>
+
+    <span class="m-note" style="left:24px;top:680px;max-width:400px"><i>1</i>왼쪽 메뉴 = 하는 일 6개 — 6단계 레일은 프로젝트 안으로</span>
+    <span class="m-note" style="left:470px;top:680px;max-width:400px"><i>2</i>내 프로젝트 — 이름 · 지금 단계 · 다음 할 일, 누르면 그 단계로</span>
+    <span class="m-note" style="left:930px;top:650px;max-width:400px"><i>3</i>기관에서 온 것과 내가 올린 결재를 한 곳(요청함)에서</span>
+    <span class="m-note" style="left:930px;top:705px;max-width:420px"><i>4</i>카드 · 지역만 고르면 시작 — 결과는 XI맵에서 차오름</span>
+  </main>
+</div>
+<span class="m-stamp"><b>시안</b> Land-XI 화면 · LX 직원 첫 화면(1안) — 숫자·이름은 예시</span>
+<script src="icons.js"></script>
+</body>
+</html>
