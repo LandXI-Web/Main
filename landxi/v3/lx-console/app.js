@@ -37,7 +37,7 @@ const railHref = () => S.rail.querySelectorAll('a.k-rail-i').forEach((a) => {
 });
 
 /* 마스트 가운데: 한 줄 · 지도 검색(K4) · 물어보기 */
-const line = h('p.lc-line', { text: '부처·지자체 실태조사를 AI로 대체하는 공공 GeoAI' });
+const line = h('p.lc-line', { text: 'AI 기반 국토정보 통합조사 플랫폼' });
 const pickEl = h('div.lc-pick');
 const askBtn = h('button.lc-ask', { type: 'button', 'aria-keyshortcuts': 'Control+K' },
   h('span', { 'aria-hidden': 'true', html: '<svg viewBox="0 0 20 20"><path d="M10 2.5l1.8 4.7 4.7 1.8-4.7 1.8L10 15.5l-1.8-4.7L3.5 9l4.7-1.8z"/></svg>' }),
