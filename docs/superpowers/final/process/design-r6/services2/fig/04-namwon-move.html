@@ -1,0 +1,84 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>남원 카드 이전 — 있는 것·없는 것·순서</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+table.m{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:12.8px}
+table.m th,table.m td{padding:10px 11px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);vertical-align:top;text-align:left;line-height:1.45}
+table.m th:last-child,table.m td:last-child{border-right:0}
+table.m th{background:#F2F4F6;font-weight:700;color:var(--ink-2);font-size:12.5px}
+table.m tr:last-child td{border-bottom:0}
+table.m td.k{font-weight:700;color:var(--ink);width:120px;background:#FAFBFC}
+table.m td.k small{display:block;font-weight:500;color:var(--ink-3);font-size:11.5px;margin-top:3px}
+.yes{display:inline-block;background:#E6F6F5;color:var(--teal);border-radius:6px;padding:1px 7px;font-size:12px;font-weight:700}
+.no{display:inline-block;background:var(--red-tint);color:var(--red);border-radius:6px;padding:1px 7px;font-size:12px;font-weight:700}
+.half{display:inline-block;background:var(--amber-tint);color:var(--amber);border-radius:6px;padding:1px 7px;font-size:12px;font-weight:700}
+.ext{display:inline-block;background:#F2F4F6;color:var(--ink-2);border-radius:6px;padding:1px 7px;font-size:12px;font-weight:700}
+.order{display:grid;grid-template-columns:1fr 36px 1fr 36px 1fr 36px 1fr;gap:0;align-items:stretch;margin-top:8px}
+.order .card{display:flex;flex-direction:column;gap:6px}
+.order .card h3{margin:0;font-size:15px;display:flex;align-items:center;gap:8px}
+.order .card h3 .no2{width:24px;height:24px;border-radius:50%;background:var(--green);color:#fff;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.order .card p{margin:0;font-size:12.8px;color:var(--ink-2)}
+.order .card p b{color:var(--ink);font-weight:600}
+.order .arrow{text-align:center}
+.order .card.dim{opacity:.7}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.two .card h3{margin:0 0 6px;font-size:14.5px}
+.two ul{margin:0;padding-left:16px;font-size:12.8px;color:var(--ink-2)}
+.two li{margin:3px 0}
+.two li b{color:var(--ink);font-weight:600}
+.fork{display:inline-block;background:var(--red-tint);color:var(--red);border-radius:6px;padding:1px 7px;font-size:12px;font-weight:700;margin-left:6px}
+</style></head><body><div class="page">
+<h1>남원 카드 이전 — 있는 것·없는 것·순서 <span class="tag gov">기관 분기</span> <span class="tag both">문서 + 화면</span></h1>
+<p class="sub">10-01 확정: 남원 메인 → 서비스 선택 → 생활환경·영농·도로안전 카드 → 서비스 대시보드 → AI 행정서비스. 옮기려면 서비스마다 지금 Land-XI 에 있는 것과 없는 것이 다릅니다. 가진 것부터 옮기고, 없는 것은 프로젝트로 만듭니다.</p>
+
+<table class="m">
+  <tr><th style="width:120px">서비스(연차)</th><th>모델</th><th>결과</th><th>화면</th><th>지금 운영</th><th>옮기려면 필요한 것</th><th>2차(기관 몫)</th></tr>
+  <tr><td class="k">영농관리<small>2025 · 농정과·축산과</small></td>
+    <td><span class="yes">있음</span> 5종 — 경작·비경작 · 비닐하우스 · 사료작물 생육기·생산기 · 곤포. 실제 가중치·학습 기록</td>
+    <td><span class="half">일부</span> 남원 비닐하우스 2023 항공 결과 · 옛 대장에 2,098필지·9,664동 기록. 드론 5종 전역 결과는 <b>다시 돌려야</b></td>
+    <td><span class="yes">있음</span> 옛 원형 + 설계 5차 대시보드 시안(현황·결과 보기·필지 대조·보고서)</td>
+    <td><span class="ext">외부 운영 시스템</span> 로그인 필요 · 운영 주체·계약 확인 필요</td>
+    <td>남원 드론 영상(가진 시점)으로 5종 분석 예약 실행 → 표본 확인 → 카드 공개(관리자 승인) → 농정과·축산과 부서 켜기. 사료작물 '8종' 목록 확인</td>
+    <td>직불금 대상 검토 · 휴경 관리(농정과 자료 — 커스텀)</td></tr>
+  <tr><td class="k">도로안전<small>2026 · 건설과</small></td>
+    <td><span class="no">없음</span> 포트홀·차선·도로시설 모델 없음(차량 모델만)</td>
+    <td><span class="no">없음</span></td>
+    <td><span class="half">일부</span> 옛 원형(빈 자리) · 공개 시안(외부 · 자료 고정) 기능 목록은 참고 가능</td>
+    <td><span class="ext">공개 시안</span> 개통 여부·개발 주체 확인 필요</td>
+    <td>프로젝트: 포트홀·도로시설 라벨링 → 학습 → 정사영상 결과 → 카드. <b>차량 영상(블랙박스)은 새 입력 — 사업(맞춤)으로</b>. 노선·구간 자료는 기관</td>
+    <td>노선 구간 등급 · 보수 우선순위 · 조치 상태(건설과 — 커스텀)</td></tr>
+  <tr><td class="k">생활환경<small>2023 · 환경과</small></td>
+    <td><span class="no">없음</span> 방치쓰레기·소각·폐가 — 학습 자료 단계</td>
+    <td><span class="no">없음</span> 2023 결과 자료 위치 확인 필요</td>
+    <td><span class="half">일부</span> 옛 원형(2023 배포본)</td>
+    <td><span class="ext">외부 운영 시스템 안</span> '방치 쓰레기 정보 분석'으로 이어짐</td>
+    <td>2023 결과·라벨 자료 확보(있으면 프로젝트 학습 자료로) → 학습 → 카드. 없으면 새 촬영·라벨링부터</td>
+    <td>민원 연계 · 현장 점검 동선(환경과 — 커스텀)</td></tr>
+  <tr><td class="k">관광인파<small>2027 · 관광과·안전총괄과</small></td>
+    <td><span class="no">없음</span> 사람 탐지·밀도 모델 없음</td><td><span class="no">없음</span></td><td><span class="half">설계만</span> 옛 카드 설계(시간 재생·밀도 격자)</td><td>—</td>
+    <td>지금은 <b>'내년' 카드만</b>. 사업 시작 때 맞춤(ⓒ) 프로젝트로 시작 → 완성되면 카드</td><td>행사 구역 · 혼잡 임계(기관)</td></tr>
+</table>
+
+<h2 class="sec">순서 제안 — 가진 것부터 <span class="fork">갈림길 2</span></h2>
+<div class="order">
+  <div class="card"><h3><span class="no2">1</span>영농관리</h3><p><b>모델 있음 → 첫 카드.</b> 드론 영상 5종 분석(예약) · 표본 확인 · 공개 · 농정과 가입. 서비스 선택에 첫 '운영' 카드.</p><p class="muted small">외부 운영 시스템은 옮기는 동안 링크로 나란히(갈림길 3)</p></div>
+  <div class="arrow">→</div>
+  <div class="card"><h3><span class="no2">2</span>도로안전 — 정사영상 분</h3><p><b>모델 없음 → 프로젝트부터.</b> 포트홀·도로시설 라벨링 → 학습 → 결과 → 카드. 카드는 '만드는 중'으로 먼저 보임.</p><p class="muted small">차량 영상 분은 사업(맞춤)으로 따로</p></div>
+  <div class="arrow">→</div>
+  <div class="card"><h3><span class="no2">3</span>생활환경</h3><p><b>자료 확인 뒤.</b> 2023 결과·라벨이 확보되면 학습 → 카드. 없으면 새 촬영·라벨링부터라 시간이 가장 오래.</p><p class="muted small">그때까지 '만드는 중' + 지금 운영 시스템 링크</p></div>
+  <div class="arrow">→</div>
+  <div class="card dim"><h3><span class="no2" style="background:var(--ink-3)">—</span>관광인파</h3><p><b>'내년' 표시만.</b> 사업 시작 때 맞춤 프로젝트로.</p></div>
+</div>
+
+<div class="two">
+  <div class="card"><h3>다른 길 — 연차 순서(생활환경 → 영농 → 도로안전)</h3>
+    <ul><li>사업 이력 순서와 같아 기관에게 설명이 쉽다.</li>
+      <li>그러나 생활환경은 모델·결과·학습 자료가 모두 없어 <b>첫 카드가 가장 늦게</b> 열린다 — 옮기기 시작하고도 한동안 '운영' 카드가 없다.</li>
+      <li>그래서 기본값은 '가진 것부터'. 사용자가 연차 순서를 원하면 그렇게 간다.</li></ul></div>
+  <div class="card"><h3>외부 운영 시스템과의 겹침 <span class="fork">갈림길 3</span></h3>
+    <ul><li>영농관리·생활환경 화면은 지금 외부 운영 시스템 안에 있다(로그인 필요). 우리 카드가 열리기 전까지 그 카드를 어떻게 두나:</li>
+      <li><b>ⓐ 지금 운영 시스템으로 가는 링크</b>로 두고, 우리 결과가 준비되면 카드 내용을 바꾼다(끊김 없음 · 두 화면이 한동안 공존).</li>
+      <li><b>ⓑ 처음부터 우리 카드만</b>('만드는 중') — 외부 링크 없음(깔끔 · 그동안 결과를 볼 곳이 없음).</li>
+      <li>어느 쪽이든 외부 시스템 안 결과(2025 영농 · 2023 생활환경)를 가져올 수 있는지, 그 시스템 가입자를 우리 가입 신청으로 옮기는지는 <b>계약·형식 확인 필요</b>.</li></ul></div>
+</div>
+<p class="foot">숫자(모델 5종 · 2,098필지 · 9,664동)는 모델 기록과 옛 대장 값. 그 밖의 시간·비용은 적지 않았다(측정·확인 필요).</p>
+</div></body></html>

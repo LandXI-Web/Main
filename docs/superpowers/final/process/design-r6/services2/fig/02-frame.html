@@ -1,0 +1,88 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>1차·2차 서비스 — 일반화한 틀 한 장</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+table.f{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:12.8px}
+table.f th,table.f td{padding:10px 11px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);vertical-align:top;text-align:left;line-height:1.45}
+table.f th:last-child,table.f td:last-child{border-right:0}
+table.f th{background:#F2F4F6;font-weight:700;color:var(--ink-2);font-size:12.5px}
+table.f th.lx{color:var(--blue)} table.f th.gov{color:var(--green)} table.f th.line{color:var(--violet)}
+table.f tr:last-child td{border-bottom:0}
+table.f td.k{font-weight:700;color:var(--ink);width:110px;background:#FAFBFC}
+table.f td.k small{display:block;font-weight:500;color:var(--ink-3);font-size:11.5px;margin-top:3px}
+table.f td b{color:var(--ink);font-weight:600}
+.chk{display:inline-block;background:var(--amber-tint);color:var(--amber);border-radius:6px;padding:1px 6px;font-size:11.5px;font-weight:700}
+.rules{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:14px}
+.rules .card{font-size:12.8px;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+.rules .card .no{width:24px;height:24px;border-radius:50%;background:var(--violet);color:#fff;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.rules .card b{color:var(--ink);font-size:13.5px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.split .card h3{margin:0 0 6px;font-size:14.5px}
+.split ul{margin:0;padding-left:16px;font-size:12.8px;color:var(--ink-2)}
+.split li{margin:3px 0}
+.split li b{color:var(--ink);font-weight:600}
+</style></head><body><div class="page">
+<h1>1차·2차 서비스 — 일반화한 틀 한 장 <span class="tag both">문서 · 둘 다</span></h1>
+<p class="sub">어느 서비스든 같은 자리에서 끊는다: <b>1차는 영상에서 보이는 것을 세고 나눈 결과(LX)</b>, <b>2차는 그 결과에 기관만 가진 자료·모델을 합쳐 업무 판단·계획을 만드는 것(기관)</b>. 경계는 표준 결과 형식 한 장이고, 1차 새 공개가 2차 재계산의 신호다.</p>
+
+<table class="f">
+  <tr><th style="width:110px">서비스</th><th class="lx">1차 — LX 가 내는 것</th><th class="line">경계 — 표준 결과 형식</th><th class="gov">2차 — 기관이 결합해 만드는 것</th><th>2차에 더 들어가는 자료·모델(누가)</th><th>2차가 다시 도는 때</th><th>틀리면 누구 몫</th></tr>
+  <tr>
+    <td class="k">해양쓰레기<small>전남 · 카드 있음(여수 결과 두 판)</small></td>
+    <td>해안 항공·드론에서 쓰레기 종류별 위치·양 · 2027 위성 부유물 패치</td>
+    <td>해안 구간·위치 · 종류 · 양 · 촬영 시점 · 신뢰도 · 버전</td>
+    <td><b>해양쓰레기 예측 지도</b> — 어느 해안에 언제 얼마나 쌓일지 · 수거 배치</td>
+    <td>해류·바람 장(바깥 제공자 <span class="chk">확인 필요</span>) · 해안선 관리 구간(전남) · 수거 기록(전남)</td>
+    <td>1차 새 회차 공개 알림 · 해류 예보 갱신(주기 <span class="chk">확인 필요</span>)</td>
+    <td>탐지 = LX · 예측 = 전남 + 모델 제공자</td>
+  </tr>
+  <tr>
+    <td class="k">영농관리<small>남원 · 모델 5종 있음</small></td>
+    <td>필지별 경작·비경작 · 비닐하우스 동수 · 사료작물 종류·면적 · 곤포</td>
+    <td>필지 번호 · 판정값 · 면적 · 촬영 시점 · 신뢰도 · 버전</td>
+    <td><b>직불금 대상 검토 · 휴경 관리</b> — 신청 필지와 AI 판정이 다른 곳 목록</td>
+    <td>농업경영체 등록정보 · 직불 신청 명단 · 농지대장(농정과 — 기관 안에서만)</td>
+    <td>1차 새 시점(영농기·수확기) 공개 · 신청 명단이 바뀔 때(기관)</td>
+    <td>판정 = LX · 대상 여부 판단 = 농정과</td>
+  </tr>
+  <tr>
+    <td class="k">도로안전<small>남원 · 모델 없음</small></td>
+    <td>포트홀 · 차선 · 도로시설 파손의 위치·크기(정사영상) · 차량 영상은 사업으로</td>
+    <td>위치 · 종류 · 크기 · 촬영 시점 · 신뢰도 · 버전</td>
+    <td><b>보수 우선순위</b> — 노선 구간별 등급 · 조치 순서 · 조치 상태</td>
+    <td>도로 노선·구간 · 교통량 · 보수 기록(건설과)</td>
+    <td>1차 새 촬영 공개 · 조치 완료가 기록될 때(기관)</td>
+    <td>탐지 = LX · 우선순위·조치 = 건설과</td>
+  </tr>
+  <tr>
+    <td class="k">생활환경<small>남원 · 모델 없음</small></td>
+    <td>방치쓰레기 더미 · 소각 흔적 · 방치 폐가의 위치·규모</td>
+    <td>위치 · 종류 · 규모 · 촬영 시점 · 신뢰도 · 버전</td>
+    <td><b>민원 연계 · 현장 점검 동선</b> — 접수 민원과 겹치는 곳, 순회 순서</td>
+    <td>민원 접수 기록 · 점검 인력(환경과)</td>
+    <td>1차 새 촬영 공개 · 민원이 들어올 때(기관)</td>
+    <td>탐지 = LX · 점검 판단 = 환경과</td>
+  </tr>
+</table>
+
+<div class="rules">
+  <div class="card"><span class="no">1</span><b>보이는 것까지가 1차</b>영상에서 보이는 성질(쓰레기·작물·구멍)만 1차. 소유·신청·민원처럼 안 보이는 것과 합치는 순간 2차.</div>
+  <div class="card"><span class="no">2</span><b>경계는 형식 한 장</b>1차 출구 = 2차 입구 = 표준 결과 형식. 시점·신뢰도·버전이 꼭 들어가야 나중에 "어느 입력으로 계산했나"가 남는다.</div>
+  <div class="card"><span class="no">3</span><b>기관 자료는 기관 안에서</b>2차에 들어가는 대장·모델·기록은 LX 로 오지 않는다(계정 범위 밖 0). 예외는 갈림길 1-ⓑ(LX 서버에서 계산)일 때만.</div>
+  <div class="card"><span class="no">4</span><b>갱신은 알림으로</b>1차 공개 = 이벤트. 카드 알림 한 줄 + 서비스별 키에 등록한 받는 주소. 2차를 자동으로 돌릴지 사람이 누를지는 기관이 정한다.</div>
+  <div class="card"><span class="no">5</span><b>책임은 기준 시점으로 가른다</b>2차 화면에 '입력 1차 기준 시점 · 버전 · 계산 시점'을 항상 표시. 1차 오류는 LX(재학습), 2차 판단은 기관.</div>
+</div>
+
+<div class="split">
+  <div class="card"><h3>문서로 정할 것 <span class="tag both">문서</span></h3>
+    <ul><li>여섯 질문 답(모델 소유 · 운영 · 계산 위치 · 자료 방향 · 갱신 · 책임)과 위 규칙 다섯</li>
+      <li><b>표준 결과 형식</b> 한 장(서비스마다 열 이름은 다르되 시점·신뢰도·버전은 공통)</li>
+      <li>2차가 네 갈래 중 어디인가 — 전남이 계산하면 <b>연결(ⓑ)</b>, LX 서버가 계산하면 <b>맞춤(ⓒ) → 카드(ⓐ)</b></li>
+      <li>해류 모델 소유·조달·갱신 주기 확인 목록</li></ul></div>
+  <div class="card"><h3>화면으로 만들 것 <span class="tag gov">기관 분기</span> <span class="tag">Land-XI</span></h3>
+    <ul><li>기관 서비스 선택에 <b>'우리 도가 운영하는 서비스' 카드 자리</b>(2차) — 입력 1차 · 기준 시점 · '다시 계산 필요' 표시</li>
+      <li>기관 알림 한 줄 "해양쓰레기 탐지 새 결과 — 예측 지도 다시 계산 필요"</li>
+      <li>기관 관리자의 연동 키 칸에 <b>'새 결과 알림 받는 주소'</b> 한 칸(API 설계와 이어짐)</li>
+      <li>Land-XI 서비스 관리에 <b>'이 결과를 쓰는 2차 서비스'</b> 한 줄 — 관리자가 갱신 배포할 때 어디에 영향이 가는지</li></ul></div>
+</div>
+<p class="foot">직불금·보수 우선순위·민원 연계는 옛 자산의 서비스 부품 목록에 '기관 몫(행정 가공)'으로 이미 적혀 있던 것을 2차로 옮겨 적은 것이다. 숫자는 넣지 않았다.</p>
+</div></body></html>

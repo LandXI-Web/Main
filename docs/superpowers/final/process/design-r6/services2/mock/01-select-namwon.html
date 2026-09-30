@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · 남원시 GeoVision — 서비스 선택(생활환경 · 영농 · 도로안전 세 카드, 관광인파는 내년)</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.two{display:grid;grid-template-columns:1fr 344px;gap:24px;align-items:start}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+.svc .n{min-height:0}
+.svc .go{margin-top:8px}
+.svc.off svg.face{opacity:.55}
+.svc.off h3,.svc.off .d{color:var(--sub)}
+.svc .ext{font:400 13px/18px var(--font-body);color:var(--sub);text-decoration:underline;text-underline-offset:3px}
+.svc .n.small{font:500 14px/20px var(--font-body);color:var(--sub-2);letter-spacing:0}
+.common{background:var(--bg-1);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:4px}
+.common h3{margin:0 0 8px;font:700 20px/28px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.hint{margin-top:20px;padding:16px 20px;border:1.5px dashed var(--mute);border-radius:16px;font:400 15px/22px var(--font-body);color:var(--sub)}
+.hint b{font-weight:500;color:var(--ink-2)}
+</style>
+</head>
+<body class="m t g ci-namwon">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">남원시 GeoVision 플랫폼</span>
+    <span class="m-sp"></span>
+    <span class="m-ask">물어보기 <kbd>Ctrl K</kbd></span>
+    <span class="m-role"><b>기관 관리자</b>남원시</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail">
+    <p class="b-mark"><span>남원</span><span>GV</span></p>
+    <span class="m-rail-i" aria-current="true"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>서비스</span>
+    <span class="m-rail-i"><i class="dot"></i><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l2 2H4l2-2z"/><path d="M10 20a2 2 0 004 0"/></svg>알림</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M4 21V4h11l1 3h4v10h-9l-1-3H4"/></svg>알린<br>필지</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>분석 의뢰</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg>기관 관리</span>
+    <span class="m-rail-i"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>계정</span>
+    <span class="m-rail-i out"><svg viewBox="0 0 24 24"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9"/></svg>로그아웃</span>
+  </nav>
+  <main class="m-main">
+    <div class="m-page">
+      <div class="m-head">
+        <h1>우리 시의 AI 분석 서비스</h1>
+        <span class="sub">카드를 누르면 그 서비스 대시보드로 갑니다 · 부서 담당자에게는 자기 부서 카드만 보입니다</span>
+        <span class="date">기준일 2026.06.08</span>
+      </div>
+      <div class="two">
+        <div>
+          <div class="grid">
+            <article class="svc off">
+              <svg class="face" viewBox="0 0 160 100" aria-hidden="true"><rect width="160" height="100" fill="var(--ci-t1)"/><path d="M0 78 L160 70 L160 100 L0 100 Z" fill="var(--ci-line)" opacity=".7"/><path d="M28 78 L44 54 L62 62 L74 46 L92 78 Z" fill="var(--ci)"/><path d="M96 78 L108 62 L122 70 L130 78 Z" fill="var(--ci)" opacity=".45"/><g stroke="var(--ci)" stroke-width="1.6" fill="none" stroke-linecap="square"><path d="M62 40 L70 26 L62 14"/><path d="M78 34 L86 22 L80 12"/></g></svg>
+              <div class="meta"><span>2023 · 환경과</span><span class="t-chip" data-lv="wait">만드는 중</span></div>
+              <h3>생활환경 관리<br>서비스</h3>
+              <p class="d">방치쓰레기 · 불법소각장 · 방치폐가</p>
+              <p class="n small">AI 분석 모델을 만들고 있습니다</p>
+              <span class="ext">지금 운영 중인 시스템에서 보기</span>
+            </article>
+            <article class="svc">
+              <svg class="face" viewBox="0 0 160 100" aria-hidden="true"><rect width="160" height="100" fill="var(--ci-t1)"/><g stroke="var(--ci-line)" stroke-width="1" fill="none"><path d="M-10 100 L18 0"/><path d="M18 100 L46 0"/><path d="M46 100 L74 0"/><path d="M74 100 L102 0"/><path d="M102 100 L130 0"/><path d="M130 100 L158 0"/><path d="M0 34 L160 20"/><path d="M0 66 L160 52"/></g><path d="M32 36 L60 33 L64 63 L36 66 Z" fill="var(--ci)"/><path d="M96 22 L124 19 L127 42 L99 45 Z" fill="var(--ci)" opacity=".45"/><g fill="none" stroke="var(--ci)" stroke-width="1.6"><path d="M104 86 L110 74 L116 86"/><path d="M117 86 L123 74 L129 86"/><path d="M130 86 L136 74 L142 86"/><path d="M143 86 L149 74 L155 86"/></g></svg>
+              <div class="meta"><span>2025 · 농정과 · 축산과</span><span class="t-chip">운영</span></div>
+              <h3>영농관리<br>행정서비스</h3>
+              <p class="d">농지이용 경작·비경작 · 비닐하우스 · 사료작물</p>
+              <p class="n"><span class="m-num">2,098</span><small>필지 · 2025년 드론영상</small></p>
+              <span class="go">대시보드 열기</span>
+            </article>
+            <article class="svc off">
+              <svg class="face" viewBox="0 0 160 100" aria-hidden="true"><rect width="160" height="100" fill="var(--ci-t1)"/><path d="M-6 88 L166 26" stroke="var(--ci-line)" stroke-width="16" fill="none"/><path d="M-6 88 L166 26" stroke="var(--ci-t1)" stroke-width="1.4" stroke-dasharray="9 9" fill="none"/><g fill="var(--ci)"><rect x="38" y="66" width="9" height="9"/><rect x="82" y="50" width="12" height="12"/><rect x="120" y="38" width="7" height="7"/></g><g fill="var(--ci)"><rect x="12" y="86" width="11" height="6"/><rect x="32" y="80" width="11" height="12" opacity=".4"/><rect x="52" y="88" width="11" height="4"/><rect x="72" y="77" width="11" height="15" opacity=".4"/><rect x="92" y="83" width="11" height="9"/><rect x="112" y="89" width="11" height="3" opacity=".4"/><rect x="132" y="81" width="11" height="11"/></g></svg>
+              <div class="meta"><span>2026 · 건설과</span><span class="t-chip" data-lv="wait">만드는 중</span></div>
+              <h3>도로안전 관리<br>서비스</h3>
+              <p class="d">포트홀 · 도로시설 파손</p>
+              <p class="n small">정사영상 분석부터 만들고 있습니다</p>
+            </article>
+            <article class="svc off">
+              <svg class="face" viewBox="0 0 160 100" aria-hidden="true"><rect width="160" height="100" fill="var(--ci-t1)"/><g stroke="var(--ci-line)" stroke-width="1"><path d="M10 0V100M30 0V100M50 0V100M70 0V100M90 0V100M110 0V100M130 0V100"/><path d="M0 10H160M0 30H160M0 50H160M0 70H160M0 90H160"/></g><rect x="50" y="30" width="60" height="40" fill="var(--ci)" opacity=".18"/><rect x="70" y="40" width="20" height="20" fill="var(--ci)" opacity=".3"/><g fill="var(--ci)"><circle cx="80" cy="50" r="4"/><circle cx="66" cy="44" r="3.2"/><circle cx="94" cy="58" r="3.4"/><circle cx="58" cy="62" r="2.6" opacity=".7"/><circle cx="104" cy="38" r="2.4" opacity=".6"/></g></svg>
+              <div class="meta"><span>2027 · 관광과</span><span class="t-chip" data-lv="gap">내년</span></div>
+              <h3>관광인파 관리<br>서비스</h3>
+              <p class="d">교통혼잡 · 인파혼잡</p>
+              <p class="n small">2027년 사업으로 시작합니다</p>
+            </article>
+          </div>
+          <div class="hint"><b>부서 담당자 화면</b> — 농정과 직원에게는 영농관리 카드 하나만 보이고, 하나뿐이라 로그인하면 이 화면을 건너 대시보드로 바로 갑니다. 기관 관리자는 네 카드를 모두 봅니다.</div>
+        </div>
+        <aside class="common">
+          <h3>공통</h3>
+          <div class="m-rows">
+            <div class="m-rowl">알림 <span class="s">새 결과 · 답</span><span class="t-chip">2</span></div>
+            <div class="m-rowl">알린 필지 <span class="s">산동면 대기리 615</span><span class="t-chip">답 있음</span></div>
+            <div class="m-rowl">분석 의뢰 <span class="s">덕과면 드론영상 → 영농관리</span><span class="t-chip" data-lv="wait">접수 대기</span></div>
+            <div class="m-rowl">기관 관리 <span class="s">부서 · 가입 승인 · 기관 정보</span><span class="t-chip" data-lv="wait">1</span></div>
+            <div class="m-rowl">계정 <span class="s">비밀번호 변경</span><span class="t-chip" data-lv="wait">—</span></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+    <div class="m-foot"><b>전북특별자치도 남원시</b><span>대표전화 063-620-6114</span><span>AI 분석 · 모델 개발과 갱신 — LX 한국국토정보공사</span></div>
+
+    <span class="m-note" style="left:120px;top:716px;max-width:860px"><i>1</i>남원시 사업 순서대로 카드 넷 — 지금 열리는 것은 영농관리(모델이 있어 첫 카드), 나머지는 '만드는 중' · '내년'</span>
+    <span class="m-note" style="left:120px;top:756px;max-width:860px"><i>2</i>옮기는 동안 생활환경 카드에 '지금 운영 중인 시스템에서 보기' 링크(갈림길 3-ⓐ) — 우리 결과가 준비되면 카드 내용이 바뀜</span>
+    <span class="m-note" style="left:120px;top:796px;max-width:860px"><i>3</i>공통 칸은 5차 시안과 같음 · 기관 관리자에게만 '기관 관리'가 하나 더</span>
+  </main>
+</div>
+<span class="m-stamp m-stamp--r"><b>시안</b> 기관 분기 화면 · 남원시 GeoVision — 서비스 선택(기관 관리자 보기)</span>
+</body>
+</html>
