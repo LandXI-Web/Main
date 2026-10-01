@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ko" style="--ci:#1F6F4A;--ci-t1:#E9F3ED;--ci-line:#D1E3D9">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · 남원시 GeoVision 플랫폼 — 서비스 대시보드 안으로 옮긴 결과 설명 · 내려받기 · 새 결과 알림 · 검토 요청</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+/* 새 결과 한 줄(탭 아래) */
+.newline{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:12px;background:var(--ci-t1);font:400 14px/20px var(--font-body);color:var(--ink-2);flex-wrap:wrap}
+.newline i{flex:none;width:8px;height:8px;border-radius:50%;background:var(--ci)}
+.newline b{font-weight:500;color:var(--ink)}
+.newline .tbtn{margin-left:auto}
+/* 이 결과는 — 카드 */
+.about dl{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;margin:0;font:400 15px/22px var(--font-body)}
+.about dt{color:var(--sub)}
+.about dd{margin:0;color:var(--ink)}
+.about dd small{display:block;color:var(--sub);font-size:13px;line-height:18px}
+.about .lv{display:inline-flex;align-items:center;gap:6px;font-weight:500}
+.about .lv::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--lock)}
+.dl3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border-top:1px solid var(--rule);padding-top:12px}
+.dl3 .btn{height:40px;padding:0 8px;font-size:13px;flex-direction:column;gap:0;line-height:1}
+.dl3 .btn small{font:400 11px/1 var(--font-body);opacity:.8;margin-top:3px}
+.dl3 .btn.b2{box-shadow:inset 0 0 0 1px var(--rule)}
+.about .small{margin-top:2px}
+/* 검토 요청 · 답 */
+.fb{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.fb li{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:12px 0;border-top:1px solid var(--rule)}
+.fb li:first-child{border-top:0;padding-top:0}
+.fb b{font:500 15px/22px var(--font-body);color:var(--ink)}
+.fb b{grid-column:1;grid-row:1}
+.fb .chip{grid-column:2;grid-row:1;justify-self:end;align-self:start}
+.fb small{grid-column:1/-1;grid-row:2;font:400 13px/18px var(--font-body);color:var(--sub)}
+.fb .chip{align-self:center}
+/* 서랍 — 이 결과 설명(여섯 칸) */
+.dim{position:fixed;inset:0;background:rgba(28,31,37,.28);z-index:60;display:none}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:480px;background:var(--bg-1);box-shadow:var(--elev-3);z-index:61;display:none;flex-direction:column;overflow:auto}
+body[data-open] .dim,body[data-open] .drawer{display:flex}
+body[data-open] .stamp{right:500px}
+.drawer .dh{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 24px 14px;border-bottom:1px solid var(--rule);position:sticky;top:0;background:var(--bg-1)}
+.drawer .dh h2{margin:0;font:700 22px/30px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.drawer .dh h2 small{display:block;font:400 13px/18px var(--font-body);color:var(--sub);letter-spacing:0;margin-top:2px}
+.drawer .dh .x{font:400 20px/1 var(--font-num);color:var(--sub)}
+.drawer .db{padding:16px 24px 24px;display:flex;flex-direction:column;gap:14px}
+.drawer .chg{padding:12px 14px;border-radius:12px;background:var(--ci-t1);font:400 14px/20px var(--font-body);color:var(--ink-2)}
+.drawer .chg b{font-weight:500;color:var(--ink);margin-right:6px}
+.six{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.six section{border-radius:12px;background:var(--bg-0);padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.six section.w{grid-column:1/-1}
+.six h3{margin:0;font:700 16px/22px var(--font-display);color:var(--ink)}
+.six .n{font:800 26px/1 var(--font-display);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums}
+.six .n small{font:500 13px/1 var(--font-body);color:var(--sub);margin-left:4px;letter-spacing:0}
+.six p{margin:0;font:400 13px/19px var(--font-body);color:var(--ink-2)}
+.six p.s{color:var(--sub)}
+.six .kind{display:flex;gap:6px;flex-wrap:wrap}
+.six .kind span{height:24px;padding:0 8px;border-radius:12px;background:var(--bg-1);font:500 12px/24px var(--font-body);color:var(--ink)}
+.six dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font:400 13px/19px var(--font-body)}
+.six dt{color:var(--sub)}
+.six dd{margin:0;color:var(--ink)}
+.cols{width:100%;border-collapse:collapse;font:400 13px/18px var(--font-body)}
+.cols th{text-align:left;color:var(--sub);font-weight:500;padding:0 8px 6px 0;border-bottom:1px solid var(--rule)}
+.cols td{padding:6px 8px 6px 0;border-bottom:1px solid var(--rule);color:var(--ink)}
+.cols tr:last-child td{border-bottom:0}
+.ver{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font:400 13px/19px var(--font-body);color:var(--ink-2)}
+.ver b{font-weight:500;color:var(--ink);margin-right:6px}
+.ver small{color:var(--sub)}
+@media (max-width:640px){.drawer{width:100%}.six{grid-template-columns:1fr}.dl3{grid-template-columns:1fr 1fr 1fr}.newline .tbtn{margin-left:0}}
+</style>
+</head>
+<body class="g t">
+<div class="app">
+  <header class="mast">
+    <p class="mark"><span>남원</span><span>GV</span></p>
+    <span class="word">남원시 GeoVision 플랫폼</span>
+    <span class="sp"></span>
+    <span class="who"><b>농정과</b>박서연</span>
+    <span class="mb">XI맵</span>
+    <span class="mb sq" data-ic="bell"><span class="bd">2</span></span>
+    <span class="mb sq">?</span>
+    <span class="mb">나가기</span>
+  </header>
+  <nav class="rail" aria-label="메뉴">
+    <span class="ri" data-ic="card" aria-current="true"><span>내 서비스</span></span>
+    <span class="ri" data-ic="upload"><span>분석 의뢰</span></span>
+    <span class="ri" data-ic="inbox"><span class="bd">1</span><span>보낸 요청</span></span>
+    <span class="ri" data-ic="me"><span>계정</span></span>
+  </nav>
+  <main class="main">
+    <div class="page">
+      <div class="crumb"><span>내 서비스</span><span class="sep">›</span><span class="k">영농관리 행정서비스</span></div>
+      <div class="head">
+        <h1>영농관리 행정서비스</h1>
+        <span class="sub">농지이용 경작·비경작 · 비닐하우스 · 사료작물 · 2025년 사업 · 농정과</span>
+        <span class="date">최근 결과 2026.06.08</span>
+      </div>
+      <div class="tabs"><span aria-current="true">현황</span><span>결과 지도</span><span>필지 목록</span><span>행정정보와 비교</span><span>보고서</span></div>
+
+      <div class="newline"><i></i><b>새 결과(2판)가 왔습니다</b><span>2025년 드론영상 · 2026.06.08 분석 · 결과 단위가 필지로 바뀜 · 종류 4가지 → 2가지</span><span class="tbtn">이 결과 설명</span></div>
+
+      <div class="dash">
+        <div class="dcol">
+          <div class="scene">
+            <img src="../../../../../../../landxi/v3/service-detail/data/img/namwon-farmland-2025/6@2x.jpg" alt="">
+            <div class="hud"><p class="l">현장 확인 필요 · 남원시</p><p class="n">1,035<small>필지</small><i>~</i></p></div>
+            <div class="open"><span class="btn ci">결과 지도 열기</span><span class="btn b2">필지 목록</span></div>
+            <span class="cap">2025년 드론영상 · 휴경·전용 의심 필지 윤곽</span>
+          </div>
+
+          <div class="card">
+            <h2>읍면별 현장 확인 필요<small>많은 곳부터</small></h2>
+            <div class="bars">
+              <div class="bar"><span>운봉읍</span><i style="--w:100%"></i><span class="n num">212</span></div>
+              <div class="bar"><span>보절면</span><i style="--w:79%"></i><span class="n num">168</span></div>
+              <div class="bar"><span>산동면</span><i style="--w:66%"></i><span class="n num">141</span></div>
+              <div class="bar"><span>인월면</span><i style="--w:57%"></i><span class="n num">120</span></div>
+              <div class="bar"><span>덕과면</span><i style="--w:45%"></i><span class="n num">96</span></div>
+              <div class="bar"><span>그 밖 18곳</span><i style="--w:100%;opacity:.35"></i><span class="n num">298</span></div>
+            </div>
+            <p class="small">읍면을 누르면 그 읍면의 결과 지도로 갑니다.</p>
+          </div>
+
+          <div class="card">
+            <h2>영상과 결과 — 2025년 네 시점<small>같은 자리 · 4·6·8·10월</small></h2>
+            <div class="epochs">
+              <div class="th"><img src="../../../../../../../landxi/v3/service-detail/data/img/namwon-epoch4/1@2x.jpg" alt=""><span>2025.04</span></div>
+              <div class="th"><img src="../../../../../../../landxi/v3/service-detail/data/img/namwon-epoch4/2@2x.jpg" alt=""><span>2025.06</span></div>
+              <div class="th"><img src="../../../../../../../landxi/v3/service-detail/data/img/namwon-epoch4/3@2x.jpg" alt=""><span>2025.08</span></div>
+              <div class="th"><img src="../../../../../../../landxi/v3/service-detail/data/img/namwon-epoch4/4@2x.jpg" alt=""><span>2025.10</span></div>
+            </div>
+            <p class="small">경작 흔적이 네 시점 모두 보이지 않으면 휴경·전용 의심으로 분류합니다. 판정은 담당자가 현장에서 확정합니다.</p>
+          </div>
+        </div>
+
+        <div class="dcol">
+          <div class="card about">
+            <h2>이 결과는<small>2판 · 2026.09.26 공개</small></h2>
+            <dl>
+              <dt>무엇이</dt><dd>판정한 필지 2,098<small>경작지 1,291 · 비경작지 807 · 우리 시 관할 안만</small></dd>
+              <dt>언제</dt><dd>2025년 드론영상 · 2026.06.08 분석</dd>
+              <dt>믿을 만한 정도</dt><dd><span class="lv">보통</span><small>확신한 결과와 아닌 결과가 섞여 있습니다 — 현장 확인 전 참고용</small></dd>
+            </dl>
+            <span class="tbtn">이 결과 설명 자세히</span>
+            <div class="dl3"><span class="btn ci">지도 파일<small>지도 프로그램용</small></span><span class="btn b2">필지 엑셀<small>필지 목록</small></span><span class="btn b2">요약<small>숫자만</small></span></div>
+            <p class="small">우리 시 관할 안 결과만 들어 있습니다. 처음 받을 때 이용 약속에 한 번 동의합니다.</p>
+          </div>
+
+          <div class="card">
+            <h2>내가 확인할 필지<small>3건</small></h2>
+            <ul class="todo">
+              <li><b>운봉읍 권포리 1229-3</b><small>휴경·전용 의심</small><span class="chip">확인 전</span></li>
+              <li><b>보절면 도룡리 905-7</b><small>휴경·전용 의심</small><span class="chip">확인 전</span></li>
+              <li><b>보절면 도룡리 844</b><small>휴경·전용 의심</small><span class="chip">확인 전</span></li>
+            </ul>
+            <span class="tbtn">모두 보기</span>
+          </div>
+
+          <div class="card">
+            <h2>LX와 주고받은 검토 요청<small>2건</small></h2>
+            <ul class="fb">
+              <li><b>세전리 1395-12 — "비닐하우스 아님"</b><small>LX 김도윤 답 · 10.01 "다음 판에 반영합니다"</small><span class="chip ci">답 도착</span></li>
+              <li><b>덕과면 드론영상 → 영농관리 분석 의뢰</b><small>10.01 보냄</small><span class="chip">LX 확인 중</span></li>
+            </ul>
+            <div class="person" style="border-top:1px solid var(--rule);padding-top:12px"><span class="av lx">LX</span><div class="t"><b>김도윤 · LX 담당</b><span>우리 시 담당 박서연 · 농정과</span></div></div>
+            <span class="tbtn">LX에 검토 요청 보내기</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="foot"><b>전북특별자치도 남원시</b><span>대표전화 063-620-6114</span><span class="sp"></span><span>AI 분석 · 모델 개발과 갱신 — LX 한국국토정보공사</span></div>
+    </div>
+  </main>
+</div>
+<nav class="tabsbar" aria-label="메뉴">
+  <span class="ri" data-ic="card" aria-current="true"><span>내 서비스</span></span>
+  <span class="ri" data-ic="upload"><span>분석 의뢰</span></span>
+  <span class="ri" data-ic="inbox"><span class="bd">1</span><span>보낸 요청</span></span>
+  <span class="ri" data-ic="me"><span>계정</span></span>
+</nav>
+
+<div class="dim"></div>
+<aside class="drawer" aria-label="이 결과 설명">
+  <div class="dh"><h2>이 결과 설명 — 2판<small>영농관리 행정서비스 · 2026.09.26 공개 · LX가 결과를 공개할 때 저절로 만들어집니다</small></h2><span class="x">×</span></div>
+  <div class="db">
+    <div class="chg"><b>바뀐 점</b>서비스 버전 2.0 → 2.1 · 새 회차 2025년 드론영상 · 2026.06.08 분석 · 결과 단위가 필지로 바뀜 · 2,098필지 · 종류 4가지 → 2가지</div>
+    <div class="six">
+      <section><h3>무엇이</h3><p class="n">2,098<small>필지</small></p><p class="s">우리 시 관할 안 결과</p><div class="kind"><span>경작지 1,291</span><span>비경작지 807</span></div></section>
+      <section><h3>어디</h3><dl><dt>시군구</dt><dd>남원시</dd><dt>모양</dt><dd>구역(테두리)</dd><dt>읍면동</dt><dd>모든 결과에 이름</dd><dt>필지</dt><dd>필지 번호 붙음</dd></dl></section>
+      <section><h3>언제</h3><dl><dt>촬영</dt><dd>2025년 드론영상</dd><dt>분석</dt><dd>2026.06.08</dd><dt>공개</dt><dd>2026.09.26</dd></dl></section>
+      <section><h3>믿을 만한 정도</h3><p class="n" style="font-size:22px">보통</p><p>확신한 결과와 아닌 결과가 섞여 있습니다</p><p class="s">결과 확인 — 확인 전 2,098건 · 현장 확인 뒤 고쳐집니다</p></section>
+      <section class="w"><h3>어떤 형식</h3><p class="s">받는 파일: 지도 파일 · 필지 엑셀 · 요약 — 파일마다 기관 · 서비스 · 판 · 회차가 붙고 '참고자료' 안내가 들어갑니다</p>
+        <table class="cols"><thead><tr><th>칸</th><th>예</th></tr></thead><tbody>
+          <tr><td>종류</td><td>비경작지</td></tr><tr><td>넓이(㎡)</td><td>2,978.4</td></tr><tr><td>읍면동 · 필지 번호</td><td>금지면 · 글자로 저장</td></tr><tr><td>결과 확인</td><td>확인 전 · 고침</td></tr>
+        </tbody></table></section>
+      <section class="w"><h3>판 기록</h3><ul class="ver"><li><b>2판</b>2025년 드론영상 · 2026.06.08 분석 · 결과 단위가 필지로 바뀜 <small>2026.09.26 공개 · 지금 판</small></li><li><b>1판</b>처음 공개 — 2023년 항공영상 <small>분석 칸마다 나눈 결과라 개수를 싣지 않습니다</small></li></ul></section>
+    </div>
+    <div class="dl3"><span class="btn ci">지도 파일<small>지도 프로그램용</small></span><span class="btn b2">필지 엑셀<small>필지 목록</small></span><span class="btn b2">요약<small>숫자만</small></span></div>
+  </div>
+</aside>
+
+<span class="stamp r"><b>시안</b> 기관 분기 · 서비스 대시보드 — '우리 공간' 메뉴 없이 결과 설명 · 내려받기 · 새 결과 · 검토 요청을 안으로 · 2,098과 1,035는 서버 값, 나머지는 예시</span>
+<script>if (new URLSearchParams(location.search).get('open')) document.body.dataset.open = '1';</script>
+<script src="icons.js"></script>
+</body>
+</html>

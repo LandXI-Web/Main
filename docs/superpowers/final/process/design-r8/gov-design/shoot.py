@@ -35,6 +35,15 @@ LIST = [
     ('mock/info.html', 'new-info-390.png', M, False),
     ('mock/info.html?full=1', 'new-info-390-full.png', M, True),
     ('mock/ask.html', 'new-ask-1440.png', PC, False),
+    ('mock/rehome-dash.html', 'new-rehome-dash-1440.png', PC, True),
+    ('mock/rehome-dash.html?open=1', 'new-rehome-dash-open-1440.png', PC, False),
+    ('mock/rehome-dash.html', 'new-rehome-dash-390.png', M, False),
+    ('mock/rehome-dash.html?full=1', 'new-rehome-dash-390-full.png', M, True),
+    ('mock/rehome-dash.html?open=1', 'new-rehome-dash-open-390.png', M, False),
+    ('mock/rehome-map.html', 'new-rehome-map-1440.png', PC, False),
+    ('mock/rehome-info.html', 'new-rehome-info-1440.png', PC, True),
+    ('mock/rehome-info.html', 'new-rehome-info-390.png', M, False),
+    ('mock/rehome-info.html?full=1', 'new-rehome-info-390-full.png', M, True),
     ('mock/inbox-lx.html', 'new-inbox-lx-1440.png', PC, True),
 ]
 

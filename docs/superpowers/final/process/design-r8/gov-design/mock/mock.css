@@ -432,7 +432,7 @@ body.g button{font:inherit;cursor:default}
   .cells{grid-template-columns:1fr 1fr}
   .epochs{grid-template-columns:repeat(2,1fr)}
   .card h2{flex-wrap:wrap}
-  .card h2 small{white-space:nowrap}
+  .card h2 small{white-space:normal;max-width:100%}
   .bar{grid-template-columns:72px 1fr 52px}
   .step{padding:18px}
   .src{grid-template-columns:1fr}

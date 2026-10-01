@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ko" style="--ci:#1F6F4A;--ci-t1:#E9F3ED;--ci-line:#D1E3D9">
+<head>
+<meta charset="utf-8">
+<title>시안 · 결과 지도(XI맵) — 지도 위 결과 카드에 '이 결과 설명 · 내려받기', 머리의 종에 새 결과</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+body.g{background:#000}
+.shot{margin:0 auto}
+.stamp{position:fixed;top:auto;bottom:16px;left:16px;right:auto}
+.cover{position:absolute;right:16px;top:80px;width:392px;height:804px;background:var(--bg-0)}
+/* 지도 왼쪽 위 — 결과 카드(지금 화면의 큰 숫자 HUD 아래) */
+.lay{position:absolute;left:96px;top:300px;width:360px;background:var(--bg-1);border-radius:16px;box-shadow:var(--elev-map);padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.lay .l{font:500 13px/18px var(--font-body);color:var(--sub)}
+.lay .nm{font:700 17px/24px var(--font-display);letter-spacing:-.01em;color:var(--ink);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lay .nm .chip{height:22px;font-size:12px}
+.lay .row{display:flex;align-items:center;gap:8px;font:400 14px/20px var(--font-body);color:var(--ink-2)}
+.lay .row i{width:8px;height:8px;border-radius:50%;background:var(--ai);flex:none}
+.lay .row.off i{background:var(--mute)}
+.lay .acts{display:flex;gap:14px;border-top:1px solid var(--rule);padding-top:10px}
+.lay .acts .tbtn{font-size:13px}
+/* 종 — 새 결과 알림 풍선 */
+.bellpop{position:absolute;right:150px;top:62px;width:340px;background:var(--bg-1);border-radius:16px;box-shadow:var(--elev-3);padding:16px 18px;display:flex;flex-direction:column;gap:10px;z-index:50}
+.bellpop::before{content:"";position:absolute;right:12px;top:-6px;width:12px;height:12px;background:var(--bg-1);transform:rotate(45deg)}
+.bellpop h3{margin:0;font:700 16px/22px var(--font-display);color:var(--ink);display:flex;justify-content:space-between}
+.bellpop h3 small{font:400 13px/18px var(--font-body);color:var(--sub)}
+.bellpop li{list-style:none;display:grid;grid-template-columns:8px 1fr;gap:4px 10px;padding:10px 0;border-top:1px solid var(--rule);font:400 14px/20px var(--font-body);color:var(--ink-2)}
+.bellpop li i{width:8px;height:8px;border-radius:50%;background:var(--ci);margin-top:6px}
+.bellpop li i.off{background:var(--mute)}
+.bellpop li b{font-weight:500;color:var(--ink)}
+.bellpop li small{grid-column:2;color:var(--sub);font-size:13px}
+.bellpop ul{margin:0;padding:0}
+/* 필지 카드 — 설계 8차 ask 와 같은 모양 */
+.sheet .acts .alt .face img{width:419%}
+</style>
+</head>
+<body class="g t">
+<div class="shot">
+  <img class="bg" src="../shots/before-ask-1440.png" alt="">
+  <div class="cover"></div>
+
+  <div class="lay">
+    <p class="l">보고 있는 결과</p>
+    <p class="nm">영농관리 행정서비스 <span class="chip ci">2판 · 새 결과</span></p>
+    <div class="row"><i></i>2025년 드론영상 · 2026.06.08 분석 · 2,098필지</div>
+    <div class="row off"><i></i>2023년 항공영상(1판) — 눌러서 바꾸기</div>
+    <div class="acts"><span class="tbtn">이 결과 설명</span><span class="tbtn">내려받기</span><span class="tbtn">네 시점 비교</span></div>
+  </div>
+
+  <div class="bellpop">
+    <h3>알림<small>2</small></h3>
+    <ul>
+      <li><i></i><b>영농관리 새 결과(2판)가 왔습니다</b><small>2025년 드론영상 · 결과 단위가 필지로 바뀜 · 9.26</small></li>
+      <li><i class="off"></i><b>세전리 1395-12 검토 요청에 LX가 답했습니다</b><small>"다음 판에 반영합니다" · 10.01</small></li>
+    </ul>
+  </div>
+
+  <aside class="sheet">
+    <div class="sh"><h2>세전리 1395-12</h2><span class="x">×</span></div>
+    <div class="tags"><span class="chip">AI 분석 · 확인 전</span><span class="chip ci">휴경·전용 의심</span></div>
+    <div class="cmp">
+      <div><span class="l">대장</span><b>답</b><span>3,532㎡ <span class="ok">✓</span></span></div>
+      <div class="ai"><span class="l">AI 분석</span><b>경작 흔적 없음</b><span>3,136㎡ ~ · 89%</span></div>
+    </div>
+    <div class="acts">
+      <span class="alt"><span class="face"><img src="../../../../../../../landxi/assets/brand/vector/lx-lockup.svg" alt=""></span>XI ChatGEO에 이 필지 묻기</span>
+      <span class="btn b2">LX에 검토 요청</span>
+    </div>
+    <p class="hint">검토 요청은 메모 한 줄로 LX 담당자에게 갑니다. 답은 머리의 종과 서비스 대시보드 '주고받은 검토 요청'에 옵니다.</p>
+  </aside>
+
+  <span class="note" style="left:470px;top:300px;max-width:380px"><i>1</i>결과 지도 왼쪽 위 '보고 있는 결과' 카드 — 어느 판인지 · 이 결과 설명 · 내려받기가 여기에</span>
+  <span class="note" style="left:640px;top:90px;max-width:360px"><i>2</i>새 결과 · 검토 답은 머리의 종 하나로 — 별도 메뉴 없음</span>
+  <span class="note" style="left:640px;top:560px;max-width:380px"><i>3</i>피드백은 필지 카드 'LX에 검토 요청' — 지도에서 보고, 바로 보낸다</span>
+</div>
+<span class="stamp"><b>시안</b> 기관 분기 · 남원시 결과 지도(XI맵) — 지금 화면 캡처 위에 그림 · 숫자는 서버 값, 알림 글은 예시</span>
+</body>
+</html>
