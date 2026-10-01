@@ -445,10 +445,25 @@ def std_retention_loop():
         time.sleep(3600)
 
 
+def improve_retention_loop():
+    """개선 고리(확인 대장 16차 개선-1) — 누가 물었는지 · '이제 됩니다' 알림은 90일만 둔다. 하루 한 번 · 작업기 여럿 중 하나만(Redis 표시) · GPU 0.
+    지운 수는 감사 기록(audit_log 'improve.purge'). 묶음 · 신호(요지 · 분류 · 역할 · 화면)에는 사람이 없어 그대로 둔다."""
+    while True:
+        try:
+            day = time.strftime("%Y-%m-%d")
+            if r().set(f"improve:purge:{day}", WID, nx=True, ex=2 * 86400):
+                from landxi_api import improve
+                improve.purge(log=lambda m: log(WHO, m))
+        except Exception as e:  # noqa: BLE001
+            log(WHO, "개선 고리 90일 정리 오류", repr(e))
+        time.sleep(3600)
+
+
 def main():
     threading.Thread(target=heartbeat, daemon=True).start()
     if FINALIZE:
         threading.Thread(target=std_retention_loop, daemon=True, name="std-retention").start()
+        threading.Thread(target=improve_retention_loop, daemon=True, name="improve-retention").start()
     ads = scan_adapters()
     log(WHO, "adapters:", ", ".join(f"{k}({v['_scope']}·{v.get('device')})" for k, v in ads.items()))
     if FINALIZE:

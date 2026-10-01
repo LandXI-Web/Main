@@ -479,3 +479,13 @@ try:
 except Exception as _e:  # noqa: BLE001
     import logging as _logging
     _logging.getLogger("landxi").warning("spaces router 건너뜀: %r", _e)
+
+
+# 못 한 요청 → 서비스 개선 고리(구현 4차 · 확인 대장 16차 개선-1 · 원칙 98) — 화면 신호(/assist/feedback) · '이제 됩니다'(/assist/notices) ·
+# LX 관리자 서비스 관리 '개선 후보'(/improve/items · landxi_api/improve.py). 같은 방식으로 붙인다 — 불러오기에 실패해도 게이트웨이는 뜬다(로그 한 줄).
+try:
+    from . import improve as _improve
+    router.include_router(_improve.router)
+except Exception as _e:  # noqa: BLE001
+    import logging as _logging
+    _logging.getLogger("landxi").warning("improve router 건너뜀: %r", _e)

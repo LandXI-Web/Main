@@ -8,6 +8,7 @@ import { gate, shell, createStage, empty, toast, devDrawer, devlog, numHtml, dra
 import { h, api, bboxOf } from '../kit/util.js';
 import { msg, when } from '../kit/notify.js';
 import { staffMenu, requestCounts } from '../kit/lx-menu.js';
+import { improveCount, openImproveDrawer } from '../ops-infra/js/improve.js';   // 개선 후보 — 내 서비스 · 기관에서 XI ChatGEO 가 못 한 요청(16차 개선-1)
 
 const $ = (s, r = document) => r.querySelector(s);
 const VERDICTS = [['ok', '맞음'], ['ai_error', 'AI 오류'], ['unknown', '모름']];
@@ -50,7 +51,7 @@ document.title = (admin ? '기관에서 온 요청' : '요청함') + ' · Land-X
 
 async function drawCells(force = false) {
   if (!cells) return;
-  const c = await requestCounts({ force }).catch(() => null);
+  const [c, imp] = await Promise.all([requestCounts({ force }).catch(() => null), improveCount().catch(() => null)]);
   const cell = (k, v, label, on) => {
     const b = h(on ? 'button.ib-cell' : 'span.ib-cell', { ...(on ? { type: 'button', onclick: on } : {}), class: v ? '' : 'is-zero', dataset: { k } },
       h('b.num', { text: v === null || v === undefined ? '—' : String(v) }), h('span', { text: label }));
@@ -59,9 +60,11 @@ async function drawCells(force = false) {
   cells.replaceChildren(
     cell('review', c?.review, '검토 요청'),
     cell('request', c?.request, '분석 의뢰', () => openList('requests', c)),
-    cell('approval', c?.approval, '내 결재', () => openList('approvals', c)));
+    cell('approval', c?.approval, '내 결재', () => openList('approvals', c)),
+    cell('improve', imp, '개선 후보', () => openImproveDrawer({ onCount: (n) => { const x = cells.querySelector('[data-k="improve"]'); if (x) { x.querySelector('b').textContent = String(n); x.classList.toggle('is-zero', !n); } } })));
   const want = location.hash.replace('#', '');
   if (!force && (want === 'requests' || want === 'approvals')) openList(want, c);
+  if (!force && want === 'improve') openImproveDrawer();
 }
 /** 분석 의뢰(확인 대기 · 내 담당 서비스 — 관리자 승인) · 내 결재(내가 올린 결재 중 대기) 목록 서랍 */
 function openList(kind, c) {

@@ -1,0 +1,123 @@
+/* 개선 후보(구현 4차 · 16차 개선-1) — LX 관리자 대시보드 → 배포 → '개선 후보' 탭 · LX 직원 요청함 서랍(같은 모양). 토큰은 kit.css(법전 v2.2) 그대로 · 밝은 톤 · 그림 없음. */
+.im-head{padding:24px 24px 0}
+.im-tabs{display:flex;gap:28px;border-bottom:1px solid var(--rule)}
+.im-tabs button{display:inline-flex;align-items:baseline;gap:6px;padding:14px 2px;border:0;background:none;font:500 16px/1 var(--font-body);color:var(--sub);cursor:pointer;white-space:nowrap}
+.im-tabs button:hover{color:var(--ink)}
+.im-tabs button[aria-selected="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent)}
+.im-tab-n{font:600 15px/1 var(--font-num)}
+.im-tab-n:empty{display:none}
+.im-dep[hidden],.im-pane[hidden]{display:none}
+.im-dep .v-dep{height:auto}
+
+.im{padding:16px 24px 24px;display:flex;flex-direction:column;gap:16px}
+.im-top{display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);gap:16px}
+.im-sum{padding:20px 24px;display:flex;flex-direction:column;gap:6px}
+.im-sum .t-label{margin:0}
+.im-big{display:flex;align-items:baseline;gap:6px;margin:0}
+.im-big b{font:700 48px/1 var(--font-num);letter-spacing:-.02em;color:var(--ink)}
+.im-big span{font:500 18px/1 var(--font-body);color:var(--sub)}
+.im-sum-s{margin:0;font:400 14px/21px var(--font-body);color:var(--sub)}
+.im-sum-s span{display:block}
+.im-filt{padding:20px 24px;display:flex;flex-direction:column;justify-content:center;gap:12px}
+.im-fr{display:flex;align-items:center;gap:16px}
+.im-fl{flex:none;width:32px;font:500 14px/1 var(--font-body);color:var(--sub)}
+.im-chips{display:flex;flex-wrap:wrap;gap:8px}
+.im-chip{height:34px;padding:0 12px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);font:500 14px/1 var(--font-body);color:var(--ink);cursor:pointer;white-space:nowrap;transition:border-color var(--d-180) var(--e-ui)}
+.im-chip:hover{border-color:var(--ink)}
+.im-chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.im-chip b{margin-left:2px;font:600 14px/1 var(--font-num)}
+
+.im-box{padding:8px 24px}
+.im-t{width:100%;border-collapse:collapse;font:400 15px/22px var(--font-body);color:var(--ink)}
+.im-t th{text-align:left;font:500 14px/20px var(--font-body);color:var(--sub);padding:14px 12px 12px 0;border-bottom:1px solid var(--rule);white-space:nowrap}
+.im-t th.num,.im-t td.num{text-align:right;padding-right:20px}
+.im-t td{padding:16px 12px 16px 0;border-bottom:1px solid var(--rule);vertical-align:middle}
+.im-t tbody tr:last-child td{border-bottom:0}
+.im-t td.im-g{min-width:240px;max-width:420px}
+.im-t td.im-g > b{display:block;font-weight:600}
+.im-t td.im-g small{display:block;margin-top:2px;font:400 13px/19px var(--font-body);color:var(--sub)}
+.im-t td.num b{font:600 18px/22px var(--font-num)}
+.im-t td.num{font:500 15px/22px var(--font-num);color:var(--ink-2)}
+.im-seg{display:inline-block;white-space:nowrap}
+.im-k{height:26px;font-size:13px;white-space:nowrap}
+.im-th-a{width:1%}
+.im-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.im-t td.im-a{text-align:right;padding-right:0;white-space:nowrap}
+.im-acts{display:inline-flex;flex-wrap:nowrap;justify-content:flex-end;align-items:center;gap:8px}
+.im-meta{display:none}
+.im-b{height:36px;padding:0 14px;font-size:14px;white-space:nowrap}
+.im-re{border:0;background:none;padding:6px 2px;font:500 13px/1 var(--font-body);color:var(--sub);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.im-re:hover{color:var(--ink)}
+.im-dec{display:flex;flex-direction:column;align-items:flex-end;gap:4px;max-width:340px;margin-left:auto;text-align:right}
+.im-dec small{font:400 13px/19px var(--font-body);color:var(--sub)}
+.im-st{height:26px;font-size:13px;white-space:nowrap}
+.im-dec + .im-acts{margin-top:8px}
+.im-foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px 16px;margin:0 4px;font:400 13px/19px var(--font-body);color:var(--sub)}
+
+/* 가운데 창 — 보류 · 이미 됨 · 이제 됩니다 */
+.im-form{display:flex;flex-direction:column;gap:14px}
+.im-form-g{display:flex;flex-direction:column;gap:2px;margin:0;padding:12px 14px;border-radius:var(--r-8);background:var(--bg-0)}
+.im-form-g span{font:500 13px/18px var(--font-body);color:var(--sub)}
+.im-form-g b{font:600 15px/22px var(--font-body);color:var(--ink)}
+.im-form-n{margin:0;font:400 14px/21px var(--font-body);color:var(--ink-2)}
+.im-f{display:flex;flex-direction:column;gap:6px}
+.im-f > span{font:500 14px/20px var(--font-body);color:var(--ink)}
+.im-f small{font:400 13px/18px var(--font-body);color:var(--sub)}
+.im-f .t-input{box-sizing:border-box}
+.im-msg{margin:0;font:500 14px/20px var(--font-body);color:var(--warn)}
+.im-form-a{display:flex;justify-content:flex-end}
+.im-form-a .t-btn{min-width:120px}
+
+/* LX 직원 요청함 서랍 */
+.im-dr{display:flex;flex-direction:column;gap:12px}
+.im-dr-s{margin:0;font:400 14px/21px var(--font-body);color:var(--sub)}
+
+/* 좁은 화면 · 서랍 — 표를 카드로 */
+@media (max-width:960px){
+  .im-top{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:760px){
+  .im-head{padding:16px 16px 0}
+  .im{padding:12px 16px 16px;gap:12px}
+}
+@media (max-width:760px){
+  .im-box{padding:4px 16px}
+  .im-sum,.im-filt{padding:16px}
+  .im-big b{font-size:40px}
+  .im-fr{align-items:flex-start}
+  .im-fl{padding-top:10px}
+}
+.im--c{padding:0;gap:12px}
+.im--c .im-top{grid-template-columns:minmax(0,1fr)}
+.im--c .im-sum,.im--c .im-filt{padding:16px;border:1px solid var(--rule)}
+.im--c .im-box{padding:4px 16px;border:1px solid var(--rule)}
+.im--c .im-big b{font-size:40px}
+/* 좁은 화면 · 서랍 — 줄마다 카드: 요청 · 한 줄 · 숫자 한 줄(몇 번 · 역할 · 화면 · 다시 물음 · 도움 안 됨 + 분류) · 누르기 */
+@media (max-width:760px){
+  .im-t thead{display:none}
+  .im-t,.im-t tbody,.im-t tr{display:block}
+  .im-t tr{padding:14px 0;border-bottom:1px solid var(--rule)}
+  .im-t tbody tr:last-child{border-bottom:0}
+  .im-t td{display:none}
+  .im-t td.im-g,.im-t td.im-a{display:block;padding:0;border:0;max-width:none;min-width:0;text-align:left}
+  .im-t td.im-a{padding-top:12px;white-space:normal}
+  .im-meta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin-top:8px;font:400 14px/22px var(--font-body);color:var(--ink-2)}
+  .im-meta b{font:600 16px/22px var(--font-num);color:var(--ink)}
+  .im-meta .t-chip{margin-left:2px}
+  .im-acts{justify-content:flex-start;flex-wrap:wrap}
+  .im-dec{align-items:flex-start;text-align:left;margin-left:0;max-width:none}
+  .im-foot{flex-direction:column}
+}
+.im--c .im-t thead{display:none}
+.im--c .im-t,.im--c .im-t tbody,.im--c .im-t tr{display:block}
+.im--c .im-t tr{padding:14px 0;border-bottom:1px solid var(--rule)}
+.im--c .im-t tbody tr:last-child{border-bottom:0}
+.im--c .im-t td{display:none}
+.im--c .im-t td.im-g,.im--c .im-t td.im-a{display:block;padding:0;border:0;max-width:none;min-width:0;text-align:left}
+.im--c .im-t td.im-a{padding-top:12px;white-space:normal}
+.im--c .im-meta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin-top:8px;font:400 14px/22px var(--font-body);color:var(--ink-2)}
+.im--c .im-meta b{font:600 16px/22px var(--font-num);color:var(--ink)}
+.im--c .im-meta .t-chip{margin-left:2px}
+.im--c .im-acts{justify-content:flex-start;flex-wrap:wrap}
+.im--c .im-dec{align-items:flex-start;text-align:left;margin-left:0;max-width:none}
+.im--c .im-foot{flex-direction:column}

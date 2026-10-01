@@ -200,6 +200,12 @@ class Ctx:
 
 async def emit(ctx: Ctx, event: str, data: dict):
     data = {"run_id": ctx.run_id, **data, "at": now_iso()}
+    if event in ("agent.done", "agent.rejected", "agent.failed"):   # 개선 고리(16차 개선-1) — 못 한 요청 모으기 · '이미 됨' 안내(hint) · 실패해도 답은 그대로
+        try:
+            from landxi_api import improve as _improve
+            await _improve.record_run(ctx, event, data)
+        except Exception:  # noqa: BLE001
+            pass
     ctx.events.append((round((time.perf_counter() - ctx.t0) * 1000), event, data))
     if ctx.r is None:
         return
