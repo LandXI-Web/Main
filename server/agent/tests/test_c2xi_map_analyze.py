@@ -91,7 +91,10 @@ def test_route_map_single_action_only():
     assert run(M.route_map("3D 시점으로 기울여 줘", c))["args"] == {"preset": "3d"}
     assert run(M.route_map("영상 층 켜 줘", c))["args"] == {"layer": "imagery", "on": True}
     assert run(M.route_map("여수시 의심 필지 보여 줘", c)) is None          # 자료 질문은 기존 도구 경로
-    assert run(M.route_map("남원시로 이동해서 3D로", c)) is None             # 섞이면 모델 경로
+    # 확인 16차 대화-2 ⓑ(expand 1) — 지명이 있으면 먼저 그곳으로 옮기고 동작 하나를 잇는다 · 지명 없이 동작 둘은 지금처럼 모델 경로
+    assert run(M.route_map("남원시로 이동해서 3D로", c)) == {"tool": "map_region", "args": {"sgg_cd": "52190", "name": "남원시"},
+                                                         "then": [{"tool": "map_view", "args": {"preset": "3d"}}]}
+    assert run(M.route_map("지도 확대해 주고 3D로 기울여 줘", c)) is None
 
 
 def test_guard_pass():

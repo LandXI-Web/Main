@@ -348,8 +348,16 @@ async def emd_chart(args: dict, ctx) -> Out:
     if sv_state == "done":
         from ..survey import survey_stats
         out = await survey_stats({"by": "emd", "region": r["sgg_cd"]}, ctx)
+        from ... import talk
+        await talk.remember(ctx, r["sgg_cd"])
         if any(b.get("type") == "chart" for b in out.blocks):
-            out.answer = f"{r['name']} 읍면동별 의심 필지입니다. 모두 {{{{suspects}}}}건이고, 막대를 누르면 그 읍면동으로 갑니다."
+            # 확인 16차 규칙 ① 4 · ④ — 어디에 그렸는지 문장에 · 차트는 많은 곳부터 다섯 줄(+ 더 보기) · 막대 누르기는 XI맵에서만 된다
+            pick = talk.on_xi(ctx) and talk.has_map(ctx) is not False
+            out.answer = (f"{r['name']} 의심 필지는 {{{{suspects}}}}입니다. 아래 차트에 많은 곳부터 다섯 곳을 두었습니다"
+                          + (" — 막대를 누르면 그 읍면동으로 갑니다." if pick else "."))
+            if not pick and talk.xi_href(ctx, r["sgg_cd"]):
+                talk.set_next(ctx, [talk.btn("XI맵에서 크게 보기" if talk.can_xi(ctx) else "지도에서 크게 보기", href=talk.xi_href(ctx, r["sgg_cd"])),
+                                    talk.btn("현장 확인 필요 필지 몇 건", q=f"{r['name']} 현장 확인 필요 필지 몇 건이야?")])
         return out
     rows, job = await (ck["emd_counts"](codes) if "emd_counts" in ck else emd_counts(codes))
     if not rows:
@@ -528,9 +536,22 @@ async def prepare(args: dict, ctx) -> dict:
     what = f" {out['service']}" if out.get("service") else ""
     if sc:
         out["scope_text"] = sc["text"]
-        out["title"] = (f"AI{what} analysis of {r['name']} · {sc['text']}" if en else f"{r['name']} AI{what} 분석 실행 · {sc['text']}")
+    if en:
+        out["title"] = f"AI{what} analysis of {r['name']}" + (f" · {sc['text']}" if sc else "")
     else:
-        out["title"] = f"AI{what} analysis of {r['name']}" if en else f"{r['name']} AI{what} 분석 실행"
+        # 확인 16차 규칙 ⑦ — 제목은 사용자 말로 한 문장(무엇을 · 어디) · 둘째 줄은 범위 문장(서버 값 그대로) + 기다림
+        out["title"] = f"{r['name']} AI{what} 분석을 실행할까요?"          # '전역'이라 말하지 않는다 — 범위는 둘째 줄(영상이 있는 곳만 · r3-xi)
+        line = [sc["text"]] if sc else ([out["scope_text"]] if out.get("scope_text") else [])
+        try:
+            from landxi_api.deps import db
+            async with db(realm="lx") as conn:
+                waiting = await conn.fetchval("SELECT count(*) FROM jobs WHERE kind='infer' AND state IN ('queued','running')")
+            if waiting:
+                line.append(f"앞에 AI 분석 {int(waiting)}건이 있어 차례가 오면 시작합니다")
+        except Exception:                                  # noqa: BLE001 — 기다림을 못 세면 범위 문장만
+            pass
+        if line:
+            out["line"] = " · ".join(line) + "."
     return out
 
 
@@ -543,6 +564,7 @@ async def prepare_build(args: dict, ctx) -> dict:
 PREPARE = {"analysis_run": prepare, "survey_build": prepare_build}
 
 RUN_RX = re.compile(r"분석.{0,8}(실행|돌려|시작|해\s*줘|해줘|해\s*주세요|진행)|(돌려|실행해)\s*(줘|주세요)")
+DRAW_SKIP = re.compile(r"범위.{0,10}(그려|그리|그린)|그려서|그린\s*(곳|범위|영역)")
 BUILD_RX = re.compile(r"실태조사.{0,12}(만들|생성|돌려|실행|시작)")
 NOT_RUN = re.compile(r"보고서|차트|몇|건수|목록|결과\s*(보여|알려)|설명|법|조문|의심\s*필지")
 SERVICE_RX = re.compile(r"비닐하우스|건물|경작지|주차장")
@@ -574,7 +596,7 @@ async def route_analyze(msg: str, ctx) -> dict | None:
     ch = await route_chart(t, ctx)
     if ch:
         return ch
-    if NOT_RUN.search(t):
+    if NOT_RUN.search(t) or DRAW_SKIP.search(t):           # '범위를 그려서 분석' — 범위 그리기(map_draw)가 먼저(확인 16차 대화-2 ⓑ)
         return None
     p = ctx.principal
     tool = "survey_build" if BUILD_RX.search(t) else "analysis_run" if RUN_RX.search(t) else None

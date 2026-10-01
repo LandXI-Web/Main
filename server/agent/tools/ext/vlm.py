@@ -183,6 +183,27 @@ RANK_MISS = "어느 필지인지 찾지 못했습니다 — 지번으로 말씀�
 RANK_MISS_EN = "I couldn't tell which parcel you mean — please name it by lot number (e.g. 'describe the imagery of ○○-ri 123')."
 
 
+async def _pick_parcels(out: Out, ctx, lang: str):
+    """확인 16차 규칙 ③ 5 — 정말 고를 수 없을 때만 선택지로: 되묻는 문장 대신 현장 확인이 먼저 필요한 필지 셋을 버튼으로(영상 설명은 GPU 일이라 대신 실행하지 않는다)."""
+    if lang != "ko":
+        return
+    try:
+        from ... import talk
+        from ..survey import survey_findings
+        r, _src, _a = await talk.resolve(ctx, (getattr(ctx, "state", None) or {}).get("msg") or "")
+        o = await survey_findings({"top": 3, **({"region": r["sgg_cd"]} if r else {})}, ctx)
+        picks = [c for c in o.citations if c.get("addr")][:3]
+    except Exception:  # noqa: BLE001 — 고를 거리를 못 찾으면 안내 한 줄만
+        picks = []
+    if not picks:
+        return
+    short = [_short(c["addr"]) for c in picks]
+    out.answer = "어느 필지인지 정해지지 않아 영상 설명을 하지 않았습니다. 현장 확인이 먼저 필요한 필지 셋을 아래에 두었습니다."
+    talk.set_next(ctx, [talk.btn(f"{a} 영상 설명", q=f"{a} 영상 설명해 줘") for a in short])
+    if isinstance(getattr(ctx, "state", None), dict):
+        ctx.state["cannot"] = {"kind": "parcel"}
+
+
 def _rank_miss_out(e: Exception, ctx, lang: str):
     """순위·'그 필지'를 바로 앞 목록으로 풀지 못한 경우 → 다른 필지로 대신하지 않고 안내 한 줄로 답(직행이면 모델을 다시 부르지 않음)."""
     if not (isinstance(e, ToolError) and e.code == "not_found" and (getattr(ctx, "state", None) or {}).get("vlm_rank_miss")):
@@ -435,6 +456,7 @@ async def vlm_describe(args: dict, ctx) -> Out:
         miss = _rank_miss_out(e, ctx, lang)
         if miss is None:
             raise
+        await _pick_parcels(miss, ctx, lang)
         return miss
     labels = [v.source.label for v in views]
     sysm, user = VP.build(t, labels, bool(views and views[0].ai_overlay), lang)

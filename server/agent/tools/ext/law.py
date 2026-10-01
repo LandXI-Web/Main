@@ -86,9 +86,26 @@ async def law_search(args: dict, ctx) -> Out:
     qk = LAW.ko_query(q) if en else q                                       # 영어 질문 → 로컬 용어 표로 한국어 검색어(번역 모델 없음)
     r = await asyncio.to_thread(LAW.search, qk, acts, 3) if qk else {"found": False, "hits": [], "reason": "no_term"}
     out = Out(source="법령 원문(국가법령정보센터 공개 원문 · 로컬 색인)")
+    loose = None
+    if not r["found"] and not en and not r.get("missing"):
+        # 확인 16차 규칙 ② — 풀어 쓴 질문('허가 없이 지은 건물에 물리는 이행강제금은 얼마야?')은 질문 그대로는 못 찾는다.
+        # 막다른 '법령 데이터에 없습니다' 대신, 법령 낱말 하나로 다시 찾아 가장 가까운 조문을 원문 그대로 보인다(지어내기 0 · 무엇으로 찾았는지 밝힘).
+        terms = loose_terms(q)
+        tries = ([" ".join(terms[:2])] if len(terms) >= 2 else []) + terms
+        for term in tries:
+            r2 = await asyncio.to_thread(LAW.search, term, acts, 3)
+            top = (r2.get("hits") or [None])[0]
+            body = ((top or {}).get("text") or "") + " " + (((top or {}).get("ref") or {}).get("label") or "")
+            if r2.get("found") and any(w in body for w in term.split()):      # 찾은 조문에 그 낱말이 실제로 있을 때만(엉뚱한 조문 0)
+                r, loose = r2, term.split()[0]
+                break
     if not r["found"]:
         out.data = {"결과": NOT_FOUND, "없는 법령": r.get("missing") or []}
-        out.answer = "Not in the law data." if en else NOT_FOUND + "."
+        out.answer = "Not in the law data." if en else "그 말로는 색인된 법령에서 맞는 조문을 찾지 못했습니다. 법령 이름이나 조문 낱말로 물으면 원문을 찾습니다."
+        if not en:
+            from ... import talk
+            talk.set_next(ctx, [talk.btn("농지 전용 근거 조문 알려 줘"), talk.btn("건축법 이행강제금 조문 알려 줘")])
+            ctx.state["cannot"] = {"kind": "law"}
         return out
     hits = r["hits"]
     top = hits[0]
@@ -114,11 +131,45 @@ async def law_search(args: dict, ctx) -> Out:
         tail = ("See also: " + " · ".join(_en_ref(h["ref"]) for h in more_h)) if more_h else ""
         note = ""
     else:
-        lead = "관련 조문 원문입니다."
+        lead = (f"질문 그대로는 맞는 조문을 찾지 못해 '{loose}'{'으로' if _batchim(loose) not in (0, 8) else '로'} 찾은 조문 원문입니다." if loose
+                else "관련 조문 원문입니다.")
         tail = ("함께 볼 조문: " + " · ".join(more)) if more else ""
-        note = "조문은 국가법령정보센터 공개 원문 그대로이며, 적용 여부는 담당자가 판단합니다."
+        note = ("금액 · 기준은 조례와 고시에 따라 달라 여기서 계산하지 않으며, 적용 여부는 담당자가 판단합니다." if loose and re.search(r"얼마|금액|몇\s*원", q)
+                else "조문은 국가법령정보센터 공개 원문 그대로이며, 적용 여부는 담당자가 판단합니다.")
+        if more_h:
+            from ... import talk
+            talk.set_next(ctx, [talk.btn(f"{_short_ref(h['ref'])} 원문", q=f"{_short_ref(h['ref'])} 조문 알려 줘") for h in more_h[:2]])
     out.answer = (NL + NL).join(x for x in [lead, *lines, tail, note] if x)
     return out
+
+
+# 풀어 쓴 질문에서 법령 낱말 뽑기 — 질문 말(얼마 · 알려 · 해 줘 · 물리는 …)을 빼고 긴 낱말부터(그 낱말 하나로 색인을 다시 찾는다)
+_LOOSE_STOP = re.compile(r"^(얼마|얼마야|얼마인가|알려|알려줘|줘|주세요|해줘|보여|보여줘|무엇|뭐야|어떻게|어떤|무슨|하는|하나|되나|되는|있나|있는|없이|지은|짓는|물리는|"
+                         r"부과|받는|내는|하면|않으면|안|못|그|이|저|때|경우|대한|관련|대해|위한|건물에|농사를|관한)$")
+
+
+# 일상어 → 조문 낱말(작은 사전 · 늘리는 곳은 여기 한 곳)
+LOOSE_SYN = {"건물": "건축물", "집": "건축물", "농사": "농업경영", "팔아야": "처분", "팔": "처분", "땅": "토지", "벌금": "과태료", "허가없이": "허가"}
+
+
+def loose_terms(q: str) -> list[str]:
+    words = []
+    for w in re.findall(r"[가-힣]{2,}", q or ""):
+        w = re.sub(r"(은|는|이|가|을|를|에|에서|의|으로|로|과|와|도|만|이야|인가요|인가|이에요|예요)$", "", w)
+        w = LOOSE_SYN.get(w, w)
+        if len(w) >= 2 and not _LOOSE_STOP.match(w) and w not in words:
+            words.append(w)
+    return sorted(words, key=len, reverse=True)[:4]
+
+
+def _short_ref(ref: dict) -> str:
+    """'「건축법」 제80조의2(…) 제2항 · 시행 …' → '건축법 제80조의2'(버튼 글)."""
+    return f"{ref.get('law') or ''} {ref.get('article') or ''}".strip()
+
+
+def _batchim(w: str) -> int:
+    ch = (w or "")[-1:]
+    return (ord(ch) - 0xAC00) % 28 if ch and "가" <= ch <= "힣" else 0
 
 
 HANDLERS = {"law_search": law_search}

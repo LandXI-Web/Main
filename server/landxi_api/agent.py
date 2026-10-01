@@ -94,8 +94,11 @@ async def create_run(body: dict, request: Request):
         raise ApiError("bad_request", "mode 는 map|report|ops")
     r = await redis()
     alive, tried = await backends.first_alive(r)
-    run_id = runner.ulid("run_")
-    ctx = runner.make_ctx(run_id, p, _token(request), body.get("context") or {}, mode, r)
+    context = dict(body.get("context") or {})
+    # 시험 · 점검으로 보낸 질문(context.test) — 답 번호를 시험용(run_test…)으로 매겨 개선 고리가 모으지 않게 한다(improve.RUN_ID · 실제 사용자의 막힘만 모은다)
+    test = bool(context.pop("test", False))
+    run_id = runner.ulid("run_test" if test else "run_")
+    ctx = runner.make_ctx(run_id, p, _token(request), context, mode, r)
     # 기관 AI 도우미 질문은 한도로 막지 않는다(원칙 83 · 7차 기관-1 — 기관에는 한도가 아니라 사용 현황). 사용량(토큰)은 runner.meter 가 그대로 기록한다.
     if alive is None:
         # 거절(관할 밖 · 자료 없음)·요약 직행은 LLM 이 없어도 서버가 한 줄로 답한다(fix-agent-scope) — 그 밖만 503

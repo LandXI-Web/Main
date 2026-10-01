@@ -43,10 +43,12 @@ kbd.k-ck-k,.k-ck-btn,.k-mast kbd,.k-mast .gl-ask,.k-mast .lc-ask,.k-mast [aria-k
 .k-ck.k-chat{position:fixed;z-index:61;top:auto;left:auto;right:var(--k-chat-r);bottom:var(--k-chat-cb);width:380px;max-width:calc(100vw - 32px);height:560px;max-height:var(--k-chat-max);transform:none;
   display:flex;flex-direction:column;background:var(--bg-1);border-radius:var(--r-16);box-shadow:var(--elev-3);overflow:hidden;animation:k-chat-in var(--d-380) var(--e-ui)}
 @keyframes k-chat-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-.k-chat-h{flex:none;display:flex;align-items:center;gap:10px;height:56px;padding:0 8px 0 16px;border-bottom:1px solid var(--rule)}
-.k-chat-tt{flex:1;min-width:0;display:flex;align-items:baseline;gap:8px;white-space:nowrap;overflow:hidden}
-.k-chat-tt b{font:700 16px/1.2 var(--font-display);letter-spacing:-.01em;color:var(--ink)}
-.k-chat-tt small{min-width:0;overflow:hidden;text-overflow:ellipsis;font:400 13px/1.2 var(--font-body);color:var(--sub)}
+.k-chat-h{flex:none;display:flex;align-items:center;gap:10px;min-height:60px;padding:8px 8px 8px 16px;border-bottom:1px solid var(--rule)}
+/* 머리 — 이름 한 줄 + 부제(확인 16차 X-1). 부제는 의미 단위 두 덩이 — 덩이 안에서는 끊지 않고, 좁으면 덩이 사이에서만 다음 줄(같은 왼쪽 선) */
+.k-chat-tt{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.k-chat-tt b{font:700 16px/1.25 var(--font-display);letter-spacing:-.01em;color:var(--ink)}
+.k-chat-tt small{display:flex;flex-wrap:wrap;column-gap:0;font:400 12.5px/1.35 var(--font-body);color:var(--sub)}
+.k-chat-tt small span{white-space:nowrap}
 .k-chat-x{flex:none;width:40px;height:40px;padding:0;border:0;border-radius:var(--r-8);background:none;color:var(--sub);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .k-chat-x svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
 .k-chat-x:hover{background:var(--bg-0);color:var(--ink)}
@@ -80,12 +82,16 @@ kbd.k-ck-k,.k-ck-btn,.k-mast kbd,.k-mast .gl-ask,.k-mast .lc-ask,.k-mast [aria-k
 .k-chat :is(.k-ck-plan,.k-chat-plan) li::before{content:counter(s);flex:none;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--rule);display:inline-flex;align-items:center;justify-content:center;font:500 11px/1 var(--font-num);color:var(--mute)}
 .k-ck-plan li.is-done,.k-chat-plan li.is-done{color:var(--ink)}
 .k-ck-plan li.is-done::before,.k-chat-plan li.is-done::before{content:"✓";background:var(--ai);border-color:var(--ai);color:#fff;font-weight:700}
+.k-ck-plan li.is-same,.k-chat-plan li.is-same{color:var(--sub)}
+.k-ck-plan li.is-same::before,.k-chat-plan li.is-same::before{content:"✓";background:var(--bg-0);border-color:var(--rule);color:var(--sub);font-weight:700}   /* 이미 그래 있던 것(회색 ✓) */
 .k-ck-plan li.is-fail,.k-chat-plan li.is-fail{color:var(--ink)}
 .k-ck-plan li.is-fail::before,.k-chat-plan li.is-fail::before{content:"!";background:transparent;border-color:var(--warn);color:var(--warn);font-weight:700}
 
 /* 실행 확인 카드(쓰기 도구: 실행/취소) */
 .k-chat .k-ck-c{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1)}
 .k-ck-cq{margin:0;font:500 15px/22px var(--font-body);color:var(--ink)}
+.k-chat .k-ck-c .k-ck-cq,.k-chat .k-chat-note-t{text-wrap:balance}   /* 두 줄이면 의미 덩이로 고르게(법전 §2-1 · 말풍선 기본 pretty 보다 앞서게) */
+.k-ck-cl{margin:-4px 0 0;font:400 13px/19px var(--font-body);color:var(--ink-2);text-wrap:pretty}   /* 둘째 줄 — 범위 문장 · 기다림(확인 16차 규칙 ⑦) */
 .k-ck-cb{display:flex;gap:8px}
 
 /* 답 블록 — 숫자 칩 · 법령 인용 · 차트 · 파일 · 영상 조각 */
@@ -96,6 +102,12 @@ kbd.k-ck-k,.k-ck-btn,.k-mast kbd,.k-mast .gl-ask,.k-mast .lc-ask,.k-mast [aria-k
 .k-chat :is(.k-ck-blocks,.k-chat-blocks){display:grid;gap:8px}
 .k-ck-blk{margin:0;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1)}
 .k-ck-blk--chart{padding:12px 14px}
+.k-ck-blk--chart:not(.is-all) .k-bar:nth-child(n+6){display:none}   /* 많은 곳부터 다섯 줄 — 나머지는 '더 보기'(확인 16차 규칙 ① 4) */
+.k-ck-blk--table{padding:12px 14px}
+.k-ck-blk--table:not(.is-all) tr:nth-child(n+6){display:none}
+.k-ck-tbl td{font-size:13.5px}
+.k-ck-more{margin-top:8px;padding:0;border:0;background:none;font:500 13px/20px var(--font-body);color:var(--accent);cursor:pointer}
+.k-ck-more:hover{text-decoration:underline}
 .k-ck-bt{margin:0 0 8px;font:500 13px/18px var(--font-body);color:var(--sub)}
 .k-ck-file{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:0 14px;border:0;background:none;cursor:pointer;text-align:left;font:500 14px/1.3 var(--font-body);color:var(--ink)}
 .k-ck-file:hover{background:var(--bg-0)}
@@ -133,7 +145,7 @@ a.k-chat-xi{display:inline-flex;align-items:center;height:32px;min-height:0;padd
 .k-chat-in{flex:none;display:flex;align-items:center;gap:8px;margin:0;padding:10px 12px 12px 16px;background:var(--bg-1)}
 .k-chat-sugg[hidden] + .k-chat-in,.k-chat[data-state=busy] .k-chat-in{border-top:1px solid var(--rule)}
 .k-chat .k-ck-i{flex:1;min-width:0;height:44px;padding:0 14px;border:1px solid var(--rule);border-radius:var(--r-8);outline:0;background:var(--bg-1);font:400 15px/1 var(--font-body);color:var(--ink);transition:border-color var(--d-180) var(--e-ui),box-shadow var(--d-180) var(--e-ui)}
-.k-chat .k-ck-i::placeholder{color:var(--sub)}
+.k-chat .k-ck-i::placeholder{color:var(--sub);font-size:13.5px}   /* 안내 한 줄이 칸 안에 다 들어가게(확인 16차 X-1 · 1440 · 390) */
 .k-chat .k-ck-i:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(0,109,247,.18)}
 .k-chat .k-ck-i:disabled{background:var(--bg-0);cursor:not-allowed}
 .k-chat-send{flex:none;width:44px;height:44px;padding:0;border:0;border-radius:var(--r-8);background:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer}
@@ -152,3 +164,28 @@ a.k-chat-xi{display:inline-flex;align-items:center;height:32px;min-height:0;padd
 }
 @keyframes k-chat-up{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.k-ck.k-chat{animation:none}.k-ck-dots i{animation:none}.k-chat-fab,.k-chat-tag{transition:none}}
+
+/* ── 답 꼬리(확인 16차 답 한 벌) — 다음 버튼 0–3(첫 버튼 채움 = 가장 가까운 일) · '다른 뜻이면 ○○' · 이미 됨 안내 · 도움 안 됐어요 ── */
+.k-chat-tail{display:flex;flex-direction:column;gap:8px;padding-top:2px}
+.k-chat-tail .k-chat-acts{display:flex;flex-wrap:wrap;gap:6px}
+.k-chat-btn{display:inline-flex;align-items:center;min-height:32px;padding:5px 12px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);color:var(--ink);
+  font:500 13px/1.35 var(--font-body);text-align:left;text-decoration:none;word-break:keep-all;cursor:pointer;transition:background var(--d-180) var(--e-ui),border-color var(--d-180) var(--e-ui)}
+.k-chat-btn:hover{background:var(--bg-0)}
+.k-chat-btn.is-main{background:var(--ink);border-color:var(--ink);color:#fff}
+.k-chat-btn.is-main:hover{background:var(--ink-2);border-color:var(--ink-2)}
+.k-chat-btn:focus-visible,.k-chat-fb:focus-visible,.k-ck-more:focus-visible,.k-chat-note button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.k-chat-alt,.k-chat-hint{margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:6px;font:400 13px/20px var(--font-body);color:var(--sub)}
+.k-chat-alt .k-chat-btn,.k-chat-hint .k-chat-btn{min-height:28px;padding:3px 10px;font-size:12.5px}
+.k-chat-fbw{margin:0;display:flex;justify-content:flex-end}
+.k-chat-fb{padding:0;border:0;background:none;font:400 12px/18px var(--font-body);color:var(--mute);cursor:pointer}
+.k-chat-fb:hover:not(:disabled){color:var(--sub);text-decoration:underline}
+.k-chat-fb:disabled{cursor:default}
+a.k-ck-file{text-decoration:none}
+
+/* 개선 고리 알림 — 창 맨 위 한 줄 '지난번에 물으신 ○○가 이제 됩니다' · 해 보기 · 닫기 */
+.k-chat-note{flex:none;display:flex;align-items:center;gap:8px;padding:8px 8px 8px 16px;background:var(--bg-0);border-bottom:1px solid var(--rule);font:500 13px/19px var(--font-body);color:var(--ink)}
+.k-chat-note-t{flex:1;min-width:0;word-break:keep-all;text-wrap:pretty}
+.k-chat-note-t .k-nb{white-space:nowrap}
+.k-chat-note-go{flex:none;min-height:28px;padding:3px 10px;border:0;border-radius:var(--r-8);background:var(--ink);color:#fff;font:500 12.5px/1.3 var(--font-body);cursor:pointer}
+.k-chat-note-x{flex:none;width:28px;height:28px;padding:0;border:0;border-radius:var(--r-8);background:none;color:var(--sub);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.k-chat-note-x svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}

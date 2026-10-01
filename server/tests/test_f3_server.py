@@ -492,7 +492,8 @@ def test_s10_agent_run_out_of_scope_no_llm(live, tok):
             elif line.startswith("data:") and ev in ("agent.rejected", "agent.route", "agent.done", "agent.failed"):
                 got = (ev, json.loads(line[5:]))
                 break
-    assert got and got[0] == "agent.rejected" and got[1]["message"] == "이 기관의 데이터가 아닙니다"
+    # 확인 16차 대화-1 규칙 ② — 이유 한 줄에 지역 이름 + 대신 할 수 있는 버튼(next)
+    assert got and got[0] == "agent.rejected" and got[1]["message"] == "여수시는 이 기관 계정에서 볼 수 없습니다." and got[1].get("next")
 
 
 # ── S-11 글로벌 타일 사다리·캐시 ─────────────────────────────────────────

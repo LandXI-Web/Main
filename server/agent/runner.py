@@ -20,7 +20,7 @@ from typing import Any
 
 import httpx
 
-from . import audit, backends, config, lint
+from . import audit, backends, config, lint, talk
 from .tools import Out, ToolError, from_contract, registry
 from .tools import jobs as jobs_tool
 from .tools import ext
@@ -336,6 +336,15 @@ def register(ctx: Ctx, i: int, out: Out) -> dict:
             if not rows:
                 continue
             b = {"type": "chart", "kind": "bar", "title": b.get("title") or "", "rows": rows[:12]}
+        elif b.get("type") == "table":                   # 작은 표(확인 16차 규칙 ④) — 이름 · 값(봉투)만 · 숫자 직접 값은 버린다
+            rows = []
+            for r in b.get("rows") or []:
+                eid = ids.get(r.get("env")) or (r.get("env") if r.get("env") in ctx.envs else None)
+                if eid:
+                    rows.append({"label": str(r.get("label") or ""), "env": eid})
+            if not rows:
+                continue
+            b = {"type": "table", "title": b.get("title") or "", "rows": rows[:12]}
         elif b.get("type") not in ("file", "image"):
             continue
         b["step"] = i
@@ -363,13 +372,15 @@ SYSTEM = """너는 Land-XI XI맵의 GeoAI 에이전트다(LX 한국국토정보�
 5) 의심 필지는 위법이 아니라 '현장조사 대상 후보'다(AI 추론 · 검수 전 · 건축물대장 미대조).
 6) 목록 질문: survey_stats 로 범위 건수를 확인하고 survey_findings 로 목록을 받는다. 두 도구를 한 번에 함께 부르고, 결과가 오면 map_arrive 로 지도에 도착시킨다.
 7) 프레임 분석 요청: jobs_quote 다음 jobs_submit 을 부른다. 실행은 사람이 확인 카드로 승인해야 된다.
-8) 답은 한국어 2~3문장, 보고체(~습니다). 필지 목록을 줄마다 다시 나열하지 않는다(지도와 인용 칩이 보여 준다).
+8) 답은 한국어 두 문장 안, 보고체(~습니다). 첫 문장에 결과. 필지 목록을 줄마다 다시 나열하지 않는다(지도와 인용 칩이 보여 준다).
+   사용자에게 할 일을 떠넘기는 '~해 주시기 바랍니다' · 사과 문장은 쓰지 않는다(다음 할 일은 서버가 버튼으로 붙인다).
    목록 답의 모양: "조건에 맞는 의심 필지 {{env:eA}} 중 점수 상위 {{env:eB}}를 지도에 표시했습니다. 1위는 ○○리 지번으로 AI 건물 근거 면적 {{env:eC}}입니다 [n]. 현장조사 대상 후보이며 건축물대장 대조 전입니다."
 9) 어느 지역에 어떤 서비스 결과가 있는지 · 서비스 상태 · '○○ 몇 건' 은 summary_lookup 으로 확인한다. 결과가 없으면 '해당 지역 데이터가 없습니다'라고만 답한다.
 10) 대장 × AI 질문('대장상 ~인데 AI가 ~')은 ledger_findings, 실태조사 의심은 survey_findings · survey_stats. 질문에 시군구가 있으면 region 인자로 넘긴다.
 11) 용어: '판독' 대신 'AI 분석', '반입' 대신 '데이터 올리기', '검수' 대신 '결과 확인'. 지역·기관 이름은 데이터에 있는 그대로 쓴다.
-12) 지도 동작(이동·확대·축소·층 켜기·3D·채색·서랍 열기·분석 실행)은 도구를 불러야만 일어난다. 맞는 도구가 없거나 부르지 않았으면 그 동작을 했다고 쓰지 말고 '그 지도 동작은 아직 할 수 없습니다'라고 쓴다.
-13) 도구 이름·API·파일·내부 코드는 답에 쓰지 않는다.
+12) 지도 동작(이동·확대·축소·층 켜기·3D·채색·두 시점 비교·범위 그리기·그림 저장·분석 실행)은 도구를 불러야만 일어난다. 맞는 도구가 없거나 부르지 않았으면 그 동작을 했다고 쓰지 말고 '그 지도 동작은 아직 없는 기능입니다.' 한 문장만 쓴다(대신 할 수 있는 것은 서버가 버튼으로 붙인다).
+13) 도구 이름·API·파일·내부 코드는 답에 쓰지 않는다. 프레임·레이어·폴리곤 같은 내부 말 대신 범위·층·도형.
+15) '의심 필지'와 '현장 확인 필요'는 다른 숫자다. 물은 이름의 숫자를 먼저 쓰고, 다른 이름의 숫자는 다음 문장에 이름을 밝혀 쓴다. 두 지역 비교는 같은 이름의 숫자끼리만.
 14) '결과 요약·정리·알려 줘·보여 줘'는 이미 있는 결과를 읽는 질문이다. summary_lookup · survey_stats 로 답하고, 분석 실행(analysis_run · jobs_submit · survey_build)을 부르지 않는다. 실행은 '실행·돌려·시작'을 말할 때만."""
 
 SYSTEM_EN = """You are the GeoAI assistant of Land-XI (LX Korea Land and Geospatial Informatix · on-premises · supports government field surveys).
@@ -444,6 +455,8 @@ async def run_tool(ctx: Ctx, i: int, name: str, args: dict, by: str = "model") -
         return {"ok": False, "block": audit.data_block(name, i, {"오류": err.code, "설명": err.message}), "err": err, "tool": name}
     reg = register(ctx, i, out)
     ui = list(out.ui_actions)
+    if name == "summary_lookup" and talk.has_map(ctx) is False:
+        ui = [a for a in ui if not (isinstance(a, dict) and a.get("op") in ("map_flyto", "map_region"))]   # 지도 없는 화면 — 묻지 않은 이동은 보내지 않는다(못 그렸다는 말 0)
     ctx.tools_ok.append(name)
     ctx.ui_ops.extend(a.get("op") for a in ui if isinstance(a, dict) and a.get("op"))
     step["result_ref"] = out.source
@@ -489,7 +502,10 @@ async def confirm_then(ctx: Ctx, i: int, name: str, args: dict) -> Out:
                         ex=config.CONFIRM_TTL_S + 30)
     await persist_state(ctx, state="waiting_confirm")
     title = next((str(x.get("title")) for x in (args, quote, meta) if isinstance(x, dict) and x.get("title")), None)   # plan 3.4 — 도구가 준 제목
-    await emit(ctx, "agent.confirm", {"i": i, "confirm_id": cid, "tool": name, "say": ext.SAY.get(name), "title": title, "args": _args_public(args), "quote": quote, "meta": meta,
+    line = next((str(x.get("line")) for x in (args, quote, meta) if isinstance(x, dict) and x.get("line")), None)     # 확인 16차 ⑦ — 범위 문장 · 기다림
+    ok_label = args.get("ok_label") if isinstance(args, dict) else None
+    await emit(ctx, "agent.confirm", {"i": i, "confirm_id": cid, "tool": name, "say": ext.SAY.get(name), "title": title, "line": line, "ok_label": ok_label,
+                                      "args": _args_public(args), "quote": quote, "meta": meta,
                                       "demo": bool((ps.get("body") or {}).get("demo")), "expires_at": exp.isoformat(timespec="seconds"),
                                       "ttl_s": config.CONFIRM_TTL_S, "metering": "이 작업은 기관 GPU 사용량에 합산됩니다" if name == "jobs_submit" else None})
     decision, by = await wait_confirm(ctx, cid)
@@ -653,6 +669,10 @@ def map_answer(ctx: Ctx, name: str, args: dict, out) -> str | None:
         key = "top" if a.get("preset") == "top" or (a.get("preset") is None and not a.get("pitch")) else "3d"
     elif name == "map_layer":
         key = "off" if a.get("on") is False or str(a.get("on")).lower() in ("false", "0", "off") else "on"
+        if key == "on" and a.get("only") and lg == "ko":
+            only = a.get("only")
+            return (f"{only} AI 분석 결과만 켰습니다." if isinstance(only, str) and only not in ("True", "true", "1")
+                    else f"{LAYER_NAME['ko'].get(a.get('layer'), '영상')} 층만 남겼습니다.")
     else:
         d = getattr(out, "data", None) or {}
         place = str(d.get("이동") or a.get("name") or "").strip()
@@ -811,9 +831,26 @@ async def ext_route(ctx: Ctx, msg: str) -> dict | None:
 
 
 async def reject(ctx: Ctx, category: str, message: str, scr: dict, region=None, event_error: str = "out_of_scope"):
-    """거절 한 줄(질문 언어로) — agent.rejected + 상태 기록."""
+    """거절 한 줄(질문 언어로) — agent.rejected + 상태 기록. 한국어는 지역 이름을 넣은 이유 한 줄 + 대신 할 수 있는 버튼(확인 16차 규칙 ②)."""
     text = audit.reject_text(category, message, ctx.lang)
-    await emit(ctx, "agent.rejected", {"error": event_error, "category": category, "message": text, "pii": scr["pii"], "region": region, "lang": ctx.lang})
+    nxt = []
+    if ctx.lang == "ko":
+        if category == "no_region_data":
+            text = talk.no_data_text(region)
+        elif category in ("cross_tenant_region", "cross_tenant"):
+            nm = region
+            if not nm:
+                g = talk.regions_in(ctx.state.get("msg") or "")
+                nm = (g[0][0].get("full") if g and g[0] else None)
+            if nm:
+                text = talk.outside_text(nm)
+        text = talk.guard_text_fix(text)
+        try:
+            nxt = await talk.guard_next(ctx, category, region)
+        except Exception:  # noqa: BLE001
+            nxt = []
+    await emit(ctx, "agent.rejected", {"error": event_error, "category": category, "message": text, "pii": scr["pii"], "region": region, "lang": ctx.lang,
+                                       **({"next": nxt[:3]} if nxt else {})})
     await persist_state(ctx, state="rejected", error=category, finished_at=dt.datetime.now(KST))
 
 
@@ -1227,6 +1264,22 @@ def guard_text(ctx: Ctx, r1: dict) -> str | None:
     if ctx.lang == "en" and nxt and _HANGUL.search(str(nxt)):
         nxt = GUARD_NEXT["en"] if st == "no_data" else None
     text = _end_dot(text)
+    if ctx.lang == "ko":
+        # 확인 16차 규칙 ② — 이유 한 줄(지역 이름) + 다음 할 일은 문장이 아니라 버튼
+        nm = _next_region(nxt)
+        if not nm:                                         # 도구가 지역을 말하지 않았으면 질문 속 지명(같은 낱말 규칙)
+            g = talk.regions_in(ctx.state.get("msg") or "")
+            nm = (g[0][0].get("name") if g and g[0] and len(g) == 1 else None)
+        if st == "no_data":
+            text = talk.no_data_text(nm) if nm else text
+            talk.set_next(ctx, talk.no_data_next(ctx, nm))
+            ctx.state["cannot"] = {"kind": "nodata"}
+            return text
+        if st == "outside":
+            ctx.state["cannot"] = {"kind": "scope"}
+            return text
+        if st == "not_found":
+            ctx.state["cannot"] = {"kind": "parcel" if re.search(r"필지|지번", text) else "other"}
     return text + ("\n\n" + _end_dot(str(nxt)) if nxt and str(nxt).strip() else "")
 
 
@@ -1320,7 +1373,100 @@ async def answer_list(ctx: Ctx, msg: str, la: dict, started: float, scr: dict):
     await finish(ctx, text, None, started, route, {}, lint_on=False)
 
 
-CANCEL_SAY = {"ko": "확인 카드에서 취소해 실행하지 않았습니다.", "en": "Cancelled on the confirmation card — nothing was run."}
+CANCEL_SAY = {"ko": "취소해서 실행하지 않았습니다.", "en": "Cancelled on the confirmation card — nothing was run."}
+
+
+# ── 확인 16차 대화 규칙(talk) — 직행 답의 앞자리: 고르기 버튼 · 없음 · 요약 · 지도 없는 화면 ─────────────────────────
+NOMAP_OPS = {"map_region", "map_zoom", "map_view", "map_layer", "map_compare", "map_draw", "map_snapshot"}
+
+
+async def talk_direct(ctx: Ctx, msg: str, hit: dict, started: float, route: dict) -> bool:
+    """직행 하나를 대화 규칙으로 먼저 처리했으면 True(답까지 보냄)."""
+    name, args = hit.get("tool"), hit.get("args") or {}
+    if ctx.lang != "ko":
+        return False
+    if hit.get("reply_choose"):                            # 기관 분석 요청 — 서비스가 여럿(되묻는 문장 대신 버튼)
+        talk.set_next(ctx, [talk.btn(f"{nm} 분석 요청", q=f"{nm} 분석 요청 보내 줘") for nm in hit["reply_choose"]])
+        await emit(ctx, "agent.plan", {"steps": [], "round": 1, "route": route, "model": {"id": "런타임", "backend": "runtime"}})
+        await finish(ctx, "분석은 LX가 합니다 — 어느 서비스로 맡길지 아래에서 고르면 분석 요청 카드가 뜹니다.", None, started, route, {}, lint_on=False)
+        return True
+    if hit.get("reply_none"):
+        talk.set_next(ctx, [talk.btn("분석 요청 화면 열기", href="/landxi/v3/gov-request/")])
+        ctx.state["cannot"] = {"kind": "nodata"}
+        await emit(ctx, "agent.plan", {"steps": [], "round": 1, "route": route, "model": {"id": "런타임", "backend": "runtime"}})
+        await finish(ctx, hit["reply_none"] + " 우리 영상을 올려 분석을 요청할 수 있습니다.", None, started, route, {}, lint_on=False)
+        return True
+    if hit.get("runtime_summary") and name == "summary_lookup":
+        await answer_summary(ctx, msg, {"region": args.get("region"), "card": None, "inventory": False, "region_name": hit.get("region_name")}, started, {"pii": []})
+        await talk.remember(ctx, args.get("region"))
+        return True
+    if name in NOMAP_OPS and talk.has_map(ctx) is False:
+        # 규칙 ④ · expand 12 — 지도 없는 화면: 동작을 보내지 않고 'XI맵을 ○○에서 열기' + 그 지역 대표 숫자 한 줄
+        reg, _src, _alts = await talk.resolve(ctx, msg)
+        if args.get("sgg_cd") or args.get("region"):
+            try:
+                from landxi_api.regions import region_of
+                reg = region_of(str(args.get("sgg_cd") or args.get("region"))) or reg
+            except Exception:  # noqa: BLE001
+                pass
+        extra = {}
+        if name == "map_compare" and reg:
+            try:
+                from .tools.ext import map as M
+                eps = await M.imagery_epochs(ctx, reg)
+                if len(eps) >= 2:
+                    want = [int(y) for y in (args.get("years") or []) if str(y).isdigit()][:2]
+                    a, b, _m = M.pick_pair(eps, want)
+                    extra["compare"] = f"{a['id']},{b['id']}"
+            except Exception:  # noqa: BLE001
+                pass
+        if name == "map_draw":
+            extra["tool"] = "analyze"
+        try:
+            from landxi_api.regions import derived
+            await derived()                                # 결과 있는 지역 판정(talk._has_data_sync)이 읽을 캐시
+        except Exception:  # noqa: BLE001
+            pass
+        text, nxt = talk.nomap_text(ctx, name, reg, extra)
+        await emit(ctx, "agent.plan", {"steps": [], "round": 1, "route": route, "model": {"id": "런타임", "backend": "runtime"}})
+        if reg:
+            try:
+                from landxi_api.regions import derived
+                dv = await derived()
+                has = reg["sgg_cd"] in (dv.get("parcels") or {})
+            except Exception:  # noqa: BLE001
+                has = False
+            if has:
+                # 그 지역 대표 숫자 한 줄(덤) — 늦으면 숫자 없이 답한다(답이 기다리지 않게 · 계획 줄에 단계를 만들지 않는다)
+                try:
+                    st = await asyncio.wait_for(registry.HANDLERS["survey_stats"]({"region": reg["sgg_cd"], "by": "rule"}, ctx), 6)
+                    register(ctx, 1, st)
+                    fc = ctx.env_id("field_check", 1)
+                    if fc and (ctx.envs.get(fc) or {}).get("value") is not None:
+                        text += f" {reg['name']} 현장 확인 필요 필지는 {{{{env:{fc}}}}}입니다."
+                except Exception as e:  # noqa: BLE001
+                    ctx.state.setdefault("route_errors", []).append(f"headline {type(e).__name__}")
+            await talk.remember(ctx, reg["sgg_cd"])
+        talk.set_next(ctx, nxt, front=True)
+        ctx.state["cannot"] = {"kind": "screen"}
+        ctx.state["rounds"] = 0
+        await finish(ctx, text, None, started, route, {}, lint_on=False)
+        return True
+    return False
+
+
+def talk_chain(ctx: Ctx, name: str, args: dict, out, then: list[dict]) -> str:
+    """'구례군으로 옮기고 한 단계 확대했습니다.' · '운봉읍으로 옮기고 비닐하우스 AI 분석 결과만 켰습니다.'"""
+    d = getattr(out, "data", None) or {}
+    place = str(d.get("이동") or args.get("name") or "").strip().split(" ")[-1]
+    tail = []
+    for nx in then:
+        t = map_answer(ctx, nx["tool"], nx.get("args") or {}, None) or ""
+        t = re.sub(r"^지도를\s*", "", t)
+        t = t.replace("확대했습니다", "한 단계 확대했습니다") if nx["tool"] == "map_zoom" and abs(float((nx.get("args") or {}).get("delta") or 1)) == 1 else t
+        tail.append(t.rstrip("."))
+    head = talk.move_word(place) if place else "옮기고"
+    return talk.chain_sentence([head, " · ".join(tail)]) + "."
 
 
 async def answer_direct(ctx: Ctx, msg: str, hit: dict, started: float, scr: dict):
@@ -1330,6 +1476,8 @@ async def answer_direct(ctx: Ctx, msg: str, hit: dict, started: float, scr: dict
     route = {"intent": "map", "ms": 0, "backend": "runtime", "model": f"직행 · {hit.get('module')}"}
     await emit(ctx, "agent.route", {**route, "pii": scr["pii"], "lang": ctx.lang})
     await persist_state(ctx, intent=hit.get("intent") or "direct")
+    if await talk_direct(ctx, msg, hit, started, route):
+        return
     if hit.get("reply"):                                  # 도구 없이 정해진 답(기관 · AI 결과 없는 곳 실행 요청 — 확인 카드 0)
         ctx.state["rounds"] = 0
         ctx.state["guard"] = {"tool": None, "text": hit["reply"]}
@@ -1347,11 +1495,41 @@ async def answer_direct(ctx: Ctx, msg: str, hit: dict, started: float, scr: dict
         await finish(ctx, g, None, started, route, {}, lint_on=False)
         return
     if not r1["ok"] and getattr(r1.get("err"), "code", None) == "rejected_by_user":
-        # 확인 카드 '취소' → 한 문장(모델이 같은 말을 두 번 쓰던 일 0 · LLM 호출 0)
+        # 확인 카드 '취소' → '취소했습니다' 한 줄 + 대신 볼 수 있는 것(규칙 ⑦ 5 · LLM 호출 0)
         ctx.state["rounds"] = 0
-        await finish(ctx, CANCEL_SAY["en" if ctx.lang == "en" else "ko"], None, started, route, {}, lint_on=False)
+        if ctx.lang == "ko":
+            reg = None
+            try:
+                from landxi_api.regions import region_of
+                reg = region_of(str(args.get("region") or "")) if args.get("region") else talk.here(ctx)
+            except Exception:  # noqa: BLE001
+                reg = None
+            talk.set_next(ctx, talk.cancel_next(ctx, reg, name))
+            say_ = "분석 요청을 보내지 않았습니다." if name == "request_send" else "취소해서 실행하지 않았습니다."
+        else:
+            say_ = CANCEL_SAY["en"]
+        await finish(ctx, say_, None, started, route, {}, lint_on=False)
+        return
+    if not r1["ok"] and getattr(r1.get("err"), "code", None) == "confirm_expired" and ctx.lang == "ko":
+        # 확인 카드를 1분 안에 누르지 않음 — 실행하지 않았다고 한 줄 + 다시 묻기(LLM 호출 0)
+        ctx.state["rounds"] = 0
+        talk.set_next(ctx, [talk.btn("다시 묻기", q=msg)])
+        await finish(ctx, "확인 카드를 1분 안에 누르지 않아 실행하지 않았습니다.", None, started, route, {}, lint_on=False)
         return
     blocks = [r1["block"]]
+    chain = [map_answer(ctx, name, args, r1.get("out"))] if r1["ok"] and hit.get("then") else []
+    for k, nx in enumerate(hit.get("then") or [], 2):
+        if not r1["ok"]:
+            break
+        rk = await run_tool(ctx, k, nx["tool"], nx.get("args") or {}, by="runtime")
+        blocks.append(rk["block"])
+        chain.append(map_answer(ctx, nx["tool"], nx.get("args") or {}, rk.get("out")) if rk["ok"] else None)
+    if chain and all(chain):
+        text = talk_chain(ctx, name, args, r1.get("out"), hit.get("then") or [])
+        ctx.state["act_claims"] = [text]
+        ctx.state["rounds"] = 0
+        await finish(ctx, text, None, started, route, {}, lint_on=False)
+        return
     if r1["ok"] and (r1.get("raw") or {}).get("features") and "map_arrive" not in ctx.ui_ops:
         r2 = await run_tool(ctx, 2, "map_arrive", {}, by="runtime")
         blocks.append(r2["block"])
@@ -1447,6 +1625,13 @@ async def answer_summary(ctx: Ctx, msg: str, sr: dict, started: float, scr: dict
                 nums.append(((mets.get(key) or {}).get("label") or key, eid))
         ids.append({"nums": nums})
     answer = summary_lookup.say(items[:8], ids, bool(sr.get("region")))
+    if sr.get("region") and ctx.lang == "ko":                # 확인 16차 — 다음에 할 수 있는 것(그 지역 숫자 · 보고서 · 지도)
+        nm = str(sr.get("region_name") or items[0].get("region_name") or "").split(" ")[-1]
+        if nm:
+            href = talk.xi_href(ctx, str(sr["region"])) if talk.has_map(ctx) is False else None
+            talk.set_next(ctx, [talk.btn(f"{nm} 현장 확인 필요 필지 몇 건", q=f"{nm} 현장 확인 필요 필지 몇 건이야?"),
+                                talk.btn(f"{nm} 보고서 초안", q=f"{nm} 보고서 초안 만들어 줘")] + ([talk.btn("XI맵에서 보기", href=href)] if href else []))
+            await talk.remember(ctx, str(sr["region"]))
     ctx.state["rounds"] = 0
     await finish(ctx, answer, None, started, route, {}, lint_on=False)
 
@@ -1477,6 +1662,9 @@ async def finish(ctx: Ctx, answer: str, res, started: float, route: dict, perf: 
     md = lint.scrub_terms(lint.render_unverified(md, ctx.lang), ctx.lang)
     if ctx.lang == "ko":
         md = fix_josa(md, ctx.envs)                    # R3: 숫자·단위 뒤 조사를 받침에 맞춘다('10필지를' · '3건을')
+        md = talk.fill_cannot(ctx, md, talk.here(ctx))     # 확인 16차 규칙 ② — '아직 할 수 없습니다'로 끝내지 않는다(이유 + 버튼)
+        if ctx.state.get("talk_kind") == "cannot" and not ctx.state.get("cannot"):
+            ctx.state["cannot"] = {"kind": "action"}
     lr.answer_md = md
     act_claims = [c for c in (ctx.state.get("act_claims") or []) if c in md] or action_sentences(md, ctx.lang)   # R3 M5: 동작 문장
     blocks = [*ctx.blocks, *auto_blocks(ctx, artifact)]
@@ -1500,6 +1688,12 @@ async def finish(ctx: Ctx, answer: str, res, started: float, route: dict, perf: 
             "citations": ctx.citations, "model": model, "tokens": tokens, "perf": perf_out, "steps": ctx.steps,
             "bad_cites": bad_cites, "verdict": "unverified_answer" if lr.unverified else "ok",
             "lang": ctx.lang, "blocks": blocks, "ui_ops": list(dict.fromkeys(ctx.ui_ops)), "act_claims": act_claims}
+    if ctx.state.get("next"):
+        data["next"] = ctx.state["next"][:3]               # 확인 16차 — 다음 버튼 2–3(첫 버튼 = 가장 가까운 일)
+    if ctx.state.get("alt"):
+        data["alt"] = ctx.state["alt"]                     # 꼬리 '다른 뜻이면 ○○'
+    if ctx.state.get("cannot"):
+        data["cannot"] = ctx.state["cannot"]               # 개선 고리(improve.classify)가 읽는 막힘 분류
     if artifact:
         data["artifact"] = artifact
     if extra:

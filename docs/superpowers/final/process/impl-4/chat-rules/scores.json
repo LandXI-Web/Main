@@ -1,0 +1,991 @@
+{
+ "summary": {
+  "questions": 31,
+  "before": {
+   "deadend": 5,
+   "mismatch": 2,
+   "wrong": 5,
+   "tone": 9,
+   "llm": 9
+  },
+  "after": {
+   "deadend": 0,
+   "mismatch": 0,
+   "wrong": 0,
+   "tone": 0,
+   "llm": 0
+  },
+  "after_console_rerun": null,
+  "design_audit_1001_11h": {
+   "deadend": 9,
+   "mismatch": 5,
+   "wrong": 4,
+   "note": "설계 7차 audit.md(손으로 셈 · 같은 31문)"
+  }
+ },
+ "rows": [
+  {
+   "n": 1,
+   "screen": "lx-console",
+   "q": "남원시로 이동해 줘",
+   "before": {
+    "answer": "지도를 이동하지 못했습니다 — 이 화면에는 지도가 없습니다.",
+    "buttons": [
+     "XI맵에서 크게 보기",
+     "어느 지역에 어떤 결과가 있어?",
+     "현장 확인 필요 필지가 많은 지역은?"
+    ],
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   },
+   "after": {
+    "answer": "이 화면에는 지도가 없어 옮기지 못했습니다 — XI맵을 열면 남원시에서 시작합니다. 남원시 현장 확인 필요 필지는 1,035필지입니다.",
+    "buttons": [
+     "XI맵을 남원시에서 열기",
+     "남원시 결과 요약 보기"
+    ],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 2,
+   "screen": "lx-console",
+   "q": "구례군 확대해 줘",
+   "before": {
+    "answer": "지도를 확대하지 못했습니다 — 이 화면에는 지도가 없습니다.",
+    "buttons": [
+     "XI맵에서 크게 보기",
+     "어느 지역에 어떤 결과가 있어?",
+     "현장 확인 필요 필지가 많은 지역은?"
+    ],
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": true,
+    "tone": false,
+    "why": [
+     "물은 것과 다른 일"
+    ]
+   },
+   "after": {
+    "answer": "이 화면에는 지도가 없어 옮기지 못했습니다 — XI맵을 열면 구례군에서 시작합니다. 구례군 현장 확인 필요 필지는 555필지입니다.",
+    "buttons": [
+     "XI맵을 구례군에서 열기",
+     "구례군 결과 요약 보기"
+    ],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 3,
+   "screen": "lx-console",
+   "q": "영상 층 켜 줘",
+   "before": {
+    "answer": "영상 층을 켜지 못했습니다 — 이 화면에는 지도가 없습니다.",
+    "buttons": [
+     "XI맵에서 크게 보기",
+     "어느 지역에 어떤 결과가 있어?",
+     "현장 확인 필요 필지가 많은 지역은?"
+    ],
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   },
+   "after": {
+    "answer": "이 화면에는 지도가 없어 층을 켜지 못했습니다 — XI맵을 열면 구례군에서 시작합니다. 구례군 현장 확인 필요 필지는 555필지입니다.",
+    "buttons": [
+     "XI맵을 구례군에서 열기",
+     "구례군 결과 요약 보기"
+    ],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 4,
+   "screen": "lx-console",
+   "q": "현장 확인 필요 필지만 보여 줘",
+   "before": {
+    "answer": "현장 확인 필요 층을 켜지 못했습니다 — 이 화면에는 지도가 없습니다.",
+    "buttons": [
+     "XI맵에서 크게 보기",
+     "어느 지역에 어떤 결과가 있어?",
+     "현장 확인 필요 필지가 많은 지역은?"
+    ],
+    "llm": true,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   },
+   "after": {
+    "answer": "이 화면에는 지도가 없어 층을 켜지 못했습니다 — XI맵을 열면 구례군에서 시작합니다. 구례군 현장 확인 필요 필지는 555필지입니다.",
+    "buttons": [
+     "XI맵을 구례군에서 열기",
+     "구례군 결과 요약 보기"
+    ],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 5,
+   "screen": "lx-console",
+   "q": "지적선 켜 줘",
+   "before": {
+    "answer": "지적선 층을 켜지 못했습니다 — 이 화면에는 지도가 없습니다.",
+    "buttons": [
+     "XI맵에서 크게 보기",
+     "어느 지역에 어떤 결과가 있어?",
+     "현장 확인 필요 필지가 많은 지역은?"
+    ],
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   },
+   "after": {
+    "answer": "이 화면에는 지도가 없어 층을 켜지 못했습니다 — XI맵을 열면 구례군에서 시작합니다. 구례군 현장 확인 필요 필지는 555필지입니다.",
+    "buttons": [
+     "XI맵을 구례군에서 열기",
+     "구례군 결과 요약 보기"
+    ],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 6,
+   "screen": "lx-console",
+   "q": "3D로 보여 줘",
+   "before": {
+    "answer": "지도 시점을 바꾸지 못했습니다 — 이 화면에는 지도가 없습니다.",
+    "buttons": [
+     "XI맵에서 크게 보기",
+     "어느 지역에 어떤 결과가 있어?",
+     "현장 확인 필요 필지가 많은 지역은?"
+    ],
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   },
+   "after": {
+    "answer": "이 화면에는 지도가 없어 기울이지 못했습니다 — XI맵을 열면 구례군에서 시작합니다. 구례군 현장 확인 필요 필지는 555필지입니다.",
+    "buttons": [
+     "XI맵을 구례군에서 열기",
+     "구례군 결과 요약 보기"
+    ],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 7,
+   "screen": "lx-console",
+   "q": "이 지역 결과 요약해 줘",
+   "before": {
+    "answer": "현재 지역의 서비스 결과 요약입니다.\n광주전남특별시 여수시의 해양쓰레기 실태조사 서비스는 운영 중이며, AI 탐지 결과 1,857건이 확인되었습니다. 영농관리 행정서비스는 목포시, 여수시, 구례군, 강진군에서 시범 운영 중이며, 각 지역별로 AI 탐지 및 의심 필지 데이터가 확보되어 있습니다.\n경기도 여주시와 충청남도 천안시 서북구에서는 주차장 서비스가 시범 운영 중이며, 각각 236건과 118건의 AI 탐지 결과가 있습니다.",
+    "buttons": [],
+    "llm": true,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": true,
+    "why": [
+     "말투(내부 말 · 떠넘김 · 길이)"
+    ]
+   },
+   "after": {
+    "answer": "광주전남특별시 구례군 영농관리 행정서비스는 시범 운영 중입니다. AI 탐지 42,657건 · 현장 확인 필요 555필지 · 결과 확인 대기 566건 · 기관 신고 1건 · 의심 필지 11,081건입니다.",
+    "buttons": [
+     "구례군 현장 확인 필요 필지 몇 건",
+     "구례군 보고서 초안",
+     "XI맵에서 보기"
+    ],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 8,
+   "screen": "lx-console",
+   "q": "남원시 의심 필지 읍면동별 차트로 보여 줘",
+   "before": {
+    "answer": "남원시 읍면동별 의심 필지입니다. 모두 20,872건이고, 막대를 누르면 그 읍면동으로 갑니다.",
+    "buttons": [],
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   },
+   "after": {
+    "answer": "남원시 의심 필지는 20,872건입니다. 아래 차트에 많은 곳부터 다섯 곳을 두었습니다.",
+    "buttons": [
+     "XI맵에서 크게 보기",
+     "현장 확인 필요 필지 몇 건"
+    ],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 9,
+   "screen": "lx-console",
+   "q": "2024년과 2025년 영상을 나란히 비교해 줘",
+   "before": {
+    "answer": "그 지도 동작은 아직 할 수 없습니다.",
+    "buttons": [
+     "XI맵에서 크게 보기",
+     "어느 지역에 어떤 결과가 있어?",
+     "현장 확인 필요 필지가 많은 지역은?"
+    ],
+    "llm": true,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": true,
+    "why": [
+     "말투(내부 말 · 떠넘김 · 길이)"
+    ]
+   },
+   "after": {
+    "answer": "이 화면에는 지도가 없어 두 시점을 나란히 놓지 못했습니다 — XI맵을 열면 남원시에서 시작합니다. 남원시 현장 확인 필요 필지는 1,035필지입니다.",
+    "buttons": [
+     "XI맵을 남원시에서 열기",
+     "남원시 결과 요약 보기"
+    ],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 10,
+   "screen": "lx-console",
+   "q": "지도에 범위를 그려서 그 안만 분석해 줘",
+   "before": {
+    "answer": "현재 화면에 분석할 결과 범위가 없어 프레임을 생성할 수 없습니다. 분석을 원하시는 지역을 선택하신 후 다시 요청해 주시기 바랍니다.",
+    "buttons": [
+     "XI맵에서 크게 보기",
+     "어느 지역에 어떤 결과가 있어?",
+     "현장 확인 필요 필지가 많은 지역은?"
+    ],
+    "llm": true,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": true,
+    "why": [
+     "말투(내부 말 · 떠넘김 · 길이)"
+    ]
+   },
+   "after": {
+    "answer": "이 화면에는 지도가 없어 범위 그리기를 켜지 못했습니다 — XI맵을 열면 남원시에서 시작합니다. 남원시 현장 확인 필요 필지는 1,035필지입니다.",
+    "buttons": [
+     "XI맵을 남원시에서 열기",
+     "남원시 결과 요약 보기"
+    ],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 11,
+   "screen": "lx-console",
+   "q": "구례군과 남원시 의심 필지 수 비교해 줘",
+   "before": {
+    "answer": "구례군과 남원시의 의심 필지 수를 비교한 결과입니다.\n구례군의 의심 필지는 11,081건이며, 남원시는 20,872건으로 확인됩니다.\n해당 수치는 실태조사 전체를 포함한 의심 필지 수이며, 현장조사 대상 후보입니다.\n이 화면에는 지도가 없어 지도에 그리지 못했습니다.",
+    "buttons": [
+     "XI맵에서 크게 보기",
+     "어느 지역에 어떤 결과가 있어?",
+     "현장 확인 필요 필지가 많은 지역은?"
+    ],
+    "llm": true,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": true,
+    "why": [
+     "말투(내부 말 · 떠넘김 · 길이)"
+    ]
+   },
+   "after": {
+    "answer": "의심 필지는 구례군 11,081건 · 남원시 20,872건입니다(아래 막대).",
+    "buttons": [
+     "XI맵에서 구례군 보기",
+     "XI맵에서 남원시 보기"
+    ],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 12,
+   "screen": "lx-console",
+   "q": "남원시 보고서 초안 만들어 줘",
+   "before": {
+    "answer": "남원시 실태조사 보고서 초안을 만들었습니다(의심 20,872건 · 법령 조문 8개 인용). 아래 버튼으로 초안 파일을 내려받을 수 있습니다. AI 가 작성한 초안이라 사람 확인이 필요합니다.",
+    "buttons": [],
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": true,
+    "why": [
+     "말투(내부 말 · 떠넘김 · 길이)"
+    ]
+   },
+   "after": {
+    "answer": "남원시 실태조사 보고서 초안을 만들었습니다(의심 필지 20,872건 · 법령 조문 8개 인용) — 아래에서 내려받을 수 있습니다. AI가 쓴 초안이라 사람 확인이 필요합니다.",
+    "buttons": [],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 13,
+   "screen": "lx-console",
+   "q": "농지 전용 허가 근거 조문 알려 줘",
+   "before": {
+    "answer": "관련 조문 원문입니다.\n「농지법」 제34조(농지의 전용허가ㆍ협의) 제1항 · 시행 2026-09-18\n①농지를 전용하려는 자는 다음 각 호의 어느 하나에 해당하는 경우 외에는 대통령령으로 정하는 바에 따라 농림축산식품부장관의 허가(다른 법률에 따라 농지전용허가가 의제되는 협의를 포함한다. 이하 같다)를 받아야 한다. 허가받은 농지의 면적 또는 경계 등 대통령령으로 정하는 중요 사항을 변경하려는 경우에도 또한 같다. <개정 2008.2.29, 2009.5.27, 2013.3.23, 2023.8.16>\n1. 삭제<2023.8.16>\n2. 「국토의 계획 및 이용에 관한 법률」에 따른 도시지역 또는 계획관리지역에 있는 농지로서 제2항에 따른 협의를 거친 농지나 제2항제1호 단서에 따라 협의 대상에서 제외되는 농지를 전용하는 경우\n3. 제35조에 따라 농지전용신고를 하고 농지를 전용하는 경우\n4. 「산지관리법」 제14조에 따른 산지전용허가를 받지 아니하거나 같은 법 제15조에 따른 산지전용신고를 하지 아니하고 불법으로 개간한 농지를 산림으로 복구하는 경우\n5. 삭제<2024.1.2>\n함께 볼 조문: 「농지법 시행규칙」 제29조(농지전용허가) 제2항 · 시행 2026-09-22 · 「농지법 시행령」 제32조(농지전용허가의 신청) 제1항 · 시행 2026-09-18\n조문은 국가법령정보센터 공개 원문 그대로이며, 적용 여부는 담당자가 판단합니다.",
+    "buttons": [],
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   },
+   "after": {
+    "answer": "관련 조문 원문입니다.\n「농지법」 제34조(농지의 전용허가ㆍ협의) 제1항 · 시행 2026-09-18\n①농지를 전용하려는 자는 다음 각 호의 어느 하나에 해당하는 경우 외에는 대통령령으로 정하는 바에 따라 농림축산식품부장관의 허가(다른 법률에 따라 농지전용허가가 의제되는 협의를 포함한다. 이하 같다)를 받아야 한다. 허가받은 농지의 면적 또는 경계 등 대통령령으로 정하는 중요 사항을 변경하려는 경우에도 또한 같다. <개정 2008.2.29, 2009.5.27, 2013.3.23, 2023.8.16>\n1. 삭제<2023.8.16>\n2. 「국토의 계획 및 이용에 관한 법률」에 따른 도시지역 또는 계획관리지역에 있는 농지로서 제2항에 따른 협의를 거친 농지나 제2항제1호 단서에 따라 협의 대상에서 제외되는 농지를 전용하는 경우\n3. 제35조에 따라 농지전용신고를 하고 농지를 전용하는 경우\n4. 「산지관리법」 제14조에 따른 산지전용허가를 받지 아니하거나 같은 법 제15조에 따른 산지전용신고를 하지 아니하고 불법으로 개간한 농지를 산림으로 복구하는 경우\n5. 삭제<2024.1.2>\n함께 볼 조문: 「농지법 시행규칙」 제29조(농지전용허가) 제2항 · 시행 2026-09-22 · 「농지법 시행령」 제32조(농지전용허가의 신청) 제1항 · 시행 2026-09-18\n조문은 국가법령정보센터 공개 원문 그대로이며, 적용 여부는 담당자가 판단합니다.",
+    "buttons": [
+     "농지법 시행규칙 제29조 원문",
+     "농지법 시행령 제32조 원문"
+    ],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 14,
+   "screen": "lx-console",
+   "q": "허가 없이 지은 건물에 물리는 이행강제금은 얼마야?",
+   "before": {
+    "answer": "법령 데이터에 없습니다.",
+    "buttons": [],
+    "llm": false,
+    "deadend": true,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": [
+     "막다른 답"
+    ]
+   },
+   "after": {
+    "answer": "질문 그대로는 맞는 조문을 찾지 못해 '이행강제금'으로 찾은 조문 원문입니다.\n「건축법」 제80조(이행강제금) 제1항 · 시행 2026-02-27\n① 허가권자는 제79조제1항에 따라 시정명령을 받은 후 시정기간 내에 시정명령을 이행하지 아니한 건축주등에 대하여는 그 시정명령의 이행에 필요한 상당한 이행기한을 정하여 그 기한까지 시정명령을 이행하지 아니하면 다음 각 호의 이행강제금을 부과한다. 다만, 연면적(공동주택의 경우에는 세대 면적을 기준으로 한다)이 60제곱미터 이하인 주거용 건축물과 제2호 중 주거용 건축물로서 대통령령으로 정하는 경우에는 다음 각 호의 어느 하나에 해당하는 금액의 2분의 1의 범위에서 해당 지방자치단체의 조례로 정하는 금액을 부과한다. <개정 2011.5.30, 2015.8.11, 2019.4.23>\n1. 건축물이 제55조와 제56조에 따른 건폐율이나 용적률을 초과하여 건축된 경우 또는 허가를 받지 아니하거나 신고를 하지 아니하고 건축된 경우에는 「지방세법」에 따라 해당 건축물에 적용되는 1제곱미터의 시가표준액의 100분의 50에 해당하는 금액에 위반면적을 곱한 금액 이하의 범위에서 위반 내용에 따라 대통령령으로 정하는 비율을 곱한 금액\n2. 건축물이 제1호 외의 위반 건축물에 해당하는 경우에는 「지방세법」에 따라 그 건축물에 적용되는 시가표준액에 해당하는 금액의 100분의 10의 범위에서 위반내용에 따라 대통령령으로 정하는 금액\n함께 볼 조문: 「건축법」 제80조의2(이행강제금 부과에 관한 특례) 제2항 · 시행 2026-02-27\n금액 · 기준은 조례와 고시에 따라 달라 여기서 계산하지 않으며, 적용 여부는 담당자가 판단합니다.",
+    "buttons": [
+     "건축법 제80조의2 원문"
+    ],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 15,
+   "screen": "lx-console",
+   "q": "지도 화면을 이미지로 저장해 줘",
+   "before": {
+    "answer": "그 지도 동작은 아직 할 수 없습니다.",
+    "buttons": [
+     "XI맵에서 크게 보기",
+     "어느 지역에 어떤 결과가 있어?",
+     "현장 확인 필요 필지가 많은 지역은?"
+    ],
+    "llm": true,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": true,
+    "why": [
+     "말투(내부 말 · 떠넘김 · 길이)"
+    ]
+   },
+   "after": {
+    "answer": "이 화면에는 지도가 없어 그림 파일로 만들지 못했습니다 — XI맵에서 크게 볼 수 있습니다.",
+    "buttons": [
+     "XI맵 열기"
+    ],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 16,
+   "screen": "lx-console",
+   "q": "서울 강남구 보여 줘",
+   "before": {
+    "answer": "지도를 이동하지 못했습니다 — 이 화면에는 지도가 없습니다.",
+    "buttons": [
+     "XI맵에서 크게 보기",
+     "어느 지역에 어떤 결과가 있어?",
+     "현장 확인 필요 필지가 많은 지역은?"
+    ],
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   },
+   "after": {
+    "answer": "이 화면에는 지도가 없어 옮기지 못했습니다 — XI맵을 열면 강남구에서 시작합니다. 강남구는 아직 AI 분석 결과가 없습니다.",
+    "buttons": [
+     "XI맵을 강남구에서 열기",
+     "강남구 전역 분석 실행",
+     "영상 등록하기"
+    ],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 17,
+   "screen": "xi-clean",
+   "q": "의심 필지 읍면동별 차트로 보여 줘",
+   "before": {
+    "answer": "남원시 읍면동별 의심 필지입니다. 모두 20,872건이고, 막대를 누르면 그 읍면동으로 갑니다.",
+    "buttons": [],
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   },
+   "after": {
+    "answer": "관할 전체 의심 필지는 113,085건입니다. 읍면동별로 막대 차트에 나누어 보였습니다.",
+    "buttons": [],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 18,
+   "screen": "xi-clean",
+   "q": "AI 분석 결과 층 꺼 줘",
+   "before": {
+    "answer": "AI 분석 결과 층을 껐습니다.",
+    "buttons": [],
+    "llm": false,
+    "deadend": false,
+    "mismatch": true,
+    "wrong": false,
+    "tone": false,
+    "why": [
+     "말했는데 지도 변화 0"
+    ]
+   },
+   "after": {
+    "answer": "AI 분석 결과 층은 이미 꺼져 있습니다.",
+    "buttons": [
+     "현장 확인 필요 층도 끄기"
+    ],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 19,
+   "screen": "xi-clean",
+   "q": "남원시 운봉읍으로 이동해서 비닐하우스 결과만 보여 줘",
+   "before": {
+    "answer": "전북특별자치도 남원시 비닐하우스 서비스는 시범 운영 중입니다. AI 탐지 132,310건 · 기관 신고 0건입니다.",
+    "buttons": [],
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": true,
+    "tone": false,
+    "why": [
+     "물은 것과 다른 일"
+    ]
+   },
+   "after": {
+    "answer": "운봉읍으로 옮기고 비닐하우스 AI 분석 결과만 켰습니다.",
+    "buttons": [],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 20,
+   "screen": "xi-clean",
+   "q": "남원시 전역 분석 실행해 줘",
+   "before": {
+    "answer": "확인 카드에서 취소해 실행하지 않았습니다.",
+    "buttons": [],
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   },
+   "after": {
+    "answer": "취소해서 실행하지 않았습니다.",
+    "buttons": [
+     "지금 있는 결과 요약",
+     "읍면동별 차트"
+    ],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 21,
+   "screen": "ops-core",
+   "q": "지금 GPU 상태 어때?",
+   "before": {
+    "answer": "16:47:04 기준 동시 고부하 GPU는 0장(최대 1장)으로 고부하인 GPU 없음 · 전력 예산 안입니다. 최근 2시간 두 장이 함께 고부하였던 적은 0회입니다. GPU 0은 부하 0%, 지금 전력 18W, 메모리 10.2GB, 온도 51°C로 대기 중입니다. GPU 1은 부하 0%, 지금 전력 30W, 메모리 43.2GB, 온도 64°C로 대기 중입니다.",
+    "buttons": [],
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": true,
+    "why": [
+     "말투(내부 말 · 떠넘김 · 길이)"
+    ]
+   },
+   "after": {
+    "answer": "18:00:14 기준 동시 고부하 GPU는 0장(최대 1장)으로 고부하인 GPU 없음 · 전력 예산 안입니다. GPU 0 대기 중 · GPU 1 대기 중입니다(아래 표).",
+    "buttons": [
+     "인프라 화면에서 크게 보기"
+    ],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 22,
+   "screen": "ops-core",
+   "q": "기관별 사용량 차트로 보여 줘",
+   "before": {
+    "answer": "이번 달 XI ChatGEO 요청 건수는 LX 89건, 남원시 23건, 광주전남특별시 0건, 키르기스 농업부 0건, 키르기스 토지자원청 0건입니다. 합계는 112건입니다.",
+    "buttons": [],
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   },
+   "after": {
+    "answer": "이번 달 XI ChatGEO 요청 건수는 LX 272건, 남원시 72건, 광주전남특별시 0건, 키르기스 농업부 0건, 키르기스 토지자원청 0건입니다. 합계는 344건입니다.",
+    "buttons": [],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 23,
+   "screen": "ops-core",
+   "q": "남원시로 이동해 줘",
+   "before": {
+    "answer": "전북특별자치도 남원시로 지도를 옮겼습니다.",
+    "buttons": [],
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   },
+   "after": {
+    "answer": "전북특별자치도 남원시로 지도를 옮겼습니다.",
+    "buttons": [],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 24,
+   "screen": "ops-core",
+   "q": "분석 대기열 요약해 줘",
+   "before": {
+    "answer": "대기 중인 분석 작업은 0건, 진행 중인 작업은 0건입니다. 작업기는 GPU 서버 1대, 일반 서버 2대입니다.",
+    "buttons": [],
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   },
+   "after": {
+    "answer": "대기 중인 분석 작업은 0건, 진행 중인 작업은 0건입니다. 작업기는 GPU 서버 1대, 일반 서버 2대입니다.",
+    "buttons": [],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 25,
+   "screen": "gov-report",
+   "q": "우리 시 현장 확인 필요 필지 몇 건이야?",
+   "before": {
+    "answer": "해당 지역 데이터가 없습니다.",
+    "buttons": [],
+    "llm": true,
+    "deadend": true,
+    "mismatch": false,
+    "wrong": true,
+    "tone": false,
+    "why": [
+     "막다른 답",
+     "물은 것과 다른 일"
+    ]
+   },
+   "after": {
+    "answer": "남원시 현장 확인 필요 필지는 1,035필지입니다. 의심 필지 20,872건 가운데 먼저 현장에서 확인할 필지입니다.",
+    "buttons": [
+     "지도에서 보기",
+     "읍면동별 차트",
+     "보고서 초안"
+    ],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 26,
+   "screen": "gov-report",
+   "q": "구례군 결과 보여 줘",
+   "before": {
+    "answer": "이 기관의 데이터가 아닙니다",
+    "buttons": [],
+    "llm": false,
+    "deadend": true,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": [
+     "막다른 답"
+    ]
+   },
+   "after": {
+    "answer": "구례군은 이 기관 계정에서 볼 수 없습니다.",
+    "buttons": [
+     "남원시 결과 요약 보기",
+     "남원시 현장 확인 필요 필지 몇 건"
+    ],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 27,
+   "screen": "gov-report",
+   "q": "운봉읍으로 이동해 줘",
+   "before": {
+    "answer": "지도를 남원시 운봉읍으로 옮겼습니다.",
+    "buttons": [],
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   },
+   "after": {
+    "answer": "지도를 남원시 운봉읍으로 옮겼습니다.",
+    "buttons": [],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 28,
+   "screen": "gov-report",
+   "q": "대장에서 논인데 AI가 비닐하우스로 본 필지 보여 줘",
+   "before": {
+    "answer": "이 화면 지도에는 그 결과 층이 없어 그리지 못했습니다. 1위는 남원시 주생면 낙동리 992-1로 AI 분석 근거 면적 2,295.6㎡입니다. 현장조사 대상 후보이며 건축물대장 대조 전입니다.",
+    "buttons": [
+     "XI맵에서 크게 보기",
+     "지도 확대해 줘",
+     "3D로 기울여 줘"
+    ],
+    "llm": true,
+    "deadend": false,
+    "mismatch": true,
+    "wrong": true,
+    "tone": true,
+    "why": [
+     "못 그렸다는데 그려짐",
+     "물은 것과 다른 일",
+     "말투(내부 말 · 떠넘김 · 길이)"
+    ]
+   },
+   "after": {
+    "answer": "대장상 논 · 밭에 있는 비닐하우스는 영농시설이라 실태조사 의심 조건에 없어 따로 세지 않습니다. 가까운 조건인 '비농지 위 비닐하우스(용도 불일치)' 필지나 비닐하우스 AI 분석 결과를 볼 수 있습니다.",
+    "buttons": [
+     "비농지 위 비닐하우스 필지 보기",
+     "비닐하우스 AI 분석 결과만 보기",
+     "대장 농지 위 건물 필지 보기"
+    ],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 29,
+   "screen": "gov-report",
+   "q": "전역 분석 실행해 줘",
+   "before": {
+    "answer": "해당 지역 데이터가 없습니다.",
+    "buttons": [],
+    "llm": true,
+    "deadend": true,
+    "mismatch": false,
+    "wrong": true,
+    "tone": false,
+    "why": [
+     "막다른 답",
+     "물은 것과 다른 일"
+    ]
+   },
+   "after": {
+    "answer": "분석은 LX가 합니다 — 어느 서비스로 맡길지 아래에서 고르면 분석 요청 카드가 뜹니다.",
+    "buttons": [
+     "비닐하우스 서비스 분석 요청",
+     "도로 안전관리 서비스 분석 요청",
+     "국토 변화 탐지 서비스 분석 요청"
+    ],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 30,
+   "screen": "gov-report",
+   "q": "이 필지 영상 보고 설명해 줘",
+   "before": {
+    "answer": "어느 필지인지 찾지 못했습니다 — 지번으로 말씀해 주세요(예: '○○면 ○○리 123 영상 설명해 줘')",
+    "buttons": [],
+    "llm": false,
+    "deadend": true,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": [
+     "막다른 답"
+    ]
+   },
+   "after": {
+    "answer": "어느 필지인지 정해지지 않아 영상 설명을 하지 않았습니다. 현장 확인이 먼저 필요한 필지 셋을 아래에 두었습니다.",
+    "buttons": [
+     "남원시 아영면 아곡리 1053-12 영상 설명",
+     "남원시 운봉읍 권포리 1229-3 영상 설명",
+     "남원시 보절면 금다리 999-2 영상 설명"
+    ],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  },
+  {
+   "n": 31,
+   "screen": "gov-report",
+   "q": "보고서 초안 만들어 줘",
+   "before": {
+    "answer": "남원시 실태조사 보고서 초안을 만들었습니다(의심 20,872건 · 법령 조문 8개 인용). 아래 버튼으로 초안 파일을 내려받을 수 있습니다. AI 가 작성한 초안이라 사람 확인이 필요합니다.",
+    "buttons": [],
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": true,
+    "why": [
+     "말투(내부 말 · 떠넘김 · 길이)"
+    ]
+   },
+   "after": {
+    "answer": "남원시 실태조사 보고서 초안을 만들었습니다(의심 필지 20,872건 · 법령 조문 8개 인용) — 아래에서 내려받을 수 있습니다. AI가 쓴 초안이라 사람 확인이 필요합니다.",
+    "buttons": [],
+    "alt": false,
+    "llm": false,
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "tone": false,
+    "why": []
+   }
+  }
+ ]
+}

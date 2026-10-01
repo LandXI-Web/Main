@@ -270,9 +270,11 @@ def say(items: list[dict], ids_by_item: list[dict], asked_region: bool) -> str:
     if len(pairs) == 1:
         return say([pairs[0][0]], [pairs[0][1]], asked_region)
     parts = []
+    one = len({it.get("sgg_cd") for it, _ in pairs}) == 1             # 한 지역이면 지역 이름은 한 번만(확인 16차 규칙 ⑥ — 짧게)
+    lead = (pairs[0][0].get("region_name") or "").split(" ")[-1] if one else ""
     for it, ids in pairs[:6]:
-        lab = f"{it.get('region_name') or ''} {it.get('card_name') or ''}".strip()
+        lab = (it.get("card_name") or "") if one else f"{it.get('region_name') or ''} {it.get('card_name') or ''}".strip()
         det = next((eid for l, eid in ids.get("nums", []) if l == "AI 탐지"), None)
         parts.append(f"{lab}({STAGE_SAY.get(it.get('stage'), it.get('stage') or '')}" + (f" · AI 탐지 {{{{env:{det}}}}})" if det else ")"))
     more = " 등" if len(pairs) > 6 else ""
-    return "결과가 있는 서비스는 " + ", ".join(parts) + more + "입니다."
+    return (f"{lead}에서 " if lead else "") + "결과가 있는 서비스는 " + ", ".join(parts) + more + "입니다."

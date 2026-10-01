@@ -126,9 +126,10 @@ async def report_draft(args: dict, ctx) -> Out:
     if lang == "en":
         out.answer = (LETTER_EN if letter else "") + f"Drafted the survey report for {j['place']}. Download the .docx below (AI draft · needs human review)."
     else:
+        # 확인 16차 규칙 ⑤ · ⑥ — 숫자 이름은 다른 화면과 같게('의심 필지') · 두 문장 안
         out.answer = ((LETTER_KO if letter else "") + f"{j['place']} 실태조사 보고서 초안을 만들었습니다"
-                      + (f"(의심 {{{{suspects}}}} · 법령 조문 {len(laws)}개 인용)" if c2 else "")
-                      + ". 아래 버튼으로 초안 파일을 내려받을 수 있습니다. AI 가 작성한 초안이라 사람 확인이 필요합니다.")
+                      + (f"(의심 필지 {{{{suspects}}}} · 법령 조문 {len(laws)}개 인용)" if c2 else "")
+                      + " — 아래에서 내려받을 수 있습니다. AI가 쓴 초안이라 사람 확인이 필요합니다.")
     return out
 
 

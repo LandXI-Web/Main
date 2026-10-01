@@ -563,6 +563,10 @@ BANNED: list[tuple[str, re.Pattern, dict]] = [
     ("V-World", re.compile(r"V-?World|브이월드", re.I), {"ko": "국가 공간정보", "en": "national spatial data"}),
     ("API 키", re.compile(r"API\s?키"), {"ko": "연계", "en": "link"}),
     ("llm", re.compile(r"(?<![A-Za-z])[Ll][Ll][Mm](?![A-Za-z])"), {"ko": "AI", "en": "AI"}),
+    # 확인 16차 규칙 ⑥ — 내부 말 대신 쓰는 말(용어표): 프레임 → 범위 · 레이어 → 층 · 폴리곤 → 도형
+    ("프레임", re.compile(r"프레임"), {"ko": "범위", "en": "area"}),
+    ("레이어", re.compile(r"레이어"), {"ko": "층", "en": "layer"}),
+    ("폴리곤", re.compile(r"폴리곤"), {"ko": "도형", "en": "shape"}),
 ]
 
 

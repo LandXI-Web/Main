@@ -21,7 +21,7 @@
    · 동작: kit:agent-action(detail = ui_action · cancelable). 화면이 직접 처리하면 e.preventDefault() 하고 끝나면
      kit:agent-action-done {op, ok} 를 낸다. 아무도 막지 않으면 키트 기본 처리(stage.map: map_region · map_zoom · map_view)
      후 키트가 kit:agent-action-done 을 낸다. 받은 done 은 이 run 의 기록(data-acts · data-acts-ok)으로 남긴다. */
-import { h, esc, api, isEnvelope, bboxOf } from './util.js';
+import { h, esc, api, isEnvelope, bboxOf, hasRoute } from './util.js';
 import { sse } from '../../shared/api-v1.js';
 import { devlog } from './dev-drawer.js';
 import { t, tl, langOf, nf, locale } from './i18n.js';
@@ -33,29 +33,42 @@ const KIT_OPS = new Set(['map_region', 'map_zoom', 'map_view', 'map_layer']);   
 /* 그리기 · 보여 주기(10-01 사용자 "시각화한 거 맞어? 안 보이는데?") — 화면에 실제로 그려진 것을 확인한 뒤에만 '그렸습니다'.
    화면이 처리하면 화면이 끝 신호를, 아니면 키트가 지도에 그리고 보이는지 잰 뒤 끝 신호를 낸다. 지도가 없는 화면이면 그리지 못했다고 말하고
    채팅 안에 작은 결과(표) + 'XI맵에서 크게 보기'(그 지역 · 그 규칙을 켠 XI맵). */
-const VIS = new Set(['map_on', 'map_arrive', 'map_frame', 'map_flyto']);
+const VIS = new Set(['map_on', 'map_arrive', 'map_frame', 'map_flyto', 'map_compare', 'map_draw', 'map_snapshot']);   // 둘째 묶음(두 시점 · 범위 그리기 · 그림 저장)도 그린 뒤에만
 const TRACK = new Set([...KIT_OPS, ...VIS]);    // R3 M5 — 답이 '했습니다'라고 말하는 지도 동작(성공·실패를 답에 반영)
 const DEADEND = /아직\s*할\s*수\s*없|할\s*수\s*없습니다|지원하지\s*않|can't do that|cannot do that|not (?:available|supported) yet/i;   // 막다른 말 — 다음 할 일을 붙인다
-const ACT_WAIT_MS = 3000;                                                       // 답이 끝난 뒤 이 시간 안에 동작 끝 신호가 없으면 '확인되지 않음'
+const ACT_WAIT_MS = 6000;                                                       // 답이 끝난 뒤 이 시간 안에 동작 끝 신호가 없으면 '확인되지 않음'(그 전까지 동작 문장은 진행형 · 먼 지역 비행 + 지역 자료 · 확인 16차 규칙 ①)
 const KEEP_TURNS = 30;                                                          // 이어 보는 대화(이 창) — 오래된 차례부터 버린다
 
 /* 창 글(화면 로캘) · 생각 중 한 줄(질문 언어) — 새 업무 용어 없이 */
 const STR = {
   ko: {
-    title: 'XI ChatGEO', sub: '말로 지도 · 분석 · 보고서', open: 'XI ChatGEO 열기', close: '닫기', tag: 'XI ChatGEO', send: '보내기',
-    ph: '지도를 움직이거나 결과를 물어보세요', intro: '말로 지도를 움직이고, 결과 · 보고서 · 법령을 찾아 드립니다.', sugg: '추천 질문', log: '대화',
+    // 확인 16차 X-1 · 원칙 107 — 머리 부제 · 입력 칸 안내(부제는 의미 단위 두 덩이: '공간지식 추론 서비스' + '(지도 제어 · 분석 · 보고서)')
+    title: 'XI ChatGEO', sub: ['공간지식 추론 서비스', '(지도 제어 · 분석 · 보고서)'], open: 'XI ChatGEO 열기', close: '닫기', tag: 'XI ChatGEO', send: '보내기',
+    ph: '더 똑똑한 공간지식 추론 서비스를 체험해 보세요', intro: '말로 지도를 움직이고, 결과 · 보고서 · 법령을 찾아 드립니다.', sugg: '추천 질문', log: '대화',
     draw: '이 화면 지도에는 그 결과 층이 없어 그리지 못했습니다', drawNomap: '이 화면에는 지도가 없어 지도에 그리지 못했습니다', xi: 'XI맵에서 크게 보기',
     found: '찾은 필지', next: '이렇게 해 볼 수 있습니다', mapCan: '이 화면 지도에서는 이동 · 확대 · 축소 · 기울이기 · 영상 층 켜고 끄기를 할 수 있습니다.',
     nomap: '이 화면에는 지도가 없습니다. 지도는 XI맵에서 크게 볼 수 있습니다.', nextMap: ['지도 확대해 줘', '3D로 기울여 줘', '어느 지역에 어떤 결과가 있어?'],
+    alt: '다른 뜻이면', more: (n) => `${n}곳 더 보기`, fb: '도움 안 됐어요', fbDone: '알려 주셔서 고맙습니다',
+    tryIt: '해 보기', dismiss: '알림 닫기', ok: '실행', snapFail: '지도를 그림 파일로 만들지 못했습니다',
+    cant: { map_compare: '이 화면에서는 두 시점을 나란히 볼 수 없습니다', map_draw: '이 화면에서는 범위를 그릴 수 없습니다', map_snapshot: '이 화면에는 지도가 없어 그림 파일로 만들지 못했습니다',
+      map_on: '이 화면에서는 지도에 칠할 수 없습니다', map_arrive: '이 화면에서는 지도에 표시할 수 없습니다' },
+    xiFor: { map_compare: 'XI맵에서 두 시점 보기', map_draw: 'XI맵에서 범위 그리기', map_on: 'XI맵에서 보기', map_arrive: 'XI맵에서 보기', map_layer: 'XI맵에서 보기' },
+    same: { on: '{layer} 층은 이미 켜져 있습니다', off: '{layer} 층은 이미 꺼져 있습니다', '3d': '이미 입체로 보고 있습니다', top: '이미 위에서 보고 있습니다', region: '이미 {place}을 보고 있습니다' },
     doing: { _: '답을 찾고 있습니다', find: '결과를 찾고 있습니다', map: '지도를 움직이고 있습니다', law: '법령 조문을 찾고 있습니다', report: '보고서 초안을 만들고 있습니다',
       ops: '운영 현황을 확인하고 있습니다', run: 'AI 분석을 준비하고 있습니다', img: '영상을 살펴보고 있습니다', parcel: '필지를 찾고 있습니다', ledger: '대장과 AI 결과를 맞추고 있습니다' },
   },
   en: {
-    title: 'XI ChatGEO', sub: 'Map · analysis · reports', open: 'Open XI ChatGEO', close: 'Close', tag: 'XI ChatGEO', send: 'Send',
-    ph: 'Move the map or ask about results', intro: 'Move the map by chat, and ask about results and reports.', sugg: 'Suggested questions', log: 'Conversation',
+    title: 'XI ChatGEO', sub: ['Spatial reasoning service', '(map control · analysis · reports)'], open: 'Open XI ChatGEO', close: 'Close', tag: 'XI ChatGEO', send: 'Send',
+    ph: 'Try a smarter spatial reasoning service', intro: 'Move the map by chat, and ask about results and reports.', sugg: 'Suggested questions', log: 'Conversation',
     draw: "This map has no layer for that result, so it wasn't drawn", drawNomap: "This screen has no map, so it wasn't drawn", xi: 'Open in XI map',
     found: 'Parcels found', next: 'You can try', mapCan: 'On this map you can move, zoom, tilt and turn the imagery on or off.',
     nomap: 'This screen has no map. Open the XI map to see it large.', nextMap: ['Zoom in on the map', 'Tilt the map in 3D', 'What results do we have here?'],
+    alt: 'If you meant', more: (n) => `${n} more`, fb: 'Not helpful', fbDone: 'Thanks for telling us',
+    tryIt: 'Try it', dismiss: 'Close notice', ok: 'Run', snapFail: "Couldn't save the map as a picture",
+    cant: { map_compare: "Two time points can't be shown side by side on this screen", map_draw: "You can't draw an area on this screen", map_snapshot: "This screen has no map to save",
+      map_on: "This screen can't colour the map", map_arrive: "This screen can't mark the map" },
+    xiFor: { map_compare: 'Compare in XI map', map_draw: 'Draw in XI map', map_on: 'Open in XI map', map_arrive: 'Open in XI map', map_layer: 'Open in XI map' },
+    same: { on: 'The {layer} layer is already on', off: 'The {layer} layer is already off', '3d': 'Already in 3D view', top: 'Already in top-down view', region: 'Already showing {place}' },
     doing: { _: 'Looking for the answer', find: 'Looking up the results', map: 'Moving the map', law: 'Finding the provision', report: 'Drafting the report',
       ops: 'Checking operations', run: 'Preparing the AI analysis', img: 'Looking at the imagery', parcel: 'Finding the parcel', ledger: 'Matching the register and AI results' },
   },
@@ -89,8 +102,13 @@ function trackMaps() {
   }
 }
 trackMaps();
+const visibleMap = (m) => { try { const c = m.getContainer(); return c?.isConnected && c.getClientRects().length > 0 && c.offsetWidth > 40 && c.offsetHeight > 40; } catch { return false; } };
+/** 이 화면의 지도 — 움직인 적 있는 지도(MAPS) 먼저, 없으면 키트 무대(createStage 가 붙인 __stage) 중 보이는 것 */
 const liveMap = () => {
-  for (let i = MAPS.length - 1; i >= 0; i--) { try { if (MAPS[i].getContainer()?.isConnected) return MAPS[i]; } catch { /* 지워진 지도 */ } }
+  for (let i = MAPS.length - 1; i >= 0; i--) { if (visibleMap(MAPS[i])) return MAPS[i]; }
+  for (const el of document.querySelectorAll('.maplibregl-map')) {
+    for (let n = el; n && n !== document.body; n = n.parentElement) { const m = n.__stage?.map; if (m && visibleMap(m)) return m; }
+  }
   return null;
 };
 const REASONS = ['max', 'min', 'nomap', 'nolayer'];
@@ -201,11 +219,13 @@ function create(opts) {
   const conf = h('div.k-ck-c', { hidden: true });
   const hdFace = h('span.k-chat-face.k-chat-face--hd', { 'data-face': 'idle' }, faceImg('idle'));
   const xBtn = h('button.k-chat-x', { type: 'button', 'aria-label': S.close, html: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>' });
-  const head = h('header.k-chat-h', {}, hdFace, h('span.k-chat-tt', {}, h('b', { text: S.title }), h('small', { text: S.sub })), xBtn);
+  // 머리 — 이름 한 줄 + 부제(의미 단위 두 덩이 · 좁으면 덩이 사이에서만 줄을 바꾼다)
+  const head = h('header.k-chat-h', {}, hdFace, h('span.k-chat-tt', {}, h('b', { text: S.title }), h('small', {}, ...S.sub.map((x) => h('span', { text: x })))), xBtn);
   const intro = h('div.k-chat-msg.ai.k-chat-intro', {}, h('span.k-chat-face', { 'data-face': 'idle' }, faceImg('idle')), h('div.k-chat-bub', {}, h('p', { text: S.intro })));
   const log = h('div.k-chat-b', { role: 'log', 'aria-live': 'polite', 'aria-label': S.log }, intro);
   const sugg = h('div.k-chat-sugg', { role: 'group', 'aria-label': S.sugg });
-  const box = h('section.k-ck.k-chat', { id: 'k-chat', role: 'dialog', 'aria-modal': 'false', 'aria-label': S.title, hidden: true }, head, log, sugg, form);
+  const note = h('div.k-chat-note', { hidden: true, role: 'status' });    // '지난번에 물으신 ○○가 이제 됩니다' 한 줄(개선 고리 알림)
+  const box = h('section.k-ck.k-chat', { id: 'k-chat', role: 'dialog', 'aria-modal': 'false', 'aria-label': S.title, hidden: true }, head, note, log, sugg, form);
   const fabFace = h('span.k-chat-face.k-chat-face--fab', { 'data-face': 'idle' }, faceImg('idle'));
   const fab = h('button.k-chat-fab', { type: 'button', 'aria-label': S.open, 'aria-controls': 'k-chat', 'aria-expanded': 'false' }, fabFace);
   const tag = h('span.k-chat-tag', { 'aria-hidden': 'true', text: S.tag });
@@ -259,7 +279,7 @@ function create(opts) {
     const was = box.hidden;
     if (was) openedAt = Date.now();
     box.hidden = false; root.dataset.open = '1'; fab.setAttribute('aria-expanded', 'true'); tag.hidden = true;
-    if (was) { drawSugg(); place(true); requestAnimationFrame(() => { log.scrollTop = log.scrollHeight; }); }
+    if (was) { drawSugg(); place(true); requestAnimationFrame(() => { log.scrollTop = log.scrollHeight; }); loadNotices(); }
     store.data.open = true; save();
     if (cfg.guest) return;
     if (q) input.value = q;
@@ -276,6 +296,32 @@ function create(opts) {
     if (inside) { try { fab.focus({ preventScroll: true }); } catch { /* */ } }
     place();
   };
+  /* 개선 고리 알림(확인 16차 개선-1) — 창을 열 때 '이제 됩니다' 한 줄 · 해 보기(그 질문을 보냄) · 닫기. 보이거나 닫으면 본 것으로(서버) · 주소가 없으면 조용히 */
+  let noteAt = 0, notes = [], noteRoute = null;
+  const seenNote = (id) => api(`/assist/notices/${encodeURIComponent(id)}/seen`, { method: 'POST' }).catch((err) => devlog('assist notice', String(err?.code || err?.message || err)));
+  function drawNote() {
+    const it = notes[0];
+    note.replaceChildren(); note.hidden = !it;
+    if (!it) return;
+    const L = S;
+    const msg = String(it.text || '');                                       // 서버(개선 고리)가 준 문구 그대로
+    // 따옴표 안 요지('지도 화면을 이미지로 저장')는 한 덩이 — 줄이 그 안에서 끊기지 않게(법전 §2-1)
+    const txt = h('span.k-chat-note-t', {}, ...msg.split(/('[^']{1,24}')/).filter(Boolean).map((x) => (/^'.*'$/.test(x) ? h('span.k-nb', { text: x }) : document.createTextNode(x))));
+    note.append(txt,
+      it.try ? h('button.k-chat-note-go', { type: 'button', text: L.tryIt, onclick: () => { notes.shift(); drawNote(); if (box.dataset.state !== 'busy') { input.value = it.try; form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true })); } } }) : null,
+      h('button.k-chat-note-x', { type: 'button', 'aria-label': L.dismiss, html: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>', onclick: () => { notes.shift(); drawNote(); } }));
+    if (!it.__seen) { it.__seen = true; seenNote(it.id); }
+  }
+  function loadNotices() {
+    if (cfg.guest || Date.now() - noteAt < 60000) return;
+    noteAt = Date.now();
+    noteRoute ||= hasRoute('/assist/notices').catch(() => false);
+    noteRoute.then((ok) => (ok ? api('/assist/notices') : null)).then((j) => {
+      const got = (j?.items || []).filter((x) => x && x.id && !notes.some((n) => n.id === x.id));
+      if (!got.length) return;
+      notes = [...notes, ...got]; drawNote();
+    }).catch((err) => devlog('assist notices', String(err?.code || err?.message || err)));
+  }
   /** 화면이 부르는 닫기 = 지도 보이기(답 뒤 자동 접기) — PC 는 지도를 가리지 않으므로 그대로 · 휴대폰은 시트를 내린다 */
   const close = (o = {}) => { if (o.force || isPhone()) hide(); };
   fab.addEventListener('click', () => (box.hidden ? open() : hide()));
@@ -324,7 +370,7 @@ function create(opts) {
     }
     archive();
     const face = h('span.k-chat-face', { 'data-face': 'think' }, faceImg('think'));
-    const bub = h('div.k-chat-bub', {}, thinkEl(), plan, conf, ans, blk);
+    const bub = h('div.k-chat-bub', {}, thinkEl(), ans, plan, conf, blk);     // 답 한 벌: 문장 → 지도 동작 줄 → 확인 카드 → 표 · 차트 · 파일 · 버튼
     const msg = h('div.k-chat-msg.ai.is-live', {}, face, bub);
     plan.innerHTML = ''; plan.hidden = true; ans.innerHTML = ''; ans.hidden = true; blk.innerHTML = ''; blk.hidden = true; conf.innerHTML = ''; conf.hidden = true;
     const me = meMsg(q);
@@ -349,27 +395,29 @@ function create(opts) {
     setTimeout(() => { if (input.value.trim() === raw || input.value.trim().startsWith(raw + '\n')) input.value = ''; }, 40);
   }, true);
 
-  // 동작 끝 기록(plan 3.1·3.2) — 화면·키트가 낸 kit:agent-action-done {op, ok, reason} 을 이 run 의 동작에 짝지어 센다
+  // 동작 끝 기록(plan 3.1·3.2) — 화면·키트가 낸 kit:agent-action-done {op, ok, reason, same?, hint?} 을 이 run 의 동작에 짝지어 센다
+  // same = 바꿀 것이 없었다(이미 켜져 있음 · 이미 입체) — 됨으로 세되 문장은 '이미 ~'로(확인 16차 규칙 ①)
   document.addEventListener('kit:agent-action-done', (e) => {
     const d = e.detail || {};
     acts.done += 1; if (d.ok) acts.ok += 1;
     box.dataset.actsDone = String(acts.done); box.dataset.actsOk = String(acts.ok);
     const x = acts.items.find((it) => it.op === d.op && it.state === 'sent');
-    if (x) { x.state = d.ok ? 'ok' : 'fail'; x.reason = d.reason || ''; markStep(x.step); }
-    devlog('agent action', `${d.op || ''} ${d.ok ? 'ok' : 'fail'}${d.by ? ` · ${d.by}` : ''}${d.reason ? ` · ${d.reason}` : ''}`);
+    if (x) { x.state = d.ok ? 'ok' : 'fail'; x.reason = d.reason || ''; x.same = !!(d.ok && d.same); x.hint = d.hint || null; markStep(x.step); }
+    devlog('agent action', `${d.op || ''} ${d.ok ? 'ok' : 'fail'}${d.same ? ' · same' : ''}${d.by ? ` · ${d.by}` : ''}${d.reason ? ` · ${d.reason}` : ''}`);
     if (x) settleActs(false);
   });
 
-  /* 지도 동작 단계 줄: 그 단계의 동작 중 하나라도 성공 → ✓ · 모두 실패 → 실패 표시 · 끝 신호를 기다리는 중이면 표시 없음(final 이면 그대로 둔다) */
+  /* 지도 동작 단계 줄: 그 단계의 동작 중 하나라도 성공 → ✓ · 모두 '이미 그래 있음' → 회색 ✓ · 모두 실패 → 실패 표시 · 끝 신호를 기다리는 중이면 표시 없음 */
   function markStep(i) {
     if (i == null) return;
     const li = plan.querySelector(`li[data-i="${i}"]`); if (!li) return;
     const tr = acts.items.filter((x) => x.step === i && TRACK.has(x.op));
     if (!tr.length) return;
-    const ok = tr.some((x) => x.state === 'ok'), bad = tr.every((x) => x.state === 'fail');
-    li.classList.toggle('is-done', ok); li.classList.toggle('is-fail', !ok && bad); li.classList.toggle('is-wait', !ok && !bad);
+    const ok = tr.some((x) => x.state === 'ok'), bad = tr.every((x) => x.state === 'fail'), same = tr.every((x) => x.same);
+    li.classList.toggle('is-done', ok && !same); li.classList.toggle('is-same', same); li.classList.toggle('is-fail', !ok && bad); li.classList.toggle('is-wait', !ok && !bad);
   }
   /* R3 M5 — 답이 말한 지도 동작이 모두 실패(ok:false)면 동작 문장을 실패 문장으로 바꾼다 · 3초 안에 끝 신호가 없으면 '확인되지 않음'.
+     확인 16차 규칙 ① — 끝 신호 전에는 동작 문장을 진행형('옮기고 있습니다')으로 두고, 끝 신호를 받은 뒤에만 '옮겼습니다'로 확정한다.
      결과는 서버 run 기록(perf.acts_*)에도 남긴다. */
   let shown = null, actTimer = 0;
   /* 판정 — 카메라(이동 · 확대 · 시점 · 층) 묶음과 그리기 묶음을 따로: 묶음 안에서 하나라도 되면 됨 · 모두 실패면 실패 · 끝 신호가 안 오면 확인되지 않음.
@@ -385,33 +433,119 @@ function create(opts) {
     const v = good(cam) && good(vis) ? 'ok' : cam === 'ok' || vis === 'ok' ? 'partial' : [cam, vis].includes('unconfirmed') ? 'unconfirmed' : 'failed';
     return { v, cam, vis };
   };
-  const hasMap = () => !!(cfg.stage?.map || liveMap());
+  const hasMap = () => !!((cfg.stage?.map && visibleMap(cfg.stage.map)) || liveMap());
+  const pageKey = () => cfg.home || document.body.dataset.home || location.pathname.split('/').filter(Boolean).pop() || '';
+  const OP_KO = { map_region: '지역 이동', map_zoom: '확대 · 축소', map_view: '시점 바꾸기', map_layer: '층 켜기 · 끄기', map_on: '지도에 칠하기', map_arrive: '지도에 표시',
+    map_flyto: '필지로 이동', map_frame: '범위 표시', map_compare: '두 시점 나란히', map_draw: '범위 그리기', map_snapshot: '지도 그림 저장' };
+  /** 진행형 — 끝 신호 전 동작 문장('옮겼습니다' → '옮기고 있습니다') */
+  const WIP = [[/옮겼습니다/g, '옮기고 있습니다'], [/이동했습니다/g, '이동하고 있습니다'], [/확대했습니다/g, '확대하고 있습니다'], [/축소했습니다/g, '축소하고 있습니다'],
+    [/기울였습니다/g, '기울이고 있습니다'], [/바꿨습니다/g, '바꾸고 있습니다'], [/켰습니다/g, '켜고 있습니다'], [/껐습니다/g, '끄고 있습니다'], [/남겼습니다/g, '남기고 있습니다'],
+    [/표시했습니다/g, '표시하고 있습니다'], [/칠했습니다/g, '칠하고 있습니다'], [/놓았습니다/g, '놓고 있습니다'], [/만들었습니다/g, '만들고 있습니다']];
+  const wip = (md, claims, lg) => {
+    if (lg !== 'ko') return md;
+    for (const c of claims || []) { if (!c || !md.includes(c)) continue; let w = c; for (const [rx, to] of WIP) w = w.replace(rx, to); md = md.replace(c, w); }
+    return md;
+  };
+  const josa = (w, a, b) => { const c = String(w || '').trim().slice(-1).charCodeAt(0); return c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 ? a : b; };
+  /** '이미 그래 있던' 동작 한 줄 — 영상 층은 이미 켜져 있습니다 · 이미 입체로 보고 있습니다 */
+  function sameLine(x, lg) {
+    const L = (STR[lg] || S).same, a = x.a || {};
+    const layer = tl(lg, `cmdk.layer.${a.layer || 'imagery'}`);
+    if (x.op === 'map_layer') return L[a.on === false ? 'off' : 'on'].replace('{layer}', layer) + '.';
+    if (x.op === 'map_view') return L[(+a.pitch || 0) > 0 ? '3d' : 'top'] + '.';
+    if (x.op === 'map_region') { const p = a.emd_name || a.name || ''; return L.region.replace('{place}', p).replace('을 보고', lg === 'ko' ? `${josa(p, '을', '를')} 보고` : ' 보고') + '.'; }
+    return '';
+  }
+  /** 그리기 묶음이 안 됐을 때 한 줄 — 동작마다(두 시점 · 범위 그리기 · 그림 저장 · 칠하기) */
+  function visFail(lg) {
+    const L = STR[lg] || S;
+    const bad = acts.items.filter((x) => VIS.has(x.op) && x.state !== 'ok');
+    const op = bad.find((x) => L.cant[x.op])?.op;
+    if (op === 'map_snapshot' && hasMap()) return `${L.snapFail}.`;
+    return `${op ? L.cant[op] : hasMap() ? L.draw : L.drawNomap}.`;
+  }
+  /** 그리지 못했을 때 가장 가까운 일 — 그 지역 · 그 규칙 · 그 시점을 이어 받은 XI맵 버튼(화면에 XI맵 길이 있을 때만) */
+  function xiFallback(lg) {
+    const L = STR[lg] || S;
+    if (!document.querySelector('.k-mast a.k-xi') || /\/xi-clean\//.test(location.pathname)) return null;
+    const bad = acts.items.filter((x) => TRACK.has(x.op) && x.state !== 'ok');
+    const pick = (op) => acts.items.find((x) => x.op === op)?.a;
+    const arr = pick('map_arrive'), on = pick('map_on'), cmp = pick('map_compare'), drw = pick('map_draw'), reg = pick('map_region');
+    const sgg = cmp?.sgg_cd || drw?.sgg_cd || arr?.sgg_cd || on?.sgg_cd || on?.filter?.sgg_cd || reg?.sgg_cd || ctxNow().region || '';
+    const q = new URLSearchParams(); if (sgg) q.set('region', String(sgg));
+    const rule = on?.filter?.rule || arr?.features?.[0]?.properties?.rule; if (rule) q.set('rule', String(rule));
+    if (cmp?.left?.id && cmp?.right?.id) q.set('compare', `${cmp.left.id},${cmp.right.id}`);
+    if (drw) q.set('tool', 'analyze');
+    const op = bad.find((x) => L.xiFor[x.op])?.op;
+    return { label: (op && L.xiFor[op]) || L.xi, href: new URL('../xi-clean/' + (q.toString() ? '?' + q : ''), location.href).href };
+  }
   function settleActs(final) {
     if (!shown || shown.run !== runId) return;
     const r = actVerdict(final || shown.expired);
     if (!r || r.v === shown.v) return;
     shown.v = r.v; box.dataset.actsVerdict = r.v;
     let md = shown.md;
-    if (r.v !== 'ok') {
-      const tr = acts.items.filter((x) => TRACK.has(x.op));
+    const tr = acts.items.filter((x) => TRACK.has(x.op));
+    const claims = (shown.claims || []).filter((c) => c && md.includes(c));
+    if (r.v === 'ok' && tr.length && tr.every((x) => x.same)) {
+      // 바뀐 것이 없다 — '켰습니다'가 아니라 '이미 켜져 있습니다'(+ 화면이 알려 준 다음 할 일)
+      const line = [...new Set(tr.map((x) => sameLine(x, shown.lang)).filter(Boolean))].join(' ');
+      if (line) { if (claims.length) { md = md.replace(claims[0], line); for (const c of claims.slice(1)) md = md.replace(c, ''); } else md = `${md}${md ? '\n\n' : ''}${line}`; }
+    } else if (r.v !== 'ok') {
       const L = STR[shown.lang] || S;
       const lines = [];
-      if (r.vis !== 'ok' && r.vis !== 'none') lines.push(`${hasMap() ? L.draw : L.drawNomap}.`);
+      if (r.vis !== 'ok' && r.vis !== 'none') lines.push(visFail(shown.lang));
       if (r.cam === 'failed') lines.push(tr.filter((x) => !VIS.has(x.op)).map((x) => failLine(x, shown.lang)).join(' '));
       else if (r.cam === 'unconfirmed') lines.push(`${tl(shown.lang, 'cmdk.act.unconfirmed')}.`);
       const line = lines.join(' ');
-      const claims = (shown.claims || []).filter((c) => c && md.includes(c));
       if (claims.length) { md = md.replace(claims[0], line); for (const c of claims.slice(1)) md = md.replace(c, '').replace(/[ \t]{2,}/g, ' '); }
       else md = `${md}${md ? '\n\n' : ''}${line}`;
+      void L;
+      // 개선 고리 — 화면이 지도 동작을 못 그린 것도 모은다(주소가 아직 없으면 조용히)
+      feedback('map_failed', { summary: [...new Set(tr.filter((x) => x.state !== 'ok').map((x) => OP_KO[x.op] || x.op))].join(' · ') });
     }
     ans.hidden = !md; ans.innerHTML = answerHtml(md, shown.envs, shown.lang);
-    if (r.v !== 'ok') nextSteps({ lang: shown.lang, drawn: r.vis === 'ok' || r.vis === 'none' });
+    const hints = tr.map((x) => x.hint).filter((h0) => h0 && h0.label);
+    if (r.v !== 'ok') {
+      const fb = xiFallback(shown.lang);
+      const drawn = r.vis === 'ok' || r.vis === 'none';
+      if (fb && (!drawn || r.cam === 'failed')) shown.next = [{ label: fb.label, href: fb.href }, ...shown.next.filter((b) => b.label !== fb.label)];
+      if (!shown.next.length) nextSteps({ lang: shown.lang, drawn });
+    }
+    if (hints.length) shown.next = [...hints.map((h0) => ({ label: h0.label, q: h0.q || h0.label })), ...shown.next];
+    if (r.v !== 'ok' || hints.length) drawTail();
     snap();
-    const items = acts.items.filter((x) => TRACK.has(x.op)).map((x) => ({ op: x.op, ok: x.state === 'ok', done: x.state !== 'sent', ...(x.reason ? { reason: x.reason } : {}) }));
+    const items = tr.map((x) => ({ op: x.op, ok: x.state === 'ok', done: x.state !== 'sent', ...(x.reason ? { reason: x.reason } : {}) }));
     api(`/agent/runs/${shown.run}/acts`, { method: 'POST', body: { sent: items.length, done: items.filter((x) => x.done).length, ok: items.filter((x) => x.ok).length, items, verdict: r.v } })
       .catch((err) => devlog('agent acts', String(err?.message || err)));
   }
-  /* 막다른 말 대신 다음 할 일 — (가) 가장 가까운 일: 지도가 없거나 그리지 못했으면 그 지역 · 그 규칙을 켠 XI맵 · 찾은 필지는 작은 표로
+
+  /* 답 꼬리(확인 16차 답 한 벌) — 다음 버튼 0–3(첫 버튼은 채움 · 가장 가까운 일) · '다른 뜻이면 ○○' 한 줄 · '이미 됨' 안내 · '도움 안 됐어요'
+     버튼 = {label, q}(누르면 그 말을 보냄) | {label, href}(그 화면을 연다). 지난 차례로 옮겨도 같은 모양으로 남는다. */
+  function drawTail() {
+    if (!shown) return;
+    blk.querySelector('.k-chat-tail')?.remove();
+    const L = STR[shown.lang] || S;
+    const el = h('div.k-chat-tail', { 'data-kind': 'next' });
+    const btn = (b, main) => (b.href
+      ? h(`a.k-chat-btn${main ? '.is-main' : ''}`, { href: new URL(b.href, location.href).href, text: b.label })
+      : h(`button.k-chat-btn${main ? '.is-main' : ''}`, { type: 'button', 'data-q': b.q || b.label, text: b.label }));
+    const nx = (shown.next || []).filter((b) => b && b.label).slice(0, 3);
+    if (nx.length) el.append(h('div.k-chat-acts', {}, ...nx.map((b, i) => btn(b, i === 0))));
+    if (shown.hint?.text) el.append(h('p.k-chat-hint', {}, h('span', { text: shown.hint.text }), shown.hint.try ? btn({ label: L.tryIt, q: shown.hint.try }, false) : null));
+    if (shown.alt?.label) el.append(h('p.k-chat-alt', {}, h('span', { text: L.alt }), btn(shown.alt, false)));
+    if (shown.run && !shown.noFb) el.append(h('p.k-chat-fbw', {}, h('button.k-chat-fb', { type: 'button', 'data-run': shown.run, text: L.fb })));
+    if (el.children.length) { blk.append(el); blk.hidden = false; }
+  }
+  /** 개선 고리(확인 16차 개선-1) — 화면이 보내는 신호. 주소가 아직 없거나(404) 실패해도 화면 오류 0 · 조용히 */
+  let fbRoute = null;
+  function feedback(kind, extra = {}, runArg = null) {
+    const run = runArg || shown?.run || runId;
+    if (!run) return;
+    fbRoute ||= hasRoute('/assist/feedback').catch(() => false);
+    fbRoute.then((ok) => ok && api('/assist/feedback', { method: 'POST', body: { run_id: run, kind, screen: pageKey(), ...extra } })).catch((err) => devlog('assist feedback', String(err?.code || err?.message || err)));
+  }
+  /* 막다른 말 대신 다음 할 일(서버가 버튼을 주지 않은 답의 대비책) — (가) 가장 가까운 일: 지도가 없거나 그리지 못했으면 그 지역 · 그 규칙을 켠 XI맵 · 찾은 필지는 작은 표로
      (나) 할 수 있는 것 두세 개(누르면 바로 묻는다) (다) 이유 한 줄. 한 답에 한 번. */
   let nextFor = null;                                              // 이 답의 다음 할 일 상태(막다른 말 · 그리지 못함을 합쳐 한 덩이로)
   function nextSteps({ lang: lg = lang, drawn, deadend } = {}) {
@@ -484,6 +618,8 @@ function create(opts) {
     box.dataset.busy = '1'; box.dataset.state = 'busy'; box.setAttribute('aria-busy', 'true');
     guard = setTimeout(() => { if (my === seq && box.dataset.state === 'busy') fail('끝 이벤트 없이 시간 초과'); }, TIMEOUT_MS);
     const ctx = { ...ctxNow() };
+    ctx.has_map = hasMap();                          // 확인 16차 규칙 ④ — 지도 없는 화면이면 서버가 'XI맵을 ○○에서 열기'로 답한다
+    ctx.page = pageKey();                            // 지금 화면(XI맵이면 차트 막대 누르기 · 가르기 등이 된다)
     if (runId) ctx.prev_run = runId;   // 이 창의 바로 앞 답('1위 필지' 같은 말은 이 답의 목록으로만 푼다 · 같은 계정 다른 창 답과 섞이지 않게)
     if (cfg.stage?.map) { const b = cfg.stage.map.getBounds(); ctx.bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]; ctx.zoom = cfg.stage.map.getZoom(); }
     let r;
@@ -565,15 +701,25 @@ function create(opts) {
         const md = String(d?.answer_md || buf || '').trim();
         devlog('vllm', `${d?.model?.id || ''} · ${d?.perf?.total_ms ?? '—'} ms · ${md.slice(0, 200)}`);
         if (!md && !(d?.blocks || []).length) { fail('빈 답'); return; }
-        settle('done'); ans.hidden = !md; ans.innerHTML = answerHtml(md, d?.envelopes, d?.lang || lang);
-        renderBlocks(d?.blocks || [], d?.envelopes || {}, d?.lang || lang);
-        shown = { run, md, envs: d?.envelopes || {}, lang: d?.lang || lang, claims: d?.act_claims || [], v: null, expired: false };
+        const lg = d?.lang || lang;
+        shown = { run, md, envs: d?.envelopes || {}, lang: lg, claims: d?.act_claims || [], v: null, expired: false,
+          next: Array.isArray(d?.next) ? d.next.slice(0, 3) : [], alt: d?.alt || null, hint: d?.hint || null };
+        // 끝 신호를 기다리는 지도 동작이 있으면 동작 문장은 진행형으로 두고, 신호가 오면 확정한다(확인 16차 규칙 ①)
+        const pending = acts.items.some((x) => TRACK.has(x.op) && x.state === 'sent');
+        settle('done'); ans.hidden = !md; ans.innerHTML = answerHtml(pending ? wip(md, shown.claims, lg) : md, d?.envelopes, lg);
+        renderBlocks(d?.blocks || [], d?.envelopes || {}, lg);
+        drawTail();
         settleActs(false);
-        if (DEADEND.test(md)) nextSteps({ lang: d?.lang || lang, deadend: true });   // 막다른 말로 끝내지 않는다
+        if (DEADEND.test(md) && !shown.next.length && !shown.alt) nextSteps({ lang: lg, deadend: true });   // 서버가 버튼을 주지 않은 막다른 말만 대비책
         clearTimeout(actTimer);
         actTimer = setTimeout(() => { if (shown && shown.run === runId) { shown.expired = true; settleActs(true); } }, ACT_WAIT_MS);
       }
-      if (name === 'agent.rejected') say(d?.message || tl(lang, 'cmdk.error'));
+      if (name === 'agent.rejected') {
+        say(d?.message || tl(lang, 'cmdk.error'));
+        // 거절도 이유 한 줄 + 대신 할 수 있는 버튼(확인 16차 규칙 ②)
+        shown = { run, md: d?.message || '', envs: {}, lang: d?.lang || lang, claims: [], v: null, expired: true, next: Array.isArray(d?.next) ? d.next.slice(0, 3) : [], alt: null, hint: d?.hint || null };
+        drawTail();
+      }
       if (name === 'agent.failed') fail(`failed · ${d?.error || ''}`);
     }
   }
@@ -582,19 +728,21 @@ function create(opts) {
     conf.hidden = false;
     conf.innerHTML = '';
     conf.append(h('p.k-ck-cq', { text: d?.title || d?.say || tl(lang, `tool.${d?.tool}`) || tl(lang, 'cmdk.confirm') }),   // plan 3.4 — 도구가 준 제목 먼저
+      d?.line ? h('p.k-ck-cl', { text: d.line }) : null,
       h('div.k-ck-cb', {},
-        h('button.t-btn', { type: 'button', text: tl(lang, 'cmdk.run'), onclick: () => decide(d.confirm_id, 'approve') }),
+        h('button.t-btn', { type: 'button', text: d?.ok_label || tl(lang, 'cmdk.run'), onclick: () => decide(d.confirm_id, 'approve') }),
         h('button.t-btn.t-btn--2', { type: 'button', text: tl(lang, 'cmdk.cancel'), onclick: () => decide(d.confirm_id, 'reject') })));
     requestAnimationFrame(() => { log.scrollTop = log.scrollHeight; });   // 실행 확인은 꼭 보이게
   }
   async function decide(cid, decision) {
     conf.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+    if (decision === 'reject') feedback('card_cancel', {}, runId);      // 개선 고리 — 확인 카드 취소(실행 카드가 잘못 떴을 수 있음)
     try { await api(`/agent/runs/${runId}/confirm`, { method: 'POST', body: { confirm_id: cid, decision } }); }
     catch { fail('확인 카드 전송 실패'); }
     conf.hidden = true;
   }
 
-  const done = (op, ok, by = 'kit', reason = '') => document.dispatchEvent(new CustomEvent('kit:agent-action-done', { detail: { op, ok: !!ok, by, ...(reason ? { reason } : {}) } }));
+  const done = (op, ok, by = 'kit', reason = '', more = {}) => document.dispatchEvent(new CustomEvent('kit:agent-action-done', { detail: { op, ok: !!ok, by, ...(reason ? { reason } : {}), ...more } }));
   function act(a, step) {
     if (!a?.op) return;
     acts.sent += 1; acts.ops.push(a.op); box.dataset.acts = String(acts.sent);
@@ -613,17 +761,23 @@ function create(opts) {
     } else if (a.op === 'map_flyto') {
       const b = a.bbox || (a.center && [a.center[0] - 0.003, a.center[1] - 0.003, a.center[0] + 0.003, a.center[1] + 0.003]);
       if (!map || !b) done(a.op, false, 'kit', tl(lang, 'cmdk.why.nomap'));
-      else { map.fitBounds(b, { padding: padNow(), maxZoom: 17, duration: 1200 }); done(a.op, true); }
+      else { map.fitBounds(b, { padding: padNow(map), maxZoom: 17, duration: 1200 }); done(a.op, true); }
     } else if (a.op === 'map_frame') {
       if (!map || !a.geojson) done(a.op, false, 'kit', tl(lang, 'cmdk.why.nomap'));
       else if (stage) { stage.geo('agent-frame', { type: 'Feature', properties: {}, geometry: a.geojson }, 'focus'); done(a.op, true); }
       else ready(map).then(() => { upsert(map, 'k-chat-frame', { type: 'Feature', properties: {}, geometry: a.geojson }, [{ id: 'k-chat-frame-l', type: 'line', paint: { 'line-color': '#FFFFFF', 'line-width': 1.6, 'line-dasharray': [2, 1.5] } }]); done(a.op, true); })
         .catch(() => done(a.op, false, 'kit', tl(lang, 'cmdk.why.nolayer')));
+    } else if (a.op === 'map_snapshot') {
+      // 지금 보이는 지도 한 장 → 그림 파일(채팅 안 그림 + 내려받기) · 실제로 만든 뒤에만 끝 신호 ok(확인 16차 대화-2 ⓑ · expand 6)
+      if (!map) done(a.op, false, 'kit', tl(lang, 'cmdk.why.nomap'));
+      else snapshot(map).then((blob) => { addSnap(blob, a); done(a.op, true); }, (err) => { devlog('agent snapshot', String(err?.message || err)); done(a.op, false, 'kit', S.snapFail); });
+    } else if (a.op === 'map_compare' || a.op === 'map_draw') {
+      done(a.op, false, 'kit', tl(lang, `cmdk.why.${map ? 'nolayer' : 'nomap'}`));   // XI맵만 한다(가르기 · 분석 범위) — 다른 화면은 'XI맵에서 …' 버튼으로
     } else if (a.op === 'map_on' && !map) {
       done(a.op, false, 'kit', tl(lang, 'cmdk.why.nomap'));     // 지도가 없는 화면 — 켤 층이 없다(지도가 있으면 그 화면이 켜고 끝 신호를 낸다 · 안 오면 '확인되지 않음')
     } else if (KIT_OPS.has(a.op)) {
       // 키트 기본 처리 — 화면이 넘긴 stage 가 없으면 이 페이지의 지도(liveMap). 할 수 없으면 ok:false + 이유 한 줄(plan 3.1)
-      let ok = false, reason = '';
+      let ok = false, reason = '', same = false;
       const why = (k) => tl(lang, `cmdk.why.${k}`);
       try {
         const box4 = a.bbox || (a.center && [a.center[0] - 0.05, a.center[1] - 0.05, a.center[0] + 0.05, a.center[1] + 0.05]);
@@ -637,24 +791,54 @@ function create(opts) {
           if (Math.abs(z - cur) < 0.05) reason = why((a.zoom ?? cur + (+a.delta || 1)) >= cur ? 'max' : 'min');
           else { map.easeTo({ zoom: z, duration: 600 }); ok = true; }
         } else if (a.op === 'map_view') {
-          map.easeTo({ pitch: +a.pitch || 0, bearing: +a.bearing || 0, duration: 800 }); ok = true;
+          const p0 = map.getPitch(), b0 = map.getBearing(), p1 = +a.pitch || 0, b1 = +a.bearing || 0;
+          if (Math.abs(p1 - p0) < 0.5 && Math.abs(b1 - b0) < 0.5) same = true;          // 이미 그 시점 — '바꿨습니다'가 아니라 '이미 ~'
+          else map.easeTo({ pitch: p1, bearing: b1, duration: 800 });
+          ok = true;
         } else if (a.op === 'map_layer') {
           const L = map.getStyle()?.layers || [];
           let ids = a.layer === 'imagery' ? L.filter((l) => l.type === 'raster' && /^img-/.test(l.id)).map((l) => l.id) : [];
           if (a.layer === 'imagery' && !ids.length) ids = ['k-eox', 'k-vw'].filter((id) => map.getLayer(id));   // 영상 층이 따로 없는 화면 = 바탕 위성 영상
           if (!ids.length) reason = why('nolayer');
-          else { for (const id of ids) map.setLayoutProperty(id, 'visibility', a.on === false ? 'none' : 'visible'); ok = true; }
+          else {
+            const want = a.on === false ? 'none' : 'visible';
+            same = ids.every((id) => (map.getLayoutProperty(id, 'visibility') || 'visible') === want);   // 바뀐 것 0 이면 '이미 켜져 있습니다'
+            for (const id of ids) map.setLayoutProperty(id, 'visibility', want); ok = true;
+          }
         }
       } catch (err) { devlog('agent action', `${a.op} 실패 · ${err?.message || err}`); }
-      done(a.op, ok, 'kit', reason);
+      done(a.op, ok, 'kit', reason, same ? { same: true } : {});
     } else if (a.op === 'screen_open' && /^\/landxi\/v3\/[\w-]+\/(\?[\w=&%.-]*)?$/.test(String(a.href || ''))) {
       done(a.op, true);                              // 화면 열기(XI맵 등 · c2-xi) — 답 한 줄을 읽을 틈을 두고 그 주소로 간다(대화는 그 화면에서 이어진다)
       setTimeout(() => { snap(); location.assign(a.href); }, 900);
-    } else if (!['map_arrive', 'map_flyto', 'map_frame', 'map_on', 'parcel_card', 'drawer_open'].includes(a.op)) {
+    } else if (!['map_arrive', 'map_flyto', 'map_frame', 'map_on', 'parcel_card', 'drawer_open', 'map_snapshot', 'map_compare', 'map_draw'].includes(a.op)) {
       done(a.op, false);                             // 처리하는 화면이 없는 동작(analysis_watch 등) — 실패로 기록
     }
   }
 
+  /** 지도 캔버스 한 장 → PNG(그리는 그 프레임 안에서 읽는다 — 그리기 버퍼를 따로 두지 않아도 된다) */
+  function snapshot(map) {
+    return new Promise((res, rej) => {
+      const t = setTimeout(() => rej(new Error('render 없음')), 4000);
+      map.once('render', () => {
+        try { map.getCanvas().toBlob((b) => { clearTimeout(t); b ? res(b) : rej(new Error('blob 없음')); }, 'image/png'); } catch (err) { clearTimeout(t); rej(err); }
+      });
+      map.triggerRepaint();
+    });
+  }
+  /** 만든 그림을 답 안에 — 그림 한 장 + 내려받기(브라우저 안 파일 · 서버로 보내지 않는다) */
+  function addSnap(blob, a) {
+    const u = URL.createObjectURL(blob); urls.push(u);
+    const name = String(a.filename || 'map.png').replace(/[\/:*?"<>|]/g, '_');
+    const fig = h('figure.k-ck-blk.k-ck-blk--image', { 'data-kind': 'image' }, h('img.k-ck-img', { alt: a.caption || name, src: u }),
+      h('figcaption.k-ck-cap', {}, h('span', { text: a.caption || name })));
+    const file = h('div.k-ck-blk.k-ck-blk--file', { 'data-kind': 'file' }, h('a.k-ck-file', { href: u, download: name },
+      h('span.k-ck-file-i', { 'aria-hidden': 'true', html: '<svg viewBox="0 0 20 20"><path d="M10 3v9m0 0l-3.5-3.5M10 12l3.5-3.5M4 15.5h12"/></svg>' }),
+      h('span.k-ck-file-l', { text: name }), h('span.k-ck-file-a', { text: tl(lang, 'cmdk.download') })));
+    const tail = blk.querySelector('.k-chat-tail');
+    blk.insertBefore(fig, tail); blk.insertBefore(file, tail);
+    blk.hidden = false;
+  }
   /* 지도 그리기 도우미 — 스타일이 선 뒤 · 같은 id 면 데이터만 바꾼다 */
   const ready = (map) => (map.isStyleLoaded() ? Promise.resolve() : new Promise((res) => { map.once('idle', res); setTimeout(res, 3000); }));
   function upsert(map, sid, data, layers) {
@@ -662,7 +846,20 @@ function create(opts) {
     else { map.addSource(sid, { type: 'geojson', data }); for (const l of layers) map.addLayer({ ...l, source: sid }); }
   }
   /** 지도 가장자리 여백 — PC 에서 채팅창이 열려 있으면 그 폭만큼 오른쪽을 비운다 */
-  const padNow = () => (!isPhone() && !box.hidden ? { top: 72, bottom: 72, left: 72, right: 380 + 56 } : { top: 56, bottom: 56, left: 40, right: 40 });
+  const padNow = (map) => {
+    let p = !isPhone() && !box.hidden ? { top: 72, bottom: 72, left: 72, right: 380 + 56 } : { top: 56, bottom: 56, left: 40, right: 40 };
+    try {                                                            // 작은 지도(카드 안 지도 등)에서도 맞춤이 풀리도록 — 지도 크기 · 채팅창이 실제로 가리는 폭으로
+      const c = map?.getContainer()?.getBoundingClientRect();
+      if (c && c.width && c.height) {
+        const cr = box.hidden || isPhone() ? null : box.getBoundingClientRect();
+        const cover = cr ? Math.max(0, Math.min(c.right, cr.right) - Math.max(c.left, cr.left) + 24) : 40;
+        const right = Math.min(Math.max(40, cover), c.width * 0.55);
+        const side = Math.min(p.left, c.width * 0.1), tb = Math.min(p.top, c.height * 0.15);
+        p = { top: tb, bottom: tb, left: side, right };
+      }
+    } catch { /* 기본 여백 */ }
+    return p;
+  };
   async function drawArrive(map, fc, stage) {
     try {
       await ready(map);
@@ -678,10 +875,16 @@ function create(opts) {
         'circle-radius': ['interpolate', ['linear'], ['zoom'], 6, 6, 14, 9], 'circle-color': '#0FA9A0', 'circle-stroke-color': '#FFFFFF', 'circle-stroke-width': 2.5 } }]);
       const b = bboxOf(fc);
       const moved = new Promise((res) => { map.once('moveend', res); setTimeout(res, 2600); });
-      map.fitBounds(b, { padding: padNow(), maxZoom: 15, duration: 1400 });
+      map.fitBounds(b, { padding: padNow(map), maxZoom: 15, duration: 1400 });
       await moved;
       await new Promise((res) => setTimeout(res, 300));
-      return map.queryRenderedFeatures({ layers: ['k-chat-pt'] }).length > 0;   // 실제로 화면에 그려졌나
+      const seen = map.queryRenderedFeatures({ layers: ['k-chat-pt'] }).length > 0;   // 실제로 화면에 그려졌나
+      if (!seen) {                                                   // '못 그렸다'고 말할 것이므로 지도에도 남기지 않는다(말과 화면이 같게 · 확인 16차 규칙 ①)
+        try { if (stage) await stage.geo('agent', null, 'ai'); } catch { /* */ }
+        for (const id of ['k-chat-pt', 'k-chat-arr-f', 'k-chat-arr-l']) { try { if (map.getLayer(id)) map.removeLayer(id); } catch { /* */ } }
+        for (const id of ['k-chat-pt', 'k-chat-arr']) { try { if (map.getSource(id)) map.removeSource(id); } catch { /* */ } }
+      }
+      return seen;
     } catch (err) { devlog('agent arrive', String(err?.message || err)); return false; }
   }
 
@@ -700,9 +903,20 @@ function create(opts) {
         const items = (b.rows || []).filter((r) => isEnvelope(envs[r.env])).map((r) => ({ label: r.label, value: envs[r.env] }));
         if (!items.length) continue;
         const u = unitOf(lg, envs[b.rows[0].env]?.unit);
+        items.sort((x, y) => (Number(y.value?.value) || 0) - (Number(x.value?.value) || 0));
         const el = h('div.k-ck-chart');
-        blk.append(h('div.k-ck-blk.k-ck-blk--chart', { 'data-kind': 'chart' }, b.title ? h('p.k-ck-bt', { text: b.title }) : null, el));
+        const rest = items.length - 5;
+        blk.append(h('div.k-ck-blk.k-ck-blk--chart', { 'data-kind': 'chart' }, b.title ? h('p.k-ck-bt', { text: b.title }) : null, el,
+          rest > 0 ? h('button.k-ck-more', { type: 'button', text: (STR[lg] || S).more(rest) }) : null));
         bars(el, { items, ai: true, unit: u, limit: 12, lang: lg });
+      } else if (b?.type === 'table') {
+        // 작은 표(확인 16차 규칙 ④) — 이름 · 값(숫자 칩 = 봉투) 다섯 줄 + '더 보기'
+        const rows = (b.rows || []).filter((r) => isEnvelope(envs[r.env]));
+        if (!rows.length) continue;
+        const tb = h('table.k-chat-tbl.k-ck-tbl', {}, h('tbody', {}, ...rows.map((r) => h('tr', {}, h('td', { text: r.label }), h('td.v', { html: chip(envs[r.env], lg) })))));
+        const rest = rows.length - 5;
+        blk.append(h('div.k-ck-blk.k-ck-blk--table', { 'data-kind': 'table' }, b.title ? h('p.k-ck-bt', { text: b.title }) : null, tb,
+          rest > 0 ? h('button.k-ck-more', { type: 'button', text: (STR[lg] || S).more(rest).replace('곳', '줄') }) : null));
       } else if (b?.type === 'file' && b.href) {
         const btn = h('button.k-ck-file', { type: 'button', 'data-href': b.href, 'data-label': b.label || '', 'data-lang': lg },
           h('span.k-ck-file-i', { 'aria-hidden': 'true', html: '<svg viewBox="0 0 20 20"><path d="M10 3v9m0 0l-3.5-3.5M10 12l3.5-3.5M4 15.5h12"/></svg>' }),
@@ -734,7 +948,17 @@ function create(opts) {
       finally { file.disabled = false; }
       return;
     }
-    const q = e.target.closest('.k-chat-retry[data-q], .k-chat-chip[data-q]')?.dataset.q;
+    const fbB = e.target.closest('button.k-chat-fb[data-run]');
+    if (fbB) {
+      const lg = box.dataset.lang || lang, run = fbB.dataset.run;
+      fbB.disabled = true; fbB.textContent = (STR[lg] || S).fbDone;
+      fbRoute ||= hasRoute('/assist/feedback').catch(() => false);
+      fbRoute.then((ok) => ok && api('/assist/feedback', { method: 'POST', body: { run_id: run, kind: 'not_helpful', screen: pageKey() } })).catch((err) => devlog('assist feedback', String(err?.code || err?.message || err)));
+      return;
+    }
+    const more = e.target.closest('button.k-ck-more');
+    if (more) { more.closest('.k-ck-blk')?.classList.add('is-all'); more.remove(); return; }
+    const q = e.target.closest('.k-chat-retry[data-q], .k-chat-chip[data-q], .k-chat-btn[data-q]')?.dataset.q;
     if (q && !cfg.guest && box.dataset.state !== 'busy') { input.value = q; form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true })); }
   });
   const keepDown = () => { const near = log.scrollHeight - log.scrollTop - log.clientHeight < 160; if (near) requestAnimationFrame(() => { log.scrollTop = log.scrollHeight; }); };

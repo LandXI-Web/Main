@@ -159,7 +159,8 @@ def test_english_messages_exist():
     for cat, _rx, _why in audit.GUARDS:
         assert cat in audit.GUARDS_EN and not any("가" <= ch <= "힣" for ch in audit.GUARDS_EN[cat])
     assert audit.reject_text("no_region_data", "해당 지역 데이터가 없습니다", "en") == "No data for this area yet."
-    assert "Map actions" in runner.system_prompt("en") and "그 지도 동작은 아직 할 수 없습니다" in runner.system_prompt("ko")
+    # 확인 16차 대화-1 규칙 ② — 모델은 '아직 없는 기능' 한 문장만 쓰고, 이유 · 대신 할 일 버튼은 서버(talk.fill_cannot)가 채운다
+    assert "Map actions" in runner.system_prompt("en") and "그 지도 동작은 아직 없는 기능입니다" in runner.system_prompt("ko")
 
 
 # ── 4. 자리표 · 꼬리 · 금지어(K2) ─────────────────────────────────────────
@@ -204,8 +205,9 @@ def _finish(ctx, answer, res=_Res(), artifact=None):
 
 def test_finish_replaces_fabricated_action_and_scrubs():
     d = _finish(_ctx(), "구례군 결과입니다. 확대하여 보여드리겠습니다. 관제 화면(AG-6)에서 보세요.")
-    assert "확대하여" not in d["answer_md"] and "그 지도 동작은 아직 할 수 없습니다" in d["answer_md"]
-    assert lint.banned_hits(d["answer_md"]) == [] and d["action_flags"]
+    # 확인 16차 대화-1 규칙 ② — 지운 동작 문장 자리에 이유 한 줄(아직 없는 기능) + 할 수 있는 것 버튼 · 막힘 분류(개선 고리)
+    assert "확대하여" not in d["answer_md"] and "아직 없는 기능입니다" in d["answer_md"] and "할 수 없습니다" not in d["answer_md"]
+    assert lint.banned_hits(d["answer_md"]) == [] and d["action_flags"] and d["next"] and d["cannot"] == {"kind": "action"}
 
 
 def test_finish_keeps_real_action():

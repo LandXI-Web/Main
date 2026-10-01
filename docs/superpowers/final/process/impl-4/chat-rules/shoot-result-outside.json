@@ -1,0 +1,552 @@
+{
+ "at": "2026-10-01T09:34:34.740Z",
+ "base": "outside",
+ "pass": 36,
+ "total": 36,
+ "test_marked": true,
+ "signals_held": {
+  "feedback": [],
+  "seen": 2
+ },
+ "results": [
+  {
+   "name": "지명 + 확대 = 구례군으로 옮기고 확대(그린 뒤에만 확정)",
+   "pass": true,
+   "answer": "구례군으로 옮기고 한 단계 확대했습니다.",
+   "next": [],
+   "alt": [],
+   "hint": [],
+   "fb": true,
+   "plan": [
+    "지역으로 이동"
+   ],
+   "kinds": [
+    "next"
+   ],
+   "bars": 0,
+   "barsShown": 0,
+   "more": [],
+   "state": "done",
+   "verdict": "ok",
+   "img": false,
+   "file": [],
+   "center": [
+    127.49825170445729,
+    35.23559971094264
+   ]
+  },
+  {
+   "name": "이미 꺼져 있으면 \"이미\" + 다음 할 일",
+   "pass": true,
+   "answer": "AI 분석 결과 층은 이미 꺼져 있습니다.",
+   "next": [
+    "현장 확인 필요 층도 끄기"
+   ],
+   "alt": [],
+   "hint": [],
+   "fb": true,
+   "plan": [
+    "층 켜기·끄기"
+   ],
+   "kinds": [
+    "next"
+   ],
+   "bars": 0,
+   "barsShown": 0,
+   "more": [],
+   "state": "done",
+   "verdict": "ok",
+   "img": false,
+   "file": []
+  },
+  {
+   "name": "같은 이름 → 하나로 가고 다른 뜻이면 버튼",
+   "pass": true,
+   "answer": "경상남도 고성군으로 지도를 옮겼습니다.",
+   "next": [],
+   "alt": [
+    "강원특별자치도 고성군"
+   ],
+   "hint": [],
+   "fb": true,
+   "plan": [
+    "지역으로 이동"
+   ],
+   "kinds": [
+    "next"
+   ],
+   "bars": 0,
+   "barsShown": 0,
+   "more": [],
+   "state": "done",
+   "verdict": "ok",
+   "img": false,
+   "file": []
+  },
+  {
+   "name": "실행 카드 = 사용자 말 제목 + 범위 문장 둘째 줄",
+   "pass": true,
+   "card": "남원시 AI 분석을 실행할까요? 시군구 전역을 분석합니다 — 읍면동 39곳. 실행 취소"
+  },
+  {
+   "name": "취소 → 한 줄 + 대신 볼 것",
+   "pass": true,
+   "a": "취소해서 실행하지 않았습니다.\n\nAI 분석 실행\n지금 있는 결과 요약\n읍면동별 차트\n\n도움 안 됐어요"
+  },
+  {
+   "name": "두 시점 나란히 = 가르기 + 시점 둘 1440",
+   "pass": true,
+   "answer": "2024년 영상은 없어 가까운 2023년 영상을 두었습니다. 남원시 2023년 · 2025년 10월 영상을 좌우로 나눠 놓았습니다 — 가운데 선을 끌어 비교하세요.",
+   "next": [
+    "남원시 현장 확인 필요 필지 몇 건",
+    "지도 화면을 이미지로 저장해 줘"
+   ],
+   "alt": [],
+   "hint": [],
+   "fb": true,
+   "plan": [
+    "두 시점 나란히 놓기"
+   ],
+   "kinds": [
+    "next"
+   ],
+   "bars": 0,
+   "barsShown": 0,
+   "more": [],
+   "state": "done",
+   "verdict": "ok",
+   "img": false,
+   "file": [],
+   "sw": {
+    "swipe": true,
+    "right": true,
+    "bar": true,
+    "sel": [
+     "2023년 영상",
+     "2025년 10월 영상"
+    ]
+   }
+  },
+  {
+   "name": "지금 지도 한 장 → 그림 파일(그린 뒤에만)",
+   "pass": true,
+   "answer": "지금 보이는 지도 한 장을 그림 파일로 만들었습니다(아래 내려받기).",
+   "next": [
+    "남원시 보고서 초안 만들기"
+   ],
+   "alt": [],
+   "hint": [],
+   "fb": true,
+   "plan": [
+    "지도 그림 파일 만들기"
+   ],
+   "kinds": [
+    "image",
+    "file",
+    "next"
+   ],
+   "bars": 0,
+   "barsShown": 0,
+   "more": [],
+   "state": "done",
+   "verdict": "ok",
+   "img": true,
+   "file": [
+    "지도_남원시_20261001-1810.png내려받기"
+   ]
+  },
+  {
+   "name": "범위 그리기 켜짐(분석 도구 그리기)",
+   "pass": true,
+   "answer": "남원시에서 범위 그리기를 켰습니다 — 지도 위에 분석할 범위를 끌어서 그리면 그 안만 분석할지 확인 카드가 뜹니다.",
+   "next": [
+    "남원시 전체 분석"
+   ],
+   "alt": [],
+   "hint": [],
+   "fb": true,
+   "plan": [
+    "범위 그리기 켜기"
+   ],
+   "kinds": [
+    "next"
+   ],
+   "bars": 0,
+   "barsShown": 0,
+   "more": [],
+   "state": "done",
+   "verdict": "ok",
+   "img": false,
+   "file": []
+  },
+  {
+   "name": "화면 오류 0 · XI맵 1440",
+   "pass": true,
+   "errs": []
+  },
+  {
+   "name": "두 시점 나란히 = 가르기 + 시점 둘 390",
+   "pass": true,
+   "answer": "2024년 영상은 없어 가까운 2023년 영상을 두었습니다. 남원시 2023년 · 2025년 10월 영상을 좌우로 나눠 놓았습니다 — 가운데 선을 끌어 비교하세요.",
+   "next": [
+    "남원시 현장 확인 필요 필지 몇 건",
+    "지도 화면을 이미지로 저장해 줘"
+   ],
+   "alt": [],
+   "hint": [],
+   "fb": true,
+   "plan": [
+    "두 시점 나란히 놓기"
+   ],
+   "kinds": [
+    "next"
+   ],
+   "bars": 0,
+   "barsShown": 0,
+   "more": [],
+   "state": "done",
+   "verdict": "ok",
+   "img": false,
+   "file": [],
+   "sw": {
+    "swipe": true,
+    "right": true,
+    "bar": true,
+    "sel": [
+     "2023년 영상",
+     "2025년 10월 영상"
+    ]
+   }
+  },
+  {
+   "name": "화면 오류 0 · XI맵 390",
+   "pass": true,
+   "errs": []
+  },
+  {
+   "name": "지도 없는 화면 · 지명 + 확대 → XI맵을 구례군에서 열기",
+   "pass": true,
+   "answer": "이 화면에는 지도가 없어 옮기지 못했습니다 — XI맵을 열면 구례군에서 시작합니다. 구례군 현장 확인 필요 필지는 555필지입니다.",
+   "next": [
+    "XI맵을 구례군에서 열기",
+    "구례군 결과 요약 보기"
+   ],
+   "alt": [],
+   "hint": [],
+   "fb": true,
+   "plan": [],
+   "kinds": [
+    "next"
+   ],
+   "bars": 0,
+   "barsShown": 0,
+   "more": [],
+   "state": "done",
+   "verdict": null,
+   "img": false,
+   "file": []
+  },
+  {
+   "name": "시험 표시 — 시험용 답 번호(개선 고리가 모으지 않음)",
+   "pass": true,
+   "prefix": "run_test"
+  },
+  {
+   "name": "차트 다섯 줄 + 더 보기 · 크게 보기",
+   "pass": true,
+   "answer": "남원시 의심 필지는 20,872건입니다. 아래 차트에 많은 곳부터 다섯 곳을 두었습니다.",
+   "next": [
+    "XI맵에서 크게 보기",
+    "현장 확인 필요 필지 몇 건"
+   ],
+   "alt": [],
+   "hint": [],
+   "fb": true,
+   "plan": [
+    "읍면동별 차트"
+   ],
+   "kinds": [
+    "chart",
+    "next"
+   ],
+   "bars": 12,
+   "barsShown": 5,
+   "more": [
+    "7곳 더 보기"
+   ],
+   "state": "done",
+   "verdict": null,
+   "img": false,
+   "file": []
+  },
+  {
+   "name": "직전 지역(남원시)으로 두 시점 · 지도 없음 → XI맵 열기",
+   "pass": true,
+   "answer": "이 화면에는 지도가 없어 두 시점을 나란히 놓지 못했습니다 — XI맵을 열면 남원시에서 시작합니다. 남원시 현장 확인 필요 필지는 1,035필지입니다.",
+   "next": [
+    "XI맵을 남원시에서 열기",
+    "남원시 결과 요약 보기"
+   ],
+   "alt": [],
+   "hint": [],
+   "fb": true,
+   "plan": [],
+   "kinds": [
+    "next"
+   ],
+   "bars": 0,
+   "barsShown": 0,
+   "more": [],
+   "state": "done",
+   "verdict": null,
+   "img": false,
+   "file": []
+  },
+  {
+   "name": "XI맵 버튼이 두 시점을 이어 간다",
+   "pass": true,
+   "href": "https://app.land-xi.dev/landxi/v3/xi-clean/?region=52190&compare=ap25-namwon-2023%2Cnamwon-city-2510"
+  },
+  {
+   "name": "지역 없는 요약 → 직전 지역 요약 또는 전국 요약 두 문장",
+   "pass": true,
+   "answer": "남원시에서 결과가 있는 서비스는 영농관리 행정서비스(운영 중 · AI 탐지 2,098필지), 국토 변화 탐지 서비스(시범 운영 중 · AI 탐지 456건), 비닐하우스 서비스(시범 운영 중 · AI 탐지 132,310건)입니다.",
+   "next": [
+    "남원시 현장 확인 필요 필지 몇 건",
+    "남원시 보고서 초안",
+    "XI맵에서 보기"
+   ],
+   "alt": [],
+   "hint": [],
+   "fb": true,
+   "plan": [
+    "보유 결과 확인"
+   ],
+   "kinds": [
+    "next"
+   ],
+   "bars": 0,
+   "barsShown": 0,
+   "more": [],
+   "state": "done",
+   "verdict": null,
+   "img": false,
+   "file": []
+  },
+  {
+   "name": "풀어 쓴 법령 → 가장 가까운 조문 원문",
+   "pass": true,
+   "answer": "질문 그대로는 맞는 조문을 찾지 못해 '이행강제금'으로 찾은 조문 원문입니다.\n\n「건축법」 제80조(이행강제금) 제1항 · 시행 2026-02-27\n① 허가권자는 제79조제1항에 따라 시정명령을 받은 후 시정기간 내에 시정명령을 이행하지 아니한 건축주등에 대하여는 그 시정명령의 이행에 ",
+   "next": [
+    "건축법 제80조의2 원문"
+   ]
+  },
+  {
+   "name": "두 지역 비교 = 같은 이름 숫자 + 막대 둘",
+   "pass": true,
+   "answer": "의심 필지는 구례군 11,081건 · 남원시 20,872건입니다(아래 막대).",
+   "next": [
+    "XI맵에서 구례군 보기",
+    "XI맵에서 남원시 보기"
+   ],
+   "alt": [],
+   "hint": [],
+   "fb": true,
+   "plan": [
+    "두 지역 비교"
+   ],
+   "kinds": [
+    "chart",
+    "next"
+   ],
+   "bars": 2,
+   "barsShown": 2,
+   "more": [],
+   "state": "done",
+   "verdict": null,
+   "img": false,
+   "file": []
+  },
+  {
+   "name": "답 아래 도움 안 됐어요",
+   "pass": true
+  },
+  {
+   "name": "금지어 0 · 지도 없는 화면",
+   "pass": true,
+   "hits": []
+  },
+  {
+   "name": "화면 오류 0 · 지도 없는 화면",
+   "pass": true,
+   "errs": []
+  },
+  {
+   "name": "기관 '우리 시' = 관할 · 물은 이름 숫자 1440",
+   "pass": true,
+   "answer": "남원시 현장 확인 필요 필지는 1,035필지입니다. 의심 필지 20,872건 가운데 먼저 현장에서 확인할 필지입니다.",
+   "next": [
+    "지도에서 보기",
+    "읍면동별 차트",
+    "보고서 초안"
+   ],
+   "alt": [],
+   "hint": [],
+   "fb": true,
+   "plan": [
+    "건수 확인"
+   ],
+   "kinds": [
+    "next"
+   ],
+   "bars": 0,
+   "barsShown": 0,
+   "more": [],
+   "state": "done",
+   "verdict": null,
+   "img": false,
+   "file": []
+  },
+  {
+   "name": "관할 밖 = 이유 한 줄(지역 이름) + 우리 시 버튼",
+   "pass": true,
+   "answer": "구례군은 이 기관 계정에서 볼 수 없습니다.",
+   "next": [
+    "남원시 결과 요약 보기",
+    "남원시 현장 확인 필요 필지 몇 건"
+   ],
+   "alt": [],
+   "hint": [],
+   "fb": true,
+   "plan": [],
+   "kinds": [
+    "next"
+   ],
+   "bars": 0,
+   "barsShown": 0,
+   "more": [],
+   "state": "rejected",
+   "verdict": null,
+   "img": false,
+   "file": []
+  },
+  {
+   "name": "기관 분석 실행 → 분석 요청(서비스 고르기 버튼)",
+   "pass": true,
+   "answer": "분석은 LX가 합니다 — 어느 서비스로 맡길지 아래에서 고르면 분석 요청 카드가 뜹니다.",
+   "next": [
+    "비닐하우스 서비스 분석 요청",
+    "도로 안전관리 서비스 분석 요청",
+    "국토 변화 탐지 서비스 분석 요청"
+   ],
+   "alt": [],
+   "hint": [],
+   "fb": true,
+   "plan": [],
+   "kinds": [
+    "next"
+   ],
+   "bars": 0,
+   "barsShown": 0,
+   "more": [],
+   "state": "done",
+   "verdict": null,
+   "img": false,
+   "file": []
+  },
+  {
+   "name": "분석 요청 카드 = 분석 요청 보내기 · 취소 · LX 관리자 확인 문장",
+   "pass": true,
+   "card": "남원시 비닐하우스 서비스 분석 요청을 보낼까요? 남원시 2020 항공영상으로 요청합니다 · 분석은 LX 관리자가 확인한 뒤에 합니다. 분석 요청 보내기 취소"
+  },
+  {
+   "name": "분석 요청 취소 → 보내지 않았다",
+   "pass": true,
+   "a": "분석 요청을 보내지 않았습니다.\n\n분석 요청 보내기\n분석 요청 화면 열기\n남원시 결과 요약 보기\n\n도움 안 됐어요"
+  },
+  {
+   "name": "화면 오류 0 · 기관 1440",
+   "pass": true,
+   "errs": []
+  },
+  {
+   "name": "기관 '우리 시' = 관할 · 물은 이름 숫자 390",
+   "pass": true,
+   "answer": "남원시 현장 확인 필요 필지는 1,035필지입니다. 의심 필지 20,872건 가운데 먼저 현장에서 확인할 필지입니다.",
+   "next": [
+    "지도에서 보기",
+    "읍면동별 차트",
+    "보고서 초안"
+   ],
+   "alt": [],
+   "hint": [],
+   "fb": true,
+   "plan": [
+    "건수 확인"
+   ],
+   "kinds": [
+    "next"
+   ],
+   "bars": 0,
+   "barsShown": 0,
+   "more": [],
+   "state": "done",
+   "verdict": null,
+   "img": false,
+   "file": []
+  },
+  {
+   "name": "화면 오류 0 · 기관 390",
+   "pass": true,
+   "errs": []
+  },
+  {
+   "name": "X-1 머리 · 입력 칸 1440",
+   "pass": true,
+   "sub": "공간지식 추론 서비스(지도 제어 · 분석 · 보고서)",
+   "spanLines": [
+    1,
+    1
+   ],
+   "ph": "더 똑똑한 공간지식 추론 서비스를 체험해 보세요",
+   "phFits": true,
+   "phW": 254,
+   "room": 270
+  },
+  {
+   "name": "알림 한 줄 1440(화면 시험 응답)",
+   "pass": true,
+   "note": "지난번에 물으신 '지도 화면을 이미지로 저장'이 이제 됩니다 — XI맵에서 해 보세요. 해 보기",
+   "seen_held": 1
+  },
+  {
+   "name": "화면 오류 0 · 머리 1440",
+   "pass": true,
+   "errs": []
+  },
+  {
+   "name": "X-1 머리 · 입력 칸 390",
+   "pass": true,
+   "sub": "공간지식 추론 서비스(지도 제어 · 분석 · 보고서)",
+   "spanLines": [
+    1,
+    1
+   ],
+   "ph": "더 똑똑한 공간지식 추론 서비스를 체험해 보세요",
+   "phFits": true,
+   "phW": 254,
+   "room": 280
+  },
+  {
+   "name": "알림 한 줄 390(화면 시험 응답)",
+   "pass": true,
+   "note": "지난번에 물으신 '지도 화면을 이미지로 저장'이 이제 됩니다 — XI맵에서 해 보세요. 해 보기",
+   "seen_held": 2
+  },
+  {
+   "name": "화면 오류 0 · 머리 390",
+   "pass": true,
+   "errs": []
+  }
+ ]
+}

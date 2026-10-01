@@ -429,6 +429,23 @@ async def ops_gpus(args: dict, ctx) -> Out:
     data["제안"] = sugg or ["지금 조치할 것은 없습니다."]
     out.data = data
     out.answer = _gpu_answer_en(rows, data) if _en(ctx) else _gpu_answer_ko(rows, data)
+    if not _en(ctx):
+        # 확인 16차 규칙 ④ · ⑥ — 답은 두 문장, GPU 별 숫자는 작은 표(같은 봉투 · 인프라 화면과 같은 값) + '인프라 화면에서 크게 보기'
+        trows = []
+        for nm, row in rows.items():
+            k = nm.split(" ")[1]
+            for lab, key in (("부하", f"g{k}_load"), ("전력", f"g{k}_w"), ("온도", f"g{k}_t")):
+                if any(key == e[0] for e in out.envelopes):
+                    trows.append({"label": f"{nm} {lab}", "env": key})
+        if "두 장 동시 고부하(최근 2시간)" in data:
+            trows.append({"label": "두 장 동시 고부하(최근 2시간)", "env": "overlap"})
+        if trows:
+            out.blocks.append({"type": "table", "title": "GPU 상태", "rows": trows})
+        try:
+            from ... import talk
+            talk.set_next(ctx, [talk.btn("인프라 화면에서 크게 보기", href="/landxi/v3/ops-infra/")])
+        except Exception:  # noqa: BLE001
+            pass
     return out
 
 
@@ -451,20 +468,20 @@ def _why_ko(k: str, row: dict) -> str:
 
 
 def _gpu_answer_ko(rows: dict, data: dict) -> str:
+    """두 문장(확인 16차 규칙 ⑥) — ① 전력 예산 판정 ② GPU 마다 하는 일. 부하 · 전력 · 온도 숫자는 표 블록(같은 봉투)."""
     parts = []
     if "동시 고부하 GPU" in data:
         who = (", ".join(data["고부하 GPU"]) + "이 고부하") if data["고부하 GPU"] else "고부하인 GPU 없음"
         head = f"{data['판정 시각']} 기준 " if data.get("판정 시각") else ""
         parts.append(f"{head}동시 고부하 GPU는 {{{{hot}}}}(최대 {{{{hot_max}}}})로 {who} · 전력 예산 {data['전력 예산']}입니다.")
-        if "두 장 동시 고부하(최근 2시간)" in data:
-            parts.append("최근 2시간 두 장이 함께 고부하였던 적은 {{overlap}}입니다.")
+    doings = []
     for nm, row in rows.items():
         k = nm.split(" ")[1]
-        bits = ([f"부하 {{{{g{k}_load}}}}"] + ([f"지금 전력 {{{{g{k}_w}}}}"] if "전력" in row else []) + ([f"메모리 {{{{g{k}_mem}}}}"] if "메모리 사용" in row else [])
-                + ([f"온도 {{{{g{k}_t}}}}"] if "온도" in row else []))
         doing = {"분석 작업": "분석 작업 중", "언어 모델": "언어 모델 사용 중", "사용 중": "사용 중",
-                 "분석 멈춤": "분석 작업이 전력 규칙으로 잠시 멈춘 상태"}.get(row["하는 일"], "대기 중")
-        parts.append(f"{nm}은 {', '.join(bits)}로 {doing}{_why_ko(k, row)}입니다.")
+                 "분석 멈춤": "분석 작업이 전력 규칙으로 잠시 멈춤"}.get(row["하는 일"], "대기 중")
+        doings.append(f"{nm} {doing}{_why_ko(k, row)}")
+    if doings:
+        parts.append(" · ".join(doings) + "입니다(아래 표).")
     return " ".join(parts) + _first_sugg(data)
 
 

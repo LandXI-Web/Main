@@ -257,9 +257,12 @@ def test_m10_no_data_tool_error_is_verbatim_with_next(monkeypatch, restore_ext, 
     _no_llm(monkeypatch)
     ctx = _ctx(GJ, q)
     asyncio.run(runner.answer_direct(ctx, q, {"tool": "r3t_report", "args": {}, "module": "r3t_report"}, 0.0, {"pii": []}))
-    md = _done(ctx)["answer_md"]
-    assert md.startswith("해당 지역 데이터가 없습니다") and "다음 할 일" in md
-    assert "이 기관" not in md and "아닙니다" not in md
+    d = _done(ctx)
+    md = d["answer_md"]
+    # 확인 16차 대화-1 규칙 ② — 지역 이름을 넣은 이유 한 줄 + 다음 할 일은 문장이 아니라 버튼(기관 = 분석 요청)
+    nm = q.split()[0]
+    assert md == f"{nm}{'은' if nm.endswith('군') else '는'} 아직 AI 분석 결과가 없습니다." and "다음 할 일" not in md
+    assert "이 기관" not in md and "아닙니다" not in md and d["next"][0]["label"] == "분석 요청 보내기"
 
 
 def test_m10_status_contract_text_and_next_verbatim(monkeypatch, restore_ext):
@@ -267,7 +270,8 @@ def test_m10_status_contract_text_and_next_verbatim(monkeypatch, restore_ext):
     _no_llm(monkeypatch)
     ctx = _ctx(STAFF, "순창군 보고서 초안 써 줘")          # LX 직원은 XI맵에서 AI 분석을 실행할 수 있다 → 도구가 준 다음 할 일 그대로
     asyncio.run(runner.answer_direct(ctx, ctx.state["msg"], {"tool": "r3t_report", "args": {}, "module": "r3t_report"}, 0.0, {"pii": []}))
-    assert _done(ctx)["answer_md"] == "해당 지역 데이터가 없습니다.\n\nXI맵에서 이 지역 AI 분석을 먼저 요청하세요."
+    d = _done(ctx)                                         # 확인 16차 — 이유 한 줄 + LX 직원이 할 수 있는 일은 버튼(그 지역 전역 분석 · 영상 등록)
+    assert d["answer_md"] == "순창군은 아직 AI 분석 결과가 없습니다." and d["next"][0]["q"] == "순창군 전역 분석 실행해 줘"
 
 
 def test_m10_outside_is_verbatim_without_next(monkeypatch, restore_ext):
@@ -429,11 +433,12 @@ CMDK = (KIT / "cmdk.js").read_text(encoding="utf-8")
 
 
 def test_cmdk_open_focuses_now_and_keeps_typed_text():
-    a = CMDK.index("const open = (q) => {")
+    a = CMDK.index("const open = (q")
     body = CMDK[a:CMDK.index("const close = ", a)]
-    assert body.index("input.focus(") < body.index("requestAnimationFrame")          # 여는 즉시 초점(다음 프레임을 기다리지 않음)
-    assert body.index("input.select()") < body.index("requestAnimationFrame")        # 앞 질문은 선택 → 새 글자로 바뀜(두 번 붙기 0)
-    assert "input.select()" not in body[body.index("requestAnimationFrame"):]        # 프레임 뒤에 다시 선택하지 않는다(그새 친 글자 보존)
+    raf = body.index("requestAnimationFrame(() => { if (!box.hidden")               # 초점 다시 잡기 프레임(구현 3차 — 앞쪽 rAF 는 대화 맨 아래로 내리기)
+    assert body.index("input.focus(") < raf                                           # 여는 즉시 초점(다음 프레임을 기다리지 않음)
+    assert body.index("input.select()") < raf                                         # 앞 질문은 선택 → 새 글자로 바뀜(두 번 붙기 0)
+    assert "input.select()" not in body[raf:]                                         # 프레임 뒤에 다시 선택하지 않는다(그새 친 글자 보존)
     assert "setRangeText(e.key" in CMDK                                               # 바 밖 초점에서 친 글자 → 입력 칸
 
 
@@ -441,7 +446,7 @@ def test_cmdk_kit_reports_reasons_and_title():
     assert "reason = why('nomap')" in CMDK and "why((a.zoom ?? cur + (+a.delta || 1)) >= cur ? 'max' : 'min')" in CMDK
     assert "'map_layer'" in CMDK.split("const KIT_OPS")[1].split("\n")[0]
     assert "d?.title || d?.say" in CMDK
-    assert "`/agent/runs/${shown.run}/acts`" in CMDK and "ACT_WAIT_MS = 3000" in CMDK
+    assert "`/agent/runs/${shown.run}/acts`" in CMDK and "ACT_WAIT_MS = 6000" in CMDK     # 확인 16차 — 끝 신호 전 진행형 · 먼 지역 비행까지 기다림
 
 
 def test_i18n_act_keys_both_languages():
@@ -527,8 +532,10 @@ def test_fix1_tenant_next_is_what_tenant_can_do(monkeypatch, restore_ext, name):
     _no_llm(monkeypatch)
     ctx = _ctx(GJ, f"{name} 보고서 초안 써 줘")
     asyncio.run(runner.answer_direct(ctx, ctx.state["msg"], {"tool": "r3t_report", "args": {}, "module": "r3t_report"}, 0.0, {"pii": []}))
-    md = _done(ctx)["answer_md"]
-    assert md == f"해당 지역 데이터가 없습니다.\n\n다음 할 일: 화면 위 도움말(?)의 '문의'로 LX에 {name} AI 분석을 요청해 주세요."
+    d = _done(ctx)
+    md = d["answer_md"]
+    # 확인 16차 — 기관이 할 수 있는 일(분석 요청 · 원칙 113)은 버튼으로 · 문장으로 떠넘기지 않는다
+    assert md == f"{name}은 아직 AI 분석 결과가 없습니다." and d["next"][0]["label"] == "분석 요청 보내기"
     assert "XI맵에서" not in md and "실행하세요" not in md and "이 기관" not in md
 
 
@@ -546,7 +553,8 @@ def test_fix1_lx_next_kept_and_ends_with_period(monkeypatch, restore_ext):
     _no_llm(monkeypatch)
     ctx = _ctx(STAFF, "고창군 보고서 초안 써 줘")
     asyncio.run(runner.answer_direct(ctx, ctx.state["msg"], {"tool": "r3t_report", "args": {}, "module": "r3t_report"}, 0.0, {"pii": []}))
-    assert _done(ctx)["answer_md"] == "해당 지역 데이터가 없습니다.\n\nXI맵에서 고창군 AI 분석을 먼저 실행하세요."
+    d = _done(ctx)
+    assert d["answer_md"] == "고창군은 아직 AI 분석 결과가 없습니다." and d["next"][0]["q"] == "고창군 전역 분석 실행해 줘"
 
 
 def _checks(done=None, running=None, partial=None, survey=None):
@@ -646,7 +654,7 @@ def test_fix4_josa_after_paren_and_units(src, envs, want):
 
 
 # 권고 — 확인 카드 취소 뒤 답이 같은 말을 두 번 하지 않는다(한 문장 · LLM 0)
-@pytest.mark.parametrize("q,want", [("곡성군 보고서 초안 써 줘", "확인 카드에서 취소해 실행하지 않았습니다."),
+@pytest.mark.parametrize("q,want", [("곡성군 보고서 초안 써 줘", "취소해서 실행하지 않았습니다."),
                                     ("Write a report", "Cancelled on the confirmation card — nothing was run.")])
 def test_cancel_is_one_sentence(monkeypatch, restore_ext, q, want):
     _guard_module(monkeypatch, exc=ToolError("rejected_by_user", "사람이 확인 카드에서 거부했습니다 — 실행하지 않았습니다", 409))

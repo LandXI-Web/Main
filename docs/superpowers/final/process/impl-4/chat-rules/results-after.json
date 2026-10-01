@@ -1,0 +1,6777 @@
+{
+ "summary": {
+  "label": "after",
+  "at": "2026-10-01T09:01:35.822Z",
+  "base": "http://localhost:4173",
+  "questions": 31,
+  "deadend": 0,
+  "mismatch": 0,
+  "wrong": 0,
+  "llm": 0,
+  "page_errors": 0
+ },
+ "results": [
+  {
+   "n": 1,
+   "role": "staff",
+   "screen": "lx-console",
+   "tag": "01-staff-lx-console",
+   "q": "남원시로 이동해 줘",
+   "ms": 5903,
+   "state": "done",
+   "confirm": null,
+   "answer": "이 화면에는 지도가 없어 옮기지 못했습니다 — XI맵을 열면 남원시에서 시작합니다. 남원시 현장 확인 필요 필지는 1,035필지입니다.",
+   "plan": [],
+   "buttons": [
+    "XI맵을 남원시에서 열기",
+    "남원시 결과 요약 보기"
+   ],
+   "chips": 1,
+   "links": 1,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 1,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [],
+   "mapAfter": [],
+   "hasMap": false,
+   "navigated": false,
+   "run": "run_2610011757245809d2",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 2,
+   "role": "staff",
+   "screen": "lx-console",
+   "tag": "02-staff-lx-console",
+   "q": "구례군 확대해 줘",
+   "ms": 5914,
+   "state": "done",
+   "confirm": null,
+   "answer": "이 화면에는 지도가 없어 옮기지 못했습니다 — XI맵을 열면 구례군에서 시작합니다. 구례군 현장 확인 필요 필지는 555필지입니다.",
+   "plan": [],
+   "buttons": [
+    "XI맵을 구례군에서 열기",
+    "구례군 결과 요약 보기"
+   ],
+   "chips": 1,
+   "links": 1,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 1,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [],
+   "mapAfter": [],
+   "hasMap": false,
+   "navigated": false,
+   "run": "run_2610011757313df50b",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 3,
+   "role": "staff",
+   "screen": "lx-console",
+   "tag": "03-staff-lx-console",
+   "q": "영상 층 켜 줘",
+   "ms": 7124,
+   "state": "done",
+   "confirm": null,
+   "answer": "이 화면에는 지도가 없어 층을 켜지 못했습니다 — XI맵을 열면 구례군에서 시작합니다. 구례군 현장 확인 필요 필지는 555필지입니다.",
+   "plan": [],
+   "buttons": [
+    "XI맵을 구례군에서 열기",
+    "구례군 결과 요약 보기"
+   ],
+   "chips": 1,
+   "links": 1,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 1,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [],
+   "mapAfter": [],
+   "hasMap": false,
+   "navigated": false,
+   "run": "run_261001175739149594",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 4,
+   "role": "staff",
+   "screen": "lx-console",
+   "tag": "04-staff-lx-console",
+   "q": "현장 확인 필요 필지만 보여 줘",
+   "ms": 6309,
+   "state": "done",
+   "confirm": null,
+   "answer": "이 화면에는 지도가 없어 층을 켜지 못했습니다 — XI맵을 열면 구례군에서 시작합니다. 구례군 현장 확인 필요 필지는 555필지입니다.",
+   "plan": [],
+   "buttons": [
+    "XI맵을 구례군에서 열기",
+    "구례군 결과 요약 보기"
+   ],
+   "chips": 1,
+   "links": 1,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 1,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [],
+   "mapAfter": [],
+   "hasMap": false,
+   "navigated": false,
+   "run": "run_261001175748deb44f",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 5,
+   "role": "staff",
+   "screen": "lx-console",
+   "tag": "05-staff-lx-console",
+   "q": "지적선 켜 줘",
+   "ms": 5893,
+   "state": "done",
+   "confirm": null,
+   "answer": "이 화면에는 지도가 없어 층을 켜지 못했습니다 — XI맵을 열면 구례군에서 시작합니다. 구례군 현장 확인 필요 필지는 555필지입니다.",
+   "plan": [],
+   "buttons": [
+    "XI맵을 구례군에서 열기",
+    "구례군 결과 요약 보기"
+   ],
+   "chips": 1,
+   "links": 1,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 1,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [],
+   "mapAfter": [],
+   "hasMap": false,
+   "navigated": false,
+   "run": "run_261001175755b95986",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 6,
+   "role": "staff",
+   "screen": "lx-console",
+   "tag": "06-staff-lx-console",
+   "q": "3D로 보여 줘",
+   "ms": 5873,
+   "state": "done",
+   "confirm": null,
+   "answer": "이 화면에는 지도가 없어 기울이지 못했습니다 — XI맵을 열면 구례군에서 시작합니다. 구례군 현장 확인 필요 필지는 555필지입니다.",
+   "plan": [],
+   "buttons": [
+    "XI맵을 구례군에서 열기",
+    "구례군 결과 요약 보기"
+   ],
+   "chips": 1,
+   "links": 1,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 1,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [],
+   "mapAfter": [],
+   "hasMap": false,
+   "navigated": false,
+   "run": "run_261001175803e4689a",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 7,
+   "role": "staff",
+   "screen": "lx-console",
+   "tag": "07-staff-lx-console",
+   "q": "이 지역 결과 요약해 줘",
+   "ms": 5908,
+   "state": "done",
+   "confirm": null,
+   "answer": "광주전남특별시 구례군 영농관리 행정서비스는 시범 운영 중입니다. AI 탐지 42,657건 · 현장 확인 필요 555필지 · 결과 확인 대기 566건 · 기관 신고 1건 · 의심 필지 11,081건입니다.",
+   "plan": [
+    "보유 결과 확인 ✓"
+   ],
+   "buttons": [
+    "구례군 현장 확인 필요 필지 몇 건",
+    "구례군 보고서 초안",
+    "XI맵에서 보기"
+   ],
+   "chips": 2,
+   "links": 1,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 5,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [],
+   "mapAfter": [],
+   "hasMap": false,
+   "navigated": false,
+   "run": "run_261001175811c5cb91",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 8,
+   "role": "staff",
+   "screen": "lx-console",
+   "tag": "08-staff-lx-console",
+   "q": "남원시 의심 필지 읍면동별 차트로 보여 줘",
+   "ms": 5890,
+   "state": "done",
+   "confirm": null,
+   "answer": "남원시 의심 필지는 20,872건입니다. 아래 차트에 많은 곳부터 다섯 곳을 두었습니다.",
+   "plan": [
+    "읍면동별 차트 ✓"
+   ],
+   "buttons": [
+    "XI맵에서 크게 보기",
+    "현장 확인 필요 필지 몇 건"
+   ],
+   "chips": 1,
+   "links": 1,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "chart",
+    "next"
+   ],
+   "chart": {
+    "rows": 12,
+    "h": 140
+   },
+   "numChips": 1,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [],
+   "mapAfter": [],
+   "hasMap": false,
+   "navigated": false,
+   "run": "run_261001175817bf9164",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 9,
+   "role": "staff",
+   "screen": "lx-console",
+   "tag": "09-staff-lx-console",
+   "q": "2024년과 2025년 영상을 나란히 비교해 줘",
+   "ms": 9209,
+   "state": "done",
+   "confirm": null,
+   "answer": "이 화면에는 지도가 없어 두 시점을 나란히 놓지 못했습니다 — XI맵을 열면 남원시에서 시작합니다. 남원시 현장 확인 필요 필지는 1,035필지입니다.",
+   "plan": [],
+   "buttons": [
+    "XI맵을 남원시에서 열기",
+    "남원시 결과 요약 보기"
+   ],
+   "chips": 1,
+   "links": 1,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 1,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [],
+   "mapAfter": [],
+   "hasMap": false,
+   "navigated": false,
+   "run": "run_261001175825576973",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 10,
+   "role": "staff",
+   "screen": "lx-console",
+   "tag": "10-staff-lx-console",
+   "q": "지도에 범위를 그려서 그 안만 분석해 줘",
+   "ms": 7138,
+   "state": "done",
+   "confirm": null,
+   "answer": "이 화면에는 지도가 없어 범위 그리기를 켜지 못했습니다 — XI맵을 열면 남원시에서 시작합니다. 남원시 현장 확인 필요 필지는 1,035필지입니다.",
+   "plan": [],
+   "buttons": [
+    "XI맵을 남원시에서 열기",
+    "남원시 결과 요약 보기"
+   ],
+   "chips": 1,
+   "links": 1,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 1,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [],
+   "mapAfter": [],
+   "hasMap": false,
+   "navigated": false,
+   "run": "run_261001175837d3987c",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 11,
+   "role": "staff",
+   "screen": "lx-console",
+   "tag": "11-staff-lx-console",
+   "q": "구례군과 남원시 의심 필지 수 비교해 줘",
+   "ms": 7562,
+   "state": "done",
+   "confirm": null,
+   "answer": "의심 필지는 구례군 11,081건 · 남원시 20,872건입니다(아래 막대).",
+   "plan": [
+    "두 지역 비교 ✓"
+   ],
+   "buttons": [
+    "XI맵에서 구례군 보기",
+    "XI맵에서 남원시 보기"
+   ],
+   "chips": 0,
+   "links": 2,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "chart",
+    "next"
+   ],
+   "chart": {
+    "rows": 2,
+    "h": 50
+   },
+   "numChips": 2,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [],
+   "mapAfter": [],
+   "hasMap": false,
+   "navigated": false,
+   "run": "run_2610011758440c32a3",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 12,
+   "role": "staff",
+   "screen": "lx-console",
+   "tag": "12-staff-lx-console",
+   "q": "남원시 보고서 초안 만들어 줘",
+   "ms": 6720,
+   "state": "done",
+   "confirm": null,
+   "answer": "남원시 실태조사 보고서 초안을 만들었습니다(의심 필지 20,872건 · 법령 조문 8개 인용) — 아래에서 내려받을 수 있습니다. AI가 쓴 초안이라 사람 확인이 필요합니다.",
+   "plan": [
+    "보고서 초안 만들기 ✓"
+   ],
+   "buttons": [],
+   "chips": 0,
+   "links": 0,
+   "files": 1,
+   "alt": false,
+   "kinds": [
+    "file",
+    "next"
+   ],
+   "chart": null,
+   "numChips": 1,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [],
+   "mapAfter": [],
+   "hasMap": false,
+   "navigated": false,
+   "run": "run_2610011758536e1349",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 13,
+   "role": "staff",
+   "screen": "lx-console",
+   "tag": "13-staff-lx-console",
+   "q": "농지 전용 허가 근거 조문 알려 줘",
+   "ms": 4642,
+   "state": "done",
+   "confirm": null,
+   "answer": "관련 조문 원문입니다.\n「농지법」 제34조(농지의 전용허가ㆍ협의) 제1항 · 시행 2026-09-18\n①농지를 전용하려는 자는 다음 각 호의 어느 하나에 해당하는 경우 외에는 대통령령으로 정하는 바에 따라 농림축산식품부장관의 허가(다른 법률에 따라 농지전용허가가 의제되는 협의를 포함한다. 이하 같다)를 받아야 한다. 허가받은 농지의 면적 또는 경계 등 대통령령으로 정하는 중요 사항을 변경하려는 경우에도 또한 같다. <개정 2008.2.29, 2009.5.27, 2013.3.23, 2023.8.16>\n1. 삭제<2023.8.16>\n2. 「국토의 계획 및 이용에 관한 법률」에 따른 도시지역 또는 계획관리지역에 있는 농지로서 제2항에 따른 협의를 거친 농지나 제2항제1호 단서에 따라 협의 대상에서 제외되는 농지를 전용하는 경우\n3. 제35조에 따라 농지전용신고를 하고 농지를 전용하는 경우\n4. 「산지관리법」 제14조에 따른 산지전용허가를 받지 아니하거나 같은 법 제15조에 따른 산지전용신고를 하지 아니하고 불법으로 개간한 농지를 산림으로 복구하는 경우\n5. 삭제<2024.1.2>\n함께 볼 조문: 「농지법 시행규칙」 제29조(농지전용허가) 제2항 · 시행 2026-09-22 · 「농지법 시행령」 제32조(농지전용허가의 신청) 제1항 · 시행 2026-09-18\n조문은 국가법령정보센터 공개 원문 그대로이며, 적용 여부는 담당자가 판단합니다.",
+   "plan": [
+    "법령 조문 찾기 ✓"
+   ],
+   "buttons": [
+    "농지법 시행규칙 제29조 원문",
+    "농지법 시행령 제32조 원문"
+   ],
+   "chips": 2,
+   "links": 0,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 0,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [],
+   "mapAfter": [],
+   "hasMap": false,
+   "navigated": false,
+   "run": "run_2610011759026704e9",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 14,
+   "role": "staff",
+   "screen": "lx-console",
+   "tag": "14-staff-lx-console",
+   "q": "허가 없이 지은 건물에 물리는 이행강제금은 얼마야?",
+   "ms": 4247,
+   "state": "done",
+   "confirm": null,
+   "answer": "질문 그대로는 맞는 조문을 찾지 못해 '이행강제금'으로 찾은 조문 원문입니다.\n「건축법」 제80조(이행강제금) 제1항 · 시행 2026-02-27\n① 허가권자는 제79조제1항에 따라 시정명령을 받은 후 시정기간 내에 시정명령을 이행하지 아니한 건축주등에 대하여는 그 시정명령의 이행에 필요한 상당한 이행기한을 정하여 그 기한까지 시정명령을 이행하지 아니하면 다음 각 호의 이행강제금을 부과한다. 다만, 연면적(공동주택의 경우에는 세대 면적을 기준으로 한다)이 60제곱미터 이하인 주거용 건축물과 제2호 중 주거용 건축물로서 대통령령으로 정하는 경우에는 다음 각 호의 어느 하나에 해당하는 금액의 2분의 1의 범위에서 해당 지방자치단체의 조례로 정하는 금액을 부과한다. <개정 2011.5.30, 2015.8.11, 2019.4.23>\n1. 건축물이 제55조와 제56조에 따른 건폐율이나 용적률을 초과하여 건축된 경우 또는 허가를 받지 아니하거나 신고를 하지 아니하고 건축된 경우에는 「지방세법」에 따라 해당 건축물에 적용되는 1제곱미터의 시가표준액의 100분의 50에 해당하는 금액에 위반면적을 곱한 금액 이하의 범위에서 위반 내용에 따라 대통령령으로 정하는 비율을 곱한 금액\n2. 건축물이 제1호 외의 위반 건축물에 해당하는 경우에는 「지방세법」에 따라 그 건축물에 적용되는 시가표준액에 해당하는 금액의 100분의 10의 범위에서 위반내용에 따라 대통령령으로 정하는 금액\n함께 볼 조문: 「건축법」 제80조의2(이행강제금 부과에 관한 특례) 제2항 · 시행 2026-02-27\n금액 · 기준은 조례와 고시에 따라 달라 여기서 계산하지 않으며, 적용 여부는 담당자가 판단합니다.",
+   "plan": [
+    "법령 조문 찾기 ✓"
+   ],
+   "buttons": [
+    "건축법 제80조의2 원문"
+   ],
+   "chips": 1,
+   "links": 0,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 0,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [],
+   "mapAfter": [],
+   "hasMap": false,
+   "navigated": false,
+   "run": "run_261001175907abe190",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 15,
+   "role": "staff",
+   "screen": "lx-console",
+   "tag": "15-staff-lx-console",
+   "q": "지도 화면을 이미지로 저장해 줘",
+   "ms": 4234,
+   "state": "done",
+   "confirm": null,
+   "answer": "이 화면에는 지도가 없어 그림 파일로 만들지 못했습니다 — XI맵에서 크게 볼 수 있습니다.",
+   "plan": [],
+   "buttons": [
+    "XI맵 열기"
+   ],
+   "chips": 0,
+   "links": 1,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 0,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [],
+   "mapAfter": [],
+   "hasMap": false,
+   "navigated": false,
+   "run": "run_2610011759136d1ca5",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 16,
+   "role": "staff",
+   "screen": "lx-console",
+   "tag": "16-staff-lx-console",
+   "q": "서울 강남구 보여 줘",
+   "ms": 4666,
+   "state": "done",
+   "confirm": null,
+   "answer": "이 화면에는 지도가 없어 옮기지 못했습니다 — XI맵을 열면 강남구에서 시작합니다. 강남구는 아직 AI 분석 결과가 없습니다.",
+   "plan": [],
+   "buttons": [
+    "XI맵을 강남구에서 열기",
+    "강남구 전역 분석 실행",
+    "영상 등록하기"
+   ],
+   "chips": 1,
+   "links": 2,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 0,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [],
+   "mapAfter": [],
+   "hasMap": false,
+   "navigated": false,
+   "run": "run_2610011759204d6c71",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "screen": "lx-console",
+   "page_errors": []
+  },
+  {
+   "n": 17,
+   "role": "staff",
+   "screen": "xi-clean",
+   "tag": "17-staff-xi-clean",
+   "q": "의심 필지 읍면동별 차트로 보여 줘",
+   "ms": 6723,
+   "state": "done",
+   "confirm": null,
+   "answer": "관할 전체 의심 필지는 113,085건입니다. 읍면동별로 막대 차트에 나누어 보였습니다.",
+   "plan": [
+    "읍면동별 차트 ✓"
+   ],
+   "buttons": [],
+   "chips": 0,
+   "links": 0,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "chart",
+    "next"
+   ],
+   "chart": {
+    "rows": 12,
+    "h": 140
+   },
+   "numChips": 1,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [
+    "중심 이동",
+    "줌 6.06 → 10.54",
+    "층 추가 img-ap25-namwon-2023",
+    "층 추가 img-namwon-city-2504",
+    "층 추가 img-namwon-aoi-2504",
+    "층 추가 img-kuksan-a68",
+    "층 추가 img-kuksan-a71",
+    "층 추가 img-jeju-2020",
+    "층 추가 img-jeju-2022",
+    "층 추가 img-jeju-landcover",
+    "층 추가 img-namwon-lc-gt-2020",
+    "층 추가 xc-cog-img-12740-2023-aerial-r",
+    "층 추가 xc-cog-img-12130-2023-aerial-r",
+    "층 추가 xc-cog-img-12720-2023-aerial-r",
+    "층 추가 xc-cog-img-12730-2023-aerial-r",
+    "층 추가 xc-cog-img-12710-2023-aerial-r",
+    "층 추가 xc-cog-img-12760-2023-aerial-r",
+    "층 추가 xc-cog-img-12800-2023-aerial-r",
+    "층 추가 xc-cog-img-12830-2023-aerial-r",
+    "층 추가 xc-cog-img-43745-2023-aerial-r",
+    "층 추가 xc-cog-img-41670-2023-aerial-r",
+    "층 추가 xc-cog-img-44133-2023-aerial-r",
+    "층 추가 xc-cog-img-12850-2023-aerial-r",
+    "층 추가 xc-cog-img-12860-2023-aerial-r",
+    "층 추가 xc-cog-img-12870-2023-aerial-r",
+    "층 추가 xc-cog-img-41550-2023-aerial-r",
+    "층 추가 xc-cog-img-43730-2023-aerial-r",
+    "층 추가 xc-cog-img-43740-2023-aerial-r",
+    "층 추가 xc-cog-img-43760-2023-aerial-r",
+    "층 추가 xc-cog-img-44180-2023-aerial-r",
+    "층 추가 xc-cog-img-44210-2023-aerial-r",
+    "층 추가 xc-cog-img-44250-2023-aerial-r",
+    "층 추가 xc-cog-img-44760-2023-aerial-r",
+    "층 추가 xc-cog-img-47280-2023-aerial-r",
+    "층 추가 xc-cog-img-52740-2023-aerial-r",
+    "층 추가 xc-cog-img-44825-2023-aerial-r",
+    "층 추가 xc-cog-img-47250-2023-aerial-r",
+    "층 추가 xc-cog-img-48880-2023-aerial-r",
+    "층 추가 xc-cog-img-51130-2023-aerial-r",
+    "층 추가 xc-cog-img-48860-2023-aerial-r",
+    "층 추가 xc-cog-img-48870-2023-aerial-r",
+    "층 추가 xc-cog-img-52130-2023-aerial-r",
+    "층 추가 xc-cog-img-52710-2023-aerial-r",
+    "층 추가 xc-cog-img-52720-2023-aerial-r",
+    "층 추가 xc-cog-img-52750-2023-aerial-r",
+    "층 추가 xc-cog-img-52770-2023-aerial-r",
+    "층 추가 xc-cog-img-52800-2023-aerial-r",
+    "층 추가 xc-cog-img-12170-2023-aerial-r",
+    "층 추가 xc-cog-img-44131-2023-aerial-r",
+    "층 추가 xc-cog-img-44200-2023-aerial-r",
+    "층 추가 xc-cog-img-52210-2023-aerial-r",
+    "층 추가 xc-cog-img-12780-2023-aerial-r",
+    "층 추가 xc-cog-img-43720-2023-aerial-r",
+    "층 추가 xc-cog-img-43750-2023-aerial-r",
+    "층 추가 xc-cog-img-12840-2023-aerial-r",
+    "층 추가 xc-cog-img-41500-2023-aerial-r",
+    "층 추가 xc-cog-img-44150-2023-aerial-r",
+    "층 추가 xc-cog-img-44230-2023-aerial-r",
+    "층 추가 xc-cog-img-44710-2023-aerial-r",
+    "층 추가 xc-cog-img-44790-2023-aerial-r",
+    "층 추가 xc-cog-img-44800-2023-aerial-r",
+    "층 추가 xc-cog-img-48850-2023-aerial-r",
+    "층 추가 xc-cog-img-52730-2023-aerial-r",
+    "층 추가 xc-cog-img-12110-2023-aerial-r",
+    "층 추가 xc-cog-img-43130-2023-aerial-r",
+    "층 추가 xc-cog-img-12750-2023-aerial-r",
+    "층 추가 xc-cog-img-12770-2023-aerial-r",
+    "층 추가 xc-cog-img-43150-2023-aerial-r",
+    "층 추가 xc-cog-img-12790-2023-aerial-r",
+    "층 추가 xc-cog-img-43770-2023-aerial-r",
+    "층 추가 xc-cog-img-12810-2023-aerial-r",
+    "층 추가 xc-cog-img-12820-2023-aerial-r",
+    "층 추가 xc-cog-img-44270-2023-aerial-r",
+    "층 추가 xc-cog-img-52180-2023-aerial-r",
+    "층 추가 xc-cog-img-44770-2023-aerial-r",
+    "층 추가 xc-cog-img-44810-2023-aerial-r",
+    "층 추가 xc-cog-img-52790-2023-aerial-r",
+    "층 추가 xc-cog-img-52190-2020-aerial-r",
+    "층 추가 xc-cog-img-52190-2023-aerial-r",
+    "층 추가 xc-cog-axis-iksan-hwangdeung-r",
+    "층 추가 sgg-hit",
+    "층 추가 sgg-hover",
+    "층 추가 sgg-line",
+    "층 추가 xc-rmask",
+    "층 추가 xc-rline",
+    "층 추가 xc-emd",
+    "층 추가 xc-ai-namwon-landcover-2023-fill",
+    "층 추가 xc-ai-namwon-landcover-2023-halo",
+    "층 추가 xc-ai-namwon-landcover-2023-line",
+    "층 추가 xc-ai-namwon-landcover-2023-pt",
+    "층 추가 xc-ai-namwon-farmland-2025-fill",
+    "층 추가 xc-ai-namwon-farmland-2025-halo",
+    "층 추가 xc-ai-namwon-farmland-2025-line",
+    "층 추가 xc-ai-namwon-farmland-2025-pt",
+    "층 추가 xc-ai-namwon-greenhouse-2025-fill",
+    "층 추가 xc-ai-namwon-greenhouse-2025-halo",
+    "층 추가 xc-ai-namwon-greenhouse-2025-line",
+    "층 추가 xc-ai-namwon-greenhouse-2025-pt",
+    "층 추가 xc-ai-namwon-change-fill",
+    "층 추가 xc-ai-namwon-change-halo",
+    "층 추가 xc-ai-namwon-change-line",
+    "층 추가 xc-ai-namwon-change-pt",
+    "층 추가 xc-ai-namwon-greenhouse-2023-vh-fill",
+    "층 추가 xc-ai-namwon-greenhouse-2023-vh-halo",
+    "층 추가 xc-ai-namwon-greenhouse-2023-vh-line",
+    "층 추가 xc-ai-namwon-greenhouse-2023-vh-pt",
+    "층 추가 xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-fill",
+    "층 추가 xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-halo",
+    "층 추가 xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-line",
+    "층 추가 xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-pt",
+    "층 추가 xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-fill",
+    "층 추가 xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-halo",
+    "층 추가 xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-line",
+    "층 추가 xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-pt",
+    "층 추가 xc-pc-parcels-namwon-l",
+    "층 추가 xc-pc-parcels-namwon-s",
+    "층 추가 xc-pc-parcels-namwon-sl",
+    "층 추가 xc-pts-glow",
+    "층 추가 xc-pts",
+    "층 추가 k-sel-f",
+    "층 추가 k-sel-l",
+    "거름 sgg-hover",
+    "거름 xc-ai-namwon-landcover-2023-pt",
+    "거름 xc-ai-namwon-farmland-2025-pt",
+    "거름 xc-ai-namwon-greenhouse-2025-pt",
+    "거름 xc-ai-namwon-change-pt",
+    "거름 xc-ai-namwon-greenhouse-2023-vh-pt",
+    "거름 xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-pt",
+    "거름 xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-pt",
+    "거름 xc-pc-parcels-namwon-s",
+    "거름 xc-pc-parcels-namwon-sl"
+   ],
+   "mapBefore": [
+    {
+     "center": [
+      128.2,
+      36.0036
+     ],
+     "zoom": 6.06,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {}
+    }
+   ],
+   "mapAfter": [
+    {
+     "center": [
+      127.4277,
+      35.4364
+     ],
+     "zoom": 10.54,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "img-ap25-namwon-2023",
+       "vis": "visible"
+      },
+      {
+       "id": "img-namwon-city-2504",
+       "vis": "visible"
+      },
+      {
+       "id": "img-namwon-aoi-2504",
+       "vis": "visible"
+      },
+      {
+       "id": "img-kuksan-a68",
+       "vis": "visible"
+      },
+      {
+       "id": "img-kuksan-a71",
+       "vis": "visible"
+      },
+      {
+       "id": "img-jeju-2020",
+       "vis": "visible"
+      },
+      {
+       "id": "img-jeju-2022",
+       "vis": "visible"
+      },
+      {
+       "id": "img-jeju-landcover",
+       "vis": "visible"
+      },
+      {
+       "id": "img-namwon-lc-gt-2020",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12740-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12720-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12730-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12710-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12760-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12800-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12830-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43745-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-41670-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44133-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12850-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12860-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12870-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-41550-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43730-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43740-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43760-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44180-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44210-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44250-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44760-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-47280-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52740-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44825-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-47250-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48880-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-51130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48860-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48870-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52710-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52720-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52750-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52800-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12170-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44131-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44200-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52210-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12780-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43720-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43750-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12840-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-41500-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44150-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44230-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44710-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44790-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44800-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48850-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52730-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12110-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12750-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43150-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12790-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12810-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12820-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44270-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52180-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44810-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52790-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52190-2020-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52190-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-axis-iksan-hwangdeung-r",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "sgg-hit",
+       "vis": "visible"
+      },
+      {
+       "id": "sgg-hover",
+       "vis": "visible"
+      },
+      {
+       "id": "sgg-line",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-rmask",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-rline",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-emd",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-pt",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "xc-pc-parcels-namwon-l",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pc-parcels-namwon-s",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pc-parcels-namwon-sl",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pts-glow",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pts",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-f",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-l",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {
+      "sgg-hover": 38,
+      "xc-ai-namwon-landcover-2023-pt": 32,
+      "xc-ai-namwon-farmland-2025-pt": 32,
+      "xc-ai-namwon-greenhouse-2025-pt": 32,
+      "xc-ai-namwon-change-pt": 32,
+      "xc-ai-namwon-greenhouse-2023-vh-pt": 32,
+      "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-pt": 32,
+      "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-pt": 32,
+      "xc-pc-parcels-namwon-s": 20760,
+      "xc-pc-parcels-namwon-sl": 20760
+     }
+    }
+   ],
+   "hasMap": true,
+   "navigated": false,
+   "run": "run_261001175938509216",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 18,
+   "role": "staff",
+   "screen": "xi-clean",
+   "tag": "18-staff-xi-clean",
+   "q": "AI 분석 결과 층 꺼 줘",
+   "ms": 4248,
+   "state": "done",
+   "confirm": null,
+   "answer": "AI 분석 결과 층은 이미 꺼져 있습니다.",
+   "plan": [
+    "층 켜기·끄기"
+   ],
+   "buttons": [
+    "현장 확인 필요 층도 끄기"
+   ],
+   "chips": 1,
+   "links": 0,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 0,
+   "helpful": true,
+   "acts": {
+    "sent": "1",
+    "done": "1",
+    "ok": "1",
+    "verdict": "ok"
+   },
+   "map": [],
+   "mapBefore": [
+    {
+     "center": [
+      127.4277,
+      35.4364
+     ],
+     "zoom": 10.54,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "img-ap25-namwon-2023",
+       "vis": "visible"
+      },
+      {
+       "id": "img-namwon-city-2504",
+       "vis": "visible"
+      },
+      {
+       "id": "img-namwon-aoi-2504",
+       "vis": "visible"
+      },
+      {
+       "id": "img-kuksan-a68",
+       "vis": "visible"
+      },
+      {
+       "id": "img-kuksan-a71",
+       "vis": "visible"
+      },
+      {
+       "id": "img-jeju-2020",
+       "vis": "visible"
+      },
+      {
+       "id": "img-jeju-2022",
+       "vis": "visible"
+      },
+      {
+       "id": "img-jeju-landcover",
+       "vis": "visible"
+      },
+      {
+       "id": "img-namwon-lc-gt-2020",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12740-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12720-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12730-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12710-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12760-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12800-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12830-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43745-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-41670-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44133-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12850-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12860-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12870-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-41550-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43730-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43740-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43760-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44180-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44210-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44250-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44760-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-47280-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52740-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44825-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-47250-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48880-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-51130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48860-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48870-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52710-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52720-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52750-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52800-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12170-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44131-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44200-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52210-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12780-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43720-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43750-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12840-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-41500-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44150-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44230-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44710-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44790-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44800-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48850-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52730-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12110-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12750-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43150-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12790-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12810-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12820-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44270-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52180-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44810-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52790-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52190-2020-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52190-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-axis-iksan-hwangdeung-r",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "sgg-hit",
+       "vis": "visible"
+      },
+      {
+       "id": "sgg-hover",
+       "vis": "visible"
+      },
+      {
+       "id": "sgg-line",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-rmask",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-rline",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-emd",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-pt",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "xc-pc-parcels-namwon-l",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pc-parcels-namwon-s",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pc-parcels-namwon-sl",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pts-glow",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pts",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-f",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-l",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {
+      "sgg-hover": 38,
+      "xc-ai-namwon-landcover-2023-pt": 32,
+      "xc-ai-namwon-farmland-2025-pt": 32,
+      "xc-ai-namwon-greenhouse-2025-pt": 32,
+      "xc-ai-namwon-change-pt": 32,
+      "xc-ai-namwon-greenhouse-2023-vh-pt": 32,
+      "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-pt": 32,
+      "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-pt": 32,
+      "xc-pc-parcels-namwon-s": 20760,
+      "xc-pc-parcels-namwon-sl": 20760
+     }
+    }
+   ],
+   "mapAfter": [
+    {
+     "center": [
+      127.4277,
+      35.4364
+     ],
+     "zoom": 10.54,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "img-ap25-namwon-2023",
+       "vis": "visible"
+      },
+      {
+       "id": "img-namwon-city-2504",
+       "vis": "visible"
+      },
+      {
+       "id": "img-namwon-aoi-2504",
+       "vis": "visible"
+      },
+      {
+       "id": "img-kuksan-a68",
+       "vis": "visible"
+      },
+      {
+       "id": "img-kuksan-a71",
+       "vis": "visible"
+      },
+      {
+       "id": "img-jeju-2020",
+       "vis": "visible"
+      },
+      {
+       "id": "img-jeju-2022",
+       "vis": "visible"
+      },
+      {
+       "id": "img-jeju-landcover",
+       "vis": "visible"
+      },
+      {
+       "id": "img-namwon-lc-gt-2020",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12740-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12720-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12730-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12710-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12760-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12800-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12830-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43745-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-41670-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44133-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12850-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12860-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12870-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-41550-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43730-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43740-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43760-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44180-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44210-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44250-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44760-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-47280-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52740-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44825-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-47250-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48880-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-51130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48860-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48870-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52710-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52720-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52750-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52800-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12170-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44131-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44200-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52210-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12780-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43720-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43750-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12840-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-41500-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44150-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44230-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44710-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44790-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44800-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48850-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52730-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12110-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12750-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43150-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12790-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12810-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12820-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44270-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52180-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44810-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52790-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52190-2020-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52190-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-axis-iksan-hwangdeung-r",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "sgg-hit",
+       "vis": "visible"
+      },
+      {
+       "id": "sgg-hover",
+       "vis": "visible"
+      },
+      {
+       "id": "sgg-line",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-rmask",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-rline",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-emd",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-pt",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "xc-pc-parcels-namwon-l",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pc-parcels-namwon-s",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pc-parcels-namwon-sl",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pts-glow",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pts",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-f",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-l",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {
+      "sgg-hover": 38,
+      "xc-ai-namwon-landcover-2023-pt": 32,
+      "xc-ai-namwon-farmland-2025-pt": 32,
+      "xc-ai-namwon-greenhouse-2025-pt": 32,
+      "xc-ai-namwon-change-pt": 32,
+      "xc-ai-namwon-greenhouse-2023-vh-pt": 32,
+      "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-pt": 32,
+      "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-pt": 32,
+      "xc-pc-parcels-namwon-s": 20760,
+      "xc-pc-parcels-namwon-sl": 20760
+     }
+    }
+   ],
+   "hasMap": true,
+   "navigated": false,
+   "run": "run_261001175947ff612c",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 19,
+   "role": "staff",
+   "screen": "xi-clean",
+   "tag": "19-staff-xi-clean",
+   "q": "남원시 운봉읍으로 이동해서 비닐하우스 결과만 보여 줘",
+   "ms": 4644,
+   "state": "done",
+   "confirm": null,
+   "answer": "운봉읍으로 옮기고 비닐하우스 AI 분석 결과만 켰습니다.",
+   "plan": [
+    "지역으로 이동 ✓"
+   ],
+   "buttons": [],
+   "chips": 0,
+   "links": 0,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 0,
+   "helpful": true,
+   "acts": {
+    "sent": "2",
+    "done": "2",
+    "ok": "2",
+    "verdict": "ok"
+   },
+   "map": [
+    "중심 이동",
+    "줌 10.54 → 11.76",
+    "층 xc-ai-namwon-greenhouse-2025-fill none → visible",
+    "층 xc-ai-namwon-greenhouse-2025-halo none → visible",
+    "층 xc-ai-namwon-greenhouse-2025-line none → visible",
+    "층 xc-ai-namwon-greenhouse-2025-pt none → visible",
+    "층 xc-ai-namwon-greenhouse-2023-vh-fill none → visible",
+    "층 xc-ai-namwon-greenhouse-2023-vh-halo none → visible",
+    "층 xc-ai-namwon-greenhouse-2023-vh-line none → visible",
+    "층 xc-ai-namwon-greenhouse-2023-vh-pt none → visible",
+    "거름 xc-pc-parcels-namwon-s",
+    "거름 xc-pc-parcels-namwon-sl"
+   ],
+   "mapBefore": [
+    {
+     "center": [
+      127.4277,
+      35.4364
+     ],
+     "zoom": 10.54,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "img-ap25-namwon-2023",
+       "vis": "visible"
+      },
+      {
+       "id": "img-namwon-city-2504",
+       "vis": "visible"
+      },
+      {
+       "id": "img-namwon-aoi-2504",
+       "vis": "visible"
+      },
+      {
+       "id": "img-kuksan-a68",
+       "vis": "visible"
+      },
+      {
+       "id": "img-kuksan-a71",
+       "vis": "visible"
+      },
+      {
+       "id": "img-jeju-2020",
+       "vis": "visible"
+      },
+      {
+       "id": "img-jeju-2022",
+       "vis": "visible"
+      },
+      {
+       "id": "img-jeju-landcover",
+       "vis": "visible"
+      },
+      {
+       "id": "img-namwon-lc-gt-2020",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12740-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12720-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12730-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12710-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12760-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12800-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12830-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43745-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-41670-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44133-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12850-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12860-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12870-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-41550-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43730-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43740-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43760-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44180-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44210-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44250-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44760-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-47280-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52740-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44825-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-47250-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48880-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-51130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48860-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48870-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52710-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52720-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52750-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52800-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12170-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44131-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44200-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52210-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12780-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43720-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43750-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12840-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-41500-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44150-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44230-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44710-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44790-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44800-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48850-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52730-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12110-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12750-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43150-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12790-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12810-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12820-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44270-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52180-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44810-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52790-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52190-2020-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52190-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-axis-iksan-hwangdeung-r",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "sgg-hit",
+       "vis": "visible"
+      },
+      {
+       "id": "sgg-hover",
+       "vis": "visible"
+      },
+      {
+       "id": "sgg-line",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-rmask",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-rline",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-emd",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-pt",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "xc-pc-parcels-namwon-l",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pc-parcels-namwon-s",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pc-parcels-namwon-sl",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pts-glow",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pts",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-f",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-l",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {
+      "sgg-hover": 38,
+      "xc-ai-namwon-landcover-2023-pt": 32,
+      "xc-ai-namwon-farmland-2025-pt": 32,
+      "xc-ai-namwon-greenhouse-2025-pt": 32,
+      "xc-ai-namwon-change-pt": 32,
+      "xc-ai-namwon-greenhouse-2023-vh-pt": 32,
+      "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-pt": 32,
+      "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-pt": 32,
+      "xc-pc-parcels-namwon-s": 20760,
+      "xc-pc-parcels-namwon-sl": 20760
+     }
+    }
+   ],
+   "mapAfter": [
+    {
+     "center": [
+      127.5351,
+      35.4271
+     ],
+     "zoom": 11.76,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "img-ap25-namwon-2023",
+       "vis": "visible"
+      },
+      {
+       "id": "img-namwon-city-2504",
+       "vis": "visible"
+      },
+      {
+       "id": "img-namwon-aoi-2504",
+       "vis": "visible"
+      },
+      {
+       "id": "img-kuksan-a68",
+       "vis": "visible"
+      },
+      {
+       "id": "img-kuksan-a71",
+       "vis": "visible"
+      },
+      {
+       "id": "img-jeju-2020",
+       "vis": "visible"
+      },
+      {
+       "id": "img-jeju-2022",
+       "vis": "visible"
+      },
+      {
+       "id": "img-jeju-landcover",
+       "vis": "visible"
+      },
+      {
+       "id": "img-namwon-lc-gt-2020",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12740-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12720-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12730-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12710-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12760-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12800-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12830-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43745-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-41670-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44133-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12850-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12860-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12870-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-41550-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43730-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43740-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43760-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44180-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44210-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44250-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44760-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-47280-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52740-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44825-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-47250-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48880-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-51130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48860-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48870-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52710-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52720-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52750-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52800-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12170-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44131-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44200-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52210-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12780-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43720-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43750-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12840-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-41500-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44150-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44230-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44710-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44790-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44800-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48850-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52730-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12110-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12750-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43150-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12790-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12810-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12820-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44270-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52180-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44810-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52790-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52190-2020-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52190-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-axis-iksan-hwangdeung-r",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "sgg-hit",
+       "vis": "visible"
+      },
+      {
+       "id": "sgg-hover",
+       "vis": "visible"
+      },
+      {
+       "id": "sgg-line",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-rmask",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-rline",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-emd",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-fill",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-halo",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-line",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-pt",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-namwon-change-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-fill",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-halo",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-line",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-pt",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-pt",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "xc-pc-parcels-namwon-l",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pc-parcels-namwon-s",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pc-parcels-namwon-sl",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pts-glow",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pts",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-f",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-l",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {
+      "sgg-hover": 38,
+      "xc-ai-namwon-landcover-2023-pt": 32,
+      "xc-ai-namwon-farmland-2025-pt": 32,
+      "xc-ai-namwon-greenhouse-2025-pt": 32,
+      "xc-ai-namwon-change-pt": 32,
+      "xc-ai-namwon-greenhouse-2023-vh-pt": 32,
+      "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-pt": 32,
+      "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-pt": 32,
+      "xc-pc-parcels-namwon-s": 2920,
+      "xc-pc-parcels-namwon-sl": 2920
+     }
+    }
+   ],
+   "hasMap": true,
+   "navigated": false,
+   "run": "run_2610011759539a9296",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 20,
+   "role": "staff",
+   "screen": "xi-clean",
+   "tag": "20-staff-xi-clean",
+   "q": "남원시 전역 분석 실행해 줘",
+   "ms": 7029,
+   "state": "done",
+   "confirm": "남원시 AI 분석을 실행할까요? 시군구 전역을 분석합니다 — 읍면동 39곳. 실행 취소",
+   "answer": "취소해서 실행하지 않았습니다.",
+   "plan": [
+    "AI 분석 실행 ✗"
+   ],
+   "buttons": [
+    "지금 있는 결과 요약",
+    "읍면동별 차트"
+   ],
+   "chips": 2,
+   "links": 0,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 0,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [
+    {
+     "center": [
+      127.5351,
+      35.4271
+     ],
+     "zoom": 11.76,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "img-ap25-namwon-2023",
+       "vis": "visible"
+      },
+      {
+       "id": "img-namwon-city-2504",
+       "vis": "visible"
+      },
+      {
+       "id": "img-namwon-aoi-2504",
+       "vis": "visible"
+      },
+      {
+       "id": "img-kuksan-a68",
+       "vis": "visible"
+      },
+      {
+       "id": "img-kuksan-a71",
+       "vis": "visible"
+      },
+      {
+       "id": "img-jeju-2020",
+       "vis": "visible"
+      },
+      {
+       "id": "img-jeju-2022",
+       "vis": "visible"
+      },
+      {
+       "id": "img-jeju-landcover",
+       "vis": "visible"
+      },
+      {
+       "id": "img-namwon-lc-gt-2020",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12740-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12720-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12730-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12710-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12760-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12800-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12830-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43745-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-41670-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44133-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12850-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12860-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12870-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-41550-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43730-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43740-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43760-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44180-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44210-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44250-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44760-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-47280-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52740-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44825-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-47250-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48880-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-51130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48860-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48870-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52710-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52720-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52750-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52800-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12170-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44131-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44200-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52210-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12780-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43720-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43750-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12840-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-41500-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44150-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44230-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44710-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44790-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44800-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48850-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52730-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12110-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12750-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43150-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12790-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12810-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12820-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44270-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52180-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44810-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52790-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52190-2020-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52190-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-axis-iksan-hwangdeung-r",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "sgg-hit",
+       "vis": "visible"
+      },
+      {
+       "id": "sgg-hover",
+       "vis": "visible"
+      },
+      {
+       "id": "sgg-line",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-rmask",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-rline",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-emd",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-fill",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-halo",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-line",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-pt",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-namwon-change-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-fill",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-halo",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-line",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-pt",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-pt",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "xc-pc-parcels-namwon-l",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pc-parcels-namwon-s",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pc-parcels-namwon-sl",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pts-glow",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pts",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-f",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-l",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {
+      "sgg-hover": 38,
+      "xc-ai-namwon-landcover-2023-pt": 32,
+      "xc-ai-namwon-farmland-2025-pt": 32,
+      "xc-ai-namwon-greenhouse-2025-pt": 32,
+      "xc-ai-namwon-change-pt": 32,
+      "xc-ai-namwon-greenhouse-2023-vh-pt": 32,
+      "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-pt": 32,
+      "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-pt": 32,
+      "xc-pc-parcels-namwon-s": 2920,
+      "xc-pc-parcels-namwon-sl": 2920
+     }
+    }
+   ],
+   "mapAfter": [
+    {
+     "center": [
+      127.5351,
+      35.4271
+     ],
+     "zoom": 11.76,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "img-ap25-namwon-2023",
+       "vis": "visible"
+      },
+      {
+       "id": "img-namwon-city-2504",
+       "vis": "visible"
+      },
+      {
+       "id": "img-namwon-aoi-2504",
+       "vis": "visible"
+      },
+      {
+       "id": "img-kuksan-a68",
+       "vis": "visible"
+      },
+      {
+       "id": "img-kuksan-a71",
+       "vis": "visible"
+      },
+      {
+       "id": "img-jeju-2020",
+       "vis": "visible"
+      },
+      {
+       "id": "img-jeju-2022",
+       "vis": "visible"
+      },
+      {
+       "id": "img-jeju-landcover",
+       "vis": "visible"
+      },
+      {
+       "id": "img-namwon-lc-gt-2020",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12740-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12720-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12730-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12710-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12760-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12800-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12830-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43745-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-41670-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44133-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12850-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12860-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12870-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-41550-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43730-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43740-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43760-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44180-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44210-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44250-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44760-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-47280-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52740-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44825-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-47250-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48880-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-51130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48860-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48870-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52710-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52720-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52750-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52800-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12170-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44131-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44200-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52210-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12780-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43720-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43750-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12840-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-41500-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44150-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44230-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44710-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44790-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44800-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-48850-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52730-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12110-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43130-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12750-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43150-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12790-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-43770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12810-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-12820-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44270-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52180-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44770-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-44810-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52790-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52190-2020-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-img-52190-2023-aerial-r",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-cog-axis-iksan-hwangdeung-r",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "sgg-hit",
+       "vis": "visible"
+      },
+      {
+       "id": "sgg-hover",
+       "vis": "visible"
+      },
+      {
+       "id": "sgg-line",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-rmask",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-rline",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-emd",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-landcover-2023-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-farmland-2025-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-fill",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-halo",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-line",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2025-pt",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-namwon-change-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-change-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-fill",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-halo",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-line",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-namwon-greenhouse-2023-vh-pt",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-pt",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-fill",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-halo",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-line",
+       "vis": "none"
+      },
+      {
+       "id": "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-pt",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "xc-pc-parcels-namwon-l",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pc-parcels-namwon-s",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pc-parcels-namwon-sl",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pts-glow",
+       "vis": "visible"
+      },
+      {
+       "id": "xc-pts",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-f",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-l",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {
+      "sgg-hover": 38,
+      "xc-ai-namwon-landcover-2023-pt": 32,
+      "xc-ai-namwon-farmland-2025-pt": 32,
+      "xc-ai-namwon-greenhouse-2025-pt": 32,
+      "xc-ai-namwon-change-pt": 32,
+      "xc-ai-namwon-greenhouse-2023-vh-pt": 32,
+      "xc-ai-results-lx-job_01M3RCYK4CWJWSXYNEXH3CWZ2B-pt": 32,
+      "xc-ai-results-lx-job_01M3PHP0GQAP0NV87VFWHPP77G-pt": 32,
+      "xc-pc-parcels-namwon-s": 2920,
+      "xc-pc-parcels-namwon-sl": 2920
+     }
+    }
+   ],
+   "hasMap": true,
+   "navigated": false,
+   "run": "run_26100117595957c762",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "screen": "xi-clean",
+   "page_errors": []
+  },
+  {
+   "n": 21,
+   "role": "admin",
+   "screen": "ops-core",
+   "tag": "21-admin-ops-core",
+   "q": "지금 GPU 상태 어때?",
+   "ms": 4243,
+   "state": "done",
+   "confirm": null,
+   "answer": "18:00:14 기준 동시 고부하 GPU는 0장(최대 1장)으로 고부하인 GPU 없음 · 전력 예산 안입니다. GPU 0 대기 중 · GPU 1 대기 중입니다(아래 표).",
+   "plan": [
+    "GPU 확인 ✓"
+   ],
+   "buttons": [
+    "인프라 화면에서 크게 보기"
+   ],
+   "chips": 0,
+   "links": 1,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "table",
+    "next"
+   ],
+   "chart": null,
+   "numChips": 9,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [
+    {
+     "center": [
+      130.0754,
+      36.0036
+     ],
+     "zoom": 6.06,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "oc-veil",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {}
+    }
+   ],
+   "mapAfter": [
+    {
+     "center": [
+      130.0754,
+      36.0036
+     ],
+     "zoom": 6.06,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "oc-veil",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {}
+    }
+   ],
+   "hasMap": true,
+   "navigated": false,
+   "run": "run_2610011800161bdacc",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 22,
+   "role": "admin",
+   "screen": "ops-core",
+   "tag": "22-admin-ops-core",
+   "q": "기관별 사용량 차트로 보여 줘",
+   "ms": 4261,
+   "state": "done",
+   "confirm": null,
+   "answer": "이번 달 XI ChatGEO 요청 건수는 LX 272건, 남원시 72건, 광주전남특별시 0건, 키르기스 농업부 0건, 키르기스 토지자원청 0건입니다. 합계는 344건입니다.",
+   "plan": [
+    "기관 사용량 확인 ✓"
+   ],
+   "buttons": [],
+   "chips": 0,
+   "links": 0,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "chart",
+    "next"
+   ],
+   "chart": {
+    "rows": 5,
+    "h": 140
+   },
+   "numChips": 6,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [
+    {
+     "center": [
+      130.0754,
+      36.0036
+     ],
+     "zoom": 6.06,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "oc-veil",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {}
+    }
+   ],
+   "mapAfter": [
+    {
+     "center": [
+      130.0754,
+      36.0036
+     ],
+     "zoom": 6.06,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "oc-veil",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {}
+    }
+   ],
+   "hasMap": true,
+   "navigated": false,
+   "run": "run_26100118002186e129",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 23,
+   "role": "admin",
+   "screen": "ops-core",
+   "tag": "23-admin-ops-core",
+   "q": "남원시로 이동해 줘",
+   "ms": 4230,
+   "state": "done",
+   "confirm": null,
+   "answer": "전북특별자치도 남원시로 지도를 옮겼습니다.",
+   "plan": [
+    "지역으로 이동 ✓"
+   ],
+   "buttons": [],
+   "chips": 0,
+   "links": 0,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 0,
+   "helpful": true,
+   "acts": {
+    "sent": "1",
+    "done": "1",
+    "ok": "1",
+    "verdict": "ok"
+   },
+   "map": [
+    "중심 이동",
+    "줌 6.06 → 10.71"
+   ],
+   "mapBefore": [
+    {
+     "center": [
+      130.0754,
+      36.0036
+     ],
+     "zoom": 6.06,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "oc-veil",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {}
+    }
+   ],
+   "mapAfter": [
+    {
+     "center": [
+      127.429,
+      35.4318
+     ],
+     "zoom": 10.71,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "oc-veil",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {}
+    }
+   ],
+   "hasMap": true,
+   "navigated": false,
+   "run": "run_261001180027be392a",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 24,
+   "role": "admin",
+   "screen": "ops-core",
+   "tag": "24-admin-ops-core",
+   "q": "분석 대기열 요약해 줘",
+   "ms": 4217,
+   "state": "done",
+   "confirm": null,
+   "answer": "대기 중인 분석 작업은 0건, 진행 중인 작업은 0건입니다. 작업기는 GPU 서버 1대, 일반 서버 2대입니다.",
+   "plan": [
+    "대기열 확인 ✓"
+   ],
+   "buttons": [],
+   "chips": 0,
+   "links": 0,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 4,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [
+    {
+     "center": [
+      127.429,
+      35.4318
+     ],
+     "zoom": 10.71,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "oc-veil",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {}
+    }
+   ],
+   "mapAfter": [
+    {
+     "center": [
+      127.429,
+      35.4318
+     ],
+     "zoom": 10.71,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "oc-veil",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {}
+    }
+   ],
+   "hasMap": true,
+   "navigated": false,
+   "run": "run_261001180033dd4518",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "screen": "ops-core",
+   "page_errors": []
+  },
+  {
+   "n": 25,
+   "role": "tenant",
+   "screen": "gov-report",
+   "tag": "25-tenant-gov-report",
+   "q": "우리 시 현장 확인 필요 필지 몇 건이야?",
+   "ms": 5872,
+   "state": "done",
+   "confirm": null,
+   "answer": "남원시 현장 확인 필요 필지는 1,035필지입니다. 의심 필지 20,872건 가운데 먼저 현장에서 확인할 필지입니다.",
+   "plan": [
+    "건수 확인 ✓"
+   ],
+   "buttons": [
+    "지도에서 보기",
+    "읍면동별 차트",
+    "보고서 초안"
+   ],
+   "chips": 2,
+   "links": 1,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 2,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [
+    {
+     "center": [
+      127.4966,
+      35.4924
+     ],
+     "zoom": 18,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "k-todo-p",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-f",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-h",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-l",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-p",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {
+      "k-sel-p": 32
+     }
+    }
+   ],
+   "mapAfter": [
+    {
+     "center": [
+      127.4966,
+      35.4924
+     ],
+     "zoom": 18,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "k-todo-p",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-f",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-h",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-l",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-p",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {
+      "k-sel-p": 32
+     }
+    }
+   ],
+   "hasMap": true,
+   "navigated": false,
+   "run": "run_261001180045402351",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 26,
+   "role": "tenant",
+   "screen": "gov-report",
+   "tag": "26-tenant-gov-report",
+   "q": "구례군 결과 보여 줘",
+   "ms": 4231,
+   "state": "rejected",
+   "confirm": null,
+   "answer": "구례군은 이 기관 계정에서 볼 수 없습니다.",
+   "plan": [],
+   "buttons": [
+    "남원시 결과 요약 보기",
+    "남원시 현장 확인 필요 필지 몇 건"
+   ],
+   "chips": 2,
+   "links": 0,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 0,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [
+    {
+     "center": [
+      127.4966,
+      35.4924
+     ],
+     "zoom": 18,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "k-todo-p",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-f",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-h",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-l",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-p",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {
+      "k-sel-p": 32
+     }
+    }
+   ],
+   "mapAfter": [
+    {
+     "center": [
+      127.4966,
+      35.4924
+     ],
+     "zoom": 18,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "k-todo-p",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-f",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-h",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-l",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-p",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {
+      "k-sel-p": 32
+     }
+    }
+   ],
+   "hasMap": true,
+   "navigated": false,
+   "run": "run_261001180053b68b2e",
+   "llm": false,
+   "model": {
+    "id": null,
+    "backend": null,
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 27,
+   "role": "tenant",
+   "screen": "gov-report",
+   "tag": "27-tenant-gov-report",
+   "q": "운봉읍으로 이동해 줘",
+   "ms": 5064,
+   "state": "done",
+   "confirm": null,
+   "answer": "지도를 남원시 운봉읍으로 옮겼습니다.",
+   "plan": [
+    "읍면동으로 이동 ✓"
+   ],
+   "buttons": [],
+   "chips": 0,
+   "links": 0,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 0,
+   "helpful": true,
+   "acts": {
+    "sent": "1",
+    "done": "1",
+    "ok": "1",
+    "verdict": "ok"
+   },
+   "map": [
+    "중심 이동",
+    "줌 18 → 11.33"
+   ],
+   "mapBefore": [
+    {
+     "center": [
+      127.4966,
+      35.4924
+     ],
+     "zoom": 18,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "k-todo-p",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-f",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-h",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-l",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-p",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {
+      "k-sel-p": 32
+     }
+    }
+   ],
+   "mapAfter": [
+    {
+     "center": [
+      127.5351,
+      35.4251
+     ],
+     "zoom": 11.33,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "k-todo-p",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-f",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-h",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-l",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-p",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {
+      "k-sel-p": 32
+     }
+    }
+   ],
+   "hasMap": true,
+   "navigated": false,
+   "run": "run_261001180101484695",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 28,
+   "role": "tenant",
+   "screen": "gov-report",
+   "tag": "28-tenant-gov-report",
+   "q": "대장에서 논인데 AI가 비닐하우스로 본 필지 보여 줘",
+   "ms": 6300,
+   "state": "done",
+   "confirm": null,
+   "answer": "대장상 논 · 밭에 있는 비닐하우스는 영농시설이라 실태조사 의심 조건에 없어 따로 세지 않습니다. 가까운 조건인 '비농지 위 비닐하우스(용도 불일치)' 필지나 비닐하우스 AI 분석 결과를 볼 수 있습니다.",
+   "plan": [
+    "조건 확인 ✓"
+   ],
+   "buttons": [
+    "비농지 위 비닐하우스 필지 보기",
+    "비닐하우스 AI 분석 결과만 보기",
+    "대장 농지 위 건물 필지 보기"
+   ],
+   "chips": 3,
+   "links": 0,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 0,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [
+    {
+     "center": [
+      127.5351,
+      35.4251
+     ],
+     "zoom": 11.33,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "k-todo-p",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-f",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-h",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-l",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-p",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {
+      "k-sel-p": 32
+     }
+    }
+   ],
+   "mapAfter": [
+    {
+     "center": [
+      127.5351,
+      35.4251
+     ],
+     "zoom": 11.33,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "k-todo-p",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-f",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-h",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-l",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-p",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {
+      "k-sel-p": 32
+     }
+    }
+   ],
+   "hasMap": true,
+   "navigated": false,
+   "run": "run_26100118011097cf3e",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 29,
+   "role": "tenant",
+   "screen": "gov-report",
+   "tag": "29-tenant-gov-report",
+   "q": "전역 분석 실행해 줘",
+   "ms": 5052,
+   "state": "done",
+   "confirm": null,
+   "answer": "분석은 LX가 합니다 — 어느 서비스로 맡길지 아래에서 고르면 분석 요청 카드가 뜹니다.",
+   "plan": [],
+   "buttons": [
+    "비닐하우스 서비스 분석 요청",
+    "도로 안전관리 서비스 분석 요청",
+    "국토 변화 탐지 서비스 분석 요청"
+   ],
+   "chips": 3,
+   "links": 0,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 0,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [
+    {
+     "center": [
+      127.5351,
+      35.4251
+     ],
+     "zoom": 11.33,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "k-todo-p",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-f",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-h",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-l",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-p",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {
+      "k-sel-p": 32
+     }
+    }
+   ],
+   "mapAfter": [
+    {
+     "center": [
+      127.5351,
+      35.4251
+     ],
+     "zoom": 11.33,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "k-todo-p",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-f",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-h",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-l",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-p",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {
+      "k-sel-p": 32
+     }
+    }
+   ],
+   "hasMap": true,
+   "navigated": false,
+   "run": "run_26100118011753fb32",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 30,
+   "role": "tenant",
+   "screen": "gov-report",
+   "tag": "30-tenant-gov-report",
+   "q": "이 필지 영상 보고 설명해 줘",
+   "ms": 4237,
+   "state": "done",
+   "confirm": null,
+   "answer": "어느 필지인지 정해지지 않아 영상 설명을 하지 않았습니다. 현장 확인이 먼저 필요한 필지 셋을 아래에 두었습니다.",
+   "plan": [
+    "영상 설명 ✓"
+   ],
+   "buttons": [
+    "남원시 아영면 아곡리 1053-12 영상 설명",
+    "남원시 운봉읍 권포리 1229-3 영상 설명",
+    "남원시 보절면 금다리 999-2 영상 설명"
+   ],
+   "chips": 3,
+   "links": 0,
+   "files": 0,
+   "alt": false,
+   "kinds": [
+    "next"
+   ],
+   "chart": null,
+   "numChips": 0,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [
+    {
+     "center": [
+      127.5351,
+      35.4251
+     ],
+     "zoom": 11.33,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "k-todo-p",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-f",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-h",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-l",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-p",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {
+      "k-sel-p": 32
+     }
+    }
+   ],
+   "mapAfter": [
+    {
+     "center": [
+      127.5351,
+      35.4251
+     ],
+     "zoom": 11.33,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "k-todo-p",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-f",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-h",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-l",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-p",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {
+      "k-sel-p": 32
+     }
+    }
+   ],
+   "hasMap": true,
+   "navigated": false,
+   "run": "run_2610011801228d6c35",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "n": 31,
+   "role": "tenant",
+   "screen": "gov-report",
+   "tag": "31-tenant-gov-report",
+   "q": "보고서 초안 만들어 줘",
+   "ms": 5488,
+   "state": "done",
+   "confirm": null,
+   "answer": "남원시 실태조사 보고서 초안을 만들었습니다(의심 필지 20,872건 · 법령 조문 8개 인용) — 아래에서 내려받을 수 있습니다. AI가 쓴 초안이라 사람 확인이 필요합니다.",
+   "plan": [
+    "보고서 초안 만들기 ✓"
+   ],
+   "buttons": [],
+   "chips": 0,
+   "links": 0,
+   "files": 1,
+   "alt": false,
+   "kinds": [
+    "file",
+    "next"
+   ],
+   "chart": null,
+   "numChips": 1,
+   "helpful": true,
+   "acts": {
+    "sent": "0",
+    "done": "0",
+    "ok": "0",
+    "verdict": null
+   },
+   "map": [],
+   "mapBefore": [
+    {
+     "center": [
+      127.5351,
+      35.4251
+     ],
+     "zoom": 11.33,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "k-todo-p",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-f",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-h",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-l",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-p",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {
+      "k-sel-p": 32
+     }
+    }
+   ],
+   "mapAfter": [
+    {
+     "center": [
+      127.5351,
+      35.4251
+     ],
+     "zoom": 11.33,
+     "pitch": 0,
+     "bearing": 0,
+     "layers": [
+      {
+       "id": "bg",
+       "vis": "visible"
+      },
+      {
+       "id": "k-eox",
+       "vis": "visible"
+      },
+      {
+       "id": "k-vw",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-imagery",
+       "vis": "none"
+      },
+      {
+       "id": "slot-reference",
+       "vis": "none"
+      },
+      {
+       "id": "slot-result",
+       "vis": "none"
+      },
+      {
+       "id": "k-todo-p",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-f",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-h",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-l",
+       "vis": "visible"
+      },
+      {
+       "id": "k-sel-p",
+       "vis": "visible"
+      },
+      {
+       "id": "slot-overlay",
+       "vis": "none"
+      }
+     ],
+     "filt": {
+      "k-sel-p": 32
+     }
+    }
+   ],
+   "hasMap": true,
+   "navigated": false,
+   "run": "run_261001180127835093",
+   "llm": false,
+   "model": {
+    "id": "런타임 안내",
+    "backend": "runtime",
+    "tokens": 0
+   },
+   "expectFail": false,
+   "verdict": {
+    "deadend": false,
+    "mismatch": false,
+    "wrong": false,
+    "why": []
+   }
+  },
+  {
+   "screen": "gov-report",
+   "page_errors": []
+  }
+ ]
+}

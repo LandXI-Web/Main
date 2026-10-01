@@ -166,7 +166,7 @@ def test_answer_card_board_same_sentence():
     card = run(A.prepare({"region": "산청군"}, _Ctx(http)))
     out = run(A.analysis_run({"region": "48860"}, _Ctx(http)))
     s = b["text"]
-    assert "산청군" in card["title"] and s in card["title"]                            # 확인 카드: 지역 이름 + 범위 문장
+    assert "산청군" in card["title"] and s in (card.get("line") or "")                # 확인 카드: 제목(지역 이름 · 사용자 말) + 둘째 줄 범위 문장(확인 16차 규칙 ⑦)
     assert s in out.answer and "나머지는 영상 등록 후 분석" in out.answer                  # 답
     w = next(a for a in out.ui_actions if a["op"] == "analysis_watch")
     assert w["scope_text"] == s and w["scope_rest"] == b["rest"]                     # 진행판(도구 값 → 화면)

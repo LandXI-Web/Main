@@ -217,7 +217,7 @@ async function boot() {
 
   cmdk = K.mountCmdk({ stage, guest: false, context: () => ({ region: S.region?.code || null, region_name: S.region?.full || null, emd_cd: S.cond.emd?.cd || null, rule: S.cond.rule || null }) });
   // 이 화면이 직접 처리하는 동작은 명령 바 기본 처리를 막는다(preventDefault · 끝나면 이 화면이 done 을 낸다 · plan 3.2)
-  const OWN = new Set(['map_region', 'map_zoom', 'map_view', 'map_layer', 'analysis_watch', 'screen_open']);
+  const OWN = new Set(['map_region', 'map_zoom', 'map_view', 'map_layer', 'analysis_watch', 'screen_open', 'map_compare', 'map_draw']);
   document.addEventListener('kit:agent-action', (e) => { if (OWN.has(e.detail?.op)) e.preventDefault(); onAgent(e.detail); });
 
   loadK.set({ progress: 0.85 });
@@ -234,6 +234,8 @@ async function boot() {
     const poll = () => (map.areTilesLoaded() || performance.now() - t0 > 900 ? out() : setTimeout(poll, 60)); poll(); }
 
   if (Q.get('pnu')) openParcel(Q.get('pnu'), { fly: true });
+  { const cq = (Q.get('compare') || '').split(',').filter(Boolean); if (cq.length === 2) compareOn(cq[0], cq[1]).catch((e) => K.devlog('compare', String(e?.message || e))); }
+  if (Q.get('tool') === 'analyze' && AN) tool('analyze');
   if (Q.get('job') && AN) { S.tool = 'analyze'; patchRail(); AN.replayJob(Q.get('job'), { label: S.region?.name, bbox: S.region?.bbox }); }
   // 기준일이 30일을 넘으면 도착 때 한 번 대조(세션당 1회)
   const stale = S.asOf && (Date.now() - Date.parse(S.asOf)) / 864e5 > STALE_DAYS;
@@ -883,17 +885,17 @@ let agentQ = Promise.resolve();
 function onAgent(a) { if (a?.op) agentQ = agentQ.then(() => runAgent(a), () => runAgent(a)); return agentQ; }
 async function runAgent(a) {
   const before = camNow();
-  let ok = true, reason = null;
+  let ok = true, reason = null, same = false, hint = null;
   try {
     const res = await agentOp(a);
-    if (res && typeof res === 'object') { ok = res.ok !== false; reason = res.reason || null; } else ok = res !== false;
+    if (res && typeof res === 'object') { ok = res.ok !== false; reason = res.reason || null; same = !!res.same; hint = res.hint || null; } else ok = res !== false;
   } catch (e) { ok = false; reason = '지도 동작을 하지 못했습니다'; K.devlog('agent op', `${a.op} ${e?.message || e}`); }
   if (['map_region', 'map_zoom', 'map_view'].includes(a.op)) await settled();
   const after = camNow();
   if (ok && a.op === 'map_zoom' && Math.abs(after.zoom - before.zoom) < 0.05) { ok = false; reason ||= (after.zoom >= before.zoom ? '더 확대할 수 없습니다' : '더 축소할 수 없습니다'); }
   if (!ok && !reason) reason = '지도 동작을 하지 못했습니다';
-  (X.agent ||= []).push({ op: a.op, ok, reason, before, after, at: new Date().toISOString() });
-  document.dispatchEvent(new CustomEvent('kit:agent-action-done', { detail: { op: a.op, ok, ...(reason ? { reason } : {}) } }));
+  (X.agent ||= []).push({ op: a.op, ok, reason, same, before, after, at: new Date().toISOString() });
+  document.dispatchEvent(new CustomEvent('kit:agent-action-done', { detail: { op: a.op, ok, ...(reason ? { reason } : {}), ...(same ? { same: true } : {}), ...(hint ? { hint } : {}) } }));
   // 지도 동작 뒤 바를 접되, 답(한 줄 · 숫자)이 있으면 읽을 수 있게 그대로 둔다(닫기는 사용자가 Esc · 바깥 누르기)
   if (['map_on', 'map_arrive', 'map_flyto', 'parcel_card', 'map_region', 'map_zoom', 'map_view', 'map_layer', 'analysis_watch'].includes(a.op)) { clearTimeout(closeT); closeT = setTimeout(() => { if (!hasAnswer()) cmdk.close(); }, 1600); }
 }
@@ -946,7 +948,7 @@ async function agentOp(a) {
   }
   if (a.op === 'map_view') {
     const p0 = map.getPitch(), p = Math.max(0, Math.min(70, +a.pitch || 0));
-    if (Math.abs(p - p0) < 0.5 && Math.abs((+a.bearing || 0) - map.getBearing()) < 0.5) return { ok: false, reason: p > 0 ? '이미 입체로 보고 있습니다' : '이미 위에서 보고 있습니다' };
+    if (Math.abs(p - p0) < 0.5 && Math.abs((+a.bearing || 0) - map.getBearing()) < 0.5) return { ok: true, same: true };   // 바뀐 것 0 — '이미 입체로 보고 있습니다'(확인 16차 규칙 ①)
     await setView(p, +a.bearing || 0); return true;
   }
   if (a.op === 'map_layer') {
@@ -954,11 +956,30 @@ async function agentOp(a) {
     if (!k) return { ok: false, reason: '그 층은 이 지도에 없습니다' };
     const have = { img: (S.imgLayers || []).length, ai: (S.res || []).length, sus: (S.susLayers || []).length, parcel: (S.parcelLayers || []).length }[k];
     if (!have) return { ok: false, reason: k === 'img' ? '이 지도에는 영상 층이 없습니다' : k === 'ai' ? '이 지역에는 AI 분석 결과 층이 없습니다' : '이 지역에는 그 층이 없습니다' };
-    S.layers[k] = a.on !== false;
+    const want = a.on !== false;
+    if (k === 'ai' && want && typeof a.only === 'string' && a.only) {
+      // '비닐하우스 결과만' — 그 서비스 결과 세트만 켠다(이름 = 카탈로그 · 없으면 못 함)
+      const w = norm(a.only), hit = (S.res || []).filter((it) => norm(it.name?.ko || it.id).includes(w));
+      if (!hit.length) return { ok: false, reason: `이 지역에는 ${a.only} AI 분석 결과가 없습니다` };
+      const before = JSON.stringify([S.layers.ai, (S.res || []).map((it) => !!S.resOn[it.id])]);
+      for (const it of S.res || []) S.resOn[it.id] = hit.includes(it);
+      S.layers.ai = true; S.aiByRegion = false; applyLayers(); if (S.tool === 'layers') renderLayers();
+      return { ok: true, same: before === JSON.stringify([true, (S.res || []).map((it) => !!S.resOn[it.id])]) };
+    }
+    if (k === 'sus' && want && a.only === true) {
+      // '현장 확인 필요 필지만' — 현장 확인 필요 층만 남기고 AI 분석 결과는 내린다
+      const same0 = S.layers.sus && !S.layers.ai;
+      S.layers.sus = true; S.layers.ai = false; S.aiByRegion = false; applyLayers(); if (S.tool === 'layers') renderLayers();
+      return { ok: true, same: same0 };
+    }
+    const same = S.layers[k] === want && (k !== 'ai' || !want || (S.res || []).every((it) => S.resOn[it.id]));
+    S.layers[k] = want;
     if (k === 'ai') { S.aiByRegion = false; if (S.layers.ai) for (const it of S.res || []) S.resOn[it.id] = true; }
     applyLayers();
     if (S.tool === 'layers') renderLayers();
-    return true;
+    // 결과 층을 껐는데 지도에 주황 점(현장 확인 필요)이 남아 있으면 — 그 점이 무엇인지와 끄는 버튼(실태 18 · 확인 16차 규칙 ①)
+    const susOn = k === 'ai' && !want && S.layers.sus && (S.last?.items || []).length > 0;
+    return { ok: true, same, hint: susOn ? { label: '현장 확인 필요 층도 끄기', q: '현장 확인 필요 층 꺼 줘' } : null };
   }
   if (a.op === 'analysis_watch') {                     // 말로 실행한 분석 — 진행 보기에 붙는다(결과가 읍면동 순으로 차오름 · 범위 문장은 작업 값 그대로)
     if (!AN || !a.job_id) return { ok: false, reason: '진행 화면을 열 수 없습니다' };
@@ -974,6 +995,20 @@ async function agentOp(a) {
     const r = rc ? await regionFromAgent({ sgg_cd: rc }) : null;
     if (r && S.region?.code !== r.code) await setRegion(r);
     return true;
+  }
+  if (a.op === 'map_compare') {                        // 두 시점 나란히(확인 16차 대화-2 ⓑ · expand 4) — 가르기 왼쪽 · 오른쪽에 서로 다른 시점 영상
+    const r = a.sgg_cd ? await regionFromAgent(a) : null;
+    if (r && S.region?.code !== r.code) await setRegion(r);
+    if (!a.left?.id || !a.right?.id) return { ok: false, reason: '나란히 볼 두 시점이 없습니다' };
+    return (await compareOn(a.left.id, a.right.id)) ? true : { ok: false, reason: '두 시점 영상을 불러오지 못했습니다' };
+  }
+  if (a.op === 'map_draw') {                           // 범위 그리기 켜기(expand 5) — 분석 도구의 그리기(그리면 견적 · 실행 카드)
+    if (!AN) return { ok: false, reason: '이 계정은 분석 범위를 그릴 수 없습니다' };
+    const r = a.sgg_cd ? await regionFromAgent(a) : null;
+    if (r && S.region?.code !== r.code) await setRegion(r);
+    if (!AN.active) tool('analyze');
+    for (let i = 0; i < 20 && !AN.active; i++) await new Promise((res) => setTimeout(res, 100));
+    return AN.active ? true : { ok: false, reason: '범위 그리기를 켜지 못했습니다' };
   }
   if (a.op === 'parcel_card' && a.pnu) { openParcel(String(a.pnu)); return true; }
   if (a.op === 'drawer_open' && a.kind === 'report') { tool('report'); return true; }
@@ -1282,12 +1317,12 @@ function bracket(b) {
   el.animate([{ opacity: 0 }, { opacity: 1, offset: 0.15 }, { opacity: 1, offset: 0.6 }, { opacity: 0 }], { duration: 1250, easing: 'linear' }).finished.then(() => el.remove(), () => el.remove());
 }
 
-/* 가르기 — 왼쪽 = 원본 영상 · 오른쪽 = 영상 + AI 판독(같은 카메라) */
+/* 가르기 — 왼쪽 = 원본 영상 · 오른쪽 = 영상 + AI 판독(같은 카메라). 확인 16차 대화-2 ⓑ — 위쪽 고르기로 왼쪽 · 오른쪽에 다른 시점 영상을 놓는다 */
 let B = null;
 async function toggleSwipe() {
   S.swipe = !S.swipe; patchRail();
   const { bEl, grip } = S.els;
-  if (!S.swipe) { bEl.hidden = true; grip.hidden = true; if (S.aiAuto) { S.layers.ai = false; S.aiAuto = false; applyLayers(); } return; }
+  if (!S.swipe) { bEl.hidden = true; grip.hidden = true; cmpOff(); if (S.aiAuto) { S.layers.ai = false; S.aiAuto = false; applyLayers(); } return; }
   if (!S.layers.ai) { S.layers.ai = true; S.aiAuto = true; applyLayers(); }
   mainEl.style.setProperty('--sw', '50%');
   bEl.hidden = false; grip.hidden = false;
@@ -1307,6 +1342,78 @@ async function toggleSwipe() {
   }
   B.map.resize();
   B.map.jumpTo({ center: map.getCenter(), zoom: map.getZoom(), pitch: map.getPitch(), bearing: map.getBearing() });
+  cmpBar();
+}
+
+/* ── 두 시점 고르기(가르기 위쪽 한 줄) — 그 지역을 덮는 등록 영상의 시점(카탈로그 그대로 · 지역 고정값 0) ── */
+const epochLabel = (it) => { const m = /^(\d{4})(?:-(\d{2}))?/.exec(String(it?.epoch || '')); return m ? `${m[1]}년${m[2] ? ` ${+m[2]}월` : ''}` : (it?.name?.ko || it?.id || ''); };
+function regionEpochs() {
+  const b = S.region?.bbox; if (!b) return [];
+  const area = Math.max(1e-12, (b[2] - b[0]) * (b[3] - b[1]));
+  const rows = [];
+  for (const it of S.cat?.items || []) {
+    if (it.role !== 'imagery' || it.source === 'external' || /change|landcover|lc-gt|gibs|xdworld/.test(it.id) || !it.bounds || it.tile_ready === false) continue;
+    if (!/^\d{4}/.test(String(it.epoch || ''))) continue;
+    const ix = [Math.max(b[0], it.bounds[0]), Math.max(b[1], it.bounds[1]), Math.min(b[2], it.bounds[2]), Math.min(b[3], it.bounds[3])];
+    const cov = Math.max(0, ix[2] - ix[0]) * Math.max(0, ix[3] - ix[1]) / area;
+    if (cov > 0.05) rows.push({ it, cov, label: epochLabel(it) });
+  }
+  const best = new Map();
+  for (const x of rows.sort((p, q) => q.cov - p.cov || String(q.it.epoch).localeCompare(String(p.it.epoch)))) if (!best.has(x.label.slice(0, 4))) best.set(x.label.slice(0, 4), x);
+  return [...best.values()].sort((p, q) => String(p.it.epoch).localeCompare(String(q.it.epoch)));
+}
+async function epochSpec(id) {
+  const it = (S.cat?.items || []).find((x) => x.id === id); if (!it) return null;
+  if (it.tier === 'raw' && it.source === 'cog') {
+    const j = await api('/tiles/sign?' + new URLSearchParams({ set: 'cog/' + it.id }));
+    return { it, spec: { type: 'raster', tiles: [onApiHost(j.url)], tileSize: 256, bounds: it.bounds, minzoom: COG_MIN_Z, maxzoom: 19, attribution: it.attribution || '' } };
+  }
+  return { it, spec: await sourceSpec(it) };
+}
+/** 한쪽 지도에 그 시점 영상 한 장(맨 위 영상 · 결과 · 필지 아래) — id 없으면 걷기 */
+async function cmpLayer(m, side, id) {
+  const sid = 'xc-cmp-' + side, lid = sid + '-r';
+  if (m.getLayer(lid)) m.removeLayer(lid);
+  if (m.getSource(sid)) m.removeSource(sid);
+  if (!id) return true;
+  const x = await epochSpec(id); if (!x) return false;
+  m.addSource(sid, x.spec);
+  m.addLayer({ id: lid, type: 'raster', source: sid, minzoom: 6, paint: { 'raster-opacity': 1, 'raster-fade-duration': 200 } }, m.getLayer('slot-reference') ? 'slot-reference' : undefined);
+  return !!m.getLayer(lid);
+}
+function cmpOff() {
+  S.cmp = null;
+  try { cmpLayer(map, 'r', null); if (B) cmpLayer(B.map, 'l', null); } catch { /* */ }
+  if (S.els.cmp) S.els.cmp.hidden = true;
+}
+/** 두 시점 켜기 — 가르기를 켜고 왼쪽(B) · 오른쪽(본 지도)에 시점 영상을 놓는다. 오른쪽 AI 결과는 내린다(영상끼리 비교) */
+async function compareOn(leftId, rightId) {
+  if (!S.swipe) await toggleSwipe();
+  if (!B) return false;
+  await B.ready;
+  if (S.aiAuto) { S.layers.ai = false; S.aiAuto = false; applyLayers(); }
+  const okL = await cmpLayer(B.map, 'l', leftId), okR = await cmpLayer(map, 'r', rightId);
+  S.cmp = { left: leftId, right: rightId };
+  cmpBar();
+  return okL && okR;
+}
+function cmpBar() {
+  let el = S.els.cmp;
+  if (!el) { el = S.els.cmp = h('div.xc-cmp', { role: 'group', 'aria-label': '가르기 시점' }); mainEl.append(el); }
+  const eps = regionEpochs();
+  el.hidden = !S.swipe;
+  if (!S.swipe) return;
+  const opt = (v, t, sel) => h('option', { value: v, text: t, selected: sel || undefined });
+  const left = h('select.xc-cmp-s', { 'aria-label': '왼쪽 시점' }, opt('', '지금 영상', !S.cmp?.left), ...eps.map((x) => opt(x.it.id, `${x.label} 영상`, S.cmp?.left === x.it.id)));
+  const right = h('select.xc-cmp-s', { 'aria-label': '오른쪽 시점' }, opt('', 'AI 분석 결과', !S.cmp?.right), ...eps.map((x) => opt(x.it.id, `${x.label} 영상`, S.cmp?.right === x.it.id)));
+  left.onchange = async () => { S.cmp = { ...(S.cmp || {}), left: left.value || null }; await cmpLayer(B.map, 'l', left.value || null); };
+  right.onchange = async () => {
+    S.cmp = { ...(S.cmp || {}), right: right.value || null };
+    await cmpLayer(map, 'r', right.value || null);
+    if (!right.value && !S.layers.ai) { S.layers.ai = true; S.aiAuto = true; applyLayers(); }
+    else if (right.value && S.aiAuto) { S.layers.ai = false; S.aiAuto = false; applyLayers(); }
+  };
+  el.replaceChildren(left, h('i.xc-cmp-d', { 'aria-hidden': 'true' }), right);
 }
 
 /* 입체 — 지형(카탈로그 terrain) + 기울기 · 지형은 지역 축척에서만 */
