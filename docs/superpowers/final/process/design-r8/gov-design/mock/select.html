@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko" style="--ci:#1F6F4A;--ci-t1:#E9F3ED;--ci-line:#D1E3D9">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · 남원시 GeoVision 플랫폼 — 내 서비스(서비스 선택)</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.today{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.today .t{background:var(--bg-1);border-radius:16px;padding:18px 20px;display:flex;align-items:center;gap:14px;min-width:0}
+.today .t .ic{flex:none;width:40px;height:40px;border-radius:10px;background:var(--ci-t1);color:var(--ci);display:inline-flex;align-items:center;justify-content:center}
+.today .t .ic svg{width:20px;height:20px;stroke:currentColor;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.today .t .tx{flex:1;min-width:0}
+.today .t .tx b{display:block;font:500 15px/22px var(--font-body);color:var(--ink)}
+.today .t .tx span{display:block;font:400 13px/18px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.today .t .chip{flex:none}
+@media (max-width:640px){.today{grid-template-columns:1fr;gap:10px}.today .t .tx span{white-space:normal}.today .t{padding:14px 16px}}
+body[data-view="dept"] .gcard:not([data-dept="농정과"]){display:none}
+body[data-view="dept"] .only-adm{display:none}
+body:not([data-view="dept"]) .only-dept{display:none}
+</style>
+</head>
+<body class="g t">
+<div class="app">
+  <header class="mast">
+    <p class="mark"><span>남원</span><span>GV</span></p>
+    <span class="word">남원시 GeoVision 플랫폼</span>
+    <span class="sp"></span>
+    <span class="who only-adm"><b>기관 관리자</b>정보통신과 최민재</span>
+    <span class="who only-dept"><b>농정과</b>박서연</span>
+    <span class="mb">XI맵</span>
+    <span class="mb sq" data-ic="bell"><span class="bd">2</span></span>
+    <span class="mb sq">?</span>
+    <span class="mb">나가기</span>
+  </header>
+  <nav class="rail" aria-label="메뉴">
+    <span class="ri" data-ic="card" aria-current="true"><span>내 서비스</span></span>
+    <span class="ri" data-ic="upload"><span>분석 의뢰</span></span>
+    <span class="ri" data-ic="inbox"><span class="bd">1</span><span>보낸 요청</span></span>
+    <span class="ri adm only-adm" data-ic="home"><span>기관 정보</span></span>
+    <span class="ri" data-ic="me"><span>계정</span></span>
+  </nav>
+  <main class="main">
+    <div class="page">
+      <div class="head">
+        <h1>내 서비스</h1>
+        <span class="sub only-adm">남원시에 열린 AI 분석 서비스 · 부서 사용자는 자기 부서 서비스만 봅니다</span>
+        <span class="sub only-dept">농정과가 쓰는 서비스 · 다른 부서 서비스는 보이지 않습니다</span>
+        <span class="date">기준일 2026.10.01</span>
+      </div>
+
+      <div class="today">
+        <div class="t"><span class="ic" data-ic="bell"></span><div class="tx"><b>새 알림 2</b><span>세전리 1395-12 검토 요청에 LX가 답했습니다</span></div><span class="chip ci">답 도착</span></div>
+        <div class="t"><span class="ic" data-ic="inbox"></span><div class="tx"><b>내가 보낸 요청 1</b><span>덕과면 드론영상 → 영농관리 분석 의뢰</span></div><span class="chip">LX 확인 중</span></div>
+        <div class="t"><span class="ic" data-ic="upload"></span><div class="tx"><b>분석 의뢰</b><span>우리 영상을 넣고 분석 카드를 고릅니다</span></div><span class="tbtn">요청하기</span></div>
+      </div>
+
+      <div class="sec-h"><h2>서비스</h2><span class="only-adm">4개 · 운영 1 · 첫 결과 전 2 · 내년 1</span><span class="only-dept">1개 · 운영</span></div>
+      <div class="gal c4">
+        <article class="gcard" data-dept="농정과">
+          <div class="crop"><img src="../../../../../../../landxi/v3/service-detail/data/img/namwon-farmland-2025/3@2x.jpg" alt=""><span class="chip ga">운영</span></div>
+          <div class="dept"><span>2025년 사업 · <b>농정과</b></span><span>LX 담당 김도윤</span></div>
+          <h3>영농관리 행정서비스</h3>
+          <p class="line">농지이용 경작·비경작 · 비닐하우스 · 사료작물을 영상으로 판정합니다</p>
+          <div class="res"><b>1,035</b><span>현장 확인 필요 필지 · 우리 시</span></div>
+          <div class="spec"><span>최근 결과 <b>2026.06.08</b></span><span>할 일 <b>확인 전 3필지</b></span></div>
+          <div class="acts"><span class="btn ci">이 서비스 열기</span><span class="tbtn">보고서</span></div>
+        </article>
+        <article class="gcard" data-dept="환경과">
+          <div class="crop blank"><b>첫 결과 전</b><span>영상이 들어오면 분석합니다</span><span class="chip pilot">2023년 사업</span></div>
+          <div class="dept"><span>2023년 사업 · <b>환경과</b></span><span>LX 담당 미지정</span></div>
+          <h3>생활환경 위험요소<br>탐지 서비스</h3>
+          <p class="line">방치쓰레기 · 불법소각장 · 방치폐가를 찾아 정비할 곳을 알려 줍니다</p>
+          <div class="res none"><span>첫 결과 확인 뒤 표시</span></div>
+          <div class="spec"><span>영상 <b>아직 없음</b></span><span>다음 <b>우리 영상으로 의뢰</b></span></div>
+          <div class="acts"><span class="btn ci">이 서비스 열기</span><span class="tbtn">분석 의뢰</span></div>
+        </article>
+        <article class="gcard" data-dept="건설과">
+          <div class="crop blank"><b>첫 결과 전</b><span>2026년 영상부터 분석합니다</span><span class="chip pilot">2026년 사업</span></div>
+          <div class="dept"><span>2026년 사업 · <b>건설과</b></span><span>LX 담당 미지정</span></div>
+          <h3>도로 안전관리 서비스</h3>
+          <p class="line">포트홀 · 도로시설 파손을 찍은 영상에서 찾아 보수 순서를 돕습니다</p>
+          <div class="res none"><span>첫 결과 확인 뒤 표시</span></div>
+          <div class="spec"><span>영상 <b>아직 없음</b></span><span>다음 <b>우리 영상으로 의뢰</b></span></div>
+          <div class="acts"><span class="btn ci">이 서비스 열기</span><span class="tbtn">분석 의뢰</span></div>
+        </article>
+        <article class="gcard dim" data-dept="관광과">
+          <div class="crop blank"><b>2027년 시작</b><span>내년 사업으로 준비합니다</span><span class="chip next">내년</span></div>
+          <div class="dept"><span>2027년 사업 · <b>관광과</b></span><span>LX 담당 미지정</span></div>
+          <h3>인파관리 서비스</h3>
+          <p class="line">축제·행사 때 교통 혼잡과 인파가 몰리는 곳을 미리 봅니다</p>
+          <div class="res none"><span>2027년부터</span></div>
+          <div class="spec"><span>시작 <b>2027년</b></span><span>지금 <b>소개만</b></span></div>
+          <div class="acts"><span class="btn off">아직 열 수 없음</span><span class="tbtn">서비스 소개</span></div>
+        </article>
+      </div>
+
+      <div class="foot"><b>전북특별자치도 남원시</b><span>대표전화 063-620-6114</span><span class="sp"></span><span>AI 분석 · 모델 개발과 갱신 — LX 한국국토정보공사</span></div>
+    </div>
+  </main>
+</div>
+<nav class="tabsbar" aria-label="메뉴">
+  <span class="ri" data-ic="card" aria-current="true"><span>내 서비스</span></span>
+  <span class="ri" data-ic="upload"><span>분석 의뢰</span></span>
+  <span class="ri" data-ic="inbox"><span class="bd">1</span><span>보낸 요청</span></span>
+  <span class="ri adm only-adm" data-ic="home"><span>기관 정보</span></span>
+  <span class="ri" data-ic="me"><span>계정</span></span>
+</nav>
+<span class="stamp r only-adm"><b>시안</b> 기관 분기 · 남원시 GeoVision — 내 서비스(기관 관리자 보기) · 알림·할 일 숫자와 이름은 예시</span>
+<span class="stamp r only-dept"><b>시안</b> 기관 분기 · 남원시 GeoVision — 내 서비스(농정과 부서 사용자 보기)</span>
+<script>if (new URLSearchParams(location.search).get('view') === 'dept') document.body.dataset.view = 'dept';</script>
+<script src="icons.js"></script>
+</body>
+</html>
