@@ -106,7 +106,7 @@ const byAt = (a, b) => String(b.at || '').localeCompare(String(a.at || ''));
    requested_by_name, request_reason, mine, at, payload}
    deploy + payload.action 'port' = 다른 지역 적용 · deploy_ga(카나리 ga 대기) · deploy(그 밖) = 배포 승인 · rule = 규칙 임계 · quota = 사용량 설정 변경(옛 기관 한도 결재 — 지금은 만들지 않음) ·
    model = 모델 등록 · card = 서비스 공개 · request = 기관 영상 분석 의뢰(확인 대장 6차 GF-2 · 판단 근거는 시트가 GET /requests/{id} 로 읽는다) */
-const QDIM = { storage_gb: '저장', gpu_s_month: 'GPU 시간', area_km2_month: '분석 면적', concurrent_jobs: '동시 작업', egress_gb_month: '내보내기', vworld_calls_day: '지도 호출', llm_tokens_month: 'AI 도우미 사용량' };
+const QDIM = { storage_gb: '저장', gpu_s_month: 'GPU 시간', area_km2_month: '분석 면적', concurrent_jobs: '동시 작업', egress_gb_month: '내보내기', vworld_calls_day: '지도 호출', llm_tokens_month: 'XI ChatGEO 사용량' };
 /* 한도 값 표기 — 기관 화면(ops-infra DIM)과 같은 단위: GPU 시간은 초 → 시간 */
 const QUNIT = { storage_gb: ['GB', 1], gpu_s_month: ['시간', 1 / 3600], area_km2_month: ['㎢', 1], llm_tokens_month: ['토큰', 1], concurrent_jobs: ['건', 1], egress_gb_month: ['GB', 1], vworld_calls_day: ['회', 1] };
 const val = (v) => (v && typeof v === 'object' && 'value' in v ? v.value : v);
@@ -170,7 +170,7 @@ function fromServer(r) {
 }
 
 /* ── 할 일(카드) ─────────────────────────── */
-const DIM = { storage_gb: '저장', gpu_s_month: 'GPU 시간', area_km2_month: '분석 면적', llm_tokens_month: 'AI 도우미 사용량' };
+const DIM = { storage_gb: '저장', gpu_s_month: 'GPU 시간', area_km2_month: '분석 면적', llm_tokens_month: 'XI ChatGEO 사용량' };
 /** 조치할 경보만(닫힌 것 · 언어 모델 상주로 차는 VRAM 경보 제외) */
 export const openAlerts = () => (D.alerts?.items || []).filter((a) => !a.closed_at && !/^vram_/.test(a.rule));
 export function power() {

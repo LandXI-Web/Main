@@ -62,8 +62,8 @@ function shares(o) {
 
 export function mountTenants(root) {
   root.innerHTML = `<div class="v v-org" id="org"></div>
-    <section class="t-card llmu" aria-label="AI 도우미 요청 건수">
-      <header class="llmu-h"><h2>AI 도우미 요청 건수</h2><span class="t-chip">이번 달</span></header>
+    <section class="t-card llmu" aria-label="XI ChatGEO 요청 건수">
+      <header class="llmu-h"><h2>XI ChatGEO 요청 건수</h2><span class="t-chip">이번 달</span></header>
       <table class="llmu-t"><thead><tr><th>기관</th><th class="num">요청 건수</th></tr></thead><tbody id="llmu"></tbody></table>
     </section>`;
   const grid = root.querySelector('#org');
@@ -72,7 +72,7 @@ export function mountTenants(root) {
     llmu.innerHTML = llmUsage().map((r) => {
       const u = r.requests?.value;
       return `<tr data-id="${esc(r.id)}"><th scope="row">${esc(r.name)}</th>
-        <td class="num"><b data-metric="AI 도우미 요청 건수" data-tenant="${esc(r.id)}" data-v="${u ?? ''}">${u == null ? '—' : nf(u, 0)}</b><small> 건</small></td></tr>`;
+        <td class="num"><b data-metric="XI ChatGEO 요청 건수" data-tenant="${esc(r.id)}" data-v="${u ?? ''}">${u == null ? '—' : nf(u, 0)}</b><small> 건</small></td></tr>`;
     }).join('');
   }
   function paint() {

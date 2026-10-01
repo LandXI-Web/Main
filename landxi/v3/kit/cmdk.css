@@ -1,55 +1,154 @@
-/* K10 Ctrl K 에이전트 바 — 상단 중앙 흰 카드 16 · 모달 그림자 · 계획 3줄 · 확인 카드 · 답 */
-.k-ck-dim{position:fixed;inset:0;z-index:60;background:rgba(28,31,37,.18)}
-.k-ck{position:fixed;z-index:61;top:96px;left:50%;width:min(600px,calc(100vw - 32px));transform:translateX(-50%);background:var(--bg-1);border-radius:var(--r-16);box-shadow:var(--elev-3);overflow:hidden;animation:k-ck-in var(--d-380) var(--e-ui)}
-@keyframes k-ck-in{from{opacity:0;transform:translate(-50%,-12px)}to{opacity:1;transform:translate(-50%,0)}}
-.k-ck-f{display:flex;align-items:center;gap:12px;height:60px;padding:0 16px 0 20px}
+/* K10 XI ChatGEO 채팅창 — 오른쪽 아래 도우미 버튼 56 · 채팅창 380 × 560 흰 카드 16 · --elev-3 · 뒤 화면 어둡게 하지 않음 ·
+   휴대폰(≤ 640) 아래에서 올라오는 전체 폭 시트 72%. 자리(--k-chat-r · --k-chat-b)는 cmdk.js 가 화면마다 잰다(서랍 · 버튼 · 글자를 비킨다).
+   답 블록(계획 줄 · 확인 카드 · 숫자 칩 · 차트 · 파일 · 영상 · 법령 인용)은 지금까지와 같은 클래스(.k-ck-*). */
+
+/* ── 옛 질문 바 모양(첫 화면 소개 그림 .m-ask 가 쓴다) — 채팅창(.k-chat)에는 걸리지 않는다 ── */
+.k-ck{background:var(--bg-1);border-radius:var(--r-16);box-shadow:var(--elev-3);overflow:hidden}
+.k-ck:not(.k-chat) .k-ck-f{display:flex;align-items:center;gap:12px;height:60px;padding:0 16px 0 20px}
 .k-ck-ico svg{width:20px;height:20px;fill:none;stroke:var(--ai);stroke-width:1.5;stroke-linejoin:round;display:block}
-.k-ck-i{flex:1;min-width:0;height:44px;border:0;outline:0;background:none;font:500 var(--fs-sub)/1 var(--font-body);color:var(--ink)}
-.k-ck-i::placeholder{color:var(--sub)}
-.k-ck-i:disabled{cursor:not-allowed}
-kbd.k-ck-k,.k-ck-btn kbd{display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:6px;background:var(--bg-0);color:var(--sub);font:500 12px/1 var(--font-num)}
-.k-ck-plan{list-style:none;margin:0;padding:12px 20px;border-top:1px solid var(--rule);display:grid;gap:8px;counter-reset:s}
-.k-ck-plan li{display:flex;align-items:center;gap:10px;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub);counter-increment:s}
-.k-ck-plan li::before{content:counter(s);width:20px;height:20px;border-radius:50%;border:1.5px solid var(--rule);display:inline-flex;align-items:center;justify-content:center;font:500 11px/1 var(--font-num);color:var(--mute)}
-.k-ck-plan li.is-done{color:var(--ink)}
-.k-ck-plan li.is-done::before{content:"✓";background:var(--ink);border-color:var(--ink);color:#fff}
-.k-ck-plan li.is-fail{color:var(--ink)}
-.k-ck-plan li.is-fail::before{content:"!";background:transparent;border-color:var(--warn);color:var(--warn);font-weight:700}
-.k-ck-c{padding:16px 20px;border-top:1px solid var(--rule);display:flex;align-items:center;gap:16px}
-.k-ck-cq{flex:1;margin:0;font:500 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--ink)}
-.k-ck-cb{display:flex;gap:8px}
-.k-ck-a{padding:16px 20px 20px;border-top:1px solid var(--rule);font:400 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--ink-2);max-height:40vh;overflow:auto}
-.k-ck-a b{font-weight:500;color:var(--ink)}
-/* 끝 상태 — 거절·오류는 한 줄(서버 문구 그대로) · 로딩은 점 */
-.k-ck[data-state=rejected] .k-ck-a,.k-ck[data-state=failed] .k-ck-a{font-weight:500;color:var(--ink)}
+.k-ck:not(.k-chat) .k-ck-i{flex:1;min-width:0;height:44px;border:0;outline:0;background:none;font:500 var(--fs-sub)/1 var(--font-body);color:var(--ink)}
+.k-ck:not(.k-chat) .k-ck-plan{list-style:none;margin:0;padding:12px 20px;border-top:1px solid var(--rule);display:grid;gap:8px;counter-reset:s}
+.k-ck:not(.k-chat) .k-ck-plan li{display:flex;align-items:center;gap:10px;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub);counter-increment:s}
+.k-ck:not(.k-chat) .k-ck-plan li::before{content:counter(s);width:20px;height:20px;border-radius:50%;border:1.5px solid var(--rule);display:inline-flex;align-items:center;justify-content:center;font:500 11px/1 var(--font-num);color:var(--mute)}
+.k-ck:not(.k-chat) .k-ck-a{padding:16px 20px 20px;border-top:1px solid var(--rule);font:400 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--ink-2)}
+/* 'Ctrl K' 표기 · 머리 '물어보기' 트리거는 어디에도 서지 않는다(채팅-2 ⓐ — 단축키만 남김) */
+kbd.k-ck-k,.k-ck-btn,.k-mast kbd,.k-mast .gl-ask,.k-mast .lc-ask,.k-mast [aria-keyshortcuts="Control+K"]{display:none!important}
 .k-ck-dots{display:inline-flex;gap:6px}
 .k-ck-dots i{width:6px;height:6px;border-radius:50%;background:var(--mute);animation:k-dot 1.2s var(--e-ui) infinite}
 .k-ck-dots i:nth-child(2){animation-delay:.12s}
 .k-ck-dots i:nth-child(3){animation-delay:.24s}
 @keyframes k-dot{0%,80%,100%{opacity:.3}40%{opacity:1;background:var(--ai)}}
-.k-ck-btn{display:inline-flex;align-items:center;gap:10px;height:36px;padding:0 8px 0 14px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);color:var(--sub);font:500 var(--fs-label)/1 var(--font-body);cursor:pointer;transition:border-color var(--d-180) var(--e-ui),color var(--d-180) var(--e-ui)}
-.k-ck-btn:hover{border-color:var(--ink);color:var(--ink)}
-@media (max-width:640px){.k-ck{top:72px}.k-ck-btn span{display:none}.k-ck-btn{padding:0 8px}}
-@media (prefers-reduced-motion:reduce){.k-ck{animation:none}.k-ck-dots i{animation:none}}
-/* C2 plan 3.3 — 답 아래 블록: 차트(막대 · 값 = 봉투) · 파일(내려받기) · 영상 조각(+ 꼬리표) */
-.k-ck-a .k-ck-n{font-weight:500;color:var(--ink);white-space:nowrap}
-.k-ck-a .k-ck-n small{font-size:.86em;font-weight:500;margin-left:1px;color:var(--ink-2)}
-.k-ck-blocks{padding:0 20px 20px;display:grid;gap:12px;max-height:44vh;overflow:auto}
-.k-ck-blocks[hidden]{display:none}
+
+/* ── 도우미 버튼 · 꼬리표 ── */
+.k-chat-root{--k-chat-r:24px;--k-chat-b:24px;--k-chat-cb:92px;--k-chat-max:560px}
+.k-chat-root[hidden],.k-chat-root [hidden]{display:none!important}   /* 로그인 전(게스트)에는 버튼 · 창 모두 없음 */
+.k-chat-fab{position:fixed;right:var(--k-chat-r);bottom:var(--k-chat-b);z-index:38;width:56px;height:56px;padding:0;border:0;border-radius:50%;background:var(--bg-1);box-shadow:var(--elev-map);display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:transform var(--d-180) var(--e-ui),right var(--d-180) var(--e-ui),bottom var(--d-180) var(--e-ui)}
+.k-chat-fab:hover{transform:translateY(-2px)}
+.k-chat-fab:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.k-chat-root[data-open] .k-chat-fab{box-shadow:var(--elev-map),0 0 0 2px var(--ink)}
+.k-chat-tag{position:fixed;right:calc(var(--k-chat-r) + 68px);bottom:calc(var(--k-chat-b) + 12px);z-index:38;height:32px;padding:0 12px;border-radius:var(--r-8);background:var(--bg-1);box-shadow:var(--elev-map);
+  font:500 14px/32px var(--font-body);color:var(--ink);white-space:nowrap;cursor:pointer;transition:right var(--d-180) var(--e-ui),bottom var(--d-180) var(--e-ui)}
+.k-chat-root[data-notag] .k-chat-tag{display:none}
+.k-chat-tag::after{content:"";position:absolute;right:-4px;top:11px;width:10px;height:10px;background:var(--bg-1);transform:rotate(45deg)}
+
+/* 마스코트 자리(그림은 assistant-mascot.js 한 곳) — 버튼 44 · 머리 32 · 답 옆 24 */
+.k-chat-face{flex:none;width:24px;height:24px;border-radius:50%;background:var(--bg-1);display:inline-flex;align-items:center;justify-content:center;overflow:hidden}
+.k-chat-face--fab{width:44px;height:44px;background:none}
+.k-chat-face--hd{width:32px;height:32px;background:var(--bg-0)}
+.k-chat-face-i{display:block;width:100%;height:100%;object-fit:contain}
+.k-chat-face-i[data-crop]{width:84%;height:auto;object-fit:cover;object-position:0 50%}
+
+/* ── 채팅창 ── */
+.k-ck.k-chat{position:fixed;z-index:61;top:auto;left:auto;right:var(--k-chat-r);bottom:var(--k-chat-cb);width:380px;max-width:calc(100vw - 32px);height:560px;max-height:var(--k-chat-max);transform:none;
+  display:flex;flex-direction:column;background:var(--bg-1);border-radius:var(--r-16);box-shadow:var(--elev-3);overflow:hidden;animation:k-chat-in var(--d-380) var(--e-ui)}
+@keyframes k-chat-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.k-chat-h{flex:none;display:flex;align-items:center;gap:10px;height:56px;padding:0 8px 0 16px;border-bottom:1px solid var(--rule)}
+.k-chat-tt{flex:1;min-width:0;display:flex;align-items:baseline;gap:8px;white-space:nowrap;overflow:hidden}
+.k-chat-tt b{font:700 16px/1.2 var(--font-display);letter-spacing:-.01em;color:var(--ink)}
+.k-chat-tt small{min-width:0;overflow:hidden;text-overflow:ellipsis;font:400 13px/1.2 var(--font-body);color:var(--sub)}
+.k-chat-x{flex:none;width:40px;height:40px;padding:0;border:0;border-radius:var(--r-8);background:none;color:var(--sub);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.k-chat-x svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.k-chat-x:hover{background:var(--bg-0);color:var(--ink)}
+.k-chat-x:focus-visible,.k-chat-chip:focus-visible,.k-chat-send:focus-visible,.k-chat-retry:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* 대화 — 내 말(오른쪽 잉크) · 도우미 답(왼쪽 흰 말풍선 + 마스코트 24) */
+.k-chat-b{position:relative;flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px;display:flex;flex-direction:column;gap:12px;background:var(--bg-0)}
+.k-chat-msg{display:flex;align-items:flex-end;gap:8px;max-width:100%}
+.k-chat-msg.me{justify-content:flex-end}
+.k-chat-bub{min-width:0;padding:10px 14px;border-radius:16px;display:flex;flex-direction:column;gap:8px;font:400 15px/22px var(--font-body);word-break:keep-all;overflow-wrap:break-word}
+.k-chat-msg.me .k-chat-bub{max-width:82%;background:var(--ink);color:#fff;border-bottom-right-radius:4px}
+.k-chat-msg.ai .k-chat-bub{max-width:calc(100% - 32px);background:var(--bg-1);color:var(--ink-2);border-bottom-left-radius:4px}
+.k-chat-msg.ai .k-chat-bub:has(.k-ck-blk,.k-ck-law,.k-ck-c:not([hidden])){flex:1}
+.k-chat-bub p{margin:0;text-wrap:pretty}
+.k-chat :is(.k-ck-a,.k-chat-a){font:400 15px/22px var(--font-body);color:var(--ink-2)}
+.k-chat :is(.k-ck-a,.k-chat-a) > * + *{margin-top:8px}
+.k-chat :is(.k-ck-a,.k-chat-a) b{font-weight:500;color:var(--ink)}
+.k-chat .k-ck-a:has(> .k-ck-dots:only-child){display:none}       /* 화면이 넣은 기다림 점 — 생각 중 한 줄이 대신한다 */
+.k-chat[data-state=rejected] .k-ck-a{font-weight:500;color:var(--ink)}
+.k-chat-err{font-weight:500;color:var(--warn)}
+.k-chat-retry{margin-left:10px;padding:0;border:0;background:none;font:500 14px/22px var(--font-body);color:var(--accent);cursor:pointer}
+.k-chat-retry:hover{text-decoration:underline}
+
+/* 생각 중 — 점 셋 + 지금 하는 일 한 줄(오래 걸리는 '~하는 중'이라 늦음 표시는 하지 않는다) */
+.k-chat-think{display:none;align-items:center;gap:10px;color:var(--sub)}
+.k-chat[data-state=busy] .k-chat-msg.is-live .k-chat-think{display:flex}
+
+/* 계획 줄 = 지도 동작 · 찾은 단계(✓ 실제로 된 것만 · 실패는 ! ) */
+.k-chat :is(.k-ck-plan,.k-chat-plan){list-style:none;margin:0;padding:10px 12px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);display:grid;gap:6px;counter-reset:s}
+.k-chat :is(.k-ck-plan,.k-chat-plan) li{display:flex;align-items:center;gap:8px;font:500 14px/20px var(--font-body);color:var(--sub);counter-increment:s}
+.k-chat :is(.k-ck-plan,.k-chat-plan) li::before{content:counter(s);flex:none;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--rule);display:inline-flex;align-items:center;justify-content:center;font:500 11px/1 var(--font-num);color:var(--mute)}
+.k-ck-plan li.is-done,.k-chat-plan li.is-done{color:var(--ink)}
+.k-ck-plan li.is-done::before,.k-chat-plan li.is-done::before{content:"✓";background:var(--ai);border-color:var(--ai);color:#fff;font-weight:700}
+.k-ck-plan li.is-fail,.k-chat-plan li.is-fail{color:var(--ink)}
+.k-ck-plan li.is-fail::before,.k-chat-plan li.is-fail::before{content:"!";background:transparent;border-color:var(--warn);color:var(--warn);font-weight:700}
+
+/* 실행 확인 카드(쓰기 도구: 실행/취소) */
+.k-chat .k-ck-c{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1)}
+.k-ck-cq{margin:0;font:500 15px/22px var(--font-body);color:var(--ink)}
+.k-ck-cb{display:flex;gap:8px}
+
+/* 답 블록 — 숫자 칩 · 법령 인용 · 차트 · 파일 · 영상 조각 */
+.k-ck-n{font-weight:500;color:var(--ink);white-space:nowrap}
+.k-ck-n small{font-size:.86em;font-weight:500;margin-left:1px;color:var(--ink-2)}
+.k-ck-law{margin:0;padding:2px 0 2px 12px;border-left:2px solid var(--rule);font:400 14px/21px var(--font-body);color:var(--ink-2)}
+.k-ck-law b{display:block;margin-bottom:4px;font-weight:500;color:var(--ink)}
+.k-chat :is(.k-ck-blocks,.k-chat-blocks){display:grid;gap:8px}
 .k-ck-blk{margin:0;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1)}
-.k-ck-blk--chart{padding:14px 16px}
-.k-ck-bt{margin:0 0 10px;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub)}
-.k-ck-file{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:0 16px;border:0;background:none;cursor:pointer;text-align:left;font:500 var(--fs-body)/1.3 var(--font-body);color:var(--ink)}
+.k-ck-blk--chart{padding:12px 14px}
+.k-ck-bt{margin:0 0 8px;font:500 13px/18px var(--font-body);color:var(--sub)}
+.k-ck-file{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:0 14px;border:0;background:none;cursor:pointer;text-align:left;font:500 14px/1.3 var(--font-body);color:var(--ink)}
 .k-ck-file:hover{background:var(--bg-0)}
 .k-ck-file:disabled{opacity:.6;cursor:progress}
-.k-ck-file-i svg{width:20px;height:20px;fill:none;stroke:var(--ai);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;display:block}
+.k-ck-file-i svg{width:18px;height:18px;fill:none;stroke:var(--ai);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;display:block}
 .k-ck-file-l{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.k-ck-file-a{font:500 var(--fs-label)/1 var(--font-body);color:var(--ai)}
+.k-ck-file-a{font:500 13px/1 var(--font-body);color:var(--ai)}
 .k-ck-blk--image{overflow:hidden}
-.k-ck-img{display:block;width:100%;max-height:280px;object-fit:contain;background:var(--bg-0)}
-.k-ck-cap{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;font:400 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--ink-2)}
+.k-ck-img{display:block;width:100%;max-height:240px;object-fit:contain;background:var(--bg-0)}
+.k-ck-cap{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 12px;font:400 13px/19px var(--font-body);color:var(--ink-2)}
 .k-ck-cap span:first-child:not(.k-ck-tag){flex:1;min-width:0}
 .k-ck-tag{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:999px;background:var(--bg-0);color:var(--sub);font:500 12px/1 var(--font-body);white-space:nowrap}
-.k-ck-imgx{margin:0;padding:24px 16px;color:var(--sub);font:400 var(--fs-label)/1.4 var(--font-body)}
-/* 명령 바 답 안의 추정 기호 — 화면이 덧붙인 문단(.t-sig est)도 '~' 꼬리 0 · 뜻은 호버 한 줄(키트 풍선) */
+.k-ck-imgx{margin:0;padding:20px 14px;color:var(--sub);font:400 13px/1.4 var(--font-body)}
+/* 답 안의 추정 기호 — 화면이 덧붙인 문단(.t-sig est)도 '~' 꼬리 0 · 뜻은 호버 한 줄(키트 풍선) */
 .k-ck-a .t-sig[data-sig="est"]::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--sub);opacity:.5;vertical-align:.2em}
+
+/* 다음 할 일(막다른 말 대신 · 그리지 못했을 때) — 찾은 필지 작은 표 · 이유 한 줄 · XI맵에서 크게 보기 · 할 수 있는 것 두세 개 */
+.k-chat-next{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.k-chat-next .k-ck-bt{margin:0}
+.k-chat-tbl{width:100%;border-collapse:collapse;font:400 13px/19px var(--font-body);color:var(--ink-2)}
+.k-chat-tbl td{padding:5px 0;border-top:1px solid var(--rule);vertical-align:top}
+.k-chat-tbl tr:first-child td{border-top:0}
+.k-chat-tbl td.n{width:22px;color:var(--sub);font-family:var(--font-num)}
+.k-chat-tbl td.v{padding-left:8px;text-align:right;white-space:nowrap;font-family:var(--font-num);font-variant-numeric:tabular-nums;color:var(--ink)}
+.k-chat-why{margin:0;font:400 14px/21px var(--font-body);color:var(--ink-2);text-wrap:pretty}
+.k-chat-acts{display:flex;flex-wrap:wrap;gap:6px}
+.k-chat-acts .k-chat-chip{background:var(--bg-0)}
+a.k-chat-xi{display:inline-flex;align-items:center;height:32px;min-height:0;padding:0 12px;font:500 13px/1 var(--font-body);text-decoration:none}
+
+/* 추천 질문 셋 + 입력 칸 · 보내기 */
+.k-chat-sugg{flex:none;display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px 0;background:var(--bg-1);border-top:1px solid var(--rule)}
+.k-chat[data-state=busy] .k-chat-sugg{display:none}
+.k-chat-chip{display:inline-flex;align-items:center;min-height:32px;padding:5px 12px;border:0;border-radius:var(--r-8);background:var(--bg-0);color:var(--ink);font:500 13px/1.35 var(--font-body);text-align:left;cursor:pointer;transition:background var(--d-180) var(--e-ui)}
+.k-chat-chip:hover{background:var(--rule)}
+.k-chat-in{flex:none;display:flex;align-items:center;gap:8px;margin:0;padding:10px 12px 12px 16px;background:var(--bg-1)}
+.k-chat-sugg[hidden] + .k-chat-in,.k-chat[data-state=busy] .k-chat-in{border-top:1px solid var(--rule)}
+.k-chat .k-ck-i{flex:1;min-width:0;height:44px;padding:0 14px;border:1px solid var(--rule);border-radius:var(--r-8);outline:0;background:var(--bg-1);font:400 15px/1 var(--font-body);color:var(--ink);transition:border-color var(--d-180) var(--e-ui),box-shadow var(--d-180) var(--e-ui)}
+.k-chat .k-ck-i::placeholder{color:var(--sub)}
+.k-chat .k-ck-i:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(0,109,247,.18)}
+.k-chat .k-ck-i:disabled{background:var(--bg-0);cursor:not-allowed}
+.k-chat-send{flex:none;width:44px;height:44px;padding:0;border:0;border-radius:var(--r-8);background:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.k-chat-send svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.k-chat-send:disabled{background:var(--rule);cursor:not-allowed}
+
+/* ── 휴대폰(≤ 640): 아래에서 올라오는 전체 폭 시트 72% · 열려 있는 동안 버튼은 시트 아래 ── */
+@media (max-width:640px){
+  .k-ck.k-chat{top:auto;left:0;right:0;bottom:0;width:auto;max-width:none;height:72vh;height:72dvh;max-height:none;border-radius:var(--r-16) var(--r-16) 0 0;box-shadow:0 -8px 32px rgba(28,31,37,.18);animation:k-chat-up var(--d-380) var(--e-ui)}
+  .k-chat-root[data-open] .k-chat-fab,.k-chat-tag{display:none}
+  .k-chat .k-ck-i{font-size:16px}
+  .k-chat-sugg{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}   /* 추천 질문은 한 줄(옆으로 밀기) — 대화 칸을 넓게 */
+  .k-chat-sugg::-webkit-scrollbar{display:none}
+  .k-chat-chip{flex:none;white-space:nowrap}
+  .k-chat-in{padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+}
+@keyframes k-chat-up{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.k-ck.k-chat{animation:none}.k-ck-dots i{animation:none}.k-chat-fab,.k-chat-tag{transition:none}}

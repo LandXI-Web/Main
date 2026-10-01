@@ -776,7 +776,7 @@ addEventListener('resize', () => alignChips());
 /* ═══ 검색 하나: 시군구 · 읍면동 · 지번 · 문장 ═══ */
 let searchInput, sugg, sel = -1, opts = [];
 function buildSearch() {
-  searchInput = h('input.xc-q-i', { type: 'search', placeholder: '시군구 · 지번 · 또는 문장으로 물어보기', 'aria-label': '시군구 · 지번 · 또는 문장으로 물어보기', autocomplete: 'off', spellcheck: 'false', role: 'combobox', 'aria-expanded': 'false', 'aria-autocomplete': 'list' });
+  searchInput = h('input.xc-q-i', { type: 'search', placeholder: '시군구 · 지번 · 또는 XI ChatGEO 에 질문', 'aria-label': '시군구 · 지번 · 또는 XI ChatGEO 에 질문', autocomplete: 'off', spellcheck: 'false', role: 'combobox', 'aria-expanded': 'false', 'aria-autocomplete': 'list' });
   sugg = h('ul.xc-sugg', { role: 'listbox', hidden: true });
   const box = h('div.xc-q', { role: 'search' }, h('span.xc-q-ico', { 'aria-hidden': 'true', html: '<svg viewBox="0 0 20 20"><circle cx="9" cy="9" r="5.5"/><path d="M13 13l4 4"/></svg>' }), searchInput, h('kbd.xc-q-k', { text: 'Ctrl K', 'aria-hidden': 'true' }), sugg);
   let t = 0;
@@ -815,7 +815,7 @@ async function drawSugg() {
       for (const f of j.items || []) { if (seen.has(f.pnu)) continue; seen.add(f.pnu); opts.push({ t: jibun(f.addr), s: ruleName(f.rule) || '', go: () => { done(); openParcel(f.pnu, { fly: true }); } }); }
     } catch { /* */ }
   }
-  if (q.length >= 4 && /\s/.test(q)) opts.push({ t: q, s: '물어보기', ask: true, go: () => { done(); ask(q); } });
+  if (q.length >= 4 && /\s/.test(q)) opts.push({ t: q, s: 'XI ChatGEO', ask: true, go: () => { done(); ask(q); } });
   if (my !== qSeq) return;
   sel = -1;
   sugg.innerHTML = opts.map((o, i) => `<li role="option" id="xc-o-${i}" data-i="${i}"${o.ask ? ' class="is-ask"' : ''}><b>${esc(o.t)}</b><small>${esc(o.s)}</small></li>`).join('');

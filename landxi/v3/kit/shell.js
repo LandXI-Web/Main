@@ -7,12 +7,15 @@
      contained,                             // true = 부모 상자 안(갤러리 · 미리보기) · 기본은 뷰포트 전체
    });
    S.main  → 화면이 채울 판(뷰포트 - 마스트 - 레일)
-   S.fresh(date|null) · S.go(i) · S.steps({ done }) · S.mast(우측에 끼울 노드) */
+   S.fresh(date|null) · S.go(i) · S.steps({ done }) · S.mast(우측에 끼울 노드)
+   XI ChatGEO(AI 도우미 · 확인 요청 9차 채팅-1 · 채팅-2 ⓐ): 셸이 모든 화면 오른쪽 아래에 도우미 버튼 · 채팅창을 붙인다(cmdk.js · 지도 없는 화면도 같은 자리).
+   머리에는 '물어보기' 버튼을 두지 않는다 — 화면이 S.mast() 로 넘긴 옛 트리거(.k-ck-btn · .gl-ask)는 머리에 넣지 않는다. */
 import { h, esc, hhmm } from './util.js';
 import { t } from './i18n.js';
 import { logout, homeFromPath, allowed } from './auth-gate.js';
 import { drawer } from './panel.js';
 import { mountBell, hasBell } from './notify.js';   // 알림 칸(검토 요청 · 메시지 — 구현 2차)
+import { mountCmdk } from './cmdk.js';               // XI ChatGEO 채팅창(오른쪽 아래 · 로그인한 모든 화면)
 
 const HOME = {
   'lx-console': 'LX 직원 대시보드', 'lx-ingest': 'LX 직원 대시보드', 'lx-train': 'LX 직원 대시보드', 'lx-review': 'LX 직원 대시보드', 'lx-deploy': 'LX 직원 대시보드',
@@ -68,6 +71,9 @@ export function shell({ who = null, home = homeFromPath(), title, rail = null, o
   const app = h('div.k-app', { class: [rail && 'has-rail', contained && 'k-app--in'].filter(Boolean).join(' ') }, mast, rail ? railEl : null, main);
   mount.prepend(app);
   if (bell) mountBell(bell, who);
+  /* XI ChatGEO — 로그인 전(게스트)에는 그리지 않는다(cmdk.js) · 부모 상자 안(갤러리 · 미리보기)과 다른 화면 속 화면(도움말 iframe)에는 붙이지 않는다 */
+  let framed = false; try { framed = window.self !== window.top; } catch { framed = true; }
+  if (!contained && !framed) mountCmdk({ who, home, guest: !who });
 
   let cur = rail?.current ?? 0, done = rail?.done;
   const drawRail = () => {
@@ -110,7 +116,14 @@ export function shell({ who = null, home = homeFromPath(), title, rail = null, o
       fresh.setAttribute('aria-label', t('shell.fresh', { time: hhmm(at) }));
       fresh.dataset.why = t('shell.fresh', { time: hhmm(at) });
     },
-    mast(node) { slot.innerHTML = ''; if (node) slot.append(node); },
+    mast(node) {
+      slot.innerHTML = '';
+      if (!node) return;
+      const ASK = '.k-ck-btn, .gl-ask, .lc-ask, [aria-keyshortcuts="Control+K"]';   // 옛 '물어보기' 트리거 — 도우미는 오른쪽 아래 버튼 · 단축키로 연다
+      if (node.matches?.(ASK)) return;
+      node.querySelectorAll?.(ASK).forEach((n) => n.remove());
+      slot.append(node);
+    },
   };
   return api;
 }
