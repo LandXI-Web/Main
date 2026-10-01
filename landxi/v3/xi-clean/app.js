@@ -11,6 +11,7 @@ import { sse, API } from '../../shared/api-v1.js';
 import { sourceSpec } from '../../xi/engine/sources.js';
 import { addResultLayers, setVis } from '../../xi/fx/arrive.js';
 import { analyzer } from './analyze.js';
+import { reviewAction, canRequest } from '../kit/notify.js';   // 필지 카드 '검토 요청'(기관 · 구현 2차)
 
 const { h, esc } = K;
 const Q = new URLSearchParams(location.search);
@@ -1106,7 +1107,9 @@ async function openParcel(pnu, { fly = false } = {}) {
   // 영상 설명(AI 의견) — 명령 바에 '{읍면동 리 지번} 영상 설명해 줘'를 보낸다(설명 도구는 에이전트 · 근거 아님 꼬리표)
   const where = String(d.addr || '').trim().split(/\s+/).slice(-3).join(' ');
   if (where) act.append(h('button.t-btn.t-btn--2', { type: 'button', text: '영상 설명', onclick: () => ask(`${where} 영상 설명해 줘`) }));
-  if (act.childElementCount) body.append(act);
+  const rv = canRequest(S.who);   // 기관 계정: 이 필지를 LX 담당자에게 검토 요청(메모 한 줄 · 선택)
+  if (act.childElementCount || rv) body.append(act);
+  if (rv) reviewAction(act, { who: S.who, pnu, rule: f?.rule, fid: f?.id, lnglat: f?.lnglat, from: 'xi-clean' });
   dr.set(body);
 }
 async function setState(f, to, btn) {

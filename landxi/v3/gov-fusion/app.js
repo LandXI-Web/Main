@@ -19,6 +19,7 @@ const ADDR_ALL = '소재지 전체';                                            
 import { ledgerStore, lastMark, ledgerKind, KIND_LABEL } from './registry.js';
 import { vwParcels, bboxOfFeature } from './vworld.js';
 import { landSetup, warmTiles, tilesIn } from './land.js';
+import { reviewAction } from '../kit/notify.js';   // 필지 카드 '검토 요청'(구현 2차)
 
 const REPORT = '/landxi/v3/gov-report/';
 const $ = (s, r = document) => r.querySelector(s);
@@ -847,6 +848,7 @@ async function openParcel(pnu, fly) {
     vb.addEventListener('click', () => askBar(`${jb} 영상 설명해 줘`));
     act.append(vb);
   }
+  reviewAction(act, { who, pnu, from: 'gov-fusion' });   // 이 필지를 LX 담당자에게 검토 요청(메모 한 줄 · 선택)
   if (!S.index) return;
   try {
     let f = findingOf(pnu);

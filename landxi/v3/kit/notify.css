@@ -1,0 +1,86 @@
+/* notify.css — 알림 칸 · 검토 요청(필지 카드) · 내가 보낸 요청(서랍). 토큰만 쓴다(법전 v2.2 — 크롬 채도 0 · 라운드 8/16 · 지도 위 카드만 그림자).
+   notify.js 가 한 번 붙인다(kit.css 를 고치지 않는다). */
+
+/* ── 알림 칸(마스트) ───────────────────── */
+.k-bell-slot{display:inline-flex;align-items:center}
+.k-bell{position:relative;width:36px;padding:0;display:inline-flex;align-items:center;justify-content:center}
+.k-bell svg{width:20px;height:20px;stroke:currentColor;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.k-bell[aria-expanded="true"]{background:var(--bg-0);color:var(--ink)}
+.k-bell-n{position:absolute;top:1px;right:0;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--ink);color:#fff;font:600 11px/18px var(--font-num);text-align:center;box-sizing:border-box;pointer-events:none}
+.k-bell-n[hidden]{display:none}
+
+.k-bell-pop{position:fixed;z-index:70;width:360px;max-width:calc(100vw - 16px);max-height:min(560px,calc(100vh - 88px));display:flex;flex-direction:column;
+  padding:16px;background:var(--bg-1);border-radius:var(--r-16);box-shadow:var(--elev-map);box-sizing:border-box;animation:k-bell-in var(--d-180) var(--e-ui)}
+@keyframes k-bell-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.k-bell-h{display:flex;align-items:baseline;justify-content:space-between;margin:0 4px 8px;font:500 16px/24px var(--font-body);color:var(--ink)}
+.k-bell-h small{font:500 var(--fs-label)/1 var(--font-body);color:var(--sub)}
+.k-bell-list{display:flex;flex-direction:column;gap:2px;overflow:auto;min-height:0}
+.k-bell-i{display:flex;flex-direction:column;gap:4px;width:100%;padding:10px 12px;border:0;border-radius:var(--r-8);background:none;text-align:left;cursor:pointer;transition:background var(--d-180) var(--e-ui)}
+.k-bell-i:hover{background:var(--bg-0)}
+.k-bell-i:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.k-bell-i[data-unread="1"]{background:var(--bg-0)}
+.k-bell-t{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.k-bell-t b{font:500 15px/22px var(--font-body);color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.k-bell-i[data-unread="1"] .k-bell-t b{font-weight:700;color:var(--ink)}
+.k-bell-t time{flex:none;font:400 13px/1 var(--font-num);color:var(--sub)}
+.k-bell-l{font:400 var(--fs-label)/20px var(--font-body);color:var(--sub-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.k-bell-none{margin:4px 0}
+.k-bell-all{align-self:flex-start;margin:12px 4px 2px}
+
+/* ── 검토 요청(기관 필지 카드 안) ───────────── */
+.k-rv{margin-top:16px;padding-top:16px;border-top:1px solid var(--rule);flex-basis:100%}
+.k-rv[hidden]{display:none}
+.k-rv-f{display:flex;flex-direction:column;gap:0}
+.k-rv .t-input,.k-rv-add .t-input{box-sizing:border-box}
+.k-rv-l{display:flex;align-items:baseline;gap:8px;margin:0 0 8px;font:500 var(--fs-label)/20px var(--font-body);color:var(--ink-2)}
+.k-rv-l small{font:400 13px/1 var(--font-body);color:var(--sub)}
+.k-rv-btns{display:flex;align-items:center;gap:8px;margin-top:12px}
+.k-rv-go{flex:1}
+.k-rv-x{height:44px;padding:0 12px;border:0;border-radius:var(--r-8);background:none;color:var(--sub);font:500 var(--fs-label)/1 var(--font-body);cursor:pointer}
+.k-rv-x:hover{background:var(--bg-0);color:var(--ink)}
+.k-rv-to{display:flex;flex-wrap:wrap;gap:0 8px;margin:12px 0 0;font:400 13px/20px var(--font-body);color:var(--sub)}
+.k-rv-to b{font-weight:500;color:var(--ink-2)}
+.k-rv-note{margin:2px 0 0;font:400 13px/20px var(--font-body);color:var(--sub)}
+.k-rv-done{padding:16px;border-radius:var(--r-8);background:var(--bg-0)}
+.k-rv-done p{margin:0}
+.k-rv-done > p:first-child b{font:500 15px/22px var(--font-body);color:var(--ink)}
+.k-rv-done .t-btn--text{margin-top:12px}
+
+/* ── 내가 보낸 요청(서랍) · 대화 ───────────── */
+.k-rv-list{display:flex;flex-direction:column}
+.k-rv-row{display:flex;flex-direction:column;align-items:stretch;gap:4px;width:100%;margin:0;padding:14px 4px;border:0;border-bottom:1px solid var(--rule);border-radius:0;background:none;text-align:left;cursor:pointer;transition:background var(--d-180) var(--e-ui)}
+.k-rv-list > .k-rv-row:hover{background:var(--bg-0)}
+.k-rv-list > .k-rv-row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.k-rv-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.k-rv-top b{font:500 16px/24px var(--font-body);color:var(--ink)}
+.k-rv-row[data-unread="1"] .k-rv-top b{font-weight:700}
+.k-rv-meta{font:400 13px/20px var(--font-body);color:var(--sub)}
+.k-rv-memo{font:400 var(--fs-label)/20px var(--font-body);color:var(--ink-2)}
+.k-rv-ans{display:flex;gap:8px;padding:8px 12px;margin-top:4px;border-radius:var(--r-8);background:var(--bg-0);font:400 var(--fs-label)/20px var(--font-body);color:var(--sub-2)}
+.k-rv-ans b{flex:none;font-weight:500;color:var(--ink)}
+
+.k-rv-conv{display:flex;flex-direction:column}
+.k-rv-head{display:flex;align-items:center;gap:8px;margin:0 0 12px}
+.k-rv-head .k-rv-meta{flex:1;min-width:0}
+.k-rv-back{flex:none;width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);color:var(--ink);cursor:pointer}
+.k-rv-back svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.k-rv-msgs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.k-rv-m{padding:12px 16px;border-radius:var(--r-16);background:var(--bg-0)}
+.k-rv-m[data-side="lx"]{background:var(--bg-1);border:1px solid var(--rule);box-shadow:inset 2px 0 0 var(--ink)}
+.k-rv-m p{margin:0}
+.k-rv-mw{display:flex;align-items:baseline;justify-content:space-between;gap:12px;font:400 13px/20px var(--font-body);color:var(--sub)}
+.k-rv-mw b{font-weight:500;color:var(--ink-2)}
+.k-rv-mw time{font-family:var(--font-num)}
+.k-rv-mv{display:flex;gap:8px;margin-top:6px !important;font:400 13px/20px var(--font-body);color:var(--sub)}
+.k-rv-mv b{font-weight:500;color:var(--ink)}
+.k-rv-mb{margin-top:4px !important;font:400 15px/24px var(--font-body);color:var(--ink);white-space:pre-wrap}
+.k-rv-mb:empty{display:none}
+.k-rv-add{display:flex;gap:8px;margin-top:16px}
+.k-rv-add .t-input{flex:1;min-width:0}
+.k-rv-add .t-btn{flex:none}
+
+@media (max-width:640px){
+  .k-bell-pop{left:8px;right:8px !important;width:auto}
+  .k-bell{width:32px;min-width:32px}
+  .k-mast:has(.k-bell) .k-exit{flex:none;white-space:nowrap}      /* 알림 칸이 자리를 차지해도 '나가기'가 두 줄로 꺾이지 않게 — 역할 칩이 먼저 줄어든다 */
+}

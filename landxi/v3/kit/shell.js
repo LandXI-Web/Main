@@ -12,6 +12,7 @@ import { h, esc, hhmm } from './util.js';
 import { t } from './i18n.js';
 import { logout, homeFromPath, allowed } from './auth-gate.js';
 import { drawer } from './panel.js';
+import { mountBell, hasBell } from './notify.js';   // 알림 칸(검토 요청 · 메시지 — 구현 2차)
 
 const HOME = {
   'lx-console': 'LX 직원 대시보드', 'lx-ingest': 'LX 직원 대시보드', 'lx-train': 'LX 직원 대시보드', 'lx-review': 'LX 직원 대시보드', 'lx-deploy': 'LX 직원 대시보드',
@@ -55,16 +56,18 @@ export function shell({ who = null, home = homeFromPath(), title, rail = null, o
     return '/landxi/v3/xi-clean/' + (r ? '?' + new URLSearchParams({ region: String(r) }) : '');
   };
   if (xi) for (const ev of ['pointerdown', 'focus', 'mouseenter']) xi.addEventListener(ev, () => { xi.href = xiHref(); });
+  const bell = !contained && hasBell(who) ? h('span.k-bell-slot') : null;   // 알림 칸 — 새 요청 · 새 답(LX 직원 · LX 관리자 · 기관)
   const mast = h('header.t-mast.k-mast', {},
     h('a.k-word', { href: who?.landing || '/landxi/v3/main/' }, h('span.word', { text: 'LAND-XI' }), name ? h('span.home', { text: name }) : null),
     h('span.sp'), slot, fresh,
     role ? h('span.t-role.k-role', { html: rn ? `<b>${esc(rk)}</b>${esc(rn)}` : esc(rk) }) : null,
-    xi, help, who ? exit : null);
+    xi, bell, help, who ? exit : null);
 
   const railEl = h('nav.t-rail.k-rail', { 'aria-label': t('shell.menu') });
   const main = h('main.k-main', { id: 'main' });
   const app = h('div.k-app', { class: [rail && 'has-rail', contained && 'k-app--in'].filter(Boolean).join(' ') }, mast, rail ? railEl : null, main);
   mount.prepend(app);
+  if (bell) mountBell(bell, who);
 
   let cur = rail?.current ?? 0, done = rail?.done;
   const drawRail = () => {

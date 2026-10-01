@@ -10,6 +10,7 @@ import { shell, gate, createStage, drawer, bignum, numHtml, table, toast, empty,
 import { api, esc, h, hasRoute, bboxOf, isDev, session } from '../kit/util.js';
 import { sse } from '../../shared/api-v1.js';
 import { buildDocx } from './docx.js';
+import { reviewAction } from '../kit/notify.js';   // 필지 카드 '검토 요청'(구현 2차)
 
 const $ = (s, r = document) => r.querySelector(s);
 const MOBILE = () => matchMedia('(max-width: 760px)').matches;
@@ -209,6 +210,7 @@ async function showDetail(r, { fly }) {
   }
   paintLock(r);
   paintAct(r);
+  paintReview(r);
   if (S.s2 && (fly || r.next === undefined)) {   // 고를 때마다 최신 상태 확인
     api(`/survey/findings/${encodeURIComponent(r.id)}`).then((d) => {
       r.next = d.allowed_next || [];
@@ -236,6 +238,16 @@ async function showDetail(r, { fly }) {
     const pad = Math.max(b[2] - b[0], b[3] - b[1]) * 0.9;
     S.stage.go([b[0] - pad, b[1] - pad, b[2] + pad, b[3] + pad], { ms: 1600, maxZoom: 18 });
   } catch (e) { devlog('parcel', e.message); if (isAuth(e)) return toFront(); if (f.lnglat) S.stage.go([f.lnglat[0] - 0.003, f.lnglat[1] - 0.003, f.lnglat[0] + 0.003, f.lnglat[1] + 0.003], { ms: 1600, maxZoom: 17 }); }
+}
+
+/* 검토 요청 — 이 필지를 LX 담당자에게 메모 한 줄로(선택). 같은 필지를 다시 그릴 때(자동 갱신)는 쓰던 메모를 지우지 않는다 */
+function paintReview(r) {
+  const det = $('#det');
+  if (S.rvFor === r.id && det.querySelector('.k-rv-b, .k-rv-done')) return;
+  det.querySelectorAll('.k-rv-b, .k-rv').forEach((x) => x.remove());
+  S.rvFor = r.id;
+  const f = r.f;
+  reviewAction($('.gr-det-act'), { who: S.who, pnu: f.pnu, lnglat: f.lnglat, rule: f.rule, fid: f.id, from: 'gov-report', before: $('#b-map') });
 }
 
 /* 조치 — 서버에 남아 다른 사람 · 기기에 보이는 쓰기만 보인다. 죽은(잠긴) 버튼은 두지 않는다.
