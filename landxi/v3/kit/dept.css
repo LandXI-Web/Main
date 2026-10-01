@@ -1,0 +1,11 @@
+/* dept.css — 부서 고르기(kit/dept.js · 제안 S-21). 입력 칸 바로 아래 목록(흐름 안 — 창 · 휴대폰에서도 잘리지 않게) · 토큰은 shared/tokens-v2.2.css */
+.k-dp{list-style:none;margin:6px 0 0;padding:6px;max-height:232px;overflow:auto;overscroll-behavior:contain;border-radius:var(--r-8);background:var(--bg-1);box-shadow:inset 0 0 0 1px var(--rule)}
+.k-dp[hidden]{display:none}
+.k-dp li{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 2px;padding:9px 10px;border-radius:6px;font:400 var(--fs-label)/20px var(--font-body);color:var(--ink);cursor:pointer;word-break:keep-all}
+.k-dp li small{font:400 13px/20px var(--font-body);color:var(--sub)}
+.k-dp li span{font-weight:500}
+.k-dp li[aria-selected="true"],.k-dp li:hover{background:var(--bg-0)}
+.k-dp li.is-own{gap:0 8px;border-top:1px solid var(--rule);border-radius:0 0 6px 6px;margin-top:4px}
+.k-dp li.is-own span{font-weight:400;color:var(--ink-2)}
+.k-dp-h{margin:6px 0 0;font:400 13px/18px var(--font-body);color:var(--sub);text-wrap:pretty}
+.k-dp-h[hidden]{display:none}

@@ -112,13 +112,11 @@ async function me(el, whoIn) {
   let edit = null;
   if (who?.me?.realm === 'lx') {
     const fill = async (p) => {
-      const { size } = await import('../kit/me.js');
-      const val = (e) => (e && typeof e === 'object' && 'value' in e ? e.value : e);
-      const q = val(p.storage?.quota_gb);
+      const { storageText } = await import('../kit/me.js');       // 저장 용량 한 줄 — 내 정보 창과 같은 말(S-19)
       dl.querySelector('dd').textContent = p.name || '—';
       dl.querySelectorAll('.hm-me-row').forEach((x) => x.remove());
       for (const [k, v] of [['부서', p.dept || '—'], ['연락처', p.contact || '—'],
-        ['저장 용량', q !== null && q !== undefined ? `${size(val(p.storage?.used))} / ${q} GB 할당` : `할당 없음 · 지금 쓴 양 ${size(val(p.storage?.used))}`]]) {
+        ['저장 용량', storageText(p.storage || {})]]) {
         dl.append(h('div.hm-me-row', {}, h('dt', { text: k }), h('dd', { text: v })));
       }
     };

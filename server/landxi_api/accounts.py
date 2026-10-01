@@ -35,6 +35,26 @@
                                                   그 요청을 받은 LX 담당 직원과 LX 관리자만(다른 직원의 요청은 빈 칸 · 기관 계정 403 — 기관-8 ⓐ · 원칙 102)
   잠금: 관리자가 잠근 계정(status locked)과 비밀번호 5번 틀려 10분 잠긴 계정(lock_until · auth.py) 둘 다 lock {locked:false} 로 푼다.
 
+저장 용량 할당 · 늘리기 요청 · 승인(제안 S-19 확인 · 원칙 66 · 91 '한도는 하드웨어에만' · 121 · LX 계정만 — 기관 계정은 범위 밖):
+  할당 = 사람마다 정한 값(lx_users.storage_quota_gb) → 없으면 기본 할당(lx_settings storage.default_quota_gb — 계정 관리에서 LX 관리자가 정한다)
+         → 없으면 '할당 없음'(지어내지 않는다). 쓴 양 = 내가 프로젝트장인 프로젝트의 저장 공간 합(projects.lead_storage — 한 곳 계산).
+  할당을 넘어도 막지 않는다 — 90% 를 넘으면 내 정보 · 파일 올리는 자리에 한 줄 + 창으로 늘리기 요청을 권한다(막을지는 구현 확인 때 사용자에게 여쭘).
+  POST /me/storage-request                      {want_gb(원하는 할당), why(이유 한 줄)} → 대기 중 요청은 한 사람에 하나
+  GET  /accounts/requests?kind=storage          (LX 관리자) 늘리기 요청 — 가입 신청 · 재설정 요청과 같은 자리 · 같은 모양
+  POST /accounts/storage/{id}/decide            {decision: approve|reject, reason} → 승인 = 할당이 원하는 값이 됨 · 반려 = 사유 필수 · 요청한 사람에게 알림(lx_notices)
+  POST /accounts/users/lx/{user_id}/quota       {quota_gb | null} 사람마다 할당(null = 기본 할당을 따름)
+  GET|PUT /accounts/storage-default             {quota_gb | null} 기본 할당(따로 정하지 않은 계정)
+  내 계정의 요청 · 할당은 다른 관리자가 — 관리자 계정이 하나뿐이면 스스로(결재함과 같은 규칙 · approvals.solo_admin).
+
+LX 부서 목록(제안 S-21 확인 · 10-01 사용자 "부서는 일단 LX 누리집 조직도에. 나중엔 사내 시스템에서 불러오는 작업을 할 예정"):
+  처음 목록 = server/config/lx-departments.csv(누리집 조직도를 옮긴 파일 · 상위 · 부서 · 단위) — 읽는 곳은 한 군데(dept_source · DEPT_SOURCES · LX_DEPT_SOURCE)라
+  사내 시스템 불러오기로 바꿔 끼운다. 고르는 칸의 이름 = '상위 › 부서'(예: 공간정보본부 › 플랫폼사업처 · 상위가 사장 · 부사장 · 감사면 부서만).
+  GET  /accounts/depts                          {items:[이름]} — 로그인 없이도(가입 신청 창의 부서 고르기) · 관리자에게는 출처 · 단위 · 마지막 바꿈 · 목록에 없는 부서를 쓰는 계정
+  POST /accounts/depts/parse                    (LX 관리자 · 엑셀 xlsx · CSV — 조직도 모양 또는 한 열) → 읽은 목록 미리 보기(저장 안 함)
+  PUT  /accounts/depts                          {rows | names} 목록을 통째로 바꾼다 · POST /accounts/depts/reload 출처에서 다시 · /add {name, parent?} · /remove {label}
+  목록에 없는 부서(지역본부 아래 지사 등)는 직접 적는다(막지 않는다) · 적은 이름이 목록의 부서와 같으면 목록 이름으로 맞춘다.
+  이미 적힌 부서 이름은 바꾸지 않는다(내 정보에서 목록의 이름을 고르게 안내만).
+
 내 정보(본인이 고친다 — 확인 17차 P-5 ⓐ · 원칙 105 · 121 · LX 직원 · LX 관리자 · LX 영업 계정. 기관 계정은 확인 범위 밖):
   GET   /me/profile                             → {login(고정), name, dept, contact, role_ko, org, changed_at, storage{quota_gb, used_bytes, projects}}
   PATCH /me/profile                             {name?, dept?, contact?} → 관리자 승인 없이 바로 바뀌고 감사 기록(account.profile — 바뀐 칸 전 · 후)에 남는다
@@ -46,17 +66,21 @@
 """
 from __future__ import annotations
 
+import csv
 import datetime as dt
+import io
 import json
+import math
 import re
 import secrets
+from decimal import Decimal
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, File, Request, UploadFile
 from starlette.concurrency import run_in_threadpool
 
 from . import auth, config
 from .deps import ApiError, Principal, db, pool, principal, redis, require
-from .envelope import KST, now_iso
+from .envelope import KST, env, now_iso
 
 router = APIRouter()
 
@@ -75,6 +99,8 @@ ACTION_KO = {
     "account.reset.request": "비밀번호 재설정 요청", "account.reset.issue": "임시 비밀번호 발급", "account.reset.reject": "재설정 반려",
     "account.temp.issue": "임시 비밀번호 발급", "account.lock": "잠금", "account.unlock": "잠금 풀기", "account.role": "역할 변경",
     "account.password.change": "새 비밀번호 설정", "account.autolock": "자동 잠금(10분)", "account.profile": "내 정보 고침(본인)",
+    "account.quota": "저장 용량 할당", "account.quota.default": "기본 할당 바꿈", "account.storage.request": "저장 용량 늘리기 요청",
+    "account.storage.approve": "저장 용량 늘리기 승인", "account.storage.reject": "저장 용량 늘리기 반려", "account.depts": "부서 목록 바꿈",
 }
 FAIL_KO = {"password": "비밀번호 틀림", "unknown": "없는 아이디", "temp_locked": "잠긴 동안 시도", "locked": "잠긴 계정", "temp_expired": "임시 비밀번호 기간 지남",
            "disabled": "사용 중지된 계정"}
@@ -233,6 +259,7 @@ async def signup(body: dict, request: Request):
             tid = (await _tenant_ok(conn, body.get("tenant_id")))["id"]
             used = await conn.fetchval("SELECT 1 FROM tenant_users WHERE tenant_id=$1 AND lower(login)=$2", tid, login)
         else:
+            dept = await dept_pick(conn, dept)          # LX 부서 목록에 있는 부서면 목록 이름으로(S-21) · 없으면 적은 그대로(지사 등 직접 적기)
             used = await conn.fetchval("SELECT 1 FROM lx_users WHERE lower(login)=$1", login)
         used = used or await conn.fetchval("SELECT 1 FROM signup_requests WHERE state='pending' AND realm=$1 AND coalesce(tenant_id,'')=coalesce($2,'') "
                                            "AND lower(login)=$3", realm, tid, login)
@@ -364,14 +391,20 @@ async def summary(request: Request):
     s = await pl.fetchval("SELECT count(*) FROM signup_requests WHERE state='pending'" + (" AND realm='lx'" if p.is_admin else w), *a)
     sv = await pl.fetchval("SELECT count(*) FROM signup_requests WHERE state='pending' AND realm='tenant'") if p.is_admin else 0
     r = await pl.fetchval("SELECT count(*) FROM reset_requests WHERE state='pending'" + w, *a)
-    return {"counts": {"signup": s, "reset": r, "signup_view": sv}, "at": now_iso()}
+    st = 0
+    if p.is_admin:                                     # 저장 용량 늘리기 요청(S-19 · LX 계정만)
+        async with db(realm="lx") as conn:
+            st = await conn.fetchval("SELECT count(*) FROM storage_requests WHERE state='pending'")
+    return {"counts": {"signup": s, "reset": r, "signup_view": sv, "storage": st}, "at": now_iso()}
 
 
 @router.get("/accounts/requests")
 async def list_requests(request: Request, kind: str = "signup", state: str = "pending"):
     p = _who(request)
+    if kind == "storage" and state in ("pending", "all"):
+        return await _storage_requests(p, state)
     if kind not in ("signup", "reset") or state not in ("pending", "all"):
-        raise ApiError("bad_request", "kind 는 signup | reset · state 는 pending | all")
+        raise ApiError("bad_request", "kind 는 signup | reset | storage · state 는 pending | all")
     pl = await pool()
     table = "signup_requests" if kind == "signup" else "reset_requests"
     q = f"SELECT * FROM {table} WHERE ($1::text = 'all' OR state = 'pending')"
@@ -508,12 +541,20 @@ async def decide_reset(rid: str, body: dict, request: Request):
 async def list_users(request: Request, realm: str | None = None, tenant_id: str | None = None):
     p = _who(request)
     out = []
+    extra = {}
     async with db(realm="lx") as conn:
         tn = await _tenant_names(conn)
         if p.is_admin and realm in (None, "", "lx") and not tenant_id:
+            from .approvals import solo_admin
+            from .projects import storage_all, storage_default
+            stor = await storage_all(conn)
+            keys = await _dept_keys(conn)
             for u in await conn.fetch("SELECT id, login, role, status, name, dept, must_change, created_at, lock_until FROM lx_users "
                                       "ORDER BY (status = 'disabled'), login"):   # 사용 중지(옛 아이디)는 뒤로
-                out.append({"realm": "lx", "tenant_id": None, "org": "LX", **_user(u, "lx")})
+                out.append({"realm": "lx", "tenant_id": None, "org": "LX", **_user(u, "lx"), "storage": _storage_out(stor.get(u["id"])),
+                            "dept_listed": (_dkey(u["dept"]) in keys) if keys and (u["dept"] or "").strip() else None})
+            extra = {"solo": await solo_admin(conn, p), "storage_default": env(await storage_default(conn), "GB", "recorded", "기본 할당(lx_settings)"),
+                     "depts": env(len(set(keys.values())), "count", "recorded", "LX 부서 목록(lx_depts · 최상위 뺌)")}
         if realm in (None, "", "tenant"):
             tid = tenant_id if p.is_admin else p.tenant_id
             rows = await conn.fetch("SELECT id, tenant_id, login, role, status, name, dept, must_change, created_at, lock_until FROM tenant_users "
@@ -527,7 +568,7 @@ async def list_users(request: Request, realm: str | None = None, tenant_id: str 
         x["last_login"] = _iso(last.get(x["id"]))
         x["mine"] = _mine(p, x["realm"], x["id"])
     orgs = [{"id": k, "name": v} for k, v in tn.items() if k not in ("lx", "lx-demo")] if p.is_admin else [{"id": p.tenant_id, "name": tn.get(p.tenant_id, "")}]
-    return {"items": out, "orgs": orgs, "roles": {k: [{"id": r, "label": ROLE_KO[(k, r)]} for r in v] for k, v in ROLES.items()}, "at": now_iso()}
+    return {"items": out, "orgs": orgs, "roles": {k: [{"id": r, "label": ROLE_KO[(k, r)]} for r in v] for k, v in ROLES.items()}, **extra, "at": now_iso()}
 
 
 def _user(u, realm: str) -> dict:
@@ -696,7 +737,6 @@ def _short(name: str) -> str:
     return w[-1] if w else ""
 
 
-
 # ── 내 정보(본인이 고친다 — 확인 17차 P-5 ⓐ · 원칙 105 · 121) ─────────────────────────────────
 PROFILE_MAX = {"name": 40, "dept": 60, "contact": 30}
 CONTACT_OK = re.compile(r"^[0-9가-힣+\-().\s#~/]{2,30}$")      # 내선 · 휴대전화 · 대표번호(예: 내선 1234 · 010-0000-0000) — 숫자가 하나는 있어야 한다
@@ -709,19 +749,34 @@ def _me_lx(request: Request) -> Principal:
     return p
 
 
+def _storage_out(st: dict | None) -> dict | None:
+    """저장 용량(projects.lead_storage · storage_all 한 출처) → 화면 값. 할당 없음이면 quota_gb · pct 가 null(지어내지 않는다)."""
+    if st is None:
+        return None
+    return {"quota_gb": env(st["quota_gb"], "GB", "recorded", "할당(사람마다 정한 값 → 없으면 기본 할당 → 없으면 할당 없음)"),
+            "quota_own": st["quota_own"],
+            "used": env(st["bytes"], "bytes", "measured", "프로젝트장인 프로젝트의 저장 공간 합(학습데이터 파일 + 올린 파일)"),
+            "projects": env(st["projects"], "count", "recorded", "프로젝트장인 프로젝트(진행 중 · 보관)"),
+            "pct": env(st["pct"], "%", "measured", "할당 가운데 쓴 비율"), "warn": st["warn"]}
+
+
 async def _profile(conn, p: Principal) -> dict:
-    from .envelope import env
     from .projects import lead_storage
     u = await conn.fetchrow("SELECT login, name, dept, contact, role FROM lx_users WHERE id=$1", p.user_id)
     if not u:
         raise ApiError("not_found", "계정이 없습니다")
     last = await conn.fetchval("SELECT max(at) FROM audit_log WHERE action='account.profile' AND actor=$1", p.user_id)
-    st = await lead_storage(conn, p.user_id)
+    st = _storage_out(await lead_storage(conn, p.user_id))
+    pend = await conn.fetchrow("SELECT want_gb, why, created_at FROM storage_requests WHERE user_id=$1 AND state='pending'", p.user_id)
+    done = await conn.fetchrow("SELECT state, want_gb, reason, decided_at FROM storage_requests WHERE user_id=$1 AND state <> 'pending' "
+                               "ORDER BY decided_at DESC NULLS LAST LIMIT 1", p.user_id)
+    st["pending"] = {"want_gb": env(float(pend["want_gb"]), "GB", "recorded", "원하는 할당"), "why": pend["why"], "at": _iso(pend["created_at"])} if pend else None
+    st["last"] = {"state": done["state"], "want_gb": env(float(done["want_gb"]), "GB", "recorded", "원하는 할당"), "reason": done["reason"], "at": _iso(done["decided_at"])} if done else None
+    listed = await dept_listed(conn, u["dept"])
     return {"login": u["login"], "name": u["name"] or "", "dept": u["dept"] or "", "contact": u["contact"] or "",
             "role_ko": ROLE_KO.get(("lx", u["role"]), "LX"), "org": "한국국토정보공사", "changed_at": _iso(last),
-            "storage": {"quota_gb": env(st["quota_gb"], "GB", "recorded", "나에게 할당된 저장 용량(LX 관리자 설정 · 없으면 할당 없음)"),
-                        "used": env(st["bytes"], "bytes", "measured", "내가 프로젝트장인 프로젝트의 저장 공간 합(학습데이터 파일 + 올린 파일)"),
-                        "projects": env(st["projects"], "count", "recorded", "내가 프로젝트장인 프로젝트(진행 중 · 보관)")}}
+            "dept_listed": listed,
+            "storage": st}
 
 
 @router.get("/me/profile")
@@ -752,6 +807,8 @@ async def edit_profile(body: dict, request: Request):
                     raise ApiError("bad_request", f"{label}{_josa(label, '은는')} {PROFILE_MAX[k]}자까지입니다", {"field": k})
                 if k == "contact" and s and not (CONTACT_OK.match(s) and re.search(r"\d", s)):
                     raise ApiError("bad_request", "연락처는 번호로 적어 주세요(예: 내선 1234)", {"field": k})
+                if k == "dept" and s:            # 목록에 있는 부서면 목록 이름으로 맞춘다 · 없으면 적은 그대로(지사 등 — S-21)
+                    s = await dept_pick(conn, s, keep=u["dept"])
                 new[k] = s or None
         before = {k: u[k] for k in new if new[k] != u[k]}
         if before:
@@ -761,3 +818,498 @@ async def edit_profile(body: dict, request: Request):
                                {"realm": "lx", "tenant_id": None, "name": new["name"], "fields": list(before), **{k: new[k] for k in before}})
         out = await _profile(conn, p)
     return {**out, "changed": list(before), "as_of": now_iso()}
+
+
+# ── 저장 용량 할당 · 늘리기 요청 · 승인(제안 S-19 확인 · 원칙 66 · 91 · 121) ─────────────────────────────
+QUOTA_MAX_GB = 100000          # 입력 확인 상한(100 TB) — 업무 값이 아니라 잘못 친 숫자를 막는 선
+WHY_MAX = 120
+
+
+def _gb(v, *, field: str = "quota_gb", allow_none: bool = False) -> float | None:
+    """GB 값(소수 둘째 자리까지 · 10 MB 단위) — 비우면 None(allow_none) · 0 이하 · 숫자 아님 · 상한 넘음은 400."""
+    if v is None or (isinstance(v, str) and not v.strip()):
+        if allow_none:
+            return None
+        raise ApiError("bad_request", "용량을 GB 로 적어 주세요", {"field": field})
+    try:
+        x = float(str(v).replace(",", "").strip())
+    except ValueError:
+        raise ApiError("bad_request", "용량은 숫자(GB)로 적어 주세요", {"field": field})
+    x = round(x, 2) if not math.isnan(x) else x
+    if math.isnan(x) or x <= 0 or x > QUOTA_MAX_GB:
+        raise ApiError("bad_request", f"용량은 0보다 크고 {QUOTA_MAX_GB:,} GB 까지입니다", {"field": field})
+    return x
+
+
+def gb_word(x) -> str:
+    """100 → '100 GB' · 50.5 → '50.5 GB' · None → '할당 없음'"""
+    if x is None:
+        return "할당 없음"
+    x = float(x)
+    return f"{int(x):,} GB" if x == int(x) else f"{x:,.2f}".rstrip("0") + " GB"
+
+
+async def _storage_requests(p: Principal, state: str) -> dict:
+    if not p.is_admin:                                 # 기관 관리자 화면은 이 탭이 없다(LX 계정만)
+        return {"items": [], "at": now_iso()}
+    from .approvals import solo_admin
+    from .projects import storage_all
+    async with db(realm="lx") as conn:
+        rows = await conn.fetch("SELECT s.*, u.name, u.dept, u.status FROM storage_requests s LEFT JOIN lx_users u ON u.id = s.user_id "
+                                "WHERE ($1::text = 'all' OR s.state = 'pending') ORDER BY s.created_at DESC LIMIT 200", state)
+        stor = await storage_all(conn)
+        solo = await solo_admin(conn, p)
+    items = []
+    for r in rows:
+        st = _storage_out(stor.get(r["user_id"]))
+        mine = _mine(p, "lx", r["user_id"])
+        items.append({"id": r["id"], "kind": "storage", "realm": "lx", "tenant_id": None, "org": "LX", "login": r["login"], "name": r["name"] or "",
+                      "dept": r["dept"], "from_gb": env(float(r["from_gb"]) if r["from_gb"] is not None else None, "GB", "recorded", "요청할 때의 할당"),
+                      "want_gb": env(float(r["want_gb"]), "GB", "recorded", "원하는 할당"),
+                      "why": r["why"], "storage": st, "state": r["state"], "reason": r["reason"], "created_at": _iso(r["created_at"]),
+                      "decided_name": r["decided_name"], "decided_at": _iso(r["decided_at"]), "mine": mine,
+                      "can_decide": r["state"] == "pending" and (not mine or solo)})
+    return {"items": items, "at": now_iso()}
+
+
+@router.post("/me/storage-request", status_code=201)
+async def storage_request(body: dict, request: Request):
+    """저장 용량 늘리기 요청 — 원하는 할당(GB) · 이유 한 줄. 할당이 없으면(제한 없음) 요청할 것이 없다(409). 대기 중 요청은 하나."""
+    p = _me_lx(request)
+    want = _gb(body.get("want_gb"), field="want_gb")
+    why = _text(body.get("why"), WHY_MAX, "이유", "why")
+    from .projects import lead_storage
+    async with db(realm="lx") as conn:
+        u = await conn.fetchrow("SELECT login, name FROM lx_users WHERE id=$1", p.user_id)
+        if not u:
+            raise ApiError("not_found", "계정이 없습니다")
+        st = await lead_storage(conn, p.user_id)
+        if st["quota_gb"] is None:
+            raise ApiError("conflict", "할당이 없어 늘리기 요청이 필요 없습니다", {"why": "no_quota"}, 409)
+        if want <= st["quota_gb"]:
+            raise ApiError("bad_request", f"지금 할당 {gb_word(st['quota_gb'])}보다 큰 값을 적어 주세요", {"field": "want_gb"})
+        if await conn.fetchval("SELECT 1 FROM storage_requests WHERE user_id=$1 AND state='pending'", p.user_id):
+            raise ApiError("conflict", "이미 보낸 요청이 있습니다. LX 관리자 확인을 기다려 주세요", {"why": "pending"}, 409)
+        rid = "sq_" + secrets.token_hex(8)
+        await conn.execute("INSERT INTO storage_requests(id, user_id, login, from_gb, want_gb, why) VALUES ($1,$2,$3,$4,$5,$6)",
+                           rid, p.user_id, u["login"], Decimal(str(st["quota_gb"])), Decimal(str(want)), why)
+        await _log(conn, p.user_id, "lx", "account.storage.request", u["login"],
+                   {"request": rid, "realm": "lx", "tenant_id": None, "name": u["name"], "from": st["quota_gb"], "to": want, "reason": why})
+        out = await _profile(conn, p)
+    return {**out, "request": rid, "as_of": now_iso()}
+
+
+@router.post("/accounts/storage/{rid}/decide")
+async def decide_storage(rid: str, body: dict, request: Request):
+    """늘리기 요청 승인(할당 = 원하는 값) · 반려(사유 필수) → 요청한 사람에게 알림 한 줄(대시보드 · 프로젝트 목록 · 내 정보)."""
+    p = _who(request)
+    if not p.is_admin:
+        raise ApiError("forbidden", "저장 용량 요청은 LX 관리자가 처리합니다")
+    d, reason = _decision(body, ("approve", "reject"))
+    from .approvals import SOLO_NOTE, solo_admin
+    from .projects import lead_storage
+    async with db(realm="lx") as conn:
+        r = await conn.fetchrow("SELECT * FROM storage_requests WHERE id=$1 FOR UPDATE", rid)
+        if not r:
+            raise ApiError("not_found", "요청이 없습니다")
+        if r["state"] != "pending":
+            raise ApiError("conflict", "이미 처리한 요청입니다", {"state": r["state"], "by": r["decided_name"]}, 409)
+        solo = False
+        if _mine(p, "lx", r["user_id"]):
+            solo = await solo_admin(conn, p)
+            if not solo:
+                raise ApiError("self_account", "내 계정의 요청은 다른 관리자가 처리합니다", status=409)
+        u = await conn.fetchrow("SELECT id, login, name, status, storage_quota_gb FROM lx_users WHERE id=$1 FOR UPDATE", r["user_id"])
+        if not u:
+            raise ApiError("not_found", "계정이 없습니다")
+        if u["status"] == "disabled":
+            raise ApiError("disabled_account", "사용 중지된 계정입니다", status=409)
+        st = await lead_storage(conn, u["id"])
+        want = float(r["want_gb"])
+        if d == "approve":
+            if st["quota_gb"] is not None and st["quota_gb"] >= want:
+                raise ApiError("conflict", f"지금 할당({gb_word(st['quota_gb'])})이 이미 원하는 양 이상입니다. 반려하거나 그대로 두세요", status=409)
+            await conn.execute("UPDATE lx_users SET storage_quota_gb=$2 WHERE id=$1", u["id"], Decimal(str(want)))
+        await conn.execute("UPDATE storage_requests SET state=$2, reason=$3, decided_by=$4, decided_name=$5, decided_at=now() WHERE id=$1",
+                           rid, "approved" if d == "approve" else "rejected", reason or None, p.user_id, p.name)
+        if u["id"] != p.user_id:                       # 요청한 사람에게 알림(스스로 처리했으면 필요 없다)
+            text = f"저장 용량 할당이 {gb_word(want)}로 늘었습니다" if d == "approve" else f"저장 용량 늘리기 요청({gb_word(want)})이 반려되었습니다"
+            await conn.execute("INSERT INTO lx_notices(id, user_id, kind, project_id, text, note, by) VALUES ($1,$2,'account.storage',NULL,$3,$4,$5)",
+                               "nt_" + secrets.token_hex(6), u["id"], text, reason or None, p.user_id)
+        await _log(conn, p.user_id, "lx", f"account.storage.{d}", u["login"],
+                   {"request": rid, "realm": "lx", "tenant_id": None, "name": u["name"], "from": st["quota_gb"], "to": want if d == "approve" else None,
+                    "reason": reason or None, **({"single_admin": True, "note": SOLO_NOTE} if solo else {})})
+    return {"ok": True, "state": "approved" if d == "approve" else "rejected", "at": now_iso()}
+
+
+@router.post("/accounts/users/{realm}/{uid}/quota")
+async def set_quota(realm: str, uid: str, body: dict, request: Request):
+    """사람마다 저장 용량 할당 — LX 관리자 · LX 계정만. quota_gb 비움(null) = 기본 할당을 따름. 바꾼 전 · 후는 처리 기록에."""
+    p = _who(request)
+    if not p.is_admin or realm != "lx":
+        raise ApiError("forbidden", "저장 용량 할당은 LX 관리자가 LX 계정에 정합니다")
+    q = _gb(body.get("quota_gb"), allow_none=True)
+    from .approvals import solo_admin
+    from .projects import lead_storage
+    async with db(realm="lx") as conn:
+        u = await conn.fetchrow("SELECT id, login, name, status, storage_quota_gb FROM lx_users WHERE id=$1 FOR UPDATE", uid)
+        if not u:
+            raise ApiError("not_found", "계정이 없습니다")
+        if u["status"] == "disabled":
+            raise ApiError("disabled_account", "사용 중지된 계정입니다", status=409)
+        if _mine(p, "lx", uid) and not await solo_admin(conn, p):
+            raise ApiError("self_account", "내 계정은 다른 관리자가 바꿉니다", status=409)
+        before = float(u["storage_quota_gb"]) if u["storage_quota_gb"] is not None else None
+        if before != q:
+            await conn.execute("UPDATE lx_users SET storage_quota_gb=$2 WHERE id=$1", uid, Decimal(str(q)) if q is not None else None)
+            await _log(conn, p.user_id, "lx", "account.quota", u["login"],
+                       {"realm": "lx", "tenant_id": None, "name": u["name"], "from": before, "to": q,
+                        "reason": f"{_qword(before)} → {_qword(q)}"})
+        st = _storage_out(await lead_storage(conn, uid))
+    return {"ok": True, "storage": st, "at": now_iso()}
+
+
+def _qword(x) -> str:
+    """사람마다 할당 — 비어 있으면 '기본 할당 따름'."""
+    return gb_word(x) if x is not None else "기본 할당 따름"
+
+
+def _admin(request: Request) -> Principal:
+    p = require(principal(request))
+    if not p.is_admin:
+        raise ApiError("forbidden", "LX 관리자만 바꿉니다")
+    return p
+
+
+@router.get("/accounts/storage-default")
+async def get_storage_default(request: Request):
+    _admin(request)
+    from .projects import STORAGE_DEFAULT_KEY, storage_default
+    async with db(realm="lx") as conn:
+        q = await storage_default(conn)
+        row = await conn.fetchrow("SELECT updated_at FROM lx_settings WHERE key=$1", STORAGE_DEFAULT_KEY)
+    return {"quota_gb": env(q, "GB", "recorded", "기본 할당(따로 정하지 않은 LX 계정 · 없으면 할당 없음)"),
+            "updated_at": _iso(row["updated_at"]) if row else None, "at": now_iso()}
+
+
+@router.put("/accounts/storage-default")
+async def put_storage_default(body: dict, request: Request):
+    """기본 할당 — 따로 정하지 않은 LX 계정에 쓰는 값(설정 한 곳). 비우면 할당 없음(처음 값)."""
+    p = _admin(request)
+    q = _gb(body.get("quota_gb"), allow_none=True)
+    from .projects import STORAGE_DEFAULT_KEY, storage_default
+    async with db(realm="lx") as conn:
+        before = await storage_default(conn)
+        if before != q:
+            await conn.execute("INSERT INTO lx_settings(key, value, updated_by, updated_at) VALUES ($1,$2,$3,now()) "
+                               "ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_by=EXCLUDED.updated_by, updated_at=now()",
+                               STORAGE_DEFAULT_KEY, q, p.user_id)
+            await _log(conn, p.user_id, "lx", "account.quota.default", "",
+                       {"realm": "lx", "tenant_id": None, "name": "기본 할당", "from": before, "to": q, "reason": f"{gb_word(before)} → {gb_word(q)}"})
+    return {"quota_gb": env(q, "GB", "recorded", "기본 할당"), "at": now_iso()}
+
+
+# ── LX 부서 목록(제안 S-21 확인 · 10-01 사용자 "부서는 일단 여기(LX 누리집 조직도)에 보자. 나중엔 사내 시스템에서 불러오는 작업을 할 예정") ─────────
+# 고르는 칸에 보이는 이름(label) = '상위 › 부서'(예: 공간정보본부 › 플랫폼사업처) — 상위가 최상위(사장 · 부사장 · 감사)면 부서만(예: 전남광주지역본부).
+# 최상위(사장 · 부사장 · 감사)는 조직도의 뼈대일 뿐 고르는 칸에는 내지 않는다. 목록에 없는 부서(지역본부 아래 지사 등)는 직접 적는다(막지 않는다).
+# 계정에는 label 을 적는다(목록과 같은 말) · 직접 적은 이름이 목록의 어느 이름(부서 · 상위 부서 · label)과 같으면 label 로 맞춘다.
+DEPT_MAX, DEPTS_MAX, DEPT_FILE_MB = 60, 3000, 2
+DEPT_TOP = "최상위"
+DEPT_SEP = " › "
+DEPT_HEAD = {"부서", "부서명", "부서 이름", "부서이름", "조직", "조직명", "소속", "소속 부서", "소속부서", "dept", "department", "name"}
+DEPT_SOURCE_KEY = "depts.source"                   # lx_settings — 지금 목록의 출처 한 줄(화면 '출처: …')
+_DEPT_BAD = re.compile(r"[\x00-\x1f\x7f<>›]")
+
+
+def _dkey(s) -> str:
+    """같은 부서인지 견줄 때 — '›' · 공백 정리 · 대소문자 무시."""
+    return " ".join(str(s or "").replace("›", " ").replace(">", " ").split()).lower()
+
+
+def _dclean(s) -> str:
+    return " ".join(_DEPT_BAD.sub(" ", str(s if s is not None else "")).split())
+
+
+# ── 부서 목록을 읽어 오는 곳(한 군데 — 출처를 바꿔 끼운다) ──────────────────────────────────
+# 지금 출처: csv = server/config/lx-departments.csv(LX 누리집 조직도를 옮긴 파일 · 열 상위 · 부서 · 단위 · '#' 줄은 메모) — 처음 목록.
+#           관리자 올리기(엑셀 · CSV — POST /accounts/depts/parse → PUT /accounts/depts)는 그 위에 덮어쓴다.
+# 사내 시스템에서 불러오려면: 아래 DEPT_SOURCES 에 '() -> (rows [{name, parent?, unit?}], 출처 한 줄)' 함수를 하나 더하고
+#           server/.env 의 LX_DEPT_SOURCE 를 그 이름으로 바꾼다. 관리자 화면의 '출처에서 다시 불러오기'(POST /accounts/depts/reload)가 그 함수를 부른다.
+DEPT_CSV = config.SERVER_ROOT / "config" / "lx-departments.csv"
+
+
+def _dept_from_csv() -> tuple[list[dict], str]:
+    raw = DEPT_CSV.read_bytes()
+    rows = _dept_table(_csv_rows(raw))
+    m = re.search(r"(\d{4}-\d{2}-\d{2})", raw.decode("utf-8-sig", "ignore"))
+    return rows, "LX 누리집 조직도" + (f" · {m.group(1)}" if m else "")
+
+
+DEPT_SOURCES = {"csv": _dept_from_csv}
+DEPT_SOURCE = (config.get("LX_DEPT_SOURCE", "csv") or "csv").strip()
+
+
+def dept_source() -> tuple[list[dict], str]:
+    fn = DEPT_SOURCES.get(DEPT_SOURCE) or DEPT_SOURCES["csv"]
+    return fn()
+
+
+def _csv_rows(data: bytes) -> list[list]:
+    for enc in ("utf-8-sig", "cp949"):
+        try:
+            text = data.decode(enc)
+            break
+        except UnicodeDecodeError:
+            continue
+    else:
+        raise ApiError("bad_request", "CSV 글자를 읽을 수 없습니다. UTF-8 로 저장한 뒤 다시 올려 주세요", {"field": "file", "why": "read"})
+    return [r for r in csv.reader(io.StringIO(text)) if r and not str(r[0]).lstrip().startswith("#")]
+
+
+def _dept_table(table: list[list]) -> list[dict]:
+    """표 → [{name, parent, unit}]. 첫 줄에 '상위' · '부서' 머리글이 있으면 그 열을 쓰고(조직도 모양), 아니면 첫 열만(부서 이름 한 열)."""
+    if not table:
+        return []
+    head = [_dclean(c) for c in table[0]]
+    if "부서" in head and "상위" in head:
+        i, j = head.index("부서"), head.index("상위")
+        k = head.index("단위") if "단위" in head else None
+        get = lambda r, n: (r[n] if n is not None and n < len(r) else None)   # noqa: E731
+        return [{"name": get(r, i), "parent": get(r, j), "unit": get(r, k)} for r in table[1:]]
+    body = table[1:] if head and head[0].lower() in DEPT_HEAD else table
+    return [{"name": r[0] if r else None, "parent": None, "unit": None} for r in body]
+
+
+def _dept_rows(raw: list[dict]) -> tuple[list[dict], dict]:
+    """정리 — 빈 칸 · 겹침 · 60자 넘음은 빼고 센다 · label 을 붙인다(상위가 최상위가 아니면 '상위 › 부서')."""
+    rows, seen, skip = [], set(), {"blank": 0, "dup": 0, "long": 0}
+    for x in raw:
+        name, parent, unit = _dclean(x.get("name")), _dclean(x.get("parent")) or None, _dclean(x.get("unit")) or None
+        if not name:
+            skip["blank"] += 1
+        elif len(name) > DEPT_MAX:
+            skip["long"] += 1
+        elif (_dkey(parent), _dkey(name)) in seen:
+            skip["dup"] += 1
+        else:
+            seen.add((_dkey(parent), _dkey(name)))
+            rows.append({"name": name, "parent": parent, "unit": unit})
+    units = {_dkey(r["name"]): r["unit"] for r in rows}
+    out, labels = [], set()
+    for r in rows:
+        up = r["parent"] if r["parent"] and units.get(_dkey(r["parent"])) != DEPT_TOP else None
+        label = f"{up}{DEPT_SEP}{r['name']}" if up else r["name"]
+        if _dkey(label) in labels:
+            skip["dup"] += 1
+            continue
+        labels.add(_dkey(label))
+        out.append({**r, "label": label, "pick": r["unit"] != DEPT_TOP})
+    if len(out) > DEPTS_MAX:
+        raise ApiError("bad_request", f"부서는 {DEPTS_MAX:,}개까지입니다", {"field": "names"})
+    return out, skip
+
+
+async def _save_depts(conn, actor: str, rows: list[dict], how: str, note: str | None = None) -> None:
+    before = int(await conn.fetchval("SELECT count(*) FROM lx_depts WHERE pick") or 0)
+    await conn.execute("DELETE FROM lx_depts")
+    if rows:
+        await conn.executemany("INSERT INTO lx_depts(label, name, parent, unit, pick, pos, by) VALUES ($1,$2,$3,$4,$5,$6,$7)",
+                               [(r["label"], r["name"], r["parent"], r["unit"], r["pick"], i, actor) for i, r in enumerate(rows)])
+    if note is not None:
+        await conn.execute("INSERT INTO lx_settings(key, value, updated_by, updated_at) VALUES ($1,$2,$3,now()) "
+                           "ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_by=EXCLUDED.updated_by, updated_at=now()",
+                           DEPT_SOURCE_KEY, {"note": note}, actor)
+    n = sum(1 for r in rows if r["pick"])
+    await _log(conn, actor, "lx", "account.depts", "",
+               {"realm": "lx", "tenant_id": None, "name": "부서 목록", "from": before, "to": n, "reason": f"{how} · {before}개 → {n}개"})
+
+
+async def _ensure_depts(conn) -> None:
+    """처음 한 번 — 출처(지금은 누리집 조직도 CSV)에서 목록을 채운다. 출처 기록(lx_settings)이 있으면(관리자가 비웠어도) 다시 채우지 않는다."""
+    if await conn.fetchval("SELECT 1 FROM lx_settings WHERE key=$1", DEPT_SOURCE_KEY):
+        return
+    try:
+        raw, note = await run_in_threadpool(dept_source)
+        rows, _ = _dept_rows(raw)
+    except Exception:            # 출처를 못 읽으면 목록 없이(직접 적기) — 다음에 다시 해 본다
+        return
+    if not await conn.fetchval("INSERT INTO lx_settings(key, value, updated_by) VALUES ($1,$2,'system') ON CONFLICT DO NOTHING RETURNING key",
+                               DEPT_SOURCE_KEY, {"note": note}):
+        return                   # 다른 요청이 먼저 채웠다
+    await _save_depts(conn, "system", rows, "처음 목록 — " + note)
+
+
+async def dept_rows(conn) -> list[dict]:
+    await _ensure_depts(conn)
+    return [dict(r) for r in await conn.fetch("SELECT label, name, parent, unit, pick FROM lx_depts ORDER BY pos, label")]
+
+
+async def dept_list(conn) -> list[str]:
+    """고르는 칸에 내는 이름(label) — 최상위(사장 · 부사장 · 감사)는 빼고 조직도 순서대로."""
+    return [r["label"] for r in await dept_rows(conn) if r["pick"]]
+
+
+async def _dept_keys(conn) -> dict:
+    """견줄 열쇠 → label — label · 부서 이름 · '상위 부서' 어느 것으로 적어도 같은 부서로 본다(부서 이름이 겹치면 label 만)."""
+    rows = [r for r in await dept_rows(conn) if r["pick"]]
+    by_name: dict[str, list[str]] = {}
+    for r in rows:
+        by_name.setdefault(_dkey(r["name"]), []).append(r["label"])
+    keys = {}
+    for r in rows:
+        keys[_dkey(r["label"])] = r["label"]
+        if r["parent"]:
+            keys[_dkey(f"{r['parent']} {r['name']}")] = r["label"]
+    for k, labels in by_name.items():
+        if len(labels) == 1:
+            keys.setdefault(k, labels[0])
+    return keys
+
+
+async def dept_listed(conn, dept: str | None) -> bool | None:
+    """지금 적힌 부서가 목록에 있나 — 목록이 비었거나 부서가 비면 None(안내할 것 없음)."""
+    if not (dept or "").strip():
+        return None
+    keys = await _dept_keys(conn)
+    return (_dkey(dept) in keys) if keys else None
+
+
+async def dept_pick(conn, dept: str | None, keep: str | None = None) -> str | None:
+    """목록에 있는 부서면 목록의 이름(label)으로 맞춘다 · 없으면 적은 그대로(지사 등 직접 적기 — 막지 않는다). keep 은 예전 호환(쓰지 않음)."""
+    if not dept:
+        return dept
+    keys = await _dept_keys(conn)
+    return keys.get(_dkey(dept), dept)
+
+
+def _read_table(name: str, data: bytes) -> list[list]:
+    ext = name.rsplit(".", 1)[-1].lower() if "." in name else ""
+    if ext == "xlsx":
+        from openpyxl import load_workbook
+        try:
+            wb = load_workbook(io.BytesIO(data), read_only=True, data_only=True)
+            ws = wb.worksheets[0]
+            table = [list(row) for row in ws.iter_rows(values_only=True) if row and any(c is not None and str(c).strip() for c in row)]
+            wb.close()
+        except Exception:
+            raise ApiError("bad_request", "엑셀 파일을 열 수 없습니다. 엑셀에서 xlsx 로 다시 저장한 뒤 올려 주세요", {"field": "file", "why": "read"})
+        return [r for r in table if not str(r[0] or "").lstrip().startswith("#")]
+    if ext == "csv":
+        return _csv_rows(data)
+    raise ApiError("bad_request", "엑셀(xlsx) 또는 CSV 파일을 올려 주세요", {"field": "file", "why": "type"})
+
+
+def _rows_out(rows: list[dict]) -> list[dict]:
+    return [{"label": r["label"], "name": r["name"], "parent": r["parent"], "unit": r["unit"]} for r in rows if r["pick"]]
+
+
+@router.get("/accounts/depts")
+async def get_depts(request: Request):
+    """LX 부서 목록 — 로그인 없이도 이름만(가입 신청 창의 부서 고르기). LX 관리자에게는 출처 · 마지막 바꿈 · 단위 · 목록에 없는 부서를 쓰는 계정."""
+    p = principal(request)
+    async with db(realm="lx") as conn:
+        rows = await dept_rows(conn)
+        names = [r["label"] for r in rows if r["pick"]]
+        out = {"items": names, "count": env(len(names), "count", "recorded", "LX 부서 목록(lx_depts · 최상위 뺌)")}
+        if p and p.is_admin:
+            src = await conn.fetchrow("SELECT value FROM lx_settings WHERE key=$1", DEPT_SOURCE_KEY)
+            last = await conn.fetchrow("SELECT actor, at FROM audit_log WHERE action='account.depts' ORDER BY id DESC LIMIT 1")
+            who = ("자동" if last["actor"] == "system" else await conn.fetchval("SELECT name FROM lx_users WHERE id=$1", last["actor"])) if last else None
+            keys = await _dept_keys(conn)
+            off = [{"name": u["name"], "login": u["login"], "dept": u["dept"]} for u in await conn.fetch(
+                "SELECT name, login, dept FROM lx_users WHERE status <> 'disabled' AND coalesce(trim(dept), '') <> '' ORDER BY name")
+                if keys and _dkey(u["dept"]) not in keys]
+            out.update({"rows": _rows_out(rows), "source": ((src["value"] or {}).get("note") if src else None),
+                        "source_kind": DEPT_SOURCE, "updated_at": _iso(last["at"]) if last else None, "updated_by": who, "unlisted": off})
+    return {**out, "at": now_iso()}
+
+
+@router.post("/accounts/depts/parse")
+async def parse_depts(request: Request, file: UploadFile = File(...)):
+    """엑셀(xlsx) · CSV 를 읽어 목록을 미리 보여 준다(저장하지 않음 — 확인한 뒤 PUT /accounts/depts).
+    첫 줄이 '상위 · 부서 · 단위' 머리글이면 조직도 모양으로, 아니면 첫 열을 부서 이름 한 열로. '#' 로 시작하는 줄은 메모."""
+    _admin(request)
+    data = await file.read(DEPT_FILE_MB * 1024 * 1024 + 1)
+    if len(data) > DEPT_FILE_MB * 1024 * 1024:
+        raise ApiError("bad_request", f"부서 목록 파일은 {DEPT_FILE_MB}MB 까지입니다", {"field": "file", "why": "size"})
+    table = await run_in_threadpool(_read_table, file.filename or "", data)
+    rows, skip = _dept_rows(_dept_table(table))
+    picks = [r for r in rows if r["pick"]]
+    if not picks:
+        raise ApiError("bad_request", "부서 이름을 찾지 못했습니다. 첫 열에 부서 이름을 한 줄에 하나씩 적어 주세요", {"field": "file", "why": "empty"})
+    return {"rows": [{k: r[k] for k in ("name", "parent", "unit")} for r in rows], "labels": [r["label"] for r in picks],
+            "count": env(len(picks), "count", "measured", "읽은 부서(최상위 뺌)"),
+            "skipped": {k: env(v, "count", "measured", "읽지 않은 줄(빈 칸 · 겹침 · 60자 넘음)") for k, v in skip.items()}, "at": now_iso()}
+
+
+@router.put("/accounts/depts")
+async def put_depts(body: dict, request: Request):
+    """부서 목록을 통째로 바꾼다(올린 파일을 미리 보고 확인한 뒤 · rows [{name, parent?, unit?}] 또는 names [이름]). 빈 목록이면 부서 칸은 직접 적기만.
+    계정에 이미 적힌 부서 이름은 건드리지 않는다."""
+    p = _admin(request)
+    raw = body.get("rows")
+    if raw is None and isinstance(body.get("names"), list):
+        raw = [{"name": n} for n in body["names"]]
+    if not isinstance(raw, list) or not all(isinstance(x, dict) for x in raw):
+        raise ApiError("bad_request", "rows 는 [{name, parent, unit}] 목록입니다", {"field": "rows"})
+    rows, _ = _dept_rows(raw)
+    note = " ".join(str(body.get("source") or "").split())[:80] or f"관리자가 올린 파일 · {dt.datetime.now(KST):%Y-%m-%d}"
+    async with db(realm="lx") as conn:
+        await _ensure_depts(conn)
+        await _save_depts(conn, p.user_id, rows, "목록 바꿈" if rows else "모두 비움", note=note if rows else "비움")
+        names = await dept_list(conn)
+    return {"items": names, "count": env(len(names), "count", "recorded", "LX 부서 목록(lx_depts · 최상위 뺌)"), "at": now_iso()}
+
+
+@router.post("/accounts/depts/reload")
+async def reload_depts(request: Request):
+    """출처(지금 csv = 누리집 조직도 · 나중에 사내 시스템)에서 다시 불러와 목록을 바꾼다."""
+    p = _admin(request)
+    try:
+        raw, note = await run_in_threadpool(dept_source)
+    except ApiError:
+        raise
+    except Exception:
+        raise ApiError("conflict", "출처에서 부서 목록을 읽지 못했습니다", status=409)
+    rows, _ = _dept_rows(raw)
+    async with db(realm="lx") as conn:
+        await _ensure_depts(conn)
+        await _save_depts(conn, p.user_id, rows, "출처에서 다시 불러옴 — " + note, note=note)
+        names = await dept_list(conn)
+    return {"items": names, "count": env(len(names), "count", "recorded", "LX 부서 목록(lx_depts · 최상위 뺌)"), "source": note, "at": now_iso()}
+
+
+@router.post("/accounts/depts/{op}")
+async def edit_dept(op: str, body: dict, request: Request):
+    """하나 더하기(add {name, parent?}) · 빼기(remove {label}) — 더하면 목록 끝에. 겹치면 409 · 없는 이름 빼기는 404."""
+    if op not in ("add", "remove"):
+        raise ApiError("not_found", "없는 길입니다")
+    p = _admin(request)
+    s = _dclean(body.get("name") if op == "add" else body.get("label") or body.get("name"))
+    up = _dclean(body.get("parent")) or None if op == "add" else None
+    if not s:
+        raise ApiError("bad_request", "부서 이름을 적어 주세요", {"field": "name"})
+    if len(s) > DEPT_MAX or (up and len(up) > DEPT_MAX):
+        raise ApiError("bad_request", f"부서 이름은 {DEPT_MAX}자까지입니다", {"field": "name"})
+    async with db(realm="lx") as conn:
+        rows = await dept_rows(conn)
+        n0 = sum(1 for r in rows if r["pick"])
+        if op == "add":
+            label = f"{up}{DEPT_SEP}{s}" if up else s
+            if any(_dkey(r["label"]) == _dkey(label) for r in rows):
+                raise ApiError("conflict", "이미 목록에 있는 부서입니다", {"field": "name"}, 409)
+            if len(rows) >= DEPTS_MAX:
+                raise ApiError("bad_request", f"부서는 {DEPTS_MAX:,}개까지입니다", {"field": "name"})
+            await conn.execute("INSERT INTO lx_depts(label, name, parent, unit, pick, pos, by) "
+                               "VALUES ($1,$2,$3,NULL,true, coalesce((SELECT max(pos) + 1 FROM lx_depts), 0), $4)", label, s, up, p.user_id)
+            how, n1 = f"더함 {label}", n0 + 1
+        else:
+            hit = next((r for r in rows if r["pick"] and _dkey(r["label"]) == _dkey(s)), None)
+            if not hit:
+                raise ApiError("not_found", "목록에 없는 부서입니다")
+            await conn.execute("DELETE FROM lx_depts WHERE label=$1", hit["label"])
+            how, n1 = f"뺌 {hit['label']}", n0 - 1
+        await _log(conn, p.user_id, "lx", "account.depts", "",
+                   {"realm": "lx", "tenant_id": None, "name": "부서 목록", "from": n0, "to": n1, "reason": f"{how} · {n0}개 → {n1}개"})
+        names = await dept_list(conn)
+    return {"items": names, "count": env(len(names), "count", "recorded", "LX 부서 목록(lx_depts · 최상위 뺌)"), "at": now_iso()}

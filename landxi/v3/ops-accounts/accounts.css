@@ -70,6 +70,66 @@ body:has(.k-drawer[data-slot="account"]) .acc-w { padding-right: calc(var(--shee
 .acc-temp__s { margin: 0; font: 400 var(--fs-label)/var(--lh-label) var(--font-body); color: var(--sub-2); }
 .acc-temp__w { margin: 0; font: 500 var(--fs-label)/var(--lh-label) var(--font-body); color: var(--warn); }
 
+/* 저장 용량(제안 S-19) — 요청 탭 위 기본 할당 한 줄 · 목록의 할당 칸 · 서랍의 할당 정하기(GB 칸) */
+.acc-set { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin: 0 0 16px; padding: 14px 20px; border-radius: 12px; background: var(--bg-1); }
+.acc-set[hidden] { display: none; }
+.acc-set__l { margin: 0; font: 500 var(--fs-label)/24px var(--font-body); color: var(--sub); }
+.acc-set__v { margin: 0; flex: 1; min-width: 0; font: 400 var(--fs-label)/24px var(--font-body); color: var(--sub-2); }
+.acc-set__v b { font-weight: 600; color: var(--ink); }
+.acc-set__v span { display: inline-block; }
+.acc-set__v span::before { content: "· "; }
+.acc-card[data-tab="storage"] .acc-b { white-space: nowrap; }
+.acc-set__b { border: 0; background: none; padding: 0; font: 500 var(--fs-label)/24px var(--font-body); color: var(--accent); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.acc-set .t-btn { height: 40px; }
+.acc-gb { position: relative; display: inline-block; }
+.acc-gb .acc-gb__i { width: 140px; padding-right: 44px; box-sizing: border-box; }
+.acc-gb i { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font: 500 var(--fs-label)/1 var(--font-num); font-style: normal; color: var(--sub); pointer-events: none; }
+.acc-q { font: 400 14px/20px var(--font-num); color: var(--ink-2); white-space: nowrap; }
+.acc-q b { font-weight: 600; color: var(--ink); }
+.acc-q.is-warn { color: var(--warn); }
+.acc-help span, .acc-cf-s span { display: inline-block; }
+.acc-card[data-tab="storage"] .acc-tbl tbody tr { cursor: pointer; transition: background var(--d-180) var(--e-ui); }
+.acc-card[data-tab="storage"] .acc-tbl tbody tr:hover { background: var(--bg-0); }
+
+/* 부서 목록(제안 S-21) — 출처 · 올리기 · 더하기 · 찾기 · 목록 · 목록에 없는 부서를 쓰는 계정 */
+.acc-dp { display: flex; flex-direction: column; gap: 14px; padding: 20px 24px 24px; }
+.acc-dp-h { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.acc-dp-t { margin: 0; font: 700 var(--fs-h4)/var(--lh-h4) var(--font-display); color: var(--ink); }
+.acc-dp-t b { font-family: var(--font-num); }
+.acc-dp-s { margin: 2px 0 0; display: flex; flex-wrap: wrap; gap: 0 12px; font: 400 13px/20px var(--font-body); color: var(--sub); }
+.acc-dp-do { display: flex; gap: 8px; flex-wrap: wrap; }
+.acc-dp-do .t-btn, .acc-dp-add .t-btn { height: 40px; }
+.acc-dp-add { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) auto; gap: 8px; }
+.acc-dp-add .t-input, .acc-dp-find { height: 40px; box-sizing: border-box; }
+.acc-dp-list { list-style: none; margin: 0; padding: 0; max-height: 520px; overflow: auto; border-top: 1px solid var(--rule); }
+.acc-dp-list li { display: flex; align-items: center; gap: 10px; padding: 10px 2px; border-bottom: 1px solid var(--rule); }
+.acc-dp-n { flex: 1; min-width: 0; font: 400 var(--fs-label)/22px var(--font-body); color: var(--ink); word-break: keep-all; }
+.acc-dp-n small { font-size: 13px; color: var(--sub); }
+.acc-dp-n b { font-weight: 500; }
+.acc-dp-list .t-chip { flex: none; }
+.acc-dp-rm { flex: none; border: 0; background: none; padding: 0 2px; font: 500 13px/20px var(--font-body); color: var(--sub); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.acc-dp-rm:hover { color: var(--warn); }
+.acc-dp-list li.acc-dp-none { display: block; color: var(--sub); border: 0; }
+.acc-dp-off summary { font: 500 var(--fs-label)/22px var(--font-body); color: var(--sub-2); cursor: pointer; }
+.acc-dp-off ul { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font: 400 14px/20px var(--font-body); color: var(--ink-2); }
+/* 확인 창(다시 불러오기 · 빼기 · 올린 목록 미리 보기) — 키트 가운데 창 안 */
+.acc-cf { display: flex; flex-direction: column; gap: 14px; }
+.acc-cf-s { margin: 0; font: 400 var(--fs-body)/var(--lh-body) var(--font-body); color: var(--ink-2); }
+.acc-dp-pv { list-style: none; margin: 0; padding: 12px 16px; border-radius: 10px; background: var(--bg-0); display: flex; flex-direction: column; gap: 4px; font: 400 14px/20px var(--font-body); color: var(--ink); }
+.acc-dp-more { color: var(--sub); }
+.acc-acts--1 { grid-template-columns: 1fr; }
+@media (max-width: 640px) {
+  .acc-dp { padding: 16px 12px 20px; }
+  .acc-dp-add { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .acc-dp-add .t-btn { grid-column: 1 / -1; }
+  .acc-card[data-tab="storage"] th:nth-child(2), .acc-card[data-tab="storage"] td:nth-child(2),
+  .acc-card[data-tab="storage"] th:nth-child(5), .acc-card[data-tab="storage"] td:nth-child(5),
+  .acc-card[data-tab="users"] th:nth-child(6), .acc-card[data-tab="users"] td:nth-child(6) { display: none; }
+  .acc-set { padding: 12px 16px; }
+  .acc-set__v span { display: block; }
+  .acc-set__v span::before { content: none; }
+}
+
 @media (max-width: 960px) {
   .acc-w { padding: 24px 16px 32px; }
   body:has(.k-drawer[data-slot="account"]) .acc-w { padding-right: 16px; }

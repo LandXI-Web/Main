@@ -132,7 +132,7 @@ export function units(text) {
   return f;
 }
 
-/** 나에게 온 알림 한 줄씩(지금은 프로젝트장 넘겨받음 — 확인 17차 P-5 ⓐ) — 프로젝트 목록 맨 위와 대시보드 '내 프로젝트' 맨 위가 같은 부품.
+/** 나에게 온 알림 한 줄씩(프로젝트장 넘겨받음 — 확인 17차 P-5 ⓐ · 저장 용량 늘리기 요청 승인 · 반려 — S-19) — 프로젝트 목록 맨 위와 대시보드 '내 프로젝트' 맨 위가 같은 부품.
     '열기' = 그 프로젝트 한 장으로(본 것으로 찍음) · '확인' = 본 것으로(다시 보이지 않음). 알림이 없으면 아무것도 그리지 않는다. */
 export async function projectNotices(host) {
   ensureCss();
@@ -143,11 +143,14 @@ export async function projectNotices(host) {
   const when = (s) => { const d = new Date(s || ''); return Number.isNaN(+d) ? '' : `${two(d.getMonth() + 1)}.${two(d.getDate())} ${two(d.getHours())}:${two(d.getMinutes())}`; };
   host.replaceChildren(...(j.items || []).map((n) => {
     const ok = h('button.lxp-ntc-ok', { type: 'button', text: '확인' });
+    /* 저장 용량 늘리기 요청 승인 · 반려(S-19) — 프로젝트가 없는 알림은 '내 정보'로(같은 창 kit/me.js) */
+    const me = n.kind === 'account.storage' ? h('a.lxp-ntc-go', { href: '#', text: '내 정보',
+      onclick: async (e) => { e.preventDefault(); await seen(n.id); row.remove(); (await import('../kit/me.js')).openMe(); } }) : null;
     const row = h('div.lxp-ntc', { role: 'status' },
       h('span.lxp-ntc-t', {}, h('b', { text: n.text }),
-        h('small', {}, units([n.by && `넘긴 사람 ${n.by}`, when(n.at), n.note && `메모 ${n.note}`].filter(Boolean).join(' · ')))),
+        h('small', {}, units([n.by && `${n.by_word || '넘긴 사람'} ${n.by}`, when(n.at), n.note && `${n.note_word || '메모'} ${n.note}`].filter(Boolean).join(' · ')))),
       n.project?.id ? h('a.lxp-ntc-go', { href: projectHref(n.project.id), text: '열기',
-        onclick: async (e) => { e.preventDefault(); await seen(n.id); location.href = projectHref(n.project.id); } }) : null, ok);
+        onclick: async (e) => { e.preventDefault(); await seen(n.id); location.href = projectHref(n.project.id); } }) : me, ok);
     ok.addEventListener('click', async () => { ok.disabled = true; await seen(n.id); row.remove(); });
     return row;
   }));

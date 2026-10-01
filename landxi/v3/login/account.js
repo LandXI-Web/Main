@@ -127,9 +127,11 @@ export function openAccountHelp({ realm = 'lx', site = realm === 'tenant' ? 'gov
     const fct = GOV ? field('contact', '연락처(선택)', { type: 'tel', auto: 'tel', hint: '내 요청을 받은 LX 담당자만 봅니다' }) : null;
     const fc = consent(GOV);
     const pw = h('div.ac-two', {}, fp.wrap, fp2.wrap);
-    const nd = h('div.ac-two', {}, fn.wrap, fd.wrap);
+    /* LX 직원 — 부서는 LX 부서 목록에서 고르기(검색 · 제안 S-21 · kit/dept.js) · 목록에 없으면(지사 등) 적은 그대로. 고르는 목록이 넓게 보이게 한 줄을 다 쓴다 */
+    const nd = GOV ? h('div.ac-two', {}, fn.wrap, fd.wrap) : fn.wrap;
+    if (!GOV) import('../kit/dept.js').then((d) => d.deptPicker(fd.input)).catch(() => { /* 목록 없이 직접 적기 */ });
     const who = GOV ? (pick ? '기관 관리자가' : `${tenant?.name || '기관'} 관리자가`) : 'LX 관리자가';
-    const { form } = formOf([...(fo ? [fo] : []), { wrap: nd }, fm, ...(fct ? [fct] : []), { wrap: pw }, fc], '신청하기', async (say) => {
+    const { form } = formOf([...(fo ? [fo] : []), { wrap: nd }, fm, ...(GOV ? [] : [fd]), ...(fct ? [fct] : []), { wrap: pw }, fc], '신청하기', async (say) => {
       const tid = tenantOf(say); if (GOV && !tid) return;
       if (!val(fn)) return say('이름을 적어 주세요', 'name');
       if (!MAIL.test(val(fm))) return say(val(fm) ? '메일 주소 형식을 확인하세요' : '메일 주소를 적어 주세요', 'login');

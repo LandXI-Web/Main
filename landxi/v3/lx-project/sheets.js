@@ -36,6 +36,7 @@ export function size(b) {
   return `${Math.max(0.1, n / 1e3).toFixed(1)} KB`;
 }
 const v = (e) => (e && typeof e === 'object' && 'value' in e ? e.value : e);
+const u = (t) => h('span.lxp-u', { text: t });          // 뜻 한 덩어리 — 덩어리 사이에서만 꺾인다(줄바꿈 규칙 9)
 
 /** 문제는 창으로 알린다(원칙 109) — 한 줄 + 다음 할 일 */
 function problem(title, line, next) {
@@ -173,8 +174,8 @@ export function openHandover(pr, { onDone } = {}) {
 const FILTERS = [['all', '전체'], ['auto', '자동'], ['memo', '메모'], ['file', '파일']];
 const ACCEPT = '.pdf,.hwp,.hwpx,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.png,.jpg,.jpeg,.gif,.webp';
 
-/** 한 줄 — 시각 · 무엇(굵게) · 덧말 · 누가 · (파일) 이름 칩 */
-function line(pr, x) {
+/** 한 줄 — 시각 · 무엇(굵게) · 덧말 · 누가 · (파일) 이름 칩 · (메모 · 파일) 지우기 — 쓴 사람 · 프로젝트장 · LX 관리자에게만(서버 can_remove) */
+function line(pr, x, onChange) {
   const what = h('span.lxp-lg-t');
   if (x.kind === 'memo') what.append(h('b', { text: '메모 ' }), x.text);
   else if (x.kind === 'file') {
@@ -189,7 +190,76 @@ function line(pr, x) {
     if (x.sub) what.append(' — ', units(x.sub));
   }
   what.append(h('i', { text: x.who }));
+  if ((x.kind === 'memo' || x.kind === 'file') && x.can_remove && x.id) {
+    const rm = h('button.lxp-lg-rm', { type: 'button', text: '지우기', 'aria-label': `${x.kind === 'file' ? '파일' : '메모'} 지우기` });
+    rm.addEventListener('click', () => openRemove(pr, x, onChange));
+    what.append(rm);
+  }
   return h('li', { dataset: { kind: x.kind } }, h('span.lxp-lg-w.num', { text: at(x.at) }), what);
+}
+
+/** 지우기 확인 창(S-20) — 지우면 되돌릴 수 없고, 기록에는 '누가 · 메모를 지움' 한 줄만(내용은 남지 않음). 파일은 저장 공간에서 빠진다 */
+function openRemove(pr, x, onChange) {
+  const file = x.kind === 'file';
+  const what = file ? (x.file?.name || '파일') : x.text;
+  const go = h('button.t-btn.lxp-rm-go', { type: 'button', text: '지우기' });
+  const cancel = h('button.t-btn.t-btn--text.lxp-cancel', { type: 'button', text: '취소' });
+  const body = h('div.lxp-sh', {},
+    h('p.lxp-rm-what', {}, h('b', { text: file ? '파일 ' : '메모 ' }), what, file && x.file ? h('small.num', { text: ` · ${size(v(x.file.bytes))}` }) : null),
+    h('p.lxp-say', {}, '지우면 되돌릴 수 없습니다.', h('br'),
+      u(`기록에는 '${file ? '파일을' : '메모를'} 지움' 한 줄만 남고`), ' ', u('내용은 남지 않습니다.'),
+      file ? h('br') : null, file ? u('파일 크기만큼 저장 공간이 줄어듭니다.') : null),
+    h('div.lxp-act', {}, go, cancel));
+  const m = modal({ title: file ? '파일 지우기' : '메모 지우기', body });
+  m.el.classList.add('lxp-md');
+  cancel.addEventListener('click', () => m.close());
+  go.addEventListener('click', async () => {
+    go.disabled = true;
+    try {
+      await api(`/projects/${pr.id}/notes/${encodeURIComponent(x.id)}`, { method: 'DELETE' });
+      m.close(true);
+      toast(file ? '파일을 지웠습니다' : '메모를 지웠습니다');
+      await onChange?.();
+    } catch (e) { m.close(true); problem('지우지 못했습니다', e.message || '잠시 뒤 다시 해 주세요.'); }
+  });
+  return m;
+}
+
+/* ── 저장 용량 — 파일 올리는 자리(S-19 · 막지 않음 · 원칙 91 · 109) ─────────────── */
+const gbw = (x) => `${Number(x).toLocaleString('ko-KR', { maximumFractionDigits: 2 })} GB`;
+/** 90% 넘음 한 줄 — 올린 파일은 프로젝트장의 저장 용량에 더해진다(서버 lead_storage 한 출처). 없으면 null */
+function storageLine(st) {
+  if (!st?.warn) return null;
+  const pct = v(st.pct);
+  const who = st.lead_is_me ? '내 저장 용량' : '프로젝트장 저장 용량';
+  const el = h('p.lxp-quota', { role: 'status' }, h('span', { text: `${who} 할당의 ${pct}%를 썼습니다.` }), ' ',
+    h('span', { text: '올리기는 그대로 됩니다' }));
+  if (st.lead_is_me) {
+    const ask = h('button.lxp-quota-ask', { type: 'button', text: '늘리기 요청' });
+    ask.addEventListener('click', () => askMore());
+    el.append(' ', ask);
+  }
+  return el;
+}
+async function askMore() {
+  const { openStorageRequest } = await import('../kit/me.js');
+  try { const p = await api('/me/profile'); openStorageRequest({ storage: p.storage }); }
+  catch { problem('지금은 요청할 수 없습니다', '잠시 뒤 내 정보에서 다시 해 주세요.'); }
+}
+/** 파일을 올린 뒤 90% 를 넘었으면 창으로 한 번 권한다(이 창을 연 동안 한 번 — 계속 띄우지 않는다) */
+let warned = false;
+function storageWindow(st) {
+  if (!st?.warn || !st.lead_is_me || warned) return;
+  warned = true;
+  const ask = h('button.t-btn', { type: 'button', text: '늘리기 요청' });
+  const ok = h('button.t-btn.t-btn--text.lxp-cancel', { type: 'button', text: '닫기' });
+  const m = modal({ title: '저장 용량이 거의 찼습니다', body: h('div.lxp-sh', {},
+    h('p.lxp-say', {}, u(`할당 ${gbw(v(st.quota_gb))} 중`), ' ', u(`${size(v(st.used))}(${v(st.pct)}%)를 썼습니다.`), h('br'),
+      u('올리기는 막지 않고 그대로 됩니다.'), ' ', u('더 필요하면 늘리기 요청을 보내 주세요.')),
+    h('div.lxp-act', {}, ask, ok)) });
+  m.el.classList.add('lxp-md');
+  ok.addEventListener('click', () => m.close());
+  ask.addEventListener('click', () => { m.close(true); askMore(); });
 }
 
 async function download(pr, f) {
@@ -242,6 +312,7 @@ function writer(pr, limits, done) {
   save.addEventListener('click', async () => {
     const text = memo.value.trim();
     save.disabled = true;
+    let up = null;
     try {
       if (file) {
         const fd = new FormData();
@@ -249,17 +320,23 @@ function writer(pr, limits, done) {
         if (text) fd.append('text', text);
         const s = session.get();
         const r = await fetch(`${API.prefix}/projects/${pr.id}/files`, { method: 'POST', headers: s ? { authorization: 'Bearer ' + s.token } : {}, body: fd });
-        if (!r.ok) { const j = await r.json().catch(() => null); throw new Error(j?.error?.message || ''); }
+        const j = await r.json().catch(() => null);
+        if (!r.ok) throw new Error(j?.error?.message || '');
+        up = j?.lead_storage || null;
       } else {
         await api(`/projects/${pr.id}/notes`, { method: 'POST', body: { text } });
       }
       memo.value = ''; file = null; showPick();
       toast('남겼습니다');
       await done?.();
+      storageWindow(up);
     } catch (e) { problem('남기지 못했습니다', e.message || '잠시 뒤 다시 해 주세요.'); }
     ready();
   });
-  return h('div.lxp-lg-wr', {}, picked, h('div.lxp-lg-in', {}, memo, fileBtn, save, pickIn));
+  const stSlot = h('div.lxp-quota-slot');
+  const wr = h('div.lxp-lg-wr', {}, stSlot, picked, h('div.lxp-lg-in', {}, memo, fileBtn, save, pickIn));
+  wr.storage = (st) => { stSlot.replaceChildren(...[storageLine(st)].filter(Boolean)); };     // 기록을 다시 읽을 때마다 한 줄을 새로
+  return wr;
 }
 
 /** 기록 칸 — 최근 3줄 + 모두 보기 n + 메모 · 파일 */
@@ -272,11 +349,13 @@ export function logCard(pr) {
   const draw = async () => {
     try { J = await api(`/projects/${pr.id}/log`); } catch { list.replaceChildren(h('li.lxp-lg-none', { text: '기록을 불러오지 못했습니다' })); return; }
     const items = J.items || [];
-    list.replaceChildren(...(items.length ? items.slice(0, 3).map((x) => line(pr, x)) : [h('li.lxp-lg-none', { text: '아직 기록이 없습니다' })]));
+    list.replaceChildren(...(items.length ? items.slice(0, 3).map((x) => line(pr, x, draw)) : [h('li.lxp-lg-none', { text: '아직 기록이 없습니다' })]));
     more.textContent = `모두 보기 ${v(J.counts?.all) ?? items.length}`;
+    wr.storage(J.lead_storage);
   };
   more.addEventListener('click', () => openLog(pr, { onChange: draw }));
-  sec.append(writer(pr, { get file_max_mb() { return J?.file_max_mb; }, get file_types() { return J?.file_types; } }, draw));
+  const wr = writer(pr, { get file_max_mb() { return J?.file_max_mb; }, get file_types() { return J?.file_types; } }, draw);
+  sec.append(wr);
   draw();
   return sec;
 }
@@ -298,13 +377,16 @@ export function openLog(pr, { onChange } = {}) {
       return c;
     }));
     const items = (J?.items || []).filter((x) => kind === 'all' || x.kind === kind);
-    list.replaceChildren(...(items.length ? items.map((x) => line(pr, x)) : [h('li.lxp-lg-none', { text: kind === 'all' ? '아직 기록이 없습니다' : '이 묶음에 기록이 없습니다' })]));
+    list.replaceChildren(...(items.length ? items.map((x) => line(pr, x, changed)) : [h('li.lxp-lg-none', { text: kind === 'all' ? '아직 기록이 없습니다' : '이 묶음에 기록이 없습니다' })]));
+    wr.storage(J?.lead_storage);
   };
   const load = async () => {
     try { J = await api(`/projects/${pr.id}/log`); } catch { list.replaceChildren(h('li.lxp-lg-none', { text: '기록을 불러오지 못했습니다' })); return; }
     draw();
   };
-  body.append(writer(pr, { get file_max_mb() { return J?.file_max_mb; }, get file_types() { return J?.file_types; } }, async () => { await load(); await onChange?.(); }));
+  const changed = async () => { await load(); await onChange?.(); };
+  const wr = writer(pr, { get file_max_mb() { return J?.file_max_mb; }, get file_types() { return J?.file_types; } }, changed);
+  body.append(wr);
   load();
   return d;
 }

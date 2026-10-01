@@ -26,6 +26,9 @@ GET    /projects/{pid}/log               기록 · 메모 · 파일(확인 17차
                                          구성원 · 프로젝트장 · LX 관리자만(기관은 안 봄 — 기관과의 대화는 검토 요청). 거르기 = all | auto | memo | file
 POST   /projects/{pid}/notes             {text} 메모 한 줄 · POST /projects/{pid}/files (multipart file · text?) 파일 올리기(작은 문서 · 그림 · 크기 한도 · 형식 제한)
 GET    /projects/{pid}/files/{nid}       올린 파일 내려받기(같은 사람들만)
+DELETE /projects/{pid}/notes/{nid}       메모 · 파일 지우기(제안 S-20) — 쓴 사람 본인 · 프로젝트장 · LX 관리자. 파일은 저장 폴더에서 빠지고(저장 공간이 줄어듦)
+                                         내용(글 · 파일 이름)은 남기지 않는다. 기록에는 '누가 · 메모를 지움 / 파일을 지움' 한 줄
+기록(GET …/log)의 lead_storage · 파일 올리기 답의 lead_storage = 프로젝트장의 저장 용량(할당 · 쓴 비율 · 90% 넘음) — 파일 올리는 자리의 한 줄 · 창(S-19 · 막지 않음)
 
 단계 6(흐름-1 의 LX 직원 부분 · 레일 순서): 데이터 올리기 → 학습데이터 구축 → 학습 → 결과 확인 → 발행 요청 → 서비스 관리.
 완료 조건(자동 · 막지 않는 길잡이 — R-D3 §3-2):
@@ -205,12 +208,40 @@ async def project_bytes(conn, pid: str) -> int:
     return int(await conn.fetchval("SELECT " + _PROJECT_BYTES.format(p="$1"), pid) or 0)
 
 
+STORAGE_DEFAULT_KEY = "storage.default_quota_gb"   # lx_settings — 따로 정하지 않은 계정의 할당(LX 관리자가 계정 관리에서 정한다 · 없으면 할당 없음)
+STORAGE_WARN_PCT = 90                               # 할당의 이만큼을 넘으면 내 정보 · 파일 올리는 자리에 한 줄 + 창(막지는 않는다 — S-19 · 원칙 91 · 109)
+
+
+async def storage_default(conn) -> float | None:
+    v = await conn.fetchval("SELECT value FROM lx_settings WHERE key=$1", STORAGE_DEFAULT_KEY)
+    try:
+        return float(v) if v is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def storage_state(used: int, own, default) -> dict:
+    """할당(따로 정한 값 → 없으면 기본값 → 없으면 None '할당 없음') · 쓴 비율 · 90% 넘음. 1 GB = 10^9 바이트(서버 사용 현황 · 화면과 같은 단위)."""
+    q = float(own) if own is not None else default
+    pct = int(round(used / (q * 1e9) * 100)) if q else None
+    return {"quota_gb": q, "quota_own": own is not None, "default_gb": default, "pct": pct, "warn": pct is not None and pct >= STORAGE_WARN_PCT}
+
+
 async def lead_storage(conn, uid: str) -> dict:
-    """내 저장 용량 — 내가 프로젝트장인 프로젝트(진행 중 · 보관)의 저장 공간 합 · 할당(lx_users.storage_quota_gb — 없으면 None).
-    → {bytes, projects, quota_gb}. 할당 · 요청 · 승인 화면은 확인 전 — 할당 값이 없으면 지어내지 않는다."""
+    """내 저장 용량 — 내가 프로젝트장인 프로젝트(진행 중 · 보관)의 저장 공간 합 · 할당(lx_users.storage_quota_gb → 없으면 기본 할당 → 없으면 None).
+    → {bytes, projects, quota_gb, quota_own, default_gb, pct, warn}. 할당 값이 없으면 지어내지 않는다(할당 없음)."""
     r = await conn.fetchrow("SELECT count(*) AS n, coalesce(sum(" + _PROJECT_BYTES.format(p="p.id") + "),0) AS b FROM projects p WHERE p.lead_id=$1", uid)
     q = await conn.fetchval("SELECT storage_quota_gb FROM lx_users WHERE id=$1", uid)
-    return {"bytes": int(r["b"] or 0), "projects": int(r["n"] or 0), "quota_gb": float(q) if q is not None else None}
+    used = int(r["b"] or 0)
+    return {"bytes": used, "projects": int(r["n"] or 0), **storage_state(used, q, await storage_default(conn))}
+
+
+async def storage_all(conn) -> dict:
+    """LX 계정마다 저장 용량(계정 관리 목록) — lead_storage 와 같은 식을 한 번에. → {uid: {bytes, projects, quota_gb, …}}"""
+    d = await storage_default(conn)
+    rows = await conn.fetch("SELECT u.id, u.storage_quota_gb AS q, count(p.id) AS n, coalesce(sum(" + _PROJECT_BYTES.format(p="p.id") + "),0) AS b "
+                            "FROM lx_users u LEFT JOIN projects p ON p.lead_id = u.id GROUP BY u.id, u.storage_quota_gb")
+    return {r["id"]: {"bytes": int(r["b"] or 0), "projects": int(r["n"] or 0), **storage_state(int(r["b"] or 0), r["q"], d)} for r in rows}
 
 
 async def project_of_card(conn, card_id: str) -> dict | None:
@@ -561,14 +592,17 @@ async def people_list(request: Request):
 
 @router.get("/projects/notices")
 async def notices(request: Request):
-    """나에게 온 알림 중 아직 안 본 것(지금은 프로젝트장 넘겨받음 — P-5 ⓐ). 대시보드 '내 프로젝트' · 프로젝트 목록 맨 위에 한 줄씩."""
+    """나에게 온 알림 중 아직 안 본 것(프로젝트장 넘겨받음 — P-5 ⓐ · 저장 용량 늘리기 요청 승인 · 반려 — S-19). 대시보드 '내 프로젝트' · 프로젝트 목록 맨 위에 한 줄씩.
+    by_word · note_word = 덧말의 이름표(넘긴 사람 · 메모 / 처리한 사람 · 사유)."""
     p = _lx(request)
     async with db(realm="lx") as conn:
         people = await _people(conn)
         rows = await conn.fetch("SELECT n.id, n.kind, n.project_id, n.text, n.note, n.by, n.at, p.name AS pname FROM lx_notices n "
                                 "LEFT JOIN projects p ON p.id = n.project_id WHERE n.user_id=$1 AND n.seen_at IS NULL ORDER BY n.at DESC LIMIT 20", p.user_id)
+    words = {"project.lead": ("넘긴 사람", "메모"), "account.storage": ("처리한 사람", "사유")}
     items = [{"id": x["id"], "kind": x["kind"], "project": {"id": x["project_id"], "name": x["pname"]} if x["project_id"] else None,
-              "text": x["text"], "note": x["note"], "by": _name(people, x["by"]), "at": _iso(x["at"])} for x in rows]
+              "text": x["text"], "note": x["note"], "by": _name(people, x["by"]), "at": _iso(x["at"]),
+              "by_word": words.get(x["kind"], ("보낸 사람", "메모"))[0], "note_word": words.get(x["kind"], ("보낸 사람", "메모"))[1]} for x in rows]
     return {"items": items, "total": env(len(items), "count", "recorded", "lx_notices(본 적 없는 것)"), "as_of": now_iso()}
 
 
@@ -784,7 +818,9 @@ FILE_TYPES = {"pdf": "application/pdf", "hwp": "application/x-hwp", "hwpx": "app
               "png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg", "gif": "image/gif", "webp": "image/webp"}
 LOG_KINDS = ("all", "auto", "memo", "file")
 _AUDIT_WORD = {"project.create": "프로젝트 만듦", "project.edit": "프로젝트 고침", "project.member.add": "구성원 더함", "project.member.remove": "구성원 뺌",
-               "project.lead": "프로젝트장 넘김", "project.archive": "끝난 프로젝트로 보관", "project.reopen": "다시 엶", "project.round": "재학습 시작"}
+               "project.lead": "프로젝트장 넘김", "project.archive": "끝난 프로젝트로 보관", "project.reopen": "다시 엶", "project.round": "재학습 시작",
+               "project.note.remove": "메모를 지움"}
+_REMOVED_WORD = {"memo": "메모를 지움", "file": "파일을 지움"}
 
 
 async def _logger(conn, p: Principal, pid: str):
@@ -799,8 +835,14 @@ def _ko(v) -> str:
     return ((v or {}).get("ko") or (v or {}).get("en") or "") if isinstance(v, dict) else (v or "")
 
 
-async def _log_items(conn, r, people: dict) -> list[dict]:
-    """한 프로젝트의 기록 — 자동(감사 기록 · 학습 표본 · 학습 · 결재 · 적용) + 메모 + 파일. 시각 내림차순. 지어낸 줄 0(모두 서버 기록)."""
+def can_remove_note(p: Principal | None, r, by: str | None) -> bool:
+    """메모 · 파일을 지울 수 있는 사람 — 쓴 사람 본인 · 프로젝트장 · LX 관리자(S-20)."""
+    return bool(p and p.user_id) and (p.user_id == by or p.user_id == r["lead_id"] or p.is_admin)
+
+
+async def _log_items(conn, r, people: dict, p: Principal | None = None) -> list[dict]:
+    """한 프로젝트의 기록 — 자동(감사 기록 · 학습 표본 · 학습 · 결재 · 적용) + 메모 + 파일. 시각 내림차순. 지어낸 줄 0(모두 서버 기록).
+    p(보는 사람)가 있으면 메모 · 파일 줄마다 지울 수 있는지(can_remove) 붙인다. 지운 메모 · 파일은 줄이 빠지고 '○○ · 메모를 지움' 한 줄만 남는다(내용 없음)."""
     pid = r["id"]
     out: list[dict] = []
     add = lambda at, kind, text, who, **kw: out.append({"at": at, "kind": kind, "text": text, "who": who, **kw}) if at else None  # noqa: E731
@@ -818,6 +860,8 @@ async def _log_items(conn, r, people: dict) -> list[dict]:
             sub = f"사유 {x['reason']}" if x.get("reason") else None
         elif act == "project.edit" and b.get("name") != x.get("name"):
             sub = f"이름 {b.get('name')} → {x.get('name')}"
+        elif act == "project.note.remove":
+            text = _REMOVED_WORD.get(x.get("kind"), text)
         add(a["at"], "auto", text, _name(people, a["actor"]), sub=sub, group="project")
     # ② 학습 표본 올림
     for s in await conn.fetch("SELECT s.n_images, s.created_at, s.created_by FROM project_links l JOIN train_samples s ON s.id = l.ref "
@@ -873,11 +917,12 @@ async def _log_items(conn, r, people: dict) -> list[dict]:
             add(v["approved_at"], "auto", "서비스 공개" + (f" · {v['version']}판" if v["version"] else ""), _name(people, v["approved_by"]), group="approval")
     # ⑤ 메모 · 파일
     for n in await conn.fetch("SELECT id, kind, body, file_name, file_ext, bytes, by, at FROM project_notes WHERE project_id=$1 AND removed_at IS NULL", pid):
+        rm = can_remove_note(p, r, n["by"])
         if n["kind"] == "file":
-            add(n["at"], "file", n["body"] or "파일", _name(people, n["by"]),
+            add(n["at"], "file", n["body"] or "파일", _name(people, n["by"]), id=n["id"], can_remove=rm,
                 file={"id": n["id"], "name": n["file_name"], "type": n["file_ext"], "bytes": env(int(n["bytes"] or 0), "bytes", "measured", "올린 파일 크기")})
         else:
-            add(n["at"], "memo", n["body"] or "", _name(people, n["by"]))
+            add(n["at"], "memo", n["body"] or "", _name(people, n["by"]), id=n["id"], can_remove=rm)
     out.sort(key=lambda x: x["at"], reverse=True)
     return [{**x, "at": _iso(x["at"])} for x in out]
 
@@ -889,11 +934,20 @@ async def project_log(pid: str, request: Request, kind: str = "all", limit: int 
         raise ApiError("bad_request", "kind 는 " + " | ".join(LOG_KINDS))
     async with db(realm="lx") as conn:
         r = await _logger(conn, p, pid)
-        items = await _log_items(conn, r, await _people(conn))
+        items = await _log_items(conn, r, await _people(conn), p)
+        st = _storage_line(await lead_storage(conn, r["lead_id"]), p.user_id == r["lead_id"])
     counts = {k: sum(1 for x in items if k == "all" or x["kind"] == k) for k in LOG_KINDS}
     pick = [x for x in items if kind == "all" or x["kind"] == kind][:max(1, min(int(limit or 200), 200))]
     return {"items": pick, "counts": {k: env(v, "count", "recorded", "프로젝트 기록(감사 기록 · 학습 · 결재 · 메모 · 파일)") for k, v in counts.items()},
-            "file_max_mb": env(FILE_MAX_MB, "MB", "recorded", "한 파일 크기 한도(설정 한 곳 · projects.FILE_MAX_MB)"), "file_types": sorted(FILE_TYPES), "as_of": now_iso()}
+            "file_max_mb": env(FILE_MAX_MB, "MB", "recorded", "한 파일 크기 한도(설정 한 곳 · projects.FILE_MAX_MB)"), "file_types": sorted(FILE_TYPES),
+            "lead_storage": st, "as_of": now_iso()}
+
+
+def _storage_line(st: dict, lead_is_me: bool) -> dict:
+    """파일 올리는 자리의 저장 용량 한 줄 — 올린 파일은 프로젝트장의 저장 용량에 더해진다(lead_storage 한 출처). 할당을 넘어도 막지 않는다(S-19 기본 · 원칙 91)."""
+    return {"quota_gb": env(st["quota_gb"], "GB", "recorded", "프로젝트장에게 할당된 저장 용량(없으면 할당 없음)"),
+            "used": env(st["bytes"], "bytes", "measured", "프로젝트장이 프로젝트장인 프로젝트의 저장 공간 합"),
+            "pct": env(st["pct"], "%", "measured", "할당 가운데 쓴 비율"), "warn": st["warn"], "lead_is_me": lead_is_me}
 
 
 @router.post("/projects/{pid}/notes", status_code=201)
@@ -956,7 +1010,37 @@ async def add_file(pid: str, request: Request, file: UploadFile = File(...), tex
                            "VALUES ($1,$2,'file',$3,$4,$5,$6,$7,$8)", nid, pid, note, name, ext, rel, size, p.user_id)
         await conn.execute("UPDATE projects SET updated_at=now() WHERE id=$1", pid)
         await audit(conn, p, "project.file", pid, None, {"note_id": nid, "name": name, "bytes": size})
-    return {"id": nid, "kind": "file", "name": name, "bytes": env(size, "bytes", "measured", "올린 파일 크기"), "at": now_iso()}
+        lead = await conn.fetchval("SELECT lead_id FROM projects WHERE id=$1", pid)
+        st = _storage_line(await lead_storage(conn, lead), p.user_id == lead)
+    return {"id": nid, "kind": "file", "name": name, "bytes": env(size, "bytes", "measured", "올린 파일 크기"), "lead_storage": st, "at": now_iso()}
+
+
+@router.delete("/projects/{pid}/notes/{nid}")
+async def remove_note(pid: str, nid: str, request: Request):
+    """메모 · 파일 지우기(S-20) — 쓴 사람 본인 · 프로젝트장 · LX 관리자. 파일은 프로젝트 저장 폴더에서 빠지고(저장 공간 숫자가 줄어듦 — _PROJECT_BYTES 한 곳),
+    메모 · 파일의 내용(글 · 파일 이름)은 남기지 않는다. 기록에는 '누가 · 메모를 지움 / 파일을 지움' 한 줄만(감사 기록 project.note.remove)."""
+    p = _lx(request)
+    async with db(realm="lx") as conn:
+        r = await _logger(conn, p, pid)
+        n = await conn.fetchrow("SELECT id, kind, by, file_rel, removed_at FROM project_notes WHERE id=$1 AND project_id=$2 FOR UPDATE", nid, pid)
+        if not n or n["removed_at"]:
+            raise ApiError("not_found", "이미 지웠거나 없는 메모 · 파일입니다")
+        if not can_remove_note(p, r, n["by"]):
+            raise ApiError("forbidden", "쓴 사람 · 프로젝트장 · LX 관리자만 지웁니다")
+        if n["kind"] == "file" and n["file_rel"]:
+            try:
+                (config.DATA_ROOT / n["file_rel"]).unlink(missing_ok=True)
+            except OSError:
+                raise ApiError("conflict", "지금은 파일을 지울 수 없습니다. 잠시 뒤 다시 해 주세요", status=409)
+        await conn.execute("UPDATE project_notes SET removed_at=now(), removed_by=$2, body=NULL, file_name=NULL, file_ext=NULL, file_rel=NULL WHERE id=$1",
+                           nid, p.user_id)
+        if n["kind"] == "file":       # 올릴 때 감사 기록에 적힌 파일 이름도 남기지 않는다(내용은 남기지 않음 — 크기만 남김)
+            await conn.execute("UPDATE audit_log SET after = after - 'name' WHERE action='project.file' AND subject=$1 AND after->>'note_id' = $2", pid, nid)
+        await conn.execute("UPDATE projects SET updated_at=now() WHERE id=$1", pid)
+        await audit(conn, p, "project.note.remove", pid, {"note_id": nid, "kind": n["kind"]}, {"note_id": nid, "kind": n["kind"], "by": n["by"]})
+        st = await project_bytes(conn, pid)
+    return {"ok": True, "kind": n["kind"], "storage": env(st, "bytes", "measured", "프로젝트 저장 공간(학습데이터 파일 — 이을 때 잰 크기 + 올린 파일)"),
+            "as_of": now_iso()}
 
 
 @router.get("/projects/{pid}/files/{nid}")

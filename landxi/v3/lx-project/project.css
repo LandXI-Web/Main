@@ -108,6 +108,18 @@ button.lxp-file:hover{box-shadow:inset 0 0 0 1px var(--ink)}
 .lxp-say b{font-weight:500;color:var(--ink)}
 .lxp-sh-n{margin:0;font:400 var(--fs-label)/20px var(--font-body);color:var(--sub)}
 .lxp-own[hidden]{display:none}
+/* 메모 · 파일 지우기(S-20) — 줄 끝 작은 글자 버튼 · 확인 창 */
+.lxp-lg-rm{margin-left:8px;padding:0;border:0;background:none;font:500 12px/20px var(--font-body);color:var(--sub);cursor:pointer;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.lxp-lg-rm:hover{color:var(--warn)}
+.lxp-lg-rm:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.lxp-rm-what{margin:0;font:400 var(--fs-body)/24px var(--font-body);color:var(--ink-2);overflow-wrap:anywhere}
+.lxp-rm-what b{font-weight:500;color:var(--ink)}
+.lxp-rm-what small{font:400 13px/24px var(--font-num);color:var(--sub)}
+/* 저장 용량 90% 넘음 한 줄(S-19 · 막지 않음) — 파일 올리는 자리 위 */
+.lxp-quota-slot:empty{display:none}
+.lxp-quota{margin:0 0 10px;font:500 13px/19px var(--font-body);color:var(--warn)}
+.lxp-quota span{display:inline-block}
+.lxp-quota-ask{padding:0;border:0;background:none;font:500 13px/19px var(--font-body);color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
 @media (max-width:640px){
   .lxp-band{margin:2px -8px 14px}
   .lxp-pt b{font-size:11px}
