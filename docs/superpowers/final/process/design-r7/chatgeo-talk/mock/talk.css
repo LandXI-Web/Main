@@ -62,5 +62,13 @@ body.m-nomap .m-map,body.m-nomap .m-legend,body.m-nomap .m-scale,body.m-nomap .m
 .m-card .rows span{display:flex;justify-content:space-between}
 .m-card .rows b{font-weight:500;font-family:var(--font-num);color:var(--ink)}
 
+/* "이제 됩니다" 한 줄 — 채팅창을 열면 대화 맨 위(장면 f) */
+.m-now{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(15,169,160,.10);border:1px solid rgba(15,169,160,.35);color:var(--ink);font:400 14px/20px var(--font-body)}
+.m-now i{flex:none;width:22px;height:22px;border-radius:50%;background:var(--ai);color:#fff;display:inline-flex;align-items:center;justify-content:center;font:700 13px/1 var(--font-num);font-style:normal}
+.m-now p{margin:0;flex:1;min-width:0}
+.m-now p b{font-weight:500;color:var(--ink)}
+.m-now .go{flex:none;display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:8px;background:var(--ink);color:#fff;font:500 13px/1 var(--font-body);white-space:nowrap}
+.m-now .x{flex:none;color:var(--sub);font:400 18px/1 var(--font-num)}
+
 /* 휴대폰 */
 @media (max-width:640px){.m-cards{grid-template-columns:1fr;left:12px;right:12px;top:12px}}

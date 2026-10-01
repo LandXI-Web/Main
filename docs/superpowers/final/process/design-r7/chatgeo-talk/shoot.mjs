@@ -16,6 +16,9 @@ const LIST = [
   ['mock/talk.html?s=d', 'new-d-confirm.png', PC],
   ['mock/talk.html?s=a', 'new-a-cannot-m.png', MO],
   ['mock/talk.html?s=b', 'new-b-nomap-m.png', MO],
+  ['mock/candidates.html', 'new-e-candidates.png', { width: 1440, height: 1200 }],   // 열두 줄 + 아래 안내가 한 화면에 — 세로만 길게
+  ['mock/talk.html?s=f', 'new-f-nowworks.png', PC],
+  ['mock/talk.html?s=f', 'new-f-nowworks-m.png', MO],
 ];
 const b = await chromium.launch();
 for (const [src, out, vp] of LIST) {
