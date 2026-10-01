@@ -194,6 +194,28 @@ def test_test_runs_are_not_collected(live, names):
     assert not _sql("SELECT 1 FROM improve_signals WHERE run_id IN ('run_test0001','run_t2610011700237e9d81')")
 
 
+def test_run_test_ids_from_chat_are_not_collected(live, names):
+    """채팅 쪽이 시험 · 점검 질문(context.test)에 매기는 답 번호 run_test + 날짜 꼴도 모으지 않는다(화면 신호도)."""
+    import datetime as _dt
+    rid_t = "run_test" + _dt.datetime.now().strftime("%y%m%d%H%M%S") + secrets.token_hex(3)
+    arun(I.record_run(Ctx(staff(), "지도 흑백 시험", rid_t), "agent.done", {"answer_md": "그 지도 동작은 아직 할 수 없습니다."}))
+    assert not _sql("SELECT 1 FROM improve_signals WHERE run_id=%s", (rid_t,))
+
+
+def test_test_marked_signals_leave_list_and_counts(tok):
+    """'시험' 표시 신호는 목록 · 횟수에서 빠진다 — 새로 온 줄은 감추고, 고른 줄은 남기되 횟수 0 · test_only."""
+    A = H(tok["admin"])
+    before = httpx.get(B + "/improve/items", headers=A, timeout=60).json()["summary"]["blocked"]["value"]
+    a, b = _test_item(), _test_item()
+    _sql("UPDATE improve_signals SET test=true WHERE item_id IN (%s,%s)", (a, b))
+    assert httpx.post(B + f"/improve/items/{b}/adopt", json={}, headers=A, timeout=30).status_code == 404   # 감춘 줄은 고를 수도 없다
+    _sql("UPDATE improve_items SET state='adopted' WHERE id=%s", (b,))
+    j = httpx.get(B + "/improve/items", headers=A, timeout=60).json()
+    ids = {x["id"]: x for x in j["items"]}
+    assert a not in ids and b in ids and ids[b]["test_only"] and ids[b]["n"]["value"] == 0
+    assert j["summary"]["blocked"]["value"] == before
+
+
 def test_already_hint_goes_into_answer(live, names):
     iid = "ic_t" + secrets.token_hex(5)
     toks = I.tokens(I.gist("두 시점 영상 겹쳐 보기 시험"))

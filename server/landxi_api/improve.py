@@ -652,6 +652,8 @@ async def feedback(body: dict, request: Request):
     except Exception:  # noqa: BLE001
         pass
     run_id = str(body.get("run_id") or "").strip() or None
+    if run_id and run_id.startswith("run_test"):       # 시험 · 점검 답(run_test…)에 붙은 화면 신호는 모으지 않는다
+        return Response(status_code=204)
     summary = re.sub(r"\s+", " ", str(body.get("summary") or "")).strip()[:200]
     scr = clean_screen(body.get("screen"))
     text, answer, ctx_kind = None, None, None
@@ -750,20 +752,23 @@ async def _items(conn, p: Principal, scope, where: str = "true", args: list | No
     sw, sa = _scope_sql(scope, 1)
     extra_args = list(args or [])
     w = f"({sw}) AND ({where})" + (f" AND i.id=${len(sa) + len(extra_args) + 1}" if one else "")
+    # 시험으로만 모인 줄은 '새로 옴'이면 감춘다 — 고른 줄(채택 · 보류 · 이미 됨 · 만들어짐)은 남긴다(횟수만 뺌)
+    w += " AND (i.state <> 'new' OR EXISTS (SELECT 1 FROM improve_signals t WHERE t.item_id=i.id AND NOT t.test))"
     rows = await conn.fetch(
         "SELECT i.*, "
-        "(SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND s.sig IN ('blocked','map_failed')) AS n_block, "
-        "(SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND s.sig='reask') AS n_reask, "
-        "(SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND s.sig='not_helpful') AS n_nh, "
-        "(SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND s.sig='card_cancel') AS n_cancel, "
-        "(SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND s.source IN ('auto','screen')) AS n_live, "
-        "(SELECT array_agg(DISTINCT s.role) FROM improve_signals s WHERE s.item_id=i.id) AS roles, "
-        "(SELECT array_agg(x.screen ORDER BY x.c DESC) FROM (SELECT s.screen, count(*) c FROM improve_signals s WHERE s.item_id=i.id AND s.screen IS NOT NULL "
+        "(SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test AND s.sig IN ('blocked','map_failed')) AS n_block, "
+        "(SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test AND s.sig='reask') AS n_reask, "
+        "(SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test AND s.sig='not_helpful') AS n_nh, "
+        "(SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test AND s.sig='card_cancel') AS n_cancel, "
+        "(SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test AND s.source IN ('auto','screen')) AS n_live, "
+        "(SELECT array_agg(DISTINCT s.role) FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test) AS roles, "
+        "(SELECT array_agg(x.screen ORDER BY x.c DESC) FROM (SELECT s.screen, count(*) c FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test AND s.screen IS NOT NULL "
         "  GROUP BY s.screen) x) AS screens, "
-        "(SELECT array_agg(x.gist ORDER BY x.at DESC) FROM (SELECT s.gist, max(s.at) at FROM improve_signals s WHERE s.item_id=i.id AND s.gist IS NOT NULL "
+        "(SELECT array_agg(x.gist ORDER BY x.at DESC) FROM (SELECT s.gist, max(s.at) at FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test AND s.gist IS NOT NULL "
         "  GROUP BY s.gist) x) AS gists, "
-        "(SELECT count(DISTINCT s.tenant_id) FILTER (WHERE s.tenant_id <> 'lx') FROM improve_signals s WHERE s.item_id=i.id) AS n_orgs, "
-        "(SELECT count(*) FROM improve_askers a WHERE a.item_id=i.id) AS n_askers "
+        "(SELECT count(DISTINCT s.tenant_id) FILTER (WHERE s.tenant_id <> 'lx') FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test) AS n_orgs, "
+        "(SELECT count(*) FROM improve_askers a WHERE a.item_id=i.id AND NOT a.test) AS n_askers, "
+        "(SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test) AS n_real "
         f"FROM improve_items i WHERE {w} ORDER BY i.last_at DESC LIMIT 500", *sa, *extra_args, *([one] if one else []))
     who = {}
     ids = {r["decided_by"] for r in rows if r["decided_by"]} | {r["notice_by"] for r in rows if r["notice_by"]}
@@ -804,6 +809,7 @@ def _item(r, p: Principal, who: dict) -> dict:
         "notice": {"n": _cnt(r["notice_n"], "개선 후보(improve_notices)"), "at": r["notice_at"], "md": _md(r["notice_at"]), "text": r["notice_text"],
                    "try": r["notice_try"]} if r["notice_at"] else None,
         "askers": _cnt(r["n_askers"], "개선 후보(improve_askers · 90일)"),
+        "test_only": not r["n_real"],                    # 시험으로만 모인 줄(횟수에서 뺌)
         "decided": {"by": _who(r["decided_by"], who), "md": _md(r["decided_at"])} if r["decided_at"] else None,
         "can": {"decide": st in ("new", "held", "already", "adopted"), "notify": p.is_admin and st == "adopted",
                 "reopen": st in ("held", "already", "adopted")},
@@ -829,7 +835,7 @@ async def list_items(request: Request, state: str | None = None, role: str | Non
             "SELECT count(*) FILTER (WHERE s.sig IN ('blocked','map_failed')) AS b, "
             "count(*) FILTER (WHERE s.sig IN ('blocked','map_failed') AND s.at >= date_trunc('month', now() AT TIME ZONE 'Asia/Seoul') AT TIME ZONE 'Asia/Seoul') AS bm, "
             "count(*) FILTER (WHERE s.sig IN ('blocked','map_failed') AND s.source='check-1001') AS bc "
-            f"FROM improve_signals s JOIN improve_items i ON i.id=s.item_id WHERE {sw}", *sa)
+            f"FROM improve_signals s JOIN improve_items i ON i.id=s.item_id WHERE NOT s.test AND {sw}", *sa)
     counts = {k: sum(1 for x in items if x["state"] == k) for k in STATE_KO}
     counts["all"] = len(items)
     rk = {"staff": "LX 직원", "admin": "LX 관리자", "tenant": "기관"}.get(role or "")
@@ -897,7 +903,7 @@ async def _decide(request: Request, iid: str, action: str, body: dict) -> dict:
             g = cur["gist"]
             text = re.sub(r"\s+", " ", str(body.get("text") or "")).strip()[:120] or f"지난번에 물으신 '{g}'{iga(g)} 이제 됩니다."
             tr = re.sub(r"\s+", " ", str(body.get("try") or "")).strip()[:100] or (g if MASK not in g else None)
-            askers = await conn.fetch(f"SELECT realm, user_id, tenant_id FROM improve_askers WHERE item_id=$1 AND at > now() - interval '{RETAIN_DAYS} days'", iid)
+            askers = await conn.fetch(f"SELECT realm, user_id, tenant_id FROM improve_askers WHERE item_id=$1 AND NOT test AND at > now() - interval '{RETAIN_DAYS} days'", iid)
             for a in askers:
                 await conn.execute("INSERT INTO improve_notices(id, item_id, realm, user_id, tenant_id, text, try) VALUES ($1,$2,$3,$4,$5,$6,$7)",
                                    "in_" + secrets.token_hex(8), iid, a["realm"], a["user_id"], a["tenant_id"], text, tr)

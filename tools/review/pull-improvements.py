@@ -34,16 +34,17 @@ ROLE_KO = {"staff": "LX 직원", "admin": "LX 관리자", "sales": "LX 영업", 
 
 SQL = """
 SELECT i.id, i.no, i.gist, i.note, i.kind, i.state, i.how, i.ledger, i.source, i.decided_at, i.decided_by,
-       (SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND s.sig IN ('blocked','map_failed')) AS n_block,
-       (SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND s.sig='reask') AS n_reask,
-       (SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND s.sig='not_helpful') AS n_nh,
-       (SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND s.sig='card_cancel') AS n_cancel,
-       (SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND s.source='check-1001') AS n_check,
-       (SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND s.source IN ('auto','screen')) AS n_live,
-       (SELECT array_agg(DISTINCT s.role) FROM improve_signals s WHERE s.item_id=i.id) AS roles,
-       (SELECT array_agg(DISTINCT s.screen) FROM improve_signals s WHERE s.item_id=i.id AND s.screen IS NOT NULL) AS screens,
-       (SELECT count(DISTINCT s.tenant_id) FILTER (WHERE s.tenant_id <> 'lx') FROM improve_signals s WHERE s.item_id=i.id) AS n_orgs,
-       (SELECT u.role FROM lx_users u WHERE u.id = i.decided_by) AS decider_role
+       (SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test AND s.sig IN ('blocked','map_failed')) AS n_block,
+       (SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test AND s.sig='reask') AS n_reask,
+       (SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test AND s.sig='not_helpful') AS n_nh,
+       (SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test AND s.sig='card_cancel') AS n_cancel,
+       (SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test AND s.source='check-1001') AS n_check,
+       (SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test AND s.source IN ('auto','screen')) AS n_live,
+       (SELECT array_agg(DISTINCT s.role) FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test) AS roles,
+       (SELECT array_agg(DISTINCT s.screen) FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test AND s.screen IS NOT NULL) AS screens,
+       (SELECT count(DISTINCT s.tenant_id) FILTER (WHERE s.tenant_id <> 'lx') FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test) AS n_orgs,
+       (SELECT u.role FROM lx_users u WHERE u.id = i.decided_by) AS decider_role,
+       (SELECT count(*) FROM improve_signals s WHERE s.item_id=i.id AND NOT s.test) AS n_real
   FROM improve_items i
  WHERE i.state = 'adopted' OR (%(all)s AND i.state IN ('adopted', 'built'))
  ORDER BY i.decided_at NULLS LAST, i.no
@@ -80,7 +81,7 @@ def rows(include_all: bool) -> list[dict]:
                 "count": {"blocked": r["n_block"], "reask": None if check_only else r["n_reask"], "not_helpful": None if check_only else r["n_nh"],
                           "card_cancel": r["n_cancel"], "from_check": r["n_check"]},
                 "roles": [ROLE_KO.get(x, x) for x in roles], "orgs": r["n_orgs"], "screens": sorted(r["screens"] or []),
-                "how": r["how"] or HOW.get(r["kind"], ""), "side": side(roles),
+                "how": r["how"] or HOW.get(r["kind"], ""), "side": side(roles), "test_only": not r["n_real"],
                 "adopted": {"at": r["decided_at"].astimezone(KST).strftime("%m-%d %H:%M") if r["decided_at"] else None,
                             "by": "LX 관리자" if r["decider_role"] == "admin" else ("LX 직원(프로젝트장)" if r["decider_role"] == "staff" else None)},
             })
@@ -112,7 +113,7 @@ def main():
     print(f"채택됐지만 확인 대장에 없는 개선 후보 {len(items)}건 ({now} 기준 · 서버 값 그대로)\n")
     for x in items:
         c = x["count"]
-        print(f"#{x['no']}  {x['what']}" + ("  [이미 대장에 있음]" if x["in_ledger"] else ""))
+        print(f"#{x['no']}  {x['what']}" + ("  [이미 대장에 있음]" if x["in_ledger"] else "") + ("  [시험으로 모인 줄 — 횟수에서 뺌]" if x["test_only"] else ""))
         print(f"  무엇: XI ChatGEO 가 못 한 요청 — 분류 '{x['kind']}'" + (f" · {x['note']}" if x["note"] else ""))
         dash = lambda v: "—" if v is None else str(v)   # noqa: E731
         print(f"  몇 번: 막힘 {c['blocked']} · 다시 물음 {dash(c['reask'])} · 도움 안 됨 {dash(c['not_helpful'])}"

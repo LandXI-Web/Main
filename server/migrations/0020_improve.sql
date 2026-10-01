@@ -48,6 +48,8 @@ CREATE TABLE IF NOT EXISTS improve_signals(
 CREATE INDEX IF NOT EXISTS improve_signals_item ON improve_signals (item_id, at DESC);
 CREATE INDEX IF NOT EXISTS improve_signals_t ON improve_signals (tenant_id, at DESC);
 CREATE UNIQUE INDEX IF NOT EXISTS improve_signals_run_sig ON improve_signals (run_id, sig) WHERE run_id IS NOT NULL;
+-- 시험 표시(10-01 정리) — 점검 · 시험 계정이 만든 신호는 지우지 않고 test 로 표시해 목록 · 횟수에서 뺀다(감사 기록 'improve.mark_test')
+ALTER TABLE improve_signals ADD COLUMN IF NOT EXISTS test boolean NOT NULL DEFAULT false;
 
 CREATE TABLE IF NOT EXISTS improve_askers(
   item_id text NOT NULL REFERENCES improve_items(id) ON DELETE CASCADE,
@@ -57,6 +59,7 @@ CREATE TABLE IF NOT EXISTS improve_askers(
   at timestamptz NOT NULL DEFAULT now(),        -- 마지막으로 물은 때 — 90일 지나면 지운다
   PRIMARY KEY (item_id, realm, user_id));
 CREATE INDEX IF NOT EXISTS improve_askers_at ON improve_askers (at);
+ALTER TABLE improve_askers ADD COLUMN IF NOT EXISTS test boolean NOT NULL DEFAULT false;   -- 시험으로만 물은 사람 — '이제 됩니다'를 보내지 않는다
 
 CREATE TABLE IF NOT EXISTS improve_notices(
   id text PRIMARY KEY,                          -- in_…

@@ -30,7 +30,8 @@ export async function improveCount() {
 function subLine(x) {
   const c = val(x.cancel) ? `확인 카드 취소 ${nf(val(x.cancel))}번` : '';
   let s = '';
-  if (x.state === 'new' && x.hold?.reason) s = `지난 보류: ${x.hold.reason}`;
+  if (x.test_only) s = '시험으로 모인 줄 — 횟수에서 뺐습니다';
+  else if (x.state === 'new' && x.hold?.reason) s = `지난 보류: ${x.hold.reason}`;
   else if (x.note) s = x.note;
   else s = (x.examples || []).map(q).join(' · ');
   return [s, c].filter(Boolean).join(' · ');
