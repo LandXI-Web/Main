@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>압축 방식별 크기와 화질</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+.track .line38{position:absolute;top:-3px;bottom:-3px;left:44.4%;border-left:2px dashed var(--red)}
+.qnote{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-3);margin:2px 0 0 160px;padding-right:102px}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>압축 방식별 — 크기 · 화질 · 시간 (실측)</h1>
+  <p class="sub">실제 영상 네 표본(25cm 항공 2 · 드론 정사 2)을 같은 표준 틀(COG · 개요 포함)로 바꾸고 압축만 달리했습니다. 막대는 표본 가운데 큰 쪽 값입니다.</p>
+
+  <div class="grid3">
+    <div class="bars">
+      <h3>크기 — 25cm 항공<small>무압축 원래 파일을 100% 로</small></h3>
+        <div class="brow"><div class="lab"><b>지금 방식</b> <span class="muted small">원본 + 개요 파일</span></div><div class="track"><div class="fill now" style="width:83.3%"></div></div><div class="val">123~125%</div></div>
+        <div class="brow"><div class="lab"><b>ZSTD</b> <span class="muted small">무손실</span></div><div class="track"><div class="fill " style="width:52.0%"></div></div><div class="val">58~78%</div></div>
+        <div class="brow"><div class="lab"><b>WEBP 무손실</b></div><div class="track"><div class="fill " style="width:30.0%"></div></div><div class="val">32~45%</div></div>
+        <div class="brow"><div class="lab"><b>JPEG 95</b></div><div class="track"><div class="fill loss" style="width:12.7%"></div></div><div class="val">13~19%</div></div>
+        <div class="brow pick"><div class="lab"><b>JPEG 90</b> <span class="muted small">추천</span></div><div class="track"><div class="fill pick" style="width:8.9%"></div></div><div class="val">9.0~13.3%</div></div>
+        <div class="brow"><div class="lab"><b>JPEG 80</b></div><div class="track"><div class="fill loss" style="width:5.9%"></div></div><div class="val">5.8~8.9%</div></div>
+        <div class="brow"><div class="lab"><b>WEBP 90</b></div><div class="track"><div class="fill loss" style="width:7.5%"></div></div><div class="val">6.2~11.3%</div></div>
+        <div class="brow"><div class="lab"><b>WEBP 80</b></div><div class="track"><div class="fill loss" style="width:4.5%"></div></div><div class="val">3.2~6.7%</div></div>
+    </div>
+    <div class="bars">
+      <h3>크기 — 드론 정사<small>LZW 원래 파일을 100% 로</small></h3>
+        <div class="brow"><div class="lab"><b>지금 방식</b> <span class="muted small">원본 + 개요 파일</span></div><div class="track"><div class="fill now" style="width:97.3%"></div></div><div class="val">123~146%</div></div>
+        <div class="brow"><div class="lab"><b>ZSTD</b> <span class="muted small">무손실</span></div><div class="track"><div class="fill " style="width:72.7%"></div></div><div class="val">59~109%</div></div>
+        <div class="brow"><div class="lab"><b>WEBP 무손실</b></div><div class="track"><div class="fill " style="width:38.0%"></div></div><div class="val">32~57%</div></div>
+        <div class="brow"><div class="lab"><b>JPEG 95</b></div><div class="track"><div class="fill loss" style="width:16.7%"></div></div><div class="val">15~25%</div></div>
+        <div class="brow pick"><div class="lab"><b>JPEG 90</b> <span class="muted small">추천</span></div><div class="track"><div class="fill pick" style="width:12.0%"></div></div><div class="val">10.6~18.0%</div></div>
+        <div class="brow"><div class="lab"><b>JPEG 80</b></div><div class="track"><div class="fill loss" style="width:8.3%"></div></div><div class="val">7.4~12.5%</div></div>
+        <div class="brow"><div class="lab"><b>WEBP 90</b></div><div class="track"><div class="fill loss" style="width:8.5%"></div></div><div class="val">8.8~12.8%</div></div>
+        <div class="brow"><div class="lab"><b>WEBP 80</b></div><div class="track"><div class="fill loss" style="width:5.1%"></div></div><div class="val">5.6~7.7%</div></div>
+    </div>
+    <div class="bars">
+      <h3>화질 — 가장 나쁜 표본<small>PSNR(dB) · SSIM</small></h3>
+        <div class="brow"><div class="lab"><b>무손실</b> <span class="muted small">ZSTD 등</span></div><div class="track"><div class="fill " style="width:100.0%"></div><div class="line38"></div></div><div class="val">원본과 같음</div></div>
+        <div class="brow"><div class="lab"><b>JPEG 95</b></div><div class="track"><div class="fill loss" style="width:67.2%"></div><div class="line38"></div></div><div class="val">42.1 · 0.989</div></div>
+        <div class="brow pick"><div class="lab"><b>JPEG 90</b> <span class="muted small">추천</span></div><div class="track"><div class="fill pick" style="width:54.4%"></div><div class="line38"></div></div><div class="val">39.8 · 0.980</div></div>
+        <div class="brow"><div class="lab"><b>JPEG 80</b></div><div class="track"><div class="fill bad" style="width:41.1%"></div><div class="line38"></div></div><div class="val">37.4 · 0.965</div></div>
+        <div class="brow"><div class="lab"><b>WEBP 90</b></div><div class="track"><div class="fill loss" style="width:57.2%"></div><div class="line38"></div></div><div class="val">40.3 · 0.978</div></div>
+        <div class="brow"><div class="lab"><b>WEBP 80</b></div><div class="track"><div class="fill bad" style="width:37.8%"></div><div class="line38"></div></div><div class="val">36.8 · 0.952</div></div>
+      <p class="small" style="margin:10px 0 0;color:var(--ink-2)"><span style="color:var(--red);font-weight:700">빨간 점선</span> = 분석 입력 기준 제안(PSNR 38 · SSIM 0.97 이상). JPEG 80 · WEBP 80 은 복잡한 항공 표본에서 기준 아래.</p>
+    </div>
+  </div>
+
+  <h2 class="sec">시간 — 도엽 한 장(약 328MB)을 CPU 4개로 바꾸는 시간 · 바꾼 파일에서 지도 한 칸 읽기</h2>
+  <table class="t">
+    <tr><th>압축</th><th>바꾸는 시간</th><th>지도 한 칸(512칸) 읽기</th><th>한 줄</th></tr>
+    <tr><td><b>ZSTD 무손실</b></td><td class="n">8.8~9.7초</td><td class="n">0.005~0.009초</td><td>값이 그대로 남아야 하는 영상(16비트 위성 · 다중분광 · 높이 값)에</td></tr>
+    <tr><td><b>WEBP 무손실</b></td><td class="n">55~66초</td><td class="n">0.018~0.028초</td><td>무손실 중 가장 작지만 바꾸기 · 읽기가 느림</td></tr>
+    <tr class="pick"><td><b>JPEG 90(추천)</b></td><td class="n">4.7~7.8초</td><td class="n">0.003~0.005초</td><td>작고 · 빠르고 · 거의 모든 GIS 도구가 읽음</td></tr>
+    <tr><td><b>WEBP 80</b></td><td class="n">15~17초</td><td class="n">0.013~0.023초</td><td>가장 작지만 화질 기준 아래 · 읽기 4배 느림</td></tr>
+    <tr><td><b>원본(드론 · 줄 단위 · 개요 없음)</b></td><td class="n">—</td><td class="n">0.22초 · 축소 화면 5.7초</td><td>표준본은 같은 화면을 수천분의 1초에</td></tr>
+  </table>
+  <p class="src">개요(축소판)는 표준 파일의 약 3분의 1. GPU 는 쓰지 않았습니다. 시험 파일은 지웠습니다.</p>
+</div>
+</body>
+</html>

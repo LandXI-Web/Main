@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>ECW 받기 세 길</title>
+<link rel="stylesheet" href="fig.css">
+</head>
+<body>
+<div class="page">
+  <h1>ECW — 서버에서 바로 받을까</h1>
+  <p class="sub">ECW 를 읽는 구성요소는 Hexagon(옛 ERDAS) 한 곳 것뿐입니다. <b>PC(데스크톱)에서 읽기는 무료, 서버에서 읽기는 유료</b>입니다. 지금 Land-XI 서버는 ECW 를 읽지 못합니다.</p>
+
+  <div class="ways">
+    <div class="way pick">
+      <h3>ⓐ 보내는 쪽 PC 에서 바꿔 올리기 <span class="pill lx">추천 · 지금</span></h3>
+      <p class="one">파일을 고르는 순간 "ECW 는 TIF 로 바꿔 올려 주세요"와 바꾸는 법 세 줄. 어려우면 LX 담당 직원이 자기 PC 에서 바꿔 대신 올립니다.</p>
+      <dl>
+        <dt>비용</dt><dd><b>0원</b> — QGIS 무료 · PC 읽기 무료 범위</dd>
+        <dt>바꾸는 법</dt><dd>QGIS 레이어 오른쪽 클릭 → 내보내기 → 다른 이름으로 저장 → GeoTIFF · 'JPEG 압축'</dd>
+        <dt>아쉬운 점</dt><dd>기관 수고 한 번 · 올리는 파일이 ECW 보다 1.4배 안팎 큼</dd>
+      </dl>
+    </div>
+    <div class="way">
+      <h3>ⓑ 무료 변환 도구를 나눠 주기</h3>
+      <p class="one">QGIS 의 변환 부분만 묶은 작은 도구를 LX 가 기관에 배포합니다.</p>
+      <dl>
+        <dt>비용</dt><dd>0원 · 도구 관리 손</dd>
+        <dt>좋은 점</dt><dd>QGIS 를 몰라도 됨</dd>
+        <dt>아쉬운 점</dt><dd>재배포 약관 확인 · 도구 판 관리 · 기능이 하나 늘어남</dd>
+      </dl>
+    </div>
+    <div class="way">
+      <h3>ⓒ 서버에 ECW 읽기 도입</h3>
+      <p class="one">Hexagon 서버 읽기 라이선스를 사서 서버가 ECW 를 바로 표준으로 바꿉니다.</p>
+      <dl>
+        <dt>비용</dt><dd><b>견적 필요</b> — 값 비공개 · 서버 CPU 코어 수에 따라 달라짐</dd>
+        <dt>좋은 점</dt><dd>기관은 ECW 그대로 올림 — 가장 쉬움</dd>
+        <dt>아쉬운 점</dt><dd>계약 · 설치 · 판 맞춤 · 서버가 바뀔 때마다 다시 확인</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="grid3" style="margin-top:16px">
+    <div class="panel">
+      <h3>ECW 를 표준으로 바꾸면 <span class="pill lx">실측</span></h3>
+      <div class="big">1.36배<small>260MB → 355MB</small></div>
+      <p class="small muted" style="margin:6px 0 0">구미 3cm 드론 ECW 한 개 · JPEG 90 · 약 6분(CPU 4개). ECW 는 원래도 크기의 약 3.7% 로 줄인 손실 압축입니다.</p>
+    </div>
+    <div class="panel">
+      <h3>지금 화면의 문제</h3>
+      <p class="small" style="margin:0;color:var(--ink-2)">분석 의뢰 화면이 'TIF · JP2 · ECW · JPG' 를 받는다고 안내하고, ECW 를 끝까지 올린 뒤에야 "읽을 수 없습니다"가 뜹니다. 어느 길이든 <b>파일을 고르는 순간</b> 알리도록 고칩니다.</p>
+    </div>
+    <div class="panel">
+      <h3>다시 볼 때</h3>
+      <p class="small" style="margin:0;color:var(--ink-2)">ECW 가 들어오는 횟수를 석 달 셉니다. 기관 의뢰의 5분의 1 이상이 ECW 면 ⓒ 견적을 받습니다. 이 PC 의 ECW 는 지적재조사 · 재난 사업 15개(16.8GB)입니다.</p>
+    </div>
+  </div>
+  <p class="src">출처: GDAL ECW 드라이버 설명(데스크톱 읽기 무료 · 서버 배치는 Hexagon 라이선스 구매) · Hexagon ECW/JP2 SDK 라이선스 목록. 이 PC 의 QGIS 3.28 에 ECW 읽기 구성요소가 있음을 확인 — 서버는 이것을 가져다 쓰지 않습니다.</p>
+</div>
+</body>
+</html>

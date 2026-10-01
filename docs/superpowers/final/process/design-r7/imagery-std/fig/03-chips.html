@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>압축 눈 비교</title>
+<link rel="stylesheet" href="fig.css">
+</head>
+<body>
+<div class="page">
+  <h1>눈으로 비교 — 같은 자리, 압축만 다르게</h1>
+  <p class="sub">공개 드론 영상(제주시 원도심 · 4cm)의 같은 자리를 4배로 키웠습니다. 우리 항공 · 드론 영상은 밖으로 내보내지 않는 영상이라 조각 대신 수치로 봅니다.</p>
+
+  <div class="chips">
+    <div class="chip"><img src="../shots/_chips/orig.png" alt="원본"><div class="cap"><b>원본</b>무손실(ZSTD · DEFLATE)도 같은 그림 · 크기 66%</div></div>
+    <div class="chip pick"><img src="../shots/_chips/jpeg90.png" alt="JPEG 90"><div class="cap"><b>JPEG 90 · 추천</b>크기 13% · PSNR 40.9 · SSIM 0.988</div></div>
+    <div class="chip"><img src="../shots/_chips/jpeg80.png" alt="JPEG 80"><div class="cap"><b>JPEG 80</b>크기 9% · PSNR 36.9 · SSIM 0.972</div></div>
+    <div class="chip"><img src="../shots/_chips/webp80.png" alt="WEBP 80"><div class="cap"><b>WEBP 80</b>크기 7% · PSNR 37.4 · SSIM 0.968</div></div>
+    <div class="chip bad"><img src="../shots/_chips/jpeg60.png" alt="JPEG 60"><div class="cap"><b>JPEG 60 · 지나침</b>크기 6% · PSNR 33.1 · SSIM 0.941</div></div>
+  </div>
+
+  <div class="grid2" style="margin-top:16px">
+    <div class="panel">
+      <h3>보이는 것</h3>
+      <p class="small" style="margin:0;color:var(--ink-2)">차 모서리 · 맨홀 · 아스팔트 결은 JPEG 80 · WEBP 80 까지 거의 같고, JPEG 60 에서 맨홀 무늬가 뭉개지며 아스팔트에 네모 자국이 생깁니다. 우리 25cm 항공(무늬가 복잡한 도엽)에서는 WEBP 80 이 나무 · 풀의 잔결을 뭉갰고, JPEG 90 은 원본과 구별이 어려웠습니다.</p>
+    </div>
+    <div class="panel">
+      <h3>읽는 법</h3>
+      <p class="small" style="margin:0;color:var(--ink-2)">크기 = 압축하지 않은 크기 대비(개요 포함). 이 공개 영상은 받을 때 이미 JPEG 이어서 차이가 덜 드러납니다 — 표준 압축 수준은 우리 영상 표본의 수치로 정했습니다.</p>
+    </div>
+  </div>
+  <p class="src">영상: OpenAerialMap '제주시 원도심' · 제공 Jeju Urban Regeneration Center · CC BY 4.0 (가운데 2,048칸을 4cm 로 읽음).</p>
+</div>
+</body>
+</html>

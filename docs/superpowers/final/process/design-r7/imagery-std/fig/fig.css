@@ -1,0 +1,84 @@
+/* 설계 7차 · 영상 표준 하나로 — 그림(밝은 톤 · 글 최소). 화면이 아니라 기획 그림이다. 바탕 규칙은 5차 기관 흐름 그림과 같다. */
+@import url('../../../design-r5/gov-flow/fig/fig.css');
+
+.page{padding:40px 56px 36px}
+h1{font-size:28px;line-height:1.3;margin:0 0 6px}
+.sub{margin:0 0 22px}
+.src{margin-top:16px;color:var(--ink-3);font-size:12.5px}
+
+/* 흐름 — 다섯 칸 */
+.flow{display:grid;grid-template-columns:1.25fr 24px 1fr 24px 1.15fr 24px 1fr 24px 1fr;align-items:stretch}
+.flow .ar{display:flex;align-items:center;justify-content:center;color:var(--ink-3);font-size:22px}
+.box{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.box h3{margin:0;font-size:16px;display:flex;align-items:center;gap:8px}
+.box h3 i{font-style:normal;width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;font-size:12.5px;display:inline-flex;align-items:center;justify-content:center}
+.box.std{border:2px solid var(--blue);background:var(--blue-tint)}
+.box.std h3 i{background:var(--blue)}
+.box ul{margin:0;padding-left:16px;font-size:13px;color:var(--ink-2)}
+.box ul li{margin:2px 0}
+.box .note{font-size:12.5px;color:var(--ink-3)}
+.fmt{display:grid;grid-template-columns:1fr auto;gap:5px 8px;font-size:13px;align-items:center}
+.fmt b{font-weight:600}
+.ok{color:var(--green);font-weight:700}
+.no{color:var(--red);font-weight:700}
+.half{color:var(--amber);font-weight:700}
+
+/* 막대 */
+.bars{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.bars h3{margin:0 0 10px;font-size:16px}
+.bars h3 small{font-weight:500;color:var(--ink-3);font-size:12.5px;margin-left:6px}
+.brow{display:grid;grid-template-columns:150px 1fr 92px;gap:10px;align-items:center;margin:5px 0;font-size:13px}
+.brow .lab{color:var(--ink-2)}
+.brow .lab b{color:var(--ink)}
+.brow .track{height:18px;background:var(--bg);border-radius:6px;position:relative;overflow:hidden}
+.brow .fill{position:absolute;left:0;top:0;bottom:0;border-radius:6px;background:#C9D2DC}
+.brow .fill.loss{background:#9DC3F9}
+.brow .fill.pick{background:var(--blue)}
+.brow .fill.bad{background:#F3B4B9}
+.brow .fill.now{background:#8B95A1}
+.brow .val{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
+.brow.pick .lab b{color:var(--blue)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+
+/* 표 */
+table.t{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:13.5px}
+table.t th,table.t td{padding:8px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+table.t th{background:var(--bg);color:var(--ink-2);font-weight:600}
+table.t td.n{text-align:right;font-variant-numeric:tabular-nums}
+table.t tr:last-child td{border-bottom:0}
+table.t tr.pick td{background:var(--blue-tint)}
+table.t tr.pick td:first-child b{color:var(--blue)}
+
+/* 조각 비교 */
+.chips{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.chip{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.chip img{display:block;width:100%;image-rendering:pixelated}
+.chip .cap{padding:8px 10px;font-size:12.5px;color:var(--ink-2)}
+.chip .cap b{display:block;color:var(--ink);font-size:14px}
+.chip.pick{border:2px solid var(--blue)}
+.chip.pick .cap b{color:var(--blue)}
+.chip.bad .cap b{color:var(--red)}
+
+/* 길 셋 */
+.ways{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.way{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.way.pick{border:2px solid var(--blue)}
+.way h3{margin:0;font-size:17px}
+.way .one{margin:0;color:var(--ink-2);font-size:13.5px}
+.way dl{margin:0;display:grid;grid-template-columns:74px 1fr;gap:6px 10px;font-size:13px}
+.way dt{color:var(--ink-3);font-weight:600}
+.way dd{margin:0;color:var(--ink-2)}
+.way dd b{color:var(--ink)}
+
+/* 설정 한 곳 */
+.panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+.panel h3{margin:0 0 10px;font-size:16px;display:flex;justify-content:space-between;align-items:center}
+.kv{display:grid;grid-template-columns:150px 1fr;gap:7px 12px;font-size:13.5px}
+.kv dt{color:var(--ink-3)}
+.kv dd{margin:0}
+.kv dd span{display:inline-block;background:var(--bg);border-radius:8px;padding:2px 8px;margin-right:4px;font-size:12.5px;color:var(--ink-2)}
+.kv dd span.on{background:var(--blue-tint);color:var(--blue);font-weight:600}
+.big{font-size:30px;font-weight:700;letter-spacing:-0.01em}
+.big small{font-size:14px;font-weight:500;color:var(--ink-2);margin-left:6px}
+.est{display:inline-block;font-size:11.5px;font-weight:600;color:var(--amber);background:var(--amber-tint);border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:middle}

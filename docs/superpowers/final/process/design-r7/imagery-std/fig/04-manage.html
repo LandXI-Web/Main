@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>영상 표준 관리</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+.srow{display:grid;grid-template-columns:190px 1fr;gap:10px;align-items:center;margin:9px 0}
+.srow .lab b{display:block;font-size:13.5px}
+.srow .lab span{font-size:12px;color:var(--ink-3)}
+.two{display:grid;grid-template-columns:1fr 92px;gap:4px 10px;align-items:center}
+.two .track{height:14px;background:var(--bg);border-radius:5px;position:relative;overflow:hidden}
+.two .fill{position:absolute;left:0;top:0;bottom:0;border-radius:5px}
+.two .fill.now{background:#8B95A1} .two .fill.pick{background:var(--blue)}
+.two .val{text-align:right;font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.two .val.b{color:var(--blue);font-weight:700}
+.leg{display:flex;gap:16px;font-size:12px;color:var(--ink-2);margin:0 0 6px}
+.leg i{display:inline-block;width:12px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle}
+.tl{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:4px}
+.tl div{background:var(--bg);border-radius:10px;padding:8px 10px;font-size:12.5px;color:var(--ink-2)}
+.tl div b{display:block;color:var(--ink);font-size:13.5px}
+.tl div.end{background:var(--violet-tint)} .tl div.end b{color:var(--violet)}
+.cols{display:grid;grid-template-columns:1.05fr 1.25fr;gap:14px}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>관리 — 규칙은 한 곳, 용량은 가볍게, 원본은 기간대로</h1>
+  <p class="sub">형식 · 압축 · 보관 규칙은 LX 관리자 화면 '장비 · 저장 설정' 한 곳에서 정하고, 바꾸면 결재함에 기록됩니다. 직원 · 기관 화면에는 입력 칸이 늘지 않습니다.</p>
+
+  <div class="cols">
+    <div class="panel">
+      <h3>영상 표준 <span class="pill adm">LX 관리자 · 설정 한 곳</span></h3>
+      <dl class="kv">
+        <dt>받는 형식</dt><dd><span class="on">GeoTIFF</span><span class="on">COG</span><span class="on">IMG</span><span class="on">JPG + 좌표 파일</span><span class="on">JP2</span><span>ECW — PC 에서 바꿔 올리기 안내</span></dd>
+        <dt>표준</dt><dd>COG · 512칸 타일 · 개요 포함 · 빈 칸은 마스크</dd>
+        <dt>색 영상 압축</dt><dd><span>JPEG 95</span><span class="on">JPEG 90</span><span>JPEG 80</span><span>무손실</span></dd>
+        <dt>값이 중요한 영상</dt><dd>16비트 위성 · 다중분광 · 높이 값 → 무손실</dd>
+        <dt>좌표계</dt><dd>파일의 원점 값으로 표준 번호 · 옛 좌표계만 다시 그림</dd>
+        <dt>원본 보관</dt><dd>표준본 확인 뒤 <b>30일</b> → 정리 목록</dd>
+        <dt>변환 시간대</dt><dd>새 영상은 바로 · 쌓인 영상은 밤(22~06시)</dd>
+        <dt>CPU 몫</dt><dd>한 건 4개 · 동시 2건(밤 4건) — 64개 중 · GPU 0</dd>
+      </dl>
+    </div>
+    <div class="panel">
+      <h3>지금 보관 영상에 표준을 적용하면 <span class="est">추정</span></h3>
+      <div class="leg"><span><i style="background:#8B95A1"></i>지금</span><span><i style="background:var(--blue)"></i>표준(JPEG 90) — 진한 곳 ~ 옅은 곳이 추정 폭</span></div>
+      <div class="srow"><div class="lab"><b>25cm 항공</b><span>무압축 · 5,381장</span></div>
+        <div class="two"><div class="track"><div class="fill now" style="width:81.3%"></div></div><div class="val">1,788GB</div>
+        <div class="track"><div class="fill pick" style="width:10.8%;opacity:.35"></div><div class="fill pick" style="width:7.3%"></div></div><div class="val b">160~237GB</div></div></div><div class="srow"><div class="lab"><b>도로 드론(무압축)</b><span>45장</span></div>
+        <div class="two"><div class="track"><div class="fill now" style="width:89.2%"></div></div><div class="val">1,962GB</div>
+        <div class="track"><div class="fill pick" style="width:10.4%;opacity:.35"></div><div class="fill pick" style="width:6.8%"></div></div><div class="val b">150~228GB</div></div></div><div class="srow"><div class="lab"><b>드론 LZW · DEFLATE</b><span>밀양 · 도로 · 용지 · 석면 · 본사</span></div>
+        <div class="two"><div class="track"><div class="fill now" style="width:96.9%"></div></div><div class="val">2,132GB</div>
+        <div class="track"><div class="fill pick" style="width:17.5%;opacity:.35"></div><div class="fill pick" style="width:10.2%"></div></div><div class="val b">225~384GB</div></div></div><div class="srow"><div class="lab"><b>그대로</b><span>이미 JPEG · 1밴드</span></div>
+        <div class="two"><div class="track"><div class="fill now" style="width:0.4%"></div></div><div class="val">9GB</div>
+        <div class="track"><div class="fill pick" style="width:0.4%;opacity:.35"></div><div class="fill pick" style="width:0.4%"></div></div><div class="val b">9GB</div></div></div><div class="srow"><div class="lab"><b>ECW</b><span>15개 — 늘어남</span></div>
+        <div class="two"><div class="track"><div class="fill now" style="width:0.8%"></div></div><div class="val">17GB</div>
+        <div class="track"><div class="fill pick" style="width:1.0%;opacity:.35"></div><div class="fill pick" style="width:1.0%"></div></div><div class="val b">23GB</div></div></div>
+      <div style="display:flex;align-items:baseline;gap:12px;margin-top:10px;border-top:1px solid var(--line);padding-top:10px">
+        <div class="big">5,907GB → 568~881GB</div><div class="small muted">85~90% 줄어듦 · 표본 넷의 비율을 묶음마다 적용</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-top:14px">
+    <div class="panel">
+      <h3>원본은 얼마나 두나 <span class="pill wait">제안</span></h3>
+      <div class="tl">
+        <div><b>올림</b>직원 · 기관이 올린 원본</div>
+        <div><b>표준본 확인</b>범위 · 좌표 · 화질 수치 자동 확인</div>
+        <div><b>30일</b>지도 · 분석은 표준본으로 — 이상이 있으면 원본으로 다시</div>
+        <div class="end"><b>정리 목록</b>LX 관리자가 한 번 눌러 지움 · 기록</div>
+      </div>
+      <p class="small" style="margin:10px 0 0;color:var(--ink-2)">이미 쌓인 LX 원본(항공 · 드론)은 표준본을 만든 뒤에도 지우지 않고 정리 목록에 '표준본 있음'으로만 올립니다 — 지울지는 사용자가 정합니다.</p>
+    </div>
+    <div class="panel">
+      <h3>변환에 드는 CPU 시간 <span class="pill lx">실측 · 추정</span></h3>
+      <dl class="kv">
+        <dt>도엽 한 장(328MB)</dt><dd>5~8초 <span>실측</span></dd>
+        <dt>드론 한 장(20GB · LZW)</dt><dd>9~18분 <span>추정</span></dd>
+        <dt>ECW 한 개(260MB)</dt><dd>약 6분 <span>실측 · ECW 풀기가 느림</span></dd>
+        <dt>쌓인 5.9TB 전부</dt><dd>밤 이틀 안팎(동시 4건) <span>추정 · 디스크 읽기가 실제 한계</span></dd>
+      </dl>
+    </div>
+  </div>
+  <p class="src">저장 공간 · 묶음 크기는 10-01 이 PC 실측. 표준본은 원본을 지우기 전에 만들어 두므로, 바꾸는 동안 표준본 크기만큼(최대 0.9TB) 여유가 필요합니다 — E 드라이브 여유 1,995GB.</p>
+</div>
+</body>
+</html>
