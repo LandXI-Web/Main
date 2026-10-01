@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ko" style="--ci:#1F6F4A;--ci-t1:#E9F3ED;--ci-line:#D1E3D9">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · 남원시 GeoVision 플랫폼 — 촬영 의뢰</title>
+<link rel="stylesheet" href="mock.css">
+<link rel="stylesheet" href="shoot.css">
+</head>
+<body class="g t">
+<div class="app">
+  <header class="mast">
+    <p class="mark"><span>남원</span><span>GV</span></p>
+    <span class="word">남원시 GeoVision 플랫폼</span>
+    <span class="sp"></span>
+    <span class="who"><b>농정과</b>박서연</span>
+    <span class="mb">XI맵</span>
+    <span class="mb sq" data-ic="bell"><span class="bd">2</span></span>
+    <span class="mb sq">?</span>
+    <span class="mb">나가기</span>
+  </header>
+  <nav class="rail" aria-label="메뉴">
+    <span class="ri" data-ic="card"><span>내 서비스</span></span>
+    <span class="ri" data-ic="upload" aria-current="true"><span>분석 의뢰</span></span>
+    <span class="ri" data-ic="inbox"><span class="bd">1</span><span>보낸 요청</span></span>
+    <span class="ri" data-ic="me"><span>계정</span></span>
+  </nav>
+  <main class="main">
+    <div class="page">
+      <div class="head">
+        <h1>촬영 의뢰</h1>
+        <span class="sub">찍을 범위를 지도에 그리면 대략 수수료가 바로 보입니다.<br>금액은 LX가 확인한 뒤 확정합니다.</span>
+      </div>
+      <div class="tabs top"><span>영상으로 분석 의뢰</span><span aria-current="true">새로 촬영 의뢰</span></div>
+
+      <div class="req">
+        <div class="dcol">
+          <section class="step" data-s="1">
+            <div class="sh"><i class="done">1</i><b>어디를 찍을까요</b><span class="ok">덕과면 일대 · 약 1.5㎢ ✓</span></div>
+            <div class="mapbox">
+              <img src="img/map-deokgwa.jpg" alt="">
+              <svg class="draw" viewBox="0 0 1368 836" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                <polygon points="462,324 645,302 709,442 602,533 446,474"/>
+                <circle cx="462" cy="324" r="6"/><circle cx="645" cy="302" r="6"/><circle cx="709" cy="442" r="6"/><circle cx="602" cy="533" r="6"/><circle cx="446" cy="474" r="6"/>
+              </svg>
+              <div class="tools"><span class="on">범위 그리기</span><span>읍면동 전체</span><span>지우기</span></div>
+              <span class="hint">지도를 눌러 꼭짓점을 찍고, 처음 점을 다시 누르면 닫힙니다</span>
+              <span class="cap"><b>덕과면 일대</b> · 약 1.5㎢</span>
+              <span class="scale">500 m<i></i></span>
+            </div>
+            <div class="alt">
+              <p class="label">또는 읍면동 전체로</p>
+              <div class="chips"><span>덕과면</span><span>사매면</span><span>보절면</span><span>산동면</span><span>운봉읍</span><span>주천면</span><span>송동면</span><span class="tbtn">읍면동 더 보기</span></div>
+            </div>
+            <p class="small">우리 시 밖은 그릴 수 없습니다.</p>
+          </section>
+
+          <section class="step" data-s="2">
+            <div class="sh"><i>2</i><b>언제 · 무엇을 위해</b><small>분석 서비스와 메모는 선택</small></div>
+            <div class="frow">
+              <p class="label">원하는 시기</p>
+              <div class="chips"><span>이달 안</span><span>다음 달</span><span class="on">2026년 11월</span><span>달 고르기</span></div>
+              <p class="label">찍은 뒤 바로 분석<small>영상이 오면 바로 분석</small></p>
+              <div class="pickr">
+                <div class="pr on"><span class="th"><img src="../../../../../../../landxi/v3/service-detail/data/img/namwon-farmland-2025/3@2x.jpg" alt=""></span><div class="t"><b>영농관리 행정서비스</b><span>경작·비경작 · 비닐하우스 · 사료작물</span></div><span class="r"></span></div>
+                <div class="pr"><span class="th">첫 결과 전</span><div class="t"><b>생활환경 위험요소 탐지</b><span>방치쓰레기 · 불법소각장 · 방치폐가</span></div><span class="r"></span></div>
+                <div class="pr"><span class="th">첫 결과 전</span><div class="t"><b>도로 안전관리</b><span>포트홀 · 도로시설 파손</span></div><span class="r"></span></div>
+              </div>
+              <p class="label">메모</p>
+              <div class="memo">메모 한 줄 — 예: 덕과면 새 농지 확인용</div>
+            </div>
+          </section>
+
+          <section class="step" data-s="3">
+            <div class="sh"><i>3</i><b>의뢰 보내기</b></div>
+            <div class="fee">
+              <span class="l">대략 수수료</span>
+              <span class="amt">21,306,000<small>원</small></span>
+              <span class="basis">0.25㎢마다 3,551,000원(시 지역) × 6칸 · 국토교통부 고시 기준</span>
+              <span class="chip ci">LX 확인 뒤 확정</span>
+            </div>
+            <div class="go"><span class="btn ci">촬영 의뢰 보내기</span><p class="small">LX가 촬영 시기와 확정 금액을 답합니다. 확정 금액을 보고 '진행'을 누르면 촬영에 들어가고, 찍은 영상은 우리 시에 공유됩니다.</p></div>
+          </section>
+        </div>
+
+        <div class="dcol">
+          <div class="card">
+            <h2>어떻게 진행되나</h2>
+            <div class="prog v">
+              <div class="ps now"><i>1</i><div class="t"><b>의뢰 보내기</b><span>지금 — 범위 · 시기 · 대략 수수료</span></div></div>
+              <div class="ps wait"><i>2</i><div class="t"><b>LX 답</b><span>촬영 시기 · 확정 금액 → 진행 누르기</span></div></div>
+              <div class="ps wait"><i>3</i><div class="t"><b>촬영 · 영상 공유</b><span>찍은 영상이 우리 시 지도에 보입니다</span></div></div>
+              <div class="ps wait"><i>4</i><div class="t"><b>분석</b><span>고른 서비스로 바로 · 비용 없음</span></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <h2>내가 보낸 촬영 의뢰</h2>
+            <ul class="mine">
+              <li><b>사매면 일대 · 약 0.5㎢</b><small>2026.09.15 보냄 · 11월 초 촬영</small><span class="chip ci">LX 답 도착</span></li>
+            </ul>
+            <span class="tbtn">보낸 요청에서 보기</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="foot"><b>전북특별자치도 남원시</b><span>대표전화 063-620-6114</span><span class="sp"></span><span>드론 촬영 · AI 분석 — LX 한국국토정보공사</span></div>
+    </div>
+  </main>
+</div>
+<nav class="tabsbar" aria-label="메뉴">
+  <span class="ri" data-ic="card"><span>내 서비스</span></span>
+  <span class="ri" data-ic="upload" aria-current="true"><span>분석 의뢰</span></span>
+  <span class="ri" data-ic="inbox"><span class="bd">1</span><span>보낸 요청</span></span>
+  <span class="ri" data-ic="me"><span>계정</span></span>
+</nav>
+<span class="stamp r"><b>시안</b> 기관 분기 · 남원시 GeoVision — 촬영 의뢰 · 지도는 실제 바탕 · 범위·시기·보낸 의뢰는 예시 · 금액은 고시 금액으로 셈</span>
+<script src="icons.js"></script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ko" style="--ci:#1C1F25;--ci-t1:#F2F4F6;--ci-line:#E5E8EB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · Land-XI LX 직원 요청함 — 촬영 의뢰 받기 · 시기와 확정 금액 답하기</title>
+<link rel="stylesheet" href="mock.css">
+<link rel="stylesheet" href="shoot.css">
+<style>
+.list .row{grid-template-columns:92px 1fr 200px 110px}
+.det .kv{font-size:14px}
+.det .ans .inp{font-size:15px}
+</style>
+</head>
+<body class="g t lx">
+<div class="app">
+  <header class="mast">
+    <span class="word">LAND-XI<small>LX 직원 대시보드</small></span>
+    <span class="sp"></span>
+    <span class="who"><b>LX 직원</b>김도윤</span>
+    <span class="mb">XI맵</span>
+    <span class="mb sq" data-ic="bell"><span class="bd">3</span></span>
+    <span class="mb sq">?</span>
+    <span class="mb">나가기</span>
+  </header>
+  <nav class="rail" aria-label="메뉴">
+    <span class="ri" data-ic="home"><span>홈</span></span>
+    <span class="ri" data-ic="proj"><span>프로젝트</span></span>
+    <span class="ri" data-ic="analyze"><span>분석하기</span></span>
+    <span class="ri" data-ic="card"><span>서비스<br>카드</span></span>
+    <span class="ri" data-ic="data"><span>데이터</span></span>
+    <span class="ri" data-ic="inbox" aria-current="true"><span class="bd">3</span><span>요청함</span></span>
+  </nav>
+  <main class="main">
+    <div class="page">
+      <div class="head">
+        <h1>요청함</h1>
+        <span class="sub">기관이 보낸 촬영 의뢰 · 분석 의뢰 · 검토 요청. LX 관리자도 함께 봅니다.</span>
+        <span class="date">2026.10.01</span>
+      </div>
+
+      <div class="inbox">
+        <div class="list">
+          <div class="row h"><span>종류</span><span>내용</span><span>보낸 사람</span><span class="n">받은 날</span></div>
+          <div class="row on"><span class="chip">촬영 의뢰</span><b>남원시 · 덕과면 일대 약 1.5㎢ · 11월 희망</b><span>남원시 농정과 박서연</span><span class="n num">2026.10.01</span></div>
+          <div class="row"><span class="chip">분석 의뢰</span><b>남원시 · 덕과면 드론영상 → 영농관리</b><span>남원시 농정과 박서연</span><span class="n num">2026.10.01</span></div>
+          <div class="row"><span class="chip">검토 요청</span><b>남원시 · 세전리 1395-12 "비닐하우스 아님"</b><span>남원시 농정과 박서연</span><span class="n num">2026.10.01</span></div>
+          <div class="row"><span class="chip">촬영 의뢰</span><b>남원시 · 사매면 일대 약 0.5㎢ · 답함(11월 첫째 주)</b><span>남원시 농정과 박서연</span><span class="n num">2026.09.15</span></div>
+        </div>
+
+        <aside class="det">
+          <h2>촬영 의뢰 · 남원시 덕과면<span class="x">×</span></h2>
+          <div class="box">
+            <p class="label">보낸 사람</p>
+            <div class="person"><span class="av">농</span><div class="t"><b>박서연 · 남원시 농정과</b><span>부서 사용자 · 2026.10.01 09:40 보냄</span></div></div>
+          </div>
+          <div class="box">
+            <p class="label">의뢰 내용</p>
+            <div class="pv2">
+              <img src="img/map-deokgwa.jpg" alt="">
+              <svg viewBox="0 0 1368 836" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><polygon points="462,324 645,302 709,442 602,533 446,474"/></svg>
+              <span class="cap">덕과면 일대 · 약 1.5㎢ · 시 지역</span>
+            </div>
+            <dl class="kv">
+              <dt>원하는 시기</dt><dd>2026년 11월</dd>
+              <dt>찍은 뒤 분석</dt><dd>영농관리 행정서비스</dd>
+              <dt>메모</dt><dd>덕과면 새 농지 확인용</dd>
+              <dt>대략 수수료</dt><dd>21,306,000원<small>0.25㎢마다 3,551,000원(시 지역) × 6칸 · 국토교통부 고시 제2025-896호</small></dd>
+            </dl>
+          </div>
+          <div class="box">
+            <p class="label">답하기</p>
+            <div class="ans">
+              <p class="label">촬영 시기</p><div class="inp">2026년 11월 둘째 주</div>
+              <p class="label">확정 금액<small>대략 금액이 미리 들어 있습니다</small></p><div class="inp">21,306,000원</div>
+              <p class="label">한 줄(선택)</p><div class="inp">날씨에 따라 하루 이틀 바뀔 수 있습니다</div>
+            </div>
+            <div class="btns"><span class="btn">답 보내기</span><span class="btn b2">반려 — 사유</span></div>
+            <p class="small">기관이 '진행'을 누르면 촬영 일정에 들어갑니다. 촬영이 끝나면 데이터 → 영상 등록 → 남원시에 공유.</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+<span class="note" style="left:560px;top:600px;max-width:400px"><i>1</i>확정 금액 칸은 서버가 센 대략 금액이 미리 들어 있고, LX 담당이 고쳐서 답한다</span>
+<span class="stamp"><b>시안</b> Land-XI · LX 직원 요청함 — 촬영 의뢰 한 건(시기 · 확정 금액 답) · 사람·날짜는 예시</span>
+<script src="icons.js"></script>
+</body>
+</html>
