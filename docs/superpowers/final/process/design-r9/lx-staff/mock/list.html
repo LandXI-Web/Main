@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · 프로젝트 목록 — '막힌 곳'을 어떻게 말할까(P-1)</title>
+<link rel="stylesheet" href="r9.css">
+<style>
+.tabs{display:flex;gap:20px;margin:16px 0 14px;padding-bottom:12px;border-bottom:1px solid var(--rule);font:500 15px/22px var(--font-body);color:var(--sub)}
+.tabs span.on{color:var(--ink);box-shadow:0 13px 0 -11px var(--accent)}
+.tabs b{font-weight:500;color:var(--sub);margin-left:6px}
+.tbl{width:100%;border-collapse:collapse;font:400 15px/22px var(--font-body);color:var(--ink-2)}
+.tbl th{padding:10px 12px;border-bottom:1px solid var(--rule);text-align:left;font:500 14px/20px var(--font-body);color:var(--sub);white-space:nowrap}
+.tbl td{padding:14px 12px;border-bottom:1px solid var(--rule);vertical-align:middle}
+.tbl td.nm{font-weight:500;color:var(--ink);white-space:nowrap}
+.tbl td small{display:block;font:400 13px/18px var(--font-body);color:var(--sub)}
+.tbl .bar6{width:170px;margin-bottom:6px}
+.bar6 i.gap{background:var(--warn)}
+.stg{display:flex;align-items:center;gap:8px;font:500 14px/20px var(--font-body);color:var(--ink);white-space:nowrap}
+.stg i{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font:500 11px/1 var(--font-num);font-style:normal}
+.stg small{display:inline;margin-left:4px;color:var(--sub)}
+.gapl{display:inline-flex;align-items:center;gap:6px;font:500 13px/18px var(--font-body);color:var(--warn);white-space:nowrap}
+.gapl i{width:8px;height:8px;border-radius:50%;background:var(--warn)}
+.todo{font:500 14px/20px var(--font-body);color:var(--warn);white-space:nowrap}
+.todo b{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--warn);color:#fff;font:600 11px/1 var(--font-num);margin-right:6px;vertical-align:-4px}
+.todo small{display:block;margin-left:26px;font:400 13px/18px var(--font-body);color:var(--sub)}
+.head-row{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:16px;align-items:start;margin-top:16px}
+.dashk .pr-row{grid-template-columns:minmax(0,1fr) 120px}
+.dashk .bar6{width:120px}
+.legend{display:flex;gap:16px;margin-top:10px;font:400 13px/18px var(--font-body);color:var(--sub)}
+.legend i{display:inline-block;width:14px;height:4px;border-radius:2px;vertical-align:2px;margin-right:5px;background:var(--ink)}
+.legend i.gap{background:var(--warn)}
+.legend i.now{background:var(--accent)}
+@media (max-width:960px){ .two{grid-template-columns:minmax(0,1fr)} .tbl .hide-m{display:none} .tbl .bar6{width:96px} .tbl td{padding:12px 8px} .tbl th{padding:10px 8px} .tbl .stg small,.stg small{display:none!important} .tbl td:nth-child(2),.tbl th:nth-child(2){display:none} .todo small{display:inline;margin-left:4px} .legend{display:none} .stg{font-size:13px} .todo{white-space:normal;font-size:13px} .todo small{margin-left:0} .gapl{white-space:normal} .dashk .pr-row{grid-template-columns:minmax(0,1fr) 96px} .dashk .bar6{width:96px} }
+</style>
+</head>
+<body class="m has-stamp">
+<div class="app">
+  <header class="mast">
+    <span class="word">LAND-XI</span><span class="home">LX 직원 대시보드</span>
+    <span class="sp"></span>
+    <span class="fresh"><i></i><span>17:09</span></span>
+    <span class="role">LX 직원</span>
+    <span class="mb">XI맵</span><span class="mb help">?</span><span class="mb">나가기</span>
+  </header>
+  <nav class="rail" aria-label="LX 직원 메뉴">
+    <span class="ri"><svg viewBox="0 0 20 20"><path d="M3 9.5L10 4l7 5.5V16H3z"/></svg><span>홈</span></span>
+    <span class="ri on"><svg viewBox="0 0 20 20"><path d="M3 5h5l2 2h7v9H3z"/></svg><span>프로젝트</span></span>
+    <span class="ri"><svg viewBox="0 0 20 20"><path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/><path d="M10 6.5l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5L6.5 10 9 9z"/></svg><span>분석하기</span></span>
+    <span class="ri more-hide"><svg viewBox="0 0 20 20"><path d="M3 4h14v12H3z M3 8h14"/></svg><span>서비스 카드</span></span>
+    <span class="ri more-hide"><svg viewBox="0 0 20 20"><ellipse cx="10" cy="5" rx="6" ry="2"/><path d="M4 5v10c0 1.1 2.7 2 6 2s6-.9 6-2V5 M4 10c0 1.1 2.7 2 6 2s6-.9 6-2"/></svg><span>데이터</span></span>
+    <span class="ri"><svg viewBox="0 0 20 20"><path d="M3 11l2-7h10l2 7v5H3z M3 11h4l1 2h4l1-2h4"/></svg><span>요청함</span></span>
+    <span class="ri more"><svg viewBox="0 0 20 20"><path d="M3 5h14 M3 10h14 M3 15h14"/></svg><span>메뉴</span></span>
+  </nav>
+  <main class="main">
+    <div class="page">
+      <div class="head-row"><h1 class="h1" style="margin:0">프로젝트</h1><span class="btn">새 프로젝트</span></div>
+      <div class="tabs"><span class="on">내가 만든<b>4</b></span><span>참여한<b>0</b></span><span>보관<b>0</b></span><span>전체<b>4</b></span></div>
+      <section class="k" id="kList" style="padding:6px 12px 10px">
+        <table class="tbl" id="tbl"></table>
+        <div class="legend" id="legend"></div>
+      </section>
+      <div class="two" id="two"></div>
+    </div>
+  </main>
+</div>
+<div class="chat"><span>XI ChatGEO</span><i>LX</i></div>
+<span class="stamp" id="stamp"><b>시안</b></span>
+<script>
+const Q = new URLSearchParams(location.search);
+const V = Q.get('v') || 'b';
+/* 이 PC 서버 프로젝트 넷(10-01 17:09) — 모두 6단계 서비스 관리 · 4단계 결과 확인이 비어 있음 */
+const P = [
+  ['건축물 2026', '건축물', '원주시', '시범 1곳'],
+  ['주차장 2026', '주차장', '여주시 외&nbsp;1곳', '시범 2곳'],
+  ['곤포사일리지 2026', '곤포사일리지', '보령시', '시범 1곳'],
+  ['비닐하우스 2026', '비닐하우스', '증평군 외&nbsp;2곳', '시범 3곳'],
+];
+const ck = '<svg viewBox="0 0 16 16" width="10" height="10"><path d="M3.5 8.5l3 3 6-7" stroke="#fff" stroke-width="2.2" fill="none"/></svg>';
+const bar = (gap) => `<div class="bar6"><i></i><i></i><i></i><i class="${gap ? 'gap' : 'wait'}"></i><i></i><i class="now"></i></div>`;
+const rows = {
+  /* ⓐ 막대의 그 칸에 표시 — 빨간 칸 + 그 아래 작은 글. '막힌 곳' 칸은 없앰 */
+  a: { th: '<th>이름</th><th>진행</th><th>다음 할 일</th><th class="hide-m">무엇을 · 어디</th><th class="hide-m">마지막 활동</th>',
+       tr: (n, w, r, s) => `<td class="nm">${n}</td><td>${bar(true)}<span class="stg"><i>6</i>서비스 관리</span><span class="gapl" style="margin-top:4px"><i></i>4단계 결과 확인 0/20 — 앞 단계가 비어 있음</span></td><td>${s}</td><td class="hide-m">${w}<small>${r}</small></td><td class="hide-m">오늘 08:58</td>`,
+       stamp: 'ⓐ 막대의 그 칸을 빨갛게 + 바로 아래 한 줄 · \'막힌 곳\' 칸은 없앰' },
+  /* ⓑ '다음 할 일'과 합치기 — 다음 할 일 = 가야 할 단계 + 할 일 한 줄. 상태(시범 n곳)는 진행 칸으로 */
+  b: { th: '<th>이름</th><th>진행</th><th>다음 할 일</th><th class="hide-m">무엇을 · 어디</th><th class="hide-m">마지막 활동</th>',
+       tr: (n, w, r, s) => `<td class="nm">${n}</td><td>${bar(true)}<span class="stg"><i>6</i>서비스 관리<small>· ${s}</small></span></td><td><span class="todo"><b>4</b>결과 확인 — 표본 20건 보기<small>앞 단계가 비어 있어 먼저&nbsp;합니다</small></span></td><td class="hide-m">${w}<small>${r}</small></td><td class="hide-m">오늘 08:58</td>`,
+       stamp: 'ⓑ \'다음 할 일\'과 합침 — 가야 할 단계 번호 + 할 일 한 줄 · 시범 n곳은 진행 칸으로' },
+  /* ⓒ 이름만 바꾸기 — '막힌 곳' → '남은 일' */
+  c: { th: '<th>이름</th><th>진행</th><th>다음 할 일</th><th>남은 일</th><th class="hide-m">무엇을 · 어디</th><th class="hide-m">마지막 활동</th>',
+       tr: (n, w, r, s) => `<td class="nm">${n}</td><td>${bar(false)}<span class="stg"><i>6</i>서비스 관리</span></td><td>${s}</td><td><span class="gapl"><i></i>결과 확인 0/20</span></td><td class="hide-m">${w}<small>${r}</small></td><td class="hide-m">오늘 08:58</td>`,
+       stamp: 'ⓒ 칸 이름만 \'막힌 곳\' → \'남은 일\'' },
+};
+const v = rows[V] || rows.b;
+document.getElementById('tbl').innerHTML = `<thead><tr>${v.th}</tr></thead><tbody>${P.map(([n, w, r, s]) => `<tr>${v.tr(n, w, r, s)}</tr>`).join('')}</tbody>`;
+document.getElementById('legend').innerHTML = V === 'c' ? '<span><i></i>끝남</span><span><i class="now"></i>지금 단계</span>' : '<span><i></i>끝남</span><span><i class="gap"></i>비어 있는 앞 단계</span><span><i class="now"></i>지금 단계</span>';
+document.getElementById('stamp').innerHTML = `<b>시안</b> ${v.stamp} · 값은 이 PC 서버(10-01 17:09)`;
+/* 대시보드 '내 프로젝트' 칸도 같은 말로(ⓑ 기준) */
+if (V === 'b') {
+  document.getElementById('two').innerHTML = `<section class="k dashk"><div class="k-h"><h2>대시보드 '내 프로젝트' 칸도 같은 말로</h2><span class="more">전체 보기 4</span></div>
+    ${P.slice(0, 3).map(([n, w, r, s]) => `<div class="pr-row"><div><span class="nm">${n}<small>${r}</small></span><span class="nx"><span class="todo"><b>4</b>결과 확인 — 표본 20건 보기</span></span></div>${bar(true)}</div>`).join('')}
+    <span class="addp">+ 새 프로젝트</span></section>
+    <section class="k"><div class="k-h"><h2>왜 이렇게 보이나</h2></div><p class="lab" style="color:var(--ink-2)">네 프로젝트 모두 6단계 서비스 관리까지 왔지만 4단계 결과 확인(표본 20건)을 건너뛴 채라, 서버가 "앞 단계가 비어 있다"고 알립니다. 지금 화면은 이것을 '막힌 곳 · 결과 확인 0/20'이라 적어 뜻이 안 보였습니다. 이 시안은 그것을 <b>'다음 할 일'</b> 한 칸으로 말합니다 — 어느 단계로 가서(4단계 ) 무엇을 하는지(표본 20건 보기).</p></section>`;
+} else document.getElementById('two').remove();
+if (Q.get('stamp') === '0') { document.querySelector('.stamp').remove(); document.body.classList.remove('has-stamp'); }
+</script>
+</body>
+</html>

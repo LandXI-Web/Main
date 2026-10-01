@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko" style="--ci:#1F6F4A;--ci-t1:#E9F3ED;--ci-line:#D1E3D9">
+<head>
+<meta charset="utf-8">
+<title>시안 · 결과 지도 필지 카드 — '영상 설명' 버튼 없이, 담당자가 확인 결과 · 메모 · 다음 확인 날짜를 적는 칸</title>
+<link rel="stylesheet" href="mock.css">
+<link rel="stylesheet" href="gov2.css">
+<style>
+body.g{background:#000}
+.shot{margin:0 auto}
+.cover{position:absolute;right:16px;top:80px;width:392px;height:804px;background:var(--bg-0)}
+.stamp{position:fixed;top:auto;bottom:16px;left:16px;right:auto}
+.sheet{gap:12px;padding:22px 24px}
+.sheet .sh h2{font-size:24px;line-height:32px}
+</style>
+</head>
+<body class="g t">
+<div class="shot">
+  <img class="bg" src="../shots/before-parcel-1440.png" alt="">
+  <div class="cover"></div>
+
+  <aside class="sheet">
+    <div class="sh"><h2>세전리 1395-12</h2><span class="x">×</span></div>
+    <div class="tags"><span class="chip">AI 분석 · 확인 전</span><span class="chip ci">휴경·전용 의심</span></div>
+    <div class="cmp">
+      <div><span class="l">대장</span><b>답</b><span>3,532㎡</span></div>
+      <div class="ai"><span class="l">AI 분석</span><b>경작 흔적 없음</b><span>3,136㎡ ~ · 89%</span></div>
+    </div>
+    <div class="verdict">
+      <p class="l">확인 결과 적기<small>담당자만 · 저장하면 이력에 남습니다</small></p>
+      <div class="seg"><span>맞음</span><span>아님</span><span class="on">현장 확인함</span></div>
+      <div class="inp ta">경작 흔적 없음 · 소유자 통화 — 10월 추수 뒤 다시 확인</div>
+      <div class="two"><div class="inp"><span class="ph">다음 확인 날짜</span><span class="cnt">2026.10.06</span></div><span class="btn ci">저장</span></div>
+      <p class="small">맞음 = 의심이 맞음 · 아님 = AI가 잘못 봄(오탐으로 LX에 전달) · 현장 확인함 = 다녀왔고 판정은 메모로</p>
+    </div>
+    <div class="log">
+      <b>이 필지의 기록</b>
+      <ul><li><span class="d">09.26</span><span>2판 공개 — 휴경·전용 의심으로 분류</span></li><li><span class="d">—</span><span>아직 적은 확인 결과 없음</span></li></ul>
+    </div>
+    <span class="btn b2">LX에 검토 요청</span>
+    <p class="hint">검토 요청은 메모 한 줄로 LX 담당에게 갑니다. 답은 머리의 종과 서비스 이력 탭에 옵니다.</p>
+  </aside>
+
+  <div class="callout">
+    <p class="l">저장하면 — 서비스 '이력' 탭에 이렇게 쌓입니다</p>
+    <ul class="tl">
+      <li class="day">10.01</li>
+      <li><span class="kind chk">확인 기록</span><b>세전리 1395-12 — 현장 확인함<small>다음 확인 10.06 · 메모 '경작 흔적 없음 · 소유자 통화 — 10월 추수 뒤 다시 확인'</small></b></li>
+      <li class="day">09.29</li>
+      <li><span class="kind chk">확인 기록</span><b>운봉읍 준향리 824-9 — 맞음<small>메모 '위반' · 김현장</small></b></li>
+    </ul>
+    <p class="small">위 한 줄은 예시 · 아래 줄은 서버에 있는 실제 기록</p>
+  </div>
+  <div class="arrow"></div>
+
+  <span class="note" style="left:470px;top:36px;max-width:420px"><i>1</i>'영상 설명' · 'XI ChatGEO에 묻기' 버튼 없음 — 카드는 확인 · 메모 · 검토 요청만</span>
+  <span class="note" style="left:470px;top:300px;max-width:420px"><i>2</i>맞음 · 아님 · 현장 확인함 + 메모 한 줄 + 다음 확인 날짜 — 서버의 필지 상태 · 판정 · 메모 기록을 그대로 씀</span>
+</div>
+<span class="stamp"><b>시안</b> 기관 분기 · 결과 지도 필지 카드 — 지금 화면 캡처 위에 그림 · 필지 값은 지금 화면 그대로 · 메모 글은 예시</span>
+</body>
+</html>

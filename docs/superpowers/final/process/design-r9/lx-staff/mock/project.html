@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · 프로젝트 한 장 — 생산 단계를 그림 띠 하나로(K-3)</title>
+<link rel="stylesheet" href="r9.css">
+</head>
+<body class="m has-stamp">
+<div class="app has-sub" id="app">
+  <header class="mast">
+    <span class="word">LAND-XI</span><span class="home">LX 직원 대시보드</span>
+    <span class="sp"></span>
+    <span class="fresh"><i></i><span>17:09</span></span>
+    <span class="role">LX 직원</span>
+    <span class="mb">XI맵</span><span class="mb help">?</span><span class="mb">나가기</span>
+  </header>
+
+  <nav class="rail" aria-label="LX 직원 메뉴">
+    <span class="ri"><svg viewBox="0 0 20 20"><path d="M3 9.5L10 4l7 5.5V16H3z"/></svg><span>홈</span></span>
+    <span class="ri on"><svg viewBox="0 0 20 20"><path d="M3 5h5l2 2h7v9H3z"/></svg><span>프로젝트</span></span>
+    <span class="ri"><svg viewBox="0 0 20 20"><path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/><path d="M10 6.5l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5L6.5 10 9 9z"/></svg><span>분석하기</span></span>
+    <span class="ri more-hide"><svg viewBox="0 0 20 20"><path d="M3 4h14v12H3z M3 8h14"/></svg><span>서비스 카드</span></span>
+    <span class="ri more-hide"><svg viewBox="0 0 20 20"><ellipse cx="10" cy="5" rx="6" ry="2"/><path d="M4 5v10c0 1.1 2.7 2 6 2s6-.9 6-2V5 M4 10c0 1.1 2.7 2 6 2s6-.9 6-2"/></svg><span>데이터</span></span>
+    <span class="ri"><svg viewBox="0 0 20 20"><path d="M3 11l2-7h10l2 7v5H3z M3 11h4l1 2h4l1-2h4"/></svg><span>요청함</span></span>
+    <span class="ri more"><svg viewBox="0 0 20 20"><path d="M3 5h14 M3 10h14 M3 15h14"/></svg><span>메뉴</span></span>
+  </nav>
+
+  <!-- 마스트 아래 단계 막대(지금 모양) — ?v=b 면 없앰(띠가 곧 막대) -->
+  <div class="sub" id="sub">
+    <div class="pname"><span>프로젝트</span><b id="subName">비닐하우스 2026</b></div>
+    <ol class="steps" aria-label="프로젝트 단계" id="subSteps">
+      <li><span class="st d"><span class="n"><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg></span><span class="t">데이터 올리기</span></span></li>
+      <li><span class="st d"><span class="n"><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg></span><span class="t">학습데이터 구축</span></span></li>
+      <li><span class="st d"><span class="n"><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg></span><span class="t">학습</span></span></li>
+      <li><span class="st"><span class="n">4</span><span class="t">결과 확인</span></span></li>
+      <li><span class="st d"><span class="n"><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg></span><span class="t">발행 요청</span></span></li>
+      <li><span class="st now"><span class="n">6</span><span class="t">서비스 관리</span></span></li>
+    </ol>
+    <p class="next"><span>다음 할 일</span><b id="subNext">결과 확인 0/20</b></p>
+  </div>
+
+  <main class="main">
+    <div class="page">
+      <header class="head">
+        <div>
+          <p class="lab">프로젝트</p>
+          <div class="ttl"><h1 id="h1">비닐하우스 2026</h1><span class="lnk q">고치기</span><span class="lnk q">끝난 프로젝트로 보관</span></div>
+          <div class="meta" id="meta"><span class="chip">비닐하우스</span><span class="chip wait">증평군</span><span class="chip wait">함양군</span><span class="chip wait">남원시</span><span class="chip add">+ 지역</span></div>
+        </div>
+        <div class="people">
+          <div class="pr"><span class="lab">프로젝트장</span><span>LX 직원<small>test@lx.or.kr</small></span><span class="lnk">넘기기</span></div>
+          <div class="pr"><span class="lab">구성원</span><span class="none">없음</span><span class="lnk">더하기</span></div>
+        </div>
+      </header>
+
+      <!-- ── 단계 띠 — 이 프로젝트가 지나는 6단계를 그림으로. 지금 여기 · 남은 것 · 다음 할 일이 한 줄에 ── -->
+      <section class="k strip-k" id="kStrip">
+        <div class="k-h"><h2>새 서비스를 만드는 6단계</h2><span class="ksub" id="stripSub">칸을 누르면 그 단계로</span><span class="more" id="stripMore" hidden></span></div>
+        <div class="strip" id="strip">
+          <a class="sc d"><span class="num"><i><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg></i><span>데이터 올리기</span></span><div class="th"><img src="img/imagery-1.jpg" alt=""></div><b>영상 · 3곳 모두 있음</b><span class="s">2023 항공 2 · 2025 드론 1</span></a>
+          <a class="sc d"><span class="num"><i><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg></i><span>학습데이터 구축</span></span><div class="th mos4"><img src="img/sample-0.jpg" alt=""><img src="img/sample-1.jpg" alt=""><img src="img/sample-4.jpg" alt=""><img src="img/sample-5.jpg" alt=""></div><b>학습 표본 200장</b><span class="s">쓸 수 있음</span></a>
+          <a class="sc d"><span class="num"><i><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg></i><span>학습</span></span><div class="th plate"><em>1차</em><small>쓸 수 있음</small></div><b>1차 모델</b><span class="s">등록 승인 09.30</span></a>
+          <a class="sc wait"><span class="num"><i>4</i><span>결과 확인</span></span><div class="th"><svg class="ring" viewBox="0 0 56 56"><circle class="bg" cx="28" cy="28" r="23"/><circle class="fg" cx="28" cy="28" r="23" stroke-dasharray="0 144.5" transform="rotate(-90 28 28)"/><text x="28" y="33" text-anchor="middle">0/20</text></svg><span class="todo">할 일</span></div><b>표본 확인 0/20</b><span class="s">아직 확인 전</span></a>
+          <a class="sc d"><span class="num"><i><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg></i><span>발행 요청</span></span><div class="th"><img src="img/scene-2.jpg" alt=""><i class="badge">시범</i></div><b>비닐하우스 서비스</b><span class="s">1.0판 · 공개됨</span></a>
+          <a class="sc now"><span class="num"><i>6</i><span>서비스 관리</span></span><div class="th geo"><img src="korea-k3.svg" alt=""><span class="here">지금 여기</span><span class="pin">시범 3곳</span></div><b>적용 · 시범 3곳</b><span class="s">운영 0</span></a>
+        </div>
+        <div class="todo-line" id="todo">
+          <span class="arrow">4</span>
+          <p>다음 할 일 — <b>4단계 결과 확인</b>: 표본 20건을 보고 맞음 · 틀림을 표시합니다<small>6단계 서비스 관리 단계이지만 4단계 가 비어 있어 '현장 확인 필요' 필지 수가 아직 서지&nbsp;않습니다</small></p>
+          <span class="btn">결과 확인 열기</span>
+        </div>
+        <span class="note" id="nStrip" style="left:24px;top:-22px;width:max-content;max-width:600px"><i>1</i>단계 6 = 그림 6칸. 끝난 칸은 검정 ✓, 남은 칸은 빨강, 지금은 파랑 '지금 여기'. 칸을 누르면 그 단계 화면</span>
+        <span class="note" id="nTodo" style="left:24px;bottom:-30px;width:max-content;max-width:520px"><i>2</i>다음 할 일은 띠 바로 아래 한 줄 — 어느 단계로 가서 무엇을 하는지 + 버튼 하나</span>
+      </section>
+
+      <div class="grid3" id="grid2">
+        <section class="k" id="kWhere">
+          <div class="k-h"><h2>지역 · 결과 장면</h2><span class="ksub">3곳 모두 AI 결과 있음 · 현장 확인 전</span><span class="more">XI맵에서 결과 보기</span></div>
+          <div class="where-b">
+            <div class="map"><img src="korea-k3.svg" alt="대상 지역 3곳 — 증평군 · 함양군 · 남원시"></div>
+            <ul class="leg">
+              <li><i></i><div><b>증평군</b>2023 항공영상 · 시범</div></li>
+              <li><i></i><div><b>함양군</b>2023 항공영상 · 시범</div></li>
+              <li><i></i><div><b>남원시</b>2025 드론영상 · 시범</div></li>
+            </ul>
+            <div class="mosaic">
+              <figure class="big"><img src="img/scene-2.jpg" alt=""><figcaption>남원시 · 2025 드론영상 · 비닐하우스 탐지</figcaption></figure>
+              <figure><img src="img/scene-1.jpg" alt=""></figure>
+              <figure><img src="img/scene-3.jpg" alt=""></figure>
+            </div>
+          </div>
+        </section>
+          <section class="k" id="kRetrain">
+            <div class="k-h"><h2>재학습</h2><span class="ksub">마지막 학습 뒤 1일</span></div>
+            <div class="band">
+              <div class="pt d"><i></i><b>표본<br>200장</b><span>9.30</span></div>
+              <div class="pt d"><i></i><b>학습<br>끝</b><span>9.30</span></div>
+              <div class="pt d"><i></i><b>모델<br>승인</b><span>9.30</span></div>
+              <div class="pt d"><i></i><b>프로젝트<br>만듦</b><span>10.1</span></div>
+              <div class="pt n"><i></i><b>지금<br>&nbsp;</b><span>10.1</span></div>
+            </div>
+            <div class="sig"><span>검토 요청 <b>0건</b></span><span>새 영상 <b>없음</b></span><span class="w">결과 확인 <b>0/20</b></span></div>
+            <div class="rt-f"><p>다시 학습할<br>근거가 적습니다</p><span class="btn b2 sm">2차 재학습 시작</span></div>
+          </section>
+          <section class="k" id="kLog">
+            <div class="k-h"><h2>기록 · 메모</h2><span class="more">모두 보기 7</span></div>
+            <ul class="lg">
+              <li><span class="w">10.01 08:58</span><span><b>프로젝트 만듦</b><i>LX 직원</i></span></li>
+              <li><span class="w">09.30 15:35</span><span><b>모델 등록 승인</b><i>LX 관리자</i></span></li>
+              <li><span class="w">09.30 15:33</span><span><b>학습 끝 · 2번째</b><i>LX 직원</i></span></li>
+            </ul>
+          </section>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="chat"><span>XI ChatGEO</span><i>LX</i></div>
+<span class="stamp" id="stamp"><b>시안</b> Land-XI 화면 · 값은 이 PC 서버(10-01 17:09 · 비닐하우스 2026)</span>
+<script>
+const Q = new URLSearchParams(location.search);
+const V = Q.get('v') || 'a';
+if (V === 'b') { document.getElementById('sub').remove(); document.getElementById('app').classList.remove('has-sub'); document.getElementById('stamp').innerHTML = '<b>시안</b> ⓑ 위 막대 없이 띠가 곧 막대 · 값은 이 PC 서버(10-01 17:09)'; }
+else document.getElementById('stamp').innerHTML = '<b>시안</b> ⓐ 위 막대 + 그림 띠 · 값은 이 PC 서버(10-01 17:09 · 비닐하우스 2026)';
+
+/* 새로 만든 직후(예시) — 아무것도 없는 프로젝트의 띠: 그림 자리는 비고 각 칸이 '여기서 무엇이 생기나'를 말한다 */
+if (Q.get('empty') === '1') {
+  document.getElementById('h1').textContent = '무허가 축사 2026';
+  document.getElementById('subName').textContent = '무허가 축사 2026';
+  document.getElementById('subNext').textContent = '영상 올리기';
+  document.getElementById('meta').innerHTML = '<span class="chip">무허가 축사</span><span class="chip wait">영상에서 정해짐</span><span class="chip add">+ 지역</span>';
+  document.getElementById('stripSub').textContent = '칸을 누르면 그 단계로';
+  document.querySelectorAll('#subSteps .st').forEach((s, i) => { s.className = 'st' + (i === 0 ? ' now' : ''); s.querySelector('.n').innerHTML = String(i + 1); });
+  const ico = (d) => `<svg viewBox="0 0 20 20">${d}</svg>`;
+  const E = [
+    ['1단계 데이터 올리기', ico('<path d="M10 14V4M6 8l4-4 4 4M4 16h12"/>'), '영상을 올리면<br>여기에 보입니다', '영상 0', '아카이브에서 고르거나 파일 올리기'],
+    ['2단계 학습데이터 구축', ico('<path d="M4 4h12v12H4z M4 10h12 M10 4v12"/>'), '표본을 그리면<br>장 수가 셉니다', '표본 0장', '영상 뒤에 열림'],
+    ['3단계 학습', ico('<circle cx="10" cy="10" r="6"/><path d="M10 7v3l2 2"/>'), '학습이 끝나면<br>모델 판이 섭니다', '모델 없음', '표본 뒤에 열림'],
+    ['4단계 결과 확인', ico('<path d="M3 10h14 M10 3v14"/><circle cx="10" cy="10" r="7"/>'), '표본 20건을 보고<br>맞음 · 틀림 표시', '0/20', '모델 뒤에 열림'],
+    ['5단계 발행 요청', ico('<path d="M3 5h14v10H3z M3 9h14"/>'), '서비스 카드로<br>관리자 결재 요청', '카드 없음', '결과 확인 뒤'],
+    ['6단계 서비스 관리', ico('<path d="M3 7l5-3 4 3 5-3v10l-5 3-4-3-5 3z"/>'), '기관에 제공 · 적용 지역<br>· 재학습', '적용 0곳', '공개 뒤'],
+  ];
+  document.getElementById('strip').innerHTML = E.map(([t, i, say, b, s], k) => `<a class="sc${k === 0 ? ' now' : ''}"><span class="num"><i>${k + 1}</i><span>${t}</span></span><div class="th empty">${i}<span>${say}</span>${k === 0 ? '<span class="here">지금 여기</span>' : ''}</div><b>${b}</b><span class="s">${s}</span></a>`).join('');
+  document.getElementById('todo').innerHTML = '<span class="arrow" style="background:var(--accent)">1</span><p>다음 할 일 — <b>1단계 데이터 올리기</b>: 아카이브에서 영상을 고르거나 파일을 올립니다<small>영상이 들어오면 지역이 정해지고 2단계 가 열립니다</small></p><span class="btn">데이터 올리기 열기</span>';
+  document.getElementById('grid2').innerHTML = '<section class="k"><div class="k-h"><h2>지역 · 결과 장면</h2><span class="ksub">첫 결과 뒤에 장면이 보입니다</span></div><p class="lab">영상을 올리면 지도에 지역이 칠해지고, AI 분석이 끝나면 결과 장면이 여기에 들어옵니다.</p></section><section class="k"><div class="k-h"><h2>재학습</h2></div><p class="lab">첫 학습 뒤에 띠가 생깁니다.</p></section><section class="k"><div class="k-h"><h2>기록 · 메모</h2></div><ul class="lg"><li><span class="w">10.01 17:09</span><span><b>프로젝트 만듦</b><i>LX 직원</i></span></li></ul></section>';
+  document.getElementById('stamp').innerHTML = '<b>예시</b> 새로 만든 직후의 띠(이 PC 서버에 없는 프로젝트 · 이름 · 값 모두 예시)';
+}
+const f = (Q.get('f') || '').split(',').filter(Boolean);
+if (f.includes('strip')) { ['nStrip', 'nTodo'].forEach((id) => document.getElementById(id).classList.add('on')); document.getElementById('kStrip').classList.add('hi'); }
+if (Q.get('stamp') === '0') { document.querySelector('.stamp').remove(); document.body.classList.remove('has-stamp'); }
+</script>
+</body>
+</html>

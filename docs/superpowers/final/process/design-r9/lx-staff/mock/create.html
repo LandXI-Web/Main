@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · 새 프로젝트 — 새 서비스를 정의하고, 영상을 고르면 지역이 정해진다(K-4)</title>
+<link rel="stylesheet" href="r9.css">
+<style>
+.ctx-card{display:grid;grid-template-columns:120px minmax(0,1fr);gap:14px;align-items:center;padding:12px;border-radius:12px;box-shadow:inset 0 0 0 1px var(--rule)}
+.ctx-card .ph-img{aspect-ratio:3/2;border-radius:8px;overflow:hidden;background:var(--bg-0)}
+.ctx-card .ph-img img{width:100%;height:100%;object-fit:cover;display:block}
+.ctx-card b{display:block;font:500 16px/22px var(--font-body);color:var(--ink)}
+.ctx-card span{display:block;font:400 13px/18px var(--font-body);color:var(--sub)}
+.ctx-say{margin:0;padding:12px 14px;border-radius:10px;background:var(--bg-0);font:400 14px/21px var(--font-body);color:var(--ink-2)}
+.ctx-say b{font-weight:500;color:var(--ink)}
+.ctx-acts{display:flex;gap:12px;align-items:center}
+@media (max-width:960px){ .create{display:flex;flex-direction:column} .create .k{min-width:0;width:100%} .create .k.ctxk{order:2} .create .k.formk{order:1} }
+</style>
+</head>
+<body class="m has-stamp">
+<div class="app">
+  <header class="mast">
+    <span class="word">LAND-XI</span><span class="home">LX 직원 대시보드</span>
+    <span class="sp"></span>
+    <span class="fresh"><i></i><span>17:09</span></span>
+    <span class="role">LX 직원</span>
+    <span class="mb">XI맵</span><span class="mb help">?</span><span class="mb">나가기</span>
+  </header>
+
+  <nav class="rail" aria-label="LX 직원 메뉴">
+    <span class="ri"><svg viewBox="0 0 20 20"><path d="M3 9.5L10 4l7 5.5V16H3z"/></svg><span>홈</span></span>
+    <span class="ri on"><svg viewBox="0 0 20 20"><path d="M3 5h5l2 2h7v9H3z"/></svg><span>프로젝트</span></span>
+    <span class="ri"><svg viewBox="0 0 20 20"><path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/><path d="M10 6.5l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5L6.5 10 9 9z"/></svg><span>분석하기</span></span>
+    <span class="ri more-hide"><svg viewBox="0 0 20 20"><path d="M3 4h14v12H3z M3 8h14"/></svg><span>서비스 카드</span></span>
+    <span class="ri more-hide"><svg viewBox="0 0 20 20"><ellipse cx="10" cy="5" rx="6" ry="2"/><path d="M4 5v10c0 1.1 2.7 2 6 2s6-.9 6-2V5 M4 10c0 1.1 2.7 2 6 2s6-.9 6-2"/></svg><span>데이터</span></span>
+    <span class="ri"><svg viewBox="0 0 20 20"><path d="M3 11l2-7h10l2 7v5H3z M3 11h4l1 2h4l1-2h4"/></svg><span>요청함</span></span>
+    <span class="ri more"><svg viewBox="0 0 20 20"><path d="M3 5h14 M3 10h14 M3 15h14"/></svg><span>메뉴</span></span>
+  </nav>
+
+  <main class="main">
+    <div class="page">
+      <p class="crumb"><span>프로젝트</span><span class="sep">›</span><span class="cur" id="crumbK">새 프로젝트</span></p>
+      <div class="create" id="create"></div>
+    </div>
+  </main>
+</div>
+
+<div class="chat"><span>XI ChatGEO</span><i>LX</i></div>
+<span class="stamp" id="stamp"><b>시안</b> Land-XI 화면 · 아카이브 목록 · 건수는 이 PC 서버(10-01 17:09)</span>
+<script>
+const Q = new URLSearchParams(location.search);
+const STEP = Q.get('step') || 'form';     // form(영상 고르는 중) · name(이름 적는 중) · review(검토)
+const EMPTY = Q.get('empty') === '1';      // 영상을 안 고른 채
+const f = (Q.get('f') || '').split(',').filter(Boolean);
+const ck = '<span class="ck"><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg></span>';
+const shape = (c) => `<img class="shape" src="shape-${c}.svg" alt="">`;
+
+/* 아카이브 — 이 PC 서버 영상 목록(83장) 중 첫 6장. 제한 영상(국토지리정보원 2023 항공 · 내부 분석용)은 그림 대신 '자리 그림' */
+const ARC = [
+  { id: 'a1', name: '증평군 2023 25cm 항공', ep: '2023 · 25cm', th: shape('43745'), pl: '자리 그림 · 내부 분석용', where: '증평군', on: true },
+  { id: 'a2', name: '함양군 2023 25cm 항공', ep: '2023 · 25cm', th: shape('48870'), pl: '자리 그림 · 내부 분석용', where: '함양군', on: true },
+  { id: 'a3', name: '2025-04 드론 1cm급 · 남원 AOI', ep: '2025-04 · 1cm급', th: '<img src="img/gh-3-clean.jpg" alt="">', pl: '', where: '남원시', on: true },
+  { id: 'a4', name: '2025-06 드론 · 남원 AOI', ep: '2025-06 · 1cm급', th: '<img src="img/fl-3-clean.jpg" alt="">', pl: '', where: '남원시', on: false },
+  { id: 'a5', name: '원주시 2023 25cm 항공', ep: '2023 · 25cm', th: shape('51130'), pl: '자리 그림 · 내부 분석용', where: '원주시', on: false },
+  { id: 'a6', name: '여주시 2023 25cm 항공', ep: '2023 · 25cm', th: shape('41670'), pl: '자리 그림 · 내부 분석용', where: '여주시', on: false },
+  { id: 'a7', name: '천안시 서북구 2023 25cm 항공', ep: '2023 · 25cm', th: shape('44133'), pl: '자리 그림 · 내부 분석용', where: '천안시 서북구', on: false },
+  { id: 'a8', name: '보령시 2023 25cm 항공', ep: '2023 · 25cm', th: shape('44180'), pl: '자리 그림 · 내부 분석용', where: '보령시', on: false },
+];
+const picked = EMPTY ? [] : ARC.filter((a) => a.on);
+const ths = (list, cls) => list.map((a) => a.th.replace('class="shape" ', '').replace('<img ', `<img ${cls || ''} `)).join('');
+
+/* ── 왼쪽 문맥 — 편집 중인 칸에 따라 바뀐다(옛 자산 B5 의 역할 그대로) ── */
+function ctxArchive() {
+  const n = picked.length;
+  return `<div class="ctx">
+    <div class="ctx-h"><p class="lab">영상 불러오기</p><h2>아카이브에서 고르기</h2><span class="cnt">83장 · 고름 ${n}</span></div>
+    <div class="arcbar"><span class="chip on">전체 83</span><span class="chip">항공 25cm 71</span><span class="chip">드론 7</span><span class="chip">위성 · 그 밖 5</span><span class="chip">내가 올린 0</span><span class="fld"><span class="ph">이름 · 지역 검색</span></span></div>
+    <div class="arc" id="arc">${ARC.map((a) => `<div class="ai${!EMPTY && a.on ? ' on' : ''}"><div class="ph-img">${a.th}${ck}${a.pl ? `<span class="pl">${a.pl}</span>` : ''}</div><b>${a.name}</b><span>${a.ep}</span><span class="where">${a.where}</span></div>`).join('')}</div>
+    <div class="pager"><span>1 / 11 쪽</span><span class="lnk q">다음 →</span></div>
+    <div class="fpmap" id="fpmap">
+      <img src="${n ? 'korea-k4.svg' : 'korea-k4-empty.svg'}" alt="">
+      <div class="say">${n ? `<b>지역은 영상의 자리에서 정해집니다</b><p>고른 영상 ${n}장의 자리(점선 상자)가 떨어지는 시군구가 이 프로젝트의 지역이 됩니다. 글로 적지 않습니다.</p><div class="chips"><span class="chip">증평군</span><span class="chip">함양군</span><span class="chip">남원시</span></div><div class="leg2"><span><i></i>영상의 자리</span><span><em></em>지역</span></div>`
+        : `<b>아직 고른 영상이 없습니다</b><p>영상을 고르면 그 자리로 지역이 정해집니다. 지금 안 골라도 프로젝트는 만들어지고, 1단계 데이터 올리기 단계에서 넣으면 그때 지역이 정해집니다.</p>`}</div>
+    </div>
+    <span class="note" id="nArc" style="left:24px;top:-22px;width:max-content;max-width:600px"><i>1</i>옛 자산의 아카이브 고르개 — 이 PC 서버 영상 83장. 제한 영상은 그림 대신 '자리 그림'(그 시군구 모양)</span>
+    <span class="note" id="nMap" style="left:24px;bottom:-30px;width:max-content;max-width:560px"><i>2</i>옛 자산의 풋프린트 지도 — 고른 영상의 자리에서 지역이 저절로 정해진다(지역을 글로 안 적음)</span>
+  </div>`;
+}
+function ctxName() {
+  return `<div class="ctx">
+    <div class="ctx-h"><p class="lab">서비스 이름 · 찾을 대상</p><h2>비슷한 서비스가 이미 있나요?</h2><span class="cnt">'비닐하우스' 1건</span></div>
+    <div class="ctx-card"><div class="ph-img"><img src="img/scene-2.jpg" alt=""></div><div><b>비닐하우스 서비스</b><span>증평군 외 2곳 · 시범 · 1.0판 · 프로젝트장 LX 직원</span></div></div>
+    <p class="ctx-say"><b>같은 것을 다른 지역에서 찾으려면</b> 새 프로젝트보다 서비스 카드 → '다른 지역에 적용'이 빠릅니다.<br><b>새로 만드는 서비스라면</b>(다른 대상 · 다른 세는 방식 · 다른 쓸 곳) 그대로 진행합니다.</p>
+    <div class="ctx-acts"><span class="btn b2 sm">서비스 카드로</span><span class="lnk q">그대로 진행</span></div>
+    <span class="note" id="nName" style="left:24px;top:-22px;width:max-content;max-width:560px"><i>1</i>이름을 적는 동안 왼쪽은 '이미 있는 서비스' — 기존 것에서 고르게 하지 않고, 있으면 알려만 준다</span>
+  </div>`;
+}
+function ctxReview() {
+  const hero = picked.length ? 'img/gh-3-clean.jpg' : '';
+  return `<div class="rv">
+    ${hero ? `<div class="rv-hero"><img src="${hero}" alt=""><span class="tg">대표 이미지 · 자동(고른 영상 1)</span></div>` : '<div class="rv-hero" style="display:flex;align-items:center;justify-content:center"><p class="lab">영상을 넣으면 대표 이미지가 생깁니다</p></div>'}
+    <h1>비닐하우스 2026</h1>
+    <table class="kv"><tbody>
+      <tr><td>찾을 대상</td><td>비닐하우스 · 하나씩 세기</td><td><span class="lnk q">수정 ›</span></td></tr>
+      <tr><td>어디에 쓰나</td><td>남원시 농정과 · 영농관리</td><td><span class="lnk q">수정 ›</span></td></tr>
+      <tr><td>영상 ${picked.length}</td><td>${picked.length ? `<span class="ths">${ths(picked)}</span>${picked.map((a) => a.name).join(' · ')}` : '<span class="lab" style="display:inline">없음 — 1단계 데이터 올리기 단계에서 넣습니다</span>'}</td><td><span class="lnk q">수정 ›</span></td></tr>
+      <tr><td>지역</td><td>${picked.length ? '증평군 · 함양군 · 남원시' : '영상을 넣으면 정해집니다'}<span class="auto">영상에서</span></td><td></td></tr>
+      <tr><td>해상도 · 시점</td><td>${picked.length ? '25cm · 2023 / 1cm급 · 2025-04' : '—'}<span class="auto">영상에서</span></td><td></td></tr>
+      <tr><td>프로젝트장</td><td>LX 직원 (나) · 구성원은 만든 뒤</td><td></td></tr>
+    </tbody></table>
+  </div>`;
+}
+
+/* ── 오른쪽 입력 — 직원이 적는 것 3 + 영상 1, 나머지는 자동 ── */
+function form() {
+  const on = (k) => (STEP === 'name' && k === 'name') || (STEP === 'form' && k === 'img') ? ' on' : '';
+  const n = picked.length;
+  return `<div class="form">
+    <div class="f${on('name')}"><p class="lab">01 서비스 이름</p><span class="fld${on('name') ? ' on' : ''}">비닐하우스 2026</span><p class="hint">공개되면 서비스 카드 이름이 됩니다</p></div>
+    <div class="f"><p class="lab">02 무엇을 찾나 <small>영상에서 AI가 찾을 것</small></p><span class="fld">비닐하우스</span>
+      <div class="kinds">
+        <div class="kind on"><div class="ph-img"><img src="img/gh-1.jpg" alt=""><span class="tg">AI 결과</span></div><b>하나씩 세기</b><span>동수 · 건수 · 대수를 셀 때</span></div>
+        <div class="kind"><div class="ph-img"><img src="img/fl-1-clean.jpg" alt=""><span class="tg">원본</span></div><b>윤곽까지 따기</b><span>면적 · 경계 · 비율을 낼 때</span></div>
+      </div></div>
+    <div class="f"><p class="lab">03 어디에 쓰나 <small>선택 — 기관 · 업무</small></p><span class="fld">남원시 농정과 · 영농관리</span></div>
+    <div class="f${on('img')}" id="fImg"><p class="lab">04 영상 <small>아카이브에서 고르기</small><span class="auto">지역 · 해상도는 영상에서</span></p>
+      ${n ? `<div class="picked"><span class="ths">${ths(picked)}</span><span class="t"><b>${n}장 고름</b><span>2023 항공 2 · 2025 드론 1</span></span><span class="lnk q">바꾸기</span></div>`
+          : `<div class="picked"><span class="t"><b>아직 없음</b><span>나중에 넣어도 프로젝트는 만들어집니다</span></span><span class="lnk">아카이브에서 고르기</span></div>`}
+      <p class="hint">새 영상 파일은 만든 뒤 1단계 데이터 올리기에서 올립니다</p></div>
+    <div class="f" id="fAuto" style="position:relative"><p class="autoline">저절로 정해지는 것 — <b>지역</b> ${n ? '증평군 · 함양군 · 남원시' : '영상을 고르면'} · <b>해상도 · 시점</b> ${n ? '25cm 2023 · 1cm급 2025-04' : '영상에서'} · <b>프로젝트장</b> 나 · <b>구성원</b> 만든 뒤</p>
+      <span class="note" id="nAuto" style="left:0;bottom:-30px;width:max-content;max-width:480px"><i>3</i>옛 자산 7칸 중 지역 · 해상도 · 구성원 · 학습데이터는 적지 않는다(자동 · 뒤 단계)</span>
+    </div>
+    <div class="ffoot"><span class="lnk q">취소</span><span class="btn">다음 · 검토</span></div>
+  </div>`;
+}
+function side() {
+  const n = picked.length;
+  return `<div class="sum">
+    <div><span>서비스 이름</span><b>비닐하우스 2026</b></div>
+    <div><span>찾을 대상</span><b>비닐하우스 · 하나씩 세기</b></div>
+    <div><span>어디에 쓰나</span><b>남원시 농정과 · 영농관리</b></div>
+    <div><span>영상</span><b${n ? '' : ' class="none"'}>${n ? `${n}장 · 25cm 항공 2 · 1cm급 드론 1` : '없음 — 나중에'}</b></div>
+    <div><span>지역</span><b${n ? '' : ' class="none"'}>${n ? '증평군 · 함양군 · 남원시' : '영상을 넣으면 정해짐'}</b></div>
+    <div><span>프로젝트장</span><b>LX 직원 (나)</b></div>
+  </div>
+  <div class="after"><b>만들면</b> 프로젝트 한 장이 열리고 단계 6이 섭니다.<br>${n ? '고른 영상 3장은 1단계 데이터 올리기에 이미 들어가 있어 <b>2단계 학습데이터 구축</b>부터 시작합니다.' : '첫 할 일은 <b>1단계 데이터 올리기</b> — 영상이 들어오면 지역이 정해집니다.'}<br>관리자 승인 없이 바로 만들어집니다.</div>
+  <div class="ffoot"><span class="lnk q">뒤로</span><span class="btn">프로젝트 만들기</span></div>`;
+}
+
+const root = document.getElementById('create');
+if (STEP === 'review') {
+  document.getElementById('crumbK').textContent = '새 프로젝트 · 검토';
+  root.innerHTML = `<section class="k ctxk" id="ctx">${ctxReview()}</section><section class="k formk"><div class="k-h"><h2>새 프로젝트</h2><span class="ksub">확인하고 만들기</span></div>${side()}</section>`;
+} else {
+  root.innerHTML = `<section class="k ctxk" id="ctx">${STEP === 'name' ? ctxName() : ctxArchive()}</section><section class="k formk" id="formk"><div class="k-h"><h2>새 프로젝트</h2><span class="ksub">새 서비스 하나를 만드는 일</span></div>${form()}</section>`;
+}
+if (f.includes('arc')) { ['nArc', 'nMap'].forEach((id) => document.getElementById(id)?.classList.add('on')); document.getElementById('ctx').classList.add('hi'); }
+if (f.includes('name')) { document.getElementById('nName')?.classList.add('on'); document.getElementById('ctx').classList.add('hi'); }
+if (f.includes('auto')) { document.getElementById('nAuto')?.classList.add('on'); }
+const S = document.getElementById('stamp');
+if (STEP === 'review') S.innerHTML = '<b>시안</b> 만들기 검토 — 옛 자산 B5 검토 화면의 역할(대표 이미지 · 이름 · 항목 표 + 요약 · 만들기)';
+else if (EMPTY) S.innerHTML = '<b>시안</b> 영상을 안 고른 채 — 지역은 비워 두고 1단계 데이터 올리기에서 정해진다';
+else if (STEP === 'name') S.innerHTML = '<b>시안</b> 이름을 적는 중 — 왼쪽은 이미 있는 서비스(카드 · 값은 이 PC 서버)';
+if (Q.get('stamp') === '0') { S.remove(); document.body.classList.remove('has-stamp'); }
+</script>
+</body>
+</html>
