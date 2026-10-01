@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · XI맵에서 지역 먼저 — 남원시를 고르고 '분석'을 누르면 이 지역에 쓸 수 있는 카드가 뜬다 → 전역 분석(같은 작업)</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+/* 바탕 = 지금 XI맵 실제 캡처(LX 직원 · 남원시 · 10-01). 바뀐 부분은 아래 왼쪽 분석 카드만 */
+.xi-bg{background-image:url('../../../../../../../shots/c2/c2-numbers/xi-namwon.png')}
+.xa .cl .c .th.th-farm{background-image:url('../../../../../../../landxi/v3/service-detail/data/img/farm-hero.jpg')}
+.xa .cl .c .th.th-house{background-image:url('../../../../../../../landxi/assets/proto/crops/namwon-greenhouse-2025/2.jpg')}
+.xa .cl .c .th.th-change{background-image:url('../../../../../../../landxi/v3/service-detail/data/img/change-hero.jpg')}
+.xa .cl .c .th.th-marine{background-image:url('../../../../../../../landxi/v3/service-detail/data/img/marine-hero.jpg');filter:grayscale(1);opacity:.6}
+</style>
+</head>
+<body class="m t">
+<div class="xi-bg"></div>
+<section class="xa" aria-label="이 지역 분석">
+  <h3>남원시 분석<span class="x">×</span></h3>
+  <p class="sub">이 지역 영상에 쓸 수 있는 카드 4 · 2025년 드론영상</p>
+  <div class="cl">
+    <div class="c on"><span class="r"></span><span class="th th-farm"></span><span><b>영농관리</b><small>경작 · 휴경 · 시설 · 전용</small></span><span class="ok">운영 중</span></div>
+    <div class="c"><span class="r"></span><span class="th th-house"></span><span><b>비닐하우스</b><small>단동 · 다동</small></span><span class="ok">시범</span></div>
+    <div class="c"><span class="r"></span><span class="th th-change"></span><span><b>국토 변화</b><small>두 시점 비교</small></span><span class="ok">시범</span></div>
+    <div class="c"><span class="r"></span><span class="th"></span><span><b>건축물</b><small>대장과 다른 건물</small></span><span class="ok">시범</span></div>
+    <div class="c off"><span class="r"></span><span class="th th-marine"></span><span><b>해양쓰레기</b><small>해안 영상이 없습니다</small></span><span class="ok">—</span></div>
+  </div>
+  <dl><dt>범위</dt><dd>남원시 전역 · 읍면동 23곳</dd><dt>결과까지</dt><dd>약 14분 <span class="m-small">최근 같은 영상 분석 기준</span></dd></dl>
+  <div class="acts"><button class="t-btn">전역 분석</button><button class="t-btn t-btn--2">읍면동만</button></div>
+  <p class="note">결과는 이 지도에 읍면동 순으로 차오릅니다</p>
+</section>
+<span class="m-note" style="left:540px;top:560px;max-width:440px"><i>1</i>지도에서 지역을 먼저 고른 사람의 길 — 왼쪽 '분석' 도구를 누르면 이 지역에 맞는 카드부터</span>
+<span class="m-note" style="left:540px;top:620px;max-width:440px"><i>2</i>'전역 분석' = 분석하기 화면의 '분석 시작'과 같은 작업(대기열 · 읍면동 순 차오름)</span>
+<span class="m-stamp m-stamp--r"><b>시안</b> Land-XI 화면 · XI맵(지금 캡처 위에 바뀐 카드만) — 걸리는 시간은 예시 자리</span>
+</body>
+</html>

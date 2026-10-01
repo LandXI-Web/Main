@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · 카드 상세(분석하기에서 열었을 때) — 결과 장면 여러 장 · 전후 비교 · 쓰이는 곳 · 영상 조건 · 걸리는 시간 · 버전·담당 · 이 카드로 분석</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.m-app.has-rail{grid-template-rows:64px auto}
+.sec{display:flex;flex-direction:column;gap:12px}
+.sec h2{margin:0;font:700 20px/28px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.sec h2 small{font:500 14px/20px var(--font-body);color:var(--sub);margin-left:8px;letter-spacing:0}
+.mini-map.in-detail{min-height:230px;border-radius:12px}
+</style>
+</head>
+<body class="m m--long t">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">LAND-XI</span>
+    <span class="m-home">LX 직원 대시보드</span>
+    <span class="m-sp"></span>
+    <span class="m-fresh"><i></i>09:34</span>
+    <span class="m-role"><b>LX 직원</b>김도윤</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail" aria-label="메뉴">
+    <span class="m-rail-i" data-ic="home"><span>홈</span></span>
+    <span class="m-rail-i" data-ic="proj"><span>프로젝트</span></span>
+    <span class="m-rail-i" data-ic="analyze" aria-current="true"><span>분석하기</span></span>
+    <span class="m-rail-i" data-ic="card"><span>서비스<br>카드</span></span>
+    <span class="m-rail-i" data-ic="data"><span>데이터</span></span>
+    <span class="m-rail-i" data-ic="inbox"><span class="bd">3</span><span>요청함</span></span>
+  </nav>
+  <main class="m-main">
+    <div class="dt">
+      <div class="col">
+        <div class="crumb"><span>분석하기</span><span class="sep">›</span><span class="k">영농관리 행정서비스</span></div>
+        <div class="hero"><img src="../../../../../../../landxi/v3/service-detail/data/img/farm-hero.jpg" alt=""><span class="cap">남원시 · 2025 드론 정사영상 4시점 · 휴경·전용 판정 필지</span></div>
+        <div class="dt-head">
+          <div class="tags"><span class="chip ga">운영</span><span class="chip">v2.1</span><span class="chip">담당 프로젝트장 미지정</span></div>
+          <h1>영농관리 행정서비스</h1>
+          <p class="m-body">경작·휴경·시설·전용을 영상으로 판정해 확인이 필요한 필지만 남깁니다.</p>
+        </div>
+        <div class="two">
+          <section class="m-card sec">
+            <h2>결과 예시</h2>
+            <div class="big"><span class="lab">현장 확인 필요 · 남원시 · 2026.10.01 기준</span><b>1,035</b><span class="u">필지</span></div>
+            <ul class="reg-l">
+              <li><span class="chip pilot">시범</span><b>강진군</b><span class="n">633<small>필지</small></span></li>
+              <li><span class="chip pilot">시범</span><b>구례군</b><span class="n">555<small>필지</small></span></li>
+              <li><span class="chip pilot">시범</span><b>여수시</b><span class="n">524<small>필지</small></span></li>
+              <li><span class="chip pilot">시범</span><b>목포시</b><span class="n">110<small>필지</small></span></li>
+            </ul>
+          </section>
+          <section class="m-card sec">
+            <h2>영상 ↔ 결과<small>같은 자리</small></h2>
+            <div class="swipe"><img src="../../../../../../../landxi/assets/proto/crops/namwon-farmland-2025/3-clean.jpg" alt=""><img class="after" src="../../../../../../../landxi/assets/proto/crops/namwon-farmland-2025/3@2x.jpg" alt=""><span class="bar"></span><span class="knob">‹›</span><span class="tag l">영상</span><span class="tag r">AI 분석</span></div>
+            <div class="thumbs">
+              <div class="th"><img src="../../../../../../../landxi/v3/service-detail/data/img/namwon-farmland-2025/1@2x.jpg" alt=""><span>경작</span></div>
+              <div class="th"><img src="../../../../../../../landxi/v3/service-detail/data/img/namwon-farmland-2025/2@2x.jpg" alt=""><span>휴경</span></div>
+              <div class="th"><img src="../../../../../../../landxi/v3/service-detail/data/img/namwon-greenhouse-2025/4@2x.jpg" alt=""><span>시설</span></div>
+              <div class="th"><img src="../../../../../../../landxi/v3/service-detail/data/img/namwon-farmland-2025/6@2x.jpg" alt=""><span>전용</span></div>
+            </div>
+          </section>
+        </div>
+        <section class="m-card sec">
+          <h2>쓰이는 곳<small>운영 1 · 시범 4 · 첫 결과 전 2</small></h2>
+          <div class="two">
+            <div class="mini-map in-detail" aria-label="적용 지역">
+              <span class="dot" style="left:52%;top:62%"></span><span class="lab" style="left:52%;top:62%">남원시</span>
+              <span class="dot pilot" style="left:48%;top:66%"></span><span class="lab" style="left:48%;top:66%">구례군</span>
+              <span class="dot pilot" style="left:56%;top:76%"></span><span class="lab" style="left:56%;top:76%">여수시</span>
+              <span class="dot pilot" style="left:36%;top:78%"></span><span class="lab" style="left:36%;top:78%">목포시</span>
+              <span class="dot pilot" style="left:42%;top:76%"></span>
+              <span class="dot pilot" style="left:40%;top:30%"></span><span class="lab" style="left:40%;top:30%">시흥시</span>
+              <span class="dot pilot" style="left:45%;top:56%"></span><span class="lab" style="left:45%;top:56%">익산시</span>
+              <span class="leg"><span><i></i>운영</span><span><i class="p"></i>시범 · 첫 결과 전</span></span>
+            </div>
+            <ul class="reg-l">
+              <li><span class="chip ga">운영</span><b>남원시</b><span class="n">2025년 드론영상</span></li>
+              <li><span class="chip pilot">시범</span><b>강진군 · 구례군 · 여수시 · 목포시</b><span class="n">2023년 항공영상</span></li>
+              <li><span class="chip none">첫 결과 전</span><b>익산시 · 시흥시</b><span class="n">영상 등록 필요</span></li>
+              <li><span class="chip">기관 신고</span><b>남원시 103건 · 구례군 1건</b><span class="n">요청함</span></li>
+            </ul>
+          </div>
+        </section>
+        <section class="m-card sec">
+          <h2>이 카드의 조건</h2>
+          <dl class="dl">
+            <div><dt>입력 영상</dt><dd>드론·항공 정사영상 <small>50cm 이하</small></dd></div>
+            <div><dt>시점</dt><dd>영농기·수확기 2시점 이상 <small>1시점도 가능</small></dd></div>
+            <div><dt>걸리는 시간</dt><dd>첫 분석 뒤 표시 <small>최근 분석 기록으로</small></dd></div>
+            <div><dt>찾는 것</dt><dd>경작지 · 비경작지 · 비닐하우스</dd></div>
+            <div><dt>대조</dt><dd>지목(기본) · 농지 대장 양식</dd></div>
+            <div><dt>버전 · 담당</dt><dd>v2.1 · 담당 미지정 <small>발행 때 프로젝트장 기록</small></dd></div>
+          </dl>
+        </section>
+      </div>
+      <aside class="side m-card">
+        <div class="m-card-h"><h2>이 카드로 분석</h2></div>
+        <div class="m-f"><p class="m-label"><i>1</i>어디<small>여러 곳 가능</small></p>
+          <div class="m-field"><span class="t-chip">구례군</span><span class="ph">시군구 이름을 검색</span></div>
+          <p class="okl"><b>구례군</b> 2023년 항공영상 · 카드 조건에 맞음 ✓</p>
+        </div>
+        <div class="m-f"><p class="m-label"><i>2</i>결과까지</p>
+          <p class="eta"><b>—</b>첫 분석 뒤 최근 기록으로 표시</p>
+        </div>
+        <button class="t-btn">분석 시작</button>
+        <p class="m-small">작업 대기열에 들어가고, 결과는 XI맵에서 읍면동 순으로 차오릅니다. 끝나면 요청함에 알립니다.</p>
+        <p class="alt">서비스 카드에서 관리하기 →</p>
+      </aside>
+    </div>
+    <span class="m-note" style="left:620px;top:585px;max-width:370px"><i>1</i>결과 장면 여러 장 + 영상↔결과 비교 — 모두 실제 결과 크롭</span>
+    <span class="m-note" style="left:1040px;top:560px;max-width:380px"><i>2</i>오른쪽 고정: 어디 → 영상 있음 확인 → 분석 시작(XI맵 전역 분석과 같은 작업)</span>
+  </main>
+</div>
+<span class="m-stamp"><b>시안</b> Land-XI 화면 · 카드 상세(분석하기에서) — 숫자는 이 PC 서버(10-01), 지도 점 자리는 시안용 근사</span>
+<script src="icons.js"></script>
+</body>
+</html>

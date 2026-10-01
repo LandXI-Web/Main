@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · LX 직원 대시보드 1안 — 내 프로젝트 진행 · 요청함 · 우리 서비스(결과 장면) · 최근 활동 · 바로 분석</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.dash{position:absolute;inset:0;padding:24px;display:grid;grid-template-columns:minmax(0,1fr) 440px;grid-template-rows:auto minmax(0,1fr);gap:16px;align-content:start}
+.dash .right{display:flex;flex-direction:column;gap:16px;grid-row:1/3}
+.dash .svcs{grid-row:2}
+.go-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.go-row .m-field{height:44px}
+</style>
+</head>
+<body class="m t">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">LAND-XI</span>
+    <span class="m-home">LX 직원 대시보드</span>
+    <span class="m-sp"></span>
+    <span class="m-fresh"><i></i>09:34</span>
+    <span class="m-role"><b>LX 직원</b>김도윤</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail" aria-label="메뉴">
+    <span class="m-rail-i" data-ic="home" aria-current="true"><span>홈</span></span>
+    <span class="m-rail-i" data-ic="proj"><span>프로젝트</span></span>
+    <span class="m-rail-i" data-ic="analyze"><span>분석하기</span></span>
+    <span class="m-rail-i" data-ic="card"><span>서비스<br>카드</span></span>
+    <span class="m-rail-i" data-ic="data"><span>데이터</span></span>
+    <span class="m-rail-i" data-ic="inbox"><span class="bd">3</span><span>요청함</span></span>
+  </nav>
+  <main class="m-main">
+    <div class="dash">
+      <section class="m-card mine">
+        <div class="m-card-h"><h2>내 프로젝트</h2><span class="m-more">전체 보기 4</span></div>
+        <div class="pj"><span class="nm">건축물 2026<small>원주시</small></span><span class="seg"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="n"></i></span><span class="st"><i>6</i>서비스 관리</span><span class="nx">결과 확인 대기 <b>60필지</b></span></div>
+        <div class="pj"><span class="nm">비닐하우스 2026<small>증평군 외 2곳</small></span><span class="seg"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="n"></i></span><span class="st"><i>6</i>서비스 관리</span><span class="nx">남원시 결과 도착</span></div>
+        <div class="pj"><span class="nm">곤포사일리지 2026<small>보령시</small></span><span class="seg"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="n"></i></span><span class="st"><i>6</i>서비스 관리</span><span class="nx">결과 확인 대기 <b>723필지</b></span></div>
+        <div class="foot"><span class="new">새 프로젝트</span></div>
+      </section>
+
+      <section class="m-card svcs">
+        <div class="m-card-h"><h2>우리 서비스<small>운영 2 · 시범 9 · 15곳</small></h2><span class="m-more">서비스 카드</span></div>
+        <div class="svc-strip">
+          <div class="svc"><div class="th"><img src="../../../../../../../landxi/v3/service-detail/data/img/farm-hero.jpg" alt=""><span class="chip ga">운영</span></div><span class="nm">영농관리</span><span class="wh">남원시 · <b>기관 신고 103</b></span></div>
+          <div class="svc"><div class="th"><img src="../../../../../../../landxi/v3/service-detail/data/img/marine-hero.jpg" alt=""><span class="chip ga">운영</span></div><span class="nm">해양쓰레기</span><span class="wh">여수시</span></div>
+          <div class="svc"><div class="th"><img src="../../../../../../../landxi/assets/proto/crops/namwon-greenhouse-2025/2@2x.jpg" alt=""><span class="chip pilot">시범</span></div><span class="nm">비닐하우스</span><span class="wh">증평 · 함양 · 남원</span></div>
+          <div class="svc"><div class="th"><img src="../../../../../../../landxi/v3/service-detail/data/img/change-hero.jpg" alt=""><span class="chip pilot">시범</span></div><span class="nm">국토 변화</span><span class="wh">남원시</span></div>
+        </div>
+        <div class="issues"><span class="chip warn">재학습 필요 3</span><span class="chip">영상 없는 지역 3곳</span></div>
+      </section>
+
+      <div class="right">
+        <section class="m-card">
+          <div class="m-card-h"><h2>요청함</h2><span class="m-more">전체</span></div>
+          <div class="cells">
+            <div class="cell"><b>2</b><span>검토 요청</span></div>
+            <div class="cell"><b>1</b><span>분석 의뢰</span></div>
+            <div class="cell is-zero"><b>0</b><span>내 결재</span></div>
+          </div>
+        </section>
+        <section class="m-card">
+          <div class="m-card-h"><h2>바로 분석하기</h2><span class="m-more">카드 고르기</span></div>
+          <div class="go-row"><div class="m-field"><span class="m-label" style="margin-right:4px">어디</span><span class="ph">시군구 이름을 검색</span></div><button class="t-btn">분석하기</button></div>
+        </section>
+        <section class="m-card">
+          <div class="m-card-h"><h2>최근 활동</h2></div>
+          <ul class="act">
+            <li><span class="when">09:16</span><span><b>영농관리</b> 남원시 결과 갱신</span></li>
+            <li><span class="when">어제 19:58</span><span><b>건축물</b> 원주시 전역 분석 끝남</span></li>
+          </ul>
+        </section>
+      </div>
+    </div>
+    <span class="m-note" style="left:400px;top:430px;max-width:520px"><i>1</i>프로젝트마다 6칸 진행 막대 + 다음 할 일 — 숫자는 결과 확인 대기(서버 요약)</span>
+    <span class="m-note" style="left:120px;top:752px;max-width:620px"><i>2</i>우리 서비스 = 실제 결과 장면 썸네일 · 어디서 도나 · 살펴볼 것(재학습 · 기관 신고 · 영상 없음)</span>
+    <span class="m-note" style="left:930px;top:640px;max-width:420px"><i>3</i>요청함 — 기관이 나를 기다리는 것부터(검토 요청 · 분석 의뢰 · 내 결재)</span>
+    <span class="m-note" style="left:930px;top:690px;max-width:420px"><i>4</i>지역만 고르면 쓸 수 있는 카드로 — 분석하기와 같은 작업</span>
+  </main>
+</div>
+<span class="m-stamp m-stamp--r"><b>시안</b> Land-XI 화면 · LX 직원 대시보드 1안 — 프로젝트·서비스 값은 이 PC 서버(10-01), 요청함·최근 활동은 예시</span>
+<script src="icons.js"></script>
+</body>
+</html>

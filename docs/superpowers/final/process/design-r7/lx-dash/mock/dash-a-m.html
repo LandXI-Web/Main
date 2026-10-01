@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · LX 직원 대시보드 1안 휴대폰 — 세로로 같은 네 묶음</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.svc-row{display:flex;gap:10px;overflow:hidden}
+.svc-row .svc{flex:0 0 150px}
+.go-col{display:flex;flex-direction:column;gap:8px}
+.go-col .t-btn{width:100%}
+</style>
+</head>
+<body class="m m--m t">
+<div class="m-app m-app--m">
+  <header class="m-mast">
+    <span class="m-word">LAND-XI</span>
+    <span class="m-sp"></span>
+    <span class="m-role"><b>LX 직원</b>김도윤</span>
+    <span class="m-mast-b m-help">?</span>
+  </header>
+  <main class="m-main">
+    <section class="m-card mine">
+      <div class="m-card-h"><h2>내 프로젝트<small>4</small></h2><span class="m-more">전체</span></div>
+      <div class="pj"><span class="nm">건축물 2026<small>원주시</small></span><span class="seg"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="n"></i></span><span class="nx">결과 확인 대기 <b>60필지</b></span></div>
+      <div class="pj"><span class="nm">비닐하우스 2026<small>증평군 외 2곳</small></span><span class="seg"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="n"></i></span><span class="nx">남원시 결과 도착</span></div>
+      <div class="pj"><span class="nm">곤포사일리지 2026<small>보령시</small></span><span class="seg"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="n"></i></span><span class="nx">결과 확인 대기 <b>723필지</b></span></div>
+    </section>
+    <section class="m-card">
+      <div class="m-card-h"><h2>요청함</h2><span class="m-more">전체</span></div>
+      <div class="cells">
+        <div class="cell"><b>2</b><span>검토 요청</span></div>
+        <div class="cell"><b>1</b><span>분석 의뢰</span></div>
+        <div class="cell is-zero"><b>0</b><span>내 결재</span></div>
+      </div>
+    </section>
+    <section class="m-card">
+      <div class="m-card-h"><h2>우리 서비스</h2><span class="m-more">카드</span></div>
+      <div class="svc-row">
+        <div class="svc"><div class="th"><img src="../../../../../../../landxi/v3/service-detail/data/img/farm-hero.jpg" alt=""><span class="chip ga">운영</span></div><span class="nm">영농관리</span><span class="wh">남원시 · <b>신고 103</b></span></div>
+        <div class="svc"><div class="th"><img src="../../../../../../../landxi/v3/service-detail/data/img/marine-hero.jpg" alt=""><span class="chip ga">운영</span></div><span class="nm">해양쓰레기</span><span class="wh">여수시</span></div>
+        <div class="svc"><div class="th"><img src="../../../../../../../landxi/assets/proto/crops/namwon-greenhouse-2025/2@2x.jpg" alt=""><span class="chip pilot">시범</span></div><span class="nm">비닐하우스</span><span class="wh">3곳</span></div>
+      </div>
+      <div class="issues"><span class="chip warn">재학습 필요 3</span><span class="chip">영상 없는 지역 3곳</span></div>
+    </section>
+    <section class="m-card">
+      <div class="m-card-h"><h2>바로 분석하기</h2></div>
+      <div class="go-col">
+        <div class="m-field"><span class="m-label" style="margin-right:4px">어디</span><span class="ph">시군구 검색</span></div>
+        <button class="t-btn">분석하기</button>
+      </div>
+    </section>
+  </main>
+  <nav class="m-tabs" aria-label="메뉴">
+    <span class="m-rail-i" data-ic="home" aria-current="true"><span>홈</span></span>
+    <span class="m-rail-i" data-ic="proj"><span>프로젝트</span></span>
+    <span class="m-rail-i" data-ic="analyze"><span>분석하기</span></span>
+    <span class="m-rail-i" data-ic="inbox"><span class="bd">3</span><span>요청함</span></span>
+    <span class="m-rail-i" data-ic="menu"><span>메뉴</span></span>
+  </nav>
+</div>
+<span class="m-stamp"><b>시안</b> LX 직원 대시보드 1안 · 휴대폰</span>
+<script src="icons.js"></script>
+</body>
+</html>
