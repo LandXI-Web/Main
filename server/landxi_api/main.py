@@ -125,6 +125,7 @@ for m in (auth, catalog, jobs, events, results, parcels, feedback, registry, dep
           regions, public, ledger, approvals, summary):   # F3 최종 명세 §3 S-1…S-9 · summary(fix-server-summary)
     app.include_router(m.router, prefix=API)
 app.include_router(tiles.router)
+app.include_router(importlib.import_module("landxi_api.projects").router, prefix=API)   # 프로젝트 — LX 직원의 일 단위(구현 2차 T1 · 확인 대장 R-D3 · 흐름-1)
 
 # 확장 라우터 훅(D0 · F2-S survey · F2-E agent) — main.py 를 만지지 않고 붙는다.
 # 모듈이 없으면 조용히(로그 1줄) · 있는데 import 오류면 기동 실패로 드러나게(예외 그대로).

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import secrets
 
 from fastapi import APIRouter, Query, Request
@@ -203,6 +204,7 @@ async def cards(request: Request, public: int | None = None):
         cs = await conn.fetch("SELECT id, name, scope, domain, kind, status_history, portable, ledger_schema, intro, crop_url FROM cards ORDER BY id")
         vs = await conn.fetch("SELECT id, card_id, version, model_ids, modules FROM card_versions ORDER BY id")
         ds = await conn.fetch("SELECT id, card_id, stage, snapshot_current, scale, coalesce(test,false) AS test, tenant_id FROM deploys")
+        owners = {} if pub else await _card_owners(conn)
     items = []
     for c in cs:
         mine = [v for v in vs if v["card_id"] == c["id"]]
@@ -220,12 +222,21 @@ async def cards(request: Request, public: int | None = None):
             continue
         mods = (mine[-1]["modules"] if mine else None) or {}
         items.append({"id": c["id"], "name": name, "scope": c["scope"], "status": c["status_history"], "status3": st, "status_label": STATUS_LABEL[st],
+                      **({"project": owners[c["id"]]["project"], "owner": owners[c["id"]]["owner"]} if c["id"] in owners else {}),
                       "versions": [v["id"] for v in mine], "modules": {"core": mods.get("core", []), "ext": mods.get("ext", [])},
                       "models": list((mine[-1]["model_ids"] if mine else None) or []),
                       "ledger_schema": c["ledger_schema"], "intro": c["intro"], "crop_url": c["crop_url"],
                       "deploys": [{"id": d["id"], "stage": d["stage"], "tenant_id": d["tenant_id"]} for d in dps if not d["test"]]})
     return {"items": items, "total": len(items), "n": env(len(items), "count", "recorded", "cards" + (" · 실결과 있는 배포본" if pub else "")), "public": pub,
             "as_of": now_iso()}
+
+
+async def _card_owners(conn) -> dict:
+    """카드 → 만든 프로젝트 · 담당(= 그 프로젝트장 · 구현 2차 T1 · 원칙 63). 프로젝트 없이 만든 옛 카드는 없음."""
+    rows = await conn.fetch("SELECT l.ref, p.id, p.name, u.name AS lead, u.role FROM project_links l JOIN projects p ON p.id=l.project_id "
+                            "LEFT JOIN lx_users u ON u.id=p.lead_id WHERE l.kind='card'")
+    word = {"admin": "LX 관리자", "staff": "LX 직원"}
+    return {r["ref"]: {"project": {"id": r["id"], "name": r["name"]}, "owner": r["lead"] or word.get(r["role"], "LX")} for r in rows}
 
 
 ROLES_OK = {"pnu", "jibun", "emd", "ri", "bon", "bu", "san", "status", "use", "date", "area", "permit_no", "owner_type", "lon", "lat"}
@@ -275,7 +286,10 @@ async def ledger_kinds(request: Request):
 @router.post("/registry/cards", status_code=201)
 async def create_card(body: dict, request: Request):
     """서비스 만들기(r3-train · C5) — 등록된 모델 + 규칙(기존 규칙 중 선택) + 대장 형식 → 새 서비스 카드 + 첫 버전(1.0).
-    본문 {name, model_id, rules:[id..], ledger_kind | ledger_schema{kind, columns}, domain?}. LX 직원·관리자."""
+    본문 {name, model_id, rules:[id..], ledger_kind | ledger_schema{kind, columns}, domain?, project_id?}. LX 직원·관리자.
+    project_id(구현 2차 T1 · 4차 P1): 발행 요청은 그 프로젝트의 프로젝트장이 한다. 공개 결재 요청에 프로젝트가 붙고(payload project_id · project_name ·
+    owner) 카드는 그 프로젝트에 이어진다(공개된 카드의 담당 = 프로젝트장). 그 프로젝트에 이미 카드가 있으면(보완 회차 · 재학습) 새 카드가 아니라
+    같은 카드의 새 판을 만들고 그 판의 공개를 결재에 올린다(재학습 결과의 배포는 관리자 승인 · 역할-3 ⓑ)."""
     p = require(principal(request), lx=True)
     if p.role not in ("staff", "admin"):
         raise ApiError("forbidden", "LX 직원·관리자만 서비스를 만듭니다")
@@ -286,7 +300,15 @@ async def create_card(body: dict, request: Request):
         raise ApiError("bad_request", "서비스 이름을 적어 주세요")
     if not isinstance(rules, list) or not all(isinstance(x, str) for x in rules):
         raise ApiError("bad_request", "rules 는 규칙 id 목록")
+    pid = str(body.get("project_id") or "") or None
     async with db(realm="lx") as conn:
+        prj = None
+        if pid:
+            prj = await conn.fetchrow("SELECT id, name, lead_id, round FROM projects WHERE id=$1", pid)
+            if not prj:
+                raise ApiError("not_found", "프로젝트가 없습니다")
+            if prj["lead_id"] != p.user_id:
+                raise ApiError("forbidden", "서비스 카드 발행 요청은 프로젝트장이 합니다")
         await sync_model_approvals(conn)
         m = await conn.fetchrow("SELECT id, status, name, task, classes FROM models WHERE id=$1", mid) if mid else None
         if not m:
@@ -311,33 +333,56 @@ async def create_card(body: dict, request: Request):
                 from .ledger import KINDS
                 raise ApiError("bad_request", "대장 형식을 골라 주세요", {"allowed": list(KINDS)})
             schema = src
-        cid = "card-" + secrets.token_hex(3)
-        while await conn.fetchval("SELECT 1 FROM cards WHERE id=$1", cid):
+        prev_card = await conn.fetchval("SELECT ref FROM project_links WHERE project_id=$1 AND kind='card' ORDER BY at LIMIT 1", pid) if pid else None
+        if prev_card:                               # 같은 프로젝트의 다음 회차 — 같은 카드의 새 판(이미 대기 중인 판이 있으면 거절)
+            wait_cv = await conn.fetchval("SELECT a.subject_id FROM approvals a JOIN project_links l ON l.kind='card_version' AND l.ref=a.subject_id "
+                                          "AND l.project_id=$1 WHERE a.subject_type='card' AND a.state='pending' LIMIT 1", pid)
+            if wait_cv:
+                raise ApiError("conflict", "공개 결재를 기다리는 판이 있습니다", {"card_version_id": wait_cv}, 409)
+            cid = prev_card
+            nums = [float(v) for v in [x["version"] for x in await conn.fetch("SELECT version FROM card_versions WHERE card_id=$1", cid)]
+                    if re.fullmatch(r"\d+(\.\d+)?", str(v or ""))]
+            ver = f"{int(max(nums, default=0)) + 1}.0"
+            cv = f"{cid}@{ver}"
+            last_round = await conn.fetchval("SELECT max(round) FROM project_links WHERE project_id=$1 AND kind='card_version'", pid) or 1
+            note = f"{prj['round']}차 재학습" if prj["round"] > last_round else "공개 다시 요청"
+            await conn.execute("INSERT INTO card_versions(id, card_id, version, model_ids, modules, changelog, approved_by, approved_at) "
+                               "VALUES ($1,$2,$3,$4,$5,$6,NULL,NULL)", cv, cid, ver, [mid],
+                               {"core": CORE_MODULES, "ext": {"mod-parcel": bool(rules)}, "rules": rules}, note)
+        else:
             cid = "card-" + secrets.token_hex(3)
-        domain = str(body.get("domain") or name)[:80]
-        await conn.execute("INSERT INTO cards(id, name, scope, domain, kind, status_history, portable, ledger_schema) "
-                           "VALUES ($1,$2,'local',$3,$4,'검토',true,$5)", cid, {"ko": name, "en": name}, domain,
-                           json.dumps({"input": ["ortho"], "output": ["polygon"], "viz": ["layer", "chart"]}), schema)
-        cv = f"{cid}@1.0"
-        # 서비스 공개 = LX 관리자 승인 뒤(확인 D2-ⓐ · impl-1) — 만든 직원을 승인자로 적지 않는다. 승인자는 결재함에서 승인한 관리자(approvals.decide)
-        await conn.execute("INSERT INTO card_versions(id, card_id, version, model_ids, modules, changelog, approved_by, approved_at) "
-                           "VALUES ($1,$2,'1.0',$3,$4,$5,NULL,NULL)", cv, cid, [mid],
-                           {"core": CORE_MODULES, "ext": {"mod-parcel": bool(rules)}, "rules": rules}, "서비스 만들기")
+            while await conn.fetchval("SELECT 1 FROM cards WHERE id=$1", cid):
+                cid = "card-" + secrets.token_hex(3)
+            domain = str(body.get("domain") or name)[:80]
+            await conn.execute("INSERT INTO cards(id, name, scope, domain, kind, status_history, portable, ledger_schema) "
+                               "VALUES ($1,$2,'local',$3,$4,'검토',true,$5)", cid, {"ko": name, "en": name}, domain,
+                               json.dumps({"input": ["ortho"], "output": ["polygon"], "viz": ["layer", "chart"]}), schema)
+            cv = f"{cid}@1.0"
+            # 서비스 공개 = LX 관리자 승인 뒤(확인 D2-ⓐ · impl-1) — 만든 직원을 승인자로 적지 않는다. 승인자는 결재함에서 승인한 관리자(approvals.decide)
+            await conn.execute("INSERT INTO card_versions(id, card_id, version, model_ids, modules, changelog, approved_by, approved_at) "
+                               "VALUES ($1,$2,'1.0',$3,$4,$5,NULL,NULL)", cv, cid, [mid],
+                               {"core": CORE_MODULES, "ext": {"mod-parcel": bool(rules)}, "rules": rules}, "서비스 만들기")
+        if prj:                                     # 발행 요청이 어느 프로젝트에서 왔나 · 카드의 담당 = 그 프로젝트장
+            from .projects import link
+            await link(conn, pid, "card", cid, p.user_id)
+            await link(conn, pid, "card_version", cv, p.user_id)
         aid = "ap_" + secrets.token_hex(6)
         mname = await conn.fetchval("SELECT name->>'ko' FROM models WHERE id=$1", mid)
         rnames = [r["name"] for r in await conn.fetch("SELECT name FROM survey_rules WHERE id = ANY($1::text[]) ORDER BY id", rules)] if rules else []
         await conn.execute("INSERT INTO approvals(id, subject_type, subject_id, requested_by, state, payload, reason, tenant_id, at) "
                            "VALUES ($1,'card',$2,$3,'pending',$4,$5,'lx',now())", aid, cv, p.user_id,
                            {"action": "publish", "card_id": cid, "name": name, "model_name": mname, "rules": rnames,
-                            "ledger_kind": schema.get("kind")}, str(body.get("reason") or "").strip()[:200] or "서비스 공개")
+                            "ledger_kind": schema.get("kind"),
+                            **({"project_id": pid, "project_name": prj["name"], "owner": p.name, "version": cv.split("@")[-1]} if prj else {})},
+                           str(body.get("reason") or "").strip()[:200] or (note if prev_card else "서비스 공개"))
         # 규칙을 고른 서비스 = 필지 대조(실태조사까지 · 고른 규칙만). 규칙이 없으면 AI 분석까지만(탐지 서비스)
         await audit(conn, p, "card.create", cid, None, {"card_version_id": cv, "model_id": mid, "rules": rules, "ledger_kind": schema.get("kind"),
-                                                        "approval_id": aid})
+                                                        "approval_id": aid, "project_id": pid})
     from .jobs import ops_event
     await ops_event("deploy.changed", {"card_id": cid, "action": "card.create", "by": p.user_id, "at": now_iso()})
     await ops_event("approval.requested", {"approval_id": aid, "subject_type": "card", "subject_id": cv, "by": p.user_id, "at": now_iso()})
     return {"id": cid, "name": name, "card_version_id": cv, "models": [mid], "rules": rules, "ledger_schema": schema,
-            "approval_id": aid, "publish": "pending", "as_of": now_iso()}
+            "approval_id": aid, "publish": "pending", "project_id": pid, "as_of": now_iso()}
 
 
 @router.put("/registry/cards/{cid}/ledger_schema")

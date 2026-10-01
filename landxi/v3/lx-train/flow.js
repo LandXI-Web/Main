@@ -74,8 +74,10 @@ async function authBlob(path) {
   return URL.createObjectURL(await r.blob());
 }
 
-/** 원스톱 서랍 — host = 학습 판 · who = 관문 결과(역할) */
-export function openFlow({ host, who }) {
+/** 원스톱 서랍 — host = 학습 판 · who = 관문 결과(역할) · project = 프로젝트 맥락(구현 2차 T1 · 없으면 지금까지와 같다).
+    프로젝트 안: 업무 · 표본 지역은 프로젝트 값으로 채우고, 올린 표본은 그 프로젝트 학습데이터로 이어지며(서버), 학습 · 서비스 카드 발행 요청에
+    프로젝트가 붙는다. 학습 시작 = 프로젝트장 · 구성원(공개된 서비스는 서버도 거절) · 발행 요청 = 프로젝트장. */
+export function openFlow({ host, who, project = null }) {
   const isAdmin = who?.me?.role === 'admin';
   const body = h('div.tf');
   const d = drawer({ title: '새 모델 만들기', body, host, slot: 'right', label: '새 모델 만들기',
@@ -93,7 +95,7 @@ export function openFlow({ host, who }) {
   const s2 = sec(2, '라벨 확인');
   const s3 = sec(3, '학습');
   const s4 = sec(4, '결과 확인 · 등록');
-  const s5 = sec(5, '서비스 만들기');
+  const s5 = sec(5, project ? '서비스 카드 발행 요청' : '서비스 만들기');
   const lock = (el, on) => el.closest('.tf-s').classList.toggle('is-lock', on);
   [s2, s3, s4, s5].forEach((x) => lock(x, true));
 
@@ -110,7 +112,9 @@ export function openFlow({ host, who }) {
   let region = null, LIMIT = 400 * 1048576;
   s1.append(h('label.t-label', { text: '업무' }), task, h('label.t-label', { text: '표본 지역(선택)' }), regEl,
     h('label.t-label', { text: '라벨 표본 묶음(zip · 그림 200장 이하)' }), file, h('div.tf-act', {}, up), upBar, upMsg, prev);
-  regionPicker(regEl, { onPick: (r) => { region = r; } });
+  const dom = project?.regions?.find((g) => !g.abroad) || null;
+  regionPicker(regEl, { onPick: (r) => { region = r; }, value: dom?.code });
+  if (project) { task.value = project.task || ''; if (dom) region = { sgg_cd: dom.code }; }
   const say1 = (t, lv = '') => { upMsg.textContent = t; upMsg.dataset.lv = lv; };
   let bad = false;
   const ready = () => { up.disabled = bad || !(task.value.trim() && file.files?.length); };
@@ -177,7 +181,7 @@ export function openFlow({ host, who }) {
     up.disabled = true; upBar.hidden = false; upBar.querySelector('i').style.width = '2%';
     say1('올리는 중');
     try {
-      const j = await sendChunked(f, { task_name: task.value.trim(), ...(region?.sgg_cd ? { region: region.sgg_cd } : {}) }, (done, total, sec) => {
+      const j = await sendChunked(f, { task_name: task.value.trim(), ...(region?.sgg_cd ? { region: region.sgg_cd } : {}), ...(project ? { project_id: project.id } : {}) }, (done, total, sec) => {
         const pct = total ? Math.round((done / total) * 100) : 0;
         upBar.querySelector('i').style.width = Math.max(2, pct) + '%'; upBar.setAttribute('aria-valuenow', String(pct));
         say1(done >= total ? '다 올렸습니다 — 묶음을 풀어 검사하는 중' : `올리는 중 ${MB(done)} / ${MB(total)} MB${left(sec)}`);
@@ -192,15 +196,27 @@ export function openFlow({ host, who }) {
       ready();
     }
   });
-  /* 이전에 올린 표본 이어 쓰기 */
-  api('/training/samples').then((j) => {
+  /* 이전에 올린 표본 이어 쓰기 — 프로젝트 안이면 그 프로젝트 표본 먼저, 다른 표본을 고르면 이 프로젝트 학습데이터로 더한다(보관된 학습데이터 불러오기 · 원칙 74) */
+  const opt = (x) => `<option value="${esc(x.id)}">${esc(x.task_name)}${x.region_name ? ' · ' + esc(x.region_name) : ''} · ${nf(val(x.images))}장 · ${esc(String(x.created_at || '').slice(0, 10).replace(/-/g, '.'))}</option>`;
+  Promise.all([api('/training/samples'), project ? api('/training/samples?project=' + encodeURIComponent(project.id)) : null]).then(([j, pj]) => {
     const items = j?.items || [];
     if (!items.length) return;
+    const mine = new Set((pj?.items || []).map((x) => x.id));
     prev.hidden = false;
-    prev.innerHTML = '<option value="">이전에 올린 표본 이어 쓰기</option>' + items.map((x) =>
-      `<option value="${esc(x.id)}">${esc(x.task_name)}${x.region_name ? ' · ' + esc(x.region_name) : ''} · ${nf(val(x.images))}장 · ${esc(String(x.created_at || '').slice(0, 10).replace(/-/g, '.'))}</option>`).join('');
-    prev.addEventListener('change', async () => { if (prev.value) showSample(await api('/training/samples/' + prev.value)); });
+    prev.innerHTML = '<option value="">이전에 올린 표본 이어 쓰기</option>'
+      + (mine.size ? `<optgroup label="이 프로젝트">${(pj.items || []).map(opt).join('')}</optgroup><optgroup label="다른 표본">` : '')
+      + items.filter((x) => !mine.has(x.id)).map(opt).join('') + (mine.size ? '</optgroup>' : '');
+    prev.addEventListener('change', async () => {
+      if (!prev.value) return;
+      if (project && !mine.has(prev.value) && project.can?.work) {
+        await api(`/projects/${project.id}/samples`, { method: 'POST', body: { sample_id: prev.value } }).then(() => { mine.add(prev.value); toast('이 프로젝트 학습데이터로 더했습니다'); }).catch(() => {});
+      }
+      showSample(await api('/training/samples/' + prev.value));
+    });
+    /* 프로젝트 안 · 주소에 표본이 없으면 그 프로젝트의 최근 표본을 이어서 연다 */
+    if (project && mine.size && !Q().get('sample') && !sample) api('/training/samples/' + pj.items[0].id).then(showSample).catch(() => {});
   }).catch(() => {});
+  if (project && !project.can?.work) { up.remove(); file.disabled = true; say1('표본 올리기는 프로젝트장과 구성원이 합니다'); }
 
   /* ── ② 라벨 확인 ─────────────────────────────── */
   const PAGE = 9;
@@ -274,6 +290,8 @@ export function openFlow({ host, who }) {
   async function buildTrain() {
     if (s3.childElementCount) { pickBase(); return; }
     s3.append(h('label.t-label', { text: '기반 모델' }), baseSel, h('p.t-label.tf-note', { text: '작은 표본 · 3회차 · 한 번에 한 건(대기열)' }), h('div.tf-act', {}, go), bar, trMsg, epochs);
+    /* 프로젝트 안: 학습 시작 = 프로젝트장 · 구성원(공개된 서비스의 재학습은 서버도 거절 — 역할-3 ⓑ) */
+    if (project && !project.can?.train) { go.remove(); trMsg.textContent = '학습은 프로젝트장과 구성원이 시작합니다'; }
     let all = [];
     try { all = await loadModels(); } catch { trMsg.textContent = '모델 목록을 불러오지 못했습니다'; trMsg.dataset.lv = 'warn'; trMsg.after(retryBtn(() => { s3.innerHTML = ''; buildTrain(); })); return; }
     const ms = all.filter((m) => ['seg', 'det', 'obb'].includes(m.task) && m.status === 'registered' && m.weights_uri !== null);
@@ -290,7 +308,7 @@ export function openFlow({ host, who }) {
   go.addEventListener('click', async () => {
     if (!sample) return;
     const body = { kind: 'train', base_model: baseSel.value, samples: [sample.id], region: sample.sgg_cd || undefined,
-      options: { epochs: 3, batch: 4, imgsz: 640 }, label: `학습 · ${sample.task_name}` };
+      options: { epochs: 3, batch: 4, imgsz: 640, ...(project ? { project_id: project.id } : {}) }, label: `학습 · ${sample.task_name}` };
     go.disabled = true; trMsg.dataset.lv = ''; trMsg.textContent = '대기열에 넣는 중';
     try {
       const q = await api('/jobs/quote', { method: 'POST', body });
@@ -303,7 +321,7 @@ export function openFlow({ host, who }) {
     } catch (e) {
       devlog('train', e.code || e.message);
       const pw = e.code === 'power_budget' || (e.reasons || e.detail?.reasons || []).includes('power_budget');
-      trMsg.textContent = pw ? '다른 학습이 도는 중입니다 — 끝난 뒤 다시 실행하세요' : '지금은 학습을 시작할 수 없습니다';
+      trMsg.textContent = pw ? '다른 학습이 도는 중입니다 — 끝난 뒤 다시 실행하세요' : (e.code === 'forbidden' && e.message) || '지금은 학습을 시작할 수 없습니다';
       trMsg.dataset.lv = 'warn'; go.disabled = false;
     }
   });
@@ -429,7 +447,9 @@ export function openFlow({ host, who }) {
     const name = h('input.t-input', { type: 'text', maxlength: '60', value: `${sample?.task_name || model?.name?.split(' · ')[0] || ''}`.trim(), 'aria-label': '서비스 이름' });
     const rulesEl = h('div.tf-rules');
     const ledger = h('select.t-input', { 'aria-label': '대장 형식' });
-    const mk = h('button.t-btn', { type: 'button', text: '서비스 만들기' });
+    /* 프로젝트 안: 이름이 '서비스 카드 발행 요청'(흐름-1 7단계) · 다음 회차(이미 카드가 있으면) = 같은 카드의 새 판 · 발행 요청은 프로젝트장 */
+    const pub = project?.stages?.find((x) => x.key === 'publish') || null;
+    const mk = h('button.t-btn', { type: 'button', text: project ? (project.card ? '새 판 발행 요청' : '서비스 카드 발행 요청') : '서비스 만들기' });
     const out = h('div.tf-out');
     s5.append(h('label.t-label', { text: '서비스 이름' }), name, h('p.t-label', { text: '모델' }), h('p.tf-m', { text: model?.name || '' }),
       h('p.t-label', { text: '규칙' }), rulesEl, h('label.t-label', { text: '대장 형식' }), ledger, h('div.tf-act', {}, mk), out);
@@ -450,13 +470,17 @@ export function openFlow({ host, who }) {
       mk.disabled = true;
       const rules = [...rulesEl.querySelectorAll('input:checked')].map((x) => x.value);
       try {
-        card = await api('/registry/cards', { method: 'POST', body: { name: name.value.trim(), model_id: model.id, rules, ledger_kind: ledger.value, domain: sample?.task_name } });
+        card = await api('/registry/cards', { method: 'POST', body: { name: name.value.trim(), model_id: model.id, rules, ledger_kind: ledger.value, domain: sample?.task_name,
+          ...(project ? { project_id: project.id } : {}) } });
         setQ({ card: card.id });
-        toast('서비스를 만들고 공개 결재를 요청했습니다');
+        toast(project ? '서비스 카드 발행을 요청했습니다 — LX 관리자 결재 뒤 공개됩니다' : '서비스를 만들고 공개 결재를 요청했습니다');
         showCard(out);
       } catch (e) { devlog('card', e.code || e.message); toast(e.message || '서비스를 만들지 못했습니다'); mk.disabled = false; }
     });
-    if (Q().get('card')) { card = { id: Q().get('card') }; mk.disabled = true; showCard(out); }
+    if (project && !project.can?.publish) { mk.remove(); out.before(h('p.t-label.tf-note', { text: '발행 요청은 프로젝트장이 합니다' })); }
+    /* 주소의 카드 — 프로젝트 안에서는 이번 회차 발행 요청이 끝났거나(공개) 결재 대기일 때만 잠근다(다음 회차는 새 판을 요청할 수 있어야) */
+    const lockMk = project ? !!(pub && (pub.done || pub.next === '공개 결재 대기')) : true;
+    if (Q().get('card') && lockMk) { card = { id: Q().get('card') }; mk.disabled = true; showCard(out); }
   }
   async function showCard(out) {
     const cards = (await api('/registry/cards').catch(() => null))?.items || [];
@@ -478,7 +502,7 @@ export function openFlow({ host, who }) {
     }
     s5.closest('.tf-s').classList.add('is-done');
     out.append(h('p.tf-sum', { html: `서비스 목록에 추가됨 · <b>${nm}</b>` }),
-      h('a.t-btn', { href: `${V3}lx-deploy/?card=${encodeURIComponent(c.id)}`, text: '다른 지역에 적용' }));
+      h('a.t-btn', { href: `${V3}lx-deploy/?card=${encodeURIComponent(c.id)}${project ? '&project=' + encodeURIComponent(project.id) : ''}`, text: '다른 지역에 적용' }));
   }
 
   /* ── 새로고침 뒤 이어 보기(URL 상태) ─────────────────── */

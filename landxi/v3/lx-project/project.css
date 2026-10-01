@@ -1,0 +1,62 @@
+/* lx-project — 프로젝트 목록 · 한 장. 업무 표형 화면: 회백 바탕 위 흰 카드 · 그림자 0 · 토큰·부품은 키트(kit.css) · 법전 system-v2.2-toss. */
+.lxp-page{height:100%;overflow:auto;box-sizing:border-box;padding:40px 48px 64px;max-width:1180px}
+.lxp-head{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}
+.lxp-head h1{margin:0}
+.lxp-head .t-label{margin:0}
+.lxp-head--row{flex-direction:row;align-items:center;justify-content:space-between;gap:16px}
+.lxp-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.lxp-title{max-width:28em}
+
+/* 목록 — 묶음 탭(밑줄 = 액센트) · 표 */
+.lxp-tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--rule)}
+.lxp-tab{display:inline-flex;align-items:center;gap:6px;height:44px;padding:0 14px;border:0;background:none;cursor:pointer;color:var(--sub);font:500 var(--fs-label)/1 var(--font-body);box-shadow:inset 0 -2px 0 transparent;transition:color var(--d-180) var(--e-ui),box-shadow var(--d-180) var(--e-ui)}
+.lxp-tab b{font:500 13px/1 var(--font-num);color:inherit}
+.lxp-tab:hover{color:var(--ink)}
+.lxp-tab[aria-selected="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent)}
+.lxp-tab:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.lxp-list{padding:8px 12px 16px}
+.lxp-list .k-table td{vertical-align:top}
+.lxp-n{font-weight:500;color:var(--ink)}
+
+/* 한 장 — 왼쪽(지금 할 일 · 단계) · 오른쪽(사람 · 재학습) */
+.lxp-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+.lxp-col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.lxp-h{margin:0 0 16px;font:500 var(--fs-sub)/var(--lh-sub) var(--font-body);color:var(--ink)}
+.lxp-now{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.lxp-now .t-label{margin:0}
+.lxp-next{margin:0 0 8px;font:700 var(--fs-h4)/var(--lh-h4) var(--font-display);letter-spacing:var(--ls-h4);color:var(--ink)}
+.lxp-why{margin:0 0 4px;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--warn)}
+.lxp-steps{gap:14px}
+.lxp-steps .t-step{padding:4px 8px 4px 0;border-radius:var(--r-8);text-align:left}
+.lxp-steps button.t-step:hover .t{text-decoration:underline;text-underline-offset:3px}
+.lxp-steps .k-step-tx{gap:2px}
+.lxp-steps .t-step .d{font-family:var(--font-body)}
+.lxp-steps .t-step[data-st="now"] .d{color:var(--ink-2)}
+.lxp-row{display:grid;grid-template-columns:88px minmax(0,1fr);align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--rule)}
+.lxp-row:first-of-type{border-top:0;padding-top:0}
+.lxp-row--top{align-items:start}
+.lxp-row .t-label{margin:0}
+.lxp-who{font:500 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--ink)}
+.lxp-mems{display:flex;flex-wrap:wrap;gap:8px}
+.lxp-mem{gap:6px}
+.lxp-x{border:0;background:none;padding:0 2px;cursor:pointer;color:var(--sub);font:500 14px/1 var(--font-body)}
+.lxp-x:hover{color:var(--ink)}
+.lxp-none{font:400 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub)}
+.lxp-add{display:flex;gap:8px;margin-top:12px}
+.lxp-add .t-input{flex:1;min-width:0}
+.lxp-add .t-btn{flex:none;padding:0 14px}
+.lxp-p{margin:0 0 14px;font:400 var(--fs-body)/var(--lh-body) var(--font-body);color:var(--sub-2)}
+.lxp-retrain .lxp-p:last-child{margin:0}
+.lxp-foot{display:flex;justify-content:flex-end;padding:0 4px}
+.lxp-arch{color:var(--sub)}
+.lxp-arch::after{content:none}
+
+@media (max-width:1100px){.lxp-grid{grid-template-columns:minmax(0,1fr)}.lxp-page{padding:32px 32px 56px}}
+@media (max-width:960px){
+  .lxp-page{padding:20px 20px 40px}
+  .lxp-head--row .t-btn{padding:0 16px}
+  .lxp-tabs{overflow-x:auto}
+  .lxp-tab{padding:0 10px;flex:none}
+  .lxp-list{padding:4px 4px 12px}
+  .lxp-next{font-size:20px;line-height:28px}
+}

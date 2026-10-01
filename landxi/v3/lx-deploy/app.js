@@ -3,6 +3,7 @@
    지역은 변수: URL ?deploy= · ?region= · ?card= · ?tab=ops, 없으면 배포 기록 중 가장 급한 곳(이식 요청 → 시범 → 운영). */
 import { ALLOW, shell, gate, createStage, regionPicker, drawer, bignum, numHtml, stepper, empty, table, toast, devDrawer, devlog, h, esc } from '../kit/index.js';
 import { api, sse } from '../../shared/api-v1.js';
+import { projectRail, attachProject, projectsLink } from '../lx-project/context.js';   // 프로젝트 맥락(?project= · 구현 2차 T1)
 import { D, load, reloadDeploys, regions, deployOf, regionKey, regionShort, workName, cardOf, STAGE_CHIP, stageKind, aoiBox, isDomestic,
   imageryIn, linkedModel, modelFor, sampleBox, boxPoly, health, reportsOf, reportsEnv, retrainEnv, retrainMap, loadHealth, hasOp } from './data.js';
 
@@ -17,7 +18,11 @@ const RAIL = [
   { label: '데이터 올리기', href: V3 + 'lx-ingest/' }, { label: '학습', href: V3 + 'lx-train/' }, { label: '서비스 만들기', href: V3 + 'lx-console/' },
   { label: '결과 확인', href: V3 + 'lx-review/' }, { label: '배포' }, { label: '서비스 관리' },
 ];
-const S = shell({ who, home: 'lx-deploy', rail: { kind: 'steps', items: RAIL, done: [], current: Q.get('tab') === 'ops' ? 5 : 4, onPick: (i) => { if (i === 4) tab('deploy'); if (i === 5) tab('ops'); } } });
+/* 프로젝트 맥락(?project=) — 레일 = 그 프로젝트의 단계 6 + 이름 · 이 화면 = 서비스 관리(화면은 그대로) */
+const PR = projectRail('ops');
+const S = shell({ who, home: 'lx-deploy', rail: PR || { kind: 'steps', items: RAIL, done: [], current: Q.get('tab') === 'ops' ? 5 : 4, onPick: (i) => { if (i === 4) tab('deploy'); if (i === 5) tab('ops'); } } });
+projectsLink(S);
+if (PR) attachProject(S, PR, 'ops');
 
 /* ── 판: 지도 무대 + 윗줄(탭 · 심기) + 범례 + 운영 판 ─────────── */
 const root = h('div.dp');
@@ -433,7 +438,7 @@ function tab(which) {
   const ops = which === 'ops';
   tabs.querySelector('#tab-deploy').setAttribute('aria-selected', String(!ops));
   tabs.querySelector('#tab-ops').setAttribute('aria-selected', String(ops));
-  S.go(ops ? 5 : 4);
+  if (!PR) S.go(ops ? 5 : 4);
   root.classList.toggle('is-ops', ops);
   const u = new URL(location.href);
   if (ops) { u.searchParams.set('tab', 'ops'); u.searchParams.delete('deploy'); u.searchParams.delete('region'); } else u.searchParams.delete('tab');

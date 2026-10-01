@@ -14,6 +14,9 @@ POST /training/uploads                    {filename, size, task_name, region?, o
 PUT  /training/uploads/{uid}?offset=N     본문 = 묶음의 N 바이트부터 한 조각(8 MB 이하) → 받은 바이트. 자리가 어긋나면 409 + 받은 바이트
 GET  /training/uploads/{uid}              받은 바이트(끊긴 뒤 이어 올릴 자리)
 POST /training/uploads/{uid}/finish       다 받았으면 풀어서 검사 → 표본(POST /training/samples 와 같은 결과)
+
+프로젝트 연결(구현 2차 T1): 올리기에 project_id 가 오면 그 프로젝트의 프로젝트장 · 구성원만 올리고, 표본은 그 프로젝트 학습데이터로 이어진다
+(project_links kind sample — 표 모양은 그대로). GET /training/samples?project= 는 그 프로젝트 표본만.
 """
 from __future__ import annotations
 
@@ -215,8 +218,9 @@ async def _row(conn, sid: str):
 
 @router.post("/training/samples", status_code=201)
 async def upload(request: Request, file: UploadFile = File(...), task_name: str = Form(...), region: str | None = Form(None),
-                 org: str | None = Form(None)):
+                 org: str | None = Form(None), project_id: str | None = Form(None)):
     p = _staff(request)
+    await _project_ok(p, project_id)
     task = (task_name or "").strip()[:40]
     if not task:
         raise ApiError("bad_request", "업무 이름을 적어 주세요")
@@ -238,10 +242,18 @@ async def upload(request: Request, file: UploadFile = File(...), task_name: str 
                 shutil.rmtree(root, ignore_errors=True)
                 raise ApiError("too_large", f"묶음이 {MAX_ZIP_MB} MB 를 넘습니다", status=413)
             f.write(b)
-    return await _ingest(p, sid, root, zp, task, region, org)
+    return await _ingest(p, sid, root, zp, task, region, org, project_id)
 
 
-async def _ingest(p, sid: str, root: Path, zp: Path, task: str, region: str | None, org: str | None) -> dict:
+async def _project_ok(p, project_id: str | None) -> None:
+    """프로젝트 맥락의 올리기 — 그 프로젝트의 프로젝트장 · 구성원만(묶음을 받기 전에 거절)."""
+    if project_id:
+        from .projects import require_member
+        async with db(realm="lx") as conn:
+            await require_member(conn, p, str(project_id))
+
+
+async def _ingest(p, sid: str, root: Path, zp: Path, task: str, region: str | None, org: str | None, project_id: str | None = None) -> dict:
     """받은 묶음(zp) → 풀기 · 검사 · 학습 목록 · 표본 행. 한 번에 올리기와 나눠 올리기가 같은 길."""
     from starlette.concurrency import run_in_threadpool
 
@@ -286,7 +298,11 @@ async def _ingest(p, sid: str, root: Path, zp: Path, task: str, region: str | No
             "label_kind, created_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)",
             sid, task, region, region_name, (org or "").strip()[:60] or None, str(root), meta["names"], n, meta["n_train"], meta["n_val"],
             meta["class_counts"], meta["class_images"], meta["label_kind"], p.user_id)
-        await audit(conn, p, "train.sample.upload", sid, None, {"images": n, "classes": meta["class_counts"], "task": task, "sgg_cd": region})
+        await audit(conn, p, "train.sample.upload", sid, None, {"images": n, "classes": meta["class_counts"], "task": task, "sgg_cd": region,
+                                                                  "project_id": project_id})
+        if project_id:                                       # 프로젝트 학습데이터로 잇는다(프로젝트 → 학습데이터 구축 단계)
+            from .projects import link
+            await link(conn, str(project_id), "sample", sid, p.user_id)
         r = await _row(conn, sid)
     return _pub(r, {"as_of": now_iso()})
 
@@ -354,6 +370,7 @@ async def up_start(body: dict, request: Request):
     if size > MAX_ZIP_MB << 20:
         raise ApiError("too_large", f"묶음이 {MAX_ZIP_MB} MB 를 넘습니다 — {MAX_ZIP_MB} MB 이하로 나눠 묶어 주세요",
                        {"size": size, "limit": MAX_ZIP_MB << 20}, 413)
+    await _project_ok(p, body.get("project_id"))
     _sweep_uploads()
     k = str(body.get("key") or "")[:200]
     uid = "up_" + (up_key(p.user_id, f"{k}|{task}") if k else secrets.token_hex(8))
@@ -366,7 +383,7 @@ async def up_start(body: dict, request: Request):
         shutil.rmtree(d, ignore_errors=True)
     d.mkdir(parents=True, exist_ok=True)
     m = {"user": p.user_id, "filename": name[:120], "size": size, "task": task, "region": body.get("region") or None,
-         "org": (str(body.get("org") or "").strip()[:60] or None), "at": now_iso()}
+         "org": (str(body.get("org") or "").strip()[:60] or None), "project": (str(body.get("project_id") or "") or None), "at": now_iso()}
     meta_f.write_text(json.dumps(m, ensure_ascii=False), encoding="utf-8")
     (d / "part").write_bytes(b"")
     return _up_view(uid, d, m)
@@ -414,14 +431,18 @@ async def up_finish(uid: str, request: Request):
     zp = root / "upload.zip"
     shutil.move(str(d / "part"), str(zp))
     shutil.rmtree(d, ignore_errors=True)
-    return await _ingest(p, sid, root, zp, m["task"], m.get("region"), m.get("org"))
+    return await _ingest(p, sid, root, zp, m["task"], m.get("region"), m.get("org"), m.get("project"))
 
 
 @router.get("/training/samples")
-async def list_samples(request: Request):
+async def list_samples(request: Request, project: str | None = None):
     _staff(request)
     async with db(realm="lx") as conn:
-        rows = await conn.fetch("SELECT * FROM train_samples WHERE status <> 'removed' ORDER BY created_at DESC LIMIT 50")
+        if project:                                          # 프로젝트 학습데이터만(프로젝트 맥락의 '이전에 올린 표본')
+            rows = await conn.fetch("SELECT s.* FROM train_samples s JOIN project_links l ON l.kind='sample' AND l.ref=s.id AND l.project_id=$1 "
+                                    "WHERE s.status <> 'removed' ORDER BY s.created_at DESC LIMIT 50", project)
+        else:
+            rows = await conn.fetch("SELECT * FROM train_samples WHERE status <> 'removed' ORDER BY created_at DESC LIMIT 50")
     return {"items": [_pub(r) for r in rows], "total": len(rows), "as_of": now_iso()}
 
 

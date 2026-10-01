@@ -182,6 +182,8 @@ async def _quote_train_tile(p: Principal, body: dict, kind: str) -> dict:
             raise ApiError("forbidden", "학습은 LX 직원·관리자만")
         base = body.get("base_model") or opts.get("base_model")
         samples = body.get("samples") or opts.get("samples")
+        from .projects import guard_train          # 공개된 서비스의 재학습 = 그 프로젝트장 · 구성원만(구현 2차 T1 · 역할-3 ⓑ)
+        await guard_train(p, samples, base, body.get("project_id") or opts.get("project_id"))
         async with db(realm="lx") as conn:
             model = await conn.fetchrow("SELECT * FROM models WHERE id=$1", base) if base else None
             busy = await conn.fetchval("SELECT count(*) FROM jobs WHERE kind='train' AND state IN ('queued','running')")

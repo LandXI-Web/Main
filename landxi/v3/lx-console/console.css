@@ -1,8 +1,8 @@
 /* lx-console — LX 직원 집. 토큰·부품은 키트(kit.css) · 여기는 이 집의 배치만. 법전 system-v2.2-toss. */
 
 /* 부팅: 데이터 전 레일·띠 숨김(바탕 --bg-0 · 검은 화면 0) */
-.is-booting .k-rail .k-rail-i,.is-booting .lc-today,.is-booting .lc-legend{opacity:0}
-.k-rail .k-rail-i,.lc-today,.lc-legend{transition:opacity var(--d-750) var(--e-cam)}
+.is-booting .k-rail .k-rail-i,.is-booting .lc-top,.is-booting .lc-legend{opacity:0}
+.k-rail .k-rail-i,.lc-top,.lc-legend{transition:opacity var(--d-750) var(--e-cam)}
 
 /* ── 마스트 가운데 ── */
 .lc-mast{display:flex;flex:1;align-items:center;gap:12px;min-width:0}
@@ -21,8 +21,34 @@
 /* ── 무대 ── */
 .lc-stage{position:absolute;inset:0}
 
-/* ── 오늘(흰 카드 · 지도 위) ── */
-.lc-today{position:absolute;z-index:5;top:16px;left:16px;width:448px;padding:20px 24px 16px}
+/* ── 윗줄 흰 카드 셋(지도 위) — 내 프로젝트 · 돌고 있는 서비스 · 만들 수 있는 것 ── */
+.lc-top{position:absolute;z-index:5;top:16px;left:16px;right:16px;display:flex;flex-wrap:wrap;align-items:flex-start;gap:16px;pointer-events:none}
+.lc-top > *{pointer-events:auto}
+.lc-mine{width:448px;box-sizing:border-box;padding:20px 24px 14px}
+.lc-q{box-sizing:border-box;padding:20px 20px 16px}
+.lc-run{width:220px}
+.lc-make{width:300px}
+.lc-q .lc-cells{grid-template-columns:repeat(auto-fit,minmax(0,1fr))}
+.lc-new{font:500 var(--fs-label)/1 var(--font-body);color:var(--ink)}
+.lc-new::after{content:none}
+.lc-new::before{display:none}
+.lc-new:hover{text-decoration:underline;text-underline-offset:3px}
+.lc-prs{display:flex;flex-direction:column}
+.lc-pr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:12px 8px;margin:0 -8px;border-top:1px solid var(--rule);border-radius:var(--r-8);text-decoration:none;color:inherit;
+  transition:background var(--d-180) var(--e-ui);animation:lc-up var(--d-750) var(--e-cam) both;animation-delay:calc(var(--i,0) * 120ms)}
+.lc-pr:first-child{border-top:0}
+.lc-pr:hover{background:var(--bg-0)}
+.lc-pr:hover + .lc-pr{border-top-color:transparent}
+.lc-pr:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.lc-pr-n{font:500 var(--fs-body)/24px var(--font-body);color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lc-pr-s{font:500 var(--fs-label)/24px var(--font-body);color:var(--sub);text-align:right;white-space:nowrap}
+.lc-pr-x{grid-column:1/-1;font:400 var(--fs-label)/20px var(--font-body);color:var(--sub-2)}
+.lc-pr-x::before{content:"→ ";color:var(--sub)}
+.lc-pr-x:empty{display:none}
+.lc-all{align-self:flex-start;margin:10px 0 4px;font:500 var(--fs-label)/1 var(--font-body)}
+.lc-prs .k-empty{margin:4px -4px 6px}
+.k-mast .k-mast-slot .lc-pick .k-region{width:100%}
+a.lc-cell{text-decoration:none}
 .lc-today-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .lc-today-h h2{margin:0;font:700 var(--fs-sub)/1 var(--font-display);letter-spacing:-0.02em;color:var(--ink)}
 .lc-first{font:500 var(--fs-label)/1 var(--font-body);color:var(--sub-2)}
@@ -108,7 +134,9 @@
   .lc-mast{flex:1}
   .lc-ask .lc-ask-t,.lc-ask kbd{display:none}
   .lc-ask{padding:0 10px}
-  .lc-today{left:12px;right:12px;top:12px;width:auto;padding:16px 16px 10px}
+  .lc-top{left:12px;right:12px;top:12px;gap:10px}
+  .lc-mine{width:100%;padding:16px 16px 10px}
+  .lc-run,.lc-make{display:none}
   .lc-today-h{margin-bottom:8px}
   .lc-cell{padding:8px 6px 10px;gap:6px;font-size:13px}
   .lc-cell .k-num{font-size:26px}
@@ -118,7 +146,8 @@
   .lc-mx-big{margin-bottom:12px}
   .lc-mx-big .t-big{font-size:48px;line-height:54px}
 }
-@media (prefers-reduced-motion:reduce){.lc-cell,.lc-mx-r{animation:none}.lc-pin.is-on .lc-dot i::before{animation:none}}
+@media (max-width:1100px) and (min-width:961px){.lc-make{display:none}}
+@media (prefers-reduced-motion:reduce){.lc-cell,.lc-mx-r,.lc-pr{animation:none}.lc-pin.is-on .lc-dot i::before{animation:none}}
 
 /* 부팅 진행 막대(글자 없음) */
 .lc-boot{position:absolute;z-index:5;left:50%;top:50%;width:160px;margin-left:-80px}

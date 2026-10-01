@@ -6,6 +6,7 @@ import { LS } from '../kit/util.js';
 import { env } from '../../shared/api-v1.js';
 import * as D from './data.js';
 import { imagerySheet, ledgerSheet } from './sheets.js';
+import { PID, projectRail, attachProject, projectsLink, stageHref } from '../lx-project/context.js';   // 프로젝트 맥락(?project= · 구현 2차 T1)
 
 const who = await K.gate('lx-ingest');
 const qs = new URLSearchParams(location.search);
@@ -22,7 +23,11 @@ const RAIL = [
 ];
 const railHref = (r, sgg) => (r.base ? r.base + (sgg ? '?region=' + encodeURIComponent(sgg) : '') + (r.hash || '') : undefined);
 RAIL.forEach((r) => { r.href = railHref(r, qs.get('region')); });
-const S = K.shell({ who, home: 'lx-ingest', rail: { kind: 'steps', items: RAIL, current: 0 } });
+/* 프로젝트 맥락(?project=) — 레일 = 그 프로젝트의 단계 6 + 이름(화면은 그대로 · 지역은 프로젝트가 고른 곳) */
+const PR = projectRail('ingest');
+const S = K.shell({ who, home: 'lx-ingest', rail: PR || { kind: 'steps', items: RAIL, current: 0 } });
+projectsLink(S);
+if (PR) attachProject(S, PR, 'ingest');
 
 /* ── 판: 지도 무대 + 지역 카드 + 공정 카드 ─────────────────────── */
 const stageEl = K.h('div.lxi-stage');
@@ -36,7 +41,7 @@ const stepsEl = K.h('div.lxi-steps');
 const joinBtn = K.h('button.t-btn.lxi-join', { type: 'button', text: '결합 실행', disabled: true });
 const bar = K.h('div.t-progress.lxi-bar', { role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': 100, hidden: true }, K.h('i'));
 /* 학습 표본(라벨 묶음) 올리기 — 원스톱 학습 서랍으로(r3-train) */
-const sampleBtn = K.h('a.t-btn.t-btn--2.lxi-sample', { href: V3 + 'lx-train/?flow=1', text: '학습 표본 올리기' });
+const sampleBtn = K.h('a.t-btn.t-btn--2.lxi-sample', { href: PID ? stageHref(PID, 'label') : V3 + 'lx-train/?flow=1', text: '학습 표본 올리기' });
 const flowCard = K.card({ map: true, cls: 'lxi-flow', body: K.h('div.lxi-flow-in', {}, stepsEl, joinBtn, sampleBtn) });
 flowCard.append(bar);
 stageEl.append(pickCard, flowCard);
@@ -212,8 +217,8 @@ async function pick(region, { fly = true } = {}) {
   if (running) { running.watch?.close(); running = null; bar.hidden = true; }
   Object.assign(done, { img: false, cad: false, led: false, join: false }); syncSteps();
   joinBtn.disabled = true;
-  history.replaceState(null, '', location.pathname + '?region=' + encodeURIComponent(region.sgg_cd) + (qs.get('dev') ? '&dev=' + qs.get('dev') : ''));
-  RAIL.forEach((r) => { r.href = railHref(r, region.sgg_cd); }); S.go(0);
+  history.replaceState(null, '', location.pathname + '?region=' + encodeURIComponent(region.sgg_cd) + (PID ? '&project=' + encodeURIComponent(PID) : '') + (qs.get('dev') ? '&dev=' + qs.get('dev') : ''));
+  if (!PR) { RAIL.forEach((r) => { r.href = railHref(r, region.sgg_cd); }); S.go(0); }
   const ui = openDrawer(region);
   map.getSource('lxi-fp').setData(EMPTY); clearEmd(); st.clear('parcels');
 

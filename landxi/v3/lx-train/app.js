@@ -18,6 +18,7 @@ import { h, esc, api, API, session, isEnvelope, hasRoute } from '../kit/util.js'
 import { sse } from '../../shared/api-v1.js';
 import { summary, stageOf } from '../lx-console/summary.js';
 import { openFlow } from './flow.js';
+import { PID, projectRail, attachProject, projectsLink } from '../lx-project/context.js';   // 프로젝트 맥락(?project= · 구현 2차 T1)
 
 const who = await gate('lx-train');
 const CFG = await fetch(new URL('./tasks.json', import.meta.url)).then((r) => r.json());
@@ -36,16 +37,22 @@ const RAIL = [
   { id: 'deploy', label: '배포', href: withRegion('/landxi/v3/lx-deploy/') },
   { id: 'ops', label: '서비스 관리', href: withRegion('/landxi/v3/lx-deploy/') + '#ops' },
 ];
-const S = shell({ who, home: 'lx-train', rail: { kind: 'steps', items: RAIL, current: 1 } });
+/* 프로젝트 맥락(?project=) — 레일 = 그 프로젝트의 단계 6 + 이름. 이 화면이 맡는 단계 = 학습데이터 구축(라벨 묶음 올리기 · 라벨 확인) ·
+   학습 · 발행 요청(서비스 카드 발행 요청) — ?stage= 로 받는다. 화면은 그대로이고 원스톱 서랍이 프로젝트 맥락으로 열린다. */
+const STAGE = ['label', 'train', 'publish'].includes(q0.get('stage')) ? q0.get('stage') : 'train';
+const PR = projectRail(STAGE);
+const S = shell({ who, home: 'lx-train', rail: PR || { kind: 'steps', items: RAIL, current: 1 } });
+projectsLink(S);
+const PROJ = PR ? attachProject(S, PR, STAGE) : Promise.resolve(null);
 devDrawer({ who });
 
 const grid = h('div.tr-grid', { role: 'list' });
 const newBtn = h('button.t-btn.tr-new', { type: 'button', text: '새 모델 만들기' });
-const pane = h('div.tr-pane', {}, h('header.tr-h', {}, h('h1.t-h3.tr-title', { text: '② 학습 · 업무별 모델' }), newBtn), grid);
+const pane = h('div.tr-pane', {}, h('header.tr-h', {}, h('h1.t-h3.tr-title', { text: PID ? '학습 · 업무별 모델' : '② 학습 · 업무별 모델' }), newBtn), grid);
 S.main.append(pane);
 /* 원스톱(r3-train): 데이터 올리기 → 라벨 확인 → 학습 → 결과 확인·등록 → 서비스 만들기 → 다른 지역에 적용 */
-newBtn.addEventListener('click', () => openFlow({ host: S.main, who }));
-if (q0.get('flow')) setTimeout(() => openFlow({ host: S.main, who }), 0);
+newBtn.addEventListener('click', async () => openFlow({ host: S.main, who, project: await PROJ }));
+if (q0.get('flow')) setTimeout(async () => openFlow({ host: S.main, who, project: await PROJ }), 0);
 
 /* 로드 전: 카드 자리(이름만 · 검은 막대 0) */
 const cardEls = new Map();
@@ -105,6 +112,7 @@ const LABEL = (async () => {
 const OFF = '라벨 도구 연결 전';
 /** 라벨 열기 자리 — 열려 있으면 새 창 링크, 아니면 비활성 한 줄 */
 function labelSlot(host, cls = 'tr-label') {
+  if (PID) return;                 // 프로젝트 안 = 지금 할 수 있는 일만(라벨 묶음 올리기 · 라벨 확인은 원스톱 서랍) — 연결 전 안내 줄을 두지 않는다
   const off = h(`span.t-label.tr-off.${cls}`, { text: OFF, hidden: true });
   host.append(off);
   LABEL.then((u) => {
@@ -272,6 +280,8 @@ function openDrawer(r) {
   const copy = h('button.t-btn', { type: 'button', text: '사본 만들기' });
   const again = h('button.t-btn.t-btn--2', { type: 'button', text: '학습 시작' });
   body.append(h('div.tr-act', {}, copy, again));
+  /* 프로젝트 안: 학습 시작은 프로젝트장 · 구성원만(공개된 서비스의 재학습 — 역할-3 ⓑ · 서버도 거절) */
+  PROJ.then((P) => { if (P && !P.can?.train) again.remove(); });
   labelSlot(body);
   body.append(run);
   copy.addEventListener('click', () => openSheet(r));
@@ -473,7 +483,7 @@ function powerMsg(e) {
 async function start(body, ui) {
   const bar = ui.run.querySelector('i'), msg = ui.run.querySelector('.tr-q');
   ui.btn.disabled = true; ui.run.hidden = false; ui.run.classList.remove('is-fail'); bar.style.width = '6%'; msg.textContent = '';
-  const fail = (e) => { devlog('train', e?.message || e?.code || 'rejected'); ui.run.classList.add('is-fail'); bar.style.width = '0'; msg.textContent = powerMsg(e) || FAIL; ui.btn.disabled = false; };
+  const fail = (e) => { devlog('train', e?.message || e?.code || 'rejected'); ui.run.classList.add('is-fail'); bar.style.width = '0'; msg.textContent = powerMsg(e) || (e?.code === 'forbidden' && e.message) || FAIL; ui.btn.disabled = false; };
   let q;
   try { q = await api('/jobs/quote', { method: 'POST', body }); } catch (e) { return fail(e); }
   if (q && q.allowed === false) return fail({ reasons: q.reasons });
