@@ -6,12 +6,13 @@
 import * as K from '../kit/index.js';
 import { h, esc, api, API } from '../kit/util.js';
 import { staffMenu, requestCounts, STAFF_HREF } from '../kit/lx-menu.js';
-import { stageHref, loadProject, STAGES, HOME as PROJECTS } from '../lx-project/context.js';
+import { stageHref, stepSeg, stuckHtml, nb, ensureCss, HOME as PROJECTS } from '../lx-project/context.js';
 import { openNewProject } from '../lx-project/new.js';
 import { summary } from './summary.js';
 import { say } from './words.js';
 import { dueSets } from '../lx-deploy/retrain.js';
 
+ensureCss();                                         // 6칸 막대 · 막힌 곳 부품(프로젝트 목록과 같은 것)의 스타일
 const who = await K.gate('lx-console');
 const S = K.shell({ who, home: 'lx-console', rail: staffMenu('home') });
 K.devDrawer({ who });
@@ -68,7 +69,7 @@ drawActs();
 window.__lxConsole = { ready: true };                 // e2e 관측(읽기 전용)
 document.documentElement.dataset.consoleReady = '1';
 
-/* ── ① 내 프로젝트 — 줄마다 이름 · 지역 · 6칸 진행 막대(끝난 칸 잉크 · 지금 칸 파랑) · 지금 단계 · 다음 할 일 ── */
+/* ── ① 내 프로젝트 — 줄마다 이름 · 지역 · 6칸 진행 막대(프로젝트 목록과 같은 부품 · 서버 판정 steps) · 지금 단계 · 다음 할 일 · 막힌 곳(같은 규칙) ── */
 async function drawMine() {
   const box = mine.querySelector('.ld-prs');
   const MAX = 3;
@@ -85,19 +86,16 @@ async function drawMine() {
   }
   const rows = items.slice(0, MAX).map((p) => {
     const where = p.regions?.length ? p.regions[0].name + (p.regions.length > 1 ? ` 외 ${p.regions.length - 1}곳` : '') : '';
-    const seg = h('span.ld-seg', { 'aria-hidden': 'true' }, ...STAGES.map(() => h('i')));
     const n = (p.stage?.index ?? 0) + 1;
+    const stuck = p.blocked?.[0]?.text;
     const a = h('a.lc-pr', { href: stageHref(p, p.next?.stage, p.next?.target), dataset: { stage: p.stage?.key || '' },
-      'aria-label': `${p.name} · ${where} · 지금 단계 ${n} ${p.stage?.label || ''} · 다음 할 일 ${p.next?.text || ''}` },
+      'aria-label': `${p.name} · ${where} · 지금 단계 ${n} ${p.stage?.label || ''} · 다음 할 일 ${p.next?.text || ''}${stuck ? ` · 막힌 곳 ${stuck}` : ''}` },
       h('span.ld-pr-nm', {}, h('b.lc-pr-n', { text: p.name }), where ? h('small', { text: where }) : null),
-      seg,
+      stepSeg(p.steps),
       h('span.lc-pr-s.ld-pr-st', {}, h('i.num', { text: String(n) }), h('span', { text: p.stage?.label || '' })),
-      p.next?.text ? h('span.lc-pr-x.ld-pr-nx', { html: esc(p.next.text).replace(/(\d[\d,]*\s?(?:필지|건|곳|개)?)/g, '<b>$1</b>') }) : null);
-    /* 막대 — 프로젝트 한 장(서버 판정: 단계마다 완료 · 지금 · 대기)을 받아 칠한다 */
-    loadProject(p.id).then((pr) => {
-      const st = pr?.stages || [];
-      [...seg.children].forEach((i, k) => { i.dataset.st = k === pr?.stage?.index ? 'now' : st[k]?.done ? 'done' : 'wait'; });
-    }).catch(() => {});
+      h('span.ld-pr-ln', {},
+        p.next?.text ? h('span.lc-pr-x.ld-pr-nx', { html: esc(nb(p.next.text)).replace(/(\d[\d,]*\s?(?:필지|건|곳|개)?)/g, '<b>$1</b>') }) : null,
+        p.blocked?.length ? h('span.ld-pr-sk', { html: stuckHtml(p) }) : null));
     return a;
   });
   box.replaceChildren(...rows);

@@ -1,6 +1,6 @@
 // 구현 4차 · 프로젝트 목록 6칸 진행 막대 + 막힌 곳(제안 2 S-14 ⓑ — 걸러 보기는 나중).
 // 로그인 폼 입력만(세션 주입 0) · 비밀번호는 server/.env DEV_PASSWORD(출력 0) · 게이트웨이 :8700 이 떠 있어야 한다. 읽기만 한다(프로젝트를 만들지 않는다).
-// 확인: ① 열 이름 ② 줄마다 막대 6칸 + 지금 단계 말 + 막힌 곳이 서버 판정(steps · blocked)과 같다 ③ 대시보드 '내 프로젝트' 막대와 같은 값 ④ 걸러 보기 없음
+// 확인: ① 열 이름 ② 줄마다 막대 6칸 + 지금 단계 말 + 막힌 곳이 서버 판정(steps · blocked)과 같다 ③ 대시보드 '내 프로젝트' 줄이 같은 부품 · 같은 값(막대 · 건너뛴 칸 · 막힌 곳) ④ 걸러 보기 없음
 //       ⑤ 휴대폰 390 에서 가로 넘침 0 · 프로젝트마다 한 장으로 접힘 · 막힌 곳이 없으면 한 줄 접힘.
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
@@ -62,20 +62,27 @@ test.describe('구현 4차 · 프로젝트 목록 — 진행 막대 · 막힌 �
     expect(errs).toEqual([]);
   });
 
-  test("대시보드 '내 프로젝트' 막대와 같은 값(같은 이름 숫자는 한 출처)", async ({ page, baseURL }) => {
+  test("대시보드 '내 프로젝트' 줄이 목록과 같은 부품 · 같은 값(막대 · 건너뛴 칸 · 막힌 곳)", async ({ page, baseURL }) => {
     const j = await openList(page, baseURL);
     const real = j.items.filter((p) => !/^(e2e|pytest)/i.test(p.name));        // 다른 시험이 잠깐 만들었다 지우는 프로젝트는 뺀다
     test.skip(!real.length, '내가 만든 프로젝트 없음');
-    const list = {};
-    for (const p of real.slice(0, 3)) list[p.name] = p.steps.map((s) => (s === 'skip' ? 'wait' : s));       // 대시보드는 건너뛴 칸을 따로 칠하지 않는다
     await page.goto('v3/lx-console/');
     const rows = page.locator('.lc-pr');
     await rows.first().waitFor({ timeout: 30000 });
+    await expect(page.locator('.lc-pr .ld-seg')).toHaveCount(0);               // 대시보드 전용 막대는 없고 목록과 같은 부품(.lxp-seg)
     let compared = 0;
-    for (const name of Object.keys(list)) {
-      const r = rows.filter({ hasText: name }).first();
+    for (const p of real.slice(0, 3)) {
+      const r = rows.filter({ hasText: p.name }).first();
       if (!(await r.count())) continue;                                          // 대시보드는 세 줄만 보인다
-      await expect.poll(async () => r.locator('.ld-seg i').evaluateAll((is) => is.map((x) => x.dataset.st)), { timeout: 25000 }).toEqual(list[name]);
+      await expect(r.locator('.lxp-seg i')).toHaveCount(6);
+      expect(await r.locator('.lxp-seg i').evaluateAll((is) => is.map((x) => x.dataset.st)), p.name).toEqual(p.steps);   // 건너뛴 칸(skip)도 목록과 같다
+      if (p.blocked.length) {
+        const st = r.locator('.lxp-stuck');
+        expect(nb(await st.innerText())).toContain(p.blocked[0].text);
+        expect(await st.getAttribute('data-kind')).toBe(p.blocked[0].kind);
+      } else {
+        await expect(r.locator('.lxp-stuck')).toHaveCount(0);
+      }
       compared++;
     }
     expect(compared).toBeGreaterThan(0);

@@ -6,7 +6,7 @@
    숫자·판정은 전부 서버(GET /projects · /projects/{id}). 부품 = 키트(셸 · 관문 · 표 · 스텝퍼 · 빈 화면 · 토스트)만 조합. */
 import * as K from '../kit/index.js';
 import { h, api } from '../kit/util.js';
-import { PID, projectRail, attachProject, refreshRail, stageHref, projectHref, loadProject, stepSegHtml } from './context.js';
+import { PID, projectRail, attachProject, refreshRail, stageHref, projectHref, loadProject, stepSegHtml, stuckHtml, nb } from './context.js';
 import { staffMenu } from '../kit/lx-menu.js';
 import { openNewProject } from './new.js';
 
@@ -28,8 +28,6 @@ function when(s) {
   return d.getFullYear() === now.getFullYear() ? `${two(d.getMonth() + 1)}.${two(d.getDate())}` : `${d.getFullYear()}.${two(d.getMonth() + 1)}.${two(d.getDate())}`;
 }
 const regionWord = (rs = []) => (rs.length ? rs[0].name + (rs.length > 1 ? ` 외 ${rs.length - 1}곳` : '') : '—');
-/** 줄이 꺾일 때 가운뎃점이 줄 맨 앞에 서지 않게 — ' · ' 의 앞 공백을 붙여 쓴다(점은 앞 낱말과 함께 윗줄 끝에) */
-const nb = (t) => String(t ?? '').replace(/ · /g, ' · ');
 const stageText = (p) => (p.stage ? `${p.stage.index + 1} ${p.stage.label}` : '—');
 
 if (PID) await one(); else await list();
@@ -77,7 +75,7 @@ async function list() {
       { key: 'name', label: '이름', fmt: (v) => `<b class="lxp-n">${esc(v)}</b>` },
       { key: 'steps', label: '진행', fmt: (v, r) => progressCell(r, k === 'archived') },
       { key: 'nextText', label: '다음 할 일' },
-      { key: 'blocked', label: '막힌 곳', fmt: (v, r) => stuckCell(r, k === 'archived') },
+      { key: 'blocked', label: '막힌 곳', fmt: (v, r) => stuckHtml(r, k === 'archived') },
       { key: 'task', label: '무엇을 · 어디', fmt: (v, r) => `<span class="lxp-what">${esc(v || '—')}<small title="${esc((r.regions || []).map((g) => g.full || g.name).join(' · '))}">${esc(r.where)}</small></span>` },
       ...(k === 'led' ? [] : [{ key: 'leadName', label: '프로젝트장' }]),
       { key: 'lastText', label: '마지막 활동' },
@@ -98,12 +96,6 @@ function progressCell(p, archived) {
   if (archived) return '<span class="lxp-pg-st is-arch">보관</span>';
   const n = (p.stage?.index ?? 0) + 1;
   return `<div class="lxp-pg">${stepSegHtml(p.steps)}<span class="lxp-pg-st"><i class="num">${n}</i>${esc(p.stage?.label || '')}</span></div>`;
-}
-/** 막힌 곳 — 서버가 준 막힌 곳(blocked: 반려 → 앞 단계 남음 → 결재 대기 순) 첫 줄 + 더 있으면 '외 n건'. 없으면 — */
-function stuckCell(p, archived) {
-  const b = archived ? [] : p.blocked || [];
-  if (!b.length) return '<span class="lxp-stuck is-none">—</span>';
-  return `<span class="lxp-stuck" data-kind="${esc(b[0].kind)}" title="${esc(b.map((x) => x.text).join(' · '))}"><span>${esc(nb(b[0].text))}${b.length > 1 ? ` <small>외 ${b.length - 1}건</small>` : ''}</span></span>`;
 }
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
