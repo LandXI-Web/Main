@@ -10,8 +10,17 @@ async function login(realm = 'lx', role = 'staff', tenant = null) {
     body: JSON.stringify(realm === 'lx' ? { realm, login: ({ staff: 'test@lx.or.kr', admin: 'lxadmin@lx.or.kr', sales: 'sales@lx.or.kr' })[role], password: process.env.DEV_PASSWORD || 'landxi-dev-2026' } : { realm, tenant_id: tenant, login: 'lxadmin@lx.or.kr', site: 'gov', password: process.env.DEV_PASSWORD || 'landxi-dev-2026' }) });
   return r.json();
 }
+/* 시험 표시(개선 고리와의 약속) — 이 스펙이 묻는 질문은 context.test 를 달아 시험용 답 번호(run_test…)로 돌게 한다(개선 고리가 모으지 않음 · 화면 · 서버 동작은 그대로). */
+async function markTest(page) {
+  await page.route(/\/api\/v1\/agent\/runs$/, async (route) => {
+    const req = route.request();
+    if (req.method() !== 'POST') return route.continue();
+    try { const b = JSON.parse(req.postData() || '{}'); b.context = { ...(b.context || {}), test: true }; return route.continue({ postData: JSON.stringify(b) }); } catch { return route.continue(); }
+  });
+}
 async function bootXI(page, { realm = 'lx', role = 'staff', tenant = null, q = '' } = {}) {
   const s = API ? await login(realm, role, tenant) : null;
+  await markTest(page);
   await page.addInitScript(([s, api, ab, realm, role, tenant]) => {
     if (api) { localStorage.setItem('lx_api_base', api); localStorage.removeItem('lx_api_mode'); } else localStorage.setItem('lx_api_mode', 'off');
     if (ab) localStorage.setItem('lx_agent_base', ab); else localStorage.removeItem('lx_agent_base');

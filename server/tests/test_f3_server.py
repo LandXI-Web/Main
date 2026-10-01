@@ -478,7 +478,8 @@ def _P(realm, role, tenant):
 
 def test_s10_agent_run_out_of_scope_no_llm(live, tok):
     """기관 세션의 관할 밖 질문 → 도구·LLM 호출 없이 거절 문구(SSE agent.rejected). LLM 사슬이 죽어 있으면 503 이라 건너뜀."""
-    r = httpx.post(B + "/agent/runs", headers=H(tok["namwon"]), json={"message": "여수시 해안 쓰레기 몇 곳이야?"}, timeout=30)
+    # context.test — 시험으로 보낸 질문(답 번호 run_test…) · 개선 고리(못 한 요청 모으기)가 모으지 않는다
+    r = httpx.post(B + "/agent/runs", headers=H(tok["namwon"]), json={"message": "여수시 해안 쓰레기 몇 곳이야?", "context": {"test": True}}, timeout=30)
     if r.status_code == 503:
         pytest.skip("LLM 사슬 응답 없음")
     assert r.status_code == 202

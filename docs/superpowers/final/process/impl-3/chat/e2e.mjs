@@ -2,6 +2,7 @@
    로그인 = 로그인 폼 입력(kit/lint/forbidden.mjs frontDoor · 세션 주입 없음). 답 시험은 게이트웨이 경로(/agent/runs)로만, 몇 번만.
    사용: node docs/superpowers/final/process/impl-3/chat/e2e.mjs [--base http://localhost:4173] [--only app,admin,gov,guest] [--pc|--mobile] [--outside]
    --outside = 바깥 주소(https://app · admin · namwon.land-xi.dev) — 입구가 주소다.
+   시험 표시: 보내는 질문에 context.test 를 달아 시험용 답 번호(run_test…)로 돌린다 — 개선 고리가 모으지 않는다(markTest).
    결과: 콘솔 JSON 줄 + e2e-result.json · 캡처 img/after-*.png */
 import path from 'node:path';
 import fs from 'node:fs';
@@ -28,6 +29,18 @@ const launch = async () => {
   return chromium.launch();
 };
 const scanSrc = `(() => { const RULES = [${RULES.map(([k, re]) => `[${JSON.stringify(k)}, ${re}]`).join(',')}]; const check = (s) => RULES.filter(([, re]) => re.test(s)).map(([k]) => k); return (${scan.toString()})(document); })()`;
+/* 시험 표시(개선 고리와의 약속 · impl-4/chat-rules 와 같은 방식) — 이 스크립트가 보내는 질문은 context.test 를 달아 시험용 답 번호(run_test…)로 돌게 하고,
+   화면이 보내는 개선 신호(도움 안 됐어요 · 확인 카드 취소 · 지도 못 그림)와 '이제 됩니다' 본 것 처리는 서버로 보내지 않고 보낸 사실만 센다(실제 사용자의 막힘 · 알림만 남게). */
+const SENT = { feedback: [], seen: [] };
+async function markTest(context) {
+  await context.route(/\/api\/v1\/agent\/runs$/, async (route) => {
+    const req = route.request();
+    if (req.method() !== 'POST') return route.continue();
+    try { const b = JSON.parse(req.postData() || '{}'); b.context = { ...(b.context || {}), test: true }; return route.continue({ postData: JSON.stringify(b) }); } catch { return route.continue(); }
+  });
+  await context.route(/\/api\/v1\/assist\/feedback$/, (route) => { try { SENT.feedback.push(JSON.parse(route.request().postData() || '{}').kind); } catch { /* */ } return route.fulfill({ status: 204, body: '' }); });
+  await context.route(/\/api\/v1\/assist\/notices\/[^/]+\/seen$/, (route) => { SENT.seen.push(route.request().url().split('/').slice(-2)[0]); return route.fulfill({ status: 204, body: '' }); });
+}
 
 const ENTRY = {
   app: { login: 'test@lx.or.kr', site: 'app', host: 'https://app.land-xi.dev', home: 'lx-console', other: 'lx-project',
@@ -90,6 +103,7 @@ async function entry(key, mobile) {
   const vw = mobile ? '390' : '1440';
   const browser = await launch();
   const ctx = await browser.newContext({ viewport: mobile ? { width: 390, height: 844 } : { width: 1440, height: 900 } });
+  await markTest(ctx);
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
@@ -119,6 +133,8 @@ async function entry(key, mobile) {
     const r = await ask(page, qs[i], shot);
     ok(`${tag}-${vw} 질문 → 답 블록: ${r.q}`, r.a && r.a.state === 'done' && (r.a.text || r.a.blocks.length) && r.turns[1] === r.turns[0] + 1, r);
   }
+  const runNo = await page.locator('.k-chat').getAttribute('data-run').catch(() => '');
+  ok(`${tag}-${vw} 시험 표시 — 시험용 답 번호(개선 고리가 모으지 않음)`, /^run_test/.test(runNo || ''), { prefix: String(runNo || '').slice(0, 8) });
   // 열린 채로 금지어 검사(창 안 글 포함)
   const lint = await page.evaluate(scanSrc);
   ok(`${tag}-${vw} 금지어 0(채팅창 열린 채)`, lint.hits.length === 0, { hits: lint.hits.slice(0, 5) });
@@ -172,5 +188,5 @@ for (const mobile of VIEWS) {
 }
 const pass = results.filter((r) => r.pass).length;
 console.log(`\n통과 ${pass} / ${results.length}`);
-fs.writeFileSync(path.join(HERE, OUTSIDE ? 'e2e-result-outside.json' : 'e2e-result.json'), JSON.stringify({ at: new Date().toISOString(), base: OUTSIDE ? 'outside' : BASE, pass, total: results.length, results }, null, 1));
+fs.writeFileSync(path.join(HERE, OUTSIDE ? 'e2e-result-outside.json' : 'e2e-result.json'), JSON.stringify({ at: new Date().toISOString(), base: OUTSIDE ? 'outside' : BASE, pass, total: results.length, test_marked: true, signals_held: { feedback: SENT.feedback.length, seen: SENT.seen.length }, results }, null, 1));
 process.exit(pass === results.length ? 0 : 1);

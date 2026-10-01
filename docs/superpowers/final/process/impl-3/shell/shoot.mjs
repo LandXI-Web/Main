@@ -1,6 +1,7 @@
 /* 구현 3차 · LX 직원 메뉴 1안 · 대시보드 1안 · 프로젝트 안 6단계 — 화면 캡처(전 / 후).
    로그인 = 로그인 폼 입력(kit/lint/forbidden.mjs frontDoor · 세션 주입 없음 · 비밀번호는 server/.env 에서 읽고 출력하지 않는다).
    사용: node docs/superpowers/final/process/impl-3/shell/shoot.mjs --tag before|after [--base https://app.land-xi.dev] [--only dash,projects,…]
+   시험 표시: XI ChatGEO 에 보내는 질문은 context.test 를 달아 시험용 답 번호(run_test…)로 돌린다(markTest) — 개선 고리가 모으지 않는다.
    결과: img/{tag}-{이름}-{1440|390}.png · 콘솔 JSON 줄(화면 상태 — 메뉴 · 머리 · 금지어 · 콘솔 오류) */
 import path from 'node:path';
 import fs from 'node:fs';
@@ -23,6 +24,18 @@ const scanSrc = `(() => { const RULES = [${RULES.map(([k, re]) => `[${JSON.strin
 const out = (o) => console.log(JSON.stringify(o));
 
 const browser = await chromium.launch({ channel: 'chromium', args: ['--use-angle=d3d11', '--ignore-gpu-blocklist'] }).catch(() => chromium.launch());
+/* 시험 표시(개선 고리와의 약속 · impl-4/chat-rules 와 같은 방식) — 이 스크립트가 보내는 질문은 context.test 를 달아 시험용 답 번호(run_test…)로 돌게 하고,
+   화면이 보내는 개선 신호와 '이제 됩니다' 본 것 처리는 서버로 보내지 않고 보낸 사실만 센다(실제 사용자의 막힘 · 알림만 남게). */
+const SENT = { feedback: [], seen: [] };
+async function markTest(context) {
+  await context.route(/\/api\/v1\/agent\/runs$/, async (route) => {
+    const req = route.request();
+    if (req.method() !== 'POST') return route.continue();
+    try { const b = JSON.parse(req.postData() || '{}'); b.context = { ...(b.context || {}), test: true }; return route.continue({ postData: JSON.stringify(b) }); } catch { return route.continue(); }
+  });
+  await context.route(/\/api\/v1\/assist\/feedback$/, (route) => { try { SENT.feedback.push(JSON.parse(route.request().postData() || '{}').kind); } catch { /* */ } return route.fulfill({ status: 204, body: '' }); });
+  await context.route(/\/api\/v1\/assist\/notices\/[^/]+\/seen$/, (route) => { SENT.seen.push(route.request().url().split('/').slice(-2)[0]); return route.fulfill({ status: 204, body: '' }); });
+}
 const view = (m) => (m ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true } : { viewport: { width: 1440, height: 900 } });
 
 /* 화면 상태 — 왼쪽 메뉴 · 머리 칸 · 단계 막대 · 금지어 */
@@ -47,6 +60,7 @@ async function shot(page, name, m) {
 
 async function staff(m) {
   const ctx = await browser.newContext(view(m));
+  await markTest(ctx);
   const page = await ctx.newPage();
   const errs = []; page.on('pageerror', (e) => errs.push(String(e).slice(0, 200)));
   page.on('console', (c) => { if (c.type() === 'error' && !/favicon|404|Failed to load resource/.test(c.text())) errs.push(c.text().slice(0, 200)); });
@@ -87,6 +101,7 @@ async function staff(m) {
 
 async function login(m) {
   const ctx = await browser.newContext(view(m));
+  await markTest(ctx);
   const page = await ctx.newPage();
   await page.goto(BASE + '/landxi/v3/login/', { waitUntil: 'domcontentloaded' });
   const ok = await page.waitForSelector('#ask.on', { timeout: 70000 }).then(() => true).catch(() => false);
@@ -99,6 +114,7 @@ async function login(m) {
 /* LX 관리자 — XI ChatGEO 에 '기관별 사용량 보여 줘'(직행 도구 · 한 번) → 답 · 차트 제목 */
 async function admin(m) {
   const ctx = await browser.newContext(view(m));
+  await markTest(ctx);
   const page = await ctx.newPage();
   await frontDoor(page, ADMIN_BASE, 'lxadmin@lx.or.kr', 'admin');
   await page.waitForTimeout(4000);
@@ -118,4 +134,5 @@ if (ONLY.has('login')) await login(false);
 const VIEWS = arg('--views', 'both');   // pc | mobile | both — 바깥 주소 로그인은 10분 20번까지라 나눠 찍을 수 있게
 for (const m of [false, true]) if (VIEWS === 'both' || (VIEWS === 'mobile') === m) await staff(m);
 if (ONLY.has('admin')) await admin(false);
+out({ test_marked: true, signals_held: { feedback: SENT.feedback.length, seen: SENT.seen.length } });
 await browser.close();

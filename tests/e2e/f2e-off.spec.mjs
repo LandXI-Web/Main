@@ -1,7 +1,17 @@
 // F2-E off 모드 — 네트워크 0 · 실제 run 녹음 재생(장면 1 · 보고서) · 마스트 '기록 · 저장 결과 재생' · 콘솔 0
 import { test, expect } from '@playwright/test';
 
+/* 시험 표시(개선 고리와의 약속) — 이 스펙이 묻는 질문은 context.test 를 달아 시험용 답 번호(run_test…)로 돌게 한다(개선 고리가 모으지 않음 · 화면 · 서버 동작은 그대로). */
+async function markTest(page) {
+  await page.route(/\/api\/v1\/agent\/runs$/, async (route) => {
+    const req = route.request();
+    if (req.method() !== 'POST') return route.continue();
+    try { const b = JSON.parse(req.postData() || '{}'); b.context = { ...(b.context || {}), test: true }; return route.continue({ postData: JSON.stringify(b) }); } catch { return route.continue(); }
+  });
+}
+
 async function bootOff(page) {
+  await markTest(page);
   await page.addInitScript(() => { localStorage.setItem('lx_api_mode', 'off'); localStorage.setItem('lx_logged_in', '1'); localStorage.setItem('lx_role', 'staff'); localStorage.removeItem('lx_api_session'); localStorage.removeItem('lx_agent_base'); });
   for (let k = 0; k < 2; k++) { await page.goto('/landxi/xi/index.html'); await page.waitForFunction(() => document.documentElement.dataset.lx === 'ready', null, { timeout: 60000 }); }
   await page.waitForFunction(() => document.documentElement.dataset.agent === 'ready', null, { timeout: 20000 });

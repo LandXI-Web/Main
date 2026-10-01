@@ -210,7 +210,8 @@ def test_analysis_not_refused_by_usage(live, tok, demo_quota):
 
 
 def _run_events(h, msg):
-    r = httpx.post(B + "/agent/runs", headers=h, json={"message": msg, "mode": "map"}, timeout=60)
+    # context.test — 시험으로 보낸 질문(답 번호 run_test…) · 개선 고리(못 한 요청 모으기)가 모으지 않는다
+    r = httpx.post(B + "/agent/runs", headers=h, json={"message": msg, "mode": "map", "context": {"test": True}}, timeout=60)
     assert r.status_code == 202, r.text
     rid = r.json()["run"]["id"]
     got = None

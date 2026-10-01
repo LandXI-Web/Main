@@ -5,6 +5,14 @@ import { test, expect } from '@playwright/test';
 import { execSync } from 'node:child_process';
 
 const API = process.env.LX_API === 'on' ? 'http://localhost:8700' : null;
+/* 시험 표시(개선 고리와의 약속) — 이 스펙이 묻는 질문은 context.test 를 달아 시험용 답 번호(run_test…)로 돌게 한다(개선 고리가 모으지 않음 · 화면 · 서버 동작은 그대로). */
+async function markTest(page) {
+  await page.route(/\/api\/v1\/agent\/runs$/, async (route) => {
+    const req = route.request();
+    if (req.method() !== 'POST') return route.continue();
+    try { const b = JSON.parse(req.postData() || '{}'); b.context = { ...(b.context || {}), test: true }; return route.continue({ postData: JSON.stringify(b) }); } catch { return route.continue(); }
+  });
+}
 const redis = (args) => execSync(`docker exec landxi-redis redis-cli ${args}`, { encoding: 'utf8' }).trim();
 
 test.skip(!API, 'on 모드 전용');
@@ -13,6 +21,7 @@ test('사슬 전부 죽음 → 리플레이 마스트 · 같은 장면 · 콘솔
   test.setTimeout(150000);
   const saved = redis('HGETALL agent:backends').split('\n').filter(Boolean);
   const errs = [], posts = [];
+  await markTest(page);
   page.on('pageerror', (e) => errs.push('pageerror: ' + e.message));
   page.on('console', (m) => { if (m.type() === 'error') errs.push('console: ' + m.text()); });
   page.on('request', (r) => { if (r.method() === 'POST' && /\/agent\/runs$/.test(r.url())) posts.push(r.url()); });

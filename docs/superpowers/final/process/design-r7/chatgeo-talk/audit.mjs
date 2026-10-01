@@ -1,6 +1,7 @@
 // 설계 7차(chatgeo-talk) — XI ChatGEO 대화 실태 조사. 실제 로그인 폼으로 들어가(세션 주입 0) 역할별 흔한 질문을 채팅창에 넣고,
 // 답 · 계획 줄 · 블록(차트 · 파일 · 영상) · 지도 동작 기록 · 지도 실제 변화(중심 · 줌 · 시점 · 층) · 캡처를 shots/ 에 남긴다(shots/ 는 gitignore).
 // 사용: node docs/superpowers/final/process/design-r7/chatgeo-talk/audit.mjs [--base http://localhost:4173] [--only staff|admin|tenant]
+// 시험 표시: 질문에 context.test 를 달아 시험용 답 번호(run_test…)로 돌린다 — 개선 고리(못 한 요청 모으기)가 모으지 않는다(markTest).
 // GPU: 질문은 한 번에 하나씩 차례로 보낸다(게이트웨이 대기열 경로). 분석 실행 확인 카드는 '취소'를 누른다(전역 분석을 돌리지 않는다).
 import { chromium } from 'playwright';
 import { frontDoor } from '../../../../../../landxi/v3/kit/lint/forbidden.mjs';
@@ -130,6 +131,19 @@ async function ask(page, q, tag) {
   return { q, ms, state, confirm, answer, plan, blocks, acts: { sent: ds.acts, done: ds.actsDone, ok: ds.actsOk, verdict: ds.actsVerdict || null }, map: diff(before, after), mapBefore: before, mapAfter: after };
 }
 
+/* 시험 표시(개선 고리와의 약속 · impl-4/chat-rules 와 같은 방식) — 이 스크립트가 보내는 질문은 context.test 를 달아 시험용 답 번호(run_test…)로 돌게 하고,
+   화면이 보내는 개선 신호(도움 안 됐어요 · 확인 카드 취소 · 지도 못 그림)와 '이제 됩니다' 본 것 처리는 서버로 보내지 않고 보낸 사실만 센다(실제 사용자의 막힘 · 알림만 남게). */
+const SENT = { feedback: [], seen: [] };
+async function markTest(context) {
+  await context.route(/\/api\/v1\/agent\/runs$/, async (route) => {
+    const req = route.request();
+    if (req.method() !== 'POST') return route.continue();
+    try { const b = JSON.parse(req.postData() || '{}'); b.context = { ...(b.context || {}), test: true }; return route.continue({ postData: JSON.stringify(b) }); } catch { return route.continue(); }
+  });
+  await context.route(/\/api\/v1\/assist\/feedback$/, (route) => { try { SENT.feedback.push(JSON.parse(route.request().postData() || '{}').kind); } catch { /* */ } return route.fulfill({ status: 204, body: '' }); });
+  await context.route(/\/api\/v1\/assist\/notices\/[^/]+\/seen$/, (route) => { SENT.seen.push(route.request().url().split('/').slice(-2)[0]); return route.fulfill({ status: 204, body: '' }); });
+}
+
 const results = [];
 const browser = await chromium.launch();
 let n = 0;
@@ -137,6 +151,7 @@ for (const step of PLAN) {
   if (ONLY && step.role !== ONLY) continue;
   if (SCREENS.length && !SCREENS.includes(step.screen)) continue;
   const ctx = await browser.newContext({ viewport: VP });
+  await markTest(ctx);
   await ctx.addInitScript(INIT);
   const page = await ctx.newPage();
   const errors = [];
@@ -163,4 +178,4 @@ for (const step of PLAN) {
 }
 await browser.close();
 fs.writeFileSync(path.join(SHOTS, OUT), JSON.stringify(results, null, 2));
-console.log(`끝 — ${results.length}건 · shots/${OUT}`);
+console.log(`끝 — ${results.length}건 · shots/${OUT} · 시험 표시(답 번호 run_test…) · 화면 신호 ${SENT.feedback.length} · 본 것 ${SENT.seen.length} 서버로 보내지 않음`);
