@@ -16,8 +16,9 @@ from .. import Out, ToolError
 ADMIN_LINE = "LX 관리자 화면에서 확인할 수 있습니다."
 KST = dt.timezone(dt.timedelta(hours=9))
 
-USAGE_DIMS = {  # dim → (사용자 말, 봉투 단위(칩 표기), 환산)
-    "llm_tokens_month": ("AI 도우미 사용량", "tokens", 1),       # 칩 단위 키(화면 i18n: ko 토큰 · en tokens)
+USAGE_DIMS = {  # dim → (사용자 말, 봉투 단위(칩 표기), 환산). 이름은 XI ChatGEO(원칙 96) · 사용 현황은 '요청 건수'(원칙 91 · 11차 자원-1)
+    "llm_requests_month": ("XI ChatGEO 요청 건수", "건", 1),     # 기본 — 기관이 XI ChatGEO 에 요청한 건수(quota.usage_of 의 agent_runs 이번 달)
+    "llm_tokens_month": ("XI ChatGEO 토큰 사용량", "tokens", 1),  # '토큰'을 콕 집어 물을 때만(칩 단위 키 — 화면 i18n: ko 토큰 · en tokens)
     "gpu_s_month": ("GPU 시간", "시간", 1 / 3600),
     "area_km2_month": ("분석 면적", "km2", 1),
     "storage_gb": ("저장", "GB", 1),
@@ -33,10 +34,10 @@ SPECS: dict[str, dict] = {
                                 "'GPU 상태' · 'GPU 괜찮아?' · '전력' 질문은 이것으로 확인한다.", "properties": {}},
     "ops_queues": {"description": "분석 작업 대기열 요약(LX 관리자) — 대기 · 진행 작업 수, 서버별 작업기 수. '대기열' · '밀린 작업' 질문.", "properties": {}},
     "ops_alerts": {"description": "경보(LX 관리자) — 지금 열린 경보 수와 이름, 최근 24시간에 닫힌 경보 수. '경보 있어?' · '문제 있나' 질문.", "properties": {}},
-    "ops_usage": {"description": "기관별 사용량(LX 관리자) — 이번 달 AI 도우미 사용량(토큰) · GPU 시간 · 분석 면적 · 저장(사용을 막는 값은 없음 — 사용량만). "
-                                 "'기관별 AI 도우미 사용량' · '이 기관 토큰 얼마나 썼어' 질문. tenant 를 주면 그 기관만.",
+    "ops_usage": {"description": "기관별 사용량(LX 관리자) — 이번 달 XI ChatGEO 요청 건수 · GPU 시간 · 분석 면적 · 저장(사용을 막는 값은 없음 — 사용량만). "
+                                 "'기관별 사용량' · '기관별 XI ChatGEO 요청 건수' · '이 기관 토큰 얼마나 썼어' 질문. tenant 를 주면 그 기관만.",
                   "properties": {"tenant": {"type": "string", "description": "기관 이름 또는 id(없으면 전 기관)"},
-                                 "dim": {"type": "string", "enum": list(USAGE_DIMS), "description": "항목(기본 AI 도우미 사용량)"}}},
+                                 "dim": {"type": "string", "enum": list(USAGE_DIMS), "description": "항목(기본 XI ChatGEO 요청 건수 · 토큰은 콕 집어 물을 때만)"}}},
     "ops_models": {"description": "언어 모델 상태(LX 관리자) — 두뇌 · 라우터 · 예비 모델 켜짐/꺼짐과 GPU 순번, 국산 모델 연결 자리. '언어 모델 상태' 질문.",
                    "properties": {}},
 }
@@ -68,13 +69,13 @@ def allowed(name: str, p) -> bool:
 
 # ── 결정적 직행(모델 앞) — 관리자의 짧은 운영 질문 4종(한국어 · 영어) ─────────────────
 _RX = [
-    ("ops_usage", re.compile(r"(AI\s*도우미|토큰|LLM|사용량|쓴\s*양|얼마나\s*썼|\bAI\s+assistant\b|\btokens?\b|\busage\b)", re.I)),
+    ("ops_usage", re.compile(r"(XI\s*ChatGEO|AI\s*도우미|요청\s*건수|토큰|LLM|사용량|쓴\s*양|얼마나\s*썼|\bAI\s+assistant\b|\btokens?\b|\busage\b)", re.I)),
     ("ops_alerts", re.compile(r"(경보|알림|장애|문제\s*있|\balerts?\b|\balarms?\b|\bincidents?\b)", re.I)),
     ("ops_queues", re.compile(r"(대기열|대기\s*중|밀린|큐|작업\s*(현황|요약|몇)|\bqueues?\b|\bbacklog\b|\bpending\s+jobs?\b)", re.I)),
     ("ops_models", re.compile(r"(언어\s*모델|두뇌|라우터|국산\s*모델|독파모|\blanguage\s+models?\b|\bdomestic\s+model\b)", re.I)),
     ("ops_gpus", re.compile(r"(GPU|그래픽|전력|온도|장비|고부하|\bpower\b|\bhigh\s+load\b|\bbusy\b|\btemperature\b)", re.I)),
 ]
-OPS_ASK = re.compile(r"(GPU|그래픽\s*카드|대기열|작업\s*대기|경보|전력\s*예산|고부하|토큰|AI\s*도우미\s*사용량|기관별\s*사용량|언어\s*모델\s*(상태|켜|꺼)|서버\s*상태|"
+OPS_ASK = re.compile(r"(GPU|그래픽\s*카드|대기열|작업\s*대기|경보|전력\s*예산|고부하|토큰|AI\s*도우미\s*사용량|XI\s*ChatGEO\s*(사용량|요청\s*건수)|기관별\s*(사용량|요청\s*건수)|언어\s*모델\s*(상태|켜|꺼)|서버\s*상태|"
                      r"queue|alert|token|AI\s+assistant\s+usage|usage\s+(by|per|of\s+each)\s+agenc|each\s+agency|language\s+models?\s+status|"
                      r"power\s+budget|high\s+load)", re.I)
 # 운영 질문이라도 '분석을 돌려 달라'는 말이면 운영 안내가 아니다(분석 도구에 맡긴다)
@@ -103,6 +104,8 @@ def ROUTE(msg: str, ctx):
         t = tenant_phrase(q)
         if t:
             args["tenant"] = t
+        if _TOKEN_ASK.search(q):                 # '토큰'을 콕 집어 물으면 토큰 · 아니면 기본(XI ChatGEO 요청 건수)
+            args["dim"] = "llm_tokens_month"
     return {"tool": hits[0], "args": args}
 
 
@@ -128,11 +131,12 @@ def _route_front():
 
 # ── 기관 이름 풀기 — 묻는 기관 하나만(느슨한 앞말 맞춤 금지) ─────────────────────────
 _ALL_T = re.compile(r"기관별|기관마다|각\s*기관|모든\s*기관|전\s*기관|기관\s*전체|\beach\s+agenc|\ball\s+agenc|\bevery\s+agenc|\bby\s+agenc|\bper\s+agenc", re.I)
-_FILL_KO = re.compile(r"AI\s*도우미|사용량|토큰|LLM|이번\s*달|지난\s*달|얼마나|얼마|몇|썼(어|나|니|는지)?|쓴\s*양|사용|현황|요약|알려\s*(줘|주세요)?|보여\s*(줘|주세요)?|"
+_TOKEN_ASK = re.compile(r"토큰|\btokens?\b", re.I)
+_FILL_KO = re.compile(r"XI\s*ChatGEO|AI\s*도우미|요청\s*건수|사용량|토큰|LLM|이번\s*달|지난\s*달|얼마나|얼마|몇|썼(어|나|니|는지)?|쓴\s*양|사용|현황|요약|알려\s*(줘|주세요)?|보여\s*(줘|주세요)?|"
                       r"확인|기관|합계|전체|상태|\?|\.|,|!", re.I)
 _FILL_EN = {"how", "much", "many", "does", "do", "did", "has", "have", "had", "is", "are", "was", "the", "a", "an", "of", "for", "this", "last", "month",
             "used", "use", "uses", "usage", "ai", "assistant", "tokens", "token", "llm", "show", "me", "what", "whats", "tell", "please", "total",
-            "agency", "agencies", "s", "by", "per", "in", "so", "far", "consumed", "spent"}
+            "agency", "agencies", "s", "by", "per", "in", "so", "far", "consumed", "spent", "xi", "chatgeo", "requests", "request"}
 _PARTICLE = re.compile(r"(은|는|이|가|의|을|를|에서|도|만|께서)$")
 
 
@@ -209,7 +213,7 @@ def _eun(w: str | None) -> str:
     return w + ("은" if 0 <= c <= 11171 and c % 28 else "는")
 
 
-# ── 시군구 이름 → 소속 기관(r3-ops) — '목포시 AI 도우미 사용량'은 목포시를 관할하는 기관 값으로 답한다(LLM 0) ─────────
+# ── 시군구 이름 → 소속 기관(r3-ops) — '목포시 사용량'은 목포시를 관할하는 기관 값으로 답한다(LLM 0) ─────────
 def _regions_find(q: str) -> list[dict]:
     try:
         from landxi_api.regions import find
@@ -319,7 +323,8 @@ def _tname_en(t: dict | None, tid: str) -> str:
     return re.sub(r"\s*\(.*\)$", "", s).strip() or tid
 
 
-_U_EN = {"장": "GPUs", "대": "workers", "개": "models", "시간": "hours"}
+_U_EN = {"장": "GPUs", "대": "workers", "개": "models", "시간": "hours", "건": "requests"}
+
 
 
 def _u(ctx, unit: str, en: str | None = None) -> str:
@@ -569,11 +574,13 @@ async def ops_alerts(args: dict, ctx) -> Out:
 
 
 # ── ops_usage ────────────────────────────────────────────────────────────
-USAGE_EN = {"llm_tokens_month": "AI assistant usage", "gpu_s_month": "GPU time", "area_km2_month": "analysis area", "storage_gb": "storage"}
+USAGE_EN = {"llm_requests_month": "XI ChatGEO requests", "llm_tokens_month": "XI ChatGEO tokens", "gpu_s_month": "GPU time", "area_km2_month": "analysis area",
+            "storage_gb": "storage"}
+INT_DIMS = {"llm_requests_month", "llm_tokens_month"}       # 건수 · 토큰은 정수
 
 
 async def ops_usage(args: dict, ctx) -> Out:
-    dim = args.get("dim") or "llm_tokens_month"
+    dim = args.get("dim") or "llm_requests_month"
     if dim not in USAGE_DIMS:
         raise ToolError("bad_request", "없는 항목입니다")
     u = await _get(ctx, "/ops/tenants")
@@ -622,7 +629,7 @@ async def ops_usage(args: dict, ctx) -> Out:
         d = (it.get("dims") or {}).get(dim) or {}
         used = _v(d.get("used"))
         e = d.get("used") or {}
-        val = None if used is None else (int(round(used * k)) if dim == "llm_tokens_month" else round(used * k, 1))
+        val = None if used is None else (int(round(used * k)) if dim in INT_DIMS else round(used * k, 1))
         key = re.sub(r"\W", "_", tid)
         row = {ko: out.env(f"{key}_u", f"{nm} 이번 달 {ko}", _e(val, unit, f"기관 사용량 · {ko}", e.get("as_of"), note=e.get("note")))}
         # 사용을 막는 값은 없다(원칙 83 · 11차 — 기관 · LX 직원 모두) — 사용량만 답한다(예전 '한도' 칸은 없앰)
@@ -634,7 +641,7 @@ async def ops_usage(args: dict, ctx) -> Out:
     data = {"항목": label, "달": (u.get("items") or [{}])[0].get("month"), "기관": rows}
     # 합계는 '기관별(전 기관)' 질문에만 — 기관을 말했으면 그 기관 값만(합계가 그 기관 값처럼 읽히지 않게)
     if len(rows) > 1 and picked is None:
-        data["합계"] = out.env("sum", f"이번 달 {ko} 합계", _e(int(total) if dim == "llm_tokens_month" else round(total, 1), unit, f"기관 사용량 · {ko} 합계",
+        data["합계"] = out.env("sum", f"이번 달 {ko} 합계", _e(int(total) if dim in INT_DIMS else round(total, 1), unit, f"기관 사용량 · {ko} 합계",
                                                           u.get("as_of")))
     out.data = data
     # 답 — 사용량 많은 순 · 사용량만(짧게). 막대 차트 한 장(값 = 같은 봉투)
@@ -643,7 +650,7 @@ async def ops_usage(args: dict, ctx) -> Out:
     if en:
         out.answer = f"{label[0].upper() + label[1:]} this month: " + ", ".join(lines) + "." + (" Total: {{sum}}." if "합계" in data else "")
     else:
-        out.answer = f"이번 달 {ko}은 " + ", ".join(lines) + "입니다." + (" 합계는 {{sum}}입니다." if "합계" in data else "")
+        out.answer = f"이번 달 {_eun(ko)} " + ", ".join(lines) + "입니다." + (" 합계는 {{sum}}입니다." if "합계" in data else "")
     if via and via.get("tenant") in rows_ids:
         r = via["region"]
         tn = _tname_en(tmeta.get(via["tenant"]), via["tenant"]) if en else _tname(tmeta.get(via["tenant"]), via["tenant"])

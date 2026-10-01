@@ -1,269 +1,220 @@
-/* app.js — LX 직원 첫 화면(LX 직원 대시보드) · 명세 LANDXI-FINAL-SPEC §2.3 · 구현 2차 T1(확인 대장 R-D3 · D3).
-   "내 일은 어디까지 왔고, 우리 서비스는 어디서 돌고, 다음에 무엇을 만들 수 있나?" — 내 프로젝트 · 돌고 있는 서비스 · 만들 수 있는 것 ·
-   6단 레일 · ③ 서비스 만들기 · 전국 배포 점. '오늘 할 일'(전국 합계 네 칸)은 '내 프로젝트'로 바뀌었다(R-D3 §4 — 일 단위 = 프로젝트).
-   부품 = 키트 K1 셸(레일 = K8 세로) · K2 관문 · K3 무대 · K4 지도 검색 · K5 서랍 · K6 큰 숫자 · K10 물어보기 · K13 토스트 · K14 개발자. */
+/* app.js — LX 직원 대시보드(홈) · 확인 대장 10차 홈-1 · 14차 대시보드-1 ⓐ 1안 · 메뉴-1 ⓐ 1안 · 원칙 81 · 90 · 99.
+   네 질문에 칸 하나씩(지도 없음): ① 내 프로젝트는 어디까지(6칸 진행 막대 · 지금 단계 · 다음 할 일) ② 기관이 나를 기다리는 것(요청함 숫자 셋)
+   ③ 우리 서비스는 어디서 돌고 무엇이 문제(실제 결과 장면 넷 · 살펴볼 것) ④ 지금 무엇을 할까(바로 분석하기 · 최근 활동).
+   숫자는 모두 서버에서 — 같은 이름의 숫자는 프로젝트 · 요청함 · 서비스 관리 화면과 같은 한 곳(지어낸 값 0 · 내부 지표 0).
+   왼쪽 메뉴 = LX 직원 메뉴(kit/lx-menu.js) · '새 프로젝트'는 메뉴 '프로젝트 → 새 프로젝트'와 같은 창(lx-project/new.js · 원칙 99). */
 import * as K from '../kit/index.js';
-import { h, esc, api } from '../kit/util.js';
-import { D, load, loadAssembly, pins, legend, STAGE_KO, cardName } from './data.js';
-import { openMatrix, regionChanged, TASKS, judge } from './matrix.js';
-import { projectsLink, stageHref, HOME as PROJECTS } from '../lx-project/context.js';
+import { h, esc, api, API } from '../kit/util.js';
+import { staffMenu, requestCounts, STAFF_HREF } from '../kit/lx-menu.js';
+import { stageHref, loadProject, STAGES, HOME as PROJECTS } from '../lx-project/context.js';
 import { openNewProject } from '../lx-project/new.js';
+import { summary } from './summary.js';
+import { say } from './words.js';
+import { dueSets } from '../lx-deploy/retrain.js';
 
-const V3 = '/landxi/v3/';
 const who = await K.gate('lx-console');
+const S = K.shell({ who, home: 'lx-console', rail: staffMenu('home') });
+K.devDrawer({ who });
+const at = (p) => new URL(p, import.meta.url).pathname;
+const V = { deploy: at('../lx-deploy/'), detail: at('../service-detail/'), xi: at('../xi-clean/'), train: at('../lx-train/') };
 
-/* ── 셸: 마스트 + 6단 레일(①②④⑤⑥ = 페이지 · ③ = 서랍) ───────────── */
-const STEPS = [
-  { id: 'ingest', label: '데이터 올리기', href: V3 + 'lx-ingest/' },
-  { id: 'train', label: '학습', href: V3 + 'lx-train/' },
-  { id: 'assemble', label: '서비스 만들기' },
-  { id: 'review', label: '결과 확인', href: V3 + 'lx-review/' },
-  { id: 'deploy', label: '배포', href: V3 + 'lx-deploy/' },
-  { id: 'ops', label: '서비스 관리', href: V3 + 'lx-deploy/', query: 'tab=ops', hash: '#ops' },
-];
-document.body.classList.add('is-booting');
-let region = null;          // 지도 검색으로 고른 지역(변수 · 없으면 전국)
-let mx = null;              // ③ 서랍
-const markers = new Map();  // 자리 키 → { 표식, 점 }
-const SPLIT = 8;            // 이 줌부터 시도 묶음을 시군구로 분해
-let level = null, sel = null;
-let going = false;          // 칸 이동 중
-const S = K.shell({
-  who, home: 'lx-console', xiRegion: () => region?.sgg_cd || null,
-  rail: { kind: 'steps', items: STEPS.map((s) => ({ ...s, href: s.href ? s.href + (s.query ? '?' + s.query : '') + (s.hash || '') : undefined })), current: -1, done: [], onPick: (i) => { if (STEPS[i].id === 'assemble') assemble(); } },
-});
-S.rail.setAttribute('aria-label', '작업 단계');
-const railHref = () => S.rail.querySelectorAll('a.k-rail-i').forEach((a) => {
-  const s = STEPS[+a.dataset.i];
-  const qs = [region && 'region=' + encodeURIComponent(region.sgg_cd), s.query].filter(Boolean).join('&');
-  a.href = s.href + (qs ? '?' + qs : '') + (s.hash || '');
-});
+/* ── 판 — 왼쪽(내 프로젝트 · 우리 서비스) · 오른쪽(요청함 · 바로 분석하기 · 최근 활동) ── */
+const head = (title, more, sub) => h('div.ld-h', {}, h('h2', {}, title, sub || null), more || null);
+const moreLink = (text, href) => h('a.ld-more', { href, text });
+const mineMore = moreLink('전체 보기', PROJECTS);
+const mine = h('section.t-card.ld-card.lc-mine', { 'aria-label': '내 프로젝트' }, head('내 프로젝트', mineMore), h('div.ld-prs'),
+  h('div.ld-foot', {}, h('button.ld-new', { type: 'button', text: '새 프로젝트', onclick: () => openNewProject() })));
+const svcSub = h('small.ld-sub');
+const svc = h('section.t-card.ld-card.ld-svc', { 'aria-label': '우리 서비스' }, head('우리 서비스', moreLink('서비스 카드', STAFF_HREF.cards), svcSub), h('div.ld-strip'), h('div.ld-issues'));
+const inbox = h('section.t-card.ld-card.ld-inbox', { 'aria-label': '요청함' }, head('요청함', moreLink('전체', STAFF_HREF.inbox)), h('div.ld-cells'));
+const pickEl = h('div.ld-pick');
+const goBtn = h('button.t-btn.ld-go', { type: 'button', text: '분석하기' });
+const quick = h('section.t-card.ld-card.ld-quick', { 'aria-label': '바로 분석하기' }, head('바로 분석하기', moreLink('카드 고르기', STAFF_HREF.analyze)),
+  h('div.ld-go-row', {}, pickEl, goBtn));
+const act = h('section.t-card.ld-card.ld-act', { 'aria-label': '최근 활동' }, head('최근 활동'), h('ul.ld-acts'));
+const page = h('div.ld', {}, h('div.ld-grid', {}, h('div.ld-col.ld-col--l', {}, mine, svc), h('div.ld-col.ld-col--r', {}, inbox, quick, act)));
+S.main.append(page);
+const wait = (el) => { const w = h('div'); el.replaceChildren(w); K.empty(w, { kind: 'loading', compact: true }).set({ progress: null }); };
+const fail = (el, retry) => { const w = h('div'); el.replaceChildren(w); K.empty(w, { kind: 'error', compact: true, onRetry: retry }); };
+for (const el of [mine.querySelector('.ld-prs'), svc.querySelector('.ld-strip'), inbox.querySelector('.ld-cells'), act.querySelector('.ld-acts')]) wait(el);
 
-/* 마스트 가운데: 한 줄 · 지도 검색(K4) · 물어보기 */
-const line = h('p.lc-line', { text: 'AI 기반 국토정보 통합조사 플랫폼' });
-const pickEl = h('div.lc-pick');
-const askBtn = h('button.lc-ask', { type: 'button', 'aria-keyshortcuts': 'Control+K' },
-  h('span', { 'aria-hidden': 'true', html: '<svg viewBox="0 0 20 20"><path d="M10 2.5l1.8 4.7 4.7 1.8-4.7 1.8L10 15.5l-1.8-4.7L3.5 9l4.7-1.8z"/></svg>' }),
-  h('span.lc-ask-t', { text: '물어보기' }), h('kbd', { text: 'Ctrl K' }));
-S.mast(h('span.lc-mast', {}, line, pickEl, askBtn));
-projectsLink(S);            // 머리 줄 — 프로젝트 목록으로 가는 길(머리 메뉴 구성은 그대로 · 사용자 10-01)
+/* 공용 자료(한 번) — 카드 · 배포 · 지역 이름 */
+const once = (f) => { let p = null; return () => (p ||= f()); };
+const cardsP = once(() => api('/registry/cards').catch(() => null));
+const deploysP = once(() => api('/deploys').catch(() => null));
+const regionsP = once(() => K.loadRegions().catch(() => []));
+const isTest = (d) => /-test(-\d+)?$/.test(String(d?.id || '')) || !!d?.test;
+const LIVE = new Set(['ga', 'canary', 'shadow']);
+/* 서비스 이름 — 서비스 관리 · LX 관리자 화면과 같은 규칙(lx-console/data.js cardName 과 같은 말) */
+const nameOf = (c) => say(c?.name || '').replace(/\s*\((해외|global)\)/i, '').replace(/\s*(행정서비스|서비스)$/, '') || '서비스';
+const shortRegion = (s) => String(s || '').trim().split(/\s+/).pop() || '';
 
-/* ── 무대: 전국 V-World 위성 ─────────────────────────────── */
-const stageEl = h('div.lc-stage');
-S.main.append(stageEl);
-const stage = K.createStage(stageEl);
-const cmdk = K.mountCmdk({ stage, context: () => ({ region: region?.sgg_cd || null }) });
-askBtn.addEventListener('click', () => cmdk.open());
-K.devDrawer({ stage, who });
+/* 시각 — 오늘 HH:MM · 어제 HH:MM · 그 밖 MM.DD */
+const two = (n) => String(n).padStart(2, '0');
+function when(s) {
+  const d = new Date(s || ''); if (Number.isNaN(+d)) return '';
+  const now = new Date(), y = new Date(now); y.setDate(now.getDate() - 1);
+  const hm = `${two(d.getHours())}:${two(d.getMinutes())}`;
+  if (d.toDateString() === now.toDateString()) return hm;
+  if (d.toDateString() === y.toDateString()) return `어제 ${hm}`;
+  return `${two(d.getMonth() + 1)}.${two(d.getDate())}`;
+}
 
-/* 윗줄 흰 카드 셋 — 내 프로젝트 · 돌고 있는 서비스 · 만들 수 있는 것(R-D3 §4 · D3 Q2 · Q3) */
-const newBtn = h('button.t-btn.t-btn--text.lc-new', { type: 'button', text: '새 프로젝트', onclick: () => openNewProject() });
-const mineEl = h('section.t-card.t-card--map.lc-mine', { 'aria-label': '내 프로젝트' },
-  h('div.lc-today-h', {}, h('h2', { text: '내 프로젝트' }), newBtn),
-  h('div.lc-prs', { 'data-budget-skip': '' }));
-const waitCells = (labels) => h('div.lc-cells', { 'data-budget-skip': '' }, ...labels.map((l) => h('span.lc-cell.is-wait', {}, h('b.lc-n', { text: '' }), h('span', { text: l }))));
-const runEl = h('section.t-card.t-card--map.lc-q.lc-run', { 'aria-label': '돌고 있는 서비스' }, h('div.lc-today-h', {}, h('h2', { text: '돌고 있는 서비스' })), waitCells(['서비스', '지역']));
-const makeEl = h('section.t-card.t-card--map.lc-q.lc-make', { 'aria-label': '만들 수 있는 것' }, h('div.lc-today-h', {}, h('h2', { text: '만들 수 있는 것' })), waitCells(['만드는 중', '업무', '재학습']));
-const todayEl = h('div.lc-top', {}, mineEl, runEl, makeEl);
-/* 범례(사진 위 흰 글자) */
-const legendEl = h('div.lc-legend', { 'aria-label': '범례' });
-const tip = h('div.lc-tip', { role: 'tooltip', hidden: true });
-stageEl.append(todayEl, legendEl, tip);
-/* 부팅 진행 막대 1개(글자 0 · 스펙시먼 G) — 카드가 서기 전 빈 바탕만 보이는 몇 초를 채운다 */
-const bootBar = h('div.t-progress.lc-boot', { role: 'progressbar', 'aria-label': '불러오는 중' }, h('i'));
-stageEl.append(bootBar);
-
-/* ── 부팅: 데이터가 오면 띠·레일·점(지도 로드는 기다리지 않는다 · 바탕 --bg-0) ── */
-const mineP = api('/projects?scope=mine').catch(() => null);        // 내 프로젝트 — 지도 자료와 나란히 받는다
-await load();
-S.fresh(D.asOf);
-drawMine(await mineP);
-drawRun();
-drawMake();
-drawPins();
-drawLegend();
-stage.map.on('zoomend', () => drawPins());
-stage.map.on('moveend', () => placeLabels());
-document.body.classList.remove('is-booting');
-bootBar.remove();
-K.regionPicker(pickEl, { onPick: pick }).then((p) => {
-  const k = new URLSearchParams(location.search).get('region');
-  if (k) p.pick(k);
-});
-window.__lxConsole = { D, stage, get level() { return level; }, get kept() { return [...markers.values()].filter((r) => !r.m.getElement().hidden).length; } };   // e2e 관측(읽기 전용)
+drawMine();
+drawInbox();
+drawQuick();
+drawServices();
+drawActs();
+window.__lxConsole = { ready: true };                 // e2e 관측(읽기 전용)
 document.documentElement.dataset.consoleReady = '1';
 
-/* ── 내 프로젝트 — 진행 중 프로젝트마다 이름 · 지금 단계 · 다음 할 일 하나(누르면 그 단계 화면) ── */
-function drawMine(j) {
-  const MINE_MAX = 3;
-  const box = mineEl.querySelector('.lc-prs');
-  box.innerHTML = '';
-  if (!j) {
-    const x = h('div'); box.append(x);
-    K.empty(x, { kind: 'error', title: '프로젝트를 불러오지 못했습니다', compact: true, onRetry: async () => drawMine(await api('/projects?scope=mine').catch(() => null)) });
-    return;
-  }
+/* ── ① 내 프로젝트 — 줄마다 이름 · 지역 · 6칸 진행 막대(끝난 칸 잉크 · 지금 칸 파랑) · 지금 단계 · 다음 할 일 ── */
+async function drawMine() {
+  const box = mine.querySelector('.ld-prs');
+  const MAX = 3;
+  let j;
+  try { j = await api('/projects?scope=mine'); } catch { fail(box, () => { wait(box); drawMine(); }); return; }
+  S.fresh(j.as_of);
   const items = j.items || [];
-  newBtn.hidden = !items.length;                          // 비었을 때는 빈 화면의 '새 프로젝트' 하나만
+  mineMore.textContent = items.length > MAX ? `전체 보기 ${items.length}` : '전체 보기';
+  mine.querySelector('.ld-foot').hidden = !items.length;           // 비었을 때는 빈 화면의 '새 프로젝트' 하나만
   if (!items.length) {
-    const x = h('div'); box.append(x);
+    const x = h('div'); box.replaceChildren(x);
     K.empty(x, { kind: 'first', title: '진행 중인 프로젝트가 없습니다', compact: true, action: { label: '새 프로젝트', onClick: () => openNewProject() } });
     return;
   }
-  items.slice(0, MINE_MAX).forEach((p, i) => {
-    const a = h('a.lc-pr', { href: stageHref(p, p.next?.stage, p.next?.target), style: { '--i': i }, dataset: { stage: p.stage?.key || '' } },
-      h('b.lc-pr-n', { text: p.name }), h('span.lc-pr-s', { text: p.stage ? `${p.stage.index + 1} ${p.stage.label}` : '' }),
-      h('span.lc-pr-x', { text: p.next?.text || '' }));
-    box.append(a);
+  const rows = items.slice(0, MAX).map((p) => {
+    const where = p.regions?.length ? p.regions[0].name + (p.regions.length > 1 ? ` 외 ${p.regions.length - 1}곳` : '') : '';
+    const seg = h('span.ld-seg', { 'aria-hidden': 'true' }, ...STAGES.map(() => h('i')));
+    const n = (p.stage?.index ?? 0) + 1;
+    const a = h('a.lc-pr', { href: stageHref(p, p.next?.stage, p.next?.target), dataset: { stage: p.stage?.key || '' },
+      'aria-label': `${p.name} · ${where} · 지금 단계 ${n} ${p.stage?.label || ''} · 다음 할 일 ${p.next?.text || ''}` },
+      h('span.ld-pr-nm', {}, h('b.lc-pr-n', { text: p.name }), where ? h('small', { text: where }) : null),
+      seg,
+      h('span.lc-pr-s.ld-pr-st', {}, h('i.num', { text: String(n) }), h('span', { text: p.stage?.label || '' })),
+      p.next?.text ? h('span.lc-pr-x.ld-pr-nx', { html: esc(p.next.text).replace(/(\d[\d,]*\s?(?:필지|건|곳|개)?)/g, '<b>$1</b>') }) : null);
+    /* 막대 — 프로젝트 한 장(서버 판정: 단계마다 완료 · 지금 · 대기)을 받아 칠한다 */
+    loadProject(p.id).then((pr) => {
+      const st = pr?.stages || [];
+      [...seg.children].forEach((i, k) => { i.dataset.st = k === pr?.stage?.index ? 'now' : st[k]?.done ? 'done' : 'wait'; });
+    }).catch(() => {});
+    return a;
   });
-  box.append(h('a.t-btn.t-btn--text.lc-all', { href: PROJECTS, text: items.length > MINE_MAX ? `전체 보기 ${items.length}` : '전체 보기' }));
+  box.replaceChildren(...rows);
 }
 
-/* ── 돌고 있는 서비스 — 배포 기록(운영 · 시범)에서 센 값 · 누르면 배포 화면 ── */
-function counted(n, asOf, source) { return { value: n, unit: 'count', basis: 'recorded', as_of: asOf || new Date().toISOString(), source }; }
-function cells(el, list) {
-  const c = el.querySelector('.lc-cells');
-  c.innerHTML = '';
-  list.forEach((x, i) => {
-    const v = x.env?.value;
-    const b = h(x.href ? 'a.lc-cell' : 'button.lc-cell', { ...(x.href ? { href: x.href } : { type: 'button' }), dataset: { k: x.k, metric: x.label, v: v ?? '' }, style: { '--i': i } },
-      h('b.lc-n', { html: x.env ? K.numHtml(x.env, { unit: x.tail || '' }) : '<span class="k-num">—</span>' }),
-      h('span', { text: x.label }));
-    if (x.onClick) b.addEventListener('click', (e) => { if (!e.target.closest('.k-sig')) x.onClick(); });
-    c.append(b);
-  });
-}
-function drawRun() {
-  const live = D.deploys.filter((d) => ['ga', 'canary', 'shadow'].includes(d.stage));
-  const svc = new Set(live.map((d) => d.card_id)).size;
-  const reg = new Set(live.map((d) => d.sgg_cd || d.region_profile || d.tenant_id)).size;
-  const ok = !D.failed.includes('deploys');
-  cells(runEl, [
-    { k: 'svc', label: '서비스', env: ok ? counted(svc, D.asOf, '배포 기록(운영 · 시범)') : null, href: V3 + 'lx-deploy/' },
-    { k: 'reg', label: '지역', env: ok ? counted(reg, D.asOf, '배포 기록(운영 · 시범)') : null, tail: '곳', href: V3 + 'lx-deploy/' },
-  ]);
+/* ── ② 요청함 — 검토 요청 · 분석 의뢰 · 내 결재(왼쪽 메뉴 '요청함' 숫자와 같은 한 곳) ── */
+async function drawInbox() {
+  const box = inbox.querySelector('.ld-cells');
+  const c = await requestCounts().catch(() => null);
+  if (!c || c.total === null) { fail(box, () => { wait(box); requestCounts({ force: true }); drawInbox(); }); return; }
+  const cell = (v, label, hash) => h('a.ld-cell', { href: STAFF_HREF.inbox + hash, class: v ? '' : 'is-zero', 'aria-label': `${label} ${v ?? '—'}건` },
+    h('b.num', { text: v === null ? '—' : String(v) }), h('span', { text: label }));
+  box.replaceChildren(cell(c.review, '검토 요청', ''), cell(c.request, '분석 의뢰', '#requests'), cell(c.approval, '내 결재', '#approvals'));
 }
 
-/* ── 만들 수 있는 것 — 만드는 중(진행 중 프로젝트) · 만들 수 있는 업무(③ 서비스 만들기와 같은 판정) · 재학습(서비스 관리와 같은 규칙) ── */
-async function drawMake() {
-  const re = D.today?.cells?.find((c) => c.k === 'retrain')?.env || null;
-  const base = (all, ready) => [
-    { k: 'making', label: '만드는 중', env: all ? all.total : null, href: PROJECTS + '?scope=all' },
-    { k: 'tasks', label: '업무', env: ready, tail: `/${TASKS.length}`, onClick: () => assemble() },
-    { k: 'retrain', label: '재학습', env: re, href: V3 + 'lx-deploy/?tab=ops#ops' },
-  ];
-  const all = await api('/projects?scope=all').catch(() => null);
-  cells(makeEl, base(all, null));
-  await loadAssembly(null);
-  const n = TASKS.filter((t) => judge(t, null).ready).length;
-  cells(makeEl, base(all, D.assemblyOk ? counted(n, D.cardsAsOf || D.asOf, '서비스 카드 기록') : null));
+/* ── ④ 바로 분석하기 — 어디 한 칸 + '분석하기'(이 화면의 1차 버튼 하나) → 분석하기(그 지역에 쓸 수 있는 카드) ── */
+async function drawQuick() {
+  let region = null;
+  goBtn.addEventListener('click', () => { location.href = STAFF_HREF.analyze + (region ? '?region=' + encodeURIComponent(region.sgg_cd) : ''); });
+  await K.regionPicker(pickEl, { onPick: (r) => { region = r; } }).catch(() => null);
+  pickEl.querySelector('input')?.setAttribute('aria-label', '어디 — 시군구 이름을 검색');
 }
 
-/* ── 전국 배포 점 ──────────────────────────────────
-   전국(줌 < 8) = 배포본 자리마다 점 하나(여러 시군구에 걸친 배포본은 시도 1점) · 이름은 호버·선택·검색 때만.
-   확대(줌 ≥ 8) = 시군구로 분해 · 이름은 서로(그리고 다른 점과) 겹치지 않는 것만. 점은 지도 표식(예산 제외). */
-function drawPins(force = false) {
-  const lv = stage.map.getZoom() >= SPLIT ? 'sgg' : 'nat';
-  if (lv === level && !force) { placeLabels(); return; }
-  level = lv;
-  for (const { m } of markers.values()) m.remove();
-  markers.clear();
-  for (const p of pins(lv)) {
-    const el = h('div.lc-pin', { dataset: { stage: p.stage, draft: p.draft ? '1' : '0', budgetSkip: '' } },
-      h('button.lc-dot', { type: 'button', 'aria-label': `${p.name} ${STAGE_KO[p.best.stage]}` }, h('i', { 'aria-hidden': 'true' })),
-      h('b.lc-lab', { text: p.name, 'aria-hidden': 'true' }));
-    const btn = el.firstChild;
-    const rec = { p, lines: p.deploys.map((d) => `${p.name} · ${cardName(d.card)} · ${STAGE_KO[d.stage] || ''}`), more: [] };
-    const all = () => [...rec.lines, ...rec.more];
-    btn.addEventListener('mouseenter', () => showTip(btn, all()));
-    btn.addEventListener('focus', () => showTip(btn, all()));
-    btn.addEventListener('mouseleave', hideTip);
-    btn.addEventListener('blur', hideTip);
-    btn.addEventListener('click', () => {
-      const rg = p.best.sgg_cd || p.sgg_cd;
-      location.href = V3 + 'lx-deploy/?deploy=' + encodeURIComponent(p.best.id) + (rg ? '&region=' + encodeURIComponent(rg) : '');
-    });
-    const m = new window.maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat(p.center).addTo(stage.map);
-    rec.m = m;
-    markers.set(p.key, rec);
+/* ── ③ 우리 서비스 — 운영 · 시범 · 지역 수 · 실제 결과 장면 넷 · 살펴볼 것(재학습 필요 · 영상 없는 지역) ── */
+async function drawServices() {
+  const strip = svc.querySelector('.ld-strip'), issues = svc.querySelector('.ld-issues');
+  const [cj, dj, sum, fb, rules, vis, deck] = await Promise.all([cardsP(), deploysP(), summary().catch(() => null),
+    api('/feedback?since=30d').catch(() => null), api('/survey/rules').catch(() => null),
+    fetch(new URL('../service-detail/data/visuals.json', import.meta.url)).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    /* 서비스 카드 한 벌(14차 카드-1 ⓐ · kit/service-card.js 덱) — 있으면 장면 · 상태 · 어디를 거기서(서비스 카드 화면과 같은 값) · 없으면 지금 자료로 */
+    import('../kit/service-card.js').then((m) => (typeof m.loadDeck === 'function' ? m.loadDeck() : null)).catch(() => null)]);
+  if (!cj || !dj) { fail(strip, () => { wait(strip); drawServices(); }); return; }
+  const cards = cj.items || [];
+  const deploys = (dj.items || []).filter((d) => !isTest(d));
+  const live = deploys.filter((d) => LIVE.has(d.stage));
+  const D = new Map((deck?.items || []).map((c) => [c.id, c]));      // 카드 한 벌의 덱(서버) — 있으면 상태 · 장면 · 어디는 이것이 정본
+  const stOf = (c) => (D.get(c.id)?.state ? { ga: '운영', pilot: '시범', none: '첫 결과 전' }[D.get(c.id).state] : c.status_label);
+  const n = (lab) => cards.filter((c) => stOf(c) === lab).length;
+  const places = new Set(live.map((d) => d.sgg_cd || d.region_profile || d.tenant_id)).size;
+  svcSub.textContent = `운영 ${n('운영')} · 시범 ${n('시범')} · ${places}곳`;
+
+  /* 장면 — 실제 결과 장면만(서비스 소개 화면의 결과 히어로 → 서버 결과 크롭). 없으면 회백 판(그림을 지어내지 않는다) */
+  const own = new URL('../service-detail/data/img/', import.meta.url).pathname;
+  const sceneOf = (c) => {
+    const ds = D.get(c.id)?.scene?.src;
+    if (D.size) return ds ? (String(ds).startsWith('/api/') ? API.base + ds : ds) : null;     // 덱이 있으면 덱의 장면만(없으면 회백 판)
+    const hero = vis?.hero?.[c.id]?.img;
+    if (hero) return /^\/|^https?:/.test(hero) ? hero : own + hero;
+    if (c.crop_url) { try { const u = new URL(c.crop_url, location.href); return u.pathname.startsWith('/files/') ? u.pathname : u.href; } catch { return null; } }
+    return null;
+  };
+  const due = dueSets(fb?.items || [], { rules: rules?.items || [] });
+  const dueCards = new Set(due.map((x) => x.card).filter(Boolean));
+  const rep = new Map();                         // 카드 → 기관 신고(서버 요약 · 서비스 관리 표와 같은 값)
+  for (const it of sum?.items || []) { const v = it.metrics?.reports?.value; if (Number.isFinite(+v) && +v) rep.set(it.card, (rep.get(it.card) || 0) + +v); }
+  const RANK = { 운영: 0, 시범: 1 };
+  const lastAt = (c) => deploys.filter((d) => d.card_id === c.id).map((d) => d.updated_at || '').sort().pop() || '';
+  const pick = cards.filter((c) => stOf(c) === '운영' || stOf(c) === '시범')
+    .sort((a, b) => (RANK[stOf(a)] - RANK[stOf(b)]) || (!!sceneOf(b) - !!sceneOf(a)) || lastAt(b).localeCompare(lastAt(a)))
+    .slice(0, 4);
+  if (!pick.length) { const x = h('div'); strip.replaceChildren(x); K.empty(x, { kind: 'first', title: '공개한 서비스가 없습니다', compact: true }); }
+  else {
+    const regs = await regionsP();
+    const nm = (code) => regs.find?.((r) => r.sgg_cd === code)?.name || null;
+    strip.replaceChildren(...pick.map((c) => {
+      const mineD = live.filter((d) => d.card_id === c.id).sort((a, b) => (a.stage === 'ga' ? 0 : 1) - (b.stage === 'ga' ? 0 : 1));
+      const names = [...new Set(mineD.map((d) => nm(d.sgg_cd) || shortRegion(d.region_name?.ko || d.region_name)).filter(Boolean))];
+      const where = D.get(c.id)?.where || (names.length ? names[0] + (names.length > 1 ? ` 외 ${names.length - 1}곳` : '') : '');
+      const src = sceneOf(c);
+      const sig = [rep.get(c.id) ? `기관 신고 ${rep.get(c.id).toLocaleString('ko-KR')}` : null, dueCards.has(c.id) ? '재학습 필요' : null].filter(Boolean).join(' · ');
+      /* 카드 한 벌과 같은 순서 — ① 결과 장면 ② 상태 ③ 어디 ④ 이름 · 그 아래 살펴볼 신호(기관 신고 · 재학습) */
+      return h('a.ld-th', { href: V.detail + '?card=' + encodeURIComponent(c.id), dataset: { card: c.id, state: stOf(c) === '운영' ? 'ga' : 'pilot' } },
+        h('span.ld-th-img', { class: src ? '' : 'is-blank' }, src ? h('img', { src, alt: '', loading: 'lazy', decoding: 'async' }) : h('span', { text: '결과 장면 없음' }),
+          h('span.ld-th-chip', { text: stOf(c) })),
+        h('span.ld-th-wh', { text: where || ' ' }),
+        h('b.ld-th-nm', { text: D.get(c.id)?.name || nameOf(c) }),
+        sig ? h('span.ld-th-sig', { text: sig }) : null);
+    }));
   }
-  mark(sel);
-  placeLabels();
+  /* 살펴볼 것 — 재학습 필요(서비스 관리 큰 숫자와 같은 계산) · 영상 없는 지역(서버 요약의 영상 유무) */
+  const noImg = new Set((sum?.items || []).filter((i) => i.imagery && i.imagery.has === false).map((i) => i.sgg_cd || i.region_name)).size;
+  const chips = [];
+  if (fb) chips.push(h('a.ld-chip', { href: V.deploy + '?tab=ops#ops', class: due.length ? 'is-warn' : '', text: `재학습 필요 ${due.length}` }));
+  if (sum) chips.push(h('a.ld-chip', { href: V.deploy, text: `영상 없는 지역 ${noImg}곳` }));
+  issues.replaceChildren(...(chips.length ? [h('span.ld-issues-k', { text: '살펴볼 것' }), ...chips] : []));
 }
-/** 겹침 정리(확대 때) — 우선순위(선택 → 운영 → 시범 → 이식 요청) 순으로
-    ① 점이 이미 놓인 점과 겹치면 그 점에 합친다(호버 목록에 더함 · 모든 점이 눌린다)
-    ② 이름은 이미 놓인 이름·다른 점과 겹치지 않을 때만 */
-function placeLabels() {
-  const list = [...markers.values()];
-  for (const r of list) { const el = r.m.getElement(); el.classList.remove('has-lab'); el.hidden = false; r.more = []; }
-  if (level !== 'sgg') return;
-  const W = stageEl.clientWidth, H = stageEl.clientHeight;
-  const hitR = (a, b) => a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1];
-  const on = (r) => r.m.getElement().classList.contains('is-on');
-  const kept = [];
-  for (const r of list.slice().sort((a, b) => (on(b) - on(a)) || a.p.rank - b.p.rank)) {
-    const q = stage.map.project(r.p.center);
-    r.box = [q.x - 11, q.y - 11, q.x + 11, q.y + 11];
-    const host = kept.find((k) => hitR(k.box, r.box));
-    if (host) { host.more.push(...r.lines); r.m.getElement().hidden = true; continue; }
-    kept.push(r);
+
+/* ── ④ 최근 활동 — 끝난 분석 · 결과 갱신 · 학습(작업 기록 · 끝난 시각) · 지역마다 가장 최근 한 줄 ── */
+async function drawActs() {
+  const box = act.querySelector('.ld-acts');
+  let j;
+  try { j = await api('/jobs?limit=60'); } catch { fail(box, () => { wait(box); drawActs(); }); return; }
+  const [cj, regs] = await Promise.all([cardsP(), regionsP()]);
+  const cards = cj?.items || [];
+  const rname = (code) => (code ? regs.find?.((r) => r.sgg_cd === code)?.name || null : null);
+  const jobs = (j.items || []).filter((x) => x.state === 'done' && x.finished_at);
+  const byId = new Map(jobs.map((x) => [x.id, x]));
+  const seen = new Set();
+  const lines = [];
+  for (const x of jobs.sort((a, b) => String(b.finished_at).localeCompare(String(a.finished_at)))) {
+    const o = x.options || {};
+    const code = o.sgg_cd || o.region || null;
+    let card = cards.find((c) => c.id === x.card_id);
+    if (!card && o.ai_job_id) card = cards.find((c) => c.id === byId.get(o.ai_job_id)?.card_id);
+    const place = rname(code);
+    let what = null, href = null;
+    if (x.kind === 'train') { what = '모델 학습 끝남'; href = V.train; }
+    else if (x.kind === 'survey' && place) { what = '결과 갱신'; href = V.xi + '?region=' + encodeURIComponent(code); }
+    else if (x.kind === 'infer' && place) { what = 'AI 분석 끝남'; href = V.xi + '?region=' + encodeURIComponent(code); }
+    if (!what) continue;
+    const key = x.kind === 'train' ? 'train' : 'r:' + code;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    lines.push(h('li', {}, h('a', { href }, h('span.ld-when.num', { text: when(x.finished_at) }),
+      h('span', {}, card ? h('b', { text: nameOf(card) + ' ' }) : null, [place, what].filter(Boolean).join(' ')))));
+    if (lines.length >= 3) break;
   }
-  const sr = stageEl.getBoundingClientRect();
-  const taken = [mineEl, runEl, makeEl, legendEl, document.querySelector('.lc-drawer')].filter((e) => e?.isConnected).map((e) => { const b = e.getBoundingClientRect(); return [b.left - sr.left, b.top - sr.top, b.right - sr.left, b.bottom - sr.top]; });
-  for (const r of kept) {
-    const lab = r.m.getElement().querySelector('.lc-lab');
-    const d = r.box, w = lab.offsetWidth, hh = lab.offsetHeight, cy = (d[1] + d[3]) / 2;
-    const box = [d[2] + 2, cy - hh / 2, d[2] + 2 + w, cy + hh / 2];
-    if (box[2] > W || box[0] < 0 || box[1] < 0 || box[3] > H) continue;
-    if (taken.some((t) => hitR(t, box)) || kept.some((o) => o !== r && hitR(o.box, box))) continue;
-    taken.push(box);
-    r.m.getElement().classList.add('has-lab');
-  }
+  if (!lines.length) { const x = h('div'); box.replaceChildren(x); K.empty(x, { kind: 'first', title: '최근 활동이 없습니다', compact: true }); return; }
+  box.replaceChildren(...lines);
 }
-/** 선택 표시 — 시군구 키가 시도 묶음 안에 있으면 그 묶음 점 */
-function mark(key) {
-  sel = key || null;
-  for (const [k, { m, p }] of markers) m.getElement().classList.toggle('is-on', !!sel && (k === sel || p.regs?.some((r) => r.sgg_cd === sel)));
-  if (level === 'sgg') placeLabels();
-}
-function showTip(el, lines) {
-  tip.innerHTML = lines.map((l) => `<span>${esc(l)}</span>`).join('');
-  tip.hidden = false;
-  const r = el.getBoundingClientRect(), s = stageEl.getBoundingClientRect(), t = tip.getBoundingClientRect();
-  const x = Math.min(s.width - t.width - 12, Math.max(12, r.left - s.left));
-  const y = r.top - s.top - t.height - 10 < 8 ? r.bottom - s.top + 10 : r.top - s.top - t.height - 10;
-  tip.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
-}
-function hideTip() { tip.hidden = true; }
-
-/* 범례 — 기호 뜻만(수는 오늘 칸 · 해외만 곳 수) · lx-deploy 범례와 같은 문구 */
-function drawLegend() {
-  const L = legend();
-  const item = (k, label) => `<span data-stage="${k}"><i></i><span>${label}</span></span>`;
-  legendEl.innerHTML = item('ga', '운영') + item('canary', '시범') + item('draft', '적용 요청')
-    + (L.abroad ? `<span class="lc-far"><span>해외 <b>${L.abroad}</b>곳</span></span>` : '');
-}
-
-/* ── 지도 검색(K4) — 지역은 변수 ──────────────────────────── */
-function pick(r) {
-  region = r;
-  railHref();
-  mark(r.sgg_cd);
-  stage.go(r, { ms: 2400, maxZoom: 11.5 });
-  const u = new URL(location.href); u.searchParams.set('region', r.sgg_cd); history.replaceState(null, '', u);
-  regionChanged(r);
-}
-
-/* ── ③ 조립 서랍 ────────────────────────────────────── */
-async function assemble() {
-  if (mx?.el.isConnected) return;
-  S.go(2);
-  document.body.classList.add('has-mx');
-  stage.pad({ right: stageEl.clientWidth > 1100 ? 392 + 48 : 320 + 48 });
-  mx = await openMatrix({
-    host: stageEl, region,
-    onClose: () => { S.go(-1); document.body.classList.remove('has-mx'); stage.pad({}); },
-    onMade: async () => { await load({ force: true }); drawPins(); drawLegend(); drawRun(); },
-  });
-}
-if (location.hash === '#assemble') assemble();

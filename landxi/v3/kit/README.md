@@ -12,7 +12,8 @@
 
 | # | 부품 | import | 주요 옵션 |
 |---|---|---|---|
-| K1 | 앱 셸 | `shell({ who, home, rail:{kind:'steps'\|'menu', items, current, done, onPick}, onHelp, contained })` → `{main, go, steps, fresh, mast}` | 마스트 64 · 역할 칩 · 신선도 · 레일 72 · ≤960 하단 탭 |
+| K1 | 앱 셸 | `shell({ who, home, rail:{kind:'steps'\|'menu', items, current, done, onPick, sub, counts}, onHelp, contained })` → `{main, sub, go, steps, fresh, mast, badge}` | 마스트 64 · 역할 칩 · 신선도 · 레일 72 · ≤960 하단 탭(항목 `more` 는 '메뉴' 안으로) · `rail.sub` = 마스트 아래 한 줄 |
+| K1a | LX 직원 메뉴 | `staffMenu('home'\|'projects'\|'analyze'\|'cards'\|'data'\|'inbox')` · `requestCounts()` · `STAFF_HREF` (`lx-menu.js`) | 홈 · 프로젝트 · 분석하기 · 서비스 카드 · 데이터 · 요청함(10차 메뉴-1 ⓐ) — 요청함 숫자 = 검토 요청 + 분석 의뢰 + 내 결재 · 알림 칸 대신. rail 을 안 준 LX 직원 화면은 셸이 붙인다. 프로젝트 안 6단계는 `lx-project/context.js` |
 | K2 | 관문 | `await gate(home?)` → `{me, tenant, key, name, org, landing}` · `whoami()` · `logout()` · `landingFor(who)` | 세션 없음 → 정문 `?next=` · 역할 밖 → 정문 `?denied=` |
 | K3 | 지도 무대 | `createStage(el, { mode:'app'\|'ops', interactive, scale })` → `{map, ready, go(region\|bbox), home(), geo(id, fc, 'ai'\|'focus'\|'point'), clear, show, ladder(items, order), mode(), pad()}` | 전국 bounds 시작 · go = 2400 `--e-cam` |
 | K4 | 지역 선택 | `await regionPicker(el, { onPick, public })` · `loadRegions()` | `/regions`(S-3) 없으면 배포 지역으로 대신 |

@@ -4,6 +4,19 @@
 .ib-t{margin:0;font:700 var(--fs-h3)/var(--lh-h3) var(--font-display);letter-spacing:var(--ls-h3);color:var(--ink)}
 .ib-s{margin:0;font:400 var(--fs-body,16px)/26px var(--font-body);color:var(--sub)}
 .ib-grid{flex:1;min-height:0;display:grid;grid-template-columns:minmax(320px,400px) minmax(0,1fr);gap:24px}
+/* LX 직원 — 요청함 숫자 셋(대시보드 '요청함' 칸과 같은 값) */
+.ib-cells{display:flex;gap:8px;margin-left:auto;align-self:center}
+.ib-cell{display:inline-flex;align-items:baseline;gap:6px;height:36px;padding:0 12px;border:0;border-radius:var(--r-8);background:var(--bg-1);color:var(--sub);font:500 var(--fs-label)/36px var(--font-body);white-space:nowrap}
+button.ib-cell{cursor:pointer;transition:background var(--d-180) var(--e-ui)}
+button.ib-cell:hover{background:var(--rule)}
+.ib-cell b{font:700 18px/1 var(--font-display);color:var(--ink)}
+.ib-cell.is-zero b{color:var(--mute)}
+.ib-xl-s{margin:0 0 12px;font:400 var(--fs-label)/20px var(--font-body);color:var(--sub)}
+.ib-xl-l{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.ib-xl-l li{display:flex;flex-direction:column;gap:2px;padding:12px 0;border-top:1px solid var(--rule)}
+.ib-xl-l li:first-child{border-top:0}
+.ib-xl-l b{font:500 15px/22px var(--font-body);color:var(--ink)}
+.ib-xl-l span{font:400 13px/18px var(--font-body);color:var(--sub)}
 
 /* 목록 */
 .ib-side{display:flex;flex-direction:column;min-height:0;padding:8px 16px 16px}
@@ -66,6 +79,7 @@
   .ib{padding:20px 20px 16px;gap:16px}
   .ib-head{padding-bottom:12px}
   .ib-s{font-size:14px;line-height:20px}
+  .ib-cells{margin-left:0;flex-wrap:wrap}
   .ib-grid{grid-template-columns:minmax(0,1fr)}
   body:not([data-conv="1"]) .ib-conv{display:none}
   body[data-conv="1"] .ib-side{display:none}

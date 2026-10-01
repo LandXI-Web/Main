@@ -128,13 +128,12 @@ body.t { overflow: hidden; }
 .res__cr { display: none; }
 .hero__credit { position: absolute; right: 24px; top: 20px; margin: 0; font: 400 var(--fs-label)/1 var(--font-body); color: rgba(255,255,255,.7); text-shadow: var(--hud-shadow); }
 
-/* ══ 장면 3 — Ctrl K 한 줄(흰 카드 · 지도 위) ══════════════════════ */
+/* ══ 장면 3 — 말 한 줄(XI ChatGEO · 흰 카드 · 지도 위) ══════════════ */
 .ask { position: absolute; left: 50%; top: 32%; display: flex; align-items: center; gap: 12px; width: min(440px, calc(100% - 48px)); padding: 14px 16px; margin: 0;
   transform: translate(-50%, 8px); opacity: 0; pointer-events: none; transition: opacity var(--d-380) var(--e-ui), transform var(--d-380) var(--e-ui); }
 .ask.on { opacity: 1; transform: translate(-50%, 0); }
-.ask__k { flex: none; padding: 3px 8px; border-radius: var(--r-8); background: var(--bg-0); font: 500 12px/1.4 var(--font-num); color: var(--sub); }
 .ask__t { font: 500 var(--fs-body)/var(--lh-label) var(--font-body); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ask__c { flex: none; width: 2px; height: 18px; margin-left: -8px; background: var(--accent); animation: caret 1s steps(1) infinite; }
+.ask__c { flex: none; width: 2px; height: 18px; margin-left: -10px; background: var(--accent); animation: caret 1s steps(1) infinite; }
 @keyframes caret { 50% { opacity: 0; } }
 .gate.leaving .ask { opacity: 0; }
 

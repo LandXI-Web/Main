@@ -18,7 +18,8 @@ import { h, esc, api, API, session, isEnvelope, hasRoute } from '../kit/util.js'
 import { sse } from '../../shared/api-v1.js';
 import { summary, stageOf } from '../lx-console/summary.js';
 import { openFlow } from './flow.js';
-import { PID, projectRail, attachProject, projectsLink } from '../lx-project/context.js';   // 프로젝트 맥락(?project= · 구현 2차 T1)
+import { PID, projectRail, attachProject } from '../lx-project/context.js';   // 프로젝트 맥락(?project= · 구현 2차 T1)
+import { staffMenu } from '../kit/lx-menu.js';
 
 const who = await gate('lx-train');
 const CFG = await fetch(new URL('./tasks.json', import.meta.url)).then((r) => r.json());
@@ -26,29 +27,20 @@ const TASKS = CFG.tasks;
 const CROP = '/landxi/assets/proto/crops/';
 const q0 = new URLSearchParams(location.search);
 const REGION = q0.get('region') || '';
-const withRegion = (p) => (REGION ? `${p}${p.includes('?') ? '&' : '?'}region=${encodeURIComponent(REGION)}` : p);
 
-/* ── 셸(K1) · 레일 6단(② 현재) ──────────────────────────────── */
-const RAIL = [
-  { id: 'ingest', label: '데이터 올리기', href: withRegion('/landxi/v3/lx-ingest/') },
-  { id: 'train', label: '학습' },
-  { id: 'assemble', label: '서비스 만들기', href: withRegion('/landxi/v3/lx-console/?step=assemble') },
-  { id: 'review', label: '결과 확인', href: withRegion('/landxi/v3/lx-review/') },
-  { id: 'deploy', label: '배포', href: withRegion('/landxi/v3/lx-deploy/') },
-  { id: 'ops', label: '서비스 관리', href: withRegion('/landxi/v3/lx-deploy/') + '#ops' },
-];
-/* 프로젝트 맥락(?project=) — 레일 = 그 프로젝트의 단계 6 + 이름. 이 화면이 맡는 단계 = 학습데이터 구축(라벨 묶음 올리기 · 라벨 확인) ·
-   학습 · 발행 요청(서비스 카드 발행 요청) — ?stage= 로 받는다. 화면은 그대로이고 원스톱 서랍이 프로젝트 맥락으로 열린다. */
+/* ── 셸(K1) · 메뉴 ──────────────────────────────────────────
+   왼쪽 메뉴 = LX 직원 메뉴(kit/lx-menu.js · 10차 메뉴-1 ⓐ · J-1) — 프로젝트 맥락(?project=)이면 '프로젝트'에 불 + 마스트 아래 단계 막대(lx-project/context.js).
+   이 화면이 맡는 프로젝트 단계 = 학습데이터 구축(라벨 묶음 올리기 · 라벨 확인) · 학습 · 발행 요청(서비스 카드 발행 요청) — ?stage= 로 받는다.
+   화면은 그대로이고 원스톱 서랍이 프로젝트 맥락으로 열린다. 프로젝트 밖에서는 메뉴 '프로젝트'(업무별 모델은 프로젝트의 일). */
 const STAGE = ['label', 'train', 'publish'].includes(q0.get('stage')) ? q0.get('stage') : 'train';
 const PR = projectRail(STAGE);
-const S = shell({ who, home: 'lx-train', rail: PR || { kind: 'steps', items: RAIL, current: 1 } });
-projectsLink(S);
+const S = shell({ who, home: 'lx-train', rail: PR || staffMenu('projects') });
 const PROJ = PR ? attachProject(S, PR, STAGE) : Promise.resolve(null);
 devDrawer({ who });
 
 const grid = h('div.tr-grid', { role: 'list' });
 const newBtn = h('button.t-btn.tr-new', { type: 'button', text: '새 모델 만들기' });
-const pane = h('div.tr-pane', {}, h('header.tr-h', {}, h('h1.t-h3.tr-title', { text: PID ? '학습 · 업무별 모델' : '② 학습 · 업무별 모델' }), newBtn), grid);
+const pane = h('div.tr-pane', {}, h('header.tr-h', {}, h('h1.t-h3.tr-title', { text: '학습 · 업무별 모델' }), newBtn), grid);
 S.main.append(pane);
 /* 원스톱(r3-train): 데이터 올리기 → 라벨 확인 → 학습 → 결과 확인·등록 → 서비스 만들기 → 다른 지역에 적용 */
 newBtn.addEventListener('click', async () => openFlow({ host: S.main, who, project: await PROJ }));

@@ -46,6 +46,7 @@ FIX = {
     "/ops/tenants": {"items": [
         {"tenant_id": t, "month": "2026-09", "dims": {
             "llm_tokens_month": {"used": E(v, "tokens"), "soft": s, "hard": h, "policy": "queue_low"},
+            "llm_requests_month": {"used": E(v // 1000, "count"), "soft": None, "hard": None},
             "gpu_s_month": {"used": E(7200.0, "gpu_s"), "soft": None, "hard": None}}}
         for t, v, s, h in [("gwangju-jeonnam", 97225, 1.2e6, 1.8e6), ("kgz-agri", 41194, None, None), ("kgz-land", 2724, None, None), ("lx", 1599304, None, None),
                            ("lx-demo", 10, 3e5, 4e5), ("namwon", 856313, 2e6, 3e6)]], "as_of": AT},
@@ -131,7 +132,8 @@ def test_route_four_questions(q, tool):
 
 
 def test_route_tenant_and_mixed():
-    assert T.ROUTE("남원 토큰 얼마나 썼어", Ctx(ADMIN)) == {"tool": "ops_usage", "args": {"tenant": "남원"}}
+    assert T.ROUTE("남원 토큰 얼마나 썼어", Ctx(ADMIN)) == {"tool": "ops_usage", "args": {"tenant": "남원", "dim": "llm_tokens_month"}}
+    assert T.ROUTE("남원 XI ChatGEO 요청 건수", Ctx(ADMIN)) == {"tool": "ops_usage", "args": {"tenant": "남원"}}
     assert T.ROUTE("GPU 와 대기열 상태 알려 줘", Ctx(ADMIN)) is None          # 둘 이상 → 모델이 고른다
     assert T.OPS_ASK.search("GPU 상태") and T.ADMIN_LINE == "LX 관리자 화면에서 확인할 수 있습니다."
 
@@ -171,8 +173,21 @@ def test_alerts_open_rule_matches_ops_core():
     assert out.data["목록"][0]["경보"] == "작업기 응답 없음"
 
 
+def test_usage_default_is_xi_chatgeo_requests():
+    """기관별 사용량의 기본 = XI ChatGEO 요청 건수(원칙 91 · 96 · 11차 자원-1) — 답 · 차트 제목에 'AI 도우미' 0."""
+    r = T.ROUTE("기관별 사용량 보여 줘", Ctx(ADMIN))
+    assert r == {"tool": "ops_usage", "args": {}}
+    out = run(T.ops_usage(r["args"], Ctx(ADMIN)))
+    e = envs(out)
+    assert e["namwon_u"]["value"] == 856 and e["namwon_u"]["unit"] == "건" and e["sum"]["value"] == 856 + 97 + 41 + 2 + 1599
+    assert out.data["항목"] == "XI ChatGEO 요청 건수" and out.answer.startswith("이번 달 XI ChatGEO 요청 건수는 ")
+    assert out.blocks[0]["title"] == "이번 달 XI ChatGEO 요청 건수"
+    assert "AI 도우미" not in out.answer and "AI 도우미" not in out.blocks[0]["title"]
+    assert "AI 도우미" not in str(T.SPECS["ops_usage"]) and "AI 도우미" not in str(T.USAGE_DIMS)
+
+
 def test_usage_llm_tokens_four_tenants():
-    out = run(T.ops_usage({}, Ctx(ADMIN)))
+    out = run(T.ops_usage({"dim": "llm_tokens_month"}, Ctx(ADMIN)))
     e = envs(out)
     assert e["namwon_u"]["value"] == 856313 and e["gwangju_jeonnam_u"]["value"] == 97225
     assert e["kgz_agri_u"]["value"] == 41194 and e["lx_u"]["value"] == 1599304
@@ -303,7 +318,7 @@ def test_usage_one_named_agency_only():
     assert r["tool"] == "ops_usage" and r["args"]["tenant"] == "키르기스 토지자원청"
     out = run(T.ops_usage(r["args"], Ctx(ADMIN)))
     assert list(out.data["기관"]) == ["키르기스 토지자원청"] and "합계" not in out.data and not out.blocks
-    assert envs(out)["kgz_land_u"]["value"] == 2724 and "kgz_agri_u" not in envs(out)
+    assert envs(out)["kgz_land_u"]["value"] == 2 and "kgz_agri_u" not in envs(out)
     assert "농업부" not in out.answer and "합계" not in out.answer
     for w in ["kgz-land", "토지자원청", "Kyrgyz State Agency on Land Resources"]:
         assert list(run(T.ops_usage({"tenant": w}, Ctx(ADMIN))).data["기관"]) == ["키르기스 토지자원청"], w
@@ -317,11 +332,11 @@ def test_usage_ambiguous_name_lists_both_without_total():
     assert set(out.data["기관"]) == {"키르기스 농업부", "키르기스 토지자원청"} and "합계" not in out.data and "합계" not in out.answer
 
 
-@pytest.mark.parametrize("q", ["How much AI assistant usage does each agency have?", "AI assistant usage by agency", "How many tokens has each agency used?"])
+@pytest.mark.parametrize("q", ["How many tokens has each agency used?", "Token usage by agency"])
 def test_admin_english_usage_direct_and_english(q):
-    """③ 관리자 영어 질문 → 모델 앞 직행 · 영어 기관명 · 한글 0 · 단위 한 번('tokens' 칩만)."""
+    """③ 관리자 영어 질문(토큰) → 모델 앞 직행 · 영어 기관명 · 한글 0 · 단위 한 번('tokens' 칩만)."""
     r = T.ROUTE(q, Ctx(ADMIN, lang="en"))
-    assert r == {"tool": "ops_usage", "args": {}}
+    assert r == {"tool": "ops_usage", "args": {"dim": "llm_tokens_month"}}
     out = run(T.ops_usage(r["args"], Ctx(ADMIN, lang="en")))
     assert not HANGUL.search(out.answer), out.answer
     assert "Namwon-si" in out.answer and "Kyrgyz State Agency on Land Resources" in out.answer and "Total: {{sum}}" in out.answer
@@ -329,12 +344,22 @@ def test_admin_english_usage_direct_and_english(q):
     e = envs(out)
     assert e["namwon_u"]["value"] == 856313 and e["namwon_u"]["unit"] == "tokens" and e["sum"]["value"] == 856313 + 97225 + 41194 + 2724 + 1599304
     b = out.blocks[0]
-    assert b["title"] == "AI assistant usage this month" and not any(HANGUL.search(x["label"]) for x in b["rows"])
+    assert b["title"] == "XI ChatGEO tokens this month" and not any(HANGUL.search(x["label"]) for x in b["rows"])
+
+
+@pytest.mark.parametrize("q", ["How much AI assistant usage does each agency have?", "XI ChatGEO usage by agency"])
+def test_admin_english_usage_default_requests(q):
+    """영어 '사용량' 질문의 기본 = XI ChatGEO 요청 건수(차트 제목 · 단위 requests)."""
+    r = T.ROUTE(q, Ctx(ADMIN, lang="en"))
+    assert r == {"tool": "ops_usage", "args": {}}
+    out = run(T.ops_usage(r["args"], Ctx(ADMIN, lang="en")))
+    assert not HANGUL.search(out.answer), out.answer
+    assert out.blocks[0]["title"] == "XI ChatGEO requests this month" and envs(out)["namwon_u"]["unit"] == "requests"
 
 
 def test_admin_english_one_agency():
     r = T.ROUTE("How many tokens has Namwon used?", Ctx(ADMIN, lang="en"))
-    assert r["tool"] == "ops_usage" and r["args"]["tenant"]
+    assert r["tool"] == "ops_usage" and r["args"]["tenant"] and r["args"]["dim"] == "llm_tokens_month"
     out = run(T.ops_usage(r["args"], Ctx(ADMIN, lang="en")))
     assert list(out.data["기관"]) == ["Namwon-si"] and "Total" not in out.answer
 

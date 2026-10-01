@@ -5,7 +5,8 @@ import { nf } from '../kit/i18n.js';
 import { h, esc, isDev, session, bboxOf } from '../kit/util.js';
 import { sourceSpec } from '../../xi/engine/sources.js';
 import { summary, total, labelOf, pick } from '../lx-console/summary.js';
-import { projectRail, attachProject, projectsLink } from '../lx-project/context.js';   // 프로젝트 맥락(?project= · 구현 2차 T1)
+import { projectRail, attachProject } from '../lx-project/context.js';   // 프로젝트 맥락(?project= · 구현 2차 T1)
+import { staffMenu } from '../kit/lx-menu.js';
 import { D, SAMPLE, CLS, probeS2, loadRules, loadQueue, parcel, aiLayersAt, loadFeedback, loadRuleStats, verdictMap, ruleStat, judge, unTag, suggest, requestThreshold, drawSample, forgetSample, regionFor, bboxOfPoints, inRegion } from './data.js';
 
 const Q = new URLSearchParams(location.search);
@@ -18,16 +19,11 @@ const who = await K.gate('lx-review');
 const T = { gate: Math.round(performance.now()) };
 E = E || kick();
 
-/* ── 셸 · 레일(공정 6단 · ④ 현재) ─────────────────────── */
-const RAIL = [
-  { id: 'ingest', label: '데이터 올리기', href: '../lx-ingest/' }, { id: 'train', label: '학습', href: '../lx-train/' },
-  { id: 'assemble', label: '서비스 만들기', href: '../lx-console/?open=assemble' }, { id: 'review', label: '결과 확인' },
-  { id: 'deploy', label: '배포', href: '../lx-deploy/' }, { id: 'ops', label: '서비스 관리', href: '../lx-deploy/#ops' },
-];
-/* 프로젝트 맥락(?project=) — 레일 = 그 프로젝트의 단계 6 + 이름 · 지역 = 프로젝트 대상 지역(?region=) · 화면은 그대로 */
+/* ── 셸 · 메뉴 ─────────────────────────────────────────
+   왼쪽 메뉴 = LX 직원 메뉴(kit/lx-menu.js · 10차 메뉴-1 ⓐ · J-1) — 프로젝트 맥락(?project=)이면 '프로젝트'에 불 + 마스트 아래 단계 막대(lx-project/context.js).
+   지역 = 프로젝트 대상 지역(?region=) · 화면은 그대로. 프로젝트 밖에서는 메뉴 '프로젝트'(결과 확인은 프로젝트의 일). */
 const PR = projectRail('review');
-const S = K.shell({ who, home: 'lx-review', xiRegion: () => region?.sgg_cd || null, rail: PR || { kind: 'steps', items: RAIL, current: 3, done: [0, 1, 2] } });
-projectsLink(S);
+const S = K.shell({ who, home: 'lx-review', xiRegion: () => region?.sgg_cd || null, rail: PR || staffMenu('projects') });
 if (PR) attachProject(S, PR, 'review');
 /* 역할 칩 — 이름이 역할과 같으면(시드 계정 'LX 직원') 한 번만 쓴다(키트 K1 요청 전 화면 쪽 보정) */
 for (const c of document.querySelectorAll('.k-role')) { const b = c.querySelector('b'); const rest = (c.textContent || '').slice((b?.textContent || '').length).trim(); if (b && rest === b.textContent.trim()) c.textContent = rest; }

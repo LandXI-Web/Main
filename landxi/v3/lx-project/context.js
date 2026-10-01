@@ -1,11 +1,13 @@
-/* context.js — 프로젝트 맥락 한 곳(구현 2차 T1 · 확인 대장 R-D3 · 흐름-1).
-   기존 화면(데이터 올리기 · 학습 · 결과 확인 · 서비스 관리)은 새로 그리지 않고 `?project=` 로 맥락만 받는다:
-     · 레일 = 그 프로젝트의 단계 6(데이터 올리기 → 학습데이터 구축 → 학습 → 결과 확인 → 발행 요청 → 서비스 관리) + 맨 위 프로젝트 이름
-     · 단계 표시(완료 · 지금 · 대기) = 서버 판정(GET /projects/{id}) — 화면이 지어내지 않는다
-     · 단계 → 화면 주소 = stageHref() 한 곳(첫 화면 '내 프로젝트' · 프로젝트 화면 · 레일이 모두 이것을 쓴다)
-   프로젝트 밖(맥락 없음)에서는 아무것도 바꾸지 않는다 — 레일은 그 화면 것 그대로. 머리 줄에는 '프로젝트' 목록으로 가는 길 하나만 더한다. */
+/* context.js — 프로젝트 맥락 한 곳(구현 2차 T1 · 확인 대장 R-D3 · 흐름-1 · 10차 메뉴-1 ⓐ · 구현 확인 2차 J-1 다시 · 원칙 81 · 99).
+   왼쪽 메뉴는 어디서나 LX 직원 메뉴(홈 · 프로젝트 · 분석하기 · 서비스 카드 · 데이터 · 요청함 — kit/lx-menu.js)이고,
+   생산 6단계는 메뉴가 아니라 **프로젝트 안**에 있다. 단계 화면(데이터 올리기 · 학습 · 결과 확인 · 서비스 관리)은 새로 그리지 않고 `?project=` 로 맥락만 받는다:
+     · 왼쪽 메뉴 = '프로젝트'에 불 · 마스트 아래 한 줄 = 프로젝트 이름 + 그 프로젝트의 단계 6(데이터 올리기 → 학습데이터 구축 → 학습 → 결과 확인 → 발행 요청 → 서비스 관리) + 다음 할 일
+     · 단계 표시(완료 · 지금 · 대기) = 서버 판정(GET /projects/{id}) — 화면이 지어내지 않는다. 이 화면이 보이는 단계는 밑줄
+     · 단계 → 화면 주소 = stageHref() 한 곳(대시보드 '내 프로젝트' · 프로젝트 화면 · 단계 막대가 모두 이것을 쓴다)
+   프로젝트 밖(맥락 없음)에서는 그 화면의 메뉴 칸(staffMenu)만 쓴다. */
 import { h, esc, api } from '../kit/util.js';
-import { TASKS } from '../lx-console/matrix.js';   // 업무 → 대조 규칙(서비스 만들기 ③과 같은 한 곳) — 결과 확인 화면을 그 업무 규칙으로 연다
+import { staffMenu } from '../kit/lx-menu.js';
+import { TASKS } from '../lx-console/matrix.js';   // 업무 → 대조 규칙(한 곳) — 결과 확인 화면을 그 업무 규칙으로 연다
 
 export const PID = new URLSearchParams(location.search).get('project') || null;
 export const STAGES = [
@@ -38,11 +40,10 @@ export function stageHref(pr, key, target = {}) {
   }
 }
 
-/** 레일(동기) — 맥락이 있으면 단계 6(주소는 대상 없이 먼저 · 프로젝트를 읽으면 대상까지 채운다). 없으면 null(화면 레일 그대로) */
+/** 왼쪽 메뉴(동기) — 맥락이 있으면 LX 직원 메뉴('프로젝트' 불) + 마스트 아래 한 줄 자리(sub). 없으면 null(화면이 자기 메뉴 칸을 쓴다) */
 export function projectRail(key) {
   if (!PID) return null;
-  const items = STAGES.map((s) => ({ id: s.key, label: s.label, href: stageHref(PID, s.key) }));
-  return { kind: 'steps', items, current: Math.max(0, STAGES.findIndex((s) => s.key === key)), done: [] };
+  return { ...staffMenu('projects'), sub: true, project: key ?? null };
 }
 
 let CUR = null;
@@ -53,52 +54,43 @@ export function loadProject(id = PID) {
   return CUR.p;
 }
 
-/** 레일에 프로젝트 이름 + 단계 판정 · 주소 대상 채우기. S = 키트 셸, rail = projectRail() 결과(같은 객체), key = 이 화면이 보이는 단계.
-    → 프로젝트(서버 응답) 또는 null(없는 프로젝트 · 권한 없음 — 레일은 기본 주소 그대로) */
+/** 마스트 아래 한 줄 — 프로젝트 이름 · 단계 6 · 다음 할 일. S = 키트 셸(rail.sub 로 만든 S.sub), key = 이 화면이 보이는 단계(프로젝트 화면이면 null).
+    자리는 셸이 미리 잡아 두고(지도 크기 변화 0), 내용은 프로젝트를 읽은 뒤 채운다.
+    → 프로젝트(서버 응답) 또는 null(없는 프로젝트 · 권한 없음 — 단계 이름만 두고 이동 주소는 대상 없이) */
 export async function attachProject(S, rail, key) {
-  if (!PID || !rail) return null;
+  if (!PID || !S?.sub) return null;
   ensureCss();
+  drawBar(S.sub, null, key);                       // 프로젝트를 읽기 전 — 단계 이름만(대기)
   const pr = await loadProject();
-  if (!pr) return null;
-  const round = pr.round?.value > 1 ? `${pr.round.value}차` : '';
-  const name = h('a.lxp-rail-name', { href: projectHref(pr.id), title: pr.name, 'aria-label': `프로젝트 ${pr.name}` },
-    h('span.lxp-rail-k', { text: round ? `프로젝트 · ${round}` : '프로젝트' }), h('b', { text: pr.name }));
-  const here = STAGES.findIndex((s) => s.key === key);
-  const put = () => {
-    if (!S.rail.contains(name)) S.rail.prepend(name);
-    const now = S.rail.dataset.now === undefined ? -1 : +S.rail.dataset.now;
-    S.rail.querySelectorAll('.k-rail-i').forEach((a, i) => { a.classList.toggle('lxp-here', i === here); if (i === here) a.setAttribute('aria-current', 'page'); else if (i !== now) a.removeAttribute('aria-current'); });
-  };
-  S.rail._lxpPut = put;
-  refreshRail(S, rail, pr, key);
-  put();
-  new MutationObserver(put).observe(S.rail, { childList: true });
-  S.rail.classList.add('lxp-has-name');
+  drawBar(S.sub, pr, key);
   return pr;
 }
 
-/** 단계 표시 · 주소 대상 다시 채우기(프로젝트가 바뀐 뒤 — 이름은 그대로) */
+/** 프로젝트가 바뀐 뒤(구성원 · 재학습 등) 한 줄 다시 그리기 */
 export function refreshRail(S, rail, pr, key) {
-  if (!rail || !pr) return;
-  const st = pr.stages || [];
-  rail.items.forEach((it, i) => { it.href = stageHref(pr, STAGES[i].key, st[i]?.target); });
-  /* 원 = 프로젝트 단계(완료 잉크 · 지금 액센트 · 대기 헤어라인 — 서버 판정) · 이 화면이 보이는 단계는 글자로 표시(lxp-here) */
-  const now = pr.stage?.index ?? 0;
-  S.rail.dataset.now = String(now);
-  S.steps({ done: st.filter((s) => s.done && s.index !== now).map((s) => s.index), current: now });
-  S.rail._lxpPut?.();
+  if (S?.sub && pr) drawBar(S.sub, pr, key ?? rail?.project ?? null);
 }
 
-/** 머리 줄에 '프로젝트' 목록으로 가는 길 하나(머리 메뉴 구성은 그대로 · 사용자 10-01). slot 안 기존 내용은 두고 뒤에 붙인다 */
-export function projectsLink(S) {
-  ensureCss();
-  const slot = S.app.querySelector('.k-mast-slot');
-  if (!slot || slot.querySelector('.lxp-mast')) return;
-  const here = location.pathname.startsWith(HOME) && !PID;
-  const a = h('a.k-mast-b.lxp-mast', { href: HOME, text: '프로젝트', 'aria-current': here ? 'page' : null });
-  const put = () => { if (!slot.contains(a)) slot.append(a); };
-  put();
-  new MutationObserver(put).observe(slot, { childList: true });   // 화면이 머리 줄 칸을 다시 채워도(S.mast) 뒤에 다시 붙는다
+const CHECK = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>';
+function drawBar(el, pr, key) {
+  const st = pr?.stages || [];
+  const here = STAGES.findIndex((s) => s.key === key);
+  const nowI = pr?.stage?.index ?? -1;
+  const name = pr ? h('a.lxp-bar-name', { href: projectHref(pr.id), title: pr.name }, h('span.lxp-bar-k', { text: '프로젝트' }), h('b', { text: pr.name }))
+    : h('span.lxp-bar-name', {}, h('span.lxp-bar-k', { text: '프로젝트' }), h('b', { text: ' ' }));
+  const steps = h('ol.lxp-bar-steps', { 'aria-label': '프로젝트 단계' });
+  STAGES.forEach((s, i) => {
+    const x = st[i] || {};
+    const state = !pr ? 'wait' : i === nowI ? 'now' : x.done ? 'done' : 'wait';
+    const word = x.skip ? '해당 없음' : state === 'done' ? '완료' : state === 'now' ? '지금 단계' : '대기';
+    const a = h('a.lxp-st', { href: pr ? stageHref(pr, s.key, x.target) : stageHref(PID, s.key), dataset: { st: state }, title: `${i + 1} ${s.label} · ${word}`,
+      'aria-current': i === here ? 'step' : null, 'aria-label': `${i + 1}단계 ${s.label} · ${word}` },
+      h('span.n', { html: state === 'done' ? CHECK : String(i + 1) }), h('span.t', { text: s.label }));
+    if (i === here) a.classList.add('is-here');
+    steps.append(h('li', {}, a));
+  });
+  const nx = pr?.next?.text && pr.state !== 'archived' ? h('p.lxp-bar-next', {}, h('span.lxp-bar-k', { text: '다음 할 일' }), h('b', { text: pr.next.text })) : null;
+  el.replaceChildren(h('div.lxp-bar', { class: key === null ? 'is-page' : '' }, key === null ? null : name, steps, nx));
 }
 
 let cssOn = false;

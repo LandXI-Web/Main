@@ -1,7 +1,7 @@
 """구현 2차 T1 '프로젝트 백본' — 프로젝트 만들기 · 단계 판정 · 서비스 카드 발행 요청 연결 · 재학습 권한. 실서버(:8700).
 
 확인 대장: 3차 R-D3(프로젝트 = 무엇 · 어디 · 담당 · 단계 6) · R-D3 갈림길 ⓐ(직원이 바로 만든다) · 4차 P1(프로젝트 → 발행 요청) ·
-          5차 역할-3 ⓑ(공개된 서비스의 재학습 = 프로젝트장 · 구성원만, 배포는 관리자 승인) · 6차 흐름-1.
+          5차 역할-3 ⓑ(공개된 서비스의 재학습 = 프로젝트장이 시작, 배포는 관리자 승인 · 구현 확인 2차 J-2 '재학습은 프로젝트장만') · 6차 흐름-1.
 GPU 0 — 학습은 견적(POST /jobs/quote)의 권한 판정까지만(대기열에 넣지 않음). 시험 계정(다른 직원)과 시험 프로젝트 · 카드 · 결재는 끝에서 지운다.
 """
 import httpx
@@ -150,8 +150,8 @@ def _publish(tok, p):
     return httpx.get(B + f"/projects/{p['id']}", headers=s, timeout=60).json()
 
 
-def test_retrain_only_lead_and_members(live, tok, made, other):
-    """공개된 서비스의 재학습 — 프로젝트장 · 구성원만 학습을 시작한다(다른 직원 · 관리자는 서버가 거절). 재학습 = 같은 프로젝트 2차 · 학습 단계로."""
+def test_retrain_only_lead(live, tok, made, other):
+    """공개된 서비스의 재학습 — 프로젝트장만 학습 · 다음 회차를 시작한다(구성원 · 다른 직원 · 관리자는 서버가 거절 · 버튼 없음). 재학습 = 같은 프로젝트 2차 · 학습 단계로."""
     p = _publish(tok, made())
     assert p["published"] is True and p["stage"]["key"] == "ops"
     assert p["can"]["retrain"] is True
@@ -170,16 +170,33 @@ def test_retrain_only_lead_and_members(live, tok, made, other):
     # 프로젝트장 — 거절하지 않는다(대기열 · 전력 판정은 그다음 일)
     r = httpx.post(B + "/jobs/quote", headers=H(tok["staff"]), json=q, timeout=60)
     assert r.status_code == 200, r.text
-    # 구성원으로 더하면 그 직원도 시작할 수 있다
+    assert httpx.post(B + f"/projects/{p['id']}/rounds", headers=H(tok["admin"]), json={}, timeout=60).status_code == 403
+    # 구성원으로 더해도 공개된 서비스의 재학습은 시작하지 못한다(프로젝트장만 · J-2) — 버튼 없음 · 견적 · 회차 모두 거절
     r = httpx.post(B + f"/projects/{p['id']}/members", headers=H(tok["staff"]), json={"user_id": OTHER}, timeout=60)
     assert r.status_code == 201
-    assert httpx.post(B + "/jobs/quote", headers=H(other), json=q, timeout=60).status_code == 200
+    pm = httpx.get(B + f"/projects/{p['id']}", headers=H(other), timeout=60).json()
+    assert pm["can"]["retrain"] is False and pm["can"]["train"] is False and pm["can"]["work"] is True
+    r = httpx.post(B + "/jobs/quote", headers=H(other), json=q, timeout=60)
+    assert r.status_code == 403 and "프로젝트장" in r.json()["error"]["message"], r.text
+    assert httpx.post(B + f"/projects/{p['id']}/rounds", headers=H(other), json={}, timeout=60).status_code == 403
     # 재학습 = 2차 · 학습 단계로 돌아간다(새 프로젝트를 만들지 않는다)
     r = httpx.post(B + f"/projects/{p['id']}/rounds", headers=H(tok["staff"]), json={}, timeout=60)
     assert r.status_code == 201, r.text
     p2 = r.json()
     assert p2["round"]["value"] == 2 and p2["stage"]["key"] == "train" and p2["id"] == p["id"]
     assert stage(p2, "label")["done"] is True                          # 앞 회차 학습데이터는 이어 쓴다
+    assert p2["can"]["retrain"] is True and p2["can"]["train"] is True   # 프로젝트장은 2차 학습을 이어서 시작한다
+
+
+def test_retrain_not_before_publish(live, tok, made, other):
+    """공개 전 프로젝트 — 다음 회차는 없다(같은 회차에서 다시 학습) · 학습은 프로젝트장과 구성원(재학습 칸은 닫힘)."""
+    p = made()
+    assert p["can"]["retrain"] is False and p["can"]["train"] is True
+    r = httpx.post(B + f"/projects/{p['id']}/rounds", headers=H(tok["staff"]), json={}, timeout=60)
+    assert r.status_code == 409, r.text
+    assert httpx.post(B + f"/projects/{p['id']}/members", headers=H(tok["staff"]), json={"user_id": OTHER}, timeout=60).status_code == 201
+    pm = httpx.get(B + f"/projects/{p['id']}", headers=H(other), timeout=60).json()
+    assert pm["can"]["train"] is True and pm["can"]["retrain"] is False
 
 
 def test_lead_change_is_admin_only(live, tok, made, other):

@@ -28,8 +28,9 @@ POST   /projects/{pid}/rounds            재학습 — 같은 프로젝트의 �
   서비스 관리     끝이 없는 단계 — 공개 뒤. 다음 할 일 = 다른 지역에 적용 · 적용 결재 대기
 판단 기준 표시(정밀도 기준값 등 · 6차 판단-1·2)는 보류라 여기서 판정하지 않는다.
 
-재학습 권한(역할-3 ⓑ): 서비스가 공개된 프로젝트의 학습(POST /jobs kind train — 이 프로젝트 표본 · 이 프로젝트 모델)은 프로젝트장과 구성원만.
-다른 직원 · 관리자는 서버가 거절한다(guard_train · jobs 견적이 부른다). 재학습 결과의 배포는 관리자 승인(모델 등록 · 새 판 공개 결재 · 배포본 모델 교체는 관리자).
+재학습 권한(역할-3 ⓑ '프로젝트장이 시작, 배포만 승인' · 구현 확인 2차 J-2 '재학습은 프로젝트장만'): 서비스가 공개된 프로젝트의 학습(POST /jobs kind train —
+이 프로젝트 표본 · 이 프로젝트 모델)과 다음 회차 시작(POST /projects/{id}/rounds)은 **프로젝트장만**. 구성원 · 다른 직원 · 관리자는 서버가 거절한다
+(guard_train · jobs 견적이 부른다 · next_round). 공개 전 학습은 프로젝트장과 구성원(지금과 같다). 재학습 결과의 배포는 관리자 승인(모델 등록 · 새 판 공개 결재 · 배포본 모델 교체는 관리자).
 """
 from __future__ import annotations
 
@@ -346,8 +347,9 @@ def _judge(r, f) -> dict:
 def _can(p: Principal, r, members: list[str], published: bool) -> dict:
     mem = _is_member(p, r, members)
     lead = p.user_id == r["lead_id"]
+    # 공개된 서비스의 재학습(학습 시작 · 다음 회차) = 프로젝트장만(역할-3 ⓑ · J-2) — 관리자도 아니다(관리자는 프로젝트장을 바꾸고 배포를 승인한다)
     return {"edit": lead or p.is_admin, "members": lead or p.is_admin, "lead": p.is_admin, "work": mem, "publish": lead,
-            "train": mem, "retrain": mem and published, "archive": lead or p.is_admin}
+            "train": lead if published else mem, "retrain": lead and published, "archive": lead or p.is_admin}
 
 
 async def view(conn, p: Principal, r, people: dict | None = None, full: bool = True) -> dict:
@@ -546,10 +548,12 @@ async def archive(pid: str, body: dict, request: Request):
 @router.post("/projects/{pid}/rounds", status_code=201)
 async def next_round(pid: str, request: Request, body: dict | None = None):
     """재학습 — 같은 프로젝트가 다음 회차로 학습 단계에 돌아간다(새 프로젝트를 만들지 않는다 · 이력이 한 줄로 이어진다).
-    공개된 서비스만 · 프로젝트장과 구성원만(역할-3 ⓑ). 재학습 결과의 배포는 관리자 승인(모델 등록 · 새 판 공개 결재)."""
+    공개된 서비스만 · 프로젝트장만(역할-3 ⓑ · J-2). 재학습 결과의 배포는 관리자 승인(모델 등록 · 새 판 공개 결재)."""
     p = _lx(request)
     async with db(realm="lx") as conn:
-        r = await require_member(conn, p, pid)
+        r = await _row(conn, pid)
+        if p.user_id != r["lead_id"]:
+            raise ApiError("forbidden", RETRAIN_LEAD)
         f = await _facts(conn, r)
         if not f["published"]:
             raise ApiError("conflict", "공개 전에는 같은 회차에서 다시 학습합니다", status=409)
@@ -566,9 +570,12 @@ async def next_round(pid: str, request: Request, body: dict | None = None):
     return {**out, "as_of": now_iso()}
 
 
-# ── 재학습 권한(역할-3 ⓑ) — jobs 견적(학습)이 부른다 ─────────────────────────────────
+# ── 재학습 권한(역할-3 ⓑ · J-2) — jobs 견적(학습)이 부른다 ─────────────────────────────────
+RETRAIN_LEAD = "공개된 서비스의 재학습은 프로젝트장이 시작합니다"
+
+
 async def guard_train(p: Principal, samples, base_model: str | None, project_id: str | None) -> None:
-    """서비스가 공개된 프로젝트의 학습은 그 프로젝트장 · 구성원만. 이 학습이 어느 프로젝트의 것인가 =
+    """서비스가 공개된 프로젝트의 학습(= 재학습)은 그 프로젝트장만. 이 학습이 어느 프로젝트의 것인가 =
     ① 본문 project_id(밝혔으면 그것만) ② 없으면 고른 학습 표본이 이어진 프로젝트 ③ 표본도 없이 모델만 다시 학습하면 그 모델을 만든(또는 그 모델로 공개된) 프로젝트.
     공개 전 프로젝트 · 프로젝트와 무관한 학습은 그대로(지금까지와 같다)."""
     sids = [str(x) for x in (samples if isinstance(samples, list) else [samples] if samples else []) if x]
@@ -591,5 +598,5 @@ async def guard_train(p: Principal, samples, base_model: str | None, project_id:
                 continue
             pub = await conn.fetchval("SELECT 1 FROM project_links l JOIN card_versions v ON v.id=l.ref WHERE l.project_id=$1 AND l.kind='card_version' "
                                       "AND v.approved_by IS NOT NULL LIMIT 1", pid)
-            if pub and not _is_member(p, r, await _members(conn, pid)):
-                raise ApiError("forbidden", "공개된 서비스의 재학습은 프로젝트장과 구성원만 시작합니다", {"project": r["name"]})
+            if pub and p.user_id != r["lead_id"]:
+                raise ApiError("forbidden", RETRAIN_LEAD, {"project": r["name"]})

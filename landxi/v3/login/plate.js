@@ -2,7 +2,7 @@
    장면 · 지역 · 업무 · 카메라 · 결과 파일은 전부 scenes.json(데이터)에서 온다 — 여기는 kind 별로 읽고 그리기만 한다(명세 §4-6).
      kind view     — 지도만(캡션·숫자 없음). 'korea' 카메라 = K3 기본 카메라(대한민국 전역 bounds).
      kind findings — 대장 대조 결과(필지 타일 + 합계 봉투)
-     kind points   — 탐지 점(GeoJSON · 건수 봉투). ask 가 있으면 Ctrl K 한 줄이 먼저 타이핑된다.
+     kind points   — 탐지 점(GeoJSON · 건수 봉투). ask 가 있으면 말 한 줄(XI ChatGEO)이 먼저 타이핑된다.
      kind grid     — 전역 격자 변화(격자 중심 열점 + 합계 봉투)
    장면 1(HYPER PERFORMANCE) = 공개 전국 결과(S-4 GET /public/stats · 252 시군구 면이 스윕과 함께 차오름). 결과를 못 읽으면 전국 지도만.
    숫자는 전부 봉투(value·unit·basis·as_of·source)로 세우고 기호·근거는 키트 K6 가 낸다.
@@ -307,7 +307,7 @@ export function mountPlate({ el, ui, sweep, credit, pad = () => ({ top: 0, botto
     };
     const snapshot = () => { try { return map.getCanvas().toDataURL('image/jpeg', 0.86); } catch { return null; } };
 
-    /* Ctrl K 한 줄 — 글자가 한 자씩 들어가고(40ms) 잠깐 머문 뒤 지도가 떠난다 */
+    /* 말 한 줄(XI ChatGEO) — 글자가 한 자씩 들어가고(40ms) 잠깐 머문 뒤 지도가 떠난다 */
     async function ask(text) {
       const t = ui.askT; t.textContent = ''; ui.ask.classList.add('on');
       if (REDUCE) { t.textContent = text; return; }
@@ -329,7 +329,7 @@ export function mountPlate({ el, ui, sweep, credit, pad = () => ({ top: 0, botto
            그 밑에서 도착지 근처로 옮겨 영상을 채운 뒤 덮개를 걷고 마지막 구간만 카메라로 내려앉는다.
            제목 · 크레딧 교체도 영상이 찬 뒤(덮개를 걷을 때) 한다. */
         ui.res.classList.add('away');
-        if (s.ask && ui.ask) await ask(s.ask);             // Ctrl K 한 줄이 먼저, 지도가 뒤따른다
+        if (s.ask && ui.ask) await ask(s.ask);             // 말 한 줄이 먼저, 지도가 뒤따른다
         await coverOn(snapshot());
         show(map, prev.layers, false); prev.hide?.(map);
         map.jumpTo({ ...cam, zoom: cam.zoom - 1.1, bearing: (cam.bearing || 0) + 8 });

@@ -156,7 +156,8 @@ def test_sgg_owner_pure():
 
 @pytest.mark.parametrize("q,want", [("목포시 AI 도우미 사용량", "목포시"), ("산청군 AI 도우미 사용량", "산청군"), ("남원시 토큰 얼마나 썼어?", "남원시")])
 def test_sgg_usage_routes_direct(q, want):
-    assert T.ROUTE_FIRST(q, C.Ctx(ADMIN)) == {"tool": "ops_usage", "args": {"tenant": want}}
+    want_args = {"tenant": want, **({"dim": "llm_tokens_month"} if "토큰" in q else {})}   # 토큰을 콕 집으면 토큰 · 아니면 XI ChatGEO 요청 건수
+    assert T.ROUTE_FIRST(q, C.Ctx(ADMIN)) == {"tool": "ops_usage", "args": want_args}
 
 
 @pytest.fixture
@@ -169,7 +170,7 @@ def fake_regions(monkeypatch):
 
 
 def test_mokpo_usage_is_agency_value_with_inclusion_line(fake_regions):
-    out = run(T.ops_usage({"tenant": "목포시"}, C.Ctx(ADMIN)))
+    out = run(T.ops_usage({"tenant": "목포시", "dim": "llm_tokens_month"}, C.Ctx(ADMIN)))
     e = envs(out)
     assert list(out.data["기관"]) == ["광주전남특별시"] and "합계" not in out.data
     assert e["gwangju_jeonnam_u"]["value"] == 97225                        # = 기관 화면 표(/ops/tenants llm_tokens_month)
@@ -178,7 +179,7 @@ def test_mokpo_usage_is_agency_value_with_inclusion_line(fake_regions):
 
 
 def test_namwon_usage_no_extra_line(fake_regions):
-    out = run(T.ops_usage({"tenant": "남원시"}, C.Ctx(ADMIN)))
+    out = run(T.ops_usage({"tenant": "남원시", "dim": "llm_tokens_month"}, C.Ctx(ADMIN)))
     assert list(out.data["기관"]) == ["남원시"] and envs(out)["namwon_u"]["value"] == 856313
     assert "포함됩니다" not in out.answer
 

@@ -7,7 +7,10 @@
      contained,                             // true = 부모 상자 안(갤러리 · 미리보기) · 기본은 뷰포트 전체
    });
    S.main  → 화면이 채울 판(뷰포트 - 마스트 - 레일)
-   S.fresh(date|null) · S.go(i) · S.steps({ done }) · S.mast(우측에 끼울 노드)
+   S.fresh(date|null) · S.go(i) · S.steps({ done }) · S.mast(우측에 끼울 노드) · S.badge(id, n)
+   LX 직원 메뉴(lx-menu.js staffMenu · 확인 대장 10차 메뉴-1 ⓐ): rail.menu = 'staff' — 요청함 숫자(rail.counts) · 알림 칸 대신 요청함 · 휴대폰은 아래 탭 + '메뉴'(rail 항목 more).
+     rail 을 주지 않은 LX 직원 화면(분석하기 · 서비스 카드 등 STAFF_OF)은 셸이 이 메뉴를 붙인다.
+   rail.sub = true → 마스트 아래 한 줄(S.sub — 프로젝트 안 6단계 막대 · lx-project/context.js)
    XI ChatGEO(AI 도우미 · 확인 요청 9차 채팅-1 · 채팅-2 ⓐ): 셸이 모든 화면 오른쪽 아래에 도우미 버튼 · 채팅창을 붙인다(cmdk.js · 지도 없는 화면도 같은 자리).
    머리에는 '물어보기' 버튼을 두지 않는다 — 화면이 S.mast() 로 넘긴 옛 트리거(.k-ck-btn · .gl-ask)는 머리에 넣지 않는다. */
 import { h, esc, hhmm } from './util.js';
@@ -16,9 +19,11 @@ import { logout, homeFromPath, allowed } from './auth-gate.js';
 import { drawer } from './panel.js';
 import { mountBell, hasBell } from './notify.js';   // 알림 칸(검토 요청 · 메시지 — 구현 2차)
 import { mountCmdk } from './cmdk.js';               // XI ChatGEO 채팅창(오른쪽 아래 · 로그인한 모든 화면)
+import { staffMenu, STAFF_OF } from './lx-menu.js'; // LX 직원 메뉴 한 곳(10차 메뉴-1 ⓐ)
 
 const HOME = {
   'lx-console': 'LX 직원 대시보드', 'lx-ingest': 'LX 직원 대시보드', 'lx-train': 'LX 직원 대시보드', 'lx-review': 'LX 직원 대시보드', 'lx-deploy': 'LX 직원 대시보드',
+  'lx-project': 'LX 직원 대시보드', 'lx-inbox': 'LX 직원 대시보드', 'lx-analyze': 'LX 직원 대시보드', 'lx-cards': 'LX 직원 대시보드',
   'ops-core': 'LX 관리자 대시보드', 'ops-infra': 'LX 관리자 대시보드', sales: '서비스 카탈로그', 'xi-clean': 'XI맵', 'help-my': '지원',
 };
 const ICON = {
@@ -28,6 +33,9 @@ const ICON = {
   gear: '<circle cx="10" cy="10" r="2.5"/><path d="M10 2.5v2 M10 15.5v2 M2.5 10h2 M15.5 10h2 M4.7 4.7l1.4 1.4 M13.9 13.9l1.4 1.4 M4.7 15.3l1.4-1.4 M13.9 6.1l1.4-1.4"/>',
   org: '<path d="M3 17V7l7-4 7 4v10 M8 17v-5h4v5"/>', inbox: '<path d="M3 11l2-7h10l2 7v5H3z M3 11h4l1 2h4l1-2h4"/>', grid: '<path d="M3 3h6v6H3z M11 3h6v6h-6z M3 11h6v6H3z M11 11h6v6h-6z"/>',
   report: '<path d="M5 2.5h7l3 3v12H5z M8 9h5 M8 12h5 M8 15h3"/>', list: '<path d="M7 5h10 M7 10h10 M7 15h10 M3 5h.01 M3 10h.01 M3 15h.01"/>',
+  folder: '<path d="M3 5h5l2 2h7v9H3z"/>', card: '<path d="M3 4h14v12H3z M3 8h14"/>', menu: '<path d="M3 5h14 M3 10h14 M3 15h14"/>',
+  scan: '<path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/><path d="M10 6.5l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5L6.5 10 9 9z"/>',
+  help: '<circle cx="10" cy="10" r="7.5"/><path d="M7.8 8a2.2 2.2 0 1 1 3.2 2c-.7.4-1 .8-1 1.5 M10 14h.01"/>', exit: '<path d="M8 3H4v14h4 M12 6l4 4-4 4 M16 10H7"/>',
 };
 export const icon = (k) => `<svg viewBox="0 0 20 20" aria-hidden="true">${ICON[k] || ICON.grid}</svg>`;
 
@@ -40,7 +48,10 @@ function roleText(who) {
   return t('shell.role.tenant', { org: who.org || who.name });
 }
 
-export function shell({ who = null, home = homeFromPath(), title, rail = null, onHelp, mount = document.body, contained = false, xiRegion } = {}) {
+export function shell({ who = null, home = homeFromPath(), title, rail, onHelp, mount = document.body, contained = false, xiRegion } = {}) {
+  /* LX 직원 화면인데 메뉴를 주지 않았으면 LX 직원 메뉴(같은 이름 · 같은 곳 — 원칙 99) */
+  if (rail === undefined) rail = STAFF_OF[home] && ['lx/staff', 'lx/admin'].includes(who?.key) ? staffMenu(STAFF_OF[home]) : null;
+  const staff = rail?.menu === 'staff';
   document.body.classList.add('t');
   if (!contained) document.body.classList.add('k-shelled');
   const name = title || (home && home.startsWith('gov') || home === 'global' ? (who?.org || '') : HOME[home] || '');
@@ -59,7 +70,8 @@ export function shell({ who = null, home = homeFromPath(), title, rail = null, o
     return '/landxi/v3/xi-clean/' + (r ? '?' + new URLSearchParams({ region: String(r) }) : '');
   };
   if (xi) for (const ev of ['pointerdown', 'focus', 'mouseenter']) xi.addEventListener(ev, () => { xi.href = xiHref(); });
-  const bell = !contained && hasBell(who) ? h('span.k-bell-slot') : null;   // 알림 칸 — 새 요청 · 새 답(LX 직원 · LX 관리자 · 기관)
+  /* 알림 칸 — 새 요청 · 새 답(LX 관리자 · 기관). LX 직원 메뉴가 있는 화면은 왼쪽 '요청함'(숫자)이 같은 일을 한다(10차 메뉴-1 ⓐ — 위 머리는 역할 · XI맵 · ? · 나가기) */
+  const bell = !contained && !staff && hasBell(who) ? h('span.k-bell-slot') : null;
   const mast = h('header.t-mast.k-mast', {},
     h('a.k-word', { href: who?.landing || '/landxi/v3/main/' }, h('span.word', { text: 'LAND-XI' }), name ? h('span.home', { text: name }) : null),
     h('span.sp'), slot, fresh,
@@ -68,14 +80,23 @@ export function shell({ who = null, home = homeFromPath(), title, rail = null, o
 
   const railEl = h('nav.t-rail.k-rail', { 'aria-label': t('shell.menu') });
   const main = h('main.k-main', { id: 'main' });
-  const app = h('div.k-app', { class: [rail && 'has-rail', contained && 'k-app--in'].filter(Boolean).join(' ') }, mast, rail ? railEl : null, main);
+  const sub = rail?.sub ? h('div.k-sub') : null;     // 마스트 아래 한 줄(프로젝트 안 6단계) — 판보다 먼저 자리를 잡아 지도 크기가 바뀌지 않게
+  const more = !!rail?.items?.some((it) => it.more);
+  const app = h('div.k-app', { class: [rail && 'has-rail', sub && 'has-sub', more && 'has-more', staff && 'is-staff', contained && 'k-app--in'].filter(Boolean).join(' ') }, mast, rail ? railEl : null, sub, main);
   mount.prepend(app);
   if (bell) mountBell(bell, who);
+  /* 마스트 아래 한 줄이 자리를 잡거나 바뀌면 판 크기가 달라진다 — 판 안의 지도(MapLibre 는 창 크기 변화만 듣는다)가 따라오게 한 번 알린다 */
+  if (sub && 'ResizeObserver' in window) {
+    let first = true, raf = 0;
+    new ResizeObserver(() => { if (first) { first = false; return; } cancelAnimationFrame(raf); raf = requestAnimationFrame(() => dispatchEvent(new Event('resize'))); }).observe(main);
+  }
   /* XI ChatGEO — 로그인 전(게스트)에는 그리지 않는다(cmdk.js) · 부모 상자 안(갤러리 · 미리보기)과 다른 화면 속 화면(도움말 iframe)에는 붙이지 않는다 */
   let framed = false; try { framed = window.self !== window.top; } catch { framed = true; }
   if (!contained && !framed) mountCmdk({ who, home, guest: !who });
 
   let cur = rail?.current ?? 0, done = rail?.done;
+  const badges = {};                                     // 칸 숫자(요청함) — id → n
+  const badgeHtml = (it) => { const n = badges[it.id]; return n ? `<i class="k-rail-b num" aria-hidden="true">${n > 99 ? '99+' : n}</i>` : ''; };
   const drawRail = () => {
     if (!rail) return;
     const steps = rail.kind === 'steps';
@@ -84,18 +105,44 @@ export function shell({ who = null, home = homeFromPath(), title, rail = null, o
       const st = done ? (done.includes(i) ? 'done' : i === cur ? 'now' : 'wait') : i < cur ? 'done' : i === cur ? 'now' : 'wait';
       const inner = steps
         ? `<span class="n" data-st="${st}">${st === 'done' ? '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>' : i + 1}</span><span>${esc(it.label)}</span>`
-        : `${icon(it.icon)}<span>${esc(it.label)}</span>`;
-      const attrs = `data-i="${i}"${i === cur ? ' aria-current="true"' : ''}${steps ? ` data-st="${st}"` : ''}`;
-      return it.href ? `<a class="k-rail-i" href="${esc(it.href)}" ${attrs}>${inner}</a>` : `<button type="button" class="k-rail-i" ${attrs}>${inner}</button>`;
-    }).join('');
+        : `${icon(it.icon)}${badgeHtml(it)}<span>${esc(it.label)}</span>`;
+      const n = badges[it.id];
+      const attrs = `data-i="${i}"${it.id ? ` data-id="${esc(it.id)}"` : ''}${i === cur ? ' aria-current="true"' : ''}${steps ? ` data-st="${st}"` : ''}${n ? ` aria-label="${esc(it.label)} ${n}건"` : ''}`;
+      const cls = 'k-rail-i' + (it.more ? ' k-rail-i--more' : '');
+      return it.href ? `<a class="${cls}" href="${esc(it.href)}" ${attrs}>${inner}</a>` : `<button type="button" class="${cls}" ${attrs}>${inner}</button>`;
+    }).join('') + (more ? `<button type="button" class="k-rail-i k-rail-more" aria-haspopup="dialog"${rail.items[cur]?.more ? ' data-on="1"' : ''}>${icon('menu')}<span>${esc(t('shell.menu'))}</span></button>` : '');
   };
   railEl.addEventListener('click', (e) => {
     const b = e.target.closest('.k-rail-i'); if (!b) return;
+    if (b.classList.contains('k-rail-more')) { e.preventDefault(); openMore(); return; }
     const i = +b.dataset.i, it = rail.items[i];
     if (!it.href) { e.preventDefault(); cur = i; drawRail(); }
     rail.onPick?.(i, it);
   });
   drawRail();
+  /* 칸 숫자 — 처음 · 1분마다 · 창에 돌아올 때 · 이 창에서 요청에 답했을 때('lx:reviews') */
+  if (rail?.counts && !contained) {
+    const pull = (force) => rail.counts(force).then((m) => { let ch = false; for (const [k, v] of Object.entries(m || {})) if (badges[k] !== v) { badges[k] = v; ch = true; } if (ch) drawRail(); }).catch(() => {});
+    pull(false);
+    setInterval(() => { if (document.visibilityState === 'visible') pull(true); }, 60000);
+    addEventListener('focus', () => pull(true));
+    document.addEventListener('lx:reviews', () => pull(true));
+  }
+  /* 휴대폰(≤ 960) '메뉴' — 아래 탭에 없는 칸(more) + XI맵 · 도움말 · 나가기 */
+  function openMore() {
+    const list = h('nav.k-more', { 'aria-label': t('shell.menu') });
+    let d = null;
+    const row = (label, ic, href, on) => {
+      const a = h(href ? 'a.k-more-i' : 'button.k-more-i', href ? { href } : { type: 'button' }, h('span.k-more-ic', { html: icon(ic) }), h('span', { text: label }));
+      if (on) a.addEventListener('click', on);
+      list.append(a);
+    };
+    rail.items.forEach((it, i) => { if (it.more) row(it.label, it.icon, it.href, it.href ? null : () => { d?.close(); cur = i; drawRail(); rail.onPick?.(i, it); }); });
+    if (xi) row('XI맵', 'map', xiHref());
+    row(t('shell.help'), 'help', null, () => { d?.close(); help.click(); });
+    if (who) row(t('shell.exit'), 'exit', null, () => logout());
+    d = drawer({ title: t('shell.menu'), body: list, label: t('shell.menu') });
+  }
 
   help.addEventListener('click', () => {
     if (onHelp) return onHelp();
@@ -105,7 +152,8 @@ export function shell({ who = null, home = homeFromPath(), title, rail = null, o
   exit.addEventListener('click', () => logout());
 
   const api = {
-    app, mast, rail: railEl, main,
+    app, mast, rail: railEl, main, sub,
+    badge(id, n) { badges[id] = n; drawRail(); },
     go(i) { cur = i; drawRail(); },
     steps({ done: d, current } = {}) { if (d) done = d; if (current !== undefined) cur = current; drawRail(); },
     fresh(d) {

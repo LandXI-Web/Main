@@ -6,27 +6,18 @@ import { LS } from '../kit/util.js';
 import { env } from '../../shared/api-v1.js';
 import * as D from './data.js';
 import { imagerySheet, ledgerSheet } from './sheets.js';
-import { PID, projectRail, attachProject, projectsLink, stageHref } from '../lx-project/context.js';   // 프로젝트 맥락(?project= · 구현 2차 T1)
+import { PID, projectRail, attachProject, stageHref } from '../lx-project/context.js';   // 프로젝트 맥락(?project= · 구현 2차 T1)
+import { staffMenu } from '../kit/lx-menu.js';
 
 const who = await K.gate('lx-ingest');
 const qs = new URLSearchParams(location.search);
 const V3 = '/landxi/v3/';
 
-/* ── 셸 + 레일(① 현재) ─────────────────────────────────────── */
-const RAIL = [
-  { id: 'ingest', label: '데이터 올리기' },
-  { id: 'train', label: '학습', base: V3 + 'lx-train/' },
-  { id: 'assemble', label: '서비스 만들기', base: V3 + 'lx-console/', hash: '#assemble' },
-  { id: 'review', label: '결과 확인', base: V3 + 'lx-review/' },
-  { id: 'deploy', label: '배포', base: V3 + 'lx-deploy/' },
-  { id: 'ops', label: '서비스 관리', base: V3 + 'lx-deploy/', hash: '#ops' },
-];
-const railHref = (r, sgg) => (r.base ? r.base + (sgg ? '?region=' + encodeURIComponent(sgg) : '') + (r.hash || '') : undefined);
-RAIL.forEach((r) => { r.href = railHref(r, qs.get('region')); });
-/* 프로젝트 맥락(?project=) — 레일 = 그 프로젝트의 단계 6 + 이름(화면은 그대로 · 지역은 프로젝트가 고른 곳) */
+/* ── 셸 + 메뉴 ─────────────────────────────────────────────
+   왼쪽 메뉴 = LX 직원 메뉴(kit/lx-menu.js · 10차 메뉴-1 ⓐ · J-1) — 프로젝트 맥락(?project=)이면 '프로젝트'에 불 + 마스트 아래 단계 막대(lx-project/context.js).
+   프로젝트 밖에서 이 화면은 메뉴 '데이터'(영상 · 행정 자산이 지역에 갖춰졌나 · 올리기). */
 const PR = projectRail('ingest');
-const S = K.shell({ who, home: 'lx-ingest', rail: PR || { kind: 'steps', items: RAIL, current: 0 } });
-projectsLink(S);
+const S = K.shell({ who, home: 'lx-ingest', rail: PR || staffMenu('data') });
 if (PR) attachProject(S, PR, 'ingest');
 
 /* ── 판: 지도 무대 + 지역 카드 + 공정 카드 ─────────────────────── */
@@ -218,7 +209,6 @@ async function pick(region, { fly = true } = {}) {
   Object.assign(done, { img: false, cad: false, led: false, join: false }); syncSteps();
   joinBtn.disabled = true;
   history.replaceState(null, '', location.pathname + '?region=' + encodeURIComponent(region.sgg_cd) + (PID ? '&project=' + encodeURIComponent(PID) : '') + (qs.get('dev') ? '&dev=' + qs.get('dev') : ''));
-  if (!PR) { RAIL.forEach((r) => { r.href = railHref(r, region.sgg_cd); }); S.go(0); }
   const ui = openDrawer(region);
   map.getSource('lxi-fp').setData(EMPTY); clearEmd(); st.clear('parcels');
 

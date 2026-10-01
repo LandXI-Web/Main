@@ -291,7 +291,7 @@ export function openFlow({ host, who, project = null }) {
     if (s3.childElementCount) { pickBase(); return; }
     s3.append(h('label.t-label', { text: '기반 모델' }), baseSel, h('p.t-label.tf-note', { text: '작은 표본 · 3회차 · 한 번에 한 건(대기열)' }), h('div.tf-act', {}, go), bar, trMsg, epochs);
     /* 프로젝트 안: 학습 시작 = 프로젝트장 · 구성원(공개된 서비스의 재학습은 서버도 거절 — 역할-3 ⓑ) */
-    if (project && !project.can?.train) { go.remove(); trMsg.textContent = '학습은 프로젝트장과 구성원이 시작합니다'; }
+    if (project && !project.can?.train) { go.remove(); trMsg.textContent = project.published ? '재학습은 프로젝트장이 시작합니다' : '학습은 프로젝트장과 구성원이 시작합니다'; }
     let all = [];
     try { all = await loadModels(); } catch { trMsg.textContent = '모델 목록을 불러오지 못했습니다'; trMsg.dataset.lv = 'warn'; trMsg.after(retryBtn(() => { s3.innerHTML = ''; buildTrain(); })); return; }
     const ms = all.filter((m) => ['seg', 'det', 'obb'].includes(m.task) && m.status === 'registered' && m.weights_uri !== null);

@@ -70,14 +70,15 @@ test.describe('구현 2차 — 검토 요청 · 주고받기 · 알림', () => {
     await expect(ap.locator(`.ib-row[data-id="${sent.id}"]`)).toBeVisible({ timeout: 20000 });
     await expect(ap.locator(`.ib-row[data-id="${sent.id}"] .ib-meta`)).toContainText('받는 사람 LX 담당');
 
-    // 3) LX 직원(app 입구) — 알림 칸 숫자 → 목록 → 그 대화 → 한 줄 + 판정 'AI 오류'
+    // 3) LX 직원(app 입구) — 왼쪽 메뉴 '요청함' 숫자(10차 메뉴-1 ⓐ — 알림 칸 대신) → 요청함 목록 → 그 대화 → 한 줄 + 판정 'AI 오류'
     const sc = await ctx(); const sp = await sc.newPage();
     sp.on('pageerror', (e) => errs.push('staff ' + e));
     await frontDoor(sp, BASE, 'test@lx.or.kr', 'app');
-    const n = sp.locator('.k-bell-n');
-    await expect(n).toBeVisible({ timeout: 20000 });
-    await sp.locator('.k-bell').click();
-    await sp.locator('.k-bell-i', { hasText: sent.where }).first().click();
+    await expect(sp.locator('.k-rail-i[data-id="inbox"] .k-rail-b')).toBeVisible({ timeout: 20000 });
+    await expect(sp.locator('.k-bell')).toHaveCount(0);
+    await sp.locator('.k-rail a.k-rail-i[data-id="inbox"]').click();
+    await expect(sp).toHaveURL(/\/lx-inbox\//);
+    await sp.locator(`.ib-row[data-id="${sent.id}"]`).click();
     await expect(sp).toHaveURL(new RegExp('/lx-inbox/\\?id=' + sent.id));
     await expect(sp.locator('.ib-thread')).toContainText(MEMO, { timeout: 20000 });
     await expect(sp.locator('.ib-facts')).toContainText('대장');     // 저절로 붙은 대장 값 · AI 결과

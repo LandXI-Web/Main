@@ -1,17 +1,18 @@
-/* lx-project — 프로젝트 목록 · 관리 · 한 장(구현 2차 T1 · 확인 대장 R-D3 · 갈림길 ⓐ · 4차 P1 · 5차 역할-3 ⓑ · 6차 흐름-1).
+/* lx-project — 프로젝트 목록 · 관리 · 한 장(구현 2차 T1 · 확인 대장 R-D3 · 갈림길 ⓐ · 4차 P1 · 5차 역할-3 ⓑ · 6차 흐름-1 · 10차 메뉴-1 ⓐ · J-1).
+   왼쪽 메뉴 = LX 직원 메뉴('프로젝트' 불) · 한 장에서는 마스트 아래 한 줄에 그 프로젝트의 단계 6(context.js) — 생산 6단계는 메뉴가 아니라 프로젝트 안.
    ?project= 없음 = 목록·관리: 내가 만든 · 참여한 · 보관(끝난 것) · 전체 · 새 프로젝트(사용자 10-01 "기존 내가 만든 프로젝트는 어디에서 관리하는지?")
    ?project=  있음 = 한 장: 지금 단계 · 다음 할 일 하나(그 단계 화면으로) · 단계 6(완료 조건 자동 판정 — 서버) · 사람(프로젝트장 · 구성원) · 재학습 · 보관
    숫자·판정은 전부 서버(GET /projects · /projects/{id}). 부품 = 키트(셸 · 관문 · 표 · 스텝퍼 · 빈 화면 · 토스트)만 조합. */
 import * as K from '../kit/index.js';
 import { h, api } from '../kit/util.js';
-import { PID, STAGES, projectRail, attachProject, refreshRail, projectsLink, stageHref, projectHref, loadProject } from './context.js';
+import { PID, projectRail, attachProject, refreshRail, stageHref, projectHref, loadProject } from './context.js';
+import { staffMenu } from '../kit/lx-menu.js';
 import { openNewProject } from './new.js';
 
 const who = await K.gate('lx-console');                  // 들어오는 사람 = LX 직원 대시보드와 같다(LX 직원 · 관리자)
 const Q = new URLSearchParams(location.search);
-const rail = projectRail(null);
-const S = K.shell({ who, home: 'lx-console', rail });
-projectsLink(S);
+const rail = projectRail(null) || staffMenu('projects');
+const S = K.shell({ who, home: 'lx-project', rail });
 K.devDrawer({ who });
 const page = h('div.lxp-page');
 S.main.append(page);
@@ -130,15 +131,7 @@ function draw(pr) {
   if (!archived) nowCard.append(h('a.t-btn.lxp-go', { href: stageHref(pr, nx.stage, nx.target), text: `${now?.label || '단계'} 열기` }));
   left.append(nowCard);
 
-  /* 단계 6 — 완료 조건 자동 판정(서버) · 누르면 그 단계 화면 */
-  const DONE = { ingest: '대상 지역 영상 있음', label: `표본 ${pr.samples?.length || 0}개`, train: '모델 쓸 수 있음', review: '표본 확인 끝', publish: '공개됨' };
-  const st = pr.stages || [];
-  const steps = st.map((s) => ({ t: s.label, d: s.skip ? '해당 없음' : s.done && s.state !== 'now' ? (DONE[s.key] || '') : (s.next || '') }));
-  const stepEl = h('div.lxp-steps');
-  const stepCard = h('section.t-card.lxp-stages', { 'aria-label': '단계' }, h('h2.lxp-h', { text: '단계' }), stepEl);
-  left.append(stepCard);
-  K.stepper(stepEl, steps, { vertical: true, done: st.filter((s) => s.done && s.state !== 'now').map((s) => s.index), current: pr.stage?.index ?? 0,
-    onPick: (i) => { location.href = stageHref(pr, STAGES[i].key, st[i]?.target); } });
+  /* 단계 6 — 마스트 아래 한 줄(context.js · 단계 화면들과 같은 막대 · 완료 조건은 서버 판정) */
 
   /* 사람 — 프로젝트장(바꾸기 = 관리자) · 구성원(더하기 · 빼기 = 프로젝트장) */
   const ppl = h('section.t-card.lxp-people', { 'aria-label': '사람' }, h('h2.lxp-h', { text: '사람' }));
@@ -162,7 +155,7 @@ function draw(pr) {
   if (pr.can?.lead && !archived) peoplePicker(ppl, pr, 'lead');
   right.append(ppl);
 
-  /* 재학습 — 공개된 서비스만 · 프로젝트장 · 구성원만(역할-3 ⓑ) · 배포는 LX 관리자 승인 */
+  /* 재학습 — 공개된 서비스만 · 프로젝트장만(역할-3 ⓑ · 구현 확인 2차 J-2 — 서버도 같은 규칙으로 막는다) · 배포는 LX 관리자 승인 */
   if (pr.published && !archived) {
     const rt = h('section.t-card.lxp-retrain', { 'aria-label': '재학습' }, h('h2.lxp-h', { text: '재학습' }));
     if (pr.can?.retrain) {
@@ -179,7 +172,7 @@ function draw(pr) {
       });
       rt.append(b);
     } else {
-      rt.append(h('p.lxp-p', { text: '재학습은 프로젝트장과 구성원이 시작합니다' }));
+      rt.append(h('p.lxp-p', { text: '재학습은 프로젝트장이 시작합니다' }));
     }
     right.append(rt);
   }

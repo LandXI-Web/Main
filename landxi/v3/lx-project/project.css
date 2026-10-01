@@ -26,12 +26,6 @@
 .lxp-now .t-label{margin:0}
 .lxp-next{margin:0 0 8px;font:700 var(--fs-h4)/var(--lh-h4) var(--font-display);letter-spacing:var(--ls-h4);color:var(--ink)}
 .lxp-why{margin:0 0 4px;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--warn)}
-.lxp-steps{gap:14px}
-.lxp-steps .t-step{padding:4px 8px 4px 0;border-radius:var(--r-8);text-align:left}
-.lxp-steps button.t-step:hover .t{text-decoration:underline;text-underline-offset:3px}
-.lxp-steps .k-step-tx{gap:2px}
-.lxp-steps .t-step .d{font-family:var(--font-body)}
-.lxp-steps .t-step[data-st="now"] .d{color:var(--ink-2)}
 .lxp-row{display:grid;grid-template-columns:88px minmax(0,1fr);align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--rule)}
 .lxp-row:first-of-type{border-top:0;padding-top:0}
 .lxp-row--top{align-items:start}
