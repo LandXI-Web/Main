@@ -295,7 +295,10 @@ async def get_brand_main(tenant: str):
         if src and cid in open_cards:                         # 열린 서비스의 결과 장면만(아직 시작 전인 서비스는 시작 시기만)
             scenes[cid] = {"src": src, "caption": str(sc.get("caption") or "")[:60]}
     bg = _main_pic(t.get("background"), max_px, restricted)
-    return {"tenant": row["id"], "background": {"src": bg} if bg else None, "scenes": scenes,
+    from .catalog import _main_meta, _main_view          # 확인 18차 기관-12 ⓐ — LX 관리자가 고른 배경 사진(가로 1,600 이하 한 장)이 있으면 그것이 먼저
+    chosen = _main_view(row["id"], _main_meta(row["id"]))
+    background = {"src": chosen["url"], "api": True} if chosen else ({"src": bg} if bg else None)   # api = 서버 길(화면이 API 주소를 앞에 붙인다)
+    return {"tenant": row["id"], "background": background, "scenes": scenes,
             "facts": await _main_facts(row["id"], svcs), "as_of": dt.datetime.now(KST).isoformat(timespec="seconds")}
 
 

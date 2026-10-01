@@ -1135,14 +1135,78 @@ async def flow_tick(only: set | None = None) -> int:
     return n
 
 
+# ── 필지 대조는 서버가 뒤에서(확인 18차 M-3 ⓐ · 원칙 45 AI 분석이 먼저) ─────────────────────────────────────────
+# 배포 흐름 밖에서 끝난 시군구 전역 AI 분석(분석하기 → 이 카드로 분석)도, 그 카드가 필지 대조 서비스면 실태조사(필지 적재 · AI 결합 · 규칙 · 의심 —
+# 배포 흐름의 _after_infer 와 같은 POST /survey/build)를 저절로 잇는다. 직원이 '결합 실행'을 누르지 않는다(데이터 올리기에서 결합 단계 · 결합률을 뺐다).
+# CPU 작업 대기열 · 한 번에 하나(돌고 있는 실태조사가 있으면 다음 차례에). 일부 범위 분석(그린 범위 · 기관 분석 요청 · 말로 분석)은 시군구 실태조사를
+# 바꾸지 않는다(전역 분석만). 그 시군구에 더 새 AI 결과로 만든 실태조사가 있으면 건너뛴다. 끝난 지 PARCEL_WINDOW_H 시간이 지난 분석은 보지 않는다.
+PARCEL_TICK_S = 30
+PARCEL_WINDOW_H = 72
+_parcel_last = {"t": 0.0}
+
+
+async def _card_parcel(conn, card_id: str) -> tuple[bool, list[str] | None]:
+    """카드의 가장 최근 판이 필지 대조 서비스인가(전용 모듈 -parcel 또는 규칙을 고른 서비스) · 고른 규칙(없으면 None = 전체)."""
+    m = await conn.fetchval("SELECT modules FROM card_versions WHERE card_id=$1 ORDER BY approved_at DESC NULLS LAST, id DESC LIMIT 1", card_id)
+    if not isinstance(m, dict):
+        return False, None
+    rules = m.get("rules") if isinstance(m.get("rules"), list) and m.get("rules") else None
+    return bool(_has_parcel(m) or rules), ([str(x) for x in rules] if rules else None)
+
+
+async def parcel_tick() -> str | None:
+    """끝난 전역 AI 분석 하나를 실태조사로 잇는다 → 이은 AI 작업 id | None."""
+    async with db(realm="lx") as conn:
+        if await conn.fetchval("SELECT 1 FROM jobs WHERE kind='survey' AND state IN ('queued','running') AND options->>'build'='true' LIMIT 1"):
+            return None                                          # 한 번에 하나
+        rows = await conn.fetch(
+            "SELECT j.id, j.card_id, j.submitted_by, j.finished_at, j.options->>'sgg_cd' AS sgg FROM jobs j "
+            "WHERE j.kind='infer' AND j.state='done' AND NOT coalesce(j.test, false) AND j.deploy_id IS NULL AND j.card_id IS NOT NULL "
+            "AND j.options->>'scope'='sgg' AND coalesce(j.options->>'sgg_cd','') <> '' "
+            "AND j.finished_at > now() - make_interval(hours => $1) "
+            "AND EXISTS (SELECT 1 FROM detections d WHERE d.job_id = j.id) "
+            "AND NOT EXISTS (SELECT 1 FROM jobs s WHERE s.kind='survey' AND s.options->>'ai_job_id' = j.id) "
+            "ORDER BY j.finished_at ASC LIMIT 20", PARCEL_WINDOW_H)
+        pick = None
+        for r in rows:
+            on, rules = await _card_parcel(conn, r["card_id"])
+            if not on:
+                continue
+            newer = await conn.fetchval(
+                "SELECT 1 FROM survey_sgg s JOIN jobs a ON a.id = s.job_id WHERE s.sgg_cd=$1 AND a.finished_at > $2", r["sgg"], r["finished_at"])
+            if newer:
+                continue
+            pick = (r, rules)
+            break
+    if not pick:
+        return None
+    r, rules = pick
+    p = _flow_actor(r["submitted_by"])
+    try:
+        await _call_route("POST", "/survey/build", {"sgg_cd": r["sgg"], "job_id": r["id"], **({"rules": rules} if rules else {})}, p)
+    except ApiError as e:
+        if e.code != "survey_build_running":
+            print(f"[parcel] {r['id']} {r['sgg']} 실태조사를 잇지 못함 {e.code}", flush=True)
+        return None
+    async with db(realm="lx") as conn:
+        await audit(conn, p, "survey.auto", r["sgg"], None, {"ai_job_id": r["id"], "card_id": r["card_id"], "why": "전역 분석 끝 — 필지 대조 서비스"})
+    return r["id"]
+
+
 async def flow_loop():
-    """게이트웨이 수명 동안 5 s 마다(ops.alert_loop 가 띄운다 — main.py 무수정)."""
+    """게이트웨이 수명 동안 5 s 마다(ops.alert_loop 가 띄운다 — main.py 무수정). 필지 대조 잇기(parcel_tick)는 30 s 마다."""
     await asyncio.sleep(3)
     while True:
         try:
             await flow_tick()
         except Exception as e:  # pragma: no cover
             print("[flow] loop error", repr(e), flush=True)
+        if time.time() - _parcel_last["t"] >= PARCEL_TICK_S:
+            _parcel_last["t"] = time.time()
+            try:
+                await parcel_tick()
+            except Exception as e:  # pragma: no cover
+                print("[parcel] loop error", repr(e), flush=True)
         await asyncio.sleep(FLOW_TICK_S)
 
 

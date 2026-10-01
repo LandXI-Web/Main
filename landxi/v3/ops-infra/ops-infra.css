@@ -306,7 +306,41 @@
 .sh-l .t{flex:1;min-width:0;display:flex;flex-direction:column}
 .sh-l .t b{font:500 14px/20px var(--font-body);color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sh-l .t span{font:400 12px/18px var(--font-body);color:var(--sub)}
-.sh-l .t .sh-o{color:var(--ink);font-variant-numeric:tabular-nums}  /* 원본 지울 날짜(영상 표준) */
+.sh-l .t .sh-o{margin-top:2px;font-size:11px;line-height:16px;color:var(--sub);font-variant-numeric:tabular-nums}  /* 원본 지울 날짜(영상 표준) — 맨 뒤 작은 글(18차 M-4 ⓐ) */
+/* 공유 영상 — 그림 보고 판단(확인 18차 M-4 ⓐ): 그림 → 이름 → 어디 · 언제 · 해상도 → 쓸 수 있는 일 → 스위치 · 종류 거르기 */
+.sh-l li{align-items:center;gap:14px;padding:8px 12px 8px 8px}
+.sh-th{position:relative;flex:none;width:104px;height:78px;border-radius:var(--r-8);overflow:hidden;background:var(--rule)}
+.sh-th img{display:block;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity var(--d-180) var(--e-ui)}
+.sh-th[data-ok] img{opacity:1}
+.sh-k{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:500 12px/1 var(--font-body);color:var(--sub)}
+.sh-th[data-ok] .sh-k{display:none}
+.sh-dt{position:absolute;left:6px;bottom:6px;padding:3px 6px;border-radius:6px;background:rgba(20,24,30,.72);font:600 11px/1 var(--font-num);color:#fff}
+.sh-l .t .sh-m em{font-style:normal;white-space:nowrap}  /* 어디 · 언제 · 해상도 — 한 덩어리씩 줄바꿈 */
+.sh-c{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.sh-c i{font:500 11px/1 var(--font-body);font-style:normal;color:var(--ink-2,var(--ink));padding:4px 6px;border:1px solid var(--rule);border-radius:6px;background:var(--bg-1)}
+.sh-f{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 2px}
+.sh-f button{height:32px;padding:0 12px;border:1px solid var(--rule);border-radius:16px;background:var(--bg-1);font:500 13px/1 var(--font-body);color:var(--ink);cursor:pointer}
+.sh-f button .num{margin-left:2px;color:var(--sub)}
+.sh-f button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.sh-f button[aria-pressed="true"] .num{color:rgba(255,255,255,.75)}
+@media (max-width:640px){.sh-th{width:88px;height:66px}.sh-l li{gap:10px}}
+/* 기관 메인 배경 사진(확인 18차 기관-12 ⓐ) — 결과 장면 · 공유 영상 · 사진 올리기 → 미리 보기 → 저장 */
+.mp-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:4px}
+.mp-t{position:relative;aspect-ratio:4/3;padding:0;border:2px solid transparent;border-radius:var(--r-8);overflow:hidden;background:var(--rule);cursor:pointer}
+.mp-t img{display:block;width:100%;height:100%;object-fit:cover}
+.mp-t span{position:absolute;left:6px;bottom:6px;max-width:calc(100% - 12px);padding:3px 6px;border-radius:6px;background:rgba(20,24,30,.72);font:500 11px/1.3 var(--font-body);color:#fff;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mp-t[aria-pressed="true"]{border-color:var(--accent)}
+.mp-t[aria-pressed="true"]::after{content:"✓";position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font:700 13px/22px var(--font-body);text-align:center}
+.mp-t:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mp-up{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px;border:1px dashed var(--sub);background:var(--bg-1);text-align:center}
+.mp-up b{font:600 13px/1.3 var(--font-body);color:var(--ink)}
+.mp-up span{position:static;max-width:none;padding:0;background:none;color:var(--sub);white-space:normal}
+.mp-p{position:relative;margin:8px 0 0;aspect-ratio:16/7;border-radius:var(--r-8);overflow:hidden;background:var(--rule)}
+.mp-p img{display:block;width:100%;height:100%;object-fit:cover}
+.mp-p figcaption{position:absolute;left:0;right:0;bottom:0;padding:8px 12px;background:linear-gradient(transparent,rgba(20,24,30,.65));font:500 12px/1.4 var(--font-body);color:#fff}
+.mp-a{display:flex;justify-content:flex-end;margin-top:8px}
+.mp-a .t-btn{min-width:96px}
+@media (max-width:640px){.mp-g{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .sw{position:relative;flex:none;width:40px;height:24px;border:0;border-radius:12px;background:var(--rule);cursor:pointer;transition:background var(--d-180) var(--e-ui)}
 .sw i{position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.18);transition:transform var(--d-180) var(--e-ui)}
 .sw[aria-checked="true"]{background:var(--ink)}

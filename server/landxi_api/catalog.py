@@ -789,6 +789,7 @@ async def tenant_shares(tid: str, request: Request):
         if x["orig_delete_on"]:
             return f"원본 지울 날짜 {date_word(x['orig_delete_on'])}"
         return "원본 보관(지우지 않음)" if not x["orig_owned"] else None
+    wheres = await run_in_threadpool(_where_words, cands)
     items = []
     for r in cands:
         g = float(r["gsd_m"]) if r["gsd_m"] is not None else None
@@ -796,11 +797,190 @@ async def tenant_shares(tid: str, request: Request):
         analyze = bool(r["path_internal"] or (r["layer"] or {}).get("cog_path"))
         view = bool(r["pmtiles_set"]) or (r["tier"] == "raw" and analyze)      # 원본만 있는 영상도 공유하면 기관 지도에(서명 동적 타일 · 10-01)
         name = (r["name"] or {}).get("ko") if isinstance(r["name"], dict) else r["name"]
+        kind = _kind_of(g)
         items.append({"id": r["id"], "name": name or "영상", "year": int(ep[:4]) if ep[:4].isdigit() else None, "gsd_m": g,
                       "gsd_word": gsd_word(g) if g else "", "view": view, "analyze": analyze, "shared": r["id"] in sh, "orig": _orig(r["id"]),
+                      "kind": kind, "kind_word": KIND_WORD.get(kind), "when": _when_word(r), "where": wheres.get(r["id"]),
+                      "_when": _when_key(r), "thumb": f"/catalog/imagery/{r['id']}/thumb",
                       "shared_at": sh[r["id"]]["shared_at"].astimezone(_KST).isoformat(timespec="seconds") if r["id"] in sh and sh[r["id"]]["shared_at"] else None})
-    items.sort(key=lambda x: (not x["shared"], -(x["year"] or 0), x["name"]))
+    # 확인 18차 M-4 ⓐ — 공유 중 먼저 → 최근 촬영순(같은 해면 월까지) → 이름
+    items.sort(key=lambda x: (not x["shared"], tuple(-v for v in x.pop("_when")), x["name"]))
     return {"tenant_id": tid, "items": items, "total": len(items), "as_of": now_iso()}
+
+
+# ── 공유 영상을 그림으로 보고 판단(확인 18차 M-4 ⓐ · 원칙 112) ─────────────────────────────────────────────
+# 줄마다 실제 영상 썸네일(표준본 · 원본 COG 또는 화면용 지도 조각에서 작게 — 지어낸 그림 0) · 어디(읍면동 · 영상 범위에서) · 언제(촬영 연월) · 종류.
+# 썸네일은 LX 관리자만(로그인 세션 · 원본에서 만든 그림이라 기관 · 게스트에는 내지 않는다). 처음 한 번 CPU 로 만들어 두고(가로 320) 다시 쓴다.
+KIND_WORD = {"drone": "드론", "aerial": "항공", "satellite": "위성"}
+THUMB_W, THUMB_H = 320, 240
+_where_cache: dict[str, str | None] = {}
+
+
+def _kind_of(g: float | None) -> str:
+    return "drone" if g is not None and g < 0.1 else "satellite" if g is not None and g >= 1 else "aerial"
+
+
+def _when_key(r) -> tuple[int, int]:
+    import re as _re
+    s = str(r["epoch"] or r["year"] or "")
+    m = _re.match(r"((?:19|20)\d{2})(?:[-.](\d{1,2}))?", s)
+    return (int(m.group(1)), int(m.group(2) or 0)) if m else (0, 0)
+
+
+def _when_word(r) -> str | None:
+    y, mo = _when_key(r)
+    return (f"{y}년 {mo}월" if mo else f"{y}년") if y else None
+
+
+def _where_words(rows) -> dict[str, str | None]:
+    """영상 범위 → '남원시 송동면 일대' · 시군구를 거의 다 덮으면 '남원시 전역'(동기 · 영상마다 한 번 계산해 둔다)."""
+    from shapely.geometry import shape as _shape
+    from .deps import Principal
+    import re
+    from .regions import emd_index, region_of
+    from .requests import _place
+    lx = Principal(realm="lx", role="admin", user_id="system")
+    out = {}
+    for r in rows:
+        if r["id"] in _where_cache:
+            out[r["id"]] = _where_cache[r["id"]]
+            continue
+        w = None
+        cov = (r["layer"] or {}).get("coverage")
+        reg = region_of(r["sgg_cd"]) if r["sgg_cd"] else None
+        try:
+            if cov is not None and float(cov) >= 0.8 and reg:
+                w = f"{reg['name']} 전역"
+            elif r["fp"]:
+                place, sgg = _place(lx, _shape(r["fp"]).buffer(0))
+                w = f"{place} 일대" if sgg else (reg or {}).get("name")
+                m = re.search(r"등 (\d+)곳$", place or "")
+                ix = emd_index(sgg) if (m and sgg) else None
+                if m and ix is not None and len(ix) and int(m.group(1)) >= 0.8 * len(ix):
+                    w = f"{place.split(' ')[0]} 전역"                    # 읍면동을 거의 다 덮는 영상
+            elif reg:
+                w = reg["name"]
+        except Exception:  # noqa: BLE001
+            w = (reg or {}).get("name")
+        out[r["id"]] = _where_cache[r["id"]] = w
+    return out
+
+
+def _thumb_make(row: dict, out) -> bool:
+    """영상 한 장 → 가로 320 · 4:3 그림(JPEG · 지도 조각 · 표준본 COG 에서 · CPU). 작은 영상(긴 변 3km 이하)은 영상이 충분히 덮으면 전체,
+    큰 영상 · 빈 곳이 많은 영상은 낮은 줌 개관에서 영상이 가장 빽빽한 곳을 찾아 그 둘레 1.2km 만(빈 바탕만 보이는 그림 0)."""
+    import math
+    import cv2
+    import numpy as np
+    from shapely.geometry import shape as _shape
+    from agent.vlm import crop as CR                               # 영상 조각 렌더(불러 쓰기만 — 고치지 않음)
+    srcs = CR.sources_from_rows([row], config.DATA_ROOT, resolve_set_path)
+    if not srcs or not row.get("fp"):
+        return False
+    src = srcs[0]
+    g = _shape(row["fp"]).buffer(0)
+    b = g.bounds
+    lat = (b[1] + b[3]) / 2
+    mx, my = 111320.0 * max(0.1, math.cos(math.radians(lat))), 110540.0
+    w_m, h_m = (b[2] - b[0]) * mx, (b[3] - b[1]) * my
+    bg = np.array(CR.NODATA_BGR, np.int16)
+
+    def box(cx, cy, wm):                                           # 가운데 · 가로 폭(m) → 4:3 상자(경위도)
+        hm = wm * 3 / 4
+        return [cx - wm / 2 / mx, cy - hm / 2 / my, cx + wm / 2 / mx, cy + hm / 2 / my]
+
+    def render(bb):
+        v = CR.render_view(src, bb, None)
+        im = cv2.imdecode(np.frombuffer(v.png, np.uint8), cv2.IMREAD_COLOR) if v else None
+        if im is None:
+            return None, None
+        data = (np.abs(im.astype(np.int16) - bg).max(axis=2) > 6).astype(np.float32)
+        return im, data
+
+    full = box((b[0] + b[2]) / 2, (b[1] + b[3]) / 2, max(w_m, h_m * 4 / 3) * 1.04)
+    im, data = render(full)
+    if im is None:                                                 # 낮은 줌 조각이 없는 세트 — 영상 안쪽 몇 점 둘레 1.2km 가운데 영상이 가장 많은 것
+        pts = [g.representative_point(), g.centroid] + [type(g.centroid)(b[0] + (b[2] - b[0]) * i / 4, b[1] + (b[3] - b[1]) * j / 4)
+                                                        for i in (1, 2, 3) for j in (1, 2, 3)]
+        best = (None, None, -1.0)
+        for c in pts:
+            if not g.contains(c):
+                continue
+            im2, d2 = render(box(c.x, c.y, min(1200.0, max(w_m, h_m))))
+            if im2 is not None and float(d2.mean()) > best[2]:
+                best = (im2, d2, float(d2.mean()))
+                if best[2] >= 0.6:
+                    break
+        im, data = best[0], best[1]
+        if im is None:
+            return False
+    if max(w_m, h_m) > 3000 or float(data.mean()) < 0.35:
+        k = max(3, int(min(data.shape) / 5) | 1)
+        dens = cv2.blur(data, (k, k))
+        vy, vx = np.unravel_index(int(np.argmax(dens)), dens.shape)
+        if dens[vy, vx] > 0.2:                                    # 영상이 가장 빽빽한 곳 → 그 둘레(긴 변 3km 이하면 영상 폭의 절반까지만 키움)
+            fx, fy = (vx + 0.5) / data.shape[1], (vy + 0.5) / data.shape[0]
+            x0m, y0m = CR.lonlat_to_m(full[0], full[1])
+            x1m, y1m = CR.lonlat_to_m(full[2], full[3])
+            xm, ym = x0m + fx * (x1m - x0m), y1m - fy * (y1m - y0m)
+            lon = xm / 6378137.0 * 180 / math.pi
+            la = (2 * math.atan(math.exp(ym / 6378137.0)) - math.pi / 2) * 180 / math.pi
+            wm = 1200.0 if max(w_m, h_m) > 3000 else max(200.0, max(w_m, h_m) / 2)
+            im2, d2 = render(box(lon, la, wm))
+            if im2 is not None:
+                im, data = im2, d2
+    ys, xs = np.nonzero(data > 0)                                  # 영상이 있는 상자만 남긴다(바깥 빈 바탕을 덜어 냄)
+    if len(xs) and (xs.max() - xs.min() + 1) * (ys.max() - ys.min() + 1) >= 0.25 * data.size:
+        im = im[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+    h, w = im.shape[:2]
+    s = max(THUMB_W / w, THUMB_H / h)
+    im = cv2.resize(im, (max(THUMB_W, round(w * s)), max(THUMB_H, round(h * s))), interpolation=cv2.INTER_AREA)
+    y0, x0 = (im.shape[0] - THUMB_H) // 2, (im.shape[1] - THUMB_W) // 2
+    ok, buf = cv2.imencode(".jpg", im[y0:y0 + THUMB_H, x0:x0 + THUMB_W], [cv2.IMWRITE_JPEG_QUALITY, 82])
+    if not ok:
+        return False
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_bytes(buf.tobytes())
+    return True
+
+
+_thumb_gate = None
+
+
+@router.get("/catalog/imagery/{iid}/thumb")
+async def imagery_thumb(iid: str, request: Request):
+    """공유 영상 썸네일(LX 관리자만) — 처음 한 번 만들어 cache/thumbs 에 두고 다시 쓴다(원천 파일이 바뀌면 새로). 그림이 없으면 204."""
+    import asyncio
+    import hashlib
+    from fastapi import Response
+    from .deps import require
+    global _thumb_gate
+    require(principal(request), admin=True)
+    async with db(realm="lx") as conn:
+        r = await conn.fetchrow("SELECT id, name, kind, gsd_m, year, epoch, path_internal, pmtiles_set, layer, ST_AsGeoJSON(footprint)::json AS fp "
+                                "FROM imagery WHERE id=$1 AND coalesce(layer->>'role','imagery')='imagery'", iid)
+    if not r:
+        raise ApiError("not_found", "영상이 없습니다")
+    row = dict(r)
+    key = hashlib.sha1(json.dumps([row["path_internal"], row["pmtiles_set"], (row["layer"] or {}).get("cog_path"), row["fp"]], default=str).encode()).hexdigest()[:12]
+    out = config.DATA_ROOT / "cache" / "thumbs" / f"{iid}-{key}.jpg"
+    hdr = {"Cache-Control": "private, max-age=86400"}
+    if out.exists():
+        return Response(content=out.read_bytes(), media_type="image/jpeg", headers=hdr)
+    if out.with_suffix(".none").exists():
+        return Response(status_code=204)
+    _thumb_gate = _thumb_gate or asyncio.Semaphore(2)               # CPU 보호 — 한 번에 둘
+    async with _thumb_gate:
+        try:
+            ok = await run_in_threadpool(_thumb_make, row, out)
+        except Exception as e:  # noqa: BLE001
+            print(f"[thumb] {iid} {e!r}", flush=True)
+            ok = False
+    if not ok:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.with_suffix(".none").touch()
+        return Response(status_code=204)
+    return Response(content=out.read_bytes(), media_type="image/jpeg", headers=hdr)
 
 
 @router.put("/tenants/{tid}/imagery-shares/{iid}")
@@ -829,3 +1009,221 @@ async def set_tenant_share(tid: str, iid: str, body: dict, request: Request):
     await ops_event("imagery.share", {"tenant_id": tid, "imagery_id": iid, "shared": on, "by": p.user_id, "at": now_iso()})
     await tenant_event(tid, "imagery.shared", {"imagery_id": iid, "shared": on})
     return {"tenant_id": tid, "imagery_id": iid, "shared": on, "as_of": now_iso()}
+
+
+# ── 기관 메인 배경 사진(확인 18차 기관-12 ⓐ · 원칙 116) ───────────────────────────────────────────────
+# LX 관리자가 그 기관의 결과 장면 · 공유한 영상에서 고르거나 올린다 → 서버가 가로 1,600 이하 JPEG 한 장으로 만들어 둔다(메타데이터 없이 다시 저장).
+# 로그인 전 기관 메인이 쓰므로 공개 길(GET /brand/{기관}/main-photo)은 그 한 장만 내준다 — 원본 · 지도 조각 · 다른 기관 그림 0.
+# 제한 영상(config/gov-main.yaml restricted 의 이름이 들어간 영상 · 장면)은 고를 수 없다. 고르지 않았으면 기관 메인은 지금 그림 그대로(기본).
+#   GET    /tenants/{기관}/main-photo              LX 관리자 — 고를 수 있는 것(결과 장면 · 공유한 영상) + 지금 고른 것
+#   PUT    /tenants/{기관}/main-photo              {kind: scene, src} | {kind: imagery, id} | {kind: default} — 고르기(default = 지금 그림으로 되돌림)
+#   POST   /tenants/{기관}/main-photo/upload       그림 파일 올리기(JPG · PNG · WEBP · 20MB 까지)
+#   GET    /brand/{기관}/main-photo                로그인 없이 — 고른 한 장(없으면 404)
+MAIN_W = 1600
+MAIN_MAX_UPLOAD = 20 * 1024 * 1024
+
+
+def _main_dir(tid: str):
+    import re as _re
+    if not _re.fullmatch(r"[a-z0-9][a-z0-9-]{1,40}", tid or ""):
+        raise ApiError("not_found", "해당 기관이 없습니다")
+    return config.DATA_ROOT / "tenants" / tid / "brand"            # 기관 마크와 같은 칸(brand.py _brand_dir) · 파일 이름 main-* · main.json
+
+
+def _main_meta(tid: str) -> dict | None:
+    try:
+        return json.loads((_main_dir(tid) / "main.json").read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _gov_main_cfg() -> dict:
+    try:
+        return config.load_yaml("gov-main") or {}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def _restricted(*names) -> bool:
+    bad = [str(x) for x in (_gov_main_cfg().get("restricted") or []) if x]
+    return any(b in str(n or "") for n in names for b in bad)
+
+
+def _save_main(tid: str, im, source: dict, by: str) -> dict:
+    """그림(BGR 배열) → 가로 1,600 이하 JPEG(메타데이터 없음) + main.json. 예전 그림은 지운다."""
+    import hashlib
+    import cv2
+    h, w = im.shape[:2]
+    if w > MAIN_W:
+        im = cv2.resize(im, (MAIN_W, max(1, round(h * MAIN_W / w))), interpolation=cv2.INTER_AREA)
+    ok, buf = cv2.imencode(".jpg", im, [cv2.IMWRITE_JPEG_QUALITY, 84, cv2.IMWRITE_JPEG_PROGRESSIVE, 1])
+    if not ok:
+        raise ApiError("bad_request", "그림을 만들지 못했습니다")
+    data = buf.tobytes()
+    d = _main_dir(tid)
+    d.mkdir(parents=True, exist_ok=True)
+    name = f"main-{hashlib.sha1(data).hexdigest()[:10]}.jpg"
+    for old in d.glob("main-*.jpg"):
+        if old.name != name:
+            old.unlink(missing_ok=True)
+    (d / name).write_bytes(data)
+    meta = {"file": name, "w": int(im.shape[1]), "h": int(im.shape[0]), "source": source, "by": by, "at": now_iso()}
+    (d / "main.json").write_text(json.dumps(meta, ensure_ascii=False), encoding="utf-8")
+    return meta
+
+
+def _main_view(tid: str, meta: dict | None) -> dict | None:
+    if not meta or not (_main_dir(tid) / meta.get("file", "-")).exists():
+        return None
+    src = meta.get("source") or {}
+    return {"url": f"/brand/{tid}/main-photo?v={meta['file'][5:15]}", "kind": src.get("kind"), "id": src.get("id"), "src": src.get("src"),
+            "label": src.get("label"), "at": meta.get("at")}
+
+
+def _render_banner(row: dict):
+    """공유 영상 한 장 → 가로 1,536 · 2:1 그림(영상이 빽빽한 곳 둘레 · 지도 조각 · 표준본 COG 에서 · CPU). 3×2 칸을 따로 그려 잇는다."""
+    import math
+    import cv2
+    import numpy as np
+    from shapely.geometry import shape as _shape
+    from agent.vlm import crop as CR                               # 영상 조각 렌더(불러 쓰기만 — 고치지 않음)
+    srcs = CR.sources_from_rows([row], config.DATA_ROOT, resolve_set_path)
+    if not srcs or not row.get("fp"):
+        return None
+    g = _shape(row["fp"]).buffer(0)
+    b = g.bounds
+    lat = (b[1] + b[3]) / 2
+    mx, my = 111320.0 * max(0.1, math.cos(math.radians(lat))), 110540.0
+    w_m = min(max((b[2] - b[0]) * mx, (b[3] - b[1]) * my * 2), 1800.0)
+    c = g.representative_point()
+    cx, cy = c.x, c.y
+    cols, rws = 3, 2
+    cw, ch = w_m / cols, w_m / 2 / rws
+    x0, y1 = cx - w_m / 2 / mx, cy + w_m / 4 / my
+    tiles = []
+    for j in range(rws):
+        line = []
+        for i in range(cols):
+            bb = [x0 + i * cw / mx, y1 - (j + 1) * ch / my, x0 + (i + 1) * cw / mx, y1 - j * ch / my]
+            v = CR.render_view(srcs[0], bb, None)
+            im = cv2.imdecode(np.frombuffer(v.png, np.uint8), cv2.IMREAD_COLOR) if v else None
+            if im is None:
+                return None
+            line.append(cv2.resize(im, (512, 341), interpolation=cv2.INTER_AREA))
+        tiles.append(np.hstack(line))
+    return np.vstack(tiles)
+
+
+@router.get("/tenants/{tid}/main-photo")
+async def main_photo_get(tid: str, request: Request):
+    """LX 관리자 — 기관 메인 배경 사진: 고를 수 있는 것(그 기관 결과 장면 · 공유한 영상) + 지금 고른 것(없으면 기본 그림)."""
+    from .deps import require
+    require(principal(request), admin=True)
+    async with db(realm="lx") as conn:
+        if not await conn.fetchval("SELECT 1 FROM tenants WHERE id=$1", tid):
+            raise ApiError("not_found", "해당 기관이 없습니다")
+        rows = await conn.fetch("SELECT i.id, i.name, i.gsd_m, i.year, i.epoch, i.path_internal, i.pmtiles_set FROM imagery_shares s JOIN imagery i ON i.id = s.imagery_id "
+                                "WHERE s.tenant_id=$1 AND coalesce(i.kind,'ortho') NOT IN ('terrain','index')", tid)
+    t = ((_gov_main_cfg().get("tenants") or {}).get(tid) or {})
+    scenes = []
+    if t.get("background") and not _restricted(t["background"]):
+        scenes.append({"kind": "scene", "src": t["background"], "label": "지금 그림(기본)", "thumb": t["background"], "default": True})
+    for card, sc in (t.get("scenes") or {}).items():
+        if isinstance(sc, dict) and sc.get("src") and not _restricted(sc["src"]):
+            scenes.append({"kind": "scene", "src": sc["src"], "label": sc.get("caption") or "결과 장면", "thumb": sc["src"]})
+    imgs = []
+    for r in sorted(rows, key=lambda x: _when_key(x), reverse=True):
+        name = (r["name"] or {}).get("ko") if isinstance(r["name"], dict) else r["name"]
+        if _restricted(r["id"], name, r["path_internal"], r["pmtiles_set"]):
+            continue
+        g = float(r["gsd_m"]) if r["gsd_m"] is not None else None
+        imgs.append({"kind": "imagery", "id": r["id"], "label": " ".join(x for x in (_when_word(r), KIND_WORD.get(_kind_of(g))) if x) or (name or "영상"),
+                     "thumb": f"/catalog/imagery/{r['id']}/thumb"})
+    return {"tenant_id": tid, "current": _main_view(tid, _main_meta(tid)), "scenes": scenes, "imagery": imgs[:12], "as_of": now_iso()}
+
+
+@router.put("/tenants/{tid}/main-photo")
+async def main_photo_put(tid: str, body: dict, request: Request):
+    """LX 관리자 — 고르기. scene = 그 기관 결과 장면(설정 한 곳의 그림) · imagery = 그 기관에 공유한 영상에서 그림 · default = 지금 그림으로 되돌림."""
+    import cv2
+    import numpy as np
+    from .deps import audit, require
+    p = require(principal(request), admin=True)
+    kind = str(body.get("kind") or "")
+    d = _main_dir(tid)
+    async with db(realm="lx") as conn:
+        if not await conn.fetchval("SELECT 1 FROM tenants WHERE id=$1", tid):
+            raise ApiError("not_found", "해당 기관이 없습니다")
+    if kind == "default":
+        for f in list(d.glob("main-*.jpg")) + [d / "main.json"]:
+            f.unlink(missing_ok=True)
+        async with db(realm="lx") as conn:
+            await audit(conn, p, "brand.main_photo", tid, None, {"kind": "default"})
+        return {"tenant_id": tid, "current": None, "as_of": now_iso()}
+    if kind == "scene":
+        src = str(body.get("src") or "")
+        t = ((_gov_main_cfg().get("tenants") or {}).get(tid) or {})
+        allowed = {t.get("background")} | {(sc or {}).get("src") for sc in (t.get("scenes") or {}).values() if isinstance(sc, dict)}
+        if not src or src not in allowed or _restricted(src) or ".." in src:
+            raise ApiError("bad_request", "이 기관의 결과 장면이 아닙니다")
+        im = await run_in_threadpool(lambda: cv2.imdecode(np.fromfile(str(config.REPO_ROOT / src.lstrip("/")), np.uint8), cv2.IMREAD_COLOR))
+        source = {"kind": "scene", "src": src, "label": str(body.get("label") or "")[:60] or None}
+    elif kind == "imagery":
+        iid = str(body.get("id") or "")
+        async with db(realm="lx") as conn:
+            r = await conn.fetchrow("SELECT i.id, i.name, i.kind, i.gsd_m, i.year, i.epoch, i.path_internal, i.pmtiles_set, i.layer, "
+                                    "ST_AsGeoJSON(i.footprint)::json AS fp FROM imagery_shares s JOIN imagery i ON i.id = s.imagery_id "
+                                    "WHERE s.tenant_id=$1 AND i.id=$2", tid, iid)
+        if not r:
+            raise ApiError("bad_request", "이 기관에 공유한 영상만 고를 수 있습니다")
+        name = (r["name"] or {}).get("ko") if isinstance(r["name"], dict) else r["name"]
+        if _restricted(r["id"], name, r["path_internal"], r["pmtiles_set"]):
+            raise ApiError("bad_request", "밖으로 낼 수 없는 영상입니다")
+        im = await run_in_threadpool(_render_banner, dict(r))
+        source = {"kind": "imagery", "id": iid, "label": " ".join(x for x in (_when_word(r), KIND_WORD.get(_kind_of(float(r["gsd_m"]) if r["gsd_m"] is not None else None))) if x)}
+    else:
+        raise ApiError("bad_request", "고를 것: scene · imagery · default")
+    if im is None:
+        raise ApiError("bad_request", "그림을 만들지 못했습니다 — 다른 장면을 골라 주세요")
+    meta = await run_in_threadpool(_save_main, tid, im, source, p.user_id)
+    async with db(realm="lx") as conn:
+        await audit(conn, p, "brand.main_photo", tid, None, {"source": source, "w": meta["w"], "h": meta["h"]})
+    return {"tenant_id": tid, "current": _main_view(tid, meta), "as_of": now_iso()}
+
+
+@router.post("/tenants/{tid}/main-photo/upload")
+async def main_photo_upload(tid: str, request: Request):
+    """LX 관리자 — 사진 올리기(JPG · PNG · WEBP · 20MB 까지) → 가로 1,600 이하로 다시 저장(메타데이터 없이)."""
+    import cv2
+    import numpy as np
+    from .deps import audit, require
+    p = require(principal(request), admin=True)
+    async with db(realm="lx") as conn:
+        if not await conn.fetchval("SELECT 1 FROM tenants WHERE id=$1", tid):
+            raise ApiError("not_found", "해당 기관이 없습니다")
+    form = await request.form()
+    f = form.get("file")
+    if f is None or not hasattr(f, "read"):
+        raise ApiError("bad_request", "사진 파일을 골라 주세요")
+    data = await f.read(MAIN_MAX_UPLOAD + 1)
+    if len(data) > MAIN_MAX_UPLOAD:
+        raise ApiError("too_large", "사진은 20MB 까지 올릴 수 있습니다", None, 413)
+    im = await run_in_threadpool(lambda: cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR))
+    if im is None or min(im.shape[:2]) < 200:
+        raise ApiError("bad_request", "사진으로 읽을 수 없는 파일입니다 — JPG · PNG 사진을 골라 주세요")
+    source = {"kind": "upload", "label": "올린 사진"}
+    meta = await run_in_threadpool(_save_main, tid, im, source, p.user_id)
+    async with db(realm="lx") as conn:
+        await audit(conn, p, "brand.main_photo", tid, None, {"source": source, "w": meta["w"], "h": meta["h"], "bytes": len(data)})
+    return {"tenant_id": tid, "current": _main_view(tid, meta), "as_of": now_iso()}
+
+
+@router.get("/brand/{tid}/main-photo")
+async def main_photo_public(tid: str):
+    """로그인 없이 — 기관 메인 배경 사진(LX 관리자가 고른 한 장 · 가로 1,600 이하). 고르지 않았으면 404(메인은 지금 그림)."""
+    from fastapi import Response
+    meta = _main_meta(tid)
+    f = _main_dir(tid) / (meta or {}).get("file", "-")
+    if not meta or not f.exists():
+        raise ApiError("not_found", "고른 배경 사진이 없습니다")
+    return Response(content=f.read_bytes(), media_type="image/jpeg", headers={"Cache-Control": "public, max-age=300"})

@@ -135,7 +135,7 @@ async function renderOrg(id) {
     F.latest ? fact(`<span class="num">${esc(ymd(F.latest))}</span>`, L.lastAi) : null) : null;
 
   const hero = h('section.gh-hero', { 'aria-label': b.platform, class: M?.background?.src ? 'has-bg' : '' },
-    M?.background?.src ? h('div.gh-bg', { 'aria-hidden': 'true' }, h('img', { src: M.background.src, alt: '', decoding: 'async' })) : null,
+    M?.background?.src ? h('div.gh-bg', { 'aria-hidden': 'true' }, h('img', { src: (M.background.api ? API.prefix : '') + M.background.src, alt: '', decoding: 'async' })) : null,   // api = LX 관리자가 고른 사진(기관-12 ⓐ)
     h('div.gh-in.gh-hero-in', {},
       h('div.gh-copy', {},
         h('p.gh-org', { text: nameOf(b) }),

@@ -204,3 +204,107 @@ def test_unreadable_file_to_lx(tok, box):
     gj = httpx.post(B + "/reviews/file", headers=H(tok["gj"]), json={"files": ["b.tif"], "deploy": SERVICE}, timeout=30)   # 다른 기관의 서비스를 적어도
     assert gj.status_code == 201 and gj.json()["service"] is None and gj.json()["recipient"]["kind"] == "admin"           # 그 기관 것이 아니면 LX 관리자
     box["fb"].append(gj.json()["id"])
+
+
+# ── M-3 ⓐ · 필지 대조는 서버가 뒤에서 ────────────────────────────────────────────────
+def test_parcel_after_global_analysis(live):
+    """배포 흐름 밖에서 끝난 시군구 전역 AI 분석 — 필지 대조 카드면 실태조사(POST /survey/build)를 저절로 잇는다 · 한 번에 하나 ·
+    필지 대조가 아닌 카드 · 일부 범위 분석은 잇지 않는다. 실태조사 호출은 가짜(실제 계산 0 · GPU 0). 시험 작업은 끝난 지 100시간 전으로 적어
+    돌고 있는 게이트웨이(72시간 창)가 건드리지 않게 한다."""
+    import asyncio
+    import uuid
+    from landxi_api import deploys as dp
+    from landxi_api import deps
+    tag = uuid.uuid4().hex[:6]
+    ok, road, aoi, busy = (f"pytest-parcel-{tag}-{k}" for k in ("ok", "road", "aoi", "busy"))
+    calls = []
+
+    async def fake_route(method, path, body, p):
+        calls.append((path, body))
+        return {"job": {"id": "x"}}
+
+    async def run():
+        async with deps.db(realm="lx") as conn:
+            for jid, card, scope in ((ok, "card-5e85a9", "sgg"), (road, "card-road", "sgg"), (aoi, "card-5e85a9", "aoi")):
+                await conn.execute("INSERT INTO jobs(id, tenant_id, submitted_by, kind, state, priority, pool, card_id, options, test, label, finished_at) "
+                                   "VALUES ($1,'lx','u_mail_test','infer','done',0,'a6000',$2,$3,false,'pytest parcel',now() - interval '100 hours')",
+                                   jid, card, {"scope": scope, "sgg_cd": "52113"})
+                await conn.execute("INSERT INTO detections(tenant_id, job_id, cls, conf) VALUES ('lx',$1,'비닐하우스',0.9)", jid)
+        o_route, o_win = dp._call_route, dp.PARCEL_WINDOW_H
+        dp._call_route, dp.PARCEL_WINDOW_H = fake_route, 200
+        try:
+            async with deps.db(realm="lx") as conn:          # 돌고 있는 실태조사가 있으면 다음 차례
+                await conn.execute("INSERT INTO jobs(id, tenant_id, kind, state, options, test, label) VALUES ($1,'lx','survey','queued',$2,true,'pytest busy')",
+                                   busy, {"build": True, "sgg_cd": "52113"})
+            first = await dp.parcel_tick()
+            async with deps.db(realm="lx") as conn:
+                await conn.execute("DELETE FROM jobs WHERE id=$1", busy)
+            second = await dp.parcel_tick()
+            return first, second
+        finally:
+            dp._call_route, dp.PARCEL_WINDOW_H = o_route, o_win
+            async with deps.db(realm="lx") as conn:
+                await conn.execute("DELETE FROM detections WHERE job_id = ANY($1::text[])", [ok, road, aoi])
+                await conn.execute("DELETE FROM jobs WHERE id = ANY($1::text[])", [ok, road, aoi, busy])
+                await conn.execute("DELETE FROM audit_log WHERE action='survey.auto' AND after->>'ai_job_id' = ANY($1::text[])", [ok, road, aoi])
+            await deps.close()
+
+    first, second = asyncio.run(run())
+    assert first is None                                                         # 한 번에 하나
+    assert second == ok                                                          # 필지 대조 카드의 전역 분석만
+    assert [p for p, _ in calls] == ["/survey/build"]
+    body = calls[0][1]
+    assert body["sgg_cd"] == "52113" and body["job_id"] == ok and body.get("rules")   # 서비스에서 고른 규칙만
+
+
+# ── M-4 ⓐ · 공유 영상 그림 · 어디 · 언제 · 순서 ───────────────────────────────────────────────
+def test_shares_with_pictures(tok):
+    adm, st = H(tok["admin"]), H(tok["staff"])
+    j = httpx.get(B + "/tenants/namwon/imagery-shares", headers=adm, timeout=120).json()
+    items = j["items"]
+    assert items and all(x["kind"] in ("drone", "aerial", "satellite") and x["thumb"] for x in items)
+    shared = [x["shared"] for x in items]
+    assert shared == sorted(shared, reverse=True)                                      # 공유 중 먼저
+    on = [x for x in items if x["shared"]]
+    years = [int(x["when"][:4]) for x in on if x["when"]]
+    assert years == sorted(years, reverse=True)                                        # 최근 촬영순
+    assert any(x["where"] and x["where"].endswith(("일대", "전역")) for x in items)     # 어디(영상 범위에서)
+    body = json.dumps(j, ensure_ascii=False)
+    assert "cog/" not in body and "path" not in body                                  # 경로 노출 0
+    r = httpx.get(B + items[0]["thumb"], headers=adm, timeout=120)
+    assert r.status_code in (200, 204) and (r.status_code == 204 or r.headers["content-type"] == "image/jpeg")
+    if r.status_code == 200:
+        import cv2
+        import numpy as np
+        im = cv2.imdecode(np.frombuffer(r.content, np.uint8), 1)
+        assert im.shape[:2] == (240, 320)
+    assert httpx.get(B + items[0]["thumb"], headers=st, timeout=30).status_code == 403   # LX 관리자만
+    assert httpx.get(B + items[0]["thumb"], timeout=30).status_code == 401
+
+
+# ── 기관-12 ⓐ · 기관 메인 배경 사진 ───────────────────────────────────────────────────────
+def test_main_photo(tok):
+    import cv2
+    import numpy as np
+    adm = H(tok["admin"])
+    T = "gwangju-jeonnam"
+    try:
+        assert httpx.get(B + f"/tenants/{T}/main-photo", headers=H(tok["staff"]), timeout=30).status_code == 403
+        j = httpx.get(B + f"/tenants/{T}/main-photo", headers=adm, timeout=60).json()
+        assert "scenes" in j and "imagery" in j
+        # 다른 기관의 장면은 못 고른다 · 이 기관에 공유하지 않은 영상도
+        assert httpx.put(B + f"/tenants/{T}/main-photo", headers=adm, json={"kind": "scene", "src": "/landxi/v3/service-detail/data/img/namwon-epoch4/4.jpg"},
+                         timeout=60).status_code == 400
+        assert httpx.put(B + f"/tenants/{T}/main-photo", headers=adm, json={"kind": "imagery", "id": "namwon-aoi-2510"}, timeout=60).status_code == 400
+        big = np.random.default_rng(7).integers(0, 255, (1500, 3000, 3), dtype=np.uint8)
+        ok, buf = cv2.imencode(".jpg", big)
+        r = httpx.post(B + f"/tenants/{T}/main-photo/upload", headers=adm, files={"file": ("pytest.jpg", buf.tobytes(), "image/jpeg")}, timeout=120)
+        assert r.status_code == 200, r.text
+        pub = httpx.get(B + f"/brand/{T}/main-photo", timeout=30)                       # 로그인 없이 — 고른 한 장(가로 1,600 이하)
+        im = cv2.imdecode(np.frombuffer(pub.content, np.uint8), 1)
+        assert pub.status_code == 200 and im.shape[1] == 1600 and im.shape[0] == 800
+        bad = httpx.post(B + f"/tenants/{T}/main-photo/upload", headers=adm, files={"file": ("x.jpg", b"nope", "image/jpeg")}, timeout=60)
+        assert bad.status_code == 400
+    finally:
+        httpx.put(B + f"/tenants/{T}/main-photo", headers=adm, json={"kind": "default"}, timeout=60)
+    assert httpx.get(B + f"/brand/{T}/main-photo", timeout=30).status_code == 404       # 기본(지금 그림)으로 되돌림

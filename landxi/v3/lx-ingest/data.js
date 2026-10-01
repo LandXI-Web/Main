@@ -1,5 +1,5 @@
-/* lx-ingest data.js — ① 반입 화면의 데이터 한 곳.
-   명세 §2.4 API: GET /catalog/layers · /regions/{sgg}(S-3) · /proxy/vworld/data · /jobs/quote|/jobs{kind:join} → SSE ·
+/* lx-ingest data.js — 데이터 올리기 화면의 데이터 한 곳.
+   명세 §2.4 API: GET /catalog/layers · /regions/{sgg}(S-3) · /proxy/vworld/data · 필지 단위 결과 GET /survey/build/{sgg}(결합 실행은 뺌 · M-3 ⓐ) ·
    영상 등록 = 파일 끌어 놓기(조각 올리기 /catalog/imagery/uploads → POST /catalog/imagery {draft_id} · 구현 4차 fixes · 확인 대장 1차 FR-1) ·
    PUT /registry/cards/{id}/ledger_schema(S-6).
    S-3 · S-5 · S-6 은 서버에 있다(2026-09-27 · openapi 로 확인). 아래 어댑터는 경로가 없을 때만 쓰는 폴백이다:
@@ -8,7 +8,7 @@
      · 대장 형식       PUT …/ledger_schema 없음 → 이 브라우저에 보관
    숫자는 전부 봉투(env). */
 import { api, hasRoute, LS, bboxOf, session } from '../kit/util.js';
-import { env, sse } from '../../shared/api-v1.js';
+import { env } from '../../shared/api-v1.js';
 import { loadRegions } from '../kit/region.js';
 import { devlog } from '../kit/dev-drawer.js';
 
@@ -109,13 +109,6 @@ export async function regionGeom(r) {
 export async function regionAt(lng, lat) {
   const j = await vw({ data: 'LT_C_ADSIGG_INFO', geomFilter: `POINT(${lng.toFixed(6)} ${lat.toFixed(6)})`, size: '1' });
   return j.features[0]?.properties?.sig_cd || null;
-}
-
-/** 읍면동 경계(결합률 채색) */
-export async function emdGeom(sgg) {
-  if (!/^\d{5}$/.test(String(sgg))) return null;
-  const j = await vw({ data: 'LT_C_ADEMD_INFO', attrFilter: `emd_cd:like:${sgg}`, geomFilter: KOREA_BOX, geometry: 'true' });
-  return { type: 'FeatureCollection', features: j.features.map((f, i) => ({ type: 'Feature', id: i + 1, properties: { cd: f.properties.emd_cd, name: f.properties.emd_kor_nm }, geometry: f.geometry })) };
 }
 
 /* ── 기하 도우미 ───────────────────────────────────────────────── */
@@ -325,77 +318,14 @@ export async function saveLedgerSchema({ kind, card, columns }) {
   return { server: false };
 }
 
-/* ── 결합률 ─────────────────────────────────────────────────────
-   필지 결합률 = AI 결과와 겹친 필지 ÷ 지역 필지(연속지적 적재분).
-   분자: GET /results/{set}/parcels(서버 ST_Intersects · by_emd) · 분모: GET /survey/stats?by=emd(지역 읍면동). */
-let STATS = null;
-const statsEmd = () => (STATS ||= api('/survey/stats?by=emd').catch((e) => { STATS = null; throw e; }));
-
-/** 지역에 결합할 수 있는가 — { emds[], parcels, set } | null */
-export async function joinBasis(region, geo) {
-  if (!/^\d{5}$/.test(String(region.sgg_cd))) return null;
-  let st; try { st = await statsEmd(); } catch { return null; }
-  const emds = (st.items || []).filter((i) => String(i.cd || '').startsWith(region.sgg_cd));
-  if (!emds.length) return null;
-  const cat = await catalog();
-  const res = (cat.items || []).filter((i) => i.role === 'result' && i.set && hitB(i.bounds, geo.bbox))
-    .sort((a, b) => (b.count?.value || 0) - (a.count?.value || 0));
-  if (!res.length) return null;
-  return { emds, parcels: emds.reduce((s, e) => s + (e.parcels?.value || 0), 0), as_of: st.as_of, set: res[0].set, setName: res[0].name?.ko };
-}
-
-const RATE = new Map();
-/** 결합률 봉투 + 읍면동별 비율 + 결합 필지 일부(지도) */
-export async function joinRate(basis, { force = false } = {}) {
-  const key = basis.set + '|' + basis.emds.map((e) => e.cd).join(',');
-  if (RATE.has(key) && !force) return RATE.get(key);
-  const p = (async () => {
-    const j = await api(`/results/${basis.set}/parcels?limit=1200&emd_cd=${basis.emds.map((e) => e.cd).join(',')}`);
-    const by = new Map((j.lx?.by_emd || []).map((b) => [b.emd_cd, b.parcels?.value || 0]));
-    const joined = [...by.values()].reduce((s, v) => s + v, 0);
-    const per = new Map(basis.emds.map((e) => [e.cd, e.parcels?.value ? (by.get(e.cd) || 0) / e.parcels.value : 0]));
-    const value = basis.parcels ? Math.round((joined / basis.parcels) * 1000) / 10 : null;
-    const e = { ...env(value, '%', 'inferred', basis.set, '확인 전 · AI 결과와 겹친 필지 ÷ 지역 필지'), as_of: j.lx?.count?.as_of || new Date().toISOString() };
-    devlog('join rate', `${joined} / ${basis.parcels} = ${value}% · ${j.lx?.ms} ms`);
-    return { env: e, per, joined, fc: { type: 'FeatureCollection', features: (j.features || []).filter((f) => f.geometry) } };
-  })();
-  RATE.set(key, p);
-  p.catch(() => RATE.delete(key));
-  return p;
-}
-
-/** 결합 실행 — POST /jobs/quote{kind:join} → POST /jobs → SSE /events/jobs/{id} */
-export async function runJoin(basis, h) {
-  // 서버 join 어댑터는 자동 선택에서 빠져 있다(hidden) — 이름을 함께 보낸다(운영 서버는 이 칸을 무시하고 자동 선택)
-  const body = { kind: 'join', adapter: 'survey/join', options: { source_set: basis.set, emd_cd: basis.emds.map((e) => e.cd) } };
-  const q = await api('/jobs/quote', { method: 'POST', body });
-  devlog('join quote', `${q.shards} · ${q.allowed ? 'ok' : q.reasons?.join(',')}`);
-  if (!q.allowed) throw Object.assign(new Error('not allowed'), { code: q.reasons?.[0] || 'not_allowed' });
-  const out = await api('/jobs', { method: 'POST', body });
-  const job = out.job || out;
-  devlog('join job', job.id);
-  return { job, watch: watchJoin(job, q.shards || basis.emds.length, h) };
-}
-
-/** 이미 돌고 있는 결합(다시 들어왔을 때 이어 보기) */
-export async function runningJoin(basis) {
-  try {
-    const j = await api('/jobs?limit=40');
-    return (j.items || []).find((x) => x.kind === 'join' && (x.state === 'queued' || x.state === 'running') && (!x.options?.source_set || x.options.source_set === basis.set)) || null;
-  } catch { return null; }
-}
-
-/** SSE /events/jobs/{id} — 처음부터 재생되므로 이어 보기도 같은 길 */
-export function watchJoin(job, total, { onShard, onProgress, onDone, onFail }) {
-  let done = 0;
-  const s = sse('/events/jobs/' + job.id, {
-    on: (name, d) => {
-      if (name === 'shard.done') { done++; onShard?.(String(d?.shard_id || '').replace(/^emd-/, ''), d); onProgress?.(done / (total || 1)); }
-      if (name === 'job.done') { s.close(); api('/jobs/' + job.id).then((j) => { devlog('join done', `${j.state} · ${j.shards_done}/${j.shards_total}`); onDone?.(j); }).catch(() => onDone?.(null)); }
-      if (name === 'job.failed' || name === 'job.cancelled') { s.close(); onFail?.(d); }
-    },
-  });
-  return { close: () => s.close() };
+/* ── 필지 단위 결과(확인 18차 M-3 ⓐ) ─────────────────────────────────────
+   필지 결합(실태조사 — 필지 적재 · AI 결합 · 규칙 · 의심)은 서버가 전역 분석 뒤 저절로 만든다(서버 deploys.parcel_tick · 배포 흐름).
+   이 화면은 상태만 읽는다 — GET /survey/build/{sgg} → { state: building | done | failed, finished_at } · 없으면 null(아직 없음).
+   예전의 결합 실행(작업 kind join) · 결합률(결과 1,200건 표본 · 읍면동별)은 뺐다 — 서버 실태조사 표와 숫자가 둘로 갈리던 것(55.2% ↔ 60.8%)도 함께 사라진다. */
+export async function parcelState(region) {
+  if (!/^\d{5}$/.test(String(region?.sgg_cd || ''))) return null;
+  try { return await api(`/survey/build/${encodeURIComponent(region.sgg_cd)}`); }
+  catch (e) { if (e.code !== 'not_found') devlog('parcel state', e.code || e.message); return null; }
 }
 
 export const who = () => session.get();

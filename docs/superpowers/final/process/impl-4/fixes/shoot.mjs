@@ -165,7 +165,72 @@ async function ingest390() {
   }
 }
 
-if (PART === 'gov') await gov();
+/* ── M-3 ⓐ · 데이터 올리기 — 결합 단계 · 결합 실행 · 결합률 없이 '필지 단위 결과' 한 줄 ─────────── */
+async function m3() {
+  for (const [w, h] of [[1440, 900], [390, 844]]) {
+    const { ctx, page } = await lxPage(w, h);
+    for (const rg of REGION.split(',')) {
+      const page2 = page;
+      await page2.goto(BASE + `/landxi/v3/lx-ingest/?region=${rg}`, { waitUntil: 'domcontentloaded' });
+      await page2.waitForSelector('.lxi-dr .lxi-img', { timeout: SLOW ? 240000 : 40000 });
+      await page2.waitForFunction(() => !/…/.test(document.querySelector('.lxi-pr')?.textContent || '…'), null, { timeout: 60000 }).catch(() => null);
+      await page2.waitForTimeout(2500);
+      const t = await page2.evaluate(() => ({ dr: document.querySelector('.lxi-dr')?.innerText || '', acts: document.querySelector('.lxi-acts')?.innerText || '',
+        join: !!document.querySelector('.lxi-join, .lxi-big, .lxi-steps'), body: /결합/.test(document.body.innerText) }));
+      log({ part: 'm3', w, region: rg, ...t });
+      await shot(page2, `after-m3-${rg}-${w}.png`);
+    }
+    await ctx.close();
+  }
+}
+
+/* ── M-4 ⓐ 공유 영상 그림 · 기관-12 ⓐ 메인 배경 사진 — LX 관리자 → 기관 → 남원시 서랍 ─────────────── */
+async function admin() {
+  const TEN = arg('--tenant', 'namwon');
+  for (const [w, h] of [[1440, 900], [390, 844]]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h } });
+    const page = await newPage(ctx);
+    await frontDoor(page, BASE, 'lxadmin@lx.or.kr', 'admin');
+    const org = SLOW ? new URL(page.url()).origin : BASE;
+    await page.goto(org + `/landxi/v3/ops-infra/?tenant=${TEN}#/tenants`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.k-drawer .sh-l li', { timeout: SLOW ? 240000 : 60000 });
+    await page.waitForFunction(() => [...document.querySelectorAll('.sh-th')].filter((x) => x.dataset.ok).length >= Math.min(4, document.querySelectorAll('.sh-th').length), null, { timeout: 120000 }).catch(() => null);
+    await page.waitForTimeout(1500);
+    const info = await page.evaluate(() => ({ rows: [...document.querySelectorAll('.sh-l li .t')].slice(0, 4).map((x) => x.innerText.split('\n').join(' | ')),
+      thumbs: [...document.querySelectorAll('.sh-th')].filter((x) => x.dataset.ok).length, n: document.querySelectorAll('.sh-th').length,
+      chips: document.querySelector('.sh-f')?.innerText || '', mp: document.querySelectorAll('.mp-t').length }));
+    log({ part: 'admin', w, ...info });
+    await shot(page, `after-admin-photo-${w}.png`);                          // 서랍 위쪽 = 메인 배경 사진
+    await page.locator('.sh-l').scrollIntoViewIfNeeded();
+    await page.locator('.k-drawer .sh-h', { hasText: '공유 영상' }).scrollIntoViewIfNeeded();
+    await page.waitForTimeout(800);
+    await shot(page, `after-admin-shares-${w}.png`);
+    if (w === 1440) {
+      await page.locator('.sh-f button', { hasText: '드론' }).click();
+      await page.waitForTimeout(600);
+      log({ part: 'admin-filter', rows: await page.locator('.sh-l li').count() });
+      await shot(page, `after-admin-shares-drone-${w}.png`);
+      await page.locator('.sh-f button', { hasText: '전체' }).click();
+      await page.locator('.mp').scrollIntoViewIfNeeded();
+      const tile = page.locator('.mp-t', { hasText: '드론' }).first();
+      await tile.click();
+      await page.waitForTimeout(1000);
+      await shot(page, `after-admin-photo-pick-${w}.png`);
+      if (argv.includes('--save')) {
+        await page.locator('.mp-a .t-btn').click();
+        await page.waitForFunction(() => /지금 쓰는 그림/.test(document.querySelector('.mp-p figcaption')?.textContent || ''), null, { timeout: 120000 });
+        await page.waitForTimeout(1500);
+        log({ part: 'admin-saved', cap: await page.locator('.mp-p figcaption').innerText() });
+        await shot(page, `after-admin-photo-saved-${w}.png`);
+      }
+    }
+    await ctx.close();
+  }
+}
+
+if (PART === 'admin') await admin();
+else if (PART === 'm3') await m3();
+else if (PART === 'gov') await gov();
 else if (PART === 'inbox') await inbox();
 else if (PART === 'ingest') await ingest();
 else if (PART === 'ingest390') await ingest390();
