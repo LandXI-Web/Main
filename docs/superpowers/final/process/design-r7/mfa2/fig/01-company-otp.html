@@ -1,0 +1,78 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>사내 OTP 와 Land-XI 아이디 짝짓기</title>
+<link rel="stylesheet" href="fig.css"></head><body><div class="page">
+<h1>사내 OTP 와 Land-XI 아이디 — 어떻게 짝짓나 <span class="tag">문서 · Land-XI</span></h1>
+<p class="sub">회사 OTP 는 이미 <b>회사 계정(사번 · 회사 메일)</b>에 묶여 있습니다. Land-XI 는 직원 계정마다 그 회사 계정을 한 칸 적어 두고, 로그인 때 회사에 "이 사람 맞나요?"만 확인받습니다.</p>
+
+<div class="pair">
+  <div class="acct co">
+    <h3>회사 계정 <span class="muted small">— 회사가 관리</span></h3>
+    <dl><dt>사번</dt><dd>회사가 정한 번호</dd><dt>회사 메일</dt><dd class="hl">gildong@lx.or.kr</dd><dt>회사 OTP</dt><dd>이 계정에 등록된 앱 · 토큰</dd><dt>퇴사·전보</dt><dd>회사가 막고 바꿈</dd></dl>
+  </div>
+  <div class="link"><span class="bar">⇄</span><b>같은 메일</b>(또는 사번)<br>로 짝지음</div>
+  <div class="acct">
+    <h3>Land-XI 계정 <span class="muted small">— LX 관리자가 관리</span></h3>
+    <dl><dt>아이디</dt><dd class="hl">gildong@lx.or.kr</dd><dt>회사 계정</dt><dd>(사번이 필요한 길이면 한 칸)</dd><dt>역할</dt><dd>LX 직원 · LX 관리자 · 영업</dd><dt>2차 인증</dt><dd>회사 OTP</dd></dl>
+  </div>
+  <div class="tip"><span class="big">아이디를 회사 메일로 만들면 가장 쉽습니다</span>
+    Land-XI 아이디가 <b>그 직원의 실제 회사 메일(@lx.or.kr)</b>이면 짝짓는 칸이 아이디 그 자체입니다. 따로 연결표를 만들 일이 없습니다. 지금의 공용 시험 계정은 정식 오픈 때 <b>사람마다 자기 회사 메일 계정</b>으로 바꿉니다.</div>
+</div>
+
+<div class="ways3">
+  <div class="way">
+    <div class="hd"><span class="ab">①</span><div><h3>회사 로그인 창에서 다 하기</h3><span class="en">통합 로그인(SSO) · SAML / OIDC</span></div></div>
+    <div class="flow">
+      <div class="c">Land-XI 로그인의 <b>'LX 통합 로그인'</b></div><div class="d">↓</div>
+      <div class="c">회사 로그인 창 — <b>사번 · 회사 비밀번호 · 회사 OTP</b> 를 회사가 확인</div><div class="d">↓</div>
+      <div class="c">회사가 Land-XI 에 <b>"이 사람은 gildong@lx.or.kr"</b>만 넘김 → 같은 메일 계정으로 입장</div>
+    </div>
+    <dl>
+      <dt>짝짓는 칸</dt><dd><b>메일</b>(아이디와 같으면 칸 없음) · 사번으로 받으면 사번 칸</dd>
+      <dt>처음 한 번</dt><dd>첫 로그인 때 넘어온 메일과 같은 계정에 <b>자동 연결</b> · LX 관리자가 만들어 둔 계정만 받음</dd>
+      <dt>퇴사·전보</dt><dd>회사가 막으면 <b>Land-XI 도 자동으로 막힘</b> · 부서를 넘겨받으면 전보도 반영</dd>
+      <dt>누가 관리</dt><dd>본인 확인은 회사 · Land-XI 역할은 LX 관리자</dd>
+    </dl>
+    <div class="when"><b>가장 깔끔</b> — Land-XI 가 회사 비밀번호·OTP 를 전혀 모름. 회사에 통합 로그인이 있을 때</div>
+  </div>
+
+  <div class="way">
+    <div class="hd"><span class="ab">②</span><div><h3>회사 OTP 서버에 번호만 묻기</h3><span class="en">RADIUS 또는 업체 확인 창구</span></div></div>
+    <div class="flow">
+      <div class="c">Land-XI 로그인 — <b>메일 아이디 · Land-XI 비밀번호</b></div><div class="d">↓</div>
+      <div class="c">회사 OTP 6자리 입력</div><div class="d">↓</div>
+      <div class="c">Land-XI 가 회사 OTP 서버에 <b>"사번 ○○, 번호 ○○○○○○ 맞나요?"</b> → 맞으면 입장</div>
+    </div>
+    <dl>
+      <dt>짝짓는 칸</dt><dd>계정마다 <b>사번 한 칸</b>(회사 OTP 가 메일 아이디로 묻는 방식이면 칸 없음)</dd>
+      <dt>처음 한 번</dt><dd>LX 관리자가 계정 만들 때 사번을 적음 → 첫 로그인의 회사 OTP 번호가 맞으면 연결 확정</dd>
+      <dt>퇴사·전보</dt><dd>퇴사자의 회사 OTP 가 멈추면 <b>다음 로그인부터 막힘</b> · 전보(부서·역할)는 LX 관리자가 고침</dd>
+      <dt>누가 관리</dt><dd>OTP 기기·서버는 회사 · 사번 칸·역할은 LX 관리자</dd>
+    </dl>
+    <div class="when"><b>흔한 방식</b> — 재택근무 VPN 이 회사 OTP 를 쓰는 방식과 같음. Land-XI 서버가 회사 OTP 서버에 닿아야 함</div>
+  </div>
+
+  <div class="way alt">
+    <div class="hd"><span class="ab">③</span><div><h3>회사 OTP 앱에 <span class="nw">Land-XI</span> 한 줄 더</h3><span class="en">표준 시간 방식(TOTP) — 회사 앱이 지원할 때만</span></div></div>
+    <div class="flow">
+      <div class="c">처음 한 번 — Land-XI 화면의 <b>QR 을 회사 OTP 앱으로 비춤</b></div><div class="d">↓</div>
+      <div class="c">회사 앱에 'Land-XI' 줄이 생김</div><div class="d">↓</div>
+      <div class="c">로그인 때 그 줄의 6자리</div>
+    </div>
+    <dl>
+      <dt>짝짓는 칸</dt><dd>없음 — 짝은 <b>Land-XI 계정과 그 휴대폰 사이</b>에만 생김(회사 서버와 무관)</dd>
+      <dt>처음 한 번</dt><dd>직원이 직접 QR 등록 · 기관 OTP 앱과 같은 순서</dd>
+      <dt>퇴사·전보</dt><dd><b>자동으로 안 끊김</b> — LX 관리자가 Land-XI 계정을 따로 잠가야 함</dd>
+      <dt>누가 관리</dt><dd>LX 관리자</dd>
+    </dl>
+    <div class="when"><b>준비가 거의 없음</b> — 앱만 회사 것. 회사 앱이 'QR 로 다른 서비스 추가'를 허용하고 규정이 허락할 때</div>
+  </div>
+</div>
+
+<h2 class="sec">LX 정보보안 부서에서 받을 것 <span class="tag both">사용자께</span></h2>
+<div class="qs">
+  <div class="q"><span class="n">1</span><div><b>회사 OTP 종류</b> — 휴대폰 앱인가요, 실물 토큰인가요? 통합 로그인이 있나요? (①·②·③ 중 어느 길인지 이것으로 정해짐)</div></div>
+  <div class="q"><span class="n">2</span><div><b>회사 계정의 기준</b> — 사번인가요, 회사 메일인가요? Land-XI 아이디를 실제 회사 메일로 맞춰도 되나요?</div></div>
+  <div class="q"><span class="n">3</span><div><b>연결 자료</b> — ① 통합 로그인 연결 정보 · 돌아올 주소 등록 / ② OTP 서버 주소 · 연동 문서 · 확인용 키 · 방화벽 허용</div></div>
+  <div class="q"><span class="n">4</span><div><b>시험 계정 2개</b>(직원 · 관리자) · 보안성 검토 절차와 기간 · 회사 인증이 멈출 때 비상 로그인 규칙</div></div>
+</div>
+<p class="foot">LX 가 직원에게 쓰게 하는 OTP 의 제품 이름·방식은 공개 자료로 확인하지 못했습니다. 어느 길이든 직원이 하는 일은 같습니다 — 로그인 때 회사 OTP 번호 한 번.</p>
+</div></body></html>

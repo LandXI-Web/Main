@@ -1,0 +1,33 @@
+/* 설계 7차 · 2차 인증 후속(사내 OTP 짝짓기 · 정부 OTP) — 6차 2차 인증 그림과 같은 결. 화면이 아니라 기획 그림이다. */
+@import url('../../../design-r6/mfa/fig/fig.css');
+
+/* 짝짓기 띠: 회사 계정 ⇄ Land-XI 계정 */
+.pair{display:grid;grid-template-columns:1fr 150px 1fr 1.25fr;gap:14px;align-items:stretch;margin-bottom:22px}
+.acct{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.acct h3{margin:0 0 8px;font-size:15px}
+.acct dl{margin:0;display:grid;grid-template-columns:78px 1fr;gap:5px 10px;font-size:13.5px}
+.acct dt{color:var(--ink-3);font-weight:600}
+.acct dd{margin:0;color:var(--ink)}
+.acct dd.hl{color:var(--blue);font-weight:700}
+.acct.co{border-color:#D6E4F5}
+.link{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;text-align:center;font-size:12.5px;color:var(--ink-2)}
+.link .bar{font-size:26px;color:var(--blue);line-height:1}
+.link b{color:var(--blue)}
+.tip{background:var(--blue-tint);border-radius:14px;padding:14px 16px;font-size:13.5px;color:var(--ink-2);line-height:1.5}
+.tip b{color:var(--ink)}
+.tip .big{display:block;font-size:15.5px;font-weight:700;color:var(--blue);margin-bottom:6px}
+
+/* 세 길 */
+.ways3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.ways3 .way dl{margin:0;display:grid;grid-template-columns:86px 1fr;gap:6px 10px;font-size:13px;line-height:1.45}
+.ways3 .way dt{color:var(--ink-3);font-weight:700}
+.ways3 .way dd{margin:0;color:var(--ink-2)}
+.ways3 .way dd b{color:var(--ink);font-weight:600}
+
+/* 단계 줄 */
+.tl{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.tl .s{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:13px;line-height:1.45;color:var(--ink-2);position:relative}
+.tl .s .n{display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--green);color:#fff;font-weight:700;font-size:12px;align-items:center;justify-content:center;margin-bottom:6px}
+.tl .s.lx .n{background:var(--blue)}
+.tl .s b{display:block;color:var(--ink);font-size:13.5px;margin-bottom:3px}
+.tl .s .who{display:block;margin-top:6px;font-size:12px;color:var(--ink-3)}

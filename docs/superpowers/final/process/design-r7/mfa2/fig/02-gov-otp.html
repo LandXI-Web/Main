@@ -1,0 +1,71 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>정부 OTP 를 기관 로그인에</title>
+<link rel="stylesheet" href="fig.css"></head><body><div class="page">
+<h1>정부 OTP 를 기관 로그인에 녹일 수 있나 <span class="tag gov">문서 · 기관 분기</span></h1>
+<p class="sub"><b>길은 있습니다.</b> 신청은 서비스를 운영하는 <b>LX</b> 가 하고, 공무원은 이미 가진 정부 OTP 번호를 넣습니다. 다만 공공기관인 LX 가 <b>인터넷에 열린 서비스</b>용으로 받을 수 있는지, 비용·기간은 공개 자료에 없어 <b>확인이 필요</b>합니다.</p>
+
+<div class="ways3">
+  <div class="way">
+    <div class="hd"><span class="ab" style="background:var(--green)">1</span><div><h3>정부 OTP</h3><span class="en">행정안전부 정부OTP인증센터 · 휴대폰 앱 또는 실물 토큰</span></div></div>
+    <div class="flow">
+      <div class="c">기관 로그인 — 메일 아이디 · 비밀번호</div><div class="d">↓</div>
+      <div class="c">공무원이 <b>정부 OTP 6자리</b></div><div class="d">↓</div>
+      <div class="c">Land-XI 가 정부 OTP 서버에 <b>"이 기기, 이 번호 맞나요?"</b></div>
+    </div>
+    <dl>
+      <dt>제도</dt><dd>연계 신청 길이 공개돼 있음(기관 담당자가 신청). <b>LX 가 신청 대상인지 확인 필요</b></dd>
+      <dt>받을 것</dt><dd>행정전자서명 연동 라이선스 · 정부 OTP 연동 키 · 국가정보자원관리원 <b>연결 허용</b>(행정망 · 인터넷망 창구가 따로 있음)</dd>
+      <dt>짝짓기</dt><dd>Land-XI 기관 계정 ↔ 그 공무원의 <b>정부 OTP 기기 번호</b>(처음 한 번 등록)</dd>
+    </dl>
+    <div class="when"><b>가장 맞는 길</b> — 공무원이 따로 앱을 깔 일이 없음</div>
+  </div>
+
+  <div class="way alt">
+    <div class="hd"><span class="ab">2</span><div><h3>행정전자서명 인증서</h3><span class="en">공무원 업무용 인증서</span></div></div>
+    <div class="flow">
+      <div class="c">기관 로그인 — 메일 아이디 · 비밀번호</div><div class="d">↓</div>
+      <div class="c">공무원이 <b>업무용 인증서</b>로 서명</div><div class="d">↓</div>
+      <div class="c">Land-XI 가 인증서가 진짜인지 확인</div>
+    </div>
+    <dl>
+      <dt>제도</dt><dd>공공기관도 공문으로 <b>확인 모듈 이용 신청</b> 가능(공개 절차)</dd>
+      <dt>사례</dt><dd>e나라도움 — 아이디·비밀번호 + 인증서(공무원은 업무용 인증서)</dd>
+      <dt>아쉬움</dt><dd>인증서가 업무망 PC 에 있는 경우가 많아 인터넷 PC 로 옮겨야 함 · 프로그램 설치</dd>
+    </dl>
+    <div class="when"><b>가능하지만 불편</b> — 낮은 우선 선택</div>
+  </div>
+
+  <div class="way alt">
+    <div class="hd"><span class="ab">3</span><div><h3>모바일 공무원증</h3><span class="en">휴대폰 속 공무원증</span></div></div>
+    <div class="flow">
+      <div class="c">기관 로그인 — <b>'모바일 공무원증으로'</b></div><div class="d">↓</div>
+      <div class="c">휴대폰 공무원증 앱으로 확인</div><div class="d">↓</div>
+      <div class="c">소속·이름을 받아 같은 계정으로 입장</div>
+    </div>
+    <dl>
+      <dt>제도</dt><dd>바깥 서비스용 통로(민간 SaaS 연계공통기반)는 <b>보안 인증을 받은 민간 서비스</b>용</dd>
+      <dt>Land-XI</dt><dd>LX 가 직접 운영하는 공공 서비스라 이 통로가 맞는지 <b>확인 필요</b></dd>
+      <dt>짝짓기</dt><dd>공무원증의 소속·이름(또는 공직 메일) ↔ 기관 계정</dd>
+    </dl>
+    <div class="when"><b>제일 편하지만 제일 불확실</b> — 행정안전부에 길부터 묻기</div>
+  </div>
+</div>
+
+<h2 class="sec">정부 OTP 를 붙이는 순서 <span class="tag both">신청은 LX</span></h2>
+<div class="tl">
+  <div class="s lx"><span class="n">1</span><b>LX 안에서 정하기</b>LX 정보보안 부서와 신청 여부 · 담당 정하기<span class="who">LX</span></div>
+  <div class="s lx"><span class="n">2</span><b>연계 신청 공문</b>인증관리센터(한국지역정보개발원)에 LX 이름으로<span class="who">LX → 인증관리센터</span></div>
+  <div class="s lx"><span class="n">3</span><b>라이선스 · 연동 키</b>확인 모듈과 정부 OTP 연동 키를 받음<span class="who">인증관리센터 → LX</span></div>
+  <div class="s lx"><span class="n">4</span><b>연결 허용 신청</b>Land-XI 서버 → 정부 OTP 서버 길 열기<span class="who">LX → 국가정보자원관리원</span></div>
+  <div class="s lx"><span class="n">5</span><b>시험</b>시험용 정부 OTP 로 기관 로그인 확인 · 보안 점검<span class="who">LX</span></div>
+  <div class="s"><span class="n">6</span><b>공무원 등록</b>처음 한 번 자기 정부 OTP 기기 번호 등록 → 이후 로그인 때 6자리<span class="who">지자체 공무원(기관 관리자가 도움)</span></div>
+</div>
+
+<h2 class="sec">함께 정할 것 · 물어볼 곳</h2>
+<div class="qs">
+  <div class="q"><span class="n">!</span><div><b>OTP 앱은 그대로 기본</b> — 해외 기관 · 공무원이 아닌 기관 직원(용역 · 기간제)은 정부 수단을 못 씀. 정부 OTP 는 공무원이 고르는 <b>추가 선택</b></div></div>
+  <div class="q"><span class="n">!</span><div><b>서버 자리</b> — 연결 허용은 고정된 운영 서버 기준. 운영 서버를 LX 전산센터로 옮길 때 함께 신청하는 것이 현실적(확인 필요)</div></div>
+  <div class="q"><span class="n">?</span><div><b>정부 OTP · 업무용 인증서</b> — 행정전자서명 인증관리센터(한국지역정보개발원) 1661-9088 · gpki@klid.or.kr</div></div>
+  <div class="q"><span class="n">?</span><div><b>연결 허용</b> — 국가정보자원관리원 서비스데스크 1577-0577 · <b>모바일 공무원증</b> — 행정안전부(담당 부서 확인 필요)</div></div>
+</div>
+<p class="foot">비용·기간은 공개 자료에 없습니다. 지자체가 따로 신청할 일은 공개 자료상 보이지 않으며, 공무원 각자가 정부 OTP 를 이미 갖고 있어야 합니다(발급은 소속 기관 보안 담당자 확인).</p>
+</div></body></html>
