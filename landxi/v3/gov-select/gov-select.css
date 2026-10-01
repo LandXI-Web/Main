@@ -100,3 +100,9 @@ a.gs-row:hover{background:var(--bg-0)}
   .gs-head-r{width:100%}
   .gs-foot{gap:8px 16px}
 }
+
+/* 서비스 선택 카드 = 서비스 카드 한 벌의 기관 모양(kit/service-card.css · 확인 대장 14차 카드-1 ⓐ ③) — 옛 얼굴 판 · 가로 카드 규칙은 쓰지 않는다 */
+.gs-grid .k-sc.gs-card{flex-direction:column}
+.gs-grid .k-sc.gs-card:hover{transform:translateY(-4px)}
+.gs-grid .k-sc.gs-card.is-off:hover{transform:none}
+@media (max-width:640px){.gs-grid .k-sc.gs-card{flex-direction:column}}

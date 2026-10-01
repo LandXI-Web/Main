@@ -1,5 +1,5 @@
 // impl-2 기관 영상 분석 의뢰(확인 대장 6차 GF-2 · 2차 D1-ⓑ · 5차 역할-4 ⓑ · 1차 FR-1) — 로그인 폼만(세션 주입 0).
-// 기관 입구 lxadmin@namwon → 서비스(?service=) → 우리 영상(작은 TIF 한 장) 끌어 놓기 → '이렇게 읽었습니다' → 분석 의뢰 →
+// 기관 입구 lxadmin@namwon → 서비스(?service=) → ① 영상 넣기(작은 TIF 한 장) → ② 분석 카드 고르기(카드 한 벌) → ③ 요청하기(구현 확인 2차 J-9 쉬운 판) →
 // 관리자 입구 lxadmin → 결재함 '분석 의뢰' 한 건(판단 근거 · 미리 보기) → 승인 → 기존 분석 대기열(GPU 한 장 · 작은 영상 한 건) → 결과 도착 · 새 시점.
 // 반려 → 사유가 기관 '내 의뢰'에. 공유 영상 불러오기 · 관리자 기관 서랍 '공유 영상' 칸.
 // LX_EVIDENCE=1 이면 증거 캡처(docs/superpowers/final/process/impl-2/request/img/after-*.png · 1440×900).
@@ -79,7 +79,7 @@ async function gov(browser) {
   await frontDoor(page, BASE, 'lxadmin@namwon', 'gov');
   await page.goto(BASE + `/landxi/v3/gov-request/?service=${SERVICE}`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.gq-sheet', { timeout: 30000 });
-  await page.waitForSelector('.gq-sr, #shared .gq-note', { timeout: 30000 });
+  await page.waitForSelector('.gq-cards .k-sc', { timeout: 30000 });
   return page;
 }
 async function admin(browser) {
@@ -90,10 +90,13 @@ async function admin(browser) {
 }
 async function send(page, file, memo) {
   await page.locator('#drop input[type=file]').setInputFiles([file]);
-  await page.waitForFunction(() => /분석할 수 있는 영상|관할 밖|✕/.test(document.querySelector('#read-ok')?.textContent || ''), null, { timeout: 90000 });
-  await expect(page.locator('#read-kv')).toContainText('25cm 항공');
-  await expect(page.locator('#read-kv')).toContainText('남원시');
-  await expect(page.locator('#read-ok')).toContainText('분석할 수 있는 영상');
+  await page.waitForFunction(() => /분석할 수 있습니다|분석할 수 없습니다/.test(document.querySelector('#picked')?.textContent || ''), null, { timeout: 90000 });
+  await expect(page.locator('#picked')).toContainText('항공영상');
+  await expect(page.locator('#picked')).toContainText('분석할 수 있습니다');
+  /* J-9 — 형식 · 해상도 · 좌표 같은 전문 글이 없다(서버가 파일에서 읽어 처리) */
+  const txt = await page.locator('.gq-pane[data-pane=new]').innerText();
+  expect(txt).not.toMatch(/25cm|좌표|해상도|이렇게 읽었습니다|TIF|JP2|ECW/);
+  await expect(page.locator('.gq-cards .k-sc.is-on')).toHaveCount(1);                 // ?service= 의 카드가 골라져 있다
   await page.fill('#memo', memo);
   await expect(page.locator('#go')).toBeEnabled();
 }
@@ -115,14 +118,15 @@ test.describe('impl-2 기관 영상 분석 의뢰 · LX 영상 공유', () => {
   test.beforeAll(async ({ request }) => { test.skip(!(await up(request)), '게이트웨이 :8700 꺼짐'); cleanup(); });
   test.afterAll(() => { if (!process.env.LX_KEEP) cleanup(); });
 
-  test('공유 영상 불러오기 — 공유된 LX 영상만 · 이렇게 읽었습니다', async ({ browser }) => {
+  test('공유 영상 불러오기 — 공유된 LX 영상만 · 분석 카드 고르기', async ({ browser }) => {
     const page = await gov(browser);
-    await expect(page.locator('#tp')).toBeVisible();                                   // 고른 서비스의 결과 시점
     const sr = page.locator('.gq-sr').first();
     await expect(sr).toBeVisible();
     await sr.locator('button').click();
-    await expect(page.locator('#read-kv')).toContainText('LX 공유 영상');
-    await expect(page.locator('#svc-note')).toContainText('이미 분석했습니다');           // 같은 영상 × 같은 서비스는 다시 의뢰하지 않게
+    await expect(page.locator('#picked')).toContainText('LX가 공유한 영상');
+    const card = page.locator('.gq-cards .k-sc[data-card="card-5e85a9"]');
+    await expect(card.locator('.k-sc-why')).toContainText('이미 분석했습니다');           // 같은 영상 × 같은 서비스는 다시 의뢰하지 않게
+    await expect(card).toHaveAttribute('aria-disabled', 'true');
     await expect(page.locator('#go')).toBeDisabled();
     await page.waitForTimeout(3200);
     await shot(page, 'after-shared-pick.png');
@@ -136,7 +140,7 @@ test.describe('impl-2 기관 영상 분석 의뢰 · LX 영상 공유', () => {
     const tif = makeTif('남원_덕과면_항공_2023.tif', 2048, 0);
     const g = await gov(browser);
     await send(g, tif, 'e2e 승인 확인');
-    await g.evaluate(() => { const p = document.querySelector('.gq-pane[data-pane=new]'); p.scrollTop = document.querySelector('#drop .k-uq-l').offsetTop - 140; });
+    await g.evaluate(() => { const p = document.querySelector('.gq-pane[data-pane=new]'); p.scrollTop = document.querySelector('#picked').offsetTop - 140; });
     await g.waitForTimeout(3200);
     await shot(g, 'after-request-read.png');
     await g.click('#go');
@@ -165,7 +169,6 @@ test.describe('impl-2 기관 영상 분석 의뢰 · LX 영상 공유', () => {
     await g.locator('.gq-row').first().click();
     await expect(g.locator('#det')).toContainText('AI 탐지');
     await expect(g.locator('#det')).toContainText('새 시점');
-    await expect(g.locator('#tp-list')).toContainText('의뢰');                          // 서비스 결과 시점에 더해짐
     await g.locator('#det-map').click();
     await g.waitForTimeout(3000);
     await shot(g, 'after-result.png');

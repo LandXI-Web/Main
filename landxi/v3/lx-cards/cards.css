@@ -1,0 +1,40 @@
+/* lx-cards — 서비스 카드 관리. 분석하기(lx-analyze/analyze.css)와 같은 틀 · 같은 카드 부품 · 토큰은 키트 그대로. */
+.lc-page{gap:16px}
+.lc-grid{display:grid;grid-template-columns:360px minmax(0,1fr);gap:24px;align-items:start}
+.lc-left{position:sticky;top:24px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.lc-k{margin:0}
+.lc-prev .k-sc:hover{transform:none;box-shadow:none}
+.lc-prev .k-sc-line{min-height:0}
+.lc-facts .la-dl{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px}
+.lc-form{display:flex;flex-direction:column;gap:16px;min-width:0}
+.lc-sec{display:flex;flex-direction:column;gap:14px}
+.lc-f{display:grid;grid-template-columns:120px minmax(0,1fr);gap:4px 12px;align-items:center}
+.lc-l{font:500 14px/20px var(--font-body);color:var(--ink-2)}
+.lc-h{grid-column:2;margin:0;font:400 13px/18px var(--font-body);color:var(--sub)}
+.lc-h[data-lv="warn"]{color:var(--warn)}
+.lc-f .t-input:disabled{background:var(--bg-0);color:var(--ink-2)}
+.lc-scenes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.lc-sc{position:relative;display:flex;flex-direction:column;gap:6px;padding:0;border:0;background:none;text-align:left;cursor:pointer;font:inherit;color:inherit}
+.lc-sc img{width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:10px;display:block;background:var(--rule)}
+.lc-sc span{font:400 12px/16px var(--font-body);color:var(--sub);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lc-sc[aria-checked="true"] img{outline:3px solid var(--ink);outline-offset:-3px}
+.lc-sc[aria-checked="true"]::after{content:"✓";position:absolute;right:8px;top:8px;width:24px;height:24px;border-radius:var(--r-8);background:var(--ink);color:#fff;font:700 13px/24px var(--font-num);text-align:center}
+.lc-sc--none{aspect-ratio:3/2;align-items:center;justify-content:center;border-radius:10px;background:var(--bg-0)}
+.lc-sc--none span{font-size:14px;color:var(--sub)}
+.lc-sc--none[aria-checked="true"]{outline:3px solid var(--ink);outline-offset:-3px}
+.lc-sc:disabled{cursor:default}
+.lc-up{display:flex;flex-direction:column;gap:8px;padding-top:12px;border-top:1px solid var(--rule)}
+.lc-up .lc-h{grid-column:auto}
+.lc-up-row{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr) auto;gap:8px}
+.lc-act{display:flex;align-items:center;justify-content:flex-end;gap:16px;flex-wrap:wrap}
+.lc-act .lc-h{grid-column:auto;margin-right:auto}
+.lc-save{min-width:140px}
+.lc-msg{margin:0;font:500 14px/20px var(--font-body);color:var(--sub)}
+.lc-msg[data-lv="warn"]{color:var(--warn)}
+@media (max-width:1099px){.lc-grid{grid-template-columns:minmax(0,1fr)}.lc-left{position:static}.lc-prev{max-width:420px}}
+@media (max-width:640px){
+  .lc-f{grid-template-columns:minmax(0,1fr)}
+  .lc-h{grid-column:1}
+  .lc-up-row{grid-template-columns:minmax(0,1fr)}
+  .lc-facts .la-dl{grid-template-columns:minmax(0,1fr)}
+}

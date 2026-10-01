@@ -10,9 +10,10 @@ import * as K from '../kit/index.js';
 import { api } from '../../shared/api-v1.js';
 import { h, ymd } from '../kit/util.js';
 import { orgHome } from '../kit/auth-gate.js';
-import { loadBrand, applyBrand, markEl, faceEl, chip, favicon, shortAddr, joinLine } from './brand.js';
+import { loadBrand, applyBrand, markEl, favicon, shortAddr, joinLine } from './brand.js';
 import { brandForm } from './brand-form.js';
 import { govRail, setRequestService } from './menu.js';
+import { loadDeck, svcCard } from '../kit/service-card.js';   // 서비스 카드 한 벌 ③ 기관 서비스 선택(확인 대장 14차 카드-1 ⓐ)
 
 const who = await K.gate('gov-select');
 const tid = who.me.tenant_id;
@@ -89,29 +90,31 @@ function brandDown() {
 }
 
 /* ═════════════ 서비스 선택 ═════════════ */
-function renderList() {
+/* 카드 = 서비스 카드 한 벌의 기관 모양(③) — 실제 결과 장면(그 기관 관할 것만) · 상태(기관 색) · 사업 연도 · LX 담당 · 이름 · 한 줄 ·
+   결과 예시(우리 기관 값 — 요약 한 출처) · 최근 결과 · 할 일 · 이 서비스 열기 · 보고서. 카드 정보는 서버 덱(GET /cards/deck · 기관 세션 = 자기 기관만) */
+async function renderList() {
   document.title = `내 서비스 · ${B.platform}`;
   page.append(head({ title: '내 서비스', sub: `${B.short}에 열린 AI 분석 서비스`, right: asOf() }));
   if (!brand) return brandDown();
   const svcs = brand.services || [];
   if (!svcs.length) { const box = h('div'); page.append(box); K.empty(box, { kind: 'first', title: '열린 서비스가 없습니다', text: '서비스가 열리면 여기에 보입니다' }); return; }
-  page.append(h('div.gs-grid', { dataset: { n: String(svcs.length) } }, ...svcs.map(svcCard)));
+  const deck = await loadDeck();
+  const by = new Map((deck?.items || []).map((c) => [c.id, c]));
+  page.append(h('div.gs-grid', { dataset: { n: String(svcs.length) } }, ...svcs.map((s) => svcEl(s, by.get(s.card)))));
 }
-function svcCard(s) {
+function svcEl(s, c) {
   const p = s.open ? primary(itemsOf(s.card)) : null;
-  const body = [
-    faceEl(s.card, 'gs-card-face'),
-    h('div.gs-card-b', {},
-      h('div.gs-meta', {}, h('span', { text: s.year ? `${s.year}년부터` : '' }), chip(s.status)),
-      h('h2.gs-card-t', { text: s.name }),
-      s.line ? h('p.gs-card-d', { text: joinLine(s.line) }) : null,
-      p ? h('div.gs-card-n', {}, h('span.t-label', { text: p.label }), h('span', { html: K.numHtml(p.env) })) : null,
-      s.open ? h('span.gs-card-go', { text: '열기' }) : null),
-  ];
-  const attrs = { dataset: { card: s.card, status: s.status } };
-  return s.open ? h('a.gs-card', { href: `?service=${encodeURIComponent(s.card)}`, ...attrs }, ...body) : h('article.gs-card.is-off', attrs, ...body);
+  /* 덱이 없을 때(서버 경로 전) — 브랜드 목록 값으로 같은 카드(장면 없이 · 숫자는 요약에서) */
+  const card = c || { id: s.card, name: s.name, line: s.line, year: s.year, status_label: s.status, open: s.open, state: { '운영': 'ga', '시범': 'pilot' }[s.status] || 'none',
+    example: p ? { value: p.env.value, unit: p.env.unit, basis: p.env.basis, as_of: p.env.as_of, source: p.env.source, label: p.label, word: p.key === 'field_check' ? '현장 확인 필요 필지' : `${p.label} ${p.env.unit || ''}`.trim(), place: B.short } : null };
+  const svc = `?service=${encodeURIComponent(s.card)}`;
+  const el = svcCard({ ...card, name: s.name || card.name, line: joinLine(s.line || card.line || ''), status_label: s.status, open: s.open, year: s.year },
+    { kind: 'gov', href: () => svc, more: () => '../gov-report/' + svc + '&tab=report' });
+  el.classList.add('gs-card');
+  if (!s.open) el.classList.add('is-off');
+  el.dataset.status = s.status;
+  return el;
 }
-
 /* ═════════════ 서비스 대시보드 ═════════════ */
 async function renderSvc() {
   if (!brand) { page.append(head({ title: '서비스', right: asOf() })); return brandDown(); }
@@ -254,7 +257,7 @@ function renderOrg() {
   }));
 }
 
-if (view === 'org') renderOrg(); else if (view === 'svc') await renderSvc(); else renderList();
+if (view === 'org') renderOrg(); else if (view === 'svc') await renderSvc(); else await renderList();
 page.append(foot());
 document.body.dataset.ready = '1';
 window.__govSelect = { ready: true, view, tenant: tid, services: (brand?.services || []).map((s) => s.card) };

@@ -92,10 +92,12 @@ test.describe('구현 2차 · 기관 분기 플랫폼(기관 주소)', () => {
     expect(await page.evaluate(() => window.__govSelect.view)).toBe('list');           // 서비스가 여럿 — 서비스 선택
     await expect(page.locator('.k-mast .gs-plat')).toHaveText('남원시 GeoVision 플랫폼'); // 머리에 기관 마크 · 이름
     await expect(page.locator('.k-mast .gb-mark')).toBeVisible();
-    await expect(page.locator('a.gs-card')).toHaveCount(3);                              // 생활환경 · 영농 · 도로안전(열림) + 인파(내년 · 닫힘)
+    /* 카드 = 서비스 카드 한 벌의 기관 모양(확인 대장 14차 카드-1 ⓐ ③) — 열린 서비스만 '이 서비스 열기' */
+    await expect(page.locator('.gs-card .k-sc-go')).toHaveCount(3);                     // 생활환경 · 영농 · 도로안전(열림) + 인파(내년 · 닫힘)
     await expect(page.locator('.gs-card.is-off[data-card="card-crowd"] .t-chip')).toHaveText('내년');
-    await expect(page.locator('a.gs-card[data-card="card-road"] .t-chip')).toHaveText('첫 결과 전');
-    await page.locator('a.gs-card[data-card="card-farm"]').click();
+    await expect(page.locator('.gs-card[data-card="card-road"] .t-chip')).toHaveText('첫 결과 전');
+    await expect(page.locator('.gs-card[data-card="card-farm"] .k-sc-crop img')).toBeVisible();   // 실제 결과 장면(그 기관 관할)
+    await page.locator('.gs-card[data-card="card-farm"] .k-sc-go').click();
     await page.waitForURL((u) => u.searchParams.get('service') === 'card-farm');
     await page.waitForFunction(() => window.__govSelect?.ready && window.__govSelect.view === 'svc', null, { timeout: 30000 });
     const big = page.locator('.gs-bigc .k-big');

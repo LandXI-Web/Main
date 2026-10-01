@@ -459,3 +459,13 @@ async def lineage(deploy_id: str, request: Request):
     if not jobs and snap:                               # 작업 기록 이전의 결과(시드 스냅샷) — 결과 세트만 잇는다
         chain.append({"kind": "result", "id": snap})
     return {"chain": chain, "as_of": now_iso()}
+
+
+# 서비스 카드 한 벌(구현 3차 · 확인 대장 14차 카드-1 ⓐ · 길-1 ⓑ) — 카드 정보 · 서비스 카드 관리 · 카드로 분석(landxi_api/cards.py).
+# 레지스트리 라우터에 붙여 main.py 를 고치지 않는다. 불러오기에 실패해도 게이트웨이는 뜬다(로그 한 줄).
+try:
+    from . import cards as _cards
+    router.include_router(_cards.router)
+except Exception as _e:  # noqa: BLE001
+    import logging as _logging
+    _logging.getLogger("landxi").warning("cards router 건너뜀: %r", _e)

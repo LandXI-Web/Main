@@ -13,10 +13,11 @@
      el.append(svcCard(item, { kind: 'analyze' })); // 한 장
      옵션: href(item) · more(item) — 1차 버튼 · '자세히' 주소(기본: 분석하기 상세) · compact — ⑦ · ⑧ 없이(대시보드 띠 · 고르기)
            pick: { selected, disabled, why, onPick(item) } — 카드 전체가 고르는 단추(role=radio · 기관 분석 의뢰 ② 분석 카드 고르기)
+           row — 가로 모양(장면 왼쪽 작은 판 · 좁은 칸 · 휴대폰)
    기관 색: 부모에 --ci(진한) · --ci-t1(연한)이 있으면 'gov' · 'mine' 카드의 배지 · 버튼이 그 색(gov-select/brand.js applyBrand).
    장면 없는 카드 = 회백 판('결과 장면 없음' · '첫 결과 전') — 그림을 지어 넣지 않는다(원칙 42 · 4차 S1 ⓐ).
    옛 K7(serviceCard · serviceGrid · joinCards · stateOf — 메인 · 영업 · 서비스 소개의 작은 카드)은 아래에 그대로 둔다. */
-import { h, esc, isEnvelope, api, hasRoute } from './util.js';
+import { h, esc, isEnvelope, api, hasRoute, API } from './util.js';
 import { numHtml } from './bignum.js';
 import { sig } from './sig.js';
 import { t, df } from './i18n.js';
@@ -41,7 +42,12 @@ let DECK = null;
 export function loadDeck({ fresh = false } = {}) {
   if (!DECK || fresh) DECK = (async () => {
     if (!(await hasRoute('/cards/deck'))) return null;
-    try { const j = await api('/cards/deck' + (fresh ? '?fresh=1' : '')); return Array.isArray(j?.items) ? j : null; } catch { return null; }
+    try {
+      const j = await api('/cards/deck' + (fresh ? '?fresh=1' : ''));
+      if (!Array.isArray(j?.items)) return null;
+      for (const c of j.items) if (c.scene?.src && String(c.scene.src).startsWith('/api/')) c.scene.src = API.base + c.scene.src;   // 올린 장면 = 게이트웨이 파일(이 PC 개발 서버에서도 열리게)
+      return j;
+    } catch { return null; }
   })();
   return DECK;
 }
@@ -96,7 +102,7 @@ function actions(c, kind, o) {
   } else if (kind === 'manage') {
     main = h('a.t-btn.k-sc-go', { href: href || `/landxi/v3/lx-cards/?card=${encodeURIComponent(c.id)}`, text: '관리' });
   } else if (kind === 'gov') {
-    main = c.open === false ? h('span.k-sc-cant', { text: c.status_label || '첫 결과 전' }) : h('a.t-btn.k-sc-go', { href: href || '#', text: '이 서비스 열기' });
+    main = c.open === false ? h('span.k-sc-cant', { text: c.year ? `${c.year}년 시작` : '사업 시작 전' }) : h('a.t-btn.k-sc-go', { href: href || '#', text: '이 서비스 열기' });
   } else if (kind === 'mine') {
     main = h('a.t-btn.k-sc-go', { href: href || '#', text: '열기' });
   }
@@ -109,13 +115,14 @@ function actions(c, kind, o) {
 function cropEl(c, kind) {
   const sc = c.scene && c.scene.src ? c.scene : null;
   const fig = h('div.k-sc-crop', { class: sc ? '' : 'is-blank' });
-  if (sc) fig.append(h('img', { src: sc.src, alt: '', loading: 'lazy', decoding: 'async' }));
-  else fig.append(h('span.k-sc-blank', { text: c.state === 'none' ? '첫 결과 전' : '결과 장면 없음' }));
+  if (sc) fig.append(h('img', { src: String(sc.src).startsWith('/api/') ? API.base + sc.src : sc.src, alt: '', loading: 'lazy', decoding: 'async' }));   // 올린 장면 = 게이트웨이 파일
+  else fig.append(h('span.k-sc-blank', { text: c.state === 'none' || kind === 'mine' ? '결과가 나오면 장면이 보입니다' : '결과 장면 없음' }));
   const word = kind === 'mine' ? (c.badge || '우리 기관이 만든 서비스') : (kind === 'gov' ? (c.status_label || STATE_WORD[c.state]) : (c.state_label || STATE_WORD[c.state]));
   const lv = kind === 'mine' ? 'mine' : kind === 'gov' && c.open === false ? 'gap' : STATE_LV[c.state] ?? 'gap';
   fig.append(h('span.k-sc-badge.t-chip', { dataset: lv ? { lv } : {}, text: word || '' }));
   if (kind === 'manage') {
-    const sigs = [c.publish?.pending ? '공개 결재 중' : '', c.reports ? `기관 신고 ${nf(c.reports)}` : ''].filter(Boolean);
+    const rp = isEnvelope(c.reports) ? c.reports.value : c.reports;
+    const sigs = [c.publish?.pending ? '공개 결재 중' : '', rp ? `기관 신고 ${nf(rp)}` : ''].filter(Boolean);
     if (sigs.length) fig.append(h('span.k-sc-flag', { text: sigs.join(' · ') }));
   }
   if (sc && sc.ex) fig.append(h('span.k-sc-ex', { text: '다른 지역 결과 · 예시' }));
@@ -129,7 +136,7 @@ export function svcCard(c, o = {}) {
   const tag = pick ? 'button' : 'article';
   const attrs = { dataset: { kind, state: c.state || 'none', card: c.id || '' } };
   if (pick) Object.assign(attrs, { type: 'button', role: 'radio', 'aria-checked': pick.selected ? 'true' : 'false', ...(pick.disabled ? { 'aria-disabled': 'true' } : {}) });
-  const el = h(`${tag}.k-sc`, { ...attrs, class: [o.compact || pick ? 'is-compact' : '', pick?.selected ? 'is-on' : '', pick?.disabled ? 'is-off' : '', kind === 'gov' && c.open === false ? 'is-off' : ''].filter(Boolean).join(' ') });
+  const el = h(`${tag}.k-sc`, { ...attrs, class: [o.compact || pick ? 'is-compact' : '', o.row ? 'is-row' : '', pick?.selected ? 'is-on' : '', pick?.disabled ? 'is-off' : '', kind === 'gov' && c.open === false ? 'is-off' : ''].filter(Boolean).join(' ') });
   const body = h('div.k-sc-b', {},
     whereRow(c, kind),
     h('h3.k-sc-t', { text: c.name || '' }),

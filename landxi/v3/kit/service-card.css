@@ -19,7 +19,7 @@
 .k-sc-crop{position:relative;aspect-ratio:3/2;overflow:hidden;background:var(--rule)}
 .k-sc-crop img{width:100%;height:100%;object-fit:cover;display:block;transition:transform var(--d-750) var(--e-cam)}
 .k-sc:hover .k-sc-crop img{transform:scale(1.03)}
-.k-sc-crop.is-blank{display:flex;align-items:center;justify-content:center;background:var(--bg-0)}
+.k-sc-crop.is-blank{display:flex;align-items:center;justify-content:center;background:var(--rule)}
 .k-sc[data-kind="gov"] .k-sc-crop.is-blank,.k-sc[data-kind="mine"] .k-sc-crop.is-blank{background:var(--ci-t1,var(--bg-0))}
 .k-sc-blank{font:500 14px/20px var(--font-body);color:var(--sub);padding:0 24px;text-align:center}
 .k-sc-badge.t-chip{position:absolute;left:12px;top:12px;height:26px;padding:0 10px;font-size:13px;background:rgba(255,255,255,.94);color:var(--ink);border:0}
@@ -37,8 +37,8 @@
 .k-sc-where > span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .k-sc-where .r{flex:none;white-space:nowrap}
 .k-sc-where .num{font-family:var(--font-num)}
-.k-sc-t{margin:0;font:700 18px/24px var(--font-display);letter-spacing:-.02em;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.k-sc-line{margin:0;font:400 14px/20px var(--font-body);color:var(--sub-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:40px}
+.k-sc-t{margin:0;font:700 18px/24px var(--font-display);letter-spacing:-.02em;color:var(--ink);text-wrap:balance;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.k-sc-line{margin:0;font:400 14px/20px var(--font-body);color:var(--sub-2);text-wrap:balance;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:40px}
 .k-sc-res{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 6px;min-height:32px;margin-top:2px}
 .k-sc-res b{font:800 28px/1 var(--font-display);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums}
 .k-sc-res .k-sc-sig .t-sig{margin-left:0}
@@ -71,8 +71,22 @@ button.k-sc.is-off .k-sc-crop img{opacity:.5}
 .k-sc-why{margin:0;font:500 13px/18px var(--font-body);color:var(--sub)}
 button.k-sc:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
+/* 가로 모양(좁은 칸 · 고르기) — 장면 왼쪽 작은 판 */
+.k-sc.is-row{flex-direction:row;align-items:stretch}
+.k-sc.is-row .k-sc-crop{width:116px;flex:none;aspect-ratio:auto;min-height:96px}
+.k-sc.is-row .k-sc-badge.t-chip{left:8px;top:8px;height:22px;padding:0 7px;font-size:12px}
+.k-sc.is-row .k-sc-blank{font-size:12px;padding:0 8px}
+.k-sc.is-row .k-sc-b{padding:10px 14px 12px;gap:4px}
+.k-sc.is-row .k-sc-where{display:none}
+.k-sc.is-row .k-sc-t{font-size:16px;line-height:22px}
+.k-sc.is-row .k-sc-line{min-height:0;font-size:13px;line-height:18px}
+.k-sc.is-row .k-sc-res{min-height:0}
+.k-sc.is-row .k-sc-res b{font-size:20px}
+.k-sc.is-row .k-sc-ex{display:none}
+button.k-sc.is-row.is-on::after{right:10px;top:10px;width:24px;height:24px;line-height:24px;font-size:13px}
 @media (max-width:640px){
   .k-sc-b{padding:12px 16px 16px}
+  .k-sc-line{min-height:0}
   .k-sc-t{font-size:17px;line-height:23px}
 }
 @media (prefers-reduced-motion:reduce){.k-sc,.k-sc-crop img{transition:none}.k-sc:hover{transform:none}}

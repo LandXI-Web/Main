@@ -43,7 +43,8 @@ body.sd[data-state="boot"] .k-main{background:var(--bg-0)}
 .sd-sec-l{margin:0 0 24px}
 .sd-end{margin-top:calc(var(--section) / 2);padding:40px;display:flex;flex-direction:column;gap:16px}
 .sd-end > .t-label{margin:0}
-.sd-end__go{display:flex;justify-content:flex-end;padding-top:8px}
+.sd-end__go{display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:12px 24px;padding-top:8px}
+.sd-end__go .sd-tocard{order:-1}
 .sd-guest .sd-end,.sd-end:not(:has(.sd-table)){flex-direction:row;align-items:center;justify-content:space-between}
 .sd-table tbody tr{cursor:pointer}
 .sd-table tbody tr[aria-selected="true"] td{background:var(--bg-0);color:var(--ink)}

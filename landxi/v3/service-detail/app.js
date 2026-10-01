@@ -424,7 +424,10 @@ function closing() {
   tb.addEventListener('click', () => requestAnimationFrame(markSel));
   mq.addEventListener('change', draw);
   draw();
-  box.append(h('p.t-label', { text: '서비스 지역' }), tb, h('div.sd-end__go', {}, cta));
+  /* LX 직원 · 관리자 — 카드 상세(분석하기 · 서비스 카드 한 벌)로 잇는다(확인 대장 14차 길-1 ⓑ · 이 소개 화면은 게스트 · 영업 · 기관 공용) */
+  const lx = who?.me?.realm === 'lx' && ['staff', 'admin'].includes(who?.me?.role);
+  const toCard = lx ? h('a.t-btn.t-btn--text.sd-tocard', { href: `${V3}lx-analyze/?card=${encodeURIComponent(D.card.id)}`, text: '분석하기에서 이 카드로 분석' }) : null;
+  box.append(h('p.t-label', { text: '서비스 지역' }), tb, h('div.sd-end__go', {}, cta, toCard));
   return box;
 }
 

@@ -54,7 +54,7 @@ test.describe('구현 2차 정리 — 화면 잇기 · 계정 · 한도 표시',
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/gov-select/'), { timeout: 30000 });
     await page.goto(BASE + '/landxi/v3/gov-select/?list=1');
     for (const t of ['내 서비스', '분석 의뢰', '내가 보낸 요청', '기관 정보', '계정']) await expect(page.locator('.k-rail .k-rail-i', { hasText: t })).toBeVisible();
-    const card = (await page.locator('a.gs-card').first().getAttribute('href'));
+    const card = (await page.locator('.gs-card .k-sc-go').first().getAttribute('href'));
     await page.goto(BASE + '/landxi/v3/gov-select/' + card);
     const tab = page.locator('.gs-tabs a.gs-tab', { hasText: '분석 의뢰' });
     await expect(tab).toBeVisible({ timeout: 20000 });
