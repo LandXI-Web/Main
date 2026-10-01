@@ -25,9 +25,9 @@ main{position:relative;z-index:3}
 
 /* ── 마스트 ── */
 .m-mast{position:fixed;top:0;left:0;right:0;z-index:20;height:var(--mast);display:flex;align-items:center;padding:0 var(--mx);background:rgba(255,255,255,.96);border-bottom:1px solid var(--rule)}
-.m-word{font:700 36px/1 var(--font-display);letter-spacing:-0.01em;color:var(--ink);white-space:nowrap}   /* 2배(18 → 36 · 10-01 사용자) */
+.m-word{font:700 26px/1 var(--font-display);letter-spacing:-0.01em;color:var(--ink);white-space:nowrap}   /* 10-01 사용자: 18 은 작고 36 은 큼 → 26 */
 .m-nav{margin-left:auto;display:flex;gap:40px}
-.m-nav a{position:relative;font:500 28px/1 var(--font-body);color:var(--ink-2);padding:8px 0;white-space:nowrap}   /* 2배(14 → 28) */
+.m-nav a{position:relative;font:500 20px/1 var(--font-body);color:var(--ink-2);padding:8px 0;white-space:nowrap}   /* 10-01 사용자: 28 에서 두 단계 줄임(28 → 24 → 20) */
 .m-nav a::before{content:"";position:absolute;left:0;bottom:0;height:1px;width:0;background:var(--ink);transition:width var(--d-380) var(--e-ui)}
 .m-nav a:hover::before{width:100%}
 
