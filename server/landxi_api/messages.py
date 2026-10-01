@@ -462,6 +462,13 @@ async def _extra(p: Principal) -> list[dict]:
                 out.append({"kind": "signup", "n": int(s), "href": page + "#signup"})
             if rs:
                 out.append({"kind": "reset", "n": int(rs), "href": page + "#reset"})
+    # 촬영 요청(18차 촬영-1 ⓑ · 원칙 120) — LX 관리자 = 답을 기다리는 것 · 기관 = 내가 보낸 요청에 LX 답이 와서 진행 여부를 정할 것
+    # 새 결과(18차 N-1 ⓐ 알림 ⓑ) — 기관 = 볼 수 있는 서비스의 새 판(읽지 않은 것). 표가 없는 서버에서도 알림 칸은 뜬다.
+    try:
+        from . import gov_history as GH
+        out.extend(await GH.bell_extra(p))
+    except Exception:  # noqa: BLE001
+        pass
     return out
 
 
@@ -476,7 +483,11 @@ async def notify(request: Request):
         items = await _list(conn, p, box="all", limit=6)
         c = await _counts(conn, p)
     extra = await _extra(p)
-    return {"n": c["unread"] + sum(x["n"] for x in extra), "items": items, "counts": c, "extra": extra, "as_of": now_iso()}
+    out = {"n": c["unread"] + sum(x["n"] for x in extra), "items": items, "counts": c, "extra": extra, "as_of": now_iso()}
+    if p.realm == "tenant":                              # 메일 알림 설정 여부(없으면 화면에 '메일 알림은 설정 뒤' — 종만)
+        from . import mailer
+        out["mail"] = mailer.enabled()
+    return out
 
 
 @router.get("/reviews/{rid}")

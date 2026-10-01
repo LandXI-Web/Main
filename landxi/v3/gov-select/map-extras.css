@@ -1,0 +1,37 @@
+/* 기관 결과 지도에 붙는 '보고 있는 결과' 카드 · 필지 카드 메모(구현 5차 2묶음 · gov-select/map-extras.js) — 밝은 톤 · 키트 토큰만 */
+.gx-card{position:absolute;left:16px;bottom:44px;z-index:6;width:min(360px,calc(100% - 32px));box-sizing:border-box;padding:16px 18px;border-radius:var(--r-16,16px);
+  background:rgba(255,255,255,.97);box-shadow:0 8px 24px rgba(17,24,39,.12);display:flex;flex-direction:column;gap:6px}
+.gx-card.is-bare{width:auto;padding:0;background:none;box-shadow:none}
+.gx-l{margin:0;font:500 13px/18px var(--font-body);color:var(--sub)}
+.gx-t{margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.gx-t b{font:700 17px/24px var(--font-display);color:var(--ink);word-break:keep-all}
+.gx-ed{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:11px;background:var(--ci-t1,var(--bg-0));color:var(--ci,var(--ink));font:500 12px/22px var(--font-body)}
+.gx-s{margin:0;display:flex;gap:8px;align-items:baseline;font:400 14px/20px var(--font-body);color:var(--ink-2);word-break:keep-all}
+.gx-s i{flex:none;width:8px;height:8px;border-radius:50%;background:var(--ci,var(--accent));transform:translateY(-1px)}
+.gx-links{margin:2px 0 0;display:flex;gap:4px 14px;flex-wrap:wrap}
+.gx-more.t-btn--text{height:auto;padding:4px 0;font-size:14px}
+.gx-req.t-btn{align-self:flex-start;margin-top:6px;background:var(--ci,var(--ink));color:#fff;border-color:transparent}
+.gx-dl{margin:16px 0 0;font:400 14px/20px var(--font-body)}
+@media (max-width:640px){
+  .gx-card{left:12px;bottom:36px;width:auto;max-width:calc(100% - 96px);padding:0;background:none;box-shadow:none}
+  .gx-card > :not(.gx-req){display:none}
+  .gx-req.t-btn{margin:0;height:40px}
+}
+/* 필지 카드 — 메모 · 다음 확인 */
+.gx-note{margin-top:16px;padding:14px 16px;border-radius:var(--r-16,16px);background:var(--bg-0);display:flex;flex-direction:column;gap:8px}
+.gx-note-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.gx-note-h b{font:500 15px/22px var(--font-body);color:var(--ink)}
+.gx-note-h small{font:400 13px/18px var(--font-body);color:var(--sub)}
+.gx-note-r{display:flex;align-items:flex-end;gap:8px}
+.gx-date-l{flex:1;display:flex;flex-direction:column;gap:4px;font:400 13px/18px var(--font-body);color:var(--sub)}
+.gx-date{width:100%}
+.gx-save.t-btn{flex:none;background:var(--ci,var(--ink));color:#fff;border-color:transparent}
+.gx-notes{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.gx-notes:empty{display:none}
+.gx-notes li{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;padding:6px 0;border-top:1px solid var(--rule);font:400 14px/20px var(--font-body);color:var(--ink-2)}
+.gx-n-d{flex:none;color:var(--sub)}
+.gx-n-t{flex:1;min-width:0;word-break:keep-all}
+.gx-notes small{color:var(--sub);font-size:13px}
+.gx-seg{white-space:nowrap}
+.gx-note .t-input{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+.gx-date-l{min-width:0}

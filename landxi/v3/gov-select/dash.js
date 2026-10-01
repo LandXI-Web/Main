@@ -1,7 +1,8 @@
-/* 서비스 대시보드 — 장면 먼저(구현 5차 · 확인 대장 '기관 화면 확인' 기관-4 ⓐ · 시안 design-r8/gov-design/mock/rehome-dash.html).
+/* 서비스 대시보드 — 장면 먼저(구현 5차 · 확인 대장 '기관 화면 확인' 기관-4 ⓐ · 시안 design-r8/gov-design/mock/rehome-dash.html ·
+   2묶음 18차 N-1 ⓐ — 탭 다섯 '현황 · 결과 지도 · 필지 목록 · 이력 · 통계·보고서'(시안 design-r9/gov-2 dash.html) · 내려받기는 통계·보고서 탭 한 곳).
    왼쪽: 결과 장면 위 큰 숫자 하나(업무 결과 · 서버 값) · 읍면별(광역 전체면 시·군·구별) 막대 — 누르면 그 곳 결과 지도 · 시점별 영상과 결과.
-   오른쪽: '이 결과는'(결과 설명서 세 줄 + '자세히' 서랍 + 내려받기 셋 — 분기 공간 1단 서버 그대로) · 내가 확인할 필지 · LX와 주고받은 검토 요청 + LX 담당.
-   탭: 현황 · 결과 지도(XI맵) · 필지 목록 · 행정정보와 비교 · 보고서(필지 대조가 있는 서비스만 필지 목록 · 보고서).
+   오른쪽: '이 결과는'(결과 설명서 세 줄 + '자세히' 서랍 — 분기 공간 1단 서버 그대로 · 행정정보와 비교) · 내가 확인할 필지 · LX와 주고받은 검토 요청 + LX 담당.
+   탭: 현황 · 결과 지도(XI맵 — 지도 위 '보고 있는 결과' 카드 · '이 영상으로 분석 요청') · 필지 목록(필지 대조가 있는 서비스만) · 이력 · 통계·보고서(tabs.js).
    숫자는 모두 서버 값 한 출처(대표 수치 요약 · 실태조사 집계 · 결과 설명서) — 지어내지 않는다. 장면은 그 기관 관할 것만(서버가 거른다).
    지역 고정값 0 — 관할 · 서비스 · 장면 · 담당 모두 로그인 기관에서. */
 import * as K from '../kit/index.js';
@@ -10,7 +11,8 @@ import { h, ymd } from '../kit/util.js';
 import { drawer } from '../kit/panel.js';
 import { shortAddr, joinLine } from './brand.js';
 import { setRequestService } from './menu.js';
-import { sixCells, download as fetchFile, val, segs, nf } from '../gov-space/guide.js';
+import { sixCells, val, segs, nf } from '../gov-space/guide.js';
+import { renderHistory, renderStats } from './tabs.js';
 
 /* 우리 공간의 설명서 칸 스타일(여섯 칸 · 동의 창)을 같이 쓴다 — 한 번만 붙인다 */
 {
@@ -19,7 +21,6 @@ import { sixCells, download as fetchFile, val, segs, nf } from '../gov-space/gui
 }
 
 const XI = (sgg, extra = {}) => '/landxi/v3/xi-clean/' + (sgg || Object.keys(extra).length ? '?' + new URLSearchParams({ ...(sgg ? { region: sgg } : {}), ...extra }) : '');
-const USE = { geojson: '지도 프로그램용', parcels: '필지 목록', summary: '숫자만' };   // 내려받기 단추 아래 짧은 말(시안)
 const svcShort = (s) => String(s || '').replace(/\s*(행정서비스|서비스)$/, '');
 const lastWord = (s) => String(s || '').trim().split(/\s+/).pop();
 const when = (iso) => { const m = /^\d{4}-(\d{2})-(\d{2})/.exec(String(iso || '')); return m ? `${m[1]}.${m[2]}` : ''; };
@@ -60,8 +61,10 @@ export async function renderDash(ctx) {
   const p = s.open ? primary(cur, card) : null;
   const sggOne = reg?.sgg_cd || (!wide ? (cur.find((i) => i.sgg_cd)?.sgg_cd || regs[0]?.sgg_cd) : null);
   const q = (extra = {}) => '?' + new URLSearchParams({ service: s.card, ...(reg ? { region: reg.sgg_cd } : {}), ...extra });
-  const mapHref = XI(sggOne);
+  const mapHref = XI(sggOne, { service: s.card });                // 결과 지도 — 그 서비스의 '보고 있는 결과' 카드가 붙는다(map-extras.js)
   const fusion = '../gov-fusion/' + q(), rep = (tab) => '../gov-report/' + q({ tab });
+  const want = new URLSearchParams(location.search).get('tab');
+  const TAB = ['history', 'stats'].includes(want) ? want : 'status';
   /* 이 서비스의 배포본(분석 요청 · 결과 시점은 배포본 단위) — 광역은 고른 시·군·구의 것, 없으면 이 서비스의 첫 배포본 */
   const deps = ((await api('/requests/services').catch(() => null))?.items || []).filter((d) => d.card === s.card);
   const dep = (reg && deps.find((d) => d.sgg_cd === reg.sgg_cd)) || deps[0] || null;
@@ -78,16 +81,20 @@ export async function renderDash(ctx) {
   const sub = joinLine([reg?.full || (wide ? '광역 전체' : ''), s.line, s.year ? `${s.year}년 사업` : ''].filter(Boolean).join(' · '));
   const latest = card?.latest ? h('span.gs-date', { text: `최근 결과 ${ymd(card.latest)}` }) : asOfEl();
   page.append(head({ title: s.name, sub, right: [pick, latest], crumb, line: false }));
+  const on = (k) => (TAB === k ? { 'aria-current': 'page' } : {});
   page.append(h('nav.gs-tabs', { 'aria-label': '서비스 기능' },
-    h('a.gs-tab', { href: q(), 'aria-current': 'page', text: '현황' }),
+    h('a.gs-tab', { href: q(), ...on('status'), text: '현황' }),
     s.open ? h('a.gs-tab', { href: mapHref, text: '결과 지도' }) : null,
     survey ? h('a.gs-tab', { href: rep('sus'), text: '필지 목록' }) : null,
-    s.open ? h('a.gs-tab', { href: fusion, text: '행정정보와 비교' }) : null,
-    survey ? h('a.gs-tab', { href: rep('report'), text: '보고서' }) : null));
+    h('a.gs-tab', { href: q({ tab: 'history' }), ...on('history'), text: '이력' }),
+    h('a.gs-tab', { href: q({ tab: 'stats' }), ...on('stats'), text: '통계·보고서' })));
 
   const newLine = h('div.gd-new', { hidden: true });
   const main = h('div.gd-main'), side = h('div.gd-side');
-  page.append(newLine, h('div.gd-grid', {}, main, side));
+  const pre = h('div.gd-pre');
+  page.append(newLine, pre, h('div.gd-grid', {}, main, side));
+  if (TAB === 'history') { document.body.dataset.tab = 'history'; await renderHistory(main, side, { s, B }); return; }
+  if (TAB === 'stats') { document.body.dataset.tab = 'stats'; await renderStats(main, side, { s, B, rep, pre, survey }); return; }
 
   /* ── 결과 장면 위 큰 숫자 하나 ── */
   const scenes = (card?.scenes || []);
@@ -132,8 +139,8 @@ export async function renderDash(ctx) {
   const talk = h('section.t-card.gd-box.gd-talk', { 'aria-label': 'LX와 주고받은 검토 요청' });
   side.append(...[about, survey && s.open ? todo : null, talk].filter(Boolean));
   await Promise.all([
-    drawAbout(about, newLine, { s, B }).catch((e) => { K.devlog('about', e.message); about.hidden = true; }),
-    survey && s.open ? drawTodo(todo, { cur, reg, rep, sggOne }).catch((e) => { K.devlog('todo', e.message); }) : null,
+    drawAbout(about, newLine, { s, B, q, fusion }).catch((e) => { K.devlog('about', e.message); about.hidden = true; }),
+    survey && s.open ? drawTodo(todo, { cur, reg, rep, sggOne, card: s.card }).catch((e) => { K.devlog('todo', e.message); }) : null,
     drawTalk(talk, { s, card, deps, mapHref }).catch((e) => { K.devlog('talk', e.message); }),
   ]);
 }
@@ -149,7 +156,7 @@ async function drawBars(el, { s, p, wide, reg, all, sggOne, survey }) {
   } else if (survey && p.key === 'field_check' && sggOne) {         // 시·군·구 하나 — 읍면별(실태조사 집계 · 큰 숫자와 같은 식)
     const j = await api('/survey/stats?by=emd&sgg=' + encodeURIComponent(sggOne));
     if (j.state === 'building') return;
-    rows = (j.items || []).map((e) => ({ name: e.key, n: e.field_check?.value || 0, href: XI(sggOne, e.top5?.[0]?.pnu ? { pnu: e.top5[0].pnu } : {}) })).filter((r) => r.n > 0);
+    rows = (j.items || []).map((e) => ({ name: e.key, n: e.field_check?.value || 0, href: XI(sggOne, { service: s.card, ...(e.top5?.[0]?.pnu ? { pnu: e.top5[0].pnu } : {}) }) })).filter((r) => r.n > 0);
     title = `읍면별 ${p.label}`; note = '읍면을 누르면 그 읍면의 결과 지도로 갑니다.';
   } else return;
   if (!rows.length) return;
@@ -164,7 +171,7 @@ async function drawBars(el, { s, p, wide, reg, all, sggOne, survey }) {
     h('p.gd-note', { text: note }));
 }
 
-async function drawAbout(el, newLine, { s, B }) {
+async function drawAbout(el, newLine, { s, B, q, fusion }) {
   el.append(h('div.gd-box-h', {}, h('h2', { text: '이 결과는' })));
   let me = null, g = null;
   try { [me, g] = await Promise.all([api('/spaces/me'), api('/spaces/me/guides/' + encodeURIComponent(s.card))]); }
@@ -183,21 +190,14 @@ async function drawAbout(el, newLine, { s, B }) {
     r0 ? h('div', {}, h('dt', { text: '언제' }), h('dd', {}, segs([r0.shot, r0.analyzed ? `${ymd(r0.analyzed)} 분석` : ''].filter(Boolean).join(' · ')))) : null,
     t.level ? h('div', {}, h('dt', { text: '믿을 만한 정도' }), h('dd', {}, h('span.gd-lv', { dataset: { lv: t.level }, text: t.level }), t1 ? h('small', { text: t1 }) : null, h('small', { text: '현장 확인 전 참고용' }))) : null));
   const more = h('button.t-btn.t-btn--text.gd-more', { type: 'button', text: '이 결과 설명 자세히' });
-  el.append(more);
-  const files = b.format?.files || [];
-  const btns = () => h('div.gd-dl3', {}, ...files.map((f) => {
-    const btn = h('button.t-btn' + (f.fmt === 'geojson' ? '.gd-ci' : '.t-btn--2'), { type: 'button', dataset: { fmt: f.fmt }, disabled: !f.ok, title: f.ok ? null : (f.why || '받을 수 없습니다') },
-      h('span', { text: f.label }), h('small', { text: f.ok ? (USE[f.fmt] || f.kind || '') : '받을 수 없음' }));
-    btn.addEventListener('click', () => fetchFile(g, f, btn, me));
-    return btn;
-  }));
-  if (files.length) el.append(btns());
-  el.append(h('p.gd-note', { text: `${B.short} 관할 안 결과만 들어 있습니다. 처음 받을 때 이용 약속에 한 번 동의합니다.` }));
+  /* 내려받기는 통계·보고서 탭 한 곳(18차 N-1 ⓐ) — 이 카드는 설명 세 줄 · 자세히 · 행정정보와 비교 */
+  el.append(h('div.gd-links', {}, more, s.open ? h('a.t-btn.t-btn--text.gd-more', { href: fusion, text: '행정정보와 비교' }) : null));
+  el.append(h('p.gd-note', {}, `${B.short} 관할 안 결과만 들어 있습니다. 자료 내려받기는 `, h('a.gd-a', { href: q({ tab: 'stats' }), text: '통계·보고서' }), ' 탭에서.'));
 
   const open = () => {
     const body = h('div.gd-drawer', {},
       g.change ? h('p.sp-change', {}, h('b', { text: '바뀐 점' }), segs(g.change)) : null,
-      sixCells(g), files.length ? btns() : null);
+      sixCells(g), h('p.gd-note', {}, h('a.gd-a', { href: q({ tab: 'stats' }), text: '자료 내려받기는 통계·보고서 탭에서' })));
     drawer({ title: `이 결과 설명 — ${val(g.edition)}판`, body, label: '이 결과 설명', width: 560 });
     if (val(me?.unread)) api('/spaces/me/read', { method: 'POST' }).then(() => { newLine.hidden = true; }).catch(() => {});
   };
@@ -212,7 +212,7 @@ async function drawAbout(el, newLine, { s, B }) {
   }
 }
 
-async function drawTodo(el, { cur, reg, rep, sggOne }) {
+async function drawTodo(el, { cur, reg, rep, sggOne, card }) {
   const rp = total(cur, 'review_pending');
   el.append(h('div.gd-box-h', {}, h('h2', { text: '내가 확인할 필지' }), rp ? h('span.gd-small', { html: `결과 확인 대기 ${K.numHtml(rp)}` }) : null));
   const list = h('ul.gd-rows'); el.append(list);
@@ -221,7 +221,7 @@ async function drawTodo(el, { cur, reg, rep, sggOne }) {
     const its = (j && j.items) || [];
     if (!its.length) { list.replaceWith(h('p.gs-none', { text: '지금 확인할 필지가 없습니다' })); return; }
     const rn = cur[0]?.region_name || reg?.full || '';
-    list.append(...its.map((f) => h('li', {}, h('a.gd-row', { href: XI(f.sgg_cd || sggOne, f.pnu ? { pnu: f.pnu } : {}) },
+    list.append(...its.map((f) => h('li', {}, h('a.gd-row', { href: XI(f.sgg_cd || sggOne, { service: card, ...(f.pnu ? { pnu: f.pnu } : {}) }) },
       h('span.gd-row-t', {}, h('b', { text: shortAddr(f.addr, rn) }), h('small', { text: f.rule_nm || '' })),
       h('span.t-chip', { text: '확인 전', dataset: { lv: 'wait' } })))));
     el.append(h('a.t-btn.t-btn--text.gd-more', { href: rep('sus'), text: '모두 보기' }));
@@ -243,7 +243,7 @@ async function drawTalk(el, { s, card, deps, mapHref }) {
   }
   for (const x of rq?.items || []) {
     if (!x.mine || !depIds.has(x.service?.id)) continue;
-    rows.push({ at: x.decided_at || x.created_at, href: '../gov-request/?' + new URLSearchParams({ service: x.service.id, tab: 'mine' }),
+    rows.push({ at: x.decided_at || x.created_at, href: '../gov-request/?' + new URLSearchParams({ service: x.service.id, tab: 'sent' }),
       t: `${x.label || '영상'} → ${svcShort(x.service?.name)} 분석 요청`, sub: `${when(x.created_at)} 보냄`,
       chip: [x.state_word, x.state === 'done' ? 'ci' : x.state === 'rejected' || x.state === 'failed' ? 'warn' : ''] });
   }
@@ -259,5 +259,5 @@ async function drawTalk(el, { s, card, deps, mapHref }) {
     h('span.gd-person-t', {}, h('b', { text: card?.owner ? `${card.owner} · LX 담당` : 'LX 담당 미지정' }),
       h('small', { text: card?.owner ? '검토 요청과 분석 요청에 답합니다' : 'LX 관리자가 대신 답합니다' }))));
   el.append(h('div.gd-acts', {}, h('a.t-btn.t-btn--text.gd-more', { href: mapHref, text: '결과 지도에서 검토 요청 보내기' }),
-    rows.length > 3 ? h('a.t-btn.t-btn--text.gd-more', { href: './?list=1&review=all', text: '모두 보기' }) : null));
+    rows.length > 3 ? h('a.t-btn.t-btn--text.gd-more', { href: '../gov-request/?tab=sent', text: '모두 보기' }) : null));
 }

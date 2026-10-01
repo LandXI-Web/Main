@@ -116,15 +116,29 @@ test.describe('구현 2차 · 기관 분기 플랫폼(기관 주소)', () => {
     const sum = await page.evaluate(async () => { const s = JSON.parse(localStorage.getItem('lx_api_session')); const r = await fetch('/api/v1/summary?card=card-farm', { headers: { authorization: 'Bearer ' + s.token } }); return r.json(); });
     expect(Number(v)).toBe(sum.items.reduce((a, i) => a + (i.metrics.field_check.value || 0), 0));   // 숫자 한 출처(/summary)
     await expect(page.locator('.gs-tab[aria-current]')).toHaveText('현황');
-    expect(await page.locator('.gs-tabs a').allInnerTexts()).toEqual(['현황', '결과 지도', '필지 목록', '행정정보와 비교', '보고서']);
-    expect(new URL(await page.locator('.gs-tabs a', { hasText: '결과 지도' }).getAttribute('href'), page.url()).pathname).toBe('/landxi/v3/xi-clean/');
+    expect(await page.locator('.gs-tabs a').allInnerTexts()).toEqual(['현황', '결과 지도', '필지 목록', '이력', '통계·보고서']);   // 18차 N-1 ⓐ 탭 다섯
+    const mapU = new URL(await page.locator('.gs-tabs a', { hasText: '결과 지도' }).getAttribute('href'), page.url());
+    expect(mapU.pathname).toBe('/landxi/v3/xi-clean/');
+    expect(mapU.searchParams.get('service')).toBe('card-farm');                         // 지도 위 '보고 있는 결과' 카드가 그 서비스로
     /* 읍면별 막대의 합 = 큰 숫자(같은 식 · 서버 값) · 이 결과는(결과 설명서) · 내려받기 셋 */
     await page.waitForSelector('.gd-bars .gd-bar');
     const bars = await page.locator('.gd-bars .gd-bar-n').allInnerTexts();
     expect(bars.reduce((a, t) => a + Number(t.replace(/,/g, '')), 0)).toBe(Number(v));
-    await expect(page.locator('.gd-about .gd-dl3 button')).toHaveCount(3);
+    await expect(page.locator('.gd-about .gd-dl3 button')).toHaveCount(0);               // 내려받기는 통계·보고서 탭 한 곳(18차 N-1 ⓐ)
     await expect(page.locator('.gd-epochs .gd-ep-i')).toHaveCount(4);
-    await page.locator('.gs-tabs a', { hasText: '행정정보와 비교' }).click();
+    /* 통계·보고서 — 다섯 숫자(현장 확인 필요 = 큰 숫자) · 보고서 만들기 + 내려받기 셋 */
+    await page.locator('.gs-tabs a', { hasText: '통계·보고서' }).click();
+    await page.waitForURL((u) => u.searchParams.get('tab') === 'stats');
+    await page.waitForSelector('.gs-num');
+    await expect(page.locator('.gs-num')).toHaveCount(5);
+    expect(Number(await page.locator('.gs-num[data-k="field_check"] .k-num').getAttribute('data-v'))).toBe(Number(v));
+    await expect(page.locator('.gs-files .gs-file')).toHaveCount(4);
+    /* 이력 — 날짜별 한 줄기 */
+    await page.locator('.gs-tabs a', { hasText: '이력' }).click();
+    await page.waitForSelector('.gy-row');
+    await page.locator('.gs-tabs a', { hasText: '현황' }).click();
+    await page.waitForSelector('.gd-about .gd-links a');
+    await page.locator('.gd-about .gd-links a', { hasText: '행정정보와 비교' }).click();
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/gov-fusion/') && u.searchParams.get('service') === 'card-farm', { timeout: 30000 });
     await page.waitForTimeout(3000);
     expect(new URL(page.url()).pathname.startsWith('/landxi/v3/gov-fusion/')).toBe(true);   // 관문이 되돌리지 않았다

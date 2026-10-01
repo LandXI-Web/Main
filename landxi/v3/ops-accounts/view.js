@@ -247,8 +247,25 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
         toast('임시 비밀번호를 만들었습니다'); load(cur);
       } catch (e) { toast(e.message || '지금은 처리할 수 없습니다'); temp.disabled = false; }
     });
+    /* 볼 수 있는 서비스(기관 관리자 · 부서 사용자만 — 확인 대장 18차 N-1 ⓐ 부서 배정 = 계정 화면 · 원칙 38) — 우리 공간의 배정과 같은 기록 */
+    const see = !LX && u.realm === 'tenant' && u.role === 'viewer' ? h('div.acc-row.acc-see', {}, h('p.t-label', { text: '볼 수 있는 서비스' }), h('p.acc-help', { text: '고른 서비스만 이 사람의 내 서비스에 보입니다.' })) : null;
+    if (see) (async () => {
+      let j;
+      try { j = await api('/spaces/me/assign'); } catch { see.append(h('p.acc-help', { text: '지금은 불러올 수 없습니다' })); return; }
+      const mine = new Set((j.users || []).find((x) => x.id === u.id)?.cards || []);
+      const boxes = (j.services || []).map((s) => { const cb = h('input', { type: 'checkbox', value: s.card, checked: mine.has(s.card) }); return { cb, el: h('label.acc-ck', {}, cb, h('span', { text: s.name })) }; });
+      const save = h('button.t-btn.t-btn--2', { type: 'button', text: '저장' });
+      save.addEventListener('click', async () => {
+        save.disabled = true;
+        try { await api(`/spaces/me/assign/${encodeURIComponent(u.id)}`, { method: 'PUT', body: { cards: boxes.filter((b) => b.cb.checked).map((b) => b.cb.value) } }); toast('볼 수 있는 서비스를 저장했습니다'); }
+        catch (e) { toast(e.message || '지금은 저장할 수 없습니다'); }
+        save.disabled = false;
+      });
+      see.append(boxes.length ? h('div.acc-cks', {}, ...boxes.map((b) => b.el)) : h('p.acc-help', { text: '우리 기관이 받은 서비스가 아직 없습니다' }), boxes.length ? save : null);
+    })();
     out.append(
       h('div.acc-row', {}, h('p.t-label', { text: '역할' }), h('div.acc-inline', {}, h('div.acc-sel', {}, sel, h('span.acc-sel__c', { 'aria-hidden': 'true', html: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="6 9 12 15 18 9"/></svg>' })), setRole)),
+      ...(see ? [see] : []),
       h('div.acc-row', {}, h('p.t-label', { text: '잠금' }), h('p.acc-help', { text: u.temp_locked && u.status !== 'locked' ? '비밀번호를 여러 번 틀려 10분 동안 잠겼습니다.' : held ? '잠긴 동안은 들어올 수 없습니다.' : '잠그면 바로 로그아웃되고 들어올 수 없습니다.' }), lock),
       h('div.acc-row', {}, h('p.t-label', { text: '비밀번호' }), h('p.acc-help', { text: '사용자는 임시 비밀번호로 들어와 새 비밀번호를 정합니다.' }), temp),
       ...(LX && u.realm === 'lx' && u.storage ? [quotaRow(u)] : []));       // 저장 용량 할당(S-19 · LX 계정만)

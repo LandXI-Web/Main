@@ -203,7 +203,7 @@ test.describe('impl-2 기관 영상 분석 의뢰 · LX 영상 공유', () => {
     await a.waitForSelector('.org', { timeout: 60000 });
     await a.locator('.org', { hasText: '남원' }).locator('.adj').click();
     await expect(a.locator('.sh-l li').first()).toBeVisible({ timeout: 20000 });
-    await expect(a.locator('.sh')).toContainText('공유 영상');
+    await expect(a.locator('.sh[aria-label="공유 영상"]')).toContainText('공유 영상');   // 같은 서랍에 '기관 메인 배경 사진' 칸(.sh.mp)이 더해졌다(기관-12)
     await a.locator('.k-drawer .k-dr-b').evaluate((el) => { el.scrollTop = el.scrollHeight; });
     await a.waitForTimeout(600);
     await shot(a, 'after-admin-shares.png');

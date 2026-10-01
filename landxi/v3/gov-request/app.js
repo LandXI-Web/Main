@@ -6,6 +6,8 @@
      ③ 요청하기        메모 한 줄(선택) → '분석 요청' — 무상(원칙 60). LX 관리자 · 담당자가 확인한 뒤 대기열 순서대로.
    형식 · 해상도 · 좌표 같은 전문 글은 화면에 없다 — 서버가 파일에서 읽어 처리하고(관할 밖 판정 등 검사는 그대로), 문제일 때만 쉬운 말 한 줄 + 할 일.
    [내가 보낸 요청] 확인 대기 → 분석 중 → 결과 도착(서비스의 새 시점) · 반려(사유). 서비스 대시보드는 '?service=' 로 이 화면을 연다.
+   18차 촬영-1 ⓑ — 이 화면이 메뉴 '요청하기': 탭 셋 분석 요청(?tab=new) · 촬영 요청(?tab=shoot · shoot.js) · 보낸 요청(?tab=sent · sent.js).
+   결과 지도의 '이 영상으로 분석 요청'은 ?service=<배포본>&imagery=<공유 영상> 으로 열어 그 영상이 들어간 채 시작한다.
    지역 고정값 없음 — 관할 · 서비스 · 공유 영상은 모두 로그인 기관에서. */
 import { shell, gate, createStage, toast, empty, devDrawer, devlog, FRONT } from '../kit/index.js';
 import { api, esc, h, session, LS } from '../kit/util.js';
@@ -14,6 +16,8 @@ import { uploadQueue } from '../kit/dropzone.js';
 import { loadDeck, svcCard } from '../kit/service-card.js';
 import { govRail } from '../gov-select/menu.js';
 import { loadBrand } from '../gov-select/brand.js';
+import { mountShoot } from './shoot.js';
+import { loadSent, drawSent } from './sent.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const STATE_LV = { pending: 'wait', approved: 'wait', analyzing: '', done: '', rejected: 'warn', failed: 'warn' };
@@ -35,7 +39,7 @@ const rail = who.key === 'tenant/local' ? govRail({ who, current: 'request', ser
 const app = shell({ who: { ...who, org }, home: 'gov-request', title: org, rail });
 app.main.append($('#tpl').content.cloneNode(true));
 document.body.classList.remove('gq-boot');
-document.title = `분석 요청 · ${org}`;
+document.title = `요청하기 · ${org}`;
 /* 바닥 — 기관 이름 · 대표전화(기관 화면 한 벌 · gov-select 와 같은 바닥) */
 loadBrand(who.me.tenant_id).then((b) => {
   const nm = b.name?.ko || b.name?.en || b.platform;
@@ -81,11 +85,34 @@ async function showImagery(id) {                       // 공유된 LX 영상을
 function clearMap() { overlay(null); stage.clear('fp'); stage.clear('res'); whereCap(null); }
 
 /* ═════════ 탭 ═════════ */
-/* 탭 없음(시안) — '내가 보낸 요청'은 늘 오른쪽에 있다. 'mine' = 그 칸으로 눈을 옮긴다(보낸 직후 · ?tab=mine) */
-function setTab(t) {
+/* 탭 셋(18차 촬영-1 ⓑ) — 분석 요청 · 촬영 요청 · 보낸 요청. 'mine'(옛 주소) = 분석 요청 탭의 '내가 보낸 분석 요청' 칸으로 눈을 옮긴다 */
+let shootUi = null;
+function setTab(t, { push = false } = {}) {
+  const mine = t === 'mine';
+  if (!['new', 'shoot', 'sent'].includes(t)) t = 'new';
+  for (const b of document.querySelectorAll('.gq-tabs [role=tab]')) b.setAttribute('aria-selected', String(b.dataset.tab === t));
+  for (const p of document.querySelectorAll('.gq-pane')) p.hidden = p.dataset.pane !== t;
   document.body.dataset.tab = t;
-  if (t === 'mine') requestAnimationFrame(() => $('#mine')?.scrollIntoView({ block: 'nearest', behavior: 'auto' }));
+  if (push) { const u = new URL(location.href); u.searchParams.set('tab', t); history.replaceState(null, '', u); }
+  if (t === 'shoot') { shootUi ??= mountShoot($('#shoot'), { org, cards: [...S.cards.values()].filter((c) => c.open !== false && c.listed !== false).map((c) => ({ id: c.id, name: c.name })), onSent: () => { refreshSent().then(() => setTab('sent', { push: true })); } }); shootUi.open(); }
+  if (t === 'new') stage.map?.resize?.();
+  if (mine) requestAnimationFrame(() => $('#mine')?.scrollIntoView({ block: 'nearest', behavior: 'auto' }));
 }
+$('.gq-tabs').addEventListener('click', (e) => { const b = e.target.closest('[role=tab]'); if (b) setTab(b.dataset.tab, { push: true }); });
+$('.gq').addEventListener('click', (e) => { const b = e.target.closest('[data-go]'); if (b) { setTab(b.dataset.go, { push: true }); $('.gq-tabs')?.scrollIntoView({ block: 'nearest' }); } });
+/* 보낸 요청 — 분석 · 촬영 · 검토 요청 한 목록(sent.js) · 촬영 요청 탭 오른쪽에는 세 줄 */
+async function refreshSent() {
+  let rows = [];
+  try { rows = await loadSent(); } catch (e) { devlog('sent', e.message); }
+  const onRequest = (r) => { setTab('new', { push: true }); openReq(r.id); requestAnimationFrame(() => $('#mine')?.scrollIntoView({ block: 'nearest' })); };
+  drawSent($('#sent-all'), rows, { onRequest });
+  drawSent($('#sent-mini'), rows, { compact: true, onRequest });
+  const live = rows.filter((r) => ['wait'].includes(r.lv)).length;
+  $('#sent-n').textContent = rows.length ? ` ${rows.length}` : '';
+  $('#sent-n2').textContent = rows.length ? `${rows.length}건` : '';
+  $('#sent-n').dataset.live = live ? '1' : '';
+}
+document.addEventListener('gq:sent', () => refreshSent());
 
 /* ═════════ ① 영상 넣기 — 공유 영상 · 우리 파일 ═════════ */
 const sharedName = (x) => `${org} ${x.year ? x.year + '년 ' : ''}${kindWord(x.gsd_m)}`;
@@ -268,6 +295,7 @@ $('#go').addEventListener('click', async () => {
   try {
     const rq = await api('/requests', { method: 'POST', body });
     toast('분석 요청을 보냈습니다 · 확인되면 알려 드립니다');
+    refreshSent();
     $('#memo').value = '';
     if (p.source === 'upload') { drop.clear(); S.draft = null; LS.set(DKEY, null); readKey = ''; $('#drop').hidden = false; }
     S.pick = null; shownImg = null;
@@ -371,17 +399,25 @@ async function loadShared() {
   try { S.shared = (await api('/requests/shared-imagery')).items || []; } catch (e) { devlog('shared', e.code || e.message); }
   drawShared();
 }
+/* 결과 지도의 '이 영상으로 분석 요청'(?imagery=) — 분석할 수 있는 공유 영상이면 그 영상이 들어간 채 연다(아니면 고르지 않는다) */
+async function pickFromMap() {
+  const id = Q.get('imagery');
+  if (!id || S.pick) return;
+  const x = S.shared.find((v) => v.id === id && v.analyzable);
+  if (x) await pickShared(x);
+}
 async function loadCards() {
   const d = await loadDeck();
   for (const c of d?.items || []) S.cards.set(c.id, c);
 }
 
 /* ═════════ 시작 ═════════ */
-setTab(Q.get('tab') === 'mine' ? 'mine' : 'new');
-await Promise.all([loadCards(), loadShared(), loadMine()]);
+await Promise.all([loadCards(), loadShared(), loadMine(), refreshSent()]);
+setTab(Q.get('tab') || 'new');
 await fitServices(null);
 if (S.svc && !S.svcs.some((s) => s.id === S.svc)) S.svc = null;              // 이 기관 서비스가 아니면 고르지 않는다
 drawPicked(); ready();
+await pickFromMap().catch((e) => devlog('imagery', e.message));
 await stage.ready;
 if (S.area) stage.go(S.area, { maxZoom: 11 });
 /* 새로 고침 · 다시 들어와도 올리던 묶음 이어 쓰기(멈춘 파일은 다시 고르면 받은 자리부터) */

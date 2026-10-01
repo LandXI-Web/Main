@@ -20,33 +20,35 @@ test.describe('구현 3차 · 기관 분기 공간 1단', () => {
   test.beforeEach(async ({ request }) => { test.skip(!process.env.DEV_PASSWORD, 'server/.env DEV_PASSWORD 없음'); test.skip(!(await up(request)), '게이트웨이 :8700 꺼짐'); });
 
   for (const [org, card, other] of [['namwon', 'card-farm', 'card-marine'], ['gwangju-jeonnam', 'card-marine', 'card-farm']]) {
-    test(`우리 공간 — ${org} · 결과 설명서 여섯 칸 · 내려받기 · 다른 기관 0`, async ({ page }) => {
+    test(`결과 설명 · 내려받기 — 서비스 안으로(18차 N-1 ⓐ) — ${org} · 여섯 칸 · 내려받기 · 다른 기관 0`, async ({ page }) => {
       test.setTimeout(150000);
       const errs = []; page.on('pageerror', (e) => errs.push(String(e)));
       await frontDoor(page, BASE, 'lxadmin@lx.or.kr', { tenant: org });
-      /* 기관 메뉴에 '우리 공간' 한 칸 — 서비스 선택 화면에서 눌러 간다(메뉴와 화면이 한 줄기) */
-      await page.goto(BASE + '/landxi/v3/gov-select/?list=1', { waitUntil: 'domcontentloaded' });
-      await page.locator('.k-rail-i', { hasText: '우리 공간' }).first().click();
-      await page.waitForURL(/\/gov-space\//, { timeout: 30000 });
-      await page.waitForSelector('.sp-cell', { timeout: 60000 });
-      /* 받은 서비스 탭 = 기관 서비스 선택의 켜진 서비스 */
-      const brand = (await call(page, `/brand/${org}`)).body;
-      const open = brand.services.filter((s) => s.open).map((s) => s.name);
-      expect(await page.locator('.sp-tab').allInnerTexts()).toEqual(open);
+      /* '우리 공간' 메뉴는 없다 — 옛 주소는 그 서비스의 통계·보고서 탭으로 간다 */
+      await page.goto(BASE + `/landxi/v3/gov-select/?service=${card}`, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('.gd-about .gd-links', { timeout: 60000 });
+      await expect(page.locator('.k-rail-i', { hasText: '우리 공간' })).toHaveCount(0);
+      await expect(page.locator('.k-rail-i', { hasText: '요청하기' }).first()).toBeAttached();
       await page.goto(BASE + `/landxi/v3/gov-space/?card=${card}`, { waitUntil: 'domcontentloaded' });
-      await page.waitForSelector('.sp-cell', { timeout: 60000 });
-      expect(await page.locator('.sp-cell h3').allInnerTexts()).toEqual(SIX);
-      await expect(page.locator('.sp-gh h2')).toContainText(/결과 설명서\s*\d+판/);
-      await expect(page.locator('.sp-change')).toContainText('바뀐 점');
+      await page.waitForURL((u) => u.pathname === '/landxi/v3/gov-select/' && u.searchParams.get('service') === card && u.searchParams.get('tab') === 'stats', { timeout: 30000 });
+      /* 결과 설명 — 현황 '이 결과는' · 자세히 서랍(여섯 칸) */
+      await page.goto(BASE + `/landxi/v3/gov-select/?service=${card}`, { waitUntil: 'domcontentloaded' });
+      await page.locator('.gd-about .gd-more', { hasText: '이 결과 설명 자세히' }).click();
+      await page.waitForSelector('.k-drawer .sp-cell', { timeout: 60000 });
+      expect(await page.locator('.k-drawer .sp-cell h3').allInnerTexts()).toEqual(SIX);
+      await expect(page.locator('.k-drawer .k-dr-t')).toContainText(/이 결과 설명\s*—\s*\d+판/);
       /* 숫자 한 출처 — 설명서 결과 수 = 대표 수치 요약 AI 탐지 */
       const sum = (await call(page, `/summary?card=${card}`)).body;
       const det = sum.items.reduce((a, i) => a + (i.metrics.detected.value || 0), 0);
-      expect(Number((await page.locator('.sp-big .num').innerText()).replace(/,/g, ''))).toBe(det);
-      /* 내려받기 세 가지 — 처음 한 번 동의 창 */
-      await expect(page.locator('.sp-file')).toHaveCount(3);
-      expect(await words(page, '.sp-page')).toEqual([]);
+      const big = page.locator('.k-drawer .sp-big .num');
+      if (await big.count()) expect(Number((await big.innerText()).replace(/,/g, ''))).toBe(det);   // 업무 결과가 아닌 도형 수는 싣지 않는다(필지 대조 서비스는 '판정한 필지')
+      /* 내려받기 세 가지 — 통계·보고서 탭 한 곳 · 처음 한 번 동의 창 */
+      await page.goto(BASE + `/landxi/v3/gov-select/?service=${card}&tab=stats`, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('.gs-files .gs-file button', { timeout: 60000 });
+      await expect(page.locator('.gs-files .gs-file button')).toHaveCount(3);
+      expect(await words(page, '.gs-page')).toEqual([]);
       const consentBefore = (await call(page, '/spaces/me')).body.consent.done;
-      await page.locator('.sp-down button[data-fmt="summary"]').click();
+      await page.locator('.gs-files .gs-file', { hasText: '요약' }).locator('button').click();
       if (!consentBefore) {
         await expect(page.locator('.k-md')).toContainText('참고자료');
         await page.locator('.k-md button', { hasText: '동의하고 내려받기' }).click();
@@ -55,9 +57,8 @@ test.describe('구현 3차 · 기관 분기 공간 1단', () => {
       expect(dl.suggestedFilename()).toMatch(/결과설명서\d+판\.json$/);
       /* 다른 기관 서비스 = 없는 서비스(서버가 내주지 않는다) */
       expect((await call(page, `/spaces/me/guides/${other}`)).status).toBe(404);
-      await page.goto(BASE + `/landxi/v3/gov-space/?card=${other}`, { waitUntil: 'domcontentloaded' });
-      await page.waitForSelector('.sp-cell', { timeout: 60000 });
-      expect(new URL(page.url()).searchParams.get('card')).not.toBe(other);   // 받은 서비스로 연다
+      await page.goto(BASE + `/landxi/v3/gov-select/?service=${other}`, { waitUntil: 'domcontentloaded' });
+      await expect(page.locator('.gs-page')).toContainText('열린 서비스가 아닙니다', { timeout: 60000 });   // 받은 서비스가 아니면 열지 않는다
       expect(errs).toEqual([]);
     });
   }

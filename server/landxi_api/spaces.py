@@ -568,6 +568,12 @@ async def _add_edition(t: str, card: str, name: str, rows: list[dict], sig: str,
         await c.execute("INSERT INTO space_log(tenant_id, kind, card_id, guide_id, line, backfill, at) VALUES ($1,'guide',$2,$3,$4,$5,$6)",
                         t, card, gid, f"{name} 결과 설명서 {ed}판 — {ch}", backfill, pub_at if backfill and pub_at else dt.datetime.now(KST))
     _write_guide_file(folder, card, ed, {"tenant": t, "card": card, "edition": ed, "change": ch, "published_at": pub, "body": body})
+    if not backfill:                                  # 새 결과 알림 = 머리의 종(알림 칸) + 메일 한 줄(18차 N-1 ⓐ 알림 ⓑ · 메일 설정이 없으면 종만)
+        try:
+            from . import mailer
+            asyncio.get_running_loop().create_task(mailer.notify_new_result(t, card, name, ed, ch))
+        except Exception as e:  # noqa: BLE001
+            log.warning("mail new result %s/%s: %r", t, card, e)
     return True
 
 
@@ -1095,3 +1101,13 @@ async def space_detail(tenant: str, request: Request):
     return {"tenant": tenant, "name": nm, "mode": (sp or {}).get("mode", "light"), "mode_word": MODE_WORD.get((sp or {}).get("mode", "light")),
             "since": _iso((sp or {}).get("created_at")), "services": items,
             "log": [{"kind": r["kind"], "line": r["line"], "at": _iso(r["at"])} for r in logs], "as_of": now_iso()}
+
+
+# 기관 분기 '요청하기' · 서비스 이력(구현 5차 2묶음 · 확인 대장 18차 촬영-1 ⓑ · N-1 ⓐ · 기관-9 ⓑ) — 촬영 요청(landxi_api/shoots.py) ·
+# 서비스 이력 · 통계 · 필지 메모(landxi_api/gov_history.py). 공간 라우터에 붙여 main.py 를 고치지 않는다 — 불러오기에 실패해도 게이트웨이는 뜬다(로그 한 줄).
+for _sub in ("shoots", "gov_history"):
+    try:
+        import importlib as _il
+        router.include_router(_il.import_module(f"landxi_api.{_sub}").router)
+    except Exception as _e:  # noqa: BLE001
+        log.warning("%s router 건너뜀: %r", _sub, _e)

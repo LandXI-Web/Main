@@ -102,3 +102,34 @@ button.ib-cell:hover{background:var(--rule)}
 .ib-who-t b{font:500 15px/22px var(--font-body);color:var(--ink)}
 .ib-who-t small{font:400 13px/18px var(--font-body);color:var(--sub)}
 .ib-xl-who{display:block;font:400 13px/18px var(--font-body);color:var(--sub-2)}
+
+/* 못 읽는 파일 확인 요청(기관-6 ⓐ) — 필지 지도 · 판정 없이 파일 이름 · 서비스 · 메모 */
+.ib-facts.ib-file{margin-top:16px;padding:14px 16px;border-radius:var(--r-16);background:var(--bg-0)}
+.ib-facts.ib-file dd{word-break:break-all}
+
+/* 기관에서 온 촬영 요청(LX 관리자 · 18차 촬영-1 ⓑ · lx-inbox/shoots.js) */
+.ib-shoot.t-btn{margin-top:12px;display:inline-flex;align-items:center;gap:8px}
+.ib-shoot b{font:700 15px/1 var(--font-num)}
+.ib-shoot small{font:500 13px/1 var(--font-body);color:var(--warn)}
+.ib-shoot small:empty{display:none}
+.ib-sh{display:flex;flex-direction:column;gap:14px}
+.ib-sh-d{margin:0;font:400 14px/21px var(--font-body);color:var(--sub);word-break:keep-all}
+.ib-sh-l{list-style:none;margin:0;padding:0}
+.ib-sh-r{width:100%;display:flex;align-items:center;gap:12px;padding:12px 0;border:0;border-top:1px solid var(--rule);background:none;text-align:left;cursor:pointer;font:inherit;color:inherit}
+.ib-sh-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ib-sh-t b{font:500 15px/22px var(--font-body);color:var(--ink);word-break:keep-all}
+.ib-sh-t small{font:400 13px/18px var(--font-body);color:var(--sub)}
+.ib-sh-map{height:220px;border-radius:var(--r-16);overflow:hidden;background:var(--bg-0)}
+.ib-sh-map[hidden]{display:none}
+.ib-sh-ans,.ib-sh-form{padding:14px 16px;border-radius:var(--r-16);background:var(--bg-0);display:flex;flex-direction:column;gap:10px}
+.ib-sh-f{display:flex;flex-direction:column;gap:6px}
+.ib-sh-f > span{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.ib-sh-f b{font:500 14px/20px var(--font-body);color:var(--ink)}
+.ib-sh-f small{font:400 13px/18px var(--font-body);color:var(--sub)}
+.ib-sh-rej{display:flex;gap:8px}
+.ib-sh-rej .t-input{flex:1;min-width:0}
+.ib-sh-warn{margin:0;color:var(--warn);font:500 14px/20px var(--font-body)}
+.ib-facts.ib-file > div{grid-template-columns:148px minmax(0,1fr)}
+.ib-sh-kv > div,.ib-sh-ans .ib-facts > div{grid-template-columns:88px minmax(0,1fr)}
+@media (max-width:640px){.ib-facts.ib-file > div{grid-template-columns:1fr;gap:2px}}
+.ib-sh .t-input{width:100%;box-sizing:border-box;min-width:0}

@@ -3,7 +3,7 @@
    기관 흐름: 기관 메인(로그인) → 내 서비스 → 서비스 대시보드 → 서비스별 기능(결과 지도 = XI맵 · 필지 목록 · 보고서 = gov-report · 행정정보와 비교 = gov-fusion).
    모든 기관이 같은 틀 — 광역 기관만 '광역 전체 / 시·군·구' 고르기 한 칸이 더 있다(관할 시군구 = GET /regions, 화면이 대신 고르지 않는다).
      ./            내 서비스(볼 수 있는 서비스가 하나뿐이면 그 서비스 대시보드로 바로)
-     ./?list=1     내 서비스(바로 넘기지 않음 — 레일 '내 서비스') — 오늘 띠 셋(새 알림 · 내가 보낸 요청 · 분석 요청) + 서비스 카드 한 벌
+     ./?list=1     내 서비스(바로 넘기지 않음 — 레일 '내 서비스') — 오늘 띠 셋(새 알림 · 보낸 요청 · 요청하기) + 서비스 카드 한 벌
      ./?service=…  서비스 대시보드(dash.js — 장면 먼저) [&region=시군구]
      ./?view=org   기관 정보(마크 · 이름 · 색 · 소개 글) — 기관 관리자만
    부서 사용자는 기관 관리자가 정해 준 서비스만 본다(서버 덱이 거른다 · 원칙 38).
@@ -53,8 +53,8 @@ if (B.color?.accent) {   // 현재 위치 표시 · 진행 막대 · 포커스 =
   document.body.style.setProperty('--accent', a); document.body.style.setProperty('--tint', `rgba(${rgb},.14)`);
 }
 
-/* 메뉴(기관 메뉴 한 곳 — menu.js) — 내 서비스 · 분석 요청 · 보낸 요청(검토 요청 목록 · 알림 칸 부품 kit/notify.js 가 ?review=all 을 열어 준다) ·
-   우리 공간 · 기관 관리자는 기관 정보 · 계정 */
+/* 메뉴(기관 메뉴 한 곳 — menu.js) — 내 서비스 · 요청하기(분석 요청 · 촬영 요청 · 보낸 요청 탭) · 기관 관리자는 기관 정보 · 계정.
+   ?review=<id> 는 그 검토 요청 대화를 연다(알림 칸 부품 kit/notify.js) */
 const RAIL = govRail({ who, current: view === 'org' ? 'org' : qs.get('review') ? 'sent' : 'list' });
 const S = K.shell({ who, home: 'gov-select', title: B.platform, rail: RAIL });
 /* 머리 = 기관 마크 · 플랫폼 이름(Land-XI 글자 대신 — 원칙 48 · 64) */
@@ -128,7 +128,7 @@ function svcEl(s, c) {
   return el;
 }
 
-/* 오늘 띠 셋 — 새 알림(알림 칸과 같은 수) · 내가 보낸 요청(진행 중 수 · 가장 최근 한 줄) · 분석 요청(바로 가기). 숫자는 서버 값 그대로 */
+/* 오늘 띠 셋 — 새 알림(알림 칸과 같은 수) · 보낸 요청(진행 중 수 · 가장 최근 한 줄) · 요청하기(바로 가기). 숫자는 서버 값 그대로 */
 const STATE_LV = { pending: 'wait', approved: 'wait', analyzing: 'wait', done: 'ci', rejected: 'warn', failed: 'warn' };
 const when = (iso) => { const m = /^\d{4}-(\d{2})-(\d{2})/.exec(String(iso || '')); return m ? `${m[1]}.${m[2]}` : ''; };
 const svcShort = (s) => String(s || '').replace(/\s*(행정서비스|서비스)$/, '');
@@ -138,27 +138,31 @@ async function drawBand(band) {
     h('span.gs-tile-t', {}, h('b', {}, o.title, o.n !== undefined && o.n !== null ? h('span.num', { text: ` ${o.n}` }) : null), h('small', { text: o.line })),
     o.chip ? h('span.t-chip', { text: o.chip[0], dataset: o.chip[1] ? { lv: o.chip[1] } : {} }) : null,
     o.go ? h('span.gs-tile-go', { text: o.go }) : null);
-  const reqTile = tile({ k: 'request', icon: 'deploy', title: '분석 요청', line: '우리 영상을 넣고 분석 카드를 고릅니다', href: '../gov-request/', go: '요청하기' });
-  band.replaceChildren(tile({ k: 'notice', icon: 'inbox', title: '새 알림', line: '불러오는 중' }), tile({ k: 'sent', icon: 'list', title: '내가 보낸 요청', line: '불러오는 중' }), reqTile);
-  const [nt, rv, rq] = await Promise.all([api('/reviews/notify').catch(() => null), api('/reviews?box=all&limit=50').catch(() => null), api('/requests').catch(() => null)]);
+  const reqTile = tile({ k: 'request', icon: 'deploy', title: '요청하기', line: '분석 요청 · 촬영 요청', href: '../gov-request/', go: '요청하기' });
+  band.replaceChildren(tile({ k: 'notice', icon: 'inbox', title: '새 알림', line: '불러오는 중' }), tile({ k: 'sent', icon: 'list', title: '보낸 요청', line: '불러오는 중' }), reqTile);
+  const [nt, rv, rq, sh] = await Promise.all([api('/reviews/notify').catch(() => null), api('/reviews?box=all&limit=50').catch(() => null), api('/requests').catch(() => null),
+    api('/shoots').catch(() => null)]);
   /* 새 알림 — 알림 칸(머리의 종)과 같은 수 · 같은 목록 */
   const unread = (nt?.items || []).find((x) => x.unread);
   const ex = (nt?.extra || [])[0];
   const notice = unread ? { line: `${unread.where} — 검토 요청에 LX가 답했습니다`, href: './?list=1&review=' + encodeURIComponent(unread.id), chip: ['답 도착', 'ci'] }
-    : ex ? { line: ex.kind === 'signup' ? `가입 신청 ${ex.n}건을 확인해 주세요` : ex.kind === 'reset' ? `비밀번호 재설정 요청 ${ex.n}건` : `확인할 일 ${ex.n}건`, href: ex.href || null }
+    : ex ? { line: ex.kind === 'result' ? `새 결과 — ${ex.items?.[0]?.title || ''}` : ex.kind === 'shoot_ans' ? `촬영 요청에 LX 답이 왔습니다` : ex.kind === 'signup' ? `가입 신청 ${ex.n}건을 확인해 주세요` : ex.kind === 'reset' ? `비밀번호 재설정 요청 ${ex.n}건` : `확인할 일 ${ex.n}건`,
+      href: ex.href || null, chip: ex.kind === 'result' ? ['새 결과', 'ci'] : null }
       : { line: '새 알림이 없습니다' };
-  /* 내가 보낸 요청 — 검토 요청(내가 보낸 것) + 분석 요청(내가 보낸 것) · 진행 중인 것의 수 · 가장 최근 한 줄 */
+  /* 보낸 요청 — 검토 요청 + 분석 요청 + 촬영 요청(내가 보낸 것) · 진행 중인 것의 수 · 가장 최근 한 줄 */
   const rows = [];
   for (const it of rv?.items || []) rows.push({ at: it.updated_at || it.at, live: it.status !== 'answered', t: `${it.where} 검토 요청`, href: './?list=1&review=' + encodeURIComponent(it.id),
     chip: it.status === 'answered' ? ['답 도착', 'ci'] : [it.status === 'seen' ? 'LX 확인 중' : '보냄', ''] });
   for (const x of rq?.items || []) if (x.mine) rows.push({ at: x.decided_at || x.created_at, live: ['pending', 'approved', 'analyzing'].includes(x.state),
-    t: `${x.label || '영상'} → ${svcShort(x.service?.name)} 분석 요청`, href: '../gov-request/?' + new URLSearchParams({ service: x.service?.id || '', tab: 'mine' }), chip: [x.state_word, STATE_LV[x.state] || ''] });
+    t: `${x.label || '영상'} → ${svcShort(x.service?.name)} 분석 요청`, href: '../gov-request/?' + new URLSearchParams({ service: x.service?.id || '', tab: 'sent' }), chip: [x.state_word, STATE_LV[x.state] || ''] });
+  for (const x of sh?.items || []) if (x.mine) rows.push({ at: x.updated_at || x.created_at, live: ['sent', 'answered'].includes(x.state),
+    t: `${x.place || '그린 범위'} 촬영 요청`, href: '../gov-request/?tab=sent', chip: [x.state_word, x.state === 'answered' ? 'ci' : x.state === 'rejected' ? 'warn' : ''] });
   rows.sort((a, b) => String(b.at).localeCompare(String(a.at)));
   const last = rows[0];
   band.replaceChildren(
     tile({ k: 'notice', icon: 'inbox', title: '새 알림', n: nt ? nt.n : null, ...notice }),
-    tile({ k: 'sent', icon: 'list', title: '내가 보낸 요청', n: rv || rq ? rows.filter((r) => r.live).length : null,
-      line: last ? `${last.t} · ${when(last.at)}` : '아직 보낸 요청이 없습니다', href: last ? last.href : './?list=1&review=all', chip: last?.chip }),
+    tile({ k: 'sent', icon: 'list', title: '보낸 요청', n: rv || rq || sh ? rows.filter((r) => r.live).length : null,
+      line: last ? `${last.t} · ${when(last.at)}` : '아직 보낸 요청이 없습니다', href: '../gov-request/?tab=sent', chip: last?.chip }),
     reqTile);
 }
 

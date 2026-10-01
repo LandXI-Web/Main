@@ -840,10 +840,12 @@ async function openParcel(pnu, fly) {
   const vw = S.index ? [o['V-World 지목'], o['V-World 용도지역'], o['V-World 농업진흥']].filter(Boolean).join(' · ') || '—' : ((S.vwProps && S.vwProps.get(pnu)) || '—');
   const ai = S.index ? aiText(o) : noImagery() ? '영상 등록 필요' : 'AI 분석 전';
   body.append(h('dl.gf-tri', { html: `<dt>대장</dt><dd>${esc(o._state || '—')}${o._date ? ` · ${esc(o._date)}` : ''}</dd><dt>AI 분석</dt><dd>${esc(ai)}</dd><dt>공개 자료</dt><dd>${esc(vw)}${o['V-World 면적(㎡)'] ? ` · ${nf(Math.round(o['V-World 면적(㎡)']))}㎡` : ''}</dd>` }));
+  const tenant = who.me?.realm === 'tenant';
+  const noteSlot = h('div'); body.append(noteSlot);           // 기관 — 메모 한 줄 + 다음 확인 날짜(18차 기관-9 ⓑ · gov-select/map-extras.js)
   const act = h('div.gf-act'); body.append(act);
   S.selPnu = pnu;
   const d = K.drawer({ title: o._jb, body, host: stageEl, slot: 'parcel', onClose: () => { if (S.selPnu === pnu) S.selPnu = null; stage.map.getLayer(hl) && stage.map.setFilter(hl, ['==', ['get', 'pnu'], '__']); } });
-  if (!noImagery()) {   // 영상 설명(AI 의견) — 명령 바로 보낸다(서버 영상 도구 · 관할 가드)
+  if (!noImagery() && !tenant) {   // 영상 설명(AI 의견) — 명령 바로 보낸다(서버 영상 도구 · 관할 가드) · 기관 필지 카드에는 없다(기관-9 ⓑ)
     const emdNm = (S.emd.get(String(pnu).slice(0, 8)) || {}).name || '';
     const jb = [emdNm && !String(o._jb).startsWith(emdNm) ? emdNm : '', o._jb].filter(Boolean).join(' ');
     const vb = h('button.t-btn.t-btn--2.gf-vlm', { type: 'button', text: '영상 설명' });
@@ -858,6 +860,7 @@ async function openParcel(pnu, fly) {
     if (!f) return;
     S.states.set(pnu, f.state);
     act.append(h('p.gf-st', {}, h('span.t-label', { text: '상태' }), h('b', { text: STATE_KO[f.state] === '—' ? '판정 전' : STATE_KO[f.state] })));
+    if (tenant) import('../gov-select/map-extras.js').then((m) => m.parcelNote(noteSlot, { finding: f })).catch((e) => K.devlog('note', String(e?.message || e)));
   } catch { /* 실태조사 기록이 없는 필지 */ }
 }
 

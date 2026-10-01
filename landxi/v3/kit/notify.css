@@ -89,3 +89,6 @@ div.k-bell-i--x{cursor:default}
   .k-bell{width:32px;min-width:32px}
   .k-mast:has(.k-bell) .k-exit{flex:none;white-space:nowrap}      /* 알림 칸이 자리를 차지해도 '나가기'가 두 줄로 꺾이지 않게 — 역할 칩이 먼저 줄어든다 */
 }
+
+/* 메일 알림 상태 한 줄(기관 · 18차 N-1 ⓐ 알림 ⓑ — 설정이 없으면 종만) */
+.k-bell-mail{margin:6px 4px 2px;padding:0;font:400 12px/17px var(--font-body);color:var(--sub);word-break:keep-all}

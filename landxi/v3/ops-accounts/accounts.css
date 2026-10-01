@@ -152,3 +152,8 @@ body:has(.k-drawer[data-slot="account"]) .acc-w { padding-right: calc(var(--shee
   .acc-sel select { min-width: 0; width: 100%; }
   .acc-sel { display: block; }
 }
+
+/* 볼 수 있는 서비스(기관 관리자 · 부서 사용자 — 구현 5차 N-1 ⓐ 부서 배정) */
+.acc-cks { display: flex; flex-direction: column; gap: 4px; }
+.acc-ck { display: flex; align-items: center; gap: 10px; padding: 6px 0; font: 400 15px/22px var(--font-body); color: var(--ink); cursor: pointer; }
+.acc-ck input { width: 18px; height: 18px; accent-color: var(--ci, var(--accent)); flex: none; }

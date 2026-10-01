@@ -36,6 +36,7 @@ function senderBox(kind, id, org) {
   return box;
 }
 import { improveCount, openImproveDrawer } from '../ops-infra/js/improve.js';   // 개선 후보 — 내 서비스 · 기관에서 XI ChatGEO 가 못 한 요청(16차 개선-1)
+import { shootStrip } from './shoots.js';   // 기관에서 온 촬영 요청(LX 관리자)
 
 const $ = (s, r = document) => r.querySelector(s);
 const VERDICTS = [['ok', '맞음'], ['ai_error', 'AI 오류'], ['unknown', '모름']];
@@ -71,7 +72,7 @@ const page = h('div.ib',
   h('header.ib-head', {},
     h('h1.ib-t', { text: admin ? '기관에서 온 요청' : '요청함' }),
     h('p.ib-s', { text: admin ? '모든 기관의 검토 요청과 답을 봅니다. 담당 직원이 없는 요청은 LX 관리자가 답합니다.' : '내가 담당하는 서비스로 온 요청과 내가 올린 결재입니다.' }),
-    cells),
+    cells, admin ? shootStrip() : null),   // 촬영 요청(18차 촬영-1 ⓑ — 받는 쪽 = LX 관리자 · lx-inbox/shoots.js)
   h('div.ib-grid', {}, h('section.ib-side.t-card', { 'aria-label': '검토 요청 목록' }, tabs, listEl), convEl));
 S.main.append(page);
 document.title = (admin ? '기관에서 온 요청' : '요청함') + ' · Land-XI';
@@ -202,7 +203,9 @@ function draw(r) {
       h('p', { text: [r.service, `${r.org} ${r.sender}`.trim(), when(r.at), admin ? `받는 사람 ${r.recipient}` : null].filter(Boolean).join(' · ') })),
     h('span.t-chip', { 'data-lv': r.status === 'answered' ? undefined : 'wait', text: r.status === 'answered' ? (r.verdict_ko || '답변') : r.status === 'seen' ? '확인 중' : '새 요청' }));
 
-  /* 저절로 붙은 것 — 영상 조각(지도) · 대장 값 · AI 결과. 기관이 따로 적지 않아도 된다 */
+  /* 저절로 붙은 것 — 영상 조각(지도) · 대장 값 · AI 결과. 기관이 따로 적지 않아도 된다.
+     못 읽는 파일 확인 요청(기관-6 ⓐ · topic 'file')은 필지가 아니다 — 파일 이름 · 분석 요청하려던 서비스 · 메모만(필지 지도 · 판정 칸 없음) */
+  const isFile = r.topic === 'file';
   const mapEl = h('div.ib-map', { 'aria-label': '영상 조각' });
   const p = r.parcel || {}, ai = r.ai;
   const facts = h('dl.ib-facts', {},
@@ -210,15 +213,19 @@ function draw(r) {
     fact('대장', `<b>${esc2(p.jimok || '—')}</b>${p.area_m2 ? ' · ' + numHtml(p.area_m2, { digits: 0 }) : ''}`),
     fact('AI 분석', ai ? `<b>${esc2(ai.rule_nm || '—')}</b>${ai.evid_m2 ? ' · ' + numHtml(ai.evid_m2, { digits: 0 }) : ''}` : '—'),
     ai?.img_date ? fact('영상', esc2(ai.img_date)) : null);
-  const att = h('div.ib-att', {}, mapEl, facts);
+  const att = isFile ? h('dl.ib-facts.ib-file', {},
+    fact('파일', (r.files || []).map(esc2).join('<br>') || esc2(r.where)),
+    fact('분석 요청하려던 서비스', esc2(r.service || '아직 고르지 않음')),
+    fact('메모', esc2(r.messages?.find((m) => m.side === 'tenant')?.body || '없음')))
+    : h('div.ib-att', {}, mapEl, facts);
 
   const thread = h('ol.k-rv-msgs.ib-thread', {}, ...r.messages.map(msg));
 
   let form = null;
   if (r.can_answer) {
-    const seg = h('div.ib-seg', { role: 'radiogroup', 'aria-label': '판정(선택)' },
+    const seg = isFile ? null : h('div.ib-seg', { role: 'radiogroup', 'aria-label': '판정(선택)' },
       ...VERDICTS.map(([k, t]) => h('button', { type: 'button', role: 'radio', 'aria-checked': 'false', dataset: { v: k }, text: t })));
-    seg.addEventListener('click', (e) => {
+    seg?.addEventListener('click', (e) => {
       const b = e.target.closest('button'); if (!b) return;
       st.verdict = st.verdict === b.dataset.v ? null : b.dataset.v;
       seg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-checked', String(x.dataset.v === st.verdict)));
@@ -226,7 +233,7 @@ function draw(r) {
     const inp = h('input.t-input', { type: 'text', maxlength: '500', placeholder: '한 줄로 답합니다', 'aria-label': '답' });
     const send = h('button.t-btn', { type: 'submit', text: '답 보내기' });
     form = h('form.ib-reply', { autocomplete: 'off' },
-      h('p.ib-reply-l', {}, h('span', { text: '판정' }), h('small', { text: '고르지 않아도 됩니다' })), seg,
+      isFile ? null : h('p.ib-reply-l', {}, h('span', { text: '판정' }), h('small', { text: '고르지 않아도 됩니다' })), seg,
       h('div.ib-reply-row', {}, inp, send));
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -245,7 +252,7 @@ function draw(r) {
   const scroll = h('div.ib-scroll', {}, head, senderBox('reviews', r.id, r.org), att, h('h3.ib-sub', { text: '주고받은 말' }), thread);
   convEl.replaceChildren(scroll, form);
   if (r.messages.length > 3) requestAnimationFrame(() => thread.lastElementChild?.scrollIntoView({ block: 'nearest' }));   // 말이 길게 쌓였으면 마지막 말이 보이게(머리는 그대로)
-  mini(mapEl, r);
+  if (!isFile) mini(mapEl, r);
 }
 const esc2 = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 

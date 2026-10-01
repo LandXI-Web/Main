@@ -234,6 +234,9 @@ async function boot() {
     const poll = () => (map.areTilesLoaded() || performance.now() - t0 > 900 ? out() : setTimeout(poll, 60)); poll(); }
 
   if (Q.get('pnu')) openParcel(Q.get('pnu'), { fly: true });
+  // 기관 — 서비스 대시보드의 '결과 지도' 탭에서 왔으면 '보고 있는 결과' 카드 · '이 영상으로 분석 요청'(18차 N-1 ⓐ · 촬영-1 ⓑ · gov-select/map-extras.js)
+  if (canRequest(who) && Q.get('service')) import('../gov-select/map-extras.js').then((m) => m.mapCard({ host: mainEl, card: Q.get('service'), region: () => S.region,
+    center: () => { const c = map.getCenter(); return [c.lng, c.lat]; } })).catch((e) => K.devlog('map-card', String(e?.message || e)));
   { const cq = (Q.get('compare') || '').split(',').filter(Boolean); if (cq.length === 2) compareOn(cq[0], cq[1]).catch((e) => K.devlog('compare', String(e?.message || e))); }
   if (Q.get('tool') === 'analyze' && AN) tool('analyze');
   if (Q.get('job') && AN) { S.tool = 'analyze'; patchRail(); AN.replayJob(Q.get('job'), { label: S.region?.name, bbox: S.region?.bbox }); }
@@ -1140,9 +1143,11 @@ async function openParcel(pnu, { fly = false } = {}) {
   const act = h('div.xc-act');
   if (f && S.lx && S.key !== 'lx/sales' && ['open', 'assigned'].includes(f.state)) act.append(h('button.t-btn.t-btn--2', { type: 'button', text: '오탐', onclick: (e) => setState(f, 'dismissed', e.currentTarget) }));
   // 영상 설명(AI 의견) — 명령 바에 '{읍면동 리 지번} 영상 설명해 줘'를 보낸다(설명 도구는 에이전트 · 근거 아님 꼬리표)
+  // 기관 필지 카드는 '영상 설명' 없이 메모 한 줄 + 다음 확인 날짜(18차 기관-9 ⓑ · gov-select/map-extras.js parcelNote)
   const where = String(d.addr || '').trim().split(/\s+/).slice(-3).join(' ');
-  if (where) act.append(h('button.t-btn.t-btn--2', { type: 'button', text: '영상 설명', onclick: () => ask(`${where} 영상 설명해 줘`) }));
   const rv = canRequest(S.who);   // 기관 계정: 이 필지를 LX 담당자에게 검토 요청(메모 한 줄 · 선택)
+  if (where && !rv) act.append(h('button.t-btn.t-btn--2', { type: 'button', text: '영상 설명', onclick: () => ask(`${where} 영상 설명해 줘`) }));
+  if (rv && f) { const slot = h('div'); body.append(slot); import('../gov-select/map-extras.js').then((m) => m.parcelNote(slot, { finding: f })).catch((e) => K.devlog('note', String(e?.message || e))); }
   if (act.childElementCount || rv) body.append(act);
   if (rv) reviewAction(act, { who: S.who, pnu, rule: f?.rule, fid: f?.id, lnglat: f?.lnglat, from: 'xi-clean' });
   dr.set(body);
