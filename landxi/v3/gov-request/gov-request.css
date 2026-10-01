@@ -1,0 +1,97 @@
+/* gov-request — 기관 분기 화면 · 우리 영상으로 분석 의뢰. 지도(왼쪽 전체) + 오른쪽 시트(새 의뢰 · 내 의뢰) + 왼쪽 위 결과 시점 카드.
+   토큰 = kit(tokens-v2.2) 그대로 · 밝은 톤 · 지도 위 카드만 그림자. */
+body.gq-boot .k-app{visibility:hidden}
+.gq{position:relative;height:100%;min-height:calc(100vh - 64px);overflow:hidden;background:var(--bg-0)}
+.gq-map{position:absolute;inset:0}
+
+/* 오른쪽 시트 */
+.gq-sheet{position:absolute;top:24px;right:24px;bottom:24px;width:448px;display:flex;flex-direction:column;background:var(--bg-1);border-radius:var(--r-16);
+  box-shadow:var(--elev-map);overflow:hidden;z-index:3}
+.gq-tabs{display:flex;gap:20px;padding:0 24px;border-bottom:1px solid var(--rule);flex:none}
+.gq-tabs button{position:relative;height:52px;padding:0 2px;border:0;background:none;font:500 15px/1 var(--font-body);color:var(--sub);cursor:pointer}
+.gq-tabs button[aria-selected="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent)}
+.gq-n{margin-left:6px;font:500 13px/1 var(--font-num);color:var(--sub)}
+.gq-n[data-live="1"]{color:var(--accent)}
+.gq-pane{flex:1;overflow:auto;padding:20px 24px 24px;display:flex;flex-direction:column;gap:4px}
+.gq-pane[hidden]{display:none}
+.gq-pane .t-input,.gq-pane .t-btn{box-sizing:border-box}
+.gq-pane > *{flex:none}                                  /* 내용이 길어 판이 스크롤될 때 단계 · 버튼이 눌려 납작해지지 않게 */
+.gq-h{margin:0 0 8px;font:700 24px/32px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+
+/* 단계 */
+.gq-stp{display:flex;flex-direction:column;gap:8px;padding:14px 0;border-bottom:1px solid var(--rule)}
+.gq-stp[hidden]{display:none}
+.gq-sh{display:flex;align-items:center;gap:10px}
+.gq-sh .n{width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;display:inline-flex;align-items:center;justify-content:center;font:500 12px/1 var(--font-num);flex:none}
+.gq-sh b{font:500 16px/22px var(--font-body);color:var(--ink)}
+.gq-sh small{font:400 13px/1 var(--font-body);color:var(--sub)}
+.gq-shared{display:flex;flex-direction:column;gap:6px}
+.gq-shared .t-label{margin:0}
+.gq-sr{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--bg-0);border-radius:var(--r-8)}
+.gq-sr.is-on{box-shadow:inset 3px 0 0 var(--accent)}
+.gq-sr .t{flex:1;min-width:0;display:flex;flex-direction:column}
+.gq-sr .t b{font:500 14px/20px var(--font-body);color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gq-sr .t span{font:400 13px/18px var(--font-body);color:var(--sub)}
+.gq-sr .t i{font-style:normal;color:var(--ink-2)}
+.gq-sr .t-btn{height:34px;padding:0 12px;font-size:13px;flex:none}
+.gq-sr .t-btn[aria-pressed="true"]{border-color:var(--ink)}
+.gq-or{margin:6px 0 0;text-align:center;font:500 12px/1 var(--font-body);color:var(--sub)}
+
+/* 이렇게 읽었습니다 */
+.gq-kv{display:grid;grid-template-columns:64px 1fr;gap:6px 12px;margin:0;font:400 14px/20px var(--font-body)}
+.gq-kv dt{color:var(--sub)}
+.gq-kv dd{margin:0;color:var(--ink)}
+.gq-ok{margin:2px 0 0;font:500 13px/18px var(--font-body);color:var(--ai)}
+.gq-ok[data-lv="warn"]{color:var(--warn)}
+.gq-ok[data-lv="wait"]{color:var(--sub)}
+.gq-ok[data-lv="lock"]{color:var(--ink-2)}
+.gq-small{height:34px;padding:0 12px;font-size:13px;align-self:flex-start}
+
+/* 서비스 */
+.gq-chips{display:flex;flex-wrap:wrap;gap:6px}
+.gq-chip{height:34px;padding:0 12px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);font:500 13px/1 var(--font-body);color:var(--ink);cursor:pointer}
+.gq-chip:hover:not(:disabled){border-color:var(--ink)}
+.gq-chip[aria-checked="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.gq-chip:disabled{color:var(--mute);cursor:default;background:var(--bg-0)}
+.gq-note{margin:0;font:400 13px/18px var(--font-body);color:var(--sub)}
+.gq-note[data-lv="warn"]{color:var(--warn)}
+.gq-go{height:48px;margin-top:16px;width:100%}
+.gq-after{margin-top:8px}
+
+/* 내 의뢰 */
+.gq-rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.gq-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;align-items:center;padding:12px;border-radius:var(--r-8);cursor:pointer}
+.gq-row:hover{background:var(--bg-0)}
+.gq-row.is-on{background:var(--bg-0);box-shadow:inset 3px 0 0 var(--accent)}
+.gq-row .l1{font:500 14px/20px var(--font-body);color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gq-row .l2{grid-column:1/-1;font:400 13px/18px var(--font-body);color:var(--sub)}
+.gq-row .t-chip{height:24px;font-size:12px}
+.gq-empty{margin-top:8px}
+.gq-det{margin-top:12px;padding:16px;background:var(--bg-0);border-radius:var(--r-16);display:flex;flex-direction:column;gap:10px}
+.gq-det[hidden]{display:none}
+.gq-det-h{display:flex;align-items:flex-start;gap:8px;justify-content:space-between}
+.gq-det-h b{font:500 16px/22px var(--font-body);color:var(--ink)}
+.gq-det-h .t-chip{background:var(--bg-1);flex:none}
+.gq-line{margin:0;font:400 14px/22px var(--font-body);color:var(--ink-2)}
+.gq-line[data-lv="warn"]{color:var(--warn)}
+
+/* 결과 시점 카드(지도 위 왼쪽) */
+.gq-tp{position:absolute;left:24px;top:24px;width:340px;padding:16px 20px;display:flex;flex-direction:column;gap:8px;z-index:2}
+.gq-tp[hidden]{display:none}
+.gq-tp .t-label{margin:0}
+.gq-tp-l{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.gq-tp-l li{display:flex;align-items:center;gap:8px;font:400 14px/20px var(--font-body);color:var(--ink)}
+.gq-tp-l li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--sub);flex:none}
+.gq-tp-l li[data-req]{cursor:pointer}
+.gq-tp-l li[data-req]::before{background:var(--ai)}
+.gq-tp-l li i{font-style:normal;font:500 12px/1 var(--font-body);color:var(--sub);padding:3px 6px;border-radius:6px;background:var(--bg-0)}
+
+@media (max-width:960px){
+  .gq-sheet{width:400px;top:16px;right:16px;bottom:16px}
+  .gq-tp{width:280px;left:16px;top:16px}
+}
+@media (max-width:640px){
+  .gq-sheet{top:auto;left:0;right:0;bottom:0;width:auto;max-height:64vh;border-radius:var(--r-16) var(--r-16) 0 0}
+  .gq-tp{left:12px;right:12px;width:auto;top:12px}
+  .gq-pane{padding:16px}
+}

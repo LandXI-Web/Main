@@ -431,7 +431,7 @@ def test_s9_ops_unified(live, tok):
     assert httpx.get(B + "/events/ops", headers={**ad, "origin": "http://evil.example"}, timeout=10).status_code == 403
     assert httpx.get(B + "/events/ops", headers={**H(tok["staff"]), "origin": "http://localhost:4173"}, timeout=10).status_code == 403
     ap = envok(httpx.get(B + "/approvals?state=pending", headers=ad, timeout=30).json())
-    assert is_env(ap["pending"]) and set(ap["counts"]) == {"deploy", "deploy_ga", "rule", "quota", "model", "card"}      # impl-1: 모델 등록 · 서비스 공개
+    assert is_env(ap["pending"]) and set(ap["counts"]) == {"deploy", "deploy_ga", "rule", "quota", "model", "card", "request"}      # impl-1: 모델 등록 · 서비스 공개 · impl-2: 분석 의뢰
     q = httpx.post(B + "/approvals", headers=H(tok["namwon"]), json={"subject_type": "quota", "payload": {"dim": "gpu_s_month", "hard": 40000},
                                                                       "reason": "pytest"}, timeout=30)
     assert q.status_code == 201

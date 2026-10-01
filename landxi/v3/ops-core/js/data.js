@@ -80,7 +80,7 @@ export const canon = () => D.deploys.filter((d) => d.tenant_id !== 'lx-demo' && 
 
 const decidedSince = (d, since) => (d.approvals || []).some((a) => new Date(a.at).getTime() >= new Date(since || 0).getTime() - 1000);
 
-export const KIND = { deploy: '배포 승인', rule: '규칙 임계', quota: '한도 변경', port: '다른 지역 적용', model: '모델 등록', card: '서비스 공개' };
+export const KIND = { deploy: '배포 승인', rule: '규칙 임계', quota: '한도 변경', port: '다른 지역 적용', model: '모델 등록', card: '서비스 공개', request: '분석 의뢰' };
 const STAGE_KO = { draft: '초안', shadow: '검증', canary: '시범', ga: '운영', rolled_back: '롤백' };
 
 /** 결재 대기 — 큰 숫자 · 레일 · 결재 표가 모두 이 목록 하나를 센다.
@@ -105,7 +105,7 @@ const byAt = (a, b) => String(b.at || '').localeCompare(String(a.at || ''));
 /* 서버 approvals 행(S-9 · GET /approvals) → 같은 항목. 모양: {id, kind: deploy|deploy_ga|rule|quota|model|card, subject{type,id}, title, requested_by,
    requested_by_name, request_reason, mine, at, payload}
    deploy + payload.action 'port' = 다른 지역 적용 · deploy_ga(카나리 ga 대기) · deploy(그 밖) = 배포 승인 · rule = 규칙 임계 · quota = 한도 변경 ·
-   model = 모델 등록 · card = 서비스 공개 */
+   model = 모델 등록 · card = 서비스 공개 · request = 기관 영상 분석 의뢰(확인 대장 6차 GF-2 · 판단 근거는 시트가 GET /requests/{id} 로 읽는다) */
 const QDIM = { storage_gb: '저장', gpu_s_month: 'GPU 시간', area_km2_month: '분석 면적', concurrent_jobs: '동시 작업', egress_gb_month: '내보내기', vworld_calls_day: '지도 호출', llm_tokens_month: 'AI 도우미 사용량' };
 /* 한도 값 표기 — 기관 화면(ops-infra DIM)과 같은 단위: GPU 시간은 초 → 시간 */
 const QUNIT = { storage_gb: ['GB', 1], gpu_s_month: ['시간', 1 / 3600], area_km2_month: ['㎢', 1], llm_tokens_month: ['토큰', 1], concurrent_jobs: ['건', 1], egress_gb_month: ['GB', 1], vworld_calls_day: ['회', 1] };
@@ -126,7 +126,7 @@ function requesterOf(r, kind, sid) {
 function fromServer(r) {
   if ((r.state || 'pending') !== 'pending') return null;
   const act = r.payload?.action;
-  const kind = r.kind === 'deploy' ? (act === 'port' ? 'port' : 'deploy') : r.kind === 'deploy_ga' ? 'deploy' : ['rule', 'quota', 'model', 'card'].includes(r.kind) ? r.kind : null;
+  const kind = r.kind === 'deploy' ? (act === 'port' ? 'port' : 'deploy') : r.kind === 'deploy_ga' ? 'deploy' : ['rule', 'quota', 'model', 'card', 'request'].includes(r.kind) ? r.kind : null;
   if (!kind) return null;
   const sid = r.subject?.id || r.subject_id;
   const d = kind === 'deploy' || kind === 'port' ? D.deploys.find((x) => x.id === sid) : null;
@@ -136,6 +136,7 @@ function fromServer(r) {
   else if (kind === 'quota') target = tenantName(sid);
   else if (kind === 'model') target = String(r.payload?.name || '새 모델');     // 모델 id 는 화면에 내지 않는다
   else if (kind === 'card') target = String(r.payload?.name || r.title || '새 서비스');
+  else if (kind === 'request') target = String(r.title || '분석 의뢰').replace(/\s*(행정서비스|서비스)$/, '');      // '남원시 · 비닐하우스'
   else target = String(r.title || '').replace(PROV, '').replace(/\s*\(해외\)$/, '') || '—';
   if (kind === 'port') {
     const src = D.deploys.find((x) => x.id === (r.payload?.from_deploy_id || d?.from_deploy_id));

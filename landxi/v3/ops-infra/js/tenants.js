@@ -1,7 +1,9 @@
 /* 기관 뷰 — 카드 밀도 그리드(기관 · 저장 · GPU 시간 · 분석 면적 · 3링) + 시트(한도 조정 → 결재 요청).
    한도 변경은 결재 요청 한 건(impl-1 · R&R '요청자 = 승인자' 막기) — 요청한 관리자가 아닌 다른 관리자가 결재함에서 승인해야 바뀐다.
-   한도를 넘은 기관은 새 작업(분석 · AI 도우미 질문)을 받지 않는다(서버 quota.over_hard) — 카드에 한 줄로 알린다. */
-import { drawer, toast, esc, nf, api, h } from './kit.js';
+   한도를 넘은 기관은 새 작업(분석 · AI 도우미 질문)을 받지 않는다(서버 quota.over_hard) — 카드에 한 줄로 알린다.
+   기관 서랍 '공유 영상' 칸(확인 대장 5차 역할-4 ⓑ — LX 관리자가 기관마다 고름): 관할 안 LX 영상 목록에서 켜고 끈다. 켠 영상만 그 기관이
+   지도에서 보고 분석 의뢰에 불러온다(서버가 거른다 · 공유 = 권한 한 줄 · 복사 0). */
+import { drawer, toast, esc, nf, api, h, empty } from './kit.js';
 import { S, DIM, RING_DIMS, POLICY, STATE_KO, dimState, orgs, loadUsage, llmUsage } from './data.js';
 import { D as AP, loadPending } from '../../ops-core/js/data.js';
 import { openBrand } from './brand.js';   // 기관 서랍 · 기관 정보(구현 2차 T3)
@@ -57,7 +59,8 @@ function sheet(o, onDone) {
     <label class="qs-why"><span>사유</span><textarea class="t-input" name="reason" rows="3" required></textarea></label>
     <p class="qs-err" role="alert"></p>
     <button class="t-btn qs-go" type="submit">결재 요청</button>`;
-  const d = drawer({ title: o.name, body, slot: 'right' });
+  const wrap = h('div.qs-w', {}, body, shares(o));
+  const d = drawer({ title: o.name, body: wrap, slot: 'right' });
   body.addEventListener('submit', async (e) => {
     e.preventDefault();
     const err = body.querySelector('.qs-err'); err.textContent = '';
@@ -82,6 +85,38 @@ function sheet(o, onDone) {
     } catch { err.textContent = '지금은 요청할 수 없습니다'; btn.disabled = false; }
   });
   return d;
+}
+
+/** 공유 영상 칸 — 관할 안 LX 영상 · 켜고 끄기(지도에서 보기 · 분석 의뢰에 쓰기). 값은 서버(GET/PUT /tenants/{id}/imagery-shares) 한 곳 */
+const CAP = (x) => (x.view && x.analyze ? '지도 · 분석 의뢰' : x.analyze ? '분석 의뢰' : x.view ? '지도' : '');
+function shares(o) {
+  const sec = h('section.sh', { 'aria-label': '공유 영상' });
+  const head = h('header.sh-h', {}, h('h3', { text: '공유 영상' }), h('span.sh-n.num'));
+  const ul = h('ul.sh-l');
+  const hold = h('div.sh-e');
+  sec.append(head, h('p.sh-d', { text: '켠 LX 영상만 이 기관이 지도에서 보고 분석 의뢰에 불러옵니다' }), hold, ul);
+  empty(hold, { kind: 'loading', compact: true });
+  let items = [];
+  const paint = () => {
+    hold.hidden = !!items.length;
+    if (!items.length) { hold.innerHTML = ''; empty(hold, { kind: 'first', title: '이 기관 관할에 LX 영상이 없습니다', compact: true }); }
+    head.querySelector('.sh-n').textContent = items.length ? `${items.filter((x) => x.shared).length} / ${items.length}` : '';
+    ul.innerHTML = items.map((x) => `<li data-id="${esc(x.id)}"><div class="t"><b>${esc(x.name)}</b><span>${esc([x.year ? x.year + '년' : '', x.gsd_word, CAP(x)].filter(Boolean).join(' · '))}</span></div>
+      <button type="button" class="sw" role="switch" aria-checked="${x.shared}" aria-label="${esc(x.name)} 공유"><i></i></button></li>`).join('');
+  };
+  api(`/tenants/${encodeURIComponent(o.id)}/imagery-shares`).then((j) => { items = j.items || []; paint(); })
+    .catch(() => { hold.innerHTML = ''; empty(hold, { kind: 'error', compact: true }); });
+  ul.addEventListener('click', async (e) => {
+    const b = e.target.closest('.sw'); if (!b) return;
+    const x = items.find((i) => i.id === b.closest('li').dataset.id); if (!x) return;
+    b.disabled = true;
+    try {
+      const r = await api(`/tenants/${encodeURIComponent(o.id)}/imagery-shares/${encodeURIComponent(x.id)}`, { method: 'PUT', body: { shared: !x.shared } });
+      x.shared = !!r.shared; paint();
+      toast(x.shared ? `${o.name}에 공유했습니다` : '공유를 껐습니다');
+    } catch (err) { toast(err.message || '지금은 바꿀 수 없습니다'); b.disabled = false; }
+  });
+  return sec;
 }
 
 export function mountTenants(root) {

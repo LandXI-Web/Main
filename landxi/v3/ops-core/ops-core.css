@@ -121,3 +121,9 @@ body:has(.k-drawer[data-slot="approval"]) .oc-inbox-w{padding-right:calc(var(--s
 
 /* r3-ops — 명령 바 막대 차트: 숫자와 단위 사이 띄움(2,059,673 tokens) */
 .k-ck-chart .k-bar-v small { margin-left: .3em; }
+/* 분석 의뢰(기관 영상 · GF-2) — 판단 근거 + 올린 영상 미리 보기 */
+.oc-rq{display:flex;flex-direction:column;gap:8px;margin:4px 0 12px}
+.oc-rq[aria-busy="true"]{min-height:120px;border-radius:12px;background:var(--bg-0)}
+.oc-rq .t-label{margin:4px 0 0}
+.oc-rq-img{display:block;width:100%;max-height:220px;object-fit:contain;border-radius:12px;background:var(--bg-0)}
+.oc-rq-n{margin:0;font:400 13px/20px var(--font-body);color:var(--sub)}

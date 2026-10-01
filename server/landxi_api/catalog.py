@@ -184,6 +184,8 @@ async def _imagery_items(stage: str | None) -> list[dict]:
         if stage and lad.get("stage") not in (stage, "both"):
             continue
         meta = r["layer"] or {}
+        if meta.get("role") == "request":         # 기관이 분석 의뢰로 맡긴 영상 — 그 의뢰의 분석에만(영상 목록 · 지도에 내지 않는다 · requests.py)
+            continue
         m = _mf(meta.get("manifest"))
         signed = False
         pm_raw = meta.get("pmtiles_set")
@@ -221,6 +223,7 @@ async def _imagery_items(stage: str | None) -> list[dict]:
         out[-1]["tile_ready"] = ready
         out[-1]["_fp"] = r["fp"]
         out[-1]["_lx_only"] = r["tier"] == "raw"
+        out[-1]["_lx_imagery"] = True            # LX 영상 표의 영상 — 기관에는 공유한 것만(imagery_shares)
     return out
 
 
@@ -304,6 +307,10 @@ async def layer_items(p: Principal, build: str | None, stage: str | None = None,
     items = _external_items(stage) + await _imagery_items(stage) + _layer_items(stage)
     tsets = await tenant_result_sets(p.tenant_id) if b == "tenant" and p.tenant_id else set()
     kept = guard(items, b, tsets)
+    if b == "tenant" and p.realm == "tenant" and p.tenant_id:
+        # LX 영상 공유(5차 역할-4 ⓑ) — 기관 세션에는 LX 관리자가 이 기관에 켠 영상만(지형 · 외부 위성 · 결과 · 참조 층은 그대로)
+        sh = await shared_ids(p.tenant_id)
+        kept = [i for i in kept if not (i.get("_lx_imagery") and i.get("role") == "imagery") or i["id"] in sh]
     if TENANT_RAW_IMAGERY and b == "tenant" and p.realm == "tenant" and p.tenant_id:
         kept += tenant_cog_items(items, p.tenant_id, {i["id"] for i in kept})
     items = [i for i in kept if _bbox_hit(i, bbox)]
@@ -514,3 +521,138 @@ async def register_imagery(request: Request):
     out.update({"sgg_cd": sgg, "year": year, "job": {"id": job["job"]["id"], "kind": "tile", "state": job["job"]["state"],
                                                      "events_url": job["events_url"]}})
     return out
+
+
+# ── LX 영상 공유(확인 대장 5차 역할-4 ⓑ — LX 관리자가 기관마다 고른다) ─────────────────────────────
+# 공유 = 권한 한 줄(imagery_shares: 기관 × 영상) — 복사 0 · 원본 파일 0. 기관 세션의 영상 층(layer_items)과 분석 의뢰의 '불러오기'(requests.py)가
+# 이 한 표만 본다. 관할 밖 영상은 공유할 수 없다(원칙 39). 첫 실행 때 한 번, 지금 기관에 보이던 관할 안 영상(지도 이미지 · 기관 공개)을 그대로 옮겨 적는다
+# (시드 — 화면이 바뀌지 않게). 그 뒤로는 관리자가 켜고 끈 것만.
+import time as _time
+
+from .envelope import KST as _KST
+
+_share_cache: dict[str, tuple[float, set]] = {}
+_share_seeded = False
+
+
+async def _seed_shares(conn) -> None:
+    global _share_seeded
+    if _share_seeded:
+        return
+    if await conn.fetchval("SELECT 1 FROM audit_log WHERE action='imagery.share.seed' LIMIT 1"):
+        _share_seeded = True
+        return
+    from .regions import in_scope, region_of, tenant_scope
+    rows = await conn.fetch("SELECT id, sgg_cd FROM imagery WHERE tier <> 'raw' AND export_policy IN ('tenant','public') AND sgg_cd IS NOT NULL "
+                            "AND coalesce(layer->>'role','imagery') = 'imagery' AND coalesce(kind,'ortho') <> 'terrain'")
+    n = 0
+    for t in await conn.fetch("SELECT id FROM tenants WHERE coalesce(kind,'') <> 'maker'"):
+        sc = tenant_scope(t["id"])
+        if not sc:                                   # 해외(None) · 전국 권한([]) 기관은 옮겨 적지 않는다
+            continue
+        for r in rows:
+            reg = region_of(r["sgg_cd"]) or {}
+            if any(in_scope(str(c), sc) for c in {r["sgg_cd"], reg.get("sgg_cd"), reg.get("prev_cd")} if c):
+                await conn.execute("INSERT INTO imagery_shares(tenant_id, imagery_id, shared_by) VALUES ($1,$2,'system') ON CONFLICT DO NOTHING",
+                                   t["id"], r["id"])
+                n += 1
+    await conn.execute("INSERT INTO audit_log(actor, realm, action, subject, before, after) VALUES ('system','system','imagery.share.seed',"
+                       "'imagery_shares',NULL,$1)", {"n": n})
+    _share_seeded = True
+
+
+async def shared_ids(tenant_id: str | None) -> set[str]:
+    """기관에 공유된 LX 영상 id(10초 캐시)."""
+    if not tenant_id:
+        return set()
+    c = _share_cache.get(tenant_id)
+    if c and _time.time() - c[0] < 10:
+        return c[1]
+    async with db(realm="lx") as conn:
+        await _seed_shares(conn)
+        ids = {r["imagery_id"] for r in await conn.fetch("SELECT imagery_id FROM imagery_shares WHERE tenant_id=$1", tenant_id)}
+    _share_cache[tenant_id] = (_time.time(), ids)
+    return ids
+
+
+def _share_candidates(tid: str, rows: list) -> list:
+    """기관 관할 안의 LX 영상(소유 시군구가 관할 안 · 또는 범위가 관할에 걸침) — 공유 고르기 목록. 동기(관할 경계 캐시)."""
+    from shapely.geometry import shape as _shape
+    from .deps import Principal
+    from .regions import geom_in_scope, in_scope, region_of, scope_of, _scope_union, _overseas_area
+    from .regions import scope_regions
+    tp = Principal(realm="tenant", role="manager", tenant_id=tid)
+    sc = scope_of(tp)
+    boxes = [x["bbox"] for x in scope_regions(tp) if x.get("bbox")] if sc else []
+    out = []
+    for r in rows:
+        reg = region_of(r["sgg_cd"]) if r["sgg_cd"] else None
+        codes = {c for c in (r["sgg_cd"], (reg or {}).get("sgg_cd"), (reg or {}).get("prev_cd")) if c}
+        hit = sc is None or (sc and any(in_scope(str(c), sc) for c in codes))
+        if not hit and r["fp"]:
+            g = _shape(r["fp"]).buffer(0)
+            b = g.bounds
+            if sc and not any(not (b[2] < x[0] or b[0] > x[2] or b[3] < x[1] or b[1] > x[3]) for x in boxes):
+                continue                               # 관할 시군구 상자에 닿지도 않는 영상 — 경계 계산 없이 뺀다
+            area = _overseas_area(tp) if sc == [] else _scope_union(tp, g.bounds)
+            hit = area is not None and g.intersects(area) and (g.intersection(area).area > 0.2 * g.area or geom_in_scope(tp, g))
+        if hit:
+            out.append(r)
+    return out
+
+
+@router.get("/tenants/{tid}/imagery-shares")
+async def tenant_shares(tid: str, request: Request):
+    """LX 관리자 — 이 기관에 열어 줄 수 있는 LX 영상(관할 안)과 지금 공유 여부. 지도에서 보기(화면용 지도 이미지가 있음) · 분석 의뢰에 쓰기(원본이 있음)."""
+    from .deps import require
+    from .deploys import gsd_word
+    require(principal(request), admin=True)
+    async with db(realm="lx") as conn:
+        if not await conn.fetchval("SELECT 1 FROM tenants WHERE id=$1", tid):
+            raise ApiError("not_found", "해당 기관이 없습니다")
+        await _seed_shares(conn)
+        rows = await conn.fetch("SELECT i.id, i.name, i.tier, i.gsd_m, i.year, i.epoch, i.kind, i.sgg_cd, i.pmtiles_set, i.path_internal, i.layer, "
+                                "ST_AsGeoJSON(i.footprint)::json AS fp FROM imagery i WHERE coalesce(i.layer->>'role','imagery') = 'imagery' "
+                                "AND coalesce(i.kind,'ortho') <> 'terrain' AND (i.sgg_cd IS NOT NULL OR i.footprint IS NOT NULL)")
+        sh = {r["imagery_id"]: r for r in await conn.fetch("SELECT imagery_id, shared_at FROM imagery_shares WHERE tenant_id=$1", tid)}
+    cands = await run_in_threadpool(_share_candidates, tid, rows)
+    items = []
+    for r in cands:
+        g = float(r["gsd_m"]) if r["gsd_m"] is not None else None
+        ep = str(r["year"] or r["epoch"] or "")
+        view = r["tier"] != "raw" and bool(r["pmtiles_set"])
+        analyze = bool(r["path_internal"] or (r["layer"] or {}).get("cog_path"))
+        name = (r["name"] or {}).get("ko") if isinstance(r["name"], dict) else r["name"]
+        items.append({"id": r["id"], "name": name or "영상", "year": int(ep[:4]) if ep[:4].isdigit() else None, "gsd_m": g,
+                      "gsd_word": gsd_word(g) if g else "", "view": view, "analyze": analyze, "shared": r["id"] in sh,
+                      "shared_at": sh[r["id"]]["shared_at"].astimezone(_KST).isoformat(timespec="seconds") if r["id"] in sh and sh[r["id"]]["shared_at"] else None})
+    items.sort(key=lambda x: (not x["shared"], -(x["year"] or 0), x["name"]))
+    return {"tenant_id": tid, "items": items, "total": len(items), "as_of": now_iso()}
+
+
+@router.put("/tenants/{tid}/imagery-shares/{iid}")
+async def set_tenant_share(tid: str, iid: str, body: dict, request: Request):
+    """LX 관리자 — 이 영상을 이 기관에 켜고 끈다(켜면 그 기관이 지도에서 보고 분석 의뢰에 불러온다). 관할 밖 영상은 켤 수 없다."""
+    from .deps import audit, require
+    from .jobs import ops_event, tenant_event
+    p = require(principal(request), admin=True)
+    on = bool(body.get("shared"))
+    async with db(realm="lx") as conn:
+        if not await conn.fetchval("SELECT 1 FROM tenants WHERE id=$1", tid):
+            raise ApiError("not_found", "해당 기관이 없습니다")
+        r = await conn.fetchrow("SELECT id, sgg_cd, ST_AsGeoJSON(footprint)::json AS fp FROM imagery WHERE id=$1 AND coalesce(layer->>'role','imagery')='imagery'",
+                                iid)
+    if not r:
+        raise ApiError("not_found", "영상이 없습니다")
+    if on and not await run_in_threadpool(_share_candidates, tid, [r]):
+        raise ApiError("out_of_scope", "이 기관 관할 밖 영상은 공유할 수 없습니다", None, 403)
+    async with db(realm="lx") as conn:
+        if on:
+            await conn.execute("INSERT INTO imagery_shares(tenant_id, imagery_id, shared_by) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING", tid, iid, p.user_id)
+        else:
+            await conn.execute("DELETE FROM imagery_shares WHERE tenant_id=$1 AND imagery_id=$2", tid, iid)
+        await audit(conn, p, "imagery.share" if on else "imagery.unshare", iid, None, {"tenant_id": tid})
+    _share_cache.pop(tid, None)
+    await ops_event("imagery.share", {"tenant_id": tid, "imagery_id": iid, "shared": on, "by": p.user_id, "at": now_iso()})
+    await tenant_event(tid, "imagery.shared", {"imagery_id": iid, "shared": on})
+    return {"tenant_id": tid, "imagery_id": iid, "shared": on, "as_of": now_iso()}

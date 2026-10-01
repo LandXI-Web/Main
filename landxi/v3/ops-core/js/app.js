@@ -132,6 +132,18 @@ async function openSheet(item) {
   for (const [k, a, b] of item.changes || []) put(ch, k, a ? `<s>${esc(a)}</s>${arrow}<b>${esc(b)}</b>` : `<b>${esc(b)}</b>`);
   if (req.childElementCount) body.append(req);
   if (ch.childElementCount) body.append(h('p.t-label', { text: '바뀌는 것' }), ch);
+  if (item.kind === 'request' && sid) {               // 기관 영상 분석 의뢰 — 판단 근거(범위 · 면적 · 예상 시간 · 대기열 · 이 기관 사용)와 올린 영상 미리 보기
+    const why = h('div.oc-rq', { 'aria-busy': 'true' });
+    body.append(why);
+    api(`/requests/${encodeURIComponent(sid)}`).then((x) => {
+      why.removeAttribute('aria-busy');
+      if (x.overlay?.url) why.append(h('img.oc-rq-img', { src: x.overlay.url, alt: '올린 영상 미리 보기' }));
+      const dl = h('dl.oc-ch');
+      for (const [k, v] of x.basis || []) put(dl, k, esc(v));
+      why.append(h('p.t-label', { text: '판단 근거' }), dl);
+      if (x.state === 'pending') why.append(h('p.oc-rq-n', { text: '승인하면 대기열 순서대로 분석하고, 결과는 그 서비스의 새 시점으로 기관에 갑니다.' }));
+    }).catch((e) => { why.removeAttribute('aria-busy'); devlog('request', e.code || e.message); });
+  }
   sheet = drawer({ title: `${item.kindKo} · ${item.target}`, body, host: S.main, slot: 'approval', onClose: () => { openKey = null; drawInbox(); } });
   if (item.mine) {                                   // 요청한 사람은 스스로 결재하지 않는다(서버도 막는다) — 다른 관리자가 결재
     body.append(h('p.oc-mine', { text: '내가 요청한 결재입니다. 다른 관리자가 결재합니다.' }));

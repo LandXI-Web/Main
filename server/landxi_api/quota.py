@@ -52,8 +52,45 @@ async def du_gb(rel: str) -> float:
 
 # ── 기관 저장 공간(fix-admin-usage) ────────────────────────────────────────────
 # 기관에 속한 것 = ① results/{기관} 폴더 ② 그 기관 몫 작업(workers.metering.OWNER_EXPR — LX 가 대신 돌린 작업 포함)의 결과 폴더·파일
-# ③ 그 기관 배포본 스냅샷이 가리키는 결과 세트 파일(config/sets.yaml aliases → sets) ④ DB 에 담긴 그 기관 행(올린 대장 · 실태조사 결과 · 탐지 결과 · 위성 지수 결과).
+# ③ 그 기관 배포본 스냅샷이 가리키는 결과 세트 파일(config/sets.yaml aliases → sets) ④ DB 에 담긴 그 기관 행(올린 대장 · 실태조사 결과 · 탐지 결과 · 위성 지수 결과)
+# ⑤ 분석 의뢰로 올린 영상 원본(config/requests.yaml storage_root — 받는 중인 조각 포함).
 _st_cache: dict[str, tuple[float, dict]] = {}
+
+
+def request_root_rel(tenant: str) -> str:
+    """기관이 올린 영상 폴더(02. 데이터 기준) — 값은 config/requests.yaml 한 곳(requests.root_rel 과 같은 값)."""
+    try:
+        s = config.load_yaml("requests") or {}
+    except Exception:  # noqa: BLE001
+        s = {}
+    return str(s.get("storage_root") or "tenants/{tenant}/requests").format(tenant=tenant).strip("/")
+
+
+def invalidate_storage(tenant: str) -> None:
+    """올리기 · 지우기 뒤 — 기관 저장 계산을 다시(60 s 캐시를 비운다)."""
+    _st_cache.pop(tenant, None)
+    _du_cache.pop(request_root_rel(tenant), None)
+
+
+async def storage_room(tenant: str, add_bytes: int) -> dict | None:
+    """새 파일을 받을 자리가 있나 — 서버 전체 저장 공간(하드웨어)이 모자랄 때만 막는다(config/requests.yaml disk_reserve_gb · LX 관리자 설정 한 곳).
+    기관 저장 한도로는 막지 않는다(사용자 7차 답 10-01 '기관에는 막는 한도를 두지 않는다 — 인프라를 얼마나 쓰는지 보여 주는 관점'):
+    기관이 올린 양은 사용 현황(storage_of · uploads_gb)으로 기록 · 표시만. → None(받는다) | {code, line(사용자 말), detail}."""
+    import shutil
+    need = max(0, int(add_bytes)) / 1e9
+    try:
+        s = config.load_yaml("requests") or {}
+    except Exception:  # noqa: BLE001
+        s = {}
+    reserve = float(s.get("disk_reserve_gb") or 200)
+    try:
+        free = shutil.disk_usage(config.DATA_ROOT).free / 1e9
+    except Exception:  # noqa: BLE001
+        free = None
+    if free is not None and free - need < reserve:
+        return {"code": "disk_full", "line": "지금은 서버 저장 공간이 모자라 올릴 수 없습니다 — LX 관리자에게 알려 주세요.",
+                "detail": {"dim": "disk", "tenant": tenant}}
+    return None
 
 
 def _set_file(set_id: str) -> str | None:
@@ -90,6 +127,7 @@ async def storage_of(tenant: str) -> dict:
             f = _set_file(sid) if sid else None
             if f:
                 rels.add(f)
+    up_rel = request_root_rel(tenant)                   # ⑤ 기관이 분석 의뢰로 올린 영상 원본(받는 중인 조각 포함 · 원칙 66)
     files_gb = 0.0
     for rel in sorted(rels):
         p = config.DATA_ROOT / rel
@@ -97,8 +135,10 @@ async def storage_of(tenant: str) -> dict:
             files_gb += round(p.stat().st_size / 1e9, 6)
         elif p.is_dir():
             files_gb += await du_gb(rel)
+    up_gb = await du_gb(up_rel) if (config.DATA_ROOT / up_rel).is_dir() else 0.0
+    files_gb += up_gb
     out = {"gb": round(files_gb + float(db_b or 0) / 1e9, 3), "files_gb": round(files_gb, 3), "db_gb": round(float(db_b or 0) / 1e9, 3),
-           "n_paths": len(rels), "n_jobs": len(jobs)}
+           "uploads_gb": round(up_gb, 3), "n_paths": len(rels) + 1, "n_jobs": len(jobs)}
     _st_cache[tenant] = (time.time(), out)
     return out
 
@@ -156,7 +196,7 @@ async def remaining(tenant: str, dim: str) -> dict:
 
 UNIT = {"storage_gb": "GB", "gpu_s_month": "gpu_s", "area_km2_month": "km2", "concurrent_jobs": "count", "egress_gb_month": "GB",
         "vworld_calls_day": "count", "llm_tokens_month": "tokens"}
-SRC = {"storage_gb": "결과 폴더·파일(기관 몫 작업 · 배포본 결과 세트) + 기관 DB 행(대장 · 실태조사 · 탐지) · 60s 캐시", "gpu_s_month": "usage_events(gpu_s · 이번 달 · 작업 귀속 기관)", "area_km2_month": "usage_events(area_km2 · 이번 달 · 작업 귀속 기관)",
+SRC = {"storage_gb": "결과 폴더·파일(기관 몫 작업 · 배포본 결과 세트) + 분석 의뢰로 올린 영상 원본 + 기관 DB 행(대장 · 실태조사 · 탐지) · 60s 캐시", "gpu_s_month": "usage_events(gpu_s · 이번 달 · 작업 귀속 기관)", "area_km2_month": "usage_events(area_km2 · 이번 달 · 작업 귀속 기관)",
        "concurrent_jobs": "jobs(state queued|running · 지금)", "egress_gb_month": "usage_events(egress_gb)", "vworld_calls_day": "Redis vworld:calls(오늘)",
        "llm_tokens_month": "usage_events(llm_tokens · 이번 달 · AI 도우미를 부른 기관)"}
 
@@ -175,7 +215,8 @@ async def usage_of(tenant: str) -> dict:
         if d == "storage_gb" and tenant != "lx":
             st = await storage_of(tenant)
             dims[d]["breakdown"] = {"files_gb": env(st["files_gb"], "GB", "measured", "결과 폴더·파일 크기(기관 몫 작업 · 배포본 결과 세트)"),
-                                    "db_gb": env(st["db_gb"], "GB", "measured", "기관 DB 행 크기(대장 · 실태조사 · 탐지 · 위성 지수)")}
+                                    "db_gb": env(st["db_gb"], "GB", "measured", "기관 DB 행 크기(대장 · 실태조사 · 탐지 · 위성 지수)"),
+                                    "uploads_gb": env(st.get("uploads_gb", 0.0), "GB", "measured", "분석 의뢰로 올린 영상 원본(받는 중 포함)")}
     # 선형 예측(gpu_s) — [추정]
     g = dims["gpu_s_month"]
     now = dt.datetime.now(KST)

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>분석 의뢰 · Land-XI</title>
+<meta name="description" content="우리 영상이나 LX 가 공유한 영상을 골라 서비스로 분석을 의뢰하고, 결과를 서비스의 새 시점으로 받는다.">
+<link rel="icon" href="../../assets/images/favicon_landxi.png">
+<link rel="stylesheet" href="../../proto/vendor/maplibre/maplibre-gl.css">
+<link rel="stylesheet" href="../kit/kit.css">
+<link rel="stylesheet" href="gov-request.css">
+<script src="../../proto/vendor/maplibre/maplibre-gl.js"></script>
+<script src="../../xi/vendor/pmtiles/pmtiles.js"></script>
+<script type="module" src="app.js"></script>
+</head>
+<body class="t gq-boot">
+<template id="tpl">
+<div class="gq">
+  <div class="gq-map" id="map"></div>
+
+  <!-- 왼쪽 위: 고른 서비스의 결과 시점(서비스 결과 + 의뢰로 더해진 시점) -->
+  <section class="t-card t-card--map gq-tp" id="tp" hidden aria-label="결과 시점">
+    <p class="t-label" id="tp-svc"></p>
+    <ol class="gq-tp-l" id="tp-list"></ol>
+  </section>
+
+  <!-- 오른쪽: 새 의뢰 · 내 의뢰 -->
+  <aside class="gq-sheet" aria-label="분석 의뢰">
+    <div class="gq-tabs" role="tablist">
+      <button type="button" role="tab" id="tab-new" aria-selected="true" data-tab="new">새 의뢰</button>
+      <button type="button" role="tab" id="tab-mine" aria-selected="false" data-tab="mine">내 의뢰<span class="gq-n num" id="mine-n"></span></button>
+    </div>
+
+    <div class="gq-pane" data-pane="new" role="tabpanel" aria-labelledby="tab-new">
+      <h2 class="gq-h">우리 영상으로 분석 의뢰</h2>
+      <section class="gq-stp" data-s="img">
+        <div class="gq-sh"><span class="n">1</span><b>영상</b></div>
+        <div class="gq-shared" id="shared"></div>
+        <p class="gq-or">또는 우리 영상 파일</p>
+        <div id="drop"></div>
+      </section>
+      <section class="gq-stp" data-s="read" id="read" hidden>
+        <div class="gq-sh"><span class="n">2</span><b>이렇게 읽었습니다</b></div>
+        <dl class="gq-kv" id="read-kv"></dl>
+        <p class="gq-ok" id="read-ok"></p>
+        <button type="button" class="t-btn t-btn--2 gq-small" id="read-drop" hidden>지우고 다시 고르기</button>
+      </section>
+      <section class="gq-stp" data-s="svc">
+        <div class="gq-sh"><span class="n" id="n-svc">2</span><b>어느 서비스로</b></div>
+        <div class="gq-chips" id="svcs" role="radiogroup" aria-label="서비스"></div>
+        <p class="gq-note" id="svc-note"></p>
+      </section>
+      <section class="gq-stp" data-s="memo">
+        <div class="gq-sh"><span class="n" id="n-memo">3</span><b>메모 한 줄</b><small>선택</small></div>
+        <input class="t-input" id="memo" type="text" maxlength="200" autocomplete="off" aria-label="메모 한 줄">
+      </section>
+      <button type="button" class="t-btn gq-go" id="go" disabled>분석 의뢰</button>
+      <p class="gq-note gq-after" id="go-note">LX 관리자가 확인한 뒤 분석합니다. 결과는 이 서비스의 새 시점으로 쌓입니다.</p>
+    </div>
+
+    <div class="gq-pane" data-pane="mine" role="tabpanel" aria-labelledby="tab-mine" hidden>
+      <ul class="gq-rows" id="rows"></ul>
+      <div class="gq-empty" id="rows-empty" hidden></div>
+      <div class="gq-det" id="det" hidden></div>
+    </div>
+  </aside>
+</div>
+</template>
+</body>
+</html>

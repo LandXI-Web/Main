@@ -5,7 +5,8 @@ GET  /approvals?state=pending|decided|all   → {items[{id, kind, subject, title
 POST /approvals                            {subject_type:'quota', subject_id: tenant, payload:{dim, soft?, hard?, policy?} | {dims:{dim:{soft,hard,policy}}}, reason} → 대기 행
 POST /approvals/{id}/decide                {decision: approve|reject, reason} → lx admin · 효과 적용(아래) · deploy.changed / approval.decided 이벤트
 효과: deploy(port) = 적용 확정 → 한 흐름 시작(deploys.on_port_decided: 영상 → 시범 + AI 분석 → 실태조사 · 영상 없으면 영상 등록 필요) · rule = 임계 적용(survey_rules · 버전 +1) ·
-      quota = quotas 표 갱신 · model = 모델 등록(registered / 반려 = candidate) · card = 서비스 공개(card_versions.approved_by = 결재한 관리자).
+      quota = quotas 표 갱신 · model = 모델 등록(registered / 반려 = candidate) · card = 서비스 공개(card_versions.approved_by = 결재한 관리자) ·
+      request = 기관 영상 분석 의뢰(확인 대장 6차 GF-2 · 무상) — 승인 = 기존 분석 작업 대기열(requests.after_decided) · 반려 = 사유가 기관 '내 의뢰'에.
 캔버스 ga 대기(카나리 · ga 승인 수 부족)도 '결재 대기'로 함께 보여 준다(행 없이 계산 · kind deploy_ga).
 
 impl-1(2026-09-30 · 확인 대장 FR-3 · D2-ⓐ · R&R 점검):
@@ -27,7 +28,7 @@ from .jobs import ops_event
 router = APIRouter()
 QUOTA_DIMS = ["storage_gb", "gpu_s_month", "area_km2_month", "concurrent_jobs", "egress_gb_month", "vworld_calls_day", "llm_tokens_month"]
 KIND_LABEL = {"deploy": "다른 지역에 적용", "deploy_ga": "운영 전환", "rule": "규칙 적용", "quota": "한도 변경", "model": "모델 등록",
-              "card": "서비스 공개"}
+              "card": "서비스 공개", "request": "분석 의뢰"}
 ROLE_WORD = {"admin": "LX 관리자", "staff": "LX 직원", "sales": "LX 영업"}
 
 
@@ -84,6 +85,8 @@ async def _title(conn, r) -> str:
     if st == "card":
         c = await conn.fetchval("SELECT c.name FROM card_versions v JOIN cards c ON c.id=v.card_id WHERE v.id=$1", sid)
         return ((c or {}).get("ko") if isinstance(c, dict) else c) or str(pl.get("name") or "새 서비스")
+    if st == "request":                                  # 기관 영상 분석 의뢰 — '남원시 · 비닐하우스 서비스'
+        return f"{pl.get('org') or ''} · {pl.get('service') or ''}".strip(" ·") or "분석 의뢰"
     return sid
 
 
@@ -119,11 +122,15 @@ async def list_approvals(request: Request, state: str = "pending"):
         who = await people(conn)
         cvs = [r["subject_id"] for r in rows if r["subject_type"] == "card"]
         live_cv = {x["id"] for x in await conn.fetch("SELECT id FROM card_versions WHERE id = ANY($1::text[])", cvs)} if cvs else set()
+        rqs = [r["subject_id"] for r in rows if r["subject_type"] == "request"]
+        live_rq = {x["id"] for x in await conn.fetch("SELECT id FROM analysis_requests WHERE id = ANY($1::text[])", rqs)} if rqs else set()
         items = []
         for r in rows:
             kind = r["subject_type"]
             if kind == "card" and r["subject_id"] not in live_cv:
                 continue                              # 지워진 서비스의 공개 결재(시험 잔여 등)는 결재함에 두지 않는다
+            if kind == "request" and r["subject_id"] not in live_rq:
+                continue                              # 지워진 분석 의뢰(시험 잔여 등)
             st = r["state"] or ("decided" if r["decision"] else "pending")
             pl = dict(r["payload"] or {})
             # 요청 사유: 대기 = reason 칸 · 결정 뒤 = payload.request_reason(옛 행은 결정 사유가 덮어써 없음 — 지어내지 않는다)
@@ -272,10 +279,16 @@ async def decide(aid: str, body: dict, request: Request):
             elif st == "card":                    # 서비스 공개(D2-ⓐ) — 승인자 = 결재한 관리자(만든 직원이 아니라)
                 await conn.execute("UPDATE card_versions SET approved_by=$2, approved_at=now() WHERE id=$1", sid, p.user_id)
                 effect = {"card_version": sid, "published": True}
+            elif st == "request":                 # 기관 영상 분석 의뢰(GF-2) — 분석 준비(대기열은 결재 뒤 배경에서)
+                from .requests import on_decided
+                effect = await on_decided(conn, sid, "approve", reason, p.user_id)
         elif st == "rule":
             await conn.execute("UPDATE survey_rules SET pending=NULL WHERE id=$1", sid)
         elif st == "model":
             await conn.execute("UPDATE models SET status='candidate' WHERE id=$1 AND status='pending'", sid)
+        elif st == "request":                     # 반려 사유가 기관 '내 의뢰'에 그대로
+            from .requests import on_decided
+            effect = await on_decided(conn, sid, "reject", reason, p.user_id)
         if r["reason"] is not None and "request_reason" not in pl:      # 요청 사유는 남기고, reason 칸에는 결정 사유를 적는다
             pl["request_reason"] = r["reason"]
         await conn.execute("UPDATE approvals SET state='decided', decision=$2, decided_by=$3, decided_at=now(), "
@@ -292,4 +305,7 @@ async def decide(aid: str, body: dict, request: Request):
         await ops_event("deploy.changed", {"deploy_id": sid, "action": "approval", "decision": dec, "tenant_id": tenant, "by": p.user_id, "at": now_iso()})
     if st == "card":
         await ops_event("deploy.changed", {"card_version_id": sid, "action": "card.publish", "decision": dec, "by": p.user_id, "at": now_iso()})
+    if st == "request":                           # 승인 = 기존 분석 작업 대기열(게이트웨이 대기열로만) · 기관 화면에 상태 알림
+        from .requests import after_decided
+        after_decided(sid, dec, p.user_id)
     return {"id": aid, "decision": dec, "kind": st, "subject": {"type": st, "id": sid}, "effect": _pub(effect), "as_of": now_iso()}
