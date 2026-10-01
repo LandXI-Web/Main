@@ -5,6 +5,7 @@ import { S, loadGpus, loadInfra, loadOrg } from './data.js';
 import { mountInfra } from './infra.js';
 import { mountTenants } from './tenants.js';
 import { mountDeploys } from './deploys.js';
+import { mountSpaces } from './spaces.js';   // 기관 → '기관 공간' 탭(구현 3차 · 13차 분기-3 ⓒ 1단 · 보기 · 지원만)
 // 결재 대기 수 — ops-core 와 같은 규칙 하나(pending())를 그대로 센다(셸 = ops-core 와 동일)
 import { loadPending as loadApprovals, pending } from '../../ops-core/js/data.js';     // 배지만 — 사용량 집계를 다시 부르지 않는다
 
@@ -52,6 +53,7 @@ const boot = document.createElement('div'); boot.className = 'oi-boot'; main.app
 empty(boot, { kind: 'loading' });
 
 const V = { infra: mountInfra(panes.infra), tenants: mountTenants(panes.tenants), deploys: mountDeploys(panes.deploys) };
+mountSpaces(panes.tenants);
 
 let cur = null;
 function show() {

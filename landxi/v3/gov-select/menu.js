@@ -10,6 +10,7 @@ export function govRail({ who, current = 'list', service = null } = {}) {
     { id: 'list', label: '내 서비스', icon: 'grid', href: at('gov-select/?list=1') },
     { id: 'request', label: '분석 의뢰', icon: 'deploy', href: at('gov-request/' + (service ? '?' + new URLSearchParams({ service }) : '')) },
     { id: 'sent', label: '내가 보낸 요청', icon: 'inbox', href: at('gov-select/?list=1&review=all') },
+    { id: 'space', label: '우리 공간', icon: 'folder', href: at('gov-space/') },   // 받은 1차 서비스의 결과 설명서 · 내려받기(구현 3차 · 13차 분기-2)
   ];
   if (mgr) items.push({ id: 'org', label: '기관 정보', icon: 'org', href: at('gov-select/?view=org') },
     { id: 'accounts', label: '계정', icon: 'list', href: at('gov-accounts/') });

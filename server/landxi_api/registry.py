@@ -469,3 +469,13 @@ try:
 except Exception as _e:  # noqa: BLE001
     import logging as _logging
     _logging.getLogger("landxi").warning("cards router 건너뜀: %r", _e)
+
+
+# 기관 분기 공간 1단(구현 3차 · 확인 대장 13차 분기-2 · 분기-3 ⓒ 1단 · 8차 API-형식 ⓐ) — 우리 공간(결과 설명서 · 내려받기 · 공간 안 알림) ·
+# LX 관리자 '기관 공간' 목록(landxi_api/spaces.py). 같은 방식으로 붙인다 — 불러오기에 실패해도 게이트웨이는 뜬다(로그 한 줄).
+try:
+    from . import spaces as _spaces
+    router.include_router(_spaces.router)
+except Exception as _e:  # noqa: BLE001
+    import logging as _logging
+    _logging.getLogger("landxi").warning("spaces router 건너뜀: %r", _e)

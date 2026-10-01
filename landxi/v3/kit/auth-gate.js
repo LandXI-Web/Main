@@ -43,6 +43,7 @@ export const ALLOW = {
   'gov-select': ['tenant/local'],   // 서비스 선택 · 서비스 대시보드 · 기관 정보(구현 2차 T3)
   'gov-request': ['tenant/local', 'tenant/global'],    // 분석 의뢰(구현 2차 — 우리 영상 · LX 공유 영상 → LX 관리자 승인)
   'gov-accounts': ['tenant/local', 'tenant/global'],   // 기관 관리자 계정(가입 신청 승인 · 재설정 · 계정) — 기관 관리자 여부는 화면 · 서버가 본다
+  'gov-space': ['tenant/local', 'tenant/global'],      // 우리 공간(구현 3차 · 13차 분기-2 — 결과 설명서 · 내려받기 · 공간 안 알림)
   'gov-home': null,                 // 기관 메인(로그인 전 · 그 기관 모습의 로그인) — 관문 없음
   global: ['tenant/global', 'lx/staff', 'lx/admin', 'lx/sales'],
   'help-my': ['lx/staff', 'lx/admin', 'lx/sales', 'tenant/demo', 'tenant/local', 'tenant/global'],

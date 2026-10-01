@@ -106,7 +106,7 @@ async def storage_of(tenant: str) -> dict:
     if c and time.time() - c[0] < 60:
         return c[1]
     from workers.metering import STORE_OWNER_EXPR
-    rels: set[str] = {f"results/{tenant}"}
+    rels: set[str] = {f"results/{tenant}", f"tenants/{tenant}/space"}   # ⑥ 기관 공간 저장 폴더(spaces.py · 가벼운 칸)
     async with db(realm="lx") as conn:
         jobs = await conn.fetch(f"SELECT j.id, j.tenant_id, j.result_set FROM jobs j WHERE NOT j.demo AND ({STORE_OWNER_EXPR}) = $1", tenant)
         snaps = await conn.fetch("SELECT snapshot_current, snapshot_prev FROM deploys WHERE tenant_id=$1 AND NOT coalesce(test, false)", tenant)
