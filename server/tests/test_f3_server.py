@@ -338,6 +338,11 @@ def test_s5_register_imagery(live, tok):
                 c.execute("DELETE FROM index_results WHERE job_id IN (SELECT id FROM jobs WHERE imagery_id=%s)", (iid,))
                 c.execute("DELETE FROM jobs WHERE imagery_id=%s", (iid,))
                 c.execute("DELETE FROM imagery WHERE id=%s", (iid,))
+                # 영상 표준(구현 3차) — 등록 작업이 만든 표준본(02. 데이터/cog/std) · 변환 기록
+                for (sp, op) in c.execute("SELECT std_path, orig_path FROM imagery_std WHERE source_kind='imagery' AND source_id=%s", (iid,)).fetchall():
+                    if sp and sp != op:
+                        (config.DATA_ROOT / sp).unlink(missing_ok=True)
+                c.execute("DELETE FROM imagery_std WHERE source_kind='imagery' AND source_id=%s", (iid,))
         p.unlink(missing_ok=True)
 
 

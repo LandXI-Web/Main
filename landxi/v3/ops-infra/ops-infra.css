@@ -306,6 +306,7 @@
 .sh-l .t{flex:1;min-width:0;display:flex;flex-direction:column}
 .sh-l .t b{font:500 14px/20px var(--font-body);color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sh-l .t span{font:400 12px/18px var(--font-body);color:var(--sub)}
+.sh-l .t .sh-o{color:var(--ink);font-variant-numeric:tabular-nums}  /* 원본 지울 날짜(영상 표준) */
 .sw{position:relative;flex:none;width:40px;height:24px;border:0;border-radius:12px;background:var(--rule);cursor:pointer;transition:background var(--d-180) var(--e-ui)}
 .sw i{position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.18);transition:transform var(--d-180) var(--e-ui)}
 .sw[aria-checked="true"]{background:var(--ink)}

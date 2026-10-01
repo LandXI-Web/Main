@@ -18,12 +18,7 @@ disk_reserve_gb: 200
 # 끝내지 못한 올리기 · 의뢰하지 않고 둔 파일 — 이 날 수가 지나면 지운다
 partial_ttl_days: 7
 
-# 분석이 끝난 원본을 얼마나 두나 — 기본값은 설계 확인 대기라 지금은 'keep'(보관). 숫자(일)를 적으면 분석 끝 뒤 그 날 수가 지나면 원본만 지운다(결과는 남음)
-retention_after_done: keep
-
-# 받는 형식 — 영상 파일 · 곁 파일(좌표 · 좌표계). JPG 는 좌표 파일(JGW 등)과 함께
-raster_ext: [tif, tiff, jpg, jpeg, jp2, ecw, img]
-sidecar_ext: [tfw, tifw, jgw, jpgw, jpw, j2w, wld, prj, aux.xml, ovr]
+# 받는 형식 · 표준 형식 · 원본 보관(표준본 확인 뒤 90일)은 영상 표준 설정 한 곳으로 옮겼다 — config/imagery.yaml(LX 영상 등록과 같은 값 · 원칙 94)
 
 # 좌표계 정보가 없는 파일(JPG + 좌표 파일 등)은 위치로 좌표계를 가려낸다 — 후보(앞에서부터)
 crs_guess: [5186, 5187, 5185, 5188, 5179, 32652, 32651, 4326]

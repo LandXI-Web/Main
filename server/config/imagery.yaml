@@ -1,0 +1,37 @@
+# 영상 표준(원칙 94 · 확인 대장 15차 영상-1 확인 · 영상-2 ⓐ JPEG 90 · 영상-3 ⓑ 90일) — 값은 여기 한 곳.
+# LX 영상 등록(데이터 올리기)과 기관 분석 의뢰가 같은 값을 읽는다. 게이트웨이 · 작업기는 파일이 바뀌면 다시 읽는다.
+# 들어오는 영상(ECW · TIF · JP2 · COG · 좌표 파일 딸린 JPG · IMG)은 표준 한 가지(COG · JPEG 품질 90 · 축소판 포함 · 빈 칸은 마스크)로 바꿔 보관한다.
+# 변환에 쓰는 GDAL 은 server/.env 한 곳: GDAL_BIN(서버 기본) · LX_ECW_GDAL_BIN(ECW · JP2 를 읽는 GDAL — 기본 QGIS 3.28.3 의 bin).
+# 영상마다 그 형식을 읽을 수 있는 GDAL 을 골라 쓴다(서버 기본이 먼저 · 못 읽는 형식만 다른 쪽).
+
+# 받는 형식 — 영상 파일 · 곁 파일(좌표 · 좌표계). JPG 는 좌표 파일(JGW 등)과 함께. ECW 의 좌표 파일은 EWW.
+accept:
+  raster: [tif, tiff, jpg, jpeg, jp2, j2k, ecw, img]
+  sidecar: [tfw, tifw, jgw, jpgw, jpw, j2w, wld, eww, prj, aux.xml, ovr]
+
+# 표준 한 가지
+standard:
+  blocksize: 512                 # 지도 한 칸 · 분석 한 조각을 파일 전체를 훑지 않고 읽는 타일 크기
+  overview_resampling: average   # 축소판은 평균으로 줄임
+  color: {compress: JPEG, quality: 90}   # 8비트 색 영상(3밴드 · 넷째 밴드가 투명 칸인 4밴드) — 확인 대장 15차 영상-2 ⓐ
+  value: {compress: ZSTD, level: 9}       # 값이 중요한 영상(16비트 · 실수 · 다중분광 · 1밴드 · 색표 영상) — 무손실
+  threads: 4                     # 변환 한 건에 CPU 4개(64개 중) — GPU 는 쓰지 않는다
+
+# 원본 — 표준본을 확인한 날부터 이 날 수가 지나면 정해진 작업(CPU 작업기 하루 한 번)이 지우고 감사 기록을 남긴다
+original:
+  keep_days: 90                  # 확인 대장 15차 영상-3 ⓑ
+  delete: true                   # false = 지울 날짜만 보여 주고 지우지 않음(보기만)
+  # 플랫폼이 받은 원본만 지운다(02. 데이터 아래 이 폴더들) — 서버 경로로 등록한 LX 보관 영상(원칙 17)은 표준본만 만들고 원본은 그대로 둔다
+  owned_roots: [tenants, cog/uploads]
+
+# 표준본 확인 — 크기 · 범위 · 좌표가 원본과 같은가 + 화질(영상이 있는 곳 몇 군데) — 기준 미달이면 한 번 더, 또 미달이면 원본을 그대로 쓰고 관리자에게
+check:
+  psnr_min_db: 38
+  ssim_min: 0.97
+  samples: 4
+
+convert:
+  inline_max_mb: 64      # 이보다 작은 파일은 읽는 자리에서 바로(몇 초) — 큰 파일은 CPU 작업기 대기열로
+  big_gb: 2              # 이보다 큰 파일은 한 번에 하나씩(작업기 둘이 큰 변환을 같이 돌리지 않게)
+  auto_max_gb: 50        # 서버 경로로 등록하는 보관 영상이 이보다 크면 자동으로 바꾸지 않는다(쌓인 영상 밤 변환은 사용자 결정 뒤)
+  wait_minutes: 240      # 분석 승인 뒤 표준본을 기다리는 최대 시간

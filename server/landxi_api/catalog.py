@@ -19,6 +19,12 @@ from .deps import ApiError, Principal, db, principal
 from .envelope import env, now_iso, today
 
 router = APIRouter()
+try:                                                    # 영상 표준(원칙 94) — 받는 형식 · 원본 지울 날짜(LX 관리자) · 같은 영상 묶음의 경로
+    from .imagery_std import router as _std_router
+    if _std_router is not None:
+        router.include_router(_std_router)
+except Exception:  # noqa: BLE001
+    pass
 PUBLIC_IMAGERY_PREFIX = ("xdworld-", "gibs-", "eox-", "pc-")
 
 
@@ -421,8 +427,23 @@ async def catalog_imagery(iid: str, request: Request):
 
 # ── S-5 영상 등록(F3 최종 명세 §3) ────────────────────────────────────────────
 IMAGERY_KINDS = {"ortho": "정사영상", "aerial": "항공영상", "drone": "드론 정사영상", "satellite": "위성영상"}
-RASTER_EXT = (".tif", ".tiff", ".vrt", ".jp2", ".img", ".ecw")
+def _raster_ext() -> tuple:
+    """LX 영상 등록이 받는 형식 = 영상 표준 설정 한 곳(config/imagery.yaml accept.raster) + 서버 안 모음 파일(VRT)."""
+    from .imagery_std import accept_raster
+    return tuple("." + e for e in accept_raster()) + (".vrt",)
+
+
+RASTER_EXT = (".tif", ".tiff", ".vrt", ".jp2", ".img", ".ecw")          # 옛 이름(다른 모듈 호환) — 등록은 _raster_ext()
 UPLOAD_MAX = 2 * 1024 ** 3
+
+
+def _std_guard(name: str) -> None:
+    """이 서버가 지금 바꿀 수 없는 형식이면 등록 전에 — LX 쪽에는 무엇이 없는지 그대로('ECW 변환기가 이 서버에 없습니다')."""
+    from .imagery_std import ext_of, unavailable
+    e = ext_of(name)
+    un = unavailable(True)
+    if e in un:
+        raise ApiError("format_unavailable", un[e], {"ext": e}, 400)
 
 
 @router.post("/catalog/imagery", status_code=201)
@@ -466,8 +487,9 @@ async def register_imagery(request: Request):
         raise ApiError("bad_request", "해당 지역이 없습니다", {"region": sgg})
     if upload is not None and hasattr(upload, "filename"):
         name = re.sub(r"[^\w.\-]", "_", upload.filename or "upload.tif")
-        if not name.lower().endswith(RASTER_EXT):
-            raise ApiError("bad_request", "래스터 파일(GeoTIFF 등)만", {"allowed": list(RASTER_EXT)})
+        if not name.lower().endswith(_raster_ext()):
+            raise ApiError("bad_request", "래스터 파일(GeoTIFF 등)만", {"allowed": list(_raster_ext())})
+        _std_guard(name)
         dest = config.DATA_ROOT / "cog" / "uploads" / f"{sgg}-{year}-{name}"
         dest.parent.mkdir(parents=True, exist_ok=True)
         size = 0
@@ -488,8 +510,9 @@ async def register_imagery(request: Request):
         if not path:
             raise ApiError("bad_request", "path 또는 upload 가 필요합니다")
         full = path if (":" in path[:3] or Path(path).is_absolute()) else str(config.DATA_ROOT / path)
-        if not Path(full).exists() or not full.lower().endswith(RASTER_EXT):
+        if not Path(full).exists() or not full.lower().endswith(_raster_ext()):
             raise ApiError("not_found", "영상 파일이 없습니다(서버 경로)")
+        _std_guard(full)
     iid = body.get("id") or f"img-{sgg}-{year}-{kind}"
     async with db(realm="lx") as conn:
         base, n = iid, 1
@@ -617,6 +640,22 @@ async def tenant_shares(tid: str, request: Request):
                                 "AND coalesce(i.kind,'ortho') <> 'terrain' AND (i.sgg_cd IS NOT NULL OR i.footprint IS NOT NULL)")
         sh = {r["imagery_id"]: r for r in await conn.fetch("SELECT imagery_id, shared_at FROM imagery_shares WHERE tenant_id=$1", tid)}
     cands = await run_in_threadpool(_share_candidates, tid, rows)
+    # 영상 표준(원칙 94 · 확인 대장 15차 영상-3 ⓑ) — 원본 지울 날짜 한 칸(숫자 한 출처 imagery_std · 경로는 내지 않는다)
+    from .imagery_std import date_word
+    async with db(realm="lx") as conn:
+        stds = {x["source_id"]: x for x in await conn.fetch(
+            "SELECT source_id, state, orig_delete_on, orig_deleted_at, orig_owned FROM imagery_std WHERE source_kind='imagery' AND source_id = ANY($1::text[])",
+            [r["id"] for r in cands])}
+
+    def _orig(iid: str) -> str | None:
+        x = stds.get(iid)
+        if not x or x["state"] != "ready":
+            return None
+        if x["orig_deleted_at"]:
+            return "원본 지움 · 표준본으로 씀"
+        if x["orig_delete_on"]:
+            return f"원본 지울 날짜 {date_word(x['orig_delete_on'])}"
+        return "원본 보관(지우지 않음)" if not x["orig_owned"] else None
     items = []
     for r in cands:
         g = float(r["gsd_m"]) if r["gsd_m"] is not None else None
@@ -625,7 +664,7 @@ async def tenant_shares(tid: str, request: Request):
         view = bool(r["pmtiles_set"]) or (r["tier"] == "raw" and analyze)      # 원본만 있는 영상도 공유하면 기관 지도에(서명 동적 타일 · 10-01)
         name = (r["name"] or {}).get("ko") if isinstance(r["name"], dict) else r["name"]
         items.append({"id": r["id"], "name": name or "영상", "year": int(ep[:4]) if ep[:4].isdigit() else None, "gsd_m": g,
-                      "gsd_word": gsd_word(g) if g else "", "view": view, "analyze": analyze, "shared": r["id"] in sh,
+                      "gsd_word": gsd_word(g) if g else "", "view": view, "analyze": analyze, "shared": r["id"] in sh, "orig": _orig(r["id"]),
                       "shared_at": sh[r["id"]]["shared_at"].astimezone(_KST).isoformat(timespec="seconds") if r["id"] in sh and sh[r["id"]]["shared_at"] else None})
     items.sort(key=lambda x: (not x["shared"], -(x["year"] or 0), x["name"]))
     return {"tenant_id": tid, "items": items, "total": len(items), "as_of": now_iso()}

@@ -65,6 +65,7 @@ for rid, tid, aid, jid, iid, src, did in c.execute("SELECT id, tenant_id, approv
     c.execute("DELETE FROM approvals WHERE id=%s OR (subject_type='request' AND subject_id=%s)", (aid, rid))
     for (rel,) in c.execute("SELECT rel_path FROM request_uploads WHERE request_id=%s OR draft_id=%s", (rid, did)).fetchall():
         shutil.rmtree((config.DATA_ROOT / rel).parent, ignore_errors=True)
+    c.execute("DELETE FROM imagery_std WHERE source_kind='upload' AND source_id IN (SELECT id FROM request_uploads WHERE request_id=%s OR draft_id=%s)", (rid, did))
     c.execute("DELETE FROM request_uploads WHERE request_id=%s OR draft_id=%s", (rid, did))
     c.execute("DELETE FROM analysis_requests WHERE id=%s", (rid,))
     if src == "upload" and iid: c.execute("DELETE FROM imagery WHERE id=%s AND layer->>'role'='request'", (iid,))

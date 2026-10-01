@@ -71,7 +71,8 @@ function xhr({ path, fields = {}, field = 'file' }, file, onProg) {
      allow: ['tif', 'jpg', …], max: bytes,   //   DELETE base/{id} = 취소 · POST base/{id}/finish = 끝
      title, kinds,                           // 놓는 칸 글(제목 · 형식 줄 — 문자열 하나 또는 줄마다 끊은 배열)
      onStart(json, item), onDone(item, json), onError(item, err), onChange(items) })
-   → { el, items(), add(files), busy(), clear() } */
+   → { el, items(), add(files), busy(), clear() }
+   고르는 순간: 파일 머리 검사 + 서버가 지금 받을 수 없는 형식({base}/formats · 있으면) — 안 맞으면 그 줄에 쉬운 말 한 줄(올리지 않음). */
 const UQ_CSS = `
 .k-uq{display:flex;flex-direction:column;gap:8px}
 .k-uq .k-drop{min-height:112px;padding:16px}
@@ -98,6 +99,28 @@ const MBf = (n) => { const m = n / 1048576; return m >= 1024 ? `${(m / 1024).toF
 const leftWord = (s) => (s == null || !Number.isFinite(s) ? '' : s < 60 ? ` · 남은 시간 ${Math.max(1, Math.round(s))}초` : ` · 남은 시간 약 ${Math.round(s / 60)}분`);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const extOf = (n) => { const s = String(n || '').toLowerCase(); return s.endsWith('.aux.xml') ? 'aux.xml' : (/\.([a-z0-9]+)$/.exec(s) || [])[1] || ''; };
+
+/* ── 고르는 순간 알리기(확인 대장 15차 '확인 없이 고칠 고장' ① · 원칙 100) ─────────────────────────────
+   ① 파일 머리(처음 몇 바이트)가 그 형식이 아니면 — 이름만 바꾼 파일 · 깨진 파일 — 올리기 전에 쉬운 말 한 줄.
+   ② 서버가 지금 바꿀 수 없는 형식(예: 변환기가 없는 ECW)이면 — 서버가 알려 준 한 줄({base}/formats · 설정 한 곳 config/imagery.yaml).
+   20GB 를 다 올린 뒤에야 '읽을 수 없음'을 보지 않게 한다. 서버 쪽도 같은 판정을 한 번 더 한다(올리기 시작 · 다 받은 뒤 읽기). */
+const MAGIC = {
+  tif: [[0x49, 0x49, 0x2a, 0x00], [0x4d, 0x4d, 0x00, 0x2a], [0x49, 0x49, 0x2b, 0x00], [0x4d, 0x4d, 0x00, 0x2b]],
+  jpg: [[0xff, 0xd8, 0xff]],
+  jp2: [[0x00, 0x00, 0x00, 0x0c, 0x6a, 0x50, 0x20, 0x20], [0xff, 0x4f, 0xff, 0x51]],
+  ecw: [[0x65, 0x02], [0x65, 0x03]],
+  img: [[0x45, 0x48, 0x46, 0x41, 0x5f, 0x48, 0x45, 0x41, 0x44, 0x45, 0x52]],          // 'EHFA_HEADER'
+};
+MAGIC.tiff = MAGIC.tif; MAGIC.ovr = MAGIC.tif; MAGIC.jpeg = MAGIC.jpg; MAGIC.j2k = MAGIC.jp2;
+const BAD_FILE = '영상으로 읽을 수 없는 파일입니다 — 다른 파일을 골라 주세요';
+async function looksRight(file, e) {
+  const sig = MAGIC[e];
+  if (!sig || !file.size) return true;
+  try {
+    const b = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+    return sig.some((s) => s.every((v, i) => b[i] === v));
+  } catch { return true; }                                          // 읽지 못하면 서버가 판정한다
+}
 
 /** 빠른 지문 — sha256(크기 + ':' + 앞 1MB + 뒤 1MB). 서버가 다 받은 뒤 같은 식으로 다시 잰다. 안전한 연결이 아니면 null(서버 전체 지문만) */
 export async function quickFingerprint(file) {
@@ -150,7 +173,17 @@ export function uploadQueue(el, { base, fields = () => ({}), allow = null, max =
     if (text != null) it.st.textContent = text;
     changed();
   }
+  /* 서버가 지금 받을 수 없는 형식 — 한 번만 묻는다(실패하면 머리 검사만) */
+  let formats = null;
+  const serverFormats = () => (formats ??= api(`${base}/formats`).catch(() => null));
+  async function check(it) {
+    const e = extOf(it.file.name);
+    if (!(await looksRight(it.file, e))) return BAD_FILE;
+    const un = (await serverFormats())?.unavailable || {};
+    return un[e] || null;
+  }
   function add(files) {
+    const fresh = [];
     for (const f of files || []) {
       const it = { file: f, id: null, state: 'wait', bytes: 0, ac: null, retry: false };
       items.push(it);
@@ -159,9 +192,17 @@ export function uploadQueue(el, { base, fields = () => ({}), allow = null, max =
       if (allow && !allow.includes(e)) { it.state = 'bad'; paint(it, '받지 않는 형식입니다'); continue; }
       if (f.size > max) { it.state = 'bad'; paint(it, `한 파일은 ${MBf(max)}까지 올릴 수 있습니다`); continue; }
       if (!f.size) { it.state = 'bad'; paint(it, '빈 파일입니다'); continue; }
-      paint(it, '기다리는 중');
+      it.state = 'check';                                          // 고르는 순간 — 올리기 전에 형식을 본다
+      paint(it, '파일을 확인하는 중');
+      fresh.push(it);
     }
-    pump();
+    Promise.all(fresh.map(async (it) => {
+      const why = await check(it).catch(() => null);
+      if (it.state !== 'check') return;                            // 그사이 취소
+      if (why) { it.state = 'bad'; paint(it, why); return; }
+      it.state = 'wait';
+      paint(it, '기다리는 중');
+    })).then(pump);
   }
   async function pump() {
     if (running) return;
@@ -259,7 +300,7 @@ export function uploadQueue(el, { base, fields = () => ({}), allow = null, max =
   zone.addEventListener('drop', (e) => { e.preventDefault(); zone.classList.remove('is-over'); add([...(e.dataTransfer?.files || [])]); });
   return {
     el, add, input, items: () => items.slice(),
-    busy: () => items.some((x) => ['wait', 'up'].includes(x.state)),
+    busy: () => items.some((x) => ['check', 'wait', 'up'].includes(x.state)),
     clear() { for (const it of items.slice()) { it.state = 'cancel'; it.ac?.abort(); it.el.remove(); } items.length = 0; changed(); },
   };
 }

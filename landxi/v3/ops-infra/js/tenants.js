@@ -42,7 +42,8 @@ function shares(o) {
     hold.hidden = !!items.length;
     if (!items.length) { hold.innerHTML = ''; empty(hold, { kind: 'first', title: '이 기관 관할에 LX 영상이 없습니다', compact: true }); }
     head.querySelector('.sh-n').textContent = items.length ? `${items.filter((x) => x.shared).length} / ${items.length}` : '';
-    ul.innerHTML = items.map((x) => `<li data-id="${esc(x.id)}"><div class="t"><b>${esc(x.name)}</b><span>${esc([x.year ? x.year + '년' : '', x.gsd_word, CAP(x)].filter(Boolean).join(' · '))}</span></div>
+    /* 원본 지울 날짜 한 칸(영상 표준 · 확인 대장 15차 영상-3 ⓑ — 표준본 확인 뒤 90일 · 서버 값 그대로) */
+    ul.innerHTML = items.map((x) => `<li data-id="${esc(x.id)}"><div class="t"><b>${esc(x.name)}</b><span>${esc([x.year ? x.year + '년' : '', x.gsd_word, CAP(x)].filter(Boolean).join(' · '))}</span>${x.orig ? `<span class="sh-o">${esc(x.orig)}</span>` : ''}</div>
       <button type="button" class="sw" role="switch" aria-checked="${x.shared}" aria-label="${esc(x.name)} 공유"><i></i></button></li>`).join('');
   };
   api(`/tenants/${encodeURIComponent(o.id)}/imagery-shares`).then((j) => { items = j.items || []; paint(); })

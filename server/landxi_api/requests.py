@@ -12,7 +12,9 @@
 관할 밖은 없다(원칙 39): 영상이 관할 밖이면 거절, 일부만 밖이면 관할 안만 분석(범위 판정은 regions 와 같은 규칙 — 연안 바다 포함).
 저장 공간(원칙 66 · 사용자 7차 답 10-01): 기관에는 막는 한도를 두지 않는다 — 올린 원본은 기관 사용 현황(저장)으로 기록 · 표시만 하고,
 서버 전체 저장 공간이 모자랄 때만 올리기를 막는다(남은 공간 기준 · 설정 한 곳). 분석은 LX 관리자 승인 + 대기열 순번. 같은 파일 두 번 올리기 방지(빠른 지문 · 전체 지문),
-끝내지 못한 올리기 · 의뢰하지 않은 파일은 정한 날 수 뒤 정리, 분석이 끝난 원본의 보관 기간은 설정 한 곳(지금 '보관').
+끝내지 못한 올리기 · 의뢰하지 않은 파일은 정한 날 수 뒤 정리.
+영상 표준(원칙 94 · 확인 대장 15차 영상-1~3): 다 받고 읽은 영상은 표준 한 가지(COG · JPEG 90 · 축소판 · 마스크)로 바꾸고 분석은 표준본으로 한다
+(ECW 처럼 서버 파이썬이 못 여는 형식도 그 형식을 읽는 GDAL 로 — imagery_std). 원본은 표준본 확인 뒤 90일에 정해진 작업이 지운다(감사 기록).
 기관이 올린 영상은 그 의뢰의 분석에만 쓴다 — 분석 동안만 영상 표에 '의뢰 영상'(layer.role 'request')으로 두고 끝나면 뺀다(다른 분석이 고르지 않게).
 
 GET    /requests/services                 그 기관에 켜진 서비스(?gsd= 영상 해상도에 맞는 모델이 있는가 fits)
@@ -37,6 +39,7 @@ import datetime as dt
 import hashlib
 import json
 import math
+import os
 import re
 import secrets
 import shutil
@@ -66,15 +69,16 @@ CHIP, OVERLAP, CONF = 1024, 0.125, 0.25           # 분석 작업 칸(배포 흐
 
 # ── 설정 한 곳(config/requests.yaml) ─────────────────────────────────────────
 def settings() -> dict:
+    from . import imagery_std as STD
     s = dict(config.load_yaml("requests") or {})
     s.setdefault("storage_root", "tenants/{tenant}/requests")
     s.setdefault("max_file_gb", 20)
     s.setdefault("chunk_mb", {"start": 1, "max": 8})
     s.setdefault("disk_reserve_gb", 200)
     s.setdefault("partial_ttl_days", 7)
-    s.setdefault("retention_after_done", "keep")
-    s.setdefault("raster_ext", ["tif", "tiff", "jpg", "jpeg", "jp2", "ecw", "img"])
-    s.setdefault("sidecar_ext", ["tfw", "tifw", "jgw", "jpgw", "jpw", "j2w", "wld", "prj", "aux.xml", "ovr"])
+    # 받는 형식 · 원본 보관은 영상 표준 설정 한 곳(config/imagery.yaml — LX 영상 등록과 같은 값 · 원칙 94)
+    s["raster_ext"] = STD.accept_raster()
+    s["sidecar_ext"] = STD.accept_sidecar()
     s.setdefault("crs_guess", [5186, 5187, 5185, 5188, 5179, 32652, 32651, 4326])
     return s
 
@@ -339,31 +343,46 @@ def _rm(*paths: Path) -> bool:
     return ok
 
 
+def _drop_std(upload_ids: list[str]) -> None:
+    """올린 파일을 지울 때 그 표준본도 지우고 기록을 'removed' 로(동기 · 스레드에서). 의뢰에 쓰인 원본 정리는 영상 표준 작업(90일)이 한다."""
+    from . import imagery_std as STD
+    for uid in upload_ids:
+        try:
+            rec = STD.get(source=("upload", uid))
+        except Exception:  # noqa: BLE001
+            rec = None
+        if not rec:
+            continue
+        if rec.get("std_path") and rec["std_path"] != rec["orig_path"]:
+            _rm(STD.absolute(rec["std_path"]))
+        STD.update(rec["id"], state="removed")
+
+
 async def _sweep(tenant: str, force: bool = False):
-    """끝내지 못한 올리기 · 의뢰하지 않은 파일(partial_ttl_days 뒤) · 보관 기간이 지난 분석 끝 원본(retention_after_done 이 숫자일 때만) 정리."""
+    """끝내지 못한 올리기 · 의뢰하지 않은 파일(partial_ttl_days 뒤) 정리(그 표준본까지).
+    분석에 쓰인 원본은 영상 표준 작업이 표준본 확인 날 + 90일에 지운다(config/imagery.yaml original.keep_days — 확인 대장 15차 영상-3 ⓑ)."""
     if not force and time.time() - _last_sweep.get(tenant, 0) < 600:
         return
     _last_sweep[tenant] = time.time()
     s = settings()
     ttl = float(s["partial_ttl_days"]) * 86400
     n = 0
+    gone: list[str] = []
     async with db(realm="lx") as conn:
         rows = await conn.fetch("SELECT * FROM request_uploads WHERE tenant_id=$1 AND request_id IS NULL AND state IN ('uploading','done') "
                                 "AND updated_at < now() - make_interval(secs => $2)", tenant, ttl)
-        ret = s.get("retention_after_done")
-        if isinstance(ret, (int, float)) and not isinstance(ret, bool) and ret > 0:
-            rows += await conn.fetch("SELECT u.* FROM request_uploads u JOIN analysis_requests q ON q.id=u.request_id WHERE u.tenant_id=$1 "
-                                     "AND u.state='done' AND q.state='done' AND q.updated_at < now() - make_interval(secs => $2)",
-                                     tenant, float(ret) * 86400)
         for r in rows:
             if not _rm(_path(r), _part(r)):
                 continue                                   # 열려 있는 파일 — 다음 정리 때
             await conn.execute("UPDATE request_uploads SET state='removed', updated_at=now() WHERE id=$1", r["id"])
+            gone.append(r["id"])
             n += 1
-        if n:
+    if gone:
+        await run_in_threadpool(_drop_std, gone)
+    if n:
+        async with db(realm="lx") as conn:
             await conn.execute("INSERT INTO audit_log(actor, realm, action, subject, before, after) VALUES ('system','system',"
                                "'request.upload.sweep',$1,NULL,$2)", tenant, {"removed": n})
-    if n:
         from .quota import invalidate_storage
         invalidate_storage(tenant)
 
@@ -404,13 +423,18 @@ async def up_start(body: dict, request: Request):
     """올리기 시작 — 형식 · 크기 · 서버 저장 여유 · 같은 파일을 먼저 검사한다(다 올린 뒤에 거절하지 않게). 같은 파일이면 받은 자리부터 이어 간다.
     기관 저장 한도로는 막지 않는다(사용 현황으로 기록만 — 사용자 7차 답)."""
     from . import quota as Q
+    from . import imagery_std as STD
     p = _tuser(request)
     s = settings()
     name = _safe_name(body.get("filename"))
     ext = _ext(name)
     if ext not in s["raster_ext"] and ext not in s["sidecar_ext"]:
-        raise ApiError("bad_ext", "영상 파일(TIF · JPG · JP2 · ECW)과 좌표 파일만 올릴 수 있습니다",
+        raise ApiError("bad_ext", "영상 파일만 올릴 수 있습니다 — 다른 파일은 받지 않습니다",
                        {"allowed": list(s["raster_ext"]) + list(s["sidecar_ext"])}, 400)
+    if ext in s["raster_ext"]:                             # 이 서버가 지금 바꿀 수 없는 형식(예: ECW 변환기가 없음) — 한 바이트도 받기 전에
+        un = await run_in_threadpool(STD.unavailable, False)
+        if ext in un:
+            raise ApiError("format_unavailable", un[ext], {"ext": ext}, 400)
     try:
         size = int(body.get("size") or 0)
     except (TypeError, ValueError):
@@ -464,6 +488,16 @@ async def up_start(body: dict, request: Request):
         await audit(conn, p, "request.upload.start", uid, None, {"draft_id": did, "size": size, "ext": ext})
     _sha[uid] = (0, hashlib.sha256())
     return _up_view(r, 0)
+
+
+@router.get("/requests/uploads/formats")
+async def up_formats(request: Request):
+    """받는 형식 · 지금 받을 수 없는 형식(한 줄) — 올리는 칸(kit/dropzone.js)이 파일을 고르는 순간 알리는 데 쓴다. 값은 config/imagery.yaml 한 곳."""
+    from . import imagery_std as STD
+    p = require(principal(request))
+    s = settings()
+    un = await run_in_threadpool(STD.unavailable, bool(p.is_lx))
+    return {"raster": s["raster_ext"], "sidecar": s["sidecar_ext"], "unavailable": un, "limit": {"size": _max_file()}, "as_of": now_iso()}
 
 
 @router.get("/requests/uploads/{uid}")
@@ -521,6 +555,7 @@ async def up_cancel(uid: str, request: Request):
             _rm(_part(r), _path(r))
             await conn.execute("UPDATE request_uploads SET state='cancelled', updated_at=now() WHERE id=$1", uid)
             await audit(conn, p, "request.upload.cancel", uid, None, {"draft_id": r["draft_id"]})
+    await run_in_threadpool(_drop_std, [uid])
     _sha.pop(uid, None)
     from .quota import invalidate_storage
     invalidate_storage(p.tenant_id)
@@ -596,6 +631,7 @@ async def draft_delete(did: str, request: Request):
             _rm(_part(r), _path(r))
         await conn.execute("UPDATE request_uploads SET state='cancelled', updated_at=now() WHERE draft_id=$1 AND state IN ('uploading','done')", did)
         await audit(conn, p, "request.draft.delete", did, None, {"files": len(rows)})
+    await run_in_threadpool(_drop_std, [r["id"] for r in rows])
     folder = config.DATA_ROOT / root_rel(p.tenant_id) / "drafts" / did
     shutil.rmtree(folder, ignore_errors=True)
     from .quota import invalidate_storage
@@ -611,36 +647,23 @@ class ReadFail(Exception):
 
 
 def _meta(path: Path) -> dict:
-    import warnings
-    import rasterio
+    """파일에서 읽은 값 — 서버 파이썬이 여는 형식은 그대로, 못 여는 형식(ECW 등)은 그 형식을 읽는 GDAL 명령으로(영상 표준 · imagery_std.inspect).
+    정말 못 읽는 파일이면 쉬운 말 한 줄과 다음 할 일만(원칙 100)."""
+    from affine import Affine
+    from rasterio.coords import BoundingBox
+    from . import imagery_std as STD
     try:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            ds = rasterio.open(str(path))
-    except Exception:
-        if _ext(path.name) == "ecw":
-            raise ReadFail("ecw", "ECW 파일은 이 서버에서 아직 바로 읽을 수 없습니다 — TIF 로 저장해 올려 주세요") from None
-        raise ReadFail("unreadable", "영상으로 읽을 수 없는 파일이 있습니다 — TIF · JPG · JP2 파일인지 확인해 주세요") from None
-    with ds:
-        epsg = None
-        if ds.crs:
-            try:
-                epsg = ds.crs.to_epsg() or ds.crs.to_epsg(confidence_threshold=40)
-            except Exception:
-                epsg = None
-        tags: dict = {}
-        for ns in (None, "EXIF"):
-            try:
-                tags.update(ds.tags(ns=ns) if ns else ds.tags())
-            except Exception:
-                pass
-        t = ds.transform
-        try:
-            ovr = bool(ds.overviews(1))
-        except Exception:
-            ovr = False
-        return {"name": path.name, "path": path, "w": ds.width, "h": ds.height, "count": ds.count, "dtype": ds.dtypes[0], "transform": t,
-                "bounds": ds.bounds, "epsg": epsg, "crs_known": bool(ds.crs), "georef": not t.is_identity, "tags": tags, "ovr": ovr}
+        i = STD.inspect(path)
+    except STD.Unreadable as u:
+        if u.code == "format_unavailable":
+            raise ReadFail("format_unavailable", "지금은 이 파일을 읽을 수 없습니다 — TIF 로 저장해 올려 주세요") from None
+        raise ReadFail("unreadable", "영상으로 읽을 수 없는 파일이 있습니다 — 지우고 다른 파일로 다시 올려 주세요") from None
+    t = Affine.from_gdal(*i["transform"])
+    w, h = i["w"], i["h"]
+    xs, ys = zip(*(t * c for c in ((0, 0), (w, 0), (0, h), (w, h))))
+    return {"name": path.name, "path": path, "w": w, "h": h, "count": i["count"], "dtype": i["dtypes"][0] if i["dtypes"] else "uint8",
+            "transform": t, "bounds": BoundingBox(min(xs), min(ys), max(xs), max(ys)), "epsg": i["epsg"], "crs_known": bool(i["crs_wkt"]),
+            "georef": not t.is_identity, "tags": i["tags"], "ovr": bool(i["overviews"]), "info": i}
 
 
 _DATE_TAGS = ("TIFFTAG_DATETIME", "EXIF_DateTimeOriginal", "EXIF_DateTimeDigitized", "EXIF_DateTime", "ACQUISITIONDATETIME",
@@ -776,6 +799,48 @@ def _corners(src: Path) -> list:
     return [[round(x, 7), round(y, 7)] for x, y in zip(xs, ys)]
 
 
+def _corners_m(m: dict, epsg: int) -> list:
+    """미리 보기 네 모서리 — 파일에서 읽은 값(변환 · 좌표계)으로(서버 파이썬이 못 여는 형식도)."""
+    from rasterio.warp import transform as wt
+    t, w, h = m["transform"], m["w"], m["h"]
+    pts = [t * (0, 0), t * (w, 0), t * (w, h), t * (0, h)]
+    xs, ys = wt(f"EPSG:{epsg}", "EPSG:4326", [x for x, _ in pts], [y for _, y in pts])
+    return [[round(x, 7), round(y, 7)] for x, y in zip(xs, ys)]
+
+
+def _preview_info(info: dict) -> str | None:
+    """서버 파이썬이 못 여는 형식(ECW 등)의 미리 보기 — 그 형식을 읽는 GDAL 로 작게 읽어서(웨이블릿 영상은 작게 읽기가 빠르다)."""
+    import numpy as np
+    from . import imagery_std as STD
+    arr, mask = STD.small(info, 640)
+    return _encode_preview(arr.astype("float32"), mask, info["dtypes"][0] if info["dtypes"] else "uint8")
+
+
+def _encode_preview(arr, mask, dtype: str) -> str | None:
+    """3×h×w + 마스크 → webp 데이터 주소. 가장자리와 이어진 흰색 · 검은색 테두리(드론 영상의 빈 칸)는 투명하게."""
+    import numpy as np
+    try:
+        import cv2
+    except Exception:
+        return None
+    from . import imagery_std as STD
+    if dtype != "uint8":
+        for i in range(3):
+            v = arr[i][mask > 0] if (mask > 0).any() else arr[i]
+            lo, hi = (np.percentile(v, 2), np.percentile(v, 98)) if v.size else (0, 1)
+            arr[i] = np.clip((arr[i] - lo) / max(hi - lo, 1e-6) * 255, 0, 255)
+    else:
+        try:
+            c = STD.collar_of(arr.astype("uint8"), mask)
+            if c is not None:
+                mask = np.minimum(mask, c[0])
+        except Exception:  # noqa: BLE001
+            pass
+    rgba = np.dstack([arr[2], arr[1], arr[0], mask.astype("float32")]).astype("uint8")
+    ok, buf = cv2.imencode(".webp", rgba, [cv2.IMWRITE_WEBP_QUALITY, 80])
+    return "data:image/webp;base64," + base64.b64encode(buf.tobytes()).decode() if ok else None
+
+
 def _preview(src: Path) -> str | None:
     """작은 미리 보기(가로 · 세로 640 이하 · 투명 테두리) — 큰 영상에 겹 해상도(오버뷰)가 없으면 만들지 않는다(읽기가 느려짐)."""
     import warnings
@@ -783,7 +848,7 @@ def _preview(src: Path) -> str | None:
     import rasterio
     from rasterio.enums import Resampling
     try:
-        import cv2
+        import cv2  # noqa: F401
     except Exception:
         return None
     with warnings.catch_warnings():
@@ -804,14 +869,7 @@ def _preview(src: Path) -> str | None:
                 mask = ds.dataset_mask(out_shape=(ph, pw))
             except Exception:
                 mask = np.full((ph, pw), 255, dtype="uint8")
-    if ds.dtypes[0] != "uint8":
-        for i in range(3):
-            v = arr[i][mask > 0] if (mask > 0).any() else arr[i]
-            lo, hi = (np.percentile(v, 2), np.percentile(v, 98)) if v.size else (0, 1)
-            arr[i] = np.clip((arr[i] - lo) / max(hi - lo, 1e-6) * 255, 0, 255)
-    rgba = np.dstack([arr[2], arr[1], arr[0], mask.astype("float32")]).astype("uint8")
-    ok, buf = cv2.imencode(".webp", rgba, [cv2.IMWRITE_WEBP_QUALITY, 80])
-    return "data:image/webp;base64," + base64.b64encode(buf.tobytes()).decode() if ok else None
+    return _encode_preview(arr, mask, ds.dtypes[0])
 
 
 def read_files(p: Principal, org: str, folder: Path, names: list[str]) -> dict:
@@ -822,20 +880,20 @@ def read_files(p: Principal, org: str, folder: Path, names: list[str]) -> dict:
     s = settings()
     rasters = [n for n in names if _ext(n) in s["raster_ext"]]
     if not rasters:
-        return {"ok": False, "code": "no_raster", "why": "영상 파일(TIF · JPG · JP2 · ECW)이 없습니다"}
+        return {"ok": False, "code": "no_raster", "why": "영상 파일이 없습니다 — 영상 파일을 함께 올려 주세요"}
     try:
         metas = [_meta(folder / n) for n in rasters]
         if not all(m["georef"] for m in metas):
-            return {"ok": False, "code": "no_georef", "why": "위치 정보가 없는 영상입니다 — 좌표 파일(JGW · TFW 등)을 함께 올려 주세요"}
+            return {"ok": False, "code": "no_georef", "why": "위치 정보가 없는 영상입니다 — 영상과 함께 받은 위치 파일도 같이 올려 주세요"}
         guessed = False
         for m in metas:
             if m["epsg"] is None:
                 g = _guess_crs(p, m)
                 if g is None:
-                    return {"ok": False, "code": "no_crs", "why": "좌표계를 알아볼 수 없는 영상입니다 — 좌표계 파일(PRJ)을 함께 올려 주세요"}
+                    return {"ok": False, "code": "no_crs", "why": "위치 기준을 알아볼 수 없는 영상입니다 — 영상과 함께 받은 파일을 모두 같이 올려 주세요"}
                 m["epsg"], guessed = g, guessed or not m["crs_known"]
         if len({m["epsg"] for m in metas}) > 1:
-            return {"ok": False, "code": "mixed_crs", "why": "좌표계가 서로 다른 파일이 섞여 있습니다 — 좌표계별로 따로 의뢰해 주세요"}
+            return {"ok": False, "code": "mixed_crs", "why": "위치 기준이 서로 다른 파일이 섞여 있습니다 — 파일을 나눠 따로 의뢰해 주세요"}
         epsg = metas[0]["epsg"]
         need_vrt = len(metas) > 1 or guessed or metas[0]["count"] < 3 or not metas[0]["crs_known"]
         src = folder / "_모음.vrt" if need_vrt else folder / rasters[0]
@@ -851,7 +909,10 @@ def read_files(p: Principal, org: str, folder: Path, names: list[str]) -> dict:
             "date": date, "date_word": _date_word(date), "date_src": date_src, "crs_word": CRS_WORD.get(epsg) or f"EPSG {epsg}",
             "crs_guessed": guessed, "footprint": mapping(fp), "bbox": list(fp.bounds)}
     try:
-        ov = {"coordinates": _corners(src), "url": _preview(src)}
+        if any(m["info"].get("reader") == "cli" for m in metas):     # 서버 파이썬이 못 여는 형식(ECW 등) — 첫 파일을 그 형식을 읽는 GDAL 로
+            ov = {"coordinates": _corners_m(metas[0], epsg), "url": _preview_info(metas[0]["info"])}
+        else:
+            ov = {"coordinates": _corners(src), "url": _preview(src)}
     except Exception:
         ov = None
     if inside is None:
@@ -862,7 +923,8 @@ def read_files(p: Principal, org: str, folder: Path, names: list[str]) -> dict:
     return {**base, "ok": True, "place": place, "sgg_cd": sgg, "scope": "partial" if out_pct else "in",
             "out_pct": env(out_pct, "%", "measured", "영상 범위 − 관할(읍면동 경계 · 연안 바다)") if out_pct else None,
             "area_km2": env(round(area, 3), "km2", "measured", "분석 범위(영상 범위 ∩ 관할 · EPSG:5186)"),
-            "aoi": mapping(inside), "overlay": ov, "_src": str(src), "_epsg": epsg}
+            "aoi": mapping(inside), "overlay": ov, "_src": str(src), "_epsg": epsg,
+            "_files": {m["name"]: {"epsg": m["epsg"] if not m["crs_known"] or not m["info"].get("epsg") else None} for m in metas}}
 
 
 def _public_read(rd: dict) -> dict:
@@ -903,7 +965,48 @@ async def draft_read(did: str, request: Request):
             cache.write_text(json.dumps(rd, ensure_ascii=False), encoding="utf-8")
         except Exception:
             pass
+    if rd.get("ok"):                                     # 읽었으면 바로 표준으로(영상 표준 · 원칙 94) — 분석은 표준본으로
+        await _kick_std(p.tenant_id, org, did, rows, rd)
     return {**_public_read(rd), "draft_id": did, "size": sum(int(r["size"]) for r in rows), "as_of": now_iso()}
+
+
+# ═══ 표준으로 바꾸기(영상 표준 · 원칙 94 · 확인 대장 15차 영상-1 · 영상-2 ⓐ) ═══════════════════════════
+_std_tasks: set = set()
+
+
+def _std_name(filename: str) -> str:
+    stem, _, ext = filename.rpartition(".")
+    stem = stem or filename
+    return f"{stem}.tif" if ext.lower() in ("tif", "tiff") else f"{stem}_{ext.lower()}.tif"
+
+
+async def _kick_std(tenant: str, org: str, did: str, rows, rd: dict) -> list[dict]:
+    """읽기가 끝난 묶음의 영상 파일 → 표준본(같은 묶음 std/ 폴더). 작은 파일은 게이트웨이에서 바로(몇 초) · 큰 파일은 CPU 작업기 대기열.
+    이미 기록이 있으면 건너뛴다(같은 묶음을 다시 읽어도 한 번). → 기록들."""
+    from . import imagery_std as STD
+    s = STD.settings()
+    files = rd.get("_files") or {}
+    folder = config.DATA_ROOT / root_rel(tenant) / "drafts" / did
+    raster = settings()["raster_ext"]
+    out = []
+    for r in rows:
+        if r["state"] != "done" or _ext(r["filename"]) not in raster:
+            continue
+        rec = await run_in_threadpool(STD.ensure, "upload", r["id"], _path(r), tenant=tenant, std_path=folder / "std" / _std_name(r["filename"]))
+        out.append(rec)
+        if rec["state"] != "queued" or rec.get("job_id"):
+            continue
+        epsg = (files.get(r["filename"]) or {}).get("epsg") or (rd.get("_epsg") if rd.get("crs_guessed") else None)
+        if int(r["size"]) <= float(s["convert"]["inline_max_mb"]) * 1e6:
+            t = asyncio.create_task(run_in_threadpool(STD.run_record, rec["id"], epsg=epsg))
+            _std_tasks.add(t)
+            t.add_done_callback(_std_tasks.discard)
+        else:
+            try:
+                await STD.enqueue(rec["id"], f"영상 표준 · {org} 올린 영상", epsg)
+            except Exception as e:  # noqa: BLE001 — 대기열이 없으면 분석 시작 때 다시
+                await run_in_threadpool(STD.update, rec["id"], error=f"대기열에 넣지 못함 — 분석 시작 때 다시({type(e).__name__})")
+    return out
 
 
 # ═══ 의뢰 ══════════════════════════════════════════════════════════════════
@@ -995,6 +1098,7 @@ async def create(body: dict, request: Request):
             rd = await run_in_threadpool(read_files, p, org, folder, [r["filename"] for r in rows])
         if not rd.get("ok"):
             raise ApiError(rd.get("code") or "unreadable", rd.get("why") or "영상을 읽지 못했습니다", None, 403 if rd.get("code") == "out_of_scope" else 409)
+        await _kick_std(p.tenant_id, org, draft, rows, rd)        # 읽기를 건너뛰고 바로 의뢰한 경우에도 표준본을 만든다(이미 있으면 그대로)
         inside = shape(rd["aoi"])
         gsd = float(rd["gsd_m"])
         date = rd.get("date")
@@ -1143,8 +1247,45 @@ async def timepoints(request: Request, service: str):
     return {"service": {"id": d["id"], "name": _svc_name(d["cname"])}, "items": items, "as_of": now_iso()}
 
 
-async def basis(conn, r) -> list:
-    """결재 판단 근거 — 범위 · 면적 · 영상 · 예상 시간 · 분석 모델 · 대기열 · 이 기관 이번 달 사용(막는 값이 아니라 보여 주는 값). 지금 있는 값만(없으면 줄을 만들지 않는다)."""
+async def _std_rows(rid: str) -> list[dict]:
+    """의뢰에 쓰인 올린 영상 파일의 표준 변환 기록(원본 지울 날짜 · 원본 · 표준본 크기 — 숫자 한 출처 imagery_std)."""
+    from . import imagery_std as STD
+    async with db(realm="lx") as conn:
+        ids = [x["id"] for x in await conn.fetch("SELECT id, filename FROM request_uploads WHERE request_id=$1 AND state='done'", rid)
+               if _ext(x["filename"]) in settings()["raster_ext"]]
+    out = []
+    for i in ids:
+        v = await run_in_threadpool(STD.get, None, source=("upload", i))
+        if v:
+            out.append(v)
+    return out
+
+
+def _std_line(recs: list[dict]) -> tuple[str | None, str | None]:
+    """→ (표준본 한 줄, 원본 지울 날짜 한 줄) — LX 쪽 판단 근거. 경로 · 도구는 내지 않는다."""
+    from . import imagery_std as STD
+    if not recs:
+        return None, None
+    st = {v["state"] for v in recs}
+    if st <= {"ready"}:
+        o = sum(int(v.get("orig_size") or 0) for v in recs)
+        n = sum(int(v.get("std_size") or 0) for v in recs)
+        line = ((f"표준본 {_gb(n / 1e9)} · 원본의 {round(100 * n / o)}%" if n < o else f"표준본 {_gb(n / 1e9)} · 원본의 {n / o:.1f}배")
+                if o and n and n != o else "표준본 확인(이미 표준 형식)")
+    elif "converting" in st or "queued" in st:
+        line = "표준본으로 바꾸는 중"
+    else:
+        line = next((v.get("error") for v in recs if v.get("error")), None) or "원본으로 분석"
+    days = sorted(v["orig_delete_on"] for v in recs if v.get("orig_delete_on") and not v.get("orig_deleted_at"))
+    gone = any(v.get("orig_deleted_at") for v in recs)
+    keep = int(STD.settings()["original"]["keep_days"])
+    when = STD.date_word(days[0]) if days else ("지웠습니다" if gone else (f"표준본 확인 뒤 {keep}일" if ("converting" in st or "queued" in st) else None))
+    return line, when
+
+
+async def basis(conn, r, lx: bool = False) -> list:
+    """결재 판단 근거 — 범위 · 면적 · 영상 · 예상 시간 · 분석 모델 · 대기열 · 이 기관 이번 달 사용(막는 값이 아니라 보여 주는 값). 지금 있는 값만(없으면 줄을 만들지 않는다).
+    LX 쪽(관리자 · 직원)에는 올린 영상의 표준본 · 원본 지울 날짜(영상 표준 · 확인 대장 15차 영상-3 ⓑ)도."""
     from . import quota as Q
     m = dict(r["meta"] or {})
     rows: list = []
@@ -1154,6 +1295,13 @@ async def basis(conn, r) -> list:
     put("영상", " · ".join(x for x in [m.get("label") if shared else None, _date_word(m.get("date")), m.get("gsd_word"), "LX 공유 영상" if shared else None] if x))
     if not shared:
         put("올린 파일", f"{m.get('files') or 1}개 · {_gb((m.get('size') or 0) / 1e9)}")
+        if lx:
+            try:
+                line, when = _std_line(await _std_rows(r["id"]))
+            except Exception:  # noqa: BLE001
+                line = when = None
+            put("표준본", line)
+            put("원본 지울 날짜", when)
     rng = m.get("place")
     if rng and m.get("out_pct"):
         rng += f" · 관할 밖 약 {m['out_pct']}%는 분석하지 않음"
@@ -1193,7 +1341,7 @@ async def get_request(rid: str, request: Request):
     m = dict(r["meta"] or {})
     v = _view(r, p)
     async with db(realm="lx") as conn:
-        v["basis"] = await basis(conn, r)
+        v["basis"] = await basis(conn, r, lx=bool(p.is_lx))
         who = None
         if p.is_lx:
             from .approvals import people
@@ -1295,9 +1443,86 @@ async def _enqueue(q: dict, body: dict, tenant: str, user: str | None) -> dict:
     return {"id": job_id, "result_set": rs}
 
 
-async def _register_upload_imagery(r) -> str:
-    """올린 영상 → 분석 동안만 쓰는 의뢰 영상 한 줄(layer.role 'request' — 영상 목록 · 다른 분석의 영상 고르기에 나오지 않는다)."""
+_waiting: set = set()
+
+
+async def _std_source(r) -> tuple[str | None, str | None]:
+    """의뢰에 쓰인 올린 파일들의 표준본 → 분석 원천(파일 하나 또는 표준본 모음). 아직 바꾸는 중이면 기다린다(작업기 대기열 · 설정 wait_minutes).
+    표준본을 만들지 못한 파일은 원본을 쓴다(서버 파이썬이 여는 형식만) — 원본도 못 읽으면 (None, 사유).
+    기다리는 동안 의뢰의 시작 표시를 새로 적어 다른 곳(목록 보기의 다시 시작)이 같은 분석을 두 번 넣지 않게 한다."""
+    from . import imagery_std as STD
+    s = STD.settings()
+    async with db(realm="lx") as conn:
+        rows = await conn.fetch("SELECT * FROM request_uploads WHERE request_id=$1 AND state='done' ORDER BY created_at", r["id"])
+        org = await _tenant_name(conn, r["tenant_id"])
+    raster = settings()["raster_ext"]
+    rows = [x for x in rows if _ext(x["filename"]) in raster]
+    if not rows:
+        return None, "올린 영상 파일이 없습니다"
     m = dict(r["meta"] or {})
+    folder = _path(rows[0]).parent
+    rd = {"_epsg": m.get("epsg"), "crs_guessed": False}
+    try:
+        rd = json.loads((folder / "_읽은값.json").read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        pass
+    deadline = time.time() + float(s["convert"]["wait_minutes"]) * 60
+    kicked = revived = False
+    while True:
+        recs = {}
+        for x in rows:
+            recs[x["id"]] = await run_in_threadpool(STD.get, None, source=("upload", x["id"]))
+        # 바꾸던 쪽이 사라진 기록(게이트웨이가 다시 뜸 — 바꾸는 동안은 5분마다 기록을 새로 적는다) → 한 번 다시 줄 세운다
+        dead = [v for v in recs.values() if v and v["state"] == "converting" and v.get("updated_at")
+                and (dt.datetime.now(KST) - v["updated_at"]).total_seconds() > 900]
+        if dead and not revived:
+            for v in dead:
+                await run_in_threadpool(STD.update, v["id"], state="queued", job_id=None)
+            revived, kicked = True, False
+            continue
+        if not kicked and any(v is None or (v["state"] == "queued" and not v.get("job_id")) for v in recs.values()):
+            await _kick_std(r["tenant_id"], org, r["draft_id"], rows, rd)          # 게이트웨이가 다시 떠 끊긴 경우
+            kicked = True
+            continue
+        if all(v and v["state"] in ("ready", "failed", "deferred", "removed") for v in recs.values()) or time.time() > deadline:
+            break
+        async with db(realm="lx") as conn:
+            await conn.execute("UPDATE analysis_requests SET meta = coalesce(meta,'{}'::jsonb) || jsonb_build_object('starting_at', extract(epoch FROM now())) "
+                               "WHERE id=$1", r["id"])
+        await asyncio.sleep(5)
+    paths = []
+    for x in rows:
+        v = recs.get(x["id"])
+        if v and v["state"] == "ready" and v.get("std_path"):
+            paths.append(STD.absolute(v["std_path"]))
+        elif STD.ext_of(x["filename"]) in ("tif", "tiff", "jpg", "jpeg", "jp2", "img") and _path(x).exists():
+            paths.append(_path(x))                            # 표준본이 없으면 원본(서버 파이썬이 여는 형식)
+        else:
+            return None, ("서버 저장 공간이 모자라 분석하지 못했습니다 — LX 담당자가 확인합니다" if v and v["state"] == "deferred"
+                          else "영상 파일을 읽을 수 없습니다 — LX 담당자가 확인합니다")
+    if len(paths) == 1 and not (rd.get("crs_guessed") and paths[0] == _path(rows[0])):
+        return str(paths[0]), None
+    # 여러 파일(또는 위치로 가려낸 좌표계의 원본) — 표준본 모음 파일 하나(복사 0)
+    def build():
+        metas = [_meta(pth) for pth in paths]
+        ep = int(m.get("epsg") or rd.get("_epsg") or metas[0]["epsg"] or 5186)
+        for mm in metas:
+            mm["name"] = os.path.relpath(mm["path"], folder).replace("\\", "/")
+        out = folder / "_모음_표준.vrt"
+        _write_vrt(out, metas, ep)
+        return str(out)
+    try:
+        return await run_in_threadpool(build), None
+    except ReadFail as e:
+        return None, e.line
+
+
+async def _register_upload_imagery(r, src: str | None = None) -> str:
+    """올린 영상 → 분석 동안만 쓰는 의뢰 영상 한 줄(layer.role 'request' — 영상 목록 · 다른 분석의 영상 고르기에 나오지 않는다).
+    분석 원천 = 표준본(영상 표준) — 없으면 읽기 때 만든 원본 모음."""
+    m = dict(r["meta"] or {})
+    if src:
+        m["src"] = src
     iid = f"rqimg-{r['id'][3:]}"
     year = int(str(m.get("date") or "0")[:4] or 0) or None
     async with db(realm="lx") as conn:
@@ -1328,7 +1553,24 @@ async def start_analysis(rid: str, user: str) -> None:
         if not r or r["state"] != "approved":
             return
         m = dict(r["meta"] or {})
-        iid = r["imagery_id"] if r["source"] == "shared" else await _register_upload_imagery(r)
+        if r["source"] == "upload":
+            if rid in _waiting:                               # 이 게이트웨이가 이미 표준본을 기다리는 중
+                return
+            _waiting.add(rid)
+            try:
+                src, why = await _std_source(r)
+            finally:
+                _waiting.discard(rid)
+            if not src:
+                await _fail(rid, "imagery_unavailable", why or FAIL_LINE["imagery_unavailable"])
+                return
+            async with db(realm="lx") as conn:                # 기다리는 사이 다른 쪽이 시작했으면 여기서 멈춘다(두 번 넣지 않게)
+                again = await conn.fetchrow("SELECT state, job_id FROM analysis_requests WHERE id=$1", rid)
+            if not again or again["state"] != "approved" or again["job_id"]:
+                return
+            iid = await _register_upload_imagery(r, src)
+        else:
+            iid = r["imagery_id"]
         async with db(realm="lx") as conn:
             pk = await choose_model(conn, r["model_override"], r["card_id"], r["card_version_id"], m.get("gsd_m"))
             img = await conn.fetchrow("SELECT id, gsd_m FROM imagery WHERE id=$1", iid)

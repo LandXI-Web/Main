@@ -109,6 +109,8 @@ def made(live):
     for did in set(box["dr"]):
         for (rel,) in c.execute("SELECT rel_path FROM request_uploads WHERE draft_id=%s", (did,)).fetchall():
             shutil.rmtree((config.DATA_ROOT / rel).parent, ignore_errors=True)
+        # 영상 표준(구현 3차) — 올린 파일마다 남는 변환 기록(표준본은 같은 묶음 폴더 안이라 위에서 함께 지워짐)
+        c.execute("DELETE FROM imagery_std WHERE source_kind='upload' AND source_id IN (SELECT id FROM request_uploads WHERE draft_id=%s)", (did,))
         c.execute("DELETE FROM request_uploads WHERE draft_id=%s", (did,))
     c.close()
 

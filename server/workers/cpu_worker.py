@@ -429,8 +429,26 @@ def finalize_cpu(job_id: str):
 finalize_index = finalize_cpu     # 예전 이름(호환)
 
 
+def std_retention_loop():
+    """영상 표준(원칙 94 · 확인 대장 15차 영상-3 ⓑ) — 원본 지울 날짜(표준본 확인 날 + 90일)가 지난 원본을 지운다.
+    하루 한 번 · 작업기 여럿 중 하나만(Redis 표시) · 플랫폼이 받은 원본만 · 지운 것은 감사 기록(audit_log 'imagery.original.delete').
+    config/imagery.yaml original.delete 가 false 면 보기만(목록만 남김). GPU 0."""
+    while True:
+        try:
+            day = time.strftime("%Y-%m-%d")
+            if r().set(f"imagery_std:purge:{day}", WID, nx=True, ex=2 * 86400):
+                from landxi_api import imagery_std
+                out = imagery_std.purge(log=lambda m: log(WHO, m))
+                log(WHO, f"영상 표준 원본 정리 {day}: 지움 {out['deleted']} · 건너뜀 {out['skipped']} · 대상 {len(out['items'])} · 보기만 {out['dry_run']}")
+        except Exception as e:  # noqa: BLE001
+            log(WHO, "영상 표준 원본 정리 오류", repr(e))
+        time.sleep(3600)
+
+
 def main():
     threading.Thread(target=heartbeat, daemon=True).start()
+    if FINALIZE:
+        threading.Thread(target=std_retention_loop, daemon=True, name="std-retention").start()
     ads = scan_adapters()
     log(WHO, "adapters:", ", ".join(f"{k}({v['_scope']}·{v.get('device')})" for k, v in ads.items()))
     if FINALIZE:
