@@ -2,13 +2,16 @@
    왼쪽 메뉴 = LX 직원 메뉴('프로젝트' 불) · 한 장에서는 마스트 아래 한 줄에 그 프로젝트의 단계 6(context.js) — 생산 6단계는 메뉴가 아니라 프로젝트 안.
    ?project= 없음 = 목록·관리: 내가 만든 · 참여한 · 보관(끝난 것) · 전체 · 새 프로젝트(사용자 10-01 "기존 내가 만든 프로젝트는 어디에서 관리하는지?")
                  줄마다 6칸 진행 막대 · 다음 할 일 · 막힌 곳(앞 단계 남음 · 결재 대기 · 반려 — 없으면 —) · 무엇을 · 어디 · 마지막 활동(제안 2 S-14 ⓑ · 걸러 보기는 나중)
-   ?project=  있음 = 한 장: 지금 단계 · 다음 할 일 하나(그 단계 화면으로) · 단계 6(완료 조건 자동 판정 — 서버) · 사람(프로젝트장 · 구성원) · 재학습 · 보관
-   숫자·판정은 전부 서버(GET /projects · /projects/{id}). 부품 = 키트(셸 · 관문 · 표 · 스텝퍼 · 빈 화면 · 토스트)만 조합. */
+   ?project=  있음 = 한 장: 지금 단계 · 다음 할 일 하나(그 단계 화면으로) · 단계 6(완료 조건 자동 판정 — 서버) · 사람(프로젝트장 · 구성원) · 재학습 · 기록 · 보관
+              구현 5차(확인 17차 — 배치는 그대로 두고 칸 안만): 사람의 '넘기기'(P-5 ⓐ) · 재학습 근거 띠 + 사유 창(P-3 ⓐ) · 기록 · 메모 · 파일 최근 3줄 + 서랍(P-4 ⓐ) — sheets.js
+   맨 위 알림 한 줄(프로젝트장을 넘겨받음 — context.js projectNotices · 대시보드 '내 프로젝트'와 같은 부품)
+   숫자·판정은 전부 서버(GET /projects · /projects/{id}). 부품 = 키트(셸 · 관문 · 표 · 스텝퍼 · 빈 화면 · 토스트 · 가운데 창 · 서랍)만 조합. */
 import * as K from '../kit/index.js';
 import { h, api } from '../kit/util.js';
-import { PID, projectRail, attachProject, refreshRail, stageHref, projectHref, loadProject, stepSegHtml, stuckHtml, nb } from './context.js';
+import { PID, projectRail, attachProject, refreshRail, stageHref, projectHref, loadProject, stepSegHtml, stuckHtml, nb, projectNotices } from './context.js';
 import { staffMenu } from '../kit/lx-menu.js';
 import { openNewProject } from './new.js';
+import { retrainCard, logCard, openHandover } from './sheets.js';
 
 const who = await K.gate('lx-console');                  // 들어오는 사람 = LX 직원 대시보드와 같다(LX 직원 · 관리자)
 const Q = new URLSearchParams(location.search);
@@ -39,7 +42,9 @@ async function list() {
     h('button.t-btn.lxp-newb', { type: 'button', text: '새 프로젝트', onclick: () => openNewProject() }));
   const tabs = h('div.lxp-tabs', { role: 'tablist', 'aria-label': '프로젝트 묶음' });
   const body = h('section.t-card.lxp-list');
-  page.append(head, tabs, body);
+  const notes = h('div.lxp-ntcs');
+  page.append(head, notes, tabs, body);
+  projectNotices(notes);
   const wait = h('div'); body.append(wait);
   K.empty(wait, { kind: 'loading' });
   let scope = TABS.some(([k]) => k === Q.get('scope')) ? Q.get('scope') : null;
@@ -140,9 +145,13 @@ function draw(pr) {
 
   /* 단계 6 — 마스트 아래 한 줄(context.js · 단계 화면들과 같은 막대 · 완료 조건은 서버 판정) */
 
-  /* 사람 — 프로젝트장(바꾸기 = 관리자) · 구성원(더하기 · 빼기 = 프로젝트장) */
+  /* 사람 — 프로젝트장(넘기기 = 프로젝트장 본인 · LX 관리자 — P-5 ⓐ) · 구성원(더하기 · 빼기 = 프로젝트장) */
   const ppl = h('section.t-card.lxp-people', { 'aria-label': '사람' }, h('h2.lxp-h', { text: '사람' }));
   const leadRow = h('div.lxp-row', {}, h('span.t-label', { text: '프로젝트장' }), h('span.lxp-who', { text: whoText(pr.lead) }));
+  if (pr.can?.lead && !archived) {
+    leadRow.classList.add('lxp-row--act');
+    leadRow.append(h('button.lxp-link', { type: 'button', text: '넘기기', onclick: () => openHandover(pr, { onDone: (out) => { draw(out); refreshRail(S, rail, out, null); } }) }));
+  }
   ppl.append(leadRow);
   const memRow = h('div.lxp-row.lxp-row--top', {}, h('span.t-label', { text: '구성원' }));
   const memList = h('div.lxp-mems');
@@ -158,31 +167,19 @@ function draw(pr) {
   if (!(pr.members || []).length) memList.append(h('span.lxp-none', { text: '없음' }));
   memRow.append(memList);
   ppl.append(memRow);
-  if (pr.can?.members && !archived) peoplePicker(ppl, pr, 'member');
-  if (pr.can?.lead && !archived) peoplePicker(ppl, pr, 'lead');
+  if (pr.can?.members && !archived) peoplePicker(ppl, pr);
   right.append(ppl);
 
-  /* 재학습 — 공개된 서비스만 · 프로젝트장만(역할-3 ⓑ · 구현 확인 2차 J-2 — 서버도 같은 규칙으로 막는다) · 배포는 LX 관리자 승인 */
+  /* 재학습 — 공개된 서비스만 · 프로젝트장만(역할-3 ⓑ · 구현 확인 2차 J-2 — 서버도 같은 규칙으로 막는다) · 배포는 LX 관리자 승인.
+     근거 = 시간 띠 하나 + 칩 셋(서버 basis) · 사유는 '재학습 시작'을 누를 때 작은 창에서 하나(P-3 ⓐ — sheets.js) */
   if (pr.published && !archived) {
-    const rt = h('section.t-card.lxp-retrain', { 'aria-label': '재학습' }, h('h2.lxp-h', { text: '재학습' }));
-    if (pr.can?.retrain) {
-      rt.append(h('p.lxp-p', {}, `같은 프로젝트에서 ${round + 1}차로 다시 학습하고,`, h('br'), '배포는 LX 관리자 승인 뒤 바뀝니다'));
-      const b = h('button.t-btn.t-btn--2.lxp-rt', { type: 'button', text: `${round + 1}차 재학습 시작` });
-      b.addEventListener('click', async () => {
-        b.disabled = true;
-        try {
-          const p2 = await api(`/projects/${pr.id}/rounds`, { method: 'POST', body: {} });
-          K.toast(`${round + 1}차 학습 단계로 돌아갔습니다`);
-          const t = p2.stages?.find((s) => s.key === 'train');
-          location.href = stageHref(p2, 'train', t?.target);
-        } catch (e) { K.toast(e.message || '재학습을 시작하지 못했습니다'); b.disabled = false; }
-      });
-      rt.append(b);
-    } else {
-      rt.append(h('p.lxp-p', { text: '재학습은 프로젝트장이 시작합니다' }));
-    }
-    right.append(rt);
+    right.append(retrainCard(pr, {
+      onStart: (p2) => { const t = p2.stages?.find((s) => s.key === 'train'); location.href = stageHref(p2, 'train', t?.target); },
+    }));
   }
+
+  /* 기록 · 메모 · 파일 — 최근 3줄 + 모두 보기 서랍(P-4 ⓐ) · 구성원 · 프로젝트장 · LX 관리자만(서버 판정) */
+  if (pr.can?.log) right.append(logCard(pr));
 
   /* 보관 · 다시 열기 */
   if (pr.can?.archive) {
@@ -199,21 +196,20 @@ async function act(fn, done) {
   catch (e) { K.toast(e.message || '바꾸지 못했습니다'); }
 }
 
-/** 구성원 더하기 · 프로젝트장 바꾸기(관리자) — LX 직원 · 관리자 이름 목록에서 고른다 */
-function peoplePicker(host, pr, kind) {
-  const sel = h('select.t-input.lxp-sel', { 'aria-label': kind === 'lead' ? '새 프로젝트장' : '더할 구성원' });
-  const b = h('button.t-btn.t-btn--2', { type: 'button', text: kind === 'lead' ? '프로젝트장 바꾸기' : '구성원 더하기', disabled: true });
+/** 구성원 더하기 — LX 직원 · 관리자 이름 목록에서 고른다(프로젝트장 넘기기는 사람 칸의 '넘기기' 창 — sheets.js) */
+function peoplePicker(host, pr) {
+  const sel = h('select.t-input.lxp-sel', { 'aria-label': '더할 구성원' });
+  const b = h('button.t-btn.t-btn--2', { type: 'button', text: '구성원 더하기', disabled: true });
   host.append(h('div.lxp-add', {}, sel, b));
   api('/projects/people').then((j) => {
     const have = new Set([pr.lead?.id, ...(pr.members || []).map((m) => m.id)]);
-    const opts = (j.items || []).filter((x) => (kind === 'lead' ? x.id !== pr.lead?.id : !have.has(x.id)));
-    sel.innerHTML = `<option value="">${kind === 'lead' ? '새 프로젝트장 고르기' : '구성원 고르기'}</option>` + opts.map((x) => `<option value="${esc(x.id)}">${esc(whoText(x))}</option>`).join('');
+    const opts = (j.items || []).filter((x) => !have.has(x.id));
+    sel.innerHTML = '<option value="">구성원 고르기</option>' + opts.map((x) => `<option value="${esc(x.id)}">${esc(whoText(x))}</option>`).join('');
     sel.addEventListener('change', () => { b.disabled = !sel.value; });
   }).catch(() => { sel.disabled = true; });
   b.addEventListener('click', () => {
     if (!sel.value) return;
-    if (kind === 'lead') act(() => api(`/projects/${pr.id}`, { method: 'PATCH', body: { lead_id: sel.value } }), '프로젝트장을 바꿨습니다');
-    else act(() => api(`/projects/${pr.id}/members`, { method: 'POST', body: { user_id: sel.value } }), '구성원을 더했습니다');
+    act(() => api(`/projects/${pr.id}/members`, { method: 'POST', body: { user_id: sel.value } }), '구성원을 더했습니다');
   });
 }
 

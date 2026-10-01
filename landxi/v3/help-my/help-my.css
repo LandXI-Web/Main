@@ -66,6 +66,8 @@ html.hm-embed body{overflow:auto;overscroll-behavior:contain}
 .hm-me dt{flex:none;width:72px;color:var(--sub);font:400 var(--fs-label)/var(--lh-label) var(--font-body)}
 .hm-me dd{margin:0;flex:1;min-width:0;color:var(--ink);font:500 15px/22px var(--font-body);word-break:keep-all}
 .hm-out{width:100%}
+.hm-me-acts{display:flex;gap:8px}
+.hm-me-acts .t-btn{flex:1}   /* 내 정보 고치기 · 로그아웃(LX 계정 — 확인 17차 P-5 ⓐ) */
 
 @media (max-width:640px){
   .hm-stage{padding:16px}

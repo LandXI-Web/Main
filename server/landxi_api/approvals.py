@@ -1,6 +1,7 @@
 """결재함(F3 최종 명세 §3 S-9) — 배포(다른 지역에 적용 · ga 승격) · 규칙(임계 활성화) · 쿼터(한도 변경) · 모델 등록 · 서비스 공개를 한 줄로 읽고 결정한다.
 
-GET  /approvals?state=pending|decided|all   → {items[{id, kind, subject, title, requested_by, requested_by_name, request_reason, at, payload, mine}], counts}
+GET  /approvals?state=pending|decided|all   → {items[{id, kind, subject, title, requested_by, requested_by_name, request_reason, retrain, at, payload, mine}], counts}
+                                               retrain = 재학습 회차에서 나온 모델 등록 · 서비스 공개면 {round, reason, project}(프로젝트장이 고른 사유 · 확인 17차 P-3 ⓐ) · 아니면 null
                                                lx admin(전체) · staff(자기 요청 — 반려 사유가 요청한 사람 화면으로 돌아가는 길)
 POST /approvals                            {subject_type:'quota', subject_id: tenant, payload:{dim, soft?, hard?, policy?} | {dims:{dim:{soft,hard,policy}}}, reason} → 대기 행
 POST /approvals/{id}/decide                {decision: approve|reject, reason} → lx admin · 효과 적용(아래) · deploy.changed / approval.decided 이벤트
@@ -31,7 +32,7 @@ from .jobs import ops_event
 router = APIRouter()
 QUOTA_DIMS = ["storage_gb", "gpu_s_month", "area_km2_month", "concurrent_jobs", "egress_gb_month", "vworld_calls_day", "llm_tokens_month"]
 KIND_LABEL = {"deploy": "다른 지역에 적용", "deploy_ga": "운영 전환", "rule": "규칙 적용", "quota": "사용량 설정 변경", "model": "모델 등록",
-              "card": "서비스 공개", "request": "분석 의뢰"}
+              "card": "서비스 공개", "request": "분석 요청"}
 ROLE_WORD = {"admin": "LX 관리자", "staff": "LX 직원", "sales": "LX 영업"}
 
 
@@ -89,7 +90,7 @@ async def _title(conn, r) -> str:
         c = await conn.fetchval("SELECT c.name FROM card_versions v JOIN cards c ON c.id=v.card_id WHERE v.id=$1", sid)
         return ((c or {}).get("ko") if isinstance(c, dict) else c) or str(pl.get("name") or "새 서비스")
     if st == "request":                                  # 기관 영상 분석 의뢰 — '남원시 · 비닐하우스 서비스'
-        return f"{pl.get('org') or ''} · {pl.get('service') or ''}".strip(" ·") or "분석 의뢰"
+        return f"{pl.get('org') or ''} · {pl.get('service') or ''}".strip(" ·") or "분석 요청"
     return sid
 
 
@@ -112,6 +113,42 @@ async def _ga_waiting(conn) -> list[dict]:
     return out
 
 
+def _round_at(rounds, when) -> dict | None:
+    """프로젝트 회차 이력 [{round, at, reason}] 가운데 when 시각에 돌고 있던 회차."""
+    import datetime as _dt
+    cur = None
+    for x in rounds or []:
+        try:
+            at = _dt.datetime.fromisoformat(str(x.get("at")))
+        except ValueError:
+            continue
+        if when is None or at <= when:
+            cur = x
+    return cur
+
+
+async def _retrain_of(conn, rows) -> dict:
+    """결재 행 → 재학습 사유(확인 17차 P-3 ⓐ — 프로젝트장이 '재학습 시작' 작은 창에서 고른 한 줄을 관리자 결재에 같은 말로).
+    모델 등록 = 그 모델 학습 표본의 프로젝트 · 모델이 만들어질 때의 회차 / 서비스 공개 = 그 판이 이어진 프로젝트 회차. 2차 이상만 → {결재 id: {round, reason, project}}."""
+    out = {}
+    mids = {r["subject_id"]: r for r in rows if r["subject_type"] == "model"}
+    cvs = {r["subject_id"]: r for r in rows if r["subject_type"] == "card"}
+    if mids:
+        for m in await conn.fetch("SELECT m.id, m.created_at, p.name, p.rounds FROM models m JOIN project_links l ON l.kind='sample' AND l.ref = m.sample_id "
+                                  "JOIN projects p ON p.id = l.project_id WHERE m.id = ANY($1::text[])", list(mids)):
+            a = mids[m["id"]]
+            x = _round_at(m["rounds"], m["created_at"] or a["at"])
+            if x and (x.get("round") or 1) > 1:
+                out[a["id"]] = {"round": env(x["round"], "count", "recorded", "프로젝트 회차"), "reason": x.get("reason"), "project": m["name"]}
+    if cvs:
+        for c in await conn.fetch("SELECT l.ref, l.round, p.name, p.rounds FROM project_links l JOIN projects p ON p.id = l.project_id "
+                                  "WHERE l.kind='card_version' AND l.ref = ANY($1::text[])", list(cvs)):
+            x = next((y for y in (c["rounds"] or []) if y.get("round") == c["round"]), None)
+            if (c["round"] or 1) > 1:
+                out[cvs[c["ref"]]["id"]] = {"round": env(c["round"], "count", "recorded", "프로젝트 회차"), "reason": (x or {}).get("reason"), "project": c["name"]}
+    return out
+
+
 @router.get("/approvals")
 async def list_approvals(request: Request, state: str = "pending"):
     p = require(principal(request), lx=True)
@@ -128,6 +165,7 @@ async def list_approvals(request: Request, state: str = "pending"):
         live_cv = {x["id"] for x in await conn.fetch("SELECT id FROM card_versions WHERE id = ANY($1::text[])", cvs)} if cvs else set()
         rqs = [r["subject_id"] for r in rows if r["subject_type"] == "request"]
         live_rq = {x["id"] for x in await conn.fetch("SELECT id FROM analysis_requests WHERE id = ANY($1::text[])", rqs)} if rqs else set()
+        retrain = await _retrain_of(conn, rows)
         items = []
         for r in rows:
             kind = r["subject_type"]
@@ -143,7 +181,8 @@ async def list_approvals(request: Request, state: str = "pending"):
             items.append({"id": r["id"], "kind": kind, "kind_label": KIND_LABEL.get(kind, kind),
                           "subject": {"type": kind, "id": r["subject_id"]}, "title": await _title(conn, r),
                           "requested_by": r["requested_by"], "requested_by_name": who.get(r["requested_by"]) if r["requested_by"] else None,
-                          "request_reason": req_reason, "mine": bool(r["requested_by"]) and r["requested_by"] == p.user_id,
+                          "request_reason": req_reason, "retrain": retrain.get(r["id"]),
+                          "mine": bool(r["requested_by"]) and r["requested_by"] == p.user_id,
                           "can_decide": p.is_admin and (r["requested_by"] != p.user_id or solo),
                           "decided_note": SOLO_NOTE if pl.get("single_admin") else None,
                           "at": _iso(r["at"]), "state": st,

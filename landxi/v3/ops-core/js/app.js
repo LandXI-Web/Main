@@ -126,6 +126,10 @@ async function openSheet(item) {
   const put = (dl, k, html) => dl.append(h('dt', { text: k }), h('dd', { html }));
   if (item.requester && item.requester !== '—') put(req, '요청한 사람', esc(item.requester));
   if (item.why) put(req, '요청 사유', esc(item.why));
+  if (item.retrain) {                                 // 재학습 사유 — 프로젝트장이 '재학습 시작' 창에서 고른 한 줄(같은 말 · 확인 17차 P-3 ⓐ)
+    const n = item.retrain.round?.value ?? item.retrain.round;
+    put(req, '재학습 사유', esc(`${n}차 · ${item.retrain.reason || '적지 않음'}`));
+  }
   const when = item.at ? new Date(item.at) : null;
   if (when && !Number.isNaN(when.getTime())) put(req, '요청일', `<span class="num">${esc(ymd(item.at))} ${String(when.getHours()).padStart(2, '0')}:${String(when.getMinutes()).padStart(2, '0')}</span>`);
   // 무엇을 — 바뀌는 것

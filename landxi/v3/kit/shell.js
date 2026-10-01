@@ -48,6 +48,19 @@ function roleText(who) {
   return t('shell.role.tenant', { org: who.org || who.name });
 }
 
+/* 내 정보(구현 5차 · 확인 17차 P-5 ⓐ) — LX 계정(직원 · 관리자 · 영업) 머리의 내 이름을 누르면 본인이 고치는 창(me.js · 처음 누를 때 불러온다) */
+const meOk = (who) => /^lx\//.test(who?.key || '');
+function mountMe(el, who) {
+  if (!document.querySelector('link[data-k-me]')) document.head.append(h('link', { rel: 'stylesheet', href: new URL('./me.css', import.meta.url).href, 'data-k-me': '' }));
+  el.type = 'button'; el.title = '내 정보'; el.setAttribute('aria-haspopup', 'dialog');
+  el.addEventListener('click', () => import('./me.js').then((m) => m.openMe({ onSaved: (p) => {
+    who.name = p.name;
+    let [k, n] = (roleText(who) || '').split(' · ');
+    if (n && n.trim() === k) n = '';
+    el.innerHTML = n ? `<b>${esc(k)}</b>${esc(n)}` : esc(k);
+  } })));
+}
+
 export function shell({ who = null, home = homeFromPath(), title, rail, onHelp, mount = document.body, contained = false, xiRegion } = {}) {
   /* LX 직원 화면인데 메뉴를 주지 않았으면 LX 직원 메뉴(같은 이름 · 같은 곳 — 원칙 99) */
   if (rail === undefined) rail = STAFF_OF[home] && ['lx/staff', 'lx/admin'].includes(who?.key) ? staffMenu(STAFF_OF[home]) : null;
@@ -75,8 +88,10 @@ export function shell({ who = null, home = homeFromPath(), title, rail, onHelp, 
   const mast = h('header.t-mast.k-mast', {},
     h('a.k-word', { href: who?.landing || '/landxi/v3/main/' }, h('span.word', { text: 'LAND-XI' }), name ? h('span.home', { text: name }) : null),
     h('span.sp'), slot, fresh,
-    role ? h('span.t-role.k-role', { html: rn ? `<b>${esc(rk)}</b>${esc(rn)}` : esc(rk) }) : null,
+    role ? h(meOk(who) ? 'button.t-role.k-role.k-me-b' : 'span.t-role.k-role', { html: rn ? `<b>${esc(rk)}</b>${esc(rn)}` : esc(rk) }) : null,
     xi, bell, help, who ? exit : null);
+  const meBtn = mast.querySelector('button.k-me-b');
+  if (meBtn) mountMe(meBtn, who);
 
   const railEl = h('nav.t-rail.k-rail', { 'aria-label': t('shell.menu') });
   const main = h('main.k-main', { id: 'main' });

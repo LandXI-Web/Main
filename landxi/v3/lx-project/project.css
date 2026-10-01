@@ -53,6 +53,68 @@
 .lxp-arch{color:var(--sub)}
 .lxp-arch::after{content:none}
 
+/* ── 구현 5차(확인 17차 · 시안 design-r8/project-page) — 배치는 그대로, 칸 안만 ── */
+.lxp-kh{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
+.lxp-kh .lxp-h{margin:0}
+.lxp-ksub{font:500 13px/18px var(--font-body);color:var(--sub);white-space:nowrap}
+.lxp-more,.lxp-link{flex:none;border:0;background:none;padding:0;cursor:pointer;font:500 var(--fs-label)/20px var(--font-body);color:var(--ink);text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.lxp-more:focus-visible,.lxp-link:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.lxp-row--act{grid-template-columns:88px minmax(0,1fr) auto}
+/* 재학습 — 시간 띠 하나(점 = 서버 기록 시각 · 빈 점 = 지금) + 칩 셋 + 회색 한 줄(P-3 ⓐ) */
+.lxp-band{--n:5;position:relative;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));margin:2px -12px 14px;padding:0;list-style:none}
+.lxp-band::before{content:"";position:absolute;left:calc(50% / var(--n));right:calc(50% / var(--n));top:7px;height:2px;background:var(--rule)}
+.lxp-pt{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0;text-align:center}
+.lxp-pt i{position:relative;z-index:1;box-sizing:border-box;width:16px;height:16px;border-radius:50%;background:var(--ink);border:3px solid var(--bg-1);box-shadow:0 0 0 1.5px var(--ink)}
+.lxp-pt.is-sig i{background:var(--bg-1);border-width:4px;border-color:var(--ink);box-shadow:0 0 0 2px var(--bg-1)}
+.lxp-pt.is-now i{background:var(--bg-1);box-shadow:0 0 0 1.5px var(--mute)}
+.lxp-pt b{font:500 12px/16px var(--font-body);color:var(--ink);white-space:nowrap}
+.lxp-pt span{font:500 11px/14px var(--font-num);color:var(--sub);white-space:nowrap}
+.lxp-pt.is-now b{color:var(--sub)}
+.lxp-sig{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.lxp-sig span{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 10px;border-radius:var(--r-8);background:var(--bg-0);font:400 13px/1 var(--font-body);color:var(--sub);white-space:nowrap}
+.lxp-sig b{font-weight:500;color:var(--ink)}
+.lxp-sig .is-warn,.lxp-sig .is-warn b{color:var(--warn)}
+.lxp-rt-f{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:14px;border-top:1px solid var(--rule)}
+.lxp-rt-f p{margin:0;min-width:0;font:400 var(--fs-label)/20px var(--font-body);color:var(--sub);text-wrap:balance}
+.lxp-rt-f .t-btn{flex:none;height:40px;padding:0 16px}
+/* 기록 · 메모 · 파일 — 최근 3줄 · 서랍(P-4 ⓐ) */
+.lxp-lg{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.lxp-lg li{display:grid;grid-template-columns:84px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid var(--rule);font:400 var(--fs-label)/20px var(--font-body);color:var(--ink-2)}
+.lxp-lg li:first-child{border-top:0;padding-top:0}
+.lxp-lg-w{font:500 13px/20px var(--font-num);color:var(--sub);white-space:nowrap}
+.lxp-lg-t{min-width:0;overflow-wrap:anywhere;word-break:keep-all}
+.lxp-lg-t b{font-weight:500;color:var(--ink)}
+.lxp-lg-t i{font-style:normal;color:var(--sub);white-space:nowrap}
+.lxp-lg-t i::before{content:" · "}
+.lxp-lg li[data-kind="memo"],.lxp-lg li[data-kind="file"]{background:var(--bg-0);border-radius:var(--r-8);border-top:0;padding:8px 10px;margin:4px -10px 0}
+.lxp-lg li.lxp-lg-none{display:block;color:var(--sub);border:0;padding:0}
+.lxp-file{display:inline-flex;align-items:center;max-width:100%;margin-top:4px;padding:3px 8px;border:0;border-radius:6px;background:var(--bg-1);box-shadow:inset 0 0 0 1px var(--rule);font:500 12px/16px var(--font-body);color:var(--ink);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+button.lxp-file:hover{box-shadow:inset 0 0 0 1px var(--ink)}
+.lxp-file.is-pk{cursor:default;margin:0}
+.lxp-lg-wr{margin-top:12px;padding-top:12px;border-top:1px solid var(--rule)}
+.lxp-lg-pk{display:flex;align-items:center;gap:6px;margin-bottom:8px;min-width:0}
+.lxp-lg-pk[hidden]{display:none}
+.lxp-lg-in{display:flex;gap:8px;align-items:center}
+.lxp-lg-in .t-input{flex:1;min-width:0;height:40px;box-sizing:border-box}
+.lxp-lg-in .t-btn{flex:none;height:40px;padding:0 14px}
+.lxp-dr .lxp-lg-dr{display:flex;flex-direction:column;gap:14px}
+.lxp-lg-chips .lxp-chip{gap:4px}
+.lxp-lg-chips .lxp-chip small{font:500 12px/1 var(--font-num);color:inherit;opacity:.75}
+.lxp-lg--all li{padding:10px 0}
+/* 작은 창 몸통(재학습 사유 · 넘기기 · 문제 알림) — 키트 가운데 창 안 */
+.lxp-sh{display:flex;flex-direction:column;gap:16px}
+.lxp-sh .t-input{box-sizing:border-box}
+.lxp-say{margin:0;padding:12px 14px;border-radius:10px;background:var(--bg-0);font:400 var(--fs-label)/21px var(--font-body);color:var(--ink-2);text-wrap:pretty}
+.lxp-say b{font-weight:500;color:var(--ink)}
+.lxp-sh-n{margin:0;font:400 var(--fs-label)/20px var(--font-body);color:var(--sub)}
+.lxp-own[hidden]{display:none}
+@media (max-width:640px){
+  .lxp-band{margin:2px -8px 14px}
+  .lxp-pt b{font-size:11px}
+  .lxp-lg li{grid-template-columns:76px minmax(0,1fr)}
+  .lxp-rt-f{flex-wrap:wrap}
+}
+
 @media (max-width:1100px){.lxp-grid{grid-template-columns:minmax(0,1fr)}.lxp-page{padding:32px 32px 56px}}
 /* 목록이 좁아지면(휴대폰 · 좁은 창) 표 대신 프로젝트마다 한 장 — 이름 · 마지막 활동 / 무엇을 · 어디 / 진행 막대 / 막힌 곳 / 다음 할 일 */
 @media (max-width:860px){

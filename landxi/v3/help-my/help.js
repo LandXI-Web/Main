@@ -108,6 +108,25 @@ async function me(el, whoIn) {
   ];
   const dl = h('dl.hm-me');
   for (const [k, v] of rows) dl.append(h('div', {}, h('dt', { text: k }), h('dd', { text: v })));
+  /* LX 계정 — 부서 · 연락처 · 저장 용량(서버 GET /me/profile 한 출처) + '내 정보 고치기'(머리의 내 이름과 같은 창 · 확인 17차 P-5 ⓐ) */
+  let edit = null;
+  if (who?.me?.realm === 'lx') {
+    const fill = async (p) => {
+      const { size } = await import('../kit/me.js');
+      const val = (e) => (e && typeof e === 'object' && 'value' in e ? e.value : e);
+      const q = val(p.storage?.quota_gb);
+      dl.querySelector('dd').textContent = p.name || '—';
+      dl.querySelectorAll('.hm-me-row').forEach((x) => x.remove());
+      for (const [k, v] of [['부서', p.dept || '—'], ['연락처', p.contact || '—'],
+        ['저장 용량', q !== null && q !== undefined ? `${size(val(p.storage?.used))} / ${q} GB 할당` : `할당 없음 · 지금 쓴 양 ${size(val(p.storage?.used))}`]]) {
+        dl.append(h('div.hm-me-row', {}, h('dt', { text: k }), h('dd', { text: v })));
+      }
+    };
+    api('/me/profile').then(fill).catch(() => {});
+    edit = h('button.t-btn.t-btn--2.hm-edit', { type: 'button', text: '내 정보 고치기' });
+    edit.addEventListener('click', () => import('../kit/me.js').then((m) => m.openMe({ onSaved: fill })));
+    if (!document.querySelector('link[data-k-me]')) document.head.append(h('link', { rel: 'stylesheet', href: new URL('../kit/me.css', import.meta.url).href, 'data-k-me': '' }));
+  }
   const out = h('button.t-btn.t-btn--2.hm-out', { type: 'button', text: '로그아웃' });
   out.addEventListener('click', async () => {
     out.disabled = true;
@@ -115,7 +134,7 @@ async function me(el, whoIn) {
     session.clear();
     (window.top || window).location.replace(FRONT);   // 서랍(iframe) 안에서도 창 전체가 정문으로
   });
-  el.append(dl, out);
+  el.append(dl, ...(edit ? [h('div.hm-me-acts', {}, edit, out)] : [out]));
 }
 
 const PANES = { notice, faq, contact, me };

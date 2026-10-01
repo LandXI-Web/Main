@@ -125,6 +125,34 @@ export function stuckHtml(p, archived = false) {
   return `<span class="lxp-stuck" data-kind="${esc(b[0].kind)}" title="${esc(b.map((x) => x.text).join(' · '))}"><span>${esc(nb(b[0].text))}${b.length > 1 ? ` <small>외 ${b.length - 1}건</small>` : ''}</span></span>`;
 }
 
+/** ' · ' 로 이은 덧말을 뜻 단위(이름 · 시각 · 메모)마다 한 덩어리로 — 줄이 꺾여도 덩어리 안에서는 끊기지 않게(줄바꿈 규칙 9) */
+export function units(text) {
+  const f = document.createDocumentFragment();
+  String(text ?? '').split(' · ').forEach((u, i) => { if (i) f.append(' · '); f.append(h('span.lxp-u', { text: u })); });
+  return f;
+}
+
+/** 나에게 온 알림 한 줄씩(지금은 프로젝트장 넘겨받음 — 확인 17차 P-5 ⓐ) — 프로젝트 목록 맨 위와 대시보드 '내 프로젝트' 맨 위가 같은 부품.
+    '열기' = 그 프로젝트 한 장으로(본 것으로 찍음) · '확인' = 본 것으로(다시 보이지 않음). 알림이 없으면 아무것도 그리지 않는다. */
+export async function projectNotices(host) {
+  ensureCss();
+  let j;
+  try { j = await api('/projects/notices'); } catch { return; }
+  const seen = (id) => api(`/projects/notices/${encodeURIComponent(id)}/seen`, { method: 'POST' }).catch(() => null);
+  const two = (n) => String(n).padStart(2, '0');
+  const when = (s) => { const d = new Date(s || ''); return Number.isNaN(+d) ? '' : `${two(d.getMonth() + 1)}.${two(d.getDate())} ${two(d.getHours())}:${two(d.getMinutes())}`; };
+  host.replaceChildren(...(j.items || []).map((n) => {
+    const ok = h('button.lxp-ntc-ok', { type: 'button', text: '확인' });
+    const row = h('div.lxp-ntc', { role: 'status' },
+      h('span.lxp-ntc-t', {}, h('b', { text: n.text }),
+        h('small', {}, units([n.by && `넘긴 사람 ${n.by}`, when(n.at), n.note && `메모 ${n.note}`].filter(Boolean).join(' · ')))),
+      n.project?.id ? h('a.lxp-ntc-go', { href: projectHref(n.project.id), text: '열기',
+        onclick: async (e) => { e.preventDefault(); await seen(n.id); location.href = projectHref(n.project.id); } }) : null, ok);
+    ok.addEventListener('click', async () => { ok.disabled = true; await seen(n.id); row.remove(); });
+    return row;
+  }));
+}
+
 let cssOn = false;
 export function ensureCss() {
   if (cssOn || document.querySelector('link[data-lxp]')) return;

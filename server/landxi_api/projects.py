@@ -17,7 +17,15 @@ POST   /projects/{pid}/members           {user_id} 프로젝트장 · 관리자
 DELETE /projects/{pid}/members/{uid}     프로젝트장 · 관리자
 POST   /projects/{pid}/samples           {sample_id} 보관된 학습 표본을 이 프로젝트 학습데이터로 더한다(프로젝트장 · 구성원)
 POST   /projects/{pid}/archive           {archived: true|false} 끝난 프로젝트 보관 · 다시 열기(프로젝트장 · 관리자) — 기록은 지우지 않는다
-POST   /projects/{pid}/rounds            재학습 — 같은 프로젝트의 다음 회차(학습 단계로 돌아감). 공개된 서비스만 · 프로젝트장 · 구성원만
+POST   /projects/{pid}/rounds            {reason} 재학습 — 같은 프로젝트의 다음 회차(학습 단계로 돌아감). 공개된 서비스만 · 프로젝트장만.
+                                         reason(왜 다시 학습하나 한 줄)은 회차 기록 · 감사 기록에 남고 LX 관리자 결재함(그 회차의 모델 등록 · 새 판 공개)에 같은 말로 보인다
+POST   /projects/{pid}/handover          {to, note?} 프로젝트장 넘기기 — 프로젝트장 본인 · LX 관리자(확인 17차 P-5 ⓐ · 원칙 105).
+                                         받는 사람에게 알림 한 줄(lx_notices) · 기록 한 줄 · 넘긴 사람은 구성원으로 남는다 · 아직 답하지 않은 기관 검토 요청 · 확인 대기 분석 요청의 받는 사람도 함께
+GET    /projects/notices                 나에게 온 알림(본 적 없는 것 — 지금은 프로젝트장 넘겨받음) · POST /projects/notices/{id}/seen 본 때 찍기
+GET    /projects/{pid}/log               기록 · 메모 · 파일(확인 17차 P-4 ⓐ) — 자동 기록(감사 기록의 그 프로젝트 줄 · 학습 표본 · 학습 · 결재 · 적용 · 회차 · 넘기기) + 메모 + 파일.
+                                         구성원 · 프로젝트장 · LX 관리자만(기관은 안 봄 — 기관과의 대화는 검토 요청). 거르기 = all | auto | memo | file
+POST   /projects/{pid}/notes             {text} 메모 한 줄 · POST /projects/{pid}/files (multipart file · text?) 파일 올리기(작은 문서 · 그림 · 크기 한도 · 형식 제한)
+GET    /projects/{pid}/files/{nid}       올린 파일 내려받기(같은 사람들만)
 
 단계 6(흐름-1 의 LX 직원 부분 · 레일 순서): 데이터 올리기 → 학습데이터 구축 → 학습 → 결과 확인 → 발행 요청 → 서비스 관리.
 완료 조건(자동 · 막지 않는 길잡이 — R-D3 §3-2):
@@ -39,7 +47,8 @@ import datetime as dt
 import re
 import secrets
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, File, Form, Request, UploadFile
+from fastapi.responses import FileResponse
 
 from . import config
 from .deps import ApiError, Principal, audit, db, principal, require
@@ -54,6 +63,7 @@ SCOPE_WORD = {"mine": "진행 중 · 내가 만든 · 참여한 프로젝트", "
               "archived": "보관한 프로젝트", "all": "진행 중 · LX 전체 프로젝트"}
 REVIEW_BATCH = 20                 # 결과 확인 화면이 한 번에 보는 표본 수(lx-review SAMPLE) — 한 묶음을 보면 이 단계는 끝
 NAME_MAX, TASK_MAX, REGIONS_MAX = 60, 40, 30
+REASON_MAX, NOTE_MAX = 200, 300
 ROLE_WORD = {"admin": "LX 관리자", "staff": "LX 직원", "sales": "LX 영업"}
 
 
@@ -128,6 +138,16 @@ def _who(people: dict, uid: str | None) -> dict | None:
     return {"id": uid, "name": x["name"], "role_label": x["role_label"]} if x else {"id": uid, "name": "LX", "role_label": "LX"}
 
 
+def _name(people: dict, uid: str | None) -> str:
+    """기록 줄의 '누가' — 사용 중인 계정은 이름, 사용 중지된 옛 아이디(0015 메일 아이디 정리 · 옛 기록은 그대로)는 역할 말만(시험용 이름을 내지 않는다)."""
+    if not uid or uid == "system":
+        return "자동"
+    x = people.get(uid)
+    if not x:
+        return "LX"
+    return x["name"] if x["active"] else x["role_label"]
+
+
 async def _row(conn, pid: str):
     r = await conn.fetchrow("SELECT * FROM projects WHERE id=$1", pid)
     if not r:
@@ -172,6 +192,25 @@ def _dir_bytes(d: str) -> int:
         return sum(f.stat().st_size for f in Path(d).rglob("*") if f.is_file())
     except Exception:
         return 0
+
+
+# ── 저장 공간(한 출처) — 프로젝트 = 이은 학습데이터 파일(이을 때 잰 크기) + 올린 파일 · 사람 = 내가 프로젝트장인 프로젝트의 합 ──────────
+# 사용자 7차 답 데이터-1 "직원이 프로젝트를 개설해도 개인의 허용된 정책 안에서" · 17차 P-5 "내 정보에는 할당된 자원(저장 용량)도".
+# 프로젝트 한 장의 storage 와 내 정보의 '지금 쓴 양'이 같은 식을 쓴다(숫자 한 출처).
+_PROJECT_BYTES = ("(SELECT coalesce(sum(l.bytes),0) FROM project_links l WHERE l.project_id = {p})"
+                  " + (SELECT coalesce(sum(n.bytes),0) FROM project_notes n WHERE n.project_id = {p} AND n.removed_at IS NULL)")
+
+
+async def project_bytes(conn, pid: str) -> int:
+    return int(await conn.fetchval("SELECT " + _PROJECT_BYTES.format(p="$1"), pid) or 0)
+
+
+async def lead_storage(conn, uid: str) -> dict:
+    """내 저장 용량 — 내가 프로젝트장인 프로젝트(진행 중 · 보관)의 저장 공간 합 · 할당(lx_users.storage_quota_gb — 없으면 None).
+    → {bytes, projects, quota_gb}. 할당 · 요청 · 승인 화면은 확인 전 — 할당 값이 없으면 지어내지 않는다."""
+    r = await conn.fetchrow("SELECT count(*) AS n, coalesce(sum(" + _PROJECT_BYTES.format(p="p.id") + "),0) AS b FROM projects p WHERE p.lead_id=$1", uid)
+    q = await conn.fetchval("SELECT storage_quota_gb FROM lx_users WHERE id=$1", uid)
+    return {"bytes": int(r["b"] or 0), "projects": int(r["n"] or 0), "quota_gb": float(q) if q is not None else None}
 
 
 async def project_of_card(conn, card_id: str) -> dict | None:
@@ -375,8 +414,82 @@ def _can(p: Principal, r, members: list[str], published: bool) -> dict:
     mem = _is_member(p, r, members)
     lead = p.user_id == r["lead_id"]
     # 공개된 서비스의 재학습(학습 시작 · 다음 회차) = 프로젝트장만(역할-3 ⓑ · J-2) — 관리자도 아니다(관리자는 프로젝트장을 바꾸고 배포를 승인한다)
-    return {"edit": lead or p.is_admin, "members": lead or p.is_admin, "lead": p.is_admin, "work": mem, "publish": lead,
-            "train": lead if published else mem, "retrain": lead and published, "archive": lead or p.is_admin}
+    # 프로젝트장 넘기기 = 프로젝트장 본인 · LX 관리자(확인 17차 P-5 ⓐ) · 기록 · 메모 · 파일 = 구성원 · 프로젝트장 · LX 관리자(P-4 ⓐ — 기관은 안 봄)
+    return {"edit": lead or p.is_admin, "members": lead or p.is_admin, "lead": lead or p.is_admin, "work": mem, "publish": lead,
+            "train": lead if published else mem, "retrain": lead and published, "archive": lead or p.is_admin,
+            "log": mem or p.is_admin}
+
+
+async def _cards(conn, pid: str) -> list[str]:
+    return [x["ref"] for x in await conn.fetch("SELECT ref FROM project_links WHERE project_id=$1 AND kind='card'", pid)]
+
+
+async def _sample_ids(conn, pid: str) -> list[str]:
+    return [x["ref"] for x in await conn.fetch("SELECT ref FROM project_links WHERE project_id=$1 AND kind='sample'", pid)]
+
+
+_TRAIN_OF = "kind='train' AND (options->>'project_id' = $1 OR (options->'samples') ?| $2::text[])"
+
+
+async def _basis(conn, r, f, blocked: list) -> dict:
+    """재학습 근거(확인 17차 P-3 ⓐ) — 시간 띠 하나(서버 기록의 실제 시각) + 칩 셋(기관 검토 요청 · 새 영상 시점 · 앞 단계 남음) + 근거가 적은가.
+    띠의 점: 학습 표본 · 학습 끝 · 모델 승인 · 서비스 공개 · n차 시작 · 프로젝트 만듦 · (마지막 학습 뒤) 새 영상 · 기관 검토 요청 — 시각순, 지금 앞에 넷까지
+    (넘치면 '프로젝트 만듦' 부터 · 그다음 오래된 것부터 뺀다). 근거가 적어도 막지 않는다(원칙 70 — 참고 표시, 판단은 프로젝트장)."""
+    pid = r["id"]
+    sids = await _sample_ids(conn, pid)
+    trained = await conn.fetchval(f"SELECT max(finished_at) FROM jobs WHERE state='done' AND {_TRAIN_OF}", pid, sids or ["-"])
+    model_ok = await conn.fetchval("SELECT max(a.decided_at) FROM approvals a JOIN models m ON m.id = a.subject_id WHERE a.subject_type='model' "
+                                   "AND a.decision='approve' AND m.sample_id = ANY($1::text[])", sids or ["-"])
+    pub = await conn.fetchval("SELECT max(v.approved_at) FROM project_links l JOIN card_versions v ON v.id = l.ref "
+                              "WHERE l.project_id=$1 AND l.kind='card_version' AND v.approved_by IS NOT NULL", pid)
+    since = trained or r["created_at"]
+    cards = await _cards(conn, pid)
+    rv = await conn.fetchrow("SELECT count(*) AS n, max(at) AS last FROM feedback WHERE kind='review' AND card_id = ANY($1::text[]) AND at > $2",
+                             cards or ["-"], since)
+    # 새 영상 시점 — 마지막 학습 뒤 대상 지역에 등록된 영상(지역 판정은 단계 판정 · /regions 와 같다)
+    from .regions import derived
+    dv = await derived()
+    ids = {i["id"] for g in (r["regions"] or []) if not g.get("abroad") for i in dv["img"].get(g["code"], [])}
+    img = await conn.fetchrow("SELECT count(*) AS n, max(registered_at) AS last FROM imagery WHERE id = ANY($1::text[]) AND registered_at > $2",
+                              list(ids) or ["-"], since)
+    n_img = int(img["n"] or 0)
+    ab = _abroad_profiles()
+    for g in r["regions"] or []:
+        bb = (ab.get(g["code"]) or {}).get("bbox") if g.get("abroad") else None
+        if bb:
+            x = await conn.fetchrow("SELECT count(*) AS n, max(registered_at) AS last FROM imagery WHERE footprint IS NOT NULL AND registered_at > $5 "
+                                    "AND ST_Intersects(footprint, ST_MakeEnvelope($1,$2,$3,$4,4326))", *bb, since)
+            n_img += int(x["n"] or 0)
+            if x["last"] and (not img["last"] or x["last"] > img["last"]):
+                img = {"n": img["n"], "last": x["last"]}
+    pts = []
+    smp = f["samples"][0] if f["samples"] else None
+    if smp:
+        pts.append({"kind": "sample", "label": f"표본 {int(smp['n_images'] or 0):,}장" if smp["n_images"] else "학습 표본", "at": smp["created_at"]})
+    if trained:
+        pts.append({"kind": "train", "label": "학습 끝", "at": trained})
+    if model_ok:
+        pts.append({"kind": "model", "label": "모델 승인", "at": model_ok})
+    if pub:
+        pts.append({"kind": "publish", "label": "서비스 공개", "at": pub})
+    for x in r["rounds"] or []:
+        if (x.get("round") or 1) > 1 and x.get("at"):
+            pts.append({"kind": "round", "label": f"{x['round']}차 시작", "at": dt.datetime.fromisoformat(x["at"])})
+    pts.append({"kind": "created", "label": "프로젝트 만듦", "at": r["created_at"]})
+    if n_img and img["last"]:
+        pts.append({"kind": "imagery", "label": "새 영상", "at": img["last"], "signal": True})
+    if rv["n"] and rv["last"]:
+        pts.append({"kind": "review", "label": f"검토 요청 {int(rv['n'])}건", "at": rv["last"], "signal": True})
+    pts.sort(key=lambda x: x["at"])
+    while len(pts) > 4:
+        drop = next((x for x in pts if x["kind"] == "created"), None) or next((x for x in pts if not x.get("signal")), pts[0])
+        pts.remove(drop)
+    before = next((b for b in blocked if b["kind"] == "before"), None)
+    return {"points": [{**x, "at": _iso(x["at"])} for x in pts], "now": now_iso(), "trained_at": _iso(trained),
+            "reviews": env(int(rv["n"] or 0), "count", "recorded", "기관 검토 요청(마지막 학습 뒤 · 이 프로젝트 서비스)"),
+            "imagery": env(n_img, "count", "recorded", "새 영상(마지막 학습 뒤 · 대상 지역에 등록)"),
+            "before": before["text"] if before else None,
+            "thin": not rv["n"] and not n_img}
 
 
 async def view(conn, p: Principal, r, people: dict | None = None, full: bool = True) -> dict:
@@ -399,10 +512,12 @@ async def view(conn, p: Principal, r, people: dict | None = None, full: bool = T
                     "samples": [{"id": s["id"], "task_name": s["task_name"], "images": env(s["n_images"], "count", "measured", "올린 표본 파일"),
                                  "created_at": _iso(s["created_at"])} for s in f["samples"][:10]],
                     "card": f["card"], "created_by": _who(people, r["created_by"]),
-                    "storage": env(int(await conn.fetchval("SELECT coalesce(sum(bytes),0) FROM project_links WHERE project_id=$1", r["id"]) or 0),
-                                   "bytes", "measured", "프로젝트 학습데이터 파일(이을 때 잰 크기)"),
+                    "storage": env(await project_bytes(conn, r["id"]), "bytes", "measured",
+                                   "프로젝트 저장 공간(학습데이터 파일 — 이을 때 잰 크기 + 올린 파일)"),
                     "rounds": [{"round": env(x.get("round"), "count", "recorded", "프로젝트 회차"), "at": x.get("at"),
-                                "by": (_who(people, x.get("by")) or {}).get("name")} for x in (r["rounds"] or [])]})
+                                "by": (_who(people, x.get("by")) or {}).get("name"), "reason": x.get("reason")} for x in (r["rounds"] or [])],
+                    # 재학습 근거(띠 · 칩) — 재학습 칸이 열리는 공개된 서비스만
+                    "basis": await _basis(conn, r, f, j["blocked"]) if j["published"] else None})
     return out
 
 
@@ -444,6 +559,27 @@ async def people_list(request: Request):
     return {"items": sorted(items, key=lambda x: (x["role_label"], x["name"])), "as_of": now_iso()}
 
 
+@router.get("/projects/notices")
+async def notices(request: Request):
+    """나에게 온 알림 중 아직 안 본 것(지금은 프로젝트장 넘겨받음 — P-5 ⓐ). 대시보드 '내 프로젝트' · 프로젝트 목록 맨 위에 한 줄씩."""
+    p = _lx(request)
+    async with db(realm="lx") as conn:
+        people = await _people(conn)
+        rows = await conn.fetch("SELECT n.id, n.kind, n.project_id, n.text, n.note, n.by, n.at, p.name AS pname FROM lx_notices n "
+                                "LEFT JOIN projects p ON p.id = n.project_id WHERE n.user_id=$1 AND n.seen_at IS NULL ORDER BY n.at DESC LIMIT 20", p.user_id)
+    items = [{"id": x["id"], "kind": x["kind"], "project": {"id": x["project_id"], "name": x["pname"]} if x["project_id"] else None,
+              "text": x["text"], "note": x["note"], "by": _name(people, x["by"]), "at": _iso(x["at"])} for x in rows]
+    return {"items": items, "total": env(len(items), "count", "recorded", "lx_notices(본 적 없는 것)"), "as_of": now_iso()}
+
+
+@router.post("/projects/notices/{nid}/seen")
+async def notice_seen(nid: str, request: Request):
+    p = _lx(request)
+    async with db(realm="lx") as conn:
+        n = await conn.execute("UPDATE lx_notices SET seen_at=now() WHERE id=$1 AND user_id=$2 AND seen_at IS NULL", nid, p.user_id)
+    return {"ok": n.endswith("1"), "as_of": now_iso()}
+
+
 @router.post("/projects", status_code=201)
 async def create(body: dict, request: Request):
     """프로젝트 만들기 — 입력은 이름 · 무엇을 · 어디 세 칸. 관리자 승인 없이 바로 만들어진다(R-D3 갈림길 ⓐ). 프로젝트장 = 만든 직원."""
@@ -481,19 +617,10 @@ async def patch_project(pid: str, body: dict, request: Request):
     p = _lx(request)
     async with db(realm="lx") as conn:
         r = await _row(conn, pid)
-        if "lead_id" in body:                      # 프로젝트장 바꾸기 = LX 관리자(확인 대장 1 · R-D3 §3-4)
-            if not p.is_admin:
-                raise ApiError("forbidden", "프로젝트장은 LX 관리자가 바꿉니다")
-            nl = str(body.get("lead_id") or "")
-            u = await conn.fetchrow("SELECT id, role, status FROM lx_users WHERE id=$1", nl)
-            if not u or u["status"] != "active" or u["role"] not in ("staff", "admin"):
-                raise ApiError("bad_request", "LX 직원 · 관리자만 프로젝트장이 됩니다")
-            await conn.execute("UPDATE projects SET lead_id=$2, updated_at=now() WHERE id=$1", pid, nl)
-            await conn.execute("DELETE FROM project_members WHERE project_id=$1 AND user_id=$2", pid, nl)
-            if r["lead_id"] != nl:                 # 앞 프로젝트장은 구성원으로 남긴다(이력 · 일이 끊기지 않게)
-                await conn.execute("INSERT INTO project_members(project_id, user_id, added_by) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING",
-                                   pid, r["lead_id"], p.user_id)
-            await audit(conn, p, "project.lead", pid, {"lead_id": r["lead_id"]}, {"lead_id": nl})
+        if "lead_id" in body:                      # 프로젝트장 바꾸기 = 넘기기와 같은 길(프로젝트장 본인 · LX 관리자 — 확인 17차 P-5 ⓐ)
+            if str(body.get("lead_id") or "") != r["lead_id"]:
+                await _handover(conn, p, r, str(body.get("lead_id") or ""), None)
+                r = await _row(conn, pid)
         edits = {k: body[k] for k in ("name", "task", "task_id", "regions") if k in body}
         if edits:
             if not (p.user_id == r["lead_id"] or p.is_admin):
@@ -589,13 +716,262 @@ async def next_round(pid: str, request: Request, body: dict | None = None):
         if busy:
             raise ApiError("conflict", "이번 회차 학습이 아직 돌고 있습니다", status=409)
         n = int(r["round"]) + 1
-        hist = list(r["rounds"] or []) + [{"round": n, "at": now_iso(), "by": p.user_id, "reason": str((body or {}).get("reason") or "")[:200] or None}]
+        reason = " ".join(str((body or {}).get("reason") or "").split())[:REASON_MAX] or None     # 왜 다시 학습하나(P-3 ⓐ — 화면의 작은 창에서 하나)
+        hist = list(r["rounds"] or []) + [{"round": n, "at": now_iso(), "by": p.user_id, "reason": reason}]
         await conn.execute("UPDATE projects SET round=$2, round_at=now(), rounds=$3, updated_at=now() WHERE id=$1", pid, n, hist)
-        await audit(conn, p, "project.round", pid, {"round": r["round"]}, {"round": n})
+        await audit(conn, p, "project.round", pid, {"round": r["round"]}, {"round": n, "reason": reason})
         out = await view(conn, p, await _row(conn, pid))
     from .jobs import ops_event
     await ops_event("project.changed", {"project_id": pid, "action": "round", "round": n, "by": p.user_id, "at": now_iso()})
     return {**out, "as_of": now_iso()}
+
+
+# ── 프로젝트장 넘기기(확인 17차 P-5 ⓐ · 원칙 105 · 63) ───────────────────────────────────────
+async def _handover(conn, p: Principal, r, to: str, note: str | None) -> dict:
+    """프로젝트장을 넘긴다 — 프로젝트장 본인 · LX 관리자. 받는 사람 = 사용 중인 LX 직원 · 관리자.
+    넘긴 사람(앞 프로젝트장)은 구성원으로 남고(일 · 기록이 끊기지 않게), 아직 답하지 않은 기관 검토 요청과 확인 대기 분석 요청의 받는 사람도 함께 바뀐다
+    (새 요청은 원래대로 '그 서비스 프로젝트장'에게 — messages._owner · 원칙 63). 받는 사람에게 알림 한 줄 · 감사 기록 한 줄."""
+    if not (p.user_id == r["lead_id"] or p.is_admin):
+        raise ApiError("forbidden", "프로젝트장 넘기기는 프로젝트장과 LX 관리자가 합니다")
+    u = await conn.fetchrow("SELECT id, role, status FROM lx_users WHERE id=$1", to)
+    if not u or u["status"] != "active" or u["role"] not in ("staff", "admin"):
+        raise ApiError("bad_request", "LX 직원 · 관리자만 프로젝트장이 됩니다")
+    old, pid = r["lead_id"], r["id"]
+    if to == old:
+        raise ApiError("bad_request", "이미 이 프로젝트의 프로젝트장입니다")
+    await conn.execute("UPDATE projects SET lead_id=$2, updated_at=now() WHERE id=$1", pid, to)
+    await conn.execute("DELETE FROM project_members WHERE project_id=$1 AND user_id=$2", pid, to)
+    await conn.execute("INSERT INTO project_members(project_id, user_id, added_by) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING", pid, old, p.user_id)
+    cards = await _cards(conn, pid)
+    moved = {"reviews": 0, "requests": 0}
+    if cards:
+        x = await conn.execute("UPDATE feedback SET recipient_id=$1 WHERE kind='review' AND card_id = ANY($2::text[]) AND recipient_id=$3 "
+                               "AND coalesce(status, 'sent') <> 'answered'", to, cards, old)
+        moved["reviews"] = int(x.split()[-1] or 0)
+        x = await conn.execute("UPDATE analysis_requests SET lead_user=$1 WHERE state='pending' AND lead_user=$3 "
+                               "AND deploy_id IN (SELECT id FROM deploys WHERE card_id = ANY($2::text[]))", to, cards, old)
+        moved["requests"] = int(x.split()[-1] or 0)
+    if to != p.user_id:                          # 관리자가 스스로 맡을 때는 알림이 필요 없다
+        await conn.execute("INSERT INTO lx_notices(id, user_id, kind, project_id, text, note, by) VALUES ($1,$2,'project.lead',$3,$4,$5,$6)",
+                           "nt_" + secrets.token_hex(6), to, pid, f"'{r['name']}' 프로젝트장을 넘겨받았습니다", note, p.user_id)
+    await audit(conn, p, "project.lead", pid, {"lead_id": old}, {"lead_id": to, "note": note, **moved})
+    return moved
+
+
+@router.post("/projects/{pid}/handover")
+async def handover(pid: str, body: dict, request: Request):
+    p = _lx(request)
+    to = str(body.get("to") or "").strip()
+    note = " ".join(str(body.get("note") or "").split())[:NOTE_MAX] or None
+    if not to:
+        raise ApiError("bad_request", "받을 사람을 골라 주세요")
+    async with db(realm="lx") as conn:
+        r = await _row(conn, pid)
+        moved = await _handover(conn, p, r, to, note)
+        out = await view(conn, p, await _row(conn, pid))
+    from .jobs import ops_event
+    await ops_event("project.changed", {"project_id": pid, "action": "lead", "by": p.user_id, "at": now_iso()})
+    return {**out, "moved": {k: env(v, "count", "recorded", "받는 사람이 함께 바뀐 기관 요청") for k, v in moved.items()}, "as_of": now_iso()}
+
+
+# ── 기록 · 메모 · 파일(확인 17차 P-4 ⓐ) ─────────────────────────────────────────────
+FILE_MAX_MB = 20                                   # 한 파일 크기 한도 — 작은 문서 · 그림(영상 · 학습데이터는 데이터 올리기로)
+FILE_TYPES = {"pdf": "application/pdf", "hwp": "application/x-hwp", "hwpx": "application/hwp+zip",
+              "doc": "application/msword", "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+              "xls": "application/vnd.ms-excel", "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+              "ppt": "application/vnd.ms-powerpoint", "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+              "txt": "text/plain; charset=utf-8", "csv": "text/csv; charset=utf-8",
+              "png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg", "gif": "image/gif", "webp": "image/webp"}
+LOG_KINDS = ("all", "auto", "memo", "file")
+_AUDIT_WORD = {"project.create": "프로젝트 만듦", "project.edit": "프로젝트 고침", "project.member.add": "구성원 더함", "project.member.remove": "구성원 뺌",
+               "project.lead": "프로젝트장 넘김", "project.archive": "끝난 프로젝트로 보관", "project.reopen": "다시 엶", "project.round": "재학습 시작"}
+
+
+async def _logger(conn, p: Principal, pid: str):
+    """기록을 보고 쓰는 사람 — 구성원 · 프로젝트장 · LX 관리자(기관 계정은 _lx 에서 이미 0)."""
+    r = await _row(conn, pid)
+    if not (p.is_admin or _is_member(p, r, await _members(conn, pid))):
+        raise ApiError("forbidden", "기록은 이 프로젝트의 프로젝트장 · 구성원과 LX 관리자가 봅니다")
+    return r
+
+
+def _ko(v) -> str:
+    return ((v or {}).get("ko") or (v or {}).get("en") or "") if isinstance(v, dict) else (v or "")
+
+
+async def _log_items(conn, r, people: dict) -> list[dict]:
+    """한 프로젝트의 기록 — 자동(감사 기록 · 학습 표본 · 학습 · 결재 · 적용) + 메모 + 파일. 시각 내림차순. 지어낸 줄 0(모두 서버 기록)."""
+    pid = r["id"]
+    out: list[dict] = []
+    add = lambda at, kind, text, who, **kw: out.append({"at": at, "kind": kind, "text": text, "who": who, **kw}) if at else None  # noqa: E731
+    # ① 감사 기록의 그 프로젝트 줄 — 만듦 · 고침 · 구성원 · 넘기기 · 보관 · 회차(사유)
+    for a in await conn.fetch("SELECT action, actor, before, after, at FROM audit_log WHERE subject=$1 AND action = ANY($2::text[]) ORDER BY at DESC LIMIT 200",
+                              pid, list(_AUDIT_WORD)):
+        b, x, act = a["before"] or {}, a["after"] or {}, a["action"]
+        text, sub = _AUDIT_WORD[act], None
+        if act in ("project.member.add", "project.member.remove"):
+            sub = _name(people, x.get("user_id") or b.get("user_id"))
+        elif act == "project.lead":
+            sub = f"{_name(people, b.get('lead_id'))} → {_name(people, x.get('lead_id'))}" + (f" · {x['note']}" if x.get("note") else "")
+        elif act == "project.round":
+            text = f"{x.get('round')}차 재학습 시작"
+            sub = f"사유 {x['reason']}" if x.get("reason") else None
+        elif act == "project.edit" and b.get("name") != x.get("name"):
+            sub = f"이름 {b.get('name')} → {x.get('name')}"
+        add(a["at"], "auto", text, _name(people, a["actor"]), sub=sub, group="project")
+    # ② 학습 표본 올림
+    for s in await conn.fetch("SELECT s.n_images, s.created_at, s.created_by FROM project_links l JOIN train_samples s ON s.id = l.ref "
+                              "WHERE l.project_id=$1 AND l.kind='sample' AND s.status <> 'removed'", pid):
+        add(s["created_at"], "auto", f"학습 표본 {int(s['n_images'] or 0):,}장 올림" if s["n_images"] else "학습 표본 올림", _name(people, s["created_by"]),
+            group="train")
+    # ③ 학습 — 끝 · 실패 · 진행 중(이 프로젝트 표본 또는 이 프로젝트로 낸 학습)
+    sids = await _sample_ids(conn, pid)
+    done = 0
+    for j in await conn.fetch(f"SELECT state, created_at, finished_at, submitted_by FROM jobs WHERE {_TRAIN_OF} ORDER BY created_at", pid, sids or ["-"]):
+        if j["state"] == "done":
+            done += 1
+            add(j["finished_at"], "auto", "학습 끝", _name(people, j["submitted_by"]), sub=f"{done}번째 학습", group="train")
+        elif j["state"] == "failed":
+            add(j["finished_at"] or j["created_at"], "auto", "학습 실패", _name(people, j["submitted_by"]), group="train")
+        elif j["state"] in ("queued", "running"):
+            add(j["created_at"], "auto", "학습 시작", _name(people, j["submitted_by"]), sub="진행 중", group="train")
+    # ④ 결재 — 모델 등록 · 서비스 공개 · 다른 지역에 적용 · 운영 전환(요청은 대기 중일 때만 · 결정은 승인 · 반려)
+    from .regions import region_of
+    deps = {d["id"]: d for d in await conn.fetch("SELECT d.id, d.sgg_cd, d.region_name FROM deploys d JOIN project_links l ON l.ref = d.card_id AND l.kind='card' "
+                                                 "WHERE l.project_id=$1 AND NOT coalesce(d.test, false)", pid)}
+    cvs = {v["id"]: v for v in await conn.fetch("SELECT v.id, v.version, v.approved_by, v.approved_at FROM project_links l JOIN card_versions v ON v.id = l.ref "
+                                                "WHERE l.project_id=$1 AND l.kind='card_version'", pid)}
+    mids = [m["id"] for m in await conn.fetch("SELECT id FROM models WHERE sample_id = ANY($1::text[])", sids or ["-"])]
+    aps = await conn.fetch("SELECT subject_type, subject_id, requested_by, decided_by, decision, reason, state, at, decided_at, payload FROM approvals "
+                           "WHERE (subject_type='model' AND subject_id = ANY($1::text[])) OR (subject_type='card' AND subject_id = ANY($2::text[])) "
+                           "OR (subject_type='deploy' AND subject_id = ANY($3::text[]))", mids or ["-"], list(cvs) or ["-"], list(deps) or ["-"])
+    carded = set()
+    for a in aps:
+        st, pl = a["subject_type"], a["payload"] or {}
+        if st == "model":
+            what = "모델 등록"
+        elif st == "card":
+            v = cvs.get(a["subject_id"])
+            what, carded = "서비스 공개", carded | {a["subject_id"]}
+            if v and v["version"]:
+                what += f" · {v['version']}판"
+        else:
+            d = deps.get(a["subject_id"]) or {}
+            place = (region_of(d["sgg_cd"]) or {}).get("name") if d.get("sgg_cd") else None
+            place = place or _ko(d.get("region_name")).split(" ")[-1] or "다른 지역"
+            what = f"{place} 적용" if pl.get("action") == "port" else f"{place} 운영 전환"
+        if a["decision"] in ("approve", "reject"):
+            word = "승인" if a["decision"] == "approve" else "반려"
+            sub = "시범" if st == "deploy" and pl.get("action") == "port" and a["decision"] == "approve" else None
+            if a["decision"] == "reject" and a["reason"]:
+                sub = f"사유 {a['reason']}"
+            add(a["decided_at"] or a["at"], "auto", f"{what} {word}", _name(people, a["decided_by"]), sub=sub, group="approval")
+        elif (a["state"] or "pending") == "pending":
+            add(a["at"], "auto", f"{what} 요청", _name(people, a["requested_by"]), sub="결재 대기", group="approval")
+    for vid, v in cvs.items():                       # 결재 행 없이 공개된 판(이관 · 옛 기록)도 한 줄
+        if vid not in carded and v["approved_by"] and v["approved_at"]:
+            add(v["approved_at"], "auto", "서비스 공개" + (f" · {v['version']}판" if v["version"] else ""), _name(people, v["approved_by"]), group="approval")
+    # ⑤ 메모 · 파일
+    for n in await conn.fetch("SELECT id, kind, body, file_name, file_ext, bytes, by, at FROM project_notes WHERE project_id=$1 AND removed_at IS NULL", pid):
+        if n["kind"] == "file":
+            add(n["at"], "file", n["body"] or "파일", _name(people, n["by"]),
+                file={"id": n["id"], "name": n["file_name"], "type": n["file_ext"], "bytes": env(int(n["bytes"] or 0), "bytes", "measured", "올린 파일 크기")})
+        else:
+            add(n["at"], "memo", n["body"] or "", _name(people, n["by"]))
+    out.sort(key=lambda x: x["at"], reverse=True)
+    return [{**x, "at": _iso(x["at"])} for x in out]
+
+
+@router.get("/projects/{pid}/log")
+async def project_log(pid: str, request: Request, kind: str = "all", limit: int = 200):
+    p = _lx(request)
+    if kind not in LOG_KINDS:
+        raise ApiError("bad_request", "kind 는 " + " | ".join(LOG_KINDS))
+    async with db(realm="lx") as conn:
+        r = await _logger(conn, p, pid)
+        items = await _log_items(conn, r, await _people(conn))
+    counts = {k: sum(1 for x in items if k == "all" or x["kind"] == k) for k in LOG_KINDS}
+    pick = [x for x in items if kind == "all" or x["kind"] == kind][:max(1, min(int(limit or 200), 200))]
+    return {"items": pick, "counts": {k: env(v, "count", "recorded", "프로젝트 기록(감사 기록 · 학습 · 결재 · 메모 · 파일)") for k, v in counts.items()},
+            "file_max_mb": env(FILE_MAX_MB, "MB", "recorded", "한 파일 크기 한도(설정 한 곳 · projects.FILE_MAX_MB)"), "file_types": sorted(FILE_TYPES), "as_of": now_iso()}
+
+
+@router.post("/projects/{pid}/notes", status_code=201)
+async def add_note(pid: str, body: dict, request: Request):
+    """메모 한 줄 — 구성원 · 프로젝트장 · LX 관리자."""
+    p = _lx(request)
+    text = " ".join(str(body.get("text") or "").split())[:NOTE_MAX]
+    if not text:
+        raise ApiError("bad_request", "메모를 적어 주세요")
+    nid = "pn_" + secrets.token_hex(6)
+    async with db(realm="lx") as conn:
+        await _logger(conn, p, pid)
+        await conn.execute("INSERT INTO project_notes(id, project_id, kind, body, by) VALUES ($1,$2,'memo',$3,$4)", nid, pid, text, p.user_id)
+        await conn.execute("UPDATE projects SET updated_at=now() WHERE id=$1", pid)
+        await audit(conn, p, "project.note", pid, None, {"note_id": nid})
+    return {"id": nid, "kind": "memo", "at": now_iso()}
+
+
+def _ext(name: str) -> str:
+    return name.rsplit(".", 1)[-1].lower() if "." in name else ""
+
+
+@router.post("/projects/{pid}/files", status_code=201)
+async def add_file(pid: str, request: Request, file: UploadFile = File(...), text: str = Form("")):
+    """파일 올리기 — 작은 문서 · 그림(형식 FILE_TYPES · 한 파일 FILE_MAX_MB 까지)을 프로젝트 저장 폴더(02. 데이터/projects/{프로젝트}/files)에.
+    크기는 프로젝트 저장 공간 · 프로젝트장의 저장 용량에 더해진다. 서버 저장 공간(하드웨어)이 모자라면 받지 않는다(기관 올리기와 같은 선)."""
+    p = _lx(request)
+    import re as _re
+    name = _re.sub(r"[\x00-\x1f\\/:*?\"<>|]", "", (file.filename or "").split("\\")[-1].split("/")[-1]).strip()[:120]
+    ext = _ext(name)
+    if not name or ext not in FILE_TYPES:
+        raise ApiError("bad_request", "올릴 수 있는 파일은 문서(PDF · 한글 · 워드 · 엑셀 · 파워포인트 · 글 · CSV)와 그림(PNG · JPG · GIF · WEBP)입니다",
+                       {"field": "file", "why": "type"})
+    note = " ".join(str(text or "").split())[:NOTE_MAX] or None
+    nid = "pn_" + secrets.token_hex(6)
+    rel = f"projects/{pid}/files/{nid}.{ext}"
+    async with db(realm="lx") as conn:
+        await _logger(conn, p, pid)
+    from .quota import storage_room
+    room = await storage_room("lx", FILE_MAX_MB * 1024 * 1024)
+    if room:
+        raise ApiError("conflict", room["line"], {"why": "disk"}, status=409)
+    dest = config.DATA_ROOT / rel
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    size, cap = 0, FILE_MAX_MB * 1024 * 1024
+    try:
+        with open(dest, "wb") as fh:
+            while chunk := await file.read(1024 * 1024):
+                size += len(chunk)
+                if size > cap:
+                    raise ApiError("bad_request", f"파일은 {FILE_MAX_MB}MB 까지 올릴 수 있습니다", {"field": "file", "why": "size", "max_mb": FILE_MAX_MB})
+                fh.write(chunk)
+        if not size:
+            raise ApiError("bad_request", "빈 파일입니다", {"field": "file", "why": "empty"})
+    except Exception:
+        dest.unlink(missing_ok=True)
+        raise
+    async with db(realm="lx") as conn:
+        await conn.execute("INSERT INTO project_notes(id, project_id, kind, body, file_name, file_ext, file_rel, bytes, by) "
+                           "VALUES ($1,$2,'file',$3,$4,$5,$6,$7,$8)", nid, pid, note, name, ext, rel, size, p.user_id)
+        await conn.execute("UPDATE projects SET updated_at=now() WHERE id=$1", pid)
+        await audit(conn, p, "project.file", pid, None, {"note_id": nid, "name": name, "bytes": size})
+    return {"id": nid, "kind": "file", "name": name, "bytes": env(size, "bytes", "measured", "올린 파일 크기"), "at": now_iso()}
+
+
+@router.get("/projects/{pid}/files/{nid}")
+async def get_file(pid: str, nid: str, request: Request):
+    p = _lx(request)
+    async with db(realm="lx") as conn:
+        await _logger(conn, p, pid)
+        n = await conn.fetchrow("SELECT file_name, file_ext, file_rel FROM project_notes WHERE id=$1 AND project_id=$2 AND kind='file' AND removed_at IS NULL",
+                                nid, pid)
+    path = config.DATA_ROOT / n["file_rel"] if n and n["file_rel"] else None
+    if not path or not path.is_file():
+        raise ApiError("not_found", "파일이 없습니다")
+    from urllib.parse import quote
+    return FileResponse(path, media_type=FILE_TYPES.get(n["file_ext"], "application/octet-stream"),
+                        headers={"Content-Disposition": f"attachment; filename=\"file.{n['file_ext']}\"; filename*=UTF-8''{quote(n['file_name'])}"})
 
 
 # ── 재학습 권한(역할-3 ⓑ · J-2) — jobs 견적(학습)이 부른다 ─────────────────────────────────

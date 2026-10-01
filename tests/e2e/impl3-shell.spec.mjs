@@ -119,6 +119,7 @@ test.describe('구현 3차 · LX 직원 메뉴 · 대시보드 · 프로젝트 �
     test.skip(!href, '공개된 프로젝트 없음');
     const pid = new URL(href).searchParams.get('project');
     await page.goto('v3/lx-project/?project=' + pid);
+    await page.locator('.k-sub .lxp-st[data-st="now"]').waitFor({ timeout: 20000 });   // 프로젝트를 읽은 뒤(단계마다 그 대상이 붙은 주소)
     await page.locator('.k-sub .lxp-st').nth(5).click();
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-deploy/'), { timeout: 20000 });
     const card = new URL(page.url()).searchParams.get('card');
@@ -130,6 +131,7 @@ test.describe('구현 3차 · LX 직원 메뉴 · 대시보드 · 프로젝트 �
     expect(card).toBeTruthy();
     /* 학습 판 — 업무 10 이 아니라 그 프로젝트 한 장 */
     await page.goto('v3/lx-project/?project=' + pid);
+    await page.locator('.k-sub .lxp-st[data-st="now"]').waitFor({ timeout: 20000 });
     await page.locator('.k-sub .lxp-st').nth(2).click();
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-train/'), { timeout: 20000 });
     await expect(page.locator('.tr-card')).toHaveCount(1, { timeout: 20000 });

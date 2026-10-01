@@ -247,13 +247,15 @@ def test_retrain_not_before_publish(live, tok, made, other):
     assert pm["can"]["train"] is True and pm["can"]["retrain"] is False
 
 
-def test_lead_change_is_admin_only(live, tok, made, other):
-    """프로젝트장 바꾸기 = LX 관리자만 · 앞 프로젝트장은 구성원으로 남는다."""
+def test_lead_change_lead_or_admin(live, tok, made, other):
+    """프로젝트장 바꾸기 = 프로젝트장 본인(넘기기) · LX 관리자(확인 17차 P-5 ⓐ — 예전에는 관리자만) · 다른 직원은 못 한다 · 앞 프로젝트장은 구성원으로 남는다."""
     p = made()
-    assert httpx.patch(B + f"/projects/{p['id']}", headers=H(tok["staff"]), json={"lead_id": OTHER}, timeout=30).status_code == 403
-    r = httpx.patch(B + f"/projects/{p['id']}", headers=H(tok["admin"]), json={"lead_id": OTHER}, timeout=30)
+    assert httpx.patch(B + f"/projects/{p['id']}", headers=H(other), json={"lead_id": OTHER}, timeout=30).status_code == 403
+    r = httpx.patch(B + f"/projects/{p['id']}", headers=H(tok["staff"]), json={"lead_id": OTHER}, timeout=30)
     assert r.status_code == 200, r.text
     assert r.json()["lead"]["id"] == OTHER and STAFF_ID in [m["id"] for m in r.json()["members"]]
+    r = httpx.patch(B + f"/projects/{p['id']}", headers=H(tok["admin"]), json={"lead_id": STAFF_ID}, timeout=30)
+    assert r.status_code == 200 and r.json()["lead"]["id"] == STAFF_ID and OTHER in [m["id"] for m in r.json()["members"]]
 
 
 def test_archive_moves_out_of_mine(live, tok, made):

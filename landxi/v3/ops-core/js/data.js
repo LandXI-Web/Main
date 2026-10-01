@@ -166,7 +166,8 @@ function fromServer(r) {
   }
   changes = changes.filter(([, , b]) => b);
   return { key: kind + ':' + (r.id || sid), id: r.id, kind, kindKo: KIND[kind], target, requester: requesterOf(r, kind, sid), at: r.at, deploy: d, ref: sid, raw: r, changes,
-    why: r.request_reason || '', mine: !!r.mine, canDecide: r.can_decide !== false };
+    why: r.request_reason || '', mine: !!r.mine, canDecide: r.can_decide !== false,
+    retrain: r.retrain || null };   // 재학습 회차에서 나온 모델 등록 · 서비스 공개 — 프로젝트장이 고른 사유(확인 17차 P-3 ⓐ)
 }
 
 /* ── 할 일(카드) ─────────────────────────── */

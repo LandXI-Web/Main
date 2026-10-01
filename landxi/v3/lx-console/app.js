@@ -6,7 +6,7 @@
 import * as K from '../kit/index.js';
 import { h, esc, api, API } from '../kit/util.js';
 import { staffMenu, requestCounts, STAFF_HREF } from '../kit/lx-menu.js';
-import { stageHref, stepSeg, stuckHtml, nb, ensureCss, HOME as PROJECTS } from '../lx-project/context.js';
+import { stageHref, stepSeg, stuckHtml, nb, ensureCss, projectNotices, HOME as PROJECTS } from '../lx-project/context.js';
 import { openNewProject } from '../lx-project/new.js';
 import { summary } from './summary.js';
 import { say } from './words.js';
@@ -23,7 +23,7 @@ const V = { deploy: at('../lx-deploy/'), detail: at('../service-detail/'), xi: a
 const head = (title, more, sub) => h('div.ld-h', {}, h('h2', {}, title, sub || null), more || null);
 const moreLink = (text, href) => h('a.ld-more', { href, text });
 const mineMore = moreLink('전체 보기', PROJECTS);
-const mine = h('section.t-card.ld-card.lc-mine', { 'aria-label': '내 프로젝트' }, head('내 프로젝트', mineMore), h('div.ld-prs'),
+const mine = h('section.t-card.ld-card.lc-mine', { 'aria-label': '내 프로젝트' }, head('내 프로젝트', mineMore), h('div.lxp-ntcs'), h('div.ld-prs'),
   h('div.ld-foot', {}, h('button.ld-new', { type: 'button', text: '새 프로젝트', onclick: () => openNewProject() })));
 const svcSub = h('small.ld-sub');
 const svc = h('section.t-card.ld-card.ld-svc', { 'aria-label': '우리 서비스' }, head('우리 서비스', moreLink('서비스 카드', STAFF_HREF.cards), svcSub), h('div.ld-strip'), h('div.ld-issues'));
@@ -62,6 +62,7 @@ function when(s) {
 }
 
 drawMine();
+projectNotices(mine.querySelector('.lxp-ntcs'));     // 프로젝트장을 넘겨받았다는 알림 한 줄(확인 17차 P-5 ⓐ — 프로젝트 목록 맨 위와 같은 부품)
 drawInbox();
 drawQuick();
 drawServices();

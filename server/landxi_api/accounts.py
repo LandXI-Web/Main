@@ -32,6 +32,12 @@
   GET  /accounts/failures                       → 실패한 로그인(아이디 · 시각 · 입구 · 접속 주소 · 까닭 · 최근 200 — 비밀번호 값은 없다)
   잠금: 관리자가 잠근 계정(status locked)과 비밀번호 5번 틀려 10분 잠긴 계정(lock_until · auth.py) 둘 다 lock {locked:false} 로 푼다.
 
+내 정보(본인이 고친다 — 확인 17차 P-5 ⓐ · 원칙 105 · 121 · LX 직원 · LX 관리자 · LX 영업 계정. 기관 계정은 확인 범위 밖):
+  GET   /me/profile                             → {login(고정), name, dept, contact, role_ko, org, changed_at, storage{quota_gb, used_bytes, projects}}
+  PATCH /me/profile                             {name?, dept?, contact?} → 관리자 승인 없이 바로 바뀌고 감사 기록(account.profile — 바뀐 칸 전 · 후)에 남는다
+  저장 용량 = 나에게 할당된 저장 용량(lx_users.storage_quota_gb — 할당 화면은 확인 전이라 없으면 null '할당 없음') + 지금 쓴 양
+             (내가 프로젝트장인 프로젝트의 저장 공간 합 — projects.lead_storage · 프로젝트 한 장의 storage 와 같은 식).
+
 임시 비밀번호: 사람이 불러 주기 쉬운 대문자·숫자 12자(헷갈리는 0·O·1·I·L 제외) · 하루 동안만 · 받은 사람은 로그인하면 새 비밀번호를 정해야 들어간다.
 비밀번호 규칙(기본값 — 사용자 확인 대기): 10자 이상 · 영문과 숫자를 함께 · 메일 아이디를 그대로 넣지 않음.
 """
@@ -65,7 +71,7 @@ ACTION_KO = {
     "account.signup.request": "가입 신청", "account.signup.approve": "가입 승인", "account.signup.reject": "가입 반려",
     "account.reset.request": "비밀번호 재설정 요청", "account.reset.issue": "임시 비밀번호 발급", "account.reset.reject": "재설정 반려",
     "account.temp.issue": "임시 비밀번호 발급", "account.lock": "잠금", "account.unlock": "잠금 풀기", "account.role": "역할 변경",
-    "account.password.change": "새 비밀번호 설정", "account.autolock": "자동 잠금(10분)",
+    "account.password.change": "새 비밀번호 설정", "account.autolock": "자동 잠금(10분)", "account.profile": "내 정보 고침(본인)",
 }
 FAIL_KO = {"password": "비밀번호 틀림", "unknown": "없는 아이디", "temp_locked": "잠긴 동안 시도", "locked": "잠긴 계정", "temp_expired": "임시 비밀번호 기간 지남",
            "disabled": "사용 중지된 계정"}
@@ -619,3 +625,69 @@ async def login_failures(request: Request):
               "site_ko": SITE_KO.get(r["site"] or "", "이 PC"), "ip": "이 PC" if (r["ip"] or "") in ("127.0.0.1", "::1", "") else r["ip"],
               "reason": r["reason"], "reason_ko": FAIL_KO.get(r["reason"], r["reason"])} for r in rows]
     return {"items": items, "at": now_iso()}
+
+
+# ── 내 정보(본인이 고친다 — 확인 17차 P-5 ⓐ · 원칙 105 · 121) ─────────────────────────────────
+PROFILE_MAX = {"name": 40, "dept": 60, "contact": 30}
+CONTACT_OK = re.compile(r"^[0-9가-힣+\-().\s#~/]{2,30}$")      # 내선 · 휴대전화 · 대표번호(예: 내선 1234 · 010-0000-0000) — 숫자가 하나는 있어야 한다
+
+
+def _me_lx(request: Request) -> Principal:
+    p = require(principal(request))
+    if p.realm != "lx" or p.role not in ROLES["lx"]:
+        raise ApiError("forbidden", "내 정보 고치기는 LX 계정에서 합니다")
+    return p
+
+
+async def _profile(conn, p: Principal) -> dict:
+    from .envelope import env
+    from .projects import lead_storage
+    u = await conn.fetchrow("SELECT login, name, dept, contact, role FROM lx_users WHERE id=$1", p.user_id)
+    if not u:
+        raise ApiError("not_found", "계정이 없습니다")
+    last = await conn.fetchval("SELECT max(at) FROM audit_log WHERE action='account.profile' AND actor=$1", p.user_id)
+    st = await lead_storage(conn, p.user_id)
+    return {"login": u["login"], "name": u["name"] or "", "dept": u["dept"] or "", "contact": u["contact"] or "",
+            "role_ko": ROLE_KO.get(("lx", u["role"]), "LX"), "org": "한국국토정보공사", "changed_at": _iso(last),
+            "storage": {"quota_gb": env(st["quota_gb"], "GB", "recorded", "나에게 할당된 저장 용량(LX 관리자 설정 · 없으면 할당 없음)"),
+                        "used": env(st["bytes"], "bytes", "measured", "내가 프로젝트장인 프로젝트의 저장 공간 합(학습데이터 파일 + 올린 파일)"),
+                        "projects": env(st["projects"], "count", "recorded", "내가 프로젝트장인 프로젝트(진행 중 · 보관)")}}
+
+
+@router.get("/me/profile")
+async def my_profile(request: Request):
+    p = _me_lx(request)
+    async with db(realm="lx") as conn:
+        out = await _profile(conn, p)
+    return {**out, "as_of": now_iso()}
+
+
+@router.patch("/me/profile")
+async def edit_profile(body: dict, request: Request):
+    """이름 · 부서 · 연락처를 본인이 바로 고친다(관리자 승인 없음). 아이디(메일)는 고치지 않는다. 바뀐 칸만 감사 기록에 전 · 후로 남긴다."""
+    p = _me_lx(request)
+    if "login" in body:
+        raise ApiError("bad_request", "아이디(메일)는 바꿀 수 없습니다", {"field": "login"})
+    async with db(realm="lx") as conn:
+        u = await conn.fetchrow("SELECT login, name, dept, contact FROM lx_users WHERE id=$1 FOR UPDATE", p.user_id)
+        if not u:
+            raise ApiError("not_found", "계정이 없습니다")
+        new = {"name": u["name"], "dept": u["dept"], "contact": u["contact"]}
+        if "name" in body:
+            new["name"] = _text(body.get("name"), PROFILE_MAX["name"], "이름", "name")
+        for k, label in (("dept", "부서"), ("contact", "연락처")):
+            if k in body:
+                s = " ".join(str(body.get(k) or "").split())
+                if len(s) > PROFILE_MAX[k]:
+                    raise ApiError("bad_request", f"{label}{_josa(label, '은는')} {PROFILE_MAX[k]}자까지입니다", {"field": k})
+                if k == "contact" and s and not (CONTACT_OK.match(s) and re.search(r"\d", s)):
+                    raise ApiError("bad_request", "연락처는 번호로 적어 주세요(예: 내선 1234)", {"field": k})
+                new[k] = s or None
+        before = {k: u[k] for k in new if new[k] != u[k]}
+        if before:
+            await conn.execute("UPDATE lx_users SET name=$2, dept=$3, contact=$4 WHERE id=$1", p.user_id, new["name"], new["dept"], new["contact"])
+            await conn.execute("INSERT INTO audit_log(actor, realm, action, subject, before, after) VALUES ($1,'lx','account.profile',$2,$3,$4)",
+                               p.user_id, u["login"], before,
+                               {"realm": "lx", "tenant_id": None, "name": new["name"], "fields": list(before), **{k: new[k] for k in before}})
+        out = await _profile(conn, p)
+    return {**out, "changed": list(before), "as_of": now_iso()}
