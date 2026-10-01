@@ -7,6 +7,7 @@
 GET    /projects?scope=mine|led|joined|archived|all
                                          mine = 내가 만든(프로젝트장) + 참여한(구성원) 진행 중 · led · joined 는 그 한쪽 · archived = 내 보관(끝난) 프로젝트
                                          (관리자는 전체 보관) · all = LX 전체 진행 중. 줄마다 지금 단계 · 다음 할 일 하나 · 마지막 활동
+                                         · steps(단계 6의 칸 상태 done|now|wait|skip — 목록의 6칸 진행 막대) · blocked(막힌 곳 — 반려 · 앞 단계 남음 · 결재 대기. 한 장과 같은 판정)
 POST   /projects                         {name, task, task_id?, regions:[code..]} → 바로 만들어진다 · 프로젝트장 = 만든 직원
 GET    /projects/places                  대상 지역 고르기의 해외 항목(국내 시군구는 GET /regions)
 GET    /projects/people                  구성원 고르기(LX 직원 · 관리자)
@@ -252,6 +253,7 @@ def _judge(r, f) -> dict:
     """사실 → 단계 6(done · now · wait) + 지금 단계 + 다음 할 일 하나. 막지 않는 길잡이 — 순서가 어긋나도 판정은 조건으로."""
     regions = r["regions"] or []
     st = {k: {"key": k, "label": lb, "done": False, "next": None, "target": {}} for k, lb in STAGES}
+    holds: dict[str, str] = {}              # 단계 → 'wait'(결재 대기) · 'reject'(반려) — 목록의 '막힌 곳'이 쓴다(아래 blocked)
     # ① 데이터 올리기
     miss = [g for g in regions if not f["have"].get(g["code"])]
     st["ingest"]["done"] = bool(regions) and not miss
@@ -279,9 +281,11 @@ def _judge(r, f) -> dict:
         ap = f["model_ap"]
         if m["status"] == "pending":
             t["next"] = "모델 등록 승인 대기"
+            holds["train"] = "wait"
         elif ap and ap["decision"] == "reject":
             t["next"] = "모델 등록 반려 · 사유 확인"
             t["reason"] = ap["reason"]
+            holds["train"] = "reject"
         else:
             t["next"] = "결과 보고 모델 등록 요청"
     elif job and job["state"] == "failed":
@@ -307,9 +311,11 @@ def _judge(r, f) -> dict:
         pb["done"] = True
     elif f["cv_ap"] and f["cv_ap"]["state"] == "pending":
         pb["next"] = "공개 결재 대기"
+        holds["publish"] = "wait"
     elif f["cv_ap"] and f["cv_ap"]["decision"] == "reject":
         pb["next"] = "공개 반려 · 사유 확인"
         pb["reason"] = f["cv_ap"]["reason"]
+        holds["publish"] = "reject"
     else:
         pb["next"] = "서비스 카드 발행 요청" if r["round"] == 1 or not f["card"] else "새 판 발행 요청"
     # ⑥ 서비스 관리 — 공개 뒤(끝이 없는 단계)
@@ -320,6 +326,7 @@ def _judge(r, f) -> dict:
     pilot = sum(1 for d in f["deploys"] if d["stage"] in ("canary", "shadow"))
     if f["port_wait"]:
         op["next"] = "다른 지역 적용 결재 대기"
+        holds["ops"] = "wait"
     elif not f["deploys"]:
         op["next"] = "다른 지역에 적용 요청"
     else:                                   # 지도 범례와 같은 말(운영 = 전면 · 시범 = 시범 운영)
@@ -341,7 +348,27 @@ def _judge(r, f) -> dict:
     now = stages[cur]
     nxt = {"text": now["next"] or ("운영 중" if now["key"] == "ops" else now["label"]), "stage": now["key"], "target": now["target"],
            "status_only": bool(now.get("status_only"))}
-    return {"stages": stages, "stage": {"index": cur, "key": now["key"], "label": now["label"]}, "next": nxt, "published": f["published"]}
+    return {"stages": stages, "stage": {"index": cur, "key": now["key"], "label": now["label"]}, "next": nxt, "published": f["published"],
+            "steps": [("skip" if s.get("skip") and s["state"] != "now" else s["state"]) for s in stages], "blocked": _blocked(stages, cur, holds)}
+
+
+_KIND_ORDER = {"reject": 0, "before": 1, "wait": 2}
+
+
+def _blocked(stages: list, cur: int, holds: dict) -> list[dict]:
+    """막힌 곳 — 같은 판정에서: 반려 · 앞 단계가 남음(지금 단계보다 앞인데 끝나지 않았고 건너뛰는 단계도 아님) · 결재 대기.
+    목록의 한 칸이 첫 줄만 보이도록 '내가 손댈 것'부터 — 반려 → 앞 단계 남음 → 결재 대기(남이 처리), 같으면 단계 순서. 없으면 빈 목록."""
+    out = []
+    for i, s in enumerate(stages):
+        k = s["key"]
+        if holds.get(k):
+            out.append({"kind": holds[k], "stage": k, "label": s["label"], "text": s["next"]})
+        elif i < cur and not s["done"] and not s.get("skip"):
+            prog = s.get("progress")
+            out.append({"kind": "before", "stage": k, "label": s["label"],
+                        "text": f"{s['label']} {prog['n']}/{prog['total']}" if prog else f"{s['label']} 남음"})
+    out.sort(key=lambda b: (_KIND_ORDER[b["kind"]], [x["key"] for x in stages].index(b["stage"])))
+    return out
 
 
 def _can(p: Principal, r, members: list[str], published: bool) -> dict:
@@ -362,6 +389,7 @@ async def view(conn, p: Principal, r, people: dict | None = None, full: bool = T
            "lead": _who(people, r["lead_id"]), "mine": _is_member(p, r, members),
            "round": env(r["round"], "count", "recorded", "프로젝트 회차"), "state": r["state"],
            "stage": j["stage"], "next": j["next"], "published": j["published"],
+           "steps": j["steps"], "blocked": j["blocked"],
            "created_at": _iso(r["created_at"]), "updated_at": _iso(r["updated_at"]), "last_at": _iso(f["last_at"]),
            "lead_is_me": p.user_id == r["lead_id"]}
     if full:

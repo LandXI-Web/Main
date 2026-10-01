@@ -15,8 +15,23 @@
 .lxp-tab[aria-selected="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent)}
 .lxp-tab:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .lxp-list{padding:8px 12px 16px}
-.lxp-list .k-table td{vertical-align:top}
+.lxp-list .k-table td{vertical-align:middle;word-break:keep-all;text-wrap:balance}
+.lxp-list .k-table td:last-child{white-space:nowrap}
 .lxp-n{font-weight:500;color:var(--ink)}
+/* 목록 칸 — 진행(6칸 막대 + 지금 단계) · 막힌 곳(없으면 —) · 무엇을 · 어디 (제안 2 S-14 ⓑ · 막대 부품은 context.css) */
+.lxp-pg{display:flex;flex-direction:column;gap:6px;min-width:120px;max-width:168px}
+.lxp-pg-st{display:inline-flex;align-items:center;gap:6px;font:500 var(--fs-label)/20px var(--font-body);color:var(--ink);white-space:nowrap}
+.lxp-pg-st i{display:inline-flex;align-items:center;justify-content:center;flex:none;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font:500 12px/1 var(--font-num);font-style:normal}
+.lxp-pg-st.is-arch{color:var(--sub)}
+.lxp-stuck{display:flex;align-items:flex-start;gap:8px;min-width:128px;font:500 var(--fs-label)/20px var(--font-body);color:var(--warn);text-wrap:balance}
+.lxp-stuck::before{content:"";flex:none;width:8px;height:8px;margin-top:6px;border-radius:50%;background:currentColor}
+.lxp-stuck[data-kind="wait"]{color:var(--ink)}
+.lxp-stuck[data-kind="wait"]::before{background:var(--lock)}
+.lxp-stuck small{font:400 13px/20px var(--font-body);color:var(--sub);white-space:nowrap}
+.lxp-stuck.is-none{color:var(--mute);font-weight:400}
+.lxp-stuck.is-none::before{content:none}
+.lxp-what{display:flex;flex-direction:column;gap:2px;min-width:0}
+.lxp-what small{font:400 13px/18px var(--font-body);color:var(--sub)}
 
 /* 한 장 — 왼쪽(지금 할 일 · 단계) · 오른쪽(사람 · 재학습) */
 .lxp-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
@@ -46,6 +61,32 @@
 .lxp-arch::after{content:none}
 
 @media (max-width:1100px){.lxp-grid{grid-template-columns:minmax(0,1fr)}.lxp-page{padding:32px 32px 56px}}
+/* 목록이 좁아지면(휴대폰 · 좁은 창) 표 대신 프로젝트마다 한 장 — 이름 · 마지막 활동 / 무엇을 · 어디 / 진행 막대 / 막힌 곳 / 다음 할 일 */
+@media (max-width:860px){
+  .lxp-list .k-table,.lxp-list .k-table tbody{display:block}
+  .lxp-list .k-table thead{display:none}
+  .lxp-list .k-table tbody tr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;padding:16px 12px;border-bottom:1px solid var(--rule);border-radius:0}
+  .lxp-list .k-table tbody tr:last-child{border-bottom:0}
+  .lxp-list .k-table td{display:block;min-width:0;padding:0;border:0}
+  .lxp-list .k-table td:nth-child(1){grid-column:1;grid-row:1}
+  .lxp-list .k-table td:last-child{grid-column:2;grid-row:1;text-align:right;white-space:nowrap;font:400 var(--fs-label)/24px var(--font-body);color:var(--sub)}
+  .lxp-list .k-table td:nth-child(5){grid-column:1/-1;grid-row:2}
+  .lxp-list .k-table td:nth-child(6):not(:last-child){grid-column:1/-1;grid-row:3;font:400 var(--fs-label)/20px var(--font-body);color:var(--sub)}
+  .lxp-list .k-table td:nth-child(6):not(:last-child)::before{content:"프로젝트장 "}
+  .lxp-list .k-table td:nth-child(2){grid-column:1/-1;grid-row:4;margin-top:4px}
+  .lxp-list .k-table td:nth-child(4){grid-column:1/-1;grid-row:5}
+  .lxp-list .k-table td:nth-child(3){grid-column:1/-1;grid-row:6}
+  .lxp-list .k-table td:nth-child(3),.lxp-list .k-table td:nth-child(4){display:flex;align-items:baseline;gap:12px;font:400 var(--fs-label)/20px var(--font-body)}
+  .lxp-list .k-table td:nth-child(3)::before,.lxp-list .k-table td:nth-child(4)::before{flex:none;width:64px;color:var(--sub)}
+  .lxp-list .k-table td:nth-child(3)::before{content:"다음 할 일"}
+  .lxp-list .k-table td:nth-child(4)::before{content:"막힌 곳"}
+  .lxp-list .k-table td:nth-child(4):has(.is-none){display:none}
+  .lxp-what{flex-direction:row;align-items:baseline;gap:0;font:400 var(--fs-label)/20px var(--font-body);color:var(--sub-2)}
+  .lxp-what small{font:inherit;color:inherit}
+  .lxp-what small::before{content:"·";margin:0 6px}
+  .lxp-pg{flex-direction:row;align-items:center;gap:14px;max-width:none}
+  .lxp-pg .lxp-seg{flex:0 0 132px}
+}
 @media (max-width:960px){
   .lxp-page{padding:20px 20px 40px}
   .lxp-head--row .t-btn{padding:0 16px}

@@ -4,6 +4,7 @@
      · 왼쪽 메뉴 = '프로젝트'에 불 · 마스트 아래 한 줄 = 프로젝트 이름 + 그 프로젝트의 단계 6(데이터 올리기 → 학습데이터 구축 → 학습 → 결과 확인 → 발행 요청 → 서비스 관리) + 다음 할 일
      · 단계 표시(완료 · 지금 · 대기) = 서버 판정(GET /projects/{id}) — 화면이 지어내지 않는다. 이 화면이 보이는 단계는 밑줄
      · 단계 → 화면 주소 = stageHref() 한 곳(대시보드 '내 프로젝트' · 프로젝트 화면 · 단계 막대가 모두 이것을 쓴다)
+   · 6칸 진행 막대(stepSegHtml) = 프로젝트 목록의 '진행' 칸 — 서버가 목록에 주는 칸 상태(steps)를 그대로 칠한다(대시보드 '내 프로젝트' 막대와 같은 모양)
    프로젝트 밖(맥락 없음)에서는 그 화면의 메뉴 칸(staffMenu)만 쓴다. */
 import { h, esc, api } from '../kit/util.js';
 import { staffMenu } from '../kit/lx-menu.js';
@@ -91,6 +92,18 @@ function drawBar(el, pr, key) {
   });
   const nx = pr?.next?.text && pr.state !== 'archived' ? h('p.lxp-bar-next', {}, h('span.lxp-bar-k', { text: '다음 할 일' }), h('b', { text: pr.next.text })) : null;
   el.replaceChildren(h('div.lxp-bar', { class: key === null ? 'is-page' : '' }, key === null ? null : name, steps, nx));
+}
+
+/** 6칸 진행 막대(HTML) — steps = 서버가 준 칸 상태 6(done · now · wait · skip). 끝난 칸 · 지금 칸 · 남은 칸 · 건너뛴 칸을 구분한다.
+    대시보드 '내 프로젝트'의 막대(.ld-seg)와 같은 모양(.lxp-seg · context.css). 칸마다 이름표(title) · 막대 전체 읽기 글(aria-label). */
+const SEG_WORD = { done: '완료', now: '지금 단계', wait: '대기', skip: '해당 없음' };
+export function stepSegHtml(steps = []) {
+  ensureCss();
+  const st = STAGES.map((_, i) => (SEG_WORD[steps?.[i]] ? steps[i] : 'wait'));
+  const nowI = st.indexOf('now');
+  const n = (k) => st.filter((x) => x === k).length;
+  const say = [`${n('done')}칸 끝남`, nowI >= 0 ? `지금 ${nowI + 1} ${STAGES[nowI].label}` : '', n('wait') ? `${n('wait')}칸 남음` : '', n('skip') ? `${n('skip')}칸 해당 없음` : ''].filter(Boolean).join(' · ');
+  return `<span class="lxp-seg" role="img" aria-label="${esc(say)}">${st.map((x, i) => `<i data-st="${x}" title="${esc(`${i + 1} ${STAGES[i].label} · ${SEG_WORD[x]}`)}"></i>`).join('')}</span>`;
 }
 
 let cssOn = false;

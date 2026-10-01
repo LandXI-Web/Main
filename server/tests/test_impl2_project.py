@@ -150,6 +150,54 @@ def _publish(tok, p):
     return httpx.get(B + f"/projects/{p['id']}", headers=s, timeout=60).json()
 
 
+def _row(tok, pid, scope="led"):
+    return next(x for x in httpx.get(B + f"/projects?scope={scope}", headers=H(tok["staff"]), timeout=60).json()["items"] if x["id"] == pid)
+
+
+def test_list_steps_and_blocked(live, tok, made):
+    """목록 줄의 6칸 막대(steps)와 막힌 곳(blocked) — 한 장(stages)과 같은 판정(제안 2 S-14 ⓑ). 결재 대기 · 반려 · 앞 단계 남음이 한 줄씩 나온다."""
+    s = H(tok["staff"])
+    # 새 프로젝트 — 칸 6 · 지금 칸 하나 · 한 장과 같다 · 막힌 곳 없음(앞 단계는 차례대로 해 가는 중)
+    p = made()
+    row = _row(tok, p["id"])
+    assert row["steps"] == [x["state"] for x in p["stages"]] and len(row["steps"]) == 6 and row["steps"].count("now") == 1
+    assert row["blocked"] == [] and p["blocked"] == []
+    # 발행 요청을 올려 둔 채 — 결재 대기(남이 처리) 한 줄
+    p = httpx.post(B + f"/projects/{p['id']}/samples", headers=s, json={"sample_id": SAMPLE}, timeout=60).json()
+    kinds = httpx.get(B + "/registry/ledger_kinds", headers=s, timeout=30).json()["items"]
+    body = {"name": "pytest 비닐하우스", "model_id": stage(p, "train")["target"]["model"], "rules": [],
+            "ledger_kind": next(k["kind"] for k in kinds if k["ready"]), "project_id": p["id"]}
+    card = httpx.post(B + "/registry/cards", headers=s, json=body, timeout=60).json()
+    row = _row(tok, p["id"])
+    assert [b["kind"] for b in row["blocked"]] == ["wait"] and row["blocked"][0]["text"] == "공개 결재 대기" and row["blocked"][0]["stage"] == "publish"
+    # 관리자가 반려 — 반려(내가 손댈 것) 한 줄 · 사유 확인
+    r = httpx.post(B + f"/approvals/{card['approval_id']}/decide", headers=H(tok["admin"]), json={"decision": "reject", "reason": "pytest"}, timeout=60)
+    assert r.status_code == 200, r.text
+    row = _row(tok, p["id"])
+    assert [b["kind"] for b in row["blocked"]] == ["reject"] and row["blocked"][0]["text"] == "공개 반려 · 사유 확인"
+
+
+def test_list_blocked_before_stage_after_publish(live, tok, made):
+    """공개까지 간 프로젝트인데 결과 확인을 한 건도 안 했다 — 지금 칸은 서비스 관리지만 '결과 확인 0/20'(앞 단계 남음)이 막힌 곳에 나온다. 막대는 그 칸만 비어 있다."""
+    p = _publish(tok, made())
+    row = _row(tok, p["id"])
+    assert row["stage"]["key"] == "ops" and row["steps"] == ["done", "done", "done", "wait", "done", "now"]
+    assert [b["kind"] for b in row["blocked"]] == ["before"] and row["blocked"][0]["stage"] == "review"
+    rv = stage(p, "review")["progress"]
+    assert row["blocked"][0]["text"] == f"결과 확인 {rv['n']}/{rv['total']}"            # 한 장의 '결과 확인 n/20'과 같은 값
+    assert httpx.get(B + f"/projects/{p['id']}", headers=H(tok["staff"]), timeout=60).json()["blocked"] == row["blocked"]
+
+
+def test_list_steps_skip_for_overseas_only(live, tok, made):
+    """해외 지역만 — 결과 확인(필지 표본)은 대상이 아니라 '건너뛴 칸'(skip)으로 나오고 막힌 곳에 올리지 않는다."""
+    places = httpx.get(B + "/projects/places", headers=H(tok["staff"]), timeout=30).json()["items"]
+    if not places:
+        pytest.skip("해외 지역 없음")
+    p = made({"name": "pytest 해외 시험", "task": "비닐하우스", "task_id": "greenhouse", "regions": [places[0]["code"]]})
+    row = _row(tok, p["id"])
+    assert row["steps"][3] == "skip" and all(b["stage"] != "review" for b in row["blocked"])
+
+
 def test_retrain_only_lead(live, tok, made, other):
     """공개된 서비스의 재학습 — 프로젝트장만 학습 · 다음 회차를 시작한다(구성원 · 다른 직원 · 관리자는 서버가 거절 · 버튼 없음). 재학습 = 같은 프로젝트 2차 · 학습 단계로."""
     p = _publish(tok, made())

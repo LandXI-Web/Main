@@ -1,11 +1,12 @@
 /* lx-project — 프로젝트 목록 · 관리 · 한 장(구현 2차 T1 · 확인 대장 R-D3 · 갈림길 ⓐ · 4차 P1 · 5차 역할-3 ⓑ · 6차 흐름-1 · 10차 메뉴-1 ⓐ · J-1).
    왼쪽 메뉴 = LX 직원 메뉴('프로젝트' 불) · 한 장에서는 마스트 아래 한 줄에 그 프로젝트의 단계 6(context.js) — 생산 6단계는 메뉴가 아니라 프로젝트 안.
    ?project= 없음 = 목록·관리: 내가 만든 · 참여한 · 보관(끝난 것) · 전체 · 새 프로젝트(사용자 10-01 "기존 내가 만든 프로젝트는 어디에서 관리하는지?")
+                 줄마다 6칸 진행 막대 · 다음 할 일 · 막힌 곳(앞 단계 남음 · 결재 대기 · 반려 — 없으면 —) · 무엇을 · 어디 · 마지막 활동(제안 2 S-14 ⓑ · 걸러 보기는 나중)
    ?project=  있음 = 한 장: 지금 단계 · 다음 할 일 하나(그 단계 화면으로) · 단계 6(완료 조건 자동 판정 — 서버) · 사람(프로젝트장 · 구성원) · 재학습 · 보관
    숫자·판정은 전부 서버(GET /projects · /projects/{id}). 부품 = 키트(셸 · 관문 · 표 · 스텝퍼 · 빈 화면 · 토스트)만 조합. */
 import * as K from '../kit/index.js';
 import { h, api } from '../kit/util.js';
-import { PID, projectRail, attachProject, refreshRail, stageHref, projectHref, loadProject } from './context.js';
+import { PID, projectRail, attachProject, refreshRail, stageHref, projectHref, loadProject, stepSegHtml } from './context.js';
 import { staffMenu } from '../kit/lx-menu.js';
 import { openNewProject } from './new.js';
 
@@ -27,6 +28,8 @@ function when(s) {
   return d.getFullYear() === now.getFullYear() ? `${two(d.getMonth() + 1)}.${two(d.getDate())}` : `${d.getFullYear()}.${two(d.getMonth() + 1)}.${two(d.getDate())}`;
 }
 const regionWord = (rs = []) => (rs.length ? rs[0].name + (rs.length > 1 ? ` 외 ${rs.length - 1}곳` : '') : '—');
+/** 줄이 꺾일 때 가운뎃점이 줄 맨 앞에 서지 않게 — ' · ' 의 앞 공백을 붙여 쓴다(점은 앞 낱말과 함께 윗줄 끝에) */
+const nb = (t) => String(t ?? '').replace(/ · /g, ' · ');
 const stageText = (p) => (p.stage ? `${p.stage.index + 1} ${p.stage.label}` : '—');
 
 if (PID) await one(); else await list();
@@ -72,14 +75,14 @@ async function list() {
     const tb = h('div'); body.append(tb);
     const cols = [
       { key: 'name', label: '이름', fmt: (v) => `<b class="lxp-n">${esc(v)}</b>` },
-      { key: 'task', label: '무엇을' },
-      { key: 'where', label: '어디' },
-      { key: 'stageText', label: '지금 단계' },
+      { key: 'steps', label: '진행', fmt: (v, r) => progressCell(r, k === 'archived') },
       { key: 'nextText', label: '다음 할 일' },
+      { key: 'blocked', label: '막힌 곳', fmt: (v, r) => stuckCell(r, k === 'archived') },
+      { key: 'task', label: '무엇을 · 어디', fmt: (v, r) => `<span class="lxp-what">${esc(v || '—')}<small title="${esc((r.regions || []).map((g) => g.full || g.name).join(' · '))}">${esc(r.where)}</small></span>` },
       ...(k === 'led' ? [] : [{ key: 'leadName', label: '프로젝트장' }]),
       { key: 'lastText', label: '마지막 활동' },
     ];
-    const rows = j.items.map((p) => ({ ...p, where: regionWord(p.regions), stageText: k === 'archived' ? '보관' : stageText(p), nextText: k === 'archived' ? '—' : (p.next?.text || '—'),
+    const rows = j.items.map((p) => ({ ...p, where: regionWord(p.regions), nextText: k === 'archived' ? '—' : nb(p.next?.text || '—'),
       leadName: p.lead?.name || '—', lastText: when(p.last_at || p.updated_at) }));
     K.table(tb, { cols, rows, limit: 20, onRow: (r) => { location.href = projectHref(r.id); }, caption: null });
   }
@@ -89,6 +92,18 @@ async function list() {
   }
   await show(scope);
   if (Q.get('new') === '1') openNewProject();
+}
+/** 진행 칸 — 6칸 막대(서버 판정 steps) + 지금 단계(번호 · 이름). 보관한 프로젝트는 막대 없이 '보관' */
+function progressCell(p, archived) {
+  if (archived) return '<span class="lxp-pg-st is-arch">보관</span>';
+  const n = (p.stage?.index ?? 0) + 1;
+  return `<div class="lxp-pg">${stepSegHtml(p.steps)}<span class="lxp-pg-st"><i class="num">${n}</i>${esc(p.stage?.label || '')}</span></div>`;
+}
+/** 막힌 곳 — 서버가 준 막힌 곳(blocked: 반려 → 앞 단계 남음 → 결재 대기 순) 첫 줄 + 더 있으면 '외 n건'. 없으면 — */
+function stuckCell(p, archived) {
+  const b = archived ? [] : p.blocked || [];
+  if (!b.length) return '<span class="lxp-stuck is-none">—</span>';
+  return `<span class="lxp-stuck" data-kind="${esc(b[0].kind)}" title="${esc(b.map((x) => x.text).join(' · '))}"><span>${esc(nb(b[0].text))}${b.length > 1 ? ` <small>외 ${b.length - 1}건</small>` : ''}</span></span>`;
 }
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
