@@ -1,0 +1,78 @@
+/* K7 서비스 카드 한 벌(확인 대장 14차 카드-1 ⓐ) — kit/service-card.js 가 붙인다. 토큰은 kit.css(법전 v2.2) 그대로.
+   흰 카드 16 · 결과 장면 3:2 상단 풀폭 · 배지 · 칩 라운드 8(필 0) · 그림자 0(바탕 위) · 숫자 잉크.
+   기관 색(--ci · --ci-t1)은 'gov' · 'mine' 카드의 배지 · 1차 버튼 · 고른 표시에만. */
+
+.k-sc-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+.k-sc-grid[data-cols="3"]{grid-template-columns:repeat(3,minmax(0,1fr))}
+.k-sc-grid[data-cols="2"]{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:1399px){.k-sc-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:1099px){.k-sc-grid,.k-sc-grid[data-cols="3"]{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.k-sc-grid,.k-sc-grid[data-cols]{grid-template-columns:minmax(0,1fr);gap:14px}}
+
+.k-sc{position:relative;display:flex;flex-direction:column;min-width:0;background:var(--bg-1);border-radius:var(--r-16);overflow:hidden;
+  text-align:left;border:0;padding:0;font:inherit;color:inherit;transition:transform var(--d-380) var(--e-ui),box-shadow var(--d-380) var(--e-ui)}
+.k-sc:hover{transform:translateY(-4px);box-shadow:var(--elev-map)}
+.k-sc.is-off{background:#FAFBFC}
+.k-sc.is-off:hover{transform:none;box-shadow:none}
+
+/* ① 결과 장면 · ② 배지 */
+.k-sc-crop{position:relative;aspect-ratio:3/2;overflow:hidden;background:var(--rule)}
+.k-sc-crop img{width:100%;height:100%;object-fit:cover;display:block;transition:transform var(--d-750) var(--e-cam)}
+.k-sc:hover .k-sc-crop img{transform:scale(1.03)}
+.k-sc-crop.is-blank{display:flex;align-items:center;justify-content:center;background:var(--bg-0)}
+.k-sc[data-kind="gov"] .k-sc-crop.is-blank,.k-sc[data-kind="mine"] .k-sc-crop.is-blank{background:var(--ci-t1,var(--bg-0))}
+.k-sc-blank{font:500 14px/20px var(--font-body);color:var(--sub);padding:0 24px;text-align:center}
+.k-sc-badge.t-chip{position:absolute;left:12px;top:12px;height:26px;padding:0 10px;font-size:13px;background:rgba(255,255,255,.94);color:var(--ink);border:0}
+.k-sc-badge.t-chip:not([data-lv]){background:var(--ink);color:#fff}
+.k-sc-badge.t-chip[data-lv="wait"]{color:var(--ink)}
+.k-sc-badge.t-chip[data-lv="gap"]{color:var(--sub);background:rgba(255,255,255,.94);box-shadow:inset 0 0 0 1px var(--rule)}
+.k-sc[data-kind="gov"] .k-sc-badge.t-chip:not([data-lv]),.k-sc-badge.t-chip[data-lv="mine"]{background:var(--ci,var(--ink));color:#fff}
+.k-sc[data-kind="gov"] .k-sc-badge.t-chip[data-lv="wait"]{color:var(--ci,var(--ink))}
+.k-sc-flag{position:absolute;right:12px;top:12px;height:26px;padding:0 10px;border-radius:var(--r-8);background:#FFF1F2;color:var(--warn);font:500 13px/26px var(--font-body);white-space:nowrap}
+.k-sc-ex{position:absolute;right:12px;bottom:10px;height:24px;padding:0 8px;border-radius:var(--r-8);background:rgba(28,31,37,.72);color:#fff;font:500 12px/24px var(--font-body);white-space:nowrap}
+
+/* 몸 — ③ 어디 · 기준일 ④ 이름 ⑤ 무엇을 찾나 ⑥ 결과 예시 ⑦ 조건 두 칸 ⑧ 버튼 */
+.k-sc-b{display:flex;flex-direction:column;gap:8px;padding:14px 18px 18px;flex:1;min-width:0}
+.k-sc-where{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:0;font:500 13px/18px var(--font-body);color:var(--sub);min-width:0}
+.k-sc-where > span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.k-sc-where .r{flex:none;white-space:nowrap}
+.k-sc-where .num{font-family:var(--font-num)}
+.k-sc-t{margin:0;font:700 18px/24px var(--font-display);letter-spacing:-.02em;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.k-sc-line{margin:0;font:400 14px/20px var(--font-body);color:var(--sub-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:40px}
+.k-sc-res{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 6px;min-height:32px;margin-top:2px}
+.k-sc-res b{font:800 28px/1 var(--font-display);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums}
+.k-sc-res .k-sc-sig .t-sig{margin-left:0}
+.k-sc-res > span:last-child{font:500 13px/18px var(--font-body);color:var(--sub)}
+.k-sc-res.is-none > span{font:500 13px/18px var(--font-body);color:var(--mute)}
+.k-sc-in{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 6px;margin:0;padding-top:8px;border-top:1px solid var(--rule);font:400 13px/18px var(--font-body);color:var(--ink-2)}
+.k-sc-in b{font-weight:500;color:var(--sub)}
+.k-sc-in::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ai);align-self:center}
+.k-sc-in small{flex-basis:100%;padding-left:12px;font-size:12px;color:var(--sub)}
+.k-sc-spec{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 12px;margin:auto 0 0;padding-top:8px;border-top:1px solid var(--rule)}
+.k-sc-spec div{min-width:0}
+.k-sc-spec dt{font:400 12px/18px var(--font-body);color:var(--sub)}
+.k-sc-spec dd{margin:0;font:500 13px/18px var(--font-body);color:var(--ink-2)}
+.k-sc-acts{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;min-height:40px}
+.k-sc-acts .t-btn.k-sc-go{height:40px;padding:0 18px}
+.k-sc[data-kind="gov"] .k-sc-go,.k-sc[data-kind="mine"] .k-sc-go{background:var(--ci,var(--ink))}
+.k-sc-more{font-size:14px;white-space:nowrap}
+.k-sc-cant{font:500 13px/18px var(--font-body);color:var(--sub);padding:9px 12px;border-radius:var(--r-8);background:var(--bg-0)}
+
+/* 짧은 카드(대시보드 띠 · 고르기) */
+.k-sc.is-compact .k-sc-b{padding:12px 16px 16px;gap:6px}
+.k-sc.is-compact .k-sc-t{font-size:17px;line-height:23px}
+.k-sc.is-compact .k-sc-line{min-height:0}
+.k-sc.is-compact .k-sc-res b{font-size:24px}
+button.k-sc{cursor:pointer;width:100%}
+button.k-sc[aria-disabled="true"]{cursor:default}
+button.k-sc.is-on{box-shadow:0 0 0 2px var(--ci,var(--ink));transform:none}
+button.k-sc.is-on::after{content:"✓";position:absolute;right:12px;top:12px;width:28px;height:28px;border-radius:var(--r-8);background:var(--ci,var(--ink));color:#fff;font:700 15px/28px var(--font-num);text-align:center}
+button.k-sc.is-off .k-sc-crop img{opacity:.5}
+.k-sc-why{margin:0;font:500 13px/18px var(--font-body);color:var(--sub)}
+button.k-sc:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+@media (max-width:640px){
+  .k-sc-b{padding:12px 16px 16px}
+  .k-sc-t{font-size:17px;line-height:23px}
+}
+@media (prefers-reduced-motion:reduce){.k-sc,.k-sc-crop img{transition:none}.k-sc:hover{transform:none}}
