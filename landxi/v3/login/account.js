@@ -119,7 +119,7 @@ export function openAccountHelp({ realm = 'lx', site = realm === 'tenant' ? 'gov
   } else {
     const fo = pick ? orgField() : null;
     const fn = field('name', '이름', { auto: 'name' });
-    const fm = field('login', '메일 주소', { type: 'email', auto: 'username', hint: '로그인 아이디로 씁니다' });
+    const fm = field('login', '메일 주소', { type: 'email', auto: 'username', hint: GOV ? '로그인 아이디로 씁니다' : '@lx.or.kr 메일 · 로그인 아이디로 씁니다' });
     const fp = field('password', '비밀번호', { type: 'password', auto: 'new-password', hint: '10자 이상 · 영문과 숫자를 함께' });
     const fp2 = field('password2', '비밀번호 확인', { type: 'password', auto: 'new-password' });
     const fd = field('dept', GOV ? '부서' : '소속 부서', { auto: 'organization-title' });
@@ -131,6 +131,7 @@ export function openAccountHelp({ realm = 'lx', site = realm === 'tenant' ? 'gov
       const tid = tenantOf(say); if (GOV && !tid) return;
       if (!val(fn)) return say('이름을 적어 주세요', 'name');
       if (!MAIL.test(val(fm))) return say(val(fm) ? '메일 주소 형식을 확인하세요' : '메일 주소를 적어 주세요', 'login');
+      if (!GOV && !/@lx\.or\.kr$/i.test(val(fm))) return say('LX 직원은 @lx.or.kr 메일로 신청합니다', 'login');   // 구현 확인 2차 Q-2 ⓐ — 서버도 같은 규칙
       if (fp.input.value.length < 10) return say('비밀번호는 10자 이상입니다', 'password');
       if (fp.input.value !== fp2.input.value) return say('두 비밀번호가 서로 다릅니다', 'password2');
       if (!val(fd)) return say('부서를 적어 주세요', 'dept');

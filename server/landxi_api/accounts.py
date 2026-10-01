@@ -45,7 +45,7 @@ import secrets
 from fastapi import APIRouter, Request
 from starlette.concurrency import run_in_threadpool
 
-from . import auth
+from . import auth, config
 from .deps import ApiError, Principal, db, pool, principal, redis, require
 from .envelope import KST, now_iso
 
@@ -70,6 +70,8 @@ ACTION_KO = {
 FAIL_KO = {"password": "비밀번호 틀림", "unknown": "없는 아이디", "temp_locked": "잠긴 동안 시도", "locked": "잠긴 계정", "temp_expired": "임시 비밀번호 기간 지남",
            "disabled": "사용 중지된 계정"}
 TENANT_SIGNUP_MSG = "기관 가입 신청은 그 기관 관리자가 승인합니다"
+# LX 직원 가입 신청은 회사 메일만(구현 확인 2차 Q-2 ⓐ) — 기관 신청은 기관 메일이 제각각이라 제한하지 않는다(그 기관 관리자가 승인으로 거른다)
+LX_MAIL_DOMAINS = tuple(d.strip().lower() for d in (config.get("LX_STAFF_MAIL_DOMAINS", "lx.or.kr") or "").split(",") if d.strip())
 SITE_KO = {"app": "Land-XI", "admin": "LX 관리자", "gov": "기관"}
 
 
@@ -192,6 +194,8 @@ async def signup(body: dict, request: Request):
     await _limit("signup", request)
     name = _text(body.get("name"), 40, "이름", "name")
     login = _mail(body.get("login"))
+    if realm == "lx" and LX_MAIL_DOMAINS and login.rpartition("@")[2] not in LX_MAIL_DOMAINS:
+        raise ApiError("bad_request", f"LX 직원은 @{LX_MAIL_DOMAINS[0]} 메일로 신청합니다", {"field": "login"})
     pw = body.get("password") or ""
     check_password(pw, login)
     if body.get("password2") is not None and body.get("password2") != pw:
