@@ -248,7 +248,7 @@ def test_duplicate_blocked(nw, made, tmp_path):
     did = u.json()["draft_id"]
     made["dr"].append(did)
     same = start(nw, f, did)                                          # 같은 묶음에 같은 파일
-    assert same.status_code == 409 and same.json()["error"]["code"] == "duplicate" and "이미 이 의뢰에" in same.json()["error"]["message"]
+    assert same.status_code == 409 and same.json()["error"]["code"] == "duplicate" and "이미 이 요청에" in same.json()["error"]["message"]
     renamed = start(nw, f, did, name="다른이름.tif")                  # 이름만 바꿔도 지문이 같다
     assert renamed.status_code == 409 and renamed.json()["error"]["code"] == "duplicate"
     httpx.post(B + f"/requests/drafts/{did}/read", headers=H(nw), timeout=120)

@@ -304,9 +304,10 @@ def test_s5_register_imagery(live, tok):
     with rasterio.open(p, "w", driver="GTiff", width=200, height=200, count=3, dtype="uint8", crs="EPSG:5186",
                        transform=from_origin(262000, 312000, 0.25, 0.25)) as ds:
         ds.write(np.full((3, 200, 200), 120, dtype="uint8"))
-    st = H(tok["staff"])
+    st = H(tok["admin"])                                                   # 서버 경로 등록 = LX 관리자 도구(직원은 파일 끌어 놓기 · impl-4 fixes)
     iid = None
     try:
+        assert httpx.post(B + "/catalog/imagery", headers=H(tok["staff"]), json={"path": str(p), "region": "52190", "year": 2025}, timeout=30).status_code == 403
         assert httpx.post(B + "/catalog/imagery", headers=H(tok["namwon"]), json={"path": str(p), "region": "52190", "year": 2025}, timeout=30).status_code == 403
         assert httpx.post(B + "/catalog/imagery", headers=st, json={"path": "없는/파일.tif", "region": "52190", "year": 2025}, timeout=30).status_code == 404
         r = httpx.post(B + "/catalog/imagery", headers=st, json={"path": str(p), "region": "52190", "year": 2025, "gsd": 0.25, "kind": "drone",

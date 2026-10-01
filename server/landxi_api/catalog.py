@@ -446,10 +446,139 @@ def _std_guard(name: str) -> None:
         raise ApiError("format_unavailable", un[e], {"ext": e}, 400)
 
 
+# ── LX 영상 등록 = 파일 끌어 놓기(확인 대장 1차 FR-1 '기존 자산 기준으로' · 원칙 41 · 49 · 사용자 규칙 2 파일 경로 노출 금지) ──────────
+# 기관 분석 의뢰와 같은 조각 올리기(여러 파일 · 진행 · 멈춤 · 이어 올리기 · 취소 — requests.py 의 같은 함수 · 폴더만 cog/uploads/drafts).
+# 다 올리면 POST /catalog/imagery {draft_id} — 서버가 파일마다 시군구 · 촬영일 · 해상도를 읽어 영상 행을 만들고 영상 등록 작업(표준본)을 건다.
+# 서버 경로 · 촬영 연도 · 해상도를 사람이 넣는 등록은 LX 관리자 도구로만(보관 영상 · 원본 지우지 않음).
+#   POST   /catalog/imagery/uploads                 {draft_id?, filename, size, quick_fp?} → 올리기 한 건(같은 파일이면 이어 올리기)
+#   PUT    /catalog/imagery/uploads/{uid}?offset=N  한 조각
+#   GET    /catalog/imagery/uploads/{uid}           받은 바이트
+#   DELETE /catalog/imagery/uploads/{uid}           취소
+#   POST   /catalog/imagery/uploads/{uid}/finish    끝
+#   GET    /catalog/imagery/uploads/formats         받는 형식 · 지금 받을 수 없는 형식(LX 말)
+#   DELETE /catalog/imagery/drafts/{did}            등록 전 묶음 지우기
+@router.get("/catalog/imagery/uploads/formats")
+async def lx_up_formats(request: Request):
+    from . import requests as RQ
+    RQ.lx_who(request)
+    return await RQ.up_formats(request)
+
+
+@router.post("/catalog/imagery/uploads", status_code=201)
+async def lx_up_start(body: dict, request: Request):
+    from . import requests as RQ
+    return await RQ.start_upload(RQ.lx_who(request), body)
+
+
+@router.get("/catalog/imagery/uploads/{uid}")
+async def lx_up_state(uid: str, request: Request):
+    from . import requests as RQ
+    return await RQ.upload_state(RQ.lx_who(request), uid)
+
+
+@router.put("/catalog/imagery/uploads/{uid}")
+async def lx_up_chunk(uid: str, request: Request, offset: int = 0):
+    from . import requests as RQ
+    return await RQ.put_chunk(RQ.lx_who(request), uid, request, offset)
+
+
+@router.delete("/catalog/imagery/uploads/{uid}")
+async def lx_up_cancel(uid: str, request: Request):
+    from . import requests as RQ
+    return await RQ.cancel_upload(RQ.lx_who(request), uid)
+
+
+@router.post("/catalog/imagery/uploads/{uid}/finish")
+async def lx_up_finish(uid: str, request: Request):
+    from . import requests as RQ
+    return await RQ.finish_upload(RQ.lx_who(request), uid)
+
+
+@router.delete("/catalog/imagery/drafts/{did}")
+async def lx_draft_delete(did: str, request: Request):
+    from . import requests as RQ
+    return await RQ.delete_draft(RQ.lx_who(request), did)
+
+
+async def _register_draft(request: Request, did: str, near_cd: str | None) -> dict:
+    """올린 묶음 → 영상 행(파일마다 하나) + 영상 등록 작업(표준본 · CPU). 입력 칸 없음 — 시군구 · 촬영일 · 해상도 · 종류는 파일에서.
+    near_cd = 그 지역 서랍에서 올렸다면 그 시군구(좌표계 기록이 없는 도엽의 위치를 가려낼 때만 쓴다 · 영상이 다른 곳이면 영상이 이긴다)."""
+    import re
+    from pathlib import Path
+    from starlette.concurrency import run_in_threadpool
+    from . import requests as RQ
+    from .deps import audit
+    from .regions import region_of, regions_base
+    w = RQ.lx_who(request)
+    p = w.p
+    if not re.fullmatch(r"dr_[0-9a-f]{12}", did or ""):
+        raise ApiError("not_found", "올린 파일이 없습니다")
+    async with db(realm="lx") as conn:
+        rows = await conn.fetch("SELECT * FROM request_uploads WHERE draft_id=$1 AND tenant_id=$2 AND state IN ('uploading','done') ORDER BY created_at",
+                                did, RQ.LX_OWNER)
+    if not rows:
+        raise ApiError("not_found", "올린 파일이 없습니다")
+    if any(r["user_id"] != p.user_id for r in rows):
+        raise ApiError("forbidden", "다른 사람의 묶음입니다")
+    if any(r["state"] == "uploading" for r in rows):
+        raise ApiError("not_ready", "아직 올리는 중인 파일이 있습니다", None, 409)
+    if any(r["request_id"] for r in rows):
+        raise ApiError("conflict", "이미 등록한 묶음입니다 — 새로 올려 주세요", None, 409)
+    folder = config.DATA_ROOT / RQ.LX_ROOT / "drafts" / did
+    near = region_of(near_cd) if near_cd else None
+    rd = await run_in_threadpool(RQ.read_each, p, folder, [r["filename"] for r in rows], near)
+    if not rd.get("ok"):
+        raise ApiError(rd["code"], rd["why"], {"files": rd.get("files") or [], "reasons": rd.get("reasons") or {}}, 400)
+    regs = {x["sgg_cd"]: x for x in regions_base()[0]}
+    made = []
+    from . import jobs as jobs_mod
+    for it in rd["items"]:
+        rg = regs.get(it["sgg_cd"]) or {"name": it["place"].split(" ")[0]}
+        year = int(it["date"][:4]) if it.get("date") else None
+        kind = it["kind"]
+        path = str(config.DATA_ROOT / RQ.LX_ROOT / "drafts" / did / it["name"])
+        async with db(realm="lx") as conn:
+            base = f"img-{it['sgg_cd']}-{year or 'nd'}-{kind}"
+            iid, n = base, 1
+            while await conn.fetchval("SELECT 1 FROM imagery WHERE id=$1", iid):
+                n += 1
+                iid = f"{base}-{n}"
+            nm = f"{rg['name']} {year} {IMAGERY_KINDS[kind]}" if year else f"{rg['name']} {IMAGERY_KINDS[kind]}"
+            await conn.execute(
+                "INSERT INTO imagery(id, name, tier, gsd_m, epoch, crs, footprint, path_internal, license, attribution, export_policy, security_review, "
+                "rights_holder, ladder, kind, layer, sgg_cd, year, registered_by, registered_at) VALUES ($1,$2,'raw',$3,$4,$5,"
+                "ST_Multi(ST_SetSRID(ST_GeomFromGeoJSON($6),4326)),$7,$8,'LX','never','pending','LX',$9,'ortho',$10,$11,$12,$13,now())",
+                iid, {"ko": nm, "en": nm}, it["gsd_m"], it.get("date") or None, f"EPSG:{it['epsg']}", json.dumps(it["footprint"]), path,
+                "LX 등록 영상(이용 범위 협의)", {"stage": "domestic", "from": 12, "to": 22, "order": 60},
+                {"role": "imagery", "cog_path": path, "source_kind": kind, "upload_draft": did, "date_src": it.get("date_src")},
+                it["sgg_cd"], year, p.user_id)
+            await audit(conn, p, "imagery.register", iid, None, {"sgg_cd": it["sgg_cd"], "year": year, "kind": kind, "gsd": it["gsd_m"],
+                                                                  "from": "upload", "draft_id": did, "crs_guessed": it["crs_guessed"]})
+        job = await jobs_mod.submit({"kind": "tile", "options": {"imagery_id": iid, "path": path}, "label": f"영상 등록 · {nm}"}, request)
+        stem = Path(it["name"]).stem.lower()
+        async with db(realm="lx") as conn:
+            await conn.execute("UPDATE imagery SET tile_job_id=$2 WHERE id=$1", iid, job["job"]["id"])
+            # 이 영상 파일과 곁 파일(같은 이름)은 이 영상에 쓰였다 — 정리(7일)에서 빠지고 같은 파일을 다시 올리면 '이미 등록한 영상'
+            await conn.execute("UPDATE request_uploads SET request_id=$2, updated_at=now() WHERE draft_id=$1 AND state='done' AND request_id IS NULL "
+                               "AND (lower(filename)=lower($3) OR lower(split_part(filename, '.', 1))=$4)", did, iid, it["name"], stem)
+        made.append({"id": iid, "sgg_cd": it["sgg_cd"], "region": rg["name"], "place": it["place"], "year": year, "date": it.get("date"),
+                     "gsd_m": it["gsd_m"], "kind": kind, "job": {"id": job["job"]["id"], "kind": "tile", "state": job["job"]["state"]}})
+    async with db(realm="lx") as conn:                 # 묶음에 남은 곁 파일(이름이 다른 PRJ 등)도 첫 영상에 묶는다
+        await conn.execute("UPDATE request_uploads SET request_id=$2, updated_at=now() WHERE draft_id=$1 AND state='done' AND request_id IS NULL",
+                           did, made[0]["id"])
+    try:
+        from .regions import _derived
+        _derived["t"] = 0
+    except Exception:
+        pass
+    return {"items": made, "draft_id": did, "as_of": now_iso()}
+
+
 @router.post("/catalog/imagery", status_code=201)
 async def register_imagery(request: Request):
-    """영상 등록 — {path | upload(multipart file), region(sgg_cd), year, gsd, kind, name?} → 카탈로그 행(tier raw · LX 전용) + 타일 작업(kind tile · CPU).
-    LX staff/admin. 경로는 서버 안(02. 데이터 또는 절대 경로) · 응답은 /catalog/layers 항목 형식 그대로 + job."""
+    """영상 등록 — 화면(LX 직원 · 데이터 올리기): {draft_id, near?} = 올린 파일 묶음 → 파일마다 영상 행 + 영상 등록 작업(_register_draft).
+    LX 관리자 도구: {path | upload(multipart file), region(sgg_cd), year, gsd, kind, name?} → 카탈로그 행(tier raw · LX 전용) + 타일 작업(kind tile · CPU).
+    경로는 서버 안(02. 데이터 또는 절대 경로) · 응답은 /catalog/layers 항목 형식 그대로 + job."""
     import datetime as dt
     import re
     from pathlib import Path
@@ -465,6 +594,10 @@ async def register_imagery(request: Request):
         upload = form.get("upload") or form.get("file")
     else:
         body = await request.json()
+    if body.get("draft_id"):
+        return await _register_draft(request, str(body.get("draft_id")), str(body.get("near") or "") or None)
+    if not p.is_admin:                                   # 서버 경로 · 사람이 넣는 연도 · 해상도 — 관리자 도구로만(화면에서 감춤)
+        raise ApiError("forbidden", "서버 경로 등록은 LX 관리자만 할 수 있습니다 — 영상 파일을 끌어 놓아 올려 주세요")
     sgg = str(body.get("region") or body.get("sgg_cd") or "").strip()
     kind = body.get("kind") or "ortho"
     if kind not in IMAGERY_KINDS:

@@ -44,6 +44,7 @@ import re
 import secrets
 import shutil
 import time
+from dataclasses import dataclass
 from pathlib import Path
 
 from fastapi import APIRouter, Request
@@ -128,6 +129,34 @@ def _tuser(request: Request) -> Principal:
     if p.realm != "tenant" or not p.tenant_id or p.tenant_id == "lx-demo":
         raise ApiError("forbidden", "기관 계정만 분석을 의뢰할 수 있습니다")
     return p
+
+
+@dataclass
+class Who:
+    """올리는 사람 — 기관 분석 의뢰(기관 사용자)와 LX 영상 등록(데이터 올리기 · LX 직원 · 관리자)이 같은 조각 올리기를 쓴다
+    (확인 대장 1차 FR-1 '기존 자산 기준으로' · 원칙 43 같은 일은 같은 모양). owner = request_uploads.tenant_id(기관 id | 'lx') ·
+    root = 02. 데이터 기준 올린 영상 폴더(그 아래 drafts/{묶음})."""
+    p: Principal
+    owner: str
+    root: str
+    lx: bool = False
+
+
+LX_OWNER = "lx"
+LX_ROOT = "cog/uploads"        # LX 가 올린 영상 칸 — config/imagery.yaml original.owned_roots 의 한 곳(표준본 확인 뒤 90일에 원본 정리)
+
+
+def _twho(request: Request) -> Who:
+    p = _tuser(request)
+    return Who(p, p.tenant_id, root_rel(p.tenant_id))
+
+
+def lx_who(request: Request) -> Who:
+    """LX 영상 등록(데이터 올리기 → 영상 등록) — LX 직원 · 관리자만."""
+    p = require(principal(request), lx=True)
+    if p.role not in ("staff", "admin"):
+        raise ApiError("forbidden", "LX 직원·관리자만 영상을 올릴 수 있습니다")
+    return Who(p, LX_OWNER, LX_ROOT, True)
 
 
 async def _tenant_name(conn, tid: str) -> str:
@@ -387,24 +416,28 @@ async def _sweep(tenant: str, force: bool = False):
         invalidate_storage(tenant)
 
 
-async def _upload_row(conn, uid: str, p: Principal, lock_state: str | None = "uploading"):
+async def _upload_row(conn, uid: str, w: Who, lock_state: str | None = "uploading"):
     if not re.fullmatch(r"ru_[0-9a-f]{12}", uid or ""):
         raise ApiError("not_found", "올리기 기록이 없습니다")
     r = await conn.fetchrow("SELECT * FROM request_uploads WHERE id=$1", uid)
-    if not r or r["tenant_id"] != p.tenant_id:
+    if not r or r["tenant_id"] != w.owner:
         raise ApiError("not_found", "올리기 기록이 없습니다 — 처음부터 다시 올려 주세요")
-    if r["user_id"] != p.user_id:
+    if r["user_id"] != w.p.user_id:
         raise ApiError("forbidden", "다른 사람이 시작한 올리기입니다")
     if lock_state and r["state"] != lock_state:
         raise ApiError("conflict", "이미 끝났거나 취소한 올리기입니다", {"state": r["state"]}, 409)
     return r
 
 
-def _dup_line(row, same_draft: bool) -> str:
-    if same_draft:
-        return "이미 이 의뢰에 올린 파일입니다"
+def _dup_line(row, same_draft: bool, lx: bool = False) -> str:
     day = _ymd(row["done_at"] or row["created_at"])
-    return f"이미 올린 영상입니다 — {day} 의뢰에 쓰인 파일과 같습니다" if day else "이미 올린 영상입니다"
+    if lx:                                                 # LX 영상 등록 — 묶음 = 한 번 등록(의뢰 아님)
+        if same_draft:
+            return "이미 함께 올린 파일입니다"
+        return f"이미 등록한 영상입니다 — {day}에 올린 파일과 같습니다" if day else "이미 등록한 영상입니다"
+    if same_draft:
+        return "이미 이 요청에 올린 파일입니다"
+    return f"이미 올린 영상입니다 — {day} 분석 요청에 쓰인 파일과 같습니다" if day else "이미 올린 영상입니다"
 
 
 async def _find_dup(conn, tenant: str, draft: str, size: int, quick: str | None, sha: str | None, not_id: str | None = None):
@@ -420,11 +453,15 @@ async def _find_dup(conn, tenant: str, draft: str, size: int, quick: str | None,
 
 @router.post("/requests/uploads", status_code=201)
 async def up_start(body: dict, request: Request):
+    return await start_upload(_twho(request), body)
+
+
+async def start_upload(w: Who, body: dict) -> dict:
     """올리기 시작 — 형식 · 크기 · 서버 저장 여유 · 같은 파일을 먼저 검사한다(다 올린 뒤에 거절하지 않게). 같은 파일이면 받은 자리부터 이어 간다.
-    기관 저장 한도로는 막지 않는다(사용 현황으로 기록만 — 사용자 7차 답)."""
+    기관 저장 한도로는 막지 않는다(사용 현황으로 기록만 — 사용자 7차 답). LX 영상 등록도 같은 길(w.lx — 폴더 cog/uploads)."""
     from . import quota as Q
     from . import imagery_std as STD
-    p = _tuser(request)
+    p = w.p
     s = settings()
     name = _safe_name(body.get("filename"))
     ext = _ext(name)
@@ -432,7 +469,7 @@ async def up_start(body: dict, request: Request):
         raise ApiError("bad_ext", "영상 파일만 올릴 수 있습니다 — 다른 파일은 받지 않습니다",
                        {"allowed": list(s["raster_ext"]) + list(s["sidecar_ext"])}, 400)
     if ext in s["raster_ext"]:                             # 이 서버가 지금 바꿀 수 없는 형식(예: ECW 변환기가 없음) — 한 바이트도 받기 전에
-        un = await run_in_threadpool(STD.unavailable, False)
+        un = await run_in_threadpool(STD.unavailable, w.lx)
         if ext in un:
             raise ApiError("format_unavailable", un[ext], {"ext": ext}, 400)
     try:
@@ -442,7 +479,8 @@ async def up_start(body: dict, request: Request):
     if size <= 0:
         raise ApiError("bad_request", "빈 파일입니다")
     if size > _max_file():
-        raise ApiError("too_large", f"한 파일은 {_gb(_max_file() / 1e9)}까지 올릴 수 있습니다 — 더 큰 영상은 LX 담당자와 협의해 주세요",
+        more = "" if w.lx else " — 더 큰 영상은 LX 담당자와 협의해 주세요"
+        raise ApiError("too_large", f"한 파일은 {_gb(_max_file() / 1e9)}까지 올릴 수 있습니다{more}",
                        {"size": size, "limit": _max_file()}, 413)
     quick = str(body.get("quick_fp") or "").strip().lower()[:64] or None
     if quick and not re.fullmatch(r"[0-9a-f]{64}", quick):
@@ -450,29 +488,29 @@ async def up_start(body: dict, request: Request):
     did = str(body.get("draft_id") or "")
     if not re.fullmatch(r"dr_[0-9a-f]{12}", did):
         did = "dr_" + secrets.token_hex(6)
-    await _sweep(p.tenant_id)
+    await _sweep(w.owner)
     async with db(realm="lx") as conn:
         own = await conn.fetch("SELECT DISTINCT tenant_id, user_id, request_id IS NOT NULL AS used FROM request_uploads WHERE draft_id=$1", did)
-        if any(o["tenant_id"] != p.tenant_id or o["user_id"] != p.user_id for o in own):
+        if any(o["tenant_id"] != w.owner or o["user_id"] != p.user_id for o in own):
             raise ApiError("forbidden", "다른 사람의 묶음입니다")
         if any(o["used"] for o in own):
-            raise ApiError("conflict", "이미 의뢰한 묶음입니다 — 새 의뢰로 올려 주세요", None, 409)
+            raise ApiError("conflict", "이미 등록한 묶음입니다 — 새로 올려 주세요" if w.lx else "이미 요청한 묶음입니다 — 새 요청으로 올려 주세요", None, 409)
         # 이어 올리기 — 같은 사람 · 같은 묶음(또는 같은 빠른 지문) · 같은 이름 · 같은 크기
         r = await conn.fetchrow("SELECT * FROM request_uploads WHERE tenant_id=$1 AND user_id=$2 AND state='uploading' AND filename=$3 AND size=$4 "
                                 "AND (draft_id=$5 OR ($6::text IS NOT NULL AND quick_fp=$6)) ORDER BY created_at DESC LIMIT 1",
-                                p.tenant_id, p.user_id, name, size, did, quick)
+                                w.owner, p.user_id, name, size, did, quick)
         if r and _part(r).exists():
             return _up_view(r)
-        dup = await _find_dup(conn, p.tenant_id, did, size, quick, None)
+        dup = await _find_dup(conn, w.owner, did, size, quick, None)
         if dup:
-            raise ApiError("duplicate", _dup_line(dup, dup["draft_id"] == did), {"filename": dup["filename"]}, 409)
+            raise ApiError("duplicate", _dup_line(dup, dup["draft_id"] == did, w.lx), {"filename": dup["filename"]}, 409)
         reserved = await conn.fetchval("SELECT coalesce(sum(size),0) FROM request_uploads WHERE state='uploading'")
     # 서버 전체 저장 여유(하드웨어 · 원칙 66) — 모든 기관이 받는 중인 파일의 크기까지 더해서 본다(기관 한도로는 막지 않는다)
-    room = await Q.storage_room(p.tenant_id, size + max(0, int(reserved or 0)))
+    room = await Q.storage_room(w.owner, size + max(0, int(reserved or 0)))
     if room:
         raise ApiError(room["code"], room["line"], room.get("detail"), 413)
     uid = "ru_" + secrets.token_hex(6)
-    folder = config.DATA_ROOT / root_rel(p.tenant_id) / "drafts" / did
+    folder = config.DATA_ROOT / w.root / "drafts" / did
     folder.mkdir(parents=True, exist_ok=True)
     fn, i = name, 1
     async with db(realm="lx") as conn:
@@ -481,13 +519,18 @@ async def up_start(body: dict, request: Request):
             i += 1
             stem, dot, tail = name.partition(".")
             fn = f"{stem}_{i}{dot}{tail}"
-        rel = f"{root_rel(p.tenant_id)}/drafts/{did}/{fn}"
+        rel = f"{w.root}/drafts/{did}/{fn}"
         (config.DATA_ROOT / (rel + ".part")).write_bytes(b"")
         r = await conn.fetchrow("INSERT INTO request_uploads(id, tenant_id, user_id, draft_id, filename, size, quick_fp, state, rel_path) "
-                                "VALUES ($1,$2,$3,$4,$5,$6,$7,'uploading',$8) RETURNING *", uid, p.tenant_id, p.user_id, did, fn, size, quick, rel)
-        await audit(conn, p, "request.upload.start", uid, None, {"draft_id": did, "size": size, "ext": ext})
+                                "VALUES ($1,$2,$3,$4,$5,$6,$7,'uploading',$8) RETURNING *", uid, w.owner, p.user_id, did, fn, size, quick, rel)
+        await audit(conn, p, _act(w, "upload.start"), uid, None, {"draft_id": did, "size": size, "ext": ext})
     _sha[uid] = (0, hashlib.sha256())
     return _up_view(r, 0)
+
+
+def _act(w: Who, what: str) -> str:
+    """감사 기록 이름 — 기관 의뢰 'request.…' · LX 영상 등록 'imagery.…'"""
+    return ("imagery." if w.lx else "request.") + what
 
 
 @router.get("/requests/uploads/formats")
@@ -502,20 +545,26 @@ async def up_formats(request: Request):
 
 @router.get("/requests/uploads/{uid}")
 async def up_state(uid: str, request: Request):
-    p = _tuser(request)
+    return await upload_state(_twho(request), uid)
+
+
+async def upload_state(w: Who, uid: str) -> dict:
     async with db(realm="lx") as conn:
-        r = await _upload_row(conn, uid, p, None)
+        r = await _upload_row(conn, uid, w, None)
     return _up_view(r)
 
 
 @router.put("/requests/uploads/{uid}")
 async def up_chunk(uid: str, request: Request, offset: int = 0):
+    return await put_chunk(_twho(request), uid, request, offset)
+
+
+async def put_chunk(w: Who, uid: str, request: Request, offset: int = 0) -> dict:
     """한 조각 — offset 이 지금까지 받은 크기와 같을 때만 붙인다(끊겼다 다시 보내도 두 번 붙지 않는다)."""
-    p = _tuser(request)
     lock = _locks.setdefault(uid, asyncio.Lock())
     async with lock:
         async with db(realm="lx") as conn:
-            r = await _upload_row(conn, uid, p)
+            r = await _upload_row(conn, uid, w)
         f = _part(r)
         have = f.stat().st_size if f.exists() else 0
         if not f.exists():
@@ -545,20 +594,23 @@ async def up_chunk(uid: str, request: Request, offset: int = 0):
 
 @router.delete("/requests/uploads/{uid}")
 async def up_cancel(uid: str, request: Request):
-    """취소 — 받은 조각(또는 다 받은 파일)을 지운다. 의뢰에 쓰인 파일은 지우지 않는다."""
-    p = _tuser(request)
+    return await cancel_upload(_twho(request), uid)
+
+
+async def cancel_upload(w: Who, uid: str) -> dict:
+    """취소 — 받은 조각(또는 다 받은 파일)을 지운다. 의뢰(LX: 등록)에 쓰인 파일은 지우지 않는다."""
     async with db(realm="lx") as conn:
-        r = await _upload_row(conn, uid, p, None)
+        r = await _upload_row(conn, uid, w, None)
         if r["request_id"]:
-            raise ApiError("conflict", "의뢰에 쓰인 파일은 지울 수 없습니다", None, 409)
+            raise ApiError("conflict", "등록한 영상의 파일은 지울 수 없습니다" if w.lx else "분석 요청에 쓰인 파일은 지울 수 없습니다", None, 409)
         if r["state"] in ("uploading", "done"):
             _rm(_part(r), _path(r))
             await conn.execute("UPDATE request_uploads SET state='cancelled', updated_at=now() WHERE id=$1", uid)
-            await audit(conn, p, "request.upload.cancel", uid, None, {"draft_id": r["draft_id"]})
+            await audit(conn, w.p, _act(w, "upload.cancel"), uid, None, {"draft_id": r["draft_id"]})
     await run_in_threadpool(_drop_std, [uid])
     _sha.pop(uid, None)
     from .quota import invalidate_storage
-    invalidate_storage(p.tenant_id)
+    invalidate_storage(w.owner)
     return {"id": uid, "state": "cancelled", "as_of": now_iso()}
 
 
@@ -582,12 +634,15 @@ def _sha_file(path: Path) -> str:
 
 @router.post("/requests/uploads/{uid}/finish")
 async def up_finish(uid: str, request: Request):
+    return await finish_upload(_twho(request), uid)
+
+
+async def finish_upload(w: Who, uid: str) -> dict:
     """다 받았으면 → 전체 지문으로 같은 파일 확인(같으면 새로 받은 것은 지우고 409) → 끝."""
-    p = _tuser(request)
     lock = _locks.setdefault(uid, asyncio.Lock())
     async with lock:
         async with db(realm="lx") as conn:
-            r = await _upload_row(conn, uid, p)
+            r = await _upload_row(conn, uid, w)
         f = _part(r)
         have = f.stat().st_size if f.exists() else 0
         if have != int(r["size"]):
@@ -598,20 +653,20 @@ async def up_finish(uid: str, request: Request):
         sha = st[1].hexdigest() if st and st[0] == have else await run_in_threadpool(_sha_file, dest)
         quick = await run_in_threadpool(_quick_fp, dest, have)
         async with db(realm="lx") as conn:
-            dup = await _find_dup(conn, p.tenant_id, r["draft_id"], have, None, sha, uid)
+            dup = await _find_dup(conn, w.owner, r["draft_id"], have, None, sha, uid)
             if dup:
                 _rm(dest)
                 await conn.execute("UPDATE request_uploads SET state='removed', sha256=$2, quick_fp=$3, updated_at=now() WHERE id=$1", uid, sha, quick)
-                await audit(conn, p, "request.upload.duplicate", uid, None, {"same_as": dup["id"]})
-                line = _dup_line(dup, dup["draft_id"] == r["draft_id"])
+                await audit(conn, w.p, _act(w, "upload.duplicate"), uid, None, {"same_as": dup["id"]})
+                line = _dup_line(dup, dup["draft_id"] == r["draft_id"], w.lx)
             else:
                 r = await conn.fetchrow("UPDATE request_uploads SET state='done', sha256=$2, quick_fp=$3, done_at=now(), updated_at=now() "
                                         "WHERE id=$1 RETURNING *", uid, sha, quick)
-                await audit(conn, p, "request.upload.done", uid, None, {"draft_id": r["draft_id"], "size": have})
+                await audit(conn, w.p, _act(w, "upload.done"), uid, None, {"draft_id": r["draft_id"], "size": have})
                 line = None
     _locks.pop(uid, None)
     from .quota import invalidate_storage
-    invalidate_storage(p.tenant_id)
+    invalidate_storage(w.owner)
     if line:
         raise ApiError("duplicate", line, None, 409)
     return _up_view(r, have)
@@ -619,23 +674,26 @@ async def up_finish(uid: str, request: Request):
 
 @router.delete("/requests/drafts/{did}")
 async def draft_delete(did: str, request: Request):
-    """의뢰하기 전 묶음을 통째로 지운다(관할 밖 영상 · 잘못 고른 파일)."""
-    p = _tuser(request)
+    return await delete_draft(_twho(request), did)
+
+
+async def delete_draft(w: Who, did: str) -> dict:
+    """의뢰(LX: 등록)하기 전 묶음을 통째로 지운다(관할 밖 영상 · 잘못 고른 파일)."""
     if not re.fullmatch(r"dr_[0-9a-f]{12}", did or ""):
         raise ApiError("not_found", "묶음이 없습니다")
     async with db(realm="lx") as conn:
-        rows = await conn.fetch("SELECT * FROM request_uploads WHERE draft_id=$1 AND tenant_id=$2 AND user_id=$3", did, p.tenant_id, p.user_id)
+        rows = await conn.fetch("SELECT * FROM request_uploads WHERE draft_id=$1 AND tenant_id=$2 AND user_id=$3", did, w.owner, w.p.user_id)
         if any(r["request_id"] for r in rows):
-            raise ApiError("conflict", "이미 의뢰한 묶음입니다", None, 409)
+            raise ApiError("conflict", "이미 등록한 묶음입니다" if w.lx else "이미 요청한 묶음입니다", None, 409)
         for r in rows:
             _rm(_part(r), _path(r))
         await conn.execute("UPDATE request_uploads SET state='cancelled', updated_at=now() WHERE draft_id=$1 AND state IN ('uploading','done')", did)
-        await audit(conn, p, "request.draft.delete", did, None, {"files": len(rows)})
+        await audit(conn, w.p, _act(w, "draft.delete"), did, None, {"files": len(rows)})
     await run_in_threadpool(_drop_std, [r["id"] for r in rows])
-    folder = config.DATA_ROOT / root_rel(p.tenant_id) / "drafts" / did
+    folder = config.DATA_ROOT / w.root / "drafts" / did
     shutil.rmtree(folder, ignore_errors=True)
     from .quota import invalidate_storage
-    invalidate_storage(p.tenant_id)
+    invalidate_storage(w.owner)
     return {"draft_id": did, "state": "cancelled", "as_of": now_iso()}
 
 
@@ -702,13 +760,17 @@ def _date_word(d: str | None) -> str | None:
     return f"{d[:4]}년" if len(d) == 4 else d.replace("-", ".")
 
 
-def _guess_crs(p: Principal, m: dict) -> int | None:
-    """좌표계 기록이 없는 파일(JPG + 좌표 파일 등) — 후보 좌표계로 옮겨 보아 관할 안에 떨어지는 것(없으면 국내에 떨어지는 첫 후보)."""
+def _guess_crs(p: Principal, m: dict, near: dict | None = None) -> int | None:
+    """좌표계 기록이 없는 파일(JPG + 좌표 파일 · TFW 만 딸린 도엽 등) — 후보 좌표계로 옮겨 보아 관할 안에 떨어지는 것(없으면 국내에 떨어지는 첫 후보).
+    near = 지금 보고 있는 지역(LX 영상 등록 — 그 지역 서랍에서 올렸다면 그 범위에 떨어지는 후보가 먼저 · 영상 등록 작업의 판정과 같은 규칙).
+    전국 계정(LX)은 '관할 안' 대신 국내 시군구 땅에 떨어지는가로 본다(바다 · 나라 밖에 떨어지는 후보는 거른다)."""
     from rasterio.warp import transform as wt
     from . import regions as R
     b = m["bounds"]
     cx, cy = (b.left + b.right) / 2, (b.bottom + b.top) / 2
-    first = None
+    nb = (near or {}).get("bbox")
+    nation = R.scope_of(p) is None
+    first, cands = None, []
     for c in settings()["crs_guess"]:
         try:
             xs, ys = wt(f"EPSG:{int(c)}", "EPSG:4326", [cx], [cy])
@@ -719,13 +781,17 @@ def _guess_crs(p: Principal, m: dict) -> int | None:
             continue
         if int(c) == 4326 and not (abs(cx) <= 180 and abs(cy) <= 90):
             continue
+        if nb and nb[0] - 0.02 <= lng <= nb[2] + 0.02 and nb[1] - 0.02 <= lat <= nb[3] + 0.02:
+            return int(c)
+        cands.append((int(c), lng, lat))
+    for c, lng, lat in cands:
         try:
-            if R.point_in_scope(p, lng, lat):
-                return int(c)
+            if (R.sgg_at(lng, lat) is not None) if nation else R.point_in_scope(p, lng, lat):
+                return c
         except Exception:
             pass
         if first is None and 124 <= lng <= 132 and 33 <= lat <= 39:
-            first = int(c)
+            first = c
     return first
 
 
@@ -925,6 +991,56 @@ def read_files(p: Principal, org: str, folder: Path, names: list[str]) -> dict:
             "area_km2": env(round(area, 3), "km2", "measured", "분석 범위(영상 범위 ∩ 관할 · EPSG:5186)"),
             "aoi": mapping(inside), "overlay": ov, "_src": str(src), "_epsg": epsg,
             "_files": {m["name"]: {"epsg": m["epsg"] if not m["crs_known"] or not m["info"].get("epsg") else None} for m in metas}}
+
+
+def read_each(p: Principal, folder: Path, names: list[str], near: dict | None = None) -> dict:
+    """LX 영상 등록(데이터 올리기) — 묶음 안 영상 파일을 하나씩 읽는다(파일 하나 = 영상 하나 · 곁 파일은 같은 이름의 영상 파일에 붙어 함께 읽힌다).
+    시군구 · 촬영일 · 해상도 · 종류는 파일에서(원칙 41 지역을 먼저 고르지 않는다 · 원칙 49 입력 칸 없음). 촬영일이 파일에 없으면 없다고 둔다(지어내지 않는다).
+    동기(스레드에서). → {ok, items:[{name, sgg_cd, place, date, date_src, gsd_m, kind, epsg, crs_guessed, footprint}]} |
+      {ok: False, code, why(사용자 말), files:[못 읽은 파일 이름]}"""
+    from . import regions as R
+    s = settings()
+    rasters = [n for n in names if _ext(n) in s["raster_ext"]]
+    if not rasters:
+        return {"ok": False, "code": "no_raster", "why": "영상 파일이 없습니다 — 영상 파일을 함께 올려 주세요", "files": names}
+    nb = (near or {}).get("bbox")
+    items, bad = [], []
+    for n in rasters:
+        try:
+            m = _meta(folder / n)
+        except ReadFail as e:
+            bad.append((n, e.code, "영상으로 읽을 수 없는 파일입니다" if e.code == "unreadable" else e.line))
+            continue
+        if not m["georef"]:
+            bad.append((n, "no_georef", "어디를 찍은 영상인지 알 수 없습니다 — 영상과 함께 받은 위치 파일(TFW 등)도 같이 올려 주세요"))
+            continue
+        guessed = False
+        if m["epsg"] is None:
+            g = _guess_crs(p, m, near)
+            if g is None:
+                bad.append((n, "no_crs", "어디를 찍은 영상인지 알 수 없습니다 — 영상과 함께 받은 파일을 모두 같이 올려 주세요"))
+                continue
+            m["epsg"], guessed = g, True
+        try:
+            fp = _footprint(m, m["epsg"])
+        except Exception:
+            bad.append((n, "no_crs", "어디를 찍은 영상인지 알 수 없습니다 — 영상과 함께 받은 파일을 모두 같이 올려 주세요"))
+            continue
+        place, sgg = _place(p, fp)
+        if not sgg and nb and fp.intersects(shape({"type": "Polygon", "coordinates": [[[nb[0], nb[1]], [nb[2], nb[1]], [nb[2], nb[3]], [nb[0], nb[3]], [nb[0], nb[1]]]]})):
+            sgg, place = near.get("sgg_cd"), near.get("name") or place   # 바다에 걸친 도엽 등 — 대표점이 땅이 아니면 보고 있던 지역(범위가 겹칠 때만)
+        if not sgg:
+            bad.append((n, "no_region", "국내 시군구 안의 영상인지 알 수 없습니다 — 위치 파일을 함께 올렸는지 확인해 주세요"))
+            continue
+        gsd = _gsd_m(m, m["epsg"])
+        date, date_src = _date_of(m)
+        items.append({"name": n, "sgg_cd": sgg, "place": place, "date": date, "date_src": date_src, "gsd_m": round(gsd, 4), "kind": _kind(gsd),
+                      "epsg": m["epsg"], "crs_guessed": guessed, "footprint": mapping(fp)})
+    if bad:
+        whys = {w for _, _, w in bad}
+        return {"ok": False, "code": bad[0][1] if len(whys) == 1 else "mixed", "why": bad[0][2] if len(whys) == 1 else "등록할 수 없는 파일이 섞여 있습니다",
+                "files": [n for n, _, _ in bad], "reasons": {n: w for n, _, w in bad}}
+    return {"ok": True, "items": items}
 
 
 def _public_read(rd: dict) -> dict:

@@ -69,7 +69,11 @@
 /* 시트(영상 등록 · 대장 형식) */
 .lxi-form{display:flex;flex-direction:column;gap:18px;padding-top:4px}
 .lxi-f{display:flex;flex-direction:column;gap:6px}
-.lxi-row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+/* 영상 등록 — 파일 끌어 놓기(키트 uploadQueue) · 아래 한 줄(파일에서 읽는 것 · 등록 중) */
+.lxi-up{display:flex;flex-direction:column;gap:12px;padding-top:4px}
+.lxi-up .k-uq .k-drop{min-height:152px}
+.lxi-up-s{margin:0;font:400 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub)}
+.lxi-up .lxi-bar{margin-top:0}
 .lxi-form .t-input{box-sizing:border-box;min-width:0}
 .lxi-form .t-input[aria-invalid="true"]{border-color:var(--warn)}
 .lxi-go{align-self:stretch;margin-top:4px}

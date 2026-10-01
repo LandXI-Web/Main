@@ -1,13 +1,13 @@
 /* lx-ingest data.js — ① 반입 화면의 데이터 한 곳.
    명세 §2.4 API: GET /catalog/layers · /regions/{sgg}(S-3) · /proxy/vworld/data · /jobs/quote|/jobs{kind:join} → SSE ·
-   POST /catalog/imagery(S-5) · PUT /registry/cards/{id}/ledger_schema(S-6).
+   영상 등록 = 파일 끌어 놓기(조각 올리기 /catalog/imagery/uploads → POST /catalog/imagery {draft_id} · 구현 4차 fixes · 확인 대장 1차 FR-1) ·
+   PUT /registry/cards/{id}/ledger_schema(S-6).
    S-3 · S-5 · S-6 은 서버에 있다(2026-09-27 · openapi 로 확인). 아래 어댑터는 경로가 없을 때만 쓰는 폴백이다:
      · 지역 목록·경계  /regions 없음 → V-World 시군구(LT_C_ADSIGG_INFO)
      · 지역 영상       /regions/{sgg} 없음 → 카탈로그 bounds 대조
-     · 영상 등록       POST /catalog/imagery 없음 → 이 브라우저에 '등록 요청'으로 보관
      · 대장 형식       PUT …/ledger_schema 없음 → 이 브라우저에 보관
    숫자는 전부 봉투(env). */
-import { api, hasRoute, LS, bboxOf, session, API } from '../kit/util.js';
+import { api, hasRoute, LS, bboxOf, session } from '../kit/util.js';
 import { env, sse } from '../../shared/api-v1.js';
 import { loadRegions } from '../kit/region.js';
 import { devlog } from '../kit/dev-drawer.js';
@@ -210,7 +210,7 @@ export async function imageryIn(region, geo, { force = false } = {}) {
   rows.sort((a, b) => b.year.localeCompare(a.year) || (a.gsd ?? 9) - (b.gsd ?? 9));
   // 같은 라벨(같은 연도·해상도·종류의 여러 시점)은 한 줄
   const seen = new Map();
-  for (const r of rows) { const k = `${r.year} ${r.res} ${r.kind}`.replace(/\s+/g, ' ').trim(); if (!seen.has(k)) seen.set(k, { ...r, label: k, n: 1 }); else seen.get(k).n++; }
+  for (const r of rows) { const k = (r.year ? `${r.year} ${r.res} ${r.kind}` : `${r.res} ${r.kind} · 촬영 연도 모름`).replace(/\s+/g, ' ').trim(); if (!seen.has(k)) seen.set(k, { ...r, label: k, n: 1 }); else seen.get(k).n++; }
   const items = rows.map((r) => r.item).filter((i) => i && i.bounds);
   return { rows, labels: [...seen.values()], items, as_of: det?.as_of || cat.as_of };
 }
@@ -222,50 +222,29 @@ export function signCog(id) {
   return SIG.get(id);
 }
 
-/** 서버 사유 → 사용자 말(토스트 한 줄) */
-export function imageryReason(e) {
-  const m = `${e?.code || ''} ${e?.message || ''}`;
-  if (/not_found|파일이 없/.test(m)) return '그 경로에 영상 파일이 없습니다';
-  if (/지역이 없/.test(m)) return '이 지역을 찾지 못했습니다';
-  if (/래스터|GeoTIFF/i.test(m)) return 'GeoTIFF 같은 영상 파일만 등록할 수 있습니다';
-  if (/너무 큽|413/.test(m)) return '파일이 커서 서버 경로로 등록해야 합니다';
-  if (/연도|year/.test(m)) return '촬영 연도를 확인해 주세요';
-  if (/forbidden|403/.test(m)) return 'LX 직원·관리자만 등록할 수 있습니다';
-  return null;
+/* ── 영상 등록 = 파일 끌어 놓기(구현 4차 fixes · 확인 대장 1차 FR-1 '기존 자산 기준으로' · 원칙 41 · 49 · 사용자 규칙 2) ──────────
+   기관 분석 요청과 같은 조각 올리기(kit/dropzone.js uploadQueue · 여러 파일 · 진행 · 멈춤 · 이어 올리기 · 취소). 다 올리면 서버가 파일마다
+   시군구 · 촬영 연도 · 해상도를 읽어 등록한다(입력 칸 없음 · 촬영 연도가 파일에 없으면 '촬영 연도 모름'). 서버 경로 등록은 LX 관리자 도구로만. */
+export const UPLOADS = '/catalog/imagery/uploads';
+let FORMATS = null;
+/** 받는 형식(설정 한 곳 config/imagery.yaml) — 못 받으면 기본 목록 */
+export function formats() {
+  FORMATS ||= api(UPLOADS + '/formats').catch(() => ({ raster: ['tif', 'tiff', 'jpg', 'jpeg', 'jp2', 'j2k', 'ecw', 'img'],
+    sidecar: ['tfw', 'tifw', 'jgw', 'jpgw', 'jpw', 'j2w', 'wld', 'eww', 'prj', 'aux.xml', 'ovr'] }));
+  return FORMATS;
 }
-
-export async function registerImagery({ region, path, file, year, gsd }) {
-  const kind = gsd < 0.1 ? 'drone' : gsd < 1 ? 'aerial' : 'satellite';
-  const body = { path, region: region.sgg_cd, year: +year, gsd: +gsd, kind };
-  if (await hasRoute('/catalog/imagery') && (await routeMethods('/catalog/imagery')).includes('post')) {
-    let out;
-    if (file) {
-      const fd = new FormData();
-      for (const [k, v] of Object.entries(body)) if (k !== 'path') fd.append(k, String(v));
-      fd.append('upload', file, file.name);
-      const s = session.get();
-      const r = await fetch(API.prefix + '/catalog/imagery', { method: 'POST', body: fd, headers: s ? { authorization: 'Bearer ' + s.token } : {} });
-      out = await r.json().catch(() => null);
-      if (!r.ok) throw Object.assign(new Error(out?.error?.message || 'http ' + r.status), { code: out?.error?.code || 'http_' + r.status });
-    } else out = await api('/catalog/imagery', { method: 'POST', body });
-    await catalog(true);
-    await regionDetail(region.sgg_cd, { force: true });
-    devlog('imagery', `POST · ${out?.id || ''} · tile job ${out?.job?.id || ''}`);
-    return { server: true, out };
-  }
-  // 폴백(S-5 경로 없음) — 계약 모양 그대로 이 브라우저에 보관
-  const ko = IMG_KIND[kind];
-  LS.set(PENDING, [...LS.get(PENDING, []), { ...body, kind: ko, at: new Date().toISOString() }]);
-  devlog('imagery', 'S-5 없음 · 로컬 보관 ' + JSON.stringify(body));
-  return { server: false };
+/** 올린 묶음 → 영상 등록(파일마다 한 영상) → { items:[{id, sgg_cd, region, place, year, gsd_m, kind}] } · 등록한 지역의 영상 목록을 새로 */
+export async function registerDraft(draft, near) {
+  const out = await api('/catalog/imagery', { method: 'POST', body: { draft_id: draft, near: near || undefined } });
+  await catalog(true).catch(() => null);
+  for (const cd of new Set((out.items || []).map((x) => x.sgg_cd))) await regionDetail(cd, { force: true });
+  devlog('imagery', `등록 ${out.items?.length || 0} · ${(out.items || []).map((x) => x.id).join(', ')}`);
+  return out;
 }
-
-let OPENAPI = null;
-async function routeMethods(path) {
-  if (!OPENAPI) OPENAPI = fetch(API.prefix + '/openapi.json', { cache: 'no-cache' }).then((r) => r.json()).catch(() => ({}));
-  const j = await OPENAPI;
-  return Object.keys(j.paths?.['/api/v1' + path] || j.paths?.[path] || {});
-}
+/** 등록 전 묶음 지우기(다른 파일 고르기) */
+export const dropDraft = (draft) => api(`/catalog/imagery/drafts/${encodeURIComponent(draft)}`, { method: 'DELETE' }).catch(() => null);
+/** 영상 종류(사용자 말) — 해상도로: 드론 · 항공 · 위성 */
+export const kindWord = (g) => (g == null ? '영상' : g < 0.1 ? '드론영상' : g < 1 ? '항공영상' : '위성영상');
 
 /* ── 대장(V-World 갖춤) ─────────────────────────────────────────── */
 export const LEDGER = [

@@ -260,7 +260,7 @@ def test_lx_register_ecw_goes_standard(live, tok):
     cp = config.DATA_ROOT / "cog" / "uploads" / f"pytest-{uuid.uuid4().hex[:6]}.ecw"
     cp.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(src, cp)
-    st = H(tok["staff"])
+    st = H(tok["admin"])                                       # 서버 경로 등록 = LX 관리자 도구(impl-4 fixes)
     iid = None
     try:
         r = httpx.post(B + "/catalog/imagery", headers=st, json={"path": str(cp), "region": "41117", "year": 2025, "gsd": 0.025, "kind": "drone",

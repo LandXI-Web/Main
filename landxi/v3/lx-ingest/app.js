@@ -133,7 +133,7 @@ function openDrawer(region) {
   const big = K.h('div.lxi-big.is-loading');
   const img = K.h('section.lxi-sec', {}, K.h('h3.t-label', { text: '영상' }), K.h('div.lxi-img', {}, skel(2)));
   const led = K.h('section.lxi-sec', {}, K.h('h3.t-label', { text: '대장' }), K.h('div.lxi-led', {}, skel(5)));
-  const bImg = K.h('button.t-btn.t-btn--2', { type: 'button', text: '영상 등록', onclick: () => imagerySheet({ host: stageEl, region: cur, under: dr, onDone: refresh }) });
+  const bImg = K.h('button.t-btn.t-btn--2', { type: 'button', text: '영상 등록', onclick: () => imagerySheet({ host: stageEl, region: cur, under: dr, onDone: afterImagery }) });
   const bLed = K.h('button.t-btn.t-btn--2', { type: 'button', text: '대장 형식 등록', onclick: () => ledgerSheet({ host: stageEl, under: dr, onDone: () => {} }) });
   body.append(big, img, led);
   if (dr && dr.el.isConnected) { dr.title(region.name); dr.set(body); }
@@ -264,7 +264,13 @@ function showRate(ui, r, { reveal = true } = {}) {
   done.join = !running && (r.env?.value || 0) > 0; syncSteps();
   paintEmd(r.per, { reveal: reveal && !running });
 }
-async function refresh() { await D.catalog(true).catch(() => null); if (cur) pick(cur, { fly: false }); }
+/* 영상 등록이 끝나면(파일 끌어 놓기 · 구현 4차 fixes) — 등록한 곳이 지금 지역이면 그 자리에서 새로, 다른 지역 영상이면 그 지역으로
+   (지역은 파일이 정한다 · 원칙 41). 영상 목록 · 카탈로그는 등록 때 새로 받아 두었다(data.registerDraft). */
+function afterImagery(out) {
+  const cds = [...new Set((out?.items || []).map((x) => x.sgg_cd))];
+  const go = cds.length && cur && !cds.includes(cur.sgg_cd) ? list.find((r) => r.sgg_cd === cds[0]) : null;
+  if (go) { picker.input.value = go.name; pick(go); } else if (cur) pick(cur, { fly: false });
+}
 
 /* ── 결합 실행 → 진행 막대 1 + 읍면동이 서→동으로 차오름 ───────── */
 function progress(p) {

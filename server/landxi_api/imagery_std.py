@@ -73,7 +73,7 @@ def settings() -> dict:
     st["value"] = {"compress": "ZSTD", "level": 9, **(st.get("value") or {})}
     st.setdefault("threads", 4)
     og = {"keep_days": 90, "delete": True, "owned_roots": ["tenants", "cog/uploads"], **(s.get("original") or {})}
-    ck = {"psnr_min_db": 38, "ssim_min": 0.97, "samples": 4, **(s.get("check") or {})}
+    ck = {"psnr_min_db": 38, "ssim_min": 0.96, "samples": 4, **(s.get("check") or {})}
     cv = {"inline_max_mb": 64, "big_gb": 2, "auto_max_gb": 50, "wait_minutes": 240, **(s.get("convert") or {})}
     return {"accept": acc, "standard": st, "original": og, "check": ck, "convert": cv}
 

@@ -212,14 +212,19 @@ def _lx_label(uid: str | None, lu: dict) -> str:
     return f"LX 담당 {name}" if name else "LX 담당 직원"
 
 
+def _sender(r, tu: dict, ctx: dict) -> str:
+    """LX 쪽에 보이는 보낸 사람 — 이름(계정 그대로) · 보낼 때 적혀 있던 부서(있으면 · 못 읽는 파일 확인 요청이 남긴다)."""
+    return " · ".join(x for x in (tu.get(r["sender_id"], ""), ctx.get("sender_dept")) if x)
+
+
 def _item(r, p: Principal, tu: dict, lu: dict, tn: dict) -> dict:
     ctx = r["ctx"] or {}
     last_side = r["last_realm"]
     return {
         "id": r["id"], "status": r["status"] or "sent", "status_ko": STATUS_KO.get(r["status"] or "sent"),
         "verdict": r["verdict"], "verdict_ko": VERDICT_KO.get(r["verdict"]) if r["verdict"] else None,
-        "where": ctx.get("where") or r["pnu"] or "", "service": ctx.get("service"),
-        "org": tn.get(r["tenant_id"], ""), "sender": tu.get(r["sender_id"], "") if p.realm == "lx" else "나",
+        "where": ctx.get("where") or r["pnu"] or "", "service": ctx.get("service"), "topic": ctx.get("topic") or "parcel",
+        "org": tn.get(r["tenant_id"], ""), "sender": _sender(r, tu, ctx) if p.realm == "lx" else "나",
         "recipient": _lx_label(r["recipient_id"], lu) if r["recipient_id"] else "LX 관리자",
         "recipient_kind": "staff" if r["recipient_id"] else "admin",
         "note": r["first_body"] or "",
@@ -367,6 +372,50 @@ async def create(body: dict, request: Request):
             "where": ctx.get("where"), "at": now_iso()}
 
 
+# ── 못 읽는 파일 — LX 담당자에게 보내 확인받기(확인 대장 기관-6 ⓐ · 원칙 109 · 114) ─────────────────────────
+FILES_MAX = 20
+
+
+@router.post("/reviews/file", status_code=201)
+async def create_file(body: dict, request: Request):
+    """기관 → 분석 요청 화면에서 고른 파일을 서버가 읽을 수 없을 때(올리지 않은 파일) 파일 이름 · 메모 한 줄(선택)을 LX 담당자에게 보낸다.
+    받는 사람 = 검토 요청과 같은 판정(그 서비스 카드의 담당 LX 직원 → 없으면 LX 관리자 · LX 관리자는 모두 본다). 서비스를 아직 안 골랐으면 LX 관리자.
+    LX 쪽 요청함에 한 건(파일 이름 · 보낸 사람 이름 · 부서 · 메모) · 기관은 '내가 보낸 요청'에서 답을 본다. 파일 자체는 받지 않는다(이름만).
+    {files:[이름…], why?(화면이 보인 한 줄), note?, deploy?}"""
+    p = _gate(principal(request))
+    if p.realm != "tenant":
+        raise ApiError("forbidden", "검토 요청은 기관 계정에서 보냅니다")
+    raw = body.get("files") or []
+    raw = raw if isinstance(raw, list) else [raw]
+    files = [re.split(r"[\\/]", re.sub(r"[\x00-\x1f]", "", str(x)))[-1].strip()[:160] for x in raw[:FILES_MAX]]
+    files = [f for f in files if f]
+    if not files:
+        raise ApiError("bad_request", "파일 이름이 없습니다")
+    note = re.sub(r"\s+", " ", str(body.get("note") or "")).strip()[:NOTE_MAX]
+    why = re.sub(r"\s+", " ", str(body.get("why") or "")).strip()[:160] or None
+    async with db(realm="lx") as conn:                       # 서비스 · 담당 판정(배포본은 그 기관 것만 — _resolve_card 가 기관 조건을 건다)
+        cid, dep = await _resolve_card(conn, p.tenant_id, {"deploy": body.get("deploy")}, None)   # 그 기관에 켜진 서비스(배포본)만 — 카드 이름만으로는 받지 않는다
+        owner = await _owner(conn, cid)
+        svc = await _card_name(conn, cid)
+        dept = await conn.fetchval("SELECT dept FROM tenant_users WHERE id=$1 AND tenant_id=$2", p.user_id, p.tenant_id)
+    where = f"못 읽는 파일 · {files[0]}" + (f" 외 {len(files) - 1}개" if len(files) > 1 else "")
+    ctx = {"where": where, "service": svc, "from": "request", "topic": "file", "files": files, "why": why, "sender_dept": (dept or "").strip() or None}
+    rid = "fb_" + secrets.token_hex(8)
+    rcpt = owner["id"] if owner else None
+    async with db(p) as conn:
+        await conn.execute(
+            "INSERT INTO feedback(id, tenant_id, kind, note, state, sender_id, card_id, deploy_id, recipient_id, status, ctx, updated_at) VALUES "
+            "($1,$2,'review',$3,'open',$4,$5,$6,$7,'sent',$8, now())", rid, p.tenant_id, note, p.user_id, cid, dep, rcpt, ctx)
+        await conn.execute("INSERT INTO review_messages(id, request_id, tenant_id, author_id, author_realm, author_role, body) VALUES ($1,$2,$3,$4,'tenant',$5,$6)",
+                           "rm_" + secrets.token_hex(8), rid, p.tenant_id, p.user_id, p.role, note)
+        await conn.execute("INSERT INTO review_reads(request_id, reader, tenant_id, read_at) VALUES ($1,$2,$3,now()) "
+                           "ON CONFLICT (request_id, reader) DO UPDATE SET read_at=now()", rid, _reader(p), p.tenant_id)
+        await audit(conn, p, "review.file", rid, None, {"card": cid, "to": rcpt or "admin", "files": len(files)})
+    return {"id": rid, "status": "sent", "status_ko": STATUS_KO["sent"], "service": svc, "where": where,
+            "recipient": {"kind": "staff", "name": owner.get("name"), "via": owner.get("via")} if owner else {"kind": "admin", "name": None},
+            "at": now_iso()}
+
+
 # ── 목록 · 한 건 · 읽음 · 답 ───────────────────────────────────────────────────────
 @router.get("/reviews")
 async def list_(request: Request, box: str = "all", limit: int = 100):
@@ -455,7 +504,8 @@ async def one(rid: str, request: Request):
     can_answer = p.realm == "lx" and (p.is_admin or r["recipient_id"] == p.user_id)
     return {"id": r["id"], "status": r["status"] or "sent", "status_ko": STATUS_KO.get(r["status"] or "sent"),
             "verdict": r["verdict"], "verdict_ko": VERDICT_KO.get(r["verdict"]) if r["verdict"] else None,
-            "org": org, "sender": tu.get(r["sender_id"], "") if p.realm == "lx" else "나",
+            "org": org, "sender": _sender(r, tu, ctx) if p.realm == "lx" else "나",
+            "topic": ctx.get("topic") or "parcel", "files": ctx.get("files") or None, "why": ctx.get("why"),
             "recipient": _lx_label(r["recipient_id"], lu) if r["recipient_id"] else "LX 관리자",
             "recipient_kind": "staff" if r["recipient_id"] else "admin",
             "where": ctx.get("where") or r["pnu"] or "", "service": ctx.get("service"),

@@ -5,6 +5,7 @@
    큰 파일 · 여러 파일(멈춤 · 이어 올리기 · 취소)은 아래 uploadQueue(조각 올리기). */
 import { h, API, api, session } from './util.js';
 import { t } from './i18n.js';
+import { modal } from './modal.js';
 
 export const ALLOW = ['xlsx', 'csv', 'shp', 'zip', 'gpkg', 'geojson'];
 export const MAX = 20 * 1024 * 1024;
@@ -72,7 +73,10 @@ function xhr({ path, fields = {}, field = 'file' }, file, onProg) {
      title, kinds,                           // 놓는 칸 글(제목 · 형식 줄 — 문자열 하나 또는 줄마다 끊은 배열)
      onStart(json, item), onDone(item, json), onError(item, err), onChange(items) })
    → { el, items(), add(files), busy(), clear() }
-   고르는 순간: 파일 머리 검사 + 서버가 지금 받을 수 없는 형식({base}/formats · 있으면) — 안 맞으면 그 줄에 쉬운 말 한 줄(올리지 않음). */
+   고르는 순간: 파일 머리 검사 + 서버가 지금 받을 수 없는 형식({base}/formats · 있으면) — 안 맞으면 올리지 않고 창 하나로 알린다
+   (구현 확인 3차 M-2 · 원칙 109 '문제는 창으로'). 한 번에 고른 파일 가운데 여럿이 안 맞으면 창 하나에 묶는다 · 나머지는 그대로 올린다.
+   창 = 쉬운 말 제목 한 줄 · 파일 이름 · 다른 파일 고르기 · 닫기. 기관 계정이면 'LX 담당자에게 보내 확인받기'도(확인 대장 기관-6 ⓐ ·
+   받는 사람 = 그 서비스 담당 LX 직원 → 없으면 LX 관리자 · 서버 POST /reviews/file · 서비스는 주소의 ?service= — 분석 요청 화면이 적는다). */
 const UQ_CSS = `
 .k-uq{display:flex;flex-direction:column;gap:8px}
 .k-uq .k-drop{min-height:112px;padding:16px}
@@ -90,7 +94,24 @@ const UQ_CSS = `
 .k-uq-s{grid-column:1/-1;margin:0;font:400 12px/18px var(--font-body);color:var(--sub)}
 .k-uq-r[data-st="bad"] .k-uq-s{color:var(--warn)}
 .k-uq-r[data-st="done"] .t-progress i{background:var(--ink)}
-.k-uq-r[data-st="done"] .k-uq-s::before{content:"✓ ";color:var(--ai)}`;
+.k-uq-r[data-st="done"] .k-uq-s::before{content:"✓ ";color:var(--ai)}
+.k-fp{display:flex;flex-direction:column;gap:12px}
+.k-fp-h,.k-fp-n{margin:0;font:400 15px/22px var(--font-body);color:var(--sub)}
+.k-fp-n{font-size:13px;line-height:19px}
+.k-fp-l{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.k-fp-l li{display:flex;flex-direction:column;gap:2px;min-width:0;padding:10px 12px;background:var(--bg-0);border-radius:var(--r-8)}
+.k-fp-l b{font:500 14px/20px var(--font-body);color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.k-fp-l span{font:400 13px/18px var(--font-body);color:var(--sub)}
+.k-fp-x{align-self:flex-start;padding:0;border:0;background:none;font:600 14px/20px var(--font-body);color:var(--accent);cursor:pointer}
+.k-fp-x:hover{text-decoration:underline}
+.k-fp-f{display:flex;flex-direction:column;gap:6px}
+.k-fp-f label{display:flex;gap:6px;align-items:baseline;font:600 14px/20px var(--font-body);color:var(--ink)}
+.k-fp-f label small{font-weight:400;font-size:13px;color:var(--sub)}
+.k-fp-f .t-input{box-sizing:border-box;width:100%}
+.k-fp-to{margin:0;font:400 13px/19px var(--font-body);color:var(--sub)}
+.k-fp-to b{margin-left:6px;font-weight:600;color:var(--ink)}
+.k-fp-a{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+@media (max-width:640px){.k-md-bg:has(> .k-fp-md){align-items:center}.k-md.k-fp-md{height:auto;max-height:calc(100dvh - 16px)}}`;
 function uqStyle() {
   if (document.getElementById('k-uq-css')) return;
   document.head.append(Object.assign(document.createElement('style'), { id: 'k-uq-css', textContent: UQ_CSS }));
@@ -113,6 +134,79 @@ const MAGIC = {
 };
 MAGIC.tiff = MAGIC.tif; MAGIC.ovr = MAGIC.tif; MAGIC.jpeg = MAGIC.jpg; MAGIC.j2k = MAGIC.jp2;
 const BAD_FILE = '영상으로 읽을 수 없는 파일입니다 — 다른 파일을 골라 주세요';
+const NOT_IMAGE = '영상 파일이 아닙니다 — 촬영한 영상 파일을 골라 주세요';
+const EMPTY_FILE = '빈 파일입니다 — 내용이 있는 파일을 골라 주세요';
+const GBd = (n) => (n >= 1e9 ? `${+(n / 1e9).toFixed(1)}GB` : MBf(n));       // 한도 글은 서버와 같은 십진 GB(서버 _gb)
+const TOO_BIG = (max) => `파일이 너무 큽니다 — 한 파일은 ${GBd(max)}까지 올릴 수 있습니다`;
+const half = (s) => { const i = String(s).indexOf(' — '); return i < 0 ? [String(s), ''] : [s.slice(0, i), s.slice(i + 3)]; };
+
+/* ── 문제는 창으로(구현 확인 3차 M-2 · 원칙 109) ───────────────────────────────────────────────
+   fileProblem({ files:[{name, why}], ok, onPick }) — 쉬운 말 제목 한 줄 · 파일 이름 · 할 수 있는 것(다른 파일 고르기 · 닫기).
+   이유가 하나면 제목 = 그 이유(뒤 절은 안내 한 줄) · 여럿이면 '올릴 수 없는 파일이 있습니다' + 파일마다 이유. ok = 그대로 올리는 나머지 수.
+   기관 계정이면 'LX 담당자에게 보내 확인받기'(확인 대장 기관-6 ⓐ) — 파일 이름 · 메모 한 줄(선택)을 그 서비스 담당 LX 직원에게(없으면 LX 관리자) ·
+   답은 '내가 보낸 요청'에서. 파일 자체는 보내지 않는다(이름만). LX 화면에는 이 칸이 없다(LX 가 받는 쪽). */
+let probM = null;
+export function fileProblem({ files = [], ok = 0, onPick, title: forceTitle, hint: forceHint } = {}) {
+  uqStyle();
+  probM?.close(true);
+  const whys = [...new Set(files.map((f) => f.why))];
+  const one = whys.length === 1;
+  const [t1, t2] = one ? half(whys[0]) : ['올릴 수 없는 파일이 있습니다', ''];
+  const title = forceTitle || t1;
+  const hint = forceHint ?? (t2 && t2 !== '다른 파일을 골라 주세요' ? t2 : '');
+  const names = () => h('ul.k-fp-l', {}, ...files.map((f) => h('li', {}, h('b', { text: f.name, title: f.name, 'data-lint-skip': '' }),
+    !one && f.why ? h('span', { text: half(f.why)[0] }) : null)));
+  const btns = (a, b) => h('div.k-fp-a', {}, a, b);
+  const tenant = session.get()?.realm === 'tenant';
+  let m = null;
+
+  function first() {
+    const pick = h('button.t-btn', { type: 'button', text: '다른 파일 고르기', autofocus: '' });
+    const close = h('button.t-btn.t-btn--2', { type: 'button', text: '닫기' });
+    close.addEventListener('click', () => m.close());
+    pick.addEventListener('click', () => { m.close(); onPick?.(); });
+    const ask = tenant ? h('button.k-fp-x', { type: 'button', text: 'LX 담당자에게 보내 확인받기 ›', onclick: () => send() }) : null;
+    m?.title(title);
+    return h('div.k-fp', {}, hint ? h('p.k-fp-h', { text: hint }) : null, names(),
+      ok ? h('p.k-fp-n', { text: `나머지 ${ok}개는 그대로 올립니다` }) : null, ask, btns(close, pick));
+  }
+  function send() {
+    const svc = new URLSearchParams(location.search).get('service') || undefined;
+    const inp = h('input.t-input', { type: 'text', maxlength: '300', placeholder: '예: 드론 업체에서 받은 파일입니다', 'aria-label': '메모 한 줄' });
+    const to = h('p.k-fp-to', {}, h('span', { text: '받는 사람' }), h('b', { text: '…' }));
+    const back = h('button.t-btn.t-btn--2', { type: 'button', text: '돌아가기', onclick: () => m.set(first()) });
+    const go = h('button.t-btn', { type: 'submit', text: '보내기' });
+    const f = h('form.k-fp', { autocomplete: 'off' }, names(),
+      h('div.k-fp-f', {}, h('label', {}, h('span', { text: '메모 한 줄' }), h('small', { text: '안 써도 됩니다' })), inp), to,
+      h('p.k-fp-n', { text: "답은 '내가 보낸 요청'에서 봅니다" }), btns(back, go));
+    api('/reviews/recipient?' + new URLSearchParams(svc ? { deploy: svc } : {})).then((r) => { to.querySelector('b').textContent = toWho(r?.recipient); })
+      .catch(() => { to.hidden = true; });
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault(); if (go.disabled) return;
+      go.disabled = true;
+      try {
+        const r = await api('/reviews/file', { method: 'POST', body: { files: files.map((x) => x.name), why: one ? half(whys[0])[0] : '여러 이유', note: inp.value.trim(), deploy: svc } });
+        document.dispatchEvent(new CustomEvent('lx:reviews'));
+        m.title('보냈습니다');
+        const see = h('button.t-btn', { type: 'button', text: '내가 보낸 요청 보기', autofocus: '' });
+        const close = h('button.t-btn.t-btn--2', { type: 'button', text: '닫기', onclick: () => m.close() });
+        see.addEventListener('click', async () => { m.close(); (await import('./notify.js')).openSent({ id: r.id }); });
+        m.set(h('div.k-fp', { role: 'status' }, h('p.k-fp-h', { text: '답이 오면 알림으로 알려 드립니다' }),
+          h('p.k-fp-to', {}, h('span', { text: '받는 사람' }), h('b', { text: toWho(r?.recipient) })), btns(close, see)));
+        see.focus();
+      } catch { go.disabled = false; to.hidden = false; to.querySelector('b').textContent = '보내지 못했습니다 — 다시 눌러 주세요'; }
+    });
+    m.title('LX 담당자에게 보내 확인받기');
+    m.set(f);
+    inp.focus();
+  }
+  m = modal({ title, body: first(), size: 'md', onClose: () => { if (probM === m) probM = null; } });   // 첫 초점 = '다른 파일 고르기'(autofocus)
+  m.el.classList.add('k-fp-md');
+  probM = m;
+  return m;
+}
+/* 받는 사람 한 줄 — 검토 요청(kit/notify.js)과 같은 말 */
+const toWho = (rc) => (rc?.kind === 'staff' && rc.name ? (rc.via === 'project' ? `이 서비스 담당 프로젝트장 ${rc.name}` : `이 서비스 담당 LX 직원 ${rc.name}`) : 'LX 관리자');
 async function looksRight(file, e) {
   const sig = MAGIC[e];
   if (!sig || !file.size) return true;
@@ -182,27 +276,35 @@ export function uploadQueue(el, { base, fields = () => ({}), allow = null, max =
     const un = (await serverFormats())?.unavailable || {};
     return un[e] || null;
   }
+  /* 고르는 순간 안 맞는 파일 — 목록에 줄을 남기지 않고(올리지 않음) 한 번 고른 것끼리 창 하나로(M-2) */
+  function drop(it) {
+    it.state = 'cancel';
+    const i = items.indexOf(it); if (i >= 0) items.splice(i, 1);
+    it.el.remove();
+    changed();
+  }
   function add(files) {
-    const fresh = [];
+    const fresh = [], bad = [];
     for (const f of files || []) {
-      const it = { file: f, id: null, state: 'wait', bytes: 0, ac: null, retry: false };
+      const e = extOf(f.name);
+      const why = allow && !allow.includes(e) ? NOT_IMAGE : f.size > max ? TOO_BIG(max) : !f.size ? EMPTY_FILE : null;
+      if (why) { bad.push({ name: f.name, why }); continue; }
+      const it = { file: f, id: null, state: 'check', bytes: 0, ac: null, retry: false };   // 고르는 순간 — 올리기 전에 형식을 본다
       items.push(it);
       row(it);
-      const e = extOf(f.name);
-      if (allow && !allow.includes(e)) { it.state = 'bad'; paint(it, '받지 않는 형식입니다'); continue; }
-      if (f.size > max) { it.state = 'bad'; paint(it, `한 파일은 ${MBf(max)}까지 올릴 수 있습니다`); continue; }
-      if (!f.size) { it.state = 'bad'; paint(it, '빈 파일입니다'); continue; }
-      it.state = 'check';                                          // 고르는 순간 — 올리기 전에 형식을 본다
       paint(it, '파일을 확인하는 중');
       fresh.push(it);
     }
     Promise.all(fresh.map(async (it) => {
       const why = await check(it).catch(() => null);
       if (it.state !== 'check') return;                            // 그사이 취소
-      if (why) { it.state = 'bad'; paint(it, why); return; }
+      if (why) { bad.push({ name: it.file.name, why }); drop(it); return; }
       it.state = 'wait';
       paint(it, '기다리는 중');
-    })).then(pump);
+    })).then(() => {
+      if (bad.length) fileProblem({ files: bad, ok: fresh.filter((x) => x.state !== 'cancel').length, onPick: () => input.click() });
+      pump();
+    });
   }
   async function pump() {
     if (running) return;
@@ -220,7 +322,7 @@ export function uploadQueue(el, { base, fields = () => ({}), allow = null, max =
       st = await api(base, { method: 'POST', body: { ...fields(), filename: it.file.name, size: it.file.size, quick_fp: it.fp } });
       it.id = st.id; it.bytes = st.bytes || 0;
       onStart?.(st, it);
-    } catch (e) { return fail(it, e); }
+    } catch (e) { return fail(it, e, true); }
     const maxC = st.chunk?.max?.size || 8 * 1048576;
     let chunk = Math.min(maxC, st.chunk?.size || 1048576), fails = 0;
     const t0 = performance.now(), b0 = it.bytes;
@@ -263,9 +365,15 @@ export function uploadQueue(el, { base, fields = () => ({}), allow = null, max =
       onDone?.(it, done);
     } catch (e) { fail(it, e); }
   }
-  function fail(it, e) {
+  function fail(it, e, atStart = false) {
     const user = e?.status === 401 ? '로그인이 끝났습니다 — 다시 로그인해 주세요'
       : e?.message && e.code !== 'network' && !/^http_/.test(e.code || '') && e.status && e.status < 500 ? e.message : null;
+    if (atStart && user && e.status !== 401) {                    // 한 바이트도 보내기 전에 서버가 거절(같은 파일 · 받을 수 없는 형식 · 저장 공간) — 창으로(M-2)
+      drop(it);
+      fileProblem({ files: [{ name: it.file.name, why: user }], onPick: () => input.click() });
+      onError?.(it, e);
+      return;
+    }
     it.retry = !user;                                              // 연결 문제는 이어 올리기로 · 서버가 거절한 이유(형식 · 같은 파일 · 저장 공간)는 그대로 알린다
     it.state = 'bad';
     paint(it, user || '올리지 못했습니다 — 이어 올리기를 누르면 이어서 올립니다');
