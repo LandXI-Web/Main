@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko" style="--ci:#0B5FA5;--ci-t1:#E6EFF7;--ci-line:#BAD2E7">
+<head>
+<meta charset="utf-8">
+<title>시안 · 전남광주 AI 플랫폼 — 해양쓰레기 예측 지도(우리 도가 만든 서비스)</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.sp-map{left:-220px;width:1588px}
+.sp-sheet{box-sizing:border-box}
+.sp-sheet .gs-crumb{margin-bottom:-8px}
+.sp-sheet .sp-meta2{display:flex;align-items:center;gap:8px;font:500 14px/20px var(--font-body);color:var(--sub)}
+</style>
+</head>
+<body class="t gs k-shelled mk" style="--accent:#0B5FA5;--tint:rgba(11,95,165,.14)">
+<div class="k-app has-rail">
+  <header class="t-mast k-mast"><a class="k-word" aria-label="전남광주 AI 플랫폼"><span class="gb-mark" data-size="md" data-lines="2" aria-hidden="true"><span>光全</span><span>AI</span></span><span class="word gs-plat">전남광주 AI 플랫폼</span></a><span class="sp"></span><span class="k-mast-slot"></span><span class="t-role k-role"><b>기관</b>광주전남특별시</span><a class="k-mast-b k-xi">XI맵</a><span class="k-bell-slot"><button class="k-mast-b k-bell" type="button" aria-label="알림"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3.2a4.6 4.6 0 0 0-4.6 4.6v3.1L4 13.6h12l-1.4-2.7V7.8A4.6 4.6 0 0 0 10 3.2z M8.1 15.6a2 2 0 0 0 3.8 0"></path></svg></button></span><button class="k-mast-b k-help" type="button" aria-label="도움말">?</button><button class="k-mast-b k-exit" type="button">나가기</button></header>
+  <nav class="t-rail k-rail" aria-label="메뉴">
+    <a class="k-rail-i" aria-current="true"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3h6v6H3z M11 3h6v6h-6z M3 11h6v6H3z M11 11h6v6h-6z"></path></svg><span>내 서비스</span></a>
+    <a class="k-rail-i"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 6.5l7-3.5 7 3.5v7l-7 3.5-7-3.5z M3 6.5l7 3.5 7-3.5 M10 10v7"></path></svg><span>우리 공간</span></a>
+    <a class="k-rail-i"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 17V7l7-4 7 4v10 M8 17v-5h4v5"></path></svg><span>기관 정보</span></a>
+  </nav>
+  <main class="k-main" id="main">
+    <div class="sp-map">
+      <svg viewBox="0 0 1368 836" aria-hidden="true">
+        <defs><marker id="arw" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#fff"></path></marker></defs>
+        <g class="pr"><rect class="p1" x="104" y="773" width="38" height="38"/><rect class="p1" x="141" y="811" width="38" height="38"/><rect class="p1" x="180" y="624" width="38" height="38"/><rect class="p1" x="255" y="587" width="38" height="38"/><rect class="p2" x="259" y="24" width="38" height="38"/><rect class="p2" x="259" y="-13" width="38" height="38"/><rect class="p1" x="292" y="587" width="38" height="38"/><rect class="p1" x="292" y="549" width="38" height="38"/><rect class="p1" x="329" y="550" width="38" height="38"/><rect class="p2" x="332" y="137" width="38" height="38"/><rect class="p1" x="370" y="138" width="38" height="38"/><rect class="p2" x="370" y="63" width="38" height="38"/><rect class="p2" x="371" y="-12" width="38" height="38"/><rect class="p2" x="407" y="138" width="38" height="38"/><rect class="p2" x="407" y="63" width="38" height="38"/><rect class="p2" x="444" y="176" width="38" height="38"/><rect class="p2" x="444" y="138" width="38" height="38"/><rect class="p1" x="514" y="814" width="38" height="38"/><rect class="p1" x="514" y="776" width="38" height="38"/><rect class="p2" x="518" y="214" width="38" height="38"/><rect class="p1" x="551" y="814" width="38" height="38"/><rect class="p2" x="555" y="251" width="38" height="38"/><rect class="p2" x="557" y="64" width="38" height="38"/><rect class="p1" x="590" y="552" width="38" height="38"/><rect class="p2" x="591" y="514" width="38" height="38"/><rect class="p2" x="592" y="289" width="38" height="38"/><rect class="p1" x="627" y="702" width="38" height="38"/><rect class="p2" x="627" y="664" width="38" height="38"/><rect class="p2" x="627" y="589" width="38" height="38"/><rect class="p2" x="665" y="515" width="38" height="38"/><rect class="p1" x="666" y="402" width="38" height="38"/><rect class="p3" x="706" y="-10" width="38" height="38"/><rect class="p3" x="742" y="140" width="38" height="38"/><rect class="p2" x="779" y="178" width="38" height="38"/><rect class="p3" x="780" y="141" width="38" height="38"/><rect class="p3" x="780" y="103" width="38" height="38"/><rect class="p1" x="813" y="666" width="38" height="38"/><rect class="p3" x="817" y="178" width="38" height="38"/><rect class="p3" x="817" y="66" width="38" height="38"/><rect class="p2" x="850" y="666" width="38" height="38"/><rect class="p3" x="855" y="29" width="38" height="38"/><rect class="p3" x="893" y="-9" width="38" height="38"/><rect class="p2" x="925" y="704" width="38" height="38"/><rect class="p2" x="927" y="442" width="38" height="38"/><rect class="p3" x="928" y="179" width="38" height="38"/><rect class="p2" x="963" y="517" width="38" height="38"/><rect class="p2" x="964" y="479" width="38" height="38"/><rect class="p3" x="964" y="442" width="38" height="38"/><rect class="p3" x="966" y="179" width="38" height="38"/><rect class="p3" x="1002" y="292" width="38" height="38"/><rect class="p2" x="1003" y="217" width="38" height="38"/><rect class="p3" x="1039" y="292" width="38" height="38"/><rect class="p2" x="1074" y="668" width="38" height="38"/><rect class="p2" x="1074" y="630" width="38" height="38"/><rect class="p3" x="1075" y="593" width="38" height="38"/><rect class="p3" x="1077" y="293" width="38" height="38"/><rect class="p2" x="1110" y="780" width="38" height="38"/><rect class="p3" x="1111" y="743" width="38" height="38"/><rect class="p2" x="1111" y="668" width="38" height="38"/><rect class="p2" x="1112" y="555" width="38" height="38"/><rect class="p2" x="1187" y="481" width="38" height="38"/><rect class="p3" x="1188" y="369" width="38" height="38"/><rect class="p3" x="1224" y="519" width="38" height="38"/></g>
+        <g class="in"><rect x="104" y="773" width="38" height="38"/><rect x="141" y="811" width="38" height="38"/><rect x="180" y="624" width="38" height="38"/><rect x="255" y="587" width="38" height="38"/><rect x="259" y="24" width="38" height="38"/><rect x="259" y="-13" width="38" height="38"/><rect x="292" y="587" width="38" height="38"/><rect x="292" y="549" width="38" height="38"/><rect x="329" y="550" width="38" height="38"/><rect x="332" y="137" width="38" height="38"/><rect x="370" y="138" width="38" height="38"/><rect x="370" y="63" width="38" height="38"/><rect x="371" y="-12" width="38" height="38"/><rect x="407" y="138" width="38" height="38"/><rect x="407" y="63" width="38" height="38"/><rect x="444" y="176" width="38" height="38"/><rect x="444" y="138" width="38" height="38"/><rect x="514" y="814" width="38" height="38"/><rect x="514" y="776" width="38" height="38"/><rect x="518" y="214" width="38" height="38"/><rect x="551" y="814" width="38" height="38"/><rect x="555" y="251" width="38" height="38"/><rect x="557" y="64" width="38" height="38"/><rect x="590" y="552" width="38" height="38"/><rect x="591" y="514" width="38" height="38"/><rect x="592" y="289" width="38" height="38"/><rect x="627" y="702" width="38" height="38"/><rect x="627" y="664" width="38" height="38"/><rect x="627" y="589" width="38" height="38"/><rect x="665" y="515" width="38" height="38"/><rect x="666" y="402" width="38" height="38"/><rect x="706" y="-10" width="38" height="38"/><rect x="742" y="140" width="38" height="38"/><rect x="779" y="178" width="38" height="38"/><rect x="780" y="141" width="38" height="38"/><rect x="780" y="103" width="38" height="38"/><rect x="813" y="666" width="38" height="38"/><rect x="817" y="178" width="38" height="38"/><rect x="817" y="66" width="38" height="38"/><rect x="850" y="666" width="38" height="38"/><rect x="855" y="29" width="38" height="38"/><rect x="893" y="-9" width="38" height="38"/><rect x="925" y="704" width="38" height="38"/><rect x="927" y="442" width="38" height="38"/><rect x="928" y="179" width="38" height="38"/><rect x="963" y="517" width="38" height="38"/><rect x="964" y="479" width="38" height="38"/><rect x="964" y="442" width="38" height="38"/><rect x="966" y="179" width="38" height="38"/><rect x="1002" y="292" width="38" height="38"/><rect x="1003" y="217" width="38" height="38"/><rect x="1039" y="292" width="38" height="38"/><rect x="1074" y="668" width="38" height="38"/><rect x="1074" y="630" width="38" height="38"/><rect x="1075" y="593" width="38" height="38"/><rect x="1077" y="293" width="38" height="38"/><rect x="1110" y="780" width="38" height="38"/><rect x="1111" y="743" width="38" height="38"/><rect x="1111" y="668" width="38" height="38"/><rect x="1112" y="555" width="38" height="38"/><rect x="1187" y="481" width="38" height="38"/><rect x="1188" y="369" width="38" height="38"/><rect x="1224" y="519" width="38" height="38"/></g>
+        <g class="cur"><path d="M300 520 L372 470"></path><path d="M330 380 L402 330"></path><path d="M470 590 L542 540"></path><path d="M690 720 L762 670"></path><path d="M1060 150 L1132 100"></path></g>
+      </svg>
+    </div>
+    <div class="sp-chips"><span><i style="background:#F04452;opacity:.7"></i>예측 · 7일</span><span><i style="border:1.5px solid var(--ink)"></i>입력 · 탐지 결과</span><span>해류 · 바람</span></div>
+    <div class="sp-legend"><b style="color:var(--ink)">앞으로 7일 쌓임 예상</b><div class="ramp"><i style="background:#FFD27A"></i><i style="background:#FF9A3D"></i><i style="background:#F04452"></i></div><div class="ramp"><em style="width:28px">적음</em><em style="width:28px">보통</em><em style="width:28px">많음</em></div></div>
+    <button class="sp-bot" type="button" aria-label="AI 도우미"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"></path><path d="M8 10h.01M12 10h.01M16 10h.01"></path></svg></button>
+    <aside class="sp-sheet">
+      <a class="gs-crumb">내 서비스</a>
+      <h1>해양쓰레기 예측 지도</h1>
+      <div class="sp-meta2"><span class="t-chip">우리 도가 만든 서비스</span><span>2026년부터</span></div>
+      <dl class="sp-inbox">
+        <dt>입력</dt><dd>해양쓰레기 탐지 결과<span class="t-sig" data-sig="ok"></span><small>2026.06.08 기준 · LX 제공 · 서비스 1.2</small></dd>
+        <dt>해류·바람</dt><dd>10.01 예보<span class="t-sig" data-sig="ex"></span></dd>
+        <dt>계산</dt><dd>10.01 06:00<span class="t-sig" data-sig="ex"></span><small>새 탐지 결과가 나오면 다시 계산</small></dd>
+      </dl>
+      <div class="sp-big"><span class="t-label">앞으로 7일 많이 쌓일 해안</span><span><span class="k-num">4<small>곳</small></span><span class="t-sig" data-sig="ex"></span></span></div>
+      <ul class="sp-rows">
+        <li>남면 해안<span class="s">북쪽</span><span class="lv"><i style="background:#F04452"></i>많음</span></li>
+        <li>화정면 해안<span class="s">동쪽</span><span class="lv"><i style="background:#F04452"></i>많음</span></li>
+        <li>남면 해안<span class="s">동쪽</span><span class="lv"><i style="background:#FF9A3D"></i>보통</span></li>
+        <li>돌산읍 해안<span class="s">남쪽</span><span class="lv"><i style="background:#FFD27A"></i>적음</span></li>
+      </ul>
+      <div class="sp-acts"><button class="t-btn" type="button">내려받기</button><button class="t-btn t-btn--2" type="button">만든 곳에 문의</button></div>
+      <p class="sp-foot">탐지 결과는 LX 가, 예측은 광주전남이 만든 서비스가 냅니다.</p>
+    </aside>
+  </main>
+</div>
+<span class="m-note" style="left:640px;top:300px;max-width:360px"><i>1</i>입력 줄 — 어떤 LX 결과를 며칠 기준으로 썼는지 공간이 적음</span>
+<span class="m-note" style="left:96px;top:136px;max-width:540px"><i>2</i>흰 테두리 칸 = LX 탐지 결과(100m 칸 · 실제) · 칠한 색 = 도가 만든 예측(예시)</span>
+<span class="m-note" style="left:300px;top:812px;max-width:420px"><i>3</i>화면 틀은 기관 플랫폼 그대로 — 2차는 지도 층 · 목록 · 숫자만 냄</span>
+<span class="m-note" style="left:560px;top:760px;max-width:360px"><i>4</i>AI 도우미에 "이번 주 많이 쌓일 해안?" — 예측 결과로 답</span>
+<span class="m-stamp" style="right:auto;left:460px;bottom:auto;top:94px"><b>시안</b> 기관 분기 화면 · 우리 도가 만든 서비스를 연 모습 · 바탕은 여수 해안 실제 항공영상 · 날짜·예측 값은 예시</span>
+</body>
+</html>

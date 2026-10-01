@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · LX 관리자 대시보드 — 기관 → 기관 공간</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+.oi-tbl td:nth-child(1){width:150px}
+.oi-tbl td:nth-child(2){width:72px}
+.oi-tbl .chipw{display:inline-block;margin-top:4px}
+.oi-req{display:flex;align-items:center;gap:10px}
+.oi-req a{margin-left:auto;font:500 13.5px/20px var(--font-body);color:var(--ink);text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.oi-kv{display:grid;grid-template-columns:72px 1fr auto;gap:10px 10px;margin:0;font:400 13.5px/20px var(--font-body)}
+.oi-kv dt{color:var(--sub)}
+.oi-kv dd{margin:0;color:var(--ink)}
+.oi-kv .fix{font:500 13px/20px var(--font-body);color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.oi-drawer .t-chip{align-self:flex-start}
+.oi-mini div{grid-template-columns:52px 1fr 66px}
+</style>
+</head>
+<body class="t k-shelled mk">
+<div class="k-app has-rail">
+  <header class="t-mast k-mast"><a class="k-word"><span class="word">LAND-XI</span><span class="home">LX 관리자 대시보드</span></a><span class="sp"></span><span class="k-mast-slot"><button class="k-ck-btn" type="button"><span>물어보기</span><kbd>Ctrl K</kbd></button></span><span class="t-fresh k-fresh k-sig" data-live="1"><i></i><span class="num">09:20</span></span><span class="t-role k-role">LX 관리자</span><a class="k-mast-b k-xi">XI맵</a><span class="k-bell-slot"><button class="k-mast-b k-bell" type="button" aria-label="알림" data-n="1"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3.2a4.6 4.6 0 0 0-4.6 4.6v3.1L4 13.6h12l-1.4-2.7V7.8A4.6 4.6 0 0 0 10 3.2z M8.1 15.6a2 2 0 0 0 3.8 0"></path></svg><b class="k-bell-n">1</b></button></span><button class="k-mast-b k-help" type="button" aria-label="도움말">?</button><button class="k-mast-b k-exit" type="button">나가기</button></header>
+  <nav class="t-rail k-rail" aria-label="메뉴">
+    <a class="k-rail-i"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5l4.5-1.5 5 2L17 4v11l-4.5 1.5-5-2L3 16z M7.5 3.5v11 M12.5 5.5v11"></path></svg><span>현황</span></a>
+    <a class="k-rail-i"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="2.5"></circle><path d="M10 2.5v2 M10 15.5v2 M2.5 10h2 M15.5 10h2 M4.7 4.7l1.4 1.4 M13.9 13.9l1.4 1.4 M4.7 15.3l1.4-1.4 M13.9 6.1l1.4-1.4"></path></svg><span>인프라</span></a>
+    <a class="k-rail-i" aria-current="true"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 17V7l7-4 7 4v10 M8 17v-5h4v5"></path></svg><span>기관</span></a>
+    <a class="k-rail-i"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10 M6 7l4-4 4 4 M4 13v4h12v-4"></path></svg><span>배포</span></a>
+    <a class="k-rail-i" data-n="3"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 11l2-7h10l2 7v5H3z M3 11h4l1 2h4l1-2h4"></path></svg><span>결재</span></a>
+  </nav>
+  <main class="k-main oi" id="main"><div class="oi-page">
+    <header class="oi-head"><div><h1>기관</h1><p>기관마다 LX 서버 위에 나눠 둔 공간 — 올라간 기관 서비스 · 자원 · 끄기</p></div></header>
+    <nav class="oi-tabs"><span>기관별 사용</span><span aria-current="true">기관 공간</span><span>기관 정보</span></nav>
+
+    <div class="oi-share">
+      <div class="t-card"><span class="t-label">기관 공간에 나눠 준 처리 몫</span><span class="v">4<small>/ 16</small><span class="t-sig" data-sig="ex"></span></span><div class="oi-bar"><i style="width:25%"></i></div></div>
+      <div class="t-card"><span class="t-label">메모리</span><span class="v">8<small>/ 64GB</small><span class="t-sig" data-sig="ex"></span></span><div class="oi-bar"><i style="width:12.5%"></i></div></div>
+      <div class="t-card"><span class="t-label">저장</span><span class="v">70<small>/ 500GB</small><span class="t-sig" data-sig="ex"></span></span><div class="oi-bar"><i style="width:14%"></i></div></div>
+      <div class="t-card"><span class="t-label">GPU</span><span class="v">0<small>AI 분석은 대기열로만</small></span><div class="oi-bar"><i style="width:0"></i></div></div>
+    </div>
+
+    <div class="oi-wrap">
+      <table class="oi-tbl">
+        <tr><th>기관</th><th>공간</th><th>기관이 만든 서비스</th><th>방식</th><th>자원 · 배정 대비</th><th>마지막 실행</th></tr>
+        <tr class="on"><td><b>광주전남특별시</b><span class="s">바깥 연결 1곳</span></td><td><span class="t-chip">켜짐</span></td><td><b>해양쓰레기 예측 지도 1.0</b><span class="s">입력 · 해양쓰레기 실태조사</span></td><td>코드 틀<br><span class="s">상자 1</span></td>
+          <td><div class="oi-mini"><div>처리<span class="oi-bar"><i style="width:60%"></i></span><em>1.2/2</em></div><div>메모리<span class="oi-bar"><i style="width:52%"></i></span><em>2.1/4GB</em></div><div>저장<span class="oi-bar"><i style="width:36%"></i></span><em>18/50GB</em></div></div></td>
+          <td>10.01 06:00<br><span class="s">정상</span></td></tr>
+        <tr class="req"><td colspan="6"><div class="oi-req"><span class="t-chip" data-lv="wait">결재 대기</span>광주전남 — 해양쓰레기 예측 지도 1.1 올리기 신청 · 자동 점검 다섯 모두 통과<a>결재함에서 보기</a></div></td></tr>
+        <tr><td><b>남원시</b><span class="s">바깥 연결 없음</span></td><td><span class="t-chip">켜짐</span></td><td><b>직불금 대상 검토 표</b><span class="s">입력 · 영농관리 행정서비스</span></td><td>설정만<br><span class="s">상자 없음</span></td>
+          <td><div class="oi-mini"><div>저장<span class="oi-bar"><i style="width:2%"></i></span><em>0.4/20GB</em></div></div></td><td>09.30 14:10<br><span class="s">정상</span></td></tr>
+        <tr><td><b>키르기스 농업부</b><span class="s">바깥 연결 없음</span></td><td><span class="t-chip">켜짐</span></td><td><span class="s">기관이 만든 서비스 없음 · LX 서비스만</span></td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td><b>키르기스 토지자원청</b><span class="s">바깥 연결 없음</span></td><td><span class="t-chip">켜짐</span></td><td><span class="s">기관이 만든 서비스 없음 · LX 서비스만</span></td><td>—</td><td>—</td><td>—</td></tr>
+      </table>
+
+      <aside class="oi-drawer">
+        <h2>광주전남 공간</h2>
+        <div class="oi-box"><b>해양쓰레기 예측 지도 1.0</b><span>만든 곳 · 도가 맡긴 개발사 · 09.30 올림 · 승인 LX 관리자</span><span>입력 · 해양쓰레기 실태조사 서비스(공간용 키 1)</span><span>다시 계산 · 새 탐지 결과가 나오면 자동</span><span>최근 7일 · 실행 7번 · 오류 0</span></div>
+        <dl class="oi-kv"><dt>자원 배정</dt><dd>처리 2 · 메모리 4GB · 저장 50GB</dd><a class="fix">바꾸기</a>
+          <dt>바깥 연결</dt><dd>해류 예보처 1곳 · 허용한 주소만</dd><a class="fix">보기</a>
+          <dt>기관 자료</dt><dd>3종 · 18GB · 개인정보 없음</dd><span></span></dl>
+        <div class="oi-acts"><button class="t-btn t-btn--2" type="button">이 서비스 끄기</button><button class="t-btn t-btn--2" type="button">이전 판으로</button></div>
+        <span class="oi-del">공간 폐기 — 90일 뒤 지움 · 두 사람 결재</span>
+      </aside>
+    </div>
+  </div></main>
+</div>
+<span class="m-note" style="left:420px;top:212px;max-width:380px"><i>1</i>기관 공간 몫 — GPU 는 주지 않음</span>
+<span class="m-note" style="left:120px;top:812px;max-width:440px"><i>2</i>기관마다 올라간 서비스 · 방식 · 자원 · 실행이 한 줄씩</span>
+<span class="m-note" style="left:600px;top:812px;max-width:400px"><i>3</i>새 판 신청은 결재함으로 — 점검 결과를 보고 승인</span>
+<span class="m-note" style="left:1020px;top:828px;max-width:400px"><i>4</i>끄기 · 되돌리기 · 폐기를 이 서랍에서</span>
+<span class="m-stamp" style="top:80px;bottom:auto"><b>시안</b> Land-XI · LX 관리자 대시보드 → 기관 → 기관 공간 · 숫자는 예시</span>
+</body>
+</html>

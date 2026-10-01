@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>공간을 무엇으로 나누나 — 세 길</title>
+<link rel="stylesheet" href="fig.css">
+</head>
+<body>
+<div class="page">
+  <h1>공간을 무엇으로 나누나 — 세 길</h1>
+  <p class="sub">'가벼운 칸'은 자료 칸 · 저장 폴더 · 서비스별 키를 기관마다 나누는 것, '상자'는 2차 계산 코드를 기관 공간 안에서 따로 돌리는 칸(컨테이너)입니다.</p>
+
+  <div class="ways">
+    <div class="way">
+      <h3>ⓐ 가벼운 칸만</h3>
+      <p class="one">기관마다 자료 칸 · 저장 폴더 · 키만 나눕니다.</p>
+      <div class="mini">
+        <div class="ag"><b>광주전남</b><div class="k"><span>자료 칸</span><span>폴더</span><span>키</span></div></div>
+        <div class="ag"><b>남원</b><div class="k"><span>자료 칸</span><span>폴더</span><span>키</span></div></div>
+        <div class="ag"><b>해외 기관</b><div class="k"><span>자료 칸</span><span>폴더</span><span>키</span></div></div>
+      </div>
+      <dl>
+        <dt>2차 코드</dt><dd><b>못 돌림</b> — 코드가 본체로 들어와 잡동사니가 됨. 설정만 2차는 됨</dd>
+        <dt>서버 자원</dt><dd>거의 0</dd>
+        <dt>보안</dt><dd>데이터베이스 권한 — 지금 규칙의 연장</dd>
+        <dt>폐기</dt><dd>칸 · 폴더 · 키 지우기</dd>
+        <dt>맞는 때</dt><dd>2차가 모두 '설정만'일 때</dd>
+      </dl>
+    </div>
+    <div class="way">
+      <h3>ⓑ 모든 기관에 상자</h3>
+      <p class="one">기관마다 상자 묶음(자기 망 · 저장 · 데이터베이스)을 통째로 둡니다.</p>
+      <div class="mini">
+        <div class="ag"><b>광주전남</b><div class="k"><span class="c">상자 묶음</span></div></div>
+        <div class="ag"><b>남원</b><div class="k"><span class="c">상자 묶음</span></div></div>
+        <div class="ag"><b>해외 기관</b><div class="k"><span class="c">상자 묶음</span></div></div>
+      </div>
+      <dl>
+        <dt>2차 코드</dt><dd>돌림</dd>
+        <dt>서버 자원</dt><dd>기관마다 늘 떠 있음 — 기관이 늘수록 메모리 · 손이 늘어남</dd>
+        <dt>보안</dt><dd>가장 단단함</dd>
+        <dt>폐기</dt><dd>묶음 통째로 내리고 지우기</dd>
+        <dt>맞는 때</dt><dd>대부분 기관이 자기 코드를 돌릴 때</dd>
+      </dl>
+    </div>
+    <div class="way pick">
+      <h3>ⓒ 둘 다 — 상자는 필요한 기관만 <span class="pill gov">추천</span></h3>
+      <p class="one">모든 기관은 가벼운 칸. 2차를 코드로 올리는 기관만 상자를 더합니다.</p>
+      <div class="mini">
+        <div class="ag"><b>광주전남</b><div class="k"><span>자료 칸</span><span>폴더</span><span>키</span><span class="c">상자 1</span></div></div>
+        <div class="ag"><b>남원</b><div class="k"><span>자료 칸</span><span>폴더</span><span>키</span></div></div>
+        <div class="ag"><b>해외 기관</b><div class="k"><span>자료 칸</span><span>폴더</span><span>키</span></div></div>
+      </div>
+      <dl>
+        <dt>2차 코드</dt><dd><b>돌림</b> — 설정만은 칸에서, 코드는 상자에서</dd>
+        <dt>서버 자원</dt><dd>상자는 2차가 있는 곳만 · 데이터베이스는 지금 것 하나에 기관 칸</dd>
+        <dt>보안</dt><dd>칸 = 데이터베이스 권한 · 코드 = 상자 다섯 장치</dd>
+        <dt>폐기</dt><dd><b>공간 이름 하나로</b> 상자 · 칸 · 폴더 · 키를 한꺼번에</dd>
+        <dt>맞는 때</dt><dd>지금 — 기관 4곳, 코드 2차는 광주전남 예측 지도가 첫 후보</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="never"><b>상자에 주지 않는 것</b>
+    <span>GPU — AI 분석은 LX 대기열로만(순번 · 승인)</span><span>본체 데이터베이스</span><span>다른 기관 공간</span><span>언어 모델 직접 접속</span><span>허용 안 한 바깥 주소</span><span>관리자 권한</span>
+  </div>
+
+  <h2 class="sec">이 서버에서 기관 공간에 나눠 줄 몫(초기 제안 · 설정 한 곳에서 바꿈)</h2>
+  <div class="share">
+    <div><b>16 / 128</b>처리 몫 — 이 PC 의 1/8</div>
+    <div><b>64 / 512GB</b>메모리 — 이 PC 의 1/8</div>
+    <div><b>500GB</b>저장 — 남은 공간 1,858GB 중</div>
+    <div><b>상자 하나 기본</b>처리 몫 2 · 메모리 4GB · 저장 50GB — 더 필요하면 요청 → 승인</div>
+  </div>
+  <p class="note">기관 화면에는 '한도'가 아니라 <b>사용 현황</b>으로 보입니다. A100 서버가 오면 상자 묶음은 그대로 옮겨 가고 '어느 서버에서 돌리나' 한 줄만 바꿉니다.</p>
+</div>
+</body>
+</html>

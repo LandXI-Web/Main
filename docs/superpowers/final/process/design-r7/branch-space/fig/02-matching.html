@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>1차 결과를 알고 매칭하는 곳 — 결과 설명서</title>
+<link rel="stylesheet" href="fig.css">
+</head>
+<body>
+<div class="page">
+  <h1>1차 결과를 '알고 매칭'하는 곳 — 공간 안 결과 설명서</h1>
+  <p class="sub">2차를 만드는 사람은 공간 안 결과 설명서에서 여섯 가지를 확인하고, 같은 공간의 결과 받기로 가져가며, 새 회차가 나오면 공간 안에서 알림을 받습니다.</p>
+
+  <div class="trio">
+    <div class="panel lx">
+      <h3>Land-XI 본체</h3>
+      <div class="cardx"><b>해양쓰레기 실태조사 서비스</b>프로젝트장이 만들고 관리자가 공개 · 서비스 1.2</div>
+      <div class="cardx"><b>새 회차 공개</b>공개하는 순간 결과 설명서가 저절로 갱신되고, 이 결과를 받는 공간마다 알림이 갑니다</div>
+      <div class="cardx"><b>사람이 쓰는 칸은 둘뿐</b>종류마다 한 줄 뜻 · 바뀐 점 한 줄 — 프로젝트장이 공개 요청 때</div>
+    </div>
+    <div class="ar">→</div>
+    <div class="panel gj">
+      <h3>광주전남 공간 — 여기서 확인합니다</h3>
+      <div class="cardx"><b>결과 설명서</b>
+        <dl class="six">
+          <dt>무엇이</dt><dd>종류 목록 · 한글 이름 · 코드 · 한 줄 뜻 · 이번 회차에 있는 종류</dd>
+          <dt>어디</dt><dd>조각 폴리곤 · 100m 칸 합계 · 좌표계 · 관할 안만 · 읍면동</dd>
+          <dt>언제</dt><dd>회차마다 촬영 시기 · 분석한 날 · 공개한 날</dd>
+          <dt>어떤 형식</dt><dd>받는 법 · 형식 다섯 · 칸 목록(이름 · 단위 · 예)</dd>
+          <dt>믿을 만한 정도</dt><dd>신뢰 값의 뜻 · 회차마다 다른 분포 · 결과 확인 표시</dd>
+          <dt>버전</dt><dd>서비스 버전 · 형식 버전 · 바뀐 점 · 다음 바뀜 예고</dd>
+        </dl></div>
+      <div class="row">
+        <div class="cardx" style="flex:1"><b>결과 받기 — 서비스별 키</b>2차는 이 길로만 1차를 읽습니다. 종류 이름은 하나로 맞춰 줍니다</div>
+        <div class="cardx" style="flex:1"><b>새 결과 알림</b>화면 알림 한 줄 + 2차에 '다시 계산' 신호</div>
+      </div>
+    </div>
+    <div class="ar">→</div>
+    <div class="panel gj" style="border-style:dashed">
+      <h3>우리 도가 만든 서비스</h3>
+      <div class="cardx"><b>해양쓰레기 예측 지도</b>100m 칸 합계 × 해류·바람 → 해안별 쌓임 예상</div>
+      <div class="cardx"><b>화면에 늘 붙는 한 줄</b>2차가 받아 간 회차를 공간이 적어 붙입니다 — 스스로 적는 글이 아닙니다
+        <span class="stamp-in"><b>입력</b> 해양쓰레기 탐지 결과 2026.06.08 기준</span></div>
+    </div>
+  </div>
+
+  <h2 class="sec">왜 확인이 필요한가 — 같은 서비스, 두 판(이 PC 에서 직접 연 값)</h2>
+  <table class="cmp">
+    <tr><th style="width:26%"></th><th>2025 항공 판 · 지금 광주전남에 공개</th><th>2026 드론 판 · LX 가 가진 다음 판(공개 전)</th></tr>
+    <tr><td>조각 수</td><td class="n">1,857</td><td class="n">2,078</td></tr>
+    <tr><td>종류</td><td class="hot">1가지(스티로폼)</td><td class="hot">8가지(스티로폼 · 부표 셋 · 상자 · 로프 · 그물 · 기타)</td></tr>
+    <tr><td>종류 이름 표기</td><td>대문자로 시작</td><td>소문자 — 그대로 합치면 스티로폼이 두 줄</td></tr>
+    <tr><td>신뢰 값 가운데값</td><td class="n hot">0.115</td><td class="n hot">0.71</td></tr>
+    <tr><td>'신뢰 0.5 이상만' 쓰면</td><td class="n hot">53건(2.9%)만 남음</td><td class="n">1,539건(74.1%)</td></tr>
+    <tr><td>조각 넓이 가운데값</td><td class="n">7.2㎡</td><td class="n">1.1㎡</td></tr>
+  </table>
+  <p class="note">설명서 없이 만들면 없는 종류를 0 으로 세고, 같은 선으로 잘라 2025 판을 거의 다 버리게 됩니다. <b>"AI 분석 결과의 정보를 알고 매칭"</b>이 이것입니다.</p>
+
+  <h2 class="sec">새 회차가 나오면</h2>
+  <div class="loop">
+    <div class="st lx"><b><i>1</i>새 회차 공개</b>LX 관리자 승인</div><span class="ar">→</span>
+    <div class="st"><b><i>2</i>공간 알림</b>화면 한 줄 · 2차에 신호 · 관리자도 봄</div><span class="ar">→</span>
+    <div class="st"><b><i>3</i>형식 버전 확인</b>같으면 바로 · 다르면 멈추고 알림</div><span class="ar">→</span>
+    <div class="st"><b><i>4</i>바뀐 것만 받기</b>새로 · 바뀜 · 지움</div><span class="ar">→</span>
+    <div class="st"><b><i>5</i>다시 계산</b>'입력 … 기준'과 계산 시각이 바뀜</div>
+  </div>
+  <p class="note"><b>형식이 바뀌는 회차</b>(종류가 늘거나 칸이 바뀜)는 공개 전에 설명서에 예고 → 2차 개발자가 공간의 시험판에서 미리 돌려 봄 → 공개. 자동으로 다시 돌지, 담당자가 누를지는 기관이 2차마다 고릅니다.</p>
+</div>
+</body>
+</html>
