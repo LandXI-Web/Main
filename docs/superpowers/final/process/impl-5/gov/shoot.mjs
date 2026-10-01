@@ -2,8 +2,8 @@
    로그인 = 로그인 폼 입력(kit/lint/forbidden.mjs frontDoor · 세션 주입 없음 · 비밀번호는 server/.env 에서 읽고 출력하지 않는다).
    바깥 주소 로그인은 10분 20번까지 — 한 사람마다 브라우저 하나로 PC · 휴대폰을 같이 찍는다.
    '전'(before): 바깥 주소는 이미 이번 판을 내주므로, 이번에 고친 화면 파일만 커밋된 판(HEAD)으로 바꿔 끼워 찍는다(브라우저 안에서만 · 서버 · 자료는 같다).
-     메인(로그인 전) '전'은 고치기 전에 바로 찍었다(before-nw-main · before-gj-main).
-   사용: node docs/superpowers/final/process/impl-5/gov/shoot.mjs --tag before|after [--only main,nw,gj,staff,admin,dept] [--dept 'login|tenant'] [--base https://app.land-xi.dev]
+     메인(로그인 전)도 같은 방법(기관 메인 화면 파일을 지난 판으로).
+   사용: node docs/superpowers/final/process/impl-5/gov/shoot.mjs --tag before|after [--only main,nw,gj,staff,admin,dept] [--dept 'login|tenant'] [--base https://app.land-xi.dev] [--ref <커밋>]
    결과: img/{tag}-{이름}-{1440|390}[-full].png · 콘솔 JSON 줄(메뉴 · 제목 · 첫 화면 글자 수 · 금지어 · 가로 넘침 · 콘솔 오류) */
 import path from 'node:path';
 import fs from 'node:fs';
@@ -23,6 +23,7 @@ const BASE = arg('--base', 'https://app.land-xi.dev');
 const PUBLIC = BASE.includes('land-xi.dev');
 const ADMIN_BASE = PUBLIC ? 'https://admin.land-xi.dev' : BASE;
 const ONLY = new Set(arg('--only', 'main,nw,gj,staff,admin').split(','));
+const REF = arg('--ref', 'HEAD');              // '전' = 이 판의 화면 파일(고친 것이 이미 커밋됐으면 그 앞 커밋을 준다)
 const DEPT = arg('--dept', '');                 // 부서 사용자 캡처(after) — 'login|tenant' (시험 계정은 부르는 쪽이 만들고 지운다)
 const IMG = path.join(HERE, 'img'); fs.mkdirSync(IMG, { recursive: true });
 const scanSrc = `(() => { const RULES = [${RULES.map(([k, re]) => `[${JSON.stringify(k)}, ${re}]`).join(',')}]; const check = (s) => RULES.filter(([, re]) => re.test(s)).map(([k]) => k); return (${scan.toString()})(document); })()`;
@@ -34,12 +35,13 @@ const go = (p, url) => p.goto(url, { waitUntil: 'domcontentloaded', timeout: 120
 /* 이번에 고친 화면 파일(전 = HEAD 판으로 바꿔 끼움) */
 const CHANGED = ['gov-select/app.js', 'gov-select/menu.js', 'gov-select/gov-select.css', 'gov-request/app.js', 'gov-request/index.html', 'gov-request/gov-request.css',
   'gov-space/app.js', 'gov-fusion/app.js', 'gov-report/app.js', 'kit/shell.js', 'kit/shell.css', 'kit/service-card.js', 'kit/service-card.css', 'kit/notify.js',
-  'lx-inbox/app.js', 'lx-inbox/inbox.css', 'lx-console/app.js', 'ops-core/js/data.js', 'ops-infra/js/tenants.js', 'login/account.js'].map((f) => 'landxi/v3/' + f);
+  'lx-inbox/app.js', 'lx-inbox/inbox.css', 'lx-console/app.js', 'ops-core/js/data.js', 'ops-infra/js/tenants.js', 'login/account.js',
+  'gov-home/app.js', 'gov-home/gov-home.css', 'gov-select/brand.css'].map((f) => 'landxi/v3/' + f);
 const TYPE = { js: 'text/javascript; charset=utf-8', css: 'text/css; charset=utf-8', html: 'text/html; charset=utf-8' };
 async function asBefore(ctx) {
   if (TAG !== 'before') return;
   for (const f of CHANGED) {
-    const body = execFileSync('git', ['-C', ROOT, 'show', 'HEAD:' + f]);
+    const body = execFileSync('git', ['-C', ROOT, 'show', REF + ':' + f]);
     const ct = TYPE[f.split('.').pop()];
     await ctx.route((u) => u.pathname === '/' + f || (f.endsWith('/index.html') && u.pathname === '/' + f.replace(/index\.html$/, '')),
       (route) => route.fulfill({ status: 200, contentType: ct, body }));
