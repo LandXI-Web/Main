@@ -1,0 +1,91 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>분석 순번 규칙</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+.rules{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.rule{background:var(--card);border:1px solid var(--rule);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.rule .h{display:flex;align-items:center;gap:9px}
+.rule .n{width:28px;height:28px;border-radius:50%;background:var(--ink);color:#fff;font-weight:700;display:inline-flex;align-items:center;justify-content:center;font-size:14px}
+.rule h3{margin:0;font-size:16px}
+.rule p{margin:0;font-size:13.5px;color:var(--ink-2);line-height:1.5}
+.rule .st{margin-top:auto;font-size:12.5px;border-radius:9px;padding:7px 10px}
+.st.have{background:var(--ai-tint);color:#0B7C76}
+.st.new{background:var(--both-tint);color:var(--both);font-weight:600}
+.rule.night{border:2px solid var(--both)}
+.also{margin-top:14px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.also div{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:11px 14px;font-size:13px;color:var(--ink-2);line-height:1.5}
+.also b{display:block;color:var(--ink);font-size:14px;margin-bottom:2px}
+.also .tg{display:inline-block;margin-top:5px;font-size:12px;border-radius:7px;padding:2px 8px}
+.night2{margin-top:18px;background:var(--card);border:1px solid var(--rule);border-radius:16px;padding:18px 20px}
+.night2 h2{margin:0 0 4px;font-size:18px}
+.night2 .lead{margin:0 0 14px;color:var(--sub-2);font-size:14px}
+.nums{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.nums div{background:var(--grey-tint);border-radius:12px;padding:10px 14px}
+.nums b{display:block;font-size:22px;letter-spacing:-0.01em}
+.nums span{font-size:12.5px;color:var(--sub-2)}
+.tl{position:relative;height:74px;margin:6px 0 0}
+.tl .axis{position:absolute;left:0;right:0;top:40px;height:1px;background:var(--rule)}
+.tl .blk{position:absolute;top:8px;height:28px;border-radius:5px;background:var(--ai);opacity:.85;border-right:2px solid #fff}
+.tl .blk.alt{background:#4BC3BC}
+.tl .lab{position:absolute;top:13px;font-size:11.5px;color:#fff;font-weight:600;white-space:nowrap;overflow:hidden}
+.tl .tick{position:absolute;top:44px;font-size:12px;color:var(--sub);transform:translateX(-50%)}
+.tl .end{position:absolute;top:0;bottom:22px;width:2px;background:var(--both)}
+.tl .endl{position:absolute;top:50px;font-size:12px;color:var(--both);font-weight:700;transform:translateX(-50%);white-space:nowrap}
+.tl .day{position:absolute;top:8px;height:28px;background:repeating-linear-gradient(45deg,#F5F6F8,#F5F6F8 6px,#ECEEF1 6px,#ECEEF1 12px);border-radius:5px}
+.note{margin-top:10px;font-size:13px;color:var(--sub-2)}
+</style></head><body><div class="page">
+<h1>분석 순번 규칙 — 거절하지 않고 차례를 정한다<span class="tag scr">화면</span><span class="tag lx">Land-XI</span></h1>
+<p class="sub">넓은 범위를 조각으로 나누는 일(타일링)과 차례를 정하는 일(스케줄링)은 이미 서버에 있습니다. 새로 붙일 것은 '큰 분석은 밤에'와 이 규칙을 LX 관리자가 한 장으로 보는 것입니다. 규칙 값을 바꾸면 다른 관리자 결재입니다.</p>
+
+<div class="rules">
+  <section class="rule">
+    <div class="h"><span class="n">1</span><h3>지금 화면에서 기다리는 분석</h3></div>
+    <p>읍면동 · 그린 범위(한 번에 150㎢까지). 누가 냈든 가장 먼저 — 첫 결과가 몇 초 안에.</p>
+    <span class="st have">지금 있음</span>
+  </section>
+  <section class="rule">
+    <div class="h"><span class="n">2</span><h3>승인된 분석</h3></div>
+    <p>기관 분석 의뢰 · API 분석 요청 · 다른 지역 적용 뒤 첫 분석. 승인된 순서대로.</p>
+    <span class="st new">새로 — 지금은 3과 같은 칸</span>
+  </section>
+  <section class="rule">
+    <div class="h"><span class="n">3</span><h3>시군구 전역 · 다시 분석</h3></div>
+    <p>예상 2시간 이하. 낮에도 돌되 1 · 2가 들어오면 그 사이사이에.</p>
+    <span class="st have">지금 있음</span>
+  </section>
+  <section class="rule night">
+    <div class="h"><span class="n">4</span><h3>큰 분석 — 밤 예약</h3></div>
+    <p>예상 2시간 넘는 분석. 밤 10시–아침 7시에 몰아서. 요청한 사람에게 '예약됨 · 예상 끝 시각'.</p>
+    <span class="st new">새로</span>
+  </section>
+</div>
+<div class="also">
+  <div><b>같은 칸 안에서는</b>새 작업의 첫 16조각을 먼저 끼워 넣고, 그다음 적게 받은 기관 · 적게 받은 작업 · 먼저 온 것 순.<span class="tg pill ok">지금 있음</span></div>
+  <div><b>기관마다 한 번에</b>광주전남 1건 · 남원 2건 — 나머지는 거절 없이 줄에서 기다림.<span class="tg pill ok">지금 있음</span></div>
+  <div><b>학습 · 전력</b>학습은 한 번에 1건, GPU 두 장이 동시에 무거운 일을 하지 않음.<span class="tg pill ok">지금 있음</span></div>
+  <div><b>AI 도우미</b>기관마다 동시에 두 질문까지, 그 이상은 잠깐 기다림 — 거절 없음.<span class="tg pill adm">새로</span></div>
+</div>
+
+<section class="night2">
+  <h2>예: 광주전남 전역을 밤에 한 번 — 9월 실제 기록 속도로 추정</h2>
+  <p class="lead">영상이 있는 20개 시군구를 서버가 실제로 계획해 본 값입니다(GPU 는 쓰지 않고 계획만). 기관마다 한 번에 한 작업이라 시군구가 한 줄로 차례차례 돕니다.</p>
+  <div class="nums">
+    <div><b class="num">20곳 · 8,418㎢</b><span>영상이 있어 분석할 수 있는 땅</span></div>
+    <div><b class="num">178,332조각</b><span>한 조각 약 256m 네모 · 해남군만 한 단계 낮춘 해상도</span></div>
+    <div><b class="num">약 6시간 30분</b><span>GPU 한 장 · 9월 시군구 전역 기록 가운데값(빠르면 5시간 · 느리면 12시간)</span></div>
+    <div><b class="num">GPU 약 3.1시간</b><span>사용 현황에 적히는 분석 시간</span></div>
+  </div>
+  <div class="tl" id="tl"><div class="axis"></div></div>
+  <p class="note">밤 10시에 시작하면 새벽 4시 30분쯤 끝나 출근 전에 지도가 차 있습니다. 밤에는 AI 도우미 질문이 적어 전력 규칙에 덜 걸립니다(추정). 느린 날은 남은 시군구를 다음 밤으로 넘깁니다(시군구 하나가 한 작업이라 끊는 자리가 분명).</p>
+</section>
+<script>
+// 20개 시군구 조각 수(서버 계획 값) — 1초에 7.57조각(9월 가운데값)으로 밤 10시부터 차례로
+const S=[['목포',314],['여수',4453],['나주',4061],['담양',4987],['곡성',9909],['구례',8031],['고흥',13181],['보성',11851],['화순',12310],['장흥',11935],['강진',10242],['해남',12158],['영암',11162],['무안',8563],['함평',4601],['영광',9714],['장성',5725],['완도',9271],['진도',9970],['신안',15894]];
+const tl=document.getElementById('tl'),W=tl.clientWidth,H0=22,H1=31,rate=7.573,px=W/((H1-H0)*3600);
+let t=0;S.forEach(([n,s],i)=>{const w=s/rate*px,b=document.createElement('div');b.className='blk'+(i%2?' alt':'');b.style.left=(t*px)+'px';b.style.width=w+'px';tl.append(b);
+ if(w>44){const l=document.createElement('span');l.className='lab';l.textContent=n;l.style.left=(t*px+5)+'px';l.style.width=(w-8)+'px';tl.append(l)}t+=s/rate});
+const d=document.createElement('div');d.className='day';d.style.left=(t*px+4)+'px';d.style.width=(W-t*px-4)+'px';tl.append(d);
+const e=document.createElement('div');e.className='end';e.style.left=(t*px)+'px';tl.append(e);
+const el=document.createElement('span');el.className='endl';el.style.left=(t*px)+'px';el.textContent='끝 · 새벽 4:30쯤';tl.append(el);
+for(let h=H0;h<=H1;h++){const k=document.createElement('span');k.className='tick';k.style.left=((h-H0)*3600*px)+'px';k.textContent=(h%24)+'시';if(h===H0)k.style.transform='none';if(h===H1)k.style.transform='translateX(-100%)';tl.append(k)}
+</script>
+</div></body></html>

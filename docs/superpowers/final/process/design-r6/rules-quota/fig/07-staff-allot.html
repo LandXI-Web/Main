@@ -1,0 +1,79 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>직원 몫과 장비 관리</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+.top{display:grid;grid-template-columns:1fr 1.1fr;gap:18px;align-items:stretch}
+.box{background:var(--card);border:1px solid var(--rule);border-radius:16px;padding:18px 20px}
+.box h2{margin:0 0 4px;font-size:18px;display:flex;align-items:center;gap:8px}
+.box .lead{margin:0 0 12px;color:var(--sub-2);font-size:13.5px}
+.allow{display:flex;flex-direction:column;gap:8px}
+.al{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:start;border:1px solid var(--rule);border-radius:12px;padding:10px 12px}
+.al b{font-size:14px}
+.al span{font-size:13px;color:var(--ink-2);line-height:1.5}
+.al em{font-style:normal;font-weight:700;color:var(--both)}
+.flow{display:flex;align-items:stretch;gap:10px}
+.fs{flex:1;border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.5;color:var(--ink-2);background:var(--grey-tint)}
+.fs b{display:block;color:var(--ink);font-size:14px;margin-bottom:2px}
+.fs.ap{background:var(--both-tint)}
+.fs.ok{background:var(--ai-tint)}
+.flow .arrow{font-size:20px}
+.req{margin-top:12px;border:1px solid var(--rule);border-radius:12px;padding:12px 14px;background:#FCFCFD}
+.req .kv{display:grid;grid-template-columns:90px 1fr;gap:5px 10px;font-size:13px}
+.req dt{color:var(--sub)} .req dd{margin:0}
+.hw{margin-top:18px;background:var(--card);border:1px solid var(--rule);border-radius:16px;padding:18px 20px}
+.hw h2{margin:0 0 4px;font-size:18px;display:flex;align-items:center;gap:8px}
+.hw .lead{margin:0 0 12px;color:var(--sub-2);font-size:13.5px}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.tile{border:1px solid var(--rule);border-radius:12px;padding:12px 14px}
+.tile span{display:block;font-size:12.5px;color:var(--sub)}
+.tile b{display:block;font-size:18px;margin:2px 0}
+.tile p{margin:0;font-size:12.5px;color:var(--ink-2);line-height:1.45}
+.staff{margin-top:12px}
+.staff td.num,.staff th.num{text-align:right}
+.mut{color:var(--sub)}
+</style></head><body><div class="page">
+<h1>자원은 사람 단위로 — 직원 몫 · 요청 · 승인, 그리고 장비 관리<span class="tag scr">화면</span><span class="tag lx">Land-XI</span></h1>
+<p class="sub">7차 답 요지 "LX 관리자가 인프라를 통제하고, 직원(개인)에게 자원 할당 — 요청 — 승인. 프로젝트를 개설해도 개인에게 허용된 정책 안에서." 기관 한도 대신 이 둘이 LX 서버를 지킵니다. 몫 값은 제안이고, 두세 달 실제 사용을 보고 LX 관리자가 고칩니다.</p>
+
+<div class="top">
+  <section class="box">
+    <h2>직원 한 사람의 몫<span class="pill hand">제안 기본값</span></h2>
+    <p class="lead">프로젝트는 지금처럼 승인 없이 바로 만듭니다. 쓰는 자원은 쓴 사람(누르거나 올린 사람)의 몫에서 셉니다.</p>
+    <div class="allow">
+      <div class="al"><b>저장</b><span><em>300GB</em> — 학습 표본 한 벌과 결과가 들어가는 크기. 원본 영상은 LX 보관소에 두므로 몫에 넣지 않음</span></div>
+      <div class="al"><b>AI 분석 시간</b><span><em>한 달 10시간</em> — 광주전남 전역 한 번이 약 3.1시간. 9월에 가장 많이 쓴 계정이 3.8시간</span></div>
+      <div class="al"><b>학습 시간</b><span><em>처음엔 기록만</em> — 지금은 학습 시간이 사용 기록에 남지 않음(9월 학습 7건 · 기록 0). 두세 달 기록 뒤 몫</span></div>
+      <div class="al"><b>큰 분석</b><span>예상 2시간이 넘으면 몫 안이어도 <em>밤 예약</em>으로 저절로 · 몫을 넘으면 요청</span></div>
+    </div>
+  </section>
+  <section class="box">
+    <h2>몫을 넘으면 — 거절이 아니라 요청 한 번<span class="pill adm">결재함 '자원 요청'</span></h2>
+    <p class="lead">화면이 "몫을 넘습니다 — 자원 요청"을 먼저 띄우고, 직원은 한 줄만 적습니다.</p>
+    <div class="flow">
+      <div class="fs"><b>LX 직원</b>무엇을 · 얼마나 · 왜 · 언제까지(프로젝트는 저절로)</div>
+      <span class="arrow">→</span>
+      <div class="fs ap"><b>LX 관리자</b>그 직원의 이번 달 사용 · 대기열 · 저장소 여유를 보고 승인 / 반려</div>
+      <span class="arrow">→</span>
+      <div class="fs ok"><b>결과</b>승인: 이번 한 번만 또는 몫을 늘림 · 반려: 사유가 직원 화면에</div>
+    </div>
+    <div class="req"><dl class="kv"><dt>예</dt><dd>"영농관리 새 모델로 광주전남 20개 시군구 전역 다시 분석 — 이번 달 분석 시간 4시간 더"</dd><dt>관리자 본인</dt><dd>관리자가 자기 몫을 요청하면 다른 관리자가 결재(결재 규칙 그대로)</dd></dl></div>
+  </section>
+</div>
+
+<section class="hw">
+  <h2>LX 관리자 — 장비를 관리한다<span class="pill lx">인프라 화면 한 곳</span></h2>
+  <p class="lead">기관별 한도 칸 대신 실제 장비를 봅니다. 값(동시 1장 · 200W · 100W)을 바꾸면 다른 관리자 결재입니다.</p>
+  <div class="tiles">
+    <div class="tile"><span>GPU</span><b>2장</b><p>동시에 무거운 일은 1장 · 장당 200W 상한 · AI 도우미 쪽이 100W 를 넘으면 분석이 잠깐 기다림</p></div>
+    <div class="tile"><span>저장소 남은 공간(10월 1일)</span><b class="num">E: 1,996GB · D: 390GB</b><p>E: 가 200GB 아래로 내려가면 경보(지금 있음) · 두는 기간이 된 것은 정리 목록</p></div>
+    <div class="tile"><span>대기열</span><b>지금 대기 · 밤 예약</b><p>기다리는 분석 · 오늘 밤 예약 목록과 예상 끝 시각 · 순번 규칙 네 칸</p></div>
+  </div>
+  <table class="t staff">
+    <thead><tr><th>사람별 사용(9월 실제 기록 · 시범 계정)</th><th class="num">AI 분석 시간</th><th class="num">몫(제안)</th><th class="num">저장</th><th>자원 요청</th></tr></thead>
+    <tbody>
+      <tr><td>LX 직원 시험 계정</td><td class="num">3.8시간</td><td class="num">10시간</td><td class="num mut">새로 셈</td><td class="mut">—</td></tr>
+      <tr><td>LX 관리자 시험 계정 ①</td><td class="num">1.0시간</td><td class="num">10시간</td><td class="num mut">새로 셈</td><td class="mut">—</td></tr>
+      <tr><td>LX 관리자 시험 계정 ②</td><td class="num">0.3시간</td><td class="num">10시간</td><td class="num mut">새로 셈</td><td class="mut">—</td></tr>
+    </tbody>
+  </table>
+</section>
+</div></body></html>

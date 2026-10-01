@@ -1,0 +1,84 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>기관 한도를 없애고</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+.who3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.w{background:var(--card);border:1px solid var(--rule);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.w h2{margin:0;font-size:18px;display:flex;align-items:center;gap:8px}
+.w .was{background:var(--warn-tint);border-radius:10px;padding:10px 12px;font-size:13.5px;color:var(--ink-2);line-height:1.5}
+.w .was b{color:var(--warn)}
+.w .down{text-align:center;color:var(--mute);font-size:22px;line-height:1}
+.w .is{background:var(--both-tint);border-radius:10px;padding:10px 12px;font-size:13.5px;color:var(--ink-2);line-height:1.5;flex:1}
+.w .is b{color:var(--both)}
+.w .is ul{margin:6px 0 0;padding-left:18px}
+.lists{margin-top:18px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.lst{background:var(--card);border:1px solid var(--rule);border-radius:16px;padding:16px 18px}
+.lst h3{margin:0 0 10px;font-size:16px;display:flex;align-items:center;gap:8px}
+.lst ol{margin:0;padding-left:20px;font-size:13.5px;color:var(--ink-2);line-height:1.55}
+.lst ol li{margin-bottom:5px}
+.lst.rm h3 .pill{background:var(--warn-tint);color:var(--warn)}
+.lst.keep h3 .pill{background:var(--grey-tint);color:var(--sub-2)}
+.lst.new h3 .pill{background:var(--both-tint);color:var(--both)}
+.q{margin:0 0 18px;background:var(--card);border-left:4px solid var(--both);border-radius:0 12px 12px 0;padding:12px 16px;font-size:14px;color:var(--ink-2);line-height:1.55}
+</style></head><body><div class="page">
+<h1>기관 한도를 없애고 — 사용 현황 · 순번 · 직원 할당으로<span class="tag scr">화면</span><span class="tag both">둘 다</span></h1>
+<p class="q">7차 답 요지(10월 1일): "기관은 한도에 관심 없고, 유지관리 수수료를 주기 때문에 한도가 있으면 불만이 있을 거다. 우리 인프라를 얼마만큼 쓰고 있는지 보여 '잘 쓰고 있구나' 관점. LX 관리자는 하드 자원을 관리. 분석의 순번이나 승인 · 반려 정책은 있겠지." · "LX 관리자가 인프라를 통제하고, 직원(개인)에게 자원 할당 — 요청 — 승인. 프로젝트를 개설해도 개인에게 허용된 정책 안에서."</p>
+
+<div class="who3">
+  <section class="w">
+    <h2>기관<span class="pill gov">기관 분기</span></h2>
+    <div class="was"><b>지금</b> — 한 달 한도에 닿으면 새 분석 · 새 질문을 거절(9월 광주전남)</div>
+    <div class="down">↓</div>
+    <div class="is"><b>막는 한도 없음.</b> '우리 기관 이용 현황'만 봅니다.
+      <ul><li>이번 달 · 지난달 AI 분석 넓이 · 횟수 · AI 도우미 질문 · 저장</li><li>LX 가 우리 서비스로 돌린 분석도 함께(잘 쓰고 있다는 근거)</li><li>큰 의뢰는 승인 뒤 순번대로 — 밤에 돌면 '예상 끝' 시각 표시</li></ul></div>
+  </section>
+  <section class="w">
+    <h2>LX 관리자<span class="pill lx">Land-XI</span></h2>
+    <div class="was"><b>지금</b> — 기관마다 한도 일곱 칸을 정하고, 바꿀 때마다 한도 변경 결재</div>
+    <div class="down">↓</div>
+    <div class="is"><b>장비를 관리하고 차례를 정합니다.</b>
+      <ul><li>장비 · 저장소 여유 · 전력 규칙 · 대기열(밤 예약 목록)</li><li>순번 규칙 · 승인 / 반려(기관 의뢰 · API 요청 · 직원 자원 요청)</li><li>기관 사용 현황으로 '잘 쓰고 있나' 확인</li></ul></div>
+  </section>
+  <section class="w">
+    <h2>LX 직원(개인)<span class="pill lx">Land-XI</span></h2>
+    <div class="was"><b>지금</b> — 제한 없음(LX 는 한도 없음). 학습 시간은 사용 기록에도 안 남음</div>
+    <div class="down">↓</div>
+    <div class="is"><b>개인에게 허용된 몫 안에서 자유롭게.</b>
+      <ul><li>저장 · 학습 시간 · 큰 분석 — 사람마다 기본 몫</li><li>프로젝트는 바로 만들되, 쓰는 자원은 만든 사람 몫에서</li><li>넘으면 '자원 요청' 한 번 → LX 관리자 승인 · 반려</li></ul></div>
+  </section>
+</div>
+
+<div class="lists">
+  <section class="lst rm">
+    <h3><span class="pill">없앰</span>지금 구현에서</h3>
+    <ol>
+      <li>한도에 닿은 기관의 새 분석 거절</li>
+      <li>한도에 닿은 기관의 새 AI 도우미 질문 · 보고서 초안 거절</li>
+      <li>관리자 '기관' 화면의 한도 고리(%) · '한도 조정' · "새 작업을 받지 않습니다" 줄</li>
+      <li>결재 종류 '한도 변경'(지난 기록은 보관)</li>
+      <li>관리자 대시보드 할 일 '한도 임박'</li>
+      <li>기관 몫 기준으로 분석을 거절하거나 뒤로 미루던 규칙</li>
+    </ol>
+  </section>
+  <section class="lst keep">
+    <h3><span class="pill">남김</span>뜻을 바꿔서</h3>
+    <ol>
+      <li>사용량 기록 — 그대로 세되 '기관이 요청한 것'과 'LX 가 기관 서비스로 돌린 것' 두 칸으로 · 고장 둘 고침</li>
+      <li>기관마다 한 번에 도는 분석 수(광주전남 1 · 남원 2) — 거절이 아니라 줄 서기</li>
+      <li>조각 나누기 · 우선순위 · 기관별 번갈아 · 전력 규칙</li>
+      <li>한 번 작업 크기 천장(시군구 하나 조각 2만 개 · 실시간 150㎢)</li>
+      <li>기관 한도 값 — 지우지 않고 쓰지 않음</li>
+      <li>결재 규칙(요청한 계정 ≠ 결재하는 계정)</li>
+    </ol>
+  </section>
+  <section class="lst new">
+    <h3><span class="pill">새로</span>만들 것</h3>
+    <ol>
+      <li>사용 현황 화면 — LX 관리자(기관 비교) · 기관 관리자(우리 기관)</li>
+      <li>순번 규칙 네 칸 + 큰 분석 밤 예약(밤 10시–아침 7시)</li>
+      <li>직원 개인 몫 · '자원 요청' 결재 · 직원별 할당 표</li>
+      <li>학습 GPU 시간도 사용 기록에(지금 0)</li>
+      <li>장비 · 저장소 · 대기열을 LX 관리자 '인프라' 한 곳에서</li>
+    </ol>
+  </section>
+</div>
+</div></body></html>

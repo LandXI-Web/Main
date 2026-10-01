@@ -1,0 +1,82 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>사용 현황 화면 시안</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+.two{display:grid;grid-template-columns:1.05fr 1fr;gap:20px;align-items:start}
+.frame{background:var(--card);border:1px solid var(--rule);border-radius:18px;overflow:hidden}
+.bar-top{display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid var(--rule);font-size:13px;color:var(--sub)}
+.bar-top b{color:var(--ink);font-size:14px}
+.body{padding:18px 20px}
+.cap{font-size:13px;color:var(--sub);margin:0 0 12px}
+.org{border:1px solid var(--rule);border-radius:14px;padding:16px 18px}
+.org h3{margin:0 0 2px;font-size:18px;display:flex;align-items:center;gap:8px}
+.org .m{font-size:12.5px;color:var(--sub);margin-bottom:12px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.kpi{background:#FAFBFC;border:1px solid var(--rule);border-radius:12px;padding:10px 12px}
+.kpi span{display:block;font-size:12px;color:var(--sub)}
+.kpi b{display:block;font-size:20px;letter-spacing:-0.01em;margin-top:2px}
+.kpi small{font-size:12px;color:var(--sub-2)}
+.split{margin-top:12px}
+.split .row2{display:grid;grid-template-columns:170px 1fr 90px;gap:10px;align-items:center;font-size:13px;margin-bottom:7px}
+.track{height:12px;border-radius:6px;background:var(--grey-tint);overflow:hidden;display:flex}
+.track i{display:block;height:100%}
+.share{margin-top:10px;font-size:13px;color:var(--ink-2)}
+.ghost{margin-top:12px;border:1px dashed var(--rule);border-radius:14px;padding:14px 18px;color:var(--sub);font-size:13px}
+.gov .bar-top{background:var(--gov-tint);color:var(--gov)}
+.gov .bar-top b{color:var(--gov)}
+.svc{border:1px solid var(--rule);border-radius:12px;padding:12px 14px;margin-top:10px}
+.svc h4{margin:0 0 4px;font-size:15px}
+.svc p{margin:0;font-size:13px;color:var(--ink-2);line-height:1.5}
+.none{display:inline-block;margin-top:6px;font-size:12.5px;color:var(--sub)}
+.foot2{margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.foot2 .card p{margin:0;font-size:13.5px;color:var(--ink-2);line-height:1.55}
+.x{color:var(--warn);text-decoration:line-through}
+</style></head><body><div class="page">
+<h1>사용 현황 — 막는 한도 대신 '잘 쓰고 있나'<span class="tag scr">화면 시안</span><span class="tag both">둘 다</span></h1>
+<p class="sub">두 화면이 같은 사용 기록 한 곳에서 같은 숫자를 씁니다. 숫자는 광주전남 9월 실제 기록을 고친 규칙(다른 지역 빼기 · 실제 분석한 땅만)으로 다시 센 값입니다. 한도 · %, 빨간 '초과'는 없습니다.</p>
+
+<div class="two">
+  <section class="frame">
+    <div class="bar-top"><b>LX 관리자 대시보드</b> · 기관 · 사용 현황<span class="pill lx" style="margin-left:auto">Land-XI</span></div>
+    <div class="body">
+      <p class="cap">지금의 한도 고리(<span class="x">100% · 초과</span>) · '한도 조정' 자리에 이 카드가 들어갑니다.</p>
+      <div class="org">
+        <h3>광주전남특별시<span class="pill hand">9월</span></h3>
+        <div class="m">해양쓰레기 실태조사 서비스(운영) · 영농관리 행정서비스(4개 시군구 적용 중)</div>
+        <div class="kpis">
+          <div class="kpi"><span>AI 분석 넓이</span><b class="num">1,176<small>㎢</small></b></div>
+          <div class="kpi"><span>AI 분석 시간</span><b class="num">38<small>분</small></b></div>
+          <div class="kpi"><span>AI 도우미 질문</span><b class="num">769<small>건</small></b></div>
+          <div class="kpi"><span>저장</span><b class="num">2.7<small>GB</small></b></div>
+        </div>
+        <div class="split">
+          <div class="row2"><span>기관이 요청한 분석</span><div class="track"><i style="width:0"></i></div><span class="num">0㎢</span></div>
+          <div class="row2"><span>LX 가 기관 서비스로 돌린 분석</span><div class="track"><i style="width:100%;background:var(--ai)"></i></div><span class="num">1,176㎢</span></div>
+        </div>
+        <p class="share">9월 LX 서버 AI 분석 시간 가운데 이 기관 몫 <b class="num">12%</b> · 저장소 여유는 장비 화면에서</p>
+      </div>
+      <div class="ghost">남원시 · 키르기스 두 기관 — 같은 모양의 카드(한도 칸 없음)</div>
+    </div>
+  </section>
+
+  <section class="frame gov">
+    <div class="bar-top"><b>광주전남 기관 화면</b> · 우리 기관 이용 현황<span class="pill gov" style="margin-left:auto">기관 분기</span></div>
+    <div class="body">
+      <p class="cap">기관 관리자가 봅니다. '한도를 넘어 새 질문을 받을 수 없습니다' 같은 문구는 없어집니다.</p>
+      <div class="kpis">
+        <div class="kpi"><span>AI 분석 넓이</span><b class="num">1,176<small>㎢</small></b></div>
+        <div class="kpi"><span>분석한 시군구</span><b class="num">4<small>곳</small></b></div>
+        <div class="kpi"><span>AI 도우미 질문</span><b class="num">769<small>건</small></b></div>
+        <div class="kpi"><span>저장</span><b class="num">2.7<small>GB</small></b></div>
+      </div>
+      <div class="svc"><h4>영농관리 행정서비스</h4><p>여수시 · 목포시 · 강진군 · 구례군 — LX 가 적용하며 AI 분석(1,176㎢)</p></div>
+      <div class="svc"><h4>해양쓰레기 실태조사 서비스</h4><p>운영 중 — 9월 새 분석 없음</p></div>
+      <span class="none">우리가 직접 맡긴 분석 의뢰: 0건</span>
+    </div>
+  </section>
+</div>
+
+<div class="foot2">
+  <section class="card"><h2>숫자는 어디서</h2><p>사용 기록 한 곳 — 분석이 끝날 때 넓이 · 분석 시간을, AI 도우미가 답할 때 질문 수를 적습니다. 지금 화면의 9월 값(10,850㎢ · 2.5시간 · 저장 5.5GB)은 다른 지역 분석이 섞이고 바다까지 잰 넓이라, 고친 규칙으로는 1,176㎢ · 38분 · 약 2.7GB입니다.</p></section>
+  <section class="card"><h2>AI 도우미 769건은</h2><p>9월 27–30일 광주전남 담당자 시험 계정으로 한 점검 질문입니다. 시범 기간이라 기관 계정은 사용자와 점검용뿐이고, 정식 오픈 때 계정을 정리하면 실제 기관 사용만 남습니다.</p></section>
+</div>
+</div></body></html>

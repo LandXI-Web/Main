@@ -1,0 +1,106 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>한도 장부와 GPU 대기열</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.col{background:var(--card);border:1px solid var(--rule);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.col h2{margin:0;font-size:19px;display:flex;align-items:center;gap:10px}
+.col .q{font-size:14px;color:var(--sub-2);margin:0}
+.ledger{border:1px solid var(--rule);border-radius:12px;overflow:hidden}
+.ledger .r{display:grid;grid-template-columns:150px 1fr 150px;gap:12px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--rule);font-size:13.5px}
+.ledger .r:last-child{border-bottom:0}
+.ledger .r.h{background:#FAFBFC;color:var(--sub);font-size:12.5px;font-weight:600}
+.bar{height:10px;border-radius:5px;background:var(--grey-tint);position:relative;overflow:hidden}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--ink)}
+.bar i.over{background:var(--warn)}
+.ledger em{font-style:normal;text-align:right;font-weight:600}
+.ledger em.over{color:var(--warn)}
+.gate{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--ink-2);flex-wrap:wrap}
+.gate .box{border-radius:10px;padding:8px 12px;background:var(--grey-tint)}
+.gate .box.no{background:var(--warn-tint);color:var(--warn);font-weight:600}
+.reset{font-size:13px;color:#0B7C76;background:var(--ai-tint);border-radius:10px;padding:8px 12px}
+.tiles{display:flex;align-items:center;gap:14px}
+.area{width:190px;height:150px;border-radius:12px;background:linear-gradient(135deg,#DDE7D8,#C9D8C3);position:relative;overflow:hidden;flex:0 0 auto}
+.area .g{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.85) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.85) 1px,transparent 1px);background-size:19px 19px}
+.area .done{position:absolute;left:0;top:0;width:57px;height:150px;background:rgba(15,169,160,.45)}
+.area .done2{position:absolute;left:57px;top:0;width:38px;height:76px;background:rgba(15,169,160,.45)}
+.tiles ul{margin:0;padding-left:18px;font-size:13.5px;color:var(--ink-2);line-height:1.6}
+.queue{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}
+.qi{border-radius:9px;padding:7px 10px;background:var(--grey-tint);color:var(--ink-2)}
+.qi.p0{background:var(--lx-tint);color:var(--lx);font-weight:600}
+.qi.p1{background:var(--both-tint);color:var(--both);font-weight:600}
+.qi.gpu{background:var(--ink);color:#fff;font-weight:600}
+.slow{font-size:13px;color:var(--sub-2);background:var(--grey-tint);border-radius:10px;padding:8px 12px}
+.cmp{margin-top:18px}
+.why{margin-top:18px;background:var(--card);border:1px solid var(--rule);border-radius:16px;padding:18px 20px}
+.why h2{margin:0 0 4px;font-size:18px}
+.why .lead{margin:0 0 14px;color:var(--sub-2);font-size:14px}
+.stack{display:flex;height:44px;border-radius:10px;overflow:hidden;font-size:12.5px;font-weight:600}
+.stack div{display:flex;align-items:center;justify-content:center;color:#fff;white-space:nowrap;padding:0 6px}
+.stack .a{background:#0FA9A0}
+.stack .b{background:#8FD3CF;color:#0B5E59}
+.stack .c{background:var(--amber)}
+.stack .d{background:#D9A54E}
+.legend{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:10px;font-size:13px;color:var(--ink-2)}
+.legend div{display:flex;gap:8px;align-items:flex-start}
+.legend i{width:12px;height:12px;border-radius:3px;margin-top:3px;flex:0 0 auto}
+.legend b{display:block;color:var(--ink);font-size:14px}
+.limitline{display:flex;justify-content:space-between;margin-top:8px;font-size:12.5px;color:var(--sub)}
+.zero{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap}
+.seven{margin:16px 0 0;background:var(--both-tint);border-radius:12px;padding:12px 16px;font-size:14px;color:var(--ink-2);line-height:1.55}
+.seven b{color:var(--both)}
+</style></head><body><div class="page">
+<h1>한도 장부와 GPU 대기열 — 서로 다른 것<span class="tag doc">문서</span><span class="tag both">둘 다</span></h1>
+<p class="sub">광주전남의 새 분석 · 질문을 막은 것은 왼쪽 장부입니다. 넓은 범위는 오른쪽처럼 이미 조각으로 나눠 차례로 돌기 때문에, 넓다고 GPU 가 받지 못하는 일은 없습니다 — 오래 걸릴 뿐입니다.</p>
+
+<div class="two">
+  <section class="col">
+    <h2>한도 = 기관 장부<span class="pill adm">LX 관리자가 기관마다 정함</span></h2>
+    <p class="q">"이 기관이 이번 달 LX 서버를 얼마나 썼나, 허용량을 넘었나?"</p>
+    <div class="ledger">
+      <div class="r h"><span>광주전남 · 9월 30일</span><span>쓴 양 / 한도</span><span></span></div>
+      <div class="r"><span>분석 면적</span><div class="bar"><i class="over" style="width:100%"></i></div><em class="over num">10,850 / 1,000㎢</em></div>
+      <div class="r"><span>AI 도우미 사용량</span><div class="bar"><i class="over" style="width:100%"></i></div><em class="over num">1,977,210 / 1,800,000</em></div>
+      <div class="r"><span>GPU 사용 시간</span><div class="bar"><i style="width:41%"></i></div><em class="num">2.5 / 6시간</em></div>
+      <div class="r"><span>저장 공간</span><div class="bar"><i style="width:2%"></i></div><em class="num">5.5 / 300GB</em></div>
+    </div>
+    <div class="gate"><span class="box">새 분석 · 새 질문</span><span class="arrow">→</span><span class="box">"이미 넘었나?"</span><span class="arrow">→</span><span class="box no">넘었으면 문 앞에서 거절 — GPU 는 쓰지도 않음</span></div>
+    <div class="reset">한 달 장부는 매달 1일 0시에 새로 시작합니다 — 10월 1일 지금 광주전남은 0, 거절 없음</div>
+  </section>
+
+  <section class="col">
+    <h2>GPU 대기열 = 처리 순서<span class="pill hand">서버가 자동으로</span></h2>
+    <p class="q">"들어온 분석을 어떤 순서로, 얼마나 빨리 돌리나?"</p>
+    <div class="tiles">
+      <div class="area"><div class="done"></div><div class="done2"></div><div class="g"></div></div>
+      <ul>
+        <li>범위를 <b>조각</b>으로 나눔 — 25cm 영상이면 한 조각 약 256m 네모, 1㎢에 약 21조각</li>
+        <li>화면에서 보는 곳과 가까운 읍면동부터 차오름</li>
+        <li>시군구 하나가 한 작업(조각 2만 개까지 — 넘으면 해상도를 한 단계 낮춤)</li>
+      </ul>
+    </div>
+    <div class="queue"><span class="qi p0">읍면동 · 그린 범위</span><span class="qi p1">시군구 전역</span><span class="qi">기관별 번갈아</span><span class="arrow">→</span><span class="qi gpu">GPU 한 번에 한 장</span></div>
+    <div class="slow">전력 규칙: 두 장이 동시에 무거운 일을 하지 않음 · 장당 200W 상한 · AI 도우미 쪽 GPU 가 100W 를 넘으면 분석은 잠깐 멈췄다가 조용해지면 이어서</div>
+    <div class="reset">넓으면 오래 걸릴 뿐 거절하지 않음 — 예: 강진군 전역 10,242조각 약 30분(9월 기록)</div>
+  </section>
+</div>
+
+<section class="why">
+  <h2>광주전남 장부 10,850㎢ 는 어디서 왔나 — 9월 실제 기록</h2>
+  <p class="lead">광주전남 계정이 낸 AI 분석은 0건. 전부 LX 직원 · 관리자가 돌린 분석 54건이 '영상 범위가 겹치는 기관' 규칙으로 광주전남 장부에 적혔습니다.</p>
+  <div class="stack">
+    <div class="a" style="width:10.8%">1,176</div>
+    <div class="b" style="width:66.1%">7,172</div>
+    <div class="c" style="width:18.2%">1,979</div>
+    <div class="d" style="width:4.9%">522</div>
+  </div>
+  <div class="limitline"><span>0</span><span style="margin-left:-60px">한 달 한도 1,000㎢ 는 이 막대의 약 9%</span><span>10,850㎢</span></div>
+  <div class="legend">
+    <div><i style="background:#0FA9A0"></i><span><b>1,176㎢</b>광주전남 땅을 실제로 분석한 넓이 — 여수 · 강진 · 구례 · 목포(여수 두 번)</span></div>
+    <div><i style="background:#8FD3CF"></i><span><b>7,172㎢</b>같은 분석을 바깥 테두리로 재어 바다 · 이웃 땅까지 들어간 몫(고장)</span></div>
+    <div><i style="background:var(--amber)"></i><span><b>1,979㎢</b>남원(전북) 분석 — 광주전남이 아님. 잘못 적힌 고장</span></div>
+    <div><i style="background:#D9A54E"></i><span><b>522㎢</b>하동(경남) 분석 — 광주전남이 아님. 잘못 적힌 고장</span></div>
+  </div>
+  <div class="zero"><span class="pill warn">AI 도우미 1,977,210 = 광주전남 담당자 시험 계정의 점검 질문 769건(9월 27–30일)</span><span class="pill amber">GPU 사용 2.5시간 중 약 4분의 3도 남원 · 하동 몫</span></div>
+</section>
+<p class="seven"><b>10월 1일 7차 답</b> — 기관에는 막는 한도를 두지 않습니다. 왼쪽 장부는 '넘었나?'를 묻는 문지기가 아니라 '얼마나 잘 쓰고 있나'를 보여 주는 사용 현황으로 바뀌고, 자원은 LX 관리자의 장비 관리와 오른쪽 대기열의 순번 · 승인 규칙으로 지킵니다.</p>
+</div></body></html>

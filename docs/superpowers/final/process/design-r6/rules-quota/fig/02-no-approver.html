@@ -1,0 +1,94 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>결재할 관리자가 한 명뿐일 때</title>
+<link rel="stylesheet" href="fig.css">
+<style>
+.now{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.case{background:var(--card);border:1px solid var(--rule);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.case h3{margin:0;font-size:16px}
+.case .flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13.5px}
+.case .flow .arrow{font-size:18px}
+.case p{margin:0;font-size:13.5px;color:var(--ink-2);line-height:1.5}
+.case .st{margin-top:auto;border-radius:10px;padding:10px 12px;font-size:13.5px;font-weight:600}
+.st.ok{background:var(--ai-tint);color:#0B7C76}
+.st.stuck{background:var(--warn-tint);color:var(--warn)}
+.st.wait{background:var(--amber-tint);color:var(--amber)}
+.facts{margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.facts ul{margin:6px 0 0;padding-left:18px;font-size:13.5px;color:var(--ink-2);line-height:1.6}
+.accts{display:flex;gap:10px;margin:10px 0 6px;align-items:center;flex-wrap:wrap}
+.acct{border:1px solid var(--rule);border-radius:10px;padding:7px 12px;font-size:13px;background:#FCFCFD}
+.acct.gone{opacity:.4;text-decoration:line-through}
+.opts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.opt{background:var(--card);border:1px solid var(--rule);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.opt.rec{border:2px solid var(--both)}
+.opt h3{margin:0;font-size:16px;display:flex;align-items:center;gap:8px}
+.opt .l{width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:14px;flex:0 0 auto}
+.opt p{margin:0;font-size:13.5px;color:var(--ink-2);line-height:1.5}
+.opt .g{font-size:13px;color:#0B7C76} .opt .b{font-size:13px;color:var(--warn)}
+.rec-band{margin-top:16px;background:var(--both-tint);border-radius:14px;padding:14px 18px;display:grid;grid-template-columns:auto 1fr;gap:6px 16px;align-items:start}
+.rec-band b{color:var(--both);font-size:15px}
+.rec-band p{margin:0;font-size:14px;color:var(--ink-2);line-height:1.55}
+</style></head><body><div class="page">
+<h1>결재할 다른 관리자가 없을 때<span class="tag scr">화면</span><span class="tag lx">Land-XI</span></h1>
+<p class="sub">지금 코드가 실제로 어떻게 움직이는지와, 고를 수 있는 길 셋입니다. 결재할 사람 명단은 따로 없고 'LX 관리자' 역할 계정이면 모든 결재를 할 수 있습니다.</p>
+
+<div class="sec"><span class="no">1</span>지금 — 관리자가 한 명뿐이면</div>
+<div class="now">
+  <section class="case">
+    <h3>직원이 요청한 결재</h3>
+    <div class="flow"><span class="pill lx">LX 직원</span><span class="arrow">→</span><span class="pill adm">관리자 한 명</span></div>
+    <p>서비스 공개 · 다른 지역 적용 · 모델 등록 · 규칙 기준값. 요청한 사람과 결재하는 사람이 다르니 그대로 처리됩니다.</p>
+    <div class="st ok">문제 없음</div>
+  </section>
+  <section class="case">
+    <h3>관리자가 요청한 결재</h3>
+    <div class="flow"><span class="pill adm">관리자 A</span><span class="arrow">→</span><span class="pill adm">관리자 A</span><span class="pill warn">거절</span></div>
+    <p>한도 변경, 그리고 관리자 계정으로 LX 직원 화면에서 만든 서비스 공개 · 적용 · 모델 등록. 결재할 수 있는 다른 계정이 없습니다.</p>
+    <div class="st stuck">기한 없이 대기 — 거두기 · 대행 · 저절로 승인 모두 없음</div>
+  </section>
+  <section class="case">
+    <h3>관리자가 휴가 · 부재</h3>
+    <div class="flow"><span class="pill lx">요청</span><span class="arrow">→</span><span class="pill hand">결재함</span><span class="arrow">→</span><span class="pill hand">아무도 없음</span></div>
+    <p>모든 결재가 쌓입니다. 요청한 직원에게 따로 알림은 없고, 관리자 대시보드의 '결재 대기 n건'만 늘어납니다.</p>
+    <div class="st wait">돌아올 때까지 대기 — 서비스 공개 · 지역 적용도 멈춤</div>
+  </section>
+</div>
+<div class="facts">
+  <section class="card">
+    <h2>지금 관리자 계정</h2>
+    <div class="accts"><span class="acct">lxadmin@lx.or.kr</span><span class="acct gone">lxadmin</span><span class="acct gone">lx-admin</span></div>
+    <p class="small muted" style="margin:0">셋 모두 사용자 한 분이 쓰는 시범 계정입니다. 옛 아이디를 정리하면 하나만 남고, 그때부터 관리자가 요청한 결재는 모두 대기에 멈춥니다.</p>
+  </section>
+  <section class="card">
+    <h2>결재자 명단은 어디서 정하나</h2>
+    <ul>
+      <li>따로 없습니다 — 계정의 역할이 'LX 관리자'면 여섯 가지 결재를 모두 합니다.</li>
+      <li>역할은 지금 서버에서 계정을 만들 때 정합니다(계정 관리 화면은 구현 2차에서 만드는 중).</li>
+    </ul>
+  </section>
+</div>
+
+<div class="sec"><span class="no">2</span>고를 수 있는 길</div>
+<div class="opts">
+  <section class="opt">
+    <h3><span class="l">ⓐ</span>관리자는 늘 두 명 이상</h3>
+    <p>관리자가 한 명이면 관리자가 요청하는 결재는 받지 않고 "결재할 관리자가 없습니다"로 안내합니다.</p>
+    <p class="g">＋ 규칙이 단순하고 확인이 늘 두 사람</p>
+    <p class="b">－ 지금처럼 한 분만 쓰는 시범 기간에는 한도 변경이 막힘</p>
+  </section>
+  <section class="opt rec">
+    <h3><span class="l">ⓑ</span>한 명뿐일 때만 스스로 승인</h3>
+    <p>관리자 계정이 하나뿐인 동안만 자기 요청을 승인할 수 있고, 결재 기록에 '혼자 결재'가 붙습니다. 두 번째 관리자가 생기면 그동안의 '혼자 결재' 목록을 한 번 확인합니다.</p>
+    <p class="g">＋ 일이 멈추지 않고 기록은 남음</p>
+    <p class="b">－ 그 기간에는 두 번째 눈이 없음</p>
+  </section>
+  <section class="opt">
+    <h3><span class="l">ⓒ</span>정해 둔 대행자</h3>
+    <p>관리자마다 대행자(예: LX 직원 중 한 사람)를 정해 두고, 부재 기간에는 대행자가 결재합니다.</p>
+    <p class="g">＋ 휴가 · 부재에도 흐름이 이어짐</p>
+    <p class="b">－ 대행 기간 · 대행자 관리라는 설정이 새로 생김</p>
+  </section>
+</div>
+<div class="rec-band">
+  <b>추천</b><p>시범 기간은 ⓑ, 정식 오픈 때 ⓐ(관리자 두 명 이상 — 한 분이 휴가면 다른 분이 결재). 대행자는 두지 않습니다.</p>
+  <b>함께</b><p>결재 대기가 5 업무일을 넘으면 모든 관리자에게 다시 알림(저절로 승인하지 않음) · 요청한 사람이 대기 중인 자기 요청을 거둘 수 있게 · 결재자 명단은 따로 만들지 않고 계정 역할로.</p>
+</div>
+</div></body></html>
