@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · 프로젝트 목록 — 진행 막대 · 막힌 곳 · 걸러 보기</title>
+<link rel="stylesheet" href="s2.css">
+</head>
+<body class="m t">
+<div class="m-app">
+  <header class="m-mast">
+    <span class="m-word">LAND-XI</span>
+    <span class="m-home">LX 직원 대시보드</span>
+    <span class="m-sp"></span>
+    <span class="m-mast-b cur">프로젝트</span>
+    <span class="m-fresh"><i></i>11:19</span>
+    <span class="m-role">LX 직원</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-bell"><svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 1 1 12 0v4l2 3H4l2-3z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <main class="m-main">
+    <div class="p-page">
+      <div class="p-head p-head--row">
+        <h1>프로젝트</h1>
+        <span class="btn">새 프로젝트</span>
+      </div>
+      <div class="p-tabs">
+        <span class="p-tab on">내가 만든 <b>4</b></span>
+        <span class="p-tab">참여한 <b>0</b></span>
+        <span class="p-tab">보관 <b>0</b></span>
+        <span class="p-tab">전체 <b>4</b></span>
+      </div>
+      <div class="p-filter">
+        <span class="m-field">무엇을 <span class="ph">전체</span><span class="car">▾</span></span>
+        <span class="m-field">어디 <span class="ph">전체</span><span class="car">▾</span></span>
+        <span class="sep"></span>
+        <span class="chip on">전체 <small>4</small></span>
+        <span class="chip">앞 단계 남음 <small>4</small></span>
+        <span class="chip">결재 대기 <small>0</small></span>
+        <span class="chip">반려 <small>0</small></span>
+        <span class="chip">운영 중 <small>0</small></span>
+      </div>
+      <section class="m-card p-list">
+        <div class="tb">
+          <div class="tb-h">이름</div><div class="tb-h">진행</div><div class="tb-h">다음 할 일</div><div class="tb-h">막힌 곳</div><div class="tb-h">무엇을 · 어디</div><div class="tb-h">마지막 활동</div>
+
+          <div class="tb-r"><span class="nm">건축물 2026</span></div>
+          <div class="tb-r"><div class="bar6"><div class="seg"><i class="d"></i><i class="d"></i><i class="d"></i><i></i><i class="d"></i><i class="n"></i></div><span><i>6</i>서비스 관리</span></div></div>
+          <div class="tb-r">시범 1곳</div>
+          <div class="tb-r"><span class="stuck">결과 확인 0/20</span></div>
+          <div class="tb-r">건축물<span class="sub">원주시</span></div>
+          <div class="tb-r num">오늘 08:58</div>
+
+          <div class="tb-r"><span class="nm">주차장 2026</span></div>
+          <div class="tb-r"><div class="bar6"><div class="seg"><i class="d"></i><i class="d"></i><i class="d"></i><i></i><i class="d"></i><i class="n"></i></div><span><i>6</i>서비스 관리</span></div></div>
+          <div class="tb-r">시범 2곳</div>
+          <div class="tb-r"><span class="stuck">결과 확인 0/20</span></div>
+          <div class="tb-r">주차장<span class="sub">여주시 · 천안시 서북구</span></div>
+          <div class="tb-r num">오늘 08:58</div>
+
+          <div class="tb-r"><span class="nm">곤포사일리지 2026</span></div>
+          <div class="tb-r"><div class="bar6"><div class="seg"><i class="d"></i><i class="d"></i><i class="d"></i><i></i><i class="d"></i><i class="n"></i></div><span><i>6</i>서비스 관리</span></div></div>
+          <div class="tb-r">시범 1곳</div>
+          <div class="tb-r"><span class="stuck">결과 확인 0/20</span></div>
+          <div class="tb-r">곤포사일리지<span class="sub">보령시</span></div>
+          <div class="tb-r num">오늘 08:58</div>
+
+          <div class="tb-r last"><span class="nm">비닐하우스 2026</span></div>
+          <div class="tb-r last"><div class="bar6"><div class="seg"><i class="d"></i><i class="d"></i><i class="d"></i><i></i><i class="d"></i><i class="n"></i></div><span><i>6</i>서비스 관리</span></div></div>
+          <div class="tb-r last">시범 3곳</div>
+          <div class="tb-r last"><span class="stuck">결과 확인 0/20</span></div>
+          <div class="tb-r last">비닐하우스<span class="sub">증평군 · 함양군 · 남원시</span></div>
+          <div class="tb-r last num">오늘 08:58</div>
+        </div>
+      </section>
+    </div>
+    <span class="m-note" style="left:48px;top:600px;max-width:520px"><i>1</i>6칸 진행 막대 — 끝난 칸 검정, 지금 칸 파랑, 비어 있으면 아직. 글자 대신 한눈에</span>
+    <span class="m-note" style="left:600px;top:600px;max-width:540px"><i>2</i>막힌 곳 — 앞 단계가 남았거나 결재 대기 · 반려인 것을 한 칸에. 지금 네 프로젝트 모두 결과 확인이 비어 있는데 화면은 '서비스 관리'만 보입니다</span>
+    <span class="m-note" style="left:740px;top:170px;max-width:420px"><i>3</i>무엇을 · 어디로 걸러 보기, 상태 칩은 서버가 센 수</span>
+  </main>
+</div>
+<span class="m-stamp m-stamp--r"><b>시안</b> Land-XI 화면 · 프로젝트 목록 — 프로젝트 네 건은 이 PC 서버 값(10-01 11:19)</span>
+</body>
+</html>

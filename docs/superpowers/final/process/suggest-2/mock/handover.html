@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · LX 관리자 계정 — 사용 중지 전에 맡은 프로젝트 넘기기</title>
+<link rel="stylesheet" href="s2.css">
+<style>
+.m-rail-i.on{color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent)}
+</style>
+</head>
+<body class="m t">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">LAND-XI</span>
+    <span class="m-home">LX 관리자 대시보드</span>
+    <span class="m-sp"></span>
+    <span class="m-role">LX 관리자</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-bell"><svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 1 1 12 0v4l2 3H4l2-3z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="m-rail">
+    <span class="m-rail-i"><span>현황</span></span>
+    <span class="m-rail-i"><span>인프라</span></span>
+    <span class="m-rail-i"><span>기관</span></span>
+    <span class="m-rail-i"><span>배포</span></span>
+    <span class="m-rail-i"><span>결재</span></span>
+    <span class="m-rail-i"><span>검토 요청</span></span>
+    <span class="m-rail-i on"><span>계정 관리</span></span>
+  </nav>
+  <main class="m-main">
+    <div class="p-page">
+      <div class="p-head"><h1>계정</h1></div>
+      <div class="a-tabs">
+        <span class="a-tab">가입 신청</span><span class="a-tab">비밀번호 재설정</span><span class="a-tab on">계정</span><span class="a-tab">로그인 실패</span><span class="a-tab">처리 기록</span>
+      </div>
+      <div class="a-wrap">
+        <section class="m-card" style="padding:8px 12px 12px">
+          <div class="a-tb">
+            <div class="h">아이디</div><div class="h">이름</div><div class="h">역할</div><div class="h">상태</div><div class="h">마지막 로그인</div>
+            <div class="c nm">lxadmin@lx.or.kr</div><div class="c">LX 관리자</div><div class="c">LX 관리자</div><div class="c"><span class="st">사용 중</span></div><div class="c num">오늘 11:19</div>
+            <div class="c nm sel">test@lx.or.kr</div><div class="c sel">LX 직원</div><div class="c sel">LX 직원</div><div class="c sel"><span class="st">사용 중</span></div><div class="c sel num">오늘 11:19</div>
+            <div class="c nm">sales@lx.or.kr</div><div class="c">LX 영업</div><div class="c">LX 영업</div><div class="c"><span class="st">사용 중</span></div><div class="c num">오늘 10:41</div>
+            <div class="c nm">lx-staff</div><div class="c">김도윤</div><div class="c">LX 직원</div><div class="c"><span class="st off">사용 중지</span></div><div class="c num">오늘 09:35</div>
+            <div class="c nm">lx-admin</div><div class="c">박서연</div><div class="c">LX 관리자</div><div class="c"><span class="st off">사용 중지</span></div><div class="c num">오늘 09:20</div>
+          </div>
+        </section>
+        <aside class="drawer hi k">
+          <h2>LX 직원 <small style="font-size:14px;color:var(--sub)">test@lx.or.kr</small></h2>
+          <div class="row"><span class="m-label">역할</span><span class="v">LX 직원</span></div>
+          <div class="row"><span class="m-label">상태</span><span class="v">사용 중<small>마지막 로그인 오늘 11:19</small></span></div>
+          <div class="row"><span class="m-label">맡은 것</span><span class="v">프로젝트장 4 · 담당 서비스 4<small>건축물 · 주차장 · 곤포사일리지 · 비닐하우스 2026</small></span></div>
+          <div class="held">
+            <b>사용을 중지하기 전에 맡은 것을 넘겨 주세요</b>
+            <p>이 사람이 프로젝트장인 프로젝트 4건과 그 서비스로 오는 기관 요청이 받는 사람 없이 남습니다.</p>
+            <ul><li>프로젝트장 → 고른 사람으로 (앞 프로젝트장은 구성원으로 남음)</li><li>기관 검토 요청 · 분석 의뢰의 받는 사람도 함께 바뀜</li></ul>
+          </div>
+          <div class="add"><span class="m-field">넘길 사람 <span class="ph">LX 관리자</span><span class="car">▾</span></span><span class="btn sm" style="height:44px">넘기고 사용 중지</span></div>
+          <div class="btns"><span class="btn b2 sm">잠그기</span><span class="btn b2 sm">임시 비밀번호</span><span class="btn tx sm">넘기지 않고 중지</span></div>
+        </aside>
+      </div>
+    </div>
+    <span class="m-note" style="left:48px;top:500px;max-width:560px"><i>1</i>계정 서랍에 '맡은 것' 한 줄 — 프로젝트장인 프로젝트 · 담당 서비스 수(이 PC 서버 값)</span>
+    <span class="m-note" style="left:48px;top:560px;max-width:560px"><i>2</i>사용 중지(퇴직 · 전출)를 누르면 먼저 넘길 사람을 고르게 — 담당 없는 프로젝트 · 요청이 생기지 않게</span>
+  </main>
+</div>
+<span class="m-stamp m-stamp--r"><b>시안</b> Land-XI 화면 · LX 관리자 계정 — 계정 · 프로젝트 수는 이 PC 서버 값(10-01 11:19) · 서랍 글은 제안</span>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>시안 · 프로젝트 한 장 — 만든 것 · 기록과 메모 · 재학습 근거 · 넘기기</title>
+<link rel="stylesheet" href="s2.css">
+<style>
+.m--long .s-rail{align-self:stretch}
+.k .m-note{left:150px;top:-22px;max-width:560px}
+.k .m-note.b{top:auto;bottom:-30px;left:24px}
+#people .m-note,#retrain .m-note,#log .m-note{left:24px;top:-22px;width:max-content;max-width:460px}
+#retrain .m-note.b{top:auto;bottom:-30px;left:24px;width:max-content;max-width:460px}
+#log .m-note.b{top:24px;bottom:auto;left:140px;width:max-content;max-width:420px}
+.m-note[data-f]{display:none}
+body[data-f="made"] .m-note[data-f="made"],body[data-f="log"] .m-note[data-f="log"],body[data-f="retrain"] .m-note[data-f="retrain"],body[data-f="people"] .m-note[data-f="people"]{display:inline-flex}
+body:not([data-f="people"]) .only-people{display:none}
+.chat{position:fixed;right:24px;bottom:28px;display:flex;align-items:center;gap:8px;z-index:60}
+.chat span{background:var(--bg-1);box-shadow:0 1px 2px rgba(0,0,0,.08);border-radius:12px;padding:8px 12px;font:500 14px/1 var(--font-body);color:var(--ink)}
+.chat i{width:52px;height:52px;border-radius:50%;background:var(--bg-1);box-shadow:0 1px 3px rgba(0,0,0,.12);display:inline-flex;align-items:center;justify-content:center;color:#1DBE7E;font:800 18px/1 var(--font-display);font-style:normal}
+</style>
+</head>
+<body class="m m--long t">
+<div class="m-app has-rail">
+  <header class="m-mast">
+    <span class="m-word">LAND-XI</span>
+    <span class="m-home">LX 직원 대시보드</span>
+    <span class="m-sp"></span>
+    <span class="m-mast-b">프로젝트</span>
+    <span class="m-fresh"><i></i>11:19</span>
+    <span class="m-role">LX 직원</span>
+    <span class="m-mast-b">XI맵</span>
+    <span class="m-bell"><svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 1 1 12 0v4l2 3H4l2-3z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></span>
+    <span class="m-mast-b m-help">?</span>
+    <span class="m-mast-b">나가기</span>
+  </header>
+  <nav class="s-rail">
+    <div class="s-rail-name"><small>프로젝트</small><b>비닐하우스 2026</b></div>
+    <span class="s-rail-i d"><i>✓</i><span>데이터<br>올리기</span></span>
+    <span class="s-rail-i d"><i>✓</i><span>학습데이터<br>구축</span></span>
+    <span class="s-rail-i d"><i>✓</i><span>학습</span></span>
+    <span class="s-rail-i"><i>4</i><span>결과 확인</span></span>
+    <span class="s-rail-i d"><i>✓</i><span>발행 요청</span></span>
+    <span class="s-rail-i n"><i>6</i><span>서비스 관리</span></span>
+  </nav>
+  <main class="m-main">
+    <div class="p-page">
+      <div class="p-head">
+        <p class="m-label">프로젝트</p>
+        <div class="p-title"><h1>비닐하우스 2026</h1><span class="lnk" id="edit">고치기</span></div>
+        <div class="p-meta"><span class="chip">비닐하우스</span><span class="chip wait">증평군</span><span class="chip wait">함양군</span><span class="chip wait">남원시</span><span class="chip add">+ 지역</span></div>
+      </div>
+      <div class="p-grid">
+        <div class="p-col">
+          <section class="k k-now">
+            <p class="m-label">지금 단계 · 6 서비스 관리</p>
+            <p class="big">시범 3곳</p>
+            <p class="why">앞 단계가 남았습니다 — 결과 확인 0/20</p>
+            <span class="btn">서비스 관리 열기</span>
+          </section>
+
+          <section class="k" id="made">
+            <span class="m-note" data-f="made"><i>1</i>이 프로젝트가 만든 것을 한 칸에 — 줄마다 그 단계 화면으로. 값은 모두 서버 기록(지금도 돌려주고 있음)</span>
+            <h2>만든 것</h2>
+            <div class="made">
+              <div class="r"><span class="l">영상</span><span><b>3곳 모두 있음</b> — 증평군 · 함양군 · 남원시</span><span class="go">데이터 올리기</span></div>
+              <div class="r"><span class="l">학습 표본</span><span><b>1묶음 · 200장</b> — 학습 160 · 검증 40 · 09.30</span><span class="go">학습데이터 구축</span></div>
+              <div class="r"><span class="l">모델</span><span><b>1차 · 쓸 수 있음</b> — 학습 2회(실패 1) · 등록 승인 09.30 15:35</span><span class="go">학습</span></div>
+              <div class="r"><span class="l">결과 확인</span><span class="w"><b class="w">0/20</b> — 아직 표본을 확인하지 않았습니다</span><span class="go">결과 확인</span></div>
+              <div class="r"><span class="l">서비스 카드</span><span><b>비닐하우스 서비스 · 1판</b> — 공개됨</span><span class="go">발행 요청</span></div>
+              <div class="r"><span class="l">적용</span><span><b>시범 3곳</b> — 증평군 · 함양군 · 남원시 · 운영 0 · 결재 대기 0</span><span class="go">서비스 관리</span></div>
+              <div class="r"><span class="l">저장 공간</span><span><b>9.7 MB</b> — 학습데이터 파일</span><span></span></div>
+            </div>
+            <span class="m-note b" data-f="made"><i>2</i>머리의 '고치기' · '+ 지역' — 이름과 대상 지역을 프로젝트장이 고칩니다(서버에는 이미 있음)</span>
+          </section>
+
+          <section class="k">
+            <h2>단계</h2>
+            <div class="steps">
+              <div class="step d"><i>✓</i><div><div class="t">데이터 올리기</div><div class="dd">대상 지역 영상 있음</div></div></div>
+              <div class="step d"><i>✓</i><div><div class="t">학습데이터 구축</div><div class="dd">표본 1개</div></div></div>
+              <div class="step d"><i>✓</i><div><div class="t">학습</div><div class="dd">모델 쓸 수 있음</div></div></div>
+              <div class="step"><i>4</i><div><div class="t">결과 확인</div><div class="dd w">표본 확인 0/20</div></div></div>
+              <div class="step d"><i>✓</i><div><div class="t">발행 요청</div><div class="dd">공개됨</div></div></div>
+              <div class="step n"><i>6</i><div><div class="t">서비스 관리</div><div class="dd">시범 3곳</div></div></div>
+            </div>
+          </section>
+        </div>
+
+        <div class="p-col">
+          <section class="k" id="people">
+            <span class="m-note" data-f="people"><i>1</i>프로젝트장이 직접 넘길 수 있게 — 지금은 LX 관리자만 바꿉니다. 넘기면 앞 프로젝트장은 구성원으로 남고, 기관 요청 받는 사람도 함께 바뀜</span>
+            <h2>사람</h2>
+            <div class="row"><span class="m-label">프로젝트장</span><span class="v">LX 직원<small>test@lx.or.kr</small></span></div>
+            <div class="row"><span class="m-label">구성원</span><span class="none">없음</span></div>
+            <div class="add"><span class="m-field"><span class="ph">구성원 고르기</span><span class="car">▾</span></span><span class="btn b2" style="height:44px">구성원 더하기</span></div>
+            <div class="btns only-people"><span class="btn b2 sm">프로젝트장 넘기기</span></div>
+          </section>
+
+          <section class="k" id="retrain">
+            <span class="m-note" data-f="retrain"><i>1</i>재학습 버튼 위에 근거 네 줄 — 모두 서버가 이미 가진 값. 판단은 프로젝트장이 합니다</span>
+            <h2>재학습</h2>
+            <div class="why3">
+              <div class="q"><span>기관 검토 요청(답할 것 · AI 오류 판정)</span><b>0건 · 0건</b></div>
+              <div class="q"><span>마지막 학습 뒤</span><b>1일 · 09.30</b></div>
+              <div class="q"><span>대상 지역 새 영상 시점</span><b>없음</b></div>
+              <div class="q"><span>앞 단계</span><b class="w">결과 확인 0/20</b></div>
+            </div>
+            <p class="m-body" style="font-size:15px;line-height:22px">같은 프로젝트에서 2차로 다시 학습하고,<br>배포는 LX 관리자 승인 뒤 바뀝니다</p>
+            <div class="reason">
+              <p class="m-label">왜 다시 학습하나 <small style="color:var(--sub);font-weight:400">한 가지 고르기 · 회차 기록과 결재에 남습니다</small></p>
+              <div class="m-chips"><span class="chip">검토 요청 반영</span><span class="chip">새 영상 시점</span><span class="chip" aria-pressed="true">성능 보완</span><span class="chip">직접 입력</span></div>
+              <div class="btns" style="margin-top:4px"><span class="btn">2차 재학습 시작</span></div>
+            </div>
+            <span class="m-note b" data-f="retrain"><i>2</i>사유 한 가지 — 2차 · 3차가 쌓여도 "왜 했나"가 남고, LX 관리자 결재 화면에 같은 근거가 보입니다</span>
+          </section>
+
+          <section class="k" id="log">
+            <span class="m-note" data-f="log"><i>1</i>자동 기록(서버가 이미 적는 것) + 사람 메모 + 파일을 한 줄기로. 구성원 · LX 관리자가 함께 봅니다</span>
+            <h2>기록 · 메모</h2>
+            <ul class="log">
+              <li class="memo"><span class="w">예시</span><span><b>메모</b> 함양군 북쪽은 영상이 흐려 표본을 더 받기로 함<span class="ex">예시</span><br><span class="file">표본 추가 목록.xlsx</span></span></li>
+              <li><span class="w">10.01 08:58</span><span><b>프로젝트 만듦</b><span class="by">LX 직원</span></span></li>
+              <li><span class="w">09.30 15:35</span><span><b>모델 등록 승인</b> — 비닐하우스 학습 2026.09.30<span class="by">LX 관리자</span></span></li>
+              <li><span class="w">09.30 15:33</span><span><b>학습 끝</b> — 2번째 학습<span class="by">LX 직원</span></span></li>
+              <li><span class="w">09.30 15:12</span><span><b>학습 실패</b> — 다시 시작함<span class="by">LX 직원</span></span></li>
+              <li><span class="w">09.30 15:05</span><span><b>증평군 적용 승인</b> — 시범<span class="by">LX 관리자</span></span></li>
+              <li><span class="w">09.30 14:35</span><span><b>남원시 · 함양군 적용 승인</b> — 시범<span class="by">LX 관리자</span></span></li>
+              <li><span class="w">09.30 14:27</span><span><b>학습 표본 200장 올림</b><span class="by">LX 직원</span></span></li>
+            </ul>
+            <p class="more">기록 3개 더 보기</p>
+            <div class="log-in"><span class="m-field"><span class="ph">메모 한 줄</span></span><span class="clip">파일</span><span class="btn sm" style="height:44px">남기기</span></div>
+            <span class="m-note b" data-f="log"><i>2</i>메모 · 파일 줄은 예시(지금은 없는 기능). 기록 줄 7개는 이 PC 서버의 실제 결재 · 학습 기록</span>
+          </section>
+
+          <div style="display:flex;justify-content:flex-end;padding:0 4px"><span class="btn tx">끝난 프로젝트로 보관</span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<div class="chat"><span>XI ChatGEO</span><i>LX</i></div>
+<span class="m-stamp m-stamp--r" id="stamp"><b>시안</b> Land-XI 화면 · 프로젝트 한 장 — 값은 이 PC 서버(10-01 11:19) · 메모 · 파일 줄만 예시</span>
+<script>
+const f = new URLSearchParams(location.search).get('f') || 'made';
+document.body.dataset.f = f;
+const hi = { made: ['made'], log: ['log'], retrain: ['retrain'], people: ['people'] }[f] || [];
+for (const id of hi) document.getElementById(id).classList.add('hi');
+if (f === 'made') document.getElementById('edit').style.textDecorationColor = 'var(--accent)';
+</script>
+</body>
+</html>
