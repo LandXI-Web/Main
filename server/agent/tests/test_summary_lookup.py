@@ -64,8 +64,8 @@ def _login(httpx, body):
 
 
 @pytest.mark.parametrize("who,body,msg", [
-    ("staff", {"realm": "lx", "login": "lx-staff"}, "여수시 해양쓰레기 결과 보여줘"),
-    ("gj", {"realm": "tenant", "tenant_id": "gwangju-jeonnam", "login": "gj-manager"}, "여수시 해양쓰레기 몇 건이야?"),
+    ("staff", {"realm": "lx", "login": "test@lx.or.kr"}, "여수시 해양쓰레기 결과 보여줘"),
+    ("gj", {"realm": "tenant", "tenant_id": "gwangju-jeonnam", "login": "lxadmin@lx.or.kr", "site": "gov"}, "여수시 해양쓰레기 몇 건이야?"),
 ])
 def test_same_as_summary_api(who, body, msg):
     """에이전트 요약 직행의 봉투 값 · 상태 == GET /api/v1/summary 의 같은 항목."""
@@ -77,7 +77,7 @@ def test_same_as_summary_api(who, body, msg):
         pytest.skip("게이트웨이 · 계정 미가동")
     from agent import runner
     from landxi_api.deps import close
-    p = {"staff": Principal("lx", "staff", None, "u_lx_staff", caps=CAPS[("lx", "staff")]),
+    p = {"staff": Principal("lx", "staff", None, "u_mail_test", caps=CAPS[("lx", "staff")]),
          "gj": Principal("tenant", "manager", "gwangju-jeonnam", "u_gj", caps=CAPS[("tenant", "manager")])}[who]
 
     async def go():

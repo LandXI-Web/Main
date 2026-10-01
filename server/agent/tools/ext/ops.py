@@ -24,16 +24,16 @@ USAGE_DIMS = {  # dim → (사용자 말, 봉투 단위(칩 표기), 환산)
 }
 ALERT_KO = {
     "gpu_temp": "GPU 온도 높음", "vram": "GPU 메모리 거의 참", "worker_heartbeat": "작업기 응답 없음", "queue_wait": "대기 시간 길어짐",
-    "disk_e": "저장 공간 부족", "vworld_calls": "지도 호출 한도 임박", "job_fail_rate": "작업 실패 많음",
+    "disk_e": "저장 공간 부족", "vworld_calls": "지도 자료 호출 많음", "job_fail_rate": "작업 실패 많음",
 }
 POOL_KO = {"a6000": "GPU 서버", "cpu": "일반 서버", "a100": "증설 GPU 서버"}
 
 SPECS: dict[str, dict] = {
-    "ops_gpus": {"description": "GPU 장비 상태(LX 관리자) — GPU 순번별 부하 · 메모리 · 전력 · 온도 · 하는 일, 동시 고부하 GPU 수와 전력 한도 안·초과. "
+    "ops_gpus": {"description": "GPU 장비 상태(LX 관리자) — GPU 순번별 부하 · 메모리 · 전력 · 온도 · 하는 일, 동시 고부하 GPU 수와 전력 규칙 안·초과. "
                                 "'GPU 상태' · 'GPU 괜찮아?' · '전력' 질문은 이것으로 확인한다.", "properties": {}},
     "ops_queues": {"description": "분석 작업 대기열 요약(LX 관리자) — 대기 · 진행 작업 수, 서버별 작업기 수. '대기열' · '밀린 작업' 질문.", "properties": {}},
     "ops_alerts": {"description": "경보(LX 관리자) — 지금 열린 경보 수와 이름, 최근 24시간에 닫힌 경보 수. '경보 있어?' · '문제 있나' 질문.", "properties": {}},
-    "ops_usage": {"description": "기관별 사용량(LX 관리자) — 이번 달 AI 도우미 사용량(토큰) · GPU 시간 · 분석 면적 · 저장과 한도. "
+    "ops_usage": {"description": "기관별 사용량(LX 관리자) — 이번 달 AI 도우미 사용량(토큰) · GPU 시간 · 분석 면적 · 저장(사용을 막는 값은 없음 — 사용량만). "
                                  "'기관별 AI 도우미 사용량' · '이 기관 토큰 얼마나 썼어' 질문. tenant 를 주면 그 기관만.",
                   "properties": {"tenant": {"type": "string", "description": "기관 이름 또는 id(없으면 전 기관)"},
                                  "dim": {"type": "string", "enum": list(USAGE_DIMS), "description": "항목(기본 AI 도우미 사용량)"}}},
@@ -363,7 +363,7 @@ async def ops_gpus(args: dict, ctx) -> Out:
         if w is not None:
             row["전력"] = out.env(f"g{i}_w", f"{nm} 전력", _e(round(w, 0), "W", "GPU 장비 기록 · 전력", at))
         if wl:
-            row["전력 한도"] = out.env(f"g{i}_wl", f"{nm} 전력 한도", _e(round(wl, 0), "W", "GPU 장비 기록 · 전력 한도", at))
+            row["전력 상한"] = out.env(f"g{i}_wl", f"{nm} 전력 상한", _e(round(wl, 0), "W", "GPU 장비 기록 · 전력 상한(관리자 설정)", at))
         if t is not None:
             row["온도"] = out.env(f"g{i}_t", f"{nm} 온도", _e(round(t, 0), "°C", "GPU 장비 기록 · 온도", at))
         llm = any(re.search(r"llama|vllm|ollama|python", str(e.get("name") or ""), re.I) for e in x.get("external") or [] if isinstance(e, dict))
@@ -411,7 +411,7 @@ async def ops_gpus(args: dict, ctx) -> Out:
         for nm, row in rows.items():
             row.setdefault("고부하", "아니오")
         data["동시 고부하 GPU"] = out.env("hot", "동시 고부하 GPU", _e(int(pb.get("hot_now") or 0), _u(ctx, "장"), "전력 예산(인프라 화면 큰 숫자)", pb.get("at") or at))
-        data["동시 고부하 한도"] = out.env("hot_max", "동시 고부하 GPU 한도", _e(int(pb["max_hot"]), _u(ctx, "장"), "전력 규칙", pb.get("at") or at, basis="recorded"))
+        data["동시 고부하 최대"] = out.env("hot_max", "동시 고부하 GPU 최대", _e(int(pb["max_hot"]), _u(ctx, "장"), "전력 규칙", pb.get("at") or at, basis="recorded"))
         data["고부하 GPU"] = busy
         data["전력 예산"] = "안" if pb.get("ok", True) else "초과"
         data["판정 시각"] = hms(jat)                   # 인프라 화면 큰 숫자 아래 'hh:mm:ss 기준' 과 같은 표본 시각
@@ -420,7 +420,7 @@ async def ops_gpus(args: dict, ctx) -> Out:
             data["두 장 동시 고부하(최근 2시간)"] = out.env("overlap", "두 장 동시 고부하(최근 2시간)",
                                                     _e(int(ov), _u(ctx, "회", "times"), "GPU 전력 실측(2초 표본)", pb.get("at") or at))
         if pb.get("ok") is False:
-            sugg.append("동시 고부하 GPU 가 한도를 넘었습니다. 새 분석 작업은 대기열에서 기다리게 두는 것을 검토하세요.")
+            sugg.append("동시 고부하 GPU 가 전력 규칙(최대 장수)을 넘었습니다. 새 분석 작업은 대기열에서 기다리게 두는 것을 검토하세요.")
     data["제안"] = sugg or ["지금 조치할 것은 없습니다."]
     out.data = data
     out.answer = _gpu_answer_en(rows, data) if _en(ctx) else _gpu_answer_ko(rows, data)
@@ -450,7 +450,7 @@ def _gpu_answer_ko(rows: dict, data: dict) -> str:
     if "동시 고부하 GPU" in data:
         who = (", ".join(data["고부하 GPU"]) + "이 고부하") if data["고부하 GPU"] else "고부하인 GPU 없음"
         head = f"{data['판정 시각']} 기준 " if data.get("판정 시각") else ""
-        parts.append(f"{head}동시 고부하 GPU는 {{{{hot}}}}(한도 {{{{hot_max}}}})로 {who} · 전력 예산 {data['전력 예산']}입니다.")
+        parts.append(f"{head}동시 고부하 GPU는 {{{{hot}}}}(최대 {{{{hot_max}}}})로 {who} · 전력 예산 {data['전력 예산']}입니다.")
         if "두 장 동시 고부하(최근 2시간)" in data:
             parts.append("최근 2시간 두 장이 함께 고부하였던 적은 {{overlap}}입니다.")
     for nm, row in rows.items():
@@ -625,11 +625,7 @@ async def ops_usage(args: dict, ctx) -> Out:
         val = None if used is None else (int(round(used * k)) if dim == "llm_tokens_month" else round(used * k, 1))
         key = re.sub(r"\W", "_", tid)
         row = {ko: out.env(f"{key}_u", f"{nm} 이번 달 {ko}", _e(val, unit, f"기관 사용량 · {ko}", e.get("as_of"), note=e.get("note")))}
-        if d.get("hard") is not None:
-            row["한도"] = out.env(f"{key}_h", f"{nm} {ko} 한도", _e(round(float(d["hard"]) * k, 1) if dim != "llm_tokens_month" else int(float(d["hard"])),
-                                                                  unit, "기관 한도", e.get("as_of"), basis="recorded", note="[추정 기반 초기값]"))
-        else:
-            row["한도"] = "not set" if en else "미설정"
+        # 사용을 막는 값은 없다(원칙 83 · 11차 — 기관 · LX 직원 모두) — 사용량만 답한다(예전 '한도' 칸은 없앰)
         rows[nm] = row
         rows_ids.add(tid)
         if val is not None:
@@ -641,7 +637,7 @@ async def ops_usage(args: dict, ctx) -> Out:
         data["합계"] = out.env("sum", f"이번 달 {ko} 합계", _e(int(total) if dim == "llm_tokens_month" else round(total, 1), unit, f"기관 사용량 · {ko} 합계",
                                                           u.get("as_of")))
     out.data = data
-    # 답 — 사용량 많은 순. 한도는 기관 화면 표에 · 답은 사용량만(짧게). 막대 차트 한 장(값 = 같은 봉투)
+    # 답 — 사용량 많은 순 · 사용량만(짧게). 막대 차트 한 장(값 = 같은 봉투)
     order = sorted(rows.items(), key=lambda kv: -(_v(next(e for kk, _, e in out.envelopes if kk == kv[1][ko])) or 0))
     lines = [f"{nm} {{{{{row[ko]}}}}}" for nm, row in order]
     if en:

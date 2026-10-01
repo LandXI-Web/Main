@@ -24,7 +24,7 @@ from survey.db import README_COUNTS, REPLAY_DIR  # noqa: E402
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--api", default=f"http://127.0.0.1:{config.API_PORT}")
-    ap.add_argument("--login", default="lx-staff")
+    ap.add_argument("--login", default="test@lx.or.kr")
     ap.add_argument("--out", default=str(REPLAY_DIR / "survey-namwon.ndjson"))
     a = ap.parse_args()
     B = a.api.rstrip("/") + "/api/v1"

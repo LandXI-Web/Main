@@ -4,7 +4,7 @@
 import { gate, shell, bignum, table, drawer, closeAll, toast, devDrawer, devlog, empty, t, mountCmdk } from '../../kit/index.js';
 import { h, esc, ymd, api } from '../../kit/util.js';
 import { sse } from '../../../shared/api-v1.js';
-import { D, loadAll, loadFast, pending, pendingEnv, openAlerts, power, nearLimits, decide, hasS9, canon } from './data.js';
+import { D, loadAll, loadFast, pending, pendingEnv, openAlerts, power, decide, hasS9, canon } from './data.js';
 import { mountMap } from './map.js';
 
 const who = await gate('ops-core');
@@ -16,6 +16,7 @@ const RAIL = [
   { id: 'deploys', label: '배포', icon: 'deploy', href: INFRA + '?view=deploys' },
   { id: 'approvals', label: '결재', icon: 'inbox' },
   { id: 'reviews', label: '검토 요청', icon: 'list', href: '/landxi/v3/lx-inbox/' },   // 기관에서 온 모든 요청 · 대화(알림-1 — 관리자도 함께 본다)
+  { id: 'accounts', label: '계정 관리', icon: 'check', href: '/landxi/v3/ops-accounts/' },   // 가입 신청 · 재설정 · 계정(구현 2차 T5 · 정리 — 메뉴로 잇기)
 ];
 const S = shell({ who, home: 'ops-core', title: 'LX 관리자 대시보드', rail: { kind: 'menu', items: RAIL, current: 0, onPick: (i, it) => { if (!it.href) location.hash = it.id === 'approvals' ? '#/approvals' : '#/'; } } });
 // 역할 칩 중복 방지(키트 요청 대기 중 로컬 폴백): 이름이 역할 문구와 같으면 역할 문구 한 번만 → 'LX 관리자'
@@ -75,7 +76,7 @@ function drawOverview() {
   /* 한 흐름: 결재 뒤 이어지는 AI 분석·실태조사(같은 작업의 GPU·사용량·배포 단계는 배포 화면 시트) */
   const flowing = canon().filter((d) => ['starting', 'analyzing', 'surveying'].includes(d.flow?.state));
   if (flowing.length) rows.push({ t: `AI 분석 진행 ${flowing.length}`, lv: '', href: INFRA + '?view=deploys' + (flowing.length === 1 ? '&deploy=' + encodeURIComponent(flowing[0].id) : '') });
-  for (const q of nearLimits().slice(0, 3)) rows.push({ t: `한도 임박 ${q.name} ${q.dim}`, lv: q.over ? 'warn' : '', dot: 'lock', href: INFRA + '?view=tenants' });
+  /* 기관 '한도 임박' 줄은 없앴다 — 기관에는 막는 한도가 없다(원칙 83 · 11차 "GPU 는 무상 정책"). 사용량은 '기관' 화면에서 */
   todoEl.innerHTML = rows.map((r) => `<li><a href="${esc(r.href)}" data-lv="${r.lv}"><i data-dot="${r.dot || ''}"></i><span>${esc(r.t)}</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5l4.5 4.5L6 12.5"/></svg></a></li>`).join('');
   M.sync();
 }
@@ -110,7 +111,7 @@ function drawInbox() {
 async function openSheet(item) {
   openKey = item.key;
   drawInbox();
-  /* 한도 변경 — 지금 값(바뀌기 전)은 기관 사용량에서. 뒤에서 오는 전체 집계를 기다리지 않고 그 기관 한 곳만 읽는다 */
+  /* 지난 사용량 설정 변경 결재(옛 기록) — 지금 값(바뀌기 전)은 기관 사용량에서. 뒤에서 오는 전체 집계를 기다리지 않고 그 기관 한 곳만 읽는다 */
   const sid = item.raw?.subject?.id;
   if (item.kind === 'quota' && sid && !D.usage.some((u) => u.tenant_id === sid)) {
     const u = await api(`/t/${encodeURIComponent(sid)}/usage`).catch(() => null);
@@ -145,10 +146,12 @@ async function openSheet(item) {
     }).catch((e) => { why.removeAttribute('aria-busy'); devlog('request', e.code || e.message); });
   }
   sheet = drawer({ title: `${item.kindKo} · ${item.target}`, body, host: S.main, slot: 'approval', onClose: () => { openKey = null; drawInbox(); } });
-  if (item.mine) {                                   // 요청한 사람은 스스로 결재하지 않는다(서버도 막는다) — 다른 관리자가 결재
+  if (item.mine && !item.canDecide) {                // 요청한 사람은 스스로 결재하지 않는다(서버도 막는다) — 다른 관리자가 결재
     body.append(h('p.oc-mine', { text: '내가 요청한 결재입니다. 다른 관리자가 결재합니다.' }));
     return;
   }
+  /* 관리자 계정이 하나뿐이면(10-01 사용자 결정 — 관리자 계정 하나를 함께 씀) 내가 올린 요청도 내가 결재하고 처리 기록에 남긴다 */
+  if (item.mine) body.append(h('p.oc-mine', { text: '관리자 계정이 하나라 이 계정이 결재합니다. 처리 기록에 ‘관리자 계정 승인(단일 계정)’으로 남습니다.' }));
   const reason = h('input.t-input.oc-reason', { type: 'text', placeholder: '사유(반려할 때는 꼭 적습니다)', 'aria-label': '사유', maxlength: '120' });
   const ok = h('button.t-btn', { type: 'button', text: '승인' });
   const no = h('button.t-btn.t-btn--2', { type: 'button', text: '반려' });

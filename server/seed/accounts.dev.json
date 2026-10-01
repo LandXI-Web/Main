@@ -1,16 +1,73 @@
 {
-  "_note": "개발 계정(F1-CONTRACT §3) — 비밀번호는 server/.env 의 DEV_PASSWORD 한 값. 실운영 전 교체.",
+  "_note": "개발 계정(F1-CONTRACT §3) — 아이디 = 메일 주소(원칙 77 · 확인 대장 PW-4). 비밀번호는 server/.env 의 DEV_PASSWORD 한 값(대화로만 전한 임시 공통 값 — 파일에 적지 않는다). 정식 오픈 전 교체.",
   "lx_users": [
-    {"id": "u_lx_admin", "login": "lx-admin", "role": "admin", "name": "박서연"},
-    {"id": "u_lx_staff", "login": "lx-staff", "role": "staff", "name": "김도윤"},
-    {"id": "u_lx_sales", "login": "lx-sales", "role": "sales", "name": "이준호"}
+    {
+      "id": "u_mail_lxadmin",
+      "login": "lxadmin@lx.or.kr",
+      "role": "admin",
+      "name": "LX 관리자"
+    },
+    {
+      "id": "u_mail_test",
+      "login": "test@lx.or.kr",
+      "role": "staff",
+      "name": "LX 직원"
+    },
+    {
+      "id": "u_lx_sales",
+      "login": "sales@lx.or.kr",
+      "role": "sales",
+      "name": "LX 영업",
+      "_note": "영업 — 사용자가 아이디를 정하지 않아 기본값(구현 2차 정리 10-01)"
+    }
   ],
   "tenant_users": [
-    {"id": "u_namwon_manager", "tenant_id": "namwon", "login": "namwon-manager", "role": "manager", "name": "남원시 담당자"},
-    {"id": "u_gj_manager", "tenant_id": "gwangju-jeonnam", "login": "gj-manager", "role": "manager", "name": "광주전남 담당자"},
-    {"id": "u_gj_manager_alias", "tenant_id": "gwangju-jeonnam", "login": "gwangju-jeonnam-manager", "role": "manager", "name": "광주전남 담당자",
-     "_note": "계약 §12 bootApi 가 `${tenant}-manager` 로 조립하므로 같은 사람의 별칭 로그인"},
-    {"id": "u_kgz_agri_manager", "tenant_id": "kgz-agri", "login": "kgz-agri-manager", "role": "manager", "name": "Kyrgyz Agriculture manager"},
-    {"id": "u_kgz_land_manager", "tenant_id": "kgz-land", "login": "kgz-land-manager", "role": "manager", "name": "Kyrgyz Land Resources manager"}
-  ]
+    {
+      "id": "u_namwon_mail_lxadmin",
+      "tenant_id": "namwon",
+      "login": "lxadmin@lx.or.kr",
+      "role": "manager",
+      "name": "담당자"
+    },
+    {
+      "id": "u_gwangju-jeonnam_mail_lxadmin",
+      "tenant_id": "gwangju-jeonnam",
+      "login": "lxadmin@lx.or.kr",
+      "role": "manager",
+      "name": "담당자"
+    },
+    {
+      "id": "u_kgz-agri_mail_lxadmin",
+      "tenant_id": "kgz-agri",
+      "login": "lxadmin@lx.or.kr",
+      "role": "manager",
+      "name": "담당자"
+    },
+    {
+      "id": "u_kgz-land_mail_lxadmin",
+      "tenant_id": "kgz-land",
+      "login": "lxadmin@lx.or.kr",
+      "role": "manager",
+      "name": "담당자"
+    }
+  ],
+  "disabled": {
+    "_note": "옛 아이디 — 지우지 않고 사용 중지(로그인 0). 가진 것은 migrations/0015_mail_accounts.sql 이 새 메일 계정으로 옮겼다. 시드는 있으면 사용 중지로만 둔다(만들지 않는다).",
+    "lx_users": [
+      "u_lx_admin",
+      "u_lx_staff",
+      "u_lxadmin"
+    ],
+    "tenant_users": [
+      "u_namwon_manager",
+      "u_namwon_lxadmin",
+      "u_gj_manager",
+      "u_gj_manager_alias",
+      "u_gwangju-jeonnam_lxadmin",
+      "u_kgz_agri_manager",
+      "u_kgz-agri_lxadmin",
+      "u_kgz_land_manager",
+      "u_kgz-land_lxadmin"
+    ]
+  }
 }

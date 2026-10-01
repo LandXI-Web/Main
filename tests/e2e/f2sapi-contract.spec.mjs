@@ -22,7 +22,7 @@ function envs(o, out = []) {
 }
 
 test('읽기 5 — 봉투 규약(value·unit·basis·as_of·source) · 목록 {items,total(봉투),counts,by_rule,as_of}', async ({ request }) => {
-  const h = await tok(request, { realm: 'tenant', tenant_id: 'namwon', login: 'namwon-manager', password: PW });
+  const h = await tok(request, { realm: 'tenant', tenant_id: 'namwon', login: 'lxadmin@lx.or.kr', site: 'gov', password: PW });
   const list = await (await request.get(API + '/survey/findings?rule=R1&priority=A&limit=5', { headers: h })).json();
   expect(list.items).toHaveLength(5);
   expect(list.total.value).toBe(759);
@@ -61,7 +61,7 @@ test('오류 형식 3 — {error:{code,message},request_id}', async ({ request }
   const gj = await g.json();
   expect(gj.error.code).toBe('unauthorized');
   expect(gj.request_id).toMatch(/^req_/);
-  const h = await tok(request, { realm: 'tenant', tenant_id: 'namwon', login: 'namwon-manager', password: PW });
+  const h = await tok(request, { realm: 'tenant', tenant_id: 'namwon', login: 'lxadmin@lx.or.kr', site: 'gov', password: PW });
   const nf = await request.get(API + '/survey/findings/f_R1_0000000000000000000', { headers: h });
   expect(nf.status()).toBe(404);
   expect((await nf.json()).error.code).toBe('not_found');

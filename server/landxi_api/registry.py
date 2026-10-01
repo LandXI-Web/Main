@@ -166,13 +166,16 @@ async def decide_model(body: dict, request: Request):
         ar = await conn.fetchrow("SELECT id, requested_by FROM approvals WHERE subject_type='model' AND subject_id=$1 AND state='pending' ORDER BY at DESC LIMIT 1", mid)
         if not ar:
             raise ApiError("not_found", "승인 대기 중인 등록 요청이 없습니다")
-        from .approvals import check_decider      # 결재함과 같은 규칙: 반려 = 사유 필수 · 요청한 사람 ≠ 결정하는 사람(impl-1)
-        check_decider(p, ar["requested_by"], dec, body.get("reason"))
+        from .approvals import SOLO_NOTE, check_decider, solo_admin   # 결재함과 같은 규칙: 반려 = 사유 필수 · 요청한 사람 ≠ 결정하는 사람(impl-1)
+        solo = bool(ar["requested_by"]) and ar["requested_by"] == p.user_id and await solo_admin(conn, p)   # 관리자 계정 하나(10-01) — 스스로 결재 · 기록
+        check_decider(p, ar["requested_by"], dec, body.get("reason"), solo=solo)
         aid = ar["id"]
-        await conn.execute("UPDATE approvals SET state='decided', decision=$2, decided_by=$3, decided_at=now(), reason=coalesce($4, reason) WHERE id=$1",
-                           aid, dec, p.user_id, body.get("reason"))
+        await conn.execute("UPDATE approvals SET state='decided', decision=$2, decided_by=$3, decided_at=now(), reason=coalesce($4, reason), "
+                           "payload = CASE WHEN $5 THEN coalesce(payload,'{}'::jsonb) || '{\"single_admin\": true}'::jsonb ELSE payload END WHERE id=$1",
+                           aid, dec, p.user_id, body.get("reason"), solo)
         await conn.execute("UPDATE models SET status=$2 WHERE id=$1", mid, "registered" if dec == "approve" else "candidate")
-        await audit(conn, p, f"approval.{dec}", aid, {"subject_type": "model", "subject_id": mid}, {"effect": {"model": mid}})
+        await audit(conn, p, f"approval.{dec}", aid, {"subject_type": "model", "subject_id": mid},
+                    {"effect": {"model": mid}, **({"single_admin": True, "note": SOLO_NOTE} if solo else {})})
         r = await conn.fetchrow(f"SELECT {MODEL_COLS} FROM models WHERE id=$1", mid)
     from .jobs import ops_event
     await ops_event("approval.decided", {"approval_id": aid, "subject_type": "model", "subject_id": mid, "decision": dec, "by": p.user_id,

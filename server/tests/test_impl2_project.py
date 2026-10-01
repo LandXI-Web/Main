@@ -8,7 +8,7 @@ import httpx
 import psycopg
 import pytest
 
-from conftest import B, H, _login
+from conftest import B, H, STAFF_ID, _login
 from landxi_api import config
 
 SAMPLE = "smp_94f1ab120e"          # 비닐하우스 학습 표본(09-30 원스톱 학습 · 등록된 모델이 이 표본으로 학습됐다)
@@ -70,7 +70,7 @@ def stage(p, key):
 def test_staff_makes_project_directly(live, tok, made):
     """직원이 바로 만든다(관리자 승인 없음) · 입력 세 칸 · 프로젝트장 = 만든 직원 · 단계 6 · '내 프로젝트'에 한 줄."""
     p = made()
-    assert p["state"] == "active" and p["lead"]["id"] == "u_lx_staff" and p["mine"] is True
+    assert p["state"] == "active" and p["lead"]["id"] == STAFF_ID and p["mine"] is True
     assert [s["key"] for s in p["stages"]] == ["ingest", "label", "train", "review", "publish", "ops"]
     assert p["regions"][0]["code"] == "52190" and p["regions"][0]["name"] == "남원시"
     assert p["round"]["value"] == 1 and p["can"]["publish"] is True
@@ -188,7 +188,7 @@ def test_lead_change_is_admin_only(live, tok, made, other):
     assert httpx.patch(B + f"/projects/{p['id']}", headers=H(tok["staff"]), json={"lead_id": OTHER}, timeout=30).status_code == 403
     r = httpx.patch(B + f"/projects/{p['id']}", headers=H(tok["admin"]), json={"lead_id": OTHER}, timeout=30)
     assert r.status_code == 200, r.text
-    assert r.json()["lead"]["id"] == OTHER and "u_lx_staff" in [m["id"] for m in r.json()["members"]]
+    assert r.json()["lead"]["id"] == OTHER and STAFF_ID in [m["id"] for m in r.json()["members"]]
 
 
 def test_archive_moves_out_of_mine(live, tok, made):

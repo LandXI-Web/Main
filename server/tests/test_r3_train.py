@@ -463,7 +463,7 @@ def test_model_list_base_is_job_record(live, tok):
 
 def test_screen_fixes_static():
     """배포 지도 표식 = 지역마다 자기 자리(마커 위치를 CSS 가 덮지 않음) · 적용 화면에 좌표계 코드·색 코드 글자 0 ·
-    관리자 계정이 'LX 직원' 문으로 들어오면 LX 직원 대시보드 · 관리자 모델 교체 = 실제로 분석에 쓴 모델."""
+    관리자 계정이 LX 직원 입구(app)로 들어오면 LX 직원 대시보드(입구별 첫 화면 표 — 역할 탭 · '문' 대신 입구 · 원칙 27) · 관리자 모델 교체 = 실제로 분석에 쓴 모델."""
     v3 = Path(__file__).resolve().parents[2] / "landxi" / "v3"
     css = (v3 / "lx-deploy/lx-deploy.css").read_text(encoding="utf-8")
     pin = next(ln for ln in css.splitlines() if ln.startswith(".dp-pin{"))
@@ -473,7 +473,9 @@ def test_screen_fixes_static():
     app = (v3 / "lx-deploy/app.js").read_text(encoding="utf-8")
     assert "placeholder: '#RRGGBB'" not in app and "CRS_WORD[o] || o" in app and "/deploy-fit?region=" in app
     login = (v3 / "login/auth.js").read_text(encoding="utf-8")
-    assert "door === 'staff' && key === 'lx/admin' ? 'lx/staff' : key" in login and "await enter(s, w);" in login
+    gate = (v3 / "kit/auth-gate.js").read_text(encoding="utf-8")
+    assert "landingFor({ key }, SITE)" in login and "await enter(s);" in login
+    assert "LANDING_AT = { app: { 'lx/admin': 'lx-console' } }" in gate
     ops = (v3 / "ops-infra/js/data.js").read_text(encoding="utf-8")
     assert "d.flow?.model?.id" in ops
 

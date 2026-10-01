@@ -63,7 +63,7 @@ test.describe('구현 2차 — 검토 요청 · 주고받기 · 알림', () => {
     // 2) LX 관리자(admin 입구) — 알림 칸에 새 요청 · '검토 요청'에서 모든 요청을 본다
     const ac = await ctx(); const ap = await ac.newPage();
     ap.on('pageerror', (e) => errs.push('admin ' + e));
-    await frontDoor(ap, BASE, 'lxadmin', 'admin');
+    await frontDoor(ap, BASE, 'lxadmin@lx.or.kr', 'admin');
     await expect(ap.locator('.k-bell-n')).toBeVisible({ timeout: 20000 });
     await ap.locator('.k-rail-i', { hasText: '검토 요청' }).click();
     await expect(ap).toHaveURL(/\/lx-inbox\//);
@@ -73,7 +73,7 @@ test.describe('구현 2차 — 검토 요청 · 주고받기 · 알림', () => {
     // 3) LX 직원(app 입구) — 알림 칸 숫자 → 목록 → 그 대화 → 한 줄 + 판정 'AI 오류'
     const sc = await ctx(); const sp = await sc.newPage();
     sp.on('pageerror', (e) => errs.push('staff ' + e));
-    await frontDoor(sp, BASE, 'lx-staff', 'app');
+    await frontDoor(sp, BASE, 'test@lx.or.kr', 'app');
     const n = sp.locator('.k-bell-n');
     await expect(n).toBeVisible({ timeout: 20000 });
     await sp.locator('.k-bell').click();

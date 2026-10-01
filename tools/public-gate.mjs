@@ -231,6 +231,7 @@ http.createServer((req, res) => {
     return serveFile(req, res, p);
   });
   if (site === 'gov' && p === '/') return serveGovHome(res);                                  // 기관 입구 첫 주소 = 기관 고르기 목록(Land-XI 로그인 아님)
+  if (site === 'gov' && /^\/landxi\/v3\/login(\/(index\.html)?)?$/.test(p)) return send(res, 302, '', { location: '/' + qStr() });   // Land-XI 로그인은 LX 전용(원칙 78) — 기관 입구는 기관 목록으로
   if (site === 'gov' || !site) {                                                             // 옛 모양 /{기관}/ — gov 입구는 기관 주소로 넘기고, 이 PC 관문 직접 접속은 그 자리에서
     const o = orgPath(p);
     if (o) return loadOrgs().then((ids) => {
@@ -240,7 +241,8 @@ http.createServer((req, res) => {
       return serveGovHome(res);
     });
   }
-  if (p === '/' || p === '/landxi' || p === '/landxi/' || p === '/landxi/v3' || p === '/landxi/v3/') return send(res, 302, '', { location: HOME });   // app · admin 입구 = 로그인(LX 전용 창구)
+  if (p === '/' || p === '/landxi' || p === '/landxi/' || p === '/landxi/v3' || p === '/landxi/v3/')   // 입구 첫 화면 — app = 메인 소개 · admin = 관리자 로그인(sites.js home 한 곳)
+    return send(res, 302, '', { location: (site && globalThis.LX_SITES[site]?.home) || HOME });
   if (p === '/favicon.ico') return send(res, 204);
   if (p === '/landxi/proto/env.js') return send(res, 200, envJs(), { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-store' });
   serveFile(req, res, p);

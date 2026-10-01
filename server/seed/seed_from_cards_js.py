@@ -138,7 +138,7 @@ def seed_core(conn, dump):
     for vid, card, ver, mids, log_ in CV:
         mods = {"core": CORE, "ext": ext_modules(dump, ext_of.get(card))}
         cur.execute("INSERT INTO card_versions(id, card_id, version, model_ids, modules, changelog, approved_by, approved_at) VALUES "
-                    "(%s,%s,%s,%s,%s,%s,'u_lx_admin',now()) ON CONFLICT (id) DO UPDATE SET model_ids=EXCLUDED.model_ids, modules=EXCLUDED.modules, "
+                    "(%s,%s,%s,%s,%s,%s,'u_mail_lxadmin',now()) ON CONFLICT (id) DO UPDATE SET model_ids=EXCLUDED.model_ids, modules=EXCLUDED.modules, "
                     "changelog=EXCLUDED.changelog", (vid, card, ver, mids, json.dumps(mods, ensure_ascii=False), log_))
     deploys = []
     for d in dump["DEPLOYS"]:
@@ -174,7 +174,7 @@ def seed_core(conn, dump):
              json.dumps(mods, ensure_ascii=False), cs, ps, year, sh, json.dumps(scale, ensure_ascii=False) if scale else None))
         if stage == "ga":
             cur.execute("INSERT INTO approvals(id, subject_type, subject_id, requested_by, decided_by, decision, reason, at) VALUES "
-                        "(%s,'deploy',%s,'u_lx_admin','u_lx_admin','approve','시드',now()) ON CONFLICT (id) DO NOTHING", (f"ap_seed_{did}", did))
+                        "(%s,'deploy',%s,'u_mail_lxadmin','u_mail_lxadmin','approve','시드',now()) ON CONFLICT (id) DO NOTHING", (f"ap_seed_{did}", did))
     # 다른 지역에 적용으로 생긴 배포본은 시드가 지운다(재현 가능하게) — 시드 목록 밖 deploys
     seed_ids = [d[0] for d in deploys]
     cur.execute("DELETE FROM deploys WHERE id <> ALL(%s)", (seed_ids,))
@@ -241,6 +241,13 @@ def seed_quotas_accounts_nodes(conn):
         cur.execute("INSERT INTO tenant_users(id, tenant_id, login, pw_hash, role, status, name) VALUES (%s,%s,%s,%s,%s,'active',%s) ON CONFLICT (id) "
                     "DO UPDATE SET login=EXCLUDED.login, pw_hash=EXCLUDED.pw_hash, role=EXCLUDED.role, name=EXCLUDED.name",
                     (u["id"], u["tenant_id"], u["login"], pw, u["role"], u["name"]))
+    # 옛 아이디(원칙 77 — 메일 아이디로 옮김) — 있으면 사용 중지로만(만들지 않는다 · 지우지 않는다) · 남은 세션 삭제
+    off = acc.get("disabled") or {}
+    for tbl, realm in (("lx_users", "lx"), ("tenant_users", "tenant")):
+        ids = off.get(tbl) or []
+        if ids:
+            cur.execute(f"UPDATE {tbl} SET status='disabled' WHERE id = ANY(%s)", (ids,))
+            cur.execute("DELETE FROM sessions WHERE realm=%s AND user_id = ANY(%s)", (realm, ids))
     for n in config.load_yaml("pools")["nodes"]:
         cur.execute("INSERT INTO nodes(id, hostname, role, gpus, pool, joined_at, state, note) VALUES (%s,%s,%s,%s,%s,now(),%s,%s) ON CONFLICT (id) DO UPDATE "
                     "SET role=EXCLUDED.role, gpus=EXCLUDED.gpus, pool=EXCLUDED.pool, state=EXCLUDED.state, note=EXCLUDED.note",

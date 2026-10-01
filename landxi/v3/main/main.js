@@ -30,7 +30,8 @@ sizeTracks();
 
 /* ── 창 자리(뷰포트 좌표 · 판이 붙어 있을 때) ─────────────────── */
 function L() {
-  const W = innerWidth, H = innerHeight, m = W <= 640, M = m ? 20 : 48, top = 64;
+  const W = innerWidth, H = innerHeight, m = W <= 640, M = m ? 20 : 48;
+  const top = parseFloat(getComputedStyle(document.body).getPropertyValue('--mast')) || 64;   // 마스트 높이(main.css .m --mast 한 곳)
   return {
     W, H, m,
     full: { x: 0, y: top, w: W, h: H - top, r: 0 },
@@ -205,10 +206,11 @@ function frame(now) {
     const t = T[k], r = t.el.getBoundingClientRect();
     t.rect = r;
     t.tx = clamp(-r.top / (r.height - H)) * t.sum;
-    t.x = RM() ? t.tx : Math.abs(t.tx - t.x) < 0.002 ? t.tx : lerp(t.x, t.tx, 0.14);
+    t.x = RM() || S.snap ? t.tx : Math.abs(t.tx - t.x) < 0.002 ? t.tx : lerp(t.x, t.tx, 0.14);   // 메뉴로 바로 이동(S.snap) = 지나가는 장면 없이 목적지 상태로
     t.vis = r.top < H && r.bottom > 0;
     t.top = t.frame.getBoundingClientRect().top;   // 판이 붙기 전(+) · 떠난 뒤(−)
   }
+  if (S.snap) S.snap--;                            // 바로 이동 뒤 몇 장(스크롤 값이 자리 잡을 때까지)만 목적지에 붙인다
   let win = null, cam = null, bg = '#fff', inv = false;
   S.want = {};
   const C = S.cams || cams();
@@ -627,12 +629,15 @@ function deferPrefetch() {
   io.observe($('#ch4'));
 }
 
+/* 메인 안 이동(서비스 보기 · 서비스 · 활용 사례 · 처음으로) — 부드러운 스크롤 없이 바로 그 자리로(10-01 사용자 "휠 스크롤 역순으로 화면이 빠르게 넘어가는데,
+   이런 거 없이 그냥 바로"). 스크롤 장면(트랙)도 따라 미끄러지지 않고 목적지 장면 상태로 바로(S.snap — frame 의 lerp 를 건너뛴다). */
 function anchors() {
-  const go = (el, off = 0) => { const y = el.getBoundingClientRect().top + scrollY + off; scrollTo({ top: y, behavior: RM() ? 'auto' : 'smooth' }); };
+  const jump = (y) => { S.snap = 3; scrollTo({ top: Math.max(0, y), behavior: 'instant' }); };
+  const go = (el, off = 0) => jump(el.getBoundingClientRect().top + scrollY + off);
   document.addEventListener('click', (e) => {
     const a = e.target.closest('a[href^="#"]'); if (!a) return;
     const id = a.getAttribute('href').slice(1);
-    if (id === 'top') { e.preventDefault(); scrollTo({ top: 0, behavior: RM() ? 'auto' : 'smooth' }); }
+    if (id === 'top') { e.preventDefault(); jump(0); }
     else if (id === 'ch4') { e.preventDefault(); go($('#ch4')); }
     else if (id === 'ch5') { e.preventDefault(); go($('#trackB'), innerHeight * 0.35); }
   });

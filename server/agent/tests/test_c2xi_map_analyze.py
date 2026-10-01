@@ -197,16 +197,18 @@ def test_read_rgb_low_zoom_uses_fast_path():
             assert src2.shape == (3, 80, 80)
 
 
-def test_tenant_cog_items_only_in_scope():
+def test_tenant_cog_items_only_shared():
+    """10-01 사용자 결정 — 기관에 공유한 원본 영상만 그 기관 지도에(서명 동적 타일). 공유 안 된 영상은 관할 안이어도 0."""
     from landxi_api.catalog import TENANT_RAW_IMAGERY, tenant_cog_items
-    assert TENANT_RAW_IMAGERY is False                     # 기본 = 사용자 결정(09-24 R6) — 기관 빌드에 원본 영상 0
+    assert TENANT_RAW_IMAGERY == "shared"                  # 09-24 R6(기관 빌드에 원본 0) → 10-01 '공유하면 그 기관 지도에도'
     items = [{"id": "img-a", "role": "imagery", "tier": "raw", "source": "cog", "sgg_cd": "52190", "path": "_work/a.vrt", "signed": False},
              {"id": "img-b", "role": "imagery", "tier": "raw", "source": "cog", "sgg_cd": "12130", "path": "_work/b.vrt", "signed": False},
              {"id": "img-c", "role": "imagery", "tier": "raw", "source": "pmtiles", "set": "imagery/img-c", "sgg_cd": "52190", "path": "x", "signed": True},
              {"id": "ext", "role": "imagery", "source": "external", "sgg_cd": None}]
-    got = tenant_cog_items(items, "namwon", set())
+    assert tenant_cog_items(items, "namwon", set()) == []                          # 공유 없음 = 0
+    got = tenant_cog_items(items, "namwon", set(), {"img-a", "img-c"})
     assert [i["id"] for i in got] == ["img-a", "img-c"] and got[0]["signed"] is True and got[0]["path"] is None
-    assert got[1]["source"] == "cog" and got[1]["set"] == "cog/img-c"            # LX 전용 PMTiles 세트는 기관에 주지 않는다
+    assert got[1]["source"] == "cog" and got[1]["set"] == "cog/img-c"            # LX 전용 PMTiles 세트는 기관에 주지 않는다 — 동적 타일로
 
 
 # ── 1차 실증 보완: 분석 → 실태조사 잇기 · 지금 지역 차트 · XI맵 열기 ─────────────────────────────
@@ -295,7 +297,7 @@ def test_chain_tick_builds_once_per_done_job():
     calls = []
 
     async def cands():
-        return [{"id": "job_D", "sgg": "52770", "submitted_by": "u_lx_staff"}]
+        return [{"id": "job_D", "sgg": "52770", "submitted_by": "u_mail_test"}]
 
     async def build(x):
         calls.append(x["id"])

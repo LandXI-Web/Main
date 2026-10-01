@@ -175,6 +175,7 @@ async def services(request: Request, gsd: float | None = None):
         for d in rows:
             f = await _fits(conn, d, gsd)
             items.append({"id": d["id"], "name": _svc_name(d["cname"]), "year": d["year"], "fits": f["fits"],
+                          "card": d["card_id"], "sgg_cd": d["sgg_cd"],              # 서비스 대시보드(카드 · 시군구) → 이 의뢰 화면(?service=배포본)
                           "bbox": [round(float(v), 6) for v in d["bb"]] if d["bb"] else None})
         org = await _tenant_name(conn, p.tenant_id)
     return {"items": items, "org": org, "area": {"bbox": _scope_bbox(p)}, "as_of": now_iso()}
@@ -1143,7 +1144,7 @@ async def timepoints(request: Request, service: str):
 
 
 async def basis(conn, r) -> list:
-    """결재 판단 근거 — 범위 · 면적 · 영상 · 예상 시간 · 분석 모델 · 한도 남은 양(지금 값). 지금 있는 값만(없으면 줄을 만들지 않는다)."""
+    """결재 판단 근거 — 범위 · 면적 · 영상 · 예상 시간 · 분석 모델 · 대기열 · 이 기관 이번 달 사용(막는 값이 아니라 보여 주는 값). 지금 있는 값만(없으면 줄을 만들지 않는다)."""
     from . import quota as Q
     m = dict(r["meta"] or {})
     rows: list = []
@@ -1233,7 +1234,7 @@ def after_decided(rid: str, decision: str, user: str, notify: bool = True):
     return task
 
 
-FAIL_LINE = {"quota_exceeded": None, "too_large": "범위가 한 번에 분석하기에 너무 넓습니다 — LX 담당자가 나눠 분석합니다",
+FAIL_LINE = {"too_large": "범위가 한 번에 분석하기에 너무 넓습니다 — LX 담당자가 나눠 분석합니다",
              "model_input_mismatch": "이 영상에 맞는 분석 모델이 없습니다", "no_imagery": "영상을 찾을 수 없습니다",
              "imagery_unavailable": "영상 파일을 읽을 수 없습니다", "out_of_scope": "관할 밖 영상입니다",
              "aoi_outside_footprint": "분석 범위가 영상 밖입니다", "aoi_too_large": "범위가 한 번에 분석하기에 너무 넓습니다 — LX 담당자가 나눠 분석합니다"}
@@ -1313,7 +1314,7 @@ async def _register_upload_imagery(r) -> str:
 
 
 async def start_analysis(rid: str, user: str) -> None:
-    """승인된 의뢰 → 영상 · 모델(배포 흐름과 같은 모델 고르기) → 관할 확인 → 기관 한도 확인 → 기존 분석 작업 대기열."""
+    """승인된 의뢰 → 영상 · 모델(배포 흐름과 같은 모델 고르기) → 관할 확인 → 기존 분석 작업 대기열(사용을 막는 값 없음 — 작업 크기 · 전력 같은 장비 조건만)."""
     from . import jobs as J
     from .deploys import choose_model
     try:
@@ -1352,7 +1353,7 @@ async def start_analysis(rid: str, user: str) -> None:
         q = await J.build_quote(lx, body)
         q["_tenant"] = r["tenant_id"]
         # 기관 한도로는 막지 않는다(사용자 7차 답) — 관리자가 승인한 분석은 대기열 순번대로. 막는 것은 작업 크기 · 전력(두 장 동시 고부하) 같은 기계 조건만
-        reasons = [x for x in (q.get("reasons") or []) if x != "quota_exceeded"]
+        reasons = list(q.get("reasons") or [])
         if reasons:
             await _fail(rid, reasons[0], FAIL_LINE.get(reasons[0]), ",".join(reasons))
             return
@@ -1364,6 +1365,6 @@ async def start_analysis(rid: str, user: str) -> None:
                                user, rid, {"job_id": job["id"], "imagery_id": iid, "model_id": model["id"], "tenant_id": r["tenant_id"]})
         await J.tenant_event(r["tenant_id"], "request.changed", {"request_id": rid, "state": "analyzing"})
     except ApiError as e:
-        await _fail(rid, e.code, FAIL_LINE.get(e.code) or (e.message if e.code == "quota_exceeded" else None), e.message)
+        await _fail(rid, e.code, FAIL_LINE.get(e.code), e.message)
     except Exception as e:  # noqa: BLE001 — 흐름 오류는 '분석하지 못함' + 기록
         await _fail(rid, "error", None, repr(e))

@@ -26,7 +26,8 @@ J1 = {"kind": "infer", "model_id": "car_v2_obb", "imagery_id": "axis-iksan-hwang
 
 
 def login(c: httpx.Client, role: str = "staff") -> str:
-    r = c.post(B + "/auth/login", json={"realm": "lx", "login": f"lx-{role}", "password": config.DEV_PASSWORD})
+    login = {"staff": "test@lx.or.kr", "admin": "lxadmin@lx.or.kr", "sales": "sales@lx.or.kr"}.get(role, role)   # 아이디 = 메일 주소(원칙 77)
+    r = c.post(B + "/auth/login", json={"realm": "lx", "login": login, "password": config.DEV_PASSWORD})
     r.raise_for_status()
     return r.json()["token"]
 

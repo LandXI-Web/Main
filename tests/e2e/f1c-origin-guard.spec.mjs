@@ -31,7 +31,7 @@ test('serve-ops 허용 접두 밖은 404 · 안은 200 · Range 206', async () =
 });
 
 test('/events/ops — 8702 Origin + admin 만(4173 Origin · staff · 토큰 없음 = 403)', async () => {
-  const admin = await login('lx-admin'); const staff = await login('lx-staff');
+  const admin = await login('lxadmin@lx.or.kr'); const staff = await login('test@lx.or.kr');
   const sse = (tok, origin) => fetch(`${B}/api/v1/events/ops?access_token=${tok || ''}`, { headers: origin ? { origin } : {} });
   expect((await sse(admin.token, 'http://localhost:4173')).status).toBe(403);
   expect((await sse(staff.token, OPS)).status).toBe(403);
@@ -43,7 +43,7 @@ test('/events/ops — 8702 Origin + admin 만(4173 Origin · staff · 토큰 없
 test('staff 로그인은 관제 진입 불가 — 문구 한 줄 · 세션 저장 안 함', async ({ page }) => {
   await page.goto(OPS + '/landxi/ops/login.html');
   await page.waitForFunction(() => document.documentElement.dataset.lx === 'ready');
-  await page.fill('#id', 'lx-staff'); await page.fill('#pw', PW); await page.click('#go');
+  await page.fill('#id', 'test@lx.or.kr'); await page.fill('#pw', PW); await page.click('#go');
   await expect(page.locator('#msg')).toHaveText('LX 관리자 전용입니다');
   expect(await page.evaluate(() => localStorage.getItem('lx_api_session'))).toBeNull();
   await page.goto(OPS + '/landxi/ops/infra.html');

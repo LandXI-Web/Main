@@ -33,7 +33,7 @@ async function readSse(url, { headers = {}, stopAt = 'snapshot.ready', max = 1e9
 
 test('순서 · 재개(Last-Event-ID) · 첫 shard.done 실측', async ({ request }) => {
   test.setTimeout(180000);
-  const tok = (await (await request.post(API + '/api/v1/auth/login', { data: { realm: 'lx', login: 'lx-staff', password: PW } })).json()).token;
+  const tok = (await (await request.post(API + '/api/v1/auth/login', { data: { realm: 'lx', login: 'test@lx.or.kr', password: PW } })).json()).token;
   const h = { authorization: 'Bearer ' + tok };
   const t0 = Date.now();
   const sub = await request.post(API + '/api/v1/jobs', { headers: h, data: { kind: 'infer', model_id: 'car_v2_obb', imagery_id: 'axis-iksan-hwangdeung', aoi: AOI, options: { chip: 1024, overlap: 0.125, conf: 0.25 }, demo: false, priority: 0 } });
@@ -74,7 +74,7 @@ test('순서 · 재개(Last-Event-ID) · 첫 shard.done 실측', async ({ reques
 
 test('/events/ops — 관리자 · 폴러 스트림 tail(gpu.sample · queue.sample)', async ({ request }) => {
   test.setTimeout(60000);
-  const tok = (await (await request.post(API + '/api/v1/auth/login', { data: { realm: 'lx', login: 'lx-admin', password: PW } })).json()).token;
+  const tok = (await (await request.post(API + '/api/v1/auth/login', { data: { realm: 'lx', login: 'lxadmin@lx.or.kr', password: PW } })).json()).token;
   const evs = await readSse(`${API}/api/v1/events/ops?access_token=${tok}`, { max: 3, stopAt: '__never__' });
   const names = new Set(evs.map((e) => e.event));
   expect(names.has('gpu.sample') || names.has('queue.sample')).toBeTruthy();

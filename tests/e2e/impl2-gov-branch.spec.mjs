@@ -17,7 +17,7 @@ const PW = process.env.LX_PW || (fs.existsSync(ENV) ? (/DEV_PASSWORD=(.+)/.exec(
 const up = async (request) => { try { return (await request.get(ORG('namwon') + '/api/v1/brand/namwon', { timeout: 15000 })).ok(); } catch { return false; } };
 
 async function adminToken(request) {
-  const r = await request.post(API + '/auth/login', { data: { realm: 'lx', login: 'lx-admin', password: PW } });
+  const r = await request.post(API + '/auth/login', { data: { realm: 'lx', login: 'lxadmin@lx.or.kr', password: PW } });
   return (await r.json()).token;
 }
 /** 브랜드 한 벌을 처음 값으로(시험이 고친 것 되돌리기) */
@@ -27,7 +27,7 @@ async function restore(request, t, b) {
     platform: b.platform, short: b.short, mark_text: b.mark.text.join('\n'), accent: b.color.accent, tint: b.color.tint, contact: b.contact,
     intro: { headline: b.intro.headline, lines: b.intro.lines, items: b.intro.items } } });
 }
-async function signInAtMain(page, org, id = 'namwon-manager') {
+async function signInAtMain(page, org, id = 'lxadmin@lx.or.kr') {
   await page.goto(ORG(org) + '/', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.__govHome?.ready, null, { timeout: 30000 });
   await page.fill('.gh-form input[name=login]', id);
@@ -57,7 +57,7 @@ test.describe('구현 2차 · 기관 분기 플랫폼(기관 주소)', () => {
     expect((await request.get(ORG('no-such-org') + '/', { maxRedirects: 0 })).status()).toBe(404);   // 서버 기관 목록에 없는 이름
     const lx = await request.get(ORG('namwon') + '/landxi/v3/login/', { maxRedirects: 0 });   // 기관 주소에서 Land-XI 로그인 아님
     expect(lx.status()).toBe(302); expect(new URL(lx.headers().location, ORG('namwon')).pathname).toBe('/');
-    const cross = await request.post(ORG('namwon') + '/api/v1/auth/login', { data: { site: 'gov', realm: 'tenant', tenant_id: 'gwangju-jeonnam', login: 'gj-manager', password: PW } });
+    const cross = await request.post(ORG('namwon') + '/api/v1/auth/login', { data: { site: 'gov', realm: 'tenant', tenant_id: 'gwangju-jeonnam', login: 'lxadmin@lx.or.kr', password: PW } });
     expect(cross.status()).toBe(400);                                                         // 남원 주소에서 다른 기관 계정 0
   });
 
@@ -113,7 +113,7 @@ test.describe('구현 2차 · 기관 분기 플랫폼(기관 주소)', () => {
 
   test('광주전남 — 서비스가 하나(해양쓰레기)라 로그인하면 그 서비스 대시보드로 · 광역 전체/시·군·구 한 칸', async ({ page }) => {
     test.setTimeout(120000);
-    await signInAtMain(page, 'gwangju-jeonnam', 'gj-manager');
+    await signInAtMain(page, 'gwangju-jeonnam', 'lxadmin@lx.or.kr');
     await page.waitForURL((u) => u.searchParams.get('service') === 'card-marine', { timeout: 30000 });
     await page.waitForFunction(() => window.__govSelect?.ready && window.__govSelect.view === 'svc', null, { timeout: 30000 });
     await expect(page.locator('.k-mast .gs-plat')).toHaveText('전남광주 AI 플랫폼');
@@ -154,7 +154,7 @@ test.describe('구현 2차 · 기관 분기 플랫폼(기관 주소)', () => {
     test.setTimeout(150000);
     const orig = await (await request.get(`${API}/brand/gwangju-jeonnam`)).json();
     try {
-      await frontDoor(page, ADMIN, 'lxadmin', 'admin');
+      await frontDoor(page, ADMIN, 'lxadmin@lx.or.kr', 'admin');
       await page.goto(ADMIN + '/landxi/v3/ops-infra/#/tenants');
       await page.locator('.org[data-id="gwangju-jeonnam"] .brand-b').click();
       await page.waitForSelector('.brand-dr form.bf');

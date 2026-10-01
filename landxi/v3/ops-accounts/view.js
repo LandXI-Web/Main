@@ -1,6 +1,7 @@
 /* 계정 화면 — LX 관리자(ops-accounts · 전부)와 기관 관리자(gov-accounts · 자기 기관만)가 같은 모양으로 쓴다(원칙 43 UI/UX 통일성).
    탭 다섯: 가입 신청 · 비밀번호 재설정 · 계정 · 로그인 실패 · 처리 기록. 목록 → 행을 누르면 오른쪽 서랍(K5) → 승인 · 반려(사유 필수 — 결재함과 같은 모양).
    서버가 정본(server/landxi_api/accounts.py): 관할(기관 관리자 = 자기 기관) · 내 계정 스스로 바꾸기 0 · 누가 처리했는지 기록.
+   LX 관리자는 기관 가입 신청을 보기만 한다(원칙 72 — 승인 · 반려는 그 기관 관리자 · 서버가 can_decide 로 알린다). 옛 아이디는 '사용 중지'(바꾸기 0).
    mountAccounts(host, { who, scope: 'lx' | 'tenant' }) — host = 셸 판(S.main). 주소 끝 #signup · #reset · #users · #fails · #log 로 탭을 바로 연다. */
 import { drawer, closeAll } from '../kit/panel.js';
 import { table } from '../kit/table.js';
@@ -20,7 +21,8 @@ const NEW_ROLE = { lx: 'LX 직원', tenant: '부서 사용자' };
 const hm = (s) => { const d = s ? new Date(s) : null; return d && !Number.isNaN(d.getTime()) ? `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` : ''; };
 const when = (s) => (s ? `${ymd(s)} ${hm(s)}` : '—');
 const orgOf = (x) => [x.org, x.dept].filter(Boolean).join(' · ') || '—';
-const stateOf = (u) => (u.status === 'locked' ? ['잠김', 'warn'] : u.temp_locked ? ['10분 잠김', 'warn'] : u.must_change ? ['새 비밀번호 대기', 'wait'] : ['사용 중', '']);
+const stateOf = (u) => (u.status === 'disabled' ? ['사용 중지', 'gap'] : u.status === 'locked' ? ['잠김', 'warn'] : u.temp_locked ? ['10분 잠김', 'warn']
+  : u.must_change ? ['새 비밀번호 대기', 'wait'] : ['사용 중', '']);
 
 export function mountAccounts(host, { who, scope = 'lx' } = {}) {
   const LX = scope === 'lx';
@@ -143,7 +145,10 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
     openKey = item.key; mark();
     const body = h('div.acc-sheet');
     const title = item.name || item.login;
-    if (cur === 'signup') {
+    if (cur === 'signup' && item.can_decide === false) {          // LX 관리자가 보는 기관 가입 신청 — 보기만(원칙 72)
+      body.append(dl([['메일 주소', item.login], ['소속', item.org], ['부서', item.dept], ['신청일', when(item.created_at)], ['개인정보 동의', when(item.consent_at)]]),
+        h('p.acc-mine', { text: '기관 가입 신청은 그 기관 관리자가 승인합니다.' }));
+    } else if (cur === 'signup') {
       body.append(dl([['메일 주소', item.login], ['소속', item.org], ['부서', item.dept], ['신청일', when(item.created_at)], ['개인정보 동의', when(item.consent_at)]]),
         h('p.acc-help', { text: `승인하면 ${NEW_ROLE[item.realm]} 계정이 열립니다.` }),
         acts(async (reason) => { await api(`/accounts/signup/${encodeURIComponent(item.id)}/decide`, { method: 'POST', body: { decision: 'reject', reason } }); await done('반려했습니다'); },
@@ -164,7 +169,8 @@ export function mountAccounts(host, { who, scope = 'lx' } = {}) {
       const [st] = stateOf(item);
       body.append(dl([['아이디', item.login], ['소속', item.org], ['부서', item.dept], ['역할', item.role_ko], ['상태', st],
         ['최근 로그인', item.last_login ? when(item.last_login) : '없음'], ['만든 날', item.created_at ? ymd(item.created_at) : '']]));
-      if (item.mine) body.append(h('p.acc-mine', { text: '내 계정은 다른 관리자가 바꿉니다.' }));
+      if (item.status === 'disabled') body.append(h('p.acc-mine', { text: '사용 중지된 계정입니다. 메일 아이디 계정으로 옮겼습니다.' }));
+      else if (item.mine) body.append(h('p.acc-mine', { text: '내 계정은 다른 관리자가 바꿉니다.' }));
       else body.append(userActs(item, body));
     }
     sheet = drawer({ title, body, host, slot: 'account', onClose: () => { openKey = null; mark(); } });

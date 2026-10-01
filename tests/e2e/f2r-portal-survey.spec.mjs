@@ -111,7 +111,7 @@ test('실태조사가 서지 않는 카드(도로 안전)는 예전 결과 지�
 test('기관 문 ?next=../xi/…(실태조사) — 기관 로그인 뒤 그리로 간다 · 바깥 주소는 거른다', async ({ page }) => {
   test.setTimeout(60000);
   await page.goto('proto/portal-login-namwon.html?next=' + encodeURIComponent(XI_SURVEY));
-  await page.locator('#pl-id').fill('namwon-manager');
+  await page.locator('#pl-id').fill('lxadmin@lx.or.kr');
   await page.locator('#pl-pw').fill('x');
   await page.locator('.pl-b').click();
   await page.waitForURL(/\/landxi\/xi\/index\.html\?mode=survey/);

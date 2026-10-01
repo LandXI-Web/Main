@@ -80,7 +80,7 @@ export const canon = () => D.deploys.filter((d) => d.tenant_id !== 'lx-demo' && 
 
 const decidedSince = (d, since) => (d.approvals || []).some((a) => new Date(a.at).getTime() >= new Date(since || 0).getTime() - 1000);
 
-export const KIND = { deploy: '배포 승인', rule: '규칙 임계', quota: '한도 변경', port: '다른 지역 적용', model: '모델 등록', card: '서비스 공개', request: '분석 의뢰' };
+export const KIND = { deploy: '배포 승인', rule: '규칙 임계', quota: '사용량 설정 변경', port: '다른 지역 적용', model: '모델 등록', card: '서비스 공개', request: '분석 의뢰' };
 const STAGE_KO = { draft: '초안', shadow: '검증', canary: '시범', ga: '운영', rolled_back: '롤백' };
 
 /** 결재 대기 — 큰 숫자 · 레일 · 결재 표가 모두 이 목록 하나를 센다.
@@ -104,7 +104,7 @@ const byAt = (a, b) => String(b.at || '').localeCompare(String(a.at || ''));
 
 /* 서버 approvals 행(S-9 · GET /approvals) → 같은 항목. 모양: {id, kind: deploy|deploy_ga|rule|quota|model|card, subject{type,id}, title, requested_by,
    requested_by_name, request_reason, mine, at, payload}
-   deploy + payload.action 'port' = 다른 지역 적용 · deploy_ga(카나리 ga 대기) · deploy(그 밖) = 배포 승인 · rule = 규칙 임계 · quota = 한도 변경 ·
+   deploy + payload.action 'port' = 다른 지역 적용 · deploy_ga(카나리 ga 대기) · deploy(그 밖) = 배포 승인 · rule = 규칙 임계 · quota = 사용량 설정 변경(옛 기관 한도 결재 — 지금은 만들지 않음) ·
    model = 모델 등록 · card = 서비스 공개 · request = 기관 영상 분석 의뢰(확인 대장 6차 GF-2 · 판단 근거는 시트가 GET /requests/{id} 로 읽는다) */
 const QDIM = { storage_gb: '저장', gpu_s_month: 'GPU 시간', area_km2_month: '분석 면적', concurrent_jobs: '동시 작업', egress_gb_month: '내보내기', vworld_calls_day: '지도 호출', llm_tokens_month: 'AI 도우미 사용량' };
 /* 한도 값 표기 — 기관 화면(ops-infra DIM)과 같은 단위: GPU 시간은 초 → 시간 */
@@ -159,14 +159,14 @@ function fromServer(r) {
     const now = D.usage.find((u) => u.tenant_id === sid)?.dims || {};
     for (const [dim, v] of Object.entries(dims)) {
       const cur = now[dim] || {};
-      if (v?.hard != null) changes.push([`${QDIM[dim] || '한도'} 한도`, fmtQ(dim, cur.hard), fmtQ(dim, v.hard)]);
-      if (v?.soft != null) changes.push([`${QDIM[dim] || '한도'} 임박 기준`, fmtQ(dim, cur.soft), fmtQ(dim, v.soft)]);
+      if (v?.hard != null) changes.push([`${QDIM[dim] || '사용량'} 설정값`, fmtQ(dim, cur.hard), fmtQ(dim, v.hard)]);
+      if (v?.soft != null) changes.push([`${QDIM[dim] || '사용량'} 알림 기준`, fmtQ(dim, cur.soft), fmtQ(dim, v.soft)]);
     }
     changes = changes.filter(([, a, b]) => a !== b);             // 그대로인 값은 빼고 바뀌는 것만
   }
   changes = changes.filter(([, , b]) => b);
   return { key: kind + ':' + (r.id || sid), id: r.id, kind, kindKo: KIND[kind], target, requester: requesterOf(r, kind, sid), at: r.at, deploy: d, ref: sid, raw: r, changes,
-    why: r.request_reason || '', mine: !!r.mine };
+    why: r.request_reason || '', mine: !!r.mine, canDecide: r.can_decide !== false };
 }
 
 /* ── 할 일(카드) ─────────────────────────── */

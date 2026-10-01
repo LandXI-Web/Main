@@ -387,17 +387,47 @@ async def _one(conn, p: Principal, rid: str):
     return r
 
 
+async def _extra(p: Principal) -> list[dict]:
+    """알림 칸의 다른 할 일(구현 2차 정리 · 화면 잇기) — 지금 처리를 기다리는 것만 센다(처리하면 저절로 빠진다).
+    · 분석 의뢰(확인 대기): LX 관리자 = 모두(결재함) · LX 직원 = 그 의뢰의 담당(lead_user — 서비스 담당 프로젝트장)
+    · 가입 신청 · 비밀번호 재설정 요청: LX 관리자 = LX 직원 가입 신청 + 모든 재설정 요청(지원) · 기관 관리자 = 자기 기관 것(LX 관리자는 기관 가입 승인 0 · 원칙 72)."""
+    out: list[dict] = []
+    async with db(realm="lx") as conn:
+        if p.realm == "lx" and p.role in ("admin", "staff"):
+            rows = await conn.fetch(
+                "SELECT q.id, q.tenant_id, q.created_at, q.meta->>'service' AS svc, t.name AS tname FROM analysis_requests q "
+                "LEFT JOIN tenants t ON t.id = q.tenant_id WHERE q.state='pending'" + ("" if p.is_admin else " AND q.lead_user=$1")
+                + " ORDER BY q.created_at DESC LIMIT 20", *([] if p.is_admin else [p.user_id]))
+            if rows:
+                out.append({"kind": "request", "n": len(rows), "href": "/landxi/v3/ops-core/#/approvals" if p.is_admin else None,
+                            "items": [{"id": r["id"], "title": " · ".join(x for x in (_short_org(r["tname"]), r["svc"]) if x), "at": _iso(r["created_at"])}
+                                      for r in rows[:3]]})
+        mgr = p.realm == "tenant" and p.role == "manager" and p.tenant_id != "lx-demo"
+        if p.is_admin or mgr:
+            w, a = ("realm='lx'", []) if p.is_admin else ("realm='tenant' AND tenant_id=$1", [p.tenant_id])
+            s = await conn.fetchval(f"SELECT count(*) FROM signup_requests WHERE state='pending' AND {w}", *a)
+            w2 = "TRUE" if p.is_admin else "realm='tenant' AND tenant_id=$1"
+            rs = await conn.fetchval(f"SELECT count(*) FROM reset_requests WHERE state='pending' AND {w2}", *a)
+            page = "/landxi/v3/ops-accounts/" if p.is_admin else "/landxi/v3/gov-accounts/"
+            if s:
+                out.append({"kind": "signup", "n": int(s), "href": page + "#signup"})
+            if rs:
+                out.append({"kind": "reset", "n": int(rs), "href": page + "#reset"})
+    return out
+
+
 @router.get("/reviews/notify")
 async def notify(request: Request):
-    """알림 칸 — 새로 온 것(상대가 보낸 말 가운데 아직 안 본 것이 있는 대화) 수 + 최근 대화 6개."""
+    """알림 칸 — 새로 온 것(상대가 보낸 말 가운데 아직 안 본 것이 있는 대화) 수 + 최근 대화 6개 + 다른 할 일(extra — 분석 의뢰 · 가입 신청 · 재설정 요청)."""
     p = principal(request)
     require(p)
     if (p.realm == "lx" and p.role not in ("admin", "staff")) or (p.realm == "tenant" and p.tenant_id == "lx-demo"):
-        return {"n": 0, "items": [], "as_of": now_iso()}
+        return {"n": 0, "items": [], "extra": [], "as_of": now_iso()}
     async with db(p) as conn:
         items = await _list(conn, p, box="all", limit=6)
         c = await _counts(conn, p)
-    return {"n": c["unread"], "items": items, "counts": c, "as_of": now_iso()}
+    extra = await _extra(p)
+    return {"n": c["unread"] + sum(x["n"] for x in extra), "items": items, "counts": c, "extra": extra, "as_of": now_iso()}
 
 
 @router.get("/reviews/{rid}")

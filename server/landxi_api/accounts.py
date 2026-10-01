@@ -12,8 +12,11 @@
 입구(site)는 바깥 주소면 공개 관문이 알린 x-lx-site 가 이기고, 이 PC 안이면 본문 site(없으면 tenant_id 유무로 app/gov).
 
 승인하는 사람(관할 — 서버가 정본 · 원칙 39):
-  LX 직원 신청 · LX 계정 재설정 = LX 관리자 · 기관 사용자 신청 · 기관 계정 재설정 = 그 기관 관리자(manager) + LX 관리자(원칙 72 — 전부 보고 승인·반려).
+  LX 직원 신청 · LX 계정 재설정 = LX 관리자 · 기관 사용자 신청 = 그 기관 관리자(manager)만 승인 · 반려.
+  LX 관리자는 기관 가입 승인에 관여하지 않는다(원칙 72 · 10-01 "LX 는 기관 가입 승인에는 관여하지 않지만 사용자 확인·통제·지원") —
+  기관 신청은 보기만(서버도 결정 403 tenant_signup) · 기관 계정은 확인 · 잠금 · 지원(임시 비밀번호 · 재설정 요청 처리).
   기관 관리자는 자기 기관 것만 보이고 바꿀 수 있다. 내 계정에 걸린 일(재설정 · 잠금 · 역할 · 임시 비밀번호)은 스스로 하지 않는다(409 self_account).
+  사용 중지된 계정(status disabled — 옛 아이디 정리 · 0015_mail_accounts.sql)은 목록에 '사용 중지'로 보이고 바꾸지 않는다(409 disabled_account).
   반려는 사유 필수(400 reason_required). 누가 승인·반려·재설정했는지는 요청 행(decided_*)과 audit_log(account.*) 두 곳에 남는다.
 
 로그인한 관리자가 부르는 길:
@@ -64,7 +67,9 @@ ACTION_KO = {
     "account.temp.issue": "임시 비밀번호 발급", "account.lock": "잠금", "account.unlock": "잠금 풀기", "account.role": "역할 변경",
     "account.password.change": "새 비밀번호 설정", "account.autolock": "자동 잠금(10분)",
 }
-FAIL_KO = {"password": "비밀번호 틀림", "unknown": "없는 아이디", "temp_locked": "잠긴 동안 시도", "locked": "잠긴 계정", "temp_expired": "임시 비밀번호 기간 지남"}
+FAIL_KO = {"password": "비밀번호 틀림", "unknown": "없는 아이디", "temp_locked": "잠긴 동안 시도", "locked": "잠긴 계정", "temp_expired": "임시 비밀번호 기간 지남",
+           "disabled": "사용 중지된 계정"}
+TENANT_SIGNUP_MSG = "기관 가입 신청은 그 기관 관리자가 승인합니다"
 SITE_KO = {"app": "Land-XI", "admin": "LX 관리자", "gov": "기관"}
 
 
@@ -306,6 +311,11 @@ def _in_scope(p: Principal, realm: str, tenant_id: str | None) -> bool:
     return p.is_admin or (realm == "tenant" and tenant_id == p.tenant_id)
 
 
+def _can_decide_signup(p: Principal, realm: str) -> bool:
+    """가입 신청을 승인 · 반려할 수 있나 — LX 직원 신청 = LX 관리자 · 기관 신청 = 그 기관 관리자만(LX 관리자는 보기만 · 원칙 72)."""
+    return (realm == "lx" and p.is_admin) or (realm == "tenant" and p.realm == "tenant" and p.role == "manager")
+
+
 async def _tenant_names(conn) -> dict:
     return {r["id"]: _tname(r["name"]) for r in await conn.fetch("SELECT id, name FROM tenants")}
 
@@ -323,9 +333,11 @@ async def summary(request: Request):
     pl = await pool()
     w = "" if p.is_admin else " AND realm='tenant' AND tenant_id=$1"
     a = [] if p.is_admin else [p.tenant_id]
-    s = await pl.fetchval("SELECT count(*) FROM signup_requests WHERE state='pending'" + w, *a)
+    # 가입 신청 수 = 내가 승인 · 반려할 것(LX 관리자 = LX 직원 신청 · 기관 관리자 = 자기 기관 신청). LX 관리자가 보기만 하는 기관 신청은 따로(signup_view)
+    s = await pl.fetchval("SELECT count(*) FROM signup_requests WHERE state='pending'" + (" AND realm='lx'" if p.is_admin else w), *a)
+    sv = await pl.fetchval("SELECT count(*) FROM signup_requests WHERE state='pending' AND realm='tenant'") if p.is_admin else 0
     r = await pl.fetchval("SELECT count(*) FROM reset_requests WHERE state='pending'" + w, *a)
-    return {"counts": {"signup": s, "reset": r}, "at": now_iso()}
+    return {"counts": {"signup": s, "reset": r, "signup_view": sv}, "at": now_iso()}
 
 
 @router.get("/accounts/requests")
@@ -358,7 +370,8 @@ async def list_requests(request: Request, kind: str = "signup", state: str = "pe
               "login": r["login"], "state": r["state"], "reason": r["reason"], "created_at": _iso(r["created_at"]),
               "decided_name": r["decided_name"], "decided_at": _iso(r["decided_at"])}
         if kind == "signup":
-            it.update({"name": r["name"], "dept": r["dept"], "consent_at": _iso(r["consent_at"]), "mine": False})
+            it.update({"name": r["name"], "dept": r["dept"], "consent_at": _iso(r["consent_at"]), "mine": False,
+                       "can_decide": _can_decide_signup(p, r["realm"])})   # LX 관리자가 보는 기관 신청 = 보기만(원칙 72)
         else:
             u = users.get((r["realm"], r["user_id"]))
             it.update({"name": u["name"] if u else "", "dept": u["dept"] if u else None, "role_ko": ROLE_KO.get((r["realm"], u["role"])) if u else None,
@@ -397,6 +410,8 @@ async def decide_signup(rid: str, body: dict, request: Request):
         r = await conn.fetchrow("SELECT * FROM signup_requests WHERE id=$1 FOR UPDATE", rid)
         if not r or not _in_scope(p, r["realm"], r["tenant_id"]):
             raise ApiError("not_found", "신청이 없습니다")
+        if not _can_decide_signup(p, r["realm"]):     # LX 관리자는 기관 가입 승인에 관여하지 않는다(보기 · 잠금 · 지원만 — 원칙 72)
+            raise ApiError("tenant_signup", TENANT_SIGNUP_MSG, status=403)
         if r["state"] != "pending":
             raise ApiError("conflict", "이미 처리한 신청입니다", {"state": r["state"], "by": r["decided_name"]}, 409)
         uid = None
@@ -455,6 +470,8 @@ async def decide_reset(rid: str, body: dict, request: Request):
         u = await conn.fetchrow(f"SELECT id, login, name, status FROM {table} WHERE id=$1", r["user_id"])
         if not u:
             raise ApiError("not_found", "계정이 없습니다")
+        if u["status"] == "disabled":
+            raise ApiError("disabled_account", "사용 중지된 계정입니다", status=409)
         tp = await _issue_temp(conn, p, r["realm"], u, r["tenant_id"], "account.reset.issue", {"request": rid})
     return {"ok": True, "state": "issued", "temp_password": tp, "locked": u["status"] == "locked", "at": now_iso()}
 
@@ -467,12 +484,13 @@ async def list_users(request: Request, realm: str | None = None, tenant_id: str 
     async with db(realm="lx") as conn:
         tn = await _tenant_names(conn)
         if p.is_admin and realm in (None, "", "lx") and not tenant_id:
-            for u in await conn.fetch("SELECT id, login, role, status, name, dept, must_change, created_at, lock_until FROM lx_users ORDER BY login"):
+            for u in await conn.fetch("SELECT id, login, role, status, name, dept, must_change, created_at, lock_until FROM lx_users "
+                                      "ORDER BY (status = 'disabled'), login"):   # 사용 중지(옛 아이디)는 뒤로
                 out.append({"realm": "lx", "tenant_id": None, "org": "LX", **_user(u, "lx")})
         if realm in (None, "", "tenant"):
             tid = tenant_id if p.is_admin else p.tenant_id
             rows = await conn.fetch("SELECT id, tenant_id, login, role, status, name, dept, must_change, created_at, lock_until FROM tenant_users "
-                                    "WHERE ($1::text IS NULL OR tenant_id=$1) ORDER BY tenant_id, login", tid)
+                                    "WHERE ($1::text IS NULL OR tenant_id=$1) ORDER BY tenant_id, (status = 'disabled'), login", tid)
             for u in rows:
                 if u["tenant_id"] == "lx-demo" and not p.is_admin:
                     continue
@@ -503,6 +521,8 @@ async def _target(conn, p: Principal, realm: str, uid: str):
         raise ApiError("not_found", "계정이 없습니다")
     if _mine(p, realm, uid):
         raise ApiError("self_account", "내 계정은 다른 관리자가 바꿉니다", status=409)
+    if u["status"] == "disabled":                      # 옛 아이디 — 메일 아이디로 옮긴 뒤 사용 중지(되살리지 않는다)
+        raise ApiError("disabled_account", "사용 중지된 계정입니다", status=409)
     return u
 
 

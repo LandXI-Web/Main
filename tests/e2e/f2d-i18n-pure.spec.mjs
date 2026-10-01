@@ -68,7 +68,7 @@ test.describe('F2-D i18n-en pure (Hangul 0)', () => {
   test('on — 게이트웨이 카탈로그 국문 라이선스도 영문(마스트 칩 · 사다리 칩 · 호버 카드)', async ({ page }) => {
     test.skip(!(await gateway()) || !pw(), '게이트웨이 :8700 · DEV_PASSWORD 필요');
     const errs = watch(page);
-    const s = await (await fetch(GW + '/api/v1/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ realm: 'lx', login: 'lx-staff', password: pw() }) })).json();
+    const s = await (await fetch(GW + '/api/v1/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ realm: 'lx', login: 'test@lx.or.kr', password: pw() }) })).json();
     await page.addInitScript(([s, gw]) => { if (sessionStorage.getItem('b')) return; sessionStorage.setItem('b', 1); localStorage.setItem('lx_api_base', gw); localStorage.removeItem('lx_api_mode'); localStorage.setItem('lx_api_session', JSON.stringify(s)); localStorage.setItem('lx_logged_in', '1'); localStorage.setItem('lx_role', 'staff'); }, [s, GW]);
     await page.goto('/landxi/global/index.html?tenant=lx&locale=en');
     await page.waitForFunction(() => document.documentElement.dataset.lx === 'ready');

@@ -1,26 +1,23 @@
 /* v3 로그인 — 실제 인증(POST /api/v1/auth/login · 게이트웨이 :8700) → 역할별 첫 화면(같은 출처 · lx_api_session).
-   역할 탭 없음(확인 대장 6·7 · 원칙 27). 입구(주소)가 로그인 문(realm)과 화면 모습을 정한다 — 주소 이름은 kit/sites.js 한 곳:
-     app   = LX 직원 · 영업(아이디로 구분) → 아이디 · 비밀번호 · 문 lx
-     admin = LX 관리자                     → 아이디 · 비밀번호 · 문 lx · 관리자 계정만(서버가 확인 — 아니면 토큰을 내주지 않는다)
-     gov   = 기관(국내 · 해외)              → 기관 고르기 + 아이디 · 비밀번호 · 문 tenant
-   바깥 주소는 주소 이름으로, 이 PC(localhost)에서는 ?site=app|admin|gov 로(없으면 ?next 화면으로 짐작 → 없으면 app).
+   역할 탭 없음(확인 대장 6·7 · 원칙 27). Land-XI 로그인은 LX 전용(원칙 78 — "이 창구는 LX 직원만 이용하는 창구다"):
+     app   = LX 직원 · 영업(아이디로 구분) → 아이디(메일 주소) · 비밀번호 · 문 lx
+     admin = LX 관리자                     → 아이디(메일 주소) · 비밀번호 · 문 lx · 관리자 계정만(서버가 확인 — 아니면 토큰을 내주지 않는다)
+     gov   = 기관 → 이 화면이 아니라 기관 메인({기관}.land-xi.dev — 그 기관 모습의 로그인 · landxi/v3/gov-home)으로 넘긴다(기관 고르기 0).
+   바깥 주소는 주소 이름으로, 이 PC(localhost)에서는 ?site=app|admin 로(없으면 ?next 화면으로 짐작 → 없으면 app).
    서버가 정본 — 바깥 주소는 공개 관문이 입구를 서버에 알리고(x-lx-site), 이 PC 에서는 본문 site 로 알린다.
    첫 화면은 키트 K2 표(kit/auth-gate.js LANDING · LANDING_AT) 한 곳에서 읽는다:
      LX 직원   → LX 직원 대시보드      /landxi/v3/lx-console/
      LX 관리자 → LX 관리자 대시보드    /landxi/v3/ops-core/   (app 입구에서는 LX 직원 대시보드 — lxadmin 한 계정으로 세 입구)
      LX 영업   → 서비스 카탈로그       /landxi/v3/sales/      (서버 role 'sales' 또는 tenant 'lx-demo')
-     국내 기관 → 기관 화면             /landxi/v3/gov-fusion/ (scope=local)
-     해외 기관 → 글로벌                /landxi/v3/global/     (scope=global)
-   착지는 서버가 돌려준 role · 기관 scope 로 정한다(화면이 권한을 지어내지 않는다).
-   기관 목록 = GET /auth/tenants(S-1 · 공개 · 기관 입구에서만 부른다). 서버에 없으면 같은 모양({id, name, scope})으로 공개 디렉터리 파일을 읽는 어댑터로 폴백.
+   착지는 서버가 돌려준 role 로 정한다(화면이 권한을 지어내지 않는다). 기관 사용자의 첫 화면은 기관 메인(gov-home)이 정한다.
    틀린 비밀번호 = 서버 401 문구 그대로. 관리자 입구에 관리자 아닌 계정 = 서버 403(토큰 없음) · 옛 서버가 토큰을 내주면 즉시 폐기하고 거절.
-   구현 2차 T5(계정): '계정 찾기 · 신청' = 가운데 창(가입 신청 · 아이디 찾기 · 비밀번호 찾기 — account.js) · 이 로그인은 LX 전용(10-01 사용자 "이 창구는 LX 직원만").
-     기관 입구(gov) 모습은 기관 분기 로그인(T3)이 열릴 때까지 남겨 둔다 — 창은 기관용으로 연다.
+   구현 2차 T5(계정): '계정 찾기 · 신청' = 가운데 창(가입 신청 · 아이디 찾기 · 비밀번호 찾기 — account.js) · 이 로그인은 LX 전용.
+     기관용 창은 기관 메인 로그인(gov-home)이 같은 부품을 그 기관 하나로 부른다.
    임시 비밀번호로 들어오면(서버 답 must_change) 새 비밀번호를 정하는 창 → 정하면 바로 들어간다.
    같은 아이디로 5번 틀리면 서버가 계정을 10분 잠근다(423 — 서버 문구 그대로). */
 
 import { API, session, api } from '../../shared/api-v1.js';
-import { keyOf, landingFor, ALLOW, FRONT, SITES, siteHere } from '../kit/auth-gate.js';
+import { keyOf, landingFor, ALLOW, FRONT, SITES, siteHere, orgHome } from '../kit/auth-gate.js';
 import { openAccountHelp, openPasswordChange } from './account.js';
 import { mountPlate } from './plate.js';
 import { handoffFragment } from './handoff.js';
@@ -29,7 +26,7 @@ const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const OPS_PORT = 8702;
 const $ = (id) => document.getElementById(id);
 const gate = $('gate'), hero = $('hero'), form = $('form'), go = $('go'), msg = $('msg');
-const idIn = $('id'), pwIn = $('pw'), org = $('org'), orgRow = $('orgRow');
+const idIn = $('id'), pwIn = $('pw');
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const LS = (k, v) => { try { return v === undefined ? localStorage.getItem(k) : localStorage.setItem(k, v); } catch { return null; } };
 
@@ -38,12 +35,19 @@ function siteFromNext() {   // 이 PC 에서 ?site 없이 화면이 로그인으
   const n = new URLSearchParams(location.search).get('next') || '';
   return /\/ops/.test(n) ? 'admin' : /\/(?:gov-|global\/)/.test(n) ? 'gov' : null;
 }
-const SITE = siteHere() || siteFromNext() || 'app';
-const GOV = SITES[SITE].realm === 'tenant';
+const SITE0 = siteHere() || siteFromNext() || 'app';
+/* 기관 입구(gov) — Land-XI 로그인은 LX 전용(원칙 78). 기관 메인의 로그인으로 넘긴다(마지막으로 들어온 기관 → 없으면 기관 목록 · 되돌아갈 화면은 같이) */
+if (SITES[SITE0]?.realm === 'tenant') {
+  let org = null;
+  try { const s = JSON.parse(localStorage.getItem('lx_api_session') || 'null'); if (s?.realm === 'tenant') org = s.tenant_id; } catch { /* */ }
+  org = org || LS('lx_login_org');
+  location.replace(orgHome(org, { next: new URLSearchParams(location.search).get('next') || undefined }));
+  await new Promise(() => {});
+}
+const SITE = SITE0;
 document.documentElement.dataset.site = SITE;
 { const lb = SITES[SITE].label, el = $('site');
-  if (lb) { el.textContent = lb; el.hidden = false; document.title = 'Land-XI · ' + lb; }
-  orgRow.hidden = !GOV; }
+  if (lb) { el.textContent = lb; el.hidden = false; document.title = 'Land-XI · ' + lb; } }
 
 /* ── 히어로 카드 ─────────────────────────────────────────────────── */
 function bootPlate() {
@@ -66,97 +70,11 @@ requestAnimationFrame(() => requestAnimationFrame(() => enterNow(false)));
 setTimeout(() => enterNow(true), 300);
 if (document.visibilityState === 'hidden') enterNow(true);
 
-/* ── 기관 목록 — 공개 기관 디렉터리(로그인 전이라 /tenants 는 못 부른다) ── */
-let ORGS = [];          // [{id, name(표시), scope}]
-let ORG_SRC = 'server';
-/* 표기 통일 — 디렉터리 원문이 '키르기스 · 키르기즈'로 섞여 있다(서버 공개 GET /auth/tenants 로 옮길 때 원문도 정리 요청).
-   국가명은 '키르기스스탄' 표준 표기의 '키르기스'로 맞춘다(형식 '기관명(관할)'은 그대로). */
-const orgName = (n) => n.replace(/키르기즈/g, '키르기스').replace(/\s+\(/g, '(');
-const DIR = new URL('../../ops/data/fixtures/tenants.json', import.meta.url).href;
-/* 늦음 안내(M8 · r3-ops) — 옛 탭이 서버 연결을 쥐고 있으면 기관 목록 요청이 끝나지 않는다.
-   ① 요청마다 제한 시간(8초) · 넘으면 한 번 더 ② 6초가 지나도 목록이 없으면, '기관'을 늦게 눌러도 안내 + '다시 불러오기'
-   ③ '다시 불러오기' = 목록을 처음부터 다시 부른다(다른 탭을 닫은 뒤 누르면 이어진다). */
-const SLOW_MS = 6000, ORG_TIMEOUT_MS = 8000;
+/* 늦음 안내 — 로그인 답이 6초 넘게 오지 않으면(옛 탭이 서버 연결을 쥐고 있을 때) 한 줄 */
+const SLOW_MS = 6000;
 const SLOW_TXT = '서버 응답이 늦습니다 — 다른 Land-XI 탭을 닫거나 새로 고친 뒤 다시 시도하세요';
-/* 서버가 멈춰 있을 때(연결 거절 · 관문 502–504) — 서버 다시 시작 중이거나 꺼진 때. 할 일 = 잠시 뒤 다시 불러오기 */
-const DOWN_TXT = '서버에 연결할 수 없습니다 — 잠시 뒤 다시 불러오기를 누르세요';
-async function getJson(url, ms) {
-  const ac = new AbortController(); const t = setTimeout(() => ac.abort(), ms);
-  try {
-    const r = await fetch(url, { cache: 'no-store', signal: ac.signal, headers: { accept: 'application/json' } });
-    if (!r.ok) { const e = new Error('http_' + r.status); e.status = r.status; throw e; }
-    return await r.json();
-  } finally { clearTimeout(t); }
-}
-async function loadOrgsOnce() {
-  try { const j = await getJson(API.prefix + '/auth/tenants', ORG_TIMEOUT_MS); ORG_SRC = 'server'; return j?.items || []; }
-  catch (e) { if (!e.status || e.status >= 502) throw e; }   // 응답 없음(시간 초과 · 연결 막힘 · 관문이 서버를 못 찾음) = 다시 시도 · 서버가 답한 오류(경로 없음 등) = 아래 어댑터
-  // 어댑터(S-1 전) — 같은 모양으로 접는다: active · 기관(user) · lx-demo 제외 → {id, name, scope}
-  ORG_SRC = 'adapter';
-  const j = await getJson(DIR, ORG_TIMEOUT_MS).catch(() => null);
-  return (j?.items || []).filter((t) => t.kind === 'user' && t.status === 'active')
-    .map((t) => ({ id: t.id, name: t.name, scope: t.scope }));
-}
-let orgsWhy = 'slow';        // 마지막 실패 이유: 'slow'(제한 시간) | 'down'(연결 거절 · 502–504)
-const whyOf = (e) => (e?.name === 'AbortError' ? 'slow' : 'down');
-async function loadOrgs() {
-  try { return await loadOrgsOnce(); }
-  catch (e) {                                                   // 제한 시간 뒤 한 번 더 · 연결 거절이면 2초 쉬고 한 번 더(짧은 다시 시작은 여기서 넘긴다)
-    orgsWhy = whyOf(e);
-    if (orgsWhy === 'down') await wait(2000);
-    try { return await loadOrgsOnce(); } catch (e2) { orgsWhy = whyOf(e2); throw e2; }
-  }
-}
-const slowEl = $('slow'), reloadBtn = $('reload');
-let orgsDone = false, orgsAt = Date.now(), slowTimer = 0;
-const orgsLate = () => !orgsDone && Date.now() - orgsAt >= SLOW_MS;
-const slowT = slowEl.querySelector('.slow__t');
-function showSlow(on) {
-  if (on && slowT) slowT.textContent = orgsWhy === 'down' ? DOWN_TXT : SLOW_TXT;
-  slowEl.hidden = !on;
-  if (on) { slowEl.classList.remove('t-in'); void slowEl.offsetWidth; slowEl.classList.add('t-in'); }
-}
-function fillOrgs(items) {
-  ORGS = items.filter((t) => t.id !== 'lx-demo')
-    .map((t) => ({ id: t.id, name: orgName(t.name?.ko || t.name?.en || t.id), scope: t.scope === 'global' ? 'global' : 'local' }));
-  while (org.options.length > 1) org.remove(1);
-  org.append(...ORGS.map((t) => new Option(t.name, t.id)));
-  const last = LS('lx_login_org'); if (last && ORGS.some((t) => t.id === last)) org.value = last;
-}
-function startOrgs() {
-  orgsDone = false; orgsAt = Date.now(); orgsWhy = 'slow';
-  if (org.options[0]) org.options[0].textContent = '기관 목록을 불러오는 중';
-  clearTimeout(slowTimer);
-  slowTimer = setTimeout(() => { if (!orgsDone && GOV) showSlow(true); }, SLOW_MS);
-  return loadOrgs().then((items) => {
-    orgsDone = true; clearTimeout(slowTimer);
-    if (org.options[0]) org.options[0].textContent = '기관 선택';
-    fillOrgs(items); showSlow(false);
-  }).catch(() => {
-    // 두 번 모두 응답 없음 — 목록은 비운 채 안내를 남긴다
-    if (org.options[0]) org.options[0].textContent = '기관 목록을 불러오지 못했습니다';
-    orgsAt = 0;
-    showSlow(true);
-  });
-}
-/* 기관 목록은 기관 입구에서만 부른다(LX 입구에는 기관 칸이 없다) */
-let orgsReady = GOV ? startOrgs() : Promise.resolve();
-if (!GOV) orgsDone = true;
-reloadBtn.addEventListener('click', () => {
-  reloadBtn.disabled = true; reloadBtn.setAttribute('aria-busy', 'true');
-  orgsReady = startOrgs().finally(() => { reloadBtn.disabled = false; reloadBtn.removeAttribute('aria-busy'); });
-});
-
-/* 아이디가 '<기관 id>-…' 로 시작하면 기관 칸을 미리 맞춘다(가장 긴 일치). 못 맞추면 사용자가 고른다 — 추측으로 보내지 않는다. */
-function orgFromLogin(login) {
-  let best = null;
-  for (const t of ORGS) if ((login === t.id || login.startsWith(t.id + '-')) && (!best || t.id.length > best.id.length)) best = t;
-  return best?.id || null;
-}
-idIn.addEventListener('input', () => { if (!GOV) return; const g = orgFromLogin(idIn.value.trim()); if (g) org.value = g; });
-org.addEventListener('change', () => { clearErr(); if (org.value) LS('lx_login_org', org.value); });
 /* 옛 호출 호환(테스트 훅 who) — 입구를 옛 문 이름으로 */
-const who = () => (GOV ? 'tenant' : SITE === 'admin' ? 'admin' : 'staff');
+const who = () => (SITE === 'admin' ? 'admin' : 'staff');
 
 /* ── 오류 표시 ──────────────────────────────────────────────────── */
 function say(text, fields = []) {
@@ -183,14 +101,11 @@ const FALLBACK = {
 };
 /* 서버 role · realm · 기관 scope → 허용표 키(키트 keyOf 그대로 · 화면이 권한을 지어내지 않는다) */
 function houseOf(s) {
-  const t = s.realm === 'tenant' ? ORGS.find((x) => x.id === s.tenant_id) || null : null;
-  return keyOf({ realm: s.realm, role: s.role, tenant_id: s.tenant_id }, t);
+  return keyOf({ realm: s.realm, role: s.role, tenant_id: s.tenant_id }, null);
 }
 
 /* ?next — 같은 출처 v3 집 경로(또는 현행 XI맵)만, 그리고 그 사람이 들어갈 수 있는 집만(오픈 리다이렉트 0 · 권한 밖 착지 0).
    화이트리스트 = 키트 허용표의 집 이름(main · service-detail · help-my · lx-* · gov-* · ops-* · sales · xi-clean · global). */
-/* 새 화면(구현 2차 T5 — 계정)도 로그인 뒤 되돌아가게. 키트 허용표(auth-gate ALLOW)에 들어가면 그쪽이 정본 — 그때 이 표는 지워도 된다 */
-const MORE_ALLOW = { 'ops-accounts': ['lx/admin'], 'gov-accounts': ['tenant/local', 'tenant/global'] };
 const NEXT_OK = /^\/landxi\/(?:v3\/([a-z-]+)\/(?:index\.html)?|(xi)\/(?:index\.html)?)(?:\?[^\s#\\]*)?(?:#[^\s\\]*)?$/;
 function nextParam(key) {
   const v = new URLSearchParams(location.search).get('next') || '';
@@ -200,7 +115,6 @@ function nextParam(key) {
   if (!m || /\.\.|\/\/|%2e|%2f|%5c/i.test(path)) return null;
   if (m[2] === 'xi') return key && ALLOW['xi-clean'].includes(key) ? v : null;
   const home = m[1];
-  if (Object.prototype.hasOwnProperty.call(MORE_ALLOW, home)) return key && MORE_ALLOW[home].includes(key) ? v : null;
   if (!Object.prototype.hasOwnProperty.call(ALLOW, home) || home === 'login') return null;
   const ok = ALLOW[home];
   return ok === null || (key && ok.includes(key)) ? v : null;
@@ -256,16 +170,8 @@ form.addEventListener('submit', async (e) => {
 
   busy = true; go.setAttribute('aria-busy', 'true'); clearErr();
   try {
-    let tenantId = null;
-    if (GOV) {
-      if (!orgsDone && orgsLate()) { showSlow(true); return; }
-      await orgsReady;
-      if (!orgsDone) { showSlow(true); return; }
-      tenantId = org.value || orgFromLogin(login);
-      if (!tenantId) { say('기관을 선택하세요', ['org']); org.focus(); return; }
-    }
     /* 입구를 함께 보낸다 — 서버가 입구별 문(realm)과 관리자 여부를 확인한다(바깥 주소는 관문이 알린 입구가 이긴다) */
-    const body = GOV ? { site: SITE, realm: 'tenant', tenant_id: tenantId, login, password } : { site: SITE, realm: 'lx', login, password };
+    const body = { site: SITE, realm: 'lx', login, password };
     let s;
     const slow = setTimeout(() => say(SLOW_TXT), SLOW_MS);
     try { s = await signIn(body); clearTimeout(slow); if (msg.textContent === SLOW_TXT) clearErr(); }
@@ -274,8 +180,8 @@ form.addEventListener('submit', async (e) => {
       if (!err.status) { say('서버에 연결할 수 없습니다'); return; }         // 두 번 모두 네트워크 오류일 때만
       if (err.status === 423 || err.status === 429) { say(err.message || '잠시 후 다시 시도하세요', ['pw']); pwIn.value = ''; return; }   // 5번 틀려 10분 잠김 · 시도 너무 많음
       if (err.status === 401 || err.code === 'unauthorized') {
-        // 서버 401 문구 그대로(명세 §2.2). 기관 입구는 기관 칸도 함께 짚는다(무엇이 틀렸는지 서버는 말하지 않는다)
-        say(err.message || '아이디 또는 비밀번호가 맞지 않습니다', GOV ? ['org', 'pw'] : ['pw']);
+        // 서버 401 문구 그대로(명세 §2.2 — 무엇이 틀렸는지 서버는 말하지 않는다)
+        say(err.message || '아이디 또는 비밀번호가 맞지 않습니다', ['pw']);
         pwIn.value = ''; pwIn.focus();
       } else if (err.status === 403) {
         say(err.message || '관리자 계정이 아닙니다', ['id']);           // 관리자 입구에 관리자 아닌 계정 — 서버가 토큰을 내주지 않았다
@@ -286,23 +192,21 @@ form.addEventListener('submit', async (e) => {
     if (s.must_change) {                               // 관리자가 준 임시 비밀번호 — 새 비밀번호를 정해야 들어간다(세션은 그 뒤에)
       pwIn.value = '';
       window.__login.mustChange = true;
-      openPasswordChange({ changeToken: s.change_token, name: s.user?.name, onDone: (s2) => land(s2, tenantId), onClose: () => pwIn.focus() });
+      openPasswordChange({ changeToken: s.change_token, name: s.user?.name, onDone: (s2) => land(s2), onClose: () => pwIn.focus() });
       return;
     }
-    await land(s, tenantId);
+    await land(s);
   } finally {
     busy = false; go.removeAttribute('aria-busy');
   }
 });
 /* 로그인 답(세션) → 입구 확인 → 세션 저장 → 첫 화면 — 로그인 · 새 비밀번호 정하기가 같이 쓴다 */
-async function land(s, tenantId) {
+async function land(s) {
   if (SITE === 'admin' && s.role !== 'admin') {
     try { await fetch(API.prefix + '/auth/logout', { method: 'POST', headers: { authorization: 'Bearer ' + s.token } }); } catch { /* */ }
     say('관리자 계정이 아닙니다', ['id']); return;
   }
-  if (GOV) LS('lx_login_org', tenantId);
   session.set({ token: s.token, realm: s.realm, role: s.role, tenant_id: s.tenant_id, expires_at: s.expires_at, user: s.user, site: SITE });
-  await orgsReady;
   window.__login.last = { realm: s.realm, role: s.role, tenant_id: s.tenant_id, house: houseOf(s), site: SITE };
   await enter(s);
 }
@@ -350,23 +254,16 @@ async function authed(path, method, token) {
     r.textContent = `${nm}${jong === 0 || jong === 8 ? '로' : '으로'} 계속`;   // 화살표는 키트 .t-btn--text::after 가 붙인다
     r.hidden = false;
     window.__login.resumeAt = Math.round(performance.now());
-    r.addEventListener('click', async (ev) => { ev.preventDefault(); await orgsReady; await enter({ ...s, realm: me.realm, role: me.role, tenant_id: me.tenant_id }); });
-    if (GOV && me.tenant_id) { await orgsReady; if (ORGS.some((t) => t.id === me.tenant_id)) org.value = me.tenant_id; }
+    r.addEventListener('click', async (ev) => { ev.preventDefault(); await enter({ ...s, realm: me.realm, role: me.role, tenant_id: me.tenant_id }); });
   } catch { /* 표시 실패는 세션과 무관 */ }
 })();
 
 /* ── 계정 찾기 · 신청 — 가운데 창(10-01 사용자 "오른쪽 서랍 대신 창이 하나 중간에") · 탭 셋: 가입 신청 · 아이디 찾기 · 비밀번호 찾기 ──
-   app = LX 직원(가입 신청 → LX 관리자 승인) · admin = 가입 신청 대신 안내 한 줄 · gov = 기관용(기관 분기 로그인이 열리면 그쪽이 같은 부품을 부른다) */
+   app = LX 직원(가입 신청 → LX 관리자 승인) · admin = 가입 신청 대신 안내 한 줄 · 기관용은 기관 메인 로그인(gov-home)이 같은 부품을 부른다 */
 let helpM = null;
 function openHelp(tab) {
   if (helpM) return helpM;
-  const pickName = (id) => ORGS.find((t) => t.id === id)?.name || '';
-  helpM = openAccountHelp({
-    realm: GOV ? 'tenant' : 'lx', site: SITE, tab,
-    tenants: GOV ? ORGS.map((t) => ({ id: t.id, name: t.name })) : null,
-    tenant: GOV && org.value ? { id: org.value, name: pickName(org.value) } : null,
-    onClose: () => { helpM = null; },
-  });
+  helpM = openAccountHelp({ realm: 'lx', site: SITE, tab, onClose: () => { helpM = null; } });
   return helpM;
 }
 $('helpBtn').addEventListener('click', () => openHelp());
@@ -374,6 +271,6 @@ $('helpBtn').addEventListener('click', () => openHelp());
 /* ── 테스트 훅 ─────────────────────────────────────────────────── */
 window.__login = {
   ready: true, last: null,
-  site: () => SITE, who, homeOf, houseOf, orgFromLogin, nextParam, orgs: () => ORGS.slice(), orgSource: () => ORG_SRC, help: openHelp, mustChange: false,
+  site: () => SITE, who, homeOf, houseOf, nextParam, help: openHelp, mustChange: false,
   plate: () => (plate ? { region: plate.region, axis: plate.axis, arrived: plate.arrived, error: plate.error, visits: plate.visits } : null),
 };

@@ -25,7 +25,7 @@ LAWS = ["농지법.xml", "농지법_시행령.xml", "농지법_시행규칙.xml"
         "농지처분_업무처리요령.xml"]
 GJ = Principal("tenant", "manager", "gwangju-jeonnam", "u_gj", caps=CAPS[("tenant", "manager")])
 NW = Principal("tenant", "manager", "namwon", "u_nw", caps=CAPS[("tenant", "manager")])
-ADMIN = Principal("lx", "admin", None, "u_lx_admin", caps=CAPS[("lx", "admin")])
+ADMIN = Principal("lx", "admin", None, "u_mail_lxadmin", caps=CAPS[("lx", "admin")])
 KANGJIN, NAMWON = "12780", "52190"
 
 

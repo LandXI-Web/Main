@@ -137,7 +137,7 @@ async def jobs_quote(args: dict, ctx) -> Out:
         except ToolError as e:
             tried.append(f"{meta['model']}×{cand['imagery_id']}: {e.code}")
             bad_img.add(cand["imagery_id"])
-            if e.code in ("quota_exceeded", "tool_forbidden", "demo_required"):
+            if e.code in ("tool_forbidden", "demo_required"):
                 raise
     if q is None:
         raise ToolError("cog_unavailable", "프레임을 덮는 영상 중 원본 래스터로 추론 가능한 것이 없습니다 · " + " · ".join(tried), 400)
@@ -149,9 +149,7 @@ async def jobs_quote(args: dict, ctx) -> Out:
     if isinstance(q.get("area_km2"), dict):
         out.env("area_km2", "프레임 면적", q["area_km2"])
     eta = eta_words(eta_value(q), getattr(ctx, "lang", "ko"))
-    rem = ((q.get("quota") or {}).get("remaining"))
-    if isinstance(rem, dict):
-        out.env("quota_remaining", f"기관 쿼터 잔여({(q.get('quota') or {}).get('dim')})", rem)
+    # 사용을 막는 값은 없다(원칙 83) — 예전 '기관 쿼터 잔여' 줄은 내지 않는다
     out.data = {"모델": meta["model"], "영상": meta["imagery"], "대상": meta["cls"], "허용": q.get("allowed"), "사유": q.get("reasons"),
                 "풀": q.get("pool"), "시연": body["demo"], "비고": "제출은 jobs_submit — 사람이 확인 카드를 승인해야 실행"}
     if eta:

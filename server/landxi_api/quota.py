@@ -1,5 +1,5 @@
 """테넌트 · 쿼터 · 사용량(F1-CONTRACT §4.8). 한도는 config/quotas.yaml → quotas 표([추정 기반 초기값]).
-사용량은 실측: usage_events 합(gpu_s · area_km2 · egress_gb — 작업 귀속 기관 기준 · llm_tokens = AI 도우미 사용량(토큰) — 에이전트 run 을 부른 기관) · 기관 저장 공간(결과 파일 + DB 행 · 60s 캐시) · jobs(동시) · Redis(vworld 일일 호출).
+사용량은 실측: usage_events 합(gpu_s · area_km2 · egress_gb — 분석을 요청한 기관(기록된 그대로) · llm_tokens = AI 도우미 사용량(토큰) — 에이전트 run 을 부른 기관) · 기관 저장 공간(결과 파일 + DB 행 · 60s 캐시) · jobs(동시) · Redis(vworld 일일 호출).
 """
 from __future__ import annotations
 
@@ -51,7 +51,8 @@ async def du_gb(rel: str) -> float:
 
 
 # ── 기관 저장 공간(fix-admin-usage) ────────────────────────────────────────────
-# 기관에 속한 것 = ① results/{기관} 폴더 ② 그 기관 몫 작업(workers.metering.OWNER_EXPR — LX 가 대신 돌린 작업 포함)의 결과 폴더·파일
+# 기관에 속한 것 = ① results/{기관} 폴더 ② 그 기관 몫 작업(workers.metering.STORE_OWNER_EXPR — 기관이 낸 작업 + 그 기관 배포본(서비스)으로 낸 작업 ·
+#   겹치는 범위로 짐작하지 않음 · 정리 작업 10-01)의 결과 폴더·파일
 # ③ 그 기관 배포본 스냅샷이 가리키는 결과 세트 파일(config/sets.yaml aliases → sets) ④ DB 에 담긴 그 기관 행(올린 대장 · 실태조사 결과 · 탐지 결과 · 위성 지수 결과)
 # ⑤ 분석 의뢰로 올린 영상 원본(config/requests.yaml storage_root — 받는 중인 조각 포함).
 _st_cache: dict[str, tuple[float, dict]] = {}
@@ -104,10 +105,10 @@ async def storage_of(tenant: str) -> dict:
     c = _st_cache.get(tenant)
     if c and time.time() - c[0] < 60:
         return c[1]
-    from workers.metering import OWNER_EXPR
+    from workers.metering import STORE_OWNER_EXPR
     rels: set[str] = {f"results/{tenant}"}
     async with db(realm="lx") as conn:
-        jobs = await conn.fetch(f"SELECT j.id, j.tenant_id, j.result_set FROM jobs j WHERE NOT j.demo AND ({OWNER_EXPR}) = $1", tenant)
+        jobs = await conn.fetch(f"SELECT j.id, j.tenant_id, j.result_set FROM jobs j WHERE NOT j.demo AND ({STORE_OWNER_EXPR}) = $1", tenant)
         snaps = await conn.fetch("SELECT snapshot_current, snapshot_prev FROM deploys WHERE tenant_id=$1 AND NOT coalesce(test, false)", tenant)
         pub = await conn.fetch("SELECT path FROM published_sets WHERE job_id = ANY($1::text[])", [j["id"] for j in jobs])
         db_b = await conn.fetchval(
@@ -166,18 +167,16 @@ _ms_cache: tuple[float, str, dict] | None = None
 
 
 async def _month_sums() -> dict:
-    """이번 달 usage_events 합(기관 × dim) — 작업 귀속(workers.metering.OWNER_EXPR)으로 센다(10s 캐시).
-    metering 은 새 행을 이미 기관 id 로 쓰고 과거 행은 백필로 옮겼지만, 옛 워커 프로세스가 아직 'lx' 로 쓴 행도 같은 규칙으로 읽어
-    화면 값이 워커 재기동 시점에 흔들리지 않게 한다. 작업 없는 행(job_id 없음)은 기록된 기관 그대로. lx-demo 는 영업 계량이라 그대로."""
+    """이번 달 usage_events 합(기관 × dim) — 기록된 기관 그대로 센다(10s 캐시).
+    계량(workers.metering.meter)이 쓸 때 이미 '분석을 요청한 기관'(정리 작업 10-01 · 장부 고장 ②)으로 적는다. 읽을 때 다시 귀속하지 않는다 —
+    지난 기록은 그때 적힌 대로 두고(고치지 않음), 새 규칙으로 다시 세어 보는 것은 server/ops/recount_usage.py(보기만)."""
     global _ms_cache
     ms = _month_start()
     if _ms_cache and time.time() - _ms_cache[0] < 10 and _ms_cache[1] == ms.isoformat():
         return _ms_cache[2]
-    from workers.metering import OWNER_EXPR
     async with db(realm="lx") as conn:
         rows = await conn.fetch(
-            "SELECT coalesce(CASE WHEN u.tenant_id = 'lx-demo' THEN 'lx-demo' ELSE o.owner END, u.tenant_id) AS t, u.dim, sum(u.amount) AS v "
-            f"FROM usage_events u LEFT JOIN (SELECT j.id, {OWNER_EXPR} AS owner FROM jobs j) o ON o.id = u.job_id "
+            "SELECT u.tenant_id AS t, u.dim, sum(u.amount) AS v FROM usage_events u "
             "WHERE u.at >= $1 AND u.dim = ANY($2::text[]) GROUP BY 1, 2", ms, list(MONTH_DIM.values()))
     out = {(r["t"], r["dim"]): float(r["v"] or 0) for r in rows}
     _ms_cache = (time.time(), ms.isoformat(), out)
@@ -196,7 +195,7 @@ async def remaining(tenant: str, dim: str) -> dict:
 
 UNIT = {"storage_gb": "GB", "gpu_s_month": "gpu_s", "area_km2_month": "km2", "concurrent_jobs": "count", "egress_gb_month": "GB",
         "vworld_calls_day": "count", "llm_tokens_month": "tokens"}
-SRC = {"storage_gb": "결과 폴더·파일(기관 몫 작업 · 배포본 결과 세트) + 분석 의뢰로 올린 영상 원본 + 기관 DB 행(대장 · 실태조사 · 탐지) · 60s 캐시", "gpu_s_month": "usage_events(gpu_s · 이번 달 · 작업 귀속 기관)", "area_km2_month": "usage_events(area_km2 · 이번 달 · 작업 귀속 기관)",
+SRC = {"storage_gb": "결과 폴더·파일(기관 몫 작업 · 배포본 결과 세트) + 분석 의뢰로 올린 영상 원본 + 기관 DB 행(대장 · 실태조사 · 탐지) · 60s 캐시", "gpu_s_month": "usage_events(gpu_s · 이번 달 · 분석을 요청한 기관 · 학습 포함)", "area_km2_month": "usage_events(area_km2 · 이번 달 · 분석을 요청한 기관 · 실제 분석한 땅)",
        "concurrent_jobs": "jobs(state queued|running · 지금)", "egress_gb_month": "usage_events(egress_gb)", "vworld_calls_day": "Redis vworld:calls(오늘)",
        "llm_tokens_month": "usage_events(llm_tokens · 이번 달 · AI 도우미를 부른 기관)"}
 
@@ -217,6 +216,11 @@ async def usage_of(tenant: str) -> dict:
             dims[d]["breakdown"] = {"files_gb": env(st["files_gb"], "GB", "measured", "결과 폴더·파일 크기(기관 몫 작업 · 배포본 결과 세트)"),
                                     "db_gb": env(st["db_gb"], "GB", "measured", "기관 DB 행 크기(대장 · 실태조사 · 탐지 · 위성 지수)"),
                                     "uploads_gb": env(st.get("uploads_gb", 0.0), "GB", "measured", "분석 의뢰로 올린 영상 원본(받는 중 포함)")}
+    # AI 도우미 요청 건수(이번 달) — 사용량 표시의 말은 '질문'이 아니라 '요청 건수'(10-01 사용자 11차 답). 토큰은 개발자용 값으로 그대로 둔다.
+    async with db(realm="lx") as conn:
+        n_req = await conn.fetchval("SELECT count(*) FROM agent_runs WHERE tenant_id=$1 AND created_at >= $2", tenant, _month_start())
+    dims["llm_requests_month"] = {"used": env(int(n_req or 0), "count", "measured", "agent_runs(이번 달 · AI 도우미를 부른 기관)"),
+                                  "soft": None, "hard": None, "policy": None, "note": None, "limit_set": False}
     # 선형 예측(gpu_s) — [추정]
     g = dims["gpu_s_month"]
     now = dt.datetime.now(KST)
@@ -264,60 +268,15 @@ async def put_quota(tid: str, body: dict, request: Request):
     return {**dict(t), "home": "portal", "approval_id": aid, "state": "pending"}
 
 
-# ── 한도를 넘으면 새 작업 거절(impl-1 · C6 — r3-ops 실증 3차 '광주전남 AI 도우미 사용량이 한도를 넘어도 계속 처리') ──────────
-# 하드 한도 = 넘으면 그 기관의 새 작업을 받지 않는다(정책 칸과 무관 · 정책은 한도를 넘기는 그 한 건의 처리 — 우선순위 낮춤 등).
-# LX(무제한)는 막지 않는다. 판정 값은 기관 화면 표 · 관리자 화면 고리와 같은 한 출처(remaining = quotas 표 + 실사용).
-WORK_DIMS = {"analysis": ["gpu_s_month", "area_km2_month", "storage_gb"], "assistant": ["llm_tokens_month"]}
-_OVER_LINE = {
-    "gpu_s_month": ("이번 달 GPU 사용 한도를 넘어 새 분석을 시작할 수 없습니다", "This month's GPU limit is used up, so new analyses can't start"),
-    "area_km2_month": ("이번 달 분석 면적 한도를 넘어 새 분석을 시작할 수 없습니다", "This month's analysis area limit is used up, so new analyses can't start"),
-    "storage_gb": ("저장 공간 한도를 넘어 새 분석을 시작할 수 없습니다", "The storage limit is used up, so new analyses can't start"),
-    "llm_tokens_month": ("이번 달 AI 도우미 사용 한도를 넘어 새 질문을 받을 수 없습니다", "This month's AI assistant limit is used up, so new questions can't be taken"),
-}
-_OVER_TAIL = (". 한도 변경은 LX 관리자에게 요청하세요.", ". Ask LX to raise the limit.")
+# ── 사용을 막는 한도 없음(10-01 사용자 — 원칙 83 · 7차 기관-1 · 11차 "GPU 는 무상 정책" · "우리 직원도 분석 시간 같은 한도가 없어야지") ──
+# 기관 · LX 직원 모두 분석 · AI 도우미 질문 · 보고서 초안을 한도로 거절하거나 뒤로 미루지 않는다(예전 over_hard · hold_quote · refuse_run 은 없앰).
+# 사용량은 그대로 기록한다(usage_events · usage_of — 사용 현황의 근거). 막는 것은 장비 보호뿐:
+#   서버 저장 공간 여유(storage_room · config/requests.yaml disk_reserve_gb) · 한 번에 분석할 수 있는 크기(jobs too_large) · 전력 규칙(power_budget) · 기관별 동시 작업 줄 서기.
+# quotas 표 값은 지우지 않고 쓰지 않는다(관리자 기록 · 지난 결재).
 
 
-def over_line(dim: str, lang: str = "ko") -> str:
-    ko, en = _OVER_LINE.get(dim, ("한도를 넘어 새 작업을 받을 수 없습니다", "The limit is used up, so new work can't be taken"))
-    return (en + _OVER_TAIL[1]) if lang == "en" else (ko + _OVER_TAIL[0])
-
-
-async def over_hard(tenant: str | None, kind: str) -> dict | None:
-    """기관의 하드 한도를 이미 넘었나(kind = analysis | assistant) → {dim, line, line_en} | None. LX · 한도 미설정 = None."""
-    if not tenant or tenant == "lx":
-        return None
-    for d in WORK_DIMS.get(kind, []):
-        try:
-            q = await remaining(tenant, d)
-        except Exception:  # noqa: BLE001 — 판정 실패로 일을 막지 않는다(계량 오류 = 통과 · 기록은 화면 표에)
-            continue
-        if q["hard"] is not None and q["used"] is not None and q["used"] >= q["hard"]:     # 한도 0 = 쓸 수 없음
-            return {"dim": d, "tenant": tenant, "line": over_line(d, "ko"), "line_en": over_line(d, "en")}
-    return None
-
-
-async def hold_quote(q: dict) -> dict:
-    """분석 견적(jobs.build_quote 결과)에 한도 판정을 더한다 — GPU 분석(infer · reinfer)만. 넘었으면 allowed False ·
-    reasons 맨 앞 quota_exceeded · reason_line(화면 한 줄). 견적(POST /jobs/quote)과 제출(POST /jobs)이 같은 판정을 쓴다."""
-    if q.get("kind") not in ("infer", "reinfer") or q.get("pool") == "cpu":
-        return q
-    ov = await over_hard(q.get("_tenant"), "analysis")
-    if ov:
-        q["reasons"] = ["quota_exceeded"] + [r for r in (q.get("reasons") or []) if r != "quota_exceeded"]
-        q["allowed"] = False
-        q["reason_line"] = ov["line"]
-        q["quota_over"] = ov["dim"]
-    return q
-
-
-async def refuse_run(ctx, message: str, ov: dict):
-    """AI 도우미 한 건을 한도 초과로 닫는다 — 모델 호출 0 · 토큰 0. 명령 바는 agent.rejected 의 문구를 그대로 보인다(질문 언어)."""
-    import datetime as _dt
-    from agent import audit as _audit, runner as _runner
-    ctx.lang = _runner.lang_of(message)
-    await _runner.persist_start(ctx, message)
-    text = ov["line_en"] if ctx.lang == "en" else ov["line"]
-    await _runner.emit(ctx, "agent.rejected", {"error": "quota_exceeded", "category": "quota", "message": text, "pii": [], "region": None,
-                                               "lang": ctx.lang})
-    await _runner.persist_state(ctx, state="rejected", error="quota_exceeded", finished_at=_dt.datetime.now(KST))
-    await _audit.log(ctx.principal, "agent.quota_exceeded", ctx.run_id, {"tenant": ov.get("tenant"), "dim": ov.get("dim")})
+def quote_block(tenant: str) -> dict:
+    """견적 답의 'quota' 자리(계약 모양 유지) — 막는 값 없음. 사용량은 기록만 한다."""
+    return {"tenant_id": tenant, "dim": "gpu_s_month",
+            "remaining": env(None, "gpu_s", "measured", "사용을 막는 값 없음 — 사용량은 usage_events 에 기록", "무제한"),
+            "policy": "notify"}

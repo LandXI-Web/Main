@@ -10,7 +10,7 @@ async function boot(page, url, { realm = 'lx', tenant = null, route = null } = {
   if (API) {
     const pw = process.env.DEV_PASSWORD || fs.readFileSync('server/.env', 'utf8').match(/^DEV_PASSWORD=(.*)$/m)[1].trim();
     const r = await fetch(API + '/api/v1/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(realm === 'lx' ? { realm, login: 'lx-staff', password: pw } : { realm, tenant_id: tenant, login: `${tenant}-manager`, password: pw }) });
+      body: JSON.stringify(realm === 'lx' ? { realm, login: 'test@lx.or.kr', password: pw } : { realm, tenant_id: tenant, login: 'lxadmin@lx.or.kr', site: 'gov', password: pw }) });
     session = await r.json();
   }
   if (route) await page.route('**/landxi/global/data/replay/gj1-ysykata.ndjson', route);
@@ -105,7 +105,7 @@ test.describe('F2-D live histogram · on(실 게이트웨이 kgz-agri)', () => {
     expect(s.every((x) => x.dist === 'on' && x.bars >= 8)).toBe(true);
     const job = st.S.result.job_id;
     const pw = process.env.DEV_PASSWORD || fs.readFileSync('server/.env', 'utf8').match(/^DEV_PASSWORD=(.*)$/m)[1].trim();
-    const tok = (await (await fetch(API + '/api/v1/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ realm: 'tenant', tenant_id: 'kgz-agri', login: 'kgz-agri-manager', password: pw }) })).json()).token;
+    const tok = (await (await fetch(API + '/api/v1/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ realm: 'tenant', tenant_id: 'kgz-agri', login: 'lxadmin@lx.or.kr', site: 'gov', password: pw }) })).json()).token;
     const srv = await (await fetch(`${API}/api/v1/results/${job}/index?format=json`, { headers: { authorization: 'Bearer ' + tok } })).json();
     const v = (x) => (x && typeof x === 'object' ? x.value : x);
     const csv = (await page.evaluate(() => window.__f1d.scenes.ys.toCsv())).replace(/^﻿/, '').split('\n');

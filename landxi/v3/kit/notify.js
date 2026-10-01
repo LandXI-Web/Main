@@ -7,7 +7,9 @@
    · 내가 보낸 요청 openSent({ id })     기관 서랍 — 목록(보냄 → 확인 중 → 답변) · 대화 · 한 줄 덧붙이기.
    주소 ?review=<id> 로 열면 그 대화가, ?review=all 이면 '내가 보낸 요청' 목록이 바로 열린다(기관 메뉴 · 다른 화면에서 이어 오기).
    LX 쪽 대화는 /landxi/v3/lx-inbox/ 화면(?id=<id>).
-   새 요청 · 새 답은 30초마다 · 창에 돌아올 때 · 이 창에서 보내고 답할 때(이벤트 'lx:reviews') 다시 센다. 메일 알림 없음. */
+   새 요청 · 새 답은 30초마다 · 창에 돌아올 때 · 이 창에서 보내고 답할 때(이벤트 'lx:reviews') 다시 센다. 메일 알림 없음.
+   다른 할 일(구현 2차 정리 · 서버 /reviews/notify extra) — 처리를 기다리는 것만 숫자에 더하고 맨 위에 한 줄씩:
+     분석 의뢰(LX 관리자 = 결재함 · 담당 LX 직원 = 관리자 승인 대기 알림) · 가입 신청 · 비밀번호 재설정 요청(LX 관리자 · 기관 관리자 = 계정 화면). */
 import { h, api } from './util.js';
 import { drawer } from './panel.js';
 import { toast } from './toast.js';
@@ -23,13 +25,16 @@ const W = {
     to: '받는 사람', to_staff: (n) => `이 서비스 담당 LX 직원 ${n}`, to_lead: (n) => `이 서비스 담당 프로젝트장 ${n}`, to_admin: 'LX 관리자', later: "답은 '내가 보낸 요청'에서 봅니다",
     done: '보냈습니다. 답이 오면 알림으로 알려 드립니다', open_sent: '내가 보낸 요청', toast_ok: '검토 요청을 보냈습니다', toast_no: '보내지 못했습니다',
     no_memo: '메모 없음', lx_ans: 'LX 답', empty_sent: '아직 보낸 요청이 없습니다', empty_sent_t: '필지 카드의 검토 요청으로 보냅니다',
-    back: '목록', more: '한 줄 덧붙이기', add: '보내기', verdict: '판정', me: '나', load_fail: '불러오지 못했습니다' },
+    back: '목록', more: '한 줄 덧붙이기', add: '보내기', verdict: '판정', me: '나', load_fail: '불러오지 못했습니다',
+    x_request: '분석 의뢰 확인 대기', x_request_staff: '담당 서비스 분석 의뢰', x_request_wait: '관리자 승인 대기', x_signup: '가입 신청', x_reset: '비밀번호 재설정 요청' },
   en: { bell: 'Notices', none: 'No new notices', all_lx: 'All requests from agencies', all_t: 'All my requests', sent: 'My review requests',
     ask: 'Request review', memo: 'One-line note', memo_opt: 'optional', ph: 'e.g. The shed was removed last month', send: 'Send to LX', cancel: 'Cancel',
     to: 'To', to_staff: (n) => `LX staff in charge ${n}`, to_lead: (n) => `LX project lead ${n}`, to_admin: 'LX administrator', later: "Replies appear in 'My review requests'",
     done: 'Sent. You will be notified when LX replies', open_sent: 'My review requests', toast_ok: 'Review request sent', toast_no: 'Could not send',
     no_memo: 'No note', lx_ans: 'LX reply', empty_sent: 'No requests yet', empty_sent_t: 'Send one from a parcel card',
-    back: 'List', more: 'Add a line', add: 'Send', verdict: 'Result', me: 'Me', load_fail: 'Could not load' },
+    back: 'List', more: 'Add a line', add: 'Send', verdict: 'Result', me: 'Me', load_fail: 'Could not load',
+    x_request: 'Analysis requests to review', x_request_staff: 'Analysis requests for my service', x_request_wait: 'Waiting for approval',
+    x_signup: 'Sign-up requests', x_reset: 'Password reset requests' },
 };
 const w = (k, ...a) => { const v = (EN() ? W.en : W.ko)[k]; return typeof v === 'function' ? v(...a) : v; };
 const ST_EN = { sent: 'Sent', seen: 'Checking', answered: 'Replied' };
@@ -92,13 +97,25 @@ export function mountBell(slot, who) {
     b.addEventListener('click', () => { close(); if (lx) location.href = INBOX + '?id=' + encodeURIComponent(it.id); else openSent({ id: it.id }); });
     return b;
   }
+  /* 다른 할 일 한 줄 — 처리할 화면이 있으면 그리로(관리자 결재함 · 계정 화면), 없으면 알림만(담당 직원의 의뢰 — 관리자 승인 대기) */
+  function xrow(x) {
+    const label = x.kind === 'request' ? (x.href ? w('x_request') : w('x_request_staff')) : w(x.kind === 'signup' ? 'x_signup' : 'x_reset');
+    const sub = x.kind === 'request' ? (x.items || []).map((i) => i.title).filter(Boolean).slice(0, 2).join(' · ') + (x.href ? '' : ` — ${w('x_request_wait')}`) : '';
+    const inner = [h('span.k-bell-t', {}, h('b', { text: label }), h('b.k-bell-x', { text: String(x.n) })), sub ? h('span.k-bell-l', { text: sub }) : null];
+    if (!x.href) return h('div.k-bell-i.k-bell-i--x', { dataset: { kind: x.kind, unread: '1' } }, ...inner);
+    const a = h('a.k-bell-i.k-bell-i--x', { href: x.href, dataset: { kind: x.kind, unread: '1' } }, ...inner);
+    a.addEventListener('click', () => close());
+    return a;
+  }
   function draw() {
     const items = data?.items || [];
-    pop.replaceChildren(
+    const extra = (data?.extra || []).filter((x) => x.n > 0);
+    pop.replaceChildren(...[
       h('p.k-bell-h', {}, h('span', { text: w('bell') }), data?.n ? h('small', { text: EN() ? `${data.n} new` : `새로 온 것 ${data.n}` }) : null),
-      items.length ? h('div.k-bell-list', {}, ...items.map(row)) : blank(data),
+      extra.length ? h('div.k-bell-list.k-bell-list--x', {}, ...extra.map(xrow)) : null,
+      items.length ? h('div.k-bell-list', {}, ...items.map(row)) : extra.length ? null : blank(data),
       lx ? h('a.t-btn.t-btn--text.k-bell-all', { href: INBOX, text: w('all_lx') })
-        : h('button.t-btn.t-btn--text.k-bell-all', { type: 'button', text: w('all_t'), onclick: () => { close(); openSent(); } }));
+        : h('button.t-btn.t-btn--text.k-bell-all', { type: 'button', text: w('all_t'), onclick: () => { close(); openSent(); } })].filter(Boolean));   // 빈 칸(null)은 넣지 않는다
   }
   function blank(d) {
     const el = h('div.k-bell-none');

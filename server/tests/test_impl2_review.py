@@ -7,7 +7,7 @@ import httpx
 import psycopg
 import pytest
 
-from conftest import B, H, _login
+from conftest import ADMIN_ID, B, H, STAFF_ID, TENANT_ID, _login, drop_account, temp_account
 from landxi_api import config
 
 CARD = "card-pytest-review"
@@ -18,18 +18,24 @@ def pg():
     return psycopg.connect(config.PG_ADMIN_DSN, autocommit=True)
 
 
+NW2_ID = "u_pytest_review_nw2"
+STAFF_NAME = "LX 직원"                    # test@lx.or.kr 의 이름(옛 lx-staff 의 일은 이 계정으로 옮겼다 — 원칙 77)
+
+
 @pytest.fixture(scope="module")
 def T(live):
     pw = config.DEV_PASSWORD
+    _, nw2 = temp_account("tenant", NW2_ID, "pytest-review-nw2@namwon.go.kr", "manager", "namwon", name="시험 담당자")   # 같은 기관의 두 번째 담당자
     t = {
-        "nw": _login({"realm": "tenant", "tenant_id": "namwon", "login": "lxadmin", "password": pw, "site": "gov"}),
-        "nw2": _login({"realm": "tenant", "tenant_id": "namwon", "login": "namwon-manager", "password": pw, "site": "gov"}),
-        "gj": _login({"realm": "tenant", "tenant_id": "gwangju-jeonnam", "login": "gj-manager", "password": pw, "site": "gov"}),
-        "staff": _login({"realm": "lx", "login": "lx-staff", "password": pw}),
-        "admin": _login({"realm": "lx", "login": "lxadmin", "password": pw}),
-        "sales": _login({"realm": "lx", "login": "lx-sales", "password": pw}),
+        "nw": _login({"realm": "tenant", "tenant_id": "namwon", "login": "lxadmin@lx.or.kr", "password": pw, "site": "gov"}),
+        "nw2": nw2,
+        "gj": _login({"realm": "tenant", "tenant_id": "gwangju-jeonnam", "login": "lxadmin@lx.or.kr", "password": pw, "site": "gov"}),
+        "staff": _login({"realm": "lx", "login": "test@lx.or.kr", "password": pw}),
+        "admin": _login({"realm": "lx", "login": "lxadmin@lx.or.kr", "password": pw}),
+        "sales": _login({"realm": "lx", "login": "sales@lx.or.kr", "password": pw}),
     }
-    return {k: H(v) for k, v in t.items()}
+    yield {k: H(v) for k, v in t.items()}
+    drop_account("tenant", NW2_ID)
 
 
 @pytest.fixture(scope="module")
@@ -68,10 +74,10 @@ def other_pnu(tenant):
 # ── 요청 만들기 · 받는 사람 ───────────────────────────────────────────────────────
 def test_request_goes_to_card_owner_then_admin(T, made):
     """카드의 담당 직원이 있으면 그 직원에게, 없으면 LX 관리자에게. 메모는 선택(빈 메모도 보낸다)."""
-    set_owner("u_lx_staff")
+    set_owner(STAFF_ID)
     r = httpx.get(B + "/reviews/recipient", headers=T["nw"], params={"pnu": PNU_R2, "card": CARD}, timeout=30)
     assert r.status_code == 200, r.text
-    assert r.json()["recipient"] == {"kind": "staff", "name": "김도윤", "via": "card"} and r.json()["service"] == "시험 서비스"
+    assert r.json()["recipient"] == {"kind": "staff", "name": STAFF_NAME, "via": "card"} and r.json()["service"] == "시험 서비스"
     r = post(T["nw"], {"pnu": PNU_R2, "card": CARD, "note": "pytest 지난달 창고를 철거했습니다", "from": "pytest"})
     assert r.status_code == 201, r.text
     j = r.json(); made.append(j["id"])
@@ -79,7 +85,7 @@ def test_request_goes_to_card_owner_then_admin(T, made):
     assert j["where"] and "남원" not in j["where"]                       # 읍면동 리 지번(시도 · 시군구를 뗀 모양)
     with pg() as c:
         row = c.execute("SELECT kind, state, status, recipient_id, card_id, sender_id, tenant_id FROM feedback WHERE id=%s", (j["id"],)).fetchone()
-    assert row == ("review", "open", "sent", "u_lx_staff", CARD, "u_namwon_lxadmin", "namwon")   # 기존 feedback 표에 이어 쓴다
+    assert row == ("review", "open", "sent", STAFF_ID, CARD, TENANT_ID["namwon"], "namwon")   # 기존 feedback 표에 이어 쓴다
 
     set_owner(None)
     r = httpx.get(B + "/reviews/recipient", headers=T["nw"], params={"pnu": PNU_R2, "card": CARD}, timeout=30)
@@ -95,12 +101,12 @@ def test_project_lead_comes_first(T, made):
     with pg() as c:
         if not c.execute("SELECT to_regclass('project_links') IS NOT NULL").fetchone()[0]:
             pytest.skip("프로젝트 표 없음")
-        c.execute("INSERT INTO projects(id, name, task, lead_id, created_by) VALUES ('prj_pytest_review', '시험 프로젝트', '시험', 'u_lx_staff', 'u_lx_staff') ON CONFLICT (id) DO NOTHING")
-        c.execute("INSERT INTO project_links(project_id, kind, ref, by) VALUES ('prj_pytest_review', 'card', %s, 'u_lx_staff') ON CONFLICT DO NOTHING", (CARD,))
+        c.execute("INSERT INTO projects(id, name, task, lead_id, created_by) VALUES ('prj_pytest_review', '시험 프로젝트', '시험', %s, %s) ON CONFLICT (id) DO NOTHING", (STAFF_ID, STAFF_ID))
+        c.execute("INSERT INTO project_links(project_id, kind, ref, by) VALUES ('prj_pytest_review', 'card', %s, %s) ON CONFLICT DO NOTHING", (CARD, STAFF_ID))
     try:
-        set_owner("u_lx_admin")                                             # 카드 담당 칸이 달라도 프로젝트장이 먼저
+        set_owner(ADMIN_ID)                                             # 카드 담당 칸이 달라도 프로젝트장이 먼저
         r = httpx.get(B + "/reviews/recipient", headers=T["nw"], params={"pnu": PNU_R2, "card": CARD}, timeout=30).json()
-        assert r["recipient"] == {"kind": "staff", "name": "김도윤", "via": "project"}
+        assert r["recipient"] == {"kind": "staff", "name": STAFF_NAME, "via": "project"}
     finally:
         set_owner(None)
         with pg() as c:
@@ -137,7 +143,7 @@ def test_out_of_scope_and_accounts_rejected(T, made):
 
 
 def test_tenant_sees_only_own_requests(T, made):
-    first, second = made[0], made[1]                     # 첫째 = lxadmin(남원) · 둘째 = namwon-manager(남원)
+    first, second = made[0], made[1]                     # 첫째 = lxadmin@lx.or.kr(남원) · 둘째 = 시험 담당자(남원)
     ids = {i["id"] for i in httpx.get(B + "/reviews", headers=T["nw"], timeout=30).json()["items"]}
     assert first in ids and second not in ids            # 같은 기관이라도 내가 보낸 것만
     assert httpx.get(B + f"/reviews/{second}", headers=T["nw"], timeout=30).status_code == 404
@@ -147,7 +153,7 @@ def test_tenant_sees_only_own_requests(T, made):
 
 # ── LX: 담당 직원 · 관리자 전체 보기 · 알림 수 ─────────────────────────────────────
 def test_staff_sees_own_admin_sees_all_and_notify_counts(T, made):
-    first, second = made[0], made[1]                     # 첫째 → 담당 김도윤 · 둘째 → LX 관리자
+    first, second = made[0], made[1]                     # 첫째 → 담당 LX 직원 · 둘째 → LX 관리자
     staff_ids = {i["id"] for i in httpx.get(B + "/reviews?box=all", headers=T["staff"], timeout=30).json()["items"]}
     admin = httpx.get(B + "/reviews?box=all&limit=300", headers=T["admin"], timeout=30).json()
     admin_ids = {i["id"] for i in admin["items"]}
@@ -184,7 +190,7 @@ def test_answer_reaches_tenant_and_ai_error_becomes_sample(T, made):
     assert it["status_ko"] == "답변" and it["verdict_ko"] == "AI 오류" and it["unread"] is True and it["last"]["side"] == "lx"
     conv = httpx.get(B + f"/reviews/{first}", headers=T["nw"], timeout=30).json()
     last = conv["messages"][-1]
-    assert last["who"] == "LX 담당 김도윤" and last["verdict_ko"] == "AI 오류" and last["new"] is True and conv["messages"][0]["who"] == "나"
+    assert last["who"] == "LX 담당 " + STAFF_NAME and last["verdict_ko"] == "AI 오류" and last["new"] is True and conv["messages"][0]["who"] == "나"
     httpx.post(B + f"/reviews/{first}/read", headers=T["nw"], timeout=30)
     assert httpx.get(B + "/reviews/notify", headers=T["nw"], timeout=30).json()["n"] == before
     with pg() as c:                                        # 'AI 오류' = 재학습 표본(feedback fp) 한 줄 — 같은 필지 · 같은 기관

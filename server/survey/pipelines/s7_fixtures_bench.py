@@ -49,7 +49,7 @@ def main():
     ap.add_argument("--no-fixtures", action="store_true")
     a = ap.parse_args()
     B = a.api.rstrip("/") + "/api/v1"
-    tok = httpx.post(B + "/auth/login", json={"realm": "tenant", "tenant_id": "namwon", "login": "namwon-manager",
+    tok = httpx.post(B + "/auth/login", json={"realm": "tenant", "tenant_id": "namwon", "login": "lxadmin@lx.or.kr", "site": "gov",
                                               "password": config.DEV_PASSWORD}, timeout=30).json()["token"]
     H = {"authorization": "Bearer " + tok}
     cl = httpx.Client(headers=H, timeout=60)

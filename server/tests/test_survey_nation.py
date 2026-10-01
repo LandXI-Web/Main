@@ -139,7 +139,7 @@ def staff():
         httpx.get(API + "/health", timeout=3).raise_for_status()
     except Exception:
         pytest.skip("게이트웨이 없음")
-    return _tok({"realm": "lx", "login": "lx-staff"})
+    return _tok({"realm": "lx", "login": "test@lx.or.kr"})
 
 
 @pytest.mark.parametrize("sgg", [BASE, NEW])
@@ -165,7 +165,7 @@ def test_findings_sgg_filter_and_regions(staff):
 
 def test_build_forbidden_outside_jurisdiction():
     try:
-        h = _tok({"realm": "tenant", "tenant_id": "namwon", "login": "namwon-manager"})
+        h = _tok({"realm": "tenant", "tenant_id": "namwon", "login": "lxadmin@lx.or.kr", "site": "gov"})
     except Exception:
         pytest.skip("게이트웨이 없음")
     r = httpx.post(f"{API}/survey/build", json={"sgg_cd": NEW}, headers=h, timeout=30)

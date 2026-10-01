@@ -1571,8 +1571,8 @@ async def redteam_eval(store: bool = True) -> dict:
     import yaml
     from landxi_api.deps import CAPS, Principal
     cases = yaml.safe_load((config.SERVER_ROOT / "agent" / "redteam.yaml").read_text(encoding="utf-8"))
-    who = {"staff": Principal("lx", "staff", None, "u_lx_staff", caps=CAPS[("lx", "staff")]),
-           "admin": Principal("lx", "admin", None, "u_lx_admin", caps=CAPS[("lx", "admin")]),
+    who = {"staff": Principal("lx", "staff", None, "u_mail_test", caps=CAPS[("lx", "staff")]),          # 메일 아이디 계정(원칙 77)
+           "admin": Principal("lx", "admin", None, "u_mail_lxadmin", caps=CAPS[("lx", "admin")]),
            "sales": Principal("lx", "sales", None, "u_lx_sales", caps=CAPS[("lx", "sales")]),
            "namwon": Principal("tenant", "manager", "namwon", "u_nw", caps=CAPS[("tenant", "manager")]),
            "gj": Principal("tenant", "manager", "gwangju-jeonnam", "u_gj", caps=CAPS[("tenant", "manager")]),

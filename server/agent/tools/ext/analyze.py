@@ -81,16 +81,15 @@ REASON = {
     "aoi_outside_footprint": "이 지역에는 분석할 영상이 아직 없습니다. 영상 등록이 필요합니다.",
     "model_input_mismatch": "이 영상에 맞는 AI 모델이 아직 없습니다.",
     "too_large": "범위가 너무 넓어 한 번에 분석할 수 없습니다.",
-    "power_budget": "지금은 GPU 전력 한도에 걸려 새 분석을 시작하지 않았습니다. 진행 중인 분석이 끝난 뒤 다시 요청해 주세요.",
-    "quota_exceeded": "이번 달 분석 한도를 넘었습니다.",
+    "power_budget": "지금은 GPU 전력 규칙(한 번에 한 장)에 걸려 새 분석을 시작하지 않았습니다. 진행 중인 분석이 끝난 뒤 다시 요청해 주세요.",
     "demo_required": "이 계정으로는 예시 분석만 실행할 수 있습니다.",
     "imagery_forbidden": "이 계정으로는 이 영상을 분석할 수 없습니다.",
-    "queue_busy": "다른 지역 AI 분석이 GPU 를 쓰고 있어 새 분석을 시작하지 않았습니다. GPU 는 전력 한도 때문에 한 장씩만 씁니다. 끝난 뒤 다시 요청해 주세요.",
+    "queue_busy": "다른 지역 AI 분석이 GPU 를 쓰고 있어 새 분석을 시작하지 않았습니다. GPU 는 전력 규칙 때문에 한 장씩만 씁니다. 끝난 뒤 다시 요청해 주세요.",
 }
 
 
 def reason_text(reasons) -> tuple[str, str]:
-    for k in ("power_budget", "queue_busy", "no_imagery", "aoi_outside_footprint", "model_input_mismatch", "too_large", "quota_exceeded",
+    for k in ("power_budget", "queue_busy", "no_imagery", "aoi_outside_footprint", "model_input_mismatch", "too_large",
               "demo_required", "imagery_forbidden"):
         if k in (reasons or []):
             return k, REASON[k]

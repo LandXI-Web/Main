@@ -39,6 +39,7 @@ SITE_REALM = {"app": "lx", "admin": "lx", "gov": "tenant"}
 #   · 관리자가 잠근 계정은 비밀번호가 맞아도 들어가지 않는다(403 account_locked).
 #   · 임시 비밀번호(관리자가 발급 · 하루)로 들어오면 세션 대신 바꾸기 표(15분)를 준다 → POST /auth/password/change(accounts.py)에서 새 비밀번호를 정해야 세션.
 #   · 메일 아이디는 대소문자를 가리지 않는다(원칙 77).
+#   · 사용 중지된 계정(status disabled — 옛 아이디 정리 · 0015_mail_accounts.sql)은 로그인 0 · 남은 세션도 받지 않는다(resolve).
 FAIL_MAX, FAIL_WIN = 5, 600
 LOCK_FOR = dt.timedelta(minutes=10)
 LOCKED_MSG = "비밀번호를 여러 번 틀려 10분 동안 잠겼습니다"
@@ -74,9 +75,11 @@ async def resolve(request: Request) -> Principal:
     if not row or row["expires_at"] < dt.datetime.now(dt.timezone.utc):
         return Principal()
     if row["realm"] == "lx":
-        u = await pl.fetchrow("SELECT name FROM lx_users WHERE id=$1", row["user_id"])
+        u = await pl.fetchrow("SELECT name, status FROM lx_users WHERE id=$1", row["user_id"])
     else:
-        u = await pl.fetchrow("SELECT name FROM tenant_users WHERE id=$1", row["user_id"])
+        u = await pl.fetchrow("SELECT name, status FROM tenant_users WHERE id=$1", row["user_id"])
+    if u and u["status"] == "disabled":            # 사용 중지된 계정(옛 아이디 정리 · 원칙 77) — 남은 세션도 받지 않는다
+        return Principal()
     return Principal(realm=row["realm"], role=row["role"], tenant_id=row["tenant_id"], user_id=row["user_id"],
                      name=u["name"] if u else None, token_hash=th, caps=CAPS.get((row["realm"], row["role"]), []))
 
@@ -116,6 +119,9 @@ async def login(body: dict, request: Request):
     if u and u["lock_until"] and u["lock_until"] > dt.datetime.now(dt.timezone.utc):   # 잠시 잠김 — 비밀번호를 보지도 않는다
         await fail("temp_locked")
         raise ApiError("temp_locked", LOCKED_MSG, status=423)
+    if u and u["status"] == "disabled":             # 사용 중지된 계정(옛 아이디 → 메일 아이디 정리) — 없는 아이디와 같은 답(계정이 있었는지 알리지 않는다)
+        await fail("disabled")
+        raise ApiError("unauthorized", "아이디 또는 비밀번호가 맞지 않습니다")
     ok = False
     if u and u["status"] in ("active", "locked"):
         try:

@@ -12,8 +12,8 @@ from agent import config, lint, runner  # noqa: E402
 from agent.tools import Out, ToolError, ext, from_contract, registry  # noqa: E402
 from landxi_api.deps import CAPS, Principal  # noqa: E402
 
-STAFF = Principal("lx", "staff", None, "u_lx_staff", caps=CAPS[("lx", "staff")])
-ADMIN = Principal("lx", "admin", None, "u_lx_admin", caps=CAPS[("lx", "admin")])
+STAFF = Principal("lx", "staff", None, "u_mail_test", caps=CAPS[("lx", "staff")])
+ADMIN = Principal("lx", "admin", None, "u_mail_lxadmin", caps=CAPS[("lx", "admin")])
 NAMWON = Principal("tenant", "manager", "namwon", "u_nw", caps=CAPS[("tenant", "manager")])
 GUEST = Principal()
 

@@ -12,6 +12,7 @@ import { h, ymd } from '../kit/util.js';
 import { orgHome } from '../kit/auth-gate.js';
 import { loadBrand, applyBrand, markEl, faceEl, chip, favicon, shortAddr, joinLine } from './brand.js';
 import { brandForm } from './brand-form.js';
+import { govRail, setRequestService } from './menu.js';
 
 const who = await K.gate('gov-select');
 const tid = who.me.tenant_id;
@@ -37,11 +38,10 @@ if (B.color?.accent) {   // 현재 위치 표시 · 진행 막대 · 포커스 =
   document.body.style.setProperty('--accent', a); document.body.style.setProperty('--tint', `rgba(${rgb},.14)`);
 }
 
-/* 메뉴 — 내 서비스 · 내가 보낸 요청(검토 요청 목록 · 알림 칸 부품 kit/notify.js 가 ?review=all 을 열어 준다) · 기관 정보(기관 관리자) */
-const rail = [{ id: 'list', label: '내 서비스', icon: 'grid', href: './?list=1' }, { id: 'sent', label: '내가 보낸 요청', icon: 'inbox', href: './?list=1&review=all' }];
-if (isMgr) rail.push({ id: 'org', label: '기관 정보', icon: 'org', href: './?view=org' });
-const railNow = view === 'org' ? 2 : qs.get('review') ? 1 : 0;
-const S = K.shell({ who, home: 'gov-select', title: B.platform, rail: { kind: 'menu', items: rail, current: railNow } });
+/* 메뉴(기관 메뉴 한 곳 — menu.js) — 내 서비스 · 분석 의뢰 · 내가 보낸 요청(검토 요청 목록 · 알림 칸 부품 kit/notify.js 가 ?review=all 을 열어 준다) ·
+   기관 관리자는 기관 정보 · 계정 */
+const RAIL = govRail({ who, current: view === 'org' ? 'org' : qs.get('review') ? 'sent' : 'list' });
+const S = K.shell({ who, home: 'gov-select', title: B.platform, rail: RAIL });
 /* 머리 = 기관 마크 · 플랫폼 이름(Land-XI 글자 대신 — 원칙 48 · 64) */
 function paintMast() {
   const w = S.app.querySelector('.k-mast .k-word');
@@ -133,6 +133,11 @@ async function renderSvc() {
   const p = s.open ? primary(cur) : null;
   const q = (extra = {}) => '?' + new URLSearchParams({ service: s.card, ...(reg ? { region: reg.sgg_cd } : {}), ...extra });
   const mapHref = '../gov-fusion/' + q(), rep = (tab) => '../gov-report/' + q({ tab });
+  /* 이 서비스의 배포본(분석 의뢰 · 결과 시점은 배포본 단위) — 광역은 고른 시·군·구의 것, 없으면 이 서비스의 첫 배포본 */
+  const deps = ((await api('/requests/services').catch(() => null))?.items || []).filter((d) => d.card === s.card);
+  const dep = (reg && deps.find((d) => d.sgg_cd === reg.sgg_cd)) || (deps.length === 1 || !wide ? deps[0] : null) || deps[0] || null;
+  const reqHref = '../gov-request/' + (dep ? '?' + new URLSearchParams({ service: dep.id }) : '');
+  if (dep) setRequestService(RAIL, S.rail, dep.id);
 
   /* 광역 — '광역 전체 / 시·군·구' 한 칸(사용자가 고른다) */
   let pick = null;
@@ -147,7 +152,8 @@ async function renderSvc() {
     h('a.gs-tab', { href: q(), 'aria-current': 'page', text: '현황' }),
     h('a.gs-tab', { href: mapHref, text: '결과 보기' }),
     survey ? h('a.gs-tab', { href: rep('sus'), text: '필지 대조 결과' }) : null,
-    survey ? h('a.gs-tab', { href: rep('report'), text: '보고서' }) : null));
+    survey ? h('a.gs-tab', { href: rep('report'), text: '보고서' }) : null,
+    s.open ? h('a.gs-tab', { href: reqHref, text: '분석 의뢰' }) : null));
 
   const mainCol = h('div.gs-main'), side = h('div.gs-side');
   page.append(h('div.gs-dash', {}, mainCol, side));
@@ -213,6 +219,27 @@ async function renderSvc() {
   if (img) rows.push(h('li', {}, h('div.gs-row', {}, h('span', { text: '등록된 영상' }), h('span.s', { text: img }))));
   recent.append(rows.length ? h('ul.gs-rows', {}, ...rows) : h('p.gs-none', { text: '아직 결과가 없습니다' }));
   side.append(recent);
+
+  /* 결과 시점 — 서비스 결과 + 분석 의뢰로 더해진 시점(GET /requests/timepoints · 의뢰 화면과 같은 목록) */
+  if (s.open && deps.length) {
+    const tp = h('section.t-card.gs-box', { 'aria-label': '결과 시점' }, h('div.gs-box-h', {}, h('h2', { text: '결과 시점' })));
+    const ul = h('ul.gs-rows');
+    tp.append(ul);
+    side.append(tp);
+    const pick = dep ? [dep] : deps.slice(0, 3);
+    const lists = await Promise.all(pick.map((d) => api('/requests/timepoints?' + new URLSearchParams({ service: d.id })).then((j) => ({ d, j })).catch(() => null)));
+    const seen = new Set();
+    for (const x of lists.filter(Boolean)) {
+      for (const t of x.j.items || []) {
+        const k = t.kind + ':' + (t.request_id || t.result_set || t.label);
+        if (seen.has(k)) continue; seen.add(k);
+        const href = t.kind === 'request' ? '../gov-request/?' + new URLSearchParams({ service: x.d.id, tab: 'mine' }) : mapHref;
+        ul.append(h('li', {}, h('a.gs-row', { href, dataset: { kind: t.kind } }, h('span', { text: t.label }),
+          t.kind === 'request' ? h('span.t-chip', { text: '의뢰' }) : h('span.t-chip', { text: '보기' }))));
+      }
+    }
+    if (!ul.childElementCount) ul.replaceWith(h('p.gs-none', { text: '아직 결과가 없습니다' }));
+  }
 }
 
 /* ═════════════ 기관 정보(기관 관리자) ═════════════ */

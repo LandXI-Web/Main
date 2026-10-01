@@ -17,8 +17,8 @@ from agent.tools.ext import ops as T  # noqa: E402
 from landxi_api.deps import CAPS, Principal  # noqa: E402
 from ops import llm_start as L  # noqa: E402
 
-ADMIN = Principal("lx", "admin", None, "u_lx_admin", caps=CAPS[("lx", "admin")])
-STAFF = Principal("lx", "staff", None, "u_lx_staff", caps=CAPS[("lx", "staff")])
+ADMIN = Principal("lx", "admin", None, "u_mail_lxadmin", caps=CAPS[("lx", "admin")])
+STAFF = Principal("lx", "staff", None, "u_mail_test", caps=CAPS[("lx", "staff")])
 NAMWON = Principal("tenant", "manager", "namwon", "u_nw", caps=CAPS[("tenant", "manager")])
 GJ = Principal("tenant", "manager", "gwangju-jeonnam", "u_gj", caps=CAPS[("tenant", "manager")])
 AT = "2026-09-30T00:10:00+09:00"
@@ -177,9 +177,10 @@ def test_usage_llm_tokens_four_tenants():
     assert e["namwon_u"]["value"] == 856313 and e["gwangju_jeonnam_u"]["value"] == 97225
     assert e["kgz_agri_u"]["value"] == 41194 and e["lx_u"]["value"] == 1599304
     assert "lx_demo_u" not in e                                             # 영업 계량 제외
-    assert e["namwon_u"]["unit"] == "tokens" and e["namwon_h"]["value"] == 3000000     # 칩 단위 키 — 화면 i18n 이 ko '토큰' · en 'tokens'
+    assert e["namwon_u"]["unit"] == "tokens"     # 칩 단위 키 — 화면 i18n 이 ko '토큰' · en 'tokens'
     assert set(out.data["기관"]) == {"남원시", "광주전남특별시", "키르기스 농업부", "키르기스 토지자원청", "LX"}
-    assert out.data["기관"]["LX"]["한도"] == "미설정"
+    # 사용을 막는 값은 없다(원칙 83 · 11차 — 기관 · LX 직원 모두) — 답에 '한도' 칸 · 봉투가 없다
+    assert not any(k.endswith("_h") for k in e) and all("한도" not in row for row in out.data["기관"].values())
     assert e["sum"]["value"] == 856313 + 97225 + 41194 + 2724 + 1599304
 
 

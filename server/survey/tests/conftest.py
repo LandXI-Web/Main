@@ -40,22 +40,22 @@ def _login(api, body):
 
 @pytest.fixture(scope="session")
 def h_nw(api):
-    return _login(api, {"realm": "tenant", "tenant_id": "namwon", "login": "namwon-manager", "password": config.DEV_PASSWORD})
+    return _login(api, {"realm": "tenant", "tenant_id": "namwon", "login": "lxadmin@lx.or.kr", "password": config.DEV_PASSWORD, "site": "gov"})
 
 
 @pytest.fixture(scope="session")
 def h_gj(api):
-    return _login(api, {"realm": "tenant", "tenant_id": "gwangju-jeonnam", "login": "gj-manager", "password": config.DEV_PASSWORD})
+    return _login(api, {"realm": "tenant", "tenant_id": "gwangju-jeonnam", "login": "lxadmin@lx.or.kr", "password": config.DEV_PASSWORD, "site": "gov"})
 
 
 @pytest.fixture(scope="session")
 def h_staff(api):
-    return _login(api, {"realm": "lx", "login": "lx-staff", "password": config.DEV_PASSWORD})
+    return _login(api, {"realm": "lx", "login": "test@lx.or.kr", "password": config.DEV_PASSWORD})
 
 
 @pytest.fixture(scope="session")
 def h_sales(api):
-    return _login(api, {"realm": "lx", "login": "lx-sales", "password": config.DEV_PASSWORD})
+    return _login(api, {"realm": "lx", "login": "sales@lx.or.kr", "password": config.DEV_PASSWORD})
 
 
 @pytest.fixture()

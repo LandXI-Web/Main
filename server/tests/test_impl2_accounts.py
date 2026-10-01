@@ -2,7 +2,8 @@
 기관 관리자는 자기 기관만 · LX 관리자는 전부 · 잠금 · 바깥 주소 로그인 시도 제한. 실서버(:8700).
 
 확인 대장: FR-4(계정 — 확인) · D4-ⓑ(가입 신청 + 승인 — 확인) · 원칙 72 · 77.
-옛 계정(lx-admin · namwon-manager · gj-manager)은 관리자 역할로만 쓰고 바꾸지 않는다. 시험 계정은 시험 안에서 만들고(비밀번호도 시험 안에서 새로) 끝에서 지운다.
+메일 계정(lxadmin@lx.or.kr · 각 기관 lxadmin@lx.or.kr)은 관리자 역할로만 쓰고 바꾸지 않는다. 옛 아이디는 사용 중지(로그인 0 · 바꾸기 0).
+LX 관리자는 기관 가입 신청을 보기만 한다(승인 · 반려 0 — 원칙 72 · 서버 403 tenant_signup). 시험 계정은 시험 안에서 만들고(비밀번호도 시험 안에서 새로) 끝에서 지운다.
 '바깥 주소' 요청은 공개 관문처럼 x-forwarded-for 를 붙여 흉내 낸다(시험마다 다른 주소 — 시도 제한이 서로 섞이지 않게).
 """
 import secrets
@@ -11,7 +12,7 @@ import httpx
 import psycopg
 import pytest
 
-from conftest import B, H
+from conftest import ADMIN_ID, B, H, STAFF_ID, TENANT_ID
 from landxi_api import config
 
 MAILDOM = "example.com"
@@ -105,7 +106,7 @@ def test_signup_approve_then_login(live, tok):
     assert me["realm"] == "lx" and me["role"] == "staff"
     c = pg()
     row = c.execute("SELECT pw_hash, decided_by, state FROM signup_requests WHERE id=%s", (rid,)).fetchone()
-    assert row == (None, "u_lx_admin", "approved")                            # 끝난 신청에 비밀번호 해시가 남지 않는다 · 승인한 사람
+    assert row == (None, ADMIN_ID, "approved")                            # 끝난 신청에 비밀번호 해시가 남지 않는다 · 승인한 사람
     c.close()
     again = signup(m, pw)
     assert again.status_code == 409                                            # 이미 가입한 메일
@@ -228,11 +229,17 @@ def test_tenant_manager_scope(live, tok):
     assert all(x["realm"] == "tenant" and x["tenant_id"] == "namwon" for x in nw)
     both = get("/accounts/requests?kind=signup", tok["admin"]).json()["items"]
     assert {mn, mg} <= {x["login"] for x in both}                              # LX 관리자는 전부 본다(원칙 72)
+    assert all(x["can_decide"] is False for x in both if x["realm"] == "tenant")  # 기관 신청은 보기만(승인 · 반려 버튼 없음)
+    assert all(x["can_decide"] is True for x in nw)
     gid = pending_id(tok["admin"], mg)
     nid = pending_id(tok["namwon"], mn)
     assert post(f"/accounts/signup/{gid}/decide", {"decision": "approve"}, token=tok["namwon"]).status_code == 404   # 다른 기관 = 없음
-    assert post(f"/accounts/signup/{nid}/decide", {"decision": "approve"}, token=tok["namwon"]).status_code == 200   # 자기 기관 = 승인
-    assert post(f"/accounts/signup/{gid}/decide", {"decision": "reject", "reason": "시험 반려"}, token=tok["admin"]).status_code == 200  # LX 관리자도 승인·반려
+    for d in ({"decision": "approve"}, {"decision": "reject", "reason": "시험 반려"}):                               # LX 관리자 = 기관 가입 승인에 관여 0
+        r = post(f"/accounts/signup/{nid}/decide", d, token=tok["admin"])
+        assert r.status_code == 403 and r.json()["error"]["code"] == "tenant_signup"
+    assert get("/accounts/summary", tok["admin"]).json()["counts"]["signup_view"] >= 2                               # 보기만 하는 기관 신청 수
+    assert post(f"/accounts/signup/{nid}/decide", {"decision": "approve"}, token=tok["namwon"]).status_code == 200   # 자기 기관 = 그 기관 관리자가 승인
+    assert post(f"/accounts/signup/{gid}/decide", {"decision": "reject", "reason": "시험 반려"}, token=tok["gj"]).status_code == 200   # 광주전남 관리자가 반려
     s = login(mn, pw, site="gov", tenant="namwon")
     assert s.status_code == 200 and s.json()["role"] == "viewer"               # 기관 신청 = 부서 사용자
     assert login(mn, pw, site="gov", tenant="gwangju-jeonnam").status_code == 401
@@ -240,12 +247,12 @@ def test_tenant_manager_scope(live, tok):
     assert users["items"] and all(u["realm"] == "tenant" and u["tenant_id"] == "namwon" for u in users["items"])
     assert [o["id"] for o in users["orgs"]] == ["namwon"]
     lx_ids = {u["id"] for u in get("/accounts/users?realm=lx", tok["admin"]).json()["items"]}
-    assert "u_lx_staff" in lx_ids
-    assert post("/accounts/users/lx/u_lx_staff/lock", {"locked": True}, token=tok["namwon"]).status_code == 404        # LX 계정 = 관할 밖
+    assert STAFF_ID in lx_ids
+    assert post(f"/accounts/users/lx/{STAFF_ID}/lock", {"locked": True}, token=tok["namwon"]).status_code == 404        # LX 계정 = 관할 밖
     uid = [u["id"] for u in users["items"] if u["login"] == mn][0]
     gj_user = [u for u in get("/accounts/users?realm=tenant&tenant_id=gwangju-jeonnam", tok["admin"]).json()["items"]][0]
     assert post(f"/accounts/users/tenant/{gj_user['id']}/temp-password", {}, token=tok["namwon"]).status_code == 404   # 다른 기관 계정
-    assert post("/accounts/users/tenant/u_namwon_manager/temp-password", {}, token=tok["namwon"]).json()["error"]["code"] == "self_account"
+    assert post(f"/accounts/users/tenant/{TENANT_ID['namwon']}/temp-password", {}, token=tok["namwon"]).json()["error"]["code"] == "self_account"
     r = post(f"/accounts/users/tenant/{uid}/role", {"role": "manager"}, token=tok["namwon"])
     assert r.status_code == 200
     assert post(f"/accounts/users/tenant/{uid}/role", {"role": "admin"}, token=tok["namwon"]).status_code == 400
@@ -275,7 +282,7 @@ def test_admin_lock(live, tok):
     assert login(m, "wrong-" + newpw()).status_code == 401                     # 틀린 비밀번호는 잠금 여부를 말하지 않는다
     assert post(f"/accounts/users/lx/{uid}/lock", {"locked": False}, token=tok["admin"]).status_code == 200
     assert login(m, pw).status_code == 200
-    assert post("/accounts/users/lx/u_lx_admin/lock", {"locked": True}, token=tok["admin"]).json()["error"]["code"] == "self_account"
+    assert post(f"/accounts/users/lx/{ADMIN_ID}/lock", {"locked": True}, token=tok["admin"]).json()["error"]["code"] == "self_account"
 
 
 def test_five_wrong_locks_account_ten_minutes(live, tok):
@@ -316,3 +323,36 @@ def test_failures_scope(live, tok):
     allf = [x for x in get("/accounts/failures", tok["admin"]).json()["items"] if x["login"] == mn]
     assert len(allf) == 2                                                       # LX 관리자는 전부
     assert get("/accounts/failures", tok["staff"]).status_code == 403
+
+
+# ── 옛 아이디 → 메일 아이디(원칙 77 · 정리 작업): 옛 계정은 지우지 않고 사용 중지 ───────────────────────────
+def test_old_ids_disabled_not_deleted(live, tok):
+    """옛 아이디(lx-staff · lx-admin · lxadmin · namwon-manager · gj-manager …)는 로그인 0 · 목록에 '사용 중지'로 남고 바꾸지 않는다.
+    가진 것(프로젝트 · 결재 · 대장 · 작업 등)은 새 메일 계정으로 옮겨져 옛 아이디로 남은 것이 없다. 영업은 sales@lx.or.kr."""
+    c = pg()
+    t0 = c.execute("SELECT now()").fetchone()[0]
+    old_lx = ["u_lx_staff", "u_lx_admin", "u_lxadmin"]
+    old_t = ["u_namwon_manager", "u_namwon_lxadmin", "u_gj_manager", "u_gj_manager_alias", "u_gwangju-jeonnam_lxadmin"]
+    try:
+        assert {r[0] for r in c.execute("SELECT status FROM lx_users WHERE id = ANY(%s)", (old_lx,)).fetchall()} == {"disabled"}
+        assert {r[0] for r in c.execute("SELECT status FROM tenant_users WHERE id = ANY(%s)", (old_t,)).fetchall()} == {"disabled"}
+        for body in ({"site": "app", "login": "lx-staff"}, {"site": "admin", "login": "lx-admin"}, {"site": "admin", "login": "lxadmin"},
+                     {"site": "gov", "tenant_id": "namwon", "login": "namwon-manager"}, {"site": "gov", "tenant_id": "gwangju-jeonnam", "login": "gj-manager"}):
+            r = post("/auth/login", {**body, "password": config.DEV_PASSWORD})
+            assert r.status_code == 401 and r.json()["error"]["message"] == "아이디 또는 비밀번호가 맞지 않습니다"     # 있었는지 알리지 않는다
+        for body in ({"site": "app", "login": "test@lx.or.kr"}, {"site": "admin", "login": "lxadmin@lx.or.kr"}, {"site": "app", "login": "sales@lx.or.kr"},
+                     {"site": "gov", "tenant_id": "namwon", "login": "lxadmin@lx.or.kr"}):
+            assert post("/auth/login", {**body, "password": config.DEV_PASSWORD}).status_code == 200, body
+        users = {u["id"]: u for u in get("/accounts/users", tok["admin"]).json()["items"]}
+        assert users["u_lx_staff"]["status"] == "disabled" and users[STAFF_ID]["status"] == "active"
+        for path in ("/accounts/users/lx/u_lx_staff/lock", "/accounts/users/tenant/u_namwon_manager/temp-password"):
+            r = post(path, {"locked": False} if path.endswith("lock") else {}, token=tok["admin"])
+            assert r.status_code == 409 and r.json()["error"]["code"] == "disabled_account"                              # 되살리지 않는다
+        assert c.execute("SELECT status FROM lx_users WHERE id='u_lx_staff'").fetchone()[0] == "disabled"
+        moved = {"projects": "lead_id", "approvals": "requested_by", "jobs": "submitted_by", "ledger_imports": "created_by", "agent_runs": "user_id"}
+        for t, col in moved.items():
+            assert c.execute(f"SELECT count(*) FROM {t} WHERE {col} = ANY(%s)", (old_lx + old_t,)).fetchone()[0] == 0, t
+        assert c.execute("SELECT count(*) FROM sessions WHERE user_id = ANY(%s)", (old_lx + old_t,)).fetchone()[0] == 0
+    finally:
+        c.execute("DELETE FROM login_failures WHERE reason='disabled' AND at >= %s", (t0,))
+        c.close()

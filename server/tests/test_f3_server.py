@@ -123,9 +123,9 @@ T_LOGIN = "pytest-ledger"
 @pytest.fixture(scope="module")
 def ttok(live):
     with adm() as c:
-        pw = c.execute("SELECT pw_hash FROM tenant_users WHERE id='u_namwon_manager'").fetchone()[0]
+        pw = c.execute("SELECT pw_hash FROM tenant_users WHERE id='u_namwon_mail_lxadmin'").fetchone()[0]     # 메일 계정과 같은 시험 비밀번호(원칙 77)
         c.execute("INSERT INTO tenant_users(id, tenant_id, login, pw_hash, role, status, name) VALUES ('u_pytest_ledger',%s,%s,%s,'manager','active','시험 담당자') "
-                  "ON CONFLICT (id) DO UPDATE SET status='active'", (T, T_LOGIN, pw))
+                  "ON CONFLICT (id) DO UPDATE SET status='active', pw_hash=EXCLUDED.pw_hash", (T, T_LOGIN, pw))
     t = httpx.post(B + "/auth/login", json={"realm": "tenant", "tenant_id": T, "login": T_LOGIN, "password": config.DEV_PASSWORD}, timeout=30)
     t.raise_for_status()
     yield t.json()["token"]

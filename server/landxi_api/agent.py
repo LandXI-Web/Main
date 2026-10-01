@@ -96,11 +96,7 @@ async def create_run(body: dict, request: Request):
     alive, tried = await backends.first_alive(r)
     run_id = runner.ulid("run_")
     ctx = runner.make_ctx(run_id, p, _token(request), body.get("context") or {}, mode, r)
-    from . import quota as quota_mod                    # 기관 AI 도우미 한도를 넘었으면 새 질문을 받지 않는다(이유 한 줄 · 모델 0 · impl-1 C6)
-    ov = await quota_mod.over_hard(runner.tenant_of(p), "assistant")
-    if ov:
-        runner.start(ctx, quota_mod.refuse_run(ctx, msg, ov))
-        return {"run": _run_public(run_id, p, mode, "rejected"), "events_url": f"/api/v1/events/agent/{run_id}", "backend": {"first": None, "skipped": []}}
+    # 기관 AI 도우미 질문은 한도로 막지 않는다(원칙 83 · 7차 기관-1 — 기관에는 한도가 아니라 사용 현황). 사용량(토큰)은 runner.meter 가 그대로 기록한다.
     if alive is None:
         # 거절(관할 밖 · 자료 없음)·요약 직행은 LLM 이 없어도 서버가 한 줄로 답한다(fix-agent-scope) — 그 밖만 503
         try:
@@ -130,11 +126,7 @@ async def report_draft(body: dict, request: Request):
     alive, tried = await backends.first_alive(r)
     run_id = runner.ulid("run_")
     ctx = runner.make_ctx(run_id, p, _token(request), body.get("context") or {}, "report", r)
-    from . import quota as quota_mod                    # 기관 AI 도우미 한도(impl-1 C6) — 넘었으면 초안도 새로 만들지 않는다
-    ov = await quota_mod.over_hard(runner.tenant_of(p), "assistant")
-    if ov:
-        runner.start(ctx, quota_mod.refuse_run(ctx, "보고서 초안", ov))
-        return {"run": _run_public(run_id, p, "report", "rejected"), "events_url": f"/api/v1/events/agent/{run_id}"}
+    # 보고서 초안도 한도로 막지 않는다(원칙 83) — 사용량 기록만
     if alive is None:
         await ctx.http.aclose()
         await _unavailable(tried)

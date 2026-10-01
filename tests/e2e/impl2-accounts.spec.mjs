@@ -31,14 +31,20 @@ test.describe('구현 2차 T5 — 계정 찾기 · 신청 가운데 창', () => 
   test.beforeEach(async ({ request }) => { test.skip(!(await up(request)), '게이트웨이 :8700 꺼짐'); });
   test.afterAll(() => cleanup(MADE.splice(0)));
 
+  /* 입구 셋 — app · admin = Land-XI 로그인(LX 전용 · 원칙 78) · gov = 기관 메인(남원)의 로그인 카드(같은 창 · 기관은 주소가 정해 기관 고르기 0) */
   for (const site of ['app', 'admin', 'gov']) {
     for (const vp of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
       test(`${site} · ${vp.width} — 가운데 창 · 탭 셋 · Esc · 바깥 · ×`, async ({ page }) => {
         const errs = []; page.on('pageerror', (e) => errs.push(String(e)));
         await page.setViewportSize(vp);
-        await page.goto(BASE + '/landxi/v3/login/?site=' + site, { waitUntil: 'domcontentloaded' });
-        await page.waitForFunction(() => window.__login?.ready);
-        const open = async () => { await page.click('#helpBtn'); await page.waitForSelector('.k-md-bg.is-open .k-md[role=dialog][aria-modal=true]'); };
+        if (site === 'gov') {
+          await page.goto(BASE + '/landxi/v3/gov-home/?org=namwon&site=gov', { waitUntil: 'domcontentloaded' });
+          await page.waitForSelector('.gh-login .gh-help', { timeout: 30000 });
+        } else {
+          await page.goto(BASE + '/landxi/v3/login/?site=' + site, { waitUntil: 'domcontentloaded' });
+          await page.waitForFunction(() => window.__login?.ready);
+        }
+        const open = async () => { await page.click(site === 'gov' ? '.gh-login .gh-help' : '#helpBtn'); await page.waitForSelector('.k-md-bg.is-open .k-md[role=dialog][aria-modal=true]'); };
         await open();
         await expect(page.locator('.k-drawer')).toHaveCount(0);                                   // 오른쪽 서랍 0
         const box = await page.locator('.k-md').boundingBox();
@@ -53,7 +59,7 @@ test.describe('구현 2차 T5 — 계정 찾기 · 신청 가운데 창', () => 
         await page.click('.ac-tab[data-tab="signup"]');
         if (site === 'admin') await expect(page.locator('.ac-pane[data-tab="signup"]')).toContainText('LX 관리자 계정은');
         else await expect(page.locator('.ac-pane[data-tab="signup"] input[name=login]')).toBeVisible();
-        if (site === 'gov') await expect(page.locator('.ac-pane[data-tab="signup"] select[name=tenant_id]')).toBeVisible();
+        if (site === 'gov') await expect(page.locator('.ac-pane[data-tab="signup"] select[name=tenant_id]')).toHaveCount(0);   // 기관은 주소가 정한다
         await page.keyboard.press('Escape');
         await expect(page.locator('.k-md-bg')).toHaveCount(0);
         await open();
@@ -99,7 +105,7 @@ test.describe('구현 2차 T5 — 계정 찾기 · 신청 가운데 창', () => 
     expect((await request.post(API + '/accounts/signup', { headers: H(), data: { site: 'app', name: '시험 재설정', login, password: pw, password2: pw, dept: '시험부', consent: true } })).status()).toBe(201);
     const dev = process.env.DEV_PASSWORD;
     test.skip(!dev, 'server/.env DEV_PASSWORD 없음');
-    const admin = (await (await request.post(API + '/auth/login', { data: { realm: 'lx', login: 'lx-admin', password: dev } })).json()).token;
+    const admin = (await (await request.post(API + '/auth/login', { data: { realm: 'lx', login: 'lxadmin@lx.or.kr', password: dev } })).json()).token;
     const auth = { authorization: 'Bearer ' + admin };
     const sid = (await (await request.get(API + '/accounts/requests?kind=signup', { headers: auth })).json()).items.find((x) => x.login === login).id;
     expect((await request.post(API + `/accounts/signup/${sid}/decide`, { headers: auth, data: { decision: 'approve' } })).ok()).toBe(true);
@@ -122,7 +128,7 @@ test.describe('구현 2차 T5 — 계정 찾기 · 신청 가운데 창', () => 
 
   test('LX 관리자 계정 화면 — 탭 다섯이 열리고, 관리자 아닌 계정은 못 들어간다', async ({ page, browser }) => {
     test.skip(!process.env.DEV_PASSWORD, 'server/.env DEV_PASSWORD 없음');
-    await frontDoor(page, BASE, 'lxadmin');
+    await frontDoor(page, BASE, 'lxadmin@lx.or.kr');
     await page.goto(BASE + '/landxi/v3/ops-accounts/');
     await expect(page.locator('.acc-tab')).toHaveText([/가입 신청/, /비밀번호 재설정/, '계정', '로그인 실패', '처리 기록']);
     for (const k of ['signup', 'reset', 'users', 'fails', 'log']) {
@@ -132,20 +138,28 @@ test.describe('구현 2차 T5 — 계정 찾기 · 신청 가운데 창', () => 
     await page.goto(BASE + '/landxi/v3/ops-accounts/#users');
     await expect(page.locator('.acc-tbl tbody tr').first()).toBeVisible();
     const ctx = await browser.newContext(); const p2 = await ctx.newPage();
-    await frontDoor(p2, BASE, 'lx-staff');
+    await frontDoor(p2, BASE, 'test@lx.or.kr');
     await p2.goto(BASE + '/landxi/v3/ops-accounts/');
     await p2.waitForURL((u) => u.pathname.startsWith('/landxi/v3/login/'), { timeout: 15000 });
     await ctx.close();
   });
 
+  test('Land-XI 로그인에 기관 모드 없음 — 기관 입구는 기관 메인으로(원칙 78)', async ({ page }) => {
+    await page.goto(BASE + '/landxi/v3/login/?site=gov', { waitUntil: 'domcontentloaded' });
+    await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/gov-home/'), { timeout: 15000 });
+    await page.goto(BASE + '/landxi/v3/login/?site=app', { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => window.__login?.ready);
+    await expect(page.locator('#org, #orgRow, select[name=tenant]')).toHaveCount(0);
+  });
+
   test('기관 관리자 계정 화면 — 자기 기관 계정만', async ({ page }) => {
     test.skip(!process.env.DEV_PASSWORD, 'server/.env DEV_PASSWORD 없음');
-    await frontDoor(page, BASE, 'namwon-manager@namwon');
+    await frontDoor(page, BASE, 'lxadmin@lx.or.kr#namwon');
     await page.goto(BASE + '/landxi/v3/gov-accounts/#users');
     await expect(page.locator('.acc-tbl tbody tr').first()).toBeVisible({ timeout: 15000 });
     const orgs = await page.locator('.acc-tbl tbody td:nth-child(3)').allTextContents();
     expect(orgs.length).toBeGreaterThan(0);
     expect(new Set(orgs.map((o) => o.split(' · ')[0])).size).toBe(1);                              // 한 기관
-    await expect(page.locator('.acc-tbl tbody tr', { hasText: 'lx-staff' })).toHaveCount(0);        // LX 계정 0
+    await expect(page.locator('.acc-tbl tbody tr', { hasText: 'test@lx.or.kr' })).toHaveCount(0);        // LX 계정 0
   });
 });

@@ -5,7 +5,7 @@ const API = process.env.LX_API === 'on' ? (process.env.LX_API_BASE || 'http://lo
 const PW = process.env.DEV_PASSWORD || 'landxi-dev-2026';
 test.skip(!API, 'LX_API=on 전용(게이트웨이 :8700)');
 
-const LOGIN = { namwon: 'namwon-manager', 'gwangju-jeonnam': 'gj-manager' };
+const LOGIN = { namwon: 'lxadmin@lx.or.kr', 'gwangju-jeonnam': 'lxadmin@lx.or.kr' };   // 각 기관 담당자(메일 아이디 — 원칙 77)
 async function tenantTok(request, tenant = 'namwon') {
   const r = await request.post(API + '/api/v1/auth/login', { data: { realm: 'tenant', tenant_id: tenant, login: LOGIN[tenant], password: PW } });
   expect(r.status()).toBe(200);

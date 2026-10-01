@@ -6,7 +6,7 @@ const PW = process.env.DEV_PASSWORD || 'landxi-dev-2026';
 test.skip(!API, 'LX_API=on 전용(게이트웨이 :8700)');
 
 async function login(request, role = 'admin') {
-  const r = await request.post(API + '/api/v1/auth/login', { data: { realm: 'lx', login: `lx-${role}`, password: PW } });
+  const r = await request.post(API + '/api/v1/auth/login', { data: { realm: 'lx', login: ({ staff: 'test@lx.or.kr', admin: 'lxadmin@lx.or.kr', sales: 'sales@lx.or.kr' })[role], password: PW } });
   expect(r.status()).toBe(200);
   return (await r.json()).token;
 }

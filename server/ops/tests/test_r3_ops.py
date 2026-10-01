@@ -126,7 +126,7 @@ def test_ko_and_en_same_envelopes():
 def test_ko_answer_regression():
     pb = {"max_hot": 1, "hot_now": 0, "ok": True, "hot": [], "per": [], "at": C.AT}
     out = run(T.ops_gpus({}, gpus_ctx(pb, "ko", IDLE)))
-    assert out.answer.startswith("00:10:00 기준 동시 고부하 GPU는 {{hot}}(한도 {{hot_max}})로 고부하인 GPU 없음 · 전력 예산 안입니다.")
+    assert out.answer.startswith("00:10:00 기준 동시 고부하 GPU는 {{hot}}(최대 {{hot_max}})로 고부하인 GPU 없음 · 전력 예산 안입니다.")
     assert "GPU 0은 부하 {{g0_load}}, 지금 전력 {{g0_w}}" in out.answer
     for bad in ("A6000", "RTX", "NVIDIA", "vLLM", "관제", "AG-"):
         assert bad not in out.answer
@@ -255,7 +255,7 @@ def test_answer_yielded_gpu_ko_en_matches_screen():
     assert "high load (recent average {{g1_avg}})." in en.answer
     assert "Both GPUs under high load at once in the last 2 hours: {{overlap}}." in en.answer
     ko = run(T.ops_gpus({}, gpus_ctx(pb, "ko", busy)))
-    assert ko.answer.startswith("00:10:00 기준 동시 고부하 GPU는 {{hot}}(한도 {{hot_max}})로 GPU 1이 고부하 · 전력 예산 안입니다.")
+    assert ko.answer.startswith("00:10:00 기준 동시 고부하 GPU는 {{hot}}(최대 {{hot_max}})로 GPU 1이 고부하 · 전력 예산 안입니다.")
     assert "전력 규칙으로 잠시 멈춘 상태" in ko.answer and envs(ko)["overlap"]["value"] == 0
     assert ko.data["GPU"]["GPU 0"]["고부하"] == "아니오"
 
@@ -342,9 +342,11 @@ def test_gateway_restart_route_admin_only():
 
 
 def test_login_notice_says_what_to_do_when_server_down():
+    """Land-XI 로그인은 LX 전용(원칙 78 · 구현 2차 정리) — 기관 목록을 부르지 않으므로 기관 목록 '다시 불러오기' 안내 · 옛 디렉터리 폴백도 없다.
+    서버가 응답하지 않을 때(두 번 모두 연결 실패)는 한 줄 '서버에 연결할 수 없습니다', 늦으면 '서버 응답이 늦습니다 — …'."""
     js = (SERVER.parent / "landxi" / "v3" / "login" / "auth.js").read_text(encoding="utf-8")
-    assert "서버에 연결할 수 없습니다 — 잠시 뒤 다시 불러오기를 누르세요" in js
-    assert "e.status >= 502" in js                        # 관문(바깥 주소)이 서버를 못 찾을 때도 옛 디렉터리로 새지 않는다
+    assert "say('서버에 연결할 수 없습니다')" in js and "서버 응답이 늦습니다" in js
+    assert "fixtures/tenants.json" not in js and "/auth/tenants" not in js     # 기관 고르기 · 옛 디렉터리 폴백 0
 
 
 # ── 실증 2차 must_fix (2026-09-30 15:07–15:18) ───────────────────────────

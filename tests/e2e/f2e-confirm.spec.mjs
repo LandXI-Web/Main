@@ -7,7 +7,7 @@ const API = process.env.LX_API === 'on' ? 'http://localhost:8700' : null;
 const AB = process.env.LX_AGENT_BASE || null;          // 개발 :8703(훅 전) · 없으면 게이트웨이
 async function login(realm = 'lx', role = 'staff', tenant = null) {
   const r = await fetch(API + '/api/v1/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(realm === 'lx' ? { realm, login: `lx-${role}`, password: process.env.DEV_PASSWORD || 'landxi-dev-2026' } : { realm, tenant_id: tenant, login: `${tenant}-manager`, password: process.env.DEV_PASSWORD || 'landxi-dev-2026' }) });
+    body: JSON.stringify(realm === 'lx' ? { realm, login: ({ staff: 'test@lx.or.kr', admin: 'lxadmin@lx.or.kr', sales: 'sales@lx.or.kr' })[role], password: process.env.DEV_PASSWORD || 'landxi-dev-2026' } : { realm, tenant_id: tenant, login: 'lxadmin@lx.or.kr', site: 'gov', password: process.env.DEV_PASSWORD || 'landxi-dev-2026' }) });
   return r.json();
 }
 async function bootXI(page, { realm = 'lx', role = 'staff', tenant = null, q = '' } = {}) {

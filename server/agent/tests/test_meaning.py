@@ -10,7 +10,7 @@ from agent import lint, report, runner  # noqa: E402
 from agent.tools import Out  # noqa: E402
 from landxi_api.deps import CAPS, Principal  # noqa: E402
 
-STAFF = Principal("lx", "staff", None, "u_lx_staff", caps=CAPS[("lx", "staff")])
+STAFF = Principal("lx", "staff", None, "u_mail_test", caps=CAPS[("lx", "staff")])
 
 
 def env(v, u, basis="inferred"):

@@ -16,7 +16,7 @@ test('사슬 전부 죽음 → 리플레이 마스트 · 같은 장면 · 콘솔
   page.on('pageerror', (e) => errs.push('pageerror: ' + e.message));
   page.on('console', (m) => { if (m.type() === 'error') errs.push('console: ' + m.text()); });
   page.on('request', (r) => { if (r.method() === 'POST' && /\/agent\/runs$/.test(r.url())) posts.push(r.url()); });
-  const s = await (await fetch(API + '/api/v1/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ realm: 'lx', login: 'lx-staff', password: process.env.DEV_PASSWORD || 'landxi-dev-2026' }) })).json();
+  const s = await (await fetch(API + '/api/v1/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ realm: 'lx', login: 'test@lx.or.kr', password: process.env.DEV_PASSWORD || 'landxi-dev-2026' }) })).json();
   await page.addInitScript(([s, api]) => { localStorage.setItem('lx_api_base', api); localStorage.removeItem('lx_agent_base'); localStorage.removeItem('lx_api_mode'); localStorage.setItem('lx_api_session', JSON.stringify(s)); localStorage.setItem('lx_logged_in', '1'); localStorage.setItem('lx_role', 'staff'); }, [s, API]);
   for (let k = 0; k < 2; k++) { await page.goto('/landxi/xi/index.html'); await page.waitForFunction(() => document.documentElement.dataset.lx === 'ready', null, { timeout: 60000 }); }
   await page.waitForFunction(() => document.documentElement.dataset.agent === 'ready', null, { timeout: 20000 });

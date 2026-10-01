@@ -108,7 +108,8 @@ V12_OPTIONAL = {
     "catalog_imagery": ["sgg_cd", "tile_ready"],                # 영상 소유 시군구 · 타일 준비
 }
 V12_NESTED = {
-    "registry_cards": {"items[]": ["crop_url", "deploys", "models", "ledger_schema", "intro", "status_label", "status3"]},   # S-6
+    "registry_cards": {"items[]": ["crop_url", "deploys", "models", "ledger_schema", "intro", "status_label", "status3",
+                                   "project", "owner"]},   # S-6 · 구현 2차 T1 — 프로젝트에서 낸 카드는 그 프로젝트 · 담당(프로젝트장)
     "deploys_list": {"items[]": ["sgg_cd", "test", "ci", "flow"], "approvals[]": ["state", "action"]},                    # S-7 결재 행 · core-flow
     "deploy": {"approvals[]": ["state", "action"]},
     "catalog_layers": {"items[]": ["sgg_cd", "tile_ready"]},    # 영상 소유 시군구 · 타일 준비

@@ -220,7 +220,7 @@ async def _quote_train_tile(p: Principal, body: dict, kind: str) -> dict:
         reasons.append("too_large")
     return {"area_km2": env(None, "km2", "measured", "-", "학습·타일 작업 — 면적 없음"), "shards": shards_n,
             "shards_env": env(shards_n, "count", "measured", f"plan({adapter})"), "gpu_s": gpu_s, "eta_s": eta,
-            "quota": {"tenant_id": tenant, "dim": "gpu_s_month", "remaining": env(None, "gpu_s", "measured", "quotas(lx)", "무제한"), "policy": "queue_low"},
+            "quota": quota_mod.quote_block(tenant),          # 사용을 막는 한도 없음(원칙 83 · 11차 — 기관 · LX 직원 모두) · 사용량은 기록만
             "allowed": not reasons, "reasons": reasons, "pool": pool, "kind": kind, "demo": False,
             "power_budget": await power_budget() if pool != "cpu" else None,
             "_aoi": None, "_tenant": tenant, "_model": dict(model) if model else None, "_img": None, "_adapter": adapter, "_opts": opts}
@@ -413,10 +413,7 @@ async def build_quote(p: Principal, body: dict) -> dict:
     else:
         gpu_s = env(None, "gpu_s", "estimate", f"models.perf({model['id'] if model else '-'}) 없음 — bench 전", "bench 후 채워짐")
         eta = env(None, "s", "estimate", "同上")
-    q = await quota_mod.remaining(tenant, "gpu_s_month")
-    req = gpu_s["value"] or 0
-    if q["hard"] is not None and q["used"] + req > q["hard"] and q["policy"] == "reject":
-        reasons.append("quota_exceeded")
+    # 기관 · LX 직원 사용 한도로는 거절하지 않는다(원칙 83 · 11차 "GPU 는 무상 정책") — 막는 것은 크기 천장 · 전력 규칙(장비 보호)뿐
     if shards_n > SHARD_CAP.get(kind, 10 ** 9):
         reasons.append("too_large")                 # 서버측 shard 계획 상한(S-8) — AOI 를 나눠 다시
     if int(opts.get("gpus", 1) or 1) > int((config.load_yaml("pools").get("power", {}) or {}).get("max_hot_gpus", 1)):
@@ -428,10 +425,7 @@ async def build_quote(p: Principal, body: dict) -> dict:
         "shards": shards_n,
         "shards_env": env(shards_n, "count", "measured", tile_src),
         "gpu_s": gpu_s, "eta_s": eta,
-        "quota": {"tenant_id": tenant, "dim": "gpu_s_month",
-                  "remaining": env(None if q["hard"] is None else round(q["hard"] - q["used"], 1), "gpu_s", "measured",
-                                   f"quotas({tenant} hard={q['hard']}) − usage_events", "무제한" if q["hard"] is None else q.get("note")),
-                  "policy": q["policy"]},
+        "quota": quota_mod.quote_block(tenant),
         "allowed": not reasons, "reasons": reasons, "pool": pool, "kind": kind, "demo": demo,
         "power_budget": await power_budget() if pool != "cpu" else None,
         "_aoi": aoi, "_tenant": tenant, "_model": dict(model) if model else None, "_img": dict(img) if img else None,
@@ -789,9 +783,7 @@ async def _quote_sgg(p: Principal, body: dict, opts: dict, demo: bool, tenant: s
     else:
         gpu_s = env(None, "gpu_s", "estimate", "bench 전")
         eta = env(None, "s", "estimate", "bench 전")
-    q = await quota_mod.remaining(tenant, "gpu_s_month")
-    if q["hard"] is not None and q["used"] + (gpu_s["value"] or 0) > q["hard"] and q["policy"] == "reject":
-        reasons.append("quota_exceeded")
+    # 시군구 전역도 사용 한도로 거절하지 않는다(원칙 83) — 조각 상한(too_large)만
     aoi_full = (info or {}).get("aoi4326")
     by_cd = dict(zip(ix.codes, ix.names))
     emds = [{"emd_cd": e["emd_cd"], "name": by_cd.get(e["emd_cd"]), "shards": e["shards"]} for e in (info or {}).get("emd", [])]
@@ -809,9 +801,7 @@ async def _quote_sgg(p: Principal, body: dict, opts: dict, demo: bool, tenant: s
         "area_km2": env((info or {}).get("area_km2"), "km2", "measured", "시군구 읍면동 ∩ 영상 footprint(EPSG:5186)"),
         "shards": shards_n, "shards_env": env(shards_n, "count", "measured", f"plan_sgg(chip {chip} · upsample {up:g})"),
         "gpu_s": gpu_s, "eta_s": eta,
-        "quota": {"tenant_id": tenant, "dim": "gpu_s_month", "remaining": env(None if q["hard"] is None else round(q["hard"] - q["used"], 1), "gpu_s",
-                                                                             "measured", f"quotas({tenant})", "무제한" if q["hard"] is None else q.get("note")),
-                  "policy": q["policy"]},
+        "quota": quota_mod.quote_block(tenant),
         "allowed": not reasons, "reasons": reasons, "pool": pool, "kind": "infer", "demo": demo,
         "power_budget": await power_budget() if pool != "cpu" else None,
         **scope_env, **({"scope": scope_txt} if scope_txt else {}),
@@ -844,7 +834,7 @@ async def prewarm(model_id: str | None, pool: str) -> list[str]:
 @router.post("/jobs/quote")
 async def quote(body: dict, request: Request):
     p = require(principal(request))
-    q = await quota_mod.hold_quote(await build_quote(p, body))          # 기관 한도를 넘었으면 새 분석 거절 + 이유 한 줄(impl-1 · C6)
+    q = await build_quote(p, body)                                      # 사용 한도로 거절하지 않는다(원칙 83 · 예전 impl-1 C6 거절은 없앰)
     o = body.get("options") or {}
     if q.get("allowed") and (o.get("live") or o.get("scope") == "sgg") and q.get("_model"):
         try:
@@ -985,20 +975,17 @@ async def submit(body: dict, request: Request):
         raise ApiError("forbidden", "제출 권한 없음")
     if p.role == "sales" and not body.get("demo"):
         raise ApiError("demo_required", "영업 계정은 시연(demo:true)만 실행할 수 있습니다")
-    q = await quota_mod.hold_quote(await build_quote(p, body))          # 기관 한도를 넘었으면 새 분석 거절 + 이유 한 줄(impl-1 · C6)
+    q = await build_quote(p, body)                                      # 사용 한도로 거절하지 않는다(원칙 83) — 크기 · 전력 · 관할만
     if not q["allowed"]:
         code = q["reasons"][0]
-        msg = q.get("reason_line") if code == "quota_exceeded" else None
-        msg = msg or {"power_budget": "전력 예산 초과 — 동시 고부하 GPU 는 1장까지입니다", "too_large": "작업이 너무 큽니다 — 범위를 나눠 주세요"}.get(code)
+        msg = {"power_budget": "전력 예산 초과 — 동시 고부하 GPU 는 1장까지입니다", "too_large": "작업이 너무 큽니다 — 범위를 나눠 주세요"}.get(code)
         raise ApiError(code, msg or f"제출 불가: {', '.join(q['reasons'])}", {"reasons": q["reasons"]},
                        status=409 if code == "power_budget" else None)
     # 시군구 전역(scope sgg · 긴 작업)은 기본 우선순위 1 — 읍면동 실시간 분석 · 소범위 작업이 먼저 칸을 받는다(첫 결과 ≤ 10 s 유지)
     long_job = body.get("kind") == "reinfer" or (body.get("options") or {}).get("scope") == "sgg"
     prio = int(body.get("priority", 0 if body.get("demo") else (1 if long_job else 0)))
     tenant = q["_tenant"]
-    qpol = await quota_mod.remaining(tenant, "gpu_s_month")
-    if qpol["hard"] is not None and qpol["used"] + (q["gpu_s"]["value"] or 0) > qpol["hard"] and qpol["policy"] == "queue_low":
-        prio = 3
+    # 사용량이 많다고 뒤로 미루지 않는다(예전 정책 '우선순위 낮춤' → 3 은 없앰 · 원칙 83) — 순서는 대기열 규칙(scheduler) 하나로만
     job_id = "job_" + ulid()
     demo = bool(body.get("demo"))
     rs = f"demo/{job_id}" if demo else f"results/{tenant}/{job_id}"

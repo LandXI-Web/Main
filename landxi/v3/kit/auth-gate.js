@@ -31,13 +31,18 @@ export const ALLOW = {
   'lx-train': ['lx/staff', 'lx/admin'],
   'lx-review': ['lx/staff', 'lx/admin'],
   'lx-deploy': ['lx/staff', 'lx/admin'],
+  'lx-project': ['lx/staff', 'lx/admin'],   // 프로젝트 목록 · 한 장(구현 2차 T1)
+  'lx-inbox': ['lx/staff', 'lx/admin'],     // 기관에서 온 요청(구현 2차 검토 요청)
   'ops-core': ['lx/admin'],
   'ops-infra': ['lx/admin'],
+  'ops-accounts': ['lx/admin'],             // 계정 관리(구현 2차 T5 — 가입 신청 · 재설정 · 계정 · 로그인 실패 · 처리 기록)
   sales: ['lx/sales', 'lx/admin', 'tenant/demo'],
   'xi-clean': ['lx/staff', 'lx/admin', 'lx/sales', 'tenant/demo', 'tenant/local'],
   'gov-fusion': ['tenant/local'],
   'gov-report': ['tenant/local'],
   'gov-select': ['tenant/local'],   // 서비스 선택 · 서비스 대시보드 · 기관 정보(구현 2차 T3)
+  'gov-request': ['tenant/local', 'tenant/global'],    // 분석 의뢰(구현 2차 — 우리 영상 · LX 공유 영상 → LX 관리자 승인)
+  'gov-accounts': ['tenant/local', 'tenant/global'],   // 기관 관리자 계정(가입 신청 승인 · 재설정 · 계정) — 기관 관리자 여부는 화면 · 서버가 본다
   'gov-home': null,                 // 기관 메인(로그인 전 · 그 기관 모습의 로그인) — 관문 없음
   global: ['tenant/global', 'lx/staff', 'lx/admin', 'lx/sales'],
   'help-my': ['lx/staff', 'lx/admin', 'lx/sales', 'tenant/demo', 'tenant/local', 'tenant/global'],

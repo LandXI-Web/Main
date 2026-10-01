@@ -16,7 +16,7 @@ test.beforeAll(() => { FID = helper('pick', '5'); });
 test.afterAll(() => { if (FID) helper('reset', FID); });
 
 test('상태 쓰기 → tenant 스트림 finding.state ≤ 1s · 같은 client_id 재전송 = 멱등 · 역방향 409', async ({ request }) => {
-  const lr = await request.post(API + '/auth/login', { data: { realm: 'tenant', tenant_id: 'namwon', login: 'namwon-manager', password: PW } });
+  const lr = await request.post(API + '/auth/login', { data: { realm: 'tenant', tenant_id: 'namwon', login: 'lxadmin@lx.or.kr', site: 'gov', password: PW } });
   const token = (await lr.json()).token;
   const h = { authorization: 'Bearer ' + token };
   const ctl = new AbortController();

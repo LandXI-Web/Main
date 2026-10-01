@@ -235,7 +235,7 @@ def staff():
     try:
         if not httpx.get(B + "/health", timeout=5).json().get("ok"):
             pytest.skip("게이트웨이 미기동")
-        t = httpx.post(B + "/auth/login", json={"realm": "lx", "login": "lx-staff", "password": config.DEV_PASSWORD}, timeout=30).json()["token"]
+        t = httpx.post(B + "/auth/login", json={"realm": "lx", "login": "test@lx.or.kr", "password": config.DEV_PASSWORD}, timeout=30).json()["token"]
     except Exception:
         pytest.skip("게이트웨이 미기동")
     return B, {"authorization": "Bearer " + t}

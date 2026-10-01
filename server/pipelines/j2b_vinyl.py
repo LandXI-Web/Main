@@ -33,7 +33,7 @@ def log(*a):
 
 def client():
     c = httpx.Client(timeout=120)
-    tok = c.post(B + "/auth/login", json={"realm": "lx", "login": "lx-staff", "password": config.DEV_PASSWORD}).json()["token"]
+    tok = c.post(B + "/auth/login", json={"realm": "lx", "login": "test@lx.or.kr", "password": config.DEV_PASSWORD}).json()["token"]
     c.headers["authorization"] = "Bearer " + tok
     return c
 

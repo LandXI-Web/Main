@@ -9,8 +9,8 @@
 <link rel="icon" href="../../assets/images/favicon_landxi.png">
 <!-- 로그인 — 법전 v2.2 '토스 톤'. 회백 바탕 위 흰 문 카드(좌 440) + 둥근 24 히어로 카드(우 · 실결과 지도 3장면 = 모토 3축).
      글 예산 ≤ 200자(공백 제외) · 버튼 3(로그인 · 계정 찾기 · 이어서).
-     역할 탭 없음(확인 대장 6 · 원칙 27) — 주소(입구)가 모습을 정한다: app·admin = 아이디·비밀번호 · gov = 기관 고르기 + 아이디·비밀번호.
-     입구 표기는 머리 오른쪽 작은 글(관리자 · 기관 입구만) — 역할은 색이 아니라 표기로. -->
+     역할 탭 없음(확인 대장 6 · 원칙 27) — LX 전용(원칙 78): app·admin = 아이디(메일 주소)·비밀번호. 기관은 기관 메인({기관}.land-xi.dev)의 로그인으로.
+     입구 표기는 머리 오른쪽 작은 글(관리자 입구만) — 역할은 색이 아니라 표기로. -->
 <link rel="stylesheet" href="../kit/kit.css"><!-- 토큰 포함 키트 CSS 한 벌 -->
 <link rel="stylesheet" href="../../proto/vendor/maplibre/maplibre-gl.css">
 <link rel="stylesheet" href="login.css">
@@ -22,7 +22,7 @@
 
 <main class="gate" id="gate">
 
-  <!-- 문 — 흰 카드 하나. 헤드라인 1 · 문장 1 · 폼(기관 입구만 기관 칸) -->
+  <!-- 문 — 흰 카드 하나. 헤드라인 1 · 문장 1 · 폼(아이디 · 비밀번호) -->
   <section class="door t-card t-card--hero" id="door">
     <header class="door__top e">
       <img class="door__mark" src="../../assets/brand/vector/landxi-wordmark-dark.svg" alt="LAND-XI PLATFORM" width="152" height="16">
@@ -34,14 +34,6 @@
       <p class="door__lead e">국토 위성·항공·드론 영상과 AI 기술로<br>현장조사 업무를 효율적으로 지원하고,<br>수요 맞춤형 행정서비스를 제공합니다.</p>
 
       <form class="form e" id="form" method="post" action="#" novalidate autocomplete="on" onsubmit="event.preventDefault();window.__lxSubmit=1"><!-- 화면 코드가 늦게 올라와도 브라우저가 폼을 그대로 보내지 않게(바깥 주소 405) — 준비되면 auth.js 가 이어서 보낸다 -->
-        <div class="fld fld--org" data-f="org" id="orgRow" hidden>
-          <label class="fld__l" for="org">기관</label>
-          <div class="sel">
-            <select class="t-input sel__i" id="org" name="tenant"><option value="">기관 선택</option></select>
-            <svg class="sel__c" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-          </div>
-        </div>
-
         <div class="fld" data-f="id">
           <label class="fld__l" for="id">아이디</label>
           <input class="t-input" id="id" name="username" type="text" autocomplete="username" spellcheck="false" autocapitalize="off" required>
@@ -52,10 +44,6 @@
         </div>
 
         <p class="msg" id="msg" role="alert" hidden></p>
-        <div class="slow" id="slow" role="status" hidden>
-          <p class="slow__t">서버 응답이 늦습니다 — 다른 Land-XI 탭을 닫거나 새로 고친 뒤 다시 시도하세요</p>
-          <button class="t-btn t-btn--text slow__b" id="reload" type="button">다시 불러오기</button>
-        </div>
 
         <button class="t-btn go" id="go" type="submit"><span>로그인</span><i class="go__line" aria-hidden="true"></i></button>
       </form>

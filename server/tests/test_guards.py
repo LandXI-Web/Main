@@ -97,11 +97,15 @@ def test_deploy_state_machine(live, tok):
         assert r.status_code == 409 and r.json()["error"]["code"] == "invalid_stage_transition"
         r = httpx.post(B + f"/deploys/{did}/rollout", headers=a, json={"stage": "shadow"}, timeout=30)
         assert r.status_code == 409 and r.json()["error"]["code"] == "approval_required"          # 심기 결재 전
-        # 요청한 관리자는 스스로 결재할 수 없다(impl-1 R&R) — 다른 관리자(lxadmin)가 결재
-        assert httpx.post(B + f"/approvals/{d['approval_id']}/decide", headers=a, json={"decision": "approve"}, timeout=30).status_code == 409
-        from conftest import _login
-        a2 = H(_login({"realm": "lx", "login": "lxadmin", "password": config.DEV_PASSWORD}))
-        assert httpx.post(B + f"/approvals/{d['approval_id']}/decide", headers=a2, json={"decision": "approve"}, timeout=30).status_code == 200
+        # 요청한 관리자는 스스로 결재할 수 없다(impl-1 R&R) — 다른 관리자(시험 안에서만 쓰는 두 번째 관리자 계정)가 결재.
+        # (관리자 계정이 하나뿐이면 스스로 결재가 열린다 — 10-01 사용자 결정 · test_impl2_cleanup.py. 여기는 두 관리자일 때의 규칙)
+        from conftest import drop_account, temp_account
+        uid2, t2 = temp_account("lx", "u_pytest_guard_admin2", "pytest-guard-admin2@lx.or.kr", "admin", name="시험 관리자")
+        try:
+            assert httpx.post(B + f"/approvals/{d['approval_id']}/decide", headers=a, json={"decision": "approve"}, timeout=30).status_code == 409
+            assert httpx.post(B + f"/approvals/{d['approval_id']}/decide", headers=H(t2), json={"decision": "approve"}, timeout=30).status_code == 200
+        finally:
+            drop_account("lx", uid2)
         for st in ("shadow", "canary"):
             assert httpx.post(B + f"/deploys/{did}/rollout", headers=a, json={"stage": st}, timeout=30).status_code == 200
         r = httpx.post(B + f"/deploys/{did}/rollout", headers=a, json={"stage": "ga"}, timeout=30)

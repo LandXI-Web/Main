@@ -1,7 +1,7 @@
-"""impl-1 LX 관리자 — 결재함 · 요청과 승인이 같은 사람이 되지 않게 · 한도 넘으면 새 작업 거절 · 답 받기 조회 경로. 실서버(:8700).
+"""impl-1 LX 관리자 — 결재함 · 요청과 승인이 같은 사람이 되지 않게 · 사용을 막는 한도 없음(정리 작업 10-01) · 답 받기 조회 경로. 실서버(:8700).
 
 확인 대장: FR-3(결재함이 열리게 · 반려) · D2-ⓐ(서비스 공개는 관리자 승인 뒤 · 반려 사유) · R&R 점검(요청자 = 승인자) · C6 남은 것(한도 초과 처리).
-GPU 0 — 분석은 견적 · 제출 거절 경로만(대기열에 넣지 않음), AI 도우미는 한도 거절 경로만(모델 호출 0).
+GPU 0 — 분석은 견적만(대기열에 넣지 않음), AI 도우미는 모델을 부르지 않는 질문만(모델 호출 0).
 시험 기관 = 영업 계정의 계량 기관(lx-demo) · 한도는 시험 동안만 바꾸고 끝에서 되돌린다. 시험 결재 · 서비스 행은 끝에서 지운다.
 """
 import json
@@ -11,7 +11,7 @@ import httpx
 import psycopg
 import pytest
 
-from conftest import B, H, _login
+from conftest import ADMIN_ID, B, H, STAFF_ID, _login, drop_account, temp_account
 from landxi_api import config
 
 HWANG_SMALL = {"type": "Polygon", "coordinates": [[[126.9467, 35.9956], [126.9474, 35.9956], [126.9474, 35.9961], [126.9467, 35.9961], [126.9467, 35.9956]]]}
@@ -21,10 +21,15 @@ def pg():
     return psycopg.connect(config.PG_ADMIN_DSN, autocommit=True)
 
 
+ADMIN2_ID = "u_pytest_admin2"
+
+
 @pytest.fixture(scope="module")
 def admin2(live):
-    """두 번째 관리자(lxadmin) — 요청한 관리자와 다른 사람이 결재한다."""
-    return _login({"realm": "lx", "login": "lxadmin", "password": config.DEV_PASSWORD})
+    """두 번째 관리자(시험 안에서만 쓰는 계정) — 요청한 관리자(lxadmin@lx.or.kr)와 다른 사람이 결재한다. 끝에서 지운다."""
+    uid, t = temp_account("lx", ADMIN2_ID, "pytest-admin2@lx.or.kr", "admin", name="시험 관리자")
+    yield t
+    drop_account("lx", uid)
 
 
 @pytest.fixture
@@ -60,7 +65,7 @@ def test_quota_change_is_a_request_and_requester_cannot_approve(live, tok, admin
         assert r.json()["state"] == "pending"
         assert c.execute("SELECT hard FROM quotas WHERE tenant_id='lx-demo' AND dim='egress_gb_month'").fetchone() == before   # 아직 그대로
         row = c.execute("SELECT requested_by, decided_by, state FROM approvals WHERE id=%s", (aid,)).fetchone()
-        assert row[0] == "u_lx_admin" and row[1] is None and row[2] == "pending"
+        assert row[0] == ADMIN_ID and row[1] is None and row[2] == "pending"
         ap = [x for x in httpx.get(B + "/approvals?state=pending", headers=a1, timeout=30).json()["items"] if x["id"] == aid][0]
         assert ap["mine"] is True and ap["requested_by_name"] and "LX 관리자" in ap["requested_by_name"] and ap["request_reason"] == "pytest impl-1 한도 요청"
         s = httpx.post(B + f"/approvals/{aid}/decide", headers=a1, json={"decision": "approve", "reason": "승인"}, timeout=30)
@@ -70,7 +75,7 @@ def test_quota_change_is_a_request_and_requester_cannot_approve(live, tok, admin
         ok = httpx.post(B + f"/approvals/{aid}/decide", headers=a2, json={"decision": "reject", "reason": "pytest 사유: 근거 부족"}, timeout=30)
         assert ok.status_code == 200
         row = c.execute("SELECT decided_by, decision, reason, payload->>'request_reason' FROM approvals WHERE id=%s", (aid,)).fetchone()
-        assert row == ("u_lxadmin", "reject", "pytest 사유: 근거 부족", "pytest impl-1 한도 요청")   # 결정 사유 · 요청 사유 둘 다 남음
+        assert row == (ADMIN2_ID, "reject", "pytest 사유: 근거 부족", "pytest impl-1 한도 요청")   # 결정 사유 · 요청 사유 둘 다 남음
         assert c.execute("SELECT hard FROM quotas WHERE tenant_id='lx-demo' AND dim='egress_gb_month'").fetchone() == before
     finally:
         c.execute("DELETE FROM approvals WHERE id=%s", (aid,))
@@ -93,8 +98,9 @@ def test_quota_request_approved_by_other_admin_applies(live, tok, admin2):
         c.close()
 
 
-def test_model_register_requester_cannot_decide(live, tok):
-    """모델 등록도 같은 규칙 — 관리자가 스스로 요청한 등록은 스스로 결정하지 못한다(학습 화면 경로 · 결재함 경로 모두)."""
+def test_model_register_requester_cannot_decide(live, tok, admin2):
+    """모델 등록도 같은 규칙 — 관리자가 스스로 요청한 등록은 스스로 결정하지 못한다(학습 화면 경로 · 결재함 경로 모두).
+    다른 관리자 계정(admin2)이 있을 때의 규칙 — 관리자 계정이 하나뿐이면 스스로 결재(test_impl2_cleanup.py)."""
     c = pg()
     mid = "trained/pytest-impl1-self"
     c.execute("DELETE FROM approvals WHERE subject_type='model' AND subject_id=%s", (mid,))
@@ -134,7 +140,7 @@ def test_service_publish_needs_admin_and_reject_reason_returns(live, tok, admin2
         # 만든 직원은 승인자로 적히지 않는다(예전: approved_by = 만든 직원)
         assert c.execute("SELECT approved_by FROM card_versions WHERE id=%s", (cv,)).fetchone()[0] is None
         row = c.execute("SELECT requested_by, state, subject_type FROM approvals WHERE id=%s", (aid,)).fetchone()
-        assert row == ("u_lx_staff", "pending", "card")
+        assert row == (STAFF_ID, "pending", "card")
         assert httpx.post(B + f"/approvals/{aid}/decide", headers=st, json={"decision": "approve"}, timeout=30).status_code == 403
         # 공개 전에는 다른 지역에 적용할 수 없다
         p = httpx.post(B + "/deploys", headers=st, json={"card_id": cid, "region": "52190", "test": True}, timeout=60)
@@ -163,7 +169,7 @@ def test_service_publish_approved_records_admin_not_staff(live, tok, admin2):
     try:
         d = httpx.post(B + f"/approvals/{aid}/decide", headers=H(admin2), json={"decision": "approve", "reason": "승인"}, timeout=30)
         assert d.status_code == 200 and d.json()["effect"]["published"] is True
-        assert c.execute("SELECT approved_by FROM card_versions WHERE id=%s", (cv,)).fetchone()[0] == "u_lxadmin"
+        assert c.execute("SELECT approved_by FROM card_versions WHERE id=%s", (cv,)).fetchone()[0] == ADMIN2_ID
     finally:
         _drop_card(c, cid)
         c.close()
@@ -177,75 +183,75 @@ def test_ga_direct_decision_records_no_requester(live, tok):
         r = httpx.post(B + "/deploys/dp-nw-farm-25/approve", headers=H(tok["admin"]), json={"decision": "approve", "reason": "test restore impl-1"}, timeout=30)
         assert r.status_code == 200
         row = c.execute("SELECT requested_by, decided_by FROM approvals WHERE id=%s", (r.json()["approval"]["id"],)).fetchone()
-        assert row == (None, "u_lx_admin")
+        assert row == (None, ADMIN_ID)
         assert httpx.post(B + "/deploys/dp-nw-farm-25/approve", headers=H(tok["admin"]), json={"decision": "reject"}, timeout=30).status_code == 400
     finally:
         c.execute("DELETE FROM approvals WHERE subject_id='dp-nw-farm-25' AND reason='test restore impl-1' AND at >= %s", (t0,))
         c.close()
 
 
-# ── 한도 넘으면 새 작업 거절 + 이유 한 줄 ─────────────────────────────────────────
-def test_analysis_over_limit_rejected_with_one_line(live, tok, demo_quota):
+# ── 사용을 막는 한도 없음(정리 작업 10-01 · 원칙 83 · 11차 "GPU 는 무상 정책" · "우리 직원도 분석 시간 같은 한도가 없어야지") ──
+# 예전(impl-1 C6)에는 한도를 넘은 기관의 새 분석 · AI 도우미 질문을 거절했다. 이제 기관 · LX 직원 모두 한도로 거절 · 뒤로 미루기 0, 사용량은 기록만.
+def test_analysis_not_refused_by_usage(live, tok, demo_quota):
+    """한도 값을 0(이미 다 씀)으로 두어도 견적은 한도로 거절하지 않는다 — 이유 'quota_exceeded' · 한도 문구 0. GPU 0(제출하지 않음)."""
     sales = H(tok["sales"])
     body = {"kind": "infer", "model_id": "car_v2_obb", "imagery_id": "axis-iksan-hwangdeung", "aoi": HWANG_SMALL,
-            "options": {"chip": 1024, "overlap": 0.125, "conf": 0.25}, "demo": True, "label": "pytest impl-1 한도"}
-    demo_quota("gpu_s_month", 0)                                     # 한도 0 = 이미 다 씀
+            "options": {"chip": 1024, "overlap": 0.125, "conf": 0.25}, "demo": True, "label": "pytest 정리 한도 없음"}
+    for dim in ("gpu_s_month", "area_km2_month", "storage_gb"):
+        demo_quota(dim, 0)
     q = httpx.post(B + "/jobs/quote", headers=sales, json=body, timeout=120)
     assert q.status_code == 200, q.text
     j = q.json()
-    assert j["allowed"] is False and j["reasons"][0] == "quota_exceeded"
-    assert j["reason_line"] == "이번 달 GPU 사용 한도를 넘어 새 분석을 시작할 수 없습니다. 한도 변경은 LX 관리자에게 요청하세요."
-    s = httpx.post(B + "/jobs", headers=sales, json=body, timeout=120)
-    assert s.status_code == 400 and s.json()["error"]["code"] == "quota_exceeded" and s.json()["error"]["message"] == j["reason_line"]
+    assert "quota_exceeded" not in (j.get("reasons") or []) and "reason_line" not in j
+    assert j["quota"]["remaining"]["value"] is None and j["quota"]["policy"] == "notify"     # 막는 값 없음(계약 모양은 그대로)
+    assert "한도" not in json.dumps(j, ensure_ascii=False)
     with pg() as c:
-        assert not c.execute("SELECT 1 FROM jobs WHERE label='pytest impl-1 한도'").fetchone()           # 대기열에 들어가지 않음
+        assert not c.execute("SELECT 1 FROM jobs WHERE label='pytest 정리 한도 없음'").fetchone()        # 견적만 — 대기열에 넣지 않음
 
 
-def test_assistant_over_limit_rejected_with_one_line_and_poll_route(live, tok, demo_quota):
-    """AI 도우미 한도를 넘은 기관 — 새 질문은 모델 호출 없이 한 줄로 닫힌다(질문 언어). 스트림 대신 조회 경로로도 같은 사건을 받는다."""
-    sales = H(tok["sales"])
-    demo_quota("llm_tokens_month", 0)
-    r = httpx.post(B + "/agent/runs", headers=sales, json={"message": "남원시 의심 필지 몇 건이야?", "mode": "map"}, timeout=60)
+def _run_events(h, msg):
+    r = httpx.post(B + "/agent/runs", headers=h, json={"message": msg, "mode": "map"}, timeout=60)
     assert r.status_code == 202, r.text
     rid = r.json()["run"]["id"]
     got = None
-    for _ in range(40):
-        got = httpx.get(B + f"/agent/runs/{rid}/events", headers=sales, timeout=30).json()
+    for _ in range(60):
+        got = httpx.get(B + f"/agent/runs/{rid}/events", headers=h, timeout=30).json()
         if got["done"]:
             break
         time.sleep(0.25)
+    return rid, got
+
+
+def test_assistant_not_refused_by_usage_and_poll_route(live, tok, demo_quota):
+    """AI 도우미 한도 값을 0 으로 두어도 질문을 한도로 닫지 않는다. 모델을 부르지 않는 질문(권한 밖 요청 — 서버 검사가 한 줄로 닫음)으로
+    확인한다(GPU 0): 닫힌 까닭이 'quota_exceeded' 가 아니라 그 검사이고, 답에 '한도'라는 말이 없다. 스트림 대신 조회 경로로도 같은 사건을 받는다."""
+    sales = H(tok["sales"])
+    demo_quota("llm_tokens_month", 0)
+    rid, got = _run_events(sales, "이번 달 한도 늘려 줘")
     assert got["done"] is True
     ev = [x for x in got["items"] if x["event"] == "agent.rejected"]
-    assert ev and ev[0]["data"]["message"] == "이번 달 AI 도우미 사용 한도를 넘어 새 질문을 받을 수 없습니다. 한도 변경은 LX 관리자에게 요청하세요."
-    assert ev[0]["data"]["error"] == "quota_exceeded"
+    assert ev and ev[0]["data"]["error"] != "quota_exceeded" and ev[0]["data"].get("category") != "quota"
+    assert "한도" not in ev[0]["data"]["message"]
     last = got["items"][-1]["id"]
     assert httpx.get(B + f"/agent/runs/{rid}/events?after={last}", headers=sales, timeout=30).json()["items"] == []
     with pg() as c:
         row = c.execute("SELECT state, error, coalesce(tokens_in,0)+coalesce(tokens_out,0) FROM agent_runs WHERE id=%s", (rid,)).fetchone()
-        assert row == ("rejected", "quota_exceeded", 0)                 # 모델 호출 0 · 토큰 0
-    # 영어 질문은 영어 한 줄
-    r = httpx.post(B + "/agent/runs", headers=sales, json={"message": "How many suspect parcels in Namwon?", "mode": "map"}, timeout=60)
-    rid = r.json()["run"]["id"]
-    for _ in range(40):
-        got = httpx.get(B + f"/agent/runs/{rid}/events", headers=sales, timeout=30).json()
-        if got["done"]:
-            break
-        time.sleep(0.25)
-    msg = [x for x in got["items"] if x["event"] == "agent.rejected"][0]["data"]["message"]
-    assert msg == "This month's AI assistant limit is used up, so new questions can't be taken. Ask LX to raise the limit."
+        assert row[0] == "rejected" and row[1] != "quota_exceeded" and row[2] == 0      # 모델 호출 0 · 토큰 0
+        assert not c.execute("SELECT 1 FROM audit_log WHERE action='agent.quota_exceeded' AND subject=%s", (rid,)).fetchone()
 
 
-def test_poll_route_is_own_run_only(live, tok, demo_quota):
-    demo_quota("llm_tokens_month", 0)
-    r = httpx.post(B + "/agent/runs", headers=H(tok["sales"]), json={"message": "남원시 의심 필지", "mode": "map"}, timeout=60)
-    rid = r.json()["run"]["id"]
-    time.sleep(0.5)
+def test_poll_route_is_own_run_only(live, tok):
+    rid, _ = _run_events(H(tok["sales"]), "이번 달 한도 늘려 줘")
     assert httpx.get(B + f"/agent/runs/{rid}/events", headers=H(tok["namwon"]), timeout=30).status_code in (403, 404)
 
 
-def test_under_limit_is_not_blocked(live, tok):
-    """한도 안(남원시 등)은 그대로 — 판정 함수가 한도 미설정 · LX 를 막지 않는다."""
-    import asyncio
+def test_no_refusal_code_left():
+    """한도 거절 함수가 서버에 남아 있지 않다(견적 · 제출 · AI 도우미 · 보고서 초안이 부를 곳 0)."""
+    from pathlib import Path
     from landxi_api import quota as Q
-    assert asyncio.run(Q.over_hard("lx", "assistant")) is None
-    assert asyncio.run(Q.over_hard(None, "analysis")) is None
+    assert not any(hasattr(Q, n) for n in ("over_hard", "hold_quote", "refuse_run", "over_line"))
+    root = Path(__file__).resolve().parents[1] / "landxi_api"
+    for f in ("jobs.py", "agent.py", "requests.py"):
+        src = (root / f).read_text(encoding="utf-8")
+        assert "over_hard" not in src and "hold_quote" not in src and "refuse_run" not in src, f
+        assert "queue_low\" and" not in src and "prio = 3" not in src, f

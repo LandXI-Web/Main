@@ -74,12 +74,12 @@ def upload(t, path, draft=None, chunk=64 * 1024):
 
 @pytest.fixture(scope="module")
 def nw(live):
-    return _login({"realm": "tenant", "tenant_id": "namwon", "login": "namwon-manager", "password": config.DEV_PASSWORD})
+    return _login({"realm": "tenant", "tenant_id": "namwon", "login": "lxadmin@lx.or.kr", "password": config.DEV_PASSWORD, "site": "gov"})
 
 
 @pytest.fixture(scope="module")
 def admin2(live):
-    return _login({"realm": "lx", "login": "lxadmin", "password": config.DEV_PASSWORD})
+    return _login({"realm": "lx", "login": "lxadmin@lx.or.kr", "password": config.DEV_PASSWORD})
 
 
 @pytest.fixture(scope="module")

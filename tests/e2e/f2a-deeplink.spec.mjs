@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
 
 const API = process.env.LX_API === 'on' ? 'http://localhost:8700' : null;
 const PW = process.env.DEV_PASSWORD || 'landxi-dev-2026';
-async function login(realm, role, tenant) { const r = await fetch(API + '/api/v1/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(realm === 'lx' ? { realm, login: `lx-${role}`, password: PW } : { realm, tenant_id: tenant, login: `${tenant}-manager`, password: PW }) }); return r.json(); }
+async function login(realm, role, tenant) { const r = await fetch(API + '/api/v1/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(realm === 'lx' ? { realm, login: ({ staff: 'test@lx.or.kr', admin: 'lxadmin@lx.or.kr', sales: 'sales@lx.or.kr' })[role], password: PW } : { realm, tenant_id: tenant, login: 'lxadmin@lx.or.kr', site: 'gov', password: PW }) }); return r.json(); }
 async function bootApi(page, url, { realm = 'lx', role = 'staff', tenant = null } = {}) {
   const session = API && realm ? await login(realm, role, tenant) : null;
   await page.addInitScript(([s, api, realm, role, tenant]) => {

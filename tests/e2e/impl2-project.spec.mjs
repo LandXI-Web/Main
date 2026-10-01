@@ -30,7 +30,7 @@ test.describe('구현 2차 · 프로젝트 백본', () => {
   test('로그인 → 새 프로젝트 → 내 프로젝트 줄 → 그 단계 화면', async ({ page, baseURL }) => {
     const errs = []; page.on('pageerror', (e) => errs.push(String(e)));
     const origin = new URL(baseURL).origin;
-    await frontDoor(page, origin, 'lx-staff', 'app');
+    await frontDoor(page, origin, 'test@lx.or.kr', 'app');
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-console/'), { timeout: 20000 });
     /* 첫 화면 — '오늘' 대신 '내 프로젝트' · 돌고 있는 서비스 · 만들 수 있는 것 · 머리 줄 '프로젝트' */
     const mine = page.locator('.lc-mine');
@@ -72,7 +72,7 @@ test.describe('구현 2차 · 프로젝트 백본', () => {
   });
 
   test('프로젝트 목록 · 관리 — 내가 만든 · 참여한 · 보관 · 전체', async ({ page, baseURL }) => {
-    await frontDoor(page, new URL(baseURL).origin, 'lx-staff', 'app');
+    await frontDoor(page, new URL(baseURL).origin, 'test@lx.or.kr', 'app');
     await page.goto('v3/lx-project/');
     await expect(page.locator('.lxp-tab')).toHaveText([/내가 만든/, /참여한/, /보관/, /전체/]);
     await expect(page.getByRole('button', { name: '새 프로젝트' }).first()).toBeVisible();

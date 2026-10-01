@@ -10,7 +10,7 @@ async function up() { try { return (await fetch(B + '/health')).ok; } catch { re
 test.beforeAll(async () => { if (!(await up())) { child = spawn(process.execPath, ['landxi/ops/serve-ops.mjs'], { stdio: 'ignore' }); for (let i = 0; i < 40 && !(await up()); i++) await new Promise((r) => setTimeout(r, 250)); } await fetch(B + '/worker/reset', { method: 'POST' }); });
 test.beforeEach(async () => { await fetch(B + '/worker/reset', { method: 'POST' }); });
 test.afterAll(() => { child?.kill(); });
-const login = async () => (await fetch(B + '/api/v1/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ realm: 'lx', login: 'lx-admin', password: PW }) })).json();
+const login = async () => (await fetch(B + '/api/v1/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ realm: 'lx', login: 'lxadmin@lx.or.kr', password: PW }) })).json();
 async function admin(page) {
   const s = await login();
   await page.addInitScript(([s, base]) => { if (sessionStorage.getItem('f1c')) return; sessionStorage.setItem('f1c', '1'); localStorage.setItem('lx_api_session', JSON.stringify(s)); localStorage.setItem('lx_ops_base', base); localStorage.setItem('lx_api_base', base); localStorage.removeItem('lx_api_mode'); localStorage.setItem('lx_ops_src', 'bridge'); }, [s, B]);
@@ -122,7 +122,7 @@ test('전력 규칙 W 케이스 — 이용률 21% · 151.5 W(한도 200 W) = 고
   // 화면(게이트웨이 직결): 칩 title 에 GPU 별 W / 한도 / 임계
   const gw = await fetch(B + '/health').then((r) => r.json()).catch(() => null);
   test.skip(!gw?.gateway?.full, '게이트웨이 없음(화면 단언 생략)');
-  const s = await (await fetch('http://localhost:8700/api/v1/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ realm: 'lx', login: 'lx-admin', password: PW }) })).json();
+  const s = await (await fetch('http://localhost:8700/api/v1/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ realm: 'lx', login: 'lxadmin@lx.or.kr', password: PW }) })).json();
   await page.addInitScript(([s]) => { localStorage.removeItem('lx_ops_src'); localStorage.removeItem('lx_api_mode'); localStorage.setItem('lx_ops_base', 'http://localhost:8700'); localStorage.setItem('lx_api_base', 'http://localhost:8700'); localStorage.setItem('lx_api_session', JSON.stringify(s)); }, [s]);
   await page.goto(OPS + '/landxi/ops/infra.html'); await page.waitForFunction(() => document.documentElement.dataset.lx === 'ready');
   const chip = page.locator('[data-k="power-budget"]');

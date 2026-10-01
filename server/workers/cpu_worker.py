@@ -138,12 +138,19 @@ def finalize(job_id: str):
             log(WHO, f"qa {job_id}: P={m['precision']} R={m['recall']} tp={m['tp']} fp={m['fp']} fn={m['fn']} gt={m['n_gt']}")
         except Exception as e:
             log(WHO, "qa error", repr(e))
-    # 면적 계량
+    # 면적 계량 — 실제로 분석한 땅(시군구 전역 = 읍면동 ∩ 영상 · 그 밖 = 범위 ∩ 영상). 바깥 테두리로 재지 않는다(장부 고장 ① · 10-01)
     try:
-        if jh.get("aoi"):
-            from workers.tiling import area_km2
+        if jh.get("aoi") or opts.get("scope") == "sgg":
+            from workers.metering import analysis_area_km2
             with bus.pg() as conn:
-                meter(conn, tenant=tenant, demo=demo, job_id=job_id, dim="area_km2", amount=round(area_km2(json.loads(jh["aoi"])), 4))
+                bus.lx_tx(conn)
+                fp = None
+                if jh.get("imagery_id") and opts.get("scope") != "sgg":
+                    row = conn.execute("SELECT ST_AsGeoJSON(footprint)::json FROM imagery WHERE id=%s", (jh.get("imagery_id"),)).fetchone()
+                    fp = row[0] if row else None
+                a = analysis_area_km2(json.loads(jh["aoi"]) if jh.get("aoi") else None, opts, fp)
+                if a is not None:
+                    meter(conn, tenant=tenant, demo=demo, job_id=job_id, dim="area_km2", amount=a)
                 conn.commit()
     except Exception as e:
         log(WHO, "area meter error", e)

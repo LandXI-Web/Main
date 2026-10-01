@@ -12,7 +12,7 @@ const up = async (request) => { try { return (await request.get('http://127.0.0.
 async function admin(page) {
   await page.goto('v3/login/?site=admin', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.__login?.ready, null, { timeout: 15000 });
-  await page.fill('#id', 'lxadmin');
+  await page.fill('#id', 'lxadmin@lx.or.kr');
   await page.fill('#pw', PW);
   await page.click('#go');
   await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/ops-core/'), { timeout: 20000 });

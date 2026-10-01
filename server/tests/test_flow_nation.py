@@ -146,12 +146,12 @@ def test_flow_chain_same_ids_mocked():
                 "'measured',$5,true,$6)", did, {"ko": "pytest"}, json.dumps(mapping(geoms[NAMWON])),
                 {"core": dp.CORE, "ext": {"mod-farm-parcel": True}}, NAMWON, dp._flow_new("approval"))
             await conn.execute("INSERT INTO approvals(id, subject_type, subject_id, requested_by, decided_by, decision, state, payload, at, decided_at) "
-                               "VALUES ($1,'deploy',$2,'u_lx_staff','u_lx_admin','approve','decided',$3,now(),now())",
+                               "VALUES ($1,'deploy',$2,'u_mail_test','u_mail_lxadmin','approve','decided',$3,now(),now())",
                                "ap_pytest_" + did[-6:], did, {"action": "port"})
         o_route, o_img = dp._call_route, dp.best_imagery
         dp._call_route, dp.best_imagery = fake_route, fake_img
         try:
-            f = await dp.flow_start(did, "u_lx_admin")
+            f = await dp.flow_start(did, "u_mail_lxadmin")
             assert f["state"] == "analyzing" and f["job_id"] == jid
             await dp.flow_tick({did})                             # 작업 done → 스냅샷 → survey/build
             await dp.flow_tick({did})                             # 실태조사 작업 done → done

@@ -30,7 +30,7 @@ test('로그인 → 반전 1600±60 · 전환 프레임 12장 상이 쌍 ≥ 8 �
   await page.goto(OPS + '/landxi/ops/login.html');
   await page.waitForFunction(() => document.documentElement.dataset.lx === 'ready');
   await page.evaluate(() => { window.__sameDoc = 'L-1'; window.__faceCanvas = document.querySelector('#faceMap canvas'); });
-  await page.fill('#id', 'lx-admin'); await page.fill('#pw', PW);
+  await page.fill('#id', 'lxadmin@lx.or.kr'); await page.fill('#pw', PW);
   await page.click('#go');
   await page.waitForFunction(() => document.documentElement.dataset.flip === 'running', null, { timeout: 5000 });
   const frames = []; const t0 = Date.now();
@@ -72,7 +72,7 @@ test('게이트웨이 직결(v1.1 기본) — 로그인·운영 현황·인프�
   await page.goto(OPS + '/landxi/ops/login.html'); await page.evaluate(() => localStorage.clear()); await page.reload();
   await page.waitForFunction(() => document.documentElement.dataset.lx === 'ready');
   await scan('login');
-  await page.fill('#id', 'lx-admin'); await page.fill('#pw', PW); await page.click('#go');
+  await page.fill('#id', 'lxadmin@lx.or.kr'); await page.fill('#pw', PW); await page.click('#go');
   await page.waitForFunction(() => document.documentElement.dataset.flip === 'grown', null, { timeout: 15000 });
   expect(await page.evaluate(() => document.documentElement.dataset.src)).toBe('gateway');
   for (const pg of ['infra', 'tenants', 'deploys', 'index']) {

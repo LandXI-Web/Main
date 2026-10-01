@@ -27,7 +27,7 @@ async function readAll(url) {
 
 test('HUD 두 줄 = GET /jobs/{id} = job.done · util 이동평균 튐 0 · power_w', async ({ page, request }) => {
   test.setTimeout(300000);
-  const login = await (await request.post(API + '/api/v1/auth/login', { data: { realm: 'lx', login: 'lx-staff', password: PW } })).json();
+  const login = await (await request.post(API + '/api/v1/auth/login', { data: { realm: 'lx', login: 'test@lx.or.kr', password: PW } })).json();
   const h = { authorization: 'Bearer ' + login.token };
   const id = (await (await request.post(API + '/api/v1/jobs', { headers: h, data: { ...BODY, label: 'e2e f2b-perf-fields' } })).json()).job.id;
   const evs = await readAll(`${API}/api/v1/events/jobs/${id}?access_token=${login.token}`);

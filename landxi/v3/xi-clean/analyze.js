@@ -249,7 +249,6 @@ export function analyzer({ stage, host, catalog, who, demo, onBusy, onDone, pick
     : rs.includes('power_budget') ? '잠시 뒤 시작합니다'
     : rs.includes('aoi_outside_footprint') ? '이 범위에는 분석할 영상이 없습니다'
     : rs.includes('demo_required') || rs.includes('imagery_forbidden') ? '이 계정으로는 이 영상을 분석할 수 없습니다'
-    : rs.includes('quota_exceeded') ? '이번 달 분석 한도를 넘었습니다'
     : rs.includes('model_input_mismatch') ? '이 영상에 맞는 모델이 아직 없습니다' : '지금은 실행할 수 없습니다';
 
   /** 진행 카드 — 첫 칸이 끝나기 전(대기열 · 워커가 영상을 여는 동안)은 '잠시 뒤 시작합니다' + 움직이는 막대, 첫 칸부터 '분석 중 {p}%'.

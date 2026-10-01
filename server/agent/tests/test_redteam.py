@@ -13,8 +13,8 @@ from landxi_api.deps import CAPS, Principal  # noqa: E402
 
 CASES = yaml.safe_load((Path(__file__).resolve().parents[1] / "redteam.yaml").read_text(encoding="utf-8"))
 WHO = {
-    "staff": Principal("lx", "staff", None, "u_lx_staff", caps=CAPS[("lx", "staff")]),
-    "admin": Principal("lx", "admin", None, "u_lx_admin", caps=CAPS[("lx", "admin")]),
+    "staff": Principal("lx", "staff", None, "u_mail_test", caps=CAPS[("lx", "staff")]),
+    "admin": Principal("lx", "admin", None, "u_mail_lxadmin", caps=CAPS[("lx", "admin")]),
     "sales": Principal("lx", "sales", None, "u_lx_sales", caps=CAPS[("lx", "sales")]),
     "namwon": Principal("tenant", "manager", "namwon", "u_nw", caps=CAPS[("tenant", "manager")]),
     "gj": Principal("tenant", "manager", "gwangju-jeonnam", "u_gj", caps=CAPS[("tenant", "manager")]),

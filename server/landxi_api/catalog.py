@@ -275,26 +275,27 @@ def guard(items: list[dict], build: str, tenant_sets: set[str] | None = None) ->
     return keep
 
 
-# 기관 계정에 관할 원본 영상(동적 타일 · 서명)을 줄 것인가 — 기본 꺼짐. 2026-09-24 사용자 결정(관문 R6: build=tenant 에 원본·동적 타일 0)을
-# 따른다. c2-xi 기획은 '기관은 서명'을 적었지만 사용자 결정이 우선이므로 켜는 것은 사용자 결정으로만(켜면 /tiles/sign 이 관할 영상만 서명).
-TENANT_RAW_IMAGERY = False
+# 기관 계정에 원본 영상(동적 타일 · 서명)을 줄 것인가 — 2026-09-24 결정(관문 R6: build=tenant 에 원본·동적 타일 0)은
+# 2026-10-01 사용자 결정 "기관에 영상을 공유하면 그 기관 지도에도 보이게 한다"로 바뀌었다:
+# LX 관리자가 그 기관에 공유한 영상(imagery_shares)만 그 기관에게 지도 조각(서명 주소 · /tiles/sign 이 공유 · 관할을 확인)으로 준다.
+# 공유 안 된 영상 · 다른 기관 · 관할 밖은 계속 0. 원본 파일 경로(path)는 내보내지 않는다.
+TENANT_RAW_IMAGERY = "shared"
 
 
-def tenant_cog_items(items: list[dict], tenant_id: str, have: set[str]) -> list[dict]:
-    """기관 계정의 영상 층(c2-xi) — 관할 시군구의 등록 원본 영상(PMTiles 없음)을 동적 래스터 타일로. 주소는 서명(exp·sig · /tiles/sign 이
-    관할 영상만 서명한다). 관할 밖 · 해외 · 외부 영상은 넣지 않는다. 원본 파일 경로(path)는 내보내지 않는다."""
-    from .regions import in_scope, tenant_scope
-    sc = tenant_scope(tenant_id)
-    if sc is None:
+def tenant_cog_items(items: list[dict], tenant_id: str, have: set[str], shared: set[str] | None = None) -> list[dict]:
+    """기관 계정의 영상 층 — 이 기관에 공유된 등록 원본 영상(PMTiles 없음 · LX 전용으로 구운 세트 포함)을 동적 래스터 타일로.
+    주소는 서명(exp·sig · /tiles/sign 이 공유 · 관할을 다시 확인해 서명한다). 공유 안 된 영상 · 관할 밖 · 해외 · 외부 영상은 넣지 않는다."""
+    from .regions import tenant_scope
+    if tenant_scope(tenant_id) is None:            # 해외 기관 — 국내 등록 원본 영상은 없음
         return []
+    shared = shared or set()                       # 공유 행은 공유할 때 관할(소유 시군구 · 범위)을 확인했다 — 서명 때 한 번 더 본다
     out = []
     for it in items:
-        if it["id"] in have or it.get("role") != "imagery" or it.get("tier") != "raw" or it.get("source") not in ("cog", "pmtiles")                 or not it.get("sgg_cd"):
+        if it["id"] in have or it["id"] not in shared or it.get("role") != "imagery" or it.get("tier") != "raw" \
+                or it.get("source") not in ("cog", "pmtiles"):
             continue
-        if not in_scope(str(it["sgg_cd"]), sc):
-            continue
-        # LX 전용으로 구운 PMTiles 세트는 기관에 주지 않는다 — 같은 영상을 동적 타일(cog/{id} · 관할 서명)로
-        out.append({**it, "source": "cog", "set": f"cog/{it['id']}", "url": None, "tiles": None, "signed": True, "path": None})
+        # LX 전용으로 구운 PMTiles 세트는 기관에 주지 않는다 — 같은 영상을 동적 타일(cog/{id} · 공유 · 관할 서명)로
+        out.append({**it, "source": "cog", "set": f"cog/{it['id']}", "url": None, "tiles": None, "signed": True, "path": None, "_lx_only": False})
     return out
 
 
@@ -311,8 +312,8 @@ async def layer_items(p: Principal, build: str | None, stage: str | None = None,
         # LX 영상 공유(5차 역할-4 ⓑ) — 기관 세션에는 LX 관리자가 이 기관에 켠 영상만(지형 · 외부 위성 · 결과 · 참조 층은 그대로)
         sh = await shared_ids(p.tenant_id)
         kept = [i for i in kept if not (i.get("_lx_imagery") and i.get("role") == "imagery") or i["id"] in sh]
-    if TENANT_RAW_IMAGERY and b == "tenant" and p.realm == "tenant" and p.tenant_id:
-        kept += tenant_cog_items(items, p.tenant_id, {i["id"] for i in kept})
+        # 공유된 원본 영상(타일 없음)도 그 기관 지도에(10-01 사용자 결정) — 서명 동적 타일
+        kept += tenant_cog_items(items, p.tenant_id, {i["id"] for i in kept}, sh)
     items = [i for i in kept if _bbox_hit(i, bbox)]
     # 기관 결과 세트는 서명 필요 표시(on 모드 url 은 /tiles/sign 으로)
     for i in items:
@@ -620,8 +621,8 @@ async def tenant_shares(tid: str, request: Request):
     for r in cands:
         g = float(r["gsd_m"]) if r["gsd_m"] is not None else None
         ep = str(r["year"] or r["epoch"] or "")
-        view = r["tier"] != "raw" and bool(r["pmtiles_set"])
         analyze = bool(r["path_internal"] or (r["layer"] or {}).get("cog_path"))
+        view = bool(r["pmtiles_set"]) or (r["tier"] == "raw" and analyze)      # 원본만 있는 영상도 공유하면 기관 지도에(서명 동적 타일 · 10-01)
         name = (r["name"] or {}).get("ko") if isinstance(r["name"], dict) else r["name"]
         items.append({"id": r["id"], "name": name or "영상", "year": int(ep[:4]) if ep[:4].isdigit() else None, "gsd_m": g,
                       "gsd_word": gsd_word(g) if g else "", "view": view, "analyze": analyze, "shared": r["id"] in sh,

@@ -52,11 +52,6 @@ body.t { overflow: hidden; }
 
 .msg { margin: 4px 0 0; font: 500 var(--fs-label)/var(--lh-label) var(--font-body); color: var(--warn); }
 .msg.t-in { animation: tin var(--d-380) var(--e-ui) both; }
-/* 늦음 안내(r3-ops M8) — 할 일 한 줄 + '다시 불러오기' */
-.slow { margin: 4px 0 0; }
-.slow__t { margin: 0; font: 500 var(--fs-label)/var(--lh-label) var(--font-body); color: var(--warn); }
-.slow__b { margin-top: 4px; font-size: var(--fs-label); }
-.slow.t-in { animation: tin var(--d-380) var(--e-ui) both; }
 @keyframes tin { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 /* 1차 행동 — 잉크 채움 44 · 폭 가득. 진행 막대(액센트)는 기다리는 동안만 */
@@ -177,16 +172,6 @@ body.t { overflow: hidden; }
   .door__lead { margin-bottom: 20px; }
 }
 
-/* 기관 입구(기관 칸 한 줄 +76) — 낮은 화면에서 늘어난 만큼 위 여백을 먼저 내준다(오류 문구까지 켜도 넘침 0) */
-@media (max-height: 800px) and (min-width: 961px) {
-  .door:has(.fld--org:not([hidden])) .door__body { padding: 12px 0 4px; }
-  .door:has(.fld--org:not([hidden])) .door__lead { margin-bottom: 20px; }
-}
-@media (max-height: 740px) and (min-width: 961px) {
-  .door:has(.fld--org:not([hidden])) .door__body { padding: 0; }
-  .door:has(.fld--org:not([hidden])) .door__lead { margin-bottom: 12px; }
-}
-
 /* ══ 좁은 화면(모바일) — 히어로 카드 위, 문 카드 아래 · 가로 스크롤 0 ═══ */
 @media (max-width: 960px) {
   body.t { overflow: auto; }
@@ -221,5 +206,5 @@ body.t { overflow: hidden; }
   .aux { transition: none; }
   .axis__ix li.on i { animation: none; width: 100%; }
   .hero__cover { transition: none; animation: none; }
-  .axis .t-in, .msg.t-in, .slow.t-in, .ask__c, .form.nudge { animation: none; }
+  .axis .t-in, .msg.t-in, .ask__c, .form.nudge { animation: none; }
 }

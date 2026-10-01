@@ -1,9 +1,11 @@
 /* K16 forbidden.mjs — 금지어 · 첫 뷰 글자 수 · 버튼 수 검사(e2e 보조).
    브라우저: import { scan } from './forbidden.mjs'; scan(document) → { hits[], chars, buttons }
-   CLI:     node landxi/v3/kit/lint/forbidden.mjs [--login lx-staff | --login namwon-manager@namwon | --login test@lx.or.kr | --login lxadmin@lx.or.kr#namwon]
+   CLI:     node landxi/v3/kit/lint/forbidden.mjs [--login test@lx.or.kr | --login lxadmin@lx.or.kr | --login sales@lx.or.kr | --login lxadmin@lx.or.kr#namwon]
                  [--tenant namwon] [--site app|admin|gov] [--base URL] [--state state.json] [--mobile] <url>…
-            로그인(/landxi/v3/login/) 폼 입력으로 로그인한 뒤 각 url 을 1440×900(또는 390×844)에서 잰다. 세션 주입 없음.
-            아이디 = 메일 주소(원칙 77) · 옛 아이디도 그대로. 기관 계정은 '메일#기관' 또는 --tenant(옛 '아이디@기관'도 그대로 — 기관 id 에는 점이 없다).
+            로그인 폼 입력으로 로그인한 뒤 각 url 을 1440×900(또는 390×844)에서 잰다. 세션 주입 없음.
+            아이디 = 메일 주소(원칙 77 · 기본 test@lx.or.kr). 옛 아이디 호출(lx-staff · lx-admin · lxadmin · lx-sales · {기관}-manager · '아이디@기관')은
+            옛 계정이 사용 중지라 같은 역할의 메일 아이디로 바꿔 부른다. 기관 계정은 '메일#기관' 또는 --tenant.
+            LX 계정 = Land-XI 로그인(/landxi/v3/login/ · LX 전용 — 원칙 78) · 기관 계정 = 그 기관 메인의 로그인({기관}.land-xi.dev · 이 PC 는 /landxi/v3/gov-home/?org=).
             입구(--site)를 안 주면 계정으로 고른다: 기관 있음 → gov · 아이디에 admin → admin · 그 밖 → app.
    검사 대상: 본문 글자 · title · aria-label · placeholder · alt. 제외: 개발자 서랍(.k-dev) · [data-lint-skip]. */
 
@@ -74,32 +76,61 @@ async function devPw() {
   const fs = await import('node:fs');
   try { return fs.readFileSync(new URL('../../../../server/.env', import.meta.url), 'utf8').match(/^DEV_PASSWORD=(.*?)\s*$/m)?.[1] || ''; } catch { return ''; }
 }
-/** 아이디 풀기(원칙 77 — 아이디 = 메일 주소 · 옛 호출 하위 호환):
-    'lx-staff' → 아이디만 · 'namwon-manager@namwon' → 옛 '아이디@기관'(@ 뒤에 점이 없으면 기관 id) ·
-    'test@lx.or.kr' → 메일 아이디(@ 뒤에 점) · 'lxadmin@lx.or.kr#namwon' → 메일 아이디 + 기관 · tenant 인자를 주면 그 기관이 먼저 */
+/** 메일 아이디(원칙 77 · 확인 대장 PW-4) — 옛 아이디는 사용 중지(server/migrations/0015_mail_accounts.sql) */
+export const MAIL = Object.freeze({ staff: 'test@lx.or.kr', admin: 'lxadmin@lx.or.kr', sales: 'sales@lx.or.kr', tenant: 'lxadmin@lx.or.kr' });
+export const DEFAULT_LOGIN = MAIL.staff;
+const OLD_LX = { 'lx-staff': MAIL.staff, 'lx-admin': MAIL.admin, lxadmin: MAIL.admin, 'lx-sales': MAIL.sales };
+const OLD_TENANT = { 'gj-manager': 'gwangju-jeonnam' };          // 그 밖 옛 기관 아이디 = '{기관}-manager'
+/** 아이디 풀기(원칙 77 — 아이디 = 메일 주소 · 옛 호출은 메일 아이디로 바꿔 부른다):
+    'test@lx.or.kr' → 메일 아이디(@ 뒤에 점) · 'lxadmin@lx.or.kr#namwon' → 메일 아이디 + 기관 · tenant 인자를 주면 그 기관이 먼저.
+    옛 호출: 'lx-staff' → test@lx.or.kr · 'lx-admin' · 'lxadmin' → lxadmin@lx.or.kr · 'lx-sales' → sales@lx.or.kr ·
+    'namwon-manager' · 'gj-manager' · 'namwon-manager@namwon' · 'lxadmin@namwon'(옛 '아이디@기관') → 그 기관의 lxadmin@lx.or.kr */
 export function parseLogin(login, tenant) {
-  let id = String(login || ''), t = tenant || null;
+  let id = String(login || DEFAULT_LOGIN), t = tenant || null;
   const hash = id.lastIndexOf('#');
   if (hash > 0) { t = t || id.slice(hash + 1); id = id.slice(0, hash); }
   else {
     const at = id.lastIndexOf('@');
     if (at > 0 && !id.slice(at + 1).includes('.')) { t = t || id.slice(at + 1); id = id.slice(0, at); }
   }
+  if (!id.includes('@')) {                                       // 옛 아이디 → 같은 역할의 메일 아이디
+    if (t) id = MAIL.tenant;
+    else if (OLD_LX[id]) id = OLD_LX[id];
+    else if (OLD_TENANT[id] || /-manager$/.test(id)) { t = OLD_TENANT[id] || id.replace(/-manager$/, ''); id = MAIL.tenant; }
+  }
   return { id, tenant: t };
 }
 /** 입구 — 'app' | 'admin' | 'gov'. 안 주면 계정으로 고른다(기관 있음 → gov · 아이디에 admin → admin · 그 밖 → app — 옛 호출 그대로 같은 첫 화면) */
 export const siteFor = (login, site, tenant) => { if (site) return site; const p = parseLogin(login, tenant); return p.tenant ? 'gov' : /admin/.test(p.id) ? 'admin' : 'app'; };
-/** 로그인 폼 입력 — login = 'lx-staff' | 'lxadmin' | 'namwon-manager@namwon' | 'test@lx.or.kr' | 'lxadmin@lx.or.kr#namwon' · site = 입구(생략 가능).
+/** 기관 메인 주소(그 기관 모습의 로그인) — 이 PC 는 /landxi/v3/gov-home/?org=&site=gov · 바깥 주소는 https://{기관}.land-xi.dev/(kit/sites.js gov.orgHost 규칙) */
+export function orgLoginUrl(base, tenant) {
+  const local = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(base);
+  if (local) return base.replace(/\/+$/, '') + '/landxi/v3/gov-home/?' + new URLSearchParams({ org: tenant, site: 'gov' });
+  const u = new URL(base);
+  u.hostname = u.hostname.replace(/^[^.]+/, tenant);            // app|admin|gov|{기관}.land-xi.dev → {기관}.land-xi.dev
+  return u.origin + '/';
+}
+/** 로그인 폼 입력 — login = 'test@lx.or.kr'(기본) | 'lxadmin@lx.or.kr' | 'sales@lx.or.kr' | 'lxadmin@lx.or.kr#namwon' · 옛 호출도 받는다(parseLogin) · site = 입구(생략 가능).
     opts = { tenant, password } — 기관 · 비밀번호(생략하면 devPw()). site 자리에 opts 를 바로 줘도 된다: frontDoor(page, base, 'a@b.kr', { tenant: 'namwon' }).
-    비밀번호는 출력하지 않는다. 역할 탭 없음(확인 대장 6) — 입구가 로그인 문을 정한다. 이 PC(localhost · 127.0.0.1)는 ?site= 로 입구를 열고,
-    바깥 주소(https://app|admin|gov.land-xi.dev)는 주소가 입구다(site 는 쓰지 않는다 — base 를 그 입구 주소로 줄 것). */
+    비밀번호는 출력하지 않는다. 역할 탭 없음(확인 대장 6) — 입구가 로그인 문을 정한다.
+    LX 계정: Land-XI 로그인 — 이 PC(localhost · 127.0.0.1)는 ?site= 로 입구를 열고, 바깥 주소(https://app|admin.land-xi.dev)는 주소가 입구.
+    기관 계정: 그 기관 메인의 로그인(원칙 78 — Land-XI 로그인은 LX 전용) — 이 PC 는 gov-home(?org=) · 바깥 주소는 {기관}.land-xi.dev. */
 export async function frontDoor(page, base, login, site, opts = {}) {
   if (site && typeof site === 'object') { opts = site; site = opts.site; }
   const { id, tenant } = parseLogin(login, opts.tenant);
   const pw = opts.password || await devPw();
   const local = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(base);
-  await page.goto(base + '/landxi/v3/login/' + (local ? '?site=' + siteFor(login, site, opts.tenant) : ''), { waitUntil: 'domcontentloaded' });
-  if (tenant) { const tf = page.locator('select[name=tenant], input[name=tenant], select[name=tenant_id], input[name=tenant_id]'); if (await tf.count()) { const el = tf.first(); if ((await el.evaluate((e) => e.tagName)) === 'SELECT') await el.selectOption(tenant); else await el.fill(tenant); } }
+  if (tenant) {                                                  // 기관 — 기관 메인의 로그인 카드
+    await page.goto(orgLoginUrl(base, tenant), { waitUntil: 'domcontentloaded' });
+    const idIn = page.locator('.gh-login input[name=login]');
+    await idIn.waitFor({ timeout: 30000 });
+    await idIn.fill(id);
+    await page.locator('.gh-login input[name=password]').fill(pw);
+    await Promise.all([page.waitForURL((u) => /\/landxi\/v3\/(?!gov-home\/)[a-z-]+\//.test(u.pathname), { timeout: 30000 }).catch(() => null),
+      page.locator('.gh-login input[name=password]').press('Enter')]);
+    return;
+  }
+  await page.goto(base + '/landxi/v3/login/' + (local ? '?site=' + siteFor(id, site) : ''), { waitUntil: 'domcontentloaded' });
   await page.locator('input[name=login], input[autocomplete=username], input[type=text]').first().fill(id);
   await page.locator('input[type=password]').first().fill(pw);
   await Promise.all([page.waitForURL((u) => !/\/login\/?(\?|$)/.test(u.pathname), { timeout: 15000 }).catch(() => null), page.locator('input[type=password]').first().press('Enter')]);

@@ -170,7 +170,7 @@ export function deploys() {
   return [...by.values()].sort((a, b) => order[a.stage] - order[b.stage] || cardName(a.card_id).localeCompare(cardName(b.card_id), 'ko'));
 }
 
-/* ── 기관 한도 ───────────────────────── */
+/* ── 기관 사용량(막는 한도 없음 — 원칙 83 · 11차 "GPU 는 무상 정책") ─────────── */
 export const DIM = {
   storage_gb: { ko: '저장', unit: 'GB', k: 1, d: 0 },
   gpu_s_month: { ko: 'GPU 시간', unit: 'h', k: 1 / 3600, d: 1 },
@@ -184,7 +184,7 @@ export function llmUsage() {
   const users = S.tenants.filter((t) => t.kind === 'user').map((t) => t.id);
   const rows = S.usage.filter((u) => users.includes(u.tenant_id) || u.tenant_id === 'lx').map((u) => {
     const v = u.dims?.llm_tokens_month || {};
-    return { id: u.tenant_id, name: tenantName(u.tenant_id), used: v.used || null, hard: v.hard ?? null, soft: v.soft ?? null, state: dimState(v),
+    return { id: u.tenant_id, name: tenantName(u.tenant_id), used: v.used || null, requests: u.dims?.llm_requests_month?.used || null, state: dimState(v),
       scope: S.tenants.find((t) => t.id === u.tenant_id)?.scope };
   });
   return rows.sort((a, b) => (a.id === 'lx') - (b.id === 'lx') || (a.scope === b.scope ? a.name.localeCompare(b.name, 'ko') : a.scope === 'local' ? -1 : 1));

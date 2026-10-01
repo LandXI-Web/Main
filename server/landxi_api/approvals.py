@@ -13,6 +13,9 @@ impl-1(2026-09-30 · 확인 대장 FR-3 · D2-ⓐ · R&R 점검):
   · 요청한 사람은 스스로 결재할 수 없다(409 self_approval) — 서비스 공개를 요청한 직원 · 한도 변경을 요청한 관리자가 스스로 승인자로 적히던 것.
   · 반려는 사유가 있어야 한다(400 reason_required). 요청 사유는 payload.request_reason 으로 남기고 reason 칸에는 결정 사유를 적는다.
   · 요청 없이 관리자가 바로 결정하는 ga 승인은 요청자를 비워 둔다(스스로 요청 · 스스로 승인으로 적지 않는다).
+관리자 계정 하나(10-01 사용자 결정 — "관리자 계정은 하나를 유지한다", 다섯 명 팀이 함께 씀):
+  · 요청한 계정이 LX 관리자이고 다른 LX 관리자 계정(사용 중 · 잠기지 않음)이 없으면 그 계정이 스스로 결재할 수 있다 — 관리자가 올린 요청이 영원히 기다리지 않게.
+    처리 기록(결재 행 payload.single_admin · audit · 목록의 decided_note)에 '관리자 계정 승인(단일 계정)'. 직원이 올린 요청은 지금처럼 관리자가 결재.
 """
 from __future__ import annotations
 
@@ -27,7 +30,7 @@ from .jobs import ops_event
 
 router = APIRouter()
 QUOTA_DIMS = ["storage_gb", "gpu_s_month", "area_km2_month", "concurrent_jobs", "egress_gb_month", "vworld_calls_day", "llm_tokens_month"]
-KIND_LABEL = {"deploy": "다른 지역에 적용", "deploy_ga": "운영 전환", "rule": "규칙 적용", "quota": "한도 변경", "model": "모델 등록",
+KIND_LABEL = {"deploy": "다른 지역에 적용", "deploy_ga": "운영 전환", "rule": "규칙 적용", "quota": "사용량 설정 변경", "model": "모델 등록",
               "card": "서비스 공개", "request": "분석 의뢰"}
 ROLE_WORD = {"admin": "LX 관리자", "staff": "LX 직원", "sales": "LX 영업"}
 
@@ -119,6 +122,7 @@ async def list_approvals(request: Request, state: str = "pending"):
     mine = None if p.is_admin else p.user_id
     async with db(realm="lx") as conn:
         rows = await _rows(conn, state, mine)
+        solo = await solo_admin(conn, p)            # 관리자 계정이 하나뿐 — 내가 올린 요청도 내가 결재(처리 기록에 표시)
         who = await people(conn)
         cvs = [r["subject_id"] for r in rows if r["subject_type"] == "card"]
         live_cv = {x["id"] for x in await conn.fetch("SELECT id FROM card_versions WHERE id = ANY($1::text[])", cvs)} if cvs else set()
@@ -140,6 +144,8 @@ async def list_approvals(request: Request, state: str = "pending"):
                           "subject": {"type": kind, "id": r["subject_id"]}, "title": await _title(conn, r),
                           "requested_by": r["requested_by"], "requested_by_name": who.get(r["requested_by"]) if r["requested_by"] else None,
                           "request_reason": req_reason, "mine": bool(r["requested_by"]) and r["requested_by"] == p.user_id,
+                          "can_decide": p.is_admin and (r["requested_by"] != p.user_id or solo),
+                          "decided_note": SOLO_NOTE if pl.get("single_admin") else None,
                           "at": _iso(r["at"]), "state": st,
                           "decision": r["decision"], "decided_by": r["decided_by"], "decided_by_name": who.get(r["decided_by"]) if r["decided_by"] else None,
                           "decided_at": _iso(r["decided_at"]), "reason": r["reason"] if st == "decided" else None, "payload": _pub(pl)})
@@ -207,11 +213,24 @@ async def request_approval(body: dict, request: Request):
     return {"approval_id": aid, "state": "pending", "as_of": now_iso()}
 
 
-def check_decider(p, requested_by: str | None, decision: str, reason: str | None) -> None:
-    """결정 규칙 한 곳(결재함 · 모델 등록 결정이 같이 쓴다): 반려 = 사유 필수 · 요청한 사람 ≠ 결정하는 사람."""
+SOLO_NOTE = "관리자 계정 승인(단일 계정)"
+
+
+async def solo_admin(conn, p) -> bool:
+    """이 LX 관리자 계정 말고 결재할 다른 관리자 계정이 없는가(사용 중 · 잠기지 않음) — 관리자 계정 하나를 여럿이 함께 쓰는 동안(10-01 사용자 결정)."""
+    if not getattr(p, "is_admin", False):
+        return False
+    n = await conn.fetchval("SELECT count(*) FROM lx_users WHERE role='admin' AND status='active' AND id <> $1 "
+                            "AND (lock_until IS NULL OR lock_until < now())", p.user_id)
+    return not n
+
+
+def check_decider(p, requested_by: str | None, decision: str, reason: str | None, solo: bool = False) -> None:
+    """결정 규칙 한 곳(결재함 · 모델 등록 결정이 같이 쓴다): 반려 = 사유 필수 · 요청한 사람 ≠ 결정하는 사람.
+    solo = 요청한 계정이 결재할 수 있는 유일한 관리자 계정(solo_admin) — 그때만 스스로 결재(처리 기록에 SOLO_NOTE)."""
     if decision == "reject" and not str(reason or "").strip():
         raise ApiError("reason_required", "반려 사유를 적어 주세요", status=400)
-    if requested_by and requested_by == p.user_id:
+    if requested_by and requested_by == p.user_id and not solo:
         raise ApiError("self_approval", "요청한 사람은 스스로 결재할 수 없습니다 — 다른 관리자가 결재합니다", status=409)
 
 
@@ -253,8 +272,11 @@ async def decide(aid: str, body: dict, request: Request):
             raise ApiError("not_found", f"결재 {aid} 없음")
         if (r["state"] or "decided") != "pending":
             raise ApiError("conflict", "이미 결정된 결재입니다", {"decision": r["decision"]}, 409)
-        check_decider(p, r["requested_by"], dec, reason)
+        solo = bool(r["requested_by"]) and r["requested_by"] == p.user_id and await solo_admin(conn, p)
+        check_decider(p, r["requested_by"], dec, reason, solo=solo)
         st, sid, pl = r["subject_type"], r["subject_id"], dict(r["payload"] or {})
+        if solo:
+            pl["single_admin"] = True            # 처리 기록 — 관리자 계정 승인(단일 계정)
         effect = None
         if dec == "approve":
             if st == "rule":
@@ -293,7 +315,8 @@ async def decide(aid: str, body: dict, request: Request):
             pl["request_reason"] = r["reason"]
         await conn.execute("UPDATE approvals SET state='decided', decision=$2, decided_by=$3, decided_at=now(), "
                            "reason=coalesce($4, reason), payload=$5 WHERE id=$1", aid, dec, p.user_id, reason, pl)
-        await audit(conn, p, f"approval.{dec}", aid, {"subject_type": st, "subject_id": sid}, {"effect": effect, "reason": reason})
+        await audit(conn, p, f"approval.{dec}", aid, {"subject_type": st, "subject_id": sid},
+                    {"effect": effect, "reason": reason, **({"single_admin": True, "note": SOLO_NOTE} if solo else {})})
         tenant = r["tenant_id"] or (await conn.fetchval("SELECT tenant_id FROM deploys WHERE id=$1", sid) if st == "deploy" else None)
     await ops_event("approval.decided", {"approval_id": aid, "subject_type": st, "subject_id": sid, "decision": dec, "by": p.user_id,
                                          "requested_by": r["requested_by"], "at": now_iso()})

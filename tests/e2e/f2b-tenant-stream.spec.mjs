@@ -33,15 +33,15 @@ function listen(url, ms) {
 
 test('관문 — 게스트 401 · 다른 기관 tenant= 403', async ({ request }) => {
   expect((await request.get(API + '/api/v1/events/tenant')).status()).toBe(401);
-  const gj = await login(request, { realm: 'tenant', tenant_id: 'gwangju-jeonnam', login: 'gj-manager' });
+  const gj = await login(request, { realm: 'tenant', tenant_id: 'gwangju-jeonnam', login: 'lxadmin@lx.or.kr', site: 'gov' });
   expect((await request.get(`${API}/api/v1/events/tenant?access_token=${gj}&tenant=namwon`)).status()).toBe(403);
 });
 
 test('배포 쓰기 → deploy.changed ≤ 1 s(남원) · 광주전남 0건 · 24h 재생', async ({ request }) => {
   test.setTimeout(60000);
-  const nw = await login(request, { realm: 'tenant', tenant_id: 'namwon', login: 'namwon-manager' });
-  const gj = await login(request, { realm: 'tenant', tenant_id: 'gwangju-jeonnam', login: 'gj-manager' });
-  const ad = await login(request, { realm: 'lx', login: 'lx-admin' });
+  const nw = await login(request, { realm: 'tenant', tenant_id: 'namwon', login: 'lxadmin@lx.or.kr', site: 'gov' });
+  const gj = await login(request, { realm: 'tenant', tenant_id: 'gwangju-jeonnam', login: 'lxadmin@lx.or.kr', site: 'gov' });
+  const ad = await login(request, { realm: 'lx', login: 'lxadmin@lx.or.kr' });
   const A = listen(`${API}/api/v1/events/tenant?access_token=${nw}`, 9000);
   const G = listen(`${API}/api/v1/events/tenant?access_token=${gj}`, 9000);
   await new Promise((r) => setTimeout(r, 1500));

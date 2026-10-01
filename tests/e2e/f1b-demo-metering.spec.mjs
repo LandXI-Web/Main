@@ -11,7 +11,7 @@ const AOI = { type: 'Polygon', coordinates: [[[126.9480, 35.9960], [126.9492, 35
 
 test('영업 세션 demo:true → detections 0 · usage_events lx-demo n행 · 결과는 demo 영역에만', async ({ request }) => {
   test.setTimeout(180000);
-  const tok = (await (await request.post(API + '/api/v1/auth/login', { data: { realm: 'lx', login: 'lx-sales', password: PW } })).json()).token;
+  const tok = (await (await request.post(API + '/api/v1/auth/login', { data: { realm: 'lx', login: 'sales@lx.or.kr', password: PW } })).json()).token;
   const h = { authorization: 'Bearer ' + tok };
   // 영업은 demo:false 를 보내도 demo 로 강제된다(계약 §3)
   const sub = await request.post(API + '/api/v1/jobs', { headers: h, data: { kind: 'infer', model_id: 'car_v2_obb', imagery_id: 'axis-iksan-hwangdeung', aoi: AOI, options: { chip: 1024, overlap: 0.125, conf: 0.25 }, demo: true, priority: 0 } });

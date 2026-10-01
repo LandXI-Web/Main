@@ -822,6 +822,20 @@ def process_train(job_id: str, entries: list[tuple[str, dict]]):
         bus.lx_tx(conn)
         conn.execute("UPDATE jobs SET state=%s, finished_at=now(), shards_done=%s, error=%s, counts=%s WHERE id=%s",
                      (st, 1 if ok else 0, None if ok else m.get("error"), json.dumps(extra.get("counts") or {}), job_id))
+        # 학습 GPU 시간을 사용 기록에 남긴다(장부 고장 ③ · 10-01 — 9월 학습 7건이 기록 0) — 성공 · 실패 모두 GPU 를 썼다.
+        # 값 = 학습 벽시계 − 전력 규칙 대기(다른 GPU 고부하로 멈춘 시간) · 기관 = 작업을 낸 기관(LX 학습 = 'lx') · 이 작업 id
+        try:
+            used_s = max(0.0, el - held["s"])
+            if used_s > 0:
+                conn.execute("SAVEPOINT lx_train_meter")
+                meter(conn, tenant=jh.get("tenant_id") or "lx", demo=False, job_id=job_id, dim="gpu_s", amount=round(used_s, 3))
+                conn.execute("RELEASE SAVEPOINT lx_train_meter")
+        except Exception as e:  # noqa: BLE001 — 계량 실패가 학습 결과 기록을 막지 않게
+            try:
+                conn.execute("ROLLBACK TO SAVEPOINT lx_train_meter")
+            except Exception:  # noqa: BLE001
+                pass
+            log(WHO, "train meter error", repr(e))
         conn.commit()
     ops_event("job.state", {"job_id": job_id, "tenant_id": jh.get("tenant_id"), "state": st, "pool": POOL, "at": now})
     bus.lane(WID, {"job_id": job_id, "from": None, "to": now, "state": st, "tenant_id": jh.get("tenant_id")})

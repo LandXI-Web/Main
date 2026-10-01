@@ -137,17 +137,17 @@ async def files_public(name: str):
 
 
 async def require_cog_scope(p, iid: str):
-    """동적 타일 서명 — 기관 manager·viewer 는 관할 시군구(regions.tenant_scope)에 소유 시군구가 있는 영상만. 그 밖은 403."""
+    """동적 타일 서명(기관) — LX 관리자가 이 기관에 공유한 영상(imagery_shares)이고, 그 영상이 이 기관 관할 안(소유 시군구 · 범위 — 공유할 때와 같은 판정)일 때만.
+    공유 안 된 영상 · 다른 기관 · 관할 밖은 403(10-01 사용자 결정 '공유하면 그 기관 지도에도'). 영업 계량 기관(lx-demo)은 없음."""
     require(p)
-    if p.realm != "tenant" or not p.tenant_id:
-        raise ApiError("forbidden", "원본 동적 타일은 LX 세션 또는 관할 기관만", {"imagery_id": iid})
-    from .regions import in_scope, region_of, tenant_scope
+    if p.realm != "tenant" or not p.tenant_id or p.tenant_id == "lx-demo":
+        raise ApiError("forbidden", "원본 동적 타일은 LX 세션 또는 공유받은 기관만", {"imagery_id": iid})
+    from .catalog import _share_candidates, shared_ids
+    if iid not in await shared_ids(p.tenant_id):
+        raise ApiError("forbidden", "이 기관에 공유된 영상이 아닙니다", {"imagery_id": iid})
     async with db(realm="lx") as conn:
-        sgg = await conn.fetchval("SELECT sgg_cd FROM imagery WHERE id=$1 AND tier='raw'", iid)
-    sc = tenant_scope(p.tenant_id)
-    r = region_of(sgg) if sgg else None
-    codes = [c for c in ((r or {}).get("sgg_cd"), (r or {}).get("prev_cd"), sgg) if c]
-    if not codes or not any(in_scope(str(c), sc) for c in codes):
+        r = await conn.fetchrow("SELECT id, sgg_cd, ST_AsGeoJSON(footprint)::json AS fp FROM imagery WHERE id=$1 AND tier='raw'", iid)
+    if not r or not await run_in_threadpool(_share_candidates, p.tenant_id, [r]):
         raise ApiError("forbidden", "관할 밖 영상", {"imagery_id": iid})
 
 
@@ -157,9 +157,8 @@ async def tiles_sign(set: str, request: Request):
     set_id = set
     canon = canonical_set(set_id)
     t = set_tenant(set_id)
-    from .catalog import TENANT_RAW_IMAGERY
-    if set_id.startswith("cog/") and not p.is_lx and TENANT_RAW_IMAGERY:
-        await require_cog_scope(p, set_id[4:])      # 기관 = 관할 시군구의 등록 영상만(설정으로 켰을 때만 · 기본 LX 전용)
+    if set_id.startswith("cog/") and not p.is_lx:
+        await require_cog_scope(p, set_id[4:])      # 기관 = 이 기관에 공유된 · 관할 안 영상만(10-01 사용자 결정)
     elif set_id.startswith("cog/") or lx_only_set(set_id):
         require(p, lx=True)
     elif t and t != "lx" and not p.is_lx and p.tenant_id != t:

@@ -39,7 +39,7 @@ async function events(url, { from = null, until = [], onEvent = null, timeoutMs 
 
 test('워커 kill → 게이트웨이 재기동 → job.recovered resumed → 완료 counts 동일', async ({ request }) => {
   test.setTimeout(420000);
-  const tok = (await (await request.post(API + '/api/v1/auth/login', { data: { realm: 'lx', login: 'lx-staff', password: PW } })).json()).token;
+  const tok = (await (await request.post(API + '/api/v1/auth/login', { data: { realm: 'lx', login: 'test@lx.or.kr', password: PW } })).json()).token;
   const h = { authorization: 'Bearer ' + tok };
   // 기준: 무중단 실행 counts(같은 AOI · 같은 모델 — 직전 완료 작업이 있으면 그 값, 없으면 새로 한 번)
   const prev = (await (await request.get(API + '/api/v1/jobs?state=done&limit=200', { headers: h })).json()).items

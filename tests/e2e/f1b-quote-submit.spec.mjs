@@ -12,7 +12,7 @@ const isEnv = (e) => e && typeof e === 'object' && 'value' in e && 'basis' in e 
 
 test('견적(면적 · shard · GPU·s 추정=bench) → 제출 → done → 스냅샷 206', async ({ request }) => {
   test.setTimeout(240000);
-  const tok = (await (await request.post(API + '/api/v1/auth/login', { data: { realm: 'lx', login: 'lx-staff', password: PW } })).json()).token;
+  const tok = (await (await request.post(API + '/api/v1/auth/login', { data: { realm: 'lx', login: 'test@lx.or.kr', password: PW } })).json()).token;
   const h = { authorization: 'Bearer ' + tok };
   const q = await (await request.post(API + '/api/v1/jobs/quote', { headers: h, data: BODY })).json();
   expect(isEnv(q.area_km2)).toBeTruthy(); expect(q.area_km2.basis).toBe('measured');
@@ -50,7 +50,7 @@ async function firstShardMs(url, t0) {
 }
 test('동시 3건(같은 기관 P0) — 각 첫 shard.done ≤ 8 s · 첫 묶음 선점', async ({ request }) => {
   test.setTimeout(240000);
-  const tok = (await (await request.post(API + '/api/v1/auth/login', { data: { realm: 'lx', login: 'lx-staff', password: PW } })).json()).token;
+  const tok = (await (await request.post(API + '/api/v1/auth/login', { data: { realm: 'lx', login: 'test@lx.or.kr', password: PW } })).json()).token;
   const h = { authorization: 'Bearer ' + tok };
   const t0 = Date.now();
   const ids = await Promise.all(SMALL.map(async (aoi) => (await (await request.post(API + '/api/v1/jobs', { headers: h, data: { ...BODY, aoi, label: 'e2e 동시 3건' } })).json()).job.id));

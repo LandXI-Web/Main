@@ -9,6 +9,7 @@ import { shell, gate, createStage, toast, empty, devDrawer, devlog, FRONT } from
 import { api, esc, h, session, LS } from '../kit/util.js';
 import { sse } from '../../shared/api-v1.js';
 import { uploadQueue } from '../kit/dropzone.js';
+import { govRail } from '../gov-select/menu.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const STATE_LV = { pending: 'wait', approved: 'wait', analyzing: '', done: '', rejected: 'warn', failed: 'warn' };
@@ -21,7 +22,9 @@ const km2 = (e) => { const v = e?.value; return v == null ? '' : v < 0.01 ? '0.0
 const who = await gate('gov-request');
 if (who.me?.realm !== 'tenant') { location.replace(who.landing || FRONT); await new Promise(() => {}); }
 const org = (who.org || who.name || '').replace(/\s*담당자$/, '').split(/\s+/).pop() || '기관';
-const app = shell({ who: { ...who, org }, home: 'gov-request', title: org });
+/* 기관 메뉴(내 서비스 · 분석 의뢰 · 내가 보낸 요청 · 기관 관리자는 기관 정보 · 계정) — 국내 기관 화면과 같은 메뉴(gov-select/menu.js) */
+const rail = who.key === 'tenant/local' ? govRail({ who, current: 'request', service: new URLSearchParams(location.search).get('service') }) : null;
+const app = shell({ who: { ...who, org }, home: 'gov-request', title: org, rail });
 app.main.append($('#tpl').content.cloneNode(true));
 document.body.classList.remove('gq-boot');
 document.title = `${org} · 분석 의뢰 · Land-XI`;

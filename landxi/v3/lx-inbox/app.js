@@ -18,10 +18,11 @@ const RAIL = admin
     { id: 'tenants', label: '기관', icon: 'org', href: '/landxi/v3/ops-infra/?view=tenants' },
     { id: 'deploys', label: '배포', icon: 'deploy', href: '/landxi/v3/ops-infra/?view=deploys' },
     { id: 'approvals', label: '결재', icon: 'inbox', href: '/landxi/v3/ops-core/#/approvals' },
-    { id: 'reviews', label: '검토 요청', icon: 'list' }]
+    { id: 'reviews', label: '검토 요청', icon: 'list' },
+    { id: 'accounts', label: '계정 관리', icon: 'check', href: '/landxi/v3/ops-accounts/' }]   // 가입 신청 · 재설정 · 계정(구현 2차 T5 · 정리 — 메뉴로 잇기)
   : [{ id: 'home', label: '대시보드', icon: 'home', href: '/landxi/v3/lx-console/' },
     { id: 'reviews', label: '검토 요청', icon: 'list' }];
-const S = shell({ who, home: 'lx-inbox', title: admin ? 'LX 관리자 대시보드' : 'LX 직원 대시보드', rail: { kind: 'menu', items: RAIL, current: RAIL.length - 1 } });
+const S = shell({ who, home: 'lx-inbox', title: admin ? 'LX 관리자 대시보드' : 'LX 직원 대시보드', rail: { kind: 'menu', items: RAIL, current: RAIL.findIndex((r) => r.id === 'reviews') } });
 devDrawer({ who });
 
 const st = { box: 'todo', items: [], counts: null, sel: new URLSearchParams(location.search).get('id'), cur: null, stage: null, verdict: null };

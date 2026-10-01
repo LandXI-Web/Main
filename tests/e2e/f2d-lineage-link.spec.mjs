@@ -34,8 +34,8 @@ test.describe('F2-D ops lineage link', () => {
   test('on — ?job=<완료 index 작업> → 결과 절 열림 · 분포(서버) · Ops lineage → 관제 infra.html?job= 행 초점 · XI map 링크에 ?job= 0', async ({ page, context }) => {
     test.skip(!(await gateway()) || !pw(), '게이트웨이 :8700 · DEV_PASSWORD 필요');
     const errs = watch(page);
-    const staff = await login({ realm: 'lx', login: 'lx-staff', password: pw() });
-    const admin = await login({ realm: 'lx', login: 'lx-admin', password: pw() });
+    const staff = await login({ realm: 'lx', login: 'test@lx.or.kr', password: pw() });
+    const admin = await login({ realm: 'lx', login: 'lxadmin@lx.or.kr', password: pw() });
     const list = await (await fetch(GW + '/api/v1/jobs?limit=200', { headers: { authorization: 'Bearer ' + admin.token } })).json();
     const job = (list.items || []).find((j) => j.kind === 'index' && j.state === 'done' && j.deploy_id === 'dp-kgz-agri-farm-26');
     test.skip(!job, '완료된 index 작업 없음');

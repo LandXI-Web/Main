@@ -25,6 +25,11 @@
 .k-bell-t time{flex:none;font:400 13px/1 var(--font-num);color:var(--sub)}
 .k-bell-l{font:400 var(--fs-label)/20px var(--font-body);color:var(--sub-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .k-bell-none{margin:4px 0}
+/* 다른 할 일(분석 의뢰 · 가입 신청 · 재설정 요청) — 대화 목록 위 한 묶음 · 숫자는 오른쪽 */
+.k-bell-list--x{margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+a.k-bell-i,div.k-bell-i{box-sizing:border-box;color:inherit;text-decoration:none}   /* 버튼과 같은 폭(채움 포함) */
+div.k-bell-i--x{cursor:default}
+.k-bell-t b.k-bell-x{flex:none;font:700 15px/22px var(--font-num);color:var(--ink)}
 .k-bell-all{align-self:flex-start;margin:12px 4px 2px}
 
 /* ── 검토 요청(기관 필지 카드 안) ───────────── */
