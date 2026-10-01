@@ -125,6 +125,7 @@ for m in (auth, catalog, jobs, events, results, parcels, feedback, registry, dep
           regions, public, ledger, approvals, summary):   # F3 최종 명세 §3 S-1…S-9 · summary(fix-server-summary)
     app.include_router(m.router, prefix=API)
 app.include_router(tiles.router)
+app.include_router(importlib.import_module("landxi_api.brand").router)   # 기관 분기 브랜드(구현 2차 T3) — /api/v1/brand/* · /files/brand/*
 app.include_router(importlib.import_module("landxi_api.accounts").router, prefix=API)   # 구현 2차 T5 계정 — 가입 신청 · 아이디/비밀번호 찾기 · 승인
 app.include_router(importlib.import_module("landxi_api.messages").router, prefix=API)   # 검토 요청 · 메시지 · 알림(구현 2차 · 확인 대장 GF-6 · 알림-1)
 app.include_router(importlib.import_module("landxi_api.projects").router, prefix=API)   # 프로젝트 — LX 직원의 일 단위(구현 2차 T1 · 확인 대장 R-D3 · 흐름-1)

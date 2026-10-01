@@ -19,6 +19,7 @@ const DEV_HOST = /^(localhost|127\.0\.0\.1|\[::1\])$/i;
 export function siteHere(loc = location) {
   const host = String(loc.hostname || '').toLowerCase();
   for (const [k, v] of Object.entries(SITES)) if (v.host === host) return k;
+  if (orgOfHost(host)) return 'gov';                                  // 기관 주소({기관}.land-xi.dev · 자체 도메인) = 기관 입구
   if (DEV_HOST.test(host)) { const q = new URLSearchParams(loc.search).get('site'); if (q && Object.prototype.hasOwnProperty.call(SITES, q)) return q; }
   return null;
 }
@@ -36,18 +37,57 @@ export const ALLOW = {
   'xi-clean': ['lx/staff', 'lx/admin', 'lx/sales', 'tenant/demo', 'tenant/local'],
   'gov-fusion': ['tenant/local'],
   'gov-report': ['tenant/local'],
+  'gov-select': ['tenant/local'],   // 서비스 선택 · 서비스 대시보드 · 기관 정보(구현 2차 T3)
+  'gov-home': null,                 // 기관 메인(로그인 전 · 그 기관 모습의 로그인) — 관문 없음
   global: ['tenant/global', 'lx/staff', 'lx/admin', 'lx/sales'],
   'help-my': ['lx/staff', 'lx/admin', 'lx/sales', 'tenant/demo', 'tenant/local', 'tenant/global'],
   'service-detail': null,   // 공용(게스트 포함) — 관문 없음
   main: null,
   login: null,
 };
-export const LANDING = { 'lx/staff': 'lx-console', 'lx/admin': 'ops-core', 'lx/sales': 'sales', 'tenant/demo': 'sales', 'tenant/local': 'gov-fusion', 'tenant/global': 'global' };
+/* 국내 기관 → 서비스 선택(구현 2차 T3 · 체계-2 ⓑ · GF-1 — 기관 메인 → 로그인 → 서비스 선택 → 서비스 대시보드 → 서비스별 기능).
+   서비스가 하나뿐인 기관은 서비스 선택이 그 서비스 대시보드로 바로 넘긴다(모든 기관이 같은 틀 — 사용자 구현 확인 I-4). */
+export const LANDING = { 'lx/staff': 'lx-console', 'lx/admin': 'ops-core', 'lx/sales': 'sales', 'tenant/demo': 'sales', 'tenant/local': 'gov-select', 'tenant/global': 'global' };
 /** 입구별 첫 화면(확인 대장 7 — lxadmin 한 계정으로 세 입구) — 같은 계정이라도 들어온 입구가 첫 화면을 정한다. 표에 없으면 LANDING.
     app 에서 관리자 계정 → LX 직원 대시보드 · admin → LX 관리자 대시보드(LANDING) · gov → 고른 기관의 화면(기관 세션 · LANDING) */
 export const LANDING_AT = { app: { 'lx/admin': 'lx-console' } };
 
 export const homeFromPath = (p = location.pathname) => (new RegExp('^' + V3 + '([^/]+)/').exec(p) || [])[1] || null;
+
+/* ── 기관 주소(구현 2차 T3 · 사용자 구현 확인 I-1 "Land-XI 로그인은 LX 직원만 이용하는 창구" · 7차 결정 기관-주소 ⓒ) ──
+   기관 사용자는 Land-XI 로그인으로 들어오지 않는다 — 자기 기관 주소({기관}.land-xi.dev)의 로그인으로 들어오고, 끝난 세션 · 나가기도 거기로 돌아간다.
+   주소 규칙은 sites.js 한 곳(gov.orgHost · gov.orgDomains). 이 PC 에서는 같은 화면을 /landxi/v3/gov-home/?org= 로 연다. id 가 없으면 기관 고르기 목록. */
+const ORG_ID = /^[a-z0-9][a-z0-9-]{1,40}$/;
+const ORG_HOST = new RegExp('^' + String(SITES.gov.orgHost || '').replace(/[.]/g, '\.').replace('{org}', '([a-z0-9][a-z0-9-]{1,40})') + '$', 'i');
+/** 주소 이름 → 기관 id(자체 도메인 → 기관 주소 규칙) · 입구 셋 · 예약 이름은 null */
+export function orgOfHost(host = typeof location === 'undefined' ? '' : location.hostname) {
+  const hn = String(host || '').toLowerCase().replace(/\.$/, '');
+  for (const [id, d] of Object.entries(SITES.gov.orgDomains || {})) if (String(d).toLowerCase() === hn) return id;
+  const m = ORG_HOST.exec(hn);
+  return m && !(SITES.gov.reserved || []).includes(m[1]) ? m[1] : null;
+}
+const PUBLIC_HOST = /\.land-xi\.dev$/i;
+const onPublic = () => PUBLIC_HOST.test(location.hostname) || !!orgOfHost();
+/** 그 기관 메인 주소 — 바깥 주소에서는 기관 주소(https://{기관}.land-xi.dev/ · 자체 도메인), 이 PC 에서는 같은 화면(?org=) */
+export function orgUrl(id) {
+  if (!ORG_ID.test(id || '')) return orgHome(null);
+  if (orgOfHost() === id) return '/';
+  if (onPublic()) return 'https://' + (SITES.gov.orgDomains?.[id] || SITES.gov.orgHost.replace('{org}', id)) + '/';
+  return V3 + 'gov-home/?' + new URLSearchParams({ org: id, ...(DEV_HOST.test(location.hostname) ? { site: 'gov' } : {}) });
+}
+export function orgHome(id, { next } = {}) {
+  let url;
+  if (ORG_ID.test(id || '')) url = orgUrl(id);
+  else url = onPublic() ? 'https://' + SITES.gov.host + '/' : V3 + 'gov-home/' + (DEV_HOST.test(location.hostname) ? '?site=gov' : '');
+  if (next && url.startsWith('/')) url += (url.includes('?') ? '&' : '?') + new URLSearchParams({ next });   // 되돌아갈 화면은 같은 주소일 때만
+  return url;
+}
+/** 마지막으로 들어온 기관 — 끝난 세션(만료)도 기관 id 는 남아 있다 · 없으면 로그인 때 고른 기관 */
+function lastOrg() {
+  try { const s = JSON.parse(localStorage.getItem('lx_api_session') || 'null'); if (s?.realm === 'tenant' && s.tenant_id) return s.tenant_id; } catch { /* */ }
+  try { return localStorage.getItem('lx_login_org') || null; } catch { return null; }
+}
+const govPage = (home) => /^gov-/.test(home || '') || siteHere() === 'gov';
 
 /** 세션·/me·기관 → 허용표 키 */
 export function keyOf(me, tenant) {
@@ -100,19 +140,24 @@ export async function gate(home = homeFromPath()) {
   const who = await whoami();
   const here = location.pathname + location.search;
   if (!who) {
-    location.replace(FRONT + '?next=' + encodeURIComponent(here));
+    if (govPage(home)) location.replace(orgHome(lastOrg(), { next: here }));   // 기관 화면 — 그 기관 메인의 로그인으로(Land-XI 로그인 아님)
+    else location.replace(FRONT + '?next=' + encodeURIComponent(here));
     return new Promise(() => {});
   }
   if (!allowed(home, who.key)) {
     location.replace(FRONT + '?denied=' + encodeURIComponent(home || ''));
     return new Promise(() => {});
   }
+  /* 기관 세션 화면의 머리 = 기관 마크 · 이름(구현 2차 T3 · 모든 기관 화면이 같은 틀) — 서비스 선택은 스스로 그린다 */
+  if (who.key === 'tenant/local' && home !== 'gov-select') import('../gov-select/brand.js').then((m) => m.brandMast(who.me.tenant_id)).catch(() => {});
   return { ...who, home };
 }
 
 /** 나가기 — 서버 세션 삭제 후 정문 */
 export async function logout() {
+  const s = session.get();
+  const org = s?.realm === 'tenant' ? s.tenant_id : null;
   try { await api('/auth/logout', { method: 'POST' }); } catch { /* 만료여도 지운다 */ }
   session.clear(); WHO = null;
-  location.replace(FRONT);
+  location.replace(org ? orgHome(org) : FRONT);   // 기관 세션 = 그 기관 메인으로
 }

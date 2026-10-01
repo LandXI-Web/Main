@@ -4,6 +4,7 @@
 import { drawer, toast, esc, nf, api, h } from './kit.js';
 import { S, DIM, RING_DIMS, POLICY, STATE_KO, dimState, orgs, loadUsage, llmUsage } from './data.js';
 import { D as AP, loadPending } from '../../ops-core/js/data.js';
+import { openBrand } from './brand.js';   // 기관 서랍 · 기관 정보(구현 2차 T3)
 /** 이 기관의 한도 변경 결재가 대기 중인가(결재 표 한 출처 — 레일 배지와 같은 목록) */
 const quotaPending = (id) => (AP.srvApprovals || []).some((a) => a.kind === 'quota' && (a.subject?.id || a.subject_id) === id && (a.state || 'pending') === 'pending');
 /** 새 작업을 받지 않는 항목(하드 한도를 넘음) — 서버 판정과 같은 항목(분석: GPU 시간 · 분석 면적 · 저장 / AI 도우미) */
@@ -109,7 +110,7 @@ export function mountTenants(root) {
         <header><h2>${esc(o.name)}</h2><span class="t-chip" data-lv="${o.state === 'over' ? 'warn' : o.state === 'ok' ? 'wait' : ''}" data-st="${o.state}">${STATE_KO[o.state]}</span></header>
         <div class="rings">${RING_DIMS.map((k) => ring(k, o.dims[k])).join('')}</div>
         ${bl.length ? `<p class="org-stop" data-stop="1">${esc(bl.join(' · '))} 한도를 넘어 새 작업을 받지 않습니다</p>` : ''}
-        <button class="t-btn t-btn--2 adj" type="button"${pend ? ' data-pend="1"' : ''}>${pend ? '한도 변경 결재 대기' : '한도 조정'}</button>
+        <div class="org-acts"><button class="t-btn t-btn--2 adj" type="button"${pend ? ' data-pend="1"' : ''}>${pend ? '한도 변경 결재 대기' : '한도 조정'}</button><button class="t-btn t-btn--2 brand-b" type="button">기관 정보</button></div>
       </section>`;
     }).join('');
     requestAnimationFrame(() => requestAnimationFrame(() => grid.querySelectorAll('.fg').forEach((c) => c.setAttribute('stroke-dashoffset', c.dataset.off))));
@@ -117,7 +118,9 @@ export function mountTenants(root) {
   }
   grid.addEventListener('click', (e) => {
     const card = e.target.closest('.org'); if (!card) return;
-    const o = orgs().find((x) => x.id === card.dataset.id); if (o) sheet(o, paint);
+    const o = orgs().find((x) => x.id === card.dataset.id); if (!o) return;
+    if (e.target.closest('.brand-b')) return openBrand(o);   // 마크 · 이름 · 색 · 소개 글(기관 관리자와 같은 칸)
+    sheet(o, paint);
   });
   return { paint, open(id) { const o = orgs().find((x) => x.id === id); if (o) sheet(o, paint); } };
 }

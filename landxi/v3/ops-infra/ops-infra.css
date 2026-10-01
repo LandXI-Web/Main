@@ -290,3 +290,7 @@
 /* 기관 카드 — 한도를 넘어 새 작업을 받지 않는 기관 한 줄 · 결재 대기 중인 한도 조정(impl-1) */
 .org-stop{margin:0;font:500 var(--fs-label)/20px var(--font-body);color:var(--warn)}
 .org .adj[data-pend]{color:var(--sub)}
+/* 기관 카드 버튼 줄 · 기관 정보 서랍(구현 2차 T3) */
+.org-acts{display:flex;gap:8px;flex-wrap:wrap;align-self:flex-start}
+.org-acts .adj{align-self:auto}
+.brand-dr .k-dr-b{padding-bottom:32px}

@@ -1,0 +1,76 @@
+/* 기관 브랜드 한 벌(구현 2차 T3) — 마크 · 서비스 얼굴 판 · 기관 정보 고치기 서식. 토큰은 kit.css(법전 v2.2) 그대로.
+   기관색 변수: --ci(진한) · --ci-t1(연한 바탕) · --ci-line(판 위 선) — gov-select/brand.js applyBrand 가 넣는다. 없으면 법전 값. */
+
+/* ── 마크 — 두 줄 글자(기관색) 또는 그림 ─────────────── */
+.gb-mark{display:inline-flex;flex-direction:column;justify-content:center;flex:none;font:800 13px/1.02 var(--font-display);letter-spacing:.02em;color:var(--ci,var(--ink));white-space:nowrap}
+.gb-mark span{display:block}
+.gb-mark[data-lines="1"]{font-size:16px}
+.gb-mark[data-size="lg"]{font-size:18px}
+.gb-mark[data-size="lg"][data-lines="1"]{font-size:22px}
+.gb-mark[data-size="xl"]{font-size:26px}
+.gb-mark[data-size="xl"][data-lines="1"]{font-size:30px}
+.gb-mark[data-long="1"]{font-size:11px}
+.gb-mark[data-long="1"][data-size="lg"]{font-size:14px}
+.gb-mark[data-long="1"][data-size="xl"]{font-size:20px}
+.gb-mark--img img{display:block;height:32px;width:auto;max-width:96px;object-fit:contain}
+.gb-mark--img[data-size="lg"] img{height:40px;max-width:120px}
+.gb-mark--img[data-size="xl"] img{height:56px;max-width:160px}
+
+/* 로그인 뒤 머리(셸 마스트) — 기관 마크 + 플랫폼 이름 */
+.k-mast .k-word[data-brand]{gap:10px}
+.k-mast .gb-plat{font:700 16px/1 var(--font-display);letter-spacing:-.01em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40vw}
+@media (max-width:640px){.k-mast .gb-plat{display:none}}
+
+/* ── 서비스 얼굴 판 — 연한 바탕 · 선 · 찾아낸 것(진한 색) ─ */
+.gb-face{--t1:var(--ci-t1,var(--bg-0));--line:var(--ci-line,var(--rule));--accent:var(--ci,var(--ink));background:var(--t1);overflow:hidden}
+.gb-face svg{display:block;width:100%;height:100%}
+
+/* ── 기관 정보 고치기(기관 관리자 · LX 관리자 같은 칸) ── */
+.bf{container-type:inline-size;display:block}
+.bf :where(input,select,textarea,button,a.t-btn){box-sizing:border-box}
+.bf-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;align-items:start}
+@container (min-width:880px){ .bf-grid{grid-template-columns:minmax(0,1fr) 400px} .bf-pv{position:sticky;top:0;order:2} }
+.bf-fields{display:flex;flex-direction:column;gap:16px;min-width:0}
+.bf-sec{background:var(--bg-1);border-radius:var(--r-16);padding:24px;display:flex;flex-direction:column;gap:14px}
+.bf-drawer .bf-sec{padding:0 0 20px;border-radius:0;border-bottom:1px solid var(--rule)}
+.bf-sec > h3{margin:0;font:700 20px/28px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.bf-row{display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:center}
+.bf-drawer .bf-row{grid-template-columns:minmax(0,1fr);gap:6px}
+.bf-row > .t-label{align-self:start;padding-top:12px}
+.bf-drawer .bf-row > .t-label{padding-top:0}
+.bf-row textarea.t-input{height:auto;min-height:72px;padding:10px 14px;line-height:26px;resize:vertical}
+.bf-hint{margin:0;font:400 13px/18px var(--font-body);color:var(--sub)}
+.bf-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.bf-mark{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.bf-mark .bf-mark-box{width:88px;height:64px;border-radius:var(--r-8);background:var(--bg-0);display:flex;align-items:center;justify-content:center;flex:none}
+.bf-mark .t-btn{height:40px}
+.bf-color{display:flex;align-items:center;gap:8px}
+.bf-color input[type=color]{width:44px;height:44px;padding:4px;border:1px solid var(--rule);border-radius:var(--r-8);background:var(--bg-1);cursor:pointer;flex:none}
+.bf-color .t-input{max-width:140px;font-family:var(--font-num);text-transform:uppercase}
+.bf-check{margin:0;font:500 14px/20px var(--font-body);color:var(--ink)}
+.bf-check::before{content:"✓ ";color:var(--ai)}
+.bf-check[data-bad="1"]{color:var(--warn)}
+.bf-check[data-bad="1"]::before{content:""}
+.bf-item{display:grid;grid-template-columns:minmax(0,200px) minmax(0,1fr);gap:12px;align-items:center}
+.bf-drawer .bf-item{grid-template-columns:minmax(0,1fr);gap:6px}
+.bf-item .nm{font:500 14px/20px var(--font-body);color:var(--ink-2)}
+.bf .is-bad{border-color:var(--warn)}
+.bf-act{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.bf-act .t-btn{min-width:120px}
+.bf-err{margin:0;font:500 14px/20px var(--font-body);color:var(--warn)}
+.bf-err:empty{display:none}
+.bf-ok{margin:0;font:500 14px/20px var(--font-body);color:var(--sub)}
+
+/* 미리 보기 — 메인 머리 한 장(바꾼 값이 바로 보인다) */
+.bf-pv{background:var(--bg-1);border-radius:var(--r-16);overflow:hidden}
+.bf-drawer .bf-pv{border:1px solid var(--rule)}
+.bf-pv-top{display:flex;align-items:center;gap:10px;height:52px;padding:0 16px;border-bottom:1px solid var(--rule);font:700 14px/1 var(--font-display);color:var(--ink);white-space:nowrap;overflow:hidden}
+.bf-pv-top span.pl{overflow:hidden;text-overflow:ellipsis}
+.bf-pv-body{padding:20px 16px 18px;display:flex;flex-direction:column;gap:10px}
+.bf-pv-body .t-label{margin:0}
+.bf-pv-h{margin:0;font:700 22px/30px var(--font-display);letter-spacing:-.02em;color:var(--ink);text-wrap:balance}
+.bf-pv-h b{color:var(--ci,var(--ink));font-weight:700}
+.bf-pv-l{margin:0;font:400 14px/22px var(--font-body);color:var(--sub-2)}
+.bf-pv-l span{display:block}
+.bf-pv .gb-face{height:120px}
+.bf-pv-cap{margin:0;padding:10px 16px 14px;font:500 13px/18px var(--font-body);color:var(--sub)}

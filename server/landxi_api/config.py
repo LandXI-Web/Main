@@ -51,10 +51,25 @@ NODE_ID = get("LX_NODE_ID", "node-tr3995wx")
 POOL = get("LX_POOL", "a6000")
 VRAM_RESERVE_MIB = int(get("LX_VRAM_RESERVE_MIB", "2048"))
 APPROVALS_REQUIRED = int(get("APPROVALS_REQUIRED", "1"))
-# 바깥 주소(Cloudflare 터널 → tools/public-gate.mjs) — 이 이름으로 들어온 요청은 https 기준 주소로 서명한다
-PUBLIC_HOSTS = [h.strip().lower() for h in (get("LX_PUBLIC_HOSTS", "app.land-xi.dev,admin.land-xi.dev,gov.land-xi.dev") or "").split(",") if h.strip()]
+class _Hosts(list):
+    """바깥 주소 이름 목록 — 이름 그대로 또는 규칙('*.land-xi.dev' = 한 단계 아래 이름 하나)."""
+
+    def __contains__(self, host) -> bool:
+        h = str(host or "").lower().rstrip(".")
+        for p in self:
+            if p.startswith("*."):
+                if h.endswith(p[1:]) and "." not in h[: -len(p) + 1] and len(h) > len(p) - 1:
+                    return True
+            elif h == p:
+                return True
+        return False
+
+
+# 바깥 주소(Cloudflare 터널 → tools/public-gate.mjs) — 이 이름으로 들어온 요청은 https 기준 주소로 서명한다.
+# 입구 셋 + 기관 주소 규칙(구현 2차 T3 · 7차 결정 기관-주소 ⓒ — {기관}.land-xi.dev). 요청 기관의 자체 도메인은 이름을 더한다(설정 한 곳 · server/.env LX_PUBLIC_HOSTS).
+PUBLIC_HOSTS = _Hosts(h.strip().lower() for h in (get("LX_PUBLIC_HOSTS", "app.land-xi.dev,admin.land-xi.dev,gov.land-xi.dev,*.land-xi.dev") or "").split(",") if h.strip())
 CORS_ORIGINS = ["http://localhost:4173", "http://localhost:8702", "http://127.0.0.1:4173", "http://127.0.0.1:8702",
-                "https://landxi-web.github.io"] + [f"https://{h}" for h in PUBLIC_HOSTS]
+                "https://landxi-web.github.io"] + [f"https://{h}" for h in PUBLIC_HOSTS if not h.startswith("*.")]   # 기관 주소는 같은 출처(관문이 /api 를 넘긴다)
 OPS_ORIGIN = "http://localhost:8702"
 VERSION = "0.1.0"
 CONFIG_DIR = SERVER_ROOT / "config"

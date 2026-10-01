@@ -1,0 +1,102 @@
+/* 서비스 선택 · 서비스 대시보드 · 기관 정보(구현 2차 T3) — 앱 셸(마스트 64 · 레일 72) 안 한 판, 세로 스크롤은 판 안에서만(법전 §3).
+   모든 기관 같은 틀(사용자 구현 확인 I-4). 기관색(--ci)은 마크 · 현재 위치(탭 밑줄 · 레일) · 서비스 얼굴 판에만. */
+.gs .k-word .gs-plat{font:700 16px/1 var(--font-display);letter-spacing:-.01em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40vw}
+.gs-page :where(input,select,textarea,button,a.t-btn){box-sizing:border-box}
+.gs-scroll{position:absolute;inset:0;overflow:auto;overscroll-behavior:contain}
+.gs-page{max-width:var(--content-max);margin:0 auto;padding:32px 48px 0;box-sizing:border-box;min-height:100%;display:flex;flex-direction:column;gap:24px}
+
+/* 머리 */
+.gs-head{display:flex;align-items:flex-end;gap:16px 24px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid var(--rule)}
+.gs-head--flat{border-bottom:0;padding-bottom:0}
+.gs-head-t{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1 1 420px}
+.gs-head h1{margin:0;font:700 40px/50px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.gs-sub{margin:0;font:400 16px/24px var(--font-body);color:var(--sub)}
+.gs-head-r{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.gs-date{font:500 14px/20px var(--font-num);color:var(--sub);white-space:nowrap;padding-bottom:4px}
+.gs-crumb{align-self:flex-start;font:500 14px/20px var(--font-body);color:var(--sub);display:inline-flex;align-items:center;gap:6px}
+.gs-crumb::before{content:"";width:7px;height:7px;border-left:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg);margin-left:2px}
+.gs-crumb:hover{color:var(--ink)}
+.gs-reg{display:flex;flex-direction:column;gap:4px;min-width:200px}
+.gs-reg .t-input{height:40px}
+
+/* 서비스 안 탭 — 현재 위치 = 기관색 밑줄 */
+.gs-tabs{display:flex;gap:28px;border-bottom:1px solid var(--rule);overflow-x:auto;scrollbar-width:none;margin-top:-8px}
+.gs-tab{padding:14px 2px;font:500 16px/1 var(--font-body);color:var(--sub);white-space:nowrap;transition:color var(--d-180) var(--e-ui)}
+.gs-tab:hover{color:var(--ink)}
+.gs-tab[aria-current]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--ci,var(--accent))}
+
+/* 서비스 선택 — 카드 격자 */
+.gs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px}
+.gs-card{background:var(--bg-1);border-radius:var(--r-16);overflow:hidden;display:flex;flex-direction:column;transition:transform var(--d-380) var(--e-ui),box-shadow var(--d-380) var(--e-ui)}
+a.gs-card:hover{transform:translateY(-4px);box-shadow:var(--elev-map)}
+.gs-card-face{aspect-ratio:16/9}
+.gs-card-b{padding:18px 24px 24px;display:flex;flex-direction:column;gap:8px;flex:1}
+.gs-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;font:500 14px/20px var(--font-body);color:var(--sub)}
+.gs-card-t{margin:2px 0 0;font:700 24px/32px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.gs-card-d{margin:0;font:400 14px/21px var(--font-body);color:var(--sub-2)}
+.gs-card-n{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:auto;padding-top:14px;border-top:1px solid var(--rule)}
+.gs-card-go{margin-top:6px;font:500 14px/20px var(--font-body);color:var(--ink)}
+.gs-card-go::after{content:" →"}
+.gs-card-n + .gs-card-go{margin-top:2px}
+.gs-card.is-off .gs-card-face{opacity:.55}
+.gs-card.is-off .gs-card-t{color:var(--ink-2)}
+
+/* 서비스 대시보드 */
+.gs-dash{display:grid;grid-template-columns:minmax(0,1fr) 392px;gap:24px;align-items:start}
+.gs-main,.gs-side{display:flex;flex-direction:column;gap:24px;min-width:0}
+.gs-bigc{padding:28px}
+.gs-bigc .t-empty{min-height:160px}
+.gs-kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin:24px 0 0;padding-top:20px;border-top:1px solid var(--rule)}
+.gs-kv dt{font:500 14px/20px var(--font-body);color:var(--sub)}
+.gs-kv dd{margin:6px 0 0}
+.gs-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:24px}
+.gs-note{margin:16px 0 0;font:500 14px/20px var(--font-body);color:var(--sub)}
+.gs-box h2{margin:0;font:700 22px/30px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.gs-box-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:6px}
+.gs-cnt{display:inline-flex;align-items:baseline;gap:8px;font:500 14px/20px var(--font-body);color:var(--sub)}
+.gs-cnt .k-num{font-size:20px}
+.gs-rows{list-style:none;margin:0;padding:0}
+.gs-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--rule);font:400 15px/22px var(--font-body);color:var(--ink);min-width:0}
+.gs-row > span:first-child{font-weight:500;flex:none;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gs-row .s{color:var(--sub);font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gs-row .t-chip,.gs-row .r{margin-left:auto;flex:none}
+a.gs-row{transition:background var(--d-180) var(--e-ui)}
+a.gs-row:hover{background:var(--bg-0)}
+.gs-row--2{align-items:center}
+.gs-row-t{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.gs-row-t b{font-weight:500;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gs-row-t .s{white-space:normal}
+.gs-link{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.gs-none{margin:10px 0 0;font:400 15px/22px var(--font-body);color:var(--sub)}
+.gs-more{margin-top:14px}
+
+/* 바닥 */
+.gs-foot{margin-top:auto;display:flex;align-items:center;gap:24px;flex-wrap:wrap;padding:20px 0 24px;border-top:1px solid var(--rule);font:400 13px/18px var(--font-body);color:var(--sub)}
+.gs-foot b{font-weight:500;color:var(--ink-2)}
+.gs-foot .sp{flex:1}
+.gs-page > .gs-foot{margin-top:auto}
+.gs-page > :nth-last-child(2){margin-bottom:24px}
+
+@media (max-width:1200px){
+  .gs-dash{grid-template-columns:minmax(0,1fr) 340px}
+}
+@media (max-width:960px){
+  .gs .k-word .gs-plat{max-width:44vw;font-size:15px}
+  .gs-page{padding:20px 20px 0;gap:18px}
+  .gs-head h1{font-size:28px;line-height:38px}
+  .gs-dash{grid-template-columns:minmax(0,1fr)}
+  .gs-bigc{padding:22px}
+  .gs-tabs{gap:22px;margin-top:-4px}
+  .gs-tab{font-size:15px}
+}
+@media (max-width:640px){
+  .gs .k-mast .gs-plat,.gs .k-mast .k-role{display:none}
+  .gs-grid{grid-template-columns:minmax(0,1fr);gap:16px}
+  .gs-card{flex-direction:row}
+  .gs-card-face{aspect-ratio:auto;width:96px;flex:none}
+  .gs-card-b{padding:14px 16px 16px;gap:6px}
+  .gs-card-t{font-size:19px;line-height:27px}
+  .gs-reg{min-width:0;flex:1}
+  .gs-head-r{width:100%}
+  .gs-foot{gap:8px 16px}
+}

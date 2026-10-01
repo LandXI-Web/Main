@@ -39,12 +39,12 @@ test.describe('v3 통합 — 로그인 · 첫 화면 · 이동', () => {
     ['LX 직원', { id: 'lx-staff' }, '/landxi/v3/lx-console/'],
     ['LX 관리자', { site: 'admin', id: 'lx-admin' }, '/landxi/v3/ops-core/'],
     ['LX 영업', { id: 'lx-sales' }, '/landxi/v3/sales/'],
-    ['지자체 공무원', { site: 'gov', id: 'namwon-manager', org: 'namwon' }, '/landxi/v3/gov-fusion/'],
+    ['지자체 공무원', { site: 'gov', id: 'namwon-manager', org: 'namwon' }, '/landxi/v3/gov-select/'],   // 기관 첫 화면 = 서비스 선택(구현 2차 T3)
     ['해외 기관', { site: 'gov', id: 'kgz-agri-manager', org: 'kgz-agri' }, '/landxi/v3/global/'],
     // lxadmin 한 계정으로 세 입구(확인 대장 7) — app → LX 직원 · admin → LX 관리자 · gov → 고른 기관
     ['lxadmin · 메인 입구', { site: 'app', id: 'lxadmin' }, '/landxi/v3/lx-console/'],
     ['lxadmin · 관리자 입구', { site: 'admin', id: 'lxadmin' }, '/landxi/v3/ops-core/'],
-    ['lxadmin · 기관 입구(남원)', { site: 'gov', id: 'lxadmin', org: 'namwon' }, '/landxi/v3/gov-fusion/'],
+    ['lxadmin · 기관 입구(남원)', { site: 'gov', id: 'lxadmin', org: 'namwon' }, '/landxi/v3/gov-select/'],
   ];
   for (const [name, who, dest] of LAND) {
     test(`로그인 폼 → ${name} 첫 화면`, async ({ page }) => {
@@ -127,7 +127,7 @@ test.describe('v3 통합 — 로그인 · 첫 화면 · 이동', () => {
 
   test('기관 세션은 LX 화면에 못 들어간다', async ({ page }) => {
     await signIn(page, { site: 'gov', id: 'namwon-manager', org: 'namwon' });
-    await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/gov-fusion/'), { timeout: 20000 });
+    await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/gov-select/'), { timeout: 20000 });
     await page.goto('v3/lx-console/');
     await page.waitForURL(/\/landxi\/v3\/login\//, { timeout: 15000 });
   });

@@ -1,0 +1,124 @@
+/* 기관 메인(구현 2차 T3) — 소개형 한 장(머리 → 서비스 → 이용 방법 → 바닥) + 그 기관 모습의 로그인.
+   법전 v2.2 토큰 그대로(밝은 톤 · 라운드 24/16/8 · 그림자 0). 기관색(--ci · --ci-t1)은 마크 · 서비스 얼굴 판 · 머리의 약칭에만. */
+body.gh{margin:0;background:var(--bg-0);min-height:100vh;display:flex;flex-direction:column}
+body.gh main{flex:1}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+.gh :where(input,select,textarea,button,a.t-btn){box-sizing:border-box}
+.gh-in{max-width:var(--content-max);margin:0 auto;padding:0 var(--margin);box-sizing:border-box;width:100%}
+
+/* 상단 바 64 */
+.gh-top{position:sticky;top:0;z-index:30;background:var(--bg-1);border-bottom:1px solid var(--rule)}
+.gh-top .gh-in{height:64px;display:flex;align-items:center;gap:16px}
+.gh-brand{display:inline-flex;align-items:center;gap:12px;min-width:0}
+.gh-plat{font:700 17px/1.2 var(--font-display);letter-spacing:-.01em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gh-brand--lx{gap:10px}
+.gh-word{font:700 16px/1 var(--font-display);letter-spacing:-.01em;color:var(--ink)}
+.gh-home{font:500 14px/1 var(--font-body);color:var(--sub)}
+.gh-home::before{content:"·";margin-right:10px;color:var(--mute)}
+.gh-nav{display:flex;gap:24px;margin-left:24px}
+.gh-nav a{position:relative;padding:8px 0;font:500 15px/1 var(--font-body);color:var(--sub);transition:color var(--d-180) var(--e-ui)}
+.gh-nav a::after{content:"";position:absolute;left:0;right:100%;bottom:2px;height:1px;background:var(--ink);transition:right var(--d-380) var(--e-ui)}
+.gh-nav a:hover{color:var(--ink)}
+.gh-nav a:hover::after{right:0}
+.gh-top .sp{flex:1}
+.gh-top-b{height:40px;flex:none}
+
+/* 머리 — 왼쪽 글 · 오른쪽 기관색 판(서비스 얼굴 + 로그인) */
+.gh-hero{background:var(--bg-1)}
+.gh-hero-in{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:64px;align-items:center;padding-top:72px;padding-bottom:80px}
+.gh-org{margin:0 0 16px;font:500 15px/20px var(--font-body);color:var(--sub)}
+.gh-h1{margin:0 0 24px;font:700 56px/68px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.gh-h1 b{font-weight:700;color:var(--ci,var(--ink))}
+.gh-lead{margin:0;font:400 20px/32px var(--font-body);color:var(--sub-2)}
+.gh-lead span{display:block}
+.gh-side{background:var(--ci-t1,var(--bg-0));border-radius:var(--r-24);overflow:hidden;display:flex;flex-direction:column}
+.gh-art{height:150px;flex:none}
+.gh-art svg{height:100%;width:100%;object-fit:cover}
+.gh-login{margin:0 20px 20px;background:var(--bg-1);border-radius:var(--r-16);padding:24px}
+.gh-side > .gh-login:first-child{margin-top:20px}
+.gh-form{display:flex;flex-direction:column;gap:14px}
+.gh-login-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.gh-login-h h2{margin:0;font:700 24px/32px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.gh-f{display:flex;flex-direction:column;gap:6px}
+.gh-f .t-input.is-bad{border-color:var(--warn)}
+.gh-msg{margin:0;font:500 14px/20px var(--font-body);color:var(--warn)}
+.gh-go{width:100%;height:48px;font-size:15px}
+.gh-help{align-self:center;font-size:14px;color:var(--sub)}
+.gh-help::after{content:none}
+.gh-login-f{margin:0;font:400 13px/18px var(--font-body);color:var(--sub)}
+.gh-login-acts{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+
+/* 섹션 — 서비스 · 이용 방법 */
+.gh-sec{padding:80px 0 0}
+.gh-h2{margin:0 0 28px;font:700 32px/42px var(--font-display);letter-spacing:-.01em;color:var(--ink)}
+.gh-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px}
+.gh-svc{background:var(--bg-1);border-radius:var(--r-16);overflow:hidden;display:flex;flex-direction:column}
+.gh-svc-face{aspect-ratio:3/2}
+.gh-svc-b{padding:18px 20px 22px;display:flex;flex-direction:column;gap:6px}
+.gh-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;font:500 14px/20px var(--font-body);color:var(--sub)}
+.gh-svc h3{margin:4px 0 0;font:700 22px/30px var(--font-display);letter-spacing:-.02em;color:var(--ink);min-height:60px}
+.gh-d{margin:0;font:400 14px/21px var(--font-body);color:var(--sub-2)}
+.gh-svc[data-status="내년"] .gh-svc-face,.gh-svc[data-status$="예정"] .gh-svc-face{opacity:.55}
+.gh-svc[data-status="내년"] h3,.gh-svc[data-status$="예정"] h3{color:var(--ink-2)}
+
+.gh-how{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.gh-step{background:var(--bg-1);border-radius:var(--r-16);padding:24px;display:flex;flex-direction:column;gap:8px}
+.gh-step .n{width:32px;height:32px;border-radius:50%;background:var(--ink);color:#fff;display:inline-flex;align-items:center;justify-content:center;font:500 14px/1 var(--font-num)}
+.gh-step h3{margin:8px 0 0;font:700 22px/30px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.gh-step p{margin:0;font:400 15px/24px var(--font-body);color:var(--sub-2)}
+
+/* 바닥 */
+.gh-foot{margin-top:80px;background:var(--bg-1);border-top:1px solid var(--rule)}
+.gh-foot .gh-in{min-height:64px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;padding-top:14px;padding-bottom:14px;font:400 13px/18px var(--font-body);color:var(--sub)}
+.gh-foot b{font-weight:500;color:var(--ink-2)}
+.gh-foot .sp{flex:1}
+
+/* 기관 고르기 */
+.gh-pick{padding:72px 0 0}
+.gh-pick-h{font-size:48px;line-height:60px;margin-bottom:12px}
+.gh-pick .gh-lead{margin-bottom:32px}
+.gh-orgs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.gh-orgc{display:flex;align-items:center;gap:20px;padding:24px;background:var(--bg-1);border-radius:var(--r-16);transition:transform var(--d-380) var(--e-ui)}
+.gh-orgc:hover{transform:translateY(-4px)}
+.gh-orgc-m{width:96px;height:96px;flex:none;border-radius:var(--r-16);background:var(--ci-t1,var(--bg-0));display:flex;align-items:center;justify-content:center}
+.gh-orgc-b{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.gh-orgc-t{font:700 22px/30px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.gh-orgc-go{font:500 20px/1 var(--font-body);color:var(--sub);transition:transform var(--d-380) var(--e-ui)}
+.gh-orgc:hover .gh-orgc-go{transform:translateX(4px);color:var(--ink)}
+
+/* 태블릿 */
+@media (max-width:1200px){
+  .gh-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .gh-hero-in{grid-template-columns:minmax(0,1fr) 400px;gap:40px}
+  .gh-h1{font-size:44px;line-height:56px}
+}
+/* 휴대폰(390) — 글 → 로그인 → 서비스. 머리는 두 줄 그대로(줄 길이 20자 안) */
+@media (max-width:960px){
+  .gh-nav{display:none}
+  .gh-hero-in{grid-template-columns:minmax(0,1fr);gap:28px;padding-top:36px;padding-bottom:40px}
+  .gh-h1{font-size:clamp(24px,6.5vw,40px);line-height:1.32;margin-bottom:16px}
+  .gh-lead{font-size:16px;line-height:26px}
+  .gh-art{display:none}
+  .gh-login{margin:16px}
+  .gh-side > .gh-login:first-child{margin-top:16px}
+  .gh-sec{padding-top:56px}
+  .gh-h2{font-size:26px;line-height:36px;margin-bottom:20px}
+  .gh-how{grid-template-columns:minmax(0,1fr);gap:12px}
+  .gh-orgs{grid-template-columns:minmax(0,1fr);gap:12px}
+  .gh-pick{padding-top:40px}
+  .gh-pick-h{font-size:32px;line-height:42px}
+  .gh-foot{margin-top:56px}
+}
+@media (max-width:640px){
+  .gh-top .gh-in{gap:10px}
+  .gh-plat{font-size:15px}
+  .gh-grid{grid-template-columns:minmax(0,1fr);gap:16px}
+  .gh-svc{flex-direction:row;align-items:stretch}
+  .gh-svc-face{aspect-ratio:auto;width:112px;flex:none}
+  .gh-svc-b{padding:14px 16px 16px}
+  .gh-svc h3{font-size:18px;line-height:26px;min-height:0}
+  .gh-orgc{padding:16px;gap:14px}
+  .gh-orgc-m{width:72px;height:72px}
+  .gh-orgc-t{font-size:18px;line-height:26px}
+}

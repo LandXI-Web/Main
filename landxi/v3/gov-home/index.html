@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>기관 AI 분석 서비스</title>
+<meta name="description" content="기관별 AI 분석 서비스 — 서비스 소개와 로그인">
+<link rel="stylesheet" href="../kit/kit.css">
+<link rel="stylesheet" href="../gov-select/brand.css">
+<link rel="stylesheet" href="gov-home.css">
+<script type="module" src="app.js"></script>
+</head>
+<body class="t gh" data-state="boot">
+<!-- 기관 메인(구현 2차 T3) — 틀은 모든 기관이 같고, 마크 · 이름 · 색 · 소개 글 · 서비스 목록만 그 기관 것(서버 GET /brand/{기관}).
+     gov.land-xi.dev/{기관}/ = 그 기관 메인(그 기관 모습의 로그인 포함) · gov.land-xi.dev/ = 기관 고르기 목록.
+     이 PC · 사본에서는 ?org={기관}. 화면은 app.js 가 그린다(코드가 오기 전 폼이 없으므로 먼저 누른 로그인이 새지 않는다). -->
+<main id="main" aria-busy="true"></main>
+</body>
+</html>
