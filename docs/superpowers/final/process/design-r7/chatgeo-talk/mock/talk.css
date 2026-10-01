@@ -1,0 +1,66 @@
+/* 설계 7차(chatgeo-talk) 시안 — 6차 채팅 시안의 틀(실제 키트 kit.css · 토큰 · 서체)을 그대로 쓰고, 답 블록 몇 가지만 더한다.
+   더한 것: 할 수 있는 것 버튼 줄(m-opts) · 작은 표(m-tbl) · 크게 보기 줄(m-more) · 이미 그려져 있음 표시(m-same) · 다른 뜻 한 줄(m-alt) ·
+   확인 카드(m-conf) · 개선 후보로 모였다는 꼬리(m-tail). 지도 없는 화면(LX 관리자 대시보드)은 m-nomap 으로 바탕만 바꾼다. */
+@import url('../../../design-r6/assistant/mock/mock.css');
+
+/* 채팅 머리 — 이름은 XI ChatGEO(원칙 96) · 마스코트 자리는 지금 화면처럼 LX 마크(로고 왼쪽 부분만) */
+.m-chat-h b{letter-spacing:0}
+.m-mark{display:inline-block;overflow:hidden;width:40px;height:19px;flex:none}
+.m-mark img{height:19px;width:auto;display:block}
+.m-msg.ai .m-mark{width:30px;height:14px;margin-bottom:4px}
+.m-msg.ai .m-mark img{height:14px}
+.m-cards[hidden]{display:none}
+
+/* 지도 동작 줄에 실패 · 이미 켜져 있음 */
+.m-act li.no::before{content:"–";color:var(--mute)}
+.m-act li.same::before{content:"✓";color:var(--sub)}
+.m-act li small{display:block;font:400 13px/18px var(--font-body);color:var(--sub);margin-left:20px}
+
+/* 할 수 있는 것 — 버튼 2–3개(누르면 그 질문이 바로 보내진다) */
+.m-opts{display:flex;flex-wrap:wrap;gap:6px}
+.m-opts span{display:inline-flex;align-items:center;height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--rule);background:var(--bg-1);color:var(--ink);font:500 13px/1 var(--font-body);white-space:nowrap}
+.m-opts span.go{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* 다른 뜻이면 — 한 줄 + 버튼 하나 */
+.m-alt{display:flex;align-items:center;justify-content:space-between;gap:8px;font:400 13px/18px var(--font-body);color:var(--sub)}
+.m-alt span.b{flex:none;display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--rule);background:var(--bg-1);color:var(--ink);font:500 13px/1 var(--font-body);white-space:nowrap}
+
+/* 작은 표(지도 없는 화면) */
+.m-tbl{width:100%;border-collapse:collapse;font:500 13px/18px var(--font-body);color:var(--ink-2)}
+.m-tbl th{font-weight:500;color:var(--sub);text-align:left;padding:2px 0 6px;border-bottom:1px solid var(--rule)}
+.m-tbl td{padding:5px 0;border-bottom:1px solid var(--bg-0)}
+.m-tbl td.n,.m-tbl th.n{text-align:right;font-family:var(--font-num);font-variant-numeric:tabular-nums;color:var(--ink)}
+.m-tbl tr:last-child td{border-bottom:0}
+
+/* 크게 보기 — 블록 아래 한 줄 */
+.m-more{display:flex;align-items:center;justify-content:flex-end;gap:6px;font:500 13px/18px var(--font-body);color:var(--accent)}
+.m-more::after{content:"→"}
+
+/* 꼬리 — 개선 후보로 모임(작게 · 한 줄) */
+.m-tail{font:400 12px/16px var(--font-body);color:var(--mute)}
+
+/* 확인 카드(실행 전) — 지금 채팅창 확인 카드와 같은 모양 */
+.m-conf{border:1px solid var(--rule);border-radius:8px;background:var(--bg-1);padding:12px;display:flex;flex-direction:column;gap:10px}
+.m-conf p{margin:0;font:500 14px/20px var(--font-body);color:var(--ink)}
+.m-conf small{font:400 13px/18px var(--font-body);color:var(--sub)}
+.m-conf .bt{display:flex;gap:8px}
+.m-conf .bt span{display:inline-flex;align-items:center;height:36px;padding:0 14px;border-radius:8px;font:500 14px/1 var(--font-body)}
+.m-conf .bt span:first-child{background:var(--ink);color:#fff}
+.m-conf .bt span:last-child{border:1px solid var(--rule);color:var(--ink);background:var(--bg-1)}
+
+/* 지도 없는 화면(LX 관리자 대시보드) 바탕 — 레일 없음 · 카드 셋 */
+body.m-nomap .m-rail{display:none}
+body.m-nomap .m-app{grid-template-columns:minmax(0,1fr)}
+body.m-nomap .m-main{grid-column:1;background:var(--bg-0)}
+body.m-nomap .m-map,body.m-nomap .m-legend,body.m-nomap .m-scale,body.m-nomap .m-today{display:none}
+.m-cards{position:absolute;left:24px;right:24px;top:24px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.m-card{background:var(--bg-1);border-radius:16px;box-shadow:var(--elev-1);padding:20px 24px;min-height:140px}
+.m-card h2{margin:0 0 6px;font:700 16px/22px var(--font-display);color:var(--ink)}
+.m-card em{font:800 36px/40px var(--font-display);font-style:normal;color:var(--ink);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.m-card small{display:block;font:500 14px/20px var(--font-body);color:var(--sub)}
+.m-card .rows{margin-top:10px;display:flex;flex-direction:column;gap:6px;font:500 14px/20px var(--font-body);color:var(--ink-2)}
+.m-card .rows span{display:flex;justify-content:space-between}
+.m-card .rows b{font-weight:500;font-family:var(--font-num);color:var(--ink)}
+
+/* 휴대폰 */
+@media (max-width:640px){.m-cards{grid-template-columns:1fr;left:12px;right:12px;top:12px}}
