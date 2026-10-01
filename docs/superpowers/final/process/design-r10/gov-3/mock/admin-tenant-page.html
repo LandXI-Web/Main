@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ko" style="--ci:#1F6F4A;--ci-t1:#E9F3ED;--ci-line:#D1E3D9">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · LX 관리자 대시보드 → 기관 → 남원시 — 기관 한 곳 화면(새 화면)</title>
+<link rel="stylesheet" href="mock.css">
+<link rel="stylesheet" href="gov2.css">
+<link rel="stylesheet" href="gov3.css">
+<style>
+.lx .ri[aria-current="true"]{box-shadow:inset 0 -2px 0 var(--accent)}
+.lx .btn.ci{background:var(--ink)}
+.lx .chip.ci{background:var(--bg-0);color:var(--ink)}
+.lx .mb.on{background:var(--bg-0);color:var(--ink)}
+.lx .tph .mark{color:#1F6F4A}
+.lx .sel .av{background:var(--bg-0)}
+.lx .person .av.lx{background:var(--bg-0)}
+section.blk{display:flex;flex-direction:column;gap:12px}
+section.blk > h2{margin:0;font:700 22px/30px var(--font-display);letter-spacing:-.02em;color:var(--ink);display:flex;align-items:baseline;gap:12px}
+section.blk > h2 small{font:400 14px/20px var(--font-body);color:var(--sub);letter-spacing:0}
+.stamp{z-index:70}
+</style>
+</head>
+<body class="g t lx">
+<div class="app">
+  <header class="mast">
+    <span class="word">LAND-XI<small>LX 관리자 대시보드</small></span>
+    <span class="sp"></span>
+    <span class="mb on">LX 관리자</span>
+    <span class="mb">XI맵</span>
+    <span class="mb sq" data-ic="bell"><span class="bd">1</span></span>
+    <span class="mb sq">?</span>
+    <span class="mb">나가기</span>
+  </header>
+  <nav class="rail" aria-label="메뉴">
+    <span class="ri" data-ic="map"><span>현황</span></span>
+    <span class="ri" data-ic="cloud"><span>인프라</span></span>
+    <span class="ri" data-ic="home" aria-current="true"><span>기관</span></span>
+    <span class="ri" data-ic="upload"><span>배포</span></span>
+    <span class="ri" data-ic="inbox"><span class="bd">1</span><span>분석 요청</span></span>
+    <span class="ri" data-ic="menu"><span>검토 요청</span></span>
+    <span class="ri" data-ic="me"><span>계정 관리</span></span>
+  </nav>
+  <main class="main">
+    <div class="page">
+      <div class="crumb"><span>기관</span><span class="sep">›</span><span class="k">남원시</span></div>
+      <div class="tph">
+        <div class="mk"><p class="mark"><span>남원</span><span>GV</span></p></div>
+        <div class="t">
+          <h1>남원시 <span class="chip">가벼운 칸</span><span class="chip ci">켜짐</span></h1>
+          <div class="sub"><span>전북특별자치도 남원시 · <b>남원시 GeoVision 플랫폼</b></span><span>namwon.land-xi.dev</span><span>기관 관리자 <b>담당자</b></span><span>공간 생김 2026.10.01</span></div>
+        </div>
+        <div class="acts"><span class="btn b2">기관 정보 — 마크 · 이름 · 색</span><span class="btn b2">기관 메인 열기</span></div>
+      </div>
+      <div class="jump"><span class="on">개요</span><span>받는 서비스와 담당<small>4</small></span><span>촬영 요청 담당</span><span>공유 영상<small>10 / 11</small></span><span>배경 사진</span><span>사용 현황</span><span>계정<small>2</small></span></div>
+
+      <!-- 개요 -->
+      <section class="blk">
+        <div class="two-col">
+          <div class="cells c4">
+            <div class="cell"><b>3<small>개</small></b><span>받는 서비스</span><small class="sub2">운영 1 · 첫 결과 전 2 · 2027년 1</small></div>
+            <div class="cell"><b>2<small>명</small></b><span>계정</span><small class="sub2">기관 관리자 1 · 부서 사용자 1</small></div>
+            <div class="cell"><b>0<small>건</small></b><span>이번 달 보낸 요청</span><small class="sub2">분석 0 · 촬영 0</small></div>
+            <div class="cell"><b>2.3<small>GB</small></b><span>저장</span><small class="sub2">XI ChatGEO 요청 94건 · 이번 달</small></div>
+          </div>
+          <div class="card">
+            <h2>최근 기록<small>이 기관에서 일어난 일</small></h2>
+            <ul class="rec">
+              <li><span class="d">10.01</span><span><b>담당자</b> — 영농관리 행정서비스 요약 내려받기(2판)</span></li>
+              <li><span class="d">10.01</span><span>부서 사용자가 볼 서비스 지정 — 영농관리 행정서비스</span></li>
+              <li><span class="d">10.01</span><span>도로 안전관리 서비스 결과 설명서 1판 — 첫 결과 전</span></li>
+              <li><span class="d">10.01</span><span>기관 공간 생김 — 가벼운 칸</span></li>
+              <li><span class="d">09.26</span><span>영농관리 행정서비스 결과 설명서 2판 — 2025년 드론영상 · 2,098필지</span></li>
+            </ul>
+            <span class="tbtn">기록 모두 보기</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 받는 서비스와 담당 -->
+      <section class="blk">
+        <h2>받는 서비스와 담당<small>서비스마다 LX 헬프데스크 담당 — 비면 관리자가 받음</small></h2>
+        <div class="card">
+          <table class="svct">
+            <thead><tr><th></th><th>서비스</th><th>상태 · 최근 결과</th><th>결과 설명서</th><th>LX 헬프데스크 담당</th><th></th></tr></thead>
+            <tbody>
+              <tr><td><span class="th"><img src="img/farm-scene.jpg" alt=""></span></td><td><b>영농관리 행정서비스</b><small>2025년 사업 · 농정과 · 프로젝트장 김도윤<span class="ex">예시</span></small></td><td><span class="chip ci">운영</span><small>2025년 드론영상 · 2026.06.08 · 판정한 필지 2,098</small></td><td class="s">2판<small>2026.09.26</small></td><td><span class="sel"><span class="av">김</span>김도윤<span class="ex">예시</span></span></td><td class="s"><span class="tbtn">바꾸기</span></td></tr>
+              <tr><td><span class="th blank">첫 결과 전</span></td><td><b>생활환경 위험요소 탐지 서비스</b><small>2023년 사업 · 환경과<span class="ex">예시</span></small></td><td><span class="chip pilot">첫 결과 전</span><small>영상이 들어오면 분석</small></td><td class="s">1판<small>2026.09.26</small></td><td><span class="sel none">미지정 — 관리자가 받음</span></td><td class="s"><span class="tbtn">고르기</span></td></tr>
+              <tr><td><span class="th blank">첫 결과 전</span></td><td><b>도로 안전관리 서비스</b><small>2026년 사업 · 건설과<span class="ex">예시</span></small></td><td><span class="chip pilot">첫 결과 전</span><small>영상이 들어오면 분석</small></td><td class="s">1판<small>2026.10.01</small></td><td><span class="sel"><span class="av">이</span>이수진<span class="ex">예시</span></span></td><td class="s"><span class="tbtn">바꾸기</span></td></tr>
+              <tr><td><span class="th blank">2027년</span></td><td><b>인파관리 서비스</b><small>2027년 사업 · 관광과<span class="ex">예시</span></small></td><td><span class="chip next">내년</span><small>아직 열지 않음</small></td><td class="s">—</td><td class="s">아직 열지 않음</td><td></td></tr>
+            </tbody>
+          </table>
+          <p class="small">담당이 비면 못 읽는 파일 · 검토 요청 · 분석 요청이 LX 관리자에게 옵니다. 바꾸면 기록이 남고, 기관 화면에는 그 서비스의 LX 담당 이름만 보입니다.</p>
+        </div>
+      </section>
+
+      <!-- 촬영 요청 담당 -->
+      <section class="blk">
+        <h2>촬영 요청 담당<small>이 기관이 보내는 새 촬영 요청 — 시기 · 금액 답</small></h2>
+        <div class="shootrow"><div class="t"><b>촬영 요청은 누가 받나</b><span>관리자가 직접 답하거나, 직원 한 사람을 지정합니다. 비어 있으면 관리자 직접.</span></div><span class="seg2"><span>관리자 직접</span><span class="on">직원 지정</span></span><span class="sel"><span class="av">이</span>이수진<span class="ex">예시</span></span></div>
+      </section>
+
+      <!-- 공유 영상 -->
+      <section class="blk">
+        <h2>공유 영상<small>켠 LX 영상만 이 기관이 지도에서 보고 분석 요청에 불러옵니다 · 10 / 11</small></h2>
+        <div class="card">
+          <ul class="imgl">
+            <li><span class="th"><img src="img/t-namwon-aoi-2504.jpg" alt=""></span><div class="t"><b>2025-04 드론 · 남원 AOI</b><span>2025년 · 드론 · 지도</span></div><span class="sw"></span></li>
+            <li><span class="th"><img src="img/epoch-2.jpg" alt=""></span><div class="t"><b>2025-06 드론 · 남원 AOI</b><span>2025년 · 드론 · 지도</span></div><span class="sw"></span></li>
+            <li><span class="th"><img src="img/epoch-3.jpg" alt=""></span><div class="t"><b>2025-08 드론 · 남원 AOI</b><span>2025년 · 드론 · 지도</span></div><span class="sw"></span></li>
+            <li><span class="th"><img src="img/t-namwon-aoi-2510.jpg" alt=""></span><div class="t"><b>2025-10 드론 · 남원 AOI</b><span>2025년 · 드론 · 지도</span></div><span class="sw"></span></li>
+            <li><span class="th"><img src="img/t-namwon-city-2510.jpg" alt=""></span><div class="t"><b>2025-10 위성 · 남원 시가지</b><span>2025년 · 위성 · 지도</span></div><span class="sw"></span></li>
+            <li><span class="th blank">위성</span><div class="t"><b>2025-04 위성 · 남원 시가지</b><span>2025년 · 위성 · 지도</span></div><span class="sw"></span></li>
+            <li><span class="th blank">변화 지수</span><div class="t"><b>변화 지수 2025-04→10 · 국산리</b><span>2025년 · 드론 · 지도</span></div><span class="sw"></span></li>
+            <li><span class="th blank">항공</span><div class="t"><b>2023 항공 · 남원</b><span>2023년 · 항공 · 지도 · 분석 요청</span></div><span class="sw"></span></li>
+            <li><span class="th blank">항공</span><div class="t"><b>남원시 2020 항공영상</b><span>2020년 · 항공 · 지도 · 분석 요청</span></div><span class="sw"></span></li>
+            <li><span class="th blank">항공</span><div class="t"><b>AI Hub 125 원천 칩 2020(도엽 35710074)</b><span>2020년 · 항공 · 지도</span></div><span class="sw"></span></li>
+            <li class="off"><span class="th blank">항공</span><div class="t"><b>남원시 2023 항공영상</b><span class="o">원본 지울 날짜 2026.12.30 · 공유 꺼짐</span></div><span class="sw off"></span></li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 배경 사진 -->
+      <section class="blk">
+        <h2>기관 메인 배경 사진<small>로그인 전 화면 · 이 기관 영상 · 결과 장면에서 고르거나 올림</small></h2>
+        <div class="card">
+          <div class="bgrow">
+            <div class="bgpick c6">
+              <div class="t on"><img src="img/farm-scene.jpg" alt=""><span>영농관리 결과 · 2025</span></div>
+              <div class="t"><img src="img/t-namwon-city-2510.jpg" alt=""><span>2025.10 남원 시가지</span></div>
+              <div class="t"><img src="img/t-namwon-aoi-2504.jpg" alt=""><span>2025.04 드론</span></div>
+              <div class="t"><img src="img/epoch-3.jpg" alt=""><span>2025.08 드론</span></div>
+              <div class="t"><img src="img/farm-2.jpg" alt=""><span>비닐하우스 결과 · 2025</span></div>
+              <div class="t up"><span style="position:static;background:none;padding:0">사진 올리기</span><small>이 기관 영상 · 결과 밖의 사진</small></div>
+            </div>
+            <div class="bgprev"><img src="img/farm-scene.jpg" alt=""><p class="t">드론·항공 영상을 AI로 분석해<br><b>남원시 행정 업무</b>를 돕습니다</p></div>
+          </div>
+          <p class="small">고른 장면은 메인 바탕에 흰빛을 눌러 깔립니다. 작은 크기로만 저장하고 원본은 내주지 않습니다.</p>
+        </div>
+      </section>
+
+      <!-- 사용 현황 -->
+      <section class="blk">
+        <h2>사용 현황<small>이번 달 · 얼마나 쓰고 있나(막는 한도 없음)</small></h2>
+        <div class="card">
+          <div class="usage">
+            <div class="u"><b>2.3<small>GB</small></b><span>저장</span><div class="brk"><span>결과 <b>2.0</b></span><span>대장 <b>0.27</b></span><span>올린 영상 <b>0.003</b></span></div></div>
+            <div class="u"><b>0<small>h</small></b><span>GPU 시간</span><div class="brk"><span>분석 · 학습 포함</span></div></div>
+            <div class="u"><b>0<small>㎢</small></b><span>분석 면적</span><div class="brk"><span>분석 요청으로 돌린 넓이</span></div></div>
+            <div class="u"><b>94<small>건</small></b><span>XI ChatGEO 요청</span><div class="brk"><span>채팅으로 지도 제어 · 분석 · 보고서</span></div></div>
+          </div>
+          <p class="small">서버 저장 공간은 인프라 화면의 하드웨어 설정에서 나눕니다. 여기서는 쓰는 양만 봅니다.</p>
+        </div>
+      </section>
+
+      <!-- 계정 -->
+      <section class="blk">
+        <h2>계정<small>기관 관리자 1 · 부서 사용자 1 · 사용 중지 2(옛 아이디)</small></h2>
+        <div class="card">
+          <table class="acct">
+            <thead><tr><th>이름</th><th>부서</th><th>역할</th><th>볼 수 있는 서비스</th><th>마지막 로그인</th><th>상태</th><th></th></tr></thead>
+            <tbody>
+              <tr><td><b>담당자</b><small>lxadmin@lx.or.kr</small></td><td class="s">—</td><td>기관 관리자</td><td class="s">모든 서비스</td><td class="s">10.01 18:23</td><td><span class="chip ci">사용 중</span></td><td class="s"><span class="tbtn">잠금 · 임시 비밀번호</span></td></tr>
+              <tr><td><b>확인용 담당자</b><small>check-impl5@namwon.go.kr</small></td><td>농정과</td><td>부서 사용자</td><td class="s">영농관리 행정서비스</td><td class="s">10.01 18:08</td><td><span class="chip ci">사용 중</span></td><td class="s"><span class="tbtn">잠금 · 임시 비밀번호</span></td></tr>
+            </tbody>
+          </table>
+          <div class="fold"><span class="tbtn">사용 중지 2 보기</span></div>
+          <p class="small">가입 승인은 기관 관리자가 합니다. LX 관리자는 보기 · 잠금 · 임시 비밀번호 · 지원만.</p>
+        </div>
+      </section>
+
+      <div class="foot"><b>LX 관리자 대시보드</b><span>기관 › 남원시</span><span class="sp"></span><span>숫자 · 영상 목록 · 계정 · 기록은 서버 값 · 사람 이름은 예시</span></div>
+    </div>
+  </main>
+</div>
+<span class="stamp r"><b>시안</b> LX 관리자 → 기관 → 남원시 — 서랍이 아니라 기관 한 곳 새 화면 · 개요 · 서비스와 담당 · 촬영 담당 · 공유 영상 · 배경 · 사용 현황 · 계정</span>
+<script src="icons.js"></script>
+</body>
+</html>

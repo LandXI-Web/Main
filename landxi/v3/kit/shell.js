@@ -11,6 +11,7 @@
    LX 직원 메뉴(lx-menu.js staffMenu · 확인 대장 10차 메뉴-1 ⓐ): rail.menu = 'staff' — 요청함 숫자(rail.counts) · 알림 칸 대신 요청함 · 휴대폰은 아래 탭 + '메뉴'(rail 항목 more).
      rail 을 주지 않은 LX 직원 화면(분석하기 · 서비스 카드 등 STAFF_OF)은 셸이 이 메뉴를 붙인다.
    rail.sub = true → 마스트 아래 한 줄(S.sub — 프로젝트 안 6단계 막대 · lx-project/context.js)
+   rail 항목 end = true → PC 레일 아래쪽에 모아 둔다(기관 메뉴의 기관 정보 · 계정 — gov-select/menu.js · 시안 design-r8/gov-design)
    XI ChatGEO(AI 도우미 · 확인 요청 9차 채팅-1 · 채팅-2 ⓐ): 셸이 모든 화면 오른쪽 아래에 도우미 버튼 · 채팅창을 붙인다(cmdk.js · 지도 없는 화면도 같은 자리).
    머리에는 '물어보기' 버튼을 두지 않는다 — 화면이 S.mast() 로 넘긴 옛 트리거(.k-ck-btn · .gl-ask)는 머리에 넣지 않는다. */
 import { h, esc, hhmm } from './util.js';
@@ -45,6 +46,11 @@ function roleText(who) {
   if (k === 'lx/staff') return t('shell.role.staff', { name: who.name });
   if (k === 'lx/admin') return t('shell.role.admin', { name: who.name });
   if (k === 'lx/sales') return t('shell.role.sales', { name: who.name });
+  /* 기관 화면 머리 = 사람(기관-1 ⓐ · 시안) — 기관 관리자 · 부서 이름 / 부서 사용자 = 부서 · 이름(계정 값 그대로 · 없으면 역할) */
+  if (k === 'tenant/local' && who.name && document.documentElement.lang !== 'en') {
+    const dept = who.me?.user?.dept || '';
+    return who.me?.role === 'manager' ? `기관 관리자 · ${[dept, who.name].filter(Boolean).join(' ')}` : `${dept || '부서 사용자'} · ${who.name}`;
+  }
   return t('shell.role.tenant', { org: who.org || who.name });
 }
 
@@ -123,7 +129,7 @@ export function shell({ who = null, home = homeFromPath(), title, rail, onHelp, 
         : `${icon(it.icon)}${badgeHtml(it)}<span>${esc(it.label)}</span>`;
       const n = badges[it.id];
       const attrs = `data-i="${i}"${it.id ? ` data-id="${esc(it.id)}"` : ''}${i === cur ? ' aria-current="true"' : ''}${steps ? ` data-st="${st}"` : ''}${n ? ` aria-label="${esc(it.label)} ${n}건"` : ''}`;
-      const cls = 'k-rail-i' + (it.more ? ' k-rail-i--more' : '');
+      const cls = 'k-rail-i' + (it.more ? ' k-rail-i--more' : '') + (it.end ? ' k-rail-i--end' : '');   // end = 레일 아래쪽 묶음(기관 정보 · 계정 — 기관 메뉴)
       return it.href ? `<a class="${cls}" href="${esc(it.href)}" ${attrs}>${inner}</a>` : `<button type="button" class="${cls}" ${attrs}>${inner}</button>`;
     }).join('') + (more ? `<button type="button" class="k-rail-i k-rail-more" aria-haspopup="dialog"${rail.items[cur]?.more ? ' data-on="1"' : ''}>${icon('menu')}<span>${esc(t('shell.menu'))}</span></button>` : '');
   };

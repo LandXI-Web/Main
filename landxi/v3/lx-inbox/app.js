@@ -8,6 +8,33 @@ import { gate, shell, createStage, empty, toast, devDrawer, devlog, numHtml, dra
 import { h, api, bboxOf } from '../kit/util.js';
 import { msg, when } from '../kit/notify.js';
 import { staffMenu, requestCounts } from '../kit/lx-menu.js';
+
+/* 보낸 사람(구현 5차 · 확인 대장 '기관 화면 확인' 기관-8 ⓐ · 원칙 102) — 기관 요청(검토 요청 · 분석 요청)의 이름 · 부서 · 기관 + 연락처(선택).
+   연락처는 그 사람이 스스로 적은 경우만 있고, 그 요청을 받은 LX 담당 직원과 LX 관리자에게만 온다(서버 GET /accounts/senders 가 자른다). */
+const SENDERS = { reviews: {}, requests: {} };
+async function loadSenders(kind, ids) {
+  const want = [...new Set(ids)].filter((id) => id && !(id in SENDERS[kind]));
+  if (!want.length) return;
+  try {
+    const j = await api(`/accounts/senders?${kind === 'reviews' ? 'review' : 'request'}=${encodeURIComponent(want.join(','))}`);
+    Object.assign(SENDERS[kind], j[kind] || {});
+  } catch (e) { devlog('senders', e.message); }
+}
+/** '남원시 농정과 박서연'(목록 한 줄) — 모르면 서버가 준 기관 · 이름 그대로 */
+const fromLine = (kind, id, org, name) => { const s = SENDERS[kind][id]; return s ? [s.org || org, s.dept, s.name || name].filter(Boolean).join(' ') : [org, name].filter(Boolean).join(' · '); };
+/** 요청 상세의 '보낸 사람' 칸 — 이름 · 기관 부서 / 역할 · 연락처(있을 때만) */
+function senderBox(kind, id, org) {
+  const box = h('section.ib-who', { 'aria-label': '보낸 사람', hidden: true });
+  loadSenders(kind, [id]).then(() => {
+    const s = SENDERS[kind][id];
+    if (!s || !s.name) return;
+    box.hidden = false;
+    box.append(h('p.ib-who-l', { text: '보낸 사람' }), h('div.ib-who-r', {}, h('span.ib-av', { text: String(s.dept || s.org || org || '기관').slice(0, 1) }),
+      h('span.ib-who-t', {}, h('b', { text: `${s.name} · ${[s.org || org, s.dept].filter(Boolean).join(' ')}` }),
+        h('small', { text: [s.role_ko, s.contact ? `연락처 ${s.contact}` : ''].filter(Boolean).join(' · ') }))));
+  });
+  return box;
+}
 import { improveCount, openImproveDrawer } from '../ops-infra/js/improve.js';   // 개선 후보 — 내 서비스 · 기관에서 XI ChatGEO 가 못 한 요청(16차 개선-1)
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -59,7 +86,7 @@ async function drawCells(force = false) {
   };
   cells.replaceChildren(
     cell('review', c?.review, '검토 요청'),
-    cell('request', c?.request, '분석 의뢰', () => openList('requests', c)),
+    cell('request', c?.request, '분석 요청', () => openList('requests', c)),
     cell('approval', c?.approval, '내 결재', () => openList('approvals', c)),
     cell('improve', imp, '개선 후보', () => openImproveDrawer({ onCount: (n) => { const x = cells.querySelector('[data-k="improve"]'); if (x) { x.querySelector('b').textContent = String(n); x.classList.toggle('is-zero', !n); } } })));
   const want = location.hash.replace('#', '');
@@ -69,16 +96,20 @@ async function drawCells(force = false) {
 /** 분석 의뢰(확인 대기 · 내 담당 서비스 — 관리자 승인) · 내 결재(내가 올린 결재 중 대기) 목록 서랍 */
 function openList(kind, c) {
   const items = kind === 'requests' ? (c?.requests || []) : (c?.approvals || []);
-  const title = kind === 'requests' ? '분석 의뢰' : '내 결재';
+  const title = kind === 'requests' ? '분석 요청' : '내 결재';
   const body = h('div.ib-xl');
   if (!items.length) {
     const x = h('div'); body.append(x);
-    empty(x, { kind: 'first', compact: true, title: kind === 'requests' ? '확인을 기다리는 분석 의뢰가 없습니다' : '결재를 기다리는 요청이 없습니다' });
+    empty(x, { kind: 'first', compact: true, title: kind === 'requests' ? '확인을 기다리는 분석 요청이 없습니다' : '결재를 기다리는 요청이 없습니다' });
   } else {
-    body.append(h('p.ib-xl-s', { text: kind === 'requests' ? '내가 담당하는 서비스로 온 의뢰입니다. 승인은 LX 관리자가 합니다.' : '내가 올린 결재 가운데 LX 관리자 결정을 기다리는 것입니다.' }),
+    body.append(h('p.ib-xl-s', { text: kind === 'requests' ? '내가 담당하는 서비스로 온 분석 요청입니다. 승인은 LX 관리자가 합니다.' : '내가 올린 결재 가운데 LX 관리자 결정을 기다리는 것입니다.' }),
       h('ul.ib-xl-l', {}, ...items.map((it) => h('li', {},
         h('b', { text: it.title || it.kind_label || title }),
-        h('span', { text: [kind === 'approvals' ? it.kind_label : null, when(it.at)].filter(Boolean).join(' · ') })))));
+        h('span', { text: [kind === 'approvals' ? it.kind_label : null, when(it.at)].filter(Boolean).join(' · ') }),
+        kind === 'requests' ? h('span.ib-xl-who', { dataset: { rid: it.id } }) : null))));
+    if (kind === 'requests') loadSenders('requests', items.map((it) => it.id)).then(() => {   // 보낸 사람 — 이름 · 기관 부서(· 연락처)
+      for (const el of body.querySelectorAll('.ib-xl-who')) { const s = SENDERS.requests[el.dataset.rid]; if (s?.name) el.textContent = `보낸 사람 ${[s.org, s.dept, s.name].filter(Boolean).join(' ')}${s.contact ? ` · 연락처 ${s.contact}` : ''}`; }
+    });
   }
   history.replaceState(null, '', location.pathname + location.search + '#' + kind);
   drawer({ title, body, label: title, onClose: () => history.replaceState(null, '', location.pathname + location.search) });
@@ -100,7 +131,7 @@ function chipOf(it) {
 }
 function rowOf(it) {
   const b = h('button.ib-row', { type: 'button', 'aria-current': it.id === st.sel ? 'true' : undefined, dataset: { unread: it.unread ? '1' : '0', id: it.id } },
-    h('span.ib-row-top', {}, h('span.ib-from', { text: [it.org, it.sender].filter(Boolean).join(' · ') }), chipOf(it)),
+    h('span.ib-row-top', {}, h('span.ib-from', { text: fromLine('reviews', it.id, it.org, it.sender) }), chipOf(it)),
     h('b.ib-where', { text: it.where }),
     h('span.ib-memo', { text: it.note ? `"${it.note}"` : '메모 없음' }),
     h('span.ib-meta', { text: [it.service, admin ? `받는 사람 ${it.recipient}` : null, when(it.at)].filter(Boolean).join(' · ') }));
@@ -121,6 +152,7 @@ async function loadList({ quiet = false } = {}) {
   }
   if (seq !== listSeq) return;
   st.items = j.items || []; st.counts = j.counts || null;
+  await loadSenders('reviews', st.items.map((i) => i.id));
   for (const b of tabs.querySelectorAll('[data-n]')) { const n = st.counts?.[b.dataset.n]; b.textContent = n ? String(n) : ''; }
   if (!st.items.length) {
     const w = h('div'); listEl.replaceChildren(w);
@@ -210,7 +242,7 @@ function draw(r) {
       } catch (err) { devlog('answer', err.message); send.disabled = false; toast('보내지 못했습니다'); }
     });
   }
-  const scroll = h('div.ib-scroll', {}, head, att, h('h3.ib-sub', { text: '주고받은 말' }), thread);
+  const scroll = h('div.ib-scroll', {}, head, senderBox('reviews', r.id, r.org), att, h('h3.ib-sub', { text: '주고받은 말' }), thread);
   convEl.replaceChildren(scroll, form);
   if (r.messages.length > 3) requestAnimationFrame(() => thread.lastElementChild?.scrollIntoView({ block: 'nearest' }));   // 말이 길게 쌓였으면 마지막 말이 보이게(머리는 그대로)
   mini(mapEl, r);

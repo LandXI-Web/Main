@@ -67,6 +67,7 @@ a.k-mast-b,a.k-xi{display:inline-flex;align-items:center;text-decoration:none}
 .k-rail-i{position:relative}
 .k-rail-b{position:absolute;top:4px;left:calc(50% + 4px);min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:var(--warn);color:#fff;font:500 11px/18px var(--font-num);font-style:normal;text-align:center}
 .k-app .k-rail-more{display:none}
+.k-rail-i:not(.k-rail-i--end) + .k-rail-i--end{margin-top:auto}   /* 아래쪽 묶음(기관 정보 · 계정) — PC 레일 아래로 */
 .k-app.has-sub{grid-template-rows:var(--mast) auto minmax(0,1fr)}
 .k-app.has-sub .k-rail{grid-row:2/4}
 .k-app.has-sub .k-main{grid-row:3}
@@ -87,4 +88,5 @@ a.k-mast-b,a.k-xi{display:inline-flex;align-items:center;text-decoration:none}
   .k-app.has-sub .k-sub{grid-row:2;grid-column:1}
   .k-app.has-sub .k-main{grid-row:3;grid-column:1}
   .k-rail-b{top:2px}
+  .k-rail-i:not(.k-rail-i--end) + .k-rail-i--end{margin-top:0}
 }

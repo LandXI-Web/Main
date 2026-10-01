@@ -4,6 +4,8 @@
 그 기관에 켜진 서비스 목록. 서버가 정본(표 tenant_brand · migrations/0012_brand.sql).
 
   GET    /api/v1/brand/{기관}          로그인 없이(기관별 메인이 읽는다) — 공개 정보만(숫자 0 · 계정 0 · 경로 0)
+  GET    /api/v1/brand/{기관}/main     로그인 없이 — 기관 메인의 그림(설정 config/gov-main.yaml · 저해상 크롭만 · 제한 영상 0)과
+                                      업무 결과 셋(업무 결과 하나 · 서비스 수 · 최근 분석한 날 — 기관-2 ⓐ 시안 · 필지 · 좌표 · 목록 0)
   PUT    /api/v1/brand/{기관}          고치기 — 그 기관의 관리자(manager) + LX 관리자만 · 기관색은 대비 검사를 통과할 때만 저장
   POST   /api/v1/brand/{기관}/mark     마크 그림 올리기(PNG · JPG · WebP · 1MB 이하 · 가로세로 64–2048) → 512 안쪽 PNG 로 다시 저장
   DELETE /api/v1/brand/{기관}/mark     그림 마크 지우기(글자 마크로)
@@ -209,6 +211,92 @@ def _editor(request: Request, tenant: str):
 @router.get(API + "/brand/{tenant}")
 async def get_brand(tenant: str, request: Request):
     return await _payload(await _tenant(tenant), request)
+
+
+# ── 기관 메인(로그인 전) — 결과 장면 작게 · 업무 결과 셋(확인 대장 '기관 화면 확인' 기관-2 ⓐ · 원칙 116) ───────────
+# 그림은 설정 한 곳(config/gov-main.yaml — LX 관리자가 고르는 화면은 다음 설계) · 로그인 전이므로 저해상 크롭만 · 제한 영상 0 · 그 기관 것만.
+# 숫자는 대표 수치 요약(summary.cached_all — 로그인 뒤 서비스 카드 · 대시보드와 같은 값) 가운데 그 기관의 업무 결과 하나(현장 확인 필요 →
+# 다듬은 결과의 AI 탐지) · 서비스 수 · 처음 사업 연도 · 최근 분석한 날만 — 필지 · 좌표 · 목록은 없다.
+_MAIN_PIC_RE = re.compile(r"/landxi/[\w./-]+\.(?:jpg|jpeg|png|webp)", re.I)
+_MAIN_PICS: dict[str, tuple[float, int]] = {}
+
+
+def _main_pic(src, max_px: int, restricted: list[str]) -> str | None:
+    """설정에 적힌 그림 → 내도 되는 주소(아니면 None). 저장소 화면 파일(/landxi/…)만 · 제한 영상 이름 0 · 긴 변 max_px 이하(서버가 잰다)."""
+    s = str(src or "").strip()
+    if not _MAIN_PIC_RE.fullmatch(s) or ".." in s or any(r and r in s for r in restricted):
+        return None
+    f = config.REPO_ROOT / s.lstrip("/")
+    try:
+        mt = f.stat().st_mtime
+    except OSError:
+        return None
+    hit = _MAIN_PICS.get(s)
+    if not hit or hit[0] != mt:
+        from PIL import Image
+        try:
+            with Image.open(f) as im:
+                px = max(im.size)
+        except Exception:  # noqa: BLE001
+            px = 1 << 30
+        hit = _MAIN_PICS[s] = (mt, px)
+    return s if hit[1] <= max_px else None
+
+
+def _svc_short(name: str) -> str:
+    return re.sub(r"\s*(행정서비스|서비스)$", "", str(name or "")).strip()
+
+
+async def _main_facts(tenant: str, svcs: list[dict]) -> dict:
+    from .cards import _metric, _raw_ai, _vnum
+    from .envelope import env
+    items, _at = await summary.cached_all()
+    mine = [it for it in items if it["tenant"] == tenant]
+    head = None
+    for key in ("field_check", "detected"):                  # 현장 확인 필요(필지 대조) → 없으면 다듬은 결과의 AI 탐지(분석 칸 도형 수 0 · 사용자 규칙 2)
+        for s in svcs:
+            if not s.get("open"):
+                continue
+            es = [_metric(it, key) for it in mine if it["card"] == s["card"] and (key == "field_check" or not _raw_ai(it))]
+            es = [e for e in es if e and (_vnum(e["value"]) or 0) > 0]
+            if not es:
+                continue
+            total = int(sum(_vnum(e["value"]) or 0 for e in es))
+            if key == "field_check":
+                head = {"env": env(total, "필지", "inferred", es[0].get("source") or "실태조사", "현장 확인 전"), "label": "현장 확인 필요"}
+            else:
+                head = {"env": env(total, es[0].get("unit") or "건", es[0].get("basis") or "inferred", es[0].get("source") or "AI 분석", "결과 확인 전"),
+                        "label": "AI 탐지"}
+            head["service"], head["card"] = _svc_short(s.get("name")), s["card"]
+            break
+        if head:
+            break
+    dates = [str((_metric(it, "detected") or {}).get("as_of") or "")[:10] for it in mine if _metric(it, "detected") and not _raw_ai(it)]
+    years = [s["year"] for s in svcs if s.get("year")]
+    return {"result": head, "services": env(len(svcs), "count", "recorded", "기관에 열린 서비스(LX 관리자가 정한 목록)"),
+            "since": str(min(years)) if years else None, "latest": max((d for d in dates if d), default=None)}
+
+
+@router.get(API + "/brand/{tenant}/main")
+async def get_brand_main(tenant: str):
+    """기관 메인(로그인 전) — 배경 그림 · 서비스별 결과 장면(작게) · 업무 결과 셋. 로그인 없이(그 기관 메인이 읽는다)."""
+    row = await _tenant(tenant)
+    cfg = config.load_yaml("gov-main") or {}
+    t = ((cfg.get("tenants") or {}).get(row["id"])) or {}
+    max_px = int(cfg.get("max_px") or 800)
+    restricted = [str(x) for x in (cfg.get("restricted") or [])]
+    intro = row["intro"] or {}
+    svcs = await _services(row["id"], list(row["services"]) if row["services"] else None, intro.get("items") or {}, _en(row))
+    open_cards = {s["card"] for s in svcs if s.get("open")}
+    scenes = {}
+    for cid, sc in (t.get("scenes") or {}).items():
+        sc = sc if isinstance(sc, dict) else {"src": sc}
+        src = _main_pic(sc.get("src"), max_px, restricted)
+        if src and cid in open_cards:                         # 열린 서비스의 결과 장면만(아직 시작 전인 서비스는 시작 시기만)
+            scenes[cid] = {"src": src, "caption": str(sc.get("caption") or "")[:60]}
+    bg = _main_pic(t.get("background"), max_px, restricted)
+    return {"tenant": row["id"], "background": {"src": bg} if bg else None, "scenes": scenes,
+            "facts": await _main_facts(row["id"], svcs), "as_of": dt.datetime.now(KST).isoformat(timespec="seconds")}
 
 
 # ── 고치기 ──────────────────────────────────────────────────────────────────

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · 방향 A — 프로젝트 한 장(덜어내기)</title>
+<link rel="stylesheet" href="r10.css">
+<script src="chrome.js"></script>
+<style>
+.ppl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font:400 15px/22px var(--font-body);color:var(--sub);margin-top:6px}
+.ppl b{font-weight:500;color:var(--ink)}
+.band{grid-template-columns:repeat(5,1fr)}
+.rt-open{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:center;padding:12px 0 4px}
+.rt-open .sig{margin:0}
+.rt-open .rt-f{border-top:0;padding-top:0;flex-direction:column;align-items:flex-start;gap:8px}
+.lg li{grid-template-columns:100px 1fr}
+.lg-open{padding:8px 0 4px}
+.lg-open .in{display:flex;gap:10px;margin-top:10px}
+.lg-open .in .fld{flex:1}
+</style>
+</head>
+<body class="m has-stamp">
+<div class="app" id="app">
+  <main class="main">
+    <div class="page">
+      <div class="stack">
+
+        <!-- ① 머리 — 이름 · 지역 · 사람 한 줄 -->
+        <header class="head" id="k-head" style="margin-bottom:0">
+          <div>
+            <p class="lab">프로젝트</p>
+            <div class="ttl"><h1 id="h1">비닐하우스 2026</h1><span class="lnk q">고치기</span><span class="lnk q">끝난 프로젝트로 보관</span></div>
+            <div class="meta" id="meta"><span class="chip">비닐하우스</span><span class="chip wait">증평군</span><span class="chip wait">함양군</span><span class="chip wait">남원시</span></div>
+            <p class="ppl"><b>프로젝트장</b> LX 직원 <span class="lnk q">넘기기</span> · <b>구성원</b> 없음 <span class="lnk q">더하기</span></p>
+          </div>
+        </header>
+
+        <!-- ② 지금 할 일 — 하나만 크게 + 단계 6 한 줄 -->
+        <section class="k" id="k-todo">
+          <div class="todo-big has-pic" id="todo">
+            <div class="what">
+              <span class="lab">지금 할 일 · 4단계</span>
+              <h2>AI 결과가 맞는지 보기<br>— 표본 20건</h2>
+              <p>20건 중 0건 봤습니다. 다 보면 결과를 얼마나 믿을지가 정해지고<br>「현장 확인 필요」 필지 수가 섭니다.</p>
+            </div>
+            <div class="pic"><img src="img/gh-1.jpg" alt=""></div>
+            <div class="act"><span class="btn">보러 가기</span><small>표본 1부터 차례로</small></div>
+          </div>
+          <ul class="s6" id="s6" style="margin-top:18px">
+            <li><i>${CK}</i>데이터 올리기</li>
+            <li><i>${CK}</i>학습데이터 구축</li>
+            <li><i>${CK}</i>AI 학습</li>
+            <li class="w"><i>4</i>AI 결과 맞는지 보기</li>
+            <li><i>${CK}</i>서비스 공개</li>
+            <li class="now"><i>6</i>서비스 운영 · 시범 적용 3곳</li>
+          </ul>
+          <span class="note" id="n-todo" style="left:24px;top:-22px;width:max-content;max-width:600px"><i>1</i>지금 할 일 하나 + 왜 + 버튼 하나. 단계 6은 한 줄 칩으로만(마스트 아래 막대 없음 — 같은 정보 두 번 안 보임)</span>
+        </section>
+
+        <!-- ③ 이 프로젝트가 만든 것 — 그림 다섯 · 나머지는 접힘 -->
+        <section class="k" id="k-made">
+          <div class="k-h"><h2>이 프로젝트가 만든 것</h2><span class="ksub">칸을 누르면 그 단계로</span></div>
+          <div class="made" id="made">
+            <a><div class="th"><img src="img/imagery-1.jpg" alt=""></div><b>영상 3장</b><span>2023 항공 2 · 2025 드론 1</span></a>
+            <a><div class="th mos4"><img src="img/sample-0.jpg" alt=""><img src="img/sample-1.jpg" alt=""><img src="img/sample-4.jpg" alt=""><img src="img/sample-5.jpg" alt=""></div><b>학습 표본 200장</b><span>9.30 · 쓸 수 있음</span></a>
+            <a><div class="th plate"><em>1차</em><small>쓸 수 있음</small></div><b>1차 모델</b><span>모델 승인 9.30</span></a>
+            <a><div class="th"><img src="img/scene-2.jpg" alt=""><span class="bd">시범 적용</span></div><b>비닐하우스 서비스</b><span>1.0판 · 공개 9.30</span></a>
+            <a><div class="th geo"><img src="korea-k3.svg" alt=""></div><b>시범 적용 3곳</b><span>운영 중 0</span></a>
+          </div>
+          <div class="fold-h" id="foldRt" style="margin-top:16px"><b>다시 학습</b><span>지금은 근거가 적습니다 — 새 영상 1 · 검토 요청 0</span></div>
+          <div class="rt-open" id="rtOpen" hidden>
+            <div class="band">
+              <div class="pt d"><i></i><b>서비스<br>공개</b><span>9.30</span></div>
+              <div class="pt d"><i></i><b>학습<br>끝</b><span>9.30</span></div>
+              <div class="pt d"><i></i><b>모델<br>승인</b><span>9.30</span></div>
+              <div class="pt d"><i></i><b>새<br>영상</b><span>10.1</span></div>
+              <div class="pt n"><i></i><b>지금<br>&nbsp;</b><span>10.1</span></div>
+            </div>
+            <div class="rt-f"><div class="sig"><span>기관 검토 요청 <b>0건</b></span><span>새 영상 <b>1개</b></span><span class="w">앞 단계 <b>표본 0/20</b></span></div><span class="btn b2 sm">다시 학습(2번째) — 사유 고르고 시작</span></div>
+          </div>
+          <div class="fold-h" id="foldLog"><b>기록 11 · 메모 0 · 파일 0</b><span>오늘 08:58 프로젝트 만듦</span></div>
+          <div class="lg-open" id="lgOpen" hidden>
+            <ul class="lg">
+              <li><span class="w">10.01 08:58</span><span><b>프로젝트 만듦</b><i>LX 직원</i></span></li>
+              <li><span class="w">09.30 15:35</span><span><b>모델 승인</b><i>LX 관리자</i></span></li>
+              <li><span class="w">09.30 15:33</span><span><b>학습 끝 · 2번째</b><i>LX 직원</i></span></li>
+            </ul>
+            <div class="in"><span class="fld"><span class="ph">메모 한 줄</span></span><span class="btn b2 sm">파일</span><span class="btn sm">남기기</span><span class="lnk q" style="margin-left:auto">모두 보기 11 →</span></div>
+          </div>
+          <span class="note" id="n-made" style="left:24px;top:-22px;width:max-content;max-width:640px"><i>2</i>만든 것 다섯은 그림 한 줄. 재학습(P-3) · 기록 · 메모 · 파일(P-4) · 보관은 접힌 줄 — 누르면 그 자리에서 펼침</span>
+        </section>
+
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+const Q = new URLSearchParams(location.search);
+document.getElementById('s6').innerHTML = document.getElementById('s6').innerHTML.replaceAll('${CK}', CK);
+chrome('projects', '<b>시안</b> 방향 A 프로젝트 한 장 — 덩어리 셋(머리 · 지금 할 일 · 만든 것) · 값은 이 PC 서버(10-01 18:23 · 비닐하우스 2026)');
+const open = Q.get('open') || '';
+if (open.includes('retrain')) { document.getElementById('rtOpen').hidden = false; document.getElementById('foldRt').classList.add('open'); }
+if (open.includes('log')) { document.getElementById('lgOpen').hidden = false; document.getElementById('foldLog').classList.add('open'); }
+if (open) document.getElementById('stamp').innerHTML = '<b>시안</b> 방향 A — 접힌 줄을 누른 뒤(다시 학습 띠 P-3 · 기록 3줄 P-4 — 확정된 기능 그대로, 자리만 접힘)';
+/* 새로 만든 직후(예시) */
+if (Q.get('empty') === '1') {
+  document.getElementById('h1').textContent = '무허가 축사 2026';
+  document.getElementById('meta').innerHTML = '<span class="chip">무허가 축사</span><span class="chip wait">지역 — 영상을 넣으면 정해짐</span>';
+  document.getElementById('todo').classList.remove('has-pic'); document.getElementById('todo').innerHTML = '<div class="what"><span class="lab" style="color:var(--accent)">지금 할 일 · 1단계</span><h2>영상 넣기</h2><p>영상 보관함에서 고르거나 파일을 올립니다.<br>영상이 들어오면 지역이 정해지고 2단계가 열립니다.</p></div><div class="act"><span class="btn">영상 넣기</span><small>보관함 83장 · 파일 올리기</small></div>';
+  document.getElementById('s6').innerHTML = '<li class="now"><i>1</i>데이터 올리기</li><li class="wait"><i>2</i>학습데이터 구축</li><li class="wait"><i>3</i>AI 학습</li><li class="wait"><i>4</i>AI 결과 맞는지 보기</li><li class="wait"><i>5</i>서비스 공개</li><li class="wait"><i>6</i>서비스 운영</li>';
+  document.getElementById('made').innerHTML = '<a><div class="th" style="box-shadow:inset 0 0 0 1px var(--rule);background:var(--bg-1)"><span style="font:400 13px/18px var(--font-body);color:var(--sub);text-align:center;padding:8px">영상을 넣으면<br>여기에 보입니다</span></div><b>영상 0</b><span>보관함 · 파일</span></a><a><div class="th" style="box-shadow:inset 0 0 0 1px var(--rule);background:var(--bg-1)"><span style="font:400 13px/18px var(--font-body);color:var(--sub);text-align:center;padding:8px">표본을 그리면<br>장 수가 셉니다</span></div><b>학습 표본 0장</b><span>영상 뒤에</span></a><a><div class="th" style="box-shadow:inset 0 0 0 1px var(--rule);background:var(--bg-1)"><span style="font:400 13px/18px var(--font-body);color:var(--sub);text-align:center;padding:8px">학습이 끝나면<br>모델 판</span></div><b>모델 없음</b><span>표본 뒤에</span></a><a><div class="th" style="box-shadow:inset 0 0 0 1px var(--rule);background:var(--bg-1)"><span style="font:400 13px/18px var(--font-body);color:var(--sub);text-align:center;padding:8px">서비스 카드로<br>공개 요청</span></div><b>카드 없음</b><span>AI 결과 보기 뒤</span></a><a><div class="th" style="box-shadow:inset 0 0 0 1px var(--rule);background:var(--bg-1)"><span style="font:400 13px/18px var(--font-body);color:var(--sub);text-align:center;padding:8px">기관에 제공 ·<br>적용 지역</span></div><b>적용 0곳</b><span>공개 뒤</span></a>';
+  document.getElementById('foldRt').innerHTML = '<b>다시 학습</b><span>첫 학습 뒤에 생깁니다</span>';
+  document.getElementById('foldLog').innerHTML = '<b>기록 1</b><span>18:23 프로젝트 만듦</span>';
+  document.getElementById('stamp').innerHTML = '<b>예시</b> 새로 만든 직후(이 PC 서버에 없는 프로젝트 · 이름 · 값은 예시)';
+}
+</script>
+</body>
+</html>

@@ -91,3 +91,14 @@ button.ib-cell:hover{background:var(--rule)}
   .ib-reply-row{flex-direction:column}
   .ib-reply-row .t-input{flex:none}
 }
+
+/* 보낸 사람(구현 5차 기관-8 ⓐ) — 이름 · 기관 부서 / 역할 · 연락처(있을 때만 · 받은 담당 직원과 LX 관리자에게만) */
+.ib-who{margin-top:16px;padding:14px 16px;border-radius:var(--r-16);background:var(--bg-0)}
+.ib-who[hidden]{display:none}
+.ib-who-l{margin:0 0 8px;font:500 var(--fs-label)/20px var(--font-body);color:var(--sub)}
+.ib-who-r{display:flex;align-items:center;gap:12px}
+.ib-av{flex:none;width:36px;height:36px;border-radius:50%;background:var(--bg-1);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;font:700 13px/1 var(--font-display)}
+.ib-who-t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ib-who-t b{font:500 15px/22px var(--font-body);color:var(--ink)}
+.ib-who-t small{font:400 13px/18px var(--font-body);color:var(--sub)}
+.ib-xl-who{display:block;font:400 13px/18px var(--font-body);color:var(--sub-2)}

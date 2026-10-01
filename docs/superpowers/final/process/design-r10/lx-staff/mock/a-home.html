@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · 방향 A — 홈(대시보드 · 덜어내기)</title>
+<link rel="stylesheet" href="r10.css">
+<script src="chrome.js"></script>
+</head>
+<body class="m has-stamp">
+<div class="app" id="app">
+  <main class="main">
+    <div class="page">
+      <div class="stack">
+
+        <!-- ① 한눈에 — 숫자 넷(대시보드 성격) -->
+        <section class="k" id="k-stats">
+          <div class="k-h"><h2>한눈에</h2><span class="ksub">18:23 기준 · 숫자를 누르면 그 목록으로</span><span class="srow" style="margin-left:auto"><span class="fld" style="height:40px;width:300px"><span class="ph">시군구 검색 — 바로 분석하기</span></span><span class="btn b2 sm" style="height:40px">분석하기</span></span></div>
+          <div class="stats">
+            <div class="stat w"><b>5</b><span>지금 할 일</span><i>기관 요청 1 · 프로젝트 4</i></div>
+            <div class="stat"><b>4</b><span>내 프로젝트</span><i>모두 서비스 운영 중</i></div>
+            <div class="stat"><b>2<small>+ 시범 적용 5</small></b><span>운영 중 서비스</span><i>적용 지역 12곳</i></div>
+            <div class="stat"><b>3</b><span>다시 학습할 서비스</span><i>영상 없는 지역 4곳</i></div>
+          </div>
+          <span class="note" id="n-stats" style="left:24px;top:-22px;width:max-content;max-width:600px"><i>1</i>홈 = 대시보드 — 숫자 · 상태가 한눈에. 같은 이름의 숫자는 프로젝트 · 요청함 · 서비스 카드 화면과 같은 값</span>
+        </section>
+
+        <!-- ② 지금 할 일 — 하나만 크게, 나머지는 눌러야 펼침 -->
+        <section class="k" id="k-todo">
+          <div class="todo-big">
+            <div class="what">
+              <span class="lab">지금 할 일 1 / 5</span>
+              <h2>남원시 농정과의<br>검토 요청에 답하기</h2>
+              <p>운봉읍 준향리 824-9 · 영농관리 행정서비스 · 18:08 받음<br>"확인용 — 보낸 사람 표시 확인"</p>
+            </div>
+            <div class="act"><span class="btn">답하기</span><small>요청함에서 엽니다</small></div>
+          </div>
+          <div class="fold-h" id="foldTodo"><b>다음 할 일 4</b><span>모두 프로젝트의 'AI 결과 맞는지 보기'</span></div>
+          <ul class="fold tight" id="todoList" hidden>
+            <li><span class="n w">2</span><span class="t"><b>비닐하우스 2026</b><small>AI 결과 맞는지 보기 · 표본 20건 중 0건 봄 · 증평군 외 2곳</small></span><span class="r go">보러 가기</span></li>
+            <li><span class="n w">3</span><span class="t"><b>건축물 2026</b><small>AI 결과 맞는지 보기 · 표본 20건 중 0건 봄 · 원주시</small></span><span class="r go">보러 가기</span></li>
+            <li><span class="n w">4</span><span class="t"><b>주차장 2026</b><small>AI 결과 맞는지 보기 · 표본 20건 중 0건 봄 · 여주시 외 1곳</small></span><span class="r go">보러 가기</span></li>
+            <li><span class="n w">5</span><span class="t"><b>곤포사일리지 2026</b><small>AI 결과 맞는지 보기 · 표본 20건 중 0건 봄 · 보령시</small></span><span class="r go">보러 가기</span></li>
+          </ul>
+          <span class="note" id="n-todo" style="left:24px;top:-22px;width:max-content;max-width:600px"><i>2</i>지금 할 일 하나만 크게(무엇을 · 왜 · 버튼 하나). 나머지 넷은 접힘 — 누르면 펼침</span>
+        </section>
+
+        <!-- ③ 서비스 카드 — 얼굴 넷 · 최근 활동은 접힘 -->
+        <section class="k svc" id="k-svc">
+          <div class="k-h"><h2>서비스 카드</h2><span class="ksub">LX가 만들어 기관에 제공하는 AI 분석 서비스 · 운영 중 2 · 시범 적용 5</span><span class="more">서비스 카드</span></div>
+          <div class="cards">
+            <div class="card"><div class="ph-img"><img src="img/farm-hero.jpg" alt=""><span class="bd">운영 중</span></div><p class="wh">남원시 외 5곳</p><p class="nm">영농관리 행정서비스</p><p class="wr">기관 검토 요청 107건 · 다시 학습 필요</p></div>
+            <div class="card"><div class="ph-img"><img src="img/marine-drone-2.jpg" alt=""><span class="bd">운영 중</span></div><p class="wh">여수시</p><p class="nm">해양쓰레기 실태조사 서비스</p></div>
+            <div class="card"><div class="ph-img"><img src="img/scene-2.jpg" alt=""><span class="bd pilot">시범 적용</span></div><p class="wh">증평군 외 2곳</p><p class="nm">비닐하우스 서비스</p></div>
+            <div class="card"><div class="ph-img"><img src="img/change-hero.jpg" alt=""><span class="bd pilot">시범 적용</span></div><p class="wh">남원시</p><p class="nm">국토 변화 탐지 서비스</p></div>
+          </div>
+          <div class="fold-h" id="foldAct"><b>최근 활동 3</b><span>12:01 건축물 천안시 서북구 결과 갱신</span></div>
+          <ul class="fold tight act" id="actList" hidden>
+            <li><span class="r">12:01</span><span class="t"><b>건축물</b> 천안시 서북구 결과 갱신</span><span class="r go">XI맵</span></li>
+            <li><span class="r">어제 20:57</span><span class="t">모델 학습 끝남</span><span class="r go">프로젝트</span></li>
+            <li><span class="r">어제 20:16</span><span class="t"><b>건축물</b> 원주시 결과 갱신</span><span class="r go">XI맵</span></li>
+          </ul>
+          <span class="note" id="n-svc" style="left:24px;top:-22px;width:max-content;max-width:600px"><i>3</i>칸 이름 = 왼쪽 메뉴와 같은 '서비스 카드' + 뜻 한 줄. 최근 활동은 접힌 줄, 바로 분석하기는 한눈에 칸 오른쪽</span>
+        </section>
+
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+const Q = new URLSearchParams(location.search);
+chrome('home', '<b>시안</b> 방향 A 홈 — 덩어리 셋(한눈에 · 지금 할 일 · 서비스 카드) · 값은 이 PC 서버(10-01 18:23)');
+if ((Q.get('open') || '').includes('todo')) { document.getElementById('todoList').hidden = false; document.getElementById('foldTodo').classList.add('open'); }
+if ((Q.get('open') || '').includes('act')) { document.getElementById('actList').hidden = false; document.getElementById('foldAct').classList.add('open'); }
+if (Q.get('open')) document.getElementById('stamp').innerHTML = '<b>시안</b> 방향 A 홈 — 접힌 줄을 누른 뒤(다음 할 일 4 · 최근 활동 3)';
+</script>
+</body>
+</html>

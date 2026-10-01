@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · 카드 숫자 다시 · 분석 요청 관리</title>
+<link rel="stylesheet" href="ci.css">
+<link rel="stylesheet" href="r10.css">
+</head>
+<body class="m" data-v="cards">
+<div class="app">
+  <header class="mast">
+    <span class="word">LAND-XI</span><span class="home" id="homeW">LX 직원 대시보드</span>
+    <span class="sp"></span>
+    <span class="fresh"><i></i><span>18:24</span></span>
+    <span class="role" id="roleW">LX 직원</span>
+    <span class="mb">XI맵</span><span class="mb help">?</span><span class="mb">나가기</span>
+  </header>
+
+  <!-- LX 직원 메뉴(cards · cardsb · cards4) -->
+  <nav class="rail" id="railStaff" aria-label="LX 직원 메뉴">
+    <span class="ri"><svg viewBox="0 0 20 20"><path d="M3 9.5L10 4l7 5.5V16H3z"/></svg><span>홈</span></span>
+    <span class="ri hide-m"><svg viewBox="0 0 20 20"><path d="M3 5h5l2 2h7v9H3z"/></svg><span>프로젝트</span></span>
+    <span class="ri" id="riAnalyze"><svg viewBox="0 0 20 20"><path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/><path d="M10 6.5l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5L6.5 10 9 9z"/></svg><span>분석하기</span></span>
+    <span class="ri" id="riCards"><svg viewBox="0 0 20 20"><path d="M3 4h14v12H3z M3 8h14"/></svg><span>서비스 카드</span></span>
+    <span class="ri"><svg viewBox="0 0 20 20"><ellipse cx="10" cy="5" rx="6" ry="2"/><path d="M4 5v10c0 1.1 2.7 2 6 2s6-.9 6-2V5 M4 10c0 1.1 2.7 2 6 2s6-.9 6-2"/></svg><span>데이터</span></span>
+    <span class="ri hide-m"><svg viewBox="0 0 20 20"><path d="M3 11l2-7h10l2 7v5H3z M3 11h4l1 2h4l1-2h4"/></svg><span>요청함</span></span>
+  </nav>
+  <!-- LX 관리자 메뉴(requests · approve · words) — '결재' 대신 '요청 관리' -->
+  <nav class="rail" id="railAdmin" aria-label="LX 관리자 메뉴" hidden>
+    <span class="ri"><svg viewBox="0 0 20 20"><path d="M3 5l5-2 4 2 5-2v12l-5 2-4-2-5 2z M8 3v12 M12 5v12"/></svg><span>현황</span></span>
+    <span class="ri hide-m"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="3"/><path d="M10 2v3M10 15v3M2 10h3M15 10h3M4.3 4.3l2.1 2.1M13.6 13.6l2.1 2.1M4.3 15.7l2.1-2.1M13.6 6.4l2.1-2.1"/></svg><span>인프라</span></span>
+    <span class="ri"><svg viewBox="0 0 20 20"><path d="M3 9l7-5 7 5v8H3z M8 17v-5h4v5"/></svg><span>기관</span></span>
+    <span class="ri hide-m"><svg viewBox="0 0 20 20"><path d="M10 14V4 M6 8l4-4 4 4 M4 16h12"/></svg><span>배포</span></span>
+    <span class="ri" id="riReq" data-n="3"><svg viewBox="0 0 20 20"><path d="M3 5h14v10H3z M3 9h14 M7 13h6"/></svg><span>요청 관리</span></span>
+    <span class="ri hide-m"><svg viewBox="0 0 20 20"><path d="M4 5h12 M4 10h12 M4 15h8"/></svg><span>검토 요청</span></span>
+    <span class="ri hide-m"><svg viewBox="0 0 20 20"><path d="M4 11l4 4 8-9"/></svg><span>계정 관리</span></span>
+  </nav>
+
+  <main class="main">
+
+    <!-- ═══════════ L-6 ⓐ · 분석하기 — 카드 ⑥ 자리 = AI 정확도(학습 검증) · 최근 분석(곳 · 넓이) ═══════════ -->
+    <section class="v" id="vCards">
+      <div class="page">
+        <h1>분석하기</h1>
+        <p class="sub">서비스 카드를 골라 지역을 정하면 AI가 분석합니다 — 결과는 XI맵에서 봅니다</p>
+        <div class="chips" style="margin-top:20px">
+          <span class="chip on">전체 <small>13</small></span><span class="chip">운영 <small>2</small></span><span class="chip">시범 <small>5</small></span><span class="chip">첫 결과 전 <small>6</small></span>
+          <span class="bar"></span>
+          <span class="chip">농지·시설</span><span class="chip">환경</span><span class="chip">건축·변화</span><span class="chip">안전</span><span class="chip">해외</span>
+          <span class="search">카드 이름 · 찾는 것</span>
+        </div>
+        <div class="k-sc-grid" style="margin-top:20px;position:relative">
+          <!-- ① 영농관리 — 학습 검증 95%(2026.01 · 옛 모델이라 표본 수 기록 없음) · 최근 분석 4곳 4,727㎢ -->
+          <article class="k-sc" data-kind="analyze" data-state="ga">
+            <div class="k-sc-crop"><div class="mos"><img src="img/farm-1.jpg" alt=""><img src="img/farm-2.jpg" alt=""><img src="img/farm-3.jpg" alt=""><img src="img/farm-4.jpg" alt=""></div><span class="k-sc-badge t-chip">운영</span></div>
+            <div class="k-sc-b">
+              <p class="k-sc-where"><span>남원시 · 2026.10.01 기준</span><span class="r num">v2.1</span></p>
+              <h3 class="k-sc-t">영농관리 행정서비스</h3>
+              <p class="k-sc-line">경작·휴경·시설·전용을 판정해<br>확인할 필지만 남깁니다</p>
+              <div class="k-sc-trust">
+                <div class="tr-m"><b>95<small>%</small></b><span class="l">AI 정확도</span></div>
+                <p class="tr-s">학습 검증 기준 · 2026.01</p>
+                <p class="tr-do">최근 분석 <b>4곳</b> · <b>4,727</b>㎢ · 2026.09.29</p>
+              </div>
+              <dl class="k-sc-spec"><div><dt>쓰이는 곳</dt><dd>운영 1 · 시범 4</dd></div><div><dt>걸리는 시간</dt><dd>구례 전역 약 18분</dd></div></dl>
+              <div class="k-sc-acts"><span class="t-btn k-sc-go">이 카드로 분석</span><span class="t-btn t-btn--text k-sc-more">자세히 →</span></div>
+            </div>
+          </article>
+          <!-- ② 비닐하우스 — 학습 검증 67% · 검증 표본 40장 · 최근 분석 3곳 1,668㎢ -->
+          <article class="k-sc" data-kind="analyze" data-state="pilot">
+            <div class="k-sc-crop"><img src="img/gh-2.jpg" alt=""><span class="k-sc-badge t-chip" data-lv="wait">시범</span></div>
+            <div class="k-sc-b">
+              <p class="k-sc-where"><span>증평군 외 2곳</span><span class="r num">v1.0</span></p>
+              <h3 class="k-sc-t">비닐하우스 서비스</h3>
+              <p class="k-sc-line">단동·다동 비닐하우스를 찾아 셉니다</p>
+              <div class="k-sc-trust">
+                <div class="tr-m"><b>67<small>%</small></b><span class="l">AI 정확도</span></div>
+                <p class="tr-s">학습 검증 40장 기준 · 2026.09.30</p>
+                <p class="tr-do">최근 분석 <b>3곳</b> · <b>1,668</b>㎢ · 2026.09.30</p>
+              </div>
+              <dl class="k-sc-spec"><div><dt>쓰이는 곳</dt><dd>시범 3</dd></div><div><dt>걸리는 시간</dt><dd>남원 전역 약 2시간 9분</dd></div></dl>
+              <div class="k-sc-acts"><span class="t-btn k-sc-go">이 카드로 분석</span><span class="t-btn t-btn--text k-sc-more">자세히 →</span></div>
+            </div>
+          </article>
+          <!-- ③ 곤포사일리지 — 학습 검증 98% 이지만 표본 12장(20장 미만) → 참고 표시 -->
+          <article class="k-sc" data-kind="analyze" data-state="pilot">
+            <div class="k-sc-crop is-blank"><span class="k-sc-blank">결과 장면 없음</span><span class="k-sc-badge t-chip" data-lv="wait">시범</span></div>
+            <div class="k-sc-b">
+              <p class="k-sc-where"><span>보령시 · 2026.10.01 기준</span><span class="r num">v1.0</span></p>
+              <h3 class="k-sc-t">곤포사일리지</h3>
+              <p class="k-sc-line">들에 쌓인 곤포사일리지를 찾아 셉니다</p>
+              <div class="k-sc-trust">
+                <div class="tr-m few"><b>98<small>%</small></b><span class="sg e">~</span><span class="l">AI 정확도 · 참고</span></div>
+                <p class="tr-s">학습 검증 12장 기준 — 표본이 적습니다 · 2026.09.30</p>
+                <p class="tr-do">최근 분석 <b>1곳</b> · <b>1,704</b>㎢ · 2026.09.30</p>
+              </div>
+              <dl class="k-sc-spec"><div><dt>쓰이는 곳</dt><dd>시범 1</dd></div><div><dt>걸리는 시간</dt><dd>보령 전역 약 33분</dd></div></dl>
+              <div class="k-sc-acts"><span class="t-btn k-sc-go">이 카드로 분석</span><span class="t-btn t-btn--text k-sc-more">자세히 →</span></div>
+            </div>
+          </article>
+          <!-- ④ 국토 변화 — 비지도(학습 검증 값 없음) -->
+          <article class="k-sc" data-kind="analyze" data-state="pilot">
+            <div class="k-sc-crop"><img src="img/chg-1.jpg" alt=""><span class="k-sc-badge t-chip" data-lv="wait">시범</span></div>
+            <div class="k-sc-b">
+              <p class="k-sc-where"><span>남원시 · 2026.06.08 기준</span><span class="r num">v1.0</span></p>
+              <h3 class="k-sc-t">국토 변화 탐지 서비스</h3>
+              <p class="k-sc-line">두 시점 영상을 비교해 신축·<br>소실·식생 변화를 골라냅니다</p>
+              <div class="k-sc-trust">
+                <div class="tr-m none"><b>정확도 — 두 시점 차이를 그대로 보임</b></div>
+                <p class="tr-s">학습한 모델이 아니라 검증 값이 없습니다</p>
+                <p class="tr-do">최근 분석 남원시 · 2시점 비교 · 2026.06.08</p>
+              </div>
+              <dl class="k-sc-spec"><div><dt>쓰이는 곳</dt><dd>시범 1</dd></div><div><dt>영상</dt><dd>드론 정사영상</dd></div></dl>
+              <div class="k-sc-acts"><span class="k-sc-cant">분석 모델 등록 전</span><span class="t-btn t-btn--text k-sc-more">자세히 →</span></div>
+            </div>
+          </article>
+          <span class="note" data-f="trust" style="left:16px;top:300px"><i>1</i>위 줄 = <b>AI 정확도</b> — 학습 때 따로 떼어 둔 검증 표본으로 잰 값(표본 수 · 기준일 함께). 현장 확인 숫자는 없습니다</span>
+          <span class="note" data-f="trust" style="left:16px;top:352px"><i>2</i>아래 줄 = <b>최근 분석</b> — 몇 곳 · 몇 ㎢ 를 언제 분석했나(작업 기록 한 출처)</span>
+          <span class="note" data-f="trust" style="left:660px;top:300px"><i>3</i>검증 표본이 20장 미만이면 '~ 참고'로 흐리게 · 검증 값이 없는 방식(비지도)은 숫자 대신 한 줄</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ L-6 ⓑ · 같은 네 카드 — 넓이가 크고 정확도는 아래 줄 ═══════════ -->
+    <section class="v" id="vCardsB">
+      <div class="page">
+        <h1>분석하기</h1>
+        <p class="sub">ⓑ 안 — 큰 숫자는 '최근 분석 넓이', AI 정확도는 아래 한 줄</p>
+        <div class="k-sc-grid" style="margin-top:20px;position:relative">
+          <article class="k-sc" data-kind="analyze" data-state="ga">
+            <div class="k-sc-crop"><div class="mos"><img src="img/farm-1.jpg" alt=""><img src="img/farm-2.jpg" alt=""><img src="img/farm-3.jpg" alt=""><img src="img/farm-4.jpg" alt=""></div><span class="k-sc-badge t-chip">운영</span></div>
+            <div class="k-sc-b">
+              <p class="k-sc-where"><span>남원시 · 2026.10.01 기준</span><span class="r num">v2.1</span></p>
+              <h3 class="k-sc-t">영농관리 행정서비스</h3>
+              <p class="k-sc-line">경작·휴경·시설·전용을 판정해<br>확인할 필지만 남깁니다</p>
+              <div class="k-sc-trust">
+                <div class="tr-m"><b>4,727<small>㎢</small></b><span class="l">최근 분석 넓이</span></div>
+                <p class="tr-s">4곳 전역 · 2026.09.29</p>
+                <p class="tr-do">AI 정확도 <b>95%</b> · 학습 검증 기준 · 2026.01</p>
+              </div>
+              <dl class="k-sc-spec"><div><dt>쓰이는 곳</dt><dd>운영 1 · 시범 4</dd></div><div><dt>걸리는 시간</dt><dd>구례 전역 약 18분</dd></div></dl>
+              <div class="k-sc-acts"><span class="t-btn k-sc-go">이 카드로 분석</span><span class="t-btn t-btn--text k-sc-more">자세히 →</span></div>
+            </div>
+          </article>
+          <article class="k-sc" data-kind="analyze" data-state="pilot">
+            <div class="k-sc-crop"><img src="img/gh-2.jpg" alt=""><span class="k-sc-badge t-chip" data-lv="wait">시범</span></div>
+            <div class="k-sc-b">
+              <p class="k-sc-where"><span>증평군 외 2곳</span><span class="r num">v1.0</span></p>
+              <h3 class="k-sc-t">비닐하우스 서비스</h3>
+              <p class="k-sc-line">단동·다동 비닐하우스를 찾아 셉니다</p>
+              <div class="k-sc-trust">
+                <div class="tr-m"><b>1,668<small>㎢</small></b><span class="l">최근 분석 넓이</span></div>
+                <p class="tr-s">3곳 전역 · 2026.09.30</p>
+                <p class="tr-do">AI 정확도 <b>67%</b> · 학습 검증 40장 · 2026.09.30</p>
+              </div>
+              <dl class="k-sc-spec"><div><dt>쓰이는 곳</dt><dd>시범 3</dd></div><div><dt>걸리는 시간</dt><dd>남원 전역 약 2시간 9분</dd></div></dl>
+              <div class="k-sc-acts"><span class="t-btn k-sc-go">이 카드로 분석</span><span class="t-btn t-btn--text k-sc-more">자세히 →</span></div>
+            </div>
+          </article>
+          <article class="k-sc" data-kind="analyze" data-state="pilot">
+            <div class="k-sc-crop is-blank"><span class="k-sc-blank">결과 장면 없음</span><span class="k-sc-badge t-chip" data-lv="wait">시범</span></div>
+            <div class="k-sc-b">
+              <p class="k-sc-where"><span>보령시 · 2026.10.01 기준</span><span class="r num">v1.0</span></p>
+              <h3 class="k-sc-t">곤포사일리지</h3>
+              <p class="k-sc-line">들에 쌓인 곤포사일리지를 찾아 셉니다</p>
+              <div class="k-sc-trust">
+                <div class="tr-m"><b>1,704<small>㎢</small></b><span class="l">최근 분석 넓이</span></div>
+                <p class="tr-s">보령 전역 · 2026.09.30</p>
+                <p class="tr-do">AI 정확도 <b>98%</b> ~ 참고 · 학습 검증 12장(적음)</p>
+              </div>
+              <dl class="k-sc-spec"><div><dt>쓰이는 곳</dt><dd>시범 1</dd></div><div><dt>걸리는 시간</dt><dd>보령 전역 약 33분</dd></div></dl>
+              <div class="k-sc-acts"><span class="t-btn k-sc-go">이 카드로 분석</span><span class="t-btn t-btn--text k-sc-more">자세히 →</span></div>
+            </div>
+          </article>
+          <article class="k-sc" data-kind="analyze" data-state="pilot">
+            <div class="k-sc-crop"><img src="img/chg-1.jpg" alt=""><span class="k-sc-badge t-chip" data-lv="wait">시범</span></div>
+            <div class="k-sc-b">
+              <p class="k-sc-where"><span>남원시 · 2026.06.08 기준</span><span class="r num">v1.0</span></p>
+              <h3 class="k-sc-t">국토 변화 탐지 서비스</h3>
+              <p class="k-sc-line">두 시점 영상을 비교해 신축·<br>소실·식생 변화를 골라냅니다</p>
+              <div class="k-sc-trust">
+                <div class="tr-m none"><b>최근 분석 — 남원시 2시점 비교</b></div>
+                <p class="tr-s">2026.06.08 · 넓이는 결과 범위에서 셉니다</p>
+                <p class="tr-do">정확도 — 검증 값이 없는 방식(두 시점 차이)</p>
+              </div>
+              <dl class="k-sc-spec"><div><dt>쓰이는 곳</dt><dd>시범 1</dd></div><div><dt>영상</dt><dd>드론 정사영상</dd></div></dl>
+              <div class="k-sc-acts"><span class="k-sc-cant">분석 모델 등록 전</span><span class="t-btn t-btn--text k-sc-more">자세히 →</span></div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ L-6 ⓐ · 같은 카드, 네 자리 ═══════════ -->
+    <section class="v" id="vCards4">
+      <div class="page">
+        <h1>서비스 카드 한 벌 — 네 자리</h1>
+        <p class="sub">같은 부품 · 같은 두 줄(AI 정확도 · 최근 분석) · 자리마다 배지와 아래 두 칸만 다릅니다</p>
+        <div class="four">
+          <div><p class="lab">① 분석하기<small>LX 직원</small></p>
+            <article class="k-sc" data-kind="analyze" data-state="ga">
+              <div class="k-sc-crop"><div class="mos"><img src="img/farm-1.jpg" alt=""><img src="img/farm-2.jpg" alt=""><img src="img/farm-3.jpg" alt=""><img src="img/farm-4.jpg" alt=""></div><span class="k-sc-badge t-chip">운영</span></div>
+              <div class="k-sc-b">
+                <p class="k-sc-where"><span>남원시 · 2026.10.01 기준</span><span class="r num">v2.1</span></p>
+                <h3 class="k-sc-t">영농관리 행정서비스</h3>
+                <p class="k-sc-line">경작·휴경·시설·전용을 판정해<br>확인할 필지만 남깁니다</p>
+                <div class="k-sc-trust"><div class="tr-m"><b>95<small>%</small></b><span class="l">AI 정확도</span></div><p class="tr-s">학습 검증 기준 · 2026.01</p><p class="tr-do">최근 분석 <b>4곳</b> · <b>4,727</b>㎢ · 2026.09.29</p></div>
+                <dl class="k-sc-spec"><div><dt>쓰이는 곳</dt><dd>운영 1 · 시범 4</dd></div><div><dt>걸리는 시간</dt><dd>구례 전역 약 18분</dd></div></dl>
+                <div class="k-sc-acts"><span class="t-btn k-sc-go">이 카드로 분석</span><span class="t-btn t-btn--text k-sc-more">자세히 →</span></div>
+              </div>
+            </article>
+          </div>
+          <div><p class="lab">② 서비스 카드 관리<small>LX 직원 · 담당 · 관리자</small></p>
+            <article class="k-sc" data-kind="manage" data-state="ga">
+              <div class="k-sc-crop"><div class="mos"><img src="img/farm-1.jpg" alt=""><img src="img/farm-2.jpg" alt=""><img src="img/farm-3.jpg" alt=""><img src="img/farm-4.jpg" alt=""></div><span class="k-sc-badge t-chip">운영</span><span class="k-sc-flag">검토 요청 107(6곳 합)</span></div>
+              <div class="k-sc-b">
+                <p class="k-sc-where"><span>남원시 · 2026.10.01 기준</span><span class="r">공개됨</span></p>
+                <h3 class="k-sc-t">영농관리 행정서비스</h3>
+                <p class="k-sc-line">경작·휴경·시설·전용을 판정해<br>확인할 필지만 남깁니다</p>
+                <div class="k-sc-trust"><div class="tr-m"><b>95<small>%</small></b><span class="l">AI 정확도</span></div><p class="tr-s">학습 검증 기준 · 2026.01</p><p class="tr-do">최근 분석 <b>4곳</b> · <b>4,727</b>㎢ · 2026.09.29</p></div>
+                <dl class="k-sc-spec"><div><dt>판 · 담당</dt><dd>v2.1 · 담당 미지정</dd></div><div><dt>다음 할 일</dt><dd>검토 요청 107건 답하기</dd></div></dl>
+                <div class="k-sc-acts"><span class="t-btn k-sc-go">관리</span><span class="t-btn t-btn--text k-sc-more">분석하기에서 보기 →</span></div>
+              </div>
+            </article>
+          </div>
+          <div><p class="lab">③ 기관 서비스 선택<small>남원시 GeoVision · 기관 색</small></p>
+            <article class="k-sc" data-kind="gov" data-state="ga">
+              <div class="k-sc-crop"><div class="mos"><img src="img/farm-1.jpg" alt=""><img src="img/farm-2.jpg" alt=""><img src="img/farm-3.jpg" alt=""><img src="img/farm-4.jpg" alt=""></div><span class="k-sc-badge t-chip">운영</span></div>
+              <div class="k-sc-b">
+                <p class="k-sc-where"><span>2025년 사업</span></p>
+                <h3 class="k-sc-t">영농관리 행정서비스</h3>
+                <p class="k-sc-line">농지이용 경작·비경작 · 비닐하우스 · 사료작물</p>
+                <div class="k-sc-trust"><div class="tr-m"><b>95<small>%</small></b><span class="l">AI 정확도</span></div><p class="tr-s">학습 검증 기준 · 2026.01</p><p class="tr-do">우리 시 결과 2025년 · 2026.10.01 갱신</p></div>
+                <dl class="k-sc-spec"><div><dt>최근 결과</dt><dd>2026.10.01</dd></div><div><dt>할 일</dt><dd>결과 확인 대기 1,038건</dd></div></dl>
+                <div class="k-sc-acts"><span class="t-btn k-sc-go">이 서비스 열기</span><span class="t-btn t-btn--text k-sc-more">보고서 →</span></div>
+              </div>
+            </article>
+          </div>
+          <div><p class="lab">④ 기관 2차 서비스<small>기관 공간 · 모양 확인용<span class="ex">예시</span></small></p>
+            <article class="k-sc" data-kind="mine" data-state="pilot">
+              <div class="k-sc-crop is-blank"><span class="k-sc-blank">결과가 나오면 장면이 보입니다</span><span class="k-sc-badge t-chip" data-lv="mine">우리 기관이 만든 서비스</span></div>
+              <div class="k-sc-b">
+                <p class="k-sc-where"><span>2026년부터 · 남원시</span></p>
+                <h3 class="k-sc-t">농지 이용 변화 지도</h3>
+                <p class="k-sc-line">영농관리 결과를 해마다 겹쳐<br>바뀐 필지를 봅니다</p>
+                <p class="k-sc-in"><b>입력</b><span>영농관리 2026.10.01 결과</span><small>입력 결과의 AI 정확도 95% · 학습 검증 기준</small></p>
+                <div class="k-sc-trust"><div class="tr-m none"><b>2차 계산 — 첫 계산 뒤 표시</b></div><p class="tr-s">1차 결과가 갱신되면 이 서비스도 갱신됩니다</p></div>
+                <div class="k-sc-acts"><span class="t-btn k-sc-go">열기</span><span class="t-btn t-btn--text k-sc-more">설명서 →</span></div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ M-4-결재 → 요청 관리 · 분석 요청(순번 · 급함 · 담당 · 보류 · 승인 · 반려) ═══════════ -->
+    <section class="v" id="vRequests">
+      <div class="page rq-page">
+        <div class="rq-head">
+          <div><h1>요청 관리</h1><p class="sub">분석 요청은 순번 · 급함 · 담당을 조정해 관리하고, 승인 요청은 승인 · 반려합니다</p></div>
+          <div class="tabs"><span class="tab on">분석 요청 <small>1</small></span><span class="tab">승인 요청 <small>2</small></span></div>
+        </div>
+        <div class="rq-body">
+          <div class="rq-left">
+            <!-- 지금 대기열(서버 값 · /ops/queues · /ops/gpus) -->
+            <div class="qs">
+              <div class="qs-c"><span class="k">지금 분석 중</span><b>없음</b></div>
+              <div class="qs-c"><span class="k">기다리는 분석</span><b>0<small>건</small></b></div>
+              <div class="qs-c"><span class="k">동시에 도는 분석</span><b>0<small> / 1건</small></b><span class="s">전력 규칙 — 한 번에 한 건</span></div>
+              <div class="qs-c"><span class="k">최근 기다린 시간</span><b>0.2<small>초</small></b><span class="s">하루 동안 거의 가장 길었던 대기</span></div>
+            </div>
+            <p class="qs-line">분석은 한 번에 한 건씩 돕니다. 순번은 그 한 줄에 선 차례이고, 2번은 1번이 끝난 뒤 시작합니다.</p>
+            <!-- 순번 목록 -->
+            <div class="rq-list">
+              <div class="rq-row rq-h"><span>순번</span><span>영상</span><span>기관 · 서비스 · 요청일</span><span>어디 · 넓이 · 영상</span><span>상태</span><span>담당</span><span>예상 시작</span><span></span></div>
+              <div class="rq-row on">
+                <span class="n">1</span>
+                <span class="th"><img src="img/req-preview.jpg" alt=""></span>
+                <span class="who"><b>광주전남특별시</b><small>영농관리 · 10.01 12:26</small></span>
+                <span class="what">순천시 와룡동·상사면 등 3곳<small>약 3.92㎢ · 1.9cm 드론</small></span>
+                <span><i class="st wait">확인 대기</i></span>
+                <span class="lead">담당 없음<small>LX 관리자가 봄</small></span>
+                <span class="eta k">승인하면 바로</span>
+                <span class="adj"><i class="up on">▲</i><i class="dn">▼</i><i class="flag">급함</i></span>
+              </div>
+              <div class="rq-row ex-row">
+                <span class="n">2</span>
+                <span class="th"><img src="img/t-namwon-aoi-2510.jpg" alt=""></span>
+                <span class="who"><b>남원시</b><small>영농관리 · 10.01 14:10</small><em class="ex">예시</em></span>
+                <span class="what">남원시 국산리 일대<small>약 1.2㎢ · 1.5cm 드론</small></span>
+                <span><i class="st ok">분석 준비</i></span>
+                <span class="lead">LX 직원<small>영농관리 담당</small></span>
+                <span class="eta">1번 끝난 뒤</span>
+                <span class="adj"><i class="up">▲</i><i class="dn">▼</i><i class="flag on">급함</i></span>
+              </div>
+              <div class="rq-row ex-row">
+                <span class="n">3</span>
+                <span class="th"><img src="img/t-ap25-namwon-2023.jpg" alt=""></span>
+                <span class="who"><b>광주전남특별시</b><small>해양쓰레기 · 10.01 15:40</small><em class="ex">예시</em></span>
+                <span class="what">여수시 돌산읍 등 2곳<small>약 18㎢ · 25cm 항공 · LX 공유</small></span>
+                <span><i class="st hold">보류</i></span>
+                <span class="lead">담당 없음<small>LX 관리자가 봄</small></span>
+                <span class="eta mute">모델 등록 뒤</span>
+                <span class="adj"><i class="up">▲</i><i class="dn off">▼</i><i class="flag">급함</i></span>
+              </div>
+            </div>
+            <p class="rq-foot">처리한 요청은 '처리 기록'에서 — 승인 · 반려 · 보류 · 순번 조정이 누가 언제 했는지 남습니다</p>
+          </div>
+
+          <!-- 한 건 서랍 — 영상 맨 위 · 관리 칸 · 무엇을 · 누가 왜 · 파일 접기 · 사유 · 보류 반려 승인 -->
+          <aside class="sheet rq-sheet">
+            <div class="sh-h"><h2>분석 요청 ·<br>광주전남특별시 · 영농관리</h2><span class="x">✕</span></div>
+            <div class="pv"><img src="img/req-preview.jpg" alt=""><div class="cap"><b>순천시 와룡동·상사면 등 3곳 · 약 3.92㎢</b><span>1.9cm 드론 · 촬영일 기록 없음 · 1장</span></div></div>
+            <div class="mg">
+              <div class="mg-r"><span class="k">순번</span><span class="v"><b>1</b> / 3<i class="up on">▲</i><i class="dn">▼</i></span></div>
+              <div class="mg-r"><span class="k">급함</span><span class="v"><span class="tg"></span><span class="hint">켜면 맨 앞으로 · 사유가 남습니다</span></span></div>
+              <div class="mg-r"><span class="k">담당</span><span class="v"><span class="sel">담당 없음 — LX 관리자 <i>▾</i></span></span></div>
+              <div class="mg-r"><span class="k">예상 시작</span><span class="v ai">승인하면 바로 — 대기 없음</span></div>
+            </div>
+            <p class="lab">무엇을 분석하나</p>
+            <dl><dt>서비스</dt><dd>영농관리 행정서비스 · 2cm 드론 모델</dd><dt>걸리는 시간</dt><dd>첫 분석 뒤 보입니다</dd></dl>
+            <p class="lab">누가 · 왜</p>
+            <dl><dt>요청한 사람</dt><dd>담당자 · 광주전남특별시 · <span class="num">10.01 12:26</span></dd><dt>요청 사유</dt><dd>영상 표준 확인 — 순천 ECW 의뢰</dd><dt>이번 달 사용</dt><dd>분석 0.0㎢ · 저장 6.9GB</dd></dl>
+            <div class="fold"><span><b>파일 · 보관</b> 1개 · 1.3GB · 표준본 3.5GB · 원본은 12월 30일 정리</span><i>▾</i></div>
+            <div class="inp">사유(반려 · 보류할 때는 꼭 적습니다)</div>
+            <div class="acts"><span class="btn b2">보류</span><span class="btn b2">반려</span><span class="btn">승인</span></div>
+          </aside>
+          <span class="note" data-f="rq" style="left:16px;top:8px"><i>1</i>맨 위는 <b>지금 대기열</b> — 분석 중 · 기다리는 건 · 동시에 한 건(전력 규칙) · 최근 대기(서버 값)</span>
+          <span class="note" data-f="rq" style="left:16px;top:150px"><i>2</i>목록은 <b>순번 순서</b> — 영상 그림 · 기관 · 어디 · 넓이 · 담당 · 예상 시작. ▲▼ 로 순번, '급함'은 맨 앞으로</span>
+          <span class="note" data-f="rq" style="left:16px;top:430px"><i>3</i>서랍은 영상 먼저 → <b>관리 칸</b>(순번 · 급함 · 담당 · 예상 시작) → 무엇을 · 누가 왜 → 파일은 접기 → 보류 · 반려 · 승인</span>
+          <span class="note" data-f="rq" style="left:16px;top:480px"><i>4</i>'결재'라는 말은 어디에도 없음 — 메뉴 '요청 관리' · 큰 숫자 '처리할 요청'</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ 요청 관리 · 승인 요청 탭(배포 승인 · 서비스 공개 · 모델 등록 · 다른 지역 적용) ═══════════ -->
+    <section class="v" id="vApprove">
+      <div class="page rq-page">
+        <div class="rq-head">
+          <div><h1>요청 관리</h1><p class="sub">분석 요청은 순번 · 급함 · 담당을 조정해 관리하고, 승인 요청은 승인 · 반려합니다</p></div>
+          <div class="tabs"><span class="tab">분석 요청 <small>1</small></span><span class="tab on">승인 요청 <small>2</small></span></div>
+        </div>
+        <div class="ap" style="position:relative;margin-top:20px">
+          <div class="tbl"><table>
+            <thead><tr><th>종류</th><th>대상</th><th>요청자</th><th>요청일 ↓</th></tr></thead>
+            <tbody>
+              <tr class="on"><td><span class="t-chip">운영 전환</span></td><td>남원시 도로 안전관리</td><td>—</td><td class="num">2026.09.26</td></tr>
+              <tr><td><span class="t-chip">운영 전환</span></td><td>키르기스 농업부 농지 이용 실태 분석</td><td>—</td><td class="num">2026.09.26</td></tr>
+            </tbody></table></div>
+          <aside class="sheet">
+            <div class="sh-h"><h2>운영 전환 ·<br>남원시 도로 안전관리</h2><span class="x">✕</span></div>
+            <p class="lab">누가 · 왜</p>
+            <dl><dt>요청일</dt><dd class="num">2026.09.26 20:33</dd><dt>요청 사유</dt><dd>적지 않음</dd></dl>
+            <p class="lab">바뀌는 것</p>
+            <dl><dt>단계</dt><dd><s>시범</s> → <b>운영</b></dd><dt>버전</dt><dd class="num">v2.1</dd></dl>
+            <div class="inp">사유(반려할 때는 꼭 적습니다)</div>
+            <div class="acts"><span class="btn b2">반려</span><span class="btn">승인</span></div>
+          </aside>
+          <span class="note" data-f="ap" style="left:16px;top:200px"><i>1</i>승인 요청 탭은 지금 '결재함' 모양 그대로 — 종류 이름만 사람 말로('배포 승인' → '운영 전환')</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ '결재' 말 바꾸기 — 보이는 곳 · 바뀐 말 ═══════════ -->
+    <section class="v" id="vWords">
+      <div class="page">
+        <h1>'결재' 말 바꾸기</h1>
+        <p class="sub">지금 화면에서 '결재'가 보이는 곳과 바뀐 말 — 메뉴 · 큰 숫자 · 버튼 · 알림 · 직원 화면</p>
+        <div class="wd">
+          <div class="wd-h"><span>어느 화면</span><span>지금</span><span>바뀐 뒤</span></div>
+          <div class="wd-r"><span>LX 관리자 — 왼쪽 메뉴 · 레일 배지</span><span>결재 <i>3</i></span><span>요청 관리 <i>3</i></span></div>
+          <div class="wd-r"><span>LX 관리자 — 현황 오른쪽 카드</span><span>결재 대기 3건 · [결재함 열기]</span><span>처리할 요청 3건(분석 요청 1 · 승인 요청 2) · [요청 관리 열기]</span></div>
+          <div class="wd-r"><span>LX 관리자 — 결재함 표 · 빈 상태 · 창 제목</span><span>결재함 · 결재할 것이 없습니다 · '… · 결재'</span><span>요청 관리(분석 요청 · 승인 요청 탭) · 처리할 요청이 없습니다 · '… · 요청 관리'</span></div>
+          <div class="wd-r"><span>LX 관리자 — 서랍 안내 두 줄</span><span>내가 요청한 결재입니다. 다른 관리자가 결재합니다 / 관리자 계정이 하나라 이 계정이 결재합니다</span><span>내가 올린 요청입니다. 다른 관리자가 결정합니다 / 관리자 계정이 하나라 이 계정이 결정합니다</span></div>
+          <div class="wd-r"><span>LX 관리자 — 종류 이름</span><span>배포 승인 · 분석 요청 · 서비스 공개 · 모델 등록 · 다른 지역 적용 · 규칙 임계</span><span>운영 전환 · 분석 요청 · 서비스 공개 · 모델 등록 · 다른 지역 적용 · 규칙 기준 — '승인' 글자는 버튼에만</span></div>
+          <div class="wd-r"><span>LX 관리자 — 배포 화면 한 흐름 띠 · 토스트</span><span>적용 요청 → 결재 → AI 분석 … / 결재 후 올릴 수 있습니다</span><span>적용 요청 → 승인 → AI 분석 … / 승인 뒤 올릴 수 있습니다</span></div>
+          <div class="wd-r"><span>LX 관리자 — 기관 · 인프라 · 계정 화면 레일</span><span>결재</span><span>요청 관리</span></div>
+          <div class="wd-r"><span>LX 직원 — 요청함 · 홈 요청함 칸 · 왼쪽 메뉴 숫자</span><span>내 결재 / 내가 올린 결재 / 결재를 기다리는 요청이 없습니다</span><span>내가 올린 요청 / 내가 올린 요청 / 결정을 기다리는 요청이 없습니다</span></div>
+          <div class="wd-r"><span>LX 직원 — 배포(다른 지역에 적용)</span><span>적용(결재 요청) · 결재 대기 · 관리자 결재 전 · 결재가 끝나면 AI 분석이 이어집니다 · LX 관리자 화면 결재함에서 결재합니다 · 결재를 요청했습니다 · 서비스 공개 결재 뒤에 적용할 수 있습니다</span><span>적용 요청 · 관리자 확인 대기 · 관리자 확인 전 · 승인되면 AI 분석이 이어집니다 · LX 관리자가 요청 관리에서 결정합니다 · 적용을 요청했습니다 · 서비스가 공개된 뒤에 적용할 수 있습니다</span></div>
+          <div class="wd-r"><span>LX 직원 — 학습 · 서비스 만들기</span><span>결재함에서 결재 · 공개 결재 대기 · LX 관리자 결재 뒤 공개됩니다 · 공개 결재를 요청했습니다</span><span>요청 관리에서 결정 · 공개 승인 대기 · LX 관리자가 승인하면 공개됩니다 · 공개를 요청했습니다</span></div>
+          <div class="wd-r"><span>LX 직원 — 서비스 카드 배지 · 카드 관리 거르기</span><span>공개 결재 중</span><span>공개 승인 대기</span></div>
+          <div class="wd-r"><span>LX 직원 — 결과 확인(규칙 기준 바꾸기)</span><span>결재를 요청했습니다 · 이미 결재 대기 중입니다 · 결재 대기 중</span><span>승인을 요청했습니다 · 이미 승인을 기다리고 있습니다 · 승인 대기 중</span></div>
+          <div class="wd-r"><span>LX 직원 — 프로젝트 목록 '막힌 곳' · 재학습 창</span><span>결재 대기 · 관리자 결재에 같은 근거가 남습니다</span><span>관리자 확인 대기 · 관리자 승인 요청에 같은 근거가 남습니다</span></div>
+          <div class="wd-r"><span>공통 — 알림 글 · 큰 숫자 허용 이름</span><span>결재함 · '결재 대기'</span><span>요청 관리 · '처리할 요청'</span></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+<div class="chat" id="chat"><span>XI ChatGEO</span><i>LX</i></div>
+<div class="stamp" id="stamp"><b>시안</b><span id="stampT"></span></div>
+<script>
+const q = new URLSearchParams(location.search);
+const v = q.get('v') || 'cards';
+document.body.dataset.v = v;
+const admin = ['requests', 'approve', 'words'].includes(v);
+document.getElementById('railStaff').hidden = admin; document.getElementById('railAdmin').hidden = !admin;
+document.getElementById('homeW').textContent = admin ? 'LX 관리자 대시보드' : 'LX 직원 대시보드';
+document.getElementById('roleW').textContent = admin ? 'LX 관리자' : 'LX 직원';
+const ON = { cards: 'riAnalyze', cardsb: 'riAnalyze', cards4: 'riCards', requests: 'riReq', approve: 'riReq', words: 'riReq' }[v];
+if (ON) document.getElementById(ON).classList.add('on');
+document.getElementById('stampT').textContent = { cards: 'ⓐ 카드 숫자 — AI 정확도(학습 검증) · 최근 분석', cardsb: 'ⓑ 카드 숫자 — 최근 분석 넓이 · 아래 줄 정확도', cards4: 'ⓐ 같은 카드 · 네 자리', requests: '요청 관리 — 분석 요청(순번 · 급함 · 담당 · 보류)', approve: '요청 관리 — 승인 요청 탭', words: "'결재' 말 바꾸기 목록" }[v] || '';
+for (const f of (q.get('f') || '').split(',').filter(Boolean)) document.querySelectorAll(`.note[data-f="${f}"]`).forEach((n) => n.classList.add('on'));
+if (q.get('m') === 'sheet') document.body.dataset.m = 'sheet';
+if (q.get('stamp') === '0') document.getElementById('stamp').remove();
+</script>
+</body>
+</html>

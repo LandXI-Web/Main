@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ko" style="--ci:#1F6F4A;--ci-t1:#E9F3ED;--ci-line:#D1E3D9">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · 기관-1 왼쪽 메뉴 세 안 — 영농관리 행정서비스 대시보드</title>
+<link rel="stylesheet" href="mock.css">
+<link rel="stylesheet" href="gov2.css">
+<link rel="stylesheet" href="gov3.css">
+<style>
+.about dl{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;margin:0;font:400 15px/22px var(--font-body)}
+.about dt{color:var(--sub)}
+.about dd{margin:0;color:var(--ink)}
+.about dd small{display:block;color:var(--sub);font-size:13px;line-height:18px}
+.about .lv{display:inline-flex;align-items:center;gap:6px;font-weight:500}
+.about .lv::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--warn)}
+</style>
+</head>
+<body class="g t">
+<div class="app" id="app">
+  <header class="mast">
+    <p class="mark"><span>남원</span><span>GV</span></p>
+    <span class="word">남원시 GeoVision 플랫폼</span>
+    <span class="mastchips" id="mastchips" hidden><span class="l">서비스</span><span class="chip on">영농관리</span><span class="chip">생활환경</span><span class="chip">도로 안전관리</span><span class="chip dim">인파관리</span></span>
+    <span class="sp"></span>
+    <span class="who"><b>농정과</b>박서연</span>
+    <span class="mb sq" data-ic="bell"><span class="bd">1</span></span>
+    <span class="mb sq">?</span>
+    <span class="mb">나가기</span>
+  </header>
+
+  <!-- A안 — 넓은 메뉴: 내 서비스 아래 서비스 이름이 바로 늘어선다 -->
+  <nav class="rail wide" id="rail-a" aria-label="메뉴">
+    <span class="ri" data-ic="card"><span>내 서비스</span></span>
+    <span class="grp">받는 서비스</span>
+    <span class="svc on"><i></i>영농관리</span>
+    <span class="svc"><i></i>생활환경</span>
+    <span class="svc"><i></i>도로 안전관리</span>
+    <span class="svc dim"><i></i>인파관리<small>2027년</small></span>
+    <span class="hr"></span>
+    <span class="ri" data-ic="send"><span>요청하기</span></span>
+    <span class="ri adm" data-ic="home"><span>기관 정보</span></span>
+    <span class="ri" data-ic="me"><span>계정</span></span>
+  </nav>
+  <!-- B · C안 — 지금처럼 아이콘 메뉴 넷 -->
+  <nav class="rail" id="rail-n" aria-label="메뉴" hidden>
+    <span class="ri" data-ic="card" aria-current="true"><span>내 서비스</span></span>
+    <span class="ri" data-ic="send"><span>요청하기</span></span>
+    <span class="ri adm" data-ic="home"><span>기관 정보</span></span>
+    <span class="ri" data-ic="me"><span>계정</span></span>
+  </nav>
+
+  <main class="main">
+    <div class="page">
+      <div class="crumb"><span>내 서비스</span><span class="sep">›</span><span class="k">영농관리 행정서비스</span></div>
+      <div class="head">
+        <span class="pick-h" id="pick"><h1>영농관리 행정서비스</h1><span class="car" id="car" hidden>▾</span>
+          <div class="pick-menu" id="pickmenu" hidden>
+            <span class="l">다른 서비스로</span>
+            <span class="it on"><i></i>영농관리 행정서비스<small>운영 · 2판</small></span>
+            <span class="it"><i></i>생활환경 위험요소 탐지 서비스<small>첫 결과 전</small></span>
+            <span class="it"><i></i>도로 안전관리 서비스<small>첫 결과 전</small></span>
+            <span class="it dim"><i></i>인파관리 서비스<small>2027년</small></span>
+            <span class="hr"></span>
+            <span class="it"><i style="background:transparent;box-shadow:inset 0 0 0 1.5px var(--mute)"></i>내 서비스 전체 보기</span>
+          </div>
+        </span>
+        <span class="sub">농지이용 경작·비경작 · 비닐하우스 · 사료작물 · 2025년 사업 · 농정과</span>
+        <span class="date">최근 결과 2026.06.08</span>
+      </div>
+      <div class="svcrow" id="svcrow"><span class="chip on">영농관리</span><span class="chip">생활환경</span><span class="chip">도로 안전관리</span><span class="chip dim">인파관리 · 2027년</span></div>
+      <div class="tabs" id="tabs">
+        <span data-t="status" aria-current="true">현황</span>
+        <span data-t="map">결과 지도</span>
+        <span data-t="list">필지 목록<span class="n">1,038</span></span>
+        <span data-t="history">이력<span class="n">26</span></span>
+        <span data-t="stats">통계·보고서</span>
+      </div>
+
+      <div class="dash">
+        <div class="dcol">
+          <div class="scene">
+            <img src="img/farm-scene.jpg" alt="">
+            <div class="hud"><p class="l">현장 확인 필요 · 남원시</p><p class="n">1,035<small>필지</small><i>~</i></p></div>
+            <div class="open"><span class="btn ci">결과 지도</span><span class="btn b2">필지 목록</span></div>
+            <span class="cap">2025년 드론영상 · 휴경·전용 의심 필지 윤곽</span>
+          </div>
+          <div class="card">
+            <h2>읍면별 현장 확인 필요<small>판정 전 · 많은 곳부터</small></h2>
+            <div class="bars">
+              <div class="bar"><span>운봉읍</span><i style="--w:100%"></i><span class="n num">143</span></div>
+              <div class="bar"><span>송동면</span><i style="--w:70%"></i><span class="n num">100</span></div>
+              <div class="bar"><span>아영면</span><i style="--w:63%"></i><span class="n num">90</span></div>
+              <div class="bar"><span>보절면</span><i style="--w:50%"></i><span class="n num">71</span></div>
+              <div class="bar"><span>대강면</span><i style="--w:45%"></i><span class="n num">65</span></div>
+              <div class="bar"><span>그 밖 34곳</span><i style="--w:100%;opacity:.35"></i><span class="n num">566</span></div>
+            </div>
+            <p class="small">읍면을 누르면 그 읍면의 결과 지도로 갑니다. 전체 표는 통계·보고서 탭에.</p>
+          </div>
+          <div class="card">
+            <h2>영상과 결과 — 2025년 네 시점<small>같은 자리 · 4·6·8·10월</small></h2>
+            <div class="epochs">
+              <div class="th"><img src="img/epoch-1.jpg" alt=""><span>2025.04</span></div>
+              <div class="th"><img src="img/epoch-2.jpg" alt=""><span>2025.06</span></div>
+              <div class="th"><img src="img/epoch-3.jpg" alt=""><span>2025.08</span></div>
+              <div class="th"><img src="img/epoch-4.jpg" alt=""><span>2025.10</span></div>
+            </div>
+            <p class="small">경작 흔적이 네 시점 모두 보이지 않으면 휴경·전용 의심으로 분류합니다. 판정은 담당자가 현장에서 확정합니다.</p>
+          </div>
+        </div>
+        <div class="dcol">
+          <div class="card about">
+            <h2>이 결과는<small>2판 · 2026.09.26 공개</small></h2>
+            <dl>
+              <dt>무엇이</dt><dd>판정한 필지 2,098<small>경작지 1,291 · 비경작지 807 · 우리 시 관할 안만</small></dd>
+              <dt>언제</dt><dd>2025년 드론영상 · 2026.06.08 분석</dd>
+              <dt>믿을 만한 정도</dt><dd><span class="lv">보통</span><small>현장 확인 전 참고용</small></dd>
+            </dl>
+            <span class="tbtn">이 결과 설명 자세히</span>
+          </div>
+          <div class="card">
+            <h2>현장 확인 예정<small>2건</small></h2>
+            <ul class="todo">
+              <li><b>산동면 대기리 615</b><small>10.04 확인 · 대장 대조 불일치</small><span class="chip ci">예정</span></li>
+              <li><b>덕과면 사율리 501-3</b><small>10.04 확인 · 대장 대조 불일치</small><span class="chip ci">예정</span></li>
+            </ul>
+            <span class="tbtn">확인 전 필지 1,038건 모두 보기</span>
+          </div>
+          <div class="card">
+            <h2>LX와 주고받은 검토 요청<small>0건</small></h2>
+            <p class="small">아직 없습니다. 결과 지도의 필지 카드에서 'LX에 검토 요청'으로 보냅니다.</p>
+            <div class="person" style="border-top:1px solid var(--rule);padding-top:12px"><span class="av lx">LX</span><div class="t"><b>김도윤 · LX 헬프데스크 담당<span class="ex">예시</span></b><span>LX 관리자가 이 서비스에 지정 · 막힌 일은 요청하기로</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="foot"><b>전북특별자치도 남원시</b><span>대표전화 063-620-6114</span><span class="sp"></span><span>AI 분석 · 모델 개발과 갱신 — LX 한국국토정보공사</span></div>
+    </div>
+  </main>
+</div>
+<nav class="tabsbar" aria-label="메뉴">
+  <span class="ri" data-ic="card" aria-current="true"><span>내 서비스</span></span>
+  <span class="ri" data-ic="send"><span>요청하기</span></span>
+  <span class="ri" data-ic="me"><span>계정</span></span>
+  <span class="ri" data-ic="menu"><span>메뉴</span></span>
+</nav>
+<span class="stamp r" id="stamp"><b>시안</b> A안 — 왼쪽 메뉴에 서비스 이름이 바로 늘어섬 · 한 번 눌러 다른 서비스로 · 숫자는 서버 값 · 사람 이름은 예시</span>
+<script>
+(() => {
+  const q = new URLSearchParams(location.search);
+  const m = q.get('menu') || 'a';
+  const app = document.getElementById('app');
+  if (m === 'a') { app.classList.add('wide'); }
+  else {
+    document.getElementById('rail-a').hidden = true; document.getElementById('rail-n').hidden = false;
+    document.getElementById('svcrow').hidden = true;
+  }
+  if (m === 'b') {
+    document.getElementById('mastchips').hidden = false;
+    document.getElementById('stamp').innerHTML = '<b>시안</b> B안 — 머리(위 띠)에 서비스 칩 · 왼쪽 메뉴는 지금처럼 넷 · 숫자는 서버 값';
+  }
+  if (m === 'c') {
+    document.getElementById('car').hidden = false; document.getElementById('pickmenu').hidden = false;
+    document.getElementById('stamp').innerHTML = '<b>시안</b> C안 — 제목 옆 고르개(▾)를 눌러 펼친 모습 · 왼쪽 메뉴는 지금처럼 넷 · 숫자는 서버 값';
+  }
+})();
+</script>
+<script src="icons.js"></script>
+</body>
+</html>

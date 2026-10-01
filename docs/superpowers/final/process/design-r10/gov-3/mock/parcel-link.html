@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ko" style="--ci:#1F6F4A;--ci-t1:#E9F3ED;--ci-line:#D1E3D9">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · 결과 지도 — LX맵 층 켜기 · 필지 카드에 연속지적 정보(운봉읍 준향리 824-9 · 실제 값)</title>
+<link rel="stylesheet" href="mock.css">
+<link rel="stylesheet" href="gov2.css">
+<link rel="stylesheet" href="gov3.css">
+<style>
+.mapwrap{height:800px}
+.mapwrap .mapimg{object-position:center}
+.layers{position:absolute;right:424px;top:20px;display:flex;gap:6px;align-items:center;background:rgba(255,255,255,.94);border-radius:10px;padding:6px 8px;box-shadow:var(--elev-map)}
+.layers .l{font:500 12px/16px var(--font-body);color:var(--sub);margin:0 4px}
+.layers .chip{height:30px;padding:0 12px;border-radius:15px;font-size:13px;background:var(--bg-0);color:var(--ink);gap:6px}
+.layers .chip.on{background:var(--ink);color:#fff}
+.layers .chip.ci.on{background:var(--ci)}
+.layers .chip i{width:8px;height:8px;border-radius:50%;background:currentColor;font-style:normal;opacity:.9}
+.ring{position:absolute;left:57.4%;top:45.5%;width:76px;height:58px;transform:translate(-50%,-50%);border:3px solid #FFD166;border-radius:10px;box-shadow:0 0 0 2px rgba(0,0,0,.35),inset 0 0 0 2px rgba(0,0,0,.25)}
+.ring::after{content:"824-9";position:absolute;left:50%;top:-26px;transform:translateX(-50%);background:#FFD166;color:var(--ink);border-radius:6px;padding:1px 7px;font:700 12px/18px var(--font-num);white-space:nowrap}
+.basecap{position:absolute;left:20px;bottom:72px;background:rgba(255,255,255,.94);border-radius:8px;padding:5px 10px;font:400 12px/16px var(--font-body);color:var(--sub)}
+.tags .chip.done{background:var(--bg-0);color:var(--ink)}
+.sheet .cmp .l{font-size:12px}
+.sheet .cmp div.ai b{font-size:17px}
+</style>
+</head>
+<body class="g t">
+<div class="app">
+  <header class="mast">
+    <p class="mark"><span>남원</span><span>GV</span></p>
+    <span class="word">남원시 GeoVision 플랫폼</span>
+    <span class="sp"></span>
+    <span class="who"><b>농정과</b>박서연</span>
+    <span class="mb sq" data-ic="bell"><span class="bd">1</span></span>
+    <span class="mb sq">?</span>
+    <span class="mb">나가기</span>
+  </header>
+  <nav class="rail" aria-label="메뉴">
+    <span class="ri" data-ic="card" aria-current="true"><span>내 서비스</span></span>
+    <span class="ri" data-ic="send"><span>요청하기</span></span>
+    <span class="ri adm" data-ic="home"><span>기관 정보</span></span>
+    <span class="ri" data-ic="me"><span>계정</span></span>
+  </nav>
+  <main class="main">
+    <div class="page">
+      <div class="crumb"><span>내 서비스</span><span class="sep">›</span><span class="k">영농관리 행정서비스</span></div>
+      <div class="head">
+        <h1>영농관리 행정서비스</h1>
+        <span class="sub">농지이용 경작·비경작 · 비닐하우스 · 사료작물 · 2025년 사업 · 농정과</span>
+        <span class="date">최근 결과 2026.06.08</span>
+      </div>
+      <div class="tabs">
+        <span>현황</span>
+        <span aria-current="true">결과 지도</span>
+        <span>필지 목록<span class="n">1,038</span></span>
+        <span>이력<span class="n">26</span></span>
+        <span>통계·보고서</span>
+      </div>
+
+      <div class="mapwrap">
+        <img class="mapimg" id="mapimg" src="img/lxmap-on.jpg" alt="">
+        <div class="ring"></div>
+        <div class="lay">
+          <p class="l">보고 있는 결과</p>
+          <p class="nm">영농관리 행정서비스 <span class="chip ci">2판</span></p>
+          <div class="row"><i></i>2025년 드론영상 · 2026.06.08 분석 · 2,098필지</div>
+          <div class="row off"><i></i>2023년 항공영상(1판) — 눌러서 바꾸기</div>
+          <div class="acts"><span class="tbtn">이 결과 설명</span><span class="tbtn">네 시점 비교</span><span class="tbtn">행정정보와 비교</span></div>
+        </div>
+        <div class="layers"><span class="l">지도 층</span><span class="chip on"><i></i>영상</span><span class="chip ci on"><i></i>AI 결과</span><span class="chip on" id="lxchip"><i></i>LX맵</span></div>
+        <span class="basecap" id="basecap">LX맵(편집지적도) 켬 — 지번 · 경계가 지도 위에 바로 · 바탕은 시안용 공개 위성 영상</span>
+        <div class="legend"><span><i class="a"></i>휴경·전용 의심 1,035</span><span><i class="b"></i>경작지</span></div>
+        <div class="mapact"><span class="btn ci">이 영상으로 분석 요청</span></div>
+
+        <aside class="sheet tall">
+          <div class="sh"><h2>운봉읍 준향리 824-9</h2><span class="x">×</span></div>
+          <div class="tags"><span class="chip done">확인 끝 · 맞음</span><span class="chip ci">휴경·전용 의심</span></div>
+          <div class="cmp">
+            <div><span class="l">연속지적 대장</span><b>답</b><span>1,652.9㎡</span></div>
+            <div class="ai"><span class="l">AI 분석</span><b>농지 위 건물</b><span>우선순위 A</span></div>
+          </div>
+          <div class="pinfo">
+            <p class="l">필지 정보<small>연속지적도 · 공시 2025.01</small></p>
+            <dl>
+              <dt>주소</dt><dd>전북특별자치도 남원시 운봉읍 준향리 824-9</dd>
+              <dt>지목</dt><dd>답</dd>
+              <dt>면적</dt><dd class="n">1,652.9 ㎡</dd>
+              <dt>공시지가</dt><dd class="n">15,600원/㎡<small>2025년 1월 고시</small></dd>
+              <dt>용도지역</dt><dd>계획관리지역<small>2023년 고시</small></dd>
+              <dt>읍면 · 리</dt><dd>운봉읍 · 준향리</dd>
+              <dt>필지 번호</dt><dd class="id">5219025030108240009</dd>
+            </dl>
+            <div class="row2"><span>이 자리 LX맵 겹쳐 보기</span><span class="sw"></span></div>
+          </div>
+          <div class="verdict">
+            <p class="l">확인 결과 적기<small>담당자만 · 저장하면 이력에 남습니다</small></p>
+            <div class="inp ta">위반</div>
+            <div class="two"><div class="inp"><span class="ph">다음 확인 날짜</span><span class="cnt">정하지 않음</span></div><span class="btn ci">저장</span></div>
+          </div>
+          <div class="log">
+            <b>이 필지의 기록</b>
+            <ul><li><span class="d">09.29</span><span>확인 기록 — 맞음 · 메모 '위반' · 김현장</span></li><li><span class="d">09.26</span><span>2판 공개 — 휴경·전용 의심으로 분류</span></li></ul>
+          </div>
+          <span class="btn b2">LX에 검토 요청</span>
+        </aside>
+      </div>
+
+      <div class="foot"><b>전북특별자치도 남원시</b><span>대표전화 063-620-6114</span><span class="sp"></span><span>AI 분석 · 모델 개발과 갱신 — LX 한국국토정보공사</span></div>
+    </div>
+  </main>
+</div>
+<span class="note" style="left:560px;top:350px;max-width:400px"><i>1</i>지도 층에 'LX맵' — 켜면 지번 · 경계가 지도 위에 바로(그림 층 · 서버가 이미 받는 길)</span>
+<span class="note" style="left:560px;top:560px;max-width:430px"><i>2</i>필지 정보 = 연속지적도 속성(주소 · 지목 · 면적 · 공시지가 · 용도지역) — 이 필지의 실제 값</span>
+<span class="note" style="left:560px;top:800px;max-width:400px"><i>3</i>확인 결과는 메모 · 다음 확인 날짜만(기관-9 ⓑ)</span>
+<span class="stamp r" id="stamp"><b>시안</b> 결과 지도 — LX맵 층 켬 · 필지 카드 '필지 정보'는 서버가 받은 실제 값(운봉읍 준향리 824-9) · 확인 기록도 서버 값</span>
+<script>
+(() => {
+  const q = new URLSearchParams(location.search);
+  if (q.get('lx') === '0') {
+    document.getElementById('mapimg').src = 'img/lxmap-sat.jpg';
+    const c = document.getElementById('lxchip'); c.classList.remove('on');
+    document.getElementById('basecap').textContent = 'LX맵 끔 — 영상과 AI 결과만 · 바탕은 시안용 공개 위성 영상';
+    document.getElementById('stamp').innerHTML = '<b>시안</b> 결과 지도 — LX맵 층 끈 모습(같은 자리) · 필지 카드는 같음';
+    document.querySelectorAll('.note').forEach((n) => { n.hidden = true; });
+    document.querySelector('.pinfo .row2 .sw').style.background = 'var(--rule)';
+  }
+})();
+</script>
+<script src="icons.js"></script>
+</body>
+</html>

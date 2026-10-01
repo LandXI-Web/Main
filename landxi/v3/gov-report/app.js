@@ -11,6 +11,7 @@ import { api, esc, h, hasRoute, bboxOf, isDev, session } from '../kit/util.js';
 import { sse } from '../../shared/api-v1.js';
 import { buildDocx } from './docx.js';
 import { reviewAction } from '../kit/notify.js';   // 필지 카드 '검토 요청'(구현 2차)
+import { govRail } from '../gov-select/menu.js';   // 기관 메뉴 한 곳(구현 5차 기관-1 ⓐ — 모든 기관 화면 같은 메뉴)
 
 const $ = (s, r = document) => r.querySelector(s);
 const MOBILE = () => matchMedia('(max-width: 760px)').matches;
@@ -59,7 +60,8 @@ const who = await gate('gov-report');
 S.who = who;
 S.key = `gr:${who.me.tenant_id}`;
 const org = (who.org || who.name || '').replace(/\s*담당자$/, '').split(/\s+/).pop();
-const app = shell({ who: { ...who, org }, home: 'gov-report', title: org, xiRegion: () => S.region });   // XI맵 링크에 지금 시군구
+const app = shell({ who: { ...who, org }, home: 'gov-report', title: org, xiRegion: () => S.region,
+  rail: who.key === 'tenant/local' ? govRail({ who, current: 'list' }) : null });   // 서비스 안 화면 = '내 서비스'   // XI맵 링크에 지금 시군구
 app.main.append($('#tpl').content.cloneNode(true));
 document.title = `${org} · 할 일 · Land-XI`;
 devDrawer({ who });

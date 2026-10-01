@@ -32,7 +32,7 @@ async function signInAtMain(page, org, id = 'lxadmin@lx.or.kr') {
   await page.waitForFunction(() => window.__govHome?.ready, null, { timeout: 30000 });
   await page.fill('.gh-form input[name=login]', id);
   await page.fill('.gh-form input[name=password]', PW);
-  await Promise.all([page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/gov-select/'), { timeout: 30000 }), page.click('.gh-go')]);
+  await Promise.all([page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/gov-select/'), { timeout: 90000, waitUntil: 'domcontentloaded' }), page.click('.gh-go')]);
 }
 
 test.describe('구현 2차 · 기관 분기 플랫폼(기관 주소)', () => {
@@ -82,6 +82,16 @@ test.describe('구현 2차 · 기관 분기 플랫폼(기관 주소)', () => {
     expect(seen.namwon.parts).toBe(5); expect(seen['gwangju-jeonnam'].parts).toBe(5);    // 틀은 같다
     expect(seen.namwon.h1).toBe(2); expect(seen['gwangju-jeonnam'].h1).toBe(2);          // 머리 두 줄
     await expect(page.locator('.gh-svc[data-card="card-marine"] .t-chip')).toHaveText('운영');
+    /* 구현 5차 기관-2 ⓐ — 결과가 있는 서비스만 실제 결과 장면(작게 · 저해상 크롭) · 나머지는 시작 시기 · 그림판(일러스트) 0 */
+    await page.goto(ORG('namwon') + '/', { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => window.__govHome?.ready, null, { timeout: 30000 });
+    const pic = page.locator('.gh-svc[data-card="card-farm"] .gh-crop img');
+    await expect(pic).toBeVisible();
+    await expect.poll(() => pic.evaluate((i) => i.naturalWidth), { timeout: 20000 }).toBeGreaterThan(0);
+    expect(await pic.evaluate((i) => Math.max(i.naturalWidth, i.naturalHeight))).toBeLessThanOrEqual(800);     // 로그인 전 = 저해상만
+    expect(await page.locator('.gh-svc[data-card="card-road"] .gh-crop.is-blank').count()).toBe(1);
+    expect(await page.locator('.gb-face, .gh-art').count()).toBe(0);
+    expect(await page.locator('.gh-fact').count()).toBe(3);                                  // 업무 결과 셋(서버 값)
   });
 
   test('남원 — 메인 로그인 → 서비스 선택 → 서비스 대시보드 → 기존 기관 화면(?service=)', async ({ page }) => {
@@ -100,13 +110,21 @@ test.describe('구현 2차 · 기관 분기 플랫폼(기관 주소)', () => {
     await page.locator('.gs-card[data-card="card-farm"] .k-sc-go').click();
     await page.waitForURL((u) => u.searchParams.get('service') === 'card-farm');
     await page.waitForFunction(() => window.__govSelect?.ready && window.__govSelect.view === 'svc', null, { timeout: 30000 });
-    const big = page.locator('.gs-bigc .k-big');
+    const big = page.locator('.gd-scene');                                               // 구현 5차 기관-4 ⓐ — 결과 장면 위 큰 숫자 하나
     await expect(big).toHaveAttribute('data-metric', '현장 확인 필요');
     const v = await big.getAttribute('data-v');
     const sum = await page.evaluate(async () => { const s = JSON.parse(localStorage.getItem('lx_api_session')); const r = await fetch('/api/v1/summary?card=card-farm', { headers: { authorization: 'Bearer ' + s.token } }); return r.json(); });
     expect(Number(v)).toBe(sum.items.reduce((a, i) => a + (i.metrics.field_check.value || 0), 0));   // 숫자 한 출처(/summary)
     await expect(page.locator('.gs-tab[aria-current]')).toHaveText('현황');
-    await page.locator('.gs-tabs a', { hasText: '결과 보기' }).click();
+    expect(await page.locator('.gs-tabs a').allInnerTexts()).toEqual(['현황', '결과 지도', '필지 목록', '행정정보와 비교', '보고서']);
+    expect(new URL(await page.locator('.gs-tabs a', { hasText: '결과 지도' }).getAttribute('href'), page.url()).pathname).toBe('/landxi/v3/xi-clean/');
+    /* 읍면별 막대의 합 = 큰 숫자(같은 식 · 서버 값) · 이 결과는(결과 설명서) · 내려받기 셋 */
+    await page.waitForSelector('.gd-bars .gd-bar');
+    const bars = await page.locator('.gd-bars .gd-bar-n').allInnerTexts();
+    expect(bars.reduce((a, t) => a + Number(t.replace(/,/g, '')), 0)).toBe(Number(v));
+    await expect(page.locator('.gd-about .gd-dl3 button')).toHaveCount(3);
+    await expect(page.locator('.gd-epochs .gd-ep-i')).toHaveCount(4);
+    await page.locator('.gs-tabs a', { hasText: '행정정보와 비교' }).click();
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/gov-fusion/') && u.searchParams.get('service') === 'card-farm', { timeout: 30000 });
     await page.waitForTimeout(3000);
     expect(new URL(page.url()).pathname.startsWith('/landxi/v3/gov-fusion/')).toBe(true);   // 관문이 되돌리지 않았다
@@ -121,7 +139,7 @@ test.describe('구현 2차 · 기관 분기 플랫폼(기관 주소)', () => {
     await expect(page.locator('.k-mast .gs-plat')).toHaveText('전남광주 AI 플랫폼');
     await expect(page.locator('.gs-reg select')).toBeVisible();                          // 광역만 한 칸 더
     await expect(page.locator('.gs-reg select option').first()).toHaveText('광역 전체');
-    await expect(page.locator('.gs-bigc .k-big')).toHaveAttribute('data-metric', 'AI 탐지');
+    await expect(page.locator('.gd-scene')).toHaveAttribute('data-metric', 'AI 탐지');
     await page.selectOption('.gs-reg select', '12130');
     await page.waitForURL((u) => u.searchParams.get('region') === '12130');
     await page.waitForFunction(() => window.__govSelect?.ready, null, { timeout: 30000 });

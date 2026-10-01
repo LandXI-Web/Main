@@ -26,7 +26,7 @@ const W = {
     done: '보냈습니다. 답이 오면 알림으로 알려 드립니다', open_sent: '내가 보낸 요청', toast_ok: '검토 요청을 보냈습니다', toast_no: '보내지 못했습니다',
     no_memo: '메모 없음', lx_ans: 'LX 답', empty_sent: '아직 보낸 요청이 없습니다', empty_sent_t: '필지 카드의 검토 요청으로 보냅니다',
     back: '목록', more: '한 줄 덧붙이기', add: '보내기', verdict: '판정', me: '나', load_fail: '불러오지 못했습니다',
-    x_request: '분석 의뢰 확인 대기', x_request_staff: '담당 서비스 분석 의뢰', x_request_wait: '관리자 승인 대기', x_signup: '가입 신청', x_reset: '비밀번호 재설정 요청' },
+    x_request: '분석 요청 확인 대기', x_request_staff: '담당 서비스 분석 요청', x_request_wait: '관리자 승인 대기', x_signup: '가입 신청', x_reset: '비밀번호 재설정 요청' },
   en: { bell: 'Notices', none: 'No new notices', all_lx: 'All requests from agencies', all_t: 'All my requests', sent: 'My review requests',
     ask: 'Request review', memo: 'One-line note', memo_opt: 'optional', ph: 'e.g. The shed was removed last month', send: 'Send to LX', cancel: 'Cancel',
     to: 'To', to_staff: (n) => `LX staff in charge ${n}`, to_lead: (n) => `LX project lead ${n}`, to_admin: 'LX administrator', later: "Replies appear in 'My review requests'",

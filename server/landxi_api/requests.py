@@ -127,7 +127,7 @@ def _iso(v) -> str | None:
 def _tuser(request: Request) -> Principal:
     p = require(principal(request))
     if p.realm != "tenant" or not p.tenant_id or p.tenant_id == "lx-demo":
-        raise ApiError("forbidden", "기관 계정만 분석을 의뢰할 수 있습니다")
+        raise ApiError("forbidden", "기관 계정만 분석을 요청할 수 있습니다")
     return p
 
 
@@ -819,7 +819,7 @@ def _write_vrt(out: Path, metas: list[dict], epsg: int) -> None:
     for m in metas:
         t = m["transform"]
         if abs(t.b) > 1e-12 or abs(t.d) > 1e-12:
-            raise ReadFail("rotated", "기울어진 영상이 섞여 있어 한 번에 읽지 못했습니다 — 파일을 하나씩 의뢰해 주세요")
+            raise ReadFail("rotated", "기울어진 영상이 섞여 있어 한 번에 읽지 못했습니다 — 파일을 하나씩 넣어 주세요")
     res = min(abs(m["transform"].a) for m in metas)
     x0 = min(m["bounds"].left for m in metas)
     x1 = max(m["bounds"].right for m in metas)
@@ -959,7 +959,7 @@ def read_files(p: Principal, org: str, folder: Path, names: list[str]) -> dict:
                     return {"ok": False, "code": "no_crs", "why": "위치 기준을 알아볼 수 없는 영상입니다 — 영상과 함께 받은 파일을 모두 같이 올려 주세요"}
                 m["epsg"], guessed = g, guessed or not m["crs_known"]
         if len({m["epsg"] for m in metas}) > 1:
-            return {"ok": False, "code": "mixed_crs", "why": "위치 기준이 서로 다른 파일이 섞여 있습니다 — 파일을 나눠 따로 의뢰해 주세요"}
+            return {"ok": False, "code": "mixed_crs", "why": "위치 기준이 서로 다른 파일이 섞여 있습니다 — 파일을 나눠 따로 요청해 주세요"}
         epsg = metas[0]["epsg"]
         need_vrt = len(metas) > 1 or guessed or metas[0]["count"] < 3 or not metas[0]["crs_known"]
         src = folder / "_모음.vrt" if need_vrt else folder / rasters[0]
@@ -982,7 +982,7 @@ def read_files(p: Principal, org: str, folder: Path, names: list[str]) -> dict:
     except Exception:
         ov = None
     if inside is None:
-        return {**base, "ok": False, "code": "out_of_scope", "why": f"관할 밖 영상입니다 — {org} 관할 안의 영상만 의뢰할 수 있습니다",
+        return {**base, "ok": False, "code": "out_of_scope", "why": f"관할 밖 영상입니다 — {org} 관할 안의 영상만 분석을 요청할 수 있습니다",
                 "overlay": ov}
     place, sgg = _place(p, inside)
     area, _ = aoi_area(mapping(inside if inside.geom_type == "Polygon" else max(getattr(inside, "geoms", [inside]), key=lambda x: x.area)))
@@ -1186,7 +1186,7 @@ async def create(body: dict, request: Request):
         if not img or not img["fp"] or not (img["path_internal"] or (img["layer"] or {}).get("cog_path")):
             raise ApiError("imagery_unavailable", "이 영상은 지도 보기 전용이라 분석에 쓸 수 없습니다", None, 409)
         if sid in done.get(imagery_id, set()):
-            raise ApiError("conflict", "이 영상은 이 서비스로 이미 분석했거나 의뢰했습니다", None, 409)
+            raise ApiError("conflict", "이 영상은 이 서비스로 이미 분석했거나 요청했습니다", None, 409)
         inside, out_pct = await run_in_threadpool(_clip, p, shape(img["fp"]).buffer(0))
         if inside is None:
             raise ApiError("out_of_scope", "관할 밖 영상입니다", None, 403)
@@ -1206,7 +1206,7 @@ async def create(body: dict, request: Request):
         if any(r["state"] == "uploading" for r in rows):
             raise ApiError("not_ready", "아직 올리는 중인 파일이 있습니다", None, 409)
         if any(r["request_id"] for r in rows):
-            raise ApiError("conflict", "이미 의뢰한 묶음입니다", None, 409)
+            raise ApiError("conflict", "이미 요청한 묶음입니다", None, 409)
         folder = config.DATA_ROOT / root_rel(p.tenant_id) / "drafts" / draft
         try:
             rd = json.loads((folder / "_읽은값.json").read_text(encoding="utf-8"))
@@ -1452,7 +1452,7 @@ async def get_request(rid: str, request: Request):
         r = await conn.fetchrow(f"SELECT {REQ_COLS} FROM analysis_requests q JOIN deploys d ON d.id=q.deploy_id LEFT JOIN cards c ON c.id=d.card_id "
                                 "WHERE q.id=$1", rid)
     if not r or (p.realm == "tenant" and r["tenant_id"] != p.tenant_id) or not (p.realm == "tenant" or (p.is_lx and p.role in ("admin", "staff"))):
-        raise ApiError("not_found", "의뢰가 없습니다")
+        raise ApiError("not_found", "분석 요청이 없습니다")
     r = (await _sync([r]))[0]
     m = dict(r["meta"] or {})
     v = _view(r, p)
@@ -1474,7 +1474,7 @@ async def on_decided(conn, rid: str, decision: str, reason: str | None, user: st
     n = await conn.execute("UPDATE analysis_requests SET state=$2, reason=$3, decided_by=$4, decided_at=now(), updated_at=now() "
                            "WHERE id=$1 AND state='pending'", rid, new, reason if new == "rejected" else None, user)
     if n.endswith(" 0"):
-        raise ApiError("conflict", "이미 결정된 의뢰입니다", None, 409)
+        raise ApiError("conflict", "이미 결정된 분석 요청입니다", None, 409)
     return {"request": rid, "state": new}
 
 
@@ -1645,9 +1645,9 @@ async def _register_upload_imagery(r, src: str | None = None) -> str:
         await conn.execute(
             "INSERT INTO imagery(id, name, tier, gsd_m, epoch, crs, footprint, path_internal, license, attribution, export_policy, security_review, "
             "rights_holder, ladder, kind, layer, sgg_cd, year, registered_by, registered_at) VALUES ($1,$2,'raw',$3,$4,$5,"
-            "ST_SetSRID(ST_GeomFromGeoJSON($6),4326),$7,'기관 제공(분석 의뢰 전용)',$8,'never','pending',$8,$9,'ortho',$10,$11,$12,$13,now()) "
+            "ST_SetSRID(ST_GeomFromGeoJSON($6),4326),$7,'기관 제공(분석 요청 전용)',$8,'never','pending',$8,$9,'ortho',$10,$11,$12,$13,now()) "
             "ON CONFLICT (id) DO NOTHING",
-            iid, {"ko": f"{m.get('org')} 의뢰 영상", "en": "request imagery"}, m.get("gsd_m"), m.get("date"), f"EPSG:{m.get('epsg')}",
+            iid, {"ko": f"{m.get('org')} 분석 요청 영상", "en": "request imagery"}, m.get("gsd_m"), m.get("date"), f"EPSG:{m.get('epsg')}",
             json.dumps(m["footprint"]), m["src"], m.get("org") or "기관", {"stage": "request", "from": 12, "to": 22, "order": 999},
             {"role": "request", "request_id": r["id"], "tenant": r["tenant_id"], "source_kind": m.get("kind")}, m.get("sgg_cd"), year, r["requested_by"])
         await conn.execute("UPDATE analysis_requests SET imagery_id=$2 WHERE id=$1", r["id"], iid)
@@ -1706,7 +1706,7 @@ async def start_analysis(rid: str, user: str) -> None:
             body = {"kind": "infer", "model_id": model["id"], "imagery_id": iid, "aoi": aoi,
                     "options": {**opts, "upsample": J.fit_upsample(model, img), "max_km2": J.INFER_MAX_KM2}}
             guard = {"aoi": aoi}
-        body["label"] = f"분석 의뢰 · {m.get('org') or ''} · {m.get('service') or ''}".strip(" ·")
+        body["label"] = f"분석 요청 · {m.get('org') or ''} · {m.get('service') or ''}".strip(" ·")
         await J.scope_guard(tp, guard)                          # 관할 밖 0(원칙 39) — 기관 계정 기준으로 한 번 더
         q = await J.build_quote(lx, body)
         q["_tenant"] = r["tenant_id"]

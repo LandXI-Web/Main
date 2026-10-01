@@ -1,0 +1,233 @@
+/* 설계 10차 · 기관 화면 3차 — mock.css(8차 한 벌) · gov2.css(9차 부품) 위에 더하는 것만.
+   왼쪽 메뉴 세 안(넓은 메뉴 · 머리 칩 · 제목 고르개) · LX 관리자 '기관 한 곳' 새 화면 · 필지 카드 연속지적 연계 · 2차 서비스 흐름 그림. */
+
+/* ══ 기관-1 A안 — 넓은 왼쪽 메뉴(서비스 이름이 바로 늘어섬) ══ */
+.app.wide{grid-template-columns:232px minmax(0,1fr)}
+.rail.wide{align-items:stretch;padding:14px 12px;gap:2px}
+.rail.wide .ri{width:auto;flex-direction:row;justify-content:flex-start;gap:10px;padding:9px 12px;font:500 14px/20px var(--font-body);text-align:left;border-radius:8px;color:var(--ink-2)}
+.rail.wide .ri svg{flex:none}
+.rail.wide .ri[aria-current="true"]{box-shadow:none;background:var(--ci-t1);color:var(--ci);font-weight:600}
+.rail.wide .ri .bd{position:static;margin-left:auto}
+.rail.wide .ri.adm{margin-top:auto}
+.rail.wide .grp{display:block;margin:10px 12px 4px;font:500 12px/16px var(--font-body);color:var(--sub)}
+.rail.wide .svc{display:flex;align-items:center;gap:8px;margin-left:22px;padding:7px 10px 7px 12px;border-left:2px solid var(--rule);font:400 14px/20px var(--font-body);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rail.wide .svc i{flex:none;width:6px;height:6px;border-radius:50%;background:var(--mute);font-style:normal}
+.rail.wide .svc.on{border-left-color:var(--ci);color:var(--ci);font-weight:600;background:var(--ci-t1);border-radius:0 8px 8px 0}
+.rail.wide .svc.on i{background:var(--ci)}
+.rail.wide .svc.go i{background:var(--ai)}
+.rail.wide .svc.dim{color:var(--sub)}
+.rail.wide .svc.dim i{background:transparent;box-shadow:inset 0 0 0 1.5px var(--mute)}
+.rail.wide .svc small{margin-left:auto;font:400 11px/14px var(--font-body);color:var(--sub)}
+.rail.wide .hr{height:1px;background:var(--rule);margin:10px 4px}
+
+/* 휴대폰 — A안은 머리 아래 서비스 칩 한 줄(가로 스크롤) */
+.svcrow{display:none}
+@media (max-width:640px){
+  .svcrow{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:-6px 0 0;padding-bottom:2px}
+  .svcrow .chip{flex:none;height:32px;padding:0 12px;border-radius:16px;font-size:13px;box-shadow:inset 0 0 0 1px var(--rule);background:var(--bg-1)}
+  .svcrow .chip.on{background:var(--ci);color:#fff;box-shadow:none}
+  .svcrow .chip.dim{color:var(--sub)}
+  .app.wide{grid-template-columns:minmax(0,1fr)}
+}
+
+/* ══ 기관-1 B안 — 머리(마스트)에 서비스 칩 ══ */
+.mastchips{display:flex;gap:6px;align-items:center;margin-left:8px;padding-left:16px;border-left:1px solid var(--rule)}
+.mastchips .chip{height:32px;padding:0 12px;border-radius:16px;font-size:13px;background:var(--bg-1);box-shadow:inset 0 0 0 1px var(--rule)}
+.mastchips .chip.on{background:var(--ci);color:#fff;box-shadow:none}
+.mastchips .chip.dim{color:var(--sub)}
+.mastchips .l{font:500 12px/16px var(--font-body);color:var(--sub);margin-right:4px}
+@media (max-width:640px){.mastchips{display:none}}
+
+/* ══ 기관-1 C안 — 제목 옆 고르개(눌러서 펼친 모습) ══ */
+.pick-h{position:relative;display:inline-flex;align-items:center;gap:10px}
+.pick-h .car{width:36px;height:36px;border-radius:8px;background:var(--bg-0);box-shadow:inset 0 0 0 1px var(--rule);display:inline-flex;align-items:center;justify-content:center;font:400 14px/1 var(--font-num);color:var(--ink)}
+.pick-menu{position:absolute;left:0;top:calc(100% + 8px);z-index:30;width:360px;background:var(--bg-1);border-radius:12px;box-shadow:var(--elev-3);padding:8px;display:flex;flex-direction:column;gap:2px}
+.pick-menu .l{padding:6px 10px 4px;font:500 12px/16px var(--font-body);color:var(--sub)}
+.pick-menu .it{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;font:500 14px/20px var(--font-body);color:var(--ink)}
+.pick-menu .it small{margin-left:auto;font:400 12px/16px var(--font-body);color:var(--sub)}
+.pick-menu .it.on{background:var(--ci-t1);color:var(--ci)}
+.pick-menu .it.dim{color:var(--sub)}
+.pick-menu .it i{width:6px;height:6px;border-radius:50%;background:var(--mute);font-style:normal;flex:none}
+.pick-menu .it.on i{background:var(--ci)}
+.pick-menu .it.go i{background:var(--ai)}
+.pick-menu .hr{height:1px;background:var(--rule);margin:4px 0}
+
+/* ══ 세 안 비교 — 작은 틀 ══ */
+.mini-app.wide{grid-template-columns:92px 1fr}
+.mini-app .mr.w{padding:6px}
+.mini-app .mr.w span{text-align:left;padding:5px 6px;font-size:9px}
+.mini-app .mr.w span.on{background:var(--ci-t1);color:var(--ci);box-shadow:none;border-radius:4px}
+.mini-app .mr.w span.s{padding:3px 6px 3px 14px;font-size:8px;color:var(--sub);border-left:1px solid var(--rule);margin-left:6px;border-radius:0}
+.mini-app .mr.w span.s.on{color:var(--ci);border-left-color:var(--ci);background:var(--ci-t1)}
+.mini-app .mm .chips{display:flex;gap:3px;margin-left:6px}
+.mini-app .mm .chips span{height:16px;padding:0 6px;border-radius:8px;font:500 8px/16px var(--font-body);background:var(--bg-0);color:var(--ink)}
+.mini-app .mm .chips span.on{background:var(--ci);color:#fff}
+.mini-app .mc .h .dd{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:4px;box-shadow:inset 0 0 0 1px var(--rule);font:400 9px/1 var(--font-num);margin-left:6px;vertical-align:middle}
+.mini-app .mc .pop{position:absolute;left:12px;top:48px;width:150px;background:var(--bg-1);border-radius:6px;box-shadow:var(--elev-3);padding:4px;display:flex;flex-direction:column;gap:1px;z-index:3}
+.mini-app .mc .pop span{padding:4px 6px;border-radius:4px;font:500 8px/12px var(--font-body);color:var(--ink)}
+.mini-app .mc .pop span.on{background:var(--ci-t1);color:var(--ci)}
+.mini-app .mc{position:relative}
+.mini-app .mp .hud{position:absolute;left:8px;top:8px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5);font:800 18px/1 var(--font-display)}
+.mini-app .mp .hud small{display:block;font:500 8px/10px var(--font-body);margin-bottom:2px}
+.opt .verdict-l{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font:400 13px/19px var(--font-body);color:var(--ink-2);margin:0}
+.opt .verdict-l dt{color:var(--sub);white-space:nowrap}
+.opt .verdict-l dd{margin:0}
+.opt .verdict-l .good{color:var(--ai)}
+.opt .verdict-l .bad{color:var(--warn)}
+
+/* ══ 기관-11 — LX 관리자 '기관 한 곳' 새 화면 ══ */
+.lx .page{max-width:1344px}
+.tph{display:flex;align-items:center;gap:18px;padding-bottom:18px;border-bottom:1px solid var(--rule)}
+.tph .mk{flex:none;width:64px;height:64px;border-radius:14px;background:var(--bg-1);box-shadow:inset 0 0 0 1px var(--rule);display:flex;align-items:center;justify-content:center}
+.tph .mk .mark{font-size:14px}
+.tph .t{flex:1;min-width:0}
+.tph h1{margin:0;font:700 32px/40px var(--font-display);letter-spacing:-.02em;color:var(--ink);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tph h1 .chip{height:26px;font-size:13px;font-weight:500}
+.tph .sub{display:flex;gap:14px;flex-wrap:wrap;font:400 14px/20px var(--font-body);color:var(--sub);margin-top:4px}
+.tph .sub b{font-weight:500;color:var(--ink-2)}
+.tph .acts{display:flex;gap:8px;flex:none}
+.tph .acts .btn{height:40px}
+.jump{display:flex;gap:4px;flex-wrap:wrap;position:sticky;top:64px;z-index:12;background:var(--bg-0);padding:8px 0;margin:-8px 0 -8px}
+.jump span{height:34px;padding:0 14px;border-radius:17px;display:inline-flex;align-items:center;font:500 14px/1 var(--font-body);color:var(--ink-2);background:var(--bg-1);box-shadow:inset 0 0 0 1px var(--rule);white-space:nowrap}
+.jump span.on{background:var(--ink);color:#fff;box-shadow:none}
+.jump span small{margin-left:6px;font:500 12px/1 var(--font-num);color:inherit;opacity:.7}
+.cells.c4{grid-template-columns:repeat(4,1fr)}
+.cell small.sub2{display:block;font:400 12px/16px var(--font-body);color:var(--sub);margin-top:2px}
+.two-col{display:grid;grid-template-columns:minmax(0,1fr) 392px;gap:24px;align-items:start}
+.svct{width:100%;border-collapse:collapse;font:400 14px/20px var(--font-body)}
+.svct th{text-align:left;font:500 13px/18px var(--font-body);color:var(--sub);padding:0 12px 10px 0;border-bottom:1px solid var(--rule);white-space:nowrap}
+.svct td{padding:12px 12px 12px 0;border-bottom:1px solid var(--rule);color:var(--ink);vertical-align:middle}
+.svct tr:last-child td{border-bottom:0}
+.svct td b{display:block;font:500 15px/22px var(--font-body);color:var(--ink)}
+.svct td small{display:block;font:400 12px/16px var(--font-body);color:var(--sub)}
+.svct td .chip{height:22px;font-size:12px}
+.svct td.s{color:var(--sub)}
+.svct .th{width:72px;height:48px;border-radius:8px;overflow:hidden;background:var(--rule);display:block}
+.svct .th img{width:100%;height:100%;object-fit:cover}
+.svct .th.blank{background:var(--bg-0);display:flex;align-items:center;justify-content:center;font:500 10px/12px var(--font-body);color:var(--sub);text-align:center;padding:4px}
+.svct .sel{min-width:160px}
+.shootrow{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;background:var(--bg-0)}
+.shootrow .t{flex:1;min-width:0}
+.shootrow .t b{display:block;font:500 15px/22px var(--font-body);color:var(--ink)}
+.shootrow .t span{display:block;font:400 13px/18px var(--font-body);color:var(--sub)}
+.shootrow .seg2{display:inline-flex;border-radius:8px;box-shadow:inset 0 0 0 1px var(--rule);overflow:hidden}
+.shootrow .seg2 span{height:36px;padding:0 14px;display:inline-flex;align-items:center;font:500 13px/1 var(--font-body);color:var(--ink);white-space:nowrap}
+.shootrow .seg2 span.on{background:var(--ink);color:#fff}
+.imgl{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.imgl li{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--bg-0);min-width:0}
+.imgl .th{flex:none;width:84px;height:54px;border-radius:8px;overflow:hidden;background:var(--rule)}
+.imgl .th img{width:100%;height:100%;object-fit:cover}
+.imgl .th.blank{background:var(--bg-1);box-shadow:inset 0 0 0 1px var(--rule);display:flex;align-items:center;justify-content:center;font:500 11px/14px var(--font-body);color:var(--sub);text-align:center;padding:4px}
+.imgl .t{flex:1;min-width:0}
+.imgl .t b{display:block;font:500 14px/20px var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.imgl .t span{display:block;font:400 12px/16px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.imgl .t span.o{color:var(--warn)}
+.imgl .sw{flex:none;width:40px;height:22px;border-radius:11px;background:var(--ink);position:relative}
+.imgl .sw::after{content:"";position:absolute;right:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff}
+.imgl .sw.off{background:var(--rule)}
+.imgl .sw.off::after{right:auto;left:3px}
+.imgl li.off .t b{color:var(--sub)}
+.acct{width:100%;border-collapse:collapse;font:400 14px/20px var(--font-body)}
+.acct th{text-align:left;font:500 13px/18px var(--font-body);color:var(--sub);padding:0 12px 10px 0;border-bottom:1px solid var(--rule);white-space:nowrap}
+.acct td{padding:12px 12px 12px 0;border-bottom:1px solid var(--rule);color:var(--ink);vertical-align:middle}
+.acct tr:last-child td{border-bottom:0}
+.acct td b{font-weight:500;color:var(--ink)}
+.acct td small{display:block;font:400 12px/16px var(--font-body);color:var(--sub)}
+.acct td.s{color:var(--sub)}
+.acct .chip{height:22px;font-size:12px}
+.lx .rec li{grid-template-columns:52px 1fr}
+.usage{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.usage .u{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border-radius:12px;background:var(--bg-0);min-width:0}
+.usage .u b{font:800 28px/1 var(--font-display);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums}
+.usage .u b small{font:500 13px/1 var(--font-body);color:var(--sub);margin-left:4px;letter-spacing:0}
+.usage .u span{font:500 13px/18px var(--font-body);color:var(--sub)}
+.usage .u .brk{display:flex;gap:10px;flex-wrap:wrap;font:400 12px/16px var(--font-body);color:var(--sub)}
+.usage .u .brk b{font:500 12px/16px var(--font-body);color:var(--ink-2);letter-spacing:0}
+.bgpick.c6{grid-template-columns:repeat(6,1fr)}
+.lx .bgpick .t.on{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--ink)}
+.lx .bgpick .t.on::after{background:var(--ink)}
+.bgrow{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:20px;align-items:start}
+.tcard.go{cursor:pointer;box-shadow:0 0 0 2px var(--accent)}
+.tcard .hint{font:400 12px/16px var(--font-body);color:var(--sub)}
+
+/* ══ 기관-9 연계 — 필지 카드의 '필지 정보' 칸 ══ */
+.pinfo{display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:12px;background:var(--bg-0)}
+.pinfo .l{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font:500 14px/20px var(--font-body);color:var(--ink)}
+.pinfo .l small{font:400 12px/16px var(--font-body);color:var(--sub);white-space:nowrap}
+.pinfo dl{display:grid;grid-template-columns:72px 1fr;gap:6px 10px;margin:0;font:400 13px/19px var(--font-body)}
+.pinfo dt{color:var(--sub)}
+.pinfo dd{margin:0;color:var(--ink);min-width:0}
+.pinfo dd.n{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+.pinfo dd small{display:block;color:var(--sub);font-size:12px}
+.pinfo dd.id{font:400 12px/16px var(--font-num);color:var(--sub);word-break:break-all}
+.pinfo .row2{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:8px;border-top:1px solid var(--rule);font:500 13px/18px var(--font-body);color:var(--ink)}
+.pinfo .row2 .sw{width:36px;height:20px;border-radius:10px;background:var(--ci);position:relative;flex:none}
+.pinfo .row2 .sw::after{content:"";position:absolute;right:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff}
+.sheet.tall{top:16px;bottom:16px;overflow:auto;gap:12px;padding:20px}
+.sheet.tall .sh h2{font-size:22px;line-height:30px}
+.sheet .cmp div b{font-size:18px;line-height:24px}
+.sheet .cmp div span{font-size:13px}
+.vtab{display:grid;grid-template-columns:1fr;gap:10px}
+.cmp2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.attr{width:100%;border-collapse:collapse;font:400 13px/18px var(--font-body)}
+.attr th{text-align:left;font:500 12px/16px var(--font-body);color:var(--sub);padding:0 10px 8px 0;border-bottom:1px solid var(--rule)}
+.attr td{padding:8px 10px 8px 0;border-bottom:1px solid var(--rule);color:var(--ink);vertical-align:top}
+.attr td.k{font-family:var(--font-num);color:var(--sub);white-space:nowrap}
+.attr tr:last-child td{border-bottom:0}
+.attr td .chip{height:20px;font-size:11px;padding:0 8px}
+
+/* ══ 기관-10 — 2차 서비스 흐름 그림 ══ */
+.fig{padding:36px 48px 40px;display:flex;flex-direction:column;gap:20px;max-width:1440px}
+.fig h1{margin:0;font:700 30px/38px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.fig .lead{margin:0;font:400 15px/23px var(--font-body);color:var(--sub-2);max-width:980px}
+.flow{display:grid;grid-template-columns:repeat(6,1fr);gap:0;align-items:stretch}
+.flow .st{position:relative;background:var(--bg-1);border-radius:14px;padding:16px 16px 14px;display:flex;flex-direction:column;gap:6px;margin-right:22px;min-width:0}
+.flow .st:last-child{margin-right:0}
+.flow .st::after{content:"";position:absolute;right:-16px;top:50%;width:0;height:0;border:7px solid transparent;border-left:9px solid var(--mute);transform:translateY(-50%)}
+.flow .st:last-child::after{display:none}
+.flow .st i{width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;display:inline-flex;align-items:center;justify-content:center;font:500 13px/1 var(--font-num);font-style:normal}
+.flow .st.lx i{background:var(--accent)}
+.flow .st b{font:700 16px/22px var(--font-display);letter-spacing:-.01em;color:var(--ink)}
+.flow .st p{margin:0;font:400 13px/19px var(--font-body);color:var(--ink-2)}
+.flow .st .whom{margin-top:auto;padding-top:8px;border-top:1px solid var(--rule);font:500 12px/16px var(--font-body);color:var(--sub)}
+.flow .st .whom b{display:block;font:500 13px/18px var(--font-body);color:var(--ink);letter-spacing:0}
+.lanes{display:grid;grid-template-columns:150px repeat(6,1fr);gap:10px 8px;align-items:stretch}
+.lanes .lh{display:flex;flex-direction:column;gap:6px;padding:12px 12px;border-radius:12px;background:var(--bg-1)}
+.lanes .lh .th{aspect-ratio:3/2;border-radius:8px;overflow:hidden;background:var(--rule)}
+.lanes .lh .th img{width:100%;height:100%;object-fit:cover}
+.lanes .lh b{font:700 14px/19px var(--font-display);color:var(--ink);letter-spacing:-.01em}
+.lanes .lh span{font:400 12px/16px var(--font-body);color:var(--sub)}
+.lanes .lc{padding:10px 12px;border-radius:10px;background:var(--bg-1);font:400 12px/17px var(--font-body);color:var(--ink-2);min-width:0}
+.lanes .lc b{display:block;font:500 13px/18px var(--font-body);color:var(--ink)}
+.lanes .lc .q{color:var(--warn);font-weight:500}
+.preset{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.preset div{padding:12px 14px;border-radius:12px;background:var(--bg-1);font:400 13px/18px var(--font-body);color:var(--ink-2);display:flex;flex-direction:column;gap:4px}
+.preset div b{font:500 14px/20px var(--font-body);color:var(--ink)}
+.preset div i{font-style:normal;font:500 11px/14px var(--font-body);color:var(--sub)}
+.fig .foot2{display:flex;gap:16px;flex-wrap:wrap;font:400 13px/18px var(--font-body);color:var(--sub);padding-top:12px;border-top:1px solid var(--rule)}
+.fig .foot2 b{font-weight:500;color:var(--ink-2)}
+
+/* 휴대폰 */
+@media (max-width:640px){
+  .jump{top:56px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+  .cells.c4{grid-template-columns:1fr 1fr}
+  .two-col,.bgrow{grid-template-columns:1fr}
+  .usage{grid-template-columns:1fr 1fr}
+  .imgl{grid-template-columns:1fr}
+  .bgpick.c6{grid-template-columns:1fr 1fr 1fr}
+  .tph{flex-wrap:wrap;gap:12px}
+  .tph .acts{flex-basis:100%}
+  .tph h1{font-size:26px;line-height:34px}
+  .svct,.acct{display:block;overflow-x:auto;scrollbar-width:none}
+  .svct th:nth-child(1),.svct td:nth-child(1),.svct th:nth-child(4),.svct td:nth-child(4){display:none}
+  .svct td .sel{min-width:0}
+  .acct th:nth-child(2),.acct td:nth-child(2),.acct th:nth-child(4),.acct td:nth-child(4),.acct th:nth-child(5),.acct td:nth-child(5),.acct th:nth-child(7),.acct td:nth-child(7){display:none}
+  .shootrow{flex-wrap:wrap}
+  .shootrow .t{flex-basis:100%}
+  .tph .sub{gap:6px 12px}
+  .cmp2{grid-template-columns:1fr}
+  .flow,.lanes,.preset{grid-template-columns:1fr}
+  .flow .st{margin-right:0}
+  .flow .st::after{display:none}
+  .fig{padding:20px 16px 32px}
+}

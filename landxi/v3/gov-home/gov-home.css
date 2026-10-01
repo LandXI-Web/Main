@@ -122,3 +122,52 @@ html{scroll-behavior:smooth;scroll-padding-top:80px}
   .gh-orgc-m{width:72px;height:72px}
   .gh-orgc-t{font-size:18px;line-height:26px}
 }
+
+/* ═══ 구현 5차 · 기관-2 ⓐ — 실제 결과 장면을 작게 · 업무 결과 셋(시안 design-r8/gov-design/mock/main.html) ═══
+   바탕 = 서버 설정의 저해상 영상(긴 변 800 이하)을 흰빛으로 눌러 글이 먼저 읽히게 · 서비스 카드 = 실제 결과 장면 또는 시작 시기(그림판 0) */
+.gh-top-b{background:var(--ci,var(--ink));color:#fff}
+.gh-hero{position:relative;overflow:hidden}
+.gh-bg{position:absolute;inset:0}
+.gh-bg img{width:100%;height:100%;object-fit:cover;filter:saturate(.75)}
+.gh-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,255,255,.97) 0%,rgba(255,255,255,.92) 46%,rgba(255,255,255,.4) 100%)}
+.gh-hero .gh-hero-in{position:relative;grid-template-columns:minmax(0,1fr) 400px;gap:48px;padding-top:64px;padding-bottom:64px}
+.gh-hero .gh-side{background:none;border-radius:0;overflow:visible}
+.gh-hero .gh-login{margin:0;padding:28px;box-shadow:var(--elev-map)}
+.gh-hero .gh-side > .gh-login:first-child{margin-top:0}
+.gh-hero .gh-go{background:var(--ink)}
+.gh-facts{display:flex;gap:16px 32px;flex-wrap:wrap;margin-top:28px}
+.gh-fact{display:flex;flex-direction:column;gap:4px;min-width:0}
+.gh-fact b{display:inline-flex;align-items:baseline;gap:2px;font:800 32px/1 var(--font-display);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums}
+.gh-fact b .k-num{font:inherit;color:inherit}
+.gh-fact b small,.gh-fact b .k-num small{font:500 14px/1 var(--font-body);color:var(--sub);margin-left:4px;letter-spacing:0}
+.gh-fact b .num{font-family:var(--font-display)}
+.gh-fact > span{font:500 13px/18px var(--font-body);color:var(--sub)}
+.gh-sub{margin:-18px 0 28px;font:400 15px/22px var(--font-body);color:var(--sub)}
+.gh-sec--svc{background:var(--bg-0)}
+.gh-crop{position:relative;aspect-ratio:3/2;box-sizing:border-box;background:var(--rule);overflow:hidden}
+.gh-crop img{width:100%;height:100%;object-fit:cover;display:block}
+.gh-crop.is-blank{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:0 24px;background:var(--ci-t1,var(--bg-0));text-align:center;font:400 14px/20px var(--font-body);color:var(--sub)}
+.gh-crop.is-blank b{font:500 15px/22px var(--font-body);color:var(--ink-2)}
+.gh-chip{position:absolute;left:12px;top:12px;height:24px;padding:0 10px;font-size:13px;background:rgba(255,255,255,.94)}
+.gh-chip[data-lv="on"]{background:var(--ci,var(--ink));color:#fff}
+.gh-chip[data-lv="gap"]{background:rgba(255,255,255,.94)}
+.gh-svc h3{min-height:0}
+.gh-res{margin:6px 0 0;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.gh-res .k-num{font:800 28px/1 var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.gh-res .k-num small{font:500 13px/1 var(--font-body);color:var(--sub);margin-left:3px;letter-spacing:0}
+.gh-res > span:last-child{font:500 13px/18px var(--font-body);color:var(--sub)}
+.gh-svc[data-status="내년"] .gh-crop,.gh-svc[data-status$="예정"] .gh-crop{opacity:.6}
+.gh-step .n{background:var(--ci,var(--ink))}
+@media (max-width:1200px){ .gh-hero .gh-hero-in{grid-template-columns:minmax(0,1fr) 380px;gap:36px} }
+@media (max-width:960px){
+  .gh-bg::after{background:linear-gradient(180deg,rgba(255,255,255,.97) 0%,rgba(255,255,255,.93) 70%,rgba(255,255,255,.7) 100%)}
+  .gh-hero .gh-hero-in{grid-template-columns:minmax(0,1fr);gap:28px;padding-top:36px;padding-bottom:32px}
+  .gh-hero .gh-login{padding:22px}
+  .gh-facts{gap:14px 24px;margin-top:20px}
+  .gh-fact b{font-size:26px}
+  .gh-sub{margin:-10px 0 18px}
+}
+@media (max-width:640px){
+  .gh-svc{flex-direction:column}
+  .gh-crop{aspect-ratio:16/9}
+}

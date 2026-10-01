@@ -114,17 +114,17 @@ test.describe('구현 3차 · 서비스 카드 한 벌', () => {
     }
   });
 
-  test('분석 의뢰(J-9) — ① 영상 넣기 ② 분석 카드 고르기 ③ 요청하기 · 전문 글 0', async ({ page }) => {
+  test('분석 요청(J-9 · 기관-5 ⓐ) — ① 영상 넣기 ② 분석 카드 고르기 ③ 요청하기 · 전문 글 0', async ({ page }) => {
     test.setTimeout(90000);
     await frontDoor(page, BASE, 'lxadmin@lx.or.kr#namwon');
     await page.goto(BASE + '/landxi/v3/gov-request/?service=dp-nw-farm-25', { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.gq-cards .k-sc', { timeout: 30000 });
-    const pane = page.locator('.gq-pane[data-pane=new]');
+    const pane = page.locator('.gq-grid > .gq-col').first();                             // 왼쪽 세 단계(구현 5차 시안 모양)
     for (const t of ['영상 넣기', '분석 카드 고르기', '요청하기']) await expect(pane).toContainText(t);
     await expect(page.locator('#go')).toHaveText('분석 요청');
     await expect(page.locator('.gq-cards .k-sc[data-card="card-farm"]')).toHaveAttribute('aria-checked', 'true');   // ?service= 의 카드
     expect(await pane.innerText()).not.toMatch(/25cm|좌표|해상도|이렇게 읽었습니다|TIF|JP2|ECW|JPG/);
-    expect(await words(page, '.gq-sheet')).toEqual([]);
+    expect(await words(page, '.gq')).toEqual([]);
     await expect(page.locator('#go')).toBeDisabled();                                    // 영상을 넣기 전
   });
 });

@@ -80,14 +80,14 @@ function done(title, html, onClose) {
   return el;
 }
 /* 개인정보 수집·이용 동의 — 한 칸 + 내용 보기(항목 · 목적 · 보관 · 거부 권리) */
-function consent() {
+function consent(gov = false) {
   const id = `ac-consent-${++seq}`;
   const box = h('input.ac-ck', { id, type: 'checkbox', name: 'consent' });
   const wrap = h('div.ac-f.ac-agree', { dataset: { f: 'consent' } },
     h('label.ac-agree__l', { for: id }, box, h('span', { text: '개인정보 수집·이용에 동의합니다' })),
     h('details.ac-pv', {}, h('summary', { text: '내용 보기' }),
       h('dl', {},
-        h('dt', { text: '수집 항목' }), h('dd', { text: '이름 · 메일 주소 · 소속' }),
+        h('dt', { text: '수집 항목' }), h('dd', { text: gov ? '이름 · 메일 주소 · 소속 · 연락처(선택 — 적은 경우만)' : '이름 · 메일 주소 · 소속' }),
         h('dt', { text: '목적' }), h('dd', { text: '계정 확인과 관리' }),
         h('dt', { text: '보관 기간' }), h('dd', { text: '계정을 지울 때까지 · 반려된 신청은 30일 뒤 지웁니다' }),
         h('dt', { text: '거부' }), h('dd', { text: '동의하지 않을 수 있으나, 그러면 가입 신청을 할 수 없습니다' }))));
@@ -123,11 +123,13 @@ export function openAccountHelp({ realm = 'lx', site = realm === 'tenant' ? 'gov
     const fp = field('password', '비밀번호', { type: 'password', auto: 'new-password', hint: '10자 이상 · 영문과 숫자를 함께' });
     const fp2 = field('password2', '비밀번호 확인', { type: 'password', auto: 'new-password' });
     const fd = field('dept', GOV ? '부서' : '소속 부서', { auto: 'organization-title' });
-    const fc = consent();
+    /* 연락처(선택 · 기관만 — 기관-8 ⓐ) — 내가 보낸 요청을 받은 LX 담당 직원과 LX 관리자만 본다. 본인이 적은 경우에만 있다 */
+    const fct = GOV ? field('contact', '연락처(선택)', { type: 'tel', auto: 'tel', hint: '내 요청을 받은 LX 담당자만 봅니다' }) : null;
+    const fc = consent(GOV);
     const pw = h('div.ac-two', {}, fp.wrap, fp2.wrap);
     const nd = h('div.ac-two', {}, fn.wrap, fd.wrap);
     const who = GOV ? (pick ? '기관 관리자가' : `${tenant?.name || '기관'} 관리자가`) : 'LX 관리자가';
-    const { form } = formOf([...(fo ? [fo] : []), { wrap: nd }, fm, { wrap: pw }, fc], '신청하기', async (say) => {
+    const { form } = formOf([...(fo ? [fo] : []), { wrap: nd }, fm, ...(fct ? [fct] : []), { wrap: pw }, fc], '신청하기', async (say) => {
       const tid = tenantOf(say); if (GOV && !tid) return;
       if (!val(fn)) return say('이름을 적어 주세요', 'name');
       if (!MAIL.test(val(fm))) return say(val(fm) ? '메일 주소 형식을 확인하세요' : '메일 주소를 적어 주세요', 'login');
@@ -136,7 +138,7 @@ export function openAccountHelp({ realm = 'lx', site = realm === 'tenant' ? 'gov
       if (fp.input.value !== fp2.input.value) return say('두 비밀번호가 서로 다릅니다', 'password2');
       if (!val(fd)) return say('부서를 적어 주세요', 'dept');
       if (!fc.input.checked) return say('개인정보 수집·이용에 동의해야 신청할 수 있습니다', 'consent');
-      const body = { site, name: val(fn), login: val(fm), password: fp.input.value, password2: fp2.input.value, dept: val(fd), consent: true, ...(GOV ? { tenant_id: tid } : {}) };
+      const body = { site, name: val(fn), login: val(fm), password: fp.input.value, password2: fp2.input.value, dept: val(fd), consent: true, ...(GOV ? { tenant_id: tid, ...(val(fct) ? { contact: val(fct) } : {}) } : {}) };
       await call('/accounts/signup', body);
       pSignup.replaceChildren(done('신청했습니다', '승인되면 로그인할 수 있습니다.', closeAll));
     });

@@ -4,7 +4,8 @@
       원칙 49(입력 최소) · 원칙 72(LX 관리자는 다 보고 돕는다) · 원칙 77(아이디 = 메일 주소) · 10-01 사용자 "가입 신청과 아이디 비밀번호 찾기 등 기능".
 
 로그인 없이 부르는 길(시도 제한 — 접속 주소마다 · 입력 검증):
-  POST /accounts/signup         {site?, tenant_id?, name, login(메일), password, password2?, dept, consent:true} → 201 {ok, state:'pending'}
+  POST /accounts/signup         {site?, tenant_id?, name, login(메일), password, password2?, dept, contact?, consent:true} → 201 {ok, state:'pending'}
+                                  contact = 연락처(선택 · 기관 사용자만 · 본인이 적는다 — 기관-8 ⓐ · 원칙 105) → 승인되면 그 계정에
                                   site 가 admin 이면 받지 않는다(LX 관리자 계정은 LX 관리자가 만든다) · app = LX 직원 신청 · gov = 기관 사용자 신청(tenant_id 필수)
   POST /accounts/find-id        {site?, tenant_id?, name} → {items:[가린 메일]} (예: te**@lx.or.kr) · 없으면 빈 목록
   POST /accounts/reset-request  {site?, tenant_id?, login} → {ok} — 계정이 있든 없든 같은 답(있는 메일을 알아내는 데 쓰이지 않게)
@@ -30,6 +31,8 @@
   POST /accounts/users/{realm}/{user_id}/temp-password → {temp_password}(한 번만)
   GET  /accounts/log                            → 계정 기록(누가 무엇을 · 최근 100)
   GET  /accounts/failures                       → 실패한 로그인(아이디 · 시각 · 입구 · 접속 주소 · 까닭 · 최근 200 — 비밀번호 값은 없다)
+  GET  /accounts/senders?review=a,b&request=x,y → (LX 직원 · LX 관리자) 기관 요청을 보낸 사람 — 이름 · 부서 · 역할 · 기관 + 연락처(선택)
+                                                  그 요청을 받은 LX 담당 직원과 LX 관리자만(다른 직원의 요청은 빈 칸 · 기관 계정 403 — 기관-8 ⓐ · 원칙 102)
   잠금: 관리자가 잠근 계정(status locked)과 비밀번호 5번 틀려 10분 잠긴 계정(lock_until · auth.py) 둘 다 lock {locked:false} 로 푼다.
 
 내 정보(본인이 고친다 — 확인 17차 P-5 ⓐ · 원칙 105 · 121 · LX 직원 · LX 관리자 · LX 영업 계정. 기관 계정은 확인 범위 밖):
@@ -142,6 +145,19 @@ def _mail(v) -> str:
     return s
 
 
+_CONTACT_BAD = re.compile(r"[\x00-\x1f\x7f<>]")
+
+
+def _contact(v) -> str | None:
+    """연락처(선택) — 전화 · 내선 등 한 줄 30자. 비우면 없음(None). 지어내거나 고쳐 적지 않는다(받은 그대로 · 공백만 정리)."""
+    s = " ".join(_CONTACT_BAD.sub("", str(v or "")).split())
+    if not s:
+        return None
+    if len(s) > 30:
+        raise ApiError("bad_request", "연락처는 30자까지입니다", {"field": "contact"})
+    return s
+
+
 def check_password(pw: str, login: str = "") -> None:
     if not isinstance(pw, str) or len(pw) < 10:
         raise ApiError("bad_request", "비밀번호는 10자 이상입니다", {"field": "password"})
@@ -207,6 +223,7 @@ async def signup(body: dict, request: Request):
     if body.get("password2") is not None and body.get("password2") != pw:
         raise ApiError("bad_request", "두 비밀번호가 서로 다릅니다", {"field": "password2"})
     dept = _text(body.get("dept"), 60, "부서", "dept")
+    contact = _contact(body.get("contact")) if realm == "tenant" else None      # 기관 사용자만(LX 직원 연락처는 받지 않는다)
     if body.get("consent") is not True:
         raise ApiError("bad_request", "개인정보 수집·이용에 동의해야 신청할 수 있습니다", {"field": "consent"})
     pw_hash = await run_in_threadpool(auth.hash_password, pw)
@@ -222,10 +239,10 @@ async def signup(body: dict, request: Request):
         if used:
             raise ApiError("conflict", "이미 가입했거나 신청한 메일 주소입니다", {"field": "login"}, 409)
         rid = "sr_" + secrets.token_hex(8)
-        await conn.execute("INSERT INTO signup_requests(id, realm, tenant_id, login, name, dept, pw_hash, consent_at) VALUES ($1,$2,$3,$4,$5,$6,$7,now())",
-                           rid, realm, tid, login, name, dept, pw_hash)
+        await conn.execute("INSERT INTO signup_requests(id, realm, tenant_id, login, name, dept, pw_hash, consent_at, contact) VALUES ($1,$2,$3,$4,$5,$6,$7,now(),$8)",
+                           rid, realm, tid, login, name, dept, pw_hash, contact)
         await _log(conn, "public", "public", "account.signup.request", login,
-                   {"request": rid, "realm": realm, "tenant_id": tid, "name": name, "dept": dept, "ip": client_ip(request)})
+                   {"request": rid, "realm": realm, "tenant_id": tid, "name": name, "dept": dept, "contact": bool(contact), "ip": client_ip(request)})
         await _purge(conn)
     return {"ok": True, "state": "pending", "at": now_iso()}
 
@@ -436,8 +453,8 @@ async def decide_signup(rid: str, body: dict, request: Request):
                 if await conn.fetchval("SELECT 1 FROM tenant_users WHERE tenant_id=$1 AND lower(login)=lower($2)", r["tenant_id"], r["login"]):
                     raise ApiError("conflict", "이미 있는 아이디입니다", None, 409)
                 uid = "u_" + secrets.token_hex(6)
-                await conn.execute("INSERT INTO tenant_users(id, tenant_id, login, pw_hash, role, status, name, dept) VALUES ($1,$2,$3,$4,$5,'active',$6,$7)",
-                                   uid, r["tenant_id"], r["login"], r["pw_hash"], NEW_ROLE["tenant"], r["name"], r["dept"])
+                await conn.execute("INSERT INTO tenant_users(id, tenant_id, login, pw_hash, role, status, name, dept, contact) VALUES ($1,$2,$3,$4,$5,'active',$6,$7,$8)",
+                                   uid, r["tenant_id"], r["login"], r["pw_hash"], NEW_ROLE["tenant"], r["name"], r["dept"], r["contact"])
         await conn.execute("UPDATE signup_requests SET state=$2, reason=$3, user_id=$4, pw_hash=NULL, decided_by=$5, decided_realm=$6, decided_name=$7, decided_at=now() "
                            "WHERE id=$1", rid, "approved" if d == "approve" else "rejected", reason or None, uid, p.user_id, p.realm, p.name)
         await _log(conn, p.user_id, p.realm, f"account.signup.{d}", r["login"],
@@ -625,6 +642,59 @@ async def login_failures(request: Request):
               "site_ko": SITE_KO.get(r["site"] or "", "이 PC"), "ip": "이 PC" if (r["ip"] or "") in ("127.0.0.1", "::1", "") else r["ip"],
               "reason": r["reason"], "reason_ko": FAIL_KO.get(r["reason"], r["reason"])} for r in rows]
     return {"items": items, "at": now_iso()}
+
+
+# ── LX 요청함 — 기관 요청을 보낸 사람(기관-8 ⓐ · 원칙 102 · 63 · 72) ───────────────────────────────────
+SENDER_MAX = 200
+
+
+def _ids(v: str | None) -> list[str]:
+    return [x for x in dict.fromkeys(s.strip() for s in str(v or "").split(",")) if re.fullmatch(r"[a-z]{2}_[0-9a-f]{8,24}", x)][:SENDER_MAX]
+
+
+@router.get("/accounts/senders")
+async def senders(request: Request, review: str | None = None, req: str | None = None):
+    """기관 요청(검토 요청 · 분석 요청)을 보낸 사람 — 이름 · 부서 · 역할 · 기관 + 연락처(선택).
+    보는 사람: LX 관리자 = 모두 · LX 직원 = 내가 받은 것(검토 요청 recipient · 분석 요청 lead_user = 그 서비스 담당)만 — 아니면 그 줄은 빈다.
+    연락처는 그 사람이 스스로 적은 경우만(가입 신청 '연락처(선택)') · 기관 계정 · 영업에는 열지 않는다(403).
+    주소 이름 request 는 요청 객체와 겹쳐 ?request= 를 req 로도 받는다."""
+    p = require(principal(request))
+    if not (p.realm == "lx" and p.role in ("admin", "staff")):
+        raise ApiError("forbidden", "LX 직원 · LX 관리자만 봅니다")
+    rv = _ids(review)
+    rq = _ids(req or request.query_params.get("request"))
+    out = {"reviews": {}, "requests": {}, "at": now_iso()}
+    if not rv and not rq:
+        return out
+    async with db(realm="lx") as conn:
+        rows = []
+        if rv:
+            rows += [("reviews", r) for r in await conn.fetch(
+                "SELECT id, tenant_id, sender_id AS uid, recipient_id AS owner FROM feedback WHERE kind='review' AND id = ANY($1::text[])", rv)]
+        if rq:
+            rows += [("requests", r) for r in await conn.fetch(
+                "SELECT id, tenant_id, requested_by AS uid, lead_user AS owner FROM analysis_requests WHERE id = ANY($1::text[])", rq)]
+        mine = [(k, r) for k, r in rows if p.is_admin or (r["owner"] and r["owner"] == p.user_id)]
+        uids = list({r["uid"] for _, r in mine if r["uid"]})
+        users = {u["id"]: u for u in await conn.fetch(
+            "SELECT id, tenant_id, name, dept, role, contact FROM tenant_users WHERE id = ANY($1::text[])", uids)} if uids else {}
+        tn = await _tenant_names(conn)
+    for k, r in mine:
+        u = users.get(r["uid"])
+        if not u or u["tenant_id"] != r["tenant_id"]:
+            out[k][r["id"]] = {"name": None, "dept": None, "role_ko": None, "org": _short(tn.get(r["tenant_id"], "")), "contact": None}
+            continue
+        out[k][r["id"]] = {"name": u["name"] or None, "dept": (u["dept"] or "").strip() or None, "role_ko": ROLE_KO.get(("tenant", u["role"])),
+                           "org": _short(tn.get(r["tenant_id"], "")),
+                           "contact": ((u["contact"] or "").strip() or None) if (p.is_admin or r["owner"] == p.user_id) else None}
+    return out
+
+
+def _short(name: str) -> str:
+    """기관 짧은 이름 — '전북특별자치도 남원시' → '남원시'(요청함 · 알림과 같은 말)."""
+    w = str(name or "").split()
+    return w[-1] if w else ""
+
 
 
 # ── 내 정보(본인이 고친다 — 확인 17차 P-5 ⓐ · 원칙 105 · 121) ─────────────────────────────────

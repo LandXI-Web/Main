@@ -38,7 +38,7 @@ test.describe('impl-3 영상 표준 — 분석 의뢰 올리기', () => {
     const page = await ctx.newPage();
     await frontDoor(page, BASE, 'lxadmin@lx.or.kr#namwon', 'gov');
     await page.goto(BASE + '/landxi/v3/gov-request/', { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('.gq-sheet #drop', { timeout: 30000 });
+    await page.waitForSelector('.gq #drop', { timeout: 30000 });
     const starts = [];
     page.on('request', (r) => { if (r.method() === 'POST' && /\/requests\/uploads$/.test(new URL(r.url()).pathname)) starts.push(r.url()); });
 

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko" style="--ci:#1F6F4A;--ci-t1:#E9F3ED;--ci-line:#D1E3D9">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>비교 · 기관-1 왼쪽 메뉴 — 서비스 바꾸기 세 안</title>
+<link rel="stylesheet" href="mock.css">
+<link rel="stylesheet" href="gov2.css">
+<link rel="stylesheet" href="gov3.css">
+<style>
+.page{max-width:1344px}
+.mini-app{height:300px}
+.opt .pro li.x::before{content:"− ";color:var(--warn)}
+.opt .pro li.o::before{content:"+ ";color:var(--ai)}
+.why{background:var(--bg-1);border-radius:16px;padding:20px 24px;display:grid;grid-template-columns:auto 1fr;gap:6px 20px;font:400 14px/21px var(--font-body);color:var(--ink-2)}
+.why b{font-weight:500;color:var(--ink);white-space:nowrap}
+</style>
+</head>
+<body class="g t">
+<div class="app no-rail">
+  <header class="mast">
+    <p class="mark"><span>남원</span><span>GV</span></p>
+    <span class="word">남원시 GeoVision 플랫폼</span>
+    <span class="sp"></span>
+    <span class="who"><b>농정과</b>박서연</span>
+  </header>
+  <main class="main">
+    <div class="page">
+      <div class="head"><h1>왼쪽 메뉴 — 다른 서비스로 바로 바꾸기</h1><span class="sub">메뉴가 허전하지 않으면서, 내 서비스로 돌아가지 않고 한 번에 다른 서비스로. 요청하기 · 기관 정보 · 계정은 셋 다 같습니다.</span></div>
+      <div class="why"><b>지금</b><span>왼쪽 메뉴 넷(내 서비스 · 요청하기 · 기관 정보 · 계정). 다른 서비스를 보려면 '내 서비스'로 나갔다가 카드를 다시 눌러야 하고, 메뉴 칸이 비어 보입니다.</span><b>셋의 공통</b><span>서비스 한 장 안의 탭 다섯(현황 · 결과 지도 · 필지 목록 · 이력 · 통계·보고서)과 요청하기 메뉴는 그대로. 부서 사용자는 자기 부서 서비스만 보입니다.</span></div>
+
+      <div class="cmpwrap">
+        <div class="opt">
+          <h3>A안 <span class="reco">추천</span></h3>
+          <p>왼쪽 메뉴를 넓혀 '내 서비스' 아래에 받는 서비스 이름이 바로 늘어선다. 이름을 누르면 그 서비스의 현황으로.</p>
+          <div class="mini-app wide">
+            <div class="mm">남원 GV <span>남원시 GeoVision 플랫폼</span><span class="sp"></span><i></i></div>
+            <div class="mr w"><span>▦ 내 서비스</span><span class="s on">영농관리</span><span class="s">생활환경</span><span class="s">도로 안전관리</span><span class="s" style="color:var(--mute)">인파관리</span><span>➤ 요청하기</span><span class="sub">기관 정보 · 계정</span></div>
+            <div class="mc"><div class="h">영농관리 행정서비스</div><div class="mt"><span class="on">현황</span><span>결과 지도</span><span>필지 목록</span><span>이력</span><span>통계·보고서</span></div><div class="mp"><img src="img/farm-scene.jpg" alt=""><div class="hud"><small>현장 확인 필요</small>1,035</div></div></div>
+          </div>
+          <ul class="pro">
+            <li class="o">메뉴가 채워지고, 지금 어느 서비스에 있는지 늘 보인다</li>
+            <li class="o">다른 서비스로 한 번에 — 내 서비스로 나갈 필요 없음</li>
+            <li class="o">부서 사용자는 서비스 하나라 메뉴가 짧고 분명하다</li>
+            <li class="x">서비스가 많은 광역 기관은 길어진다 → 여섯 개 넘으면 접기('더 보기')</li>
+            <li class="x">휴대폰은 왼쪽 메뉴가 없어 머리 아래 서비스 칩 한 줄로 대신</li>
+          </ul>
+        </div>
+        <div class="opt">
+          <h3>B안</h3>
+          <p>왼쪽 메뉴는 지금처럼 넷. 머리(위 띠)에 서비스 칩이 늘 보여 거기서 바꾼다.</p>
+          <div class="mini-app">
+            <div class="mm">남원 GV <span>남원시 GeoVision</span><span class="chips"><span class="on">영농관리</span><span>생활환경</span><span>도로 안전관리</span></span><span class="sp"></span><i></i></div>
+            <div class="mr"><span class="on">내 서비스</span><span>요청하기</span><span class="sub">기관 정보 · 계정</span></div>
+            <div class="mc"><div class="h">영농관리 행정서비스</div><div class="mt"><span class="on">현황</span><span>결과 지도</span><span>필지 목록</span><span>이력</span><span>통계·보고서</span></div><div class="mp"><img src="img/farm-scene.jpg" alt=""><div class="hud"><small>현장 확인 필요</small>1,035</div></div></div>
+          </div>
+          <ul class="pro">
+            <li class="o">어느 화면에서나 한 번에 바꾼다(요청하기에서도)</li>
+            <li class="x">왼쪽 메뉴의 허전함은 그대로</li>
+            <li class="x">머리가 기관 이름 · 사람 · 알림과 섞여 복잡해지고, 서비스가 넷을 넘으면 들어가지 않는다</li>
+            <li class="x">휴대폰은 머리가 좁아 칩을 못 둔다</li>
+          </ul>
+        </div>
+        <div class="opt">
+          <h3>C안</h3>
+          <p>왼쪽 메뉴는 지금처럼 넷. 서비스 제목 옆 고르개(▾)를 눌러 다른 서비스로.</p>
+          <div class="mini-app">
+            <div class="mm">남원 GV <span>남원시 GeoVision 플랫폼</span><span class="sp"></span><i></i></div>
+            <div class="mr"><span class="on">내 서비스</span><span>요청하기</span><span class="sub">기관 정보 · 계정</span></div>
+            <div class="mc"><div class="h">영농관리 행정서비스<span class="dd">▾</span></div><div class="pop"><span class="on">영농관리 행정서비스</span><span>생활환경 위험요소 탐지</span><span>도로 안전관리</span><span style="color:var(--mute)">인파관리 · 2027년</span></div><div class="mt"><span class="on">현황</span><span>결과 지도</span><span>필지 목록</span><span>이력</span><span>통계·보고서</span></div><div class="mp"><img src="img/farm-scene.jpg" alt=""><div class="hud"><small>현장 확인 필요</small>1,035</div></div></div>
+          </div>
+          <ul class="pro">
+            <li class="o">화면이 가장 조용하다 — 바꿀 때만 펼친다</li>
+            <li class="o">휴대폰에서도 같은 자리에서 쓸 수 있다</li>
+            <li class="x">왼쪽 메뉴의 허전함은 그대로</li>
+            <li class="x">누르기 전엔 다른 서비스가 있는지 보이지 않는다(두 번 누름)</li>
+          </ul>
+        </div>
+      </div>
+      <p class="small">추천 A안 — "메뉴가 허전하다"와 "다른 서비스로 바로"를 한 번에 풉니다. 휴대폰은 A안도 C안처럼 서비스 칩 한 줄(머리 아래)로 바꿉니다. 광역 기관(광주전남)은 서비스가 많아지면 부서별로 묶어 접습니다.</p>
+    </div>
+  </main>
+</div>
+<span class="stamp r"><b>비교</b> 기관-1 — 왼쪽 메뉴 · 서비스 바꾸기 세 안 · 추천 A</span>
+</body>
+</html>

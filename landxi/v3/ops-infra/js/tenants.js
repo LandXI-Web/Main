@@ -29,13 +29,13 @@ function sheet(o) {
 }
 
 /** 공유 영상 칸 — 관할 안 LX 영상 · 켜고 끄기(지도에서 보기 · 분석 의뢰에 쓰기). 값은 서버(GET/PUT /tenants/{id}/imagery-shares) 한 곳 */
-const CAP = (x) => (x.view && x.analyze ? '지도 · 분석 의뢰' : x.analyze ? '분석 의뢰' : x.view ? '지도' : '');
+const CAP = (x) => (x.view && x.analyze ? '지도 · 분석 요청' : x.analyze ? '분석 요청' : x.view ? '지도' : '');
 function shares(o) {
   const sec = h('section.sh', { 'aria-label': '공유 영상' });
   const head = h('header.sh-h', {}, h('h3', { text: '공유 영상' }), h('span.sh-n.num'));
   const ul = h('ul.sh-l');
   const hold = h('div.sh-e');
-  sec.append(head, h('p.sh-d', { text: '켠 LX 영상만 이 기관이 지도에서 보고 분석 의뢰에 불러옵니다' }), hold, ul);
+  sec.append(head, h('p.sh-d', { text: '켠 LX 영상만 이 기관이 지도에서 보고 분석 요청에 불러옵니다' }), hold, ul);
   empty(hold, { kind: 'loading', compact: true });
   let items = [];
   const paint = () => {

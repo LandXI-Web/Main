@@ -1,6 +1,7 @@
 // impl-2 기관 영상 분석 의뢰(확인 대장 6차 GF-2 · 2차 D1-ⓑ · 5차 역할-4 ⓑ · 1차 FR-1) — 로그인 폼만(세션 주입 0).
 // 기관 입구 lxadmin@namwon → 서비스(?service=) → ① 영상 넣기(작은 TIF 한 장) → ② 분석 카드 고르기(카드 한 벌) → ③ 요청하기(구현 확인 2차 J-9 쉬운 판) →
-// 관리자 입구 lxadmin → 결재함 '분석 의뢰' 한 건(판단 근거 · 미리 보기) → 승인 → 기존 분석 대기열(GPU 한 장 · 작은 영상 한 건) → 결과 도착 · 새 시점.
+// 구현 5차 기관-5 ⓐ — 이름 '분석 요청' · 시안 모양(왼쪽 세 단계 · 오른쪽 '어디를 분석하나' · 내가 보낸 요청 — 탭 없음).
+// 관리자 입구 lxadmin → 결재함 '분석 요청' 한 건(판단 근거 · 미리 보기) → 승인 → 기존 분석 대기열(GPU 한 장 · 작은 영상 한 건) → 결과 도착 · 새 시점.
 // 반려 → 사유가 기관 '내 의뢰'에. 공유 영상 불러오기 · 관리자 기관 서랍 '공유 영상' 칸.
 // LX_EVIDENCE=1 이면 증거 캡처(docs/superpowers/final/process/impl-2/request/img/after-*.png · 1440×900).
 // 끝에서 이 시험이 만든 의뢰 · 결재 · 작업 · 올린 파일을 지운다(scratch 정리 스크립트와 같은 규칙 — server 쪽 pytest 픽스처 참고).
@@ -79,7 +80,7 @@ async function gov(browser) {
   const page = await ctx.newPage();
   await frontDoor(page, BASE, 'lxadmin@namwon', 'gov');
   await page.goto(BASE + `/landxi/v3/gov-request/?service=${SERVICE}`, { waitUntil: 'domcontentloaded' });
-  await page.waitForSelector('.gq-sheet', { timeout: 30000 });
+  await page.waitForSelector('.gq-grid', { timeout: 30000 });
   await page.waitForSelector('.gq-cards .k-sc', { timeout: 30000 });
   return page;
 }
@@ -95,7 +96,7 @@ async function send(page, file, memo) {
   await expect(page.locator('#picked')).toContainText('항공영상');
   await expect(page.locator('#picked')).toContainText('분석할 수 있습니다');
   /* J-9 — 형식 · 해상도 · 좌표 같은 전문 글이 없다(서버가 파일에서 읽어 처리) */
-  const txt = await page.locator('.gq-pane[data-pane=new]').innerText();
+  const txt = await page.locator('.gq-grid > .gq-col').first().innerText();
   expect(txt).not.toMatch(/25cm|좌표|해상도|이렇게 읽었습니다|TIF|JP2|ECW/);
   await expect(page.locator('.gq-cards .k-sc.is-on')).toHaveCount(1);                 // ?service= 의 카드가 골라져 있다
   await page.fill('#memo', memo);
@@ -104,7 +105,7 @@ async function send(page, file, memo) {
 async function openInbox(page, memo) {
   await page.goto(BASE + '/landxi/v3/ops-core/#/approvals', { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.oc-tbl tbody tr', { timeout: 60000 });
-  const rows = page.locator('.oc-tbl tbody tr', { hasText: '분석 의뢰' });
+  const rows = page.locator('.oc-tbl tbody tr', { hasText: '분석 요청' });
   await expect(rows.first()).toBeVisible();
   for (let i = 0; i < await rows.count(); i++) {          // 이 시험의 의뢰(메모 = 요청 사유)
     await rows.nth(i).click();
@@ -141,7 +142,7 @@ test.describe('impl-2 기관 영상 분석 의뢰 · LX 영상 공유', () => {
     const tif = makeTif('남원_덕과면_항공_2023.tif', 2048, 0);
     const g = await gov(browser);
     await send(g, tif, 'e2e 승인 확인');
-    await g.evaluate(() => { const p = document.querySelector('.gq-pane[data-pane=new]'); p.scrollTop = document.querySelector('#picked').offsetTop - 140; });
+    await g.locator('#picked').scrollIntoViewIfNeeded();
     await g.waitForTimeout(3200);
     await shot(g, 'after-request-read.png');
     await g.click('#go');
@@ -164,8 +165,7 @@ test.describe('impl-2 기관 영상 분석 의뢰 · LX 영상 공유', () => {
     await expect(a.locator('.k-toast')).toContainText('승인했습니다');
 
     // 기관 화면 — 분석 중 → 결과 도착(대기열 순서 · 작은 영상 한 건)
-    await g.locator('#tab-mine').click();
-    await expect.poll(async () => { await g.reload(); await g.waitForSelector('.gq-sheet'); await g.locator('#tab-mine').click();
+    await expect.poll(async () => { await g.reload(); await g.waitForSelector('.gq-grid');
       return g.locator('.gq-row').first().innerText(); }, { timeout: 300000, intervals: [5000] }).toContain('결과 도착');
     await g.locator('.gq-row').first().click();
     await expect(g.locator('#det')).toContainText('AI 탐지');
@@ -175,7 +175,7 @@ test.describe('impl-2 기관 영상 분석 의뢰 · LX 영상 공유', () => {
     await shot(g, 'after-result.png');
   });
 
-  test('반려 — 사유가 기관 내 의뢰에 보인다', async ({ browser }) => {
+  test('반려 — 사유가 기관 내가 보낸 요청에 보인다', async ({ browser }) => {
     const tif = makeTif('남원_덕과면_항공_2023_b.tif', 512, 0.004);
     const g = await gov(browser);
     await send(g, tif, 'e2e 반려 확인');
@@ -190,8 +190,7 @@ test.describe('impl-2 기관 영상 분석 의뢰 · LX 영상 공유', () => {
     await sheet.locator('.oc-acts button', { hasText: '반려' }).click();
     await expect(a.locator('.k-toast')).toContainText('반려했습니다');
     await g.reload();
-    await g.waitForSelector('.gq-sheet');
-    await g.locator('#tab-mine').click();
+    await g.waitForSelector('.gq-grid');
     await g.locator('.gq-row', { hasText: '반려' }).first().click();
     await expect(g.locator('#det')).toContainText('반려 · 사유: 영상 범위가 서비스 대상과 맞지 않습니다');
     await g.waitForTimeout(3200);

@@ -22,6 +22,8 @@
 .k-sc-crop.is-blank{display:flex;align-items:center;justify-content:center;background:var(--rule)}
 .k-sc[data-kind="gov"] .k-sc-crop.is-blank,.k-sc[data-kind="mine"] .k-sc-crop.is-blank{background:var(--ci-t1,var(--bg-0))}
 .k-sc-blank{font:500 14px/20px var(--font-body);color:var(--sub);padding:0 24px;text-align:center}
+.k-sc-blank b{display:block;font:500 15px/22px var(--font-body);color:var(--ink-2)}
+.k-sc-blank small{display:block;margin-top:4px;font:400 14px/20px var(--font-body);color:var(--sub)}
 .k-sc-badge.t-chip{position:absolute;left:12px;top:12px;height:26px;padding:0 10px;font-size:13px;background:rgba(255,255,255,.94);color:var(--ink);border:0}
 .k-sc-badge.t-chip:not([data-lv]){background:var(--ink);color:#fff}
 .k-sc-badge.t-chip[data-lv="wait"]{color:var(--ink)}

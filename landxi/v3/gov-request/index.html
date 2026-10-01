@@ -3,12 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>분석 의뢰 · Land-XI</title>
+<title>분석 요청</title>
 <meta name="description" content="영상을 넣고 분석 카드를 고르면 LX가 분석해 드립니다. 결과는 그 서비스의 새 시점으로 쌓입니다.">
 <link rel="icon" href="../../assets/images/favicon_landxi.png">
 <link rel="stylesheet" href="../../proto/vendor/maplibre/maplibre-gl.css">
 <link rel="stylesheet" href="../kit/kit.css">
 <link rel="stylesheet" href="../kit/service-card.css">
+<link rel="stylesheet" href="../gov-select/brand.css">
+<link rel="stylesheet" href="../gov-select/gov-select.css">
 <link rel="stylesheet" href="gov-request.css">
 <script src="../../proto/vendor/maplibre/maplibre-gl.js"></script>
 <script src="../../xi/vendor/pmtiles/pmtiles.js"></script>
@@ -16,44 +18,50 @@
 </head>
 <body class="t gq-boot">
 <template id="tpl">
-<div class="gq">
-  <div class="gq-map" id="map"></div>
-
-  <!-- 오른쪽: 새 의뢰(① 영상 넣기 → ② 분석 카드 고르기 → ③ 요청하기) · 내 의뢰 -->
-  <aside class="gq-sheet" aria-label="분석 의뢰">
-    <div class="gq-tabs" role="tablist">
-      <button type="button" role="tab" id="tab-new" aria-selected="true" data-tab="new">새 의뢰</button>
-      <button type="button" role="tab" id="tab-mine" aria-selected="false" data-tab="mine">내 의뢰<span class="gq-n num" id="mine-n"></span></button>
-    </div>
-
-    <div class="gq-pane" data-pane="new" role="tabpanel" aria-labelledby="tab-new">
-      <h2 class="gq-h">분석 의뢰</h2>
-      <p class="gq-lead">영상을 넣고 분석 카드를 고르면<br>LX가 분석해 드립니다</p>
-      <section class="gq-stp" data-s="1">
+<div class="gs-scroll gq-scroll">
+ <div class="gs-page gq">
+  <!-- 분석 요청(기관-5 ⓐ · 원칙 113) — 시안 design-r8/gov-design/mock/request.html: 왼쪽 세 단계 · 오른쪽 '어디를 분석하나' 미리 보기 · 내가 보낸 요청 -->
+  <header class="gs-head">
+    <div class="gs-head-t"><h1>분석 요청</h1><p class="gs-sub">영상을 넣고 분석 카드를 고르면 LX가 분석해 드립니다. 비용은 없습니다.</p></div>
+  </header>
+  <div class="gq-grid">
+    <div class="gq-col" aria-label="분석 요청">
+      <section class="gq-stp t-card" data-s="1">
         <div class="gq-sh"><span class="n">1</span><b>영상 넣기</b><span class="gq-done" id="ok-1"></span></div>
-        <div class="gq-shared" id="shared"></div>
-        <p class="gq-or" id="or">우리 영상 파일</p>
-        <div id="drop"></div>
+        <div class="gq-src">
+          <div class="gq-tile" id="shared-tile"><div class="gq-shared" id="shared"></div></div>
+          <div class="gq-tile"><p class="t-label gq-or" id="or">우리 영상 파일</p><div id="drop"></div></div>
+        </div>
         <div class="gq-picked" id="picked" hidden></div>
       </section>
-      <section class="gq-stp" data-s="2">
+      <section class="gq-stp t-card" data-s="2">
         <div class="gq-sh"><span class="n">2</span><b>분석 카드 고르기</b><span class="gq-done" id="ok-2"></span></div>
         <div class="gq-cards" id="svcs" role="radiogroup" aria-label="분석 카드"></div>
       </section>
-      <section class="gq-stp" data-s="3">
+      <section class="gq-stp t-card" data-s="3">
         <div class="gq-sh"><span class="n">3</span><b>요청하기</b><small>메모는 선택</small></div>
-        <input class="t-input" id="memo" type="text" maxlength="200" autocomplete="off" placeholder="메모 한 줄" aria-label="메모 한 줄">
-        <button type="button" class="t-btn gq-go" id="go" disabled>분석 요청</button>
-        <p class="gq-note gq-after" id="go-note">LX 담당자가 확인한 뒤 분석합니다.<br>끝나면 알림으로 알려 드립니다.</p>
+        <input class="t-input" id="memo" type="text" maxlength="200" autocomplete="off" placeholder="메모 한 줄 — 예: 새 농지 확인용" aria-label="메모 한 줄">
+        <div class="gq-go-row">
+          <button type="button" class="t-btn gq-go" id="go" disabled>분석 요청</button>
+          <p class="gq-note gq-after" id="go-note">LX 담당자가 확인한 뒤 분석합니다.<br>끝나면 알림으로 알려 드리고, 결과는 그 서비스에 새 시점으로 쌓입니다.</p>
+        </div>
       </section>
     </div>
-
-    <div class="gq-pane" data-pane="mine" role="tabpanel" aria-labelledby="tab-mine" hidden>
-      <ul class="gq-rows" id="rows"></ul>
-      <div class="gq-empty" id="rows-empty" hidden></div>
-      <div class="gq-det" id="det" hidden></div>
-    </div>
-  </aside>
+    <aside class="gq-col">
+      <section class="t-card gq-box gq-where" aria-label="어디를 분석하나">
+        <h2>어디를 분석하나</h2>
+        <div class="gq-map-box"><div class="gq-map" id="map"></div><span class="gq-cap" id="map-cap" hidden></span></div>
+        <p class="gq-note" id="map-note">영상을 넣으면 어디를 찍은 것인지 여기에 보입니다</p>
+      </section>
+      <section class="t-card gq-box gq-mine" id="mine" aria-label="내가 보낸 요청">
+        <h2>내가 보낸 요청<small class="gq-n num" id="mine-n"></small></h2>
+        <ul class="gq-rows" id="rows"></ul>
+        <div class="gq-empty" id="rows-empty" hidden></div>
+        <div class="gq-det" id="det" hidden></div>
+      </section>
+    </aside>
+  </div>
+ </div>
 </div>
 </template>
 </body>

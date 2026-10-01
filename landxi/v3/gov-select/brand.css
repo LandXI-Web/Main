@@ -19,7 +19,7 @@
 /* 로그인 뒤 머리(셸 마스트) — 기관 마크 + 플랫폼 이름 */
 .k-mast .k-word[data-brand]{gap:10px}
 .k-mast .gb-plat{font:700 16px/1 var(--font-display);letter-spacing:-.01em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40vw}
-@media (max-width:640px){.k-mast .gb-plat{display:none}}
+@media (max-width:640px){.k-mast .gb-plat{display:none}.k-mast:has(.gb-mark) .k-role{display:none}}   /* 휴대폰 기관 머리 = 마크 · 알림 · 도움말(모든 기관 화면 같게) */
 
 /* ── 서비스 얼굴 판 — 연한 바탕 · 선 · 찾아낸 것(진한 색) ─ */
 .gb-face{--t1:var(--ci-t1,var(--bg-0));--line:var(--ci-line,var(--rule));--accent:var(--ci,var(--ink));background:var(--t1);overflow:hidden}

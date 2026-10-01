@@ -242,6 +242,19 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
     if sc:
         ex = bool(sc.get("ex")) or bool(sc.get("sgg") and all_sggs and str(sc["sgg"]) not in all_sggs)
         scene = {"src": sc["src"], "caption": sc.get("caption") or "", "ex": ex}
+    # 시점별 결과 장면(기관 서비스 대시보드 '영상과 결과 — 시점' · 기관-4 ⓐ) — 고를 수 있는 장면 가운데 그 계정이 볼 수 있는 것(관할)만 ·
+    # 시점 = 장면 이름(캡션)에 적힌 날(2025.04 · 2025) — 날이 없는 장면은 시점 칸에 넣지 않는다(지어내지 않는다)
+    scenes = []
+    if p.realm == "tenant":
+        for x in inf.get("scenes") or []:
+            if not scene_ok(x) or x.get("ex"):
+                continue
+            dm = re.search(r"((?:19|20)\d{2})(?:[.\-/](\d{1,2}))?", str(x.get("caption") or ""))
+            if not dm:
+                continue
+            when = f"{dm.group(1)}.{int(dm.group(2)):02d}" if dm.group(2) else dm.group(1)
+            scenes.append({"src": x["src"], "caption": x.get("caption") or "", "when": when})
+        scenes.sort(key=lambda x: x["when"])
 
     # ⑦ 영상 조건 · 걸리는 시간 · 찾는 것 · 대조
     gw = m["gsd_word"]
@@ -301,7 +314,7 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
     out = {
         "id": cid, "name": _name(card["name"]), "scope": card["scope"] or "local", "group": inf.get("grp") or ("해외" if card["scope"] == "global" else None),
         "state": state, "state_label": STAGE_WORD[state],
-        "line": _words(inf.get("line")), "scene": scene,
+        "line": _words(inf.get("line")), "scene": scene, **({"scenes": scenes} if p.realm == "tenant" else {}),
         "where": example["region"] if example else where_any, "as_of": example["as_of"] if example else None, "example": example,
         "example_note": None if example else ("첫 결과 뒤 표시" if state == "none" else "필지 대조 뒤 표시" if parcel else "업무 결과 집계 전"),
         "uses": {"text": uses_text, "counts": {"ga": n["ga"], "pilot": n["pilot"], "none": n["none"]}},
@@ -355,10 +368,22 @@ async def _deck_tenant(p) -> dict:
         dps = await conn.fetch("SELECT card_id, min(year) AS year FROM deploys WHERE tenant_id=$1 AND NOT coalesce(test,false) AND stage <> 'draft' "
                                "AND card_id IS NOT NULL GROUP BY card_id ORDER BY card_id", p.tenant_id)
     cards = {c["id"]: c for c in m["cards"]}
+    # 부서 사용자는 기관 관리자가 정해 준 서비스만(원칙 38 · 기관-3 ⓐ '부서 사용자는 자기 서비스만') — 우리 공간 · 결과 설명서와 같은 배정(space_assign).
+    # 기관 관리자 = 그 기관 서비스 전부. 배정이 없으면 빈 덱(화면은 '아직 맡은 서비스가 없습니다')
+    dept_only = p.role != "manager"
+    if dept_only:
+        async with db(p) as c2:
+            mine_cards = {r["card_id"] for r in await c2.fetch("SELECT card_id FROM space_assign WHERE tenant_id=$1 AND user_id=$2", p.tenant_id, p.user_id)}
+        svcs = [s for s in svcs if s["card"] in mine_cards]
     listed = {s["card"] for s in svcs}
     # 서비스 선택에 보이는 서비스(listed) + 그 기관에 적용된 다른 서비스(분석 의뢰에서 고를 수 있는 것 — /requests/services 와 같은 배포 기록)
     extra = [{"card": d["card_id"], "name": None, "line": None, "year": d["year"], "status": None, "open": True, "_extra": True}
-             for d in dps if d["card_id"] not in listed]
+             for d in dps if d["card_id"] not in listed and (not dept_only or d["card_id"] in mine_cards)]
+    # LX 담당 = 기관이 보낸 검토 요청 · 분석 요청을 실제로 받는 사람(messages._owner — 프로젝트장 → 카드 담당 → 공개 요청한 직원) ·
+    # 기관 화면의 'LX 담당'과 받는 사람이 같은 한 출처(구현 5차 기관-4 ⓐ 'LX와 주고받은 검토 요청' · 담당)
+    from .messages import _owner as _rv_owner
+    async with db(realm="lx") as conn:
+        rv_owner = {s["card"]: await _rv_owner(conn, s["card"]) for s in svcs + extra}
     out = []
     for s in svcs + extra:
         c = cards.get(s["card"])
@@ -386,21 +411,23 @@ async def _deck_tenant(p) -> dict:
                                "word": word, "place": short}
         else:
             core["example"] = None
-        dates = [str((_metric(it, k) or {}).get("as_of") or "")[:10] for it in mine for k in ("detected", "field_check")]
+        # 최근 결과 = 다듬은 결과 세트의 분석한 날만 — 현장 확인 필요(필지 대조)의 기준일은 '지금 센 때'라 결과 날짜가 아니고,
+        # 분석 칸 도형 결과(작업 결과)의 기준일도 센 때다(둘 다 쓰면 '최근 결과'가 늘 오늘이 된다 · 지어내지 않는다 → 없으면 비움)
+        dates = [str((_metric(it, "detected") or {}).get("as_of") or "")[:10] for it in mine if _metric(it, "detected") and not _raw_ai(it)]
         dates = [d for d in dates if d]
         survey = any(it.get("survey_state") or _metric(it, "field_check") for it in mine)
         core.update({
             "line": s.get("line") or core["line"], "name": s.get("name") or core["name"],
             "year": s.get("year"), "status_label": s.get("status") or core["state_label"], "open": bool(s.get("open")),
             "state": STAGE_KEY.get(s.get("status"), core["state"]) if s.get("open") else "none", "listed": not s.get("_extra"),
-            "latest": max(dates) if dates else None,
+            "latest": max(dates) if dates else None, "owner": (rv_owner.get(c["id"]) or {}).get("name"),
             "todo": {"text": (f"결과 확인 대기 {int(rp['value']):,}건" if rp["value"] else "확인할 결과 없음") if rp else ("확인할 결과 없음" if s.get("open") else "—")},
             "report": survey,
         })
         for k in ("uses", "time", "publish", "reports", "reports_sum", "imagery", "timepoints", "finds", "compare", "can_analyze", "cant", "version"):
             core.pop(k, None)
         out.append(core)
-    return {"items": out, "total": len(out), "short": short, "as_of": now_iso(), "computed_at": at}
+    return {"items": out, "total": len(out), "short": short, "as_of": now_iso(), "computed_at": at, "scope": "assigned" if dept_only else "all"}
 
 
 @router.get("/cards/deck")

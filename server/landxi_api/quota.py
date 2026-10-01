@@ -195,7 +195,7 @@ async def remaining(tenant: str, dim: str) -> dict:
 
 UNIT = {"storage_gb": "GB", "gpu_s_month": "gpu_s", "area_km2_month": "km2", "concurrent_jobs": "count", "egress_gb_month": "GB",
         "vworld_calls_day": "count", "llm_tokens_month": "tokens"}
-SRC = {"storage_gb": "결과 폴더·파일(기관 몫 작업 · 배포본 결과 세트) + 분석 의뢰로 올린 영상 원본 + 기관 DB 행(대장 · 실태조사 · 탐지) · 60s 캐시", "gpu_s_month": "usage_events(gpu_s · 이번 달 · 분석을 요청한 기관 · 학습 포함)", "area_km2_month": "usage_events(area_km2 · 이번 달 · 분석을 요청한 기관 · 실제 분석한 땅)",
+SRC = {"storage_gb": "결과 폴더·파일(기관 몫 작업 · 배포본 결과 세트) + 분석 요청으로 올린 영상 원본 + 기관 DB 행(대장 · 실태조사 · 탐지) · 60s 캐시", "gpu_s_month": "usage_events(gpu_s · 이번 달 · 분석을 요청한 기관 · 학습 포함)", "area_km2_month": "usage_events(area_km2 · 이번 달 · 분석을 요청한 기관 · 실제 분석한 땅)",
        "concurrent_jobs": "jobs(state queued|running · 지금)", "egress_gb_month": "usage_events(egress_gb)", "vworld_calls_day": "Redis vworld:calls(오늘)",
        "llm_tokens_month": "usage_events(llm_tokens · 이번 달 · AI 도우미를 부른 기관)"}
 
@@ -215,7 +215,7 @@ async def usage_of(tenant: str) -> dict:
             st = await storage_of(tenant)
             dims[d]["breakdown"] = {"files_gb": env(st["files_gb"], "GB", "measured", "결과 폴더·파일 크기(기관 몫 작업 · 배포본 결과 세트)"),
                                     "db_gb": env(st["db_gb"], "GB", "measured", "기관 DB 행 크기(대장 · 실태조사 · 탐지 · 위성 지수)"),
-                                    "uploads_gb": env(st.get("uploads_gb", 0.0), "GB", "measured", "분석 의뢰로 올린 영상 원본(받는 중 포함)")}
+                                    "uploads_gb": env(st.get("uploads_gb", 0.0), "GB", "measured", "분석 요청으로 올린 영상 원본(받는 중 포함)")}
     # AI 도우미 요청 건수(이번 달) — 사용량 표시의 말은 '질문'이 아니라 '요청 건수'(10-01 사용자 11차 답). 토큰은 개발자용 값으로 그대로 둔다.
     async with db(realm="lx") as conn:
         n_req = await conn.fetchval("SELECT count(*) FROM agent_runs WHERE tenant_id=$1 AND created_at >= $2", tenant, _month_start())

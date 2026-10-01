@@ -3,13 +3,17 @@
      기관은 주소로 정해지므로 기관 고르기가 없다. 서버 로그인 경로는 그대로(gov 입구 + tenant_id).
    · gov.land-xi.dev/ : 기관 고르기 목록(각 기관 메인으로 가는 카드) — 기관 이름 목록은 서버가 정본(GET /auth/tenants).
    · 이 PC · 사본: /landxi/v3/gov-home/?org={기관}
-   틀(배치 · 메뉴 · 부품)은 모든 기관이 같다(원칙 48 · I-4). 기관색은 마크 · 서비스 얼굴 판 · 머리의 약칭에만.
+   틀(배치 · 메뉴 · 부품)은 모든 기관이 같다(원칙 48 · I-4). 기관색은 마크 · 머리의 약칭 · 1차 버튼 · 상태 칩에만.
+   구현 5차(기관-2 ⓐ · 시안 design-r8/gov-design/mock/main.html): 그림판(일러스트) 대신 실제 결과 장면을 작게 — 로그인 전이므로 서버 설정 한 곳의
+   저해상 크롭만(GET /brand/{기관}/main · config/gov-main.yaml · 원본 · 지도 타일 · 제한 영상 0). 머리 아래 업무 결과 셋(업무 결과 하나 · 서비스 수 · 최근 분석한 날 —
+   서버 값 그대로). 배경 사진을 LX 관리자가 고르는 화면은 다음 설계(원칙 116).
    로그인 뒤 = 서비스 선택(kit/auth-gate.js LANDING) — ?next 가 그 사람이 들어갈 수 있는 같은 출처 화면이면 거기로. */
 import { API, api, session } from '../../shared/api-v1.js';
 import { h, enter } from '../kit/util.js';
 import { empty } from '../kit/empty.js';
 import { keyOf, landingFor, ALLOW, SITES, orgHome, orgUrl, orgOfHost } from '../kit/auth-gate.js';
-import { loadBrand, applyBrand, markEl, faceEl, statusLv, headlineHtml, favicon, joinLine } from '../gov-select/brand.js';
+import { loadBrand, applyBrand, markEl, statusLv, headlineHtml, favicon, joinLine } from '../gov-select/brand.js';
+import { numHtml } from '../kit/bignum.js';
 
 const main = document.getElementById('main');
 const qs = new URLSearchParams(location.search);
@@ -34,16 +38,19 @@ const ORG = orgHere();
 
 /* ── 말(기관의 언어 — 해외 기관은 영어) ─────────────────────── */
 const KO = {
-  menu: '메뉴', svcNav: '서비스 소개', how: '이용 방법', contact: '문의', login: '로그인', mine: '내 서비스',
+  menu: '메뉴', svcNav: '서비스', how: '이용 방법', contact: '문의', login: '로그인', mine: '내 서비스',
   who: (s) => `${s} 직원 계정`, id: '아이디', idPh: '메일 주소', pw: '비밀번호',
   need: '아이디와 비밀번호를 입력하세요', fail: '아이디 또는 비밀번호가 맞지 않습니다', down: '서버에 연결할 수 없습니다 — 잠시 뒤 다시 시도하세요',
   ask: (c) => `계정 문의 ${c}`, help: '가입 신청 · 아이디 · 비밀번호 찾기', inT: '로그인되어 있습니다', go: '내 서비스로', out: '나가기',
   svc: (s) => `${s} AI 분석 서비스`, since: (y) => `${y}년부터`,
   status: (s) => s, steps: [
-    ['로그인', 'LX가 발급한 기관 계정으로 로그인합니다.'],
-    ['서비스 선택', '우리 기관에 열린 서비스 가운데 하나를 고릅니다.'],
-    ['결과 확인 · 보고서', 'AI 분석 결과를 지도와 표로 보고 보고서를 만듭니다.'],
+    ['로그인', '기관 관리자가 승인한 계정(메일 주소)으로 들어옵니다. 내가 맡은 서비스만 보입니다.'],
+    ['결과 확인', '서비스를 열어 AI 분석 결과를 지도와 표로 봅니다. 현장 확인이 필요한 필지가 먼저 보입니다.'],
+    ['보고서 · 분석 요청', '결과로 보고서를 만들고, 우리 영상을 넣어 새 분석을 요청합니다. LX가 확인한 뒤 분석합니다.'],
   ],
+  svcSub: '결과가 있는 서비스는 실제 결과 장면을, 아직 없는 서비스는 시작 시기를 보여 줍니다.', howSub: '세 단계면 됩니다. 어려운 설정은 없습니다.',
+  first: '첫 결과 전', firstT: '영상이 들어오면 분석합니다', starts: (y) => `${y}년 시작`, startsT: (st) => (st === '내년' ? '내년 사업으로 준비합니다' : '사업이 시작되면 결과가 보입니다'),
+  biz: (y) => `${y}년 사업`, latest: (d) => `최근 결과 ${d}`, nSvc: '서비스', since2: (y) => `${y}년부터 사업 순서대로`, lastAi: '최근 AI 분석 결과',
   phone: (c) => `대표전화 ${c}`, lx: 'AI 분석 · 모델 개발과 갱신 — LX 한국국토정보공사',
   none: '없는 기관 주소입니다', noneT: '기관 목록에서 우리 기관을 고르세요', pick: '기관 목록',
   pickH: '기관 선택', pickL: '우리 기관을 고르면 그 기관의 서비스 소개와 로그인으로 이어집니다.', pickEmpty: '열린 기관이 없습니다',
@@ -55,8 +62,12 @@ const EN = {
   ask: (c) => `Account help ${c}`, help: 'Sign up · find ID · reset password', inT: 'Signed in', go: 'Go to my services', out: 'Sign out',
   svc: (s) => `${s} AI analysis services`, since: (y) => `Since ${y}`,
   status: (s) => ({ 운영: 'In service', 시범: 'Pilot', '첫 결과 전': 'Before first result', 내년: 'Next year' }[s] || s),
-  steps: [['Sign in', 'Sign in here with the account issued by LX.'], ['Choose a service', 'Pick one of the services opened for your agency.'],
-    ['Results · reports', 'Review AI results on the map and in tables, and make reports.']],
+  steps: [['Sign in', 'Sign in with the account your agency administrator approved. Only your services are shown.'],
+    ['Check results', 'Open a service to see AI results on the map and in tables.'],
+    ['Reports · analysis requests', 'Make reports from the results, or upload your imagery to request a new analysis. LX reviews it first.']],
+  svcSub: 'Services with results show a real result scene; the others show when they start.', howSub: 'Three steps. No complex settings.',
+  first: 'Before first result', firstT: 'Analysis starts when imagery arrives', starts: (y) => `Starts ${y}`, startsT: () => 'Prepared as an upcoming project',
+  biz: (y) => `Since ${y}`, latest: (d) => `Latest ${d}`, nSvc: 'services', since2: (y) => `Since ${y}, in project order`, lastAi: 'Latest AI analysis',
   phone: (c) => `Tel. ${c}`, lx: 'AI analysis · model development and updates — LX Korea Land and Geospatial InformatiX Corporation',
   none: 'Unknown agency address', noneT: 'Choose your agency from the list', pick: 'Agency list',
 };
@@ -94,7 +105,7 @@ async function renderOrg(id) {
   applyBrand(document.documentElement, b); favicon(b);
   document.title = b.platform;
   const svcs = b.services || [];
-  const lead = svcs.find((s) => s.status === '운영') || svcs.find((s) => s.open) || svcs[0];
+  const mainP = api(`/brand/${encodeURIComponent(b.tenant)}/main`).catch(() => null);   // 그림 · 업무 결과 셋(로그인 없이)
 
   /* 이미 이 기관으로 들어와 있으면 '내 서비스로' */
   const s0 = session.get();
@@ -110,26 +121,53 @@ async function renderOrg(id) {
   /* 로그인 카드 — 아이디(메일 주소) · 비밀번호. 기관은 주소가 정한다 */
   const card = h('div.gh-login', { id: 'login' });
   if (mineS) paintSignedIn(card, b, mineS, dest); else paintLogin(card, b);
-  const side = h('div.gh-side', {}, lead ? faceEl(lead.card, 'gh-art') : null, card);
+  const side = h('div.gh-side', {}, card);
 
-  const hero = h('section.gh-hero', { 'aria-label': b.platform }, h('div.gh-in.gh-hero-in', {},
-    h('div.gh-copy', {},
-      h('p.gh-org', { text: nameOf(b) }),
-      h('h1.gh-h1', { html: headlineHtml(b) }),
-      (b.intro?.lines || []).length ? h('p.gh-lead', {}, ...b.intro.lines.map((l) => h('span', { text: l }))) : null),
-    side));
+  /* 그림 · 업무 결과 셋 — 서버 설정 한 곳(저해상 크롭만 · 제한 영상 0) · 숫자는 서버 값 그대로(없으면 그 칸을 비운다 · 지어내지 않는다) */
+  const M = await mainP;
+  const F = M?.facts || null;
+  const ymd = (d) => String(d || '').slice(0, 10).replace(/-/g, '.');
+  const fact = (big, lab) => h('div.gh-fact', {}, h('b', { html: big }), h('span', { text: lab }));
+  const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const facts = F ? h('div.gh-facts', {},
+    F.result?.env ? fact(numHtml(F.result.env), `${F.result.label} · ${F.result.service}`) : null,
+    F.services?.value ? fact(`${esc(F.services.value)}<small>${esc(L.nSvc)}</small>`, F.since ? L.since2(F.since) : '') : null,
+    F.latest ? fact(`<span class="num">${esc(ymd(F.latest))}</span>`, L.lastAi) : null) : null;
 
-  const svc = h('section.gh-sec', { id: 'svc' }, h('div.gh-in', {},
-    h('h2.gh-h2.t-enter', { text: L.svc(b.short) }),
-    h('div.gh-grid', { dataset: { n: String(svcs.length) } }, ...svcs.map((s) => h('article.gh-svc.t-enter', { dataset: { card: s.card, status: s.status } },
-      faceEl(s.card, 'gh-svc-face'),
+  const hero = h('section.gh-hero', { 'aria-label': b.platform, class: M?.background?.src ? 'has-bg' : '' },
+    M?.background?.src ? h('div.gh-bg', { 'aria-hidden': 'true' }, h('img', { src: M.background.src, alt: '', decoding: 'async' })) : null,
+    h('div.gh-in.gh-hero-in', {},
+      h('div.gh-copy', {},
+        h('p.gh-org', { text: nameOf(b) }),
+        h('h1.gh-h1', { html: headlineHtml(b) }),
+        (b.intro?.lines || []).length ? h('p.gh-lead', {}, ...b.intro.lines.map((l) => h('span', { text: l }))) : null,
+        facts && facts.childElementCount ? facts : null),
+      side));
+
+  /* 서비스 카드 — 결과가 있는 서비스는 실제 결과 장면(작게), 없는 서비스는 시작 시기만(그림 없음) */
+  const svcCard = (s) => {
+    const pic = s.open ? M?.scenes?.[s.card] : null;
+    const lv = statusLv(s.status);
+    const chip = h('span.t-chip.gh-chip', { text: L.status(s.status), dataset: lv ? { lv } : { lv: 'on' } });
+    const crop = pic ? h('div.gh-crop', {}, h('img', { src: pic.src, alt: '', loading: 'lazy', decoding: 'async' }), chip)
+      : h('div.gh-crop.is-blank', {}, h('b', { text: s.open ? L.first : L.starts(s.year || '') }), h('span', { text: s.open ? L.firstT : L.startsT(s.status) }), chip);
+    const hit = F?.result && F.result.card === s.card ? F.result : null;
+    return h('article.gh-svc.t-enter', { dataset: { card: s.card, status: s.status } },
+      crop,
       h('div.gh-svc-b', {},
-        h('div.gh-meta', {}, h('span', { text: s.year ? L.since(s.year) : '' }), svcChip(s.status)),
+        h('div.gh-meta', {}, h('span', { text: s.year ? L.biz(s.year) : '' }), h('span', { text: hit && F.latest ? L.latest(ymd(F.latest)) : L.status(s.status) })),
         h('h3', { text: s.name }),
-        s.line ? h('p.gh-d', { text: joinLine(s.line) }) : null))))));
+        s.line ? h('p.gh-d', { text: joinLine(s.line) }) : null,
+        hit ? h('p.gh-res', { html: `${numHtml(hit.env)}<span>${esc(hit.label)} · ${esc(b.short)}</span>` }) : null));
+  };
+  const svc = h('section.gh-sec.gh-sec--svc', { id: 'svc' }, h('div.gh-in', {},
+    h('h2.gh-h2.t-enter', { text: L.svc(b.short) }),
+    h('p.gh-sub', { text: L.svcSub }),
+    h('div.gh-grid', { dataset: { n: String(svcs.length) } }, ...svcs.map(svcCard))));
 
   const how = h('section.gh-sec', { id: 'how' }, h('div.gh-in', {},
     h('h2.gh-h2.t-enter', { text: L.how }),
+    h('p.gh-sub', { text: L.howSub }),
     h('ol.gh-how', {}, ...L.steps.map(([t, d], i) => h('li.gh-step.t-enter', {}, h('span.n', { text: String(i + 1) }), h('h3', { text: t }), h('p', { text: d }))))));
 
   const foot = h('footer.gh-foot', { id: 'contact' }, h('div.gh-in', {},

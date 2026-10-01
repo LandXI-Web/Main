@@ -1,10 +1,11 @@
-/* gov-request — 기관 분기 화면 · 분석 의뢰(확인 대장 6차 GF-2 · 2차 D1-ⓑ · 5차 역할-4 ⓑ · 1차 FR-1 · 구현 확인 2차 J-9 · 원칙 100).
+/* gov-request — 기관 분기 화면 · 분석 요청(확인 대장 6차 GF-2 · 2차 D1-ⓑ · 5차 역할-4 ⓑ · 1차 FR-1 · 구현 확인 2차 J-9 · 원칙 100 ·
+   구현 5차 기관-5 ⓐ — 이름 '분석 요청'(원칙 113) · 시안 design-r8/gov-design/mock/request.html 모양: 왼쪽 세 단계 · 오른쪽 '어디를 분석하나'(작은 지도) · 내가 보낸 요청).
    공무원은 전문가가 아니다 — 세 단계만:
      ① 영상 넣기      LX 가 이 기관에 공유한 영상 '불러오기' 또는 우리 영상 파일 끌어 놓기(여러 장 · 진행 막대 · 멈춤 · 이어 올리기)
      ② 분석 카드 고르기 그 기관에 켜진 서비스를 서비스 카드 한 벌(kit/service-card · 고르는 모양)로 — 이 영상으로 못 하는 카드는 쉬운 말 한 줄
      ③ 요청하기        메모 한 줄(선택) → '분석 요청' — 무상(원칙 60). LX 관리자 · 담당자가 확인한 뒤 대기열 순서대로.
    형식 · 해상도 · 좌표 같은 전문 글은 화면에 없다 — 서버가 파일에서 읽어 처리하고(관할 밖 판정 등 검사는 그대로), 문제일 때만 쉬운 말 한 줄 + 할 일.
-   [내 의뢰] 확인 대기 → 분석 중 → 결과 도착(서비스의 새 시점) · 반려(사유). 서비스 대시보드는 '?service=' 로 이 화면을 연다.
+   [내가 보낸 요청] 확인 대기 → 분석 중 → 결과 도착(서비스의 새 시점) · 반려(사유). 서비스 대시보드는 '?service=' 로 이 화면을 연다.
    지역 고정값 없음 — 관할 · 서비스 · 공유 영상은 모두 로그인 기관에서. */
 import { shell, gate, createStage, toast, empty, devDrawer, devlog, FRONT } from '../kit/index.js';
 import { api, esc, h, session, LS } from '../kit/util.js';
@@ -12,6 +13,7 @@ import { sse } from '../../shared/api-v1.js';
 import { uploadQueue } from '../kit/dropzone.js';
 import { loadDeck, svcCard } from '../kit/service-card.js';
 import { govRail } from '../gov-select/menu.js';
+import { loadBrand } from '../gov-select/brand.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const STATE_LV = { pending: 'wait', approved: 'wait', analyzing: '', done: '', rejected: 'warn', failed: 'warn' };
@@ -28,12 +30,18 @@ const whenWord = (d) => { const m = /^(\d{4})(?:-(\d{2}))?/.exec(String(d || '')
 const who = await gate('gov-request');
 if (who.me?.realm !== 'tenant') { location.replace(who.landing || FRONT); await new Promise(() => {}); }
 const org = (who.org || who.name || '').replace(/\s*담당자$/, '').split(/\s+/).pop() || '기관';
-/* 기관 메뉴(내 서비스 · 분석 의뢰 · 내가 보낸 요청 · 기관 관리자는 기관 정보 · 계정) — 국내 기관 화면과 같은 메뉴(gov-select/menu.js) */
+/* 기관 메뉴(내 서비스 · 분석 요청 · 보낸 요청 · 우리 공간 · 기관 관리자는 기관 정보 · 계정) — 국내 기관 화면과 같은 메뉴(gov-select/menu.js) */
 const rail = who.key === 'tenant/local' ? govRail({ who, current: 'request', service: new URLSearchParams(location.search).get('service') }) : null;
 const app = shell({ who: { ...who, org }, home: 'gov-request', title: org, rail });
 app.main.append($('#tpl').content.cloneNode(true));
 document.body.classList.remove('gq-boot');
-document.title = `${org} · 분석 의뢰 · Land-XI`;
+document.title = `분석 요청 · ${org}`;
+/* 바닥 — 기관 이름 · 대표전화(기관 화면 한 벌 · gov-select 와 같은 바닥) */
+loadBrand(who.me.tenant_id).then((b) => {
+  const nm = b.name?.ko || b.name?.en || b.platform;
+  $('.gq').append(h('footer.gs-foot', {}, h('b', { text: nm }), b.contact ? h('span', { text: `대표전화 ${b.contact}` }) : null, h('span.sp'),
+    h('span', { text: 'AI 분석 · 모델 개발과 갱신 — LX 한국국토정보공사' })));
+}).catch(() => {});
 devDrawer({ who });
 
 const Q = new URLSearchParams(location.search);
@@ -42,8 +50,13 @@ const DKEY = `gq:draft:${who.me.tenant_id}:${who.me.user?.id || ''}`;
 const S = { svcs: [], cards: new Map(), shared: [], mine: [], card: null, svc: Q.get('service') || null, pick: null, draft: LS.get(DKEY), area: null, sel: null, fitGsd: null };
 
 /* ═════════ 지도 — 넣은 영상이 어디인지 ═════════ */
-const MOB = matchMedia('(max-width: 640px)').matches;          // 휴대폰 = 아래 시트(화면 높이 64%)가 지도를 덮는다
-const stage = createStage($('#map'), { padding: MOB ? { top: 24, bottom: Math.round(innerHeight * 0.66), left: 16, right: 16 } : { top: 72, bottom: 72, left: 72, right: 560 } });
+const stage = createStage($('#map'), { padding: { top: 28, bottom: 28, left: 28, right: 28 } });   // 오른쪽 '어디를 분석하나' 작은 지도(시안)
+/** 미리 보기 한 줄 — 어디를 찍은 영상인지(사용자 말) · 없으면 안내 한 줄 */
+function whereCap(text) {
+  const cap = $('#map-cap'), note = $('#map-note');
+  cap.hidden = !text; cap.textContent = text || '';
+  note.textContent = text ? `${org} 밖은 분석하지 않습니다.` : '영상을 넣으면 어디를 찍은 것인지 여기에 보입니다';
+}
 const FC = (geoms) => ({ type: 'FeatureCollection', features: geoms.filter(Boolean).map((g) => ({ type: 'Feature', properties: {}, geometry: g })) });
 const box = (b) => b && ({ type: 'Polygon', coordinates: [[[b[0], b[1]], [b[2], b[1]], [b[2], b[3]], [b[0], b[3]], [b[0], b[1]]]] });
 async function overlay(ov) {
@@ -65,23 +78,23 @@ async function showImagery(id) {                       // 공유된 LX 영상을
     if (it && shownImg === id) { await stage.ladder([it], [id]); }
   } catch (e) { devlog('imagery', e.code || e.message); }
 }
-function clearMap() { overlay(null); stage.clear('fp'); stage.clear('res'); }
+function clearMap() { overlay(null); stage.clear('fp'); stage.clear('res'); whereCap(null); }
 
 /* ═════════ 탭 ═════════ */
+/* 탭 없음(시안) — '내가 보낸 요청'은 늘 오른쪽에 있다. 'mine' = 그 칸으로 눈을 옮긴다(보낸 직후 · ?tab=mine) */
 function setTab(t) {
-  for (const b of document.querySelectorAll('.gq-tabs [role=tab]')) b.setAttribute('aria-selected', String(b.dataset.tab === t));
-  for (const p of document.querySelectorAll('.gq-pane')) p.hidden = p.dataset.pane !== t;
   document.body.dataset.tab = t;
+  if (t === 'mine') requestAnimationFrame(() => $('#mine')?.scrollIntoView({ block: 'nearest', behavior: 'auto' }));
 }
-$('.gq-tabs').addEventListener('click', (e) => { const b = e.target.closest('[role=tab]'); if (b) setTab(b.dataset.tab); });
 
 /* ═════════ ① 영상 넣기 — 공유 영상 · 우리 파일 ═════════ */
 const sharedName = (x) => `${org} ${x.year ? x.year + '년 ' : ''}${kindWord(x.gsd_m)}`;
 function drawShared() {
   const el = $('#shared');
   const list = S.shared.filter((x) => x.analyzable);
-  if (!list.length) { el.innerHTML = ''; $('#or').textContent = '우리 영상 파일'; return; }
-  $('#or').textContent = '또는 우리 영상 파일';
+  $('#shared-tile').hidden = !list.length;
+  $('.gq-src').dataset.n = list.length ? '2' : '1';
+  if (!list.length) { el.innerHTML = ''; return; }
   el.innerHTML = `<p class="t-label">LX가 ${esc(org)}에 공유한 영상</p>` + list.slice(0, 4).map((x) => {
     const on = S.pick?.source === 'shared' && S.pick.imagery.id === x.id;
     return `<div class="gq-sr${on ? ' is-on' : ''}" data-id="${esc(x.id)}"><div class="t"><b>${esc(sharedName(x))}</b><span>${x.result_services?.length ? '이미 분석한 영상' : '아직 분석하지 않은 영상'}</span></div>
@@ -101,6 +114,7 @@ async function pickShared(x) {
   await fitServices(x.gsd_m);
   stage.geo('fp', FC([box(x.bbox)]), 'focus');
   if (x.bbox) stage.go(x.bbox, { maxZoom: 15 });
+  whereCap(sharedName(x));
   showImagery(x.id);
   ready();
 }
@@ -110,7 +124,7 @@ const drop = uploadQueue($('#drop'), {
   fields: () => ({ draft_id: S.draft || undefined }),
   allow: [...RASTER, ...SIDECAR],
   max: 20e9,
-  title: '파일을 끌어 놓거나 눌러 고르세요',
+  title: matchMedia('(max-width: 640px)').matches ? '눌러서 영상 파일을 고르세요' : '파일을 끌어 놓거나 눌러 고르세요',   // 휴대폰엔 끌어 놓기가 없다
   kinds: '여러 장도 한 번에 넣을 수 있습니다',
   onStart: (st) => { if (st.draft_id && st.draft_id !== S.draft) { S.draft = st.draft_id; LS.set(DKEY, S.draft); } },
   onChange: (items) => {
@@ -134,7 +148,7 @@ async function readDraft() {
     overlay(rd.overlay);
     stage.geo('fp', FC([rd.footprint]), 'focus');
     if (rd.bbox) stage.go(rd.bbox, { maxZoom: 17 });
-    if (rd.ok) await fitServices(rd.gsd_m);
+    if (rd.ok) { whereCap(rd.place ? `${rd.place} 일대` : '넣은 영상'); await fitServices(rd.gsd_m); }
   } catch (e) {
     readKey = '';
     S.pick = { source: 'upload', draft: S.draft, read: { ok: false, code: e.code } };
@@ -229,7 +243,7 @@ function drawCards() {
     const no = ds.length && ds.every((d) => d.fits === false);
     const dupe = S.pick?.source === 'shared' && ds.some((d) => S.pick.imagery.result_services?.includes(d.id));
     const why = no ? '이 영상으로는 어렵습니다 — 다른 영상이 필요합니다' : dupe ? '이 영상은 이 카드로 이미 분석했습니다' : '';
-    return svcCard({ ...c, scene: c.scene || null }, { kind: 'gov', row: true, pick: { selected: S.card === id && !no && !dupe, disabled: no || dupe, why, onPick: (x) => { S.card = x.id; S.svc = deployOf(x.id)?.id || null; const u = new URL(location.href); if (S.svc) u.searchParams.set('service', S.svc); history.replaceState(null, '', u); drawCards(); ready(); } } });
+    return svcCard({ ...c, scene: c.scene || null }, { kind: 'gov', pick: { selected: S.card === id && !no && !dupe, disabled: no || dupe, why, onPick: (x) => { S.card = x.id; S.svc = deployOf(x.id)?.id || null; const u = new URL(location.href); if (S.svc) u.searchParams.set('service', S.svc); history.replaceState(null, '', u); drawCards(); ready(); } } });
   }));
   const on = el.querySelector('.k-sc.is-on');
   $('#ok-2').textContent = on ? `${(on.querySelector('.k-sc-t')?.textContent || '').replace(/\s*(행정서비스|서비스)$/, '')} 선택 ✓` : '';
@@ -253,7 +267,7 @@ $('#go').addEventListener('click', async () => {
   body.memo = $('#memo').value.trim() || undefined;
   try {
     const rq = await api('/requests', { method: 'POST', body });
-    toast('의뢰를 보냈습니다 · 확인되면 알려 드립니다');
+    toast('분석 요청을 보냈습니다 · 확인되면 알려 드립니다');
     $('#memo').value = '';
     if (p.source === 'upload') { drop.clear(); S.draft = null; LS.set(DKEY, null); readKey = ''; $('#drop').hidden = false; }
     S.pick = null; shownImg = null;
@@ -263,35 +277,36 @@ $('#go').addEventListener('click', async () => {
     openReq(rq.id);
   } catch (e) {
     devlog('request', `${e.code} ${e.message}`);
-    $('#go-note').textContent = e.message || '지금은 의뢰할 수 없습니다';
+    $('#go-note').textContent = e.message || '지금은 요청할 수 없습니다';
     $('#go-note').dataset.lv = 'warn';
-    setTimeout(() => { $('#go-note').innerHTML = 'LX 담당자가 확인한 뒤 분석합니다.<br>끝나면 알림으로 알려 드립니다.'; delete $('#go-note').dataset.lv; }, 6000);
+    setTimeout(() => { $('#go-note').innerHTML = 'LX 담당자가 확인한 뒤 분석합니다.<br>끝나면 알림으로 알려 드리고, 결과는 그 서비스에 새 시점으로 쌓입니다.'; delete $('#go-note').dataset.lv; }, 6000);
   }
   ready();
 });
 
-/* ═════════ 내 의뢰 ═════════ */
+/* ═════════ 내가 보낸 요청 ═════════ */
 async function loadMine() {
   try {
     const j = await api('/requests');
     S.mine = j.items || [];
   } catch (e) { devlog('mine', e.code || e.message); return; }
   const n = S.mine.filter((x) => ['pending', 'approved', 'analyzing'].includes(x.state)).length;
-  $('#mine-n').textContent = S.mine.length ? String(S.mine.length) : '';
+  $('#mine-n').textContent = S.mine.length ? `${S.mine.length}건` : '';
   $('#mine-n').dataset.live = n ? '1' : '';
   drawMine();
   if (S.sel) openReq(S.sel, { keepMap: true });
   plan();
 }
 function title(x) { return `${x.label || '영상'} → ${String(x.service?.name || '').replace(/\s*(행정서비스|서비스)$/, '')}`; }
+const whenTxt = (x) => (x.state === 'done' ? `${ymd(x.decided_at || x.created_at)} 결과 도착` : `${ymd(x.created_at)} 보냄`);
 const row = (k, v) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`;
 function drawMine() {
   const ul = $('#rows'), none = $('#rows-empty');
   none.hidden = !!S.mine.length;
-  if (!S.mine.length && !none.firstChild) empty(none, { kind: 'first', title: '보낸 의뢰가 없습니다', compact: true });
+  if (!S.mine.length && !none.firstChild) empty(none, { kind: 'first', title: '아직 보낸 요청이 없습니다', compact: true });
   ul.innerHTML = S.mine.map((x) => `<li class="gq-row${x.id === S.sel ? ' is-on' : ''}" data-id="${esc(x.id)}" tabindex="0" role="button">
     <span class="l1">${esc(title(x))}</span><span class="t-chip" data-lv="${STATE_LV[x.state] ?? ''}">${esc(x.state_word)}</span>
-    <span class="l2">${esc([ymd(x.created_at), x.place].filter(Boolean).join(' · '))}</span></li>`).join('');
+    <span class="l2">${esc([whenTxt(x), x.place].filter(Boolean).join(' · '))}</span></li>`).join('');
 }
 $('#rows').addEventListener('click', (e) => { const r = e.target.closest('.gq-row'); if (r) openReq(r.dataset.id); });
 $('#rows').addEventListener('keydown', (e) => { const r = e.target.closest('.gq-row'); if (r && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openReq(r.dataset.id); } });
@@ -326,6 +341,7 @@ async function openReq(id, { keepMap = false } = {}) {
     if (x.overlay) overlay(x.overlay);
     if (x.aoi) { stage.geo('fp', FC([x.aoi]), 'focus'); fitGeom(x.aoi); }
   }
+  if (x.place || x.label) whereCap([x.place ? `${x.place} 일대` : x.label, x.area_km2 ? km2(x.area_km2) : ''].filter(Boolean).join(' · '));
 }
 function fitGeom(g) {
   const pts = []; const walk = (c) => (typeof c[0] === 'number' ? pts.push(c) : c.forEach(walk)); walk(g.coordinates || []);
@@ -378,6 +394,6 @@ if (S.draft) {
     drawPicked(); ready();
   } catch (e) { if (e.code !== 'not_ready') { S.draft = null; LS.set(DKEY, null); } }
 }
-devlog('gov-request', `카드 ${cardIds().length} · 공유 영상 ${S.shared.length} · 내 의뢰 ${S.mine.length}`);
+devlog('gov-request', `카드 ${cardIds().length} · 공유 영상 ${S.shared.length} · 보낸 요청 ${S.mine.length}`);
 document.body.dataset.ready = '1';
 void session;

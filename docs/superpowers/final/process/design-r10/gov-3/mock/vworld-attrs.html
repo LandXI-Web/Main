@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko" style="--ci:#1F6F4A;--ci-t1:#E9F3ED;--ci-line:#D1E3D9">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>표 · 필지 카드에 이을 수 있는 것 — 서버가 실제로 받은 값(연속지적도 · LX맵)</title>
+<link rel="stylesheet" href="mock.css">
+<link rel="stylesheet" href="gov2.css">
+<link rel="stylesheet" href="gov3.css">
+<style>
+.page{max-width:1344px}
+.cmp2{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}
+.lxfig{border-radius:12px;overflow:hidden;aspect-ratio:4/3;background:var(--rule);position:relative}
+.lxfig img{width:100%;height:100%;object-fit:cover}
+.lxfig .cap{position:absolute;left:10px;bottom:10px;background:rgba(255,255,255,.94);border-radius:8px;padding:5px 10px;font:500 12px/16px var(--font-body);color:var(--ink)}
+.kv2{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font:400 13px/19px var(--font-body)}
+.kv2 dt{color:var(--sub);white-space:nowrap}
+.kv2 dd{margin:0;color:var(--ink)}
+.attr td.v{font-family:var(--font-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.attr td.v.w{white-space:normal}
+.attr tr.grp td{background:var(--bg-0);font:500 12px/16px var(--font-body);color:var(--sub);padding:6px 10px}
+</style>
+</head>
+<body class="g t">
+<div class="app no-rail">
+  <header class="mast">
+    <p class="mark"><span>남원</span><span>GV</span></p>
+    <span class="word">남원시 GeoVision 플랫폼</span>
+    <span class="sp"></span>
+    <span class="who"><b>농정과</b>박서연</span>
+  </header>
+  <main class="main">
+    <div class="page">
+      <div class="head"><h1>필지 카드에 이을 수 있는 것</h1><span class="sub">서버가 실제로 받아 둔 값 두 필지 — 남원시 운봉읍 준향리 824-9(확인 기록 있음) · 운봉읍 서천리 125-3. 열쇠 값은 서버에만 있고 화면 · 기록에 없습니다.</span></div>
+      <div class="cmp2">
+        <div class="card">
+          <h2>연속지적도 — 필지 속성<small>V-World 데이터 · 서버가 이미 받는 길 · 30일 저장</small></h2>
+          <table class="attr">
+            <thead><tr><th>받는 것</th><th>뜻</th><th>준향리 824-9</th><th>서천리 125-3</th><th>카드에</th></tr></thead>
+            <tbody>
+              <tr class="grp"><td colspan="5">연속지적도에서 그대로 오는 값</td></tr>
+              <tr><td class="k">addr</td><td>주소</td><td class="v w">전북특별자치도 남원시 운봉읍 준향리 824-9</td><td class="v w">… 운봉읍 서천리 125-3</td><td><span class="chip ci">보임</span></td></tr>
+              <tr><td class="k">jibun</td><td>지번 + 지목</td><td class="v">824-9답</td><td class="v">125-3 대</td><td><span class="chip ci">지목으로</span></td></tr>
+              <tr><td class="k">bonbun · bubun</td><td>본번 · 부번</td><td class="v">824 · 9</td><td class="v">125 · 3</td><td><span class="chip">안 보임</span></td></tr>
+              <tr><td class="k">jiga</td><td>공시지가(원/㎡)</td><td class="v">15,600</td><td class="v">52,800</td><td><span class="chip ci">보임</span></td></tr>
+              <tr><td class="k">gosi_year · month</td><td>공시 연월</td><td class="v">2025 · 01</td><td class="v">2025 · 01</td><td><span class="chip ci">작게</span></td></tr>
+              <tr><td class="k">pnu</td><td>필지 번호(19자리)</td><td class="v">5219025030108240009</td><td class="v">5219025029101250003</td><td><span class="chip">작게</span></td></tr>
+              <tr class="grp"><td colspan="5">서버가 적재한 연속지적 도형에서 더 계산하는 값(같은 원천)</td></tr>
+              <tr><td class="k">면적</td><td>도형 면적(㎡)</td><td class="v">1,652.9</td><td class="v">550.0</td><td><span class="chip ci">보임</span></td></tr>
+              <tr><td class="k">읍면 · 리</td><td>법정 읍면동 · 리 이름</td><td class="v">운봉읍 · 준향리</td><td class="v">운봉읍 · 서천리</td><td><span class="chip ci">보임</span></td></tr>
+              <tr class="grp"><td colspan="5">같은 자리의 다른 층(V-World 지역지구)에서 오는 값</td></tr>
+              <tr><td class="k">uname</td><td>용도지역</td><td class="v">계획관리지역(2023년 고시)</td><td class="v">일반상업지역</td><td><span class="chip ci">보임</span></td></tr>
+            </tbody>
+          </table>
+          <p class="small">연속지적도에는 소유자 · 건물이 없습니다. 농업진흥 · 보호구역은 서버 적재 정본에 값이 있는 필지에만 보입니다(지금 화면의 '공개 자료' 줄과 같은 원천 · 준향리 824-9 는 해당 없음). 건물 층은 같은 자리에서 조회했지만 값이 오지 않아 넣지 않았습니다.</p>
+        </div>
+        <div class="card">
+          <h2>LX맵(편집지적도) — 지도 그림 층<small>V-World 지도 층 · 서버 중계로 받음 · 30일 저장</small></h2>
+          <div class="lxfig"><img src="img/lxmap-on.jpg" alt=""><span class="cap">운봉읍 준향리 824-9 둘레 — 실제로 받은 LX맵 한 장(위성 영상 위)</span></div>
+          <dl class="kv2">
+            <dt>무엇이 오나</dt><dd>지번 · 지목 글자와 필지 경계가 그려진 투명 그림 — 속성 값은 오지 않음</dd>
+            <dt>어떻게 쓰나</dt><dd>결과 지도의 '지도 층'에서 켜고 끔 · 필지를 누르면 그 자리 LX맵이 보임</dd>
+            <dt>연속지적도와 차이</dt><dd>연속지적도 = 필지마다 글자 값으로 카드에 적음 · LX맵 = 지도 위에 겹쳐 보는 그림</dd>
+            <dt>지금 서버</dt><dd>둘 다 서버가 이미 받는 길이 있음 — 새 열쇠 · 새 계약 없이 화면만 잇는 일</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<span class="stamp r"><b>표</b> 기관-9 연계 — 두 필지 실제 값 · 열쇠 값 없음</span>
+</body>
+</html>

@@ -201,7 +201,7 @@ def test_request_reject_and_approve_flow(nw, tok, admin2, made, tmp_path):
     assert "범위" in keys and "면적" in keys and "대기열" in keys and "이 기관 이번 달 사용" in keys   # 판단 근거(막는 한도 아님 · 사용 현황)
     assert not any("남은 양" in k or "한도" in k for k in keys)
     ap = [x for x in httpx.get(B + "/approvals?state=pending", headers=H(admin2), timeout=30).json()["items"] if x["subject"]["id"] == rq["id"]]
-    assert ap and ap[0]["kind"] == "request" and ap[0]["kind_label"] == "분석 의뢰" and ap[0]["request_reason"] == "pytest 반려 확인"
+    assert ap and ap[0]["kind"] == "request" and ap[0]["kind_label"] == "분석 요청" and ap[0]["request_reason"] == "pytest 반려 확인"
     aid = ap[0]["id"]
     n = httpx.post(B + f"/approvals/{aid}/decide", headers=H(admin2), json={"decision": "reject"}, timeout=30)
     assert n.status_code == 400 and n.json()["error"]["code"] == "reason_required"
@@ -233,7 +233,7 @@ def test_request_reject_and_approve_flow(nw, tok, admin2, made, tmp_path):
         assert jid, db.execute("SELECT state, reason FROM analysis_requests WHERE id=%s", (r2["id"],)).fetchone()
         httpx.post(B + f"/jobs/{jid}/cancel", headers=H(admin2), timeout=30)
         j = db.execute("SELECT tenant_id, kind, label, imagery_id, deploy_id FROM jobs WHERE id=%s", (jid,)).fetchone()
-        assert j[0] == "namwon" and j[1] == "infer" and j[2].startswith("분석 의뢰") and j[3].startswith("rqimg-") and j[4] is None
+        assert j[0] == "namwon" and j[1] == "infer" and j[2].startswith("분석 요청") and j[3].startswith("rqimg-") and j[4] is None
         v = httpx.get(B + f"/requests/{r2['id']}", headers=H(nw), timeout=30).json()
         assert v["state"] in ("analyzing", "failed", "done")
     finally:

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · 방향 B — 프로젝트 목록(일의 목록)</title>
+<link rel="stylesheet" href="r10.css">
+<script src="chrome.js"></script>
+</head>
+<body class="m has-stamp">
+<div class="app" id="app">
+  <main class="main">
+    <div class="page">
+      <div class="row-h">
+        <div><h1>프로젝트</h1><p class="sub-t">내가 만든 4 · 참여한 0 · 보관 0</p></div>
+        <span class="btn">새 프로젝트</span>
+      </div>
+      <section class="k" id="k-list">
+        <p class="grp"><b>할 일 있음 4</b> · 줄마다 체크 여섯 = 6단계, 빨간 칸이 지금 할 일</p>
+        <div class="brow" id="b1"></div>
+        <div class="brow" id="b2"></div>
+        <div class="brow" id="b3"></div>
+        <div class="brow" id="b4"></div>
+        <p class="grp" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--rule)"><b>기다리는 중 0</b>(관리자 승인 · 학습 중) · <b>할 일 없음 0</b></p>
+        <div class="fold-h"><b>참여한 프로젝트 0 · 보관 0</b><span>펼치기</span></div>
+        <span class="note" id="n-list" style="left:24px;top:-22px;width:max-content;max-width:620px"><i>1</i>목록 = 일의 목록. 이름 · 체크 여섯 · 지금 할 일 한 줄 · 마지막 활동. '막힌 곳' 칸 없음 — 빨간 칸이 곧 할 일</span>
+      </section>
+    </div>
+  </main>
+</div>
+<script>
+const P = [
+  ['b1', '비닐하우스 2026', '비닐하우스 · 증평군 · 함양군 · 남원시', '시범 적용 3곳'],
+  ['b2', '건축물 2026', '건축물 · 원주시', '시범 적용 1곳'],
+  ['b3', '주차장 2026', '주차장 · 여주시 · 천안시 서북구', '시범 적용 2곳'],
+  ['b4', '곤포사일리지 2026', '곤포사일리지 · 보령시', '시범 적용 1곳'],
+];
+for (const [id, n, s, ops] of P) document.getElementById(id).innerHTML = `<div class="nm">${n}<small>${s}</small></div>
+  <span class="cks"><i>${CK}</i><i>${CK}</i><i>${CK}</i><i class="w">4</i><i>${CK}</i><i class="run">6</i></span>
+  <div class="td"><i>4</i><span><b>AI 결과 맞는지 보기</b><small>표본 20건 중 0건 봄 · 서비스 운영 중 · ${ops}</small></span></div>
+  <span class="at">오늘 08:58</span>`;
+chrome('projects', '<b>시안</b> 방향 B 프로젝트 목록 — 줄마다 체크 여섯 + 지금 할 일 · 값은 이 PC 서버(10-01 18:23)');
+</script>
+</body>
+</html>

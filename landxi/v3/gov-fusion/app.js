@@ -20,6 +20,7 @@ import { ledgerStore, lastMark, ledgerKind, KIND_LABEL } from './registry.js';
 import { vwParcels, bboxOfFeature } from './vworld.js';
 import { landSetup, warmTiles, tilesIn } from './land.js';
 import { reviewAction } from '../kit/notify.js';   // 필지 카드 '검토 요청'(구현 2차)
+import { govRail } from '../gov-select/menu.js';   // 기관 메뉴 한 곳(구현 5차 기관-1 ⓐ — 모든 기관 화면 같은 메뉴)
 
 const REPORT = '/landxi/v3/gov-report/';
 const $ = (s, r = document) => r.querySelector(s);
@@ -66,7 +67,8 @@ const curSgg = () => S.askRegion || QREG || ledgerSgg() || homeSgg();   // 이 �
 const RECENT_K = `gr:recent:${who.me.tenant_id}`;
 const recentSgg = () => { try { const a = JSON.parse(localStorage.getItem(RECENT_K) || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
 const rememberSgg = (cd) => { try { localStorage.setItem(RECENT_K, JSON.stringify([cd, ...recentSgg().filter((x) => x !== cd)].slice(0, 3))); } catch { /* 저장 불가 */ } };
-const shell = K.shell({ who, home: 'gov-fusion', title: String(who.org || '').trim().split(/\s+/).pop(), xiRegion: curSgg });   // 관할 이름(끝 낱말) — 배포 기록을 읽은 뒤 같은 값으로 확정
+const shell = K.shell({ who, home: 'gov-fusion', title: String(who.org || '').trim().split(/\s+/).pop(), xiRegion: curSgg,
+  rail: who.key === 'tenant/local' ? govRail({ who, current: 'list', service: null }) : null });   // 서비스 안 화면 = '내 서비스'   // 관할 이름(끝 낱말) — 배포 기록을 읽은 뒤 같은 값으로 확정
 const mastEl = shell.app.querySelector('.k-mast');
 const stageEl = h('div.gf-stage'); shell.main.append(stageEl);
 const stage = K.createStage(stageEl);

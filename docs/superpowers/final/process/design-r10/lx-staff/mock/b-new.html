@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · 방향 B — 새 프로젝트(네 줄을 차례로)</title>
+<link rel="stylesheet" href="r10.css">
+<script src="chrome.js"></script>
+<script src="vmap-data.js"></script>
+<script src="vmap.js"></script>
+<style>
+.page.center{max-width:900px}
+.arc.sm{grid-template-columns:repeat(4,minmax(0,1fr))}
+.arc.sm .ai .ph-img{aspect-ratio:16/10}
+.sumk{display:flex;flex-direction:column}
+.sumk div{display:grid;grid-template-columns:120px 1fr;gap:12px;padding:9px 0;border-top:1px solid var(--rule);font:400 15px/22px var(--font-body);color:var(--sub)}
+.sumk div:first-child{border-top:0;padding-top:0}
+.sumk div b{font-weight:500;color:var(--ink)}
+.tabs{display:inline-flex;gap:4px;padding:4px;border-radius:10px;background:var(--bg-0);margin-bottom:12px}
+.tabs span{height:34px;padding:0 14px;border-radius:8px;font:500 14px/34px var(--font-body);color:var(--sub);white-space:nowrap}
+.tabs span.on{background:var(--bg-1);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.vmap{height:340px}
+</style>
+</head>
+<body class="m has-stamp">
+<div class="app" id="app">
+  <main class="main">
+    <div class="page center">
+      <p class="crumb"><span>프로젝트</span><span class="sep">›</span><span class="cur">새 프로젝트</span></p>
+      <section class="k" id="k-new">
+        <div class="k-h"><h2>새 프로젝트</h2><span class="ksub">네 줄을 차례로 — 다 적으면 만들어집니다</span></div>
+        <ul class="cl new" id="cl"></ul>
+        <span class="note" id="n-new" style="left:24px;top:-22px;width:max-content;max-width:620px"><i>1</i>새 프로젝트도 같은 체크리스트: 적은 줄은 한 줄로 접히고(값만), 지금 줄만 펼쳐짐. 영상 보관함 · 지도도 그 줄 안에서</span>
+      </section>
+    </div>
+  </main>
+</div>
+<script>
+const Q = new URLSearchParams(location.search);
+const step = +(Q.get('step') || 3);
+const tab = Q.get('tab') || 'arc';
+const ck = '<span class="ck">' + CK + '</span>';
+const shape = (c) => `<img class="shape" src="shape-${c}.svg" alt="">`;
+const ARC = [
+  ['증평군 2023 25cm 항공', '2023 · 25cm', shape('43745'), '자리 그림', '증평군', true],
+  ['함양군 2023 25cm 항공', '2023 · 25cm', shape('48870'), '자리 그림', '함양군', true],
+  ['2025-04 드론 · 남원', '2025-04 · 1cm급', '<img src="img/gh-3-clean.jpg" alt="">', '', '남원시', true],
+  ['2025-06 드론 · 남원', '2025-06 · 1cm급', '<img src="img/fl-3-clean.jpg" alt="">', '', '남원시', false],
+];
+const done = (n, t, val, sub) => `<li><span class="ck">${CK}</span><span class="ti"><b>${t}</b></span><span class="side"><span class="val">${val}${sub ? `<small>${sub}</small>` : ''}</span><span class="go">고치기</span></span></li>`;
+const wait = (n, t, s) => `<li class="wt"><span class="ck wait">${n}</span><span class="ti"><b>${t}</b><span>${s}</span></span><span class="side"></span></li>`;
+const openRow = (n, t, s, body, foot) => `<li class="open"><div class="open-h"><span class="ck run">${n}</span><span class="ti"><b>${t}</b><span>${s}</span></span></div><div class="body">${body}<div class="ffoot">${foot}</div></div></li>`;
+const rows = [];
+// 1 이름
+rows.push(step === 1 ? openRow(1, '서비스 이름', '공개되면 서비스 카드 이름이 됩니다', '<span class="fld on">비닐하우스 2026</span>', '<span class="btn">다음</span>')
+  : step > 1 ? done(1, '서비스 이름', '비닐하우스 2026') : wait(1, '서비스 이름', ''));
+// 2 무엇을 찾나
+rows.push(step === 2 ? openRow(2, '무엇을 찾나', '영상에서 AI가 찾을 것 · 세는 방식은 그림에서 고름',
+  '<span class="fld">비닐하우스</span><div class="kinds"><div class="kind on"><div class="ph-img"><img src="img/gh-1.jpg" alt=""><span class="tg">AI 결과</span></div><b>개수 세기</b><span>동수 · 건수 · 대수를 셀 때</span></div><div class="kind"><div class="ph-img"><img src="img/fl-1.jpg" alt=""><span class="tg">AI 결과</span></div><b>면적 재기</b><span>경계 · 넓이 · 비율을 낼 때</span></div></div>', '<span class="lnk q">이전</span><span class="btn">다음</span>')
+  : step > 2 ? done(2, '무엇을 찾나', '비닐하우스', '개수 세기') : wait(2, '무엇을 찾나', '이름 뒤에'));
+// 3 영상
+if (step === 3) {
+  const tabs = `<div class="tabs"><span class="${tab === 'arc' ? 'on' : ''}">영상 보관함 83장</span><span class="${tab === 'map' ? 'on' : ''}">영상 없이 — 지도에서 지역 정하기</span><span class="${tab === 'later' ? 'on' : ''}">나중에</span></div>`;
+  let body, foot;
+  if (tab === 'map') {
+    body = tabs + `<div class="vmap-wrap"><div class="vmap narrow" id="vmap"></div><div class="vmap-side"><div class="pick-k"><b>남원시</b><span>전북특별자치도 · 지도에서 눌러 고름</span></div><ul class="leg"><li><i class="pk"></i><div>고른 시군구(행정경계)</div></li><li><i class="dr"></i><div>직접 그린 범위(예시)</div></li></ul><p class="say"><b>영상이 없으면</b> 학습 · AI 분석은 못 합니다. 지역만 정해 두고,<br>영상은 1번째 줄에서 붙입니다.</p></div></div>`;
+    foot = '<span class="lnk q">이전</span><span class="btn">이 지역으로 · 다음</span>';
+  } else if (tab === 'later') {
+    body = tabs + '<p class="sub-t">영상도 지역도 비워 둡니다. 만든 뒤 1번째 줄(데이터 올리기)에서 영상을 넣으면 그때 지역이 정해집니다. 그동안 목록 · 홈의 "어디"는 빈 칸입니다.</p>';
+    foot = '<span class="lnk q">이전</span><span class="btn">비워 두고 · 다음</span>';
+  } else {
+    body = tabs + `<div class="arcbar"><span class="chip on">전체 83</span><span class="chip">항공 25cm 71</span><span class="chip">드론 7</span><span class="chip">위성 · 그 밖 5</span><span class="chip">내가 올린 0</span><span class="fld" style="height:36px"><span class="ph">이름 · 지역 검색</span></span></div>
+      <div class="arc sm">${ARC.map(([n, ep, th, pl, w, on]) => `<div class="ai${on ? ' on' : ''}"><div class="ph-img">${th}${ck}${pl ? `<span class="pl">${pl}</span>` : ''}</div><b>${n}</b><span>${ep}</span><span class="where">${w}</span></div>`).join('')}</div>
+      <div class="pager"><span>1 / 21 쪽</span><span class="lnk q">다음 →</span></div>
+      <p class="autoline" style="margin-top:12px">고른 3장의 자리에서 지역이 정해집니다 — 글로 적지 않습니다.<br>지역 <b>증평군 · 함양군 · 남원시</b><br>해상도 · 촬영 시점도 영상에서</p>`;
+    foot = '<span class="lnk q">이전</span><span class="btn">3장 넣고 · 다음</span>';
+  }
+  rows.push(openRow(3, '영상', '보관함에서 고르면 지역은 영상의 자리에서 정해집니다', body, foot));
+} else rows.push(step > 3 ? done(3, '영상', '3장 → 증평군 · 함양군 · 남원시', '2023 항공 2 · 2025 드론 1') : wait(3, '영상', '무엇을 찾나 뒤에'));
+// 4 확인하고 만들기
+rows.push(step === 4 ? openRow(4, '확인하고 만들기', '관리자 승인 없이 바로',
+  '<div class="sumk"><div><span>서비스 이름</span><b>비닐하우스 2026</b></div><div><span>무엇을 찾나</span><b>비닐하우스 · 개수 세기</b></div><div><span>영상</span><b>3장 · 2023 항공 2 · 2025 드론 1</b></div><div><span>지역 <i class="chip ai" style="height:22px;font-size:12px;font-style:normal;padding:0 7px;margin-left:4px;vertical-align:1px">영상에서</i></span><b>증평군 · 함양군 · 남원시</b></div><div><span>프로젝트장</span><b>LX 직원(나) · 구성원은 만든 뒤</b></div></div><p class="autoline" style="margin-top:12px">만들면 프로젝트 한 장(여섯 줄)이 열립니다. 영상이 있으니 1번째 줄은 끝난 것으로, <b>2번째 줄 학습데이터 구축</b>부터.</p>',
+  '<span class="lnk q">이전</span><span class="btn">프로젝트 만들기</span>')
+  : wait(4, '확인하고 만들기', '위 세 줄을 적으면 열립니다'));
+document.getElementById('cl').innerHTML = rows.join('');
+chrome('projects', `<b>시안</b> 방향 B 새 프로젝트 — ${step}번째 줄을 적는 중${tab === 'map' ? ' · K-4 갈림길: 영상 없이 V-World 배경 지도에서 지역 고르기' : ''} · 보관함 건수는 이 PC 서버(10-01 18:29)`);
+if (tab === 'map') renderVmap(document.getElementById('vmap'), Q.get('mode') || 'pick');
+</script>
+</body>
+</html>

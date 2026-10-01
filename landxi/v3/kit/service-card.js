@@ -117,7 +117,11 @@ function cropEl(c, kind, o = {}) {
   const sc = c.scene && c.scene.src ? c.scene : null;
   const fig = h('div.k-sc-crop', { class: sc ? '' : 'is-blank' });
   if (sc) fig.append(h('img', { src: String(sc.src).startsWith('/api/') ? API.base + sc.src : sc.src, alt: '', loading: 'lazy', decoding: 'async' }));   // 올린 장면 = 게이트웨이 파일
-  else fig.append(h('span.k-sc-blank', { text: o.row ? '장면 없음' : c.state === 'none' || kind === 'mine' ? '결과가 나오면 장면이 보입니다' : '결과 장면 없음' }));
+  else if (kind === 'gov' && !o.row) {   // 기관 카드 — 시작 시기만(시안 기관-3 ⓐ · 그림 0): 열린 서비스 = 첫 결과 전 · 사업 전 = 'YYYY년 시작'
+    const off = c.open === false;
+    fig.append(h('span.k-sc-blank', {}, h('b', { text: off ? (c.year ? `${c.year}년 시작` : '사업 시작 전') : '첫 결과 전' }),
+      h('small', { text: off ? (c.status_label === '내년' ? '내년 사업으로 준비합니다' : '사업이 시작되면 결과가 보입니다') : '영상이 들어오면 분석합니다' })));
+  } else fig.append(h('span.k-sc-blank', { text: o.row ? '장면 없음' : c.state === 'none' || kind === 'mine' ? '결과가 나오면 장면이 보입니다' : '결과 장면 없음' }));
   const word = kind === 'mine' ? (c.badge || '우리 기관이 만든 서비스') : (kind === 'gov' ? (c.status_label || STATE_WORD[c.state]) : (c.state_label || STATE_WORD[c.state]));
   const lv = kind === 'mine' ? 'mine' : kind === 'gov' && c.open === false ? 'gap' : STATE_LV[c.state] ?? 'gap';
   fig.append(h('span.k-sc-badge.t-chip', { dataset: lv ? { lv } : {}, text: word || '' }));

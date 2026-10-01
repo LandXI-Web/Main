@@ -406,6 +406,10 @@ async def stats(request: Request, by: str = "emd", ledger: str | None = None, sg
             elif by == "emd":
                 emd = await conn.fetch(f"SELECT emd_cd, name, names, parcels, area_ha, top5, bbox, suspect_parcels FROM survey_emd{fw} ORDER BY emd_cd", *fa)
                 cnt = await conn.fetch(f"SELECT emd_cd, rule, priority, state, count(*) n FROM survey_findings{fw}{rw} GROUP BY 1,2,3,4", *ra)
+                # 읍면동별 현장 확인 필요 — 큰 숫자(survey_counts field_check)와 같은 식(R1–R6 · 우선순위 A · 판정 전 · 서로 다른 필지) ·
+                # 칸 합 = 시군구 합(필지는 한 읍면동에만 있다). 기관 서비스 대시보드의 '읍면별 현장 확인 필요' 막대(기관-4 ⓐ)가 쓴다.
+                fcm = {r["emd_cd"]: int(r["n"]) for r in await conn.fetch(
+                    f"SELECT emd_cd, count(DISTINCT pnu) n FROM survey_findings{fw}{rw} AND priority = 'A' AND state IN ('open','assigned') GROUP BY 1", *ra)}
                 agg: dict = {}
                 for r in cnt:
                     a = agg.setdefault(r["emd_cd"], {"rule": {}, "prio": {}, "state": {}, "n": 0})
@@ -419,6 +423,7 @@ async def stats(request: Request, by: str = "emd", ledger: str | None = None, sg
                                   "parcels": X.env(e["parcels"], "필지", "measured", "survey_emd(연속지적 필지 수)"),
                                   "area_ha": X.env(e["area_ha"], "ha", "measured", SRC_SUMMARY),
                                   "n": E(a["n"]), "suspect_parcels": X.env(int(e["suspect_parcels"] or 0), "필지", "inferred", "survey_emd(적재 검증 = 요약 json)", "검수 전"),
+                                  "field_check": X.env(fcm.get(e["emd_cd"], 0), "필지", "inferred", NT.FIELD_SRC, "현장 확인 전"),
                                   "by_rule": {r: E(a["rule"].get(r, 0)) for r in RULE_IDS},
                                   "by_priority": {k: E(a["prio"].get(k, 0)) for k in "ABC"},
                                   "by_state": {s: X.env(int(a["state"].get(s, 0)), "count", "recorded", "survey_findings.state") for s in STATES},

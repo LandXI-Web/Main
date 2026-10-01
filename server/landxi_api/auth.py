@@ -220,5 +220,11 @@ async def logout(request: Request):
 @router.get("/me")
 async def me(request: Request):
     p = require(principal(request))
-    return {"realm": p.realm, "role": p.role, "tenant_id": p.tenant_id, "caps": p.caps,
-            "user": {"id": p.user_id, "name": p.name}, "at": now_iso()}
+    user = {"id": p.user_id, "name": p.name}
+    if p.realm == "tenant" and p.user_id:            # 기관 화면 머리의 사람 표기(부서 · 이름 — 기관-1 ⓐ) · 본인 계정 값 그대로
+        try:
+            d = await (await pool()).fetchval("SELECT dept FROM tenant_users WHERE id=$1 AND tenant_id=$2", p.user_id, p.tenant_id)
+            user["dept"] = (d or "").strip() or None
+        except Exception:  # noqa: BLE001
+            pass
+    return {"realm": p.realm, "role": p.role, "tenant_id": p.tenant_id, "caps": p.caps, "user": user, "at": now_iso()}

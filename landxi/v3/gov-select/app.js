@@ -1,19 +1,22 @@
-/* 서비스 선택 · 서비스 대시보드 · 기관 정보(구현 2차 T3 · 체계-2 ⓑ · GF-1 · GF-5 ⓐ · 사용자 구현 확인 I-4 "지자체 서비스도 UI/UX 통일성").
-   기관 흐름: 기관 메인(로그인) → 서비스 선택 → 서비스 대시보드 → 서비스별 기능(지금 있는 기관 화면 gov-fusion · gov-report 에 ?service= 로 잇는다).
+/* 서비스 선택(내 서비스) · 서비스 대시보드 · 기관 정보(구현 2차 T3 · 체계-2 ⓑ · GF-1 · GF-5 ⓐ · 사용자 구현 확인 I-4 "지자체 서비스도 UI/UX 통일성" ·
+   구현 5차 기관 화면 완성 디자인 — 확인 대장 '기관 화면 확인' 기관-1 ⓐ 공통 틀 · 기관-3 ⓐ 내 서비스 · 기관-4 ⓐ 서비스 대시보드).
+   기관 흐름: 기관 메인(로그인) → 내 서비스 → 서비스 대시보드 → 서비스별 기능(결과 지도 = XI맵 · 필지 목록 · 보고서 = gov-report · 행정정보와 비교 = gov-fusion).
    모든 기관이 같은 틀 — 광역 기관만 '광역 전체 / 시·군·구' 고르기 한 칸이 더 있다(관할 시군구 = GET /regions, 화면이 대신 고르지 않는다).
-     ./            서비스 선택(켜진 서비스가 하나뿐이면 그 서비스 대시보드로 바로)
-     ./?list=1     서비스 선택(바로 넘기지 않음 — 레일 '내 서비스')
-     ./?service=…  서비스 대시보드(큰 숫자 하나 · 할 일 · 최근 결과) [&region=시군구]
+     ./            내 서비스(볼 수 있는 서비스가 하나뿐이면 그 서비스 대시보드로 바로)
+     ./?list=1     내 서비스(바로 넘기지 않음 — 레일 '내 서비스') — 오늘 띠 셋(새 알림 · 내가 보낸 요청 · 분석 요청) + 서비스 카드 한 벌
+     ./?service=…  서비스 대시보드(dash.js — 장면 먼저) [&region=시군구]
      ./?view=org   기관 정보(마크 · 이름 · 색 · 소개 글) — 기관 관리자만
+   부서 사용자는 기관 관리자가 정해 준 서비스만 본다(서버 덱이 거른다 · 원칙 38).
    숫자는 대표 수치 요약 GET /summary 한 출처(기관 세션 = 자기 기관만 · 값이 없으면 지어내지 않는다). 머리에 기관 마크 · 이름 · 색(GET /brand/{기관}). */
 import * as K from '../kit/index.js';
 import { api } from '../../shared/api-v1.js';
 import { h, ymd } from '../kit/util.js';
 import { orgHome } from '../kit/auth-gate.js';
-import { loadBrand, applyBrand, markEl, favicon, shortAddr, joinLine } from './brand.js';
+import { loadBrand, applyBrand, markEl, favicon, joinLine } from './brand.js';
 import { brandForm } from './brand-form.js';
-import { govRail, setRequestService } from './menu.js';
+import { govRail } from './menu.js';
 import { loadDeck, svcCard } from '../kit/service-card.js';   // 서비스 카드 한 벌 ③ 기관 서비스 선택(확인 대장 14차 카드-1 ⓐ)
+import { renderDash, primary } from './dash.js';
 
 const who = await K.gate('gov-select');
 const tid = who.me.tenant_id;
@@ -25,11 +28,22 @@ document.body.dataset.view = view;
 
 let brand = null;
 try { brand = await loadBrand(tid); } catch { /* 아래에서 문제 표시 */ }
+const deckP = view === 'org' ? Promise.resolve(null) : loadDeck();
 
-/* 켜진 서비스가 하나뿐이면 서비스 선택을 건너 그 서비스 대시보드로(체계-2 ⓑ · 모든 기관 같은 흐름) */
+/* 볼 수 있는 서비스 — 브랜드 목록(LX 관리자가 정한 순서 · 상태 말) ∩ 서버 덱(부서 사용자 = 정해 준 서비스만). 덱이 없으면(서버 경로 전) 브랜드 목록 그대로 */
+async function visible() {
+  const svcs = brand?.services || [];
+  const deck = await deckP;
+  if (!deck) return { svcs, deck: null };
+  const ids = new Set((deck.items || []).filter((c) => c.listed !== false).map((c) => c.id));
+  return { svcs: svcs.filter((s) => ids.has(s.card)), deck };
+}
+
+/* 볼 수 있는 서비스가 하나뿐이면 서비스 선택을 건너 그 서비스 대시보드로(체계-2 ⓑ · 모든 기관 같은 흐름) */
 if (view === 'list' && !qs.has('list') && brand) {
-  const open = (brand.services || []).filter((s) => s.open);
-  if (open.length === 1) { location.replace('?service=' + encodeURIComponent(open[0].card)); await new Promise(() => {}); }
+  const { svcs } = await visible();
+  const open = svcs.filter((s) => s.open);
+  if (open.length === 1 && svcs.length === 1) { location.replace('?service=' + encodeURIComponent(open[0].card)); await new Promise(() => {}); }
 }
 
 const B = brand || { tenant: tid, platform: who.org || '', short: who.org || '', mark: { text: [] }, color: {}, services: [], intro: {}, contact: '', name: { ko: who.org } };
@@ -39,8 +53,8 @@ if (B.color?.accent) {   // 현재 위치 표시 · 진행 막대 · 포커스 =
   document.body.style.setProperty('--accent', a); document.body.style.setProperty('--tint', `rgba(${rgb},.14)`);
 }
 
-/* 메뉴(기관 메뉴 한 곳 — menu.js) — 내 서비스 · 분석 의뢰 · 내가 보낸 요청(검토 요청 목록 · 알림 칸 부품 kit/notify.js 가 ?review=all 을 열어 준다) ·
-   기관 관리자는 기관 정보 · 계정 */
+/* 메뉴(기관 메뉴 한 곳 — menu.js) — 내 서비스 · 분석 요청 · 보낸 요청(검토 요청 목록 · 알림 칸 부품 kit/notify.js 가 ?review=all 을 열어 준다) ·
+   우리 공간 · 기관 관리자는 기관 정보 · 계정 */
 const RAIL = govRail({ who, current: view === 'org' ? 'org' : qs.get('review') ? 'sent' : 'list' });
 const S = K.shell({ who, home: 'gov-select', title: B.platform, rail: RAIL });
 /* 머리 = 기관 마크 · 플랫폼 이름(Land-XI 글자 대신 — 원칙 48 · 64) */
@@ -63,19 +77,6 @@ const sumP = api('/summary').catch(() => null);
 const regP = api('/regions').catch(() => null);
 const sum = await sumP;
 const itemsOf = (card) => ((sum && sum.items) || []).filter((i) => i.card === card);
-/** 같은 이름의 값을 더한다(광역 전체) — 값 있는 것만 · 하나면 그대로 */
-function total(items, key) {
-  const es = items.map((i) => i.metrics?.[key]).filter((e) => e && e.value !== null && e.value !== undefined);
-  if (!es.length) return null;
-  if (es.length === 1) return es[0];
-  return { ...es[0], value: es.reduce((a, e) => a + e.value, 0), as_of: es.map((e) => e.as_of).sort().pop() };
-}
-/** 큰 숫자 하나 = 업무 결과 — 현장 확인 필요(필지 대조가 있는 서비스) → 없으면 AI 탐지 → 없으면 없음(첫 결과 전) */
-function primary(items) {
-  for (const k of ['field_check', 'detected']) { const e = total(items, k); if (e) return { key: k, env: e, label: e.label }; }
-  return null;
-}
-const lastWord = (s) => String(s || '').trim().split(/\s+/).pop();
 
 function head({ title, sub, right, crumb, line = true }) {
   return h('header.gs-head', { class: line ? '' : 'gs-head--flat' },
@@ -89,21 +90,31 @@ function brandDown() {
   K.empty(box, { kind: 'error', title: '기관 정보를 불러오지 못했습니다', onRetry: () => location.reload() });
 }
 
-/* ═════════════ 서비스 선택 ═════════════ */
-/* 카드 = 서비스 카드 한 벌의 기관 모양(③) — 실제 결과 장면(그 기관 관할 것만) · 상태(기관 색) · 사업 연도 · LX 담당 · 이름 · 한 줄 ·
-   결과 예시(우리 기관 값 — 요약 한 출처) · 최근 결과 · 할 일 · 이 서비스 열기 · 보고서. 카드 정보는 서버 덱(GET /cards/deck · 기관 세션 = 자기 기관만) */
+/* ═════════════ 내 서비스 — 오늘 띠 셋 + 서비스 카드 한 벌 ═════════════ */
 async function renderList() {
   document.title = `내 서비스 · ${B.platform}`;
-  page.append(head({ title: '내 서비스', sub: `${B.short}에 열린 AI 분석 서비스`, right: asOf() }));
+  page.append(head({ title: '내 서비스', sub: `${B.short}에 열린 AI 분석 서비스${isMgr ? '' : ' · 내가 맡은 서비스만 보입니다'}`, right: asOf() }));
   if (!brand) return brandDown();
-  const svcs = brand.services || [];
-  if (!svcs.length) { const box = h('div'); page.append(box); K.empty(box, { kind: 'first', title: '열린 서비스가 없습니다', text: '서비스가 열리면 여기에 보입니다' }); return; }
-  const deck = await loadDeck();
+  const band = h('div.gs-band', { 'aria-label': '오늘' });
+  page.append(band);
+  const { svcs, deck } = await visible();
+  const bandP = drawBand(band).catch((e) => { K.devlog('band', e.message); });
+  if (!svcs.length) {
+    const box = h('div'); page.append(box);
+    K.empty(box, isMgr || !deck ? { kind: 'first', title: '열린 서비스가 없습니다', text: '서비스가 열리면 여기에 보입니다' }
+      : { kind: 'first', title: '아직 맡은 서비스가 없습니다', text: '기관 관리자가 볼 서비스를 정해 줍니다' });
+    return;
+  }
   const by = new Map((deck?.items || []).map((c) => [c.id, c]));
+  const cnt = {};
+  for (const s of svcs) cnt[s.status] = (cnt[s.status] || 0) + 1;
+  page.append(h('div.gs-sec-h', {}, h('h2', { text: '서비스' }),
+    h('span', { text: [`${svcs.length}개`, ...Object.entries(cnt).map(([k, n]) => `${k} ${n}`)].join(' · ') })));
   page.append(h('div.gs-grid', { dataset: { n: String(svcs.length) } }, ...svcs.map((s) => svcEl(s, by.get(s.card)))));
+  await bandP;
 }
 function svcEl(s, c) {
-  const p = s.open ? primary(itemsOf(s.card)) : null;
+  const p = s.open ? primary(itemsOf(s.card), c) : null;
   /* 덱이 없을 때(서버 경로 전) — 브랜드 목록 값으로 같은 카드(장면 없이 · 숫자는 요약에서) */
   const card = c || { id: s.card, name: s.name, line: s.line, year: s.year, status_label: s.status, open: s.open, state: { '운영': 'ga', '시범': 'pilot' }[s.status] || 'none',
     /* 덱 없이는 결과 수가 다듬은 결과인지 알 수 없다 — 업무 결과(현장 확인 필요)만 싣는다(분석 칸 도형 수 0 · 사용자 규칙 2) */
@@ -116,134 +127,54 @@ function svcEl(s, c) {
   el.dataset.status = s.status;
   return el;
 }
+
+/* 오늘 띠 셋 — 새 알림(알림 칸과 같은 수) · 내가 보낸 요청(진행 중 수 · 가장 최근 한 줄) · 분석 요청(바로 가기). 숫자는 서버 값 그대로 */
+const STATE_LV = { pending: 'wait', approved: 'wait', analyzing: 'wait', done: 'ci', rejected: 'warn', failed: 'warn' };
+const when = (iso) => { const m = /^\d{4}-(\d{2})-(\d{2})/.exec(String(iso || '')); return m ? `${m[1]}.${m[2]}` : ''; };
+const svcShort = (s) => String(s || '').replace(/\s*(행정서비스|서비스)$/, '');
+async function drawBand(band) {
+  const tile = (o) => h(o.href ? 'a.gs-tile' : 'div.gs-tile', { ...(o.href ? { href: o.href } : {}), dataset: { k: o.k } },
+    h('span.gs-tile-ic', { html: K.icon(o.icon) }),
+    h('span.gs-tile-t', {}, h('b', {}, o.title, o.n !== undefined && o.n !== null ? h('span.num', { text: ` ${o.n}` }) : null), h('small', { text: o.line })),
+    o.chip ? h('span.t-chip', { text: o.chip[0], dataset: o.chip[1] ? { lv: o.chip[1] } : {} }) : null,
+    o.go ? h('span.gs-tile-go', { text: o.go }) : null);
+  const reqTile = tile({ k: 'request', icon: 'deploy', title: '분석 요청', line: '우리 영상을 넣고 분석 카드를 고릅니다', href: '../gov-request/', go: '요청하기' });
+  band.replaceChildren(tile({ k: 'notice', icon: 'inbox', title: '새 알림', line: '불러오는 중' }), tile({ k: 'sent', icon: 'list', title: '내가 보낸 요청', line: '불러오는 중' }), reqTile);
+  const [nt, rv, rq] = await Promise.all([api('/reviews/notify').catch(() => null), api('/reviews?box=all&limit=50').catch(() => null), api('/requests').catch(() => null)]);
+  /* 새 알림 — 알림 칸(머리의 종)과 같은 수 · 같은 목록 */
+  const unread = (nt?.items || []).find((x) => x.unread);
+  const ex = (nt?.extra || [])[0];
+  const notice = unread ? { line: `${unread.where} — 검토 요청에 LX가 답했습니다`, href: './?list=1&review=' + encodeURIComponent(unread.id), chip: ['답 도착', 'ci'] }
+    : ex ? { line: ex.kind === 'signup' ? `가입 신청 ${ex.n}건을 확인해 주세요` : ex.kind === 'reset' ? `비밀번호 재설정 요청 ${ex.n}건` : `확인할 일 ${ex.n}건`, href: ex.href || null }
+      : { line: '새 알림이 없습니다' };
+  /* 내가 보낸 요청 — 검토 요청(내가 보낸 것) + 분석 요청(내가 보낸 것) · 진행 중인 것의 수 · 가장 최근 한 줄 */
+  const rows = [];
+  for (const it of rv?.items || []) rows.push({ at: it.updated_at || it.at, live: it.status !== 'answered', t: `${it.where} 검토 요청`, href: './?list=1&review=' + encodeURIComponent(it.id),
+    chip: it.status === 'answered' ? ['답 도착', 'ci'] : [it.status === 'seen' ? 'LX 확인 중' : '보냄', ''] });
+  for (const x of rq?.items || []) if (x.mine) rows.push({ at: x.decided_at || x.created_at, live: ['pending', 'approved', 'analyzing'].includes(x.state),
+    t: `${x.label || '영상'} → ${svcShort(x.service?.name)} 분석 요청`, href: '../gov-request/?' + new URLSearchParams({ service: x.service?.id || '', tab: 'mine' }), chip: [x.state_word, STATE_LV[x.state] || ''] });
+  rows.sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  const last = rows[0];
+  band.replaceChildren(
+    tile({ k: 'notice', icon: 'inbox', title: '새 알림', n: nt ? nt.n : null, ...notice }),
+    tile({ k: 'sent', icon: 'list', title: '내가 보낸 요청', n: rv || rq ? rows.filter((r) => r.live).length : null,
+      line: last ? `${last.t} · ${when(last.at)}` : '아직 보낸 요청이 없습니다', href: last ? last.href : './?list=1&review=all', chip: last?.chip }),
+    reqTile);
+}
+
 /* ═════════════ 서비스 대시보드 ═════════════ */
 async function renderSvc() {
   if (!brand) { page.append(head({ title: '서비스', right: asOf() })); return brandDown(); }
-  const s = (brand.services || []).find((x) => x.card === SVC);
-  const crumb = h('a.gs-crumb', { href: './?list=1', text: '내 서비스' });
+  const { svcs, deck } = await visible();
+  const s = svcs.find((x) => x.card === SVC);
   if (!s) {
-    page.append(head({ title: '서비스', crumb }));
+    page.append(head({ title: '서비스', crumb: h('a.gs-crumb', { href: './?list=1', text: '내 서비스' }) }));
     const box = h('div'); page.append(box);
-    K.empty(box, { kind: 'first', title: '이 기관에 열린 서비스가 아닙니다', text: '내 서비스에서 다시 고르세요', action: { label: '내 서비스', href: './?list=1' } });
+    K.empty(box, { kind: 'first', title: isMgr ? '이 기관에 열린 서비스가 아닙니다' : '내가 맡은 서비스가 아닙니다', text: '내 서비스에서 다시 고르세요', action: { label: '내 서비스', href: './?list=1' } });
     return;
   }
-  document.title = `${s.name} · ${B.platform}`;
-  const regs = ((await regP)?.items || []).slice().sort((a, b) => String(a.name).localeCompare(String(b.name), 'ko'));
-  const wide = regs.length > 1;                                   // 광역 기관 — 관할 시군구가 여럿(gov-fusion 과 같은 판정)
-  const reg = wide && REG && regs.some((r) => r.sgg_cd === REG) ? regs.find((r) => r.sgg_cd === REG) : null;
-  const all = itemsOf(s.card);
-  const cur = reg ? all.filter((i) => i.sgg_cd === reg.sgg_cd) : all;
-  const survey = cur.some((i) => i.survey_state || (i.metrics?.field_check && i.metrics.field_check.value !== null));
-  const p = s.open ? primary(cur) : null;
-  const q = (extra = {}) => '?' + new URLSearchParams({ service: s.card, ...(reg ? { region: reg.sgg_cd } : {}), ...extra });
-  const mapHref = '../gov-fusion/' + q(), rep = (tab) => '../gov-report/' + q({ tab });
-  /* 이 서비스의 배포본(분석 의뢰 · 결과 시점은 배포본 단위) — 광역은 고른 시·군·구의 것, 없으면 이 서비스의 첫 배포본 */
-  const deps = ((await api('/requests/services').catch(() => null))?.items || []).filter((d) => d.card === s.card);
-  const dep = (reg && deps.find((d) => d.sgg_cd === reg.sgg_cd)) || (deps.length === 1 || !wide ? deps[0] : null) || deps[0] || null;
-  const reqHref = '../gov-request/' + (dep ? '?' + new URLSearchParams({ service: dep.id }) : '');
-  if (dep) setRequestService(RAIL, S.rail, dep.id);
-
-  /* 광역 — '광역 전체 / 시·군·구' 한 칸(사용자가 고른다) */
-  let pick = null;
-  if (wide) {
-    pick = h('label.gs-reg', {}, h('span.t-label', { text: '시·군·구' }),
-      h('select.t-input', { 'aria-label': '시·군·구' }, h('option', { value: '', text: '광역 전체' }),
-        ...regs.map((r) => h('option', { value: r.sgg_cd, text: r.name, selected: reg && r.sgg_cd === reg.sgg_cd ? true : null }))));
-    pick.querySelector('select').addEventListener('change', (e) => { const v = e.target.value; location.assign('?' + new URLSearchParams({ service: s.card, ...(v ? { region: v } : {}) })); });
-  }
-  page.append(head({ title: s.name, sub: joinLine([reg?.full || (wide ? '광역 전체' : ''), s.line].filter(Boolean).join(' · ')), right: [pick, asOf()], crumb, line: false }));
-  page.append(h('nav.gs-tabs', { 'aria-label': '서비스 기능' },
-    h('a.gs-tab', { href: q(), 'aria-current': 'page', text: '현황' }),
-    h('a.gs-tab', { href: mapHref, text: '결과 보기' }),
-    survey ? h('a.gs-tab', { href: rep('sus'), text: '필지 대조 결과' }) : null,
-    survey ? h('a.gs-tab', { href: rep('report'), text: '보고서' }) : null,
-    s.open ? h('a.gs-tab', { href: reqHref, text: '분석 의뢰' }) : null));
-
-  const mainCol = h('div.gs-main'), side = h('div.gs-side');
-  page.append(h('div.gs-dash', {}, mainCol, side));
-
-  /* 큰 숫자 하나 */
-  const bigCard = h('section.t-card.gs-bigc', { 'aria-label': '현황' });
-  mainCol.append(bigCard);
-  if (p) {
-    const bEl = h('div'); bigCard.append(bEl);
-    K.bignum(bEl, p.env, { label: p.label });
-    const kv = [['detected', 'AI 탐지']].filter(([k]) => k !== p.key)   // 결과 확인 대기는 오른쪽 '할 일'에(같은 숫자 두 번 0)
-      .map(([k]) => [k, total(cur, k)]).filter(([, e]) => e);
-    if (kv.length) bigCard.append(h('dl.gs-kv', {}, ...kv.map(([, e]) => h('div', {}, h('dt', { text: e.label }), h('dd', { html: K.numHtml(e) })))));
-    bigCard.append(h('div.gs-acts', {}, h('a.t-btn', { href: mapHref, text: '결과 보기' }), survey ? h('a.t-btn.t-btn--2', { href: rep('sus'), text: '필지 대조 결과' }) : null));
-  } else {
-    const img = cur.find((i) => i.imagery?.has)?.imagery?.label || (reg ? null : all.find((i) => i.imagery?.has)?.imagery?.label);
-    const box = h('div'); bigCard.append(box);
-    K.empty(box, { kind: 'first', title: s.open ? '첫 결과 전' : `${s.year}년 시작`,
-      text: s.open ? (reg && all.length ? '이 시·군·구에는 아직 결과가 없습니다' : '첫 AI 분석 결과가 나오면 여기에 보입니다') : '사업이 시작되면 여기에 결과가 보입니다' });
-    if (img) bigCard.append(h('p.gs-note', { text: `등록된 영상 · ${img}` }));
-    if (s.open) bigCard.append(h('div.gs-acts', {}, h('a.t-btn.t-btn--2', { href: mapHref, text: '지도 열기' })));
-  }
-
-  /* 광역 전체 — 시·군·구별(결과가 있는 곳만 · 누르면 그 시·군·구) */
-  if (wide && !reg) {
-    const rows = all.filter((i) => i.sgg_cd).map((i) => ({ i, p: primary([i]) })).filter((x) => x.p);
-    if (rows.length === 1) {   // 결과가 한 시·군·구에만 — 같은 숫자를 표로 한 번 더 쓰지 않고 한 줄로
-      const i = rows[0].i;
-      bigCard.append(h('p.gs-note', {}, '결과가 있는 시·군·구 · ', h('a.gs-link', { href: '?' + new URLSearchParams({ service: s.card, region: i.sgg_cd }), text: lastWord(i.region_name) })));
-    } else if (rows.length > 1) {
-      mainCol.append(h('section.t-card.gs-box', { 'aria-label': '시·군·구별' }, h('h2', { text: '시·군·구별' }),
-        h('ul.gs-rows', {}, ...rows.map(({ i, p: pp }) => h('li', {}, h('a.gs-row', { href: '?' + new URLSearchParams({ service: s.card, region: i.sgg_cd }) },
-          h('span', { text: lastWord(i.region_name) }), h('span.s', { text: pp.label }), h('span.r', { html: K.numHtml(pp.env) })))))));
-    }
-  }
-
-  /* 할 일 — 필지 대조가 있는 서비스: 결과 확인 대기 + 점수 높은 필지 셋 */
-  const todo = h('section.t-card.gs-box', { 'aria-label': '할 일' });
-  side.append(todo);
-  const rp = total(cur, 'review_pending');
-  todo.append(h('div.gs-box-h', {}, h('h2', { text: '할 일' }), rp ? h('span.gs-cnt', {}, rp.label, h('span', { html: K.numHtml(rp) })) : null));
-  if (survey && s.open) {
-    const list = h('ul.gs-rows'); todo.append(list);
-    try {
-      const j = await api(`/survey/findings?state=open&rule=R1,R2,R3,R4,R5,R6&sort=score&limit=3${reg ? `&sgg=${encodeURIComponent(reg.sgg_cd)}` : ''}`);
-      const its = (j && j.items) || [];
-      if (its.length) {
-        const rn = cur[0]?.region_name || reg?.full || '';
-        list.append(...its.map((f) => h('li', {}, h('a.gs-row.gs-row--2', { href: rep('sus') },
-          h('span.gs-row-t', {}, h('b', { text: shortAddr(f.addr, rn) }), h('span.s', { text: f.rule_nm || '' })),
-          h('span.t-chip', { text: '확인 전', dataset: { lv: 'wait' } })))));
-        todo.append(h('a.t-btn.t-btn--text.gs-more', { href: rep('sus'), text: '모두 보기' }));
-      } else list.replaceWith(h('p.gs-none', { text: '지금 확인할 결과가 없습니다' }));
-    } catch { list.replaceWith(h('p.gs-none', { text: '지금은 불러올 수 없습니다' })); }
-  } else todo.append(h('p.gs-none', { text: s.open ? '지금 확인할 결과가 없습니다' : '사업이 시작되면 할 일이 생깁니다' }));
-
-  /* 최근 결과 — AI 분석 결과 기준일 · 등록된 영상 */
-  const det = total(cur, 'detected');
-  const img = cur.find((i) => i.imagery?.has)?.imagery?.label;
-  const recent = h('section.t-card.gs-box', { 'aria-label': '최근 결과' }, h('div.gs-box-h', {}, h('h2', { text: '최근 결과' })));
-  const rows = [];
-  if (det) rows.push(h('li', {}, h('a.gs-row', { href: mapHref }, h('span', { text: 'AI 분석 결과' }), h('span.s', { text: ymd(det.as_of) }), h('span.t-chip', { text: '보기' }))));
-  if (img) rows.push(h('li', {}, h('div.gs-row', {}, h('span', { text: '등록된 영상' }), h('span.s', { text: img }))));
-  recent.append(rows.length ? h('ul.gs-rows', {}, ...rows) : h('p.gs-none', { text: '아직 결과가 없습니다' }));
-  side.append(recent);
-
-  /* 결과 시점 — 서비스 결과 + 분석 의뢰로 더해진 시점(GET /requests/timepoints · 의뢰 화면과 같은 목록) */
-  if (s.open && deps.length) {
-    const tp = h('section.t-card.gs-box', { 'aria-label': '결과 시점' }, h('div.gs-box-h', {}, h('h2', { text: '결과 시점' })));
-    const ul = h('ul.gs-rows');
-    tp.append(ul);
-    side.append(tp);
-    const pick = dep ? [dep] : deps.slice(0, 3);
-    const lists = await Promise.all(pick.map((d) => api('/requests/timepoints?' + new URLSearchParams({ service: d.id })).then((j) => ({ d, j })).catch(() => null)));
-    const seen = new Set();
-    for (const x of lists.filter(Boolean)) {
-      for (const t of x.j.items || []) {
-        const k = t.kind + ':' + (t.request_id || t.result_set || t.label);
-        if (seen.has(k)) continue; seen.add(k);
-        const href = t.kind === 'request' ? '../gov-request/?' + new URLSearchParams({ service: x.d.id, tab: 'mine' }) : mapHref;
-        ul.append(h('li', {}, h('a.gs-row', { href, dataset: { kind: t.kind } }, h('span', { text: t.label }),
-          t.kind === 'request' ? h('span.t-chip', { text: '의뢰' }) : h('span.t-chip', { text: '보기' }))));
-      }
-    }
-    if (!ul.childElementCount) ul.replaceWith(h('p.gs-none', { text: '아직 결과가 없습니다' }));
-  }
+  const card = (deck?.items || []).find((c) => c.id === s.card) || null;
+  await renderDash({ page, B, s, card, sum, regP, RAIL, S, head, asOfEl: asOf, REG });
 }
 
 /* ═════════════ 기관 정보(기관 관리자) ═════════════ */

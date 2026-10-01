@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · 방향 B — 홈(대시보드 · 할 일 목록)</title>
+<link rel="stylesheet" href="r10.css">
+<script src="chrome.js"></script>
+<style>
+.two{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:16px;align-items:start}
+.act2{display:flex;flex-direction:column}
+.two{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:16px;align-items:start}
+.act2 div{display:grid;grid-template-columns:86px 1fr;gap:12px;padding:9px 0;border-top:1px solid var(--rule);font:400 15px/22px var(--font-body);color:var(--ink-2)}
+.act2 div:first-child{border-top:0;padding-top:0}
+.act2 div span{font:500 13px/22px var(--font-num);color:var(--sub)}
+.act2 div b{font-weight:500;color:var(--ink)}
+@media (max-width:960px){.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body class="m has-stamp">
+<div class="app" id="app">
+  <main class="main">
+    <div class="page">
+      <div class="stack">
+
+        <!-- ① 한눈에 — 숫자 넷 -->
+        <section class="k" id="k-stats">
+          <div class="k-h"><h2>한눈에</h2><span class="ksub">18:23 기준</span></div>
+          <div class="stats">
+            <div class="stat w"><b>5</b><span>오늘 할 일</span><i>기관 요청 1 · 프로젝트 4</i></div>
+            <div class="stat"><b>4</b><span>내 프로젝트</span><i>모두 서비스 운영 중</i></div>
+            <div class="stat"><b>2<small>+ 시범 적용 5</small></b><span>운영 중 서비스</span><i>적용 지역 12곳</i></div>
+            <div class="stat"><b>3</b><span>다시 학습할 서비스</span><i>영상 없는 지역 4곳</i></div>
+          </div>
+        </section>
+
+        <div class="two">
+          <!-- ② 할 일 목록 — 체크리스트(끝낸 줄은 지워짐) -->
+          <section class="k" id="k-todo">
+            <div class="k-h"><h2>할 일 목록</h2><span class="ksub" id="tsub">5 · 오늘 끝낸 것 0</span><span class="more">프로젝트</span></div>
+            <ul class="tl" id="tl">
+              <li><span class="cb"></span><span class="pl"></span><span class="ti"><b>남원시 농정과 검토 요청에 답하기</b><span>운봉읍 준향리 824-9 · 영농관리 행정서비스 · <em>18:08 받음</em></span></span><span class="r">답하기</span></li>
+              <li id="row2"><span class="cb"></span><img src="img/gh-1.jpg" alt=""><span class="ti"><b>비닐하우스 2026 — AI 결과 맞는지 보기</b><span>표본 20건 중 0건 봄 · 증평군 · 함양군 · 남원시</span></span><span class="r">보러 가기</span></li>
+              <li><span class="cb"></span><span class="pl"></span><span class="ti"><b>건축물 2026 — AI 결과 맞는지 보기</b><span>표본 20건 중 0건 봄 · 원주시</span></span><span class="r">보러 가기</span></li>
+              <li><span class="cb"></span><span class="pl"></span><span class="ti"><b>주차장 2026 — AI 결과 맞는지 보기</b><span>표본 20건 중 0건 봄 · 여주시 · 천안시 서북구</span></span><span class="r">보러 가기</span></li>
+              <li><span class="cb"></span><span class="pl"></span><span class="ti"><b>곤포사일리지 2026 — AI 결과 맞는지 보기</b><span>표본 20건 중 0건 봄 · 보령시</span></span><span class="r">보러 가기</span></li>
+            </ul>
+            <span class="note" id="n-todo" style="left:24px;top:-22px;width:max-content;max-width:600px"><i>1</i>홈의 가운데 = 내 할 일 목록 하나(기관 요청 + 프로젝트 할 일). 끝내면 줄이 지워지고 '오늘 끝낸 것'이 셈</span>
+          </section>
+
+          <!-- ③ 최근 활동 · 서비스 카드(목록) · 바로 분석하기 -->
+          <section class="k" id="k-act">
+            <div class="k-h"><h2>최근 활동</h2></div>
+            <div class="act2">
+              <div><span>12:01</span><em style="font-style:normal"><b>건축물</b> 천안시 서북구 결과 갱신</em></div>
+              <div><span>어제 20:57</span><em style="font-style:normal">모델 학습 끝남</em></div>
+              <div><span>어제 20:16</span><em style="font-style:normal"><b>건축물</b> 원주시 결과 갱신</em></div>
+            </div>
+            <div class="k-h" style="margin-top:18px"><h2>서비스 카드</h2><span class="ksub">운영 중 2 · 시범 적용 5</span><span class="more">서비스 카드</span></div>
+            <ul class="sl">
+              <li><img src="img/farm-hero.jpg" alt=""><span class="ti"><b>영농관리 행정서비스</b><span class="w">남원시 외 5곳 · 기관 검토 요청 107건 · 다시 학습 필요</span></span><span class="st">운영 중</span></li>
+              <li><img src="img/marine-drone-2.jpg" alt=""><span class="ti"><b>해양쓰레기 실태조사 서비스</b><span>여수시</span></span><span class="st">운영 중</span></li>
+              <li><img src="img/scene-2.jpg" alt=""><span class="ti"><b>비닐하우스 서비스</b><span>증평군 외 2곳</span></span><span class="st pilot">시범 적용</span></li>
+              <li><img src="img/change-hero.jpg" alt=""><span class="ti"><b>국토 변화 탐지 서비스</b><span>남원시</span></span><span class="st pilot">시범 적용</span></li>
+            </ul>
+            <div class="k-h" style="margin-top:18px"><h2>바로 분석하기</h2><span class="more">카드 고르기</span></div>
+            <div class="srow"><span class="fld"><span class="ph">시군구 검색</span></span><span class="btn b2">분석하기</span></div>
+          </section>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+const Q = new URLSearchParams(location.search);
+chrome('home', '<b>시안</b> 방향 B 홈 — 숫자 띠 + 할 일 목록(체크리스트) + 오른쪽에 최근 활동 · 서비스 카드 목록 · 값은 이 PC 서버(10-01 18:23)');
+if (Q.get('done') === '1') {
+  const r = document.getElementById('row2'); r.classList.add('done'); r.querySelector('.cb').classList.add('d'); r.querySelector('.cb').innerHTML = CK; r.querySelector('.ti span').textContent = '표본 20건 모두 봄 · 방금 끝냄'; r.querySelector('.r').textContent = '프로젝트';
+  document.getElementById('tsub').textContent = '4 · 오늘 끝낸 것 1';
+  document.getElementById('stamp').innerHTML = '<b>예시</b> 방향 B 홈 — 할 일 하나를 끝낸 뒤(줄에 줄이 그어지고 오늘 끝낸 것 1 · 이 PC 서버에는 아직 없는 상태)';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+# 기관 메인(로그인 전) 그림 — 확인 대장 '기관 화면 확인' 기관-2 ⓐ(실제 결과 장면을 작게) · 원칙 116(배경 사진은 LX 관리자가 최종으로 올리거나 고른다)
+# LX 관리자가 고르는 화면은 다음 설계 — 그 전까지는 이 파일 한 곳이 기본 그림이다. 게이트웨이는 파일이 바뀌면 다시 읽는다.
+#
+# 로그인 전에도 보이는 그림이므로 서버가 지킨다(landxi_api/brand.py GET /api/v1/brand/{기관}/main):
+#   · 저해상 크롭만 — 긴 변이 max_px 를 넘는 그림은 내지 않는다(원 해상도 · 원본 · 지도 타일 금지)
+#   · 제한 영상 금지 — 경로에 restricted 의 이름이 들어 있으면 내지 않는다(밖으로 낼 수 없는 영상에서 나온 그림)
+#   · 그 기관 것만 — tenants.{기관} 에 적힌 그림만 그 기관 메인에 · 다른 기관 그림 0
+# 그림 주소는 저장소의 화면 파일(/landxi/…) — 이 PC 와 바깥 주소에서 같은 파일이 열린다.
+max_px: 800
+restricted: [yeosu-marine-2025-aerial, marine-aerial, marine-hero]
+
+tenants:
+  namwon:
+    background: /landxi/v3/service-detail/data/img/namwon-epoch4/4.jpg       # 2025 드론영상(10월) · 640×420
+    scenes:                                                                     # 서비스(카드)마다 결과 장면 한 장 — 없으면 시작 시기만
+      card-farm: {src: /landxi/v3/service-detail/data/img/namwon-cycle4/3.jpg, caption: 2025년 드론영상 · 휴경·전용 의심 필지}
+  gwangju-jeonnam:
+    background: /landxi/v3/service-detail/data/img/marine-drone/2.jpg         # 여수 2026 드론영상 · 640×420
+    scenes:
+      card-marine: {src: /landxi/v3/service-detail/data/img/marine-drone/1.jpg, caption: 2026년 드론영상 · 해안 쓰레기}
