@@ -56,7 +56,7 @@ export function loadDeck({ fresh = false } = {}) {
 function resultEl(c, kind) {
   const ex = c.example;
   if (!ex || ex.value === null || ex.value === undefined) {
-    return h('div.k-sc-res.is-none', {}, h('span', { text: c.state === 'none' || kind === 'mine' ? '첫 결과 뒤 표시' : '결과 수 집계 전' }));
+    return h('div.k-sc-res.is-none', {}, h('span', { text: kind === 'mine' ? '첫 계산 뒤 표시' : c.state === 'none' ? '첫 결과 뒤 표시' : '결과 수 집계 전' }));
   }
   const env = { value: ex.value, unit: ex.unit || '', basis: ex.basis || 'estimate', as_of: ex.as_of || '', source: ex.source || '' };
   const word = [ex.word, kind === 'gov' || kind === 'mine' ? ex.place : ex.region].filter(Boolean).join(' · ');
@@ -112,11 +112,11 @@ function actions(c, kind, o) {
 /* gov '보고서' 주소는 화면이 more(c) 로 준다(그 기관의 보고서 화면) — c.report = 필지 대조가 있는 서비스 */
 
 /** ① 결과 장면 · ② 상태 배지 · (manage) 관리 신호 · 다른 지역 결과 표기 */
-function cropEl(c, kind) {
+function cropEl(c, kind, o = {}) {
   const sc = c.scene && c.scene.src ? c.scene : null;
   const fig = h('div.k-sc-crop', { class: sc ? '' : 'is-blank' });
   if (sc) fig.append(h('img', { src: String(sc.src).startsWith('/api/') ? API.base + sc.src : sc.src, alt: '', loading: 'lazy', decoding: 'async' }));   // 올린 장면 = 게이트웨이 파일
-  else fig.append(h('span.k-sc-blank', { text: c.state === 'none' || kind === 'mine' ? '결과가 나오면 장면이 보입니다' : '결과 장면 없음' }));
+  else fig.append(h('span.k-sc-blank', { text: o.row ? '장면 없음' : c.state === 'none' || kind === 'mine' ? '결과가 나오면 장면이 보입니다' : '결과 장면 없음' }));
   const word = kind === 'mine' ? (c.badge || '우리 기관이 만든 서비스') : (kind === 'gov' ? (c.status_label || STATE_WORD[c.state]) : (c.state_label || STATE_WORD[c.state]));
   const lv = kind === 'mine' ? 'mine' : kind === 'gov' && c.open === false ? 'gap' : STATE_LV[c.state] ?? 'gap';
   fig.append(h('span.k-sc-badge.t-chip', { dataset: lv ? { lv } : {}, text: word || '' }));
@@ -150,7 +150,7 @@ export function svcCard(c, o = {}) {
   } else if (pick?.why) {
     body.append(h('p.k-sc-why', { text: pick.why }));
   }
-  el.append(cropEl(c, kind), body);
+  el.append(cropEl(c, kind, o), body);
   if (pick) el.addEventListener('click', () => { if (!pick.disabled) pick.onPick?.(c); });
   return el;
 }

@@ -49,6 +49,10 @@ test.describe('구현 3차 · 서비스 카드 한 벌', () => {
     await page.locator('.la-side .k-region-l [role=option]', { hasText: '원주시' }).first().click();
     await expect(page.locator('.la-picks')).toContainText(/카드 조건에 맞음|분석할 수 없|등록된 영상이 없/, { timeout: 90000 });
     expect(await words(page, '.la-page')).toEqual([]);
+    /* 홈 '바로 분석하기'에서 직원이 고른 지역(?region=)은 '어디'에 담겨 온다 */
+    await page.goto(BASE + '/landxi/v3/lx-analyze/?card=card-45424f&region=51130', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('.la-picks li')).toHaveCount(1, { timeout: 30000 });
+    await expect(page.locator('.la-picks li').first()).toContainText('원주시');
     if (process.env.LX_GPU === '1') {                                         // 게이트웨이 작업 대기열로 한 번(작은 시군구 · GPU 한 장)
       await page.locator('.la-go').click();
       await expect(page.locator('.la-done')).toContainText('XI맵에서 보기', { timeout: 60000 });

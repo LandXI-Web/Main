@@ -42,7 +42,8 @@ const DKEY = `gq:draft:${who.me.tenant_id}:${who.me.user?.id || ''}`;
 const S = { svcs: [], cards: new Map(), shared: [], mine: [], card: null, svc: Q.get('service') || null, pick: null, draft: LS.get(DKEY), area: null, sel: null, fitGsd: null };
 
 /* ═════════ 지도 — 넣은 영상이 어디인지 ═════════ */
-const stage = createStage($('#map'), { padding: { top: 72, bottom: 72, left: 72, right: 560 } });
+const MOB = matchMedia('(max-width: 640px)').matches;          // 휴대폰 = 아래 시트(화면 높이 64%)가 지도를 덮는다
+const stage = createStage($('#map'), { padding: MOB ? { top: 24, bottom: Math.round(innerHeight * 0.66), left: 16, right: 16 } : { top: 72, bottom: 72, left: 72, right: 560 } });
 const FC = (geoms) => ({ type: 'FeatureCollection', features: geoms.filter(Boolean).map((g) => ({ type: 'Feature', properties: {}, geometry: g })) });
 const box = (b) => b && ({ type: 'Polygon', coordinates: [[[b[0], b[1]], [b[2], b[1]], [b[2], b[3]], [b[0], b[3]], [b[0], b[1]]]] });
 async function overlay(ov) {
@@ -172,7 +173,7 @@ function drawPicked() {
   const r = p.read;
   const n = drop.items().filter((i) => i.state === 'done').length;
   if (!r.ok) {
-    el.replaceChildren(h('div.t', {}, h('b.warn', { text: '이 영상으로는 분석할 수 없습니다' }), h('span', { text: plainWhy(r) })), other);
+    el.replaceChildren(h('div.t', {}, h('b.warn', { text: '이 영상으로는 분석할 수 없습니다' }), ...plainWhy(r).split(' — ').map((t) => h('span', { text: t }))), other);
     el.dataset.lv = 'warn';
     return;
   }
