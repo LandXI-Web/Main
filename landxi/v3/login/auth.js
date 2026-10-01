@@ -13,12 +13,15 @@
      해외 기관 → 글로벌                /landxi/v3/global/     (scope=global)
    착지는 서버가 돌려준 role · 기관 scope 로 정한다(화면이 권한을 지어내지 않는다).
    기관 목록 = GET /auth/tenants(S-1 · 공개 · 기관 입구에서만 부른다). 서버에 없으면 같은 모양({id, name, scope})으로 공개 디렉터리 파일을 읽는 어댑터로 폴백.
-   틀린 비밀번호 = 서버 401 문구 그대로. 관리자 입구에 관리자 아닌 계정 = 서버 403(토큰 없음) · 옛 서버가 토큰을 내주면 즉시 폐기하고 거절. */
+   틀린 비밀번호 = 서버 401 문구 그대로. 관리자 입구에 관리자 아닌 계정 = 서버 403(토큰 없음) · 옛 서버가 토큰을 내주면 즉시 폐기하고 거절.
+   구현 2차 T5(계정): '계정 찾기 · 신청' = 가운데 창(가입 신청 · 아이디 찾기 · 비밀번호 찾기 — account.js) · 이 로그인은 LX 전용(10-01 사용자 "이 창구는 LX 직원만").
+     기관 입구(gov) 모습은 기관 분기 로그인(T3)이 열릴 때까지 남겨 둔다 — 창은 기관용으로 연다.
+   임시 비밀번호로 들어오면(서버 답 must_change) 새 비밀번호를 정하는 창 → 정하면 바로 들어간다.
+   같은 아이디로 5번 틀리면 서버가 계정을 10분 잠근다(423 — 서버 문구 그대로). */
 
 import { API, session, api } from '../../shared/api-v1.js';
 import { keyOf, landingFor, ALLOW, FRONT, SITES, siteHere } from '../kit/auth-gate.js';
-import { drawer } from '../kit/panel.js';
-import { h } from '../kit/util.js';
+import { openAccountHelp, openPasswordChange } from './account.js';
 import { mountPlate } from './plate.js';
 import { handoffFragment } from './handoff.js';
 
@@ -186,6 +189,8 @@ function houseOf(s) {
 
 /* ?next — 같은 출처 v3 집 경로(또는 현행 XI맵)만, 그리고 그 사람이 들어갈 수 있는 집만(오픈 리다이렉트 0 · 권한 밖 착지 0).
    화이트리스트 = 키트 허용표의 집 이름(main · service-detail · help-my · lx-* · gov-* · ops-* · sales · xi-clean · global). */
+/* 새 화면(구현 2차 T5 — 계정)도 로그인 뒤 되돌아가게. 키트 허용표(auth-gate ALLOW)에 들어가면 그쪽이 정본 — 그때 이 표는 지워도 된다 */
+const MORE_ALLOW = { 'ops-accounts': ['lx/admin'], 'gov-accounts': ['tenant/local', 'tenant/global'] };
 const NEXT_OK = /^\/landxi\/(?:v3\/([a-z-]+)\/(?:index\.html)?|(xi)\/(?:index\.html)?)(?:\?[^\s#\\]*)?(?:#[^\s\\]*)?$/;
 function nextParam(key) {
   const v = new URLSearchParams(location.search).get('next') || '';
@@ -195,6 +200,7 @@ function nextParam(key) {
   if (!m || /\.\.|\/\/|%2e|%2f|%5c/i.test(path)) return null;
   if (m[2] === 'xi') return key && ALLOW['xi-clean'].includes(key) ? v : null;
   const home = m[1];
+  if (Object.prototype.hasOwnProperty.call(MORE_ALLOW, home)) return key && MORE_ALLOW[home].includes(key) ? v : null;
   if (!Object.prototype.hasOwnProperty.call(ALLOW, home) || home === 'login') return null;
   const ok = ALLOW[home];
   return ok === null || (key && ok.includes(key)) ? v : null;
@@ -266,6 +272,7 @@ form.addEventListener('submit', async (e) => {
     catch (err) {
       clearTimeout(slow);
       if (!err.status) { say('서버에 연결할 수 없습니다'); return; }         // 두 번 모두 네트워크 오류일 때만
+      if (err.status === 423 || err.status === 429) { say(err.message || '잠시 후 다시 시도하세요', ['pw']); pwIn.value = ''; return; }   // 5번 틀려 10분 잠김 · 시도 너무 많음
       if (err.status === 401 || err.code === 'unauthorized') {
         // 서버 401 문구 그대로(명세 §2.2). 기관 입구는 기관 칸도 함께 짚는다(무엇이 틀렸는지 서버는 말하지 않는다)
         say(err.message || '아이디 또는 비밀번호가 맞지 않습니다', GOV ? ['org', 'pw'] : ['pw']);
@@ -276,19 +283,29 @@ form.addEventListener('submit', async (e) => {
       } else say('잠시 후 다시 시도하세요');
       return;
     }
-    if (SITE === 'admin' && s.role !== 'admin') {
-      try { await fetch(API.prefix + '/auth/logout', { method: 'POST', headers: { authorization: 'Bearer ' + s.token } }); } catch { /* */ }
-      say('관리자 계정이 아닙니다', ['id']); return;
+    if (s.must_change) {                               // 관리자가 준 임시 비밀번호 — 새 비밀번호를 정해야 들어간다(세션은 그 뒤에)
+      pwIn.value = '';
+      window.__login.mustChange = true;
+      openPasswordChange({ changeToken: s.change_token, name: s.user?.name, onDone: (s2) => land(s2, tenantId), onClose: () => pwIn.focus() });
+      return;
     }
-    if (GOV) LS('lx_login_org', tenantId);
-    session.set({ token: s.token, realm: s.realm, role: s.role, tenant_id: s.tenant_id, expires_at: s.expires_at, user: s.user, site: SITE });
-    await orgsReady;
-    window.__login.last = { realm: s.realm, role: s.role, tenant_id: s.tenant_id, house: houseOf(s), site: SITE };
-    await enter(s);
+    await land(s, tenantId);
   } finally {
     busy = false; go.removeAttribute('aria-busy');
   }
 });
+/* 로그인 답(세션) → 입구 확인 → 세션 저장 → 첫 화면 — 로그인 · 새 비밀번호 정하기가 같이 쓴다 */
+async function land(s, tenantId) {
+  if (SITE === 'admin' && s.role !== 'admin') {
+    try { await fetch(API.prefix + '/auth/logout', { method: 'POST', headers: { authorization: 'Bearer ' + s.token } }); } catch { /* */ }
+    say('관리자 계정이 아닙니다', ['id']); return;
+  }
+  if (GOV) LS('lx_login_org', tenantId);
+  session.set({ token: s.token, realm: s.realm, role: s.role, tenant_id: s.tenant_id, expires_at: s.expires_at, user: s.user, site: SITE });
+  await orgsReady;
+  window.__login.last = { realm: s.realm, role: s.role, tenant_id: s.tenant_id, house: houseOf(s), site: SITE };
+  await enter(s);
+}
 /* 화면 코드가 올라오기 전에 누른 로그인(index.html onsubmit 이 막아 둠) — 이제 이어서 보낸다 */
 if (window.__lxSubmit) { window.__lxSubmit = 0; setTimeout(() => form.requestSubmit(), 0); }   // 모듈 끝까지 읽힌 뒤
 
@@ -338,22 +355,25 @@ async function authed(path, method, token) {
   } catch { /* 표시 실패는 세션과 무관 */ }
 })();
 
-/* ── 계정 찾기 · 신청 — K5 서랍(제목 · 행 · Esc 닫기 · 같은 자리 재열기 = 교체) · 이 입구의 계정 한 줄 + 문의 ── */
-const helpBody = () => h('dl.help__dl', {},
-  GOV ? h('div', {}, h('dt', { text: '기관' }), h('dd', { text: '서비스 계약 시 LX가 발급' }))
-    : h('div', {}, h('dt', { text: 'LX 직원 · 관리자' }), h('dd', { text: '관리자 승인 후 발급' })),
-  h('div', {}, h('dt', { text: '문의' }), h('dd.n', {}, h('a', { href: 'tel:063-713-1218', text: '063-713-1218' }))));
-let helpD = null;
-$('helpBtn').addEventListener('click', () => {
-  if (helpD) { helpD.close(); return; }
-  helpD = drawer({ title: '계정 찾기 · 신청', body: helpBody(), slot: 'help', onClose: () => { helpD = null; $('helpBtn').focus(); } });
-  helpD.el.classList.add('help');
-  helpD.el.querySelector('.k-dr-x')?.focus();
-});
+/* ── 계정 찾기 · 신청 — 가운데 창(10-01 사용자 "오른쪽 서랍 대신 창이 하나 중간에") · 탭 셋: 가입 신청 · 아이디 찾기 · 비밀번호 찾기 ──
+   app = LX 직원(가입 신청 → LX 관리자 승인) · admin = 가입 신청 대신 안내 한 줄 · gov = 기관용(기관 분기 로그인이 열리면 그쪽이 같은 부품을 부른다) */
+let helpM = null;
+function openHelp(tab) {
+  if (helpM) return helpM;
+  const pickName = (id) => ORGS.find((t) => t.id === id)?.name || '';
+  helpM = openAccountHelp({
+    realm: GOV ? 'tenant' : 'lx', site: SITE, tab,
+    tenants: GOV ? ORGS.map((t) => ({ id: t.id, name: t.name })) : null,
+    tenant: GOV && org.value ? { id: org.value, name: pickName(org.value) } : null,
+    onClose: () => { helpM = null; },
+  });
+  return helpM;
+}
+$('helpBtn').addEventListener('click', () => openHelp());
 
 /* ── 테스트 훅 ─────────────────────────────────────────────────── */
 window.__login = {
   ready: true, last: null,
-  site: () => SITE, who, homeOf, houseOf, orgFromLogin, nextParam, orgs: () => ORGS.slice(), orgSource: () => ORG_SRC,
+  site: () => SITE, who, homeOf, houseOf, orgFromLogin, nextParam, orgs: () => ORGS.slice(), orgSource: () => ORG_SRC, help: openHelp, mustChange: false,
   plate: () => (plate ? { region: plate.region, axis: plate.axis, arrived: plate.arrived, error: plate.error, visits: plate.visits } : null),
 };

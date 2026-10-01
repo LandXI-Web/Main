@@ -1,0 +1,30 @@
+/* K17 가운데 창 — 흰 카드 16 · 바탕 --dim-modal · 그림자 --elev-3 · 등장 380 --e-ui(20px 올라섬) · 휴대폰(≤ 640)은 거의 전체 화면 */
+html.k-md-open, html.k-md-open body { overflow: hidden; }
+.k-md-bg { position: fixed; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center; padding: 24px;
+  background: var(--dim-modal); opacity: 0; transition: opacity var(--d-380) var(--e-ui); }
+.k-md-bg.is-open { opacity: 1; }
+.k-md-bg.is-closing { opacity: 0; }
+.k-md { position: relative; display: flex; flex-direction: column; width: min(480px, 100%); max-height: min(800px, calc(100dvh - 48px));
+  background: var(--bg-1); border-radius: var(--r-16); box-shadow: var(--elev-3); outline: 0;
+  transform: translateY(var(--enter-y-card, 20px)); transition: transform var(--d-380) var(--e-ui); }
+.k-md[data-size="lg"] { width: min(640px, 100%); }
+.k-md-bg.is-open .k-md { transform: none; }
+.k-md-bg.is-closing .k-md { transform: translateY(var(--enter-y-card, 20px)); }
+.k-md-h { display: flex; align-items: center; gap: 12px; padding: 24px 16px 8px 28px; }
+.k-md-t { flex: 1; margin: 0; font: 700 var(--fs-h4)/var(--lh-h4) var(--font-display); letter-spacing: var(--ls-h4); color: var(--ink); }
+.k-md-x { flex: none; width: 36px; height: 36px; border: 0; border-radius: var(--r-8); background: none; color: var(--sub); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: background var(--d-180) var(--e-ui), color var(--d-180) var(--e-ui); }
+.k-md-x:hover { background: var(--bg-0); color: var(--ink); }
+.k-md-x:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.k-md-x svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round; }
+.k-md-b { flex: 1; min-height: 0; overflow: auto; padding: 4px 28px 28px; overscroll-behavior: contain; }
+
+@media (max-width: 640px) {
+  .k-md-bg { padding: 8px; align-items: stretch; }
+  .k-md, .k-md[data-size="lg"] { width: 100%; max-height: none; height: 100%; }
+  .k-md-h { padding: 16px 12px 4px 20px; }
+  .k-md-b { padding: 4px 20px 24px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .k-md-bg, .k-md { transition: none; transform: none; }
+}

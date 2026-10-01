@@ -1,0 +1,94 @@
+/* 계정 화면(LX 관리자 · 기관 관리자 같은 모양) — 토큰·부품은 kit.css. 결재함(ops-core)과 같은 목록 → 서랍 → 승인/반려 모양(원칙 43). */
+body.acc-boot .k-app { opacity: 0; }
+.k-app { transition: opacity var(--d-380) var(--e-ui); }
+
+.acc { position: absolute; inset: 0; overflow: auto; background: var(--bg-0); }
+.acc-w { max-width: 1040px; padding: 40px 48px 48px; }
+body:has(.k-drawer[data-slot="account"]) .acc-w { padding-right: calc(var(--sheet) + 48px); }
+.acc-h { margin: 0 0 16px; font: 700 var(--fs-h3)/var(--lh-h3) var(--font-display); letter-spacing: var(--ls-h3); color: var(--ink); }
+
+/* 탭 — 잉크 글자 + 액센트 밑줄 · 대기 수는 잉크 배지 */
+.acc-tabs { display: flex; gap: 28px; margin: 0 0 20px; border-bottom: 1px solid var(--rule); overflow-x: auto; scrollbar-width: none; }
+.acc-tabs::-webkit-scrollbar { display: none; }
+.acc-tab { position: relative; flex: none; display: inline-flex; align-items: center; gap: 8px; height: 48px; padding: 0; border: 0; background: none;
+  color: var(--sub); font: 500 var(--fs-body)/1 var(--font-body); cursor: pointer; white-space: nowrap; transition: color var(--d-180) var(--e-ui); }
+.acc-tab:hover { color: var(--ink); }
+.acc-tab[aria-selected="true"] { color: var(--ink); font-weight: 700; }
+.acc-tab[aria-selected="true"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--accent); }
+.acc-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 4px; }
+.acc-n { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--ink); color: #fff; font: 600 12px/20px var(--font-num); text-align: center; box-sizing: border-box; }
+.acc-n[hidden] { display: none; }
+
+.acc-filter { margin: 0 0 16px; }
+.acc-filter[hidden] { display: none; }
+.acc-sel { position: relative; display: inline-block; }
+.acc-sel select { appearance: none; -webkit-appearance: none; width: auto; min-width: 200px; padding-right: 40px; cursor: pointer; font: 400 var(--fs-label)/1 var(--font-body); }
+.acc-sel__c { position: absolute; right: 14px; top: 14px; color: var(--sub); pointer-events: none; display: flex; }
+
+/* 목록 — 흰 카드 16 한 장 */
+.acc-tbl { background: var(--bg-1); border-radius: var(--r-16); padding: 8px 24px 16px; }
+.acc-tbl .k-table { width: 100%; }
+.acc-card[data-tab="signup"] .acc-tbl tbody tr, .acc-card[data-tab="reset"] .acc-tbl tbody tr, .acc-card[data-tab="users"] .acc-tbl tbody tr { cursor: pointer; transition: background var(--d-180) var(--e-ui); }
+.acc-card[data-tab="signup"] .acc-tbl tbody tr:hover, .acc-card[data-tab="reset"] .acc-tbl tbody tr:hover, .acc-card[data-tab="users"] .acc-tbl tbody tr:hover { background: var(--bg-0); }
+.acc-tbl tbody tr.is-on { background: var(--bg-0); box-shadow: inset 3px 0 0 var(--accent); }
+.acc-tbl .t-chip { white-space: nowrap; }
+.acc-tbl tbody tr.is-on .t-chip { background: var(--bg-1); }
+.acc-b { font-weight: 500; color: var(--ink); }
+.acc-m { font-family: var(--font-num); font-size: 14px; color: var(--ink-2); white-space: nowrap; }
+.acc-card .k-empty { max-width: 560px; }
+
+/* 서랍 — 한 건(불투명 흰 카드) */
+.k-drawer[data-slot="account"] { background: var(--bg-1); }
+.acc-sheet { display: flex; flex-direction: column; gap: 16px; }
+.acc-dl { display: grid; grid-template-columns: minmax(84px, max-content) 1fr; gap: 10px 16px; margin: 0; padding: 16px; border-radius: 12px; background: var(--bg-0); }
+.acc-dl dt { font: 500 var(--fs-label)/24px var(--font-body); color: var(--sub); }
+.acc-dl dd { margin: 0; font: 400 var(--fs-body)/24px var(--font-body); color: var(--ink); overflow-wrap: anywhere; }
+.acc-help { margin: 0; font: 400 var(--fs-label)/var(--lh-label) var(--font-body); color: var(--sub-2); }
+.acc-mine { margin: 0; padding: 14px 16px; border-radius: 12px; background: var(--bg-0); font: 500 var(--fs-body)/24px var(--font-body); color: var(--sub); }
+.acc-do { display: flex; flex-direction: column; gap: 10px; }
+.acc-reason { width: 100%; box-sizing: border-box; }
+.acc-reason.is-need { animation: acc-need 380ms var(--e-ui); border-color: var(--warn); }
+@keyframes acc-need { 20% { transform: translateX(-6px); } 50% { transform: translateX(5px); } 80% { transform: translateX(-2px); } }
+.acc-need { margin: -2px 0 0; font: 400 var(--fs-label)/20px var(--font-body); color: var(--warn); }
+.acc-need:empty { display: none; }
+.acc-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.acc-acts .t-btn { height: 52px; font-size: var(--fs-body); }
+.t .acc-acts .t-btn:not(.t-btn--2) { color: #fff; }
+
+.acc-user { display: flex; flex-direction: column; gap: 0; }
+.acc-row { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 16px 0; border-top: 1px solid var(--rule); }
+.acc-row .t-label { margin: 0; }
+.acc-inline { display: flex; gap: 8px; flex-wrap: wrap; }
+.acc-role { min-width: 160px; }
+
+/* 임시 비밀번호 — 한 번만 보인다 */
+.acc-temp { display: flex; flex-direction: column; gap: 10px; padding: 20px; border-radius: 12px; border: 1px solid var(--ink); }
+.acc-temp .t-label { margin: 0; }
+.acc-temp__row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.acc-temp__v { font: 600 24px/32px var(--font-num); letter-spacing: .06em; color: var(--ink); font-variant-numeric: tabular-nums; user-select: all; }
+.acc-copy { height: 36px; padding: 0 14px; }
+.acc-temp__s { margin: 0; font: 400 var(--fs-label)/var(--lh-label) var(--font-body); color: var(--sub-2); }
+.acc-temp__w { margin: 0; font: 500 var(--fs-label)/var(--lh-label) var(--font-body); color: var(--warn); }
+
+@media (max-width: 960px) {
+  .acc-w { padding: 24px 16px 32px; }
+  body:has(.k-drawer[data-slot="account"]) .acc-w { padding-right: 16px; }
+  .acc-h { font-size: var(--fs-h4); line-height: var(--lh-h4); }
+  .acc-tabs { gap: 20px; }
+  .acc-tab { font-size: 15px; height: 44px; }
+}
+@media (max-width: 640px) {
+  .acc-tbl { padding: 4px 12px 8px; overflow-x: auto; }
+  /* 휴대폰 — 목록은 누구·어디·언제만(메일 주소 · 세부는 서랍에서) · 메일 주소는 한 줄(글자 중간 끊김 0) */
+  .acc-card[data-tab="signup"] th:nth-child(2), .acc-card[data-tab="signup"] td:nth-child(2),
+  .acc-card[data-tab="reset"] th:nth-child(2), .acc-card[data-tab="reset"] td:nth-child(2),
+  .acc-card[data-tab="users"] th:nth-child(2), .acc-card[data-tab="users"] td:nth-child(2),
+  .acc-card[data-tab="users"] th:nth-child(4), .acc-card[data-tab="users"] td:nth-child(4),
+  .acc-card[data-tab="fails"] th:nth-child(3), .acc-card[data-tab="fails"] td:nth-child(3),
+  .acc-card[data-tab="fails"] th:nth-child(4), .acc-card[data-tab="fails"] td:nth-child(4),
+  .acc-card[data-tab="log"] th:nth-child(4), .acc-card[data-tab="log"] td:nth-child(4),
+  .acc-card[data-tab="log"] th:nth-child(5), .acc-card[data-tab="log"] td:nth-child(5) { display: none; }
+  .acc-card[data-tab="log"] td .acc-m { display: none; }
+  .acc-sel select { min-width: 0; width: 100%; }
+  .acc-sel { display: block; }
+}

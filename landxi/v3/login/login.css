@@ -133,15 +133,6 @@ body.t { overflow: hidden; }
 .res__cr { display: none; }
 .hero__credit { position: absolute; right: 24px; top: 20px; margin: 0; font: 400 var(--fs-label)/1 var(--font-body); color: rgba(255,255,255,.7); text-shadow: var(--hud-shadow); }
 
-/* ══ 서랍 — 키트 K5(.k-drawer) 안의 3행. 정문엔 마스트가 없어 위 여백만 맞춘다 ══ */
-.k-drawer.help { top: var(--margin); }
-.help__dl { margin: 0; }
-.help__dl div { display: grid; grid-template-columns: 120px 1fr; gap: 12px; padding: 14px 0; border-top: 1px solid var(--rule); }
-.help__dl dt { font: 500 var(--fs-label)/var(--lh-label) var(--font-body); color: var(--sub); }
-.help__dl dd { margin: 0; font: 400 var(--fs-body)/var(--lh-label) var(--font-body); color: var(--ink); }
-.help__dl .n a { color: inherit; font-family: var(--font-num); font-variant-numeric: tabular-nums; text-decoration: none; }
-.help__dl .n a:hover { text-decoration: underline; }
-
 /* ══ 장면 3 — Ctrl K 한 줄(흰 카드 · 지도 위) ══════════════════════ */
 .ask { position: absolute; left: 50%; top: 32%; display: flex; align-items: center; gap: 12px; width: min(440px, calc(100% - 48px)); padding: 14px 16px; margin: 0;
   transform: translate(-50%, 8px); opacity: 0; pointer-events: none; transition: opacity var(--d-380) var(--e-ui), transform var(--d-380) var(--e-ui); }
