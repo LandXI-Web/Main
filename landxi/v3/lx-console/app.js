@@ -136,8 +136,11 @@ async function drawServices() {
   const D = new Map((deck?.items || []).map((c) => [c.id, c]));      // 카드 한 벌의 덱(서버) — 있으면 상태 · 장면 · 어디는 이것이 정본
   const stOf = (c) => (D.get(c.id)?.state ? { ga: '운영', pilot: '시범', none: '첫 결과 전' }[D.get(c.id).state] : c.status_label);
   const n = (lab) => cards.filter((c) => stOf(c) === lab).length;
-  const places = new Set(live.map((d) => d.sgg_cd || d.region_profile || d.tenant_id)).size;
-  svcSub.textContent = `운영 ${n('운영')} · 시범 ${n('시범')} · ${places}곳`;
+  /* 적용 지역 = 운영 · 시범 서비스의 배포본(운영 · 시범)이 있는 시군구(해외는 지역) 수 — 같은 지역 여러 서비스는 한 곳 */
+  const onCards = new Set(cards.filter((c) => ['운영', '시범'].includes(stOf(c))).map((c) => c.id));
+  const placeKey = (d) => d.sgg_cd || d.region_profile || d.tenant_id;
+  const places = new Set(live.filter((d) => onCards.has(d.card_id)).map(placeKey)).size;
+  svcSub.textContent = `운영 ${n('운영')} · 시범 ${n('시범')} · 적용 지역 ${places}곳`;
 
   /* 장면 — 실제 결과 장면만(서비스 소개 화면의 결과 히어로 → 서버 결과 크롭). 없으면 회백 판(그림을 지어내지 않는다) */
   const own = new URL('../service-detail/data/img/', import.meta.url).pathname;
@@ -151,8 +154,15 @@ async function drawServices() {
   };
   const due = dueSets(fb?.items || [], { rules: rules?.items || [] });
   const dueCards = new Set(due.map((x) => x.card).filter(Boolean));
-  const rep = new Map();                         // 카드 → 기관 신고(서버 요약 · 서비스 관리 표와 같은 값)
-  for (const it of sum?.items || []) { const v = it.metrics?.reports?.value; if (Number.isFinite(+v) && +v) rep.set(it.card, (rep.get(it.card) || 0) + +v); }
+  /* 카드 → 기관 신고. 서비스 관리 표는 배포본(지역)마다 한 줄 — 여기는 그 서비스가 돌고 있는 지역들의 합이라 '(n곳 합)'으로 이름을 밝힌다(숫자 한 출처: 서버 요약) */
+  const rep = new Map();
+  const liveAt = new Map();                      // 카드 → 돌고 있는 지역(시군구) 모음
+  for (const d of live) { if (!liveAt.has(d.card_id)) liveAt.set(d.card_id, new Set()); liveAt.get(d.card_id).add(d.sgg_cd || d.region_profile || d.tenant_id); }
+  for (const it of sum?.items || []) {
+    const v = it.metrics?.reports?.value;
+    if (!Number.isFinite(+v) || !+v || (it.sgg_cd && !liveAt.get(it.card)?.has(it.sgg_cd))) continue;
+    rep.set(it.card, (rep.get(it.card) || 0) + +v);
+  }
   const RANK = { 운영: 0, 시범: 1 };
   const lastAt = (c) => deploys.filter((d) => d.card_id === c.id).map((d) => d.updated_at || '').sort().pop() || '';
   const pick = cards.filter((c) => stOf(c) === '운영' || stOf(c) === '시범')
@@ -165,16 +175,17 @@ async function drawServices() {
     strip.replaceChildren(...pick.map((c) => {
       const mineD = live.filter((d) => d.card_id === c.id).sort((a, b) => (a.stage === 'ga' ? 0 : 1) - (b.stage === 'ga' ? 0 : 1));
       const names = [...new Set(mineD.map((d) => nm(d.sgg_cd) || shortRegion(d.region_name?.ko || d.region_name)).filter(Boolean))];
-      const where = D.get(c.id)?.where || (names.length ? names[0] + (names.length > 1 ? ` 외 ${names.length - 1}곳` : '') : '');
+      const where = names.length ? names[0] + (names.length > 1 ? ` 외 ${names.length - 1}곳` : '') : (D.get(c.id)?.where || '');   // 돌고 있는 곳 전부(대표 지역 외 n곳)
       const src = sceneOf(c);
-      const sig = [rep.get(c.id) ? `기관 신고 ${rep.get(c.id).toLocaleString('ko-KR')}` : null, dueCards.has(c.id) ? '재학습 필요' : null].filter(Boolean).join(' · ');
+      const rn = rep.get(c.id);
+      const sig = [rn ? `기관 신고 ${rn.toLocaleString('ko-KR')}${names.length > 1 ? `(${names.length}곳 합)` : ''}` : null, dueCards.has(c.id) ? '재학습 필요' : null].filter(Boolean);
       /* 카드 한 벌과 같은 순서 — ① 결과 장면 ② 상태 ③ 어디 ④ 이름 · 그 아래 살펴볼 신호(기관 신고 · 재학습) */
       return h('a.ld-th', { href: V.detail + '?card=' + encodeURIComponent(c.id), dataset: { card: c.id, state: stOf(c) === '운영' ? 'ga' : 'pilot' } },
         h('span.ld-th-img', { class: src ? '' : 'is-blank' }, src ? h('img', { src, alt: '', loading: 'lazy', decoding: 'async' }) : h('span', { text: '결과 장면 없음' }),
           h('span.ld-th-chip', { text: stOf(c) })),
         h('span.ld-th-wh', { text: where || ' ' }),
         h('b.ld-th-nm', { text: D.get(c.id)?.name || nameOf(c) }),
-        sig ? h('span.ld-th-sig', { text: sig }) : null);
+        ...sig.map((x) => h('span.ld-th-sig', { text: x })));
     }));
   }
   /* 살펴볼 것 — 재학습 필요(서비스 관리 큰 숫자와 같은 계산) · 영상 없는 지역(서버 요약의 영상 유무) */

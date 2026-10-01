@@ -21,6 +21,7 @@ test.describe('구현 3차 · LX 직원 메뉴 · 대시보드 · 프로젝트 �
     await frontDoor(page, new URL(baseURL).origin, 'test@lx.or.kr', 'app');
     await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-console/'), { timeout: 20000 });
     const hrefs = async () => page.locator('.k-rail a.k-rail-i').evaluateAll((as) => as.map((a) => new URL(a.href).pathname));
+    await page.locator('.k-rail a.k-rail-i').first().waitFor({ timeout: 20000 });
     const base = await hrefs();
     expect(base).toEqual(['/landxi/v3/lx-console/', '/landxi/v3/lx-project/', '/landxi/v3/lx-analyze/', '/landxi/v3/lx-cards/', '/landxi/v3/lx-ingest/', '/landxi/v3/lx-inbox/']);
     for (const [url, on] of [['v3/lx-console/', '홈'], ['v3/lx-project/', '프로젝트'], ['v3/lx-ingest/', '데이터'], ['v3/lx-train/', '프로젝트'],
@@ -48,8 +49,14 @@ test.describe('구현 3차 · LX 직원 메뉴 · 대시보드 · 프로젝트 �
     const sum = (await cells.allTextContents()).reduce((s, x) => s + (Number(x) || 0), 0);
     const badge = page.locator('.k-rail-i[data-id="inbox"] .k-rail-b');
     if (sum) await expect(badge).toHaveText(String(sum)); else await expect(badge).toHaveCount(0);
-    /* 우리 서비스 — 장면 넷(실제 결과 장면 또는 회백 판) · 서비스 소개로 */
+    /* 우리 서비스 — 장면 넷(실제 결과 장면 또는 회백 판) · 서비스 소개로 · 여러 지역 합은 이름으로 밝힌다(숫자 한 출처) */
     await expect(page.locator('.ld-th')).toHaveCount(4, { timeout: 20000 });
+    await expect(page.locator('.ld-sub')).toContainText('적용 지역');
+    for (const t of await page.locator('.ld-th-sig').allTextContents()) if (/기관 신고/.test(t)) {
+      const th = page.locator('.ld-th', { has: page.locator('.ld-th-sig', { hasText: t }) });
+      const where = await th.locator('.ld-th-wh').textContent();
+      if (/외 \d+곳/.test(where)) expect(t).toMatch(/\(\d+곳 합\)/);
+    }
     for (const a of await page.locator('.ld-th').all()) expect(await a.getAttribute('href')).toMatch(/service-detail\/\?card=/);
     /* 1차 버튼은 하나(분석하기) — 지역을 고르면 그 지역을 들고 분석하기로 */
     await expect(page.locator('.ld .t-btn:not(.t-btn--2):not(.t-btn--text)')).toHaveCount(1);
@@ -95,6 +102,54 @@ test.describe('구현 3차 · LX 직원 메뉴 · 대시보드 · 프로젝트 �
     await page.waitForTimeout(1500);
     const [mainH, mapH] = await page.evaluate(() => [document.querySelector('.k-main').getBoundingClientRect().height, document.querySelector('.maplibregl-canvas')?.getBoundingClientRect().height || 0]);
     expect(Math.abs(mainH - mapH)).toBeLessThan(4);
+  });
+
+  test('프로젝트 안 단계 화면은 그 프로젝트의 것만 — 서비스 관리 표 · 큰 숫자 · 학습 판 · 결과 확인 규칙(프로젝트 밖은 전체)', async ({ page, baseURL }) => {
+    await frontDoor(page, new URL(baseURL).origin, 'test@lx.or.kr', 'app');
+    await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-console/'), { timeout: 20000 });
+    /* 프로젝트 밖(메뉴 '서비스 카드' 자리) — 전체 배포본 */
+    await page.goto('v3/lx-deploy/?tab=ops');
+    await page.locator('.dp-ops .k-table tbody tr').first().waitFor({ timeout: 30000 });
+    const all = await page.locator('.dp-ops .k-table tbody tr').count();
+    /* 공개된 프로젝트 하나 — 서비스 관리 단계 */
+    /* 공개된 프로젝트 = 대시보드 '내 프로젝트' 줄 가운데 다음 할 일이 서비스 관리인 것 */
+    await page.goto('v3/lx-console/');
+    await page.locator('a.lc-pr').first().waitFor({ timeout: 20000 }).catch(() => {});
+    const href = (await page.locator('a.lc-pr').evaluateAll((as) => as.map((a) => a.href))).find((u) => /lx-deploy\/.*tab=ops/.test(u));
+    test.skip(!href, '공개된 프로젝트 없음');
+    const pid = new URL(href).searchParams.get('project');
+    await page.goto('v3/lx-project/?project=' + pid);
+    await page.locator('.k-sub .lxp-st').nth(5).click();
+    await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-deploy/'), { timeout: 20000 });
+    const card = new URL(page.url()).searchParams.get('card');
+    await page.locator('.dp-ops .k-table tbody tr').first().waitFor({ timeout: 30000 });
+    const names = await page.locator('.dp-ops .dp-wk').evaluateAll((els) => els.map((e) => e.firstChild.textContent.trim()));
+    expect(new Set(names).size, names.join(',')).toBe(1);                    // 그 프로젝트 서비스 하나의 배포본만
+    expect(names.length).toBeLessThan(all);
+    for (const k of await page.locator('.dp-pin').evaluateAll((els) => els.map((e) => e.dataset.key))) expect(k).toBeTruthy();
+    expect(card).toBeTruthy();
+    /* 학습 판 — 업무 10 이 아니라 그 프로젝트 한 장 */
+    await page.goto('v3/lx-project/?project=' + pid);
+    await page.locator('.k-sub .lxp-st').nth(2).click();
+    await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-train/'), { timeout: 20000 });
+    await expect(page.locator('.tr-card')).toHaveCount(1, { timeout: 20000 });
+    await expect(page.locator('.tr-title')).toHaveText('학습 · 이 프로젝트 모델');
+  });
+
+  test('서비스 관리 지도 — 이름표가 서로 겹치지 않는다(겹치면 하나만 · 점은 그대로)', async ({ page, baseURL }) => {
+    await frontDoor(page, new URL(baseURL).origin, 'test@lx.or.kr', 'app');
+    await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-console/'), { timeout: 20000 });
+    await page.goto('v3/lx-deploy/?tab=ops');
+    await page.locator('.dp-pin').first().waitFor({ timeout: 30000 });
+    await page.waitForTimeout(3500);                                     // 카메라가 멈춘 뒤(겹침 정리는 지도가 멈출 때마다)
+    const r = await page.evaluate(() => {
+      const labs = [...document.querySelectorAll('.dp-pin:not(.no-lab) span')].map((e) => e.getBoundingClientRect()).filter((b) => b.width && b.right > 0 && b.left < innerWidth);
+      let n = 0;
+      for (let i = 0; i < labs.length; i++) for (let j = i + 1; j < labs.length; j++) { const a = labs[i], b = labs[j]; if (a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top) n++; }
+      return { shown: labs.length, pins: document.querySelectorAll('.dp-pin').length, overlaps: n };
+    });
+    expect(r.overlaps, JSON.stringify(r)).toBe(0);
+    expect(r.shown).toBeGreaterThan(0);
   });
 
   test('휴대폰(390) — 아래 탭 다섯(홈 · 프로젝트 · 분석하기 · 요청함 · 메뉴) · 메뉴에 나머지', async ({ browser, baseURL }) => {

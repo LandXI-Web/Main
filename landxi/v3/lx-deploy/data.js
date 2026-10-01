@@ -14,6 +14,12 @@ export { REPORT_MIN };
 const isTest = (id) => /-test(-\d+)?$/.test(id);
 const ok = (r) => (r.status === 'fulfilled' ? r.value : null);
 
+/* 프로젝트 맥락(?project= · J-1) — 그 프로젝트의 서비스(카드)만. card = null 이면(공개 전) 비어 있다. 프로젝트 밖이면 null(전체) */
+let SCOPE = null;
+export function setScope(card) { SCOPE = { card: card || null }; }
+export const scoped = () => !!SCOPE;
+const inScope = (list) => (SCOPE ? list.filter((d) => SCOPE.card && d.card_id === SCOPE.card) : list);
+
 export async function load() {
   const r = await Promise.allSettled([
     api('/deploys?with=health'), api('/registry/cards'), api('/registry/models'), api('/catalog/layers'),
@@ -30,7 +36,8 @@ export async function load() {
   D.tenants = ten?.items || [];
   D.asOf = dp?.as_of || new Date().toISOString();
   D.health = D.deploys.some((d) => d.health) ? 'server' : 'adapter';
-  D.sumOf = assignSummary();
+  D.sumOf = assignSummary();          // 요약 숫자는 전체 배포본에 먼저 붙이고(같은 계산) · 그다음 프로젝트 범위로 거른다
+  D.deploys = inScope(D.deploys);
   devlog('health', D.health === 'server' ? '서버 계산(S-7)' : '어댑터 계산(S-7 전)');
   devlog('deploys', `${D.deploys.length} (시험 ${(dp?.items || []).length - D.deploys.length} 제외)`);
   return D;
@@ -38,7 +45,7 @@ export async function load() {
 
 export async function reloadDeploys() {
   const dp = await api('/deploys?with=health');
-  D.deploys = (dp.items || []).filter((d) => !isTest(d.id));
+  D.deploys = inScope((dp.items || []).filter((d) => !isTest(d.id)));
   D.asOf = dp.as_of || D.asOf;
   return D.deploys;
 }
@@ -220,6 +227,8 @@ export function health(d, model = null, due = retrainMap()) {
 
 /** 재학습 필요 {n}건 — 재학습 묶음 수(= 표 '재학습' 행 수 · 콘솔 '오늘'이 dueSets 를 쓰면 같은 값) */
 export function retrainEnv() {
+  /* 프로젝트 안 = 그 서비스 배포본에 걸린 재학습 묶음만(표 '재학습' 행과 같은 범위) · 밖 = 전체 묶음(대시보드 '재학습 필요'와 같은 값) */
+  if (SCOPE) { const n = [...retrainMap().values()].reduce((s, l) => s + l.length, 0); return envOf(n, 'count', 'recorded', '기관 확인 기록(이 프로젝트 서비스)'); }
   const list = due();
   devlog('재학습', list.map((x) => `${x.key} ${x.n}(${x.sets.join('+')})`).join(' · ') || '0');
   return envOf(list.length, 'count', 'recorded', '기관 확인 기록');

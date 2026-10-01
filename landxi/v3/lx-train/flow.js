@@ -77,10 +77,13 @@ async function authBlob(path) {
 /** 원스톱 서랍 — host = 학습 판 · who = 관문 결과(역할) · project = 프로젝트 맥락(구현 2차 T1 · 없으면 지금까지와 같다).
     프로젝트 안: 업무 · 표본 지역은 프로젝트 값으로 채우고, 올린 표본은 그 프로젝트 학습데이터로 이어지며(서버), 학습 · 서비스 카드 발행 요청에
     프로젝트가 붙는다. 학습 시작 = 프로젝트장 · 구성원(공개된 서비스는 서버도 거절) · 발행 요청 = 프로젝트장. */
-export function openFlow({ host, who, project = null }) {
+export function openFlow({ host, who, project = null, step = null }) {
   const isAdmin = who?.me?.role === 'admin';
   const body = h('div.tf');
-  const d = drawer({ title: '새 모델 만들기', body, host, slot: 'right', label: '새 모델 만들기',
+  /* 프로젝트 안(J-1) — 서랍 제목 = 그 단계 이름(프로젝트 이름은 위 단계 막대에), 열면 그 단계 칸으로(학습데이터 구축 = ① · 학습 = ③ · 발행 요청 = ⑤) */
+  const STEP_T = { 1: '학습데이터 구축', 3: '학습', 5: '발행 요청' };
+  const title = project ? STEP_T[step] || '학습' : '새 모델 만들기';
+  const d = drawer({ title, body, host, slot: 'right', label: title,
     onClose: () => { closed = true; stream?.close(); setQ({ flow: null, sample: null, job: null, model: null, card: null }); } });
   d.el.classList.add('tf-drawer');
   let closed = false, stream = null;
@@ -98,6 +101,7 @@ export function openFlow({ host, who, project = null }) {
   const s5 = sec(5, project ? '서비스 카드 발행 요청' : '서비스 만들기');
   const lock = (el, on) => el.closest('.tf-s').classList.toggle('is-lock', on);
   [s2, s3, s4, s5].forEach((x) => lock(x, true));
+  if (project && step > 1) setTimeout(() => { if (!closed) body.querySelector(`.tf-s[data-step="${step}"]`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 1600);
 
   let sample = null, model = null, card = null;
 

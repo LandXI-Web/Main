@@ -5,7 +5,7 @@ import { ALLOW, shell, gate, createStage, regionPicker, drawer, bignum, numHtml,
 import { api, sse } from '../../shared/api-v1.js';
 import { projectRail, attachProject } from '../lx-project/context.js';   // 프로젝트 맥락(?project= · 구현 2차 T1)
 import { staffMenu } from '../kit/lx-menu.js';
-import { D, load, reloadDeploys, regions, deployOf, regionKey, regionShort, workName, cardOf, STAGE_CHIP, stageKind, aoiBox, isDomestic,
+import { D, load, setScope, scoped, reloadDeploys, regions, deployOf, regionKey, regionShort, workName, cardOf, STAGE_CHIP, stageKind, aoiBox, isDomestic,
   imageryIn, linkedModel, modelFor, sampleBox, boxPoly, health, reportsOf, reportsEnv, retrainEnv, retrainMap, loadHealth, hasOp } from './data.js';
 
 const V3 = '/landxi/v3/';
@@ -19,7 +19,7 @@ const who = await gate('lx-deploy');
    이 화면 = 프로젝트 단계 '서비스 관리'(화면은 그대로 · 배포 탭 = 다른 지역에 적용). 프로젝트 밖에서는 메뉴 '서비스 카드'(우리가 만든 서비스 · 적용 지역). */
 const PR = projectRail('ops');
 const S = shell({ who, home: 'lx-deploy', rail: PR || staffMenu('cards') });
-if (PR) attachProject(S, PR, 'ops');
+const PROJ = PR ? attachProject(S, PR, 'ops') : null;
 
 /* ── 판: 지도 무대 + 윗줄(탭 · 심기) + 범례 + 운영 판 ─────────── */
 const root = h('div.dp');
@@ -41,6 +41,8 @@ const isAdmin = who.me?.role === 'admin';
 /* 기관 포털 미리보기 — 관문이 LX 세션의 gov-fusion 읽기(?preview=)를 허용할 때만(아니면 정문으로 튕기는 죽은 링크) */
 const canPreview = (ALLOW['gov-fusion'] || []).includes(who.key);
 
+/* 프로젝트 안(J-1) — 그 프로젝트의 서비스(카드) 배포본만 · 큰 숫자(재학습 필요)도 그 범위 · 프로젝트 밖(메뉴 '서비스 카드')은 전체 */
+if (PROJ) setScope((await PROJ)?.card || null);
 await load();
 S.fresh(D.asOf);
 
@@ -60,9 +62,28 @@ function drawPins({ fresh } = {}) {
   }
   markPin();
 }
-const markPin = () => { for (const [k, p] of PINS) p.el.classList.toggle('is-on', !!selected && regionKey(selected) === k); };
+const markPin = () => { for (const [k, p] of PINS) p.el.classList.toggle('is-on', !!selected && regionKey(selected) === k); declutter(); };
+/* 이름표 겹침 정리 — 선택 → 운영 → 시범 → 적용 요청 → 배포본 많은 곳 순으로 놓고, 먼저 놓인 이름표 · 다른 점과 겹치는 이름표는 감춘다
+   (점은 그대로 · 감춘 이름은 점에 마우스를 올리면 보인다). 지도를 옮기고 확대할 때마다 다시 */
+const PIN_RANK = { ga: 0, pilot: 1, draft: 2 };
+function declutter() {
+  const list = [...PINS.values()];
+  for (const p of list) p.el.classList.remove('no-lab');
+  const box = (r, m = 0) => ({ l: r.left - m, r: r.right + m, t: r.top - m, b: r.bottom + m });
+  const hit = (a, b) => a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t;
+  const dots = new Map(list.map((p) => [p, box(p.el.querySelector('i').getBoundingClientRect())]));
+  const on = (p) => p.el.classList.contains('is-on');
+  const kept = [];
+  for (const p of list.slice().sort((a, b) => (on(b) - on(a)) || (PIN_RANK[a.r.stage] ?? 9) - (PIN_RANK[b.r.stage] ?? 9) || b.r.list.length - a.r.list.length)) {
+    const lab = box(p.el.querySelector('span').getBoundingClientRect(), 3);
+    if (kept.some((k) => hit(k, lab)) || list.some((o) => o !== p && hit(dots.get(o), lab))) { p.el.classList.add('no-lab'); continue; }
+    kept.push(lab);
+  }
+}
 await st.ready;
 drawPins();
+st.map.on('moveend', declutter);
+addEventListener('resize', () => requestAnimationFrame(declutter));
 
 function padFor(open) {
   if (mobile()) st.pad({ bottom: open ? Math.round(innerHeight * 0.62) : 72, top: 72 });
@@ -276,7 +297,7 @@ function colorField(k) {
 
 async function openPlant() {
   const src = selected && isDomestic(selected) && selected.stage !== 'draft' ? selected : D.deploys.find((d) => d.stage === 'ga' && isDomestic(d));
-  const cards = D.cards.filter((c) => c.scope !== 'global' && (c.versions || []).length);
+  const cards = D.cards.filter((c) => c.scope !== 'global' && (c.versions || []).length && (!scoped() || c.id === Q.get('card')));   // 프로젝트 안 = 그 서비스만
   const pd = drawer({ title: '다른 지역에 적용', slot: 'right', onClose: () => { if (selected) select(selected.id); } }); pd.kind = 'plant';
   drw = pd;
   const cardSel = h('select.t-input', { 'aria-label': '카드' }, ...cards.map((c) => h('option', { value: c.id, text: workName(c.id), selected: c.id === (Q.get('card') && cards.some((x) => x.id === Q.get('card')) ? Q.get('card') : src?.card_id) })));
@@ -412,7 +433,7 @@ async function renderOps() {
   tcard.append(big);
   bignum(big, retrainEnv(), { label: '재학습 필요', unit: '건' });
   opsEl.append(tcard);
-  if (!rows.length) { empty(tcard.appendChild(h('div.dp-empty')), { kind: 'first', text: '이 카드가 깔린 기관이 아직 없습니다' }); return; }
+  if (!rows.length) { empty(tcard.appendChild(h('div.dp-empty')), { kind: 'first', text: scoped() && !Q.get('card') ? '서비스 카드를 공개하면 여기서 관리합니다' : '이 카드가 깔린 기관이 아직 없습니다' }); return; }
   const rank = { 재학습: 0, '갱신 배포': 1, '표본 확인': 2, 없음: 3 };
   table(tcard.appendChild(h('div')), {
     cols: [

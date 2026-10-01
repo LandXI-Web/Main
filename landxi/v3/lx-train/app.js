@@ -18,12 +18,11 @@ import { h, esc, api, API, session, isEnvelope, hasRoute } from '../kit/util.js'
 import { sse } from '../../shared/api-v1.js';
 import { summary, stageOf } from '../lx-console/summary.js';
 import { openFlow } from './flow.js';
-import { PID, projectRail, attachProject } from '../lx-project/context.js';   // 프로젝트 맥락(?project= · 구현 2차 T1)
+import { PID, projectRail, attachProject, projectModel } from '../lx-project/context.js';   // 프로젝트 맥락(?project= · 구현 2차 T1)
 import { staffMenu } from '../kit/lx-menu.js';
 
 const who = await gate('lx-train');
 const CFG = await fetch(new URL('./tasks.json', import.meta.url)).then((r) => r.json());
-const TASKS = CFG.tasks;
 const CROP = '/landxi/assets/proto/crops/';
 const q0 = new URLSearchParams(location.search);
 const REGION = q0.get('region') || '';
@@ -37,14 +36,24 @@ const PR = projectRail(STAGE);
 const S = shell({ who, home: 'lx-train', rail: PR || staffMenu('projects') });
 const PROJ = PR ? attachProject(S, PR, STAGE) : Promise.resolve(null);
 devDrawer({ who });
+/* 프로젝트 안(J-1) — 판에는 그 프로젝트의 업무 · 모델 한 장만(다른 업무 · 다른 프로젝트 모델 0). 프로젝트 밖(메뉴)은 업무 10 전부.
+   업무가 정해진 프로젝트 = 그 업무 카드(모델은 이 프로젝트 모델) · 직접 입력한 업무 = 프로젝트 이름의 한 장(모델 · 서비스 카드는 프로젝트 것) */
+const PRJ = PID ? await PROJ : null;
+const TASKS = !PRJ ? CFG.tasks : (() => {
+  const base = PRJ.task_id ? CFG.tasks.find((t) => t.id === PRJ.task_id) : null;
+  const model = projectModel(PRJ);
+  if (base) return [{ ...base, model: model || null, card: PRJ.card || base.card }];
+  return [{ id: 'project', name: PRJ.task || PRJ.name, noun: PRJ.task || PRJ.name, cls: [], sets: '^$', rules: [], model, card: PRJ.card || null, noReports: true }];
+})();
+const STEP = { label: 1, train: 3, publish: 5 }[STAGE];
 
 const grid = h('div.tr-grid', { role: 'list' });
 const newBtn = h('button.t-btn.tr-new', { type: 'button', text: '새 모델 만들기' });
-const pane = h('div.tr-pane', {}, h('header.tr-h', {}, h('h1.t-h3.tr-title', { text: '학습 · 업무별 모델' }), newBtn), grid);
+const pane = h('div.tr-pane', {}, h('header.tr-h', {}, h('h1.t-h3.tr-title', { text: PRJ ? '학습 · 이 프로젝트 모델' : '학습 · 업무별 모델' }), newBtn), grid);
 S.main.append(pane);
 /* 원스톱(r3-train): 데이터 올리기 → 라벨 확인 → 학습 → 결과 확인·등록 → 서비스 만들기 → 다른 지역에 적용 */
-newBtn.addEventListener('click', async () => openFlow({ host: S.main, who, project: await PROJ }));
-if (q0.get('flow')) setTimeout(async () => openFlow({ host: S.main, who, project: await PROJ }), 0);
+newBtn.addEventListener('click', async () => openFlow({ host: S.main, who, project: await PROJ, step: STEP }));
+if (q0.get('flow')) setTimeout(async () => openFlow({ host: S.main, who, project: await PROJ, step: STEP }), 0);
 
 /* 로드 전: 카드 자리(이름만 · 검은 막대 0) */
 const cardEls = new Map();
@@ -92,7 +101,7 @@ if (modelsJ === null || fbJ === null) {
 
 /* 라벨 도구(AXIS-Label · 외부 새 창) — 서버 설정(/me label_url)이 정본. 없으면 tasks.json 대체 주소.
    어느 쪽이든 실제로 열려 있을 때만 링크를 그린다(죽은 링크 0). 닫혀 있으면 `라벨 도구 연결 전` 한 줄. */
-const LABEL = (async () => {
+const LABEL = PID ? Promise.resolve(null) : (async () => {   // 프로젝트 안에서는 라벨 도구 칸을 두지 않으므로 확인하지 않는다(바깥 주소에서 이 PC 주소를 두드리지 않게)
   const me = await get('/me');
   const url = me?.label_url || me?.links?.label || CFG.labelUrl || '';
   if (!url) return null;
@@ -126,6 +135,7 @@ const dayText = (s) => (/^\d{4}-\d{2}$/.test(s) ? s.replace('-', '.') : df(s));
 
 /** 업무 → 대표 모델: 이 업무 클래스 비중이 큰 모델 → 최근 학습 순 */
 function modelsFor(t) {
+  if (t.model) { const m = MODELS.find((x) => x.id === t.model); if (m) { if (!t.cls.length) t.cls = m.classes || []; return [m]; } }   // 프로젝트 안 = 그 프로젝트 모델
   const hit = MODELS.filter((m) => (m.classes || []).some((c) => t.cls.includes(c)));
   const share = (m) => (m.classes || []).filter((c) => t.cls.includes(c)).length / Math.max(1, (m.classes || []).length);
   return hit.sort((a, b) => share(b) - share(a) || dateOf(b).localeCompare(dateOf(a)));
@@ -260,7 +270,7 @@ function openDrawer(r) {
   /* 표본 — 서버가 값을 줄 때만 행을 연다(값 없으면 접음 · 큰 숫자 블록과 같은 규칙) */
   const sv = isEnvelope(r.m.samples) ? (r.m.samples.value ?? null) : Number.isFinite(r.m.samples) ? r.m.samples : null;
   if (sv !== null) row('표본', `<span class="num">${nf(sv)}</span>${isEnvelope(r.m.samples) ? sig(r.m.samples) : ''}`);
-  row('오탐 신고', `<span class="num${r.reports.length >= CFG.reportMin ? ' tr-warn' : ''}">${nf(r.reports.length)}</span>`);
+  if (!r.t.noReports) row('오탐 신고', `<span class="num${r.reports.length >= CFG.reportMin ? ' tr-warn' : ''}">${nf(r.reports.length)}</span>`);   // 결과층을 모르는 업무(직접 입력)는 세지 않는다(0 을 지어내지 않는다)
   body.append(dl);
 
   /* 학습 곡선 — 학습 로그가 없으면 섹션째 접는다(제목 아래 줄표만 남기지 않는다). 표시점 = 서랍 정밀도와 같은 회차·같은 값 */

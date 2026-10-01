@@ -100,6 +100,24 @@ export function ensureCss() {
   document.head.append(h('link', { rel: 'stylesheet', href: new URL('./context.css', import.meta.url).href, dataset: { lxp: '1' } }));
 }
 
+/* ── 프로젝트 범위(단계 화면이 '그 프로젝트의 것'만 보이게 · J-1) ───────────────────────── */
+/** 이 프로젝트의 모델 — 학습 단계(없으면 발행 요청 단계)가 가리키는 모델 id · 없으면 null */
+export const projectModel = (pr) => pr?.stages?.find((s) => s.key === 'train')?.target?.model || pr?.stages?.find((s) => s.key === 'publish')?.target?.model || null;
+/** 이 프로젝트의 대조 규칙 — 업무가 정해진 프로젝트는 그 업무 규칙(TASKS), 아니면 이 프로젝트 모델로 평가할 수 있는 규칙(서버 판정 · 서비스 만들기와 같은 한 곳).
+    → 규칙 id 배열 · 알 수 없으면 null(거르지 않는다) */
+export async function projectRules(pr) {
+  if (!pr) return null;
+  const t = pr.task_id ? TASKS.find((x) => x.id === pr.task_id) : null;
+  if (t?.rules?.length) return t.rules.slice();
+  const m = projectModel(pr);
+  if (!m) return null;
+  try {
+    const j = await api('/registry/model-rules?model_id=' + encodeURIComponent(m));
+    const ids = (j.items || []).filter((r) => r.fits).map((r) => r.id);
+    return ids.length ? ids : null;
+  } catch { return null; }
+}
+
 /** 단계 표시 말(짧게) — 지금 단계 번호 + 이름 */
 export const stageWord = (pr) => (pr?.stage ? `${pr.stage.index + 1} ${pr.stage.label}` : '');
 export { esc };

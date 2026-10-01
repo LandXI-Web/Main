@@ -168,3 +168,7 @@ body.t .k-drawer.is-closing{opacity:1;transform:translateX(calc(100% + 24px))}
 /* r3-train 3차 — 적용 전 점검 한 줄(서비스 모델 × 지역 영상 해상도) */
 .dp-fit{margin:8px 0 0;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub);word-break:keep-all}
 .dp-fit[data-lv="warn"]{color:var(--warn)}
+/* 이름표 겹침 — 감춘 이름은 점에 마우스를 올리면(누르기 전) 보인다 */
+.dp-pin.no-lab span{visibility:hidden}
+.dp-pin.no-lab:hover{z-index:2}
+.dp-pin.no-lab:hover span{visibility:visible}

@@ -5,7 +5,7 @@ import { nf } from '../kit/i18n.js';
 import { h, esc, isDev, session, bboxOf } from '../kit/util.js';
 import { sourceSpec } from '../../xi/engine/sources.js';
 import { summary, total, labelOf, pick } from '../lx-console/summary.js';
-import { projectRail, attachProject } from '../lx-project/context.js';   // 프로젝트 맥락(?project= · 구현 2차 T1)
+import { projectRail, attachProject, projectRules } from '../lx-project/context.js';   // 프로젝트 맥락(?project= · 구현 2차 T1)
 import { staffMenu } from '../kit/lx-menu.js';
 import { D, SAMPLE, CLS, probeS2, loadRules, loadQueue, parcel, aiLayersAt, loadFeedback, loadRuleStats, verdictMap, ruleStat, judge, unTag, suggest, requestThreshold, drawSample, forgetSample, regionFor, bboxOfPoints, inRegion } from './data.js';
 
@@ -24,7 +24,7 @@ E = E || kick();
    지역 = 프로젝트 대상 지역(?region=) · 화면은 그대로. 프로젝트 밖에서는 메뉴 '프로젝트'(결과 확인은 프로젝트의 일). */
 const PR = projectRail('review');
 const S = K.shell({ who, home: 'lx-review', xiRegion: () => region?.sgg_cd || null, rail: PR || staffMenu('projects') });
-if (PR) attachProject(S, PR, 'review');
+const PROJ = PR ? attachProject(S, PR, 'review') : null;
 /* 역할 칩 — 이름이 역할과 같으면(시드 계정 'LX 직원') 한 번만 쓴다(키트 K1 요청 전 화면 쪽 보정) */
 for (const c of document.querySelectorAll('.k-role')) { const b = c.querySelector('b'); const rest = (c.textContent || '').slice((b?.textContent || '').length).trim(); if (b && rest === b.textContent.trim()) c.textContent = rest; }
 const stageEl = h('div.rv-stage'); S.main.append(stageEl);
@@ -458,7 +458,10 @@ document.addEventListener('mouseover', (e) => {
 document.addEventListener('mouseout', (e) => { if (e.target.closest?.('.rv-tipw')) { const t = document.querySelector('.rv-tip'); if (t) t.hidden = true; } });
 
 /* ── 시작 · 자료 ─────────────────────────────────────── */
-const [regions, , , firstQ] = await Promise.all([E.regions, E.rules, E.fb, E.first]);
+const [regions, , , firstQ, PRJ] = await Promise.all([E.regions, E.rules, E.fb, E.first, PROJ]);
+/* 프로젝트 안(J-1) — 그 프로젝트의 대조 규칙만(막대 · 큰 숫자 · 점 · 표본) · 큰 숫자는 그 서비스(카드)의 현장 확인 필요. 프로젝트 밖은 전체 */
+const PRULES = PRJ ? await projectRules(PRJ) : null;
+if (PRULES) { const keep = D.rules.filter((r) => PRULES.includes(r.id)); if (keep.length) D.rules.splice(0, D.rules.length, ...keep); }
 skeleton();
 const first = firstQ?.items?.[0] || null;
 /* 주소의 지역이 없거나 모르는 값이면 첫 순위 의심 필지의 시군구로(데이터가 정한다) */
@@ -483,7 +486,7 @@ rule = Q.get('rule') && D.byId[Q.get('rule')] ? Q.get('rule') : [...D.rules].sor
 const aggAny = Object.values(byRule).some((e) => (e?.value || 0) > 0);
 /* 이 규칙의 정밀도 봉투(stats · lx) 한 건만 먼저 — 나머지 5건은 첫 보드 뒤(지연) */
 const [sum] = await Promise.all([summary({ region: region?.sgg_cd || null }), rule ? loadRuleStats([rule]) : null]);
-hudEnv = sum ? total(sum, 'field_check', region?.sgg_cd ? pick({ sgg: region.sgg_cd }) : null) ?? null : null;
+hudEnv = sum ? total(sum, 'field_check', region?.sgg_cd || PRJ?.card ? pick({ sgg: region?.sgg_cd || null, card: PRJ?.card || null }) : null) ?? null : null;
 K.devlog('현장 확인 필요', sum ? `summary ${hudEnv?.value ?? '—'}` : 'summary 없음');
 hudLabel.textContent = `${labelOf(sum, 'field_check')} · ${region?.name || ''}`.replace(/ · $/, '');
 setHud();

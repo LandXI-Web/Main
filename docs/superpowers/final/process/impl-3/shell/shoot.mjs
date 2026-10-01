@@ -17,7 +17,7 @@ const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? proces
 const TAG = arg('--tag', 'after');
 const BASE = arg('--base', 'https://app.land-xi.dev');
 const ADMIN_BASE = arg('--admin', BASE.includes('land-xi.dev') ? 'https://admin.land-xi.dev' : BASE);
-const ONLY = new Set(arg('--only', 'login,dash,projects,project,step,data,inbox,menu,admin').split(','));
+const ONLY = new Set(arg('--only', 'login,dash,projects,project,step,train,review,ops,data,inbox,menu,admin').split(','));
 const IMG = path.join(HERE, 'img'); fs.mkdirSync(IMG, { recursive: true });
 const scanSrc = `(() => { const RULES = [${RULES.map(([k, re]) => `[${JSON.stringify(k)}, ${re}]`).join(',')}]; const check = (s) => RULES.filter(([, re]) => re.test(s)).map(([k]) => k); return (${scan.toString()})(document); })()`;
 const out = (o) => console.log(JSON.stringify(o));
@@ -53,19 +53,33 @@ async function staff(m) {
   await frontDoor(page, BASE, 'test@lx.or.kr', 'app');
   await page.waitForURL((u) => u.pathname.startsWith('/landxi/v3/lx-console/'), { timeout: 30000 });
   await page.waitForTimeout(5000);
-  if (ONLY.has('dash')) await shot(page, 'dash', m);
+  if (ONLY.has('dash')) {
+    await page.waitForFunction(() => { const im = [...document.querySelectorAll('.ld-th img')]; return im.length && im.every((i) => i.complete && i.naturalWidth); }, null, { timeout: 20000 }).catch(() => {});
+    await shot(page, 'dash', m);
+  }
   if (ONLY.has('menu') && m) {
     const more = page.locator('.k-rail-more');
     if (await more.count()) { await more.click(); await page.waitForTimeout(800); await shot(page, 'menu', m); await page.keyboard.press('Escape'); await page.waitForTimeout(400); }
   }
   const prHref = await page.locator('a.lc-pr').first().getAttribute('href').catch(() => null);
-  if (ONLY.has('projects')) { await page.goto(BASE + '/landxi/v3/lx-project/'); await page.waitForTimeout(3500); await shot(page, 'projects', m); }
+  if (ONLY.has('projects')) { await page.goto(BASE + '/landxi/v3/lx-project/'); await page.locator('.lxp-list .k-table, .lxp-list .k-empty:not(.is-wait)').first().waitFor({ timeout: 30000 }).catch(() => {}); await page.waitForTimeout(1500); await shot(page, 'projects', m); }
   if (ONLY.has('project') && prHref) {
     const id = new URL(prHref, BASE).searchParams.get('project');
     if (id) { await page.goto(BASE + '/landxi/v3/lx-project/?project=' + encodeURIComponent(id)); await page.waitForTimeout(4000); await shot(page, 'project', m); }
   }
-  if (ONLY.has('step') && prHref) { await page.goto(new URL(prHref, BASE).href); await page.waitForTimeout(7000); await shot(page, 'step', m); }
-  if (ONLY.has('data')) { await page.goto(BASE + '/landxi/v3/lx-ingest/'); await page.waitForTimeout(5000); await shot(page, 'data', m); }
+  if (ONLY.has('step') && prHref) { await page.goto(new URL(prHref, BASE).href); await page.locator('.dp-ops .k-table, .dp-ops .k-empty').first().waitFor({ timeout: 30000 }).catch(() => {}); await page.waitForTimeout(2500); await shot(page, 'step', m); }
+  /* 프로젝트 안 학습(③) · 결과 확인(④) — 단계 막대의 주소 그대로 */
+  if ((ONLY.has('train') || ONLY.has('review')) && prHref) {
+    const id = new URL(prHref, BASE).searchParams.get('project');
+    await page.goto(BASE + '/landxi/v3/lx-project/?project=' + encodeURIComponent(id));
+    await page.locator('.k-sub .lxp-st').first().waitFor({ timeout: 20000 });
+    const st = await page.locator('.k-sub .lxp-st').evaluateAll((as) => as.map((a) => a.href));
+    if (ONLY.has('train')) { await page.goto(st[2]); await page.waitForTimeout(6000); await shot(page, 'train', m); }
+    if (ONLY.has('review')) { await page.goto(st[3]); await page.waitForTimeout(7000); await shot(page, 'review', m); }
+  }
+  /* 프로젝트 밖 서비스 관리(메뉴 '서비스 카드' 자리) — 전체 배포본 · 지도 이름표 */
+  if (ONLY.has('ops')) { await page.goto(BASE + '/landxi/v3/lx-deploy/?tab=ops'); await page.locator('.dp-ops .k-table').first().waitFor({ timeout: 40000 }).catch(() => {}); await page.waitForTimeout(3000); await shot(page, 'ops', m); }
+  if (ONLY.has('data')) { await page.goto(BASE + '/landxi/v3/lx-ingest/'); await page.waitForTimeout(9000); await shot(page, 'data', m); }
   if (ONLY.has('inbox')) { await page.goto(BASE + '/landxi/v3/lx-inbox/'); await page.waitForTimeout(3500); await shot(page, 'inbox', m); }
   out({ who: 'staff', mobile: m, errors: errs });
   await ctx.close();
@@ -101,6 +115,7 @@ async function admin(m) {
 }
 
 if (ONLY.has('login')) await login(false);
-for (const m of [false, true]) await staff(m);
+const VIEWS = arg('--views', 'both');   // pc | mobile | both — 바깥 주소 로그인은 10분 20번까지라 나눠 찍을 수 있게
+for (const m of [false, true]) if (VIEWS === 'both' || (VIEWS === 'mobile') === m) await staff(m);
 if (ONLY.has('admin')) await admin(false);
 await browser.close();
