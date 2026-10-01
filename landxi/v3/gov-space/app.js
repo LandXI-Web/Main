@@ -40,7 +40,7 @@ const num = (e) => { const v = val(e); return v === null || v === undefined ? ''
 /** ' · ' 앞에서 줄이 바뀌어 줄 머리에 가운뎃점이 오지 않게(법전 §2-1) */
 const keep = (s) => String(s || '').replace(/ · /g, ' · ').replace(/ → /g, ' → ');
 /** 바뀐 점처럼 ' · ' 로 이은 글 — 한 마디씩 묶어 마디 가운데서 줄이 바뀌지 않게(마디가 줄보다 길 때만 그 안에서) */
-const segs = (s) => { const parts = String(s || '').split(' · ').filter(Boolean); const out = h('span.sp-segs'); parts.forEach((x, i) => { out.append(h('span.sp-seg', { text: x.replace(/ → /g, ' → ') })); if (i < parts.length - 1) out.append(' · '); }); return out; };
+const segs = (s) => { const parts = String(s || '').split(' · ').filter(Boolean); const out = h('span.sp-segs'); parts.forEach((x, i) => { const last = i === parts.length - 1; out.append(h('span.sp-seg', { text: x.replace(/ → /g, ' → ') + (last ? '' : ' ·') })); if (!last) out.append(' '); }); return out; };   // 가운뎃점은 앞 마디 끝에 붙여 줄 머리에 오지 않게
 const dl = (rows) => h('dl.sp-dl', {}, ...rows.filter((r) => r && r[1]).map(([k, v]) => h('div', {}, h('dt', { text: k }), h('dd', {}, v instanceof Node ? v : keep(v)))));
 
 /* ── 머리 ───────────────────────── */
@@ -140,7 +140,10 @@ function what(b) {
   const wrap = h('div');
   if (val(tot) !== null && val(tot) !== undefined) wrap.append(h('p.sp-big', {}, h('span.num', { text: nf(val(tot)) }), h('small', { text: (tot.unit && tot.unit !== 'count' ? tot.unit : '건') })),
     h('p.sp-note', { text: '우리 기관 관할 안 결과' }));
-  else wrap.append(h('p.sp-none', { text: '결과가 나오면 종류와 개수가 붙습니다' }));
+  else {   // 첫 결과 전 · 업무 결과가 아닌 결과(분석 칸마다 나눈 도형 조각 — 개수를 싣지 않는다 · 사용자 규칙 2)
+    const [n1, n2] = String(b.what?.note || '결과가 나오면 종류와 개수가 붙습니다').split(' — ');
+    wrap.append(h('p.sp-none', { text: n1 }), n2 ? h('p.sp-note', { text: n2 }) : null);
+  }
   if (cls.length) {
     wrap.append(h('ul.sp-chips', {}, ...cls.map((c) => h('li', {}, h('span', { text: c.name }), val(c.n) !== null && val(c.n) !== undefined ? h('b.num', { text: num(c.n) }) : null))));
   }

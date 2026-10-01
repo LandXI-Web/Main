@@ -375,6 +375,19 @@ async def _stats(tenant: str, sets: list[str]) -> dict:
 
 
 SRC_DET = "1차 서비스 결과(이 기관 관할 안 · 지운 결과 제외)"
+FRAG_NOTE = "분석 칸마다 나눈 결과라 개수를 싣지 않습니다 — 필지 · 물체 단위로 다듬은 결과에만 붙습니다"
+
+
+def biz_sets(sets: list[str]) -> bool:
+    """결과 세트가 업무 결과(손으로 다듬은 필지 · 물체 단위)인가 — 서비스 카드의 '업무 결과만' 판정(cards._raw_ai: 작업 결과 세트 job_… =
+    분석 칸마다 잘린 도형 조각)과 같은 기준에, 셈 단위가 도형 조각인 세트(sets.yaml count_unit polygons)와 결과 목록에 없는 세트를 더 뺀다
+    (모르면 업무 결과로 보지 않는다). 업무 결과가 아니면 설명서 · 바뀐 점 · 요약 어디에도 개수를 싣지 않는다(사용자 규칙 2 — 폴리곤 수 노출 금지)."""
+    if not sets:
+        return False
+    from .cards import _raw_ai
+    if _raw_ai({"_sets": set(sets)}):
+        return False
+    return all((_layer(s) or {}).get("count_unit") not in (None, "polygons") for s in sets)
 
 
 async def build_body(tenant: str, card: str, rows: list[dict]) -> dict:
@@ -393,9 +406,12 @@ async def build_body(tenant: str, card: str, rows: list[dict]) -> dict:
     st = await _stats(tenant, sets)
     n = st["n"]
     unit = summary._unit_of(sets[0]) if sets else "건"     # 결과 셈 단위(필지 · 동 · 건) — 대표 수치 요약과 같은 표(sets.yaml count_unit)
+    biz = biz_sets(sets)                                    # 업무 결과일 때만 개수(도형 조각 수는 어디에도 싣지 않는다)
+    kind = "biz" if biz else ("fragments" if sets else "none")
     # 무엇이
     classes = [{"name": class_ko(x["cls"], x["cls_en"]), "code": x["cls_en"] or x["cls"],
-                "n": _cnt(int(x["n"]), SRC_DET, unit), "area": env(round(float(x["a"] or 0), 1), "m2", "measured", SRC_DET)} for x in st["classes"]]
+                **({"n": _cnt(int(x["n"]), SRC_DET, unit), "area": env(round(float(x["a"] or 0), 1), "m2", "measured", SRC_DET)} if biz else {})}
+               for x in st["classes"]]
     if not classes and mcls:
         seen = []
         for x in mcls:
@@ -411,7 +427,7 @@ async def build_body(tenant: str, card: str, rows: list[dict]) -> dict:
             places.append(r["name"])
     shape_word = {"MULTIPOLYGON": "구역(테두리가 있는 모양)", "POLYGON": "구역(테두리가 있는 모양)", "POINT": "점", "MULTIPOINT": "점",
                   "LINESTRING": "선", "MULTILINESTRING": "선"}.get(str(st["shape"] or "").upper())
-    where = {"shape": shape_word, "places": places, "outside_emd": _cnt(st["no_code"] if n else None, SRC_DET, note="바다 등 읍면동 밖"),
+    where = {"shape": shape_word, "places": places, "outside_emd": _cnt(st["no_code"] if (n and biz) else None, SRC_DET, note="바다 등 읍면동 밖"),
              "emd": "모든 결과에 읍면동 이름" if n and st["with_emd"] == n else ("일부 결과에 읍면동 이름" if st["with_emd"] else None),
              "parcel": "필지 번호가 붙음" if st["with_pnu"] else ("필지와 이어 봄" if st["parcels"] else None),
              "crs": "경위도(GPS와 같은 좌표)"}
@@ -437,13 +453,14 @@ async def build_body(tenant: str, card: str, rows: list[dict]) -> dict:
     # 믿을 만한 정도
     tr = trust_of(st["median"]) if n else {"level": None, "line": "결과가 나오면 붙습니다"}
     trust = {**tr, "median": env(round(st["median"], 3) if st["median"] is not None else None, "ratio", "measured", "AI 점수 가운데값(관할 안 결과)"),
-             "no_score": _cnt(st["no_score"] if n else None, SRC_DET, note="AI 점수가 없는 결과"),
-             "checks": {CHECK_WORD.get(k, k): _cnt(v, "결과 확인 기록(관할 안)") for k, v in sorted(st["checks"].items())},
+             "no_score": _cnt(st["no_score"] if (n and biz) else None, SRC_DET, note="AI 점수가 없는 결과"),
+             "checks": {CHECK_WORD.get(k, k): _cnt(v, "결과 확인 기록(관할 안)") for k, v in sorted(st["checks"].items())} if biz else {},
              "note": "AI 점수는 확률이 아닙니다 — 회차 · 영상 종류마다 다릅니다"}
     # 버전
     version = {"service": [v["version"] for v in vers if v.get("version")]}
     return {"service": {"name": name, "line": (crow["line"] if crow else None) or (crow["domain"] if crow else None)},
-            "what": {"classes": classes, "total": _cnt(n if (n or sets) else None, SRC_DET, unit, note=None if (n or sets) else "첫 결과 전")},
+            "what": {"classes": classes, "kind": kind, "note": FRAG_NOTE if kind == "fragments" else None,
+                     "total": _cnt(n if biz else None, SRC_DET, unit, note=None if biz else (FRAG_NOTE if sets else "첫 결과 전"))},
             "where": where, "when": when, "format": fmt, "trust": trust, "version": version, "sets": sets,
             "made": now_iso()}
 
@@ -455,9 +472,12 @@ def change_line(prev: dict | None, cur: dict) -> str:
     u = (cur.get("what", {}).get("total") or {}).get("unit") or "건"
     rnd = (cur.get("when", {}).get("rounds") or [])
     shot = " · ".join(sorted({r["shot"] for r in rnd if r.get("shot")}))
+    kind = cur.get("what", {}).get("kind") or ("biz" if tot is not None else "none")
     if not prev:
-        if tot:
+        if tot is not None:
             return f"처음 공개 — {shot + ' · ' if shot else ''}결과 {tot:,}{u}"
+        if kind == "fragments" or rnd:                     # 결과는 있으나 업무 결과가 아님(분석 칸 도형 조각) — 개수 없이 회차만
+            return f"처음 공개 — {shot}" if shot else "처음 공개"
         return "처음 공개 — 첫 결과 전"
     parts = []
     pv = prev.get("version", {}).get("service") or []
@@ -472,8 +492,14 @@ def change_line(prev: dict | None, cur: dict) -> str:
         parts.append(f"새 회차 {shot}{' · ' + an.replace('-', '.') + ' 분석' if an else ''}".strip())
     ptot = (prev.get("what", {}).get("total") or {}).get("value")
     pu = (prev.get("what", {}).get("total") or {}).get("unit") or "건"
-    if ptot != tot and tot is not None:
-        parts.append(f"결과 {ptot or 0:,}{pu} → {tot:,}{u}")
+    pkind = prev.get("what", {}).get("kind") or ("biz" if ptot is not None else "none")
+    if tot is not None:                                    # 개수는 업무 결과(필지 · 동 · 다듬은 결과 건수)끼리만 견준다 — 도형 조각 수는 싣지 않는다
+        if pkind == "fragments":
+            parts.append(f"결과 단위가 {u}{'로' if u == '필지' else '으로'} 바뀜 · {tot:,}{u}" if u in ("필지", "동") else f"결과 {tot:,}{u}")
+        elif ptot is None:
+            parts.append(f"결과 {tot:,}{u}")
+        elif ptot != tot or pu != u:
+            parts.append(f"결과 {ptot:,}{pu} → {tot:,}{u}")
     pk = len(prev.get("what", {}).get("classes") or [])
     ck = len(cur.get("what", {}).get("classes") or [])
     if pk != ck and ck:
@@ -895,8 +921,9 @@ def _summary_doc(org: str, svc: dict, g: dict, parcels: int | None) -> dict:
     tr = b.get("trust") or {}
     return {"기관": org, "서비스": svc["name"], "결과 설명서": f"{g['edition']}판", "회차": b.get("when", {}).get("rounds") or [],
             "서비스 버전": b.get("version", {}).get("service") or [], "만든 때": now_iso(),
-            "결과": {"값": (b.get("what", {}).get("total") or {}).get("value"), "단위": "건", "뜻": "이 기관 관할 안 결과(지운 결과 제외)"},
-            "종류별": [{"종류": x["name"], "코드": x.get("code"), "개수": (x.get("n") or {}).get("value"), "넓이_㎡": (x.get("area") or {}).get("value")}
+            "결과": {"값": (b.get("what", {}).get("total") or {}).get("value"), "단위": (b.get("what", {}).get("total") or {}).get("unit") or "건",
+                   "뜻": "이 기관 관할 안 결과(지운 결과 제외)" if b.get("what", {}).get("kind") == "biz" else (b.get("what", {}).get("note") or "첫 결과 전")},
+            "종류별": [{"종류": x["name"], "코드": x.get("code"), **({"개수": x["n"].get("value"), "넓이_㎡": (x.get("area") or {}).get("value")} if x.get("n") else {})}
                      for x in b.get("what", {}).get("classes") or []],
             "시군구": b.get("where", {}).get("places") or [],
             "필지": {"값": parcels, "단위": "필지"} if parcels else None,

@@ -76,6 +76,10 @@ def test_every_received_service_has_guide(tok, key):
         assert "sets" not in g["body"]                            # 내부 결과 세트 이름은 내지 않는다
         assert len(g["body"]["format"]["files"]) == 3             # GeoJSON · 필지 엑셀 · 요약(8차 API-형식 ⓐ)
         assert "API" not in json.dumps(g, ensure_ascii=False)
+        w = g["body"]["what"]
+        if w["kind"] != "biz":                                    # 업무 결과가 아니면 개수 0(분석 칸 도형 조각 수 노출 금지 · 사용자 규칙 2)
+            assert w["total"]["value"] is None and not any("n" in c for c in w["classes"])
+            assert not g["body"]["trust"]["checks"] and g["body"]["where"]["outside_emd"]["value"] is None
 
 
 def test_guide_numbers_match_summary(tok):
@@ -131,7 +135,14 @@ def test_new_round_makes_new_edition_and_notice(live):
 
         first, second, third, cur = asyncio.run(run())
         assert [r[0] for r in first] == [1, 2] and all(r[1] for r in first)        # 직전 회차(2.0) + 지금 회차(2.1) — 지난 공개분
-        assert first[0][2].startswith("처음 공개")
+        # 직전 회차 = 분석 칸마다 잘린 도형 조각(셈 단위 polygons) — 개수를 어디에도 싣지 않는다(카드의 '업무 결과만'과 같은 기준)
+        assert first[0][2] == "처음 공개 — 2023년 항공영상"
+        b1 = _sql("SELECT body FROM space_guides WHERE tenant_id=%s AND card_id=%s AND edition=1", (t, card))[0]
+        assert b1["what"]["kind"] == "fragments" and b1["what"]["total"]["value"] is None
+        assert not any("n" in c or "area" in c for c in b1["what"]["classes"]) and not b1["trust"]["checks"]
+        assert "결과 단위가 필지로 바뀜 · 2,098필지" in first[1][2] and "129,420" not in first[1][2]
+        import re as _re
+        assert not _re.search(r"\d{2,3},\d{3}건", first[1][2])                    # 조각 수(예: 129,420건)가 바뀐 점에 없다
         assert len(second) == 3 and second[2][1] is False                          # 새 회차 = 3판 · 새 알림
         assert "서비스 버전" in second[2][2] and "→" in second[2][2]
         notes = _sql("SELECT line, backfill FROM space_log WHERE tenant_id=%s AND card_id=%s AND kind='guide' ORDER BY id", (t, card), many=True)

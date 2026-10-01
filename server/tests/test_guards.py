@@ -22,9 +22,21 @@ def test_guest_cannot_escalate_build(live):
 
 
 def test_tenant_catalog_no_raw_or_cog(live, tok):
-    j = httpx.get(B + "/catalog/layers", headers=H(tok["namwon"]), timeout=60).json()
-    assert j["build"] == "tenant"
-    assert not [i for i in j["items"] if i["tier"] == "raw" or i["source"] == "cog"]
+    """기관 영상 층 — 원본 · 동적 타일은 LX 관리자가 그 기관에 공유한 영상만(구현 확인 2차 J-16 완료 · 10-01 결정 '공유하면 그 기관 지도에도 보임' ·
+    원칙 94). 공유 안 된 영상 · 다른 기관 공유분 · LX 전용 세트는 0, 공유분도 서명 주소로만(원본 경로 · 바로 열리는 주소 없음)."""
+    shared = {}
+    for t in ("namwon", "gwangju-jeonnam"):
+        s = httpx.get(B + f"/tenants/{t}/imagery-shares", headers=H(tok["admin"]), timeout=60).json()
+        shared[t] = {x["id"] for x in s["items"] if x["shared"]}
+    for key, t in (("namwon", "namwon"), ("gj", "gwangju-jeonnam")):
+        j = httpx.get(B + "/catalog/layers", headers=H(tok[key]), timeout=60).json()
+        assert j["build"] == "tenant"
+        raw = [i for i in j["items"] if i["tier"] == "raw" or i["source"] == "cog"]
+        assert all(i["id"] in shared[t] for i in raw), [i["id"] for i in raw if i["id"] not in shared[t]]   # 공유한 영상만
+        assert all(i["signed"] and not i.get("url") and not i.get("path") and i["set"] == f"cog/{i['id']}" for i in raw)
+        others = set().union(*(v for k, v in shared.items() if k != t)) - shared[t]
+        assert not [i for i in j["items"] if i["role"] == "imagery" and i["id"] in others]   # 다른 기관에만 공유한 영상 0(참조 층은 공유 대상 아님)
+        assert not [i for i in j["items"] if i["set"] in ("imagery/axis_iksan_hwangdeung", "results/lx/axis-hwangdeung-gt")]   # LX 전용 세트 0
 
 
 def test_tenant_raw_routes_403(live, tok):

@@ -13,7 +13,7 @@ const val = (e) => (e && typeof e === 'object' && 'value' in e ? e.value : e);
 const md = (s) => { const m = /^\d{4}-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/.exec(String(s || '')); return m ? `${Number(m[1])}.${Number(m[2])}${m[3] ? ` ${m[3]}:${m[4]}` : ''}` : '—'; };
 const keep = (s) => String(s || '').replace(/ · /g, ' · ').replace(/ → /g, ' → ');
 /** ' · ' 로 이은 글 — 마디째 줄바꿈(마디 가운데서 끊지 않는다 · 법전 §2-1) */
-const segs = (t) => String(t || '').split(' · ').filter(Boolean).map((x) => `<span class="sp-seg">${esc(x.replace(/ → /g, ' → '))}</span>`).join(' · ');
+const segs = (t) => { const ps = String(t || '').split(' · ').filter(Boolean); return ps.map((x, i) => `<span class="sp-seg">${esc(x.replace(/ → /g, ' → ') + (i < ps.length - 1 ? ' ·' : ''))}</span>`).join(' '); };   // 가운뎃점은 앞 마디 끝에
 /** 저장 — 사용 현황 탭과 같은 표기(1 GB 아래면 MB) */
 function gb(e) {
   const x = val(e);

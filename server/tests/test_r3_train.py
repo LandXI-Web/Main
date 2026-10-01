@@ -258,7 +258,9 @@ def test_screen_name_rules_one_source():
     con = (v3 / "lx-console/data.js").read_text(encoding="utf-8")
     rule = "(행정서비스|서비스)$/"
     assert rule in ops and rule in dep and rule in con
-    assert "model: '모델 등록'" in ops and "['rule', 'quota', 'model', 'card'].includes(r.kind)" in ops      # impl-1: 서비스 공개(card)도 결재함에
+    assert "model: '모델 등록'" in ops and "request: '분석 의뢰'" in ops
+    # impl-1: 서비스 공개(card) · impl-2: 기관 영상 분석 의뢰(request — 6차 GF-2 · LX 관리자 승인/반려)도 결재함에
+    assert "['rule', 'quota', 'model', 'card', 'request'].includes(r.kind)" in ops
     assert "whoWhere(d)" in ops                                           # '남원시 남원시' 두 번 금지
     login = (v3 / "login/auth.js").read_text(encoding="utf-8")
     assert "const path = v.split(/[?#]/)[0];" in login

@@ -1,7 +1,7 @@
 """구현 2차 T5 계정 — 가입 신청 → 승인 → 로그인 · 반려 사유 · 아이디 찾기(가림 · 시도 제한) · 재설정 → 임시 비밀번호 → 바꾸기 강제 ·
 기관 관리자는 자기 기관만 · LX 관리자는 전부 · 잠금 · 바깥 주소 로그인 시도 제한. 실서버(:8700).
 
-확인 대장: FR-4(계정 — 확인) · D4-ⓑ(가입 신청 + 승인 — 확인) · 원칙 72 · 77.
+확인 대장: FR-4(계정 — 확인) · D4-ⓑ(가입 신청 + 승인 — 확인) · 원칙 72 · 77 · 구현 확인 2차 Q-2 ⓐ(LX 직원 가입 신청은 @lx.or.kr 메일만 · 기관 신청은 제한 없음).
 메일 계정(lxadmin@lx.or.kr · 각 기관 lxadmin@lx.or.kr)은 관리자 역할로만 쓰고 바꾸지 않는다. 옛 아이디는 사용 중지(로그인 0 · 바꾸기 0).
 LX 관리자는 기관 가입 신청을 보기만 한다(승인 · 반려 0 — 원칙 72 · 서버 403 tenant_signup). 시험 계정은 시험 안에서 만들고(비밀번호도 시험 안에서 새로) 끝에서 지운다.
 '바깥 주소' 요청은 공개 관문처럼 x-forwarded-for 를 붙여 흉내 낸다(시험마다 다른 주소 — 시도 제한이 서로 섞이지 않게).
@@ -15,7 +15,8 @@ import pytest
 from conftest import ADMIN_ID, B, H, STAFF_ID, TENANT_ID
 from landxi_api import config
 
-MAILDOM = "example.com"
+MAILDOM = "lx.or.kr"          # LX 직원 가입 신청은 @lx.or.kr 만(Q-2 ⓐ) — 시험 메일도 그 주소(앞머리 pytest- 로 구분 · 끝에서 지운다)
+OTHERDOM = "example.com"      # 다른 메일 — LX 신청은 거절 · 기관 신청은 받는다
 
 
 def pg():
@@ -67,17 +68,17 @@ def pending_id(token, login, kind="signup"):
 def cleanup(live):
     yield
     c = pg()
-    like = f"pytest-%@{MAILDOM}"
-    ids = [r[0] for r in c.execute("SELECT id FROM lx_users WHERE login LIKE %s UNION ALL SELECT id FROM tenant_users WHERE login LIKE %s", (like, like)).fetchall()]
-    if ids:
-        c.execute("DELETE FROM sessions WHERE user_id = ANY(%s)", (ids,))
-        c.execute("DELETE FROM audit_log WHERE action='login' AND actor = ANY(%s)", (ids,))
-    c.execute("DELETE FROM lx_users WHERE login LIKE %s", (like,))
-    c.execute("DELETE FROM tenant_users WHERE login LIKE %s", (like,))
-    c.execute("DELETE FROM signup_requests WHERE login LIKE %s", (like,))
-    c.execute("DELETE FROM reset_requests WHERE login LIKE %s", (like,))
-    c.execute("DELETE FROM audit_log WHERE action LIKE 'account.%%' AND subject LIKE %s", (like,))
-    c.execute("DELETE FROM login_failures WHERE login ILIKE %s", (like,))
+    for like in (f"pytest-%@{MAILDOM}", f"pytest-%@{OTHERDOM}"):
+        ids = [r[0] for r in c.execute("SELECT id FROM lx_users WHERE login LIKE %s UNION ALL SELECT id FROM tenant_users WHERE login LIKE %s", (like, like)).fetchall()]
+        if ids:
+            c.execute("DELETE FROM sessions WHERE user_id = ANY(%s)", (ids,))
+            c.execute("DELETE FROM audit_log WHERE action='login' AND actor = ANY(%s)", (ids,))
+        c.execute("DELETE FROM lx_users WHERE login LIKE %s", (like,))
+        c.execute("DELETE FROM tenant_users WHERE login LIKE %s", (like,))
+        c.execute("DELETE FROM signup_requests WHERE login LIKE %s", (like,))
+        c.execute("DELETE FROM reset_requests WHERE login LIKE %s", (like,))
+        c.execute("DELETE FROM audit_log WHERE action LIKE 'account.%%' AND subject LIKE %s", (like,))
+        c.execute("DELETE FROM login_failures WHERE login ILIKE %s", (like,))
     c.close()
 
 
@@ -110,6 +111,18 @@ def test_signup_approve_then_login(live, tok):
     c.close()
     again = signup(m, pw)
     assert again.status_code == 409                                            # 이미 가입한 메일
+
+
+def test_lx_signup_needs_lx_mail(live, tok):
+    """구현 확인 2차 Q-2 ⓐ — LX 직원 가입 신청은 @lx.or.kr 메일만(신청 창 · 서버 둘 다). 기관 신청은 메일 끝을 막지 않는다(기관 관리자가 승인으로 거름)."""
+    pw = newpw()
+    other = f"pytest-o{secrets.token_hex(4)}@{OTHERDOM}"
+    r = signup(other, pw)
+    assert r.status_code == 400 and r.json()["error"]["detail"]["field"] == "login" and "@lx.or.kr" in r.json()["error"]["message"], r.text
+    assert pending_id(tok["admin"], other) is None                             # 거절된 신청은 남지 않는다
+    assert signup(mail("ok"), pw).status_code == 201                          # 같은 내용 · @lx.or.kr 은 받는다
+    g = signup(f"pytest-g{secrets.token_hex(4)}@{OTHERDOM}", pw, tenant="namwon")
+    assert g.status_code == 201 and g.json()["state"] == "pending", g.text   # 기관 신청은 다른 메일도 받는다
 
 
 def test_signup_validation_and_admin_site(live):
@@ -201,16 +214,17 @@ def test_reset_temp_password_forces_change(live, tok):
     assert t.status_code == 200
     j = t.json()
     assert j["must_change"] is True and "token" not in j and j["change_token"].startswith("lxc_")   # 세션 없음 — 바꾸기만
-    weak = post("/auth/password/change", {"change_token": j["change_token"], "password": "abc"})
+    who = ip()                                                                 # 바꾸기 시도 제한(접속 주소마다)이 다른 시험과 섞이지 않게
+    weak = post("/auth/password/change", {"change_token": j["change_token"], "password": "abc"}, xff=who)
     assert weak.status_code == 400
-    same = post("/auth/password/change", {"change_token": j["change_token"], "password": tp})
+    same = post("/auth/password/change", {"change_token": j["change_token"], "password": tp}, xff=who)
     assert same.status_code == 400                                             # 임시 비밀번호 그대로는 안 된다
     pw2 = newpw()
-    ch = post("/auth/password/change", {"change_token": j["change_token"], "password": pw2, "password2": pw2})
+    ch = post("/auth/password/change", {"change_token": j["change_token"], "password": pw2, "password2": pw2}, xff=who)
     assert ch.status_code == 200, ch.text
     s = ch.json()
     assert s["token"].startswith("lxs_") and get("/me", s["token"]).status_code == 200
-    assert post("/auth/password/change", {"change_token": j["change_token"], "password": newpw()}).status_code == 401   # 바꾸기 표는 한 번
+    assert post("/auth/password/change", {"change_token": j["change_token"], "password": newpw()}, xff=who).status_code == 401   # 바꾸기 표는 한 번
     assert login(m, tp).status_code == 401 and login(m, pw2).status_code == 200
     log = get("/accounts/log", tok["admin"]).json()["items"]
     mine = [x for x in log if x["subject"] == m]
