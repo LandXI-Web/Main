@@ -88,6 +88,30 @@ def _metric(item: dict | None, key: str) -> dict | None:
     return m
 
 
+def _raw_ai(it: dict) -> bool:
+    """AI 탐지 수가 분석 칸 도형 수인가 — 작업 결과 세트(job_…)의 행은 칸마다 잘린 도형이다(모델의 모든 분류 · 칸 경계 조각 포함).
+    예) 남원 비닐하우스 132,310 = 경작지 · 건물 · 비닐하우스 · 주차장 도형 조각 수(칸 8,016 · 경계 조각 11,486). 업무 결과가 아니므로
+    큰 숫자 자리에 쓰지 않는다(사용자 규칙 2). 손으로 다듬은 결과 세트(필지 · 물체 단위)만 업무 결과로 센다. 모르면 업무 결과로 보지 않는다."""
+    sets = it.get("_sets")
+    if sets is None:
+        return True
+    return any(str(x).startswith("job_") for x in sets)
+
+
+def _biz(it: dict, inf: dict) -> tuple | None:
+    """그 항목의 업무 결과 한 가지 — (봉투, 말, 키). 현장 확인 필요(필지 대조) → 다듬은 결과 세트의 AI 탐지 수 → 없음."""
+    fc = _metric(it, "field_check")
+    if fc and (_vnum(fc["value"]) or 0) > 0:
+        return fc, "현장 확인 필요 필지", "field_check"
+    det = _metric(it, "detected")
+    if det and (_vnum(det["value"]) or 0) > 0 and not _raw_ai(it):
+        unit = det.get("unit") or "건"
+        # 결과 말(예: 비닐하우스 동)은 셈 단위가 필지 · 동으로 확인된 결과 세트(sets.yaml count_unit)에만 — 그 밖은 'AI 탐지 n건'(다른 화면과 같은 이름)
+        rw = inf.get("result_word") if unit in ("필지", "동") and (not inf.get("result_sgg") or str(it.get("sgg_cd") or "") == inf["result_sgg"]) else None
+        return det, rw or f"AI 탐지 {unit}", "detected"
+    return None
+
+
 def _vnum(v) -> float | None:
     try:
         return float(v)
@@ -146,8 +170,9 @@ async def _load(conn) -> dict:
     lead = await conn.fetch("SELECT l.ref, p.id, p.name, p.lead_id, u.name AS lead FROM project_links l JOIN projects p ON p.id=l.project_id "
                             "LEFT JOIN lx_users u ON u.id=p.lead_id WHERE l.kind='card' ORDER BY l.at")
     rules = {r["id"]: r["name"] for r in await conn.fetch("SELECT id, name FROM survey_rules")}
+    live = await conn.fetch("SELECT card_id, sgg_cd, region_profile, tenant_id FROM deploys WHERE stage IN ('ga','canary','shadow') AND NOT coalesce(test,false)")
     owner_names = {r["id"]: r["name"] for r in await conn.fetch("SELECT id, name FROM lx_users")}
-    return {"cards": cards, "info": info, "vers": vers, "models": models, "appr": appr, "jobs": jobs, "lead": lead, "rules": rules,
+    return {"cards": cards, "info": info, "vers": vers, "models": models, "appr": appr, "jobs": jobs, "lead": lead, "rules": rules, "live": live,
             "owner_names": owner_names, "learned": _learned, "gsd_word": gsd_word}
 
 
@@ -179,23 +204,26 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
     parts = [f"운영 {n['ga']}" if n["ga"] else "", f"시범 {n['pilot']}" if n["pilot"] else ""]
     uses_text = " · ".join(x for x in parts if x) or (f"첫 결과 전 {n['none']}" if n["none"] else "아직 없음")
 
-    # ⑥ 결과 예시 — LX 가 고른 지역 → 운영 먼저 · 현장 확인 필요 먼저 · 요약 순서
-    ranked = sorted(items, key=lambda it: (RANK[STAGE_KEY.get(it["stage"], "none")], 0 if (_vnum((_metric(it, "field_check") or {}).get("value")) or 0) > 0 else 1))
-    pick = None
-    if inf.get("result_sgg"):
-        pick = next((it for it in items if str(it.get("sgg_cd") or "") == inf["result_sgg"]), None)
-    pick = pick or next((it for it in ranked if (_vnum((_metric(it, "field_check") or {}).get("value")) or 0) > 0), None) \
-        or next((it for it in ranked if (_vnum((_metric(it, "detected") or {}).get("value")) or 0) > 0), None)
+    # ⑥ 결과 예시 = 업무 결과만(현장 확인 필요 · 다듬은 결과 세트의 AI 탐지 수) — LX 가 고른 지역 → 운영 먼저 · 현장 확인 필요 먼저
+    cands = [(it, b) for it, b in ((it, _biz(it, inf)) for it in items) if b]
+    pick = next(((it, b) for it, b in cands if inf.get("result_sgg") and str(it.get("sgg_cd") or "") == inf["result_sgg"]), None)
+    if not pick and cands:
+        pick = sorted(cands, key=lambda x: (RANK[STAGE_KEY.get(x[0]["stage"], "none")], 0 if x[1][2] == "field_check" else 1))[0]
     example = None
     if pick:
-        fc, det = _metric(pick, "field_check"), _metric(pick, "detected")
-        # 결과 말(예: 비닐하우스 동)은 LX 가 정한 지역의 값에만 — 다른 지역의 AI 탐지 수에 그 말을 붙이지 않는다(셈 단위가 같다고 확인한 곳만)
-        rw = inf.get("result_word") if (not inf.get("result_sgg") or str(pick.get("sgg_cd") or "") == inf["result_sgg"]) else None
-        use, word = (fc, "현장 확인 필요 필지") if fc and (_vnum(fc["value"]) or 0) > 0 else (det, rw or f"AI 탐지 {det['unit'] if det else '건'}")
-        if use:
-            example = {"value": use["value"], "unit": use.get("unit") or "", "basis": use.get("basis") or "estimate", "as_of": str(use.get("as_of") or "")[:10],
-                       "source": use.get("source") or "", "label": use.get("label") or "", "word": word,
-                       "region": _short(pick.get("region_name"), pick.get("sgg_cd")), "sgg": pick.get("sgg_cd")}
+        it, (use, word, _k) = pick
+        example = {"value": use["value"], "unit": use.get("unit") or "", "basis": use.get("basis") or "estimate", "as_of": str(use.get("as_of") or "")[:10],
+                   "source": use.get("source") or "", "label": use.get("label") or "", "word": word,
+                   "region": _short(it.get("region_name"), it.get("sgg_cd")), "sgg": it.get("sgg_cd")}
+
+    # 업무 결과 숫자가 없을 때의 '어디' — 결과가 있는 지역(운영 먼저 · 대시보드 '우리 서비스'와 같은 'n 외 n곳' 말)
+    rnames = []
+    for it in sorted(items, key=lambda it: RANK[STAGE_KEY.get(it["stage"], "none")]):
+        if _metric(it, "detected") or _metric(it, "field_check"):
+            nm = _short(it.get("region_name"), it.get("sgg_cd"))
+            if nm and nm not in rnames:
+                rnames.append(nm)
+    where_any = (rnames[0] + (f" 외 {len(rnames) - 1}곳" if len(rnames) > 1 else "")) if rnames else None
 
     # 결과가 있는 시군구(장면이 '다른 지역 결과'인지 가른다)
     result_sggs = {str(it.get("sgg_cd")) for it in items if it.get("sgg_cd") and (_metric(it, "detected") or _metric(it, "field_check"))}
@@ -263,19 +291,24 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
     publish = {"pending": pending,
                "label": "공개 결재 중" if pending else "공개 반려" if (last and last["state"] == "rejected" and not any_ok)
                else "공개됨" if any_ok else "공개 전"}
-    reports = sum(int(_vnum((_metric(it, "reports") or {}).get("value")) or 0) for it in items)
+    # 기관 신고 = 그 서비스가 돌고 있는 지역(운영 · 시범 · 뒤에서 돌림 배포본)의 합 — LX 직원 대시보드 '우리 서비스'와 같은 이름 · 같은 값 ·
+    # 지역이 여럿이면 'n곳 합'을 붙인다(카드의 '어디'는 결과 예시 한 지역이라 합계와 섞이지 않게)
+    lk = {str(d["sgg_cd"] or d["region_profile"] or d["tenant_id"]) for d in m["live"] if d["card_id"] == cid}
+    reports = sum(int(_vnum((_metric(it, "reports") or {}).get("value")) or 0) for it in items if not it.get("sgg_cd") or str(it["sgg_cd"]) in lk)
+    reports_sum = f"{len(lk)}곳 합" if len(lk) > 1 else None
     own = _owner(m, cid, card)
     can_analyze = bool(learned) and (card["scope"] or "local") != "global"
     out = {
         "id": cid, "name": _name(card["name"]), "scope": card["scope"] or "local", "group": inf.get("grp") or ("해외" if card["scope"] == "global" else None),
         "state": state, "state_label": STAGE_WORD[state],
         "line": _words(inf.get("line")), "scene": scene,
-        "where": example["region"] if example else None, "as_of": example["as_of"] if example else None, "example": example,
+        "where": example["region"] if example else where_any, "as_of": example["as_of"] if example else None, "example": example,
+        "example_note": None if example else ("첫 결과 뒤 표시" if state == "none" else "필지 대조 뒤 표시" if parcel else "업무 결과 집계 전"),
         "uses": {"text": uses_text, "counts": {"ga": n["ga"], "pilot": n["pilot"], "none": n["none"]}},
         "imagery": imagery, "timepoints": inf.get("timepoints") or "1시점", "finds": finds, "compare": compare, "time": time,
         "version": cur["version"] if cur else None, "owner": own["name"],
         "can_analyze": can_analyze, "cant": None if can_analyze else ("해외 카드는 해외 화면에서 분석합니다" if card["scope"] == "global" else "분석 모델 등록 전"),
-        "reports": env(reports, "count", "recorded", "기관이 보낸 신고"), "publish": publish,
+        "reports": env(reports, "count", "recorded", "기관이 보낸 신고"), "reports_sum": reports_sum, "publish": publish,
     }
     if p.realm == "lx":
         out["project"] = own["project"]
@@ -286,7 +319,7 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
         if publish["pending"]:
             out["next"] = {"text": "공개 결재 기다리는 중", "href": "/landxi/v3/lx-inbox/"}
         elif reports:
-            out["next"] = {"text": f"기관 신고 {reports}건 확인", "href": "/landxi/v3/lx-inbox/"}
+            out["next"] = {"text": f"기관 신고 {reports:,}건 확인" + (f"({reports_sum})" if reports_sum else ""), "href": "/landxi/v3/lx-inbox/"}
         elif not can_analyze:
             out["next"] = {"text": "분석 모델 등록" if card["scope"] != "global" else "해외 화면에서 관리", "href": None}
         elif state == "none":
@@ -316,7 +349,7 @@ async def _deck_tenant(p) -> dict:
     svcs = await brand._services(p.tenant_id, list(row["services"]) if row["services"] else None, intro.get("items") or {}, brand._en(row))
     short = row["short"] or brand._short_default(row)
     items, at = await summary.cached_all()
-    own_items = summary._filter(items, p.tenant_id, None, None)
+    own_items = [it for it in items if it["tenant"] == p.tenant_id]        # 그 기관 항목만(/summary 기관 세션과 같은 거르기 · 업무 결과 판정용 속칸 유지)
     async with db(realm="lx") as conn:
         m = await _load(conn)
         dps = await conn.fetch("SELECT card_id, min(year) AS year FROM deploys WHERE tenant_id=$1 AND NOT coalesce(test,false) AND stage <> 'draft' "
@@ -340,13 +373,19 @@ async def _deck_tenant(p) -> dict:
             if not es:
                 return None
             return {**es[0], "value": sum(_vnum(e["value"]) or 0 for e in es), "as_of": max(str(e.get("as_of") or "") for e in es)}
-        fc, det, rp = total("field_check"), total("detected"), total("review_pending")
-        use = fc if fc and fc["value"] > 0 else det if det and det["value"] > 0 else None
+        rp = total("review_pending")
+        # 결과 예시 = 우리 기관의 업무 결과 합(현장 확인 필요 → 다듬은 결과 세트의 AI 탐지 수) — 칸 도형 수는 쓰지 않는다(사용자 규칙 2)
         inf2 = m["info"].get(c["id"]) or {}
-        rw = inf2.get("result_word") if not inf2.get("result_sgg") or {str(it.get("sgg_cd")) for it in mine} == {inf2["result_sgg"]} else None
-        word = "현장 확인 필요 필지" if use is fc and fc else (rw or (f"AI 탐지 {det['unit']}" if det else ""))
-        core["example"] = {"value": use["value"], "unit": use.get("unit") or "", "basis": use.get("basis") or "estimate", "as_of": str(use.get("as_of") or "")[:10],
-                           "source": use.get("source") or "", "label": use.get("label") or "", "word": word, "place": short} if use else None
+        bs = [b for b in (_biz(it, inf2) for it in mine) if b]
+        use_l = [b for b in bs if b[2] == "field_check"] or [b for b in bs if b[2] == "detected"]
+        if use_l:
+            e0 = use_l[0][0]
+            word = use_l[0][1] if len(use_l) == 1 else ("현장 확인 필요 필지" if use_l[0][2] == "field_check" else f"AI 탐지 {e0.get('unit') or '건'}")
+            core["example"] = {"value": sum(_vnum(b[0]["value"]) or 0 for b in use_l), "unit": e0.get("unit") or "", "basis": e0.get("basis") or "estimate",
+                               "as_of": max(str(b[0].get("as_of") or "") for b in use_l)[:10], "source": e0.get("source") or "", "label": e0.get("label") or "",
+                               "word": word, "place": short}
+        else:
+            core["example"] = None
         dates = [str((_metric(it, k) or {}).get("as_of") or "")[:10] for it in mine for k in ("detected", "field_check")]
         dates = [d for d in dates if d]
         survey = any(it.get("survey_state") or _metric(it, "field_check") for it in mine)
@@ -358,7 +397,7 @@ async def _deck_tenant(p) -> dict:
             "todo": {"text": (f"결과 확인 대기 {int(rp['value']):,}건" if rp["value"] else "확인할 결과 없음") if rp else ("확인할 결과 없음" if s.get("open") else "—")},
             "report": survey,
         })
-        for k in ("uses", "time", "publish", "reports", "imagery", "timepoints", "finds", "compare", "can_analyze", "cant", "version"):
+        for k in ("uses", "time", "publish", "reports", "reports_sum", "imagery", "timepoints", "finds", "compare", "can_analyze", "cant", "version"):
             core.pop(k, None)
         out.append(core)
     return {"items": out, "total": len(out), "short": short, "as_of": now_iso(), "computed_at": at}
@@ -399,7 +438,7 @@ async def one(cid: str, request: Request):
         k = STAGE_KEY.get(it["stage"], "none")
         regions.append({"sgg": it.get("sgg_cd"), "name": _short(it.get("region_name"), it.get("sgg_cd")), "full": it.get("region_name"),
                         "state": k, "state_label": STAGE_WORD[k], "imagery": (it.get("imagery") or {}).get("label"),
-                        "field_check": _metric(it, "field_check"), "detected": _metric(it, "detected"),
+                        "field_check": _metric(it, "field_check"), "detected": None if _raw_ai(it) else _metric(it, "detected"),
                         "reports": env(int(_vnum((_metric(it, "reports") or {}).get("value")) or 0), "count", "recorded", "기관이 보낸 신고")})
     scenes = [s for s in (inf.get("scenes") or []) if s.get("src")]
     vers = sorted([v for v in m["vers"] if v["card_id"] == cid], key=lambda v: _ver_key(v["version"]), reverse=True)

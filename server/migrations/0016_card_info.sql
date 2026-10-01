@@ -2,6 +2,8 @@
 --   카드 한 장 = 정보 여덟 칸(결과 장면 · 상태 · 어디·기준일 · 이름 · 무엇을 찾나 · 결과 예시 · 조건 두 칸 · 1차 버튼).
 --   상태 · 어디 · 결과 숫자 · 쓰이는 곳 · 걸리는 시간은 서버가 기록에서 계산한다(대표 수치 요약 /summary · 작업 기록) — 이 표에는 적지 않는다.
 --   이 표는 LX 가 카드마다 고쳐 쓰는 글과 그림만: 무엇을 찾나 · 분류 · 결과 예시(지역 · 말) · 영상 조건 · 시점 · 찾는 것 · 대조 · 대표 이미지 · 결과 장면.
+--   결과 예시 숫자 = 업무 결과만(현장 확인 필요 · 손으로 다듬은 결과 세트의 수). 분석 작업 결과 세트의 행(칸마다 잘린 도형 · 모든 분류)은 쓰지 않는다(cards.py _raw_ai).
+--   결과 말(result_word)은 셈 단위가 필지 · 동으로 확인된 결과 세트(sets.yaml count_unit)에만 붙는다.
 --   대표 이미지 = 실제 결과 장면만(지어낸 그림 0 · 반출할 수 없는 영상의 장면 0). 장면마다 어느 시군구 결과인지(sgg)와 그 지역 기관(tenant)을 적어
 --   기관 화면에는 그 기관 관할의 장면만 보인다(원칙 39). 장면이 없는 카드 = 회백 판(원칙 42).
 --   씨앗 값은 없는 행에만 넣는다(LX 가 고친 값을 덮지 않는다).
@@ -37,7 +39,7 @@ SELECT 'card-farm', '경작·휴경·시설·전용을 판정해 확인할 필�
 WHERE EXISTS (SELECT 1 FROM cards WHERE id = 'card-farm') ON CONFLICT (card_id) DO NOTHING;
 
 INSERT INTO card_info(card_id, line, grp, result_sgg, result_word, imagery, timepoints, finds, scene, scenes, swipe, updated_by)
-SELECT 'card-5e85a9', '단동·다동 비닐하우스를 찾아 셉니다', '농지·시설', '43745', '비닐하우스 동', '드론·항공 50cm 이하', '1시점', '비닐하우스(단동 · 다동)',
+SELECT 'card-5e85a9', '단동·다동 비닐하우스를 찾아 셉니다', '농지·시설', NULL, NULL, '드론·항공 50cm 이하', '1시점', '비닐하우스(단동 · 다동)',
   '{"src":"/landxi/assets/proto/crops/namwon-greenhouse-2025/2@2x.jpg","caption":"남원시 · 2025 정사영상 · 비닐하우스","sgg":"52190","tenant":"namwon"}'::jsonb,
   '[{"src":"/landxi/assets/proto/crops/namwon-greenhouse-2025/2@2x.jpg","caption":"남원시 · 2025 정사영상","sgg":"52190","tenant":"namwon"},
     {"src":"/landxi/assets/proto/crops/namwon-greenhouse-2025/1@2x.jpg","caption":"남원시 · 2025 정사영상","sgg":"52190","tenant":"namwon"},
@@ -48,7 +50,7 @@ SELECT 'card-5e85a9', '단동·다동 비닐하우스를 찾아 셉니다', '농
 WHERE EXISTS (SELECT 1 FROM cards WHERE id = 'card-5e85a9') ON CONFLICT (card_id) DO NOTHING;
 
 INSERT INTO card_info(card_id, line, grp, result_word, imagery, timepoints, finds, scene, scenes, swipe, updated_by)
-SELECT 'card-marine', '해안 영상에서 쓰레기 군집을 찾아 수거할 곳부터 알려 줍니다', '환경', '쓰레기 군집 곳', '항공·드론 · 간조 때', '1시점', '해안 쓰레기 군집',
+SELECT 'card-marine', '해안 영상에서 쓰레기 군집을 찾아 수거할 곳부터 알려 줍니다', '환경', NULL, '항공·드론 · 간조 때', '1시점', '해안 쓰레기 군집',
   '{"src":"/landxi/v3/service-detail/data/img/marine-hero.jpg","caption":"여수시 · 항공영상 · 쓰레기 군집","sgg":"12130","tenant":"gwangju-jeonnam"}'::jsonb,
   '[{"src":"/landxi/v3/service-detail/data/img/marine-hero.jpg","caption":"여수시 · 항공영상","sgg":"12130","tenant":"gwangju-jeonnam"},
     {"src":"/landxi/v3/service-detail/data/img/marine-aerial/1@2x.jpg","caption":"여수시 · 2025 항공영상","sgg":"12130","tenant":"gwangju-jeonnam"},
@@ -60,7 +62,7 @@ SELECT 'card-marine', '해안 영상에서 쓰레기 군집을 찾아 수거할 
 WHERE EXISTS (SELECT 1 FROM cards WHERE id = 'card-marine') ON CONFLICT (card_id) DO NOTHING;
 
 INSERT INTO card_info(card_id, line, grp, result_word, imagery, timepoints, finds, scene, scenes, updated_by)
-SELECT 'card-change', '두 시점 영상을 비교해 신축·소실·식생 변화를 골라냅니다', '건축·변화', '달라진 곳', '드론 정사영상', '같은 지역 2시점', '신축 · 소실 · 식생 변화',
+SELECT 'card-change', '두 시점 영상을 비교해 신축·소실·식생 변화를 골라냅니다', '건축·변화', NULL, '드론 정사영상', '같은 지역 2시점', '신축 · 소실 · 식생 변화',
   '{"src":"/landxi/v3/service-detail/data/img/change-hero.jpg","caption":"남원시 · 2025.04 ↔ 2025.10","sgg":"52190","tenant":"namwon"}'::jsonb,
   '[{"src":"/landxi/v3/service-detail/data/img/change-hero.jpg","caption":"남원시 · 2025.04 ↔ 2025.10","sgg":"52190","tenant":"namwon"},
     {"src":"/landxi/v3/service-detail/data/img/namwon-change/1@2x.jpg","caption":"남원시 · 4월 대비 10월","sgg":"52190","tenant":"namwon"},
@@ -86,3 +88,9 @@ FROM (VALUES
 ) AS v(id, line, grp, img, tp, finds)
 WHERE EXISTS (SELECT 1 FROM cards WHERE cards.id = v.id)
 ON CONFLICT (card_id) DO NOTHING;
+
+-- 바로잡기(10-01) — 처음 씨앗의 결과 말 · 결과 예시 지역이 분석 칸 도형 수(모든 분류)에 붙어 있었다(증평 725 = 비닐하우스 77 + 건물 · 경작지 · 주차장).
+-- LX 가 손대지 않은 씨앗 행만 비운다(고친 값은 그대로).
+UPDATE card_info SET result_word = NULL, result_sgg = NULL
+WHERE updated_by = 'system:0016' AND card_id IN ('card-5e85a9', 'card-marine', 'card-change')
+  AND (result_word IN ('비닐하우스 동', '쓰레기 군집 곳', '달라진 곳') OR result_sgg = '43745');

@@ -72,12 +72,13 @@ async function edit(cid) {
 
   let cur = c;
   const paint = () => {
-    prev.replaceChildren(svcCard({ ...cur, scene: cur.scene ? { ...cur.scene, src: src(cur.scene.src) } : null }, { kind: 'analyze', more: () => `../lx-analyze/?card=${encodeURIComponent(cid)}` }));
+    /* 응답의 as_of 는 응답 시각 — 카드의 기준일은 결과 예시의 기준일(덱과 같은 값) */
+    prev.replaceChildren(svcCard({ ...cur, as_of: cur.example?.as_of || null, scene: cur.scene ? { ...cur.scene, src: src(cur.scene.src) } : null }, { kind: 'analyze', more: () => `../lx-analyze/?card=${encodeURIComponent(cid)}` }));
     facts.replaceChildren(h('h2.la-h', {}, '서버 값', h('small', { text: '기록에서 계산 — 고치지 않습니다' })),
       h('dl.la-dl.lc-dl', {}, ...[
         ['상태', cur.state_label], ['서비스 공개', cur.publish?.label || '—'],
         ['쓰이는 곳', cur.uses?.text || '—'], ['판 · 담당', `${cur.version ? 'v' + cur.version : '판 없음'} · ${cur.owner || '담당 미지정'}`],
-        ['걸리는 시간', cur.time?.text || '첫 분석 뒤 표시'], ['기관 신고', cur.reports?.value ? `${nf(cur.reports.value)}건` : '없음'],
+        ['걸리는 시간', cur.time?.text || '첫 분석 뒤 표시'], ['기관 신고', cur.reports?.value ? `${nf(cur.reports.value)}건${cur.reports_sum ? ` · ${cur.reports_sum}` : ''}` : '없음'],
       ].map(([k, v]) => h('div', {}, h('dt', { text: k }), h('dd', { text: v })))),
       cur.edited?.at ? h('p.la-note', { text: `마지막으로 고친 때 ${ymd(cur.edited.at)}` }) : null);
   };
@@ -152,7 +153,7 @@ async function edit(cid) {
   form.append(
     h('section.t-card.lc-sec', {}, h('h2.la-h', { text: '대표 이미지' }), sceneBox, up),
     h('section.t-card.lc-sec', {}, h('h2.la-h', { text: '이름 · 무엇을 찾나' }), field('이름', name), field('무엇을 찾나', line, '카드에 두 줄까지 보입니다'), field('분류', grp, '분석하기의 거르기 칩')),
-    h('section.t-card.lc-sec', {}, h('h2.la-h', {}, '결과 예시', h('small', { text: '숫자는 서버 값 그대로' })), field('보일 지역', exSel), field('말', word, 'AI 탐지 수일 때만 — 예: 비닐하우스 동')),
+    h('section.t-card.lc-sec', {}, h('h2.la-h', {}, '결과 예시', h('small', { text: '숫자는 서버 값 그대로' })), field('보일 지역', exSel), field('말', word, '셈 단위가 필지 · 동으로 확인된 결과에만 붙습니다 — 예: 비닐하우스 동')),
     h('section.t-card.lc-sec', {}, h('h2.la-h', { text: '이 카드의 조건' }), field('입력 영상', imagery), field('시점', tp), field('찾는 것', finds), field('대조', compare)),
     h('div.lc-act', {}, ro ? h('p.lc-h', { text: '이 카드의 담당 프로젝트장과 LX 관리자가 고칩니다' }) : null, msg, save));
 

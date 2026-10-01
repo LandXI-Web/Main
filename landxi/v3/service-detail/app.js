@@ -191,7 +191,8 @@ function hero(state) {
   } else {
     /* 결과 전 — 그림 없이 회백 카드 + 문장 하나(검정 잔재 0) */
     const e = h('div.sd-hero__empty'); fig.append(e); fig.classList.add('is-empty');
-    const det = metric(itemOfDeploy(cur), 'detected');   // 영상 조각은 없어도 이 지역 결과 수는 있다(summary)
+    /* 영상 조각은 없어도 이 지역 결과 수는 있다(summary) — 다듬은 결과 세트(배포본 봉투가 있는 것)의 수만. 분석 작업 결과의 칸 도형 수는 쓰지 않는다(사용자 규칙 2) */
+    const det = isEnvelope(cur?.scale) ? metric(itemOfDeploy(cur), 'detected') : null;
     empty(e, { kind: 'first', text: det ? `${where(cur)} · ${det.label} ${Number(det.value).toLocaleString("ko-KR")}${det.unit || ''}` : '첫 결과가 생기면 여기에 결과가 보입니다' });
     e.querySelector('h6')?.remove();   // 상태는 위 칩 한 곳(시범 칩 옆에 '첫 결과 전' 제목이 겹치지 않게)
   }
@@ -359,7 +360,10 @@ function related(rows, id) {
     if (lab && set && exOf(set, r.deploys || []) && !dropSet(set, r.deploys || [])) markEx(lab, regionOfSet(vis, set).name);
     /* 카드 숫자 = 메인 · 영업 카드와 같은 값(요약의 AI 탐지 · 그 카드 대표 항목) · 요약에 값이 없으면 숫자 없이 */
     const n = el.querySelector('.k-svc-n');
-    if (n) { const env = SUM && !(set && exOf(set, r.deploys || [])) ? scaleOf((r.deploy && itemOfDeploy(r.deploy)) || itemFor(SUM, r.card.id)) : null; n.innerHTML = env ? numHtml(env) : ''; n.hidden = !env; }
+    /* 다듬은 결과 세트(배포본 봉투가 있는 것)의 수만 — 분석 작업 결과의 칸 도형 수(모든 분류 · 칸 경계 조각)는 숫자 자리에 쓰지 않는다(사용자 규칙 2) */
+    /* 게스트(배포 기록 없음)는 공개 요약 = 운영 · 시범 배포본의 다듬은 결과만이라 그대로 */
+    const curated = r.deploy ? isEnvelope(r.deploy.scale) : !who;
+    if (n) { const env = SUM && curated && !(set && exOf(set, r.deploys || [])) ? scaleOf((r.deploy && itemOfDeploy(r.deploy)) || itemFor(SUM, r.card.id)) : null; n.innerHTML = env ? numHtml(env) : ''; n.hidden = !env; }
   });
   grid.querySelectorAll('.k-svc').forEach((c) => c.classList.add('t-enter'));
   return h('section.sd-rel', {}, h('p.t-label.sd-sec-l', { text: '관련 서비스' }), grid);

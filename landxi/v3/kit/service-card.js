@@ -56,7 +56,8 @@ export function loadDeck({ fresh = false } = {}) {
 function resultEl(c, kind) {
   const ex = c.example;
   if (!ex || ex.value === null || ex.value === undefined) {
-    return h('div.k-sc-res.is-none', {}, h('span', { text: kind === 'mine' ? '첫 계산 뒤 표시' : c.state === 'none' ? '첫 결과 뒤 표시' : '결과 수 집계 전' }));
+    /* 업무 결과(현장 확인 필요 · 다듬은 결과 수)가 없으면 비워 둔다 — 분석 칸 도형 수는 숫자 자리에 쓰지 않는다(사용자 규칙 2) */
+    return h('div.k-sc-res.is-none', {}, h('span', { text: kind === 'mine' ? '첫 계산 뒤 표시' : c.example_note || (c.state === 'none' ? '첫 결과 뒤 표시' : '업무 결과 집계 전') }));
   }
   const env = { value: ex.value, unit: ex.unit || '', basis: ex.basis || 'estimate', as_of: ex.as_of || '', source: ex.source || '' };
   const word = [ex.word, kind === 'gov' || kind === 'mine' ? ex.place : ex.region].filter(Boolean).join(' · ');
@@ -122,7 +123,7 @@ function cropEl(c, kind, o = {}) {
   fig.append(h('span.k-sc-badge.t-chip', { dataset: lv ? { lv } : {}, text: word || '' }));
   if (kind === 'manage') {
     const rp = isEnvelope(c.reports) ? c.reports.value : c.reports;
-    const sigs = [c.publish?.pending ? '공개 결재 중' : '', rp ? `기관 신고 ${nf(rp)}` : ''].filter(Boolean);
+    const sigs = [c.publish?.pending ? '공개 결재 중' : '', rp ? `기관 신고 ${nf(rp)}${c.reports_sum ? `(${c.reports_sum})` : ''}` : ''].filter(Boolean);   // 대시보드와 같은 이름 · 같은 값(여러 곳이면 'n곳 합')
     if (sigs.length) fig.append(h('span.k-sc-flag', { text: sigs.join(' · ') }));
   }
   if (sc && sc.ex) fig.append(h('span.k-sc-ex', { text: '다른 지역 결과 · 예시' }));

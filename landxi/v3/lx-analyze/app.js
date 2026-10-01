@@ -115,7 +115,10 @@ async function detail(cid) {
 function resultCard(c) {
   const sec = h('section.t-card.la-box', { 'aria-label': '결과 예시' }, h('h2.la-h', { text: '결과 예시' }));
   const ex = c.example;
-  if (!ex) { sec.append(h('p.la-none-t', { text: c.state === 'none' ? '첫 분석 결과가 나오면 여기에 보입니다' : '결과 수를 아직 세지 않았습니다' })); return sec; }
+  if (!ex) {                                   // 업무 결과(현장 확인 필요 · 다듬은 결과 수)가 없으면 숫자 없이 — 분석 칸 도형 수는 쓰지 않는다
+    sec.append(h('p.la-none-t', { text: c.state === 'none' ? '첫 분석 결과가 나오면 여기에 보입니다' : c.example_note === '필지 대조 뒤 표시' ? '필지 대조가 끝나면 현장 확인 필요 필지가 보입니다' : '업무 결과를 아직 세지 않았습니다' }));
+    return sec;
+  }
   const env = { value: ex.value, unit: ex.unit || '', basis: ex.basis, as_of: ex.as_of, source: ex.source };
   sec.append(h('p.t-label.la-ex-l', { text: [ex.label === '현장 확인 필요' ? '현장 확인 필요' : ex.word, ex.region, ex.as_of ? `${ymd(ex.as_of)} 기준` : ''].filter(Boolean).join(' · ') }),
     h('div.la-big', { dataset: { metric: ex.label || '', v: String(ex.value) } }, h('b', { text: nf(ex.value) }),
@@ -177,7 +180,7 @@ function usesCard(c) {
       h('span.im', { text: g.imagery || (g.state === 'none' ? '영상 등록 필요' : '') })));
   }
   const rp = c.reports?.value;
-  if (rp) ul.append(h('li', {}, h('span.t-chip', { dataset: { lv: 'wait' }, text: '기관 신고' }), h('span.rg', { text: `${nf(rp)}건` }), h('a.im', { href: '../lx-inbox/', text: '요청함' })));
+  if (rp) ul.append(h('li', {}, h('span.t-chip', { dataset: { lv: 'wait' }, text: '기관 신고' }), h('span.rg', { text: `${nf(rp)}건${c.reports_sum ? ` · ${c.reports_sum}` : ''}` }), h('a.im', { href: '../lx-inbox/', text: '요청함' })));
   sec.append(ul);
   return sec;
 }

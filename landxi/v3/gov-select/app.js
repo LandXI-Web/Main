@@ -106,7 +106,8 @@ function svcEl(s, c) {
   const p = s.open ? primary(itemsOf(s.card)) : null;
   /* 덱이 없을 때(서버 경로 전) — 브랜드 목록 값으로 같은 카드(장면 없이 · 숫자는 요약에서) */
   const card = c || { id: s.card, name: s.name, line: s.line, year: s.year, status_label: s.status, open: s.open, state: { '운영': 'ga', '시범': 'pilot' }[s.status] || 'none',
-    example: p ? { value: p.env.value, unit: p.env.unit, basis: p.env.basis, as_of: p.env.as_of, source: p.env.source, label: p.label, word: p.key === 'field_check' ? '현장 확인 필요 필지' : `${p.label} ${p.env.unit || ''}`.trim(), place: B.short } : null };
+    /* 덱 없이는 결과 수가 다듬은 결과인지 알 수 없다 — 업무 결과(현장 확인 필요)만 싣는다(분석 칸 도형 수 0 · 사용자 규칙 2) */
+    example: p && p.key === 'field_check' ? { value: p.env.value, unit: p.env.unit, basis: p.env.basis, as_of: p.env.as_of, source: p.env.source, label: p.label, word: '현장 확인 필요 필지', place: B.short } : null };
   const svc = `?service=${encodeURIComponent(s.card)}`;
   const el = svcCard({ ...card, name: s.name || card.name, line: joinLine(s.line || card.line || ''), status_label: s.status, open: s.open, year: s.year },
     { kind: 'gov', href: () => svc, more: () => '../gov-report/' + svc + '&tab=report' });

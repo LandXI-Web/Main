@@ -33,6 +33,11 @@ test.describe('구현 3차 · 서비스 카드 한 벌', () => {
     const sum = await call(page, '/summary?card=card-farm');
     const vals = sum.body.items.flatMap((i) => [i.metrics.field_check?.value, i.metrics.detected?.value]).filter((x) => x != null);
     expect(vals).toContain(v);
+    /* 큰 숫자 자리 = 업무 결과만 — 분석 칸 도형 수(남원 · 증평 비닐하우스 AI 탐지 = 모든 분류 도형 조각)는 쓰지 않는다(사용자 규칙 2) */
+    await expect(page.locator('.k-sc[data-card="card-5e85a9"] .k-sc-res')).toHaveClass(/is-none/);
+    const deckL = (await call(page, '/cards/deck')).body;
+    for (const c of deckL.items) if (c.example) expect(['현장 확인 필요', 'AI 탐지']).toContain(c.example.label);
+    expect(deckL.items.find((c) => c.id === 'card-5e85a9').example).toBeNull();
     /* 장면 없는 카드 = 회백 판(그림 0) */
     await expect(page.locator('.k-sc .k-sc-crop.is-blank').first()).toContainText(/결과 장면 없음|결과가 나오면/);
     /* 거르기 — 운영만 */
@@ -103,6 +108,7 @@ test.describe('구현 3차 · 서비스 카드 한 벌', () => {
         expect(c.time).toBeUndefined();
       }
       if (org === 'gwangju-jeonnam') expect(deck.items.find((c) => c.id === 'card-farm')?.scene ?? null).toBeNull();   // 남원 장면은 광주전남에 0
+      if (org === 'namwon') expect(deck.items.find((c) => c.id === 'card-5e85a9')?.example ?? null).toBeNull();          // 분석 칸 도형 수(132,310) 0
       expect((await call(page, '/cards/card-farm')).status).toBe(403);                   // 카드 상세 · 고치기는 LX 만
       await ctx.close();
     }
