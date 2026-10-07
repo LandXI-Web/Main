@@ -94,10 +94,10 @@ const band = (p, a, b) => (p < a ? 'pre' : p > b ? 'out' : 'in');
 function finState(on, win) {
   const el = $('#fin');
   if (!on || !win || !el) return 'pre';
-  const t = S.t7 || 0, top = el.offsetTop, bottom = win.y + win.h;
-  const reached = t >= 0.999 || Math.abs(bottom - (LY.fin.y + LY.fin.h)) < 2;
-  if ((t >= 0.85 || reached) && bottom <= top - 12) return 'in';
-  return el.dataset.st === 'in' && t >= 0.8 && bottom <= top ? 'in' : 'pre';
+  const t = S.t7 || 0;
+  // 글은 지구 카드 아래 띠에 따로 놓여 있다 — 카드가 다 줄었을 때(t ≥ 0.97)만 켜고, 한 번 켜지면 t < 0.9 까지 유지(떨림 0)
+  if (t >= 0.97) return 'in';
+  return el.dataset.st === 'in' && t >= 0.9 ? 'in' : 'pre';
 }
 
 /* ── 지도 무대(K3) ────────────────────────────────────── */
@@ -657,3 +657,18 @@ else {
   addEventListener('scroll', kick, { passive: true });
   setTimeout(kick, 2500);
 }
+
+
+/* ── 스크롤 안내(메인-2): 2초 뒤 가운데 아래 · 처음 스크롤에 사라지고 다시 안 나옴 ── */
+(() => {
+  const hint = document.getElementById('hint');
+  if (!hint) return;
+  const EV = ['scroll', 'wheel', 'touchmove', 'keydown'];
+  let gone = false;
+  const bye = () => { if (gone) return; gone = true; hint.classList.remove('is-on'); hint.classList.add('is-off'); for (const ev of EV) removeEventListener(ev, bye); };
+  setTimeout(() => {
+    if (scrollY > 40 || gone) return;
+    hint.classList.add('is-on');
+    for (const ev of EV) addEventListener(ev, bye, { passive: true });
+  }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 600 : 2000);
+})();

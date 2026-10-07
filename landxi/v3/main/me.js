@@ -5,5 +5,5 @@ import { whoami } from '../kit/auth-gate.js';
 const who = await whoami().catch(() => null);
 if (who?.me?.realm === 'lx' && who.landing) {
   const rel = '../' + String(who.landing).split('/landxi/v3/')[1];          // 상대경로(사본 /Main/ 아래에서도)
-  for (const a of document.querySelectorAll('a[data-login]')) { a.textContent = '내 화면으로'; a.href = rel; a.dataset.me = '1'; }
+  for (const a of document.querySelectorAll('a[data-login]')) { (a.querySelector('.m-lb') || a).textContent = '내 화면으로'; a.href = rel; a.dataset.me = '1'; }
 }
