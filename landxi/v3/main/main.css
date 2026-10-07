@@ -114,8 +114,6 @@ main{position:relative;z-index:3}
 .m-fin .m-p{margin-top:12px;max-width:none;word-break:keep-all}
 .m-fin .m-p span{display:block}
 .m-fin .m-cta{margin-top:20px;justify-content:center;align-items:center;gap:12px;flex-wrap:nowrap}
-.m-ic{gap:8px}
-.m-ic svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .m-top{margin-left:12px;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--sub);white-space:nowrap}
 .m-top:hover{color:var(--ink)}
 .m-motto{font-size:36px;line-height:46px}
