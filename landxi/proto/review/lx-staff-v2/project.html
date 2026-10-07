@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>시안 · 프로젝트 개요 — 학습데이터 정보 · 프로젝트 정보 · 최근 작업</title>
 <link rel="stylesheet" href="staff.css">
+<link rel="stylesheet" href="visual.css">
 <script src="chrome.js"></script>
 </head>
 <body class="m has-stamp">
@@ -35,7 +36,7 @@
           <div class="tabs"><span class="on">프로젝트 개요</span><span>참여자</span><span>기록</span></div>
         </header>
 
-        <!-- ① 학습데이터 정보 (구 '데이터셋 정보': 업로드 이미지 · 라벨링 이미지 · 라벨 개수 · 미작업 이미지 · 클래스별 이미지 수) -->
+        <!-- ① 학습데이터 정보 (구 '데이터셋 정보': 업로드 이미지 · 라벨링 이미지 · 라벨 개수 · 미작업 이미지 도넛 · 클래스별 이미지 수 막대) -->
         <section class="k c7" id="k-data">
           <div class="k-h"><h2>학습데이터 정보</h2><span class="ksub">표본 묶음 1 · 09.30 올림</span><span class="more">학습데이터 구축</span></div>
           <div class="two">
@@ -54,19 +55,28 @@
                   <li><span class="lb">주차장</span><div class="bar2"><i class="p4" style="width:20%"></i></div><span class="n"><b>40</b>장 · 라벨 176</span></li>
                 </ul>
               </div>
+              <!-- 표본 사진 — 라벨이 그려진 표본 장면(비닐하우스) -->
+              <div class="ph-row">
+                <figure><img src="ph-gh2.jpg" alt=""><figcaption>표본 · 비닐하우스 라벨</figcaption></figure>
+                <figure><img src="ph-gh1.jpg" alt=""><figcaption>표본 · 단동</figcaption></figure>
+                <figure><img src="ph-gh6.jpg" alt=""><figcaption>표본 · 다동</figcaption></figure>
+                <figure class="more"><b>200</b>장 모두 보기</figure>
+              </div>
             </div>
             <div class="box">
               <h3>표본 상태</h3>
-              <div class="stk"><i class="p1" style="width:80%"></i><i class="p2" style="width:20%"></i></div>
-              <ul class="lgd" style="flex-direction:column;gap:4px"><li><i class="p1"></i>학습용 <b>160</b></li><li><i class="p2"></i>검증용 <b>40</b></li><li><i class="p6"></i>뺀 이미지 <b>0</b></li><li><i class="p6"></i>아직 라벨 없음 <b>0</b></li></ul>
+              <div class="dn sm" data-parts="160,40,0,0" data-colors="p1,p2,p6,p6" data-center="200" data-label="장" style="grid-template-columns:1fr;justify-items:center;gap:8px">
+                <div class="dn-svg"></div>
+                <ul class="lgd" style="width:100%"><li><i class="p1"></i>학습용<b>160</b><span class="pc">80%</span></li><li><i class="p2"></i>검증용<b>40</b><span class="pc">20%</span></li><li><i class="p6"></i>뺀 이미지<b>0</b><span class="pc">0%</span></li><li><i class="p6"></i>아직 라벨 없음<b>0</b><span class="pc">0%</span></li></ul>
+              </div>
               <p class="rn">표본 20건 보기 <em>0/20</em> — 4단계 AI 결과 보기에서 봅니다.</p>
-              <p class="rn"><span class="ex srv">서버에 더할 것</span> 라벨 없는 이미지 수 — 지금은 라벨이 붙은 파일만 올라옵니다</p>
+              <p class="rn"><span class="ex srv">서버에 더할 것</span> 라벨 없는 이미지 수</p>
             </div>
           </div>
         </section>
 
-        <!-- ② 프로젝트 정보 (구: 워크플로우 · 학습 · 추론 수 · 진행 현황 · 프로젝트 사용량 · 최근 작업 이력) -->
-        <section class="k c5" id="k-info">
+        <!-- ② 프로젝트 정보 (구 파란 칸: 워크플로우 · 학습 · 추론 수 · 진행 현황 도넛 · 프로젝트 사용량 · 최근 작업 이력) — 대표 칸 -->
+        <section class="k c5 hero" id="k-info">
           <div class="k-h"><h2>프로젝트 정보</h2><span class="more">서비스 카드</span></div>
           <ul class="big c3">
             <li><span>서비스</span><b>1<small>개</small></b><i>공개 · 1.0판 · 09.30</i></li>
@@ -74,9 +84,9 @@
             <li><span>시범 적용</span><b>3<small>곳</small></b><i>운영 0곳</i></li>
           </ul>
           <ul class="big c2" style="margin-top:10px">
-            <li><span>프로젝트 사용량</span><b>10.2<small>MB</small></b><i>내 저장 용량 29.8 MB 가운데 34%</i></li>
+            <li><span>프로젝트 사용량</span><b>10.2<small>MB</small></b><div class="bar2" style="margin-top:6px"><i class="p2" style="width:34%"></i></div><i>내 저장 용량 29.8 MB 가운데 34%</i></li>
             <li><span>진행 현황</span>
-              <div class="steps6" style="margin-top:4px"><span class="seg6 big"><i class="d"></i><i class="d"></i><i class="d"></i><i class="wait"></i><i class="d"></i><i class="now"></i></span><div class="lbs"><span>올림</span><span>구축</span><span>학습</span><span style="color:var(--warn)">확인</span><span>공개</span><span class="now">관리</span></div></div>
+              <div class="steps6" style="margin-top:6px"><span class="seg6 big"><i class="d"></i><i class="d"></i><i class="d"></i><i class="wait"></i><i class="d"></i><i class="now"></i></span><div class="lbs"><span>올림</span><span>구축</span><span>학습</span><span style="color:var(--warn)">확인</span><span>공개</span><span class="now">관리</span></div></div>
               <i>6단계 가운데 5 끝 · 표본 확인 남음</i></li>
           </ul>
           <div class="box" style="margin-top:10px;flex:1;justify-content:center">
@@ -91,22 +101,22 @@
         <section class="k c7" id="k-log">
           <div class="k-h"><h2>최근 작업 이력</h2><span class="ksub">자동 기록 · 메모 · 파일</span><span class="more">기록</span></div>
           <ul class="ls" style="flex:1">
-              <li><span class="d">10.01 08:58</span><span class="t">프로젝트 만듦<small>LX 직원</small></span><span class="st ok">끝</span></li>
-              <li><span class="d">09.30 15:35</span><span class="t">모델 등록 승인<small>LX 관리자</small></span><span class="st ok">끝</span></li>
-              <li><span class="d">09.30 15:33</span><span class="t">학습 끝<small>2번째 학습 · LX 직원</small></span><span class="st ok">끝</span></li>
-              <li><span class="d">09.30 15:12</span><span class="t">학습 실패<small>다시 학습 · LX 직원</small></span><span class="st f">실패</span></li>
-              <li><span class="d">09.30 15:05</span><span class="t">증평군 적용 승인<small>시범 · LX 관리자</small></span><span class="st ok">끝</span></li>
+              <li><span class="d">10.01 08:58</span><span class="th"><img class="sh" src="shape-52190.svg" alt=""></span><span class="t">프로젝트 만듦<small>LX 직원</small></span><span class="st ok">끝</span></li>
+              <li><span class="d">09.30 15:35</span><span class="th"><img src="ph-gh3.jpg" alt=""></span><span class="t">모델 등록 승인<small>LX 관리자</small></span><span class="st ok">끝</span></li>
+              <li><span class="d">09.30 15:33</span><span class="th"><img src="ph-gh2.jpg" alt=""></span><span class="t">학습 끝<small>2번째 학습 · LX 직원</small></span><span class="st ok">끝</span></li>
+              <li><span class="d">09.30 15:12</span><span class="th"><img src="ph-gh1.jpg" alt=""></span><span class="t">학습 실패<small>다시 학습 · LX 직원</small></span><span class="st f">실패</span></li>
+              <li><span class="d">09.30 15:05</span><span class="th"><img class="sh" src="shape-43745.svg" alt=""></span><span class="t">증평군 적용 승인<small>시범 · LX 관리자</small></span><span class="st ok">끝</span></li>
             </ul>
             <div class="pj-foot"><span class="ksub">기록 11건 · 메모 0 · 파일 0</span><span class="lnk">모두 보기</span></div>
         </section>
 
         <!-- ④ 적용 지역 3곳 — 이 서비스가 돌고 있는 곳(지금 기능) · 다시 학습할 근거 -->
         <section class="k c5" id="k-reg">
-          <div class="k-h"><h2>적용 지역 3곳</h2><span class="ksub">이 서비스가 돌고 있는 곳 · 마지막 학습 09.30 15:33</span><span class="more">다른 지역에 적용</span></div>
+          <div class="k-h"><h2>적용 지역 3곳</h2><span class="ksub">마지막 학습 09.30 15:33</span><span class="more">다른 지역에 적용</span></div>
           <ul class="reg">
-            <li><img src="shape-43745.svg" alt=""><div><b>증평군</b><span>2023년 항공영상 · 시범</span><em>AI 탐지 725건</em></div></li>
-            <li><img src="shape-48870.svg" alt=""><div><b>함양군</b><span>2023년 항공영상 · 시범</span><em>AI 탐지 42,214건</em></div></li>
-            <li><img src="shape-52190.svg" alt=""><div><b>남원시</b><span>2025년 드론영상 · 시범 · <span style="color:#0052C2;display:inline">2023 항공영상 새로 들어옴 10.01</span></span><em>AI 탐지 132,310건</em></div></li>
+            <li><img src="shape-43745.svg" alt=""><div><b>증평군</b><span>2023년 항공영상 · 시범</span><em>AI 탐지 725건</em></div><span class="ph none">결과 장면<br>첫 결과 뒤</span></li>
+            <li><img src="shape-48870.svg" alt=""><div><b>함양군</b><span>2023년 항공영상 · 시범</span><em>AI 탐지 42,214건</em></div><span class="ph none">결과 장면<br>첫 결과 뒤</span></li>
+            <li><img src="shape-52190.svg" alt=""><div><b>남원시</b><span>2025년 드론영상 · 시범 · <span style="color:#0052C2;display:inline">2023 항공영상 새로 들어옴 10.01</span></span><em>AI 탐지 132,310건</em></div><span class="ph"><img src="ph-gh6.jpg" alt=""></span></li>
           </ul>
           <div class="pj-foot" style="margin-top:12px;align-items:flex-start"><span class="ppl" style="flex-direction:column;align-items:flex-start;gap:2px"><span>다시 학습할 근거 — 새 영상 <b>1</b> · 기관 검토 요청 <b>0</b> · 표본 확인 <b>0/20</b></span><span class="ksub">표본을 다 봐야 다음 회차를 시작할 수 있습니다</span></span><span class="btn b2 sm">재학습 시작</span></div>
         </section>
@@ -115,6 +125,7 @@
     </div>
   </main>
 </div>
+<script src="viz.js"></script>
 <script>
 chrome('projects', '<b>시안</b> 프로젝트 개요 — 구 Land-XI 의 데이터셋 정보 · 프로젝트 정보 · 최근 작업 이력 구성에 지금의 6단계 · 적용 지역 · 재학습 근거를 더함 · 값은 이 PC 서버(10-07 17:10 · 비닐하우스 2026)');
 </script>

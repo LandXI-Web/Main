@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>시안 · 내 정보 — 저장 용량 · 늘리기 요청 · 이력</title>
 <link rel="stylesheet" href="staff.css">
+<link rel="stylesheet" href="visual.css">
 <script src="chrome.js"></script>
 </head>
 <body class="m has-stamp">
@@ -21,18 +22,20 @@
           <div class="tabs"><span class="on">내 정보</span><span>알림</span><span>지원</span></div>
         </header>
 
-        <!-- ① 저장 용량 (구 '디스크 사용량 41% · 20.8/50.0 GB · 증량 신청') -->
-        <section class="k c4" id="k-stor">
+        <!-- ① 저장 용량 (구 '디스크 사용량 41% · 20.8/50.0 GB · 증량 신청' — 색 바탕 칸) — 대표 칸 -->
+        <section class="k c4 hero" id="k-stor">
           <div class="k-h"><h2>저장 용량</h2><span class="ksub">내가 프로젝트장인 프로젝트의 합</span></div>
           <div class="use"><b>29.8<small>MB 사용</small></b><em>할당 없음</em></div>
-          <div class="bar2" style="margin-top:8px"><i class="p1" style="width:34%"></i><i class="p2" style="width:30%"></i><i class="p3" style="width:29%"></i><i class="p4" style="width:7%"></i></div>
-          <p class="rn">아직 저장 할당이 정해지지 않았습니다 — LX 관리자가 기본 할당을 정하면 비율이 보입니다.</p>
-          <ul class="pjb">
-            <li><span class="lb">비닐하우스 2026</span><div class="bar2"><i class="p1" style="width:100%"></i></div><span class="n">10.2 MB</span></li>
-            <li><span class="lb">주차장 2026</span><div class="bar2"><i class="p2" style="width:88%"></i></div><span class="n">9.0 MB</span></li>
-            <li><span class="lb">건축물 2026</span><div class="bar2"><i class="p3" style="width:85%"></i></div><span class="n">8.7 MB</span></li>
-            <li><span class="lb">곤포사일리지 2026</span><div class="bar2"><i class="p4" style="width:19%"></i></div><span class="n">1.9 MB</span></li>
-          </ul>
+          <p class="rn" style="margin-top:4px">LX 관리자가 기본 할당을 정하면 비율이 보입니다.</p>
+          <div class="stor" data-parts="10.2,9.0,8.7,1.9" data-colors="p1,p2,p3,p4" data-center="29.8" data-label="MB · 프로젝트 4">
+            <div class="dn-svg"></div>
+            <ul class="pjb">
+              <li><div class="bar2"><i class="p1"></i></div><span class="lb">비닐하우스 2026</span><span class="n">10.2 MB</span></li>
+              <li><div class="bar2"><i class="p2"></i></div><span class="lb">주차장 2026</span><span class="n">9.0 MB</span></li>
+              <li><div class="bar2"><i class="p3"></i></div><span class="lb">건축물 2026</span><span class="n">8.7 MB</span></li>
+              <li><div class="bar2"><i class="p4"></i></div><span class="lb">곤포사일리지 2026</span><span class="n">1.9 MB</span></li>
+            </ul>
+          </div>
           <div class="ask">
             <div class="frm"><span class="fld ro">원하는 할당</span><span class="fld"><span class="ph">예: 50 GB</span></span><span class="fld ro">이유 한 줄</span><span class="fld"><span class="ph">왜 필요한지</span></span></div>
             <div class="act"><span class="ksub">대기 중 요청은 한 사람에 하나</span><span class="btn sm">늘리기 요청</span></div>
@@ -64,17 +67,25 @@
           <p class="rn">승인되면 할당이 요청한 값이 되고, 반려되면 사유가 알림으로 옵니다.</p>
         </section>
 
-        <!-- ④ 내가 쓴 분석 (11차 답: 한도 없음 · 쓴 양은 보여 줌) -->
+        <!-- ④ 내가 쓴 분석 (11차 답: 한도 없음 · 쓴 양은 보여 줌) — 종류별 막대 -->
         <section class="k c5" id="k-use">
-          <div class="k-h"><h2>내가 쓴 분석</h2><span class="ksub">9.26 – 10.01 · 내가 돌린 것</span></div>
-          <ul class="kv"><li><span>AI 분석</span><b>220건</b></li><li><span>필지 대조</span><b>104건</b></li><li><span>위성 지수</span><b>18건</b></li><li><span>모델 학습</span><b>6번</b></li><li><span>영상 준비</span><b>2건</b></li><li><span>걸린 시간 합</span><b>9시간 13분</b></li></ul>
-          <p class="rn">분석에는 한도가 없습니다. 쓴 양만 보입니다 — 끝난 것만 셌고(취소 36 · 실패 1 은 뺌) 학습 시간은 기록이 없어 시간 합에서 빠졌습니다.</p>
+          <div class="k-h"><h2>내가 쓴 분석</h2><span class="ksub">9.26 – 10.01 · 내가 돌린 것 · 한도 없음</span></div>
+          <div class="sum" style="border:0;padding:0;margin:0 0 10px;flex-direction:row"><b>350</b><span>건 끝남 · 걸린 시간 합 <b style="font-size:16px">9시간 13분</b></span></div>
+          <ul class="ub">
+            <li><span>AI 분석</span><div class="bar2"><i class="p1" style="width:100%"></i></div><span class="n">220<small>건</small></span></li>
+            <li><span>필지 대조</span><div class="bar2"><i class="p2" style="width:47%"></i></div><span class="n">104<small>건</small></span></li>
+            <li><span>위성 지수</span><div class="bar2"><i class="p3" style="width:8%"></i></div><span class="n">18<small>건</small></span></li>
+            <li><span>모델 학습</span><div class="bar2"><i class="p5" style="width:3%"></i></div><span class="n">6<small>번</small></span></li>
+            <li><span>영상 준비</span><div class="bar2"><i class="p4" style="width:1%"></i></div><span class="n">2<small>건</small></span></li>
+          </ul>
+          <p class="rn">끝난 것만 셌고(취소 36 · 실패 1 은 뺌) 학습 시간은 기록이 없어 시간 합에서 빠졌습니다.</p>
         </section>
 
       </div>
     </div>
   </main>
 </div>
+<script src="viz.js"></script>
 <script>
 chrome('me', '<b>시안</b> 내 정보 — 구 Land-XI 마이페이지(디스크 사용량 · 증량 신청 · 신청 이력 · 기본 정보) 구성에 프로젝트별 용량 · 내가 쓴 분석을 더함 · 값은 이 PC 서버(10-07 17:10)');
 </script>

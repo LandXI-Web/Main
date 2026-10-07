@@ -1,0 +1,166 @@
+/* 12차 다시(10-07 반려 "흰 바탕에 글만" → 원칙 132) — 정보 구성은 그대로, 시각만.
+   바탕을 한 단 어둡게 · 칸은 흰색 + 테두리 + 얕은 그림자 + 머리 띠 · 대표 칸 하나는 파란 바탕(구 'MY 작업현황' 자리 · 법전 액센트 한 색 · 그라데이션 0)
+   숫자는 크게 · 비율은 도넛 · 막대 · 쌓인 막대 · 사진이 있는 것은 사진(비닐하우스 결과 장면 4) · 단추 옆 그림 기호 0(원칙 126) */
+html,body,.app{background:#E9EDF2}
+.page{padding:16px 32px 32px}
+.g12{gap:16px}
+.k{background:#fff;border:1px solid #DDE2E8;border-radius:16px;box-shadow:0 1px 2px rgba(28,31,37,.04),0 6px 18px rgba(28,31,37,.06);padding:0 22px 18px}
+.k-h{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;min-height:54px;padding:12px 0 10px;margin:0 0 12px;border-bottom:1px solid var(--rule)}
+.k-h h2{font-size:18px;line-height:26px;white-space:nowrap}
+.k-h .ksub{font-size:13px;line-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.k-h .more{margin-left:auto;font-size:14px;color:var(--accent)}
+.k-h .btn.sm{margin-left:auto}
+.k-h .tabs{margin-left:auto}
+.ex{height:24px}
+.pj-foot{padding-top:10px;border-top:1px solid var(--rule)}
+
+/* 대표 칸 — 파란 바탕 · 안쪽은 흰 작은 칸 */
+.k.hero{background:var(--accent);border-color:var(--accent);box-shadow:0 1px 2px rgba(0,109,247,.2),0 8px 22px rgba(0,109,247,.22)}
+.k.hero .k-h{border-bottom-color:rgba(255,255,255,.28)}
+.k.hero .k-h h2,.k.hero .k-h .ksub{color:#fff}
+.k.hero .k-h .more{color:#fff;opacity:.9}
+.k.hero .k-h .ex{background:rgba(255,255,255,.18);color:#fff}
+.hb{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;flex:1}
+.hb li{flex:1}
+.hb li{display:grid;grid-template-columns:84px minmax(0,1fr) auto;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;background:#fff;min-height:64px}
+.hb .lb{font:500 14px/20px var(--font-body);color:var(--sub);white-space:nowrap}
+.hb .v{display:flex;flex-direction:column;gap:1px;min-width:0}
+.hb .v b{font:800 30px/34px var(--font-display);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.hb .v b small{font:500 14px/20px var(--font-body);color:var(--sub);margin-left:5px;letter-spacing:0}
+.hb .v span{font:400 13px/18px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hb .r{display:flex;align-items:center;gap:8px;flex:none}
+.hb .r .btn.sm{background:var(--accent);color:#fff;box-shadow:none}
+.hb .r .lnk.q{color:var(--accent);text-decoration:none;font-weight:500}
+.hb .nums{display:flex;gap:4px 14px;flex-wrap:wrap}
+.hb .nums .num{display:inline-flex;align-items:baseline;gap:4px;font:400 13px/18px var(--font-body);color:var(--sub)}
+.hb .nums .num b{font:800 22px/24px var(--font-display);color:var(--ink)}
+.hb .nums .num.w b{color:var(--warn)}.hb .nums .num.acc b{color:var(--accent)}
+.hb .bar2{height:10px;border-radius:5px;margin-top:6px}
+
+/* 도넛(SVG · viz.js 가 그린다) */
+.dn{display:grid;grid-template-columns:132px minmax(0,1fr);gap:16px;align-items:center}
+.dn svg{width:132px;height:132px;display:block}
+.dn .c,.stor .c{font:800 26px var(--font-display);fill:var(--ink);letter-spacing:-.02em}
+.dn .cl,.stor .cl{font:500 12px var(--font-body);fill:var(--sub)}
+.dn .lgd{margin:0;display:grid;grid-template-columns:1fr;gap:5px}
+.dn .lgd li{display:grid;grid-template-columns:10px minmax(0,1fr) auto auto;gap:8px;align-items:center;font-size:13px}
+.dn .lgd b{font:700 14px/18px var(--font-num);color:var(--ink);text-align:right}
+.dn .lgd .pc{font:500 12px/16px var(--font-num);color:var(--sub);text-align:right;min-width:34px}
+.dn.sm{grid-template-columns:112px minmax(0,1fr);gap:12px}
+.dn.sm svg{width:112px;height:112px}
+.dn.sm .c{font-size:22px}
+.p1{background:#0B7F78}.p2{background:#2F6FE4}.p3{background:#E0A526}.p4{background:#8A8F98}.p5{background:#7B61FF}.p6{background:#C7CBD1}
+
+/* 막대 — 두껍게 · 숫자 함께 */
+.bar2{height:10px;border-radius:5px}
+.stk{height:12px;border-radius:6px}
+.cls{gap:9px}
+.cls li{grid-template-columns:76px minmax(0,1fr) 128px}
+.cls .bar2{height:12px;border-radius:6px}
+.cls .n b{font:700 15px/18px var(--font-num)}
+.seg6{grid-template-columns:repeat(6,18px);gap:3px}
+.seg6 i{height:10px;border-radius:3px}
+.seg6.big i{height:14px;border-radius:4px}
+.tr li{grid-template-columns:128px minmax(0,1fr) 54px}
+.tr .bar2{height:10px}
+.prog li{padding:9px 0}
+
+/* 큰 값 칸 · 작은 상자 */
+.big{gap:10px}
+.big li{padding:12px 14px;border-radius:12px;background:var(--bg-0);border:1px solid #E8ECF0}
+.big li b{font-size:30px;line-height:36px}
+.box{background:var(--bg-0);border:1px solid #E8ECF0}
+.k.hero .big li,.k.hero .box{background:#fff;border-color:#fff}
+
+/* 사진 — 표본 · 결과 장면 */
+.ph-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}
+.ph-row figure{position:relative;margin:0;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:var(--bg-0)}
+.ph-row img{width:100%;height:100%;object-fit:cover;display:block}
+.ph-row figcaption{position:absolute;left:6px;bottom:6px;height:20px;padding:0 7px;border-radius:5px;background:rgba(255,255,255,.94);font:500 11px/20px var(--font-body);color:var(--ink);white-space:nowrap}
+.ph-row figure.more{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:var(--bg-0);border:1px solid #E8ECF0;font:500 13px/18px var(--font-body);color:var(--ink);text-align:center;padding:8px}
+.ph-row figure.more b{font:800 24px/28px var(--font-display);color:var(--ink)}
+.th{flex:none;width:56px;height:40px;border-radius:7px;overflow:hidden;background:var(--bg-0);border:1px solid #E8ECF0;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
+.th img{width:100%;height:100%;object-fit:cover;display:block}
+.th img.sh{object-fit:contain;padding:3px;background:transparent;border:0;margin:0;width:100%;height:100%;border-radius:0}
+
+/* 목록 줄 — 그림 자리 + 상태 칩 */
+.ls li{grid-template-columns:80px 56px minmax(0,1fr) auto;align-items:center;padding:7px 0}
+.ls li:first-child{padding-top:0}
+.ls .t small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ls .st{height:26px;padding:0 9px;font-weight:600}
+.ls.ntc li{grid-template-columns:34px minmax(0,1fr) auto;align-items:center}
+.ls.ntc .no{width:28px;height:28px;border-radius:8px;background:#E8F1FF;color:var(--accent);display:inline-flex;align-items:center;justify-content:center;font:700 13px/1 var(--font-num)}
+.ls.ntc li.new .no{background:var(--accent);color:#fff}
+.ls.ntc .d{font-size:12px}
+.ls.memo li{grid-template-columns:56px minmax(0,1fr) auto auto;align-items:center}
+.ls.memo .no{height:24px;padding:0 8px;border-radius:6px;background:var(--bg-0);display:inline-flex;align-items:center;font-size:12px;color:var(--sub)}
+.memo-p{padding:10px 12px 10px 14px;border:0;border-left:3px solid #E0A526;background:#FFFBEE;border-radius:0 10px 10px 0;margin-bottom:8px;font-size:14px;line-height:20px}
+.memo-p:first-child{padding-top:10px}
+.memo-p small{font-size:12px}
+
+/* 표 — 머리 띠 · 줄 그림 */
+.tb th{background:var(--bg-0);padding:8px 10px 8px 8px;border-bottom:1px solid #DDE2E8;border-top:1px solid #DDE2E8}
+.tb th:first-child{border-radius:8px 0 0 8px;padding-left:10px}
+.tb th:last-child{border-radius:0 8px 8px 0;padding-right:10px}
+.tb td{padding:7px 10px 7px 8px}
+.tb td:first-child{padding-left:10px}
+.tb td.nm .th{margin-right:10px}
+.tb td.nm .t{display:inline-block;vertical-align:middle;white-space:nowrap}
+.tb td.nm small{display:inline;margin-left:6px}
+.tb .seg{width:64px;height:6px;border-radius:3px}
+.tb .sh{margin:0}
+
+/* 내 정보 — 저장 용량 대표 칸 · 내가 쓴 분석 막대 */
+.k.hero .use b,.k.hero .use b small,.k.hero .use em{color:#fff}
+.k.hero .use em{opacity:.92}
+.k.hero .rn{color:#fff;opacity:.9}
+.k.hero .ask{border-top:0;background:#fff;border-radius:12px;padding:12px 14px;margin-top:10px}
+.k.hero .ask .ksub{color:var(--sub)}
+.k.hero .ask .btn.sm{background:var(--accent);color:#fff}
+.stor{display:grid;grid-template-columns:132px minmax(0,1fr);gap:14px;align-items:center;background:#fff;border-radius:12px;padding:12px 14px;margin-top:10px}
+.stor svg{width:132px;height:132px;display:block}
+.stor .pjb{margin:0;padding:0;background:transparent}
+.stor .pjb li{grid-template-columns:14px minmax(0,1fr) auto;gap:8px}
+.stor .pjb .bar2{height:14px;border-radius:4px}
+.stor .pjb .bar2 i{width:100%!important}
+.ub{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+.ub li{display:grid;grid-template-columns:76px minmax(0,1fr) 64px;gap:10px;align-items:center;font:400 14px/20px var(--font-body);color:var(--ink)}
+.ub .bar2{height:12px;border-radius:6px}
+.ub .n{text-align:right;font:700 15px/18px var(--font-num);color:var(--ink);white-space:nowrap}
+.ub .n small{font:400 12px/16px var(--font-body);color:var(--sub);margin-left:2px}
+.info th{background:var(--bg-0);padding-left:12px;width:132px}
+.info td{padding-left:14px}
+.info tr:first-child th{border-radius:8px 0 0 0}
+.info tr:last-child th{border-radius:0 0 0 8px}
+
+/* 적용 지역 — 행정경계 + 결과 장면 */
+.reg li{grid-template-columns:72px minmax(0,1fr) 96px;background:#fff;border:1px solid #E8ECF0}
+.reg .ph{width:96px;height:64px;border-radius:8px;overflow:hidden;background:var(--bg-0);border:1px solid #E8ECF0}
+.reg .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.reg .ph.none{display:flex;align-items:center;justify-content:center;font:400 11px/14px var(--font-body);color:var(--sub);text-align:center;padding:4px}
+
+/* 할 일 띠 — 칸처럼 */
+.todo-bar{background:#fff;border:1px solid #DDE2E8;box-shadow:0 1px 2px rgba(28,31,37,.04),0 6px 18px rgba(28,31,37,.06);border-radius:16px;padding:10px 20px 10px 18px}
+
+@media (max-width:960px){
+  .page{padding:16px 16px 28px}
+  .k{padding:0 16px 16px}
+  .k-h{min-height:50px;padding:10px 0 8px;overflow:hidden}
+  .k-h .ksub{display:none}
+  .hb li{grid-template-columns:76px minmax(0,1fr);gap:6px 10px;padding:10px 12px}
+  .hb .r{grid-column:2}
+  .dn{grid-template-columns:112px minmax(0,1fr);gap:12px}
+  .dn svg{width:112px;height:112px}
+  .ls li{grid-template-columns:52px 48px minmax(0,1fr) auto;gap:8px}
+  .ls .d{white-space:normal;font-size:12px;line-height:16px}
+  .ls.memo .pj small{display:block;margin-left:0}
+  .th{width:48px;height:34px}
+  .ph-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stor{grid-template-columns:1fr;justify-items:center}
+  .reg li{grid-template-columns:56px minmax(0,1fr);gap:10px}
+  .reg img{width:56px;height:48px}
+  .reg .ph{display:none}
+  .ub li{grid-template-columns:70px minmax(0,1fr) 60px}
+  .tb td.nm .th{display:none}
+  .tb td.nm small{display:none}
+}
