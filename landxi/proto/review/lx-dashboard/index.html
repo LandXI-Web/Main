@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · LX 직원 대시보드 — 내 업무 · 프로젝트 · 팀 · 공지</title>
+<link rel="stylesheet" href="dash.css">
+<script src="chrome.js"></script>
+</head>
+<body class="m has-stamp">
+<div class="app" id="app">
+  <main class="main">
+    <div class="page">
+      <div class="stack">
+
+        <!-- 머리 한 줄 — 이름 · 숫자는 작은 글로 · 오른쪽 바로 분석하기 -->
+        <header class="row-h" id="k-head">
+          <div>
+            <h1>대시보드</h1>
+            <ul class="glance" id="glance">
+              <li><b>4</b>내 프로젝트 · 모두 서비스 운영 중</li>
+              <li><b>7</b>곳 시범 적용</li>
+              <li class="z"><b>0</b>요청함 · 새로 온 것 없음</li>
+            </ul>
+          </div>
+          <div class="quick"><span class="fld"><span class="ph">시군구 검색 — 바로 분석하기</span></span><span class="btn b2 sm" style="height:40px">분석하기</span></div>
+        </header>
+
+        <!-- 할 일 띠 — 있을 때만 한 줄. 없으면 이 줄 자체가 사라진다(빈 칸 0) -->
+        <section class="todo-bar" id="todo">
+          <span class="cnt"><b>4</b>할 일</span>
+          <span class="what">AI 결과가 맞는지 보기 — 프로젝트마다 표본 20건 중 0건 봄<small>다 보면 현장 확인 필지 수가 섭니다</small></span>
+          <span class="who"><span class="chip">비닐하우스 2026</span><span class="chip">건축물 2026</span><span class="chip">주차장 2026</span><span class="chip">곤포사일리지 2026</span></span>
+        </section>
+
+        <div class="two">
+          <div class="col">
+
+            <!-- 내 프로젝트 진행 상황 -->
+            <section class="k" id="k-pj">
+              <div class="k-h"><h2>내 프로젝트</h2><span class="ksub">프로젝트장 4 · 참여 0</span><span class="more">프로젝트</span></div>
+              <ul class="pj">
+                <li><span class="sh"><img src="shape-43745.svg" alt=""></span><span class="nm"><b>비닐하우스 2026</b><small>증평군 · 함양군 · 남원시</small></span><span class="st">서비스 운영 중 · 시범 적용 3곳<small>마지막 10.01 · 기록 11</small></span><span class="td">표본 20건 중 0건 봄</span></li>
+                <li><span class="sh"><img src="shape-51130.svg" alt=""></span><span class="nm"><b>건축물 2026</b><small>원주시</small></span><span class="st">서비스 운영 중 · 시범 적용 1곳<small>마지막 10.01 · 기록 7</small></span><span class="td">표본 20건 중 0건 봄</span></li>
+                <li><span class="sh"><img src="shape-41670.svg" alt=""></span><span class="nm"><b>주차장 2026</b><small>여주시 · 천안시 서북구</small></span><span class="st">서비스 운영 중 · 시범 적용 2곳<small>마지막 10.01 · 기록 7</small></span><span class="td">표본 20건 중 0건 봄</span></li>
+                <li><span class="sh"><img src="shape-44180.svg" alt=""></span><span class="nm"><b>곤포사일리지 2026</b><small>보령시</small></span><span class="st">서비스 운영 중 · 시범 적용 1곳<small>마지막 10.01 · 기록 6</small></span><span class="td">표본 20건 중 0건 봄</span></li>
+              </ul>
+              <div class="pj-foot"><span class="lnk">새 프로젝트</span><span class="lnk" style="color:var(--sub)">보관한 프로젝트 0</span></div>
+              <div class="fold-h" id="foldAct"><b>최근 활동 3</b><span>10.01 건축물 천안시 서북구 결과 갱신</span></div>
+              <ul class="fold tight act" id="actList" hidden>
+                <li><span class="r">10.01</span><span class="t"><b>건축물</b> 천안시 서북구 결과 갱신</span><span class="r go">XI맵</span></li>
+                <li><span class="r">09.30</span><span class="t">모델 학습 끝남</span><span class="r go">프로젝트</span></li>
+                <li><span class="r">09.30</span><span class="t"><b>건축물</b> 원주시 결과 갱신</span><span class="r go">XI맵</span></li>
+              </ul>
+            </section>
+
+            <!-- 내 서비스가 돌고 있는 곳 — 구 대시보드 '전국 판'을 작게 -->
+            <section class="k" id="k-where">
+              <div class="k-h"><h2>내 서비스가 돌고 있는 곳</h2><span class="ksub">시범 적용 7곳</span><span class="more">XI맵</span></div>
+              <div class="where">
+                <div class="map"><img src="korea-mine.svg" alt="" style="width:100%;height:100%;object-fit:contain"></div>
+                <div class="lst">
+                  <div class="row"><span class="lb">비닐하우스 2026</span><span class="chip">증평군</span><span class="chip">함양군</span><span class="chip">남원시</span></div>
+                  <div class="row"><span class="lb">건축물 2026</span><span class="chip">원주시</span></div>
+                  <div class="row"><span class="lb">주차장 2026</span><span class="chip">여주시</span><span class="chip">천안시 서북구</span></div>
+                  <div class="row"><span class="lb">곤포사일리지 2026</span><span class="chip">보령시</span></div>
+                </div>
+              </div>
+            </section>
+
+          </div>
+          <div class="col">
+
+            <!-- 팀과 소통 — 프로젝트별 최근 메모 · 대화 · 멘션(프로젝트 한 장의 '기록 · 메모 · 파일'과 같은 곳) -->
+            <section class="k" id="k-talk">
+              <div class="k-h"><h2>팀과 소통</h2><span class="ksub">내 프로젝트의 메모 · 대화</span><span class="ex" style="margin-left:auto">예시 — 지금 구성원 · 메모 0</span></div>
+              <ul class="talk">
+                <li><div class="hd"><b>LX 관리자</b><span class="pjn">비닐하우스 2026</span><span>어제 17:40</span></div><p><span class="mt">@LX 직원</span> 증평군 표본 10건은 제가 볼게요. 나머지 10건 부탁드립니다.</p></li>
+                <li><div class="hd"><b>LX 직원</b><span class="pjn">주차장 2026</span><span>10.01</span></div><p>천안시 서북구 결과 갱신 — 여주시와 견준 뒤 보고.</p></li>
+                <li><div class="hd"><b>LX 관리자</b><span class="pjn">건축물 2026</span><span>09.30</span></div><p><span class="fi">원주시 현장 사진 3장</span> 표본 볼 때 같이 보세요.</p></li>
+              </ul>
+              <div class="write"><span class="pick">비닐하우스 2026</span><span class="fld"><span class="ph">메모 남기기 · @이름</span></span></div>
+            </section>
+
+            <!-- 공지사항 — LX 전체 -->
+            <section class="k" id="k-ntc">
+              <div class="k-h"><h2>공지사항</h2><span class="ksub">LX 전체</span><span class="ex" style="margin-left:auto">예시 — 지금 공지 0</span></div>
+              <ul class="ntc">
+                <li class="new"><span class="d">10.06</span><span class="t">영상 형식 표준 적용 안내<small>새로 올리는 영상은 표준본으로 저장</small></span></li>
+                <li class="new"><span class="d">10.02</span><span class="t">연휴 기간 분석 대기열 운영<small>10.3–10.9 분석은 다음 날 아침 완료</small></span></li>
+                <li><span class="d">09.30</span><span class="t">임시 비밀번호 바꾸기 안내</span></li>
+              </ul>
+              <div class="pj-foot" style="margin-top:8px"><span class="lnk">모두 보기</span></div>
+            </section>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+const Q = new URLSearchParams(location.search);
+chrome('home', '<b>시안</b> LX 직원 대시보드 — 내 업무 · 내 프로젝트 · 팀과 소통 · 공지 · 값은 이 PC 서버(10-07 16:01) · 서버에 없는 것은 "예시"');
+if ((Q.get('open') || '').includes('act')) { document.getElementById('actList').hidden = false; document.getElementById('foldAct').classList.add('open'); }
+/* 할 일이 없을 때 — 띠가 사라지고, 줄의 빨간 꼬리표가 상태 글로 바뀐다. 다른 칸은 그대로(빈 칸을 세우지 않는다) */
+if (Q.get('todo') === '0') {
+  document.getElementById('todo').remove();
+  document.querySelectorAll('.pj li').forEach((li) => {
+    const st = li.querySelector('.st'); st.innerHTML = st.innerHTML.replace('서비스 운영 중', '표본 20건 다 봄 · 서비스 운영 중');
+    const td = li.querySelector('.td'); td.className = 'ok'; td.textContent = '할 일 없음';
+  });
+  document.getElementById('stamp').innerHTML = '<b>시안</b> 할 일이 없을 때 — 띠가 사라지고 줄의 꼬리표만 바뀜(예시 · 표본을 다 본 뒤)';
+}
+</script>
+</body>
+</html>

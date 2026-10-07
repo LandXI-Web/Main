@@ -1,0 +1,103 @@
+/* 설계 11차 · LX 직원 대시보드 시안 — base.css(틀) · r10.css(부품) 위에 더하는 것만.
+   한 화면 = 머리 한 줄 · 할 일 띠(있을 때만) · 왼쪽(내 프로젝트 · 돌고 있는 곳) · 오른쪽(팀과 소통 · 공지사항). 큰 숫자 띠 없음 — 숫자는 머리 한 줄의 작은 글. */
+@import url("r10.css");
+
+.page{padding:16px 40px 24px}
+.row-h{margin-bottom:4px}
+.row-h h1{font-size:30px;line-height:38px}
+.glance{display:flex;flex-wrap:wrap;gap:6px 18px;margin:0;padding:0;list-style:none}
+.glance li{font:400 15px/22px var(--font-body);color:var(--sub)}
+.glance li b{font:700 17px/22px var(--font-num);color:var(--ink);margin-right:2px;letter-spacing:-.01em}
+.glance li.z b{color:var(--sub);font-weight:600}
+.quick{display:flex;align-items:center;gap:8px;flex:none}
+.quick .fld{height:40px;width:280px}
+
+/* 할 일 띠 — 한 줄 · 있을 때만 · 왼쪽 빨간 선 */
+.todo-bar{display:flex;align-items:center;gap:14px;min-height:52px;padding:6px 20px 6px 18px;border-radius:12px;background:var(--bg-1);box-shadow:inset 4px 0 0 var(--warn)}
+.todo-bar .cnt{flex:none;display:inline-flex;align-items:baseline;gap:6px;font:700 17px/24px var(--font-body);color:var(--warn);white-space:nowrap}
+.todo-bar .cnt b{font:800 22px/24px var(--font-num)}
+.todo-bar .what{min-width:0;font:400 15px/22px var(--font-body);color:var(--ink)}
+.todo-bar .what small{color:var(--sub);margin-left:6px}
+.todo-bar .who{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto}
+.todo-bar .who .chip{height:28px;font-size:13px;padding:0 10px;background:var(--bg-0);color:var(--ink)}
+
+/* 두 칸 */
+.two{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:14px;align-items:start}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+
+/* 내 프로젝트 — 줄 넷 */
+.pj{list-style:none;margin:0;padding:0}
+.pj li{display:grid;grid-template-columns:64px minmax(0,1fr) auto auto;gap:16px;align-items:center;padding:10px 0;border-top:1px solid var(--rule)}
+.pj li:first-child{border-top:0;padding-top:4px}
+.pj .sh{width:64px;height:48px;border-radius:8px;overflow:hidden;background:var(--bg-0)}
+.pj .sh img{width:100%;height:100%;display:block;object-fit:cover}
+.pj .nm{min-width:0}
+.pj .nm b{display:block;font:500 16px/22px var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pj .nm small{display:block;font:400 14px/20px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pj .st{font:400 15px/22px var(--font-body);color:var(--ink);white-space:nowrap}
+.pj .st small{display:block;font:400 13px/18px var(--font-body);color:var(--sub);white-space:nowrap}
+.pj .td{display:inline-flex;align-items:center;height:30px;padding:0 10px;border-radius:8px;background:#FFF1EC;color:var(--warn);font:500 14px/1 var(--font-body);white-space:nowrap}
+.pj .ok{font:500 14px/20px var(--font-body);color:var(--sub);white-space:nowrap}
+.pj-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:4px}
+
+/* 돌고 있는 곳 — 지도 + 칩 */
+.where{display:grid;grid-template-columns:200px minmax(0,1fr);gap:20px;align-items:center}
+.where .map{width:200px;height:160px;background:var(--bg-0);border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.where .map svg{width:100%;height:100%}
+.where .lst{display:flex;flex-direction:column;gap:10px}
+.where .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.where .row .lb{flex:none;width:112px;font:500 14px/20px var(--font-body);color:var(--sub)}
+.where .chip{height:28px;font-size:13px;padding:0 10px;background:#E6F6F5;color:#0B7F78}
+
+/* 팀과 소통 */
+.talk{list-style:none;margin:0;padding:0}
+.talk li{display:block;padding:12px 0;border-top:1px solid var(--rule)}
+.talk li:first-child{border-top:0;padding-top:4px}
+.talk .hd{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;font:400 13px/18px var(--font-body);color:var(--sub)}
+.talk .hd b{font:500 14px/18px var(--font-body);color:var(--ink)}
+.talk .hd .pjn{color:#0B7F78;background:#E6F6F5;padding:0 6px;border-radius:4px;font-weight:500}
+.talk p{margin:4px 0 0;font:400 15px/22px var(--font-body);color:var(--ink)}
+.talk p .mt{color:#0052C2;background:#EEF4FF;padding:0 4px;border-radius:4px;font-weight:500}
+.talk p .fi{color:var(--ink);font-weight:500;text-decoration:underline;text-underline-offset:3px}
+.write{display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--rule)}
+.write .fld{flex:1;height:40px}
+.write .fld .ph{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.write .pick{flex:none;height:40px;padding:0 12px;border-radius:8px;background:var(--bg-0);color:var(--ink);font:500 14px/40px var(--font-body);white-space:nowrap}
+
+/* 공지사항 */
+.ntc{list-style:none;margin:0;padding:0}
+.ntc li{display:grid;grid-template-columns:52px minmax(0,1fr);gap:12px;padding:10px 0;border-top:1px solid var(--rule);align-items:baseline}
+.ntc li:first-child{border-top:0;padding-top:4px}
+.ntc .d{font:500 14px/22px var(--font-num);color:var(--sub)}
+.ntc .t{font:500 15px/22px var(--font-body);color:var(--ink)}
+.ntc .t small{display:block;font:400 14px/20px var(--font-body);color:var(--sub)}
+.ntc li.new .d{color:var(--accent)}
+
+/* 예시 도장(서버에 없는 것) — 칸 머리 오른쪽 작은 꼬리표 */
+.ex{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;background:#FFF7DB;color:#7A5A00;font:500 12px/1 var(--font-body);white-space:nowrap}
+
+@media (max-width:960px){
+  .page{padding:16px 16px 24px}
+  .row-h{flex-direction:column;align-items:stretch;gap:10px}
+  .row-h h1{font-size:26px;line-height:34px}
+  .quick{width:100%}
+  .quick .fld{flex:1;width:auto}
+  .glance{gap:4px 14px}
+  .glance li{font-size:14px}
+  .todo-bar{flex-wrap:wrap;gap:6px 12px;padding:12px 16px 12px 14px}
+  .todo-bar .who{margin-left:0;width:100%}
+  .two{grid-template-columns:minmax(0,1fr)}
+  .pj li{grid-template-columns:56px minmax(0,1fr);gap:6px 12px;padding:14px 0}
+  .pj .sh{width:56px;height:42px;grid-row:1/3;align-self:start}
+  .pj .nm{grid-column:2}
+  .pj .st{grid-column:2}
+  .pj .td,.pj .ok{grid-column:2;justify-self:start;margin-top:2px}
+  .where{grid-template-columns:minmax(0,1fr)}
+  .where .map{width:100%;height:200px}
+  .where .row .lb{width:100%}
+  .write{flex-wrap:wrap}
+  .write .fld{flex-basis:100%}
+}
+
+/* 원칙 126(10-07) — 글자 옆 그림 기호 0: 물려받은 화살표 · 세모 덮어쓰기 */
+.more::after,.fold .r.go::after,.fold .r.car::after,.fold-h span::after,.fold-h.open span::after{content:none}
