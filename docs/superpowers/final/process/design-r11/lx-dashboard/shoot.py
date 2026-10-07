@@ -16,7 +16,6 @@ LIST = [
     ('mock/index.html', 'new-dash-1440.png', PC, False),
     ('mock/index.html?todo=0', 'new-dash-empty-1440.png', PC, False),
     ('mock/index.html', 'new-dash-390.png', M, False),
-    ('mock/index.html', 'new-dash-390-full.png', M, True),
 ]
 
 FORBID = [

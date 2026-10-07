@@ -1,103 +1,177 @@
-/* 설계 11차 · LX 직원 대시보드 시안 — base.css(틀) · r10.css(부품) 위에 더하는 것만.
-   한 화면 = 머리 한 줄 · 할 일 띠(있을 때만) · 왼쪽(내 프로젝트 · 돌고 있는 곳) · 오른쪽(팀과 소통 · 공지사항). 큰 숫자 띠 없음 — 숫자는 머리 한 줄의 작은 글. */
+/* 설계 11차(다시) · LX 직원 대시보드 시안 — base.css(틀) · r10.css(부품) 위에 더하는 것만.
+   원칙 127: 12칸 격자로 넓이 전체를 고르게 — 판은 가운데 정렬 · 넓이 제한 없음(1920 까지) · 왼쪽 쏠림 0 · 큰 빈 여백 0.
+   원칙 128: 직원이 매일 보고 싶은 것 — 내 프로젝트(용량 포함) · 내 자원 · 분석 · 나에게 온 것 · 돌고 있는 곳 · 팀 · 공지.
+   원칙 126: 단추 · 글자 옆 그림 기호 0. */
 @import url("r10.css");
 
-.page{padding:16px 40px 24px}
-.row-h{margin-bottom:4px}
+.page{padding:16px 32px 28px;max-width:none;margin:0 auto}
+.g12{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px;align-items:stretch}
+.c12{grid-column:span 12}.c8{grid-column:span 8}.c7{grid-column:span 7}.c5{grid-column:span 5}.c4{grid-column:span 4}
+.k{display:flex;flex-direction:column;padding:16px 22px 16px}
+.k-h{margin-bottom:6px}
+.k-h .more,.k-h .ex{margin-left:auto}
+
+/* 머리 */
+.row-h{margin-bottom:0}
 .row-h h1{font-size:30px;line-height:38px}
-.glance{display:flex;flex-wrap:wrap;gap:6px 18px;margin:0;padding:0;list-style:none}
-.glance li{font:400 15px/22px var(--font-body);color:var(--sub)}
-.glance li b{font:700 17px/22px var(--font-num);color:var(--ink);margin-right:2px;letter-spacing:-.01em}
-.glance li.z b{color:var(--sub);font-weight:600}
+.today{margin:2px 0 0;font:400 15px/22px var(--font-body);color:var(--sub)}
+.today b{font:700 16px/22px var(--font-num);color:var(--ink)}
 .quick{display:flex;align-items:center;gap:8px;flex:none}
 .quick .fld{height:40px;width:280px}
 
-/* 할 일 띠 — 한 줄 · 있을 때만 · 왼쪽 빨간 선 */
-.todo-bar{display:flex;align-items:center;gap:14px;min-height:52px;padding:6px 20px 6px 18px;border-radius:12px;background:var(--bg-1);box-shadow:inset 4px 0 0 var(--warn)}
-.todo-bar .cnt{flex:none;display:inline-flex;align-items:baseline;gap:6px;font:700 17px/24px var(--font-body);color:var(--warn);white-space:nowrap}
-.todo-bar .cnt b{font:800 22px/24px var(--font-num)}
-.todo-bar .what{min-width:0;font:400 15px/22px var(--font-body);color:var(--ink)}
-.todo-bar .what small{color:var(--sub);margin-left:6px}
+/* 할 일 띠 — 있을 때만 · 왼쪽 빨간 선 · 할 일 종류마다 한 줄 */
+.todo-bar{display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 18px;align-items:start;padding:7px 20px 7px 18px;border-radius:12px;background:var(--bg-1);box-shadow:inset 4px 0 0 var(--warn)}
+.todo-bar .cnt{display:inline-flex;align-items:baseline;gap:6px;font:700 17px/26px var(--font-body);color:var(--warn);white-space:nowrap;padding-top:4px}
+.todo-bar .cnt b{font:800 24px/26px var(--font-num)}
+.todo-bar .tl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.todo-bar .tl li{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:3px 0;font:400 15px/24px var(--font-body);color:var(--sub)}
+.todo-bar .tl li+li{border-top:1px solid var(--rule);margin-top:1px;padding-top:4px}
+.todo-bar .tl .w{font-weight:600;color:var(--ink);white-space:nowrap}
 .todo-bar .who{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto}
 .todo-bar .who .chip{height:28px;font-size:13px;padding:0 10px;background:var(--bg-0);color:var(--ink)}
 
-/* 두 칸 */
-.two{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:14px;align-items:start}
-.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+/* ① 내 프로젝트 — 표 */
+.pjt{width:100%;border-collapse:collapse;table-layout:auto}
+.pjt th:first-child{width:40%}
+.pjt th{text-align:left;font:500 13px/18px var(--font-body);color:var(--sub);padding:0 10px 8px 0;border-bottom:1px solid var(--rule);white-space:nowrap}
+.pjt th.n,.pjt td.n{text-align:right}
+.pjt td{padding:7px 10px 7px 0;border-bottom:1px solid var(--rule);vertical-align:middle;font:400 15px/22px var(--font-body);color:var(--ink)}
+.pjt tbody tr:last-child td{border-bottom:1px solid var(--rule)}
+.pjt tfoot td{border-bottom:0;padding-top:9px;padding-bottom:0;color:var(--sub);font-size:14px}
+.pjt tfoot td b{color:var(--ink);font-weight:600}
+.pjt th:last-child,.pjt td:last-child{padding-right:0;text-align:right}
+.pjt .nm>div{display:flex;align-items:center;gap:12px;min-width:0}
+.pjt .nm .sh{width:48px;height:36px;border-radius:8px;background:var(--bg-0);object-fit:cover;flex:none}
+.pjt .nm b{display:block;font-weight:500;white-space:nowrap}
+.pjt .nm small{display:block;font:400 13px/18px var(--font-body);color:var(--sub);white-space:nowrap}
+.pjt .sta{white-space:nowrap}
+.pjt .sta small{display:block;font:400 13px/18px var(--font-body);color:var(--sub)}
+.pjt td.n{font-family:var(--font-num);white-space:nowrap}
+.pjt .seg{display:block;height:4px;width:64px;margin:4px 0 0 auto;border-radius:2px;background:var(--rule);overflow:hidden}
+.pjt .seg i{display:block;height:100%;background:#0B7F78}
+.pjt .td{display:inline-flex;align-items:center;height:28px;padding:0 9px;border-radius:8px;background:#FFF1EC;color:var(--warn);font:500 13px/1 var(--font-body);white-space:nowrap}
+.pjt .td.t2{background:#EEF4FF;color:#0052C2;margin-left:4px}
+.pjt .ok{font:500 13px/20px var(--font-body);color:var(--sub)}
 
-/* 내 프로젝트 — 줄 넷 */
-.pj{list-style:none;margin:0;padding:0}
-.pj li{display:grid;grid-template-columns:64px minmax(0,1fr) auto auto;gap:16px;align-items:center;padding:10px 0;border-top:1px solid var(--rule)}
-.pj li:first-child{border-top:0;padding-top:4px}
-.pj .sh{width:64px;height:48px;border-radius:8px;overflow:hidden;background:var(--bg-0)}
-.pj .sh img{width:100%;height:100%;display:block;object-fit:cover}
-.pj .nm{min-width:0}
-.pj .nm b{display:block;font:500 16px/22px var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pj .nm small{display:block;font:400 14px/20px var(--font-body);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pj .st{font:400 15px/22px var(--font-body);color:var(--ink);white-space:nowrap}
-.pj .st small{display:block;font:400 13px/18px var(--font-body);color:var(--sub);white-space:nowrap}
-.pj .td{display:inline-flex;align-items:center;height:30px;padding:0 10px;border-radius:8px;background:#FFF1EC;color:var(--warn);font:500 14px/1 var(--font-body);white-space:nowrap}
-.pj .ok{font:500 14px/20px var(--font-body);color:var(--sub);white-space:nowrap}
-.pj-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:4px}
+/* ② 내 자원 */
+.res{display:flex;flex-direction:column;gap:12px;flex:1}
+.res .r+.r{border-top:1px solid var(--rule);padding-top:12px}
+.res .rh{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;font:400 14px/20px var(--font-body);color:var(--sub)}
+.res .rh b{font:600 15px/22px var(--font-body);color:var(--ink)}
+.res .rh em{font-style:normal;color:var(--warn);font-weight:500}
+.stk{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--rule);margin-top:8px;gap:2px}
+.stk i{display:block;height:100%}
+.p1{background:#0B7F78}.p2{background:#2F6FE4}.p3{background:#B9770E}.p4{background:#8A8F98}
+.lgd{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:4px 14px;font:400 13px/18px var(--font-body);color:var(--sub)}
+.lgd li{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;border:0;padding:0}
+.lgd i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.rn{margin:8px 0 0;font:400 13px/18px var(--font-body);color:var(--sub)}
+.kv{list-style:none;margin:8px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:6px 16px}
+.kv li{display:flex;justify-content:space-between;gap:8px;font:400 14px/20px var(--font-body);color:var(--sub);border-bottom:1px dashed var(--rule);padding-bottom:4px}
+.kv li b{font:600 15px/20px var(--font-num);color:var(--ink);white-space:nowrap}
 
-/* 돌고 있는 곳 — 지도 + 칩 */
-.where{display:grid;grid-template-columns:200px minmax(0,1fr);gap:20px;align-items:center}
-.where .map{width:200px;height:160px;background:var(--bg-0);border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center}
-.where .map svg{width:100%;height:100%}
-.where .lst{display:flex;flex-direction:column;gap:10px}
-.where .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.where .row .lb{flex:none;width:112px;font:500 14px/20px var(--font-body);color:var(--sub)}
-.where .chip{height:28px;font-size:13px;padding:0 10px;background:#E6F6F5;color:#0B7F78}
+/* ③ 분석 */
+.now{display:flex;align-items:baseline;gap:18px;padding:6px 0 10px;border-bottom:1px solid var(--rule)}
+.now span{font:400 14px/20px var(--font-body);color:var(--sub);white-space:nowrap}
+.now span b{font:700 24px/28px var(--font-num);color:var(--ink);margin-right:4px}
+.now .q{margin-left:auto;font-size:13px;white-space:normal;text-align:right}
+.done{list-style:none;margin:0;padding:0}
+.done li{display:grid;grid-template-columns:86px minmax(0,1fr);gap:10px;padding:7px 0;border-top:1px solid var(--rule);align-items:baseline}
+.done li:first-child{border-top:0}
+.done .d{font:500 13px/20px var(--font-num);color:var(--sub);white-space:nowrap}
+.done .t{font:400 15px/22px var(--font-body);color:var(--ink)}
+.done .t b{font-weight:600}
+.done .t small{display:block;font:400 13px/18px var(--font-body);color:var(--sub)}
 
-/* 팀과 소통 */
-.talk{list-style:none;margin:0;padding:0}
-.talk li{display:block;padding:12px 0;border-top:1px solid var(--rule)}
-.talk li:first-child{border-top:0;padding-top:4px}
+/* ④ 나에게 온 것 */
+.inb{list-style:none;margin:0;padding:0;flex:1}
+.inb li{display:grid;grid-template-columns:40px minmax(0,1fr);gap:12px;padding:10px 0;border-top:1px solid var(--rule);align-items:start}
+.inb li:first-child{border-top:0;padding-top:4px}
+.inb .n{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;background:#FFF1EC;color:var(--warn);font:700 18px/1 var(--font-num)}
+.inb .n.z{background:var(--bg-0);color:var(--sub);font-weight:600}
+.inb .n.acc{background:#EEF4FF;color:#0052C2}
+.inb .t{font:400 15px/22px var(--font-body);color:var(--ink)}
+.inb .t b{font-weight:600}
+.inb .t small{display:block;font:400 13px/18px var(--font-body);color:var(--sub)}
+
+/* ⑤ 돌고 있는 곳 — 지도 + 칩 */
+.where{display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;align-items:center;flex:1}
+.where .map{width:120px;height:180px;background:var(--bg-0);border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.where .map img{width:100%;height:100%;object-fit:contain}
+.where .lst{display:flex;flex-direction:column;gap:7px}
+.where .row{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center}
+.where .row .lb{flex:none;width:100%;font:500 13px/16px var(--font-body);color:var(--sub)}
+.where .chip{height:26px;font-size:13px;padding:0 9px;background:#E6F6F5;color:#0B7F78}
+
+/* ⑥ 팀과 소통 */
+.talk{list-style:none;margin:0;padding:0;flex:1}
+.talk li{display:block;padding:10px 0;border-top:1px solid var(--rule)}
+.talk li:first-child{border-top:0;padding-top:2px}
 .talk .hd{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;font:400 13px/18px var(--font-body);color:var(--sub)}
 .talk .hd b{font:500 14px/18px var(--font-body);color:var(--ink)}
 .talk .hd .pjn{color:#0B7F78;background:#E6F6F5;padding:0 6px;border-radius:4px;font-weight:500}
-.talk p{margin:4px 0 0;font:400 15px/22px var(--font-body);color:var(--ink)}
+.talk p{margin:2px 0 0;font:400 15px/22px var(--font-body);color:var(--ink)}
 .talk p .mt{color:#0052C2;background:#EEF4FF;padding:0 4px;border-radius:4px;font-weight:500}
 .talk p .fi{color:var(--ink);font-weight:500;text-decoration:underline;text-underline-offset:3px}
-.write{display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--rule)}
+.write{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--rule)}
 .write .fld{flex:1;height:40px}
 .write .fld .ph{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .write .pick{flex:none;height:40px;padding:0 12px;border-radius:8px;background:var(--bg-0);color:var(--ink);font:500 14px/40px var(--font-body);white-space:nowrap}
 
-/* 공지사항 */
-.ntc{list-style:none;margin:0;padding:0}
+/* ⑦ 공지사항 */
+.ntc{list-style:none;margin:0;padding:0;flex:1}
 .ntc li{display:grid;grid-template-columns:52px minmax(0,1fr);gap:12px;padding:10px 0;border-top:1px solid var(--rule);align-items:baseline}
-.ntc li:first-child{border-top:0;padding-top:4px}
+.ntc li:first-child{border-top:0;padding-top:2px}
 .ntc .d{font:500 14px/22px var(--font-num);color:var(--sub)}
 .ntc .t{font:500 15px/22px var(--font-body);color:var(--ink)}
 .ntc .t small{display:block;font:400 14px/20px var(--font-body);color:var(--sub)}
 .ntc li.new .d{color:var(--accent)}
+.pj-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:6px}
 
-/* 예시 도장(서버에 없는 것) — 칸 머리 오른쪽 작은 꼬리표 */
+/* 예시 도장(서버에 없는 것) */
 .ex{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;background:#FFF7DB;color:#7A5A00;font:500 12px/1 var(--font-body);white-space:nowrap}
 
+/* 1280 이하 — 8+4 를 12+12 로, 4·4·4 는 6·6·12 */
+@media (max-width:1280px){
+  .c8,.c4,.c7,.c5{grid-column:span 6}
+  #k-pj{grid-column:span 12}
+  .quick .fld{width:220px}
+}
+/* 휴대폰 — 한 칸씩 */
 @media (max-width:960px){
   .page{padding:16px 16px 24px}
+  .g12{gap:12px}
+  .c12,.c8,.c7,.c5,.c4,#k-pj{grid-column:span 12}
   .row-h{flex-direction:column;align-items:stretch;gap:10px}
   .row-h h1{font-size:26px;line-height:34px}
+  .today{font-size:14px}
   .quick{width:100%}
   .quick .fld{flex:1;width:auto}
-  .glance{gap:4px 14px}
-  .glance li{font-size:14px}
-  .todo-bar{flex-wrap:wrap;gap:6px 12px;padding:12px 16px 12px 14px}
+  .todo-bar{grid-template-columns:1fr;gap:4px;padding:12px 16px 12px 14px}
+  .todo-bar .tl li{font-size:14px;line-height:22px}
   .todo-bar .who{margin-left:0;width:100%}
-  .two{grid-template-columns:minmax(0,1fr)}
-  .pj li{grid-template-columns:56px minmax(0,1fr);gap:6px 12px;padding:14px 0}
-  .pj .sh{width:56px;height:42px;grid-row:1/3;align-self:start}
-  .pj .nm{grid-column:2}
-  .pj .st{grid-column:2}
-  .pj .td,.pj .ok{grid-column:2;justify-self:start;margin-top:2px}
-  .where{grid-template-columns:minmax(0,1fr)}
-  .where .map{width:100%;height:200px}
-  .where .row .lb{width:100%}
+  .k{padding:16px 18px}
+  /* 표 → 줄 카드 */
+  .pjt,.pjt tbody,.pjt tr,.pjt td{display:block}
+  .pjt thead,.pjt tfoot .n,.pjt tfoot .sta{display:none}
+  .pjt tr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:10px 0;border-bottom:1px solid var(--rule)}
+  .pjt td{border:0;padding:0}
+  .pjt .nm{grid-column:1/-1}
+  .pjt .sta{grid-column:1;grid-row:2;white-space:normal}
+  .pjt .sta small{display:inline;margin-left:6px}
+  .pjt td.n{text-align:left;grid-column:1;font-size:13px;color:var(--sub)}
+  .pjt td.n::before{content:attr(data-l) " ";color:var(--sub)}
+  .pjt .seg{display:none}
+  .pjt td:last-child{grid-column:2;grid-row:2/5;align-self:start;text-align:right}
+  .pjt .td.t2{margin-left:0;margin-top:4px;display:inline-flex}
+  .pjt tfoot tr{grid-template-columns:1fr auto;border-bottom:0}
+  .pjt tfoot td:last-child{grid-row:auto}
+  .kv{grid-template-columns:1fr 1fr}
+  .where{grid-template-columns:110px minmax(0,1fr)}
+  .where .map{width:110px;height:150px}
   .write{flex-wrap:wrap}
   .write .fld{flex-basis:100%}
 }
 
-/* 원칙 126(10-07) — 글자 옆 그림 기호 0: 물려받은 화살표 · 세모 덮어쓰기 */
+/* 원칙 126 — 글자 옆 그림 기호 0: 물려받은 화살표 · 세모 덮어쓰기 */
 .more::after,.fold .r.go::after,.fold .r.car::after,.fold-h span::after,.fold-h.open span::after{content:none}
