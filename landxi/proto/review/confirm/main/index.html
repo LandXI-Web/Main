@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Land-XI 메인 — 움직임 보완 확인</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../../../fonts-system.css">
+<style>
+:root{--ink:#191F28;--ink2:#4E5968;--mute:#8B95A1;--line:#E5E8EB;--bg:#F2F4F6;--accent:#3182F6;--tint:#E8F3FF;--ok:#0FA9A0;--warn:#F59E0B;--no:#F04452}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Pretendard,system-ui,sans-serif;word-break:keep-all;overflow-wrap:break-word}
+a{color:var(--accent);text-decoration:none}
+.w{max-width:1120px;margin:0 auto;padding:32px 16px 140px}
+h1{font:800 34px/1.2 Paperlogy,Pretendard,sans-serif;letter-spacing:-.02em;margin:0 0 8px}
+.lead{margin:0 0 6px;color:var(--ink2)}
+.how{text-wrap:pretty;margin:16px 0 0;padding:16px 20px;background:#fff;border-radius:16px;color:var(--ink2);font-size:15px}
+.how b{color:var(--ink)}
+section{margin-top:40px}
+h2{font:700 24px/1.3 Paperlogy,Pretendard,sans-serif;margin:0 0 4px;text-wrap:balance}
+.sub{margin:0 0 16px;color:var(--mute);font-size:15px;text-wrap:pretty}
+.c{background:#fff;border-radius:20px;padding:20px 24px;margin:0 0 14px;border:2px solid transparent}
+.c[data-s="확인"],.c[data-s="채택"],.c[data-s="완료"],.c[data-s^="ⓐ"],.c[data-s^="ⓑ"],.c[data-s^="ⓒ"],.c[data-s="제안대로"],.c[data-s^="영상대로"]{border-color:var(--ok)}
+.c[data-s="보류"],.c[data-s="검토 필요"]{border-color:var(--warn)}.c[data-s="반려"],.c[data-s="다시"]{border-color:var(--no)}
+.c header{display:flex;gap:10px;align-items:baseline;margin-bottom:10px}
+.n{font:600 13px/1 Inter,Pretendard,sans-serif;color:var(--accent);background:var(--tint);padding:5px 8px;border-radius:8px;flex:none}
+h3{margin:0;font:700 19px/1.4 Pretendard,sans-serif;text-wrap:balance}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.tx p{margin:0 0 8px;color:var(--ink2);text-wrap:pretty}.tx p.k{margin:12px 0 2px;font-size:13px;font-weight:600;color:var(--mute)}.tx p.k:first-child{margin-top:0}
+.wh{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.wh li{display:flex;flex-direction:column;background:var(--bg);border-radius:10px;padding:8px 12px;font-size:14px}
+.wh li a{overflow-wrap:anywhere}.wh li span,.wh li em{text-wrap:pretty}.wh li span{color:var(--ink2)}.wh li em{font-style:normal;color:var(--mute);font-size:13px}
+.im{display:grid;gap:8px;align-content:start}
+.im figure{margin:0;position:relative}.im img{width:100%;border-radius:12px;border:1px solid var(--line);display:block}.im figcaption{position:absolute;left:10px;top:10px;font:600 12px/1 Pretendard,sans-serif;padding:6px 8px;border-radius:8px;background:rgba(25,31,40,.82);color:#fff}
+.na{color:var(--mute);font-size:14px;margin:0;padding:24px;background:var(--bg);border-radius:12px;text-align:center}
+footer{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.op{display:flex;gap:6px;flex-wrap:wrap}
+.op button{font:600 15px/1 Pretendard,sans-serif;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.op button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+footer input{flex:1;min-width:200px;font:15px Pretendard,sans-serif;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:12px 16px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
+.bar b{font-weight:600}
+.bar button{font:700 16px/1 Pretendard,sans-serif;padding:14px 22px;border-radius:12px;border:0;background:var(--accent);color:#fff;cursor:pointer}
+.bar small{color:var(--mute)}
+@media (max-width:760px){.g{grid-template-columns:1fr}.c{padding:16px}h1{font-size:28px}}
+</style>
+</head>
+<body>
+<main class="w">
+<h1>메인 — 움직임 보완 확인</h1>
+<p class="lead">메인을 실제로 움직이는 시안으로 만들었습니다. 먼저 미리보기를 열어 보신 뒤 네 가지를 골라 주세요. 미리보기: app.land-xi.dev/landxi/proto/review/main-motion/index.html</p>
+<div class="how"><b>보는 법</b> — 항목마다 <b>지금</b>(무엇이 문제인지) · <b>제안</b>(바뀐 뒤) · <b>보는 곳</b>(캡처, 그리고 직접 열어 볼 주소·계정·누를 곳)이 있습니다. 캡처를 누르면 크게 열립니다.<br>
+<b>고르는 법</b> — 버튼을 누르고, 고칠 점이 있으면 한 줄 적어 주세요. 고른 것은 이 브라우저에 저장됩니다. 다 고르시면 아래 <b>결정 복사</b>를 눌러 대화창에 붙여 넣어 주세요. 안 고른 항목은 그대로 두셔도 됩니다.</div>
+<section><h2>메인 움직임 보완 — 첫 화면 표기 등장 · 스크롤 안내 · 마지막 장면 · 배운 것</h2><p class="sub">10-07 사용자: &quot;마우스 휠로 내리세요 같은 친절한 안내가 부족하고, 마지막 끝 슬라이드는 아무것도 없다. 참고 사이트는 이름을 하나하나씩 띄우는 고급스러운 부분이 있다.&quot; 참고 페이지의 움직임 문법만 배워(캡처·구성은 가져오지 않음) 우리 메인을 우리 글·우리 그림으로 보완한 시안입니다. 움직임은 직접 열어 보셔야 판단이 됩니다 — 시안 주소는 로그인 없이 열리고, 왼쪽 아래 작은 칩으로 안을 바꿔 볼 수 있습니다. &#x27;동작 줄이기&#x27; 설정을 켠 기기에서는 모든 움직임이 꺼지고 글이 바로 보입니다. 캡처 이름 끝 1440은 PC, 390은 휴대폰입니다.</p><article class="c" data-id="메인-1" data-t="[화면][Land-XI] 첫 화면 — &#x27;LAND-XI PLATFORM&#x27; 글자가 차례로 나타남"><header><span class="n">메인-1</span><h3>[화면][Land-XI] 첫 화면 — &#x27;LAND-XI PLATFORM&#x27; 글자가 차례로 나타남</h3></header><div class="g"><div class="tx"><p class="k">지금</p><p>지금은 페이지가 열리면 &#x27;LAND-XI PLATFORM&#x27; 표기와 메뉴가 그냥 박혀 있고, 제목·설명만 아래에서 한 번에 올라옵니다(0.75초). 표기에 등장이 없어 첫 1초가 밋밋합니다.</p><p class="k">제안</p><p>표기 16글자가 0.2초부터 글자마다 0.06초씩 차례로 떠오르고(각 0.5초), 1.1초에 메뉴가 뒤따라 서며, 0.9초부터 제목 → 설명 → 단추가 지금처럼 올라옵니다. 지구는 0.4초부터 천천히 또렷해집니다. 글자는 그림이 아니라 진짜 글자라 마우스로 잡히고 복사됩니다(원칙 95). 두 안 — ⓐ 글자 하나씩 떠오름(추천 · 참고 페이지의 마지막 로고와 같은 문법) · ⓑ 왼쪽에서 오른쪽으로 쓸리듯 드러남(1.1초 · 더 조용함). 시안 주소에서 ?word=b 를 붙이거나 왼쪽 아래 칩으로 바꿔 볼 수 있습니다.</p><p class="k">보는 곳</p><ul class="wh"><li><a href="https://app.land-xi.dev/landxi/proto/review/main-motion/index.html" target="_blank" rel="noopener">app.land-xi.dev/landxi/proto/review/main-motion/index.html</a><span>로그인 없이</span><em>열리자마자 왼쪽 위 표기 — 새로 고침하면 다시 봄 · 영상 new-hero-enter-1440.webm</em></li><li><a href="https://app.land-xi.dev/landxi/proto/review/main-motion/index.html?word=b" target="_blank" rel="noopener">app.land-xi.dev/landxi/proto/review/main-motion/index.html?word=b</a><span>로그인 없이</span><em>ⓑ 쓸어 드러남</em></li><li><a href="https://app.land-xi.dev/landxi/v3/main/" target="_blank" rel="noopener">app.land-xi.dev/landxi/v3/main/</a><span>로그인 없이</span><em>지금 메인 — 표기가 바로 박혀 있음</em></li></ul></div><div class="im"><figure><a href="img/new-hero-enter-mid-1440.png" target="_blank"><img src="img/new-hero-enter-mid-1440.png" alt="" loading="lazy"></a><figcaption>시안</figcaption></figure><figure><a href="img/new-word-b-mid-1440.png" target="_blank"><img src="img/new-word-b-mid-1440.png" alt="" loading="lazy"></a><figcaption>시안</figcaption></figure><figure><a href="img/new-hero-1440.png" target="_blank"><img src="img/new-hero-1440.png" alt="" loading="lazy"></a><figcaption>시안</figcaption></figure></div></div><footer><div class="op"><button type="button" data-v="ⓐ 글자 하나씩 떠오름(추천)">ⓐ 글자 하나씩 떠오름(추천)</button><button type="button" data-v="ⓑ 왼쪽에서 쓸어 드러남">ⓑ 왼쪽에서 쓸어 드러남</button><button type="button" data-v="지금 그대로">지금 그대로</button><button type="button" data-v="검토 필요">검토 필요</button></div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article><article class="c" data-id="메인-2" data-t="[화면][Land-XI] 첫 화면 — 스크롤 안내(휠을 내려 보세요 · 위로 밀어 보세요)"><header><span class="n">메인-2</span><h3>[화면][Land-XI] 첫 화면 — 스크롤 안내(휠을 내려 보세요 · 위로 밀어 보세요)</h3></header><div class="g"><div class="tx"><p class="k">지금</p><p>첫 화면에 아래로 더 있다는 표시가 없습니다. 지도 카드가 화면을 꽉 채워 끝 화면처럼 보이고, 처음 온 공무원은 &#x27;서비스 보기&#x27;를 누르기 전까지 뭘 해야 할지 모릅니다.</p><p class="k">제안</p><p>글이 다 선 뒤(2.2초) 왼쪽 아래 글 기둥과 같은 선에 작은 마우스 그림(휠 점이 내려감)과 &#x27;휠을 내려 보세요&#x27; 한 줄이 조용히 켜지고, 처음 스크롤(휠·터치·키)하는 순간 사라져 다시 나오지 않습니다. 휴대폰은 가운데 아래에 손가락 그림과 &#x27;위로 밀어 보세요&#x27;. 이미 내려온 상태로 열리면 안 보입니다. 글자는 회색 작은 글(14px) 하나라 첫 화면 글 예산을 넘지 않습니다.</p><p class="k">보는 곳</p><ul class="wh"><li><a href="https://app.land-xi.dev/landxi/proto/review/main-motion/index.html" target="_blank" rel="noopener">app.land-xi.dev/landxi/proto/review/main-motion/index.html</a><span>로그인 없이</span><em>열고 2초쯤 기다리면 왼쪽 아래 — 휠을 굴리면 사라짐</em></li></ul></div><div class="im"><figure><a href="img/new-hero-1440.png" target="_blank"><img src="img/new-hero-1440.png" alt="" loading="lazy"></a><figcaption>시안</figcaption></figure><figure><a href="img/new-hero-390.png" target="_blank"><img src="img/new-hero-390.png" alt="" loading="lazy"></a><figcaption>시안</figcaption></figure></div></div><footer><div class="op"><button type="button" data-v="ⓐ 시안대로(2초 뒤 · 처음 스크롤에 사라짐)">ⓐ 시안대로(2초 뒤 · 처음 스크롤에 사라짐)</button><button type="button" data-v="ⓑ 글 없이 그림만">ⓑ 글 없이 그림만</button><button type="button" data-v="넣지 않음">넣지 않음</button><button type="button" data-v="검토 필요">검토 필요</button></div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article><article class="c" data-id="메인-3" data-t="[화면][Land-XI] 마지막 장면 — 무엇으로 끝내나"><header><span class="n">메인-3</span><h3>[화면][Land-XI] 마지막 장면 — 무엇으로 끝내나</h3></header><div class="g"><div class="tx"><p class="k">지금</p><p>PC에서 끝까지 내리면 지구 카드 아래가 비어 있고(모토·문장·로그인이 켜지지 않음) 그 아래 회색 빈 칸이 한 화면 더 있다가 바닥글이 나옵니다. 휴대폰에서는 모토와 로그인이 보이지만 설명 문장이 &#x27;AI / 기술을&#x27;처럼 글자 단위로 끊깁니다. 참고 페이지는 끝을 회사 이름 글자가 하나씩 떠오르는 장면으로 맺고, 시작 단추는 늘 떠 있어 끝에서도 다음 행동이 있습니다.</p><p class="k">제안</p><p>두 안을 그렸습니다. ⓐ 마무리(추천) — 지구가 또렷해진 뒤 모토 → &#x27;국토 위성·항공·드론 영상과 AI로 / 현장조사와 행정서비스를 지원합니다.&#x27; 두 줄(의미 단위 줄바꿈) → 로그인 · 서비스 보기 두 단추 → 1.5초 뒤 &#x27;한국국토정보공사(LX)가 만들고 운영합니다&#x27; 한 줄 → &#x27;처음으로 ↑&#x27;. 끝에서 바로 로그인하거나 서비스로 돌아갈 수 있습니다. ⓑ 다시 처음으로 — 지구 아래 &#x27;LAND-XI PLATFORM&#x27; 큰 표기가 글자마다 0.07초씩 떠오르고(첫 화면 표기와 같은 문법으로 열고 닫음) &#x27;처음으로 ↑&#x27; 하나만. 로그인은 위 표기 줄에 늘 있으니 끝에서는 이름으로 맺습니다. 두 안 모두 빈 회색 칸은 없애고 바닥글이 바로 이어집니다. &#x27;처음으로&#x27;는 연출 없이 바로 이동합니다(원칙 95).</p><p class="k">보는 곳</p><ul class="wh"><li><a href="https://app.land-xi.dev/landxi/proto/review/main-motion/index.html?fin=a" target="_blank" rel="noopener">app.land-xi.dev/landxi/proto/review/main-motion/index.html?fin=a</a><span>로그인 없이</span><em>끝까지 내리기 — ⓐ 마무리</em></li><li><a href="https://app.land-xi.dev/landxi/proto/review/main-motion/index.html?fin=b" target="_blank" rel="noopener">app.land-xi.dev/landxi/proto/review/main-motion/index.html?fin=b</a><span>로그인 없이</span><em>끝까지 내리기 — ⓑ 다시 처음으로</em></li><li><a href="https://app.land-xi.dev/landxi/v3/main/" target="_blank" rel="noopener">app.land-xi.dev/landxi/v3/main/</a><span>로그인 없이</span><em>지금 메인 — PC에서 끝까지 내리면 지구 카드 아래가 비어 있음</em></li></ul></div><div class="im"><figure><a href="img/new-fin-a-1440.png" target="_blank"><img src="img/new-fin-a-1440.png" alt="" loading="lazy"></a><figcaption>시안</figcaption></figure><figure><a href="img/new-fin-b-1440.png" target="_blank"><img src="img/new-fin-b-1440.png" alt="" loading="lazy"></a><figcaption>시안</figcaption></figure><figure><a href="img/new-fin-a-390.png" target="_blank"><img src="img/new-fin-a-390.png" alt="" loading="lazy"></a><figcaption>시안</figcaption></figure><figure><a href="img/new-fin-b-390.png" target="_blank"><img src="img/new-fin-b-390.png" alt="" loading="lazy"></a><figcaption>시안</figcaption></figure></div></div><footer><div class="op"><button type="button" data-v="ⓐ 마무리 — 모토 · 두 단추 · LX 한 줄 · 처음으로(추천)">ⓐ 마무리 — 모토 · 두 단추 · LX 한 줄 · 처음으로(추천)</button><button type="button" data-v="ⓑ 다시 처음으로 — 큰 표기 글자 하나씩 · 처음으로">ⓑ 다시 처음으로 — 큰 표기 글자 하나씩 · 처음으로</button><button type="button" data-v="ⓐ + ⓑ 합침(모토 대신 큰 표기 · 두 단추 유지)">ⓐ + ⓑ 합침(모토 대신 큰 표기 · 두 단추 유지)</button><button type="button" data-v="검토 필요">검토 필요</button></div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article><article class="c" data-id="메인-4" data-t="[화면][Land-XI] 그 밖에 배울 것 셋 — 장면 제목 쓸어 드러남 · 지금 보는 장면 메뉴 밑줄 · 첫 화면 지구 천천히 또렷해짐"><header><span class="n">메인-4</span><h3>[화면][Land-XI] 그 밖에 배울 것 셋 — 장면 제목 쓸어 드러남 · 지금 보는 장면 메뉴 밑줄 · 첫 화면 지구 천천히 또렷해짐</h3></header><div class="g"><div class="tx"><p class="k">지금</p><p>장면 제목은 모두 같은 &#x27;아래서 올라옴&#x27; 한 가지라 일곱 장면이 단조롭습니다. 위 메뉴(서비스 · 활용 사례)는 어디를 보고 있는지 알려 주지 않습니다. 첫 화면 지구는 타일이 차는 대로 툭 나타납니다.</p><p class="k">제안</p><p>① 장면 제목 두 줄이 왼쪽에서 오른쪽으로 쓸리듯 드러남(1.1초 · 둘째 줄 0.16초 뒤) — 전부가 아니라 &#x27;활용 사례&#x27;처럼 강조할 장면 한두 곳만. ② 그 장면이 화면의 35%를 넘으면 위 메뉴의 &#x27;서비스&#x27; 또는 &#x27;활용 사례&#x27; 아래 2px 밑줄 — 지금 보는 곳이 늘 보임. ③ 첫 화면 지구는 0.4초부터 1.2초 동안 1.04배에서 제자리로 천천히 또렷해짐(지도가 다 차기 전에는 지금처럼 순백 지구 사진으로). 셋 다 시안 주소에서 둘째 장면과 위 메뉴로 볼 수 있습니다. 참고 페이지의 &#x27;시작 단추 늘 떠 있기&#x27;는 우리 위 표기 줄에 로그인이 늘 있어 따로 넣지 않습니다.</p><p class="k">보는 곳</p><ul class="wh"><li><a href="https://app.land-xi.dev/landxi/proto/review/main-motion/index.html" target="_blank" rel="noopener">app.land-xi.dev/landxi/proto/review/main-motion/index.html</a><span>로그인 없이</span><em>둘째 장면 제목(쓸어 드러남) · 내리면서 위 메뉴 밑줄 · 열자마자 지구</em></li></ul></div><div class="im"><figure><a href="img/new-hero-1440.png" target="_blank"><img src="img/new-hero-1440.png" alt="" loading="lazy"></a><figcaption>시안</figcaption></figure></div></div><footer><div class="op"><button type="button" data-v="셋 다 넣기">셋 다 넣기</button><button type="button" data-v="①만">①만</button><button type="button" data-v="②만">②만</button><button type="button" data-v="③만">③만</button><button type="button" data-v="넣지 않음">넣지 않음</button><button type="button" data-v="검토 필요">검토 필요</button></div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article></section>
+</main>
+<div class="bar"><b id="cnt">0 / 4 고름</b><button type="button" id="copy">결정 복사</button><small id="msg"></small></div>
+<script>
+const KEY='lx-confirm-0930-rmain';
+let S={};try{S=JSON.parse(localStorage.getItem(KEY)||'{}')}catch{}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch{}};
+const cards=[...document.querySelectorAll('.c')];
+const count=()=>{document.getElementById('cnt').textContent=Object.values(S).filter(v=>v&&v.v).length+' / '+cards.length+' 고름'};
+for(const c of cards){const id=c.dataset.id,st=S[id]||{};const inp=c.querySelector('input');
+  const paint=()=>{c.dataset.s=(S[id]||{}).v||'';for(const b of c.querySelectorAll('.op button'))b.classList.toggle('on',b.dataset.v===(S[id]||{}).v)};
+  if(st.m)inp.value=st.m;paint();
+  c.querySelectorAll('.op button').forEach(b=>b.onclick=()=>{S[id]={...(S[id]||{}),v:(S[id]||{}).v===b.dataset.v?'':b.dataset.v};save();paint();count()});
+  inp.oninput=()=>{S[id]={...(S[id]||{}),m:inp.value};save()};}
+count();
+document.getElementById('copy').onclick=async()=>{
+  const lines=cards.filter(c=>(S[c.dataset.id]||{}).v||(S[c.dataset.id]||{}).m).map(c=>{const s=S[c.dataset.id];return '- '+c.dataset.id+' '+c.dataset.t+': '+(s.v||'(선택 없음)')+(s.m?' — '+s.m:'')});
+  const t='[메인 — 움직임 보완 확인 결정 · '+new Date().toLocaleString('ko-KR')+']\n'+(lines.join('\n')||'(고른 항목 없음)');
+  try{await navigator.clipboard.writeText(t);document.getElementById('msg').textContent='복사했습니다 — 대화창에 붙여 넣어 주세요'}catch{prompt('아래 글을 복사해 주세요',t)}};
+</script>
+</body>
+</html>
