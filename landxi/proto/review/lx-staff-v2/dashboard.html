@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · LX 직원 대시보드 — 구 Land-XI 구성에서</title>
+<link rel="stylesheet" href="staff.css">
+<script src="chrome.js"></script>
+</head>
+<body class="m has-stamp">
+<div class="app" id="app">
+  <main class="main">
+    <div class="page">
+      <div class="g12">
+
+        <!-- 머리 -->
+        <header class="row-h c12" id="k-head">
+          <div>
+            <h1>대시보드</h1>
+            <p class="today" id="today">LX 직원님 · 10월 7일 화요일 · 내 프로젝트 <b>4</b> · 내 서비스 <b>4</b> · 시범 적용 <b>7</b>곳 · 지금 돌고 있는 분석 없음</p>
+          </div>
+          <div class="quick v3"><span class="fld"><span class="ph">시군구 검색 — 바로 분석하기</span></span><span class="btn b2 sm" style="height:40px">분석하기</span></div>
+        </header>
+
+        <!-- 할 일 띠(v3 기능 · 있을 때만) — ⓑ 에서만 -->
+        <section class="todo-bar c12 v3" id="todo">
+          <span class="cnt"><b>5</b>할 일</span>
+          <ul class="tl">
+            <li><span class="w">AI 결과가 맞는지 보기</span><span>프로젝트 4개 · 표본 20건 중 0건 봄 — 다 보면 현장 확인 필지 수가 섭니다</span><span class="who"><span class="chip">비닐하우스 2026</span><span class="chip">건축물 2026</span><span class="chip">주차장 2026</span><span class="chip">곤포사일리지 2026</span></span></li>
+            <li><span class="w">새 영상으로 다시 분석</span><span>남원시 2023 항공영상이 10.01 들어옴 — 비닐하우스 2026 결과를 새로 낼 수 있습니다</span><span class="who"><span class="chip">비닐하우스 2026 · 남원시</span></span></li>
+          </ul>
+        </section>
+
+        <!-- ① 내 작업 현황 (구 'MY 작업현황': 분석 서비스 · 프로젝트 · 디스크 사용량 + 디스크 관리) -->
+        <section class="k c4" id="k-my">
+          <div class="k-h"><h2>내 작업 현황</h2><span class="more">내 정보</span></div>
+          <ul class="rows">
+            <li><span class="lb">내 서비스</span><div class="v"><b>4<small>개</small></b><span>시범 적용 7곳 · 운영 0곳</span></div><span class="r"><span class="lnk q">서비스 카드</span></span></li>
+            <li><span class="lb">프로젝트</span><div class="v"><b>4<small>개</small></b><span>내가 만든 4 · 참여 0 · 보관 0</span></div><span class="r"><span class="lnk q">프로젝트</span></span></li>
+            <li><span class="lb">저장 용량</span><div class="v"><b>29.8<small>MB 사용</small></b><div class="bar2" style="margin-top:4px"><i class="p1" style="width:34%"></i><i class="p2" style="width:29%"></i><i class="p3" style="width:30%"></i><i class="p4" style="width:7%"></i></div><span>할당 없음 — 프로젝트 4개 합</span></div><span class="r"><span class="btn b2 sm">저장 관리</span></span></li>
+            <li class="v3"><span class="lb">나에게 온 것</span><div class="v" style="flex-direction:row;flex-wrap:wrap;gap:4px 12px"><span class="num"><b>0</b>검토 요청</span><span class="num w"><b>1</b>분석 요청</span><span class="num acc"><b>4</b>개선 후보</span></div><span class="r"><span class="lnk q">요청함</span></span></li>
+          </ul>
+        </section>
+
+        <!-- ② 프로젝트 진행 현황 (구: 학습 · 추론 도넛 + 학습 진행 막대) -->
+        <section class="k c4" id="k-prog">
+          <div class="k-h"><h2>프로젝트 진행 현황</h2><span class="more">프로젝트</span></div>
+          <div class="sum"><b>350</b><span>끝난 내 작업 · 9.26 – 10.01 · 취소 36 · 실패 1 은 뺌</span></div>
+          <div class="stk"><i class="p1" style="width:63%"></i><i class="p2" style="width:30%"></i><i class="p3" style="width:5%"></i><i class="p5" style="width:1.5%"></i><i class="p4" style="width:.5%"></i></div>
+          <ul class="lgd"><li><i class="p1"></i>AI 분석 <b>220</b></li><li><i class="p2"></i>필지 대조 <b>104</b></li><li><i class="p3"></i>위성 지수 <b>18</b></li><li><i class="p5"></i>학습 <b>6</b></li><li><i class="p4"></i>영상 준비 <b>2</b></li></ul>
+          <!-- ⓑ: 프로젝트마다 6단계(v3 부품) -->
+          <ul class="prog v3" style="margin-top:10px">
+            <li><span class="t">비닐하우스 2026<small>증평군 외 2곳</small></span><span class="s">서비스 관리 · <em>표본 확인 0/20</em> · 새 영상 1</span><span class="seg6"><i class="d"></i><i class="d"></i><i class="d"></i><i class="wait"></i><i class="d"></i><i class="now"></i></span></li>
+            <li><span class="t">건축물 2026<small>원주시</small></span><span class="s">서비스 관리 · <em>표본 확인 0/20</em></span><span class="seg6"><i class="d"></i><i class="d"></i><i class="d"></i><i class="wait"></i><i class="d"></i><i class="now"></i></span></li>
+            <li><span class="t">주차장 2026<small>여주시 · 천안시 서북구</small></span><span class="s">서비스 관리 · <em>표본 확인 0/20</em></span><span class="seg6"><i class="d"></i><i class="d"></i><i class="d"></i><i class="wait"></i><i class="d"></i><i class="now"></i></span></li>
+            <li><span class="t">곤포사일리지 2026<small>보령시</small></span><span class="s">서비스 관리 · <em>표본 확인 0/20</em></span><span class="seg6"><i class="d"></i><i class="d"></i><i class="d"></i><i class="wait"></i><i class="d"></i><i class="now"></i></span></li>
+          </ul>
+          <!-- ⓐ: 구 화면처럼 학습 진행 막대 -->
+          <ul class="tr old-only" style="margin-top:10px" hidden>
+            <li><span class="lb">건축물 · 3번째 학습<small>09.30 20:57</small></span><div class="bar2"><i class="p2" style="width:100%"></i></div><span class="pc">100%</span></li>
+            <li><span class="lb">건축물 · 2번째 학습<small>09.30 19:49</small></span><div class="bar2"><i class="p2" style="width:100%"></i></div><span class="pc">100%</span></li>
+            <li><span class="lb">주차장 · 1번째 학습<small>09.30 18:48</small></span><div class="bar2"><i class="p2" style="width:100%"></i></div><span class="pc">100%</span></li>
+            <li><span class="lb">곤포사일리지 · 1번째<small>09.30 17:10</small></span><div class="bar2"><i class="p2" style="width:100%"></i></div><span class="pc">100%</span></li>
+          </ul>
+        </section>
+
+        <!-- ③ 공지사항 · AI 교육정보 (구 그대로 — 서버에 없어 예시) -->
+        <section class="k c4" id="k-ntc">
+          <div class="k-h"><h2>공지사항</h2><span class="tabs" id="ntabs"><span class="on" data-t="n">공지사항</span><span data-t="e">AI 교육정보</span></span></div>
+          <ul class="ls ntc" id="nt-n">
+            <li class="new"><span class="d">10.06</span><span class="t">영상 형식 표준 적용 안내<small>새로 올리는 영상은 표준본으로 저장됩니다</small></span></li>
+            <li class="new"><span class="d">10.02</span><span class="t">연휴 기간 분석 대기열 운영<small>10.3–10.9 분석은 다음 날 아침에 끝납니다</small></span></li>
+            <li><span class="d">09.30</span><span class="t">임시 비밀번호 바꾸기 안내<small>첫 로그인 뒤 내 정보에서 바꿔 주세요</small></span></li>
+            <li><span class="d">09.26</span><span class="t">전국 하천구역 건물 점유 분석 결과 공유<small>252개 시군구 · XI맵에서 열기</small></span></li>
+          </ul>
+          <ul class="ls ntc" id="nt-e" hidden>
+            <li class="new"><span class="d">10.05</span><span class="t">학습데이터 만들기 안내서<small>라벨 그리기 · 검증용 나누기 · 표본 20건 보기</small></span></li>
+            <li><span class="d">09.24</span><span class="t">항공영상으로 비닐하우스 찾기 — 실습 영상<small>40분 · 남원시 예시</small></span></li>
+            <li><span class="d">09.10</span><span class="t">필지 대조 결과 읽는 법<small>대장과 다른 후보 · 현장 확인 필지</small></span></li>
+            <li><span class="d">08.20</span><span class="t">학습용 데이터 구축 안내서(QGIS)<small>구 Land-XI 공지에 있던 자료</small></span></li>
+          </ul>
+          <div class="pj-foot"><span class="ex">예시 — 지금 공지 0 · 교육 자료 0</span><span class="lnk">모두 보기</span></div>
+        </section>
+
+        <!-- ④ 작업 이력 (구 그대로 — 최근 돌린 것) -->
+        <section class="k c4" id="k-hist">
+          <div class="k-h"><h2>작업 이력</h2><span class="more">기록</span></div>
+          <ul class="ls">
+            <li><span class="d">10.01 12:48</span><span class="t"><b>남원시</b> 영상 준비<small>2023 항공영상 — 비닐하우스 2026 다시 분석 가능</small></span><span class="st ok">끝</span></li>
+            <li><span class="d">10.01 12:01</span><span class="t"><b>천안시 서북구</b> 필지 대조<small>대장과 다른 후보 337필지</small></span><span class="st ok">끝</span></li>
+            <li><span class="d">10.01 12:00</span><span class="t"><b>천안시 서북구</b> AI 분석<small>건물 1,158동 · 13.0 km²</small></span><span class="st ok">끝</span></li>
+            <li><span class="d">09.30 20:57</span><span class="t"><b>건축물 2026</b> 학습<small>3번째 학습 · 모델 후보 등록</small></span><span class="st ok">끝</span></li>
+            <li><span class="d">09.30 19:49</span><span class="t"><b>건축물 2026</b> 학습<small>2번째 학습</small></span><span class="st ok">끝</span></li>
+          </ul>
+          <div class="pj-foot"><span class="ksub">끝난 내 작업 350건 가운데 최근 5</span><span class="lnk">모두 보기</span></div>
+        </section>
+
+        <!-- ⑤ 프로젝트 메모 (구 그대로 — 프로젝트마다 메모 있나) -->
+        <section class="k c4" id="k-pmemo">
+          <div class="k-h"><h2>프로젝트 메모</h2><span class="ksub">프로젝트 한 장의 메모</span></div>
+          <ul class="ls memo">
+            <li><span class="pj">비닐하우스 2026<small>LX 직원</small></span><span class="no">메모 없음</span><span class="lnk q">쓰기</span></li>
+            <li><span class="pj">건축물 2026<small>LX 직원</small></span><span class="no">메모 없음</span><span class="lnk q">쓰기</span></li>
+            <li><span class="pj">주차장 2026<small>LX 직원</small></span><span class="no">메모 없음</span><span class="lnk q">쓰기</span></li>
+            <li><span class="pj">곤포사일리지 2026<small>LX 직원</small></span><span class="no">메모 없음</span><span class="lnk q">쓰기</span></li>
+          </ul>
+          <div class="pj-foot"><span class="ksub">자동 기록은 31건 · 메모 0 · 파일 0</span><span class="lnk">기록</span></div>
+        </section>
+
+        <!-- ⑥ 개인 메모 (구 그대로 — 서버에 없음 · 더할 것) -->
+        <section class="k c4" id="k-memo">
+          <div class="k-h"><h2>개인 메모</h2><span class="ex srv">서버에 더할 것</span></div>
+          <div style="flex:1">
+            <p class="memo-p">증평군 표본 10건은 내일 오전에 보기<small>10.06 · 나만 보는 메모</small></p>
+            <p class="memo-p">원주시 결과 — 여주시와 견준 뒤 보고<small>10.01</small></p>
+          </div>
+          <div class="write"><span class="fld"><span class="ph">메모 남기기 — 나만 봅니다</span></span><span class="btn b2 sm" style="height:40px">저장</span></div>
+        </section>
+
+        <!-- ⑦ 즐겨찾기 프로젝트 (구 '즐겨찾기 — 프로젝트' 표) -->
+        <section class="k c6" id="k-favp">
+          <div class="k-h"><h2>즐겨찾기 프로젝트</h2><span class="ex srv">즐겨찾기는 서버에 더할 것 — 지금은 내 프로젝트 4</span></div>
+          <table class="tb">
+            <thead><tr><th>번호</th><th>프로젝트</th><th>프로젝트장</th><th class="n">학습 표본</th><th class="n">저장 용량</th><th class="n">만든 날</th><th class="n">마지막</th></tr></thead>
+            <tbody>
+              <tr><td class="n">1</td><td class="nm"><img class="sh" src="shape-43745.svg" alt=""><b>비닐하우스 2026</b><small style="display:inline;margin-left:6px">증평군 · 함양군 · 남원시</small></td><td>LX 직원</td><td class="n">200장</td><td class="n">10.2 MB<span class="seg"><i style="width:34%"></i></span></td><td class="n">10.01</td><td class="n">10.01</td></tr>
+              <tr><td class="n">2</td><td class="nm"><img class="sh" src="shape-51130.svg" alt=""><b>건축물 2026</b><small style="display:inline;margin-left:6px">원주시</small></td><td>LX 직원</td><td class="n">139장</td><td class="n">8.7 MB<span class="seg"><i style="width:29%"></i></span></td><td class="n">10.01</td><td class="n">10.01</td></tr>
+              <tr><td class="n">3</td><td class="nm"><img class="sh" src="shape-41670.svg" alt=""><b>주차장 2026</b><small style="display:inline;margin-left:6px">여주시 · 천안시 서북구</small></td><td>LX 직원</td><td class="n">170장</td><td class="n">9.0 MB<span class="seg"><i style="width:30%"></i></span></td><td class="n">10.01</td><td class="n">10.01</td></tr>
+              <tr><td class="n">4</td><td class="nm"><img class="sh" src="shape-44180.svg" alt=""><b>곤포사일리지 2026</b><small style="display:inline;margin-left:6px">보령시</small></td><td>LX 직원</td><td class="n">60장</td><td class="n">1.9 MB<span class="seg"><i style="width:7%"></i></span></td><td class="n">10.01</td><td class="n">10.01</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- ⑧ 즐겨찾기 서비스 (구 '즐겨찾기 — 워크플로우' 표 ↔ 지금의 서비스 카드) -->
+        <section class="k c6" id="k-favs">
+          <div class="k-h"><h2>즐겨찾기 서비스</h2><span class="ex srv">구 워크플로우 자리 — 내 서비스 4</span></div>
+          <table class="tb">
+            <thead><tr><th>번호</th><th>서비스</th><th>찾는 것</th><th>적용 지역</th><th>상태</th><th class="n">공개</th></tr></thead>
+            <tbody>
+              <tr><td class="n">1</td><td class="nm"><b>비닐하우스 서비스</b><small>1.0판 · 비닐하우스 2026</small></td><td>비닐하우스(단동 · 다동)</td><td>증평군 외 2곳</td><td><span class="td">시범 3곳</span></td><td class="n">09.30</td></tr>
+              <tr><td class="n">2</td><td class="nm"><b>건축물</b><small>1.0판 · 건축물 2026</small></td><td>건물</td><td>원주시</td><td><span class="td">시범 1곳</span></td><td class="n">09.30</td></tr>
+              <tr><td class="n">3</td><td class="nm"><b>주차장</b><small>1.0판 · 주차장 2026</small></td><td>주차장</td><td>여주시 · 천안시 서북구</td><td><span class="td">시범 2곳</span></td><td class="n">09.30</td></tr>
+              <tr><td class="n">4</td><td class="nm"><b>곤포사일리지</b><small>1.0판 · 곤포사일리지 2026</small></td><td>곤포사일리지</td><td>보령시</td><td><span class="td">시범 1곳</span></td><td class="n">09.30</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+const Q = new URLSearchParams(location.search);
+const A = Q.get('v') === 'a';
+chrome('home', A
+  ? '<b>시안 ⓐ</b> LX 직원 대시보드 — 구 Land-XI 구성 그대로(내 작업 현황 · 진행 현황 · 공지 · 작업 이력 · 프로젝트 메모 · 개인 메모 · 즐겨찾기) · 값은 이 PC 서버(10-07 17:10)'
+  : '<b>시안 ⓑ</b> LX 직원 대시보드 — 구 Land-XI 구성 + 지금 기능(할 일 · 나에게 온 것 · 6단계 · 바로 분석) · 값은 이 PC 서버(10-07 17:10) · 서버에 없는 것은 "예시"');
+if (A) { document.querySelectorAll('.v3').forEach((e) => e.remove()); document.querySelectorAll('.old-only').forEach((e) => { e.hidden = false; }); }
+/* 공지 · AI 교육정보 탭 */
+document.getElementById('ntabs').addEventListener('click', (ev) => {
+  const t = ev.target.closest('span[data-t]'); if (!t) return;
+  document.querySelectorAll('#ntabs span').forEach((s) => s.classList.toggle('on', s === t));
+  document.getElementById('nt-n').hidden = t.dataset.t !== 'n'; document.getElementById('nt-e').hidden = t.dataset.t !== 'e';
+  document.querySelector('#k-ntc h2').textContent = t.dataset.t === 'n' ? '공지사항' : 'AI 교육정보';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · 프로젝트 개요 — 학습데이터 정보 · 프로젝트 정보 · 최근 작업</title>
+<link rel="stylesheet" href="staff.css">
+<script src="chrome.js"></script>
+</head>
+<body class="m has-stamp">
+<div class="app has-sub" id="app">
+  <!-- 마스트 아래 한 줄 — 이 프로젝트의 6단계(지금 화면 부품 · 구 왼쪽 메뉴 '데이터 전처리 · 모델 활용'의 자리) -->
+  <div class="sub">
+    <div class="pname"><span>프로젝트</span><b>비닐하우스 2026</b></div>
+    <ol class="steps">
+      <li><span class="st d"><span class="n">1</span><span class="t">데이터 올리기</span></span></li>
+      <li><span class="st d"><span class="n">2</span><span class="t">학습데이터 구축</span></span></li>
+      <li><span class="st d"><span class="n">3</span><span class="t">학습</span></span></li>
+      <li><span class="st"><span class="n">4</span><span class="t">AI 결과 보기</span></span></li>
+      <li><span class="st d"><span class="n">5</span><span class="t">서비스 공개</span></span></li>
+      <li><span class="st now"><span class="n">6</span><span class="t">서비스 관리</span></span></li>
+    </ol>
+    <p class="next"><span>다음 할 일</span><b>표본 확인 0/20</b></p>
+  </div>
+  <main class="main">
+    <div class="page">
+      <div class="g12">
+
+        <!-- 머리 — 구 화면의 탭(프로젝트 개요 · 참여자) + 기록 -->
+        <header class="row-h c12">
+          <div>
+            <h1>비닐하우스 2026</h1>
+            <p class="today">프로젝트장 <b style="font-family:var(--font-body)">LX 직원</b> · 구성원 0 · 1회차 · 만든 날 10.01 · 마지막 움직임 10.01 19:18</p>
+          </div>
+          <div class="tabs"><span class="on">프로젝트 개요</span><span>참여자</span><span>기록</span></div>
+        </header>
+
+        <!-- ① 학습데이터 정보 (구 '데이터셋 정보': 업로드 이미지 · 라벨링 이미지 · 라벨 개수 · 미작업 이미지 · 클래스별 이미지 수) -->
+        <section class="k c7" id="k-data">
+          <div class="k-h"><h2>학습데이터 정보</h2><span class="ksub">표본 묶음 1 · 09.30 올림</span><span class="more">학습데이터 구축</span></div>
+          <div class="two">
+            <div>
+              <ul class="big c3">
+                <li><span>올린 이미지</span><b>200<small>장</small></b><i>학습용 160 · 검증용 40</i></li>
+                <li><span>라벨 있는 이미지</span><b>200<small>장</small></b><i>라벨 없는 이미지 0</i></li>
+                <li><span>라벨 개수</span><b>3,453<small>개</small></b><i>폴리곤 · 클래스 4</i></li>
+              </ul>
+              <div class="box" style="margin-top:10px">
+                <h3>클래스별 이미지 수</h3>
+                <ul class="cls">
+                  <li><span class="lb">경작지</span><div class="bar2"><i class="p1" style="width:90.5%"></i></div><span class="n"><b>181</b>장 · 라벨 1,425</span></li>
+                  <li><span class="lb">건물</span><div class="bar2"><i class="p2" style="width:72%"></i></div><span class="n"><b>144</b>장 · 라벨 1,183</span></li>
+                  <li><span class="lb">비닐하우스</span><div class="bar2"><i class="p3" style="width:65%"></i></div><span class="n"><b>130</b>장 · 라벨 669</span></li>
+                  <li><span class="lb">주차장</span><div class="bar2"><i class="p4" style="width:20%"></i></div><span class="n"><b>40</b>장 · 라벨 176</span></li>
+                </ul>
+              </div>
+            </div>
+            <div class="box">
+              <h3>표본 상태</h3>
+              <div class="stk"><i class="p1" style="width:80%"></i><i class="p2" style="width:20%"></i></div>
+              <ul class="lgd" style="flex-direction:column;gap:4px"><li><i class="p1"></i>학습용 <b>160</b></li><li><i class="p2"></i>검증용 <b>40</b></li><li><i class="p6"></i>뺀 이미지 <b>0</b></li><li><i class="p6"></i>아직 라벨 없음 <b>0</b></li></ul>
+              <p class="rn">표본 20건 보기 <em>0/20</em> — 4단계 AI 결과 보기에서 봅니다.</p>
+              <p class="rn"><span class="ex srv">서버에 더할 것</span> 라벨 없는 이미지 수 — 지금은 라벨이 붙은 파일만 올라옵니다</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ② 프로젝트 정보 (구: 워크플로우 · 학습 · 추론 수 · 진행 현황 · 프로젝트 사용량 · 최근 작업 이력) -->
+        <section class="k c5" id="k-info">
+          <div class="k-h"><h2>프로젝트 정보</h2><span class="more">서비스 카드</span></div>
+          <ul class="big c3">
+            <li><span>서비스</span><b>1<small>개</small></b><i>공개 · 1.0판 · 09.30</i></li>
+            <li><span>학습</span><b>3<small>번</small></b><i>끝 2 · 실패 1</i></li>
+            <li><span>시범 적용</span><b>3<small>곳</small></b><i>운영 0곳</i></li>
+          </ul>
+          <ul class="big c2" style="margin-top:10px">
+            <li><span>프로젝트 사용량</span><b>10.2<small>MB</small></b><i>내 저장 용량 29.8 MB 가운데 34%</i></li>
+            <li><span>진행 현황</span>
+              <div class="steps6" style="margin-top:4px"><span class="seg6 big"><i class="d"></i><i class="d"></i><i class="d"></i><i class="wait"></i><i class="d"></i><i class="now"></i></span><div class="lbs"><span>올림</span><span>구축</span><span>학습</span><span style="color:var(--warn)">확인</span><span>공개</span><span class="now">관리</span></div></div>
+              <i>6단계 가운데 5 끝 · 표본 확인 남음</i></li>
+          </ul>
+          <div class="box" style="margin-top:10px;flex:1;justify-content:center">
+            <h3>사람 · 서비스</h3>
+            <p class="ppl" style="margin:0">프로젝트장 <b>LX 직원</b> · 구성원 <b>0</b> <span class="lnk q">구성원 더하기</span> <span class="lnk q">넘기기</span></p>
+            <p class="ppl" style="margin:0">서비스 <b>비닐하우스 서비스 1.0판</b> · 공개 09.30 · 기관 신고 <b>0</b> · 보고서 <b>0</b></p>
+            <p class="rn" style="margin-top:0">끝난 프로젝트는 보관할 수 있습니다 — 기록은 지워지지 않습니다. <span class="lnk q">보관</span></p>
+          </div>
+        </section>
+
+        <!-- ③ 최근 작업 이력 (구 '최근 작업 이력' — 지금의 기록 · 메모 · 파일) -->
+        <section class="k c7" id="k-log">
+          <div class="k-h"><h2>최근 작업 이력</h2><span class="ksub">자동 기록 · 메모 · 파일</span><span class="more">기록</span></div>
+          <ul class="ls" style="flex:1">
+              <li><span class="d">10.01 08:58</span><span class="t">프로젝트 만듦<small>LX 직원</small></span><span class="st ok">끝</span></li>
+              <li><span class="d">09.30 15:35</span><span class="t">모델 등록 승인<small>LX 관리자</small></span><span class="st ok">끝</span></li>
+              <li><span class="d">09.30 15:33</span><span class="t">학습 끝<small>2번째 학습 · LX 직원</small></span><span class="st ok">끝</span></li>
+              <li><span class="d">09.30 15:12</span><span class="t">학습 실패<small>다시 학습 · LX 직원</small></span><span class="st f">실패</span></li>
+              <li><span class="d">09.30 15:05</span><span class="t">증평군 적용 승인<small>시범 · LX 관리자</small></span><span class="st ok">끝</span></li>
+            </ul>
+            <div class="pj-foot"><span class="ksub">기록 11건 · 메모 0 · 파일 0</span><span class="lnk">모두 보기</span></div>
+        </section>
+
+        <!-- ④ 적용 지역 3곳 — 이 서비스가 돌고 있는 곳(지금 기능) · 다시 학습할 근거 -->
+        <section class="k c5" id="k-reg">
+          <div class="k-h"><h2>적용 지역 3곳</h2><span class="ksub">이 서비스가 돌고 있는 곳 · 마지막 학습 09.30 15:33</span><span class="more">다른 지역에 적용</span></div>
+          <ul class="reg">
+            <li><img src="shape-43745.svg" alt=""><div><b>증평군</b><span>2023년 항공영상 · 시범</span><em>AI 탐지 725건</em></div></li>
+            <li><img src="shape-48870.svg" alt=""><div><b>함양군</b><span>2023년 항공영상 · 시범</span><em>AI 탐지 42,214건</em></div></li>
+            <li><img src="shape-52190.svg" alt=""><div><b>남원시</b><span>2025년 드론영상 · 시범 · <span style="color:#0052C2;display:inline">2023 항공영상 새로 들어옴 10.01</span></span><em>AI 탐지 132,310건</em></div></li>
+          </ul>
+          <div class="pj-foot" style="margin-top:12px;align-items:flex-start"><span class="ppl" style="flex-direction:column;align-items:flex-start;gap:2px"><span>다시 학습할 근거 — 새 영상 <b>1</b> · 기관 검토 요청 <b>0</b> · 표본 확인 <b>0/20</b></span><span class="ksub">표본을 다 봐야 다음 회차를 시작할 수 있습니다</span></span><span class="btn b2 sm">재학습 시작</span></div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+chrome('projects', '<b>시안</b> 프로젝트 개요 — 구 Land-XI 의 데이터셋 정보 · 프로젝트 정보 · 최근 작업 이력 구성에 지금의 6단계 · 적용 지역 · 재학습 근거를 더함 · 값은 이 PC 서버(10-07 17:10 · 비닐하우스 2026)');
+</script>
+</body>
+</html>

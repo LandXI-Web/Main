@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시안 · 내 정보 — 저장 용량 · 늘리기 요청 · 이력</title>
+<link rel="stylesheet" href="staff.css">
+<script src="chrome.js"></script>
+</head>
+<body class="m has-stamp">
+<div class="app" id="app">
+  <main class="main">
+    <div class="page">
+      <div class="g12">
+
+        <header class="row-h c12">
+          <div>
+            <h1>내 정보</h1>
+            <p class="today">LX 직원님 · 한국국토정보공사 · 마지막 로그인 10.07 17:10</p>
+          </div>
+          <div class="tabs"><span class="on">내 정보</span><span>알림</span><span>지원</span></div>
+        </header>
+
+        <!-- ① 저장 용량 (구 '디스크 사용량 41% · 20.8/50.0 GB · 증량 신청') -->
+        <section class="k c4" id="k-stor">
+          <div class="k-h"><h2>저장 용량</h2><span class="ksub">내가 프로젝트장인 프로젝트의 합</span></div>
+          <div class="use"><b>29.8<small>MB 사용</small></b><em>할당 없음</em></div>
+          <div class="bar2" style="margin-top:8px"><i class="p1" style="width:34%"></i><i class="p2" style="width:30%"></i><i class="p3" style="width:29%"></i><i class="p4" style="width:7%"></i></div>
+          <p class="rn">아직 저장 할당이 정해지지 않았습니다 — LX 관리자가 기본 할당을 정하면 비율이 보입니다.</p>
+          <ul class="pjb">
+            <li><span class="lb">비닐하우스 2026</span><div class="bar2"><i class="p1" style="width:100%"></i></div><span class="n">10.2 MB</span></li>
+            <li><span class="lb">주차장 2026</span><div class="bar2"><i class="p2" style="width:88%"></i></div><span class="n">9.0 MB</span></li>
+            <li><span class="lb">건축물 2026</span><div class="bar2"><i class="p3" style="width:85%"></i></div><span class="n">8.7 MB</span></li>
+            <li><span class="lb">곤포사일리지 2026</span><div class="bar2"><i class="p4" style="width:19%"></i></div><span class="n">1.9 MB</span></li>
+          </ul>
+          <div class="ask">
+            <div class="frm"><span class="fld ro">원하는 할당</span><span class="fld"><span class="ph">예: 50 GB</span></span><span class="fld ro">이유 한 줄</span><span class="fld"><span class="ph">왜 필요한지</span></span></div>
+            <div class="act"><span class="ksub">대기 중 요청은 한 사람에 하나</span><span class="btn sm">늘리기 요청</span></div>
+          </div>
+        </section>
+
+        <!-- ② 기본 정보 (구 '기본 정보': 아이디 · 이름 · 기관 · 연락처 · 사번) -->
+        <section class="k c8" id="k-info">
+          <div class="k-h"><h2>기본 정보</h2><span class="ksub">바꾸면 바로 적용되고 기록에 남습니다</span><span class="btn b2 sm">내 정보 고치기</span></div>
+          <table class="info">
+            <tr><th>아이디</th><td>test@lx.or.kr<small>바꿀 수 없음</small></td></tr>
+            <tr><th>이름</th><td>LX 직원</td></tr>
+            <tr><th>역할</th><td>LX 직원<small>프로젝트 만들기 · 학습 · 서비스 공개 요청</small></td></tr>
+            <tr><th>기관</th><td>한국국토정보공사</td></tr>
+            <tr><th>부서</th><td><span class="mute">아직 없음</span><small>부서 목록에서 고릅니다</small></td></tr>
+            <tr><th>연락처</th><td><span class="mute">아직 없음</span></td></tr>
+            <tr><th>사번</th><td><span class="mute">—</span><small><span class="ex srv">서버에 더할 것</span> 구 화면에 있던 칸</small></td></tr>
+            <tr><th>비밀번호</th><td>임시 비밀번호 사용 중<small>첫 로그인 뒤 바꿔 주세요</small> <span class="lnk" style="margin-left:8px">비밀번호 바꾸기</span></td></tr>
+          </table>
+        </section>
+
+        <!-- ③ 늘리기 요청 이력 (구 '디스크 증량 신청 이력' 표) -->
+        <section class="k c7" id="k-hist">
+          <div class="k-h"><h2>저장 용량 늘리기 요청 이력</h2><span class="ksub">요청 · 승인 · 반려</span></div>
+          <table class="tb">
+            <thead><tr><th>번호</th><th>처리</th><th>요청한 날</th><th class="n">요청 용량</th><th>요청 이유</th><th>처리 내용</th></tr></thead>
+            <tbody><tr><td class="no" colspan="6">늘리기 요청 이력이 없습니다</td></tr></tbody>
+          </table>
+          <p class="rn">승인되면 할당이 요청한 값이 되고, 반려되면 사유가 알림으로 옵니다.</p>
+        </section>
+
+        <!-- ④ 내가 쓴 분석 (11차 답: 한도 없음 · 쓴 양은 보여 줌) -->
+        <section class="k c5" id="k-use">
+          <div class="k-h"><h2>내가 쓴 분석</h2><span class="ksub">9.26 – 10.01 · 내가 돌린 것</span></div>
+          <ul class="kv"><li><span>AI 분석</span><b>220건</b></li><li><span>필지 대조</span><b>104건</b></li><li><span>위성 지수</span><b>18건</b></li><li><span>모델 학습</span><b>6번</b></li><li><span>영상 준비</span><b>2건</b></li><li><span>걸린 시간 합</span><b>9시간 13분</b></li></ul>
+          <p class="rn">분석에는 한도가 없습니다. 쓴 양만 보입니다 — 끝난 것만 셌고(취소 36 · 실패 1 은 뺌) 학습 시간은 기록이 없어 시간 합에서 빠졌습니다.</p>
+        </section>
+
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+chrome('me', '<b>시안</b> 내 정보 — 구 Land-XI 마이페이지(디스크 사용량 · 증량 신청 · 신청 이력 · 기본 정보) 구성에 프로젝트별 용량 · 내가 쓴 분석을 더함 · 값은 이 PC 서버(10-07 17:10)');
+</script>
+</body>
+</html>
