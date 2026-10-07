@@ -214,18 +214,18 @@ a.k-svc:hover .m-more::after{transform:translateX(4px)}
 }
 
 /* ── 스크롤 안내(메인-2) — 화면 가운데 아래 · 2초 뒤 · 처음 스크롤에 사라짐 ── */
-.m-hint{position:fixed;left:50%;bottom:10px;z-index:15;transform:translateX(-50%);display:flex;align-items:center;gap:10px;height:28px;color:var(--sub);font:500 var(--fs-label)/var(--lh-label) var(--font-body);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity var(--d-500) var(--e-cam)}
+.m-hint{position:fixed;left:50%;bottom:28px;z-index:15;transform:translateX(-50%);display:flex;align-items:center;gap:10px;height:44px;padding:0 18px 0 14px;border-radius:22px;background:rgba(255,255,255,.96);box-shadow:0 4px 18px rgba(16,24,40,.14);color:var(--ink);font:600 15px/1 var(--font-body);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity var(--d-500) var(--e-cam)}
 .m-hint.is-on{opacity:1}
 .m-hint.is-off{opacity:0;transition-duration:var(--d-380)}
-.m-mouse{width:18px;height:28px;border:2px solid var(--sub);border-radius:10px;position:relative;flex:none}
-.m-mouse::after{content:"";position:absolute;left:50%;top:5px;width:3px;height:5px;margin-left:-1.5px;border-radius:2px;background:var(--sub);animation:m-wheel 1.6s var(--e-cam) infinite}
+.m-mouse{width:18px;height:28px;border:2px solid var(--ink);border-radius:10px;position:relative;flex:none}
+.m-mouse::after{content:"";position:absolute;left:50%;top:5px;width:3px;height:5px;margin-left:-1.5px;border-radius:2px;background:var(--ink);animation:m-wheel 1.6s var(--e-cam) infinite}
 @keyframes m-wheel{0%{transform:translateY(0);opacity:1}70%{transform:translateY(9px);opacity:0}100%{opacity:0}}
 .m-touch{display:none;width:28px;height:28px;flex:none}
-.m-touch path{fill:none;stroke:var(--sub);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.m-touch path{fill:none;stroke:var(--ink);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .m-chev{animation:m-push 1.6s var(--e-cam) infinite}
 @keyframes m-push{0%{transform:translateY(4px);opacity:0}40%{opacity:1}100%{transform:translateY(-3px);opacity:0}}
 .m-t-touch{display:none}
-@media (pointer:coarse),(max-width:640px){.m-mouse,.m-t-pc{display:none}.m-touch,.m-t-touch{display:block}.m-hint{bottom:26px}}
+@media (pointer:coarse),(max-width:640px){.m-mouse,.m-t-pc{display:none}.m-touch,.m-t-touch{display:block}.m-hint{bottom:32px}}
 @media (prefers-reduced-motion:reduce){.m-mouse::after,.m-chev{animation:none}.m-mouse,.m-touch{display:none}.m-hint{transition:none}}
 /* 휴대폰 첫 화면 문장 — 글자 중간에서 끊기지 않게(§2-1) */
 .m-lead span{word-break:keep-all}
