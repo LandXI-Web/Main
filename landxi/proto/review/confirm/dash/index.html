@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Land-XI LX 직원 대시보드 — 내 일 중심</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../../../fonts-system.css">
+<style>
+:root{--ink:#191F28;--ink2:#4E5968;--mute:#8B95A1;--line:#E5E8EB;--bg:#F2F4F6;--accent:#3182F6;--tint:#E8F3FF;--ok:#0FA9A0;--warn:#F59E0B;--no:#F04452}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Pretendard,system-ui,sans-serif;word-break:keep-all;overflow-wrap:break-word}
+a{color:var(--accent);text-decoration:none}
+.w{max-width:1120px;margin:0 auto;padding:32px 16px 140px}
+h1{font:800 34px/1.2 Paperlogy,Pretendard,sans-serif;letter-spacing:-.02em;margin:0 0 8px}
+.lead{margin:0 0 6px;color:var(--ink2)}
+.how{text-wrap:pretty;margin:16px 0 0;padding:16px 20px;background:#fff;border-radius:16px;color:var(--ink2);font-size:15px}
+.how b{color:var(--ink)}
+section{margin-top:40px}
+h2{font:700 24px/1.3 Paperlogy,Pretendard,sans-serif;margin:0 0 4px;text-wrap:balance}
+.sub{margin:0 0 16px;color:var(--mute);font-size:15px;text-wrap:pretty}
+.c{background:#fff;border-radius:20px;padding:20px 24px;margin:0 0 14px;border:2px solid transparent}
+.c[data-s="확인"],.c[data-s="채택"],.c[data-s="완료"],.c[data-s^="ⓐ"],.c[data-s^="ⓑ"],.c[data-s^="ⓒ"],.c[data-s="제안대로"],.c[data-s^="영상대로"]{border-color:var(--ok)}
+.c[data-s="보류"],.c[data-s="검토 필요"]{border-color:var(--warn)}.c[data-s="반려"],.c[data-s="다시"]{border-color:var(--no)}
+.c header{display:flex;gap:10px;align-items:baseline;margin-bottom:10px}
+.n{font:600 13px/1 Inter,Pretendard,sans-serif;color:var(--accent);background:var(--tint);padding:5px 8px;border-radius:8px;flex:none}
+h3{margin:0;font:700 19px/1.4 Pretendard,sans-serif;text-wrap:balance}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.tx p{margin:0 0 8px;color:var(--ink2);text-wrap:pretty}.tx p.k{margin:12px 0 2px;font-size:13px;font-weight:600;color:var(--mute)}.tx p.k:first-child{margin-top:0}
+.wh{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.wh li{display:flex;flex-direction:column;background:var(--bg);border-radius:10px;padding:8px 12px;font-size:14px}
+.wh li a{overflow-wrap:anywhere}.wh li span,.wh li em{text-wrap:pretty}.wh li span{color:var(--ink2)}.wh li em{font-style:normal;color:var(--mute);font-size:13px}
+.im{display:grid;gap:8px;align-content:start}
+.im figure{margin:0;position:relative}.im img{width:100%;border-radius:12px;border:1px solid var(--line);display:block}.im figcaption{position:absolute;left:10px;top:10px;font:600 12px/1 Pretendard,sans-serif;padding:6px 8px;border-radius:8px;background:rgba(25,31,40,.82);color:#fff}
+.na{color:var(--mute);font-size:14px;margin:0;padding:24px;background:var(--bg);border-radius:12px;text-align:center}
+footer{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.op{display:flex;gap:6px;flex-wrap:wrap}
+.op button{font:600 15px/1 Pretendard,sans-serif;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.op button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+footer input{flex:1;min-width:200px;font:15px Pretendard,sans-serif;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:12px 16px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
+.bar b{font-weight:600}
+.bar button{font:700 16px/1 Pretendard,sans-serif;padding:14px 22px;border-radius:12px;border:0;background:var(--accent);color:#fff;cursor:pointer}
+.bar small{color:var(--mute)}
+@media (max-width:760px){.g{grid-template-columns:1fr}.c{padding:16px}h1{font-size:28px}}
+</style>
+</head>
+<body>
+<main class="w">
+<h1>LX 직원 대시보드 — 내 일 중심</h1>
+<p class="lead">먼저 미리보기를 열어 보세요: app.land-xi.dev/landxi/proto/review/lx-dashboard/index.html (할 일 없을 때는 주소 끝에 ?todo=0). 두 가지만 고르시면 됩니다.</p>
+<div class="how"><b>보는 법</b> — 항목마다 <b>지금</b>(무엇이 문제인지) · <b>제안</b>(바뀐 뒤) · <b>보는 곳</b>(캡처, 그리고 직접 열어 볼 주소·계정·누를 곳)이 있습니다. 캡처를 누르면 크게 열립니다.<br>
+<b>고르는 법</b> — 버튼을 누르고, 고칠 점이 있으면 한 줄 적어 주세요. 고른 것은 이 브라우저에 저장됩니다. 다 고르시면 아래 <b>결정 복사</b>를 눌러 대화창에 붙여 넣어 주세요. 안 고른 항목은 그대로 두셔도 됩니다.</div>
+<section><h2>LX 직원 대시보드 — &#x27;홈&#x27;이 아니라 대시보드로, 내 일 중심(10-07 답 ⓐ · 모두 Land-XI · LX 직원 화면)</h2><p class="sub">시안 하나(new-dash-*)입니다. 숫자 · 이름 · 지역 · 기록 수는 10월 7일 16시에 로그인 폼으로 들어가 읽은 이 PC 서버의 실제 값이고, 서버에 없는 것(팀 메모 · 공지)은 칸 머리에 &#x27;예시&#x27;라고 적었습니다. 구 Land-XI 플랫폼 대시보드(공지 띠 · 큰 숫자 · 전국 판 · 프로젝트 현황 · 스토리지)를 표로 대조해 공지 · 전국 지도 · 프로젝트 현황의 자리는 이어받고 큰 숫자 띠 · 모델 이름 · 스토리지 · 방문 추세는 뺐습니다(README §1). 단추 · 글자 옆 그림 기호는 넣지 않았습니다(10-07 원칙 126). 미리보기: https://app.land-xi.dev/landxi/proto/review/lx-dashboard/index.html (할 일 없을 때 …/index.html?todo=0).</p><article class="c" data-id="대시-1" data-t="[화면][Land-XI] LX 직원 대시보드 — 이 구성으로 갈까"><header><span class="n">대시-1</span><h3>[화면][Land-XI] LX 직원 대시보드 — 이 구성으로 갈까</h3></header><div class="g"><div class="tx"><p class="k">지금</p><p>지금 홈은 내 프로젝트 3줄 · 우리 서비스(다른 사람 서비스의 운영 2 · 시범 5 · 장면 넷 · 기관 신고 · 재학습 필요) · 요청함 숫자 셋 · 바로 분석하기 · 최근 활동으로, 목록의 축소판이지 대시보드가 아니었습니다. 팀과 소통할 곳과 공지는 없었고, 프로젝트 줄에는 &#x27;6 서비스 관리 · 시범 3곳 · 결과 확인 0/20&#x27;처럼 한 상태가 세 가지 표기로 섰습니다. 10차에 두 방향(A · B)을 그렸지만 &quot;아직 이해가 안 된다&quot;는 답이었습니다.</p><p class="k">제안</p><p>이름은 &#x27;대시보드&#x27;(왼쪽 메뉴 첫 항목 · 마스트는 지금처럼 &#x27;LX 직원 대시보드&#x27;). 한 화면 = ① 머리 한 줄: &#x27;대시보드&#x27; + 작은 글(4 내 프로젝트 · 모두 서비스 운영 중 / 7곳 시범 적용 / 0 요청함 · 새로 온 것 없음) + 오른쪽 시군구 검색 — 바로 분석하기 ② 할 일 띠(있을 때만 · 대시-2) ③ 왼쪽 &#x27;내 프로젝트&#x27;: 줄 넷 — 시군구 모양 그림 · 이름 · 지역 · &#x27;서비스 운영 중 · 시범 적용 3곳&#x27; · &#x27;마지막 10.01 · 기록 11&#x27; · 빨간 꼬리표 &#x27;표본 20건 중 0건 봄&#x27;, 아래 새 프로젝트 · 보관 0 · 접힌 최근 활동 3 ④ 왼쪽 &#x27;내 서비스가 돌고 있는 곳&#x27;: 작은 전국 지도(행정경계 · 7곳 색칠) + 프로젝트별 지역 칩 — 구 대시보드 전국 판의 자리 ⑤ 오른쪽 &#x27;팀과 소통&#x27;: 내 프로젝트의 메모 · 대화 · @이름 부르기(프로젝트 한 장의 &#x27;기록 · 메모 · 파일&#x27;과 같은 곳 — 거기서 쓴 메모가 여기 모임) + 메모 남기기 칸 ⑥ 오른쪽 &#x27;공지사항&#x27;: LX 전체 최근 3 · 안 읽은 것은 날짜가 파랑. 다른 사람 서비스의 현황은 &#x27;서비스 카드&#x27; 메뉴에 그대로 두고 대시보드에서 뺐습니다(내 일 중심 ⓐ). 큰 숫자 띠 · 모델 이름 · 스토리지는 없습니다(규칙 2 · 내 저장 공간은 내 정보). 그림 기호 0. 1440 세로 932(할 일 없을 때 900 · 스크롤 0) · 첫 화면 버튼 1 · 휴대폰은 한 칸씩 세로.</p><p class="k">보는 곳</p><ul class="wh"><li><a href="https://app.land-xi.dev/landxi/proto/review/lx-dashboard/index.html" target="_blank" rel="noopener">app.land-xi.dev/landxi/proto/review/lx-dashboard/index.html</a><span>로그인 없이</span><em>시안 — 위 띠 · 왼쪽 두 칸 · 오른쪽 두 칸. 지금 홈(https://app.land-xi.dev/ · 아이디 test@lx.or.kr · 임시 비밀번호)과 견주어 보기</em></li></ul></div><div class="im"><figure><a href="img/new-dash-1440.png" target="_blank"><img src="img/new-dash-1440.png" alt="" loading="lazy"></a><figcaption>시안</figcaption></figure><figure><a href="img/new-dash-390.png" target="_blank"><img src="img/new-dash-390.png" alt="" loading="lazy"></a><figcaption>시안</figcaption></figure></div></div><footer><div class="op"><button type="button" data-v="ⓐ 이 구성대로">ⓐ 이 구성대로</button><button type="button" data-v="ⓑ 칸을 바꿔(어느 칸을 빼거나 더할지 메모)">ⓑ 칸을 바꿔(어느 칸을 빼거나 더할지 메모)</button><button type="button" data-v="ⓒ 다시">ⓒ 다시</button><button type="button" data-v="검토 필요">검토 필요</button></div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article><article class="c" data-id="대시-2" data-t="[화면][Land-XI] 할 일의 자리 — 있을 때만 한 줄 띠 + 줄의 꼬리표"><header><span class="n">대시-2</span><h3>[화면][Land-XI] 할 일의 자리 — 있을 때만 한 줄 띠 + 줄의 꼬리표</h3></header><div class="g"><div class="tx"><p class="k">지금</p><p>19차에 &quot;지금 할 일이 없다면 어떤 모습이지? 굳이 메인 대시보드에 있어야 하나? 너무 크게 의미없게 차지한다&quot;고 하셨습니다. 10차 방향 A는 &#x27;지금 할 일 하나&#x27;를 큰 칸으로, B는 체크 목록으로 두어 할 일이 없을 때 빈 칸이 남았습니다.</p><p class="k">제안</p><p>할 일은 큰 칸이 아니라 ① 머리 아래 &#x27;한 줄 띠&#x27;(높이 52px · 왼쪽 빨간 선 · &#x27;4 할 일 · AI 결과가 맞는지 보기 — 프로젝트마다 표본 20건 중 0건 봄&#x27; + 프로젝트 칩 넷)와 ② 내 프로젝트 줄마다 붙는 빨간 꼬리표(&#x27;표본 20건 중 0건 봄&#x27;)로만 보입니다. 할 일이 없으면 띠는 사라지고(빈 칸을 세우지 않음) 꼬리표는 회색 &#x27;할 일 없음&#x27;, 상태 글 앞에 &#x27;표본 20건 다 봄&#x27;이 붙습니다 — 그때 1440 은 스크롤 0 으로 다 들어옵니다(new-dash-empty-1440). 기관 검토 요청 · 분석 요청이 오면 같은 띠에 함께 섭니다(지금은 0).</p><p class="k">보는 곳</p><ul class="wh"><li><a href="https://app.land-xi.dev/landxi/proto/review/lx-dashboard/index.html?todo=0" target="_blank" rel="noopener">app.land-xi.dev/landxi/proto/review/lx-dashboard/index.html?todo=0</a><span>로그인 없이</span><em>할 일이 없을 때 — 띠가 없고 줄의 꼬리표만 바뀐 모습(…/index.html 과 번갈아 보기)</em></li></ul></div><div class="im"><figure><a href="img/new-dash-1440.png" target="_blank"><img src="img/new-dash-1440.png" alt="" loading="lazy"></a><figcaption>시안</figcaption></figure><figure><a href="img/new-dash-empty-1440.png" target="_blank"><img src="img/new-dash-empty-1440.png" alt="" loading="lazy"></a><figcaption>시안</figcaption></figure></div></div><footer><div class="op"><button type="button" data-v="ⓐ 띠 + 줄 꼬리표(시안대로)">ⓐ 띠 + 줄 꼬리표(시안대로)</button><button type="button" data-v="ⓑ 줄 꼬리표만(띠 없이)">ⓑ 줄 꼬리표만(띠 없이)</button><button type="button" data-v="ⓒ 다른 방식(메모)">ⓒ 다른 방식(메모)</button><button type="button" data-v="검토 필요">검토 필요</button></div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article></section>
+</main>
+<div class="bar"><b id="cnt">0 / 2 고름</b><button type="button" id="copy">결정 복사</button><small id="msg"></small></div>
+<script>
+const KEY='lx-confirm-0930-rdash';
+let S={};try{S=JSON.parse(localStorage.getItem(KEY)||'{}')}catch{}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch{}};
+const cards=[...document.querySelectorAll('.c')];
+const count=()=>{document.getElementById('cnt').textContent=Object.values(S).filter(v=>v&&v.v).length+' / '+cards.length+' 고름'};
+for(const c of cards){const id=c.dataset.id,st=S[id]||{};const inp=c.querySelector('input');
+  const paint=()=>{c.dataset.s=(S[id]||{}).v||'';for(const b of c.querySelectorAll('.op button'))b.classList.toggle('on',b.dataset.v===(S[id]||{}).v)};
+  if(st.m)inp.value=st.m;paint();
+  c.querySelectorAll('.op button').forEach(b=>b.onclick=()=>{S[id]={...(S[id]||{}),v:(S[id]||{}).v===b.dataset.v?'':b.dataset.v};save();paint();count()});
+  inp.oninput=()=>{S[id]={...(S[id]||{}),m:inp.value};save()};}
+count();
+document.getElementById('copy').onclick=async()=>{
+  const lines=cards.filter(c=>(S[c.dataset.id]||{}).v||(S[c.dataset.id]||{}).m).map(c=>{const s=S[c.dataset.id];return '- '+c.dataset.id+' '+c.dataset.t+': '+(s.v||'(선택 없음)')+(s.m?' — '+s.m:'')});
+  const t='[LX 직원 대시보드 — 내 일 중심 결정 · '+new Date().toLocaleString('ko-KR')+']\n'+(lines.join('\n')||'(고른 항목 없음)');
+  try{await navigator.clipboard.writeText(t);document.getElementById('msg').textContent='복사했습니다 — 대화창에 붙여 넣어 주세요'}catch{prompt('아래 글을 복사해 주세요',t)}};
+</script>
+</body>
+</html>
