@@ -3,58 +3,83 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>시안 · 학습 데이터 — 목록</title>
+<title>시안 · 공유 데이터 — 학습 데이터(관리자)</title>
 <link rel="stylesheet" href="da.css">
-<script src="../lx-dashboard/chrome.js"></script>
 </head>
 <body class="m has-stamp">
 <div class="app" id="app">
+  <header class="mast"><span class="word">LAND-XI</span><span class="home">LX 관리자 대시보드</span><span class="sp"></span><span class="role">LX 관리자</span><span class="mb">XI맵</span><span class="mb help">?</span><span class="mb">나가기</span></header>
+  <nav class="rail txt" aria-label="LX 관리자 메뉴"><span class="ri">현황</span><span class="ri">인프라</span><span class="ri">기관</span><span class="ri">배포</span><span class="ri">결재</span><span class="ri">검토 요청</span><span class="ri">계정 관리</span><span class="ri on">공유 데이터</span></nav>
   <main class="main">
     <div class="page">
       <div class="g12">
 
         <header class="row-h c12">
           <div>
-            <p class="lab">데이터</p>
+            <p class="lab">공유 데이터</p>
             <h1>학습 데이터</h1>
           </div>
-          <div class="tabs"><span>영상 · 행정 자료</span><span class="on">학습 데이터</span></div>
-          <div class="acts"><span class="btn b2 sm">학습 데이터 올리기</span></div>
+          <div class="tabs"><span>영상</span><span>행정 자료</span><span class="on">학습 데이터</span></div>
+          <div class="tabs"><span class="on">클래스</span><span>그림 묶음</span><span>흡수 신청 <b class="num">1</b></span><span>내려받기 요청 <b class="num">0</b></span></div>
         </header>
 
-        <section class="tile c3"><span>학습 데이터</span><b>48<small>건</small></b><p>라벨이 붙은 묶음 · 클래스 목록이 같은 것끼리 한 건</p></section>
-        <section class="tile c3"><span>서비스 카드에 쓰이는 것</span><b>7<small>건</small></b><p>이 자료로 학습한 모델이 카드에 붙어 있음</p></section>
-        <section class="tile c3 w"><span>이용 조건 확인 필요</span><b>38<small>건</small></b><p>약관 원문을 아직 못 봄 — 해외 기관 서비스에 쓰기 전 확인</p></section>
-        <section class="tile c3"><span>다음 판에 담을 것</span><b>105<small>건</small></b><p>기관이 알린 오탐 — 아직 라벨로 옮기지 않음</p></section>
+        <section class="tile hero c3"><span>표준 클래스</span><b>30<small>개</small></b><p>라벨 층 68 · 센 것만(원본 형식 11줄은 들일 때 셈)</p></section>
+        <section class="tile c3"><span>그림은 한 번만 저장</span>
+          <div class="dup"><div><i style="width:100%"></i><em>35,063</em></div><div><i class="on" style="width:44%"></i><em>15,417</em></div></div>
+          <p>공개 묶음 9개의 원 그림 → 서로 다른 그림(원 파일 이름 기준)</p></section>
+        <section class="tile c3"><span>첫 표준 후보 클래스</span><b>5<small>/ 30</small></b>
+          <span class="meter"><i style="width:16.7%"></i></span><p>비닐하우스 · 건물 · 경작지 · 주차장 · 곤포사일리지</p></section>
+        <section class="tile w c3"><span>이용 조건 확인 필요</span><b>38<small>/ 48 묶음</small></b>
+          <span class="meter w"><i style="width:79%"></i></span><p>약관 원문을 아직 못 봄</p></section>
 
-        <section class="k c12">
+        <section class="k c8">
           <div class="flt">
             <div class="grp"><em>영상</em><span class="chip on">전체</span><span class="chip">항공</span><span class="chip">위성</span><span class="chip">드론</span><span class="chip">현장 사진</span></div>
-            <div class="grp"><em>라벨</em><span class="chip">도형</span><span class="chip">상자</span></div>
-            <div class="grp"><em>출처</em><span class="chip">LX</span><span class="chip">AI Hub</span><span class="chip">공개 묶음</span></div>
-            <div class="grp"><em>이용 조건</em><span class="chip">확인됨</span><span class="chip">확인 필요</span></div>
-            <span class="fld"><span class="ph">이름 · 대상 · 지역 찾기</span></span>
+            <div class="grp"><em>층</em><span class="chip">표준</span><span class="chip">자유</span></div>
+            <span class="fld"><span class="ph">클래스 찾기</span></span>
           </div>
-          <table class="at" style="margin-top:14px">
-            <thead><tr><th style="width:27%">학습 데이터</th><th>영상</th><th>라벨</th><th class="n">그림</th><th class="n">객체</th><th>지역</th><th>출처</th><th>이용 조건</th><th>쓰임</th><th class="n">판</th></tr></thead>
+          <table class="at" style="margin-top:12px">
+            <thead><tr><th style="width:30%">클래스</th><th>표준 판</th><th class="n">층</th><th class="n">그 클래스가 든 그림</th><th class="n">객체</th><th>이용 조건</th></tr></thead>
             <tbody>
-              <tr class="sel"><td><div class="nm"><img src="img/a01.webp" alt=""><span><b>항공 토지피복 4분류</b><small>건물 · 주차장 · 경작지 · 비닐하우스</small></span></div></td><td>항공 25cm</td><td>도형</td><td class="n">153,295</td><td class="n">2,056,031</td><td>경기 · 경상 · 전라 · 제주</td><td>AI Hub 가공</td><td><span class="cond chk">확인 필요</span></td><td class="use"><b>영농관리</b><small>모델 1 · 표본 3건의 바탕</small></td><td class="n">1</td></tr>
-              <tr><td><div class="nm"><img src="img/a04s.webp" alt=""><span><b>남원 곤포사일리지</b><small>곤포사일리지</small></span></div></td><td>드론 약 1.5cm</td><td>도형</td><td class="n">2,010</td><td class="n">8,616</td><td>남원시</td><td>LX 남원 사업</td><td><span class="cond ok">확인됨</span></td><td class="use"><b>곤포사일리지</b><small>모델 1</small></td><td class="n">1</td></tr>
-              <tr><td><div class="nm"><img src="img/a04v.webp" alt=""><span><b>남원 비닐하우스(드론)</b><small>단동 · 다동</small></span></div></td><td>드론 약 1.5cm</td><td>도형</td><td class="n">1,953</td><td class="n">3,134</td><td>남원시</td><td>LX 남원 사업</td><td><span class="cond ok">확인됨</span></td><td class="use">남원 2025 결과<small>카드에는 안 씀</small></td><td class="n">1</td></tr>
-              <tr><td><div class="nm"><img src="img/a05.webp" alt=""><span><b>드론 4분류(하천부지)</b><small>경작지 · 비닐하우스 · 가건물 · 천막</small></span></div></td><td>드론 약 2cm</td><td>도형</td><td class="n">153,971</td><td class="n">280,348</td><td>아산시</td><td>AI Hub 가공</td><td><span class="cond chk">확인 필요</span></td><td class="use s">아직 안 씀</td><td class="n">1</td></tr>
-              <tr><td><div class="nm"><img src="img/a11.webp" alt=""><span><b>해양쓰레기(항공)</b><small>해안 쓰레기</small></span></div></td><td>항공</td><td>도형</td><td class="n">37,023</td><td class="n">59,426</td><td>해안</td><td>공개 묶음</td><td><span class="cond chk">확인 필요</span></td><td class="use s">아직 안 씀</td><td class="n">1</td></tr>
-              <tr><td><div class="nm"><img src="img/a21.webp" alt=""><span><b>방치쓰레기</b><small>쓰레기 더미</small></span></div></td><td>드론 사진</td><td>도형</td><td class="n">16,702</td><td class="n">68,887</td><td>전북 등</td><td>공개 묶음</td><td><span class="cond chk">확인 필요</span></td><td class="use s">아직 안 씀</td><td class="n">1</td></tr>
-              <tr><td><div class="nm"><img src="img/a20.webp" alt=""><span><b>태양광</b><small>태양광 패널</small></span></div></td><td>드론 정사</td><td>상자</td><td class="n">3,682</td><td class="n">5,217</td><td>경북</td><td>공개 묶음</td><td><span class="cond chk">확인 필요</span></td><td class="use s">아직 안 씀</td><td class="n">1</td></tr>
-              <tr><td><div class="nm"><img src="img/a16.webp" alt=""><span><b>석면 슬레이트 지붕</b><small>석면 지붕</small></span></div></td><td>드론</td><td>도형</td><td class="n">1,316</td><td class="n">1,561</td><td>경북 · 전북</td><td>공개 묶음</td><td><span class="cond chk">확인 필요</span></td><td class="use s">아직 안 씀</td><td class="n">1</td></tr>
+              <tr class="sel"><td><div class="nm"><img src="img/c-vh.webp" alt=""><span><b>비닐하우스</b><small>항공 · 드론</small></span></div></td><td><span class="std">항공 25cm 1판</span></td><td class="n">9</td><td class="n">90,264</td><td class="n">410,442</td><td><span class="cond chk">7 확인 필요</span></td></tr>
+              <tr><td><div class="nm"><img src="img/c-bld.webp" alt=""><span><b>건물</b><small>항공 · 위성 · 드론</small></span></div></td><td><span class="std">항공 25cm 1판</span></td><td class="n">9</td><td class="n">129,948</td><td class="n">1,516,746</td><td><span class="cond chk">8 확인 필요</span></td></tr>
+              <tr><td><div class="nm"><img src="img/c-farm.webp" alt=""><span><b>경작지</b><small>항공 · 위성 · 드론</small></span></div></td><td><span class="std">항공 25cm 1판</span></td><td class="n">7</td><td class="n">213,300</td><td class="n">977,710</td><td><span class="cond chk">5 확인 필요</span></td></tr>
+              <tr><td><div class="nm"><img src="img/a21.webp" alt=""><span><b>방치쓰레기</b><small>드론</small></span></div></td><td class="s">없음</td><td class="n">4</td><td class="n">49,499</td><td class="n">206,630</td><td><span class="cond chk">4 확인 필요</span></td></tr>
+              <tr><td><div class="nm"><img src="img/c-park.webp" alt=""><span><b>주차장</b><small>항공</small></span></div></td><td><span class="std">항공 25cm 1판</span></td><td class="n">3</td><td class="n">41,767</td><td class="n">148,722</td><td><span class="cond chk">3 확인 필요</span></td></tr>
+              <tr><td><div class="nm"><img src="img/a16.webp" alt=""><span><b>석면 지붕</b><small>드론</small></span></div></td><td class="s">없음</td><td class="n">5</td><td class="n">20,628</td><td class="n">33,991</td><td><span class="cond chk">5 확인 필요</span></td></tr>
+              <tr><td><div class="nm"><img src="img/a04s.webp" alt=""><span><b>곤포사일리지</b><small>드론</small></span></div></td><td><span class="std">드론 1.5cm 1판</span></td><td class="n">3</td><td class="n">2,170</td><td class="n">9,283</td><td><span class="cond ok">확인됨</span></td></tr>
             </tbody>
           </table>
-          <div class="foot"><span>48건 중 8건 · 그림 많은 순</span><span class="more">더 보기</span></div>
+          <div class="foot"><span>30개 중 7개 · 객체 많은 순</span><span class="more">더 보기</span></div>
+        </section>
+
+        <section class="k c4 side">
+          <div class="k-h"><h2>비닐하우스</h2><span class="ksub">층 9 · 표준 1</span></div>
+          <div class="lays">
+            <div class="lay std"><img src="img/c-vh.webp" alt=""><span><b>항공 토지피복 4분류</b><small>항공 25cm · 도형 · 27,605장 · 110,091개</small></span><em>표준 1판</em></div>
+            <div class="lay"><img src="img/g-dg.webp" alt=""><span><b>대구경북 6종</b><small>드론 · 상자 · 14,638장 · 133,209개</small></span><em>자유</em></div>
+            <div class="lay"><img src="img/g-asan.webp" alt=""><span><b>드론 4분류(하천부지)</b><small>드론 2cm · 도형 · 25,948장 · 34,132개</small></span><em>자유</em></div>
+            <div class="lay"><img src="img/g-dis.webp" alt=""><span><b>재난 피해</b><small>드론 · 상자 · 5,431장 · 49,396개</small></span><em>자유</em></div>
+            <div class="lay ask"><img src="img/g-nw.webp" alt=""><span><b>남원 드론 비닐하우스</b><small>드론 1.5cm · 도형 · 1,953장 · 3,134개</small></span><em>흡수 신청</em></div>
+          </div>
+          <div class="chk2">
+            <p class="ct2">흡수 신청 자동 점검 — 남원 드론 비닐하우스</p>
+            <div class="cg">
+              <div><span>빈 라벨</span><b>0</b></div>
+              <div><span>너무 작은 도형</span><b class="w">45</b></div>
+              <div><span>같은 그림</span><b class="w">32</b></div>
+              <div><span>해상도</span><b class="w">1.5cm</b></div>
+            </div>
+            <p class="tip">항공 25cm 표준과 해상도가 16배 다릅니다. 같은 판에 섞지 않고 <b>'비닐하우스 · 드론' 표준 1판</b>으로 여는 것을 권합니다.</p>
+            <div class="adm"><span class="btn sm">드론 표준으로 받기</span><span class="btn b2 sm">돌려보내기</span></div>
+          </div>
         </section>
 
       </div>
     </div>
   </main>
 </div>
-<script>chrome('data', '<b>시안</b> 설계 12차 · 데이터 › 학습 데이터 목록 · 사진은 실제 학습 자료 그림 + 라벨');</script>
+<span class="stamp" id="stamp"><b>시안</b> 설계 12차(다시) · LX 관리자 › 공유 데이터 › 학습 데이터 · 숫자는 라벨 파일에서 센 값</span>
+<script>if (new URLSearchParams(location.search).get('stamp') === '0') { document.getElementById('stamp').remove(); document.body.classList.remove('has-stamp'); }</script>
 </body>
 </html>

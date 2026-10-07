@@ -3,90 +3,70 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>시안 · 학습 데이터 — 한 건</title>
+<title>시안 · 프로젝트 — 공유 데이터 불러오기</title>
 <link rel="stylesheet" href="da.css">
-<script src="../lx-dashboard/chrome.js"></script>
+<link rel="stylesheet" href="pick.css">
 </head>
 <body class="m has-stamp">
-<div class="app" id="app">
-  <main class="main">
-    <div class="page">
-      <div class="g12">
-
-        <header class="row-h c12">
-          <div>
-            <p class="lab"><a>데이터 › 학습 데이터</a></p>
-            <h1>항공 토지피복 4분류</h1>
-            <div class="badges"><span class="chip">항공 25cm</span><span class="chip">512칸</span><span class="chip">도형</span><span class="chip">경기 · 경상 · 전라 · 제주</span><span class="chip">1판</span></div>
-          </div>
-          <div class="acts"><span class="btn b2 sm">프로젝트에 더하기</span><span class="btn b2 sm">새 판 만들기</span></div>
-        </header>
-
-        <section class="k c7">
-          <div class="k-h"><h2>표본 사진</h2><span class="ksub">라벨을 겹쳐 그림 · 누르면 크게</span><span class="more">153,295장 모두 보기</span></div>
-          <div class="ph6">
-            <figure><img src="img/d-bld.webp" alt=""><figcaption>건물</figcaption></figure>
-            <figure><img src="img/d-park.webp" alt=""><figcaption>주차장</figcaption></figure>
-            <figure><img src="img/d-farm.webp" alt=""><figcaption>경작지</figcaption></figure>
-            <figure><img src="img/d-vh.webp" alt=""><figcaption>비닐하우스</figcaption></figure>
-            <figure><img src="img/d-mix0.webp" alt=""><figcaption>섞임</figcaption></figure>
-            <figure><img src="img/d-mix1.webp" alt=""><figcaption>섞임</figcaption></figure>
-          </div>
-        </section>
-
-        <section class="k c5">
-          <div class="k-h"><h2>클래스별</h2><span class="ksub">라벨 파일에서 센 값</span></div>
-          <table class="ct">
-            <thead><tr><th>클래스</th><th class="n">객체</th><th class="n">그 클래스가 든 그림</th></tr></thead>
-            <tbody>
-              <tr><td>건물<span class="bar"><i style="width:100%;background:#0FA9A0"></i></span></td><td class="n">1,059,267</td><td class="n">105,528</td></tr>
-              <tr><td>경작지<span class="bar"><i style="width:70%;background:#3182F6"></i></span></td><td class="n">739,204</td><td class="n">118,318</td></tr>
-              <tr><td>주차장<span class="bar"><i style="width:14%;background:#FF7A45"></i></span></td><td class="n">147,469</td><td class="n">41,557</td></tr>
-              <tr><td>비닐하우스<span class="bar"><i style="width:10.4%;background:#F04452"></i></span></td><td class="n">110,091</td><td class="n">27,605</td></tr>
-            </tbody>
-          </table>
-          <div class="split"><div><span>학습</span><b>105,036</b></div><div><span>검증</span><b>22,506</b></div><div><span>시험</span><b>25,753</b></div></div>
-          <p class="tip">비닐하우스가 가장 적습니다 — 비닐하우스 모델을 따로 다시 학습할 때 이 묶음만으로는 모자라 경기 · 제주 토지피복 정답을 더하는 것을 권합니다.</p>
-        </section>
-
-        <section class="k c4">
-          <div class="k-h"><h2>어디에 쓰였나</h2></div>
-          <div class="kv">
-            <div><span>서비스 카드</span><span><b>영농관리</b><small>2.0 판 · 남원시 2023 결과</small></span></div>
-            <div><span>모델</span><span><b>항공 4분류 원판</b><small>이 자료 전체로 학습 · 4바퀴</small></span></div>
-            <div><span>뽑은 표본</span><span><b>비닐하우스 200 · 건축물 139 · 주차장 170장</b><small>서비스 만들기 표본 — 비닐하우스 · 건축물 · 주차장 카드의 모델</small></span></div>
-            <div><span>바탕</span><span><b>AI Hub 토지피복 정답(4권역)</b><small>이 자료는 그것을 4분류로 가공한 것</small></span></div>
-          </div>
-        </section>
-
-        <section class="k c4">
-          <div class="k-h"><h2>출처 · 이용 조건</h2><span class="cond chk">확인 필요</span></div>
-          <div class="rules">
-            <div><span>LX 안에서 학습 · 분석</span><span class="cond ok">됨</span></div>
-            <div><span>국내 기관 서비스 모델</span><span class="cond chk">확인 필요</span></div>
-            <div><span>해외 기관 서비스 모델</span><span class="cond chk">확인 필요</span></div>
-            <div><span>원본 그림 내보내기</span><span class="cond chk">안 됨</span></div>
-          </div>
-          <p class="tip">AI Hub 약관 원문을 아직 열어 보지 못했습니다. 정해질 때까지 이 자료로 만든 모델은 해외 기관에 배포하지 않습니다.</p>
-          <div class="adm"><span class="btn sm">약관 확인하고 정하기</span><small>LX 관리자만</small></div>
-        </section>
-
-        <section class="k c4">
-          <div class="k-h"><h2>판 이력</h2><span class="ksub">라벨을 고치면 새 판 · 앞 판은 그대로</span></div>
-          <div class="ver">
-            <div><span class="v">1판</span><span><b>대장에서 들임</b><small>153,295장 · 2,056,031개 · 모델이 써서 잠김</small></span><span class="lk">잠김</span></div>
-            <div><span class="v nx">2판</span><span><b>다음 판에 담을 것</b><small>모이면 프로젝트장이 담아 새 판을 만듭니다</small></span><span class="lk">아직 없음</span></div>
-          </div>
-          <div class="q">
-            <div><span>AI 결과에서 고친 도형</span><b>0</b></div>
-            <div><span>기관이 알린 오탐</span><b>0</b></div>
-          </div>
-        </section>
-
-      </div>
-    </div>
-  </main>
+<div class="app has-sub" id="app">
+  <header class="mast"><span class="word">LAND-XI</span><span class="home">LX 직원 대시보드</span><span class="sp"></span><span class="role">LX 직원</span><span class="mb">XI맵</span><span class="mb help">?</span><span class="mb">나가기</span></header>
+  <nav class="rail txt" aria-label="LX 직원 메뉴"><span class="ri">대시보드</span><span class="ri on">프로젝트</span><span class="ri">분석하기</span><span class="ri">서비스 카드</span><span class="ri">데이터</span><span class="ri">요청함</span></nav>
+  <div class="sub"><div class="pname"><span>프로젝트</span><b>비닐하우스 2026</b></div>
+    <ol class="steps"><li><span class="st d"><span class="n">1</span><span class="t">데이터 올리기</span></span></li><li><span class="st now"><span class="n">2</span><span class="t">학습데이터 구축</span></span></li><li><span class="st"><span class="n">3</span><span class="t">학습</span></span></li><li><span class="st"><span class="n">4</span><span class="t">AI 결과 보기</span></span></li><li><span class="st"><span class="n">5</span><span class="t">공개 요청</span></span></li><li><span class="st"><span class="n">6</span><span class="t">서비스 관리</span></span></li></ol>
+  </div>
+  <main class="main"><div class="page"><div class="g12"><section class="k c12" style="min-height:780px"></section></div></div></main>
 </div>
-<script>chrome('data', '<b>시안</b> 설계 12차 · 학습 데이터 한 건 · 숫자는 이 PC 자료에서 센 값');</script>
+
+<div class="dim"></div>
+<section class="pick" role="dialog" aria-label="공유 데이터 불러오기">
+  <header class="p-h">
+    <div><h2>공유 데이터 불러오기</h2><p>LX 관리자가 관리하는 학습 데이터에서 클래스를 골라 이 프로젝트로 가져옵니다</p></div>
+    <span class="lnk q">닫기</span>
+  </header>
+  <div class="p-b">
+    <aside class="p-cls">
+      <span class="fld"><span class="ph">클래스 찾기</span></span>
+      <ul>
+        <li class="on"><b>비닐하우스</b><span>층 9</span></li>
+        <li class="add"><b>건물</b><span>층 9</span></li>
+        <li><b>경작지</b><span>층 7</span></li>
+        <li><b>주차장</b><span>층 3</span></li>
+        <li><b>방치쓰레기</b><span>층 4</span></li>
+        <li><b>석면 지붕</b><span>층 5</span></li>
+        <li><b>곤포사일리지</b><span>층 3</span></li>
+        <li><b>태양광</b><span>층 1</span></li>
+      </ul>
+      <p class="more">30개 모두</p>
+    </aside>
+
+    <div class="p-list">
+      <div class="p-lh"><b>비닐하우스</b><span>표준 먼저 · 이 프로젝트 영상(항공 25cm)과 맞는 것 위로</span></div>
+      <div class="row on"><span class="ck"></span><img src="img/c-vh.webp" alt=""><span class="tx"><b>항공 토지피복 4분류</b><small>항공 25cm · 도형 · 경기 · 경상 · 전라 · 제주</small></span><span class="nums"><b>27,605</b>장<br><b>110,091</b>개</span><span class="tags"><span class="std">표준 1판</span><span class="full">빠짐없이 그림</span><span class="cond chk">이용 조건 확인 필요</span></span></div>
+      <div class="row"><span class="ck"></span><img src="img/g-asan.webp" alt=""><span class="tx"><b>드론 4분류(하천부지)</b><small>드론 2cm · 도형 · 아산시</small></span><span class="nums"><b>25,948</b>장<br><b>34,132</b>개</span><span class="tags"><span class="free">자유</span><span class="full">빠짐없이 그림</span><span class="cond chk">이용 조건 확인 필요</span></span></div>
+      <div class="row"><span class="ck"></span><img src="img/g-dg.webp" alt=""><span class="tx"><b>대구경북 6종</b><small>드론 사진 · 상자 · 대구 · 경북</small></span><span class="nums"><b>14,638</b>장<br><b>133,209</b>개</span><span class="tags"><span class="free">자유</span><span class="unk">선언 없음</span><span class="cond chk">이용 조건 확인 필요</span></span></div>
+      <div class="row"><span class="ck"></span><img src="img/g-dis.webp" alt=""><span class="tx"><b>재난 피해</b><small>드론 · 상자</small></span><span class="nums"><b>5,431</b>장<br><b>49,396</b>개</span><span class="tags"><span class="free">자유</span><span class="unk">선언 없음</span><span class="cond ok">LX 자체</span></span></div>
+      <div class="row"><span class="ck"></span><img src="img/g-nw.webp" alt=""><span class="tx"><b>남원 드론 비닐하우스</b><small>드론 1.5cm · 도형 · 남원시</small></span><span class="nums"><b>1,953</b>장<br><b>3,134</b>개</span><span class="tags"><span class="free">자유 · 흡수 심사 중</span><span class="full">빠짐없이 그림</span><span class="cond ok">LX 자체</span></span></div>
+    </div>
+
+    <aside class="p-sum">
+      <p class="lab">가져올 것</p>
+      <div class="big"><b>27,605</b><small>장</small></div>
+      <p class="s1">비닐하우스가 든 그림 · 비닐하우스와 건물 층 · 항공 표준 1판</p>
+      <div class="lyr">
+        <figure><img src="img/L-img.webp" alt=""><figcaption>그림 한 번</figcaption></figure>
+        <figure><img src="img/L-vh.webp" alt=""><figcaption>비닐하우스 층</figcaption></figure>
+        <figure><img src="img/L-bld.webp" alt=""><figcaption>건물 층</figcaption></figure>
+      </div>
+      <p class="tip">건물을 함께 고르면 — 이 묶음은 네 클래스를 빠짐없이 그린 묶음이라 같은 그림으로 함께 학습합니다. '선언 없음' 묶음은 건물 자리가 비어 있을 수 있어 함께 학습할 때 빠집니다.</p>
+      <div class="use">
+        <div><span>플랫폼 안 학습 · 분석</span><span class="cond ok">바로</span></div>
+        <div><span>내려받기</span><span class="cond chk">관리자 승인</span></div>
+      </div>
+      <div class="p-act"><span class="btn">프로젝트에 불러오기</span><span class="btn b2">내려받기 요청</span></div>
+    </aside>
+  </div>
+</section>
+<span class="stamp" id="stamp"><b>시안</b> 설계 12차(다시) · 프로젝트 › 학습데이터 구축 › 공유 데이터 불러오기</span>
+<script>if (new URLSearchParams(location.search).get('stamp') === '0') { document.getElementById('stamp').remove(); document.body.classList.remove('has-stamp'); }</script>
 </body>
 </html>

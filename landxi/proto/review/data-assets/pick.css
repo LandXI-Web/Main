@@ -1,0 +1,49 @@
+/* 설계 12차(다시) · 직원 프로젝트 안 '공유 데이터 불러오기' 창 */
+.dim{position:fixed;inset:0;background:rgba(17,20,26,.45);z-index:70}
+.pick{position:fixed;left:50%;top:84px;transform:translateX(-50%);width:min(1240px,calc(100vw - 48px));z-index:80;background:var(--bg-1);border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.25);overflow:hidden}
+.p-h{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:20px 26px 16px;border-bottom:1px solid var(--rule);background:var(--bg-0)}
+.p-h h2{margin:0;font:700 22px/30px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.p-h p{margin:2px 0 0;font:400 14px/20px var(--font-body);color:var(--sub)}
+.p-b{display:grid;grid-template-columns:200px minmax(0,1fr) 330px}
+.p-cls{padding:16px;border-right:1px solid var(--rule);background:#FAFBFC}
+.p-cls .fld{height:38px}
+.p-cls ul{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:4px}
+.p-cls li{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:9px;font:400 14px/20px var(--font-body);color:var(--ink)}
+.p-cls li b{font-weight:500}
+.p-cls li span{font:500 12px/1 var(--font-num);color:var(--sub)}
+.p-cls li.on{background:var(--ink);color:#fff}.p-cls li.on span{color:rgba(255,255,255,.7)}
+.p-cls li.add{box-shadow:inset 0 0 0 2px var(--ink)}
+.p-cls .more{margin:10px 12px 0;display:block}
+.p-list{padding:14px 18px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.p-lh{display:flex;align-items:baseline;gap:10px;margin-bottom:2px}
+.p-lh b{font:700 17px/24px var(--font-body);color:var(--ink)}
+.p-lh span{font:400 13px/18px var(--font-body);color:var(--sub)}
+.row{display:grid;grid-template-columns:22px 96px minmax(0,1fr) 92px;grid-template-rows:auto auto;column-gap:12px;row-gap:6px;align-items:center;padding:10px 12px;border-radius:12px;box-shadow:inset 0 0 0 1px var(--rule)}
+.row.on{box-shadow:inset 0 0 0 2px #2B6FE8;background:#F5F9FF}
+.row .ck{grid-row:1/3;width:20px;height:20px;border-radius:6px;box-shadow:inset 0 0 0 2px var(--rule);background:var(--bg-1)}
+.row.on .ck{background:#2B6FE8;box-shadow:none;position:relative}
+.row.on .ck::after{content:"";position:absolute;left:6px;top:2px;width:6px;height:11px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.row img{grid-row:1/3;width:96px;height:64px;object-fit:cover;border-radius:8px;display:block}
+.row .tx b{display:block;font:600 15px/21px var(--font-body);color:var(--ink)}
+.row .tx small{display:block;font:400 13px/18px var(--font-body);color:var(--sub)}
+.row .nums{grid-row:1/3;grid-column:4;text-align:right;font:400 12px/20px var(--font-body);color:var(--sub)}
+.row .nums b{font:700 15px/20px var(--font-num);color:var(--ink)}
+.row .tags{grid-column:3;display:flex;flex-wrap:wrap;gap:6px}
+.free,.full,.unk{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:7px;font:500 13px/1 var(--font-body);white-space:nowrap}
+.free{background:var(--bg-0);color:var(--sub-2)}
+.full{background:#E9F8F1;color:#0B8A5A}
+.unk{background:#FFF6DA;color:#8A6400}
+.p-sum{padding:16px 22px 20px;border-left:1px solid var(--rule);background:#F5F9FF;display:flex;flex-direction:column}
+.p-sum .big{display:flex;align-items:baseline;gap:4px;margin-top:2px}
+.p-sum .big b{font:800 34px/40px var(--font-num);color:var(--ink);letter-spacing:-.01em}
+.p-sum .big small{font:500 15px/1 var(--font-body);color:var(--sub)}
+.p-sum .s1{margin:2px 0 0;font:400 14px/20px var(--font-body);color:var(--sub-2)}
+.lyr{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px}
+.lyr figure{margin:0}
+.lyr img{width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:8px;display:block}
+.lyr figcaption{margin-top:4px;font:500 12px/16px var(--font-body);color:var(--sub);text-align:center}
+.p-sum .tip{background:var(--bg-1)}
+.p-sum .use{margin-top:12px;display:flex;flex-direction:column}
+.p-sum .use div{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--rule);font:400 14px/20px var(--font-body);color:var(--ink)}
+.p-act{display:flex;gap:8px;margin-top:14px}
+.p-act .btn{flex:1}
