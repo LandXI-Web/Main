@@ -1,0 +1,68 @@
+{
+ "S1": {
+  "frag": 14792,
+  "stitched": 14172,
+  "after_cls": 13534,
+  "after_min30": 12999,
+  "load_s": 1.65,
+  "stitch_s": 6.83,
+  "parcels": {
+   "touched": 21280,
+   "main_parcel": 9271,
+   "parcel_ge30": 12470,
+   "no_parcel": 1,
+   "s": 29.23
+  }
+ },
+ "S2": {
+  "frag": 2819,
+  "edge": 1800,
+  "stitched": 1922,
+  "after_min30": 1922,
+  "parts": 14381,
+  "stitch_s": 2.3,
+  "parcels": {
+   "touched": 18438,
+   "main_parcel": 1820,
+   "parcel_ge30": 12281,
+   "no_parcel": 0,
+   "s": 12.93
+  }
+ },
+ "S3": {
+  "parcels": {
+   "touched": 2881,
+   "main_parcel": 1652,
+   "parcel_ge30": 1672,
+   "no_parcel": 0,
+   "s": 2.36
+  },
+  "parts": 3505,
+  "area_pct": [
+   83.0,
+   603.8,
+   2720.1
+  ]
+ },
+ "area_pct_S1": [
+  38.3,
+  184.6,
+  2771.7
+ ],
+ "area_pct_S2": [
+  248.3,
+  2706.1,
+  16174.1
+ ],
+ "parcel_prep_s": 3.56,
+ "parcel_cmp_S2_S3": {
+  "keep": 518,
+  "new": 1154,
+  "gone": 11763
+ },
+ "parcel_cmp_S1_S3": {
+  "keep": 1481,
+  "new": 191,
+  "gone": 10989
+ }
+}

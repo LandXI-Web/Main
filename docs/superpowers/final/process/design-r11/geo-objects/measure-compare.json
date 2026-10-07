@@ -1,0 +1,63 @@
+{
+ "box": {
+  "n2023": 123,
+  "n2025": 175
+ },
+ "box_tol0.5": {
+  "keep_groups": 62,
+  "keep_2023": 70,
+  "keep_2025": 155,
+  "new": 20,
+  "gone": 53,
+  "area23": 135935,
+  "area25": 112496,
+  "grow": 27,
+  "shrink": 18,
+  "offset_med": 12.68,
+  "offset_p90": 28.13,
+  "pairs": 162
+ },
+ "box_tol2.0": {
+  "keep_groups": 61,
+  "keep_2023": 70,
+  "keep_2025": 157,
+  "new": 18,
+  "gone": 53,
+  "area23": 135935,
+  "area25": 113399,
+  "grow": 26,
+  "shrink": 16,
+  "offset_med": 12.68,
+  "offset_p90": 28.13,
+  "pairs": 162
+ },
+ "box_tol5.0": {
+  "keep_groups": 45,
+  "keep_2023": 81,
+  "keep_2025": 165,
+  "new": 10,
+  "gone": 42,
+  "area23": 143179,
+  "area25": 119214,
+  "grow": 15,
+  "shrink": 17,
+  "offset_med": 12.68,
+  "offset_p90": 28.13,
+  "pairs": 162
+ },
+ "all_namwon": {
+  "keep_groups": 1907,
+  "keep_2023": 2357,
+  "keep_2025": 2798,
+  "new": 707,
+  "gone": 10642,
+  "area23": 2360401,
+  "area25": 2144993,
+  "grow": 664,
+  "shrink": 537,
+  "offset_med": 9.41,
+  "offset_p90": 27.86,
+  "pairs": 2927
+ },
+ "all_s": 4.77
+}
