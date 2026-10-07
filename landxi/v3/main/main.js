@@ -659,23 +659,15 @@ else {
 }
 
 
-/* ── 스크롤 안내(메인-2): 2초 뒤 가운데 아래 · 처음 스크롤에 사라지고 다시 안 나옴 ── */
+/* ── 스크롤 안내(메인-2): 맨 위에 머물면 가운데 아래에 보이고, 내려가면 숨고, 다시 맨 위로 오면 또 보인다 ── */
 (() => {
   const hint = document.getElementById('hint');
   if (!hint) return;
-  // 사용자가 직접 움직일 때만 사라진다 — 화면이 스스로 조금 움직이는 scroll 사건(배치 · 맞춤)에는 반응하지 않음
-  const EV = ['scroll', 'wheel', 'touchmove', 'keydown'];
-  let gone = false;
-  const bye = (e) => {
-    if (gone) return;
-    if (e && e.type === 'scroll' && scrollY < 80) return;
-    if (e && e.type === 'wheel' && Math.abs(e.deltaY) < 4) return;
-    if (e && e.type === 'keydown' && !['ArrowDown', 'PageDown', ' ', 'End'].includes(e.key)) return;
-    gone = true; hint.classList.remove('is-on'); hint.classList.add('is-off'); for (const ev of EV) removeEventListener(ev, bye);
-  };
-  setTimeout(() => {
-    if (scrollY > 40 || gone) return;
-    hint.classList.add('is-on');
-    for (const ev of EV) addEventListener(ev, bye, { passive: true });
-  }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 600 : 2000);
+  const wait = matchMedia('(prefers-reduced-motion: reduce)').matches ? 600 : 1500;
+  let t = 0;
+  const show = () => { hint.classList.remove('is-off'); hint.classList.add('is-on'); };
+  const hide = () => { if (hint.classList.contains('is-on')) { hint.classList.remove('is-on'); hint.classList.add('is-off'); } };
+  const check = () => { clearTimeout(t); if (scrollY > 40) { hide(); return; } t = setTimeout(() => { if (scrollY <= 40) show(); }, wait); };
+  addEventListener('scroll', check, { passive: true });
+  check();
 })();
