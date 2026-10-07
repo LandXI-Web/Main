@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Land-XI LX 직원 화면 — 구 Land-XI에서 출발</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../../../fonts-system.css">
+<style>
+:root{--ink:#191F28;--ink2:#4E5968;--mute:#8B95A1;--line:#E5E8EB;--bg:#F2F4F6;--accent:#3182F6;--tint:#E8F3FF;--ok:#0FA9A0;--warn:#F59E0B;--no:#F04452}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Pretendard,system-ui,sans-serif;word-break:keep-all;overflow-wrap:break-word}
+a{color:var(--accent);text-decoration:none}
+.w{max-width:1120px;margin:0 auto;padding:32px 16px 140px}
+h1{font:800 34px/1.2 Paperlogy,Pretendard,sans-serif;letter-spacing:-.02em;margin:0 0 8px}
+.lead{margin:0 0 6px;color:var(--ink2)}
+.how{text-wrap:pretty;margin:16px 0 0;padding:16px 20px;background:#fff;border-radius:16px;color:var(--ink2);font-size:15px}
+.how b{color:var(--ink)}
+section{margin-top:40px}
+h2{font:700 24px/1.3 Paperlogy,Pretendard,sans-serif;margin:0 0 4px;text-wrap:balance}
+.sub{margin:0 0 16px;color:var(--mute);font-size:15px;text-wrap:pretty}
+.c{background:#fff;border-radius:20px;padding:20px 24px;margin:0 0 14px;border:2px solid transparent}
+.c[data-s="확인"],.c[data-s="채택"],.c[data-s="완료"],.c[data-s^="ⓐ"],.c[data-s^="ⓑ"],.c[data-s^="ⓒ"],.c[data-s="제안대로"],.c[data-s^="영상대로"]{border-color:var(--ok)}
+.c[data-s="보류"],.c[data-s="검토 필요"]{border-color:var(--warn)}.c[data-s="반려"],.c[data-s="다시"]{border-color:var(--no)}
+.c header{display:flex;gap:10px;align-items:baseline;margin-bottom:10px}
+.n{font:600 13px/1 Inter,Pretendard,sans-serif;color:var(--accent);background:var(--tint);padding:5px 8px;border-radius:8px;flex:none}
+h3{margin:0;font:700 19px/1.4 Pretendard,sans-serif;text-wrap:balance}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.tx p{margin:0 0 8px;color:var(--ink2);text-wrap:pretty}.tx p.k{margin:12px 0 2px;font-size:13px;font-weight:600;color:var(--mute)}.tx p.k:first-child{margin-top:0}
+.wh{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.wh li{display:flex;flex-direction:column;background:var(--bg);border-radius:10px;padding:8px 12px;font-size:14px}
+.wh li a{overflow-wrap:anywhere}.wh li span,.wh li em{text-wrap:pretty}.wh li span{color:var(--ink2)}.wh li em{font-style:normal;color:var(--mute);font-size:13px}
+.im{display:grid;gap:8px;align-content:start}
+.im figure{margin:0;position:relative}.im img{width:100%;border-radius:12px;border:1px solid var(--line);display:block}.im figcaption{position:absolute;left:10px;top:10px;font:600 12px/1 Pretendard,sans-serif;padding:6px 8px;border-radius:8px;background:rgba(25,31,40,.82);color:#fff}
+.na{color:var(--mute);font-size:14px;margin:0;padding:24px;background:var(--bg);border-radius:12px;text-align:center}
+footer{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.op{display:flex;gap:6px;flex-wrap:wrap}
+.op button{font:600 15px/1 Pretendard,sans-serif;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.op button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+footer input{flex:1;min-width:200px;font:15px Pretendard,sans-serif;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:12px 16px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
+.bar b{font-weight:600}
+.bar button{font:700 16px/1 Pretendard,sans-serif;padding:14px 22px;border-radius:12px;border:0;background:var(--accent);color:#fff;cursor:pointer}
+.bar small{color:var(--mute)}
+@media (max-width:760px){.g{grid-template-columns:1fr}.c{padding:16px}h1{font-size:28px}}
+</style>
+</head>
+<body>
+<main class="w">
+<h1>LX 직원 화면 — 구 Land-XI에서 출발</h1>
+<p class="lead">구 Land-XI 대시보드 · 프로젝트 개요 · 마이페이지의 구성에서 출발했습니다. 먼저 미리보기 세 화면을 열어 보세요: app.land-xi.dev/landxi/proto/review/lx-staff-v2/dashboard.html · project.html · my.html</p>
+<div class="how"><b>보는 법</b> — 항목마다 <b>지금</b>(무엇이 문제인지) · <b>제안</b>(바뀐 뒤) · <b>보는 곳</b>(캡처, 그리고 직접 열어 볼 주소·계정·누를 곳)이 있습니다. 캡처를 누르면 크게 열립니다.<br>
+<b>고르는 법</b> — 버튼을 누르고, 고칠 점이 있으면 한 줄 적어 주세요. 고른 것은 이 브라우저에 저장됩니다. 다 고르시면 아래 <b>결정 복사</b>를 눌러 대화창에 붙여 넣어 주세요. 안 고른 항목은 그대로 두셔도 됩니다.</div>
+<section><h2>LX 직원 화면 셋 — 구 Land-XI 의 정보 구성에서 다시(10-07 · 모두 Land-XI · LX 직원 화면)</h2><p class="sub">11차 대시보드 시안은 &#x27;전혀 공감이 안 되고 어수선하다 · 고르는 곳도 의미가 없다&#x27;로 반려됐습니다. 이번에는 사용자가 준 구 Land-XI 화면 5장(대시보드 · 프로젝트 개요 · 마이페이지 · 분석 서비스 · 메인)의 칸 하나하나를 지금 화면과 대조하고(README §1 — 빠진 것 10가지: 대시보드의 저장 용량 · 공지/AI 교육정보 · 개인 메모 · 즐겨찾기 · 작업 집계 · 데이터셋 정보 · 프로젝트 사용량 · 늘리기 요청 화면 · 사번 · 이력의 끝/실패), 구 화면의 정보 구성을 그대로 가져와 지금 Land-XI 의 밝은 톤 · 12칸 격자 · 쉬운 말로만 다듬었습니다(파란 그라데이션 · 도넛은 가져오지 않음). 값은 10월 7일 17시 10분에 로그인 폼으로 읽은 서버 값이고, 서버에 없는 것만 &#x27;예시&#x27; · &#x27;서버에 더할 것&#x27; 표시입니다. 빈 여백 1440: 대시보드 11.4% · 프로젝트 개요 10.4% · 내 정보 18%(짧은 화면). 단추 · 글자 옆 그림 기호는 없습니다. 미리보기(로그인 없이): https://app.land-xi.dev/landxi/proto/review/lx-staff-v2/dashboard.html · …/dashboard.html?v=a · …/project.html · …/my.html</p><article class="c" data-id="직원-1" data-t="[화면][Land-XI] 대시보드 구성"><header><span class="n">직원-1</span><h3>[화면][Land-XI] 대시보드 구성</h3></header><div class="g"><div class="tx"><p class="k">지금</p><p>지금 홈(v3)은 내 프로젝트(6단계) · 요청함 · 우리 서비스 · 최근 활동 · 바로 분석하기 네 칸이고, 구 Land-XI 에 있던 저장 용량 · 공지 · AI 교육정보 · 작업 이력 · 프로젝트 메모 · 개인 메모 · 즐겨찾기가 없습니다. 11차 시안(일곱 칸)은 반려됐습니다.</p><p class="k">제안</p><p>구 대시보드의 3 × 2 + 1 짜임 그대로: 윗줄 내 작업 현황(내 서비스 4개 · 프로젝트 4개 · 저장 용량 29.8 MB 사용 · 할당 없음 · 프로젝트 4개 막대 + 저장 관리) · 프로젝트 진행 현황(끝난 내 작업 350건을 종류별 한 줄 띠로 — AI 분석 220 · 필지 대조 104 · 위성 지수 18 · 학습 6 · 영상 준비 2) · 공지사항 | AI 교육정보 탭(예시 — 서버에 공지 · 교육 자료 0). 가운데 줄 작업 이력(최근 5 · 끝/실패) · 프로젝트 메모(4개 모두 &#x27;메모 없음&#x27; — 서버 값) · 개인 메모(서버에 더할 것 · 예시 2). 아랫줄 즐겨찾기 프로젝트 표(이름 · 지역 · 프로젝트장 · 학습 표본 · 저장 용량 · 만든 날 · 마지막)와 즐겨찾기 서비스 표(구 워크플로우 자리). 12칸 격자로 1440 · 1920 모두 칸 밖 빈 여백 9–11%. ⓑ는 여기에 지금 기능을 더합니다 — 머리 오른쪽 시군구 검색 · 바로 분석, 5 할 일 띠(있을 때만), 내 작업 현황의 &#x27;나에게 온 것&#x27;(검토 요청 0 · 분석 요청 1 · 개선 후보 4), 진행 현황의 프로젝트마다 6단계. ⓐ는 그것들 없이 구 구성 그대로(진행 현황은 구처럼 최근 학습 막대 4). ⓒ는 지금 v3 네 칸을 그대로 두고 구에서 빠진 저장 용량 · 메모 · 즐겨찾기만 아래에 더하는 것입니다(시안 없음 — 지금 홈을 보시면 됩니다).</p><p class="k">보는 곳</p><ul class="wh"><li><a href="https://app.land-xi.dev/landxi/proto/review/lx-staff-v2/dashboard.html" target="_blank" rel="noopener">app.land-xi.dev/landxi/proto/review/lx-staff-v2/dashboard.html</a><span>로그인 없이</span><em>ⓑ 구 구성 + 지금 기능(할 일 띠 · 나에게 온 것 · 6단계 · 바로 분석) — 공지 칸의 &#x27;AI 교육정보&#x27; 탭도 눌러 보기</em></li><li><a href="https://app.land-xi.dev/landxi/proto/review/lx-staff-v2/dashboard.html?v=a" target="_blank" rel="noopener">app.land-xi.dev/landxi/proto/review/lx-staff-v2/dashboard.html?v=a</a><span>로그인 없이</span><em>ⓐ 구 Land-XI 구성 그대로 — 두 주소를 번갈아 보기</em></li><li><a href="https://app.land-xi.dev/" target="_blank" rel="noopener">app.land-xi.dev/</a><span>아이디 test@lx.or.kr · 임시 비밀번호</span><em>ⓒ 의 바탕이 되는 지금 홈(v3) — 견주어 보기</em></li></ul></div><div class="im"><figure><a href="img/dash-b-1440.png" target="_blank"><img src="img/dash-b-1440.png" alt="" loading="lazy"></a></figure><figure><a href="img/dash-a-1440.png" target="_blank"><img src="img/dash-a-1440.png" alt="" loading="lazy"></a></figure><figure><a href="img/dash-b-390.png" target="_blank"><img src="img/dash-b-390.png" alt="" loading="lazy"></a></figure></div></div><footer><div class="op"><button type="button" data-v="ⓐ 구 Land-XI 구성 그대로(7칸 · 지금 기능 없이) — ?v=a">ⓐ 구 Land-XI 구성 그대로(7칸 · 지금 기능 없이) — ?v=a</button><button type="button" data-v="ⓑ 구 구성 + 지금 기능(할 일 띠 · 나에게 온 것 · 6단계 · 바로 분석) — 시안 기본">ⓑ 구 구성 + 지금 기능(할 일 띠 · 나에게 온 것 · 6단계 · 바로 분석) — 시안 기본</button><button type="button" data-v="ⓒ 지금 v3 네 칸을 두고 구에서 빠진 것(저장 용량 · 메모 · 즐겨찾기)만 아래에 더함">ⓒ 지금 v3 네 칸을 두고 구에서 빠진 것(저장 용량 · 메모 · 즐겨찾기)만 아래에 더함</button><button type="button" data-v="검토 필요">검토 필요</button></div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article><article class="c" data-id="직원-2" data-t="[화면][Land-XI] 프로젝트 개요 범위"><header><span class="n">직원-2</span><h3>[화면][Land-XI] 프로젝트 개요 범위</h3></header><div class="g"><div class="tx"><p class="k">지금</p><p>지금 프로젝트 한 장(v3)은 6단계 · 다음 할 일 · 사람 · 재학습 · 기록 3줄이고, 구 Land-XI 의 데이터셋 정보(올린 이미지 · 라벨 이미지 · 라벨 개수 · 미작업 · 클래스별 이미지 수) · 프로젝트 사용량 · 최근 작업 이력(끝/실패) 이 없습니다.</p><p class="k">제안</p><p>구 화면의 좌 &#x27;데이터셋 정보&#x27; · 우 &#x27;프로젝트 정보&#x27; 둘을 7 · 5 로 다시. 왼쪽 학습데이터 정보: 올린 이미지 200장(학습용 160 · 검증용 40) · 라벨 있는 이미지 200장 · 라벨 개수 3,453개 세 칸 + 클래스별 이미지 수 막대(경작지 181 · 건물 144 · 비닐하우스 130 · 주차장 40 · 라벨 수 함께) + 표본 상태(구 도넛 자리 · 막대 — 뺀 것 0 · 라벨 없는 이미지 수는 서버에 더할 것). 오른쪽 프로젝트 정보: 서비스 1개(공개 1.0판) · 학습 3번(끝 2 · 실패 1) · 시범 적용 3곳 + 프로젝트 사용량 10.2 MB(내 29.8 MB 가운데 34%) · 진행 현황 6단계(5 끝 · 표본 확인 남음) + 사람 · 서비스 줄(프로젝트장 · 구성원 0 · 구성원 더하기 · 넘기기 · 보관). 아랫줄 최근 작업 이력 5줄(끝/실패 · 기록 11건) · 적용 지역 3곳(행정경계 그림 · 영상 · AI 탐지 수 · 남원시 새 영상 10.01 · 재학습 근거 + 재학습 시작). 마스트 아래 6단계 띠는 그대로 두되 4단계를 &#x27;결과 확인&#x27; 대신 &#x27;AI 결과 보기&#x27;로 풀어 씁니다(원칙 125). 1440 칸 밖 빈 여백 10.4%.</p><p class="k">보는 곳</p><ul class="wh"><li><a href="https://app.land-xi.dev/landxi/proto/review/lx-staff-v2/project.html" target="_blank" rel="noopener">app.land-xi.dev/landxi/proto/review/lx-staff-v2/project.html</a><span>로그인 없이</span><em>비닐하우스 2026 한 장 — 서버 값 그대로</em></li><li><a href="https://app.land-xi.dev/landxi/v3/lx-project/" target="_blank" rel="noopener">app.land-xi.dev/landxi/v3/lx-project/</a><span>아이디 test@lx.or.kr · 임시 비밀번호</span><em>지금 프로젝트 한 장(v3) — 견주어 보기</em></li></ul></div><div class="im"><figure><a href="img/project-1440.png" target="_blank"><img src="img/project-1440.png" alt="" loading="lazy"></a></figure></div></div><footer><div class="op"><button type="button" data-v="ⓐ 구처럼 수치만(학습데이터 정보 · 프로젝트 정보 · 최근 작업 이력 — 적용 지역 · 재학습 근거 없이)">ⓐ 구처럼 수치만(학습데이터 정보 · 프로젝트 정보 · 최근 작업 이력 — 적용 지역 · 재학습 근거 없이)</button><button type="button" data-v="ⓑ 수치 + 적용 지역 · 재학습 근거(시안대로)">ⓑ 수치 + 적용 지역 · 재학습 근거(시안대로)</button><button type="button" data-v="ⓒ 개요 칸 없이 지금처럼 6단계 · 기록만 두고, 학습데이터 정보는 2단계(학습데이터 구축) 화면 안에">ⓒ 개요 칸 없이 지금처럼 6단계 · 기록만 두고, 학습데이터 정보는 2단계(학습데이터 구축) 화면 안에</button><button type="button" data-v="검토 필요">검토 필요</button></div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article><article class="c" data-id="직원-3" data-t="[화면][Land-XI] 저장 용량 늘리기"><header><span class="n">직원-3</span><h3>[화면][Land-XI] 저장 용량 늘리기</h3></header><div class="g"><div class="tx"><p class="k">지금</p><p>지금은 내 정보 창(이름 · 부서 · 연락처 고치기)과 지원 화면 &#x27;내 계정&#x27; 탭의 한 줄(29.8 MB · 할당 없음)뿐이고, 서버에 이미 있는 저장 용량 늘리기 요청(대기 중 요청은 한 사람에 하나 · 승인/반려 · 알림)은 화면이 없습니다. 구 Land-XI 마이페이지에는 디스크 사용량 41% · 증량 신청 · 신청 이력 표 · 기본 정보(사번 포함)가 있었습니다.</p><p class="k">제안</p><p>구 마이페이지의 좌 &#x27;디스크 사용량 + 증량 신청&#x27; · 우 &#x27;기본 정보&#x27; · 아래 &#x27;증량 신청 이력 표&#x27;를 4 · 8 / 7 · 5 로. 저장 용량: 29.8 MB 사용 · 할당 없음(LX 관리자가 기본 할당을 정하면 비율이 보임) + 프로젝트별 막대 4(비닐하우스 10.2 · 주차장 9.0 · 건축물 8.7 · 곤포사일리지 1.9) + 늘리기 요청(원하는 할당 · 이유 한 줄 — 서버 기능). 기본 정보: 아이디(바꿀 수 없음) · 이름 · 역할 · 기관 · 부서 · 연락처 · 사번(서버에 더할 것) · 임시 비밀번호 바꾸기 + 내 정보 고치기. 아랫줄: 늘리기 요청 이력 표(번호 · 처리 · 요청한 날 · 요청 용량 · 이유 · 처리 내용 — 지금 0건) · 내가 쓴 분석(AI 분석 220 · 필지 대조 104 · 위성 지수 18 · 학습 6 · 영상 준비 2 · 걸린 시간 합 9시간 13분 · 한도 없음). 1440 에서 한 화면(900)에 다 들어오는 짧은 화면.</p><p class="k">보는 곳</p><ul class="wh"><li><a href="https://app.land-xi.dev/landxi/proto/review/lx-staff-v2/my.html" target="_blank" rel="noopener">app.land-xi.dev/landxi/proto/review/lx-staff-v2/my.html</a><span>로그인 없이</span><em>내 정보 — 서버 값 그대로(할당 없음 · 요청 이력 0)</em></li><li><a href="https://app.land-xi.dev/landxi/v3/help-my/" target="_blank" rel="noopener">app.land-xi.dev/landxi/v3/help-my/</a><span>아이디 test@lx.or.kr · 임시 비밀번호</span><em>지금 지원 화면의 &#x27;내 계정&#x27; 탭 — 견주어 보기</em></li></ul></div><div class="im"><figure><a href="img/my-1440.png" target="_blank"><img src="img/my-1440.png" alt="" loading="lazy"></a></figure></div></div><footer><div class="op"><button type="button" data-v="ⓐ 구처럼 늘리기 요청 창 + 요청 이력 표(시안대로 — 서버 기능 이미 있음)">ⓐ 구처럼 늘리기 요청 창 + 요청 이력 표(시안대로 — 서버 기능 이미 있음)</button><button type="button" data-v="ⓑ 요청 없이 LX 관리자가 기본 할당만 정함(화면은 용량 · 프로젝트별 막대만)">ⓑ 요청 없이 LX 관리자가 기본 할당만 정함(화면은 용량 · 프로젝트별 막대만)</button><button type="button" data-v="ⓒ 직원에게 할당을 두지 않고 쓴 양만 보여 줌(기관과 같은 방식 — 늘리기 요청 · 이력 없음)">ⓒ 직원에게 할당을 두지 않고 쓴 양만 보여 줌(기관과 같은 방식 — 늘리기 요청 · 이력 없음)</button><button type="button" data-v="검토 필요">검토 필요</button></div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article></section>
+</main>
+<div class="bar"><b id="cnt">0 / 3 고름</b><button type="button" id="copy">결정 복사</button><small id="msg"></small></div>
+<script>
+const KEY='lx-confirm-0930-rstaff2';
+let S={};try{S=JSON.parse(localStorage.getItem(KEY)||'{}')}catch{}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch{}};
+const cards=[...document.querySelectorAll('.c')];
+const count=()=>{document.getElementById('cnt').textContent=Object.values(S).filter(v=>v&&v.v).length+' / '+cards.length+' 고름'};
+for(const c of cards){const id=c.dataset.id,st=S[id]||{};const inp=c.querySelector('input');
+  const paint=()=>{c.dataset.s=(S[id]||{}).v||'';for(const b of c.querySelectorAll('.op button'))b.classList.toggle('on',b.dataset.v===(S[id]||{}).v)};
+  if(st.m)inp.value=st.m;paint();
+  c.querySelectorAll('.op button').forEach(b=>b.onclick=()=>{S[id]={...(S[id]||{}),v:(S[id]||{}).v===b.dataset.v?'':b.dataset.v};save();paint();count()});
+  inp.oninput=()=>{S[id]={...(S[id]||{}),m:inp.value};save()};}
+count();
+document.getElementById('copy').onclick=async()=>{
+  const lines=cards.filter(c=>(S[c.dataset.id]||{}).v||(S[c.dataset.id]||{}).m).map(c=>{const s=S[c.dataset.id];return '- '+c.dataset.id+' '+c.dataset.t+': '+(s.v||'(선택 없음)')+(s.m?' — '+s.m:'')});
+  const t='[LX 직원 화면 — 구 Land-XI에서 출발 결정 · '+new Date().toLocaleString('ko-KR')+']\n'+(lines.join('\n')||'(고른 항목 없음)');
+  try{await navigator.clipboard.writeText(t);document.getElementById('msg').textContent='복사했습니다 — 대화창에 붙여 넣어 주세요'}catch{prompt('아래 글을 복사해 주세요',t)}};
+</script>
+</body>
+</html>
