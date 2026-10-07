@@ -663,9 +663,16 @@ else {
 (() => {
   const hint = document.getElementById('hint');
   if (!hint) return;
+  // 사용자가 직접 움직일 때만 사라진다 — 화면이 스스로 조금 움직이는 scroll 사건(배치 · 맞춤)에는 반응하지 않음
   const EV = ['scroll', 'wheel', 'touchmove', 'keydown'];
   let gone = false;
-  const bye = () => { if (gone) return; gone = true; hint.classList.remove('is-on'); hint.classList.add('is-off'); for (const ev of EV) removeEventListener(ev, bye); };
+  const bye = (e) => {
+    if (gone) return;
+    if (e && e.type === 'scroll' && scrollY < 80) return;
+    if (e && e.type === 'wheel' && Math.abs(e.deltaY) < 4) return;
+    if (e && e.type === 'keydown' && !['ArrowDown', 'PageDown', ' ', 'End'].includes(e.key)) return;
+    gone = true; hint.classList.remove('is-on'); hint.classList.add('is-off'); for (const ev of EV) removeEventListener(ev, bye);
+  };
   setTimeout(() => {
     if (scrollY > 40 || gone) return;
     hint.classList.add('is-on');
