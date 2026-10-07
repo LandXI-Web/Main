@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Land-XI AI 학습 데이터 — 자산으로 관리</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../../../fonts-system.css">
+<style>
+:root{--ink:#191F28;--ink2:#4E5968;--mute:#8B95A1;--line:#E5E8EB;--bg:#F2F4F6;--accent:#3182F6;--tint:#E8F3FF;--ok:#0FA9A0;--warn:#F59E0B;--no:#F04452}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Pretendard,system-ui,sans-serif;word-break:keep-all;overflow-wrap:break-word}
+a{color:var(--accent);text-decoration:none}
+.w{max-width:1120px;margin:0 auto;padding:32px 16px 140px}
+h1{font:800 34px/1.2 Paperlogy,Pretendard,sans-serif;letter-spacing:-.02em;margin:0 0 8px}
+.lead{margin:0 0 6px;color:var(--ink2)}
+.how{text-wrap:pretty;margin:16px 0 0;padding:16px 20px;background:#fff;border-radius:16px;color:var(--ink2);font-size:15px}
+.how b{color:var(--ink)}
+section{margin-top:40px}
+h2{font:700 24px/1.3 Paperlogy,Pretendard,sans-serif;margin:0 0 4px;text-wrap:balance}
+.sub{margin:0 0 16px;color:var(--mute);font-size:15px;text-wrap:pretty}
+.c{background:#fff;border-radius:20px;padding:20px 24px;margin:0 0 14px;border:2px solid transparent}
+.c[data-s="확인"],.c[data-s="채택"],.c[data-s="완료"],.c[data-s^="ⓐ"],.c[data-s^="ⓑ"],.c[data-s^="ⓒ"],.c[data-s="제안대로"],.c[data-s^="영상대로"]{border-color:var(--ok)}
+.c[data-s="보류"],.c[data-s="검토 필요"]{border-color:var(--warn)}.c[data-s="반려"],.c[data-s="다시"]{border-color:var(--no)}
+.c header{display:flex;gap:10px;align-items:baseline;margin-bottom:10px}
+.n{font:600 13px/1 Inter,Pretendard,sans-serif;color:var(--accent);background:var(--tint);padding:5px 8px;border-radius:8px;flex:none}
+h3{margin:0;font:700 19px/1.4 Pretendard,sans-serif;text-wrap:balance}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.tx p{margin:0 0 8px;color:var(--ink2);text-wrap:pretty}.tx p.k{margin:12px 0 2px;font-size:13px;font-weight:600;color:var(--mute)}.tx p.k:first-child{margin-top:0}
+.wh{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.wh li{display:flex;flex-direction:column;background:var(--bg);border-radius:10px;padding:8px 12px;font-size:14px}
+.wh li a{overflow-wrap:anywhere}.wh li span,.wh li em{text-wrap:pretty}.wh li span{color:var(--ink2)}.wh li em{font-style:normal;color:var(--mute);font-size:13px}
+.im{display:grid;gap:8px;align-content:start}
+.im figure{margin:0;position:relative}.im img{width:100%;border-radius:12px;border:1px solid var(--line);display:block}.im figcaption{position:absolute;left:10px;top:10px;font:600 12px/1 Pretendard,sans-serif;padding:6px 8px;border-radius:8px;background:rgba(25,31,40,.82);color:#fff}
+.na{color:var(--mute);font-size:14px;margin:0;padding:24px;background:var(--bg);border-radius:12px;text-align:center}
+footer{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.op{display:flex;gap:6px;flex-wrap:wrap}
+.op button{font:600 15px/1 Pretendard,sans-serif;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.op button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+footer input{flex:1;min-width:200px;font:15px Pretendard,sans-serif;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:12px 16px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
+.bar b{font-weight:600}
+.bar button{font:700 16px/1 Pretendard,sans-serif;padding:14px 22px;border-radius:12px;border:0;background:var(--accent);color:#fff;cursor:pointer}
+.bar small{color:var(--mute)}
+@media (max-width:760px){.g{grid-template-columns:1fr}.c{padding:16px}h1{font-size:28px}}
+</style>
+</head>
+<body>
+<main class="w">
+<h1>AI 학습 데이터 — 자산으로 관리</h1>
+<p class="lead">먼저 미리보기를 열어 보세요: 목록 app.land-xi.dev/landxi/proto/review/data-assets/index.html · 한 건 detail.html. 세 가지만 고르시면 됩니다.</p>
+<div class="how"><b>보는 법</b> — 항목마다 <b>지금</b>(무엇이 문제인지) · <b>제안</b>(바뀐 뒤) · <b>보는 곳</b>(캡처, 그리고 직접 열어 볼 주소·계정·누를 곳)이 있습니다. 캡처를 누르면 크게 열립니다.<br>
+<b>고르는 법</b> — 버튼을 누르고, 고칠 점이 있으면 한 줄 적어 주세요. 고른 것은 이 브라우저에 저장됩니다. 다 고르시면 아래 <b>결정 복사</b>를 눌러 대화창에 붙여 넣어 주세요. 안 고른 항목은 그대로 두셔도 됩니다.</div>
+<section><h2>설계 12차 — AI 학습 데이터를 자산으로 관리하기</h2><p class="sub">&#x27;AI 학습 데이터를 자산으로 관리하는 부분도 필요하다&#x27;(10-07)에 따라 설계했습니다. Land-XI 플랫폼의 LX 직원 화면입니다. 학습 데이터 한 건 = 클래스 목록이 같은 라벨 묶음 하나로, 지금 대장 27줄은 48건이 됩니다. 코드는 고치지 않았습니다(GPU 0 · 원본 이동 0). 세 가지를 골라 주시면 그대로 만듭니다.</p><article class="c" data-id="자산-1" data-t="[화면][Land-XI] 학습 데이터 관리 — 어디까지 만들까"><header><span class="n">자산-1</span><h3>[화면][Land-XI] 학습 데이터 관리 — 어디까지 만들까</h3></header><div class="g"><div class="tx"><p class="k">지금</p><p>지금은 &#x27;서비스 만들기&#x27;용 작은 표본 5건만 서버에 있고, 15만 장 묶음 같은 큰 자료 22줄은 대장 문서에만 있습니다. 결과를 보며 고친 것이나 기관이 알린 오탐(지금 105건 쌓임)이 학습 데이터로 돌아가는 길이 없습니다.</p><p class="k">제안</p><p>ⓐ 목록 · 한 건 · 이용 조건만 — 48건을 들여 사진 · 수량 · 출처 · 이용 조건 · 쓰인 모델을 봅니다. 판은 1판으로 고정. 가장 작음. ⓑ ⓐ + 판 관리 · 다음 판에 담을 것 — 모델이 쓴 판은 잠그고, 라벨을 고치면 새 판. &#x27;AI 결과가 맞는지 보기&#x27;의 오탐 판정과 기관 오탐 알림이 그 자산의 &#x27;다음 판에 담을 것&#x27;으로 모이고, 프로젝트장이 골라 새 판을 만들어 다시 학습합니다(추천 — 고친 만큼 모델이 좋아지는 길). ⓒ ⓑ + 화면 안 라벨링 도구 — 구 Land-XI의 클래스 등록 · 라벨링 · 데이터 셋 생성처럼 도형을 직접 그리고 고칩니다(사람이 그리는 것부터 · 가장 큼).</p><p class="k">보는 곳</p><ul class="wh"><li><a href="https://app.land-xi.dev/landxi/proto/review/data-assets/index.html" target="_blank" rel="noopener">app.land-xi.dev/landxi/proto/review/data-assets/index.html</a><span>로그인 없이</span><em>시안 — 목록. 첫 줄 &#x27;항공 토지피복 4분류&#x27;를 누른 화면은 detail.html</em></li></ul></div><div class="im"><figure><a href="img/assets-list-1440.png" target="_blank"><img src="img/assets-list-1440.png" alt="" loading="lazy"></a></figure><figure><a href="img/asset-detail-1440.png" target="_blank"><img src="img/asset-detail-1440.png" alt="" loading="lazy"></a></figure></div></div><footer><div class="op"><button type="button" data-v="ⓐ 목록 · 한 건만">ⓐ 목록 · 한 건만</button><button type="button" data-v="ⓑ + 판 관리 · 다음 판에 담을 것">ⓑ + 판 관리 · 다음 판에 담을 것</button><button type="button" data-v="ⓒ + 라벨링 도구까지">ⓒ + 라벨링 도구까지</button><button type="button" data-v="검토 필요">검토 필요</button></div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article><article class="c" data-id="자산-2" data-t="[화면][Land-XI] 학습 데이터를 어디에 둘까"><header><span class="n">자산-2</span><h3>[화면][Land-XI] 학습 데이터를 어디에 둘까</h3></header><div class="g"><div class="tx"><p class="k">지금</p><p>지금 LX 직원 메뉴 &#x27;데이터&#x27;에는 데이터 올리기(영상 · 행정 자료) 화면만 있고, 학습 표본은 프로젝트의 &#x27;학습데이터 구축&#x27; 단계에서만 보입니다.</p><p class="k">제안</p><p>ⓐ 데이터 메뉴 안 &#x27;학습 데이터&#x27; 탭에 전체 목록 + 프로젝트 &#x27;학습데이터 구축&#x27; 단계에는 그 프로젝트 것만 같은 표로(목록에서 고르기 · 새로 올리기). 프로젝트에 안 붙은 44건도 갈 곳이 있습니다(추천). ⓑ 프로젝트 안에만 — 메뉴는 그대로지만, 어느 프로젝트에도 안 붙은 44건은 볼 곳이 없습니다. ⓒ 왼쪽 메뉴에 &#x27;학습 데이터&#x27; 칸을 따로 — 찾기 쉬우나 메뉴가 일곱 칸이 됩니다.</p><p class="k">보는 곳</p><ul class="wh"><li><a href="https://app.land-xi.dev/landxi/v3/lx-ingest/" target="_blank" rel="noopener">app.land-xi.dev/landxi/v3/lx-ingest/</a><span>아이디 test@lx.or.kr · 임시 비밀번호</span><em>지금 &#x27;데이터&#x27; 화면 — 시안의 위쪽 탭 자리와 견주어 보기</em></li></ul></div><div class="im"><figure><a href="img/assets-list-1440.png" target="_blank"><img src="img/assets-list-1440.png" alt="" loading="lazy"></a></figure></div></div><footer><div class="op"><button type="button" data-v="ⓐ 데이터 탭 + 프로젝트엔 그 것만">ⓐ 데이터 탭 + 프로젝트엔 그 것만</button><button type="button" data-v="ⓑ 프로젝트 안에만">ⓑ 프로젝트 안에만</button><button type="button" data-v="ⓒ 왼쪽 메뉴 칸 따로">ⓒ 왼쪽 메뉴 칸 따로</button><button type="button" data-v="검토 필요">검토 필요</button></div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article><article class="c" data-id="자산-3" data-t="[운영][Land-XI] 이용 조건이 확인 안 된 자료 — 얼마나 막을까"><header><span class="n">자산-3</span><h3>[운영][Land-XI] 이용 조건이 확인 안 된 자료 — 얼마나 막을까</h3></header><div class="g"><div class="tx"><p class="k">지금</p><p>48건 중 38건(AI Hub 가공 · 공개 묶음 · 출처 추정)은 약관 원문을 아직 보지 못했습니다. 지금 비닐하우스 · 건축물 · 주차장 카드의 모델도 그중 하나에서 나왔습니다.</p><p class="k">제안</p><p>ⓐ LX 관리자가 자산마다 넷 칸(LX 안 학습 · 국내 기관 모델 · 해외 기관 모델 · 원본 내보내기)을 정하고, 정하기 전에는 그 자료로 만든 모델을 해외 기관에 배포하지 못하게 서버가 막습니다(가장 안전 · 해외 배포가 늦어질 수 있음). ⓑ 막지 않고, 배포 결재 화면에 &#x27;이용 조건 확인 전 자료로 학습&#x27; 경고 한 줄만(빠름 · 놓칠 수 있음). ⓒ 출처별로 한 번에 정하고(AI Hub 전부 · 공개 묶음 전부) 다른 것만 자산마다 — 38건을 두세 번 누름으로(정하는 수고 가장 적음).</p><p class="k">보는 곳</p><ul class="wh"><li><a href="https://app.land-xi.dev/landxi/proto/review/data-assets/detail.html" target="_blank" rel="noopener">app.land-xi.dev/landxi/proto/review/data-assets/detail.html</a><span>로그인 없이</span><em>가운데 아래 &#x27;출처 · 이용 조건&#x27; 칸</em></li></ul></div><div class="im"><figure><a href="img/asset-detail-1440.png" target="_blank"><img src="img/asset-detail-1440.png" alt="" loading="lazy"></a></figure></div></div><footer><div class="op"><button type="button" data-v="ⓐ 확인 전엔 해외 배포 막음">ⓐ 확인 전엔 해외 배포 막음</button><button type="button" data-v="ⓑ 경고만">ⓑ 경고만</button><button type="button" data-v="ⓒ 출처별 일괄 + 예외">ⓒ 출처별 일괄 + 예외</button><button type="button" data-v="검토 필요">검토 필요</button></div><input type="text" placeholder="고칠 점이 있으면 한 줄" aria-label="메모"></footer></article></section>
+</main>
+<div class="bar"><b id="cnt">0 / 3 고름</b><button type="button" id="copy">결정 복사</button><small id="msg"></small></div>
+<script>
+const KEY='lx-confirm-0930-rassets';
+let S={};try{S=JSON.parse(localStorage.getItem(KEY)||'{}')}catch{}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch{}};
+const cards=[...document.querySelectorAll('.c')];
+const count=()=>{document.getElementById('cnt').textContent=Object.values(S).filter(v=>v&&v.v).length+' / '+cards.length+' 고름'};
+for(const c of cards){const id=c.dataset.id,st=S[id]||{};const inp=c.querySelector('input');
+  const paint=()=>{c.dataset.s=(S[id]||{}).v||'';for(const b of c.querySelectorAll('.op button'))b.classList.toggle('on',b.dataset.v===(S[id]||{}).v)};
+  if(st.m)inp.value=st.m;paint();
+  c.querySelectorAll('.op button').forEach(b=>b.onclick=()=>{S[id]={...(S[id]||{}),v:(S[id]||{}).v===b.dataset.v?'':b.dataset.v};save();paint();count()});
+  inp.oninput=()=>{S[id]={...(S[id]||{}),m:inp.value};save()};}
+count();
+document.getElementById('copy').onclick=async()=>{
+  const lines=cards.filter(c=>(S[c.dataset.id]||{}).v||(S[c.dataset.id]||{}).m).map(c=>{const s=S[c.dataset.id];return '- '+c.dataset.id+' '+c.dataset.t+': '+(s.v||'(선택 없음)')+(s.m?' — '+s.m:'')});
+  const t='[AI 학습 데이터 — 자산으로 관리 결정 · '+new Date().toLocaleString('ko-KR')+']\n'+(lines.join('\n')||'(고른 항목 없음)');
+  try{await navigator.clipboard.writeText(t);document.getElementById('msg').textContent='복사했습니다 — 대화창에 붙여 넣어 주세요'}catch{prompt('아래 글을 복사해 주세요',t)}};
+</script>
+</body>
+</html>
