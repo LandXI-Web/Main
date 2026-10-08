@@ -968,6 +968,25 @@ def _centroid(aoi, img) -> list | None:
     return [round(c.x, 6), round(c.y, 6)]
 
 
+async def card_classes(card_id: str | None, deploy_id: str | None) -> list[str] | None:
+    """서비스(카드 판)가 찾는 분류 — card_versions.modules.classes. 배포본이면 그 배포본의 판, 아니면 카드의 최신 승인 판.
+    없으면 None(모델이 내는 분류를 모두 남긴다 · 지금까지와 같다)."""
+    async with db(realm="lx") as conn:
+        cv = None
+        if deploy_id:
+            d = await conn.fetchrow("SELECT card_id, card_version_id FROM deploys WHERE id=$1", deploy_id)
+            if d:
+                card_id, cv = card_id or d["card_id"], d["card_version_id"]
+        if cv:
+            m = await conn.fetchval("SELECT modules FROM card_versions WHERE id=$1", cv)
+        elif card_id:
+            m = await conn.fetchval("SELECT modules FROM card_versions WHERE card_id=$1 ORDER BY approved_at DESC NULLS LAST, id DESC LIMIT 1", card_id)
+        else:
+            m = None
+    cls = (m or {}).get("classes") if isinstance(m, dict) else None
+    return [str(x) for x in cls] if isinstance(cls, list) and cls else None
+
+
 @router.post("/jobs", status_code=202)
 async def submit(body: dict, request: Request):
     p = require(principal(request))
@@ -1001,6 +1020,10 @@ async def submit(body: dict, request: Request):
         opts.setdefault("adapter", q["_adapter"])
     if q.get("_opts"):
         opts.update(q["_opts"])
+    if q["kind"] in ("infer", "reinfer") and "classes" not in opts and (body.get("card_id") or body.get("deploy_id")):
+        cls = await card_classes(body.get("card_id"), body.get("deploy_id"))
+        if cls:
+            opts["classes"] = cls                  # 서비스가 찾는 분류만 남긴다(GPU 워커가 거른다 · 데이터-1)
     is_test = bool(body.get("test")) or str(body.get("label") or "").lower().startswith(("pytest", "test/"))
     # 시군구 전역 분석은 서버가 영상 · 모델을 고른다(견적과 같은 값)
     server_pick = opts.get("scope") == "sgg" or bool(q.get("_auto"))          # 전역 분석 · 읍면동/그린 범위(영상 id 없이 온 것)

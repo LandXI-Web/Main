@@ -590,6 +590,8 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
             reader(s)
         t_read += time.perf_counter() - tp
         results = run(part, reader, opts) if run else run_batch_default(ad, part, reader, opts)
+        if opts.get("classes"):
+            results = keep_classes(opts["classes"], results)   # 서비스가 찾는 분류만(예: 4분류 원판 → 비닐하우스 카드는 비닐하우스만)
         if opts.get("live"):
             results = clip_to_aoi(job_id, jh, results)      # 실시간 읍면동 분석 — 범위 밖 결과 제외
         elif sgg:
@@ -609,6 +611,21 @@ def process(job_id: str, entries: list[tuple[str, dict]]):
         bus.lane(WID, {"job_id": job_id, "to": now_iso(), "state": "done"})
         log(WHO, f"job {job_id} 전 shard 완료 → {lane} (read {t_read*1000:.0f}ms/batch)")
     state["job_id"] = None
+
+
+def keep_classes(classes, results: list) -> list:
+    """작업 options.classes(서비스가 찾는 분류)에 든 결과만 남긴다 — '비닐하우스_단동'은 '비닐하우스'로 본다(앞말 · 한글 이름 또는 영문 이름)."""
+    want = {str(c).strip().split("_")[0].lower() for c in classes or [] if c}
+    if not want:
+        return results
+    out = []
+    for res in results:
+        keep = [d for d in res.features
+                if str(getattr(d, "cls", "") or "").split("_")[0].lower() in want or str(getattr(d, "cls_en", "") or "").split("_")[0].lower() in want]
+        if len(keep) != len(res.features):
+            res = type(res)(features=keep, metrics=res.metrics, n=len(keep), ms=res.ms)
+        out.append(res)
+    return out
 
 
 _aoi_cache: "OrderedDict[str, object]" = OrderedDict()

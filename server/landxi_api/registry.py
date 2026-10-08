@@ -318,6 +318,16 @@ async def create_card(body: dict, request: Request):
             raise ApiError("not_found", "모델이 없습니다")
         if m["status"] != "registered":
             raise ApiError("conflict", "등록된 모델로만 서비스를 만듭니다", {"status": m["status"]}, 409)
+        # 찾는 분류(데이터-1 · 10-07) — 모델이 더 많은 분류를 내도(예: 4분류 원판) 이 서비스는 고른 분류만 결과로 남긴다(분석 작업 options.classes)
+        want = body.get("classes")
+        if want is not None:
+            if not isinstance(want, list) or not want or not all(isinstance(x, str) and x.strip() for x in want):
+                raise ApiError("bad_request", "classes 는 분류 이름 목록")
+            have = {str(c).strip().split("_")[0] for c in (m["classes"] or [])}
+            off = [x for x in want if x.strip().split("_")[0] not in have]
+            if off:
+                raise ApiError("bad_request", "이 모델이 찾지 않는 분류입니다: " + ", ".join(off), {"classes": off})
+            want = [x.strip() for x in want]
         if rules:
             ok = {r["id"]: r["name"] for r in await conn.fetch("SELECT id, name FROM survey_rules WHERE id = ANY($1::text[])", rules)}
             bad = [x for x in rules if x not in ok]
@@ -349,9 +359,10 @@ async def create_card(body: dict, request: Request):
             cv = f"{cid}@{ver}"
             last_round = await conn.fetchval("SELECT max(round) FROM project_links WHERE project_id=$1 AND kind='card_version'", pid) or 1
             note = f"{prj['round']}차 재학습" if prj["round"] > last_round else "공개 다시 요청"
+            note = str(body.get("changelog") or "").strip()[:120] or note      # 바뀐 점 한 줄(예: 모델을 원판으로 되돌림)
             await conn.execute("INSERT INTO card_versions(id, card_id, version, model_ids, modules, changelog, approved_by, approved_at) "
                                "VALUES ($1,$2,$3,$4,$5,$6,NULL,NULL)", cv, cid, ver, [mid],
-                               {"core": CORE_MODULES, "ext": {"mod-parcel": bool(rules)}, "rules": rules}, note)
+                               {"core": CORE_MODULES, "ext": {"mod-parcel": bool(rules)}, "rules": rules, **({"classes": want} if want else {})}, note)
         else:
             cid = "card-" + secrets.token_hex(3)
             while await conn.fetchval("SELECT 1 FROM cards WHERE id=$1", cid):
@@ -364,7 +375,7 @@ async def create_card(body: dict, request: Request):
             # 서비스 공개 = LX 관리자 승인 뒤(확인 D2-ⓐ · impl-1) — 만든 직원을 승인자로 적지 않는다. 승인자는 결재함에서 승인한 관리자(approvals.decide)
             await conn.execute("INSERT INTO card_versions(id, card_id, version, model_ids, modules, changelog, approved_by, approved_at) "
                                "VALUES ($1,$2,'1.0',$3,$4,$5,NULL,NULL)", cv, cid, [mid],
-                               {"core": CORE_MODULES, "ext": {"mod-parcel": bool(rules)}, "rules": rules}, "서비스 만들기")
+                               {"core": CORE_MODULES, "ext": {"mod-parcel": bool(rules)}, "rules": rules, **({"classes": want} if want else {})}, "서비스 만들기")
         if prj:                                     # 발행 요청이 어느 프로젝트에서 왔나 · 카드의 담당 = 그 프로젝트장
             from .projects import link
             await link(conn, pid, "card", cid, p.user_id)
@@ -375,11 +386,11 @@ async def create_card(body: dict, request: Request):
         await conn.execute("INSERT INTO approvals(id, subject_type, subject_id, requested_by, state, payload, reason, tenant_id, at) "
                            "VALUES ($1,'card',$2,$3,'pending',$4,$5,'lx',now())", aid, cv, p.user_id,
                            {"action": "publish", "card_id": cid, "name": name, "model_name": mname, "rules": rnames,
-                            "ledger_kind": schema.get("kind"),
+                            "ledger_kind": schema.get("kind"), **({"classes": want} if want else {}),
                             **({"project_id": pid, "project_name": prj["name"], "owner": p.name, "version": cv.split("@")[-1]} if prj else {})},
                            str(body.get("reason") or "").strip()[:200] or (note if prev_card else "서비스 공개"))
         # 규칙을 고른 서비스 = 필지 대조(실태조사까지 · 고른 규칙만). 규칙이 없으면 AI 분석까지만(탐지 서비스)
-        await audit(conn, p, "card.create", cid, None, {"card_version_id": cv, "model_id": mid, "rules": rules, "ledger_kind": schema.get("kind"),
+        await audit(conn, p, "card.create", cid, None, {"card_version_id": cv, "model_id": mid, "rules": rules, "classes": want, "ledger_kind": schema.get("kind"),
                                                         "approval_id": aid, "project_id": pid})
     from .jobs import ops_event
     await ops_event("deploy.changed", {"card_id": cid, "action": "card.create", "by": p.user_id, "at": now_iso()})

@@ -1227,14 +1227,19 @@ async def flow_retry(did: str, request: Request, body: dict | None = None):
         await audit(conn, p, "flow.retry", did, {"flow": (d["flow"] or {}).get("state")}, {"deploy_id": did, "job_id": (d["flow"] or {}).get("job_id")})
         fl = d["flow"] or {}
         j = await _job_row(conn, fl.get("job_id"))
-    if j is not None and j["state"] == "done" and not await _parcel_on(d):
+        renew = False
+        if j is not None and j["state"] == "done":       # 서비스 새 판으로 모델이 바뀌었으면(데이터-1 · 원판으로 되돌림 등) AI 분석부터 다시
+            pk = await choose_model(conn, d["model_override"], d["card_id"], d["card_version_id"], ((fl.get("imagery") or {}).get("gsd_m")))
+            jm = await conn.fetchval("SELECT model_id FROM jobs WHERE id=$1", j["id"])
+            renew = bool(pk.get("model_id")) and pk["model_id"] != jm
+    if j is not None and j["state"] == "done" and not renew and not await _parcel_on(d):
         raise ApiError("conflict", "이미 결과가 반영됐습니다", status=409)
-    if j is not None and j["state"] == "done":          # AI 분석은 끝났다 — 실태조사만 다시(GPU 재사용 0)
+    if j is not None and j["state"] == "done" and not renew:          # AI 분석은 끝났다 — 실태조사만 다시(GPU 재사용 0)
         await _after_infer(did, d, j)
         async with db(realm="lx") as conn:
             f = (await _get(conn, did))["flow"]
         return {"deploy_id": did, "flow": flow_view(f), "as_of": now_iso()}
-    f = await flow_start(did, p.user_id, why="retry")
+    f = await flow_start(did, p.user_id, why="new_version" if renew else "retry")
     return {"deploy_id": did, "flow": flow_view(f), "as_of": now_iso()}
 
 
