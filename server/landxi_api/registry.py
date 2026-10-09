@@ -26,11 +26,64 @@ def model_dict(r, train: bool = True, base_of: dict | None = None) -> dict:
     if not train:
         return d
     return {**d,
-            "name": (r["name"] or {}).get("ko") if isinstance(r["name"], dict) else r["name"], "sample_id": r["sample_id"],
+            "name": name_ko(r), "sample_id": r["sample_id"],
             "train_job": r["train_job"], "train_log": _log(r["train_log"]),
             "base_model": (base_of or {}).get(r["train_job"]) if r["train_job"] else None,
             "created_at": r["created_at"].isoformat(timespec="seconds") if r["created_at"] else None,
             "status_label": STATUS_MODEL.get(r["status"] or "", r["status"])}
+
+
+_CLS_KO = {"vehicle": "차량", "car": "차량", "building": "건물", "parking": "주차장", "cropland": "경작지", "greenhouse": "비닐하우스"}
+_CARD_CACHE: dict[str, tuple[float, dict]] = {}
+
+
+def _card_json(card_url) -> dict:
+    """모델 카드(card.json) — 파일 시각이 같으면 다시 읽지 않는다. 없으면 {}."""
+    if not (isinstance(card_url, str) and card_url.startswith("/files/")):
+        return {}
+    f = config.DATA_ROOT / card_url[len("/files/"):]
+    try:
+        mt = f.stat().st_mtime
+        hit = _CARD_CACHE.get(str(f))
+        if hit and hit[0] == mt:
+            return hit[1]
+        c = json.loads(f.read_text(encoding="utf-8")) or {}
+        _CARD_CACHE[str(f)] = (mt, c)
+        return c
+    except Exception:                                   # noqa: BLE001
+        return {}
+
+
+def name_ko(r) -> str | None:
+    """모델 이름(사람 말 · fix9 · 원칙 143) — 서버 이름 칸이 있으면 그것. 없으면 '{대상} 모델 (날짜)':
+    대상 = 모델 카드의 업무 이름(task_ko) → 없으면 클래스 이름(세부 '_단동' 등은 앞말 · 영문은 우리말) · 날짜 = 학습 끝 날(카드 ckpt_date → 검증 기록 날).
+    파일명 · 영문 코드는 화면에 내지 않는다."""
+    n = (r["name"] or {}).get("ko") if isinstance(r["name"], dict) else r["name"]
+    if n:
+        return n
+    if r["task"] not in ("seg", "det", "obb"):          # 지수 · 규칙(학습 모델 아님)은 이름을 짓지 않는다
+        return None
+    c = _card_json(r["card_url"])
+    what = str(c.get("task_ko") or "").strip()
+    if not what:
+        words = []
+        for x in (r["classes"] or []):
+            w = _CLS_KO.get(str(x).lower(), str(x).split("_")[0])
+            if w and w not in words:
+                words.append(w)
+        what = "·".join(words) if len(words) <= 2 else f"{words[0]}·{words[1]} 등 {len(words)}종"   # 고르는 칸에서 잘리지 않게(줄바꿈 규칙 9)
+    if not what:
+        return None
+    day = str(c.get("ckpt_date") or "")[:10]
+    if not day:
+        mt = r["metrics"] or {}
+        if isinstance(mt, str):
+            try:
+                mt = json.loads(mt)
+            except ValueError:
+                mt = {}
+        day = next((str(e.get("as_of"))[:10] for e in mt.values() if isinstance(e, dict) and e.get("as_of")), "")
+    return f"{what} 모델 ({day.replace('-', '.')})" if day else f"{what} 모델"
 
 
 async def train_bases(conn) -> dict:
@@ -208,6 +261,8 @@ async def cards(request: Request, public: int | None = None):
         vs = await conn.fetch("SELECT id, card_id, version, model_ids, modules FROM card_versions ORDER BY id")
         ds = await conn.fetch("SELECT id, card_id, stage, snapshot_current, scale, coalesce(test,false) AS test, tenant_id FROM deploys")
         owners = {} if pub else await _card_owners(conn)
+    from .catalog import base_of, rebase                  # 크롭 주소 = 이 요청의 기준 주소(바깥 주소에서 이 PC 주소 0 · fix9)
+    base = base_of(request)
     items = []
     for c in cs:
         mine = [v for v in vs if v["card_id"] == c["id"]]
@@ -221,14 +276,14 @@ async def cards(request: Request, public: int | None = None):
             if p.realm == "tenant":                       # 기관 계정: 다른 기관 배포본 id 는 내주지 않는다(원칙 39)
                 live = [d for d in live if d["tenant_id"] == p.tenant_id]
             items.append({"id": c["id"], "name": name, "scope": c["scope"], "status": st, "status_label": STATUS_LABEL[st],
-                          "intro": c["intro"], "crop_url": c["crop_url"], "deploys": [d["id"] for d in live]})
+                          "intro": c["intro"], "crop_url": rebase(c["crop_url"], base), "deploys": [d["id"] for d in live]})
             continue
         mods = (mine[-1]["modules"] if mine else None) or {}
         items.append({"id": c["id"], "name": name, "scope": c["scope"], "status": c["status_history"], "status3": st, "status_label": STATUS_LABEL[st],
                       **({"project": owners[c["id"]]["project"], "owner": owners[c["id"]]["owner"]} if c["id"] in owners else {}),
                       "versions": [v["id"] for v in mine], "modules": {"core": mods.get("core", []), "ext": mods.get("ext", [])},
                       "models": list((mine[-1]["model_ids"] if mine else None) or []),
-                      "ledger_schema": c["ledger_schema"], "intro": c["intro"], "crop_url": c["crop_url"],
+                      "ledger_schema": c["ledger_schema"], "intro": c["intro"], "crop_url": rebase(c["crop_url"], base),
                       "deploys": [{"id": d["id"], "stage": d["stage"], "tenant_id": d["tenant_id"]} for d in dps if not d["test"]]})
     return {"items": items, "total": len(items), "n": env(len(items), "count", "recorded", "cards" + (" · 실결과 있는 배포본" if pub else "")), "public": pub,
             "as_of": now_iso()}

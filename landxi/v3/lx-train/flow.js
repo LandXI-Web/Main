@@ -12,18 +12,18 @@ import { nf } from '../kit/i18n.js';
 import { sig } from '../kit/sig.js';
 import { h, esc, api, API, session, isEnvelope } from '../kit/util.js';
 import { sse, JOB_EVENTS } from '../../shared/api-v1.js';
+import { accOf } from '../kit/acc.js';   // 검증 정확도 한 규칙(분석하기 카드와 같은 값 · fix9)
 
 const V3 = '/landxi/v3/';
 const val = (e) => (isEnvelope(e) ? e.value : e);
 const num = (e, d = 0) => (val(e) == null ? '—' : `<span class="num">${nf(val(e), d)}</span>${sig(e)}`);
-const perf = (m) => {
-  const k = Object.keys(m?.metrics || {});
-  const key = ['metrics/mAP50(M)', 'metrics/mAP50(B)', 'mask_mAP50', 'box_mAP50', 'mAP50'].find((x) => k.includes(x));
-  return key ? m.metrics[key] : null;
-};
+/** 검증 정확도(정수 %) — 분석하기 카드 · 업무 카드와 같은 규칙(kit/acc.js) */
+const perf = (m) => accOf(m?.metrics);
+const pct = (e) => (e ? `<span class="num">${nf(e.value)}</span>%${sig(e)}` : '—');
 const gsdWord = (g) => (g == null ? '' : g < 0.1 ? `${+(g * 100).toFixed(1)}cm 드론` : `${Math.round(g * 100)}cm 항공`);
 const CLS_KO = { vehicle: '차량', building: '건물', parking: '주차장', cropland: '경작지', greenhouse: '비닐하우스' };
 const clsWord = (c) => CLS_KO[String(c).toLowerCase()] || String(c).split('_')[0];
+/** 모델 이름 = 서버 이름(서버가 '{대상} 모델 (날짜)'로 채워 준다 · fix9) — 없을 때만 해상도 · 클래스 */
 const baseName = (m) => m.name || [gsdWord(m.gsd_trained_m), [...new Set((m.classes || []).map(clsWord))].slice(0, 4).join('·')].filter(Boolean).join(' · ');
 const MB = (b) => (b / 1048576).toFixed(b < 10485760 ? 1 : 0);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -305,7 +305,7 @@ export function openFlow({ host, who, project = null, step = null }) {
     for (const m of ms) { const n = baseName(m); seen[n] = (seen[n] || 0) + 1; nth.set(m.id, seen[n]); }
     const two = (x) => String(x).padStart(2, '0');
     const when = (s) => { const d = new Date(s); return isNaN(d) ? '' : `${two(d.getMonth() + 1)}.${two(d.getDate())} ${two(d.getHours())}:${two(d.getMinutes())}`; };
-    const label = (m) => { const n = baseName(m); return seen[n] > 1 ? `${n} · ${m.created_at ? when(m.created_at) : nth.get(m.id) + '번째'}` : n; };
+    const label = (m) => { const n = baseName(m); const a = perf(m); return seen[n] > 1 ? `${n} · ${a ? `검증 정확도 ${a.value}%` : m.created_at ? when(m.created_at) : nth.get(m.id) + '번째'}` : n; };   // 같은 이름은 검증 정확도로 가른다(fix9)
     ms.sort((a, b) => (!!a.train_job - !!b.train_job) || label(a).localeCompare(label(b), 'ko'));
     baseSel.innerHTML = ms.map((m) => `<option value="${esc(m.id)}">${esc(label(m))}</option>`).join('');
     pickBase();
@@ -413,9 +413,9 @@ export function openFlow({ host, who, project = null, step = null }) {
     const dl = h('dl.tf-dl');
     const row = (k, v) => dl.append(h('dt.t-label', { text: k }), h('dd', { html: v }));
     row('새 모델', esc(model.name || '새 모델'));
-    row('성능(학습 끝 검증)', num(perf(model), 3));
+    row('검증 정확도', pct(perf(model)));
     if (base) row('기반 모델', esc(baseName(base)));
-    if (base && perf(base)) row('기반 모델 성능', num(perf(base), 3));
+    if (base && perf(base)) row('기반 모델 검증 정확도', pct(perf(base)));
     row('클래스', esc((model.classes || []).join(' · ')));
     row('상태', `<span class="t-chip" data-st="${esc(model.status)}">${esc(model.status_label || model.status)}</span>`);
     s4.append(dl);

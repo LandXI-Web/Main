@@ -138,3 +138,5 @@
 /* r3-train 3차 — 모델이 찾지 않는 대상의 규칙(고를 수 없음) · 올리기 진행 막대 */
 .tf-rule[data-off="1"]{opacity:.45;cursor:not-allowed}
 .tf-s .tf-bar + .tf-msg{margin-top:6px}
+/* 검증 정확도 % — 숫자에 붙인다(분석하기 카드와 같은 모양 · fix9) */
+.tr-pct{font-size:.5em;font-style:normal;margin-left:2px;color:var(--ink-2)}

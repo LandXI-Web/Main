@@ -49,8 +49,8 @@ test.describe('v3 통합 — 로그인 · 첫 화면 · 이동', () => {
     ['LX 영업', { id: 'sales@lx.or.kr' }, '/landxi/v3/sales/'],
     ['지자체 공무원(기관 메인 로그인)', { site: 'gov', id: 'lxadmin@lx.or.kr', org: 'namwon' }, '/landxi/v3/gov-select/'],   // 기관 첫 화면 = 서비스 선택(구현 2차 T3)
     ['해외 기관(기관 메인 로그인)', { site: 'gov', id: 'lxadmin@lx.or.kr', org: 'kgz-agri' }, '/landxi/v3/global/'],
-    // 관리자 메일 계정 한 계정으로 두 입구(확인 대장 7) — app → LX 직원 대시보드 · admin → LX 관리자 대시보드
-    ['관리자 계정 · 메인 입구', { site: 'app', id: 'lxadmin@lx.or.kr' }, '/landxi/v3/lx-console/'],
+    // 관리자 계정은 어느 입구로 들어와도 LX 관리자 대시보드(10-09 fix9 — 직원 전용 계정 test@lx.or.kr 이 생긴 뒤)
+    ['관리자 계정 · 메인 입구', { site: 'app', id: 'lxadmin@lx.or.kr' }, '/landxi/v3/ops-core/'],
   ];
   for (const [name, who, dest] of LAND) {
     test(`로그인 폼 → ${name} 첫 화면`, async ({ page }) => {

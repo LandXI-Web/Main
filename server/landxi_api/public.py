@@ -54,7 +54,7 @@ def _breaks(vals: list[int]) -> list[int]:
 
 
 @router.get("/public/stats")
-async def public_stats(set: str = "river-occupy", by: str = "sigungu", geom: int | None = None):
+async def public_stats(request: Request, set: str = "river-occupy", by: str = "sigungu", geom: int | None = None):
     if set not in SETS:
         raise ApiError("not_found", "공개 결과가 없습니다", {"allowed": list(SETS)})
     if by not in SETS[set]["by"]:
@@ -76,8 +76,8 @@ async def public_stats(set: str = "river-occupy", by: str = "sigungu", geom: int
            "top": {"sgg_cd": top["sgg_cd"], "name": tr.get("name"), "sido": tr.get("sido_short"),
                    "value": env(top["value"], "count", "measured", src, as_of=d["as_of"])},
            "items": items,
-           "tiles": {"pmtiles": f"{config.PUBLIC_BASE}/tiles/pmtiles/public/{set}.pmtiles",
-                     "xyz": f"{config.PUBLIC_BASE}/tiles/xyz/public/{set}/{{z}}/{{x}}/{{y}}.pbf", "layer": set.replace("-", "_")},
+           "tiles": {"pmtiles": f"{_base(request)}/tiles/pmtiles/public/{set}.pmtiles",   # 이 요청의 기준 주소(바깥 주소에서 이 PC 주소 0 · fix9)
+                     "xyz": f"{_base(request)}/tiles/xyz/public/{set}/{{z}}/{{x}}/{{y}}.pbf", "layer": set.replace("-", "_")},
            "source": src}
     if geom:
         gs = _geoms()
@@ -86,6 +86,11 @@ async def public_stats(set: str = "river-occupy", by: str = "sigungu", geom: int
             {"type": "Feature", "properties": {**gs[cd]["properties"], "value": vals.get(cd)}, "geometry": gs[cd]["geometry"]}
             for cd in gs]}
     return out
+
+
+def _base(request: Request) -> str:
+    from .catalog import base_of
+    return base_of(request)
 
 
 def _mask(pnu: str) -> str:

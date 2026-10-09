@@ -31,6 +31,7 @@ export const ALLOW = {
   'lx-train': ['lx/staff', 'lx/admin'],
   'lx-review': ['lx/staff', 'lx/admin'],
   'lx-deploy': ['lx/staff', 'lx/admin'],
+  'lx-release': ['lx/staff', 'lx/admin'],   // 프로젝트 안 추론 · 배포 신청(10-09 배포-1 · 2)
   'lx-project': ['lx/staff', 'lx/admin'],   // 프로젝트 목록 · 한 장(구현 2차 T1)
   'lx-inbox': ['lx/staff', 'lx/admin'],     // 기관에서 온 요청(구현 2차 검토 요청)
   'ops-core': ['lx/admin'],
@@ -54,9 +55,10 @@ export const ALLOW = {
 /* 국내 기관 → 서비스 선택(구현 2차 T3 · 체계-2 ⓑ · GF-1 — 기관 메인 → 로그인 → 서비스 선택 → 서비스 대시보드 → 서비스별 기능).
    서비스가 하나뿐인 기관은 서비스 선택이 그 서비스 대시보드로 바로 넘긴다(모든 기관이 같은 틀 — 사용자 구현 확인 I-4). */
 export const LANDING = { 'lx/staff': 'lx-console', 'lx/admin': 'ops-core', 'lx/sales': 'sales', 'tenant/demo': 'sales', 'tenant/local': 'gov-select', 'tenant/global': 'global' };
-/** 입구별 첫 화면(확인 대장 7 — lxadmin 한 계정으로 세 입구) — 같은 계정이라도 들어온 입구가 첫 화면을 정한다. 표에 없으면 LANDING.
-    app 에서 관리자 계정 → LX 직원 대시보드 · admin → LX 관리자 대시보드(LANDING) · gov → 고른 기관의 화면(기관 세션 · LANDING) */
-export const LANDING_AT = { app: { 'lx/admin': 'lx-console' } };
+/** 입구별 첫 화면 — 같은 계정이라도 들어온 입구가 첫 화면을 정할 때만 적는다. 표에 없으면 LANDING.
+    10-09 고장 고침(fix9): LX 관리자 계정은 어느 입구로 들어와도 LX 관리자 대시보드(LANDING). 확인 대장 7(09-30 '메인 → LX 직원 화면')은
+    LX 직원 전용 계정(test@lx.or.kr · 10-01 PW-4)이 생기기 전 임시 규칙 — 관리자가 직원 화면을 볼 때는 메뉴로 간다(lx-console 허용표에 관리자 있음). */
+export const LANDING_AT = {};
 
 export const homeFromPath = (p = location.pathname) => (new RegExp('^' + V3 + '([^/]+)/').exec(p) || [])[1] || null;
 

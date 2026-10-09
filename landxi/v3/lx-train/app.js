@@ -19,6 +19,7 @@ import { summary, stageOf } from '../lx-console/summary.js';
 import { openFlow } from './flow.js';
 import { PID, projectRail, attachProject, projectModel } from '../lx-project/context.js';   // 프로젝트 맥락(?project= · 구현 2차 T1)
 import { staffMenu } from '../kit/lx-menu.js';
+import { accOf, accColumn } from '../kit/acc.js';   // 검증 정확도 한 규칙(분석하기 카드와 같은 값 · fix9)
 
 const who = await gate('lx-train');
 const CFG = await fetch(new URL('./tasks.json', import.meta.url)).then((r) => r.json());
@@ -104,6 +105,9 @@ const LABEL = PID ? Promise.resolve(null) : (async () => {   // 프로젝트 안
   const me = await get('/me');
   const url = me?.label_url || me?.links?.label || CFG.labelUrl || '';
   if (!url) return null;
+  /* 바깥 주소에서는 이 PC 주소(localhost · 127.0.0.1)를 두드리지 않는다 — 바깥 사용자 브라우저에서는 그 주소가 자기 PC 다(fix9) */
+  const LOOP = /^(localhost|127\.0\.0\.1|\[::1\])$/i;
+  try { if (LOOP.test(new URL(url, location.href).hostname) && !LOOP.test(location.hostname)) return null; } catch { return null; }
   const ac = new AbortController(); const to = setTimeout(() => ac.abort(), 2500);
   try { await fetch(url, { mode: 'no-cors', cache: 'no-store', signal: ac.signal }); return url; }
   catch { devlog('label', 'label tool closed'); return null; }
@@ -140,28 +144,18 @@ function modelsFor(t) {
   return hit.sort((a, b) => share(b) - share(a) || dateOf(b).localeCompare(dateOf(a)));
 }
 
-/** 정밀도 한 출처 — 쓰는 가중치(best)가 나온 회차의 기록. 카드·서랍 `정밀도`와 곡선 표시점이 모두 이 값 하나를 읽는다.
-    { value, epoch } · epoch 는 학습 로그가 있을 때만(없으면 곡선 없음) */
+/** 검증 정확도 한 출처(fix9 · 숫자 한 출처) — 분석하기 카드와 같은 값: 모델 기록의 학습 끝 검증 값(kit/acc.js · 서버 cards.py 와 같은 순서) → 정수 %.
+    같은 모델이면 업무 카드 · 서랍 · 분석하기 카드가 같은 숫자를 보인다. 곡선 표시점 = 그 기록이 나온 회차(학습 기록 best_by). */
 function bestOf(m) {
   const c = CARD.get(m.id);
   if (!c) return null;
-  const k = m.task === 'seg' ? 'M' : 'B';
   const bk = Object.keys(c).find((x) => x.startsWith('best_by'));
-  const best = (bk && c[bk]) || c.metrics || c.last;
-  const v = best?.[`metrics/precision(${k})`] ?? best?.['metrics/precision(B)'];
-  if (v === undefined || v === null) return null;
-  return { value: +v, epoch: Number.isFinite(+best.epoch) && best.epoch != null ? +best.epoch : null };
+  const best = (bk && c[bk]) || null;
+  return { epoch: best && Number.isFinite(+best.epoch) && best.epoch != null ? +best.epoch : null };
 }
-/** 이 업무 전용 모델인가 — 모델 클래스가 모두 이 업무 클래스(여러 업무를 함께 보는 모델의 전체 정밀도는 업무 값이 아니다) */
-const dedicated = (m, t) => (m?.classes || []).length > 0 && m.classes.every((c) => t.cls.includes(c));
-/** 정밀도(학습 검증 영상 기준 = 추정치 ~) — 이 업무 전용 모델의 기록만. 없으면 null('—') */
-function precEnv(m, t) {
-  if (!dedicated(m, t)) return null;
-  const b = bestOf(m);
-  if (!b) return null;
-  const c = CARD.get(m.id);
-  return { value: b.value, unit: 'ratio', basis: 'estimate', as_of: String(c.ckpt_date || '').slice(0, 10), source: '학습 검증 영상' };
-}
+/** 검증 정확도 봉투(정수 %) — 모델 기록에 값이 없으면 null('—') */
+function precEnv(m) { return accOf(m?.metrics); }
+const accHtml = (e) => `<span class="num">${nf(e.value)}%</span>${sig(e)}`;
 
 /** 해상도 말(서랍 제목 = 카드와 같은 업무명 · 해상도) */
 const gsdWord = (g) => (g == null ? '' : g < 0.1 ? `${+(g * 100).toFixed(g < 0.1 ? 1 : 0)}cm 드론` : `${Math.round(g * 100)}cm 항공`);
@@ -181,7 +175,7 @@ for (const t of TASKS) {
   const reports = reportsFor(t);
   /* 모델 기록이 없어도 이 업무 결과가 있으면(summary 운영·시범) '첫 학습 전'이라 하지 않는다 — '학습 기록 없음' */
   const state = !m ? (hasResults(t) ? 'nomodel' : 'first') : reports.length >= CFG.reportMin ? 'retrain' : 'ok';
-  ROWS.set(t.id, { t, m, ms, reports, state, prec: m ? precEnv(m, t) : null });
+  ROWS.set(t.id, { t, m, ms, reports, state, prec: m ? precEnv(m) : null });
 }
 devlog('summary', SUM ? TASKS.filter((t) => t.card).map((t) => `${t.card} ${stageOf(SUM, t.card) || '—'}`).join(' · ') || '업무 전용 카드 없음' : '없음 · 카드 기록 단계로 대체');
 
@@ -206,9 +200,9 @@ for (const [id, r] of ROWS) {
   el.querySelector('.tr-year').textContent = r.m && yearOf(r.m) ? `${yearOf(r.m)} 학습` : '';
   const [txt, lv] = CHIP[r.state];
   const chip = el.querySelector('.tr-chip'); chip.textContent = txt; if (lv) chip.dataset.lv = lv;
-  /* 정밀도 — 이 업무의 실제 기록값 · 모델은 있는데 업무 기록이 없으면 '—'(다른 업무 값을 옮겨 쓰지 않는다) · 모델이 없으면 칸 없음 */
-  el.querySelector('.tr-n').innerHTML = r.prec ? `<span class="t-label">정밀도</span><span class="k-num tr-p" data-v="${r.prec.value}">${nf(r.prec.value, 2)}</span>${sig(r.prec)}`
-    : r.m ? '<span class="t-label">정밀도</span><span class="k-num tr-p" data-v="">—</span>' : '';
+  /* 검증 정확도 — 분석하기 카드와 같은 값(모델 기록 · fix9) · 모델은 있는데 기록이 없으면 '—' · 모델이 없으면 칸 없음 */
+  el.querySelector('.tr-n').innerHTML = r.prec ? `<span class="t-label">검증 정확도</span><span class="k-num tr-p" data-v="${r.prec.value}">${nf(r.prec.value)}<i class="tr-pct">%</i></span>${sig(r.prec)}`
+    : r.m ? '<span class="t-label">검증 정확도</span><span class="k-num tr-p" data-v="">—</span>' : '';
 }
 document.documentElement.dataset.trainReady = '1';
 S.fresh(modelsJ?.as_of || fbJ?.as_of || new Date().toISOString());
@@ -253,7 +247,7 @@ function openDrawer(r) {
   const c = CARD.get(r.m.id);
   const dl = h('dl.tr-dl');
   const row = (k, v) => dl.append(h('dt.t-label', { text: k }), h('dd', { html: v }));
-  row('정밀도', r.prec ? `<span class="num">${nf(r.prec.value, 2)}</span>${sig(r.prec)}` : '—');
+  row('검증 정확도', r.prec ? accHtml(r.prec) : '—');
   row('마지막 학습', `<span class="num">${esc(dayText(dateOf(r.m)) || '—')}</span>`);
   /* 표본 — 서버가 값을 줄 때만 행을 연다(값 없으면 접음 · 큰 숫자 블록과 같은 규칙) */
   const sv = isEnvelope(r.m.samples) ? (r.m.samples.value ?? null) : Number.isFinite(r.m.samples) ? r.m.samples : null;
@@ -264,7 +258,7 @@ function openDrawer(r) {
   /* 학습 곡선 — 학습 로그가 없으면 섹션째 접는다(제목 아래 줄표만 남기지 않는다). 표시점 = 서랍 정밀도와 같은 회차·같은 값 */
   const chartBox = h('section.tr-curve', { hidden: true }, h('p.t-label', { text: '학습 곡선' }));
   const chart = h('div'); chartBox.append(chart); body.append(chartBox);
-  if (r.prec) curve(r.m, c).then(({ pts, mark }) => { if (pts.length > 1) { chartBox.hidden = false; drawCurve(chart, pts, mark, r.prec?.value); } });
+  if (r.prec) curve(r.m, c).then(({ pts, mark }) => { if (pts.length > 1) { chartBox.hidden = false; drawCurve(chart, pts, mark, r.prec ? r.prec.value / 100 : undefined); } });
 
   const run = h('div.tr-run', { hidden: true }, h('div.t-progress', {}, h('i')), h('p.t-label.tr-q', { role: 'status', 'aria-live': 'polite' }));
   const copy = h('button.t-btn', { type: 'button', text: '사본 만들기' });
@@ -296,8 +290,8 @@ function drawCurve(el, pts, mark = pts.length - 1, shown) {
   el.querySelector('.tr-mark')?.remove();
   el.append(h('i.tr-mark', { style: `left:${x}%;top:${y}px` }));
   const v = el.querySelector('.k-line-v');
-  if (v) { v.textContent = nf(val, 2); v.classList.add('tr-mark-v'); v.style.left = x + '%'; v.style.top = y + 'px'; v.dataset.v = val; }
-  el.querySelector('svg')?.setAttribute('aria-label', `학습 곡선 ${pts[0].label} → ${pts[pts.length - 1].label} · ${pts[i].label} ${nf(val, 2)}`);
+  if (v) { v.textContent = nf(Math.round(val * 100)) + '%'; v.classList.add('tr-mark-v'); v.style.left = x + '%'; v.style.top = y + 'px'; v.dataset.v = val; }
+  el.querySelector('svg')?.setAttribute('aria-label', `학습 곡선 ${pts[0].label} → ${pts[pts.length - 1].label} · ${pts[i].label} ${nf(Math.round(val * 100))}%`);
 }
 
 /** 학습 곡선 — 학습 기록(회차별 정밀도). 내부 지표 이름은 여기 밖으로 나가지 않는다 */
@@ -311,14 +305,14 @@ async function curve(m, c) {
     if (csv) {
       const [head, ...lines] = csv.trim().split(/\r?\n/);
       const cols = head.split(',').map((s) => s.trim());
-      const k = m.task === 'seg' ? 'M' : 'B';
-      const pi = cols.indexOf(`metrics/precision(${k})`) >= 0 ? cols.indexOf(`metrics/precision(${k})`) : cols.indexOf('metrics/precision(B)');
+      const ac = accOf(m.metrics);
+      const pi = cols.indexOf(accColumn(ac?.key, m.task));   // 검증 정확도와 같은 지표의 회차별 값
       const ei = cols.indexOf('epoch');
       const all = lines.map((l) => l.split(',')).filter((x) => x.length > pi && pi >= 0).map((x) => ({ ep: +x[ei], label: `${+x[ei]}회차`, value: +x[pi] }));
       /* 표시 회차 = 정밀도의 회차(best). 로그에 그 회차가 없으면 곡선을 그리지 않는다(다른 값 두 개를 보이지 않게) */
       const bi = all.findIndex((p) => p.ep === best.epoch);
       if (bi >= 0) {
-        all[bi].value = best.value;   // 같은 회차 · 기록의 같은 값(로그 반올림 차이까지 한 출처로)
+        if (ac) all[bi].value = ac.value / 100;   // 같은 회차 · 기록의 같은 값(로그 반올림 차이까지 한 출처로)
         const step = Math.max(1, Math.ceil(all.length / 60));
         pts = all.filter((_, i) => i % step === 0 || i === all.length - 1 || i === bi);
         mark = pts.indexOf(all[bi]);
@@ -482,7 +476,7 @@ function track(job, eventsUrl, ui) {
       if (name === 'job.progress') {
         const p = d?.progress ?? (d?.epoch && d?.epochs ? d.epoch / d.epochs : null);
         if (p != null) bar.style.width = Math.max(6, p * 100) + '%';
-        const mt = d?.metrics; const v = mt?.precision ?? mt?.['metrics/precision(M)'] ?? mt?.['metrics/precision(B)'];
+        const mt = d?.metrics; const v = mt?.['metrics/mAP50(M)'] ?? mt?.['metrics/mAP50(B)'];   // 검증 정확도와 같은 지표(fix9)
         if (ui.chart && v != null) { pts.push({ label: `${d.epoch ?? pts.length + 1}회차`, value: +v }); if (pts.length > 1) { const sec = ui.chart.closest('.tr-curve'); if (sec) sec.hidden = false; drawCurve(ui.chart, pts); } }
       }
       if (name === 'job.done') { s.close(); queued = false; bar.style.width = '100%'; ui.btn.disabled = false; }

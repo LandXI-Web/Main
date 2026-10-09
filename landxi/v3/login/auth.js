@@ -7,7 +7,7 @@
    서버가 정본 — 바깥 주소는 공개 관문이 입구를 서버에 알리고(x-lx-site), 이 PC 에서는 본문 site 로 알린다.
    첫 화면은 키트 K2 표(kit/auth-gate.js LANDING · LANDING_AT) 한 곳에서 읽는다:
      LX 직원   → LX 직원 대시보드      /landxi/v3/lx-console/
-     LX 관리자 → LX 관리자 대시보드    /landxi/v3/ops-core/   (app 입구에서는 LX 직원 대시보드 — lxadmin 한 계정으로 세 입구)
+     LX 관리자 → LX 관리자 대시보드    /landxi/v3/ops-core/   (어느 입구로 들어와도 — fix9)
      LX 영업   → 서비스 카탈로그       /landxi/v3/sales/      (서버 role 'sales' 또는 tenant 'lx-demo')
    착지는 서버가 돌려준 role 로 정한다(화면이 권한을 지어내지 않는다). 기관 사용자의 첫 화면은 기관 메인(gov-home)이 정한다.
    틀린 비밀번호 = 서버 401 문구 그대로. 관리자 입구에 관리자 아닌 계정 = 서버 403(토큰 없음) · 옛 서버가 토큰을 내주면 즉시 폐기하고 거절.
