@@ -18,14 +18,19 @@ const LIST = [
   ['?v=a', 'ch1-a-390.png', [390, 844], 1200, async (p) => { await p.click('#ch1-list li[data-id="river"]'); await p.waitForTimeout(2200); }],
   ['?v=b', 'ch1-b-1440.png', [1440, 900], 2600, async (p) => { await p.click('#ch1-list li[data-id="marine"]'); await p.waitForTimeout(1800); }],
   ['?v=b', 'ch1-b-390.png', [390, 844], 2600, async (p) => { await p.click('#ch1-list li[data-id="marine"]'); await p.waitForTimeout(1800); }],
-  ['?v=c2', 'ch2-1440.png', [1440, 900], 6400],
-  ['?v=c2', 'ch2-390.png', [390, 844], 6400],
-  ['?v=c3', 'ch3-1440.png', [1440, 900], 16000],
-  ['?v=c3', 'ch3-390.png', [390, 844], 16000],
+  // 10-09 둘째 답 뒤: 셋째는 새 문구 후보 셋을 1440 으로 한 장씩 · 넷째는 점 없는 면만 1440 한 장
+  ['?v=c2&w=1', 'ch2-w1-1440.png', [1440, 900], 6400],
+  ['?v=c2&w=2', 'ch2-w2-1440.png', [1440, 900], 6400],
+  ['?v=c2&w=3', 'ch2-w3-1440.png', [1440, 900], 6400],
+  // 넷째는 ① 지도에 그리기 상태(금지면 창 · 비닐하우스 면)로 — 왼쪽 단계 ①을 눌러 멈추고 찍는다
+  ['?v=c3', 'ch3-1440.png', [1440, 900], 2000, async (p) => { await p.click('#ch3-steps li[data-i="0"]'); await p.waitForTimeout(7000); }],
 ];
+// --only ch2,ch3 처럼 파일 이름 앞부분으로 골라 찍기
+const ONLY = (arg('--only', '') || '').split(',').filter(Boolean);
+const TODO = ONLY.length ? LIST.filter(([, out]) => ONLY.some((k) => out.startsWith(k))) : LIST;
 const browser = await chromium.launch({ channel: 'chromium' }).catch(() => chromium.launch());
 const report = [];
-for (const [src, out, [w, h], ms, pre] of LIST) {
+for (const [src, out, [w, h], ms, pre] of TODO) {
   const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
   const bad = [], errs = [];
   page.on('requestfailed', (r) => bad.push(r.url()));
@@ -45,5 +50,6 @@ for (const [src, out, [w, h], ms, pre] of LIST) {
   console.log(out, JSON.stringify(report.at(-1)));
   await page.close();
 }
-fs.writeFileSync(path.join(SHOTS, 'measure.json'), JSON.stringify(report, null, 1));
+const prev = fs.existsSync(path.join(SHOTS, 'measure.json')) ? JSON.parse(fs.readFileSync(path.join(SHOTS, 'measure.json'), 'utf8')) : [];
+fs.writeFileSync(path.join(SHOTS, 'measure.json'), JSON.stringify([...prev.filter((p) => !report.some((r) => r.out === p.out)), ...report], null, 1));
 await browser.close();

@@ -1,8 +1,8 @@
 /* 메인 장면 시안(설계 13차 · 사용자 확인 전) — v3 메인의 장면을 복사해 한 장면씩 고정해 보인다.
    ?v=a  둘째 ⓐ 차례로: 실태조사가 몇 초씩 바뀌고 지도 모양도 그 일에 맞게 + 숫자 + 실제 결과 장면(작게)
    ?v=b  둘째 ⓑ 겹쳐서: 한 지도에 여러 실태조사 층 · 목록에서 고르면 그 층이 진해진다
-   ?v=c2 셋째: 현장에 가지 않아도 필지마다 판단(문구 1·2·3)
-   ?v=c3 넷째: XI ChatGEO 에게 말로 묻기 → 지도 → 읍면동 통계 → 보고서 초안(문구 1·2·3)
+   ?v=c2 셋째: 고정밀 영상 · AI 분석 · 행정 정보 융합으로 바로 판단(문구 1·2·3 · 원칙 135: 현장 확인 개념 없음)
+   ?v=c3 넷째: XI ChatGEO 에게 말로 묻기 → 지도 → 읍면동 통계 → 보고서 초안(문구 1·2·3) · 비닐하우스는 동 면만(점 없음)
    숫자는 서버 요약(/summary) · 공개 통계(/public/stats)에서만. 비닐하우스 1,674동은 결과 파일(results/namwon-greenhouse-2025) — 요약에 아직 없음.
    움직임 줄이기 설정이면 자동 넘김 · 타자 · 카메라 이동 없이 결과 상태만. v3 코드 수정 0. */
 import { createStage, bignum, bars } from '../../../v3/kit/index.js';
@@ -13,7 +13,8 @@ import { loadSummary, itemFor, metric } from '../../../v3/service-detail/summary
 const $ = (s) => document.querySelector(s);
 const Q = new URLSearchParams(location.search);
 const V = ['a', 'b', 'c2', 'c3'].includes(Q.get('v')) ? Q.get('v') : 'a';
-const W = ['1', '2', '3'].includes(Q.get('w')) ? +Q.get('w') : 1;
+// 문구 기본값 — 둘째 장면은 2(10-09 사용자 "문구는 2번으로") · 셋째 · 넷째는 1
+const W = ['1', '2', '3'].includes(Q.get('w')) ? +Q.get('w') : (['a', 'b'].includes(V) ? 2 : 1);
 const KOREA = [124.6, 33.1, 130.95, 38.62];
 const NARROW = () => matchMedia('(max-width: 640px)').matches;
 const DATA = new URL('./data/', import.meta.url).href;
@@ -28,10 +29,12 @@ const COPY = {
     2: ['전국 어디서나', '여러 실태조사를 한 번에'],
     3: ['하천 · 농지 · 바다 · 국토 변화', '전국을 같은 눈으로'],
   },
+  // 10-09 둘째 답 "고정밀 영상 + AI 분석 + 행정 정보 융합 → 행정 혁신 · 업무 부담 줄임" — 결이 다른 셋
+  // 원칙 135(10-09): '현장 확인' 개념은 쓰지 않는다 — AI 분석 결과(동 · 필지 · 면적)와 행정 정보 융합이 주인공
   ch2: {
-    1: { h: ['현장에 가지 않아도', '필지마다 판단'], p: 'AI가 영상에서 본 것을 지적도와 대장에 맞춰, 대장과 다른 필지를 바로 가려냅니다.', steps: ['AI가 본 것', '대장과 견주기', '판단'], chip: '대장과 다름', foot: ['대장은 논, 실제는 건물', '농지로 쓰이지 않는 필지로 판단 — 현장에 가지 않고 결과에 반영'] },
-    2: { h: ['AI 결과와 지적정보를', '합쳐 바로 결정'], p: '항공영상에서 AI가 찾은 것을 필지와 대장에 겹쳐, 현장에 가지 않고 행정 결정을 내립니다.', steps: ['영상에서 찾기', '필지 · 대장에 겹치기', '결정'], chip: '대장과 다름', foot: ['대장은 논, 실제는 건물', '농지 아님으로 결정 — 현장 확인 없이'] },
-    3: { h: ['현장 확인 없이', '결정하는 행정서비스'], p: 'AI 분석과 지적 · 대장 정보를 한데 모아 필지마다 결론을 냅니다.', steps: ['AI 분석', '대장 대조', '결론'], chip: '대장과 다름', foot: ['대장은 논, 실제는 건물', '농지 아님 — 현장 확인 생략'] },
+    1: { h: ['고정밀 영상을 AI가 읽고', '행정 정보와 맞춰 바로 판단'], p: 'AI가 찾은 건물과 면적을 지적 · 대장 정보와 겹쳐 필지마다 결론이 나옵니다. 실태조사가 빨라지고 담당자 부담이 줄어듭니다.', steps: ['AI 영상 분석', '행정 정보와 맞추기', '바로 판단'], chip: '대장과 다름', foot: ['대장은 논, AI 분석은 건물', 'AI 가 찾은 건물 면적을 대장과 맞춰 농지로 쓰이지 않는 필지로 판단'] },
+    2: { h: ['영상 · AI · 행정 정보를', '하나로 합친 실태조사'], p: '고정밀 항공영상을 AI가 분석하고 지적 · 대장 정보와 겹쳐, 필지마다 실태를 그 자리에서 확인합니다.', steps: ['AI 영상 분석', '지적 · 대장과 겹치기', '실태 확인'], chip: '대장과 다름', foot: ['대장은 논, AI 분석은 건물', 'AI 가 본 건물과 대장을 겹쳐 농지 아님으로 확인'] },
+    3: { h: ['AI가 먼저 분석하고', '담당자는 결정만'], p: '고정밀 영상에서 AI가 찾은 결과를 행정 정보와 맞춰 주니, 담당자는 필지마다 결정만 하면 됩니다.', steps: ['AI가 영상 분석', '행정 정보와 맞춤', '담당자 결정'], chip: '대장과 다름', foot: ['대장은 논, AI 분석은 건물', 'AI 분석과 대장을 맞춰 농지 아님으로 결정'] },
   },
   ch3: {
     1: { h: ['XI ChatGEO 에게 물으면', '지도 · 통계 · 보고서까지'], p: '"남원시 비닐하우스 보여 줘"처럼 평소 말로 물으면 AI 결과를 지도에 그리고, 읍면동 통계와 보고서 초안까지 이어서 만듭니다.' },
@@ -162,7 +165,7 @@ function labelsB(regions) {
   S.st.map.on('render', place); place();
 }
 
-/* ══ 셋째 장면 — 현장에 가지 않아도 필지마다 판단 ═════════════ */
+/* ══ 셋째 장면 — AI 분석 + 행정 정보 융합으로 바로 판단 ═════════════ */
 async function ch2() {
   show('ch2');
   win.dataset.shape = 'right';
@@ -203,6 +206,15 @@ async function ch2() {
   S.timer = setTimeout(() => go(1), 2400);
 }
 
+/* 동이 가장 모인 곳 — 각 동의 가운데점 중 반경 약 500 m 안 이웃이 가장 많은 점을 중심으로 약 1.2 × 0.8 km 창 */
+function denseWin(fc) {
+  const cs = fc.features.map((f) => { const b = bboxOf({ features: [f] }); return [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2]; });
+  if (!cs.length) return null;
+  let best = cs[0], bn = -1;
+  for (const c of cs) { const n = cs.reduce((k, d) => k + (Math.hypot((d[0] - c[0]) * 0.9, d[1] - c[1]) < 0.0045 ? 1 : 0), 0); if (n > bn) { bn = n; best = c; } }
+  return [best[0] - 0.0075, best[1] - 0.0032, best[0] + 0.0075, best[1] + 0.0058];
+}
+
 /* ══ 넷째 장면 — XI ChatGEO 에게 말로 ═════════════════════ */
 async function ch3() {
   show('ch3');
@@ -216,14 +228,16 @@ async function ch3() {
     <div class="k-ck-f"><span class="k-ck-ico" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M10 2.5l1.8 4.7 4.7 1.8-4.7 1.8L10 15.5l-1.8-4.7L3.5 9l4.7-1.8z"/></svg></span><span class="k-ck-t" data-ph="이 지역에 대해 물어보기"></span><kbd class="k-ck-k">Ctrl K</kbd></div>
     <div class="p-chat" id="chat"></div>
   </div></div>`;
-  const [emd, pts, stat] = await Promise.all([fetch('../../../assets/data/geo/namwon-emd.geojson').then((r) => r.json()), geo('greenhouse-points.geojson'), geo('greenhouse-emd.json')]);
+  // 10-09 사용자 "동그라미가 혼란" → 점 층 없음 · 비닐하우스는 동 면(원판 모델 결과)만
+  const [emd, stat] = await Promise.all([fetch('../../../assets/data/geo/namwon-emd.geojson').then((r) => r.json()), geo('greenhouse-emd.json')]);
   const by = Object.fromEntries(stat.rows.map((r) => [r.emd, r.n]));
   for (const f of emd.features) f.properties.v = by[f.properties.nm] || 0;
   S.st = await stage($('#stage'));
   const st = S.st, m = st.map;
   await st.geo('emd', emd, 'ai'); setOp(m, 'k-emd-h', 'line-opacity', 0); setOp(m, 'k-emd-l', 'line-color', '#FFFFFF'); setOp(m, 'k-emd-l', 'line-width', 0.8); setOp(m, 'k-emd-f', 'fill-opacity', 0);
-  await st.geo('gh', pts, 'ai'); setOp(m, 'k-gh-p', 'circle-opacity', 0); setOp(m, 'k-gh-p', 'circle-stroke-opacity', 0); setOp(m, 'k-gh-p', 'circle-radius', ['interpolate', ['linear'], ['zoom'], 9, 2.2, 13, 4]);
   await st.geo('ghp', null, 'ai');
+  // 면만 잘 보이게 — 청록 면을 진하게, 흰 테두리로 영상과 대비(점 없음)
+  const ghLook = () => { setOp(m, 'k-ghp-f', 'fill-opacity', 0.6); setOp(m, 'k-ghp-l', 'line-color', '#FFFFFF'); setOp(m, 'k-ghp-l', 'line-width', ['interpolate', ['linear'], ['zoom'], 13, 0.5, 16, 1.2]); setOp(m, 'k-ghp-l', 'line-opacity', 0.9); setOp(m, 'k-ghp-h', 'line-opacity', 0); };
   const eb = bboxOf(emd);
   const padR = () => (NARROW() ? { top: 150, left: 16, right: 16, bottom: 16 } : { top: 60, left: 500, right: 48, bottom: 40 });
   const home = (ms) => (RM() || !ms ? m.fitBounds(eb, { padding: padR(), duration: 0 }) : m.fitBounds(eb, { padding: padR(), duration: ms }));
@@ -237,20 +251,21 @@ async function ch3() {
   // ① 지도에 그리기
   async function s1() {
     mark(0); chat.innerHTML = ''; tline.textContent = '';
-    setOp(m, 'k-emd-f', 'fill-opacity', 0); setOp(m, 'k-gh-p', 'circle-opacity', 0); setOp(m, 'k-gh-p', 'circle-stroke-opacity', 0);
+    setOp(m, 'k-emd-f', 'fill-opacity', 0); await st.geo('ghp', null, 'ai');
     await typed('남원시 비닐하우스 보여 줘');
     const el = block('남원시 비닐하우스 보여 줘', []);
     const ol = h('ol.k-ck-plan'); el.append(ol);
     for (const t of ['비닐하우스 결과 찾기', '남원시 범위로 자르기', '지도에 그리기']) { const li = h('li', { text: t }); ol.append(li); if (!RM()) await wait(380); li.classList.add('is-done'); }
-    setOp(m, 'k-gh-p', 'circle-opacity', 1); setOp(m, 'k-gh-p', 'circle-stroke-opacity', 1);
     el.append(h('div.k-ck-a', {}, h('span.t-label', { text: '남원시 · 비닐하우스' }), h('b.num', { text: nf(stat.total) }), h('small', { text: `동 · 단동 ${nf(stat.single)} · 다동 ${nf(stat.multi)}` })));
     el.append(h('p.p-q', { text: `${stat.as_of}년 항공영상 AI 분석 결과 · 읍면동 ${stat.rows.length}곳` }));
     chat.scrollTop = chat.scrollHeight;
     // 실제 장면으로 — 가장 많은 금지면 창(면 도형)
     const meta = S.meta || (S.meta = await geo('meta.json'));
     const poly = S.cache.gh ||= await geo('greenhouse.geojson');
-    await st.geo('ghp', poly, 'ai'); setOp(m, 'k-ghp-f', 'fill-opacity', 0.45);
-    if (!RM()) { await wait(900); m.fitBounds(meta.greenhouse.bbox, { padding: padR(), duration: 2200 }); }
+    await st.geo('ghp', poly, 'ai'); ghLook();
+    // 비닐하우스 면이 면으로 보이는 크기로 — 창 안에서 동이 가장 모인 곳(약 1.2 km)으로 들어간다(점 없이 면만)
+    const to = denseWin(poly) || meta.greenhouse.bbox;
+    if (!RM()) { await wait(600); m.fitBounds(to, { padding: padR(), duration: 2200 }); } else m.fitBounds(to, { padding: padR(), duration: 0 });
   }
   // ② 읍면동 통계
   async function s2() {
