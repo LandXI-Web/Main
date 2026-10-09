@@ -72,10 +72,13 @@ def test_one_source_everywhere(api, request, sgg, hname, pg):
         j = _get(api, f"/survey/stats?by={by}&sgg={sgg}", h)
         assert j["total"]["value"] == ref["suspect"]
         assert sum(i["n"]["value"] for i in j["items"] if not str(i["key"]).startswith("L")) == ref["suspect"], by
+    # 카드 항목 = 그 카드 판의 값(모델-표기 ⓐ · 카드마다 따로) — 같은 식(counts_sync card=)으로 낸 값과 같다
     sm = _get(api, f"/summary?region={sgg}", h)
-    vals = [(it["metrics"].get("suspect") or {}).get("value") for it in sm["items"] if (it["metrics"].get("suspect") or {}).get("value") is not None]
-    fcs = [(it["metrics"].get("field_check") or {}).get("value") for it in sm["items"] if (it["metrics"].get("field_check") or {}).get("value") is not None]
-    assert vals and set(vals) == {ref["suspect"]} and set(fcs) == {ref["field_check"]}
+    got = [it for it in sm["items"] if (it["metrics"].get("suspect") or {}).get("value") is not None]
+    assert got
+    for it in got:
+        rc = NT.counts_sync(pg, sgg, card=it["card"])
+        assert (it["metrics"]["suspect"]["value"], it["metrics"]["field_check"]["value"]) == (rc["suspect"], rc["field_check"]), it["card"]
     rg = _get(api, "/survey/regions", h)
     assert [i["findings"]["value"] for i in rg["items"] if i["sgg_cd"] == sgg] == [ref["suspect"]]
     rr = _get(api, f"/regions/{sgg}", h)

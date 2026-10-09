@@ -182,11 +182,11 @@ async def _services(conn, tid: str) -> list:
 
 async def _fits(conn, d, gsd: float | None) -> dict:
     """그 서비스가 이 해상도 영상을 분석할 모델을 가졌는가(배포 흐름의 모델 고르기와 같은 판정 — deploys.choose_model)."""
-    from .deploys import choose_model, model_block
+    from .deploys import card_finds, choose_model, model_block
     if not gsd:
         return {"fits": None}
     pk = await choose_model(conn, d["model_override"], d["card_id"], d["card_version_id"], gsd)
-    mb = await model_block(conn, pk["model_id"]) if pk.get("model_id") else None
+    mb = await model_block(conn, pk["model_id"], finds=await card_finds(conn, d["card_version_id"], d["card_id"])) if pk.get("model_id") else None
     return {"fits": bool(pk.get("model_id")), "model_id": pk.get("model_id"), "model": mb}
 
 

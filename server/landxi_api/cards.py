@@ -282,7 +282,10 @@ def _card_core(m: dict, card, items: list[dict], p, *, tenant: str | None = None
         time = {"text": f"{reg} 전역 {_dur(_vnum(job['el']))}".strip(), "seconds": round(_vnum(job["el"]) or 0),
                 "region": _short(None, job["sgg"]),
                 "coverage": env(round(cov * 100) if cov is not None else None, "%", "measured", "영상 범위 ∩ 시군구 면적")}
-    finds = inf.get("finds")
+    # 찾는 것 = 카드 판이 찾는 분류(서비스 만들기에서 고른 것 · 분석 작업이 결과로 남기는 분류와 같은 출처 · 손으로 적은 글보다 먼저) —
+    # 모델이 더 많은 분류를 내도(4분류 원판) 카드 분류만(모델-표기 ⓐ). 판에 분류가 없을 때만 적은 글 · 모델 분류.
+    own_cls = ((cur["modules"] or {}).get("classes") if cur and isinstance(cur["modules"], dict) else None) or []
+    finds = (" · ".join(dict.fromkeys(_clean_cls(c).split()[0] for c in own_cls if c)) or None) if own_cls else inf.get("finds")
     if not finds and learned:
         cls = []
         for md in learned:

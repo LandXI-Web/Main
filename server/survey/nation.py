@@ -427,17 +427,26 @@ def join(conn, sgg: str, tenant: str, job_id: str, progress=None) -> dict:
     return {"emd": len(emds), "pairs": n_pairs, "rows": n_rows, "joined_parcels": int(joined), "join_s": round(time.time() - t0, 1)}
 
 
-def set_coverage(conn, sgg: str, job_id: str) -> dict:
-    """분석 범위 = AI 작업 범위(jobs.aoi) ∩ 영상 footprint(imagery) ∩ 시군구 필지 범위. 작업 행이 없는 정적 세트 = NULL(전역)."""
+def set_coverage(conn, sgg: str, job_id: str, card_id: str | None = None) -> dict:
+    """분석 범위 = AI 작업 범위(jobs.aoi) ∩ 영상 footprint(imagery) ∩ 시군구 필지 범위. 작업 행이 없는 정적 세트 = NULL(전역).
+    card_id 가 있으면 그 카드 판(survey_card)에 — 시군구 실태조사의 범위를 덮지 않는다."""
     row = conn.execute(
         "SELECT CASE WHEN j.aoi IS NOT NULL AND i.footprint IS NOT NULL THEN ST_Intersection(ST_MakeValid(j.aoi), ST_MakeValid(i.footprint)) "
         "ELSE coalesce(ST_MakeValid(i.footprint), ST_MakeValid(j.aoi)) END FROM jobs j LEFT JOIN imagery i ON i.id = j.imagery_id WHERE j.id = %s",
         (job_id,)).fetchone()
     g = row[0] if row else None
-    conn.execute("UPDATE survey_sgg SET coverage = %s::geometry WHERE sgg_cd = %s", (g, sgg))
-    n = conn.execute("SELECT count(*) FROM survey_parcels sp WHERE sp.sgg_cd = %s AND ((SELECT coverage FROM survey_sgg WHERE sgg_cd = %s) IS NULL "
-                     "OR ST_Intersects((SELECT coverage FROM survey_sgg WHERE sgg_cd = %s), ST_PointOnSurface(sp.geom)))", (sgg, sgg, sgg)).fetchone()[0]
-    conn.execute("UPDATE survey_sgg SET covered_parcels = %s WHERE sgg_cd = %s", (n, sgg))
+    if card_id:
+        conn.execute("UPDATE survey_card SET coverage = %s::geometry WHERE sgg_cd = %s AND card_id = %s", (g, sgg, card_id))
+        cov = "(SELECT coverage FROM survey_card WHERE sgg_cd = %(sgg)s AND card_id = %(card)s)"
+    else:
+        conn.execute("UPDATE survey_sgg SET coverage = %s::geometry WHERE sgg_cd = %s", (g, sgg))
+        cov = "(SELECT coverage FROM survey_sgg WHERE sgg_cd = %(sgg)s)"
+    n = conn.execute(f"SELECT count(*) FROM survey_parcels sp WHERE sp.sgg_cd = %(sgg)s AND ({cov} IS NULL "
+                     f"OR ST_Intersects({cov}, ST_PointOnSurface(sp.geom)))", {"sgg": sgg, "card": card_id}).fetchone()[0]
+    if card_id:
+        conn.execute("UPDATE survey_card SET covered_parcels = %s WHERE sgg_cd = %s AND card_id = %s", (n, sgg, card_id))
+    else:
+        conn.execute("UPDATE survey_sgg SET covered_parcels = %s WHERE sgg_cd = %s", (n, sgg))
     return {"covered_parcels": int(n), "scoped": g is not None}
 
 
@@ -453,13 +462,13 @@ def quantile(xs: list[float], q: float) -> float:
     return s[lo] + (s[hi] - s[lo]) * (pos - lo)
 
 
-def evaluate(conn, sgg: str, job_id: str, th: dict | None = None, rules: list[str] | None = None) -> list[tuple]:
-    """rules = 서비스(카드 버전)에서 고른 규칙만(r3-train) · None = 전체 규칙."""
+def evaluate(conn, sgg: str, job_id: str, th: dict | None = None, rules: list[str] | None = None, card_id: str | None = None) -> list[tuple]:
+    """rules = 서비스(카드 버전)에서 고른 규칙만(r3-train) · None = 전체 규칙. card_id = 그 카드 판의 분석 범위(survey_card.coverage)로."""
     th = th or R.default_thresholds()
     rs = [r for r in RULE_IDS if r in rules] if rules else None
     if rules and not rs:
         return []
-    return conn.execute(R.eval_sql_ai(th, rs), {"sgg": sgg, "job": job_id}).fetchall()
+    return conn.execute(R.eval_sql_ai(th, rs, card=bool(card_id)), {"sgg": sgg, "job": job_id, "card": card_id}).fetchall()
 
 
 def imagery_label(conn, job_id: str) -> str:
@@ -473,8 +482,26 @@ def _fmt(x) -> str:
     return f"{x:,.0f}"
 
 
-def findings(conn, sgg: str, tenant: str, job_id: str, rows: list[tuple], img: str) -> dict:
-    """규칙 행 → survey_findings(upsert · 상태 기록 보존) · survey_emd · 등급 절단(그 시군구 안)."""
+def finding_ids(conn, sgg: str, card_id: str | None, keys: list[tuple]) -> dict:
+    """(규칙, 필지) → 의심 id — 그 판(카드 · 시군구 실태조사)에 이미 있는 행은 그 id 그대로(상태 기록 · 판정이 달린 id 를 바꾸지 않는다).
+    새 행: 시군구 실태조사 = f_{규칙}_{필지}(지금까지와 같다) · 카드 판 = f_{규칙}_{필지}~{카드}. 다른 판이 이미 쓴 id 면 뒤에 판 이름을 붙인다."""
+    have = {(r[1], r[2]): r[0] for r in conn.execute(
+        "SELECT id, rule, pnu FROM survey_findings WHERE sgg_cd = %s AND card_id IS NOT DISTINCT FROM %s", (sgg, card_id)).fetchall()}
+    want = {k: (have.get(k) or (f"f_{k[0]}_{k[1]}~{card_id}" if card_id else f"f_{k[0]}_{k[1]}")) for k in keys}
+    new = [v for k, v in want.items() if k not in have]
+    if new:
+        taken = {r[0] for r in conn.execute("SELECT id FROM survey_findings WHERE id = ANY(%s) AND card_id IS DISTINCT FROM %s",
+                                            (new, card_id)).fetchall()}
+        for k, v in list(want.items()):
+            if v in taken:
+                want[k] = f"{v}~{card_id or 'sgg'}"
+    return want
+
+
+def findings(conn, sgg: str, tenant: str, job_id: str, rows: list[tuple], img: str, card_id: str | None = None,
+             rules: list[str] | None = None, emd: bool = True) -> dict:
+    """규칙 행 → survey_findings(upsert · 상태 기록 보존) · survey_emd · 등급 절단(그 판 안).
+    판 = card_id(그 카드의 필지 대조) 또는 None(시군구 실태조사). 지우기 · 등급은 그 판 · 그 판이 평가한 규칙 안에서만 — 다른 카드 결과를 덮지 않는다."""
     t0 = time.time()
     defs = R.definitions()
     pn = sorted({r[1] for r in rows})
@@ -516,10 +543,13 @@ def findings(conn, sgg: str, tenant: str, job_id: str, rows: list[tuple], img: s
             ev = f"{base} | AI 농경 비율 {(o.get('r_farm') or 0):.0%}(경작지 {_fmt(o.get('crop_hit') or 0)}㎡), 건물 {(o.get('r_bld') or 0):.0%} [{img}]"
             key = "crop"
         corro = ["농업진흥구역"] if (nongup == "농업진흥구역" and rule in ("R1", "R4", "R2")) else []
-        items.append({"id": f"f_{rule}_{pnu}", "rule": rule, "rule_nm": defs[rule]["name"], "pnu": pnu, "addr": addr, "emd": emd, "emd_cd": emd_cd,
+        items.append({"id": (rule, pnu), "rule": rule, "rule_nm": defs[rule]["name"], "pnu": pnu, "addr": addr, "emd": emd, "emd_cd": emd_cd,
                       "jimok": jnm, "parcel_m2": area, "yongdo": yongdo, "nongup": nongup, "evid_m2": round(float(a or 0), 1),
                       "conf": None if c is None else round(float(c), 3), "score": round(float(score), 1), "corroboration": ";".join(corro),
                       "evidence": ev, "img_date": img, "ai_ids": ids.get((pnu, key)) or "", "lon": round(lon, 6), "lat": round(lat, 6)})
+    idm = finding_ids(conn, sgg, card_id, [x["id"] for x in items])
+    for x in items:
+        x["id"] = idm[x["id"]]
     scores = [x["score"] for x in items]
     q95, q75 = quantile(scores, 0.95), quantile(scores, 0.75)
     items.sort(key=lambda x: -x["score"])
@@ -537,25 +567,51 @@ def findings(conn, sgg: str, tenant: str, job_id: str, rows: list[tuple], img: s
         for x in items:
             cp.write_row([x[k] for k in keys])
     upd = ", ".join(f"{k} = EXCLUDED.{k}" for k in keys if k != "id")
-    conn.execute(f"INSERT INTO survey_findings(tenant_id, sgg_cd, ai_job_id, geom, {', '.join(keys)}) "
-                 f"SELECT %s, %s, %s, ST_SetSRID(ST_MakePoint(lon, lat), 4326), {', '.join(keys)} FROM _sf "
+    conn.execute(f"INSERT INTO survey_findings(tenant_id, sgg_cd, ai_job_id, card_id, geom, {', '.join(keys)}) "
+                 f"SELECT %s, %s, %s, %s, ST_SetSRID(ST_MakePoint(lon, lat), 4326), {', '.join(keys)} FROM _sf "
                  f"ON CONFLICT (id) DO UPDATE SET tenant_id = EXCLUDED.tenant_id, sgg_cd = EXCLUDED.sgg_cd, ai_job_id = EXCLUDED.ai_job_id, "
-                 f"geom = EXCLUDED.geom, {upd}", (tenant, sgg, job_id))
-    # 이번 평가에 없는 옛 의심 — 아무 기록(상태·판정·조치)이 없는 것만 지운다
+                 f"card_id = EXCLUDED.card_id, geom = EXCLUDED.geom, {upd}", (tenant, sgg, job_id, card_id))
+    # 이번 평가에 없는 옛 의심(같은 판 안 · 그 판이 이제 고르지 않은 규칙의 행 포함) — 아무 기록(상태·판정·조치)이 없는 것만 지운다
+    ev_rules = list(RULE_IDS)
     stale = conn.execute(
-        "DELETE FROM survey_findings f WHERE f.sgg_cd = %s AND f.rule = ANY(%s) AND f.state = 'open' AND f.verdict IS NULL "
+        "DELETE FROM survey_findings f WHERE f.sgg_cd = %s AND f.card_id IS NOT DISTINCT FROM %s AND f.rule = ANY(%s) AND f.state = 'open' "
+        "AND f.verdict IS NULL "
         "AND NOT EXISTS (SELECT 1 FROM _sf s WHERE s.id = f.id) "
         "AND NOT EXISTS (SELECT 1 FROM survey_finding_events e WHERE e.finding_id = f.id) "
         "AND NOT EXISTS (SELECT 1 FROM survey_actions a WHERE a.finding_id = f.id) "
-        "AND NOT EXISTS (SELECT 1 FROM finding_verdicts v WHERE v.finding_id = f.id)", (sgg, list(RULE_IDS))).rowcount
+        "AND NOT EXISTS (SELECT 1 FROM finding_verdicts v WHERE v.finding_id = f.id)", (sgg, card_id, ev_rules)).rowcount
     by_rule = {r: 0 for r in RULE_IDS}
     by_pr = {"A": 0, "B": 0, "C": 0}
     for x in items:
         by_rule[x["rule"]] += 1
         by_pr[x["priority"]] += 1
-    emd_summary(conn, sgg, tenant, job_id, items)
+    if emd:
+        emd_summary(conn, sgg, tenant, job_id, union_items(conn, sgg))
     return {"findings": len(items), "suspect_parcels": len({x["pnu"] for x in items}), "by_rule": by_rule, "by_priority": by_pr,
             "cut": cut, "stale_removed": stale, "findings_s": round(time.time() - t0, 1)}
+
+
+def union_items(conn, sgg: str) -> list[dict]:
+    """그 시군구의 모든 필지 대조 의심(시군구 실태조사 + 카드 판 · R1–R6) — 읍면동 요약(survey_emd)은 시군구 숫자와 같은 범위로 센다."""
+    cur = conn.execute("SELECT emd_cd, pnu, rule, priority, addr, rank, evid_m2, score FROM survey_findings WHERE sgg_cd = %s AND rule = ANY(%s)",
+                       (sgg, list(RULE_IDS)))
+    cols = [d.name for d in cur.description]
+    return [dict(zip(cols, r)) for r in cur.fetchall()]
+
+
+def refresh_sgg(conn, sgg: str) -> dict:
+    """survey_sgg 의 의심 합(findings · by_rule · by_priority) = 그 시군구 모든 필지 대조 행(시군구 숫자 한 출처 — counts_sql 과 같은 범위)."""
+    by = {r: 0 for r in RULE_IDS}
+    pr = {"A": 0, "B": 0, "C": 0}
+    for rule, prio, n in conn.execute("SELECT rule, priority, count(*) FROM survey_findings WHERE sgg_cd = %s AND rule = ANY(%s) GROUP BY 1, 2",
+                                      (sgg, list(RULE_IDS))).fetchall():
+        by[rule] = by.get(rule, 0) + int(n)
+        if prio in pr:
+            pr[prio] += int(n)
+    tot = sum(by.values())
+    conn.execute("UPDATE survey_sgg SET findings = %s, by_rule = %s, by_priority = %s WHERE sgg_cd = %s",
+                 (tot, json.dumps(by), json.dumps(pr), sgg))
+    return {"findings": tot, "by_rule": by, "by_priority": pr}
 
 
 def emd_summary(conn, sgg: str, tenant: str, job_id: str, items: list[dict]):
@@ -581,7 +637,7 @@ def emd_summary(conn, sgg: str, tenant: str, job_id: str, items: list[dict]):
         sus = {r: sum(1 for x in xs if x["rule"] == r) for r in RULE_IDS}
         pr = {k: sum(1 for x in xs if x["priority"] == k) for k in "ABC"}
         top = [{"pnu": x["pnu"], "addr": x["addr"], "rank": x["rank"], "rule": x["rule"], "evid_m2": x["evid_m2"], "priority": x["priority"]}
-               for x in sorted(xs, key=lambda x: x["rank"])[:5]]
+               for x in sorted(xs, key=lambda x: (-(x.get("score") or 0), x["rank"] or 0))[:5]]
         jtop = dict(sorted(jt.get(cd, []), key=lambda kv: -kv[1])[:6])
         name = nm or cd
         conn.execute(
@@ -617,8 +673,10 @@ def is_canon(conn, sgg: str) -> bool:
 
 # ─────────────────────────── 전체 ───────────────────────────
 def build(sgg_cd: str, ai_job_id: str | None = None, *, build_job_id: str | None = None, progress=None, force: bool = False,
-          rules: list[str] | None = None) -> dict:
-    """한 시군구 전체 — ① 필지 ② 결합 ③ 규칙·의심. 반환: survey.done counts + 단계 실측. rules = 서비스에서 고른 규칙만(없으면 전체)."""
+          rules: list[str] | None = None, card_id: str | None = None, card_version_id: str | None = None, deploy_id: str | None = None) -> dict:
+    """한 시군구 전체 — ① 필지 ② 결합 ③ 규칙·의심. 반환: survey.done counts + 단계 실측. rules = 서비스에서 고른 규칙만(없으면 전체).
+    card_id 가 있으면 그 카드의 필지 대조(판 = survey_card 한 줄 + survey_findings.card_id) — 시군구 실태조사 · 다른 카드 결과를 덮지 않는다
+    (확인 대장 '모델-표기' ⓐ). 정본(canon) 시군구에서도 카드 판은 따로 평가해 저장한다(정본 의심은 그대로)."""
     rg = region(sgg_cd)
     sgg = rg["sgg_cd"]
     tenant = tenant_for(sgg)
@@ -626,10 +684,21 @@ def build(sgg_cd: str, ai_job_id: str | None = None, *, build_job_id: str | None
     ms: dict = {}
     with pg() as conn:
         lx_tx(conn)
-        conn.execute("INSERT INTO survey_sgg(sgg_cd, tenant_id, name, sido, state, build_job_id, at) VALUES (%s,%s,%s,%s,'building',%s,now()) "
-                     "ON CONFLICT (sgg_cd) DO UPDATE SET state = CASE WHEN survey_sgg.state = 'done' AND survey_sgg.parcels_src ? 'canon' "
-                     "THEN 'done' ELSE 'building' END, build_job_id = EXCLUDED.build_job_id, name = EXCLUDED.name, sido = EXCLUDED.sido, error = NULL",
-                     (sgg, tenant, rg["name"], rg["sido"], build_job_id))
+        if card_id:
+            # 필지 적재 상태 줄(시군구)은 없을 때만 만든다 — 있는 시군구 실태조사의 상태 · 숫자는 건드리지 않는다
+            conn.execute("INSERT INTO survey_sgg(sgg_cd, tenant_id, name, sido, state, build_job_id, at) VALUES (%s,%s,%s,%s,'building',%s,now()) "
+                         "ON CONFLICT (sgg_cd) DO NOTHING", (sgg, tenant, rg["name"], rg["sido"], build_job_id))
+            conn.execute("INSERT INTO survey_card(sgg_cd, card_id, tenant_id, card_version_id, deploy_id, rules, state, build_job_id, error, at) "
+                         "VALUES (%s,%s,%s,%s,%s,%s,'building',%s,NULL,now()) ON CONFLICT (sgg_cd, card_id) DO UPDATE SET state='building', "
+                         "tenant_id=EXCLUDED.tenant_id, card_version_id=coalesce(EXCLUDED.card_version_id, survey_card.card_version_id), "
+                         "deploy_id=coalesce(EXCLUDED.deploy_id, survey_card.deploy_id), rules=EXCLUDED.rules, build_job_id=EXCLUDED.build_job_id, "
+                         "error=NULL, at=now()",
+                         (sgg, card_id, tenant, card_version_id, deploy_id, json.dumps(list(rules)) if rules else None, build_job_id))
+        else:
+            conn.execute("INSERT INTO survey_sgg(sgg_cd, tenant_id, name, sido, state, build_job_id, at) VALUES (%s,%s,%s,%s,'building',%s,now()) "
+                         "ON CONFLICT (sgg_cd) DO UPDATE SET state = CASE WHEN survey_sgg.state = 'done' AND survey_sgg.parcels_src ? 'canon' "
+                         "THEN 'done' ELSE 'building' END, build_job_id = EXCLUDED.build_job_id, name = EXCLUDED.name, sido = EXCLUDED.sido, error = NULL",
+                         (sgg, tenant, rg["name"], rg["sido"], build_job_id))
         conn.commit()
     try:
         with pg() as conn:
@@ -650,55 +719,92 @@ def build(sgg_cd: str, ai_job_id: str | None = None, *, build_job_id: str | None
             as_of = conn.execute("SELECT max(src_as_of) FROM survey_parcels WHERE sgg_cd=%s", (sgg,)).fetchone()[0]
             bbox = conn.execute("SELECT ARRAY[ST_XMin(e), ST_YMin(e), ST_XMax(e), ST_YMax(e)] FROM (SELECT ST_Extent(geom) e FROM survey_parcels "
                                 "WHERE sgg_cd=%s) q", (sgg,)).fetchone()[0]
+            if card_id:
+                # 시군구 줄이 이 적재로 처음 생겼으면(또는 AI 결과가 없던 줄) 필지 적재 결과를 채운다 — 있던 시군구 실태조사는 그대로
+                conn.execute("UPDATE survey_sgg SET parcels=%s, parcels_src=%s, parcels_as_of=%s, bbox=coalesce(bbox, %s) WHERE sgg_cd=%s",
+                             (sum(src_n.values()), json.dumps(src_n), as_of, bbox, sgg))
             if not job:
-                conn.execute("UPDATE survey_sgg SET state='no_ai', parcels=%s, parcels_src=%s, parcels_as_of=%s, bbox=%s, ms=%s, finished_at=now() "
-                             "WHERE sgg_cd=%s", (sum(src_n.values()), json.dumps(src_n), as_of, bbox, json.dumps(ms, ensure_ascii=False), sgg))
+                if card_id:
+                    conn.execute("UPDATE survey_card SET state='no_ai', ms=%s, finished_at=now() WHERE sgg_cd=%s AND card_id=%s",
+                                 (json.dumps(ms, ensure_ascii=False), sgg, card_id))
+                    conn.execute("UPDATE survey_sgg SET state='no_ai', finished_at=now() WHERE sgg_cd=%s AND state='building' "
+                                 "AND build_job_id IS NOT DISTINCT FROM %s", (sgg, build_job_id))
+                else:
+                    conn.execute("UPDATE survey_sgg SET state='no_ai', parcels=%s, parcels_src=%s, parcels_as_of=%s, bbox=%s, ms=%s, finished_at=now() "
+                                 "WHERE sgg_cd=%s", (sum(src_n.values()), json.dumps(src_n), as_of, bbox, json.dumps(ms, ensure_ascii=False), sgg))
                 conn.commit()
-                return {"sgg_cd": sgg, "tenant_id": tenant, "ai_job_id": None, "state": "no_ai",
+                return {"sgg_cd": sgg, "tenant_id": tenant, "ai_job_id": None, "state": "no_ai", **({"card_id": card_id} if card_id else {}),
                         "counts": {"parcels": sum(src_n.values()), "joined_parcels": 0, "findings": 0, "by_rule": {}, "by_priority": {}}, "ms": ms}
             # ② 결합 · 분석 범위
-            ms["coverage"] = set_coverage(conn, sgg, job)
+            ms["coverage"] = set_coverage(conn, sgg, job, card_id)
             ms["join"] = join(conn, sgg, tenant, job, progress)
             conn.commit()
             lx_tx(conn)
             # ③ 규칙
             t = time.time()
-            rows = evaluate(conn, sgg, job, rules=rules)
+            rows = evaluate(conn, sgg, job, rules=rules, card_id=card_id)
             ms["rules"] = {"rows": len(rows), "rules_s": round(time.time() - t, 1), **({"only": list(rules)} if rules else {})}
             if progress:
                 progress("rules", len(rows), len(rows), None)
-            img = IMG23 if canon else imagery_label(conn, job)       # 정본 = 적재 때 영상 표기 그대로
-            if canon:
-                # 정본 시군구 — 의심은 그대로, 일반 규칙 평가 결과는 회귀 대조로만
-                by = {r: 0 for r in RULE_IDS}
-                for r in rows:
-                    by[r[0]] += 1
-                cur = {r: int(n) for r, n in conn.execute(
-                    "SELECT rule, count(*) FROM survey_findings WHERE sgg_cd=%s AND rule = ANY(%s) GROUP BY 1", (sgg, list(RULE_IDS))).fetchall()}
-                pr = {k: int(n) for k, n in conn.execute(
-                    "SELECT priority, count(*) FROM survey_findings WHERE sgg_cd=%s AND rule = ANY(%s) GROUP BY 1", (sgg, list(RULE_IDS))).fetchall()}
-                ms["regression"] = {"canon": cur, "generic": by, "note": "정본 의심 유지 · 일반 규칙(단일 AI 작업) 평가는 대조로만"}
-                fres = {"findings": sum(cur.values()), "by_rule": cur, "by_priority": pr, "cut": None}
-            else:
-                fres = findings(conn, sgg, tenant, job, rows, img)
+            img = imagery_label(conn, job) if (card_id or not canon) else IMG23     # 정본 = 적재 때 영상 표기 그대로
+            if card_id:
+                # 카드 판 — 그 카드 행만 쓰고 지운다(정본 · 시군구 실태조사 · 다른 카드는 그대로). 읍면동 요약은 정본이 아닐 때만 시군구 전체로 다시 센다.
+                fres = findings(conn, sgg, tenant, job, rows, img, card_id=card_id, rules=rules, emd=not canon)
                 ms["findings"] = {k: v for k, v in fres.items() if k in ("findings_s", "stale_removed", "suspect_parcels")}
-            ms["total_s"] = round(time.time() - T0, 1)
-            conn.execute("UPDATE survey_sgg SET state='done', tenant_id=%s, job_id=%s, parcels=%s, parcels_src=%s, parcels_as_of=%s, joined_parcels=%s, "
-                         "findings=%s, by_rule=%s, by_priority=%s, priority_cut=coalesce(%s, priority_cut), imagery=%s, bbox=%s, ms=%s, "
-                         "finished_at=now() WHERE sgg_cd=%s",
-                         (tenant, job, sum(src_n.values()), json.dumps(src_n), as_of, ms["join"]["joined_parcels"], fres["findings"],
-                          json.dumps(fres["by_rule"]), json.dumps(fres["by_priority"]),
-                          json.dumps({"A": fres["cut"]["A"], "B": fres["cut"]["B"], "scope": "sgg"}) if fres.get("cut") else None,
-                          img, bbox, json.dumps(ms, ensure_ascii=False), sgg))
-            conn.commit()
+                ms["total_s"] = round(time.time() - T0, 1)
+                conn.execute("UPDATE survey_card SET state='done', tenant_id=%s, job_id=%s, joined_parcels=%s, findings=%s, by_rule=%s, by_priority=%s, "
+                             "priority_cut=%s, imagery=%s, ms=%s, error=NULL, finished_at=now() WHERE sgg_cd=%s AND card_id=%s",
+                             (tenant, job, ms["join"]["joined_parcels"], fres["findings"], json.dumps(fres["by_rule"]), json.dumps(fres["by_priority"]),
+                              json.dumps({"A": fres["cut"]["A"], "B": fres["cut"]["B"], "scope": "card"}) if fres.get("cut") else None,
+                              img, json.dumps(ms, ensure_ascii=False), sgg, card_id))
+                # 시군구 줄: 이 적재가 만든 줄이면 끝냄 + AI 작업(옛 읽기 경로용) · 의심 합 = 시군구 전체(모든 판)
+                conn.execute("UPDATE survey_sgg SET state = CASE WHEN state IN ('building','no_ai','failed') AND build_job_id IS NOT DISTINCT FROM %s "
+                             "THEN 'done' ELSE state END, job_id = coalesce(job_id, %s), imagery = coalesce(imagery, %s), "
+                             "joined_parcels = CASE WHEN job_id IS NULL THEN %s ELSE joined_parcels END, finished_at = coalesce(finished_at, now()) "
+                             "WHERE sgg_cd=%s", (build_job_id, job, img, ms["join"]["joined_parcels"], sgg))
+                refresh_sgg(conn, sgg)
+                conn.commit()
+            else:
+                if canon:
+                    # 정본 시군구 — 의심은 그대로, 일반 규칙 평가 결과는 회귀 대조로만
+                    by = {r: 0 for r in RULE_IDS}
+                    for r in rows:
+                        by[r[0]] += 1
+                    cur = {r: int(n) for r, n in conn.execute(
+                        "SELECT rule, count(*) FROM survey_findings WHERE sgg_cd=%s AND card_id IS NULL AND rule = ANY(%s) GROUP BY 1",
+                        (sgg, list(RULE_IDS))).fetchall()}
+                    pr = {k: int(n) for k, n in conn.execute(
+                        "SELECT priority, count(*) FROM survey_findings WHERE sgg_cd=%s AND card_id IS NULL AND rule = ANY(%s) GROUP BY 1",
+                        (sgg, list(RULE_IDS))).fetchall()}
+                    ms["regression"] = {"canon": cur, "generic": by, "note": "정본 의심 유지 · 일반 규칙(단일 AI 작업) 평가는 대조로만"}
+                    fres = {"findings": sum(cur.values()), "by_rule": cur, "by_priority": pr, "cut": None}
+                else:
+                    fres = findings(conn, sgg, tenant, job, rows, img, rules=rules)
+                    ms["findings"] = {k: v for k, v in fres.items() if k in ("findings_s", "stale_removed", "suspect_parcels")}
+                ms["total_s"] = round(time.time() - T0, 1)
+                conn.execute("UPDATE survey_sgg SET state='done', tenant_id=%s, job_id=%s, parcels=%s, parcels_src=%s, parcels_as_of=%s, joined_parcels=%s, "
+                             "findings=%s, by_rule=%s, by_priority=%s, priority_cut=coalesce(%s, priority_cut), imagery=%s, bbox=%s, ms=%s, "
+                             "finished_at=now() WHERE sgg_cd=%s",
+                             (tenant, job, sum(src_n.values()), json.dumps(src_n), as_of, ms["join"]["joined_parcels"], fres["findings"],
+                              json.dumps(fres["by_rule"]), json.dumps(fres["by_priority"]),
+                              json.dumps({"A": fres["cut"]["A"], "B": fres["cut"]["B"], "scope": "sgg"}) if fres.get("cut") else None,
+                              img, bbox, json.dumps(ms, ensure_ascii=False), sgg))
+                refresh_sgg(conn, sgg)
+                conn.commit()
     except Exception as e:
         with pg() as conn:
             lx_tx(conn)
-            conn.execute("UPDATE survey_sgg SET state = CASE WHEN parcels_src ? 'canon' THEN 'done' ELSE 'failed' END, error=%s, "
-                         "finished_at=now() WHERE sgg_cd=%s", (f"{type(e).__name__}: {str(e)[:300]}", sgg))
+            if card_id:
+                conn.execute("UPDATE survey_card SET state='failed', error=%s, finished_at=now() WHERE sgg_cd=%s AND card_id=%s",
+                             (f"{type(e).__name__}: {str(e)[:300]}", sgg, card_id))
+                conn.execute("UPDATE survey_sgg SET state='no_ai' WHERE sgg_cd=%s AND state='building' AND build_job_id IS NOT DISTINCT FROM %s",
+                             (sgg, build_job_id))
+            else:
+                conn.execute("UPDATE survey_sgg SET state = CASE WHEN parcels_src ? 'canon' THEN 'done' ELSE 'failed' END, error=%s, "
+                             "finished_at=now() WHERE sgg_cd=%s", (f"{type(e).__name__}: {str(e)[:300]}", sgg))
             conn.commit()
         raise
-    return {"sgg_cd": sgg, "tenant_id": tenant, "ai_job_id": job, "state": "done",
+    return {"sgg_cd": sgg, "tenant_id": tenant, "ai_job_id": job, "state": "done", **({"card_id": card_id} if card_id else {}),
             "counts": {"parcels": sum(src_n.values()), "joined_parcels": ms["join"]["joined_parcels"], "findings": fres["findings"],
                        "by_rule": fres["by_rule"], "by_priority": fres["by_priority"]}, "ms": ms}
 
@@ -734,7 +840,7 @@ def ai_operands(conn, pnus: list[str], sgg_cd: str | None = None) -> dict[str, d
 
 # ─────────────────────────── 숫자 한 출처(c2-numbers) ───────────────────────────
 # 정의(모든 화면·에이전트·보고서가 이 두 줄만 쓴다):
-#   의심 필지      = survey_sgg.findings — 그 시군구 AI × 연속지적 규칙(R1–R6) 의심 건(필지 × 규칙 1행). 적재(build) 때 확정되고
+#   의심 필지      = 그 범위(시군구 · 카드 판 — 아래 '판')의 AI × 연속지적 규칙(R1–R6) 의심 행 수(판 × 필지 × 규칙 1행). 적재(build) 때 확정되고
 #                    상태(판정·오탐·종결)로 줄지 않는다. 대장 규칙(L-*)은 넣지 않는다(대장 대조 결과로 따로 센다).
 #   현장 확인 필요 = 같은 시군구 R1–R6 의심 중 우선순위 A · 상태 open|assigned(판정 전 · assigned 는 옛 기록) 인 서로 다른 필지(PNU) 수 — 판정·오탐 처리로 줄어든다.
 #   적재 중(survey_sgg.state = 'building')에는 두 값 모두 None + '집계 중'(숫자를 섞어 내지 않는다).
@@ -742,21 +848,32 @@ def ai_operands(conn, pnus: list[str], sgg_cd: str | None = None) -> dict[str, d
 #   · 21,303 = survey_findings 전체(대장 규칙 L-* 431행 포함). 여수 10,499 = 중복 제거 · 10,504 = R1–R6 행.
 COUNT_RULES = list(RULE_IDS)
 COUNTING = "집계 중"
-COUNTS_SQL = ("SELECT s.sgg_cd, s.tenant_id, s.state, s.findings, coalesce(s.finished_at, s.at) AS at, "
-              "(SELECT count(DISTINCT f.pnu) FROM survey_findings f WHERE f.sgg_cd = s.sgg_cd AND f.rule = ANY({rules}) "
-              "AND f.priority = 'A' AND f.state IN ('open','assigned')) AS field_check, "
-              "(SELECT count(*) FROM survey_findings f WHERE f.sgg_cd = s.sgg_cd AND f.rule = ANY({rules}) "
-              "AND f.priority = 'A' AND f.state = 'open') AS review_pending "
+# 판(모델-표기 ⓐ · 2026-10-09): 필지 대조 행은 카드마다 따로(survey_findings.card_id · survey_card). 같은 이름 · 같은 식, 범위만 다르다.
+#   시군구(sgg)  = 그 시군구의 모든 필지 대조 행(시군구 실태조사 + 카드 판) — 지역을 묻는 화면 · XI ChatGEO 지역 질문 · 보고서.
+#   카드(card)   = 그 카드 판 행만(survey_card 한 줄) — 서비스 카드 숫자 · 카드 상세 · 기관 서비스 이력.
+#   시군구 실태조사(base) = card_id 가 없는 행만 — 규칙을 고르지 않은(전 규칙) 카드가 아직 제 판이 없을 때 그 카드 숫자로 쓴다.
+_CNT = ("(SELECT count(*) FROM survey_findings f WHERE f.sgg_cd = s.sgg_cd AND f.rule = ANY({rules}){scope}) AS findings, "
+        "(SELECT count(DISTINCT f.pnu) FROM survey_findings f WHERE f.sgg_cd = s.sgg_cd AND f.rule = ANY({rules}){scope} "
+        "AND f.priority = 'A' AND f.state IN ('open','assigned')) AS field_check, "
+        "(SELECT count(*) FROM survey_findings f WHERE f.sgg_cd = s.sgg_cd AND f.rule = ANY({rules}){scope} "
+        "AND f.priority = 'A' AND f.state = 'open') AS review_pending ")
+COUNTS_SQL = ("SELECT s.sgg_cd, s.tenant_id, s.state, coalesce(s.finished_at, s.at) AS at, " + _CNT.format(rules="{rules}", scope="") +
               "FROM survey_sgg s WHERE ({codes}::text[] IS NULL OR s.sgg_cd = ANY({codes}::text[])) ORDER BY s.sgg_cd")
+BASE_SQL = ("SELECT s.sgg_cd, s.tenant_id, s.state, coalesce(s.finished_at, s.at) AS at, " + _CNT.format(rules="{rules}", scope=" AND f.card_id IS NULL") +
+            "FROM survey_sgg s WHERE ({codes}::text[] IS NULL OR s.sgg_cd = ANY({codes}::text[])) ORDER BY s.sgg_cd")
+CARD_SQL = ("SELECT s.sgg_cd, s.card_id, s.tenant_id, s.state, coalesce(s.finished_at, s.at) AS at, " + _CNT.format(rules="{rules}", scope=" AND f.card_id = s.card_id") +
+            "FROM survey_card s WHERE ({codes}::text[] IS NULL OR s.sgg_cd = ANY({codes}::text[])) AND ({card}::text IS NULL OR s.card_id = {card}) "
+            "ORDER BY s.sgg_cd, s.card_id")
 SUSPECT_SRC = "실태조사 의심(AI × 연속지적 규칙 R1–R6)"
 FIELD_SRC = "실태조사 의심 중 우선순위 A · 판정 전"
 
 
-def counts_sql(style: str) -> str:
-    """style 'pg'(asyncpg $n) | 'psycopg'(%(n)s)."""
+def counts_sql(style: str, scope: str = "sgg") -> str:
+    """style 'pg'(asyncpg $n) | 'psycopg'(%(n)s). scope 'sgg'(시군구 전체) | 'base'(시군구 실태조사만) | 'card'(카드 판 — 인자 하나 더)."""
+    sql = {"sgg": COUNTS_SQL, "base": BASE_SQL, "card": CARD_SQL}[scope]
     if style == "pg":
-        return COUNTS_SQL.format(rules="$1::text[]", codes="$2")
-    return COUNTS_SQL.format(rules="%(rules)s", codes="%(codes)s")
+        return sql.format(rules="$1::text[]", codes="$2", card="$3")
+    return sql.format(rules="%(rules)s", codes="%(codes)s", card="%(card)s")
 
 
 def _iso(v) -> str | None:
@@ -791,12 +908,29 @@ def counts_from_rows(rows: list[dict], sgg: str | None = None) -> dict:
             "as_of": max((v["as_of"] for v in by.values() if v["as_of"]), default=None), "by_sgg": by}
 
 
-def counts_sync(conn, sgg: str | None = None) -> dict:
-    """동기(psycopg · 보고서·파이프라인) — landxi_api.survey.survey_counts 와 같은 식. conn 의 RLS 그대로."""
+def card_all_rules(conn, card_id: str) -> bool:
+    """카드의 가장 최근 판이 규칙을 고르지 않았나(= 전 규칙 · 시군구 실태조사와 같은 범위)."""
+    r = conn.execute("SELECT modules FROM card_versions WHERE card_id=%s ORDER BY approved_at DESC NULLS LAST, id DESC LIMIT 1", (card_id,)).fetchone()
+    m = r[0] if r else None
+    return not (isinstance(m, dict) and isinstance(m.get("rules"), list) and m.get("rules"))
+
+
+def counts_sync(conn, sgg: str | None = None, card: str | None = None) -> dict:
+    """동기(psycopg · 보고서·파이프라인) — landxi_api.survey.survey_counts 와 같은 식. conn 의 RLS 그대로.
+    card 가 있으면 그 카드 판(없고 전 규칙 카드면 시군구 실태조사)."""
     cs = codes(sgg) if sgg else None
-    cur = conn.execute(counts_sql("psycopg"), {"rules": COUNT_RULES, "codes": cs})
-    cols = [d.name for d in cur.description]
-    return counts_from_rows([dict(zip(cols, r)) for r in cur.fetchall()], (region(sgg)["sgg_cd"] if sgg else None))
+    one = region(sgg)["sgg_cd"] if sgg else None
+
+    def run(scope):
+        cur = conn.execute(counts_sql("psycopg", scope), {"rules": COUNT_RULES, "codes": cs, "card": card})
+        cols = [d.name for d in cur.description]
+        return [dict(zip(cols, r)) for r in cur.fetchall()]
+    if not card:
+        return counts_from_rows(run("sgg"), one)
+    rows = run("card")
+    if not rows and sgg and card_all_rules(conn, card):
+        rows = run("base")
+    return counts_from_rows(rows, one)
 
 
 # ─────────────────────────── 필지 위치 검사(여수 93필지 · c2-numbers) ───────────────────────────

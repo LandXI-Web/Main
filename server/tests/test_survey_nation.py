@@ -74,7 +74,8 @@ def canon_job(pg):
 def test_generic_rules_on_canon_equal_canon(pg):
     rows = pg.execute(R.eval_sql(R.default_thresholds(), emd_cd=False)).fetchall()
     got = {(r[0], r[1]): round(r[5], 1) for r in rows}
-    canon = {(r, p): s for r, p, s in pg.execute("SELECT rule, pnu, score FROM survey_findings WHERE rule LIKE 'R%%' AND sgg_cd=%s",
+    canon = {(r, p): s for r, p, s in pg.execute("SELECT rule, pnu, score FROM survey_findings WHERE rule LIKE 'R%%' AND sgg_cd=%s "
+                                                  "AND card_id IS NULL",           # 정본 = 시군구 실태조사 행(카드 판 제외 · 모델-표기 ⓐ)
                                                   (BASE,)).fetchall()}
     assert set(got) == set(canon) and all(got[k] == canon[k] for k in canon)
 

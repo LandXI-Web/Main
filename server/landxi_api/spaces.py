@@ -397,9 +397,13 @@ async def build_body(tenant: str, card: str, rows: list[dict]) -> dict:
     cvs = sorted({r["card_version_id"] for r in rows if r.get("card_version_id")})
     async with db(realm="lx") as c:
         crow = await c.fetchrow("SELECT c.name, c.domain, c.kind, i.line FROM cards c LEFT JOIN card_info i ON i.card_id = c.id WHERE c.id=$1", card)
-        vers = [dict(r) for r in await c.fetch("SELECT id, version, model_ids FROM card_versions WHERE id = ANY($1::text[]) ORDER BY id", cvs)] if cvs else []
+        vers = [dict(r) for r in await c.fetch("SELECT id, version, model_ids, modules FROM card_versions WHERE id = ANY($1::text[]) ORDER BY id", cvs)] if cvs else []
         mids = sorted({m for v in vers for m in (v["model_ids"] or [])})
-        mcls = [x for r in await c.fetch("SELECT classes FROM models WHERE id = ANY($1::text[])", mids) for x in (r["classes"] or [])] if mids else []
+        # 결과 전 '무엇이' = 카드 판이 찾는 분류(모델-표기 ⓐ · 4분류 원판이어도 카드 분류만) — 판에 분류가 없을 때만 모델 분류
+        from .deploys import finds_of
+        mcls = [x for v in vers for x in (finds_of(v.get("modules")) or [])]
+        if not mcls:
+            mcls = [x for r in await c.fetch("SELECT classes FROM models WHERE id = ANY($1::text[])", mids) for x in (r["classes"] or [])] if mids else []
         rounds = await _rounds(c, rows)
     from .cards import _name as card_name
     name = card_name(crow["name"]) if crow else card

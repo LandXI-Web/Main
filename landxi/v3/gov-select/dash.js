@@ -154,7 +154,7 @@ async function drawBars(el, { s, p, wide, reg, all, sggOne, survey }) {
     title = `시·군·구별 ${p.label}`; note = '시·군·구를 누르면 그 곳의 현황으로 갑니다.';
     if (rows.length < 2) return;                                    // 한 곳뿐이면 막대 대신 큰 숫자로 충분하다
   } else if (survey && p.key === 'field_check' && sggOne) {         // 시·군·구 하나 — 읍면별(실태조사 집계 · 큰 숫자와 같은 식)
-    const j = await api('/survey/stats?by=emd&sgg=' + encodeURIComponent(sggOne));
+    const j = await api('/survey/stats?by=emd&sgg=' + encodeURIComponent(sggOne) + '&card=' + encodeURIComponent(s.card));   // 이 서비스의 필지 대조만(큰 숫자와 같은 범위)
     if (j.state === 'building') return;
     rows = (j.items || []).map((e) => ({ name: e.key, n: e.field_check?.value || 0, href: XI(sggOne, { service: s.card, ...(e.top5?.[0]?.pnu ? { pnu: e.top5[0].pnu } : {}) }) })).filter((r) => r.n > 0);
     title = `읍면별 ${p.label}`; note = '읍면을 누르면 그 읍면의 결과 지도로 갑니다.';
@@ -217,7 +217,7 @@ async function drawTodo(el, { cur, reg, rep, sggOne, card }) {
   el.append(h('div.gd-box-h', {}, h('h2', { text: '내가 확인할 필지' }), rp ? h('span.gd-small', { html: `결과 확인 대기 ${K.numHtml(rp)}` }) : null));
   const list = h('ul.gd-rows'); el.append(list);
   try {
-    const j = await api(`/survey/findings?state=open&rule=R1,R2,R3,R4,R5,R6&sort=score&limit=3${reg ? `&sgg=${encodeURIComponent(reg.sgg_cd)}` : ''}`);
+    const j = await api(`/survey/findings?state=open&rule=R1,R2,R3,R4,R5,R6&sort=score&limit=3${reg ? `&sgg=${encodeURIComponent(reg.sgg_cd)}` : ''}${card ? `&card=${encodeURIComponent(card)}` : ''}`);
     const its = (j && j.items) || [];
     if (!its.length) { list.replaceWith(h('p.gs-none', { text: '지금 확인할 필지가 없습니다' })); return; }
     const rn = cur[0]?.region_name || reg?.full || '';

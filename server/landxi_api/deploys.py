@@ -79,9 +79,11 @@ async def _model_truth(conn, r, fv: dict) -> None:
     own = [x for x in await conn.fetch("SELECT id, task, classes, weights_uri, status FROM models WHERE id = ANY($1::text[])", own_ids) if _learned(x)]
     if own and m["id"] not in own_ids:
         m["substitute"] = True
-        if not covers(m.get("classes"), [c for x in own for c in (x["classes"] or [])]):
+        if not covers(m.get("model_classes") or m.get("classes"), [c for x in own for c in (x["classes"] or [])]):
             fv["model_ok"] = False
             fv["note"] = fv.get("note") or "서비스 모델로 분석하지 않았습니다 — 이 결과는 서비스 결과로 보지 않습니다"
+    # '분석에 쓴 모델' 줄 = 그 카드가 찾는 분류(모델-표기 ⓐ) — 흐름 기록에는 모델의 모든 분류가 남아 있어 읽을 때 카드 판으로 좁힌다
+    narrow(m, await card_finds(conn, r["card_version_id"]))
 
 
 async def _get(conn, did: str):
@@ -774,16 +776,43 @@ async def plan_analysis(conn, override, card_id, cv, sgg, aoi, img: dict | None 
     return {"img": img, "pick": pick, "fits": True, "note": None}
 
 
-async def model_block(conn, mid: str | None, substitute: bool = False) -> dict | None:
-    """화면·관리자 공용 — 실제로 분석에 쓴(쓸) 모델 한 줄."""
+def finds_of(modules) -> list[str] | None:
+    """카드 판이 찾는 분류(card_versions.modules.classes · 서비스 만들기에서 고름) — 없으면 None(모델이 내는 분류 전부)."""
+    cls = (modules or {}).get("classes") if isinstance(modules, dict) else None
+    return [str(x) for x in cls] if isinstance(cls, list) and cls else None
+
+
+async def card_finds(conn, cv: str | None, card_id: str | None = None) -> list[str] | None:
+    """카드 판(없으면 카드의 최신 승인 판)이 찾는 분류 — 분석 작업 options.classes(jobs.card_classes)와 같은 출처."""
+    if cv:
+        m = await conn.fetchval("SELECT modules FROM card_versions WHERE id=$1", cv)
+    elif card_id:
+        m = await conn.fetchval("SELECT modules FROM card_versions WHERE card_id=$1 ORDER BY approved_at DESC NULLS LAST, id DESC LIMIT 1", card_id)
+    else:
+        return None
+    return finds_of(m)
+
+
+def narrow(mb: dict | None, finds: list[str] | None) -> dict | None:
+    """모델 한 줄의 분류를 카드가 찾는 분류로(모델-표기 ⓐ) — 모델의 모든 분류는 model_classes 로 남긴다(관리 · 판정용)."""
+    if not mb or not finds:
+        return mb
+    allc = mb.get("model_classes") or list(mb.get("classes") or [])
+    mb["model_classes"] = allc
+    mb["classes"] = list(finds)
+    return mb
+
+
+async def model_block(conn, mid: str | None, substitute: bool = False, finds: list[str] | None = None) -> dict | None:
+    """화면·관리자 공용 — 실제로 분석에 쓴(쓸) 모델 한 줄. finds = 카드가 찾는 분류(있으면 classes 는 그 분류만 · 모델 전체는 model_classes)."""
     if not mid:
         return None
     m = await conn.fetchrow("SELECT id, name, classes, gsd_trained_m FROM models WHERE id=$1", mid)
     if not m:
-        return {"id": mid, "name": None, "classes": [], "gsd_m": None, "substitute": substitute}
-    return {"id": m["id"], "name": (m["name"] or {}).get("ko") if isinstance(m["name"], dict) else m["name"], "classes": list(m["classes"] or []),
-            "gsd_m": float(m["gsd_trained_m"]) if m["gsd_trained_m"] is not None else None, "gsd_word": gsd_word(m["gsd_trained_m"]),
-            "substitute": substitute}
+        return narrow({"id": mid, "name": None, "classes": [], "gsd_m": None, "substitute": substitute}, finds)
+    return narrow({"id": m["id"], "name": (m["name"] or {}).get("ko") if isinstance(m["name"], dict) else m["name"], "classes": list(m["classes"] or []),
+                   "gsd_m": float(m["gsd_trained_m"]) if m["gsd_trained_m"] is not None else None, "gsd_word": gsd_word(m["gsd_trained_m"]),
+                   "substitute": substitute}, finds)
 
 
 @router.get("/deploy-fit")
@@ -811,14 +840,15 @@ async def deploy_fit(request: Request, region: str, card_id: str | None = None, 
             raise ApiError("bad_request", "서비스(card_id)가 필요합니다")
         pl = await plan_analysis(conn, override, card_id, cv, sgg, aoi)
         pk = pl["pick"] or {}
-        mb = await model_block(conn, pk.get("model_id"), bool(pk.get("substitute")))
+        fd = await card_finds(conn, cv)
+        mb = await model_block(conn, pk.get("model_id"), bool(pk.get("substitute")), fd)
         own = pk.get("own")
     img = pl["img"] or {}
     return {"region": sgg, "fits": pl["fits"], "note": pl["note"],
             "imagery": {"has": bool(img.get("imagery_id")), "gsd_m": img.get("gsd_m"), "gsd_word": gsd_word(img.get("gsd_m")), "year": img.get("year"),
                         "coverage": env(img.get("coverage"), "ratio", "measured", "영상 범위 ∩ 시군구 면적",
                                         None if img.get("coverage") is not None else "영상 없음")},
-            "model": mb, "service_model": ({**own, "gsd_word": gsd_word(own.get("gsd_m"))} if own else None), "as_of": now_iso()}
+            "model": mb, "service_model": (narrow({**own, "gsd_word": gsd_word(own.get("gsd_m"))}, fd) if own else None), "as_of": now_iso()}
 
 
 # ── 계약 경로를 같은 프로세스에서 부른다(POST /jobs · POST /survey/build) — 결재한 사람의 권한으로 ──
@@ -923,7 +953,7 @@ async def flow_start(did: str, user_id: str | None = None, *, why: str = "approv
             await audit(conn, p, "flow.failed", did, None, {"deploy_id": did, "reason": "no_model"})
             return f
         img = pl["img"]
-        mb = await model_block(conn, model_id, bool(pk.get("substitute")))
+        mb = await model_block(conn, model_id, bool(pk.get("substitute")), await card_finds(conn, d["card_version_id"]))
         f = _flow_next(flow, "starting", imagery=img, model_id=model_id, model=mb, todo=None, reason=None, note=pl["note"])
         stage = "shadow" if d["stage"] == "draft" else None
         await _set_flow(conn, did, f, stage=stage)
@@ -992,13 +1022,19 @@ async def _job_row(conn, jid: str | None):
     return await conn.fetchrow("SELECT id, state, result_set, error, finished_at, counts FROM jobs WHERE id=$1", jid) if jid else None
 
 
-async def _survey_state(sgg: str | None, build_job: str | None) -> dict | None:
-    """실태조사 적재 결과(core-survey 계약 표 survey_sgg · 읽기만). 표가 없거나 다른 적재 작업의 행이면 None."""
+async def _survey_state(sgg: str | None, build_job: str | None, card: str | None = None) -> dict | None:
+    """실태조사 적재 결과(core-survey 계약 표 survey_sgg · 카드 판이면 survey_card · 읽기만). 표가 없거나 다른 적재 작업의 행이면 None."""
     if not sgg:
         return None
     try:
         async with db(realm="lx") as conn:
-            r = await conn.fetchrow("SELECT state, parcels, findings, error, build_job_id FROM survey_sgg WHERE sgg_cd=$1", sgg)
+            r = None
+            if card:
+                r = await conn.fetchrow("SELECT c.state, s.parcels, c.findings, c.error, c.build_job_id FROM survey_card c "
+                                        "LEFT JOIN survey_sgg s ON s.sgg_cd = c.sgg_cd WHERE c.sgg_cd=$1 AND c.card_id=$2 AND c.build_job_id=$3",
+                                        sgg, card, build_job)
+            if r is None:
+                r = await conn.fetchrow("SELECT state, parcels, findings, error, build_job_id FROM survey_sgg WHERE sgg_cd=$1", sgg)
     except Exception:
         return None
     if not r or (build_job and r["build_job_id"] and r["build_job_id"] != build_job):
@@ -1034,7 +1070,8 @@ async def _after_infer(did: str, d, job) -> None:
     rules = await card_rules(d)
     try:
         res = await _call_route("POST", "/survey/build", {"sgg_cd": d["sgg_cd"], "job_id": job["id"], "deploy_id": did,
-                                                          "tenant_id": d["tenant_id"], **({"rules": rules} if rules else {})}, p)
+                                                          "tenant_id": d["tenant_id"], "card_id": d["card_id"], "card_version_id": d["card_version_id"],
+                                                          **({"rules": rules} if rules else {})}, p)
     except ApiError as e:
         async with db(realm="lx") as conn:
             d2 = await _get(conn, did)
@@ -1088,7 +1125,7 @@ async def flow_tick(only: set | None = None) -> int:
             elif st == "surveying" and f.get("survey_job_id"):
                 async with db(realm="lx") as conn:
                     j = await _job_row(conn, f.get("survey_job_id"))
-                sv = await _survey_state(d["sgg_cd"], j["id"]) if j and j["state"] == "done" else None
+                sv = await _survey_state(d["sgg_cd"], j["id"], d["card_id"]) if j and j["state"] == "done" else None
                 if j and j["state"] == "done" and sv and sv.get("state") == "failed":
                     # 작업은 끝났다고 했지만 실태조사 적재 표가 실패(계약 survey_sgg.state) — 정직하게 멈춤 + 자동 재시도(최대 5회)
                     await _fail(did, f, "survey failed", {"job_id": f.get("job_id"), "survey_job_id": j["id"], "error": str(sv.get("error"))[:200]})
@@ -1172,8 +1209,9 @@ async def parcel_tick() -> str | None:
             on, rules = await _card_parcel(conn, r["card_id"])
             if not on:
                 continue
-            newer = await conn.fetchval(
-                "SELECT 1 FROM survey_sgg s JOIN jobs a ON a.id = s.job_id WHERE s.sgg_cd=$1 AND a.finished_at > $2", r["sgg"], r["finished_at"])
+            newer = await conn.fetchval(               # 같은 카드 판에 더 새 AI 결과로 만든 필지 대조가 있으면(카드마다 따로 · 모델-표기 ⓐ)
+                "SELECT 1 FROM survey_card s JOIN jobs a ON a.id = s.job_id WHERE s.sgg_cd=$1 AND s.card_id=$2 AND a.finished_at > $3",
+                r["sgg"], r["card_id"], r["finished_at"])
             if newer:
                 continue
             pick = (r, rules)
@@ -1183,7 +1221,8 @@ async def parcel_tick() -> str | None:
     r, rules = pick
     p = _flow_actor(r["submitted_by"])
     try:
-        await _call_route("POST", "/survey/build", {"sgg_cd": r["sgg"], "job_id": r["id"], **({"rules": rules} if rules else {})}, p)
+        await _call_route("POST", "/survey/build", {"sgg_cd": r["sgg"], "job_id": r["id"], "card_id": r["card_id"],
+                                                    **({"rules": rules} if rules else {})}, p)
     except ApiError as e:
         if e.code != "survey_build_running":
             print(f"[parcel] {r['id']} {r['sgg']} 실태조사를 잇지 못함 {e.code}", flush=True)

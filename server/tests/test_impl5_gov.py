@@ -103,7 +103,7 @@ def test_dept_user_sees_only_assigned_services(T):
 
 # ── 기관-4 서비스 대시보드 재료 ─────────────────────────────────────────────────────
 def test_emd_field_check_sums_to_big_number(T):
-    j = get("/survey/stats", T["nw"], params={"by": "emd", "sgg": "52190"}).json()
+    j = get("/survey/stats", T["nw"], params={"by": "emd", "sgg": "52190", "card": "card-farm"}).json()     # 그 서비스의 필지 대조만(모델-표기 ⓐ)
     if j.get("state") == "building":
         pytest.skip("실태조사 집계 중")
     tot = j["field_check"]["value"]

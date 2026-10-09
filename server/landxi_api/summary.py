@@ -7,7 +7,8 @@
 
 계산식(정본):
   detected       AI 탐지       = 이 항목 배포본 스냅샷 결과 세트(sets.yaml aliases · 작업 결과 세트 results/{기관}/{작업} → 작업)의 detections 행 수
-  suspect        의심 필지     = survey_counts(sgg).suspect — survey_sgg.findings(AI × 연속지적 규칙 R1–R6 · 적재 때 확정 · 대장 규칙 제외)
+  suspect        의심 필지     = 그 항목 카드 판의 survey_counts(sgg, card).suspect(AI × 연속지적 규칙 R1–R6 · 적재 때 확정 · 대장 규칙 제외)
+                 — 카드마다 따로(모델-표기 ⓐ). 카드 판이 없고 규칙을 고르지 않은(전 규칙) 카드면 시군구 실태조사.
   field_check    현장 확인 필요 = survey_counts(sgg).field_check — R1–R6 의심 중 우선순위 A · 상태 open|assigned 인 서로 다른 필지 수
   review_pending 결과 확인 대기 = survey_counts(sgg).review_pending — R1–R6 의심 중 우선순위 A · 상태 open 인 건수(아직 배정·판정 전)
   실태조사 세 값은 /survey/stats · 에이전트(survey_stats · summary_lookup) · 보고서와 같은 함수(landxi_api.survey.survey_counts)에서 온다.
@@ -173,8 +174,14 @@ async def build(conn, tenant: str | None, region: str | None = None, card: str |
 
 async def _items(conn, tenant: str | None) -> list[dict]:
     async with db(realm="lx") as c:
-        dps = await c.fetch("SELECT id, tenant_id, card_id, stage, sgg_cd, snapshot_current, scale, modules, year, "
+        dps = await c.fetch("SELECT id, tenant_id, card_id, card_version_id, stage, sgg_cd, snapshot_current, scale, modules, year, "
                             "region_name, coalesce(test,false) AS test FROM deploys WHERE NOT coalesce(test,false)")
+        # 카드 판의 필지 대조 여부 · 고른 규칙(배포본 모듈 표가 비어 있어도 서비스 만들기로 규칙을 고른 판은 필지 대조 — deploys._parcel_on 과 같은 판정)
+        cvm = {r["id"]: r["modules"] for r in await c.fetch("SELECT id, modules FROM card_versions")}
+        last_rules = {}
+        for r in await c.fetch("SELECT DISTINCT ON (card_id) card_id, modules FROM card_versions ORDER BY card_id, approved_at DESC NULLS LAST, id DESC"):
+            m = r["modules"] if isinstance(r["modules"], dict) else {}
+            last_rules[r["card_id"]] = bool(isinstance(m.get("rules"), list) and m.get("rules"))
     sets = sorted({canonical(d["snapshot_current"]) for d in dps if d["snapshot_current"]})
     facts = await _sys_facts(sets)
     _, _, by, _ = _regions()
@@ -204,8 +211,10 @@ async def _items(conn, tenant: str | None) -> list[dict]:
                 groups[home[0]] += groups.pop(key)
 
     # 3) 실태조사 · 신고(기관 자료 — 넘겨받은 연결 · RLS)
-    from .survey import survey_counts                 # 숫자 한 출처(c2-numbers) — /survey/stats · 에이전트와 같은 함수
+    from .survey import survey_counts, survey_counts_scoped   # 숫자 한 출처(c2-numbers) — /survey/stats · 에이전트와 같은 식
     sc = await survey_counts(conn, None)
+    # 카드마다 따로(모델-표기 ⓐ): 항목(기관 × 카드 × 지역)의 실태조사 숫자 = 그 카드 판. 카드 판이 없고 규칙을 고르지 않은(전 규칙) 카드면 시군구 실태조사.
+    scp = await survey_counts_scoped(conn)
     fb = await conn.fetch("SELECT tenant_id, set_id, count(*) n FROM feedback WHERE state='open' GROUP BY 1,2")
     survey: dict[tuple, dict] = {}
     for cd, v in (sc.get("by_sgg") or {}).items():
@@ -220,8 +229,17 @@ async def _items(conn, tenant: str | None) -> list[dict]:
         lead = rs[0]["d"]
         n_det = sum(x["n"] for x in {x["set"]: x for x in rs if x["set"]}.values())
         res_sets = sorted({x["set"] for x in rs if x["set"] and x["n"]})
-        parcel = any(_has_parcel(x["d"]["modules"]) for x in rs if x["d"]["stage"] != "draft")
-        sv_here = survey.get((t, sgg)) if (parcel and sgg) else None
+        def _cv_parcel(d):
+            m = cvm.get(d["card_version_id"]) if d["card_version_id"] else None
+            return isinstance(m, dict) and (_has_parcel(m) or bool(m.get("rules")))
+        parcel = any(_has_parcel(x["d"]["modules"]) or _cv_parcel(x["d"]) for x in rs if x["d"]["stage"] != "draft")
+        sv_here = None
+        if parcel and sgg:
+            sv_here = scp["card"].get((sgg, cid)) or scp["card"].get((rs[0]["d"]["sgg_cd"], cid))
+            if sv_here is None and not last_rules.get(cid):
+                sv_here = scp["base"].get(sgg) or scp["base"].get(rs[0]["d"]["sgg_cd"])
+            if sv_here is not None and (sv_here.get("tenant_id") != t or sv_here["state"] not in ("done", "building")):
+                sv_here = None
         busy = bool(sv_here) and sv_here["state"] == "building"
         real = bool(n_det) or bool(sv_here and (busy or sv_here["suspect"]))
         live = [x["d"]["stage"] for x in rs if x["d"]["stage"] != "draft"]

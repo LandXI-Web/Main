@@ -7,7 +7,8 @@
 main.py 확장 훅(F2-B · `importlib.import_module("landxi_api.survey")`)이 이 router 를 /api/v1 에 붙인다.
 
 숫자 한 출처(c2-numbers) — survey_counts(conn, sgg) 하나를 /survey/stats · /summary · 에이전트(survey_stats · summary_lookup) · 보고서가 쓴다.
-  의심 필지      = survey_sgg.findings(그 시군구 AI × 연속지적 규칙 R1–R6 의심 건 · 적재 때 확정 · 상태로 줄지 않음 · 대장 규칙 L-* 제외)
+  의심 필지      = 그 시군구 AI × 연속지적 규칙 R1–R6 의심 행(시군구 실태조사 + 카드 판 · 적재 때 확정 · 상태로 줄지 않음 · 대장 규칙 L-* 제외)
+  카드(서비스) 숫자는 card= 로 그 카드 판만(survey_card · survey_findings.card_id — 모델-표기 ⓐ · 카드마다 따로)
   현장 확인 필요 = 같은 시군구 R1–R6 의심 중 우선순위 A · 판정 전(open · 옛 기록 assigned) 서로 다른 필지 수(판정·오탐 처리로 준다)
   적재 중(building)이면 두 값 모두 None + note '집계 중'. 정의·원인 기록 = survey/nation.py '숫자 한 출처' 절.
 """
@@ -63,9 +64,28 @@ _revert = {"t": 0.0}
 SUSPECT_LABEL, FIELD_LABEL = "의심 필지", "현장 확인 필요"
 
 
-async def survey_counts(conn, sgg: str | list[str] | None = None) -> dict:
+async def card_all_rules(card: str) -> bool:
+    """카드의 가장 최근 판이 규칙을 고르지 않았나(전 규칙 = 시군구 실태조사와 같은 범위) — 카드 판이 아직 없을 때 시군구 실태조사로 이을지."""
+    async with db(realm="lx") as c:
+        m = await c.fetchval("SELECT modules FROM card_versions WHERE card_id=$1 ORDER BY approved_at DESC NULLS LAST, id DESC LIMIT 1", card)
+    return not (isinstance(m, dict) and isinstance(m.get("rules"), list) and m.get("rules"))
+
+
+async def survey_counts_scoped(conn) -> dict:
+    """대표 수치 요약(카드 × 지역 항목)용 — {"card": {(sgg, card): 값}, "base": {sgg: 값}}. 값 = counts_from_rows 의 by_sgg 한 칸 모양."""
+    out: dict = {"card": {}, "base": {}}
+    for r in await conn.fetch(NT.counts_sql("pg", "card"), NT.COUNT_RULES, None, None):
+        v = NT.counts_from_rows([dict(r)])["by_sgg"][r["sgg_cd"]]
+        out["card"][(r["sgg_cd"], r["card_id"])] = v
+    for r in await conn.fetch(NT.counts_sql("pg", "base"), NT.COUNT_RULES, None):
+        out["base"][r["sgg_cd"]] = NT.counts_from_rows([dict(r)])["by_sgg"][r["sgg_cd"]]
+    return out
+
+
+async def survey_counts(conn, sgg: str | list[str] | None = None, card: str | None = None) -> dict:
     """→ {sgg_cd, state, suspect, field_check, review_pending, as_of, by_sgg}(정수 · 집계 중이면 None).
-    conn = 호출자 연결(RLS 그대로 — 기관 세션은 자기 기관 시군구만). sgg: 코드 5자리(지금/옛) · 목록 · None(볼 수 있는 전체)."""
+    conn = 호출자 연결(RLS 그대로 — 기관 세션은 자기 기관 시군구만). sgg: 코드 5자리(지금/옛) · 목록 · None(볼 수 있는 전체).
+    card: 그 카드 판만(모델-표기 ⓐ — 카드마다 따로). 카드 판이 없는 시군구는, 규칙을 고르지 않은(전 규칙) 카드면 시군구 실태조사로."""
     if isinstance(sgg, (list, tuple, set)):
         cs = sorted({c for x in sgg for c in NT.codes(str(x)[:5])}) or None
         one = None
@@ -77,8 +97,14 @@ async def survey_counts(conn, sgg: str | list[str] | None = None) -> dict:
             one = str(sgg)[:5]
     else:
         cs, one = None, None
-    rows = await conn.fetch(NT.counts_sql("pg"), NT.COUNT_RULES, cs)
-    return NT.counts_from_rows([dict(r) for r in rows], one)
+    if not card:
+        rows = await conn.fetch(NT.counts_sql("pg"), NT.COUNT_RULES, cs)
+        return NT.counts_from_rows([dict(r) for r in rows], one)
+    rows = [dict(r) for r in await conn.fetch(NT.counts_sql("pg", "card"), NT.COUNT_RULES, cs, card)]
+    if cs and await card_all_rules(card):
+        have = {r["sgg_cd"] for r in rows}
+        rows += [dict(r) for r in await conn.fetch(NT.counts_sql("pg", "base"), NT.COUNT_RULES, cs) if r["sgg_cd"] not in have]
+    return NT.counts_from_rows(rows, one)
 
 
 def counts_env(c: dict, key: str) -> dict:
@@ -162,7 +188,27 @@ def _filters(q: dict, *, skip: str | None = None) -> tuple[list[str], list]:
         add("pnu = ANY(?::text[])", q["pnu"])
     if q.get("ledger") is not None:
         add("pnu IN (SELECT pnu FROM registry_snapshots WHERE import_id = ANY(?::text[]) AND pnu IS NOT NULL)", q["ledger"])
+    if q.get("scope"):
+        add(SCOPE_SQL, *q["scope"])
     return w, a
+
+
+# 한 서비스(카드)의 필지 대조 행만(모델-표기 ⓐ · 카드마다 따로) — 카드 판이 있는 시군구는 그 카드 행, 없는 시군구는(전 규칙 카드만) 시군구 실태조사 행
+SCOPE_SQL = "((card_id = ? AND sgg_cd = ANY(?::text[])) OR (card_id IS NULL AND sgg_cd = ANY(?::text[])))"
+
+
+async def card_scope(card: str, sg: list[str] | None) -> tuple:
+    """(카드, 카드 판 시군구, 시군구 실태조사로 잇는 시군구) — summary · 카드 숫자와 같은 판정(survey_counts card=)."""
+    async with db(realm="lx") as c:
+        own = {r["sgg_cd"] for r in await c.fetch("SELECT sgg_cd FROM survey_card WHERE card_id=$1 AND ($2::text[] IS NULL OR sgg_cd = ANY($2::text[]))",
+                                                  card, sg or None)}
+        base: set = set()
+        if await card_all_rules(card):
+            base = {r["s"] for r in await c.fetch("SELECT DISTINCT sgg_cd s FROM deploys WHERE card_id=$1 AND sgg_cd IS NOT NULL", card)}
+            if sg:
+                base = (base | set(sg)) & set(sg)
+            base -= own
+    return (card, sorted(own), sorted(base))
 
 
 def sgg_codes(v: str | None) -> list[str]:
@@ -187,7 +233,7 @@ def _row(r) -> dict:
 async def findings(request: Request, rule: str | None = None, priority: str | None = None, emd_cd: str | None = None,
                    state: str | None = None, bbox: str | None = None, q: str | None = None, pnu: str | None = None,
                    deploy_id: str | None = None, sort: str = "score", limit: int = 200, offset: int = 0, ledger: str | None = None,
-                   sgg: str | None = None, region: str | None = None):
+                   sgg: str | None = None, region: str | None = None, card: str | None = None):
     p = _read(principal(request))
     _kick_emd_sweep()
     t0 = time.perf_counter()
@@ -208,6 +254,8 @@ async def findings(request: Request, rule: str | None = None, priority: str | No
           "q": (q or "").strip()[:60] or None, "pnu": _list_param(pnu, None), "sgg": sgg_codes(sgg or region)}
     if ledger:
         qq["ledger"] = await LG.resolve_ledger_param(p, ledger)
+    if card:                                       # 그 서비스의 필지 대조 행만(서비스 대시보드 · 카드 숫자와 같은 범위)
+        qq["scope"] = await card_scope(card, qq["sgg"] or None)
     try:
         async with db(p) as conn:
             if deploy_id:
@@ -241,7 +289,8 @@ async def findings(request: Request, rule: str | None = None, priority: str | No
     return {"items": [X.finding_item(_row(r)) | {"verdict": r["verdict"], "verdict_code": r["verdict_code"]} for r in rows],
             "total": X.env(int(total), "count", "inferred", "PostGIS survey_findings", "의심 후보 · 검수 전 · 위법 판정 아님"),
             "counts": counts, "by_rule": by_rule, "limit": limit, "offset": offset, "sort": sort,
-            "filters": {k: v for k, v in qq.items() if v and k not in ("pnu", "ledger", "sgg")} | ({"sgg": sgg or region} if (sgg or region) else {}) | ({"deploy_id": deploy_id} if deploy_id else {})
+            "filters": {k: v for k, v in qq.items() if v and k not in ("pnu", "ledger", "sgg", "scope")} | ({"sgg": sgg or region} if (sgg or region) else {}) | ({"deploy_id": deploy_id} if deploy_id else {})
+            | ({"card": card} if card else {})
             | ({"ledger": ledger} if ledger else {}),
             "as_of": AS_OF, "source": SRC_SUSPECTS, "fixed": FIXED_PHRASE,
             "db_ms": X.env(round((time.perf_counter() - t0) * 1000, 1), "ms", "measured", "gateway survey.findings · SQL 구간만(조회·집계 · 직렬화 제외 — 서버 전체 처리는 응답 헤더 X-LX-Time-ms)")}
@@ -381,7 +430,8 @@ async def parcel(pnu: str, request: Request, with_: str | None = None):
 
 
 @router.get("/survey/stats")
-async def stats(request: Request, by: str = "emd", ledger: str | None = None, sgg: str | None = None, region: str | None = None):
+async def stats(request: Request, by: str = "emd", ledger: str | None = None, sgg: str | None = None, region: str | None = None,
+                card: str | None = None):
     """집계 — 합계(total) = survey_counts '의심 필지'(R1–R6 · 한 출처). 읍면동·등급·상태 칸도 R1–R6 만 센다(칸 합 = 합계).
     대장 규칙(L-*)은 by=rule 의 L 항목과 by=emd&ledger= 의 ledger_findings 로만 나온다. 적재 중이면 칸 없이 '집계 중'."""
     p = _read(principal(request))
@@ -391,6 +441,11 @@ async def stats(request: Request, by: str = "emd", ledger: str | None = None, sg
     fa = [sg] if sg else []
     rw = (" AND " if sg else " WHERE ") + f"rule = ANY(${len(fa) + 1}::text[])"      # survey_findings: R1–R6 만
     ra = fa + [list(RULE_IDS)]
+    if card:                                       # 그 서비스의 필지 대조 행만(카드 숫자 · 서비스 대시보드와 같은 범위 · 모델-표기 ⓐ)
+        sc = await card_scope(card, sg or None)
+        k = len(ra)
+        rw += " AND " + SCOPE_SQL.replace("?", f"${k + 1}", 1).replace("?", f"${k + 2}", 1).replace("?", f"${k + 3}", 1)
+        ra = ra + list(sc)
     led_ids = await LG.resolve_ledger_param(p, ledger) if ledger else None
     if by not in ("emd", "rule", "priority", "state"):
         raise ApiError("bad_request", "by 는 emd|rule|priority|state")
@@ -398,7 +453,7 @@ async def stats(request: Request, by: str = "emd", ledger: str | None = None, sg
     E = lambda v, note="검수 전": X.env(int(v), "count", "inferred", src, note)  # noqa: E731
     try:
         async with db(p) as conn:
-            cnt_all = await survey_counts(conn, sg or None)
+            cnt_all = await survey_counts(conn, sg or None, card=card)
             busy = cnt_all["state"] == "building"
             items: list = []
             if busy:
@@ -478,7 +533,7 @@ async def stats(request: Request, by: str = "emd", ledger: str | None = None, sg
     return {**out_ledger, "by": by, "items": items, "total": counts_env(cnt_all, "suspect"), "total_label": SUSPECT_LABEL,
             "field_check": counts_env(cnt_all, "field_check"), "state": cnt_all["state"],
             "parcels": X.env(int(parcels_n), "필지", "measured", "survey_emd(연속지적 필지 수)"), "as_of": cnt_all.get("as_of") or AS_OF,
-            "source": src, **({"sgg": sgg or region} if sg else {})}
+            "source": src, **({"sgg": sgg or region} if sg else {}), **({"card": card} if card else {})}
 
 
 @router.get("/survey/rules")
@@ -573,10 +628,18 @@ async def survey_build(body: dict, request: Request):
         if bad:
             raise ApiError("bad_request", "없는 규칙", {"rules": bad})
         body2["options"]["rules"] = [str(x) for x in rules]
+    # 카드(서비스)의 필지 대조면 그 카드 판으로 따로 저장(모델-표기 ⓐ — 같은 시군구의 다른 카드 · 시군구 실태조사를 덮지 않는다)
+    card = str((body or {}).get("card_id") or "").strip() or None
+    if card:
+        async with db(realm="lx") as conn:
+            if not await conn.fetchval("SELECT 1 FROM cards WHERE id=$1", card):
+                raise ApiError("not_found", "없는 서비스입니다", {"card_id": card})
+        body2["options"].update({"card_id": card, "card_version_id": (body or {}).get("card_version_id"), "deploy_id": (body or {}).get("deploy_id")})
+        body2["label"] = f"survey/build {sgg} {card}"
     if (body or {}).get("test"):
         body2["test"] = True
     out = await JB.submit(body2, request)
-    await audit_lx(p, "survey.build", sgg, {"ai_job_id": ai_job, "job_id": out["job"]["id"], "tenant_id": tenant})
+    await audit_lx(p, "survey.build", sgg, {"ai_job_id": ai_job, "job_id": out["job"]["id"], "tenant_id": tenant, **({"card_id": card} if card else {})})
     return {**out, "sgg_cd": sgg, "tenant_id": tenant, "ai_job_id": ai_job,
             "note": None if ai_job else "AI 분석 결과가 없어 필지만 적재합니다(AI 분석 전)"}
 

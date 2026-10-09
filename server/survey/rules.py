@@ -168,12 +168,14 @@ def eval_sql(th: dict, rules: list[str] | None = None, emd_cd: bool = True) -> s
             f"SELECT rule, pnu, emd_cd, a, c, score FROM ({rule_selects(th, rules)}) q")
 
 
-def eval_sql_ai(th: dict, rules: list[str] | None = None, emd_cd: bool = False) -> str:
-    """전국 경로 — 시군구 %(sgg)s · AI 작업 %(job)s(· 읍면동 %(emd_cd)s). 같은 규칙 SQL 을 survey_parcel_ai 피연산자로 평가."""
+def eval_sql_ai(th: dict, rules: list[str] | None = None, emd_cd: bool = False, card: bool = False) -> str:
+    """전국 경로 — 시군구 %(sgg)s · AI 작업 %(job)s(· 읍면동 %(emd_cd)s). 같은 규칙 SQL 을 survey_parcel_ai 피연산자로 평가.
+    card=True 면 그 카드 판(%(card)s)의 분석 범위(survey_card.coverage) — 시군구 실태조사 범위와 따로(모델-표기 ⓐ)."""
+    cov = ("(SELECT coverage FROM survey_card WHERE sgg_cd = %(sgg)s AND card_id = %(card)s)" if card
+           else "(SELECT coverage FROM survey_sgg WHERE sgg_cd = %(sgg)s)")
     where = ("WHERE sp.sgg_cd = %(sgg)s" + (" AND sp.emd_cd = %(emd_cd)s" if emd_cd else "")
-             # 분석 범위 안 필지만(survey_sgg.coverage · NULL = 전역) — AI 가 보지 않은 필지에 '부재' 규칙이 켜지지 않게
-             + " AND ((SELECT coverage FROM survey_sgg WHERE sgg_cd = %(sgg)s) IS NULL"
-               " OR ST_Intersects((SELECT coverage FROM survey_sgg WHERE sgg_cd = %(sgg)s), ST_PointOnSurface(sp.geom)))")
+             # 분석 범위 안 필지만(coverage · NULL = 전역) — AI 가 보지 않은 필지에 '부재' 규칙이 켜지지 않게
+             + f" AND ({cov} IS NULL OR ST_Intersects({cov}, ST_PointOnSurface(sp.geom)))")
     return (f"WITH p AS MATERIALIZED ({ai_src(where)})\n"
             f"SELECT rule, pnu, emd_cd, a, c, score FROM ({rule_selects(th, rules)}) q")
 

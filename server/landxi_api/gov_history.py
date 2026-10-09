@@ -91,6 +91,15 @@ async def survey_sggs(tenant: str, card: str) -> list[str]:
     return sorted(set(out))
 
 
+async def card_scope(card: str, sggs: list[str], k: int) -> tuple[str, list]:
+    """그 서비스의 필지 대조 행만 고르는 조건(별칭 f · 인자 $k 부터 셋) — 카드 판(survey_card)이 있는 시군구는 그 카드 행,
+    없는 시군구(규칙을 고르지 않은 카드 · 시군구 실태조사로 잇는 곳)는 시군구 실태조사 행(card_id 없음). 모델-표기 ⓐ · 카드마다 따로."""
+    async with db(realm="lx") as c:
+        own = {r["sgg_cd"] for r in await c.fetch("SELECT sgg_cd FROM survey_card WHERE card_id=$1 AND sgg_cd = ANY($2::text[])", card, sggs)}
+    return (f"((f.card_id = ${k} AND f.sgg_cd = ANY(${k + 1}::text[])) OR (f.card_id IS NULL AND f.sgg_cd = ANY(${k + 2}::text[])))",
+            [card, sorted(own), sorted(set(sggs) - own)])
+
+
 @router.get("/history")
 async def history(request: Request, card: str, limit: int = 200):
     p = await _gate(request, card)
@@ -115,10 +124,11 @@ async def history(request: Request, card: str, limit: int = 200):
                                   "title": f"{rd.get('shot') or '영상'} 분석 끝", "sub": f"{n:,}{unit if unit != 'count' else '건'}" if isinstance(n, (int, float)) else "", "who": "LX"})
         # 확인 기록 — 필지 상태 기록(메모 · 다음 확인 날짜) · 필지 대조가 있는 서비스만
         if sggs:
+            sw, sa = await card_scope(card, sggs, 3)
             rows = await c.fetch(
                 "SELECT e.at, e.from_state, e.to_state, e.verdict, e.verdict_code, e.note, e.reason, e.planned_for, e.assignee, e.by, f.addr, f.pnu "
                 "FROM survey_finding_events e JOIN survey_findings f ON f.id = e.finding_id "
-                "WHERE e.tenant_id=$1 AND f.sgg_cd = ANY($2::text[]) AND NOT coalesce(e.demo,false) ORDER BY e.at DESC LIMIT $3", p.tenant_id, sggs, limit)
+                f"WHERE e.tenant_id=$1 AND {sw} AND NOT coalesce(e.demo,false) ORDER BY e.at DESC LIMIT $2", p.tenant_id, limit, *sa)
             for e in rows:
                 memo = (e["note"] or e["reason"] or "").strip()
                 nxt = f"다음 확인 {e['planned_for'].month}.{e['planned_for'].day:02d}" if e["planned_for"] and e["to_state"] != "assigned" and e["from_state"] != e["to_state"] else ""
@@ -246,25 +256,27 @@ async def stats(request: Request, card: str, period: str = "all"):
     now = dt.datetime.now(KST)
     since = {"year": dt.datetime(now.year, 1, 1, tzinfo=KST), "month": dt.datetime(now.year, now.month, 1, tzinfo=KST)}.get(period)
     src = "실태조사(AI × 연속지적 규칙 R1–R6) · 상태 기록"
+    sw, sa = await card_scope(card, sggs, 2)                    # 이 서비스의 필지 대조 행만(카드마다 따로) — $2..$4
+    sw3 = sw.replace("$4", "$5").replace("$3", "$4").replace("$2", "$3")         # 같은 조건 · $3..$5
     async with db(p) as c:                                       # 기관 세션 연결 — 관할 밖 0(RLS)
         tot = await c.fetchrow(
             "SELECT count(*) AS suspect, count(DISTINCT pnu) FILTER (WHERE priority='A' AND state IN ('open','assigned')) AS field_check, "
             "count(*) FILTER (WHERE priority='A') AS prio_a, count(*) FILTER (WHERE state='closed') AS closed, "
             "count(*) FILTER (WHERE state='dismissed' OR verdict IN ('match_fp','fp')) AS fp, "
             "count(*) FILTER (WHERE planned_for IS NOT NULL AND state NOT IN ('closed','dismissed')) AS planned "
-            "FROM survey_findings WHERE sgg_cd = ANY($1::text[]) AND rule = ANY($2::text[])", sggs, RULES)
+            f"FROM survey_findings f WHERE {sw} AND f.rule = ANY($1::text[])", RULES, *sa)
         emd = await c.fetch(
             "SELECT f.emd_cd, coalesce(e.name, f.emd) AS name, count(*) AS suspect, count(*) FILTER (WHERE f.priority='A') AS prio_a, "
             "count(DISTINCT f.pnu) FILTER (WHERE f.priority='A' AND f.state IN ('open','assigned')) AS field_check, "
             "count(*) FILTER (WHERE f.state='closed') AS closed, count(*) FILTER (WHERE f.state='dismissed' OR f.verdict IN ('match_fp','fp')) AS fp "
-            "FROM survey_findings f LEFT JOIN survey_emd e ON e.emd_cd=f.emd_cd WHERE f.sgg_cd = ANY($1::text[]) AND f.rule = ANY($2::text[]) "
-            "GROUP BY 1,2 ORDER BY prio_a DESC, suspect DESC", sggs, RULES)
+            f"FROM survey_findings f LEFT JOIN survey_emd e ON e.emd_cd=f.emd_cd WHERE {sw} AND f.rule = ANY($1::text[]) "
+            "GROUP BY 1,2 ORDER BY prio_a DESC, suspect DESC", RULES, *sa)
         mon = await c.fetch(
             "SELECT to_char(date_trunc('month', e.at AT TIME ZONE 'Asia/Seoul'), 'YYYY-MM') AS m, count(*) AS n FROM survey_finding_events e "
-            "JOIN survey_findings f ON f.id=e.finding_id WHERE e.tenant_id=$1 AND f.sgg_cd = ANY($2::text[]) AND NOT coalesce(e.demo,false) "
-            "AND ($3::timestamptz IS NULL OR e.at >= $3) GROUP BY 1 ORDER BY 1", p.tenant_id, sggs, since)
+            f"JOIN survey_findings f ON f.id=e.finding_id WHERE e.tenant_id=$1 AND {sw3} AND NOT coalesce(e.demo,false) "
+            "AND ($2::timestamptz IS NULL OR e.at >= $2) GROUP BY 1 ORDER BY 1", p.tenant_id, since, *sa)
         recent = await c.fetchval("SELECT count(*) FROM survey_finding_events e JOIN survey_findings f ON f.id=e.finding_id WHERE e.tenant_id=$1 "
-                                  "AND f.sgg_cd = ANY($2::text[]) AND NOT coalesce(e.demo,false) AND ($3::timestamptz IS NULL OR e.at >= $3)", p.tenant_id, sggs, since)
+                                  f"AND {sw3} AND NOT coalesce(e.demo,false) AND ($2::timestamptz IS NULL OR e.at >= $2)", p.tenant_id, since, *sa)
     E = lambda v, unit, note=None: env(int(v or 0), unit, "inferred", src, note)  # noqa: E731
     return {"card": card, "survey": True, "period": period,
             "numbers": {"suspect": E(tot["suspect"], "필지", "검수 전 · 위법 판정 아님"), "field_check": E(tot["field_check"], "필지", "현장 확인 전"),
