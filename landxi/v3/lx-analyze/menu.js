@@ -8,7 +8,7 @@ export async function staffRail(current) {
     if (typeof m.staffMenu === 'function') return m.staffMenu(current);
   } catch { /* 키트 메뉴 전 — 아래 표 */ }
   const items = [
-    { id: 'home', label: '홈', icon: 'home', href: at('../lx-console/') },
+    { id: 'home', label: '대시보드', icon: 'home', href: at('../lx-console/') },
     { id: 'projects', label: '프로젝트', icon: 'list', href: at('../lx-project/') },
     { id: 'analyze', label: '분석하기', icon: 'grid', href: at('../lx-analyze/') },
     { id: 'cards', label: '서비스 카드', icon: 'report', href: at('../lx-cards/') },

@@ -11,7 +11,7 @@ export const STAFF_HREF = {
   cards: at('../lx-cards/'), data: at('../lx-ingest/'), inbox: at('../lx-inbox/'),
 };
 export const STAFF_MENU = [
-  { id: 'home', label: '홈', icon: 'home' },
+  { id: 'home', label: '대시보드', icon: 'home' },
   { id: 'projects', label: '프로젝트', icon: 'folder' },
   { id: 'analyze', label: '분석하기', icon: 'scan' },
   { id: 'cards', label: '서비스 카드', icon: 'card', more: true },
