@@ -25,6 +25,8 @@ _CARD_CACHE: dict = {"t": 0.0, "rows": []}
 _GENERIC = {"서비스", "행정서비스", "실태조사", "실태", "조사", "탐지", "관리", "분석", "이용", "해외", "국토", "안전", "위험요소", "피해", "판독"}
 # 같은 뜻의 흔한 말(띄어쓰기 없앤 문장에 적용)
 _SYN = {"해안쓰레기": "해양쓰레기", "바다쓰레기": "해양쓰레기", "해변쓰레기": "해양쓰레기", "해양폐기물": "해양쓰레기"}
+# 10-09 카드 이름이 '경작·휴경 분석서비스'로 바뀜(카드틀-5) — 담당자가 쓰는 옛 말 '영농(관리)'로 물어도 같은 카드로(이름으로 못 찾을 때만)
+_ALIAS = {"영농관리": "경작", "영농": "경작"}
 
 
 def tenant_arg(p) -> str | None:
@@ -201,6 +203,10 @@ def match_card(text: str, cards: list[dict]) -> str | None:
         t = t.replace(a, b)
     words = card_words(cards)
     found = {cid for w, cid in words.items() if w in t}
+    if not found:
+        for a, b in _ALIAS.items():
+            t = t.replace(a, b)
+        found = {cid for w, cid in words.items() if w in t}
     return next(iter(found)) if len(found) == 1 else None
 
 
