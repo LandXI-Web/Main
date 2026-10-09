@@ -90,6 +90,8 @@ function get(url, headers = {}) {
     }).on('error', rej);
   });
 }
+// 윈도우에서는 윈도우 기본 tar(bsdtar)를 쓴다 — Git Bash 의 GNU tar 는 'E:' 를 원격 주소로 읽어 실패한다
+const TAR = process.platform === 'win32' ? path.join(process.env.SystemRoot || 'C:/Windows', 'System32', 'tar.exe') : 'tar';
 const UNIT = { B: 1, KB: 1024, MB: 1024 ** 2, GB: 1024 ** 3, TB: 1024 ** 4 };
 const gb = (b) => (b / 1024 ** 3).toFixed(b < 10 * 1024 ** 3 ? 2 : 0);
 function freeBytes(dir) {
@@ -166,14 +168,17 @@ async function plan(key, o) {
   const free = freeBytes(dest);
   const need = bytes * 3; // 공식 안내: 받는 용량의 2~3배 여유
   const capGB = o.cap ? Number(o.cap) : Number(readEnv('AIHUB_CAP_GB') || 0);
-  const used = fs.existsSync(dest) ? dirBytes(dest) : 0;
+  // 한도는 새로 받는 몫만 센다 — 이미 가진 13건을 옮겨 둔 owned/ 는 빼고(AI허브-3 ⓑ · 한도 AI허브-2 ⓐ)
+  const used = fs.existsSync(dest) ? dirBytes(dest, new Set(['owned'])) : 0;
   const capOk = !capGB || used + bytes <= capGB * 1024 ** 3;
   return { key: Number(key), files: sel, bytes, dest, free, need, diskOk: free >= need, capGB: capGB || null, used, capOk, notice: t.notice };
 }
-function dirBytes(d) {
+function dirBytes(d, skip = null) {
   let s = 0;
   for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+    if (skip && skip.has(e.name)) continue;
     const p = path.join(d, e.name);
+    if (e.isSymbolicLink()) continue;                   // 연결(정션)은 세지 않음
     s += e.isDirectory() ? dirBytes(p) : fs.statSync(p).size;
   }
   return s;
@@ -220,6 +225,10 @@ function downloadResume(url, k, out) {
       if (r.statusCode !== 200 && r.statusCode !== 206) {
         let b = ''; r.on('data', (d) => (b += d)); r.on('end', () => rej(new Error(`응답 ${r.statusCode}: ${b.slice(0, 300)}`))); return;
       }
+      // 10-09 시험: AI 허브 서버는 이어 받기 요청을 받지 않고 200 으로 처음부터 준다.
+      // 이미 다 받은 파일(크기 = 서버가 알려 준 길이)이면 다시 받지 않고 넘어간다.
+      const len = Number(r.headers['content-length'] || 0);
+      if (r.statusCode === 200 && have > 0 && len > 0 && len === have) { r.destroy(); return res({ resumed: have, done: true }); }
       const append = r.statusCode === 206 && have > 0;          // 서버가 이어 받기를 받아 주면 덧붙임, 아니면 처음부터
       const ws = fs.createWriteStream(out, { flags: append ? 'a' : 'w' });
       let n = append ? have : 0; let last = Date.now();
@@ -257,6 +266,43 @@ function mergeParts(root) {
   }
   return groups.size;
 }
+// tar 풀기(도구 안에서) — AI Hub tar 는 UTF-8 한글 이름이라 윈도우 기본 tar 가 'Invalid empty pathname' 으로 실패한다(10-09 시험).
+// ustar 머리(512바이트) · GNU 긴 이름(L) · pax(x) 를 읽고, 바깥으로 나가는 경로(..)와 절대 경로는 거절한다.
+function extractTar(tarPath, dir) {
+  const fd = fs.openSync(tarPath, 'r');
+  const hdr = Buffer.alloc(512); const buf = Buffer.allocUnsafe(64 * 1024 * 1024);
+  const root = path.resolve(dir); let pos = 0; let longName = null; let n = 0;
+  const str = (b, s, l) => { const x = b.subarray(s, s + l); const z = x.indexOf(0); return (z < 0 ? x : x.subarray(0, z)).toString('utf8'); };
+  const num = (b, s, l) => {
+    if (b[s] & 0x80) { let v = 0; for (let i = s + 1; i < s + l; i++) v = v * 256 + b[i]; return v; } // base-256(큰 파일)
+    return parseInt(str(b, s, l).trim() || '0', 8);
+  };
+  const readAll = (len) => { const out = Buffer.alloc(len); fs.readSync(fd, out, 0, len, pos); return out; };
+  try {
+    for (;;) {
+      if (fs.readSync(fd, hdr, 0, 512, pos) < 512) break;
+      if (hdr.every((b) => b === 0)) break;                     // 끝 표시
+      pos += 512;
+      const size = num(hdr, 124, 12); const type = String.fromCharCode(hdr[156] || 48);
+      const pad = Math.ceil(size / 512) * 512;
+      if (type === 'L') { longName = readAll(size).toString('utf8').replace(/\0+$/, ''); pos += pad; continue; }
+      if (type === 'x') { const m = readAll(size).toString('utf8').match(/\d+ path=([^\n]*)\n/); if (m) longName = m[1]; pos += pad; continue; }
+      if (type === 'g') { pos += pad; continue; }
+      const prefix = str(hdr, 345, 155); let name = longName || (prefix ? prefix + '/' + str(hdr, 0, 100) : str(hdr, 0, 100));
+      longName = null;
+      const out = path.resolve(root, name);
+      if (path.isAbsolute(name) || !(out === root || out.startsWith(root + path.sep))) throw new Error(`tar 안 경로가 받는 곳 밖을 가리킴: ${name}`);
+      if (type === '5') { fs.mkdirSync(out, { recursive: true }); pos += pad; continue; }
+      if (type !== '0' && type !== '7') { pos += pad; continue; }     // 연결 등은 건너뜀
+      fs.mkdirSync(path.dirname(out), { recursive: true });
+      const w = fs.openSync(out, 'w'); let left = size; let p2 = pos;
+      while (left > 0) { const k = fs.readSync(fd, buf, 0, Math.min(buf.length, left), p2); if (k <= 0) throw new Error('tar 가 중간에 끊김(다시 받기 필요)'); fs.writeSync(w, buf, 0, k); left -= k; p2 += k; }
+      fs.closeSync(w); pos += pad; n++;
+    }
+  } finally { fs.closeSync(fd); }
+  if (!n) throw new Error('tar 에서 푼 파일이 없음');
+  return n;
+}
 // zip 풀기 — AI Hub 원천은 분할 zip(TS.z01 · TS.z02 · TS.zip)이 많아 윈도우 기본 tar 로는 못 푼다.
 // 반디집 명령줄(bz.exe) → 7-Zip → (분할 아닌 것만) tar 순서로 찾는다. 한글 파일 이름도 반디집 · 7-Zip 이 처리.
 function unzipAll(dir) {
@@ -271,7 +317,7 @@ function unzipAll(dir) {
     let r;
     if (tool && /bz\.exe$/i.test(tool)) r = spawnSync(tool, ['x', '-y', `-o:${out}`, z], { stdio: 'inherit' });
     else if (tool) r = spawnSync(tool, ['x', '-y', `-o${out}`, z], { stdio: 'inherit' });
-    else if (!split) { fs.mkdirSync(out, { recursive: true }); r = spawnSync('tar', ['-xf', z, '-C', out], { stdio: 'inherit' }); }
+    else if (!split) { fs.mkdirSync(out, { recursive: true }); r = spawnSync(TAR, ['-xf', z, '-C', out], { stdio: 'inherit' }); }
     else { console.log(`  분할 zip 은 반디집 또는 7-Zip 이 있어야 풉니다: ${path.basename(z)}`); continue; }
     console.log(`  ${r.status === 0 ? '풀림' : '풀기 실패'} ${path.basename(z)}${split ? '(분할)' : ''}`);
   }
@@ -288,12 +334,15 @@ async function getCmd(key, o) {
   const keys = p.files.length === (await tree(key)).files.length ? 'all' : p.files.map((f) => f.filekey).join(',');
   const tarPath = path.join(dir, `download-${keys === 'all' ? 'all' : p.files.length + 'files'}.tar`);
   console.log('받는 중(끊겨도 같은 명령으로 이어 받음)…');
-  await downloadResume(downloadUrl(key, keys), k, tarPath);
+  // 다 받은 표시(.done)가 있으면 다시 받지 않는다 — 서버가 이어 받기 · 길이를 주지 않아 크기로는 판단 못 함(10-09 시험)
+  const doneMark = tarPath + '.done';
+  if (fs.existsSync(tarPath) && fs.existsSync(doneMark)) console.log('  이미 다 받음 — 풀기부터');
+  else { await downloadResume(downloadUrl(key, keys), k, tarPath); fs.writeFileSync(doneMark, new Date().toISOString()); }
   console.log('풀기…');
-  const tr = spawnSync('tar', ['-xf', tarPath, '-C', dir], { stdio: 'inherit' });
-  if (tr.status !== 0) throw new Error('tar 풀기 실패');
+  const nx = extractTar(tarPath, dir);
+  console.log(`  ${nx}개 풀림`);
   mergeParts(dir);
-  fs.unlinkSync(tarPath);
+  fs.unlinkSync(tarPath); if (fs.existsSync(doneMark)) fs.unlinkSync(doneMark);
   if (o.unzip) unzipAll(dir);          // 기본은 zip 그대로 보관(클래스 층 만들 때 필요한 것만 풂)
   const entry = {
     key: Number(key), name: (await catalog()).find((c) => c.key === Number(key))?.name || null,
