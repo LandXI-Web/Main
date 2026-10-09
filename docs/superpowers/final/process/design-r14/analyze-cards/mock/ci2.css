@@ -1,0 +1,59 @@
+/* 2차(10-09 사용자 답 뒤) — 정식 서비스 카드 한 틀 · 지도 서비스 상세. 1차 ci.css 위에 덧씀. */
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;align-items:stretch}
+.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;align-items:stretch}
+.ca .bd{gap:8px}
+.ca .ln{min-height:0}
+.ca.nb .bd{padding:16px 18px 18px}
+.hero2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px;padding:14px 16px 12px;border-radius:var(--r-8);background:var(--bg-0)}
+.hero2 b{display:block;font:800 32px/36px var(--font-display);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums}
+.hero2 b i{font:700 18px/1 var(--font-display);font-style:normal;margin-left:2px;color:var(--ink-2)}
+.hero2 b.d{font-size:24px;line-height:36px;font-weight:700}
+.hero2 small{display:block;margin-top:2px;font:500 13px/18px var(--font-body);color:var(--sub)}
+.where{display:flex;flex-direction:column;gap:2px;margin:4px 0 0;font:500 14px/20px var(--font-body);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.where .k{font:400 12px/18px var(--font-body);color:var(--sub)}
+.ca .acts{margin-top:auto;padding-top:8px}
+
+/* 지도 서비스 상세 */
+.page.map{padding:24px 32px 24px;max-width:none;gap:14px;height:calc(900px - 64px)}
+.mp{display:grid;grid-template-columns:272px minmax(0,1fr) 336px;gap:16px;flex:1;min-height:0}
+.mp-l,.mp-r{background:var(--bg-1);border-radius:var(--r-16);padding:20px;display:flex;flex-direction:column;gap:18px;min-height:0;overflow:hidden}
+.mp h2{margin:0 0 8px;font:700 15px/20px var(--font-display);color:var(--ink)}
+.mp-r h1.nm{font:700 22px/28px var(--font-display);white-space:normal;margin:0}
+.mp-r .ln{font:400 14px/20px var(--font-body)}
+.mp-r .hero2{margin-top:0}
+.mp-r .note{margin:-8px 0 0}
+.mp-m{position:relative;border-radius:var(--r-16);overflow:hidden;background:var(--bg-0);min-height:0}
+.mp-m img{width:100%;height:100%;object-fit:cover;display:block}
+.mcap{position:absolute;left:16px;top:16px;padding:8px 12px;border-radius:var(--r-8);background:rgba(255,255,255,.94);font:500 13px/18px var(--font-body);color:var(--ink)}
+.zoom{position:absolute;right:16px;bottom:16px;display:flex;flex-direction:column;border-radius:var(--r-8);overflow:hidden;background:var(--bg-1);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.zoom b{width:36px;height:36px;font:500 18px/36px var(--font-num);text-align:center;color:var(--ink)}
+.zoom b+b{border-top:1px solid var(--rule)}
+.rl2{list-style:none;margin:0;padding:0}
+.rl2 li{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:8px;align-items:center;height:36px;padding:0 8px;border-radius:var(--r-8);font:500 14px/20px var(--font-body);color:var(--ink-2)}
+.rl2 li.on{background:var(--bg-0);color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
+.rl2 .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rl2 .v{font:500 13px/18px var(--font-num);color:var(--ink);font-variant-numeric:tabular-nums}
+.rl2 .v.none{color:var(--mute)}
+.st{display:inline-flex;align-items:center;justify-content:center;height:22px;padding:0 7px;border-radius:6px;background:var(--bg-0);font:500 12px/1 var(--font-body);color:var(--ink);white-space:nowrap}
+.rl2 li.on .st{background:var(--bg-1)}
+.st[data-s="pilot"]{color:var(--sub)}
+.st[data-s="none"]{color:var(--mute)}
+.ly{list-style:none;margin:0;padding:0}
+.ly li{display:flex;align-items:center;gap:10px;height:32px;font:500 14px/20px var(--font-body);color:var(--sub)}
+.ly li.on{color:var(--ink)}
+.ly i{width:34px;height:20px;border-radius:10px;background:var(--mute);position:relative;flex:none}
+.ly i::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff}
+.ly li.on i{background:var(--ink)}
+.ly li.on i::after{left:16px}
+.lg{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font:500 14px/20px var(--font-body);color:var(--ink-2)}
+.lg li{display:flex;align-items:center;gap:10px}
+.lg i{width:18px;height:14px;border-radius:3px;flex:none}
+.lg i.a{background:rgba(15,169,160,.45);box-shadow:inset 0 0 0 2px var(--ai)}
+.lg i.b{background:transparent;box-shadow:inset 0 0 0 2px var(--ai)}
+.lg i.c{background:transparent;box-shadow:inset 0 0 0 1px #fff,0 0 0 1px var(--mute)}
+.rt{width:100%;border-collapse:collapse;font:500 13px/18px var(--font-body);color:var(--ink-2)}
+.rt td{padding:7px 4px;border-bottom:1px solid var(--rule);white-space:nowrap}
+.rt td:nth-child(3){text-align:right;font-family:var(--font-num);color:var(--ink)}
+.rt td.none{color:var(--mute)}
+.rt td.sub2{color:var(--sub);font-weight:400;text-align:right}
+.go.wide{justify-content:center;height:44px;margin-top:auto}

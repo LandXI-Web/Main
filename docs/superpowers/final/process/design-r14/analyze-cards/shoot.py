@@ -16,9 +16,9 @@ PC = (1440, 900)
 M = (390, 844)
 # (파일?쿼리, 결과 이름, 크기, 전체 페이지)
 LIST = [
-    ('mock/view.html?v=a', 'new-a-list-1440.png', PC, False),
-    ('mock/view.html?v=b', 'new-b-list-1440.png', PC, False),
-    ('mock/view.html?v=detail', 'new-detail-1440.png', PC, False),
+    ('mock/view.html?v=list', 'new-list-1440.png', PC, False),
+    ('mock/view.html?v=listb', 'new-list-b-1440.png', PC, False),
+    ('mock/view.html?v=map', 'new-map-1440.png', PC, False),
 ]
 
 FORBID = [
