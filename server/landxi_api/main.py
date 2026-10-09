@@ -148,7 +148,7 @@ for _name in ("survey", "agent"):
     print(f"[gateway] ext router landxi_api.{_name}: 등록({len(_m.router.routes)} routes)", flush=True)
 
 # C2 확장 라우터(c2-report-law 법령 원문·색인 등) — 있으면 붙이고, 없거나 불러오기에 실패하면 건너뛴다(게이트웨이는 뜬다 · 로그 1줄).
-for _name in ("law", "training", "global_data"):
+for _name in ("law", "training", "global_data", "staff_home"):   # staff_home = LX 직원 대시보드 칸(저장 용량 · 내가 돌린 작업 · 공지 — 직원-4 ⓐ · 직원-5 ⓐ)
     try:
         _m = importlib.import_module(f"landxi_api.{_name}")
         app.include_router(_m.router, prefix=API)

@@ -6,6 +6,7 @@ import { h, esc, ymd, api } from '../../kit/util.js';
 import { sse } from '../../../shared/api-v1.js';
 import { D, loadAll, loadFast, pending, pendingEnv, openAlerts, power, decide, hasS9, canon } from './data.js';
 import { mountMap } from './map.js';
+import { openNoticeWriter, noticeCount } from './notice.js';   // 공지 쓰기(직원-4 ⓐ — LX 직원 대시보드 '공지' 칸에 보인다)
 
 const who = await gate('ops-core');
 const INFRA = '/landxi/v3/ops-infra/';
@@ -77,9 +78,20 @@ function drawOverview() {
   const flowing = canon().filter((d) => ['starting', 'analyzing', 'surveying'].includes(d.flow?.state));
   if (flowing.length) rows.push({ t: `AI 분석 진행 ${flowing.length}`, lv: '', href: INFRA + '?view=deploys' + (flowing.length === 1 ? '&deploy=' + encodeURIComponent(flowing[0].id) : '') });
   /* 기관 '한도 임박' 줄은 없앴다 — 기관에는 막는 한도가 없다(원칙 83 · 11차 "GPU 는 무상 정책"). 사용량은 '기관' 화면에서 */
+  rows.push({ t: annN === null ? '공지 쓰기' : `공지 ${annN}건 · 쓰기`, lv: '', href: '#/notice' });   // 공지(직원-4 ⓐ) — 누르면 쓰기 창
   todoEl.innerHTML = rows.map((r) => `<li><a href="${esc(r.href)}" data-lv="${r.lv}"><i data-dot="${r.dot || ''}"></i><span>${esc(r.t)}</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5l4.5 4.5L6 12.5"/></svg></a></li>`).join('');
   M.sync();
 }
+
+/* 공지 — 할 일 목록의 '공지 · 쓰기' 줄(주소는 바꾸지 않고 창만) · 올린 수는 서버 GET /announcements 한 출처 */
+let annN = null;
+const annLoad = () => noticeCount().then((n) => { annN = n; drawOverview(); });
+annLoad();
+todoEl.addEventListener('click', (e) => {
+  const a = e.target.closest('a[href="#/notice"]'); if (!a) return;
+  e.preventDefault();
+  openNoticeWriter({ onChange: annLoad });
+});
 
 /* ── 결재함 ────────────────────────────── */
 const inboxWrap = h('div.oc-inbox-w');

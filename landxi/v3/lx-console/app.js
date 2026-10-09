@@ -2,6 +2,8 @@
    네 질문에 칸 하나씩(지도 없음): ① 내 프로젝트는 어디까지(6칸 진행 막대 · 지금 단계 · 다음 할 일) ② 기관이 나를 기다리는 것(요청함 숫자 셋)
    ③ 우리 서비스는 어디서 돌고 무엇이 문제(실제 결과 장면 넷 · 살펴볼 것) ④ 지금 무엇을 할까(바로 분석하기 · 최근 활동).
    숫자는 모두 서버에서 — 같은 이름의 숫자는 프로젝트 · 요청함 · 서비스 관리 화면과 같은 한 곳(지어낸 값 0 · 내부 지표 0).
+   직원-4 ⓐ(10-09 · 시안 design-r13/lx-staff-v3plus): 칸 셋을 더함 — ⑤ 저장 용량(GET /me/storage — 내 정보 창과 같은 한 출처 · 프로젝트별 막대)
+   ⑥ 내가 돌린 작업(GET /me/jobs — 끝남 · 실패 · 취소 · 지금 도는 것 · 종류별 · 최근 몇 건) ⑦ 공지(GET /announcements — LX 관리자가 쓴 실제 글만 · 비면 '새 공지가 없습니다').
    왼쪽 메뉴 = LX 직원 메뉴(kit/lx-menu.js) · '새 프로젝트'는 메뉴 '프로젝트 → 새 프로젝트'와 같은 창(lx-project/new.js · 원칙 99). */
 import * as K from '../kit/index.js';
 import { h, esc, api, API } from '../kit/util.js';
@@ -11,6 +13,8 @@ import { openNewProject } from '../lx-project/new.js';
 import { summary } from './summary.js';
 import { say } from './words.js';
 import { dueSets } from '../lx-deploy/retrain.js';
+import { openMe, projectBars, bigSize, gb } from '../kit/me.js';
+import { modal } from '../kit/modal.js';
 
 ensureCss();                                         // 6칸 막대 · 막힌 곳 부품(프로젝트 목록과 같은 것)의 스타일
 const who = await K.gate('lx-console');
@@ -33,11 +37,19 @@ const goBtn = h('button.t-btn.ld-go', { type: 'button', text: '분석하기' });
 const quick = h('section.t-card.ld-card.ld-quick', { 'aria-label': '바로 분석하기' }, head('바로 분석하기', moreLink('카드 고르기', STAFF_HREF.analyze)),
   h('div.ld-go-row', {}, pickEl, goBtn));
 const act = h('section.t-card.ld-card.ld-act', { 'aria-label': '최근 활동' }, head('최근 활동'), h('ul.ld-acts'));
-const page = h('div.ld', {}, h('div.ld-grid', {}, h('div.ld-col.ld-col--l', {}, mine, svc), h('div.ld-col.ld-col--r', {}, inbox, quick, act)));
+const storeSub = h('small.ld-sub');
+const store = h('section.t-card.ld-card.ld-store', { 'aria-label': '저장 용량' },
+  head('저장 용량', h('button.ld-more', { type: 'button', text: '내 정보', onclick: () => openMe({ onSaved: () => drawStore() }) }), storeSub), h('div.ld-store-b'));
+const jobsSub = h('small.ld-sub');
+const jobs = h('section.t-card.ld-card.ld-jobs', { 'aria-label': '내가 돌린 작업' }, head('내가 돌린 작업', null, jobsSub), h('div.ld-jobs-b'));
+const noticeSub = h('small.ld-sub');
+const notice = h('section.t-card.ld-card.ld-notice', { 'aria-label': '공지' }, head('공지', null, noticeSub), h('ul.ld-ntc'));
+const page = h('div.ld', {}, h('div.ld-grid', {}, h('div.ld-col.ld-col--l', {}, mine, svc, jobs), h('div.ld-col.ld-col--r', {}, inbox, quick, store, act, notice)));
 S.main.append(page);
 const wait = (el) => { const w = h('div'); el.replaceChildren(w); K.empty(w, { kind: 'loading', compact: true }).set({ progress: null }); };
 const fail = (el, retry) => { const w = h('div'); el.replaceChildren(w); K.empty(w, { kind: 'error', compact: true, onRetry: retry }); };
-for (const el of [mine.querySelector('.ld-prs'), svc.querySelector('.ld-strip'), inbox.querySelector('.ld-cells'), act.querySelector('.ld-acts')]) wait(el);
+for (const el of [mine.querySelector('.ld-prs'), svc.querySelector('.ld-strip'), inbox.querySelector('.ld-cells'), act.querySelector('.ld-acts'),
+  store.querySelector('.ld-store-b'), jobs.querySelector('.ld-jobs-b'), notice.querySelector('.ld-ntc')]) wait(el);
 
 /* 공용 자료(한 번) — 카드 · 배포 · 지역 이름 */
 const once = (f) => { let p = null; return () => (p ||= f()); };
@@ -67,6 +79,9 @@ drawInbox();
 drawQuick();
 drawServices();
 drawActs();
+drawStore();
+drawJobs();
+drawNotice();
 window.__lxConsole = { ready: true };                 // e2e 관측(읽기 전용)
 document.documentElement.dataset.consoleReady = '1';
 
@@ -227,4 +242,67 @@ async function drawActs() {
   }
   if (!lines.length) { const x = h('div'); box.replaceChildren(x); K.empty(x, { kind: 'first', title: '최근 활동이 없습니다', compact: true }); return; }
   box.replaceChildren(...lines);
+}
+
+/* ── ⑤ 저장 용량 — 큰 숫자(내가 쓴 양) · 할당 · 프로젝트별 막대(내 정보 창과 같은 부품 · GET /me/storage 한 출처) ── */
+const ev = (e) => (e && typeof e === 'object' && 'value' in e ? e.value : e);
+async function drawStore() {
+  const box = store.querySelector('.ld-store-b');
+  let j;
+  try { j = await api('/me/storage'); } catch { fail(box, () => { wait(box); drawStore(); }); return; }
+  const st = j.storage || {};
+  const used = Number(ev(st.used)) || 0, q = ev(st.quota_gb), pct = ev(st.pct);
+  const has = q !== null && q !== undefined;
+  storeSub.textContent = has ? `할당 ${gb(q)}${pct !== null && pct !== undefined ? ` · ${pct}%` : ''}` : '할당 없음';
+  const ps = j.projects || [];
+  const kids = [bigSize(used, ps.length ? `프로젝트 ${ps.length}개` : '내가 프로젝트장인 프로젝트 없음')];
+  if (ps.length) kids.push(projectBars(ps, used, { max: 4 }));
+  if (st.warn) kids.push(h('p.ld-warn', { text: `할당의 ${pct}%를 썼습니다 · 내 정보에서 늘리기 요청` }));
+  box.replaceChildren(...kids);
+}
+
+/* ── ⑥ 내가 돌린 작업 — 끝남 · 실패 · 취소 · 지금 도는 것(큰 숫자) · 종류별 막대 · 최근 몇 건(시각 | 무엇 | 상태) ── */
+const STATE = { done: '끝', failed: '실패', cancelled: '취소', queued: '대기', running: '도는 중' };
+const md = (s) => { const d = new Date(s || ''); return Number.isNaN(+d) ? '' : `${d.getMonth() + 1}.${d.getDate()}`; };
+async function drawJobs() {
+  const box = jobs.querySelector('.ld-jobs-b');
+  let j;
+  try { j = await api('/me/jobs?recent=4'); } catch { fail(box, () => { wait(box); drawJobs(); }); return; }
+  const c = j.counts || {}, n = (k) => Number(ev(c[k])) || 0;
+  const total = n('done') + n('failed') + n('cancelled') + n('running');
+  jobsSub.textContent = total && j.first ? `${md(j.first)} – ${md(j.last)}` : '';
+  if (!total) { const x = h('div'); box.replaceChildren(x); K.empty(x, { kind: 'first', title: '돌린 작업이 없습니다', compact: true }); return; }
+  const cell = (v, label, cls) => h('div.ld-cell.ld-cell--ro', { class: cls }, h('b.num', { text: v.toLocaleString('ko-KR') }), h('span', { text: label }));
+  const cells = h('div.ld-cells.ld-cells--2', {},
+    cell(n('done'), '끝남', n('done') ? '' : 'is-zero'), cell(n('failed'), '실패', n('failed') ? 'is-warn' : 'is-zero'),
+    cell(n('cancelled'), '취소', n('cancelled') ? '' : 'is-zero'), cell(n('running'), '지금 도는 것', n('running') ? '' : 'is-zero'));
+  const [cj, regs] = await Promise.all([cardsP(), regionsP()]);
+  const cards = cj?.items || [];
+  const rname = (code) => (code ? regs.find?.((r) => r.sgg_cd === code)?.name || null : null);
+  /* 최근 — 시각 | 무엇(서비스 · 지역 · 종류) | 상태. 실패는 경고색 */
+  const rows = (j.recent || []).map((x) => {
+    const card = cards.find((cc) => cc.id === x.card_id);
+    const what = [card ? nameOf(card) : null, rname(x.sgg_cd), x.kind_ko].filter(Boolean).join(' ');
+    return h('li', {}, h('span.ld-when.num', { text: when(x.at) }), h('span', { text: what }),
+      h('span.ld-st', { class: x.state === 'failed' ? 'is-no' : '', text: STATE[x.state] || '진행' }));
+  });
+  const recent = h('div.ld-recent', {}, h('p.ld-k', { text: '최근' }), h('ul.ld-rows', {}, ...rows));
+  /* 종류별 — 한 줄(AI 분석 275 · 결과 갱신 108 …) */
+  const kinds = (j.kinds || []).slice(0, 5).map((k) => h('span', {}, k.label + ' ', h('b.num', { text: k.n.toLocaleString('ko-KR') })));
+  box.replaceChildren(h('div.ld-two', {}, cells, recent), ...(kinds.length ? [h('p.ld-kinds', {}, h('span.ld-k', { text: '종류별' }), ...kinds)] : []));
+}
+
+/* ── ⑦ 공지 — LX 관리자가 쓴 실제 글(GET /announcements) · 누르면 본문 창. 비면 '새 공지가 없습니다'(지어내지 않는다) ── */
+async function drawNotice() {
+  const box = notice.querySelector('.ld-ntc');
+  let j;
+  try { j = await api('/announcements?limit=4'); } catch { fail(box, () => { wait(box); drawNotice(); }); return; }
+  const items = j.items || [];
+  noticeSub.textContent = j.total > items.length ? `${j.total}건 중 최근 ${items.length}` : '';
+  if (!items.length) { box.replaceChildren(h('li.ld-ntc-none', { text: '새 공지가 없습니다' })); return; }
+  const day = (s) => { const d = new Date(s || ''); return Number.isNaN(+d) ? '' : `${d.getFullYear()}.${two(d.getMonth() + 1)}.${two(d.getDate())}`; };
+  box.replaceChildren(...items.map((a) => h('li', {}, h('button', { type: 'button', onclick: () => {
+    const b = h('div.ld-ntc-md', {}, h('p.ld-ntc-by', { text: `${a.by_name} · ${day(a.at)}` }), a.body ? h('p.ld-ntc-tx', { text: a.body }) : null);
+    modal({ title: a.title, body: b });
+  } }, h('span.ld-when.num', { text: when(a.at) }), h('b', { text: a.title })))));
 }

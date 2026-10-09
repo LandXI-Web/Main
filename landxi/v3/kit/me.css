@@ -45,3 +45,36 @@ button.k-role.k-me-b:hover{background:var(--rule)}
 button.k-role.k-me-b:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 button.k-role.k-me-b::after{content:"";flex:none;width:6px;height:6px;margin-left:2px;border-right:1.5px solid var(--sub);border-bottom:1.5px solid var(--sub);transform:translateY(-2px) rotate(45deg)}
 @media (max-width:960px){.k-app button.k-role.k-me-b{display:inline-flex;align-items:center}}
+/* 두 단 창(직원-5 ⓐ · 10-09 · 시안 design-r13/lx-staff-v3plus my) — 왼쪽 내 정보 칸 · 오른쪽 저장 용량 · 늘리기 요청 이력. 휴대폰은 한 단(내 정보 → 저장 용량) */
+.k-md.k-me-wide{width:min(960px,100%)}
+.k-me-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:start}
+.k-me-two > .k-me{min-width:0}
+.k-me-r{display:flex;flex-direction:column;gap:14px;min-width:0}
+.k-me-r .k-me-st{gap:12px}
+.k-me-tag{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:var(--r-8);background:var(--bg-1);color:var(--sub-2);font:500 12px/22px var(--font-body);white-space:nowrap}
+.k-me-st .k-me-bar{background:var(--bg-1)}   /* 회백 칸 안의 막대 길은 흰색(회백 위 회색 길은 거의 안 보인다) */
+/* 큰 숫자(29.8 MB) — 대시보드 큰 숫자와 같은 모양 */
+.k-me-big{margin:0;display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px}
+.k-me-big b{font:800 32px/1.1 var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.k-me-big > span{font:700 18px/1 var(--font-display);color:var(--ink)}
+.k-me-big small{margin-left:4px;font:500 var(--fs-label)/20px var(--font-body);color:var(--sub)}
+.k-me-big.is-zero b{color:var(--mute)}
+/* 프로젝트별 막대 줄(이름 | 막대 | 크기) — 대시보드 저장 용량 칸과 같은 부품 */
+.k-me-bars{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.k-me-bars li{display:grid;grid-template-columns:minmax(0,9em) minmax(0,1fr) auto;align-items:center;gap:12px}
+.k-me-pn{font:500 var(--fs-label)/20px var(--font-body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.k-me-pv{font:500 var(--fs-label)/20px var(--font-num);color:var(--ink);white-space:nowrap;text-align:right;min-width:5.5em}
+.k-me-bars li.k-me-more{display:block;font:400 13px/18px var(--font-body);color:var(--sub)}
+/* 늘리기 요청 이력 줄(날짜 | 할당 → 원하는 값 · 이유 | 상태) */
+.k-me-rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.k-me-rows li{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:baseline;padding:9px 0;border-top:1px solid var(--rule);font:400 var(--fs-label)/20px var(--font-body);color:var(--ink-2)}
+.k-me-rows li:first-child{border-top:0;padding-top:0}
+.k-me-rw{font-size:13px;color:var(--sub);white-space:nowrap}
+.k-me-rt{min-width:0;word-break:keep-all}
+.k-me-rt b{font-weight:500;color:var(--ink)}
+.k-me-rt i{margin-left:6px;font-style:normal;color:var(--sub)}
+.k-me-rt small{display:block;font:400 13px/18px var(--font-body);color:var(--sub)}
+.k-me-rs{font:500 13px/20px var(--font-body);color:var(--sub);white-space:nowrap}
+.k-me-rs.is-no{color:var(--warn)}
+@media (max-width:960px){.k-me-two{grid-template-columns:1fr;gap:20px}}
+@media (max-width:640px){.k-me-big b{font-size:26px}.k-me-bars li{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;gap:10px}.k-me-pv{min-width:0}}

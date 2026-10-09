@@ -5,6 +5,7 @@
      할당이 없으면 '할당 없음 · 지금 쓴 양'만(지어내지 않는다). 90% 를 넘으면 한 줄로 늘리기 요청을 권한다(막지 않는다 — 원칙 91).
    · 부서(제안 S-21): LX 부서 목록에서 고르기(검색 · kit/dept.js) — 목록에 없는 부서(지사 등)는 적은 그대로. 지금 적힌 이름이 목록에 없으면 안내만.
    LX 직원 · LX 관리자 · LX 영업 계정(기관 계정은 확인 범위 밖 — 셸이 버튼을 붙이지 않는다).
+   · 창은 두 단(직원-5 ⓐ · 10-09): 왼쪽 = 내 정보 칸 · 오른쪽 = 저장 용량(큰 숫자 · 프로젝트별 막대) + 늘리기 요청 이력(GET /me/storage).
    openMe({ onSaved(profile) }) · openStorageRequest({ storage, onDone(profile) }) — 파일 올리는 자리의 창에서도 같은 요청 창을 쓴다 */
 import { h, api } from './util.js';
 import { modal } from './modal.js';
@@ -64,7 +65,66 @@ export function storageBlock(st = {}, { onAsk } = {}) {
   return box;
 }
 
-/** 용량 늘리기 요청 창 — 원하는 할당(GB) · 이유 한 줄. 보내면 LX 관리자 계정 관리 '저장 용량 요청'에 한 건 */
+/** 프로젝트별 막대 줄(이름 | 막대 | 크기) — 대시보드 '저장 용량' 칸과 내 정보 창 오른쪽 단이 같이 쓴다(직원-4 ⓐ · 직원-5 ⓐ · 같은 모양 한 벌).
+    막대 = 내가 쓴 전체 가운데 그 프로젝트 몫. 보관한 프로젝트는 이름 뒤 '보관'. max 를 넘으면 '외 n개' 한 줄 */
+export function projectBars(projects = [], used = 0, { max = 4 } = {}) {
+  sheet();
+  const all = Number(used) || 0;
+  const list = projects.slice(0, max).map((p) => {
+    const w = all ? Math.round((p.bytes / all) * 100) : 0;
+    return h('li', {}, h('span.k-me-pn', { text: p.name + (p.archived ? ' · 보관' : ''), title: p.name }),
+      h('span.k-me-bar', { role: 'img', 'aria-label': `전체의 ${w}%` }, h('i', { style: `width:${Math.max(p.bytes > 0 ? 1 : 0, w)}%` })),
+      h('span.k-me-pv.num', { text: size(p.bytes) }));
+  });
+  const ul = h('ul.k-me-bars', {}, ...list);
+  if (projects.length > max) ul.append(h('li.k-me-more', { text: `외 ${projects.length - max}개` }));
+  return ul;
+}
+
+/** 큰 숫자(29.8 MB) — 숫자 · 단위 · 회색 한 줄 */
+export function bigSize(bytes, note) {
+  sheet();
+  const [n, u] = size(bytes).split(' ');
+  return h('p.k-me-big', {}, h('b.num', { text: n }), h('span', { text: u }), note ? h('small', { text: note }) : null);
+}
+
+/** 내 정보 창 오른쪽 단 — 저장 용량(큰 숫자 · 프로젝트별 막대 · 늘리기 요청) + 늘리기 요청 이력(서버 GET /me/storage 한 출처) */
+function storageSide(S, { onAsk } = {}) {
+  const st = S.storage || {};
+  const used = Number(v(st.used)) || 0, quota = v(st.quota_gb), pct = v(st.pct);
+  const has = quota !== null && quota !== undefined;
+  const ask = has && onAsk && !st.pending ? h('button.k-me-ask', { type: 'button', text: '용량 늘리기 요청', onclick: () => onAsk() }) : null;
+  const a = h('div.k-me-st', { class: st.warn ? 'is-warn' : '' },
+    h('div.k-me-sth', {}, h('p.k-me-l', { text: '저장 용량' }), ask || h('span.k-me-tag', { text: has ? `할당 ${gb(quota)}` : '할당 없음' })),
+    bigSize(used, has ? `할당 ${gb(quota)} 중${pct !== null && pct !== undefined ? ` · ${pct}%` : ''}` : '지금 쓴 양'));
+  if (has) {
+    const w = Math.min(100, Math.max(used > 0 ? 1 : 0, Number(pct) || 0));
+    a.append(h('div.k-me-bar', { role: 'img', 'aria-label': `할당의 ${pct ?? 0}% 사용` }, h('i', { style: `width:${w}%` })));
+  }
+  const ps = S.projects || [];
+  if (ps.length) a.append(projectBars(ps, used, { max: 5 }));
+  a.append(h('p.k-me-sub', { text: ps.length ? `내가 프로젝트장인 프로젝트 ${ps.length}개의 학습데이터 · 올린 파일` : '내가 프로젝트장인 프로젝트가 없습니다' }));
+  if (st.warn) a.append(h('p.k-me-warn', {}, h('span', { text: `할당의 ${pct}%를 썼습니다.` }), ' ',
+    h('span', { text: st.pending ? '늘리기 요청을 보냈습니다' : '더 필요하면 늘리기 요청을 보내 주세요' })));
+
+  const R = S.requests || [];
+  const wait = R.filter((r) => r.state === 'pending').length;
+  const ST = { pending: '대기', approved: '승인', rejected: '반려' };
+  const b = h('div.k-me-st', {},
+    h('div.k-me-sth', {}, h('p.k-me-l', { text: '늘리기 요청 이력' })),
+    h('p.k-me-big', { class: R.length ? '' : 'is-zero' }, h('b.num', { text: String(R.length) }), h('small', { text: `보낸 요청 · 대기 ${wait}` })));
+  if (R.length) {
+    b.append(h('ul.k-me-rows', {}, ...R.slice(0, 5).map((r) => h('li', {},
+      h('span.k-me-rw.num', { text: md(r.at) }),
+      h('span.k-me-rt', {}, h('b', { text: `${r.from_gb !== null ? gb(r.from_gb) : '할당 없음'} → ${gb(r.want_gb)}` }), r.why ? h('i', { text: r.why }) : null,
+        r.state === 'rejected' && r.reason ? h('small', { text: `사유 ${r.reason}` }) : null),
+      h('span.k-me-rs', { class: r.state === 'rejected' ? 'is-no' : '', text: ST[r.state] || r.state })))));
+  }
+  b.append(h('p.k-me-sub', { text: has ? '보낸 요청의 승인 · 반려가 여기 쌓입니다' : "할당이 정해지면 '용량 늘리기 요청'을 보낼 수 있고, 승인 · 반려가 여기 쌓입니다" }));
+  return h('div.k-me-r', {}, a, b);
+}
+
+/** 용량 늘리기 요청 창 —원하는 할당(GB) · 이유 한 줄. 보내면 LX 관리자 계정 관리 '저장 용량 요청'에 한 건 */
 export function openStorageRequest({ storage = {}, onDone } = {}) {
   sheet();
   const q = v(storage.quota_gb), used = Number(v(storage.used)) || 0, pct = v(storage.pct);
@@ -104,12 +164,15 @@ export function openMe({ onSaved } = {}) {
   sheet();
   const body = h('div.k-me', {}, h('p.k-me-wait', { text: '불러오는 중' }));
   const m = modal({ title: '내 정보', body, onClose: () => { cur = null; } });
-  m.el.classList.add('k-me-md');
+  m.el.classList.add('k-me-md', 'k-me-wide');          // 두 단(직원-5 ⓐ) — 왼쪽 내 정보 · 오른쪽 저장 용량 · 늘리기 요청 이력
   cur = m;
-  const load = () => api('/me/profile').then((p) => draw(p)).catch(() => { body.replaceChildren(h('p.k-me-wait', { text: '내 정보를 불러오지 못했습니다' })); });
+  /* 오른쪽 단 = GET /me/storage(프로젝트별 · 요청 이력). 못 받으면 내 정보의 저장 용량 한 칸(예전 모양)으로 */
+  const side = () => api('/me/storage').catch(() => null);
+  const load = () => Promise.all([api('/me/profile'), side()]).then(([p, s]) => draw(p, s))
+    .catch(() => { body.replaceChildren(h('p.k-me-wait', { text: '내 정보를 불러오지 못했습니다' })); });
   load();
 
-  function draw(p) {
+  function draw(p, S) {
     const field = (label, input, opt, tag = 'label.k-me-f') => h(tag, {}, h('span.k-me-l', {}, label, opt ? h('small', { text: '선택' }) : null), input);
     const name = h('input.t-input', { type: 'text', name: 'name', maxlength: '40', autocomplete: 'name', value: p.name || '' });
     const dept = h('input.t-input', { type: 'text', name: 'dept', maxlength: '60', autocomplete: 'off', value: p.dept || '', placeholder: '부서 이름 일부를 적으면 찾습니다', 'aria-label': '부서' });
@@ -122,19 +185,23 @@ export function openMe({ onSaved } = {}) {
     const deptBox = field('부서', dept, false, 'div.k-me-f');
     /* 저장 용량 칸 — 늘리기 요청을 보내면 이 칸만 새로 그린다(고치던 이름 · 부서는 그대로) */
     let stBox = null;
-    const stDraw = (st) => {
-      const nb = storageBlock(st, { onAsk: () => openStorageRequest({ storage: st, onDone: (out) => stDraw(out.storage) }) });
+    const again = () => side().then((s) => { if (s) stDraw(s); });
+    const stDraw = (s, fb = p.storage) => {
+      const st = s ? s.storage : fb;
+      const onAsk = () => openStorageRequest({ storage: st, onDone: (out) => (s ? again() : stDraw(null, out.storage)) });
+      const nb = s ? storageSide(s, { onAsk }) : h('div.k-me-r', {}, storageBlock(st, { onAsk }));
       if (stBox) stBox.replaceWith(nb);
       stBox = nb;
       return nb;
     };
-    body.replaceChildren(
-      h('div.k-me-f', {}, h('span.k-me-l', { text: '아이디' }), h('p.k-me-ro', { text: p.login, title: '아이디(메일)는 바꿀 수 없습니다' })),
-      field('이름', name), deptBox, field('연락처', contact, true),
-      stDraw(p.storage),
-      h('p.k-me-say', {}, h('span', { text: '관리자 승인 없이 바로 바뀌고,' }), ' ', h('span', { text: '바꾼 기록이 남습니다' }), h('br'),
-        `마지막 바꿈 ${p.changed_at ? stamp(p.changed_at) : '없음'}`),
-      err, h('div.k-me-act', {}, save, cancel));
+    body.replaceChildren(h('div.k-me-two', {},
+      h('div.k-me', {},
+        h('div.k-me-f', {}, h('span.k-me-l', { text: '아이디' }), h('p.k-me-ro', { text: p.login, title: '아이디(메일)는 바꿀 수 없습니다' })),
+        field('이름', name), deptBox, field('연락처', contact, true),
+        h('p.k-me-say', {}, h('span', { text: '관리자 승인 없이 바로 바뀌고,' }), ' ', h('span', { text: '바꾼 기록이 남습니다' }), h('br'),
+          `마지막 바꿈 ${p.changed_at ? stamp(p.changed_at) : '없음'}`),
+        err, h('div.k-me-act', {}, save, cancel)),
+      stDraw(S)));
     import('./dept.js').then((d) => d.deptPicker(dept).ready).then((has) => { if (!has) dept.placeholder = '부서 이름'; })
       .catch(() => { dept.placeholder = '부서 이름'; });
     cancel.addEventListener('click', () => m.close());

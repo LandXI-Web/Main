@@ -98,3 +98,39 @@
   .ld-sub{display:block;margin:2px 0 0}
 }
 @media (max-width:640px){.ld-pr-nm small{display:none}}
+
+/* ⑤ 저장 용량 · ⑥ 내가 돌린 작업 · ⑦ 공지(직원-4 ⓐ · 10-09 · 시안 design-r13/lx-staff-v3plus) — 큰 숫자 · 막대 줄은 내 정보 창과 같은 부품(kit/me.css .k-me-big · .k-me-bars) */
+button.ld-more{border:0;padding:0;cursor:pointer;background-color:transparent}
+.ld-store-b{display:flex;flex-direction:column;gap:16px}
+.ld-warn{margin:0;font:500 13px/19px var(--font-body);color:var(--warn)}
+.ld-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:20px 32px;align-items:start}
+.ld-cells--2{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:18px}
+.ld-cell--ro:hover{background:none}
+.ld-cell.is-warn b{color:var(--warn)}
+.ld-recent{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ld-kinds{margin:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;border-top:1px solid var(--rule);padding-top:14px;font:400 var(--fs-label)/20px var(--font-body);color:var(--sub-2)}
+.ld-kinds > span{display:inline-block;white-space:nowrap}
+.ld-kinds b{font:500 var(--fs-label)/20px var(--font-num);color:var(--ink)}
+.ld-kinds .ld-k{margin-right:4px}
+.ld-k{margin:0;font:500 13px/18px var(--font-body);color:var(--sub)}
+.ld-rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.ld-rows li{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:12px;align-items:center;padding:8px 0;border-top:1px solid var(--rule);font:400 var(--fs-label)/20px var(--font-body);color:var(--ink)}
+.ld-rows li:first-child{border-top:0;padding-top:2px}
+.ld-rows li > span:nth-child(2){min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ld-st{font:500 13px/20px var(--font-body);color:var(--sub);white-space:nowrap}
+.ld-st.is-no{color:var(--warn)}
+.ld-ntc{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.ld-ntc li{border-top:1px solid var(--rule)}
+.ld-ntc li:first-child{border-top:0}
+.ld-ntc button{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;width:calc(100% + 16px);padding:9px 8px;margin:0 -8px;border:0;border-radius:var(--r-8);background:none;cursor:pointer;text-align:left;font:400 var(--fs-label)/20px var(--font-body);color:var(--ink)}
+.ld-ntc button:hover{background:var(--bg-0)}
+.ld-ntc button b{font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ld-ntc li.ld-ntc-none{border:0;padding:14px 16px;border-radius:var(--r-8);background:var(--bg-0);font:500 var(--fs-label)/20px var(--font-body);color:var(--sub)}
+.ld-ntc-md{display:flex;flex-direction:column;gap:12px;padding-bottom:8px}
+.ld-ntc-by{margin:0;font:400 13px/18px var(--font-body);color:var(--sub)}
+.ld-ntc-tx{margin:0;font:400 var(--fs-body)/26px var(--font-body);color:var(--ink-2);white-space:pre-wrap;word-break:keep-all}
+/* 넓은 화면(1920)에서 가운데 1344 로 묶지 않는다(원칙 127 · 시안과 같다) — 오른쪽 단도 함께 넓어진다 */
+@media (min-width:1281px){.ld-grid{max-width:none;grid-template-columns:minmax(0,1fr) minmax(440px,.5fr)}}
+/* 한 줄(≤ 1100) · 휴대폰 순서 — 내 프로젝트 · 요청함 · 우리 서비스 · 저장 용량 · 바로 분석하기 · 내가 돌린 작업 · 공지 · 최근 활동 */
+@media (max-width:1100px){.ld-store{order:4}.ld-quick{order:5}.ld-jobs{order:6}.ld-notice{order:7}.ld-act{order:8}}
+@media (max-width:960px){.ld-two{grid-template-columns:1fr}.ld-rows li{grid-template-columns:60px minmax(0,1fr) auto}.ld-ntc button{grid-template-columns:60px minmax(0,1fr)}}

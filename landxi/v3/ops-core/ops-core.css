@@ -127,3 +127,24 @@ body:has(.k-drawer[data-slot="approval"]) .oc-inbox-w{padding-right:calc(var(--s
 .oc-rq .t-label{margin:4px 0 0}
 .oc-rq-img{display:block;width:100%;max-height:220px;object-fit:contain;border-radius:12px;background:var(--bg-0)}
 .oc-rq-n{margin:0;font:400 13px/20px var(--font-body);color:var(--sub)}
+
+/* 공지 쓰기 창(직원-4 ⓐ · js/notice.js) — 쓰기 · 올린 공지(내리기) */
+.oc-ntc{display:flex;flex-direction:column;gap:14px}
+.oc-ntc-f{display:flex;flex-direction:column;gap:6px;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--ink)}
+.oc-ntc-f small{margin-left:6px;font-weight:400;color:var(--sub)}
+.oc-ntc .t-input{box-sizing:border-box;width:100%}
+.oc-ntc-ta{height:auto;min-height:120px;padding:12px 14px;resize:vertical;font:400 var(--fs-body)/24px var(--font-body)}
+.oc-ntc-say{margin:0;font:400 13px/19px var(--font-body);color:var(--sub)}
+.oc-ntc-err{margin:0;font:500 var(--fs-label)/var(--lh-label) var(--font-body);color:var(--warn)}
+.oc-ntc-err[hidden]{display:none}
+.oc-ntc-act{display:flex}
+.oc-ntc-act .t-btn{padding:0 28px}
+.oc-ntc-k{margin:6px 0 0;padding-top:14px;border-top:1px solid var(--rule);font:500 var(--fs-label)/20px var(--font-body);color:var(--ink)}
+.oc-ntc-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.oc-ntc-list li{display:grid;grid-template-columns:88px minmax(0,1fr) auto;gap:12px;align-items:center;padding:9px 0;border-top:1px solid var(--rule);font:400 var(--fs-label)/20px var(--font-body);color:var(--ink)}
+.oc-ntc-list li:first-child{border-top:0}
+.oc-ntc-list li > span{font-size:13px;color:var(--sub)}
+.oc-ntc-list b{font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.oc-ntc-list li.oc-ntc-none{display:block;color:var(--sub)}
+.oc-ntc-off{border:0;background:none;padding:2px 0;cursor:pointer;font:500 13px/20px var(--font-body);color:var(--sub);text-decoration:underline;text-underline-offset:3px}
+.oc-ntc-off:hover{color:var(--warn)}
