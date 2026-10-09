@@ -230,4 +230,4 @@ a.k-svc:hover .m-more::after{transform:translateX(4px)}
 /* 휴대폰 첫 화면 문장 — 글자 중간에서 끊기지 않게(§2-1) */
 .m-lead span{word-break:keep-all}
 /* 첫 화면 글을 지구 쪽으로(넓은 화면에서 왼쪽 끝에 붙어 지구와 멀어지지 않게 · 10-09) */
-@media (min-width:1101px){.m-hero{padding-left:max(0px,calc(46vw - var(--mx) - 24px - 540px))}}
+@media (min-width:1101px){.m-hero,.m-side{padding-left:max(0px,calc(46vw - var(--mx) - 24px - 540px))}}
