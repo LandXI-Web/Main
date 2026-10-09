@@ -190,3 +190,63 @@
 .sb-store .sb-dn{margin:0 auto}
 .sb-store-row--lg .sb-dn{--dn:140px!important}
 .k-me-r .k-me-st{gap:8px}
+
+/* ── 3차(10-09 직원-6 답: 흐름도 + 단계별 숫자 · 주인공답게) ── */
+.sb-fl{list-style:none;margin:4px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0 28px;position:relative}
+.sb-st{position:relative;display:flex;flex-direction:column;gap:10px;min-width:0}
+.sb-st-b{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:16px 18px 14px;border:0;border-radius:12px;background:var(--bg-0);text-align:left;font:inherit;color:inherit;cursor:pointer;transition:background var(--d-180) var(--e-ui),box-shadow var(--d-180) var(--e-ui)}
+.sb-st-b:hover{box-shadow:inset 0 0 0 1px var(--rule)}
+.sb-st-b:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sb-st[data-open] .sb-st-b{background:var(--bg-1);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.sb-st[data-open] .sb-st-b::after{content:"";position:absolute;left:50%;bottom:-9px;width:14px;height:14px;margin-left:-7px;background:var(--bg-1);border-right:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);transform:rotate(45deg)}
+.sb-st-k{position:absolute;right:14px;top:12px;font:500 12px/1 var(--font-num);color:var(--mute)}
+.sb-st-b > b{font:800 44px/1 var(--font-display);letter-spacing:-.03em;color:var(--ink)}
+.sb-st[data-n="0"] .sb-st-b > b{color:var(--mute)}
+.sb-st-l{margin-top:6px;font:500 16px/22px var(--font-body);color:var(--ink)}
+.sb-st[data-n="0"] .sb-st-l{color:var(--sub)}
+.sb-st-s{font:400 13px/18px var(--font-body);color:var(--sub)}
+.sb-st-s em{font-style:normal;font-weight:500;color:var(--warn)}
+/* 작은 진행 그래프 — 프로젝트별 끝낸 칸 비율(세로 막대 · 남은 일 있으면 빨강) */
+.sb-st-g{display:flex;align-items:flex-end;gap:3px;height:22px;margin-top:10px}
+.sb-st-g i{display:block;width:10px;height:100%;border-radius:2px;background:var(--rule);position:relative;overflow:hidden}
+.sb-st-g i::after{content:"";position:absolute;left:0;right:0;bottom:0;height:var(--w);background:var(--ink)}
+.sb-st-g i[data-kind="warn"]::after{background:var(--warn)}
+.sb-st-g i[data-kind="wait"]::after{background:var(--lock)}
+.sb-st[data-n="0"] .sb-st-g{visibility:hidden}
+/* 연결선 — 흐름을 따라 점이 움직인다(한 화면에 움직이는 것 1 · 사다리 1250) */
+.sb-st + .sb-st .sb-st-b::before{content:"";position:absolute;left:-28px;top:44px;width:28px;height:2px;background:var(--rule)}
+.sb-st + .sb-st .sb-st-b > .sb-st-k::before{content:"";position:absolute;left:-28px;top:-5px}
+.sb-st + .sb-st::before{content:"";position:absolute;left:-28px;top:40px;width:8px;height:8px;border-radius:50%;background:var(--accent);animation:sb-flow 1250ms var(--e-cam) infinite;z-index:1}
+@keyframes sb-flow{from{transform:translateX(-4px);opacity:0}30%{opacity:1}to{transform:translateX(24px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.sb-st + .sb-st::before{animation:none;transform:translateX(10px);opacity:1}}
+/* 이름 칩(이름 + 6칸 막대 · 남은 일은 빨간 점) */
+.sb-chips{display:flex;flex-direction:column;gap:6px;min-height:92px}
+.sb-chip{display:grid;grid-template-columns:minmax(0,1fr) 54px;align-items:center;gap:10px;height:30px;padding:0 10px 0 12px;border-radius:var(--r-8);background:var(--bg-0);text-decoration:none;color:var(--ink);font:500 13px/1 var(--font-body);position:relative;transition:background var(--d-180) var(--e-ui)}
+a.sb-chip:hover{background:var(--rule)}
+.sb-chip > span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-chip .lxp-seg{height:5px;gap:2px}
+.sb-chip[data-kind="warn"]::before{content:"";position:absolute;left:6px;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;background:var(--warn)}
+.sb-chip[data-kind="warn"]{padding-left:18px}
+.sb-chip--more,.sb-chip--none{display:inline-flex;align-items:center;justify-self:start;background:none;color:var(--sub);font-weight:400;padding-left:4px}
+.sb-chip--none{color:var(--mute)}
+/* 펼친 표 */
+.sb-open{margin-top:14px;padding:16px 20px 8px;border-radius:12px;border:1.5px solid var(--ink)}
+.sb-open-h{display:flex;align-items:baseline;gap:14px;margin-bottom:4px}
+.sb-open-h h3{margin:0;font:700 18px/26px var(--font-display);letter-spacing:-.02em;color:var(--ink)}
+.sb-open-h h3 b{margin-left:4px;color:var(--accent)}
+.sb-open-h p{margin:0;font:400 13px/18px var(--font-body);color:var(--sub)}
+.sb-tb th:first-child,.sb-tb td:first-child{padding-left:0}
+.sb-tb th:last-child,.sb-tb td:last-child{padding-right:0;text-align:right}
+.sb-tb td{vertical-align:middle;padding-top:10px;padding-bottom:10px}
+.sb-tb tbody tr:last-child td{border-bottom:0}
+.sb-prog{display:inline-grid;grid-template-columns:96px auto;align-items:center;gap:8px}
+.sb-prog .lxp-seg{height:6px}
+.sb-prog small{font:500 12px/1 var(--font-num);color:var(--sub)}
+.sb-kick{display:inline-flex;align-items:center;gap:6px;font:500 13px/18px var(--font-body);color:var(--warn)}
+.sb-kick::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.sb-kick[data-kind="wait"]{color:var(--ink)}
+.sb-kick[data-kind="wait"]::before{background:var(--lock)}
+.sb-kick[data-kind="ok"]{color:var(--sub);font-weight:400}
+.sb-kick[data-kind="ok"]::before{background:var(--ai)}
+.sb-tb-none{text-align:center;color:var(--sub)}
+.sb-foot p span{margin-right:6px}

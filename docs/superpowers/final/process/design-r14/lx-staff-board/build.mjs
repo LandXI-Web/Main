@@ -61,8 +61,8 @@ const I = {
   map: '<path d="M3 5l4.5-1.5 5 2L17 4v11l-4.5 1.5-5-2L3 16z M7.5 3.5v11 M12.5 5.5v11"/>', gear: '<circle cx="10" cy="10" r="2.5"/><path d="M10 2.5v2 M10 15.5v2 M2.5 10h2 M15.5 10h2 M4.7 4.7l1.4 1.4 M13.9 13.9l1.4 1.4 M4.7 15.3l1.4-1.4 M13.9 6.1l1.4-1.4"/>',
   org: '<path d="M3 17V7l7-4 7 4v10 M8 17v-5h4v5"/>', deploy: '<path d="M10 3v10 M6 7l4-4 4 4 M4 13v4h12v-4"/>', list: '<path d="M7 5h10 M7 10h10 M7 15h10 M3 5h.01 M3 10h.01 M3 15h.01"/>', check: '<path d="M4 10.5l4 4 8-9"/>',
 };
-const ico = (k) => `<svg viewBox="0 0 20 20" aria-hidden="true">${I[k]}</svg>`;
-const STAFF = [['home', '대시보드', 'lx-console/'], ['folder', '프로젝트', 'lx-project/'], ['scan', '분석하기', 'lx-analyze/'], ['card', '서비스 카드', 'lx-cards/', 1], ['data', '데이터', 'lx-ingest/', 1], ['inbox', '요청함', 'lx-inbox/']];
+const ico = (k) => (k === 'XI' ? '<i class="k-rail-g" aria-hidden="true">XI</i>' : `<svg viewBox="0 0 20 20" aria-hidden="true">${I[k]}</svg>`);
+const STAFF = [['home', '대시보드', 'lx-console/'], ['folder', '프로젝트', 'lx-project/'], ['scan', '분석하기', 'lx-analyze/'], ['XI', 'XI맵', 'xi-clean/', 1], ['data', '데이터', 'lx-ingest/', 1], ['inbox', '요청함', 'lx-inbox/']];   // 지금 메뉴(kit/lx-menu.js · 원칙 149 · 151)
 const ADMIN = [['map', '현황', 'ops-core/'], ['gear', '인프라', 'ops-infra/'], ['org', '기관', 'ops-infra/?view=tenants'], ['deploy', '배포', 'ops-infra/?view=deploys'], ['inbox', '결재', 'ops-core/#approvals'], ['list', '검토 요청', 'lx-inbox/'], ['check', '계정 관리', 'ops-accounts/']];
 const rail = (items, cur, v3) => items.map(([ic, label, href, more], i) =>
   `<a class="k-rail-i${more ? ' k-rail-i--more' : ''}" href="${v3}/${href}" data-i="${i}"${i === cur ? ' aria-current="true"' : ''}>${ico(ic)}<span>${label}</span></a>`).join('')
@@ -97,39 +97,59 @@ ${body}
 }
 
 /* ── ① 대시보드 — 프로젝트 진행 현황(네 칸) + 저장 용량 · 내가 돌린 작업 · 요청함 · 공지 ── */
-const COLS = [['ingest', '데이터 올리기'], ['ai', 'AI 분석'], ['review', '결과 확인'], ['publish', '서비스 공개']];
+const COLS = [['ingest', '데이터 올리기'], ['ai', 'AI 분석'], ['review', '결과 확인'], ['publish', '배포 신청']];   // 원칙 152 — '서비스 공개' 대신 '배포 신청'
 const COL_OF = { ingest: 'ingest', label: 'ai', train: 'ai', review: 'review', publish: 'publish', ops: 'publish' };
-const regionOf = (p) => (p.regions.length ? p.regions[0].name + (p.regions.length > 1 ? ` 외 ${p.regions.length - 1}곳` : '') : '지역 없음');
-/* 카드 — 이름 · 지금(단계 안 상태) · 지역 · 서비스 · 담당 · 마감 · 남은 것 한 줄 */
-function pcard(p, { now, kick, kind = 'warn', due = null }) {
-  const m = [['지역', regionOf(p)], ['서비스', p.task || '—'], ['담당', p.lead?.name || '—'], ['마감', due]];
-  const pic = PIC[p.name];
-  return `<a class="sb-pc" href="#" aria-label="${esc(p.name)} · ${esc(regionOf(p))} · ${esc(now)}${kick ? ` · ${esc(kick)}` : ''}">
-<span class="sb-pc-img${pic ? '' : ' is-blank'}">${pic ? `<img src="img/${pic[0]}" alt="" loading="lazy" decoding="async"><span class="sb-pc-cap">${pic[1]}</span>` : '<span>그림 없음 · 첫 결과 뒤</span>'}</span>
-<span class="sb-pc-t"><b>${esc(p.name)}</b><span class="sb-pc-now">${esc(now)}</span></span>
-<dl class="sb-pc-m">${m.map(([k, v]) => `<dt>${k}</dt><dd${v ? '' : ' class="is-none"'}>${esc(v || '미정')}</dd>`).join('')}</dl>
-${kick ? `<p class="sb-pc-k" data-kind="${kind}">${esc(kick)}</p>` : ''}</a>`;
-}
-/* 서버 그대로 — 넷 모두 서비스 공개(서비스 관리 · 시범) · 결과 확인 0/20 이 남아 있음 */
-const REAL = P.map((p) => ({ col: COL_OF[p.stage.key], p, now: p.stage.label + (p.next?.text ? ` · ${p.next.text}` : ''), kick: p.blocked?.[0] ? `${p.blocked[0].text} 남음` : '', kind: p.blocked?.[0]?.kind === 'before' ? 'warn' : 'wait' }));
-/* 예시 배치 — 같은 네 프로젝트를 네 칸에 하나씩(모양을 보기 위한 자리 · 서버 값 아님) */
-const byName = (n) => P.find((p) => p.name === n);
+const regionOf = (p) => (p.regions.length ? p.regions[0].name + (p.regions.length > 1 ? ` 외 ${p.regions.length - 1}곳` : '') : '지역 미정');
+const TODAY = new Date('2026-10-09T12:00:00+09:00');
+const daysAgo = (iso) => Math.max(0, Math.round((TODAY - new Date(iso)) / 864e5));
+/* 서버 그대로 — 넷 모두 배포 신청 칸(서비스 관리 · 시범) · '결과 확인 0/20' 이 앞 단계에 남아 있음 · 진행 = 6단계 가운데 끝난 칸 수 · 마지막 활동 = last_at */
+const REAL = P.map((p) => ({ col: COL_OF[p.stage.key], name: p.name, region: regionOf(p), lead: p.lead?.name || '—', now: p.next?.text || p.stage.label,
+  kick: p.blocked?.[0] ? `${p.blocked[0].text} 남음` : '', kind: p.blocked?.[0]?.kind === 'before' ? 'warn' : (p.blocked?.[0] ? 'wait' : 'ok'),
+  done: p.steps.filter((x) => x === 'done').length, steps: p.steps, days: daysAgo(p.last_at) }));
+/* 예시 배치 — 프로젝트가 열 개를 넘을 때의 모양(실제 4 + 분석 서비스 이름을 빌린 예시 9 · 값은 모양을 보기 위한 것) */
+const mk = (name, region, col, done, days, kick, kind, now) => ({ col, name, region, lead: 'LX 직원', now, kick, kind, done, days, ex: true,
+  steps: ['ingest', 'label', 'train', 'review', 'publish', 'ops'].map((_, i) => (i < done ? 'done' : i === done ? 'now' : 'wait')) });
 const EXAMPLE = [
-  { col: 'ingest', p: byName('곤포사일리지 2026'), now: '영상 등록', kick: '영상 없는 지역 1곳', kind: 'warn' },
-  { col: 'ai', p: byName('주차장 2026'), now: '학습 중', kick: '학습 2시간째 · 끝나면 알림', kind: 'wait' },
-  { col: 'review', p: byName('건축물 2026'), now: '표본 확인', kick: '결과 확인 0/20 남음', kind: 'warn' },
-  { col: 'publish', p: byName('비닐하우스 2026'), now: '서비스 관리 · 시범 3곳', kick: '기관 신고 없음', kind: 'ok' },
+  ...REAL.map((x) => (x.name === '곤포사일리지 2026' ? { ...mk(x.name, x.region, 'ingest', 0, x.days, '영상 없는 지역 1곳', 'warn', '영상 등록'), ex: false }
+    : x.name === '주차장 2026' ? { ...mk(x.name, x.region, 'ai', 2, x.days, '', 'ok', '학습'), ex: false }
+    : x.name === '건축물 2026' ? { ...mk(x.name, x.region, 'review', 3, x.days, '결과 확인 0/20 남음', 'warn', '결과 확인'), ex: false } : x)),
+  mk('영농관리 2026', '남원시', 'ai', 2, 1, '학습 2시간째 · 끝나면 알림', 'wait', '학습'),
+  mk('해양쓰레기 2026', '여수시', 'ai', 1, 3, '', 'ok', '학습데이터 구축'),
+  mk('국토 변화 2026', '남원시', 'review', 3, 5, '결과 확인 12/20 남음', 'warn', '결과 확인'),
+  mk('도로 안전 2026', '지역 미정', 'ingest', 0, 12, '영상 없는 지역 1곳', 'warn', '데이터 올리기'),
+  mk('산림·탄소 2026', '지역 미정', 'ingest', 0, 2, '', 'ok', '데이터 올리기'),
+  mk('생활환경 2026', '지역 미정', 'ai', 2, 0, '', 'ok', '학습'),
+  mk('인파관리 2026', '지역 미정', 'ai', 1, 4, '', 'ok', '학습데이터 구축'),
+  mk('농지 이용(해외) 2026', '지역 미정', 'publish', 4, 1, '', 'wait', '승인 대기'),
+  mk('재해 피해(해외) 2026', '지역 미정', 'review', 3, 9, '결과 확인 0/20 남음', 'warn', '결과 확인'),
 ];
-function board(list, ex = false) {
-  const cols = COLS.map(([key, label]) => {
+/* 6칸 진행 막대(프로젝트 목록과 같은 부품 .lxp-seg) */
+const seg = (steps) => `<span class="lxp-seg" role="img" aria-label="${steps.filter((x) => x === 'done').length}칸 끝남"><i data-st="${steps[0]}"></i><i data-st="${steps[1]}"></i><i data-st="${steps[2]}"></i><i data-st="${steps[3]}"></i><i data-st="${steps[4]}"></i><i data-st="${steps[5]}"></i></span>`;
+const ago = (d) => (d === 0 ? '오늘' : d === 1 ? '어제' : `${d}일 전`);
+/* 흐름도 + 단계별 숫자 — 단계 넷을 선으로 잇고(점이 흐름을 따라 움직임) · 단계마다 큰 숫자 · 작은 진행 그래프(프로젝트별 6칸 막대) · 이름 칩 · 누른 단계는 아래로 표 */
+function board(list, ex = false, open = 'publish') {
+  const nodes = COLS.map(([key, label], i) => {
     const here = list.filter((x) => x.col === key);
-    return `<div class="sb-col" data-n="${here.length}"><div class="sb-col-h"><b class="num">${here.length}</b><span>${label}</span></div>
-${here.length ? pcard(here[0].p, here[0]) + (here.length > 1 ? `<ul class="sb-rest">${here.slice(1).map((x) => `<li><a href="#"><b>${esc(x.p.name)}</b><span>${esc(regionOf(x.p))}</span>${x.kick ? `<i data-kind="${x.kind}"></i>` : ''}</a></li>`).join('')}</ul>` : '') : '<p class="sb-none">해당 프로젝트 없음</p>'}</div>`;   // 칸마다 그림 카드 하나 · 나머지는 이름 줄(점 = 남은 것 있음)
+    const warn = here.filter((x) => x.kind === 'warn').length, wait = here.filter((x) => x.kind === 'wait').length;
+    const sub = !here.length ? '머문 프로젝트 없음' : [warn ? `<em>남은 일 ${warn}</em>` : '', wait ? `기다림 ${wait}` : '', `마지막 활동 ${ago(Math.min(...here.map((x) => x.days)))}`].filter(Boolean).join(' · ');
+    const MAXC = 3;
+    const chips = here.slice(0, MAXC).map((x) => `<a class="sb-chip" href="#" data-kind="${x.kind}" title="${esc(x.name)} · ${esc(x.now)}"><span>${esc(x.name)}</span>${seg(x.steps)}</a>`).join('')
+      + (here.length > MAXC ? `<span class="sb-chip sb-chip--more">외 ${here.length - MAXC}개</span>` : '');
+    return `<li class="sb-st" data-n="${here.length}"${key === open ? ' data-open="1"' : ''}${warn ? ' data-warn="1"' : ''}>
+<button class="sb-st-b" type="button" aria-expanded="${key === open}"><span class="sb-st-k num">${i + 1}</span><b class="num">${here.length}</b><span class="sb-st-l">${label}</span><small class="sb-st-s">${sub}</small>
+<span class="sb-st-g" aria-hidden="true">${here.slice(0, 6).map((x) => `<i style="--w:${Math.round((x.done / 6) * 100)}%" data-kind="${x.kind}"></i>`).join('')}</span></button>
+<div class="sb-chips">${chips}</div></li>`;
   }).join('\n');
+  const cur = list.filter((x) => x.col === open);
+  const title = COLS.find(([k]) => k === open)[1];
+  const rows = cur.map((x) => `<tr><td><b class="acc-b">${esc(x.name)}</b>${x.ex ? ' <span class="sb-ex">예시</span>' : ''}</td><td>${esc(x.region)}</td><td>${esc(x.lead)}</td><td>${esc(x.now)}</td>
+<td><span class="sb-prog">${seg(x.steps)}<small class="num">${x.done}/6</small></span></td><td class="num">${ago(x.days)}</td><td>${x.kick ? `<span class="sb-kick" data-kind="${x.kind}">${esc(x.kick)}</span>` : '<span class="sb-kick" data-kind="ok">없음</span>'}</td><td><a class="ld-more" href="#">열기</a></td></tr>`).join('');
   return `<section class="t-card ld-card sb-board" aria-label="프로젝트 진행 현황">
-${head('프로젝트 진행 현황', `진행 중 ${P.length} · 내가 맡은 ${P.filter((p) => p.lead_is_me).length}`, '<a class="ld-more" href="#">전체 보기</a>', ex ? ' <span class="sb-ex">예시 배치 — 모양을 보기 위한 자리</span>' : '')}
-<div class="sb-cols">${cols}</div>
-<div class="sb-foot"><p><span>칸 = 프로젝트가 지금 있는 단계.</span> <span>카드를 누르면 그 단계 화면으로 갑니다.</span></p><button class="ld-new" type="button">새 프로젝트</button></div>
+${head('프로젝트 진행 현황', `진행 중 ${list.length} · 내가 맡은 ${list.filter((x) => x.lead === 'LX 직원').length} · 남은 일 있는 프로젝트 ${list.filter((x) => x.kind === 'warn').length}`, '<a class="ld-more" href="#">전체 보기</a>', ex ? ' <span class="sb-ex">예시 배치 — 프로젝트가 열 개를 넘을 때</span>' : '')}
+<ol class="sb-fl">${nodes}</ol>
+<div class="sb-open"><div class="sb-open-h"><h3>${title} <b class="num">${cur.length}</b></h3><p>단계를 누르면 그 단계의 프로젝트가 여기에 펼쳐집니다</p></div>
+<div class="k-table-w"><table class="k-table sb-tb"><thead><tr><th>프로젝트</th><th>지역</th><th>담당</th><th>지금</th><th>진행</th><th class="num">마지막 활동</th><th>남은 일</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="8" class="sb-tb-none">이 단계에 머문 프로젝트가 없습니다</td></tr>'}</tbody></table></div></div>
+<div class="sb-foot"><p><span>숫자 = 그 단계에 있는 프로젝트 수.</span> <span>막대 = 여섯 단계 가운데 끝낸 칸.</span> <span>빨간 점 = 앞 단계에 남은 일.</span></p><button class="ld-new" type="button">새 프로젝트</button></div>
 </section>`;
 }
 function storeCard(ex = false) {
@@ -155,11 +175,11 @@ const noticeCard = () => `<section class="t-card ld-card sb-notice" aria-label="
 
 function dashboard(o, ex = false) {
   const body = `<div class="sb"><div class="sb-in">
-${board(ex ? EXAMPLE : REAL, ex)}
+${board(ex ? EXAMPLE : REAL, ex, ex ? 'ai' : 'publish')}
 <div class="sb-row">${storeCard(ex)}${jobsCard()}${inboxCard()}${noticeCard()}</div>
 </div></div>`;
   return shell({ title: 'LX 직원 대시보드', home: 'LX 직원 대시보드', role: 'LX 직원', items: STAFF, cur: 0, v3: o.v3, assets: o.assets,
-    css: [`${o.v3}/lx-console/console.css`, `${o.v3}/kit/me.css`], body, desc: `LX 직원 대시보드 — 프로젝트 진행 현황 네 칸 · 저장 용량 · 내가 돌린 작업 · 요청함 · 공지${ex ? ' (예시 배치)' : ''}` });
+    css: [`${o.v3}/lx-console/console.css`, `${o.v3}/kit/me.css`, `${o.v3}/lx-project/context.css`, `${o.v3}/ops-accounts/accounts.css`], body, desc: `LX 직원 대시보드 — 프로젝트 진행 현황 네 칸 · 저장 용량 · 내가 돌린 작업 · 요청함 · 공지${ex ? ' (예시 배치)' : ''}` });
 }
 
 /* ── ② 내 정보 창 — 왼쪽 내 정보 · 오른쪽 저장 용량(할당 50 GB · 막대 · 프로젝트별) · 증량 신청(펼친 상태) · 요청 이력 ── */
@@ -191,14 +211,14 @@ function my(o) {
 <div class="k-me-st"><div class="k-me-sth"><p class="k-me-l">증량 신청 이력</p></div>
 <p class="k-me-big is-zero"><b class="num">0</b><small>신청 · 대기 0</small></p>
 <p class="sb-me-none">신청한 적이 없습니다</p>
-<p class="k-me-sub">신청의 승인 · 반려가 여기 남습니다</p></div>
+<p class="k-me-sub">신청의 승인 · 거절가 여기 남습니다</p></div>
 </div></div></div></div></div>`;
   const body = `<div class="sb"><div class="sb-in">${board(REAL)}<div class="sb-row">${storeCard()}${jobsCard()}${inboxCard()}${noticeCard()}</div></div></div>${modal}`;
   return shell({ title: '내 정보 — 저장 용량', home: 'LX 직원 대시보드', role: 'LX 직원', items: STAFF, cur: 0, v3: o.v3, assets: o.assets, cls: 'k-md-open',
-    css: [`${o.v3}/lx-console/console.css`, `${o.v3}/kit/me.css`, `${o.v3}/kit/modal.css`], body, desc: '내 정보 창 — 저장 용량(할당 50 GB · 프로젝트별) · 증량 신청 · 요청 이력' });
+    css: [`${o.v3}/lx-console/console.css`, `${o.v3}/kit/me.css`, `${o.v3}/kit/modal.css`, `${o.v3}/lx-project/context.css`, `${o.v3}/ops-accounts/accounts.css`], body, desc: '내 정보 창 — 저장 용량(할당 50 GB · 프로젝트별) · 증량 신청 · 요청 이력' });
 }
 
-/* ── ③ LX 관리자 · 계정 화면 '저장 용량' 탭 — 기본 할당 · 증량 신청(승인 · 반려) · 계정별 할당 ── */
+/* ── ③ LX 관리자 · 계정 화면 '저장 용량' 탭 — 기본 할당 · 증량 신청(승인 · 거절) · 계정별 할당 ── */
 function overview() {
   const alloc = STORAGE.quota * USERS.length * 1e9, acc = USERS.reduce((a, u) => a + u[3], 0);
   const tb = (b) => `${(b / 1e12).toFixed(1)} TB`;
@@ -237,11 +257,11 @@ ${overview()}
 <dl class="acc-dl"><dt>누가</dt><dd>${REQ.who} · ${REQ.login}</dd><dt>언제</dt><dd>${REQ.at}</dd><dt>이유</dt><dd>${REQ.why}</dd><dt>사용량</dt><dd>${size(REQ.used)} · 할당의 ${pct(REQ.used, REQ.from)}%</dd></dl>
 <p class="sb-dr-big"><b class="num">${REQ.from}</b><span>GB</span><i>→</i><b class="num">${REQ.want}</b><span>GB</span></p>
 <p class="sb-dr-after"><span>승인하면 이 사람만 ${REQ.want} GB 개별 할당.</span> <span>할당 합계 ${STORAGE.quota * USERS.length + REQ.want - REQ.from} GB — 여유 2.0 TB의 ${Math.round(((STORAGE.quota * USERS.length + REQ.want - REQ.from) * 1e9 / DISK.free) * 100)}%.</span> <span>신청한 사람에게 알림이 갑니다</span></p>
-<div class="acc-do"><input class="t-input acc-reason" type="text" placeholder="반려 사유(반려할 때)" aria-label="사유"><div class="acc-acts"><button class="t-btn t-btn--2" type="button">반려</button><button class="t-btn" type="button">승인</button></div></div>
+<div class="acc-do"><input class="t-input acc-reason" type="text" placeholder="거절 사유(거절할 때)" aria-label="사유"><div class="acc-acts"><button class="t-btn t-btn--2" type="button">거절</button><button class="t-btn" type="button">승인</button></div></div>
 </aside>
 </div></div></div>`;
   return shell({ title: 'LX 관리자 — 계정별 저장 용량', home: 'LX 관리자 대시보드', role: 'LX 관리자', items: ADMIN, cur: 6, v3: o.v3, assets: o.assets,
-    css: [`${o.v3}/ops-accounts/accounts.css`, `${o.v3}/lx-console/console.css`, `${o.v3}/kit/me.css`], body, desc: 'LX 관리자 계정 화면 저장 용량 탭 — 기본 할당 · 계정별 할당 · 증량 신청 승인 · 반려' });
+    css: [`${o.v3}/ops-accounts/accounts.css`, `${o.v3}/lx-console/console.css`, `${o.v3}/kit/me.css`], body, desc: 'LX 관리자 계정 화면 저장 용량 탭 — 기본 할당 · 계정별 할당 · 증량 신청 승인 · 거절' });
 }
 
 for (const o of OUTS) {
